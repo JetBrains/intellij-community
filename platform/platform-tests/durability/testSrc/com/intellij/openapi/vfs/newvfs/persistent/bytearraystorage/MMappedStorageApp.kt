@@ -17,9 +17,9 @@ import kotlin.io.path.exists
 
 class MMappedStorageApp: App {
 
-  class MMappedStorage: StorageDurabilityTest.Storage {
+  class MMappedStorage: Storage {
     val path = Path.of("mmapped.data")
-    val stateSize = StorageDurabilityTest.stateSize
+    val stateSize = Storage.stateSize
 
     enum class WriteImpl(val desc: String) {
       SinglePut("single-put"),

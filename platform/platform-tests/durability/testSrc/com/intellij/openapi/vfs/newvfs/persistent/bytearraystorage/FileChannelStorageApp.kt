@@ -11,9 +11,9 @@ import java.nio.file.StandardOpenOption.*
 import kotlin.io.path.exists
 
 class FileChannelStorageApp: App {
-  class FileChannelStorage: StorageDurabilityTest.Storage {
+  class FileChannelStorage: Storage {
     val path = Path.of("fc.data")
-    val stateSize = StorageDurabilityTest.stateSize
+    val stateSize = Storage.stateSize
 
     init {
       if (!path.exists()) {

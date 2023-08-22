@@ -8,9 +8,9 @@ import com.intellij.openapi.vfs.newvfs.persistent.log.io.DurablePersistentByteAr
 import java.nio.file.Path
 
 class DurablePersistentByteArrayStorageApp : App {
-  private class DurablePersistentByteArrayStorage: StorageDurabilityTest.Storage {
+  private class DurablePersistentByteArrayStorage: Storage {
     val path = Path.of("dpba.dat")
-    val stateSize = StorageDurabilityTest.stateSize
+    val stateSize = Storage.stateSize
 
     val persistence = DurablePersistentByteArray(path, OpenMode.ReadWrite, stateSize) { ByteArray(stateSize) }
 

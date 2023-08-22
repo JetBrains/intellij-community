@@ -2,9 +2,6 @@
 package com.intellij.openapi.vfs.newvfs.persistent.bytearraystorage
 
 import com.intellij.openapi.vfs.newvfs.persistent.*
-import com.intellij.openapi.vfs.newvfs.persistent.bytearraystorage.StorageDurabilityTest.Proto
-import com.intellij.openapi.vfs.newvfs.persistent.bytearraystorage.StorageDurabilityTest.readProto
-import com.intellij.openapi.vfs.newvfs.persistent.bytearraystorage.StorageDurabilityTest.writeProto
 import kotlinx.coroutines.*
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.Json
@@ -16,64 +13,65 @@ import java.util.concurrent.atomic.AtomicReference
 import java.util.concurrent.locks.LockSupport
 import kotlin.time.Duration.Companion.milliseconds
 
-object StorageDurabilityTest {
-  interface Storage {
-    fun setBytes(bytes: ByteArray, offset: Int)
-    fun getBytes(offset: Int, size: Int): ByteArray
-    fun flush()
-    fun close()
-  }
+internal interface Storage {
+  fun setBytes(bytes: ByteArray, offset: Int)
+  fun getBytes(offset: Int, size: Int): ByteArray
+  fun flush()
+  fun close()
 
-  val stateSize = (System.getenv("stress.state-size") ?: "1000000").toInt()
-
-  @Serializable
-  sealed interface Proto {
-    @Serializable
-    sealed interface Request : Proto {
-      @Serializable
-      data class SetBytes(val offset: Int, val bytes: ByteArray) : Request
-
-      @Serializable
-      data class ReadBytes(val offset: Int, val size: Int) : Request
-
-      @Serializable
-      object Flush : Request
-
-      @Serializable
-      object Close : Request
-    }
-
-    @Serializable
-    sealed interface Response : Proto {
-      @Serializable
-      object Ok : Response
-
-      @Serializable
-      data class ReadBytes(val bytes: ByteArray) : Response
-    }
-  }
-
-  fun OutputStream.writeProto(obj: Proto) {
-    val msg = Json.Default.encodeToString(Proto.serializer(), obj).encodeToByteArray()
-    val sizeBuf = ByteBuffer.allocate(4)
-    sizeBuf.putInt(msg.size)
-    write(sizeBuf.array())
-    write(msg)
-    flush()
-  }
-
-  fun InputStream.readProto(): Proto? {
-    val sizeArr = readNBytes(4)
-    if (sizeArr.isEmpty()) return null // EOF
-    check(sizeArr.size == 4) { "sizeArr.size != 4, != 0" } // partial msg
-    val size = ByteBuffer.wrap(sizeArr).getInt()
-    val data = readNBytes(size)
-    check(data.size == size) { "data.size != size" } // partial msg
-    return Json.decodeFromString(data.decodeToString())
+  companion object {
+    val stateSize = (System.getenv("stress.state-size") ?: "1000000").toInt()
   }
 }
 
-class StorageApp(private val storageBackend: StorageDurabilityTest.Storage) : App {
+
+@Serializable
+private sealed interface Proto {
+  @Serializable
+  sealed interface Request : Proto {
+    @Serializable
+    data class SetBytes(val offset: Int, val bytes: ByteArray) : Request
+
+    @Serializable
+    data class ReadBytes(val offset: Int, val size: Int) : Request
+
+    @Serializable
+    object Flush : Request
+
+    @Serializable
+    object Close : Request
+  }
+
+  @Serializable
+  sealed interface Response : Proto {
+    @Serializable
+    object Ok : Response
+
+    @Serializable
+    data class ReadBytes(val bytes: ByteArray) : Response
+  }
+}
+
+private fun OutputStream.writeProto(obj: Proto) {
+  val msg = Json.Default.encodeToString(Proto.serializer(), obj).encodeToByteArray()
+  val sizeBuf = ByteBuffer.allocate(4)
+  sizeBuf.putInt(msg.size)
+  write(sizeBuf.array())
+  write(msg)
+  flush()
+}
+
+private fun InputStream.readProto(): Proto? {
+  val sizeArr = readNBytes(4)
+  if (sizeArr.isEmpty()) return null // EOF
+  check(sizeArr.size == 4) { "sizeArr.size != 4, != 0" } // partial msg
+  val size = ByteBuffer.wrap(sizeArr).getInt()
+  val data = readNBytes(size)
+  check(data.size == size) { "data.size != size" } // partial msg
+  return Json.decodeFromString(data.decodeToString())
+}
+
+internal class StorageApp(private val storageBackend: Storage) : App {
   companion object {
     val ENFORCE_PER_PAGE_WRITES = (System.getenv("stress.enforce-per-page-writes") ?: "false").toBooleanStrict()
     val PAGE_SIZE = (System.getenv("stress.page-size") ?: "4096").toInt()
@@ -119,7 +117,7 @@ class StorageApp(private val storageBackend: StorageDurabilityTest.Storage) : Ap
   }
 }
 
-class StorageUser : User {
+internal class StorageUser : User {
   class InvalidStateException(message: String) : Exception(message)
 
   class API(val appController: AppController) {
@@ -157,12 +155,12 @@ class StorageUser : User {
     val coroutineScope = CoroutineScope(Dispatchers.IO + SupervisorJob())
     val random = userAgent.random
     val timesToKill = 10
-    val lastAcknowledgedState = ByteArray(StorageDurabilityTest.stateSize)
+    val lastAcknowledgedState = ByteArray(Storage.stateSize)
     val possibleValidState = AtomicReference<ByteArray?>()
 
     val randomGet: API.(() -> Unit) -> Unit = { afterRequest ->
-      val offset = random.nextInt(0, StorageDurabilityTest.stateSize)
-      val size = random.nextInt(1, StorageDurabilityTest.stateSize - offset + 1)
+      val offset = random.nextInt(0, Storage.stateSize)
+      val size = random.nextInt(1, Storage.stateSize - offset + 1)
       val expected = lastAcknowledgedState.copyOfRange(offset, offset + size)
       val result = get(offset, size, afterRequest)
       if (!result.contentEquals(expected)) {
@@ -171,8 +169,8 @@ class StorageUser : User {
     }
 
     val randomSet: API.(() -> Unit) -> Unit = { afterRequest ->
-      val offset = random.nextInt(0, StorageDurabilityTest.stateSize)
-      val size = random.nextInt(1, StorageDurabilityTest.stateSize - offset + 1)
+      val offset = random.nextInt(0, Storage.stateSize)
+      val size = random.nextInt(1, Storage.stateSize - offset + 1)
       val data = random.nextBytes(size)
       val stateCopy = lastAcknowledgedState.copyOf()
       data.copyInto(stateCopy, offset)
@@ -195,7 +193,7 @@ class StorageUser : User {
           val api = API(app)
           if (runCounter == 0) api.set(0, lastAcknowledgedState)
 
-          val fullState = api.get(0, StorageDurabilityTest.stateSize)
+          val fullState = api.get(0, Storage.stateSize)
           if (!lastAcknowledgedState.contentEquals(fullState)) {
             val possibleState = possibleValidState.get()
             if (possibleState != null) {
