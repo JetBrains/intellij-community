@@ -33,9 +33,13 @@ class GradleAttachSourcesProviderTest : GradleImportingTestCase() {
                                                           "a6c32b40bf3d76eca54e3c601e5d1470c86fcdfa/$DEPENDENCY_SOURCES_JAR"
   }
 
+  override fun setUp() {
+    super.setUp()
+    removeCachedLibrary()
+  }
+
   @Test
   fun `test download sources dynamic task`() {
-    removeCachedLibrary()
     importProject {
       withJavaPlugin()
       withIdeaPlugin()
@@ -50,7 +54,6 @@ class GradleAttachSourcesProviderTest : GradleImportingTestCase() {
   @Test
   @TargetVersions("6.5+")
   fun `test download sources with configuration cache`() {
-    removeCachedLibrary()
     createProjectSubFile("gradle.properties", "org.gradle.configuration-cache=true\n org.gradle.unsafe.configuration-cache=true")
     importProject {
       withJavaPlugin()
@@ -66,7 +69,6 @@ class GradleAttachSourcesProviderTest : GradleImportingTestCase() {
   @Test
   @TargetVersions("!4.0")
   fun `test download sources from gradle sub module repository`() {
-    removeCachedLibrary()
     createSettingsFile("include 'projectA', 'projectB' ")
     importProject(
       createBuildScriptBuilder()

@@ -206,8 +206,8 @@ private fun isContentEquals(path: Path, content: ByteArray): Boolean {
 
 private fun loadDownloadSourcesInitScript(path: String, dependencyNotation: String, taskName: String, downloadTarget: String): String {
   return loadInitScript(path, mapOf(
-    "DEPENDENCY_NOTATION" to "\"" + dependencyNotation + "\"",
-    "TARGET_PATH" to "\"" + downloadTarget + "\"",
-    "GRADLE_TASK_NAME" to "\"" + taskName + "\""
+    "DEPENDENCY_NOTATION" to dependencyNotation.toGroovyStringLiteral(),
+    "TARGET_PATH" to downloadTarget.toGroovyStringLiteral(),
+    "GRADLE_TASK_NAME" to taskName.toGroovyStringLiteral()
   ))
 }

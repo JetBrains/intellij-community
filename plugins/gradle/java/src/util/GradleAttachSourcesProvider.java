@@ -111,8 +111,7 @@ final class GradleAttachSourcesProvider implements AttachSourcesProvider {
       return downloadSources(psiFile, sourceArtifactNotation, artifactCoordinates);
     }
 
-    @Nullable
-    private static String lookupSourcesPathFromCache(LibraryOrderEntry libraryOrderEntry) {
+    private static @Nullable String lookupSourcesPathFromCache(@NotNull LibraryOrderEntry libraryOrderEntry) {
       VirtualFile[] rootFiles = libraryOrderEntry.getRootFiles(OrderRootType.CLASSES);
       if (rootFiles.length == 0) {
         return null;
@@ -131,10 +130,9 @@ final class GradleAttachSourcesProvider implements AttachSourcesProvider {
       return sources.iterator().next();
     }
 
-    @NotNull
-    private ActionCallback downloadSources(@NotNull PsiFile psiFile,
-                                           String sourceArtifactNotation,
-                                           String artifactCoordinates) {
+    private @NotNull ActionCallback downloadSources(@NotNull PsiFile psiFile,
+                                           @NotNull String sourceArtifactNotation,
+                                           @NotNull String artifactCoordinates) {
       final String sourcesLocationFilePath;
       final File sourcesLocationFile;
       try {
@@ -234,7 +232,10 @@ final class GradleAttachSourcesProvider implements AttachSourcesProvider {
     return StringUtil.trimEnd(groupNameVersionCoordinates, ANDROID_LIBRARY_SUFFIX) + ":sources";
   }
 
-  private static UserDataHolderBase prepareUserData(String sourceArtifactNotation, String taskName, String sourcesLocationFilePath) {
+  private static @NotNull UserDataHolderBase prepareUserData(@NotNull String sourceArtifactNotation,
+                                                    @NotNull String taskName,
+                                                    @NotNull String sourcesLocationFilePath
+  ) {
     UserDataHolderBase userData = new UserDataHolderBase();
     VersionSpecificInitScript legacyInitScript = new LazyVersionSpecificInitScript(
       () -> GradleInitScriptUtil.loadLegacyDownloadSourcesInitScript(sourceArtifactNotation, taskName, sourcesLocationFilePath),
