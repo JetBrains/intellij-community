@@ -82,7 +82,8 @@ class JpsSdkEntitySerializer(val entitySource: JpsGlobalFileEntitySource, privat
 
       // TODO the same problem as with FacetConfiguration we have 7 types of additional data for SDK so 7 entities
       val additionalDataElement = sdkElement.getChild(ELEMENT_ADDITIONAL)
-      SdkMainEntity(sdkName, sdkType, homePathVfu, roots, JDOMUtil.write(additionalDataElement), entitySource) {
+      val additionalData = if (additionalDataElement != null) JDOMUtil.write(additionalDataElement) else ""
+      SdkMainEntity(sdkName, sdkType, homePathVfu, roots, additionalData, entitySource) {
         this.version = sdkVersion
       }
     }
