@@ -27,7 +27,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.ArrayList;
 import java.util.List;
 
-public class LivePreviewController implements LivePreview.Delegate, FindUtil.ReplaceDelegate {
+public final class LivePreviewController implements LivePreview.Delegate, FindUtil.ReplaceDelegate {
   public static final int USER_ACTIVITY_TRIGGERING_DELAY = 30;
   public static final int MATCHES_LIMIT = 10000;
   protected EditorSearchSession myComponent;

@@ -1447,12 +1447,14 @@ public final class PsiUtil extends PsiUtilCore {
     return variable instanceof PsiLocalVariable || variable instanceof PsiParameter;
   }
 
-  public static boolean isFollowedByImport(PsiElement element) {
-    PsiElement currentElement = element.getNextSibling();
-    while (!(currentElement instanceof PsiImportStatement)) {
-      if (currentElement == null) return false;
-      currentElement = currentElement.getNextSibling();
+  public static boolean isFollowedByImport(@NotNull PsiElement element) {
+    final PsiElement parent = element.getParent();
+    if (parent instanceof PsiImportList) {
+      final PsiImportList importList = (PsiImportList)parent;
+      final PsiImportStatementBase @NotNull [] imports = importList.getAllImportStatements();
+      if (imports.length == 0) return false;
+      return imports[imports.length - 1].getStartOffsetInParent() > element.getStartOffsetInParent();
     }
-    return true;
+    return false;
   }
 }

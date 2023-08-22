@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.application.options.editor;
 
 import com.intellij.codeInsight.daemon.*;
@@ -41,7 +41,7 @@ import java.util.*;
 /**
  * @author Dmitry Avdeev
  */
-public class GutterIconsConfigurable implements SearchableConfigurable, Configurable.NoScroll {
+public final class GutterIconsConfigurable implements SearchableConfigurable, Configurable.NoScroll {
   @NonNls public static final String ID = "editor.preferences.gutterIcons";
 
   private JPanel myPanel;
@@ -240,7 +240,7 @@ public class GutterIconsConfigurable implements SearchableConfigurable, Configur
   @TestOnly
   public List<GutterIconDescriptor> getDescriptors() { return myDescriptors; }
 
-  public static class ShowSettingsAction extends DumbAwareAction implements ActionRemoteBehaviorSpecification.Frontend {
+  public static final class ShowSettingsAction extends DumbAwareAction implements ActionRemoteBehaviorSpecification.Frontend {
     public ShowSettingsAction() {
     }
 

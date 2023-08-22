@@ -316,7 +316,7 @@ final class InspectionUsageFUSCollector extends ProjectUsagesCollector {
     return null;
   }
 
-  public static class InspectionToolValidator extends CustomValidationRule {
+  public static final class InspectionToolValidator extends CustomValidationRule {
     @NotNull
     @Override
     public String getRuleId() {

@@ -19,7 +19,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
-public class CodeStyleSettingsNameProvider implements CodeStyleSettingsCustomizable {
+public final class CodeStyleSettingsNameProvider implements CodeStyleSettingsCustomizable {
 
   protected Map<SettingsType, Map<SettingsGroup, List<CodeStyleSettingPresentation>>> mySettings =
     new HashMap<>();

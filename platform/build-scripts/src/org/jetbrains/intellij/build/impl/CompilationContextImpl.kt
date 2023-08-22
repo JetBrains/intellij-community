@@ -86,7 +86,7 @@ class CompilationContextImpl private constructor(
   override val paths: BuildPaths,
   override val options: BuildOptions,
 ) : CompilationContext {
-  val global: JpsGlobal
+  val global: JpsGlobal = model.global
   private val nameToModule: Map<String?, JpsModule>
 
   override var classesOutputDirectory: Path
@@ -99,7 +99,7 @@ class CompilationContextImpl private constructor(
       JpsJavaExtensionService.getInstance().getOrCreateProjectExtension(project).outputUrl = url
     }
 
-  override val project: JpsProject
+  override val project: JpsProject = model.project
   override val projectModel: JpsModel = model
   override val dependenciesProperties: DependenciesProperties
   override val bundledRuntime: BundledRuntime
@@ -114,8 +114,6 @@ class CompilationContextImpl private constructor(
   }
 
   init {
-    project = model.project
-    global = model.global
     val modules = project.modules
     nameToModule = modules.associateByTo(HashMap(modules.size)) { it.name }
     dependenciesProperties = DependenciesProperties(paths.communityHomeDirRoot)

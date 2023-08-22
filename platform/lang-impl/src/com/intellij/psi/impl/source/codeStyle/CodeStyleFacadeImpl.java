@@ -17,7 +17,7 @@ import com.intellij.psi.codeStyle.CodeStyleManager;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public class CodeStyleFacadeImpl extends CodeStyleFacade {
+public final class CodeStyleFacadeImpl extends CodeStyleFacade {
   private final @Nullable Project myProject;
 
   public CodeStyleFacadeImpl() {

@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.codeInsight.completion;
 
@@ -77,7 +77,7 @@ import java.util.function.Supplier;
  * Please don't use this class directly from plugins.
  */
 @ApiStatus.Internal
-public class CompletionProgressIndicator extends ProgressIndicatorBase implements CompletionProcessEx, Disposable {
+public final class CompletionProgressIndicator extends ProgressIndicatorBase implements CompletionProcessEx, Disposable {
   private static final Logger LOG = Logger.getInstance(CompletionProgressIndicator.class);
   private final Editor myEditor;
   @NotNull
@@ -903,7 +903,7 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
     ourShowPopupAfterFirstItemGroupingTime = timeSpan;
   }
 
-  private static class ModifierTracker extends KeyAdapter {
+  private static final class ModifierTracker extends KeyAdapter {
     private final JComponent myContentComponent;
 
     ModifierTracker(JComponent contentComponent) {
@@ -935,7 +935,7 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
     }
   }
 
-  private static class ProjectEmptyCompletionNotifier implements EmptyCompletionNotifier {
+  private static final class ProjectEmptyCompletionNotifier implements EmptyCompletionNotifier {
     @Override
     public void showIncompleteHint(@NotNull Editor editor, @NotNull @HintText String text, boolean isDumbMode) {
       String message = isDumbMode ?

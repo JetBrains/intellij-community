@@ -2004,8 +2004,7 @@ public class XmlHighlightingTest extends DaemonAnalyzerTestCase {
   }
 
   public void testDropAnyAttributeCacheOnExitFromDumbMode() throws Exception {
-    try {
-      DumbServiceImpl.getInstance(myProject).setDumb(true);
+    DumbServiceImpl.getInstance(myProject).runInDumbModeSynchronously(() -> {
       configureByFiles(null, findVirtualFile(BASE_PATH + "AnyAttributeNavigation/test.xml"),
                        findVirtualFile(BASE_PATH + "AnyAttributeNavigation/test.xsd"),
                        findVirtualFile(BASE_PATH + "AnyAttributeNavigation/library.xsd"));
@@ -2015,10 +2014,7 @@ public class XmlHighlightingTest extends DaemonAnalyzerTestCase {
       XmlElementDescriptor descriptor = tag.getDescriptor();
       XmlAttributeDescriptor[] descriptors = descriptor.getAttributesDescriptors(tag);
       LOG.debug(String.valueOf(Arrays.asList(descriptors)));
-    }
-    finally {
-      DumbServiceImpl.getInstance(myProject).setDumb(false);
-    }
+    });
 
     doDoTest(true, false);
   }

@@ -336,7 +336,12 @@ private class AlertDialog(project: Project?,
 
     if (myIsTitleComponent && !StringUtil.isEmpty(myTitle)) {
       val title = UIUtil.replaceMnemonicAmpersand(myTitle!!).replace(BundleBase.MNEMONIC_STRING, "")
-      val titleComponent = createTextComponent(JEditorPane(), StringUtil.trimLog(title, 100))
+      val titleComponent = createTextComponent(object : JEditorPane() {
+        override fun getPreferredSize(): Dimension {
+          val size = super.getPreferredSize()
+          return Dimension(min(size.width, JBUI.scale(450)), size.height)
+        }
+      }, StringUtil.trimLog(title, 100))
       titleComponent.font = JBFont.h4()
       textPanel.add(wrapWithMinWidth(titleComponent), BorderLayout.NORTH)
       singleSelectionHandler.add(titleComponent, false)

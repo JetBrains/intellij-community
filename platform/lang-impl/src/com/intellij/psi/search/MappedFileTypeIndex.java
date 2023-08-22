@@ -1,6 +1,7 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.search;
 
+import com.intellij.diagnostic.LoadingState;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileTypes.FileType;
@@ -137,7 +138,7 @@ public final class MappedFileTypeIndex extends FileTypeIndexImplBase {
     }
   }
 
-  private static class IndexDataController {
+  private static final class IndexDataController {
     private final @NotNull Int2ObjectMap<RandomAccessIntContainer> myInvertedIndex;
     private final @NotNull MappedFileTypeIndex.IndexDataController.ForwardIndexFileController myForwardIndex;
     private final @NotNull IntConsumer myInvertedIndexChangeCallback;
@@ -266,7 +267,7 @@ public final class MappedFileTypeIndex extends FileTypeIndexImplBase {
     return new IndexDataController(invertedIndex, forwardIndex, invertedIndexChangeCallback);
   }
 
-  private static class ForwardIndexFileControllerOverFile implements IndexDataController.ForwardIndexFileController {
+  private static final class ForwardIndexFileControllerOverFile implements IndexDataController.ForwardIndexFileController {
     private static final int ELEMENT_BYTES = Short.BYTES;
     private static final int DEFAULT_FILE_ALLOCATION_BYTES = 512;
     private static final int DEFAULT_FULL_SCAN_BUFFER_BYTES = 1024;
@@ -368,12 +369,12 @@ public final class MappedFileTypeIndex extends FileTypeIndexImplBase {
     @Override
     public void processEntries(@NotNull EntriesProcessor processor) throws StorageException {
       try {
-        boolean isReadAction = ApplicationManager.getApplication().isReadAccessAllowed();
+        boolean isCheckCanceledNeeded = isCheckCanceledNeeded();
 
         final int bufferSize = DEFAULT_FULL_SCAN_BUFFER_BYTES;
         final ByteBuffer buffer = ByteBuffer.allocate(bufferSize);
         for (int i = 0; i < myElementsCount; ) {
-          if (isReadAction) {
+          if (isCheckCanceledNeeded) {
             ProgressManager.checkCanceled();
           }
           buffer.clear();
@@ -446,13 +447,17 @@ public final class MappedFileTypeIndex extends FileTypeIndexImplBase {
     }
   }
 
+  private static boolean isCheckCanceledNeeded() {
+    return LoadingState.COMPONENTS_LOADED.isOccurred() && ApplicationManager.getApplication().isReadAccessAllowed();
+  }
+
   /**
    * 'OverMappedFile' is a bit of abstraction leak, since implementation really uses specialized
    * FileAttribute ({@link SpecializedFileAttributes#specializeAsFastShort(FSRecordsImpl, FileAttribute)}).
    * But we know that specialization uses memory-mapped file under the hood, and this is
    * that really important here.
    */
-  private static class ForwardIndexFileControllerOverMappedFile implements IndexDataController.ForwardIndexFileController {
+  private static final class ForwardIndexFileControllerOverMappedFile implements IndexDataController.ForwardIndexFileController {
 
     private static final String STORAGE_NAME = "filetype.index";
     private static final int BINARY_FORMAT_VERSION = 1;
@@ -515,10 +520,10 @@ public final class MappedFileTypeIndex extends FileTypeIndexImplBase {
     @Override
     public void processEntries(@NotNull EntriesProcessor processor) throws StorageException {
       try {
-        boolean isReadAction = ApplicationManager.getApplication().isReadAccessAllowed();
+        boolean isCheckCanceledNeeded = isCheckCanceledNeeded();
         int maxAllocatedID = FSRecords.getInstance().connection().getRecords().maxAllocatedID();
         for (int fileId = FSRecords.ROOT_FILE_ID; fileId <= maxAllocatedID; fileId++) {
-          if (isReadAction) {
+          if (isCheckCanceledNeeded) {
             ProgressManager.checkCanceled();
           }
           short value = readImpl(fileId);

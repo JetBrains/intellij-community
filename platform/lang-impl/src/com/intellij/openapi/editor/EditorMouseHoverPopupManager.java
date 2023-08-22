@@ -575,7 +575,7 @@ public class EditorMouseHoverPopupManager implements Disposable {
     }
   }
 
-  private static class MyActionListener implements AnActionListener {
+  private static final class MyActionListener implements AnActionListener {
     @Override
     public void beforeActionPerformed(@NotNull AnAction action, @NotNull AnActionEvent event) {
       if (action instanceof HintManagerImpl.ActionToIgnore) {

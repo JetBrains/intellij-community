@@ -19,7 +19,7 @@ import java.io.IOException;
 import java.nio.file.Path;
 import java.util.Collection;
 
-class FileTypeMapReduceIndex extends TransientFileContentIndex<FileType, Void, VfsAwareMapReduceIndex.IndexerIdHolder>
+final class FileTypeMapReduceIndex extends TransientFileContentIndex<FileType, Void, VfsAwareMapReduceIndex.IndexerIdHolder>
   implements FileTypeNameEnumerator {
   private static final Logger LOG = Logger.getInstance(FileTypeIndexImpl.class);
   private PersistentStringEnumerator myFileTypeNameEnumerator;

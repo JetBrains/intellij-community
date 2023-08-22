@@ -172,6 +172,7 @@ class TableToolbarDecorator extends ToolbarDecorator {
           idx[i] += delta;
         }
         TableUtil.selectRows(table, idx);
+        TableUtil.scrollSelectionToVisible(table);
         IdeFocusManager.getGlobalInstance().doWhenFocusSettlesDown(() -> IdeFocusManager.getGlobalInstance().requestFocus(table, true));
         if (row != -1 && col != -1) {
           int newEditingRow = row + delta;

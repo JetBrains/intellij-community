@@ -7,7 +7,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public class GeneratedSourcesHighlightingSettingProvider extends DefaultHighlightingSettingProvider {
+public final class GeneratedSourcesHighlightingSettingProvider extends DefaultHighlightingSettingProvider {
   @Override
   public @Nullable FileHighlightingSetting getDefaultSetting(@NotNull Project project, @NotNull VirtualFile file) {
     return GeneratedSourcesFilter.isGeneratedSourceByAnyFilter(file, project) ? FileHighlightingSetting.SKIP_INSPECTION : null;

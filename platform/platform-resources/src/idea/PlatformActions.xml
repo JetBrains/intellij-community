@@ -738,6 +738,7 @@
         <action id="CreateLauncherScript" class="com.intellij.ide.actions.CreateLauncherScriptAction"/>
         <action id="CreateDesktopEntry" class="com.intellij.ide.actions.CreateDesktopEntryAction"/>
         <separator/>
+        <group id="OtherMenu" class="com.intellij.ide.actions.NonEmptyActionGroup"/>
       </group>
 
       <group id="WindowMenu" popup="true">
@@ -893,8 +894,6 @@
         <action id="About" class="com.intellij.ide.actions.AboutAction"/>
         <separator/>
       </group>
-
-      <group id="OtherMenu" class="com.intellij.ide.actions.NonEmptyActionGroup"/>
     </group>
 
     <action id="ZoomInIdeAction" class="com.intellij.ide.actions.ZoomInIdeAction">
@@ -1252,6 +1251,7 @@
           <action id="JTabbedPaneDemo" internal="true" class="com.intellij.internal.JTabbedPaneDemoAction"/>
           <action id="TestTooltipsAction" internal="true" class="com.intellij.internal.TestTooltipsAction"/>
           <action id="ShowGotItDemo" internal="true" class="com.intellij.internal.ui.ShowGotItDemoAction"/>
+          <action id="ShowInlineBanner" internal="true" class="com.intellij.internal.ui.InlineBannerTestAction"/>
         </group>
         <action id="TransferSettingsDemoAction" class="com.intellij.ide.customize.transferSettings.TransferSettingsDemoAction"/>
         <action id="JBCefOsrMeasureFps" class="com.intellij.internal.jcef.JBCefOsrBrowserMeasureFpsAction"/>

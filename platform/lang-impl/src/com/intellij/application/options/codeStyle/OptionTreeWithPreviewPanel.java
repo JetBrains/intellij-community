@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.application.options.codeStyle;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -404,7 +404,7 @@ public abstract class OptionTreeWithPreviewPanel extends CustomizableLanguageCod
     return renamed == null ? defaultTitle : renamed;
   }
 
-  protected static class MyTreeCellRenderer implements TreeCellRenderer {
+  protected static final class MyTreeCellRenderer implements TreeCellRenderer {
     private final SimpleColoredComponent myLabel;
     private final JCheckBox              myCheckBox;
     private final JPanel                 myCheckBoxPanel;
@@ -510,7 +510,7 @@ public abstract class OptionTreeWithPreviewPanel extends CustomizableLanguageCod
                                     @Nullable String anchorFieldName) {
   }
 
-  private class CustomBooleanOptionKey<T extends CustomCodeStyleSettings> extends BooleanOptionKey {
+  private final class CustomBooleanOptionKey<T extends CustomCodeStyleSettings> extends BooleanOptionKey {
     private final Class<T> mySettingsClass;
 
     CustomBooleanOptionKey(String fieldName,
@@ -542,7 +542,7 @@ public abstract class OptionTreeWithPreviewPanel extends CustomizableLanguageCod
     }
   }
 
-  private static class MyToggleTreeNode extends DefaultMutableTreeNode {
+  private static final class MyToggleTreeNode extends DefaultMutableTreeNode {
     private final Object myKey;
     private final @NlsContexts.Label String myText;
     private boolean isSelected;

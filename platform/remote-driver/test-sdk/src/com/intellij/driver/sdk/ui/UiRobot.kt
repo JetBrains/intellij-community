@@ -15,12 +15,22 @@ class UiRobot(override val driver: Driver, override val robotService: RobotServi
     robotService.robot.moveMouse(point)
   }
 
+  fun clickMouse() {
+    robotService.robot.pressMouse(RemoteMouseButton.LEFT)
+    robotService.robot.releaseMouse(RemoteMouseButton.LEFT)
+  }
+
   fun clickMouse(point: Point) {
     robotService.robot.click(point, RemoteMouseButton.LEFT, 1)
   }
 
   fun doubleClickMouse(point: Point) {
     robotService.robot.click(point, RemoteMouseButton.LEFT, 2)
+  }
+
+  fun rightClickMouse() {
+    robotService.robot.pressMouse(RemoteMouseButton.RIGHT)
+    robotService.robot.releaseMouse(RemoteMouseButton.RIGHT)
   }
 
   fun rightClickMouse(point: Point) {

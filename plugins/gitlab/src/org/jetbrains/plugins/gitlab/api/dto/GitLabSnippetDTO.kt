@@ -2,8 +2,10 @@
 package org.jetbrains.plugins.gitlab.api.dto
 
 import com.intellij.collaboration.api.dto.GraphQLFragment
+import org.jetbrains.plugins.gitlab.api.SinceGitLab
 import java.util.*
 
+@SinceGitLab("12.6")
 @GraphQLFragment("graphql/fragment/snippet.graphql")
 class GitLabSnippetDTO(
   val id: String,

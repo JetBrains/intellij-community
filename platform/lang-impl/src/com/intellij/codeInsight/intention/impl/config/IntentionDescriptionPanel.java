@@ -38,7 +38,7 @@ import java.net.URISyntaxException;
 import java.util.ArrayList;
 import java.util.List;
 
-public class IntentionDescriptionPanel {
+public final class IntentionDescriptionPanel {
   private static final Logger LOG = Logger.getInstance(IntentionDescriptionPanel.class);
   private final JPanel myPanel;
 

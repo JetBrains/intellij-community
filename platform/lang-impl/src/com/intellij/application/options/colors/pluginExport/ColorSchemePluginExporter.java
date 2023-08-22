@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.application.options.colors.pluginExport;
 
 import com.intellij.application.options.schemes.SerializableSchemeExporter;
@@ -18,7 +18,7 @@ import java.nio.charset.StandardCharsets;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipOutputStream;
 
-public class ColorSchemePluginExporter extends ConfigurableSchemeExporter<PluginExportData,EditorColorsScheme> {
+public final class ColorSchemePluginExporter extends ConfigurableSchemeExporter<PluginExportData,EditorColorsScheme> {
   @Override
   public void exportScheme(@NotNull EditorColorsScheme scheme, @NotNull OutputStream outputStream, @Nullable PluginExportData exportData)
     throws Exception {

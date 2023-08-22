@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.ui.tree;
 
 import com.intellij.CommonBundle;
@@ -794,7 +794,7 @@ public abstract class PerFileConfigurableBase<T> implements SearchableConfigurab
     return group;
   }
 
-  private static class MyModel<T> extends AbstractTableModel {
+  private static final class MyModel<T> extends AbstractTableModel {
     final String[] columnNames;
     final List<Pair<Object, T>> data = new ArrayList<>();
 

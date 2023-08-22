@@ -53,13 +53,9 @@ class GroovyStubsTest extends LightJavaCodeInsightFixtureTestCase {
     } as ThrowableRunnable)
     PsiDocumentManager.getInstance(project).commitDocument(fooDocument)
     fooFile.setTreeElementPointer(null)
-    DumbServiceImpl.getInstance(project).setDumb(true)
-    try {
+    DumbServiceImpl.getInstance(project).runInDumbModeSynchronously {
       assertOneElement(((GroovyFile) fooFile).classes)
       assertFalse(fooFile.isContentsLoaded())
-    }
-    finally {
-      DumbServiceImpl.getInstance(project).setDumb(false)
     }
     assert JavaPsiFacade.getInstance(project).findClass("Fooxx", GlobalSearchScope.allScope(project))
   }

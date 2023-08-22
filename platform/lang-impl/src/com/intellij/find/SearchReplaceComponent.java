@@ -640,7 +640,7 @@ public final class SearchReplaceComponent extends EditorHeaderComponent implemen
     return true;
   }
 
-  private class CloseAction extends DumbAwareAction implements LightEditCompatible, RightAlignedToolbarAction {
+  private final class CloseAction extends DumbAwareAction implements LightEditCompatible, RightAlignedToolbarAction {
     private final ShortcutSet shortcut = KeymapUtil.getActiveKeymapShortcuts(IdeActions.ACTION_EDITOR_ESCAPE);
     private CloseAction() {
       getTemplatePresentation().setText(FindBundle.message("find.close.button.name"));
@@ -895,8 +895,8 @@ public final class SearchReplaceComponent extends EditorHeaderComponent implemen
   }
 
   private interface SearchComponentMode { }
-  private static class TextAreaMode implements SearchComponentMode { }
-  private static class SearchTextFieldMode implements SearchComponentMode {
+  private static final class TextAreaMode implements SearchComponentMode { }
+  private static final class SearchTextFieldMode implements SearchComponentMode {
     public final boolean searchHistoryEnabled;
     public final boolean clearSearchActionEnabled;
 
@@ -925,7 +925,7 @@ public final class SearchReplaceComponent extends EditorHeaderComponent implemen
     }
   }
 
-  private class TransferFocusAction extends DumbAwareAction {
+  private final class TransferFocusAction extends DumbAwareAction {
     @Override
     public void actionPerformed(@NotNull AnActionEvent e) {
       Component focusOwner = IdeFocusManager.getInstance(myProject).getFocusOwner();
@@ -933,7 +933,7 @@ public final class SearchReplaceComponent extends EditorHeaderComponent implemen
     }
   }
 
-  private class TransferFocusBackwardAction extends DumbAwareAction {
+  private final class TransferFocusBackwardAction extends DumbAwareAction {
     @Override
     public void actionPerformed(@NotNull AnActionEvent e) {
       Component focusOwner = IdeFocusManager.getInstance(myProject).getFocusOwner();
@@ -941,7 +941,7 @@ public final class SearchReplaceComponent extends EditorHeaderComponent implemen
     }
   }
 
-  private class ModeAction extends DumbAwareAction implements ContextAwareShortcutProvider {
+  private final class ModeAction extends DumbAwareAction implements ContextAwareShortcutProvider {
     private ModeAction() {
       getTemplatePresentation().setIcon(AllIcons.General.ChevronRight);
     }

@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.hint;
 
 import com.intellij.codeInsight.CodeInsightSettings;
@@ -553,7 +553,7 @@ public abstract class ParameterInfoControllerBase extends UserDataHolderBase imp
   public interface SignatureItemModel {
   }
 
-  public static class RawSignatureItem implements SignatureItemModel {
+  public static final class RawSignatureItem implements SignatureItemModel {
     public final String htmlText;
 
     public RawSignatureItem(String htmlText) {
@@ -561,7 +561,7 @@ public abstract class ParameterInfoControllerBase extends UserDataHolderBase imp
     }
   }
 
-  public static class SignatureItem implements SignatureItemModel {
+  public static final class SignatureItem implements SignatureItemModel {
     public final String text;
     public final boolean deprecated;
     public final boolean disabled;
@@ -581,7 +581,7 @@ public abstract class ParameterInfoControllerBase extends UserDataHolderBase imp
     }
   }
 
-  public static class Model {
+  public static final class Model {
     public final List<SignatureItemModel> signatures = new ArrayList<>();
     public int current = -1;
     public int highlightedSignature = -1;
@@ -590,7 +590,7 @@ public abstract class ParameterInfoControllerBase extends UserDataHolderBase imp
     public Project project;
   }
 
-  private class MyDeleteParameterInfoContext implements DeleteParameterInfoContext {
+  private final class MyDeleteParameterInfoContext implements DeleteParameterInfoContext {
     @Override
     public PsiElement getParameterOwner() {
       return myParameterInfoControllerData.getParameterOwner();

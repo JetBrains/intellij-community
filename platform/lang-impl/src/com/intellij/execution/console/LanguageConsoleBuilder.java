@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.console;
 
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
@@ -176,7 +176,7 @@ public final class LanguageConsoleBuilder {
     return consoleView;
   }
 
-  public static class MyHelper extends LanguageConsoleImpl.Helper {
+  public static final class MyHelper extends LanguageConsoleImpl.Helper {
     private final PairFunction<? super VirtualFile, ? super Project, ? extends PsiFile> psiFileFactory;
 
     GutteredLanguageConsole console;
@@ -439,7 +439,7 @@ public final class LanguageConsoleBuilder {
     }
   }
 
-  public static class MyConsoleRootType extends ConsoleRootType {
+  public static final class MyConsoleRootType extends ConsoleRootType {
     public MyConsoleRootType(String historyType) {
       super(historyType, null);
     }

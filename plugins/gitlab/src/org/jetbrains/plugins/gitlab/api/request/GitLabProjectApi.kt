@@ -17,6 +17,7 @@ import org.jetbrains.plugins.gitlab.util.GitLabApiRequestName
 import java.net.URI
 import java.net.http.HttpResponse
 
+@SinceGitLab("13.1", note = "No exact version")
 fun GitLabApi.GraphQL.createAllProjectLabelsFlow(project: GitLabProjectCoordinates): Flow<List<GitLabLabelDTO>> =
   ApiPageUtil.createGQLPagesFlow { page ->
     val parameters = page.asParameters() + mapOf(
@@ -28,8 +29,10 @@ fun GitLabApi.GraphQL.createAllProjectLabelsFlow(project: GitLabProjectCoordinat
     }
   }.map { it.nodes }
 
+@SinceGitLab("7.0", note = "No exact version")
 fun getProjectUsersURI(project: GitLabProjectCoordinates) = project.restApiUri.resolveRelative("users")
 
+@SinceGitLab("7.0", note = "No exact version")
 suspend fun GitLabApi.Rest.getProjectUsers(serverPath: GitLabServerPath, uri: URI): HttpResponse<out List<GitLabUserRestDTO>> {
   val request = request(uri).GET().build()
   return withErrorStats(serverPath, GitLabApiRequestName.REST_GET_PROJECT_USERS) {

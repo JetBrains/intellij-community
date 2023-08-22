@@ -8,11 +8,13 @@ import com.intellij.driver.model.OnDispatcher
 @Remote("com.intellij.openapi.editor.Editor")
 interface Editor {
   fun getDocument(): Document
+  fun getProject(): Project
 }
 
 @Remote("com.intellij.openapi.editor.Document")
 interface Document {
   fun getText(): String
+  fun setText(text: String)
 }
 
 @Remote("com.intellij.openapi.fileEditor.FileEditor")

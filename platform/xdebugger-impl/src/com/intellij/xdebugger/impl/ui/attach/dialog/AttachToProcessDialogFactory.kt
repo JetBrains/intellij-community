@@ -16,9 +16,6 @@ class AttachToProcessDialogFactory(private val project: Project) {
   companion object {
     // used externally
     @Suppress("MemberVisibilityCanBePrivate")
-    val IS_LOCAL_VIEW_DEFAULT_KEY: DataKey<Boolean> = DataKey.create("ATTACH_DIALOG_VIEW_TYPE")
-    // used externally
-    @Suppress("MemberVisibilityCanBePrivate")
     val DEFAULT_VIEW_HOST_TYPE: DataKey<AttachDialogHostType> = DataKey.create("ATTACH_DIALOG_VIEW_HOST_TYPE")
     private fun getDefaultViewHostType(dataContext: DataContext): AttachDialogHostType =
       dataContext.getData(DEFAULT_VIEW_HOST_TYPE) ?: AttachDialogHostType.LOCAL
@@ -34,7 +31,7 @@ class AttachToProcessDialogFactory(private val project: Project) {
 
     val currentDialogInstance = getOpenDialog()
     if (currentDialogInstance != null) {
-      currentDialogInstance.setShowLocalView(defaultViewHostType == AttachDialogHostType.LOCAL)
+      currentDialogInstance.setAttachView(defaultViewHostType)
       return
     }
 

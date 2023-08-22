@@ -13,7 +13,7 @@ import org.jetbrains.annotations.NotNull;
 import java.util.List;
 import java.util.Map;
 
-class MimeTypeDescription implements Comparable<MimeTypeDescription> {
+final class MimeTypeDescription implements Comparable<MimeTypeDescription> {
   private final static String TYPE_PREFIX = "application/x-" + PlatformUtils.getPlatformPrefix() + "-";
 
   /**

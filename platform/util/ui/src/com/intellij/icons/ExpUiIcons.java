@@ -115,13 +115,13 @@ public final class ExpUiIcons {
   }
 
   public static final class CodeInsight {
-    /** 12x12 */ public static final @NotNull Icon InlayGlobe = load("expui/codeInsight/inlayGlobe.svg", 867064087, 2);
+    /** 12x12 */ public static final @NotNull Icon InlayGlobe = load("expui/codeInsight/inlayGlobe.svg", 1536948055, 2);
     /** 12x12 */ public static final @NotNull Icon InlayRenameInComments = load("expui/codeInsight/inlayRenameInComments.svg", 514503166, 2);
     /** 12x12 */ public static final @NotNull Icon InlayRenameInCommentsActive = load("expui/codeInsight/inlayRenameInCommentsActive.svg", 1405437941, 2);
     /** 12x12 */ public static final @NotNull Icon InlayRenameInNoCodeFiles = load("expui/codeInsight/inlayRenameInNoCodeFiles.svg", -1983946882, 2);
     /** 12x12 */ public static final @NotNull Icon InlayRenameInNoCodeFilesActive = load("expui/codeInsight/inlayRenameInNoCodeFilesActive.svg", -1065560628, 2);
-    /** 12x12 */ public static final @NotNull Icon InlaySecuredShield = load("expui/codeInsight/inlaySecuredShield.svg", 358705954, 2);
-    /** 12x12 */ public static final @NotNull Icon InlaySettings = load("expui/codeInsight/inlaySettings.svg", -462348171, 2);
+    /** 12x12 */ public static final @NotNull Icon InlaySecuredShield = load("expui/codeInsight/inlaySecuredShield.svg", 1768593830, 2);
+    /** 12x12 */ public static final @NotNull Icon InlaySettings = load("expui/codeInsight/inlaySettings.svg", 681598369, 2);
     /** 16x16 */ public static final @NotNull Icon IntentionBulb = load("expui/codeInsight/intentionBulb.svg", -169640950, 2);
     /** 16x16 */ public static final @NotNull Icon IntentionBulbGrey = load("expui/codeInsight/intentionBulbGrey.svg", -1895429769, 2);
     /** 16x16 */ public static final @NotNull Icon QuickfixBulb = load("expui/codeInsight/quickfixBulb.svg", 228909852, 2);
@@ -637,8 +637,8 @@ public final class ExpUiIcons {
     /** 20x20 */ public static final @NotNull Icon Changes_20x20 = load("expui/toolwindow/changes@20x20.svg", 1768066093, 2);
     /** 16x16 */ public static final @NotNull Icon Commit = load("expui/toolwindow/commit.svg", -441038154, 2);
     /** 20x20 */ public static final @NotNull Icon Commit_20x20 = load("expui/toolwindow/commit@20x20.svg", 93507568, 2);
-    /** 16x16 */ public static final @NotNull Icon Coverage = load("expui/toolwindow/coverage.svg", 1142310710, 2);
-    /** 20x20 */ public static final @NotNull Icon Coverage_20x20 = load("expui/toolwindow/coverage@20x20.svg", -1549838003, 2);
+    /** 16x16 */ public static final @NotNull Icon Coverage = load("expui/toolwindow/coverage.svg", 211150817, 2);
+    /** 20x20 */ public static final @NotNull Icon Coverage_20x20 = load("expui/toolwindow/coverage@20x20.svg", 1415215084, 2);
     /** 16x16 */ public static final @NotNull Icon Debug = load("expui/toolwindow/debug.svg", -1538863538, 2);
     /** 20x20 */ public static final @NotNull Icon Debug_20x20 = load("expui/toolwindow/debug@20x20.svg", 1669427222, 2);
     /** 16x16 */ public static final @NotNull Icon Dependencies = load("expui/toolwindow/dependencies.svg", -2145342262, 2);
@@ -679,6 +679,8 @@ public final class ExpUiIcons {
     /** 20x20 */ public static final @NotNull Icon ToolWindowInternal_20x20 = load("expui/toolwindow/toolWindowInternal@20x20.svg", -82643488, 2);
     /** 16x16 */ public static final @NotNull Icon ToolWindowJsonPath = load("expui/toolwindow/toolWindowJsonPath.svg", -522669516, 2);
     /** 20x20 */ public static final @NotNull Icon ToolWindowJsonPath_20x20 = load("expui/toolwindow/toolWindowJsonPath@20x20.svg", 267975089, 2);
+    /** 16x16 */ public static final @NotNull Icon ToolWindowRunWithCoverage = load("expui/toolwindow/toolWindowRunWithCoverage.svg", 1004559629, 2);
+    /** 20x20 */ public static final @NotNull Icon ToolWindowRunWithCoverage_20x20 = load("expui/toolwindow/toolWindowRunWithCoverage@20x20.svg", -1437888707, 2);
     /** 16x16 */ public static final @NotNull Icon ToolWindowVariableView = load("expui/toolwindow/toolWindowVariableView.svg", 1128504186, 2);
     /** 20x20 */ public static final @NotNull Icon ToolWindowVariableView_20x20 = load("expui/toolwindow/toolWindowVariableView@20x20.svg", 1905460077, 2);
     /** 16x16 */ public static final @NotNull Icon Vcs = load("expui/toolwindow/vcs.svg", 1023462254, 2);

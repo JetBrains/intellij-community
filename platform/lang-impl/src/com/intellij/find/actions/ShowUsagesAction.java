@@ -1461,7 +1461,7 @@ public final class ShowUsagesAction extends AnAction implements PopupAction, Hin
     }
   }
 
-  private static class SettingsAction extends DumbAwareAction implements CustomComponentAction {
+  private static final class SettingsAction extends DumbAwareAction implements CustomComponentAction {
     private final Project project;
     private final Runnable cancelAction;
     private final Runnable showDialogAction;

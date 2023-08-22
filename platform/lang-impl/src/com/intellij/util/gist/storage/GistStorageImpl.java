@@ -49,7 +49,7 @@ import static java.util.concurrent.TimeUnit.MINUTES;
  * Implementation stores small gists (<= {@link #MAX_GIST_SIZE_TO_STORE_IN_ATTRIBUTES} in VFS file attributes,
  * and uses dedicated files in a {system}/huge-hists/ folder to store larger gists.
  */
-public class GistStorageImpl extends GistStorage {
+public final class GistStorageImpl extends GistStorage {
   private static final Logger LOG = Logger.getInstance(GistStorageImpl.class);
 
   /**
@@ -168,7 +168,7 @@ public class GistStorageImpl extends GistStorage {
     }
   }
 
-  public static class GistImpl<Data> implements Gist<Data> {
+  public static final class GistImpl<Data> implements Gist<Data> {
     /**
      * Version of Gist persistent format: must be incremented each time Gist persistent
      * format is changed so that older records can't be read with new code.
@@ -489,7 +489,7 @@ public class GistStorageImpl extends GistStorage {
     }
   }
 
-  private static class GistRecord<T> {
+  private static final class GistRecord<T> {
     private final @NotNull String projectId;
     private final int gistStamp;
 

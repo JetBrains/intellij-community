@@ -239,7 +239,7 @@ public abstract class RefactoringDialog extends DialogWrapper {
     return myProject;
   }
 
-  private class RefactorAction extends AbstractAction {
+  private final class RefactorAction extends AbstractAction {
     RefactorAction() {
       super(RefactoringBundle.message("refactor.button"));
       putValue(DEFAULT_ACTION, Boolean.TRUE);
@@ -253,7 +253,7 @@ public abstract class RefactoringDialog extends DialogWrapper {
     }
   }
 
-  private class PreviewAction extends AbstractAction {
+  private final class PreviewAction extends AbstractAction {
     PreviewAction() {
       super(RefactoringBundle.message("preview.button"));
       if (SystemInfo.isMac) {

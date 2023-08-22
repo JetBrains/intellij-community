@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.profile.codeInspection.ui.table;
 
 import com.intellij.codeHighlighting.HighlightDisplayLevel;
@@ -28,7 +28,7 @@ import java.util.List;
 import java.util.ArrayList;
 import java.util.EventObject;
 
-public class SeverityRenderer extends ComboBoxTableRenderer<HighlightSeverity> {
+public final class SeverityRenderer extends ComboBoxTableRenderer<HighlightSeverity> {
   private static final Icon DEFAULT_DISABLED_ICON = HighlightDisplayLevel.createIconByMask(UIUtil.getLabelDisabledForeground());
 
   static final HighlightSeverity EDIT_SEVERITIES = new HighlightSeverity("-", -1);

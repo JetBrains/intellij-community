@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.codeInspection.ui;
 
@@ -63,7 +63,7 @@ import java.util.stream.Stream;
 
 import static com.intellij.codeInspection.CommonProblemDescriptor.DESCRIPTOR_COMPARATOR;
 
-public class InspectionTree extends Tree {
+public final class InspectionTree extends Tree {
   private static final Logger LOG = Logger.getInstance(InspectionTree.class);
 
   private final InspectionTreeModel myModel;
@@ -610,7 +610,7 @@ public class InspectionTree extends Tree {
     return RefEntity.EMPTY_ELEMENTS_ARRAY;
   }
 
-  private class MyOccurrenceNavigator implements OccurenceNavigator {
+  private final class MyOccurrenceNavigator implements OccurenceNavigator {
     @Override
     public boolean hasNextOccurence() {
       return getNextNode(true) != null;

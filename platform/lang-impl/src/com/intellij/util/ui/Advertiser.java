@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.ui;
 
 import com.intellij.codeInsight.CodeInsightBundle;
@@ -126,7 +126,7 @@ public class Advertiser {
 
   // ------------------------------------------------------
   // Custom layout
-  private class AdvertiserLayout implements LayoutManager {
+  private final class AdvertiserLayout implements LayoutManager {
     @Override
     public void addLayoutComponent(String name, Component comp) {}
 
@@ -180,7 +180,7 @@ public class Advertiser {
     }
   }
 
-  private class Item {
+  private final class Item {
     private final @PopupAdvertisement String text;
     private final                     Icon   icon;
 

@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.actions;
 
 import com.intellij.ide.ui.LafManagerListener;
@@ -115,7 +115,7 @@ public class SearchEverywherePsiRenderer extends PsiElementListCellRenderer<PsiE
     return Iconable.ICON_FLAG_READ_STATUS;
   }
 
-  public static class SELayout extends BorderLayout {
+  public static final class SELayout extends BorderLayout {
     @Override
     public void layoutContainer(Container target) {
       super.layoutContainer(target);

@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.indexing;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -212,7 +212,7 @@ public final class IndexVersion {
       }
     };
 
-    class InitialBuild implements IndexVersionDiff {
+    final class InitialBuild implements IndexVersionDiff {
       private final int myVersion;
 
       public InitialBuild(int version) {myVersion = version;}
@@ -223,7 +223,7 @@ public final class IndexVersion {
       }
     }
 
-    class CorruptedRebuild implements IndexVersionDiff {
+    final class CorruptedRebuild implements IndexVersionDiff {
       private final int myVersion;
 
       public CorruptedRebuild(int version) {myVersion = version;}
@@ -234,7 +234,7 @@ public final class IndexVersion {
       }
     }
 
-    class VersionChanged implements IndexVersionDiff {
+    final class VersionChanged implements IndexVersionDiff {
       private final long myPreviousVersion;
       private final long myActualVersion;
       private final String myVersionType;

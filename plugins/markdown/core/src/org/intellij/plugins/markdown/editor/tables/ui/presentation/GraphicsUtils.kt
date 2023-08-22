@@ -37,4 +37,13 @@ internal object GraphicsUtils {
     val arc = Arc2D.Double(x.toDouble(), y.toDouble(), width.toDouble(), height.toDouble(), start, 180.0, Arc2D.PIE)
     fill(arc)
   }
+
+  fun <T> Graphics2D.useCopy(block: (Graphics2D) -> T): T {
+    val local = create() as Graphics2D
+    try {
+      return block(local)
+    } finally {
+      local.dispose()
+    }
+  }
 }

@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.editor.richcopy.settings;
 
 import com.intellij.openapi.application.ApplicationManager;
@@ -13,7 +13,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 @State(name = "EditorRichCopySettings", storages = @Storage("editor.rich.copy.xml"), category = SettingsCategory.UI)
-public class RichCopySettings implements PersistentStateComponent<RichCopySettings> {
+public final class RichCopySettings implements PersistentStateComponent<RichCopySettings> {
 
   @NotNull public static final String ACTIVE_GLOBAL_SCHEME_MARKER = "__ACTIVE_GLOBAL_SCHEME__";
 

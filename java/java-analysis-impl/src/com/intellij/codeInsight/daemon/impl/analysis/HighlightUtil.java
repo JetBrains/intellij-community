@@ -3197,6 +3197,18 @@ public final class HighlightUtil {
     return null;
   }
 
+  static HighlightInfo.Builder checkLoneSemicolonBetweenPackageStatements(@NotNull PsiJavaToken token, IElementType type, @NotNull LanguageLevel level) {
+    if (type == JavaTokenType.SEMICOLON
+        && level.isAtLeast(LanguageLevel.JDK_21)
+        && token.getParent() instanceof PsiImportList
+        && PsiUtil.isFollowedByImport(token)) {
+      return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR)
+            .range(token.getTextRange())
+            .descriptionAndTooltip(JavaErrorBundle.message("error.extra.semicolons.between.import.statements.not.allowed"));
+    }
+    return null;
+  }
+
   @FunctionalInterface
   interface IncompatibleTypesTooltipComposer {
     @NotNull @NlsContexts.Tooltip

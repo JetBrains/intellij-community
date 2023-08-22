@@ -20,7 +20,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
 
-public class LinuxFileTypeAssociator implements SystemFileTypeAssociator {
+public final class LinuxFileTypeAssociator implements SystemFileTypeAssociator {
   @Override
   public void associateFileTypes(@NotNull List<FileType> fileTypes) throws OSFileAssociationException {
     updateMimeTypes(fileTypes.stream().map(MimeTypeDescription::new).sorted().toList());

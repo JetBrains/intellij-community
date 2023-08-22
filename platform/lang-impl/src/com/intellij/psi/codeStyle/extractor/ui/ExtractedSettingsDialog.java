@@ -40,7 +40,7 @@ import java.awt.event.ActionListener;
 import java.util.List;
 import java.util.*;
 
-public class ExtractedSettingsDialog extends DialogWrapper {
+public final class ExtractedSettingsDialog extends DialogWrapper {
   protected CodeStyleSettingsNameProvider myNameProvider;
   protected List<Value> myValues;
   protected DefaultMutableTreeNode myRoot;
@@ -81,7 +81,7 @@ public class ExtractedSettingsDialog extends DialogWrapper {
     return false;
   }
 
-  public static class SettingsTreeNode extends DefaultMutableTreeNode {
+  public static final class SettingsTreeNode extends DefaultMutableTreeNode {
     protected CodeStyleSettingPresentation myRepresentation;
     protected boolean accepted = true;
     protected final @Nls String valueString;
@@ -138,7 +138,7 @@ public class ExtractedSettingsDialog extends DialogWrapper {
     };
   }
 
-  protected static class ValueRenderer implements TableCellRenderer {
+  protected static final class ValueRenderer implements TableCellRenderer {
     private final JLabel myLabel = new JLabel();
     private final JCheckBox myCheckBox = new JCheckBox();
     private final JPanel myPanel = new JPanel(new HorizontalLayout(0));
@@ -170,7 +170,7 @@ public class ExtractedSettingsDialog extends DialogWrapper {
     }
   }
 
-  protected static class ValueEditor extends AbstractTableCellEditor {
+  protected static final class ValueEditor extends AbstractTableCellEditor {
 
     private final JLabel myLabel = new JLabel();
     private final JCheckBox myCheckBox = new JCheckBox();
@@ -427,7 +427,7 @@ public class ExtractedSettingsDialog extends DialogWrapper {
 
   final TreeCellRenderer myTitleRenderer = new CellRenderer();
 
-  public static class CellRenderer implements TreeCellRenderer {
+  public static final class CellRenderer implements TreeCellRenderer {
 
     private final JLabel myLabel = new JLabel();
 

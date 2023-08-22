@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.slicer;
 
 import com.intellij.icons.AllIcons;
@@ -152,7 +152,7 @@ public abstract class SlicePanel extends JPanel implements DataProvider, Disposa
     ToolTipManager.sharedInstance().unregisterComponent(myTree);
   }
 
-  static class MultiLanguageTreeCellRenderer implements TreeCellRenderer {
+  static final class MultiLanguageTreeCellRenderer implements TreeCellRenderer {
     @NotNull
     private final SliceUsageCellRendererBase rootRenderer;
 

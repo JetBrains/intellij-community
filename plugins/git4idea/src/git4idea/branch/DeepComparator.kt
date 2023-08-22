@@ -57,7 +57,7 @@ class DeepComparator(private val project: Project,
 
   private var progressIndicator: ProgressIndicator? = null
   private var comparedBranch: String? = null
-  private var repositoriesWithCurrentBranches: Map<GitRepository, GitBranch>? = null
+  private var repositoriesWithCurrentBranches: Map<GitRepository, String>? = null
   private var nonPickedCommits: IntOpenHashSet? = null
 
   init {
@@ -155,11 +155,10 @@ class DeepComparator(private val project: Project,
   }
 
   private fun getRepositories(providers: Map<VirtualFile, VcsLogProvider>,
-                              branchToCompare: String): Map<GitRepository, GitBranch> {
+                              branchToCompare: String): Map<GitRepository, String> {
     return providers.keys.mapNotNull { repositoryManager.getRepositoryForRootQuick(it) }.filter { repository ->
-      repository.currentBranch != null &&
       repository.branches.findBranchByName(branchToCompare) != null
-    }.associateWith { it.currentBranch!! }
+    }.associateWith { it.currentBranch?.name ?: GitUtil.HEAD }
   }
 
   private fun notifyUnhighlight(branch: String?) {
@@ -179,7 +178,7 @@ class DeepComparator(private val project: Project,
     stopTaskAndUnhighlight()
   }
 
-  private inner class MyTask(private val repositoriesWithCurrentBranches: Map<GitRepository, GitBranch>,
+  private inner class MyTask(private val repositoriesWithCurrentBranches: Map<GitRepository, String>,
                              vcsLogDataPack: VcsLogDataPack,
                              private val comparedBranch: String) :
     Task.Backgroundable(project, GitBundle.message("git.log.cherry.picked.highlighter.process")) {
@@ -193,14 +192,14 @@ class DeepComparator(private val project: Project,
         repositoriesWithCurrentBranches.forEach { (repo, currentBranch) ->
           val commits = if (Registry.`is`("git.log.use.index.for.picked.commits.highlighting")) {
             if (Registry.`is`("git.log.fast.picked.commits.highlighting")) {
-              getCommitsByIndexFast(repo.root, comparedBranch) ?: getCommitsByIndexReliable(repo.root, comparedBranch, currentBranch.name)
+              getCommitsByIndexFast(repo.root, comparedBranch, currentBranch) ?: getCommitsByIndexReliable(repo.root, comparedBranch, currentBranch)
             }
             else {
-              getCommitsByIndexReliable(repo.root, comparedBranch, currentBranch.name)
+              getCommitsByIndexReliable(repo.root, comparedBranch, currentBranch)
             }
           }
           else {
-            getCommitsByPatch(repo.root, comparedBranch, currentBranch.name)
+            getCommitsByPatch(repo.root, comparedBranch, currentBranch)
           }
           collectedNonPickedCommits.addAll(commits)
         }
@@ -242,19 +241,19 @@ class DeepComparator(private val project: Project,
 
       val resultFromIndex = recordSpan(root, "Getting non picked commits with index reliable") {
         val sourceBranchRef = dataPack.refsModel.findBranch(sourceBranch, root) ?: return resultFromGit
-        val targetBranchRef = dataPack.refsModel.findBranch(GitUtil.HEAD, root) ?: return resultFromGit
+        val targetBranchRef = dataPack.refsModel.findBranch(targetBranch, root) ?: return resultFromGit
         getCommitsFromIndex(dataPack, root, sourceBranchRef, targetBranchRef, resultFromGit, true)
       }
 
       return resultFromIndex ?: resultFromGit
     }
 
-    private fun getCommitsByIndexFast(root: VirtualFile, sourceBranch: String): IntSet? {
+    private fun getCommitsByIndexFast(root: VirtualFile, sourceBranch: String, targetBranch: String): IntSet? {
       if (!vcsLogData.index.isIndexed(root) || dataPack == null || !dataPack.isFull) return null
 
       return recordSpan(root, "Getting non picked commits with index fast") {
         val sourceBranchRef = dataPack.refsModel.findBranch(sourceBranch, root) ?: return null
-        val targetBranchRef = dataPack.refsModel.findBranch(GitUtil.HEAD, root) ?: return null
+        val targetBranchRef = dataPack.refsModel.findBranch(targetBranch, root) ?: return null
         val sourceBranchCommits = dataPack.subgraphDifference(sourceBranchRef, targetBranchRef, storage) ?: return null
         getCommitsFromIndex(dataPack, root, sourceBranchRef, targetBranchRef, sourceBranchCommits, false)
       }

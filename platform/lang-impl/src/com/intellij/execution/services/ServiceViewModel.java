@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.services;
 
 import com.intellij.execution.services.ServiceEventListener.ServiceEvent;
@@ -334,7 +334,7 @@ abstract class ServiceViewModel implements Disposable, InvokerSupplier, ServiceM
     void structureChanged();
   }
 
-  static class AllServicesModel extends ServiceViewModel {
+  static final class AllServicesModel extends ServiceViewModel {
     AllServicesModel(@NotNull ServiceModel model, @NotNull ServiceModelFilter modelFilter,
                      @NotNull Collection<ServiceViewContributor<?>> contributors) {
       super(model, modelFilter, new ServiceViewFilter(null) {
@@ -357,7 +357,7 @@ abstract class ServiceViewModel implements Disposable, InvokerSupplier, ServiceM
     }
   }
 
-  static class ContributorModel extends ServiceViewModel {
+  static final class ContributorModel extends ServiceViewModel {
     private static final String TYPE = "contributor";
 
     private final ServiceViewContributor<?> myContributor;
@@ -400,7 +400,7 @@ abstract class ServiceViewModel implements Disposable, InvokerSupplier, ServiceM
     }
   }
 
-  static class GroupModel extends ServiceViewModel {
+  static final class GroupModel extends ServiceViewModel {
     private static final String TYPE = "group";
 
     private final AtomicReference<ServiceGroupNode> myGroupRef;
@@ -446,7 +446,7 @@ abstract class ServiceViewModel implements Disposable, InvokerSupplier, ServiceM
     }
   }
 
-  static class SingeServiceModel extends ServiceViewModel {
+  static final class SingeServiceModel extends ServiceViewModel {
     private static final String TYPE = "service";
 
     private final AtomicReference<ServiceViewItem> myServiceRef;
@@ -490,7 +490,7 @@ abstract class ServiceViewModel implements Disposable, InvokerSupplier, ServiceM
     }
   }
 
-  static class ServiceListModel extends ServiceViewModel {
+  static final class ServiceListModel extends ServiceViewModel {
     private static final String TYPE = "services";
 
     private final List<ServiceViewItem> myRoots;

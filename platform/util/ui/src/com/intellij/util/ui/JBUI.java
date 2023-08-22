@@ -124,8 +124,7 @@ public final class JBUI {
   }
 
   public static @NotNull JBInsets insets(@NonNls @NotNull String propName, @NotNull JBInsets defaultValue) {
-    Insets i = UIManager.getInsets(propName);
-    return i != null ? JBInsets.create(i) : defaultValue;
+    return JBInsets.create(propName, defaultValue);
   }
 
   public static @NotNull JBInsets insets(int topBottom, int leftRight) {
@@ -260,8 +259,10 @@ public final class JBUI {
     }
 
     public static @NotNull Border empty(@NotNull Insets insets) {
-      insets = JBInsets.unwrap(insets);
-      return empty(insets.top, insets.left, insets.bottom, insets.right);
+      if (insets.top == 0 && insets.left == 0 && insets.bottom == 0 && insets.right == 0) {
+        return JBEmptyBorder.SHARED_EMPTY_INSTANCE;
+      }
+      return new JBEmptyBorder(insets);
     }
 
     public static @NotNull Border customLine(Color color, int top, int left, int bottom, int right) {
@@ -1077,13 +1078,21 @@ public final class JBUI {
       }
 
       public static @Nullable Insets verticalToolbarInsets() {
-        return isNewUI() ? insets("ToolBar.verticalToolbarInsets", insets(7, 4)) :
-               UIManager.getInsets("ToolBar.verticalToolbarInsets");
+        return isNewUI() ? insets(verticalInsetsKey(), insets(5, 7)) :
+               UIManager.getInsets(verticalInsetsKey());
+      }
+
+      public static @NotNull String verticalInsetsKey() {
+        return "ToolBar.verticalToolbarInsets";
       }
 
       public static @Nullable Insets horizontalToolbarInsets() {
-        return isNewUI() ? insets("ToolBar.horizontalToolbarInsets", insets(4, 7)) :
-               UIManager.getInsets("ToolBar.horizontalToolbarInsets");
+        return isNewUI() ? insets(horizontalInsetsKey(), insets(5, 7)) :
+               UIManager.getInsets(horizontalInsetsKey());
+      }
+
+      public static @NotNull String horizontalInsetsKey() {
+        return "ToolBar.horizontalToolbarInsets";
       }
 
       public static Insets mainToolbarButtonInsets() {

@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.ui;
 
 import com.intellij.codeHighlighting.HighlightDisplayLevel;
@@ -29,10 +29,11 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.tree.TreeNode;
 import javax.swing.tree.TreePath;
-import java.util.*;
+import java.util.Arrays;
+import java.util.List;
 import java.util.function.Supplier;
 
-public class InspectionTreeModel extends BaseTreeModel<InspectionTreeNode> implements InvokerSupplier {
+public final class InspectionTreeModel extends BaseTreeModel<InspectionTreeNode> implements InvokerSupplier {
   private static final Logger LOG = Logger.getInstance(InspectionTreeModel.class);
   private final InspectionRootNode myRoot = new InspectionRootNode(this);
   private final Invoker myInvoker;

@@ -5,6 +5,7 @@ import com.intellij.codeInsight.breadcrumbs.FileBreadcrumbsCollector
 import com.intellij.ide.ui.UISettingsListener
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.EDT
+import com.intellij.openapi.application.readAction
 import com.intellij.openapi.components.serviceAsync
 import com.intellij.openapi.editor.ex.EditorSettingsExternalizable
 import com.intellij.openapi.extensions.ExtensionNotApplicableException
@@ -24,7 +25,9 @@ import com.intellij.openapi.vfs.VirtualFileListener
 import com.intellij.openapi.vfs.VirtualFileManager
 import com.intellij.openapi.vfs.VirtualFilePropertyEvent
 import com.intellij.openapi.vfs.impl.http.HttpVirtualFile
+import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 
 private class BreadcrumbsInitializingActivity : ProjectActivity {
@@ -106,36 +109,52 @@ private fun reinitBreadcrumbsComponent(fileEditorManager: FileEditorManager, fil
 
 private fun reinitBreadcrumbComponent(fileEditor: TextEditor, fileEditorManager: FileEditorManager, file: VirtualFile, above: Boolean) {
   val editor = fileEditor.editor
-  if (isSuitable(fileEditorManager.project, fileEditor, file)) {
-    var wrapper = BreadcrumbsXmlWrapper.getBreadcrumbWrapper(editor)
-    if (wrapper == null) {
-      wrapper = BreadcrumbsXmlWrapper(editor)
-      registerWrapper(fileEditorManager, fileEditor, wrapper)
+  val project = fileEditorManager.project
+  val forcedShown = BreadcrumbsForceShownSettings.getForcedShown(editor)
+  val editorIsValid = fileEditor.isValid
+  project.coroutineScope.launch(Dispatchers.Default) {
+    val isSuitable = readAction {
+      isSuitable(project, file, forcedShown, editorIsValid)
     }
-    else {
-      if (wrapper.breadcrumbs.above != above) {
-        remove(fileEditorManager, fileEditor, wrapper)
-        wrapper.breadcrumbs.above = above
-        add(fileEditorManager, fileEditor, wrapper)
+    withContext(Dispatchers.EDT) {
+      if (isSuitable) {
+        var wrapper = BreadcrumbsXmlWrapper.getBreadcrumbWrapper(editor)
+        if (wrapper == null) {
+          wrapper = BreadcrumbsXmlWrapper(editor)
+          registerWrapper(fileEditorManager, fileEditor, wrapper)
+        }
+        else {
+          if (wrapper.breadcrumbs.above != above) {
+            remove(fileEditorManager, fileEditor, wrapper)
+            wrapper.breadcrumbs.above = above
+            add(fileEditorManager, fileEditor, wrapper)
+          }
+          wrapper.queueUpdate()
+        }
+        fileEditorManager.project.messageBus.syncPublisher(BreadcrumbsInitListener.TOPIC)
+          .breadcrumbsInitialized(wrapper, fileEditor, fileEditorManager)
       }
-      wrapper.queueUpdate()
+      else {
+        val wrapper = BreadcrumbsXmlWrapper.getBreadcrumbWrapper(editor)
+        if (wrapper != null) {
+          disposeWrapper(fileEditorManager, fileEditor, wrapper)
+        }
+      }
     }
-    fileEditorManager.project.messageBus.syncPublisher(BreadcrumbsInitListener.TOPIC)
-      .breadcrumbsInitialized(wrapper, fileEditor, fileEditorManager)
-  }
-  else {
-    disposeWrapper(fileEditorManager = fileEditorManager,
-                   fileEditor = fileEditor,
-                   wrapper = BreadcrumbsXmlWrapper.getBreadcrumbWrapper(editor) ?: return)
   }
 }
 
-private fun isSuitable(project: Project, editor: TextEditor, file: VirtualFile): Boolean {
-  if (file is HttpVirtualFile || !editor.isValid) {
+@RequiresBackgroundThread
+private fun isSuitable(project: Project, file: VirtualFile, forcedShown: Boolean?, editorIsValid: Boolean): Boolean {
+  if (file is HttpVirtualFile || !editorIsValid) {
+    return false
+  }
+  val providerExists = BreadcrumbsUtilEx.findProvider(file, project, forcedShown) != null
+  if (!providerExists) {
     return false
   }
   for (collector in FileBreadcrumbsCollector.EP_NAME.getExtensions(project)) {
-    if (collector.handlesFile(file) && collector.isShownForFile(editor.editor, file)) {
+    if (collector.handlesFile(file)) {
       return true
     }
   }

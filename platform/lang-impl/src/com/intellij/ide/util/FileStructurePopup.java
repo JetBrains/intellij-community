@@ -665,7 +665,7 @@ public final class FileStructurePopup implements Disposable, TreeActionsOwner {
     return minChild;
   }
 
-  private class MyTreeActionWrapper extends TreeActionWrapper {
+  private final class MyTreeActionWrapper extends TreeActionWrapper {
     private final TreeAction myAction;
 
     MyTreeActionWrapper(TreeAction action) {
@@ -939,7 +939,7 @@ public final class FileStructurePopup implements Disposable, TreeActionsOwner {
     return false;
   }
 
-  private class FileStructurePopupFilter implements ElementFilter {
+  private final class FileStructurePopupFilter implements ElementFilter {
     private String myLastFilter;
     private final Set<Object> myVisibleParents = new HashSet<>();
     private final boolean isUnitTest = ApplicationManager.getApplication().isUnitTestMode();
@@ -989,7 +989,7 @@ public final class FileStructurePopup implements Disposable, TreeActionsOwner {
            ? mySpeedSearch.getEnteredPrefix() : null;
   }
 
-  private class MyTreeSpeedSearch extends TreeSpeedSearch {
+  private final class MyTreeSpeedSearch extends TreeSpeedSearch {
     private volatile boolean myPopupVisible;
 
     private MyTreeSpeedSearch() {
@@ -1068,7 +1068,7 @@ public final class FileStructurePopup implements Disposable, TreeActionsOwner {
     return false;
   }
 
-  static class MyTree extends DnDAwareTree implements PlaceProvider {
+  static final class MyTree extends DnDAwareTree implements PlaceProvider {
 
     MyTree(TreeModel treeModel) {
       super(treeModel);
@@ -1087,7 +1087,7 @@ public final class FileStructurePopup implements Disposable, TreeActionsOwner {
     }
   }
 
-  private class NavigateSelectedElementAction extends DumbAwareAction {
+  private final class NavigateSelectedElementAction extends DumbAwareAction {
     private final JPanel myPanel;
 
     private NavigateSelectedElementAction(JPanel panel) {
@@ -1103,7 +1103,7 @@ public final class FileStructurePopup implements Disposable, TreeActionsOwner {
     }
   }
 
-  private class ToggleNarrowDownAction extends ToggleAction {
+  private final class ToggleNarrowDownAction extends ToggleAction {
     private ToggleNarrowDownAction() {
       super(IdeBundle.message("checkbox.narrow.down.on.typing"));
     }

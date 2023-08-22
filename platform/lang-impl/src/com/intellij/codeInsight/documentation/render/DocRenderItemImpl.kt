@@ -179,7 +179,7 @@ internal class DocRenderItemImpl(override val editor: Editor,
   }
 
   private inner class MyGutterIconRenderer(icon: Icon, iconVisible: Boolean) : GutterIconRenderer(), DumbAware {
-    private val icon: LayeredIcon
+    private val icon = LayeredIcon.layeredIcon(arrayOf(icon))
 
     var isIconVisible: Boolean
       get() = icon.isLayerEnabled(0)
@@ -188,7 +188,6 @@ internal class DocRenderItemImpl(override val editor: Editor,
       }
 
     init {
-      this.icon = LayeredIcon.layeredIcon(arrayOf(icon))
       isIconVisible = iconVisible
     }
 

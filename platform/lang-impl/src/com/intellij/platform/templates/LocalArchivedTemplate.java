@@ -214,7 +214,7 @@ public final class LocalArchivedTemplate extends ArchivedProjectTemplate {
     }
   }
 
-  static class RootDescription {
+  static final class RootDescription {
     private static final @NonNls String ROOTS_ELEMENT = "roots";
     private static final @NonNls String ROOT_ELEMENT = "root";
     private static final @NonNls String INDEX_ATTRIBUTE = "index";

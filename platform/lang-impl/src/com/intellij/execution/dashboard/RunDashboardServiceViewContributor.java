@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.dashboard;
 
 import com.intellij.execution.RunManager;
@@ -182,9 +182,9 @@ public final class RunDashboardServiceViewContributor
     return node;
   }
 
-  private static class RunConfigurationServiceViewDescriptor implements ServiceViewDescriptor,
-                                                                        ServiceViewLocatableDescriptor,
-                                                                        ServiceViewDnDDescriptor {
+  private static final class RunConfigurationServiceViewDescriptor implements ServiceViewDescriptor,
+                                                                              ServiceViewLocatableDescriptor,
+                                                                              ServiceViewDnDDescriptor {
     private final RunConfigurationNode myNode;
 
     RunConfigurationServiceViewDescriptor(RunConfigurationNode node) {
@@ -491,7 +491,7 @@ public final class RunDashboardServiceViewContributor
     }
   }
 
-  private static class RunDashboardFolderGroupViewDescriptor extends RunDashboardGroupViewDescriptor implements ServiceViewDnDDescriptor {
+  private static final class RunDashboardFolderGroupViewDescriptor extends RunDashboardGroupViewDescriptor implements ServiceViewDnDDescriptor {
     RunDashboardFolderGroupViewDescriptor(GroupingNode node) {
       super(node);
     }
@@ -542,7 +542,7 @@ public final class RunDashboardServiceViewContributor
     }
   }
 
-  static class RunConfigurationContributor implements ServiceViewProvidingContributor<AbstractTreeNode<?>, RunConfigurationNode> {
+  static final class RunConfigurationContributor implements ServiceViewProvidingContributor<AbstractTreeNode<?>, RunConfigurationNode> {
     private final RunConfigurationNode myNode;
 
     RunConfigurationContributor(@NotNull RunConfigurationNode node) {
@@ -622,7 +622,7 @@ public final class RunDashboardServiceViewContributor
     }
   }
 
-  private static class RunDashboardContributorViewDescriptor extends SimpleServiceViewDescriptor
+  private static final class RunDashboardContributorViewDescriptor extends SimpleServiceViewDescriptor
     implements ServiceViewToolWindowDescriptor {
     private final Project myProject;
 

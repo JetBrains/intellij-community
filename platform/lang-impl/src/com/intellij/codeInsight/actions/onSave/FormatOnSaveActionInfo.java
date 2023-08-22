@@ -23,7 +23,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.Collection;
 import java.util.List;
 
-class FormatOnSaveActionInfo extends FormatOnSaveActionInfoBase<FormatOnSaveOptions> {
+final class FormatOnSaveActionInfo extends FormatOnSaveActionInfoBase<FormatOnSaveOptions> {
 
   private static final Key<FormatOnSaveOptions> CURRENT_UI_STATE_KEY = Key.create("format.on.save.options");
 

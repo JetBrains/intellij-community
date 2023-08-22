@@ -130,6 +130,11 @@ public class SliceNode extends AbstractTreeNode<SliceUsage> implements Duplicate
 
   @Override
   protected void update(@NotNull PresentationData presentation) {
+    SliceUsage sliceUsage = getValue();
+    if (sliceUsage != null) {
+      sliceUsage.updateCachedPresentation();
+    }
+
     presentation.setChanged(presentation.isChanged() || changed);
     changed = false;
   }

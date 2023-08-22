@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.codeInsight.template.actions;
 
@@ -31,7 +31,7 @@ import org.jetbrains.annotations.VisibleForTesting;
 
 import java.util.*;
 
-public class SaveAsTemplateAction extends AnAction {
+public final class SaveAsTemplateAction extends AnAction {
 
   private static final Logger LOG = Logger.getInstance(SaveAsTemplateAction.class);
 

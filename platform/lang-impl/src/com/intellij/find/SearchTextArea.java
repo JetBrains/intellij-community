@@ -332,7 +332,7 @@ public class SearchTextArea extends JBPanel<SearchTextArea> implements PropertyC
   @Deprecated
   public void setInfoText(@SuppressWarnings("unused") String info) {}
 
-  private class ShowHistoryAction extends DumbAwareAction implements LightEditCompatible {
+  private final class ShowHistoryAction extends DumbAwareAction implements LightEditCompatible {
     ShowHistoryAction() {
       super(FindBundle.message(mySearchMode ? "find.search.history" : "find.replace.history"),
             FindBundle.message(mySearchMode ? "find.search.history" : "find.replace.history"),
@@ -355,7 +355,7 @@ public class SearchTextArea extends JBPanel<SearchTextArea> implements PropertyC
     }
   }
 
-  private class ClearAction extends DumbAwareAction implements LightEditCompatible {
+  private final class ClearAction extends DumbAwareAction implements LightEditCompatible {
     ClearAction() {
       super(ExperimentalUI.isNewUI() ? ExpUiIcons.General.CloseSmall : AllIcons.Actions.Close);
       getTemplatePresentation().setHoveredIcon(
@@ -369,7 +369,7 @@ public class SearchTextArea extends JBPanel<SearchTextArea> implements PropertyC
     }
   }
 
-  private class NewLineAction extends DumbAwareAction implements LightEditCompatible {
+  private final class NewLineAction extends DumbAwareAction implements LightEditCompatible {
     NewLineAction() {
       super(FindBundle.message("find.new.line"), null, AllIcons.Actions.SearchNewLine);
       setShortcutSet(new CustomShortcutSet(NEW_LINE_KEYSTROKE));
@@ -410,7 +410,7 @@ public class SearchTextArea extends JBPanel<SearchTextArea> implements PropertyC
     }
   }
 
-  private static class PseudoSeparatorBorder implements Border {
+  private static final class PseudoSeparatorBorder implements Border {
     @Override
     public void paintBorder(Component c, Graphics g, int x, int y, int width, int height) {
       g.setColor(JBUI.CurrentTheme.CustomFrameDecorations.separatorForeground());

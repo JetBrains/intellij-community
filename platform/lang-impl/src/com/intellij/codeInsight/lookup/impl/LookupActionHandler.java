@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.codeInsight.lookup.impl;
 
@@ -79,7 +79,7 @@ public abstract class LookupActionHandler extends EditorActionHandler {
 
   }
 
-  public static class DownHandler extends LookupActionHandler {
+  public static final class DownHandler extends LookupActionHandler {
 
     public DownHandler(EditorActionHandler originalHandler){
       super(originalHandler);
@@ -92,25 +92,25 @@ public abstract class LookupActionHandler extends EditorActionHandler {
 
   }
 
-  public static class UpAction extends EditorAction implements ActionRemoteBehaviorSpecification.Frontend {
+  public static final class UpAction extends EditorAction implements ActionRemoteBehaviorSpecification.Frontend {
     public UpAction() {
       super(new UpDownInEditorHandler(true));
     }
   }
 
-  public static class DownAction extends EditorAction implements ActionRemoteBehaviorSpecification.Frontend {
+  public static final class DownAction extends EditorAction implements ActionRemoteBehaviorSpecification.Frontend {
     public DownAction() {
       super(new UpDownInEditorHandler(false));
     }
   }
 
-  public static class UpInLookupAction extends EditorAction implements ActionRemoteBehaviorSpecification.Frontend {
+  public static final class UpInLookupAction extends EditorAction implements ActionRemoteBehaviorSpecification.Frontend {
     public UpInLookupAction() {
       super(new UpHandler(null));
     }
   }
 
-  public static class DownInLookupAction extends EditorAction implements ActionRemoteBehaviorSpecification.Frontend {
+  public static final class DownInLookupAction extends EditorAction implements ActionRemoteBehaviorSpecification.Frontend {
     public DownInLookupAction() {
       super(new DownHandler(null));
     }
@@ -144,7 +144,7 @@ public abstract class LookupActionHandler extends EditorActionHandler {
     }
   }
 
-  public static class UpHandler extends LookupActionHandler {
+  public static final class UpHandler extends LookupActionHandler {
     public UpHandler(EditorActionHandler originalHandler){
       super(originalHandler);
     }
@@ -162,7 +162,7 @@ public abstract class LookupActionHandler extends EditorActionHandler {
 
   }
 
-  public static class PageDownHandler extends LookupActionHandler {
+  public static final class PageDownHandler extends LookupActionHandler {
     public PageDownHandler(final EditorActionHandler originalHandler) {
       super(originalHandler);
     }
@@ -174,7 +174,7 @@ public abstract class LookupActionHandler extends EditorActionHandler {
     }
   }
 
-  public static class PageUpHandler extends LookupActionHandler {
+  public static final class PageUpHandler extends LookupActionHandler {
     public PageUpHandler(EditorActionHandler originalHandler){
       super(originalHandler);
     }

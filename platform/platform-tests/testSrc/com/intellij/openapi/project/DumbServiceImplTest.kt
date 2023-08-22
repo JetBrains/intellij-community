@@ -29,10 +29,7 @@ import com.intellij.util.indexing.diagnostic.ProjectDumbIndexingHistoryImpl
 import com.intellij.util.indexing.diagnostic.ProjectIndexingHistoryImpl
 import com.intellij.util.indexing.diagnostic.ScanningType
 import com.intellij.util.ui.UIUtil
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.delay
-import kotlinx.coroutines.launch
+import kotlinx.coroutines.*
 import org.junit.*
 import org.junit.Assert.*
 import org.junit.runner.RunWith
@@ -320,7 +317,7 @@ class DumbServiceImplTest {
     lateinit var future: Future<*>
     for (i in 0 until N) {
       runInEdtAndWait {
-        dumbService.runInDumbMode {
+        dumbService.runInDumbModeSynchronously {
           val waiting = CountDownLatch(1)
           future = application.executeOnPooledThread {
             waiting.countDown()
@@ -550,6 +547,13 @@ class DumbServiceImplTest {
     assertNull(exception.get())
   }
 
+  @Test
+  fun `test startEternalDumbModeTask and endEternalDumbModeTaskAndWaitForSmartMode do not hang when invoked from EDT`() {
+    runInEdtAndWait {
+      val dumbTask = DumbModeTestUtils.startEternalDumbModeTask(project)
+      DumbModeTestUtils.endEternalDumbModeTaskAndWaitForSmartMode(project, dumbTask)
+    }
+  }
 
   private fun waitForSmartModeFiveSecondsOrThrow() {
     if (!dumbService.waitForSmartMode(5_000)) {

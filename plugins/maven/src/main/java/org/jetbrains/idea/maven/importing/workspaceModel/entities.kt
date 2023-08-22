@@ -1,15 +1,9 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.maven.importing.workspaceModel
 
-import com.intellij.platform.workspace.storage.EntitySource
-import com.intellij.platform.workspace.storage.GeneratedCodeApiVersion
-import com.intellij.platform.workspace.storage.MutableEntityStorage
-import com.intellij.platform.workspace.storage.WorkspaceEntity
+import com.intellij.platform.workspace.storage.*
 import com.intellij.platform.workspace.storage.impl.containers.toMutableWorkspaceList
-import kotlin.jvm.JvmName
-import kotlin.jvm.JvmOverloads
-import kotlin.jvm.JvmStatic
-import com.intellij.platform.workspace.storage.EntityType
+import com.intellij.platform.workspace.storage.url.VirtualFileUrl
 
 object MavenProjectsTreeEntitySource : EntitySource
 
@@ -44,4 +38,39 @@ interface MavenProjectsTreeSettingsEntity: WorkspaceEntity {
 fun MutableEntityStorage.modifyEntity(entity: MavenProjectsTreeSettingsEntity,
                                       modification: MavenProjectsTreeSettingsEntity.Builder.() -> Unit) = modifyEntity(
   MavenProjectsTreeSettingsEntity.Builder::class.java, entity, modification)
+//endregion
+
+object MavenCustomModuleNameMappingEntitySource : EntitySource
+
+interface MavenCustomModuleNameMappingEntity: WorkspaceEntity {
+  val customModuleNames: Map<VirtualFileUrl, String>
+
+  //region generated code
+  @GeneratedCodeApiVersion(2)
+  interface Builder : MavenCustomModuleNameMappingEntity, WorkspaceEntity.Builder<MavenCustomModuleNameMappingEntity> {
+    override var entitySource: EntitySource
+    override var customModuleNames: Map<VirtualFileUrl, String>
+  }
+
+  companion object : EntityType<MavenCustomModuleNameMappingEntity, Builder>() {
+    @JvmOverloads
+    @JvmStatic
+    @JvmName("create")
+    operator fun invoke(customModuleNames: Map<VirtualFileUrl, String>,
+                        entitySource: EntitySource,
+                        init: (Builder.() -> Unit)? = null): MavenCustomModuleNameMappingEntity {
+      val builder = builder()
+      builder.customModuleNames = customModuleNames
+      builder.entitySource = entitySource
+      init?.invoke(builder)
+      return builder
+    }
+  }
+  //endregion
+}
+
+//region generated code
+fun MutableEntityStorage.modifyEntity(entity: MavenCustomModuleNameMappingEntity,
+                                      modification: MavenCustomModuleNameMappingEntity.Builder.() -> Unit) = modifyEntity(
+  MavenCustomModuleNameMappingEntity.Builder::class.java, entity, modification)
 //endregion

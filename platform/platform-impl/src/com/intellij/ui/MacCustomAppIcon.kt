@@ -20,6 +20,7 @@ import java.util.concurrent.TimeUnit
 import java.util.function.Function
 
 private const val CUSTOM_ICON = "ide.mac.custom.app.icon"
+private const val CUSTOM_ICON_ENABLED_BY_DEFAULT = false
 
 /**
  * @author Alexander Lobas
@@ -70,7 +71,7 @@ class MacCustomAppIcon {
         val result = Foundation.invoke(workspace, "setIcon:forFile:options:", image, Foundation.nsString(appPath), 2).booleanValue()
 
         if (result) {
-          PropertiesComponent.getInstance().setValue(CUSTOM_ICON, value)
+          PropertiesComponent.getInstance().setValue(CUSTOM_ICON, value, CUSTOM_ICON_ENABLED_BY_DEFAULT)
           val process = Runtime.getRuntime().exec("killall Finder && killall Dock")
 
           if (showDialog && PluginManagerConfigurable.showRestartDialog(IdeBundle.message("dialog.title.restart.required"), Function {
@@ -112,7 +113,7 @@ class MacCustomAppIcon {
 
 class MacCustomAppIconStartupService : AppLifecycleListener {
   override fun appStarted() {
-    if (MacCustomAppIcon.available() && PropertiesComponent.getInstance().getBoolean(CUSTOM_ICON, false) && !MacCustomAppIcon.isCustom()) {
+    if (MacCustomAppIcon.available() && PropertiesComponent.getInstance().getBoolean(CUSTOM_ICON, CUSTOM_ICON_ENABLED_BY_DEFAULT) && !MacCustomAppIcon.isCustom()) {
       MacCustomAppIcon.setCustom(true, false)
     }
   }

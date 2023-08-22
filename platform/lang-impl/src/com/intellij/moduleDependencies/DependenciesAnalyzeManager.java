@@ -20,7 +20,7 @@ public final class DependenciesAnalyzeManager implements PersistentStateComponen
   private final Project myProject;
   private ContentManager myContentManager;
 
-  public static class State {
+  public static final class State {
     public boolean forwardDirection = true;
     public boolean includeTests = false;
   }

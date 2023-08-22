@@ -23,6 +23,11 @@ import java.util.concurrent.ThreadLocalRandom;
  */
 public final class FrugalQuantileEstimator {
 
+  /**
+   * That percentile to estimate: value in [0..100).
+   * Keep in mind: the farther from the median (50%) the harder it is for the algorithm
+   * to converge.
+   */
   private int targetPercentileToEstimate;
   private double currentEstimation;
 
@@ -39,7 +44,7 @@ public final class FrugalQuantileEstimator {
     if (step <= 0) {
       throw new IllegalArgumentException("step(=" + step + ") must be >0");
     }
-    updateEstimation(percentileToEstimate);
+    updateTargetPercentile(percentileToEstimate);
     this.currentEstimation = initialEstimation;
     this.step = step;
   }

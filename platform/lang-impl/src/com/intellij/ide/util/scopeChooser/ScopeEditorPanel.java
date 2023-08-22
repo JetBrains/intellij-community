@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.util.scopeChooser;
 
 import com.intellij.icons.AllIcons;
@@ -616,7 +616,7 @@ public final class ScopeEditorPanel implements Disposable {
     FileTreeModelBuilder.clearCaches(myProject);
   }
 
-  private static class MyTreeCellRenderer extends ColoredTreeCellRenderer {
+  private static final class MyTreeCellRenderer extends ColoredTreeCellRenderer {
     private static final Color WHOLE_INCLUDED = new JBColor(new Color(10, 119, 0), new Color(0xA5C25C));
     private static final Color PARTIAL_INCLUDED = new JBColor(new Color(0, 50, 160), DarculaColors.BLUE);
 
@@ -708,7 +708,7 @@ public final class ScopeEditorPanel implements Disposable {
     }
   }
 
-  protected class MyPanelProgressIndicator extends PanelProgressIndicator {
+  protected final class MyPanelProgressIndicator extends PanelProgressIndicator {
     private final boolean myRequestFocus;
 
     public MyPanelProgressIndicator(final boolean requestFocus) {

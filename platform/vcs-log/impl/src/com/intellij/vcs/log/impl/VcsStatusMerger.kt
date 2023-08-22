@@ -81,11 +81,7 @@ abstract class VcsStatusMerger<S, Path> {
   protected abstract fun getType(info: S): Change.Type
 
   class MergedStatusInfo<S> @JvmOverloads constructor(val statusInfo: S, infos: List<S> = ContainerUtil.emptyList()) {
-    val mergedStatusInfos: List<S>
-
-    init {
-      mergedStatusInfos = SmartList(infos)
-    }
+    val mergedStatusInfos: List<S> = SmartList(infos)
 
     override fun toString(): String {
       return "MergedStatusInfo{" +

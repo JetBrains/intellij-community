@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.projectView.impl;
 
 import com.intellij.ide.IdeBundle;
@@ -109,7 +109,7 @@ public abstract class AttachableProjectViewPane extends ProjectViewPane {
     });
   }
 
-  private class DropAreaDecorator extends JPanel implements DnDTargetChecker, DnDDropHandler {
+  private final class DropAreaDecorator extends JPanel implements DnDTargetChecker, DnDDropHandler {
     private JComponent myWrappee;
     private final JPanel myDropArea = new JPanel(new BorderLayout());
     private final JLabel myLabel = new JLabel(

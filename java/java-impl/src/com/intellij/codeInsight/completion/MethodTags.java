@@ -33,7 +33,7 @@ public final class MethodTags {
    */
   @Nullable
   static LookupElement wrapLookupWithTags(@NotNull LookupElement element, @NotNull Condition<? super String> matcher,
-                                          @NotNull String prefix) {
+                                          @NotNull String prefix, @NotNull CompletionType completionType) {
     if (matcher.value(element.getLookupString())) {
       return null;
     }
@@ -50,7 +50,7 @@ public final class MethodTags {
     if (tags.isEmpty()) {
       return null;
     }
-    return new TagLookupElementDecorator(element, tags, prefix);
+    return new TagLookupElementDecorator(element, tags, prefix, completionType == CompletionType.SMART);
   }
 
   @ApiStatus.Experimental
@@ -61,10 +61,21 @@ public final class MethodTags {
 
     @NotNull
     private final String myPrefix;
-    protected TagLookupElementDecorator(@NotNull LookupElement delegate, @NotNull Set<String> tags, @NotNull String prefix) {
+    private final boolean myIsSmart;
+
+    protected TagLookupElementDecorator(@NotNull LookupElement delegate, @NotNull Set<String> tags, @NotNull String prefix,
+                                        boolean isSmart) {
       super(delegate);
       myTags = tags;
       myPrefix = prefix;
+      myIsSmart = isSmart;
+    }
+
+    @Override
+    public void handleInsert(@NotNull InsertionContext context) {
+      JavaContributorCollectors.logInsertHandle(context.getProject(), JavaContributorCollectors.TAG_TYPE,
+                                                myIsSmart ? CompletionType.SMART : CompletionType.BASIC);
+      super.handleInsert(context);
     }
 
     @NotNull
@@ -82,7 +93,7 @@ public final class MethodTags {
     @Override
     public void renderElement(@NotNull LookupElementPresentation presentation) {
       super.renderElement(presentation);
-      if (myTags.size()==1) {
+      if (myTags.size() == 1) {
         presentation.appendTailText(" " + JavaBundle.message("java.completion.tag", myTags.size()) + " ", true);
         int startOffset = getStartOffset(presentation);
         String text = myTags.iterator().next();
@@ -112,9 +123,9 @@ public final class MethodTags {
       Iterable<TextRange> ranges = LookupCellRenderer.getMatchingFragments(myPrefix, lastFragment.text);
       if (ranges != null) {
         for (TextRange nextHighlightedRange : ranges) {
-          presentation.decorateTailItemTextRange(new TextRange(start + nextHighlightedRange.getStartOffset(), start  + nextHighlightedRange.getEndOffset()),
-                                                 LookupElementPresentation.LookupItemDecoration.HIGHLIGHT_MATCHED);
-
+          presentation.decorateTailItemTextRange(
+            new TextRange(start + nextHighlightedRange.getStartOffset(), start + nextHighlightedRange.getEndOffset()),
+            LookupElementPresentation.LookupItemDecoration.HIGHLIGHT_MATCHED);
         }
       }
     }
@@ -230,7 +241,7 @@ public final class MethodTags {
     };
   }
 
-  record Tag (@NotNull String name, @NotNull Predicate<PsiClass> matcher) {
+  record Tag(@NotNull String name, @NotNull Predicate<PsiClass> matcher) {
     static Predicate<PsiClass> any() {
       return t -> true;
     }

@@ -7,9 +7,6 @@ import com.intellij.execution.actions.StopAction
 import com.intellij.execution.compound.CompoundRunConfiguration
 import com.intellij.execution.impl.ExecutionManagerImpl
 import com.intellij.execution.impl.isOfSameType
-import com.intellij.execution.runToolbar.environment
-import com.intellij.execution.runToolbar.getRunToolbarProcess
-import com.intellij.execution.runToolbar.isRunning
 import com.intellij.icons.AllIcons
 import com.intellij.ide.IdeBundle
 import com.intellij.ide.ui.laf.darcula.ui.ToolbarComboWidgetUiSizes
@@ -99,13 +96,18 @@ class RunWidgetResumeManager(private val project: Project)  {
   }
 
   private fun isDebugStarted(): Boolean {
-    return ExecutionManagerImpl.getAllDescriptors(project)
-      .asSequence()
-      .mapNotNull { it.environment() }
-      .filter { it.contentToReuse != null && it.getRunToolbarProcess() != null }
-      .filter { it.isRunning() == true }
-      .any { it.executor.id == ToolWindowId.DEBUG }
+    val executionManager = ExecutionManagerImpl.getInstance(project)
+    return ExecutionManagerImpl.getAllDescriptors(project).filter { isActive(it) == true }.firstOrNull {
+      executionManager.getExecutors(it).firstOrNull { executor -> executor.id == ToolWindowId.DEBUG } != null
+    } != null
   }
+
+  private fun isActive(processDescriptor: RunContentDescriptor): Boolean? {
+    return processDescriptor.processHandler?.let {
+      !it.isProcessTerminating && !it.isProcessTerminated
+    }
+  }
+
 
   private fun getStarted(configuration: RunnerAndConfigurationSettings, executorId: String): RunContentDescriptor? {
     val executionManager = ExecutionManagerImpl.getInstance(project)
@@ -201,7 +203,7 @@ class RunToolbarTopLevelExecutorActionGroup : ActionGroup() {
   override fun isPopup() = false
 
   override fun getActionUpdateThread(): ActionUpdateThread {
-    return ActionUpdateThread.EDT
+    return ActionUpdateThread.BGT
   }
 
   override fun getChildren(e: AnActionEvent?): Array<AnAction> {
@@ -412,7 +414,7 @@ private class MoreRunToolbarActions : TogglePopupAction(
       }
     }
   }
-  override fun getActionUpdateThread() = ActionUpdateThread.EDT
+  override fun getActionUpdateThread() = ActionUpdateThread.BGT
 }
 
 internal val excludeRunAndDebug: (Executor) -> Boolean = {

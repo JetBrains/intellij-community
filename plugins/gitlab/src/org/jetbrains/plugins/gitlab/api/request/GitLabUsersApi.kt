@@ -11,6 +11,7 @@ import org.jetbrains.plugins.gitlab.util.GitLabApiRequestName
 import java.awt.Image
 import java.net.http.HttpResponse
 
+@SinceGitLab("7.0", note = "No exact version")
 suspend fun GitLabApi.Rest.getCurrentUser(server: GitLabServerPath): HttpResponse<out GitLabUserRestDTO> {
   val uri = server.restApiUri.resolveRelative("user")
   val request = request(uri).GET().build()
@@ -19,6 +20,7 @@ suspend fun GitLabApi.Rest.getCurrentUser(server: GitLabServerPath): HttpRespons
   }
 }
 
+@SinceGitLab("12.5", note = "No exact version")
 suspend fun GitLabApi.GraphQL.getCurrentUser(server: GitLabServerPath): GitLabUserDetailedDTO? {
   val request = gitLabQuery(server, GitLabGQLQuery.GET_CURRENT_USER)
   return withErrorStats(server, GitLabGQLQuery.GET_CURRENT_USER) {

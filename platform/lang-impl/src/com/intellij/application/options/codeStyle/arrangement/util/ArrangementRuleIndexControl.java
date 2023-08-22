@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.application.options.codeStyle.arrangement.util;
 
 import com.intellij.ui.JBColor;
@@ -7,7 +7,7 @@ import com.intellij.util.ui.UIUtil;
 import javax.swing.*;
 import java.awt.*;
 
-public class ArrangementRuleIndexControl extends JPanel {
+public final class ArrangementRuleIndexControl extends JPanel {
 
   private boolean myIsError;
   private final int myDiameter;

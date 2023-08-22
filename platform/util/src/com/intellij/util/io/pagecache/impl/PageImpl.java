@@ -790,7 +790,7 @@ public abstract class PageImpl implements Page, Flushable, PageUnsafe {
            "{" +
            "state: " + unpackState(packedState) + ", " +
            "inUse: " + unpackUsageCount(packedState) +
-           "}" + ((auxDebugData != null) ? auxDebugData : "");
+           "}" + ((auxDebugData != null) ? ", aux: " + auxDebugData : "");
   }
 
   @Override

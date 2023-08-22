@@ -38,7 +38,9 @@ internal class LinuxIdeMenuBar(coroutineScope: CoroutineScope, frame: JFrame) : 
     get() = super.isDarkMenu || globalMenu != null
 
   override fun updateGlobalMenuRoots() {
-    globalMenu?.setRoots(components.mapNotNull { it as? ActionMenu })
+    super.updateGlobalMenuRoots()
+
+    globalMenu?.setRoots(rootMenuItems)
   }
 
   override fun doInstallAppMenuIfNeeded(frame: JFrame) {

@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.find.actions;
 
 import com.intellij.ide.util.gotoByName.ModelDiff;
@@ -41,7 +41,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.stream.Collectors;
 
-public class ShowUsagesTable extends JBTable implements DataProvider {
+public final class ShowUsagesTable extends JBTable implements DataProvider {
   final Usage MORE_USAGES_SEPARATOR = new UsageAdapter();
   final Usage USAGES_OUTSIDE_SCOPE_SEPARATOR = new UsageAdapter();
   final Usage USAGES_FILTERED_OUT_SEPARATOR = new UsageAdapter();
@@ -236,7 +236,7 @@ public class ShowUsagesTable extends JBTable implements DataProvider {
     return model;
   }
 
-  private static class MySpeedSearch extends SpeedSearchBase<JTable> {
+  private static final class MySpeedSearch extends SpeedSearchBase<JTable> {
     private MySpeedSearch(@NotNull ShowUsagesTable table) {
       super(table, null);
     }

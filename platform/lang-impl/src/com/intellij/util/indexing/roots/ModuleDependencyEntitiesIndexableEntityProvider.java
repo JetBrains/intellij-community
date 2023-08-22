@@ -15,8 +15,8 @@ import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 
-public class ModuleDependencyEntitiesIndexableEntityProvider implements IndexableEntityProvider.Existing<ModuleEntity>,
-                                                                        IndexableEntityProvider.Enforced<ModuleEntity> {
+public final class ModuleDependencyEntitiesIndexableEntityProvider implements IndexableEntityProvider.Existing<ModuleEntity>,
+                                                                              IndexableEntityProvider.Enforced<ModuleEntity> {
 
   @Override
   public @NotNull Class<ModuleEntity> getEntityClass() {

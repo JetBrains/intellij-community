@@ -5,11 +5,14 @@ import com.intellij.concurrency.callable
 import com.intellij.concurrency.currentThreadContext
 import com.intellij.concurrency.installThreadContext
 import com.intellij.concurrency.runnable
-import com.intellij.openapi.application.*
+import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.application.ModalityState
+import com.intellij.openapi.application.ReadAction
 import com.intellij.openapi.application.impl.LaterInvocator
 import com.intellij.openapi.application.impl.assertReferenced
 import com.intellij.openapi.application.impl.pumpEDT
 import com.intellij.openapi.application.impl.withModality
+import com.intellij.openapi.application.writeAction
 import com.intellij.openapi.progress.*
 import com.intellij.openapi.util.Condition
 import com.intellij.openapi.util.Conditions
@@ -36,12 +39,10 @@ import org.junit.jupiter.api.extension.ExtensionContext
 import org.junit.jupiter.api.extension.InvocationInterceptor
 import org.junit.jupiter.api.extension.ReflectiveInvocationContext
 import java.lang.reflect.Method
-import java.util.*
 import java.util.concurrent.*
 import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.atomic.AtomicInteger
 import java.util.concurrent.atomic.AtomicReference
-import kotlin.Result
 import kotlin.test.assertNotNull
 
 /**

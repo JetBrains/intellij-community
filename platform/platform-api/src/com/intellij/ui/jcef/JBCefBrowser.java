@@ -265,7 +265,7 @@ public class JBCefBrowser extends JBCefBrowserBase {
     Component uiComp = getCefBrowser().getUIComponent();
     JPanel resultPanel = new MyPanel(uiComp, isMouseWheelEventEnabled);
 
-    resultPanel.setBackground(JBColor.background());
+    resultPanel.setBackground(getBackgroundColor());
     resultPanel.putClientProperty(JBCEFBROWSER_INSTANCE_PROP, this);
     if (SystemInfo.isMac) {
       // We handle shortcuts manually on MacOS: https://www.magpcss.org/ceforum/viewtopic.php?f=6&t=12561
@@ -309,6 +309,10 @@ public class JBCefBrowser extends JBCefBrowserBase {
       }
     });
     return resultPanel;
+  }
+
+  protected @NotNull Color getBackgroundColor() {
+    return JBColor.background();
   }
 
   /**

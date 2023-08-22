@@ -19,7 +19,6 @@ import com.intellij.openapi.application.Application
 import com.intellij.openapi.application.ApplicationNamesInfo
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.PathManager
-import com.intellij.openapi.application.ex.ApplicationInfoEx
 import com.intellij.openapi.application.ex.ApplicationManagerEx
 import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.logger
@@ -31,6 +30,7 @@ import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.util.SystemInfoRt
 import com.intellij.platform.ide.CoreUiCoroutineScopeHolder
+import com.intellij.platform.ide.customization.ExternalProductResourceUrls
 import com.intellij.util.SystemProperties
 import com.intellij.util.lang.JavaVersion
 import com.intellij.util.system.CpuArch
@@ -150,8 +150,10 @@ private suspend fun checkRuntime() {
 
   LOG.info("${CpuArch.CURRENT} appears to be emulated")
   if (SystemInfoRt.isMac && CpuArch.isIntel64()) {
-    val downloadAction = NotificationAction.createSimpleExpiring(IdeBundle.message("bundled.jre.m1.arch.message.download")) {
-      BrowserUtil.browse(ApplicationInfoEx.getInstanceEx().downloadUrl)
+    val downloadAction = ExternalProductResourceUrls.getInstance().downloadPageUrl?.let { downloadPageUrl ->
+      NotificationAction.createSimpleExpiring(IdeBundle.message("bundled.jre.m1.arch.message.download")) {
+        BrowserUtil.browse(downloadPageUrl.toExternalForm())
+      }
     }
     showNotification("bundled.jre.m1.arch.message", suppressable = true, downloadAction, ApplicationNamesInfo.getInstance().fullProductName)
   }

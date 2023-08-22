@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.actions;
 
 import com.intellij.ide.actions.searcheverywhere.FoundItemDescriptor;
@@ -282,7 +282,7 @@ public class GotoFileItemProvider extends DefaultChooseByNameItemProvider {
     return pos;
   }
 
-  private class NameGrouper {
+  private final class NameGrouper {
     private final String namePattern;
     private final char[] NAME_PATTERN; // upper cased namePattern
     private final char[] name_pattern; // lower cased namePattern
@@ -332,7 +332,7 @@ public class GotoFileItemProvider extends DefaultChooseByNameItemProvider {
     }
   }
 
-  private class SuffixMatches {
+  private final class SuffixMatches {
     final String patternSuffix;
     final MinusculeMatcher matcher;
     final List<MatchResult> matchingNames = new ArrayList<>();

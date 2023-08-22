@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.daemon.impl;
 
 import com.intellij.codeHighlighting.Pass;
@@ -29,7 +29,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.ArrayList;
 import java.util.List;
 
-public class DefaultHighlightInfoProcessor extends HighlightInfoProcessor {
+public final class DefaultHighlightInfoProcessor extends HighlightInfoProcessor {
   private volatile TextEditorHighlightingPass myCachedShowAutoImportPass; // cache to avoid re-creating it multiple times
   @Override
   public void highlightsInsideVisiblePartAreProduced(@NotNull HighlightingSession session,

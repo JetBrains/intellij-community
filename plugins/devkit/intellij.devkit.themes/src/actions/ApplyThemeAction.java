@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.devkit.themes.actions;
 
 import com.intellij.icons.AllIcons;
@@ -37,7 +37,7 @@ import java.util.Map;
 /**
  * @author Konstantin Bulenkov
  */
-public final class ApplyThemeAction extends DumbAwareAction {
+final class ApplyThemeAction extends DumbAwareAction {
   @Override
   public void actionPerformed(@NotNull AnActionEvent e) {
     applyTempTheme(e);
@@ -83,13 +83,10 @@ public final class ApplyThemeAction extends DumbAwareAction {
 
       Module module = ModuleUtilCore.findModuleForFile(json, project);
       UITheme theme = TempUIThemeBasedLookAndFeelInfo.loadTempTheme(json.getInputStream(), new IconPathPatcher() {
-
         @Override
         public @NotNull String patchPath(@NotNull String path,
                                          @Nullable ClassLoader classLoader) {
-          String result = module != null ?
-                          findAbsoluteFilePathByRelativePath(module, path) :
-                          null;
+          String result = module == null ? null : findAbsoluteFilePathByRelativePath(module, path);
           return result != null ? result : path;
         }
       });

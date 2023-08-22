@@ -131,7 +131,8 @@ public class JavaNoVariantsDelegator extends CompletionContributor implements Du
     tagResultSet.runRemainingContributors(parameters, downstream -> {
       LookupElement element = downstream.getLookupElement();
       if (element != null && !prefixMatcher.prefixMatches(element) && tagMatcher.prefixMatches(element)) {
-        LookupElement lookupElement = MethodTags.wrapLookupWithTags(element, prefixMatcher::prefixMatches, prefixMatcher.getPrefix());
+        LookupElement lookupElement = MethodTags.wrapLookupWithTags(element, prefixMatcher::prefixMatches, prefixMatcher.getPrefix(),
+                                                                    parameters.getCompletionType());
         if (lookupElement != null) {
           CompletionResult wrapped = CompletionResult.wrap(lookupElement, downstream.getPrefixMatcher(),
                                                            downstream.getSorter());

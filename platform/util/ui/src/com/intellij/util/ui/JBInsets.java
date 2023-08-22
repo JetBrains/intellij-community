@@ -4,7 +4,9 @@ package com.intellij.util.ui;
 import com.intellij.ui.scale.JBUIScale;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
+import javax.swing.*;
 import javax.swing.plaf.UIResource;
 import java.awt.*;
 
@@ -12,7 +14,8 @@ import java.awt.*;
  * @author Konstantin Bulenkov
  */
 public class JBInsets extends Insets {
-  private final Insets unscaled;
+  private final @Nullable String key;
+  private final @NotNull Insets unscaledDefault;
 
   @ApiStatus.Internal
   public JBInsets(int all) {
@@ -35,9 +38,50 @@ public class JBInsets extends Insets {
    * @param right  the inset from the right.
    */
   public JBInsets(int top, int left, int bottom, int right) {
+    this(null, top, left, bottom, right);
+  }
+
+  @SuppressWarnings("UseDPIAwareInsets")
+  private JBInsets(@NotNull JBInsets other) {
+    super(other.top, other.left, other.bottom, other.right);
+    this.key = other.key;
+    this.unscaledDefault = new Insets(
+      other.unscaledDefault.top,
+      other.unscaledDefault.left,
+      other.unscaledDefault.bottom,
+      other.unscaledDefault.right
+    );
+  }
+
+  @SuppressWarnings("UseDPIAwareInsets")
+  private JBInsets(@Nullable String key, int top, int left, int bottom, int right) {
     super(JBUIScale.scale(top), JBUIScale.scale(left), JBUIScale.scale(bottom), JBUIScale.scale(right));
-    //noinspection UseDPIAwareInsets
-    unscaled = new Insets(top, left, bottom, right);
+    this.key = key;
+    unscaledDefault = new Insets(top, left, bottom, right);
+  }
+
+  /**
+   * Updates the current values of these insets.
+   * <p>
+   *   If these insets have a UI Defaults key, then a fresh value (assumed to be unscaled)
+   *   is first retrieved, otherwise the default values are used. Then these values are scaled
+   *   according to the current {@link com.intellij.ui.scale.ScaleType#USR_SCALE} value.
+   * </p>
+   */
+  public void update() {
+    var unscaled = unscaledNoCopy();
+    top = JBUIScale.scale(unscaled.top);
+    left = JBUIScale.scale(unscaled.left);
+    bottom = JBUIScale.scale(unscaled.bottom);
+    right = JBUIScale.scale(unscaled.right);
+  }
+
+  private @NotNull Insets unscaledNoCopy() {
+    var result = key != null ? UIManager.getInsets(key) : unscaledDefault;
+    if (result == null) {
+      result = unscaledDefault;
+    }
+    return result;
   }
 
   public int width() {
@@ -56,18 +100,22 @@ public class JBInsets extends Insets {
   }
 
   public static @NotNull JBInsets create(@NotNull Insets insets) {
-    if (insets instanceof JBInsets) {
-      JBInsets copy = new JBInsets(0, 0, 0, 0);
-      copyInsets(copy, insets);
-      return copy;
+    if (insets instanceof JBInsets jbInsets) {
+      return new JBInsets(jbInsets);
     }
      return new JBInsets(insets.top, insets.left, insets.bottom, insets.right);
+  }
+
+  public static @NotNull JBInsets create(@NotNull String key, @NotNull Insets defaultValue) {
+    var unscaledDefault = unwrap(defaultValue);
+    return new JBInsets(key, unscaledDefault.top, unscaledDefault.left, unscaledDefault.bottom, unscaledDefault.right);
   }
 
   /**
    * Returns unscaled insets
    */
   public Insets getUnscaled() {
+    var unscaled = unscaledNoCopy();
     //noinspection UseDPIAwareInsets
     return new Insets(unscaled.top, unscaled.left, unscaled.bottom, unscaled.right);
   }
@@ -78,8 +126,7 @@ public class JBInsets extends Insets {
 
   public static final class JBInsetsUIResource extends JBInsets implements UIResource {
     public JBInsetsUIResource(JBInsets insets) {
-      super(0, 0, 0, 0);
-      JBInsets.copyInsets(this, insets);
+      super(insets);
     }
   }
 
@@ -142,13 +189,6 @@ public class JBInsets extends Insets {
     return result;
   }
 
-  private static void copyInsets(@NotNull Insets dest, @NotNull Insets src) {
-    dest.top = src.top;
-    dest.left = src.left;
-    dest.bottom = src.bottom;
-    dest.right = src.right;
-  }
-
   /**
    * Get safely unscaled Insets if the parameter is an instance of JBInsets.
    *
@@ -158,27 +198,27 @@ public class JBInsets extends Insets {
   @ApiStatus.Internal
   public static Insets unwrap(@NotNull Insets insets) {
     if (insets instanceof JBInsets jbInsets) {
-      // Check that scaled values consistent with unscaled ones
-      JBInsets cleanInsets = create(jbInsets.getUnscaled());
-
-      if (insets.equals(cleanInsets)) return jbInsets.getUnscaled();
-      else return unscale(insets);
+      return jbInsets.getUnscaled();
     }
     return insets;
   }
 
   /**
-   * Unscale the given Insets by applying JBUI.unscale to each value.
+   * Get the unscaled inset values.
+   * <p>
+   *   If the {@code insets} parameter value is not an instance of {@code JBInsets}, then it's assumed to be already unscaled.
+   * </p>
    *
    * @param insets the Insets to unscale
    * @return the unscaled Insets
    */
   @ApiStatus.Internal
   public static Insets unscale(@NotNull Insets insets) {
-    //noinspection UseDPIAwareInsets
-    return new Insets(JBUI.unscale(insets.top),
-                      JBUI.unscale(insets.left),
-                      JBUI.unscale(insets.bottom),
-                      JBUI.unscale(insets.right));
+    if (insets instanceof JBInsets jbInsets) {
+      return jbInsets.getUnscaled();
+    }
+    else {
+      return insets;
+    }
   }
 }

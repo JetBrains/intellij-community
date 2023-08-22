@@ -30,6 +30,7 @@ import com.intellij.openapi.util.text.HtmlBuilder
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.wm.impl.welcomeScreen.WelcomeFrame
 import com.intellij.platform.ide.customization.ExternalProductResourceUrls
+import com.intellij.util.Url
 import com.intellij.util.Urls
 import com.intellij.util.concurrency.AppExecutorUtil
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
@@ -37,7 +38,6 @@ import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.intellij.util.concurrency.annotations.RequiresReadLockAbsence
 import com.intellij.util.containers.MultiMap
 import com.intellij.util.io.HttpRequests
-import com.intellij.util.io.URLUtil
 import com.intellij.util.ui.UIUtil
 import com.intellij.xml.util.XmlStringUtil
 import kotlinx.coroutines.CoroutineScope
@@ -106,8 +106,14 @@ object UpdateChecker {
   const val MACHINE_ID_DISABLED_PROPERTY: String = "machine.id.disabled"
   const val MACHINE_ID_PARAMETER: String = "mid"
 
-  private val updateUrl: String?
-    get() = System.getProperty("idea.updates.url") ?: ExternalProductResourceUrls.getInstance().updatesMetadataXmlUrl
+  private val updateUrl: Url?
+    get() {
+      val customUrl = System.getProperty("idea.updates.url")
+      if (customUrl != null) {
+        return Urls.newFromEncoded(customUrl)
+      }
+      return ExternalProductResourceUrls.getInstance().updatesMetadataXmlUrl
+    }
 
   private val productDataLock = ReentrantLock()
   private var productDataCache: SoftReference<Result<Product?>>? = null
@@ -214,13 +220,9 @@ object UpdateChecker {
     productDataLock.withLock {
       val cached = productDataCache?.get()
       if (cached != null) return@withLock cached.getOrThrow()
-      val updateUrl = updateUrl ?: return@withLock null
+      val url = updateUrl ?: return@withLock null
 
       val result = runCatching {
-        var url = Urls.newFromEncoded(updateUrl)
-        if (url.scheme != URLUtil.FILE_PROTOCOL) {
-          url = UpdateRequestParameters.amendUpdateRequest(url)
-        }
         LOG.debug { "loading ${url}" }
         HttpRequests.request(url)
           .connect { JDOMUtil.load(it.getReader(indicator)) }

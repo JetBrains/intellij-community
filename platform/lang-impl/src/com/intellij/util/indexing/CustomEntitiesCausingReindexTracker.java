@@ -22,7 +22,7 @@ import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-class CustomEntitiesCausingReindexTracker {
+final class CustomEntitiesCausingReindexTracker {
   private final boolean useWorkspaceFileIndexContributors = IndexableFilesIndex.isEnabled();
   @NotNull
   private Set<Class<? extends WorkspaceEntity>> customEntitiesToRescan;

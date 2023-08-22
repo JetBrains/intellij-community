@@ -27,6 +27,7 @@ import java.io.File
 import kotlin.test.assertNotNull
 
 const val CONFIGURE_LIBRARY_PREFIX = "CONFIGURE_LIBRARY:"
+const val LIBRARY_JAR_FILE_PREFIX = "LIBRARY_JAR_FILE:"
 
 /**
  * Helper for configuring kotlin runtime in tested project.
@@ -235,6 +236,19 @@ object ConfigLibraryUtil {
         if (libraryNames.isNotEmpty()) throw AssertionError("Couldn't find the following libraries: $libraryNames")
     }
 
+    fun configureLibrariesByDirective(module: Module, testDataDirectory: File, fileText: String) {
+        configureLibrariesByDirective(module, fileText)
+        val customLibraries = InTextDirectivesUtils.findLinesWithPrefixesRemoved(fileText, "// $LIBRARY_JAR_FILE_PREFIX ")
+        if (customLibraries.isNotEmpty()) {
+            for (customLibrary in customLibraries) {
+                addLibrary(module, customLibrary) {
+                    val jar = File(testDataDirectory, customLibrary).takeIf(File::exists) ?: error("$customLibrary doesn't exist")
+                    addRoot(jar, OrderRootType.CLASSES)
+                }
+            }
+        }
+    }
+
     fun configureLibrariesByDirective(module: Module, fileText: String) {
         configureLibraries(module, InTextDirectivesUtils.findListWithPrefixes(fileText, CONFIGURE_LIBRARY_PREFIX))
     }
@@ -242,7 +256,8 @@ object ConfigLibraryUtil {
     fun unconfigureLibrariesByDirective(module: Module, fileText: String) {
         val libraryNames =
             InTextDirectivesUtils.findListWithPrefixes(fileText, CONFIGURE_LIBRARY_PREFIX) +
-            InTextDirectivesUtils.findListWithPrefixes(fileText, "// UNCONFIGURE_LIBRARY: ")
+            InTextDirectivesUtils.findListWithPrefixes(fileText, "// UNCONFIGURE_LIBRARY: ") +
+            InTextDirectivesUtils.findListWithPrefixes(fileText, "// $LIBRARY_JAR_FILE_PREFIX ")
 
         unconfigureLibrariesByName(module, libraryNames.toMutableList())
     }

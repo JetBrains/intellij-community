@@ -38,7 +38,7 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 import java.util.regex.PatternSyntaxException;
 
-public class SearchResults implements DocumentListener, CaretListener {
+public final class SearchResults implements DocumentListener, CaretListener {
 
   public int getStamp() {
     return ++myStamp;

@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.file.exclude;
 
 import com.intellij.idea.ActionsBundle;
@@ -23,7 +23,7 @@ import java.util.function.Function;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
-class OverrideFileTypeAction extends DumbAwareAction {
+final class OverrideFileTypeAction extends DumbAwareAction {
   @Override
   public void update(@NotNull AnActionEvent e) {
     VirtualFile[] files = getContextFiles(e, file -> OverrideFileTypeManager.getInstance().getFileValue(file) == null);
@@ -82,7 +82,7 @@ class OverrideFileTypeAction extends DumbAwareAction {
       .toArray(count -> VirtualFile.ARRAY_FACTORY.create(count));
   }
 
-  private static class ChangeToThisFileTypeAction extends DumbAwareAction {
+  private static final class ChangeToThisFileTypeAction extends DumbAwareAction {
     private final @NotNull VirtualFile @NotNull [] myFiles;
     private final FileType myType;
 

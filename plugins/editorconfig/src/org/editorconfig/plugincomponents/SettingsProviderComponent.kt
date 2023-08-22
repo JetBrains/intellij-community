@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.editorconfig.plugincomponents
 
 import com.intellij.openapi.application.ApplicationManager
@@ -32,6 +32,7 @@ import kotlin.time.Duration.Companion.seconds
 class SettingsProviderComponent(private val project: Project, private val coroutineScope: CoroutineScope) : SimpleModificationTracker() {
   companion object {
     private val LOG = thisLogger()
+    private const val PROCESSING_POOL_SIZE = 16
     private const val TIMEOUT = 10 // Seconds
     private val EMPTY_PROPERTIES = ResourceProperties.builder().build()
 
@@ -81,7 +82,10 @@ class SettingsProviderComponent(private val project: Project, private val corout
     }
   }
 
-  private val pendingJobs = ConcurrentHashMap<String, Deferred<Pair<ResourceProperties, List<VirtualFile>>>>()
+  @OptIn(ExperimentalCoroutinesApi::class)
+  private val processingDispatcher = Dispatchers.IO.limitedParallelism(PROCESSING_POOL_SIZE)
+
+  private val pendingJobs = ConcurrentHashMap<String, Lazy<Deferred<Pair<ResourceProperties, List<VirtualFile>>>>>()
 
   private fun doGetPropertiesAndEditorConfigs(file: VirtualFile): Pair<ResourceProperties, List<VirtualFile>> {
     var properties: ResourceProperties? = null
@@ -101,19 +105,19 @@ class SettingsProviderComponent(private val project: Project, private val corout
     }
     else {
       val key = file.url
-      val deferred = pendingJobs.computeIfAbsent(key) {
-        coroutineScope.async(CoroutineName("EditorConfig IO monitor")) {
-          withTimeout(TIMEOUT.seconds) {
-            // Since withTimeout relies on cooperative cancellation and native calls are not cancellable, this cannot be a child coroutine
-            coroutineScope.async(CoroutineName("EditorConfig IO") + Dispatchers.IO) {
-              doGetPropertiesAndEditorConfigs(file)
-            }.await()
+      val lazyDeferred = pendingJobs.computeIfAbsent(key) {
+        lazy {
+          coroutineScope.async(CoroutineName("EditorConfig IO") + processingDispatcher) {
+            doGetPropertiesAndEditorConfigs(file)
+          }.apply {
+            invokeOnCompletion { pendingJobs.remove(key) } // cleanup
           }
         }
       }
-      val result = deferred.await()
-      pendingJobs.computeIfPresent(key) { _, v -> if (deferred.isCompleted) null else v }
-      return result
+      val deferred = lazyDeferred.value
+      return withTimeout(TIMEOUT.seconds) {
+        deferred.await()
+      }
     }
   }
 }

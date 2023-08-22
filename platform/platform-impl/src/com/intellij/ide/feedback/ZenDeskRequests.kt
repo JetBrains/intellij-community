@@ -3,9 +3,9 @@ package com.intellij.ide.feedback
 
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.intellij.openapi.application.ApplicationInfo
-import com.intellij.openapi.application.impl.ZenDeskForm
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.util.SystemInfo
+import com.intellij.platform.ide.impl.customization.ZenDeskFeedbackFormData
 import com.intellij.ui.LicensingFacade
 import com.intellij.util.io.HttpRequests
 import java.io.IOException
@@ -14,34 +14,40 @@ import java.net.HttpURLConnection
 class ZenDeskRequests {
   private val objectMapper by lazy { ObjectMapper() }
 
-  fun submit(form: ZenDeskForm, email: String, subject: String, text: String, fieldData: Map<String, Any>, onDone: () -> Unit, onError: () -> Unit) {
-    val customFields = mutableListOf<ZenDeskCustomField>()
-    for (field in form.fields) {
-      val value = field.value
-                  ?: when (field.type) {
-                    "build" -> ApplicationInfo.getInstance().build.asString()
-                    "os" -> getOsForZenDesk()
-                    "timezone" -> System.getProperty("user.timezone")
-                    "eval" -> LicensingFacade.getInstance()?.isEvaluationLicense?.toString()
-                    "needsupport" -> if (fieldData[field.type] == true) "share_problems_or_ask_about_missing_features" else "provide_a_feedback"
-                    else -> fieldData[field.type]
-                  }
-      value?.let {
-        customFields.add(ZenDeskCustomField(field.id, it))
+  internal fun submit(zenDeskFormData: ZenDeskFeedbackFormData, email: String, subject: String, text: String, 
+                      customFieldValues: CustomFieldValues, onDone: () -> Unit, onError: () -> Unit) {
+    val fieldIds = zenDeskFormData.fieldIds
+    val customFields = listOfNotNull(
+      ZenDeskCustomField(fieldIds.product, zenDeskFormData.productId),
+      ZenDeskCustomField(fieldIds.country, "sl_unknown"),
+      customFieldValues.rating?.let { rating ->
+        ZenDeskCustomField(fieldIds.rating, rating)
+      },
+      ZenDeskCustomField(fieldIds.build, ApplicationInfo.getInstance().build.asString()),
+      ZenDeskCustomField(fieldIds.os, getOsForZenDesk()),
+      ZenDeskCustomField(fieldIds.timezone, System.getProperty("user.timezone")),
+      LicensingFacade.getInstance()?.isEvaluationLicense?.let { isEval ->
+        ZenDeskCustomField(fieldIds.eval, isEval.toString())
+      },
+      ZenDeskCustomField(fieldIds.systemInfo, customFieldValues.systemInfo),
+      ZenDeskCustomField(fieldIds.needSupport,
+                         if (customFieldValues.needSupport) "share_problems_or_ask_about_missing_features" else "provide_a_feedback"),
+      customFieldValues.topicId?.let { topicId ->
+        ZenDeskCustomField(fieldIds.topic, topicId)
       }
-    }
+    )
 
     val request = ZenDeskRequest(
       ZenDeskRequester("anonymous", email),
       subject,
       ZenDeskComment(text),
-      form.id,
+      zenDeskFormData.formId,
       customFields
     )
     val requestData = objectMapper.writeValueAsString(mapOf("request" to request))
     try {
       HttpRequests
-        .post("${form.url}/api/v2/requests", "application/json")
+        .post("${zenDeskFormData.formUrl}/api/v2/requests", "application/json")
         .productNameAsUserAgent()
         .accept("application/json")
         .connect {
@@ -80,6 +86,13 @@ class ZenDeskRequests {
     private val LOG = Logger.getInstance(ZenDeskRequests::class.java)
   }
 }
+
+internal data class CustomFieldValues(
+  val systemInfo: String,
+  val needSupport: Boolean,
+  val rating: Int?,
+  val topicId: String?
+)
 
 private class ZenDeskComment(val body: String)
 

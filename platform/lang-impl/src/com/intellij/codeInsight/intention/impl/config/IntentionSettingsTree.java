@@ -321,7 +321,7 @@ public abstract class IntentionSettingsTree {
     }
   }
 
-  private class MyFilterComponent extends FilterComponent {
+  private final class MyFilterComponent extends FilterComponent {
     private final TreeExpansionMonitor<DefaultMutableTreeNode> myExpansionMonitor = TreeExpansionMonitor.install(myTree);
 
     MyFilterComponent() {
@@ -374,7 +374,7 @@ public abstract class IntentionSettingsTree {
     return myNorthPanel;
   }
 
-  private class IntentionsTreeCellRenderer extends CheckboxTree.CheckboxTreeCellRenderer implements UiInspectorTreeRendererContextProvider {
+  private final class IntentionsTreeCellRenderer extends CheckboxTree.CheckboxTreeCellRenderer implements UiInspectorTreeRendererContextProvider {
     IntentionsTreeCellRenderer() {
       super(true);
     }

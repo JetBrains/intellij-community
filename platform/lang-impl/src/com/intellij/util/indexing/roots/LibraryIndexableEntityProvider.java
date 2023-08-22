@@ -2,10 +2,10 @@
 package com.intellij.util.indexing.roots;
 
 import com.intellij.openapi.project.Project;
-import com.intellij.util.indexing.roots.builders.IndexableIteratorBuilders;
 import com.intellij.platform.workspace.jps.entities.ExcludeUrlEntity;
 import com.intellij.platform.workspace.jps.entities.LibraryEntity;
 import com.intellij.platform.workspace.jps.entities.LibraryRoot;
+import com.intellij.util.indexing.roots.builders.IndexableIteratorBuilders;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
@@ -15,7 +15,7 @@ import java.util.List;
 
 @ApiStatus.Internal
 @ApiStatus.Experimental
-public class LibraryIndexableEntityProvider implements IndexableEntityProvider<LibraryEntity> {
+public final class LibraryIndexableEntityProvider implements IndexableEntityProvider<LibraryEntity> {
 
   @Override
   public @NotNull Class<LibraryEntity> getEntityClass() {

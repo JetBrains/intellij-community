@@ -92,7 +92,7 @@ class EditorWindow internal constructor(val owner: EditorsSplitters, private val
   internal val component: JComponent
     get() = tabbedPane.component
 
-  val tabbedPane: EditorTabbedContainer
+  val tabbedPane: EditorTabbedContainer = EditorTabbedContainer(window = this, coroutineScope = coroutineScope)
 
   val isDisposed: Boolean
     get() = !coroutineScope.isActive
@@ -198,8 +198,6 @@ class EditorWindow internal constructor(val owner: EditorsSplitters, private val
   internal fun getFileSequence(): Sequence<VirtualFile> = getComposites().map { it.file }
 
   init {
-    tabbedPane = EditorTabbedContainer(window = this, coroutineScope = coroutineScope)
-
     // tab layout policy
     if (UISettings.getInstance().scrollTabLayoutInEditor) {
       setTabLayoutPolicy(JTabbedPane.SCROLL_TAB_LAYOUT)

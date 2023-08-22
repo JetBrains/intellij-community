@@ -526,7 +526,6 @@ public abstract class KeymapsTestCase extends KeymapsTestCaseBase {
       {"ctrl alt DOWN",            "MethodDown", "ResizeToolWindowDown"},
       {"ctrl alt UP",              "MethodUp", "ResizeToolWindowUp"},
       {"ctrl meta M",              "ChangesView.Move", "Vcs.MoveChangedLinesToChangelist"},
-      {"ctrl BACK_SLASH",          "CallMultiLineCompletionAction", "Resume"},
       {"meta CLOSE_BRACKET",       "Forward", "NextDiff"},
       {"meta DOWN",                "EditSourceNotInEditor", "EditorTextEnd"},
       {"meta I",                   "DatabaseView.PropertiesAction", "QuickJavaDoc", "org.intellij.plugins.markdown.ui.actions.styling.ToggleItalicAction"},

@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.navigationToolbar;
 
 import com.intellij.ide.actions.OpenInRightSplitAction;
@@ -166,7 +166,7 @@ public class NavBarPopup extends LightweightHint implements Disposable{
   }
 
   private static JComponent createPopupContent(@NotNull NavBarPanel panel, Object @NotNull [] siblings) {
-    class MyListRenderer implements ListCellRenderer<Object> {
+    final class MyListRenderer implements ListCellRenderer<Object> {
       final List<SelectablePanel> selectables = new ArrayList<>();
 
       @Override
@@ -201,7 +201,7 @@ public class NavBarPopup extends LightweightHint implements Disposable{
       }
     }
 
-    class MyList<E> extends JBList<E> implements DependentTransientComponent, Queryable {
+    final class MyList<E> extends JBList<E> implements DependentTransientComponent, Queryable {
       @Override
       public void putInfo(@NotNull Map<? super String, ? super String> info) {
         panel.putInfo(info);

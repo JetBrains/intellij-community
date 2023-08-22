@@ -156,7 +156,7 @@ abstract class AttachToProcessViewWithHosts(
       val newSelectedHost =
         if (selected == null) {
           val defaultAttachHost = getDefaultAttachHost(state)
-          val defaultAttachHostItem = if (defaultAttachHost != null) newHostsAsSet.find { it.getPresentation() == defaultAttachHost } else null
+          val defaultAttachHostItem = if (defaultAttachHost != null) newHostsAsSet.find { it.getId() == defaultAttachHost } else null
           defaultAttachHostItem ?: getSavedHost(newHostsAsSet) ?: getHostFromSet(newHostsAsSet)
         }
         else if (addedHosts.size == 1 && removedHosts.size <= 1) { //new connection was added (or modified)

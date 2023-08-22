@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.application.options.colors.fileStatus;
 
 import com.intellij.ui.ColorUtil;
@@ -14,7 +14,7 @@ import javax.swing.table.TableCellRenderer;
 import javax.swing.table.TableColumn;
 import java.awt.*;
 
-public class FileStatusColorsTable extends JBTable {
+public final class FileStatusColorsTable extends JBTable {
 
   public FileStatusColorsTable() {
     setShowGrid(false);
@@ -60,7 +60,7 @@ public class FileStatusColorsTable extends JBTable {
     return getModel().getColumnClass(col).equals(Color.class);
   }
 
-  private class MyStatusCellRenderer extends DefaultTableCellRenderer {
+  private final class MyStatusCellRenderer extends DefaultTableCellRenderer {
 
     private final JLabel myLabel = new JLabel();
 
@@ -84,7 +84,7 @@ public class FileStatusColorsTable extends JBTable {
     }
   }
 
-  private static class MyDefaultStatusRenderer extends DefaultTableCellRenderer {
+  private static final class MyDefaultStatusRenderer extends DefaultTableCellRenderer {
     private final JLabel myLabel = new JLabel();
     private final Color myLabelColor;
 

@@ -62,7 +62,7 @@
   </actions>
   <extensions defaultExtensionNs="com.intellij">
     <actionPromoter implementation="com.intellij.execution.runToolbar.RunToolbarActionPromoter"/>
-    <projectConfigurable groupId="build" provider="com.intellij.execution.runToolbar.RunToolbarSettingsConfigurableProvider" />
+    <projectConfigurable groupId="build" provider="com.intellij.execution.runToolbar.RunToolbarSettingsConfigurableProvider" bundle="messages.LangBundle" key="run.toolbar.configurable.title"/>
     <console.folding implementation="com.intellij.execution.wsl.WslDistributionConsoleFolding" os="windows"/>
     <projectService serviceInterface="com.intellij.ide.ui.experimental.toolbar.RunWidgetAvailabilityManager"
                     serviceImplementation="com.intellij.ide.ui.experimental.toolbar.RunWidgetAvailabilityManager"/>

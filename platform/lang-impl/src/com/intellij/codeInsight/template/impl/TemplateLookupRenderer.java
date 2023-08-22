@@ -8,7 +8,7 @@ import com.intellij.codeInsight.lookup.impl.ElementLookupRenderer;
 import com.intellij.codeInsight.template.Template;
 
 
-public class TemplateLookupRenderer implements ElementLookupRenderer<Template> {
+public final class TemplateLookupRenderer implements ElementLookupRenderer<Template> {
   @Override
   public boolean handlesItem(final Object element) {
     return element instanceof Template;

@@ -681,6 +681,10 @@ public class AllIcons {
       /** 16x16 */ public static final @NotNull Icon OpenRecentProject = load("ide/runAnything/openRecentProject.svg", -235566969, 0);
     }
 
+    public static final class Settings {
+      /** 94x24 */ public static final @NotNull Icon NewUI = load("ide/settings/newUI.svg", 243529199, 2);
+    }
+
     public static final class Shadow {
       /** 4x14 */ public static final @NotNull Icon Bottom = load("ide/shadow/bottom.svg", 840768513, 0);
       /** 18x22 */ public static final @NotNull Icon BottomLeft = load("ide/shadow/bottomLeft.svg", -1321651824, 0);
@@ -1174,6 +1178,7 @@ public class AllIcons {
     /** 13x13 */ public static final @NotNull Icon ToolWindowProfiler = load("toolwindows/toolWindowProfiler.svg", 840495627, 2);
     /** 13x13 */ public static final @NotNull Icon ToolWindowProject = load("toolwindows/toolWindowProject.svg", 373456992, 2);
     /** 13x13 */ public static final @NotNull Icon ToolWindowRun = load("toolwindows/toolWindowRun.svg", 562367487, 2);
+    /** 13x13 */ public static final @NotNull Icon ToolWindowRunWithCoverage = load("toolwindows/toolWindowRunWithCoverage.svg", -2005199929, 2);
     /** 13x13 */ public static final @NotNull Icon ToolWindowServices = load("toolwindows/toolWindowServices.svg", 116892796, 2);
     /** 13x13 */ public static final @NotNull Icon ToolWindowStructure = load("toolwindows/toolWindowStructure.svg", -1465620418, 2);
     /** 13x13 */ public static final @NotNull Icon ToolWindowTodo = load("toolwindows/toolWindowTodo.svg", -2027082181, 2);

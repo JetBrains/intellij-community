@@ -6,7 +6,7 @@ import com.intellij.openapi.components.Service
 import inspections.wrapInSupplierFix.MyAnnotation
 
 @MyAnnotation
-val <warning descr="Application service must not be assigned to a static final field">topLevelAppService<caret></warning>: MyService = ApplicationManager.getApplication().getService(MyService::class.java)
+val <warning descr="Application service must not be assigned to a static immutable property with a backing field">topLevelAppService<caret></warning>: MyService = ApplicationManager.getApplication().getService(MyService::class.java)
 
 
 // to test naming conflicts

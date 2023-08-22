@@ -307,7 +307,7 @@ public class ApplicationImpl extends ClientAwareComponentManager implements Appl
   public boolean isWriteIntentLockAcquired() {
     // Write lock is good too
     ReadMostlyRWLock lock = myLock;
-    return lock != null && lock.isWriteThread() && (lock.isWriteIntentLocked() || lock.isWriteAcquired());
+    return lock == null || lock.isWriteThread() && (lock.isWriteIntentLocked() || lock.isWriteAcquired());
   }
 
   @Deprecated
@@ -1018,7 +1018,8 @@ public class ApplicationImpl extends ClientAwareComponentManager implements Appl
 
   @Override
   public boolean isReadAccessAllowed() {
-    return myLock.isReadAllowed();
+    ReadMostlyRWLock lock = myLock;
+    return lock == null || myLock.isReadAllowed();
   }
 
   @Override
@@ -1155,7 +1156,7 @@ public class ApplicationImpl extends ClientAwareComponentManager implements Appl
   @Override
   public boolean isWriteAccessAllowed() {
     ReadMostlyRWLock lock = myLock;
-    return lock.isWriteThread() && lock.isWriteAcquired();
+    return lock == null || lock.isWriteThread() && lock.isWriteAcquired();
   }
 
   private void assertNotInsideListener() {

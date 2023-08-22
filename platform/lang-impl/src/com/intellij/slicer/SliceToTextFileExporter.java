@@ -7,7 +7,7 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
 
-public class SliceToTextFileExporter implements ExporterToTextFile {
+public final class SliceToTextFileExporter implements ExporterToTextFile {
   private final SliceTreeBuilder myBuilder;
   @NotNull private final UsageViewSettings myUsageViewSettings;
   private static final String myLineSeparator = System.lineSeparator();

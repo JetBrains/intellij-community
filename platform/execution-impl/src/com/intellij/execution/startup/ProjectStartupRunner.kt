@@ -65,20 +65,14 @@ internal class ProjectStartupRunner : ProjectActivity {
 }
 
 private class MyExecutor(executor: Executor, configuration: RunnerAndConfigurationSettings, private val alarm: Alarm) : Runnable {
-  private val environment: ExecutionEnvironment
-  private val project: Project
+  private val environment = create(executor, configuration).contentToReuse(null).dataContext(null).activeTarget().build()
+  private val project = configuration.getConfiguration().getProject()
   private var count = ATTEMPTS
-  private val name: String
+  private val name = configuration.getName()
 
   companion object {
     const val ATTEMPTS: Int = 10
     const val PAUSE: Long = 300
-  }
-
-  init {
-    name = configuration.getName()
-    project = configuration.getConfiguration().getProject()
-    environment = create(executor, configuration).contentToReuse(null).dataContext(null).activeTarget().build()
   }
 
   override fun run() {

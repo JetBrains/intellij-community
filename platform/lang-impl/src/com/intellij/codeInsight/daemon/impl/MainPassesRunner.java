@@ -41,7 +41,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Function;
 
-public class MainPassesRunner {
+public final class MainPassesRunner {
   private static final Logger LOG = Logger.getInstance(MainPassesRunner.class);
   private final Project myProject;
   private final @NlsContexts.DialogTitle String myTitle;

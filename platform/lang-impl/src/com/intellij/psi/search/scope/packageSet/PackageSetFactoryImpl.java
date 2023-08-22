@@ -21,7 +21,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.ArrayList;
 import java.util.List;
 
-public class PackageSetFactoryImpl extends PackageSetFactory {
+public final class PackageSetFactoryImpl extends PackageSetFactory {
   private static final Logger LOG = Logger.getInstance(PackageSetFactoryImpl.class);
 
   public PackageSetFactoryImpl() {
@@ -69,7 +69,7 @@ public class PackageSetFactoryImpl extends PackageSetFactory {
     return new Parser(lexer).parse();
   }
 
-  private static class Parser {
+  private static final class Parser {
     private final Lexer myLexer;
 
     Parser(Lexer lexer) {

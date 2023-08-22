@@ -1330,7 +1330,7 @@ public class GlobalInspectionContextImpl extends GlobalInspectionContextEx {
     });
   }
 
-  public static class Wrappers {
+  public static final class Wrappers {
     @NotNull
     private final List<LocalInspectionToolWrapper> localWrappers;
     @NotNull
@@ -1366,7 +1366,7 @@ public class GlobalInspectionContextImpl extends GlobalInspectionContextEx {
     }
   }
 
-  static class InspectionPerformanceCollector extends CounterUsagesCollector {
+  static final class InspectionPerformanceCollector extends CounterUsagesCollector {
     private static final EventLogGroup GROUP = new EventLogGroup("inspection.performance", 3);
 
     static final LongEventField TOTAL_DURATION = new LongEventField("total_duration_ms");

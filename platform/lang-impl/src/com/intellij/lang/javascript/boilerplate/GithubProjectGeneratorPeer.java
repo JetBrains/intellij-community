@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.lang.javascript.boilerplate;
 
 import com.intellij.BundleBase;
@@ -12,7 +12,6 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.platform.WebProjectGenerator;
 import com.intellij.platform.templates.github.GithubTagInfo;
 import com.intellij.ui.SimpleListCellRenderer;
-import com.intellij.util.ObjectUtils;
 import com.intellij.util.ui.ReloadableComboBoxPanel;
 import com.intellij.util.ui.ReloadablePanel;
 import org.jetbrains.annotations.NotNull;
@@ -21,7 +20,7 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.util.*;
 
-public class GithubProjectGeneratorPeer implements WebProjectGenerator.GeneratorPeer<GithubTagInfo> {
+public final class GithubProjectGeneratorPeer implements WebProjectGenerator.GeneratorPeer<GithubTagInfo> {
 
   public static String getGithubZipballUrl(String ghUserName,String ghRepoName, String branch) {
     return String.format("https://github.com/%s/%s/zipball/%s", ghUserName, ghRepoName, branch);

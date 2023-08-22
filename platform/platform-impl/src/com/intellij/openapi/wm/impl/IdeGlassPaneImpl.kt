@@ -80,28 +80,28 @@ class IdeGlassPaneImpl : JComponent, IdeGlassPaneEx, IdeEventQueue.EventDispatch
 
     // workaround to fix cursor when some semi-transparent 'highlighting area' overrides it to default
     isEnabled = false
-    if (AppMode.isHeadless() ||
-        loadingState == null ||
-        loadingState.done.isCompleted ||
-        ApplicationManager.getApplication().isHeadlessEnvironment) {
+
+    if (AppMode.isHeadless() || ApplicationManager.getApplication().isHeadlessEnvironment) {
       isVisible = false
-      installPainters()
+    }
+    else if (loadingState == null || loadingState.done.isCompleted) {
+      isVisible = false
+      hideSplash()
+    }
+    else if (hasSplash()) {
+      loadingState.done.invokeOnCompletion {
+        coroutineScope.launch(RawSwingDispatcher) {
+          hideSplash()
+        }
+      }
     }
     else {
-      if (hasSplash()) {
-        loadingState.done.invokeOnCompletion {
-          coroutineScope.launch(RawSwingDispatcher) {
-            hideSplash()
-          }
-        }
-      }
-      else {
-        loadingIndicator = IdePaneLoadingLayer(pane = this, loadingState, coroutineScope = coroutineScope) {
-          loadingIndicator = null
-          applyActivationState()
-        }
+      hideSplash()
+      loadingIndicator = IdePaneLoadingLayer(pane = this, loadingState, coroutineScope = coroutineScope) {
+        loadingIndicator = null
         applyActivationState()
       }
+      applyActivationState()
     }
   }
 

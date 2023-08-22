@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.webcore.packaging;
 
 import com.intellij.CommonBundle;
@@ -603,7 +603,7 @@ public class InstalledPackagesPanel extends JPanel {
     return version != null ? version : "";
   }
 
-  private class MyTableCellRenderer extends DefaultTableCellRenderer {
+  private final class MyTableCellRenderer extends DefaultTableCellRenderer {
     @Override
     public Component getTableCellRendererComponent(final JTable table, final Object value, final boolean isSelected,
                                                    final boolean hasFocus, final int row, final int column) {

@@ -3,11 +3,14 @@ package com.intellij.codeInsight.inline.completion.listeners
 
 import com.intellij.codeInsight.completion.CompletionUtil
 import com.intellij.codeInsight.inline.completion.InlineCompletionContext.Companion.resetInlineCompletionContext
+import com.intellij.codeInsight.inline.completion.InlineCompletionContext.Companion.resetInlineCompletionContextWithPlaceholder
 import com.intellij.codeInsight.inline.completion.InlineCompletionHandler
 import com.intellij.codeWithMe.ClientId
 import com.intellij.codeWithMe.isCurrent
 import com.intellij.openapi.editor.ClientEditorManager
 import com.intellij.openapi.editor.Editor
+import com.intellij.openapi.editor.event.CaretEvent
+import com.intellij.openapi.editor.event.CaretListener
 import com.intellij.openapi.editor.event.DocumentEvent
 import com.intellij.openapi.editor.event.DocumentListener
 import com.intellij.openapi.editor.ex.FocusChangeListener
@@ -57,5 +60,18 @@ open class InlineCompletionKeyListener(private val editor: Editor) : KeyAdapter(
 class InlineCompletionFocusListener : FocusChangeListener {
   override fun focusLost(editor: Editor) {
     editor.resetInlineCompletionContext()
+  }
+}
+
+@ApiStatus.Experimental
+class InlineCaretListener(private val editor: Editor) : CaretListener {
+  override fun caretPositionChanged(event: CaretEvent) {
+    if (isSimple(event)) return
+
+    editor.resetInlineCompletionContextWithPlaceholder()
+  }
+
+  private fun isSimple(event: CaretEvent): Boolean {
+    return event.oldPosition.line == event.newPosition.line && event.oldPosition.column + 1 == event.newPosition.column
   }
 }

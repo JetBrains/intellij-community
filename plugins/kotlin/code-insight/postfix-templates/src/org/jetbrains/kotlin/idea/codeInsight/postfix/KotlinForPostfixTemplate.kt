@@ -104,8 +104,8 @@ internal class KotlinForLoopNumbersPostfixTemplate(
     provider: PostfixTemplateProvider
 ) : AbstractKotlinForLoopNumbersPostfixTemplate(
     @Suppress("SpellCheckingInspection") "fori",
-    "for (i in 0..number)",
-    "for (\$index$ in 0..\$expr$) {\n    \$END$\n}",
+    "for (i in 0 until number)",
+    "for (\$index$ in 0 until \$expr$) {\n    \$END$\n}",
     provider
 )
 

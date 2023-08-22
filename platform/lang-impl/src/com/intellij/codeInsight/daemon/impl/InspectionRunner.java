@@ -74,7 +74,7 @@ final class InspectionRunner {
     mySuppressedElements = suppressedElements;
   }
 
-  static class InspectionContext {
+  static final class InspectionContext {
     private InspectionContext(@NotNull LocalInspectionToolWrapper tool,
                               @NotNull InspectionProblemHolder holder,
                               @NotNull PsiElementVisitor visitor) {
@@ -429,7 +429,7 @@ final class InspectionRunner {
     }
   }
 
-  static class InspectionProblemHolder extends ProblemsHolder {
+  static final class InspectionProblemHolder extends ProblemsHolder {
     private final @NotNull LocalInspectionToolWrapper myToolWrapper;
     private final InspectionProfileWrapper myProfileWrapper;
     private final BiPredicate<? super ProblemDescriptor, ? super LocalInspectionToolWrapper> applyIncrementallyCallback;

@@ -4,8 +4,6 @@ package com.intellij.openapi.progress;
 import com.intellij.concurrency.ThreadContext;
 import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.util.ThrowableComputable;
-import kotlin.coroutines.CoroutineContext;
-import kotlinx.coroutines.CompletableJob;
 import kotlinx.coroutines.Job;
 import org.jetbrains.annotations.ApiStatus.Internal;
 import org.jetbrains.annotations.NotNull;
@@ -24,11 +22,6 @@ public final class Cancellation {
   @VisibleForTesting
   public static @Nullable Job currentJob() {
     return ThreadContext.currentThreadContext().get(Job.Key);
-  }
-
-  public static @Nullable CompletableJob getJob(@NotNull CoroutineContext context) {
-    Job job = context.get(Job.Key);
-    return job instanceof CompletableJob ? (CompletableJob)job : null;
   }
 
   public static void checkCancelled() {

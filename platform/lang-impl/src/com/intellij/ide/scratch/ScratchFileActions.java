@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.scratch;
 
 import com.intellij.icons.AllIcons;
@@ -65,7 +65,7 @@ public final class ScratchFileActions {
   }
 
 
-  public static class NewFileAction extends DumbAwareAction {
+  public static final class NewFileAction extends DumbAwareAction {
     private static final String ACTION_ID = "NewScratchFile";
 
     private final NotNullLazyValue<@Nls String> myActionText = NotNullLazyValue.lazy(() -> {
@@ -173,7 +173,7 @@ public final class ScratchFileActions {
     }
   }
 
-  public static class NewBufferAction extends DumbAwareAction {
+  public static final class NewBufferAction extends DumbAwareAction {
 
     @Override
     public @NotNull ActionUpdateThread getActionUpdateThread() {
@@ -389,7 +389,7 @@ public final class ScratchFileActions {
     }
   }
 
-  public static class ShowFilesPopupAction extends DumbAwareAction {
+  public static final class ShowFilesPopupAction extends DumbAwareAction {
     @Override
     public @NotNull ActionUpdateThread getActionUpdateThread() {
       return ActionUpdateThread.BGT;
@@ -448,7 +448,7 @@ public final class ScratchFileActions {
     }
   }
 
-  public static class ExportToScratchAction extends DumbAwareAction {
+  public static final class ExportToScratchAction extends DumbAwareAction {
     {
       setEnabledInModalContext(true);
     }

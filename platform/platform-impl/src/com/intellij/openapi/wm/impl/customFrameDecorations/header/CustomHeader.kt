@@ -6,8 +6,6 @@ import com.intellij.accessibility.AccessibilityUtils
 import com.intellij.icons.AllIcons
 import com.intellij.ide.ui.UISettings
 import com.intellij.ide.ui.customization.CustomActionsSchema
-import com.intellij.internal.inspector.ConfigureCustomSizeAction.CustomSizeModel.height
-import com.intellij.internal.inspector.ConfigureCustomSizeAction.CustomSizeModel.width
 import com.intellij.openapi.MnemonicHelper
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.ui.JBPopupMenu
@@ -406,8 +404,8 @@ internal class CustomFrameTopBorder(@JvmField val isTopNeeded: () -> Boolean = {
     val borderInsets = getBorderInsets(header)
 
     val thickness = calculateWindowBorderThicknessInLogicalPx()
-    header.repaint(0, 0, width, ceil(thickness).toInt())
-    header.repaint(0, height - borderInsets.bottom, width, borderInsets.bottom)
+    header.repaint(0, 0, header.width, ceil(thickness).toInt())
+    header.repaint(0, header.height - borderInsets.bottom, header.width, borderInsets.bottom)
   }
 
   private val shouldDrawTopBorder: Boolean

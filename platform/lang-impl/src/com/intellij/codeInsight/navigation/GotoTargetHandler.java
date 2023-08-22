@@ -321,7 +321,7 @@ public abstract class GotoTargetHandler implements CodeInsightActionHandler {
     void execute();
   }
 
-  public static class GotoData {
+  public static final class GotoData {
     @NotNull public final PsiElement source;
     public PsiElement[] targets;
     public final List<AdditionalAction> additionalActions;
@@ -402,7 +402,7 @@ public abstract class GotoTargetHandler implements CodeInsightActionHandler {
     }
   }
 
-  private static class DefaultPsiElementListCellRenderer extends PsiElementListCellRenderer {
+  private static final class DefaultPsiElementListCellRenderer extends PsiElementListCellRenderer {
     @Override
     public String getElementText(final PsiElement element) {
       if (element instanceof PsiNamedElement) {

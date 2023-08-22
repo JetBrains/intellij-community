@@ -449,7 +449,7 @@ public final class JavaCompletionContributor extends CompletionContributor imple
             MethodTags.TagMatcher tagMatcher = new MethodTags.TagMatcher(matcher);
             List<LookupElement> proposedElements = completeReference(parameters, parentRef, session, expectedInfos, tagMatcher::prefixMatches);
             refSuggestions = ContainerUtil.map(proposedElements, element -> {
-              LookupElement withTags = MethodTags.wrapLookupWithTags(element, matcher::prefixMatches, matcher.getPrefix());
+              LookupElement withTags = MethodTags.wrapLookupWithTags(element, matcher::prefixMatches, matcher.getPrefix(), parameters.getCompletionType());
               return withTags != null ? withTags : element;
             });
           }

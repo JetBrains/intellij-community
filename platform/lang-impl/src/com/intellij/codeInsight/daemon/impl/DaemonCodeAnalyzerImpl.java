@@ -832,7 +832,7 @@ public final class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx implement
     UnresolvedReferenceQuickFixUpdater.getInstance(project).waitQuickFixesSynchronously(file, editor, relevantInfos);
   }
 
-  static class HighlightByOffsetProcessor implements Processor<HighlightInfo> {
+  static final class HighlightByOffsetProcessor implements Processor<HighlightInfo> {
     private final List<HighlightInfo> foundInfoList = new SmartList<>();
     private final boolean highestPriorityOnly;
 

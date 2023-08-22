@@ -9,7 +9,7 @@ import com.intellij.util.indexing.roots.origin.IndexingSourceRootHolder;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public class ExternalEntityIndexableIteratorImpl extends SourceRootHolderIteratorBase {
+public final class ExternalEntityIndexableIteratorImpl extends SourceRootHolderIteratorBase {
 
   public ExternalEntityIndexableIteratorImpl(@NotNull EntityReference<?> entityReference,
                                              @NotNull IndexingSourceRootHolder roots,

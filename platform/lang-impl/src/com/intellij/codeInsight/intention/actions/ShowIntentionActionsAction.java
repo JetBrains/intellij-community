@@ -21,10 +21,10 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.util.PsiUtilBase;
 import org.jetbrains.annotations.NotNull;
 
-public class ShowIntentionActionsAction extends BaseCodeInsightAction implements HintManagerImpl.ActionToIgnore,
-                                                                                 LightEditCompatible,
-                                                                                 DumbAware,
-                                                                                 ActionRemoteBehaviorSpecification.Frontend {
+public final class ShowIntentionActionsAction extends BaseCodeInsightAction implements HintManagerImpl.ActionToIgnore,
+                                                                                       LightEditCompatible,
+                                                                                       DumbAware,
+                                                                                       ActionRemoteBehaviorSpecification.Frontend {
   public ShowIntentionActionsAction() {
     setEnabledInModalContext(true);
   }

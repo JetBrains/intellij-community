@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.codeInsight.lookup.impl;
 
@@ -698,7 +698,7 @@ public final class LookupCellRenderer implements ListCellRenderer<LookupElement>
     }
   }
 
-  private class LookupPanel extends SelectablePanel {
+  private final class LookupPanel extends SelectablePanel {
     boolean myUpdateExtender;
     LookupPanel() {
       setLayout(new BorderLayout());

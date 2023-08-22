@@ -3,6 +3,7 @@
 package org.jetbrains.intellij.build
 
 import io.ktor.client.HttpClient
+import io.ktor.client.HttpClientConfig
 import io.ktor.client.call.body
 import io.ktor.client.engine.cio.CIO
 import io.ktor.client.plugins.HttpRequestRetry
@@ -225,11 +226,23 @@ private suspend fun downloadFileToCacheLocation(url: String,
           .resolve("${target.fileName}-${(Instant.now().epochSecond - 1634886185).toString(36)}-${Instant.now().nano.toString(36)}".take(255))
         Files.deleteIfExists(tempFile)
         try {
-          // we have custom error handler
-          val clientExpectSuccess = false
+          // each io.ktor.client.HttpClient.config call creates a new client
+          // extract common configuration to prevent excessive client creation
+          val commonConfig: HttpClientConfig<*>.() -> Unit = {
+            expectSuccess = false // we have custom error handler
+
+            install(ContentEncoding) {
+              // Any `Content-Encoding` will drop `Content-Length` header in nginx responses,
+              // yet we rely on that header in `downloadFileToCacheLocation`.
+              // Hence, we override `ContentEncoding` plugin config from `httpClient` with zero weights.
+              deflate(0.0F)
+              gzip(0.0F)
+            }
+          }
+
           val effectiveClient = when {
             token != null -> httpClient.value.config {
-              expectSuccess = clientExpectSuccess
+              commonConfig()
               Auth {
                 bearer {
                   loadTokens {
@@ -240,7 +253,7 @@ private suspend fun downloadFileToCacheLocation(url: String,
             }
 
             username != null && password != null -> httpClient.value.config {
-              expectSuccess = clientExpectSuccess
+              commonConfig()
               Auth {
                 basic {
                   credentials {
@@ -251,9 +264,7 @@ private suspend fun downloadFileToCacheLocation(url: String,
               }
             }
 
-            else -> httpClient.value.config {
-              expectSuccess = clientExpectSuccess
-            }
+            else -> httpClient.value.config(commonConfig)
           }
 
           val response = effectiveClient.use { client ->

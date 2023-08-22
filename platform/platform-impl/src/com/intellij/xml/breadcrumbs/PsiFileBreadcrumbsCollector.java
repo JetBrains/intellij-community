@@ -51,11 +51,6 @@ public class PsiFileBreadcrumbsCollector extends FileBreadcrumbsCollector {
   }
 
   @Override
-  public boolean isShownForFile(@NotNull Editor editor, @NotNull VirtualFile file) {
-    return findProvider(file, editor.getProject(), BreadcrumbsForceShownSettings.getForcedShown(editor)) != null;
-  }
-
-  @Override
   public void watchForChanges(@NotNull VirtualFile file,
                               @NotNull Editor editor,
                               @NotNull Disposable disposable,

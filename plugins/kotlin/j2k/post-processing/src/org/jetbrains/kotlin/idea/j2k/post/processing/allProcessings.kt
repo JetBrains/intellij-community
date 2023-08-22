@@ -24,7 +24,6 @@ private val errorsFixingDiagnosticBasedPostProcessingGroup = DiagnosticBasedPost
     diagnosticBasedProcessing(SmartCastImpossibleExclExclFixFactory, Errors.SMARTCAST_IMPOSSIBLE),
     diagnosticBasedProcessing(ReplacePrimitiveCastWithNumberConversionFix, Errors.CAST_NEVER_SUCCEEDS),
     diagnosticBasedProcessing(ReturnTypeMismatchOnOverrideFactory, Errors.RETURN_TYPE_MISMATCH_ON_OVERRIDE),
-    diagnosticBasedProcessing(RemoveModifierFixBase.createRemoveProjectionFactory(isRedundant = true), Errors.REDUNDANT_PROJECTION),
     diagnosticBasedProcessing(AddModifierFixFE10.createFactory(KtTokens.OVERRIDE_KEYWORD), Errors.VIRTUAL_MEMBER_HIDDEN),
     invisibleMemberDiagnosticBasedProcessing(MakeVisibleFactory, Errors.INVISIBLE_MEMBER),
     diagnosticBasedProcessing(RemoveModifierFixBase.removeNonRedundantModifier, Errors.WRONG_MODIFIER_TARGET),
@@ -156,6 +155,11 @@ private val inferringTypesPostProcessingGroup = NamedPostProcessingGroup(
 private val cleaningUpCodePostProcessingGroup = NamedPostProcessingGroup(
     KotlinNJ2KServicesBundle.message("processing.step.cleaning.up.code"),
     listOf(
+        DiagnosticBasedPostProcessingGroup(
+            // We need to remove the redundant projection before `ConvertGettersAndSettersToPropertyProcessing`,
+            // so that the property and accessor types wouldn't differ in projections.
+            diagnosticBasedProcessing(RemoveModifierFixBase.createRemoveProjectionFactory(isRedundant = true), Errors.REDUNDANT_PROJECTION),
+        ),
         ConvertGettersAndSettersToPropertyProcessing(),
         InspectionLikeProcessingGroup(RemoveExplicitAccessorInspectionBasedProcessing()),
         MergePropertyWithConstructorParameterProcessing(),

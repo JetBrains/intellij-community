@@ -12,7 +12,7 @@ import org.jetbrains.intellij.build.dependencies.BuildDependenciesLogging.info
 import org.jetbrains.intellij.build.dependencies.BuildDependenciesLogging.verbose
 import org.jetbrains.intellij.build.dependencies.BuildDependenciesLogging.warn
 import org.jetbrains.intellij.build.dependencies.BuildDependenciesUtil.cleanDirectory
-import org.jetbrains.intellij.build.dependencies.TeamCityHelper.isUnderTeamCity
+import org.jetbrains.intellij.build.dependencies.DotNetPackagesCredentials.setupSystemCredentials
 import org.jetbrains.jps.api.CmdlineRemoteProto.Message.ControllerMessage.ParametersMessage.TargetTypeBuildScope
 import org.jetbrains.jps.api.GlobalOptions
 import org.jetbrains.jps.build.Standalone
@@ -78,7 +78,7 @@ class JpsBuild(communityRoot: BuildDependenciesCommunityRoot, private val myMode
     val spaceUsername = System.getProperty(BuildDependenciesConstants.JPS_AUTH_SPACE_USERNAME)
     val spacePassword = System.getProperty(BuildDependenciesConstants.JPS_AUTH_SPACE_PASSWORD)
     if (spaceUsername == null || spaceUsername.isBlank() || spacePassword == null || spacePassword.isBlank()) {
-      if (isUnderTeamCity) {
+      if (!setupSystemCredentials()) {
         warn("Space credentials are not provided via -D" + BuildDependenciesConstants.JPS_AUTH_SPACE_USERNAME
           + " and -D" + BuildDependenciesConstants.JPS_AUTH_SPACE_PASSWORD
           + ". Private Space Maven dependencies, if not available locally, will fail to be resolved.")

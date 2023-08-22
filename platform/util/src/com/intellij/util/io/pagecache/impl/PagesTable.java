@@ -103,7 +103,7 @@ public final class PagesTable {
           //RC: table content could change between alivePagesCount calculation, and actual rehash under
           //    the lock: more pages could be inserted into a table, so alivePagesCount is an underestimation.
           //    It could be so huge an underestimation that shrinking is not appropriate at all -- e.g.
-          //    there will be not enough slots in a table, if shrinked. We deal with it speculatively: try
+          //    there will be not enough slots in a table, if shrunk. We deal with it speculatively: try
           //    to rehashToSize(), and cancel resize if NoFreeSpaceException is thrown:
           return false;
         }

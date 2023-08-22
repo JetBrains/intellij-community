@@ -18,7 +18,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.ArrayList;
 import java.util.List;
 
-public class FormatterBasedLineIndentInfoBuilder {
+public final class FormatterBasedLineIndentInfoBuilder {
   private static final int MAX_NEW_LINE_BLOCKS_TO_PROCESS = 500;
 
   private final ProgressIndicator myProgressIndicator;

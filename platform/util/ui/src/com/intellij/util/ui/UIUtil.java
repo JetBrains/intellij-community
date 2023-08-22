@@ -1945,7 +1945,7 @@ public final class UIUtil {
         }
       }
       catch (Throwable e) {
-        // this might happen e.g. if we're running under newer runtime, forbidding access to sun.font package
+        // this might happen e.g., if we're running under newer runtime, forbidding access to sun.font package
         getLogger().warn(e);
         // this might not give the same result, but we have no choice here
         return StartupUiUtil.getFontWithFallback(font.getFamily(), font.getStyle(), font.getSize());
@@ -1955,10 +1955,6 @@ public final class UIUtil {
   }
 
   public static @NotNull FontUIResource getFontWithFallback(@Nullable String familyName, @JdkConstants.FontStyle int style, int size) {
-    return StartupUiUtil.getFontWithFallback(familyName, style, size);
-  }
-
-  public static @NotNull FontUIResource getFontWithFallback(@Nullable String familyName, @JdkConstants.FontStyle int style, float size) {
     return StartupUiUtil.getFontWithFallback(familyName, style, size);
   }
 

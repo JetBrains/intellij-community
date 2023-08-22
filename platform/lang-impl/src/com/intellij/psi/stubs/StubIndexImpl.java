@@ -308,7 +308,7 @@ public final class StubIndexImpl extends StubIndexEx {
     return LOG;
   }
 
-  private static class StubIndexStorageLayout<K> implements VfsAwareIndexStorageLayout<K, Void> {
+  private static final class StubIndexStorageLayout<K> implements VfsAwareIndexStorageLayout<K, Void> {
     private final FileBasedIndexExtension<K, Void> myWrappedExtension;
     private final StubIndexKey<K, ?> myIndexKey;
 

@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.impl.dataRules;
 
 import com.intellij.openapi.actionSystem.CommonDataKeys;
@@ -9,7 +9,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiManager;
 import org.jetbrains.annotations.NotNull;
 
-public class PsiFileRule implements GetDataRule {
+public final class PsiFileRule implements GetDataRule {
   @Override
   public Object getData(@NotNull DataProvider dataProvider) {
     final PsiElement element = CommonDataKeys.PSI_ELEMENT.getData(dataProvider);

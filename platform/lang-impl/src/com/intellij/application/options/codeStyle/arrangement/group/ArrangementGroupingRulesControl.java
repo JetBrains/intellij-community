@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.application.options.codeStyle.arrangement.group;
 
 import com.intellij.application.options.codeStyle.arrangement.color.ArrangementColorsProvider;
@@ -23,7 +23,7 @@ import java.awt.*;
 import java.util.List;
 import java.util.*;
 
-public class ArrangementGroupingRulesControl extends JBTable {
+public final class ArrangementGroupingRulesControl extends JBTable {
 
   @NotNull public static final DataKey<ArrangementGroupingRulesControl> KEY = DataKey.create("Arrangement.Rule.Group.Control");
 
@@ -113,7 +113,7 @@ public class ArrangementGroupingRulesControl extends JBTable {
     return result;
   }
 
-  private static class MyRenderer implements TableCellRenderer {
+  private static final class MyRenderer implements TableCellRenderer {
     @Override
     public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
       if (value instanceof ArrangementGroupingComponent component) {
@@ -129,7 +129,7 @@ public class ArrangementGroupingRulesControl extends JBTable {
     }
   }
 
-  private static class MyEditor extends AbstractTableCellEditor {
+  private static final class MyEditor extends AbstractTableCellEditor {
 
     @Nullable Object myValue;
 

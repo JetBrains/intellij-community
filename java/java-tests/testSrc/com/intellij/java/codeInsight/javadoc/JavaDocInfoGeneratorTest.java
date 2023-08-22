@@ -281,13 +281,9 @@ public class JavaDocInfoGeneratorTest extends JavaCodeInsightTestCase {
   }
 
   public void testDumbMode() {
-    DumbServiceImpl.getInstance(myProject).setDumb(true);
-    try {
+    DumbServiceImpl.getInstance(myProject).runInDumbModeSynchronously(() -> {
       doTestAtCaret();
-    }
-    finally {
-      DumbServiceImpl.getInstance(myProject).setDumb(false);
-    }
+    });
   }
 
   public void testLibraryPackageDocumentation() {

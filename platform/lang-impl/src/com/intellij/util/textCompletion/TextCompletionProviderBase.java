@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.textCompletion;
 
 import com.intellij.codeInsight.completion.*;
@@ -100,7 +100,7 @@ public abstract class TextCompletionProviderBase<T> implements TextCompletionPro
                                                        @NotNull String prefix,
                                                        @NotNull CompletionResultSet result);
 
-  public class CompletionCharInsertHandler implements InsertHandler<LookupElement> {
+  public final class CompletionCharInsertHandler implements InsertHandler<LookupElement> {
     @Override
     public void handleInsert(@NotNull InsertionContext context, @NotNull LookupElement item) {
       context.setAddCompletionChar(mySeparators.contains(context.getCompletionChar()));

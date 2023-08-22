@@ -10,7 +10,7 @@ import org.jetbrains.annotations.NotNull;
 import java.util.Collection;
 import java.util.Collections;
 
-class ExcludeUrlIndexableEntityProvider implements IndexableEntityProvider.Enforced<ExcludeUrlEntity> {
+final class ExcludeUrlIndexableEntityProvider implements IndexableEntityProvider.Enforced<ExcludeUrlEntity> {
 
   @Override
   public @NotNull Class<ExcludeUrlEntity> getEntityClass() {

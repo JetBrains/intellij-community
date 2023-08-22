@@ -379,7 +379,7 @@ public final class ProjectTaskManagerImpl extends ProjectTaskManager {
     return run(createBuildTask(isIncrementalBuild, buildableElements));
   }
 
-  private static class DummyTaskRunner extends ProjectTaskRunner {
+  private static final class DummyTaskRunner extends ProjectTaskRunner {
     @Override
     public Promise<Result> run(@NotNull Project project,
                                @NotNull ProjectTaskContext context,

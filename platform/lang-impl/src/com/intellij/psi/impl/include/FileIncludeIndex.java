@@ -161,7 +161,7 @@ public final class FileIncludeIndex extends FileBasedIndexExtension<String, List
     return 6;
   }
 
-  private static class StringSetDescriptor implements KeyDescriptor<Set<String>> {
+  private static final class StringSetDescriptor implements KeyDescriptor<Set<String>> {
     @Override
     public int getHashCode(Set<String> value) {
       return value.hashCode();

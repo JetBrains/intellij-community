@@ -90,6 +90,11 @@ class InlineCompletionContext private constructor(val editor: Editor, private va
       }
     }
 
+    fun Editor.resetInlineCompletionContextWithPlaceholder(): Unit? = getInlineCompletionContextOrNull()?.let {
+      removeInlineCompletionContext()
+      Disposer.dispose(it)
+    }
+
     fun Editor.getInlineCompletionContextOrNull(): InlineCompletionContext? = getUserData(INLINE_COMPLETION_CONTEXT)
     fun Editor.removeInlineCompletionContext(): Unit = putUserData(INLINE_COMPLETION_CONTEXT, null)
     fun Editor.resetInlineCompletionContext(): Unit? = getInlineCompletionContextOrNull()?.let {

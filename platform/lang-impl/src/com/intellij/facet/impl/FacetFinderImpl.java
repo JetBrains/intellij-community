@@ -21,7 +21,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
-public class FacetFinderImpl extends FacetFinder {
+public final class FacetFinderImpl extends FacetFinder {
   private static final Logger LOG = Logger.getInstance(FacetFinderImpl.class);
   private final Map<FacetTypeId, AllFacetsOfTypeModificationTracker> myAllFacetTrackers = new HashMap<>();
   private final Map<FacetTypeId, CachedValue<Map<VirtualFile, List<Facet>>>> myCachedMaps =
@@ -105,7 +105,7 @@ public class FacetFinderImpl extends FacetFinder {
     return Collections.emptyList();
   }
 
-  private static class AllFacetsOfTypeModificationTracker<F extends Facet> extends SimpleModificationTracker implements Disposable, ProjectWideFacetListener<F> {
+  private static final class AllFacetsOfTypeModificationTracker<F extends Facet> extends SimpleModificationTracker implements Disposable, ProjectWideFacetListener<F> {
     AllFacetsOfTypeModificationTracker(final Project project, final FacetTypeId<F> type) {
       ProjectWideFacetListenersRegistry.getInstance(project).registerListener(type, this, this);
     }

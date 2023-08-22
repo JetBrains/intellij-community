@@ -2,7 +2,10 @@
 package com.intellij.platform.ide.customization
 
 import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.BuildNumber
 import com.intellij.util.Url
+import com.intellij.util.concurrency.annotations.RequiresEdt
 import org.jetbrains.annotations.ApiStatus
 
 /**
@@ -26,14 +29,14 @@ interface ExternalProductResourceUrls {
    * is available. Currently, there is no specification of that XML file format; you may use [the file](https://www.jetbrains.com/updates/updates.xml)
    * used by JetBrains IDEs as a reference.
    */
-  val updatesMetadataXmlUrl: String?
+  val updatesMetadataXmlUrl: Url?
 
   /**
-   * Returns the base part of a URL which can be used to download patches. If [a metadata][updatesMetadataXmlUrl] contains information about
-   * a patch which can be used to update to a new version, the name of the patch file will be appended to the returned value and the
-   * resulting URL will be used to download the patch file when user initiates update.
+   * Returns URL which can be used to download a patch from build [from] to build [to].
+   * This function is called only if [the metadata][updatesMetadataXmlUrl] contains information about a patch for these versions, 
+   * and a user initiates update.
    */
-  val basePatchDownloadUrl: String?
+  fun computePatchUrl(from: BuildNumber, to: BuildNumber): Url?
 
   /**
    * Returns a function which computes URL for bug reporting.
@@ -67,6 +70,12 @@ interface ExternalProductResourceUrls {
    */
   val feedbackReporter: FeedbackReporter?
     get() = null
+
+  /**
+   * Returns URL of the product's download page. It will be shown in the browser if automatic downloading isn't available for some reason.
+   */
+  val downloadPageUrl: Url?
+    get() = null
 }
 
 /**
@@ -88,4 +97,15 @@ interface FeedbackReporter {
    * extension point.
    */
   fun feedbackFormUrl(description: String): Url
+
+  /**
+   * Override this function to show a custom form when "Submit Feedback" action is invoked or when the IDE requests a user to provide 
+   * feedback during the evaluation period.
+   * @param requestedForEvaluation `true` if the form is shown by the IDE during the evaluation period and `false` if user explicitly 
+   * invoked "Submit Feedback" action.  
+   * @return `true` if the custom form was shown, and `false` otherwise;
+   * in the latter case, the default way with opening [feedbackFormUrl] in the browser will be used.
+   */
+  @RequiresEdt
+  fun showFeedbackForm(project: Project?, requestedForEvaluation: Boolean): Boolean = false
 }

@@ -168,6 +168,7 @@ abstract class KotlinDescriptorTestCaseWithStepping : KotlinDescriptorTestCase()
 
         when (instruction.kind) {
             SteppingInstructionKind.StepInto -> loop(instruction.arg) { doStepInto(false, null) }
+            SteppingInstructionKind.StepIntoIgnoreFilters -> loop(instruction.arg) { doStepInto(true, null) }
             SteppingInstructionKind.StepOut -> loop(instruction.arg) { doStepOut() }
             SteppingInstructionKind.StepOver -> loop(instruction.arg) { doStepOver() }
             SteppingInstructionKind.ForceStepOver -> loop(instruction.arg) { doStepOver(ignoreBreakpoints = true) }

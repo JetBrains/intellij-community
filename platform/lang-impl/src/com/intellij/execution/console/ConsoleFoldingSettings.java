@@ -1,9 +1,9 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.console;
 
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.components.SettingsCategory;
 import com.intellij.openapi.components.PersistentStateComponent;
+import com.intellij.openapi.components.SettingsCategory;
 import com.intellij.openapi.components.State;
 import com.intellij.openapi.components.Storage;
 import com.intellij.openapi.extensions.ExtensionPointListener;
@@ -133,7 +133,7 @@ public final class ConsoleFoldingSettings implements PersistentStateComponent<Co
 
   }
 
-  public static class MyBean {
+  public static final class MyBean {
     public List<String> addedPositive = new ArrayList<>();
     public List<String> addedNegative = new ArrayList<>();
     public List<String> removedPositive = new ArrayList<>();

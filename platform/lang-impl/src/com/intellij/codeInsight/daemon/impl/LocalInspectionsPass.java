@@ -480,7 +480,7 @@ public class LocalInspectionsPass extends ProgressableTextEditorHighlightingPass
     return Collections.unmodifiableList(myInfos);
   }
 
-  public static class InspectionHighlightInfoType extends HighlightInfoType.HighlightInfoTypeImpl {
+  public static final class InspectionHighlightInfoType extends HighlightInfoType.HighlightInfoTypeImpl {
     InspectionHighlightInfoType(@NotNull HighlightInfoType level, @NotNull PsiElement element) {
       super(level.getSeverity(element), level.getAttributesKey());
     }

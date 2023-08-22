@@ -78,7 +78,7 @@ public final class BegMenuItemUI extends BasicMenuItemUI {
     selectionBackground = JBColor.namedColor("Menu.selectionBackground", UIUtil.getListSelectionBackground(true));
   }
 
-  private static boolean isSelected(JMenuItem item) {
+  static boolean isSelected(JMenuItem item) {
     if (item == null) return false;
     ButtonModel model = item.getModel();
     if (model == null) return false;

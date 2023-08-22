@@ -15,6 +15,8 @@ import java.util.concurrent.atomic.AtomicBoolean
 import java.util.function.BiConsumer
 import java.util.function.Consumer
 import kotlin.coroutines.CoroutineContext
+import kotlin.coroutines.resume
+import kotlin.coroutines.resumeWithException
 
 open class AsyncPromise<T> private constructor(internal val f: CompletableFuture<T>,
                                                private val hasErrorHandler: AtomicBoolean,
@@ -146,18 +148,18 @@ open class AsyncPromise<T> private constructor(internal val f: CompletableFuture
   }
 
   private inline fun <T> wrapWithCancellationPropagation(producer: (CoroutineContext) -> CompletableFuture<T>): CompletableFuture<T> {
-    val (childContext, childJob) = createChildContext()
+    val (childContext, childContinuation) = createChildContext()
     val capturingFuture = producer(childContext)
     return capturingFuture.whenComplete { _, result ->
       when (result) {
-        null -> childJob?.complete()
-        is ProcessCanceledException -> childJob?.cancel(CancellationException())
+        null -> childContinuation?.resume(Unit)
+        is ProcessCanceledException -> childContinuation?.resumeWithException(CancellationException())
         is CompletionException -> when (val cause = result.cause) {
-          is CancellationException -> childJob?.cancel(cause)
-          null -> childJob?.complete()
-          else -> childJob?.completeExceptionally(cause)
+          is CancellationException -> childContinuation?.resumeWithException(cause)
+          null -> childContinuation?.resume(Unit)
+          else -> childContinuation?.resumeWithException(cause)
         }
-        else -> childJob?.completeExceptionally(result)
+        else -> childContinuation?.resumeWithException(result)
       }
     }
   }

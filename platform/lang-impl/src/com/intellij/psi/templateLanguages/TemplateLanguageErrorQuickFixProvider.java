@@ -18,7 +18,7 @@ import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
-public class TemplateLanguageErrorQuickFixProvider implements ErrorQuickFixProvider{
+public final class TemplateLanguageErrorQuickFixProvider implements ErrorQuickFixProvider{
 
   @Override
   public void registerErrorQuickFix(final @NotNull PsiErrorElement errorElement, final @NotNull HighlightInfo.Builder highlightInfo) {

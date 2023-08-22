@@ -21,7 +21,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 
-public class CleanupInspectionUtilImpl implements CleanupInspectionUtil {
+public final class CleanupInspectionUtilImpl implements CleanupInspectionUtil {
   private final static Logger LOG = Logger.getInstance(CleanupInspectionUtilImpl.class);
 
   @Override
@@ -61,7 +61,7 @@ public class CleanupInspectionUtilImpl implements CleanupInspectionUtil {
     return applyFixesNoSort(project, presentationText, descriptions, quickfixClass, startInWriteAction, true);
   }
 
-  private static class PerformBatchFixesTask extends AbstractPerformFixesTask {
+  private static final class PerformBatchFixesTask extends AbstractPerformFixesTask {
     private final List<ProblemDescriptor> myBatchModeDescriptors = new ArrayList<>();
     private boolean myApplied;
 

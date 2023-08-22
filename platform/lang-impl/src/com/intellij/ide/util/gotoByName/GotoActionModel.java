@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.ide.util.gotoByName;
 
@@ -533,7 +533,7 @@ public final class GotoActionModel implements ChooseByNameModel, Comparator<Obje
     return true;
   }
 
-  public static class GroupMapping implements Comparable<GroupMapping> {
+  public static final class GroupMapping implements Comparable<GroupMapping> {
     private final boolean myShowNonPopupGroups;
     private final List<List<ActionGroup>> myPaths = new ArrayList<>();
 
@@ -763,7 +763,7 @@ public final class GotoActionModel implements ChooseByNameModel, Comparator<Obje
   }
 
   @DirtyUI
-  public static class GotoActionListCellRenderer extends DefaultListCellRenderer {
+  public static final class GotoActionListCellRenderer extends DefaultListCellRenderer {
     public static final Border TOGGLE_BUTTON_BORDER = JBUI.Borders.empty(0, 2);
     private final Function<? super OptionDescription, @ActionText String> myGroupNamer;
     private final boolean myUseListFont;

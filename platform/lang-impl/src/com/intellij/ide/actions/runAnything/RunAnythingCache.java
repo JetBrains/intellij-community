@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.actions.runAnything;
 
 import com.intellij.ide.actions.runAnything.activity.RunAnythingProvider;
@@ -21,7 +21,7 @@ import java.util.Map;
 import java.util.stream.Collectors;
 
 @State(name = "RunAnythingCache", storages = @Storage(StoragePathMacros.WORKSPACE_FILE))
-public class RunAnythingCache implements PersistentStateComponent<RunAnythingCache.State> {
+public final class RunAnythingCache implements PersistentStateComponent<RunAnythingCache.State> {
   private final State mySettings = new State();
 
   public static RunAnythingCache getInstance(Project project) {
@@ -80,7 +80,7 @@ public class RunAnythingCache implements PersistentStateComponent<RunAnythingCac
       .forEach(provider -> settings.myKeys.put(provider.getCompletionGroupTitle(), true));
   }
 
-  public static class State {
+  public static final class State {
     @XMap(entryTagName = "visibility", keyAttributeName = "group", valueAttributeName = "flag")
     @NotNull private final Map<String, Boolean> myKeys =
       StreamEx.of(RunAnythingProvider.EP_NAME.getExtensions())

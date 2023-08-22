@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.services;
 
 import com.intellij.execution.services.ServiceModel.ServiceViewItem;
@@ -32,7 +32,7 @@ import java.util.List;
 
 import static com.intellij.execution.services.ServiceViewDragHelper.getTheOnlyRootContributor;
 
-class ServiceViewActionProvider {
+final class ServiceViewActionProvider {
   @NonNls private static final String SERVICE_VIEW_ITEM_TOOLBAR = "ServiceViewItemToolbar";
   @NonNls static final String SERVICE_VIEW_ITEM_POPUP = "ServiceViewItemPopup";
   @NonNls private static final String SERVICE_VIEW_TREE_TOOLBAR = "ServiceViewTreeToolbar";
@@ -159,7 +159,7 @@ class ServiceViewActionProvider {
     return (ServiceView)contextComponent;
   }
 
-  private static class ServiceViewTreeExpander extends DefaultTreeExpander {
+  private static final class ServiceViewTreeExpander extends DefaultTreeExpander {
     private boolean myFlat;
 
     ServiceViewTreeExpander(JTree tree) {
@@ -238,14 +238,14 @@ class ServiceViewActionProvider {
     return group == null ? AnAction.EMPTY_ARRAY : group.getChildren(e);
   }
 
-  public static class ItemToolbarActionGroup extends ActionGroup {
+  public static final class ItemToolbarActionGroup extends ActionGroup {
     @Override
     public AnAction @NotNull [] getChildren(@Nullable AnActionEvent e) {
       return doGetActions(e, true);
     }
   }
 
-  public static class ItemPopupActionGroup extends ActionGroup {
+  public static final class ItemPopupActionGroup extends ActionGroup {
     @Override
     public AnAction @NotNull [] getChildren(@Nullable AnActionEvent e) {
       return doGetActions(e, false);

@@ -1713,26 +1713,31 @@ public abstract class DialogWrapper {
   }
 
   private void doShow() {
-    if (UiInterceptors.tryIntercept(this)) return;
+    if (UiInterceptors.tryIntercept(this)) {
+      return;
+    }
 
     ensureEventDispatchThread();
     registerKeyboardShortcuts();
 
     Disposable uiParent = ClientDisposableProvider.getCurrentDisposable();
-    if (uiParent != null) { // may be null if no app yet (license agreement)
-      Disposer.register(uiParent, myDisposable); // ensure everything is disposed on app quit
+    // may be null if no app yet (license agreement)
+    if (uiParent != null) {
+      // ensure everything is disposed on app quit
+      Disposer.register(uiParent, myDisposable);
     }
 
     Window window = myPeer.getWindow();
     if (window != null) {
       ClientProperty.put(window, KEEP_POPUPS_OPEN, myKeepPopupsOpen);
     }
+
     myPeer.show();
   }
 
   /**
-   * @return Location in absolute coordinates which is used when dialog has no dimension service key or no position was stored yet.
-   * Can return null. In that case dialog will be centered relative to its owner.
+   * @return Location in absolute coordinates which is used when the dialog has no dimension service key or no position was stored yet.
+   * Can return null. In that case, the dialog will be centered relative to its owner.
    */
   public @Nullable Point getInitialLocation() {
     if (LOG.isDebugEnabled()) {

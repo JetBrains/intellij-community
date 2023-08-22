@@ -43,7 +43,7 @@ public final class CompletionServiceImpl extends BaseCompletionService {
   private static final CompletionPhaseHolder DEFAULT_PHASE_HOLDER = new CompletionPhaseHolder(CompletionPhase.NoCompletion, null);
   private final IJTracer myCompletionTracer = TelemetryManager.getInstance().getTracer(CodeCompletion);
 
-  private static class ClientCompletionService implements Disposable {
+  private static final class ClientCompletionService implements Disposable {
     public static @Nullable ClientCompletionService tryGetInstance(@Nullable ClientAppSession session) {
       if (session == null) {
         return null;
@@ -187,7 +187,7 @@ public final class CompletionServiceImpl extends BaseCompletionService {
     return clientCompletionService.getCurrentCompletionProgressIndicator();
   }
 
-  private static class CompletionResultSetImpl extends BaseCompletionResultSet {
+  private static final class CompletionResultSetImpl extends BaseCompletionResultSet {
     CompletionResultSetImpl(Consumer<? super CompletionResult> consumer, PrefixMatcher prefixMatcher,
                             CompletionContributor contributor, CompletionParameters parameters,
                             @Nullable CompletionSorter sorter, @Nullable CompletionResultSetImpl original) {

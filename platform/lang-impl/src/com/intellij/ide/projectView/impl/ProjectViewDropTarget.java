@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.projectView.impl;
 
 import com.intellij.ide.DataManager;
@@ -262,7 +262,7 @@ public abstract class ProjectViewDropTarget implements DnDNativeTarget {
     return sourceFiles.toArray(new PsiFileSystemItem[0]);
   }
 
-  private class MoveDropHandler extends MoveCopyDropHandler {
+  private final class MoveDropHandler extends MoveCopyDropHandler {
     @Override
     protected boolean canDrop(TreePath @NotNull [] sources, @NotNull TreePath target) {
       DropTargetNode node = getLastUserObject(DropTargetNode.class, target);
@@ -367,7 +367,7 @@ public abstract class ProjectViewDropTarget implements DnDNativeTarget {
     }
   }
 
-  private class CopyDropHandler extends MoveCopyDropHandler {
+  private final class CopyDropHandler extends MoveCopyDropHandler {
     @Override
     protected boolean canDrop(TreePath @NotNull [] sources, @NotNull TreePath target) {
       PsiElement[] sourceElements = getPsiElements(sources);

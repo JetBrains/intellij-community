@@ -14,7 +14,7 @@ class TerminalCharFilter : CharFilter() {
       // Close lookup on any char typed
       Result.HIDE_LOOKUP
     }
-    else if (lookup.editor.getUserData(TerminalPromptPanel.KEY) != null) {
+    else if (lookup.editor.getUserData(TerminalPromptController.KEY) != null) {
       // It is command completion lookup
       val matches = lookup.items.filter { matchesAfterAppendingChar(lookup, it, c) }
       if (matches.isNotEmpty()) {

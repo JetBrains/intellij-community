@@ -42,7 +42,7 @@ final class UnindexedFilesFinder {
   private final boolean myShouldProcessUpToDateFiles;
   private final IndexingReasonExplanationLogger explanationLogger;
 
-  private static class UnindexedFileStatusBuilder {
+  private static final class UnindexedFileStatusBuilder {
     boolean shouldIndex = false;
     boolean indexesWereProvidedByInfrastructureExtension = false;
     long timeProcessingUpToDateFiles = 0;

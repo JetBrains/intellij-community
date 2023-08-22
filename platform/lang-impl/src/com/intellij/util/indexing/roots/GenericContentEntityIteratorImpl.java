@@ -10,7 +10,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 
-public class GenericContentEntityIteratorImpl extends RootHolderIteratorBase {
+public final class GenericContentEntityIteratorImpl extends RootHolderIteratorBase {
 
   public GenericContentEntityIteratorImpl(@NotNull EntityReference<?> entityReference,
                                           @NotNull IndexingRootHolder roots,

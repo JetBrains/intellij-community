@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.moduleDependencies;
 
 import com.intellij.CommonBundle;
@@ -51,7 +51,7 @@ import java.util.*;
 /**
  * @author anna
  */
-public class ModulesDependenciesPanel extends JPanel implements Disposable {
+public final class ModulesDependenciesPanel extends JPanel implements Disposable {
   public static final String HELP_ID = "module.dependencies.tool.window";
 
   private static final Comparator<DefaultMutableTreeNode> NODE_COMPARATOR = (o1, o2) -> {
@@ -364,7 +364,7 @@ public class ModulesDependenciesPanel extends JPanel implements Disposable {
   public void dispose() { }
 
 
-  private static class MyUserObject implements NavigatableWithText {
+  private static final class MyUserObject implements NavigatableWithText {
     private final Module myModule;
     private final boolean myInCycle;
 
@@ -409,7 +409,7 @@ public class ModulesDependenciesPanel extends JPanel implements Disposable {
     }
   }
 
-  private static class MyTreePanel extends JPanel implements DataProvider {
+  private static final class MyTreePanel extends JPanel implements DataProvider {
     private final Tree myTree;
     private final Project myProject;
 
@@ -448,7 +448,7 @@ public class ModulesDependenciesPanel extends JPanel implements Disposable {
     }
   }
 
-  private static class MyTreeExpander extends DefaultTreeExpander {
+  private static final class MyTreeExpander extends DefaultTreeExpander {
     private final boolean myEnableExpandAll;
 
     MyTreeExpander(Tree tree, boolean enableExpandAll) {

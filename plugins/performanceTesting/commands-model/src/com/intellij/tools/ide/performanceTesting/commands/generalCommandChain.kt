@@ -957,3 +957,8 @@ fun <T : CommandChain> T.saveDocumentsAndSettings(): T {
   addCommand("${CMD_PREFIX}saveDocumentsAndSettings")
   return this
 }
+
+fun <T : CommandChain> T.freezeUI(durationOfFreezeInMs: Int): T {
+  addCommand("${CMD_PREFIX}freezeUI $durationOfFreezeInMs")
+  return this
+}

@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.codeInspection.ui.actions;
 
@@ -14,7 +14,7 @@ import com.intellij.ui.ExperimentalUI;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 
-public class InvokeQuickFixAction extends AnAction {
+public final class InvokeQuickFixAction extends AnAction {
   private final InspectionResultsView myView;
 
   public InvokeQuickFixAction(final InspectionResultsView view) {

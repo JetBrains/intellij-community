@@ -31,7 +31,7 @@ abstract class PlaybackCommandCoroutineAdapter(protected val text: @NonNls Strin
     }
     job.invokeOnCompletion {
       if (it != null) {
-        context.error(text, line)
+        context.error(text + ": " + it.message, line)
       }
     }
     return job.asCompletableFuture()

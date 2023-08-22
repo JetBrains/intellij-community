@@ -88,7 +88,6 @@ public final class ApplicationInfoImpl extends ApplicationInfoEx {
 
   private String mySubscriptionFormId;
   private boolean mySubscriptionTipsAvailable;
-  private XmlElement myFeedbackForm;
 
   private String myDefaultLightLaf;
   private String myDefaultClassicLightLaf;
@@ -201,9 +200,6 @@ public final class ApplicationInfoImpl extends ApplicationInfoEx {
 
         case "feedback": {
           myFeedbackUrl = child.getAttributeValue("url");
-          if (child.getAttributeValue("zendesk-form-id") != null) {
-            myFeedbackForm = child;
-          }
         }
         break;
 
@@ -746,11 +742,6 @@ public final class ApplicationInfoImpl extends ApplicationInfoEx {
   public @Nullable String getDefaultClassicDarkLaf() {
     String override = System.getProperty(IDEA_APPLICATION_INFO_DEFAULT_CLASSIC_DARK_LAF);
     return override != null ? override : myDefaultClassicDarkLaf;
-  }
-
-  public @Nullable ZenDeskForm getFeedbackForm() {
-    XmlElement v = myFeedbackForm;
-    return v == null ? null : ZenDeskForm.parse(v);
   }
 
   private static final class UpdateUrlsImpl implements UpdateUrls {

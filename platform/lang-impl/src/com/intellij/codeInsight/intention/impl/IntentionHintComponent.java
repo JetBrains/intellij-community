@@ -485,7 +485,7 @@ public final class IntentionHintComponent implements Disposable, ScrollAwareHint
   }
 
   /** The light bulb icon, optionally surrounded by a border. */
-  private class LightBulbPanel extends JPanel {
+  private final class LightBulbPanel extends JPanel {
     private static final Icon ourInactiveArrowIcon = IconManager.getInstance().createEmptyIcon(AllIcons.General.ArrowDown);
 
     private final RowIcon myHighlightedIcon;
@@ -558,7 +558,7 @@ public final class IntentionHintComponent implements Disposable, ScrollAwareHint
   }
 
   // IDEA-313550: Intention light bulb border is calculated wrong
-  private class LightBulbMouseListener extends MouseAdapter {
+  private final class LightBulbMouseListener extends MouseAdapter {
     private final @NotNull Project myProject;
     private final @NotNull PsiFile myFile;
 
@@ -593,7 +593,7 @@ public final class IntentionHintComponent implements Disposable, ScrollAwareHint
     }
   }
 
-  static class IntentionPopup implements Disposable.Parent {
+  static final class IntentionPopup implements Disposable.Parent {
     private final @NotNull Project myProject;
     private final @NotNull Editor myEditor;
     private final @NotNull PsiFile myFile;

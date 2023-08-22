@@ -36,6 +36,8 @@ import com.intellij.ui.mac.initMacApplication
 import com.intellij.ui.mac.screenmenu.Menu
 import com.intellij.ui.svg.SvgCacheManager
 import com.intellij.util.*
+import com.intellij.util.containers.SLRUMap
+import com.intellij.util.io.*
 import com.intellij.util.lang.ZipFilePool
 import com.jetbrains.JBR
 import io.opentelemetry.sdk.OpenTelemetrySdkBuilder
@@ -143,13 +145,6 @@ fun CoroutineScope.startApplication(args: List<String>,
   if (!isHeadless) {
     showSplashIfNeeded(initUiDeferred = initLafJob, appInfoDeferred = appInfoDeferred, args = args)
 
-    launch {
-      lockSystemDirsJob.join()
-      span("SvgCache creation") {
-        SvgCacheManager.svgCache = SvgCacheManager.createSvgCacheManager()
-      }
-    }
-
     updateFrameClassAndWindowIconAndPreloadSystemFonts(initLafJob)
   }
 
@@ -183,6 +178,29 @@ fun CoroutineScope.startApplication(args: List<String>,
 
   // log initialization must happen only after locking the system directory
   val logDeferred = setupLogger(consoleLoggerJob, checkSystemDirJob)
+
+  launch {
+    // PHM wants logger
+    logDeferred.join()
+
+    span("PHM classes preloading", Dispatchers.IO) {
+      val classLoader = AppStarter::class.java.classLoader
+      Class.forName(PersistentMapBuilder::class.java.name, true, classLoader)
+      Class.forName(PersistentMapImpl::class.java.name, true, classLoader)
+      Class.forName(PersistentEnumerator::class.java.name, true, classLoader)
+      Class.forName(ResizeableMappedFile::class.java.name, true, classLoader)
+      Class.forName(PagedFileStorage::class.java.name, true, classLoader)
+      Class.forName(PageCacheUtils::class.java.name, true, classLoader)
+      Class.forName(PersistentHashMapValueStorage::class.java.name, true, classLoader)
+      Class.forName(SLRUMap::class.java.name, true, classLoader)
+    }
+
+    if (!isHeadless) {
+      span("SvgCache creation") {
+        SvgCacheManager.svgCache = SvgCacheManager.createSvgCacheManager()
+      }
+    }
+  }
 
   shellEnvDeferred = async {
     // EnvironmentUtil wants logger
@@ -301,7 +319,8 @@ fun isConfigImportNeeded(configPath: Path): Boolean {
  * This property is used to override the default target directory ([PathManager.getConfigPath]) when a custom way to read and write
  * configuration files is implemented.
  */
-@get:Internal @set:Internal
+@get:Internal
+@set:Internal
 var customTargetDirectoryToImportConfig: Path? = null
 
 @Suppress("SpellCheckingInspection")
@@ -682,8 +701,10 @@ private fun logPath(path: String): String {
     val real = configured.toRealPath()
     return if (configured == real) path else "${path} -> ${real}"
   }
-  catch (_: IOException) { }
-  catch (_: InvalidPathException) { }
+  catch (_: IOException) {
+  }
+  catch (_: InvalidPathException) {
+  }
   return "${path} -> ?"
 }
 

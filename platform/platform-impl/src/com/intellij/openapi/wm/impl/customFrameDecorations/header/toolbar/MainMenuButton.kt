@@ -20,6 +20,7 @@ import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.ui.popup.JBPopupFactory
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.wm.IdeFocusManager
+import com.intellij.openapi.wm.impl.IdeMenuBar
 import com.intellij.ui.popup.PopupFactoryImpl
 import com.intellij.ui.popup.list.ListPopupImpl
 import com.intellij.util.messages.MessageBusConnection
@@ -37,11 +38,17 @@ import javax.swing.SwingUtilities
 
 @ApiStatus.Internal
 class MainMenuButton {
+
   internal var expandableMenu: ExpandableMenu? = null
+    set(value) {
+      field = value
+      updateSubMenuShortcutsManager()
+    }
+
   private val menuAction = ShowMenuAction()
   private var disposable: Disposable? = null
   private var shortcutsChangeConnection: MessageBusConnection? = null
-  private var registeredKeyStrokes = mutableListOf<KeyStroke>()
+  private val subMenuShortcutsManager = SubMenuShortcutsManager()
 
   val button: ActionButton = createMenuButton(menuAction)
 
@@ -91,7 +98,7 @@ class MainMenuButton {
       disposable = Disposer.newDisposable()
 
       registerMenuButtonShortcut(rootPaneCopy)
-      registerSubMenuShortcuts(rootPaneCopy)
+      updateSubMenuShortcutsManager()
       initShortcutsChangeConnection()
     }
   }
@@ -101,34 +108,28 @@ class MainMenuButton {
     disposable = null
     shortcutsChangeConnection?.let { Disposer.dispose(it) }
     shortcutsChangeConnection = null
-    rootPane?.let {
-      for (keyStroke in registeredKeyStrokes) {
-        it.unregisterKeyboardAction(keyStroke)
+    subMenuShortcutsManager.reset()
+  }
+
+  private fun updateSubMenuShortcutsManager() {
+    subMenuShortcutsManager.reset()
+
+    val ideMenuBar = expandableMenu?.ideMenu
+    if (button.isShowing && ideMenuBar != null) {
+      rootPane?.let {
+        subMenuShortcutsManager.init(it, ideMenuBar)
       }
     }
-    registeredKeyStrokes.clear()
   }
 
   private fun registerMenuButtonShortcut(component: JComponent) {
     val showMenuAction = ActionManager.getInstance().getAction(MAIN_MENU_ACTION_ID)
     if (showMenuAction == null) {
-      logger<MainMenuButton>().warn("Cannot find action by id $MAIN_MENU_ACTION_ID")
+      LOG.warn("Cannot find action by id $MAIN_MENU_ACTION_ID")
       return
     }
     menuAction.registerCustomShortcutSet(showMenuAction.shortcutSet, component, disposable)
     button.update() // Update shortcut in tooltip
-  }
-
-  private fun registerSubMenuShortcuts(component: JComponent) {
-    val mainMenu = getMainMenuGroup()
-    for (action in mainMenu.getChildren(null)) {
-      val mnemonic = action.templatePresentation.mnemonic
-      if (mnemonic > 0) {
-        val keyStroke = KeyStroke.getKeyStroke(mnemonic, KeyEvent.ALT_DOWN_MASK)
-        component.registerKeyboardAction(ShowSubMenuAction(action), keyStroke, JComponent.WHEN_IN_FOCUSED_WINDOW)
-        registeredKeyStrokes.add(keyStroke)
-      }
-    }
   }
 
   @ApiStatus.Internal
@@ -179,6 +180,61 @@ class MainMenuButton {
           showPopup(DataManager.getInstance().getDataContext(component), actionToShow)
         }
       }
+    }
+  }
+
+  private inner class SubMenuShortcutsManager {
+
+    private var shortcutsOwner: JComponent? = null
+    private var ideMenuBar: IdeMenuBar? = null
+    private val listener = Runnable {
+      resetKeyStrokes()
+      initKeyStrokes()
+    }
+    private var registeredKeyStrokes = mutableListOf<KeyStroke>()
+
+    fun init(shortcutsOwner: JComponent, ideMenuBar: IdeMenuBar) {
+      reset()
+      this.shortcutsOwner = shortcutsOwner
+      this.ideMenuBar = ideMenuBar
+      ideMenuBar.addUpdateGlobalMenuRootsListener(listener)
+
+      initKeyStrokes()
+    }
+
+    fun reset() {
+      resetKeyStrokes()
+      ideMenuBar?.removeUpdateGlobalMenuRootsListener(listener)
+      shortcutsOwner = null
+      ideMenuBar = null
+    }
+
+    private fun initKeyStrokes() {
+      val ideMenuBarCopy = ideMenuBar
+      val shortcutsOwnerCopy = shortcutsOwner
+
+      if (ideMenuBarCopy == null || shortcutsOwnerCopy == null) {
+        return
+      }
+
+      for (item in ideMenuBarCopy.rootMenuItems) {
+        val action = item.anAction
+        val mnemonic = item.mnemonic
+        if (mnemonic > 0) {
+          val keyStroke = KeyStroke.getKeyStroke(mnemonic, KeyEvent.ALT_DOWN_MASK)
+          shortcutsOwnerCopy.registerKeyboardAction(ShowSubMenuAction(action), keyStroke, JComponent.WHEN_IN_FOCUSED_WINDOW)
+          registeredKeyStrokes.add(keyStroke)
+        }
+      }
+    }
+
+    private fun resetKeyStrokes() {
+      shortcutsOwner?.let {
+        for (keyStroke in registeredKeyStrokes) {
+          it.unregisterKeyboardAction(keyStroke)
+        }
+      }
+      registeredKeyStrokes.clear()
     }
   }
 }

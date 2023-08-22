@@ -1,20 +1,20 @@
 <component name="libraryTable">
   <library name="rd-framework" type="repository">
-    <properties include-transitive-deps="false" maven-id="com.jetbrains.rd:rd-framework:2023.3.2-preview1">
+    <properties include-transitive-deps="false" maven-id="com.jetbrains.rd:rd-framework:2023.3.2-preview2">
       <verification>
-        <artifact url="file://$MAVEN_REPOSITORY$/com/jetbrains/rd/rd-framework/2023.3.2-preview1/rd-framework-2023.3.2-preview1.jar">
-          <sha256sum>ab6e91e274ec800cc85388f5a808a9292a641090d39d78734718db3c458a350a</sha256sum>
+        <artifact url="file://$MAVEN_REPOSITORY$/com/jetbrains/rd/rd-framework/2023.3.2-preview2/rd-framework-2023.3.2-preview2.jar">
+          <sha256sum>65877cdcd2245432238463a33f4a8c4a9fbb23322a22b6bca930a4384feee770</sha256sum>
         </artifact>
       </verification>
     </properties>
     <CLASSES>
-      <root url="jar://$MAVEN_REPOSITORY$/com/jetbrains/rd/rd-framework/2023.3.2-preview1/rd-framework-2023.3.2-preview1.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/com/jetbrains/rd/rd-framework/2023.3.2-preview2/rd-framework-2023.3.2-preview2.jar!/" />
     </CLASSES>
     <JAVADOC>
-      <root url="jar://$MAVEN_REPOSITORY$/com/jetbrains/rd/rd-framework/2023.3.2-preview1/rd-framework-2023.3.2-preview1-javadoc.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/com/jetbrains/rd/rd-framework/2023.3.2-preview2/rd-framework-2023.3.2-preview2-javadoc.jar!/" />
     </JAVADOC>
     <SOURCES>
-      <root url="jar://$MAVEN_REPOSITORY$/com/jetbrains/rd/rd-framework/2023.3.2-preview1/rd-framework-2023.3.2-preview1-sources.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/com/jetbrains/rd/rd-framework/2023.3.2-preview2/rd-framework-2023.3.2-preview2-sources.jar!/" />
     </SOURCES>
   </library>
 </component>

@@ -18,7 +18,7 @@ import java.util.Map;
 /**
  * @author Dmitry Avdeev
  */
-public class PathReferenceManagerImpl extends PathReferenceManager {
+public final class PathReferenceManagerImpl extends PathReferenceManager {
   private final StaticPathReferenceProvider myStaticProvider = new StaticPathReferenceProvider(null);
   private final PathReferenceProvider myGlobalPathsProvider = new GlobalPathReferenceProvider();
 

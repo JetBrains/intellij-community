@@ -364,7 +364,7 @@ final class LookupUi {
     return result;
   }
 
-  private static class ShowCompletionSettingsAction extends AnAction implements DumbAware {
+  private static final class ShowCompletionSettingsAction extends AnAction implements DumbAware {
     ShowCompletionSettingsAction() {
       super(LangBundle.message("action.code.completion.settings.text"), null, AllIcons.General.Settings);
     }
@@ -483,7 +483,7 @@ final class LookupUi {
     }
   }
 
-  private class LookupBottomLayout implements LayoutManager {
+  private final class LookupBottomLayout implements LayoutManager {
     @Override
     public void addLayoutComponent(String name, Component comp) {}
 

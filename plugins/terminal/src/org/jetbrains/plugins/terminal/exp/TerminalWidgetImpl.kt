@@ -54,7 +54,7 @@ class TerminalWidgetImpl(private val project: Project,
     session.shellIntegration = options.shellIntegration
     Disposer.dispose(controller)
     controller = if (options.shellIntegration?.withCommandBlocks == true) {
-      TerminalBlocksController(project, session, terminalSettings)
+      BlockTerminalPanel(project, session, terminalSettings)
     }
     else PlainTerminalController(project, session, terminalSettings)
     Disposer.register(this, controller)
@@ -102,7 +102,7 @@ class TerminalWidgetImpl(private val project: Project,
   private class TerminalPlaceholder : TerminalContentController {
     private val panel: JPanel = object : JPanel() {
       override fun getBackground(): Color {
-        return UIUtil.getTextFieldBackground()
+        return TerminalUI.terminalBackground
       }
     }
 

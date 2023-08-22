@@ -7,9 +7,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.module.ModuleWithNameAlreadyExists;
-import com.intellij.testFramework.RunAll;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.idea.maven.utils.MavenUtil;
 import org.junit.Test;
 
 import java.util.List;
@@ -31,8 +29,10 @@ public class MavenRenameModulesWatcherTest extends MavenDomTestCase {
     catch (ModuleWithNameAlreadyExists e) {
       throw new RuntimeException(e);
     }
-    CommandProcessor.getInstance().executeCommand(myProject, () -> ApplicationManager.getApplication().runWriteAction(() -> modifiableModel.commit()), "renaming model", null);
-    myProject.getMessageBus().syncPublisher(ProjectTopics.MODULES).modulesRenamed(myProject, List.of(module), m -> oldName);
+    CommandProcessor.getInstance().executeCommand(myProject, () -> ApplicationManager.getApplication().runWriteAction(() -> {
+      modifiableModel.commit();
+      myProject.getMessageBus().syncPublisher(ProjectTopics.MODULES).modulesRenamed(myProject, List.of(module), m -> oldName);
+    }), "renaming model", null);
   }
 
   @Test

@@ -90,16 +90,13 @@ open class MergingQueueGuiExecutor<T : MergeableQueueTask<T>> protected construc
 
   private val mySingleTaskExecutor: SingleTaskExecutor
   private val mySuspended = AtomicBoolean()
-  private val myListener: ExecutorStateListener
+  private val myListener: ExecutorStateListener = SafeExecutorStateListenerWrapper(listener)
   protected val guiSuspender: MergingQueueGuiSuspender = MergingQueueGuiSuspender()
-  private val myProgressTitle: @ProgressTitle String
-  private val mySuspendedText: @ProgressText String
+  private val myProgressTitle: @ProgressTitle String = progressTitle
+  private val mySuspendedText: @ProgressText String = suspendedText
   private val backgroundTasksSubmitted = AtomicInteger(0)
 
   init {
-    myListener = SafeExecutorStateListenerWrapper(listener)
-    myProgressTitle = progressTitle
-    mySuspendedText = suspendedText
     mySingleTaskExecutor = SingleTaskExecutor { visibleIndicator: ProgressIndicator ->
       runWithCallbacks {
         runBackgroundProcessWithSuspender(visibleIndicator)

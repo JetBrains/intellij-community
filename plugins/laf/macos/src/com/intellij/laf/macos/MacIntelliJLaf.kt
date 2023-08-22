@@ -12,6 +12,10 @@ internal class MacIntelliJLaf : IntelliJLaf() {
     putUserData(StartupUiUtil.PLUGGABLE_LAF_KEY, name)
   }
 
+  companion object {
+    fun isMacLaf() = UIManager.getLookAndFeel() is MacIntelliJLaf
+  }
+
   override fun getName() = MacLafProvider.LAF_NAME
 
   override fun loadDefaults(defaults: UIDefaults) {
@@ -24,11 +28,8 @@ internal class MacIntelliJLaf : IntelliJLaf() {
     }
   }
 
-  override fun getPrefix() = "com/intellij/ide/ui/laf/intellijlaf"
-
-  override fun getSystemPrefix() = "com/intellij/laf/macos/macintellijlaf"
-
-  companion object {
-    fun isMacLaf() = UIManager.getLookAndFeel() is MacIntelliJLaf
-  }
+  override val prefix: String
+    get() = "com/intellij/ide/ui/laf/intellijlaf"
+  override val systemPrefix: String
+    get() = "com/intellij/laf/macos/macintellijlaf"
 }

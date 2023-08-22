@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.favoritesTreeView;
 
 import com.intellij.ide.IdeBundle;
@@ -606,7 +606,7 @@ public final class FavoritesManager implements PersistentStateComponent<Element>
     return null;
   }
 
-  private class MyRootsChangeAdapter extends PsiTreeChangeAdapter {
+  private final class MyRootsChangeAdapter extends PsiTreeChangeAdapter {
     @Override
     public void beforeChildMovement(@NotNull final PsiTreeChangeEvent event) {
       final PsiElement oldParent = event.getOldParent();

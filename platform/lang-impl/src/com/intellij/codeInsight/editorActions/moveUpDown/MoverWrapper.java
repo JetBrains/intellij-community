@@ -20,7 +20,7 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-class MoverWrapper {
+final class MoverWrapper {
   private static final Logger LOGGER = Logger.getInstance(MoverWrapper.class);
 
   protected final boolean myIsDown;

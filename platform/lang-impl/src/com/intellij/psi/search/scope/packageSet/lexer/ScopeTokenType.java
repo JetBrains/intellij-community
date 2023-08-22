@@ -10,7 +10,7 @@ import com.intellij.psi.tree.IElementType;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
-public class ScopeTokenType extends IElementType {
+public final class ScopeTokenType extends IElementType {
   public ScopeTokenType(final @NotNull @NonNls String debugName) {
     super(debugName, Language.ANY);
   }

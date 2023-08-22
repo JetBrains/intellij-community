@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.facet.impl.ui;
 
 import com.intellij.facet.ui.FacetEditor;
@@ -19,7 +19,7 @@ import java.awt.event.ItemListener;
 import java.util.ArrayList;
 import java.util.List;
 
-public class MultipleFacetEditorHelperImpl implements MultipleFacetEditorHelper {
+public final class MultipleFacetEditorHelperImpl implements MultipleFacetEditorHelper {
   private static final Logger LOG = Logger.getInstance(MultipleFacetSettingsEditor.class);
   private final List<AbstractBinding> myBindings = new ArrayList<>();
 
@@ -68,7 +68,7 @@ public class MultipleFacetEditorHelperImpl implements MultipleFacetEditorHelper 
     public abstract void unbind();
   }
 
-  private static class CheckBoxBinding extends AbstractBinding implements ActionListener {
+  private static final class CheckBoxBinding extends AbstractBinding implements ActionListener {
     private final ThreeStateCheckBox myCommon;
     private final List<? extends JCheckBox> myCheckBoxesList;
     private final List<Boolean> myInitialValues;
@@ -165,7 +165,7 @@ public class MultipleFacetEditorHelperImpl implements MultipleFacetEditorHelper 
     }
   }
 
-  private static class CombobBoxBinding extends AbstractBinding implements ItemListener {
+  private static final class CombobBoxBinding extends AbstractBinding implements ItemListener {
     private final JComboBox myCommon;
     private final List<? extends JComboBox> myComponentsList;
     private final List<Object> myInitialValues;

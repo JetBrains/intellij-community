@@ -161,7 +161,7 @@ public final class IntroduceTargetChooser {
     }
   }
 
-  private static class MyIntroduceTarget<T extends PsiElement> extends PsiIntroduceTarget<T> {
+  private static final class MyIntroduceTarget<T extends PsiElement> extends PsiIntroduceTarget<T> {
     private final TextRange myTextRange;
     private final String myText;
 

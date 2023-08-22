@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.largeFilesEditor.search;
 
 import com.intellij.codeInsight.hint.HintManager;
@@ -45,7 +45,7 @@ import javax.swing.event.ListSelectionListener;
 import java.io.IOException;
 import java.util.List;
 
-public class LfeSearchManagerImpl implements LfeSearchManager, CloseSearchTask.Callback {
+public final class LfeSearchManagerImpl implements LfeSearchManager, CloseSearchTask.Callback {
   private static final int CONTEXT_ONE_SIDE_LENGTH = 100;
   private static final long STATUS_TEXT_LIFE_TIME = 3000;
 
@@ -665,7 +665,7 @@ public class LfeSearchManagerImpl implements LfeSearchManager, CloseSearchTask.C
   }
 
 
-  private class CloseSearchResultsListSelectionListener implements ListSelectionListener {
+  private final class CloseSearchResultsListSelectionListener implements ListSelectionListener {
     private final JBList<SearchResult> list;
 
     CloseSearchResultsListSelectionListener(JBList<SearchResult> list) {

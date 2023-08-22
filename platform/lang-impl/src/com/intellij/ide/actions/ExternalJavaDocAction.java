@@ -33,7 +33,7 @@ import java.awt.*;
 import java.util.Collections;
 import java.util.List;
 
-public class ExternalJavaDocAction extends AnAction {
+public final class ExternalJavaDocAction extends AnAction {
 
   public ExternalJavaDocAction() {
     setInjectedContext(true);

@@ -14,6 +14,7 @@ import org.jetbrains.annotations.Nullable;
 import java.awt.*;
 import java.io.File;
 import java.lang.reflect.Proxy;
+import java.nio.CharBuffer;
 import java.nio.charset.StandardCharsets;
 import java.util.List;
 import java.util.*;
@@ -129,12 +130,11 @@ public final @NonNls class Foundation {
   }
 
   /**
-   *
-   * @param cls The class to which to add a method.
+   * @param cls          The class to which to add a method.
    * @param selectorName A selector that specifies the name of the method being added.
-   * @param impl A function which is the implementation of the new method. The function must take at least two arguments-self and _cmd.
-   * @param types An array of characters that describe the types of the arguments to the method.
-   *              See <a href="https://developer.apple.com/library/IOs/documentation/Cocoa/Conceptual/ObjCRuntimeGuide/Articles/ocrtTypeEncodings.html#//apple_ref/doc/uid/TP40008048-CH100"></a>
+   * @param impl         A function which is the implementation of the new method. The function must take at least two arguments-self and _cmd.
+   * @param types        An array of characters that describe the types of the arguments to the method.
+   *                     See <a href="https://developer.apple.com/library/IOs/documentation/Cocoa/Conceptual/ObjCRuntimeGuide/Articles/ocrtTypeEncodings.html#//apple_ref/doc/uid/TP40008048-CH100"></a>
    * @return true if the method was added successfully, otherwise false (for example, the class already contains a method implementation with that name).
    */
   public static boolean addMethod(ID cls, Pointer selectorName, Callback impl, String types) {
@@ -156,7 +156,7 @@ public final @NonNls class Foundation {
   public static @Nullable String stringFromSelector(Pointer selector) {
     ID id = myFoundationLibrary.NSStringFromSelector(selector);
     return ID.NIL.equals(id) ? null : toStringViaUTF8(id);
-    }
+  }
 
   public static @Nullable String stringFromClass(ID aClass) {
     ID id = myFoundationLibrary.NSStringFromClass(aClass);
@@ -207,13 +207,33 @@ public final @NonNls class Foundation {
       }
 
       byte[] utf16Bytes = s.getBytes(StandardCharsets.UTF_16LE);
-      return invoke(invoke(invoke(nsStringCls, allocSel),
-                           initWithBytesLengthEncodingSel, utf16Bytes, utf16Bytes.length, nsEncodingUTF16LE),
-                    autoreleaseSel);
+      return create(utf16Bytes);
+    }
+
+    public static @NotNull ID create(@NotNull CharSequence cs) {
+      if (cs instanceof String s) {
+        return create(s);
+      }
+      if (cs.isEmpty()) {
+        return invoke(nsStringCls, stringSel);
+      }
+
+      byte[] utf16Bytes = StandardCharsets.UTF_16LE.encode(CharBuffer.wrap(cs)).array();
+      return create(utf16Bytes);
+    }
+
+    private static @NotNull ID create(byte[] utf16Bytes) {
+      ID emptyNsString = invoke(nsStringCls, allocSel);
+      ID initializedEmptyNsString = invoke(emptyNsString, initWithBytesLengthEncodingSel, utf16Bytes, utf16Bytes.length, nsEncodingUTF16LE);
+      return invoke(initializedEmptyNsString, autoreleaseSel);
     }
   }
 
   public static @NotNull ID nsString(@Nullable String s) {
+    return s == null ? ID.NIL : NSString.create(s);
+  }
+
+  public static @NotNull ID nsString(@Nullable CharSequence s) {
     return s == null ? ID.NIL : NSString.create(s);
   }
 
@@ -282,7 +302,7 @@ public final @NonNls class Foundation {
     }
   }
 
-  public static ID autorelease(ID id){
+  public static ID autorelease(ID id) {
     return invoke(id, "autorelease");
   }
 

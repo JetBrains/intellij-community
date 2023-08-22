@@ -13,7 +13,7 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.Objects;
 
-public class ModuleGroupPathIndexableEntityProvider implements IndexableEntityProvider.Enforced<ModuleGroupPathEntity> {
+public final class ModuleGroupPathIndexableEntityProvider implements IndexableEntityProvider.Enforced<ModuleGroupPathEntity> {
 
   @Override
   public @NotNull Class<ModuleGroupPathEntity> getEntityClass() {
