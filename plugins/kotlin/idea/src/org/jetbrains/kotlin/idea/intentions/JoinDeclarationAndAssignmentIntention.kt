@@ -2,6 +2,7 @@
 
 package org.jetbrains.kotlin.idea.intentions
 
+import com.intellij.codeInspection.options.OptPane
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.ScrollType
 import com.intellij.openapi.util.TextRange
@@ -38,7 +39,17 @@ import org.jetbrains.kotlin.util.match
 class JoinDeclarationAndAssignmentInspection : IntentionBasedInspection<KtProperty>(
     JoinDeclarationAndAssignmentIntention::class,
     KotlinBundle.message("can.be.joined.with.assignment")
-)
+) {
+    @JvmField
+    var reportWithComplexInitializationOfMemberProperties = true
+
+    override fun getOptionsPane(): OptPane = OptPane.pane(
+        OptPane.checkbox(
+            "reportWithComplexInitializationOfMemberProperties",
+            KotlinBundle.message("inspection.join.declaration.and.assignment.option.report.with.complex.initialization.of.member.properties")
+        )
+    )
+}
 
 class JoinDeclarationAndAssignmentIntention : SelfTargetingRangeIntention<KtProperty>(
     KtProperty::class.java,
@@ -69,7 +80,17 @@ class JoinDeclarationAndAssignmentIntention : SelfTargetingRangeIntention<KtProp
         if (initializer.hasReference(propertyDescriptor, context)) return null
         if (initializer.dependsOnNextSiblingsOfProperty(element)) return null
         if (!isNonLocalVar && !typesCanBeMergedSafely.value) return null
-        if (element.isLocal && element.hasModifier(LATEINIT_KEYWORD) && isUsedBeforeAssignment.value) return null
+
+        if (element.isLocal) {
+            if (element.hasModifier(LATEINIT_KEYWORD) && isUsedBeforeAssignment.value) return null
+        } else {
+            val reportWithComplexInitializationOfMemberProperties =
+                (this.inspection as? JoinDeclarationAndAssignmentInspection)?.reportWithComplexInitializationOfMemberProperties ?: true
+            if (!reportWithComplexInitializationOfMemberProperties) {
+                if (initializer.isComplexInitializer()) return null
+                if (assignment.nextSiblings().hasReference(propertyDescriptor, context)) return null
+            }
+        }
 
         val startOffset = (element.modifierList ?: element.valOrVarKeyword).startOffset
         val endOffset = (element.typeReference ?: element).endOffset

@@ -8,6 +8,7 @@ import org.jetbrains.kotlin.builtins.StandardNames
 import org.jetbrains.kotlin.builtins.functions.FunctionInvokeDescriptor
 import org.jetbrains.kotlin.builtins.isKSuspendFunctionType
 import org.jetbrains.kotlin.descriptors.*
+import org.jetbrains.kotlin.idea.base.psi.isOneLiner
 import org.jetbrains.kotlin.idea.caches.resolve.analyze
 import org.jetbrains.kotlin.idea.caches.resolve.resolveToCall
 import org.jetbrains.kotlin.idea.codeinsight.utils.negate
@@ -16,6 +17,7 @@ import org.jetbrains.kotlin.idea.core.getLastLambdaExpression
 import org.jetbrains.kotlin.idea.core.setType
 import org.jetbrains.kotlin.idea.inspections.collections.isCalling
 import org.jetbrains.kotlin.idea.search.usagesSearch.descriptor
+import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.load.java.descriptors.JavaMethodDescriptor
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.name.Name
@@ -275,4 +277,15 @@ fun ClassDescriptor.isRange(): Boolean {
 
 fun KtTypeReference?.typeArguments(): List<KtTypeProjection> {
     return (this?.typeElement as? KtUserType)?.typeArguments.orEmpty()
+}
+
+internal fun KtExpression.isComplexInitializer(): Boolean {
+    fun KtExpression.isElvisExpression(): Boolean = this is KtBinaryExpression && operationToken == KtTokens.ELVIS
+
+    if (!isOneLiner()) return true
+    return anyDescendantOfType<KtExpression> {
+        it is KtThrowExpression || it is KtReturnExpression || it is KtBreakExpression ||
+                it is KtContinueExpression || it is KtIfExpression || it is KtWhenExpression ||
+                it is KtTryExpression || it is KtLambdaExpression || it.isElvisExpression()
+    }
 }
