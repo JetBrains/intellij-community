@@ -17,9 +17,7 @@ package org.jetbrains.intellij.build
 
 import kotlinx.collections.immutable.putAll
 import org.jetbrains.intellij.build.CommunityRepositoryModules.COMMUNITY_REPOSITORY_PLUGINS
-import org.jetbrains.intellij.build.impl.BaseLayout
-import org.jetbrains.intellij.build.impl.ModuleItem
-import org.jetbrains.intellij.build.impl.PluginLayout
+import org.jetbrains.intellij.build.impl.PlatformJarNames.TEST_FRAMEWORK_JAR
 import org.jetbrains.intellij.build.impl.PluginLayout.Companion.plugin
 import java.nio.file.Path
 import java.util.function.BiPredicate
@@ -92,8 +90,8 @@ class AndroidStudioProperties(home: Path) : BaseIdeaProperties() {
       listOf("intellij.idea.community.resources", "intellij.platform.duplicates.analysis", "intellij.platform.main", "intellij.platform.structuralSearch") -
       listOf("intellij.platform.jps.model.impl", "intellij.platform.jps.model.serialization")
     productLayout.addPlatformSpec { layout, _ ->
-      layout.withModules(listOf("intellij.android.adt.branding").map { ModuleItem(moduleName = it, relativeOutputFile = "resources.jar", reason = null) })
-      layout.withModules(listOf("intellij.cidr.common.testFramework.core").map { ModuleItem(moduleName = it, relativeOutputFile = "testFramework.jar", reason = null) })
+      layout.withModule("intellij.android.adt.branding", "resources.jar")
+      layout.withModule("intellij.cidr.common.testFramework.core", TEST_FRAMEWORK_JAR)
     }
 
     val unknownExcludedPlugins = EXCLUDED_PLUGINS - INHERITED_PLUGINS
