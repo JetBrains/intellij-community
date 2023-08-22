@@ -1,6 +1,7 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.searchEverywhereMl.ranking.features
 
+import com.intellij.internal.statistic.collectors.fus.fileTypes.FileTypeUsagesCollector
 import com.intellij.internal.statistic.eventLog.events.EventField
 import com.intellij.internal.statistic.eventLog.events.EventFields
 import com.intellij.internal.statistic.eventLog.events.EventPair
@@ -22,7 +23,7 @@ internal class SearchEverywhereContextFeaturesProvider {
     private val GLOBAL_STATISTICS_CONTEXT_UPDATED = GlobalStatisticsContextFields(ActionsGlobalSummaryManager.getUpdatedStatisticsVersion())
 
 
-    internal val OPEN_FILE_TYPES_KEY = EventFields.StringListValidatedByCustomRule("openFileTypes", "file_type")
+    internal val OPEN_FILE_TYPES_KEY = EventFields.StringListValidatedByCustomRule("openFileTypes", FileTypeUsagesCollector.ValidationRule::class.java)
     internal val NUMBER_OF_OPEN_EDITORS_KEY = EventFields.Int("numberOfOpenEditors")
     internal val IS_SINGLE_MODULE_PROJECT = EventFields.Boolean("isSingleModuleProject")
 
