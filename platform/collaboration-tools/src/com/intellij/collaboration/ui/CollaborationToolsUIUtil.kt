@@ -33,7 +33,6 @@ import com.intellij.util.ui.update.UiNotifyConnector
 import com.intellij.vcs.log.ui.frame.ProgressStripe
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.Flow
-import org.jetbrains.annotations.ApiStatus.Internal
 import org.jetbrains.annotations.Nls
 import java.awt.*
 import java.awt.event.InputEvent
@@ -83,7 +82,6 @@ object CollaborationToolsUIUtil {
   /**
    * Show an error on [component] if there's one in [errorValue]
    */
-  @Internal
   fun installValidator(component: JComponent, errorValue: SingleValueModel<@Nls String?>) {
     UiNotifyConnector.installOn(component, ValidatorActivatable(errorValue, component), false)
   }
@@ -118,7 +116,6 @@ object CollaborationToolsUIUtil {
   /**
    * Show progress label over [component]
    */
-  @Internal
   fun wrapWithProgressOverlay(component: JComponent, inProgressValue: SingleValueModel<Boolean>): JComponent {
     val busyLabel = JLabel(AnimatedIcon.Default())
     inProgressValue.addAndInvokeListener {
@@ -131,7 +128,6 @@ object CollaborationToolsUIUtil {
   /**
    * Show progress stripe above [component]
    */
-  @Internal
   fun wrapWithProgressStripe(scope: CoroutineScope, loadingFlow: Flow<Boolean>, component: JComponent): JComponent {
     return ProgressStripe(component, scope.nestedDisposable(), ProgressWindow.DEFAULT_PROGRESS_DIALOG_POSTPONE_TIME_MILLIS).apply {
       bindProgressIn(scope, loadingFlow)
@@ -141,7 +137,6 @@ object CollaborationToolsUIUtil {
   /**
    * Wrap component with [SingleComponentCenteringLayout] to show component in a center
    */
-  @Internal
   fun moveToCenter(component: JComponent): JComponent {
     return JPanel(SingleComponentCenteringLayout()).apply {
       isOpaque = false
