@@ -1712,6 +1712,11 @@ public abstract class NewJavaToKotlinConverterSingleFileTestGenerated extends Ab
             runTest("testData/newJ2k/detectProperties/GetterTypeNotMatch.java");
         }
 
+        @TestMetadata("GetterWithRedundantProjection.java")
+        public void testGetterWithRedundantProjection() throws Exception {
+            runTest("testData/newJ2k/detectProperties/GetterWithRedundantProjection.java");
+        }
+
         @TestMetadata("GetterWithSideEffect1.java")
         public void testGetterWithSideEffect1() throws Exception {
             runTest("testData/newJ2k/detectProperties/GetterWithSideEffect1.java");
