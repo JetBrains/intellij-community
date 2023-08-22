@@ -13,7 +13,7 @@ class MyService {
     companion object {
 
         @MyAnnotation
-        val <warning descr="Application service must not be assigned to a static immutable property with a backing field">companionObjectAppService<caret></warning> = ApplicationManager.getApplication().getService(MyService::class.java)
+        val <warning descr="An explicit 'getInstance()' method should be used to retrieve an application service instead of a property">companionObjectAppService<caret></warning> = ApplicationManager.getApplication().getService(MyService::class.java)
 
 
         // to test naming conflicts

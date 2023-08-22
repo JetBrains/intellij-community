@@ -538,9 +538,9 @@
       implementationClass="org.jetbrains.idea.devkit.inspections.ServiceLevelExtractorForJVM"/>
     <lightServiceMustBeFinalErrorMessageProvider language="JVM"
       implementationClass="org.jetbrains.idea.devkit.inspections.LightServiceMustBeFinalErrorMessageProvider"/>
-    <appServiceAsStaticFinalFieldOrPropertyProvider
+    <appServiceAsStaticFinalFieldOrPropertyFixProvider
       language="JAVA"
-      implementationClass="org.jetbrains.idea.devkit.inspections.quickfix.JavaAppServiceAsStaticFinalFieldOrPropertyProvider"/>
+      implementationClass="org.jetbrains.idea.devkit.inspections.quickfix.JavaAppServiceAsStaticFinalFieldOrPropertyFixProvider"/>
   </extensions>
 
   <extensionPoints>
@@ -584,10 +584,15 @@
                     dynamic="true">
       <with attribute="implementationClass" implements="org.jetbrains.idea.devkit.inspections.ErrorMessageProvider"/>
     </extensionPoint>
-    <extensionPoint qualifiedName="DevKit.lang.appServiceAsStaticFinalFieldOrPropertyProvider"
+    <extensionPoint qualifiedName="DevKit.lang.appServiceAsStaticFinalFieldOrPropertyVisitorProvider"
                     beanClass="com.intellij.lang.LanguageExtensionPoint"
                     dynamic="true">
-      <with attribute="implementationClass" implements="org.jetbrains.idea.devkit.inspections.quickfix.AppServiceAsStaticFinalFieldOrPropertyProvider"/>
+      <with attribute="implementationClass" implements="org.jetbrains.idea.devkit.inspections.AppServiceAsStaticFinalFieldOrPropertyVisitorProvider"/>
+    </extensionPoint>
+    <extensionPoint qualifiedName="DevKit.lang.appServiceAsStaticFinalFieldOrPropertyFixProvider"
+                    beanClass="com.intellij.lang.LanguageExtensionPoint"
+                    dynamic="true">
+      <with attribute="implementationClass" implements="org.jetbrains.idea.devkit.inspections.quickfix.AppServiceAsStaticFinalFieldOrPropertyFixProvider"/>
     </extensionPoint>
     <extensionPoint qualifiedName="DevKit.lang.uElementAsPsiCheckProvider"
                     beanClass="com.intellij.lang.LanguageExtensionPoint"

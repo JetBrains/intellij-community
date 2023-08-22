@@ -10,6 +10,7 @@ import com.intellij.lang.jvm.annotation.JvmAnnotationArrayValue
 import com.intellij.lang.jvm.annotation.JvmAnnotationEnumFieldValue
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.IntellijInternalApi
 import com.intellij.psi.PsiAnnotation
 import com.intellij.psi.PsiField
 import com.intellij.util.xml.DomManager
@@ -17,7 +18,8 @@ import org.jetbrains.idea.devkit.dom.Extension
 import org.jetbrains.idea.devkit.util.locateExtensionsByPsiClass
 import org.jetbrains.uast.*
 
-internal enum class LevelType {
+@IntellijInternalApi
+enum class LevelType {
   APP, PROJECT, MODULE, APP_AND_PROJECT, NOT_SPECIFIED;
 
   fun isApp(): Boolean {
@@ -41,7 +43,8 @@ internal fun getLevelType(annotation: JvmAnnotation, language: Language): LevelT
   return toLevelType(levels)
 }
 
-internal fun getLevelType(project: Project, uClass: UClass): LevelType? {
+@IntellijInternalApi
+fun getLevelType(project: Project, uClass: UClass): LevelType? {
   val serviceAnnotation = uClass.findAnnotation(Service::class.java.canonicalName)
   if (serviceAnnotation != null) return getLevelType(serviceAnnotation)
   val javaPsi = uClass.javaPsi

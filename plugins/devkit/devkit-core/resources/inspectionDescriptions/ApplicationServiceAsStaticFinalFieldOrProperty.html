@@ -26,6 +26,45 @@ Reports assignments of application services to static final fields / immutable p
   // Exception
   private static final UniqueVFilePathBuilder DUMMY_BUILDER = new UniqueVFilePathBuilder()
 </code></pre>
+<p><b>Retrieving a service instance through static immutable properties (Kotlin)</b></p>
+<p>
+  While services' assignments to properties without backing fields don't cause the aforementioned problem,
+  using an explicit <code>getInstance()</code> method to retrieve a service is preferred over using a property:
+</p>
+<ul>
+  <li>It makes it more clear on the call site that it can involve loading the service, which might not be cheap.</li>
+  <li>Loading the service can throw an exception, and having an exception thrown by a method call is less surprising
+    than if it was caused by property access.</li>
+  <li>(Over-)using properties may be error-prone in a way that it might be accidentally changed to a property with an initializer
+    instead of the correct (but more verbose) property with a getter, and that change can easily be overlooked.</li>
+  <li>Using the method instead of a property keeps <code>MyApplicationService.getInstance()</code> calls consistent
+    when used both in Kotlin, and Java.</li>
+  <li>Using the method keeps <code>MyApplicationService.getInstance()</code> consistent with <code>MyProjectService.getInstance(project)</code>,
+    both on the declaration and call sites.</li>
+</ul>
+<p>For better tooling performance, it is always advised to keep an explicit method return type.</p>
+<p><b>Example:</b></p>
+<pre><code lang="kotlin">
+  // Incorrect way
+  @Service
+  class MyApplicationService {
+    companion object {
+      @JvmStatic
+      val instance: MyApplicationService
+         get() = service()
+    }
+  }
+</code></pre>
+<pre><code lang="kotlin">
+  // Correct way
+  @Service
+  class MyApplicationService {
+    companion object {
+      @JvmStatic
+      fun getInstance(): MyApplicationService = service()
+    }
+  }
+</code></pre>
 <p><small>New in 2023.3</small>
 </body>
 </html>

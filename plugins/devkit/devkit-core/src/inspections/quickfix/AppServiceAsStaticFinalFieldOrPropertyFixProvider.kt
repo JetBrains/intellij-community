@@ -3,9 +3,9 @@ package org.jetbrains.idea.devkit.inspections.quickfix
 
 import com.intellij.codeInsight.FileModificationService
 import com.intellij.codeInsight.intention.preview.IntentionPreviewInfo
+import com.intellij.codeInspection.LocalQuickFix
 import com.intellij.codeInspection.LocalQuickFixOnPsiElement
 import com.intellij.codeInspection.ProblemDescriptor
-import com.intellij.codeInspection.ProblemsHolder
 import com.intellij.lang.LanguageExtension
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.CachedSingletonsRegistry
@@ -26,29 +26,26 @@ import org.jetbrains.idea.devkit.DevKitBundle
 import java.util.function.Supplier
 
 
-private val EP_NAME = ExtensionPointName.create<AppServiceAsStaticFinalFieldOrPropertyProvider>(
-  "DevKit.lang.appServiceAsStaticFinalFieldOrPropertyProvider"
+private val EP_NAME = ExtensionPointName.create<AppServiceAsStaticFinalFieldOrPropertyFixProvider>(
+  "DevKit.lang.appServiceAsStaticFinalFieldOrPropertyFixProvider"
 )
 
-internal object AppServiceAsStaticFinalFieldOrPropertyProviders : LanguageExtension<AppServiceAsStaticFinalFieldOrPropertyProvider>(EP_NAME.name)
+internal object AppServiceAsStaticFinalFieldOrPropertyFixProviders :
+  LanguageExtension<AppServiceAsStaticFinalFieldOrPropertyFixProvider>(EP_NAME.name)
 
 @IntellijInternalApi
 @ApiStatus.Internal
-interface AppServiceAsStaticFinalFieldOrPropertyProvider {
-  fun registerProblem(holder: ProblemsHolder, sourcePsi: PsiElement, anchor: PsiElement)
+interface AppServiceAsStaticFinalFieldOrPropertyFixProvider {
+  fun getFixes(sourcePsi: PsiElement): List<LocalQuickFix>
 
 }
 
 
-private class JavaAppServiceAsStaticFinalFieldOrPropertyProvider : AppServiceAsStaticFinalFieldOrPropertyProvider {
-  override fun registerProblem(holder: ProblemsHolder, sourcePsi: PsiElement, anchor: PsiElement) {
-    if (sourcePsi !is PsiField) return
 
-    return holder.registerProblem(
-      anchor,
-      DevKitBundle.message("inspections.application.service.as.static.final.field.message"),
-      JavaWrapInSupplierQuickFix(sourcePsi),
-    )
+private class JavaAppServiceAsStaticFinalFieldOrPropertyFixProvider : AppServiceAsStaticFinalFieldOrPropertyFixProvider {
+
+  override fun getFixes(sourcePsi: PsiElement): List<LocalQuickFix> {
+    return if (sourcePsi is PsiField) listOf(JavaWrapInSupplierQuickFix(sourcePsi)) else emptyList()
   }
 
 }

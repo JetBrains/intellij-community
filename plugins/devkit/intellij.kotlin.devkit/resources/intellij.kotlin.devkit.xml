@@ -55,8 +55,8 @@
       implementationClass="org.jetbrains.idea.devkit.kotlin.inspections.ServiceLevelExtractorForKotlin"/>
     <lightServiceMustBeFinalErrorMessageProvider language="kotlin"
      implementationClass="org.jetbrains.idea.devkit.kotlin.inspections.LightServiceMustNotBeOpenErrorMessageProvider"/>
-    <appServiceAsStaticFinalFieldOrPropertyProvider language="kotlin"
-      implementationClass="org.jetbrains.idea.devkit.kotlin.inspections.KtAppServiceAsStaticFinalFieldOrPropertyProvider"/>
+    <appServiceAsStaticFinalFieldOrPropertyVisitorProvider language="kotlin"
+      implementationClass="org.jetbrains.idea.devkit.kotlin.inspections.KtAppServiceAsStaticFinalFieldOrPropertyVisitorProvider"/>
     <uElementAsPsiCheckProvider language="kotlin"
       implementationClass="org.jetbrains.idea.devkit.kotlin.inspections.KtUElementAsPsiCheckProvider"/>
   </extensions>

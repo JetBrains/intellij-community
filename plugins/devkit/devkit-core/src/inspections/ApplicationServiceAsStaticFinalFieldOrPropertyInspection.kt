@@ -2,10 +2,16 @@
 package org.jetbrains.idea.devkit.inspections
 
 import com.intellij.codeInspection.ProblemsHolder
+import com.intellij.codeInspection.registerUProblem
+import com.intellij.lang.LanguageExtension
+import com.intellij.openapi.extensions.ExtensionPointName
+import com.intellij.openapi.util.IntellijInternalApi
 import com.intellij.psi.PsiElementVisitor
 import com.intellij.psi.util.PsiTypesUtil
 import com.intellij.uast.UastHintedVisitorAdapter
-import org.jetbrains.idea.devkit.inspections.quickfix.AppServiceAsStaticFinalFieldOrPropertyProviders
+import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.idea.devkit.DevKitBundle
+import org.jetbrains.idea.devkit.inspections.quickfix.AppServiceAsStaticFinalFieldOrPropertyFixProviders
 import org.jetbrains.uast.*
 import org.jetbrains.uast.visitor.AbstractUastNonRecursiveVisitor
 
@@ -13,7 +19,13 @@ import org.jetbrains.uast.visitor.AbstractUastNonRecursiveVisitor
 class ApplicationServiceAsStaticFinalFieldOrPropertyInspection : DevKitUastInspectionBase() {
 
   override fun buildInternalVisitor(holder: ProblemsHolder, isOnTheFly: Boolean): PsiElementVisitor {
+    // Can't easily visit all Kotlin properties via UAST (since some of them are UField,
+    // some of them are UMethod), so a separate visitor is needed
+    val visitorProvider = AppServiceAsStaticFinalFieldOrPropertyVisitorProviders.forLanguage(holder.file.language)
+    return visitorProvider?.getVisitor(holder) ?: getUastVisitor(holder)
+  }
 
+  private fun getUastVisitor(holder: ProblemsHolder): PsiElementVisitor {
     return UastHintedVisitorAdapter.create(
       holder.file.language,
       object : AbstractUastNonRecursiveVisitor() {
@@ -28,10 +40,14 @@ class ApplicationServiceAsStaticFinalFieldOrPropertyInspection : DevKitUastInspe
           if (serviceLevel == null || !serviceLevel.isApp()) return true
 
           val sourcePsi = node.sourcePsi ?: return true
-          val anchor = node.uastAnchor?.sourcePsi ?: return true
-          val provider = AppServiceAsStaticFinalFieldOrPropertyProviders.forLanguage(holder.file.language) ?: return true
+          val fixProvider = AppServiceAsStaticFinalFieldOrPropertyFixProviders.forLanguage(holder.file.language)
+          val fixes = fixProvider?.getFixes(sourcePsi) ?: emptyList()
 
-          provider.registerProblem(holder, sourcePsi, anchor)
+          holder.registerUProblem(
+            node,
+            DevKitBundle.message("inspections.application.service.as.static.final.field.message"),
+            *fixes.toTypedArray()
+          )
           return true
         }
 
@@ -44,4 +60,19 @@ class ApplicationServiceAsStaticFinalFieldOrPropertyInspection : DevKitUastInspe
     val initializer = field.uastInitializer
     return initializer is UCallExpression && initializer.hasKind(UastCallKind.CONSTRUCTOR_CALL)
   }
+
+}
+
+private val EP_NAME = ExtensionPointName.create<AppServiceAsStaticFinalFieldOrPropertyVisitorProvider>(
+  "DevKit.lang.appServiceAsStaticFinalFieldOrPropertyVisitorProvider"
+)
+
+internal object AppServiceAsStaticFinalFieldOrPropertyVisitorProviders :
+  LanguageExtension<AppServiceAsStaticFinalFieldOrPropertyVisitorProvider>(EP_NAME.name)
+
+@IntellijInternalApi
+@ApiStatus.Internal
+interface AppServiceAsStaticFinalFieldOrPropertyVisitorProvider {
+  fun getVisitor(holder: ProblemsHolder): PsiElementVisitor
+
 }

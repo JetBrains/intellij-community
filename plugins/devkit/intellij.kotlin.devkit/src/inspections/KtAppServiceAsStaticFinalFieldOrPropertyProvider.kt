@@ -7,46 +7,100 @@ import com.intellij.codeInspection.ProblemsHolder
 import com.intellij.openapi.application.CachedSingletonsRegistry
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiElement
+import com.intellij.psi.PsiElementVisitor
 import com.intellij.psi.util.PsiEditorUtil
 import com.intellij.psi.util.parentOfType
-import org.jetbrains.idea.devkit.inspections.quickfix.AppServiceAsStaticFinalFieldOrPropertyProvider
+import org.jetbrains.idea.devkit.inspections.AppServiceAsStaticFinalFieldOrPropertyVisitorProvider
+import org.jetbrains.idea.devkit.inspections.getLevelType
 import org.jetbrains.idea.devkit.inspections.quickfix.WrapInSupplierQuickFix
 import org.jetbrains.idea.devkit.kotlin.DevKitKotlinBundle
 import org.jetbrains.kotlin.analysis.api.KtAllowAnalysisFromWriteAction
 import org.jetbrains.kotlin.analysis.api.KtAllowAnalysisOnEdt
 import org.jetbrains.kotlin.analysis.api.analyze
+import org.jetbrains.kotlin.analysis.api.calls.singleFunctionCallOrNull
+import org.jetbrains.kotlin.analysis.api.calls.symbol
 import org.jetbrains.kotlin.analysis.api.lifetime.allowAnalysisFromWriteAction
 import org.jetbrains.kotlin.analysis.api.lifetime.allowAnalysisOnEdt
+import org.jetbrains.kotlin.analysis.api.symbols.KtConstructorSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KtPropertySymbol
+import org.jetbrains.kotlin.analysis.api.symbols.KtSamConstructorSymbol
 import org.jetbrains.kotlin.analysis.api.types.KtNonErrorClassType
+import org.jetbrains.kotlin.analysis.api.types.KtTypeNullability
 import org.jetbrains.kotlin.idea.base.codeInsight.KotlinNameSuggester
 import org.jetbrains.kotlin.idea.base.codeInsight.KotlinNameSuggestionProvider
 import org.jetbrains.kotlin.idea.base.codeInsight.ShortenReferencesFacility
 import org.jetbrains.kotlin.idea.base.fe10.codeInsight.newDeclaration.Fe10KotlinNewDeclarationNameValidator
 import org.jetbrains.kotlin.idea.intentions.ConvertPropertyToFunctionIntention
 import org.jetbrains.kotlin.idea.refactoring.inline.KotlinInlinePropertyProcessor
-import org.jetbrains.kotlin.psi.KtClass
-import org.jetbrains.kotlin.psi.KtObjectDeclaration
-import org.jetbrains.kotlin.psi.KtProperty
-import org.jetbrains.kotlin.psi.KtPsiFactory
+import org.jetbrains.kotlin.psi.*
+import org.jetbrains.kotlin.psi.psiUtil.containingClass
 import org.jetbrains.kotlin.psi.psiUtil.containingClassOrObject
+import org.jetbrains.uast.UClass
+import org.jetbrains.uast.toUElementOfType
 import java.util.function.Supplier
 
-private class KtAppServiceAsStaticFinalFieldOrPropertyProvider : AppServiceAsStaticFinalFieldOrPropertyProvider {
 
-  override fun registerProblem(holder: ProblemsHolder, sourcePsi: PsiElement, anchor: PsiElement) {
-    if (sourcePsi !is KtProperty) return
+private class KtAppServiceAsStaticFinalFieldOrPropertyVisitorProvider : AppServiceAsStaticFinalFieldOrPropertyVisitorProvider {
 
-    if (!sourcePsi.hasBackingField()) return
+  override fun getVisitor(holder: ProblemsHolder): PsiElementVisitor {
+    return object : KtVisitorVoid() {
+      override fun visitProperty(property: KtProperty) {
+        if (property.isVar || !property.isStatic()) return
 
-    holder.registerProblem(
-      anchor,
-      DevKitKotlinBundle.message("inspections.application.service.as.static.immutable.property.with.backing.field.message"),
-      ProblemHighlightType.WARNING,
-      IntentionWrapper(ConvertPropertyToFunctionIntention()),
-      KtWrapInSupplierQuickFix(sourcePsi),
-    )
+        @OptIn(KtAllowAnalysisOnEdt::class)
+        val typeClassElement = allowAnalysisOnEdt {
+          analyze(property) {
+            // return if it's an explicit constructor call
+            val resolveSymbol = property.initializer?.resolveCall()?.singleFunctionCallOrNull()?.symbol
+            val isConstructorCall = resolveSymbol is KtSamConstructorSymbol || resolveSymbol is KtConstructorSymbol
+            if (isConstructorCall) return
+
+            // can be KtClass or PsiClass
+            property.getReturnKtType().withNullability(KtTypeNullability.UNKNOWN).expandedClassSymbol?.psi ?: return
+          }
+        }
+
+        val serviceLevel = getLevelType(holder.project, typeClassElement.toUElementOfType<UClass>()!!)
+        if (serviceLevel == null || !serviceLevel.isApp()) return
+
+        val anchor = property.nameIdentifier ?: property
+
+        // a property is used by service implementation to retrieve a service instance
+        // if it's inside a companion object and returns and instance of containing class
+        val isInstance = property.parentOfType<KtObjectDeclaration>()?.isCompanion() == true &&
+                         property.containingClass() == typeClassElement
+
+        if (isInstance) {
+          holder.registerProblem(
+            anchor,
+            DevKitKotlinBundle.message("inspections.an.explicit.method.should.be.used.to.retrieve.an.application.service.message"),
+            ProblemHighlightType.WARNING,
+            IntentionWrapper(ConvertPropertyToFunctionIntention()),
+            KtWrapInSupplierQuickFix(property),
+          )
+          return
+        }
+
+        if (property.hasBackingField()) {
+          holder.registerProblem(
+            anchor,
+            DevKitKotlinBundle.message("inspections.application.service.as.static.immutable.property.with.backing.field.message"),
+            ProblemHighlightType.WARNING,
+            IntentionWrapper(ConvertPropertyToFunctionIntention()),
+            KtWrapInSupplierQuickFix(property),
+          )
+        }
+      }
+    }
   }
+
+  /**
+   * Top-level or being a member of any object.
+   */
+  private fun KtProperty.isStatic(): Boolean {
+    return isTopLevel || isMember && containingClassOrObject is KtObjectDeclaration
+  }
+
 
   @OptIn(KtAllowAnalysisOnEdt::class)
   private fun KtProperty.hasBackingField(): Boolean {
@@ -59,7 +113,6 @@ private class KtAppServiceAsStaticFinalFieldOrPropertyProvider : AppServiceAsSta
       }
     }
   }
-
 }
 
 
