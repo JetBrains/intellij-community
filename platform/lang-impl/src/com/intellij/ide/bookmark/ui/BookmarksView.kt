@@ -13,6 +13,7 @@ import com.intellij.ide.bookmark.ui.tree.VirtualFileVisitor
 import com.intellij.ide.dnd.DnDSupport
 import com.intellij.ide.dnd.aware.DnDAwareTree
 import com.intellij.ide.ui.UISettings
+import com.intellij.ide.util.DeleteHandler.DefaultDeleteProvider
 import com.intellij.ide.util.treeView.AbstractTreeNode
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.*
@@ -99,6 +100,8 @@ class BookmarksView(val project: Project, showToolbar: Boolean?)
     PlatformDataKeys.TREE_EXPANDER.`is`(dataId) -> treeExpander
     PlatformDataKeys.SELECTED_ITEMS.`is`(dataId) -> selectedNodes?.toArray(emptyArray<Any>())
     PlatformDataKeys.SELECTED_ITEM.`is`(dataId) -> selectedNodes?.firstOrNull()
+    PlatformDataKeys.PROJECT.`is`(dataId) -> project
+    PlatformDataKeys.DELETE_ELEMENT_PROVIDER.`is`(dataId) -> DefaultDeleteProvider()
     PlatformDataKeys.BGT_DATA_PROVIDER.`is`(dataId) -> {
       val selectedNodes = selectedNodes
       DataProvider { slowDataId -> getSlowData(slowDataId, selectedNodes) }
