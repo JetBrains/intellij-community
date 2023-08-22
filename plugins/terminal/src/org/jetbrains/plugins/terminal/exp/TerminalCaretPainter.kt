@@ -40,25 +40,35 @@ class TerminalCaretPainter(private val caretModel: TerminalCaretModel,
 
   @RequiresEdt
   fun repaint() {
-    updateCaretHighlighter(caretModel.caretPosition)
+    updateCaretHighlighter(caretModel.caretPosition, caretModel.isBlinking)
   }
 
   override fun caretPositionChanged(oldPosition: LogicalPosition?, newPosition: LogicalPosition?) {
     invokeLater {
       if (!editor.isDisposed) {
-        updateCaretHighlighter(newPosition)
+        updateCaretHighlighter(newPosition, caretModel.isBlinking)
       }
     }
   }
 
-  private fun updateCaretHighlighter(newPosition: LogicalPosition?) {
+  override fun caretBlinkingChanged(isBlinking: Boolean) {
+    invokeLater {
+      if (!editor.isDisposed) {
+        updateCaretHighlighter(caretModel.caretPosition, isBlinking)
+      }
+    }
+  }
+
+  private fun updateCaretHighlighter(newPosition: LogicalPosition?, isBlinking: Boolean) {
     removeHighlighter()
     caretUpdater?.let { Disposer.dispose(it) }
     caretUpdater = null
     if (newPosition != null) {
       installCaretHighlighter(newPosition)
-      caretUpdater = BlinkingCaretUpdater(newPosition)
-      Disposer.register(caretModel, caretUpdater!!)
+      if (isBlinking) {
+        caretUpdater = BlinkingCaretUpdater(newPosition)
+        Disposer.register(caretModel, caretUpdater!!)
+      }
     }
   }
 

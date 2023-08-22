@@ -19,6 +19,9 @@ class TerminalCaretModel(private val session: TerminalSession,
   @Volatile
   var caretPosition: LogicalPosition? = LogicalPosition(0, 0)
     private set
+  @Volatile
+  var isBlinking: Boolean = terminalModel.isCursorBlinking
+    private set
 
   init {
     session.addCommandListener(this, parentDisposable = this)
@@ -44,6 +47,11 @@ class TerminalCaretModel(private val session: TerminalSession,
       updateCaretPosition(terminalModel.cursorX, terminalModel.cursorY)
     }
     else updateCaretPosition(null)
+  }
+
+  override fun onBlinkingChanged(blinking: Boolean) {
+    isBlinking = blinking
+    listeners.forEach { it.caretBlinkingChanged(blinking) }
   }
 
   override fun commandStarted(command: String) {
@@ -85,5 +93,6 @@ class TerminalCaretModel(private val session: TerminalSession,
 
   interface CaretListener {
     fun caretPositionChanged(oldPosition: LogicalPosition?, newPosition: LogicalPosition?) {}
+    fun caretBlinkingChanged(isBlinking: Boolean) {}
   }
 }
