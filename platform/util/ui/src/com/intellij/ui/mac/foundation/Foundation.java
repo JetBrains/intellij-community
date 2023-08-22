@@ -14,6 +14,7 @@ import org.jetbrains.annotations.Nullable;
 import java.awt.*;
 import java.io.File;
 import java.lang.reflect.Proxy;
+import java.nio.CharBuffer;
 import java.nio.charset.StandardCharsets;
 import java.util.List;
 import java.util.*;
@@ -211,9 +212,27 @@ public final @NonNls class Foundation {
                            initWithBytesLengthEncodingSel, utf16Bytes, utf16Bytes.length, nsEncodingUTF16LE),
                     autoreleaseSel);
     }
+
+    public static @NotNull ID create(@NotNull CharSequence cs) {
+      if (cs instanceof String s) {
+        return create(s);
+      }
+      if (cs.isEmpty()) {
+        return invoke(nsStringCls, stringSel);
+      }
+
+      byte[] utf16Bytes = StandardCharsets.UTF_16LE.encode(CharBuffer.wrap(cs)).array();
+      return invoke(invoke(invoke(nsStringCls, allocSel),
+                           initWithBytesLengthEncodingSel, utf16Bytes, utf16Bytes.length, nsEncodingUTF16LE),
+                    autoreleaseSel);
+    }
   }
 
   public static @NotNull ID nsString(@Nullable String s) {
+    return s == null ? ID.NIL : NSString.create(s);
+  }
+
+  public static @NotNull ID nsString(@Nullable CharSequence s) {
     return s == null ? ID.NIL : NSString.create(s);
   }
 
