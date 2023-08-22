@@ -9,6 +9,7 @@ import com.intellij.openapi.util.NlsSafe
 import com.intellij.psi.PsiClass
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiJavaFile
+import com.intellij.psi.impl.compiled.ClsFileImpl
 import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.psi.search.PsiShortNamesCache
 import com.intellij.psi.util.CachedValueProvider
@@ -160,7 +161,7 @@ class KotlinJUnit3Framework: JUnit3Framework(), KotlinPsiBasedTestFramework {
 
         private fun checkNameMatch(file: PsiJavaFile, fqNames: Set<String>, shortName: String): Boolean {
             if (shortName in fqNames || "${file.packageName}.$shortName" in fqNames) return true
-            val importStatements = file.importList?.importStatements ?: return false
+            val importStatements = (file.importList ?: ((file as? ClsFileImpl)?.decompiledPsiFile as? PsiJavaFile)?.importList)?.importStatements ?: return false
             for (importStatement in importStatements) {
                 val importedFqName = importStatement.qualifiedName ?: continue
                 if (importedFqName.endsWith(".$shortName") && importedFqName in fqNames) {
@@ -219,7 +220,6 @@ class KotlinJUnit3Framework: JUnit3Framework(), KotlinPsiBasedTestFramework {
     override fun isIgnoredMethod(declaration: KtNamedFunction): Boolean =
         psiBasedDelegate.isIgnoredMethod(declaration)
 
-    private companion object {
-        private val TEST_CLASS_FQN = setOf(JUnitUtil.TEST_CASE_CLASS)
-    }
 }
+
+private val TEST_CLASS_FQN = setOf(JUnitUtil.TEST_CASE_CLASS)
