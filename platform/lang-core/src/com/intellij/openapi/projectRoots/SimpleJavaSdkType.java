@@ -35,7 +35,9 @@ public class SimpleJavaSdkType extends SdkType implements JavaSdkType {
   public Sdk createJdk(@NotNull String jdkName, @NotNull String home) {
     Sdk jdk = ProjectJdkTable.getInstance().createSdk(jdkName, this);
     SdkModificator sdkModificator = jdk.getSdkModificator();
-    sdkModificator.setHomePath(FileUtil.toSystemIndependentName(home));
+    String homePath = FileUtil.toSystemIndependentName(home);
+    sdkModificator.setHomePath(homePath);
+    sdkModificator.setVersionString(this.getVersionString(homePath));
     Application application = ApplicationManager.getApplication();
     Runnable runnable = () -> sdkModificator.commitChanges();
     if (application.isDispatchThread()) {
