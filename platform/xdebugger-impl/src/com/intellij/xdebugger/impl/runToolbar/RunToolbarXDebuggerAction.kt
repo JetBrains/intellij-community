@@ -108,7 +108,7 @@ open class ConfigurationXDebuggerResumeAction : XDebuggerResumeAction() {
 
 abstract class XDebuggerResumeAction : XDebuggerActionBase(false) {
   override fun getActionUpdateThread(): ActionUpdateThread {
-    return ActionUpdateThread.EDT
+    return ActionUpdateThread.BGT
   }
 
   override fun getHandler(debuggerSupport: DebuggerSupport): DebuggerActionHandler {
