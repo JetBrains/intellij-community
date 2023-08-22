@@ -777,16 +777,16 @@ open class ActionManagerImpl protected constructor(private val coroutineScope: C
       return null
     }
 
-    var parentGroup = getActionImpl(id = groupId, canReturnStub = true)
+    val parentGroup = getActionImpl(id = groupId, canReturnStub = true)
     if (parentGroup == null) {
       reportActionError(module = module,
-                        message = "$actionName: group with id \"$groupId\" isn't registered; action will be added to the \"Other\" group",
+                        message = "$actionName: group with id \"$groupId\" isn't registered so the action won't be added to it; the action can be invoked via \"Find Action\"",
                         cause = null)
-      parentGroup = getActionImpl(id = IdeActions.GROUP_OTHER_MENU, canReturnStub = true)
+      return null
     }
     if (parentGroup !is DefaultActionGroup) {
       reportActionError(module, "$actionName: group with id \"$groupId\" should be instance of ${DefaultActionGroup::class.java.name}" +
-                                " but was ${parentGroup?.javaClass ?: "[null]"}")
+                                " but was ${parentGroup.javaClass}")
       return null
     }
     return parentGroup

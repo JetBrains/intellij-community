@@ -738,6 +738,7 @@
         <action id="CreateLauncherScript" class="com.intellij.ide.actions.CreateLauncherScriptAction"/>
         <action id="CreateDesktopEntry" class="com.intellij.ide.actions.CreateDesktopEntryAction"/>
         <separator/>
+        <group id="OtherMenu" class="com.intellij.ide.actions.NonEmptyActionGroup"/>
       </group>
 
       <group id="WindowMenu" popup="true">
@@ -893,8 +894,6 @@
         <action id="About" class="com.intellij.ide.actions.AboutAction"/>
         <separator/>
       </group>
-
-      <group id="OtherMenu" class="com.intellij.ide.actions.NonEmptyActionGroup"/>
     </group>
 
     <action id="ZoomInIdeAction" class="com.intellij.ide.actions.ZoomInIdeAction">
