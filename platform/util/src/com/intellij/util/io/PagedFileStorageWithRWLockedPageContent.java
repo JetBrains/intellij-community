@@ -127,7 +127,7 @@ public final class PagedFileStorageWithRWLockedPageContent implements PagedStora
                                                  @NotNull StorageLockContext storageLockContext,
                                                  int pageSize,
                                                  @NotNull PageContentLockingStrategy strategy) throws IOException {
-    this(file, storageLockContext, pageSize, /*nativeBytesOrder: */true , /*readOnly: */false, strategy);
+    this(file, storageLockContext, pageSize, /*nativeBytesOrder: */true, /*readOnly: */false, strategy);
   }
 
   public PagedFileStorageWithRWLockedPageContent(@NotNull Path file,
@@ -406,7 +406,13 @@ public final class PagedFileStorageWithRWLockedPageContent implements PagedStora
           }
         }
         else {
-          Thread.yield();
+          if (attempt < 10) {
+            Thread.yield();
+          }
+          else {
+            //instead of blind yield -- better to wait for housekeeper to make a turn
+            pageCache.waitForHousekeepingTurn( 1 /*ms*/ );
+          }
         }
       }
     }
