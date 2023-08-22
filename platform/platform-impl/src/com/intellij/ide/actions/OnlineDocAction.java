@@ -5,19 +5,23 @@ import com.intellij.ide.BrowserUtil;
 import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.application.impl.ApplicationInfoImpl;
 import com.intellij.openapi.project.DumbAware;
+import com.intellij.platform.ide.customization.ExternalProductResourceUrls;
+import com.intellij.util.Url;
 import org.jetbrains.annotations.NotNull;
 
 public final class OnlineDocAction extends AnAction implements DumbAware {
   @Override
   public void actionPerformed(@NotNull AnActionEvent e) {
-    BrowserUtil.browse(ApplicationInfoImpl.getShadowInstance().getDocumentationUrl());
+    Url url = ExternalProductResourceUrls.getInstance().getGettingStartedPageUrl();
+    if (url != null) {
+      BrowserUtil.browse(url.toExternalForm());
+    }
   }
 
   @Override
   public void update(final @NotNull AnActionEvent e) {
-    e.getPresentation().setEnabledAndVisible(ApplicationInfoImpl.getShadowInstance().getDocumentationUrl() != null);
+    e.getPresentation().setEnabledAndVisible(ExternalProductResourceUrls.getInstance().getGettingStartedPageUrl() != null);
   }
 
   @Override

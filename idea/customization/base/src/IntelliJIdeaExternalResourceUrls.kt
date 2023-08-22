@@ -48,4 +48,7 @@ class IntelliJIdeaExternalResourceUrls : BaseJetBrainsExternalProductResourceUrl
       val suffix = if (SystemInfo.isMac) "_Mac" else ""
       return Urls.newFromEncoded("https://www.jetbrains.com/idea/docs/IntelliJIDEA_ReferenceCard$suffix.pdf")
     }
+
+  override val gettingStartedPageUrl: Url
+    get() = Urls.newFromEncoded("https://www.jetbrains.com/idea/resources/")
 }

@@ -16,7 +16,6 @@
            builtin-url="__BUILTIN_PLUGINS_URL__"/>
 
   <help webhelp-url="https://www.jetbrains.com/help/idea/"/>
-  <documentation url="https://www.jetbrains.com/idea/resources/"/>
   <whatsnew show-on-update="true"/>
 
   <statistics settings="https://www.jetbrains.com/idea/statistics/stat-assistant.xml"

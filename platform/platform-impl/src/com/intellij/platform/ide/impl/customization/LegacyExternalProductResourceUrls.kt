@@ -84,4 +84,7 @@ class LegacyExternalProductResourceUrls : ExternalProductResourceUrls {
 
   override val whatIsNewPageUrl: Url?
     get() = ApplicationInfoEx.getInstanceEx().whatsNewUrl?.let { Urls.newFromEncoded(it) }
+
+  override val gettingStartedPageUrl: Url?
+    get() = ApplicationInfoEx.getInstanceEx().documentationUrl?.let { Urls.newFromEncoded(it) }
 }

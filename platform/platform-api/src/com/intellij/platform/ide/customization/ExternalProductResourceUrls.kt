@@ -100,6 +100,14 @@ interface ExternalProductResourceUrls {
    */
   val whatIsNewPageUrl: Url?
     get() = null
+  
+  /**
+   * Returns URL of the page containing introductory documentation of the product.  
+   * It's opened in the browser when a user invokes the "Getting Started" action.
+   * If the property returns `null`, the action won't be shown.
+   */
+  val gettingStartedPageUrl: Url?
+    get() = null
 }
 
 /**
