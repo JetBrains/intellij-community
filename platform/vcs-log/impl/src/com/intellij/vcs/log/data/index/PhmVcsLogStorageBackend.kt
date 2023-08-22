@@ -324,6 +324,12 @@ internal class PhmVcsLogStorageBackend(
     }
   }
 
+  internal fun clearCaches() {
+    for (index in listOf(trigrams, paths, users)) {
+      index.clearCaches()
+    }
+  }
+
   override fun dispose() = Unit
 
   companion object {
