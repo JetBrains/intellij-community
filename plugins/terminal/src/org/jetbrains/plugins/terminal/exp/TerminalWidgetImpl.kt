@@ -99,19 +99,17 @@ class TerminalWidgetImpl(private val project: Project,
   override fun getPreferredFocusableComponent(): JComponent = view.preferredFocusableComponent
 
   private class TerminalPlaceholder : TerminalContentView {
-    private val panel: JPanel = object : JPanel() {
+    override val component: JComponent = object : JPanel() {
       override fun getBackground(): Color {
         return TerminalUI.terminalBackground
       }
     }
 
+    override val preferredFocusableComponent: JComponent = component
+
     override fun getTerminalSize(): TermSize? = null
 
     override fun isFocused(): Boolean = false
-
-    override fun getComponent(): JComponent = panel
-
-    override fun getPreferredFocusableComponent(): JComponent = panel
 
     override fun dispose() {
     }

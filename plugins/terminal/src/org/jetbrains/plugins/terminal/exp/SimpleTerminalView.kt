@@ -1,13 +1,13 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.terminal.exp
 
+import com.intellij.openapi.Disposable
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.EditorFactory
 import com.intellij.openapi.editor.ex.FocusChangeListener
 import com.intellij.openapi.editor.impl.DocumentImpl
 import com.intellij.openapi.editor.impl.EditorImpl
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.ui.ComponentContainer
 import com.intellij.openapi.util.Disposer
 import com.intellij.terminal.JBTerminalSystemSettingsProviderBase
 import com.intellij.util.ui.JBUI
@@ -24,9 +24,13 @@ class SimpleTerminalView(
   session: TerminalSession,
   eventsHandler: TerminalEventsHandler,
   private val withVerticalScroll: Boolean = true
-) : JPanel(), ComponentContainer {
+) : JPanel(), Disposable {
   private val editor: EditorImpl
   private val controller: SimpleTerminalController
+
+  val component: JComponent = this
+  val preferredFocusableComponent: JComponent
+    get() = editor.contentComponent
 
   val terminalWidth: Int
     get() {
@@ -72,10 +76,6 @@ class SimpleTerminalView(
   override fun getBackground(): Color {
     return TerminalUI.terminalBackground
   }
-
-  override fun getComponent(): JComponent = this
-
-  override fun getPreferredFocusableComponent(): JComponent = editor.contentComponent
 
   override fun dispose() {
     EditorFactory.getInstance().releaseEditor(editor)

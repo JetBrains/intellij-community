@@ -31,6 +31,15 @@ class BlockTerminalView(
   private val promptView: TerminalPromptView = TerminalPromptView(project, settings, session, this)
   private var alternateBufferView: SimpleTerminalView? = null
 
+  override val component: JComponent = this
+
+  override val preferredFocusableComponent: JComponent
+    get() = when {
+      alternateBufferView != null -> alternateBufferView!!.preferredFocusableComponent
+      promptView.component.isVisible -> promptView.preferredFocusableComponent
+      else -> outputView.preferredFocusableComponent
+    }
+
   init {
     Disposer.register(this, outputView)
     Disposer.register(this, promptView)
@@ -145,16 +154,6 @@ class BlockTerminalView(
   }
 
   override fun dispose() {}
-
-  override fun getComponent(): JComponent = this
-
-  override fun getPreferredFocusableComponent(): JComponent {
-    return when {
-      alternateBufferView != null -> alternateBufferView!!.preferredFocusableComponent
-      promptView.component.isVisible -> promptView.preferredFocusableComponent
-      else -> outputView.preferredFocusableComponent
-    }
-  }
 
   /**
    * This layout is needed to place [TOP] component (command blocks) over the [BOTTOM] component (prompt).

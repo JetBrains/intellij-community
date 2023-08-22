@@ -1,13 +1,13 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.terminal.exp
 
+import com.intellij.openapi.Disposable
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.EditorFactory
 import com.intellij.openapi.editor.ex.FocusChangeListener
 import com.intellij.openapi.editor.impl.DocumentImpl
 import com.intellij.openapi.editor.impl.EditorImpl
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.ui.ComponentContainer
 import com.intellij.terminal.JBTerminalSystemSettingsProviderBase
 import java.awt.Dimension
 import javax.swing.JComponent
@@ -16,8 +16,12 @@ class TerminalOutputView(
   private val project: Project,
   session: TerminalSession,
   settings: JBTerminalSystemSettingsProviderBase
-) : ComponentContainer {
+) : Disposable {
   val controller: TerminalOutputController
+  val component: JComponent
+    get() = editor.component
+  val preferredFocusableComponent: JComponent
+    get() = editor.contentComponent
 
   private val editor: EditorImpl
 
@@ -56,8 +60,4 @@ class TerminalOutputView(
   override fun dispose() {
     EditorFactory.getInstance().releaseEditor(editor)
   }
-
-  override fun getComponent(): JComponent = editor.component
-
-  override fun getPreferredFocusableComponent(): JComponent = editor.contentComponent
 }

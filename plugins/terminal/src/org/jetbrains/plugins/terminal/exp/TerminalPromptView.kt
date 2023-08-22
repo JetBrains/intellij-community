@@ -1,12 +1,12 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.terminal.exp
 
+import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.runInEdt
 import com.intellij.openapi.editor.ex.util.EditorUtil
 import com.intellij.openapi.editor.impl.EditorImpl
 import com.intellij.openapi.fileTypes.PlainTextLanguage
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.ui.ComponentContainer
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.terminal.JBTerminalSystemSettingsProviderBase
 import com.intellij.ui.LanguageTextField
@@ -25,8 +25,12 @@ class TerminalPromptView(
   private val settings: JBTerminalSystemSettingsProviderBase,
   session: TerminalSession,
   commandExecutor: TerminalCommandExecutor
-) : JPanel(), ComponentContainer, PromptStateListener {
+) : JPanel(), PromptStateListener, Disposable {
   val controller: TerminalPromptController
+
+  val component: JComponent = this
+  val preferredFocusableComponent: JComponent
+    get() = editor.contentComponent
 
   private val editor: EditorImpl
   private val promptLabel: JLabel
@@ -117,10 +121,6 @@ class TerminalPromptView(
   }
 
   override fun getBackground(): Color = TerminalUI.terminalBackground
-
-  override fun getComponent(): JComponent = this
-
-  override fun getPreferredFocusableComponent(): JComponent = editor.contentComponent
 
   override fun dispose() {}
 }

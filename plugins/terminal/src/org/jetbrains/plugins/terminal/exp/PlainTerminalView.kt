@@ -16,6 +16,11 @@ class PlainTerminalView(
   private val session: TerminalSession,
   settings: JBTerminalSystemSettingsProviderBase
 ) : TerminalContentView {
+  override val component: JComponent
+    get() = view.component
+  override val preferredFocusableComponent: JComponent
+    get() = view.preferredFocusableComponent
+
   private val view: SimpleTerminalView
 
   init {
@@ -42,10 +47,6 @@ class PlainTerminalView(
   override fun isFocused(): Boolean {
     return view.isFocused()
   }
-
-  override fun getComponent(): JComponent = view
-
-  override fun getPreferredFocusableComponent(): JComponent = view.preferredFocusableComponent
 
   override fun dispose() {
   }
