@@ -120,6 +120,8 @@
 
     <consoleFilterProvider implementation="org.jetbrains.idea.maven.project.MavenConsoleFilterProvider"/>
 
+    <activityInProgressPredicate implementation="org.jetbrains.idea.maven.utils.MavenInProgressPredicate"/>
+
     <projectConfigurable groupId="build.tools" groupWeight="120" instance="org.jetbrains.idea.maven.utils.MavenSettings" id="MavenSettings"
                          bundle="messages.MavenProjectBundle"
                          key="configurable.MavenSettings.display.name"
