@@ -1,6 +1,8 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.maven.server;
 
+import com.intellij.concurrency.ThreadContext;
+import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.EmptyProgressIndicator;
 import com.intellij.openapi.progress.ProgressIndicator;
@@ -59,8 +61,11 @@ public class MavenIndexingConnectorImpl extends MavenServerConnectorBase {
           MavenLog.LOG.debug("[connector] terminate " + MavenIndexingConnectorImpl.this);
           MavenServerManager.getInstance().shutdownConnector(MavenIndexingConnectorImpl.this, false);
         });
-        MavenServer server = mySupport.acquire(this, "", indicator);
-        myServerPromise.setResult(server);
+        // Maven server's lifetime is bigger than the activity that spawned it, so we let it go untracked
+        try (AccessToken ignored = ThreadContext.resetThreadContext()) {
+          MavenServer server = mySupport.acquire(this, "", indicator);
+          myServerPromise.setResult(server);
+        }
         MavenLog.LOG.debug("[connector] in " + dirForLogs + " has been connected " + MavenIndexingConnectorImpl.this);
       }
       catch (Throwable e) {
