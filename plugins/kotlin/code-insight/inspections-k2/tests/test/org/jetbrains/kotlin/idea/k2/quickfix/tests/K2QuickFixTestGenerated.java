@@ -692,24 +692,221 @@ public abstract class K2QuickFixTestGenerated extends AbstractK2QuickFixTest {
 
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("../../../idea/tests/testData/quickfix/suppress/inspections")
-        public static class Inspections extends AbstractK2QuickFixTest {
-            private void runTest(String testDataFilePath) throws Exception {
-                KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+        public abstract static class Inspections extends AbstractK2QuickFixTest {
+            @RunWith(JUnit3RunnerWithInners.class)
+            @TestMetadata("../../../idea/tests/testData/quickfix/suppress/inspections/codeStructure")
+            public static class CodeStructure extends AbstractK2QuickFixTest {
+                private void runTest(String testDataFilePath) throws Exception {
+                    KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+                }
+
+                @TestMetadata("classSuppressedOnClass.kt")
+                public void testClassSuppressedOnClass() throws Exception {
+                    runTest("../../../idea/tests/testData/quickfix/suppress/inspections/codeStructure/classSuppressedOnClass.kt");
+                }
+
+                @TestMetadata("classSuppressedOnFile.kt")
+                public void testClassSuppressedOnFile() throws Exception {
+                    runTest("../../../idea/tests/testData/quickfix/suppress/inspections/codeStructure/classSuppressedOnFile.kt");
+                }
+
+                @TestMetadata("classTypeParameterSuppressedOnClass.kt")
+                public void testClassTypeParameterSuppressedOnClass() throws Exception {
+                    runTest("../../../idea/tests/testData/quickfix/suppress/inspections/codeStructure/classTypeParameterSuppressedOnClass.kt");
+                }
+
+                @TestMetadata("classTypeParameterSuppressedOnFile.kt")
+                public void testClassTypeParameterSuppressedOnFile() throws Exception {
+                    runTest("../../../idea/tests/testData/quickfix/suppress/inspections/codeStructure/classTypeParameterSuppressedOnFile.kt");
+                }
+
+                @TestMetadata("classTypeParameterSuppressedOnTypeParameter.kt")
+                public void testClassTypeParameterSuppressedOnTypeParameter() throws Exception {
+                    runTest("../../../idea/tests/testData/quickfix/suppress/inspections/codeStructure/classTypeParameterSuppressedOnTypeParameter.kt");
+                }
+
+                @TestMetadata("companionSuppressedOnClass.kt")
+                public void testCompanionSuppressedOnClass() throws Exception {
+                    runTest("../../../idea/tests/testData/quickfix/suppress/inspections/codeStructure/companionSuppressedOnClass.kt");
+                }
+
+                @TestMetadata("companionSuppressedOnCompanion.kt")
+                public void testCompanionSuppressedOnCompanion() throws Exception {
+                    runTest("../../../idea/tests/testData/quickfix/suppress/inspections/codeStructure/companionSuppressedOnCompanion.kt");
+                }
+
+                @TestMetadata("companionSuppressedOnFile.kt")
+                public void testCompanionSuppressedOnFile() throws Exception {
+                    runTest("../../../idea/tests/testData/quickfix/suppress/inspections/codeStructure/companionSuppressedOnFile.kt");
+                }
+
+                @TestMetadata("constructorSuppressedOnClass.kt")
+                public void testConstructorSuppressedOnClass() throws Exception {
+                    runTest("../../../idea/tests/testData/quickfix/suppress/inspections/codeStructure/constructorSuppressedOnClass.kt");
+                }
+
+                @TestMetadata("constructorSuppressedOnConstructor.kt")
+                public void testConstructorSuppressedOnConstructor() throws Exception {
+                    runTest("../../../idea/tests/testData/quickfix/suppress/inspections/codeStructure/constructorSuppressedOnConstructor.kt");
+                }
+
+                @TestMetadata("constructorSuppressedOnFile.kt")
+                public void testConstructorSuppressedOnFile() throws Exception {
+                    runTest("../../../idea/tests/testData/quickfix/suppress/inspections/codeStructure/constructorSuppressedOnFile.kt");
+                }
+
+                @TestMetadata("enumEntrySuppressedOnClass.kt")
+                public void testEnumEntrySuppressedOnClass() throws Exception {
+                    runTest("../../../idea/tests/testData/quickfix/suppress/inspections/codeStructure/enumEntrySuppressedOnClass.kt");
+                }
+
+                @TestMetadata("enumEntrySuppressedOnEnumEntry.kt")
+                public void testEnumEntrySuppressedOnEnumEntry() throws Exception {
+                    runTest("../../../idea/tests/testData/quickfix/suppress/inspections/codeStructure/enumEntrySuppressedOnEnumEntry.kt");
+                }
+
+                @TestMetadata("enumEntrySuppressedOnFile.kt")
+                public void testEnumEntrySuppressedOnFile() throws Exception {
+                    runTest("../../../idea/tests/testData/quickfix/suppress/inspections/codeStructure/enumEntrySuppressedOnFile.kt");
+                }
+
+                @TestMetadata("funTypeParameterSuppressedOnFun.kt")
+                public void testFunTypeParameterSuppressedOnFun() throws Exception {
+                    runTest("../../../idea/tests/testData/quickfix/suppress/inspections/codeStructure/funTypeParameterSuppressedOnFun.kt");
+                }
+
+                @TestMetadata("initializerSuppressedOnFile.kt")
+                public void testInitializerSuppressedOnFile() throws Exception {
+                    runTest("../../../idea/tests/testData/quickfix/suppress/inspections/codeStructure/initializerSuppressedOnFile.kt");
+                }
+
+                @TestMetadata("initializerSuppressedOnFun.kt")
+                public void testInitializerSuppressedOnFun() throws Exception {
+                    runTest("../../../idea/tests/testData/quickfix/suppress/inspections/codeStructure/initializerSuppressedOnFun.kt");
+                }
+
+                @TestMetadata("initializerSuppressedOnInitializer.kt")
+                public void testInitializerSuppressedOnInitializer() throws Exception {
+                    runTest("../../../idea/tests/testData/quickfix/suppress/inspections/codeStructure/initializerSuppressedOnInitializer.kt");
+                }
+
+                @TestMetadata("interfaceSuppressedOnFile.kt")
+                public void testInterfaceSuppressedOnFile() throws Exception {
+                    runTest("../../../idea/tests/testData/quickfix/suppress/inspections/codeStructure/interfaceSuppressedOnFile.kt");
+                }
+
+                @TestMetadata("interfaceSuppressedOnInterface.kt")
+                public void testInterfaceSuppressedOnInterface() throws Exception {
+                    runTest("../../../idea/tests/testData/quickfix/suppress/inspections/codeStructure/interfaceSuppressedOnInterface.kt");
+                }
+
+                @TestMetadata("objectSuppressedOnFile.kt")
+                public void testObjectSuppressedOnFile() throws Exception {
+                    runTest("../../../idea/tests/testData/quickfix/suppress/inspections/codeStructure/objectSuppressedOnFile.kt");
+                }
+
+                @TestMetadata("objectSuppressedOnObject.kt")
+                public void testObjectSuppressedOnObject() throws Exception {
+                    runTest("../../../idea/tests/testData/quickfix/suppress/inspections/codeStructure/objectSuppressedOnObject.kt");
+                }
+
+                @TestMetadata("parameterSuppressedOnClass.kt")
+                public void testParameterSuppressedOnClass() throws Exception {
+                    runTest("../../../idea/tests/testData/quickfix/suppress/inspections/codeStructure/parameterSuppressedOnClass.kt");
+                }
+
+                @TestMetadata("parameterSuppressedOnFile.kt")
+                public void testParameterSuppressedOnFile() throws Exception {
+                    runTest("../../../idea/tests/testData/quickfix/suppress/inspections/codeStructure/parameterSuppressedOnFile.kt");
+                }
+
+                @TestMetadata("parameterSuppressedOnFun.kt")
+                public void testParameterSuppressedOnFun() throws Exception {
+                    runTest("../../../idea/tests/testData/quickfix/suppress/inspections/codeStructure/parameterSuppressedOnFun.kt");
+                }
+
+                @TestMetadata("parameterSuppressedOnParameter.kt")
+                public void testParameterSuppressedOnParameter() throws Exception {
+                    runTest("../../../idea/tests/testData/quickfix/suppress/inspections/codeStructure/parameterSuppressedOnParameter.kt");
+                }
+
+                @TestMetadata("propertySuppressedOnClass.kt")
+                public void testPropertySuppressedOnClass() throws Exception {
+                    runTest("../../../idea/tests/testData/quickfix/suppress/inspections/codeStructure/propertySuppressedOnClass.kt");
+                }
+
+                @TestMetadata("propertySuppressedOnFile.kt")
+                public void testPropertySuppressedOnFile() throws Exception {
+                    runTest("../../../idea/tests/testData/quickfix/suppress/inspections/codeStructure/propertySuppressedOnFile.kt");
+                }
+
+                @TestMetadata("propertySuppressedOnFun.kt")
+                public void testPropertySuppressedOnFun() throws Exception {
+                    runTest("../../../idea/tests/testData/quickfix/suppress/inspections/codeStructure/propertySuppressedOnFun.kt");
+                }
+
+                @TestMetadata("propertySuppressedOnProperty.kt")
+                public void testPropertySuppressedOnProperty() throws Exception {
+                    runTest("../../../idea/tests/testData/quickfix/suppress/inspections/codeStructure/propertySuppressedOnProperty.kt");
+                }
+
+                @TestMetadata("statementSuppressedOnAnonymous.kt")
+                public void testStatementSuppressedOnAnonymous() throws Exception {
+                    runTest("../../../idea/tests/testData/quickfix/suppress/inspections/codeStructure/statementSuppressedOnAnonymous.kt");
+                }
+
+                @TestMetadata("statementSuppressedOnClass.kt")
+                public void testStatementSuppressedOnClass() throws Exception {
+                    runTest("../../../idea/tests/testData/quickfix/suppress/inspections/codeStructure/statementSuppressedOnClass.kt");
+                }
+
+                @TestMetadata("statementSuppressedOnFile.kt")
+                public void testStatementSuppressedOnFile() throws Exception {
+                    runTest("../../../idea/tests/testData/quickfix/suppress/inspections/codeStructure/statementSuppressedOnFile.kt");
+                }
+
+                @TestMetadata("statementSuppressedOnFun.kt")
+                public void testStatementSuppressedOnFun() throws Exception {
+                    runTest("../../../idea/tests/testData/quickfix/suppress/inspections/codeStructure/statementSuppressedOnFun.kt");
+                }
+
+                @TestMetadata("statementSuppressedOnStatement.kt")
+                public void testStatementSuppressedOnStatement() throws Exception {
+                    runTest("../../../idea/tests/testData/quickfix/suppress/inspections/codeStructure/statementSuppressedOnStatement.kt");
+                }
+
+                @TestMetadata("statementSuppressedOnStatementTop.kt")
+                public void testStatementSuppressedOnStatementTop() throws Exception {
+                    runTest("../../../idea/tests/testData/quickfix/suppress/inspections/codeStructure/statementSuppressedOnStatementTop.kt");
+                }
+
+                @TestMetadata("statementSuppressedOnVal.kt")
+                public void testStatementSuppressedOnVal() throws Exception {
+                    runTest("../../../idea/tests/testData/quickfix/suppress/inspections/codeStructure/statementSuppressedOnVal.kt");
+                }
             }
 
-            @TestMetadata("constantConditionIf.kt")
-            public void testConstantConditionIf() throws Exception {
-                runTest("../../../idea/tests/testData/quickfix/suppress/inspections/constantConditionIf.kt");
-            }
+            @RunWith(JUnit3RunnerWithInners.class)
+            @TestMetadata("../../../idea/tests/testData/quickfix/suppress/inspections")
+            public static class Uncategorized extends AbstractK2QuickFixTest {
+                private void runTest(String testDataFilePath) throws Exception {
+                    KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+                }
 
-            @TestMetadata("redundantUnitReturn.kt")
-            public void testRedundantUnitReturn() throws Exception {
-                runTest("../../../idea/tests/testData/quickfix/suppress/inspections/redundantUnitReturn.kt");
-            }
+                @TestMetadata("constantConditionIf.kt")
+                public void testConstantConditionIf() throws Exception {
+                    runTest("../../../idea/tests/testData/quickfix/suppress/inspections/constantConditionIf.kt");
+                }
 
-            @TestMetadata("unusedImports.kt")
-            public void testUnusedImports() throws Exception {
-                runTest("../../../idea/tests/testData/quickfix/suppress/inspections/unusedImports.kt");
+                @TestMetadata("redundantUnitReturn.kt")
+                public void testRedundantUnitReturn() throws Exception {
+                    runTest("../../../idea/tests/testData/quickfix/suppress/inspections/redundantUnitReturn.kt");
+                }
+
+                @TestMetadata("unusedImports.kt")
+                public void testUnusedImports() throws Exception {
+                    runTest("../../../idea/tests/testData/quickfix/suppress/inspections/unusedImports.kt");
+                }
             }
         }
 
