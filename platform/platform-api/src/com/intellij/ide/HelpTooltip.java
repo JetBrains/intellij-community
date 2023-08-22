@@ -127,6 +127,7 @@ public class HelpTooltip {
   private BooleanSupplier masterPopupOpenCondition;
 
   private JBPopup myPopup;
+  private Component myPopupOwner;
   private final Alarm popupAlarm = new Alarm();
   private boolean isOverPopup;
   private boolean isMultiline;
@@ -368,6 +369,9 @@ public class HelpTooltip {
   protected final void createMouseListeners() {
     myMouseListener = new MouseAdapter() {
       @Override public void mouseEntered(MouseEvent e) {
+        if (myPopup != null && myPopupOwner == e.getSource()) {
+          return;
+        }
         if (myPopup != null && !myPopup.isDisposed()){
           myPopup.cancel();
         }
@@ -380,6 +384,9 @@ public class HelpTooltip {
       }
 
       @Override public void mouseExited(MouseEvent e) {
+        if (insidePopup(e)) {
+          return;
+        }
         int delay = myHideDelay;
         if (delay == -1) {
           delay = Registry.intValue("ide.tooltip.initialDelay.highlighter", 150);
@@ -391,6 +398,14 @@ public class HelpTooltip {
         if (!initialShowScheduled) {
           scheduleShow(e, Registry.intValue("ide.tooltip.reshowDelay"));
         }
+      }
+
+      private boolean insidePopup(MouseEvent e) {
+        if (myPopup == null) {
+          return false;
+        }
+        Point p = SwingUtilities.convertPoint(myPopupOwner, e.getX(), e.getY(), myPopup.getContent());
+        return myPopup.getContent().contains(p);
       }
     };
   }
@@ -415,8 +430,18 @@ public class HelpTooltip {
       public void mouseExited(MouseEvent e) {
         if (link == null || !link.getBounds().contains(e.getPoint())) {
           isOverPopup = false;
-          hidePopup(false);
+          if (!insidePopupOwner(e)) {
+            hidePopup(false);
+          }
         }
+      }
+
+      private boolean insidePopupOwner(MouseEvent e) {
+        if (myPopup == null) {
+          return false;
+        }
+        Point p = SwingUtilities.convertPoint(myPopup.getContent(), e.getX(), e.getY(), myPopupOwner);
+        return myPopup.getOwner().contains(p);
       }
     };
   }
