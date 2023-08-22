@@ -127,6 +127,12 @@ class SqliteConnection(file: Path?, readOnly: Boolean = false) : AutoCloseable {
     }
   }
 
+  fun selectInt(@Language("SQLite") sql: String, values: Any? = null): Int? {
+    return executeLifecycle<Int?>(sql.encodeToByteArray(), values) { db, statementPointer, empty ->
+      if (empty) null else db.column_int(statementPointer, 0)
+    }
+  }
+
   private inline fun <T> executeLifecycle(sql: ByteArray,
                                           values: Any? = null,
                                           executor: (db: NativeDB, statementPointer: Long, empty: Boolean) -> T): T {
