@@ -4,6 +4,7 @@ package com.intellij.codeInsight.daemon;
 
 import com.intellij.psi.PsiElement;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
 import java.util.List;
@@ -70,7 +71,7 @@ public interface LineMarkerProvider {
    * }
    * </pre>
    */
-  LineMarkerInfo<?> getLineMarkerInfo(@NotNull PsiElement element);
+  @Nullable LineMarkerInfo<?> getLineMarkerInfo(@NotNull PsiElement element);
 
   /**
    * Collects line markers for several PsiElements in batch, after all (relatively faster) {@link #getLineMarkerInfo(PsiElement)} calls are finished.
