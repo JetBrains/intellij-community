@@ -68,7 +68,6 @@ internal fun CoroutineScope.showSplashIfNeeded(initUiDeferred: Job, appInfoDefer
     initUiDeferred.join()
 
     val appInfo = appInfoDeferred.await()
-
     val image = span("splash preparation") {
       assert(SPLASH_WINDOW == null)
       loadSplashImage(appInfo = appInfo)
@@ -86,21 +85,33 @@ internal fun CoroutineScope.showSplashIfNeeded(initUiDeferred: Job, appInfoDefer
       val splash = Splash(image)
       StartUpMeasurer.addInstantEvent("splash shown")
       try {
-        SPLASH_WINDOW = splash
-
         ensureActive()
-
+        SPLASH_WINDOW = splash
         span("splash set visible") {
           splash.isVisible = true
+        }
+
+        val showJob = CompletableDeferred<Unit>()
+        splash.addWindowListener(object : WindowAdapter() {
+          override fun windowClosed(e: WindowEvent) {
+            showJob.complete(Unit)
+          }
+        })
+        withContext(Dispatchers.Default) {
+          showJob.join()
         }
       }
       catch (ignore: CancellationException) {
         SPLASH_WINDOW = null
-        launch(NonCancellable + RawSwingDispatcher) {
+        withContext(NonCancellable) {
           splash.isVisible = false
           splash.dispose()
+
+          StartUpMeasurer.addInstantEvent("splash hidden")
         }
       }
+
+      SPLASH_WINDOW = null
     }
   }
 
@@ -185,20 +196,7 @@ fun hideSplashBeforeShow(window: Window) {
 internal fun hasSplash(): Boolean = SPLASH_WINDOW != null
 
 fun hideSplash() {
-  splashJob.get().cancel()
-
-  var window: Window? = SPLASH_WINDOW
-  if (window == null) {
-    window = PROJECT_FRAME ?: return
-    PROJECT_FRAME = null
-  }
-  else {
-    SPLASH_WINDOW = null
-  }
-
-  StartUpMeasurer.addInstantEvent("splash hidden")
-  window.isVisible = false
-  window.dispose()
+  splashJob.get().cancel("hideSplash")
 }
 
 private fun doShowFrame(savedBounds: Rectangle, backgroundColor: Color, extendedState: Int): IdeFrameImpl {
