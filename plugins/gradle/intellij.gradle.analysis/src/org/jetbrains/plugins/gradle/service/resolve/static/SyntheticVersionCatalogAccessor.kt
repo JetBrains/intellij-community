@@ -33,7 +33,7 @@ class SyntheticVersionCatalogAccessor(project: Project, scope: GlobalSearchScope
     .buildEnclosingMethod(this, model.versions(className)!!.properties, "versions")
 
   private val bundles: PsiMethod = SyntheticAccessorBuilder(project, scope, className, Kind.BUNDLE)
-    .buildEnclosingMethod(this, emptyList(), "bundles")
+    .buildEnclosingMethod(this, model.bundles(className)!!.properties, "bundles")
 
   private val className = "LibrariesFor${StringUtil.capitalize(className)}"
 
