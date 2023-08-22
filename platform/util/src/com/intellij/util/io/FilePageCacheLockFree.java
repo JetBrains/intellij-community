@@ -1124,7 +1124,7 @@ public final class FilePageCacheLockFree implements AutoCloseable {
       }
 
       return Math.max(
-        pagesAllocatedInTurn * safetyMarginFactor.value() / 10,
+        pagesAllocatedInTurn * safetyMarginFactor.value() / 10  + 1,
         1
       );
     }
