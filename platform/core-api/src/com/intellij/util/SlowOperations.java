@@ -9,6 +9,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.ThrowableComputable;
 import com.intellij.openapi.util.objectTree.ThrowableInterner;
 import com.intellij.openapi.util.registry.Registry;
+import com.intellij.util.concurrency.ThreadingAssertions;
 import com.intellij.util.containers.FList;
 import com.intellij.util.ui.EDT;
 import org.jetbrains.annotations.ApiStatus;
@@ -45,6 +46,19 @@ public final class SlowOperations {
   private static @NotNull FList<@NotNull String> ourStack = FList.emptyList();
 
   private SlowOperations() {}
+
+  /**
+   * I/O and native calls in addition to being slow operations must not be called inside read-action (RA)
+   * as such RAs cannot be promptly canceled on an incoming write-action (WA).
+   *
+   * @see #assertSlowOperationsAreAllowed
+   * @see ThreadingAssertions#assertNoReadAccess
+   */
+  public static void assertNonCancelableSlowOperationsAreAllowed() {
+    assertSlowOperationsAreAllowed();
+    if (isAlwaysAllowed()) return;
+    ThreadingAssertions.assertNoReadAccess();
+  }
 
   /**
    * If you get an exception from this method, then you need to move the computation to a background thread (BGT)
