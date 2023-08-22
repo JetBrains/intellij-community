@@ -33,7 +33,15 @@ import static com.intellij.updater.Runner.LOG;
  * </p>
  */
 public abstract class BaseUpdateAction extends PatchAction {
+  /**
+   * The patch will contain the full file.
+   * <p>
+   * If the file is marked as {@link PatchAction#isCritical()} the file is always saved full.
+   */
   private static final byte RAW = 0;
+  /**
+   * The patch will contain only a diff between the original and updated files.
+   */
   private static final byte COMPRESSED = 1;
 
   private final String mySource;
@@ -110,12 +118,18 @@ public abstract class BaseUpdateAction extends PatchAction {
   @Override
   public void backup(File toDir, File backupDir) throws IOException {
     if (myInPlace) {
-      Utils.copy(getFile(toDir), getFile(backupDir), false);
+      File fileToBackup = getFile(toDir);
+      if (fileToBackup.exists()) {
+        Utils.copy(fileToBackup, getFile(backupDir), false);
+      }
     }
     else {
       File moveBackup = getSource(backupDir);
       if (!moveBackup.exists()) {
-        Utils.copy(getSource(toDir), moveBackup, false);
+        File fileToBackup = getSource(toDir);
+        if (fileToBackup.exists()) {
+          Utils.copy(fileToBackup, moveBackup, false);
+        }
       }
     }
   }
@@ -135,7 +149,14 @@ public abstract class BaseUpdateAction extends PatchAction {
   protected void doRevert(File toFile, File backupFile) throws IOException {
     if (myInPlace) {
       if (!Files.exists(toFile.toPath()) || isModified(toFile)) {
-        Utils.copy(backupFile, toFile, true);
+        if (backupFile.exists()) {
+          Utils.copy(backupFile, toFile, true);
+        }
+        else {
+          // The file didn't exist in the original installation.
+          // Must probably this mean that the installation is corrupted (e.g. after IDEA-326800), but still we restore the original state.
+          Utils.delete(toFile);
+        }
       }
     }
     else {
@@ -145,6 +166,7 @@ public abstract class BaseUpdateAction extends PatchAction {
 
   protected void writeDiff(InputStream olderFileIn, InputStream newerFileIn, OutputStream patchOutput) throws IOException {
     if (isCritical()) {
+      // If the file is critical, we always store the full file instead of calculating the diff.
       LOG.info("critical: " + mySource);
 
       patchOutput.write(RAW);
@@ -172,9 +194,10 @@ public abstract class BaseUpdateAction extends PatchAction {
     }
   }
 
-  protected void applyDiff(InputStream patchInput, InputStream oldFileIn, OutputStream toFileOut) throws IOException {
+  protected void applyDiff(InputStream patchInput, /* @Nullable */ InputStream oldFileIn, OutputStream toFileOut) throws IOException {
     int type = patchInput.read();
     if (type == COMPRESSED) {
+      if (oldFileIn == null) throw new RuntimeException("File in local installation missing");
       JBPatch.bspatch(oldFileIn, toFileOut, patchInput);
     }
     else if (type == RAW) {

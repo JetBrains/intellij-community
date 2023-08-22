@@ -279,6 +279,59 @@ public abstract class PatchApplyingRevertingTest extends PatchTestCase {
   }
 
   @Test
+  public void testApplyingWithRemovedCriticalFiles() throws Exception {
+    myPatchSpec.setStrict(true);
+    myPatchSpec.setCriticalFiles(Collections.singletonList("lib/annotations.jar"));
+    createPatch();
+
+    FileUtil.delete(new File(myOlderDir, "lib/annotations.jar"));
+
+    if (isBinary()) {
+      assertAppliedAndReverted();
+    }
+    else {
+      PatchFileCreator.PreparationResult preparationResult = PatchFileCreator.prepareAndValidate(myFile, myOlderDir, TEST_UI);
+      assertThat(preparationResult.validationResults).containsExactly(
+        new ValidationResult(ValidationResult.Kind.ERROR,
+                             "lib/annotations.jar",
+                             ValidationResult.Action.UPDATE,
+                             ValidationResult.ABSENT_MESSAGE,
+                             ValidationResult.Option.NONE));
+    }
+  }
+
+  @Test
+  public void testApplyingWithRemovedNonCriticalFilesWithStrict() throws Exception {
+    myPatchSpec.setStrict(true);
+    createPatch();
+
+    FileUtil.delete(new File(myOlderDir, "lib/annotations.jar"));
+
+    PatchFileCreator.PreparationResult preparationResult = PatchFileCreator.prepareAndValidate(myFile, myOlderDir, TEST_UI);
+    assertThat(preparationResult.validationResults).containsExactly(
+      new ValidationResult(ValidationResult.Kind.ERROR,
+                           "lib/annotations.jar",
+                           ValidationResult.Action.UPDATE,
+                           ValidationResult.ABSENT_MESSAGE,
+                           ValidationResult.Option.NONE));
+  }
+
+  @Test
+  public void testApplyingWithRemovedNonCriticalFilesWithoutStrict() throws Exception {
+    createPatch();
+
+    FileUtil.delete(new File(myOlderDir, "lib/annotations.jar"));
+
+    PatchFileCreator.PreparationResult preparationResult = PatchFileCreator.prepareAndValidate(myFile, myOlderDir, TEST_UI);
+    assertThat(preparationResult.validationResults).containsExactly(
+      new ValidationResult(ValidationResult.Kind.ERROR,
+                           "lib/annotations.jar",
+                           ValidationResult.Action.UPDATE,
+                           ValidationResult.ABSENT_MESSAGE,
+                           ValidationResult.Option.IGNORE));
+  }
+
+  @Test
   public void testApplyingWithModifiedCriticalFilesAndDifferentRoot() throws Exception {
     myPatchSpec.setStrict(true);
     myPatchSpec.setRoot("lib/");

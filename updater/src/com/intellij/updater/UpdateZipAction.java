@@ -72,6 +72,28 @@ public class UpdateZipAction extends BaseUpdateAction {
   }
 
   @Override
+  public ValidationResult validate(File toDir) throws IOException {
+    // Firstly we check if the zip file exists at all.
+    if (!isOptional() && !getSource(toDir).exists()) {
+      ValidationResult.Option solution;
+      if (isStrict() || myPatch.isStrict()) {
+        solution = ValidationResult.Option.NONE;
+      }
+      else if (isCritical()) {
+        solution = ValidationResult.Option.NONE;
+      }
+      else {
+        solution = ValidationResult.Option.IGNORE;
+      }
+
+      return new ValidationResult(ValidationResult.Kind.ERROR, getReportPath(), ValidationResult.Action.UPDATE,
+                                  ValidationResult.ABSENT_MESSAGE, solution);
+    }
+
+    return super.validate(toDir);
+  }
+
+  @Override
   protected boolean doCalculate(File olderFile, File newerFile) throws IOException {
     Map<String, Long> oldCheckSums = new HashMap<>(), newCheckSums = new HashMap<>();
     processZipFile(olderFile, (entry, in) -> oldCheckSums.put(entry.getName(), Digester.digestStream(in)));
