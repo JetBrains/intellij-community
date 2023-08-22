@@ -31,7 +31,8 @@ enum class LevelType {
   }
 }
 
-internal fun getLevelType(annotation: JvmAnnotation, language: Language): LevelType {
+@IntellijInternalApi
+fun getLevelType(annotation: JvmAnnotation, language: Language): LevelType {
   val levels = when (val attributeValue = annotation.findAttribute(PsiAnnotation.DEFAULT_REFERENCED_METHOD_NAME)?.attributeValue) {
     is JvmAnnotationArrayValue -> {
       val serviceLevelExtractor = getProvider(ServiceLevelExtractors, language) ?: return LevelType.NOT_SPECIFIED
@@ -69,6 +70,7 @@ fun getLevelType(project: Project, uClass: UClass): LevelType? {
   return toLevelType(levels)
 }
 
+@IntellijInternalApi
 fun getLevels(attributeValue: JvmAnnotationEnumFieldValue): Collection<Service.Level> {
   if (attributeValue.containingClassName != Service.Level::class.java.canonicalName) return emptySet()
   val fieldName = attributeValue.fieldName ?: return emptySet()
@@ -110,6 +112,7 @@ private fun toLevelType(levels: Collection<Service.Level>): LevelType {
   }
 }
 
+@IntellijInternalApi
 fun toLevel(name: String): Service.Level? {
   return try {
     Service.Level.valueOf(name)
