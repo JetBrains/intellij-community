@@ -207,9 +207,7 @@ public final @NonNls class Foundation {
       }
 
       byte[] utf16Bytes = s.getBytes(StandardCharsets.UTF_16LE);
-      return invoke(invoke(invoke(nsStringCls, allocSel),
-                           initWithBytesLengthEncodingSel, utf16Bytes, utf16Bytes.length, nsEncodingUTF16LE),
-                    autoreleaseSel);
+      return create(utf16Bytes);
     }
 
     public static @NotNull ID create(@NotNull CharSequence cs) {
@@ -221,9 +219,13 @@ public final @NonNls class Foundation {
       }
 
       byte[] utf16Bytes = StandardCharsets.UTF_16LE.encode(CharBuffer.wrap(cs)).array();
-      return invoke(invoke(invoke(nsStringCls, allocSel),
-                           initWithBytesLengthEncodingSel, utf16Bytes, utf16Bytes.length, nsEncodingUTF16LE),
-                    autoreleaseSel);
+      return create(utf16Bytes);
+    }
+
+    private static @NotNull ID create(byte[] utf16Bytes) {
+      ID emptyNsString = invoke(nsStringCls, allocSel);
+      ID initializedEmptyNsString = invoke(emptyNsString, initWithBytesLengthEncodingSel, utf16Bytes, utf16Bytes.length, nsEncodingUTF16LE);
+      return invoke(initializedEmptyNsString, autoreleaseSel);
     }
   }
 
