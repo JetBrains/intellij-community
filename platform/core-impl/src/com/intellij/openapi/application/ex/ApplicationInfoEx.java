@@ -70,6 +70,11 @@ public abstract class ApplicationInfoEx extends ApplicationInfo {
 
   public abstract String getPluginsListUrl();
 
+  /**
+   * @deprecated is not used by the platform anymore
+   */
+  @ApiStatus.ScheduledForRemoval
+  @Deprecated
   public abstract String getChannelsListUrl();
 
   public abstract String getPluginsDownloadUrl();

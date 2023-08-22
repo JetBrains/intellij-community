@@ -28,7 +28,6 @@ public class ApplicationInfoTest {
       assertThat(info.getPluginManagerUrl()).contains(host).doesNotContain(ApplicationInfoImpl.DEFAULT_PLUGINS_HOST);
       assertThat(info.getPluginsListUrl()).contains(host).doesNotContain(ApplicationInfoImpl.DEFAULT_PLUGINS_HOST);
       assertThat(info.getPluginsDownloadUrl()).contains(host).doesNotContain(ApplicationInfoImpl.DEFAULT_PLUGINS_HOST);
-      assertThat(info.getChannelsListUrl()).contains(host).doesNotContain(ApplicationInfoImpl.DEFAULT_PLUGINS_HOST);
     });
   }
 
