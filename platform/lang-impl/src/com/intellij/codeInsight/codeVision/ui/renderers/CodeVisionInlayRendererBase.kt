@@ -40,33 +40,21 @@ abstract class CodeVisionInlayRendererBase(theme: CodeVisionTheme = CodeVisionTh
   }
 
   override fun mouseMoved(event: MouseEvent, translated: Point) {
-    isHovered = true
-    updateHoveredEntry(translated)
-    updateCursor(true)
-    inlay.repaint()
+    updateMouseState(true, translated)
   }
 
   override fun mouseExited() {
-    isHovered = false
-    hoveredEntry = null
-    updateCursor(false)
-    inlay.repaint()
+    updateMouseState(false, null)
   }
 
   override fun mousePressed(event: MouseEvent, translated: Point) {
-    if (event.isShiftDown) return
     val clickedEntry = hoveredEntry ?: return
-    if (SwingUtilities.isLeftMouseButton(event)) {
-      handleLeftClick(clickedEntry)
-      event.consume()
-      return
+    when {
+      event.isShiftDown -> return
+      SwingUtilities.isLeftMouseButton(event) -> handleLeftClick(clickedEntry)
+      SwingUtilities.isRightMouseButton(event) -> handleRightClick(clickedEntry)
     }
-
-    if (SwingUtilities.isRightMouseButton(event)) {
-      handleRightClick(clickedEntry)
-      event.consume()
-      return
-    }
+    event.consume()
   }
 
   private fun handleRightClick(clickedEntry: CodeVisionEntry) {
@@ -77,11 +65,17 @@ abstract class CodeVisionInlayRendererBase(theme: CodeVisionTheme = CodeVisionTh
     inlay.getUserData(CodeVisionListData.KEY)?.rangeCodeVisionModel?.handleLensClick(clickedEntry, inlay)
   }
 
-  private fun updateHoveredEntry(point: Point) {
+  private fun updateMouseState(isHovered: Boolean, point: Point?) {
+    this.isHovered = isHovered
+    hoveredEntry = if (isHovered) getHoveredEntry(point) else null
+    updateCursor(isHovered)
+    inlay.repaint()
+  }
+
+  private fun getHoveredEntry(point: Point?): CodeVisionEntry? {
     val codeVisionListData = inlay.getUserData(CodeVisionListData.KEY)
     val state = codeVisionListData?.rangeCodeVisionModel?.state() ?: RangeCodeVisionModel.InlayState.NORMAL
-
-    hoveredEntry = painter.hoveredEntry(inlay.editor, state, codeVisionListData, point.x, point.y)
+    return point?.let { painter.hoveredEntry(inlay.editor, state, codeVisionListData, it.x, it.y) }
   }
 
   private fun updateCursor(hasHoveredEntry: Boolean) {
@@ -95,5 +89,6 @@ abstract class CodeVisionInlayRendererBase(theme: CodeVisionTheme = CodeVisionTh
 
   protected open fun getPoint(inlay: Inlay<*>, targetPoint: Point): Point = targetPoint
 
-  protected fun inlayState(inlay: Inlay<*>): RangeCodeVisionModel.InlayState = inlay.getUserData(CodeVisionListData.KEY)?.rangeCodeVisionModel?.state() ?: RangeCodeVisionModel.InlayState.NORMAL
+  protected fun inlayState(inlay: Inlay<*>): RangeCodeVisionModel.InlayState =
+    inlay.getUserData(CodeVisionListData.KEY)?.rangeCodeVisionModel?.state() ?: RangeCodeVisionModel.InlayState.NORMAL
 }
