@@ -2,6 +2,7 @@
 package com.intellij.openapi.wm.impl.customFrameDecorations.frameTitleButtons
 
 import com.intellij.icons.AllIcons
+import com.intellij.ide.ui.LafManager
 import com.intellij.openapi.wm.impl.customFrameDecorations.LinuxLookAndFeel
 import com.intellij.openapi.wm.impl.customFrameDecorations.LinuxLookAndFeel.Companion.findIconAbsolutePath
 import com.intellij.openapi.wm.impl.customFrameDecorations.style.HOVER_KEY
@@ -91,17 +92,28 @@ class LinuxFrameTitleButtons(
 }
 
 
+// Can not use JBColor because title frame can use a dark background in Light theme
+@Suppress("UseJBColor")
 private class HoveredCircleButtonUI : BasicButtonUI() {
+  private val circleDiameter = 24
+
   // Adwaita background circle:
   // - light theme: rgba(0, 0, 0, 0.08) -> 20.40
   // - dark theme: rgba(255, 255, 255, 0.1) -> 25.5
-  private val circleDiameter = 24
+  private val circleLightBackground = Color(1f, 1f, 1f, 0.08f)
+  private val circleDarkBackground = Color(0f, 0f, 0f, 0.1f)
+
   override fun paint(g: Graphics, c: JComponent) {
-    g.color = JBColor(Color(0f, 0f, 0f, 0.1f), Color(1f, 1f, 1f, 0.08f))
-    getHoverColor(c)?.let {
-      g.color = JBColor(Color(0f, 0f, 0f, 0.1f + 0.05f), Color(1f, 1f, 1f, 0.08f + 0.05f))
-      //g.fillRect(0, 0, c.width, c.height)
+    val isLightBackground = with(LafManager.getInstance().currentLookAndFeel.name) {
+      this == "Light with Light Header" || this == "IntelliJ Light"
     }
+    val backgroundColor = if (isLightBackground) circleDarkBackground else circleLightBackground
+
+    g.color = backgroundColor
+    getHoverColor(c)?.let {
+      g.color = alterAlpha(backgroundColor, 0.05f)
+    }
+
     if (g is Graphics2D) {
       g.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON)
       g.fillRoundRect((c.width / 2) - (circleDiameter / 2), (c.height / 2) - (circleDiameter / 2), circleDiameter, circleDiameter, c.width, c.height)
@@ -110,5 +122,9 @@ private class HoveredCircleButtonUI : BasicButtonUI() {
   }
 
   private fun getHoverColor(c: JComponent): Color? = c.getClientProperty(HOVER_KEY) as? Color
+
+  private fun alterAlpha(color: Color, amount: Float): Color {
+    return Color(color.red, color.green, color.blue, (((color.alpha.toFloat() / 256f) + amount) * 256).toInt())
+  }
 }
 
