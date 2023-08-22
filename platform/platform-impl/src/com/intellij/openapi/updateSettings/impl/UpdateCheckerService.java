@@ -26,6 +26,8 @@ import com.intellij.openapi.util.BuildNumber;
 import com.intellij.openapi.util.text.HtmlBuilder;
 import com.intellij.openapi.util.text.HtmlChunk;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.platform.ide.customization.ExternalProductResourceUrls;
+import com.intellij.util.Url;
 import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.text.DateFormatUtil;
 import org.jetbrains.annotations.NotNull;
@@ -188,10 +190,10 @@ final class UpdateCheckerService {
   }
 
   private static void showWhatsNew(Project project, BuildNumber current) {
-    String url = ApplicationInfoEx.getInstanceEx().getWhatsNewUrl();
+    Url url = ExternalProductResourceUrls.getInstance().getWhatIsNewPageUrl();
     if (url != null && WhatsNewUtil.isWhatsNewAvailable() && shouldShowWhatsNew(current, ApplicationInfoEx.getInstanceEx().isMajorEAP())) {
       if (UpdateSettings.getInstance().isShowWhatsNewEditor()) {
-        ApplicationManager.getApplication().invokeLater(() -> WhatsNewAction.openWhatsNewPage(project, url));
+        ApplicationManager.getApplication().invokeLater(() -> WhatsNewAction.openWhatsNewPage(project, url.toExternalForm()));
         IdeUpdateUsageTriggerCollector.majorUpdateHappened(true);
       }
       else {

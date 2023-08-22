@@ -92,6 +92,14 @@ interface ExternalProductResourceUrls {
    */
   val keyboardShortcutsPdfUrl: Url?
     get() = null
+  
+  /**
+   * Returns URL of the page containing information about new features in the product.  
+   * It's opened in the browser or in the editor when a user invokes the "What's New" action.
+   * If the property returns `null`, the action won't be shown.
+   */
+  val whatIsNewPageUrl: Url?
+    get() = null
 }
 
 /**

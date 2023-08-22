@@ -30,7 +30,9 @@ abstract class BaseJetBrainsExternalProductResourceUrls : ExternalProductResourc
 
   /**
    * Returns URL of the product page on jetbrains.com site. 
-   * It's supposed that by appending `download` to this URL you get the address of the download page.
+   * It's used to compute URLs of the following resources: 
+   * * [productPageUrl]/download to get the address of the download page;
+   * * [productPageUrl]/whatsnew to get the address of "What's New" page.  
    */
   abstract val productPageUrl: String
 
@@ -81,6 +83,9 @@ abstract class BaseJetBrainsExternalProductResourceUrls : ExternalProductResourc
 
   override val downloadPageUrl: Url?
     get() = Urls.newFromEncoded(productPageUrl).resolve("download")
+
+  override val whatIsNewPageUrl: Url?
+    get() = Urls.newFromEncoded(productPageUrl).resolve("whatsnew")
 }
 
 /**

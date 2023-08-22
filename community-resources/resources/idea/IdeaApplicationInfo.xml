@@ -17,7 +17,7 @@
 
   <help webhelp-url="https://www.jetbrains.com/help/idea/"/>
   <documentation url="https://www.jetbrains.com/idea/resources/"/>
-  <whatsnew url="https://www.jetbrains.com/idea/whatsnew/" show-on-update="true"/>
+  <whatsnew show-on-update="true"/>
 
   <statistics settings="https://www.jetbrains.com/idea/statistics/stat-assistant.xml"
               service="https://www.jetbrains.com/idea/statistics/index.jsp"

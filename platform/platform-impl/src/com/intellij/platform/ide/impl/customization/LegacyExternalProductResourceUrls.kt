@@ -81,4 +81,7 @@ class LegacyExternalProductResourceUrls : ExternalProductResourceUrls {
       val url = if (SystemInfo.isMac) appInfo.getMacKeymapUrl() else appInfo.getWinKeymapUrl()
       return url?.let { Urls.newFromEncoded(url) }
     }
+
+  override val whatIsNewPageUrl: Url?
+    get() = ApplicationInfoEx.getInstanceEx().whatsNewUrl?.let { Urls.newFromEncoded(it) }
 }
