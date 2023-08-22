@@ -174,6 +174,9 @@ abstract class BaseIdeaProperties : ProductProperties() {
       layout.withoutProjectLibrary("jetbrains.qodana.sarif.converter")
       layout.withoutProjectLibrary("jetbrains.qodana.web.ui")
       layout.withoutProjectLibrary("qodana-sarif")
+      // todo it is a quick fix - fix the root cause
+      layout.withoutProjectLibrary("assertJ")
+      layout.withoutProjectLibrary("hamcrest")
     }
 
     productLayout.compatiblePluginsToIgnore = persistentListOf(
