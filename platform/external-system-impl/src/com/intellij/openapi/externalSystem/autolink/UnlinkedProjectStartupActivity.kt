@@ -5,12 +5,14 @@ import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.readAction
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
+import com.intellij.openapi.components.serviceAsync
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.extensions.createExtensionDisposable
 import com.intellij.openapi.externalSystem.autoimport.ExternalSystemProjectId
 import com.intellij.openapi.externalSystem.autoimport.changes.vfs.VirtualFileChangesListener
 import com.intellij.openapi.externalSystem.autoimport.changes.vfs.VirtualFileChangesListener.Companion.installAsyncVirtualFileListener
 import com.intellij.openapi.externalSystem.autolink.ExternalSystemUnlinkedProjectAware.Companion.EP_NAME
+import com.intellij.openapi.externalSystem.service.ExternalSystemInProgressService
 import com.intellij.openapi.externalSystem.util.ExternalSystemUtil
 import com.intellij.openapi.module.ModuleManager
 import com.intellij.openapi.progress.blockingContext
@@ -42,9 +44,11 @@ class UnlinkedProjectStartupActivity : ProjectActivity {
   private class CoroutineScopeService(val coroutineScope: CoroutineScope)
 
   override suspend fun execute(project: Project) {
-    loadProjectIfSingleUnlinkedProjectFound(project)
-    val projectRoots = installProjectRootsScanner(project)
-    installUnlinkedProjectScanner(project, projectRoots)
+    project.serviceAsync<ExternalSystemInProgressService>().trackConfigurationActivity {
+      loadProjectIfSingleUnlinkedProjectFound(project)
+      val projectRoots = installProjectRootsScanner(project)
+      installUnlinkedProjectScanner(project, projectRoots)
+    }
   }
 
   private fun isEnabledAutoLink(project: Project): Boolean {

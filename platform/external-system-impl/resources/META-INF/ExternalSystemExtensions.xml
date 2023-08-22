@@ -136,6 +136,8 @@
 
     <externalSystemSettingsListener implementation="com.intellij.openapi.externalSystem.service.ui.ExternalToolWindowManager"/>
 
+    <activityInProgressPredicate implementation="com.intellij.openapi.externalSystem.service.ExternalSystemInProgressPredicate"/>
+
     <trustedProjectsLocator implementation="com.intellij.openapi.externalSystem.service.project.trusted.ExternalSystemTrustedProjectsLocator"/>
   </extensions>
   <applicationListeners>
