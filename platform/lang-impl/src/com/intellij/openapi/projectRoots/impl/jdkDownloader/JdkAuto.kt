@@ -2,7 +2,9 @@
 package com.intellij.openapi.projectRoots.impl.jdkDownloader
 
 import com.intellij.execution.wsl.WslPath
-import com.intellij.openapi.application.*
+import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.application.runReadAction
+import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.components.BaseState
 import com.intellij.openapi.components.SimplePersistentStateComponent
 import com.intellij.openapi.components.service
@@ -13,7 +15,6 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectBundle
 import com.intellij.openapi.projectRoots.*
 import com.intellij.openapi.projectRoots.SimpleJavaSdkType.notSimpleJavaSdkTypeIfAlternativeExistsAndNotDependentSdkType
-import com.intellij.openapi.projectRoots.impl.MockSdk
 import com.intellij.openapi.projectRoots.impl.UnknownSdkTracker
 import com.intellij.openapi.roots.OrderRootType
 import com.intellij.openapi.roots.ui.configuration.*
@@ -286,7 +287,7 @@ class JdkAuto : UnknownSdkResolver, JdkDownloaderBase {
           val version = runCatching { JavaVersion.tryParse(versionString) }.getOrNull() ?: continue
           val suggestedName = runCatching { JdkUtil.suggestJdkName(versionString) }.getOrNull() ?: continue
 
-          if (!homeDir.contains("mockJDK") && runCatching {
+          if (!it.isMockSdk() && runCatching {
               val homePath = it.homePath
               homePath != null && sdkType.isValidSdkHome(homePath)
             }.getOrNull() != true) continue
