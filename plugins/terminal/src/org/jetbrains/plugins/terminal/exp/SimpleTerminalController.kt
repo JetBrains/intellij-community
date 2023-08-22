@@ -20,10 +20,12 @@ import com.jediterm.terminal.ui.AwtTransformers
 import java.awt.Color
 import java.awt.Font
 
-class TerminalPanelController(private val settings: JBTerminalSystemSettingsProviderBase,
-                              private val session: TerminalSession,
-                              private val editor: EditorEx,
-                              eventsHandler: TerminalEventsHandler) : Disposable {
+class SimpleTerminalController(
+  private val settings: JBTerminalSystemSettingsProviderBase,
+  private val session: TerminalSession,
+  private val editor: EditorEx,
+  eventsHandler: TerminalEventsHandler
+) : Disposable {
   val document: Document
     get() = editor.document
   private val palette: ColorPalette

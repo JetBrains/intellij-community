@@ -11,41 +11,41 @@ import java.awt.event.ComponentAdapter
 import java.awt.event.ComponentEvent
 import javax.swing.JComponent
 
-class PlainTerminalController(
+class PlainTerminalView(
   project: Project,
   private val session: TerminalSession,
   settings: JBTerminalSystemSettingsProviderBase
-) : TerminalContentController {
-  private val panel: TerminalPanel
+) : TerminalContentView {
+  private val view: SimpleTerminalView
 
   init {
     val eventsHandler = TerminalEventsHandler(session, settings)
-    panel = TerminalPanel(project, settings, session, eventsHandler)
-    panel.border = JBUI.Borders.empty()
-    panel.addComponentListener(object : ComponentAdapter() {
+    view = SimpleTerminalView(project, settings, session, eventsHandler)
+    view.border = JBUI.Borders.empty()
+    view.addComponentListener(object : ComponentAdapter() {
       override fun componentResized(e: ComponentEvent?) {
         val newSize = getTerminalSize() ?: return
         session.postResize(newSize)
       }
     })
 
-    Disposer.register(this, panel)
+    Disposer.register(this, view)
   }
 
   // return preferred size of the terminal calculated from the component size
   override fun getTerminalSize(): TermSize? {
-    if (panel.bounds.isEmpty) return null
-    val contentSize = Dimension(panel.terminalWidth, panel.height)
-    return TerminalUiUtils.calculateTerminalSize(contentSize, panel.charSize)
+    if (view.bounds.isEmpty) return null
+    val contentSize = Dimension(view.terminalWidth, view.height)
+    return TerminalUiUtils.calculateTerminalSize(contentSize, view.charSize)
   }
 
   override fun isFocused(): Boolean {
-    return panel.isFocused()
+    return view.isFocused()
   }
 
-  override fun getComponent(): JComponent = panel
+  override fun getComponent(): JComponent = view
 
-  override fun getPreferredFocusableComponent(): JComponent = panel.preferredFocusableComponent
+  override fun getPreferredFocusableComponent(): JComponent = view.preferredFocusableComponent
 
   override fun dispose() {
   }

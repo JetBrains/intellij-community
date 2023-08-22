@@ -20,24 +20,24 @@ import javax.swing.JPanel
 import kotlin.math.max
 import kotlin.math.min
 
-class BlockTerminalPanel(
+class BlockTerminalView(
   private val project: Project,
   private val session: TerminalSession,
   private val settings: JBTerminalSystemSettingsProviderBase
-) : JPanel(), TerminalContentController, TerminalCommandExecutor {
+) : JPanel(), TerminalContentView, TerminalCommandExecutor {
   private val controller: BlockTerminalController
 
-  private val outputPanel: TerminalOutputPanel
-  private val promptPanel: TerminalPromptPanel
-  private var alternateBufferPanel: TerminalPanel? = null
+  private val outputView: TerminalOutputView
+  private val promptView: TerminalPromptView
+  private var alternateBufferView: SimpleTerminalView? = null
 
   init {
-    outputPanel = TerminalOutputPanel(project, session, settings)
-    promptPanel = TerminalPromptPanel(project, settings, session, this)
+    outputView = TerminalOutputView(project, session, settings)
+    promptView = TerminalPromptView(project, settings, session, this)
 
-    promptPanel.controller.addListener(object : PromptStateListener {
+    promptView.controller.addListener(object : PromptStateListener {
       override fun promptVisibilityChanged(visible: Boolean) {
-        promptPanel.component.isVisible = visible
+        promptView.component.isVisible = visible
         revalidate()
         invokeLater {
           IdeFocusManager.getInstance(project).requestFocus(preferredFocusableComponent, true)
@@ -45,24 +45,24 @@ class BlockTerminalPanel(
       }
     })
 
-    promptPanel.controller.addDocumentListener(object : DocumentListener {
+    promptView.controller.addDocumentListener(object : DocumentListener {
       override fun documentChanged(event: DocumentEvent) {
-        if (promptPanel.component.preferredHeight != promptPanel.component.height) {
+        if (promptView.component.preferredHeight != promptView.component.height) {
           revalidate()
         }
       }
     })
 
-    outputPanel.controller.addDocumentListener(object : DocumentListener {
+    outputView.controller.addDocumentListener(object : DocumentListener {
       override fun documentChanged(event: DocumentEvent) {
-        if (outputPanel.component.height < this@BlockTerminalPanel.height    // do not revalidate if output already occupied all height
-            && outputPanel.component.preferredHeight > outputPanel.component.height) { // revalidate if output no more fit in current bounds
+        if (outputView.component.height < this@BlockTerminalView.height    // do not revalidate if output already occupied all height
+            && outputView.component.preferredHeight > outputView.component.height) { // revalidate if output no more fit in current bounds
           revalidate()
         }
       }
     })
 
-    controller = BlockTerminalController(session, outputPanel.controller, promptPanel.controller)
+    controller = BlockTerminalController(session, outputView.controller, promptView.controller)
 
     addComponentListener(object : ComponentAdapter() {
       override fun componentResized(e: ComponentEvent?) {
@@ -86,8 +86,8 @@ class BlockTerminalPanel(
       installAlternateBufferPanel()
     }
     else {
-      alternateBufferPanel?.let { Disposer.dispose(it) }
-      alternateBufferPanel = null
+      alternateBufferView?.let { Disposer.dispose(it) }
+      alternateBufferView = null
       installPromptAndOutput()
     }
     IdeFocusManager.getInstance(project).requestFocus(preferredFocusableComponent, true)
@@ -98,21 +98,21 @@ class BlockTerminalPanel(
 
   private fun installAlternateBufferPanel() {
     val eventsHandler = TerminalEventsHandler(session, settings)
-    val panel = TerminalPanel(project, settings, session, eventsHandler, withVerticalScroll = false)
-    Disposer.register(this, panel)
-    alternateBufferPanel = panel
+    val view = SimpleTerminalView(project, settings, session, eventsHandler, withVerticalScroll = false)
+    Disposer.register(this, view)
+    alternateBufferView = view
 
     removeAll()
     layout = BorderLayout()
-    add(panel.component, BorderLayout.CENTER)
+    add(view.component, BorderLayout.CENTER)
     revalidate()
   }
 
   private fun installPromptAndOutput() {
     removeAll()
     layout = BlockTerminalLayout()
-    add(outputPanel.component, BlockTerminalLayout.TOP)
-    add(promptPanel.component, BlockTerminalLayout.BOTTOM)
+    add(outputView.component, BlockTerminalLayout.TOP)
+    add(promptView.component, BlockTerminalLayout.BOTTOM)
     revalidate()
   }
 
@@ -130,10 +130,10 @@ class BlockTerminalPanel(
   }
 
   override fun getTerminalSize(): TermSize? {
-    val (width, charSize) = if (alternateBufferPanel != null) {
-      alternateBufferPanel!!.let { it.terminalWidth to it.charSize }
+    val (width, charSize) = if (alternateBufferView != null) {
+      alternateBufferView!!.let { it.terminalWidth to it.charSize }
     }
-    else outputPanel.let { it.terminalWidth to it.charSize }
+    else outputView.let { it.terminalWidth to it.charSize }
     return if (width > 0 && height > 0) {
       TerminalUiUtils.calculateTerminalSize(Dimension(width, height), charSize)
     }
@@ -141,21 +141,21 @@ class BlockTerminalPanel(
   }
 
   override fun isFocused(): Boolean {
-    return outputPanel.component.hasFocus() || promptPanel.component.hasFocus()
+    return outputView.component.hasFocus() || promptView.component.hasFocus()
   }
 
   override fun dispose() {
-    Disposer.dispose(outputPanel)
-    Disposer.dispose(promptPanel)
+    Disposer.dispose(outputView)
+    Disposer.dispose(promptView)
   }
 
   override fun getComponent(): JComponent = this
 
   override fun getPreferredFocusableComponent(): JComponent {
     return when {
-      alternateBufferPanel != null -> alternateBufferPanel!!.preferredFocusableComponent
-      promptPanel.component.isVisible -> promptPanel.preferredFocusableComponent
-      else -> outputPanel.preferredFocusableComponent
+      alternateBufferView != null -> alternateBufferView!!.preferredFocusableComponent
+      promptView.component.isVisible -> promptView.preferredFocusableComponent
+      else -> outputView.preferredFocusableComponent
     }
   }
 

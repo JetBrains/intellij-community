@@ -20,7 +20,7 @@ import javax.swing.JComponent
 import javax.swing.JLabel
 import javax.swing.JPanel
 
-class TerminalPromptPanel(
+class TerminalPromptView(
   private val project: Project,
   private val settings: JBTerminalSystemSettingsProviderBase,
   session: TerminalSession,

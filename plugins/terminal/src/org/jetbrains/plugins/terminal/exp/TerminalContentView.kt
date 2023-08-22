@@ -4,7 +4,7 @@ package org.jetbrains.plugins.terminal.exp
 import com.intellij.openapi.ui.ComponentContainer
 import com.jediterm.core.util.TermSize
 
-interface TerminalContentController : ComponentContainer {
+interface TerminalContentView : ComponentContainer {
   fun getTerminalSize(): TermSize?
 
   fun isFocused(): Boolean

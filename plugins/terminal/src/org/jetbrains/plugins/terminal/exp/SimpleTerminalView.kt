@@ -8,18 +8,25 @@ import com.intellij.openapi.editor.impl.DocumentImpl
 import com.intellij.openapi.editor.impl.EditorImpl
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.ComponentContainer
+import com.intellij.openapi.util.Disposer
 import com.intellij.terminal.JBTerminalSystemSettingsProviderBase
+import com.intellij.util.ui.JBUI
+import java.awt.BorderLayout
+import java.awt.Color
 import java.awt.Dimension
 import javax.swing.JComponent
+import javax.swing.JPanel
+import javax.swing.JScrollPane
 
-class TerminalOutputPanel(
+class SimpleTerminalView(
   private val project: Project,
+  private val settings: JBTerminalSystemSettingsProviderBase,
   session: TerminalSession,
-  settings: JBTerminalSystemSettingsProviderBase
-) : ComponentContainer {
-  val controller: TerminalOutputController
-
+  eventsHandler: TerminalEventsHandler,
+  private val withVerticalScroll: Boolean = true
+) : JPanel(), ComponentContainer {
   private val editor: EditorImpl
+  private val controller: SimpleTerminalController
 
   val terminalWidth: Int
     get() {
@@ -32,9 +39,8 @@ class TerminalOutputPanel(
     get() = Dimension(editor.charHeight, editor.lineHeight)
 
   init {
-    editor = createEditor(settings)
-    controller = TerminalOutputController(editor, session, settings)
-
+    editor = createEditor()
+    controller = SimpleTerminalController(settings, session, editor, eventsHandler)
     editor.addFocusListener(object : FocusChangeListener {
       override fun focusGained(editor: Editor) {
         controller.isFocused = true
@@ -44,20 +50,35 @@ class TerminalOutputPanel(
         controller.isFocused = false
       }
     })
+
+    border = JBUI.Borders.emptyLeft(TerminalUI.alternateBufferLeftInset)
+    layout = BorderLayout()
+    add(editor.component, BorderLayout.CENTER)
   }
 
-  private fun createEditor(settings: JBTerminalSystemSettingsProviderBase): EditorImpl {
+  private fun createEditor(): EditorImpl {
     val document = DocumentImpl("", true)
     val editor = TerminalUiUtils.createOutputEditor(document, project, settings)
-    editor.settings.isUseSoftWraps = true
+    editor.settings.isLineMarkerAreaShown = false
+    editor.scrollPane.verticalScrollBarPolicy = if (withVerticalScroll) {
+      JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED
+    }
+    else JScrollPane.VERTICAL_SCROLLBAR_NEVER
     return editor
   }
 
-  override fun dispose() {
-    EditorFactory.getInstance().releaseEditor(editor)
+  fun isFocused(): Boolean = editor.contentComponent.hasFocus()
+
+  override fun getBackground(): Color {
+    return TerminalUI.terminalBackground
   }
 
-  override fun getComponent(): JComponent = editor.component
+  override fun getComponent(): JComponent = this
 
   override fun getPreferredFocusableComponent(): JComponent = editor.contentComponent
+
+  override fun dispose() {
+    EditorFactory.getInstance().releaseEditor(editor)
+    Disposer.dispose(controller)
+  }
 }

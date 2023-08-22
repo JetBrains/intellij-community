@@ -11,7 +11,6 @@ import com.intellij.terminal.ui.TerminalWidget
 import com.intellij.terminal.ui.TtyConnectorAccessor
 import com.intellij.ui.components.panels.Wrapper
 import com.intellij.util.concurrency.annotations.RequiresEdt
-import com.intellij.util.ui.UIUtil
 import com.jediterm.core.util.TermSize
 import com.jediterm.terminal.RequestOrigin
 import com.jediterm.terminal.TtyConnector
@@ -29,18 +28,18 @@ class TerminalWidgetImpl(private val project: Project,
   override val terminalTitle: TerminalTitle = TerminalTitle()
 
   override val termSize: TermSize?
-    get() = controller.getTerminalSize()
+    get() = view.getTerminalSize()
 
   override val ttyConnectorAccessor: TtyConnectorAccessor = TtyConnectorAccessor()
 
   private val session: TerminalSession = TerminalSession(terminalSettings)
-  private var controller: TerminalContentController = TerminalPlaceholder()
+  private var view: TerminalContentView = TerminalPlaceholder()
 
   init {
-    wrapper.setContent(controller.component)
+    wrapper.setContent(view.component)
     Disposer.register(parent, this)
     Disposer.register(this, session)
-    Disposer.register(this, controller)
+    Disposer.register(this, view)
   }
 
   override fun connectToTty(ttyConnector: TtyConnector, initialTermSize: TermSize) {
@@ -52,18 +51,18 @@ class TerminalWidgetImpl(private val project: Project,
   @RequiresEdt(generateAssertion = false)
   fun initialize(options: ShellStartupOptions): CompletableFuture<TermSize> {
     session.shellIntegration = options.shellIntegration
-    Disposer.dispose(controller)
-    controller = if (options.shellIntegration?.withCommandBlocks == true) {
-      BlockTerminalPanel(project, session, terminalSettings)
+    Disposer.dispose(view)
+    view = if (options.shellIntegration?.withCommandBlocks == true) {
+      BlockTerminalView(project, session, terminalSettings)
     }
-    else PlainTerminalController(project, session, terminalSettings)
-    Disposer.register(this, controller)
+    else PlainTerminalView(project, session, terminalSettings)
+    Disposer.register(this, view)
 
-    val component = controller.component
+    val component = view.component
     wrapper.setContent(component)
 
-    return TerminalUiUtils.awaitComponentLayout(component, controller).thenApply {
-      controller.getTerminalSize()
+    return TerminalUiUtils.awaitComponentLayout(component, view).thenApply {
+      view.getTerminalSize()
     }
   }
 
@@ -76,7 +75,7 @@ class TerminalWidgetImpl(private val project: Project,
   }
 
   override fun hasFocus(): Boolean {
-    return controller.isFocused()
+    return view.isFocused()
   }
 
   override fun requestFocus() {
@@ -97,9 +96,9 @@ class TerminalWidgetImpl(private val project: Project,
 
   override fun getComponent(): JComponent = wrapper
 
-  override fun getPreferredFocusableComponent(): JComponent = controller.preferredFocusableComponent
+  override fun getPreferredFocusableComponent(): JComponent = view.preferredFocusableComponent
 
-  private class TerminalPlaceholder : TerminalContentController {
+  private class TerminalPlaceholder : TerminalContentView {
     private val panel: JPanel = object : JPanel() {
       override fun getBackground(): Color {
         return TerminalUI.terminalBackground

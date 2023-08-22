@@ -8,23 +8,18 @@ import com.intellij.openapi.editor.impl.DocumentImpl
 import com.intellij.openapi.editor.impl.EditorImpl
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.ComponentContainer
-import com.intellij.openapi.util.Disposer
 import com.intellij.terminal.JBTerminalSystemSettingsProviderBase
-import com.intellij.util.ui.JBUI
-import java.awt.BorderLayout
-import java.awt.Color
 import java.awt.Dimension
 import javax.swing.JComponent
-import javax.swing.JPanel
-import javax.swing.JScrollPane
 
-class TerminalPanel(private val project: Project,
-                    private val settings: JBTerminalSystemSettingsProviderBase,
-                    session: TerminalSession,
-                    eventsHandler: TerminalEventsHandler,
-                    private val withVerticalScroll: Boolean = true) : JPanel(), ComponentContainer {
+class TerminalOutputView(
+  private val project: Project,
+  session: TerminalSession,
+  settings: JBTerminalSystemSettingsProviderBase
+) : ComponentContainer {
+  val controller: TerminalOutputController
+
   private val editor: EditorImpl
-  private val controller: TerminalPanelController
 
   val terminalWidth: Int
     get() {
@@ -37,8 +32,9 @@ class TerminalPanel(private val project: Project,
     get() = Dimension(editor.charHeight, editor.lineHeight)
 
   init {
-    editor = createEditor()
-    controller = TerminalPanelController(settings, session, editor, eventsHandler)
+    editor = createEditor(settings)
+    controller = TerminalOutputController(editor, session, settings)
+
     editor.addFocusListener(object : FocusChangeListener {
       override fun focusGained(editor: Editor) {
         controller.isFocused = true
@@ -48,35 +44,20 @@ class TerminalPanel(private val project: Project,
         controller.isFocused = false
       }
     })
-
-    border = JBUI.Borders.emptyLeft(TerminalUI.alternateBufferLeftInset)
-    layout = BorderLayout()
-    add(editor.component, BorderLayout.CENTER)
   }
 
-  private fun createEditor(): EditorImpl {
+  private fun createEditor(settings: JBTerminalSystemSettingsProviderBase): EditorImpl {
     val document = DocumentImpl("", true)
     val editor = TerminalUiUtils.createOutputEditor(document, project, settings)
-    editor.settings.isLineMarkerAreaShown = false
-    editor.scrollPane.verticalScrollBarPolicy = if (withVerticalScroll) {
-      JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED
-    }
-    else JScrollPane.VERTICAL_SCROLLBAR_NEVER
+    editor.settings.isUseSoftWraps = true
     return editor
   }
 
-  fun isFocused(): Boolean = editor.contentComponent.hasFocus()
-
-  override fun getBackground(): Color {
-    return TerminalUI.terminalBackground
-  }
-
-  override fun getComponent(): JComponent = this
-
-  override fun getPreferredFocusableComponent(): JComponent = editor.contentComponent
-
   override fun dispose() {
     EditorFactory.getInstance().releaseEditor(editor)
-    Disposer.dispose(controller)
   }
+
+  override fun getComponent(): JComponent = editor.component
+
+  override fun getPreferredFocusableComponent(): JComponent = editor.contentComponent
 }

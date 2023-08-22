@@ -26,8 +26,7 @@ import kotlin.math.min
 
 /**
  * Mostly duplicates the logic of [com.jediterm.terminal.model.JediTerminal],
- * but do not modify the view directly. All changes are reflected on [TerminalModel]
- * and propagated to the [TerminalPanel].
+ * but do not modify the view directly.
  */
 class TerminalController(private val model: TerminalModel,
                          private val settings: JBTerminalSystemSettingsProviderBase) : Terminal {
