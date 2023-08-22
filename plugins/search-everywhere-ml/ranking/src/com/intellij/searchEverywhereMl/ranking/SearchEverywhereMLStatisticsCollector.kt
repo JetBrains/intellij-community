@@ -3,6 +3,7 @@ package com.intellij.searchEverywhereMl.ranking
 
 import com.intellij.ide.actions.searcheverywhere.SearchEverywhereMixedListInfo
 import com.intellij.ide.actions.searcheverywhere.SearchRestartReason
+import com.intellij.internal.statistic.collectors.fus.actions.persistence.ActionRuleValidator
 import com.intellij.internal.statistic.eventLog.EventLogGroup
 import com.intellij.internal.statistic.eventLog.events.*
 import com.intellij.internal.statistic.service.fus.collectors.CounterUsagesCollector
@@ -303,7 +304,7 @@ class SearchEverywhereMLStatisticsCollector : CounterUsagesCollector() {
 
     @VisibleForTesting
     val ID_KEY = EventFields.Int("id")
-    internal val ACTION_ID_KEY = EventFields.StringValidatedByCustomRule("actionId", "action")
+    internal val ACTION_ID_KEY = EventFields.StringValidatedByCustomRule("actionId", ActionRuleValidator::class.java)
 
     @VisibleForTesting
     val FEATURES_DATA_KEY = createFeaturesEventObject()
