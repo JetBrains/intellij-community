@@ -3,23 +3,51 @@ package com.intellij.codeInsight.codeVision.ui.renderers
 import com.intellij.codeInsight.codeVision.CodeVisionEntry
 import com.intellij.codeInsight.codeVision.ui.model.CodeVisionListData
 import com.intellij.codeInsight.codeVision.ui.model.RangeCodeVisionModel
+import com.intellij.codeInsight.codeVision.ui.model.SwingScheduler
+import com.intellij.codeInsight.codeVision.ui.model.tooltipText
 import com.intellij.codeInsight.codeVision.ui.renderers.painters.CodeVisionListPainter
 import com.intellij.codeInsight.codeVision.ui.renderers.painters.CodeVisionTheme
+import com.intellij.codeInsight.codeVision.ui.visibleAreaChanged
+import com.intellij.ide.IdeTooltip
+import com.intellij.ide.IdeTooltipManager
 import com.intellij.openapi.editor.Inlay
 import com.intellij.openapi.editor.markup.TextAttributes
+import com.intellij.openapi.rd.defineNestedLifetime
+import com.intellij.ui.awt.RelativePoint
 import com.intellij.util.ui.UIUtil
+import com.jetbrains.rd.util.asProperty
+import com.jetbrains.rd.util.debounceNotNull
+import com.jetbrains.rd.util.lifetime.Lifetime
+import com.jetbrains.rd.util.reactive.Property
+import com.jetbrains.rd.util.reactive.viewNotNull
 import java.awt.Cursor
 import java.awt.Graphics
 import java.awt.Point
 import java.awt.Rectangle
 import java.awt.event.MouseEvent
+import java.time.Duration
+import javax.swing.JLabel
 import javax.swing.SwingUtilities
 
 abstract class CodeVisionInlayRendererBase(theme: CodeVisionTheme = CodeVisionTheme()) : CodeVisionInlayRenderer {
   private var isHovered = false
-  private var hoveredEntry: CodeVisionEntry? = null
+  private var hoveredEntry: Property<CodeVisionEntry?> = Property(null)
   protected val painter: CodeVisionListPainter = CodeVisionListPainter(theme = theme)
-  lateinit var inlay: Inlay<*>
+  protected lateinit var inlay: Inlay<*>
+
+
+  fun initialize(inlay: Inlay<*>){
+    assert(!::inlay.isInitialized) { "Inlay already defined for current renderer" }
+    this.inlay = inlay
+
+    val inlayLifetimeDefinition = inlay.defineNestedLifetime()
+    hoveredEntry.view(inlayLifetimeDefinition.lifetime) { lifetime, _ ->
+      hoveredEntry.debounceNotNull(Duration.ofMillis(1000), SwingScheduler).asProperty(null)
+        .viewNotNull(lifetime) { tooltipLifetime, tooltipEntry ->
+          showTooltip(tooltipLifetime, tooltipEntry)
+        }
+    }
+  }
 
   override fun paint(inlay: Inlay<*>, g: Graphics, targetRegion: Rectangle, textAttributes: TextAttributes) {
     if (!inlay.isValid) return
@@ -35,7 +63,7 @@ abstract class CodeVisionInlayRendererBase(theme: CodeVisionTheme = CodeVisionTh
       getPoint(inlay, targetRegion.location),
       userData?.rangeCodeVisionModel?.state() ?: RangeCodeVisionModel.InlayState.NORMAL,
       isHovered && userData?.isMoreLensActive() == true,
-      hoveredEntry
+      hoveredEntry.value
     )
   }
 
@@ -48,7 +76,7 @@ abstract class CodeVisionInlayRendererBase(theme: CodeVisionTheme = CodeVisionTh
   }
 
   override fun mousePressed(event: MouseEvent, translated: Point) {
-    val clickedEntry = hoveredEntry ?: return
+    val clickedEntry = hoveredEntry.value ?: return
     when {
       event.isShiftDown -> return
       SwingUtilities.isLeftMouseButton(event) -> handleLeftClick(clickedEntry)
@@ -67,7 +95,7 @@ abstract class CodeVisionInlayRendererBase(theme: CodeVisionTheme = CodeVisionTh
 
   private fun updateMouseState(isHovered: Boolean, point: Point?) {
     this.isHovered = isHovered
-    hoveredEntry = if (isHovered) getHoveredEntry(point) else null
+    hoveredEntry.set(if (isHovered) getHoveredEntry(point) else null)
     updateCursor(isHovered)
     inlay.repaint()
   }
@@ -91,4 +119,31 @@ abstract class CodeVisionInlayRendererBase(theme: CodeVisionTheme = CodeVisionTh
 
   protected fun inlayState(inlay: Inlay<*>): RangeCodeVisionModel.InlayState =
     inlay.getUserData(CodeVisionListData.KEY)?.rangeCodeVisionModel?.state() ?: RangeCodeVisionModel.InlayState.NORMAL
+
+  private fun showTooltip(tooltipLifetime: Lifetime, entry: CodeVisionEntry) {
+    val text = entry.tooltipText()
+    if (text.isEmpty()) return
+
+    val inlayBounds = inlay.bounds ?: return
+    val entryBounds = calculateCodeVisionEntryBounds(entry) ?: return
+
+    val tooltipLifetimeDefinition = tooltipLifetime.createNested()
+
+    val x = inlayBounds.x + entryBounds.x + (entryBounds.width / 2)
+    val y = inlayBounds.y + (inlayBounds.height / 2)
+
+    val contentComponent = inlay.editor.contentComponent
+    val component = inlay.editor.component
+    val relativePoint = RelativePoint(contentComponent, Point(x, y))
+    val tooltip = IdeTooltip(component, relativePoint.getPoint(component), JLabel(text))
+    val currentTooltip = IdeTooltipManager.getInstance().show(tooltip, false, false)
+
+    tooltipLifetimeDefinition.onTermination {
+      currentTooltip.hide()
+    }
+
+    inlay.editor.scrollingModel.visibleAreaChanged().advise(tooltipLifetimeDefinition){
+      tooltipLifetimeDefinition.terminate()
+    }
+  }
 }

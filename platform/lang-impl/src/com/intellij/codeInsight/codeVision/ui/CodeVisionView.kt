@@ -126,7 +126,7 @@ class CodeVisionView(val project: Project) {
         lineEndOffset, false,
         InlineCodeVisionInlayRenderer()
       )
-      inlay.renderer.inlay = inlay
+      inlay.renderer.initialize(inlay)
       //keeper.restoreOriginalLocation()
       inlay
     }
@@ -160,7 +160,7 @@ class CodeVisionView(val project: Project) {
         inlayAnchor, true, true,
         1, BlockCodeVisionInlayRenderer()
       )
-      inlay.renderer.inlay = inlay
+      inlay.renderer.initialize(inlay)
       keeper.restoreOriginalLocation()
       inlay
     }
