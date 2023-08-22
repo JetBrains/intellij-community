@@ -76,6 +76,14 @@ interface ExternalProductResourceUrls {
    */
   val downloadPageUrl: Url?
     get() = null
+
+  /**
+   * Returns URL of the YouTube channel containing video material for the product. 
+   * It's opened in the browser when a user invokes "`<Product>` on YouTube" action.
+   * If the property returns `null`, the action won't be shown.
+   */
+  val youTubeChannelUrl: Url?
+    get() = null
 }
 
 /**

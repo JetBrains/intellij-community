@@ -4,6 +4,8 @@ package com.intellij.idea.customization.base
 import com.intellij.platform.ide.impl.customization.BaseJetBrainsExternalProductResourceUrls
 import com.intellij.platform.ide.impl.customization.ZenDeskFeedbackFormData
 import com.intellij.platform.ide.impl.customization.ZenDeskFeedbackFormFieldIds
+import com.intellij.util.Url
+import com.intellij.util.Urls
 
 class IntelliJIdeaExternalResourceUrls : BaseJetBrainsExternalProductResourceUrls() {
   override val basePatchDownloadUrl: String
@@ -36,4 +38,7 @@ class IntelliJIdeaExternalResourceUrls : BaseJetBrainsExternalProductResourceUrl
         override val topic: Long = 28116681
       }
     }
+
+  override val youTubeChannelUrl: Url
+    get() = Urls.newFromEncoded("https://www.youtube.com/user/intellijideavideo")
 }

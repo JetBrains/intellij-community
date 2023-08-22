@@ -20,7 +20,6 @@
   <whatsnew url="https://www.jetbrains.com/idea/whatsnew/" show-on-update="true"/>
   <keymap win="https://www.jetbrains.com/idea/docs/IntelliJIDEA_ReferenceCard.pdf"
           mac="https://www.jetbrains.com/idea/docs/IntelliJIDEA_ReferenceCard_Mac.pdf"/>
-  <jetbrains-tv url="https://www.youtube.com/user/intellijideavideo"/>
 
   <statistics settings="https://www.jetbrains.com/idea/statistics/stat-assistant.xml"
               service="https://www.jetbrains.com/idea/statistics/index.jsp"

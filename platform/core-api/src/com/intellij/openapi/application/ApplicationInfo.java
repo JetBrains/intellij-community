@@ -68,7 +68,7 @@ public abstract class ApplicationInfo {
 
   public abstract String getProductUrl();
 
-  public abstract String getJetBrainsTvUrl();
+  public abstract @Nullable String getJetBrainsTvUrl();
 
   public abstract boolean hasHelp();
 

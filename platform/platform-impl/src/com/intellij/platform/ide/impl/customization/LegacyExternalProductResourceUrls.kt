@@ -70,4 +70,7 @@ class LegacyExternalProductResourceUrls : ExternalProductResourceUrls {
 
   override val downloadPageUrl: Url
     get() = Urls.newFromEncoded(ApplicationInfoEx.getInstanceEx().downloadUrl)
+
+  override val youTubeChannelUrl: Url?
+    get() = ApplicationInfoEx.getInstanceEx().jetBrainsTvUrl?.let { Urls.newFromEncoded(it) }
 }

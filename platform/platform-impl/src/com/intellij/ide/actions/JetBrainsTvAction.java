@@ -7,23 +7,20 @@ import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.remoting.ActionRemoteBehaviorSpecification;
-import com.intellij.openapi.application.ApplicationInfo;
 import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.project.DumbAware;
+import com.intellij.platform.ide.customization.ExternalProductResourceUrls;
+import com.intellij.util.Url;
 import org.jetbrains.annotations.NotNull;
 
 public class JetBrainsTvAction extends AnAction implements DumbAware, ActionRemoteBehaviorSpecification.Frontend {
-  private final String myUrl;
-
   public JetBrainsTvAction() {
-    myUrl = ApplicationInfo.getInstance().getJetBrainsTvUrl();
     getTemplatePresentation().setText(() -> ActionsBundle.message("action.Help.JetBrainsTV.templateText", ApplicationNamesInfo.getInstance().getFullProductName()));
   }
 
   @Override
   public void update(@NotNull AnActionEvent e) {
-    boolean enabled = myUrl != null;
-    e.getPresentation().setEnabledAndVisible(enabled);
+    e.getPresentation().setEnabledAndVisible(ExternalProductResourceUrls.getInstance().getYouTubeChannelUrl() != null);
   }
 
   @Override
@@ -33,8 +30,9 @@ public class JetBrainsTvAction extends AnAction implements DumbAware, ActionRemo
 
   @Override
   public void actionPerformed(@NotNull AnActionEvent e) {
-    if (myUrl != null) {
-      BrowserUtil.browse(myUrl);
+    Url url = ExternalProductResourceUrls.getInstance().getYouTubeChannelUrl();
+    if (url != null) {
+      BrowserUtil.browse(url.toExternalForm());
     }
   }
 }
