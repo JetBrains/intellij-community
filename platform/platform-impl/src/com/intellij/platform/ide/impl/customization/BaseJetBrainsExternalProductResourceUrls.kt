@@ -37,6 +37,13 @@ abstract class BaseJetBrainsExternalProductResourceUrls : ExternalProductResourc
   abstract val productPageUrl: String
 
   /**
+   * Returns base URL of context help pages. 
+   * The current IDE version number and ID of the requested topic are added to it to obtain the actual URL:
+   * [baseWebHelpUrl]`/<version>/?<topicId>`.
+   */
+  abstract val baseWebHelpUrl: String
+
+  /**
    * Returns ID of the form used to contact support at intellij-support.jetbrains.com site 
    */
   open val intellijSupportFormId: Int
@@ -86,6 +93,13 @@ abstract class BaseJetBrainsExternalProductResourceUrls : ExternalProductResourc
 
   override val whatIsNewPageUrl: Url?
     get() = Urls.newFromEncoded(productPageUrl).resolve("whatsnew")
+
+  override val helpPageUrl: ((topicId: String) -> Url)
+    get() = { topicId ->
+      Urls.newFromEncoded(baseWebHelpUrl).resolve("${ApplicationInfo.getInstance().shortVersion}/").addParameters(mapOf(
+        topicId to ""
+      ))
+    }
 }
 
 /**

@@ -51,4 +51,7 @@ class IntelliJIdeaExternalResourceUrls : BaseJetBrainsExternalProductResourceUrl
 
   override val gettingStartedPageUrl: Url
     get() = Urls.newFromEncoded("https://www.jetbrains.com/idea/resources/")
+  
+  override val baseWebHelpUrl: String
+    get() = "https://www.jetbrains.com/help/idea/"
 }

@@ -108,6 +108,13 @@ interface ExternalProductResourceUrls {
    */
   val gettingStartedPageUrl: Url?
     get() = null
+
+  /**
+   * Returns a function which computes URL of a help page by a given `topicId`.
+   * This URL is used by [HelpManager][com.intellij.openapi.help.HelpManager] to show context help.
+   */
+  val helpPageUrl: ((topicId: String) -> Url)?
+    get() = null
 }
 
 /**

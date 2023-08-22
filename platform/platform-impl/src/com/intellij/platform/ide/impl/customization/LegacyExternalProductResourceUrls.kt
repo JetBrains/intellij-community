@@ -87,4 +87,14 @@ class LegacyExternalProductResourceUrls : ExternalProductResourceUrls {
 
   override val gettingStartedPageUrl: Url?
     get() = ApplicationInfoEx.getInstanceEx().documentationUrl?.let { Urls.newFromEncoded(it) }
+
+  override val helpPageUrl: ((topicId: String) -> Url)?
+    get() {
+      val baseHelpUrl = ApplicationInfoEx.getInstanceEx().webHelpUrl ?: return null 
+      return { topicId ->
+        Urls.newFromEncoded(baseHelpUrl).resolve("${ApplicationInfo.getInstance().shortVersion}/").addParameters(mapOf(
+          topicId to ""
+        ))
+      }
+    }
 }

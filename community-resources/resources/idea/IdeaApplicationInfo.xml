@@ -15,7 +15,6 @@
   <plugins url="https://plugins.jetbrains.com/"
            builtin-url="__BUILTIN_PLUGINS_URL__"/>
 
-  <help webhelp-url="https://www.jetbrains.com/help/idea/"/>
   <whatsnew show-on-update="true"/>
 
   <statistics settings="https://www.jetbrains.com/idea/statistics/stat-assistant.xml"
