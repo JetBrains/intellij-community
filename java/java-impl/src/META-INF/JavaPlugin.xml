@@ -1997,6 +1997,7 @@
       <categoryKey>intention.category.try.statements</categoryKey>
     </intentionAction>
     <intentionAction>
+      <language>JAVA</language>
       <className>com.intellij.codeInsight.daemon.impl.quickfix.ConvertToStringLiteralAction</className>
       <bundleName>messages.JavaBundle</bundleName>
       <categoryKey>intention.category.strings</categoryKey>
@@ -2104,11 +2105,13 @@
       <categoryKey>intention.category.refactorings</categoryKey>
     </intentionAction>
     <intentionAction>
+      <language>JAVA</language>
       <className>com.intellij.codeInsight.daemon.impl.quickfix.DefineParamsDefaultValueAction</className>
       <bundleName>messages.JavaBundle</bundleName>
       <categoryKey>intention.category.declaration</categoryKey>
     </intentionAction>
     <intentionAction>
+      <language>JAVA</language>
       <className>com.intellij.codeInsight.daemon.impl.quickfix.AddRuntimeExceptionToThrowsAction</className>
       <bundleName>messages.JavaBundle</bundleName>
       <categoryKey>intention.category.declaration</categoryKey>
@@ -2150,11 +2153,13 @@
       <categoryKey>intention.category.declaration</categoryKey>
     </intentionAction>
     <intentionAction>
+      <language>JAVA</language>
       <className>com.intellij.codeInsight.daemon.impl.quickfix.CreateCastExpressionFromInstanceofAction</className>
       <bundleName>messages.JavaBundle</bundleName>
       <categoryKey>intention.category.expressions</categoryKey>
     </intentionAction>
     <intentionAction>
+      <language>JAVA</language>
       <className>com.intellij.codeInsight.daemon.impl.quickfix.CreateLocalVarFromInstanceofAction</className>
       <bundleName>messages.JavaBundle</bundleName>
       <categoryKey>intention.category.declaration</categoryKey>
@@ -2214,6 +2219,7 @@
       <categoryKey>intention.category.annotations</categoryKey>
     </intentionAction>
     <intentionAction>
+      <language>JAVA</language>
       <className>com.intellij.codeInsight.daemon.impl.quickfix.IterateOverIterableIntention</className>
       <bundleName>messages.JavaBundle</bundleName>
       <categoryKey>intention.category.control.flow</categoryKey>
