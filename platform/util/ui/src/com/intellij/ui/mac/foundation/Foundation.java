@@ -130,12 +130,11 @@ public final @NonNls class Foundation {
   }
 
   /**
-   *
-   * @param cls The class to which to add a method.
+   * @param cls          The class to which to add a method.
    * @param selectorName A selector that specifies the name of the method being added.
-   * @param impl A function which is the implementation of the new method. The function must take at least two arguments-self and _cmd.
-   * @param types An array of characters that describe the types of the arguments to the method.
-   *              See <a href="https://developer.apple.com/library/IOs/documentation/Cocoa/Conceptual/ObjCRuntimeGuide/Articles/ocrtTypeEncodings.html#//apple_ref/doc/uid/TP40008048-CH100"></a>
+   * @param impl         A function which is the implementation of the new method. The function must take at least two arguments-self and _cmd.
+   * @param types        An array of characters that describe the types of the arguments to the method.
+   *                     See <a href="https://developer.apple.com/library/IOs/documentation/Cocoa/Conceptual/ObjCRuntimeGuide/Articles/ocrtTypeEncodings.html#//apple_ref/doc/uid/TP40008048-CH100"></a>
    * @return true if the method was added successfully, otherwise false (for example, the class already contains a method implementation with that name).
    */
   public static boolean addMethod(ID cls, Pointer selectorName, Callback impl, String types) {
@@ -157,7 +156,7 @@ public final @NonNls class Foundation {
   public static @Nullable String stringFromSelector(Pointer selector) {
     ID id = myFoundationLibrary.NSStringFromSelector(selector);
     return ID.NIL.equals(id) ? null : toStringViaUTF8(id);
-    }
+  }
 
   public static @Nullable String stringFromClass(ID aClass) {
     ID id = myFoundationLibrary.NSStringFromClass(aClass);
@@ -301,7 +300,7 @@ public final @NonNls class Foundation {
     }
   }
 
-  public static ID autorelease(ID id){
+  public static ID autorelease(ID id) {
     return invoke(id, "autorelease");
   }
 
