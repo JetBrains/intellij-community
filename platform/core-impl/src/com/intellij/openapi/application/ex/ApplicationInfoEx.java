@@ -82,9 +82,9 @@ public abstract class ApplicationInfoEx extends ApplicationInfo {
 
   public abstract boolean isShowWhatsNewOnUpdate();
 
-  public abstract String getWinKeymapUrl();
+  public abstract @Nullable String getWinKeymapUrl();
 
-  public abstract String getMacKeymapUrl();
+  public abstract @Nullable String getMacKeymapUrl();
 
   public interface UpdateUrls {
     String getCheckingUrl();

@@ -84,6 +84,14 @@ interface ExternalProductResourceUrls {
    */
   val youTubeChannelUrl: Url?
     get() = null
+  
+  /**
+   * Returns URL of a PDF file describing keyboard shortcuts of the product. 
+   * It's opened in the browser when a user invokes the "Keyboard Shortcuts PDF" action if `help/ReferenceCard.pdf` (`help/ReferenceCardForMac.pdf`
+   * for macOS) is not found.
+   */
+  val keyboardShortcutsPdfUrl: Url?
+    get() = null
 }
 
 /**

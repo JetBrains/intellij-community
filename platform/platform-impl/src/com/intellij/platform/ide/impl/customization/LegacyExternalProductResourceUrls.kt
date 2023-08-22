@@ -5,6 +5,7 @@ import com.intellij.openapi.application.ApplicationInfo
 import com.intellij.openapi.application.ex.ApplicationInfoEx
 import com.intellij.openapi.updateSettings.impl.UpdateRequestParameters
 import com.intellij.openapi.util.BuildNumber
+import com.intellij.openapi.util.SystemInfo
 import com.intellij.platform.ide.customization.ExternalProductResourceUrls
 import com.intellij.platform.ide.customization.FeedbackReporter
 import com.intellij.ui.LicensingFacade
@@ -73,4 +74,11 @@ class LegacyExternalProductResourceUrls : ExternalProductResourceUrls {
 
   override val youTubeChannelUrl: Url?
     get() = ApplicationInfoEx.getInstanceEx().jetBrainsTvUrl?.let { Urls.newFromEncoded(it) }
+
+  override val keyboardShortcutsPdfUrl: Url?
+    get() {
+      val appInfo = ApplicationInfoEx.getInstanceEx()
+      val url = if (SystemInfo.isMac) appInfo.getMacKeymapUrl() else appInfo.getWinKeymapUrl()
+      return url?.let { Urls.newFromEncoded(url) }
+    }
 }
