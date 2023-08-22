@@ -74,7 +74,7 @@ class JpsSdkEntitySerializer(val entitySource: JpsGlobalFileEntitySource, privat
       if ("2" != versionValue) {
         throw InvalidDataException("Too old version is not supported: $versionValue")
       }
-      val sdkVersion = sdkElement.getChild(ELEMENT_VERSION).getAttributeValue(ATTRIBUTE_VALUE)
+      val sdkVersion = sdkElement.getChild(ELEMENT_VERSION)?.getAttributeValue(ATTRIBUTE_VALUE)
       val homePath = sdkElement.getChild(ELEMENT_HOMEPATH).getAttributeValueStrict(ATTRIBUTE_VALUE)
       val homePathVfu = virtualFileManager.fromUrl(homePath)
 
