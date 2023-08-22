@@ -87,7 +87,7 @@ class BlockTerminalView(
       }
     })
 
-    component.background = TerminalUI.terminalBackground
+    component.background = TerminalUi.terminalBackground
     installPromptAndOutput()
   }
 

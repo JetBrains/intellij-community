@@ -101,7 +101,7 @@ class TerminalWidgetImpl(private val project: Project,
   private class TerminalPlaceholder : TerminalContentView {
     override val component: JComponent = object : JPanel() {
       override fun getBackground(): Color {
-        return TerminalUI.terminalBackground
+        return TerminalUi.terminalBackground
       }
     }
 

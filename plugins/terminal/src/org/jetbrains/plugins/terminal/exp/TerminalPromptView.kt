@@ -47,15 +47,15 @@ class TerminalPromptView(
 
     commandHistoryPresenter = CommandHistoryPresenter(project, editor, commandExecutor)
 
-    val innerBorder = JBUI.Borders.empty(TerminalUI.promptTopInset,
-                                         TerminalUI.blockLeftInset + TerminalUI.cornerToBlockInset,
-                                         TerminalUI.promptBottomInset,
-                                         TerminalUI.blockRightInset + TerminalUI.cornerToBlockInset)
+    val innerBorder = JBUI.Borders.empty(TerminalUi.promptTopInset,
+                                         TerminalUi.blockLeftInset + TerminalUi.cornerToBlockInset,
+                                         TerminalUi.promptBottomInset,
+                                         TerminalUi.blockRightInset + TerminalUi.cornerToBlockInset)
     val outerBorder = JBUI.Borders.customLineTop(JBUI.CurrentTheme.CustomFrameDecorations.separatorForeground())
     component.border = JBUI.Borders.compound(outerBorder, innerBorder)
 
-    component.background = TerminalUI.terminalBackground
-    component.layout = ListLayout.vertical(TerminalUI.promptToCommandInset)
+    component.background = TerminalUi.terminalBackground
+    component.layout = ListLayout.vertical(TerminalUi.promptToCommandInset)
     component.add(promptLabel)
     component.add(editorTextField)
   }
@@ -98,7 +98,7 @@ class TerminalPromptView(
     val editor = textField.getEditor(true) as EditorImpl
     editor.scrollPane.border = JBUI.Borders.empty()
     editor.gutterComponentEx.isPaintBackground = false
-    editor.backgroundColor = TerminalUI.terminalBackground
+    editor.backgroundColor = TerminalUi.terminalBackground
     editor.colorsScheme.apply {
       editorFontName = settings.terminalFont.fontName
       editorFontSize = settings.terminalFont.size
@@ -116,7 +116,7 @@ class TerminalPromptView(
         font = EditorUtil.getEditorFont()
       }
     }
-    label.foreground = TerminalUI.promptForeground
+    label.foreground = TerminalUi.promptForeground
     label.alignmentX = JComponent.LEFT_ALIGNMENT
     return label
   }

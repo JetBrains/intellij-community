@@ -54,8 +54,8 @@ class SimpleTerminalView(
       }
     })
 
-    component.background = TerminalUI.terminalBackground
-    component.border = JBUI.Borders.emptyLeft(TerminalUI.alternateBufferLeftInset)
+    component.background = TerminalUi.terminalBackground
+    component.border = JBUI.Borders.emptyLeft(TerminalUi.alternateBufferLeftInset)
     component.layout = BorderLayout()
     component.add(editor.component, BorderLayout.CENTER)
   }
