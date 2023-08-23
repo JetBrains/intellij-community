@@ -96,7 +96,11 @@ private fun createKtModuleByModuleInfo(moduleInfo: ModuleInfo): KtModule {
 private fun calculateKtModule(psiElement: PsiElement): KtModule {
     val virtualFile = psiElement.containingFile?.virtualFile
     val project = psiElement.project
-    val config = ModuleInfoProvider.Configuration(createSourceLibraryInfoForLibraryBinaries = false)
+    val config = ModuleInfoProvider.Configuration(
+        createSourceLibraryInfoForLibraryBinaries = false,
+        preferModulesFromExtensions = virtualFile?.nameSequence?.endsWith(".kts") == true
+    )
+
     val moduleInfo = ModuleInfoProvider.getInstance(project).firstOrNull(psiElement, config)
         ?: NotUnderContentRootModuleInfo(project, psiElement.containingFile as? KtFile)
 

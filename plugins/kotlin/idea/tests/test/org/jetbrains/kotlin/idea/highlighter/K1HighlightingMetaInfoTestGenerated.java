@@ -240,6 +240,11 @@ public abstract class K1HighlightingMetaInfoTestGenerated extends AbstractK1High
             runTest("testData/highlighterMetaInfo/PropertiesWithPropertyDeclarations.kt");
         }
 
+        @TestMetadata("script.kts")
+        public void testScript() throws Exception {
+            runTest("testData/highlighterMetaInfo/script.kts");
+        }
+
         @TestMetadata("Suspend.kt")
         public void testSuspend() throws Exception {
             runTest("testData/highlighterMetaInfo/Suspend.kt");

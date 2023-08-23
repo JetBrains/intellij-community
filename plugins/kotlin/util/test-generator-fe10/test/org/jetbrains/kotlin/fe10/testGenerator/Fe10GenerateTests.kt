@@ -474,7 +474,7 @@ private fun assembleWorkspace(): TWorkspace = workspace {
         }
 
         testClass<AbstractK1HighlightingMetaInfoTest> {
-            model("highlighterMetaInfo")
+            model("highlighterMetaInfo", pattern = Patterns.KT_OR_KTS)
         }
 
         testClass<AbstractDslHighlighterTest> {
