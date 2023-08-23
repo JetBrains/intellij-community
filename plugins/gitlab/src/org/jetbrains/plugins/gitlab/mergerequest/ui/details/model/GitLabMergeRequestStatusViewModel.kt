@@ -48,17 +48,20 @@ class GitLabMergeRequestStatusViewModel(
     return CodeReviewCIJob(name, status.toCiState(), jobUrl.toString())
   }
 
+  // TODO: Add more states (CodeReviewCIJobState.SKIPPED -> MANUAL, SKIPPED)
   private fun GitLabCiJobStatus.toCiState(): CodeReviewCIJobState = when (this) {
     GitLabCiJobStatus.CANCELED,
-    GitLabCiJobStatus.CREATED,
+    GitLabCiJobStatus.FAILED,
     GitLabCiJobStatus.MANUAL,
+    GitLabCiJobStatus.SKIPPED -> CodeReviewCIJobState.FAILED
+
+    GitLabCiJobStatus.CREATED,
+    GitLabCiJobStatus.PENDING,
     GitLabCiJobStatus.PREPARING,
-    GitLabCiJobStatus.SCHEDULED,
-    GitLabCiJobStatus.SKIPPED,
     GitLabCiJobStatus.RUNNING,
-    GitLabCiJobStatus.WAITING_FOR_RESOURCE,
-    GitLabCiJobStatus.FAILED -> CodeReviewCIJobState.FAILED
-    GitLabCiJobStatus.PENDING -> CodeReviewCIJobState.PENDING
+    GitLabCiJobStatus.SCHEDULED,
+    GitLabCiJobStatus.WAITING_FOR_RESOURCE -> CodeReviewCIJobState.PENDING
+
     GitLabCiJobStatus.SUCCESS -> CodeReviewCIJobState.SUCCESS
   }
 }
