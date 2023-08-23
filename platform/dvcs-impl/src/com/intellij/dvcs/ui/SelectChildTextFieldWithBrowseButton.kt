@@ -4,7 +4,7 @@ package com.intellij.dvcs.ui
 import com.intellij.openapi.ui.TextFieldWithBrowseButton
 
 @Deprecated("Replace with more low-level CloneDvcsDirectoryChildPathHandle")
-class SelectChildTextFieldWithBrowseButton constructor(defaultParentPath: String) : TextFieldWithBrowseButton() {
+class SelectChildTextFieldWithBrowseButton(defaultParentPath: String) : TextFieldWithBrowseButton() {
 
   private val handle = FilePathDocumentChildPathHandle.install(textField.document, defaultParentPath)
 

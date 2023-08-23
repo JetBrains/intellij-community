@@ -17,7 +17,7 @@ import com.jetbrains.rd.util.reactive.map
 import java.awt.Rectangle
 
 class CodeVisionPopup {
-  enum class Disposition constructor(val list: List<Anchoring2D>) {
+  enum class Disposition(val list: List<Anchoring2D>) {
     MOUSE_POPUP_DISPOSITION(listOf(
       Anchoring2D(Anchoring.FarOutside, Anchoring.NearOutside),
       Anchoring2D(Anchoring.NearOutside, Anchoring.NearOutside),

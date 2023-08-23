@@ -29,7 +29,7 @@ import org.jetbrains.plugins.groovy.lang.resolve.shouldProcessMembers
  * - [name] = `Bar`
  * - [isAliased] = `false`
  */
-data class StaticImport constructor(
+data class StaticImport(
   override val classFqn: String,
   val memberName: String,
   override val name: String

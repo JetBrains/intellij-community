@@ -25,8 +25,8 @@ import java.util.*
 
 private const val LOCALHOST = "localhost"
 
-class WslTargetEnvironment constructor(override val request: WslTargetEnvironmentRequest,
-                                       private val distribution: WSLDistribution) : TargetEnvironment(request), ExternallySynchronized {
+class WslTargetEnvironment(override val request: WslTargetEnvironmentRequest,
+                           private val distribution: WSLDistribution) : TargetEnvironment(request), ExternallySynchronized {
 
   private val myUploadVolumes: MutableMap<UploadRoot, UploadableVolume> = HashMap()
   private val myDownloadVolumes: MutableMap<DownloadRoot, DownloadableVolume> = HashMap()

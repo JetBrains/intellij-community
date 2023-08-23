@@ -122,10 +122,10 @@ class ExecutionTargetComboBoxAction : ComboBoxAction(), DumbAware {
   override fun shouldShowDisabledActions(): Boolean =
     true
 
-  private class SelectTargetAction constructor(private val project: Project,
-                                               private val target: ExecutionTarget,
-                                               val isSelected: Boolean,
-                                               private val isReady: Boolean) : DumbAwareAction() {
+  private class SelectTargetAction(private val project: Project,
+                                   private val target: ExecutionTarget,
+                                   val isSelected: Boolean,
+                                   private val isReady: Boolean) : DumbAwareAction() {
     init {
       val name = target.displayName
       templatePresentation.setText(name, false)

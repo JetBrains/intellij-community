@@ -162,7 +162,7 @@ class ContainingBranchesGetter internal constructor(private val logData: VcsLogD
                                                  root: VirtualFile, hash: Hash): List<String>
   }
 
-  private inner class GraphTask constructor(provider: VcsLogProvider, root: VirtualFile, hash: Hash, dataPack: DataPack) :
+  private inner class GraphTask(provider: VcsLogProvider, root: VirtualFile, hash: Hash, dataPack: DataPack) :
     Task(provider, root, hash) {
 
     private val graph = dataPack.permanentGraph

@@ -44,13 +44,13 @@ import java.util.function.Supplier
 /**
  * Panel with a control that allows to add either new or selecting existing virtualenv.
  */
-class PyAddVirtualEnvPanel constructor(project: Project?,
-                                       module: Module?,
-                                       private val existingSdks: List<Sdk> = emptyList(),
-                                       allowAddNewVirtualenv: Boolean = false,
-                                       private val context: UserDataHolder,
-                                       targetSupplier: Supplier<TargetEnvironmentConfiguration>?,
-                                       config: PythonLanguageRuntimeConfiguration)
+class PyAddVirtualEnvPanel(project: Project?,
+                           module: Module?,
+                           private val existingSdks: List<Sdk> = emptyList(),
+                           allowAddNewVirtualenv: Boolean = false,
+                           private val context: UserDataHolder,
+                           targetSupplier: Supplier<TargetEnvironmentConfiguration>?,
+                           config: PythonLanguageRuntimeConfiguration)
   : PyAddSdkPanelBase(project, module, targetSupplier) {
 
   override val panelName = PyBundle.message("python.add.sdk.panel.name.virtualenv.environment")

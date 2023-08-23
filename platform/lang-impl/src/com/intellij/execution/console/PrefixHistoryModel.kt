@@ -33,8 +33,8 @@ fun createModel(persistenceId: String, console: LanguageConsoleView): ConsoleHis
 }
 
 
-private class PrefixHistoryModel constructor(private val masterModel: MasterModel,
-                                             private val getPrefixFn: () -> String) : ConsoleHistoryBaseModel by masterModel,
+private class PrefixHistoryModel(private val masterModel: MasterModel,
+                                 private val getPrefixFn: () -> String) : ConsoleHistoryBaseModel by masterModel,
                                                                                       ConsoleHistoryModel {
   var userContent: String = ""
   override fun setContent(userContent: String) {
