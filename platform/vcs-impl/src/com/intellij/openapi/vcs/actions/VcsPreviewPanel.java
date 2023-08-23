@@ -30,6 +30,7 @@ import com.intellij.openapi.editor.colors.EditorColors;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.colors.EditorFontType;
 import com.intellij.openapi.editor.ex.EditorEx;
+import com.intellij.openapi.editor.ex.EditorGutterFreePainterAreaState;
 import com.intellij.openapi.editor.impl.DocumentImpl;
 import com.intellij.openapi.editor.markup.ActiveGutterRenderer;
 import com.intellij.openapi.editor.markup.HighlighterTargetArea;
@@ -59,7 +60,7 @@ class VcsPreviewPanel implements PreviewPanel {
   VcsPreviewPanel() {
     DocumentImpl document = new DocumentImpl("", true);
     myEditor = (EditorEx)EditorFactory.getInstance().createViewer(document);
-    myEditor.getGutterComponentEx().setForceShowRightFreePaintersArea(true);
+    myEditor.getGutterComponentEx().setRightFreePaintersAreaState(EditorGutterFreePainterAreaState.SHOW);
     myEditor.getSettings().setFoldingOutlineShown(true);
   }
 

@@ -40,7 +40,10 @@ import com.intellij.openapi.editor.highlighter.EditorHighlighter;
 import com.intellij.openapi.editor.highlighter.HighlighterClient;
 import com.intellij.openapi.editor.impl.event.MarkupModelListener;
 import com.intellij.openapi.editor.impl.view.EditorView;
-import com.intellij.openapi.editor.markup.*;
+import com.intellij.openapi.editor.markup.GutterDraggableObject;
+import com.intellij.openapi.editor.markup.GutterIconRenderer;
+import com.intellij.openapi.editor.markup.RangeHighlighter;
+import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.editor.state.ObservableStateListener;
 import com.intellij.openapi.editor.toolbar.floating.EditorFloatingToolbar;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
@@ -374,7 +377,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
       @Override
       public void afterAdded(@NotNull RangeHighlighterEx highlighter) {
         TextAttributes attributes = highlighter.getTextAttributes(getColorsScheme());
-        onHighlighterChanged(highlighter, canImpactGutterSize(highlighter),
+        onHighlighterChanged(highlighter, myGutterComponent.canImpactSize(highlighter),
                              EditorUtil.attributesImpactFontStyle(attributes),
                              EditorUtil.attributesImpactForegroundColor(attributes));
       }
@@ -382,7 +385,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
       @Override
       public void afterRemoved(@NotNull RangeHighlighterEx highlighter) {
         TextAttributes attributes = highlighter.getTextAttributes(getColorsScheme());
-        onHighlighterChanged(highlighter, canImpactGutterSize(highlighter),
+        onHighlighterChanged(highlighter, myGutterComponent.canImpactSize(highlighter),
                              EditorUtil.attributesImpactFontStyle(attributes),
                              EditorUtil.attributesImpactForegroundColor(attributes));
       }
@@ -585,15 +588,6 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
       repaintLines(caretLine, caretLine);
     }
     fireFocusLost(e);
-  }
-
-  private boolean canImpactGutterSize(@NotNull RangeHighlighterEx highlighter) {
-    if (highlighter.getGutterIconRenderer() != null) return true;
-    LineMarkerRenderer lineMarkerRenderer = highlighter.getLineMarkerRenderer();
-    if (lineMarkerRenderer == null) return false;
-    LineMarkerRendererEx.Position position = EditorGutterComponentImpl.getLineMarkerPosition(lineMarkerRenderer);
-    return position == LineMarkerRendererEx.Position.LEFT && !myGutterComponent.myForceLeftFreePaintersAreaShown ||
-           position == LineMarkerRendererEx.Position.RIGHT && !myGutterComponent.myForceRightFreePaintersAreaShown;
   }
 
   private void errorStripeMarkerChanged(@NotNull RangeHighlighterEx highlighter) {

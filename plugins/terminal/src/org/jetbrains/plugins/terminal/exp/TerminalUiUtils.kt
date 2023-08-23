@@ -11,6 +11,7 @@ import com.intellij.openapi.editor.Document
 import com.intellij.openapi.editor.EditorFactory
 import com.intellij.openapi.editor.EditorKind
 import com.intellij.openapi.editor.event.EditorMouseEvent
+import com.intellij.openapi.editor.ex.EditorGutterFreePainterAreaState
 import com.intellij.openapi.editor.impl.ContextMenuPopupHandler
 import com.intellij.openapi.editor.impl.EditorImpl
 import com.intellij.openapi.project.Project
@@ -41,7 +42,7 @@ object TerminalUiUtils {
     editor.scrollPane.border = JBUI.Borders.empty()
     editor.scrollPane.horizontalScrollBarPolicy = JScrollPane.HORIZONTAL_SCROLLBAR_NEVER
     editor.gutterComponentEx.isPaintBackground = false
-    editor.gutterComponentEx.setRightFreePaintersAreaWidth(0)
+    editor.gutterComponentEx.setRightFreePaintersAreaState(EditorGutterFreePainterAreaState.HIDE)
 
     editor.colorsScheme.apply {
       editorFontName = settings.terminalFont.fontName

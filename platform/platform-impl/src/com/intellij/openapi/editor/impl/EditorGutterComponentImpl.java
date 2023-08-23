@@ -190,10 +190,11 @@ final class EditorGutterComponentImpl extends EditorGutterComponentEx implements
   private boolean myPaintBackground = true;
   private boolean myLeftFreePaintersAreaShown;
   private boolean myRightFreePaintersAreaShown;
-  boolean myForceLeftFreePaintersAreaShown;
-  boolean myForceRightFreePaintersAreaShown;
+  private @NotNull EditorGutterFreePainterAreaState myLeftFreePaintersAreaState = EditorGutterFreePainterAreaState.ON_DEMAND;
+  private @NotNull EditorGutterFreePainterAreaState myRightFreePaintersAreaState = EditorGutterFreePainterAreaState.ON_DEMAND;
+  private int myLeftFreePaintersAreaReserveWidth = 0;
+  private int myRightFreePaintersAreaReserveWidth = 0;
   private short myForcedLeftFreePaintersAreaWidth = -1;
-  private short myForcedRightFreePaintersAreaWidth = -1;
   private int myLastNonDumbModeIconAreaWidth;
   boolean myDnDInProgress;
   private final EditorGutterLayout myLayout = new EditorGutterLayout(this);
@@ -913,6 +914,15 @@ final class EditorGutterComponentImpl extends EditorGutterComponentEx implements
     return h1 != null && (h2 == null || h1.getStartOffset() < h2.getStartOffset());
   }
 
+  boolean canImpactSize(@NotNull RangeHighlighterEx highlighter) {
+    if (highlighter.getGutterIconRenderer() != null) return true;
+    LineMarkerRenderer lineMarkerRenderer = highlighter.getLineMarkerRenderer();
+    if (lineMarkerRenderer == null) return false;
+    LineMarkerRendererEx.Position position = getLineMarkerPosition(lineMarkerRenderer);
+    return position == LineMarkerRendererEx.Position.LEFT && myLeftFreePaintersAreaState == EditorGutterFreePainterAreaState.ON_DEMAND ||
+           position == LineMarkerRendererEx.Position.RIGHT && myRightFreePaintersAreaState == EditorGutterFreePainterAreaState.ON_DEMAND;
+  }
+
   @Override
   public void revalidateMarkup() {
     updateSize();
@@ -1080,17 +1090,26 @@ final class EditorGutterComponentImpl extends EditorGutterComponentEx implements
   }
 
   private void calcLineMarkerAreaWidth(boolean canShrink) {
-    myLeftFreePaintersAreaShown = myForceLeftFreePaintersAreaShown;
-    myRightFreePaintersAreaShown = myForceRightFreePaintersAreaShown;
+    boolean leftPainterOnDemand = myLeftFreePaintersAreaState == EditorGutterFreePainterAreaState.ON_DEMAND;
+    myLeftFreePaintersAreaShown = myLeftFreePaintersAreaState == EditorGutterFreePainterAreaState.SHOW;
 
-    processRangeHighlighters(0, myEditor.getDocument().getTextLength(), highlighter -> {
-      LineMarkerRenderer lineMarkerRenderer = highlighter.getLineMarkerRenderer();
-      if (lineMarkerRenderer != null) {
-        LineMarkerRendererEx.Position position = getLineMarkerPosition(lineMarkerRenderer);
-        if (position == LineMarkerRendererEx.Position.LEFT && isLineMarkerVisible(highlighter)) myLeftFreePaintersAreaShown = true;
-        if (position == LineMarkerRendererEx.Position.RIGHT && isLineMarkerVisible(highlighter)) myRightFreePaintersAreaShown = true;
-      }
-    });
+    boolean rightPainterOnDemand = myRightFreePaintersAreaState == EditorGutterFreePainterAreaState.ON_DEMAND;
+    myRightFreePaintersAreaShown = myRightFreePaintersAreaState == EditorGutterFreePainterAreaState.SHOW;
+
+    if (leftPainterOnDemand || rightPainterOnDemand) {
+      processRangeHighlighters(0, myEditor.getDocument().getTextLength(), highlighter -> {
+        LineMarkerRenderer lineMarkerRenderer = highlighter.getLineMarkerRenderer();
+        if (lineMarkerRenderer != null) {
+          LineMarkerRendererEx.Position position = getLineMarkerPosition(lineMarkerRenderer);
+          if (leftPainterOnDemand && position == LineMarkerRendererEx.Position.LEFT && isLineMarkerVisible(highlighter)) {
+            myLeftFreePaintersAreaShown = true;
+          }
+          if (rightPainterOnDemand && position == LineMarkerRendererEx.Position.RIGHT && isLineMarkerVisible(highlighter)) {
+            myRightFreePaintersAreaShown = true;
+          }
+        }
+      });
+    }
 
     int minWidth = areIconsShown() ? EditorUIUtil.scaleWidth(myStartIconAreaWidth, myEditor) : 0;
     myIconsAreaWidth = canShrink ? minWidth : Math.max(myIconsAreaWidth, minWidth);
@@ -1856,28 +1875,28 @@ final class EditorGutterComponentImpl extends EditorGutterComponentEx implements
   }
 
   int getExtraLeftFreePaintersAreaWidth() {
-    return scaleWithEditor(FREE_PAINTERS_EXTRA_LEFT_AREA_WIDTH.getFloat());
+    float width = FREE_PAINTERS_EXTRA_LEFT_AREA_WIDTH.getFloat();
+    return scaleWithEditor(width);
   }
 
   int getLeftFreePaintersAreaWidth() {
     if (!myLeftFreePaintersAreaShown) return 0;
     if (myForcedLeftFreePaintersAreaWidth >= 0) return myForcedLeftFreePaintersAreaWidth;
 
+    int width = Math.max(FREE_PAINTERS_LEFT_AREA_WIDTH.get(), myLeftFreePaintersAreaReserveWidth);
     if (ExperimentalUI.isNewUI()) {
-      return scaleWithEditor(FREE_PAINTERS_LEFT_AREA_WIDTH.get()) + 2;
+      return scaleWithEditor(width) + 2;
     }
-    return FREE_PAINTERS_LEFT_AREA_WIDTH.get();
+    return width;
   }
 
   int getRightFreePaintersAreaWidth() {
-    if (!myRightFreePaintersAreaShown) {
-      return 0;
-    }
-    if (myForcedRightFreePaintersAreaWidth >= 0) {
-      return myForcedRightFreePaintersAreaWidth;
-    }
+    if (!myRightFreePaintersAreaShown) return 0;
 
-    return ExperimentalUI.isNewUI() ? 0 : FREE_PAINTERS_RIGHT_AREA_WIDTH.get();
+    if (ExperimentalUI.isNewUI()) {
+      return Math.max(0, myRightFreePaintersAreaReserveWidth);
+    }
+    return Math.max(FREE_PAINTERS_RIGHT_AREA_WIDTH.get(), myRightFreePaintersAreaReserveWidth);
   }
 
   @Override
@@ -2461,25 +2480,35 @@ final class EditorGutterComponentImpl extends EditorGutterComponentEx implements
   }
 
   @Override
-  public void setForceShowLeftFreePaintersArea(boolean value) {
-    myForceLeftFreePaintersAreaShown = value;
+  public void setLeftFreePaintersAreaState(@NotNull EditorGutterFreePainterAreaState value) {
+    myLeftFreePaintersAreaState = value;
   }
 
   @Override
-  public void setForceShowRightFreePaintersArea(boolean value) {
-    myForceRightFreePaintersAreaShown = value;
+  public void setRightFreePaintersAreaState(@NotNull EditorGutterFreePainterAreaState value) {
+    myRightFreePaintersAreaState = value;
   }
 
   @Override
-  public void setLeftFreePaintersAreaWidth(int widthInPixels) {
-    if (widthInPixels != -1 && widthInPixels < 0 || widthInPixels > Short.MAX_VALUE) throw new IllegalArgumentException();
-    myForcedLeftFreePaintersAreaWidth = (short)widthInPixels;
+  public void reserveLeftFreePaintersAreaWidth(@NotNull Disposable disposable, int widthInPixels) {
+    if (widthInPixels < 0 || widthInPixels > Short.MAX_VALUE) throw new IllegalArgumentException();
+    myLeftFreePaintersAreaReserveWidth += widthInPixels;
+    updateSize();
+    Disposer.register(disposable, () -> {
+      myLeftFreePaintersAreaReserveWidth -= widthInPixels;
+      updateSize(false, true);
+    });
   }
 
   @Override
-  public void setRightFreePaintersAreaWidth(int widthInPixels) {
-    if (widthInPixels != -1 && widthInPixels < 0 || widthInPixels > Short.MAX_VALUE) throw new IllegalArgumentException();
-    myForcedRightFreePaintersAreaWidth = (short)widthInPixels;
+  public void reserveRightFreePaintersAreaWidth(@NotNull Disposable disposable, int widthInPixels) {
+    if (widthInPixels < 0 || widthInPixels > Short.MAX_VALUE) throw new IllegalArgumentException();
+    myRightFreePaintersAreaReserveWidth += widthInPixels;
+    updateSize();
+    Disposer.register(disposable, () -> {
+      myRightFreePaintersAreaReserveWidth -= widthInPixels;
+      updateSize(false, true);
+    });
   }
 
   @Override

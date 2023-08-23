@@ -14,6 +14,7 @@ import com.intellij.openapi.editor.EditorFactory
 import com.intellij.openapi.editor.event.DocumentEvent
 import com.intellij.openapi.editor.event.DocumentListener
 import com.intellij.openapi.editor.ex.EditorEx
+import com.intellij.openapi.editor.ex.EditorGutterFreePainterAreaState
 import com.intellij.openapi.editor.ex.EditorMarkupModel
 import com.intellij.openapi.editor.impl.EditorImpl
 import com.intellij.openapi.fileEditor.FileDocumentManager
@@ -71,7 +72,7 @@ open class TextEditorComponent(
     editor.component.isFocusable = false
     editor.document.addDocumentListener(MyDocumentListener(), this)
     (editor.markupModel as EditorMarkupModel).isErrorStripeVisible = true
-    editor.gutterComponentEx.setForceShowRightFreePaintersArea(true)
+    editor.gutterComponentEx.setRightFreePaintersAreaState(EditorGutterFreePainterAreaState.SHOW)
     editor.setFile(file)
     editor.contextMenuGroupId = IdeActions.GROUP_EDITOR_POPUP
     editor.setDropHandler(FileDropHandler(editor))
