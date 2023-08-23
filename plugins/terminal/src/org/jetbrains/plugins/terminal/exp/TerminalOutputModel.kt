@@ -24,7 +24,8 @@ class TerminalOutputModel(private val editor: EditorEx) {
     if (lastBlock != null) {
       lastBlock.range.isGreedyToRight = false
       decorations[lastBlock]?.let {
-        it.highlighter.isGreedyToRight = false
+        it.backgroundHighlighter.isGreedyToRight = false
+        it.cornersHighlighter.isGreedyToRight = false
         (it.bottomInlay as RangeMarkerImpl).isStickingToRight = false
       }
     }
@@ -50,7 +51,8 @@ class TerminalOutputModel(private val editor: EditorEx) {
     decorations[block]?.let {
       Disposer.dispose(it.topInlay)
       Disposer.dispose(it.bottomInlay)
-      editor.markupModel.removeHighlighter(it.highlighter)
+      editor.markupModel.removeHighlighter(it.backgroundHighlighter)
+      editor.markupModel.removeHighlighter(it.cornersHighlighter)
     }
 
     blocks.remove(block)
