@@ -265,7 +265,7 @@ public final class ExpUiIcons {
     /** 16x16 */ public static final @NotNull Icon EditorOnly = load("expui/general/editorOnly.svg", 664284995, 2);
     /** 16x16 */ public static final @NotNull Icon EditorPreview = load("expui/general/editorPreview.svg", 1092233625, 2);
     /** 16x16 */ public static final @NotNull Icon EditorPreviewVertical = load("expui/general/editorPreviewVertical.svg", 1066008888, 2);
-    /** 28x28 */ public static final @NotNull Icon ErrorDialog = load("expui/general/errorDialog.svg", -775209288, 2);
+    /** 28x28 */ public static final @NotNull Icon ErrorDialog = load("expui/general/errorDialog.svg", 1022280318, 2);
     /** 16x16 */ public static final @NotNull Icon Exit = load("expui/general/exit.svg", 1345528853, 2);
     /** 16x16 */ public static final @NotNull Icon ExpandAll = load("expui/general/expandAll.svg", 732447936, 2);
     /** 16x16 */ public static final @NotNull Icon Export = load("expui/general/export.svg", -737835750, 2);
@@ -276,7 +276,7 @@ public final class ExpUiIcons {
     /** 16x16 */ public static final @NotNull Icon History = load("expui/general/history.svg", -1313586434, 2);
     /** 16x16 */ public static final @NotNull Icon IdeUpdate = load("expui/general/ideUpdate.svg", -835911935, 2);
     /** 16x16 */ public static final @NotNull Icon Import = load("expui/general/import.svg", 100114017, 2);
-    /** 28x28 */ public static final @NotNull Icon InformationDialog = load("expui/general/informationDialog.svg", 658647123, 2);
+    /** 28x28 */ public static final @NotNull Icon InformationDialog = load("expui/general/informationDialog.svg", -452195602, 2);
 
     public static final class Inspections {
       /** 16x16 */ public static final @NotNull Icon InspectionsError = load("expui/general/inspections/inspectionsError.svg", 1576466233, 0);
@@ -319,7 +319,7 @@ public final class ExpUiIcons {
     /** 16x16 */ public static final @NotNull Icon ProjectStructure = load("expui/general/projectStructure.svg", 200874544, 2);
     /** 16x16 */ public static final @NotNull Icon ProjectWideAnalysisOff = load("expui/general/projectWideAnalysisOff.svg", 1505013057, 2);
     /** 16x16 */ public static final @NotNull Icon ProjectWideAnalysisOn = load("expui/general/projectWideAnalysisOn.svg", 103110158, 2);
-    /** 28x28 */ public static final @NotNull Icon QuestionDialog = load("expui/general/questionDialog.svg", 95839547, 2);
+    /** 28x28 */ public static final @NotNull Icon QuestionDialog = load("expui/general/questionDialog.svg", 2033181276, 2);
     /** 16x16 */ public static final @NotNull Icon Redo = load("expui/general/redo.svg", -765720439, 2);
     /** 16x16 */ public static final @NotNull Icon Refresh = load("expui/general/refresh.svg", 323445437, 2);
     /** 16x16 */ public static final @NotNull Icon Remove = load("expui/general/remove.svg", 288478484, 2);
@@ -339,7 +339,7 @@ public final class ExpUiIcons {
     /** 16x16 */ public static final @NotNull Icon SoftWrap = load("expui/general/softWrap.svg", 1261736010, 2);
     /** 16x16 */ public static final @NotNull Icon SplitHorizontally = load("expui/general/splitHorizontally.svg", -79366107, 2);
     /** 16x16 */ public static final @NotNull Icon SplitVertically = load("expui/general/splitVertically.svg", -61631069, 2);
-    /** 28x28 */ public static final @NotNull Icon SuccessDialog = load("expui/general/successDialog.svg", 319586180, 2);
+    /** 28x28 */ public static final @NotNull Icon SuccessDialog = load("expui/general/successDialog.svg", -703647226, 2);
     /** 48x48 */ public static final @NotNull Icon SuccessLogin = load("expui/general/successLogin.svg", -1600608774, 2);
     /** 16x16 */ public static final @NotNull Icon Undo = load("expui/general/undo.svg", 1388909186, 2);
     /** 16x16 */ public static final @NotNull Icon Unlocked = load("expui/general/unlocked.svg", -1889256406, 2);
@@ -347,7 +347,7 @@ public final class ExpUiIcons {
     /** 16x16 */ public static final @NotNull Icon Upload = load("expui/general/upload.svg", 600163934, 2);
     /** 16x16 */ public static final @NotNull Icon User = load("expui/general/user.svg", 1868835079, 2);
     /** 16x16 */ public static final @NotNull Icon Vcs = load("expui/general/vcs.svg", 1023462254, 2);
-    /** 28x28 */ public static final @NotNull Icon WarningDialog = load("expui/general/warningDialog.svg", 151050177, 2);
+    /** 28x28 */ public static final @NotNull Icon WarningDialog = load("expui/general/warningDialog.svg", 1404992157, 2);
     /** 20x20 */ public static final @NotNull Icon WindowsMenu_20x20 = load("expui/general/windowsMenu@20x20.svg", 2146328371, 2);
   }
 
@@ -604,14 +604,14 @@ public final class ExpUiIcons {
   }
 
   public static final class Status {
-    /** 16x16 */ public static final @NotNull Icon Error = load("expui/status/error.svg", 2027223231, 2);
-    /** 16x16 */ public static final @NotNull Icon ErrorOutline = load("expui/status/errorOutline.svg", -528038395, 2);
+    /** 16x16 */ public static final @NotNull Icon Error = load("expui/status/error.svg", -143235814, 2);
+    /** 16x16 */ public static final @NotNull Icon ErrorOutline = load("expui/status/errorOutline.svg", -281923861, 2);
     /** 16x16 */ public static final @NotNull Icon FailedInProgress = load("expui/status/failedInProgress.svg", 8468379, 2);
-    /** 16x16 */ public static final @NotNull Icon Info = load("expui/status/info.svg", -1198937638, 2);
-    /** 16x16 */ public static final @NotNull Icon InfoOutline = load("expui/status/infoOutline.svg", 384779684, 2);
-    /** 16x16 */ public static final @NotNull Icon Success = load("expui/status/success.svg", -1623423182, 2);
-    /** 16x16 */ public static final @NotNull Icon Warning = load("expui/status/warning.svg", 2102752571, 2);
-    /** 16x16 */ public static final @NotNull Icon WarningOutline = load("expui/status/warningOutline.svg", -835193201, 2);
+    /** 16x16 */ public static final @NotNull Icon Info = load("expui/status/info.svg", 370358095, 2);
+    /** 16x16 */ public static final @NotNull Icon InfoOutline = load("expui/status/infoOutline.svg", -1701696200, 2);
+    /** 16x16 */ public static final @NotNull Icon Success = load("expui/status/success.svg", 282847188, 2);
+    /** 16x16 */ public static final @NotNull Icon Warning = load("expui/status/warning.svg", -2099948057, 2);
+    /** 16x16 */ public static final @NotNull Icon WarningOutline = load("expui/status/warningOutline.svg", -235105415, 2);
   }
 
   /** 16x16 */ public static final @NotNull Icon Stub = load("expui/stub.svg", -784127213, 2);
