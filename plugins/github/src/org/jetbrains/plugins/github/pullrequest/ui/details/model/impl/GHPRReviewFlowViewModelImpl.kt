@@ -3,14 +3,12 @@ package org.jetbrains.plugins.github.pullrequest.ui.details.model.impl
 
 import com.intellij.collaboration.async.nestedDisposable
 import com.intellij.collaboration.messages.CollaborationToolsBundle
-import com.intellij.collaboration.ui.SingleValueModel
-import com.intellij.collaboration.ui.asStateFlow
 import com.intellij.collaboration.ui.codereview.action.ReviewMergeCommitMessageDialog
+import com.intellij.collaboration.ui.codereview.commits.splitCommitMessage
 import com.intellij.collaboration.ui.codereview.details.data.ReviewRole
 import com.intellij.collaboration.ui.codereview.details.data.ReviewState
 import com.intellij.collaboration.util.CollectionDelta
 import com.intellij.collaboration.util.SingleCoroutineLauncher
-import com.intellij.openapi.Disposable
 import com.intellij.openapi.progress.EmptyProgressIndicator
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.text.StringUtil
@@ -248,13 +246,3 @@ private fun GHPullRequest.isReviewer(user: GHUser): Boolean =
   reviewRequests.any { it.requestedReviewer?.id == user.id }
   ||
   reviews.any { it.author?.id == user.id }
-
-private fun splitCommitMessage(commitMessage: String): Pair<String, String> {
-  val idx = commitMessage.indexOf("\n\n")
-  return if (idx < 0) "" to commitMessage
-  else {
-    val subject = commitMessage.substring(0, idx)
-    if (subject.contains("\n")) "" to commitMessage
-    else subject to commitMessage.substring(idx + 2)
-  }
-}

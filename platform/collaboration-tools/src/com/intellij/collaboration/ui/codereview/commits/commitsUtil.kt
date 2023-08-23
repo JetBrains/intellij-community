@@ -1,21 +1,19 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.collaboration.ui.codereview.commits
 
-import com.intellij.openapi.util.Couple
-
 /**
- * Splits full commit message into subject and description in GitHub style:
+ * Splits full commit message into subject and description:
  * First line becomes subject, everything after first line becomes description
  * Also supports empty line that separates subject and description
  *
  * @param commitMessage full commit message
- * @return couple of subject and description based on full commit message
+ * @return pair of subject and description based on full commit message
  */
-fun getGithubLikeFormattedDescriptionMessage(commitMessage: String?): Couple<String> {
+fun splitCommitMessage(commitMessage: String?): Pair<String, String> {
   //Trim original
   val message = commitMessage?.trim { it <= ' ' } ?: ""
   if (message.isEmpty()) {
-    return Couple.of("", "")
+    return Pair("", "")
   }
   val firstLineEnd = message.indexOf("\n")
   val subject: String
@@ -33,5 +31,5 @@ fun getGithubLikeFormattedDescriptionMessage(commitMessage: String?): Couple<Str
     description = ""
   }
 
-  return Couple.of(subject, description)
+  return Pair(subject, description)
 }
