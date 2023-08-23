@@ -14,6 +14,7 @@ import com.intellij.ide.lightEdit.LightEditFeatureUsagesUtil
 import com.intellij.ide.lightEdit.LightEditFeatureUsagesUtil.OpenPlace
 import com.intellij.ide.ui.UISettings
 import com.intellij.ide.util.gotoByName.QuickSearchComponent
+import com.intellij.internal.statistic.eventLog.EventLogGroup
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.actionSystem.ex.ActionUtil
@@ -85,6 +86,9 @@ import kotlin.math.min
 object Switcher : BaseSwitcherAction(null) {
   val SWITCHER_KEY: Key<SwitcherPanel> = Key.create("SWITCHER_KEY")
 
+  private val GROUP = EventLogGroup("recent.files.dialog", 1)
+  private val SHOWN_TIME_ACTIVITY = GROUP.registerIdeActivity("shown_time")
+
   @Deprecated("Please use {@link Switcher#createAndShowSwitcher(AnActionEvent, String, boolean, boolean)}")
   @JvmStatic
   fun createAndShowSwitcher(e: AnActionEvent, title: @Nls String, pinned: Boolean, vFiles: Array<VirtualFile?>?): SwitcherPanel? {
@@ -101,6 +105,7 @@ object Switcher : BaseSwitcherAction(null) {
                       onlyEditedFiles: Boolean?,
                       forward: Boolean) : BorderLayoutPanel(), DataProvider, QuickSearchComponent, Disposable {
     val myPopup: JBPopup?
+    val activity = SHOWN_TIME_ACTIVITY.started(project)
     val toolWindows: JBList<SwitcherListItem>
     val files: JBList<SwitcherVirtualFile>
     val cbShowOnlyEditedFiles: JCheckBox?
@@ -347,6 +352,7 @@ object Switcher : BaseSwitcherAction(null) {
 
     override fun dispose() {
       project.putUserData(SWITCHER_KEY, null)
+      activity.finished()
     }
 
     val isOnlyEditedFilesShown: Boolean
