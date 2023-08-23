@@ -17,6 +17,7 @@ interface GitStageUiSettingsListener : EventListener {
 }
 
 @State(name = "Git.Stage.Ui.Settings", storages = [Storage(StoragePathMacros.WORKSPACE_FILE)])
+@Service(Service.Level.PROJECT)
 class GitStageUiSettingsImpl(val project: Project) : SimplePersistentStateComponent<GitStageUiSettingsImpl.State>(State()), GitStageUiSettings {
   private val eventDispatcher = EventDispatcher.create(GitStageUiSettingsListener::class.java)
 
