@@ -67,8 +67,8 @@ internal object IndexDiagnostic {
 
   private fun IndexDataGetter.getFilteringDiff(commitId: Int, details: VcsFullCommitDetails): String? {
     val authorFilter = VcsLogFilterObject.fromUser(details.author)
-    val textFilter = details.fullMessage.lineSequence().first().takeIf { it.length > 3 }?.let {
-      VcsLogFilterObject.fromPattern(it, false, true)
+    val textFilter = details.fullMessage.lineSequence().firstOrNull { it.length > 5 }?.let {
+      VcsLogFilterObject.fromPattern(it.take(25), false, true)
     }
     val paths = details.parents.indices.flatMapTo(mutableSetOf()) { parentIndex ->
       ChangesUtil.getPaths(details.getChanges(parentIndex))
