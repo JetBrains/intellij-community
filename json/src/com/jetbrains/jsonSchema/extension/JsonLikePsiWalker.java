@@ -11,10 +11,12 @@ import com.jetbrains.jsonSchema.extension.adapters.JsonPropertyAdapter;
 import com.jetbrains.jsonSchema.extension.adapters.JsonValueAdapter;
 import com.jetbrains.jsonSchema.impl.JsonOriginalPsiWalker;
 import com.jetbrains.jsonSchema.impl.JsonSchemaObject;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
+import java.util.List;
 import java.util.Set;
 
 public interface JsonLikePsiWalker {
@@ -40,6 +42,25 @@ public interface JsonLikePsiWalker {
   boolean hasMissingCommaAfter(@NotNull PsiElement element);
 
   Set<String> getPropertyNamesOfParentObject(@NotNull PsiElement originalPosition, PsiElement computedPosition);
+
+  /**
+   * @param accessor A list of names representing the path you need to navigate down
+   * @param start Does <b>NOT</b> always represent a direct object that can be searched for children.
+   *              If it's not an object, start looking from its siblings
+   * @return The object that is a sub-child of [start] or null if it can not be found
+   */
+  @ApiStatus.Experimental
+  default @Nullable PsiElement findChildBy(@NotNull List<String> accessor, @Nullable PsiElement start) {
+    return start;
+  }
+
+  default int indentOf(@NotNull PsiElement element) {
+    return 0;
+  }
+
+  default int indentOf(@NotNull PsiFile file) {
+    return 4;
+  }
 
   @Nullable
   JsonPropertyAdapter getParentPropertyAdapter(@NotNull PsiElement element);

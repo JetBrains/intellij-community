@@ -156,6 +156,13 @@ public final class LookupElementBuilder extends LookupElement {
     return cloneWithUserData(myLookupString, myObject, myInsertHandler, myRenderer, myExpensiveRenderer, myHardcodedPresentation,
                              myPsiElement, Collections.unmodifiableSet(set), myCaseSensitive);
   }
+
+  @Contract(pure=true)
+  public @NotNull LookupElementBuilder withBaseLookupString(@NotNull String lookupString) {
+    return cloneWithUserData(lookupString, myObject, myInsertHandler, myRenderer, myExpensiveRenderer, myHardcodedPresentation,
+                             myPsiElement, myAllLookupStrings, myCaseSensitive);
+  }
+
   @Contract(pure=true)
   public @NotNull LookupElementBuilder withLookupStrings(@NotNull Collection<String> another) {
     Set<String> set = new HashSet<>(myAllLookupStrings.size() + another.size());

@@ -19,6 +19,8 @@ import com.intellij.util.containers.ContainerUtil;
 import com.jetbrains.jsonSchema.JsonDependencyModificationTracker;
 import com.jetbrains.jsonSchema.extension.adapters.JsonValueAdapter;
 import com.jetbrains.jsonSchema.ide.JsonSchemaService;
+import com.jetbrains.jsonSchema.impl.nestedCompletions.NestedCompletionsNode;
+import com.jetbrains.jsonSchema.impl.nestedCompletions.NestedCompletionsNodeKt;
 import com.jetbrains.jsonSchema.remote.JsonFileResolver;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -130,6 +132,9 @@ public final class JsonSchemaObject {
 
   private boolean myForceCaseInsensitive = false;
 
+  /** @see NestedCompletionsNode or test usages */
+  private NestedCompletionsNode myNestedCompletionRoot = null;
+
   private final UserDataHolderBase myUserDataHolder = new UserDataHolderBase();
 
   public boolean isValidByExclusion() {
@@ -221,6 +226,14 @@ public final class JsonSchemaObject {
   @Nullable
   public String getLanguageInjectionPostfix() {
     return myLanguageInjectionPostfix;
+  }
+
+  public void setNestedCompletionRoot(NestedCompletionsNode nestedCompletionRoot) {
+    myNestedCompletionRoot = nestedCompletionRoot;
+  }
+
+  public NestedCompletionsNode getNestedCompletionRoot() {
+    return myNestedCompletionRoot;
   }
 
   @Nullable
@@ -380,6 +393,7 @@ public final class JsonSchemaObject {
     myShouldValidateAgainstJSType |= other.myShouldValidateAgainstJSType;
     if (myLanguageInjection == null) myLanguageInjection = other.myLanguageInjection;
     myForceCaseInsensitive = myForceCaseInsensitive || other.myForceCaseInsensitive;
+    myNestedCompletionRoot = NestedCompletionsNodeKt.merge(myNestedCompletionRoot, other.myNestedCompletionRoot);
   }
 
   private static void mergeProperties(@NotNull JsonSchemaObject thisObject, @NotNull JsonSchemaObject otherObject) {

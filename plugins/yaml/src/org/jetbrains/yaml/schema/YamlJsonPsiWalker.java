@@ -1,6 +1,7 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.yaml.schema;
 
+import com.intellij.application.options.CodeStyle;
 import com.intellij.codeInsight.completion.CompletionUtil;
 import com.intellij.codeInsight.completion.CompletionUtilCore;
 import com.intellij.json.pointer.JsonPointerPosition;
@@ -23,10 +24,13 @@ import com.jetbrains.jsonSchema.extension.JsonLikeSyntaxAdapter;
 import com.jetbrains.jsonSchema.extension.adapters.JsonPropertyAdapter;
 import com.jetbrains.jsonSchema.extension.adapters.JsonValueAdapter;
 import com.jetbrains.jsonSchema.impl.JsonSchemaType;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.yaml.YAMLElementGenerator;
+import org.jetbrains.yaml.YAMLLanguage;
 import org.jetbrains.yaml.YAMLTokenTypes;
+import org.jetbrains.yaml.YAMLUtil;
 import org.jetbrains.yaml.psi.*;
 import org.jetbrains.yaml.psi.impl.YAMLBlockMappingImpl;
 
@@ -142,6 +146,34 @@ public final class YamlJsonPsiWalker implements JsonLikePsiWalker {
     }
     if (object == null) return Collections.emptySet();
     return new YamlObjectAdapter(object).getPropertyList().stream().map(p -> p.getName()).collect(Collectors.toSet());
+  }
+
+  @Override
+  @ApiStatus.Experimental
+  public @Nullable PsiElement findChildBy(@NotNull List<String> accessor, @Nullable PsiElement start) {
+    return accessor.isEmpty()
+           ? start
+           : findChildBy(accessor, 0, PsiTreeUtil.getParentOfType(start, YAMLMapping.class, false));
+  }
+
+  private static @Nullable PsiElement findChildBy(List<String> accessor, int offset, PsiElement current) {
+    if (accessor.size() <= offset) return current;
+    if (!(current instanceof YAMLMapping node)) return null;
+
+    YAMLKeyValue pair = node.getKeyValueByKey(accessor.get(offset));
+    return pair == null
+           ? null
+           : findChildBy(accessor, offset + 1, pair.getValue());
+  }
+
+  @Override
+  public int indentOf(@NotNull PsiElement element) {
+    return YAMLUtil.getIndentToThisElement(element);
+  }
+
+  @Override
+  public int indentOf(@NotNull PsiFile file) {
+    return Objects.requireNonNull(CodeStyle.getLanguageSettings(file, YAMLLanguage.INSTANCE).getIndentOptions()).INDENT_SIZE;
   }
 
   @Nullable
