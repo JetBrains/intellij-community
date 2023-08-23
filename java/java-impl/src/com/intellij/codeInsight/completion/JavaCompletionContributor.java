@@ -1253,7 +1253,8 @@ public final class JavaCompletionContributor extends CompletionContributor imple
     at = skipWhitespacesAndComments(at);
 
     if (PsiUtilCore.getElementType(at) == JavaTokenType.LPARENTH &&
-        PsiTreeUtil.getParentOfType(ref, PsiExpression.class, PsiClass.class) == null) {
+        PsiTreeUtil.getParentOfType(ref, PsiExpression.class, PsiClass.class) == null &&
+        PsiTreeUtil.getParentOfType(at, PsiUnnamedClass.class) == null) { // TODO check before it that there is record
       // looks like a method declaration, e.g. StringBui<caret>methodName() inside a class
       return true;
     }
