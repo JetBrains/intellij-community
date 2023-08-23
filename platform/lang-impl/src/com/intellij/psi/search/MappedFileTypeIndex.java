@@ -150,15 +150,14 @@ public final class MappedFileTypeIndex extends FileTypeIndexImplBase {
       myForwardIndex = forwardIndex;
       myInvertedIndexChangeCallback = invertedIndexChangeCallback;
     }
-    //FIXME RC: why do we use synchronized in this class? -- all the method calls are protected by RWLock up the
-    // callstack anyway
 
     public void setAssociation(int inputId, short data) throws StorageException {
       short indexedData = getIndexedData(inputId);
       if (indexedData != 0) {
         var indexedSet = myInvertedIndex.get(indexedData);
-        assert indexedSet != null;
-        indexedSet.remove(inputId);
+        assert indexedSet != null : "inputId=" + inputId + " indexedData=" + indexedData;
+        var removed = indexedSet.remove(inputId);
+        assert removed : "inputId=" + inputId + " indexedData=" + indexedData;
       }
       myForwardIndex.set(inputId, data);
       if (data != 0) {
