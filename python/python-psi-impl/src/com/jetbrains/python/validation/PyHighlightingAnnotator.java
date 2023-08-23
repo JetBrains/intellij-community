@@ -87,6 +87,11 @@ public class PyHighlightingAnnotator extends PyAnnotator implements HighlightRan
   }
 
   @Override
+  public void visitPyTypeAliasStatement(@NotNull PyTypeAliasStatement node) {
+    highlightKeyword(node, PyTokenTypes.TYPE_KEYWORD);
+  }
+
+  @Override
   public boolean isForceHighlightParents(@NotNull PsiFile file) {
     return file instanceof PyFile;
   }
