@@ -12,7 +12,7 @@ import org.jetbrains.plugins.gitlab.api.SinceGitLab
 class GitLabPipelineDTO(
   @SinceGitLab("13.6") jobs: CiJobConnection?
 ) {
-  val jobs: List<GitLabCiJobDTO>? = jobs?.nodes
+  val jobs: List<GitLabCiJobDTO>? = jobs?.nodes?.distinctBy { it.name }
 
   class CiJobConnection(pageInfo: GraphQLCursorPageInfoDTO, nodes: List<GitLabCiJobDTO>)
     : GraphQLConnectionDTO<GitLabCiJobDTO>(pageInfo, nodes)
