@@ -3,7 +3,6 @@ package com.intellij.diagnostic;
 
 import com.intellij.openapi.Disposable;
 import com.intellij.platform.diagnostic.telemetry.TelemetryManager;
-import com.intellij.util.concurrency.annotations.RequiresEdt;
 import io.opentelemetry.api.metrics.*;
 import org.HdrHistogram.Histogram;
 import org.HdrHistogram.SingleWriterRecorder;
@@ -152,10 +151,9 @@ public final class OtelReportingEventWatcher implements EventWatcher, Disposable
 
   private long awtEventExecutionStartedNs = -1;
 
-  @RequiresEdt
   @Override
-  public void edtEventStarted(final @NotNull AWTEvent event,
-                              final long startedAtMs) {
+  public void edtEventStarted(@NotNull AWTEvent event, long startedAtMs) {
+    com.intellij.util.ui.EDT.assertIsEdt();
     this.awtEventExecutionStartedNs = System.nanoTime();
   }
 
