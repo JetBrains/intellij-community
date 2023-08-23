@@ -10,6 +10,9 @@
     <smartUpdateStep id="build.project" implementation="com.intellij.smartUpdate.BuildProjectStep"/>
     <backgroundPostStartupActivity implementation="com.intellij.smartUpdate.IdeRestartedActivity"/>
     <statistics.counterUsagesCollector implementationClass="com.intellij.smartUpdate.SmartUpdateUsagesCollector"/>
+    <registryKey key="ide.smart.update" defaultValue="false"
+                 description="Enables the 'Update and Build' action which allows to upgrade the IDE installation,
+                 and to update and build the sources" />
   </extensions>
 
   <actions resource-bundle="messages.SmartUpdateBundle">
