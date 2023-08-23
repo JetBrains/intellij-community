@@ -146,8 +146,8 @@ internal object GitLabMergeRequestDetailsComponentFactory {
     val title = commit.fullTitle.orEmpty()
     val description = commit.description?.removePrefix(title).orEmpty()
     return CommitPresentation(
-      title = if (issueProcessor != null) issueProcessor(title) else title,
-      description = if (issueProcessor != null) issueProcessor(description) else description,
+      titleHtml = if (issueProcessor != null) issueProcessor(title) else title,
+      descriptionHtml = if (issueProcessor != null) issueProcessor(description) else description,
       author = commit.author?.name ?: commit.authorName,
       committedDate = commit.authoredDate
     )

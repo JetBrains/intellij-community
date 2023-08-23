@@ -94,8 +94,8 @@ internal object GHPRDetailsComponentFactory {
     ghostUser: GHUser,
     issueProcessor: ((String) -> String)? = null
   ) = CommitPresentation(
-    title = if (issueProcessor != null) issueProcessor(commit.messageHeadlineHTML) else commit.messageHeadlineHTML,
-    description = if (issueProcessor != null) issueProcessor(commit.messageBodyHTML) else commit.messageBodyHTML,
+    titleHtml = if (issueProcessor != null) issueProcessor(commit.messageHeadlineHTML) else commit.messageHeadlineHTML,
+    descriptionHtml = if (issueProcessor != null) issueProcessor(commit.messageBodyHTML) else commit.messageBodyHTML,
     author = (commit.author?.user ?: ghostUser).getPresentableName(),
     committedDate = commit.committedDate
   )
