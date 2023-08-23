@@ -1198,24 +1198,23 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
       LOG.trace("searching for words " + words + " in " + scope);
     }
 
-    Computable<Boolean> query =
-      () -> {
-        Collection<FileBasedIndex.AllKeysQuery<?, ?>> queries = ContainerUtil.flatMap(Arrays.asList(textIndexQueries), q -> q.toFileBasedIndexQueries());
-        return FileBasedIndex.getInstance().processFilesContainingAllKeys(queries, scope, processor);
-      };
-
     if (FileBasedIndex.isIndexAccessDuringDumbModeEnabled()) {
       if (ApplicationManager.getApplication().isReadAccessAllowed() &&
           (!DumbService.isDumb(project) ||
           FileBasedIndex.getInstance().getCurrentDumbModeAccessType() != null)) {
-        return query.compute();
+        return computeQueries(scope, processor, textIndexQueries);
       }
 
-      return ReadAction.compute(() -> DumbModeAccessType.RAW_INDEX_DATA_ACCEPTABLE.ignoreDumbMode(() -> query.compute()));
+      return ReadAction.compute(() -> DumbModeAccessType.RAW_INDEX_DATA_ACCEPTABLE.ignoreDumbMode(() -> computeQueries(scope, processor, textIndexQueries)));
     }
-    else {
-      return DumbService.getInstance(project).runReadActionInSmartMode(query);
-    }
+    return DumbService.getInstance(project).runReadActionInSmartMode(() -> computeQueries(scope, processor, textIndexQueries));
+  }
+
+  private static boolean computeQueries(@NotNull GlobalSearchScope scope,
+                                        @NotNull Processor<? super VirtualFile> processor,
+                                        @NotNull TextIndexQuery @NotNull [] textIndexQueries) {
+    Collection<FileBasedIndex.AllKeysQuery<?, ?>> queries = ContainerUtil.concat(textIndexQueries, q -> q.toFileBasedIndexQueries());
+    return FileBasedIndex.getInstance().processFilesContainingAllKeys(queries, scope, processor);
   }
 
   @ApiStatus.Internal
