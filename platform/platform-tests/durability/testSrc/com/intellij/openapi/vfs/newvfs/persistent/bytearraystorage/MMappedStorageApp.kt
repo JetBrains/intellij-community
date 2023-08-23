@@ -7,13 +7,12 @@ import com.intellij.openapi.vfs.newvfs.persistent.bytearraystorage.MMappedStorag
 import com.intellij.openapi.vfs.newvfs.persistent.bytearraystorage.MMappedStorageApp.MMappedStorage.WriteImpl.SinglePut
 import com.intellij.util.io.ByteBufferUtil
 import com.intellij.util.io.ResilientFileChannel
-import com.intellij.util.io.write
-import java.nio.ByteBuffer
 import java.nio.MappedByteBuffer
 import java.nio.channels.FileChannel
 import java.nio.file.Path
 import java.nio.file.StandardOpenOption.*
 import kotlin.io.path.exists
+import kotlin.io.path.writeBytes
 
 class MMappedStorageApp: App {
 
@@ -34,7 +33,7 @@ class MMappedStorageApp: App {
 
     init {
       if (!path.exists()) {
-        path.write(ByteBuffer.allocate(stateSize), true)
+        path.writeBytes(ByteArray(stateSize), WRITE, CREATE)
       }
     }
 

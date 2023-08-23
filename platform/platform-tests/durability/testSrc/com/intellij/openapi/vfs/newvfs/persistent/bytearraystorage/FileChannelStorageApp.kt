@@ -4,11 +4,11 @@ package com.intellij.openapi.vfs.newvfs.persistent.bytearraystorage
 import com.intellij.openapi.vfs.newvfs.persistent.App
 import com.intellij.openapi.vfs.newvfs.persistent.AppAgent
 import com.intellij.util.io.ResilientFileChannel
-import com.intellij.util.io.write
 import java.nio.ByteBuffer
 import java.nio.file.Path
 import java.nio.file.StandardOpenOption.*
 import kotlin.io.path.exists
+import kotlin.io.path.writeBytes
 
 class FileChannelStorageApp: App {
   class FileChannelStorage: Storage {
@@ -17,7 +17,7 @@ class FileChannelStorageApp: App {
 
     init {
       if (!path.exists()) {
-        path.write(ByteBuffer.allocate(stateSize), true)
+        path.writeBytes(ByteArray(stateSize), WRITE, CREATE)
       }
     }
 

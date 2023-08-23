@@ -3,13 +3,13 @@ package com.intellij.openapi.vfs.newvfs.persistent.enumerators
 
 import com.intellij.openapi.vfs.newvfs.persistent.App
 import com.intellij.openapi.vfs.newvfs.persistent.AppAgent
-import com.intellij.openapi.vfs.newvfs.persistent.dev.StringPersistentEnumerator
+import com.intellij.openapi.vfs.newvfs.persistent.dev.enumerator.DurableStringEnumerator
 import java.nio.file.Path
 import kotlin.io.path.absolute
 
-class StringPersistentEnumeratorApp: App {
-  private class SPE : StringEnum {
-    val instance = StringPersistentEnumerator(Path.of("pse.data").absolute())
+class DurableStringEnumeratorApp: App {
+  private class DSE : StringEnum {
+    val instance = DurableStringEnumerator(Path.of("pse.data").absolute())
 
     override fun enumerate(s: String): Int {
       return instance.enumerate(s)
@@ -34,7 +34,7 @@ class StringPersistentEnumeratorApp: App {
   }
 
   override fun run(appAgent: AppAgent) {
-    val backend = SPE()
+    val backend = DSE()
     StringEnumApp(backend).run(appAgent)
   }
 }
