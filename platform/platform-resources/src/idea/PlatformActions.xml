@@ -1251,6 +1251,7 @@
           <action id="TestTooltipsAction" internal="true" class="com.intellij.internal.TestTooltipsAction"/>
           <action id="ShowGotItDemo" internal="true" class="com.intellij.internal.ui.ShowGotItDemoAction"/>
           <action id="ShowInlineBanner" internal="true" class="com.intellij.internal.ui.InlineBannerTestAction"/>
+          <action id="ToolbarDemo" internal="true" class="com.intellij.internal.ToolbarDemoAction"/>
         </group>
         <group id="Internal.UI.Animation" popup="true">
           <action id="AnimationPanelTestAction" internal="true" class="com.intellij.internal.ui.AnimationPanelTestAction"/>

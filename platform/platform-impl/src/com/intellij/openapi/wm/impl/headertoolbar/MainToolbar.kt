@@ -275,6 +275,12 @@ private fun createActionBar(group: ActionGroup, customizationGroup: ActionGroup?
   return toolbar
 }
 
+/**
+ * Method is added for Demo-action only
+ * Do not use it in your code
+ */
+internal fun createDemoToolbar(group: ActionGroup): MyActionToolbarImpl = createActionBar(group, null)
+
 private fun addWidget(widget: JComponent, parent: JComponent, position: HorizontalLayout.Group) {
   parent.add(widget, position)
   if (widget is Disposable) {
@@ -282,29 +288,7 @@ private fun addWidget(widget: JComponent, parent: JComponent, position: Horizont
   }
 }
 
-internal suspend fun computeMainActionGroups(): List<Pair<ActionGroup, HorizontalLayout.Group>> {
-  return span("toolbar action groups computing") {
-    serviceAsync<ActionManager>()
-    val customActionSchema = CustomActionsSchema.getInstanceAsync()
-    computeMainActionGroups(customActionSchema)
-  }
-}
-
-internal fun computeMainActionGroups(customActionSchema: CustomActionsSchema): List<Pair<ActionGroup, HorizontalLayout.Group>> {
-  return sequenceOf(
-    GroupInfo("MainToolbarLeft", ActionsTreeUtil.getMainToolbarLeft(), HorizontalLayout.Group.LEFT),
-    GroupInfo("MainToolbarCenter", ActionsTreeUtil.getMainToolbarCenter(), HorizontalLayout.Group.CENTER),
-    GroupInfo("MainToolbarRight", ActionsTreeUtil.getMainToolbarRight(), HorizontalLayout.Group.RIGHT)
-  )
-    .mapNotNull { info ->
-      customActionSchema.getCorrectedAction(info.id, info.name)?.let {
-        it to info.align
-      }
-    }
-    .toList()
-}
-
-private class MyActionToolbarImpl(group: ActionGroup, customizationGroup: ActionGroup?)
+internal class MyActionToolbarImpl(group: ActionGroup, customizationGroup: ActionGroup?)
   : ActionToolbarImpl(ActionPlaces.MAIN_TOOLBAR, group, true, false, true, customizationGroup, MAIN_TOOLBAR_ID) {
   private val iconUpdater = HeaderIconUpdater()
 
@@ -424,6 +408,28 @@ private class MyActionToolbarImpl(group: ActionGroup, customizationGroup: Action
       component.font = font
     }
   }
+}
+
+internal suspend fun computeMainActionGroups(): List<Pair<ActionGroup, HorizontalLayout.Group>> {
+  return span("toolbar action groups computing") {
+    serviceAsync<ActionManager>()
+    val customActionSchema = CustomActionsSchema.getInstanceAsync()
+    computeMainActionGroups(customActionSchema)
+  }
+}
+
+internal fun computeMainActionGroups(customActionSchema: CustomActionsSchema): List<Pair<ActionGroup, HorizontalLayout.Group>> {
+  return sequenceOf(
+    GroupInfo("MainToolbarLeft", ActionsTreeUtil.getMainToolbarLeft(), HorizontalLayout.Group.LEFT),
+    GroupInfo("MainToolbarCenter", ActionsTreeUtil.getMainToolbarCenter(), HorizontalLayout.Group.CENTER),
+    GroupInfo("MainToolbarRight", ActionsTreeUtil.getMainToolbarRight(), HorizontalLayout.Group.RIGHT)
+  )
+    .mapNotNull { info ->
+      customActionSchema.getCorrectedAction(info.id, info.name)?.let {
+        it to info.align
+      }
+    }
+    .toList()
 }
 
 internal fun isToolbarInHeader(): Boolean {
