@@ -57,7 +57,7 @@ public class CoverageListRootNode extends CoverageListNode {
   @NotNull
   @Override
   public List<? extends AbstractTreeNode<?>> getChildren() {
-    if (myStateBean.myFlattenPackages) {
+    if (myStateBean.isFlattenPackages()) {
       return getTopLevelPackages(myBundle, myStateBean, myProject);
     }
     setHasVCSFilteredChildren(false);

@@ -135,7 +135,7 @@ public final class CoverageViewManager implements PersistentStateComponent<Cover
   }
 
   public static final class StateBean {
-    public boolean myFlattenPackages = false;
+    private boolean myFlattenPackages = false;
     public boolean myAutoScrollToSource = false;
     public boolean myAutoScrollFromSource = false;
     public List<Integer> myColumnSize;
@@ -145,15 +145,25 @@ public final class CoverageViewManager implements PersistentStateComponent<Cover
     private boolean myShowOnlyModified = true;
     private boolean myDefaultFilters = true;
 
+    public boolean isFlattenPackages() {
+      return myFlattenPackages;
+    }
+
+    public void setFlattenPackages(boolean flattenPackages) {
+      if (myFlattenPackages != flattenPackages) {
+        myFlattenPackages = flattenPackages;
+      }
+    }
+
     public boolean isHideFullyCovered() {
       return myHideFullyCovered;
     }
 
     public void setHideFullyCovered(boolean hideFullyCovered) {
       if (myHideFullyCovered != hideFullyCovered) {
+        myHideFullyCovered = hideFullyCovered;
         myDefaultFilters = false;
       }
-      myHideFullyCovered = hideFullyCovered;
     }
 
     public boolean isShowOnlyModified() {
@@ -162,9 +172,9 @@ public final class CoverageViewManager implements PersistentStateComponent<Cover
 
     public void setShowOnlyModified(boolean showOnlyModified) {
       if (myShowOnlyModified != showOnlyModified) {
+        myShowOnlyModified = showOnlyModified;
         myDefaultFilters = false;
       }
-      myShowOnlyModified = showOnlyModified;
     }
 
     public boolean isDefaultFilters() {

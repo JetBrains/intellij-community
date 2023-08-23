@@ -183,9 +183,9 @@ public class CoverageView extends BorderLayoutPanel implements DataProvider, Dis
     speedSearch.setClearSearchOnNavigateNoMatch(true);
     PopupHandler.installPopupMenu(myTable, createPopupGroup(), "CoverageViewPopup");
 
-    myTable.getTree().registerKeyboardAction(e -> resetView(), KeyStroke.getKeyStroke(KeyEvent.VK_BACK_SLASH, SystemInfo.isMac ? InputEvent.META_MASK : InputEvent.CTRL_MASK), JComponent.WHEN_FOCUSED);
+    myTable.getTree().registerKeyboardAction(e -> resetView(), KeyStroke.getKeyStroke(KeyEvent.VK_BACK_SLASH, SystemInfo.isMac ? InputEvent.META_DOWN_MASK : InputEvent.CTRL_DOWN_MASK), JComponent.WHEN_FOCUSED);
     myTable.getTree().getInputMap(WHEN_FOCUSED).put(KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, 0), ACTION_DRILL_DOWN);
-    myTable.getTree().getInputMap(WHEN_FOCUSED).put(KeyStroke.getKeyStroke(KeyEvent.VK_PAGE_DOWN, SystemInfo.isMac ? InputEvent.META_MASK : InputEvent.CTRL_MASK), ACTION_DRILL_DOWN);
+    myTable.getTree().getInputMap(WHEN_FOCUSED).put(KeyStroke.getKeyStroke(KeyEvent.VK_PAGE_DOWN, SystemInfo.isMac ? InputEvent.META_DOWN_MASK : InputEvent.CTRL_DOWN_MASK), ACTION_DRILL_DOWN);
     myTable.getTree().getActionMap().put(ACTION_DRILL_DOWN, new AbstractAction() {
       @Override
       public void actionPerformed(final ActionEvent e) {
@@ -338,7 +338,7 @@ public class CoverageView extends BorderLayoutPanel implements DataProvider, Dis
   }
 
   private int getColumnWidth(int column) {
-    final String preferredString = myViewExtension.getPercentage(column, (CoverageListNode)myTreeStructure.getRootElement());
+    final String preferredString = myViewExtension.getPercentage(column, (AbstractTreeNode<?>)myTreeStructure.getRootElement());
     if (preferredString == null) return JBUIScale.scale(60);
     return getStringWidth(preferredString);
   }
@@ -442,7 +442,7 @@ public class CoverageView extends BorderLayoutPanel implements DataProvider, Dis
     return myTable.getTree().getSelectionPath();
   }
 
-  private CoverageListNode getLast(@Nullable TreePath path) {
+  private AbstractTreeNode<?> getLast(@Nullable TreePath path) {
     if (path == null) return null;
     return myModel.getCoverageNode(path.getLastPathComponent());
   }
@@ -485,12 +485,12 @@ public class CoverageView extends BorderLayoutPanel implements DataProvider, Dis
 
     @Override
     public boolean isSelected(@NotNull AnActionEvent e) {
-      return myStateBean.myFlattenPackages;
+      return myStateBean.isFlattenPackages();
     }
 
     @Override
     public void setSelected(@NotNull AnActionEvent e, boolean state) {
-      myStateBean.myFlattenPackages = state;
+      myStateBean.setFlattenPackages(state);
       myModel.reset(false);
     }
 
@@ -562,8 +562,8 @@ public class CoverageView extends BorderLayoutPanel implements DataProvider, Dis
     ScrollingUtil.ensureSelectionExists(myTable.getTable());
   }
 
-  private CoverageListNode getNode(PsiElement element, VirtualFile file) {
-    CoverageListNode node = (CoverageListNode)myTreeStructure.getRootElement();
+  private AbstractTreeNode<?> getNode(PsiElement element, VirtualFile file) {
+    AbstractTreeNode<?> node = (AbstractTreeNode<?>)myTreeStructure.getRootElement();
     down:
     while (true) {
       if (Comparing.equal(node.getValue(), element)) break;

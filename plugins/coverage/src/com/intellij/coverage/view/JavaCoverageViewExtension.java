@@ -1,7 +1,6 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.coverage.view;
 
-import com.intellij.CommonBundle;
 import com.intellij.coverage.*;
 import com.intellij.execution.configurations.RunConfigurationBase;
 import com.intellij.execution.configurations.coverage.JavaCoverageEnabledConfiguration;
@@ -53,14 +52,14 @@ public class JavaCoverageViewExtension extends CoverageViewExtension {
 
   private PackageAnnotator.SummaryCoverageInfo getSummaryCoverageForNodeValue(AbstractTreeNode<?> node) {
     if (node instanceof CoverageListRootNode) {
-      return myAnnotator.getPackageCoverageInfo("", myStateBean.myFlattenPackages);
+      return myAnnotator.getPackageCoverageInfo("", myStateBean.isFlattenPackages());
     }
     final JavaCoverageNode javaNode = (JavaCoverageNode)node;
     if (javaNode.isLeaf()) {
       return myAnnotator.getClassCoverageInfo(javaNode.getQualifiedName());
     }
     else {
-      return myAnnotator.getPackageCoverageInfo(javaNode.getQualifiedName(), myStateBean.myFlattenPackages);
+      return myAnnotator.getPackageCoverageInfo(javaNode.getQualifiedName(), myStateBean.isFlattenPackages());
     }
   }
 
@@ -159,10 +158,10 @@ public class JavaCoverageViewExtension extends CoverageViewExtension {
       node.setFullyCovered(isFullyCovered(aPackage));
       children.add(node);
     }
-    else if (!myStateBean.myFlattenPackages) {
+    else if (!myStateBean.isFlattenPackages()) {
       collectSubPackages(children, aPackage, searchScope);
     }
-    if (myStateBean.myFlattenPackages) {
+    if (myStateBean.isFlattenPackages()) {
       collectSubPackages(children, aPackage, searchScope);
     }
   }
@@ -170,7 +169,7 @@ public class JavaCoverageViewExtension extends CoverageViewExtension {
   private boolean shouldIncludePackage(PsiPackage aPackage, GlobalSearchScope searchScope) {
     return ReadAction.compute(() -> isInCoverageScope(aPackage) &&
                                     getPackageCoverageInfo(aPackage) != null &&
-                                    !myStateBean.myFlattenPackages || aPackage.getClasses(searchScope).length != 0);
+                                    !myStateBean.isFlattenPackages() || aPackage.getClasses(searchScope).length != 0);
   }
 
   private boolean shouldIncludeClass(PsiClass aClass) {
@@ -202,7 +201,7 @@ public class JavaCoverageViewExtension extends CoverageViewExtension {
       if (val instanceof PsiPackage psiPackage) {
         final GlobalSearchScope searchScope = mySuitesBundle.getSearchScope(myProject);
         if (ReadAction.compute(() -> isInCoverageScope(psiPackage))) {
-          if (!myStateBean.myFlattenPackages) {
+          if (!myStateBean.isFlattenPackages()) {
             collectSubPackages(children, psiPackage, searchScope);
           }
 
@@ -211,7 +210,7 @@ public class JavaCoverageViewExtension extends CoverageViewExtension {
             collectFileChildren(file, children);
           }
         }
-        else if (!myStateBean.myFlattenPackages) {
+        else if (!myStateBean.isFlattenPackages()) {
           collectSubPackages(children, (PsiPackage)val, searchScope);
         }
       }
@@ -260,7 +259,7 @@ public class JavaCoverageViewExtension extends CoverageViewExtension {
 
   @Nullable
   private PackageAnnotator.PackageCoverageInfo getPackageCoverageInfo(final PsiPackage aPackage) {
-    return ReadAction.compute(() -> myAnnotator.getPackageCoverageInfo(aPackage.getQualifiedName(), myStateBean.myFlattenPackages));
+    return ReadAction.compute(() -> myAnnotator.getPackageCoverageInfo(aPackage.getQualifiedName(), myStateBean.isFlattenPackages()));
   }
 
   @Override

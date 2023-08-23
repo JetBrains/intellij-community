@@ -142,7 +142,7 @@ public class CoverageListNode extends AbstractTreeNode<Object> {
       final Object object = getValue();
       if (object instanceof PsiNamedElement value) {
         if (value instanceof PsiQualifiedNamedElement &&
-            (myStateBean.myFlattenPackages && value.getContainingFile() == null || getParent() instanceof CoverageListRootNode)) {
+            (myStateBean.isFlattenPackages() && value.getContainingFile() == null || getParent() instanceof CoverageListRootNode)) {
           presentation.setPresentableText(((PsiQualifiedNamedElement)value).getQualifiedName());
         }
         else {
@@ -229,7 +229,7 @@ public class CoverageListNode extends AbstractTreeNode<Object> {
   }
 
   private boolean contains(VirtualFile file, PsiDirectory value) {
-    if (myStateBean.myFlattenPackages) {
+    if (myStateBean.isFlattenPackages()) {
       return Comparing.equal(value.getVirtualFile(), file.getParent());
     }
 
