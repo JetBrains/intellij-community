@@ -96,15 +96,23 @@ class IdeFrameImpl : JFrame(), IdeFrame, DataProvider {
   }
 
   override fun setExtendedState(state: Int) {
+    val maximized = isMaximized(state)
+
     // do not load FrameInfoHelper class
-    if (LoadingState.COMPONENTS_REGISTERED.isOccurred && extendedState == NORMAL && isMaximized(state)) {
+    if (LoadingState.COMPONENTS_REGISTERED.isOccurred && extendedState == NORMAL && maximized) {
       normalBounds = bounds
       screenBounds = graphicsConfiguration?.bounds
       if (IDE_FRAME_EVENT_LOG.isDebugEnabled) { // avoid unnecessary concatenation
         IDE_FRAME_EVENT_LOG.debug("Saved bounds for IDE frame ${normalBounds} and screen ${screenBounds} before maximizing")
       }
     }
-    super.setExtendedState(state)
+
+    if (maximized && SystemInfoRt.isXWindow && X11UiUtil.isInitialized()) {
+      // Ubuntu (and may be other linux distros) doesn't set maximized correctly if the frame is MAXIMIZED_VERT already. Use X11 API
+      X11UiUtil.setMaximized(this, true)
+    } else {
+      super.setExtendedState(state)
+    }
   }
 
   override fun paint(g: Graphics) {
