@@ -33,10 +33,10 @@ public class SourceSetCachedFinder {
   private static final boolean is73OrBetter = gradleBaseVersion.compareTo(GradleVersion.version("7.3")) >= 0;
 
   private final @NotNull ArtifactsMap myArtifactsMap;
-  private final @NotNull ConcurrentMap<String, Set<File>> mySourcesMap;
+  private final @NotNull ConcurrentMap<String, Set<File>> mySourceMap;
 
   private SourceSetCachedFinder(@NotNull ModelBuilderContext context) {
-    mySourcesMap = new ConcurrentHashMap<>();
+    mySourceMap = new ConcurrentHashMap<>();
     myArtifactsMap = createArtifactsMap(context);
   }
 
@@ -49,11 +49,11 @@ public class SourceSetCachedFinder {
   }
 
   private @NotNull Set<File> findSourcesByArtifact(@NotNull String path) {
-    if (!mySourcesMap.containsKey(path)) {
+    if (!mySourceMap.containsKey(path)) {
       SourceSet sourceSet = myArtifactsMap.myArtifactsMap.get(path);
       if (sourceSet != null) {
         Set<File> sources = sourceSet.getAllJava().getSrcDirs();
-        Set<File> calculatedSources = mySourcesMap.putIfAbsent(path, sources);
+        Set<File> calculatedSources = mySourceMap.putIfAbsent(path, sources);
         return calculatedSources != null ? calculatedSources : sources;
       }
     }
