@@ -34,7 +34,6 @@ import org.jetbrains.plugins.gradle.tooling.AbstractModelBuilderService
 import org.jetbrains.plugins.gradle.tooling.ErrorMessageBuilder
 import org.jetbrains.plugins.gradle.tooling.ModelBuilderContext
 import org.jetbrains.plugins.gradle.tooling.util.JavaPluginUtil
-import com.intellij.gradle.toolingExtension.impl.modelBuilder.SourceSetCachedFinder
 import org.jetbrains.plugins.gradle.tooling.util.resolve.DependencyResolverImpl
 
 import java.lang.reflect.InvocationTargetException
@@ -71,16 +70,14 @@ class ExternalProjectBuilderImpl extends AbstractModelBuilderService {
       throw new RuntimeException("Boom!")
     }
     def tasksFactory = context.getData(TASKS_PROVIDER)
-    def sourceSetFinder = new SourceSetCachedFinder(context)
-    return buildExternalProject(project, context, tasksFactory, sourceSetFinder)
+    return buildExternalProject(project, context, tasksFactory)
   }
 
   @NotNull
   private static DefaultExternalProject buildExternalProject(
     @NotNull Project project,
     @NotNull ModelBuilderContext context,
-    @NotNull TasksFactory tasksFactory,
-    @NotNull SourceSetCachedFinder sourceSetFinder
+    @NotNull TasksFactory tasksFactory
   ) {
     DefaultExternalProject externalProject = new DefaultExternalProject()
     externalProject.externalSystemId = "GRADLE"
@@ -112,7 +109,7 @@ class ExternalProjectBuilderImpl extends AbstractModelBuilderService {
     externalProject.buildFile = project.buildFile
     externalProject.group = wrap(project.group)
     externalProject.projectDir = project.projectDir
-    externalProject.sourceSets = getSourceSets(project, context, sourceSetFinder)
+    externalProject.sourceSets = getSourceSets(project, context)
     externalProject.tasks = getTasks(project, tasksFactory)
     externalProject.sourceCompatibility = getSourceCompatibility(project)
     externalProject.targetCompatibility = getTargetCompatibility(project)
@@ -194,8 +191,7 @@ class ExternalProjectBuilderImpl extends AbstractModelBuilderService {
   @CompileDynamic
   private static Map<String, DefaultExternalSourceSet> getSourceSets(
     @NotNull Project project,
-    @NotNull ModelBuilderContext context,
-    @NotNull SourceSetCachedFinder sourceSetFinder
+    @NotNull ModelBuilderContext context
   ) {
     def resolveSourceSetDependencies = System.properties.'idea.resolveSourceSetDependencies' as boolean
     final IdeaPlugin ideaPlugin = project.getPlugins().findPlugin(IdeaPlugin.class)
@@ -490,8 +486,8 @@ class ExternalProjectBuilderImpl extends AbstractModelBuilderService {
       }
 
       if (resolveSourceSetDependencies) {
-        def dependencies = new DependencyResolverImpl(project, downloadJavadoc, downloadSources, sourceSetFinder).
-          resolveDependencies(sourceSet)
+        def dependencies = new DependencyResolverImpl(context, project, downloadJavadoc, downloadSources)
+          .resolveDependencies(sourceSet)
         externalSourceSet.dependencies.addAll(dependencies)
       }
 

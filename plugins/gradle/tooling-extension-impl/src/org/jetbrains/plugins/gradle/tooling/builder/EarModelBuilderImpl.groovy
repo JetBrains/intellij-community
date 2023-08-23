@@ -22,7 +22,6 @@ import org.jetbrains.plugins.gradle.tooling.internal.ear.EarConfigurationImpl
 import org.jetbrains.plugins.gradle.tooling.internal.ear.EarModelImpl
 import org.jetbrains.plugins.gradle.tooling.internal.ear.EarResourceImpl
 import org.jetbrains.plugins.gradle.tooling.util.DependencyResolver
-import com.intellij.gradle.toolingExtension.impl.modelBuilder.SourceSetCachedFinder
 import org.jetbrains.plugins.gradle.tooling.util.resolve.DependencyResolverImpl
 
 import static org.jetbrains.plugins.gradle.tooling.internal.ExtraModelBuilder.reportModelBuilderFailure
@@ -36,7 +35,6 @@ import static org.jetbrains.plugins.gradle.tooling.util.ReflectionUtil.reflectiv
 class EarModelBuilderImpl extends AbstractModelBuilderService {
 
   private static final String APP_DIR_PROPERTY = "appDirName"
-  private SourceSetCachedFinder mySourceSetFinder = null
   // Manifest.writeTo(Writer) was deprecated since 2.14.1 version
   // https://github.com/gradle/gradle/commit/b435112d1baba787fbe4a9a6833401e837df9246
   private static boolean is2_14_1_OrBetter = GradleVersion.current().baseVersion >= GradleVersion.version("2.14.1")
@@ -55,14 +53,12 @@ class EarModelBuilderImpl extends AbstractModelBuilderService {
     final earPlugin = project.plugins.findPlugin(EarPlugin)
     if (earPlugin == null) return null
 
-    if (mySourceSetFinder == null) mySourceSetFinder = new SourceSetCachedFinder(context)
-
     List<? extends EarConfiguration.EarModel> earModels = []
 
     def deployConfiguration = project.configurations.findByName(EarPlugin.DEPLOY_CONFIGURATION_NAME)
     def earlibConfiguration = project.configurations.findByName(EarPlugin.EARLIB_CONFIGURATION_NAME)
 
-    DependencyResolver dependencyResolver = new DependencyResolverImpl(project, false, false, mySourceSetFinder)
+    DependencyResolver dependencyResolver = new DependencyResolverImpl(context, project, false, false)
 
     def deployDependencies = dependencyResolver.resolveDependencies(deployConfiguration)
     def earlibDependencies = dependencyResolver.resolveDependencies(earlibConfiguration)

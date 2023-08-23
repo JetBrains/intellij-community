@@ -32,21 +32,15 @@ public class SourceSetCachedFinder {
   private static final boolean is51OrBetter = gradleBaseVersion.compareTo(GradleVersion.version("5.1")) >= 0;
   private static final boolean is73OrBetter = gradleBaseVersion.compareTo(GradleVersion.version("7.3")) >= 0;
 
-  private static final @NotNull DataProvider<ArtifactsMap> ARTIFACTS_PROVIDER =
-    (gradle, ___) -> createArtifactsMap(gradle);
-
-  private static final @NotNull DataProvider<ConcurrentMap<String, Set<File>>> SOURCES_DATA_KEY =
-    (__, ___) -> new ConcurrentHashMap<>();
-
   private final @NotNull ArtifactsMap myArtifactsMap;
   private final @NotNull ConcurrentMap<String, Set<File>> mySourcesMap;
 
-  public SourceSetCachedFinder(@NotNull ModelBuilderContext context) {
-    myArtifactsMap = context.getData(ARTIFACTS_PROVIDER);
-    mySourcesMap = context.getData(SOURCES_DATA_KEY);
+  private SourceSetCachedFinder(@NotNull Gradle gradle) {
+    mySourcesMap = new ConcurrentHashMap<>();
+    myArtifactsMap = createArtifactsMap(gradle);
   }
 
-  public @NotNull List<File> findArtifactSources(Collection<? extends File> artifactFiles) {
+  public @NotNull List<File> findArtifactSources(@NotNull Collection<? extends File> artifactFiles) {
     List<File> artifactSources = new ArrayList<>();
     for (File artifactFile : artifactFiles) {
       artifactSources.addAll(findSourcesByArtifact(artifactFile.getPath()));
@@ -153,6 +147,13 @@ public class SourceSetCachedFinder {
       myArtifactsMap = Collections.unmodifiableMap(artifactsMap);
       mySourceSetOutputDirsToArtifactsMap = Collections.unmodifiableMap(sourceSetOutputDirsToArtifactsMap);
     }
+  }
+
+  private static final @NotNull DataProvider<SourceSetCachedFinder> INSTANCE_PROVIDER =
+    (gradle, ___) -> new SourceSetCachedFinder(gradle);
+
+  public static @NotNull SourceSetCachedFinder getInstance(@NotNull ModelBuilderContext context) {
+    return context.getData(INSTANCE_PROVIDER);
   }
 }
 

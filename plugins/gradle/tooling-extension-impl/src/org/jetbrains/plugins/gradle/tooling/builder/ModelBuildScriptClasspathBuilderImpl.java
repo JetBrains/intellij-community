@@ -15,7 +15,6 @@ import org.jetbrains.plugins.gradle.tooling.ModelBuilderContext;
 import org.jetbrains.plugins.gradle.tooling.internal.BuildScriptClasspathModelImpl;
 import org.jetbrains.plugins.gradle.tooling.internal.ClasspathEntryModelImpl;
 import org.jetbrains.plugins.gradle.tooling.util.DependencyTraverser;
-import com.intellij.gradle.toolingExtension.impl.modelBuilder.SourceSetCachedFinder;
 import org.jetbrains.plugins.gradle.tooling.util.resolve.DependencyResolverImpl;
 
 import java.io.File;
@@ -32,7 +31,6 @@ public class ModelBuildScriptClasspathBuilderImpl extends AbstractModelBuilderSe
 
   private static final String CLASSPATH_CONFIGURATION_NAME = "classpath";
   private final Map<String, BuildScriptClasspathModelImpl> cache = new ConcurrentHashMap<>();
-  private SourceSetCachedFinder mySourceSetFinder = null;
 
   @Override
   public boolean canBuild(String modelName) {
@@ -44,8 +42,6 @@ public class ModelBuildScriptClasspathBuilderImpl extends AbstractModelBuilderSe
   public Object buildAll(@NotNull final String modelName, @NotNull final Project project, @NotNull ModelBuilderContext context) {
     BuildScriptClasspathModelImpl buildScriptClasspath = cache.get(project.getPath());
     if (buildScriptClasspath != null) return buildScriptClasspath;
-
-    if (mySourceSetFinder == null) mySourceSetFinder = new SourceSetCachedFinder(context);
 
     buildScriptClasspath = new BuildScriptClasspathModelImpl();
     final File gradleHomeDir = project.getGradle().getGradleHomeDir();
@@ -76,7 +72,8 @@ public class ModelBuildScriptClasspathBuilderImpl extends AbstractModelBuilderSe
     Configuration classpathConfiguration = project.getBuildscript().getConfigurations().findByName(CLASSPATH_CONFIGURATION_NAME);
     if (classpathConfiguration == null) return null;
 
-    Collection<ExternalDependency> dependencies = new DependencyResolverImpl(project, downloadJavadoc, downloadSources, mySourceSetFinder).resolveDependencies(classpathConfiguration);
+    Collection<ExternalDependency> dependencies = new DependencyResolverImpl(context, project, downloadJavadoc, downloadSources)
+      .resolveDependencies(classpathConfiguration);
 
     for (ExternalDependency dependency : new DependencyTraverser(dependencies)) {
       if (dependency instanceof ExternalProjectDependency) {
