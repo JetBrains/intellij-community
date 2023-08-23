@@ -7,15 +7,15 @@ plugins {
 }
 
 val sourcesJar by tasks.registering(Jar::class) {
-    from(kotlin.sourceSets.main.get().kotlin)
+    from(kotlin.sourceSets.main.map { it.kotlin })
     archiveClassifier = "sources"
-    into(layout.buildDirectory.dir("artifacts"))
+    destinationDirectory = layout.buildDirectory.dir("artifacts")
 }
 
 val javadocJar by tasks.registering(Jar::class) {
     from(tasks.dokkaHtml)
     archiveClassifier = "javadoc"
-    into(layout.buildDirectory.dir("artifacts"))
+    destinationDirectory = layout.buildDirectory.dir("artifacts")
 }
 
 publishing {
