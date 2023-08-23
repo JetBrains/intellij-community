@@ -31,6 +31,7 @@ import com.intellij.ui.HyperlinkLabel
 import kotlinx.coroutines.*
 import org.jetbrains.annotations.VisibleForTesting
 import java.awt.BorderLayout
+import java.time.Instant
 import java.util.function.Function
 import javax.swing.JComponent
 import javax.swing.JLabel
@@ -287,10 +288,14 @@ internal class AdvertiserInfoUpdateService(
   private val project: Project,
   private val coroutineScope: CoroutineScope
 ) {
+  private val firstRequestTs: Instant = Instant.now()
+
   fun scheduleAdvertiserUpdate(file: VirtualFile) {
     val fileName = file.name
     coroutineScope.launch {
-      delay(30.seconds) // no hurry, let's think that the network is really slow anyway
+      if (Instant.now().isBefore(firstRequestTs.plusSeconds(30))) {
+        delay(30.seconds) // no hurry, let's think that the network is really slow anyway
+      }
 
       MarketplaceRequests.getInstance().updatePluginIdsAndExtensionData()
 
