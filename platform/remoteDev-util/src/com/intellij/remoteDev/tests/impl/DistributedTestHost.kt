@@ -169,7 +169,7 @@ open class DistributedTestHost(coroutineScope: CoroutineScope) {
                   // Sync state across all IDE agents to maintain proper order in protocol events
                   LOG.info("'$actionTitle': Sync protocol events before execution...")
                   val elapsedSync = measureTimeMillis {
-                    DistributedTestBridge.getInstance(it).syncProtocolEvents()
+                    DistributedTestBridge.getInstance().syncProtocolEvents()
                   }
                   LOG.info("'$actionTitle': Protocol state sync completed in ${elapsedSync}ms")
                 }
