@@ -5,6 +5,7 @@ import com.intellij.codeInsight.codeVision.ui.model.CodeVisionListData
 import com.intellij.openapi.editor.Inlay
 import com.intellij.util.DocumentUtil
 import com.intellij.util.text.CharArrayUtil
+import java.awt.Point
 import java.awt.Rectangle
 
 class BlockCodeVisionInlayRenderer : CodeVisionInlayRendererBase(){
@@ -34,5 +35,10 @@ class BlockCodeVisionInlayRenderer : CodeVisionInlayRendererBase(){
     val shiftForward = CharArrayUtil.shiftForward(editor.document.immutableCharSequence, lineStartOffset, " \t")
 
     return editor.offsetToXY(shiftForward).x
+  }
+
+  override fun getPoint(inlay: Inlay<*>, targetPoint: Point): Point {
+    val painterPosition = painterPosition(inlay)
+    return Point(targetPoint.x + painterPosition, targetPoint.y)
   }
 }
