@@ -1,6 +1,7 @@
 package com.intellij.codeInsight.codeVision.ui.renderers
 
 import com.intellij.codeInsight.codeVision.CodeVisionEntry
+import com.intellij.codeInsight.codeVision.codeVisionEntryMouseEventKey
 import com.intellij.codeInsight.codeVision.ui.model.CodeVisionListData
 import com.intellij.codeInsight.codeVision.ui.model.RangeCodeVisionModel
 import com.intellij.codeInsight.codeVision.ui.model.SwingScheduler
@@ -83,6 +84,8 @@ abstract class CodeVisionInlayRendererBase(theme: CodeVisionTheme = CodeVisionTh
 
   override fun mousePressed(event: MouseEvent, translated: Point) {
     val clickedEntry = hoveredEntry.value ?: return
+    clickedEntry.putUserData(codeVisionEntryMouseEventKey, event)
+
     when {
       event.isShiftDown -> return
       SwingUtilities.isLeftMouseButton(event) -> handleLeftClick(clickedEntry)
