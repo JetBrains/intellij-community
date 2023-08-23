@@ -11,7 +11,6 @@ import com.intellij.openapi.externalSystem.service.notification.ExternalSystemNo
 import com.intellij.openapi.externalSystem.service.notification.NotificationCategory;
 import com.intellij.openapi.externalSystem.service.notification.NotificationData;
 import com.intellij.openapi.externalSystem.service.notification.NotificationSource;
-import com.intellij.openapi.externalSystem.settings.ExternalProjectSettings;
 import com.intellij.openapi.externalSystem.task.TaskCallback;
 import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil;
 import com.intellij.openapi.externalSystem.util.ExternalSystemUtil;
@@ -21,7 +20,6 @@ import com.intellij.openapi.roots.LibraryOrderEntry;
 import com.intellij.openapi.roots.OrderRootType;
 import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.util.ActionCallback;
-import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.UserDataHolderBase;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
@@ -93,22 +91,38 @@ final class GradleAttachSourcesProvider implements AttachSourcesProvider {
 
     @Override
     public @NotNull ActionCallback perform(@NotNull List<? extends LibraryOrderEntry> orderEntriesContainingFile) {
-      Pair<String, LibraryOrderEntry> artifactMetadata = getArtifactMetadata(orderEntries);
-      if (artifactMetadata == null) {
+      Map<LibraryOrderEntry, Module> gradleModules = getGradleModules(orderEntries);
+      if (gradleModules.isEmpty()) {
         return ActionCallback.REJECTED;
       }
-      String artifactCoordinates = artifactMetadata.getFirst();
-      LibraryOrderEntry libraryOrderEntry = artifactMetadata.getSecond();
+      Map.Entry<LibraryOrderEntry, Module> next = gradleModules.entrySet().iterator().next();
+      Module module = next.getValue();
+      if (CachedModuleDataFinder.getGradleModuleData(module) == null) {
+        return ActionCallback.REJECTED;
+      }
+      LibraryOrderEntry libraryOrderEntry = next.getKey();
+      String libraryName = libraryOrderEntry.getLibraryName();
+      if (libraryName == null) {
+        return ActionCallback.REJECTED;
+      }
+      String artifactCoordinates = StringUtil.trimStart(libraryName, GradleConstants.SYSTEM_ID.getReadableName() + ": ");
+      if (StringUtil.equals(libraryName, artifactCoordinates)) {
+        return ActionCallback.REJECTED;
+      }
       String cachedSourcesPath = lookupSourcesPathFromCache(libraryOrderEntry);
       if (cachedSourcesPath != null && isValidJar(cachedSourcesPath)) {
         attachSources(new File(cachedSourcesPath), orderEntries);
         return ActionCallback.DONE;
       }
+      String externalProjectPath = ExternalSystemApiUtil.getExternalRootProjectPath(module);
+      if (externalProjectPath == null) {
+        return ActionCallback.REJECTED;
+      }
       String sourceArtifactNotation = getSourcesArtifactNotation(artifactCoordinates, artifactIdCandidate -> {
         VirtualFile[] rootFiles = libraryOrderEntry.getRootFiles(OrderRootType.CLASSES);
         return rootFiles.length == 0 || ContainerUtil.exists(rootFiles, file -> file.getName().startsWith(artifactIdCandidate));
       });
-      return downloadSources(psiFile, sourceArtifactNotation, artifactCoordinates);
+      return downloadSources(psiFile, sourceArtifactNotation, artifactCoordinates, externalProjectPath);
     }
 
     private static @Nullable String lookupSourcesPathFromCache(@NotNull LibraryOrderEntry libraryOrderEntry) {
@@ -131,8 +145,9 @@ final class GradleAttachSourcesProvider implements AttachSourcesProvider {
     }
 
     private @NotNull ActionCallback downloadSources(@NotNull PsiFile psiFile,
-                                           @NotNull String sourceArtifactNotation,
-                                           @NotNull String artifactCoordinates) {
+                                                    @NotNull String sourceArtifactNotation,
+                                                    @NotNull String artifactCoordinates,
+                                                    @NotNull String externalProjectPath) {
       final String sourcesLocationFilePath;
       final File sourcesLocationFile;
       try {
@@ -145,15 +160,10 @@ final class GradleAttachSourcesProvider implements AttachSourcesProvider {
         return ActionCallback.REJECTED;
       }
       Project project = psiFile.getProject();
-      String gradleProjectRoot = getGradleProjectRoot(project);
-      if (gradleProjectRoot == null) {
-        GradleLog.LOG.warn("Unable to find root folder for Gradle project");
-        return ActionCallback.REJECTED;
-      }
       String taskName = "ijDownloadSources" + UUID.randomUUID().toString().substring(0, 12);
       ExternalSystemTaskExecutionSettings settings = new ExternalSystemTaskExecutionSettings();
       settings.setExecutionName(getName());
-      settings.setExternalProjectPath(gradleProjectRoot);
+      settings.setExternalProjectPath(externalProjectPath);
       settings.setTaskNames(List.of(taskName));
       settings.setVmOptions(GradleSettings.getInstance(project).getGradleVmOptions());
       settings.setExternalSystemIdString(GradleConstants.SYSTEM_ID.getId());
@@ -251,15 +261,6 @@ final class GradleAttachSourcesProvider implements AttachSourcesProvider {
     return userData;
   }
 
-  private static @Nullable String getGradleProjectRoot(@NotNull Project project) {
-    return GradleSettings.getInstance(project)
-      .getLinkedProjectsSettings()
-      .stream()
-      .findFirst()
-      .map(ExternalProjectSettings::getExternalProjectPath)
-      .orElse(null);
-  }
-
   private static @NotNull Map<LibraryOrderEntry, Module> getGradleModules(@NotNull List<? extends LibraryOrderEntry> libraryOrderEntries) {
     Map<LibraryOrderEntry, Module> result = new HashMap<>();
     for (LibraryOrderEntry entry : libraryOrderEntries) {
@@ -270,28 +271,6 @@ final class GradleAttachSourcesProvider implements AttachSourcesProvider {
       }
     }
     return result;
-  }
-
-  private static @Nullable Pair<String, LibraryOrderEntry> getArtifactMetadata(@NotNull List<? extends LibraryOrderEntry> orderEntries) {
-    Map<LibraryOrderEntry, Module> gradleModules = getGradleModules(orderEntries);
-    if (gradleModules.isEmpty()) {
-      return null;
-    }
-    Map.Entry<LibraryOrderEntry, Module> next = gradleModules.entrySet().iterator().next();
-    Module module = next.getValue();
-    if (CachedModuleDataFinder.getGradleModuleData(module) == null) {
-      return null;
-    }
-    LibraryOrderEntry libraryOrderEntry = next.getKey();
-    String libraryName = libraryOrderEntry.getLibraryName();
-    if (libraryName == null) {
-      return null;
-    }
-    String artifactCoordinates = StringUtil.trimStart(libraryName, GradleConstants.SYSTEM_ID.getReadableName() + ": ");
-    if (StringUtil.equals(libraryName, artifactCoordinates)) {
-      return null;
-    }
-    return new Pair<>(artifactCoordinates, libraryOrderEntry);
   }
 
   private static boolean isValidJar(@NotNull String rawPath) {
