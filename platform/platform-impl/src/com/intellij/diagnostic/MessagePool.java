@@ -5,7 +5,6 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Attachment;
 import com.intellij.openapi.diagnostic.IdeaLoggingEvent;
 import com.intellij.openapi.util.registry.Registry;
-import com.intellij.openapi.util.text.Strings;
 import com.intellij.util.SlowOperations;
 import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.containers.ContainerUtil;
@@ -114,7 +113,7 @@ public final class MessagePool {
         attachment.setIncluded(true);
       }
     }
-    if (Strings.areSameInstance(SlowOperations.ERROR_MESSAGE, message.getThrowable().getMessage())) {
+    if (SlowOperations.isMyMessage(message.getThrowable().getMessage())) {
       message.setRead(true);
     }
     myErrors.add(message);
@@ -128,7 +127,7 @@ public final class MessagePool {
     @Override
     public void run() {
       synchronized (myMessages) {
-        if (myMessages.size() > 0) {
+        if (!myMessages.isEmpty()) {
           post();
         }
       }
