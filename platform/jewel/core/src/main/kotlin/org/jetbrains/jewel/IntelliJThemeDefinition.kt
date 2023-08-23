@@ -7,7 +7,10 @@ import androidx.compose.ui.text.TextStyle
 interface IntelliJThemeDefinition {
 
     val isDark: Boolean
-    val colors: ThemeColors
-    val metrics: ThemeMetrics
+    val globalColors: GlobalColors
+    val metrics: GlobalMetrics
     val defaultTextStyle: TextStyle
+
+    val colorPalette: IntelliJThemeColorPalette
+    val iconData: IntelliJThemeIconData
 }

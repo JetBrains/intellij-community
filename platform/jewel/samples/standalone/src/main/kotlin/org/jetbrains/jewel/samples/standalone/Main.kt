@@ -53,15 +53,15 @@ fun main() {
     ) {
         var isDark by remember { mutableStateOf(false) }
         var swingCompat by remember { mutableStateOf(false) }
-        val theme = if (isDark) IntUiTheme.dark() else IntUiTheme.light()
+        val theme = if (isDark) IntUiTheme.darkThemeDefinition() else IntUiTheme.lightThemeDefinition()
 
         val resourceLoader = LocalResourceLoader.current
 
         IntUiTheme(theme, swingCompat) {
             val windowBackground = if (isDark) {
-                IntUiTheme.palette.grey(1)
+                IntUiTheme.colorPalette.grey(1)
             } else {
-                IntUiTheme.palette.grey(14)
+                IntUiTheme.colorPalette.grey(14)
             }
 
             Column(Modifier.fillMaxSize().background(windowBackground)) {

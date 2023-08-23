@@ -3,20 +3,42 @@ package org.jetbrains.jewel.themes.intui.standalone
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.Immutable
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.takeOrElse
 import org.jetbrains.jewel.BorderColors
+import org.jetbrains.jewel.GlobalColors
 import org.jetbrains.jewel.OutlineColors
 import org.jetbrains.jewel.SwingLafKey
-import org.jetbrains.jewel.ThemeColors
-import org.jetbrains.jewel.themes.intui.core.LocalIntUiPalette
 import org.jetbrains.jewel.themes.intui.core.theme.IntUiDarkTheme
 import org.jetbrains.jewel.themes.intui.core.theme.IntUiLightTheme
 
-data class IntUiThemeColors(
+@Immutable
+class IntUiGlobalColors(
     override val borders: BorderColors,
     override val outlines: OutlineColors,
     @SwingLafKey("*.infoForeground") override val infoContent: Color,
-) : ThemeColors {
+) : GlobalColors {
+
+    override fun equals(other: Any?): Boolean {
+        if (this === other) return true
+        if (javaClass != other?.javaClass) return false
+
+        other as IntUiGlobalColors
+
+        if (borders != other.borders) return false
+        if (outlines != other.outlines) return false
+        if (infoContent != other.infoContent) return false
+
+        return true
+    }
+
+    override fun hashCode(): Int {
+        var result = borders.hashCode()
+        result = 31 * result + outlines.hashCode()
+        result = 31 * result + infoContent.hashCode()
+        return result
+    }
+
+    override fun toString(): String =
+        "IntUiGlobalColors(borders=$borders, outlines=$outlines, infoContent=$infoContent)"
 
     companion object {
 
@@ -24,32 +46,55 @@ data class IntUiThemeColors(
         fun light(
             borders: BorderColors = IntUiBorderColors.light(),
             outlines: OutlineColors = IntUiOutlineColors.light(),
-            @SwingLafKey("*.infoForeground") infoContent: Color = Color.Unspecified,
-        ) = IntUiThemeColors(
+            @SwingLafKey("*.infoForeground") infoContent: Color = IntUiTheme.colorPalette.grey(7),
+        ) = IntUiGlobalColors(
             borders = borders,
             outlines = outlines,
-            infoContent = infoContent.takeOrElse { LocalIntUiPalette.current.grey(7) }
+            infoContent = infoContent
         )
 
         @Composable
         fun dark(
             borders: BorderColors = IntUiBorderColors.dark(),
             outlines: OutlineColors = IntUiOutlineColors.dark(),
-            @SwingLafKey("*.infoForeground") infoContent: Color = Color.Unspecified,
-        ) = IntUiThemeColors(
+            @SwingLafKey("*.infoForeground") infoContent: Color = IntUiTheme.colorPalette.grey(7),
+        ) = IntUiGlobalColors(
             borders = borders,
             outlines = outlines,
-            infoContent = infoContent.takeOrElse { LocalIntUiPalette.current.grey(7) }
+            infoContent = infoContent
         )
     }
 }
 
 @Immutable
-data class IntUiBorderColors(
+class IntUiBorderColors(
     @SwingLafKey("Component.borderColor") override val normal: Color,
     @SwingLafKey("Component.focusedBorderColor") override val focused: Color,
     @SwingLafKey("*.disabledBorderColor") override val disabled: Color,
 ) : BorderColors {
+
+    override fun equals(other: Any?): Boolean {
+        if (this === other) return true
+        if (javaClass != other?.javaClass) return false
+
+        other as IntUiBorderColors
+
+        if (normal != other.normal) return false
+        if (focused != other.focused) return false
+        if (disabled != other.disabled) return false
+
+        return true
+    }
+
+    override fun hashCode(): Int {
+        var result = normal.hashCode()
+        result = 31 * result + focused.hashCode()
+        result = 31 * result + disabled.hashCode()
+        return result
+    }
+
+    override fun toString(): String =
+        "IntUiBorderColors(normal=$normal, focused=$focused, disabled=$disabled)"
 
     companion object {
 
@@ -70,13 +115,41 @@ data class IntUiBorderColors(
 }
 
 @Immutable
-data class IntUiOutlineColors(
+class IntUiOutlineColors(
     @SwingLafKey("*.focusColor") override val focused: Color,
     @SwingLafKey("Component.warningFocusColor") override val focusedWarning: Color,
     @SwingLafKey("Component.errorFocusColor") override val focusedError: Color,
     @SwingLafKey("Component.inactiveWarningFocusColor") override val warning: Color,
     @SwingLafKey("Component.inactiveErrorFocusColor") override val error: Color,
 ) : OutlineColors {
+
+    override fun equals(other: Any?): Boolean {
+        if (this === other) return true
+        if (javaClass != other?.javaClass) return false
+
+        other as IntUiOutlineColors
+
+        if (focused != other.focused) return false
+        if (focusedWarning != other.focusedWarning) return false
+        if (focusedError != other.focusedError) return false
+        if (warning != other.warning) return false
+        if (error != other.error) return false
+
+        return true
+    }
+
+    override fun hashCode(): Int {
+        var result = focused.hashCode()
+        result = 31 * result + focusedWarning.hashCode()
+        result = 31 * result + focusedError.hashCode()
+        result = 31 * result + warning.hashCode()
+        result = 31 * result + error.hashCode()
+        return result
+    }
+
+    override fun toString(): String =
+        "IntUiOutlineColors(focused=$focused, focusedWarning=$focusedWarning, focusedError=$focusedError, " +
+            "warning=$warning, error=$error)"
 
     companion object {
 

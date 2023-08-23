@@ -1,6 +1,8 @@
-package org.jetbrains.jewel.themes.intui.core
+package org.jetbrains.jewel.themes
 
 import androidx.compose.ui.graphics.Color
+import org.jetbrains.jewel.IntelliJThemeColorPalette
+import org.jetbrains.jewel.IntelliJThemeIconData
 import org.jetbrains.jewel.PaletteMapper
 
 object PaletteMapperFactory {
@@ -58,10 +60,10 @@ object PaletteMapperFactory {
 
     fun create(
         isDark: Boolean,
-        themeIcons: IntelliJThemeIcons,
-        themeColors: IntelliJThemeColorPalette,
+        iconData: IntelliJThemeIconData,
+        colorPalette: IntelliJThemeColorPalette,
     ): PaletteMapper {
-        val overrides = computeOverrides(isDark, themeIcons.colorPalette, themeColors)
+        val overrides = computeOverrides(isDark, iconData.colorPalette, colorPalette)
         return PaletteMapper(overrides)
     }
 
@@ -76,15 +78,15 @@ object PaletteMapperFactory {
     // 6. Write a new entry oldColor -> newColor, bringing over the original alpha into the newColor (if any)
     private fun computeOverrides(
         isDark: Boolean,
-        iconsColorPalette: Map<String, String>,
-        themeColors: IntelliJThemeColorPalette,
+        iconColorMap: Map<String, String>,
+        colorPalette: IntelliJThemeColorPalette,
     ) =
         buildMap {
-            for (colorOverride in iconsColorPalette) {
+            for (colorOverride in iconColorMap) {
                 val key = colorHexForKey(colorOverride.key, isDark)
                 val overrideValue = colorOverride.value
                 val newColor = overrideValue.takeIf { it.startsWith("#") }?.toColorOrNull()
-                    ?: themeColors.lookup(overrideValue)
+                    ?: colorPalette.lookup(overrideValue)
                     ?: continue
                 val oldColor = key.toColorOrNull() ?: continue
                 put(oldColor, newColor)

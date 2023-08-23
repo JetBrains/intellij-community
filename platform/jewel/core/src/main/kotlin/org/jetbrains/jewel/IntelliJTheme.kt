@@ -46,15 +46,15 @@ interface IntelliJTheme {
         // Global values
         // -------------
 
-        val colors: ThemeColors
+        val globalColors: GlobalColors
             @Composable
             @ReadOnlyComposable
-            get() = LocalThemeColors.current
+            get() = LocalGlobalColors.current
 
-        val metrics: ThemeMetrics
+        val globalMetrics: GlobalMetrics
             @Composable
             @ReadOnlyComposable
-            get() = LocalThemeMetrics.current
+            get() = LocalGlobalMetrics.current
 
         val defaultTextStyle: TextStyle
             @Composable
@@ -70,6 +70,16 @@ interface IntelliJTheme {
             @Composable
             @ReadOnlyComposable
             get() = LocalSwingCompatMode.current
+
+        val colorPalette: IntelliJThemeColorPalette
+            @Composable
+            @ReadOnlyComposable
+            get() = LocalColorPalette.current
+
+        val iconData: IntelliJThemeIconData
+            @Composable
+            @ReadOnlyComposable
+            get() = LocalIconData.current
 
         // -----------------
         // Component styling
@@ -180,8 +190,8 @@ fun IntelliJTheme(theme: IntelliJThemeDefinition, content: @Composable () -> Uni
         LocalContentColor provides theme.defaultTextStyle.color,
         LocalIsDarkTheme provides theme.isDark,
         LocalTextStyle provides theme.defaultTextStyle,
-        LocalThemeColors provides theme.colors,
-        LocalThemeMetrics provides theme.metrics,
+        LocalGlobalColors provides theme.globalColors,
+        LocalGlobalMetrics provides theme.metrics,
         content = content
     )
 }
@@ -193,4 +203,12 @@ internal val LocalIsDarkTheme = staticCompositionLocalOf<Boolean> {
 internal val LocalSwingCompatMode = staticCompositionLocalOf {
     // By default, Swing compat is not enabled
     false
+}
+
+val LocalColorPalette = staticCompositionLocalOf<IntelliJThemeColorPalette> {
+    EmptyThemeColorPalette
+}
+
+val LocalIconData = staticCompositionLocalOf<IntelliJThemeIconData> {
+    EmptyThemeIconData
 }

@@ -6,12 +6,12 @@ import androidx.compose.runtime.staticCompositionLocalOf
 import androidx.compose.ui.unit.Dp
 
 @Immutable
-interface ThemeMetrics {
+interface GlobalMetrics {
 
     val outlineWidth: Dp
     val outlineCornerSize: CornerSize
 }
 
-val LocalThemeMetrics = staticCompositionLocalOf<ThemeMetrics> {
-    error("No ThemeMetrics provided")
+val LocalGlobalMetrics = staticCompositionLocalOf<GlobalMetrics> {
+    error("No GlobalMetrics provided")
 }

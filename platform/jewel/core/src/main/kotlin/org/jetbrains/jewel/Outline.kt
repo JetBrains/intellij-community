@@ -29,10 +29,10 @@ enum class Outline {
 @Composable
 fun Modifier.focusOutline(
     state: FocusableComponentState,
-    outlineShape: Shape = RoundedCornerShape(LocalThemeMetrics.current.outlineCornerSize),
-    outlineWidth: Dp = LocalThemeMetrics.current.outlineWidth,
+    outlineShape: Shape = RoundedCornerShape(LocalGlobalMetrics.current.outlineCornerSize),
+    outlineWidth: Dp = LocalGlobalMetrics.current.outlineWidth,
 ): Modifier {
-    val outlineColors = LocalThemeColors.current.outlines
+    val outlineColors = LocalGlobalColors.current.outlines
 
     return thenIf(state.isFocused) {
         val outlineColor = outlineColors.focused
@@ -43,10 +43,10 @@ fun Modifier.focusOutline(
 @Composable
 fun Modifier.outline(
     state: StateWithOutline,
-    outlineShape: Shape = RoundedCornerShape(LocalThemeMetrics.current.outlineCornerSize),
-    outlineWidth: Dp = LocalThemeMetrics.current.outlineWidth,
+    outlineShape: Shape = RoundedCornerShape(LocalGlobalMetrics.current.outlineCornerSize),
+    outlineWidth: Dp = LocalGlobalMetrics.current.outlineWidth,
 ): Modifier {
-    val outlineColors = LocalThemeColors.current.outlines
+    val outlineColors = LocalGlobalColors.current.outlines
 
     return thenIf(state.hasOutline) {
         val outlineColor = when {
@@ -64,10 +64,10 @@ fun Modifier.outline(
     state: FocusableComponentState,
     outline: Outline,
     alignment: Stroke.Alignment = Stroke.Alignment.Outside,
-    outlineShape: Shape = RoundedCornerShape(LocalThemeMetrics.current.outlineCornerSize),
-    outlineWidth: Dp = LocalThemeMetrics.current.outlineWidth,
+    outlineShape: Shape = RoundedCornerShape(LocalGlobalMetrics.current.outlineCornerSize),
+    outlineWidth: Dp = LocalGlobalMetrics.current.outlineWidth,
 ): Modifier {
-    val outlineColors = LocalThemeColors.current.outlines
+    val outlineColors = LocalGlobalColors.current.outlines
 
     return thenIf(outline != Outline.None) {
         val outlineColor = when {

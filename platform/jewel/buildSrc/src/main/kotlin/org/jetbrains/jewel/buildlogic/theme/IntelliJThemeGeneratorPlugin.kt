@@ -57,15 +57,24 @@ open class IntelliJThemeGeneratorTask : BaseThemeGeneratorTask() {
             append(themeFile.get())
         }
 
-        val theme = URL(url).openStream().use {
+        logger.lifecycle("Fetching theme descriptor from $url...")
+
+        val themeDescriptor = URL(url).openStream().use {
             json.decodeFromString<IntellijThemeDescriptor>(it.reader().readText())
         }
 
+        logger.info("Theme descriptor fetched, parsing...")
         val className = ClassName.bestGuess(themeClassName.get())
-        val file = ThemeDescriptorReader.readThemeFrom(theme, className, ideaVersion.get(), url)
 
-        output.get().asFile.bufferedWriter().use {
+        // TODO handle non-Int UI themes, too
+        val file = IntUiThemeDescriptorReader.readThemeFrom(themeDescriptor, className, ideaVersion.get(), url)
+
+        logger.info("Theme descriptor parsed, writing generated code to disk...")
+        val outputFile = output.get().asFile
+        outputFile.bufferedWriter().use {
             file.writeTo(it)
         }
+
+        logger.lifecycle("Theme descriptor for ${themeDescriptor.name} parsed and code generated into ${outputFile.path}")
     }
 }

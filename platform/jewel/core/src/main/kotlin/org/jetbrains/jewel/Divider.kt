@@ -16,7 +16,7 @@ import androidx.compose.ui.unit.dp
 @Composable
 fun Divider(
     modifier: Modifier = Modifier,
-    color: Color = IntelliJTheme.colors.borders.normal,
+    color: Color = IntelliJTheme.globalColors.borders.normal,
     thickness: Dp = 1.dp,
     orientation: Orientation = Orientation.Horizontal,
     startIndent: Dp = 0.dp,

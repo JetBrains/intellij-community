@@ -5,7 +5,7 @@ import androidx.compose.runtime.staticCompositionLocalOf
 import androidx.compose.ui.graphics.Color
 
 @Immutable
-interface ThemeColors {
+interface GlobalColors {
 
     val borders: BorderColors
     val outlines: OutlineColors
@@ -46,6 +46,6 @@ interface OutlineColors {
     val error: Color
 }
 
-val LocalThemeColors = staticCompositionLocalOf<ThemeColors> {
-    error("No ThemeColors provided")
+val LocalGlobalColors = staticCompositionLocalOf<GlobalColors> {
+    error("No GlobalColors provided")
 }

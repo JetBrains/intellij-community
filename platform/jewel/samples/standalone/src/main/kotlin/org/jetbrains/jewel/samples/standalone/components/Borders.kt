@@ -89,7 +89,7 @@ internal fun Borders() {
                 .border(
                     borderAlignment,
                     width,
-                    IntUiTheme.palette.blue(4),
+                    IntUiTheme.colorPalette.blue(4),
                     CircleShape,
                     expand
                 )
@@ -99,7 +99,7 @@ internal fun Borders() {
                 .border(
                     borderAlignment,
                     width,
-                    IntUiTheme.palette.blue(4),
+                    IntUiTheme.colorPalette.blue(4),
                     RectangleShape,
                     expand
                 )
@@ -109,7 +109,7 @@ internal fun Borders() {
                 .border(
                     borderAlignment,
                     width,
-                    IntUiTheme.palette.blue(4),
+                    IntUiTheme.colorPalette.blue(4),
                     RoundedCornerShape(4.dp),
                     expand
                 )
@@ -119,7 +119,7 @@ internal fun Borders() {
                 .border(
                     borderAlignment,
                     width,
-                    IntUiTheme.palette.blue(4),
+                    IntUiTheme.colorPalette.blue(4),
                     RoundedCornerShape(4.dp, 0.dp, 4.dp, 0.dp),
                     expand
                 )

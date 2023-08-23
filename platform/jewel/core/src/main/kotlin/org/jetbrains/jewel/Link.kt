@@ -279,8 +279,8 @@ private fun LinkImpl(
 
     val focusHaloModifier = Modifier.border(
         alignment = Stroke.Alignment.Outside,
-        width = LocalThemeMetrics.current.outlineWidth,
-        color = LocalThemeColors.current.outlines.focused,
+        width = LocalGlobalMetrics.current.outlineWidth,
+        color = LocalGlobalColors.current.outlines.focused,
         shape = RoundedCornerShape(style.metrics.focusHaloCornerSize)
     )
 
