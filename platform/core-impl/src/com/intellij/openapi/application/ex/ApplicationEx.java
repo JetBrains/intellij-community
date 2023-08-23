@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.application.ex;
 
 import com.intellij.openapi.application.Application;
@@ -47,7 +47,7 @@ public interface ApplicationEx extends Application {
    * Acquires IW lock if it's not acquired by the current thread.
    *
    * @param invokedClassFqn fully qualified name of the class requiring the write-intent lock.
-   * @return {@code true} if lock was acquired by this call, {@code false} if lock was taken already.
+   * @return {@code true} if this call acquired lock, {@code false} if lock was taken already.
    */
   @ApiStatus.Internal
   default boolean acquireWriteIntentLock(@NotNull String invokedClassFqn) {
@@ -118,7 +118,8 @@ public interface ApplicationEx extends Application {
   void restart(boolean exitConfirmed, boolean elevate);
 
   /**
-   * Runs modal process. For internal use only, see {@link Task}.
+   * Runs a modal process.
+   * For internal use only, see {@link Task}.
    * Consider also {@code ProgressManager.getInstance().runProcessWithProgressSynchronously}
    */
   @ApiStatus.Internal
@@ -130,7 +131,7 @@ public interface ApplicationEx extends Application {
   }
 
   /**
-   * Runs modal or non-modal process.
+   * Runs a modal or non-modal process.
    * For internal use only, see {@link Task}.
    * Consider also {@code ProgressManager.getInstance().runProcessWithProgressSynchronously}
    */
@@ -146,7 +147,7 @@ public interface ApplicationEx extends Application {
   void assertIsDispatchThread(@Nullable JComponent component);
 
   /**
-   * Use {@link #assertIsNonDispatchThread()}
+   * @deprecated Use {@link #assertIsNonDispatchThread()}
    */
   @Deprecated
   void assertTimeConsuming();
@@ -226,15 +227,16 @@ public interface ApplicationEx extends Application {
     return true;
   }
 
-  // in some cases we cannot get service by class
+  // in some cases, we cannot get service by class
   /**
    * Light service is not supported.
    */
+  @Override
   @ApiStatus.Internal
   <T> @Nullable T getServiceByClassName(@NotNull String serviceClassName);
 
   /**
-   * Runs specified action with disabled implicit read lock, if this feature is enabled with system property.
+   * Runs specified action with disabled implicit read lock if this feature is enabled with system property.
    * @see com.intellij.idea.StartupUtil#isImplicitReadOnEDTDisabled() StartupUtil.isImplicitReadOnEDTDisabled()
    * @param runnable action to run with disabled implicit read lock.
    */

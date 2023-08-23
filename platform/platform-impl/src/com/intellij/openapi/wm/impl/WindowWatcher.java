@@ -93,8 +93,7 @@ public final class WindowWatcher implements PropertyChangeListener {
 
   void dispatchComponentEvent(final ComponentEvent e) {
     int id = e.getID();
-    if (WindowEvent.WINDOW_CLOSED == id ||
-        (ComponentEvent.COMPONENT_HIDDEN == id && e.getSource() instanceof Window)) {
+    if (WindowEvent.WINDOW_CLOSED == id || (ComponentEvent.COMPONENT_HIDDEN == id && e.getSource() instanceof Window)) {
       dispatchHiddenOrClosed((Window)e.getSource());
     }
     // clear obsolete reference on root frame

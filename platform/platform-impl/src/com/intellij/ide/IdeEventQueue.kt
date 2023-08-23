@@ -49,7 +49,6 @@ import com.intellij.util.ui.EdtInvocationManager
 import com.intellij.util.ui.UIUtil
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.job
-import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.ApiStatus.Internal
 import org.jetbrains.annotations.TestOnly
 import org.jetbrains.annotations.VisibleForTesting
@@ -75,7 +74,7 @@ class IdeEventQueue private constructor() : EventQueue() {
   private val lock = Any()
   private val activityListeners = ContainerUtil.createLockFreeCopyOnWriteList<Runnable>()
 
-  @ApiStatus.Internal
+  @Internal
   val rwLockHolder: RwLockHolder = RwLockHolder(Thread.currentThread())
   val keyEventDispatcher: IdeKeyEventDispatcher = IdeKeyEventDispatcher(this)
   val mouseEventDispatcher: IdeMouseEventDispatcher = IdeMouseEventDispatcher()
@@ -548,6 +547,7 @@ class IdeEventQueue private constructor() : EventQueue() {
     if (e.id == MouseEvent.MOUSE_DRAGGED && appIsLoaded()) {
       (DnDManager.getInstance() as? DnDManagerImpl)?.lastDropHandler = null
     }
+
     eventCount++
     keyboardBusy = e is KeyEvent || keyboardEventPosted.get() > keyboardEventDispatched.get()
     if (e is KeyEvent) {
@@ -578,14 +578,19 @@ class IdeEventQueue private constructor() : EventQueue() {
       return
     }
 
-    val application = ApplicationManagerEx.getApplicationEx()
-    if (e is ComponentEvent && appIsLoaded && !application.isHeadlessEnvironment) {
-      (application.serviceIfCreated<WindowManager>() as WindowManagerEx?)?.dispatchComponentEvent(e)
-    }
-    when (e) {
-      is KeyEvent -> dispatchKeyEvent(e)
-      is MouseEvent -> dispatchMouseEvent(e)
-      else -> application.runWithoutImplicitRead { defaultDispatchEvent(e) }
+    when {
+      e is MouseEvent -> dispatchMouseEvent(e)
+      e is KeyEvent -> dispatchKeyEvent(e)
+      appIsLoaded() -> {
+        val app = ApplicationManagerEx.getApplicationEx()
+        if (e is ComponentEvent) {
+          if (!app.isHeadlessEnvironment) {
+            (app.serviceIfCreated<WindowManager>() as? WindowManagerEx)?.dispatchComponentEvent(e)
+          }
+        }
+        app.runWithoutImplicitRead { defaultDispatchEvent(e) }
+      }
+      else -> defaultDispatchEvent(e)
     }
   }
 
@@ -612,23 +617,22 @@ class IdeEventQueue private constructor() : EventQueue() {
     }
   }
 
-  private fun dispatchKeyEvent(e: AWTEvent) {
-    if (keyEventDispatcher.dispatchKeyEvent(e as KeyEvent)) {
+  private fun dispatchKeyEvent(e: KeyEvent) {
+    if (keyEventDispatcher.dispatchKeyEvent(e)) {
       e.consume()
     }
     defaultDispatchEvent(e)
   }
 
-  private fun dispatchMouseEvent(e: AWTEvent) {
-    val me = e as MouseEvent
+  private fun dispatchMouseEvent(e: MouseEvent) {
     @Suppress("DEPRECATION")
-    if (me.id == MouseEvent.MOUSE_PRESSED && me.modifiers > 0 && me.modifiersEx == 0) {
-      resetGlobalMouseEventTarget(me)
+    if (e.id == MouseEvent.MOUSE_PRESSED && e.modifiers > 0 && e.modifiersEx == 0) {
+      resetGlobalMouseEventTarget(e)
     }
-    if (IdeMouseEventDispatcher.patchClickCount(me) && me.id == MouseEvent.MOUSE_CLICKED) {
-      redispatchLater(me)
+    if (IdeMouseEventDispatcher.patchClickCount(e) && e.id == MouseEvent.MOUSE_CLICKED) {
+      redispatchLater(e)
     }
-    if (!mouseEventDispatcher.dispatchMouseEvent(me)) {
+    if (!mouseEventDispatcher.dispatchMouseEvent(e)) {
       defaultDispatchEvent(e)
     }
   }
@@ -659,6 +663,7 @@ class IdeEventQueue private constructor() : EventQueue() {
         processException(t)
       }
     }
+
     for (eachDispatcher in DISPATCHER_EP.extensionsIfPointIsRegistered) {
       try {
         if (eachDispatcher.dispatch(e)) {
@@ -1005,7 +1010,7 @@ private fun mapXWindowMouseEvent(src: MouseEvent): AWTEvent {
                            if (src.button == 4) -1 else 1)
   }
   else {
-    // Here we "shift" events with buttons 6 and 7 to similar events with buttons 4 and 5
+    // Here we "shift" events with buttons `6` and `7` to similar events with buttons 4 and 5
     // See java.awt.InputEvent#BUTTON_DOWN_MASK, 1<<14 is 4th physical button, 1<<15 is 5th.
     @Suppress("DEPRECATION")
     return MouseEvent(src.component, src.id, src.getWhen(),
@@ -1027,15 +1032,14 @@ private fun processMouseWheelEvent(e: MouseWheelEvent): Boolean {
 
 private fun processAppActivationEvent(event: WindowEvent) {
   ApplicationActivationStateManager.updateState(event)
-  if (event.id != WindowEvent.WINDOW_DEACTIVATED && event.id != WindowEvent.WINDOW_LOST_FOCUS) {
+
+  if (!LoadingState.COMPONENTS_LOADED.isOccurred ||
+      (event.id != WindowEvent.WINDOW_DEACTIVATED && event.id != WindowEvent.WINDOW_LOST_FOCUS)) {
     return
   }
 
   val eventWindow = event.window
   val focusOwnerInDeactivatedWindow = eventWindow.mostRecentFocusOwner ?: return
-  if (!appIsLoaded()) {
-    return
-  }
 
   val windowManager = ApplicationManager.getApplication().serviceIfCreated<WindowManager>() as WindowManagerEx? ?: return
   val frame = ComponentUtil.findUltimateParent(eventWindow)
@@ -1200,10 +1204,10 @@ private class WindowsAltSuppressor : IdeEventQueue.EventDispatcher {
 @Suppress("SpellCheckingInspection")
 private fun abracadabraDaberBoreh(eventQueue: IdeEventQueue) {
   // We need to track if there are KeyBoardEvents in IdeEventQueue
-  // So we want to intercept all events posted to IdeEventQueue and increment counters
+  // So we want to intercept all events posted to IdeEventQueue and increment counters,
   // However, the regular control flow goes like this:
   //    PostEventQueue.flush() -> EventQueue.postEvent() -> IdeEventQueue.postEventPrivate() -> AAAA we missed event, because postEventPrivate() can't be overridden.
-  // Instead, we do following:
+  // Instead, we do the following:
   //  - create new PostEventQueue holding our IdeEventQueue instead of old EventQueue
   //  - replace "PostEventQueue" value in AppContext with this new PostEventQueue
   // After that the control flow goes like this:
