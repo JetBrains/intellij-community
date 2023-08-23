@@ -27,6 +27,7 @@ import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.NlsContexts;
+import com.intellij.openapi.util.Predicates;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -79,13 +80,13 @@ class PostHighlightingVisitor {
                                                 HighlightInfoType.UNUSED_SYMBOL.getAttributesKey()));
   }
 
-  void collectHighlights(@NotNull HighlightInfoHolder result, @NotNull ProgressIndicator progress) {
+  void collectHighlights(@NotNull HighlightInfoHolder holder, @NotNull ProgressIndicator progress) {
     ApplicationManager.getApplication().assertIsNonDispatchThread();
     AtomicBoolean errorFound = new AtomicBoolean();
-
     if (isToolEnabled(myDeadCodeKey)) {
+      TextRange priorityRange = holder.getAnnotationSession().getPriorityRange();
       GlobalUsageHelper globalUsageHelper = myRefCountHolder.getGlobalUsageHelper(myFile, myDeadCodeInspection);
-      Divider.divideInsideAndOutsideAllRoots(myFile, myFile.getTextRange(), myFile.getTextRange(), __->true, dividedElements -> {
+      Divider.divideInsideAndOutsideAllRoots(myFile, myFile.getTextRange(), priorityRange, Predicates.alwaysTrue(), dividedElements -> {
         ProgressManager.checkCanceled();
         PsiFile psiRoot = dividedElements.psiRoot();
         HighlightingLevelManager highlightingLevelManager = HighlightingLevelManager.getInstance(myProject);
@@ -96,14 +97,14 @@ class PostHighlightingVisitor {
           ProgressManager.checkCanceled();
           if (element instanceof PsiIdentifier identifier) {
             HighlightInfo.Builder builder = processIdentifier(identifier, progress, globalUsageHelper);
-            addInfo(result, builder, errorFound);
+            addInfo(holder, builder, errorFound);
           }
         }
         for (PsiElement element : dividedElements.outside()) {
           ProgressManager.checkCanceled();
           if (element instanceof PsiIdentifier identifier) {
             HighlightInfo.Builder builder = processIdentifier(identifier, progress, globalUsageHelper);
-            addInfo(result, builder, errorFound);
+            addInfo(holder, builder, errorFound);
           }
         }
         return true;
@@ -118,7 +119,7 @@ class PostHighlightingVisitor {
         for (PsiImportStatementBase statement : imports) {
           ProgressManager.checkCanceled();
           HighlightInfo.Builder builder = processImport(statement, unusedImportKey);
-          addInfo(result, builder, errorFound);
+          addInfo(holder, builder, errorFound);
         }
       }
     }
@@ -134,13 +135,13 @@ class PostHighlightingVisitor {
     }
   }
 
-  private static void addInfo(@NotNull HighlightInfoHolder result, @Nullable HighlightInfo.Builder builder, @NotNull AtomicBoolean errorFound) {
+  private static void addInfo(@NotNull HighlightInfoHolder holder, @Nullable HighlightInfo.Builder builder, @NotNull AtomicBoolean errorFound) {
     if (builder != null) {
       HighlightInfo info = builder.create();
       if (info != null && info.getSeverity() == HighlightSeverity.ERROR) {
         errorFound.set(true);
       }
-      result.add(info);
+      holder.add(info);
     }
   }
 
