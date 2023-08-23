@@ -10,7 +10,6 @@ import com.fasterxml.jackson.module.kotlin.readValue
 import com.fasterxml.jackson.module.kotlin.registerKotlinModule
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.project.Project
-import com.intellij.util.indexing.ID
 import com.intellij.util.indexing.diagnostic.dto.*
 import java.nio.file.Path
 import java.nio.file.StandardOpenOption
@@ -46,6 +45,18 @@ object SharedIndexDiagnostic {
 
   fun onIndexAttachIncompatible(project: Project, kind: String, indexId: String) {
     appendEvent(project, JsonSharedIndexDiagnosticEvent.Attached.Incompatible(
+      time = JsonSharedIndexDiagnosticEvent.now(), kind = kind, chunkUniqueId = indexId
+    ))
+  }
+
+  fun onIndexAttachNotFound(project: Project, kind: String, indexId: String) {
+    appendEvent(project, JsonSharedIndexDiagnosticEvent.Attached.NotFound(
+      time = JsonSharedIndexDiagnosticEvent.now(), kind = kind, chunkUniqueId = indexId
+    ))
+  }
+
+  fun onIndexAttachExcluded(project: Project, kind: String, indexId: String) {
+    appendEvent(project, JsonSharedIndexDiagnosticEvent.Attached.Excluded(
       time = JsonSharedIndexDiagnosticEvent.now(), kind = kind, chunkUniqueId = indexId
     ))
   }
@@ -152,6 +163,22 @@ sealed class JsonSharedIndexDiagnosticEvent {
     @JsonIgnoreProperties(ignoreUnknown = true)
     @JsonTypeName("attachIncompatible")
     data class Incompatible(
+      override val time: JsonDateTime = JsonDateTime(),
+      override val kind: String = "",
+      override val chunkUniqueId: String = ""
+    ) : Attached()
+
+    @JsonIgnoreProperties(ignoreUnknown = true)
+    @JsonTypeName("notFound")
+    data class NotFound(
+      override val time: JsonDateTime = JsonDateTime(),
+      override val kind: String = "",
+      override val chunkUniqueId: String = ""
+    ) : Attached()
+
+    @JsonIgnoreProperties(ignoreUnknown = true)
+    @JsonTypeName("excluded")
+    data class Excluded(
       override val time: JsonDateTime = JsonDateTime(),
       override val kind: String = "",
       override val chunkUniqueId: String = ""
