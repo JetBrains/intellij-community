@@ -25,6 +25,7 @@ import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.UserDataHolder
 import com.intellij.openapi.util.UserDataHolderBase
+import com.intellij.util.concurrency.annotations.RequiresReadLock
 import org.jetbrains.annotations.TestOnly
 
 class MutableLookupStorage(
@@ -132,9 +133,9 @@ class MutableLookupStorage(
     getItemStorage(element.idString()).fireElementScored(factors, mlScore)
   }
 
-  fun initUserFactors(project: Project) {
-    ApplicationManager.getApplication().assertReadAccessAllowed()
-    if (_userFactors == null && UserFactorsManager.ENABLE_USER_FACTORS) {
+  @RequiresReadLock
+  fun initUserFactors(project: Project, language: Language? = null) {
+    if (_userFactors == null && UserFactorsManager.shouldUseUserFactors(language)) {
       val userFactorValues = mutableMapOf<String, String>()
       val userFactors = UserFactorsManager.getInstance().getAllFactors()
       val applicationStorage: UserFactorStorage = UserFactorStorage.getInstance()

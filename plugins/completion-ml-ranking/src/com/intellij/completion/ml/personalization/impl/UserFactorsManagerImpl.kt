@@ -31,7 +31,7 @@ class UserFactorsManagerImpl : UserFactorsManager {
     }
     private val userFactors = mutableMapOf<String, UserFactor>()
     init {
-        if (UserFactorsManager.ENABLE_USER_FACTORS) {
+        if (UserFactorsManager.shouldUseUserFactors()) {
             registerAllFactors()
         }
     }

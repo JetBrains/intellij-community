@@ -9,6 +9,8 @@ import com.intellij.completion.ml.personalization.UserFactorsManager
 import com.intellij.completion.ml.personalization.session.SessionFactorsUtils
 import com.intellij.completion.ml.personalization.session.SessionPrefixTracker
 import com.intellij.completion.ml.storage.MutableLookupStorage
+import com.intellij.completion.ml.util.language
+import com.intellij.lang.Language
 
 class CompletionFactorsInitializer : LookupTracker() {
   companion object {
@@ -22,12 +24,12 @@ class CompletionFactorsInitializer : LookupTracker() {
     processSessionFactors(lookup, storage)
   }
 
-  private fun shouldUseUserFactors() = UserFactorsManager.ENABLE_USER_FACTORS
+  private fun shouldUseUserFactors(language: Language?) = UserFactorsManager.shouldUseUserFactors(language)
 
   private fun shouldUseSessionFactors(): Boolean = SessionFactorsUtils.shouldUseSessionFactors()
 
   private fun processUserFactors(lookup: LookupImpl) {
-    if (!shouldUseUserFactors()) return
+    if (!shouldUseUserFactors(lookup.language())) return
 
     UserFactorStorage.applyOnBoth(lookup.project, UserFactorDescriptions.COMPLETION_USAGE) {
       it.fireCompletionUsed()
