@@ -1,0 +1,1 @@
+<info textAttributesKey="PY.KEYWORD">type</info> myType = <info descr="PY.BUILTIN_NAME">int</info>
