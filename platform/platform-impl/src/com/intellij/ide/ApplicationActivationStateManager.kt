@@ -1,28 +1,23 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide
 
-import com.intellij.openapi.application.Application
-import com.intellij.openapi.application.ApplicationActivationListener
-import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.application.*
 import com.intellij.openapi.application.impl.ApplicationImpl
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.wm.IdeFrame
 import com.intellij.ui.ComponentUtil
-import com.intellij.util.ui.TimerUtil
+import kotlinx.coroutines.*
+import org.jetbrains.annotations.ApiStatus.Internal
 import java.awt.Window
 import java.awt.event.WindowEvent
-import java.util.concurrent.atomic.AtomicLong
+import kotlin.time.Duration.Companion.milliseconds
 
+@Internal
 object ApplicationActivationStateManager {
   private val LOG = logger<ApplicationActivationStateManager>()
 
-  private val requestToDeactivateTime = AtomicLong(System.currentTimeMillis())
-
   private var state = ApplicationActivationStateManagerState.DEACTIVATED
-
-  val isInactive: Boolean
-    get() = state.isInactive
 
   val isActive: Boolean
     get() = state.isActive
@@ -33,9 +28,10 @@ object ApplicationActivationStateManager {
       return false
     }
 
+    val window = windowEvent.window
     if (windowEvent.id == WindowEvent.WINDOW_ACTIVATED || windowEvent.id == WindowEvent.WINDOW_GAINED_FOCUS) {
       if (state.isInactive) {
-        return setActive(app, windowEvent.window)
+        return setActive(app, window)
       }
     }
     else if (windowEvent.id == WindowEvent.WINDOW_DEACTIVATED && windowEvent.getOppositeWindow() == null) {
@@ -44,11 +40,9 @@ object ApplicationActivationStateManager {
         return false
       }
 
-      requestToDeactivateTime.getAndSet(System.currentTimeMillis())
-
       // for stuff that cannot wait windowEvent notify about deactivation immediately
       if (state.isActive && !app.isDisposed()) {
-        val ideFrame = getIdeFrameFromWindow(windowEvent.window)
+        val ideFrame = getIdeFrameFromWindow(window)
         if (ideFrame != null) {
           app.getMessageBus().syncPublisher(ApplicationActivationListener.TOPIC).applicationDeactivated(ideFrame)
         }
@@ -59,23 +53,22 @@ object ApplicationActivationStateManager {
       // So let's postpone the application deactivation for a while
       state = ApplicationActivationStateManagerState.DEACTIVATING
       LOG.debug("The app is in the deactivating state")
-      val timer = TimerUtil.createNamedTimer("ApplicationDeactivation", Registry.intValue("application.deactivation.timeout", 1500)) {
-        if (state != ApplicationActivationStateManagerState.DEACTIVATING) {
-          return@createNamedTimer
-        }
+      app.coroutineScope.launch(CoroutineName("ApplicationDeactivation")) {
+        delay(Registry.intValue("application.deactivation.timeout", 1_500).milliseconds)
+        withContext(Dispatchers.EDT + ModalityState.any().asContextElement()) {
+          if (state != ApplicationActivationStateManagerState.DEACTIVATING) {
+            return@withContext
+          }
 
-        state = ApplicationActivationStateManagerState.DEACTIVATED
-        LOG.debug("The app is in the deactivated state")
-        if (!app.isDisposed()) {
-          val ideFrame = getIdeFrameFromWindow(windowEvent.window)
-          // getIdeFrameFromWindow returns something from a UI tree, so, if not null, it must be Window
+          state = ApplicationActivationStateManagerState.DEACTIVATED
+          LOG.debug("The app is in the deactivated state")
+          val ideFrame = getIdeFrameFromWindow(window)
           if (ideFrame != null) {
-            app.getMessageBus().syncPublisher(ApplicationActivationListener.TOPIC).delayedApplicationDeactivated((ideFrame as Window?)!!)
+            // getIdeFrameFromWindow returns something from a UI tree, so, if not null, it must be Window
+            app.getMessageBus().syncPublisher(ApplicationActivationListener.TOPIC).delayedApplicationDeactivated(ideFrame as Window)
           }
         }
       }
-      timer.isRepeats = false
-      timer.start()
       return true
     }
     return false

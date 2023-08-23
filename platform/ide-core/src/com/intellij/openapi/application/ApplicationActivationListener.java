@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.application;
 
 import com.intellij.openapi.wm.IdeFrame;
@@ -22,11 +22,11 @@ public interface ApplicationActivationListener {
   default void applicationDeactivated(@NotNull IdeFrame ideFrame) { }
 
   /**
-   * This is more precise notification than {code applicationDeactivated} callback.
+   * This is a more precise notification than {code applicationDeactivated} callback.
    * It is intended for the focus subsystem and purposes where we do not want to be bothered by false application deactivation events.
    * <p>
    * The shortcoming of the method is that a notification is delivered with a delay.
-   * See the {code app.deactivation.timeout} key in the registry.
+   * See the {@code app.deactivation.timeout} key in the registry.
    */
   default void delayedApplicationDeactivated(@NotNull Window ideFrame) { }
 }
