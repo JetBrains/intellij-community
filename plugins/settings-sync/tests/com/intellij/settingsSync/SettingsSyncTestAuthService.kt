@@ -1,6 +1,5 @@
 package com.intellij.settingsSync
 
-import com.intellij.openapi.Disposable
 import com.intellij.settingsSync.auth.SettingsSyncAuthService
 import com.intellij.ui.JBAccountInfoService
 
@@ -25,6 +24,6 @@ internal class SettingsSyncTestAuthService : SettingsSyncAuthService {
     return false
   }
 
-  override fun addListener(listener: SettingsSyncAuthService.Listener, disposable: Disposable) {
+  override fun invalidateJBA(userId: String) {
   }
 }

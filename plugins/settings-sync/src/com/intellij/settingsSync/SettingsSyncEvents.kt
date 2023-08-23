@@ -42,6 +42,10 @@ class SettingsSyncEvents : Disposable {
     eventDispatcher.multicaster.restartRequired(reason)
   }
 
+  fun fireLoginStateChanged() {
+    eventDispatcher.multicaster.loginStateChanged()
+  }
+
   companion object {
     fun getInstance(): SettingsSyncEvents = service<SettingsSyncEvents>()
   }
@@ -56,6 +60,7 @@ interface SettingsSyncEventListener : EventListener {
   fun settingChanged(event: SyncSettingsEvent) {}
   fun enabledStateChanged(syncEnabled: Boolean) {}
   fun restartRequired(reason: RestartReason) {}
+  fun loginStateChanged() {}
 }
 
 sealed class RestartReason: Comparable<RestartReason> {
