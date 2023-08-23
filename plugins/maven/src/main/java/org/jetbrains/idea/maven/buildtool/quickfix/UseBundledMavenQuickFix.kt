@@ -17,7 +17,7 @@ class UseBundledMavenQuickFix: BuildIssueQuickFix {
   override val id: String = ID
 
   override fun runQuickFix(project: Project, dataContext: DataContext): CompletableFuture<*> {
-    MavenWorkspaceSettingsComponent.getInstance(project).settings.getGeneralSettings().mavenHomeType = BundledMaven3
+    MavenWorkspaceSettingsComponent.getInstance(project).settings.generalSettings.mavenHomeType = BundledMaven3
     Notification(MavenUtil.MAVEN_NOTIFICATION_GROUP, "",
                  RunnerBundle.message("maven.change.version.notification", MavenServerManager.getInstance().currentMavenVersion),
                  NotificationType.INFORMATION).notify(null)

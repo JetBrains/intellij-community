@@ -22,7 +22,7 @@ internal class JetBrainsFeedbackReporter(private val productName: String,
     return Urls.newFromEncoded("https://www.jetbrains.com/feedback/feedback.jsp")
       .addParameters(mapOf(
         "product" to productName,
-        "build" to if (appInfo.isEAP()) build.asStringWithoutProductCode() else build.asString(),
+        "build" to if (appInfo.isEAP) build.asStringWithoutProductCode() else build.asString(),
         "timezone" to System.getProperty("user.timezone", ""),
         "eval" to (LicensingFacade.getInstance()?.isEvaluationLicense == true).toString(),
       ))

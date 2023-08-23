@@ -101,7 +101,7 @@ private class CodeCleanupCheckinHandler(private val project: Project) :
 
     val commandProcessor = CommandProcessor.getInstance() as CommandProcessorEx
     commandProcessor.executeCommand {
-      if (cleanupProblems.isGlobalScope()) commandProcessor.markCurrentCommandAsGlobal(project)
+      if (cleanupProblems.isGlobalScope) commandProcessor.markCurrentCommandAsGlobal(project)
 
       val sink = coroutineContext.progressSink
       val runner = SequentialModalProgressTask(project, "", true)

@@ -15,7 +15,7 @@ import org.jetbrains.plugins.gradle.util.GradleConstants
 class GradleScriptAdditionalIdeaDependenciesProvider : ScriptAdditionalIdeaDependenciesProvider() {
     override fun getRelatedModules(file: VirtualFile, project: Project): List<Module> {
         val gradleSettings = ExternalSystemApiUtil.getSettings(project, GradleConstants.SYSTEM_ID)
-        val projectSettings = gradleSettings.getLinkedProjectsSettings().filterIsInstance<GradleProjectSettings>().firstOrNull()
+        val projectSettings = gradleSettings.linkedProjectsSettings.filterIsInstance<GradleProjectSettings>().firstOrNull()
             ?: return emptyList()
         val includedModulesPath: List<String> = projectSettings.compositeBuild?.compositeParticipants?.mapNotNull { part ->
             projectSettings.modules.find { it == part.rootPath }

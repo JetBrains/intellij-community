@@ -59,7 +59,7 @@ class LegacyExternalProductResourceUrls : ExternalProductResourceUrls {
           val appInfo = ApplicationInfoEx.getInstanceEx()
           val build = appInfo.getBuild()
           val url = urlTemplate
-            .replace("\$BUILD", URLUtil.encodeURIComponent(if (appInfo.isEAP()) build.asStringWithoutProductCode() else build.asString()))
+            .replace("\$BUILD", URLUtil.encodeURIComponent(if (appInfo.isEAP) build.asStringWithoutProductCode() else build.asString()))
             .replace("\$TIMEZONE", URLUtil.encodeURIComponent(System.getProperty("user.timezone", "")))
             .replace("\$VERSION", URLUtil.encodeURIComponent(appInfo.getFullVersion()))
             .replace("\$EVAL", URLUtil.encodeURIComponent((LicensingFacade.getInstance()?.isEvaluationLicense == true).toString()))

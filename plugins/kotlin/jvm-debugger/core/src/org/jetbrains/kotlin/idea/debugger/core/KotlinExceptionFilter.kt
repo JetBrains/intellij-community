@@ -35,7 +35,7 @@ class KotlinExceptionFilter(private val searchScope: GlobalSearchScope) : Except
         val newHyperlinkInfo = createHyperlinkInfo(line, result) ?: return result
 
         return Filter.Result(result.resultItems.map {
-            Filter.ResultItem(it.highlightStartOffset, it.highlightEndOffset, newHyperlinkInfo, it.getHighlightAttributes())
+            Filter.ResultItem(it.highlightStartOffset, it.highlightEndOffset, newHyperlinkInfo, it.highlightAttributes)
         })
     }
 

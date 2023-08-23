@@ -303,7 +303,7 @@ class MavenSyncConsole(private val myProject: Project) {
 
   private fun attachOfflineQuickFix() {
     try {
-      val generalSettings = MavenWorkspaceSettingsComponent.getInstance(myProject).settings.getGeneralSettings()
+      val generalSettings = MavenWorkspaceSettingsComponent.getInstance(myProject).settings.generalSettings
       if (hasUnresolved && generalSettings.isWorkOffline) {
         mySyncView.onEvent(mySyncId, BuildIssueEventImpl(mySyncId, object : BuildIssue {
           override val title: String = "Dependency Resolution Failed"

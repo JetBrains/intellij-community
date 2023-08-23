@@ -23,7 +23,7 @@ import java.util.function.Predicate
 class MavenGroupIdCompletionContributor : MavenCoordinateCompletionContributor("groupId") {
 
   override fun handleEmptyLookup(parameters: CompletionParameters, editor: Editor): @NlsContexts.HintText String? {
-    return if (PlaceChecker(parameters).checkPlace().isCorrectPlace()) {
+    return if (PlaceChecker(parameters).checkPlace().isCorrectPlace) {
       IndicesBundle.message("maven.dependency.completion.group.empty")
     }
     else null

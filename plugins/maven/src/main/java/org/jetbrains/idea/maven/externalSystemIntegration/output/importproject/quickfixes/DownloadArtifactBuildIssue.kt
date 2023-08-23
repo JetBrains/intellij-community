@@ -36,8 +36,10 @@ class ForceUpdateSnapshotsImportQuickFix() : BuildIssueQuickFix {
 
   override fun runQuickFix(project: Project, dataContext: DataContext): CompletableFuture<*> {
     MavenUtil.restartMavenConnectors(project, false)
-    MavenProjectsManager.getInstance(project).setForceUpdateSnapshots(true)
-    MavenProjectsManager.getInstance(project).forceUpdateProjects()
+    MavenProjectsManager.getInstance(project).apply {
+      forceUpdateSnapshots = true
+      forceUpdateProjects()
+    }
     return CompletableFuture.completedFuture(null)
   }
 

@@ -71,7 +71,7 @@ open class PydevConsoleExecuteActionHandler(private val myConsoleView: LanguageC
     if (!consoleComm.isWaitingForInput) {
       executingPrompt()
     }
-    if (ipythonEnabled && !consoleComm.isWaitingForInput && !code.getText().isBlank()) {
+    if (ipythonEnabled && !consoleComm.isWaitingForInput && !code.text.isBlank()) {
       ++ipythonInputPromptCount
     }
     if (PyConsoleUtil.isCommandQueueEnabled(project)) {

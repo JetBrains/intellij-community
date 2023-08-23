@@ -107,8 +107,8 @@ class MavenImportingManager(val project: Project) {
   fun openProjectAndImport(importPaths: ImportPaths): MavenImportingResult {
     val settings = MavenWorkspaceSettingsComponent.getInstance(project).settings
     return openProjectAndImport(importPaths,
-                                settings.getImportingSettings(),
-                                settings.getGeneralSettings(),
+                                settings.importingSettings,
+                                settings.generalSettings,
                                 MavenImportSpec.EXPLICIT_IMPORT)
 
   }
@@ -167,18 +167,14 @@ class MavenImportingManager(val project: Project) {
 
   private fun setProjectSettings(initialImportContext: MavenInitialImportContext) {
     //workaround, as most maven machinery use settings from component, also we need to keep listeners
-    val generalSettings = MavenWorkspaceSettingsComponent.getInstance(initialImportContext.project).settings.getGeneralSettings()
-    val importingSettings = MavenWorkspaceSettingsComponent.getInstance(initialImportContext.project).settings.getImportingSettings()
-    MavenWorkspaceSettingsComponent.getInstance(initialImportContext.project).settings.setGeneralSettings(
-      initialImportContext.generalSettings)
-    MavenWorkspaceSettingsComponent.getInstance(initialImportContext.project).settings.setImportingSettings(
-      initialImportContext.importingSettings)
+    val generalSettings = MavenWorkspaceSettingsComponent.getInstance(initialImportContext.project).settings.generalSettings
+    val importingSettings = MavenWorkspaceSettingsComponent.getInstance(initialImportContext.project).settings.importingSettings
+    MavenWorkspaceSettingsComponent.getInstance(initialImportContext.project).settings.generalSettings = initialImportContext.generalSettings
+    MavenWorkspaceSettingsComponent.getInstance(initialImportContext.project).settings.importingSettings = initialImportContext.importingSettings
     initialImportContext.generalSettings.copyListeners(generalSettings)
     initialImportContext.importingSettings.copyListeners(importingSettings)
 
-    MavenWorkspaceSettingsComponent.getInstance(initialImportContext.project).settings.setGeneralSettings(
-      initialImportContext.generalSettings)
-
+    MavenWorkspaceSettingsComponent.getInstance(initialImportContext.project).settings.generalSettings = initialImportContext.generalSettings
   }
 
   private fun doImport(indicator: MavenProgressIndicator,
@@ -280,8 +276,8 @@ class MavenImportingManager(val project: Project) {
     val settings = MavenWorkspaceSettingsComponent.getInstance(project)
     return openProjectAndImport(
       FilesList(manager.projectsTree.managedFilesPaths.mapNotNull { LocalFileSystem.getInstance().findFileByPath(it) }),
-      settings.settings.getImportingSettings(),
-      settings.settings.getGeneralSettings(), spec)
+      settings.settings.importingSettings,
+      settings.settings.generalSettings, spec)
   }
 
 
@@ -294,8 +290,8 @@ class MavenImportingManager(val project: Project) {
     val manager = MavenProjectsManager.getInstance(project)
     val settings = MavenWorkspaceSettingsComponent.getInstance(project)
     manager.projectsTree.removeManagedFiles(filesToDelete)
-    return openProjectAndImport(FilesList(filesToUpdate), settings.settings.getImportingSettings(),
-                                settings.settings.getGeneralSettings(), spec)
+    return openProjectAndImport(FilesList(filesToUpdate), settings.settings.importingSettings,
+                                settings.settings.generalSettings, spec)
   }
 
   private fun isRecursiveImportCalledFromMavenProjectsManagerWatcher(): Boolean {
