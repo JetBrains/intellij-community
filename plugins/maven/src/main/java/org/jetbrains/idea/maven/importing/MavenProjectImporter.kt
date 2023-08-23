@@ -38,7 +38,7 @@ interface MavenProjectImporter {
           try {
             importingInProgress.incrementAndGet()
 
-            val postImportTasks = importer.importProject()
+            val postImportTasks = importer.importProject()!!
 
             val statsMarker = PostImportingTaskMarker(importingActivity)
             return ContainerUtil.concat(listOf(statsMarker.createStartedTask()),
