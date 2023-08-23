@@ -34,7 +34,7 @@ import java.io.IOException
 import java.nio.file.Files
 import javax.swing.Icon
 
-abstract class ProjectOpenProcessorBase<T : ProjectImportBuilder<*>> : ProjectOpenProcessor {
+abstract class ProjectOpenProcessorBase<T : ProjectImportBuilder<*>> protected constructor() : ProjectOpenProcessor() {
   companion object {
     @JvmStatic
     protected fun canOpenFile(file: VirtualFile, supported: Array<String>): Boolean = supported.contains(file.name)
@@ -51,11 +51,7 @@ abstract class ProjectOpenProcessorBase<T : ProjectImportBuilder<*>> : ProjectOp
     }
   }
 
-  private val myBuilder: T?
-
-  protected constructor() {
-    myBuilder = null
-  }
+  private val myBuilder: T? = null
 
   open val builder: T
     get() = doGetBuilder()
