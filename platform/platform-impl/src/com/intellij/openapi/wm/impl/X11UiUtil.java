@@ -77,6 +77,8 @@ public final class X11UiUtil {
     private long NET_WM_STATE;
     private long NET_WM_ACTION_FULLSCREEN;
     private long NET_WM_STATE_FULLSCREEN;
+    private long NET_WM_STATE_MAXIMIZED_VERT;
+    private long NET_WM_STATE_MAXIMIZED_HORZ;
     private long NET_WM_STATE_DEMANDS_ATTENTION;
     private long NET_ACTIVE_WINDOW;
 
@@ -112,6 +114,8 @@ public final class X11UiUtil {
         x11.NET_WM_STATE = (Long)atom.get(get.invoke(null, "_NET_WM_STATE"));
         x11.NET_WM_ACTION_FULLSCREEN = (Long)atom.get(get.invoke(null, "_NET_WM_ACTION_FULLSCREEN"));
         x11.NET_WM_STATE_FULLSCREEN = (Long)atom.get(get.invoke(null, "_NET_WM_STATE_FULLSCREEN"));
+        x11.NET_WM_STATE_MAXIMIZED_VERT = (Long)atom.get(get.invoke(null, "_NET_WM_STATE_MAXIMIZED_VERT"));
+        x11.NET_WM_STATE_MAXIMIZED_HORZ = (Long)atom.get(get.invoke(null, "_NET_WM_STATE_MAXIMIZED_HORZ"));
         x11.NET_WM_STATE_DEMANDS_ATTENTION = (Long)atom.get(get.invoke(null, "_NET_WM_STATE_DEMANDS_ATTENTION"));
         x11.NET_ACTIVE_WINDOW = (Long)atom.get(get.invoke(null, "_NET_ACTIVE_WINDOW"));
 
@@ -247,7 +251,9 @@ public final class X11UiUtil {
 
   private static final @Nullable Xlib X11 = Xlib.getInstance();
 
-  // full-screen support
+  public static boolean isInitialized() {
+    return X11 != null;
+  }
 
   public static boolean isFullScreenSupported() {
     if (X11 == null) return false;
@@ -264,6 +270,27 @@ public final class X11UiUtil {
 
   public static boolean isInFullScreenMode(JFrame frame) {
     return X11 != null && hasWindowProperty(frame, X11.NET_WM_STATE, X11.NET_WM_STATE_FULLSCREEN);
+  }
+
+  public static boolean isMaximizedVert(JFrame frame) {
+    return X11 != null && hasWindowProperty(frame, X11.NET_WM_STATE, X11.NET_WM_STATE_MAXIMIZED_VERT);
+  }
+
+  public static boolean isMaximizedHorz(JFrame frame) {
+    return X11 != null && hasWindowProperty(frame, X11.NET_WM_STATE, X11.NET_WM_STATE_MAXIMIZED_HORZ);
+  }
+
+  public static void setMaximized(JFrame frame, boolean maximized) {
+    if (X11 == null) return;
+
+    if (maximized) {
+      X11.sendClientMessage(frame, "set Maximized mode", X11.NET_WM_STATE, NET_WM_STATE_ADD,
+                            X11.NET_WM_STATE_MAXIMIZED_HORZ, X11.NET_WM_STATE_MAXIMIZED_VERT);
+    }
+    else {
+      X11.sendClientMessage(frame, "reset Maximized mode", X11.NET_WM_STATE, NET_WM_STATE_REMOVE,
+                            X11.NET_WM_STATE_MAXIMIZED_HORZ, X11.NET_WM_STATE_MAXIMIZED_VERT);
+    }
   }
 
   public static boolean isWSL() {
