@@ -292,7 +292,7 @@ open class DarculaLaf : BasicLookAndFeel(), UserDataHolder {
         val aClass = DarculaLaf::class.java.getClassLoader().loadClass(UIManager.getSystemLookAndFeelClassName())
         return MethodHandles.lookup().findConstructor(aClass, MethodType.methodType(Void.TYPE)).invoke() as BasicLookAndFeel
       }
-      else if (!SystemInfoRt.isLinux) {
+      else if (!SystemInfoRt.isLinux || GraphicsEnvironment.isHeadless()) {
         return IdeaLaf(customFontDefaults = null)
       }
 
@@ -303,7 +303,8 @@ open class DarculaLaf : BasicLookAndFeel(), UserDataHolder {
       try {
         @Suppress("SpellCheckingInspection")
         val aClass = DarculaLaf::class.java.getClassLoader().loadClass("com.sun.java.swing.plaf.gtk.GTKLookAndFeel")
-        val gtk = MethodHandles.lookup().findConstructor(aClass, MethodType.methodType(Void.TYPE)).invoke() as LookAndFeel
+        val gtk = MethodHandles.privateLookupIn(aClass, MethodHandles.lookup())
+          .findConstructor(aClass, MethodType.methodType(Void.TYPE)).invoke() as LookAndFeel
         // GTK is available
         if (gtk.isSupportedLookAndFeel) {
           // on JBR 11, overrides `SunGraphicsEnvironment#uiScaleEnabled` (sets `#uiScaleEnabled_overridden` to `false`)
