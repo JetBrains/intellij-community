@@ -4,6 +4,7 @@ import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.externalSystem.autoimport.ExternalSystemProjectTrackerSettings
 import com.intellij.openapi.externalSystem.autoimport.ExternalSystemProjectTrackerSettings.AutoReloadType
 import com.intellij.openapi.externalSystem.service.project.manage.ExternalProjectsManagerImpl
+import com.intellij.openapi.progress.runBlockingMaybeCancellable
 import com.intellij.openapi.project.DumbService
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.playback.PlaybackContext
@@ -68,30 +69,27 @@ class ImportMavenProjectCommand(text: String, line: Int) : AbstractCommand(text,
       MavenUtil.runWhenInitialized(project) {
         ApplicationManager.getApplication().executeOnPooledThread {
           waitForCurrentMavenImportActivities(context, project)
-            .thenAsync {
-              context.message("Import of the project has been started", line)
-              val mavenManager = MavenProjectsManager.getInstance(project)
-              if (!mavenManager.isMavenizedProject) {
-                mavenManager.addManagedFiles(mavenManager.collectAllAvailablePomFiles())
-              }
-              mavenManager.updateAllMavenProjectsSync(MavenImportSpec.EXPLICIT_IMPORT)
-              waitForCurrentMavenImportActivities(context, project)
-            }
-            .onProcessed {
-              context.message("Import of the maven project has been finished", line)
-              projectTrackerSettings.autoReloadType = currentAutoReloadType
-              DumbService.getInstance(project).runWhenSmart(DisposeAwareRunnable.create(runnable, project))
-            }
+          context.message("Import of the project has been started", line)
+          val mavenManager = MavenProjectsManager.getInstance(project)
+          if (!mavenManager.isMavenizedProject) {
+            mavenManager.addManagedFiles(mavenManager.collectAllAvailablePomFiles())
+          }
+          runBlockingMaybeCancellable {
+            mavenManager.updateAllMavenProjects(MavenImportSpec.EXPLICIT_IMPORT)
+          }
+          waitForCurrentMavenImportActivities(context, project)
+          context.message("Import of the maven project has been finished", line)
+          projectTrackerSettings.autoReloadType = currentAutoReloadType
+          DumbService.getInstance(project).runWhenSmart(DisposeAwareRunnable.create(runnable, project))
         }
       }
     }
   }
 
-  private fun waitForCurrentMavenImportActivities(context: PlaybackContext, project: Project): Promise<*> {
+  private fun waitForCurrentMavenImportActivities(context: PlaybackContext, project: Project) {
     context.message("Waiting for current maven import activities", line)
-    return MavenProjectsManager.getInstance(project).waitForImportCompletion().onProcessed {
-      context.message("Maven import activities completed", line)
-    }
+    MavenProjectsManager.getInstance(project).waitForImportCompletion()
+    context.message("Maven import activities completed", line)
   }
 
   companion object {
