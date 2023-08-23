@@ -58,7 +58,7 @@ class ImplicitInitializerConversion(context: NewJ2kConverterContext) : Recursive
             if (initialized) continue
             val parentConstructors = generateSequence(constructor) { it.parentConstructor() }
             if (parentConstructors.any { symbolToInitialized[it] == true }) {
-                constructorsToInitialize += parentConstructors
+                constructorsToInitialize += constructor
             }
         }
 

@@ -1463,6 +1463,21 @@ public abstract class NewJavaToKotlinConverterSingleFileTestGenerated extends Ab
             runTest("testData/newJ2k/constructors/secondaryConstructorWithDefaultValues2.java");
         }
 
+        @TestMetadata("secondaryConstructorsChain2.java")
+        public void testSecondaryConstructorsChain2() throws Exception {
+            runTest("testData/newJ2k/constructors/secondaryConstructorsChain2.java");
+        }
+
+        @TestMetadata("secondaryConstructorsChain3.java")
+        public void testSecondaryConstructorsChain3() throws Exception {
+            runTest("testData/newJ2k/constructors/secondaryConstructorsChain3.java");
+        }
+
+        @TestMetadata("secondaryConstructorsChain4.java")
+        public void testSecondaryConstructorsChain4() throws Exception {
+            runTest("testData/newJ2k/constructors/secondaryConstructorsChain4.java");
+        }
+
         @TestMetadata("secondaryConstructorsInInnerClass.java")
         public void testSecondaryConstructorsInInnerClass() throws Exception {
             runTest("testData/newJ2k/constructors/secondaryConstructorsInInnerClass.java");
