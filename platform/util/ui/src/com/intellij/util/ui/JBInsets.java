@@ -124,6 +124,14 @@ public class JBInsets extends Insets {
     return new JBInsetsUIResource(this);
   }
 
+  static boolean isZero(Insets insets) {
+    if (insets instanceof JBInsets jbInsets && jbInsets.key != null) {
+      return false; // Even if these are zero now, they can be non-zero later (e.g. if the theme is changed or compact mode toggled).
+    }
+    // Scaling doesn't matter here, as zero is zero regardless of scaling:
+    return insets.top == 0 && insets.left == 0 && insets.bottom == 0 && insets.right == 0;
+  }
+
   public static final class JBInsetsUIResource extends JBInsets implements UIResource {
     public JBInsetsUIResource(JBInsets insets) {
       super(insets);

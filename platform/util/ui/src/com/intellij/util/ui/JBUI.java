@@ -259,7 +259,7 @@ public final class JBUI {
     }
 
     public static @NotNull Border empty(@NotNull Insets insets) {
-      if (insets.top == 0 && insets.left == 0 && insets.bottom == 0 && insets.right == 0) {
+      if (JBInsets.isZero(insets)) {
         return JBEmptyBorder.SHARED_EMPTY_INSTANCE;
       }
       return new JBEmptyBorder(insets);
