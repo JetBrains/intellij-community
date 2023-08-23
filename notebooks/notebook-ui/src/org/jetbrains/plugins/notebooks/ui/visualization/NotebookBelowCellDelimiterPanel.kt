@@ -15,7 +15,7 @@ import javax.swing.JPanel
 import javax.swing.JProgressBar
 import kotlin.math.max
 
-class NotebookBelowCellDelimiterPanel() : JPanel(GridLayout(1, 1)) {
+class NotebookBelowCellDelimiterPanel : JPanel(GridLayout(1, 1)) {
   private val steadyUI = JupyterProgressBarUI()
   private val progress = object : JProgressBar(0, 100) {
     init {

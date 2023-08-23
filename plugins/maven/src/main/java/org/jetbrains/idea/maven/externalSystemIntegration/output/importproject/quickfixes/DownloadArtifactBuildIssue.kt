@@ -30,7 +30,7 @@ object DownloadArtifactBuildIssue {
   }
 }
 
-class ForceUpdateSnapshotsImportQuickFix() : BuildIssueQuickFix {
+class ForceUpdateSnapshotsImportQuickFix : BuildIssueQuickFix {
 
   override val id: String = ID
 

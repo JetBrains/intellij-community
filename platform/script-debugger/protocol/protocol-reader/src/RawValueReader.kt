@@ -2,7 +2,7 @@ package org.jetbrains.protocolReader
 
 import org.jetbrains.io.JsonReaderEx
 
-internal class RawValueReader() : ValueReader() {
+internal class RawValueReader : ValueReader() {
   override fun writeReadCode(scope: ClassScope, subtyping: Boolean, out: TextOutput) {
     addReaderParameter(subtyping, out)
     out.append(".createSubReaderAndSkipValue()")
