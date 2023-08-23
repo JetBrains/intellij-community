@@ -92,6 +92,8 @@ class AndroidStudioProperties(home: Path) : BaseIdeaProperties() {
     productLayout.addPlatformSpec { layout, _ ->
       layout.withModule("intellij.android.adt.branding", "resources.jar")
       layout.withModule("intellij.cidr.common.testFramework.core", TEST_FRAMEWORK_JAR)
+      layout.withProjectLibrary("assertJ", TEST_FRAMEWORK_JAR) // Used by the CIDR test framework (b/295336541).
+      layout.withProjectLibrary("hamcrest", TEST_FRAMEWORK_JAR) // Used by the CIDR test framework (b/295336541).
     }
 
     val unknownExcludedPlugins = EXCLUDED_PLUGINS - INHERITED_PLUGINS
