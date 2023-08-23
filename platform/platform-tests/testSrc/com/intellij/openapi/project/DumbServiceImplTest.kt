@@ -29,10 +29,7 @@ import com.intellij.util.indexing.diagnostic.ProjectDumbIndexingHistoryImpl
 import com.intellij.util.indexing.diagnostic.ProjectIndexingHistoryImpl
 import com.intellij.util.indexing.diagnostic.ScanningType
 import com.intellij.util.ui.UIUtil
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.delay
-import kotlinx.coroutines.launch
+import kotlinx.coroutines.*
 import org.junit.*
 import org.junit.Assert.*
 import org.junit.runner.RunWith
@@ -554,6 +551,56 @@ class DumbServiceImplTest {
     runInEdtAndWait {
       val dumbTask = DumbModeTestUtils.startEternalDumbModeTask(project)
       DumbModeTestUtils.endEternalDumbModeTaskAndWaitForSmartMode(project, dumbTask)
+    }
+  }
+
+  private fun <E> permutationsOf(original: List<E> = listOf(), resultsCollector: List<E> = mutableListOf()): List<List<E>> =
+    if (original.isEmpty()) listOf(resultsCollector)
+    else original.flatMap { permutationsOf((original - it), resultsCollector + it) }
+
+  @Test
+  fun `two concurrent dumb tasks start and finish in all possible orders`() = runBlocking {
+    val taskIds = listOf(0, 1)
+    val startFinishCombinations = mutableListOf<Pair<List<Int>, List<Int>>>()
+    permutationsOf(taskIds).forEach { startSeq ->
+      permutationsOf(taskIds).forEach { endSeq ->
+        startFinishCombinations.add(Pair(startSeq, endSeq))
+      }
+    }
+
+    startFinishCombinations.forEachIndexed { i, (startSeq, finishSeq) ->
+      assertFalse("$i: Should be smart before the first submitted task. startOrder: $startSeq, finishOrder: $finishSeq",
+                  dumbService.isDumb)
+
+      val triggers = Array(taskIds.size) { CompletableDeferred<Boolean>() }
+      val started = Array(taskIds.size) { CompletableDeferred<Boolean>() }
+      val tasks = Array(taskIds.size) { idx ->
+        launch(start = CoroutineStart.LAZY) {
+          dumbService.runInDumbMode {
+            assertTrue("$i,$idx: Should be dumb inside runInDumbMode. startOrder: $startSeq, finishOrder: $finishSeq", dumbService.isDumb)
+            started[idx].complete(true)
+            triggers[idx].await()
+          }
+        }
+      }
+
+      // Start the tasks in order
+      startSeq.forEach { idx ->
+        tasks[idx].start()
+        started[idx].await()
+        assertTrue("$i,$idx: Should be dumb after the first submitted task. startOrder: $startSeq, finishOrder: $finishSeq",
+                   dumbService.isDumb)
+      }
+
+      // All the tasks are started. Finish them in order
+      finishSeq.forEach { idx ->
+        assertTrue("$i,$idx: Should be dumb before finishing the last task. startOrder: $startSeq, finishOrder: $finishSeq",
+                   dumbService.isDumb)
+        triggers[idx].complete(true)
+        tasks[idx].join()
+      }
+
+      assertFalse("$i: Should be smart after finishing last task. startOrder: $startSeq, finishOrder: $finishSeq", dumbService.isDumb)
     }
   }
 

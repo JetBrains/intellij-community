@@ -34,9 +34,7 @@ import com.intellij.util.indexing.IndexingBundle
 import com.intellij.util.ui.DeprecationStripePanel
 import com.intellij.util.ui.UIUtil
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.update
+import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Async
@@ -50,7 +48,7 @@ import javax.swing.JComponent
 @ApiStatus.Internal
 open class DumbServiceImpl @NonInjectable @VisibleForTesting constructor(private val myProject: Project,
                                                                          publisher: DumbModeListener) : DumbService(), Disposable, ModificationTracker, DumbServiceBalloon.Service {
-  private val myState: MutableStateFlow<DumbState> = MutableStateFlow(DumbState(!myProject.isDefault, 0L))
+  private val myState: MutableStateFlow<DumbState> = MutableStateFlow(DumbState(!myProject.isDefault, 0L, 0))
 
   override val project: Project = myProject
   override var isAlternativeResolveEnabled: Boolean
@@ -140,7 +138,7 @@ open class DumbServiceImpl @NonInjectable @VisibleForTesting constructor(private
       // This is the same side effects as produced by enterSmartModeIfDumb (except updating icons). We apply them synchronously, because
       // invokeLaterWithDumbStartModality(this::enterSmartModeIfDumb) does not work well in synchronous environments (e.g. in unit tests):
       // code continues to execute without waiting for smart mode to start because of invoke*Later*. See, for example, DbSrcFileDialectTest
-      myState.update { it.makeSmart() }
+      myState.update { it.incrementDumbCounter().decrementDumbCounter() }
       myCancellableLaterEdtInvoker.invokeLaterWithDumbStartModality { myPublisher.exitDumbMode() }
     }
   }
@@ -165,7 +163,7 @@ open class DumbServiceImpl @NonInjectable @VisibleForTesting constructor(private
     myGuiDumbTaskRunner.guiSuspender().suspendAndRun(activityName, activity)
   }
 
-  private var _isDumb: Boolean
+  override val isDumb: Boolean
     get() {
       if (ALWAYS_SMART) return false
       if (!ApplicationManager.getApplication().isReadAccessAllowed && Registry.`is`("ide.check.is.dumb.contract")) {
@@ -174,18 +172,6 @@ open class DumbServiceImpl @NonInjectable @VisibleForTesting constructor(private
       }
       return myState.value.isDumb
     }
-    @TestOnly @Deprecated("Use runInDumbMode instead (or {run/compute}InDumbModeSynchronously)") set(dumb) {
-      ApplicationManager.getApplication().assertIsDispatchThread()
-      if (dumb) {
-        myState.update { it.makeDumb() }
-        myPublisher.enteredDumbMode()
-      }
-      else {
-        enterSmartModeIfDumb()
-      }
-    }
-
-  override val isDumb: Boolean get() = _isDumb
 
   /**
    * This method starts dumb mode (if not started), then runs the runnable, then ends dumb mode (if no other dumb tasks are running).
@@ -208,15 +194,24 @@ open class DumbServiceImpl @NonInjectable @VisibleForTesting constructor(private
    */
   @TestOnly
   fun <T> computeInDumbModeSynchronously(computable: ThrowableComputable<T, in Throwable>): T {
+    val trace = Throwable()
     application.invokeAndWait {
-      _isDumb = true
+      val old = myState.getAndUpdate { it.incrementDumbCounter() }
+      if (old.isSmart) {
+        dumbModeStartTrace = trace
+        runCatching { myPublisher.enteredDumbMode() }
+      }
     }
     try {
       return computable.compute()
     }
     finally {
       application.invokeAndWait {
-        _isDumb = false
+        val new = myState.updateAndGet { it.decrementDumbCounter() }
+        if (new.isSmart) {
+          dumbModeStartTrace = null
+          runCatching { myPublisher.exitDumbMode() }
+        }
       }
     }
   }
@@ -229,15 +224,24 @@ open class DumbServiceImpl @NonInjectable @VisibleForTesting constructor(private
    */
   @TestOnly
   suspend fun <T> runInDumbMode(block: suspend () -> T): T {
+    val trace = Throwable()
     executeImmediatelyOrScheduleOnEDT {
-      _isDumb = true
+      val old = myState.getAndUpdate { it.incrementDumbCounter() }
+      if (old.isSmart) {
+        dumbModeStartTrace = trace
+        runCatching { myPublisher.enteredDumbMode() }
+      }
     }
     try {
       return block()
     }
     finally {
       executeImmediatelyOrScheduleOnEDT {
-        _isDumb = false
+        val new = myState.updateAndGet { it.decrementDumbCounter() }
+        if (new.isSmart) {
+          dumbModeStartTrace = null
+          runCatching { myPublisher.exitDumbMode() }
+        }
       }
     }
   }
@@ -313,7 +317,8 @@ open class DumbServiceImpl @NonInjectable @VisibleForTesting constructor(private
 
       dumbModeStartTrace = trace
       myCancellableLaterEdtInvoker.setDumbStartModality(modality)
-      myState.update { it.makeDumb() }
+      // note that currently enterDumbModeIfSmart and showDumbModeNotification can be unbalanced. We use counter as boolean flag as of now
+      myState.update { it.nextCounterState(1) }
       !myProject.isDisposed
     }
     if (entered) {
@@ -330,7 +335,8 @@ open class DumbServiceImpl @NonInjectable @VisibleForTesting constructor(private
       if (myState.value.isSmart) return@compute false
 
       dumbModeStartTrace = null
-      myState.update { it.makeSmart() }
+      // note that currently enterDumbModeIfSmart and showDumbModeNotification can be unbalanced. We use counter as boolean flag as of now
+      myState.update { it.nextCounterState(0) }
       myCancellableLaterEdtInvoker.setDumbStartModality(null)
       !myProject.isDisposed
     }
@@ -523,12 +529,22 @@ open class DumbServiceImpl @NonInjectable @VisibleForTesting constructor(private
   internal val dumbStateAsFlow: StateFlow<DumbState> = myState
 
   internal data class DumbState(
-    val isDumb: Boolean,
-    val modificationCounter: Long
+    val isDumb: Boolean, val modificationCounter: Long, val dumbCounter: Int
   ) {
-    fun makeSmart(): DumbState = if (isDumb) invert() else this
-    fun makeDumb(): DumbState = if (isDumb) this else invert()
-    fun invert(): DumbState = DumbState(!isDumb, modificationCounter + 1)
+    internal fun nextCounterState(nextVal: Int): DumbState {
+      if (nextVal > 0) {
+        return DumbState(true, modificationCounter + 1, nextVal)
+      }
+      else {
+        LOG.assertTrue(nextVal == 0) { "Invalid nextVal=$nextVal" }
+        return DumbState(false, modificationCounter + 1, 0)
+      }
+    }
+
+    fun incrementDumbCounter(): DumbState = nextCounterState(dumbCounter + 1)
+    fun decrementDumbCounter(): DumbState = nextCounterState(dumbCounter - 1)
+    fun tryIncrementDumbCounter(): DumbState = if (isDumb) incrementDumbCounter() else this
+    fun tryDecrementDumbCounter(): DumbState = if (dumbCounter > 1) decrementDumbCounter() else this
     val isSmart: Boolean get() = !isDumb
   }
 
