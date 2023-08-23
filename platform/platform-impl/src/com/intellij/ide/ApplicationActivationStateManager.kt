@@ -1,136 +1,117 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.ide;
+package com.intellij.ide
 
-import com.intellij.openapi.application.Application;
-import com.intellij.openapi.application.ApplicationActivationListener;
-import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.impl.ApplicationImpl;
-import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.util.registry.Registry;
-import com.intellij.openapi.wm.IdeFrame;
-import com.intellij.ui.ComponentUtil;
-import com.intellij.util.ui.TimerUtil;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import com.intellij.openapi.application.Application
+import com.intellij.openapi.application.ApplicationActivationListener
+import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.application.impl.ApplicationImpl
+import com.intellij.openapi.diagnostic.logger
+import com.intellij.openapi.util.registry.Registry
+import com.intellij.openapi.wm.IdeFrame
+import com.intellij.ui.ComponentUtil
+import com.intellij.util.ui.TimerUtil
+import java.awt.Window
+import java.awt.event.WindowEvent
+import java.util.concurrent.atomic.AtomicLong
 
-import javax.swing.*;
-import java.awt.*;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
-import java.awt.event.WindowEvent;
-import java.util.concurrent.atomic.AtomicLong;
+object ApplicationActivationStateManager {
+  private val LOG = logger<ApplicationActivationStateManager>()
 
-public final class ApplicationActivationStateManager {
-  private static final Logger LOG = Logger.getInstance(ApplicationActivationStateManager.class);
+  private val requestToDeactivateTime = AtomicLong(System.currentTimeMillis())
 
-  private static final AtomicLong requestToDeactivateTime = new AtomicLong(System.currentTimeMillis());
+  private var state = ApplicationActivationStateManagerState.DEACTIVATED
 
-  private ApplicationActivationStateManager() {}
+  val isInactive: Boolean
+    get() = state.isInactive
 
-  private static ApplicationActivationStateManagerState state = ApplicationActivationStateManagerState.DEACTIVATED;
+  val isActive: Boolean
+    get() = state.isActive
 
-  public static boolean isInactive() {
-    return state.isInactive();
-  }
-
-  public static boolean isActive() {
-    return state.isActive();
-  }
-
-  public static boolean updateState(@NotNull WindowEvent windowEvent) {
-    Application app = ApplicationManager.getApplication();
-    if (!(app instanceof ApplicationImpl)) {
-      return false;
+  fun updateState(windowEvent: WindowEvent): Boolean {
+    val app = ApplicationManager.getApplication()
+    if (app !is ApplicationImpl) {
+      return false
     }
 
-    if (windowEvent.getID() == WindowEvent.WINDOW_ACTIVATED || windowEvent.getID() == WindowEvent.WINDOW_GAINED_FOCUS) {
-      if (state.isInactive()) {
-        return setActive(app, windowEvent.getWindow());
+    if (windowEvent.id == WindowEvent.WINDOW_ACTIVATED || windowEvent.id == WindowEvent.WINDOW_GAINED_FOCUS) {
+      if (state.isInactive) {
+        return setActive(app, windowEvent.window)
       }
     }
-    else if (windowEvent.getID() == WindowEvent.WINDOW_DEACTIVATED && windowEvent.getOppositeWindow() == null) {
-      if (IdeEventQueueKt.getSkipWindowDeactivationEvents()) {
-        LOG.warn("Skipped " + windowEvent);
-        return false;
+    else if (windowEvent.id == WindowEvent.WINDOW_DEACTIVATED && windowEvent.getOppositeWindow() == null) {
+      if (skipWindowDeactivationEvents) {
+        LOG.warn("Skipped $windowEvent")
+        return false
       }
-      requestToDeactivateTime.getAndSet(System.currentTimeMillis());
+
+      requestToDeactivateTime.getAndSet(System.currentTimeMillis())
 
       // for stuff that cannot wait windowEvent notify about deactivation immediately
-      if (state.isActive() && !app.isDisposed()) {
-        IdeFrame ideFrame = getIdeFrameFromWindow(windowEvent.getWindow());
+      if (state.isActive && !app.isDisposed()) {
+        val ideFrame = getIdeFrameFromWindow(windowEvent.window)
         if (ideFrame != null) {
-          app.getMessageBus().syncPublisher(ApplicationActivationListener.TOPIC).applicationDeactivated(ideFrame);
+          app.getMessageBus().syncPublisher(ApplicationActivationListener.TOPIC).applicationDeactivated(ideFrame)
         }
       }
 
-      // We do not know for sure that application is going to be inactive,
+      // We do not know for sure that the application is going to be inactive,
       // windowEvent could just be showing a popup or another transient window.
       // So let's postpone the application deactivation for a while
-      state = ApplicationActivationStateManagerState.DEACTIVATING;
-      LOG.debug("The app is in the deactivating state");
+      state = ApplicationActivationStateManagerState.DEACTIVATING
+      LOG.debug("The app is in the deactivating state")
+      val timer = TimerUtil.createNamedTimer("ApplicationDeactivation", Registry.intValue("application.deactivation.timeout", 1500)) {
+        if (state != ApplicationActivationStateManagerState.DEACTIVATING) {
+          return@createNamedTimer
+        }
 
-      Timer timer = TimerUtil.createNamedTimer("ApplicationDeactivation", Registry.intValue("application.deactivation.timeout", 1500), new ActionListener() {
-        @Override
-        public void actionPerformed(ActionEvent evt) {
-          if (state == ApplicationActivationStateManagerState.DEACTIVATING) {
-            //noinspection AssignmentToStaticFieldFromInstanceMethod
-            state = ApplicationActivationStateManagerState.DEACTIVATED;
-            LOG.debug("The app is in the deactivated state");
-
-            if (!app.isDisposed()) {
-              IdeFrame ideFrame = getIdeFrameFromWindow(windowEvent.getWindow());
-              // getIdeFrameFromWindow returns something from UI tree, so, if not null, it must be Window
-              if (ideFrame != null) {
-                app.getMessageBus().syncPublisher(ApplicationActivationListener.TOPIC).delayedApplicationDeactivated(((Window)ideFrame));
-              }
-            }
+        state = ApplicationActivationStateManagerState.DEACTIVATED
+        LOG.debug("The app is in the deactivated state")
+        if (!app.isDisposed()) {
+          val ideFrame = getIdeFrameFromWindow(windowEvent.window)
+          // getIdeFrameFromWindow returns something from a UI tree, so, if not null, it must be Window
+          if (ideFrame != null) {
+            app.getMessageBus().syncPublisher(ApplicationActivationListener.TOPIC).delayedApplicationDeactivated((ideFrame as Window?)!!)
           }
         }
-      });
-
-      timer.setRepeats(false);
-      timer.start();
-      return true;
+      }
+      timer.isRepeats = false
+      timer.start()
+      return true
     }
-    return false;
+    return false
   }
 
-  private static boolean setActive(@NotNull Application app, @Nullable Window window) {
-    state = ApplicationActivationStateManagerState.ACTIVE;
-    LOG.debug("The app is in the active state");
-
+  private fun setActive(app: Application, window: Window?): Boolean {
+    state = ApplicationActivationStateManagerState.ACTIVE
+    LOG.debug("The app is in the active state")
     if (!app.isDisposed()) {
-      IdeFrame ideFrame = getIdeFrameFromWindow(window);
+      val ideFrame = getIdeFrameFromWindow(window)
       if (ideFrame != null) {
-        app.getMessageBus().syncPublisher(ApplicationActivationListener.TOPIC).applicationActivated(ideFrame);
-        return true;
+        app.getMessageBus().syncPublisher(ApplicationActivationListener.TOPIC).applicationActivated(ideFrame)
+        return true
       }
     }
-    return false;
+    return false
   }
 
-  public static void updateState(@NotNull ApplicationImpl app, @NotNull Window window) {
-    if (state.isInactive()) {
-      setActive(app, window);
+  fun updateState(app: ApplicationImpl, window: Window) {
+    if (state.isInactive) {
+      setActive(app, window)
     }
   }
 
-  private static @Nullable IdeFrame getIdeFrameFromWindow(@Nullable Window window) {
-    Component frame = window == null ? null : ComponentUtil.findUltimateParent(window);
-    return frame instanceof IdeFrame ? (IdeFrame)frame : null;
+  private fun getIdeFrameFromWindow(window: Window?): IdeFrame? {
+    return if (window == null) null else (ComponentUtil.findUltimateParent(window) as? IdeFrame)
   }
 }
 
-enum ApplicationActivationStateManagerState {
+private enum class ApplicationActivationStateManagerState {
   ACTIVE,
   DEACTIVATED,
   DEACTIVATING;
 
-  public boolean isInactive() {
-    return this != ACTIVE;
-  }
-
-  public boolean isActive() {
-    return this == ACTIVE;
-  }
+  val isInactive: Boolean
+    get() = this != ACTIVE
+  val isActive: Boolean
+    get() = this == ACTIVE
 }
