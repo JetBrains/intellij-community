@@ -6,10 +6,9 @@ import com.intellij.platform.workspace.storage.impl.ConnectionId
 import com.intellij.platform.workspace.storage.impl.ModifiableWorkspaceEntityBase
 import com.intellij.platform.workspace.storage.impl.WorkspaceEntityBase
 import com.intellij.platform.workspace.storage.impl.WorkspaceEntityData
-import com.intellij.platform.workspace.storage.EntityType
-import org.junit.After
-import org.junit.Before
-import org.junit.Test
+import org.junit.jupiter.api.AfterEach
+import org.junit.jupiter.api.BeforeEach
+import org.junit.jupiter.api.Test
 import kotlin.test.assertContains
 import kotlin.test.assertTrue
 import kotlin.test.fail
@@ -18,13 +17,13 @@ class GeneratedCodeVersionsTest {
   private var prev_api = 0
   private var prev_impl = 0
 
-  @Before
+  @BeforeEach
   fun setUp() {
     prev_api = CodeGeneratorVersions.API_VERSION
     prev_impl = CodeGeneratorVersions.IMPL_VERSION
   }
 
-  @After
+  @AfterEach
   fun tearDown() {
     CodeGeneratorVersions.API_VERSION = prev_api
     CodeGeneratorVersions.IMPL_VERSION = prev_impl

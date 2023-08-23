@@ -7,17 +7,19 @@ import com.intellij.platform.workspace.storage.impl.MutableEntityStorageImpl
 import com.intellij.platform.workspace.storage.impl.url.VirtualFileUrlManagerImpl
 import com.intellij.platform.workspace.storage.testEntities.entities.*
 import com.intellij.platform.workspace.storage.url.VirtualFileUrlManager
-import org.junit.Assert.*
-import org.junit.Before
-import org.junit.Test
+import org.junit.jupiter.api.Assertions
+import org.junit.jupiter.api.BeforeEach
+import org.junit.jupiter.api.Test
 import java.nio.file.Files
 import java.nio.file.Path
 import java.util.*
+import kotlin.test.assertEquals
+import kotlin.test.assertTrue
 
 class EntityStorageSerializationTest {
   private lateinit var virtualFileManager: VirtualFileUrlManager
 
-  @Before
+  @BeforeEach
   fun setUp() {
     virtualFileManager = VirtualFileUrlManagerImpl()
   }
@@ -98,7 +100,7 @@ class EntityStorageSerializationTest {
       serializer.serializeCache(file, builder.toSnapshot())
 
       val deserialized = (deserializer.deserializeCache(file).getOrThrow() as? MutableEntityStorageImpl)?.toSnapshot()
-      assertNull(deserialized)
+      Assertions.assertNull(deserialized)
     }
   }
 
@@ -110,7 +112,8 @@ class EntityStorageSerializationTest {
 
     val registration = (10..1_000).mapNotNull { kryo.getRegistration(it) }.joinToString(separator = "\n")
 
-    assertEquals("Have you changed kryo registration? Update the version number! (And this test)", expectedKryoRegistration, registration)
+    assertEquals(expectedKryoRegistration, registration,
+                            "Have you changed kryo registration? Update the version number! (And this test)")
   }
 
   @Test
@@ -175,7 +178,7 @@ class EntityStorageSerializationTest {
       // Remove random byte from a serialised store
       Files.write(file, Files.readAllBytes(file).filterIndexed { i, _ -> i != 3 }.toByteArray())
       val result = serializer.deserializeCache(file)
-      assertNull(result.getOrNull())
+      Assertions.assertNull(result.getOrNull())
     }
   }
 }

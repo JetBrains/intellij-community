@@ -1,13 +1,13 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.workspace.storage.tests
 
+import com.intellij.platform.workspace.storage.impl.ClassToIntConverter
 import com.intellij.util.ConcurrencyUtil
 import com.intellij.util.concurrency.AppExecutorUtil
-import com.intellij.platform.workspace.storage.impl.ClassToIntConverter
-import junit.framework.TestCase.assertEquals
-import org.junit.Test
+import org.junit.jupiter.api.Test
 import java.util.concurrent.Callable
 import kotlin.random.Random
+import kotlin.test.assertEquals
 
 class ClassToIntConverterTest {
   @Test

@@ -2,34 +2,34 @@
 package com.intellij.platform.workspace.storage.tests
 
 import com.intellij.platform.workspace.storage.impl.VirtualFileNameStore
-import org.junit.Assert
-import org.junit.Test
+import org.junit.jupiter.api.Test
+import kotlin.test.assertEquals
 
 class VirtualFileNameStoreTest {
   @Test
   fun `test 1`() {
     val store = VirtualFileNameStore()
-    Assert.assertEquals(1, store.generateIdForName("a"))
-    Assert.assertEquals(2, store.generateIdForName("b"))
-    Assert.assertEquals(3, store.generateIdForName("c"))
+    assertEquals(1, store.generateIdForName("a"))
+    assertEquals(2, store.generateIdForName("b"))
+    assertEquals(3, store.generateIdForName("c"))
   }
 
   @Test
   fun `test 2`() {
     val store = VirtualFileNameStore()
-    Assert.assertEquals(1, store.generateIdForName("a"))
-    Assert.assertEquals(1, store.generateIdForName("a"))
+    assertEquals(1, store.generateIdForName("a"))
+    assertEquals(1, store.generateIdForName("a"))
   }
 
   @Test
   fun `test 3`() {
     val store = VirtualFileNameStore()
-    Assert.assertEquals(1, store.generateIdForName("a"))
-    Assert.assertEquals(2, store.generateIdForName("b"))
-    Assert.assertEquals(3, store.generateIdForName("c"))
+    assertEquals(1, store.generateIdForName("a"))
+    assertEquals(2, store.generateIdForName("b"))
+    assertEquals(3, store.generateIdForName("c"))
     store.removeName("b")
     store.removeName("a")
-    Assert.assertEquals(4, store.generateIdForName("e"))
-    Assert.assertEquals(5, store.generateIdForName("f"))
+    assertEquals(4, store.generateIdForName("e"))
+    assertEquals(5, store.generateIdForName("f"))
   }
 }

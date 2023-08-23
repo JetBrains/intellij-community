@@ -1,8 +1,6 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.platform.workspace.storage.tests
 
-import com.intellij.platform.workspace.storage.testEntities.entities.*
-import com.intellij.testFramework.UsefulTestCase.assertOneElement
 import com.intellij.platform.workspace.storage.EntityStorage
 import com.intellij.platform.workspace.storage.MutableEntityStorage
 import com.intellij.platform.workspace.storage.impl.EntityStorageSnapshotImpl
@@ -11,11 +9,13 @@ import com.intellij.platform.workspace.storage.impl.assertConsistency
 import com.intellij.platform.workspace.storage.impl.exceptions.AddDiffException
 import com.intellij.platform.workspace.storage.impl.external.ExternalEntityMappingImpl
 import com.intellij.platform.workspace.storage.impl.url.VirtualFileUrlManagerImpl
+import com.intellij.platform.workspace.storage.testEntities.entities.*
 import com.intellij.platform.workspace.storage.toBuilder
 import com.intellij.platform.workspace.storage.url.VirtualFileUrlManager
+import com.intellij.testFramework.UsefulTestCase.assertOneElement
 import org.junit.jupiter.api.*
-import org.junit.jupiter.api.Assertions.assertEquals
 import java.util.*
+import kotlin.test.assertEquals
 import kotlin.test.assertNotNull
 import kotlin.test.assertSame
 import kotlin.test.assertTrue
@@ -107,7 +107,7 @@ class AddDiffTest {
       stringProperty = "changed"
     }
     val storage = target.applyDiff(source)
-    assertEquals(emptyList<SampleEntity>(), storage.entities(SampleEntity::class.java).toList())
+    assertEquals(emptyList(), storage.entities(SampleEntity::class.java).toList())
   }
 
   @RepeatedTest(10)
@@ -143,7 +143,7 @@ class AddDiffTest {
     source.removeEntity(entity.from(source))
     source.assertConsistency()
     val storage = target.applyDiff(source)
-    assertEquals(emptyList<SampleEntity>(), storage.entities(SampleEntity::class.java).toList())
+    assertEquals(emptyList(), storage.entities(SampleEntity::class.java).toList())
   }
 
   @RepeatedTest(10)
@@ -299,7 +299,7 @@ class AddDiffTest {
     val thrown = assertThrows<Throwable> {
       source.applyDiff(target)
     }
-    assertEquals(thrown.cause?.javaClass, AddDiffException::class.java, "Exception: ${thrown.stackTraceToString()}")
+    Assertions.assertEquals(thrown.cause?.javaClass, AddDiffException::class.java, "Exception: ${thrown.stackTraceToString()}")
   }
 
   @RepeatedTest(10)
@@ -316,7 +316,7 @@ class AddDiffTest {
     val thrown = assertThrows<Throwable> {
       source.applyDiff(target)
     }
-    assertEquals(thrown.cause?.javaClass, AddDiffException::class.java, "Exception: ${thrown.stackTraceToString()}")
+    Assertions.assertEquals(thrown.cause?.javaClass, AddDiffException::class.java, "Exception: ${thrown.stackTraceToString()}")
   }
 
   @RepeatedTest(10)

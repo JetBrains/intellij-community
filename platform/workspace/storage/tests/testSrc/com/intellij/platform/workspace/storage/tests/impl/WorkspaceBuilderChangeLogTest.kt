@@ -1,16 +1,16 @@
 // Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.platform.workspace.storage.tests.impl
 
-import com.intellij.platform.workspace.storage.testEntities.entities.*
-import com.intellij.platform.workspace.storage.tests.createEmptyBuilder
-import com.intellij.testFramework.assertInstanceOf
 import com.intellij.platform.workspace.storage.impl.AbstractEntityStorage
 import com.intellij.platform.workspace.storage.impl.ChangeEntry
 import com.intellij.platform.workspace.storage.impl.MutableEntityStorageImpl
 import com.intellij.platform.workspace.storage.impl.assertConsistency
-import org.junit.After
-import org.junit.Before
-import org.junit.Test
+import com.intellij.platform.workspace.storage.testEntities.entities.*
+import com.intellij.platform.workspace.storage.tests.createEmptyBuilder
+import com.intellij.testFramework.assertInstanceOf
+import org.junit.jupiter.api.AfterEach
+import org.junit.jupiter.api.BeforeEach
+import org.junit.jupiter.api.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFalse
 import kotlin.test.assertTrue
@@ -19,13 +19,13 @@ class WorkspaceBuilderChangeLogTest {
   internal lateinit var builder: MutableEntityStorageImpl
   internal lateinit var another: MutableEntityStorageImpl
 
-  @Before
+  @BeforeEach
   fun setUp() {
     builder = createEmptyBuilder()
     another = createEmptyBuilder()
   }
 
-  @After
+  @AfterEach
   fun tearDown() {
     builder.assertConsistency()
   }

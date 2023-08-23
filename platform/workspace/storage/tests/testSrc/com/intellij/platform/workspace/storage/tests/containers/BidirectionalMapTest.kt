@@ -1,15 +1,18 @@
 // Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.platform.workspace.storage.tests.containers
 
-import com.intellij.testFramework.UsefulTestCase.*
 import com.intellij.platform.workspace.storage.impl.containers.BidirectionalMap
-import org.junit.Before
-import org.junit.Test
+import com.intellij.testFramework.UsefulTestCase.*
+import org.junit.jupiter.api.Assertions
+import org.junit.jupiter.api.BeforeEach
+import org.junit.jupiter.api.Test
+import kotlin.test.assertNotNull
+import kotlin.test.assertNull
 
 class BidirectionalMapTest {
   private lateinit var bidirectionalMap: BidirectionalMap<Int, Int>
 
-  @Before
+  @BeforeEach
   fun setUp() {
     bidirectionalMap = BidirectionalMap()
   }
@@ -25,7 +28,7 @@ class BidirectionalMapTest {
     bidirectionalMap.removeValue(2)
     bidirectionalMap.remove(1)
     val copy = bidirectionalMap.copy()
-    assertNotSame(copy.getSlotsWithList(), bidirectionalMap.getSlotsWithList())
+    Assertions.assertNotSame(copy.getSlotsWithList(), bidirectionalMap.getSlotsWithList())
     assertEmpty(copy.getSlotsWithList())
     assertNull(copy[1])
     assertNull(copy[2])
@@ -76,7 +79,7 @@ class BidirectionalMapTest {
     assertDoesntContain(bidirectionalMap.getSlotsWithList(), 3)
     val copy = bidirectionalMap.copy()
     copy.assertConsistency()
-    assertNotSame(copy.getSlotsWithList(), bidirectionalMap.getSlotsWithList())
+    Assertions.assertNotSame(copy.getSlotsWithList(), bidirectionalMap.getSlotsWithList())
     assertContainsElements(copy.getSlotsWithList(), 1)
   }
 }
