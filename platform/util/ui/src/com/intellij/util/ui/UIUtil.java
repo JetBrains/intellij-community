@@ -1935,6 +1935,15 @@ public final class UIUtil {
     }
   }
 
+  public static @NotNull Font getFontWithFallbackIfNeeded(@NotNull Font font, @NotNull char[] text) {
+    if (!SystemInfoRt.isMac /* 'getFontWithFallback' does nothing on macOS */ && font.canDisplayUpTo(text, 0, text.length) != -1) {
+      return getFontWithFallback(font);
+    }
+    else {
+      return font;
+    }
+  }
+
   public static @NotNull FontUIResource getFontWithFallback(@NotNull Font font) {
     // On macOS font fallback is implemented in JDK by default
     // (except for explicitly registered fonts, e.g. the fonts we bundle with IDE, for them we don't have a solution now)
