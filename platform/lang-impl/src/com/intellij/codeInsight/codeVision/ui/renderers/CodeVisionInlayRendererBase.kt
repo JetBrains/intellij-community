@@ -41,11 +41,17 @@ abstract class CodeVisionInlayRendererBase(theme: CodeVisionTheme = CodeVisionTh
     this.inlay = inlay
 
     val inlayLifetimeDefinition = inlay.defineNestedLifetime()
-    hoveredEntry.view(inlayLifetimeDefinition.lifetime) { lifetime, _ ->
+    hoveredEntry.viewNotNull(inlayLifetimeDefinition.lifetime) { lifetime, _ ->
+
       hoveredEntry.debounceNotNull(Duration.ofMillis(1000), SwingScheduler).asProperty(null)
         .viewNotNull(lifetime) { tooltipLifetime, tooltipEntry ->
           showTooltip(tooltipLifetime, tooltipEntry)
         }
+
+      updateCursor(true)
+      lifetime.onTermination {
+        updateCursor(false)
+      }
     }
   }
 
@@ -96,7 +102,6 @@ abstract class CodeVisionInlayRendererBase(theme: CodeVisionTheme = CodeVisionTh
   private fun updateMouseState(isHovered: Boolean, point: Point?) {
     this.isHovered = isHovered
     hoveredEntry.set(if (isHovered) getHoveredEntry(point) else null)
-    updateCursor(isHovered)
     inlay.repaint()
   }
 
