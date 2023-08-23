@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vfs.newvfs;
 
 import com.intellij.openapi.application.ApplicationManager;
@@ -14,7 +14,6 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileAttributes;
 import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.*;
 import com.intellij.openapi.vfs.impl.local.LocalFileSystemImpl;
@@ -26,10 +25,8 @@ import com.intellij.openapi.vfs.newvfs.monitoring.VfsUsageCollector;
 import com.intellij.openapi.vfs.newvfs.persistent.BatchingFileSystem;
 import com.intellij.openapi.vfs.newvfs.persistent.PersistentFS;
 import com.intellij.openapi.vfs.newvfs.persistent.PersistentFSImpl;
-import com.intellij.util.MathUtil;
 import com.intellij.util.SmartList;
 import com.intellij.util.TimeoutUtil;
-import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.concurrency.Semaphore;
 import com.intellij.util.containers.CollectionFactory;
 import com.intellij.util.containers.ContainerUtil;
@@ -42,23 +39,23 @@ import java.io.IOException;
 import java.nio.file.*;
 import java.nio.file.attribute.BasicFileAttributes;
 import java.util.*;
+import java.util.concurrent.CancellationException;
 import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.ExecutorService;
+import java.util.concurrent.CompletionException;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.function.Consumer;
+import java.util.function.Function;
+import java.util.function.Supplier;
 
 import static java.util.concurrent.TimeUnit.NANOSECONDS;
 
 final class RefreshWorker {
   private static final Logger LOG = Logger.getInstance(RefreshWorker.class);
 
-  private static final int ourParallelism =
-    MathUtil.clamp(Registry.intValue("vfs.refresh.worker.parallelism", 4), 1, Runtime.getRuntime().availableProcessors());
-  private static final ExecutorService ourExecutor =
-    AppExecutorUtil.createBoundedApplicationPoolExecutor("VFS Refresh", ourParallelism);
+  private final int parallelism;
+  private final Function<Supplier<List<VFileEvent>>, CompletableFuture<List<VFileEvent>>> executor;
 
   private final boolean myIsRecursive;
   private final boolean myParallel;
@@ -73,10 +70,14 @@ final class RefreshWorker {
 
   RefreshWorker(@NotNull Collection<@NotNull NewVirtualFile> refreshRoots, boolean isRecursive) {
     myIsRecursive = isRecursive;
-    myParallel = isRecursive && ourParallelism > 1 && !ApplicationManager.getApplication().isWriteIntentLockAcquired();
+    RefreshWorkerHelper helper = ApplicationManager.getApplication().getService(RefreshWorkerHelper.class);
+    myParallel = isRecursive && helper.parallelism > 1 && !ApplicationManager.getApplication().isWriteIntentLockAcquired();
     myRoots = new HashSet<>(refreshRoots);
     myRefreshQueue = new LinkedBlockingQueue<>(refreshRoots);
     mySemaphore = new Semaphore(refreshRoots.size());
+
+    parallelism = helper.parallelism;
+    executor = helper.createRefreshWorkerExecutor();
   }
 
   void cancel() {
@@ -113,16 +114,17 @@ final class RefreshWorker {
   }
 
   private void parallelScan(List<VFileEvent> events) {
-    var futures = new ArrayList<CompletableFuture<List<VFileEvent>>>(ourParallelism);
+    var futures = new ArrayList<CompletableFuture<List<VFileEvent>>>(parallelism);
 
-    for (var i = 0; i < ourParallelism; i++) {
-      futures.add(CompletableFuture.supplyAsync(() -> {
+    for (var i = 0; i < parallelism; i++) {
+      futures.add(executor.apply(() -> {
         var threadEvents = new ArrayList<VFileEvent>();
         try {
           processQueue(threadEvents);
         }
-        catch (RefreshCancelledException ignored) { }
-        catch (ProcessCanceledException e) {
+        catch (RefreshCancelledException ignored) {
+        }
+        catch (ProcessCanceledException | CancellationException e) {
           myCancelled = true;
         }
         catch (Throwable t) {
@@ -130,15 +132,16 @@ final class RefreshWorker {
           myCancelled = true;
         }
         return threadEvents;
-      }, ourExecutor));
+      }));
     }
 
     for (var future : futures) {
       try {
-        events.addAll(future.get());
+        events.addAll(future.join());
       }
-      catch (InterruptedException ignored) { }
-      catch (ExecutionException e) {
+      catch (CancellationException ignored) {
+      }
+      catch (CompletionException e) {
         LOG.error(e);
       }
     }
