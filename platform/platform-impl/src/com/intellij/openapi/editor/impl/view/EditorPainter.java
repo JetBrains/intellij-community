@@ -134,6 +134,7 @@ public final class EditorPainter implements TextDrawingCallback {
     private final Color myBackgroundColor;
     private final int myMarginColumns;
     private final List<Consumer<Graphics2D>> myTextDrawingTasks = new ArrayList<>();
+    private final List<RangeHighlighter> myAfterBackgroundCustomHighlighters = new SmartList<>();
     private final List<RangeHighlighter> myForegroundCustomHighlighters = new SmartList<>();
     private final ScaleContext myScaleContext;
     private MarginPositions myMarginPositions;
@@ -183,10 +184,11 @@ public final class EditorPainter implements TextDrawingCallback {
         return;
       }
 
-      paintBackground();
-      paintRightMargin();
       paintCustomRenderers(myDocMarkup);
       paintCustomRenderers(myEditorMarkup);
+      paintBackground();
+      paintRightMargin();
+      paintCustomRenderers(myAfterBackgroundCustomHighlighters);
       paintLineMarkersSeparators(myDocMarkup);
       paintLineMarkersSeparators(myEditorMarkup);
       paintTextWithEffects();
@@ -195,7 +197,7 @@ public final class EditorPainter implements TextDrawingCallback {
       paintBorderEffect(myEditor.getHighlighter());
       paintBorderEffect(myDocMarkup);
       paintBorderEffect(myEditorMarkup);
-      paintForegroundCustomRenderers();
+      paintCustomRenderers(myForegroundCustomHighlighters);
       paintBlockInlays();
       paintCaret();
       paintComposedTextDecoration();
@@ -585,11 +587,10 @@ public final class EditorPainter implements TextDrawingCallback {
         CustomHighlighterRenderer customRenderer = highlighter.getCustomRenderer();
         if (customRenderer != null) {
           if (myClipDetector.rangeCanBeVisible(highlighter.getStartOffset(), highlighter.getEndOffset())) {
-            if (customRenderer.isForeground()) {
-              myForegroundCustomHighlighters.add(highlighter);
-            }
-            else {
-              customRenderer.paint(myEditor, highlighter, myGraphics);
+            switch (customRenderer.getOrder()) {
+              case BEFORE_BACKGROUND -> customRenderer.paint(myEditor, highlighter, myGraphics);
+              case AFTER_BACKGROUND -> myAfterBackgroundCustomHighlighters.add(highlighter);
+              case AFTER_TEXT -> myForegroundCustomHighlighters.add(highlighter);
             }
           }
         }
@@ -598,10 +599,10 @@ public final class EditorPainter implements TextDrawingCallback {
       myGraphics.translate(0, -myYShift);
     }
 
-    private void paintForegroundCustomRenderers() {
-      if (!myForegroundCustomHighlighters.isEmpty()) {
+    private void paintCustomRenderers(List<RangeHighlighter> highlighters) {
+      if (!highlighters.isEmpty()) {
         myGraphics.translate(0, myYShift);
-        for (RangeHighlighter highlighter : myForegroundCustomHighlighters) {
+        for (RangeHighlighter highlighter : highlighters) {
           CustomHighlighterRenderer customRenderer = highlighter.getCustomRenderer();
           if (customRenderer != null) {
             customRenderer.paint(myEditor, highlighter, myGraphics);
