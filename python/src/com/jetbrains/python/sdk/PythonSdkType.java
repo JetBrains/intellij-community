@@ -15,7 +15,6 @@ import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.*;
-import com.intellij.openapi.projectRoots.impl.MockSdk;
 import com.intellij.openapi.roots.OrderRootType;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Ref;
@@ -597,8 +596,7 @@ public final class PythonSdkType extends SdkType {
    */
   @SuppressWarnings("TestOnlyProblems")
   public static boolean isMock(@NotNull Sdk sdk) {
-    return sdk instanceof MockSdk ||
-           (sdk.getUserData(MOCK_PY_VERSION_KEY) != null) ||
+    return (sdk.getUserData(MOCK_PY_VERSION_KEY) != null) ||
            (sdk.getUserData(MOCK_SYS_PATH_KEY) != null);
   }
 
