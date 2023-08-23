@@ -225,7 +225,7 @@ public class ProblemsViewPanel extends OnePixelSplitter implements Disposable, D
         int orientation = myToolbar.getOrientation();
         Insets i = orientation == SwingConstants.VERTICAL ? JBUI.CurrentTheme.Toolbar.verticalToolbarInsets()
                                                           : JBUI.CurrentTheme.Toolbar.horizontalToolbarInsets();
-        Border innerBorder = i != null ? JBUI.Borders.empty(i.top, i.left, i.bottom, i.right)
+        Border innerBorder = i != null ? JBUI.Borders.empty(i)
                                        : JBUI.Borders.empty(2);
 
         Border border = event.getAdjustable().getValue() != 0 ? JBUI.Borders.compound(new CustomLineBorder(myToolbarInsets), innerBorder)
