@@ -64,11 +64,11 @@ public abstract class ApplicationInfoEx extends ApplicationInfo {
   /**
    * Returns URL to plugins repository without trailing slash.
    */
-  public abstract String getPluginManagerUrl();
+  public abstract @NotNull String getPluginManagerUrl();
 
   public abstract boolean usesJetBrainsPluginRepository();
 
-  public abstract String getPluginsListUrl();
+  public abstract @NotNull String getPluginsListUrl();
 
   /**
    * @deprecated is not used by the platform anymore
@@ -77,7 +77,7 @@ public abstract class ApplicationInfoEx extends ApplicationInfo {
   @Deprecated
   public abstract String getChannelsListUrl();
 
-  public abstract String getPluginsDownloadUrl();
+  public abstract @NotNull String getPluginsDownloadUrl();
 
   /**
    * @deprecated use {@link com.intellij.ide.plugins.RepositoryHelper#CUSTOM_BUILT_IN_PLUGIN_REPOSITORY_PROPERTY} system property to pass

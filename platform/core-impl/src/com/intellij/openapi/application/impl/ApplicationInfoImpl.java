@@ -266,6 +266,10 @@ public final class ApplicationInfoImpl extends ApplicationInfoEx {
       }
     }
 
+    if (myPluginManagerUrl == null) {
+      readPluginInfo(null);
+    }
+    
     requireNonNull(mySvgIconUrl, "Missing attribute: //icon@svg");
     requireNonNull(mySmallSvgIconUrl, "Missing attribute: //icon@svg-small");
 
@@ -489,7 +493,7 @@ public final class ApplicationInfoImpl extends ApplicationInfoEx {
   }
 
   @Override
-  public String getPluginManagerUrl() {
+  public @NotNull String getPluginManagerUrl() {
     return myPluginManagerUrl;
   }
 
@@ -499,7 +503,7 @@ public final class ApplicationInfoImpl extends ApplicationInfoEx {
   }
 
   @Override
-  public String getPluginsListUrl() {
+  public @NotNull String getPluginsListUrl() {
     return myPluginsListUrl;
   }
 
@@ -509,7 +513,7 @@ public final class ApplicationInfoImpl extends ApplicationInfoEx {
   }
 
   @Override
-  public String getPluginsDownloadUrl() {
+  public @NotNull String getPluginsDownloadUrl() {
     return myPluginsDownloadUrl;
   }
 
