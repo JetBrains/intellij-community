@@ -398,6 +398,13 @@
                      implementationClass="org.jetbrains.idea.devkit.inspections.IncorrectProcessCanceledExceptionHandlingInspection"
                      key="inspections.incorrect.process.canceled.exception.handling.display.name"/>
 
+    <localInspection language="UAST" shortName="StaticInitializationInExtensions" groupPathKey="inspections.group.path"
+                     projectType="INTELLIJ_PLUGIN"
+                     key="inspections.static.initialization.in.extensions.name" groupKey="inspections.group.code"
+                     enabledByDefault="false" level="WARNING"
+                     implementationClass="org.jetbrains.idea.devkit.inspections.StaticInitializationInExtensionsInspection"/>
+
+
     <moduleConfigurationEditorProvider implementation="org.jetbrains.idea.devkit.module.PluginModuleEditorsProvider"/>
     <implicitUsageProvider implementation="org.jetbrains.idea.devkit.inspections.DevKitImplicitUsageProvider"/>
 
@@ -598,6 +605,11 @@
                     beanClass="com.intellij.lang.LanguageExtensionPoint"
                     dynamic="true">
       <with attribute="implementationClass" implements="org.jetbrains.idea.devkit.inspections.UElementAsPsiCheckProvider"/>
+    </extensionPoint>
+    <extensionPoint qualifiedName="DevKit.lang.staticInitializationInExtensionsVisitorProvider"
+                    beanClass="com.intellij.lang.LanguageExtensionPoint"
+                    dynamic="true">
+      <with attribute="implementationClass" implements="org.jetbrains.idea.devkit.inspections.StaticInitializationInExtensionsVisitorProvider"/>
     </extensionPoint>
   </extensionPoints>
 

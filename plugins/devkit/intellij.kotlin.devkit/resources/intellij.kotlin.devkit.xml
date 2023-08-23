@@ -59,6 +59,8 @@
       implementationClass="org.jetbrains.idea.devkit.kotlin.inspections.KtAppServiceAsStaticFinalFieldOrPropertyVisitorProvider"/>
     <uElementAsPsiCheckProvider language="kotlin"
       implementationClass="org.jetbrains.idea.devkit.kotlin.inspections.KtUElementAsPsiCheckProvider"/>
+    <staticInitializationInExtensionsVisitorProvider language="kotlin"
+      implementationClass="org.jetbrains.idea.devkit.kotlin.inspections.KtStaticInitializationInExtensionsVisitorProvider"/>
   </extensions>
 
 </idea-plugin>
