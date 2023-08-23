@@ -1704,4 +1704,8 @@ public class MavenUtil {
     MavenHomeType type = MavenProjectsManager.getInstance(project).getGeneralSettings().getMavenHomeType();
     return MavenUtil.resolveSuperPomFile(distribution.getMavenHome().toFile());
   }
+
+  public static MavenProjectModelReadHelper createModelReadHelper(Project project) {
+    return new MavenProjectModelServerModelReadHelper(project);
+  }
 }
