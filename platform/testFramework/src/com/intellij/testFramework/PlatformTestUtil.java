@@ -471,12 +471,14 @@ public final class PlatformTestUtil {
   public static void dispatchAllInvocationEventsInIdeEventQueue() {
     assertDispatchThreadWithoutWriteAccess();
     IdeEventQueue eventQueue = IdeEventQueue.getInstance();
-    while (true) {
-      AWTEvent event = eventQueue.peekEvent();
-      if (event == null) break;
-      event = eventQueue.getNextEvent();
-      if (event instanceof InvocationEvent) {
-        eventQueue.dispatchEvent(event);
+    try (AccessToken ignored = ThreadContext.resetThreadContext()) {
+      while (true) {
+        AWTEvent event = eventQueue.peekEvent();
+        if (event == null) break;
+        event = eventQueue.getNextEvent();
+        if (event instanceof InvocationEvent) {
+          eventQueue.dispatchEvent(event);
+        }
       }
     }
   }
