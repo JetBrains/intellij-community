@@ -10,7 +10,7 @@ import com.intellij.collaboration.api.dto.GraphQLFragment
 class GitLabPipelineDTO(
   jobs: CiJobConnection?
 ) {
-  val jobs: List<GitLabCiJobDTO>? = jobs?.nodes
+  val jobs: List<GitLabCiJobDTO>? = jobs?.nodes?.distinctBy { it.name }
 
   class CiJobConnection(pageInfo: GraphQLCursorPageInfoDTO, nodes: List<GitLabCiJobDTO>)
     : GraphQLConnectionDTO<GitLabCiJobDTO>(pageInfo, nodes)
