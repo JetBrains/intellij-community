@@ -24,15 +24,18 @@ public class TasksFactory {
   private static final boolean TASKS_REFRESH_REQUIRED =
     GradleVersion.current().getBaseVersion().compareTo(GradleVersion.version("5.0")) < 0;
   private final Map<Project, Set<Task>> allTasks = new ConcurrentHashMap<>();
-  private final Set<Project> processedRootProjects = Collections.newSetFromMap(new ConcurrentHashMap<Project, Boolean>());
+  private final Set<Project> processedRootProjects = Collections.newSetFromMap(new ConcurrentHashMap<>());
   @NotNull private final MessageReporter myMessageReporter;
 
   public TasksFactory(@NotNull ModelBuilderContext context) {
     myMessageReporter = context;
   }
 
-  private void collectTasks(Project root) {
-    allTasks.putAll(getAllTasks(root));
+  private void collectTasks(Project project) {
+    Project rootProject = project.getRootProject();
+    if (processedRootProjects.add(rootProject)) {
+      allTasks.putAll(getAllTasks(rootProject));
+    }
   }
 
   @NotNull
@@ -72,26 +75,20 @@ public class TasksFactory {
   }
 
   public Set<Task> getTasks(Project project) {
-    Project rootProject = project.getRootProject();
-    if (processedRootProjects.add(rootProject)) {
-      collectTasks(rootProject);
-    }
+    collectTasks(project);
 
-    Set<Task> tasks = new LinkedHashSet<>(getTasksNullsafe(project));
+    Set<Task> result = new LinkedHashSet<>();
+    Set<Task> projectTasks = allTasks.get(project);
+    if (projectTasks != null) {
+      result.addAll(projectTasks);
+    }
     for (Project subProject : project.getSubprojects()) {
-      tasks.addAll(getTasksNullsafe(subProject));
+      Set<Task> subProjectTasks = allTasks.get(subProject);
+      if (subProjectTasks != null) {
+        result.addAll(subProjectTasks);
+      }
     }
-    return tasks;
-  }
-
-  private Set<Task> getTasksNullsafe(Project project) {
-    Set<Task> tasks = allTasks.get(project);
-    if (tasks != null) {
-      return tasks;
-    }
-    else {
-      return Collections.emptySet();
-    }
+    return result;
   }
 
   private static void maybeRefreshTasks(Project project) {
