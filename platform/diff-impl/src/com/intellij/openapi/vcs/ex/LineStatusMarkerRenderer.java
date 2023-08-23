@@ -50,7 +50,7 @@ public abstract class LineStatusMarkerRenderer {
   @NotNull private final MergingUpdateQueue myUpdateQueue;
   private boolean myDisposed;
   @NotNull private RangeHighlighter myHighlighter;
-  @NotNull private final List<RangeHighlighter> myTooltipHighlighters = new ArrayList<>();
+  @NotNull private final List<RangeHighlighter> myErrorStripeHighlighters = new ArrayList<>();
 
   LineStatusMarkerRenderer(@NotNull LineStatusTrackerI<?> tracker) {
     myTracker = tracker;
@@ -120,17 +120,22 @@ public abstract class LineStatusMarkerRenderer {
         if (editor instanceof EditorEx) ((EditorEx)editor).getGutterComponentEx().repaint();
       });
 
+    updateErrorStripeHighlighters();
+  }
+
+  @RequiresEdt
+  private void updateErrorStripeHighlighters() {
     List<? extends Range> ranges = shouldPaintErrorStripeMarkers() ? myTracker.getRanges() : null;
     if (ContainerUtil.isEmpty(ranges)) {
-      for (RangeHighlighter highlighter : myTooltipHighlighters) {
+      for (RangeHighlighter highlighter : myErrorStripeHighlighters) {
         disposeHighlighter(highlighter);
       }
-      myTooltipHighlighters.clear();
+      myErrorStripeHighlighters.clear();
       return;
     }
 
     MarkupModelEx markupModel = (MarkupModelEx)DocumentMarkupModel.forDocument(myTracker.getDocument(), myTracker.getProject(), true);
-    PeekableIterator<RangeHighlighter> highlighterIt = new PeekableIteratorWrapper<>(myTooltipHighlighters.iterator());
+    PeekableIterator<RangeHighlighter> highlighterIt = new PeekableIteratorWrapper<>(myErrorStripeHighlighters.iterator());
     List<RangeHighlighter> newHighlighters = new ArrayList<>();
     List<RangeHighlighter> oldHighlighters = new ArrayList<>();
 
@@ -153,7 +158,7 @@ public abstract class LineStatusMarkerRenderer {
         highlighterIt.next();
       }
       else {
-        newHighlighters.add(createTooltipRangeHighlighter(markupModel, textRange, range.getType()));
+        newHighlighters.add(createErrorStripeHighlighter(markupModel, textRange, range.getType()));
       }
     }
 
@@ -164,12 +169,12 @@ public abstract class LineStatusMarkerRenderer {
     for (RangeHighlighter highlighter : oldHighlighters) {
       disposeHighlighter(highlighter);
     }
-    myTooltipHighlighters.clear();
-    myTooltipHighlighters.addAll(newHighlighters);
+    myErrorStripeHighlighters.clear();
+    myErrorStripeHighlighters.addAll(newHighlighters);
   }
 
   @NotNull
-  private RangeHighlighter createTooltipRangeHighlighter(@NotNull MarkupModelEx markupModel, @NotNull TextRange textRange, byte diffType) {
+  private RangeHighlighter createErrorStripeHighlighter(@NotNull MarkupModelEx markupModel, @NotNull TextRange textRange, byte diffType) {
     return markupModel.addRangeHighlighterAndChangeAttributes(null, textRange.getStartOffset(), textRange.getEndOffset(),
                                                               DiffDrawUtil.LST_LINE_MARKER_LAYER,
                                                               HighlighterTargetArea.LINES_IN_RANGE,
@@ -195,10 +200,10 @@ public abstract class LineStatusMarkerRenderer {
 
     disposeHighlighter(myHighlighter);
 
-    for (RangeHighlighter highlighter : myTooltipHighlighters) {
+    for (RangeHighlighter highlighter : myErrorStripeHighlighters) {
       disposeHighlighter(highlighter);
     }
-    myTooltipHighlighters.clear();
+    myErrorStripeHighlighters.clear();
   }
 
   private static void disposeHighlighter(@NotNull RangeHighlighter highlighter) {
@@ -254,10 +259,16 @@ public abstract class LineStatusMarkerRenderer {
     return LineStatusMarkerDrawUtil.calcBounds(ranges, editor, lineNum);
   }
 
+  /**
+   * @return true if gutter markers should be painted, false otherwise
+   */
   protected boolean shouldPaintGutter() {
     return true;
   }
 
+  /**
+   * @return true if markers in the error stripe (near the scrollbar) should be painted, false otherwise
+   */
   protected boolean shouldPaintErrorStripeMarkers() {
     return shouldPaintGutter();
   }
