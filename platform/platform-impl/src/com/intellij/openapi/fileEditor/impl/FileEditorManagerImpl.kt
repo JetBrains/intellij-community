@@ -1425,6 +1425,11 @@ open class FileEditorManagerImpl(
         return clientFileEditorManager?.getAllFiles() ?: emptyList()
       }
 
+      return locallyOpenedFiles
+    }
+
+  private val locallyOpenedFiles: List<VirtualFile>
+    get() {
       val files = ArrayList<VirtualFile>()
       for (composite in openedComposites) {
         val file = composite.file
@@ -1436,7 +1441,7 @@ open class FileEditorManagerImpl(
     }
 
   override fun getOpenFilesWithRemotes(): List<VirtualFile> {
-    val result = openedFiles.toMutableList()
+    val result = locallyOpenedFiles.toMutableList()
     for (m in allClientFileEditorManagers) {
       result.addAll(m.getAllFiles())
     }
