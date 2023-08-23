@@ -50,6 +50,7 @@ import javax.swing.JComponent
 import javax.swing.JFrame
 import javax.swing.JPanel
 import kotlin.math.max
+import kotlin.math.min
 
 private const val MAIN_TOOLBAR_ID = IdeActions.GROUP_MAIN_TOOLBAR_NEW_UI
 
@@ -327,6 +328,14 @@ private class MyActionToolbarImpl(group: ActionGroup, customizationGroup: Action
       val rect = bounds[i]
       fitRectangle(prevRect, rect, getComponent(i), size2Fit.height)
     }
+  }
+
+  override fun getChildPreferredSize(index: Int): Dimension {
+    val pref = super.getChildPreferredSize(index)
+
+    val cmp = getComponent(index)
+    val max = cmp.getMaximumSize()
+    return Dimension(min(pref.width, max.width), min(pref.height, max.height))
   }
 
   private fun fitRectangle(prevRect: Rectangle?, currRect: Rectangle, cmp: Component, toolbarHeight: Int) {

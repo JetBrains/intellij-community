@@ -7,7 +7,6 @@ import com.intellij.icons.AllIcons
 import com.intellij.icons.ExpUiIcons
 import com.intellij.ide.ui.customization.CustomActionsSchema
 import com.intellij.ide.ui.customization.groupContainsAction
-import com.intellij.ide.ui.laf.darcula.ui.ToolbarComboWidgetUI
 import com.intellij.ide.util.PropertiesComponent
 import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.project.Project
@@ -19,7 +18,8 @@ import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.vcs.ProjectLevelVcsManager
 import com.intellij.openapi.wm.impl.ExpandableComboAction
-import com.intellij.openapi.wm.impl.ToolbarComboWidget
+import com.intellij.openapi.wm.impl.ToolbarComboButton
+import com.intellij.ui.util.maximumWidth
 import git4idea.GitUtil
 import git4idea.GitVcs
 import git4idea.branch.GitBranchIncomingOutgoingManager
@@ -67,13 +67,11 @@ internal class GitToolbarWidgetAction : ExpandableComboAction() {
   }
 
   override fun createCustomComponent(presentation: Presentation, place: String): JComponent {
-    val component = super.createCustomComponent(presentation, place)
-    (component.ui as? ToolbarComboWidgetUI)?.setMaxWidth(Int.MAX_VALUE)
-    return component
+    return super.createCustomComponent(presentation, place).apply { maximumWidth = Int.MAX_VALUE }
   }
 
   override fun updateCustomComponent(component: JComponent, presentation: Presentation) {
-    val widget = component as? ToolbarComboWidget ?: return
+    val widget = component as? ToolbarComboButton ?: return
     widget.text = presentation.text
     widget.toolTipText = presentation.description
     widget.leftIcons = listOfNotNull(presentation.icon)

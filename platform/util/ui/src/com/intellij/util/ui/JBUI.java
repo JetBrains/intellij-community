@@ -1184,8 +1184,16 @@ public final class JBUI {
 
       public static final class Dropdown {
 
+        /**
+         * @deprecated This method supposed to be used for deprecated ToolbarComboWidget only.
+         */
+        @Deprecated
         public static @NotNull Insets borderInsets() {
           return insets("MainToolbar.Dropdown.borderInsets", isNewUI() ? insets(5, 10, 5, 6) : insets(3, 5));
+        }
+
+        public static @NotNull Insets margin() {
+          return borderInsets();
         }
 
         public static @NotNull JBValue hoverArc() {
@@ -1195,8 +1203,23 @@ public final class JBUI {
 
       public static final class SplitDropdown {
 
+        /**
+         * @deprecated This method supposed to be used for deprecated ToolbarComboWidget only.
+         */
+        @Deprecated
         public static @NotNull Insets borderInsets() {
           return insets("MainToolbar.SplitDropdown.borderInsets", isNewUI() ? insets(5, 5, 5, 3) : insets(3, 5));
+        }
+
+        @NotNull public static Insets separatorMargin() {
+          return insets("MainToolbar.SplitDropdown.separatorMargin", insets(5, 3));
+        }
+
+        @NotNull public static Insets leftPartMargin() {
+          return insets("MainToolbar.SplitDropdown.leftPartMargin", insets(3, 7));
+        }
+        @NotNull public static Insets rightPartMargin() {
+          return insets("MainToolbar.SplitDropdown.rightPartMargin", insets(3, 3));
         }
       }
 

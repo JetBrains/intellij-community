@@ -573,15 +573,21 @@ public class AbstractPopup implements JBPopup, ScreenAreaConsumer, AlignedPopup 
   }
 
   private static int calcHorizontalAlignment(JComponent jcomp) {
-    int componentLeftInset = jcomp.getInsets().left;
-    int popupLeftInset = JBUI.CurrentTheme.Popup.Selection.LEFT_RIGHT_INSET.get() + JBUI.CurrentTheme.Popup.Selection.innerInsets().left;
-    int res = componentLeftInset - popupLeftInset;
-    if (jcomp instanceof AbstractButton button) {
-      Insets margin = button.getMargin();
-      if (margin != null) {
-        res += margin.left;
+    int componentLeftInset;
+    if (jcomp instanceof PopupAlignableComponent pac) {
+      componentLeftInset = pac.getLeftGap();
+    }
+    else {
+      componentLeftInset = jcomp.getInsets().left;
+      if (jcomp instanceof AbstractButton button) {
+        Insets margin = button.getMargin();
+        if (margin != null) {
+          componentLeftInset += margin.left;
+        }
       }
     }
+    int popupLeftInset = JBUI.CurrentTheme.Popup.Selection.LEFT_RIGHT_INSET.get() + JBUI.CurrentTheme.Popup.Selection.innerInsets().left;
+    int res = componentLeftInset - popupLeftInset;
     return res;
   }
 

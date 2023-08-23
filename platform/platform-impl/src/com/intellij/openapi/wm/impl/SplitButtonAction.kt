@@ -9,16 +9,19 @@ import com.intellij.openapi.actionSystem.ex.CustomComponentAction
 import com.intellij.openapi.ui.popup.JBPopup
 import com.intellij.openapi.ui.popup.JBPopupListener
 import com.intellij.openapi.ui.popup.LightweightWindowEvent
+import java.awt.event.ActionEvent
 import javax.swing.JComponent
 
-abstract class ExpandableComboAction : AnAction(), CustomComponentAction {
+abstract class SplitButtonAction : AnAction(), CustomComponentAction {
+
   override fun createCustomComponent(presentation: Presentation, place: String): JComponent {
     val model = MyPopupModel()
-    model.addActionListener { actionEvent ->
-      val combo = (actionEvent.source as? ToolbarComboButton) ?: return@addActionListener
+    model.addActionListener { actionEvent -> buttonPressed(actionEvent, actionEvent.source as JComponent, presentation, place) }
+    model.addExpandListener { actionEvent ->
+      val combo = (actionEvent.source as? ToolbarSplitButton) ?: return@addExpandListener
       val dataContext = DataManager.getInstance().getDataContext(combo)
       val anActionEvent = AnActionEvent.createFromDataContext(place, presentation, dataContext)
-      val popup = createPopup(anActionEvent) ?: return@addActionListener
+      val popup = createPopup(anActionEvent) ?: return@addExpandListener
       popup.addListener(object : JBPopupListener {
         override fun beforeShown(event: LightweightWindowEvent) {
           model.isPopupShown = true
@@ -30,20 +33,23 @@ abstract class ExpandableComboAction : AnAction(), CustomComponentAction {
       })
       popup.showUnderneathOf(combo)
     }
-    return ToolbarComboButton(model)
+    return ToolbarSplitButton(model)
   }
 
   protected abstract fun createPopup(event: AnActionEvent): JBPopup?
 
-  override fun actionPerformed(e: AnActionEvent) {
-    e.project?.let { createPopup(e)?.showCenteredInCurrentWindow(it) }
+  protected open fun buttonPressed(event: ActionEvent, widget: JComponent, presentation: Presentation, place: String) {
+    val dataContext = DataManager.getInstance().getDataContext(widget)
+    val anActionEvent = AnActionEvent.createFromDataContext(place, presentation, dataContext)
+    actionPerformed(anActionEvent)
   }
 
-  private class MyPopupModel: DefaultToolbarComboButtonModel() {
+  private class MyPopupModel: DefaultToolbarSplitButtonModel() {
     var isPopupShown: Boolean = false
 
-    override fun isSelected(): Boolean {
-      return super.isSelected() || isPopupShown
+    override fun isExpandButtonSelected(): Boolean {
+      return super.isExpandButtonSelected() || isPopupShown
     }
   }
+
 }

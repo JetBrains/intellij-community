@@ -544,6 +544,14 @@
       "UI": "com.intellij.ide.ui.laf.darcula.ui.ToolbarComboWidgetUI"
     },
 
+    "ToolbarComboButton": {
+      "UI": "com.intellij.ide.ui.laf.darcula.ui.ToolbarComboButtonUI"
+    },
+
+    "ToolbarSplitButton": {
+      "UI": "com.intellij.ide.ui.laf.darcula.ui.ToolbarSplitButtonUI"
+    },
+
     "TitlePane.Button.preferredSize": "47,28",
 
     "activeCaption": "#434E60",
