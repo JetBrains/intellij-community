@@ -7,6 +7,7 @@ import com.intellij.collaboration.ui.codereview.details.model.CodeReviewChangesC
 import com.intellij.collaboration.ui.codereview.details.model.CodeReviewChangesViewModel
 import com.intellij.collaboration.ui.codereview.details.model.CodeReviewChangesViewModelDelegate
 import com.intellij.collaboration.util.REVISION_COMPARISON_CHANGE_HASHING_STRATEGY
+import com.intellij.collaboration.util.ResultUtil.runCatchingUser
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.project.Project
@@ -46,7 +47,7 @@ internal class GitLabMergeRequestChangesViewModelImpl(
 
   @OptIn(ExperimentalCoroutinesApi::class)
   private val changesContainer: Flow<Result<CodeReviewChangesContainer>> = mergeRequest.changes.mapLatest {
-    runCatching {
+    runCatchingUser {
       val changes = it.getParsedChanges()
       CodeReviewChangesContainer(changes.changes, changes.commits.map { it.sha }, changes.changesByCommits)
     }

@@ -7,6 +7,7 @@ import com.intellij.collaboration.api.page.SequentialListLoader
 import com.intellij.collaboration.async.mapScoped
 import com.intellij.collaboration.async.withInitial
 import com.intellij.collaboration.messages.CollaborationToolsBundle
+import com.intellij.collaboration.util.ResultUtil.runCatchingUser
 import com.intellij.openapi.project.Project
 import com.intellij.util.childScope
 import kotlinx.coroutines.CoroutineScope
@@ -86,7 +87,7 @@ class CachingGitLabProjectMergeRequestsStore(private val project: Project,
         .filter { requestedId -> requestedId == iid }
         .withInitial(iid)
         .mapScoped { mrId ->
-          runCatching {
+          runCatchingUser {
             // TODO: create from cached details
             val cs = this
             val mrData = loadMergeRequest(mrId)
