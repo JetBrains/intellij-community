@@ -418,7 +418,15 @@
       </xs:annotation>
     </xs:attribute>
     <xs:attribute type="xs:string" name="download-url"/>
-    <xs:attribute type="xs:string" name="builtin-url"/>
+    <xs:attribute type="xs:string" name="builtin-url">
+      <xs:annotation>
+        <xs:documentation>
+          Deprecated since 2023.3. 
+          Use 'intellij.plugins.custom.built.in.repository.url' system property to pass URL of built-in custom plugin repository instead.
+        </xs:documentation>
+        <xs:documentation>deprecated</xs:documentation>
+      </xs:annotation>
+    </xs:attribute>
   </xs:complexType>
   <xs:complexType name="keymapType">
     <xs:attribute type="xs:string" name="win" use="required"/>

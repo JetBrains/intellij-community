@@ -79,6 +79,12 @@ public abstract class ApplicationInfoEx extends ApplicationInfo {
 
   public abstract String getPluginsDownloadUrl();
 
+  /**
+   * @deprecated use {@link com.intellij.ide.plugins.RepositoryHelper#CUSTOM_BUILT_IN_PLUGIN_REPOSITORY_PROPERTY} system property to pass
+   * URL of the built-in custom plugin repository instead
+   */
+  @SuppressWarnings("DeprecatedIsStillUsed")
+  @Deprecated
   public abstract String getBuiltinPluginsUrl();
 
   public abstract String getWebHelpUrl();

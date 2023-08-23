@@ -16,14 +16,12 @@ import com.intellij.notification.NotificationType;
 import com.intellij.notification.Notifications;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
-import com.intellij.openapi.application.ex.ApplicationInfoEx;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.PluginId;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.ui.MessageDialogBuilder;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.updateSettings.impl.PluginDownloader;
-import com.intellij.openapi.updateSettings.impl.UpdateSettings;
 import com.intellij.openapi.util.ActionCallback;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.registry.Registry;
@@ -152,17 +150,17 @@ public final class PluginInstallOperation {
     }
     if (!unknownNodes) return;
 
-    List<String> hosts = new SmartList<>();
-    ContainerUtil.addIfNotNull(hosts, ApplicationInfoEx.getInstanceEx().getBuiltinPluginsUrl());
-    hosts.addAll(UpdateSettings.getInstance().getPluginHosts());
+    List<String> hosts = RepositoryHelper.getPluginHosts();
     Map<PluginId, PluginNode> allPlugins = new HashMap<>();
     for (String host : hosts) {
-      try {
-        for (PluginNode descriptor : RepositoryHelper.loadPlugins(host, null, myIndicator)) {
-          allPlugins.put(descriptor.getPluginId(), descriptor);
+      if (host != null) {
+        try {
+          for (PluginNode descriptor : RepositoryHelper.loadPlugins(host, null, myIndicator)) {
+            allPlugins.put(descriptor.getPluginId(), descriptor);
+          }
         }
-      }
-      catch (IOException ignored) {
+        catch (IOException ignored) {
+        }
       }
     }
 
