@@ -121,6 +121,16 @@ public final class MavenProjectReader {
       return new RawModelReadResult(result, problems, alwaysOnProfiles);
     }
 
+    return readMavenProjectModel(file, headerOnly, problems, alwaysOnProfiles, MavenConsumerPomUtil.isAutomaticVersionFeatureEnabled(file, myProject));
+  }
+
+  @NotNull
+  private static RawModelReadResult readMavenProjectModel(VirtualFile file,
+                                                          boolean headerOnly,
+                                                          Collection<MavenProjectProblem> problems,
+                                                          Set<String> alwaysOnProfiles,
+                                                          boolean isAutomaticVersionFeatureEnabled) {
+    MavenModel result;
     result = new MavenModel();
     Element xmlProject = readXml(file, problems, MavenProjectProblem.ProblemType.SYNTAX);
     if (xmlProject == null || !"project".equals(xmlProject.getName())) {
@@ -132,7 +142,7 @@ public final class MavenProjectReader {
     if (MavenJDOMUtil.hasChildByPath(xmlProject, "parent")) {
       parent = new MavenParent(new MavenId(MavenJDOMUtil.findChildValueByPath(xmlProject, "parent.groupId", UNKNOWN),
                                            MavenJDOMUtil.findChildValueByPath(xmlProject, "parent.artifactId", UNKNOWN),
-                                           calculateParentVersion(xmlProject, problems, file)),
+                                           calculateParentVersion(xmlProject, problems, file, isAutomaticVersionFeatureEnabled)),
                                MavenJDOMUtil.findChildValueByPath(xmlProject, "parent.relativePath", "../pom.xml"));
       result.setParent(parent);
     }
@@ -156,11 +166,13 @@ public final class MavenProjectReader {
   }
 
   @NotNull
-  private String calculateParentVersion(Element xmlProject,
+  private static String calculateParentVersion(
+    Element xmlProject,
                                         Collection<MavenProjectProblem> problems,
-                                        VirtualFile file) {
+    VirtualFile file,
+    boolean isAutomaticVersionFeatureEnabled) {
     String version = MavenJDOMUtil.findChildValueByPath(xmlProject, "parent.version");
-    if (version != null || !MavenConsumerPomUtil.isAutomaticVersionFeatureEnabled(file, myProject)) {
+    if (version != null || !isAutomaticVersionFeatureEnabled) {
       return StringUtil.notNullize(version, UNKNOWN);
     }
     String parentGroupId = MavenJDOMUtil.findChildValueByPath(xmlProject, "parent.groupId");
@@ -185,7 +197,7 @@ public final class MavenProjectReader {
     if (version != null) {
       return version;
     }
-    return calculateParentVersion(parentXmlProject, problems, parentFile);
+    return calculateParentVersion(parentXmlProject, problems, parentFile, isAutomaticVersionFeatureEnabled);
   }
 
   private void repairModelBody(MavenModel model) {
@@ -226,7 +238,7 @@ public final class MavenProjectReader {
     return new MavenResource(directory, false, null, Collections.emptyList(), Collections.emptyList());
   }
 
-  private List<MavenProfile> collectProfiles(VirtualFile projectFile,
+  private static List<MavenProfile> collectProfiles(VirtualFile projectFile,
                                              Element xmlProject,
                                              Collection<MavenProjectProblem> problems,
                                              Set<String> alwaysOnProfiles) {
@@ -279,7 +291,7 @@ public final class MavenProjectReader {
     alwaysOnProfiles.addAll(mySettingsProfilesCache.alwaysOnProfiles);
   }
 
-  private void collectProfilesFromSettingsXmlOrProfilesXml(VirtualFile profilesFile,
+  private static void collectProfilesFromSettingsXmlOrProfilesXml(VirtualFile profilesFile,
                                                            String rootElementName,
                                                            boolean wrapRootIfNecessary,
                                                            String profilesSource,
@@ -301,7 +313,7 @@ public final class MavenProjectReader {
     alwaysOnProfiles.addAll(MavenJDOMUtil.findChildrenValuesByPath(rootElement, "activeProfiles", "activeProfile"));
   }
 
-  private void collectProfiles(List<Element> xmlProfiles, List<MavenProfile> result, String source) {
+  private static void collectProfiles(List<Element> xmlProfiles, List<MavenProfile> result, String source) {
     for (Element each : xmlProfiles) {
       String id = MavenJDOMUtil.findChildValueByPath(each, "id");
       if (isEmptyOrSpaces(id)) continue;
@@ -346,7 +358,7 @@ public final class MavenProjectReader {
     }
   }
 
-  private boolean addProfileIfDoesNotExist(MavenProfile profile, List<MavenProfile> result) {
+  private static boolean addProfileIfDoesNotExist(MavenProfile profile, List<MavenProfile> result) {
     for (MavenProfile each : result) {
       if (Objects.equals(each.getId(), profile.getId())) return false;
     }
