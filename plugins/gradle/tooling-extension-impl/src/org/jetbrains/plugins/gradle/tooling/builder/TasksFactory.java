@@ -9,10 +9,17 @@ import org.gradle.util.GradleVersion;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.gradle.tooling.MessageBuilder;
 import org.jetbrains.plugins.gradle.tooling.MessageReporter;
+import org.jetbrains.plugins.gradle.tooling.ModelBuilderContext;
+import org.jetbrains.plugins.gradle.tooling.ModelBuilderContext.DataProvider;
 
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 
+/**
+ * Provides fast access to the {@link Project}'s tasks.
+ *
+ * @see TasksFactory#getTasks(Project)
+ */
 public class TasksFactory {
   private static final boolean TASKS_REFRESH_REQUIRED =
     GradleVersion.current().getBaseVersion().compareTo(GradleVersion.version("5.0")) < 0;
@@ -98,5 +105,12 @@ public class TasksFactory {
         }
       }
     }
+  }
+
+  private static final @NotNull DataProvider<TasksFactory> INSTANCE_PROVIDER =
+    (__, messageReporter) -> new TasksFactory(messageReporter);
+
+  public static @NotNull TasksFactory getInstance(@NotNull ModelBuilderContext context) {
+    return context.getData(INSTANCE_PROVIDER);
   }
 }

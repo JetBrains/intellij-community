@@ -40,10 +40,10 @@ import java.lang.reflect.InvocationTargetException
 import java.lang.reflect.Method
 import java.nio.file.Path
 
-import static org.jetbrains.plugins.gradle.tooling.builder.ModelBuildersDataProviders.TASKS_PROVIDER
 import static org.jetbrains.plugins.gradle.tooling.util.ReflectionUtil.dynamicCheckInstanceOf
 import static org.jetbrains.plugins.gradle.tooling.util.ReflectionUtil.reflectiveGetProperty
 import static org.jetbrains.plugins.gradle.tooling.util.StringUtils.toCamelCase
+
 /**
  * @author Vladislav.Soroka
  */
@@ -69,15 +69,13 @@ class ExternalProjectBuilderImpl extends AbstractModelBuilderService {
     if (System.properties.'idea.internal.failEsModelBuilder' as boolean) {
       throw new RuntimeException("Boom!")
     }
-    def tasksFactory = context.getData(TASKS_PROVIDER)
-    return buildExternalProject(project, context, tasksFactory)
+    return buildExternalProject(project, context)
   }
 
   @NotNull
   private static DefaultExternalProject buildExternalProject(
     @NotNull Project project,
-    @NotNull ModelBuilderContext context,
-    @NotNull TasksFactory tasksFactory
+    @NotNull ModelBuilderContext context
   ) {
     DefaultExternalProject externalProject = new DefaultExternalProject()
     externalProject.externalSystemId = "GRADLE"
@@ -110,7 +108,7 @@ class ExternalProjectBuilderImpl extends AbstractModelBuilderService {
     externalProject.group = wrap(project.group)
     externalProject.projectDir = project.projectDir
     externalProject.sourceSets = getSourceSets(project, context)
-    externalProject.tasks = getTasks(project, tasksFactory)
+    externalProject.tasks = getTasks(project, context)
     externalProject.sourceCompatibility = getSourceCompatibility(project)
     externalProject.targetCompatibility = getTargetCompatibility(project)
 
@@ -157,9 +155,10 @@ class ExternalProjectBuilderImpl extends AbstractModelBuilderService {
     externalProject.setArtifactsByConfiguration(artifactsByConfiguration)
   }
 
-  static Map<String, DefaultExternalTask> getTasks(Project project, TasksFactory tasksFactory) {
+  static Map<String, DefaultExternalTask> getTasks(@NotNull Project project, @NotNull ModelBuilderContext context) {
     def result = [:] as Map<String, DefaultExternalTask>
 
+    def tasksFactory = TasksFactory.getInstance(context)
     for (Task task in tasksFactory.getTasks(project)) {
       DefaultExternalTask externalTask = result.get(task.name)
       if (externalTask == null) {
