@@ -68,9 +68,6 @@
     <applicationService serviceInterface="com.intellij.workspaceModel.ide.legacyBridge.sdk.GlobalSdkTableBridge"
                         serviceImplementation="com.intellij.workspaceModel.ide.impl.legacyBridge.sdk.GlobalSdkBridgesLoader"/>
 
-    <!--<workspaceModel.sdk.implementation.delegate implementation="com.intellij.openapi.projectRoots.impl.LegacyProjectJdkTableDelegate"/>-->
-    <!--<workspaceModel.sdk.implementation.delegate implementation="com.intellij.workspaceModel.ide.impl.legacyBridge.sdk.SdkTableBridgeImpl"/>-->
-
     <postStartupActivity implementation="com.intellij.openapi.projectRoots.impl.UnknownSdkStartupChecker"/>
     <commandLineInspectionProjectConfigurator implementation="com.intellij.openapi.projectRoots.impl.UnknownSdkInspectionCommandLineConfigurator"/>
     <registryKey key="unknown.sdk" defaultValue="true" description="Check for unknown SDKs and provide automatic fixes or smart suggestions"/>
@@ -86,8 +83,6 @@
     <applicationService serviceImplementation="com.intellij.codeInsight.TargetElementUtil"/>
     <applicationService serviceInterface="com.intellij.profile.codeInspection.InspectionProfileManager"
                         serviceImplementation="com.intellij.codeInspection.ex.ApplicationInspectionProfileManager"/>
-
-    <exportable serviceInterface="com.intellij.openapi.projectRoots.ProjectJdkTable"/>
 
     <projectOpenProcessor implementation="com.intellij.platform.PlatformProjectOpenProcessor" order="last"/>
 
