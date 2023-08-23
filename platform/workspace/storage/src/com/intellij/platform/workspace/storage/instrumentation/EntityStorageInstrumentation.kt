@@ -88,6 +88,10 @@ internal val EntityStorage.instrumentation: EntityStorageInstrumentation
   get() = this as EntityStorageInstrumentation
 
 @EntityStorageInstrumentationApi
+internal val EntityStorageSnapshot.instrumentation: EntityStorageSnapshotInstrumentation
+  get() = this as EntityStorageSnapshotInstrumentation
+
+@EntityStorageInstrumentationApi
 internal val MutableEntityStorage.instrumentation: MutableEntityStorageInstrumentation
   get() {
     check(this is MutableEntityStorageInstrumentation) {
