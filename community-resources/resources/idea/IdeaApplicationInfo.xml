@@ -10,7 +10,5 @@
   <essential-plugin>com.intellij.java</essential-plugin>
   <essential-plugin>com.intellij.java.ide</essential-plugin>
 
-  <plugins url="https://plugins.jetbrains.com/"/>
-
   <whatsnew show-on-update="true"/>
 </component>

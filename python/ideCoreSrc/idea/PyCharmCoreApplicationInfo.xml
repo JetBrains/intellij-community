@@ -12,7 +12,6 @@
   <essential-plugin>PythonCore</essential-plugin>
   <essential-plugin>com.jetbrains.pycharm.community.customization</essential-plugin>
 
-  <plugins url="https://plugins.jetbrains.com/"/>
   <update-urls check="https://www.jetbrains.com/updates/updates.xml"
                patches="https://download.jetbrains.com/python/"/>
 
