@@ -112,8 +112,10 @@ object ImageLoader {
     return loadCustomIcon(url = file.toURI().toURL())
   }
 
+  @Suppress("unused")
+  @Deprecated("Do not use")
   class Dimension2DDouble(var width: Double, var height: Double) {
-    fun setSize(size: Dimension2DDouble) {
+    fun setSize(@Suppress("DEPRECATION") size: Dimension2DDouble) {
       width = size.width
       height = size.height
     }
