@@ -167,9 +167,6 @@ class PluginAdvertiserExtensionsStateService : SerializablePersistentStateCompon
     }
 
     private fun getByFilenameOrExt(fileNameOrExtension: String): PluginAdvertiserExtensionsData? {
-      val existing = cache.getIfPresent(fileNameOrExtension)
-      if (existing != null) return existing
-
       return state.plugins[fileNameOrExtension]?.let {
         PluginAdvertiserExtensionsData(fileNameOrExtension, setOf(it))
       }
