@@ -1671,8 +1671,25 @@ final class EditorGutterComponentImpl extends EditorGutterComponentEx implements
     return Math.max(width / 5, scale(2));
   }
 
+  /**
+   * Scale the value by BOTH user scale and editor line height scale
+   */
   private double scale(double v) {
     return JBUIScale.scale((float)v) * myEditor.getScale();
+  }
+
+  /**
+   * Scale the value by editor line height scale
+   */
+  private int scaleWithEditor(int v) {
+    return RoundingMode.ROUND.round(v * myEditor.getScale());
+  }
+
+  /**
+   * Scale the value by editor line height scale
+   */
+  private int scaleWithEditor(float v) {
+    return RoundingMode.ROUND.round(v * myEditor.getScale());
   }
 
   private int getFoldingAnchorWidth() {
@@ -1839,7 +1856,7 @@ final class EditorGutterComponentImpl extends EditorGutterComponentEx implements
   }
 
   int getExtraLeftFreePaintersAreaWidth() {
-    return (int)scale(FREE_PAINTERS_EXTRA_LEFT_AREA_WIDTH.get());
+    return scaleWithEditor(FREE_PAINTERS_EXTRA_LEFT_AREA_WIDTH.getFloat());
   }
 
   int getLeftFreePaintersAreaWidth() {
@@ -1847,7 +1864,7 @@ final class EditorGutterComponentImpl extends EditorGutterComponentEx implements
     if (myForcedLeftFreePaintersAreaWidth >= 0) return myForcedLeftFreePaintersAreaWidth;
 
     if (ExperimentalUI.isNewUI()) {
-      return (int)scale(FREE_PAINTERS_LEFT_AREA_WIDTH.get()) + 2;
+      return scaleWithEditor(FREE_PAINTERS_LEFT_AREA_WIDTH.get()) + 2;
     }
     return FREE_PAINTERS_LEFT_AREA_WIDTH.get();
   }
@@ -1862,7 +1879,9 @@ final class EditorGutterComponentImpl extends EditorGutterComponentEx implements
 
     int width = FREE_PAINTERS_RIGHT_AREA_WIDTH.get();
     if (ExperimentalUI.isNewUI() && width != 0) {
-      return (int)Math.max(width, scale(JBUI.getInt("Gutter.VcsChanges.width", 4)) + JBUI.scale(5));
+      int changesWidth = RoundingMode.ROUND
+        .round(scale(JBUI.getInt("Gutter.VcsChanges.width", 4)) + JBUI.scale(5));
+      return Math.max(width, changesWidth);
     }
     return width;
   }
