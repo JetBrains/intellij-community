@@ -352,6 +352,9 @@
     <action id="Git.Stage.Merge" class="git4idea.index.actions.GitStageMergeConflictAction"/>
     <action id="Git.Stage.ThreeSideDiff" class="git4idea.index.actions.GitStageThreeSideDiffAction"/>
     <action id="Git.Stage.ToggleIgnored" class="git4idea.index.actions.GitToggleIgnoredFilesAction"/>
+    <action id="Git.Stage.ToggleCommitAll" class="git4idea.index.actions.GitToggleCommitAllAction">
+      <add-to-group group-id="CommitView.GearActions"/>
+    </action>
     <action id="Git.Stage.Add.All" class="git4idea.index.actions.GitStageAllAction"/>
     <action id="Git.Stage.Add.Tracked" class="git4idea.index.actions.GitStageTrackedAction" icon="AllIcons.General.Add"/>
     <action id="Git.Stage.Show.Staged" class="git4idea.index.actions.GitShowStagedVersionAction"/>
@@ -580,7 +583,8 @@
     <registryKey key="git.stage.navigate.to.index.file" defaultValue="false"
                  description="Navigate to the staging area content from diff instead of the local file" />
     <registryKey key="git.stage.enable.commit.all" defaultValue="true"
-                 description="When no changes are staged, stage and commit all changes in the project"/>
+                 description="Deprecated. Use the option in the Commit tool window 'Options' menu.
+                 When no changes are staged, stage and commit all changes in the project"/>
     <registryKey key="git.branches.panel.persist.tree.state" defaultValue="true"
                  description="Persist branches panel tree state between restarts"/>
     <registryKey key="git.branches.tree.popup.expand.node.on.single.click" defaultValue="true"
