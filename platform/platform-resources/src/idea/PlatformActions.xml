@@ -738,7 +738,7 @@
         <action id="CreateLauncherScript" class="com.intellij.ide.actions.CreateLauncherScriptAction"/>
         <action id="CreateDesktopEntry" class="com.intellij.ide.actions.CreateDesktopEntryAction"/>
         <separator/>
-        <group id="OtherMenu" class="com.intellij.ide.actions.NonEmptyActionGroup"/>
+        <group id="OtherMenu"/>
       </group>
 
       <group id="WindowMenu" popup="true">
