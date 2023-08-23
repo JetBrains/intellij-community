@@ -462,9 +462,6 @@ public final class FileHistoryPanelImpl extends JPanel implements DataProvider, 
     else if (VcsDataKeys.FILE_PATH.is(dataId)) {
       return myFilePath;
     }
-    else if (VcsDataKeys.IO_FILE.is(dataId)) {
-      return myFilePath.getIOFile();
-    }
     else if (CommonDataKeys.VIRTUAL_FILE.is(dataId)) {
       VirtualFile virtualFile = myFilePath.getVirtualFile();
       return virtualFile == null || !virtualFile.isValid() ? null : virtualFile;

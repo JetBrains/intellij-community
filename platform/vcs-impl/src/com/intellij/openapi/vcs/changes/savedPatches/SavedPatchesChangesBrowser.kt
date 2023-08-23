@@ -170,10 +170,9 @@ class SavedPatchesChangesBrowser(project: Project,
         .filterNotNull()
         .toList().toTypedArray()
     }
-    else if (VcsDataKeys.IO_FILE_ARRAY.`is`(dataId)) {
+    else if (VcsDataKeys.FILE_PATHS.`is`(dataId)) {
       return VcsTreeModelData.selected(myViewer).iterateUserObjects(SavedPatchesProvider.ChangeObject::class.java)
-        .map { it.filePath.ioFile }
-        .toList().toTypedArray()
+        .map { it.filePath }
     }
     else if (CommonDataKeys.NAVIGATABLE_ARRAY.`is`(dataId)) {
       val virtualFiles = VcsTreeModelData.selected(myViewer).iterateUserObjects(SavedPatchesProvider.ChangeObject::class.java)
