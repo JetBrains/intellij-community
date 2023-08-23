@@ -26,6 +26,12 @@ class InlayEditorMouseListener : EditorMouseListener {
     }
   }
 
+  override fun mouseReleased(e: EditorMouseEvent) {
+    handleMouseAction(e) { event, translated ->
+      mouseReleased(event, translated)
+    }
+  }
+
   private fun handleMouseAction(e: EditorMouseEvent, handler: InputHandler.(MouseEvent, Point) -> Unit) {
     if (e.isConsumed) return
     val event = e.mouseEvent

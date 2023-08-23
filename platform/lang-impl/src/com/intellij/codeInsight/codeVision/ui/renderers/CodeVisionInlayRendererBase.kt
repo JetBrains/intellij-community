@@ -82,7 +82,7 @@ abstract class CodeVisionInlayRendererBase(theme: CodeVisionTheme = CodeVisionTh
     updateMouseState(false, null)
   }
 
-  override fun mousePressed(event: MouseEvent, translated: Point) {
+  override fun mouseReleased(event: MouseEvent, translated: Point) {
     val clickedEntry = hoveredEntry.value ?: return
     clickedEntry.putUserData(codeVisionEntryMouseEventKey, event)
 
