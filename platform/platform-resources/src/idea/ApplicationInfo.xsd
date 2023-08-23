@@ -52,7 +52,14 @@
             </xs:documentation>
           </xs:annotation>
         </xs:element>
-        <xs:element type="pluginsType" name="plugins" minOccurs="0"/>
+        <xs:element type="pluginsType" name="plugins" minOccurs="0">
+          <xs:annotation>
+            <xs:documentation>
+              Specifies custom URLs used by the IDE to search and install plugins. By default, JetBrains Marketplace (https://plugins.jetbrains.com)
+              is used.
+            </xs:documentation>
+          </xs:annotation>
+        </xs:element>
         <xs:element type="update-urlsType" name="update-urls" minOccurs="0"/>
         <xs:element type="helpType" name="help" minOccurs="0"/>
         <xs:element type="urlType" name="documentation" minOccurs="0"/>
@@ -408,7 +415,13 @@
     </xs:restriction>
   </xs:simpleType>
   <xs:complexType name="pluginsType">
-    <xs:attribute type="xs:anyURI" name="url"/>
+    <xs:attribute type="xs:anyURI" name="url">
+      <xs:annotation>
+        <xs:documentation>
+          URL of the main plugin repository used by the IDE. By default, JetBrains Marketplace URL is used (https://plugins.jetbrains.com).
+        </xs:documentation>
+      </xs:annotation>
+    </xs:attribute>
     <xs:attribute type="xs:string" name="list-url"/>
     <xs:attribute type="xs:string" name="channel-list-url">
       <xs:annotation>
