@@ -45,7 +45,7 @@ class GitStageCommitPanel(project: Project) : NonModalCommitPanel(project) {
   override val commitProgressUi: GitStageCommitProgressPanel get() = progressPanel
 
   @Volatile
-  private var state: InclusionState = InclusionState(emptySet(), GitStageTracker.State.EMPTY)
+  private var state: InclusionState = InclusionState(emptySet(), GitStageTracker.State.EMPTY, isCommitAllProperty.asBoolean())
 
   val rootsToCommit get() = state.rootsToCommit
   val includedRoots get() = state.includedRoots
@@ -70,21 +70,21 @@ class GitStageCommitPanel(project: Project) : NonModalCommitPanel(project) {
 
     isCommitAllProperty.addListener(object : RegistryValueListener {
       override fun afterValueChanged(value: RegistryValue) {
-        fireInclusionChanged()
+        setState(state.includedRoots, state.trackerState, value.asBoolean())
       }
     }, this)
   }
 
   fun setIncludedRoots(includedRoots: Collection<VirtualFile>) {
-    setState(includedRoots.toSet(), state.trackerState)
+    setState(includedRoots.toSet(), state.trackerState, state.isCommitAllEnabled)
   }
 
   fun setTrackerState(trackerState: GitStageTracker.State) {
-    setState(state.includedRoots, trackerState)
+    setState(state.includedRoots, trackerState, state.isCommitAllEnabled)
   }
 
-  private fun setState(includedRoots: Set<VirtualFile>, trackerState: GitStageTracker.State) {
-    val newState = InclusionState(includedRoots, trackerState)
+  private fun setState(includedRoots: Set<VirtualFile>, trackerState: GitStageTracker.State, isCommitAllEnabled: Boolean) {
+    val newState = InclusionState(includedRoots, trackerState, isCommitAllEnabled)
     val inclusionChanged = newState.isInclusionChangedFrom(state)
     state = newState
     if (inclusionChanged) {
@@ -103,7 +103,9 @@ class GitStageCommitPanel(project: Project) : NonModalCommitPanel(project) {
   override fun getDisplayedUnversionedFiles(): List<FilePath> = emptyList()
   override fun getIncludedUnversionedFiles(): List<FilePath> = emptyList()
 
-  private inner class InclusionState(val includedRoots: Set<VirtualFile>, val trackerState: GitStageTracker.State) {
+  private inner class InclusionState(val includedRoots: Set<VirtualFile>,
+                                     val trackerState: GitStageTracker.State,
+                                     val isCommitAllEnabled: Boolean) {
     private val stagedStatuses: Set<GitFileStatus> = trackerState.getStaged()
 
     private val changedRoots: Set<VirtualFile> = trackerState.changedRoots
@@ -114,7 +116,7 @@ class GitStageCommitPanel(project: Project) : NonModalCommitPanel(project) {
         includedRoots.contains(it)
       }.values.flatMap { it.getStagedChanges(project) }
     }
-    val isCommitAll = isCommitAllProperty.asBoolean() && trackerState.stagedRoots.isEmpty() && trackerState.changedRoots.isNotEmpty()
+    val isCommitAll = isCommitAllEnabled && trackerState.stagedRoots.isEmpty() && trackerState.changedRoots.isNotEmpty()
     val rootsToCommit: Set<VirtualFile>
       get() {
         if (isCommitAll) {
