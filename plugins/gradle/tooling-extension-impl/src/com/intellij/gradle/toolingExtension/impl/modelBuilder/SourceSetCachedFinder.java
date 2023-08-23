@@ -35,9 +35,9 @@ public class SourceSetCachedFinder {
   private final @NotNull ArtifactsMap myArtifactsMap;
   private final @NotNull ConcurrentMap<String, Set<File>> mySourcesMap;
 
-  private SourceSetCachedFinder(@NotNull Gradle gradle) {
+  private SourceSetCachedFinder(@NotNull ModelBuilderContext context) {
     mySourcesMap = new ConcurrentHashMap<>();
-    myArtifactsMap = createArtifactsMap(gradle);
+    myArtifactsMap = createArtifactsMap(context);
   }
 
   public @NotNull List<File> findArtifactSources(@NotNull Collection<? extends File> artifactFiles) {
@@ -68,7 +68,8 @@ public class SourceSetCachedFinder {
     return myArtifactsMap.mySourceSetOutputDirsToArtifactsMap.get(outputPath);
   }
 
-  private static @NotNull ArtifactsMap createArtifactsMap(@NotNull Gradle gradle) {
+  private static @NotNull ArtifactsMap createArtifactsMap(@NotNull ModelBuilderContext context) {
+    Gradle gradle = context.getGradle();
     Map<String, SourceSet> artifactsMap = new HashMap<>();
     Map<String, String> sourceSetOutputDirsToArtifactsMap = new HashMap<>();
     List<Project> projects = new ArrayList<>(gradle.getRootProject().getAllprojects());
@@ -149,8 +150,7 @@ public class SourceSetCachedFinder {
     }
   }
 
-  private static final @NotNull DataProvider<SourceSetCachedFinder> INSTANCE_PROVIDER =
-    (gradle, ___) -> new SourceSetCachedFinder(gradle);
+  private static final @NotNull DataProvider<SourceSetCachedFinder> INSTANCE_PROVIDER = SourceSetCachedFinder::new;
 
   public static @NotNull SourceSetCachedFinder getInstance(@NotNull ModelBuilderContext context) {
     return context.getData(INSTANCE_PROVIDER);

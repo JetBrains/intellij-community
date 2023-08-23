@@ -167,6 +167,11 @@ public class ExtraModelBuilder implements ToolingModelBuilder {
       myGradle = gradle;
     }
 
+    @Override
+    public @NotNull Gradle getGradle() {
+      return myGradle;
+    }
+
     @NotNull
     @Override
     public <T> T getData(@NotNull DataProvider<T> provider) {
@@ -178,7 +183,7 @@ public class ExtraModelBuilder implements ToolingModelBuilder {
             //noinspection unchecked
             return (T)secondAttempt;
           }
-          T value = provider.create(myGradle, this);
+          T value = provider.create(this);
           myMap.put(provider, value);
           return value;
         }

@@ -27,8 +27,8 @@ public class TasksFactory {
   private final Set<Project> processedRootProjects = Collections.newSetFromMap(new ConcurrentHashMap<Project, Boolean>());
   @NotNull private final MessageReporter myMessageReporter;
 
-  public TasksFactory(@NotNull MessageReporter messageReporter) {
-    myMessageReporter = messageReporter;
+  public TasksFactory(@NotNull ModelBuilderContext context) {
+    myMessageReporter = context;
   }
 
   private void collectTasks(Project root) {
@@ -107,8 +107,7 @@ public class TasksFactory {
     }
   }
 
-  private static final @NotNull DataProvider<TasksFactory> INSTANCE_PROVIDER =
-    (__, messageReporter) -> new TasksFactory(messageReporter);
+  private static final @NotNull DataProvider<TasksFactory> INSTANCE_PROVIDER = TasksFactory::new;
 
   public static @NotNull TasksFactory getInstance(@NotNull ModelBuilderContext context) {
     return context.getData(INSTANCE_PROVIDER);

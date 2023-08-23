@@ -9,6 +9,8 @@ import org.jetbrains.annotations.NotNull;
  */
 public interface ModelBuilderContext extends MessageReporter {
 
+  @NotNull Gradle getGradle();
+
   /**
    * @return cached data if it's already created, newly created data otherwise
    */
@@ -21,6 +23,6 @@ public interface ModelBuilderContext extends MessageReporter {
      * Returned value should be thread-safe.
      */
     @NotNull
-    T create(@NotNull Gradle gradle, @NotNull MessageReporter messageReporter);
+    T create(@NotNull ModelBuilderContext context);
   }
 }
