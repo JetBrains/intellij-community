@@ -14,13 +14,19 @@ import kotlin.time.DurationUnit.SECONDS
 import kotlin.time.toDuration
 
 object DumbModeTestUtils {
+  class EternalTaskShutdownToken internal constructor(private val dumbTask: Job) : AutoCloseable {
+    override fun close() {
+      dumbTask.cancel(null)
+    }
+  }
+
   /**
    * "Eternal" means that test framework will not terminate the task. Please stop dumb mode in the end of test. Use wisely.
    *
-   * Always invoke [Job.cancel] or [endEternalDumbModeTaskAndWaitForSmartMode] in test's `tearDown` in `finally` block.
+   * Always invoke [EternalTaskShutdownToken.close] or [endEternalDumbModeTaskAndWaitForSmartMode] in test's `tearDown` in `finally` block.
    */
   @JvmStatic
-  fun startEternalDumbModeTask(project: Project): Job {
+  fun startEternalDumbModeTask(project: Project): EternalTaskShutdownToken {
     var dumbModeJob: Job? = null
     @Suppress("RAW_RUN_BLOCKING")
     runBlocking {
@@ -36,12 +42,17 @@ object DumbModeTestUtils {
       }
     }
     assertTrue("Dumb mode didn't start", DumbService.isDumb(project))
-    return dumbModeJob ?: fail("Could not start dumb mode task")
+    return EternalTaskShutdownToken(dumbModeJob ?: fail("Could not start dumb mode task"))
   }
 
   @JvmStatic
-  fun endEternalDumbModeTaskAndWaitForSmartMode(project: Project, job: Job) {
-    job.cancel()
+  fun endEternalDumbModeTask(task: EternalTaskShutdownToken) {
+    task.close()
+  }
+
+  @JvmStatic
+  fun endEternalDumbModeTaskAndWaitForSmartMode(project: Project, task: EternalTaskShutdownToken) {
+    endEternalDumbModeTask(task)
     waitForSmartMode(project)
   }
 
