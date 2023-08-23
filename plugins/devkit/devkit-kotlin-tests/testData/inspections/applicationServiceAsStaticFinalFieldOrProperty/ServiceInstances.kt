@@ -4,20 +4,18 @@ import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 
-interface ServiceInterface
+@Service(Service.Level.APP)
+class LightApplicationService1
 
 @Service(Service.Level.APP)
-class LightApplicationService1 : ServiceInterface
-
-@Service(Service.Level.APP)
-class LightApplicationService2 : ServiceInterface {
+class LightApplicationService2 {
   companion object {
-    val <warning descr="An explicit 'getInstance()' method should be used to retrieve an application service instead of a property">instance1</warning>: LightApplicationService2
+    val <warning descr="Provide explicit 'getInstance()' method to access application service instead of a property">instance1</warning>: LightApplicationService2
       get() = service()
 
-    val <warning descr="An explicit 'getInstance()' method should be used to retrieve an application service instead of a property">instance2</warning> = service<LightApplicationService2>()
+    val <warning descr="Provide explicit 'getInstance()' method to access application service instead of a property">instance2</warning> = service<LightApplicationService2>()
 
-    val <warning descr="An explicit 'getInstance()' method should be used to retrieve an application service instead of a property">instance3</warning> = ApplicationManager.getApplication().getService(LightApplicationService2::class.java)
+    val <warning descr="Provide explicit 'getInstance()' method to access application service instead of a property">instance3</warning> = ApplicationManager.getApplication().getService(LightApplicationService2::class.java)
 
     //  not this service instance but still stores a service with a backing field
     val <warning descr="Application service must not be assigned to a static immutable property with a backing field">instance4</warning> = service<LightApplicationService1>()
