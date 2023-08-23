@@ -12,12 +12,21 @@ gradlePlugin {
     }
 }
 
+kotlin {
+    sourceSets {
+        all {
+            languageSettings {
+                optIn("kotlinx.serialization.ExperimentalSerializationApi")
+            }
+        }
+    }
+}
 
 dependencies {
     implementation(libs.kotlin.gradlePlugin)
     implementation(libs.kotlinter.gradlePlugin)
     implementation(libs.detekt.gradlePlugin)
-    implementation(libs.javaSarif)
+    implementation(libs.kotlinSarif)
     implementation(libs.dokka.gradlePlugin)
     implementation(libs.kotlinpoet)
     implementation(libs.kotlinx.serialization.json)

@@ -24,7 +24,7 @@ class IntelliJSvgLoader(private val svgPatcher: SvgPatcher) : SvgLoader {
         pathPatcher: @Composable (String) -> String,
     ): Painter {
         val patchedPath = pathPatcher(originalPath)
-        if (cache.containsKey(patchedPath)) return cache[patchedPath]!!
+        cache[patchedPath]?.let { return it }
 
         val painter = rememberPatchedSvgResource(originalPath, patchedPath, resourceLoader)
         cache[patchedPath] = painter

@@ -1,3 +1,5 @@
+@file:Suppress("UnstableApiUsage")
+
 plugins {
     `maven-publish`
     id("org.jetbrains.dokka")
@@ -6,14 +8,14 @@ plugins {
 
 val sourcesJar by tasks.registering(Jar::class) {
     from(kotlin.sourceSets.main.get().kotlin)
-    archiveClassifier.set("sources")
-    into("$buildDir/artifacts")
+    archiveClassifier = "sources"
+    into(layout.buildDirectory.dir("artifacts"))
 }
 
 val javadocJar by tasks.registering(Jar::class) {
     from(tasks.dokkaHtml)
-    archiveClassifier.set("javadoc")
-    into("$buildDir/artifacts")
+    archiveClassifier = "javadoc"
+    into(layout.buildDirectory.dir("artifacts"))
 }
 
 publishing {
@@ -34,19 +36,19 @@ publishing {
             version = project.version.toString()
             artifactId = "jewel-${project.name}"
             pom {
-                name.set("Jewel")
-                description.set("intelliJ theming system in for Compose.")
-                url.set("https://github.com/JetBrains/jewel")
+                name = "Jewel"
+                description = "intelliJ theming system in for Compose."
+                url = "https://github.com/JetBrains/jewel"
                 licenses {
                     license {
-                        name.set("Apache License 2.0")
-                        url.set("http://www.apache.org/licenses/LICENSE-2.0.txt")
+                        name = "Apache License 2.0"
+                        url = "http://www.apache.org/licenses/LICENSE-2.0.txt"
                     }
                 }
                 scm {
-                    connection.set("scm:git:https://github.com/JetBrains/jewel.git")
-                    developerConnection.set("scm:git:https://github.com/JetBrains/jewel.git")
-                    url.set("https://github.com/JetBrains/jewel")
+                    connection = "scm:git:https://github.com/JetBrains/jewel.git"
+                    developerConnection = "scm:git:https://github.com/JetBrains/jewel.git"
+                    url = "https://github.com/JetBrains/jewel"
                 }
             }
         }

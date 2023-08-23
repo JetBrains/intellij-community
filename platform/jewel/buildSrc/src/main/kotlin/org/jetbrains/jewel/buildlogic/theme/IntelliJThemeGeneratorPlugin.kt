@@ -1,55 +1,94 @@
 package org.jetbrains.jewel.buildlogic.theme
 
 import com.squareup.kotlinpoet.ClassName
-import kotlinx.serialization.ExperimentalSerializationApi
-import kotlinx.serialization.json.Json
-import org.gradle.api.Project
-import org.gradle.api.tasks.TaskProvider
-import org.gradle.util.internal.GUtil
+import io.gitlab.arturbosch.detekt.Detekt
 import java.net.URL
+import kotlinx.serialization.Serializable
+import kotlinx.serialization.json.Json
+import kotlinx.serialization.json.JsonElement
+import kotlinx.serialization.json.decodeFromStream
+import org.gradle.api.DefaultTask
+import org.gradle.api.NamedDomainObjectContainer
+import org.gradle.api.Plugin
+import org.gradle.api.Project
+import org.gradle.api.file.DirectoryProperty
+import org.gradle.api.tasks.Input
+import org.gradle.api.tasks.OutputFile
+import org.gradle.api.tasks.TaskAction
+import org.gradle.kotlin.dsl.container
+import org.gradle.kotlin.dsl.get
+import org.gradle.kotlin.dsl.getByType
+import org.gradle.kotlin.dsl.property
+import org.gradle.kotlin.dsl.register
+import org.gradle.kotlin.dsl.withType
+import org.gradle.util.internal.GUtil
+import org.jetbrains.kotlin.gradle.dsl.KotlinJvmProjectExtension
+import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 
-class IntelliJThemeGeneratorPlugin : BaseIntelliJThemeGeneratorPlugin() {
+abstract class IntelliJThemeGeneratorPlugin : Plugin<Project> {
 
-    override fun createExtension(project: Project): ThemeGeneratorContainer =
-        ThemeGeneratorContainer(project.container(ThemeGeneration::class.java) {
-            ThemeGeneration(it, project).apply {
-                targetDir.set(project.layout.buildDirectory.dir("generated/theme"))
-                ideaVersion.set("232.6734")
+    final override fun apply(target: Project): Unit = with(target) {
+        val extension = ThemeGeneratorContainer(container<ThemeGeneration> { ThemeGeneration(it, project) })
+        extensions.add("intelliJThemeGenerator", extension)
+
+        extension.all {
+            val task = tasks.register<IntelliJThemeGeneratorTask>("generate${GUtil.toCamelCase(name)}Theme") {
+                outputFile.set(targetDir.file(this@all.themeClassName.map {
+                    val className = ClassName.bestGuess(it)
+                    className.packageName.replace(".", "/")
+                        .plus("/${className.simpleName}.kt")
+                }))
+                themeClassName.set(this@all.themeClassName)
+                ideaVersion.set(this@all.ideaVersion)
+                themeFile.set(this@all.themeFile)
             }
-        }).apply {
-            project.extensions.add("intelliJThemeGenerator", this)
-        }
-
-    override fun createGenerateTask(
-        project: Project,
-        extension: ThemeGeneratorContainer
-    ): List<TaskProvider<out BaseThemeGeneratorTask>> =
-        extension.map { config ->
-            project.tasks.register(
-                "generate${GUtil.toCamelCase(config.name)}Theme",
-                IntelliJThemeGeneratorTask::class.java
-            ).apply {
-                configure {
-                    output.set(config.targetDir.file(config.themeClassName.map {
-                        val className = ClassName.bestGuess(it)
-                        className.packageName.replace('.', '/') + "/${className.simpleName}.kt"
-                    }))
-                    themeClassName.set(config.themeClassName)
-                    ideaVersion.set(config.ideaVersion)
-                    themeFile.set(config.themeFile)
+            tasks.withType<KotlinCompile> {
+                dependsOn(task)
+            }
+            tasks.withType<Detekt> {
+                dependsOn(task)
+            }
+            pluginManager.withPlugin("org.jetbrains.kotlin.jvm") {
+                extensions.getByType<KotlinJvmProjectExtension>().apply {
+                    sourceSets["main"].kotlin.srcDir(targetDir)
                 }
             }
         }
+    }
 }
 
-open class IntelliJThemeGeneratorTask : BaseThemeGeneratorTask() {
+class ThemeGeneratorContainer(container: NamedDomainObjectContainer<ThemeGeneration>) : NamedDomainObjectContainer<ThemeGeneration> by container
 
-    private val json = Json {
-        ignoreUnknownKeys = true
+class ThemeGeneration(val name: String, project: Project) {
+    val targetDir: DirectoryProperty = project.objects.directoryProperty()
+        .convention(project.layout.buildDirectory.dir("generated/theme"))
+    val ideaVersion = project.objects.property<String>()
+        .convention("232.6734")
+    val themeClassName = project.objects.property<String>()
+    val themeFile = project.objects.property<String>()
+}
+
+open class IntelliJThemeGeneratorTask : DefaultTask() {
+
+    @get:OutputFile
+    val outputFile = project.objects.fileProperty()
+
+    @get:Input
+    val ideaVersion = project.objects.property<String>()
+
+    @get:Input
+    val themeFile = project.objects.property<String>()
+
+    @get:Input
+    val themeClassName = project.objects.property<String>()
+
+    init {
+        group = "jewel"
     }
 
-    @OptIn(ExperimentalSerializationApi::class)
-    override fun doGenerate() {
+    @TaskAction
+    fun generate() {
+        val json = Json { ignoreUnknownKeys = true }
         val url = buildString {
             append("https://raw.githubusercontent.com/JetBrains/intellij-community/")
             append(ideaVersion.get())
@@ -58,23 +97,27 @@ open class IntelliJThemeGeneratorTask : BaseThemeGeneratorTask() {
         }
 
         logger.lifecycle("Fetching theme descriptor from $url...")
+        val themeDescriptor = URL(url).openStream()
+            .use { json.decodeFromStream<IntellijThemeDescriptor>(it) }
 
-        val themeDescriptor = URL(url).openStream().use {
-            json.decodeFromString<IntellijThemeDescriptor>(it.reader().readText())
-        }
-
-        logger.info("Theme descriptor fetched, parsing...")
         val className = ClassName.bestGuess(themeClassName.get())
 
         // TODO handle non-Int UI themes, too
         val file = IntUiThemeDescriptorReader.readThemeFrom(themeDescriptor, className, ideaVersion.get(), url)
 
-        logger.info("Theme descriptor parsed, writing generated code to disk...")
-        val outputFile = output.get().asFile
-        outputFile.bufferedWriter().use {
-            file.writeTo(it)
-        }
-
+        val outputFile = outputFile.get().asFile
         logger.lifecycle("Theme descriptor for ${themeDescriptor.name} parsed and code generated into ${outputFile.path}")
+        outputFile.bufferedWriter().use { file.writeTo(it) }
     }
 }
+
+@Serializable
+data class IntellijThemeDescriptor(
+    val name: String,
+    val author: String = "",
+    val dark: Boolean = false,
+    val editorScheme: String,
+    val colors: Map<String, String> = emptyMap(),
+    val ui: Map<String, JsonElement> = emptyMap(),
+    val icons: Map<String, JsonElement> = emptyMap(),
+)

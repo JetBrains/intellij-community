@@ -1,3 +1,5 @@
+@file:Suppress("UnstableApiUsage")
+
 import org.jetbrains.compose.desktop.application.dsl.TargetFormat
 
 plugins {
@@ -21,12 +23,12 @@ compose.desktop {
             packageVersion = "1.0"
             description = "Jewel Sample Application"
             vendor = "JetBrains"
-            licenseFile.set(File(rootDir, "LICENSE"))
+            licenseFile = rootProject.file("LICENSE")
 
             macOS {
                 dockName = "Jewel Sample"
                 bundleID = "org.jetbrains.jewel.sample.standalone"
-                iconFile.set(File(projectDir, "icons/jewel.icns"))
+                iconFile = file("icons/jewel.icns")
             }
         }
     }

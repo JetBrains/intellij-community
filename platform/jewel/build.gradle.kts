@@ -2,16 +2,25 @@ plugins {
     alias(libs.plugins.composeDesktop) apply false
 }
 
-tasks {
-    val check by registering {
-        group = "verification"
+val sarif: Configuration by configurations.creating {
+    isCanBeResolved = true
+    attributes {
+        attribute(Usage.USAGE_ATTRIBUTE, objects.named("sarif"))
     }
+}
+
+dependencies {
+    sarif(projects.foundation)
+    sarif(projects.core)
+    sarif(projects.composeUtils)
+    sarif(projects.samples.standalone)
+    sarif(projects.themes.intUi.intUiStandalone)
+    sarif(projects.themes.intUi.intUiCore)
+}
+
+tasks {
     register<MergeSarifTask>("mergeSarifReports") {
-        dependsOn(check)
-        source = rootProject.fileTree("build/reports") {
-            include("*.sarif")
-            exclude("static-analysis.sarif")
-        }
-        outputs.file(rootProject.file("build/reports/static-analysis.sarif"))
+        source(sarif)
+        include { it.file.extension == "sarif" }
     }
 }
