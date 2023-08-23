@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package git4idea.index.actions
 
 import com.intellij.icons.AllIcons
@@ -16,11 +16,11 @@ class GitToggleIgnoredFilesAction : DumbAwareToggleAction(VcsBundle.messagePoint
   }
 
   override fun isSelected(e: AnActionEvent): Boolean {
-    return e.getData(GitStageDataKeys.GIT_STAGE_UI_SETTINGS)?.ignoredFilesShown() ?: return false
+    return e.getData(GitStageDataKeys.GIT_STAGE_UI_SETTINGS)?.ignoredFilesShown ?: return false
   }
 
   override fun setSelected(e: AnActionEvent, state: Boolean) {
-    e.getData(GitStageDataKeys.GIT_STAGE_UI_SETTINGS)?.setIgnoredFilesShown(state)
+    e.getData(GitStageDataKeys.GIT_STAGE_UI_SETTINGS)?.ignoredFilesShown = state
   }
 
   override fun update(e: AnActionEvent) {

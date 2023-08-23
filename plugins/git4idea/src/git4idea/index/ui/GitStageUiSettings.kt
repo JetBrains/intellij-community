@@ -8,8 +8,7 @@ import com.intellij.util.EventDispatcher
 import java.util.*
 
 interface GitStageUiSettings {
-  fun ignoredFilesShown(): Boolean
-  fun setIgnoredFilesShown(value: Boolean)
+  var ignoredFilesShown: Boolean
   fun addListener(listener: GitStageUiSettingsListener, disposable: Disposable)
 }
 
@@ -21,11 +20,12 @@ interface GitStageUiSettingsListener : EventListener {
 class GitStageUiSettingsImpl(val project: Project) : SimplePersistentStateComponent<GitStageUiSettingsImpl.State>(State()), GitStageUiSettings {
   private val eventDispatcher = EventDispatcher.create(GitStageUiSettingsListener::class.java)
 
-  override fun ignoredFilesShown(): Boolean = state.ignoredFilesShown
-  override fun setIgnoredFilesShown(value: Boolean) {
-    state.ignoredFilesShown = value
-    eventDispatcher.multicaster.settingsChanged()
-  }
+  override var ignoredFilesShown: Boolean
+    get() = state.ignoredFilesShown
+    set(value) {
+      state.ignoredFilesShown = value
+      eventDispatcher.multicaster.settingsChanged()
+    }
 
   override fun addListener(listener: GitStageUiSettingsListener, disposable: Disposable) {
     eventDispatcher.addListener(listener, disposable)

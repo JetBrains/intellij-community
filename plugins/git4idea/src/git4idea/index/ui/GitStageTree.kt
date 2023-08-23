@@ -106,7 +106,7 @@ abstract class GitStageTree(project: Project,
         }
       }
 
-      if (settings.ignoredFilesShown()) {
+      if (settings.ignoredFilesShown) {
         builder.insertIgnoredPaths(ignoredFilePaths)
       }
 
