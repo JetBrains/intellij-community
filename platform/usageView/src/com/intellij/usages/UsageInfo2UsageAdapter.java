@@ -113,10 +113,6 @@ public class UsageInfo2UsageAdapter implements UsageInModule, UsageInfoAdapter,
     myVirtualFile = data.virtualFile;
     myOffsetToCompareUsages = data.offsetToCompareUsages;
     myModificationStamp = getCurrentModificationStamp();
-
-    if (ApplicationManager.getApplication().isUnitTestMode() && ourAutomaticallyCalculatePresentationInTests) {
-      updateCachedPresentation();
-    }
   }
 
   @Override
