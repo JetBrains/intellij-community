@@ -27,8 +27,8 @@ class RangeCodeVisionModel(
   private val lensForRange: List<CodeVisionEntry> = lensMap.flatMap { it.value }
   val inlays: ArrayList<Inlay<*>> = ArrayList()
 
-  fun handleLensClick(entry: CodeVisionEntry) {
-    projectModel.handleLensClick(editor, anchoringRange, entry)
+  fun handleLensClick(entry: CodeVisionEntry, anchorInlay: Inlay<*>) {
+    projectModel.handleLensClick(editor, anchoringRange, anchorInlay, entry)
   }
 
   fun handleLensRightClick(clickedEntry: CodeVisionEntry, anchorInlay: Inlay<*>) {
