@@ -2164,6 +2164,15 @@ public class Py3TypeTest extends PyTestCase {
                  expr = y
              """);
   }
+
+  public void testEnumerateType() {
+    doTest("tuple[int, int]",
+           """
+             a: list[int] = [1, 2, 3]
+             for expr in enumerate(a):
+                 pass
+             """);
+  }
   
 
   private void doTest(final String expectedType, final String text) {
