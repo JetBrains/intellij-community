@@ -33,7 +33,7 @@
     <orderEntry type="module" module-name="intellij.platform.ide.impl" />
     <orderEntry type="library" scope="TEST" name="kotlinx-serialization-core" level="project" />
     <orderEntry type="library" scope="TEST" name="kotlinx-serialization-json" level="project" />
-    <orderEntry type="library" name="kotlinc.kotlinx-serialization-compiler-plugin" level="project" />
+    <orderEntry type="library" scope="TEST" name="kotlinc.kotlinx-serialization-compiler-plugin" level="project" />
     <orderEntry type="library" scope="TEST" name="kotlin-reflect" level="project" />
     <orderEntry type="module" module-name="intellij.platform.util" />
   </component>
