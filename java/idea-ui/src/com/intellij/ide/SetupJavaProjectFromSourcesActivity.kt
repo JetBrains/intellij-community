@@ -15,6 +15,8 @@ import com.intellij.ide.util.projectWizard.importSources.impl.ProjectFromSources
 import com.intellij.notification.*
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.EDT
+import com.intellij.openapi.components.Service
+import com.intellij.openapi.components.service
 import com.intellij.openapi.extensions.ExtensionNotApplicableException
 import com.intellij.openapi.fileTypes.FileTypeRegistry
 import com.intellij.openapi.module.JavaModuleType
@@ -34,7 +36,9 @@ import com.intellij.platform.PlatformProjectOpenProcessor
 import com.intellij.platform.PlatformProjectOpenProcessor.Companion.isOpenedByPlatformProcessor
 import com.intellij.projectImport.ProjectOpenProcessor
 import com.intellij.util.SystemProperties
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import java.io.File
 import javax.swing.event.HyperlinkEvent
@@ -113,6 +117,8 @@ private fun searchImporters(projectDirectory: VirtualFile): ArrayListMultimap<Pr
   return providersAndFiles
 }
 
+@Service(Service.Level.PROJECT)
+private class CoroutineScopeService(val coroutineScope: CoroutineScope)
 
 private fun showNotificationToImport(project: Project,
                                      projectDirectory: VirtualFile,
@@ -144,9 +150,12 @@ private fun showNotificationToImport(project: Project,
   if (providersAndFiles.keySet().all { it.canImportProjectAfterwards() }) {
     val actionName = JavaUiBundle.message("build.script.found.notification.import", providersAndFiles.keySet().size)
     notification.addAction(NotificationAction.createSimpleExpiring(actionName) {
-      for ((provider, files) in providersAndFiles.asMap()) {
-        for (file in files) {
-          provider.importProjectAfterwards(project, file)
+      val cs = project.service<CoroutineScopeService>().coroutineScope
+      cs.launch {
+        for ((provider, files) in providersAndFiles.asMap()) {
+          for (file in files) {
+            provider.importProjectAfterwardsAsync(project, file)
+          }
         }
       }
     })

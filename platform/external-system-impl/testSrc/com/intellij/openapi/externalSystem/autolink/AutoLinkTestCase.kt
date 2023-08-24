@@ -107,8 +107,8 @@ abstract class AutoLinkTestCase {
       }
 
       override fun canImportProjectAfterwards(): Boolean = true
-      override fun importProjectAfterwards(project: Project, file: VirtualFile) =
-        openProvider.linkToExistingProject(file, project)
+      override suspend fun importProjectAfterwardsAsync(project: Project, file: VirtualFile) =
+        openProvider.linkToExistingProjectAsync(file, project)
     }
   }
 
