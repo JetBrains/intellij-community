@@ -25,6 +25,7 @@ import com.intellij.openapi.util.UserDataHolder
 import com.intellij.openapi.util.UserDataHolderBase
 import com.intellij.openapi.util.UserDataHolderEx
 import com.intellij.openapi.util.io.FileUtil
+import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.platform.backend.workspace.WorkspaceModel
 import com.intellij.platform.workspace.jps.JpsImportedEntitySource
@@ -50,6 +51,7 @@ import org.jetbrains.idea.maven.statistics.MavenImportCollector
 import org.jetbrains.idea.maven.utils.MavenLog
 import org.jetbrains.idea.maven.utils.MavenProgressIndicator
 import org.jetbrains.idea.maven.utils.MavenUtil
+import org.jetbrains.jps.model.serialization.SerializationConstants
 import java.nio.file.Path
 import java.util.function.Function
 import kotlin.coroutines.cancellation.CancellationException
@@ -90,7 +92,8 @@ internal class WorkspaceProjectImporter(
     val stats = WorkspaceImportStats.start(myProject)
 
     val allProjectsToChanges = projectChangesInfo.allProjectsToChanges
-    val mavenProjectToModuleName = buildModuleNameMap(allProjectsToChanges)
+    val externalSystemModuleEntities = storageBeforeImport.entities(ExternalSystemModuleOptionsEntity::class.java)
+    val mavenProjectToModuleName = buildModuleNameMap(externalSystemModuleEntities, allProjectsToChanges)
 
     val builder = MutableEntityStorage.create()
     builder.addEntity(MavenProjectsTreeSettingsEntity(projectChangesInfo.projectFilePaths, MavenProjectsTreeEntitySource))
@@ -211,10 +214,16 @@ internal class WorkspaceProjectImporter(
     return ProjectChangesInfo(hasChanges, allProjectsToChanges)
   }
 
-  private fun buildModuleNameMap(projectToImport: Map<MavenProject, MavenProjectChanges>): HashMap<MavenProject, String> {
+  private fun buildModuleNameMap(mavenModuleEntities: Sequence<ExternalSystemModuleOptionsEntity>,
+                                 projectToImport: Map<MavenProject, MavenProjectChanges>): HashMap<MavenProject, String> {
+    val existingModuleNames = mavenModuleEntities.filter { it.externalSystem == SerializationConstants.MAVEN_EXTERNAL_SOURCE_ID }
+      .filter { it.linkedProjectId != null }
+      .associate { LocalFileSystem.getInstance().findFileByPath(it.linkedProjectId!!) to it.module.name }
+      .filterKeys { it != null }
+      .mapKeys { it.key!! }
+
     val mavenProjectToModuleName = HashMap<MavenProject, String>()
-    val customModuleNames = myProject.getService(MavenCustomModuleNameMapper::class.java).getCustomModuleNames()
-    MavenModuleNameMapper.resolveModuleNames(projectToImport.keys, customModuleNames, mavenProjectToModuleName)
+    MavenModuleNameMapper.resolveModuleNames(projectToImport.keys, existingModuleNames, mavenProjectToModuleName)
     return mavenProjectToModuleName
   }
 
