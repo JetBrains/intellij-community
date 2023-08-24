@@ -44,6 +44,7 @@ import kotlin.streams.asSequence
 
 @Suppress("SpellCheckingInspection")
 private val QODANA_PLUGINS_THIRD_PARTY_ACCEPT = java.lang.Boolean.getBoolean("idea.qodana.thirdpartyplugins.accept")
+private val FLEET_BACKEND_PLUGINS_THIRD_PARTY_ACCEPT = java.lang.Boolean.getBoolean("fleet.backend.third-party.plugins.accept")
 private const val THIRD_PARTY_PLUGINS_FILE = "alien_plugins.txt"
 
 @Volatile
@@ -654,7 +655,7 @@ object PluginManagerCore {
 
   private fun check3rdPartyPluginsPrivacyConsent(aliens: List<IdeaPluginDescriptorImpl>) {
     if (GraphicsEnvironment.isHeadless()) {
-      if (QODANA_PLUGINS_THIRD_PARTY_ACCEPT) {
+      if (QODANA_PLUGINS_THIRD_PARTY_ACCEPT || FLEET_BACKEND_PLUGINS_THIRD_PARTY_ACCEPT) {
         thirdPartyPluginsNoteAccepted = true
         return
       }
