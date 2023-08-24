@@ -675,7 +675,7 @@ public final class FilePageCacheLockFree implements AutoCloseable {
       //Wakeup housekeeper, and wait for it to collect more pages
       statistics.pageAllocationWaited();
       wakeupHousekeeper();
-      pagesToProbablyReclaim.waitForRefill(10 /*ms*/);
+      pagesToProbablyReclaim.waitForRefill(1 /*ms*/);
       //MAYBE RC: Waiting for housekeeper to collect new portion of pages for us -- is basically a
       // backpressure. We slow down the current thread so the housekeeper could keep up.
       // We could avoid this waiting by assisting housekeeper instead -- i.e. we could scan through
