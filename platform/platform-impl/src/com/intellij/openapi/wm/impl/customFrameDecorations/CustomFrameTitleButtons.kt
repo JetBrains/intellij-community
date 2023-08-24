@@ -3,6 +3,7 @@ package com.intellij.openapi.wm.impl.customFrameDecorations
 
 import com.intellij.ide.ui.UISettings
 import com.intellij.openapi.util.SystemInfo
+import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.wm.impl.customFrameDecorations.frameTitleButtons.FrameTitleButtons
 import com.intellij.openapi.wm.impl.customFrameDecorations.frameTitleButtons.LinuxFrameTitleButtons
 import com.intellij.openapi.wm.impl.customFrameDecorations.frameTitleButtons.WindowsFrameTitleButtons
@@ -14,7 +15,10 @@ import com.intellij.util.ui.JBUI.Borders
 import com.intellij.util.ui.JBUI.CurrentTheme
 import java.awt.Dimension
 import java.awt.FlowLayout
-import javax.swing.*
+import javax.swing.Action
+import javax.swing.Icon
+import javax.swing.JComponent
+import javax.swing.JPanel
 
 
 internal open class CustomFrameTitleButtons(private val myCloseAction: Action,
@@ -33,7 +37,9 @@ internal open class CustomFrameTitleButtons(private val myCloseAction: Action,
     }
   }
 
-  private val buttons: FrameTitleButtons = if (SystemInfo.isWindows)
+  private val isLinuxThemingEnabled = Registry.`is`("ide.linux.mimic.system.theme", false)
+
+  private val buttons: FrameTitleButtons = if (SystemInfo.isWindows || !isLinuxThemingEnabled)
     WindowsFrameTitleButtons(myCloseAction, myRestoreAction, myIconifyAction, myMaximizeAction)
   else
     LinuxFrameTitleButtons(myCloseAction, myRestoreAction, myIconifyAction, myMaximizeAction)
@@ -52,7 +58,9 @@ internal open class CustomFrameTitleButtons(private val myCloseAction: Action,
   }
 
 
-  private val panel = TitleButtonsPanel()
+  private val panel = TitleButtonsPanel(buttons)
+
+  fun getView(): JComponent = panel
 
 
   internal var isCompactMode: Boolean
@@ -109,37 +117,9 @@ internal open class CustomFrameTitleButtons(private val myCloseAction: Action,
   }
 
   protected fun createChildren() {
-    fillButtonPane()
+    buttons.fillButtonPane(panel)
     updateVisibility()
     updateStyles()
-  }
-
-  fun getView(): JComponent = panel
-
-  protected open fun fillButtonPane() {
-    if (SystemInfo.isLinux) {
-      var linuxButtonsLayout = LinuxLookAndFeel.getHeaderLayout()
-      if (!linuxButtonsLayout.contains("close")) {
-        linuxButtonsLayout = linuxButtonsLayout.plus("close")
-      }
-      for (item in linuxButtonsLayout) {
-        when (item) {
-          "minimize" -> buttons.minimizeButton?.let { panel.addComponent(it) }
-          "maximize" -> {
-            buttons.maximizeButton?.let { panel.addComponent(it) }
-            buttons.restoreButton?.let { panel.addComponent(it) }
-          }
-          "close" -> panel.addComponent(buttons.closeButton)
-        }
-      }
-      val emptyComponent: Box = Box.createHorizontalBox() // Margin right
-      panel.addComponent(emptyComponent)
-    } else {
-      buttons.minimizeButton?.let { panel.addComponent(it) }
-      buttons.maximizeButton?.let { panel.addComponent(it) }
-      buttons.restoreButton?.let { panel.addComponent(it) }
-      panel.addComponent(buttons.closeButton)
-    }
   }
 
   open fun updateVisibility() {
@@ -166,7 +146,7 @@ internal open class CustomFrameTitleButtons(private val myCloseAction: Action,
 
 }
 
-private class TitleButtonsPanel : JPanel(FlowLayout(FlowLayout.LEADING, 0, 0)) {
+class TitleButtonsPanel(val buttons: FrameTitleButtons) : JPanel(FlowLayout(FlowLayout.LEADING, 0, 0)) {
   var isCompactMode = false
     set(value) {
       field = value
@@ -188,19 +168,11 @@ private class TitleButtonsPanel : JPanel(FlowLayout(FlowLayout.LEADING, 0, 0)) {
 
   private fun JComponent.setScaledPreferredSize() {
     val size = CurrentTheme.TitlePane.buttonPreferredSize(UISettings.defFontScale).clone() as Dimension
-    // TODO isCompactMode siempre es false, parece un bug
+    // TODO isCompactMode is always false
     if (isCompactMode) {
       size.height = JBUIScale.scale(30)
     }
-    if (SystemInfo.isLinux) {
-      if (this !is Box) {
-        preferredSize = Dimension(38, size.height)
-      } else {
-        preferredSize = Dimension(1, size.height) // Margin right
-      }
-    } else {
-      preferredSize = Dimension(size.width, size.height)
-    }
+    preferredSize = buttons.setScaledPreferredSize(size)
   }
 
   override fun updateUI() {

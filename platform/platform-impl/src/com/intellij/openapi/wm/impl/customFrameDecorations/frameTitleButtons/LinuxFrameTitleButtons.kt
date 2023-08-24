@@ -1,25 +1,19 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.wm.impl.customFrameDecorations.frameTitleButtons
 
-import com.intellij.icons.AllIcons
 import com.intellij.ide.ui.LafManager
 import com.intellij.openapi.wm.impl.customFrameDecorations.LinuxLookAndFeel
-import com.intellij.openapi.wm.impl.customFrameDecorations.LinuxLookAndFeel.Companion.findIconAbsolutePath
+import com.intellij.openapi.wm.impl.customFrameDecorations.TitleButtonsPanel
 import com.intellij.openapi.wm.impl.customFrameDecorations.style.HOVER_KEY
-import com.intellij.ui.IconManager
-import com.intellij.ui.JBColor
-import com.intellij.util.IconUtil
-import java.awt.Color
-import java.awt.Graphics
-import java.awt.Graphics2D
-import java.awt.RenderingHints
+import com.intellij.util.ui.JBUI
+import java.awt.*
 import javax.accessibility.AccessibleContext
 import javax.swing.Action
-import javax.swing.Icon
 import javax.swing.JButton
 import javax.swing.JComponent
 import javax.swing.plaf.ButtonUI
 import javax.swing.plaf.basic.BasicButtonUI
+
 
 class LinuxFrameTitleButtons(
   myCloseAction: Action,
@@ -31,19 +25,19 @@ class LinuxFrameTitleButtons(
   override val maximizeButton: JButton? = myMaximizeAction?.let { createButton("Maximize", it) }
   override val minimizeButton: JButton? = myIconifyAction?.let { createButton("Iconify", it) }
 
-  val restore = loadLinuxIcon("window-restore-symbolic.svg")
+  val restore = LinuxLookAndFeel.getLinuxIcon("window-restore-symbolic.svg")
   override val restoreIcon = restore
   override val restoreInactiveIcon = restore
 
-  val maximize = loadLinuxIcon("window-maximize-symbolic.svg")
+  val maximize = LinuxLookAndFeel.getLinuxIcon("window-maximize-symbolic.svg")
   override val maximizeIcon = maximize
   override val maximizeInactiveIcon = maximize
 
-  val minimize = loadLinuxIcon("window-minimize-symbolic.svg")
+  val minimize = LinuxLookAndFeel.getLinuxIcon("window-minimize-symbolic.svg")
   override val minimizeIcon = minimize
   override val minimizeInactiveIcon = minimize
 
-  val close = loadLinuxIcon("window-close-symbolic.svg")
+  val close = LinuxLookAndFeel.getLinuxIcon("window-close-symbolic.svg")
   override val closeIcon = close
   override val closeInactiveIcon = close
   override val closeHoverIcon = close
@@ -61,33 +55,30 @@ class LinuxFrameTitleButtons(
     button.isFocusable = false
     button.putClientProperty(AccessibleContext.ACCESSIBLE_NAME_PROPERTY, accessibleName)
     button.text = null
-
-    println("====================================")
-    println("====================================")
-    println("====================================")
-    println("====================================")
-    println(LinuxLookAndFeel.getIconTheme())
-    println(LinuxLookAndFeel.getHeaderLayout())
-    println("====================================")
-    println("====================================")
-    println("====================================")
-    println("====================================")
-
     return button
   }
 
+  override fun fillButtonPane(panel: TitleButtonsPanel) {
+    var linuxButtonsLayout = LinuxLookAndFeel.getHeaderLayout()
+    if (!linuxButtonsLayout.contains("close")) {
+      linuxButtonsLayout = linuxButtonsLayout.plus("close")
+    }
+    for (item in linuxButtonsLayout) {
+      when (item) {
+        "minimize" -> this.minimizeButton?.let { panel.addComponent(it) }
+        "maximize" -> {
+          this.maximizeButton?.let { panel.addComponent(it) }
+          this.restoreButton?.let { panel.addComponent(it) }
+        }
+        "close" -> panel.addComponent(this.closeButton)
+      }
+    }
+    panel.border = JBUI.Borders.emptyRight(1)
+  }
 
-  private fun loadLinuxIcon(iconName: String): Icon {
-    /*val iconThemeName = LinuxLookAndFeel.getIconTheme()
-    find /usr/share/icons -type f -name "window-maximize-symbolic.svg"
-    val themeAdwaita = "Adwaita/scalable/ui/" // Adwaita
-    val themeYaru = "Yaru/scalable/ui/" // Yaru
-    val themePapirus = "Papirus/symbolic/actions/" // Papirus*/
-    val iconPath = findIconAbsolutePath(iconName)
-    var icon = IconManager.getInstance().getIcon("file:$iconPath",
-                                                 AllIcons::class.java.classLoader)
-    icon = IconUtil.colorizeReplace(icon, JBColor(0x6c7080, 0xcfd1d8))
-    return icon
+
+  override fun setScaledPreferredSize(size: Dimension): Dimension {
+    return Dimension(38, size.height)
   }
 }
 

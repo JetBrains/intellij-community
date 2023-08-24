@@ -2,13 +2,12 @@
 package com.intellij.openapi.wm.impl.customFrameDecorations.frameTitleButtons
 
 import com.intellij.icons.AllIcons
-import com.intellij.openapi.wm.impl.customFrameDecorations.style.ComponentStyle
-import com.intellij.openapi.wm.impl.customFrameDecorations.style.ComponentStyleState
+import com.intellij.openapi.wm.impl.customFrameDecorations.TitleButtonsPanel
 import com.intellij.openapi.wm.impl.customFrameDecorations.style.HOVER_KEY
 import com.intellij.ui.JBColor
 import com.intellij.util.IconUtil
-import com.intellij.util.ui.JBUI
 import java.awt.Color
+import java.awt.Dimension
 import java.awt.Graphics
 import javax.accessibility.AccessibleContext
 import javax.swing.Action
@@ -55,6 +54,17 @@ class WindowsFrameTitleButtons(
     button.putClientProperty(AccessibleContext.ACCESSIBLE_NAME_PROPERTY, accessibleName)
     button.text = null
     return button
+  }
+
+  override fun fillButtonPane(panel: TitleButtonsPanel) {
+    this.minimizeButton?.let { panel.addComponent(it) }
+    this.maximizeButton?.let { panel.addComponent(it) }
+    this.restoreButton?.let { panel.addComponent(it) }
+    panel.addComponent(this.closeButton)
+  }
+
+  override fun setScaledPreferredSize(size: Dimension): Dimension {
+    return Dimension(size.width, size.height)
   }
 }
 

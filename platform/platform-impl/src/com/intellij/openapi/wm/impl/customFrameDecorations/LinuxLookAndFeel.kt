@@ -1,13 +1,26 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.wm.impl.customFrameDecorations
 
+import com.intellij.icons.AllIcons
+import com.intellij.ui.IconManager
+import com.intellij.ui.JBColor
+import com.intellij.util.IconUtil
 import java.io.BufferedReader
 import java.io.InputStreamReader
+import javax.swing.Icon
 import kotlin.concurrent.thread
 
 
 class LinuxLookAndFeel {
   companion object {
+    fun getLinuxIcon(iconName: String): Icon {
+      val iconPath = findIconAbsolutePath(iconName)
+      var icon = IconManager.getInstance().getIcon("file:$iconPath",
+                                                   AllIcons::class.java.classLoader)
+      icon = IconUtil.colorizeReplace(icon, JBColor(0x6c7080, 0xcfd1d8))
+      return icon
+    }
+
     fun findIconAbsolutePath(iconName: String): String? {
       val iconTheme = getIconTheme() ?: return null
       val command = "find /usr/share/icons/$iconTheme -type f -name $iconName"
