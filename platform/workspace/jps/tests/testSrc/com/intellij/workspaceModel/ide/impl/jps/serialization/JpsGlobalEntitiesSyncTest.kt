@@ -65,7 +65,7 @@ class JpsGlobalEntitiesSyncTest {
       ApplicationManager.getApplication().invokeAndWait {
         runWriteAction {
           GlobalWorkspaceModel.getInstance().updateModel("Test update") { builder ->
-            val libraryEntity = builder.entities(LibraryEntity::class.java).first()
+            val libraryEntity = builder.entities(LibraryEntity::class.java).first{ it.name == "aws.s3" }
             val libraryNameToRemove = libraryEntity.name
             builder.removeEntity(libraryEntity)
             globalLibrariesNames.remove(libraryNameToRemove)
@@ -81,7 +81,7 @@ class JpsGlobalEntitiesSyncTest {
         runWriteAction {
           val virtualFileManager = VirtualFileUrlManager.getInstance(project)
           WorkspaceModel.getInstance(project).updateProjectModel("Test update") { builder ->
-            val libraryEntity = builder.entities(LibraryEntity::class.java).first { globalLibrariesNames.contains(it.name) }
+            val libraryEntity = builder.entities(LibraryEntity::class.java).first { it.name == "com.google.plugin" }
             val libraryNameToRemove = libraryEntity.name
             builder.removeEntity(libraryEntity)
             globalLibrariesNames.remove(libraryNameToRemove)
