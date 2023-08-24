@@ -229,7 +229,9 @@ object IgnoreTests {
     }
 
     object DIRECTIVES {
+        @Deprecated(message = "use IGNORE_FIR instead")
         const val FIR_COMPARISON = "// FIR_COMPARISON"
+        @Deprecated(message = "use IGNORE_FIR instead")
         const val FIR_COMPARISON_MULTILINE_COMMENT = "/* FIR_COMPARISON */"
 
         const val IGNORE_FIR_LOG = "// IGNORE_FIR_LOG"

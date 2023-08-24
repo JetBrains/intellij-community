@@ -32,7 +32,7 @@ abstract class AbstractCompletionHandlerTest(private val defaultCompletionType: 
 
     protected open fun doTest(testPath: String) {
         if (isFirPlugin) {
-            IgnoreTests.runTestIfEnabledByFileDirective(dataFilePath(), IgnoreTests.DIRECTIVES.FIR_COMPARISON, ".after") {
+            runTestIfNotDisabledByFileDirective(dataFilePath(), IgnoreTests.DIRECTIVES.IGNORE_K2, ".after") {
                 test(testPath)
                 val originalTestFile = dataFile()
                 val extension = originalTestFile.extension

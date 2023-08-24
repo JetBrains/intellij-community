@@ -10,7 +10,7 @@ fun doTestWithFIRFlagsByPath(path: String, body: () -> Unit) =
     doTestWithFIRFlags(Paths.get(path), body)
 
 fun doTestWithFIRFlags(testFile: Path, body: () -> Unit) {
-    IgnoreTests.runTestIfEnabledByFileDirective(testFile, IgnoreTests.DIRECTIVES.FIR_COMPARISON) {
+    IgnoreTests.runTestIfNotDisabledByFileDirective(testFile, IgnoreTests.DIRECTIVES.IGNORE_K2) {
         body()
     }
 }

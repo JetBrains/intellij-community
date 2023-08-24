@@ -20,7 +20,7 @@ class HighLevelCompletionMultifileHandlerTest : CompletionMultiFileHandlerTest22
     override fun doTest(completionChar: Char, vararg extraFileNames: String, tailText: String?) {
         val testFile = Paths.get(testDataDirectory.path, getTestFileName())
 
-        IgnoreTests.runTestIfEnabledByFileDirective(testFile, IgnoreTests.DIRECTIVES.FIR_COMPARISON) {
+        IgnoreTests.runTestIfNotDisabledByFileDirective(testFile, IgnoreTests.DIRECTIVES.IGNORE_K2) {
             super.doTest(completionChar, *extraFileNames, tailText = tailText)
         }
     }

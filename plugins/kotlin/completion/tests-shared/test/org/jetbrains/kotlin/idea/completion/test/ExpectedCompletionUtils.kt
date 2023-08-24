@@ -155,6 +155,7 @@ object ExpectedCompletionUtils {
         BLOCK_CODE_FRAGMENT,
         AstAccessControl.ALLOW_AST_ACCESS_DIRECTIVE,
         IgnoreTests.DIRECTIVES.FIR_COMPARISON,
+        IgnoreTests.DIRECTIVES.IGNORE_FIR,
         IgnoreTests.DIRECTIVES.FIR_IDENTICAL,
         IgnoreTests.DIRECTIVES.FIR_COMPARISON_MULTILINE_COMMENT,
         IgnoreTests.DIRECTIVES.IGNORE_FE10,
