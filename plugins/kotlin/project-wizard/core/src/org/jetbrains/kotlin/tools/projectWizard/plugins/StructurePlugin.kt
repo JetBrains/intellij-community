@@ -3,11 +3,14 @@ package org.jetbrains.kotlin.tools.projectWizard.plugins
 
 
 import org.jetbrains.kotlin.tools.projectWizard.KotlinNewProjectWizardBundle
-import org.jetbrains.kotlin.tools.projectWizard.core.*
+import org.jetbrains.kotlin.tools.projectWizard.core.Context
+import org.jetbrains.kotlin.tools.projectWizard.core.Plugin
+import org.jetbrains.kotlin.tools.projectWizard.core.PluginSettingsOwner
+import org.jetbrains.kotlin.tools.projectWizard.core.Reader
 import org.jetbrains.kotlin.tools.projectWizard.core.entity.PipelineTask
-import org.jetbrains.kotlin.tools.projectWizard.core.entity.properties.Property
 import org.jetbrains.kotlin.tools.projectWizard.core.entity.StringValidators
 import org.jetbrains.kotlin.tools.projectWizard.core.entity.ValidationResult
+import org.jetbrains.kotlin.tools.projectWizard.core.entity.properties.Property
 import org.jetbrains.kotlin.tools.projectWizard.core.entity.settings.PluginSetting
 import org.jetbrains.kotlin.tools.projectWizard.core.service.FileSystemWizardService
 import org.jetbrains.kotlin.tools.projectWizard.ir.buildsystem.PomIR
@@ -84,6 +87,13 @@ class StructurePlugin(context: Context) : Plugin(context) {
             defaultValue = value(true)
         }
 
+        val useCompactProjectStructure by booleanSetting(
+            "<USE_COMPACT_PROJECT_STRUCTURE>",
+            GenerationPhase.FIRST_STEP,
+        ) {
+            defaultValue = value(false)
+        }
+
         val createProjectDir by pipelineTask(GenerationPhase.PROJECT_GENERATION) {
             withAction {
                 service<FileSystemWizardService>().createDirectory(StructurePlugin.projectPath.settingValue)
@@ -98,7 +108,8 @@ class StructurePlugin(context: Context) : Plugin(context) {
             groupId,
             artifactId,
             version,
-            renderPomIR
+            renderPomIR,
+            useCompactProjectStructure
         )
     override val pipelineTasks: List<PipelineTask> =
         listOf(createProjectDir)

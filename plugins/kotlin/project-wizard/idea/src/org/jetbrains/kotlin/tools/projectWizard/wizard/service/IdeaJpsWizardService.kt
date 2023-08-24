@@ -143,17 +143,17 @@ private class ProjectImporter(
         )
         val rootModel = ModuleRootManager.getInstance(module).modifiableModel
         val contentRoot = rootModel.addContentEntry(moduleIr.path.url)
-
-        SourcesetType.ALL.forEach { sourceset ->
-            val isTest = sourceset == SourcesetType.test
-            contentRoot.addSourceFolder(
-                (moduleIr.path / "src" / sourceset.name / "kotlin").url,
-                if (isTest) JavaSourceRootType.TEST_SOURCE else JavaSourceRootType.SOURCE
-            )
-            contentRoot.addSourceFolder(
-                (moduleIr.path / "src" / sourceset.name / "resources").url,
-                if (isTest) JavaResourceRootType.TEST_RESOURCE else JavaResourceRootType.RESOURCE
-            )
+        moduleIr.sourcesets.forEach { sourceset ->
+            val isTest = sourceset.sourcesetType == SourcesetType.test
+            sourceset.sourcePaths.forEach { (sourceType, path) ->
+                val pathType = when {
+                  isTest && sourceType == SourcesetSourceType.RESOURCES -> JavaResourceRootType.TEST_RESOURCE
+                    sourceType == SourcesetSourceType.RESOURCES -> JavaResourceRootType.RESOURCE
+                    isTest -> JavaSourceRootType.TEST_SOURCE
+                    else -> JavaSourceRootType.SOURCE
+                }
+                contentRoot.addSourceFolder(path.url, pathType)
+            }
         }
 
         rootModel.inheritSdk()
