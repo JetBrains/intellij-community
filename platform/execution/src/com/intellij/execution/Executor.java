@@ -1,5 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution;
 
 import com.intellij.execution.executors.DefaultRunExecutor;
@@ -22,24 +21,21 @@ import javax.swing.*;
  * a configuration using this executor.
  *
  * @see ExecutorRegistry
+ * @see <a href="https://plugins.jetbrains.com/docs/intellij/execution.html">Execution (IntelliJ Platform Docs)</a>
  */
 public abstract class Executor {
   public static final ExtensionPointName<Executor> EXECUTOR_EXTENSION_NAME = new ExtensionPointName<>("com.intellij.executor");
 
   /**
-   * Returns the ID of the toolwindow in which the run tabs created by this executor will be displayed.
-   *
    * @return the ID of the toolwindow (usually {@link com.intellij.openapi.wm.ToolWindowId#RUN} or
-   * {@link com.intellij.openapi.wm.ToolWindowId#DEBUG}).
+   * {@link com.intellij.openapi.wm.ToolWindowId#DEBUG}) in which the run tabs created by this executor will be displayed
    */
   public abstract @NotNull String getToolWindowId();
 
   public abstract @NotNull Icon getToolWindowIcon();
 
   /**
-   * Returns the 16x16 icon for the toolbar button corresponding to the executor.
-   *
-   * @return the icon.
+   * @return the 16x16 icon for the toolbar button corresponding to the executor
    */
   public abstract @NotNull Icon getIcon();
 
@@ -48,25 +44,19 @@ public abstract class Executor {
   }
 
   /**
-   * Returns the 16x16 icon for the disabled toolbar button corresponding to the executor.
-   *
-   * @return the icon for the disabled button.
+   * @return the 16x16 icon for the disabled toolbar button corresponding to the executor
    */
   public abstract Icon getDisabledIcon();
 
   /**
-   * Returns the action description (text displayed in the status bar) for the toolbar button corresponding to the executor.
-   *
-   * @return the executor action description.
+   * @return the action description (text displayed in the status bar) for the toolbar button corresponding to the executor
    */
   public abstract @NlsActions.ActionDescription String getDescription();
 
   public abstract @NotNull @NlsActions.ActionText String getActionName();
 
   /**
-   * Returns the unique ID of the executor.
-   *
-   * @return the ID of the executor.
+   * @return the unique ID of the executor
    */
   public abstract @NotNull @NonNls String getId();
 
@@ -80,11 +70,9 @@ public abstract class Executor {
   public abstract @NonNls String getHelpId();
 
   /**
-   * Returns the way to customize ExecutorAction (or ExecutorGroupActionGroup) created for this Executor by ExecutorRegistryImpl
-   *
    * @return the way to customize {@link com.intellij.execution.ExecutorRegistryImpl.ExecutorAction}
    * (or {@link com.intellij.execution.ExecutorRegistryImpl.ExecutorGroupActionGroup}) created for this Executor,
-   * that will be shown in {@link com.intellij.execution.ExecutorRegistryImpl#RUNNERS_GROUP} group on main toolbar
+   * that will be shown in {@link com.intellij.execution.ExecutorRegistryImpl#RUNNERS_GROUP} group on the main toolbar
    */
   public @Nullable ActionWrapper runnerActionsGroupExecutorActionCustomizer() {
     return null;

@@ -5,3 +5,5 @@ fun foo(b: Int) {
         b: Int = 2
     ) = Unit
 }
+
+// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.ReorderParametersFix

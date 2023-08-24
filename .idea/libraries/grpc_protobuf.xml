@@ -1,6 +1,17 @@
 <component name="libraryTable">
   <library name="grpc-protobuf" type="repository">
     <properties maven-id="io.grpc:grpc-protobuf:1.53.0">
+      <verification>
+        <artifact url="file://$MAVEN_REPOSITORY$/io/grpc/grpc-protobuf/1.53.0/grpc-protobuf-1.53.0.jar">
+          <sha256sum>eb3c2107f6a6397d9c09179e814e2c6ebc5ff901d67bbf76588e8ef5bb51ca05</sha256sum>
+        </artifact>
+        <artifact url="file://$MAVEN_REPOSITORY$/com/google/api/grpc/proto-google-common-protos/2.9.0/proto-google-common-protos-2.9.0.jar">
+          <sha256sum>0d830380ec66bd7e25eee63aa0a5a08578e46ad187fb72d99b44d9ba22827f91</sha256sum>
+        </artifact>
+        <artifact url="file://$MAVEN_REPOSITORY$/io/grpc/grpc-protobuf-lite/1.53.0/grpc-protobuf-lite-1.53.0.jar">
+          <sha256sum>0e0b234188894ae282f770f85f717f3a2376b5afb5f80c00d664de22fa6cdaa8</sha256sum>
+        </artifact>
+      </verification>
       <exclude>
         <dependency maven-id="io.grpc:grpc-api" />
         <dependency maven-id="com.google.code.findbugs:jsr305" />

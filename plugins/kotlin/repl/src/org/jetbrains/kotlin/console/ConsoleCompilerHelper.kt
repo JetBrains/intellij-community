@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.console
 
@@ -9,6 +9,7 @@ import com.intellij.openapi.compiler.CompilerManager
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.project.Project
 import com.intellij.task.ProjectTaskManager
+import com.intellij.task.impl.ProjectTaskManagerImpl
 
 class ConsoleCompilerHelper(
     private val project: Project,
@@ -25,6 +26,7 @@ class ConsoleCompilerHelper(
 
     fun compileModule() {
         if (RunContentManager.getInstance(project).removeRunContent(executor, contentDescriptor)) {
+            ProjectTaskManagerImpl.putBuildOriginator(project, this.javaClass)
             ProjectTaskManager.getInstance(project).build(module).onSuccess {
                 if (!module.isDisposed) {
                     KotlinConsoleKeeper.getInstance(project).run(module, previousCompilationFailed = it.hasErrors())

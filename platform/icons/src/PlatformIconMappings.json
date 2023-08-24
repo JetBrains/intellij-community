@@ -29,6 +29,7 @@
       "profileCPU.svg": "actions/profileCPU.svg",
       "projectDirectory.svg": "actions/projectDirectory.svg",
       "reformatCode.svg": "actions/reformatCode.svg",
+      "runAll.svg": "actions/runAll.svg",
       "showReadAccess.svg": "actions/showReadAccess.svg",
       "showWriteAccess.svg": "actions/showWriteAccess.svg",
       "split.svg": "modules/split.svg",
@@ -182,7 +183,6 @@
       "javaScript.svg": "fileTypes/javaScript.svg",
       "jest.svg": "icons/fileTypes/jestSnapshot.svg",
       "jfr.svg": "fileTypes/jfr.svg",
-      "jshint.svg": "icons/fileTypes/jsHint.svg",
       "json.svg": "fileTypes/json.svg",
       "jsp.svg": "fileTypes/jsp.svg",
       "jspx.svg": "fileTypes/jspx.svg",
@@ -193,13 +193,11 @@
       "modified.svg": "general/modified.svg",
       "patch.svg": "vcs/patch_file.svg",
       "properties.svg": "fileTypes/properties.svg",
-      "protobuf.svg": "protoFile.png",
       "react.svg": "org/jetbrains/kotlin/idea/icons/wizard/react.svg",
       "regexp.svg": "fileTypes/regexp.svg",
       "scala.svg": "org/jetbrains/plugins/scala/images/scala16.png",
       "scratch.svg": "actions/scratch.svg",
       "scratches.svg": "scope/scratches.svg",
-      "scss.svg": "org/jetbrains/plugins/sass/sass.svg",
       "shell.svg": [
         "nodes/console.svg",
         "debugger/console.svg"
@@ -415,7 +413,7 @@
       "feedbackRatingFocused.svg": "ide/feedbackRatingFocused.svg",
       "feedbackRatingFocusedOn.svg": "ide/feedbackRatingFocusedOn.svg",
       "feedbackRatingOn.svg": "ide/feedbackRatingOn.svg",
-      "localScope.svg": "ide/localScope.svg"
+      "localScope.svg": ["ide/localScope.svg", "ide/localScopeAction.svg"]
     },
     "image": {
       "actualZoom.svg": "graph/actualZoom.svg",
@@ -554,7 +552,10 @@
         "nodes/newParameter.svg",
         "nodes/parameter.svg"
       ],
-      "plugin.svg": "nodes/plugin.svg",
+      "plugin.svg": [
+        "nodes/plugin.svg",
+        "nodes/pluginobsolete.svg"
+      ],
       "ppWeb.svg": "nodes/ppWeb.svg",
       "property.svg": [
         "nodes/property.svg",
@@ -657,18 +658,33 @@
       "stepOver.svg": "actions/traceOver.svg",
       "stop.svg": "actions/suspend.svg",
       "testCustom.svg": "runConfigurations/testCustom.svg",
-      "testError.svg": "runConfigurations/testError.svg",
-      "testFailed.svg": "runConfigurations/testFailed.svg",
+      "testError.svg": [
+        "runConfigurations/testError.svg",
+        "runConfigurations/toolbarError.svg"
+      ],
+      "testFailed.svg": [
+        "runConfigurations/testFailed.svg",
+        "runConfigurations/toolbarFailed.svg"
+      ],
       "testIgnored.svg": "runConfigurations/testIgnored.svg",
       "testNotRunYet.svg": "runConfigurations/testNotRan.svg",
-      "testPassed.svg": "runConfigurations/testPassed.svg",
+      "testPassed.svg": [
+        "runConfigurations/testPassed.svg",
+        "runConfigurations/toolbarPassed.svg"
+      ],
       "testPassedIgnored.svg": [
         "runConfigurations/testPassedIgnored.svg",
         "runConfigurations/toolbarPassedIgnored.svg"
       ],
       "testPaused.svg": "runConfigurations/testPaused.svg",
-      "testSkipped.svg": "runConfigurations/testSkipped.svg",
-      "testTerminated.svg": "runConfigurations/testTerminated.svg",
+      "testSkipped.svg": [
+        "runConfigurations/testSkipped.svg",
+        "runConfigurations/toolbarSkipped.svg"
+      ],
+      "testTerminated.svg": [
+        "runConfigurations/testTerminated.svg",
+        "runConfigurations/toolbarTerminated.svg"
+      ],
       "testUnknown.svg": "runConfigurations/testUnknown.svg",
       "viewBreakpoints.svg": "debugger/viewBreakpoints.svg"
     },
@@ -733,7 +749,10 @@
       "toolWindowJsonPath.svg": "toolwindows/toolWindowJsonPath.svg",
       "toolWindowVariableView.svg": "toolwindows/toolWindowVariableView.svg",
       "vcs.svg": "toolwindows/toolWindowChanges.svg",
-      "web.svg": "toolwindows/webToolWindow.svg"
+      "web.svg": [
+        "toolwindows/webToolWindow.svg",
+        "general/web.svg"
+      ]
     },
     "vcs": {
       "branchLabel.svg": "icons/branchLabel.svg",

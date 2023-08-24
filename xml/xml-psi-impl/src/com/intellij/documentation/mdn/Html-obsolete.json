@@ -13,12 +13,12 @@
     "applet": {
       "status": [
         "StandardTrack",
-        "Deprecated"
+        "Obsolete"
       ],
       "compatibility": {
         "Safari": ""
       },
-      "doc": "<div class=\"notecard deprecated\">\n<h4 id=\"deprecated\">Deprecated</h4>\n<p>This feature is no longer recommended. Though some browsers might still support it, it may have already been removed from the relevant web standards, may be in the process of being dropped, or may only be kept for compatibility purposes. Avoid using it, and update existing code if possible; see the <a href=\"#browser_compatibility\">compatibility table</a> at the bottom of this page to guide your decision. Be aware that this feature may cease to work at any time.</p>\n</div>\n<div class=\"notecard warning\">\n<p>The <strong><code>&lt;applet&gt;</code></strong> <a href=\"$MDN_URL$/Web/HTML\">HTML</a> element was removed in <a href=\"https://bugzilla.mozilla.org/show_bug.cgi?id=1279218\" class=\"external\" rel=\" noopener\">Gecko 56</a> and <a href=\"https://bugs.chromium.org/p/chromium/issues/detail?id=470301\" class=\"external\" rel=\" noopener\">Chrome 47</a>.</p>\n<p>Removal is being considered in <a href=\"https://bugs.webkit.org/show_bug.cgi?id=157926\" class=\"external\" rel=\" noopener\">WebKit</a> and <a href=\"https://developer.microsoft.com/en-us/microsoft-edge/platform/issues/11946645/\" class=\"external\" rel=\" noopener\">Edge</a>.</p>\n</div>\n<p><span class=\"seoSummary\">The obsolete <strong>HTML Applet Element</strong> (<strong><code>&lt;applet&gt;</code></strong>) embeds a Java applet into the document; this element has been deprecated in favor of <a href=\"$MDN_URL$/Web/HTML/Element/object\"><code>&lt;object&gt;</code></a>.</span></p>\n<p>Use of Java applets on the Web is deprecated; most browsers no longer support use of plug-ins, including the Java plug-in.</p>",
+      "doc": "\n<div class=\"notecard warning\">\n<p>The <strong><code>&lt;applet&gt;</code></strong> <a href=\"$MDN_URL$/Web/HTML\">HTML</a> element was removed in <a href=\"https://bugzilla.mozilla.org/show_bug.cgi?id=1279218\" class=\"external\" rel=\" noopener\">Gecko 56</a> and <a href=\"https://bugs.chromium.org/p/chromium/issues/detail?id=470301\" class=\"external\" rel=\" noopener\">Chrome 47</a>.</p>\n<p>Removal is being considered in <a href=\"https://bugs.webkit.org/show_bug.cgi?id=157926\" class=\"external\" rel=\" noopener\">WebKit</a> and <a href=\"https://developer.microsoft.com/en-us/microsoft-edge/platform/issues/11946645/\" class=\"external\" rel=\" noopener\">Edge</a>.</p>\n</div>\n<p><span class=\"seoSummary\">The obsolete <strong>HTML Applet Element</strong> (<strong><code>&lt;applet&gt;</code></strong>) embeds a Java applet into the document; this element has been deprecated in favor of <a href=\"$MDN_URL$/Web/HTML/Element/object\"><code>&lt;object&gt;</code></a>.</span></p>\n<p>Use of Java applets on the Web is deprecated; most browsers no longer support use of plug-ins, including the Java plug-in.</p>",
       "details": {
         "<a href=\"$MDN_URL$/Web/Guide/HTML/Content_categories\">Content categories</a>": "<a href=\"$MDN_URL$/Web/Guide/HTML/Content_categories#flow_content\">Flow content</a>\n,\n<a href=\"$MDN_URL$/Web/Guide/HTML/Content_categories#phrasing_content\">phrasing content</a>\n,\n<a href=\"$MDN_URL$/Web/Guide/HTML/Content_categories#embedded_content\">embedded content</a>\n, interactive content, palpable content.\n",
         "Permitted content": "Zero or more\n<a href=\"$MDN_URL$/Web/HTML/Element/param\"><code>&lt;param&gt;</code></a>\nelements, then\n<a href=\"$MDN_URL$/Web/Guide/HTML/Content_categories#transparent_content_model\">transparent</a>\n.\n",
@@ -30,7 +30,7 @@
         "align": {
           "status": [
             "StandardTrack",
-            "Deprecated"
+            "Obsolete"
           ],
           "compatibility": {
             "Safari": ""
@@ -40,7 +40,7 @@
         "alt": {
           "status": [
             "StandardTrack",
-            "Deprecated"
+            "Obsolete"
           ],
           "compatibility": {
             "Safari": ""
@@ -50,7 +50,7 @@
         "archive": {
           "status": [
             "StandardTrack",
-            "Deprecated"
+            "Obsolete"
           ],
           "compatibility": {
             "Safari": ""
@@ -60,7 +60,7 @@
         "code": {
           "status": [
             "StandardTrack",
-            "Deprecated"
+            "Obsolete"
           ],
           "compatibility": {
             "Safari": ""
@@ -70,7 +70,7 @@
         "codebase": {
           "status": [
             "StandardTrack",
-            "Deprecated"
+            "Obsolete"
           ],
           "compatibility": {
             "Safari": ""
@@ -80,7 +80,7 @@
         "datafld": {
           "status": [
             "StandardTrack",
-            "Deprecated"
+            "Obsolete"
           ],
           "compatibility": {
             "Safari": ""
@@ -90,7 +90,7 @@
         "datasrc": {
           "status": [
             "StandardTrack",
-            "Deprecated"
+            "Obsolete"
           ],
           "compatibility": {
             "Safari": ""
@@ -100,7 +100,7 @@
         "height": {
           "status": [
             "StandardTrack",
-            "Deprecated"
+            "Obsolete"
           ],
           "compatibility": {
             "Safari": ""
@@ -110,7 +110,7 @@
         "hspace": {
           "status": [
             "StandardTrack",
-            "Deprecated"
+            "Obsolete"
           ],
           "compatibility": {
             "Safari": ""
@@ -120,7 +120,7 @@
         "mayscript": {
           "status": [
             "StandardTrack",
-            "Deprecated"
+            "Obsolete"
           ],
           "compatibility": {
             "Safari": ""
@@ -130,7 +130,7 @@
         "name": {
           "status": [
             "StandardTrack",
-            "Deprecated"
+            "Obsolete"
           ],
           "compatibility": {
             "Safari": ""
@@ -140,7 +140,7 @@
         "object": {
           "status": [
             "StandardTrack",
-            "Deprecated"
+            "Obsolete"
           ],
           "compatibility": {
             "Safari": ""
@@ -150,7 +150,7 @@
         "src": {
           "status": [
             "StandardTrack",
-            "Deprecated"
+            "Obsolete"
           ],
           "compatibility": {
             "Safari": ""
@@ -160,7 +160,7 @@
         "vspace": {
           "status": [
             "StandardTrack",
-            "Deprecated"
+            "Obsolete"
           ],
           "compatibility": {
             "Safari": ""
@@ -170,7 +170,7 @@
         "width": {
           "status": [
             "StandardTrack",
-            "Deprecated"
+            "Obsolete"
           ],
           "compatibility": {
             "Safari": ""
@@ -182,11 +182,11 @@
     "basefont": {
       "status": [
         "StandardTrack",
-        "Deprecated"
+        "Obsolete"
       ],
       "compatibility": {
       },
-      "doc": "<div><div class=\"notecard deprecated\">\n<h4 id=\"deprecated\">Deprecated</h4>\n<p>This feature is no longer recommended. Though some browsers might still support it, it may have already been removed from the relevant web standards, may be in the process of being dropped, or may only be kept for compatibility purposes. Avoid using it, and update existing code if possible; see the <a href=\"#browser_compatibility\">compatibility table</a> at the bottom of this page to guide your decision. Be aware that this feature may cease to work at any time.</p>\n</div></div>\n<p>The <strong><code>&lt;basefont&gt;</code></strong> <a href=\"$MDN_URL$/Web/HTML\">HTML</a> element is deprecated. It sets a default font face, size, and color for the other elements which are descended from its parent element. With this set, the font's size can then be varied relative to the base size using the <a href=\"$MDN_URL$/Web/HTML/Element/font\"><code>&lt;font&gt;</code></a> element.</p>\n<p>You should not use this element; instead, you should use CSS properties such as <a href=\"$MDN_URL$/Web/CSS/font\"><code>font</code></a>, <a href=\"$MDN_URL$/Web/CSS/font-family\"><code>font-family</code></a>, <a href=\"$MDN_URL$/Web/CSS/font-size\"><code>font-size</code></a>, and <a href=\"$MDN_URL$/Web/CSS/color\"><code>color</code></a> to change the font configuration for an element and its contents.</p>",
+      "doc": "The <strong><code>&lt;basefont&gt;</code></strong> <a href=\"$MDN_URL$/Web/HTML\">HTML</a> element is deprecated. It sets a default font face, size, and color for the other elements which are descended from its parent element. With this set, the font's size can then be varied relative to the base size using the <a href=\"$MDN_URL$/Web/HTML/Element/font\"><code>&lt;font&gt;</code></a> element.</p>\n<p>You should not use this element; instead, you should use CSS properties such as <a href=\"$MDN_URL$/Web/CSS/font\"><code>font</code></a>, <a href=\"$MDN_URL$/Web/CSS/font-family\"><code>font-family</code></a>, <a href=\"$MDN_URL$/Web/CSS/font-size\"><code>font-size</code></a>, and <a href=\"$MDN_URL$/Web/CSS/color\"><code>color</code></a> to change the font configuration for an element and its contents.</p>",
       "attrs": {
         "color": {
           "doc": "This attribute sets the text color using either a named color or a color specified in the hexadecimal #RRGGBB format."
@@ -201,11 +201,11 @@
     },
     "bgsound": {
       "status": [
-        "Deprecated"
+        "Obsolete"
       ],
       "compatibility": {
       },
-      "doc": "<div><div class=\"notecard deprecated\">\n<h4 id=\"deprecated\">Deprecated</h4>\n<p>This feature is no longer recommended. Though some browsers might still support it, it may have already been removed from the relevant web standards, may be in the process of being dropped, or may only be kept for compatibility purposes. Avoid using it, and update existing code if possible; see the <a href=\"#browser_compatibility\">compatibility table</a> at the bottom of this page to guide your decision. Be aware that this feature may cease to work at any time.</p>\n</div><div class=\"notecard warning\">\n<h4 id=\"non-standard\">Non-standard</h4>\n<p>This feature is non-standard and is not on a standards track. Do not use it on production sites facing the Web: it will not work for every user. There may also be large incompatibilities between implementations and the behavior may change in the future.</p>\n</div></div>\n<p>The <strong><code>&lt;bgsound&gt;</code></strong> <a href=\"$MDN_URL$/Web/HTML\">HTML</a> element is deprecated. It sets up a sound file to play in the background while the page is used; use <a href=\"$MDN_URL$/Web/HTML/Element/audio\"><code>&lt;audio&gt;</code></a> instead.</p>\n<div class=\"note notecard\">\n<p><strong>Do not use this! </strong>In order to embed audio in a Web page, you should be using the <a href=\"$MDN_URL$/Web/HTML/Element/audio\"><code>&lt;audio&gt;</code></a> element.</p>\n</div>",
+      "doc": "<div><div class=\"notecard warning\">\n<h4 id=\"non-standard\">Non-standard</h4>\n<p>This feature is non-standard and is not on a standards track. Do not use it on production sites facing the Web: it will not work for every user. There may also be large incompatibilities between implementations and the behavior may change in the future.</p>\n</div></div>\n<p>The <strong><code>&lt;bgsound&gt;</code></strong> <a href=\"$MDN_URL$/Web/HTML\">HTML</a> element is deprecated. It sets up a sound file to play in the background while the page is used; use <a href=\"$MDN_URL$/Web/HTML/Element/audio\"><code>&lt;audio&gt;</code></a> instead.</p>\n<div class=\"note notecard\">\n<p><strong>Do not use this! </strong>In order to embed audio in a Web page, you should be using the <a href=\"$MDN_URL$/Web/HTML/Element/audio\"><code>&lt;audio&gt;</code></a> element.</p>\n</div>",
       "attrs": {
         "balance": {
           "doc": "This attribute defines a number between -10,000 and +10,000 that determines how the volume will be divided between the speakers."
@@ -223,17 +223,17 @@
     },
     "blink": {
       "status": [
-        "Deprecated"
+        "Obsolete"
       ],
       "compatibility": {},
-      "doc": "<div><div class=\"notecard deprecated\">\n<h4 id=\"deprecated\">Deprecated</h4>\n<p>This feature is no longer recommended. Though some browsers might still support it, it may have already been removed from the relevant web standards, may be in the process of being dropped, or may only be kept for compatibility purposes. Avoid using it, and update existing code if possible; see the <a href=\"#browser_compatibility\">compatibility table</a> at the bottom of this page to guide your decision. Be aware that this feature may cease to work at any time.</p>\n</div></div>\n<p>The <strong><code>&lt;blink&gt;</code></strong> <a href=\"$MDN_URL$/Web/HTML\">HTML</a> element is a non-standard element which causes the enclosed text to flash slowly.</p>\n<div class=\"warning notecard\">Do not use this element as it is <strong>obsolete</strong> and is bad design practice. Blinking text is frowned upon by several accessibility standards and the CSS specification allows browsers to ignore the <code>&lt;blink&gt;</code> element.</div>"
+      "doc": "The <strong><code>&lt;blink&gt;</code></strong> <a href=\"$MDN_URL$/Web/HTML\">HTML</a> element is a non-standard element which causes the enclosed text to flash slowly.</p>\n<div class=\"warning notecard\">Do not use this element as it is <strong>obsolete</strong> and is bad design practice. Blinking text is frowned upon by several accessibility standards and the CSS specification allows browsers to ignore the <code>&lt;blink&gt;</code> element.</div>"
     },
     "content": {
       "status": [
-        "Deprecated"
+        "Obsolete"
       ],
       "compatibility": {},
-      "doc": "<div><div class=\"notecard deprecated\">\n<h4 id=\"deprecated\">Deprecated</h4>\n<p>This feature is no longer recommended. Though some browsers might still support it, it may have already been removed from the relevant web standards, may be in the process of being dropped, or may only be kept for compatibility purposes. Avoid using it, and update existing code if possible; see the <a href=\"#browser_compatibility\">compatibility table</a> at the bottom of this page to guide your decision. Be aware that this feature may cease to work at any time.</p>\n</div></div>\n<p>The <strong><code>&lt;content&gt;</code></strong> <a href=\"$MDN_URL$/Web/HTML\">HTML</a> element—an obsolete part of the <a href=\"$MDN_URL$/Web/Web_Components\">Web Components</a> suite of technologies—was used inside of <a href=\"$MDN_URL$/Web/Web_Components/Using_shadow_DOM\">Shadow DOM</a> as an <a class=\"page-not-created\"  >insertion point</a>, and wasn't meant to be used in ordinary HTML. It has now been replaced by the <a href=\"$MDN_URL$/Web/HTML/Element/slot\"><code>&lt;slot&gt;</code></a> element, which creates a point in the DOM at which a shadow DOM can be inserted.</p>\n<div class=\"note notecard\">\n<p><strong>Note:</strong> Though present in early draft of the specifications and implemented in several browsers, this element has been removed in later versions of the spec, and should not be used. It is documented here to assist in adapting code written during the time it was included in the spec to work with newer versions of the specification.</p>\n</div>",
+      "doc": "The <strong><code>&lt;content&gt;</code></strong> <a href=\"$MDN_URL$/Web/HTML\">HTML</a> element—an obsolete part of the <a href=\"$MDN_URL$/Web/Web_Components\">Web Components</a> suite of technologies—was used inside of <a href=\"$MDN_URL$/Web/Web_Components/Using_shadow_DOM\">Shadow DOM</a> as an <a class=\"page-not-created\"  >insertion point</a>, and wasn't meant to be used in ordinary HTML. It has now been replaced by the <a href=\"$MDN_URL$/Web/HTML/Element/slot\"><code>&lt;slot&gt;</code></a> element, which creates a point in the DOM at which a shadow DOM can be inserted.</p>\n<div class=\"note notecard\">\n<p><strong>Note:</strong> Though present in early draft of the specifications and implemented in several browsers, this element has been removed in later versions of the spec, and should not be used. It is documented here to assist in adapting code written during the time it was included in the spec to work with newer versions of the specification.</p>\n</div>",
       "details": {
         "<a href=\"$MDN_URL$/Web/Guide/HTML/Content_categories\">Content categories</a>": "<a href=\"$MDN_URL$/Web/Guide/HTML/Content_categories#transparent_content_model\">Transparent content</a>\n.\n",
         "Permitted content": "<a href=\"$MDN_URL$/Web/Guide/HTML/Content_categories#flow_content\">Flow content</a>\n.\n",
@@ -250,13 +250,13 @@
     "keygen": {
       "status": [
         "StandardTrack",
-        "Deprecated"
+        "Obsolete"
       ],
       "compatibility": {
         "Opera": "3",
         "Safari": "1.2"
       },
-      "doc": "<div class=\"notecard deprecated\">\n<h4 id=\"deprecated\">Deprecated</h4>\n<p>This feature is no longer recommended. Though some browsers might still support it, it may have already been removed from the relevant web standards, may be in the process of being dropped, or may only be kept for compatibility purposes. Avoid using it, and update existing code if possible; see the <a href=\"#browser_compatibility\">compatibility table</a> at the bottom of this page to guide your decision. Be aware that this feature may cease to work at any time.</p>\n</div>\n<p>The <strong><code>&lt;keygen&gt;</code></strong> <a href=\"$MDN_URL$/Web/HTML\">HTML</a> element exists to facilitate generation of key material, and submission of the public key as part of an <a href=\"$MDN_URL$/Learn/Forms\">HTML form</a>. This mechanism is designed for use with Web-based certificate management systems. It is expected that the <code>&lt;keygen&gt;</code> element will be used in an HTML form along with other information needed to construct a certificate request, and that the result of the process will be a signed certificate.</p>",
+      "doc": "The <strong><code>&lt;keygen&gt;</code></strong> <a href=\"$MDN_URL$/Web/HTML\">HTML</a> element exists to facilitate generation of key material, and submission of the public key as part of an <a href=\"$MDN_URL$/Learn/Forms\">HTML form</a>. This mechanism is designed for use with Web-based certificate management systems. It is expected that the <code>&lt;keygen&gt;</code> element will be used in an HTML form along with other information needed to construct a certificate request, and that the result of the process will be a signed certificate.</p>",
       "details": {
         "<a href=\"$MDN_URL$/Web/Guide/HTML/Content_categories\">Content categories</a>": "<a href=\"$MDN_URL$/Web/Guide/HTML/Content_categories#flow_content\">Flow content</a>\n,\n<a href=\"$MDN_URL$/Web/Guide/HTML/Content_categories#phrasing_content\">phrasing content</a>\n, interactive content,\n<a href=\"$MDN_URL$/Web/Guide/HTML/Content_categories#form_listed\">listed</a>\n,\n<a href=\"$MDN_URL$/Web/Guide/HTML/Content_categories#form_labelable\">labelable</a>\n,\n<a href=\"$MDN_URL$/Web/Guide/HTML/Content_categories#form_submittable\">submittable</a>\n,\n<a href=\"$MDN_URL$/Web/Guide/HTML/Content_categories#form_resettable\">resettable</a>\n<a href=\"$MDN_URL$/Web/Guide/HTML/Content_categories#form-associated_content\">form-associated element</a>\n, palpable content.\n",
         "Permitted content": "None, it is an\n<a href=\"$MDN_URL$/Glossary/Empty_element\">empty element</a>\n.\n",
@@ -288,10 +288,10 @@
     },
     "menuitem": {
       "status": [
-        "Deprecated"
+        "Obsolete"
       ],
       "compatibility": {},
-      "doc": "<div class=\"notecard deprecated\">\n<h4 id=\"deprecated\">Deprecated</h4>\n<p>This feature is no longer recommended. Though some browsers might still support it, it may have already been removed from the relevant web standards, may be in the process of being dropped, or may only be kept for compatibility purposes. Avoid using it, and update existing code if possible; see the <a href=\"#browser_compatibility\">compatibility table</a> at the bottom of this page to guide your decision. Be aware that this feature may cease to work at any time.</p>\n</div>\n<p>The <strong><code>&lt;menuitem&gt;</code></strong> <a href=\"$MDN_URL$/Web/HTML\">HTML</a> element represents a command that a user is able to invoke through a popup menu. This includes context menus, as well as menus that might be attached to a menu button.</p>\n<p>A command can either be defined explicitly, with a textual label and optional icon to describe its appearance, or alternatively as an <em>indirect command</em> whose behavior is defined by a separate element. Commands can also optionally include a checkbox or be grouped to share radio buttons. (Menu items for indirect commands gain checkboxes or radio buttons when defined against elements <code>&lt;input type=\"checkbox\"&gt;</code> and <code>&lt;input type=\"radio\"&gt;</code>.)</p>",
+      "doc": "The <strong><code>&lt;menuitem&gt;</code></strong> <a href=\"$MDN_URL$/Web/HTML\">HTML</a> element represents a command that a user is able to invoke through a popup menu. This includes context menus, as well as menus that might be attached to a menu button.</p>\n<p>A command can either be defined explicitly, with a textual label and optional icon to describe its appearance, or alternatively as an <em>indirect command</em> whose behavior is defined by a separate element. Commands can also optionally include a checkbox or be grouped to share radio buttons. (Menu items for indirect commands gain checkboxes or radio buttons when defined against elements <code>&lt;input type=\"checkbox\"&gt;</code> and <code>&lt;input type=\"radio\"&gt;</code>.)</p>",
       "details": {
         "<a href=\"$MDN_URL$/Web/Guide/HTML/Content_categories\">Content categories</a>": "None.\n",
         "Permitted content": "None, it is an\n<a href=\"$MDN_URL$/Glossary/Empty_element\">empty element</a>\n.\n",
@@ -303,7 +303,7 @@
       "attrs": {
         "checked": {
           "status": [
-            "Deprecated"
+            "Obsolete"
           ],
           "compatibility": {
             "Firefox": "8"
@@ -312,7 +312,7 @@
         },
         "command": {
           "status": [
-            "Deprecated"
+            "Obsolete"
           ],
           "compatibility": {
             "Firefox": "8"
@@ -321,7 +321,7 @@
         },
         "default": {
           "status": [
-            "Deprecated"
+            "Obsolete"
           ],
           "compatibility": {
             "Firefox": "8"
@@ -330,7 +330,7 @@
         },
         "disabled": {
           "status": [
-            "Deprecated"
+            "Obsolete"
           ],
           "compatibility": {
             "Firefox": "8"
@@ -339,7 +339,7 @@
         },
         "icon": {
           "status": [
-            "Deprecated"
+            "Obsolete"
           ],
           "compatibility": {
             "Firefox": "8"
@@ -351,7 +351,7 @@
         },
         "radiogroup": {
           "status": [
-            "Deprecated"
+            "Obsolete"
           ],
           "compatibility": {
             "Firefox": "8"
@@ -360,7 +360,7 @@
         },
         "type": {
           "status": [
-            "Deprecated"
+            "Obsolete"
           ],
           "compatibility": {
             "Firefox": "8"
@@ -371,10 +371,10 @@
     },
     "shadow": {
       "status": [
-        "Deprecated"
+        "Obsolete"
       ],
       "compatibility": {},
-      "doc": "<div class=\"notecard deprecated\">\n<h4 id=\"deprecated\">Deprecated</h4>\n<p>This feature is no longer recommended. Though some browsers might still support it, it may have already been removed from the relevant web standards, may be in the process of being dropped, or may only be kept for compatibility purposes. Avoid using it, and update existing code if possible; see the <a href=\"#browser_compatibility\">compatibility table</a> at the bottom of this page to guide your decision. Be aware that this feature may cease to work at any time.</p>\n</div>\n<p>The <strong><code>&lt;shadow&gt;</code></strong> <a href=\"$MDN_URL$/Web/HTML\">HTML</a> element—an obsolete part of the <a href=\"$MDN_URL$/Web/Web_Components\">Web Components</a> technology suite—was intended to be used as a shadow DOM <a class=\"page-not-created\"  >insertion point</a>. You might have used it if you have created multiple shadow roots under a shadow host. It is not useful in ordinary HTML.</p>",
+      "doc": "The <strong><code>&lt;shadow&gt;</code></strong> <a href=\"$MDN_URL$/Web/HTML\">HTML</a> element—an obsolete part of the <a href=\"$MDN_URL$/Web/Web_Components\">Web Components</a> technology suite—was intended to be used as a shadow DOM <a class=\"page-not-created\"  >insertion point</a>. You might have used it if you have created multiple shadow roots under a shadow host. It is not useful in ordinary HTML.</p>",
       "details": {
         "<a href=\"$MDN_URL$/Web/Guide/HTML/Content_categories\">Content categories</a>": "<a href=\"$MDN_URL$/Web/Guide/HTML/Content_categories#transparent_content_model\">Transparent content</a>\n",
         "Permitted content": "<a href=\"$MDN_URL$/Web/Guide/HTML/Content_categories#flow_content\">Flow content</a>\n",
@@ -386,10 +386,10 @@
     },
     "spacer": {
       "status": [
-        "Deprecated"
+        "Obsolete"
       ],
       "compatibility": {},
-      "doc": "<div><div class=\"notecard warning\">\n<h4 id=\"non-standard\">Non-standard</h4>\n<p>This feature is non-standard and is not on a standards track. Do not use it on production sites facing the Web: it will not work for every user. There may also be large incompatibilities between implementations and the behavior may change in the future.</p>\n</div><div class=\"notecard deprecated\">\n<h4 id=\"deprecated\">Deprecated</h4>\n<p>This feature is no longer recommended. Though some browsers might still support it, it may have already been removed from the relevant web standards, may be in the process of being dropped, or may only be kept for compatibility purposes. Avoid using it, and update existing code if possible; see the <a href=\"#browser_compatibility\">compatibility table</a> at the bottom of this page to guide your decision. Be aware that this feature may cease to work at any time.</p>\n</div></div>\n<p>The <strong><code>&lt;spacer&gt;</code></strong> <a href=\"$MDN_URL$/Web/HTML\">HTML</a> element is an obsolete HTML element which allowed insertion of empty spaces on pages. It was devised by Netscape to accomplish the same effect as a single-pixel layout image, which was something web designers used to use to add white spaces to web pages without actually using an image. However, <code>&lt;spacer&gt;</code> no longer supported by any major browser and the same effects can now be achieved using simple CSS.</p>\n<p>Firefox, which is the descendant of Netscape's browsers, removed support for <code>&lt;spacer&gt;</code> in version 4.</p>",
+      "doc": "<div><div class=\"notecard warning\">\n<h4 id=\"non-standard\">Non-standard</h4>\n<p>This feature is non-standard and is not on a standards track. Do not use it on production sites facing the Web: it will not work for every user. There may also be large incompatibilities between implementations and the behavior may change in the future.</p>\n</div></div>\n<p>The <strong><code>&lt;spacer&gt;</code></strong> <a href=\"$MDN_URL$/Web/HTML\">HTML</a> element is an obsolete HTML element which allowed insertion of empty spaces on pages. It was devised by Netscape to accomplish the same effect as a single-pixel layout image, which was something web designers used to use to add white spaces to web pages without actually using an image. However, <code>&lt;spacer&gt;</code> no longer supported by any major browser and the same effects can now be achieved using simple CSS.</p>\n<p>Firefox, which is the descendant of Netscape's browsers, removed support for <code>&lt;spacer&gt;</code> in version 4.</p>",
       "attrs": {
         "align": {
           "doc": "This attribute determines alignment of spacer. Possible values are\n<code>left</code>\n,\n<code>right</code>\nand\n<code>center</code>\n."

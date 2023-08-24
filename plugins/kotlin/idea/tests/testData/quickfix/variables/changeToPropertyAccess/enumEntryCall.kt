@@ -6,3 +6,4 @@ enum class Test {
 fun test() {
     Test.A<caret>()
 }
+// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.ChangeToPropertyAccessFix

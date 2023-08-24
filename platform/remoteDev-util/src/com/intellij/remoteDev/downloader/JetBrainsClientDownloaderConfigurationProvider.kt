@@ -28,6 +28,24 @@ import kotlin.io.path.*
 // .startServerAndServeClient(lifetime, clientDistribution, clientJdkBuildTxt)
 @ApiStatus.Experimental
 interface JetBrainsClientDownloaderConfigurationProvider {
+
+  companion object {
+    const val THIN_CLIENT_DOWNLOAD_URL_KEY = "THIN_CLIENT_DOWNLOAD_URL"
+    val thinClientDownloadUrlValue: String?
+      get() = System.getenv(THIN_CLIENT_DOWNLOAD_URL_KEY)
+
+    const val THIN_CLIENT_VERIFY_SIGNATURE_KEY = "THIN_CLIENT_VERIFY_SIGNATURE"
+    val thinClientVerifySignatureValue: Boolean?
+      get() = System.getenv(THIN_CLIENT_VERIFY_SIGNATURE_KEY)?.toBoolean()
+
+    const val THIN_CLIENT_DOWNLOAD_LATEST_BUILD_FROM_CDN_FOR_SNAPSHOT_KEY = "THIN_CLIENT_DOWNLOAD_LATEST_BUILD_FROM_CDN_FOR_SNAPSHOT"
+    val thinClientDownloadLatestBuildFromCDNForSnapshotValue: Boolean?
+      get() = System.getenv(THIN_CLIENT_DOWNLOAD_LATEST_BUILD_FROM_CDN_FOR_SNAPSHOT_KEY)?.toBoolean()
+
+    val customPropertiesAreSet
+      get() = thinClientDownloadUrlValue != null && thinClientDownloadLatestBuildFromCDNForSnapshotValue != null && thinClientVerifySignatureValue != null
+  }
+
   fun modifyClientCommandLine(clientCommandLine: GeneralCommandLine)
 
   val clientDownloadUrl: URI
@@ -52,7 +70,10 @@ class RealJetBrainsClientDownloaderConfigurationProvider : JetBrainsClientDownlo
   override fun modifyClientCommandLine(clientCommandLine: GeneralCommandLine) { }
 
   override val clientDownloadUrl: URI
-    get() = RemoteDevSystemSettings.getClientDownloadUrl().value
+    get() {
+      val envVar = JetBrainsClientDownloaderConfigurationProvider.thinClientDownloadUrlValue
+      return envVar?.let { URI(it) } ?: RemoteDevSystemSettings.getClientDownloadUrl().value
+    }
   override val jreDownloadUrl: URI
     get() = RemoteDevSystemSettings.getJreDownloadUrl().value
 
@@ -69,7 +90,11 @@ class RealJetBrainsClientDownloaderConfigurationProvider : JetBrainsClientDownlo
     get() = IntellijClientDownloaderSystemSettings.isVersionManagementEnabled()
   override val modifiedDateInManifestIncluded: Boolean
     get() = IntellijClientDownloaderSystemSettings.isModifiedDateInManifestIncluded()
-  override val verifySignature: Boolean = true
+  override val verifySignature: Boolean
+    get() {
+      val envVar = JetBrainsClientDownloaderConfigurationProvider.thinClientVerifySignatureValue
+      return envVar ?: true
+    }
 
   override fun patchVmOptions(vmOptionsFile: Path, connectionUri: URI) {
 
@@ -77,7 +102,11 @@ class RealJetBrainsClientDownloaderConfigurationProvider : JetBrainsClientDownlo
 
   override val clientLaunched: Signal<Unit> = Signal()
 
-  override val downloadLatestBuildFromCDNForSnapshotHost = true
+  override val downloadLatestBuildFromCDNForSnapshotHost: Boolean
+    get() {
+      val envVar = JetBrainsClientDownloaderConfigurationProvider.thinClientDownloadLatestBuildFromCDNForSnapshotValue
+      return envVar ?: true
+    }
 }
 
 @ApiStatus.Experimental
@@ -108,7 +137,11 @@ class TestJetBrainsClientDownloaderConfigurationProvider : JetBrainsClientDownlo
 
   override val clientLaunched: Signal<Unit> = Signal()
 
-  override val downloadLatestBuildFromCDNForSnapshotHost = false
+  override val downloadLatestBuildFromCDNForSnapshotHost: Boolean
+    get() {
+      val envVar = JetBrainsClientDownloaderConfigurationProvider.thinClientDownloadLatestBuildFromCDNForSnapshotValue
+      return envVar ?: false
+    }
 
   override fun patchVmOptions(vmOptionsFile: Path, connectionUri: URI) {
     thisLogger().info("Patching $vmOptionsFile")

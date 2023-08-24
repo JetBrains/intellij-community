@@ -9,3 +9,4 @@ fun println() {}
 fun usage() {
     <caret>runSuspendOld { println() }
 }
+// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.replaceWith.DeprecatedSymbolUsageFix

@@ -9,10 +9,12 @@ import com.intellij.internal.statistic.eventLog.uploader.EventLogExternalUploade
 import com.intellij.internal.statistic.eventLog.validator.IntellijSensitiveDataValidator
 import com.intellij.internal.statistic.utils.StatisticsUploadAssistant
 import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.components.Service
 import com.intellij.openapi.extensions.ExtensionNotApplicableException
 import com.intellij.openapi.extensions.InternalIgnoreDependencyViolation
 import com.intellij.openapi.progress.blockingContext
 import kotlinx.coroutines.*
+import org.jetbrains.annotations.ApiStatus
 import kotlin.time.Duration.Companion.milliseconds
 import kotlin.time.Duration.Companion.minutes
 import kotlin.time.Duration.Companion.seconds
@@ -56,6 +58,7 @@ private suspend fun runValidationRulesUpdate() {
         }
       }
     }
+    ApplicationManager.getApplication().getService(StatisticsValidationUpdatedService::class.java).updatedDeferred.complete(Unit)
 
     delay(180.minutes)
   }
@@ -90,4 +93,10 @@ private suspend fun runEventLogStatisticsService() {
       }
     }
   }
+}
+
+@ApiStatus.Internal
+@Service(Service.Level.APP)
+class StatisticsValidationUpdatedService {
+  val updatedDeferred = CompletableDeferred<Unit>()
 }

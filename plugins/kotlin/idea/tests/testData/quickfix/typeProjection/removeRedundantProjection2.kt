@@ -6,3 +6,5 @@ class Foo<in T> {
 fun bar(x : Foo<in<caret>  Any>) {
 
 }
+
+// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.RemoveModifierFixBase

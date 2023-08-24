@@ -173,7 +173,7 @@ class IcsManager @JvmOverloads constructor(
     override val isExclusive: Boolean
       get() = isRepositoryActive
 
-    override fun isApplicable(fileSpec: String, roamingType: RoamingType): Boolean = isRepositoryActive
+    override fun isApplicable(fileSpec: String, roamingType: RoamingType): Boolean = isRepositoryActive && roamingType != RoamingType.DISABLED
 
     override fun processChildren(path: String,
                                  roamingType: RoamingType,
@@ -208,7 +208,7 @@ class IcsManager @JvmOverloads constructor(
       repositoryManager.write(toRepositoryPath(fileSpec, roamingType), content)
 
     override fun read(fileSpec: String, roamingType: RoamingType, consumer: (InputStream?) -> Unit): Boolean {
-      if (!isRepositoryActive) {
+      if (!isApplicable(fileSpec, roamingType)) {
         return false
       }
 
@@ -230,6 +230,12 @@ class IcsManager @JvmOverloads constructor(
       }
 
       return true
+    }
+
+    override fun deleteIfObsolete(fileSpec: String, roamingType: RoamingType) {
+      if (roamingType == RoamingType.DISABLED) {
+        delete(fileSpec, roamingType)
+      }
     }
   }
 }

@@ -10,3 +10,4 @@ class A<T>(val items: List<T>) {
 private fun <E, T> List<E>.foo(t: T, s: String): T {
     TODO("Not yet implemented")
 }
+// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.createFromUsage.createCallable.CreateExtensionCallableFromUsageFix

@@ -6,3 +6,4 @@ fun foo(a: List<String>) {
 }
 
 fun bar(a: MutableList<String>) {}
+// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.ConvertCollectionFix

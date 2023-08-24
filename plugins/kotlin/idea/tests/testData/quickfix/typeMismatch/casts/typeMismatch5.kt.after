@@ -5,3 +5,4 @@
 fun <T> f() {
     val someList: List<T> = listOf(1) as List<T><caret>
 }
+// FUS_K2_QUICKFIX_NAME: org.jetbrains.kotlin.idea.codeinsight.api.applicators.fixes.KotlinApplicatorBasedQuickFix

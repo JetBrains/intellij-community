@@ -212,6 +212,11 @@ public class ActionPopupStep implements ListPopupStepEx<PopupFactoryImpl.ActionI
   }
 
   @ApiStatus.Internal
+  public @NotNull BiFunction<DataContext, AnAction, DataContext> getSubStepContextAdjuster() {
+    return mySubStepContextAdjuster;
+  }
+
+  @ApiStatus.Internal
   public void setSubStepContextAdjuster(@NotNull BiFunction<DataContext, AnAction, DataContext>  subStepContextAdjuster) {
     mySubStepContextAdjuster = subStepContextAdjuster;
   }

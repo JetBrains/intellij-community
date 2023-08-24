@@ -4,3 +4,4 @@ interface T
 fun foo(): T {
     return object: T{}
 }
+// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.ChangeCallableReturnTypeFix$ForEnclosing

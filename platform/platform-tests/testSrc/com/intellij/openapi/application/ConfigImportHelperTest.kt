@@ -3,6 +3,7 @@ package com.intellij.openapi.application
 
 import com.intellij.configurationStore.getPerOsSettingsStorageFolderName
 import com.intellij.diagnostic.VMOptions
+import com.intellij.ide.SpecialConfigFiles
 import com.intellij.ide.plugins.PluginBuilder
 import com.intellij.ide.plugins.marketplace.MarketplacePluginDownloadService
 import com.intellij.ide.startup.StartupActionScriptManager
@@ -141,16 +142,18 @@ class ConfigImportHelperTest : ConfigImportHelperBaseTest() {
     val oldConfigDir = createConfigDir("2021.2")
     val newConfigDir = createConfigDir("2021.3")
 
-    val jdkFile = oldConfigDir.resolve("${ApplicationNamesInfo.getInstance().scriptName}.jdk")
-    val otherFile = oldConfigDir.resolve("other.xml")
-    Files.write(jdkFile, listOf("..."))
-    Files.write(otherFile, listOf("..."))
+    val jdkFile = Files.writeString(oldConfigDir.resolve("${ApplicationNamesInfo.getInstance().scriptName}.jdk"), "...")
+    val migrationOptionFile = Files.writeString(CustomConfigMigrationOption.getCustomConfigMarkerFilePath(oldConfigDir), "")
+    val lockFile = Files.writeString(oldConfigDir.resolve(SpecialConfigFiles.LOCK_FILE), "...")
+    val otherFile = Files.writeString(oldConfigDir.resolve("other.xml"), "...")
 
     val options = ConfigImportHelper.ConfigImportOptions(LOG)
     options.headless = true
     ConfigImportHelper.doImport(oldConfigDir, newConfigDir, null, oldConfigDir.resolve("plugins"), newConfigDir.resolve("plugins"), options)
 
     assertThat(newConfigDir.resolve(jdkFile.fileName)).doesNotExist()
+    assertThat(newConfigDir.resolve(migrationOptionFile.fileName)).doesNotExist()
+    assertThat(newConfigDir.resolve(lockFile.fileName)).doesNotExist()
     assertThat(newConfigDir.resolve(otherFile.fileName)).hasSameBinaryContentAs(otherFile)
   }
 

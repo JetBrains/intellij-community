@@ -5,12 +5,17 @@ import com.intellij.ide.RecentProjectsManagerBase
 import com.intellij.ide.actions.QuickChangeLookAndFeel
 import com.intellij.ide.customize.transferSettings.models.*
 import com.intellij.ide.ui.LafManager
+import com.intellij.ide.ui.UISettings
+import com.intellij.ide.ui.laf.darcula.DarculaInstaller
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.editor.colors.EditorColorsManager
 import com.intellij.openapi.extensions.PluginId
 import com.intellij.openapi.keymap.ex.KeymapManagerEx
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.IconLoader
+import com.intellij.ui.JBColor
+import com.intellij.util.ui.StartupUiUtil
 
 /**
  * Similar to ImportPerformer
@@ -54,9 +59,30 @@ class LookAndFeelImportPerformer : PartialImportPerformer {
 
   override fun performEdt(project: Project?, settings: Settings) {
     (settings.laf as? BundledLookAndFeel)?.let {
-      val mgr = LafManager.getInstance()
-      mgr.currentLookAndFeel = it.lafInfo
-      QuickChangeLookAndFeel.switchLafAndUpdateUI(mgr, mgr.currentLookAndFeel, false)
+      val laf = it.lafInfo
+      val wasDark = StartupUiUtil.isUnderDarcula
+
+      LafManager.getInstance().apply {
+        setCurrentLookAndFeel(laf, false)
+        updateUI()
+        repaintUI()
+      }
+
+      val isDark = StartupUiUtil.isUnderDarcula
+
+      if (isDark) {
+        DarculaInstaller.install()
+      }
+      else if (wasDark) {
+        DarculaInstaller.uninstall()
+      }
+
+      JBColor.setDark(isDark)
+      IconLoader.setUseDarkIcons(isDark)
+
+      LafManager.getInstance().updateUI()
+
+      UISettings.getInstance().fireUISettingsChanged()
     }
   }
 }

@@ -45,7 +45,7 @@ open class GitBranchesTreeSingleRepoModel(
     branchesTreeCache.keys.clear()
     val localBranches = repository.localBranchesOrCurrent
     val remoteBranches = repository.branches.remoteBranches
-    val recentCheckoutBranches = repository.branches.recentCheckoutBranches
+    val recentCheckoutBranches = repository.recentCheckoutBranches
     localBranchesTree = LazyBranchesSubtreeHolder(localBranches, listOf(repository), matcher, ::isPrefixGrouping,
                                                   recentCheckoutBranches::contains)
     remoteBranchesTree = LazyBranchesSubtreeHolder(remoteBranches, listOf(repository), matcher, ::isPrefixGrouping)

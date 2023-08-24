@@ -5,3 +5,4 @@ fun foo(f: (java.util.HashSet<Int>) -> String) {
         x: String<caret> -> ""
     }
 }
+// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.ChangeTypeFix

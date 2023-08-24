@@ -14,6 +14,7 @@ import com.intellij.execution.configuration.PersistentAwareRunConfiguration
 import com.intellij.execution.configurations.*
 import com.intellij.execution.executors.DefaultRunExecutor
 import com.intellij.execution.runners.ProgramRunner
+import com.intellij.execution.util.ProgramParametersConfigurator
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.ReadAction
 import com.intellij.openapi.components.PathMacroManager
@@ -338,10 +339,13 @@ class RunnerAndConfigurationSettingsImpl @JvmOverloads constructor(
   override fun checkSettings(executor: Executor?) {
     val configuration = configuration
     var warning: RuntimeConfigurationException? = null
+    val dataContext = ProgramParametersConfigurator.projectContext(configuration.project, null, null)
 
-    ReadAction.nonBlocking {
+     ReadAction.nonBlocking {
       try {
-        configuration.checkConfiguration()
+        ExecutionManagerImpl.withEnvironmentDataContext(dataContext).use {
+          configuration.checkConfiguration()
+        }
       }
       catch (e: RuntimeConfigurationException) {
         warning = e

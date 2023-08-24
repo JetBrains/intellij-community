@@ -106,6 +106,7 @@ public class UnifiedLocalChangeListDiffViewer extends UnifiedDiffViewer {
       document1,
       document2,
       myLocalRequest.getChangelistId(),
+      myAllowExcludeChangesFromCommit,
       myTextDiffProvider,
       indicator,
       new MyLocalTrackerDiffHandler(document1, document2, indicator));
@@ -361,7 +362,7 @@ public class UnifiedLocalChangeListDiffViewer extends UnifiedDiffViewer {
 
     @Override
     public void installHighlighter() {
-      if (getChange().isPartiallyExcluded()) {
+      if (getChange().isPartiallyExcluded() && getViewer().myAllowExcludeChangesFromCommit) {
         assert myHighlighters.isEmpty() && myOperations.isEmpty();
 
         int deletionStart = myChange.getDeletedRange().start;

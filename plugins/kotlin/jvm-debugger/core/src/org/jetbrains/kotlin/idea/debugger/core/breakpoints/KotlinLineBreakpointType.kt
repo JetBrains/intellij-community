@@ -107,16 +107,16 @@ class KotlinLineBreakpointType :
 
         val pos = SourcePosition.createFromLine(file, position.line)
         val lambdas = getLambdasAtLineIfAny(pos)
-        val condRet = findSingleConditionalReturn(file, position.line)
+        val condRet = if (canStopOnConditionalReturn(file)) findSingleConditionalReturn(file, position.line) else null
 
         if (lambdas.isEmpty() && condRet == null) return emptyList()
 
         val result = LinkedList<JavaLineBreakpointType.JavaBreakpointVariant>()
         val elementAt = pos.elementAt.parentsWithSelf.firstIsInstance<KtElement>()
-        val mainMethod = PsiTreeUtil.getParentOfType(elementAt, KtFunction::class.java, false)
+        val mainMethod = elementAt.getContainingMethod(excludingElement = false)
         var mainMethodAdded = false
         if (mainMethod != null) {
-            val bodyExpression = mainMethod.bodyExpression
+            val bodyExpression = if (mainMethod is KtDeclarationWithBody) mainMethod.bodyExpression else null
             val isLambdaResult = bodyExpression is KtLambdaExpression && bodyExpression.functionLiteral in lambdas
 
             if (!isLambdaResult) {
@@ -192,8 +192,9 @@ class KotlinLineBreakpointType :
 private val LineBreakpoint<*>.javaBreakpointProperties
     get() = xBreakpoint?.properties as? JavaBreakpointProperties<*>
 
-private fun PsiElement.getContainingMethod(): PsiElement? =
-    PsiTreeUtil.getParentOfType(this, KtFunction::class.java, KtClassInitializer::class.java)
+private fun PsiElement.getContainingMethod(excludingElement: Boolean = true): PsiElement? =
+  PsiTreeUtil.getParentOfType(this, excludingElement,
+                              KtFunction::class.java, KtClassInitializer::class.java, KtPropertyAccessor::class.java)
 
 private fun PsiElement?.isInlineOnlyDeclaration(): Boolean =
     this is KtCallableDeclaration && isInlineOnly()

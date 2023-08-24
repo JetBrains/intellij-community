@@ -318,6 +318,7 @@ internal val WebTypes.descriptionMarkupWithLegacy: WebTypes.DescriptionMarkup?
 internal fun HtmlValueType.wrap(): WebSymbolHtmlAttributeValue.Type? =
   when (this.value) {
     "enum" -> WebSymbolHtmlAttributeValue.Type.ENUM
+    "symbol" -> WebSymbolHtmlAttributeValue.Type.SYMBOL
     "of-match" -> WebSymbolHtmlAttributeValue.Type.OF_MATCH
     "string" -> WebSymbolHtmlAttributeValue.Type.STRING
     "boolean" -> WebSymbolHtmlAttributeValue.Type.BOOLEAN
@@ -328,7 +329,7 @@ internal fun HtmlValueType.wrap(): WebSymbolHtmlAttributeValue.Type? =
 
 internal fun HtmlValueType.toLangType(): List<Type>? =
   when (val typeValue = this.value) {
-    null, "enum", "of-match" -> null
+    null, "enum", "of-match", "symbol" -> null
     is List<*> -> typeValue.filterIsInstance<Type>()
     is TypeReference, is String -> listOf(
       Type().also { it.value = typeValue })
@@ -491,7 +492,9 @@ private fun parseWebTypesPath(path: List<String>, context: WebSymbol?): List<Web
 
 @Suppress("HardCodedStringLiteral")
 internal fun BaseContribution.toApiStatus(origin: WebTypesJsonOrigin): WebSymbolApiStatus =
-  deprecated?.value?.takeIf { it != false }
+  obsolete?.value?.takeIf { it != false }
+    ?.let { msg -> WebSymbolApiStatus.Obsolete((msg as? String)?.let { origin.renderDescription(it) }, obsoleteSince) }
+  ?: deprecated?.value?.takeIf { it != false }
     ?.let { msg -> WebSymbolApiStatus.Deprecated((msg as? String)?.let { origin.renderDescription(it) }, deprecatedSince) }
   ?: experimental?.value?.takeIf { it != false }
     ?.let { msg -> WebSymbolApiStatus.Experimental((msg as? String)?.let { origin.renderDescription(it) }, since) }

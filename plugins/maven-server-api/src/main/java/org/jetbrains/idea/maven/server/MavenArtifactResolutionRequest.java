@@ -6,6 +6,7 @@ import org.jetbrains.idea.maven.model.MavenArtifactInfo;
 import org.jetbrains.idea.maven.model.MavenRemoteRepository;
 
 import java.io.Serializable;
+import java.util.ArrayList;
 import java.util.List;
 
 public final class MavenArtifactResolutionRequest implements Serializable {
@@ -16,7 +17,7 @@ public final class MavenArtifactResolutionRequest implements Serializable {
 
   public MavenArtifactResolutionRequest(@NotNull MavenArtifactInfo mavenArtifactInfo, @NotNull List<MavenRemoteRepository> repositories) {
     myArtifactInfo = mavenArtifactInfo;
-    myRemoteRepositories = repositories;
+    myRemoteRepositories = new ArrayList<>(repositories);
   }
 
   @NotNull

@@ -39,6 +39,8 @@ abstract class AbstractKotlinApplicableInspection<ELEMENT : KtElement>(
         if (!isApplicable) return null
 
         val elementPointer = element.createSmartPointer()
+        val inspectionClass = javaClass
+
         val quickFix = object : AbstractKotlinApplicableInspectionQuickFix<ELEMENT>() {
             override fun applyTo(element: ELEMENT) {
                 apply(element, element.project, element.findExistingEditor())
@@ -47,6 +49,7 @@ abstract class AbstractKotlinApplicableInspection<ELEMENT : KtElement>(
             override fun shouldApplyInWriteAction(): Boolean = this@AbstractKotlinApplicableInspection.shouldApplyInWriteAction()
             override fun getFamilyName(): String = this@AbstractKotlinApplicableInspection.getActionFamilyName()
             override fun getName(): String = elementPointer.element?.let { getActionName(it) } ?: familyName
+            override fun getSubstitutedClass(): Class<*> = inspectionClass
         }
 
         val description = getProblemDescription(element)

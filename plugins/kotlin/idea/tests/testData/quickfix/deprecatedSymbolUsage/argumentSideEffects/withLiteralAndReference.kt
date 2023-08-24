@@ -7,3 +7,4 @@ fun bar(y: Any) {}
 fun main() {
     <caret>foo(4::class, 42::dec, ::bar)
 }
+// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.replaceWith.DeprecatedSymbolUsageFix

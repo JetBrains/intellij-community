@@ -17,6 +17,7 @@ import com.intellij.testFramework.LightProjectDescriptor;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.kotlin.config.JvmTarget;
 import org.jetbrains.kotlin.idea.compiler.configuration.IdeKotlinVersion;
 import org.jetbrains.kotlin.idea.test.KotlinLightCodeInsightTestCase;
 import org.jetbrains.kotlin.idea.test.InTextDirectivesUtils;
@@ -58,7 +59,7 @@ public abstract class AbstractConfigureProjectByChangingFileTest<C extends Kotli
 
         NotificationMessageCollector collector = NotificationMessageCollector.create(getProject());
 
-        runConfigurator(getModule(), getFile(), configurator, version, collector);
+        runConfigurator(getModule(), getFile(), configurator, version, JvmTarget.JVM_1_8.getDescription(), collector);
 
         collector.showNotification();
 
@@ -98,6 +99,7 @@ public abstract class AbstractConfigureProjectByChangingFileTest<C extends Kotli
             Module module, @NotNull PsiFile file,
             @NotNull C configurator,
             @NotNull IdeKotlinVersion version,
+            @NotNull String jvmTarget,
             @NotNull NotificationMessageCollector collector
     );
 

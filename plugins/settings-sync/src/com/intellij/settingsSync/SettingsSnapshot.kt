@@ -2,10 +2,13 @@ package com.intellij.settingsSync
 
 import com.intellij.openapi.application.ApplicationInfo
 import com.intellij.openapi.application.PathManager
+import com.intellij.openapi.components.SettingsCategory
 import com.intellij.openapi.components.service
 import com.intellij.openapi.util.BuildNumber
+import com.intellij.openapi.util.JDOMUtil
 import com.intellij.settingsSync.plugins.SettingsSyncPluginsState
 import com.intellij.util.SystemProperties
+import com.intellij.util.xmlb.XmlSerializer
 import org.jetbrains.annotations.ApiStatus
 import java.time.Instant
 import java.util.*
@@ -52,6 +55,29 @@ data class SettingsSnapshot(val metaInfo: MetaInfo,
 
   fun isDeleted(): Boolean {
     return metaInfo.isDeleted
+  }
+
+  fun getState(): SettingsSyncState {
+    val fileState = fileStates.firstOrNull {
+      it.file == ("${PathManager.OPTIONS_DIRECTORY}/${SettingsSyncSettings.FILE_SPEC}")
+    } ?: return SettingsSyncStateHolder()
+
+    if (fileState !is FileState.Modified) {
+      return SettingsSyncStateHolder()
+    }
+    try {
+      val componentElement = JDOMUtil.load(fileState.content).getChildren("component")
+                               .firstOrNull { it.getAttributeValue("name") == SettingsSyncSettings.COMPONENT_NAME }
+                             ?: return SettingsSyncStateHolder()
+      val state = XmlSerializer.deserialize(componentElement, SettingsSyncSettings.State::class.java)
+      return SettingsSyncStateHolder(
+        state
+      )
+    }
+    catch (ex: Throwable) {
+      SettingsSyncSettings.LOG.error("Unable to deserialize content of ${SettingsSyncSettings.FILE_SPEC} into object", ex)
+      return SettingsSyncStateHolder()
+    }
   }
 }
 

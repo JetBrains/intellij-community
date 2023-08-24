@@ -467,7 +467,9 @@
         "warningBackground": "#f9f78e",
         "warningBorderColor": "#bab824",
         "warningForeground": "foreground"
-      }
+      },
+
+      "WelcomeScreen.separatorColor": "#d1d1d1"
     },
 
 
@@ -824,8 +826,10 @@
 
     "TitlePane": {
       "background": "panel",
-      "Button.hoverBackground": "#00000019",
-      "Button.preferredSize": "47,28",
+      "Button": {
+        "hoverBackground": "#00000019",
+        "preferredSize": "47,28"
+      },
       "inactiveBackground": "panel",
       "inactiveInfoForeground": "grey04",
       "infoForeground": "grey01"
@@ -956,6 +960,7 @@
     "text": "foreground",
     "textText": "foreground",
     "window": "panel",
+    "Window.undecorated.border" : "1,1,1,1,#5A5D6B",
 
     "WelcomeScreen": {
       "Details.background": "white",

@@ -4,6 +4,7 @@ package com.intellij.util.ui;
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.SystemInfoRt;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.ui.*;
 import com.intellij.ui.border.CustomLineBorder;
 import com.intellij.ui.border.NamedBorderKt;
@@ -1088,7 +1089,12 @@ public final class JBUI {
       }
 
       public static Insets mainToolbarButtonInsets() {
-        return insets("MainToolbar.Button.buttonInsets", isNewUI() ? emptyInsets() : insets(1, 2));
+        return insets(mainToolbarButtonInsetsKey(), isNewUI() ? emptyInsets() : insets(1, 2));
+      }
+
+      @NotNull
+      public static String mainToolbarButtonInsetsKey() {
+        return "MainToolbar.Icon.insets";
       }
 
       public static @NotNull Dimension experimentalToolbarButtonSize() {
@@ -1627,7 +1633,16 @@ public final class JBUI {
           return 7;
         }
       }
+    }
 
+    public interface Window {
+      static Border getBorder(boolean undecoratedWindow) {
+        Border result = UIManager.getBorder("Window.border");
+        if (result == null && undecoratedWindow && SystemInfoRt.isXWindow && Registry.is("ide.linux.use.undecorated.border")) {
+          result = UIManager.getBorder("Window.undecorated.border");
+        }
+        return result;
+      }
     }
 
     public static final class Link {
@@ -1756,6 +1771,14 @@ public final class JBUI {
           return JBColor.namedColor("Tooltip.Learning.borderColor", base);
         }
         return base;
+      }
+
+      public static @NotNull Color imageBorderColor(boolean useContrastColors) {
+        return JBColor.namedColor("GotItTooltip.imageBorderColor", background(useContrastColors));
+      }
+
+      public static @NotNull Color animationBackground(boolean useContrastColors) {
+        return JBColor.namedColor("GotItTooltip.animationBackground", background(useContrastColors));
       }
 
       public static @NotNull Color buttonBackgroundContrast() {

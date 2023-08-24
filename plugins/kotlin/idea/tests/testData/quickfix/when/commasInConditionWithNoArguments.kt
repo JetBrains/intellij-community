@@ -14,3 +14,4 @@ fun test(i: Int, j: Int) {
     }
 }
 /* IGNORE_FIR */
+// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.CommaInWhenConditionWithoutArgumentFix

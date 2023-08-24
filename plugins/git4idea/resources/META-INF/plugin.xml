@@ -22,6 +22,10 @@
   </dependencies>
   <depends optional="true" config-file="git-performance-plugin-support.xml">com.jetbrains.performancePlugin</depends>
 
+  <content>
+    <module name="intellij.vcs.git/newUiOnboarding"/>
+  </content>
+
   <actions>
     <action id="Git.Init" class="git4idea.actions.GitInit">
       <add-to-group group-id="Vcs.Import"/>
@@ -49,6 +53,7 @@
     <action id="Git.Revert.In.Log" class="git4idea.revert.GitRevertAction"/>
     <action id="Git.Uncommit" class="git4idea.reset.GitUncommitAction"/>
     <action id="Git.Reword.Commit" class="git4idea.rebase.GitRewordAction"/>
+    <group id="Git.Reword.ToolbarActions"/>
     <action id="Git.Squash.Commits" class="git4idea.rebase.log.squash.GitSquashLogAction"/>
     <action id="Git.Drop.Commits" class="git4idea.rebase.log.drop.GitDropLogAction"/>
     <action id="Git.Rename.Local.Branch" class="git4idea.ui.branch.dashboard.BranchesDashboardActions$RenameLocalBranch"/>
@@ -549,6 +554,8 @@
                  description="Wrap 'git' process with 'setsid -w' for remote operations with WSL executable."/>
     <registryKey key="git.wsl.exe.executable.no.shell" defaultValue="false"
                  description="Run git process for WSL executables without wrapping into a shell command."/>
+    <registryKey key="git.wsl.exe.executable.login.shell" defaultValue="false"
+                 description="Run git process for WSL executables using login shell command."/>
     <registryKey key="git.use.no.optional.locks" defaultValue="true"
                  description="Use 'GIT_OPTIONAL_LOCKS' env variable to avoid taking unnecessary locks in git. Ex: to avoid 'git status' to interfere with 'git rebase' process in terminal."/>
     <registryKey key="git.merge.conflicts.toolwindow" defaultValue="false"
@@ -579,9 +586,11 @@
                  description="If true, then tree nodes will be expanded on single click, otherwise expand as usual JTree"/>
     <registryKey key="git.do.not.swap.merge.conflict.sides" defaultValue="false"
                  description="Do not inverse 'ours' and 'theirs' conflict sides during rebase"/>
-    <registryKey key="git.recent.checkout.branches.reflog.entries.max.count" defaultValue="5"
+    <registryKey key="git.recent.checkout.branches.reflog.entries.max.count" defaultValue="50"
                  restartRequired="true"
                  description="Amount of entry to process from Git reflog to parse recently checkout branches"/>
+    <registryKey key="git.show.recent.checkout.branches" defaultValue="5"
+                 description="Max count of recently checkout branches to show (e.g. in branches tree popup)"/>
 
     <search.projectOptionsTopHitProvider implementation="git4idea.config.GitOptionsTopHitProvider"/>
     <vcs name="Git" vcsClass="git4idea.GitVcs" displayName="Git" administrativeAreaName=".git"/>

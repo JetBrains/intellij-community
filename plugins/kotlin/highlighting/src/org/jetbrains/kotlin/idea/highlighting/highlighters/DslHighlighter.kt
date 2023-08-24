@@ -12,6 +12,7 @@ import org.jetbrains.kotlin.analysis.api.symbols.KtClassKind
 import org.jetbrains.kotlin.analysis.api.symbols.KtClassOrObjectSymbol
 import org.jetbrains.kotlin.analysis.api.types.KtFunctionalType
 import org.jetbrains.kotlin.analysis.api.types.KtType
+import org.jetbrains.kotlin.idea.base.highlighting.HighlightingFactory
 import org.jetbrains.kotlin.idea.base.highlighting.dsl.DslStyleUtils
 import org.jetbrains.kotlin.name.ClassId
 import org.jetbrains.kotlin.psi.KtCallExpression
@@ -42,9 +43,9 @@ internal class DslHighlighter(project: Project) : AfterResolveHighlighter(projec
         val dslAnnotation = getDslAnnotation(receiverType) ?: return null
 
         val dslStyleId = DslStyleUtils.styleIdByFQName(dslAnnotation.asSingleFqName())
-        return highlightName(
+        return HighlightingFactory.highlightName(
             calleeExpression,
-            DslStyleUtils.styleById(dslStyleId),
+            DslStyleUtils.typeById(dslStyleId),
             DslStyleUtils.styleOptionDisplayName(dslStyleId)
         )
     }

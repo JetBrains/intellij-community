@@ -53,7 +53,13 @@
     <orderEntry type="module" module-name="intellij.platform.diff.impl" />
     <orderEntry type="module-library">
       <library name="completion-ranking-java" type="repository">
-        <properties include-transitive-deps="false" maven-id="org.jetbrains.intellij.deps.completion:completion-ranking-java:0.9.3" />
+        <properties include-transitive-deps="false" maven-id="org.jetbrains.intellij.deps.completion:completion-ranking-java:0.9.3">
+          <verification>
+            <artifact url="file://$MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/completion/completion-ranking-java/0.9.3/completion-ranking-java-0.9.3.jar">
+              <sha256sum>e3dcfee71eb13467139a1385152bd28554c79c677738cb617a91a772ea6e9f87</sha256sum>
+            </artifact>
+          </verification>
+        </properties>
         <CLASSES>
           <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/completion/completion-ranking-java/0.9.3/completion-ranking-java-0.9.3.jar!/" />
         </CLASSES>

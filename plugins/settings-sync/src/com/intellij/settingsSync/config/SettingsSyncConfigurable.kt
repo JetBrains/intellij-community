@@ -73,6 +73,7 @@ internal class SettingsSyncConfigurable : BoundConfigurable(message("title.setti
       SettingsSyncEvents.getInstance().addEnabledStateChangeListener(object : SettingsSyncEnabledStateListener {
         override fun enabledStateChanged(syncEnabled: Boolean) {
           listener(invoke())
+          configPanel.reset()
         }
       }, disposable!!)
     }
@@ -126,7 +127,7 @@ internal class SettingsSyncConfigurable : BoundConfigurable(message("title.setti
   }
 
   override fun createPanel(): DialogPanel {
-    val categoriesPanel = SettingsSyncPanelFactory.createPanel(message("configurable.what.to.sync.label"))
+    val categoriesPanel = SettingsSyncPanelFactory.createPanel(message("configurable.what.to.sync.label"), SettingsSyncSettings.getInstance())
     val authService = SettingsSyncAuthService.getInstance()
     val authAvailable = authService.isLoginAvailable()
     configPanel = panel {
@@ -252,8 +253,8 @@ internal class SettingsSyncConfigurable : BoundConfigurable(message("title.setti
 
   override fun serverStateCheckFinished(updateResult: UpdateResult) {
     when (updateResult) {
-      NoFileOnServer, FileDeletedFromServer -> showEnableSyncDialog(false)
-      is Success -> showEnableSyncDialog(true)
+      NoFileOnServer, FileDeletedFromServer -> showEnableSyncDialog(null)
+      is Success -> showEnableSyncDialog(updateResult.settingsSnapshot.getState())
       is Error -> {
         if (updateResult != SettingsSyncEnabler.State.CANCELLED) {
           showError(message("notification.title.update.error"), updateResult.message)
@@ -278,19 +279,20 @@ internal class SettingsSyncConfigurable : BoundConfigurable(message("title.setti
     updateStatusInfo()
   }
 
-  private fun showEnableSyncDialog(remoteSettingsFound: Boolean) {
-    val dialogResult = EnableSettingsSyncDialog.showAndGetResult(configPanel, remoteSettingsFound)
+  private fun showEnableSyncDialog(remoteSettings: SettingsSyncState?) {
+    val dialog = EnableSettingsSyncDialog(configPanel, remoteSettings)
+    dialog.show()
+    val dialogResult = dialog.getResult()
     if (dialogResult != null) {
-      reset()
       when (dialogResult) {
         EnableSettingsSyncDialog.Result.GET_FROM_SERVER -> {
-          syncEnabler.getSettingsFromServer()
+          syncEnabler.getSettingsFromServer(dialog.syncSettings)
           SettingsSyncEventsStatistics.ENABLED_MANUALLY.log(SettingsSyncEventsStatistics.EnabledMethod.GET_FROM_SERVER)
         }
         EnableSettingsSyncDialog.Result.PUSH_LOCAL -> {
           SettingsSyncSettings.getInstance().syncEnabled = true
           syncEnabler.pushSettingsToServer()
-          if (remoteSettingsFound) {
+          if (remoteSettings != null) {
             SettingsSyncEventsStatistics.ENABLED_MANUALLY.log(SettingsSyncEventsStatistics.EnabledMethod.PUSH_LOCAL)
           }
           else {
@@ -302,6 +304,8 @@ internal class SettingsSyncConfigurable : BoundConfigurable(message("title.setti
     else {
       SettingsSyncEventsStatistics.ENABLED_MANUALLY.log(SettingsSyncEventsStatistics.EnabledMethod.CANCELED)
     }
+    reset()
+    configPanel.reset()
   }
 
   companion object DisableResult {

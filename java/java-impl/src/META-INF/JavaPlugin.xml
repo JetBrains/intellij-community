@@ -799,6 +799,7 @@
     <xdebugger.breakpointType implementation="com.intellij.debugger.ui.breakpoints.JavaExceptionBreakpointType"/>
     <xdebugger.breakpointType implementation="com.intellij.debugger.ui.breakpoints.JavaLineBreakpointType"/>
     <debugger.jvmSmartStepIntoHandler implementation="com.intellij.debugger.actions.JavaSmartStepIntoHandler" order="last"/>
+    <statistics.counterUsagesCollector implementationClass="com.intellij.debugger.ui.breakpoints.JavaBreakpointsUsageCollector"/>
     <debugger.simplePropertyGetterProvider implementation="com.intellij.debugger.engine.JavaSimpleGetterProvider"/>
     <debugger.syntheticProvider implementation="com.intellij.debugger.engine.DefaultSyntheticProvider"/>
     <debugger.sourcePositionProvider implementation="com.intellij.debugger.engine.DefaultSourcePositionProvider" order="last"/>

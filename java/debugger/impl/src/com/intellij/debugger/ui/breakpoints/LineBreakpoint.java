@@ -11,6 +11,7 @@ import com.intellij.debugger.JavaDebuggerBundle;
 import com.intellij.debugger.SourcePosition;
 import com.intellij.debugger.engine.ContextUtil;
 import com.intellij.debugger.engine.DebugProcessImpl;
+import com.intellij.debugger.engine.DebuggerUtils;
 import com.intellij.debugger.impl.DebuggerUtilsEx;
 import com.intellij.debugger.jdi.MethodBytecodeUtil;
 import com.intellij.debugger.jdi.VirtualMachineProxyImpl;
@@ -22,6 +23,7 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.roots.ProjectRootManager;
+import com.intellij.openapi.ui.MessageType;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -34,6 +36,7 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.xdebugger.XDebuggerUtil;
 import com.intellij.xdebugger.breakpoints.XBreakpoint;
 import com.intellij.xdebugger.breakpoints.XBreakpointType;
+import com.intellij.xdebugger.impl.XDebuggerManagerImpl;
 import com.intellij.xdebugger.impl.XDebuggerUtilImpl;
 import com.sun.jdi.*;
 import com.sun.jdi.event.LocatableEvent;
@@ -121,7 +124,12 @@ public class LineBreakpoint<P extends JavaBreakpointProperties> extends Breakpoi
         }).filter(l -> acceptLocation(debugProcess, classType, l)).toList();
 
         if (getProperties() instanceof JavaLineBreakpointProperties props && props.isConditionalReturn()) {
-          if (vm.canGetBytecodes() && vm.canGetConstantPool()) {
+          if (DebuggerUtils.isAndroidVM(vm.getVirtualMachine())) {
+            XDebuggerManagerImpl.getNotificationGroup()
+              .createNotification(JavaDebuggerBundle.message("message.conditional.return.breakpoint.on.android"), MessageType.INFO)
+              .notify(debugProcess.getProject());
+          }
+          else if (vm.canGetBytecodes() && vm.canGetConstantPool()) {
             locations = locations.stream()
               .map(l -> l.method())
               .distinct()

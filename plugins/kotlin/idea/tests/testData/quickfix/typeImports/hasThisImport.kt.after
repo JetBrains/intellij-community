@@ -8,3 +8,4 @@ class M {
         val l: List<Int><caret>
     }
 }
+// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.RemovePartsFromPropertyFix

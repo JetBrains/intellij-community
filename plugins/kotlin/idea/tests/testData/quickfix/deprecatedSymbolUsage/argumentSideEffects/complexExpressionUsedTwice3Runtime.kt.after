@@ -13,3 +13,5 @@ fun foo(): Int {
     val p = v++
     return newFun(p, p)
 }
+
+// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.replaceWith.DeprecatedSymbolUsageFix

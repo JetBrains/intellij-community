@@ -20,6 +20,8 @@ import com.intellij.openapi.util.Pair
 import com.intellij.openapi.vfs.*
 import com.intellij.openapi.vfs.newvfs.BulkFileListener
 import com.intellij.openapi.vfs.newvfs.events.VFileEvent
+import com.intellij.platform.backend.workspace.virtualFile
+import com.intellij.platform.workspace.storage.url.VirtualFileUrlManager
 import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.util.CollectionQuery
 import com.intellij.util.PathUtil
@@ -32,8 +34,6 @@ import com.intellij.workspaceModel.core.fileIndex.WorkspaceFileSetData
 import com.intellij.workspaceModel.core.fileIndex.WorkspaceFileSetWithCustomData
 import com.intellij.workspaceModel.core.fileIndex.impl.WorkspaceFileInternalInfo.NonWorkspace
 import com.intellij.workspaceModel.ide.getInstance
-import com.intellij.platform.backend.workspace.virtualFile
-import com.intellij.platform.workspace.storage.url.VirtualFileUrlManager
 
 class WorkspaceFileIndexImpl(private val project: Project) : WorkspaceFileIndexEx, Disposable.Default {
   companion object {
@@ -112,6 +112,14 @@ class WorkspaceFileIndexImpl(private val project: Project) : WorkspaceFileIndexE
                                               processor: ContentIteratorEx,
                                               customFilter: VirtualFileFilter?,
                                               fileSetFilter: (WorkspaceFileSetWithCustomData<*>) -> Boolean): Boolean {
+    return processContentFilesRecursively(fileOrDir, processor, customFilter, fileSetFilter, 0)
+  }
+
+  private fun processContentFilesRecursively(fileOrDir: VirtualFile,
+                                             processor: ContentIteratorEx,
+                                             customFilter: VirtualFileFilter?,
+                                             fileSetFilter: (WorkspaceFileSetWithCustomData<*>) -> Boolean,
+                                             numberOfExcludedParentDirectories: Int): Boolean {
     val visitor = object : VirtualFileVisitor<Void?>() {
       override fun visitFileEx(file: VirtualFile): Result {
         val fileInfo = runReadAction {
@@ -120,7 +128,8 @@ class WorkspaceFileIndexImpl(private val project: Project) : WorkspaceFileIndexE
         if (file.isDirectory && fileInfo is NonWorkspace) {
           return when (fileInfo) {
             NonWorkspace.EXCLUDED, NonWorkspace.NOT_UNDER_ROOTS -> {
-              processContentFilesUnderExcludedDirectory(file, processor, customFilter, fileSetFilter, fileOrDir)
+              processContentFilesUnderExcludedDirectory(file, processor, customFilter, fileSetFilter, fileOrDir, 
+                                                        numberOfExcludedParentDirectories)
             }
             NonWorkspace.IGNORED, NonWorkspace.INVALID -> {
               SKIP_CHILDREN
@@ -147,7 +156,18 @@ class WorkspaceFileIndexImpl(private val project: Project) : WorkspaceFileIndexE
                                                         processor: ContentIteratorEx,
                                                         customFilter: VirtualFileFilter?,
                                                         fileSetFilter: (WorkspaceFileSetWithCustomData<*>) -> Boolean,
-                                                        rootDir: VirtualFile): VirtualFileVisitor.Result {
+                                                        rootDir: VirtualFile,
+                                                        numberOfExcludedParentDirectories: Int): VirtualFileVisitor.Result {
+    if (numberOfExcludedParentDirectories > 5) {
+      /* 
+         It seems improbable that there are more than 5 alternations between excluded and non-excluded directories, so it seems that this 
+         is an infinite recursion.
+         However, such cases should be caught by check in VirtualFileVisitor.allowVisitChildren, so report the details and skip processing.  
+      */
+      reportInfiniteRecursion(dir, this)
+      return VirtualFileVisitor.SKIP_CHILDREN
+    }
+    
     /* there may be other file sets under this directory; their URLs must be registered in VirtualFileUrlManager,
        so it's enough to process VirtualFileUrls only. */
     val virtualFileUrlManager = VirtualFileUrlManager.getInstance(project)
@@ -155,7 +175,7 @@ class WorkspaceFileIndexImpl(private val project: Project) : WorkspaceFileIndexE
     val processed = virtualFileUrlManager.processChildrenRecursively(virtualFileUrl) { childUrl ->
       val childFile = childUrl.virtualFile ?: return@processChildrenRecursively TreeNodeProcessingResult.SKIP_CHILDREN
       return@processChildrenRecursively if (runReadAction { isInContent (childFile) }) {
-        if (processContentFilesRecursively(childFile, processor, customFilter, fileSetFilter)) {
+        if (processContentFilesRecursively(childFile, processor, customFilter, fileSetFilter, numberOfExcludedParentDirectories + 1)) {
           TreeNodeProcessingResult.SKIP_CHILDREN
         }
         else {

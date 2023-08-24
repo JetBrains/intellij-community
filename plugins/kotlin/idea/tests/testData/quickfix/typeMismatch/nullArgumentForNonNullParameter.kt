@@ -6,3 +6,4 @@ class Foo(s: String) {
 fun test() {
     Foo(<caret>null)
 }
+// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.ChangeParameterTypeFix

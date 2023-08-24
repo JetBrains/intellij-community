@@ -83,7 +83,7 @@ public final class StartupActionScriptManager {
   }
 
   private static Path getActionScriptFile() {
-    return Path.of(PathManager.getPluginTempPath(), ACTION_SCRIPT_FILE);
+    return PathManager.getStartupScriptDir().resolve(ACTION_SCRIPT_FILE);
   }
 
   @ApiStatus.Internal

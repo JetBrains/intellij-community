@@ -44,7 +44,6 @@ import com.intellij.openapi.editor.ex.MarkupModelEx;
 import com.intellij.openapi.editor.ex.RangeHighlighterEx;
 import com.intellij.openapi.editor.highlighter.EditorHighlighter;
 import com.intellij.openapi.editor.impl.DocumentMarkupModel;
-import com.intellij.openapi.editor.impl.LineNumberConverterAdapter;
 import com.intellij.openapi.editor.impl.event.MarkupModelListener;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.progress.EmptyProgressIndicator;
@@ -77,6 +76,7 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.util.*;
+import java.util.function.IntPredicate;
 import java.util.function.IntUnaryOperator;
 
 public class UnifiedDiffViewer extends ListenerDiffViewerBase implements DifferencesLabel.DifferencesCounter {
@@ -428,13 +428,13 @@ public class UnifiedDiffViewer extends ListenerDiffViewerBase implements Differe
         myPanel.addNotification(TextDiffViewerUtil.createEqualContentsNotification(getContents()));
       }
 
-      IntUnaryOperator foldingLineConvertor = myFoldingModel.getLineNumberConvertor();
-      IntUnaryOperator contentConvertor1 = DiffUtil.getContentLineConvertor(getContent1());
-      IntUnaryOperator contentConvertor2 = DiffUtil.getContentLineConvertor(getContent2());
-      IntUnaryOperator merged1 = mergeLineConverters(contentConvertor1, convertor1.createConvertor(), foldingLineConvertor);
-      IntUnaryOperator merged2 = mergeLineConverters(contentConvertor2, convertor2.createConvertor(), foldingLineConvertor);
-      myEditor.getGutter().setLineNumberConverter(merged1 == null ? LineNumberConverter.DEFAULT : new LineNumberConverterAdapter(merged1),
-                                                  merged2 == null ? null : new LineNumberConverterAdapter(merged2));
+      IntPredicate foldingLinePredicate = myFoldingModel.hideLineNumberPredicate(0);
+      IntUnaryOperator merged1 = DiffUtil.mergeLineConverters(DiffUtil.getContentLineConvertor(getContent1()),
+                                                              convertor1.createConvertor());
+      IntUnaryOperator merged2 = DiffUtil.mergeLineConverters(DiffUtil.getContentLineConvertor(getContent2()),
+                                                              convertor2.createConvertor());
+      myEditor.getGutter().setLineNumberConverter(new DiffLineNumberConverter(foldingLinePredicate, merged1),
+                                                  new DiffLineNumberConverter(foldingLinePredicate, merged2));
 
       ApplicationManager.getApplication().runWriteAction(() -> {
         myDuringOnesideDocumentModification = true;
@@ -486,12 +486,6 @@ public class UnifiedDiffViewer extends ListenerDiffViewerBase implements Differe
     block.setGreedyToLeft(true);
     block.setGreedyToRight(true);
     return block;
-  }
-
-  private static IntUnaryOperator mergeLineConverters(@Nullable IntUnaryOperator contentConvertor,
-                                                      @NotNull IntUnaryOperator unifiedConvertor,
-                                                      @NotNull IntUnaryOperator foldingConvertor) {
-    return DiffUtil.mergeLineConverters(DiffUtil.mergeLineConverters(contentConvertor, unifiedConvertor), foldingConvertor);
   }
 
   /*
@@ -1245,11 +1239,6 @@ public class UnifiedDiffViewer extends ListenerDiffViewerBase implements Differe
       myLineNumberConvertor = new DisposableLineNumberConvertor(lineConvertor);
       MyFoldingBuilder builder = new MyFoldingBuilder(document, myLineNumberConvertor, lineCount, settings);
       return builder.build(it);
-    }
-
-    @NotNull
-    public IntUnaryOperator getLineNumberConvertor() {
-      return getLineConvertor(0);
     }
 
     public void disposeLineConvertor() {

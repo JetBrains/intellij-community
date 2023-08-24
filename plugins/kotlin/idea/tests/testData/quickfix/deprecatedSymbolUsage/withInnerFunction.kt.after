@@ -12,3 +12,5 @@ private class A {
 private fun test(a: A) {
     val c = a.bar
 }
+
+// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.replaceWith.DeprecatedSymbolUsageFix

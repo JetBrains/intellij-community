@@ -16,6 +16,7 @@ import com.intellij.ui.ComponentUtil
 import com.intellij.ui.UIBundle
 import com.intellij.ui.components.JBPanel
 import com.intellij.util.ui.JBUI
+import org.jetbrains.annotations.ApiStatus
 import java.awt.BorderLayout
 import java.awt.Color
 import java.awt.Point
@@ -25,13 +26,14 @@ import javax.accessibility.AccessibleRole
 import javax.swing.JComponent
 import javax.swing.border.Border
 
-internal abstract class ToolWindowToolbar(private val isPrimary: Boolean) : JBPanel<ToolWindowToolbar>() {
+@ApiStatus.Internal
+abstract class ToolWindowToolbar(private val isPrimary: Boolean) : JBPanel<ToolWindowToolbar>() {
   lateinit var defaults: List<String>
 
-  abstract val bottomStripe: StripeV2
-  abstract val topStripe: StripeV2
+  internal abstract val bottomStripe: StripeV2
+  internal abstract val topStripe: StripeV2
 
-  abstract val moreButton: MoreSquareStripeButton
+  internal abstract val moreButton: MoreSquareStripeButton
 
   protected fun init() {
     layout = BorderLayout()
@@ -60,13 +62,13 @@ internal abstract class ToolWindowToolbar(private val isPrimary: Boolean) : JBPa
   open fun createBorder():Border = JBUI.Borders.empty()
   open fun getBorderColor(): Color? = JBUI.CurrentTheme.ToolWindow.borderColor()
 
-  abstract fun getStripeFor(anchor: ToolWindowAnchor): AbstractDroppableStripe
+  internal abstract fun getStripeFor(anchor: ToolWindowAnchor): AbstractDroppableStripe
 
-  fun getButtonFor(toolWindowId: String): StripeButtonManager? {
+  internal fun getButtonFor(toolWindowId: String): StripeButtonManager? {
     return topStripe.getButtons().find { it.id == toolWindowId } ?: bottomStripe.getButtons().find { it.id == toolWindowId }
   }
 
-  open fun getStripeFor(screenPoint: Point): AbstractDroppableStripe? {
+  internal open fun getStripeFor(screenPoint: Point): AbstractDroppableStripe? {
     if (!isShowing) {
       return null
     }
@@ -93,7 +95,7 @@ internal abstract class ToolWindowToolbar(private val isPrimary: Boolean) : JBPa
 
   fun stopDrag(): Unit = startDrag()
 
-  fun tryDroppingOnGap(data: LayoutData, gap: Int, dropRectangle: Rectangle, doLayout: () -> Unit) {
+  internal fun tryDroppingOnGap(data: LayoutData, gap: Int, dropRectangle: Rectangle, doLayout: () -> Unit) {
     val sideDistance = data.eachY + gap - dropRectangle.y + dropRectangle.height
     if (sideDistance > 0) {
       data.dragInsertPosition = -1
@@ -110,7 +112,7 @@ internal abstract class ToolWindowToolbar(private val isPrimary: Boolean) : JBPa
       panel.repaint()
     }
 
-    fun remove(panel: AbstractDroppableStripe, toolWindow: ToolWindow) {
+    internal fun remove(panel: AbstractDroppableStripe, toolWindow: ToolWindow) {
       val component = panel.components.firstOrNull { it is SquareStripeButton && it.toolWindow.id == toolWindow.id } ?: return
       panel.remove(component)
       panel.revalidate()

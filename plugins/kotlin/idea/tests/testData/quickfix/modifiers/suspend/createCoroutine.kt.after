@@ -8,3 +8,5 @@ suspend fun <T> suspending(): T {
     val block: suspend () -> T = { null!! }
     return suspendCoroutine { block.createCoroutine(it) }
 }
+
+// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.AddSuspendModifierFix

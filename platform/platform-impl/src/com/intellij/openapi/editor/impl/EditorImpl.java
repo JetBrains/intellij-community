@@ -195,6 +195,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
   private boolean isReleased;
 
   private boolean mySuppressPainting;
+  private boolean mySuppressDisposedPainting;
 
   private @Nullable MouseEvent myMousePressedEvent;
   private @Nullable MouseEvent myMouseMovedEvent;
@@ -1950,6 +1951,11 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     mySuppressPainting = suppress;
   }
 
+  @ApiStatus.Internal
+  public void suppressDisposedPainting(boolean suppress) {
+    mySuppressDisposedPainting = suppress;
+  }
+
   void paint(@NotNull Graphics2D g) {
     ReadAction.run(() -> {
       Rectangle clip = g.getClipBounds();
@@ -1987,7 +1993,8 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     });
   }
 
-  static @NotNull Color getDisposedBackground() {
+  @NotNull Color getDisposedBackground() {
+    if (mySuppressDisposedPainting) return getBackgroundColor();
     return new JBColor(new Color(128, 255, 128), new Color(128, 255, 128));
   }
 
@@ -4980,8 +4987,10 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     private static final MouseEvent mouseEventStub = new MouseEvent(new Component() {}, 0, 0L, 0, 0, 0, 0, false, 0);
 
     private static EditorImpl getEditor(@NotNull JComponent comp) {
-      EditorComponentImpl editorComponent = (EditorComponentImpl)comp;
-      return editorComponent.getEditor();
+      if (comp instanceof EditorComponentImpl editorComponent) {
+        return editorComponent.getEditor();
+      }
+      return ((EditorGutterComponentImpl)comp).getEditor();
     }
 
     @Override

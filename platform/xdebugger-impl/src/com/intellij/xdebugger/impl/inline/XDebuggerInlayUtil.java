@@ -14,6 +14,7 @@ import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileEditor.TextEditor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.util.DocumentUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.EDT;
 import com.intellij.xdebugger.*;
@@ -91,8 +92,10 @@ public final class XDebuggerInlayUtil {
     FileEditor editor = FileEditorManager.getInstance(session.getProject()).getSelectedEditor(position.getFile());
     if (editor instanceof TextEditor) {
       Editor e = ((TextEditor)editor).getEditor();
-      int lineStart = e.getDocument().getLineStartOffset(position.getLine());
-      int lineEnd = e.getDocument().getLineEndOffset(position.getLine());
+      int line = position.getLine();
+      if (!DocumentUtil.isValidLine(line, e.getDocument())) return;
+      int lineStart = e.getDocument().getLineStartOffset(line);
+      int lineEnd = e.getDocument().getLineEndOffset(line);
 
       // Don't add the same value twice.
       List<Inlay<? extends InlineDebugRenderer>> existingInlays =

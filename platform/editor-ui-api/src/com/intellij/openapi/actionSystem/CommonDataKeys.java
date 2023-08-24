@@ -44,6 +44,8 @@ public class CommonDataKeys {
 
   /**
    * Returns editor even if focus currently is in find bar.
+   *
+   * @see #EDITOR
    */
   public static final DataKey<Editor> EDITOR_EVEN_IF_INACTIVE = DataKey.create("editor.even.if.inactive");
 
@@ -52,6 +54,8 @@ public class CommonDataKeys {
    * <p/>
    * If {@link DataContext} has a value for {@link #PSI_ELEMENT} key which implements {@link Navigatable} it will automatically
    * return it for this key if explicit value isn't provided.
+   *
+   * @see #NAVIGATABLE_ARRAY
    */
   public static final DataKey<Navigatable> NAVIGATABLE = DataKey.create("Navigatable");
 
@@ -60,6 +64,8 @@ public class CommonDataKeys {
    * <p/>
    * Note that if {@link DataContext} has a value for {@link #NAVIGATABLE} key it will automatically return single-element array for this
    * key if explicit value isn't provided so there is no need to perform such wrapping by hand.
+   *
+   * @see #NAVIGATABLE
    */
   public static final DataKey<Navigatable[]> NAVIGATABLE_ARRAY = DataKey.create("NavigatableArray");
 
@@ -68,6 +74,8 @@ public class CommonDataKeys {
    * <p/>
    * Note that if {@link DataContext} has a value for {@link #PSI_FILE} key it will automatically return the corresponding {@link VirtualFile}
    * for this key if explicit value isn't provided. Also it'll return the containing file if a value for {@link #PSI_ELEMENT} key is provided.
+   *
+   * @see #VIRTUAL_FILE_ARRAY
    */
   public static final DataKey<VirtualFile> VIRTUAL_FILE = DataKey.create("virtualFile");
 
@@ -77,11 +85,15 @@ public class CommonDataKeys {
    * Note that if {@link DataContext} doesn't have an explicit value for this key it will automatically collect {@link VirtualFile} instances
    * corresponding to values provided for {@link #VIRTUAL_FILE}, {@link #PSI_FILE}, {@link #PSI_ELEMENT} and other keys and return the array
    * containing unique instances of the found files.
+   *
+   * @see #VIRTUAL_FILE
    */
   public static final DataKey<VirtualFile[]> VIRTUAL_FILE_ARRAY = DataKey.create("virtualFileArray");
 
   /**
    * Returns {@link PsiElement} instance.
+   *
+   * @see com.intellij.openapi.actionSystem.PlatformCoreDataKeys#PSI_ELEMENT_ARRAY
    */
   public static final DataKey<PsiElement> PSI_ELEMENT = DataKey.create("psi.Element");
 

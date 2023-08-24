@@ -199,11 +199,6 @@ abstract class XmlElementStorage protected constructor(val fileSpec: String,
   }
 
   fun updatedFrom(changedComponentNames: MutableSet<String>, deleted: Boolean, useStreamProvider: Boolean) {
-    if (roamingType == RoamingType.DISABLED) {
-      // storage roaming was changed to DISABLED, but settings repository has old state
-      return
-    }
-
     LOG.runAndLogException {
       val newElement = if (deleted) null else loadElement(useStreamProvider)
       val states = storageDataRef.get()

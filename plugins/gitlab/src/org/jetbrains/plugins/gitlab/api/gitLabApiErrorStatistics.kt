@@ -6,7 +6,7 @@ import com.intellij.collaboration.api.graphql.GraphQLErrorException
 import com.intellij.collaboration.api.json.HttpJsonDeserializationException
 import com.intellij.openapi.components.service
 import org.jetbrains.plugins.gitlab.GitLabServersManager
-import org.jetbrains.plugins.gitlab.api.request.getServerMetadata
+import org.jetbrains.plugins.gitlab.api.request.getServerMetadataOrVersion
 import org.jetbrains.plugins.gitlab.util.GitLabApiRequestName
 import org.jetbrains.plugins.gitlab.util.GitLabStatistics
 
@@ -73,5 +73,5 @@ suspend inline fun <reified T> GitLabApi.Rest.withErrorStats(server: GitLabServe
 
 private suspend fun GitLabApi.tryGetServerVersion(server: GitLabServerPath): String? =
   service<GitLabServersManager>().getMetadata(server) {
-    runCatching { rest.getServerMetadata(it).body() }
+    runCatching { rest.getServerMetadataOrVersion(it) }
   }?.version

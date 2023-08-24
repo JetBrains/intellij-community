@@ -6,3 +6,4 @@ abstract class C {
 class B : C() {
     <caret>override fun foo(a: Int) {}
 }
+// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.ChangeMemberFunctionSignatureFix

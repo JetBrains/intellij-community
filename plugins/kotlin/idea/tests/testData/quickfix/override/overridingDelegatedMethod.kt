@@ -17,3 +17,5 @@ class B(y: XX) : A(y) {
     }
 }
 /* IGNORE_FIR */
+
+// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.MakeOverriddenMemberOpenFix

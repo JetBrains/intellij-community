@@ -118,7 +118,7 @@ object KDocRenderer {
 
     private fun getTargetLinkElementAttributes(element: PsiElement?): TextAttributes {
         return element
-            ?.let { textAttributesKeyForKtElement(it) }
+            ?.let { textAttributesKeyForKtElement(it)?.attributesKey }
             ?.let { getTargetLinkElementAttributes(it) }
             ?: TextAttributes().apply {
                 foregroundColor = EditorColorsManager.getInstance().globalScheme.getColor(DefaultLanguageHighlighterColors.DOC_COMMENT_LINK)

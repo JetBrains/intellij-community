@@ -14,3 +14,4 @@ interface A {
     fun gav()
 }
 class B
+// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.LetImplementInterfaceFix

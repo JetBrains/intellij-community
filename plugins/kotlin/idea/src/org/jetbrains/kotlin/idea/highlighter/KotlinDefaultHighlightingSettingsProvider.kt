@@ -21,9 +21,14 @@ class KotlinDefaultHighlightingSettingsProvider : DefaultHighlightingSettingProv
             return null
         }
 
+        val psiFile = file.toPsiFile(project) ?: return null
         return when {
-            file.toPsiFile(project) !is KtFile -> null
-            RootKindFilter.libraryFiles.matches(project, file) -> FileHighlightingSetting.SKIP_INSPECTION
+            psiFile is KtFile ->
+                when {
+                    psiFile.isCompiled -> FileHighlightingSetting.SKIP_INSPECTION
+                    RootKindFilter.libraryFiles.matches(project, file) -> FileHighlightingSetting.SKIP_INSPECTION
+                    else -> null
+                }
             file.isKotlinDecompiledFile -> FileHighlightingSetting.SKIP_HIGHLIGHTING
             else -> null
         }

@@ -2,6 +2,7 @@
 package org.jetbrains.plugins.gradle.execution
 
 import com.intellij.execution.executors.DefaultRunExecutor
+import com.intellij.internal.statistic.FUCollectorTestCase
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.externalSystem.action.ExternalSystemActionUtil
 import com.intellij.openapi.externalSystem.model.execution.ExternalSystemTaskExecutionSettings
@@ -14,16 +15,58 @@ import com.intellij.openapi.externalSystem.task.TaskCallback
 import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil
 import com.intellij.openapi.externalSystem.util.ExternalSystemUtil
 import com.intellij.openapi.externalSystem.util.ExternalSystemUtil.runTask
+import com.jetbrains.fus.reporting.model.lion3.LogEvent
 import junit.framework.AssertionFailedError
+import junit.framework.TestCase
 import org.assertj.core.api.Assertions.assertThat
 import org.jetbrains.plugins.gradle.importing.GradleImportingTestCase
+import org.jetbrains.plugins.gradle.importing.TestGradleBuildScriptBuilder
+import org.jetbrains.plugins.gradle.statistics.GradleExecutionPerformanceCollector
 import org.jetbrains.plugins.gradle.util.GradleConstants
 import org.junit.Test
 import org.junit.runners.Parameterized
 import java.util.concurrent.CompletableFuture
 import java.util.concurrent.TimeUnit
+import java.util.function.Consumer
 
 class GradleTasksExecutionTest : GradleImportingTestCase() {
+
+  @Test
+  fun `test fus contains only well known task metrics`() {
+    val buildScript = createBuildScriptBuilder()
+      .withTask("userDefinedTask") {
+        code("dependsOn { subprojects.collect { \"\$it.name:clean\"} }\n  dependsOn { subprojects.collect { \"\$it.name:build\"} }")
+      }
+      .allprojects { withJavaPlugin() }
+      .project(":projectA", Consumer<TestGradleBuildScriptBuilder> { it: TestGradleBuildScriptBuilder -> it.withIdeaPlugin() })
+      .project(":projectB", Consumer<TestGradleBuildScriptBuilder> { it: TestGradleBuildScriptBuilder ->
+        it.withTask("customTaskFromProjectB")
+        it.withPostfix { code("tasks.findByName('build').dependsOn('customTaskFromProjectB')") }
+      })
+      .project(":projectC", Consumer<TestGradleBuildScriptBuilder> { it: TestGradleBuildScriptBuilder ->
+        it.withTask("customTaskFromProjectC")
+        it.withPostfix { code("tasks.findByName('clean').dependsOn('customTaskFromProjectC')") }
+      })
+      .generate()
+    createProjectSubFile("build.gradle", buildScript)
+    createSettingsFile("include 'projectA', 'projectB', 'projectC'")
+    val events: List<LogEvent> = collectGradlePerformanceEvents {
+      assertThat(runTaskAndGetErrorOutput(projectPath, "userDefinedTask")).isEmpty()
+    }
+    val executedGradleTasks = events.filter { it.event.id == "task.executed" }.map { it.event.data["name"].toString() }
+    val expectedGradleTasks = listOf("compileJava", "processResources", "classes", "jar", "assemble", "compileTestJava",
+                                     "processTestResources", "testClasses", "test", "check", "build", "clean", "other")
+    assertCollection(executedGradleTasks, expectedGradleTasks)
+    val executedStages = events.groupingBy { it.event.id }.eachCount()
+    val expectedStages = setOf("execution.completed", "build.loaded", "settings.evaluated", "project.loaded",
+                               "task.graph.calculated", "container.callback.executed", "task.executed", "task.graph.executed")
+    assertCollection(executedStages.keys, expectedStages)
+    executedStages.forEach { (name, count) ->
+      if (name != "task.executed") {
+        TestCase.assertEquals(1, count)
+      }
+    }
+  }
 
   @Test
   fun `run task with specified build file test`() {
@@ -170,6 +213,10 @@ tasks.register("hello-module") {
       notificationManager.removeNotificationListener(stdErrListener)
     }
   }
+
+  private fun collectGradlePerformanceEvents(runnable: () -> Unit): List<LogEvent> = FUCollectorTestCase
+    .collectLogEvents(getTestRootDisposable(), runnable)
+    .filter { it.group.id == GradleExecutionPerformanceCollector.GROUP.id }
 
   companion object {
     /**

@@ -80,7 +80,7 @@ public class RevealFileAction extends DumbAwareAction implements LightEditCompat
   };
 
   public RevealFileAction() {
-    getTemplatePresentation().setText(ActionsBundle.message("action.RevealIn.name.other", IdeBundle.message("action.file.manager.text")));
+    getTemplatePresentation().setText(getActionName(true));
   }
 
   @Override
@@ -121,15 +121,14 @@ public class RevealFileAction extends DumbAwareAction implements LightEditCompat
   }
 
   public static @ActionText @NotNull String getActionName(@Nullable String place) {
-    if (ActionPlaces.EDITOR_TAB_POPUP.equals(place) || ActionPlaces.EDITOR_POPUP.equals(place) || ActionPlaces.PROJECT_VIEW_POPUP.equals(place)) {
-      return getFileManagerName();
-    }
-    else if (SystemInfo.isMac) {
-      return ActionsBundle.message("action.RevealIn.name.mac");
-    }
-    else {
-      return ActionsBundle.message("action.RevealIn.name.other", getFileManagerName());
-    }
+    var shortName = ActionPlaces.EDITOR_TAB_POPUP.equals(place) || ActionPlaces.EDITOR_POPUP.equals(place) || ActionPlaces.PROJECT_VIEW_POPUP.equals(place);
+    return shortName ? getFileManagerName() : getActionName(false);
+  }
+
+  private static @ActionText String getActionName(boolean skipDetection) {
+    return SystemInfo.isMac ? ActionsBundle.message("action.RevealIn.name.mac") :
+           skipDetection ? ActionsBundle.message("action.RevealIn.name.other", IdeBundle.message("action.file.manager.text")) :
+           ActionsBundle.message("action.RevealIn.name.other", getFileManagerName());
   }
 
   public static @NotNull @ActionText String getFileManagerName() {

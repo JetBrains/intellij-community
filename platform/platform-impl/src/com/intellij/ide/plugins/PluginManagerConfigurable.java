@@ -36,6 +36,7 @@ import com.intellij.openapi.ui.popup.JBPopupListener;
 import com.intellij.openapi.ui.popup.LightweightWindowEvent;
 import com.intellij.openapi.updateSettings.impl.UpdateChecker;
 import com.intellij.openapi.updateSettings.impl.UpdateSettings;
+import com.intellij.openapi.updateSettings.impl.pluginsAdvertisement.FUSEventSource;
 import com.intellij.openapi.updateSettings.impl.pluginsAdvertisement.PluginsAdvertiserStartupActivityKt;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.NlsSafe;
@@ -1527,11 +1528,19 @@ public final class PluginManagerConfigurable
                                                     () -> configurable.select(pluginIds));
   }
 
-  public static void showSuggestedPlugins(@Nullable Project project) {
+  public static void showSuggestedPlugins(@Nullable Project project, @Nullable FUSEventSource source) {
     PluginManagerConfigurable configurable = new PluginManagerConfigurable();
     ShowSettingsUtil.getInstance().editConfigurable(project,
                                                     configurable,
-                                                    () -> configurable.openMarketplaceTab("/suggested"));
+                                                    () -> {
+                                                      configurable.setInstallSource(source);
+                                                      configurable.openMarketplaceTab("/suggested");
+                                                    });
+  }
+
+  @SuppressWarnings("SameParameterValue")
+  private void setInstallSource(@Nullable FUSEventSource source) {
+    this.myPluginModel.setInstallSource(source);
   }
 
   public static void showPluginConfigurable(@Nullable Component parent,

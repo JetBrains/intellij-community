@@ -295,15 +295,7 @@ public final class SdkConfigurationUtil {
     // The behaviour may also depend on the FileChooser implementations which does not reuse that code
     FileChooser.chooseFiles(descriptor, null, component, getSuggestedSdkRoot(sdkType), chosen -> {
       final String path = chosen.get(0).getPath();
-      if (sdkType.isValidSdkHome(path)) {
-        consumer.consume(path);
-        return;
-      }
-
-      final String adjustedPath = sdkType.adjustSelectedSdkHome(path);
-      if (sdkType.isValidSdkHome(adjustedPath)) {
-        consumer.consume(adjustedPath);
-      }
+      consumer.consume(path);
     });
   }
 

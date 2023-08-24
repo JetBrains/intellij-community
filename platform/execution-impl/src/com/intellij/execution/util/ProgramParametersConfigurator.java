@@ -6,7 +6,7 @@ import com.intellij.execution.ExecutionBundle;
 import com.intellij.execution.configurations.ModuleBasedConfiguration;
 import com.intellij.execution.configurations.RuntimeConfigurationWarning;
 import com.intellij.execution.configurations.SimpleProgramParameters;
-import com.intellij.execution.runners.ExecutionUtil;
+import com.intellij.execution.impl.ExecutionManagerImpl;
 import com.intellij.ide.macro.Macro;
 import com.intellij.ide.macro.MacroManager;
 import com.intellij.ide.macro.MacroWithParams;
@@ -29,10 +29,7 @@ import com.intellij.util.EnvironmentUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.PathUtil;
 import com.intellij.util.execution.ParametersListUtil;
-import org.jetbrains.annotations.Contract;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
-import org.jetbrains.annotations.SystemIndependent;
+import org.jetbrains.annotations.*;
 import org.jetbrains.jps.model.serialization.PathMacroUtil;
 
 import java.nio.file.Files;
@@ -78,7 +75,7 @@ public class ProgramParametersConfigurator {
   public @Nullable String expandPathAndMacros(String s, @Nullable Module module, @NotNull Project project) {
     String path = s;
     if (path != null) path = expandPath(path, module, project);
-    if (path != null) path = expandMacros(path, projectContext(project, module), false);
+    if (path != null) path = expandMacros(path, projectContext(project, module, myValidation), false);
     return path;
   }
 
@@ -86,11 +83,14 @@ public class ProgramParametersConfigurator {
     myValidation = validation;
   }
 
-  private DataContext projectContext(Project project, Module module) {
+  @ApiStatus.Internal
+  public static @NotNull DataContext projectContext(@NotNull Project project, @Nullable Module module, @Nullable Boolean validationMode) {
     return dataId -> {
+      if (CommonDataKeys.VIRTUAL_FILE.is(dataId)) return project.getBaseDir();
       if (CommonDataKeys.PROJECT.is(dataId)) return project;
+      if (PlatformCoreDataKeys.PROJECT_FILE_DIRECTORY.is(dataId)) return project.getBaseDir();
       if (PlatformCoreDataKeys.MODULE.is(dataId) || LangDataKeys.MODULE_CONTEXT.is(dataId)) return module;
-      if (VALIDATION_MODE.is(dataId)) return myValidation;
+      if (VALIDATION_MODE.is(dataId)) return validationMode;
       return null;
     };
   }
@@ -114,17 +114,26 @@ public class ProgramParametersConfigurator {
     return ParametersListUtil.parse(expandedParametersString);
   }
 
-  private static String expandMacros(String path, DataContext dataContext, boolean applyParameterEscaping) {
+  private static String expandMacros(@NotNull String path, @NotNull DataContext fallbackDataContext, boolean applyParameterEscaping) {
     if (!Registry.is("allow.macros.for.run.configurations")) {
       return path;
     }
 
-    DataContext threadContext = ExecutionUtil.getThreadContext();
-    DataContext context = threadContext == null ? dataContext : new DataContext() {
+    DataContext envContext = ExecutionManagerImpl.getEnvironmentDataContext();
+    if (fallbackDataContext == DataContext.EMPTY_CONTEXT && envContext != null) {
+      Project project = CommonDataKeys.PROJECT.getData(envContext);
+      Module module = PlatformCoreDataKeys.MODULE.getData(envContext);
+      if (project != null) {
+        fallbackDataContext = projectContext(project, module, null);
+      }
+    }
+
+    DataContext finalFallbackDataContext = fallbackDataContext;
+    DataContext context = envContext == null ? fallbackDataContext : new DataContext() {
       @Override
       public @Nullable Object getData(@NotNull String dataId) {
-        Object data = dataContext.getData(dataId);
-        return data != null ? data : threadContext.getData(dataId);
+        Object data = envContext.getData(dataId);
+        return data != null ? data : finalFallbackDataContext.getData(dataId);
       }
     };
     for (Macro macro : MacroManager.getInstance().getMacros()) {

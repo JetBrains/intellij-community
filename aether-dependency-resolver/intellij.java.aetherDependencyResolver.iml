@@ -34,6 +34,11 @@
     <orderEntry type="module-library">
       <library name="org.apache.maven.resolver:maven-resolver-transport-file" type="repository">
         <properties maven-id="org.apache.maven.resolver:maven-resolver-transport-file:1.3.3">
+          <verification>
+            <artifact url="file://$MAVEN_REPOSITORY$/org/apache/maven/resolver/maven-resolver-transport-file/1.3.3/maven-resolver-transport-file-1.3.3.jar">
+              <sha256sum>e6842c1a2c9080e60fed7747d2375fedf7e51277a995b7c053426f68537bc9c3</sha256sum>
+            </artifact>
+          </verification>
           <exclude>
             <dependency maven-id="org.apache.maven.resolver:maven-resolver-api" />
             <dependency maven-id="org.apache.maven.resolver:maven-resolver-spi" />
@@ -52,6 +57,11 @@
     <orderEntry type="module-library">
       <library name="org.apache.maven.resolver:maven-resolver-transport-http" type="repository">
         <properties maven-id="org.apache.maven.resolver:maven-resolver-transport-http:1.3.3">
+          <verification>
+            <artifact url="file://$MAVEN_REPOSITORY$/org/apache/maven/resolver/maven-resolver-transport-http/1.3.3/maven-resolver-transport-http-1.3.3.jar">
+              <sha256sum>efe8d834e7b55c30e1e17a1a9171ffcf67915eb00c3b0f8a9b8f2bc8aa4752f8</sha256sum>
+            </artifact>
+          </verification>
           <exclude>
             <dependency maven-id="org.slf4j:slf4j-api" />
             <dependency maven-id="org.apache.maven.resolver:maven-resolver-api" />
@@ -75,6 +85,11 @@
     <orderEntry type="module-library">
       <library name="org.apache.maven.resolver:maven-resolver-connector-basic" type="repository">
         <properties maven-id="org.apache.maven.resolver:maven-resolver-connector-basic:1.3.3">
+          <verification>
+            <artifact url="file://$MAVEN_REPOSITORY$/org/apache/maven/resolver/maven-resolver-connector-basic/1.3.3/maven-resolver-connector-basic-1.3.3.jar">
+              <sha256sum>273d2fe6bfe65986949d6e827794cf3ec43295af6dafe1d4186b6f3dd83c75a3</sha256sum>
+            </artifact>
+          </verification>
           <exclude>
             <dependency maven-id="org.apache.maven.resolver:maven-resolver-api" />
             <dependency maven-id="org.apache.maven.resolver:maven-resolver-spi" />

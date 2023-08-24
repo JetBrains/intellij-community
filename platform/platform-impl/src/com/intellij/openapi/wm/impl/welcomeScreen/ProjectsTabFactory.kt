@@ -19,6 +19,7 @@ import com.intellij.openapi.actionSystem.ex.ActionButtonLook
 import com.intellij.openapi.actionSystem.impl.ActionButton
 import com.intellij.openapi.actionSystem.impl.ActionToolbarImpl
 import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.application.invokeLater
 import com.intellij.openapi.progress.TaskInfo
 import com.intellij.openapi.wm.WelcomeScreenTab
 import com.intellij.openapi.wm.WelcomeTabFactory
@@ -141,6 +142,16 @@ internal class ProjectsTab(private val parentDisposable: Disposable) : DefaultWe
     }
     panelState = currentPanelState
     projectsPanelWrapper.repaint()
+  }
+
+  override fun updateComponent() {
+    // balloonLayout is not initialized at this point
+    invokeLater {
+      val balloonLayout = WelcomeFrame.getInstance()?.balloonLayout
+      if (balloonLayout is WelcomeBalloonLayoutImpl) {
+        balloonLayout.locationComponent = notificationPanel
+      }
+    }
   }
 
   private fun createRecentProjectsPanel(): JComponent {

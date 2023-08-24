@@ -1,3 +1,4 @@
 // "Add 'val' to parameter 'a'" "true"
 // ERROR: The feature "multi platform projects" is experimental and should be enabled explicitly
 expect annotation class A(<caret>a: Int)
+// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.intentions.AddValVarToConstructorParameterAction$QuickFix

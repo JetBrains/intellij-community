@@ -1,20 +1,22 @@
 // FIR_IDENTICAL
-interface <!HIGHLIGHTING("textAttributesKey='KOTLIN_TRAIT'")!>WithInvoke<!> {
-    <!HIGHLIGHTING("textAttributesKey='KOTLIN_BUILTIN_ANNOTATION'")!>operator<!> fun <!HIGHLIGHTING("textAttributesKey='KOTLIN_FUNCTION_DECLARATION'")!>invoke<!>()
+// CHECK_SYMBOL_NAMES
+// HIGHLIGHTER_ATTRIBUTES_KEY
+interface <!HIGHLIGHTING("severity='SYMBOL_TYPE_SEVERITY'; highlightingTextAttributesKey='KOTLIN_TRAIT'")!>WithInvoke<!> {
+    <!HIGHLIGHTING("severity='SYMBOL_TYPE_SEVERITY'; highlightingTextAttributesKey='KOTLIN_BUILTIN_ANNOTATION'")!>operator<!> fun <!HIGHLIGHTING("severity='SYMBOL_TYPE_SEVERITY'; highlightingTextAttributesKey='KOTLIN_FUNCTION_DECLARATION'")!>invoke<!>()
 }
 
-object <!HIGHLIGHTING("textAttributesKey='KOTLIN_OBJECT'")!>One<!> {
-    object <!HIGHLIGHTING("textAttributesKey='KOTLIN_OBJECT'")!>Two<!> {
-        val <!HIGHLIGHTING("textAttributesKey='KOTLIN_INSTANCE_PROPERTY'")!>staticVal<!>: <!HIGHLIGHTING("textAttributesKey='KOTLIN_CLASS'")!>Any<!> = <!HIGHLIGHTING("textAttributesKey='KOTLIN_CONSTRUCTOR'")!>Any<!>()
+object <!HIGHLIGHTING("severity='SYMBOL_TYPE_SEVERITY'; highlightingTextAttributesKey='KOTLIN_OBJECT'")!>One<!> {
+    object <!HIGHLIGHTING("severity='SYMBOL_TYPE_SEVERITY'; highlightingTextAttributesKey='KOTLIN_OBJECT'")!>Two<!> {
+        val <!HIGHLIGHTING("severity='SYMBOL_TYPE_SEVERITY'; highlightingTextAttributesKey='KOTLIN_INSTANCE_PROPERTY'")!>staticVal<!>: <!HIGHLIGHTING("severity='SYMBOL_TYPE_SEVERITY'; highlightingTextAttributesKey='KOTLIN_CLASS'")!>Any<!> = <!HIGHLIGHTING("severity='SYMBOL_TYPE_SEVERITY'; highlightingTextAttributesKey='KOTLIN_CONSTRUCTOR'")!>Any<!>()
     }
 }
 
-fun <!HIGHLIGHTING("textAttributesKey='KOTLIN_FUNCTION_DECLARATION'")!>test<!>(<!HIGHLIGHTING("textAttributesKey='KOTLIN_PARAMETER'")!>param<!>: <!HIGHLIGHTING("textAttributesKey='KOTLIN_CLASS'")!>Any<!>) {
-    if (<!HIGHLIGHTING("textAttributesKey='KOTLIN_PARAMETER'")!>param<!> is <!HIGHLIGHTING("textAttributesKey='KOTLIN_TRAIT'")!>WithInvoke<!>) {
-        <!HIGHLIGHTING("descr='Smart cast to WithInvoke'; textAttributesKey='KOTLIN_SMART_CAST_VALUE'"), HIGHLIGHTING("textAttributesKey='KOTLIN_PARAMETER'"), HIGHLIGHTING("textAttributesKey='KOTLIN_VARIABLE_AS_FUNCTION_LIKE'")!>param<!>()
+fun <!HIGHLIGHTING("severity='SYMBOL_TYPE_SEVERITY'; highlightingTextAttributesKey='KOTLIN_FUNCTION_DECLARATION'")!>test<!>(<!HIGHLIGHTING("severity='SYMBOL_TYPE_SEVERITY'; highlightingTextAttributesKey='KOTLIN_PARAMETER'")!>param<!>: <!HIGHLIGHTING("severity='SYMBOL_TYPE_SEVERITY'; highlightingTextAttributesKey='KOTLIN_CLASS'")!>Any<!>) {
+    if (<!HIGHLIGHTING("severity='SYMBOL_TYPE_SEVERITY'; highlightingTextAttributesKey='KOTLIN_PARAMETER'")!>param<!> is <!HIGHLIGHTING("severity='SYMBOL_TYPE_SEVERITY'; highlightingTextAttributesKey='KOTLIN_TRAIT'")!>WithInvoke<!>) {
+        <!HIGHLIGHTING("severity='SYMBOL_TYPE_SEVERITY'; descr='Smart cast to WithInvoke'; highlightingTextAttributesKey='KOTLIN_SMART_CAST_VALUE'"), HIGHLIGHTING("severity='SYMBOL_TYPE_SEVERITY'; highlightingTextAttributesKey='KOTLIN_PARAMETER'"), HIGHLIGHTING("severity='SYMBOL_TYPE_SEVERITY'; highlightingTextAttributesKey='KOTLIN_VARIABLE_AS_FUNCTION_LIKE'")!>param<!>()
     }
 
-    if (<!HIGHLIGHTING("textAttributesKey='KOTLIN_OBJECT'")!>One<!>.<!HIGHLIGHTING("textAttributesKey='KOTLIN_OBJECT'")!>Two<!>.<!HIGHLIGHTING("textAttributesKey='KOTLIN_INSTANCE_PROPERTY'")!>staticVal<!> is <!HIGHLIGHTING("textAttributesKey='KOTLIN_TRAIT'")!>WithInvoke<!>) {
-        <!HIGHLIGHTING("textAttributesKey='KOTLIN_OBJECT'")!>One<!>.<!HIGHLIGHTING("textAttributesKey='KOTLIN_OBJECT'")!>Two<!>.<!HIGHLIGHTING("descr='Smart cast to WithInvoke'; textAttributesKey='KOTLIN_SMART_CAST_VALUE'"), HIGHLIGHTING("textAttributesKey='KOTLIN_INSTANCE_PROPERTY'"), HIGHLIGHTING("textAttributesKey='KOTLIN_VARIABLE_AS_FUNCTION_LIKE'")!>staticVal<!>()
+    if (<!HIGHLIGHTING("severity='SYMBOL_TYPE_SEVERITY'; highlightingTextAttributesKey='KOTLIN_OBJECT'")!>One<!>.<!HIGHLIGHTING("severity='SYMBOL_TYPE_SEVERITY'; highlightingTextAttributesKey='KOTLIN_OBJECT'")!>Two<!>.<!HIGHLIGHTING("severity='SYMBOL_TYPE_SEVERITY'; highlightingTextAttributesKey='KOTLIN_INSTANCE_PROPERTY'")!>staticVal<!> is <!HIGHLIGHTING("severity='SYMBOL_TYPE_SEVERITY'; highlightingTextAttributesKey='KOTLIN_TRAIT'")!>WithInvoke<!>) {
+        <!HIGHLIGHTING("severity='SYMBOL_TYPE_SEVERITY'; highlightingTextAttributesKey='KOTLIN_OBJECT'")!>One<!>.<!HIGHLIGHTING("severity='SYMBOL_TYPE_SEVERITY'; highlightingTextAttributesKey='KOTLIN_OBJECT'")!>Two<!>.<!HIGHLIGHTING("severity='SYMBOL_TYPE_SEVERITY'; descr='Smart cast to WithInvoke'; highlightingTextAttributesKey='KOTLIN_SMART_CAST_VALUE'"), HIGHLIGHTING("severity='SYMBOL_TYPE_SEVERITY'; highlightingTextAttributesKey='KOTLIN_INSTANCE_PROPERTY'"), HIGHLIGHTING("severity='SYMBOL_TYPE_SEVERITY'; highlightingTextAttributesKey='KOTLIN_VARIABLE_AS_FUNCTION_LIKE'")!>staticVal<!>()
     }
 }

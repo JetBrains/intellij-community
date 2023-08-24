@@ -3,6 +3,12 @@ package com.intellij.openapi.wm.impl.welcomeScreen.learnIde.coursesInProgress
 
 import com.intellij.openapi.extensions.ExtensionPointName
 
+/**
+ *  Extension point to provide custom [CourseDataStorage] to show in-progress course
+ *  on [com.intellij.openapi.wm.impl.welcomeScreen.learnIde.LearnTabPanel]
+ *
+ *  Currently used in [JetBrains Academy Plugin](https://plugins.jetbrains.com/plugin/10081-jetbrains-academy)
+ */
 interface CoursesStorageProvider {
   fun getCoursesStorage(): CourseDataStorage
 

@@ -16,6 +16,11 @@ abstract class VirtualFileUtilTestCase : NioPathUtilTestCase() {
     return VirtualFileAssertion().init { refreshAndGetVirtualDirectory().init() }
   }
 
+  suspend fun FileAssertion<VirtualFile>.isNioPathEqualsTo(path: Path) = apply {
+    assertNioPath { getFile()!!.toNioPath() }
+      .isEqualsTo { path }
+  }
+
   inner class VirtualFileAssertion : FileAssertion<VirtualFile>() {
 
     override suspend fun createAssertion(init: suspend VirtualFile.() -> VirtualFile?) =

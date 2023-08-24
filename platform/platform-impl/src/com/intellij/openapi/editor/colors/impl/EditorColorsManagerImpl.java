@@ -13,6 +13,7 @@ import com.intellij.ide.IdeBundle;
 import com.intellij.ide.plugins.DynamicPluginListener;
 import com.intellij.ide.plugins.IdeaPluginDescriptor;
 import com.intellij.ide.plugins.PluginManager;
+import com.intellij.ide.plugins.cl.PluginClassLoader;
 import com.intellij.ide.ui.LafManager;
 import com.intellij.ide.ui.LafManagerListener;
 import com.intellij.ide.ui.UITheme;
@@ -23,7 +24,6 @@ import com.intellij.ide.util.RunOnceUtil;
 import com.intellij.notification.Notification;
 import com.intellij.notification.NotificationAction;
 import com.intellij.notification.NotificationType;
-import com.intellij.notification.Notifications;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
@@ -39,6 +39,7 @@ import com.intellij.openapi.editor.colors.TextAttributesKey;
 import com.intellij.openapi.editor.colors.ex.DefaultColorSchemesManager;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.extensions.ExtensionPointName;
+import com.intellij.openapi.extensions.PluginDescriptor;
 import com.intellij.openapi.extensions.PluginId;
 import com.intellij.openapi.options.Scheme;
 import com.intellij.openapi.options.SchemeManager;
@@ -91,8 +92,7 @@ public final class EditorColorsManagerImpl extends EditorColorsManager implement
 
   public static final String COMPONENT_NAME = "EditorColorsManagerImpl";
   public static final String STORAGE_NAME = "colors.scheme.xml";
-
-  private static final ExtensionPointName<BundledSchemeEP> BUNDLED_EP_NAME = new ExtensionPointName<>("com.intellij.bundledColorScheme");
+  public static final ExtensionPointName<BundledSchemeEP> BUNDLED_EP_NAME = new ExtensionPointName<>("com.intellij.bundledColorScheme");
 
   private final ComponentTreeEventDispatcher<EditorColorsListener> myTreeDispatcher = ComponentTreeEventDispatcher.create(EditorColorsListener.class);
 
@@ -276,7 +276,7 @@ public final class EditorColorsManagerImpl extends EditorColorsManager implement
   private void loadBundledSchemes() {
     if (!isUnitTestOrHeadlessMode()) {
       BUNDLED_EP_NAME.processWithPluginDescriptor((ep, pluginDescriptor) -> {
-        mySchemeManager.loadBundledScheme(ep.getPath() + ".xml", null, pluginDescriptor);
+        loadBundledScheme(ep.getPath() + ".xml", null, pluginDescriptor);
       });
     }
   }
@@ -289,13 +289,21 @@ public final class EditorColorsManagerImpl extends EditorColorsManager implement
       if (themeName.equals(theme.getName())) {
         String scheme = theme.getEditorScheme();
         if (scheme != null) {
-          EditorColorsScheme bundledScheme = mySchemeManager.loadBundledScheme(scheme, theme, null);
+          EditorColorsScheme bundledScheme = loadBundledScheme(scheme, theme, null);
           initEditableBundledSchemesCopies();
           return bundledScheme;
         }
       }
     }
     return null;
+  }
+
+  @TestOnly
+  public @Nullable EditorColorsScheme loadBundledScheme(@NotNull String resourcePath, @NotNull PluginDescriptor descriptor) {
+    assert ApplicationManager.getApplication().isUnitTestMode() : "Test-only method";
+    EditorColorsScheme bundledScheme = loadBundledScheme(resourcePath, null, descriptor);
+    initEditableBundledSchemesCopies();
+    return bundledScheme;
   }
 
   @TestOnly
@@ -312,16 +320,32 @@ public final class EditorColorsManagerImpl extends EditorColorsManager implement
     for (UIThemeBasedLookAndFeelInfo laf : UiThemeProviderListManager.getInstance().getLaFs()) {
       UITheme theme = laf.getTheme();
       String[] schemes = theme.getAdditionalEditorSchemes();
+      PluginDescriptor pluginDescriptor = getPluginDescriptor(theme);
       if (schemes != null) {
         for (String scheme : schemes) {
-          mySchemeManager.loadBundledScheme(scheme, theme, null);
+          loadBundledScheme(scheme, theme, pluginDescriptor);
         }
       }
       String path = theme.getEditorScheme();
       if (path != null) {
-        mySchemeManager.loadBundledScheme(path, theme, null);
+        loadBundledScheme(path, theme, pluginDescriptor);
       }
     }
+  }
+
+  private @Nullable EditorColorsScheme loadBundledScheme(@NotNull String resourceName, 
+                                                         @Nullable Object requestor,
+                                                         @Nullable PluginDescriptor descriptor) {
+    BundledScheme scheme = (BundledScheme)mySchemeManager.loadBundledScheme(resourceName, requestor, descriptor);
+    if (scheme != null && descriptor != null) {
+      scheme.getMetaProperties().setProperty(AbstractColorsScheme.META_INFO_PLUGIN_ID, descriptor.getPluginId().getIdString());
+    }
+    return scheme;
+  }
+  
+  private static PluginDescriptor getPluginDescriptor(@NotNull UITheme theme) {
+    ClassLoader classLoader = theme.getProviderClassLoader();
+    return classLoader instanceof PluginClassLoader ? ((PluginClassLoader)classLoader).getPluginDescriptor() : null;
   }
 
   private void initEditableBundledSchemesCopies() {
@@ -339,14 +363,8 @@ public final class EditorColorsManagerImpl extends EditorColorsManager implement
         resolveSchemeParent(scheme);
       }
       catch (InvalidDataException e) {
+        LOG.warn("Skipping '" + scheme.getName() + "' because its parent scheme '" + e.getMessage() + "' is missing.");
         brokenSchemesList.add(scheme);
-        String name = scheme.getName();
-        if (name.startsWith(Scheme.EDITABLE_COPY_PREFIX)) name = StringUtil.trimStart(name, Scheme.EDITABLE_COPY_PREFIX);
-        String message = IdeBundle
-          .message("notification.content.color.scheme", name,
-                   e.getMessage());
-        Notifications.Bus.notify(
-          new Notification(Notifications.SYSTEM_MESSAGES_GROUP_ID, IdeBundle.message("notification.title.incompatible.color.scheme"), message, NotificationType.ERROR));
       }
     }
     for (EditorColorsScheme brokenScheme : brokenSchemesList) {
@@ -395,7 +413,7 @@ public final class EditorColorsManagerImpl extends EditorColorsManager implement
   public void handleThemeAdded(@NotNull UITheme theme) {
     String editorScheme = theme.getEditorScheme();
     if (editorScheme != null) {
-      getSchemeManager().loadBundledScheme(editorScheme, theme, null);
+      loadBundledScheme(editorScheme, theme, null);
       initEditableBundledSchemesCopies();
     }
   }
@@ -536,7 +554,10 @@ public final class EditorColorsManagerImpl extends EditorColorsManager implement
     DefaultColorsScheme defaultScheme = DefaultColorSchemesManager.getInstance().getFirstScheme();
     String editableCopyName = defaultScheme.getEditableCopyName();
     EditorColorsScheme editableCopy = getScheme(editableCopyName);
-    assert editableCopy != null : "An editable copy of " + defaultScheme.getName() + " has not been initialized.";
+    if (editableCopy == null) {
+      LOG.error("An editable copy of " + defaultScheme.getName() + " has not been initialized.");
+      return defaultScheme;
+    }
     return editableCopy;
   }
 

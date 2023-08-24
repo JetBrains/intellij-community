@@ -131,6 +131,9 @@ abstract class GitCommitEditingActionBase<T : GitCommitEditingActionBase.Multipl
   }
 
   override fun update(e: AnActionEvent) {
+    e.presentation.isEnabledAndVisible = true
+    e.presentation.description = templatePresentation.description
+   
     val commitEditingDataCreationResult = createCommitEditingData(e)
     if (commitEditingDataCreationResult is Prohibited) {
       val description = commitEditingDataCreationResult.description

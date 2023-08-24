@@ -1344,11 +1344,8 @@ public class AbstractPopup implements JBPopup, ScreenAreaConsumer, AlignedPopup 
     myContent.addKeyListener(mySpeedSearch);
 
     if (myCancelOnMouseOutCallback != null || myCancelOnWindow) {
-      myMouseOutCanceller = new Canceller();
-      Toolkit.getDefaultToolkit().addAWTEventListener(myMouseOutCanceller,
-                                                      WINDOW_EVENT_MASK | MOUSE_EVENT_MASK | MOUSE_MOTION_EVENT_MASK);
+      installMouseOutCanceller();
     }
-
 
     ChildFocusWatcher focusWatcher = new ChildFocusWatcher(myContent) {
       @Override
@@ -1619,15 +1616,7 @@ public class AbstractPopup implements JBPopup, ScreenAreaConsumer, AlignedPopup 
     myCallBack = null;
     myListeners.clear();
 
-    if (myMouseOutCanceller != null) {
-      final Toolkit toolkit = Toolkit.getDefaultToolkit();
-      // it may happen, but have no idea how
-      // http://www.jetbrains.net/jira/browse/IDEADEV-21265
-      if (toolkit != null) {
-        toolkit.removeAWTEventListener(myMouseOutCanceller);
-      }
-    }
-    myMouseOutCanceller = null;
+    removeMouseOutCanceller();
 
     if (myFinalRunnable != null) {
       Runnable finalRunnable = myFinalRunnable;
@@ -1773,6 +1762,46 @@ public class AbstractPopup implements JBPopup, ScreenAreaConsumer, AlignedPopup 
 
   boolean isCancelOnWindowDeactivation() {
     return myCancelOnWindowDeactivation;
+  }
+
+  @ApiStatus.Internal
+  public void setCancelOnMouseOutCallback(@Nullable MouseChecker checker) {
+    myCancelOnMouseOutCallback = checker;
+    if (checker != null && myMouseOutCanceller == null) {
+      installMouseOutCanceller();
+    }
+    else if (checker == null && myMouseOutCanceller != null && !myCancelOnWindow) {
+      removeMouseOutCanceller();
+    }
+  }
+
+  @ApiStatus.Internal
+  public void setCancelOnOtherWindowOpen(boolean cancel) {
+    myCancelOnWindow = cancel;
+    if (cancel && myMouseOutCanceller == null) {
+      installMouseOutCanceller();
+    }
+    else if (!cancel && myMouseOutCanceller != null && myCancelOnMouseOutCallback == null) {
+      removeMouseOutCanceller();
+    }
+  }
+
+  private void installMouseOutCanceller() {
+    myMouseOutCanceller = new Canceller();
+    Toolkit.getDefaultToolkit().addAWTEventListener(myMouseOutCanceller,
+                                                    WINDOW_EVENT_MASK | MOUSE_EVENT_MASK | MOUSE_MOTION_EVENT_MASK);
+  }
+
+  private void removeMouseOutCanceller() {
+    if (myMouseOutCanceller != null) {
+      final Toolkit toolkit = Toolkit.getDefaultToolkit();
+      // it may happen, but have no idea how
+      // http://www.jetbrains.net/jira/browse/IDEADEV-21265
+      if (toolkit != null) {
+        toolkit.removeAWTEventListener(myMouseOutCanceller);
+      }
+    }
+    myMouseOutCanceller = null;
   }
 
   private class Canceller implements AWTEventListener {
@@ -2082,6 +2111,11 @@ public class AbstractPopup implements JBPopup, ScreenAreaConsumer, AlignedPopup 
   @Override
   public boolean isCancelKeyEnabled() {
     return myCancelKeyEnabled;
+  }
+
+  @ApiStatus.Internal
+  public void setCancelKeyEnabled(boolean enabled) {
+    myCancelKeyEnabled = enabled;
   }
 
   public @NotNull CaptionPanel getTitle() {

@@ -11,3 +11,5 @@ class B : A() {
         print(foo<caret>)
     }
 }
+
+// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.AddJvmStaticAnnotationFix

@@ -17,7 +17,7 @@ import com.intellij.util.ui.JBPoint
 
 class ChangeProjectColorActionGroup: DefaultActionGroup(), DumbAware {
   override fun getChildren(e: AnActionEvent?): Array<AnAction> {
-    val projectPath = e?.project?.basePath ?: return emptyArray()
+    val projectPath = e?.project?.let { ProjectWindowCustomizerService.projectPath(it) } ?: return emptyArray()
 
     return arrayOf(ChangeProjectColorAction(projectPath, IdeBundle.message("action.ChangeProjectColorAction.Amber.title"), 0),
                    ChangeProjectColorAction(projectPath, IdeBundle.message("action.ChangeProjectColorAction.Rust.title"), 1),

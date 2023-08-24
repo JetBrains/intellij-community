@@ -11,3 +11,4 @@ class B<TElement>(t: TElement) : A<T>({ t })
 fun b() {
     A({ 42 })
 }
+// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.replaceWith.DeprecatedSymbolUsageInWholeProjectFix

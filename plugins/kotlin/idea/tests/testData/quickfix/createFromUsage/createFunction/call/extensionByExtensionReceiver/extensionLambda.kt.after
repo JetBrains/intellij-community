@@ -15,3 +15,4 @@ fun test() {
 private fun A.foo(n: Int): Boolean {
     TODO("Not yet implemented")
 }
+// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.createFromUsage.createCallable.CreateExtensionCallableFromUsageFix

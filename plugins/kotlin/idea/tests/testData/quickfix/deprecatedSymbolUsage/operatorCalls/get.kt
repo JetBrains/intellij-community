@@ -9,3 +9,4 @@ interface T {
 fun test(t: T) {
     val s = <caret>t[0]
 }
+// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.replaceWith.DeprecatedSymbolUsageFix

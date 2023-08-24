@@ -15,6 +15,7 @@
  */
 package com.intellij.testFramework;
 
+import org.junit.jupiter.api.condition.DisabledIf;
 import org.junit.jupiter.api.condition.DisabledIfSystemProperty;
 
 import java.lang.annotation.*;
@@ -25,6 +26,7 @@ import java.lang.annotation.*;
 @Target(ElementType.TYPE)
 @Retention(RetentionPolicy.RUNTIME)
 @DisabledIfSystemProperty(named = "java.awt.headless", matches = "true", disabledReason = "Test is disabled in headless environment")
+@DisabledIf(value = "java.awt.GraphicsEnvironment#isHeadless", disabledReason = "Test is disabled in headless environment")
 @Inherited
 public @interface SkipInHeadlessEnvironment {
 }

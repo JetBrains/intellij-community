@@ -20,6 +20,17 @@
     <orderEntry type="module-library">
       <library name="jetbrains.research.refactorinsight.kotlin.impl" type="repository">
         <properties maven-id="org.jetbrains.research.refactorinsight:kotlin-impl:1.1">
+          <verification>
+            <artifact url="file://$MAVEN_REPOSITORY$/org/jetbrains/research/refactorinsight/kotlin-impl/1.1/kotlin-impl-1.1.jar">
+              <sha256sum>4f82b5f024ce886685560b3a4f7467d164e707956da0d9a822b03b2df6f53e32</sha256sum>
+            </artifact>
+            <artifact url="file://$MAVEN_REPOSITORY$/org/jetbrains/research/refactorinsight/common/1.1/common-1.1.jar">
+              <sha256sum>97ea3971d83a4503799375bd7b33ec590081476f6e2999cf1cb9fec5c6f3411e</sha256sum>
+            </artifact>
+            <artifact url="file://$MAVEN_REPOSITORY$/org/jetbrains/research/kotlinrminer/kotlinRMiner-ide/1.2.1/kotlinRMiner-ide-1.2.1.jar">
+              <sha256sum>48c13df97048b3535fe1c044bafa31629f23f9c01259f215127edccc1467aa1b</sha256sum>
+            </artifact>
+          </verification>
           <exclude>
             <dependency maven-id="org.apache.commons:commons-text" />
             <dependency maven-id="commons-io:commons-io" />

@@ -6,3 +6,5 @@ interface I {
 fun test() {
     val x = <caret>I {}
 }
+
+// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.AddFunModifierFix

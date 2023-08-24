@@ -4,11 +4,13 @@
 package training.onboarding
 
 import com.intellij.execution.impl.RunnerAndConfigurationSettingsImpl
+import com.intellij.execution.lineMarker.LineMarkerActionWrapper
 import com.intellij.ide.util.PropertiesComponent
 import com.intellij.ide.wizard.NewProjectOnboardingTips
 import com.intellij.ide.wizard.NewProjectWizardStep
 import com.intellij.internal.statistic.local.ActionsLocalSummary
 import com.intellij.openapi.actionSystem.*
+import com.intellij.openapi.actionSystem.ex.ActionUtil.getDelegateChainRootAction
 import com.intellij.openapi.actionSystem.ex.AnActionListener
 import com.intellij.openapi.actionSystem.impl.ActionButton
 import com.intellij.openapi.application.ApplicationManager
@@ -55,7 +57,9 @@ private val RESET_TOOLTIP_SAMPLE_TEXT = Key.create<String>("reset.tooltip.sample
 internal val promotedActions = listOf(IdeActions.ACTION_SEARCH_EVERYWHERE,
                                       IdeActions.ACTION_SHOW_INTENTION_ACTIONS,
                                       IdeActions.ACTION_DEFAULT_RUNNER,
+                                      "RunClass",
                                       IdeActions.ACTION_DEFAULT_DEBUGGER,
+                                      "DebugClass",
                                       IdeActions.ACTION_TOGGLE_LINE_BREAKPOINT)
 
 private class NewProjectOnboardingTipsImpl : NewProjectOnboardingTips {
@@ -111,7 +115,8 @@ private fun installActionListener(project: Project, pathToRunningFile: @NonNls S
         return
       }
 
-      val actionId = ActionManager.getInstance().getId(action)!!
+      val original = getDelegateChainRootAction(action)
+      val actionId = ActionManager.getInstance().getId(original) ?: return
       val reported = actionsMapReported.get(actionId) ?: return
       if (!reported) {
         actionsMapReported.put(actionId, true)

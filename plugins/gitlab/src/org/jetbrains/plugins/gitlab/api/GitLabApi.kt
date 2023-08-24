@@ -7,9 +7,12 @@ import com.intellij.collaboration.api.httpclient.*
 import com.intellij.collaboration.api.json.JsonHttpApiHelper
 import com.intellij.collaboration.api.json.loadJsonList
 import com.intellij.collaboration.api.json.loadOptionalJsonList
+import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.util.io.HttpSecurityUtil
+import org.jetbrains.plugins.gitlab.GitLabServersManager
 import org.jetbrains.plugins.gitlab.api.dto.GitLabGraphQLMutationResultDTO
+import org.jetbrains.plugins.gitlab.api.request.getServerMetadataOrVersion
 import org.jetbrains.plugins.gitlab.util.GitLabApiRequestName
 import java.net.URI
 import java.net.http.HttpRequest
@@ -33,7 +36,6 @@ class GitLabApiImpl(httpHelper: HttpApiHelper) : GitLabApi, HttpApiHelper by htt
   override val graphQL: GitLabApi.GraphQL =
     GraphQLImpl(GraphQLApiHelper(logger<GitLabApi>(),
                                  this,
-                                 GitLabGQLQueryLoader,
                                  GitLabGQLDataDeSerializer,
                                  GitLabGQLDataDeSerializer))
 
@@ -54,8 +56,18 @@ class GitLabApiImpl(httpHelper: HttpApiHelper) : GitLabApi, HttpApiHelper by htt
     JsonHttpApiHelper by helper
 }
 
-fun GitLabApi.GraphQL.gitLabQuery(serverPath: GitLabServerPath, query: GitLabGQLQuery, variablesObject: Any? = null): HttpRequest =
-  query(serverPath.gqlApiUri, query.filePath, variablesObject)
+suspend fun GitLabApi.GraphQL.gitLabQuery(serverPath: GitLabServerPath, query: GitLabGQLQuery, variablesObject: Any? = null): HttpRequest {
+  val serverMeta = service<GitLabServersManager>().getMetadata(serverPath) {
+    runCatching { rest.getServerMetadataOrVersion(it) }
+  }
+  val queryLoader = if (serverMeta?.enterprise == false) {
+    GitLabGQLQueryLoaders.community
+  }
+  else {
+    GitLabGQLQueryLoaders.default
+  }
+  return query(serverPath.gqlApiUri, { queryLoader.loadQuery(query.filePath) }, variablesObject)
+}
 
 suspend inline fun <reified T> GitLabApi.Rest.loadList(serverPath: GitLabServerPath, requestName: GitLabApiRequestName, uri: String)
   : HttpResponse<out List<T>> {

@@ -2,3 +2,5 @@
 public fun foo(a: Any) {
     a as List<*>
 }
+
+// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.ChangeToStarProjectionFix

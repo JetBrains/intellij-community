@@ -5,3 +5,4 @@ const val FOO = 1
 fun foo() = 1
 fun test(){
 }
+// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.replaceWith.DeprecatedSymbolUsageFix

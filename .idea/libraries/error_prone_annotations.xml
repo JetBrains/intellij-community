@@ -1,6 +1,12 @@
 <component name="libraryTable">
   <library name="error-prone-annotations" type="repository">
-    <properties include-transitive-deps="false" maven-id="com.google.errorprone:error_prone_annotations:2.16" />
+    <properties include-transitive-deps="false" maven-id="com.google.errorprone:error_prone_annotations:2.16">
+      <verification>
+        <artifact url="file://$MAVEN_REPOSITORY$/com/google/errorprone/error_prone_annotations/2.16/error_prone_annotations-2.16.jar">
+          <sha256sum>2668536a354cda63d19885fcabdecd8d6298aec4260cdfdf34b722e964d60396</sha256sum>
+        </artifact>
+      </verification>
+    </properties>
     <CLASSES>
       <root url="jar://$MAVEN_REPOSITORY$/com/google/errorprone/error_prone_annotations/2.16/error_prone_annotations-2.16.jar!/" />
     </CLASSES>

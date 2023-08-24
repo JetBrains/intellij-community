@@ -62,8 +62,6 @@ import com.intellij.openapi.progress.util.ProgressIndicatorBase;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.ui.ex.lineNumber.HybridLineNumberConverter;
-import com.intellij.openapi.ui.ex.lineNumber.RelativeLineNumberConverter;
 import com.intellij.openapi.ui.popup.Balloon;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.registry.Registry;
@@ -114,6 +112,8 @@ import java.util.*;
 import java.util.concurrent.Callable;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
+
+import static com.intellij.openapi.ui.ex.lineNumber.LineNumberConvertersKt.getStandardLineNumberConverter;
 
 /**
  * Gutter content (left to right):
@@ -374,7 +374,7 @@ final class EditorGutterComponentImpl extends EditorGutterComponentEx implements
       Graphics2D g = (Graphics2D)getComponentGraphics(g_);
 
       if (myEditor.isDisposed()) {
-        g.setColor(EditorImpl.getDisposedBackground());
+        g.setColor(myEditor.getDisposedBackground());
         g.fillRect(clip.x, clip.y, clip.width, clip.height);
         return;
       }
@@ -722,7 +722,7 @@ final class EditorGutterComponentImpl extends EditorGutterComponentEx implements
   private Font getFontForLineNumbers() {
     Font editorFont = myEditor.getColorsScheme().getFont(EditorFontType.PLAIN);
     float editorFontSize = editorFont.getSize2D();
-    float delta = (float) AdvancedSettings.getInt("editor.gutter.linenumber.font.size.delta");
+    float delta = (float)AdvancedSettings.getInt("editor.gutter.linenumber.font.size.delta");
     return editorFont.deriveFont(Math.max(1f, editorFontSize + delta));
   }
 
@@ -855,9 +855,10 @@ final class EditorGutterComponentImpl extends EditorGutterComponentEx implements
   void processRangeHighlighters(int startOffset, int endOffset, @NotNull RangeHighlighterProcessor processor) {
     // we limit highlighters to process to between line starting at startOffset and line ending at endOffset
     MarkupIterator<RangeHighlighterEx> docHighlighters =
-      new FilteringMarkupIterator<>(myEditor.getFilteredDocumentMarkupModel().overlappingIterator(startOffset, endOffset), h->h.isRenderedInGutter());
+      new FilteringMarkupIterator<>(myEditor.getFilteredDocumentMarkupModel().overlappingIterator(startOffset, endOffset),
+                                    h -> h.isRenderedInGutter());
     MarkupIterator<RangeHighlighterEx> editorHighlighters =
-      new FilteringMarkupIterator<>(myEditor.getMarkupModel().overlappingIterator(startOffset, endOffset), h->h.isRenderedInGutter());
+      new FilteringMarkupIterator<>(myEditor.getMarkupModel().overlappingIterator(startOffset, endOffset), h -> h.isRenderedInGutter());
 
     try {
       RangeHighlighterEx lastDocHighlighter = null;
@@ -1717,21 +1718,17 @@ final class EditorGutterComponentImpl extends EditorGutterComponentEx implements
     return myEditor.getSettings().isLineNumbersShown();
   }
 
-  @NotNull LineNumberConverter getPrimaryLineNumberConverter() {
+  @Override
+  public @NotNull LineNumberConverter getPrimaryLineNumberConverter() {
     if (myLineNumberConverter != null) return myLineNumberConverter;
 
-    EditorSettings.LineNumerationType numeration = myEditor.getSettings().getLineNumerationType();
-    switch (numeration) {
-      case RELATIVE -> {
-        return RelativeLineNumberConverter.INSTANCE;
-      }
-      case HYBRID -> {
-        return HybridLineNumberConverter.INSTANCE;
-      }
-      default -> {
-        return LineNumberConverter.DEFAULT;
-      }
-    }
+    EditorSettings.LineNumerationType type = myEditor.getSettings().getLineNumerationType();
+    return getStandardLineNumberConverter(type);
+  }
+
+  @Override
+  public @Nullable LineNumberConverter getAdditionalLineNumberConverter() {
+    return myAdditionalLineNumberConverter;
   }
 
   @Override
@@ -1987,7 +1984,8 @@ final class EditorGutterComponentImpl extends EditorGutterComponentEx implements
     int x = convertX(point.x);
 
     int hoveredLine;
-    if (x >= getExtraLineMarkerFreePaintersAreaOffset() && x <= getExtraLineMarkerFreePaintersAreaOffset() + getExtraLeftFreePaintersAreaWidth()) {
+    if (x >= getExtraLineMarkerFreePaintersAreaOffset() &&
+        x <= getExtraLineMarkerFreePaintersAreaOffset() + getExtraLeftFreePaintersAreaWidth()) {
       hoveredLine = getEditor().xyToLogicalPosition(point).line;
     }
     else {
@@ -2064,10 +2062,10 @@ final class EditorGutterComponentImpl extends EditorGutterComponentEx implements
     UIUtil.setCursor(this, Cursor.getPredefinedCursor(Cursor.DEFAULT_CURSOR));
   }
 
-  private void updateHover(@Nullable GutterIconRenderer hoverGutterRenderer)
-  {
-    if (hoverGutterRenderer == myCurrentHoveringGutterRenderer)
+  private void updateHover(@Nullable GutterIconRenderer hoverGutterRenderer) {
+    if (hoverGutterRenderer == myCurrentHoveringGutterRenderer) {
       return;
+    }
     if (myCurrentHoveringGutterRenderer != null) {
       myEditorGutterListeners.getMulticaster().hoverEnded(new EditorGutterHoverEvent(this, myCurrentHoveringGutterRenderer));
       myCurrentHoveringGutterRenderer = null;
@@ -2419,9 +2417,10 @@ final class EditorGutterComponentImpl extends EditorGutterComponentEx implements
   }
 
   @Override
-  public void setLineNumberConverter(@NotNull LineNumberConverter primaryConverter, @Nullable LineNumberConverter additionalConverter) {
+  public void setLineNumberConverter(@Nullable LineNumberConverter primaryConverter, @Nullable LineNumberConverter additionalConverter) {
     myLineNumberConverter = primaryConverter;
     myAdditionalLineNumberConverter = additionalConverter;
+    myEditorGutterListeners.getMulticaster().lineNumberConvertersChanged();
     repaint();
   }
 
@@ -2617,7 +2616,7 @@ final class EditorGutterComponentImpl extends EditorGutterComponentEx implements
   public void mouseExited(MouseEvent e) {
     TooltipController.getInstance().cancelTooltip(GUTTER_TOOLTIP_GROUP, e, false);
     updateFreePainters(e);
-	updateHover(null);
+    updateHover(null);
   }
 
   private int convertPointToLineNumber(final Point p) {

@@ -21,10 +21,13 @@ class SyntaxNodeDescriptorImpl implements MutableSyntaxNodeDescriptor {
   private List<InjectionNodeDescriptor> myInjections = new ArrayList<>();
 
   private final SyntaxNodeDescriptor myParentNode;
-  private CharSequence myScopeName = null;
 
-  SyntaxNodeDescriptorImpl(@Nullable SyntaxNodeDescriptor parentNode) {
+  @Nullable
+  private final CharSequence myScopeName;
+
+  SyntaxNodeDescriptorImpl(@Nullable CharSequence scopeName, @Nullable SyntaxNodeDescriptor parentNode) {
     myParentNode = parentNode;
+    myScopeName = scopeName;
   }
 
   @Override
@@ -73,11 +76,6 @@ class SyntaxNodeDescriptorImpl implements MutableSyntaxNodeDescriptor {
   @Override
   public void appendRepository(int ruleId, SyntaxNodeDescriptor descriptor) {
     myRepository.put(ruleId, descriptor);
-  }
-
-  @Override
-  public void setScopeName(@NotNull CharSequence scopeName) {
-    myScopeName = scopeName;
   }
 
   @Override

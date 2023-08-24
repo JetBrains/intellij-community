@@ -2,6 +2,7 @@
 package com.intellij.util.indexing.diagnostic
 
 import com.intellij.openapi.project.Project
+import com.intellij.util.indexing.diagnostic.dto.JsonChangedFilesDuringIndexingStatistics
 import com.intellij.util.indexing.diagnostic.dto.JsonFileProviderIndexStatistics
 import com.intellij.util.indexing.diagnostic.dto.JsonScanningStatistics
 import com.intellij.util.messages.Topic
@@ -85,7 +86,7 @@ interface ProjectDumbIndexingHistory : ProjectIndexingActivityHistory {
   override val project: Project
   val indexingActivitySessionId: Long
   val times: DumbIndexingTimes
-  val refreshedScanningStatistics: JsonScanningStatistics?
+  val changedDuringIndexingFilesStat: JsonChangedFilesDuringIndexingStatistics?
   val providerStatistics: List<JsonFileProviderIndexStatistics>
   val totalStatsPerFileType: Map<String, StatsPerFileType>
   val totalStatsPerIndexer: Map<String, StatsPerIndexer>
@@ -208,7 +209,7 @@ interface DumbIndexingTimes {
   val totalUpdatingTime: TimeNano
   val updatingEnd: ZonedDateTime
   val contentLoadingVisibleDuration: Duration
-  val refreshedScanFilesDuration: Duration
+  val retrievingChangedDuringIndexingFilesDuration: Duration
   val pausedDuration: Duration
   val appliedAllValuesSeparately: Boolean
   val separateValueApplicationVisibleTime: TimeNano

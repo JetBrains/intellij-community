@@ -6,3 +6,5 @@ package test
 fun foo() {
     <caret>asserter
 }
+
+// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.ImportFix

@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.compiler.actions;
 
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
@@ -9,6 +9,7 @@ import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiFile;
+import com.intellij.task.impl.ProjectTaskManagerImpl;
 import org.jetbrains.annotations.NotNull;
 
 public abstract class CompileActionBase extends AnAction implements DumbAware {
@@ -29,6 +30,7 @@ public abstract class CompileActionBase extends AnAction implements DumbAware {
     if (file != null && editor != null && !DumbService.getInstance(project).isDumb()) {
       DaemonCodeAnalyzer.getInstance(project).autoImportReferenceAtCursor(editor, file); //let autoimport complete
     }
+    ProjectTaskManagerImpl.putBuildOriginator(project, this.getClass());
     doAction(e.getDataContext(), project);
   }
 

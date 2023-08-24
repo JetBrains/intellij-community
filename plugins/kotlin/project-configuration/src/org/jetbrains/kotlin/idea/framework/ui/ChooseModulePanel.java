@@ -127,4 +127,8 @@ public class ChooseModulePanel {
 
         return Collections.singletonList(ModuleManager.getInstance(project).findModuleByName(selectedItem));
     }
+
+    public @NotNull List<Module> getModules() {
+        return modules;
+    }
 }

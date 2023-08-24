@@ -242,6 +242,7 @@ class VSRegistryParserNew private constructor(val hive: VSHive) {
         if (pathExp.isDirectory) {
           metadata = "folder|"
         }
+        displayName = pathExp.name
         projectOpenTimestamp = it.second.time // / 1000L
         buildTimestamp = it.second.time
       }
@@ -306,6 +307,7 @@ class VSRegistryParserNew private constructor(val hive: VSHive) {
         }
         projectOpenTimestamp = i
         buildTimestamp = i
+        displayName = name
       }
 
       RecentPathInfo(pathExp.systemIndependentPath, info)

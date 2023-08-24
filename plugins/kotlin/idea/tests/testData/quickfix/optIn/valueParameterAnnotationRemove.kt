@@ -8,3 +8,6 @@ annotation class SomeOptInAnnotation
 
 class Foo(<caret>@SomeOptInAnnotation val value: Int) {
 }
+
+// FUS_K2_QUICKFIX_NAME: org.jetbrains.kotlin.idea.inspections.RemoveAnnotationFix
+// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.inspections.RemoveAnnotationFix

@@ -13,3 +13,4 @@ class B : A(), I {
         return super.<caret>toString()
     }
 }
+// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.AbstractSuperCallFix

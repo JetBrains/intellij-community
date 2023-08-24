@@ -15,3 +15,4 @@ internal class Outer {
 class Container {
     interface Derived : <caret>Base
 }
+// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.ChangeVisibilityFix$ChangeToPrivateFix

@@ -6,3 +6,4 @@ fun person(): Person = TODO()
 fun main(args: Array<String>) {
     val (name, age, address: String) = person()
 }
+// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.createFromUsage.createVariable.CreateParameterFromUsageFix

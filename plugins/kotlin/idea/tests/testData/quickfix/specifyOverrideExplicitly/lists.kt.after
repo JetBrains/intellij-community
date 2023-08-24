@@ -8,3 +8,4 @@ class B(private val f: MutableList<String>): ArrayList<String>(), MutableList<St
         return f.isEmpty()
     }
 }
+// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.SpecifyOverrideExplicitlyFix

@@ -619,7 +619,7 @@ Android Studio: don't register IntelliJ fork -->
     <fileType name="ARCHIVE" implementationClass="com.intellij.ide.highlighter.ArchiveFileType" fieldName="INSTANCE"
               extensions="ane;apk;ear;egg;jar;swc;war;zip"/>
     <fileType name="PLAIN_TEXT" implementationClass="com.intellij.openapi.fileTypes.PlainTextFileType" fieldName="INSTANCE" language="TEXT"
-              extensions="txt"/>
+              extensions="log;txt"/>
     <fileType name="Native" implementationClass="com.intellij.openapi.fileTypes.NativeFileType" fieldName="INSTANCE"
               extensions="doc;docx;hlp;mdb;odt;pdf;ppt;pptx;vsd;xls;xlsx"/>
     <fileType name="UNKNOWN" implementationClass="com.intellij.openapi.fileTypes.UnknownFileType" fieldName="INSTANCE"/>
@@ -862,6 +862,7 @@ Android Studio: instead AndroidStudioStatisticsEventLoggerProvider is registered
     <statistics.applicationUsagesCollector implementation="com.intellij.featureStatistics.fusCollectors.WSLInstallationsCollector"/>
     <statistics.counterUsagesCollector implementationClass="com.intellij.ide.impl.TrustedProjectsStatistics" />
     <statistics.applicationUsagesCollector implementation="com.intellij.notification.impl.NotificationSettingsCollector"/>
+    <statistics.counterUsagesCollector implementationClass="com.intellij.openapi.project.ReadmeShownUsageCollector"/>
 
     <applicationService serviceImplementation="com.intellij.internal.statistic.eventLog.validator.storage.persistence.EventLogMetadataSettingsPersistence"
                         preload="true" />
@@ -1588,8 +1589,6 @@ Android Studio: b/285867050 -->
               topic="com.intellij.notification.Notifications"/>
     <listener class="com.intellij.formatting.EditorFormatterListener"
               topic="com.intellij.psi.codeStyle.CodeStyleManager$Listener"/>
-    <listener class="com.intellij.openapi.project.SmartModeScheduler$SmartModeSchedulerDumbModeListener"
-              topic="com.intellij.openapi.project.DumbService$DumbModeListener"/>
     <listener class="com.intellij.openapi.project.ProjectRootManagerOnEndOfDumbModeIncrementer"
               topic="com.intellij.openapi.project.DumbService$DumbModeListener"/>
     <listener class="com.intellij.openapi.project.RefreshIconsOnEndOfDumbModeListener"

@@ -11,6 +11,7 @@ import com.intellij.openapi.progress.impl.CoreProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vcs.VcsException;
+import com.intellij.openapi.vcs.telemetry.VcsTelemetrySpan.LogData;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.platform.diagnostic.telemetry.TelemetryManager;
 import com.intellij.util.containers.ContainerUtil;
@@ -118,12 +119,12 @@ public class VcsLogRefresherImpl implements VcsLogRefresher, Disposable {
   }
 
   private @NotNull LogInfo loadRecentData(final @NotNull Map<VirtualFile, VcsLogProvider.Requirements> requirements) throws VcsException {
-    return computeWithSpanThrows(myTracer, "loading commits", __ -> {
+    return computeWithSpanThrows(myTracer, LogData.LoadingCommits.getName(), __ -> {
       LogInfo logInfo = new LogInfo(myStorage);
       for (Map.Entry<VirtualFile, VcsLogProvider> entry : getProvidersForRoots(requirements.keySet()).entrySet()) {
         VirtualFile root = entry.getKey();
         VcsLogProvider provider = entry.getValue();
-        runWithSpanThrows(myTracer, "loading commits", spanForRoot -> {
+        runWithSpanThrows(myTracer, LogData.LoadingCommits.getName(), spanForRoot -> {
           spanForRoot.setAttribute("rootName", root.getName());
           VcsLogProvider.DetailedLogData data = provider.readFirstBlock(root, requirements.get(root));
           logInfo.put(root, compactCommits(data.getCommits(), root));
@@ -149,14 +150,14 @@ public class VcsLogRefresherImpl implements VcsLogRefresher, Disposable {
   }
 
   private static @NotNull <T extends GraphCommit<Integer>> List<T> multiRepoJoin(@NotNull Collection<? extends List<T>> commits) {
-    Span span = TelemetryManager.getInstance().getTracer(VcsScope).spanBuilder("multi-repo join").startSpan();
+    Span span = TelemetryManager.getInstance().getTracer(VcsScope).spanBuilder(LogData.MultiRepoJoin.getName()).startSpan();
     List<T> joined = new VcsLogMultiRepoJoiner<Integer, T>().join(commits);
     span.end();
     return joined;
   }
 
   private @NotNull List<GraphCommit<Integer>> compactCommits(@NotNull List<? extends TimedVcsCommit> commits, @NotNull VirtualFile root) {
-    return computeWithSpan(myTracer, "compacting commits", (span -> {
+    return computeWithSpan(myTracer, LogData.CompactingCommits.getName(), (span -> {
       if (commits.isEmpty()) {
         return Collections.emptyList();
       }
@@ -250,7 +251,7 @@ public class VcsLogRefresherImpl implements VcsLogRefresher, Disposable {
     }
 
     private @NotNull DataPack doRefresh(@NotNull Collection<? extends VirtualFile> roots) {
-      return computeWithSpanThrows(myTracer, "refresh", span -> {
+      return computeWithSpanThrows(myTracer, LogData.Refresh.getName(), span -> {
         try {
           PermanentGraph<Integer> permanentGraph = myCurrentDataPack.isFull() ? myCurrentDataPack.getPermanentGraph() : null;
           Map<VirtualFile, CompressedRefs> currentRefs = myCurrentDataPack.getRefsModel().getAllRefsByRoot();
@@ -326,7 +327,7 @@ public class VcsLogRefresherImpl implements VcsLogRefresher, Disposable {
                                                                 @NotNull Map<VirtualFile, CompressedRefs> newRefs) {
       if (fullLog.isEmpty()) return recentCommits;
 
-      return computeWithSpan(myTracer, "joining new commits", span -> {
+      return computeWithSpan(myTracer, LogData.JoiningNewCommits.getName(), span -> {
         Collection<Integer> prevRefIndices = previousRefs
           .values()
           .stream()
@@ -357,7 +358,7 @@ public class VcsLogRefresherImpl implements VcsLogRefresher, Disposable {
     }
 
     private @NotNull DataPack loadFullLog() throws VcsException {
-      return computeWithSpanThrows(myTracer, "full log reload", span -> {
+      return computeWithSpanThrows(myTracer, LogData.FullLogReload.getName(), span -> {
         LogInfo logInfo = readFullLogFromVcs();
         List<? extends GraphCommit<Integer>> graphCommits = multiRepoJoin(logInfo.getCommits());
         return DataPack.build(graphCommits, logInfo.getRefs(), myProviders, myStorage, true);
@@ -365,12 +366,13 @@ public class VcsLogRefresherImpl implements VcsLogRefresher, Disposable {
     }
 
     private @NotNull LogInfo readFullLogFromVcs() throws VcsException {
-      return computeWithSpanThrows(myTracer, "read full log from VCS", span -> {
+      return computeWithSpanThrows(myTracer, LogData.ReadFullLogFromVcs.getName(), span -> {
         LogInfo logInfo = new LogInfo(myStorage);
         for (Map.Entry<VirtualFile, VcsLogProvider> entry : myProviders.entrySet()) {
           VirtualFile root = entry.getKey();
           VcsLogProvider provider = entry.getValue();
-          runWithSpanThrows(myTracer, "read full log from VCS for " + root.getName(), scopeSpan -> {
+          runWithSpanThrows(myTracer, LogData.ReadFullLogFromVcsForRoot.getName(), scopeSpan -> {
+            scopeSpan.setAttribute("rootName", root.getName());
             List<GraphCommit<Integer>> graphCommits = new ArrayList<>();
             VcsLogProvider.LogData data = provider.readAllHashes(root, commit -> graphCommits.add(compactCommit(commit, root)));
             logInfo.put(root, graphCommits);

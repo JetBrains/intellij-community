@@ -40,4 +40,9 @@ abstract class AbstractEditIntentionSettingsAction implements IntentionAction {
   public boolean startInWriteAction() {
     return false;
   }
+
+  @Override
+  public String toString() {
+    return "Edit settings for " + myFamilyName + " (" + myEnabled + ")";
+  }
 }

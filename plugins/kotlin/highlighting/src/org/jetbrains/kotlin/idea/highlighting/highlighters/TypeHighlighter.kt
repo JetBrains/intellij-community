@@ -8,10 +8,11 @@ import com.intellij.psi.util.PsiTreeUtil
 import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
 import org.jetbrains.kotlin.analysis.api.symbols.*
 import org.jetbrains.kotlin.descriptors.Modality
+import org.jetbrains.kotlin.idea.base.highlighting.HighlightingFactory
 import org.jetbrains.kotlin.idea.base.highlighting.isNameHighlightingEnabled
+import org.jetbrains.kotlin.idea.highlighter.KotlinHighlightInfoTypeSemanticNames
 import org.jetbrains.kotlin.idea.references.mainReference
 import org.jetbrains.kotlin.psi.*
-import org.jetbrains.kotlin.idea.highlighter.KotlinHighlightingColors as Colors
 
 internal class TypeHighlighter(
   project: Project,
@@ -47,25 +48,25 @@ internal class TypeHighlighter(
         }
 
         val color = when (symbol) {
-            is KtAnonymousObjectSymbol -> Colors.CLASS
+            is KtAnonymousObjectSymbol -> KotlinHighlightInfoTypeSemanticNames.CLASS
             is KtNamedClassOrObjectSymbol -> when (symbol.classKind) {
                 KtClassKind.CLASS -> when (symbol.modality) {
-                    Modality.FINAL, Modality.SEALED , Modality.OPEN -> Colors.CLASS
-                    Modality.ABSTRACT -> Colors.ABSTRACT_CLASS
+                    Modality.FINAL, Modality.SEALED , Modality.OPEN -> KotlinHighlightInfoTypeSemanticNames.CLASS
+                    Modality.ABSTRACT -> KotlinHighlightInfoTypeSemanticNames.ABSTRACT_CLASS
                 }
-                KtClassKind.ENUM_CLASS -> Colors.ENUM
-                KtClassKind.ANNOTATION_CLASS -> Colors.ANNOTATION
-                KtClassKind.OBJECT -> Colors.OBJECT
-                KtClassKind.COMPANION_OBJECT -> Colors.OBJECT
-                KtClassKind.INTERFACE -> Colors.TRAIT
-                KtClassKind.ANONYMOUS_OBJECT -> Colors.CLASS
+                KtClassKind.ENUM_CLASS -> KotlinHighlightInfoTypeSemanticNames.ENUM
+                KtClassKind.ANNOTATION_CLASS -> KotlinHighlightInfoTypeSemanticNames.ANNOTATION
+                KtClassKind.OBJECT -> KotlinHighlightInfoTypeSemanticNames.OBJECT
+                KtClassKind.COMPANION_OBJECT -> KotlinHighlightInfoTypeSemanticNames.OBJECT
+                KtClassKind.INTERFACE -> KotlinHighlightInfoTypeSemanticNames.TRAIT
+                KtClassKind.ANONYMOUS_OBJECT -> KotlinHighlightInfoTypeSemanticNames.CLASS
             }
 
-            is KtTypeAliasSymbol -> Colors.TYPE_ALIAS
-            is KtTypeParameterSymbol -> Colors.TYPE_PARAMETER
+            is KtTypeAliasSymbol -> KotlinHighlightInfoTypeSemanticNames.TYPE_ALIAS
+            is KtTypeParameterSymbol -> KotlinHighlightInfoTypeSemanticNames.TYPE_PARAMETER
         }
 
-        return listOfNotNull(highlightName (expression.textRange, color))
+        return listOfNotNull(HighlightingFactory.highlightName(expression, color))
     }
 
     context(KtAnalysisSession)

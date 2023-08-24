@@ -12,5 +12,6 @@
     <module name="intellij.notebooks.ui"/>
     <module name="intellij.platform.images.copyright"/>
     <module name="intellij.xml.xmlbeans"/>
+    <module name="intellij.platform.ide.newUiOnboarding"/>
   </content>
 </idea-plugin>

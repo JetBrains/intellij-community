@@ -2,7 +2,7 @@
 
 package org.jetbrains.kotlin.idea.highlighter
 
-import com.intellij.openapi.editor.colors.TextAttributesKey
+import com.intellij.codeInsight.daemon.impl.HighlightInfoType
 import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.psi.PsiElement
 import org.jetbrains.annotations.ApiStatus
@@ -10,9 +10,9 @@ import org.jetbrains.kotlin.descriptors.DeclarationDescriptor
 import org.jetbrains.kotlin.resolve.calls.model.ResolvedCall
 
 abstract class KotlinHighlightingVisitorExtension {
-    abstract fun highlightDeclaration(elementToHighlight: PsiElement, descriptor: DeclarationDescriptor): TextAttributesKey?
+    abstract fun highlightDeclaration(elementToHighlight: PsiElement, descriptor: DeclarationDescriptor): HighlightInfoType?
 
-    open fun highlightCall(elementToHighlight: PsiElement, resolvedCall: ResolvedCall<*>): TextAttributesKey? {
+    open fun highlightCall(elementToHighlight: PsiElement, resolvedCall: ResolvedCall<*>): HighlightInfoType? {
         return highlightDeclaration(elementToHighlight, resolvedCall.resultingDescriptor)
     }
 

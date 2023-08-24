@@ -4,3 +4,5 @@ annotation class Anno2
 
 @<caret>Anno2
 var b = 42
+
+// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.AddAnnotationUseSiteTargetFix

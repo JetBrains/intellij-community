@@ -10,3 +10,4 @@ fun foo(
 fun main() {
     foo("a", "b", "c", "d", "e")
 }
+// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.ReorderParametersFix

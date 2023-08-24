@@ -55,6 +55,7 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.Unmodifiable;
 import org.jetbrains.concurrency.AsyncPromise;
 import org.jetbrains.concurrency.Promise;
+import org.jetbrains.concurrency.Promises;
 
 import javax.swing.*;
 import java.lang.ref.WeakReference;
@@ -340,6 +341,30 @@ public final class ServiceViewManagerImpl implements ServiceViewManager, Persist
 
   @Override
   public @NotNull Promise<Void> select(@NotNull Object service, @NotNull Class<?> contributorClass, boolean activate, boolean focus) {
+    return trackingSelect(service, contributorClass, activate, focus).then(result -> null);
+  }
+
+  public @NotNull Promise<Boolean> trackingSelect(@NotNull Object service, @NotNull Class<?> contributorClass,
+                                                  boolean activate, boolean focus) {
+    if (!myState.selectActiveService) {
+      if (activate) {
+        String toolWindowId = getToolWindowId(contributorClass);
+        if (toolWindowId == null) {
+          return Promises.rejectedPromise("Contributor group not found");
+        }
+        ToolWindowManager.getInstance(myProject).invokeLater(() -> {
+          ToolWindow toolWindow = ToolWindowManager.getInstance(myProject).getToolWindow(toolWindowId);
+          if (toolWindow != null) {
+            toolWindow.activate(null, focus, focus);
+          }
+        });
+      }
+      return expand(service, contributorClass).then(o -> false);
+    }
+    return doSelect(service, contributorClass, activate, focus).then(o -> true);
+  }
+
+  private @NotNull Promise<Void> doSelect(@NotNull Object service, @NotNull Class<?> contributorClass, boolean activate, boolean focus) {
     AsyncPromise<Void> result = new AsyncPromise<>();
     // Ensure model is updated, then iterate over service views on EDT in order to find view with service and select it.
     myModel.getInvoker().invoke(() -> AppUIUtil.invokeLaterIfProjectAlive(myProject, () -> {
@@ -478,7 +503,7 @@ public final class ServiceViewManagerImpl implements ServiceViewManager, Persist
         fileCondition
       );
       if (fileItem != null) {
-        Promise<Void> promise = select(fileItem.getValue(), fileItem.getRootContributor().getClass(), false, false);
+        Promise<Void> promise = doSelect(fileItem.getValue(), fileItem.getRootContributor().getClass(), false, false);
         promise.processed(result);
       }
     });
@@ -756,6 +781,7 @@ public final class ServiceViewManagerImpl implements ServiceViewManager, Persist
     public List<ServiceViewState> viewStates = new ArrayList<>();
 
     public boolean showServicesTree = true;
+    public boolean selectActiveService = true;
     public final Set<String> included = new HashSet<>();
     public final Set<String> excluded = new HashSet<>();
   }
@@ -780,6 +806,14 @@ public final class ServiceViewManagerImpl implements ServiceViewManager, Persist
         serviceView.getUi().setMasterComponentVisible(value);
       }
     }
+  }
+
+  boolean isSelectActiveService() {
+    return myState.selectActiveService;
+  }
+
+  void setSelectActiveService(boolean value) {
+    myState.selectActiveService = value;
   }
 
   boolean isSplitByTypeEnabled(@NotNull ServiceView selectedView) {

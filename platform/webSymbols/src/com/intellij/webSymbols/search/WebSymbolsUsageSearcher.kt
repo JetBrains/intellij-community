@@ -14,10 +14,12 @@ import com.intellij.model.search.SearchContext
 import com.intellij.model.search.SearchService
 import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
+import com.intellij.psi.PsiNameIdentifierOwner
 import com.intellij.psi.search.SearchScope
 import com.intellij.psi.util.walkUp
 import com.intellij.refactoring.suggested.startOffset
 import com.intellij.util.Query
+import com.intellij.webSymbols.PsiSourcedWebSymbol
 import com.intellij.webSymbols.WebSymbol
 import com.intellij.webSymbols.declarations.WebSymbolDeclarationProvider
 import com.intellij.webSymbols.query.WebSymbolNamesProvider
@@ -59,33 +61,51 @@ class WebSymbolsUsageSearcher : UsageSearcher {
     private fun findReferencesToSymbol(symbol: WebSymbol, leafOccurrence: LeafOccurrence): Collection<PsiUsage> =
       service<PsiSymbolReferenceService>().run {
         for ((element, offsetInElement) in walkUp(leafOccurrence.start, leafOccurrence.offsetInStart, leafOccurrence.scope)) {
-          if (element !is PsiExternalReferenceHost)
-            continue
+          val psiSource = (symbol as? PsiSourcedWebSymbol)?.source
 
-          val declarations = WebSymbolDeclarationProvider.getAllDeclarations(element, offsetInElement)
-          if (declarations.isNotEmpty()) {
-            return declarations
-              .filter { it.symbol.isEquivalentTo(symbol) }
-              .map {
-                WebSymbolPsiUsage(it.declaringElement.containingFile,
-                                  it.rangeInDeclaringElement.shiftRight(it.declaringElement.startOffset),
-                                  true)
-              }
+          if (psiSource == element) {
+            val nameIdentifier = (element as? PsiNameIdentifierOwner)?.nameIdentifier
+            if (nameIdentifier != null)
+              return listOf(WebSymbolPsiUsage(element.containingFile, nameIdentifier.textRange, true))
           }
 
-          val foundReferences = getReferences(element, PsiSymbolReferenceHints.offsetHint(offsetInElement))
-            .asSequence()
-            .filterIsInstance<WebSymbolReference>()
-            .filter { it.rangeInElement.containsOffset(offsetInElement) }
-            .filter { ref -> ref.resolvesTo(symbol) }
-            .map { WebSymbolPsiUsage(it.element.containingFile, it.absoluteRange, false) }
-            .toList()
+          if (element is PsiExternalReferenceHost) {
+            val declarations = WebSymbolDeclarationProvider.getAllDeclarations(element, offsetInElement)
+            if (declarations.isNotEmpty()) {
+              return declarations
+                .filter { it.symbol.isEquivalentTo(symbol) }
+                .map {
+                  WebSymbolPsiUsage(it.declaringElement.containingFile,
+                                    it.rangeInDeclaringElement.shiftRight(it.declaringElement.startOffset),
+                                    true)
+                }
+            }
 
-          if (foundReferences.isNotEmpty()) {
-            return foundReferences
+            val foundReferences = getReferences(element, PsiSymbolReferenceHints.offsetHint(offsetInElement))
+              .asSequence()
+              .filterIsInstance<WebSymbolReference>()
+              .filter { it.rangeInElement.containsOffset(offsetInElement) }
+              .filter { ref -> ref.resolvesTo(symbol) }
+              .map { WebSymbolPsiUsage(it.element.containingFile, it.absoluteRange, false) }
+              .toList()
+
+            if (foundReferences.isNotEmpty()) {
+              return foundReferences
+            }
+          }
+
+          if (psiSource != null) {
+            val foundReferences = element.references.asSequence()
+              .filter { it.rangeInElement.containsOffset(offsetInElement) }
+              .filter { it.isReferenceTo(psiSource) }
+              .map { WebSymbolPsiUsage(it.element.containingFile, it.absoluteRange, false) }
+              .toList()
+
+            if (foundReferences.isNotEmpty()) {
+              return foundReferences
+            }
           }
         }
-
         emptyList()
       }
   }

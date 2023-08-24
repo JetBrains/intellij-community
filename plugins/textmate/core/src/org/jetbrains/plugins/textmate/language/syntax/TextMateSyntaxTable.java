@@ -5,7 +5,6 @@ import com.intellij.util.containers.Interner;
 import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
 import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
 import it.unimi.dsi.fastutil.objects.Object2IntMap;
-import it.unimi.dsi.fastutil.objects.Object2IntMaps;
 import it.unimi.dsi.fastutil.objects.Object2IntOpenHashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -41,7 +40,7 @@ public class TextMateSyntaxTable {
    * @param plist Plist represented syntax file (*.tmLanguage) of target language.
    * @return language scope root name
    */
-  @NotNull
+  @Nullable
   public CharSequence loadSyntax(Plist plist, @NotNull Interner<CharSequence> interner) {
     return loadRealNode(plist, null, interner).getScopeName();
   }
@@ -78,7 +77,12 @@ public class TextMateSyntaxTable {
   private SyntaxNodeDescriptor loadRealNode(@NotNull Plist plist,
                                             @Nullable SyntaxNodeDescriptor parentNode,
                                             @NotNull Interner<CharSequence> interner) {
-    MutableSyntaxNodeDescriptor result = new SyntaxNodeDescriptorImpl(parentNode);
+    PListValue scopeNameValue = plist.getPlistValue(Constants.StringKey.SCOPE_NAME.value);
+    CharSequence scopeName = scopeNameValue != null ? interner.intern(scopeNameValue.getString()) : null;
+    MutableSyntaxNodeDescriptor result = new SyntaxNodeDescriptorImpl(scopeName, parentNode);
+    if (scopeName != null) {
+      rulesMap.put(scopeName, result);
+    }
     for (Map.Entry<String, PListValue> entry : plist.entries()) {
       PListValue pListValue = entry.getValue();
       if (pListValue != null) {
@@ -106,11 +110,6 @@ public class TextMateSyntaxTable {
           loadInjections(result, pListValue, interner);
         }
       }
-    }
-    if (plist.contains(Constants.StringKey.SCOPE_NAME.value)) {
-      CharSequence scopeName = interner.intern(plist.getPlistValue(Constants.StringKey.SCOPE_NAME.value, Constants.DEFAULT_SCOPE_NAME).getString());
-      result.setScopeName(scopeName);
-      rulesMap.put(scopeName, result);
     }
     result.compact();
     return result;
@@ -141,7 +140,7 @@ public class TextMateSyntaxTable {
                                              @NotNull SyntaxNodeDescriptor result,
                                              @NotNull Interner<CharSequence> interner) {
     String include = plist.getPlistValue(Constants.INCLUDE_KEY, "").getString();
-    if (include.length() > 0 && include.charAt(0) == '#') {
+    if (!include.isEmpty() && include.charAt(0) == '#') {
       return new SyntaxRuleProxyDescriptor(getRuleId(include.substring(1)), result);
     }
     else if (Constants.INCLUDE_SELF_VALUE.equalsIgnoreCase(include) || Constants.INCLUDE_BASE_VALUE.equalsIgnoreCase(include)) {

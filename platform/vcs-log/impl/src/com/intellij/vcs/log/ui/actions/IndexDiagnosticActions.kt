@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.vcs.log.ui.actions
 
 import com.intellij.openapi.actionSystem.ActionUpdateThread
@@ -16,7 +16,7 @@ import com.intellij.vcs.log.*
 import com.intellij.vcs.log.data.AbstractDataGetter.Companion.getCommitDetails
 import com.intellij.vcs.log.data.VcsLogData
 import com.intellij.vcs.log.data.index.IndexDiagnostic.getDiffFor
-import com.intellij.vcs.log.data.index.IndexDiagnostic.getFirstCommits
+import com.intellij.vcs.log.data.index.IndexDiagnostic.pickCommits
 import com.intellij.vcs.log.data.index.VcsLogPersistentIndex
 import com.intellij.vcs.log.impl.VcsLogManager
 import com.intellij.vcs.log.impl.VcsProjectLog
@@ -126,6 +126,6 @@ class CheckOldCommits : IndexDiagnosticActionBase(VcsLogBundle.messagePointer("v
     val dataPack = logManager.dataManager.dataPack
     if (!dataPack.isFull) return emptyList()
 
-    return dataPack.getFirstCommits(logManager.dataManager.storage, indexedRoots)
+    return dataPack.pickCommits(logManager.dataManager.storage, indexedRoots, true).toList()
   }
 }

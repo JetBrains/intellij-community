@@ -12,6 +12,7 @@ import com.intellij.openapi.vcs.FilePath
 import com.intellij.openapi.vcs.VcsBundle
 import com.intellij.openapi.vcs.VcsDataKeys
 import com.intellij.openapi.vcs.changes.*
+import com.intellij.openapi.vcs.impl.LineStatusTrackerManager
 import com.intellij.util.EventDispatcher
 import com.intellij.util.containers.CollectionFactory
 import org.jetbrains.concurrency.await
@@ -163,11 +164,14 @@ internal class ChangesViewCommitWorkflowHandler(
 
   val isActive: Boolean get() = ui.isActive
   fun activate(): Boolean = fireActivityStateChanged { ui.activate() }
-  fun deactivate(isRestoreState: Boolean) {
-    fireActivityStateChanged { ui.deactivate(isRestoreState) }
+  fun deactivate(isOnCommit: Boolean) {
+    fireActivityStateChanged { ui.deactivate(isOnCommit) }
     if (isToggleMode()) {
       resetCommitChecksResult()
       ui.commitProgressUi.clearCommitCheckFailures()
+      if (!isOnCommit) {
+        LineStatusTrackerManager.getInstanceImpl(project).resetExcludedFromCommitMarkers()
+      }
     }
   }
 

@@ -87,5 +87,6 @@
     <orderEntry type="module" module-name="intellij.platform.collaborationTools" />
     <orderEntry type="module" module-name="intellij.platform.util.text.matching" />
     <orderEntry type="module" module-name="intellij.performanceTesting" />
+    <orderEntry type="module" module-name="intellij.platform.ide.newUiOnboarding" />
   </component>
 </module>

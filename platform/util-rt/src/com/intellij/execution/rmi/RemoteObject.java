@@ -104,35 +104,11 @@ public class RemoteObject implements Remote, Unreferenced {
   }
 
   public final Throwable wrapException(Throwable ex) {
-    return wrapExceptionRec(ex, new HashSet<Throwable>());
+    return createExceptionProcessor().wrapException(ex);
   }
 
-  protected Throwable wrapException(Throwable ex, Set<Throwable> recursion) {
-    boolean foreignException = false;
-    Throwable each = ex;
-    while (each != null) {
-      if (!each.getClass().getName().startsWith("java.") && !isKnownException(each)) {
-        foreignException = true;
-        break;
-      }
-      each = each.getCause();
-    }
-
-    if (foreignException) {
-      ForeignException wrapper = ForeignException.create(ex.toString(), ex.getClass());
-      wrapper.initCause(wrapExceptionRec(ex.getCause(), recursion));
-      wrapper.setStackTrace(ex.getStackTrace());
-      ex = wrapper;
-    }
-    return ex;
-  }
-
-  protected final Throwable wrapExceptionRec(Throwable ex, Set<Throwable> recursion) {
-    return ex == null || !recursion.add(ex) || recursion.size() >= ALLOWED_EXCEPTIONS_RECURSION_DEPTH ? null : wrapException(ex, recursion);
-  }
-
-  protected boolean isKnownException(Throwable ex) {
-    return false;
+  protected ExceptionProcessor createExceptionProcessor() {
+    return new ExceptionProcessor();
   }
 
   protected Iterable<RemoteObject> getExportedChildren() {
@@ -165,6 +141,38 @@ public class RemoteObject implements Remote, Unreferenced {
       String s = getOriginalClassName();
       String message = getLocalizedMessage();
       return (message != null) ? (s + ": " + message) : s;
+    }
+  }
+
+  public static class ExceptionProcessor {
+    private final Set<Throwable> recursion = new HashSet<>();
+
+    public final Throwable wrapException(Throwable ex) {
+      return ex == null || !recursion.add(ex) || recursion.size() >= ALLOWED_EXCEPTIONS_RECURSION_DEPTH ? null : wrapExceptionStep(ex);
+    }
+
+    protected Throwable wrapExceptionStep(Throwable ex) {
+      boolean foreignException = false;
+      Throwable each = ex;
+      while (each != null) {
+        if (!each.getClass().getName().startsWith("java.") && !isKnownException(each)) {
+          foreignException = true;
+          break;
+        }
+        each = each.getCause();
+      }
+
+      if (foreignException) {
+        ForeignException wrapper = ForeignException.create(ex.toString(), ex.getClass());
+        wrapper.initCause(wrapException(ex.getCause()));
+        wrapper.setStackTrace(ex.getStackTrace());
+        ex = wrapper;
+      }
+      return ex;
+    }
+
+    protected boolean isKnownException(Throwable ex) {
+      return false;
     }
   }
 }

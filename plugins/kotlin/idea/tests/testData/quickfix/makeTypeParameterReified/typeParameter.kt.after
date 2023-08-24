@@ -1,2 +1,3 @@
 // "Make type parameter reified and function inline" "true"
 inline fun <reified T> test(a: String) = a is T
+// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.MakeTypeParameterReifiedAndFunctionInlineFix

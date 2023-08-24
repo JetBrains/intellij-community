@@ -38,6 +38,29 @@
     <orderEntry type="module-library">
       <library name="google.apis.api.services.drive" type="repository">
         <properties maven-id="com.google.apis:google-api-services-drive:v3-rev20230306-2.0.0">
+          <verification>
+            <artifact url="file://$MAVEN_REPOSITORY$/com/google/apis/google-api-services-drive/v3-rev20230306-2.0.0/google-api-services-drive-v3-rev20230306-2.0.0.jar">
+              <sha256sum>a606dcd52e961402296c9774e92e998becccc5eee0fba79d5d9f9df6862c4718</sha256sum>
+            </artifact>
+            <artifact url="file://$MAVEN_REPOSITORY$/com/google/api-client/google-api-client/2.2.0/google-api-client-2.2.0.jar">
+              <sha256sum>58eca9fb0a869391689ffc828b3bd0b19ac76042ff9fab4881eddf7fde76903f</sha256sum>
+            </artifact>
+            <artifact url="file://$MAVEN_REPOSITORY$/com/google/oauth-client/google-oauth-client/1.34.1/google-oauth-client-1.34.1.jar">
+              <sha256sum>193edf97aefa28b93c5892bdc598bac34fa4c396588030084f290b1440e8b98a</sha256sum>
+            </artifact>
+            <artifact url="file://$MAVEN_REPOSITORY$/com/google/http-client/google-http-client-gson/1.42.3/google-http-client-gson-1.42.3.jar">
+              <sha256sum>8196efaa89c5f73b00b2b48edad02fcd78524259407c37ab1860737988545cee</sha256sum>
+            </artifact>
+            <artifact url="file://$MAVEN_REPOSITORY$/com/google/http-client/google-http-client/1.42.3/google-http-client-1.42.3.jar">
+              <sha256sum>e395dd1765e3e6bceb0c610706bcf4128de84bd6e65cf1d4adbf998b4114161c</sha256sum>
+            </artifact>
+            <artifact url="file://$MAVEN_REPOSITORY$/io/opencensus/opencensus-api/0.31.1/opencensus-api-0.31.1.jar">
+              <sha256sum>f1474d47f4b6b001558ad27b952e35eda5cc7146788877fc52938c6eba24b382</sha256sum>
+            </artifact>
+            <artifact url="file://$MAVEN_REPOSITORY$/io/opencensus/opencensus-contrib-http-util/0.31.1/opencensus-contrib-http-util-0.31.1.jar">
+              <sha256sum>3ea995b55a4068be22989b70cc29a4d788c2d328d1d50613a7a9afd13fdd2d0a</sha256sum>
+            </artifact>
+          </verification>
           <exclude>
             <dependency maven-id="commons-codec:commons-codec" />
             <dependency maven-id="com.google.guava:guava" />

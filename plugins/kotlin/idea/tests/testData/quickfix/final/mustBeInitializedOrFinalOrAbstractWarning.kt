@@ -9,3 +9,5 @@ open class Foo {
         x = ""
     }
 }
+
+// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.AddModifierFixFE10

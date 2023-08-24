@@ -182,6 +182,8 @@ public abstract class ActionPlaces {
 
   public static final String PROJECT_WIDGET_POPUP = "ProjectWidgetPopup";
 
+  public static final String NEW_UI_ONBOARDING = "NewUiOnboarding";
+
   // Vcs Log
   public static final String VCS_LOG_TABLE_PLACE = "Vcs.Log.ContextMenu";
   public static final String VCS_LOG_TOOLBAR_PLACE = "Vcs.Log.Toolbar";

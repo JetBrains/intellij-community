@@ -6,3 +6,4 @@ class A {
 fun foo() = 0 in A()
 
 /* IGNORE_FIR */
+// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.inspections.AddModifierFixFactory$createAction$1

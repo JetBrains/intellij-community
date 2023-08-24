@@ -92,10 +92,16 @@ public final class CodeStyle {
 
   public static CodeStyleSettings getSettings(@NotNull PsiFile file) {
     final Project project = file.getProject();
+    CodeStyleSettingsManager settingsManager = CodeStyleSettingsManager.getInstance(project);
     @SuppressWarnings("TestOnlyProblems")
-    CodeStyleSettings tempSettings = CodeStyleSettingsManager.getInstance(project).getTemporarySettings();
+    CodeStyleSettings tempSettings = settingsManager.getTemporarySettings();
     if (tempSettings != null) {
       return tempSettings;
+    }
+    
+    CodeStyleSettings localSettings = settingsManager.getLocalSettings();
+    if (localSettings != null) {
+      return localSettings;
     }
 
     PsiFile settingsFile = getSettingsPsi(file);
@@ -296,14 +302,29 @@ public final class CodeStyle {
   }
 
   /**
+   * Invoke a runnable using the specified settings in the current thread.
+   *
+   * @param project The current project.
+   * @param localSettings The local settings. 
+   * @param runnable The runnable.
+   */
+  public static void runWithLocalSettings(@NotNull Project project,
+                                          @NotNull CodeStyleSettings localSettings,
+                                          @NotNull Runnable runnable) {
+    CodeStyleSettingsManager.getInstance(project).runWithLocalSettings(localSettings, runnable);
+  }
+
+  /**
    * Execute the specified runnable with the given temporary code style settings and restore the old settings even if the runnable fails
    * with an exception.
+   * <p> 
+   * For production code use {@link #runWithLocalSettings(Project, CodeStyleSettings, Runnable)}
    *
    * @param project       The current project.
    * @param tempSettings  The temporary code style settings.
    * @param runnable      The runnable to execute with the temporary settings.
    */
-  @SuppressWarnings("TestOnlyProblems")
+  @TestOnly
   public static void doWithTemporarySettings(@NotNull Project project,
                                              @NotNull CodeStyleSettings tempSettings,
                                              @NotNull Runnable runnable) {
@@ -327,12 +348,14 @@ public final class CodeStyle {
    * Invoke the specified consumer with a copy of the given <b>baseSettings</b> and restore the old settings even if the
    * consumer fails with an exception. It is safe to make any changes to the copy of settings passed to consumer, these
    * changes will not affect any currently set code style.
+   * <p> 
+   * For production code use {@link #runWithLocalSettings(Project, CodeStyleSettings, Runnable)}
    *
    * @param project              The current project.
    * @param baseSettings         The base settings to be cloned and used in consumer.
    * @param tempSettingsConsumer The consumer to execute with the base settings copy.
    */
-  @SuppressWarnings("TestOnlyProblems")
+  @TestOnly
   public static void doWithTemporarySettings(@NotNull Project project,
                                              @NotNull CodeStyleSettings baseSettings,
                                              @NotNull Consumer<? super CodeStyleSettings> tempSettingsConsumer) {
@@ -396,7 +419,7 @@ public final class CodeStyle {
     final Project project = contextFile.getProject();
     CodeStyleManager codeStyleManager = CodeStyleManager.getInstance(project);
     CodeStyleSettings realFileSettings = getSettings(contextFile);
-    doWithTemporarySettings(project, realFileSettings, () -> codeStyleManager.reformat(fileToReformat));
+    runWithLocalSettings(project, realFileSettings, () -> codeStyleManager.reformat(fileToReformat));
   }
 
 

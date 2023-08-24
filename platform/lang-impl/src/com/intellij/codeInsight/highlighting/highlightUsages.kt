@@ -60,31 +60,22 @@ private fun highlightSymbolUsages(project: Project, editor: Editor, file: PsiFil
 
 internal fun getUsageRanges(file: PsiFile, symbol: Symbol): UsageRanges? {
   val psiTarget: PsiElement? = PsiSymbolService.getInstance().extractElementFromSymbol(symbol)
+  val hostFile = InjectedLanguageManager.getInstance(file.project).getTopLevelFile(file) ?: file
   if (psiTarget != null) {
-    return getPsiUsageRanges(file, psiTarget)
+    return getPsiUsageRanges(hostFile, psiTarget)
   }
   else {
-    return getSymbolUsageRanges(file, symbol)
+    return getSymbolUsageRanges(hostFile, symbol)
   }
 }
 
-private fun getPsiUsageRanges(file: PsiFile, psiTarget: PsiElement): UsageRanges {
+private fun getPsiUsageRanges(hostFile: PsiFile, psiTarget: PsiElement): UsageRanges {
   val readRanges = ArrayList<TextRange>()
   val writeRanges = ArrayList<TextRange>()
   val readDeclarationRanges = ArrayList<TextRange>()
   val writeDeclarationRanges = ArrayList<TextRange>()
 
-  val project = file.project
-  val hostFile: PsiFile = psiTarget.containingFile?.let { targetContainingFile ->
-    val injectedManager = InjectedLanguageManager.getInstance(project)
-    if (injectedManager.isInjectedFragment(file) != injectedManager.isInjectedFragment(targetContainingFile)) {
-      // weird case when injected symbol references host file
-      injectedManager.getTopLevelFile(file)
-    }
-    else {
-      null
-    }
-  } ?: file
+  val project = hostFile.project
   val searchScope: SearchScope = LocalSearchScope(hostFile)
   val detector: ReadWriteAccessDetector? = ReadWriteAccessDetector.findDetector(psiTarget)
   val oldHandler: FindUsagesHandler? = (FindManager.getInstance(project) as FindManagerImpl)
@@ -111,10 +102,10 @@ private fun getPsiUsageRanges(file: PsiFile, psiTarget: PsiElement): UsageRanges
   return UsageRanges(readRanges, writeRanges, readDeclarationRanges, writeDeclarationRanges)
 }
 
-private fun getSymbolUsageRanges(file: PsiFile, symbol: Symbol): UsageRanges? {
-  val project: Project = file.project
+private fun getSymbolUsageRanges(hostFile: PsiFile, symbol: Symbol): UsageRanges? {
+  val project: Project = hostFile.project
   val searchTarget = symbolSearchTarget(project, symbol) ?: return null
-  val searchScope = LocalSearchScope(file)
+  val searchScope = LocalSearchScope(hostFile)
   val usages: Collection<Usage> = buildQuery(project, searchTarget, AllSearchOptions(
     options = UsageOptions.createOptions(searchScope),
     textSearch = true,

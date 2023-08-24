@@ -33,7 +33,6 @@ public class TreeTableTree extends Tree {
     myTreeTable = treeTable;
     setCellRenderer(getCellRenderer());
     putClientProperty(FOCUSABLE_SIBLING, treeTable);
-    setBorder(null);
   }
 
   public TreeTable getTreeTable() {
@@ -43,6 +42,7 @@ public class TreeTableTree extends Tree {
   @Override
   public void updateUI() {
     super.updateUI();
+    setBorder(null);
     TreeCellRenderer tcr = super.getCellRenderer();
     if (tcr instanceof DefaultTreeCellRenderer dtcr) {
       dtcr.setTextSelectionColor(UIUtil.getTableSelectionForeground());

@@ -11,3 +11,5 @@ fun foobar(parent: Parent) {
         doSmthWithChild(parent, <caret>123)
     }
 }
+
+// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.AddFunctionParametersFix

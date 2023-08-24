@@ -7,3 +7,5 @@ fun caller() {
 }
 
 fun called() {}
+
+// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.AddFunctionParametersFix

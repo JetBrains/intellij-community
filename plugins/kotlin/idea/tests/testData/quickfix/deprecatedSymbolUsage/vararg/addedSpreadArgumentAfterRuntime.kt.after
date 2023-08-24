@@ -11,3 +11,5 @@ fun newFun(vararg p: Int){}
 fun foo(list: List<Int>) {
     <caret>newFun(1, 2, 3, *list.toIntArray())
 }
+
+// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.replaceWith.DeprecatedSymbolUsageFix

@@ -10,6 +10,7 @@ import org.junit.jupiter.api.Assertions.*
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertDoesNotThrow
 import org.junit.jupiter.api.assertThrows
+import kotlin.time.Duration.Companion.milliseconds
 
 class RunBlockingCancellableTest : CancellationTest() {
 
@@ -18,6 +19,17 @@ class RunBlockingCancellableTest : CancellationTest() {
     assertLogThrows<IllegalStateException> {
       runBlockingCancellable {
         fail()
+      }
+    }
+  }
+
+  @Test
+  fun `without context non-cancellable`() {
+    Cancellation.computeInNonCancelableSection<_, Nothing> {
+      assertDoesNotThrow {
+        runBlockingCancellable {
+          yield()
+        }
       }
     }
   }
@@ -38,6 +50,31 @@ class RunBlockingCancellableTest : CancellationTest() {
       assertNotNull(Cancellation.currentJob())
       assertNull(ProgressManager.getGlobalProgressIndicator())
     }
+  }
+
+  @Test
+  fun `with current job non-cancellable`(): Unit = timeoutRunBlocking {
+    val job = launch {
+      blockingContext {
+        Cancellation.computeInNonCancelableSection<_, Nothing> {
+          assertDoesNotThrow {
+            runBlockingCancellable {
+              @OptIn(ExperimentalCoroutinesApi::class)
+              assertNull(coroutineContext.job.parent) // rbc does not attach to blockingContext job
+              assertDoesNotThrow {
+                ensureActive()
+              }
+              this@launch.cancel()
+              assertDoesNotThrow {
+                ensureActive()
+              }
+            }
+          }
+        }
+      }
+    }
+    job.join()
+    assertTrue(job.isCancelled)
   }
 
   @Test
@@ -80,6 +117,29 @@ class RunBlockingCancellableTest : CancellationTest() {
           }
           indicator.cancel()
           awaitCancellation()
+        }
+      }
+    }
+  }
+
+  @Test
+  fun `with indicator non-cancellable`() {
+    val indicator = EmptyProgressIndicator()
+    withIndicator(indicator) {
+      Cancellation.computeInNonCancelableSection<_, Nothing> {
+        assertDoesNotThrow {
+          runBlockingCancellable {
+            @OptIn(ExperimentalCoroutinesApi::class)
+            assertNull(coroutineContext.job.parent) // rbc does not attach to blockingContext job
+            assertDoesNotThrow {
+              ensureActive()
+            }
+            indicator.cancel()
+            delay(100.milliseconds) // let indicator polling job kick in
+            assertDoesNotThrow {
+              ensureActive()
+            }
+          }
         }
       }
     }

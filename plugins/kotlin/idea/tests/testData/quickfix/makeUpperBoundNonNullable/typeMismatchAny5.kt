@@ -10,3 +10,5 @@ class Bar<T, U> {
         foo(<caret>x)
     }
 }
+
+// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.HighPriorityMakeUpperBoundNonNullableFix

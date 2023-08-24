@@ -1,11 +1,13 @@
 // FIR_IDENTICAL
+// CHECK_SYMBOL_NAMES
+// HIGHLIGHTER_ATTRIBUTES_KEY
 /**
- * @param <!HIGHLIGHTING("textAttributesKey='KDOC_LINK'")!>x<!> foo and <!HIGHLIGHTING("textAttributesKey='KDOC_LINK'")!>[baz]<!>
- * @param <!HIGHLIGHTING("textAttributesKey='KDOC_LINK'")!>y<!> bar
+ * @param <!HIGHLIGHTING("severity='SYMBOL_TYPE_SEVERITY'; highlightingTextAttributesKey='KDOC_LINK'")!>x<!> foo and <!HIGHLIGHTING("severity='SYMBOL_TYPE_SEVERITY'; highlightingTextAttributesKey='KDOC_LINK'")!>[baz]<!>
+ * @param <!HIGHLIGHTING("severity='SYMBOL_TYPE_SEVERITY'; highlightingTextAttributesKey='KDOC_LINK'")!>y<!> bar
  * @return notALink here
  */
-fun <!HIGHLIGHTING("textAttributesKey='KOTLIN_FUNCTION_DECLARATION'")!>f<!>(<!HIGHLIGHTING("textAttributesKey='KOTLIN_PARAMETER'")!>x<!>: <!HIGHLIGHTING("textAttributesKey='KOTLIN_CLASS'")!>Int<!>, <!HIGHLIGHTING("textAttributesKey='KOTLIN_PARAMETER'")!>y<!>: <!HIGHLIGHTING("textAttributesKey='KOTLIN_CLASS'")!>Int<!>): <!HIGHLIGHTING("textAttributesKey='KOTLIN_CLASS'")!>Int<!> {
-return <!HIGHLIGHTING("textAttributesKey='KOTLIN_PARAMETER'")!>x<!> + <!HIGHLIGHTING("textAttributesKey='KOTLIN_PARAMETER'")!>y<!>
+fun <!HIGHLIGHTING("severity='SYMBOL_TYPE_SEVERITY'; highlightingTextAttributesKey='KOTLIN_FUNCTION_DECLARATION'")!>f<!>(<!HIGHLIGHTING("severity='SYMBOL_TYPE_SEVERITY'; highlightingTextAttributesKey='KOTLIN_PARAMETER'")!>x<!>: <!HIGHLIGHTING("severity='SYMBOL_TYPE_SEVERITY'; highlightingTextAttributesKey='KOTLIN_CLASS'")!>Int<!>, <!HIGHLIGHTING("severity='SYMBOL_TYPE_SEVERITY'; highlightingTextAttributesKey='KOTLIN_PARAMETER'")!>y<!>: <!HIGHLIGHTING("severity='SYMBOL_TYPE_SEVERITY'; highlightingTextAttributesKey='KOTLIN_CLASS'")!>Int<!>): <!HIGHLIGHTING("severity='SYMBOL_TYPE_SEVERITY'; highlightingTextAttributesKey='KOTLIN_CLASS'")!>Int<!> {
+return <!HIGHLIGHTING("severity='SYMBOL_TYPE_SEVERITY'; highlightingTextAttributesKey='KOTLIN_PARAMETER'")!>x<!> + <!HIGHLIGHTING("severity='SYMBOL_TYPE_SEVERITY'; highlightingTextAttributesKey='KOTLIN_PARAMETER'")!>y<!>
 }
 
-fun <!HIGHLIGHTING("textAttributesKey='KOTLIN_FUNCTION_DECLARATION'")!>baz<!>() {}
+fun <!HIGHLIGHTING("severity='SYMBOL_TYPE_SEVERITY'; highlightingTextAttributesKey='KOTLIN_FUNCTION_DECLARATION'")!>baz<!>() {}

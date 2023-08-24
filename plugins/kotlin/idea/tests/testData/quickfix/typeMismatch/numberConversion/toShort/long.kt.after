@@ -4,3 +4,4 @@ fun short(x: Short) {}
 fun test(l: Long) {
     short(l.toShort())
 }
+// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.NumberConversionFix

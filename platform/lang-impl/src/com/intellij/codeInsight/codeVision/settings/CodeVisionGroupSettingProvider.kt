@@ -31,7 +31,7 @@ interface CodeVisionGroupSettingProvider {
 
   private fun getLanguageSpecificDescriptionOrDefault(): @Nls String {
     val languageId = previewLanguage?.id ?: return defaultDescription
-    val ep = CodeVisionSettingsPreviewLanguage.EP_NAME.extensionList.first { it.language == languageId } ?: return defaultDescription
+    val ep = CodeVisionSettingsPreviewLanguage.EP_NAME.extensionList.firstOrNull { it.language == languageId } ?: return defaultDescription
     val bundle = ep.findBundle() ?: return defaultDescription
     return BundleBase.messageOrDefault(bundle, "$languageId.codeLens.$groupId.description", defaultDescription)!!
   }

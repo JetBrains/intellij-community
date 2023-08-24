@@ -1,5 +1,6 @@
 if test -z "$INTELLIJ_TERMINAL_COMMAND_BLOCKS"
-  return
+  # `return` outside of function definition is supported since Fish 3.4.0 (released March 25, 2022)
+  exit
 end
 
 function __jetbrains_intellij_encode -a value

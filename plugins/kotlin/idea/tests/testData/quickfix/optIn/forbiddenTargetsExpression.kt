@@ -4,3 +4,6 @@
 @RequiresOptIn
 @Target(<caret>AnnotationTarget.CLASS, AnnotationTarget.EXPRESSION, AnnotationTarget.FUNCTION)
 annotation class SomeOptInAnnotation
+
+// FUS_K2_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.RemoveWrongOptInAnnotationTargetFix
+// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.RemoveWrongOptInAnnotationTargetFactory$RemoveAllForbiddenOptInTargetsFix

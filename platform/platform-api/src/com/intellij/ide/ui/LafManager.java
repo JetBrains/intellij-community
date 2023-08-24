@@ -64,7 +64,7 @@ public abstract class LafManager {
   public abstract void setRememberSchemeForLaf(boolean rememberSchemeForLaf);
 
   @ApiStatus.Internal
-  public abstract void rememberSchemeForLaf(@NotNull String schemeName);
+  public abstract void rememberSchemeForLaf(@NotNull EditorColorsScheme scheme);
 
   @ApiStatus.Internal
   public void applyDensity() { }

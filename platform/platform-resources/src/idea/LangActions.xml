@@ -1544,6 +1544,7 @@
       <reference id="EditSource"/>
       <action id="ServiceView.JumpToServices" class="com.intellij.execution.services.JumpToServicesAction" use-shortcut-of="ShowNavBar"/>
     </group>
+    <action id="ServiceView.SelectActiveService" class="com.intellij.execution.services.SelectActiveServiceAction"/>
     <action id="ServiceView.ShowServices" class="com.intellij.execution.services.ShowServicesAction" icon="AllIcons.Actions.ShowAsTree"/>
     <action id="ServiceView.ConfigureServices" class="com.intellij.execution.services.ConfigureServicesAction" icon="AllIcons.General.GearPlain"/>
     <group id="RunDashboard.GroupBy" popup="true" class="com.intellij.ide.actions.NonEmptyActionGroup">

@@ -55,8 +55,6 @@ public final class PyRemoteProcessHandler extends BaseRemoteProcessHandler<Remot
 
     myPathMapper = pathMapper != null ? pathMapper : new PyRemotePathMapper();
     myIsRunWithPty = isRunWithPty;
-
-    putUserData(PythonRemoteInterpreterManager.PATH_MAPPING_SETTINGS_KEY, pathMapper);
   }
 
   @NotNull

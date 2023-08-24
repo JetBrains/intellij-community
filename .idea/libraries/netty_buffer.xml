@@ -1,6 +1,15 @@
 <component name="libraryTable">
   <library name="netty-buffer" type="repository">
-    <properties maven-id="io.netty:netty-buffer:4.1.91.Final" />
+    <properties maven-id="io.netty:netty-buffer:4.1.91.Final">
+      <verification>
+        <artifact url="file://$MAVEN_REPOSITORY$/io/netty/netty-buffer/4.1.91.Final/netty-buffer-4.1.91.Final.jar">
+          <sha256sum>cc88941780b833a5fce6f4f203224b4138b6e2260b93d81889c25066af33890f</sha256sum>
+        </artifact>
+        <artifact url="file://$MAVEN_REPOSITORY$/io/netty/netty-common/4.1.91.Final/netty-common-4.1.91.Final.jar">
+          <sha256sum>ae507ef1c97cb6293c05626777d501146369112fd6ce7ec6b8db6d169bf43390</sha256sum>
+        </artifact>
+      </verification>
+    </properties>
     <CLASSES>
       <root url="jar://$MAVEN_REPOSITORY$/io/netty/netty-buffer/4.1.91.Final/netty-buffer-4.1.91.Final.jar!/" />
       <root url="jar://$MAVEN_REPOSITORY$/io/netty/netty-common/4.1.91.Final/netty-common-4.1.91.Final.jar!/" />

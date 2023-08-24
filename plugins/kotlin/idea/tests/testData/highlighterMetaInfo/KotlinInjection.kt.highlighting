@@ -1,7 +1,9 @@
 // FIR_IDENTICAL
+// CHECK_SYMBOL_NAMES
+// HIGHLIGHTER_ATTRIBUTES_KEY
 package language_injection
 
-<!HIGHLIGHTING("textAttributesKey='KOTLIN_KEYWORD'")!>import<!> org.intellij.lang.annotations.<!HIGHLIGHTING("textAttributesKey='KOTLIN_ANNOTATION'")!>Language<!>
+<!HIGHLIGHTING("severity='SYMBOL_TYPE_SEVERITY'; highlightingTextAttributesKey='KOTLIN_KEYWORD'")!>import<!> org.intellij.lang.annotations.<!HIGHLIGHTING("severity='SYMBOL_TYPE_SEVERITY'; highlightingTextAttributesKey='KOTLIN_ANNOTATION'")!>Language<!>
 
-<!HIGHLIGHTING("textAttributesKey='KOTLIN_ANNOTATION'")!>@Language<!>("kotlin")
-val <!HIGHLIGHTING("textAttributesKey='KOTLIN_PACKAGE_PROPERTY'")!>test<!> = "fun test2() {}"
+<!HIGHLIGHTING("severity='SYMBOL_TYPE_SEVERITY'; highlightingTextAttributesKey='KOTLIN_ANNOTATION'")!>@Language<!>("kotlin")
+val <!HIGHLIGHTING("severity='SYMBOL_TYPE_SEVERITY'; highlightingTextAttributesKey='KOTLIN_PACKAGE_PROPERTY'")!>test<!> = "fun test2() {}"

@@ -11,3 +11,4 @@ fun test() {
         it<caret>.foo()
     }
 }
+// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.SurroundWithNullCheckFix

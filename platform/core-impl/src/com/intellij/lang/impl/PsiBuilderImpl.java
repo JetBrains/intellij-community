@@ -51,6 +51,8 @@ import static com.intellij.lang.WhitespacesBinders.DEFAULT_RIGHT_BINDER;
 public class PsiBuilderImpl extends UnprotectedUserDataHolder implements PsiBuilder {
   private static final Logger LOG = Logger.getInstance(PsiBuilderImpl.class);
 
+  static PsiBuilderDiagnostics DIAGNOSTICS;
+
   // function stored in PsiBuilderImpl's user data that is called during reparse when the algorithm is not sure what to merge
   public static final Key<TripleFunction<ASTNode, LighterASTNode, FlyweightCapableTreeStructure<LighterASTNode>, ThreeState>>
     CUSTOM_COMPARATOR = Key.create("CUSTOM_COMPARATOR");
@@ -163,6 +165,9 @@ public class PsiBuilderImpl extends UnprotectedUserDataHolder implements PsiBuil
     myLexStarts = tokens.lexStarts;
     myLexTypes = tokens.lexTypes;
     myLexemeCount = tokens.lexemeCount;
+    if (DIAGNOSTICS != null) {
+      DIAGNOSTICS.registerPass(text.length(), myLexemeCount);
+    }
   }
 
   private @NotNull TokenSequence performLexing(@Nullable Object parentCachingNode) {
@@ -821,6 +826,9 @@ public class PsiBuilderImpl extends UnprotectedUserDataHolder implements PsiBuil
     if (myDebugMode) {
       myProduction.assertNoDoneMarkerAround(marker);
     }
+    if (DIAGNOSTICS != null) {
+      DIAGNOSTICS.registerRollback(myCurrentLexeme - marker.myLexemeIndex);
+    }
     myCurrentLexeme = marker.myLexemeIndex;
     myTokenTypeChecked = true;
     myProduction.rollbackTo(marker);
@@ -945,10 +953,9 @@ public class PsiBuilderImpl extends UnprotectedUserDataHolder implements PsiBuil
     private final ASTConverter myConverter;
 
     private ConvertFromTokensToASTBuilder(@NotNull StartMarker rootNode,
-                                          @NotNull DiffTreeChangeBuilder<? super ASTNode, ? super ASTNode> delegate,
-                                          @Nullable ASTFactory astFactory) {
+                                          @NotNull DiffTreeChangeBuilder<? super ASTNode, ? super ASTNode> delegate) {
       myDelegate = delegate;
-      myConverter = new ASTConverter(rootNode, astFactory);
+      myConverter = new ASTConverter(rootNode);
     }
 
     @Override
@@ -974,7 +981,7 @@ public class PsiBuilderImpl extends UnprotectedUserDataHolder implements PsiBuil
 
   private @NotNull DiffLog merge(@NotNull ASTNode oldRoot, @NotNull StartMarker newRoot, @NotNull CharSequence lastCommittedText) {
     DiffLog diffLog = new DiffLog();
-    DiffTreeChangeBuilder<ASTNode, LighterASTNode> builder = new ConvertFromTokensToASTBuilder(newRoot, diffLog, getASTFactory());
+    DiffTreeChangeBuilder<ASTNode, LighterASTNode> builder = new ConvertFromTokensToASTBuilder(newRoot, diffLog);
     MyTreeStructure treeStructure = new MyTreeStructure(newRoot, null);
     List<CustomLanguageASTComparator> customLanguageASTComparators = CustomLanguageASTComparator.getMatchingComparators(myFile);
     ShallowNodeComparator<ASTNode, LighterASTNode> comparator =
@@ -1642,11 +1649,9 @@ public class PsiBuilderImpl extends UnprotectedUserDataHolder implements PsiBuil
 
   private static final class ASTConverter implements Function<Node, ASTNode> {
     private final StartMarker myRoot;
-    private final ASTFactory myASTFactory;
 
-    private ASTConverter(@NotNull StartMarker root, @Nullable ASTFactory astFactory) {
+    private ASTConverter(@NotNull StartMarker root) {
       myRoot = root;
-      myASTFactory = astFactory;
     }
 
     @Override
@@ -1661,7 +1666,7 @@ public class PsiBuilderImpl extends UnprotectedUserDataHolder implements PsiBuil
       else {
         StartMarker startMarker = (StartMarker)n;
         CompositeElement composite = n == myRoot ? (CompositeElement)myRoot.myBuilder.createRootAST(myRoot)
-                                                         : createComposite(startMarker, myASTFactory);
+                                                 : createComposite(startMarker, startMarker.myBuilder.getASTFactory());
         startMarker.myBuilder.bind(startMarker, composite);
         return composite;
       }

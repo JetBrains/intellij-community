@@ -1,21 +1,23 @@
 // FIR_IDENTICAL
-interface <!HIGHLIGHTING("textAttributesKey='KOTLIN_TRAIT'")!>FunctionLike<!> {
-    <!HIGHLIGHTING("textAttributesKey='KOTLIN_BUILTIN_ANNOTATION'")!>operator<!> fun <!HIGHLIGHTING("textAttributesKey='KOTLIN_FUNCTION_DECLARATION'")!>invoke<!>() {
+// CHECK_SYMBOL_NAMES
+// HIGHLIGHTER_ATTRIBUTES_KEY
+interface <!HIGHLIGHTING("severity='SYMBOL_TYPE_SEVERITY'; highlightingTextAttributesKey='KOTLIN_TRAIT'")!>FunctionLike<!> {
+    <!HIGHLIGHTING("severity='SYMBOL_TYPE_SEVERITY'; highlightingTextAttributesKey='KOTLIN_BUILTIN_ANNOTATION'")!>operator<!> fun <!HIGHLIGHTING("severity='SYMBOL_TYPE_SEVERITY'; highlightingTextAttributesKey='KOTLIN_FUNCTION_DECLARATION'")!>invoke<!>() {
     }
 }
 
-var <!HIGHLIGHTING("textAttributesKey='KOTLIN_MUTABLE_VARIABLE'"), HIGHLIGHTING("textAttributesKey='KOTLIN_PACKAGE_PROPERTY'")!>global<!> : () -> <!HIGHLIGHTING("textAttributesKey='KOTLIN_OBJECT'")!>Unit<!> = {}
+var <!HIGHLIGHTING("severity='SYMBOL_TYPE_SEVERITY'; highlightingTextAttributesKey='KOTLIN_MUTABLE_VARIABLE'"), HIGHLIGHTING("severity='SYMBOL_TYPE_SEVERITY'; highlightingTextAttributesKey='KOTLIN_PACKAGE_PROPERTY'")!>global<!> : () -> <!HIGHLIGHTING("severity='SYMBOL_TYPE_SEVERITY'; highlightingTextAttributesKey='KOTLIN_OBJECT'")!>Unit<!> = {}
 
-val <!HIGHLIGHTING("textAttributesKey='KOTLIN_CLASS'")!>Int<!>.<!HIGHLIGHTING("textAttributesKey='KOTLIN_EXTENSION_PROPERTY'")!>ext<!> : () -> <!HIGHLIGHTING("textAttributesKey='KOTLIN_OBJECT'")!>Unit<!>
-<!HIGHLIGHTING("textAttributesKey='KOTLIN_KEYWORD'")!>get<!>() {
+val <!HIGHLIGHTING("severity='SYMBOL_TYPE_SEVERITY'; highlightingTextAttributesKey='KOTLIN_CLASS'")!>Int<!>.<!HIGHLIGHTING("severity='SYMBOL_TYPE_SEVERITY'; highlightingTextAttributesKey='KOTLIN_EXTENSION_PROPERTY'")!>ext<!> : () -> <!HIGHLIGHTING("severity='SYMBOL_TYPE_SEVERITY'; highlightingTextAttributesKey='KOTLIN_OBJECT'")!>Unit<!>
+<!HIGHLIGHTING("severity='SYMBOL_TYPE_SEVERITY'; highlightingTextAttributesKey='KOTLIN_KEYWORD'")!>get<!>() {
   return {}
 }
 
-fun <!HIGHLIGHTING("textAttributesKey='KOTLIN_FUNCTION_DECLARATION'")!>foo<!>(<!HIGHLIGHTING("textAttributesKey='KOTLIN_PARAMETER'")!>a<!> : () -> <!HIGHLIGHTING("textAttributesKey='KOTLIN_OBJECT'")!>Unit<!>, <!HIGHLIGHTING("textAttributesKey='KOTLIN_PARAMETER'")!>functionLike<!>: <!HIGHLIGHTING("textAttributesKey='KOTLIN_TRAIT'")!>FunctionLike<!>) {
-    <!HIGHLIGHTING("textAttributesKey='KOTLIN_PARAMETER'"), HIGHLIGHTING("textAttributesKey='KOTLIN_VARIABLE_AS_FUNCTION'")!>a<!>()
-    <!HIGHLIGHTING("textAttributesKey='KOTLIN_PARAMETER'"), HIGHLIGHTING("textAttributesKey='KOTLIN_VARIABLE_AS_FUNCTION_LIKE'")!>functionLike<!>()
-    <!HIGHLIGHTING("textAttributesKey='KOTLIN_MUTABLE_VARIABLE'"), HIGHLIGHTING("textAttributesKey='KOTLIN_PACKAGE_PROPERTY'"), HIGHLIGHTING("textAttributesKey='KOTLIN_VARIABLE_AS_FUNCTION'")!>global<!>()
-    1.<!HIGHLIGHTING("textAttributesKey='KOTLIN_EXTENSION_PROPERTY'"), HIGHLIGHTING("textAttributesKey='KOTLIN_VARIABLE_AS_FUNCTION'")!>ext<!>();
+fun <!HIGHLIGHTING("severity='SYMBOL_TYPE_SEVERITY'; highlightingTextAttributesKey='KOTLIN_FUNCTION_DECLARATION'")!>foo<!>(<!HIGHLIGHTING("severity='SYMBOL_TYPE_SEVERITY'; highlightingTextAttributesKey='KOTLIN_PARAMETER'")!>a<!> : () -> <!HIGHLIGHTING("severity='SYMBOL_TYPE_SEVERITY'; highlightingTextAttributesKey='KOTLIN_OBJECT'")!>Unit<!>, <!HIGHLIGHTING("severity='SYMBOL_TYPE_SEVERITY'; highlightingTextAttributesKey='KOTLIN_PARAMETER'")!>functionLike<!>: <!HIGHLIGHTING("severity='SYMBOL_TYPE_SEVERITY'; highlightingTextAttributesKey='KOTLIN_TRAIT'")!>FunctionLike<!>) {
+    <!HIGHLIGHTING("severity='SYMBOL_TYPE_SEVERITY'; highlightingTextAttributesKey='KOTLIN_PARAMETER'"), HIGHLIGHTING("severity='SYMBOL_TYPE_SEVERITY'; highlightingTextAttributesKey='KOTLIN_VARIABLE_AS_FUNCTION'")!>a<!>()
+    <!HIGHLIGHTING("severity='SYMBOL_TYPE_SEVERITY'; highlightingTextAttributesKey='KOTLIN_PARAMETER'"), HIGHLIGHTING("severity='SYMBOL_TYPE_SEVERITY'; highlightingTextAttributesKey='KOTLIN_VARIABLE_AS_FUNCTION_LIKE'")!>functionLike<!>()
+    <!HIGHLIGHTING("severity='SYMBOL_TYPE_SEVERITY'; highlightingTextAttributesKey='KOTLIN_MUTABLE_VARIABLE'"), HIGHLIGHTING("severity='SYMBOL_TYPE_SEVERITY'; highlightingTextAttributesKey='KOTLIN_PACKAGE_PROPERTY'"), HIGHLIGHTING("severity='SYMBOL_TYPE_SEVERITY'; highlightingTextAttributesKey='KOTLIN_VARIABLE_AS_FUNCTION'")!>global<!>()
+    1.<!HIGHLIGHTING("severity='SYMBOL_TYPE_SEVERITY'; highlightingTextAttributesKey='KOTLIN_EXTENSION_PROPERTY'"), HIGHLIGHTING("severity='SYMBOL_TYPE_SEVERITY'; highlightingTextAttributesKey='KOTLIN_VARIABLE_AS_FUNCTION'")!>ext<!>();
 
     {}() //should not be highlighted as "calling variable as function"!
 }

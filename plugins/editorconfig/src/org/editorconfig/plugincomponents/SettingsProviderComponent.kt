@@ -15,6 +15,10 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.util.CachedValueProvider
 import com.intellij.psi.util.CachedValuesManager
 import com.intellij.util.SlowOperations
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Deferred
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.async
 import org.ec4j.core.*
 import org.ec4j.core.model.Version
 import org.ec4j.core.parser.ParseException
@@ -25,7 +29,7 @@ import org.editorconfig.core.ec4jwrappers.VirtualFileResource
 import java.io.IOException
 
 @Service
-class SettingsProviderComponent(private val project: Project) : SimpleModificationTracker() {
+class SettingsProviderComponent(private val project: Project, private val coroutineScope: CoroutineScope) : SimpleModificationTracker() {
   // TODO not caching properties per virtual file right now (c.f. CachedPairProvider in SettingsProviderComponentOld)
   companion object {
     private val LOG = thisLogger()
@@ -79,14 +83,16 @@ class SettingsProviderComponent(private val project: Project) : SimpleModificati
     }
   }
 
-  fun getPropertiesAndEditorConfigs(file: VirtualFile): Pair<ResourceProperties, List<VirtualFile>> {
-    var properties: ResourceProperties? = null
-    val accessed = resourceCache.doWhileRecordingAccess {
-      properties = getProperties(file)
-    }.map {
-      require(it is VirtualFileResource)
-      it.file
+  fun getPropertiesAndEditorConfigs(file: VirtualFile): Deferred<Pair<ResourceProperties, List<VirtualFile>>> {
+    return coroutineScope.async(Dispatchers.IO) {
+      var properties: ResourceProperties? = null
+      val accessed = resourceCache.doWhileRecordingAccess {
+        properties = getProperties(file)
+      }.map {
+        require(it is VirtualFileResource)
+        it.file
+      }
+      Pair(properties!!, accessed)
     }
-    return Pair(properties!!, accessed)
   }
 }

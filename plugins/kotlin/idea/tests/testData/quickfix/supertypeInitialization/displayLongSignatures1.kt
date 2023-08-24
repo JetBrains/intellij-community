@@ -12,3 +12,5 @@ open class Base {
 }
 
 class C : Base<caret>
+
+// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.SuperClassNotInitialized$AddParametersFix

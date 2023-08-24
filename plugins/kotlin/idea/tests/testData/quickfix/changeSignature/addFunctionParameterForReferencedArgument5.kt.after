@@ -9,3 +9,4 @@ class Test {
             return field
         }
 }
+// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.AddFunctionParametersFix

@@ -28,6 +28,7 @@ import com.intellij.openapi.wm.IdeFrame
 import com.intellij.openapi.wm.impl.FrameInfoHelper.Companion.isFloatingMenuBarSupported
 import com.intellij.openapi.wm.impl.ProjectFrameHelper.Companion.getFrameHelper
 import com.intellij.openapi.wm.impl.status.ClockPanel
+import com.intellij.ui.ClientProperty
 import com.intellij.ui.ColorUtil
 import com.intellij.ui.Gray
 import com.intellij.ui.ScreenUtil
@@ -95,7 +96,10 @@ open class IdeMenuBar internal constructor() : JMenuBar(), UISettingsListener {
       button = MyExitFullScreenButton()
       add(clockPanel)
       add(button)
-      addPropertyChangeListener(IdeFrameDecorator.FULL_SCREEN) { updateState() }
+      addPropertyChangeListener(IdeFrameDecorator.FULL_SCREEN) {
+        val fullScreenProperty = ClientProperty.isTrue(this, IdeFrameDecorator.FULL_SCREEN)
+        updateState(fullScreenProperty)
+      }
       addMouseListener(MyMouseListener())
     }
     else {
@@ -246,10 +250,8 @@ open class IdeMenuBar internal constructor() : JMenuBar(), UISettingsListener {
       return index != -1 && getMenu(index).isPopupMenuVisible
     }
 
-  private fun updateState() {
+  private fun updateState(fullScreen: Boolean) {
     val animator = animator ?: return
-    val window = (SwingUtilities.getWindowAncestor(this) as? IdeFrame) ?: return
-    val fullScreen = window.isInFullScreen
     if (fullScreen) {
       state = State.COLLAPSING
       restartAnimator()

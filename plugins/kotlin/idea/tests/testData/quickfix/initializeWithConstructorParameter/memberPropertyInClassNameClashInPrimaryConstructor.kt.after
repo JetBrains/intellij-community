@@ -9,3 +9,4 @@ class B : A(0, 0)
 fun test() {
     val a = A(0, 0)
 }
+// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.InitializePropertyQuickFixFactory$InitializeWithConstructorParameter

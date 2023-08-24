@@ -4,3 +4,4 @@ fun test() {
     val s = ""
     assert(<caret>s != null && true)
 }
+// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.SimplifyComparisonFix

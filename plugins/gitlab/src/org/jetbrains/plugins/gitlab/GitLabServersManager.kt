@@ -11,7 +11,7 @@ import org.jetbrains.plugins.gitlab.api.GitLabApiImpl
 import org.jetbrains.plugins.gitlab.api.GitLabServerPath
 import org.jetbrains.plugins.gitlab.api.dto.GitLabServerMetadataDTO
 import org.jetbrains.plugins.gitlab.api.request.checkIsGitLabServer
-import org.jetbrains.plugins.gitlab.api.request.getServerMetadata
+import org.jetbrains.plugins.gitlab.api.request.getServerMetadataOrVersion
 import org.jetbrains.plugins.gitlab.util.GitLabBundle
 import java.util.concurrent.ConcurrentHashMap
 
@@ -91,7 +91,7 @@ private suspend fun GitLabServersManager.getMetadataCached(server: GitLabServerP
   withContext(Dispatchers.IO) {
     getMetadata(server) {
       runCatching {
-        api.rest.getServerMetadata(server).body()
+        api.rest.getServerMetadataOrVersion(server)
       }
     }.let {
       requireNotNull(it) { GitLabBundle.message("server.version.error") }

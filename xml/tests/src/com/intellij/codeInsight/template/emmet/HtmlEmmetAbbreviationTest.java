@@ -55,7 +55,7 @@ public class HtmlEmmetAbbreviationTest extends EmmetAbbreviationTestSuite {
 
   @Override
   protected void setUp(@NotNull Project project) throws Exception {
-    super.setUp(project);    
+    super.setUp(project);
     final TemplateManagerImpl templateManager = (TemplateManagerImpl)TemplateManager.getInstance(project);
     TemplateContextType contextType = TemplateContextTypes.getByClass(HtmlTextContextType.class);
 
@@ -222,10 +222,8 @@ public class HtmlEmmetAbbreviationTest extends EmmetAbbreviationTestSuite {
     addTestWithInit("input[title]", "<input type=\"text\" title=\"\">", null);
     addTestWithInit("input[title]", "<input type=\"text\" title>", (fixture, testRootDisposable) -> {
       final HtmlUnknownBooleanAttributeInspection inspection = new HtmlUnknownBooleanAttributeInspection();
-      final String oldValue = inspection.getAdditionalEntries();
-      inspection.updateAdditionalEntries("title");
+      inspection.updateAdditionalEntries("title", testRootDisposable);
       fixture.enableInspections(inspection);
-      Disposer.register(testRootDisposable, () -> inspection.updateAdditionalEntries(oldValue));
     });
   }
 

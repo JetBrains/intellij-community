@@ -12,3 +12,4 @@ fun test(foo: Foo) {
     foo.bar?.baz<caret>()
 }
 /* IGNORE_FIR */
+// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.WrapWithSafeLetCallFix

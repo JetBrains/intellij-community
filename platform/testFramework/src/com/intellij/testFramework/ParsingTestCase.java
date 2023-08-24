@@ -271,7 +271,7 @@ public abstract class ParsingTestCase extends UsefulTestCase {
 
   /* Sanity check against thoughtlessly copy-pasting actual test results as the expected test data. */
   protected void ensureNoErrorElements() {
-    ParsingTestUtil.ensureNoErrorElements(myFile);
+    ParsingTestUtil.assertNoPsiErrorElements(myFile);
   }
 
   protected void doTest(boolean checkResult) {
@@ -376,6 +376,29 @@ public abstract class ParsingTestCase extends UsefulTestCase {
     ensureParsed(myFile);
     assertEquals(code, myFile.getText());
     checkResult(myFilePrefix + name, myFile);
+  }
+
+  protected void doReparseTest(String textBefore, String textAfter) {
+    var file = createFile("test." + myFileExt, textBefore);
+    var fileAfter = createFile("test." + myFileExt, textAfter);
+
+    var rangeStart = StringUtil.commonPrefixLength(textBefore, textAfter);
+    var rangeEnd = textBefore.length() - StringUtil.commonSuffixLength(textBefore, textAfter);
+
+    var range = new TextRange(Math.min(rangeStart, rangeEnd), Math.max(rangeStart, rangeEnd));
+
+    var psiToStringDefault = DebugUtil.psiToString(fileAfter, true, false, true, null);
+    DebugUtil.performPsiModification("ensureCorrectReparse", () -> {
+      new BlockSupportImpl().reparseRange(
+        file,
+        file.getNode(),
+        range,
+        fileAfter.getText(),
+        new EmptyProgressIndicator(),
+        file.getText()
+      ).performActualPsiChange(file);
+    });
+    assertEquals(psiToStringDefault, DebugUtil.psiToString(file, true, false, true, null));
   }
 
   protected PsiFile createPsiFile(@NotNull String name, @NotNull String text) {

@@ -17,10 +17,7 @@ import com.intellij.openapi.util.text.Strings;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.Interner;
 import kotlinx.coroutines.CoroutineScope;
-import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
-import org.jetbrains.annotations.TestOnly;
+import org.jetbrains.annotations.*;
 import org.jetbrains.plugins.textmate.bundles.*;
 import org.jetbrains.plugins.textmate.configuration.TextMateBuiltinBundlesSettings;
 import org.jetbrains.plugins.textmate.configuration.TextMatePersistentBundle;
@@ -150,7 +147,8 @@ public final class TextMateServiceImpl extends TextMateService {
     }, ModalityState.nonModal());
   }
 
-  private static List<Path> discoverBuiltinBundles(@NotNull TextMateBuiltinBundlesSettings builtinBundlesSettings) {
+  @ApiStatus.Internal
+  public static List<Path> discoverBuiltinBundles(@NotNull TextMateBuiltinBundlesSettings builtinBundlesSettings) {
     List<Path> builtinBundles = builtinBundlesSettings.getBuiltinBundles();
     if (builtinBundles.isEmpty()) {
       Path builtinBundlesPath = getBundledBundlePath();
@@ -317,8 +315,10 @@ public final class TextMateServiceImpl extends TextMateService {
     while (grammarIterator.hasNext()) {
       TextMateGrammar grammar = grammarIterator.next();
       CharSequence rootScopeName = mySyntaxTable.loadSyntax(grammar.getPlist().getValue(), myInterner);
-      for (TextMateFileNameMatcher fileNameMatcher : grammar.getFileNameMatchers()) {
-        extensionMapping.put(fileNameMatcher, rootScopeName);
+      if (rootScopeName != null) {
+        for (TextMateFileNameMatcher fileNameMatcher : grammar.getFileNameMatchers()) {
+          extensionMapping.put(fileNameMatcher, rootScopeName);
+        }
       }
     }
   }

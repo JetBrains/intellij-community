@@ -12,9 +12,9 @@ import static com.intellij.openapi.editor.colors.TextAttributesKey.createTextAtt
 public final class KotlinHighlightingColors {
     // default keys (mostly syntax elements)
     public static final TextAttributesKey KEYWORD = createTextAttributesKey("KOTLIN_KEYWORD", JavaHighlightingColors.KEYWORD);
-    public static final TextAttributesKey BUILTIN_ANNOTATION = createTextAttributesKey("KOTLIN_BUILTIN_ANNOTATION", KotlinHighlightingColors.KEYWORD);
-    public static final TextAttributesKey VAL_KEYWORD = createTextAttributesKey("KOTLIN_KEYWORD_VAL", KotlinHighlightingColors.KEYWORD);
-    public static final TextAttributesKey VAR_KEYWORD = createTextAttributesKey("KOTLIN_KEYWORD_VAR", KotlinHighlightingColors.KEYWORD);
+    public static final TextAttributesKey BUILTIN_ANNOTATION = createTextAttributesKey("KOTLIN_BUILTIN_ANNOTATION", KEYWORD);
+    public static final TextAttributesKey VAL_KEYWORD = createTextAttributesKey("KOTLIN_KEYWORD_VAL", KEYWORD);
+    public static final TextAttributesKey VAR_KEYWORD = createTextAttributesKey("KOTLIN_KEYWORD_VAR", KEYWORD);
     public static final TextAttributesKey NUMBER = createTextAttributesKey("KOTLIN_NUMBER", DefaultLanguageHighlighterColors.NUMBER);
     public static final TextAttributesKey STRING = createTextAttributesKey("KOTLIN_STRING", DefaultLanguageHighlighterColors.STRING);
     public static final TextAttributesKey STRING_ESCAPE = createTextAttributesKey("KOTLIN_STRING_ESCAPE", DefaultLanguageHighlighterColors.VALID_STRING_ESCAPE);
@@ -73,7 +73,7 @@ public final class KotlinHighlightingColors {
     public static final TextAttributesKey EXTENSION_FUNCTION_CALL = createTextAttributesKey("KOTLIN_EXTENSION_FUNCTION_CALL", DefaultLanguageHighlighterColors.STATIC_METHOD);
     public static final TextAttributesKey CONSTRUCTOR_CALL = createTextAttributesKey("KOTLIN_CONSTRUCTOR", DefaultLanguageHighlighterColors.FUNCTION_CALL);
     public static final TextAttributesKey DYNAMIC_FUNCTION_CALL = createTextAttributesKey("KOTLIN_DYNAMIC_FUNCTION_CALL");
-    public static final TextAttributesKey SUSPEND_FUNCTION_CALL = createTextAttributesKey("KOTLIN_SUSPEND_FUNCTION_CALL", KotlinHighlightingColors.FUNCTION_CALL);
+    public static final TextAttributesKey SUSPEND_FUNCTION_CALL = createTextAttributesKey("KOTLIN_SUSPEND_FUNCTION_CALL", FUNCTION_CALL);
     public static final TextAttributesKey VARIABLE_AS_FUNCTION_CALL = createTextAttributesKey("KOTLIN_VARIABLE_AS_FUNCTION");
     public static final TextAttributesKey VARIABLE_AS_FUNCTION_LIKE_CALL = createTextAttributesKey("KOTLIN_VARIABLE_AS_FUNCTION_LIKE");
 

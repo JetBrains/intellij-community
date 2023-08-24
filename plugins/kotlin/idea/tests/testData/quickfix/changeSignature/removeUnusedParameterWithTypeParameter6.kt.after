@@ -4,3 +4,5 @@ class Foo {
 }
 
 val foo = Foo()
+
+// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.RemoveUnusedFunctionParameterFix

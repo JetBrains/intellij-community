@@ -12,3 +12,5 @@ class Derived : Base() {
     @Deprecated("Don't use", replaceWith = ReplaceWith("bar()"))
     override fun foo() {}
 }
+
+// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.AddAnnotationWithArgumentsFix

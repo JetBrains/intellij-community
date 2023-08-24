@@ -5,3 +5,4 @@ class Test<in T> {
     fun foo(t: T) {}
     fun bar(): <caret>T = TODO()
 }
+// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.RemoveTypeVarianceFix

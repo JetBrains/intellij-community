@@ -13,3 +13,5 @@ fun newFun(p: String){}
 fun foo() {
     <caret>oldFun(foo(*arrayOf("a", "b")))
 }
+
+// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.replaceWith.DeprecatedSymbolUsageFix

@@ -6,3 +6,4 @@ enum class E {
 fun foo() {
     E.<caret>C
 }
+// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.createFromUsage.createClass.CreateClassFromUsageFix

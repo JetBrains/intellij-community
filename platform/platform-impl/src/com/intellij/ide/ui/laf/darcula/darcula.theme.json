@@ -556,6 +556,7 @@
     "textInactiveText" : "#808080",
     "textText": "#bbbbbb",
     "window": "#3c3f41",
+    "Window.undecorated.border" : "1,1,1,1,#5A5D63",
 
     "Lesson": {
       "shortcutBackground": "#333638",
@@ -726,6 +727,8 @@
       "bottomRight0Color": "#00000000",
       "bottomRight1Color": "#00000009"
     },
+
+    "Notification.WelcomeScreen.separatorColor": "#717375",
 
     "WelcomeScreen.Projects.actions.selectionBackground": "#326FC1",
     "WelcomeScreen.Projects.actions.background": "#3C5C86",

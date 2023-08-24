@@ -1,279 +1,279 @@
-<info descr="null" tooltip="null">open</info> class A() {
-  fun foo() {
-      if (this is B) {
-          <info descr="Implicit receiver smart cast to B" tooltip="Implicit receiver smart cast to B">bar</info>()
+<symbolName descr="null" tooltip="null" textAttributesKey="KOTLIN_BUILTIN_ANNOTATION">open</symbolName> class <symbolName descr="null" tooltip="null" textAttributesKey="KOTLIN_CLASS">A</symbolName>() {
+  fun <symbolName descr="null" tooltip="null" textAttributesKey="KOTLIN_FUNCTION_DECLARATION">foo</symbolName>() {
+      if (this is <symbolName descr="null" tooltip="null" textAttributesKey="KOTLIN_CLASS">B</symbolName>) {
+          <symbolName descr="null" tooltip="null" textAttributesKey="KOTLIN_FUNCTION_CALL"><symbolName descr="Implicit receiver smart cast to B" tooltip="Implicit receiver smart cast to B" textAttributesKey="KOTLIN_SMART_CAST_RECEIVER">bar</symbolName></symbolName>()
       }
   }
 }
 
-class B() : A() {
-  fun bar() {}
+class <symbolName descr="null" tooltip="null" textAttributesKey="KOTLIN_CLASS">B</symbolName>() : <symbolName descr="null" tooltip="null" textAttributesKey="KOTLIN_CONSTRUCTOR">A</symbolName>() {
+  fun <symbolName descr="null" tooltip="null" textAttributesKey="KOTLIN_FUNCTION_DECLARATION">bar</symbolName>() {}
 }
 
-fun f9(a : A?) {
-  a<info>?.</info>foo()
-  a<info>?.</info><error descr="[UNRESOLVED_REFERENCE] Unresolved reference: bar">bar</error>()
-  if (a is B) {
-    <info descr="Smart cast to B" tooltip="Smart cast to B">a</info>.bar()
-    <info descr="Smart cast to B" tooltip="Smart cast to B">a</info>.foo()
+fun <symbolName descr="null" tooltip="null" textAttributesKey="KOTLIN_FUNCTION_DECLARATION">f9</symbolName>(<symbolName descr="null" tooltip="null" textAttributesKey="KOTLIN_PARAMETER">a</symbolName> : <symbolName descr="null" tooltip="null" textAttributesKey="KOTLIN_CLASS">A</symbolName>?) {
+  <symbolName descr="null" tooltip="null" textAttributesKey="KOTLIN_PARAMETER">a</symbolName><symbolName descr="null" tooltip="null" textAttributesKey="KOTLIN_SAFE_ACCESS">?.</symbolName><symbolName descr="null" tooltip="null" textAttributesKey="KOTLIN_FUNCTION_CALL">foo</symbolName>()
+  <symbolName descr="null" tooltip="null" textAttributesKey="KOTLIN_PARAMETER">a</symbolName><symbolName descr="null" tooltip="null" textAttributesKey="KOTLIN_SAFE_ACCESS">?.</symbolName><error descr="[UNRESOLVED_REFERENCE] Unresolved reference: bar" tooltip="[UNRESOLVED_REFERENCE] Unresolved reference: bar" textAttributesKey="WRONG_REFERENCES_ATTRIBUTES">bar</error>()
+  if (<symbolName descr="null" tooltip="null" textAttributesKey="KOTLIN_PARAMETER">a</symbolName> is <symbolName descr="null" tooltip="null" textAttributesKey="KOTLIN_CLASS">B</symbolName>) {
+    <symbolName descr="null" tooltip="null" textAttributesKey="KOTLIN_PARAMETER"><symbolName descr="Smart cast to B" tooltip="Smart cast to B" textAttributesKey="KOTLIN_SMART_CAST_VALUE">a</symbolName></symbolName>.<symbolName descr="null" tooltip="null" textAttributesKey="KOTLIN_FUNCTION_CALL">bar</symbolName>()
+    <symbolName descr="null" tooltip="null" textAttributesKey="KOTLIN_PARAMETER"><symbolName descr="Smart cast to B" tooltip="Smart cast to B" textAttributesKey="KOTLIN_SMART_CAST_VALUE">a</symbolName></symbolName>.<symbolName descr="null" tooltip="null" textAttributesKey="KOTLIN_FUNCTION_CALL">foo</symbolName>()
   }
-  a<info>?.</info>foo()
-  a<info>?.</info><error descr="[UNRESOLVED_REFERENCE] Unresolved reference: bar">bar</error>()
-  if (!(a is B)) {
-    a<info>?.</info><error descr="[UNRESOLVED_REFERENCE] Unresolved reference: bar">bar</error>()
-    a<info>?.</info>foo()
+  <symbolName descr="null" tooltip="null" textAttributesKey="KOTLIN_PARAMETER">a</symbolName><symbolName descr="null" tooltip="null" textAttributesKey="KOTLIN_SAFE_ACCESS">?.</symbolName><symbolName descr="null" tooltip="null" textAttributesKey="KOTLIN_FUNCTION_CALL">foo</symbolName>()
+  <symbolName descr="null" tooltip="null" textAttributesKey="KOTLIN_PARAMETER">a</symbolName><symbolName descr="null" tooltip="null" textAttributesKey="KOTLIN_SAFE_ACCESS">?.</symbolName><error descr="[UNRESOLVED_REFERENCE] Unresolved reference: bar" tooltip="[UNRESOLVED_REFERENCE] Unresolved reference: bar" textAttributesKey="WRONG_REFERENCES_ATTRIBUTES">bar</error>()
+  if (!(<symbolName descr="null" tooltip="null" textAttributesKey="KOTLIN_PARAMETER">a</symbolName> is <symbolName descr="null" tooltip="null" textAttributesKey="KOTLIN_CLASS">B</symbolName>)) {
+    <symbolName descr="null" tooltip="null" textAttributesKey="KOTLIN_PARAMETER">a</symbolName><symbolName descr="null" tooltip="null" textAttributesKey="KOTLIN_SAFE_ACCESS">?.</symbolName><error descr="[UNRESOLVED_REFERENCE] Unresolved reference: bar" tooltip="[UNRESOLVED_REFERENCE] Unresolved reference: bar" textAttributesKey="WRONG_REFERENCES_ATTRIBUTES">bar</error>()
+    <symbolName descr="null" tooltip="null" textAttributesKey="KOTLIN_PARAMETER">a</symbolName><symbolName descr="null" tooltip="null" textAttributesKey="KOTLIN_SAFE_ACCESS">?.</symbolName><symbolName descr="null" tooltip="null" textAttributesKey="KOTLIN_FUNCTION_CALL">foo</symbolName>()
   }
-  if (!(a is B) || <info descr="Smart cast to B" tooltip="Smart cast to B">a</info>.bar() == Unit) {
-      a<info>?.</info><error descr="[UNRESOLVED_REFERENCE] Unresolved reference: bar">bar</error>()
+  if (!(<symbolName descr="null" tooltip="null" textAttributesKey="KOTLIN_PARAMETER">a</symbolName> is <symbolName descr="null" tooltip="null" textAttributesKey="KOTLIN_CLASS">B</symbolName>) || <symbolName descr="null" tooltip="null" textAttributesKey="KOTLIN_PARAMETER"><symbolName descr="Smart cast to B" tooltip="Smart cast to B" textAttributesKey="KOTLIN_SMART_CAST_VALUE">a</symbolName></symbolName>.<symbolName descr="null" tooltip="null" textAttributesKey="KOTLIN_FUNCTION_CALL">bar</symbolName>() == <symbolName descr="null" tooltip="null" textAttributesKey="KOTLIN_OBJECT">Unit</symbolName>) {
+      <symbolName descr="null" tooltip="null" textAttributesKey="KOTLIN_PARAMETER">a</symbolName><symbolName descr="null" tooltip="null" textAttributesKey="KOTLIN_SAFE_ACCESS">?.</symbolName><error descr="[UNRESOLVED_REFERENCE] Unresolved reference: bar" tooltip="[UNRESOLVED_REFERENCE] Unresolved reference: bar" textAttributesKey="WRONG_REFERENCES_ATTRIBUTES">bar</error>()
   }
-  if (!(a is B)) {
+  if (!(<symbolName descr="null" tooltip="null" textAttributesKey="KOTLIN_PARAMETER">a</symbolName> is <symbolName descr="null" tooltip="null" textAttributesKey="KOTLIN_CLASS">B</symbolName>)) {
     return;
   }
-  <info descr="Smart cast to B" tooltip="Smart cast to B">a</info>.bar()
-  <info descr="Smart cast to B" tooltip="Smart cast to B">a</info>.foo()
+  <symbolName descr="null" tooltip="null" textAttributesKey="KOTLIN_PARAMETER"><symbolName descr="Smart cast to B" tooltip="Smart cast to B" textAttributesKey="KOTLIN_SMART_CAST_VALUE">a</symbolName></symbolName>.<symbolName descr="null" tooltip="null" textAttributesKey="KOTLIN_FUNCTION_CALL">bar</symbolName>()
+  <symbolName descr="null" tooltip="null" textAttributesKey="KOTLIN_PARAMETER"><symbolName descr="Smart cast to B" tooltip="Smart cast to B" textAttributesKey="KOTLIN_SMART_CAST_VALUE">a</symbolName></symbolName>.<symbolName descr="null" tooltip="null" textAttributesKey="KOTLIN_FUNCTION_CALL">foo</symbolName>()
 }
 
-fun fAny(a : Any?) {
-    if (a is B) {
-        <info descr="Smart cast to B" tooltip="Smart cast to B">a</info>.bar()
-        <info descr="Smart cast to B" tooltip="Smart cast to B">a</info>.foo()
+fun <symbolName descr="null" tooltip="null" textAttributesKey="KOTLIN_FUNCTION_DECLARATION">fAny</symbolName>(<symbolName descr="null" tooltip="null" textAttributesKey="KOTLIN_PARAMETER">a</symbolName> : <symbolName descr="null" tooltip="null" textAttributesKey="KOTLIN_CLASS">Any</symbolName>?) {
+    if (<symbolName descr="null" tooltip="null" textAttributesKey="KOTLIN_PARAMETER">a</symbolName> is <symbolName descr="null" tooltip="null" textAttributesKey="KOTLIN_CLASS">B</symbolName>) {
+        <symbolName descr="null" tooltip="null" textAttributesKey="KOTLIN_PARAMETER"><symbolName descr="Smart cast to B" tooltip="Smart cast to B" textAttributesKey="KOTLIN_SMART_CAST_VALUE">a</symbolName></symbolName>.<symbolName descr="null" tooltip="null" textAttributesKey="KOTLIN_FUNCTION_CALL">bar</symbolName>()
+        <symbolName descr="null" tooltip="null" textAttributesKey="KOTLIN_PARAMETER"><symbolName descr="Smart cast to B" tooltip="Smart cast to B" textAttributesKey="KOTLIN_SMART_CAST_VALUE">a</symbolName></symbolName>.<symbolName descr="null" tooltip="null" textAttributesKey="KOTLIN_FUNCTION_CALL">foo</symbolName>()
     }
-    if (!(a is B)) {
+    if (!(<symbolName descr="null" tooltip="null" textAttributesKey="KOTLIN_PARAMETER">a</symbolName> is <symbolName descr="null" tooltip="null" textAttributesKey="KOTLIN_CLASS">B</symbolName>)) {
         return;
     }
-    <info descr="Smart cast to B" tooltip="Smart cast to B">a</info>.bar()
-    <info descr="Smart cast to B" tooltip="Smart cast to B">a</info>.foo()
+    <symbolName descr="null" tooltip="null" textAttributesKey="KOTLIN_PARAMETER"><symbolName descr="Smart cast to B" tooltip="Smart cast to B" textAttributesKey="KOTLIN_SMART_CAST_VALUE">a</symbolName></symbolName>.<symbolName descr="null" tooltip="null" textAttributesKey="KOTLIN_FUNCTION_CALL">bar</symbolName>()
+    <symbolName descr="null" tooltip="null" textAttributesKey="KOTLIN_PARAMETER"><symbolName descr="Smart cast to B" tooltip="Smart cast to B" textAttributesKey="KOTLIN_SMART_CAST_VALUE">a</symbolName></symbolName>.<symbolName descr="null" tooltip="null" textAttributesKey="KOTLIN_FUNCTION_CALL">foo</symbolName>()
 }
 
-fun f10(a : A?) {
-  if (!(a is B)) {
+fun <symbolName descr="null" tooltip="null" textAttributesKey="KOTLIN_FUNCTION_DECLARATION">f10</symbolName>(<symbolName descr="null" tooltip="null" textAttributesKey="KOTLIN_PARAMETER">a</symbolName> : <symbolName descr="null" tooltip="null" textAttributesKey="KOTLIN_CLASS">A</symbolName>?) {
+  if (!(<symbolName descr="null" tooltip="null" textAttributesKey="KOTLIN_PARAMETER">a</symbolName> is <symbolName descr="null" tooltip="null" textAttributesKey="KOTLIN_CLASS">B</symbolName>)) {
     return;
   }
-  if (!(<warning>a is B</warning>)) {
+  if (!(<warning descr="[USELESS_IS_CHECK] Check for instance is always 'true'" tooltip="[USELESS_IS_CHECK] Check for instance is always 'true'" textAttributesKey="WARNING_ATTRIBUTES"><symbolName descr="null" tooltip="null" textAttributesKey="KOTLIN_PARAMETER">a</symbolName> is <symbolName descr="null" tooltip="null" textAttributesKey="KOTLIN_CLASS">B</symbolName></warning>)) {
     return;
   }
 }
 
-class C() : A() {
-  fun bar() {
+class <symbolName descr="null" tooltip="null" textAttributesKey="KOTLIN_CLASS">C</symbolName>() : <symbolName descr="null" tooltip="null" textAttributesKey="KOTLIN_CONSTRUCTOR">A</symbolName>() {
+  fun <symbolName descr="null" tooltip="null" textAttributesKey="KOTLIN_FUNCTION_DECLARATION">bar</symbolName>() {
 
   }
 }
 
-fun f101(a : A?) {
-    if (a is C) {
-      <info descr="Smart cast to C" tooltip="Smart cast to C">a</info>.bar();
+fun <symbolName descr="null" tooltip="null" textAttributesKey="KOTLIN_FUNCTION_DECLARATION">f101</symbolName>(<symbolName descr="null" tooltip="null" textAttributesKey="KOTLIN_PARAMETER">a</symbolName> : <symbolName descr="null" tooltip="null" textAttributesKey="KOTLIN_CLASS">A</symbolName>?) {
+    if (<symbolName descr="null" tooltip="null" textAttributesKey="KOTLIN_PARAMETER">a</symbolName> is <symbolName descr="null" tooltip="null" textAttributesKey="KOTLIN_CLASS">C</symbolName>) {
+      <symbolName descr="null" tooltip="null" textAttributesKey="KOTLIN_PARAMETER"><symbolName descr="Smart cast to C" tooltip="Smart cast to C" textAttributesKey="KOTLIN_SMART_CAST_VALUE">a</symbolName></symbolName>.<symbolName descr="null" tooltip="null" textAttributesKey="KOTLIN_FUNCTION_CALL">bar</symbolName>();
     }
 }
 
-fun f11(a : A?) {
-  when (a) {
-    is B -> <info descr="Smart cast to B" tooltip="Smart cast to B">a</info>.bar()
-    is A -> <info descr="Smart cast to A" tooltip="Smart cast to A">a</info>.foo()
-    is Any -> <info descr="Smart cast to A" tooltip="Smart cast to A">a</info>.foo()
-    <warning>is Any?</warning> -> a.<error descr="[UNRESOLVED_REFERENCE] Unresolved reference: bar">bar</error>()
-    else -> a<info>?.</info>foo()
+fun <symbolName descr="null" tooltip="null" textAttributesKey="KOTLIN_FUNCTION_DECLARATION">f11</symbolName>(<symbolName descr="null" tooltip="null" textAttributesKey="KOTLIN_PARAMETER">a</symbolName> : <symbolName descr="null" tooltip="null" textAttributesKey="KOTLIN_CLASS">A</symbolName>?) {
+  when (<symbolName descr="null" tooltip="null" textAttributesKey="KOTLIN_PARAMETER">a</symbolName>) {
+    is <symbolName descr="null" tooltip="null" textAttributesKey="KOTLIN_CLASS">B</symbolName> -> <symbolName descr="null" tooltip="null" textAttributesKey="KOTLIN_PARAMETER"><symbolName descr="Smart cast to B" tooltip="Smart cast to B" textAttributesKey="KOTLIN_SMART_CAST_VALUE">a</symbolName></symbolName>.<symbolName descr="null" tooltip="null" textAttributesKey="KOTLIN_FUNCTION_CALL">bar</symbolName>()
+    is <symbolName descr="null" tooltip="null" textAttributesKey="KOTLIN_CLASS">A</symbolName> -> <symbolName descr="null" tooltip="null" textAttributesKey="KOTLIN_PARAMETER"><symbolName descr="Smart cast to A" tooltip="Smart cast to A" textAttributesKey="KOTLIN_SMART_CAST_VALUE">a</symbolName></symbolName>.<symbolName descr="null" tooltip="null" textAttributesKey="KOTLIN_FUNCTION_CALL">foo</symbolName>()
+    is <symbolName descr="null" tooltip="null" textAttributesKey="KOTLIN_CLASS">Any</symbolName> -> <symbolName descr="null" tooltip="null" textAttributesKey="KOTLIN_PARAMETER"><symbolName descr="Smart cast to A" tooltip="Smart cast to A" textAttributesKey="KOTLIN_SMART_CAST_VALUE">a</symbolName></symbolName>.<symbolName descr="null" tooltip="null" textAttributesKey="KOTLIN_FUNCTION_CALL">foo</symbolName>()
+    <warning descr="[USELESS_IS_CHECK] Check for instance is always 'true'" tooltip="[USELESS_IS_CHECK] Check for instance is always 'true'" textAttributesKey="WARNING_ATTRIBUTES">is <symbolName descr="null" tooltip="null" textAttributesKey="KOTLIN_CLASS">Any</symbolName>?</warning> -> <symbolName descr="null" tooltip="null" textAttributesKey="KOTLIN_PARAMETER">a</symbolName>.<error descr="[UNRESOLVED_REFERENCE] Unresolved reference: bar" tooltip="[UNRESOLVED_REFERENCE] Unresolved reference: bar" textAttributesKey="WRONG_REFERENCES_ATTRIBUTES">bar</error>()
+    else -> <symbolName descr="null" tooltip="null" textAttributesKey="KOTLIN_PARAMETER">a</symbolName><symbolName descr="null" tooltip="null" textAttributesKey="KOTLIN_SAFE_ACCESS">?.</symbolName><symbolName descr="null" tooltip="null" textAttributesKey="KOTLIN_FUNCTION_CALL">foo</symbolName>()
   }
 }
 
-fun f12(a : A?) {
-  when (a) {
-    is B -> <info descr="Smart cast to B" tooltip="Smart cast to B">a</info>.bar()
-    is A -> <info descr="Smart cast to A" tooltip="Smart cast to A">a</info>.foo()
-    is Any -> <info descr="Smart cast to A" tooltip="Smart cast to A">a</info>.foo();
-    <warning>is Any?</warning> -> a.<error descr="[UNRESOLVED_REFERENCE] Unresolved reference: bar">bar</error>()
-    is C -> <info descr="Smart cast to C" tooltip="Smart cast to C">a</info>.bar()
-    else -> a<info>?.</info>foo()
+fun <symbolName descr="null" tooltip="null" textAttributesKey="KOTLIN_FUNCTION_DECLARATION">f12</symbolName>(<symbolName descr="null" tooltip="null" textAttributesKey="KOTLIN_PARAMETER">a</symbolName> : <symbolName descr="null" tooltip="null" textAttributesKey="KOTLIN_CLASS">A</symbolName>?) {
+  when (<symbolName descr="null" tooltip="null" textAttributesKey="KOTLIN_PARAMETER">a</symbolName>) {
+    is <symbolName descr="null" tooltip="null" textAttributesKey="KOTLIN_CLASS">B</symbolName> -> <symbolName descr="null" tooltip="null" textAttributesKey="KOTLIN_PARAMETER"><symbolName descr="Smart cast to B" tooltip="Smart cast to B" textAttributesKey="KOTLIN_SMART_CAST_VALUE">a</symbolName></symbolName>.<symbolName descr="null" tooltip="null" textAttributesKey="KOTLIN_FUNCTION_CALL">bar</symbolName>()
+    is <symbolName descr="null" tooltip="null" textAttributesKey="KOTLIN_CLASS">A</symbolName> -> <symbolName descr="null" tooltip="null" textAttributesKey="KOTLIN_PARAMETER"><symbolName descr="Smart cast to A" tooltip="Smart cast to A" textAttributesKey="KOTLIN_SMART_CAST_VALUE">a</symbolName></symbolName>.<symbolName descr="null" tooltip="null" textAttributesKey="KOTLIN_FUNCTION_CALL">foo</symbolName>()
+    is <symbolName descr="null" tooltip="null" textAttributesKey="KOTLIN_CLASS">Any</symbolName> -> <symbolName descr="null" tooltip="null" textAttributesKey="KOTLIN_PARAMETER"><symbolName descr="Smart cast to A" tooltip="Smart cast to A" textAttributesKey="KOTLIN_SMART_CAST_VALUE">a</symbolName></symbolName>.<symbolName descr="null" tooltip="null" textAttributesKey="KOTLIN_FUNCTION_CALL">foo</symbolName>();
+    <warning descr="[USELESS_IS_CHECK] Check for instance is always 'true'" tooltip="[USELESS_IS_CHECK] Check for instance is always 'true'" textAttributesKey="WARNING_ATTRIBUTES">is <symbolName descr="null" tooltip="null" textAttributesKey="KOTLIN_CLASS">Any</symbolName>?</warning> -> <symbolName descr="null" tooltip="null" textAttributesKey="KOTLIN_PARAMETER">a</symbolName>.<error descr="[UNRESOLVED_REFERENCE] Unresolved reference: bar" tooltip="[UNRESOLVED_REFERENCE] Unresolved reference: bar" textAttributesKey="WRONG_REFERENCES_ATTRIBUTES">bar</error>()
+    is <symbolName descr="null" tooltip="null" textAttributesKey="KOTLIN_CLASS">C</symbolName> -> <symbolName descr="null" tooltip="null" textAttributesKey="KOTLIN_PARAMETER"><symbolName descr="Smart cast to C" tooltip="Smart cast to C" textAttributesKey="KOTLIN_SMART_CAST_VALUE">a</symbolName></symbolName>.<symbolName descr="null" tooltip="null" textAttributesKey="KOTLIN_FUNCTION_CALL">bar</symbolName>()
+    else -> <symbolName descr="null" tooltip="null" textAttributesKey="KOTLIN_PARAMETER">a</symbolName><symbolName descr="null" tooltip="null" textAttributesKey="KOTLIN_SAFE_ACCESS">?.</symbolName><symbolName descr="null" tooltip="null" textAttributesKey="KOTLIN_FUNCTION_CALL">foo</symbolName>()
   }
 
-  if (<warning>a is Any?</warning>) {
-    a<info>?.</info><error descr="[UNRESOLVED_REFERENCE] Unresolved reference: bar">bar</error>()
+  if (<warning descr="[USELESS_IS_CHECK] Check for instance is always 'true'" tooltip="[USELESS_IS_CHECK] Check for instance is always 'true'" textAttributesKey="WARNING_ATTRIBUTES"><symbolName descr="null" tooltip="null" textAttributesKey="KOTLIN_PARAMETER">a</symbolName> is <symbolName descr="null" tooltip="null" textAttributesKey="KOTLIN_CLASS">Any</symbolName>?</warning>) {
+    <symbolName descr="null" tooltip="null" textAttributesKey="KOTLIN_PARAMETER">a</symbolName><symbolName descr="null" tooltip="null" textAttributesKey="KOTLIN_SAFE_ACCESS">?.</symbolName><error descr="[UNRESOLVED_REFERENCE] Unresolved reference: bar" tooltip="[UNRESOLVED_REFERENCE] Unresolved reference: bar" textAttributesKey="WRONG_REFERENCES_ATTRIBUTES">bar</error>()
   }
-  if (a is B) {
-    <info descr="Smart cast to B" tooltip="Smart cast to B">a</info>.bar()
+  if (<symbolName descr="null" tooltip="null" textAttributesKey="KOTLIN_PARAMETER">a</symbolName> is <symbolName descr="null" tooltip="null" textAttributesKey="KOTLIN_CLASS">B</symbolName>) {
+    <symbolName descr="null" tooltip="null" textAttributesKey="KOTLIN_PARAMETER"><symbolName descr="Smart cast to B" tooltip="Smart cast to B" textAttributesKey="KOTLIN_SMART_CAST_VALUE">a</symbolName></symbolName>.<symbolName descr="null" tooltip="null" textAttributesKey="KOTLIN_FUNCTION_CALL">bar</symbolName>()
   }
 }
 
-fun f13(a : A?) {
-  if (a is B) {
-    <info descr="Smart cast to B" tooltip="Smart cast to B">a</info>.foo()
-    <info descr="Smart cast to B" tooltip="Smart cast to B">a</info>.bar()
+fun <symbolName descr="null" tooltip="null" textAttributesKey="KOTLIN_FUNCTION_DECLARATION">f13</symbolName>(<symbolName descr="null" tooltip="null" textAttributesKey="KOTLIN_PARAMETER">a</symbolName> : <symbolName descr="null" tooltip="null" textAttributesKey="KOTLIN_CLASS">A</symbolName>?) {
+  if (<symbolName descr="null" tooltip="null" textAttributesKey="KOTLIN_PARAMETER">a</symbolName> is <symbolName descr="null" tooltip="null" textAttributesKey="KOTLIN_CLASS">B</symbolName>) {
+    <symbolName descr="null" tooltip="null" textAttributesKey="KOTLIN_PARAMETER"><symbolName descr="Smart cast to B" tooltip="Smart cast to B" textAttributesKey="KOTLIN_SMART_CAST_VALUE">a</symbolName></symbolName>.<symbolName descr="null" tooltip="null" textAttributesKey="KOTLIN_FUNCTION_CALL">foo</symbolName>()
+    <symbolName descr="null" tooltip="null" textAttributesKey="KOTLIN_PARAMETER"><symbolName descr="Smart cast to B" tooltip="Smart cast to B" textAttributesKey="KOTLIN_SMART_CAST_VALUE">a</symbolName></symbolName>.<symbolName descr="null" tooltip="null" textAttributesKey="KOTLIN_FUNCTION_CALL">bar</symbolName>()
   }
   else {
-    a<info>?.</info>foo()
-    <error descr="[UNRESOLVED_REFERENCE] Unresolved reference: c">c</error>.<error>bar</error>()
+    <symbolName descr="null" tooltip="null" textAttributesKey="KOTLIN_PARAMETER">a</symbolName><symbolName descr="null" tooltip="null" textAttributesKey="KOTLIN_SAFE_ACCESS">?.</symbolName><symbolName descr="null" tooltip="null" textAttributesKey="KOTLIN_FUNCTION_CALL">foo</symbolName>()
+    <error descr="[UNRESOLVED_REFERENCE] Unresolved reference: c" tooltip="[UNRESOLVED_REFERENCE] Unresolved reference: c" textAttributesKey="WRONG_REFERENCES_ATTRIBUTES">c</error>.<error descr="[DEBUG] Reference is not resolved to anything, but is not marked unresolved" tooltip="[DEBUG] Reference is not resolved to anything, but is not marked unresolved" textAttributesKey="KOTLIN_DEBUG_INFO">bar</error>()
   }
 
-  a<info>?.</info>foo()
-  if (!(a is B)) {
-    a<info>?.</info>foo()
+  <symbolName descr="null" tooltip="null" textAttributesKey="KOTLIN_PARAMETER">a</symbolName><symbolName descr="null" tooltip="null" textAttributesKey="KOTLIN_SAFE_ACCESS">?.</symbolName><symbolName descr="null" tooltip="null" textAttributesKey="KOTLIN_FUNCTION_CALL">foo</symbolName>()
+  if (!(<symbolName descr="null" tooltip="null" textAttributesKey="KOTLIN_PARAMETER">a</symbolName> is <symbolName descr="null" tooltip="null" textAttributesKey="KOTLIN_CLASS">B</symbolName>)) {
+    <symbolName descr="null" tooltip="null" textAttributesKey="KOTLIN_PARAMETER">a</symbolName><symbolName descr="null" tooltip="null" textAttributesKey="KOTLIN_SAFE_ACCESS">?.</symbolName><symbolName descr="null" tooltip="null" textAttributesKey="KOTLIN_FUNCTION_CALL">foo</symbolName>()
   }
   else {
-    <info descr="Smart cast to B" tooltip="Smart cast to B">a</info>.foo()
+    <symbolName descr="null" tooltip="null" textAttributesKey="KOTLIN_PARAMETER"><symbolName descr="Smart cast to B" tooltip="Smart cast to B" textAttributesKey="KOTLIN_SMART_CAST_VALUE">a</symbolName></symbolName>.<symbolName descr="null" tooltip="null" textAttributesKey="KOTLIN_FUNCTION_CALL">foo</symbolName>()
   }
 
-  a<info>?.</info>foo()
-  if (a is B && <info descr="Smart cast to B" tooltip="Smart cast to B">a</info>.foo() == Unit) {
-    <info descr="Smart cast to B" tooltip="Smart cast to B">a</info>.foo()
-    <info descr="Smart cast to B" tooltip="Smart cast to B">a</info>.bar()
+  <symbolName descr="null" tooltip="null" textAttributesKey="KOTLIN_PARAMETER">a</symbolName><symbolName descr="null" tooltip="null" textAttributesKey="KOTLIN_SAFE_ACCESS">?.</symbolName><symbolName descr="null" tooltip="null" textAttributesKey="KOTLIN_FUNCTION_CALL">foo</symbolName>()
+  if (<symbolName descr="null" tooltip="null" textAttributesKey="KOTLIN_PARAMETER">a</symbolName> is <symbolName descr="null" tooltip="null" textAttributesKey="KOTLIN_CLASS">B</symbolName> && <symbolName descr="null" tooltip="null" textAttributesKey="KOTLIN_PARAMETER"><symbolName descr="Smart cast to B" tooltip="Smart cast to B" textAttributesKey="KOTLIN_SMART_CAST_VALUE">a</symbolName></symbolName>.<symbolName descr="null" tooltip="null" textAttributesKey="KOTLIN_FUNCTION_CALL">foo</symbolName>() == <symbolName descr="null" tooltip="null" textAttributesKey="KOTLIN_OBJECT">Unit</symbolName>) {
+    <symbolName descr="null" tooltip="null" textAttributesKey="KOTLIN_PARAMETER"><symbolName descr="Smart cast to B" tooltip="Smart cast to B" textAttributesKey="KOTLIN_SMART_CAST_VALUE">a</symbolName></symbolName>.<symbolName descr="null" tooltip="null" textAttributesKey="KOTLIN_FUNCTION_CALL">foo</symbolName>()
+    <symbolName descr="null" tooltip="null" textAttributesKey="KOTLIN_PARAMETER"><symbolName descr="Smart cast to B" tooltip="Smart cast to B" textAttributesKey="KOTLIN_SMART_CAST_VALUE">a</symbolName></symbolName>.<symbolName descr="null" tooltip="null" textAttributesKey="KOTLIN_FUNCTION_CALL">bar</symbolName>()
   }
   else {
-    a<info>?.</info>foo()
+    <symbolName descr="null" tooltip="null" textAttributesKey="KOTLIN_PARAMETER">a</symbolName><symbolName descr="null" tooltip="null" textAttributesKey="KOTLIN_SAFE_ACCESS">?.</symbolName><symbolName descr="null" tooltip="null" textAttributesKey="KOTLIN_FUNCTION_CALL">foo</symbolName>()
   }
 
-  if (!(a is B) || !(a is C)) {
+  if (!(<symbolName descr="null" tooltip="null" textAttributesKey="KOTLIN_PARAMETER">a</symbolName> is <symbolName descr="null" tooltip="null" textAttributesKey="KOTLIN_CLASS">B</symbolName>) || !(<symbolName descr="null" tooltip="null" textAttributesKey="KOTLIN_PARAMETER">a</symbolName> is <symbolName descr="null" tooltip="null" textAttributesKey="KOTLIN_CLASS">C</symbolName>)) {
   }
   else {
   }
 
-  if (!(a is B) || !(a is C)) {
+  if (!(<symbolName descr="null" tooltip="null" textAttributesKey="KOTLIN_PARAMETER">a</symbolName> is <symbolName descr="null" tooltip="null" textAttributesKey="KOTLIN_CLASS">B</symbolName>) || !(<symbolName descr="null" tooltip="null" textAttributesKey="KOTLIN_PARAMETER">a</symbolName> is <symbolName descr="null" tooltip="null" textAttributesKey="KOTLIN_CLASS">C</symbolName>)) {
   }
 
-  if (!(a is B)) return
-  <info descr="Smart cast to B" tooltip="Smart cast to B">a</info>.bar()
+  if (!(<symbolName descr="null" tooltip="null" textAttributesKey="KOTLIN_PARAMETER">a</symbolName> is <symbolName descr="null" tooltip="null" textAttributesKey="KOTLIN_CLASS">B</symbolName>)) return
+  <symbolName descr="null" tooltip="null" textAttributesKey="KOTLIN_PARAMETER"><symbolName descr="Smart cast to B" tooltip="Smart cast to B" textAttributesKey="KOTLIN_SMART_CAST_VALUE">a</symbolName></symbolName>.<symbolName descr="null" tooltip="null" textAttributesKey="KOTLIN_FUNCTION_CALL">bar</symbolName>()
 }
 
-fun f14(a : A?) {
-  while (!(a is B)) {
+fun <symbolName descr="null" tooltip="null" textAttributesKey="KOTLIN_FUNCTION_DECLARATION">f14</symbolName>(<symbolName descr="null" tooltip="null" textAttributesKey="KOTLIN_PARAMETER">a</symbolName> : <symbolName descr="null" tooltip="null" textAttributesKey="KOTLIN_CLASS">A</symbolName>?) {
+  while (!(<symbolName descr="null" tooltip="null" textAttributesKey="KOTLIN_PARAMETER">a</symbolName> is <symbolName descr="null" tooltip="null" textAttributesKey="KOTLIN_CLASS">B</symbolName>)) {
   }
-  <info descr="Smart cast to B" tooltip="Smart cast to B">a</info>.bar()
+  <symbolName descr="null" tooltip="null" textAttributesKey="KOTLIN_PARAMETER"><symbolName descr="Smart cast to B" tooltip="Smart cast to B" textAttributesKey="KOTLIN_SMART_CAST_VALUE">a</symbolName></symbolName>.<symbolName descr="null" tooltip="null" textAttributesKey="KOTLIN_FUNCTION_CALL">bar</symbolName>()
 }
-fun f15(a : A?) {
+fun <symbolName descr="null" tooltip="null" textAttributesKey="KOTLIN_FUNCTION_DECLARATION">f15</symbolName>(<symbolName descr="null" tooltip="null" textAttributesKey="KOTLIN_PARAMETER">a</symbolName> : <symbolName descr="null" tooltip="null" textAttributesKey="KOTLIN_CLASS">A</symbolName>?) {
   do {
-  } while (!(a is B))
-  <info descr="Smart cast to B" tooltip="Smart cast to B">a</info>.bar()
+  } while (!(<symbolName descr="null" tooltip="null" textAttributesKey="KOTLIN_PARAMETER">a</symbolName> is <symbolName descr="null" tooltip="null" textAttributesKey="KOTLIN_CLASS">B</symbolName>))
+  <symbolName descr="null" tooltip="null" textAttributesKey="KOTLIN_PARAMETER"><symbolName descr="Smart cast to B" tooltip="Smart cast to B" textAttributesKey="KOTLIN_SMART_CAST_VALUE">a</symbolName></symbolName>.<symbolName descr="null" tooltip="null" textAttributesKey="KOTLIN_FUNCTION_CALL">bar</symbolName>()
 }
 
-fun getStringLength(obj : Any) : Char? {
-  if (obj !is String)
+fun <symbolName descr="null" tooltip="null" textAttributesKey="KOTLIN_FUNCTION_DECLARATION">getStringLength</symbolName>(<symbolName descr="null" tooltip="null" textAttributesKey="KOTLIN_PARAMETER">obj</symbolName> : <symbolName descr="null" tooltip="null" textAttributesKey="KOTLIN_CLASS">Any</symbolName>) : <symbolName descr="null" tooltip="null" textAttributesKey="KOTLIN_CLASS">Char</symbolName>? {
+  if (<symbolName descr="null" tooltip="null" textAttributesKey="KOTLIN_PARAMETER">obj</symbolName> !is <symbolName descr="null" tooltip="null" textAttributesKey="KOTLIN_CLASS">String</symbolName>)
     return null
-  return <info descr="Smart cast to kotlin.String" tooltip="Smart cast to kotlin.String">obj</info>.get(0) // no cast to kotlin.String is needed
+  return <symbolName descr="null" tooltip="null" textAttributesKey="KOTLIN_PARAMETER"><symbolName descr="Smart cast to kotlin.String" tooltip="Smart cast to kotlin.String" textAttributesKey="KOTLIN_SMART_CAST_VALUE">obj</symbolName></symbolName>.<symbolName descr="null" tooltip="null" textAttributesKey="KOTLIN_FUNCTION_CALL">get</symbolName>(0) // no cast to kotlin.String is needed
 }
 
-fun toInt(i: Int?): Int = if (i != null) <info>i</info> else 0
-fun illegalWhenBody(a: Any): Int = when(a) {
-    is Int -> <info>a</info>
-    is String -> <error>a</error>
+fun <symbolName descr="null" tooltip="null" textAttributesKey="KOTLIN_FUNCTION_DECLARATION">toInt</symbolName>(<symbolName descr="null" tooltip="null" textAttributesKey="KOTLIN_PARAMETER">i</symbolName>: <symbolName descr="null" tooltip="null" textAttributesKey="KOTLIN_CLASS">Int</symbolName>?): <symbolName descr="null" tooltip="null" textAttributesKey="KOTLIN_CLASS">Int</symbolName> = if (<symbolName descr="null" tooltip="null" textAttributesKey="KOTLIN_PARAMETER">i</symbolName> != null) <symbolName descr="null" tooltip="null" textAttributesKey="KOTLIN_PARAMETER"><symbolName descr="Smart cast to kotlin.Int (for null call)" tooltip="Smart cast to kotlin.Int (for null call)" textAttributesKey="KOTLIN_SMART_CAST_VALUE"><symbolName descr="Smart cast to kotlin.Int (for null call)" tooltip="Smart cast to kotlin.Int (for null call)" textAttributesKey="KOTLIN_SMART_CAST_VALUE">i</symbolName></symbolName></symbolName> else 0
+fun <symbolName descr="null" tooltip="null" textAttributesKey="KOTLIN_FUNCTION_DECLARATION">illegalWhenBody</symbolName>(<symbolName descr="null" tooltip="null" textAttributesKey="KOTLIN_PARAMETER">a</symbolName>: <symbolName descr="null" tooltip="null" textAttributesKey="KOTLIN_CLASS">Any</symbolName>): <symbolName descr="null" tooltip="null" textAttributesKey="KOTLIN_CLASS">Int</symbolName> = when(<symbolName descr="null" tooltip="null" textAttributesKey="KOTLIN_PARAMETER">a</symbolName>) {
+    is <symbolName descr="null" tooltip="null" textAttributesKey="KOTLIN_CLASS">Int</symbolName> -> <symbolName descr="null" tooltip="null" textAttributesKey="KOTLIN_PARAMETER"><symbolName descr="Smart cast to kotlin.Int (for null call)" tooltip="Smart cast to kotlin.Int (for null call)" textAttributesKey="KOTLIN_SMART_CAST_VALUE"><symbolName descr="Smart cast to kotlin.Int (for null call)" tooltip="Smart cast to kotlin.Int (for null call)" textAttributesKey="KOTLIN_SMART_CAST_VALUE">a</symbolName></symbolName></symbolName>
+    is <symbolName descr="null" tooltip="null" textAttributesKey="KOTLIN_CLASS">String</symbolName> -> <error descr="[TYPE_MISMATCH] Type mismatch: inferred type is String but Int was expected" tooltip="[TYPE_MISMATCH] Type mismatch.<table><tr><td>Required:</td><td>Int</td></tr><tr><td>Found:</td><td>String</td></tr></table>" textAttributesKey="ERRORS_ATTRIBUTES"><symbolName descr="null" tooltip="null" textAttributesKey="KOTLIN_PARAMETER">a</symbolName></error>
     else -> 1
 }
-fun illegalWhenBlock(a: Any): Int {
-    when(a) {
-        is Int -> return <info descr="Smart cast to kotlin.Int" tooltip="Smart cast to kotlin.Int">a</info>
-        is String -> return <error descr="[TYPE_MISMATCH] Type mismatch: inferred type is Any but Int was expected">a</error>
+fun <symbolName descr="null" tooltip="null" textAttributesKey="KOTLIN_FUNCTION_DECLARATION">illegalWhenBlock</symbolName>(<symbolName descr="null" tooltip="null" textAttributesKey="KOTLIN_PARAMETER">a</symbolName>: <symbolName descr="null" tooltip="null" textAttributesKey="KOTLIN_CLASS">Any</symbolName>): <symbolName descr="null" tooltip="null" textAttributesKey="KOTLIN_CLASS">Int</symbolName> {
+    when(<symbolName descr="null" tooltip="null" textAttributesKey="KOTLIN_PARAMETER">a</symbolName>) {
+        is <symbolName descr="null" tooltip="null" textAttributesKey="KOTLIN_CLASS">Int</symbolName> -> return <symbolName descr="null" tooltip="null" textAttributesKey="KOTLIN_PARAMETER"><symbolName descr="Smart cast to kotlin.Int" tooltip="Smart cast to kotlin.Int" textAttributesKey="KOTLIN_SMART_CAST_VALUE">a</symbolName></symbolName>
+        is <symbolName descr="null" tooltip="null" textAttributesKey="KOTLIN_CLASS">String</symbolName> -> return <error descr="[TYPE_MISMATCH] Type mismatch: inferred type is Any but Int was expected" tooltip="[TYPE_MISMATCH] Type mismatch.<table><tr><td>Required:</td><td>Int</td></tr><tr><td>Found:</td><td>Any</td></tr></table>" textAttributesKey="ERRORS_ATTRIBUTES"><symbolName descr="null" tooltip="null" textAttributesKey="KOTLIN_PARAMETER">a</symbolName></error>
         else -> return 1
     }
 }
-fun declarations(a: Any?) {
-    if (a is String) {
-       val <warning>p4</warning>: String = <info descr="Smart cast to kotlin.String" tooltip="Smart cast to kotlin.String">a</info>
+fun <symbolName descr="null" tooltip="null" textAttributesKey="KOTLIN_FUNCTION_DECLARATION">declarations</symbolName>(<symbolName descr="null" tooltip="null" textAttributesKey="KOTLIN_PARAMETER">a</symbolName>: <symbolName descr="null" tooltip="null" textAttributesKey="KOTLIN_CLASS">Any</symbolName>?) {
+    if (<symbolName descr="null" tooltip="null" textAttributesKey="KOTLIN_PARAMETER">a</symbolName> is <symbolName descr="null" tooltip="null" textAttributesKey="KOTLIN_CLASS">String</symbolName>) {
+       val <warning descr="[UNUSED_VARIABLE] Variable 'p4' is never used" tooltip="[UNUSED_VARIABLE] Variable 'p4' is never used" textAttributesKey="NOT_USED_ELEMENT_ATTRIBUTES"><symbolName descr="null" tooltip="null" textAttributesKey="KOTLIN_LOCAL_VARIABLE">p4</symbolName></warning>: <symbolName descr="null" tooltip="null" textAttributesKey="KOTLIN_CLASS">String</symbolName> = <symbolName descr="null" tooltip="null" textAttributesKey="KOTLIN_PARAMETER"><symbolName descr="Smart cast to kotlin.String" tooltip="Smart cast to kotlin.String" textAttributesKey="KOTLIN_SMART_CAST_VALUE">a</symbolName></symbolName>
     }
-    if (a is String?) {
-        if (a != null) {
-            val <warning>s</warning>: String = <info descr="Smart cast to kotlin.String" tooltip="Smart cast to kotlin.String">a</info>
+    if (<symbolName descr="null" tooltip="null" textAttributesKey="KOTLIN_PARAMETER">a</symbolName> is <symbolName descr="null" tooltip="null" textAttributesKey="KOTLIN_CLASS">String</symbolName>?) {
+        if (<symbolName descr="null" tooltip="null" textAttributesKey="KOTLIN_PARAMETER">a</symbolName> != null) {
+            val <warning descr="[UNUSED_VARIABLE] Variable 's' is never used" tooltip="[UNUSED_VARIABLE] Variable 's' is never used" textAttributesKey="NOT_USED_ELEMENT_ATTRIBUTES"><symbolName descr="null" tooltip="null" textAttributesKey="KOTLIN_LOCAL_VARIABLE">s</symbolName></warning>: <symbolName descr="null" tooltip="null" textAttributesKey="KOTLIN_CLASS">String</symbolName> = <symbolName descr="null" tooltip="null" textAttributesKey="KOTLIN_PARAMETER"><symbolName descr="Smart cast to kotlin.String" tooltip="Smart cast to kotlin.String" textAttributesKey="KOTLIN_SMART_CAST_VALUE">a</symbolName></symbolName>
         }
     }
-    if (a != null) {
-        if (a is String?) {
-            val <warning>s</warning>: String = <info descr="Smart cast to kotlin.String" tooltip="Smart cast to kotlin.String">a</info>
+    if (<symbolName descr="null" tooltip="null" textAttributesKey="KOTLIN_PARAMETER">a</symbolName> != null) {
+        if (<symbolName descr="null" tooltip="null" textAttributesKey="KOTLIN_PARAMETER">a</symbolName> is <symbolName descr="null" tooltip="null" textAttributesKey="KOTLIN_CLASS">String</symbolName>?) {
+            val <warning descr="[UNUSED_VARIABLE] Variable 's' is never used" tooltip="[UNUSED_VARIABLE] Variable 's' is never used" textAttributesKey="NOT_USED_ELEMENT_ATTRIBUTES"><symbolName descr="null" tooltip="null" textAttributesKey="KOTLIN_LOCAL_VARIABLE">s</symbolName></warning>: <symbolName descr="null" tooltip="null" textAttributesKey="KOTLIN_CLASS">String</symbolName> = <symbolName descr="null" tooltip="null" textAttributesKey="KOTLIN_PARAMETER"><symbolName descr="Smart cast to kotlin.String" tooltip="Smart cast to kotlin.String" textAttributesKey="KOTLIN_SMART_CAST_VALUE">a</symbolName></symbolName>
         }
     }
 }
-fun vars(a: Any?) {
-    var <warning>b</warning>: Int = 0
-    if (a is Int) {
-        <warning>b =</warning> <info descr="Smart cast to kotlin.Int" tooltip="Smart cast to kotlin.Int">a</info>
+fun <symbolName descr="null" tooltip="null" textAttributesKey="KOTLIN_FUNCTION_DECLARATION">vars</symbolName>(<symbolName descr="null" tooltip="null" textAttributesKey="KOTLIN_PARAMETER">a</symbolName>: <symbolName descr="null" tooltip="null" textAttributesKey="KOTLIN_CLASS">Any</symbolName>?) {
+    var <warning descr="[ASSIGNED_BUT_NEVER_ACCESSED_VARIABLE] Variable 'b' is assigned but never accessed" tooltip="[ASSIGNED_BUT_NEVER_ACCESSED_VARIABLE] Variable 'b' is assigned but never accessed" textAttributesKey="NOT_USED_ELEMENT_ATTRIBUTES"><symbolName descr="null" tooltip="null" textAttributesKey="KOTLIN_LOCAL_VARIABLE"><symbolName descr="null" tooltip="null" textAttributesKey="KOTLIN_MUTABLE_VARIABLE">b</symbolName></symbolName></warning>: <symbolName descr="null" tooltip="null" textAttributesKey="KOTLIN_CLASS">Int</symbolName> = 0
+    if (<symbolName descr="null" tooltip="null" textAttributesKey="KOTLIN_PARAMETER">a</symbolName> is <symbolName descr="null" tooltip="null" textAttributesKey="KOTLIN_CLASS">Int</symbolName>) {
+        <warning descr="[UNUSED_VALUE] The value 'a' assigned to 'var b: Int defined in vars' is never used" tooltip="[UNUSED_VALUE] The value 'a' assigned to 'var b: Int defined in vars' is never used" textAttributesKey="NOT_USED_ELEMENT_ATTRIBUTES"><symbolName descr="null" tooltip="null" textAttributesKey="KOTLIN_LOCAL_VARIABLE"><symbolName descr="null" tooltip="null" textAttributesKey="KOTLIN_MUTABLE_VARIABLE">b</symbolName></symbolName> =</warning> <symbolName descr="null" tooltip="null" textAttributesKey="KOTLIN_PARAMETER"><symbolName descr="Smart cast to kotlin.Int" tooltip="Smart cast to kotlin.Int" textAttributesKey="KOTLIN_SMART_CAST_VALUE">a</symbolName></symbolName>
     }
 }
-fun returnFunctionLiteralBlock(a: Any?): Function0<Int> {
-    if (<info>a</info> is Int) return { <info descr="Smart cast to kotlin.Int" tooltip="Smart cast to kotlin.Int"><info>a</info></info> }
+fun <symbolName descr="null" tooltip="null" textAttributesKey="KOTLIN_FUNCTION_DECLARATION">returnFunctionLiteralBlock</symbolName>(<symbolName descr="null" tooltip="null" textAttributesKey="KOTLIN_PARAMETER">a</symbolName>: <symbolName descr="null" tooltip="null" textAttributesKey="KOTLIN_CLASS">Any</symbolName>?): <symbolName descr="null" tooltip="null" textAttributesKey="KOTLIN_TRAIT">Function0</symbolName><<symbolName descr="null" tooltip="null" textAttributesKey="KOTLIN_CLASS">Int</symbolName>> {
+    if (<symbolName descr="Value captured in a closure" tooltip="Value captured in a closure" textAttributesKey="KOTLIN_WRAPPED_INTO_REF">a</symbolName> is <symbolName descr="null" tooltip="null" textAttributesKey="KOTLIN_CLASS">Int</symbolName>) return { <symbolName descr="Smart cast to kotlin.Int" tooltip="Smart cast to kotlin.Int" textAttributesKey="KOTLIN_SMART_CAST_VALUE"><symbolName descr="Value captured in a closure" tooltip="Value captured in a closure" textAttributesKey="KOTLIN_WRAPPED_INTO_REF">a</symbolName></symbolName> }
     else return { 1 }
 }
-fun returnFunctionLiteral(a: Any?): Function0<Int> =
-    if (<info>a</info> is Int) (fun (): Int = <info descr="Smart cast to kotlin.Int" tooltip="Smart cast to kotlin.Int"><info>a</info></info>)
+fun <symbolName descr="null" tooltip="null" textAttributesKey="KOTLIN_FUNCTION_DECLARATION">returnFunctionLiteral</symbolName>(<symbolName descr="null" tooltip="null" textAttributesKey="KOTLIN_PARAMETER">a</symbolName>: <symbolName descr="null" tooltip="null" textAttributesKey="KOTLIN_CLASS">Any</symbolName>?): <symbolName descr="null" tooltip="null" textAttributesKey="KOTLIN_TRAIT">Function0</symbolName><<symbolName descr="null" tooltip="null" textAttributesKey="KOTLIN_CLASS">Int</symbolName>> =
+    if (<symbolName descr="Value captured in a closure" tooltip="Value captured in a closure" textAttributesKey="KOTLIN_WRAPPED_INTO_REF">a</symbolName> is <symbolName descr="null" tooltip="null" textAttributesKey="KOTLIN_CLASS">Int</symbolName>) (fun (): <symbolName descr="null" tooltip="null" textAttributesKey="KOTLIN_CLASS">Int</symbolName> = <symbolName descr="Smart cast to kotlin.Int" tooltip="Smart cast to kotlin.Int" textAttributesKey="KOTLIN_SMART_CAST_VALUE"><symbolName descr="Value captured in a closure" tooltip="Value captured in a closure" textAttributesKey="KOTLIN_WRAPPED_INTO_REF">a</symbolName></symbolName>)
     else { -> 1 }
 
-fun mergeSmartCasts(a: Any?) {
-  if (a is String || a is Int) {
-    a.<error descr="[UNRESOLVED_REFERENCE] Unresolved reference: compareTo">compareTo</error>("")
-    <info descr="Smart cast to kotlin.Any" tooltip="Smart cast to kotlin.Any"><info>a</info></info>.toString()
+fun <symbolName descr="null" tooltip="null" textAttributesKey="KOTLIN_FUNCTION_DECLARATION">mergeSmartCasts</symbolName>(<symbolName descr="null" tooltip="null" textAttributesKey="KOTLIN_PARAMETER">a</symbolName>: <symbolName descr="null" tooltip="null" textAttributesKey="KOTLIN_CLASS">Any</symbolName>?) {
+  if (<symbolName descr="null" tooltip="null" textAttributesKey="KOTLIN_PARAMETER">a</symbolName> is <symbolName descr="null" tooltip="null" textAttributesKey="KOTLIN_CLASS">String</symbolName> || <symbolName descr="null" tooltip="null" textAttributesKey="KOTLIN_PARAMETER">a</symbolName> is <symbolName descr="null" tooltip="null" textAttributesKey="KOTLIN_CLASS">Int</symbolName>) {
+    <symbolName descr="null" tooltip="null" textAttributesKey="KOTLIN_PARAMETER">a</symbolName>.<error descr="[UNRESOLVED_REFERENCE] Unresolved reference: compareTo" tooltip="[UNRESOLVED_REFERENCE] Unresolved reference: compareTo" textAttributesKey="WRONG_REFERENCES_ATTRIBUTES">compareTo</error>("")
+    <symbolName descr="null" tooltip="null" textAttributesKey="KOTLIN_PARAMETER"><symbolName descr="Smart cast to kotlin.Any" tooltip="Smart cast to kotlin.Any" textAttributesKey="KOTLIN_SMART_CAST_VALUE">a</symbolName></symbolName>.<symbolName descr="null" tooltip="null" textAttributesKey="KOTLIN_FUNCTION_CALL">toString</symbolName>()
   }
-  if (a is Int || a is String) {
-    a.<error descr="[UNRESOLVED_REFERENCE] Unresolved reference: compareTo">compareTo</error>("")
+  if (<symbolName descr="null" tooltip="null" textAttributesKey="KOTLIN_PARAMETER">a</symbolName> is <symbolName descr="null" tooltip="null" textAttributesKey="KOTLIN_CLASS">Int</symbolName> || <symbolName descr="null" tooltip="null" textAttributesKey="KOTLIN_PARAMETER">a</symbolName> is <symbolName descr="null" tooltip="null" textAttributesKey="KOTLIN_CLASS">String</symbolName>) {
+    <symbolName descr="null" tooltip="null" textAttributesKey="KOTLIN_PARAMETER">a</symbolName>.<error descr="[UNRESOLVED_REFERENCE] Unresolved reference: compareTo" tooltip="[UNRESOLVED_REFERENCE] Unresolved reference: compareTo" textAttributesKey="WRONG_REFERENCES_ATTRIBUTES">compareTo</error>("")
   }
-  when (a) {
-    is String, is Any -> a.<error descr="[UNRESOLVED_REFERENCE] Unresolved reference: compareTo">compareTo</error>("")
+  when (<symbolName descr="null" tooltip="null" textAttributesKey="KOTLIN_PARAMETER">a</symbolName>) {
+    is <symbolName descr="null" tooltip="null" textAttributesKey="KOTLIN_CLASS">String</symbolName>, is <symbolName descr="null" tooltip="null" textAttributesKey="KOTLIN_CLASS">Any</symbolName> -> <symbolName descr="null" tooltip="null" textAttributesKey="KOTLIN_PARAMETER">a</symbolName>.<error descr="[UNRESOLVED_REFERENCE] Unresolved reference: compareTo" tooltip="[UNRESOLVED_REFERENCE] Unresolved reference: compareTo" textAttributesKey="WRONG_REFERENCES_ATTRIBUTES">compareTo</error>("")
   }
-  if (a is String && <warning>a is Any</warning>) {
-    val <warning>i</warning>: Int = <info descr="Smart cast to kotlin.String" tooltip="Smart cast to kotlin.String">a</info>.compareTo("")
+  if (<symbolName descr="null" tooltip="null" textAttributesKey="KOTLIN_PARAMETER">a</symbolName> is <symbolName descr="null" tooltip="null" textAttributesKey="KOTLIN_CLASS">String</symbolName> && <warning descr="[USELESS_IS_CHECK] Check for instance is always 'true'" tooltip="[USELESS_IS_CHECK] Check for instance is always 'true'" textAttributesKey="WARNING_ATTRIBUTES"><symbolName descr="null" tooltip="null" textAttributesKey="KOTLIN_PARAMETER">a</symbolName> is <symbolName descr="null" tooltip="null" textAttributesKey="KOTLIN_CLASS">Any</symbolName></warning>) {
+    val <warning descr="[UNUSED_VARIABLE] Variable 'i' is never used" tooltip="[UNUSED_VARIABLE] Variable 'i' is never used" textAttributesKey="NOT_USED_ELEMENT_ATTRIBUTES"><symbolName descr="null" tooltip="null" textAttributesKey="KOTLIN_LOCAL_VARIABLE">i</symbolName></warning>: <symbolName descr="null" tooltip="null" textAttributesKey="KOTLIN_CLASS">Int</symbolName> = <symbolName descr="null" tooltip="null" textAttributesKey="KOTLIN_PARAMETER"><symbolName descr="Smart cast to kotlin.String" tooltip="Smart cast to kotlin.String" textAttributesKey="KOTLIN_SMART_CAST_VALUE">a</symbolName></symbolName>.<symbolName descr="null" tooltip="null" textAttributesKey="KOTLIN_FUNCTION_CALL">compareTo</symbolName>("")
   }
-  if (a is String && <info descr="Smart cast to kotlin.String" tooltip="Smart cast to kotlin.String">a</info>.compareTo("") == 0) {}
-  if (a is String || a.<error descr="[UNRESOLVED_REFERENCE] Unresolved reference: compareTo">compareTo</error>("") <error>==</error> 0) {}
+  if (<symbolName descr="null" tooltip="null" textAttributesKey="KOTLIN_PARAMETER">a</symbolName> is <symbolName descr="null" tooltip="null" textAttributesKey="KOTLIN_CLASS">String</symbolName> && <symbolName descr="null" tooltip="null" textAttributesKey="KOTLIN_PARAMETER"><symbolName descr="Smart cast to kotlin.String" tooltip="Smart cast to kotlin.String" textAttributesKey="KOTLIN_SMART_CAST_VALUE">a</symbolName></symbolName>.<symbolName descr="null" tooltip="null" textAttributesKey="KOTLIN_FUNCTION_CALL">compareTo</symbolName>("") == 0) {}
+  if (<symbolName descr="null" tooltip="null" textAttributesKey="KOTLIN_PARAMETER">a</symbolName> is <symbolName descr="null" tooltip="null" textAttributesKey="KOTLIN_CLASS">String</symbolName> || <symbolName descr="null" tooltip="null" textAttributesKey="KOTLIN_PARAMETER">a</symbolName>.<error descr="[UNRESOLVED_REFERENCE] Unresolved reference: compareTo" tooltip="[UNRESOLVED_REFERENCE] Unresolved reference: compareTo" textAttributesKey="WRONG_REFERENCES_ATTRIBUTES">compareTo</error>("") <error descr="[DEBUG] Reference is not resolved to anything, but is not marked unresolved" tooltip="[DEBUG] Reference is not resolved to anything, but is not marked unresolved" textAttributesKey="KOTLIN_DEBUG_INFO">==</error> 0) {}
 }
 
 //mutability
-fun f(): String {
-    var a: Any = 11
-    if (<info>a</info> is String) {
-        val <warning>i</warning>: String = <info descr="Smart cast to kotlin.String" tooltip="Smart cast to kotlin.String"><info descr="Wrapped into a reference object to be modified when captured in a closure" tooltip="Wrapped into a reference object to be modified when captured in a closure">a</info></info>
-        <info descr="Smart cast to kotlin.String" tooltip="Smart cast to kotlin.String"><info descr="Wrapped into a reference object to be modified when captured in a closure" tooltip="Wrapped into a reference object to be modified when captured in a closure">a</info></info>.compareTo("f")
-        val <warning>f</warning>: Function0<String> = {
-            <info>a</info> = 42
-            <error descr="[TYPE_MISMATCH] Type mismatch: inferred type is Any but String was expected">a</error>
+fun <symbolName descr="null" tooltip="null" textAttributesKey="KOTLIN_FUNCTION_DECLARATION">f</symbolName>(): <symbolName descr="null" tooltip="null" textAttributesKey="KOTLIN_CLASS">String</symbolName> {
+    var <symbolName descr="null" tooltip="null" textAttributesKey="KOTLIN_LOCAL_VARIABLE"><symbolName descr="null" tooltip="null" textAttributesKey="KOTLIN_MUTABLE_VARIABLE">a</symbolName></symbolName>: <symbolName descr="null" tooltip="null" textAttributesKey="KOTLIN_CLASS">Any</symbolName> = 11
+    if (<symbolName descr="null" tooltip="null" textAttributesKey="KOTLIN_MUTABLE_VARIABLE"><symbolName descr="Wrapped into a reference object to be modified when captured in a closure" tooltip="Wrapped into a reference object to be modified when captured in a closure" textAttributesKey="KOTLIN_WRAPPED_INTO_REF">a</symbolName></symbolName> is <symbolName descr="null" tooltip="null" textAttributesKey="KOTLIN_CLASS">String</symbolName>) {
+        val <warning descr="[UNUSED_VARIABLE] Variable 'i' is never used" tooltip="[UNUSED_VARIABLE] Variable 'i' is never used" textAttributesKey="NOT_USED_ELEMENT_ATTRIBUTES"><symbolName descr="null" tooltip="null" textAttributesKey="KOTLIN_LOCAL_VARIABLE">i</symbolName></warning>: <symbolName descr="null" tooltip="null" textAttributesKey="KOTLIN_CLASS">String</symbolName> = <symbolName descr="null" tooltip="null" textAttributesKey="KOTLIN_MUTABLE_VARIABLE"><symbolName descr="Smart cast to kotlin.String" tooltip="Smart cast to kotlin.String" textAttributesKey="KOTLIN_SMART_CAST_VALUE"><symbolName descr="Wrapped into a reference object to be modified when captured in a closure" tooltip="Wrapped into a reference object to be modified when captured in a closure" textAttributesKey="KOTLIN_WRAPPED_INTO_REF">a</symbolName></symbolName></symbolName>
+        <symbolName descr="null" tooltip="null" textAttributesKey="KOTLIN_MUTABLE_VARIABLE"><symbolName descr="Smart cast to kotlin.String" tooltip="Smart cast to kotlin.String" textAttributesKey="KOTLIN_SMART_CAST_VALUE"><symbolName descr="Wrapped into a reference object to be modified when captured in a closure" tooltip="Wrapped into a reference object to be modified when captured in a closure" textAttributesKey="KOTLIN_WRAPPED_INTO_REF">a</symbolName></symbolName></symbolName>.<symbolName descr="null" tooltip="null" textAttributesKey="KOTLIN_FUNCTION_CALL">compareTo</symbolName>("f")
+        val <warning descr="[UNUSED_VARIABLE] Variable 'f' is never used" tooltip="[UNUSED_VARIABLE] Variable 'f' is never used" textAttributesKey="NOT_USED_ELEMENT_ATTRIBUTES"><symbolName descr="null" tooltip="null" textAttributesKey="KOTLIN_LOCAL_VARIABLE">f</symbolName></warning>: <symbolName descr="null" tooltip="null" textAttributesKey="KOTLIN_TRAIT">Function0</symbolName><<symbolName descr="null" tooltip="null" textAttributesKey="KOTLIN_CLASS">String</symbolName>> = {
+            <symbolName descr="null" tooltip="null" textAttributesKey="KOTLIN_MUTABLE_VARIABLE"><symbolName descr="Wrapped into a reference object to be modified when captured in a closure" tooltip="Wrapped into a reference object to be modified when captured in a closure" textAttributesKey="KOTLIN_WRAPPED_INTO_REF">a</symbolName></symbolName> = 42
+            <error descr="[TYPE_MISMATCH] Type mismatch: inferred type is Any but String was expected" tooltip="[TYPE_MISMATCH] Type mismatch.<table><tr><td>Required:</td><td>String</td></tr><tr><td>Found:</td><td>Any</td></tr></table>" textAttributesKey="ERRORS_ATTRIBUTES"><symbolName descr="null" tooltip="null" textAttributesKey="KOTLIN_MUTABLE_VARIABLE"><symbolName descr="Wrapped into a reference object to be modified when captured in a closure" tooltip="Wrapped into a reference object to be modified when captured in a closure" textAttributesKey="KOTLIN_WRAPPED_INTO_REF">a</symbolName></symbolName></error>
         }
-        return <error descr="[SMARTCAST_IMPOSSIBLE] Smart cast to 'String' is impossible, because 'a' is a local variable that is captured by a changing closure">a</error>
+        return <error descr="[SMARTCAST_IMPOSSIBLE] Smart cast to 'String' is impossible, because 'a' is a local variable that is captured by a changing closure" tooltip="[SMARTCAST_IMPOSSIBLE] Smart cast to 'String' is impossible, because 'a' is a local variable that is captured by a changing closure" textAttributesKey="ERRORS_ATTRIBUTES"><symbolName descr="null" tooltip="null" textAttributesKey="KOTLIN_MUTABLE_VARIABLE"><symbolName descr="Wrapped into a reference object to be modified when captured in a closure" tooltip="Wrapped into a reference object to be modified when captured in a closure" textAttributesKey="KOTLIN_WRAPPED_INTO_REF">a</symbolName></symbolName></error>
     }
     return ""
 }
 
-class Mutable(var x: String?) {
+class <symbolName descr="null" tooltip="null" textAttributesKey="KOTLIN_CLASS">Mutable</symbolName>(var <symbolName descr="null" tooltip="null" textAttributesKey="KOTLIN_INSTANCE_PROPERTY"><symbolName descr="null" tooltip="null" textAttributesKey="KOTLIN_MUTABLE_VARIABLE">x</symbolName></symbolName>: <symbolName descr="null" tooltip="null" textAttributesKey="KOTLIN_CLASS">String</symbolName>?) {
 
-    val xx: String?
-        <info descr="null" tooltip="null">get</info>() = x
+    val <symbolName descr="null" tooltip="null" textAttributesKey="KOTLIN_INSTANCE_PROPERTY_CUSTOM_PROPERTY_DECLARATION"><symbolName descr="null" tooltip="null" textAttributesKey="KOTLIN_INSTANCE_PROPERTY_CUSTOM_PROPERTY_DECLARATION">xx</symbolName></symbolName>: <symbolName descr="null" tooltip="null" textAttributesKey="KOTLIN_CLASS">String</symbolName>?
+        <symbolName descr="null" tooltip="null" textAttributesKey="KOTLIN_KEYWORD">get</symbolName>() = <symbolName descr="null" tooltip="null" textAttributesKey="KOTLIN_INSTANCE_PROPERTY"><symbolName descr="null" tooltip="null" textAttributesKey="KOTLIN_MUTABLE_VARIABLE">x</symbolName></symbolName>
 
-    fun foo(): String {
-        if (x is String) {
-            return <error descr="[SMARTCAST_IMPOSSIBLE] Smart cast to 'String' is impossible, because 'x' is a mutable property that could have been changed by this time">x</error>
+    fun <symbolName descr="null" tooltip="null" textAttributesKey="KOTLIN_FUNCTION_DECLARATION">foo</symbolName>(): <symbolName descr="null" tooltip="null" textAttributesKey="KOTLIN_CLASS">String</symbolName> {
+        if (<symbolName descr="null" tooltip="null" textAttributesKey="KOTLIN_INSTANCE_PROPERTY"><symbolName descr="null" tooltip="null" textAttributesKey="KOTLIN_MUTABLE_VARIABLE">x</symbolName></symbolName> is <symbolName descr="null" tooltip="null" textAttributesKey="KOTLIN_CLASS">String</symbolName>) {
+            return <error descr="[SMARTCAST_IMPOSSIBLE] Smart cast to 'String' is impossible, because 'x' is a mutable property that could have been changed by this time" tooltip="[SMARTCAST_IMPOSSIBLE] Smart cast to 'String' is impossible, because 'x' is a mutable property that could have been changed by this time" textAttributesKey="ERRORS_ATTRIBUTES"><symbolName descr="null" tooltip="null" textAttributesKey="KOTLIN_INSTANCE_PROPERTY"><symbolName descr="null" tooltip="null" textAttributesKey="KOTLIN_MUTABLE_VARIABLE">x</symbolName></symbolName></error>
         }
-        if (x != null) {
-            return <error descr="[SMARTCAST_IMPOSSIBLE] Smart cast to 'String' is impossible, because 'x' is a mutable property that could have been changed by this time">x</error>
+        if (<symbolName descr="null" tooltip="null" textAttributesKey="KOTLIN_INSTANCE_PROPERTY"><symbolName descr="null" tooltip="null" textAttributesKey="KOTLIN_MUTABLE_VARIABLE">x</symbolName></symbolName> != null) {
+            return <error descr="[SMARTCAST_IMPOSSIBLE] Smart cast to 'String' is impossible, because 'x' is a mutable property that could have been changed by this time" tooltip="[SMARTCAST_IMPOSSIBLE] Smart cast to 'String' is impossible, because 'x' is a mutable property that could have been changed by this time" textAttributesKey="ERRORS_ATTRIBUTES"><symbolName descr="null" tooltip="null" textAttributesKey="KOTLIN_INSTANCE_PROPERTY"><symbolName descr="null" tooltip="null" textAttributesKey="KOTLIN_MUTABLE_VARIABLE">x</symbolName></symbolName></error>
         }
-        if (xx is String) {
-            return <error descr="[SMARTCAST_IMPOSSIBLE] Smart cast to 'String' is impossible, because 'xx' is a property that has open or custom getter">xx</error>
+        if (<symbolName descr="null" tooltip="null" textAttributesKey="KOTLIN_INSTANCE_PROPERTY_CUSTOM_PROPERTY_DECLARATION"><symbolName descr="null" tooltip="null" textAttributesKey="KOTLIN_INSTANCE_PROPERTY_CUSTOM_PROPERTY_DECLARATION">xx</symbolName></symbolName> is <symbolName descr="null" tooltip="null" textAttributesKey="KOTLIN_CLASS">String</symbolName>) {
+            return <error descr="[SMARTCAST_IMPOSSIBLE] Smart cast to 'String' is impossible, because 'xx' is a property that has open or custom getter" tooltip="[SMARTCAST_IMPOSSIBLE] Smart cast to 'String' is impossible, because 'xx' is a property that has open or custom getter" textAttributesKey="ERRORS_ATTRIBUTES"><symbolName descr="null" tooltip="null" textAttributesKey="KOTLIN_INSTANCE_PROPERTY_CUSTOM_PROPERTY_DECLARATION"><symbolName descr="null" tooltip="null" textAttributesKey="KOTLIN_INSTANCE_PROPERTY_CUSTOM_PROPERTY_DECLARATION">xx</symbolName></symbolName></error>
         }
         return ""
     }
 
-    fun bar(other: Mutable): String {
-        var y = other
-        if (y.x is String) {
-            return <error descr="[SMARTCAST_IMPOSSIBLE] Smart cast to 'String' is impossible, because 'y.x' is a complex expression">y.x</error>
+    fun <symbolName descr="null" tooltip="null" textAttributesKey="KOTLIN_FUNCTION_DECLARATION">bar</symbolName>(<symbolName descr="null" tooltip="null" textAttributesKey="KOTLIN_PARAMETER">other</symbolName>: <symbolName descr="null" tooltip="null" textAttributesKey="KOTLIN_CLASS">Mutable</symbolName>): <symbolName descr="null" tooltip="null" textAttributesKey="KOTLIN_CLASS">String</symbolName> {
+        var <symbolName descr="null" tooltip="null" textAttributesKey="KOTLIN_LOCAL_VARIABLE"><symbolName descr="null" tooltip="null" textAttributesKey="KOTLIN_MUTABLE_VARIABLE">y</symbolName></symbolName> = <symbolName descr="null" tooltip="null" textAttributesKey="KOTLIN_PARAMETER">other</symbolName>
+        if (<symbolName descr="null" tooltip="null" textAttributesKey="KOTLIN_LOCAL_VARIABLE"><symbolName descr="null" tooltip="null" textAttributesKey="KOTLIN_MUTABLE_VARIABLE">y</symbolName></symbolName>.<symbolName descr="null" tooltip="null" textAttributesKey="KOTLIN_INSTANCE_PROPERTY"><symbolName descr="null" tooltip="null" textAttributesKey="KOTLIN_MUTABLE_VARIABLE">x</symbolName></symbolName> is <symbolName descr="null" tooltip="null" textAttributesKey="KOTLIN_CLASS">String</symbolName>) {
+            return <error descr="[SMARTCAST_IMPOSSIBLE] Smart cast to 'String' is impossible, because 'y.x' is a complex expression" tooltip="[SMARTCAST_IMPOSSIBLE] Smart cast to 'String' is impossible, because 'y.x' is a complex expression" textAttributesKey="ERRORS_ATTRIBUTES"><symbolName descr="null" tooltip="null" textAttributesKey="KOTLIN_LOCAL_VARIABLE"><symbolName descr="null" tooltip="null" textAttributesKey="KOTLIN_MUTABLE_VARIABLE">y</symbolName></symbolName>.<symbolName descr="null" tooltip="null" textAttributesKey="KOTLIN_INSTANCE_PROPERTY"><symbolName descr="null" tooltip="null" textAttributesKey="KOTLIN_MUTABLE_VARIABLE">x</symbolName></symbolName></error>
         }
         return ""
     }
 }
 
-fun foo(aa: Any): Int {
-    var a = aa
-    if (a is Int) {
-        return <info descr="Smart cast to kotlin.Int" tooltip="Smart cast to kotlin.Int">a</info>
+fun <symbolName descr="null" tooltip="null" textAttributesKey="KOTLIN_FUNCTION_DECLARATION">foo</symbolName>(<symbolName descr="null" tooltip="null" textAttributesKey="KOTLIN_PARAMETER">aa</symbolName>: <symbolName descr="null" tooltip="null" textAttributesKey="KOTLIN_CLASS">Any</symbolName>): <symbolName descr="null" tooltip="null" textAttributesKey="KOTLIN_CLASS">Int</symbolName> {
+    var <symbolName descr="null" tooltip="null" textAttributesKey="KOTLIN_LOCAL_VARIABLE"><symbolName descr="null" tooltip="null" textAttributesKey="KOTLIN_MUTABLE_VARIABLE">a</symbolName></symbolName> = <symbolName descr="null" tooltip="null" textAttributesKey="KOTLIN_PARAMETER">aa</symbolName>
+    if (<symbolName descr="null" tooltip="null" textAttributesKey="KOTLIN_LOCAL_VARIABLE"><symbolName descr="null" tooltip="null" textAttributesKey="KOTLIN_MUTABLE_VARIABLE">a</symbolName></symbolName> is <symbolName descr="null" tooltip="null" textAttributesKey="KOTLIN_CLASS">Int</symbolName>) {
+        return <symbolName descr="null" tooltip="null" textAttributesKey="KOTLIN_LOCAL_VARIABLE"><symbolName descr="null" tooltip="null" textAttributesKey="KOTLIN_MUTABLE_VARIABLE"><symbolName descr="Smart cast to kotlin.Int" tooltip="Smart cast to kotlin.Int" textAttributesKey="KOTLIN_SMART_CAST_VALUE">a</symbolName></symbolName></symbolName>
     }
     return 1
 }
 
-fun inForLoop(x: Any?) {
-    if (x is Array<*>) {
-        for (i in <info>x</info>) {}
+fun <symbolName descr="null" tooltip="null" textAttributesKey="KOTLIN_FUNCTION_DECLARATION">inForLoop</symbolName>(<symbolName descr="null" tooltip="null" textAttributesKey="KOTLIN_PARAMETER">x</symbolName>: <symbolName descr="null" tooltip="null" textAttributesKey="KOTLIN_CLASS">Any</symbolName>?) {
+    if (<symbolName descr="null" tooltip="null" textAttributesKey="KOTLIN_PARAMETER">x</symbolName> is <symbolName descr="null" tooltip="null" textAttributesKey="KOTLIN_CLASS">Array</symbolName><*>) {
+        for (<symbolName descr="null" tooltip="null" textAttributesKey="KOTLIN_LOCAL_VARIABLE">i</symbolName> in <symbolName descr="null" tooltip="null" textAttributesKey="KOTLIN_PARAMETER"><symbolName descr="Smart cast to kotlin.Array<*>" tooltip="Smart cast to kotlin.Array<*>" textAttributesKey="KOTLIN_SMART_CAST_VALUE">x</symbolName></symbolName>) {}
     }
-    for (i in <error descr="[ITERATOR_MISSING] For-loop range must have an 'iterator()' method">x</error>) {}
+    for (<symbolName descr="null" tooltip="null" textAttributesKey="KOTLIN_LOCAL_VARIABLE">i</symbolName> in <error descr="[ITERATOR_MISSING] For-loop range must have an 'iterator()' method" tooltip="[ITERATOR_MISSING] For-loop range must have an 'iterator()' method" textAttributesKey="ERRORS_ATTRIBUTES"><symbolName descr="null" tooltip="null" textAttributesKey="KOTLIN_PARAMETER">x</symbolName></error>) {}
 }
 
-class ExplicitAccessorForAnnotation {
-    val tt: String? = "good"
-        <info descr="null" tooltip="null">get</info>
+class <symbolName descr="null" tooltip="null" textAttributesKey="KOTLIN_CLASS">ExplicitAccessorForAnnotation</symbolName> {
+    val <symbolName descr="null" tooltip="null" textAttributesKey="KOTLIN_INSTANCE_PROPERTY_CUSTOM_PROPERTY_DECLARATION"><symbolName descr="null" tooltip="null" textAttributesKey="KOTLIN_INSTANCE_PROPERTY_CUSTOM_PROPERTY_DECLARATION">tt</symbolName></symbolName>: <symbolName descr="null" tooltip="null" textAttributesKey="KOTLIN_CLASS">String</symbolName>? = "good"
+        <symbolName descr="null" tooltip="null" textAttributesKey="KOTLIN_KEYWORD">get</symbolName>
 
-    fun foo(): String {
-        if (tt is String) {
-            return <error descr="[SMARTCAST_IMPOSSIBLE] Smart cast to 'String' is impossible, because 'tt' is a property that has open or custom getter">tt</error>
+    fun <symbolName descr="null" tooltip="null" textAttributesKey="KOTLIN_FUNCTION_DECLARATION">foo</symbolName>(): <symbolName descr="null" tooltip="null" textAttributesKey="KOTLIN_CLASS">String</symbolName> {
+        if (<symbolName descr="null" tooltip="null" textAttributesKey="KOTLIN_INSTANCE_PROPERTY_CUSTOM_PROPERTY_DECLARATION"><symbolName descr="null" tooltip="null" textAttributesKey="KOTLIN_INSTANCE_PROPERTY_CUSTOM_PROPERTY_DECLARATION">tt</symbolName></symbolName> is <symbolName descr="null" tooltip="null" textAttributesKey="KOTLIN_CLASS">String</symbolName>) {
+            return <error descr="[SMARTCAST_IMPOSSIBLE] Smart cast to 'String' is impossible, because 'tt' is a property that has open or custom getter" tooltip="[SMARTCAST_IMPOSSIBLE] Smart cast to 'String' is impossible, because 'tt' is a property that has open or custom getter" textAttributesKey="ERRORS_ATTRIBUTES"><symbolName descr="null" tooltip="null" textAttributesKey="KOTLIN_INSTANCE_PROPERTY_CUSTOM_PROPERTY_DECLARATION"><symbolName descr="null" tooltip="null" textAttributesKey="KOTLIN_INSTANCE_PROPERTY_CUSTOM_PROPERTY_DECLARATION">tt</symbolName></symbolName></error>
         }
         return ""
     }

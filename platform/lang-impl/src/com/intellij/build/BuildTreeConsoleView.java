@@ -5,6 +5,7 @@ import com.intellij.build.events.*;
 import com.intellij.build.events.impl.FailureResultImpl;
 import com.intellij.build.events.impl.SkippedResultImpl;
 import com.intellij.concurrency.ConcurrentCollectionFactory;
+import com.intellij.execution.actions.ClearConsoleAction;
 import com.intellij.execution.filters.Filter;
 import com.intellij.execution.filters.HyperlinkInfo;
 import com.intellij.execution.impl.ConsoleViewImpl;
@@ -1011,6 +1012,7 @@ public final class BuildTreeConsoleView implements ConsoleView, DataProvider, Bu
         }
       });
       textConsoleToolbarActionGroup.add(new ScrollEditorToTheEndAction(this));
+      textConsoleToolbarActionGroup.add(new ClearConsoleAction());
       return textConsoleToolbarActionGroup;
     }
 

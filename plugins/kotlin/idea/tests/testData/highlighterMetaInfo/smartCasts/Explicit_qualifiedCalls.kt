@@ -1,3 +1,5 @@
+// CHECK_SYMBOL_NAMES
+// HIGHLIGHTER_ATTRIBUTES_KEY
 package some.long.pkg
 
 interface WithInvoke {

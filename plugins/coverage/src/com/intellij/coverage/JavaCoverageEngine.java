@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.coverage;
 
 import com.intellij.CommonBundle;
@@ -58,6 +58,7 @@ import com.intellij.rt.coverage.data.JumpData;
 import com.intellij.rt.coverage.data.LineData;
 import com.intellij.rt.coverage.data.SwitchData;
 import com.intellij.task.ProjectTaskManager;
+import com.intellij.task.impl.ProjectTaskManagerImpl;
 import com.intellij.testIntegration.TestFramework;
 import com.intellij.util.containers.ContainerUtil;
 import jetbrains.coverage.report.ReportGenerationFailedException;
@@ -359,6 +360,7 @@ public class JavaCoverageEngine extends CoverageEngine {
                                                          JavaCoverageBundle.message("project.class.files.are.out.of.date"),
                                                          NotificationType.INFORMATION);
       notification.addAction(NotificationAction.createSimpleExpiring(JavaCoverageBundle.message("coverage.recompile"), () -> {
+        ProjectTaskManagerImpl.putBuildOriginator(project, this.getClass());
         ProjectTaskManager taskManager = ProjectTaskManager.getInstance(project);
         Promise<ProjectTaskManager.Result> promise = taskManager.buildAllModules();
         promise.onSuccess(result -> ApplicationManager.getApplication().invokeLater(() -> {

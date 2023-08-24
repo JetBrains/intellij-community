@@ -159,5 +159,6 @@
 
     <statistics.counterUsagesCollector implementationClass="com.intellij.tasks.impl.TaskManagementUsageCollector"/>
     <statistics.projectUsagesCollector implementation="com.intellij.tasks.impl.TaskManagementConfigurationCollector"/>
+    <statistics.projectUsagesCollector implementation="com.intellij.tasks.core.fus.TasksStateCollector"/>
   </extensions>
 </idea-plugin>

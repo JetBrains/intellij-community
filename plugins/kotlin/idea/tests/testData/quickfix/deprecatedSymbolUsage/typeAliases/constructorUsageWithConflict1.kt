@@ -10,3 +10,4 @@ class NewClass(p: Int = 12)
 typealias New = NewClass
 
 fun foo() = <caret>Old()
+// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.replaceWith.DeprecatedSymbolUsageFix

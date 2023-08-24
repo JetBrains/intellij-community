@@ -74,6 +74,17 @@ internal class WebSymbolsQueryExecutorImpl(private val rootScope: List<WebSymbol
     else
       WebSymbolsQueryExecutorImpl(rootScope, namesProvider.withRules(rules), resultsCustomizer, context, allowResolve)
 
+  override fun hasExclusiveScopeFor(namespace: SymbolNamespace, kind: SymbolKind, scope: List<WebSymbolsScope>): Boolean {
+    val finalScope = rootScope.toMutableSet()
+    scope.flatMapTo(finalScope) {
+      if (it is WebSymbol)
+        it.queryScope
+      else
+        listOf(it)
+    }
+    return finalScope.any { it.isExclusiveFor(namespace, kind) }
+  }
+
   internal fun runNameMatchQuery(path: List<WebSymbolQualifiedName>, queryParams: WebSymbolsNameMatchQueryParams,
                                  scope: List<WebSymbolsScope>): List<WebSymbol> =
     runQuery(path, queryParams, scope) { finalContext: Collection<WebSymbolsScope>,

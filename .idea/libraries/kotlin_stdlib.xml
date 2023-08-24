@@ -1,6 +1,14 @@
 <component name="libraryTable">
   <library name="kotlin-stdlib" type="repository">
     <properties maven-id="org.jetbrains.kotlin:kotlin-stdlib:1.8.20">
+      <verification>
+        <artifact url="file://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-stdlib/1.8.20/kotlin-stdlib-1.8.20.jar">
+          <sha256sum>4395647b1961d9fb730a34e8dbe56c293157bc0759004cca63d9b5ee6653e5c7</sha256sum>
+        </artifact>
+        <artifact url="file://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-stdlib-common/1.8.20/kotlin-stdlib-common-1.8.20.jar">
+          <sha256sum>fa20188abaa8ecf1d0035e93a969b071f10e45a1c8378c314521eade73f75fd5</sha256sum>
+        </artifact>
+      </verification>
       <exclude>
         <dependency maven-id="org.jetbrains:annotations" />
       </exclude>

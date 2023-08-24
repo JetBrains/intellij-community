@@ -1,17 +1,17 @@
 // FIR_IDENTICAL
 
-fun foo(s: String) = s.length
+fun <symbolName descr="null" textAttributesKey="KOTLIN_FUNCTION_DECLARATION">foo</symbolName>(<symbolName descr="null" textAttributesKey="KOTLIN_PARAMETER">s</symbolName>: <symbolName descr="null" textAttributesKey="KOTLIN_CLASS">String</symbolName>) = <symbolName descr="null" textAttributesKey="KOTLIN_PARAMETER">s</symbolName>.<symbolName descr="null" textAttributesKey="KOTLIN_INSTANCE_PROPERTY">length</symbolName>
 
-fun baz(s: String?, r: String?): Int {
-    return foo(r ?: when {
-        s != null -> <info><info>s</info></info>
+fun <symbolName descr="null" textAttributesKey="KOTLIN_FUNCTION_DECLARATION">baz</symbolName>(<symbolName descr="null" textAttributesKey="KOTLIN_PARAMETER">s</symbolName>: <symbolName descr="null" textAttributesKey="KOTLIN_CLASS">String</symbolName>?, <symbolName descr="null" textAttributesKey="KOTLIN_PARAMETER">r</symbolName>: <symbolName descr="null" textAttributesKey="KOTLIN_CLASS">String</symbolName>?): <symbolName descr="null" textAttributesKey="KOTLIN_CLASS">Int</symbolName> {
+    return <symbolName descr="null" textAttributesKey="KOTLIN_PACKAGE_FUNCTION_CALL">foo</symbolName>(<symbolName descr="null" textAttributesKey="KOTLIN_PARAMETER">r</symbolName> ?: when {
+        <symbolName descr="null" textAttributesKey="KOTLIN_PARAMETER">s</symbolName> != null -> <symbolName descr="null" textAttributesKey="KOTLIN_PARAMETER"><symbolName descr="Smart cast to kotlin.String (for null call)" textAttributesKey="KOTLIN_SMART_CAST_VALUE"><symbolName textAttributesKey="KOTLIN_SMART_CAST_VALUE">s</symbolName></symbolName></symbolName>
         else -> ""
     })
 }
 
-fun bar(s: String?, r: String?): Int {
-    return (r ?: when {
-        s != null -> <info><info>s</info></info>
+fun <symbolName descr="null" textAttributesKey="KOTLIN_FUNCTION_DECLARATION">bar</symbolName>(<symbolName descr="null" textAttributesKey="KOTLIN_PARAMETER">s</symbolName>: <symbolName descr="null" textAttributesKey="KOTLIN_CLASS">String</symbolName>?, <symbolName descr="null" textAttributesKey="KOTLIN_PARAMETER">r</symbolName>: <symbolName descr="null" textAttributesKey="KOTLIN_CLASS">String</symbolName>?): <symbolName descr="null" textAttributesKey="KOTLIN_CLASS">Int</symbolName> {
+    return (<symbolName descr="null" textAttributesKey="KOTLIN_PARAMETER">r</symbolName> ?: when {
+        <symbolName descr="null" textAttributesKey="KOTLIN_PARAMETER">s</symbolName> != null -> <symbolName descr="null" textAttributesKey="KOTLIN_PARAMETER"><symbolName descr="Smart cast to kotlin.String (for null call)" textAttributesKey="KOTLIN_SMART_CAST_VALUE"><symbolName textAttributesKey="KOTLIN_SMART_CAST_VALUE">s</symbolName></symbolName></symbolName>
         else -> ""
-    }).length
+    }).<symbolName descr="null" textAttributesKey="KOTLIN_INSTANCE_PROPERTY">length</symbolName>
 }

@@ -11,3 +11,4 @@ fun test() {
 }
 
 fun println(s: String) {}
+// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.RemoveUnusedFunctionParameterFix

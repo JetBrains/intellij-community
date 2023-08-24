@@ -11,3 +11,5 @@ class Abcd {
 
 @<caret>Anno
 var a by Abcd()
+
+// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.AddAnnotationUseSiteTargetFix

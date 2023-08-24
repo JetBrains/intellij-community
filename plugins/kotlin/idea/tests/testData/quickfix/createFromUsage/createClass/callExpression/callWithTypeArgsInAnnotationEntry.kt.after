@@ -6,3 +6,4 @@
 }
 
 annotation class bar(val s: String, val i: Int)
+// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.createFromUsage.createClass.CreateClassFromUsageFix$LowPriorityCreateClassFromUsageFix

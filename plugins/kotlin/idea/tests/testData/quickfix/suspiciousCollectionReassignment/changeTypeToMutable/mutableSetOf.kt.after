@@ -5,3 +5,4 @@ fun test() {
     val set = mutableSetOf(1)<caret>
     set += 1
 }
+// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.inspections.SuspiciousCollectionReassignmentInspection$ChangeTypeToMutableFix

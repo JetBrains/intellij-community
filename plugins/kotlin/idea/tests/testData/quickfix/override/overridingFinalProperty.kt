@@ -7,3 +7,5 @@ class B : A() {
     override<caret> var x = 24;
 }
 /* IGNORE_FIR */
+
+// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.MakeOverriddenMemberOpenFix

@@ -3,4 +3,9 @@
   <extensions defaultExtensionNs="com.intellij">
     <multiHostInjector implementation="org.intellij.plugins.intelliLang.inject.xml.XmlLanguageInjector"/>
   </extensions>
+
+  <extensions defaultExtensionNs="org.intellij.intelliLang">
+    <languageSupport implementation="org.intellij.plugins.intelliLang.inject.xml.XmlLanguageInjectionSupport"/>
+    <injectionConfig config="resources/xmlInjections-html.xml"/>
+  </extensions>
 </idea-plugin>

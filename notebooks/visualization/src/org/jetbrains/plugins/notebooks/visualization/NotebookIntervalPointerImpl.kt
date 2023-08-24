@@ -320,12 +320,16 @@ class NotebookIntervalPointerFactoryImpl(private val notebookCellLines: Notebook
     }
 
   private fun onUpdated(event: NotebookIntervalPointersEvent) {
+    safelyUpdate(changeListeners.multicaster, event)
+    safelyUpdate(ApplicationManager.getApplication().messageBus.syncPublisher(NotebookIntervalPointerFactory.ChangeListener.TOPIC), event)
+  }
+
+  private fun safelyUpdate(listener: NotebookIntervalPointerFactory.ChangeListener, event: NotebookIntervalPointersEvent) {
     try {
-      changeListeners.multicaster.onUpdated(event)
-      ApplicationManager.getApplication().messageBus.syncPublisher(NotebookIntervalPointerFactory.ChangeListener.TOPIC).onUpdated(event)
+      listener.onUpdated(event)
     }
     catch (e: Exception) {
-      thisLogger().error("NotebookIntervalPointerFactory.ChangeListener shouldn't throw exceptions", e)
+      thisLogger().error("$listener shouldn't throw exceptions", e)
     }
   }
 

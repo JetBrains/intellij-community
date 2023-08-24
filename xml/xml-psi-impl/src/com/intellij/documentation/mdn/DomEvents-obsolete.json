@@ -11,7 +11,7 @@
   "events": {
     "overflow": {
       "status": [
-        "Deprecated"
+        "Obsolete"
       ],
       "compatibility": {
         "Firefox": ""
@@ -21,7 +21,7 @@
     "show": {
       "status": [
         "StandardTrack",
-        "Deprecated"
+        "Obsolete"
       ],
       "compatibility": {
         "Firefox": ""
@@ -30,7 +30,7 @@
     },
     "underflow": {
       "status": [
-        "Deprecated"
+        "Obsolete"
       ],
       "compatibility": {
         "Firefox": ""

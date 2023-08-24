@@ -4,13 +4,14 @@ package com.intellij.internal.statistic
 import com.intellij.internal.statistic.eventLog.*
 import com.jetbrains.fus.reporting.model.lion3.LogEvent
 import java.util.concurrent.CompletableFuture
+import java.util.concurrent.CopyOnWriteArrayList
 import java.util.concurrent.Executor
 
-class TestStatisticsEventLogger(private val session: String = "testSession",
+open class TestStatisticsEventLogger(private val session: String = "testSession",
                                 private val build: String = "999.999",
                                 private val bucket: String = "1",
                                 private val recorderVersion: String = "1") : StatisticsEventLogger {
-  val logged = ArrayList<LogEvent>()
+  val logged = CopyOnWriteArrayList<LogEvent>()
 
   override fun logAsync(group: EventLogGroup, eventId: String, data: Map<String, Any>, isState: Boolean): CompletableFuture<Void> {
     val eventTime = System.currentTimeMillis()

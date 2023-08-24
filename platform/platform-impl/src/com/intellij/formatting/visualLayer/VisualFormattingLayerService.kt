@@ -14,24 +14,10 @@ import com.intellij.psi.codeStyle.CodeStyleSettings
 
 val visualFormattingElementKey: Key<Boolean> = Key.create("visual.formatting.element")
 
+private val EDITOR_VISUAL_FORMATTING_LAYER_CODE_STYLE_SETTINGS = Key.create<CodeStyleSettings>("visual.formatting.layer.info")
+
+
 abstract class VisualFormattingLayerService {
-  private val EDITOR_VISUAL_FORMATTING_LAYER_CODE_STYLE_SETTINGS = Key.create<CodeStyleSettings>("visual.formatting.layer.info")
-  private val Editor.visualFormattingLayerEnabled: Boolean
-    get() = visualFormattingLayerCodeStyleSettings != null
-  var Editor.visualFormattingLayerCodeStyleSettings: CodeStyleSettings?
-    get() = getUserData(EDITOR_VISUAL_FORMATTING_LAYER_CODE_STYLE_SETTINGS)
-    private set(value) = putUserData(EDITOR_VISUAL_FORMATTING_LAYER_CODE_STYLE_SETTINGS, value)
-
-  fun enabledForEditor(editor: Editor): Boolean = editor.visualFormattingLayerEnabled
-
-  fun enableForEditor(editor: Editor, codeStyleSettings: CodeStyleSettings) {
-    editor.visualFormattingLayerCodeStyleSettings = codeStyleSettings
-  }
-
-  fun disableForEditor(editor: Editor) {
-    editor.visualFormattingLayerCodeStyleSettings = null
-  }
-
   abstract fun collectVisualFormattingLayerElements(editor: Editor): List<VisualFormattingLayerElement>
 
   abstract fun applyVisualFormattingLayerElementsToEditor(editor: Editor, elements: List<VisualFormattingLayerElement>)
@@ -45,6 +31,33 @@ abstract class VisualFormattingLayerService {
     @JvmStatic
     fun getInstance(): VisualFormattingLayerService =
       ApplicationManager.getApplication().getService(VisualFormattingLayerService::class.java)
+
+    private val Editor.visualFormattingLayerEnabled: Boolean
+      get() = visualFormattingLayerCodeStyleSettings != null
+    var Editor.visualFormattingLayerCodeStyleSettings: CodeStyleSettings?
+      get() = getUserData(EDITOR_VISUAL_FORMATTING_LAYER_CODE_STYLE_SETTINGS)
+      private set(value) = putUserData(EDITOR_VISUAL_FORMATTING_LAYER_CODE_STYLE_SETTINGS, value)
+
+    @JvmStatic
+    fun isEnabledForEditor(editor: Editor): Boolean = editor.visualFormattingLayerEnabled
+
+    @JvmStatic
+    fun enableForEditor(editor: Editor, codeStyleSettings: CodeStyleSettings) {
+      editor.visualFormattingLayerCodeStyleSettings = codeStyleSettings
+    }
+
+    @JvmStatic
+    fun disableForEditor(editor: Editor) {
+      editor.visualFormattingLayerCodeStyleSettings = null
+    }
+
+    @Suppress("UNCHECKED_CAST")
+    @JvmStatic
+    fun getVisualFormattingInlineInlays(editor: Editor, startOffset: Int, endOffset: Int): List<Inlay<out InlayPresentation>> =
+      editor.inlayModel
+        .getInlineElementsInRange(startOffset, endOffset)
+        .filter { InlayPresentation::class.isInstance(it.renderer) && !(it.renderer as InlayPresentation).vertical }
+        as List<Inlay<out InlayPresentation>>
   }
 
 }

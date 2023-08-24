@@ -20,12 +20,15 @@ import com.intellij.codeInspection.ProblemHighlightType;
 import com.intellij.codeInspection.ProblemsHolder;
 import com.intellij.codeInspection.util.InspectionMessage;
 import com.intellij.lang.ASTNode;
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.JDOMExternalizableStringList;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.xml.XmlAttribute;
 import com.intellij.psi.xml.XmlChildRole;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.StringTokenizer;
@@ -43,7 +46,7 @@ public abstract class HtmlUnknownElementInspection extends HtmlLocalInspectionTo
 
     final StringTokenizer tokenizer = new StringTokenizer(properties, ",");
     while (tokenizer.hasMoreTokens()) {
-      result.add(StringUtil.toLowerCase(tokenizer.nextToken()).trim());
+      result.add(tokenizer.nextToken());
     }
 
     return result;
@@ -64,13 +67,13 @@ public abstract class HtmlUnknownElementInspection extends HtmlLocalInspectionTo
     }
   }
 
-  protected boolean isCustomValue(@NotNull final String value) {
-    return myValues.contains(StringUtil.toLowerCase(value));
+  protected boolean isCustomValue(@NotNull String value) {
+    return ContainerUtil.exists(myValues, val -> StringUtil.equalsIgnoreCase(val, value));
   }
 
   @Override
   public void addEntry(@NotNull final String text) {
-    final String s = StringUtil.toLowerCase(text.trim());
+    final String s = text.trim();
     if (!isCustomValue(s)) {
       myValues.add(s);
     }
@@ -89,8 +92,14 @@ public abstract class HtmlUnknownElementInspection extends HtmlLocalInspectionTo
     return StringUtil.join(myValues, ",");
   }
 
-  public void updateAdditionalEntries(@NotNull final String values) {
+  public void updateAdditionalEntries(@NotNull final String values, Disposable disposable) {
+    JDOMExternalizableStringList oldValue = myValues;
     myValues = reparseProperties(values);
+    if (disposable != null) {
+      Disposer.register(disposable, () -> {
+        myValues = oldValue;
+      });
+    }
   }
 
   @NotNull

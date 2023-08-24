@@ -59,6 +59,7 @@ import kotlinx.coroutines.flow.FlowCollector
 import org.jetbrains.annotations.ApiStatus
 import java.awt.*
 import java.awt.event.MouseMotionAdapter
+import java.awt.event.WindowStateListener
 import javax.accessibility.AccessibleContext
 import javax.accessibility.AccessibleRole
 import javax.swing.*
@@ -178,6 +179,14 @@ open class IdeRootPane internal constructor(frame: JFrame,
           isLightEdit = isLightEdit
         )
         layeredPane.add(customFrameTitlePane.getComponent(), (JLayeredPane.DEFAULT_LAYER - 3) as Any)
+
+        val windowStateListener = WindowStateListener {
+          installLinuxBorder()
+        }
+        frame.addWindowStateListener(windowStateListener)
+        coroutineScope.coroutineContext.job.invokeOnCompletion {
+          frame.removeWindowStateListener(windowStateListener)
+        }
       }
       else {
         helper = UndecoratedHelper
@@ -207,7 +216,12 @@ open class IdeRootPane internal constructor(frame: JFrame,
 
     ComponentUtil.decorateWindowHeader(this)
 
-    border = UIManager.getBorder("Window.border")
+    if (SystemInfoRt.isXWindow) {
+      installLinuxBorder()
+    }
+    else {
+      border = UIManager.getBorder("Window.border")
+    }
 
     helper.init(frame, rootPane, parentDisposable)
     updateMainMenuVisibility()
@@ -252,7 +266,14 @@ open class IdeRootPane internal constructor(frame: JFrame,
     internal val hideNativeLinuxTitle: Boolean
       get() = hideNativeLinuxTitleAvailable
               && UISettings.shadowInstance.mergeMainMenuWithWindowTitle
+              && hideNativeLinuxTitleSupported
+
+    internal val hideNativeLinuxTitleSupported: Boolean
+      get() = SystemInfoRt.isXWindow
+              && ExperimentalUI.isNewUI()
               && jbr5777Workaround() && JBR.isWindowMoveSupported()
+              && !X11UiUtil.isWSL()
+              && !X11UiUtil.isTileWM()
 
     internal val hideNativeLinuxTitleAvailable: Boolean
       get() = SystemInfoRt.isXWindow
@@ -274,6 +295,15 @@ open class IdeRootPane internal constructor(frame: JFrame,
     // Workaround for JBR-5777, should be removed after JBR-5777 is fixed
     fun jbr5777Workaround(): Boolean {
       return GraphicsEnvironment.getLocalGraphicsEnvironment().javaClass.getName().equals("sun.awt.X11GraphicsEnvironment")
+    }
+  }
+
+  override fun updateUI() {
+    super.updateUI()
+
+    @Suppress("SENSELESS_COMPARISON") // frame = null when called from init of super
+    if (frame != null && windowDecorationStyle == NONE) {
+      installLinuxBorder()
     }
   }
 
@@ -323,8 +353,17 @@ open class IdeRootPane internal constructor(frame: JFrame,
 
   open fun getToolWindowPane(): ToolWindowPane = toolWindowPane!!
 
-  private fun updateScreenState(isInFullScreen: () -> Boolean) {
-    fullScreen = isInFullScreen()
+  private fun installLinuxBorder() {
+    if (SystemInfoRt.isXWindow) {
+      val extendedState = frame?.extendedState ?: 0
+      val maximized = extendedState and Frame.MAXIMIZED_BOTH == Frame.MAXIMIZED_BOTH
+      border = JBUI.CurrentTheme.Window.getBorder(!fullScreen && !maximized && hideNativeLinuxTitle)
+    }
+  }
+
+  private fun updateScreenState(fullScreen: Boolean) {
+    this.fullScreen = fullScreen
+    installLinuxBorder()
     if (helper is DecoratedHelper) {
       val isCustomFrameHeaderVisible = !fullScreen || SystemInfoRt.isMac && !isCompactHeader
       helper.customFrameTitlePane.getComponent().isVisible = isCustomFrameHeaderVisible
@@ -353,9 +392,9 @@ open class IdeRootPane internal constructor(frame: JFrame,
    * Invoked when enclosed frame is being disposed.
    */
   override fun removeNotify() {
-    coroutineScope.cancel()
-
     if (ScreenUtil.isStandardAddRemoveNotify(this)) {
+      coroutineScope.cancel()
+
       jMenuBar = null
       if (helper is DecoratedHelper) {
         val customFrameTitlePane = helper.customFrameTitlePane
@@ -379,10 +418,13 @@ open class IdeRootPane internal constructor(frame: JFrame,
   }
 
   @RequiresEdt
-  internal fun preInit(isInFullScreen: () -> Boolean) {
+  internal fun preInit(fullScreen: Boolean) {
     if (isDecoratedMenu || isFloatingMenuBarSupported) {
-      addPropertyChangeListener(IdeFrameDecorator.FULL_SCREEN) { updateScreenState(isInFullScreen) }
-      updateScreenState(isInFullScreen)
+      addPropertyChangeListener(IdeFrameDecorator.FULL_SCREEN) {
+        val fullScreenProperty = ClientProperty.isTrue(this, IdeFrameDecorator.FULL_SCREEN)
+        updateScreenState(fullScreenProperty)
+      }
+      updateScreenState(fullScreen)
     }
   }
 
@@ -579,7 +621,7 @@ open class IdeRootPane internal constructor(frame: JFrame,
     frame.background = JBColor.PanelBackground
     (frame.balloonLayout as? BalloonLayoutImpl)?.queueRelayout()
 
-    updateScreenState { fullScreen }
+    updateScreenState(fullScreen)
   }
 
   private val frame: IdeFrameImpl?

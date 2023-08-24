@@ -7,7 +7,6 @@ import com.intellij.ide.IdeBundle;
 import com.intellij.ide.ui.ToolbarSettings;
 import com.intellij.ide.ui.UISettings;
 import com.intellij.ide.ui.UISettingsListener;
-import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.TooltipDescriptionProvider;
 import com.intellij.openapi.application.ApplicationManager;
@@ -43,7 +42,7 @@ import java.util.List;
 /**
  * @author Alexander Lobas
  */
-public final class SettingsEntryPointAction extends DumbAwareAction implements RightAlignedToolbarAction, TooltipDescriptionProvider {
+public final class SettingsEntryPointAction extends DumbAwareAction implements RightAlignedToolbarAction, TooltipDescriptionProvider, Toggleable {
   private static final BadgeIconSupplier GEAR_ICON = new BadgeIconSupplier(AllIcons.General.GearPlain);
   private static final Icon NEW_UI_ICON =
     IconManager.getInstance().withIconBadge(AllIcons.General.GearPlain, JBUI.CurrentTheme.IconBadge.NEW_UI);
@@ -59,6 +58,7 @@ public final class SettingsEntryPointAction extends DumbAwareAction implements R
     resetActionIcon();
 
     ListPopup popup = createMainPopup(e.getDataContext(), e.getInputEvent().getComponent());
+    PopupUtil.addToggledStateListener(popup, e.getPresentation());
     PopupUtil.showForActionButtonEvent(popup, e);
   }
 
@@ -181,8 +181,7 @@ public final class SettingsEntryPointAction extends DumbAwareAction implements R
   }
 
   private static boolean calculateOurNewUiIcon() {
-    PropertiesComponent propertyComponent = PropertiesComponent.getInstance();
-    return !ExperimentalUI.isNewUI() && !propertyComponent.getBoolean(ExperimentalUI.NEW_UI_USED_PROPERTY)
+    return !ExperimentalUI.isNewUI() && !ExperimentalUI.isNewUiUsedOnce()
            && ExperimentalUI.getPromotionDaysCount() < 14;
   }
 

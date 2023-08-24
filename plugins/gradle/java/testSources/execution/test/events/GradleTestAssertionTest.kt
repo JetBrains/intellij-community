@@ -113,6 +113,15 @@ class GradleTestAssertionTest : GradleExecutionTestCase() {
               """.trimMargin())
             }
           }
+          assertNode("test wrapped assertion exception") {
+            // Wrapped assertion exceptions isn't recognized by Gradle and IDE comparison extractors.
+            assertTestConsoleContains("""
+              |java.lang.AssertionError: additional message
+            """.trimMargin())
+            assertTestConsoleContains("""
+              |org.opentest4j.AssertionFailedError: assertion message ==> expected: <expected text> but was: <actual text>
+            """.trimMargin())
+          }
         }
       }
     }
@@ -351,6 +360,15 @@ class GradleTestAssertionTest : GradleExecutionTestCase() {
               |<Click to see difference>
               |
               |java.lang.AssertionError: assertion message expected same:<string> was not:<string>
+            """.trimMargin())
+          }
+          assertNode("test_wrapped_assertion_exception") {
+            // Wrapped assertion exceptions isn't recognized by Gradle and IDE comparison extractors.
+            assertTestConsoleContains("""
+              |java.lang.AssertionError: additional message
+            """.trimMargin())
+            assertTestConsoleContains("""
+              |org.junit.ComparisonFailure: assertion message expected:<[expected] text> but was:<[actual] text>
             """.trimMargin())
           }
         }
@@ -642,6 +660,15 @@ class GradleTestAssertionTest : GradleExecutionTestCase() {
         |  public void test_file_comparison_failure_without_actual_file() {
         |    throw new FileComparisonFailure("assertion message", "Expected text.", "Actual text.", "$expectedPath", null);
         |  }
+        |
+        |  @Test
+        |  public void test_wrapped_file_comparison_failure() {
+        |    try {
+        |      throw new FileComparisonFailure("assertion message", "Expected text.", "Actual text.", "$expectedPath", "$actualPath");
+        |    } catch (AssertionError error) {
+        |      throw new AssertionError("additional message", error);
+        |    }
+        |  }
         |}
       """.trimMargin())
 
@@ -679,6 +706,15 @@ class GradleTestAssertionTest : GradleExecutionTestCase() {
               Assertions.assertEquals(expectedPath, diffViewerProvider.filePath)
               Assertions.assertEquals(null, diffViewerProvider.actualFilePath)
             }
+          }
+          assertNode("test_wrapped_file_comparison_failure") {
+            // Wrapped assertion exceptions isn't recognized by Gradle and IDE comparison extractors.
+            assertTestConsoleContains("""
+              |java.lang.AssertionError: additional message
+            """.trimMargin())
+            assertTestConsoleContains("""
+              |com.intellij.rt.execution.junit.FileComparisonFailure: assertion message expected:<[Expected] text.> but was:<[Actual] text.>
+            """.trimMargin())
           }
         }
       }
@@ -705,10 +741,17 @@ class GradleTestAssertionTest : GradleExecutionTestCase() {
     test(gradleVersion, fixture) {
       val expectedPath = writeText("expected.txt", "Expected text.").path
       val actualPath = writeText("actual.txt", "Actual text.").path
+      val expectedPath1 = writeText("expected1.txt", "Expected text 1.").path
+      val actualPath1 = writeText("actual1.txt", "Actual text 1.").path
+      val expectedPath2 = writeText("expected2.txt", "Expected text 2.").path
+      val actualPath2 = writeText("actual2.txt", "Actual text 2.").path
+      val expectedPath3 = writeText("expected3.txt", "Expected text 3.").path
+      val actualPath3 = writeText("actual3.txt", "Actual text 3.").path
       writeText("src/test/java/org/example/TestCase.java", """
         |package org.example;
         |
         |import com.intellij.rt.execution.junit.FileComparisonFailure;
+        |import org.junit.jupiter.api.Assertions;
         |import org.junit.jupiter.api.Test;
         |
         |public class TestCase {
@@ -721,6 +764,24 @@ class GradleTestAssertionTest : GradleExecutionTestCase() {
         |  @Test
         |  public void test_file_comparison_failure_without_actual_file() {
         |    throw new FileComparisonFailure("assertion message", "Expected text.", "Actual text.", "$expectedPath", null);
+        |  }
+        |
+        |  @Test
+        |  public void test_multiple_file_comparison_failure() {
+        |    Assertions.assertAll(
+        |      () -> { throw new FileComparisonFailure("assertion message 1", "Expected text 1.", "Actual text 1.", "$expectedPath1", "$actualPath1"); },
+        |      () -> { throw new FileComparisonFailure("assertion message 2", "Expected text 2.", "Actual text 2.", "$expectedPath2", "$actualPath2"); },
+        |      () -> { throw new FileComparisonFailure("assertion message 3", "Expected text 3.", "Actual text 3.", "$expectedPath3", "$actualPath3"); }
+        |    );
+        |  }
+        |
+        |  @Test
+        |  public void test_wrapped_file_comparison_failure() {
+        |    try {
+        |      throw new FileComparisonFailure("assertion message", "Expected text.", "Actual text.", "$expectedPath", "$actualPath");
+        |    } catch (AssertionError error) {
+        |      throw new AssertionError("additional message", error);
+        |    }
         |  }
         |}
       """.trimMargin())
@@ -759,6 +820,56 @@ class GradleTestAssertionTest : GradleExecutionTestCase() {
               Assertions.assertEquals(expectedPath, diffViewerProvider.filePath)
               Assertions.assertEquals(null, diffViewerProvider.actualFilePath)
             }
+          }
+          assertNode("test_multiple_file_comparison_failure") {
+            if (isBuiltInTestEventsUsed()) {
+              assertTestConsoleContains("""
+                |
+                |assertion message 1
+                |Expected :Expected text 1.
+                |Actual   :Actual text 1.
+                |<Click to see difference>
+                |
+                |com.intellij.rt.execution.junit.FileComparisonFailure: assertion message 1 expected:<[Expected] text 1.> but was:<[Actual] text 1.>
+              """.trimMargin())
+              assertTestConsoleContains("""
+                |
+                |assertion message 2
+                |Expected :Expected text 2.
+                |Actual   :Actual text 2.
+                |<Click to see difference>
+                |
+                |com.intellij.rt.execution.junit.FileComparisonFailure: assertion message 2 expected:<[Expected] text 2.> but was:<[Actual] text 2.>
+              """.trimMargin())
+              assertTestConsoleContains("""
+                |
+                |assertion message 3
+                |Expected :Expected text 3.
+                |Actual   :Actual text 3.
+                |<Click to see difference>
+                |
+                |com.intellij.rt.execution.junit.FileComparisonFailure: assertion message 3 expected:<[Expected] text 3.> but was:<[Actual] text 3.>
+              """.trimMargin())
+            } else {
+              assertTestConsoleContains("""
+                |com.intellij.rt.execution.junit.FileComparisonFailure: assertion message 1 expected:<[Expected] text 1.> but was:<[Actual] text 1.>
+              """.trimMargin())
+              assertTestConsoleContains("""
+                |com.intellij.rt.execution.junit.FileComparisonFailure: assertion message 2 expected:<[Expected] text 2.> but was:<[Actual] text 2.>
+              """.trimMargin())
+              assertTestConsoleContains("""
+                |com.intellij.rt.execution.junit.FileComparisonFailure: assertion message 3 expected:<[Expected] text 3.> but was:<[Actual] text 3.>
+              """.trimMargin())
+            }
+          }
+          assertNode("test_wrapped_file_comparison_failure") {
+            // Wrapped assertion exceptions isn't recognized by Gradle and IDE comparison extractors.
+            assertTestConsoleContains("""
+              |java.lang.AssertionError: additional message
+            """.trimMargin())
+            assertTestConsoleContains("""
+              |com.intellij.rt.execution.junit.FileComparisonFailure: assertion message expected:<[Expected] text.> but was:<[Actual] text.>
+            """.trimMargin())
           }
         }
       }
@@ -951,6 +1062,15 @@ class GradleTestAssertionTest : GradleExecutionTestCase() {
       |        () -> Assertions.assertEquals("expected text 2", "actual text 2", "assertion message 2"),
       |        () -> Assertions.assertEquals("expected text 3", "actual text 3", "assertion message 3")
       |    );
+      |  }
+      |  
+      |  @Test
+      |  public void test_wrapped_assertion_exception() {
+      |    try {
+      |      Assertions.assertEquals("expected text", "actual text", "assertion message");
+      |    } catch (AssertionError error) {
+      |      throw new AssertionError("additional message", error);
+      |    }
       |  }
       |}
     """.trimMargin()
@@ -1194,6 +1314,15 @@ class GradleTestAssertionTest : GradleExecutionTestCase() {
       |      }
       |    };
       |    Assert.assertSame("assertion message", expected, actual);
+      |  }
+      |
+      |  @Test
+      |  public void test_wrapped_assertion_exception() {
+      |    try {
+      |      Assert.assertEquals("assertion message", "expected text", "actual text");
+      |    } catch (AssertionError error) {
+      |      throw new AssertionError("additional message", error);
+      |    }
       |  }
       |}
     """.trimMargin()

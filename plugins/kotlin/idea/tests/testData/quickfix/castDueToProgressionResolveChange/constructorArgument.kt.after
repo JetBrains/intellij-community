@@ -8,3 +8,4 @@ class SmartList<T> {
 fun invoke() {
     SmartList((1..10) as Iterable<Int>)
 }
+// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.OverloadResolutionChangeFix

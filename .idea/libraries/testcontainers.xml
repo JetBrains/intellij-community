@@ -1,6 +1,23 @@
 <component name="libraryTable">
   <library name="testcontainers" type="repository">
     <properties maven-id="org.testcontainers:testcontainers:1.17.3">
+      <verification>
+        <artifact url="file://$MAVEN_REPOSITORY$/org/testcontainers/testcontainers/1.17.3/testcontainers-1.17.3.jar">
+          <sha256sum>b87e3bd3d005683ca5dcac70f431b633e407d8f63e3754a867112c631dcf683e</sha256sum>
+        </artifact>
+        <artifact url="file://$MAVEN_REPOSITORY$/org/rnorth/duct-tape/duct-tape/1.0.8/duct-tape-1.0.8.jar">
+          <sha256sum>31cef12ddec979d1f86d7cf708c41a17da523d05c685fd6642e9d0b2addb7240</sha256sum>
+        </artifact>
+        <artifact url="file://$MAVEN_REPOSITORY$/com/github/docker-java/docker-java-api/3.2.13/docker-java-api-3.2.13.jar">
+          <sha256sum>f810d8c76637991990d17282be226feb7c8d74056147dc79f0d9d2a6e201aecc</sha256sum>
+        </artifact>
+        <artifact url="file://$MAVEN_REPOSITORY$/com/github/docker-java/docker-java-transport-zerodep/3.2.13/docker-java-transport-zerodep-3.2.13.jar">
+          <sha256sum>3f76f8eb0332607c145d69f27ad8aa6941b5448e745823641d3867ba3746f0f7</sha256sum>
+        </artifact>
+        <artifact url="file://$MAVEN_REPOSITORY$/com/github/docker-java/docker-java-transport/3.2.13/docker-java-transport-3.2.13.jar">
+          <sha256sum>778c35c0557cd3ba4f1c9f64fb942f77ca7e390c5daae4471854150f4ee8d87d</sha256sum>
+        </artifact>
+      </verification>
       <exclude>
         <dependency maven-id="junit:junit" />
         <dependency maven-id="org.slf4j:slf4j-api" />

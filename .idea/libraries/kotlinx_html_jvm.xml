@@ -1,6 +1,12 @@
 <component name="libraryTable">
   <library name="kotlinx-html-jvm" type="repository">
-    <properties include-transitive-deps="false" maven-id="org.jetbrains.kotlinx:kotlinx-html-jvm:0.8.1" />
+    <properties include-transitive-deps="false" maven-id="org.jetbrains.kotlinx:kotlinx-html-jvm:0.8.1">
+      <verification>
+        <artifact url="file://$MAVEN_REPOSITORY$/org/jetbrains/kotlinx/kotlinx-html-jvm/0.8.1/kotlinx-html-jvm-0.8.1.jar">
+          <sha256sum>98bda1c78a5028a134ceb25b63f5c130c89349730d35fd47ef7490b6bf0b63b3</sha256sum>
+        </artifact>
+      </verification>
+    </properties>
     <CLASSES>
       <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlinx/kotlinx-html-jvm/0.8.1/kotlinx-html-jvm-0.8.1.jar!/" />
     </CLASSES>

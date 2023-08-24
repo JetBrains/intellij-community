@@ -16,6 +16,7 @@ import kotlinx.coroutines.*
 import kotlinx.coroutines.sync.Semaphore
 import org.junit.jupiter.api.Assertions.*
 import org.junit.jupiter.api.Test
+import org.junit.jupiter.api.assertDoesNotThrow
 import org.junit.jupiter.api.assertThrows
 import java.lang.Runnable
 import kotlin.coroutines.ContinuationInterceptor
@@ -99,6 +100,29 @@ class RunWithModalProgressBlockingTest : ModalCoroutineTest() {
       }
     }
     assertSame(t, assertInstanceOf<CancellationException>(thrown.cause))
+  }
+
+  @Test
+  fun `non-cancellable`(): Unit = timeoutRunBlocking {
+    val job = launch(Dispatchers.EDT) {
+      blockingContext {
+        Cancellation.computeInNonCancelableSection<_, Nothing> {
+          assertDoesNotThrow {
+            runWithModalProgressBlocking {
+              assertDoesNotThrow {
+                ensureActive()
+              }
+              this@launch.cancel()
+              assertDoesNotThrow {
+                ensureActive()
+              }
+            }
+          }
+        }
+      }
+    }
+    job.join()
+    assertTrue(job.isCancelled)
   }
 
   @Test

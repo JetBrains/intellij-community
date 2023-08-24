@@ -183,7 +183,7 @@
     <localInspection groupPath="Java" language="JAVA" shortName="LombokGetterMayBeUsed" enabledByDefault="true" level="WARNING"
                      bundle="messages.LombokBundle" key="inspection.lombok.getter.may.be.used.display.name"
                      groupBundle="messages.InspectionsBundle" groupKey="group.names.verbose.or.redundant.code.constructs"
-                     implementationClass="de.plushnikov.intellij.plugin.inspection.LombokGetterMayBeUsedInspection" cleanupTool="true"/>
+                     implementationClass="de.plushnikov.intellij.plugin.inspection.LombokGetterMayBeUsedInspection" />
 
     <localInspection
       language="JAVA"

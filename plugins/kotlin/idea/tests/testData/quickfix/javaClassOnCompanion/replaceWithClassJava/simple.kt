@@ -3,3 +3,4 @@
 fun main() {
     val c = Int.javaClass<caret>
 }
+// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.ReplaceWithClassJavaFix

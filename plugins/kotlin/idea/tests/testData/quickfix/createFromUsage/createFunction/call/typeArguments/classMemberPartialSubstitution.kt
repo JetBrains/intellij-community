@@ -9,3 +9,4 @@ class A<T>(val b: B<T>) {
         return b.<caret>foo<String>(2, "2")
     }
 }
+// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.createFromUsage.createCallable.CreateCallableFromUsageFix

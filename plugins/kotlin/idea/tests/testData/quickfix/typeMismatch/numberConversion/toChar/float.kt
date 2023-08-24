@@ -4,3 +4,5 @@ fun char(x: Char) {}
 fun test(f: Float) {
     char(<caret>f)
 }
+
+// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.NumberConversionFix

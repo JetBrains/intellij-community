@@ -13,7 +13,7 @@
     "altglyph": {
       "status": [
         "StandardTrack",
-        "Deprecated"
+        "Obsolete"
       ],
       "compatibility": {
         "Chrome": "",
@@ -23,12 +23,12 @@
         "Safari": "4",
         "SafariIOS": "4"
       },
-      "doc": "<div><div class=\"notecard deprecated\">\n<h4 id=\"deprecated\">Deprecated</h4>\n<p>This feature is no longer recommended. Though some browsers might still support it, it may have already been removed from the relevant web standards, may be in the process of being dropped, or may only be kept for compatibility purposes. Avoid using it, and update existing code if possible; see the <a href=\"#browser_compatibility\">compatibility table</a> at the bottom of this page to guide your decision. Be aware that this feature may cease to work at any time.</p>\n</div></div>\n<p>The <strong><code>&lt;altGlyph&gt;</code></strong> SVG element allows sophisticated selection of the glyphs used to render its child character data.</p>",
+      "doc": "The <strong><code>&lt;altGlyph&gt;</code></strong> SVG element allows sophisticated selection of the glyphs used to render its child character data.</p>",
       "attrs": {
         "dx": {
           "status": [
             "StandardTrack",
-            "Deprecated"
+            "Obsolete"
           ],
           "compatibility": {},
           "doc": "This attribute indicates a shift along the x-axis on the position of the element.\n<br>\n<small><em>Value type</em>: <a href=\"$MDN_URL$/Web/SVG/Content_type#list-of-ts\"><strong>&lt;list-of-coordinates&gt;</strong></a> ; <em>Default value</em>: Relative x-coordinate of ancestor <a href=\"$MDN_URL$/Web/SVG/Element/text\"><code>&lt;text&gt;</code></a> or <a href=\"$MDN_URL$/Web/SVG/Element/tspan\"><code>&lt;tspan&gt;</code></a>; <em>Animatable</em>: <strong>yes</strong></small>"
@@ -36,7 +36,7 @@
         "dy": {
           "status": [
             "StandardTrack",
-            "Deprecated"
+            "Obsolete"
           ],
           "compatibility": {},
           "doc": "This attribute indicates a shift along the x-axis on the position of the element.\n<br>\n<small><em>Value type</em>: <a href=\"$MDN_URL$/Web/SVG/Content_type#list-of-ts\"><strong>&lt;list-of-coordinates&gt;</strong></a> ; <em>Default value</em>: Relative y-coordinate of ancestor <a href=\"$MDN_URL$/Web/SVG/Element/text\"><code>&lt;text&gt;</code></a> or <a href=\"$MDN_URL$/Web/SVG/Element/tspan\"><code>&lt;tspan&gt;</code></a>; <em>Animatable</em>: <strong>yes</strong></small>"
@@ -44,7 +44,7 @@
         "format": {
           "status": [
             "StandardTrack",
-            "Deprecated"
+            "Obsolete"
           ],
           "compatibility": {},
           "doc": "The format of the given font.\n<br>\n<small><em>Value type</em>: <strong>&lt;string</strong><a href=\"$MDN_URL$/Web/SVG/Content_type#percentage\"><strong>&gt;</strong></a> ; <em>Default value</em>: <em>none</em>; <em>Animatable</em>: <strong>no</strong></small>"
@@ -52,14 +52,14 @@
         "glyphref": {
           "status": [
             "StandardTrack",
-            "Deprecated"
+            "Obsolete"
           ],
           "compatibility": {}
         },
         "rotate": {
           "status": [
             "StandardTrack",
-            "Deprecated"
+            "Obsolete"
           ],
           "compatibility": {},
           "doc": "This attribute defines the supplemental rotation that will be applied to the element.\n<br>\n<small><em>Value type</em>: <a href=\"$MDN_URL$/Web/SVG/Content_type#list-of-ts\"><strong>&lt;list-of-numbers&gt;</strong></a> ; <em>Default value</em>: <em>none</em>; <em>Animatable</em>: <strong>yes (non-additive)</strong></small>"
@@ -67,7 +67,7 @@
         "x": {
           "status": [
             "StandardTrack",
-            "Deprecated"
+            "Obsolete"
           ],
           "compatibility": {},
           "doc": "This attribute defines the corresponding absolute x-coordinates for rendering the element.\n<br>\n<small><em>Value type</em>: <a href=\"$MDN_URL$/Web/SVG/Content_type#list-of-ts\"><strong>&lt;list-of-coordinates&gt;</strong></a> ; <em>Default value</em>: Absolute x-coordinate of ancestor <a href=\"$MDN_URL$/Web/SVG/Element/text\"><code>&lt;text&gt;</code></a> or <a href=\"$MDN_URL$/Web/SVG/Element/tspan\"><code>&lt;tspan&gt;</code></a>; <em>Animatable</em>: <strong>yes</strong></small>"
@@ -78,7 +78,7 @@
         "y": {
           "status": [
             "StandardTrack",
-            "Deprecated"
+            "Obsolete"
           ],
           "compatibility": {},
           "doc": "This attribute defines the corresponding absolute y-coordinates for rendering the element.\n<br>\n<small><em>Value type</em>: <a href=\"$MDN_URL$/Web/SVG/Content_type#list-of-ts\"><strong>&lt;list-of-coordinates&gt;</strong></a> ; <em>Default value</em>: Absolute y-coordinate of ancestor <a href=\"$MDN_URL$/Web/SVG/Element/text\"><code>&lt;text&gt;</code></a> or <a href=\"$MDN_URL$/Web/SVG/Element/tspan\"><code>&lt;tspan&gt;</code></a>; <em>Animatable</em>: <strong>yes</strong></small>"
@@ -88,44 +88,44 @@
     "altglyphdef": {
       "status": [
         "StandardTrack",
-        "Deprecated"
+        "Obsolete"
       ],
       "compatibility": {},
-      "doc": "<div><div class=\"notecard deprecated\">\n<h4 id=\"deprecated\">Deprecated</h4>\n<p>This feature is no longer recommended. Though some browsers might still support it, it may have already been removed from the relevant web standards, may be in the process of being dropped, or may only be kept for compatibility purposes. Avoid using it, and update existing code if possible; see the <a href=\"#browser_compatibility\">compatibility table</a> at the bottom of this page to guide your decision. Be aware that this feature may cease to work at any time.</p>\n</div></div>\n<p>The <strong><code>&lt;altGlyphDef&gt;</code></strong> <a href=\"$MDN_URL$/Web/SVG\">SVG</a> element defines a substitution representation for glyphs.</p>"
+      "doc": "The <strong><code>&lt;altGlyphDef&gt;</code></strong> <a href=\"$MDN_URL$/Web/SVG\">SVG</a> element defines a substitution representation for glyphs.</p>"
     },
     "altglyphitem": {
       "status": [
         "StandardTrack",
-        "Deprecated"
+        "Obsolete"
       ],
       "compatibility": {},
-      "doc": "<div><div class=\"notecard deprecated\">\n<h4 id=\"deprecated\">Deprecated</h4>\n<p>This feature is no longer recommended. Though some browsers might still support it, it may have already been removed from the relevant web standards, may be in the process of being dropped, or may only be kept for compatibility purposes. Avoid using it, and update existing code if possible; see the <a href=\"#browser_compatibility\">compatibility table</a> at the bottom of this page to guide your decision. Be aware that this feature may cease to work at any time.</p>\n</div></div>\n<p>The <strong><code>&lt;altGlyphItem&gt;</code></strong> element provides a set of candidates for glyph substitution by the <a href=\"$MDN_URL$/Web/SVG/Element/altGlyph\"><code>&lt;altGlyph&gt;</code></a> element.</p>"
+      "doc": "The <strong><code>&lt;altGlyphItem&gt;</code></strong> element provides a set of candidates for glyph substitution by the <a href=\"$MDN_URL$/Web/SVG/Element/altGlyph\"><code>&lt;altGlyph&gt;</code></a> element.</p>"
     },
     "animatecolor": {
       "status": [
-        "Deprecated"
+        "Obsolete"
       ],
       "compatibility": {},
-      "doc": "<div><div class=\"notecard deprecated\">\n<h4 id=\"deprecated\">Deprecated</h4>\n<p>This feature is no longer recommended. Though some browsers might still support it, it may have already been removed from the relevant web standards, may be in the process of being dropped, or may only be kept for compatibility purposes. Avoid using it, and update existing code if possible; see the <a href=\"#browser_compatibility\">compatibility table</a> at the bottom of this page to guide your decision. Be aware that this feature may cease to work at any time.</p>\n</div></div>\n<div class=\"warning notecard\">\n<p>This element has been deprecated in SVG 1.1 Second Edition and may be removed in a future version of SVG. It provides no features not already available by using the <a href=\"$MDN_URL$/Web/SVG/Element/animate\"><code>&lt;animate&gt;</code></a> element. So, authors should use the <code>&lt;animate&gt;</code> element instead.</p>\n</div>\n<p>The <strong><code>&lt;animateColor&gt;</code></strong> <a href=\"$MDN_URL$/Web/SVG\">SVG</a> element specifies a color transformation over time.</p>",
+      "doc": "<div></div>\n<div class=\"warning notecard\">\n<p>This element has been deprecated in SVG 1.1 Second Edition and may be removed in a future version of SVG. It provides no features not already available by using the <a href=\"$MDN_URL$/Web/SVG/Element/animate\"><code>&lt;animate&gt;</code></a> element. So, authors should use the <code>&lt;animate&gt;</code> element instead.</p>\n</div>\n<p>The <strong><code>&lt;animateColor&gt;</code></strong> <a href=\"$MDN_URL$/Web/SVG\">SVG</a> element specifies a color transformation over time.</p>",
       "attrs": {
         "by": {
           "status": [
             "StandardTrack",
-            "Deprecated"
+            "Obsolete"
           ],
           "compatibility": {}
         },
         "from": {
           "status": [
             "StandardTrack",
-            "Deprecated"
+            "Obsolete"
           ],
           "compatibility": {}
         },
         "to": {
           "status": [
             "StandardTrack",
-            "Deprecated"
+            "Obsolete"
           ],
           "compatibility": {}
         }

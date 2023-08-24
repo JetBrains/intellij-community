@@ -963,11 +963,11 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
   }
 
   private void indexUnsavedDocuments(@NotNull final ID<?, ?> indexId,
-                                     @Nullable Project project,
+                                     @Nullable("All projects") Project project,
                                      @Nullable GlobalSearchScope filter,
                                      @Nullable VirtualFile restrictedFile) {
     if (myUpToDateIndicesForUnsavedOrTransactedDocuments.contains(indexId)) {
-      return; // no need to index unsaved docs        // todo: check scope ?
+      return; // no need to index unsaved docs        // todo: we only index files for a project, but this service is app-wide
     }
 
     Document[] unsavedDocuments = myFileDocumentManager.getUnsavedDocuments();
@@ -982,10 +982,13 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
     documents.addAll(transactedDocuments);
     Collections.addAll(documents, uncommittedDocuments);
 
-    Collection<Document> documentsToProcessForProject = ContainerUtil.filter(documents,
+    LOG.assertTrue(project == null || filter == null || filter.getProject() == null || project.equals(filter.getProject()),
+                   "filter should filter files in provided project. ref: 50cf572587cf");
+    Collection<Document> documentsToProcessForProject = project == null ? documents :
+                                                        ContainerUtil.filter(documents,
                                                                              document -> belongsToScope(
                                                                                myFileDocumentManager.getFile(document), restrictedFile,
-                                                                               filter));
+                                                                               GlobalSearchScope.everythingScope(project)));
 
     if (!documentsToProcessForProject.isEmpty()) {
       UpdateTask<Document> task = myRegisteredIndexes.getUnsavedDataUpdateTask(indexId);
@@ -2318,10 +2321,6 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
 
     @Override
     protected boolean betterPostponeFlushNow() {
-      if (HeavyProcessLatch.INSTANCE.isRunning()) {
-        return true;
-      }
-
       //RC: Basically, we're trying to flush 'if idle': i.e. we don't want to
       //    issue a flush if somebody actively writes to indexes because flush
       //    will slow them down, if not stall them -- and (regular) flush is

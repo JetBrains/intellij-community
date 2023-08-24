@@ -5,6 +5,7 @@ package org.jetbrains.kotlin.idea.highlighter
 import com.intellij.codeInsight.daemon.impl.analysis.HighlightInfoHolder
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiNameIdentifierOwner
+import com.intellij.psi.PsiNamedElement
 import org.jetbrains.kotlin.descriptors.DeclarationDescriptor
 import org.jetbrains.kotlin.descriptors.PropertyDescriptor
 import org.jetbrains.kotlin.descriptors.ValueParameterDescriptor
@@ -15,7 +16,6 @@ import org.jetbrains.kotlin.idea.base.fe10.highlighting.KotlinBaseFe10Highlighti
 import org.jetbrains.kotlin.idea.base.highlighting.KotlinBaseHighlightingBundle
 import org.jetbrains.kotlin.idea.caches.resolve.getResolutionFacade
 import org.jetbrains.kotlin.idea.core.isVisible
-import org.jetbrains.kotlin.idea.highlighter.KotlinHighlightingColors.*
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.getReceiverExpression
 import org.jetbrains.kotlin.renderer.DescriptorRenderer
@@ -35,10 +35,10 @@ internal class VariablesHighlightingVisitor(holder: HighlightInfoHolder, binding
     override fun visitSimpleNameExpression(expression: KtSimpleNameExpression) {
         val target = bindingContext.get(REFERENCE_TARGET, expression) ?: return
         if (target is ValueParameterDescriptor && bindingContext.get(AUTO_CREATED_IT, target) == true) {
-            createInfoAnnotation(
-                expression,
-                KotlinBaseHighlightingBundle.message("automatically.declared.based.on.the.expected.type"),
-                FUNCTION_LITERAL_DEFAULT_PARAMETER
+            highlightName(
+              expression,
+              KotlinHighlightInfoTypeSemanticNames.FUNCTION_LITERAL_DEFAULT_PARAMETER,
+              KotlinBaseHighlightingBundle.message("automatically.declared.based.on.the.expected.type")
             )
         } else if (expression.parent !is KtValueArgumentName) { // highlighted separately
             highlightVariable(expression, target)
@@ -87,42 +87,42 @@ internal class VariablesHighlightingVisitor(holder: HighlightInfoHolder, binding
                     is ImplicitClassReceiver -> KotlinBaseHighlightingBundle.message("implicit.receiver")
                     else -> KotlinBaseFe10HighlightingBundle.message("unknown.receiver")
                 }
-                createInfoAnnotation(
-                    expression,
-                    KotlinBaseHighlightingBundle.message(
-                        "0.smart.cast.to.1",
-                        receiverName,
-                        DescriptorRenderer.FQ_NAMES_IN_TYPES.renderType(type)
-                    ),
-                    SMART_CAST_RECEIVER
+                highlightName(
+                  expression,
+                  KotlinHighlightInfoTypeSemanticNames.SMART_CAST_RECEIVER,
+                  KotlinBaseHighlightingBundle.message(
+                      "0.smart.cast.to.1",
+                      receiverName,
+                      DescriptorRenderer.FQ_NAMES_IN_TYPES.renderType(type)
+                  )
                 )
             }
         }
 
         val nullSmartCast = bindingContext.get(SMARTCAST_NULL, expression) == true
         if (nullSmartCast) {
-            createInfoAnnotation(expression, KotlinBaseFe10HighlightingBundle.message("always.null"), SMART_CONSTANT)
+            highlightName(expression, KotlinHighlightInfoTypeSemanticNames.SMART_CONSTANT, KotlinBaseFe10HighlightingBundle.message("always.null"))
         }
 
         val smartCast = bindingContext.get(SMARTCAST, expression)
         if (smartCast != null) {
             val defaultType = smartCast.defaultType
             if (defaultType != null) {
-                createInfoAnnotation(
-                    getSmartCastTarget(expression),
-                    KotlinBaseHighlightingBundle.message("smart.cast.to.0", DescriptorRenderer.FQ_NAMES_IN_TYPES.renderType(defaultType)),
-                    SMART_CAST_VALUE
+                highlightName(
+                  getSmartCastTarget(expression),
+                  KotlinHighlightInfoTypeSemanticNames.SMART_CAST_VALUE,
+                  KotlinBaseHighlightingBundle.message("smart.cast.to.0", DescriptorRenderer.FQ_NAMES_IN_TYPES.renderType(defaultType))
                 )
             } else if (smartCast is MultipleSmartCasts) {
                 for ((call, type) in smartCast.map) {
-                    createInfoAnnotation(
-                        getSmartCastTarget(expression),
-                        KotlinBaseFe10HighlightingBundle.message(
-                            "smart.cast.to.0.for.1.call",
-                            DescriptorRenderer.FQ_NAMES_IN_TYPES.renderType(type),
-                            call.toString()
-                        ),
-                        SMART_CAST_VALUE
+                    highlightName(
+                      getSmartCastTarget(expression),
+                      KotlinHighlightInfoTypeSemanticNames.SMART_CAST_VALUE,
+                      KotlinBaseFe10HighlightingBundle.message(
+                        "smart.cast.to.0.for.1.call",
+                        DescriptorRenderer.FQ_NAMES_IN_TYPES.renderType(type),
+                        (call?.callElement as? PsiNamedElement)?.name?:"null"
+                      )
                     )
                 }
             }
@@ -143,7 +143,7 @@ internal class VariablesHighlightingVisitor(holder: HighlightInfoHolder, binding
         if (descriptor is VariableDescriptor) {
 
             if (descriptor.isDynamic()) {
-                highlightName(elementToHighlight, DYNAMIC_PROPERTY_CALL)
+                highlightName(elementToHighlight, KotlinHighlightInfoTypeSemanticNames.DYNAMIC_PROPERTY_CALL)
                 return
             }
 
@@ -156,7 +156,7 @@ internal class VariablesHighlightingVisitor(holder: HighlightInfoHolder, binding
                     )
                 } else true
                 if (shouldHighlight) {
-                    highlightName(elementToHighlight, MUTABLE_VARIABLE)
+                    highlightName(elementToHighlight, KotlinHighlightInfoTypeSemanticNames.MUTABLE_VARIABLE)
                 }
             }
 
@@ -168,17 +168,17 @@ internal class VariablesHighlightingVisitor(holder: HighlightInfoHolder, binding
 
                 val parent = elementToHighlight.parent
                 if (!(parent is PsiNameIdentifierOwner && parent.nameIdentifier == elementToHighlight)) {
-                    createInfoAnnotation(elementToHighlight, msg, WRAPPED_INTO_REF)
+                    highlightName(elementToHighlight, KotlinHighlightInfoTypeSemanticNames.WRAPPED_INTO_REF, msg)
                     return
                 }
             }
 
             if (descriptor is LocalVariableDescriptor && descriptor !is SyntheticFieldDescriptor) {
-                highlightName(elementToHighlight, LOCAL_VARIABLE)
+                highlightName(elementToHighlight, KotlinHighlightInfoTypeSemanticNames.LOCAL_VARIABLE)
             }
 
             if (descriptor is ValueParameterDescriptor) {
-                highlightName(elementToHighlight, PARAMETER)
+                highlightName(elementToHighlight, KotlinHighlightInfoTypeSemanticNames.PARAMETER)
             }
 
             if (descriptor is PropertyDescriptor && hasCustomPropertyDeclaration(descriptor)) {
@@ -186,9 +186,9 @@ internal class VariablesHighlightingVisitor(holder: HighlightInfoHolder, binding
                 highlightName(
                     elementToHighlight,
                     if (isStaticDeclaration)
-                        PACKAGE_PROPERTY_CUSTOM_PROPERTY_DECLARATION
+                        KotlinHighlightInfoTypeSemanticNames.PACKAGE_PROPERTY_CUSTOM_PROPERTY_DECLARATION
                     else
-                        INSTANCE_PROPERTY_CUSTOM_PROPERTY_DECLARATION
+                        KotlinHighlightInfoTypeSemanticNames.INSTANCE_PROPERTY_CUSTOM_PROPERTY_DECLARATION
                 )
             }
         }

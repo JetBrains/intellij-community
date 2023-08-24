@@ -8,3 +8,4 @@ fun A.bar() = 2
 fun test(a: A) {
     a::foo<caret>
 }
+// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.replaceWith.DeprecatedSymbolUsageFix

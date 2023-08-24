@@ -12,3 +12,5 @@ fun foo(): Int {
     var v = 0
     return <caret>oldFun(v++)
 }
+
+// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.replaceWith.DeprecatedSymbolUsageFix

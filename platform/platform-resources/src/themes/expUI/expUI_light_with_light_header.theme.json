@@ -47,6 +47,8 @@
       }
     },
 
+    "TitlePane.Button.hoverBackground": "#0000000D",
+
     "MenuBar.borderColor": "Grey12",
 
     "Notification.Shadow": {
@@ -83,7 +85,8 @@
         "background": "Grey13",
         "innerBorderColor": "Grey13",
         "foreground": "Grey6"
-      }
+      },
+      "WelcomeScreen.separatorColor": "#EBECF0"
     },
 
     "RunWidget" : {
@@ -118,6 +121,8 @@
       "codeBackground": "Grey14",
       "codeBorderColor": "Grey8",
       "linkForeground": "Blue2",
+      "imageBorderColor": "Grey12",
+      "animationBackground": "Grey13",
       "Button": {
         "foreground": "Grey3",
         "startBackground": "Grey11",

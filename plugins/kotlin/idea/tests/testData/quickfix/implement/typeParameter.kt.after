@@ -3,3 +3,4 @@
 
 interface Base<T : Any>
 class BaseImpl<T : Any> : Base<T>
+// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.intentions.CreateKotlinSubClassIntention

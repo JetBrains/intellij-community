@@ -11,6 +11,7 @@ import com.intellij.ide.ui.IconMapLoader
 import com.intellij.ide.ui.LafManager
 import com.intellij.ide.ui.UISettings
 import com.intellij.ide.util.PropertiesComponent
+import com.intellij.openapi.application.ApplicationInfo
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.ApplicationNamesInfo
 import com.intellij.openapi.application.ex.ApplicationManagerEx
@@ -19,7 +20,6 @@ import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.ui.MessageDialogBuilder
 import com.intellij.openapi.ui.Messages
 import com.intellij.openapi.util.registry.EarlyAccessRegistryManager
-import com.intellij.openapi.util.registry.Registry
 import com.intellij.util.PlatformUtils
 
 /**
@@ -31,6 +31,7 @@ private class ExperimentalUIImpl : ExperimentalUI() {
   }
 
   private var shouldApplyOnClose: Boolean? = null
+  private var shouldUnsetNewUiSwitchKey: Boolean = true
 
   override fun getIconMappings(): Map<ClassLoader, Map<String, String>> = service<IconMapLoader>().loadIconMapping()
 
@@ -77,12 +78,15 @@ private class ExperimentalUIImpl : ExperimentalUI() {
 
   fun appStarted() {
     if (isNewUI()) {
-      PropertiesComponent.getInstance()
-        .setValue(NEW_UI_USED_PROPERTY, true)
+      val version = ApplicationInfo.getInstance().build.asStringWithoutProductCodeAndSnapshot()
+      PropertiesComponent.getInstance().setValue(NEW_UI_USED_VERSION, version)
     }
   }
 
   fun appClosing() {
+    if (shouldUnsetNewUiSwitchKey) {
+      PropertiesComponent.getInstance().unsetValue(NEW_UI_SWITCH)
+    }
     val newValue = shouldApplyOnClose
     if (newValue != null && newValue != NewUiValue.isEnabled()) {
       saveNewValue(newValue)
@@ -114,7 +118,7 @@ private class ExperimentalUIImpl : ExperimentalUI() {
   private fun saveNewValue(enabled: Boolean) {
     try {
       logger.info("Saving newUi=$enabled to registry")
-      Registry.get(KEY).setValue(enabled)
+      EarlyAccessRegistryManager.setBoolean(KEY, enabled)
       EarlyAccessRegistryManager.syncAndFlush()
     }
     catch (e: Throwable) {
@@ -129,12 +133,14 @@ private class ExperimentalUIImpl : ExperimentalUI() {
 
   private fun setNewUiUsed() {
     val propertyComponent = PropertiesComponent.getInstance()
-    if (propertyComponent.getBoolean(NEW_UI_USED_PROPERTY)) {
+    if (isNewUiUsedOnce()) {
       propertyComponent.unsetValue(NEW_UI_FIRST_SWITCH)
     }
     else {
       propertyComponent.setValue(NEW_UI_FIRST_SWITCH, true)
     }
+    propertyComponent.setValue(NEW_UI_SWITCH, true)
+    shouldUnsetNewUiSwitchKey = false
   }
 
   private fun changeUiWithDelegate(isEnabled: Boolean) {

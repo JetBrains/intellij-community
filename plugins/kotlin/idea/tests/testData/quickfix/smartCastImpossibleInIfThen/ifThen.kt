@@ -6,3 +6,4 @@ class Test {
         if (x != null) <caret>x.length
     }
 }
+// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.SmartCastImpossibleInIfThenFactory$createQuickFix$1

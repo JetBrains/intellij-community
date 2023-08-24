@@ -63,7 +63,7 @@ public final class EditorColorSchemeDropHandler extends CustomFileDropHandler {
       try {
         ColorSchemeImporter importer = new ColorSchemeImporter();
         EditorColorsManager colorsManager = EditorColorsManager.getInstance();
-        String oldSchemeName = colorsManager.getGlobalScheme().getName();
+        EditorColorsScheme oldScheme = colorsManager.getGlobalScheme();
         List<String> names = ContainerUtil.map(colorsManager.getAllSchemes(), EditorColorsScheme::getName);
         EditorColorsScheme imported = importer
           .importScheme(DefaultProjectFactory.getInstance().getDefaultProject(), file, colorsManager.getGlobalScheme(),
@@ -84,7 +84,7 @@ public final class EditorColorSchemeDropHandler extends CustomFileDropHandler {
 
           colorsManager.setGlobalScheme(imported);
           Notification notification = new Notification("ColorSchemeDrop", LangBundle.message("notification.title.color.scheme.added"), message, NotificationType.INFORMATION);
-          QuickChangeColorSchemeAction.changeLafIfNecessary(oldSchemeName, imported, () -> {
+          QuickChangeColorSchemeAction.changeLafIfNecessary(oldScheme, imported, () -> {
             new Alarm().addRequest(
               () -> Notifications.Bus.notify(notification, project), 300);
           });

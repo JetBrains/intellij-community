@@ -1,6 +1,7 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.xml.util.documentation;
 
+import com.intellij.documentation.mdn.MdnDocumentationKt;
 import com.intellij.lang.Language;
 import com.intellij.lang.documentation.DocumentationProvider;
 import com.intellij.lang.documentation.DocumentationUtil;
@@ -40,7 +41,6 @@ public class XmlDocumentationProvider implements DocumentationProvider {
   private static final Logger LOG = Logger.getInstance(XmlDocumentationProvider.class);
 
   @NonNls private static final String NAME_ATTR_NAME = "name";
-  @NonNls private static final String BASE_SITEPOINT_URL = "http://reference.sitepoint.com/html/";
 
 
   @Override
@@ -289,13 +289,11 @@ public class XmlDocumentationProvider implements DocumentationProvider {
         append = language == XHTMLLanguage.INSTANCE;
       }
 
-      if (tag != null) {
-        EntityDescriptor descriptor = HtmlDescriptorsTable.getTagDescriptor(tag.getName());
-        if (descriptor != null && append) {
+      if (tag != null && append) {
+        var documentation = MdnDocumentationKt.getHtmlMdnDocumentation(tag, tag);
+        if (documentation != null && documentation.getUrl() != null) {
           buf.append("<br>");
-          buf.append(XmlBundle.message("html.quickdoc.additional.template",
-                                       descriptor.getHelpRef(),
-                                       BASE_SITEPOINT_URL + tag.getName()));
+          buf.append(XmlBundle.message("html.quickdoc.additional.template", documentation.getUrl()));
         }
       }
     }

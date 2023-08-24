@@ -7,3 +7,5 @@ object Obj {
 fun use(arg: Int?) {
     Obj.foo(<caret>arg)
 }
+
+// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.SurroundWithNullCheckFix

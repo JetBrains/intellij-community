@@ -11,3 +11,5 @@ fun foo(p: Int) {
     val p1 = "p=$p"
     <caret>newFun(p1, p1)
 }
+
+// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.replaceWith.DeprecatedSymbolUsageFix

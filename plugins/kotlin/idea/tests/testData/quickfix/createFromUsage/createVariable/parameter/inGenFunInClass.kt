@@ -5,3 +5,5 @@ class A {
         val t: T = <caret>foo
     }
 }
+
+// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.createFromUsage.createVariable.CreateParameterFromUsageFix

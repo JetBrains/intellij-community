@@ -7,3 +7,4 @@ data class DC<S : String>(val x: Int, val y: String) {
         val c: Int = Int.MIN_VALUE
     }
 }
+// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.InlineTypeParameterFix

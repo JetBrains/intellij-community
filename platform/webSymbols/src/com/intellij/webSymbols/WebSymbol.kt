@@ -2,6 +2,7 @@
 package com.intellij.webSymbols
 
 import com.intellij.find.usages.api.SearchTarget
+import com.intellij.find.usages.symbol.SearchTargetSymbol
 import com.intellij.model.Pointer
 import com.intellij.model.Symbol
 import com.intellij.navigation.NavigatableSymbol
@@ -13,6 +14,7 @@ import com.intellij.platform.backend.presentation.TargetPresentation
 import com.intellij.psi.PsiElement
 import com.intellij.psi.util.CachedValue
 import com.intellij.refactoring.rename.api.RenameTarget
+import com.intellij.refactoring.rename.symbol.RenameableSymbol
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import com.intellij.util.concurrency.annotations.RequiresReadLock
 import com.intellij.webSymbols.documentation.WebSymbolDocumentation
@@ -129,9 +131,10 @@ interface WebSymbol : WebSymbolsScope, Symbol, NavigatableSymbol {
 
   /**
    * Documents API status of the symbol. It is one of the sub-interfaces of [WebSymbolApiStatus]:
-   * [WebSymbolApiStatus.Stable], [WebSymbolApiStatus.Experimental] or [WebSymbolApiStatus.Deprecated].
+   * [WebSymbolApiStatus.Stable], [WebSymbolApiStatus.Experimental], [WebSymbolApiStatus.Deprecated]
+   * or [WebSymbolApiStatus.Obsolete].
    *
-   * Deprecated symbols are appropriately highlighted in the code editor, code completion and
+   * Deprecated and obsolete symbols are appropriately highlighted in the code editor, code completion and
    * quick documentation.
    */
   val apiStatus: WebSymbolApiStatus
@@ -244,6 +247,36 @@ interface WebSymbol : WebSymbolsScope, Symbol, NavigatableSymbol {
         .icon(icon)
         .presentation()
     }
+
+  /**
+   * Implement to provide usage search for the symbol.
+   * In most cases the implementation would simply call
+   * [WebSymbolSearchTarget.create].
+   *
+   * Symbol can also implement [SearchTarget] interface directly
+   * and override its methods, in which case [WebSymbolSearchTarget]
+   * returned by [searchTarget] property is ignored.
+   *
+   * @see [SearchTargetSymbol]
+   * @see [SearchTarget]
+   */
+  val searchTarget: WebSymbolSearchTarget?
+    get() = null
+
+  /**
+   * Implement to provide rename refactoring for the symbol.
+   * In most cases the implementation would simply create
+   * [WebSymbolRenameTarget] object.
+   *
+   * Symbol can also implement [RenameTarget] interface directly
+   * and override its methods, in which case [WebSymbolRenameTarget]
+   * returned by [renameTarget] property is ignored.
+   *
+   * @see [RenameableSymbol]
+   * @see [RenameTarget]
+   */
+  val renameTarget: WebSymbolRenameTarget?
+    get() = null
 
   /**
    * Used by Web Symbols framework to get a [DocumentationTarget], which handles documentation

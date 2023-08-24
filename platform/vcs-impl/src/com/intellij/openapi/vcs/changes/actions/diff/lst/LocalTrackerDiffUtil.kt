@@ -59,6 +59,7 @@ object LocalTrackerDiffUtil {
                          document1: Document,
                          document2: Document,
                          activeChangelistId: String,
+                         allowExcludeChangesFromCommit: Boolean,
                          textDiffProvider: TwosideTextDiffProvider,
                          indicator: ProgressIndicator,
                          handler: LocalTrackerDiffHandler): Runnable {
@@ -134,7 +135,7 @@ object LocalTrackerDiffUtil {
       val lineRange = linesRanges[i]
 
       val rangesFragmentData = LineFragmentData(activeChangelistId, localRange.changelistId, localRange.exclusionState)
-      if (rangesFragmentData.isPartiallyExcluded()) {
+      if (rangesFragmentData.isPartiallyExcluded() && allowExcludeChangesFromCommit) {
         val fragment = ComparisonManagerImpl.createLineFragment(lineRange.start1, lineRange.end1,
                                                                 lineRange.start2, lineRange.end2,
                                                                 lineOffsets1, lineOffsets2)

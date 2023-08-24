@@ -1,3 +1,4 @@
 // "Add constructor parameter 'z'" "true"
 abstract class A(val x: Int, val y: String, val z: Long)
 class B(x: Int, y: String, z: Long) : A(x, y, z)
+// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.AddConstructorParameterFromSuperTypeCallFix

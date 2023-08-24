@@ -13,3 +13,5 @@ object FooObj : Foo()
 fun usage() {
     ObjAlias.<caret>ext()
 }
+
+// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.ImportFix

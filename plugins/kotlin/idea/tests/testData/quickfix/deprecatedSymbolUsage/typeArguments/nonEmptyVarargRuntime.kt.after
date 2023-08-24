@@ -11,3 +11,5 @@ fun <T> newFun(vararg elements: T){}
 fun foo() {
     newFun("a")
 }
+
+// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.replaceWith.DeprecatedSymbolUsageFix

@@ -12,3 +12,4 @@ class New<T> : Main<T>()
 fun test() {
     val main = <caret>New()
 }
+// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.replaceWith.DeprecatedSymbolUsageFix

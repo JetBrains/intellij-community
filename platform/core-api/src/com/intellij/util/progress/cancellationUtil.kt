@@ -42,6 +42,17 @@ fun Semaphore.waitForCancellable() {
 
 @RequiresBackgroundThread(generateAssertion = false)
 @RequiresBlockingContext
+fun Semaphore.waitForMaybeCancellable() {
+  if (isUp) {
+    return
+  }
+  runBlockingMaybeCancellable {
+    awaitFor()
+  }
+}
+
+@RequiresBackgroundThread(generateAssertion = false)
+@RequiresBlockingContext
 fun Lock.lockCancellable() {
   LOG.assertTrue(isInCancellableContext())
   while (true) {

@@ -70,6 +70,7 @@ public final class TipPanel extends JPanel implements DoNotAskOption {
   private TipAndTrickBean myCurrentTip = null;
   private JPanel myCurrentPromotion = null;
 
+  private ActionToolbarImpl myFeedbackToolbar = null;
   private final Map<String, Boolean> myTipIdToLikenessState = new LinkedHashMap<>();
   private Boolean myCurrentLikenessState = null;
 
@@ -136,8 +137,8 @@ public final class TipPanel extends JPanel implements DoNotAskOption {
     panel.add(label);
     panel.add(Box.createRigidArea(new JBDimension(8, 0)));
 
-    ActionToolbarImpl toolbar = createFeedbackActionsToolbar();
-    panel.add(toolbar);
+    myFeedbackToolbar = createFeedbackActionsToolbar();
+    panel.add(myFeedbackToolbar);
     return panel;
   }
 
@@ -278,6 +279,7 @@ public final class TipPanel extends JPanel implements DoNotAskOption {
   private void doSetTip(@NotNull TipAndTrickBean tip, @NotNull List<? extends TextParagraph> tipContent) {
     saveCurrentTipLikenessState();
     myCurrentLikenessState = getLikenessState(tip);
+    myFeedbackToolbar.updateActionsImmediately();
     myCurrentTip = tip;
 
     if (Registry.is("tips.of.the.day.show.group.label", false)) {
@@ -369,15 +371,12 @@ public final class TipPanel extends JPanel implements DoNotAskOption {
   }
 
   private void saveCurrentTipLikenessState() {
-    if (myCurrentTip != null) {
-      String curTipId = myCurrentTip.getId();
-      if (myCurrentLikenessState != TipsFeedback.getInstance().getLikenessState(curTipId)) {
-        myTipIdToLikenessState.put(curTipId, myCurrentLikenessState);
-      }
+    if (myCurrentTip != null && myCurrentLikenessState != getLikenessState(myCurrentTip)) {
+      myTipIdToLikenessState.put(myCurrentTip.getId(), myCurrentLikenessState);
     }
   }
 
-  private Boolean getLikenessState(TipAndTrickBean tip) {
+  private Boolean getLikenessState(@NotNull TipAndTrickBean tip) {
     String tipId = tip.getId();
     if (myTipIdToLikenessState.containsKey(tipId)) {
       return myTipIdToLikenessState.get(tipId);

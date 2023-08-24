@@ -7,3 +7,4 @@ fun foo(x: Int) {
     foo(1, 4<caret>);
     foo(2, 3, sdsd);
 }
+// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.AddFunctionParametersFix

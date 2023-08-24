@@ -4,3 +4,4 @@ val a: Array<Int> = arrayOf(1)
 val b: Array<Int> = <caret>arrayOf(a)
 
 /* IGNORE_FIR */
+// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.ChangeVariableTypeFix

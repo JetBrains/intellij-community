@@ -8,3 +8,4 @@ open class Derived : Base() {
         super.baseFun("123")
     }
 }
+// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.ChangeVisibilityFix

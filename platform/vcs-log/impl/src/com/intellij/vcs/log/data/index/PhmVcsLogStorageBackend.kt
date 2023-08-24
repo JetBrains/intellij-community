@@ -32,6 +32,7 @@ import java.io.IOException
 import java.nio.file.Files
 import java.util.*
 import java.util.function.IntConsumer
+import java.util.function.IntFunction
 import java.util.function.ObjIntConsumer
 
 internal class PhmVcsLogStorageBackend(
@@ -183,6 +184,16 @@ internal class PhmVcsLogStorageBackend(
       }
     })
     return missing
+  }
+
+  @Throws(IOException::class)
+  override fun iterateIndexedCommits(limit: Int, processor: IntFunction<Boolean>) {
+    var iterationCount = 0
+    messages.processKeysWithExistingMapping {
+      if (iterationCount >= limit) return@processKeysWithExistingMapping false
+      iterationCount++
+      processor.apply(it)
+    }
   }
 
   fun force() {

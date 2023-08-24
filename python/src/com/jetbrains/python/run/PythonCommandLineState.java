@@ -29,7 +29,6 @@ import com.intellij.execution.ui.ConsoleView;
 import com.intellij.facet.Facet;
 import com.intellij.facet.FacetManager;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.module.ModuleUtilCore;
@@ -92,8 +91,6 @@ import java.util.function.Function;
  * @author traff, Leonid Shalupov
  */
 public abstract class PythonCommandLineState extends CommandLineState {
-  private final static Logger LOG = Logger.getInstance(PythonCommandLineState.class);
-
   // command line has a number of fixed groups of parameters; patchers should only operate on them and not the raw list.
 
   public static final String GROUP_EXE_OPTIONS = "Exe Options";
@@ -515,7 +512,7 @@ public abstract class PythonCommandLineState extends CommandLineState {
     }
     final boolean isMostlySilentProcess = false;
     PyTargetPathMapper consolidatedPathMappings = new PyTargetPathMapper(targetEnvironment, pathMappingSettings);
-    return PyCustomProcessHandlerProvider.createProcessHandler(process, commandLineString, commandLine.getCharset(),
+    return PyCustomProcessHandlerProvider.createProcessHandler(process, targetEnvironment, commandLineString, commandLine.getCharset(),
                                                                consolidatedPathMappings, isMostlySilentProcess, myRunWithPty);
   }
 
@@ -771,9 +768,12 @@ public abstract class PythonCommandLineState extends CommandLineState {
                                      @Nullable PyRemotePathMapper pathMapper,
                                      boolean isDebug,
                                      @NotNull TargetEnvironmentRequest targetEnvironmentRequest) {
-    Module module = getModule(project, config);
-    buildPythonPath(project, module, pythonScript, config.getSdkHome(), pathMapper, config.isPassParentEnvs(),
-                    config.shouldAddContentRoots(), config.shouldAddSourceRoots(), isDebug, targetEnvironmentRequest);
+    Sdk sdk = config.getSdk();
+    if (sdk != null) {
+      Module module = getModule(project, config);
+      buildPythonPath(project, module, pythonScript, sdk, pathMapper, config.isPassParentEnvs(),
+                      config.shouldAddContentRoots(), config.shouldAddSourceRoots(), isDebug, targetEnvironmentRequest);
+    }
   }
 
   public static void buildPythonPath(@Nullable Module module,
@@ -795,24 +795,21 @@ public abstract class PythonCommandLineState extends CommandLineState {
   public static void buildPythonPath(@NotNull Project project,
                                      @Nullable Module module,
                                      @NotNull PythonExecution pythonScript,
-                                     @Nullable String sdkHome,
+                                     @NotNull Sdk pythonSdk,
                                      @Nullable PyRemotePathMapper pathMapper,
                                      boolean passParentEnvs,
                                      boolean shouldAddContentRoots,
                                      boolean shouldAddSourceRoots,
                                      boolean isDebug,
                                      @NotNull TargetEnvironmentRequest targetEnvironmentRequest) {
-    Sdk pythonSdk = PythonSdkUtil.findSdkByPath(sdkHome);
-    if (pythonSdk != null) {
-      List<Function<TargetEnvironment, String>> pathList = new ArrayList<>();
-      var data = pythonSdk.getSdkAdditionalData();
-      if (data != null) {
-        pathList.addAll(TargetedPythonPaths.getAddedPaths(data));
-      }
-      pathList.addAll(TargetedPythonPaths.collectPythonPath(project, module, sdkHome, pathMapper,
-                                                            shouldAddContentRoots, shouldAddSourceRoots, isDebug));
-      initPythonPath(pythonScript, passParentEnvs, pathList, targetEnvironmentRequest);
+    List<Function<TargetEnvironment, String>> pathList = new ArrayList<>();
+    var data = pythonSdk.getSdkAdditionalData();
+    if (data != null) {
+      pathList.addAll(TargetedPythonPaths.getAddedPaths(data));
     }
+    pathList.addAll(TargetedPythonPaths.collectPythonPath(project, module, pythonSdk, pathMapper,
+                                                          shouldAddContentRoots, shouldAddSourceRoots, isDebug));
+    initPythonPath(pythonScript, passParentEnvs, pathList, targetEnvironmentRequest);
   }
 
   /**

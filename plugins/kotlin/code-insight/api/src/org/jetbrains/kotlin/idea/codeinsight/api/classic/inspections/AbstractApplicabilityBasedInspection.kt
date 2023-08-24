@@ -5,6 +5,7 @@ import com.intellij.codeInsight.intention.FileModifier
 import com.intellij.codeInspection.*
 import com.intellij.codeInspection.util.InspectionMessage
 import com.intellij.codeInspection.util.IntentionName
+import com.intellij.internal.statistic.ReportingClassSubstitutor
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.TextRange
@@ -62,7 +63,7 @@ abstract class AbstractApplicabilityBasedInspection<TElement : KtElement>(
     private class LocalFix<TElement : KtElement>(
       @FileModifier.SafeFieldForPreview val inspection: AbstractApplicabilityBasedInspection<TElement>,
       @IntentionName val text: String
-    ) : LocalQuickFix {
+    ) : LocalQuickFix, ReportingClassSubstitutor {
         override fun startInWriteAction() = inspection.startFixInWriteAction
 
         override fun applyFix(project: Project, descriptor: ProblemDescriptor) {
@@ -74,5 +75,7 @@ abstract class AbstractApplicabilityBasedInspection<TElement : KtElement>(
         override fun getFamilyName() = inspection.defaultFixText
 
         override fun getName() = text
+
+        override fun getSubstitutedClass(): Class<*> = inspection.javaClass
     }
 }

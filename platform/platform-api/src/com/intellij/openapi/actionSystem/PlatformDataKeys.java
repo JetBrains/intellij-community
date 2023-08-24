@@ -31,8 +31,19 @@ public class PlatformDataKeys extends PlatformCoreDataKeys {
   public static final DataKey<ContentManager> CONTENT_MANAGER = DataKey.create("contentManager");
   public static final DataKey<ContentManager> NONEMPTY_CONTENT_MANAGER = DataKey.create("nonemptyContentManager");
 
+  /**
+   * @see #LAST_ACTIVE_TOOL_WINDOWS
+   */
   public static final DataKey<ToolWindow> TOOL_WINDOW = DataKey.create("TOOL_WINDOW");
+
+  /**
+   * @see #TOOL_WINDOW
+   */
   public static final DataKey<ToolWindow[]> LAST_ACTIVE_TOOL_WINDOWS = DataKey.create("LAST_ACTIVE_TOOL_WINDOWS");
+
+  /**
+   * @see PlatformCoreDataKeys#FILE_EDITOR
+   */
   public static final DataKey<FileEditor> LAST_ACTIVE_FILE_EDITOR = DataKey.create("LAST_ACTIVE_FILE_EDITOR");
 
   public static final DataKey<StatusBar> STATUS_BAR = DataKey.create("STATUS_BAR");

@@ -6,3 +6,4 @@ fun foo(arg: Int?, flag: Boolean) {
         true -> arg<caret>.hashCode()
     }
 }
+// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.SurroundWithNullCheckFix

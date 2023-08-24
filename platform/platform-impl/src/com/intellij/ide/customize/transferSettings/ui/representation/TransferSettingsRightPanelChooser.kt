@@ -7,11 +7,15 @@ import com.intellij.ide.customize.transferSettings.models.FailedIdeVersion
 import com.intellij.ide.customize.transferSettings.models.IdeVersion
 import com.intellij.ide.customize.transferSettings.ui.representation.failed.TransferSettingsFailedIdeRepresentation
 import com.intellij.ide.customize.transferSettings.ui.representation.ideVersion.TransferSettingsIdeRepresentation
+import javax.swing.JComponent
+import javax.swing.JLabel
 
-class TransferSettingsRightPanelChooser(private val ideV: BaseIdeVersion, private val config: TransferSettingsConfiguration) {
-  fun select(): TransferSettingsRepresentationPanel = when (ideV) {
-    is IdeVersion -> TransferSettingsIdeRepresentation(ideV, config.getSectionsFactory())
+open class TransferSettingsRightPanelChooser(protected val ideV: BaseIdeVersion, protected val config: TransferSettingsConfiguration) {
+  open fun select(): TransferSettingsRepresentationPanel = when (ideV) {
+    is IdeVersion -> TransferSettingsIdeRepresentation(ideV, config.getSectionsFactory(), getBottomComponentFactory())
     is FailedIdeVersion -> TransferSettingsFailedIdeRepresentation(ideV, config.controller)
     else -> error("Unknown type of BaseIdeVersion")
   }
+
+  open fun getBottomComponentFactory(): (() -> JComponent?)? = null
 }

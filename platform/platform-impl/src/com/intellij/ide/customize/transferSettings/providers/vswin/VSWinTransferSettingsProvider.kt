@@ -2,6 +2,8 @@ package com.intellij.ide.customize.transferSettings.providers.vswin
 
 import com.intellij.icons.AllIcons
 import com.intellij.ide.IdeBundle
+import com.intellij.ide.customize.transferSettings.TransferSettingsConfiguration
+import com.intellij.ide.customize.transferSettings.db.KnownPlugins
 import com.intellij.ide.customize.transferSettings.models.BaseIdeVersion
 import com.intellij.ide.customize.transferSettings.models.FailedIdeVersion
 import com.intellij.ide.customize.transferSettings.models.IdeVersion
@@ -19,8 +21,12 @@ import com.intellij.ide.customize.transferSettings.providers.vswin.parsers.VSPar
 import com.intellij.ide.customize.transferSettings.providers.vswin.utilities.VSHiveDetourFileNotFoundException
 import com.intellij.ide.customize.transferSettings.providers.vswin.utilities.VSPossibleVersionsEnumerator
 import com.intellij.ide.customize.transferSettings.providers.vswin.utilities.VSProfileDetectorUtils
+import com.intellij.ide.customize.transferSettings.ui.representation.TransferSettingsRightPanelChooser
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.util.SystemInfoRt
+import com.intellij.ui.SeparatorComponent
+import com.intellij.ui.dsl.builder.panel
+import com.intellij.ui.dsl.gridLayout.UnscaledGaps
 import net.miginfocom.swing.MigLayout
 import org.jetbrains.annotations.Nls
 import javax.swing.*
@@ -167,4 +173,23 @@ class VSWinTransferSettingsProvider : TransferSettingsProvider {
   private fun timeFn() = System.nanoTime()
   private fun convertTimeFn(time: Long): Long = time / 1_000_000
 
+  override fun getRightPanel(ideV: IdeVersion, config: TransferSettingsConfiguration): TransferSettingsRightPanelChooser? {
+    return VSWinTransferSettingsRightPanelChooser(ideV, config)
+  }
+
+  private class VSWinTransferSettingsRightPanelChooser(private val ide: IdeVersion, config: TransferSettingsConfiguration) : TransferSettingsRightPanelChooser(ide, config) {
+    override fun getBottomComponentFactory(): () -> JComponent? = {
+      if (ide.settings.plugins.contains(KnownPlugins.ReSharper)) {
+        panel {
+          row {
+            icon(AllIcons.TransferSettings.Resharper).customize(UnscaledGaps(left = 5, right = 5))
+            label("ReSharper settings are found and will be imported")
+          }
+        }
+      }
+      else {
+        null
+      }
+    }
+  }
 }

@@ -797,9 +797,10 @@ public class NullableStuffInspectionBase extends AbstractBaseJavaLocalInspection
     if (REPORT_NOT_ANNOTATED_METHOD_OVERRIDES_NOTNULL &&
         !(method.getReturnType() instanceof PsiPrimitiveType) &&
         !method.isConstructor()) {
-      NullabilityAnnotationInfo info = getNullityManager(method).findEffectiveNullabilityInfo(method);
+      NullableNotNullManager manager = getNullityManager(method);
+      NullabilityAnnotationInfo info = manager.findEffectiveNullabilityInfo(method);
       if ((info == null || info.isInferred() ||
-           (!info.isContainer() && !info.isExternal() && !PsiTreeUtil.isAncestor(method, info.getAnnotation(), true))) &&
+           (info.getInheritedFrom() != null && manager.findContainerAnnotation(method) == null)) &&
           isNotNullNotInferred(superMethod, true, IGNORE_EXTERNAL_SUPER_NOTNULL) &&
           !hasInheritableNotNull(superMethod)) {
         return true;

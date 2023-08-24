@@ -2,22 +2,21 @@
 
 package org.jetbrains.kotlin.idea.highlighter
 
+import com.intellij.codeInsight.daemon.impl.HighlightInfoType
 import com.intellij.codeInsight.daemon.impl.analysis.HighlightInfoHolder
-import com.intellij.openapi.editor.colors.TextAttributesKey
 import com.intellij.openapi.extensions.Extensions
 import com.intellij.psi.PsiElement
 import org.jetbrains.kotlin.descriptors.PropertyDescriptor
 import org.jetbrains.kotlin.descriptors.impl.SyntheticFieldDescriptor
-import org.jetbrains.kotlin.idea.highlighter.KotlinHighlightingColors.*
 import org.jetbrains.kotlin.psi.KtParameter
 import org.jetbrains.kotlin.psi.KtProperty
 import org.jetbrains.kotlin.psi.KtSimpleNameExpression
 import org.jetbrains.kotlin.psi.KtThisExpression
 import org.jetbrains.kotlin.resolve.BindingContext
 import org.jetbrains.kotlin.resolve.DescriptorUtils
-import org.jetbrains.kotlin.resolve.calls.util.getResolvedCall
 import org.jetbrains.kotlin.resolve.calls.tasks.isDynamic
 import org.jetbrains.kotlin.resolve.calls.tower.isSynthesized
+import org.jetbrains.kotlin.resolve.calls.util.getResolvedCall
 
 internal class PropertiesHighlightingVisitor(holder: HighlightInfoHolder, bindingContext: BindingContext) :
     AfterAnalysisHighlightingVisitor(holder, bindingContext) {
@@ -28,7 +27,7 @@ internal class PropertiesHighlightingVisitor(holder: HighlightInfoHolder, bindin
         }
         val target = bindingContext.get(BindingContext.REFERENCE_TARGET, expression)
         if (target is SyntheticFieldDescriptor) {
-            highlightName(expression, BACKING_FIELD_VARIABLE)
+            highlightName(expression, KotlinHighlightInfoTypeSemanticNames.BACKING_FIELD_VARIABLE)
             return
         }
         if (target !is PropertyDescriptor) {
@@ -42,10 +41,11 @@ internal class PropertiesHighlightingVisitor(holder: HighlightInfoHolder, bindin
             Extensions.getExtensions(KotlinHighlightingVisitorExtension.EP_NAME).firstNotNullOfOrNull { extension ->
                 extension.highlightCall(expression, call)
             }
-        } ?: attributeKeyByPropertyType(target)
+        }
 
-        if (attributesKey != null) {
-            highlightName(expression, attributesKey)
+        val highlightInfoType = attributesKey ?: attributeKeyByPropertyType(target)
+        if (highlightInfoType != null) {
+            highlightName(expression, highlightInfoType)
         }
     }
 
@@ -64,7 +64,7 @@ internal class PropertiesHighlightingVisitor(holder: HighlightInfoHolder, bindin
         val propertyDescriptor = bindingContext.get(BindingContext.PRIMARY_CONSTRUCTOR_PARAMETER, parameter)
         if (propertyDescriptor != null) {
             if (propertyDescriptor.isVar) {
-                highlightName(nameIdentifier, MUTABLE_VARIABLE)
+                highlightName(nameIdentifier, KotlinHighlightInfoTypeSemanticNames.MUTABLE_VARIABLE)
             }
             highlightPropertyDeclaration(nameIdentifier, propertyDescriptor)
         }
@@ -76,36 +76,31 @@ internal class PropertiesHighlightingVisitor(holder: HighlightInfoHolder, bindin
         elementToHighlight: PsiElement,
         descriptor: PropertyDescriptor
     ) {
-        val textAttributesKey =
-            attributeKeyForDeclarationFromExtensions(elementToHighlight, descriptor) ?: attributeKeyByPropertyType(descriptor)
-
-        if (textAttributesKey != null) {
-            highlightName(
-                elementToHighlight,
-                textAttributesKey
-            )
+        val highlightInfoType = attributeKeyForDeclarationFromExtensions(elementToHighlight, descriptor) ?: attributeKeyByPropertyType(descriptor)
+        if (highlightInfoType != null) {
+            highlightName(elementToHighlight, highlightInfoType)
         }
     }
 
-    private fun attributeKeyByPropertyType(descriptor: PropertyDescriptor): TextAttributesKey? = when {
+    private fun attributeKeyByPropertyType(descriptor: PropertyDescriptor): HighlightInfoType? = when {
         descriptor.isDynamic() ->
             // The property is set in VariablesHighlightingVisitor
             null
 
         hasExtensionReceiverParameter(descriptor) ->
-            if (descriptor.isSynthesized) SYNTHETIC_EXTENSION_PROPERTY else EXTENSION_PROPERTY
+            if (descriptor.isSynthesized) KotlinHighlightInfoTypeSemanticNames.SYNTHETIC_EXTENSION_PROPERTY else KotlinHighlightInfoTypeSemanticNames.EXTENSION_PROPERTY
 
         DescriptorUtils.isStaticDeclaration(descriptor) ->
             if (hasCustomPropertyDeclaration(descriptor))
-                PACKAGE_PROPERTY_CUSTOM_PROPERTY_DECLARATION
+                KotlinHighlightInfoTypeSemanticNames.PACKAGE_PROPERTY_CUSTOM_PROPERTY_DECLARATION
             else
-                PACKAGE_PROPERTY
+                KotlinHighlightInfoTypeSemanticNames.PACKAGE_PROPERTY
 
         else ->
             if (hasCustomPropertyDeclaration(descriptor))
-                INSTANCE_PROPERTY_CUSTOM_PROPERTY_DECLARATION
+                KotlinHighlightInfoTypeSemanticNames.INSTANCE_PROPERTY_CUSTOM_PROPERTY_DECLARATION
             else
-                INSTANCE_PROPERTY
+                KotlinHighlightInfoTypeSemanticNames.INSTANCE_PROPERTY
     }
 }
 

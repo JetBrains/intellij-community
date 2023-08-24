@@ -132,6 +132,7 @@ public abstract class StubTreeLoader {
       }
 
       msg += "\nindexing info: " + indexingStampInfo;
+      msg += "\nref: 50cf572587cf";
 
       ArrayList<Attachment> attachments = createAttachments(stubTree, psiFile, file);
       return new StubTreeAndIndexUnmatchCoarseException(psiFile, file, msg, attachments, upToDate, cause, stubTree);

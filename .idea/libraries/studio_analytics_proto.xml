@@ -1,6 +1,12 @@
 <component name="libraryTable">
   <library name="studio-analytics-proto" type="repository">
-    <properties include-transitive-deps="false" maven-id="org.jetbrains.intellij.deps.android.tools.base:libstudio.proto:223.0.1.0" />
+    <properties include-transitive-deps="false" maven-id="org.jetbrains.intellij.deps.android.tools.base:libstudio.proto:223.0.1.0">
+      <verification>
+        <artifact url="file://$MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/android/tools/base/libstudio.proto/223.0.1.0/libstudio.proto-223.0.1.0.jar">
+          <sha256sum>9d65977b9f93c7dc44f5618eed39217edc40061756f72657f8b17f97010268ca</sha256sum>
+        </artifact>
+      </verification>
+    </properties>
     <CLASSES>
       <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/android/tools/base/libstudio.proto/223.0.1.0/libstudio.proto-223.0.1.0.jar!/" />
     </CLASSES>

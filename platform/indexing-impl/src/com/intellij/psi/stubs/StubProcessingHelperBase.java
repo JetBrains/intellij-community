@@ -88,9 +88,15 @@ public abstract class StubProcessingHelperBase {
   private <Psi extends PsiElement> boolean checkType(@NotNull Class<Psi> requiredClass, PsiFile psiFile, PsiElement psiElement) {
     if (requiredClass.isInstance(psiElement)) return true;
 
+    String extraMessage = "psiElement is not instance of requiredClass.\n" +
+                          "psiElement=" + psiElement +
+                          ", psiElement.class=" + psiElement.getClass() +
+                          ", requiredClass=" + requiredClass +
+                          ".\nref: 50cf572587cf";
+
     StubTree stubTree = ((PsiFileWithStubSupport)psiFile).getStubTree();
     if (stubTree == null && psiFile instanceof PsiFileImpl) stubTree = ((PsiFileImpl)psiFile).calcStubTree();
-    inconsistencyDetected(stubTree, (PsiFileWithStubSupport)psiFile);
+    inconsistencyDetected(stubTree, (PsiFileWithStubSupport)psiFile, extraMessage);
     return false;
   }
 
@@ -138,17 +144,24 @@ public abstract class StubProcessingHelperBase {
       return true;
     }
     if (!requiredClass.isInstance(psiFile)) {
-      inconsistencyDetected(objectStubTree, (PsiFileWithStubSupport)psiFile);
+      String extraMessage = "psiFile is not instance of requiredClass.\n" +
+                            "psiFile=" + psiFile +
+                            ", psiFile.class=" + psiFile.getClass() +
+                            ", requiredClass=" + requiredClass +
+                            ".\nref: 50cf572587cf";
+      inconsistencyDetected(objectStubTree, (PsiFileWithStubSupport)psiFile, extraMessage);
       return true;
     }
     //noinspection unchecked
     return processor.process((Psi)psiFile);
   }
 
-  private void inconsistencyDetected(@Nullable ObjectStubTree stubTree, @NotNull PsiFileWithStubSupport psiFile) {
+  private void inconsistencyDetected(@Nullable ObjectStubTree stubTree,
+                                     @NotNull PsiFileWithStubSupport psiFile,
+                                     @NotNull String extraMessage) {
     try {
       StubTextInconsistencyException.checkStubTextConsistency(psiFile);
-      LOG.error(StubTreeLoader.getInstance().stubTreeAndIndexDoNotMatch(stubTree, psiFile, null));
+      LOG.error(extraMessage + "\n" + StubTreeLoader.getInstance().stubTreeAndIndexDoNotMatch(stubTree, psiFile, null));
     }
     finally {
       onInternalError(psiFile.getVirtualFile());

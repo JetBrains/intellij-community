@@ -10,3 +10,5 @@ object RegObject : Reg()
 fun usage() {
     <caret>regularFun()
 }
+
+// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.ImportFix

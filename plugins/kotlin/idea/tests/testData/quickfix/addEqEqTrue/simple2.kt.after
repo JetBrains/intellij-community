@@ -8,3 +8,5 @@ fun baz(b: Boolean) {}
 fun test(foo: Foo?) {
     baz(foo?.bar() == true)
 }
+
+// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.AddEqEqTrueFix

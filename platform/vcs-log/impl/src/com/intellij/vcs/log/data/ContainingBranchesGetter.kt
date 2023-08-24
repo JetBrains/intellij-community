@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.vcs.log.data
 
 import com.github.benmanes.caffeine.cache.Caffeine
@@ -8,6 +8,7 @@ import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.progress.util.BackgroundTaskUtil
 import com.intellij.openapi.vcs.VcsException
 import com.intellij.openapi.vcs.VcsScope
+import com.intellij.openapi.vcs.telemetry.VcsTelemetrySpan.LogData
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.platform.diagnostic.telemetry.TelemetryManager
 import com.intellij.platform.diagnostic.telemetry.helpers.computeWithSpan
@@ -146,7 +147,7 @@ class ContainingBranchesGetter internal constructor(private val logData: VcsLogD
 
     @Throws(VcsException::class)
     fun getContainingBranches(): List<String> {
-      return computeWithSpan(TelemetryManager.getInstance().getTracer(VcsScope), "get containing branches") {
+      return computeWithSpan(TelemetryManager.getInstance().getTracer(VcsScope), LogData.GetContainingBranches.name) {
         try {
           getContainingBranches(myProvider, myRoot, myHash)
         }

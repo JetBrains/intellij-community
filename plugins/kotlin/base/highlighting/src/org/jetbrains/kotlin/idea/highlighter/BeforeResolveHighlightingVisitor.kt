@@ -24,20 +24,20 @@ class BeforeResolveHighlightingVisitor(holder: HighlightInfoHolder) : AbstractHi
     override fun visitElement(element: PsiElement) {
         val elementType = element.node.elementType
         val attributes = when {
-            element is KDocLink && !willApplyRainbowHighlight(element) -> KotlinHighlightingColors.KDOC_LINK
+            element is KDocLink && !willApplyRainbowHighlight(element) -> KotlinHighlightInfoTypeSemanticNames.KDOC_LINK
 
             elementType in KtTokens.SOFT_KEYWORDS -> {
                 when (elementType) {
-                    in KtTokens.MODIFIER_KEYWORDS -> KotlinHighlightingColors.BUILTIN_ANNOTATION
-                    else -> KotlinHighlightingColors.KEYWORD
+                    in KtTokens.MODIFIER_KEYWORDS -> KotlinHighlightInfoTypeSemanticNames.BUILTIN_ANNOTATION
+                    else -> KotlinHighlightInfoTypeSemanticNames.KEYWORD
                 }
             }
-            elementType == KtTokens.SAFE_ACCESS -> KotlinHighlightingColors.SAFE_ACCESS
-            elementType == KtTokens.EXCLEXCL -> KotlinHighlightingColors.EXCLEXCL
+            elementType == KtTokens.SAFE_ACCESS -> KotlinHighlightInfoTypeSemanticNames.SAFE_ACCESS
+            elementType == KtTokens.EXCLEXCL -> KotlinHighlightInfoTypeSemanticNames.EXCLEXCL
             else -> return
         }
 
-        createInfoAnnotation(element, textAttributes = attributes)
+        highlightName(element, attributes)
     }
 
     private fun willApplyRainbowHighlight(element: KDocLink): Boolean {
@@ -52,35 +52,35 @@ class BeforeResolveHighlightingVisitor(holder: HighlightInfoHolder) : AbstractHi
         if (isUnitTestMode()) return
 
         val functionLiteral = lambdaExpression.functionLiteral
-        createInfoAnnotation(functionLiteral.lBrace, textAttributes = KotlinHighlightingColors.FUNCTION_LITERAL_BRACES_AND_ARROW)
+        highlightName(functionLiteral.lBrace, KotlinHighlightInfoTypeSemanticNames.FUNCTION_LITERAL_BRACES_AND_ARROW)
 
         val closingBrace = functionLiteral.rBrace
         if (closingBrace != null) {
-            createInfoAnnotation(closingBrace, textAttributes = KotlinHighlightingColors.FUNCTION_LITERAL_BRACES_AND_ARROW)
+            highlightName(closingBrace, KotlinHighlightInfoTypeSemanticNames.FUNCTION_LITERAL_BRACES_AND_ARROW)
         }
 
         val arrow = functionLiteral.arrow
         if (arrow != null) {
-            createInfoAnnotation(arrow, textAttributes = KotlinHighlightingColors.FUNCTION_LITERAL_BRACES_AND_ARROW)
+            highlightName(arrow, KotlinHighlightInfoTypeSemanticNames.FUNCTION_LITERAL_BRACES_AND_ARROW)
         }
     }
 
     override fun visitArgument(argument: KtValueArgument) {
         val argumentName = argument.getArgumentName() ?: return
         val eq = argument.equalsToken ?: return
-        createInfoAnnotation(
+        highlightName(argument.project,
             TextRange(argumentName.startOffset, eq.endOffset),
-            textAttributes = if (argument.parents.match(KtValueArgumentList::class, last = KtAnnotationEntry::class) != null)
-                KotlinHighlightingColors.ANNOTATION_ATTRIBUTE_NAME_ATTRIBUTES
+            if (argument.parents.match(KtValueArgumentList::class, last = KtAnnotationEntry::class) != null)
+                KotlinHighlightInfoTypeSemanticNames.ANNOTATION_ATTRIBUTE_NAME_ATTRIBUTES
             else
-                KotlinHighlightingColors.NAMED_ARGUMENT
+                KotlinHighlightInfoTypeSemanticNames.NAMED_ARGUMENT
         )
     }
 
     override fun visitExpressionWithLabel(expression: KtExpressionWithLabel) {
         val targetLabel = expression.getTargetLabel()
         if (targetLabel != null) {
-            highlightName(targetLabel, KotlinHighlightingColors.LABEL)
+            highlightName(targetLabel, KotlinHighlightInfoTypeSemanticNames.LABEL)
         }
     }
 
@@ -88,19 +88,19 @@ class BeforeResolveHighlightingVisitor(holder: HighlightInfoHolder) : AbstractHi
         val calleeExpression = call.calleeExpression
         val typeElement = calleeExpression.typeReference?.typeElement
         if (typeElement is KtUserType) {
-            typeElement.referenceExpression?.let { highlightName(it, KotlinHighlightingColors.CONSTRUCTOR_CALL) }
+            typeElement.referenceExpression?.let { highlightName(it, KotlinHighlightInfoTypeSemanticNames.CONSTRUCTOR_CALL) }
         }
         super.visitSuperTypeCallEntry(call)
     }
 
 
     override fun visitTypeParameter(parameter: KtTypeParameter) {
-        parameter.nameIdentifier?.let { highlightName(it, KotlinHighlightingColors.TYPE_PARAMETER) }
+        parameter.nameIdentifier?.let { highlightName(it, KotlinHighlightInfoTypeSemanticNames.TYPE_PARAMETER) }
         super.visitTypeParameter(parameter)
     }
 
     override fun visitNamedFunction(function: KtNamedFunction) {
-        highlightNamedDeclaration(function, KotlinHighlightingColors.FUNCTION_DECLARATION)
+        highlightNamedDeclaration(function, KotlinHighlightInfoTypeSemanticNames.FUNCTION_DECLARATION)
         super.visitNamedFunction(function)
     }
 }

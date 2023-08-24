@@ -71,11 +71,13 @@ abstract public class LexerTestCase extends UsefulTestCase {
     while (grammars.hasNext()) {
       TextMateGrammar grammar = grammars.next();
       CharSequence rootScope = mySyntaxTable.loadSyntax(grammar.getPlist().getValue(), myInterner);
-      grammar.getFileNameMatchers().forEach(matcher -> {
-        myLanguageDescriptors.put(matcher, rootScope);
-      });
-      if (scope == null) {
-        scope = rootScope;
+      if (rootScope != null) {
+        grammar.getFileNameMatchers().forEach(matcher -> {
+          myLanguageDescriptors.put(matcher, rootScope);
+        });
+        if (scope == null) {
+          scope = rootScope;
+        }
       }
     }
 

@@ -10,3 +10,5 @@ fun newFun(p1: Int, p2: Int){}
 fun foo() {
     newFun(0/*use zero*/, 0)
 }
+
+// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.replaceWith.DeprecatedSymbolUsageFix

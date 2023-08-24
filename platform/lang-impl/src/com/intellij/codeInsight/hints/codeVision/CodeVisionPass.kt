@@ -2,16 +2,13 @@
 package com.intellij.codeInsight.hints.codeVision
 
 import com.intellij.codeHighlighting.EditorBoundHighlightingPass
+import com.intellij.codeInsight.codeVision.CodeVisionEntry
 import com.intellij.codeInsight.codeVision.CodeVisionHost
 import com.intellij.codeInsight.codeVision.CodeVisionInitializer
 import com.intellij.codeInsight.codeVision.CodeVisionProviderFactory
 import com.intellij.codeInsight.codeVision.settings.CodeVisionSettings
 import com.intellij.codeInsight.codeVision.ui.model.ProjectCodeVisionModel
 import com.intellij.concurrency.JobLauncher
-import com.intellij.platform.diagnostic.telemetry.TelemetryManager
-import com.intellij.platform.diagnostic.telemetry.helpers.computeWithSpan
-import com.intellij.platform.diagnostic.telemetry.helpers.runWithSpan
-import com.intellij.platform.diagnostic.telemetry.helpers.useWithScope
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.progress.EmptyProgressIndicator
@@ -19,6 +16,11 @@ import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.rd.createLifetime
+import com.intellij.openapi.util.TextRange
+import com.intellij.platform.diagnostic.telemetry.TelemetryManager
+import com.intellij.platform.diagnostic.telemetry.helpers.computeWithSpan
+import com.intellij.platform.diagnostic.telemetry.helpers.runWithSpan
+import com.intellij.platform.diagnostic.telemetry.helpers.useWithScope
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
 import com.intellij.psi.util.PsiModificationTracker
@@ -26,6 +28,7 @@ import com.intellij.util.Processor
 import com.jetbrains.rd.util.reactive.adviseUntil
 import org.jetbrains.annotations.ApiStatus.Internal
 import java.util.concurrent.ConcurrentHashMap
+import kotlin.system.measureTimeMillis
 
 /**
  * Prepares data for [com.intellij.codeInsight.codeVision.CodeVisionHost].
@@ -67,15 +70,19 @@ class CodeVisionPass(
       runWithSpan(tracer, "codeVision") { span ->
         span.setAttribute("file", file.name)
         JobLauncher.getInstance().invokeConcurrentlyUnderProgress(providers, progress, Processor { provider ->
-          span.useWithScope {
-            computeWithSpan(tracer, provider.javaClass.simpleName) {
-              val results = provider.computeForEditor(editor, file)
-              providerIdToLenses[provider.id] = DaemonBoundCodeVisionCacheService.CodeVisionWithStamp(results,
-                                                                                                      modificationTracker.modificationCount)
+            span.useWithScope {
+              computeWithSpan(tracer, provider.javaClass.simpleName) {
+                val results: List<Pair<TextRange, CodeVisionEntry>>
+                val duration = measureTimeMillis {
+                  results = provider.computeForEditor(editor, file)
+                }
+                CodeVisionFusCollector.CODE_VISION_FINISHED.log(file.project, duration, provider::class.java, file.language)
+                providerIdToLenses[provider.id] = DaemonBoundCodeVisionCacheService.CodeVisionWithStamp(results,
+                                                                                                        modificationTracker.modificationCount)
+              }
             }
-          }
-          true
-        })
+            true
+          })
       }
     }
 

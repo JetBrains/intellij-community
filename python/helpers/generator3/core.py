@@ -367,7 +367,7 @@ def get_module_origin(mod_path, mod_qname):
         return None
 
     if is_test_mode():
-        return get_relative_path_by_qname(mod_path, mod_qname)
+        return get_portable_test_module_path(mod_path, mod_qname)
     return mod_path
 
 

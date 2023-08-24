@@ -9,6 +9,7 @@ import org.jetbrains.plugins.gradle.tooling.internal.init.Init
 import org.jetbrains.plugins.gradle.util.GradleConstants
 import java.io.File
 import java.io.IOException
+import java.nio.file.FileAlreadyExistsException
 import java.nio.file.Path
 import java.util.regex.Matcher
 import kotlin.io.path.*
@@ -166,11 +167,14 @@ fun createInitScript(prefix: String, content: String): Path {
     suffix++
     val candidateName = prefix + suffix + "." + GradleConstants.EXTENSION
     val candidate = tempDirectory.resolve(candidateName)
-    if (!candidate.exists()) {
+    try {
       candidate.createFile()
       candidate.writeBytes(contentBytes)
+      @Suppress("SSBasedInspection")
       candidate.toFile().deleteOnExit()
       return candidate
+    }
+    catch (_: FileAlreadyExistsException) {
     }
     if (isContentEquals(candidate, contentBytes)) {
       return candidate

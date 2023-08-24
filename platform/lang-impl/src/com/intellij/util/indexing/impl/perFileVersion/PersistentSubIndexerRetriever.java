@@ -115,6 +115,7 @@ public final class PersistentSubIndexerRetriever<SubIndexerType, SubIndexerVersi
   @Override
   public int getFileIndexerId(@NotNull IndexedFile file) throws IOException {
     SubIndexerVersion version = getVersion(file);
+    // TODO indexId
     if (version == null) return NULL_SUB_INDEXER;
     return myPersistentVersionEnumerator.enumerate(version);
   }

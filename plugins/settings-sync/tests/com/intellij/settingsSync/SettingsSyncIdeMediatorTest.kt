@@ -9,9 +9,7 @@ import com.intellij.openapi.components.*
 import com.intellij.serviceContainer.ComponentManagerImpl
 import com.intellij.testFramework.fixtures.BasePlatformTestCase
 import com.intellij.testFramework.rules.InMemoryFsRule
-import junit.framework.TestCase
 import org.junit.Assert
-import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -55,6 +53,52 @@ true
     assertEquals(setOf("mytemplate.kt"), visited)
   }
 
+  @Test
+  fun `respect SettingSyncState`() {
+    val rootConfig = memoryFs.fs.getPath("/appconfig")
+    val componentStore = object : ChildlessComponentStore() {
+      override val storageManager: StateStorageManager
+        get() = ApplicationManager.getApplication().stateStore.storageManager
+
+      override fun setPath(path: Path) {
+        TODO("Not yet implemented")
+      }
+    }
+    val mediator = SettingsSyncIdeMediatorImpl(componentStore, rootConfig, { true })
+    val metaInfo = SettingsSnapshot.MetaInfo(Instant.now(), null)
+    val settingsSyncXmlState = FileState.Modified("options/settingsSync.xml", """
+<application>
+  <component name="SettingsSyncSettings">
+    <option name="disabledSubcategories">
+      <map>
+        <entry key="PLUGINS">
+          <value>
+            <list>
+              <option value="org.vlang" />
+            </list>
+          </value>
+        </entry>
+      </map>
+    </option>
+  </component>
+</application>      
+    """.trimIndent().toByteArray())
+    val snapshot = SettingsSnapshot(metaInfo, setOf(settingsSyncXmlState), null, emptyMap(), emptySet())
+    val syncState = SettingsSyncStateHolder(SettingsSyncSettings.State())
+    syncState.syncEnabled = true
+    syncState.setCategoryEnabled(SettingsCategory.CODE, false)
+    syncState.setSubcategoryEnabled(SettingsCategory.PLUGINS, "IdeaVIM", false)
+    mediator.applyToIde(snapshot, syncState)
+    Assert.assertTrue(SettingsSyncSettings.getInstance().syncEnabled)
+    Assert.assertFalse(SettingsSyncSettings.getInstance().migrationFromOldStorageChecked)
+    Assert.assertFalse(SettingsSyncSettings.getInstance().isCategoryEnabled(SettingsCategory.CODE))
+    Assert.assertTrue(SettingsSyncSettings.getInstance().isCategoryEnabled(SettingsCategory.UI))
+    Assert.assertTrue(SettingsSyncSettings.getInstance().isCategoryEnabled(SettingsCategory.SYSTEM))
+
+    Assert.assertTrue(SettingsSyncSettings.getInstance().isSubcategoryEnabled(SettingsCategory.PLUGINS, "org.vlang"))
+    Assert.assertFalse(SettingsSyncSettings.getInstance().isSubcategoryEnabled(SettingsCategory.PLUGINS, "IdeaVIM"))
+  }
+
   @TestFor(issues = ["IDEA-324914"])
   @Test
   fun `process files2apply last`() {
@@ -94,9 +138,11 @@ true
   </component>
   </application>
     """.trimIndent().toByteArray())), null, emptyMap(), emptySet())
+    val syncState = SettingsSyncStateHolder(SettingsSyncSettings.State())
+    syncState.syncEnabled = true
     try {
       mediator.activateStreamProvider()
-      mediator.applyToIde(snapshot)
+      mediator.applyToIde(snapshot, syncState)
       Assert.assertEquals(2, callbackCalls.size)
       Assert.assertEquals("First", callbackCalls[0])
       Assert.assertEquals("Second", callbackCalls[1])
@@ -115,7 +161,7 @@ true
   </component>
   </application>
     """.trimIndent().toByteArray())), null, emptyMap(), emptySet())
-      mediator.applyToIde(newSnapshot)
+      mediator.applyToIde(newSnapshot, syncState)
       Assert.assertEquals(2, callbackCalls.size)
       Assert.assertEquals("Second", callbackCalls[0])
       Assert.assertEquals("First", callbackCalls[1])

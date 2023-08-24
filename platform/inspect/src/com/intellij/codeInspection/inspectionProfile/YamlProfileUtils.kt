@@ -69,7 +69,7 @@ object YamlProfileUtils {
     return yaml
   }
 
-  private val representer: Representer = object : Representer(DumperOptions()) {
+  private val representer: Representer get() = object : Representer(DumperOptions()) {
     init {
       propertyUtils.isSkipMissingProperties = true
     }

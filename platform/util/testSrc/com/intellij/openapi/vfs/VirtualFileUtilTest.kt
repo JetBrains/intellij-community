@@ -170,4 +170,29 @@ class VirtualFileUtilTest : VirtualFileUtilTestCase() {
         .isEmptyDirectory()
     }
   }
+
+  @Test
+  fun `test multi root file systems`() {
+    runBlocking {
+      val root = root.refreshAndGetVirtualDirectory()
+      writeAction { root.createFile("C:/c_directory/c_file.txt") }
+      writeAction { root.createFile("D:/d_directory/d_file.txt") }
+
+      val testFileSystem = MockMultiRootFileSystem(root)
+      val root1 = testFileSystem.refreshAndFindFileByPath("C:")!!
+      val root2 = testFileSystem.refreshAndFindFileByPath("D:")!!
+
+      assertVirtualFile { readAction { root1.getDirectory("c_directory") } }
+        .isNioPathEqualsTo("C:/c_directory".toNioPath())
+      assertVirtualFile { writeAction { root1.createFile("c_directory1/c_file.txt") } }
+        .isEqualsTo { readAction { root1.getFile("c_directory1/c_file.txt") } }
+        .isNioPathEqualsTo("C:/c_directory1/c_file.txt".toNioPath())
+
+      assertVirtualFile { readAction { root2.getDirectory("d_directory") } }
+        .isNioPathEqualsTo("D:/d_directory".toNioPath())
+      assertVirtualFile { writeAction { root2.createFile("d_directory1/d_file.txt") } }
+        .isEqualsTo { readAction { root2.getFile("d_directory1/d_file.txt") } }
+        .isNioPathEqualsTo("D:/d_directory1/d_file.txt".toNioPath())
+    }
+  }
 }

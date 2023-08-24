@@ -4,3 +4,4 @@
 fun foo() {
     var f: Int = { x: kotlin.properties.Delegates ->  }<caret>
 }
+// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.ChangeVariableTypeFix

@@ -7,7 +7,6 @@ import com.intellij.codeInspection.htmlInspections.HtmlLocalInspectionTool;
 import com.intellij.htmltools.HtmlToolsBundle;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.xml.XmlCustomElementDescriptor;
-import com.intellij.xml.XmlElementDescriptor;
 import com.intellij.xml.util.HtmlUtil;
 import org.jetbrains.annotations.NotNull;
 
@@ -23,8 +22,7 @@ public class HtmlRequiredTitleElementInspection extends HtmlLocalInspectionTool 
   protected void checkTag(@NotNull XmlTag tag, @NotNull ProblemsHolder holder, boolean isOnTheFly) {
     if (!HtmlUtil.isHtmlTagContainingFile(tag)) return;
     if (!tag.getName().equalsIgnoreCase(HEAD)) return;
-    XmlElementDescriptor descriptor = tag.getDescriptor();
-    if (descriptor instanceof XmlCustomElementDescriptor && ((XmlCustomElementDescriptor)descriptor).isCustomElement()) return;
+    if (XmlCustomElementDescriptor.isCustomElement(tag)) return;
     final XmlTag[] subTags = tag.getSubTags();
     long count = Arrays.stream(subTags).filter((element) -> element.getName().equalsIgnoreCase(TITLE)).count();
     if (count > 0) return;

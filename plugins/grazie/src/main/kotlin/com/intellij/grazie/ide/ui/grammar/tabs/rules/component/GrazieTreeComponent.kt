@@ -18,6 +18,7 @@ import com.intellij.openapi.actionSystem.DefaultActionGroup
 import com.intellij.ui.*
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.tree.TreeUtil
+import org.jetbrains.annotations.ApiStatus
 import java.awt.BorderLayout
 import javax.swing.ScrollPaneConstants
 import javax.swing.tree.DefaultTreeModel
@@ -142,7 +143,8 @@ internal class GrazieTreeComponent(onSelectionChanged: (meta: Any) -> Unit) : Ch
   }
 }
 
-internal fun allRules(state: GrazieConfig.State = GrazieConfig.get()): Map<Lang, List<Rule>> {
+@ApiStatus.Internal
+fun allRules(state: GrazieConfig.State = GrazieConfig.get()): Map<Lang, List<Rule>> {
   val result = hashMapOf<Lang, List<Rule>>()
   state.enabledLanguages.forEach { lang ->
     val jLanguage = lang.jLanguage

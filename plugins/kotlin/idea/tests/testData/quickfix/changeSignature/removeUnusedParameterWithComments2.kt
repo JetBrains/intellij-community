@@ -8,3 +8,4 @@ private fun test() {
         "baz" // baz comment
     )
 }
+// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.RemoveUnusedFunctionParameterFix

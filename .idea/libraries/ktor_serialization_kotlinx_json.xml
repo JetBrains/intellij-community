@@ -1,6 +1,29 @@
 <component name="libraryTable">
   <library name="ktor-serialization-kotlinx-json" type="repository">
     <properties maven-id="io.ktor:ktor-serialization-kotlinx-json-jvm:2.3.0">
+      <verification>
+        <artifact url="file://$MAVEN_REPOSITORY$/io/ktor/ktor-serialization-kotlinx-json-jvm/2.3.0/ktor-serialization-kotlinx-json-jvm-2.3.0.jar">
+          <sha256sum>34130cfb69365342f4c2a0a192edaf8cc3f0374206b42d97280f59a6a4a2978c</sha256sum>
+        </artifact>
+        <artifact url="file://$MAVEN_REPOSITORY$/io/ktor/ktor-http-jvm/2.3.0/ktor-http-jvm-2.3.0.jar">
+          <sha256sum>a116d91b9de823384e157c9ddae8c7dd34592253cea03a812cb4c430f941914e</sha256sum>
+        </artifact>
+        <artifact url="file://$MAVEN_REPOSITORY$/io/ktor/ktor-utils-jvm/2.3.0/ktor-utils-jvm-2.3.0.jar">
+          <sha256sum>11f01ec6bc4a139852bec08e2346046a96ae636bb3d7643a14c109332692a447</sha256sum>
+        </artifact>
+        <artifact url="file://$MAVEN_REPOSITORY$/io/ktor/ktor-io-jvm/2.3.0/ktor-io-jvm-2.3.0.jar">
+          <sha256sum>e4fc6eafdd18cdc95ee7e090b586b932a35d992660ae70fb18ba64b737427bcf</sha256sum>
+        </artifact>
+        <artifact url="file://$MAVEN_REPOSITORY$/io/ktor/ktor-serialization-kotlinx-jvm/2.3.0/ktor-serialization-kotlinx-jvm-2.3.0.jar">
+          <sha256sum>f0c870a7cbf616287b76991c7786f655fd7690073b112c0c427eea98e9c10a88</sha256sum>
+        </artifact>
+        <artifact url="file://$MAVEN_REPOSITORY$/io/ktor/ktor-serialization-jvm/2.3.0/ktor-serialization-jvm-2.3.0.jar">
+          <sha256sum>dbb254d2f1eea8a9f97d77f1c6783b1aedb01563da0aba886bcfa89f973c3783</sha256sum>
+        </artifact>
+        <artifact url="file://$MAVEN_REPOSITORY$/io/ktor/ktor-websockets-jvm/2.3.0/ktor-websockets-jvm-2.3.0.jar">
+          <sha256sum>1412d2331f6951dc0b6c99e0a88fdb56ff50943e720191b25cdcdf715dab5c49</sha256sum>
+        </artifact>
+      </verification>
       <exclude>
         <dependency maven-id="org.jetbrains:annotations" />
         <dependency maven-id="org.jetbrains.kotlin:kotlin-stdlib-common" />

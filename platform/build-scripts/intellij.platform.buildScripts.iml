@@ -86,6 +86,11 @@
     <orderEntry type="module-library">
       <library name="jetbrains.format.ripper" type="repository">
         <properties maven-id="com.jetbrains.format-ripper:format-ripper:1.1.1">
+          <verification>
+            <artifact url="file://$MAVEN_REPOSITORY$/com/jetbrains/format-ripper/format-ripper/1.1.1/format-ripper-1.1.1.jar">
+              <sha256sum>c5edac7046453d487daf26bfce1ebb0ccb2d51e07167d01878a13ffdb9b66b8e</sha256sum>
+            </artifact>
+          </verification>
           <exclude>
             <dependency maven-id="org.jetbrains:annotations" />
             <dependency maven-id="org.jetbrains.kotlin:kotlin-stdlib-common" />
@@ -120,6 +125,29 @@
     <orderEntry type="module-library">
       <library name="jetbrains.apple.notary.api.kotlin.client" type="repository">
         <properties maven-id="org.jetbrains:apple-notary-api-kotlin-client:1.0.2">
+          <verification>
+            <artifact url="file://$MAVEN_REPOSITORY$/org/jetbrains/apple-notary-api-kotlin-client/1.0.2/apple-notary-api-kotlin-client-1.0.2.jar">
+              <sha256sum>25ac259e3506b4d80d038131445643d80bffc097488da73a9cbea05a2f14270b</sha256sum>
+            </artifact>
+            <artifact url="file://$MAVEN_REPOSITORY$/com/amazonaws/aws-java-sdk-s3/1.12.431/aws-java-sdk-s3-1.12.431.jar">
+              <sha256sum>45b24b098dcaec230fde72b4e0568dab464cf7d8afd8b83fb9ac628778c67df9</sha256sum>
+            </artifact>
+            <artifact url="file://$MAVEN_REPOSITORY$/com/amazonaws/aws-java-sdk-kms/1.12.431/aws-java-sdk-kms-1.12.431.jar">
+              <sha256sum>ffc62a11ad6a454d150a28c66c98e0300186faa53ec34d1c58c7dc5e2f7a3011</sha256sum>
+            </artifact>
+            <artifact url="file://$MAVEN_REPOSITORY$/com/amazonaws/aws-java-sdk-core/1.12.431/aws-java-sdk-core-1.12.431.jar">
+              <sha256sum>e17a93342d623ecd58449b6142db53c5ec9d1fb7a6a40d6266e56ed796e06fdf</sha256sum>
+            </artifact>
+            <artifact url="file://$MAVEN_REPOSITORY$/software/amazon/ion/ion-java/1.0.2/ion-java-1.0.2.jar">
+              <sha256sum>0d127b205a1fce0abc2a3757a041748651bc66c15cf4c059bac5833b27d471a5</sha256sum>
+            </artifact>
+            <artifact url="file://$MAVEN_REPOSITORY$/com/amazonaws/jmespath-java/1.12.431/jmespath-java-1.12.431.jar">
+              <sha256sum>238630e244b369b57238bb35e9a23382be65771b04a0f36d85df07b61b4ae2b9</sha256sum>
+            </artifact>
+            <artifact url="file://$MAVEN_REPOSITORY$/com/auth0/java-jwt/4.3.0/java-jwt-4.3.0.jar">
+              <sha256sum>25a2353a1789870d960c0a9d8878a62eb1873116a2299d74f278451697676a67</sha256sum>
+            </artifact>
+          </verification>
           <exclude>
             <dependency maven-id="org.jetbrains:annotations" />
             <dependency maven-id="org.slf4j:slf4j-api" />
@@ -179,6 +207,23 @@
     <orderEntry type="module-library">
       <library name="jetbrains.intellij.plugins.structure" type="repository">
         <properties maven-id="org.jetbrains.intellij.plugins:structure-intellij:3.247">
+          <verification>
+            <artifact url="file://$MAVEN_REPOSITORY$/org/jetbrains/intellij/plugins/structure-intellij/3.247/structure-intellij-3.247.jar">
+              <sha256sum>92bf25de8508be9d8dc84f65fd1b08c348a3f54a726fae389f0a92797e8816ce</sha256sum>
+            </artifact>
+            <artifact url="file://$MAVEN_REPOSITORY$/org/jetbrains/intellij/plugins/structure-base/3.247/structure-base-3.247.jar">
+              <sha256sum>80f807bca6b0c01ec2d9c126f65906172698ba67897286574aff17d52cfae792</sha256sum>
+            </artifact>
+            <artifact url="file://$MAVEN_REPOSITORY$/org/atteo/evo-inflector/1.3/evo-inflector-1.3.jar">
+              <sha256sum>ac0192fd110a0363732b17ea94fd1ce8cfd85790c8e1551e14f866908b5d80e1</sha256sum>
+            </artifact>
+            <artifact url="file://$MAVEN_REPOSITORY$/org/jdom/jdom2/2.0.6.1/jdom2-2.0.6.1.jar">
+              <sha256sum>0b20f45e3a0fd8f0d12cdc5316b06776e902b1365db00118876f9175c60f302c</sha256sum>
+            </artifact>
+            <artifact url="file://$MAVEN_REPOSITORY$/com/fasterxml/jackson/module/jackson-module-kotlin/2.14.1/jackson-module-kotlin-2.14.1.jar">
+              <sha256sum>8d83e6fe0ee319266dde031126da7c67024151b7c6a56410c3abb065fcd1ee7c</sha256sum>
+            </artifact>
+          </verification>
           <exclude>
             <dependency maven-id="org.jetbrains.kotlin:kotlin-reflect" />
             <dependency maven-id="org.jetbrains.kotlin:kotlin-stdlib-common" />

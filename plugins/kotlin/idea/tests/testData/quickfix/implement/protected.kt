@@ -4,3 +4,4 @@
 class Container {
     protected abstract class <caret>Base
 }
+// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.intentions.CreateKotlinSubClassIntention

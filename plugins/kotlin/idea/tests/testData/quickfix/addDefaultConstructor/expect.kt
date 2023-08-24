@@ -5,3 +5,5 @@
 expect open class A
 
 open class C : A<caret>()
+
+// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.AddDefaultConstructorFix

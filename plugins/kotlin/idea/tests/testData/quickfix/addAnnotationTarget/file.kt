@@ -4,3 +4,4 @@ package test
 
 @Target
 annotation class Ann
+// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.AddAnnotationTargetFix

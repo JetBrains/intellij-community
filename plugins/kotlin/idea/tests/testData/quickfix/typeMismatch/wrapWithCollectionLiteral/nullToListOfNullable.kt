@@ -6,3 +6,5 @@ fun foo() {
 }
 
 fun bar(a: List<String?>) {}
+
+// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.WrapWithCollectionLiteralCallFix

@@ -8,3 +8,4 @@ import org.intellij.lang.annotations.JdkConstants
 @Language<caret>
 @Language33
 val v: JdkConstants
+// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.ImportFix

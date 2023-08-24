@@ -10,3 +10,5 @@ fun test() {
     {}<caret>
     {}
 }
+
+// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.AddSemicolonBeforeLambdaExpressionFix

@@ -5,3 +5,4 @@ class SomeClass(private vararg val dismissibleViewTypes: Int) {
         dismissibleViewTypes
     }
 }
+// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.MakeConstructorParameterPropertyFix

@@ -19,3 +19,5 @@ class B : A(), X, Y, Z {
     override<caret> fun foo() {}
 }
 /* IGNORE_FIR */
+
+// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.MakeOverriddenMemberOpenFix

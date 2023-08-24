@@ -1,7 +1,7 @@
 // IGNORE_FIR
 package language_injection
 
-<info descr="null">import</info> org.intellij.lang.annotations.<info descr="null">Language</info>
+<symbolName descr="null">import</symbolName> org.intellij.lang.annotations.<symbolName descr="null">Language</symbolName>
 
-<info descr="null">@Language</info>("kotlin")
-val <info descr="null">test</info> = "<inject descr="null">fun test2() {}</inject>"
+<symbolName descr="null">@Language</symbolName>("kotlin")
+val <symbolName descr="null">test</symbolName> = "<inject descr="null">fun test2() {}</inject>"

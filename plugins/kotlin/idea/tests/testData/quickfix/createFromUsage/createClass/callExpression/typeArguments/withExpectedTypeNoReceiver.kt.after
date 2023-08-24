@@ -9,3 +9,4 @@ fun test(a: A): A = Foo<A, Int>(a, 1)
 class Foo<T, U>(a: T, u: U) : A() {
 
 }
+// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.createFromUsage.createClass.CreateClassFromUsageFix

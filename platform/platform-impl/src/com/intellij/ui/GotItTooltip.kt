@@ -20,17 +20,18 @@ import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.Key
 import com.intellij.ui.awt.RelativePoint
 import com.intellij.util.Alarm
-import com.intellij.util.ui.*
+import com.intellij.util.ui.PositionTracker
 import org.jetbrains.annotations.Nls
 import org.jetbrains.annotations.NonNls
-import java.awt.*
+import java.awt.Component
+import java.awt.Point
 import java.awt.event.ComponentAdapter
 import java.awt.event.ComponentEvent
 import java.awt.event.KeyEvent
 import java.net.URL
-import javax.swing.*
+import javax.swing.Icon
+import javax.swing.JComponent
 import javax.swing.event.AncestorEvent
-import javax.swing.text.*
 
 @Service(Service.Level.APP)
 class GotItTooltipService {
@@ -63,11 +64,9 @@ class GotItTooltipService {
  * The description of the tooltip can contain inline shortcuts, icons and links.
  * See [GotItTextBuilder] doc for more info.
  */
-class GotItTooltip(@NonNls val id: String,
-                   textSupplier: GotItTextBuilder.() -> @Nls String,
-                   parentDisposable: Disposable? = null) : ToolbarActionTracker<Balloon>() {
-  private val gotItBuilder = GotItComponentBuilder(textSupplier)
-
+class GotItTooltip internal constructor(@NonNls val id: String,
+                                        private val gotItBuilder: GotItComponentBuilder,
+                                        parentDisposable: Disposable? = null) : ToolbarActionTracker<Balloon>() {
   private var timeout: Int = -1
   private var maxCount = 1
   private var onBalloonCreated: (Balloon) -> Unit = {}
@@ -90,9 +89,14 @@ class GotItTooltip(@NonNls val id: String,
   var position: Balloon.Position = Balloon.Position.below
 
   constructor(@NonNls id: String,
+              textSupplier: GotItTextBuilder.() -> @Nls String,
+              parentDisposable: Disposable? = null)
+    : this(id, GotItComponentBuilder(textSupplier), parentDisposable)
+
+  constructor(@NonNls id: String,
               @Nls text: String,
               parentDisposable: Disposable? = null)
-    : this(id, { text }, parentDisposable)
+    : this(id, GotItComponentBuilder { text }, parentDisposable)
 
   init {
     if (parentDisposable != null) {
@@ -109,8 +113,8 @@ class GotItTooltip(@NonNls val id: String,
   /**
    * Add an optional image above the header or description
    */
-  fun withImage(image: Icon): GotItTooltip {
-    gotItBuilder.withImage(image)
+  fun withImage(image: Icon, withBorder: Boolean = true): GotItTooltip {
+    gotItBuilder.withImage(image, withBorder)
     return this
   }
 
@@ -239,7 +243,6 @@ class GotItTooltip(@NonNls val id: String,
    */
   @Deprecated("Not supported in the updated design")
   fun andShowCloseShortcut(): GotItTooltip {
-    gotItBuilder.showCloseShortcut(true)
     return this
   }
 

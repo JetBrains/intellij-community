@@ -11,3 +11,4 @@ fun foo(x: String?) {
 }
 
 fun bar() {}
+// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.SimplifyComparisonFix

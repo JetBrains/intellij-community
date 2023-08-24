@@ -5,3 +5,5 @@ import java.util.Random
 class MyRandom : Random() {
     <caret>override fun next(): Int = 4
 }
+
+// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.ChangeMemberFunctionSignatureFix

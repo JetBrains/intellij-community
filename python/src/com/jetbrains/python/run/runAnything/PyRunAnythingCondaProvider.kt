@@ -39,6 +39,8 @@ class PyRunAnythingCondaProvider : PyRunAnythingPackageProvider() {
   override fun getPackageRepository(dataContext: DataContext): PyPackageRepository? {
     return getPackageManager(dataContext)?.repositoryManager?.repositories?.first { it is CondaPackageRepository }
   }
+
+  override fun getLogCommandType(): CommandType = CommandType.CONDA
 }
 
 val CONDA_COMMANDS = listOf("clean", "compare", "config", "create", "help", "info", "init", "install", "list", "package", "remove",

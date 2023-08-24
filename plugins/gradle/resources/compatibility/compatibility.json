@@ -44,7 +44,8 @@
       {"java": "16-17",   "gradle": "7.0-INF"},
       {"java": "17-18",   "gradle": "7.2-INF"},
       {"java": "18-19",   "gradle": "7.5-INF"},
-      {"java": "19-20",   "gradle": "7.6-INF"}
+      {"java": "19-20",   "gradle": "7.6-INF"},
+      {"java": "20-21",   "gradle": "8.3-INF"}
     ]
   },
   {
@@ -73,7 +74,8 @@
       {"java": "16-17",   "gradle": "7.0-INF"},
       {"java": "17-18",   "gradle": "7.2-INF"},
       {"java": "18-19",   "gradle": "7.5-INF"},
-      {"java": "19-20",   "gradle": "7.6-INF"}
+      {"java": "19-20",   "gradle": "7.6-INF"},
+      {"java": "20-21",   "gradle": "8.3-INF"}
     ]
   }
 ]

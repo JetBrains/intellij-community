@@ -1,6 +1,20 @@
 <component name="libraryTable">
   <library name="ktor-network-tls" type="repository">
     <properties maven-id="io.ktor:ktor-network-tls-jvm:2.3.0">
+      <verification>
+        <artifact url="file://$MAVEN_REPOSITORY$/io/ktor/ktor-network-tls-jvm/2.3.0/ktor-network-tls-jvm-2.3.0.jar">
+          <sha256sum>9720bb29ebd4b035e38082dbb11620bdcc8b57e4988d8f3206fb4bf307fdf9f5</sha256sum>
+        </artifact>
+        <artifact url="file://$MAVEN_REPOSITORY$/io/ktor/ktor-network-jvm/2.3.0/ktor-network-jvm-2.3.0.jar">
+          <sha256sum>17b85d910c882b8c33073f7888275b610739ac04faecb4f43f94bf757572c391</sha256sum>
+        </artifact>
+        <artifact url="file://$MAVEN_REPOSITORY$/io/ktor/ktor-utils-jvm/2.3.0/ktor-utils-jvm-2.3.0.jar">
+          <sha256sum>11f01ec6bc4a139852bec08e2346046a96ae636bb3d7643a14c109332692a447</sha256sum>
+        </artifact>
+        <artifact url="file://$MAVEN_REPOSITORY$/io/ktor/ktor-io-jvm/2.3.0/ktor-io-jvm-2.3.0.jar">
+          <sha256sum>e4fc6eafdd18cdc95ee7e090b586b932a35d992660ae70fb18ba64b737427bcf</sha256sum>
+        </artifact>
+      </verification>
       <exclude>
         <dependency maven-id="org.jetbrains.kotlinx:kotlinx-coroutines-core-jvm" />
         <dependency maven-id="org.jetbrains.kotlin:kotlin-stdlib-common" />

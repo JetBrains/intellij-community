@@ -8,3 +8,4 @@ abstract class B {
 <caret>class MyImpl(
     override val p: String? = null
 ) : B()
+// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.core.overrideImplement.ImplementMembersHandler

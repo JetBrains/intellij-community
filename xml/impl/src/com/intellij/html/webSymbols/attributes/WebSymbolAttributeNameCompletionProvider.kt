@@ -55,6 +55,7 @@ class WebSymbolAttributeNameCompletionProvider : WebSymbolsCompletionProviderBas
       KIND_HTML_ATTRIBUTES,
       name,
       position,
+      context,
       symbols,
       providedAttributes,
       filter = { item ->

@@ -10,3 +10,4 @@ class NewClass(p: Int = 0)
 typealias Old = <caret>OldClass
 
 val a: Old = Old()
+// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.replaceWith.DeprecatedSymbolUsageFix

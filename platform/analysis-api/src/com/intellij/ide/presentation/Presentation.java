@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.presentation;
 
 import org.jetbrains.annotations.NonNls;
@@ -9,7 +9,7 @@ import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
 /**
- * Registers icon and type name for element.
+ * Registers icon and type name for an element.
  */
 @Retention(RetentionPolicy.RUNTIME)
 @Target(ElementType.TYPE)
@@ -24,7 +24,8 @@ public @interface Presentation {
   Class<? extends PresentationProvider> provider() default PresentationProvider.class;
 
   /**
-   * Non-localized type name. Use {@link TypeNameEP} or provide localized text via {@link PresentationProvider#getTypeName(Object)} for i18n.
+   * Non-localized type name. Use {@link com.intellij.ide.TypeNameEP} or provide localized text
+   * via {@link PresentationProvider#getTypeName(Object)} for i18n.
    */
   @NonNls
   String typeName() default "";

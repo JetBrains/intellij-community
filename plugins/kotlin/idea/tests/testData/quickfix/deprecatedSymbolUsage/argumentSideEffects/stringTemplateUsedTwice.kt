@@ -10,3 +10,5 @@ fun newFun(p1: String, p2: String){}
 fun foo(p: Int) {
     <caret>oldFun("p=$p")
 }
+
+// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.replaceWith.DeprecatedSymbolUsageFix

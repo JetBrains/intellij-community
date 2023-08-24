@@ -5,6 +5,8 @@ import com.intellij.codeWithMe.ClientId;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.ActionButtonComponent;
 import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.Presentation;
+import com.intellij.openapi.actionSystem.Toggleable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
@@ -300,5 +302,22 @@ public final class PopupUtil {
   @Nullable
   public static Component getPopupToggleComponent(@NotNull JBPopup jbPopup) {
     return (Component)SoftReference.dereference((WeakReference<?>)jbPopup.getContent().getClientProperty(POPUP_TOGGLE_COMPONENT));
+  }
+
+  /**
+   * Adds a listener to the popup that will change the toggled state of the Presentation depending on the popup showing state.
+   */
+  public static void addToggledStateListener(@NotNull JBPopup popup, @NotNull Presentation presentation) {
+    popup.addListener(new JBPopupListener() {
+      @Override
+      public void beforeShown(@NotNull LightweightWindowEvent event) {
+        Toggleable.setSelected(presentation, true);
+      }
+
+      @Override
+      public void onClosed(@NotNull LightweightWindowEvent event) {
+        Toggleable.setSelected(presentation, false);
+      }
+    });
   }
 }

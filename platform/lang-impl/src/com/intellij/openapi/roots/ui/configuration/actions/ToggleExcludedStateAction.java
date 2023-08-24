@@ -17,7 +17,6 @@
 package com.intellij.openapi.roots.ui.configuration.actions;
 
 import com.intellij.icons.AllIcons;
-import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.project.ProjectBundle;
@@ -48,7 +47,8 @@ public class ToggleExcludedStateAction extends ContentEntryEditingAction {
     final VirtualFile[] selectedFiles = getSelectedFiles();
     if (selectedFiles.length == 0) return false;
 
-    return myEntryTreeEditor.getContentEntryEditor().isExcludedOrUnderExcludedDirectory(selectedFiles[0]);
+    ContentEntryEditor editor = myEntryTreeEditor.getContentEntryEditor();
+    return editor != null && editor.isExcludedOrUnderExcludedDirectory(selectedFiles[0]);
   }
 
   @Override
@@ -57,6 +57,8 @@ public class ToggleExcludedStateAction extends ContentEntryEditingAction {
     assert selectedFiles.length != 0;
 
     ContentEntryEditor contentEntryEditor = myEntryTreeEditor.getContentEntryEditor();
+    if (contentEntryEditor == null) return;
+    
     for (VirtualFile selectedFile : selectedFiles) {
       if (isSelected) {
         if (!contentEntryEditor.isExcludedOrUnderExcludedDirectory(selectedFile)) { // not excluded yet

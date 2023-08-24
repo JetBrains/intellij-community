@@ -341,12 +341,12 @@ private fun applyCodeStyleSettings(settings: TransientCodeStyleSettings, propert
   return isModified
 }
 
-private fun processEditorConfig(project: Project, psiFile: PsiFile): Pair<ResourceProperties, List<VirtualFile>> {
+private suspend fun processEditorConfig(project: Project, psiFile: PsiFile): Pair<ResourceProperties, List<VirtualFile>> {
   try {
     val file = psiFile.virtualFile
     val filePath = Utils.getFilePath(project, file)
     if (filePath != null) {
-      return SettingsProviderComponent.getInstance(project).getPropertiesAndEditorConfigs(file)
+      return SettingsProviderComponent.getInstance(project).getPropertiesAndEditorConfigs(file).await()
     }
     else if (VfsUtilCore.isBrokenLink(file)) {
       LOG.warn("${file.presentableUrl} is a broken link")

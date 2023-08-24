@@ -8,3 +8,4 @@ class Success<T>(override val value : T) : ParseResult<T> {
     public override val success : Boolean = true
 }
 /* IGNORE_FIR */
+// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.ChangeVisibilityModifierFix

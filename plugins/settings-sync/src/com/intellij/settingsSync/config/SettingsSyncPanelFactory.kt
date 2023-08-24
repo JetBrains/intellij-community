@@ -3,6 +3,7 @@ package com.intellij.settingsSync.config
 import com.intellij.openapi.ui.DialogPanel
 import com.intellij.openapi.ui.popup.JBPopupFactory
 import com.intellij.settingsSync.SettingsSyncBundle.message
+import com.intellij.settingsSync.SettingsSyncState
 import com.intellij.ui.CheckBoxList
 import com.intellij.ui.CheckBoxListListener
 import com.intellij.ui.SeparatorComponent
@@ -21,52 +22,51 @@ import javax.swing.JComponent
 import javax.swing.JPanel
 
 internal object SettingsSyncPanelFactory {
-  fun createPanel(syncLabel: @Nls String): DialogPanel {
+  fun createPanel(syncLabel: @Nls String, state: SettingsSyncState): DialogPanel {
     return panel {
       row {
         label(syncLabel)
       }
-
-      SettingsCategoryDescriptor.listAll().forEach { descriptor ->
-        descriptor.reset()
+      val categoryHolders = SyncCategoryHolder.createAllForState(state)
+      for (holder in categoryHolders) {
         indent {
           row {
-            if (descriptor.secondaryGroup == null) {
+            if (holder.secondaryGroup == null) {
               checkBox(
-                descriptor.name
+                holder.name
               )
-                .bindSelected(descriptor::isSynchronized)
-                .onReset { descriptor.reset() }
-                .onApply { descriptor.apply() }
-                .onIsModified { descriptor.isModified() }
-              comment(descriptor.description)
+                .bindSelected(holder::isSynchronized)
+                .onReset { holder.reset() }
+                .onApply { holder.apply() }
+                .onIsModified { holder.isModified() }
+              comment(holder.description)
             }
             else {
-              val topCheckBox = ThreeStateCheckBox(descriptor.name)
+              val topCheckBox = ThreeStateCheckBox(holder.name)
               topCheckBox.isThirdStateEnabled = false
               cell(topCheckBox)
                 .onReset {
-                  descriptor.reset()
-                  topCheckBox.state = getGroupState(descriptor)
+                  holder.reset()
+                  topCheckBox.state = getGroupState(holder)
                 }
                 .onApply {
-                  descriptor.isSynchronized = topCheckBox.state != State.NOT_SELECTED
-                  descriptor.apply()
+                  holder.isSynchronized = topCheckBox.state != State.NOT_SELECTED
+                  holder.apply()
                 }
-                .onIsModified { descriptor.isModified() }
-              val c = comment(descriptor.description).visible(!descriptor.description.isEmpty())
-              val subcategoryLink = configureLink(descriptor.secondaryGroup, c.component.font.size2D) {
-                topCheckBox.state = getGroupState(descriptor)
-                descriptor.isSynchronized = topCheckBox.state != State.NOT_SELECTED
+                .onIsModified { holder.isModified() }
+              val c = comment(holder.description).visible(!holder.description.isEmpty())
+              val subcategoryLink = configureLink(holder.secondaryGroup!!, c.component.font.size2D) {
+                topCheckBox.state = getGroupState(holder)
+                holder.isSynchronized = topCheckBox.state != State.NOT_SELECTED
               }
               cell(subcategoryLink)
-                .visible(descriptor.secondaryGroup.getDescriptors().size > 1 || !descriptor.secondaryGroup.isComplete())
+                .visible(holder.secondaryGroup!!.getDescriptors().size > 1 || !holder.secondaryGroup!!.isComplete())
               topCheckBox.addActionListener {
-                descriptor.isSynchronized = topCheckBox.state != State.NOT_SELECTED
-                descriptor.secondaryGroup.getDescriptors().forEach {
-                  it.isSelected = descriptor.isSynchronized
+                holder.isSynchronized = topCheckBox.state != State.NOT_SELECTED
+                holder.secondaryGroup!!.getDescriptors().forEach {
+                  it.isSelected = holder.isSynchronized
                 }
-                subcategoryLink.isEnabled = descriptor.secondaryGroup.isComplete() || descriptor.isSynchronized
+                subcategoryLink.isEnabled = holder.secondaryGroup!!.isComplete() || holder.isSynchronized
               }
             }
 
@@ -76,7 +76,7 @@ internal object SettingsSyncPanelFactory {
     }
   }
 
-  private fun getGroupState(descriptor: SettingsCategoryDescriptor): State {
+  private fun getGroupState(descriptor: SyncCategoryHolder): State {
     val group = descriptor.secondaryGroup
     if (group == null) {
       return if (descriptor.isSynchronized) State.SELECTED else State.NOT_SELECTED
@@ -95,7 +95,7 @@ internal object SettingsSyncPanelFactory {
     }
   }
 
-  private fun configureLink(group: SettingsSyncSubcategoryGroup,
+  private fun configureLink(group: SyncSubcategoryGroup,
                             fontSize: Float,
                             onCheckBoxChange: () -> Unit): JComponent {
     val actionLink = ActionLink(message("subcategory.config.link")) {}

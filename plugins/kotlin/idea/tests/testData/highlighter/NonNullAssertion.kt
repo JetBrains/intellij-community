@@ -1,3 +1,3 @@
-fun <info descr="null" textAttributesKey="KOTLIN_FUNCTION_DECLARATION">test</info>(<info descr="null" textAttributesKey="KOTLIN_PARAMETER">s</info>: <info descr="null" textAttributesKey="KOTLIN_CLASS">String</info>?) {
-    <info descr="null" textAttributesKey="KOTLIN_PARAMETER">s</info><info descr="null" textAttributesKey="KOTLIN_EXCLEXCL">!!</info>.<info descr="null" textAttributesKey="KOTLIN_INSTANCE_PROPERTY">length</info>
+fun <symbolName descr="null" textAttributesKey="KOTLIN_FUNCTION_DECLARATION">test</symbolName>(<symbolName descr="null" textAttributesKey="KOTLIN_PARAMETER">s</symbolName>: <symbolName descr="null" textAttributesKey="KOTLIN_CLASS">String</symbolName>?) {
+    <symbolName descr="null" textAttributesKey="KOTLIN_PARAMETER">s</symbolName><symbolName descr="null" textAttributesKey="KOTLIN_EXCLEXCL">!!</symbolName>.<symbolName descr="null" textAttributesKey="KOTLIN_INSTANCE_PROPERTY">length</symbolName>
 }

@@ -1,13 +1,17 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.debugger.evaluate.compilation
 
-import com.intellij.openapi.application.runReadAction
+import com.intellij.openapi.application.ReadAction
+import com.intellij.openapi.progress.ProcessCanceledException
+import com.intellij.openapi.progress.ProgressManager
 import org.jetbrains.kotlin.descriptors.ModuleDescriptor
 import org.jetbrains.kotlin.idea.debugger.base.util.evaluate.ExecutionContext
 import org.jetbrains.kotlin.idea.debugger.evaluate.evaluationException
 import org.jetbrains.kotlin.idea.debugger.evaluate.getResolutionFacadeForCodeFragment
 import org.jetbrains.kotlin.psi.KtCodeFragment
+import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.resolve.BindingContext
+import java.util.concurrent.TimeUnit
 
 class CodeFragmentCompilerHandler(val strategy: CodeFragmentCompilingStrategy) {
 
@@ -27,7 +31,7 @@ class CodeFragmentCompilerHandler(val strategy: CodeFragmentCompilingStrategy) {
         bindingContext: BindingContext,
         executionContext: ExecutionContext
     ): CodeFragmentCompiler.CompilationResult {
-        val (newBindingContext, filesToCompile) = runReadAction {
+        val (newBindingContext, filesToCompile) = ReadAction.nonBlocking<Pair<BindingContext, List<KtFile>>> {
             val resolutionFacade = getResolutionFacadeForCodeFragment(codeFragment)
             try {
                 val filesToCompile = strategy.getFilesToCompile(resolutionFacade, bindingContext)
@@ -36,7 +40,7 @@ class CodeFragmentCompilerHandler(val strategy: CodeFragmentCompilingStrategy) {
             } catch (e: IllegalArgumentException) {
                 evaluationException(e.message ?: e.toString())
             }
-        }
+        }.executeSynchronously()
 
         return try {
             CodeFragmentCompiler(executionContext).compile(codeFragment, filesToCompile, strategy, newBindingContext, moduleDescriptor)

@@ -5,7 +5,6 @@ package com.intellij.openapi.vcs.changes;
 import com.intellij.diagnostic.Activity;
 import com.intellij.diagnostic.ActivityCategory;
 import com.intellij.diagnostic.StartUpMeasurer;
-import com.intellij.platform.diagnostic.telemetry.TelemetryManager;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.CommonActionsManager;
 import com.intellij.ide.DataManager;
@@ -40,11 +39,13 @@ import com.intellij.openapi.vcs.changes.actions.diff.ShowDiffFromLocalChangesAct
 import com.intellij.openapi.vcs.changes.shelf.ShelveChangesManager;
 import com.intellij.openapi.vcs.changes.ui.*;
 import com.intellij.openapi.vcs.impl.LineStatusTrackerSettingListener;
+import com.intellij.openapi.vcs.telemetry.VcsTelemetrySpan.ChangesView;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.openapi.wm.ex.ToolWindowManagerListener;
+import com.intellij.platform.diagnostic.telemetry.TelemetryManager;
 import com.intellij.problems.ProblemListener;
 import com.intellij.ui.ExperimentalUI;
 import com.intellij.ui.JBColor;
@@ -760,7 +761,7 @@ public class ChangesViewManager implements ChangesViewEx,
     private @Nullable Runnable refreshView() {
       if (myDisposed || !myProject.isInitialized() || ApplicationManager.getApplication().isUnitTestMode()) return null;
 
-      Span span = TRACER.spanBuilder("changes-view-refresh-background").startSpan();
+      Span span = TRACER.spanBuilder(ChangesView.ChangesViewRefreshBackground.getName()).startSpan();
       try {
         ChangeListManagerImpl changeListManager = ChangeListManagerImpl.getInstanceImpl(myProject);
         List<LocalChangeList> changeLists = changeListManager.getChangeLists();
@@ -829,7 +830,7 @@ public class ChangesViewManager implements ChangesViewEx,
                                   boolean hasPendingRefresh) {
       if (myDisposed) return;
 
-      Span span = TRACER.spanBuilder("changes-view-refresh-edt").startSpan();
+      Span span = TRACER.spanBuilder(ChangesView.ChangesViewRefreshEdt.getName()).startSpan();
       try {
         myModelUpdateInProgress = true;
         try {

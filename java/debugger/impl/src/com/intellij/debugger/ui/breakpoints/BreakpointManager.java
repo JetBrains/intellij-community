@@ -105,7 +105,7 @@ public class BreakpointManager {
 
   private static boolean checkAndNotifyPossiblySlowBreakpoint(XBreakpoint breakpoint) {
     XBreakpointProperties properties = breakpoint.getProperties();
-    if (breakpoint.isEnabled() && properties instanceof JavaMethodBreakpointProperties && !((JavaMethodBreakpointProperties)properties).EMULATED) {
+    if (breakpoint.isEnabled() && properties instanceof JavaMethodBreakpointProperties javaProperties && !javaProperties.EMULATED) {
       XDebuggerManagerImpl.getNotificationGroup()
         .createNotification(JavaDebuggerBundle.message("method.breakpoints.slowness.warning"), MessageType.WARNING)
         .notify(((XBreakpointBase<?, ?, ?>)breakpoint).getProject());
@@ -118,15 +118,16 @@ public class BreakpointManager {
     busConnection.subscribe(XBreakpointListener.TOPIC, new XBreakpointListener<>() {
       @Override
       public void breakpointAdded(@NotNull XBreakpoint<?> xBreakpoint) {
-        Breakpoint breakpoint = getJavaBreakpoint(xBreakpoint);
+        Breakpoint<?> breakpoint = getJavaBreakpoint(xBreakpoint);
         if (breakpoint != null) {
           addBreakpoint(breakpoint);
+          JavaBreakpointsUsageCollector.reportNewBreakpoint(breakpoint, xBreakpoint.getType());
         }
       }
 
       @Override
       public void breakpointChanged(@NotNull XBreakpoint xBreakpoint) {
-        Breakpoint breakpoint = getJavaBreakpoint(xBreakpoint);
+        Breakpoint<?> breakpoint = getJavaBreakpoint(xBreakpoint);
         if (breakpoint != null) {
           fireBreakpointChanged(breakpoint);
         }
@@ -511,7 +512,13 @@ public class BreakpointManager {
     Breakpoint<?> breakpoint = xBreakpoint.getUserData(Breakpoint.DATA_KEY);
     if (breakpoint == null && xBreakpoint.getType() instanceof JavaBreakpointType) {
       Project project = ((XBreakpointBase<?, ?, ?>)xBreakpoint).getProject();
-      breakpoint = ((JavaBreakpointType)xBreakpoint.getType()).createJavaBreakpoint(project, xBreakpoint);
+      try {
+        breakpoint = ((JavaBreakpointType)xBreakpoint.getType()).createJavaBreakpoint(project, xBreakpoint);
+      }
+      catch (Throwable e) {
+        DebuggerUtilsImpl.logError(e);
+        return null;
+      }
       xBreakpoint.putUserData(Breakpoint.DATA_KEY, breakpoint);
     }
     return breakpoint;

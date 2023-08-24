@@ -6,3 +6,4 @@ fun append(y: String, xs: Collection<*>, z: Int) {}
 fun invoke() {
     append("", 1..10<caret>, 0)
 }
+// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.OverloadResolutionChangeFix

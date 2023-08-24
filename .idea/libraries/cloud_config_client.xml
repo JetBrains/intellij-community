@@ -1,6 +1,12 @@
 <component name="libraryTable">
   <library name="cloud-config-client" type="repository">
-    <properties include-transitive-deps="false" maven-id="com.jetbrains.cloudconfig:cloudconfig:2.2.0" />
+    <properties include-transitive-deps="false" maven-id="com.jetbrains.cloudconfig:cloudconfig:2.2.0">
+      <verification>
+        <artifact url="file://$MAVEN_REPOSITORY$/com/jetbrains/cloudconfig/cloudconfig/2.2.0/cloudconfig-2.2.0.jar">
+          <sha256sum>f2246f96f74545e025787f281a8bef2920601d55f7251d9d7a449744083e3265</sha256sum>
+        </artifact>
+      </verification>
+    </properties>
     <CLASSES>
       <root url="jar://$MAVEN_REPOSITORY$/com/jetbrains/cloudconfig/cloudconfig/2.2.0/cloudconfig-2.2.0.jar!/" />
     </CLASSES>

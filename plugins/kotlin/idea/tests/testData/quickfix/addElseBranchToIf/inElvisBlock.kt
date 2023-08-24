@@ -4,3 +4,4 @@ fun foo(x: String?) {
         return
     }
 }
+// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.AddIfElseBranchFix

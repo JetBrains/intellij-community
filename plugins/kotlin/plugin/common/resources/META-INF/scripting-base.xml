@@ -113,9 +113,10 @@
             restartRequired="true"/>
 
     <registryKey
-            key="kotlin.scripting.wait-init.timeout.sec"
-            description="Max time to wait for scripting initialization activity (in seconds)"
-            defaultValue="5"
+            key="kotlin.scripting.wait-init.attempts.num"
+            description="Scripting initialization takes time. This key limits the number of waiting attempts (each takes milliseconds)
+             before the data becomes available for other subsystems."
+            defaultValue="10"
             restartRequired="false"/>
 
     <fileType name="script-definition-marker" fieldName="INSTANCE"

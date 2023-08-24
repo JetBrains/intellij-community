@@ -4,6 +4,7 @@ package com.intellij.ui.tree;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.testFramework.EdtTestUtil;
 import com.intellij.testFramework.TestApplicationManager;
 import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.concurrency.Invoker;
@@ -62,7 +63,7 @@ public final class AsyncTreeModelTest {
       assert !model.isProcessing() : "created model should not update content";
     }
     finally {
-      Disposer.dispose(disposable);
+      EdtTestUtil.runInEdtAndWait(() -> Disposer.dispose(disposable));
     }
   }
 
@@ -464,7 +465,7 @@ public final class AsyncTreeModelTest {
         fail(seconds + " seconds is not enough for " + toString());
       }
       finally {
-        Disposer.dispose(disposable);
+        EdtTestUtil.runInEdtAndWait(() -> Disposer.dispose(disposable));
         printTime("done in ", time);
         if (PRINT) System.out.println();
       }

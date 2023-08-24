@@ -70,7 +70,7 @@ public class SetupTaskChooserAction extends AnAction {
     e.getPresentation().setEnabled(module != null && PyPackageUtil.hasSetupPy(module) && PythonSdkUtil.findPythonSdk(module) != null);
   }
 
-  public static void runSetupTask(@NlsSafe String taskName, Module module) {
+  private static void runSetupTask(@NlsSafe String taskName, @NotNull Module module) {
     final List<SetupTask.Option> options = SetupTaskIntrospector.getSetupTaskOptions(module, taskName);
     List<String> parameters = new ArrayList<>();
     parameters.add(taskName);
@@ -84,7 +84,7 @@ public class SetupTaskChooserAction extends AnAction {
     runSetupTask(taskName, module, parameters);
   }
 
-  public static void runSetupTask(@NlsSafe String taskName, Module module, List<String> parameters) {
+  public static void runSetupTask(@NlsSafe String taskName, @NotNull Module module, List<String> parameters) {
     try {
       final PyFile setupPy = PyPackageUtil.findSetupPy(module);
       if (setupPy == null) return;

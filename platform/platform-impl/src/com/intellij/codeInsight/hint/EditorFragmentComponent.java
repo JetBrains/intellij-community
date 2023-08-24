@@ -23,6 +23,7 @@ import com.intellij.ui.scale.JBUIScale;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.StartupUiUtil;
 import com.intellij.util.ui.UIUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -38,6 +39,11 @@ public final class EditorFragmentComponent extends JPanel {
   private static final Key<WeakReference<LightweightHint>> CURRENT_HINT = Key.create("EditorFragmentComponent.currentHint");
   private static final int LINE_BORDER_THICKNESS = 1;
   private static final int EMPTY_BORDER_THICKNESS = 2;
+  private final EditorEx myEditor;
+  private final int myStartLine;
+  private final int myEndLine;
+  private final boolean myShowFolding;
+  private final boolean myShowGutter;
 
   private EditorFragmentComponent(EditorEx editor, int startLine, int endLine, boolean showFolding, boolean showGutter) {
     editor.setPurePaintingMode(true);
@@ -47,6 +53,11 @@ public final class EditorFragmentComponent extends JPanel {
     finally {
       editor.setPurePaintingMode(false);
     }
+    myEditor = editor;
+    myStartLine = startLine;
+    myEndLine = endLine;
+    myShowFolding = showFolding;
+    myShowGutter = showGutter;
   }
 
   private void doInit(EditorEx editor, int startLine, int endLine, boolean showFolding, boolean showGutter) {
@@ -139,6 +150,31 @@ public final class EditorFragmentComponent extends JPanel {
     add(component);
 
     setBorder(createEditorFragmentBorder(editor));
+  }
+
+  @ApiStatus.Internal
+  public EditorEx getEditor() {
+    return myEditor;
+  }
+
+  @ApiStatus.Internal
+  public int getStartLine() {
+    return myStartLine;
+  }
+
+  @ApiStatus.Internal
+  public int getEndLine() {
+    return myEndLine;
+  }
+
+  @ApiStatus.Internal
+  public boolean showFolding() {
+    return myShowFolding;
+  }
+
+  @ApiStatus.Internal
+  public boolean showGutter() {
+    return myShowGutter;
   }
 
   private static int getWidthLimit(@NotNull Editor editor) {

@@ -40,6 +40,7 @@ abstract class AbstractKotlinApplicableInspectionWithContext<ELEMENT : KtElement
         val context = prepareContextWithAnalyze(element) ?: return null
 
         val elementPointer = element.createSmartPointer()
+        val inspectionWithContextClass = javaClass
         val quickFix = object : AbstractKotlinApplicableInspectionQuickFix<ELEMENT>() {
             override fun applyTo(element: ELEMENT) {
                 apply(element, context, element.project, element.findExistingEditor())
@@ -48,6 +49,7 @@ abstract class AbstractKotlinApplicableInspectionWithContext<ELEMENT : KtElement
             override fun shouldApplyInWriteAction(): Boolean = this@AbstractKotlinApplicableInspectionWithContext.shouldApplyInWriteAction()
             override fun getFamilyName(): String = this@AbstractKotlinApplicableInspectionWithContext.getActionFamilyName()
             override fun getName(): String = elementPointer.element?.let { getActionName(it, context) } ?: familyName
+            override fun getSubstitutedClass(): Class<*> = inspectionWithContextClass
         }
 
         val description = getProblemDescription(element, context)

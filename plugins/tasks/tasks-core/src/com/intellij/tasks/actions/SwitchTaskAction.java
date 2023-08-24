@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.tasks.actions;
 
@@ -68,17 +68,15 @@ public class SwitchTaskAction extends ComboBoxAction implements DumbAware {
       TaskManager taskManager = TaskManager.getManager(project);
       LocalTask activeTask = taskManager.getActiveTask();
 
-      if (isImplicit(activeTask) &&
-          taskManager.getAllRepositories().length == 0 &&
-          !TaskSettings.getInstance().ALWAYS_DISPLAY_COMBO) {
-        presentation.setEnabledAndVisible(false);
-      }
-      else {
+      if (isTaskManagerComboInToolbarEnabledAndVisible(activeTask, taskManager)) {
         String s = getText(activeTask);
         presentation.setEnabledAndVisible(true);
         presentation.setText(s, false);
         presentation.setIcon(activeTask.getIcon());
         presentation.setDescription(activeTask.getSummary());
+      }
+      else {
+        presentation.setEnabledAndVisible(false);
       }
     }
     else {
@@ -87,12 +85,18 @@ public class SwitchTaskAction extends ComboBoxAction implements DumbAware {
     }
   }
 
+  public static boolean isTaskManagerComboInToolbarEnabledAndVisible(LocalTask activeTask, TaskManager taskManager) {
+    return !isOriginalDefault(activeTask) ||
+           taskManager.getAllRepositories().length != 0 ||
+           TaskSettings.getInstance().ALWAYS_DISPLAY_COMBO;
+  }
+
   @Override
   public @NotNull ActionUpdateThread getActionUpdateThread() {
     return ActionUpdateThread.BGT;
   }
 
-  private static boolean isImplicit(LocalTask activeTask) {
+  private static boolean isOriginalDefault(LocalTask activeTask) {
     return activeTask.isDefault() && Comparing.equal(activeTask.getCreated(), activeTask.getUpdated());
   }
 

@@ -107,6 +107,7 @@ public class SimpleLocalChangeListDiffViewer extends SimpleDiffViewer {
       getContent1().getDocument(),
       getContent2().getDocument(),
       myLocalRequest.getChangelistId(),
+      myAllowExcludeChangesFromCommit,
       myTextDiffProvider,
       indicator,
       new MyLocalTrackerDiffHandler(indicator)
@@ -321,7 +322,7 @@ public class SimpleLocalChangeListDiffViewer extends SimpleDiffViewer {
 
     @Override
     public void installHighlighter(@Nullable SimpleDiffChange previousChange) {
-      if (getChange().isPartiallyExcluded()) {
+      if (getChange().isPartiallyExcluded() && getViewer().myAllowExcludeChangesFromCommit) {
         assert myHighlighters.isEmpty() && myOperations.isEmpty();
 
         int changeStart1 = getChange().getStartLine(Side.LEFT);
@@ -386,7 +387,7 @@ public class SimpleLocalChangeListDiffViewer extends SimpleDiffViewer {
 
     @Override
     public boolean drawDivider(DiffDividerDrawUtil.DividerPaintable.@NotNull Handler handler) {
-      if (getChange().isPartiallyExcluded()) {
+      if (getChange().isPartiallyExcluded() && getViewer().myAllowExcludeChangesFromCommit) {
         int startLine1 = myChange.getStartLine(Side.LEFT);
         int endLine1 = myChange.getEndLine(Side.LEFT);
         int startLine2 = myChange.getStartLine(Side.RIGHT);

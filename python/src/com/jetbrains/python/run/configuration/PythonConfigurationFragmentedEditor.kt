@@ -2,8 +2,10 @@
 package com.jetbrains.python.run.configuration
 
 import com.intellij.execution.ExecutionBundle
+import com.intellij.execution.ui.CommandLinePanel
 import com.intellij.execution.ui.SettingsEditorFragment
 import com.intellij.execution.ui.SettingsEditorFragmentType
+import com.intellij.ide.macro.MacrosDialog
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory
 import com.intellij.openapi.ui.LabeledComponent
 import com.intellij.openapi.ui.TextBrowseFolderListener
@@ -22,14 +24,17 @@ class PythonConfigurationFragmentedEditor(runConfiguration: PythonRunConfigurati
   override fun customizeFragments(fragments: MutableList<SettingsEditorFragment<PythonRunConfiguration, *>>) {
     fragments.add(PyScriptOrModuleFragment())
 
+    val parametersEditor = RawCommandLineEditor()
+    CommandLinePanel.setMinimumWidth(parametersEditor, MIN_FRAGMENT_WIDTH)
     val scriptParametersFragment: SettingsEditorFragment<PythonRunConfiguration, RawCommandLineEditor> = SettingsEditorFragment<PythonRunConfiguration, RawCommandLineEditor>(
       "py.script.parameters",
       PyBundle.message("python.run.configuration.fragments.script.parameters"),
       PyBundle.message("python.run.configuration.fragments.python.group"),
-      RawCommandLineEditor(), SettingsEditorFragmentType.COMMAND_LINE,
+      parametersEditor, SettingsEditorFragmentType.COMMAND_LINE,
       { config: PythonRunConfiguration, field: RawCommandLineEditor -> field.text = config.scriptParameters },
       { config: PythonRunConfiguration, field: RawCommandLineEditor -> config.scriptParameters = field.text.trim() },
-      { config: PythonRunConfiguration -> !config.scriptParameters.trim().isEmpty() })
+      { true })
+    MacrosDialog.addMacroSupport(parametersEditor.editorField, MacrosDialog.Filters.ALL) { false }
     scriptParametersFragment.setHint(PyBundle.message("python.run.configuration.fragments.script.parameters.hint"))
     scriptParametersFragment.actionHint = PyBundle.message("python.run.configuration.fragments.script.parameters.hint")
     fragments.add(scriptParametersFragment)

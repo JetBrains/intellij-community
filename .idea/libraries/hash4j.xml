@@ -1,6 +1,12 @@
 <component name="libraryTable">
   <library name="hash4j" type="repository">
-    <properties maven-id="com.dynatrace.hash4j:hash4j:0.9.0" />
+    <properties maven-id="com.dynatrace.hash4j:hash4j:0.9.0">
+      <verification>
+        <artifact url="file://$MAVEN_REPOSITORY$/com/dynatrace/hash4j/hash4j/0.9.0/hash4j-0.9.0.jar">
+          <sha256sum>d6aa5066620ebf8451cc1f80ccbe30f7c7612bc0084049dd5012159fd93d6670</sha256sum>
+        </artifact>
+      </verification>
+    </properties>
     <CLASSES>
       <root url="jar://$MAVEN_REPOSITORY$/com/dynatrace/hash4j/hash4j/0.9.0/hash4j-0.9.0.jar!/" />
     </CLASSES>

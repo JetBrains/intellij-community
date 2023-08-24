@@ -7,3 +7,4 @@ fun foo() {
     A() xyz<caret>zy 5
 }
 /* IGNORE_FIR */
+// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.inspections.AddModifierFixFactory$createAction$1

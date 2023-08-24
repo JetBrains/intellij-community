@@ -100,7 +100,6 @@ public class MavenModuleResourceConfiguration {
     result = 31 * result + (classpath != null ? classpath.hashCode() : 0);
     result = 31 * result + delimitersPattern.hashCode();
     result = 31 * result + modelMap.hashCode();
-    result = 31 * result + modelMap.values().hashCode();
     result = 31 * result + properties.hashCode();
     result = 31 * result + filteringExclusions.hashCode();
     result = 31 * result + (escapeString != null ? escapeString.hashCode() : 0);

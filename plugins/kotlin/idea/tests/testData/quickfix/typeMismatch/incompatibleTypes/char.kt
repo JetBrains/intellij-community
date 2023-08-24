@@ -4,3 +4,4 @@ fun test(c: Char) {
         <caret>"." -> {}
     }
 }
+// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.ConvertStringToCharLiteralFix

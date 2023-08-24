@@ -342,6 +342,8 @@
       "SearchField.background": "Grey14"
     },
 
+    "NewUiOnboarding.Dialog.background": "Grey14",
+
     "Ide.Shadow": {
       "borderInsets": "16,16,16,16",
       "top0Color": "#FFFFFF00",
@@ -407,7 +409,8 @@
         "warningBorderColor": "Yellow6",
         "informativeBackground": "Green9",
         "informativeBorderColor": "Green8"
-      }
+      },
+      "WelcomeScreen.separatorColor": "#383A42"
   },
 
     "NotificationsToolwindow": {
@@ -554,6 +557,8 @@
       "codeBackground": "Grey2",
       "codeBorderColor": "Grey6",
       "linkForeground": "Blue7",
+      "imageBorderColor": "Grey4",
+      "animationBackground": "Grey13",
       "Button": {
         "foreground": "Grey14",
         "startBackground": "Grey4",
@@ -609,7 +614,8 @@
       "Icon": {
         "background": "Grey2",
         "hoverBackground": "Grey3",
-        "pressedBackground": "Grey3"
+        "pressedBackground": "Grey3",
+        "insets": "5,5,5,5"
       },
       "Dropdown": {
         "foreground": "Grey12",
@@ -621,14 +627,16 @@
       }
     },
 
+    "Window.undecorated.border" : "1,1,1,1,#5A5D6B",
+
     "OnePixelDivider.background": "Grey12",
 
     "TitlePane": {
       "background": "Grey13",
       "inactiveBackground": "Grey13",
       "Button": {
-        "hoverBackground": "#00000000",
-        "preferredSize": "44,40"
+        "preferredSize": "44,40",
+        "hoverBackground": "#FFFFFF1A"
       }
     },
 

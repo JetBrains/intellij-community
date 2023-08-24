@@ -1,6 +1,12 @@
 <component name="libraryTable">
   <library name="org.codehaus.groovy:groovy-templates" type="repository">
-    <properties include-transitive-deps="false" maven-id="org.codehaus.groovy:groovy-templates:3.0.13" />
+    <properties include-transitive-deps="false" maven-id="org.codehaus.groovy:groovy-templates:3.0.13">
+      <verification>
+        <artifact url="file://$MAVEN_REPOSITORY$/org/codehaus/groovy/groovy-templates/3.0.13/groovy-templates-3.0.13.jar">
+          <sha256sum>abfb7190631a35fc96e023bfcd4658f3f7d4ae76c488ef1b972a54b29809ddc2</sha256sum>
+        </artifact>
+      </verification>
+    </properties>
     <CLASSES>
       <root url="jar://$MAVEN_REPOSITORY$/org/codehaus/groovy/groovy-templates/3.0.13/groovy-templates-3.0.13.jar!/" />
     </CLASSES>

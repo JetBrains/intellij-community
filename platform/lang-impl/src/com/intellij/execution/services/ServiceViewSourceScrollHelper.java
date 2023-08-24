@@ -37,8 +37,7 @@ final class ServiceViewSourceScrollHelper {
     ServiceViewAutoScrollFromSourceHandler fromSourceHandler = new ServiceViewAutoScrollFromSourceHandler(project, toolWindow);
     fromSourceHandler.install();
     DefaultActionGroup additionalGearActions = new DefaultActionGroup(toSourceHandler.createToggleAction(),
-                                                                      fromSourceHandler.createToggleAction(),
-                                                                      Separator.getInstance());
+                                                                      fromSourceHandler.createToggleAction());
     List<AnAction> additionalProviderActions = ServiceViewActionProvider.getInstance().getAdditionalGearActions();
     for (AnAction action : additionalProviderActions) {
       additionalGearActions.add(action);

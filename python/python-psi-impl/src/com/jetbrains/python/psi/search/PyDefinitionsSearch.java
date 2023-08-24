@@ -4,43 +4,50 @@ package com.jetbrains.python.psi.search;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.psi.PsiElement;
 import com.intellij.util.Processor;
-import com.intellij.util.Query;
 import com.intellij.util.QueryExecutor;
-import com.jetbrains.python.psi.PyAssignmentStatement;
-import com.jetbrains.python.psi.PyClass;
-import com.jetbrains.python.psi.PyFunction;
-import com.jetbrains.python.psi.PyTargetExpression;
-import com.jetbrains.python.pyi.PyiFile;
+import com.jetbrains.python.psi.*;
 import com.jetbrains.python.pyi.PyiUtil;
 import org.jetbrains.annotations.NotNull;
 
 
 public class PyDefinitionsSearch implements QueryExecutor<PsiElement, PsiElement> {
   @Override
-  public boolean execute(@NotNull final PsiElement e, @NotNull final Processor<? super PsiElement> consumer) {
-    if (e instanceof PyClass) {
-      final Query<PyClass> query = PyClassInheritorsSearch.search((PyClass)e, true);
-      return query.forEach(consumer);
-    }
-    else if (e instanceof PyFunction) {
-      final Query<PyFunction> query =
-        ReadAction.compute(() -> PyOverridingMethodsSearch.search((PyFunction)e, true));
-
-      return query.forEach(consumer);
-    }
-    else if (e instanceof PyTargetExpression) {  // PY-237
-      final PsiElement parent = ReadAction.compute(() -> e.getParent());
-
-      if (parent instanceof PyAssignmentStatement) {
-        return consumer.process(parent);
+  public boolean execute(@NotNull PsiElement element, @NotNull Processor<? super PsiElement> consumer) {
+    if (element instanceof PyElement) {
+      PsiElement finalElement = element;
+      boolean isInsideStub = ReadAction.compute(() -> PyiUtil.isInsideStub(finalElement));
+      if (isInsideStub) {
+        var originalElement = ReadAction.compute(() -> PyiUtil.getOriginalElement((PyElement)finalElement));
+        if (originalElement != null) {
+          element = originalElement;
+          if (!consumer.process(element)) return false;
+        }
       }
     }
-    else if (e instanceof PyiFile) {
-      final PsiElement originalElement = ReadAction.compute(() -> PyiUtil.getOriginalElement((PyiFile)e));
-      if (originalElement != null) {
-        consumer.process(originalElement);
-      }
+    if (element instanceof PyClass) {
+      return processInheritors((PyClass)element, consumer);
+    }
+    else if (element instanceof PyFunction) {
+      return processOverridingMethods((PyFunction)element, consumer);
+    }
+    else if (element instanceof PyTargetExpression) {
+      return processAssignmentStatement(element, consumer);
     }
     return true;
+  }
+
+  private static boolean processInheritors(@NotNull PyClass pyClass, @NotNull Processor<? super PsiElement> consumer) {
+    return ReadAction.compute(() -> PyClassInheritorsSearch.search(pyClass, true)).forEach(consumer);
+  }
+
+  private static boolean processOverridingMethods(@NotNull PyFunction pyFunction,
+                                                  @NotNull Processor<? super PsiElement> consumer) {
+    return ReadAction.compute(() -> PyOverridingMethodsSearch.search(pyFunction, true)).forEach(consumer);
+  }
+
+  private static boolean processAssignmentStatement(@NotNull PsiElement element,
+                                                    @NotNull Processor<? super PsiElement> consumer) {
+    PsiElement parent = ReadAction.compute(() -> element.getParent());
+    return !(parent instanceof PyAssignmentStatement) || consumer.process(parent);
   }
 }

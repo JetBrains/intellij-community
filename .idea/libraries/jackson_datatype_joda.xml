@@ -1,6 +1,14 @@
 <component name="libraryTable">
   <library name="jackson-datatype-joda" type="repository">
     <properties maven-id="com.fasterxml.jackson.datatype:jackson-datatype-joda:2.15.0">
+      <verification>
+        <artifact url="file://$MAVEN_REPOSITORY$/com/fasterxml/jackson/datatype/jackson-datatype-joda/2.15.0/jackson-datatype-joda-2.15.0.jar">
+          <sha256sum>294155c0a30238c2d5dd39d6802b33506b349065e2f55985e64d5beeb706e20b</sha256sum>
+        </artifact>
+        <artifact url="file://$MAVEN_REPOSITORY$/joda-time/joda-time/2.10.14/joda-time-2.10.14.jar">
+          <sha256sum>d65b4f127d36cf52b9b7b439552db22f3de92b892014512870cb3c98a3cf505e</sha256sum>
+        </artifact>
+      </verification>
       <exclude>
         <dependency maven-id="com.fasterxml.jackson.core:jackson-annotations" />
         <dependency maven-id="com.fasterxml.jackson.core:jackson-core" />

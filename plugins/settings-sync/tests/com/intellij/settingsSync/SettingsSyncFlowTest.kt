@@ -1,10 +1,13 @@
 package com.intellij.settingsSync
 
+import com.intellij.idea.TestFor
 import com.intellij.openapi.components.SettingsCategory
 import com.intellij.settingsSync.auth.SettingsSyncAuthService
 import com.intellij.testFramework.LoggedErrorProcessor
+import com.intellij.testFramework.utils.io.createDirectory
 import com.intellij.util.ConcurrencyUtil
 import com.intellij.util.concurrency.AppExecutorUtil.createBoundedScheduledExecutorService
+import com.intellij.util.io.createFile
 import com.intellij.util.io.readText
 import com.intellij.util.io.write
 import org.eclipse.jgit.api.Git
@@ -392,6 +395,37 @@ internal class SettingsSyncFlowTest : SettingsSyncTestBase() {
     assertServerSnapshot {
       additionalFile("newformat.json", "File with new unknown format")
     }
+  }
+
+  @TestFor(issues = ["IDEA-326189"])
+  @Test fun `create initial commit for empty repo`(){
+    val dotGit: Path = settingsSyncStorage.resolve(".git")
+    val repository = FileRepositoryBuilder().setGitDir(dotGit.toFile()).setAutonomous(true).readEnvironment().build()
+    repository.create()
+    initSettingsSync()
+    assertNotNull(repository.findRef(GitSettingsLog.CLOUD_REF_NAME))
+    assertNotNull(repository.findRef(GitSettingsLog.IDE_REF_NAME))
+  }
+
+  @Test fun `disable sync if init failed`(){
+    SettingsSyncSettings.getInstance().syncEnabled = true
+    val dotGit: Path = settingsSyncStorage.resolve(".git")
+    val repository = FileRepositoryBuilder().setGitDir(dotGit.toFile()).setAutonomous(true).readEnvironment().build()
+    repository.create()
+    val gitignore = settingsSyncStorage.resolve(".gitignore").createFile()
+    gitignore.write("""
+      .idea/workspace.xml
+        """.trimIndent())
+
+    val git = Git(repository)
+    git.add().addFilepattern(".gitignore").call()
+    git.commit().setMessage("init").setNoVerify(true).setSign(false).call()
+
+    (dotGit / "index").write("aaaaaaa")
+    LoggedErrorProcessor.executeAndReturnLoggedError{
+      initSettingsSync()
+    }
+    assertFalse(SettingsSyncSettings.getInstance().syncEnabled)
   }
 
   private fun syncSettingsAndWait() {

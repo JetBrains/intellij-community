@@ -1,6 +1,14 @@
 <component name="libraryTable">
   <library name="okhttp" type="repository">
     <properties maven-id="com.squareup.okhttp3:okhttp-jvm:5.0.0-alpha.11">
+      <verification>
+        <artifact url="file://$MAVEN_REPOSITORY$/com/squareup/okhttp3/okhttp-jvm/5.0.0-alpha.11/okhttp-jvm-5.0.0-alpha.11.jar">
+          <sha256sum>506a1d3aba9f99b55570c7f8813cd79a44946531f29050d5b938474efdb4cf80</sha256sum>
+        </artifact>
+        <artifact url="file://$MAVEN_REPOSITORY$/com/squareup/okio/okio-jvm/3.2.0/okio-jvm-3.2.0.jar">
+          <sha256sum>b642baef4c570055de4cb3d1667b2b16dced901ff8066345a063691aa06025a4</sha256sum>
+        </artifact>
+      </verification>
       <exclude>
         <dependency maven-id="org.jetbrains.kotlin:kotlin-stdlib-jdk8" />
         <dependency maven-id="org.jetbrains.kotlin:kotlin-stdlib-common" />

@@ -4,3 +4,4 @@ fun short(x: Short) {}
 fun test(d: Double) {
     short(d.toInt().toShort())
 }
+// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.NumberConversionFix

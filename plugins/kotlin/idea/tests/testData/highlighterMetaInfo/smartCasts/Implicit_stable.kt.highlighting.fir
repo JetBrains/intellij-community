@@ -1,12 +1,14 @@
-class <!HIGHLIGHTING("textAttributesKey='KOTLIN_CLASS'")!>My<!>(val <!HIGHLIGHTING("textAttributesKey='KOTLIN_INSTANCE_PROPERTY'")!>x<!>: <!HIGHLIGHTING("textAttributesKey='KOTLIN_CLASS'")!>Int<!>?)
+// CHECK_SYMBOL_NAMES
+// HIGHLIGHTER_ATTRIBUTES_KEY
+class <!HIGHLIGHTING("severity='SYMBOL_TYPE_SEVERITY'; highlightingTextAttributesKey='KOTLIN_CLASS'")!>My<!>(val <!HIGHLIGHTING("severity='SYMBOL_TYPE_SEVERITY'; highlightingTextAttributesKey='KOTLIN_INSTANCE_PROPERTY'")!>x<!>: <!HIGHLIGHTING("severity='SYMBOL_TYPE_SEVERITY'; highlightingTextAttributesKey='KOTLIN_CLASS'")!>Int<!>?)
 
-fun <!HIGHLIGHTING("textAttributesKey='KOTLIN_CLASS'")!>My<!>?.<!HIGHLIGHTING("textAttributesKey='KOTLIN_FUNCTION_DECLARATION'")!>foo<!>(): <!HIGHLIGHTING("textAttributesKey='KOTLIN_CLASS'")!>Int<!> {
+fun <!HIGHLIGHTING("severity='SYMBOL_TYPE_SEVERITY'; highlightingTextAttributesKey='KOTLIN_CLASS'")!>My<!>?.<!HIGHLIGHTING("severity='SYMBOL_TYPE_SEVERITY'; highlightingTextAttributesKey='KOTLIN_FUNCTION_DECLARATION'")!>foo<!>(): <!HIGHLIGHTING("severity='SYMBOL_TYPE_SEVERITY'; highlightingTextAttributesKey='KOTLIN_CLASS'")!>Int<!> {
     if (this == null) return 42
-    if (<!HIGHLIGHTING("descr='Implicit receiver smart cast to My'; textAttributesKey='KOTLIN_SMART_CAST_RECEIVER'"), HIGHLIGHTING("textAttributesKey='KOTLIN_INSTANCE_PROPERTY'")!>x<!> == null) {
-        if (<!HIGHLIGHTING("descr='Implicit receiver smart cast to My'; textAttributesKey='KOTLIN_SMART_CAST_RECEIVER'"), HIGHLIGHTING("descr='Smart cast to kotlin/Nothing?'; textAttributesKey='KOTLIN_SMART_CAST_VALUE'"), HIGHLIGHTING("textAttributesKey='KOTLIN_INSTANCE_PROPERTY'")!>x<!> != null) {
-            return <!HIGHLIGHTING("descr='Implicit receiver smart cast to My'; textAttributesKey='KOTLIN_SMART_CAST_RECEIVER'"), HIGHLIGHTING("descr='Smart cast to kotlin/Nothing'; textAttributesKey='KOTLIN_SMART_CAST_VALUE'"), HIGHLIGHTING("textAttributesKey='KOTLIN_INSTANCE_PROPERTY'")!>x<!>
+    if (<!HIGHLIGHTING("severity='SYMBOL_TYPE_SEVERITY'; descr='Implicit receiver smart cast to My'; highlightingTextAttributesKey='KOTLIN_SMART_CAST_RECEIVER'"), HIGHLIGHTING("severity='SYMBOL_TYPE_SEVERITY'; highlightingTextAttributesKey='KOTLIN_INSTANCE_PROPERTY'")!>x<!> == null) {
+        if (<!HIGHLIGHTING("severity='SYMBOL_TYPE_SEVERITY'; descr='Implicit receiver smart cast to My'; highlightingTextAttributesKey='KOTLIN_SMART_CAST_RECEIVER'"), HIGHLIGHTING("severity='SYMBOL_TYPE_SEVERITY'; descr='Smart cast to kotlin/Nothing?'; highlightingTextAttributesKey='KOTLIN_SMART_CAST_VALUE'"), HIGHLIGHTING("severity='SYMBOL_TYPE_SEVERITY'; highlightingTextAttributesKey='KOTLIN_INSTANCE_PROPERTY'")!>x<!> != null) {
+            return <!HIGHLIGHTING("severity='SYMBOL_TYPE_SEVERITY'; descr='Implicit receiver smart cast to My'; highlightingTextAttributesKey='KOTLIN_SMART_CAST_RECEIVER'"), HIGHLIGHTING("severity='SYMBOL_TYPE_SEVERITY'; descr='Smart cast to kotlin/Nothing'; highlightingTextAttributesKey='KOTLIN_SMART_CAST_VALUE'"), HIGHLIGHTING("severity='SYMBOL_TYPE_SEVERITY'; highlightingTextAttributesKey='KOTLIN_INSTANCE_PROPERTY'")!>x<!>
         }
         return 13
     }
-    return <!HIGHLIGHTING("descr='Implicit receiver smart cast to My'; textAttributesKey='KOTLIN_SMART_CAST_RECEIVER'"), HIGHLIGHTING("descr='Smart cast to kotlin/Int'; textAttributesKey='KOTLIN_SMART_CAST_VALUE'"), HIGHLIGHTING("textAttributesKey='KOTLIN_INSTANCE_PROPERTY'")!>x<!>
+    return <!HIGHLIGHTING("severity='SYMBOL_TYPE_SEVERITY'; descr='Implicit receiver smart cast to My'; highlightingTextAttributesKey='KOTLIN_SMART_CAST_RECEIVER'"), HIGHLIGHTING("severity='SYMBOL_TYPE_SEVERITY'; descr='Smart cast to kotlin/Int'; highlightingTextAttributesKey='KOTLIN_SMART_CAST_VALUE'"), HIGHLIGHTING("severity='SYMBOL_TYPE_SEVERITY'; highlightingTextAttributesKey='KOTLIN_INSTANCE_PROPERTY'")!>x<!>
 }

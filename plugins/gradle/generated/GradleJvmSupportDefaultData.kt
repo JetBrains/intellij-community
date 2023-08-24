@@ -34,6 +34,7 @@ internal val DEFAULT_DATA = GradleCompatibilityState(
     VersionMapping(java = "16-17", gradle = "7.0-INF"),
     VersionMapping(java = "17-18", gradle = "7.2-INF"),
     VersionMapping(java = "18-19", gradle = "7.5-INF"),
-    VersionMapping(java = "19-20", gradle = "7.6-INF")
+    VersionMapping(java = "19-20", gradle = "7.6-INF"),
+    VersionMapping(java = "20-21", gradle = "8.3-INF")
   )
 );

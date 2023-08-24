@@ -9,6 +9,7 @@ import com.intellij.codeInsight.intention.LowPriorityAction
 import com.intellij.codeInsight.intention.preview.IntentionPreviewUtils
 import com.intellij.codeInspection.*
 import com.intellij.codeInspection.util.InspectionMessage
+import com.intellij.internal.statistic.ReportingClassSubstitutor
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.TextRange
@@ -139,9 +140,11 @@ abstract class IntentionBasedInspection<TElement : PsiElement> private construct
         val intention: SelfTargetingRangeIntention<TElement>,
         private val additionalChecker: (TElement, IntentionBasedInspection<TElement>) -> Boolean,
         targetElement: TElement
-    ) : LocalQuickFixOnPsiElement(targetElement), IntentionAction {
+    ) : LocalQuickFixOnPsiElement(targetElement), IntentionAction, ReportingClassSubstitutor {
 
         private val text = intention.text
+
+        override fun getSubstitutedClass(): Class<*> = intention.javaClass
 
         // store text into variable because intention instance is shared and may change its text later
         override fun getFamilyName() = intention.familyName

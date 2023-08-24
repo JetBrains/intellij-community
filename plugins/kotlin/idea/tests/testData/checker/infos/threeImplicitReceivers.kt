@@ -1,28 +1,28 @@
 // FIR_IDENTICAL
-interface IA
-interface IB
-interface IC
+interface <symbolName descr="null" tooltip="null" textAttributesKey="KOTLIN_TRAIT">IA</symbolName>
+interface <symbolName descr="null" tooltip="null" textAttributesKey="KOTLIN_TRAIT">IB</symbolName>
+interface <symbolName descr="null" tooltip="null" textAttributesKey="KOTLIN_TRAIT">IC</symbolName>
 
-object Host : IB
+object <symbolName descr="null" tooltip="null" textAttributesKey="KOTLIN_OBJECT">Host</symbolName> : <symbolName descr="null" tooltip="null" textAttributesKey="KOTLIN_TRAIT">IB</symbolName>
 
-object Prop : IA {
-    val Host.foo: Callee <info descr="null" tooltip="null">get</info>() = Callee
+object <symbolName descr="null" tooltip="null" textAttributesKey="KOTLIN_OBJECT">Prop</symbolName> : <symbolName descr="null" tooltip="null" textAttributesKey="KOTLIN_TRAIT">IA</symbolName> {
+    val <symbolName descr="null" tooltip="null" textAttributesKey="KOTLIN_OBJECT">Host</symbolName>.<symbolName descr="null" tooltip="null" textAttributesKey="KOTLIN_EXTENSION_PROPERTY">foo</symbolName>: <symbolName descr="null" tooltip="null" textAttributesKey="KOTLIN_OBJECT">Callee</symbolName> <symbolName descr="null" tooltip="null" textAttributesKey="KOTLIN_KEYWORD">get</symbolName>() = <symbolName descr="null" tooltip="null" textAttributesKey="KOTLIN_OBJECT">Callee</symbolName>
 }
 
-object Callee
+object <symbolName descr="null" tooltip="null" textAttributesKey="KOTLIN_OBJECT">Callee</symbolName>
 
-object Invoke : IC {
-    <info descr="null" tooltip="null">operator</info> fun Callee.invoke() { }
+object <symbolName descr="null" tooltip="null" textAttributesKey="KOTLIN_OBJECT">Invoke</symbolName> : <symbolName descr="null" tooltip="null" textAttributesKey="KOTLIN_TRAIT">IC</symbolName> {
+    <symbolName descr="null" tooltip="null" textAttributesKey="KOTLIN_BUILTIN_ANNOTATION">operator</symbolName> fun <symbolName descr="null" tooltip="null" textAttributesKey="KOTLIN_OBJECT">Callee</symbolName>.<symbolName descr="null" tooltip="null" textAttributesKey="KOTLIN_FUNCTION_DECLARATION">invoke</symbolName>() { }
 }
 
-<info descr="null" tooltip="null">public</info> <info descr="null" tooltip="null">inline</info> fun <T, R> with(receiver: T, block: T.() -> R): R = receiver.block()
+<symbolName descr="null" tooltip="null" textAttributesKey="KOTLIN_BUILTIN_ANNOTATION">public</symbolName> <symbolName descr="null" tooltip="null" textAttributesKey="KOTLIN_BUILTIN_ANNOTATION">inline</symbolName> fun <<symbolName descr="null" tooltip="null" textAttributesKey="KOTLIN_TYPE_PARAMETER">T</symbolName>, <symbolName descr="null" tooltip="null" textAttributesKey="KOTLIN_TYPE_PARAMETER">R</symbolName>> <symbolName descr="null" tooltip="null" textAttributesKey="KOTLIN_FUNCTION_DECLARATION">with</symbolName>(<symbolName descr="null" tooltip="null" textAttributesKey="KOTLIN_PARAMETER">receiver</symbolName>: <symbolName descr="null" tooltip="null" textAttributesKey="KOTLIN_TYPE_PARAMETER">T</symbolName>, <symbolName descr="null" tooltip="null" textAttributesKey="KOTLIN_PARAMETER">block</symbolName>: <symbolName descr="null" tooltip="null" textAttributesKey="KOTLIN_TYPE_PARAMETER">T</symbolName>.() -> <symbolName descr="null" tooltip="null" textAttributesKey="KOTLIN_TYPE_PARAMETER">R</symbolName>): <symbolName descr="null" tooltip="null" textAttributesKey="KOTLIN_TYPE_PARAMETER">R</symbolName> = <symbolName descr="null" tooltip="null" textAttributesKey="KOTLIN_PARAMETER">receiver</symbolName>.<symbolName descr="null" tooltip="null" textAttributesKey="KOTLIN_PARAMETER"><symbolName descr="null" tooltip="null" textAttributesKey="KOTLIN_VARIABLE_AS_FUNCTION">block</symbolName></symbolName>()
 
-fun test(a: IA, b: IB, c: IC) {
-    with(a) lambdaA@{
-        with(b) lambdaB@{
-            with(c) lambdaC@{
-                if (this@lambdaA is Prop && this@lambdaB is Host && this@lambdaC is Invoke) {
-                    <info descr="Extension implicit receiver smart cast to Host" tooltip="Extension implicit receiver smart cast to Host"><info descr="Extension implicit receiver smart cast to Prop" tooltip="Extension implicit receiver smart cast to Prop">foo</info></info>()
+fun <symbolName descr="null" tooltip="null" textAttributesKey="KOTLIN_FUNCTION_DECLARATION">test</symbolName>(<symbolName descr="null" tooltip="null" textAttributesKey="KOTLIN_PARAMETER">a</symbolName>: <symbolName descr="null" tooltip="null" textAttributesKey="KOTLIN_TRAIT">IA</symbolName>, <symbolName descr="null" tooltip="null" textAttributesKey="KOTLIN_PARAMETER">b</symbolName>: <symbolName descr="null" tooltip="null" textAttributesKey="KOTLIN_TRAIT">IB</symbolName>, <symbolName descr="null" tooltip="null" textAttributesKey="KOTLIN_PARAMETER">c</symbolName>: <symbolName descr="null" tooltip="null" textAttributesKey="KOTLIN_TRAIT">IC</symbolName>) {
+    <symbolName descr="null" tooltip="null" textAttributesKey="KOTLIN_PACKAGE_FUNCTION_CALL">with</symbolName>(<symbolName descr="null" tooltip="null" textAttributesKey="KOTLIN_PARAMETER">a</symbolName>) <symbolName descr="null" tooltip="null" textAttributesKey="KOTLIN_LABEL">lambdaA@</symbolName>{
+        <symbolName descr="null" tooltip="null" textAttributesKey="KOTLIN_PACKAGE_FUNCTION_CALL">with</symbolName>(<symbolName descr="null" tooltip="null" textAttributesKey="KOTLIN_PARAMETER">b</symbolName>) <symbolName descr="null" tooltip="null" textAttributesKey="KOTLIN_LABEL">lambdaB@</symbolName>{
+            <symbolName descr="null" tooltip="null" textAttributesKey="KOTLIN_PACKAGE_FUNCTION_CALL">with</symbolName>(<symbolName descr="null" tooltip="null" textAttributesKey="KOTLIN_PARAMETER">c</symbolName>) <symbolName descr="null" tooltip="null" textAttributesKey="KOTLIN_LABEL">lambdaC@</symbolName>{
+                if (this<symbolName descr="null" tooltip="null" textAttributesKey="KOTLIN_LABEL">@lambdaA</symbolName> is <symbolName descr="null" tooltip="null" textAttributesKey="KOTLIN_OBJECT">Prop</symbolName> && this<symbolName descr="null" tooltip="null" textAttributesKey="KOTLIN_LABEL">@lambdaB</symbolName> is <symbolName descr="null" tooltip="null" textAttributesKey="KOTLIN_OBJECT">Host</symbolName> && this<symbolName descr="null" tooltip="null" textAttributesKey="KOTLIN_LABEL">@lambdaC</symbolName> is <symbolName descr="null" tooltip="null" textAttributesKey="KOTLIN_OBJECT">Invoke</symbolName>) {
+                    <symbolName descr="null" tooltip="null" textAttributesKey="KOTLIN_EXTENSION_PROPERTY"><symbolName descr="null" tooltip="null" textAttributesKey="KOTLIN_VARIABLE_AS_FUNCTION_LIKE"><symbolName descr="Extension implicit receiver smart cast to Host" tooltip="Extension implicit receiver smart cast to Host" textAttributesKey="KOTLIN_SMART_CAST_RECEIVER"><symbolName descr="Extension implicit receiver smart cast to Prop" tooltip="Extension implicit receiver smart cast to Prop" textAttributesKey="KOTLIN_SMART_CAST_RECEIVER">foo</symbolName></symbolName></symbolName></symbolName>()
                 }
             }
         }

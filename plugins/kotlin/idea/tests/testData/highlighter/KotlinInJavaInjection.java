@@ -6,3 +6,4 @@ public class KotlinInJavaInjection {
             "<inject descr="null">fun test() {}</inject>";
     }
 }
+// NO_CHECK_INFOS

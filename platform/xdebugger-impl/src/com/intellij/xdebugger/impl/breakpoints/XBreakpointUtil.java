@@ -146,7 +146,7 @@ public final class XBreakpointUtil {
 
     if (editor != null && lineStart != lineWinner) {
       int offset = editor.getDocument().getLineStartOffset(lineWinner);
-      ExpandRegionAction.expandRegionAtOffset(project, editor, offset);
+      ExpandRegionAction.expandRegionAtOffset(editor, offset);
       if (moveCaret) {
         editor.getCaretModel().moveToOffset(offset);
       }

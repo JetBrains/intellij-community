@@ -17,7 +17,6 @@ import java.io.File
 import java.io.IOException
 import java.nio.file.Files
 import java.nio.file.Path
-import kotlin.streams.toList
 
 class StartupActionScriptManagerTest {
   @Rule @JvmField val tempDir = TempDirectory()
@@ -25,7 +24,7 @@ class StartupActionScriptManagerTest {
   private lateinit var scriptFile: Path
 
   @Before fun setUp() {
-    scriptFile = Path.of(PathManager.getPluginTempPath(), StartupActionScriptManager.ACTION_SCRIPT_FILE)
+    scriptFile = PathManager.getStartupScriptDir().resolve(StartupActionScriptManager.ACTION_SCRIPT_FILE)
     NioFiles.createDirectories(scriptFile.parent)
   }
 

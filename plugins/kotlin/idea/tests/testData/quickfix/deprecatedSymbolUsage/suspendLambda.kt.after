@@ -9,3 +9,4 @@ fun println() {}
 fun usage() {
     runSuspend { println() }
 }
+// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.replaceWith.DeprecatedSymbolUsageFix

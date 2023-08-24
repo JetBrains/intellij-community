@@ -7,6 +7,7 @@ import com.intellij.util.TEST_TIMEOUT_MS
 import com.intellij.util.concurrency.Semaphore
 import com.intellij.util.getValue
 import com.intellij.util.setValue
+import com.intellij.util.timeoutRunBlocking
 import kotlinx.coroutines.*
 import org.junit.jupiter.api.Assertions.*
 import org.junit.jupiter.api.assertThrows
@@ -138,6 +139,12 @@ fun currentJobTest(test: (Job) -> Unit) {
   assertTrue(job.isActive)
   assertFalse(job.isCompleted)
   assertFalse(job.isCancelled)
+}
+
+fun blockingContextTest(test: () -> Unit) {
+  timeoutRunBlocking {
+    blockingContext(test)
+  }
 }
 
 fun indicatorTest(test: (ProgressIndicator) -> Unit) {

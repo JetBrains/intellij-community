@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.testFramework;
 
 import com.intellij.lang.ASTNode;
@@ -6,8 +6,6 @@ import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.util.Couple;
 import com.intellij.openapi.util.TextRange;
-import com.intellij.openapi.util.text.LineColumn;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiErrorElement;
 import com.intellij.psi.PsiFile;
@@ -21,8 +19,12 @@ import junit.framework.TestCase;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.ArrayList;
 import java.util.Comparator;
+import java.util.List;
 import java.util.Objects;
+
+import static org.junit.Assert.fail;
 
 public final class ParsingTestUtil {
   private static final String SEPARATOR = "---------------";
@@ -34,44 +36,29 @@ public final class ParsingTestUtil {
   /**
    * Ensures that none of psi subtrees contains {@link PsiErrorElement} or fails
    */
-  public static void ensureNoErrorElementsInAllSubTrees(@NotNull PsiFile file) {
+  public static void assertNoPsiErrorElementsInAllSubTrees(@NotNull PsiFile file) {
     for (PsiFile subTree : file.getViewProvider().getAllFiles()) {
-      ensureNoErrorElements(subTree);
+      assertNoPsiErrorElements(subTree);
     }
   }
 
   /**
    * Ensures that {@code file} contains no {@link PsiErrorElement} or fails
    *
-   * @see #ensureNoErrorElementsInAllSubTrees(PsiFile)
+   * @see #assertNoPsiErrorElementsInAllSubTrees(PsiFile)
    */
-  public static void ensureNoErrorElements(@NotNull PsiFile file) {
+  public static void assertNoPsiErrorElements(@NotNull PsiFile file) {
+    List<String> errors = new ArrayList<>();
     file.accept(new PsiRecursiveElementVisitor() {
-      private static final int TAB_WIDTH = 8;
-
       @Override
       public void visitErrorElement(@NotNull PsiErrorElement element) {
-        // Very dump approach since a corresponding Document is not available.
-        String text = file.getText();
-        String[] lines = StringUtil.splitByLinesKeepSeparators(text);
-
-        int offset = element.getTextOffset();
-        LineColumn position = StringUtil.offsetToLineColumn(text, offset);
-        int lineNumber = position != null ? position.line : -1;
-        int column = position != null ? position.column : 0;
-
-        String line = StringUtil.trimTrailing(lines[lineNumber]);
-        // Sanitize: expand indentation tabs, replace the rest with a single space
-        int numIndentTabs = StringUtil.countChars(line.subSequence(0, column), '\t', 0, true);
-        int indentedColumn = column + numIndentTabs * (TAB_WIDTH - 1);
-        String lineWithNoTabs = StringUtil.repeat(" ", numIndentTabs * TAB_WIDTH) + line.substring(numIndentTabs).replace('\t', ' ');
-        String errorUnderline = StringUtil.repeat(" ", indentedColumn) + StringUtil.repeat("^", Math.max(1, element.getTextLength()));
-
-        TestCase.fail(String.format("Unexpected error element: %s:%d:%d\n\n%s\n%s\n%s",
-                                    file.getName(), lineNumber + 1, column,
-                                    lineWithNoTabs, errorUnderline, element.getErrorDescription()));
+        errors.add(element.getTextOffset() + ": " + element.getErrorDescription());
+        super.visitErrorElement(element);
       }
     });
+    if (!errors.isEmpty()) {
+      fail("Found PsiElement errors at offsets:\n" + String.join("\n", errors));
+    }
   }
 
   /**
@@ -95,7 +82,7 @@ public final class ParsingTestUtil {
                                             boolean checkInitialTreeForErrors,
                                             boolean checkFinalTreeForErrors) {
     if (checkInitialTreeForErrors) {
-      ensureNoErrorElements(psiFile);
+      assertNoPsiErrorElements(psiFile);
     }
     var project = psiFile.getProject();
     var psiDocumentManager = PsiDocumentManager.getInstance(project);
@@ -135,7 +122,7 @@ public final class ParsingTestUtil {
 
     TestCase.assertEquals("Reparsing error", psiFileToString(psiFile), psiBeforeCommit);
     if (checkFinalTreeForErrors) {
-      ensureNoErrorElementsInAllSubTrees(psiFile);
+      assertNoPsiErrorElementsInAllSubTrees(psiFile);
     }
     UsefulTestCase.assertSameLinesWithFile(answersFilePath, result.toString(), false);
   }

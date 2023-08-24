@@ -300,7 +300,7 @@ public class ColorAndFontOptions extends SearchableConfigurable.Parent.Abstract
     try {
       EditorColorsManager myColorsManager = EditorColorsManager.getInstance();
       SchemeManager<EditorColorsScheme> schemeManager = ((EditorColorsManagerImpl)myColorsManager).getSchemeManager();
-      String oldScheme = myColorsManager.getGlobalScheme().getName();
+      EditorColorsScheme oldScheme = myColorsManager.getGlobalScheme();
 
       List<EditorColorsScheme> result = new ArrayList<>(mySchemes.values().size());
       boolean activeSchemeModified = false;
@@ -320,7 +320,7 @@ public class ColorAndFontOptions extends SearchableConfigurable.Parent.Abstract
         ((EditorColorsManagerImpl)EditorColorsManager.getInstance()).schemeChangedOrSwitched(null);
       }
 
-      if (!StringUtil.equals(oldScheme, myColorsManager.getGlobalScheme().getName())) {
+      if (!StringUtil.equals(oldScheme.getName(), myColorsManager.getGlobalScheme().getName())) {
         changeLafIfNecessary(oldScheme, activeOriginalScheme);
       }
 

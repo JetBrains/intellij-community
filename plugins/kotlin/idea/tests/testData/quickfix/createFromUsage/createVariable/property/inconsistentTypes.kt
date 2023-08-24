@@ -7,3 +7,5 @@ class A<T>(val n: T)
 fun test(): Int {
     return A(1).<caret>foo as A<Int>
 }
+
+// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.createFromUsage.createCallable.CreateCallableFromUsageFix

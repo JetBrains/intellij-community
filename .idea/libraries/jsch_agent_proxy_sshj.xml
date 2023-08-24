@@ -1,6 +1,12 @@
 <component name="libraryTable">
   <library name="jsch-agent-proxy-sshj" type="repository">
-    <properties include-transitive-deps="false" maven-id="com.jcraft:jsch.agentproxy.sshj:0.0.9" />
+    <properties include-transitive-deps="false" maven-id="com.jcraft:jsch.agentproxy.sshj:0.0.9">
+      <verification>
+        <artifact url="file://$MAVEN_REPOSITORY$/com/jcraft/jsch.agentproxy.sshj/0.0.9/jsch.agentproxy.sshj-0.0.9.jar">
+          <sha256sum>9a513fbf41d640df36a105e2e50e0ac6f99a9adf04ed4c72db55dfd93da8ef36</sha256sum>
+        </artifact>
+      </verification>
+    </properties>
     <CLASSES>
       <root url="jar://$MAVEN_REPOSITORY$/com/jcraft/jsch.agentproxy.sshj/0.0.9/jsch.agentproxy.sshj-0.0.9.jar!/" />
     </CLASSES>

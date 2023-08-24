@@ -9,3 +9,4 @@ class C : I {
     @B(1)
     <caret>override fun foo() {}
 }
+// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.AddFunctionToSupertypeFix

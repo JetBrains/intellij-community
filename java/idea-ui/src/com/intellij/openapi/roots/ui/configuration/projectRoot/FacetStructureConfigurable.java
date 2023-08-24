@@ -195,7 +195,7 @@ public class FacetStructureConfigurable extends BaseStructureConfigurable {
   public FacetTypeEditor getOrCreateFacetTypeEditor(@NotNull FacetType<?, ?> facetType) {
     FacetTypeEditor editor = myFacetTypeEditors.get(facetType);
     if (editor == null) {
-      editor = new FacetTypeEditor(myProject, myContext, facetType);
+      editor = new FacetTypeEditor(myProject, facetType);
       editor.reset();
       myFacetTypeEditors.put(facetType, editor);
     }
@@ -235,7 +235,8 @@ public class FacetStructureConfigurable extends BaseStructureConfigurable {
   @Override
   public void disposeUIResources() {
     super.disposeUIResources();
-
+    disposeMultipleSettingsEditor();
+    
     for (FacetTypeEditor editor : myFacetTypeEditors.values()) {
       editor.disposeUIResources();
     }

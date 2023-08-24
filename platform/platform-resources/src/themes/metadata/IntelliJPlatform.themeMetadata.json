@@ -565,6 +565,16 @@
       "since": "2023.1"
     },
     {
+      "key": "GotItTooltip.imageBorderColor",
+      "description": "GotIt tooltip image rounded border color if different from GotItTooltip.background",
+      "since": "2023.2.1"
+    },
+    {
+      "key": "GotItTooltip.animationBackground",
+      "description": "GotIt tooltip animation background color if different from GotItTooltip.background",
+      "since": "2023.2.1"
+    },
+    {
       "key": "GotItTooltip.Header.foreground",
       "description": "GotIt tooltip header foreground color if different from GotItTooltip.foreground",
       "since": "2022.3.1"
@@ -802,6 +812,11 @@
     {
       "key": "NavBar.borderColor",
       "description": "Border above the navbar, visible when the toolbar is on"
+    },
+    {
+      "key": "NewUiOnboarding.Dialog.background",
+      "description": "Background of the dialog with proposal to start the onboarding to the New UI",
+      "since": "2023.2.1"
     },
     {
       "key": "Notification.background",
@@ -1834,6 +1849,10 @@
     {
       "key": "Window.border",
       "description": "Dialog border. Format: \"top,left,bottom,right,hex\", e.g. \"1,1,1,1,FFFFFF\". Sizes in pixels"
+    },
+    {
+      "key": "Window.undecorated.border",
+      "description": "Used as window border in case the window has no border, decoration and shadow. Used on Linux in non-fullscreen mode only. Format: \"top,left,bottom,right,hex\", e.g. \"1,1,1,1,FFFFFF\". Sizes in pixels"
     },
     {
       "key": "RunToolbar.Run.activeBackground",

@@ -143,7 +143,8 @@ class LafManagerImpl : LafManager(), PersistentStateComponent<Element>, Disposab
     val name = ApplicationInfoEx.getInstanceEx().defaultLightLaf
     if (name == null) {
       findLafByName("Light") ?: error("Default light LookAndFeel 'Light' not found")
-    } else {
+    }
+    else {
       findLafByName(name) ?: error("Default light LookAndFeel '$name' not found")
     }
   }
@@ -178,14 +179,20 @@ class LafManagerImpl : LafManager(), PersistentStateComponent<Element>, Disposab
   private var isUpdatingPlugin = false
   private var themeIdBeforePluginUpdate: String? = null
   private var autodetect = false
+
   // We remember the last used editor scheme for each laf in order to restore it after switching laf
   private var rememberSchemeForLaf = true
   private val lafToPreviousScheme: MutableMap<String, String> = mutableMapOf()
+  /**
+   * Stores values of options from [UISettings] which were used to set up current LaF. 
+   */
+  private var usedValuesOfUiOptions: List<Any?> = emptyList()
 
   override fun getDefaultLightLaf(): LookAndFeelInfo {
     return if (ExperimentalUI.isNewUI()) {
       defaultLightLaf.value
-    } else {
+    }
+    else {
       defaultClassicLightLaf.value
     }
   }
@@ -193,7 +200,8 @@ class LafManagerImpl : LafManager(), PersistentStateComponent<Element>, Disposab
   override fun getDefaultDarkLaf(): LookAndFeelInfo {
     return if (ExperimentalUI.isNewUI()) {
       defaultDarkLaf.value
-    } else {
+    }
+    else {
       defaultClassicDarkLaf.value
     }
   }
@@ -312,12 +320,13 @@ class LafManagerImpl : LafManager(), PersistentStateComponent<Element>, Disposab
     runActivity("new ui configuration") {
       ExperimentalUI.getInstance().lookAndFeelChanged()
     }
-    addThemeAndDynamicPluginListeners()
+    addListeners()
   }
 
-  private fun addThemeAndDynamicPluginListeners() {
+  private fun addListeners() {
     UIThemeProvider.EP_NAME.addExtensionPointListener(UiThemeEpListener(), this)
-    ApplicationManager.getApplication().messageBus.connect(this).subscribe(DynamicPluginListener.TOPIC, object : DynamicPluginListener {
+    val connection = ApplicationManager.getApplication().messageBus.connect(this)
+    connection.subscribe(DynamicPluginListener.TOPIC, object : DynamicPluginListener {
       override fun beforePluginUnload(pluginDescriptor: IdeaPluginDescriptor, isUpdate: Boolean) {
         isUpdatingPlugin = isUpdate
         themeIdBeforePluginUpdate = if (myCurrentLaf is UIThemeBasedLookAndFeelInfo) {
@@ -331,6 +340,14 @@ class LafManagerImpl : LafManager(), PersistentStateComponent<Element>, Disposab
       override fun pluginLoaded(pluginDescriptor: IdeaPluginDescriptor) {
         isUpdatingPlugin = false
         themeIdBeforePluginUpdate = null
+      }
+    })
+    connection.subscribe(UISettingsListener.TOPIC, object : UISettingsListener {
+      override fun uiSettingsChanged(uiSettings: UISettings) {
+        val newValues = computeValuesOfUsedUiOptions()
+        if (newValues != usedValuesOfUiOptions) {
+          updateUI()
+        }
       }
     })
   }
@@ -390,7 +407,7 @@ class LafManagerImpl : LafManager(), PersistentStateComponent<Element>, Disposab
       orCreateLafDetector
     }
     if (!isFirstSetup && newLaF != oldLaF) {
-      QuickChangeLookAndFeel.switchLafAndUpdateUI(this, newLaF, true, true)
+      QuickChangeLookAndFeel.switchLafAndUpdateUI(this, newLaF, true, true, true)
     }
     else {
       myCurrentLaf = newLaF
@@ -566,7 +583,7 @@ class LafManagerImpl : LafManager(), PersistentStateComponent<Element>, Disposab
   private fun setLookAndFeelImpl(lookAndFeelInfo: LookAndFeelInfo, installEditorScheme: Boolean, processChangeSynchronously: Boolean) {
     val oldLaf = myCurrentLaf
 
-    rememberSchemeForLaf(EditorColorsManager.getInstance().globalScheme.name)
+    rememberSchemeForLaf(EditorColorsManager.getInstance().globalScheme)
 
     if (oldLaf !== lookAndFeelInfo && oldLaf is UIThemeBasedLookAndFeelInfo) {
       oldLaf.dispose()
@@ -733,6 +750,7 @@ class LafManagerImpl : LafManager(), PersistentStateComponent<Element>, Disposab
       defaults.put(JBUI.CurrentTheme.Toolbar.stripeToolbarButtonSizeKey(), cmSize(32, 32))
       defaults.put(JBUI.CurrentTheme.Toolbar.stripeToolbarButtonIconSizeKey(), 16)
       defaults.put(JBUI.CurrentTheme.Toolbar.stripeToolbarButtonIconPaddingKey(), cmInsets(4))
+      defaults.put(JBUI.CurrentTheme.Toolbar.mainToolbarButtonInsetsKey(), cmInsets(2))
       // Run Widget
       defaults.put(JBUI.CurrentTheme.RunWidget.toolbarHeightKey(), 26)
       defaults.put(JBUI.CurrentTheme.RunWidget.toolbarBorderHeightKey(), 4)
@@ -825,7 +843,7 @@ class LafManagerImpl : LafManager(), PersistentStateComponent<Element>, Disposab
     val dark = StartupUiUtil.isUnderDarcula
     val wasUITheme = oldLaf is UIThemeBasedLookAndFeelInfo
     if (dark != ColorUtil.isDark(current.defaultBackground) || wasUITheme) {
-      var targetScheme: String? = if (dark) DarculaLaf.NAME else EditorColorsScheme.DEFAULT_SCHEME_NAME
+      var targetScheme = defaultNonLaFSchemeName(dark)
       val properties = PropertiesComponent.getInstance()
       val savedEditorThemeKey = if (dark) DARCULA_EDITOR_THEME_KEY else DEFAULT_EDITOR_THEME_KEY
       val toSavedEditorThemeKey = if (dark) DEFAULT_EDITOR_THEME_KEY else DARCULA_EDITOR_THEME_KEY
@@ -836,12 +854,14 @@ class LafManagerImpl : LafManager(), PersistentStateComponent<Element>, Disposab
       if (!wasUITheme) {
         properties.setValue(toSavedEditorThemeKey, current.name, if (dark) EditorColorsScheme.DEFAULT_SCHEME_NAME else DarculaLaf.NAME)
       }
-      val scheme = editorColorManager.getScheme(targetScheme!!)
+      val scheme = editorColorManager.getScheme(targetScheme)
       if (scheme != null) {
         (editorColorManager as EditorColorsManagerImpl).setGlobalScheme(scheme, processChangeSynchronously)
       }
     }
   }
+
+  private fun defaultNonLaFSchemeName(dark: Boolean) = if (dark) DarculaLaf.NAME else EditorColorsScheme.DEFAULT_SCHEME_NAME
 
   /**
    * Updates LAF of all windows. The method also updates font of components
@@ -871,6 +891,7 @@ class LafManagerImpl : LafManager(), PersistentStateComponent<Element>, Disposab
     uiDefaults.put(RenderingHints.KEY_TEXT_ANTIALIASING, AntialiasingType.getKeyForCurrentScope(false))
     uiDefaults.put(RenderingHints.KEY_TEXT_LCD_CONTRAST, StartupUiUtil.getLcdContrastValue())
     uiDefaults.put(RenderingHints.KEY_FRACTIONALMETRICS, AppUIUtil.adjustFractionalMetrics(getPreferredFractionalMetricsValue()))
+    usedValuesOfUiOptions = computeValuesOfUsedUiOptions()
     if (isFirstSetup) {
       ApplicationManager.getApplication().invokeLater { notifyLookAndFeelChanged() }
     }
@@ -881,6 +902,19 @@ class LafManagerImpl : LafManager(), PersistentStateComponent<Element>, Disposab
         updateUI(frame)
       }
     }
+  }
+
+  private fun computeValuesOfUsedUiOptions(): List<Any?> {
+    val instance = UISettings.getInstance()
+    return listOf(
+      instance.overrideLafFonts,
+      instance.fontFace,
+      instance.fontSize2D,
+      instance.ideAAType,
+      instance.editorAAType,
+      instance.ideScale,
+      instance.presentationModeIdeScale,
+    )
   }
 
   private fun notifyLookAndFeelChanged() {
@@ -1015,10 +1049,24 @@ class LafManagerImpl : LafManager(), PersistentStateComponent<Element>, Disposab
     this.rememberSchemeForLaf = rememberSchemeForLaf
   }
 
-  override fun rememberSchemeForLaf(schemeName: String) {
-    val lookAndFeelInfo = myCurrentLaf
+  override fun rememberSchemeForLaf(scheme: EditorColorsScheme) {
+    val lookAndFeelInfo: LookAndFeelInfo? = myCurrentLaf
     if (rememberSchemeForLaf && lookAndFeelInfo != null) {
-      lafToPreviousScheme[lookAndFeelInfo.name] = schemeName
+      if (isSchemeDefault(lookAndFeelInfo, scheme)) {
+        lafToPreviousScheme.remove(lookAndFeelInfo.name)
+      }
+      else {
+        lafToPreviousScheme[lookAndFeelInfo.name] = scheme.name
+      }
+    }
+  }
+
+  private fun isSchemeDefault(lookAndFeelInfo: LookAndFeelInfo, scheme: EditorColorsScheme): Boolean {
+    if (lookAndFeelInfo is UIThemeBasedLookAndFeelInfo) {
+      return lookAndFeelInfo.theme.editorSchemeName == scheme.displayName
+    }
+    else {
+      return defaultNonLaFSchemeName(ColorUtil.isDark(scheme.defaultBackground)) == scheme.displayName
     }
   }
 

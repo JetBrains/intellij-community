@@ -2,8 +2,8 @@
 
 package org.jetbrains.kotlin.idea.highlighter
 
+import com.intellij.codeInsight.daemon.impl.HighlightInfoType
 import com.intellij.codeInsight.daemon.impl.analysis.HighlightInfoHolder
-import com.intellij.openapi.editor.colors.TextAttributesKey
 import com.intellij.openapi.extensions.Extensions
 import com.intellij.psi.PsiElement
 import org.jetbrains.kotlin.descriptors.CallableDescriptor
@@ -18,7 +18,7 @@ abstract class AfterAnalysisHighlightingVisitor protected constructor(
     protected var bindingContext: BindingContext
 ) : AbstractHighlightingVisitor(holder) {
 
-    protected fun attributeKeyForDeclarationFromExtensions(element: PsiElement, descriptor: DeclarationDescriptor): TextAttributesKey? {
+    protected fun attributeKeyForDeclarationFromExtensions(element: PsiElement, descriptor: DeclarationDescriptor): HighlightInfoType? {
         @Suppress("DEPRECATION")
         return Extensions.getExtensions(KotlinHighlightingVisitorExtension.EP_NAME).firstNotNullOfOrNull { extension ->
             extension.highlightDeclaration(element, descriptor)
@@ -28,7 +28,7 @@ abstract class AfterAnalysisHighlightingVisitor protected constructor(
     protected fun attributeKeyForCallFromExtensions(
         expression: KtSimpleNameExpression,
         resolvedCall: ResolvedCall<out CallableDescriptor>
-    ): TextAttributesKey? {
+    ): HighlightInfoType? {
         @Suppress("DEPRECATION")
         return Extensions.getExtensions(KotlinHighlightingVisitorExtension.EP_NAME).firstNotNullOfOrNull { extension ->
             extension.highlightCall(expression, resolvedCall)

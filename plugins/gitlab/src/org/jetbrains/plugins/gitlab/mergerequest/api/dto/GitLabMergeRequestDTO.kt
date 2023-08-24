@@ -11,6 +11,7 @@ import org.jetbrains.plugins.gitlab.mergerequest.data.GitLabMergeStatus
 import java.util.*
 
 @GraphQLFragment("/graphql/fragment/mergeRequest.graphql")
+@GraphQLFragment("/graphql/fragment/community/mergeRequest.graphql")
 class GitLabMergeRequestDTO(
   val id: String,
   override val iid: String,
@@ -21,7 +22,8 @@ class GitLabMergeRequestDTO(
   val targetBranch: String,
   val sourceBranch: String,
   val diffRefs: GitLabDiffRefs,
-  val approved: Boolean,
+  // will be missing in community edition
+  val approved: Boolean?,
   val conflicts: Boolean,
   val headPipeline: GitLabPipelineDTO?,
   val mergeStatusEnum: GitLabMergeStatus,

@@ -141,14 +141,16 @@ internal class ExpandableMenu(private val headerContent: JComponent, disposable:
   }
 
   private fun updateBounds() {
-    val location = SwingUtilities.convertPoint(headerContent, 0, 0, rootPane ?: return)
+    val rootPaneCopy = rootPane ?: return
+    val location = SwingUtilities.convertPoint(headerContent, 0, 0, rootPaneCopy)
     if (location == null) {
       headerColorfulPanel?.horizontalOffset = 0
     } else {
       val insets = headerContent.insets
       headerColorfulPanel?.horizontalOffset = location.x + insets.left
       expandedMenuBar?.let {
-        it.bounds = Rectangle(location.x + insets.left, location.y + insets.top,
+        val rootPaneInsets = rootPaneCopy.insets
+        it.bounds = Rectangle(location.x + insets.left - rootPaneInsets.left, location.y + insets.top - rootPaneInsets.top,
                               headerContent.width - insets.left - insets.right,
                               headerContent.height - insets.top - insets.bottom)
       }

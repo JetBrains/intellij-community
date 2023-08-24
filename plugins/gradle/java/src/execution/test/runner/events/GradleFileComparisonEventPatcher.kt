@@ -2,7 +2,6 @@
 package org.jetbrains.plugins.gradle.execution.test.runner.events
 
 import com.intellij.openapi.externalSystem.model.task.event.*
-import com.intellij.util.text.nullize
 import org.jetbrains.annotations.ApiStatus
 import java.util.StringJoiner
 
@@ -91,82 +90,65 @@ internal class GradleFileComparisonEventPatcher {
   private fun getEventPatchId(event: TestFinishEvent): String? {
     val operationResult = event.operationResult
     if (operationResult is FailureResult) {
-      return getFailuresPatchId(operationResult.failures)
+      val failure = operationResult.failures.singleOrNull()
+      if (failure is TestFailure) {
+        if (failure.exceptionName == FILE_COMPARISON_FAILURE) {
+          return failure.stackTrace
+        }
+      }
     }
     return null
   }
 
-  private fun getFailuresPatchId(failure: List<Failure>): String? {
-    return failure.mapNotNull { getFailurePatchId(it) }
-      .joinToString("========================================\n")
-      .nullize()
-  }
-
-  private fun getFailurePatchId(failure: Failure): String? {
-    if (failure is TestFailure) {
-      if (failure.exceptionName == "com.intellij.rt.execution.junit.FileComparisonFailure") {
-        return failure.stackTrace
-      }
-    }
-    return getFailuresPatchId(failure.causes)
-  }
-
+  /**
+   * Patches [tapiEvent] data by expected/actual data from [xmlEvent].
+   * This function makes upgrade only for test events, where file comparison failure is single and root failure.
+   * This condition also used inside `FileComparisonTestEventLogger.gradle` which collects file comparison
+   * patch data on Gradle side, and transfers it into IDE in XML format.
+   *
+   * Also, see `org/jetbrains/plugins/gradle/tooling/internal/init/FileComparisonTestEventLogger.gradle`.
+   */
   private fun createTestFinishEvent(tapiEvent: TestFinishEvent, xmlEvent: TestFinishEvent): TestFinishEvent {
-    return ExternalSystemFinishEventImpl<TestOperationDescriptor>(
-      tapiEvent.eventId,
-      tapiEvent.parentEventId,
-      tapiEvent.descriptor,
-      createOperationResult(tapiEvent.operationResult, xmlEvent.operationResult)
-    )
-  }
-
-  private fun createOperationResult(tapiOperationResult: OperationResult, xmlOperationResult: OperationResult): OperationResult {
+    val tapiOperationResult = tapiEvent.operationResult
+    val xmlOperationResult = xmlEvent.operationResult
     if (tapiOperationResult is FailureResult && xmlOperationResult is FailureResult) {
-      return FailureResultImpl(
-        tapiOperationResult.startTime,
-        tapiOperationResult.endTime,
-        createFailures(tapiOperationResult.failures, xmlOperationResult.failures)
-      )
-    }
-    return tapiOperationResult
-  }
-
-  private fun createFailures(tapiFailures: List<Failure>, xmlFailures: List<Failure>): List<Failure> {
-    val failures = ArrayList<Failure>()
-    val xmlFailuresIndex = xmlFailures.associateBy { getFailurePatchId(it) }
-    for (tapiFailure in tapiFailures) {
-      val patchId = getFailurePatchId(tapiFailure)
-      val xmlFailure = xmlFailuresIndex[patchId]
-      if (xmlFailure != null) {
-        val failure = createFailure(tapiFailure, xmlFailure)
-        failures.add(failure)
+      val tapiFailure = tapiOperationResult.failures.singleOrNull()
+      val xmlFailure = xmlOperationResult.failures.singleOrNull()
+      if (tapiFailure is TestFailure && xmlFailure is TestAssertionFailure) {
+        val failure = TestAssertionFailure(
+          tapiFailure.exceptionName,
+          tapiFailure.message,
+          tapiFailure.stackTrace,
+          tapiFailure.description,
+          tapiFailure.causes,
+          xmlFailure.expectedText,
+          xmlFailure.actualText,
+          xmlFailure.expectedFile,
+          xmlFailure.actualFile
+        )
+        val failureResult = FailureResultImpl(
+          tapiOperationResult.startTime,
+          tapiOperationResult.endTime,
+          listOf(failure)
+        )
+        return ExternalSystemFinishEventImpl<TestOperationDescriptor>(
+          tapiEvent.eventId,
+          tapiEvent.parentEventId,
+          tapiEvent.descriptor,
+          failureResult
+        )
       }
-      else {
-        failures.add(tapiFailure)
-      }
     }
-    return failures
-  }
-
-  private fun createFailure(tapiFailure: Failure, xmlFailure: Failure): Failure {
-    if (tapiFailure is TestFailure && xmlFailure is TestAssertionFailure) {
-      return TestAssertionFailure(
-        tapiFailure.exceptionName,
-        tapiFailure.message,
-        tapiFailure.stackTrace,
-        tapiFailure.description,
-        createFailures(tapiFailure.causes, xmlFailure.causes),
-        xmlFailure.expectedText,
-        xmlFailure.actualText,
-        xmlFailure.expectedFile,
-        xmlFailure.actualFile
-      )
-    }
-    return tapiFailure
+    return tapiEvent
   }
 
   private class TestEventData(
     val xmlTestEvent: TestFinishEvent?,
     val tapiTestEvent: TestFinishEvent?
   )
+
+  companion object {
+
+    private const val FILE_COMPARISON_FAILURE = "com.intellij.rt.execution.junit.FileComparisonFailure"
+  }
 }

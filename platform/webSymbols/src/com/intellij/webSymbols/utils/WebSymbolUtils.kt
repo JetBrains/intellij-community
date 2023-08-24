@@ -231,12 +231,18 @@ fun List<WebSymbolNameSegment>.withOffset(offset: Int): List<WebSymbolNameSegmen
 fun WebSymbolApiStatus?.coalesceWith(other: WebSymbolApiStatus?): WebSymbolApiStatus =
   when (this) {
     null -> other ?: WebSymbolApiStatus.Stable
-    is WebSymbolApiStatus.Deprecated -> this
+    is WebSymbolApiStatus.Obsolete -> this
+    is WebSymbolApiStatus.Deprecated -> when (other) {
+      is WebSymbolApiStatus.Obsolete -> other
+      else -> this
+    }
     is WebSymbolApiStatus.Experimental -> when (other) {
+      is WebSymbolApiStatus.Obsolete,
       is WebSymbolApiStatus.Deprecated -> other
       else -> this
     }
     is WebSymbolApiStatus.Stable -> when (other) {
+      is WebSymbolApiStatus.Obsolete,
       is WebSymbolApiStatus.Deprecated,
       is WebSymbolApiStatus.Experimental -> other
       else -> this

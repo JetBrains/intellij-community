@@ -7,9 +7,12 @@ import com.intellij.debugger.SourcePosition;
 import com.intellij.debugger.engine.PositionManagerImpl;
 import com.intellij.debugger.impl.DebuggerUtilsEx;
 import com.intellij.debugger.jdi.MethodBytecodeUtil;
+import com.intellij.facet.FacetManager;
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.editor.Document;
+import com.intellij.openapi.module.Module;
+import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
@@ -21,6 +24,7 @@ import com.intellij.psi.impl.source.tree.LeafElement;
 import com.intellij.util.DocumentUtil;
 import com.intellij.util.Processor;
 import com.intellij.util.SmartList;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.xdebugger.XDebuggerUtil;
 import com.intellij.xdebugger.XSourcePosition;
 import com.intellij.xdebugger.breakpoints.XBreakpoint;
@@ -102,19 +106,21 @@ public class JavaLineBreakpointType extends JavaLineBreakpointTypeBase<JavaLineB
   @NotNull
   @Override
   public List<JavaBreakpointVariant> computeVariants(@NotNull Project project, @NotNull XSourcePosition position) {
-    SourcePosition pos = DebuggerUtilsEx.toSourcePosition(position, project);
-    if (pos == null) {
-      return Collections.emptyList();
-    }
+    PsiFile file = DebuggerUtilsEx.getPsiFile(position, project);
+    if (file == null) return Collections.emptyList();
 
-    Document document = PsiDocumentManager.getInstance(project).getDocument(pos.getFile());
+    SourcePosition pos = SourcePosition.createFromLine(file, position.getLine());
+
+    Document document = PsiDocumentManager.getInstance(project).getDocument(file);
     if (document == null) {
       return Collections.emptyList();
     }
 
     PsiElement startMethod = DebuggerUtilsEx.getContainingMethod(pos);
     List<PsiLambdaExpression> lambdas = DebuggerUtilsEx.collectLambdas(pos, true);
-    PsiElement condRet = findSingleConditionalReturn(project, document, position.getLine());
+    PsiElement condRet = canStopOnConditionalReturn(file)
+                         ? findSingleConditionalReturn(project, document, position.getLine())
+                         : null;
 
     if ((lambdas.isEmpty() || (lambdas.contains(startMethod) && lambdas.size() == 1)) && condRet == null) {
       return Collections.emptyList();
@@ -122,10 +128,8 @@ public class JavaLineBreakpointType extends JavaLineBreakpointTypeBase<JavaLineB
 
     List<JavaBreakpointVariant> res = new SmartList<>();
 
-    boolean baseMethodWasAdded = false;
     int lambdaCount = 0;
     if (!(startMethod instanceof PsiLambdaExpression)) {
-      baseMethodWasAdded = true;
       res.add(new LineJavaBreakpointVariant(position, startMethod, -1));
     }
 
@@ -136,7 +140,6 @@ public class JavaLineBreakpointType extends JavaLineBreakpointTypeBase<JavaLineB
         XSourcePositionImpl elementPosition = XSourcePositionImpl.createByElement(firstElem);
         if (elementPosition != null) {
           if (lambda == startMethod) {
-            baseMethodWasAdded = true;
             res.add(0, new LineJavaBreakpointVariant(elementPosition, lambda, ordinal++));
           }
           else {
@@ -146,7 +149,6 @@ public class JavaLineBreakpointType extends JavaLineBreakpointTypeBase<JavaLineB
         }
       }
     }
-    assert baseMethodWasAdded;
 
     if (lambdaCount > 0) {
       res.add(new JavaBreakpointVariant(position, lambdaCount)); //all
@@ -157,8 +159,6 @@ public class JavaLineBreakpointType extends JavaLineBreakpointTypeBase<JavaLineB
       int ordinal = lambdas.indexOf(method);
       res.add(new ConditionalReturnJavaBreakpointVariant(position, condRet, ordinal)); //conditional return
     }
-
-    assert lambdaCount > 0 || condRet != null;
 
     return res;
   }
@@ -224,6 +224,13 @@ public class JavaLineBreakpointType extends JavaLineBreakpointTypeBase<JavaLineB
     return element instanceof LeafElement && element.getText().equals("return");
   }
 
+  public static boolean canStopOnConditionalReturn(@NotNull PsiFile file) {
+    // We haven't implemented Dalvik bytecode parsing yet.
+    Module module = ModuleUtilCore.findModuleForFile(file);
+    return module == null ||
+           !ContainerUtil.exists(FacetManager.getInstance(module).getAllFacets(), f -> f.getName().equals("Android"));
+  }
+
   public boolean matchesPosition(@NotNull LineBreakpoint<?> breakpoint, @NotNull SourcePosition position) {
     JavaBreakpointProperties properties = breakpoint.getProperties();
     if (properties instanceof JavaLineBreakpointProperties) {
@@ -243,7 +250,7 @@ public class JavaLineBreakpointType extends JavaLineBreakpointTypeBase<JavaLineB
     JavaBreakpointProperties properties = breakpoint.getProperties();
     if (properties instanceof JavaLineBreakpointProperties && !(breakpoint instanceof RunToCursorBreakpoint)) {
       Integer ordinal = ((JavaLineBreakpointProperties)properties).getLambdaOrdinal();
-      if (ordinal > -1) {
+      if (ordinal != null && ordinal != -1) {
         List<PsiLambdaExpression> lambdas = DebuggerUtilsEx.collectLambdas(position, true);
         if (ordinal < lambdas.size()) {
           return lambdas.get(ordinal);
@@ -424,7 +431,8 @@ public class JavaLineBreakpointType extends JavaLineBreakpointTypeBase<JavaLineB
 
     boolean condRet = properties.isConditionalReturn();
     Integer lambdaOrdinal = properties.getLambdaOrdinal();
-    if (!condRet && (lambdaOrdinal == null || lambdaOrdinal == -1)) return null;
+    boolean isLambda = lambdaOrdinal != null && lambdaOrdinal != -1;
+    if (!condRet && !isLambda) return null;
 
     return ReadAction.compute(() -> {
       SourcePosition linePosition = createLineSourcePosition((XLineBreakpointImpl)breakpoint);
@@ -432,7 +440,8 @@ public class JavaLineBreakpointType extends JavaLineBreakpointTypeBase<JavaLineB
         PsiElement theReturn = condRet ? findSingleConditionalReturn(linePosition) : null;
         if (theReturn != null) {
           return XSourcePositionImpl.createByElement(theReturn);
-        } else {
+        }
+        else if (isLambda) {
           return DebuggerUtilsEx.toXSourcePosition(new PositionManagerImpl.JavaSourcePosition(linePosition, lambdaOrdinal));
         }
       }

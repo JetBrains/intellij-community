@@ -8,3 +8,5 @@ open class Foo {
             return 42
         }
 }
+
+// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.ChangeVisibilityFix

@@ -11,14 +11,12 @@ import com.intellij.openapi.roots.ProjectRootModificationTracker
 import com.intellij.psi.util.CachedValueProvider
 import com.intellij.psi.util.CachedValuesManager
 import org.jetbrains.annotations.ApiStatus
-import org.jetbrains.kotlin.idea.base.util.KotlinPlatformUtils
 import org.jetbrains.kotlin.idea.base.projectStructure.RootKindFilter
 import org.jetbrains.kotlin.idea.base.projectStructure.matches
 import org.jetbrains.kotlin.idea.base.projectStructure.moduleInfo
 import org.jetbrains.kotlin.idea.base.projectStructure.moduleInfo.NotUnderContentRootModuleInfo
+import org.jetbrains.kotlin.idea.base.util.KotlinPlatformUtils
 import org.jetbrains.kotlin.idea.core.script.IdeScriptReportSink
-import org.jetbrains.kotlin.idea.core.script.ScriptConfigurationManager
-import org.jetbrains.kotlin.idea.core.script.ScriptDefinitionsManager
 import org.jetbrains.kotlin.psi.KtCodeFragment
 import org.jetbrains.kotlin.psi.KtFile
 import kotlin.script.experimental.api.ScriptDiagnostic
@@ -57,8 +55,6 @@ private fun KtFile.calculateShouldHighlightFile(): Boolean {
         return true
     }
 
-    if (isCompiled) return false
-
     if (OutsidersPsiFileSupport.isOutsiderFile(virtualFile)) {
         return true
     }
@@ -84,18 +80,6 @@ private fun KtFile.shouldCheckScript(): Boolean? = runReadAction {
     }
 }
 
-private fun KtFile.shouldHighlightScript(): Boolean {
-    if (KotlinPlatformUtils.isCidr) {
-        // There is no Java support in CIDR. So do not highlight errors in KTS if running in CIDR.
-        return false
-    }
-
-    if (!ScriptConfigurationManager.getInstance(project).hasConfiguration(this)) return false
-    if (IdeScriptReportSink.getReports(this).any { it.severity == ScriptDiagnostic.Severity.FATAL }) {
-        return false
-    }
-
-    if (!ScriptDefinitionsManager.getInstance(project).isReady()) return false
-
-    return RootKindFilter.projectSources.copy(includeScriptsOutsideSourceRoots = true).matches(this)
-}
+private fun KtFile.shouldHighlightScript(): Boolean =
+    !KotlinPlatformUtils.isCidr // There is no Java support in CIDR. So do not highlight errors in KTS if running in CIDR.
+            && !IdeScriptReportSink.getReports(this).any { it.severity == ScriptDiagnostic.Severity.FATAL }

@@ -19,6 +19,8 @@ import java.awt.peer.ComponentPeer;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.util.List;
+import java.util.Locale;
+import java.util.Set;
 
 public final class X11UiUtil {
   private static final Logger LOG = Logger.getInstance(X11UiUtil.class);
@@ -32,8 +34,29 @@ public final class X11UiUtil {
   private static final int FORMAT_BYTE = 8;
   private static final int FORMAT_LONG = 32;
   private static final long EVENT_MASK = (3L << 19);
+  private static final long NET_WM_STATE_REMOVE = 0;
   private static final long NET_WM_STATE_ADD = 1;
   private static final long NET_WM_STATE_TOGGLE = 2;
+
+  /**
+   * List of all known tile WM, can be updated later
+   */
+  private static final Set<String> TILE_WM = Set.of(
+    "awesome",
+    "bspwm",
+    "dwm",
+    "frankenwm",
+    "herbstluftwm",
+    "i3",
+    "leftwm",
+    "notion",
+    "qtile",
+    "ratpoison",
+    "snapwm",
+    "spectrwm",
+    "stumpwm",
+    "xmonad"
+  );
 
   @SuppressWarnings("SpellCheckingInspection")
   private static class Xlib {
@@ -243,6 +266,15 @@ public final class X11UiUtil {
     return X11 != null && hasWindowProperty(frame, X11.NET_WM_STATE, X11.NET_WM_STATE_FULLSCREEN);
   }
 
+  public static boolean isWSL() {
+    return SystemInfoRt.isXWindow && System.getenv("WSL_DISTRO_NAME") != null;
+  }
+
+  public static boolean isTileWM() {
+    String desktop = System.getenv("XDG_CURRENT_DESKTOP");
+    return SystemInfoRt.isXWindow && desktop != null && TILE_WM.contains(desktop.toLowerCase(Locale.ENGLISH));
+  }
+
   private static boolean hasWindowProperty(JFrame frame, long name, long expected) {
     if (X11 == null) return false;
     try {
@@ -265,6 +297,17 @@ public final class X11UiUtil {
   public static void toggleFullScreenMode(JFrame frame) {
     if (X11 == null) return;
     X11.sendClientMessage(frame, "toggle mode", X11.NET_WM_STATE, NET_WM_STATE_TOGGLE, X11.NET_WM_STATE_FULLSCREEN);
+  }
+
+  public static void setFullScreenMode(JFrame frame, boolean fullScreen) {
+    if (X11 == null) return;
+
+    if (fullScreen) {
+      X11.sendClientMessage(frame, "set FullScreen mode", X11.NET_WM_STATE, NET_WM_STATE_ADD, X11.NET_WM_STATE_FULLSCREEN);
+    }
+    else {
+      X11.sendClientMessage(frame, "reset FullScreen mode", X11.NET_WM_STATE, NET_WM_STATE_REMOVE, X11.NET_WM_STATE_FULLSCREEN);
+    }
   }
 
   /**

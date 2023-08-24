@@ -11,7 +11,6 @@ import com.intellij.ide.ui.UISettings
 import com.intellij.ide.ui.UISettingsListener
 import com.intellij.ide.ui.experimental.ExperimentalUiCollector
 import com.intellij.openapi.actionSystem.DataProvider
-import com.intellij.openapi.application.ApplicationInfo
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.ex.ApplicationInfoEx
 import com.intellij.openapi.diagnostic.Logger
@@ -127,18 +126,12 @@ internal class MeetNewUiToolWindow(private val project: Project, private val too
           }
         }.customize(UnscaledGapsY(bottom = 20))
         row {
-          /*
-          button(IdeBundle.message("meetnewui.toolwindow.button.startTour")) {
-            Not implemented yet
-          }.applyToComponent {
-            putClientProperty(DEFAULT_STYLE_KEY, true)
-          }.customize(JBGaps(right = 8))
-          */
-
           button(IdeBundle.message("meetnewui.toolwindow.button.finishSetup")) {
             val toolWindowManager = (ToolWindowManagerEx.getInstanceEx(project) as ToolWindowManagerImpl)
             toolWindowManager.hideToolWindow(toolWindow.id, hideSide = true, removeFromStripe = true)
           }
+
+          MeetNewUiCustomization.firstOrNull()?.addButtons(project, this)
 
           cell() // Deny right component to shrink
         }

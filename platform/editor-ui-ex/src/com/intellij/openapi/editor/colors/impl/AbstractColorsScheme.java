@@ -107,6 +107,7 @@ public abstract class AbstractColorsScheme extends EditorFontCacheImpl implement
   private static final @NonNls String META_INFO_IDE_VERSION   = "ideVersion";
   private static final @NonNls String META_INFO_ORIGINAL      = "originalScheme";
   private static final @NonNls String META_INFO_PARTIAL       = "partialSave";
+  public static final @NonNls  String META_INFO_PLUGIN_ID     = "pluginId";
 
   //endregion
 
@@ -123,6 +124,10 @@ public abstract class AbstractColorsScheme extends EditorFontCacheImpl implement
     myMetaInfo.setProperty(META_INFO_IDE_VERSION,   ApplicationInfoEx.getInstanceEx().getStrictVersion());
     if (parentScheme != null && parentScheme != EmptyColorScheme.INSTANCE && !parentScheme.getName().startsWith(Scheme.EDITABLE_COPY_PREFIX)) {
       myMetaInfo.setProperty(META_INFO_ORIGINAL, parentScheme.getName());
+      String pluginId = parentScheme.getMetaProperties().getProperty(META_INFO_PLUGIN_ID);
+      if (pluginId != null) {
+        myMetaInfo.setProperty(META_INFO_PLUGIN_ID, pluginId);
+      }
     }
   }
 

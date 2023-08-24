@@ -1,2 +1,3 @@
 // "Convert to unicode escape" "true"
 val c = '\u000c'
+// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.ConvertIllegalEscapeToUnicodeEscapeFix

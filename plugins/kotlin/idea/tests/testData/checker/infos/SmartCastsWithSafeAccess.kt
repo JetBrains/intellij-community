@@ -1,37 +1,37 @@
 // FIR_IDENTICAL
 
-interface A {
-    fun foo()
+interface <symbolName descr="null" tooltip="null" textAttributesKey="KOTLIN_TRAIT">A</symbolName> {
+    fun <symbolName descr="null" tooltip="null" textAttributesKey="KOTLIN_FUNCTION_DECLARATION">foo</symbolName>()
 }
 
-interface B : A {
-    fun bar()
+interface <symbolName descr="null" tooltip="null" textAttributesKey="KOTLIN_TRAIT">B</symbolName> : <symbolName descr="null" tooltip="null" textAttributesKey="KOTLIN_TRAIT">A</symbolName> {
+    fun <symbolName descr="null" tooltip="null" textAttributesKey="KOTLIN_FUNCTION_DECLARATION">bar</symbolName>()
 }
 
-interface C
+interface <symbolName descr="null" tooltip="null" textAttributesKey="KOTLIN_TRAIT">C</symbolName>
 
-interface D : A
+interface <symbolName descr="null" tooltip="null" textAttributesKey="KOTLIN_TRAIT">D</symbolName> : <symbolName descr="null" tooltip="null" textAttributesKey="KOTLIN_TRAIT">A</symbolName>
 
-fun test(a: A?) {
-    if (a != null && a is B?) {
-        <info descr="Smart cast to B" tooltip="Smart cast to B">a</info>.bar()
+fun <symbolName descr="null" tooltip="null" textAttributesKey="KOTLIN_FUNCTION_DECLARATION">test</symbolName>(<symbolName descr="null" tooltip="null" textAttributesKey="KOTLIN_PARAMETER">a</symbolName>: <symbolName descr="null" tooltip="null" textAttributesKey="KOTLIN_TRAIT">A</symbolName>?) {
+    if (<symbolName descr="null" tooltip="null" textAttributesKey="KOTLIN_PARAMETER">a</symbolName> != null && <symbolName descr="null" tooltip="null" textAttributesKey="KOTLIN_PARAMETER">a</symbolName> is <symbolName descr="null" tooltip="null" textAttributesKey="KOTLIN_TRAIT">B</symbolName>?) {
+        <symbolName descr="null" tooltip="null" textAttributesKey="KOTLIN_PARAMETER"><symbolName descr="Smart cast to B" tooltip="Smart cast to B" textAttributesKey="KOTLIN_SMART_CAST_VALUE">a</symbolName></symbolName>.<symbolName descr="null" tooltip="null" textAttributesKey="KOTLIN_FUNCTION_CALL">bar</symbolName>()
     }
 
-    if (a is B && a is C) {
-        <info descr="Smart cast to B" tooltip="Smart cast to B">a</info>.foo()
+    if (<symbolName descr="null" tooltip="null" textAttributesKey="KOTLIN_PARAMETER">a</symbolName> is <symbolName descr="null" tooltip="null" textAttributesKey="KOTLIN_TRAIT">B</symbolName> && <symbolName descr="null" tooltip="null" textAttributesKey="KOTLIN_PARAMETER">a</symbolName> is <symbolName descr="null" tooltip="null" textAttributesKey="KOTLIN_TRAIT">C</symbolName>) {
+        <symbolName descr="null" tooltip="null" textAttributesKey="KOTLIN_PARAMETER"><symbolName descr="Smart cast to B" tooltip="Smart cast to B" textAttributesKey="KOTLIN_SMART_CAST_VALUE">a</symbolName></symbolName>.<symbolName descr="null" tooltip="null" textAttributesKey="KOTLIN_FUNCTION_CALL">foo</symbolName>()
     }
 
-    if (a is B? && a is C?) {
-        <info descr="Smart cast to B?" tooltip="Smart cast to B?">a</info><info>?.</info>bar()
+    if (<symbolName descr="null" tooltip="null" textAttributesKey="KOTLIN_PARAMETER">a</symbolName> is <symbolName descr="null" tooltip="null" textAttributesKey="KOTLIN_TRAIT">B</symbolName>? && <symbolName descr="null" tooltip="null" textAttributesKey="KOTLIN_PARAMETER">a</symbolName> is <symbolName descr="null" tooltip="null" textAttributesKey="KOTLIN_TRAIT">C</symbolName>?) {
+        <symbolName descr="null" tooltip="null" textAttributesKey="KOTLIN_PARAMETER"><symbolName descr="Smart cast to B?" tooltip="Smart cast to B?" textAttributesKey="KOTLIN_SMART_CAST_VALUE">a</symbolName></symbolName><symbolName descr="null" tooltip="null" textAttributesKey="KOTLIN_SAFE_ACCESS">?.</symbolName><symbolName descr="null" tooltip="null" textAttributesKey="KOTLIN_FUNCTION_CALL">bar</symbolName>()
     }
 
-    a<info>?.</info>foo()
-    if (a is B? && a is C?) {
-        a<info>?.</info>foo()
+    <symbolName descr="null" tooltip="null" textAttributesKey="KOTLIN_PARAMETER">a</symbolName><symbolName descr="null" tooltip="null" textAttributesKey="KOTLIN_SAFE_ACCESS">?.</symbolName><symbolName descr="null" tooltip="null" textAttributesKey="KOTLIN_FUNCTION_CALL">foo</symbolName>()
+    if (<symbolName descr="null" tooltip="null" textAttributesKey="KOTLIN_PARAMETER">a</symbolName> is <symbolName descr="null" tooltip="null" textAttributesKey="KOTLIN_TRAIT">B</symbolName>? && <symbolName descr="null" tooltip="null" textAttributesKey="KOTLIN_PARAMETER">a</symbolName> is <symbolName descr="null" tooltip="null" textAttributesKey="KOTLIN_TRAIT">C</symbolName>?) {
+        <symbolName descr="null" tooltip="null" textAttributesKey="KOTLIN_PARAMETER">a</symbolName><symbolName descr="null" tooltip="null" textAttributesKey="KOTLIN_SAFE_ACCESS">?.</symbolName><symbolName descr="null" tooltip="null" textAttributesKey="KOTLIN_FUNCTION_CALL">foo</symbolName>()
     }
 
-    if (a is B && a is D) {
+    if (<symbolName descr="null" tooltip="null" textAttributesKey="KOTLIN_PARAMETER">a</symbolName> is <symbolName descr="null" tooltip="null" textAttributesKey="KOTLIN_TRAIT">B</symbolName> && <symbolName descr="null" tooltip="null" textAttributesKey="KOTLIN_PARAMETER">a</symbolName> is <symbolName descr="null" tooltip="null" textAttributesKey="KOTLIN_TRAIT">D</symbolName>) {
         //when it's resolved, the message should be 'Smart cast to A'
-        <info>a</info>.<error>foo</error>
+        <symbolName descr="null" tooltip="null" textAttributesKey="KOTLIN_PARAMETER"><symbolName descr="Smart cast to B" tooltip="Smart cast to B" textAttributesKey="KOTLIN_SMART_CAST_VALUE">a</symbolName></symbolName>.<error descr="[FUNCTION_CALL_EXPECTED] Function invocation 'foo()' expected" tooltip="[FUNCTION_CALL_EXPECTED] Function invocation 'foo()' expected" textAttributesKey="ERRORS_ATTRIBUTES">foo</error>
     }
 }

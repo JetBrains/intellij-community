@@ -1,6 +1,35 @@
 <component name="libraryTable">
   <library name="ktor-client-mock" type="repository">
     <properties maven-id="io.ktor:ktor-client-mock-jvm:2.3.0">
+      <verification>
+        <artifact url="file://$MAVEN_REPOSITORY$/io/ktor/ktor-client-mock-jvm/2.3.0/ktor-client-mock-jvm-2.3.0.jar">
+          <sha256sum>a4717dd09bb5b13897c4d3b09406f66eed303d44c84a63d96b82a92c13d047b0</sha256sum>
+        </artifact>
+        <artifact url="file://$MAVEN_REPOSITORY$/io/ktor/ktor-http-jvm/2.3.0/ktor-http-jvm-2.3.0.jar">
+          <sha256sum>a116d91b9de823384e157c9ddae8c7dd34592253cea03a812cb4c430f941914e</sha256sum>
+        </artifact>
+        <artifact url="file://$MAVEN_REPOSITORY$/io/ktor/ktor-utils-jvm/2.3.0/ktor-utils-jvm-2.3.0.jar">
+          <sha256sum>11f01ec6bc4a139852bec08e2346046a96ae636bb3d7643a14c109332692a447</sha256sum>
+        </artifact>
+        <artifact url="file://$MAVEN_REPOSITORY$/io/ktor/ktor-io-jvm/2.3.0/ktor-io-jvm-2.3.0.jar">
+          <sha256sum>e4fc6eafdd18cdc95ee7e090b586b932a35d992660ae70fb18ba64b737427bcf</sha256sum>
+        </artifact>
+        <artifact url="file://$MAVEN_REPOSITORY$/io/ktor/ktor-client-core-jvm/2.3.0/ktor-client-core-jvm-2.3.0.jar">
+          <sha256sum>9c8707aac68e30900326933f9044fbedb4797ef18aa127dd2ec9cd74b5100153</sha256sum>
+        </artifact>
+        <artifact url="file://$MAVEN_REPOSITORY$/io/ktor/ktor-events-jvm/2.3.0/ktor-events-jvm-2.3.0.jar">
+          <sha256sum>c0fa2f2829e6ca47ce812a6fe35e65b634673aafcff2170b2cd07cf555981492</sha256sum>
+        </artifact>
+        <artifact url="file://$MAVEN_REPOSITORY$/io/ktor/ktor-websocket-serialization-jvm/2.3.0/ktor-websocket-serialization-jvm-2.3.0.jar">
+          <sha256sum>37f83ea9cab8a2e56c80d0bd0e461b6f4de0a7e4d97c3d26b38b091fbb0d2a49</sha256sum>
+        </artifact>
+        <artifact url="file://$MAVEN_REPOSITORY$/io/ktor/ktor-serialization-jvm/2.3.0/ktor-serialization-jvm-2.3.0.jar">
+          <sha256sum>dbb254d2f1eea8a9f97d77f1c6783b1aedb01563da0aba886bcfa89f973c3783</sha256sum>
+        </artifact>
+        <artifact url="file://$MAVEN_REPOSITORY$/io/ktor/ktor-websockets-jvm/2.3.0/ktor-websockets-jvm-2.3.0.jar">
+          <sha256sum>1412d2331f6951dc0b6c99e0a88fdb56ff50943e720191b25cdcdf715dab5c49</sha256sum>
+        </artifact>
+      </verification>
       <exclude>
         <dependency maven-id="org.jetbrains:annotations" />
         <dependency maven-id="org.jetbrains.kotlin:kotlin-stdlib-common" />

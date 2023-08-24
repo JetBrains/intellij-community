@@ -322,3 +322,13 @@ fun <Node> generateRecursiveSequence(initialSequence: Sequence<Node>, children: 
 fun <T : Any> sequenceOfNotNull(element: T?): Sequence<T> = if (element == null) emptySequence() else sequenceOf(element)
 
 fun <K, V : Any> Map<K, V>.reverse(): Map<V, K> = map { (k, v) -> v to k }.toMap()
+
+fun <K, V> Iterable<Pair<K, V>>.toMultiMap(): MultiMap<K, V> =
+  toMultiMap(MultiMap.createLinked())
+
+fun <K, V> Iterable<Pair<K, V>>.toMultiMap(multiMap: MultiMap<K, V>): MultiMap<K, V> {
+  forEach {
+    multiMap.putValue(it.first, it.second)
+  }
+  return multiMap
+}

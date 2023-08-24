@@ -11,3 +11,5 @@ object BodyObject : Body()
 fun usage() {
     Obj.<caret>foo()
 }
+
+// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.ImportFix

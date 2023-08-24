@@ -18,6 +18,8 @@ abstract class ComponentPredicate : () -> Boolean {
   companion object {
     val TRUE: ComponentPredicate = ConstantComponentPredicate(true)
     val FALSE: ComponentPredicate = ConstantComponentPredicate(false)
+
+    fun fromValue(value: Boolean) : ComponentPredicate = if (value) TRUE else FALSE
   }
 }
 

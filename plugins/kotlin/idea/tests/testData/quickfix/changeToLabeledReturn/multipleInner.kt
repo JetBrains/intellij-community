@@ -16,3 +16,4 @@ fun bar() {
         return@foo 1
     }
 }
+// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.ChangeToLabeledReturnFix

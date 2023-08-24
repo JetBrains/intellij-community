@@ -6,3 +6,4 @@ expect annotation class Foo
 
 @Foo<caret>
 fun bar() {}
+// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.AddDefaultConstructorFix

@@ -47,6 +47,10 @@ class PyTargetAwareAdditionalData private constructor(private val b: RemoteSdkPr
       notifyTargetEnvironmentConfigurationChanged()
     }
 
+  init {
+    notifyTargetEnvironmentConfigurationChanged()
+  }
+
   constructor(flavorAndData: PyFlavorAndData<*, *>, targetEnvironmentConfiguration: TargetEnvironmentConfiguration? = null) : this(
     RemoteSdkPropertiesHolder(DEFAULT_PYCHARM_HELPERS_DIR_NAME), flavorAndData, targetEnvironmentConfiguration)
 

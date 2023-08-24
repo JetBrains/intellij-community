@@ -145,7 +145,7 @@ internal class SettingsRepositoryToSettingsSyncMigration {
             TemplateSettings.getInstance() // Required for live templates to be migrated correctly, see IDEA-303831
 
             SettingsSyncIdeMediatorImpl(ApplicationManager.getApplication().stateStore as ComponentStoreImpl,
-                                        PathManager.getConfigDir(), { false }).applyToIde(snapshot)
+                                        PathManager.getConfigDir(), { false }).applyToIde(snapshot, null)
             settingsRepositoryMigration.showNotificationAboutUnbundling(executorService)
             SettingsSyncEventsStatistics.MIGRATED_FROM_SETTINGS_REPOSITORY.log()
           }

@@ -10,3 +10,6 @@ fun foo() {
     <caret>@SomeOptInAnnotation
     var x: Int
 }
+
+// FUS_K2_QUICKFIX_NAME: org.jetbrains.kotlin.idea.inspections.RemoveAnnotationFix
+// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.inspections.RemoveAnnotationFix

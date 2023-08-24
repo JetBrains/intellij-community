@@ -7,3 +7,5 @@ class A : B {
 
     constructor() : super(1)
 }
+
+// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.InsertDelegationCallQuickfix

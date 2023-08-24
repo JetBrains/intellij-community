@@ -8,3 +8,5 @@ class A
 fun foo() {
     B()
 }
+
+// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.inspections.KotlinOptimizeImportsQuickFix

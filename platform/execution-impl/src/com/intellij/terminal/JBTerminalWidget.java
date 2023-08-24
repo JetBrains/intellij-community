@@ -165,6 +165,11 @@ public class JBTerminalWidget extends JediTermWidget implements Disposable, Data
   }
 
   @Override
+  protected @NotNull TerminalExecutorServiceManager createExecutorServiceManager() {
+    return new TerminalExecutorServiceManagerImpl();
+  }
+
+  @Override
   protected JBTerminalPanel createTerminalPanel(@NotNull SettingsProvider settingsProvider,
                                                 @NotNull StyleState styleState,
                                                 @NotNull TerminalTextBuffer textBuffer) {

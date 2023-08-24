@@ -44,7 +44,13 @@
     <orderEntry type="library" name="javax.annotation-api" level="project" />
     <orderEntry type="module-library">
       <library name="qdox-java-parser" type="repository">
-        <properties maven-id="com.thoughtworks.qdox:qdox:2.0.1" />
+        <properties maven-id="com.thoughtworks.qdox:qdox:2.0.1">
+          <verification>
+            <artifact url="file://$MAVEN_REPOSITORY$/com/thoughtworks/qdox/qdox/2.0.1/qdox-2.0.1.jar">
+              <sha256sum>c28db4602da9f3817a59de9be137c1f6083a9cb95fa1781f54eda75763a95c67</sha256sum>
+            </artifact>
+          </verification>
+        </properties>
         <CLASSES>
           <root url="jar://$MAVEN_REPOSITORY$/com/thoughtworks/qdox/qdox/2.0.1/qdox-2.0.1.jar!/" />
         </CLASSES>

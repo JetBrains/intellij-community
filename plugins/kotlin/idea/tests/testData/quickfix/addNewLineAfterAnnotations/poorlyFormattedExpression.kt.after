@@ -9,3 +9,5 @@ fun foo(y: IntArray) {
     @Ann
     y[0 + 9 * 4] = y[y [1]]
 }
+
+// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.AddNewLineAfterAnnotationsFix

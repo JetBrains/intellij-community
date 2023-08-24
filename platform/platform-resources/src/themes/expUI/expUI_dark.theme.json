@@ -317,6 +317,8 @@
       "borderColor": "Grey4"
     },
 
+    "NewUiOnboarding.Dialog.background": "Grey2",
+
     "Ide.Shadow": {
       "borderInsets": "16,16,16,16",
       "top0Color": "#00000000",
@@ -382,7 +384,8 @@
         "warningBorderColor": "Yellow2",
         "informativeBackground": "Green1",
         "informativeBorderColor": "Green2"
-      }
+      },
+      "WelcomeScreen.separatorColor": "#4E5157"
     },
 
     "NotificationsToolwindow": {
@@ -541,6 +544,8 @@
       "codeBackground": "Grey3",
       "codeBorderColor": "Grey7",
       "linkForeground": "Blue9",
+      "imageBorderColor": "Grey4",
+      "animationBackground": "Grey1",
       "Button": {
         "foreground": "Grey14",
         "startBackground": "Grey6",
@@ -588,7 +593,8 @@
     "MainToolbar": {
       "Icon": {
         "background": "Grey2",
-        "pressedBackground": "Grey3"
+        "pressedBackground": "Grey3",
+        "insets": "5,5,5,5"
       },
       "Dropdown": {
         "pressedBackground": "Grey3",
@@ -598,6 +604,8 @@
       "background": "Grey2",
       "separatorColor": "Grey4"
     },
+
+    "Window.undecorated.border" : "1,1,1,1,#5A5D63",
 
     "Tree": {
       "collapsedIcon": "/expui/general/chevronRight.svg",

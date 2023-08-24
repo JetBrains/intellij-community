@@ -1,6 +1,7 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.wm.impl
 
+import com.intellij.openapi.ui.popup.JBPopup
 import org.jetbrains.annotations.Nls
 import java.awt.Color
 import java.awt.event.ActionListener
@@ -26,6 +27,7 @@ abstract class ToolbarComboWidget: JComponent() {
   var transparentHoverBackground: Color? by Delegates.observable(null, this::fireUpdateEvents)
   var highlightBackground: Color? by Delegates.observable(null, this::fireUpdateEvents)
   var isExpandable: Boolean by Delegates.observable(true, this::fireUpdateEvents)
+  var isPopupShowing: Boolean by Delegates.observable(false, this::fireUpdateEvents)
 
   init {
     updateUI() //set UI for component
@@ -33,6 +35,8 @@ abstract class ToolbarComboWidget: JComponent() {
   }
 
   abstract fun doExpand(e: InputEvent?)
+
+  open fun createPopup(e: InputEvent?): JBPopup? = null
 
   override fun getUIClassID(): String {
     return "ToolbarComboWidgetUI"

@@ -10,3 +10,5 @@ interface I {
 fun foo(i: I) {
     i.<caret>oldFun(p1 = "a") { true }
 }
+
+// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.replaceWith.DeprecatedSymbolUsageFix

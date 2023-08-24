@@ -17,9 +17,12 @@ import com.intellij.lang.documentation.ide.IdeDocumentationTargetProvider
 import com.intellij.lang.injection.InjectedLanguageManager
 import com.intellij.model.psi.PsiSymbolReference
 import com.intellij.model.psi.impl.referencesAt
+import com.intellij.openapi.actionSystem.IdeActions
 import com.intellij.openapi.application.WriteAction
 import com.intellij.openapi.command.CommandProcessor
 import com.intellij.openapi.diagnostic.Logger
+import com.intellij.openapi.editor.Editor
+import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.registry.Registry
@@ -33,7 +36,6 @@ import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.psi.search.SearchScope
 import com.intellij.psi.util.elementsAtOffsetUp
 import com.intellij.refactoring.rename.api.RenameTarget
-import com.intellij.refactoring.rename.symbol.RenameableSymbol
 import com.intellij.refactoring.rename.symbol.SymbolRenameTargetFactory
 import com.intellij.rt.execution.junit.FileComparisonFailure
 import com.intellij.testFramework.PlatformTestUtil
@@ -46,7 +48,6 @@ import com.intellij.testFramework.fixtures.TestLookupElementPresentation
 import com.intellij.usages.Usage
 import com.intellij.util.ObjectUtils.coalesce
 import com.intellij.util.concurrency.annotations.RequiresEdt
-import com.intellij.util.containers.ContainerUtil
 import com.intellij.webSymbols.declarations.WebSymbolDeclaration
 import com.intellij.webSymbols.declarations.WebSymbolDeclarationProvider
 import com.intellij.webSymbols.query.WebSymbolMatch
@@ -54,6 +55,8 @@ import com.intellij.webSymbols.query.WebSymbolsQueryExecutorFactory
 import junit.framework.TestCase.*
 import org.junit.Assert
 import java.io.File
+import kotlin.math.max
+import kotlin.math.min
 
 internal val webSymbolsTestsDataPath get() = "${PlatformTestUtil.getCommunityPath()}/platform/webSymbols/testData/"
 
@@ -84,21 +87,24 @@ fun CodeInsightTestFixture.checkDocumentationAtCaret() {
   checkDocumentation(renderDocAtCaret())
 }
 
-fun CodeInsightTestFixture.checkLookupElementDocumentationAtCaret(
+fun CodeInsightTestFixture.checkLookupItems(
   renderPriority: Boolean = false,
   renderTypeText: Boolean = false,
   renderTailText: Boolean = false,
   renderProximity: Boolean = false,
   renderPresentedText: Boolean = false,
+  checkDocumentation: Boolean = false,
+  containsCheck: Boolean = false,
+  locations: List<String> = emptyList(),
   fileName: String = InjectedLanguageManager.getInstance(project).getTopLevelFile(file).virtualFile.nameWithoutExtension,
-  lookupFilter: (item: LookupElement) -> Boolean = { true }) {
+  expectedDataLocation: String = "",
+  lookupItemFilter: (item: LookupElementInfo) -> Boolean = { true },
+) {
+  val hasDir = expectedDataLocation.isNotEmpty()
 
-  noAutoComplete {
-    completeBasic()
-    checkListByFile(renderLookupItems(renderPriority, renderTypeText, renderTailText, renderProximity, renderPresentedText, lookupFilter),
-                    "$fileName.list.txt", false)
-
-    val lookupsToCheck = renderLookupItems(false, false, lookupFilter = lookupFilter).filter { it.isNotBlank() }
+  fun checkLookupDocumentation(fileSuffix: String = "") {
+    if (!checkDocumentation) return
+    val lookupsToCheck = renderLookupItems(false, false, lookupFilter = lookupItemFilter).filter { it.isNotBlank() }
     val lookupElements = lookupElements!!.asSequence().associateBy { it.lookupString }
     for (lookupString in lookupsToCheck) {
       val lookupElement = lookupElements[lookupString]
@@ -110,17 +116,57 @@ fun CodeInsightTestFixture.checkLookupElementDocumentationAtCaret(
         ?.trim()
 
       val sanitizedLookupString = lookupString.replace(Regex("[*\"?<>/\\[\\]:;|,#]"), "_")
-      checkDocumentation(doc ?: "<no documentation>", "#$sanitizedLookupString")
+      checkDocumentation(doc ?: "<no documentation>", "$fileSuffix#$sanitizedLookupString", expectedDataLocation)
     }
   }
 
+  noAutoComplete {
+    if (locations.isEmpty()) {
+      completeBasic()
+      checkListByFile(
+        renderLookupItems(renderPriority, renderTypeText, renderTailText, renderProximity, renderPresentedText, lookupItemFilter),
+        expectedDataLocation + (if (hasDir) "/items" else "$fileName.items") + ".txt",
+        containsCheck
+      )
+      checkLookupDocumentation()
+    }
+    else {
+      locations.forEachIndexed { index, location ->
+        moveToOffsetBySignature(location)
+        completeBasic()
+        checkListByFile(
+          renderLookupItems(renderPriority, renderTypeText, renderTailText, renderProximity, renderPresentedText, lookupItemFilter),
+          expectedDataLocation + (if (hasDir) "/items" else "$fileName.items") + ".${index + 1}.txt",
+          containsCheck
+        )
+        checkLookupDocumentation(".${index + 1}")
+      }
+    }
+  }
 }
 
-private fun CodeInsightTestFixture.checkDocumentation(actualDocumentation: String?, fileSuffix: String = ".expected") {
+data class LookupElementInfo(
+  val lookupElement: LookupElement,
+  val lookupString: String,
+  val itemText: String?,
+  val tailText: String?,
+  val typeText: String?,
+  val priority: Double,
+  val proximity: Int?,
+  val isStrikeout: Boolean,
+  val isItemTextBold: Boolean,
+  val isItemTextItalic: Boolean,
+  val isItemTextUnderline: Boolean,
+  val isTypeGreyed: Boolean,
+)
+
+private fun CodeInsightTestFixture.checkDocumentation(actualDocumentation: String?,
+                                                      fileSuffix: String = ".expected",
+                                                      directory: String = "") {
   assertNotNull("No documentation rendered", actualDocumentation)
   val expectedFile = InjectedLanguageManager.getInstance(project).getTopLevelFile(file)
                        .virtualFile.nameWithoutExtension + fileSuffix + ".html"
-  val path = "$testDataPath/$expectedFile"
+  val path = "$testDataPath/$directory/$expectedFile"
   val file = File(path)
   if (!file.exists()) {
     file.createNewFile()
@@ -147,45 +193,57 @@ fun CodeInsightTestFixture.renderLookupItems(renderPriority: Boolean,
                                              renderTailText: Boolean = false,
                                              renderProximity: Boolean = false,
                                              renderPresentedText: Boolean = false,
-                                             lookupFilter: (item: LookupElement) -> Boolean = { true }): List<String> {
-  return ContainerUtil.mapNotNull(lookupElements?.filter(lookupFilter) ?: return emptyList()) { el ->
-    val result = StringBuilder()
-    val presentation = TestLookupElementPresentation.renderReal(el)
-    if (renderPriority && presentation.isItemTextBold) {
-      result.append('!')
+                                             lookupFilter: (item: LookupElementInfo) -> Boolean = { true }): List<String> =
+  lookupElements?.asSequence()
+    ?.map {
+      val presentation = TestLookupElementPresentation.renderReal(it)
+      LookupElementInfo(it, it.lookupString, presentation.itemText, presentation.tailText,
+                        presentation.typeText, (it as? PrioritizedLookupElement<*>)?.priority?: 0.0,
+                        (it as? PrioritizedLookupElement<*>)?.explicitProximity,
+                        presentation.isStrikeout, presentation.isItemTextBold,
+                        presentation.isItemTextItalic, presentation.isItemTextUnderlined,
+                        presentation.isTypeGrayed)
     }
-    if (renderPriority && presentation.isStrikeout) {
-      result.append('~')
+    ?.filter(lookupFilter)
+    ?.map { el ->
+      val result = StringBuilder()
+      if (renderPriority && el.isItemTextBold) {
+        result.append('!')
+      }
+      if (renderPriority && el.isStrikeout) {
+        result.append('~')
+      }
+      result.append(el.lookupString)
+      if (renderPresentedText) {
+        result.append('[')
+        result.append(el.itemText)
+        result.append(']')
+      }
+      if (renderTailText) {
+        result.append('%')
+        result.append(el.tailText)
+      }
+      if (renderTypeText) {
+        result.append('#')
+        result.append(el.typeText)
+      }
+      if (renderPriority) {
+        result.append('#')
+          .append(el.priority.toInt())
+      }
+      if (renderProximity) {
+        result.append("+")
+          .append(el.proximity ?: 0)
+      }
+      Pair(el, result.toString())
     }
-    result.append(el.lookupString)
-    if (renderPresentedText) {
-      result.append('[')
-      result.append(presentation.itemText)
-      result.append(']')
-    }
-    if (renderTailText) {
-      result.append('%')
-      result.append(presentation.tailText)
-    }
-    if (renderTypeText) {
-      result.append('#')
-      result.append(presentation.typeText)
-    }
-    if (renderPriority) {
-      result.append('#')
-        .append(((el as? PrioritizedLookupElement<*>)?.priority ?: 0.0).toInt())
-    }
-    if (renderProximity) {
-      result.append("+")
-        .append((el as? PrioritizedLookupElement<*>)?.explicitProximity ?: 0)
-    }
-    Pair(el, result.toString())
-  }
-    .sortedWith(Comparator.comparing { it: Pair<LookupElement, String> -> -((it.first as? PrioritizedLookupElement<*>)?.priority ?: 0.0) }
-                  .thenComparingInt { -((it.first as? PrioritizedLookupElement<*>)?.explicitProximity ?: 0) }
-                  .thenComparing { it: Pair<LookupElement, String> -> it.first.lookupString })
-    .map { it.second }
-}
+    ?.sortedWith(
+      Comparator.comparing { it: Pair<LookupElementInfo, String> -> -(it.first.priority ?: 0.0) }
+        .thenComparingInt { -(it.first.proximity ?: 0) }
+        .thenComparing { it: Pair<LookupElementInfo, String> -> it.first.lookupString })
+    ?.map { it.second }
+    ?.toList()
+  ?: emptyList()
 
 fun CodeInsightTestFixture.moveToOffsetBySignature(signature: String) {
   PsiDocumentManager.getInstance(project).commitAllDocuments()
@@ -243,18 +301,21 @@ fun CodeInsightTestFixture.resolveWebSymbolReference(signature: String): WebSymb
 }
 
 fun CodeInsightTestFixture.multiResolveWebSymbolReference(signature: String): List<WebSymbol> {
-  val offset = file.findOffsetBySignature(signature)
-  return file.referencesAt(offset)
-    .let { refs ->
-      if (refs.size > 1) {
-        val filtered = refs.filter { it.absoluteRange.contains(offset) }
-        if (filtered.size == 1)
-          filtered
-        else throw AssertionError("Multiple PsiSymbolReferences found at $signature: $refs")
+  val signatureOffset = file.findOffsetBySignature(signature)
+  return injectionThenHost(file, signatureOffset) { file, offset ->
+    file.referencesAt(offset)
+      .let { refs ->
+        if (refs.size > 1) {
+          val filtered = refs.filter { it.absoluteRange.contains(signatureOffset) }
+          if (filtered.size == 1)
+            filtered
+          else throw AssertionError("Multiple PsiSymbolReferences found at $signature: $refs")
+        }
+        else refs
       }
-      else refs
-    }
-    .resolveToWebSymbols()
+      .resolveToWebSymbols()
+      .takeIf { it.isNotEmpty() }
+  } ?: emptyList()
 }
 
 private fun Collection<PsiSymbolReference>.resolveToWebSymbols(): List<WebSymbol> =
@@ -371,31 +432,36 @@ fun CodeInsightTestFixture.checkGTDUOutcome(expectedOutcome: GotoDeclarationOrUs
   if (signature != null) {
     moveToOffsetBySignature(signature)
   }
-  var file = file
-  var offset = caretOffset
+  val actualSignature = signature ?: editor.currentPositionSignature
   val editor = InjectedLanguageUtil.getEditorForInjectedLanguageNoCommit(editor, file)
-  if (editor is EditorWindow) {
-    file = editor.injectedFile
-    offset -= InjectedLanguageManager.getInstance(project).injectedToHost(file, 0)
-  }
+  val offset = editor.caretModel.offset
+  val file = PsiDocumentManager.getInstance(project).getPsiFile(editor.document) ?: file
   val gtduOutcome = GotoDeclarationOrUsageHandler2.testGTDUOutcomeInNonBlockingReadAction(editor, file, offset)
-  Assert.assertEquals(signature,
+  Assert.assertEquals(actualSignature,
                       expectedOutcome,
                       gtduOutcome)
 }
 
-fun CodeInsightTestFixture.checkGotoDeclaration(signature: String, expectedOffset: Int, expectedFileName: String? = null) {
-  checkGTDUOutcome(GotoDeclarationOrUsageHandler2.GTDUOutcome.GTD, signature)
+fun CodeInsightTestFixture.checkGotoDeclaration(fromSignature: String?, declarationSignature: String, expectedFileName: String? = null) {
+  checkGTDUOutcome(GotoDeclarationOrUsageHandler2.GTDUOutcome.GTD, fromSignature)
+  val actualSignature = fromSignature ?: editor.currentPositionSignature
   performEditorAction("GotoDeclaration")
-  val targetEditor = FileEditorManager.getInstance(project).selectedTextEditor
-  if (targetEditor == null) throw NullPointerException(signature)
+  val targetEditor = FileEditorManager.getInstance(project).selectedTextEditor?.topLevelEditor
+  if (targetEditor == null) throw NullPointerException(actualSignature)
+  val targetFile = PsiDocumentManager.getInstance(project).getPsiFile(targetEditor.document)!!
   if (expectedFileName != null) {
-    assertEquals(signature, expectedFileName, PsiDocumentManager.getInstance(project).getPsiFile(targetEditor.document)?.name)
+    assertEquals(actualSignature, expectedFileName, PsiDocumentManager.getInstance(project).getPsiFile(targetEditor.document)?.name)
   }
   else {
-    assertEquals(signature, targetEditor, editor)
+    assertEquals(actualSignature, targetEditor, editor.topLevelEditor)
   }
-  assertEquals(signature, expectedOffset, targetEditor.caretModel.offset)
+  if (!declarationSignature.contains("<caret>") || targetFile.findOffsetBySignature(
+      declarationSignature) != targetEditor.caretModel.offset) {
+    assertEquals("For go to from: $actualSignature",
+                 declarationSignature + if (!declarationSignature.contains("<caret>")) ""
+                 else (" [" + file.findOffsetBySignature(declarationSignature) + "]"),
+                 targetEditor.currentPositionSignature + "[${targetEditor.caretModel.offset}]")
+  }
 }
 
 fun CodeInsightTestFixture.checkListByFile(actualList: List<String>, @TestDataFile expectedFile: String, containsCheck: Boolean) {
@@ -433,7 +499,7 @@ fun CodeInsightTestFixture.checkTextByFile(actualContents: String, @TestDataFile
 
 fun CodeInsightTestFixture.canRenameWebSymbolAtCaret() =
   webSymbolAtCaret().let {
-    it is RenameableSymbol || it is RenameTarget || (it is PsiSourcedWebSymbol && it.source != null)
+    it is RenameTarget || it?.renameTarget != null || (it is PsiSourcedWebSymbol && it.source != null)
   }
 
 fun CodeInsightTestFixture.renameWebSymbol(newName: String) {
@@ -446,7 +512,6 @@ fun CodeInsightTestFixture.renameWebSymbol(newName: String) {
   }
   if (target == null) {
     target = when (symbol) {
-      is RenameableSymbol -> symbol.renameTarget
       is RenameTarget -> symbol
       is PsiSourcedWebSymbol -> {
         val psiTarget = symbol.source
@@ -454,8 +519,8 @@ fun CodeInsightTestFixture.renameWebSymbol(newName: String) {
         renameElement(psiTarget, newName)
         return
       }
-      else ->
-        throw AssertionError("Symbol $symbol does not provide rename target nor is a PsiSourcedWebSymbol")
+      else -> symbol.renameTarget
+              ?: throw AssertionError("Symbol $symbol does not provide rename target nor is a PsiSourcedWebSymbol")
     }
   }
   if (target.createPointer().dereference() == null) {
@@ -464,9 +529,14 @@ fun CodeInsightTestFixture.renameWebSymbol(newName: String) {
   renameTarget(target, newName)
 }
 
-fun CodeInsightTestFixture.testWebSymbolRename(fileAfter: String, newName: String) {
-  renameWebSymbol(newName)
-  checkResultByFile(fileAfter)
+fun CodeInsightTestFixture.configureAndCopyPaste(sourceFile: String, destinationFile: String) {
+  configureFromTempProjectFile(sourceFile)
+  performEditorAction(IdeActions.ACTION_EDITOR_COPY)
+  configureFromTempProjectFile(destinationFile)
+  performEditorAction(IdeActions.ACTION_EDITOR_PASTE)
+  WriteAction.runAndWait<Throwable> {
+    FileDocumentManager.getInstance().saveAllDocuments()
+  }
 }
 
 fun doCompletionItemsTest(fixture: CodeInsightTestFixture,
@@ -510,3 +580,16 @@ fun doCompletionItemsTest(fixture: CodeInsightTestFixture,
     }
   }
 }
+
+private val Editor.currentPositionSignature: String
+  get() {
+    val caretPos = caretModel.offset
+    val text = document.text
+    return (text.substring(max(0, caretPos - 15), caretPos) + "<caret>" +
+            text.substring(caretPos, min(caretPos + 15, text.length)))
+      .replace("\n", "\\n")
+  }
+
+
+private val Editor.topLevelEditor
+  get() = if (this is EditorWindow) delegate else this

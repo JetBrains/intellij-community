@@ -14,6 +14,7 @@ import com.intellij.openapi.util.CheckedDisposable;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vcs.VcsException;
+import com.intellij.openapi.vcs.telemetry.VcsTelemetrySpan.LogData;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.platform.diagnostic.telemetry.TelemetryManager;
 import com.intellij.util.containers.ContainerUtil;
@@ -162,7 +163,7 @@ public final class VcsLogData implements Disposable, VcsLogDataProvider {
     synchronized (myLock) {
       if (myState.equals(State.CREATED)) {
         myState = State.INITIALIZED;
-        Span span = TelemetryManager.getInstance().getTracer(VcsScope).spanBuilder("initialize").startSpan();
+        Span span = TelemetryManager.getInstance().getTracer(VcsScope).spanBuilder(LogData.Initialize.getName()).startSpan();
         Task.Backgroundable backgroundable = new Task.Backgroundable(myProject,
                                                                      VcsLogBundle.message("vcs.log.initial.loading.process"),
                                                                      false) {
@@ -223,7 +224,7 @@ public final class VcsLogData implements Disposable, VcsLogDataProvider {
   }
 
   private void readCurrentUser() {
-    Span span = TelemetryManager.getInstance().getTracer(VcsScope).spanBuilder("readCurrentUser").startSpan();
+    Span span = TelemetryManager.getInstance().getTracer(VcsScope).spanBuilder(LogData.ReadCurrentUser.getName()).startSpan();
     for (Map.Entry<VirtualFile, VcsLogProvider> entry : myLogProviders.entrySet()) {
       VirtualFile root = entry.getKey();
       try {

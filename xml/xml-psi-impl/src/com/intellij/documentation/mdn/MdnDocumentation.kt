@@ -22,6 +22,7 @@ import com.intellij.psi.impl.source.html.dtd.HtmlSymbolDeclaration
 import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.psi.xml.*
 import com.intellij.util.asSafely
+import com.intellij.webSymbols.WebSymbolApiStatus
 import com.intellij.webSymbols.WebSymbolsBundle
 import com.intellij.xml.psi.XmlPsiBundle
 import com.intellij.xml.util.HtmlUtil
@@ -175,8 +176,7 @@ private fun innerGetEventDoc(eventName: String): Pair<MdnDocumentation, MdnDomEv
 interface MdnSymbolDocumentation {
   val name: String
   val url: String?
-  val isDeprecated: Boolean
-  val isExperimental: Boolean
+  val apiStatus: WebSymbolApiStatus
   val description: String
   val sections: Map<@Nls String, @Nls String>
   val footnote: @Nls String?
@@ -196,11 +196,15 @@ class MdnSymbolDocumentationAdapter(override val name: String,
   override val url: String?
     get() = doc.url?.let { fixMdnUrls(it, source.lang) }
 
-  override val isDeprecated: Boolean
-    get() = doc.status?.contains(MdnApiStatus.Deprecated) == true
-
-  override val isExperimental: Boolean
-    get() = doc.status?.contains(MdnApiStatus.Experimental) == true
+  override val apiStatus: WebSymbolApiStatus
+    get() = doc.status?.let {
+      when {
+        it.contains(MdnApiStatus.Obsolete) -> WebSymbolApiStatus.Obsolete
+        it.contains(MdnApiStatus.Deprecated) -> WebSymbolApiStatus.Deprecated
+        it.contains(MdnApiStatus.Experimental) -> WebSymbolApiStatus.Experimental
+        else -> null
+      }
+    } ?: WebSymbolApiStatus.Stable
 
   override val description: String
     get() = capitalize(doc.doc ?: "").fixUrls()
@@ -331,7 +335,7 @@ data class MdnCssBasicSymbolDocumentation(override val url: String?,
                                           @JsonDeserialize(using = CompatibilityMapDeserializer::class)
                                           override val compatibility: CompatibilityMap?,
                                           override val doc: String?,
-                                          val formalSyntax: String?) : MdnRawSymbolDocumentation{
+                                          val formalSyntax: String?) : MdnRawSymbolDocumentation {
   override val sections: Map<String, String>
     get() {
       val result = mutableMapOf<String, String>()
@@ -348,7 +352,7 @@ data class MdnCssAtRuleSymbolDocumentation(override val url: String?,
                                            override val compatibility: CompatibilityMap?,
                                            override val doc: String?,
                                            val properties: Map<String, MdnCssPropertySymbolDocumentation>?,
-                                           val formalSyntax: String?) : MdnRawSymbolDocumentation{
+                                           val formalSyntax: String?) : MdnRawSymbolDocumentation {
   override val sections: Map<String, String>
     get() {
       val result = mutableMapOf<String, String>()
@@ -392,7 +396,8 @@ enum class MdnApiNamespace {
 enum class MdnApiStatus {
   Experimental,
   StandardTrack,
-  Deprecated
+  Deprecated,
+  Obsolete
 }
 
 enum class MdnJavaScriptRuntime(displayName: String? = null, mdnId: String? = null, val firstVersion: String = "1") {

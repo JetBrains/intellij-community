@@ -89,6 +89,7 @@ private suspend fun getAuthData(project: Project, url: String, server: GitLabSer
       }
     }
   }?.let { (account, token) ->
+    accountManager.updateAccount(account, token)
     AuthData(account.name, token)
   }
 }

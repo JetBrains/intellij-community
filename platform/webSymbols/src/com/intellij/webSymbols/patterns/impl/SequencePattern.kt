@@ -4,13 +4,17 @@ package com.intellij.webSymbols.patterns.impl
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.util.containers.Stack
 import com.intellij.util.text.CharSequenceSubSequence
-import com.intellij.webSymbols.*
+import com.intellij.webSymbols.WebSymbol
+import com.intellij.webSymbols.WebSymbolNameSegment
+import com.intellij.webSymbols.WebSymbolOrigin
+import com.intellij.webSymbols.WebSymbolsScope
 import com.intellij.webSymbols.completion.WebSymbolCodeCompletionItem
 import com.intellij.webSymbols.completion.impl.CompoundInsertHandler
 import com.intellij.webSymbols.patterns.WebSymbolsPattern
 import com.intellij.webSymbols.patterns.WebSymbolsPatternSymbolsResolver
 import com.intellij.webSymbols.query.WebSymbolMatch
 import com.intellij.webSymbols.utils.asSingleSymbol
+import com.intellij.webSymbols.utils.coalesceWith
 import com.intellij.webSymbols.utils.nameSegments
 import com.intellij.webSymbols.utils.withOffset
 
@@ -342,7 +346,7 @@ internal class SequencePattern(private val patternsProvider: () -> List<WebSymbo
         symbol = symbol,
         proximity = proximity,
         priority = priority,
-        deprecated = required.deprecated || new.deprecated,
+        apiStatus = required.apiStatus.coalesceWith(new.apiStatus),
         icon = new.icon ?: required.icon
       )
     else
@@ -355,7 +359,7 @@ internal class SequencePattern(private val patternsProvider: () -> List<WebSymbo
         symbol = symbol,
         proximity = proximity,
         priority = priority,
-        deprecated = required.deprecated || new.deprecated,
+        apiStatus = required.apiStatus.coalesceWith(new.apiStatus),
         icon = new.icon ?: required.icon,
         insertHandler = CompoundInsertHandler.merge(required.insertHandler, new.insertHandler)
       )

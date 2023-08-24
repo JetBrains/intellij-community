@@ -1,6 +1,12 @@
 <component name="libraryTable">
   <library name="kotlinx-coroutines-slf4j" type="repository">
-    <properties include-transitive-deps="false" maven-id="org.jetbrains.kotlinx:kotlinx-coroutines-slf4j:1.7.1" />
+    <properties include-transitive-deps="false" maven-id="org.jetbrains.kotlinx:kotlinx-coroutines-slf4j:1.7.1">
+      <verification>
+        <artifact url="file://$MAVEN_REPOSITORY$/org/jetbrains/kotlinx/kotlinx-coroutines-slf4j/1.7.1/kotlinx-coroutines-slf4j-1.7.1.jar">
+          <sha256sum>fbb40ca7e55a78017feac897180be64f562a2eb781c6a3f6c9bb2ff88d92223f</sha256sum>
+        </artifact>
+      </verification>
+    </properties>
     <CLASSES>
       <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlinx/kotlinx-coroutines-slf4j/1.7.1/kotlinx-coroutines-slf4j-1.7.1.jar!/" />
     </CLASSES>

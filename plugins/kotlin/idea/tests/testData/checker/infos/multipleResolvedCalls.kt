@@ -1,21 +1,21 @@
 // FIR_IDENTICAL
 
-interface I1
-interface I2
-interface I3
-interface I4
-interface I5
+interface <symbolName descr="null" tooltip="null" textAttributesKey="KOTLIN_TRAIT">I1</symbolName>
+interface <symbolName descr="null" tooltip="null" textAttributesKey="KOTLIN_TRAIT">I2</symbolName>
+interface <symbolName descr="null" tooltip="null" textAttributesKey="KOTLIN_TRAIT">I3</symbolName>
+interface <symbolName descr="null" tooltip="null" textAttributesKey="KOTLIN_TRAIT">I4</symbolName>
+interface <symbolName descr="null" tooltip="null" textAttributesKey="KOTLIN_TRAIT">I5</symbolName>
 
-<info descr="null" tooltip="null">operator</info> fun I1.component1() = 1
-<info descr="null" tooltip="null">operator</info> fun I2.component2() = 2
-<info descr="null" tooltip="null">operator</info> fun I3.component3() = 3
-<info descr="null" tooltip="null">operator</info> fun I4.component4() = 4
-<info descr="null" tooltip="null">operator</info> fun I5.component5() = 5
+<symbolName descr="null" tooltip="null" textAttributesKey="KOTLIN_BUILTIN_ANNOTATION">operator</symbolName> fun <symbolName descr="null" tooltip="null" textAttributesKey="KOTLIN_TRAIT">I1</symbolName>.<symbolName descr="null" tooltip="null" textAttributesKey="KOTLIN_FUNCTION_DECLARATION">component1</symbolName>() = 1
+<symbolName descr="null" tooltip="null" textAttributesKey="KOTLIN_BUILTIN_ANNOTATION">operator</symbolName> fun <symbolName descr="null" tooltip="null" textAttributesKey="KOTLIN_TRAIT">I2</symbolName>.<symbolName descr="null" tooltip="null" textAttributesKey="KOTLIN_FUNCTION_DECLARATION">component2</symbolName>() = 2
+<symbolName descr="null" tooltip="null" textAttributesKey="KOTLIN_BUILTIN_ANNOTATION">operator</symbolName> fun <symbolName descr="null" tooltip="null" textAttributesKey="KOTLIN_TRAIT">I3</symbolName>.<symbolName descr="null" tooltip="null" textAttributesKey="KOTLIN_FUNCTION_DECLARATION">component3</symbolName>() = 3
+<symbolName descr="null" tooltip="null" textAttributesKey="KOTLIN_BUILTIN_ANNOTATION">operator</symbolName> fun <symbolName descr="null" tooltip="null" textAttributesKey="KOTLIN_TRAIT">I4</symbolName>.<symbolName descr="null" tooltip="null" textAttributesKey="KOTLIN_FUNCTION_DECLARATION">component4</symbolName>() = 4
+<symbolName descr="null" tooltip="null" textAttributesKey="KOTLIN_BUILTIN_ANNOTATION">operator</symbolName> fun <symbolName descr="null" tooltip="null" textAttributesKey="KOTLIN_TRAIT">I5</symbolName>.<symbolName descr="null" tooltip="null" textAttributesKey="KOTLIN_FUNCTION_DECLARATION">component5</symbolName>() = 5
 
-fun test(x: Any): Int {
-    if (x is I1 && x is I2 && x is I3 && x is I4 && x is I5) {
-        val (t1, t2, t3, t4, t5) = <info descr="Smart cast to I1 (for t1 call)" tooltip="Smart cast to I1 (for t1 call)"><info descr="Smart cast to I2 (for t2 call)" tooltip="Smart cast to I2 (for t2 call)"><info descr="Smart cast to I3 (for t3 call)" tooltip="Smart cast to I3 (for t3 call)"><info descr="Smart cast to I4 (for t4 call)" tooltip="Smart cast to I4 (for t4 call)"><info descr="Smart cast to I5 (for t5 call)" tooltip="Smart cast to I5 (for t5 call)">x</info></info></info></info></info>
-        return t1 + t2 + t3 + t4 + t5
+fun <symbolName descr="null" tooltip="null" textAttributesKey="KOTLIN_FUNCTION_DECLARATION">test</symbolName>(<symbolName descr="null" tooltip="null" textAttributesKey="KOTLIN_PARAMETER">x</symbolName>: <symbolName descr="null" tooltip="null" textAttributesKey="KOTLIN_CLASS">Any</symbolName>): <symbolName descr="null" tooltip="null" textAttributesKey="KOTLIN_CLASS">Int</symbolName> {
+    if (<symbolName descr="null" tooltip="null" textAttributesKey="KOTLIN_PARAMETER">x</symbolName> is <symbolName descr="null" tooltip="null" textAttributesKey="KOTLIN_TRAIT">I1</symbolName> && <symbolName descr="null" tooltip="null" textAttributesKey="KOTLIN_PARAMETER">x</symbolName> is <symbolName descr="null" tooltip="null" textAttributesKey="KOTLIN_TRAIT">I2</symbolName> && <symbolName descr="null" tooltip="null" textAttributesKey="KOTLIN_PARAMETER">x</symbolName> is <symbolName descr="null" tooltip="null" textAttributesKey="KOTLIN_TRAIT">I3</symbolName> && <symbolName descr="null" tooltip="null" textAttributesKey="KOTLIN_PARAMETER">x</symbolName> is <symbolName descr="null" tooltip="null" textAttributesKey="KOTLIN_TRAIT">I4</symbolName> && <symbolName descr="null" tooltip="null" textAttributesKey="KOTLIN_PARAMETER">x</symbolName> is <symbolName descr="null" tooltip="null" textAttributesKey="KOTLIN_TRAIT">I5</symbolName>) {
+        val (<symbolName descr="null" tooltip="null" textAttributesKey="KOTLIN_LOCAL_VARIABLE">t1</symbolName>, <symbolName descr="null" tooltip="null" textAttributesKey="KOTLIN_LOCAL_VARIABLE">t2</symbolName>, <symbolName descr="null" tooltip="null" textAttributesKey="KOTLIN_LOCAL_VARIABLE">t3</symbolName>, <symbolName descr="null" tooltip="null" textAttributesKey="KOTLIN_LOCAL_VARIABLE">t4</symbolName>, <symbolName descr="null" tooltip="null" textAttributesKey="KOTLIN_LOCAL_VARIABLE">t5</symbolName>) = <symbolName descr="null" tooltip="null" textAttributesKey="KOTLIN_PARAMETER"><symbolName descr="Smart cast to I1 (for t1 call)" tooltip="Smart cast to I1 (for t1 call)" textAttributesKey="KOTLIN_SMART_CAST_VALUE"><symbolName descr="Smart cast to I2 (for t2 call)" tooltip="Smart cast to I2 (for t2 call)" textAttributesKey="KOTLIN_SMART_CAST_VALUE"><symbolName descr="Smart cast to I3 (for t3 call)" tooltip="Smart cast to I3 (for t3 call)" textAttributesKey="KOTLIN_SMART_CAST_VALUE"><symbolName descr="Smart cast to I4 (for t4 call)" tooltip="Smart cast to I4 (for t4 call)" textAttributesKey="KOTLIN_SMART_CAST_VALUE"><symbolName descr="Smart cast to I5 (for t5 call)" tooltip="Smart cast to I5 (for t5 call)" textAttributesKey="KOTLIN_SMART_CAST_VALUE">x</symbolName></symbolName></symbolName></symbolName></symbolName></symbolName>
+        return <symbolName descr="null" tooltip="null" textAttributesKey="KOTLIN_LOCAL_VARIABLE">t1</symbolName> + <symbolName descr="null" tooltip="null" textAttributesKey="KOTLIN_LOCAL_VARIABLE">t2</symbolName> + <symbolName descr="null" tooltip="null" textAttributesKey="KOTLIN_LOCAL_VARIABLE">t3</symbolName> + <symbolName descr="null" tooltip="null" textAttributesKey="KOTLIN_LOCAL_VARIABLE">t4</symbolName> + <symbolName descr="null" tooltip="null" textAttributesKey="KOTLIN_LOCAL_VARIABLE">t5</symbolName>
     }
     else return 0
 }

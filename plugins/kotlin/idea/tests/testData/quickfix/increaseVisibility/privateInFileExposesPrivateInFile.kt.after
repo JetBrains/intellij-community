@@ -4,3 +4,4 @@ private interface I2 {
     class Private
     fun <caret>pp() = Private()
 }
+// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.ChangeVisibilityFix$ChangeToPublicFix

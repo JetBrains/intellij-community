@@ -1,6 +1,17 @@
 <component name="libraryTable">
   <library name="TestNG" type="repository">
     <properties maven-id="org.testng:testng:7.7.0">
+      <verification>
+        <artifact url="file://$MAVEN_REPOSITORY$/org/testng/testng/7.7.0/testng-7.7.0.jar">
+          <sha256sum>7c686ba8696f8206473b1b78e7e4947191b2aa4891c57b184b44ad4e052d2c08</sha256sum>
+        </artifact>
+        <artifact url="file://$MAVEN_REPOSITORY$/com/beust/jcommander/1.82/jcommander-1.82.jar">
+          <sha256sum>deeac157c8de6822878d85d0c7bc8467a19cc8484d37788f7804f039dde280b1</sha256sum>
+        </artifact>
+        <artifact url="file://$MAVEN_REPOSITORY$/org/webjars/jquery/3.6.1/jquery-3.6.1.jar">
+          <sha256sum>da2381fbee4799631ba44d1f4d6487b886b22450c7fc85842c5fdfa03429b817</sha256sum>
+        </artifact>
+      </verification>
       <exclude>
         <dependency maven-id="com.google.guava:guava" />
         <dependency maven-id="org.yaml:snakeyaml" />

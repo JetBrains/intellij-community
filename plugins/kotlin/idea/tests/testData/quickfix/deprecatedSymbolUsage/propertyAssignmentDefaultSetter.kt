@@ -14,3 +14,4 @@ fun foo() {
     val a = A()
     a.<caret>old = "foo"
 }
+// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.replaceWith.DeprecatedSymbolUsageFix

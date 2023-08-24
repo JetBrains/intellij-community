@@ -45,6 +45,7 @@ public final class ExpUiIcons {
     /** 16x16 */ public static final @NotNull Icon ProfileCPU = load("expui/actions/profileCPU.svg", -143458575, 2);
     /** 16x16 */ public static final @NotNull Icon ProjectDirectory = load("expui/actions/projectDirectory.svg", 1333538549, 2);
     /** 16x16 */ public static final @NotNull Icon ReformatCode = load("expui/actions/reformatCode.svg", 1018232520, 2);
+    /** 16x16 */ public static final @NotNull Icon RunAll = load("expui/actions/runAll.svg", 892135407, 2);
     /** 16x16 */ public static final @NotNull Icon ShowImportStatements = load("expui/actions/showImportStatements.svg", 935761482, 2);
     /** 16x16 */ public static final @NotNull Icon ShowReadAccess = load("expui/actions/showReadAccess.svg", 432207500, 2);
     /** 16x16 */ public static final @NotNull Icon ShowWriteAccess = load("expui/actions/showWriteAccess.svg", 799113071, 2);
@@ -201,10 +202,9 @@ public final class ExpUiIcons {
     /** 16x16 */ public static final @NotNull Icon Ignored = load("expui/fileTypes/ignored.svg", -321420728, 2);
     /** 16x16 */ public static final @NotNull Icon Image = load("expui/fileTypes/image.svg", 1474336461, 2);
     /** 16x16 */ public static final @NotNull Icon Java = load("expui/fileTypes/java.svg", -1582472465, 2);
-    /** 16x16 */ public static final @NotNull Icon JavaScript = load("expui/fileTypes/javaScript.svg", -989574810, 2);
+    /** 16x16 */ public static final @NotNull Icon JavaScript = load("expui/fileTypes/javaScript.svg", -330180907, 2);
     /** 16x16 */ public static final @NotNull Icon Jest = load("expui/fileTypes/jest.svg", -332532916, 0);
     /** 16x16 */ public static final @NotNull Icon Jfr = load("expui/fileTypes/jfr.svg", 924476752, 2);
-    /** 16x16 */ public static final @NotNull Icon Jshint = load("expui/fileTypes/jshint.svg", 389498291, 2);
     /** 16x16 */ public static final @NotNull Icon Json = load("expui/fileTypes/json.svg", -2127501654, 2);
     /** 16x16 */ public static final @NotNull Icon Jsp = load("expui/fileTypes/jsp.svg", -1447994527, 2);
     /** 16x16 */ public static final @NotNull Icon Jspx = load("expui/fileTypes/jspx.svg", 1548605739, 2);
@@ -216,14 +216,12 @@ public final class ExpUiIcons {
     /** 16x16 */ public static final @NotNull Icon Patch = load("expui/fileTypes/patch.svg", -706028010, 2);
     /** 16x16 */ public static final @NotNull Icon Perl = load("expui/fileTypes/perl.svg", 108994589, 2);
     /** 16x16 */ public static final @NotNull Icon Properties = load("expui/fileTypes/properties.svg", -560303724, 2);
-    /** 16x16 */ public static final @NotNull Icon Protobuf = load("expui/fileTypes/protobuf.svg", 1900663409, 0);
     /** 16x16 */ public static final @NotNull Icon React = load("expui/fileTypes/react.svg", 1620243355, 2);
     /** 16x16 */ public static final @NotNull Icon Regexp = load("expui/fileTypes/regexp.svg", 1958077143, 2);
     /** 16x16 */ public static final @NotNull Icon Sbt = load("expui/fileTypes/sbt.svg", -984587052, 2);
     /** 16x16 */ public static final @NotNull Icon Scala = load("expui/fileTypes/scala.svg", 1475163984, 2);
     /** 16x16 */ public static final @NotNull Icon Scratch = load("expui/fileTypes/scratch.svg", -782432053, 2);
     /** 16x16 */ public static final @NotNull Icon Scratches = load("expui/fileTypes/scratches.svg", -1406379294, 2);
-    /** 16x16 */ public static final @NotNull Icon Scss = load("expui/fileTypes/scss.svg", -1373749340, 0);
     /** 16x16 */ public static final @NotNull Icon Shell = load("expui/fileTypes/shell.svg", -1124749060, 2);
     /** 16x16 */ public static final @NotNull Icon SourceMap = load("expui/fileTypes/sourceMap.svg", -798309148, 2);
     /** 16x16 */ public static final @NotNull Icon Sql = load("expui/fileTypes/sql.svg", -1496861857, 2);
@@ -308,6 +306,9 @@ public final class ExpUiIcons {
     /** 16x16 */ public static final @NotNull Icon OpenNewTab = load("expui/general/openNewTab.svg", -257413023, 2);
     /** 16x16 */ public static final @NotNull Icon Paste = load("expui/general/paste.svg", 1278512529, 2);
     /** 16x16 */ public static final @NotNull Icon Pin = load("expui/general/pin.svg", -1431984061, 2);
+    /** 16x16 */ public static final @NotNull Icon PinHovered = load("expui/general/pinHovered.svg", -1678268667, 2);
+    /** 16x16 */ public static final @NotNull Icon PinSelected = load("expui/general/pinSelected.svg", 73725357, 2);
+    /** 16x16 */ public static final @NotNull Icon PinSelectedHovered = load("expui/general/pinSelectedHovered.svg", -1008198008, 2);
     /** 16x16 */ public static final @NotNull Icon PluginUpdate = load("expui/general/pluginUpdate.svg", -1250370893, 2);
     /** 16x16 */ public static final @NotNull Icon PreviewHorizontally = load("expui/general/previewHorizontally.svg", 510613415, 2);
     /** 16x16 */ public static final @NotNull Icon PreviewOnly = load("expui/general/previewOnly.svg", -1461478213, 2);

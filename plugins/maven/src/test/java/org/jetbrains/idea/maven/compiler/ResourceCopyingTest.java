@@ -26,7 +26,6 @@ import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.testFramework.PsiTestUtil;
-import org.jetbrains.idea.maven.utils.MavenUtil;
 import org.junit.Assume;
 import org.junit.Test;
 
@@ -714,6 +713,33 @@ public class ResourceCopyingTest extends MavenCompilingTestCase {
 
     assertCopied("target/generated-sources/annotations");
     assertCopied("target/generated-test-sources/test-annotations");
+  }
+
+
+  @Test
+  public void testFileResourceRebuildShouldNotTouchOtherFiles() throws Exception {
+    String cssContent = """
+      body {
+          color: red;
+      }""";
+    VirtualFile css = createProjectSubFile("src/main/resources/text.css", cssContent);
+    VirtualFile txt = createProjectSubFile("src/main/resources/text.txt", "hello 1");
+
+    importProject("""
+                    <groupId>test</groupId>
+                    <artifactId>project</artifactId>
+                    <version>1</version>
+                    """);
+    compileModules("project");
+
+    assertCopied("target/classes/text.css", cssContent);
+    assertCopied("target/classes/text.txt", "hello 1");
+    setFileContent(txt, "hello 2", true);
+
+    compileFile("project", txt);
+
+    assertCopied("target/classes/text.css", cssContent);
+    assertCopied("target/classes/text.txt", "hello 2");
   }
 
 }

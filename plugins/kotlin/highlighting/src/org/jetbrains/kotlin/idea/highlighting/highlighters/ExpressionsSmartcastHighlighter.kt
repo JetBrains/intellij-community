@@ -6,8 +6,9 @@ import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiElement
 import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
 import org.jetbrains.kotlin.analysis.api.components.KtImplicitReceiverSmartCastKind
+import org.jetbrains.kotlin.idea.base.highlighting.HighlightingFactory
 import org.jetbrains.kotlin.idea.base.highlighting.KotlinBaseHighlightingBundle
-import org.jetbrains.kotlin.idea.highlighter.KotlinHighlightingColors
+import org.jetbrains.kotlin.idea.highlighter.KotlinHighlightInfoTypeSemanticNames
 import org.jetbrains.kotlin.psi.*
 
 internal class ExpressionsSmartcastHighlighter(
@@ -31,25 +32,31 @@ internal class ExpressionsSmartcastHighlighter(
                 KtImplicitReceiverSmartCastKind.DISPATCH -> KotlinBaseHighlightingBundle.message("implicit.receiver")
             }
 
-            result.add(createInfoAnnotation(
-                expression,
-                KotlinBaseHighlightingBundle.message(
-                    "0.smart.cast.to.1",
-                    receiverName,
-                    it.type.asStringForDebugging()
-                ),
-                KotlinHighlightingColors.SMART_CAST_RECEIVER
-            ))
+            val builder = HighlightingFactory.highlightName(
+              expression,
+              KotlinHighlightInfoTypeSemanticNames.SMART_CAST_RECEIVER,
+              KotlinBaseHighlightingBundle.message(
+                "0.smart.cast.to.1",
+                receiverName,
+                it.type.asStringForDebugging()
+              )
+            )
+            if (builder != null) {
+                result.add(builder)
+            }
         }
         expression.getSmartCastInfo()?.let { info ->
-            result.add(createInfoAnnotation(
-                getSmartCastTarget(expression),
-                KotlinBaseHighlightingBundle.message(
-                    "smart.cast.to.0",
-                    info.smartCastType.asStringForDebugging()
-                ),
-                KotlinHighlightingColors.SMART_CAST_VALUE
-            ))
+            val builder = HighlightingFactory.highlightName(
+              getSmartCastTarget(expression),
+              KotlinHighlightInfoTypeSemanticNames.SMART_CAST_VALUE,
+              KotlinBaseHighlightingBundle.message(
+                "smart.cast.to.0",
+                info.smartCastType.asStringForDebugging()
+              )
+            )
+            if (builder != null) {
+                result.add(builder)
+            }
         }
         return result
     }

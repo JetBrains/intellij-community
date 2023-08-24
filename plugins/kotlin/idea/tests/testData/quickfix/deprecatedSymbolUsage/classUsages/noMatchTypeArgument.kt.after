@@ -8,3 +8,5 @@ class B<T>
 fun foo() {
     var c: <caret>B<Int>
 }
+
+// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.replaceWith.DeprecatedSymbolUsageFix

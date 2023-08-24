@@ -12,11 +12,12 @@ import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
 
 /**
- * If invalidation and calculation should be bound to daemon, then use @see [com.intellij.codeInsight.hints.codeVision.DaemonBoundCodeVisionProvider]
- * Otherwise implement [CodeVisionProvider] directly
+ * If invalidation and calculation should be bound to daemon,
+ * then use [com.intellij.codeInsight.hints.codeVision.DaemonBoundCodeVisionProvider]
+ * Otherwise implement [CodeVisionProvider] directly.
  *
  * If you want to implement multiple providers with same meaning (for example, for different languages)
- * and group them in settings window, then @see [com.intellij.codeInsight.codeVision.settings.CodeVisionGroupSettingProvider]
+ * and group them in the settings window, then see [com.intellij.codeInsight.codeVision.settings.CodeVisionGroupSettingProvider].
  * @see [PlatformCodeVisionIds]
  * @see CodeVisionProviderFactory
  */
@@ -40,19 +41,19 @@ interface CodeVisionProvider<T> {
   }
 
   /**
-   * Computes some data on UI thread, before the background thread invocation
+   * Computes some data on UI thread before the background thread invocation.
    */
   fun precomputeOnUiThread(editor: Editor): T
 
   /**
-   *  Called during code vision update process
-   *  Return true if [computeForEditor] should be called
-   *  false otherwise
+   *  Called during the code vision update process.
+   *
+   *  @return true if [computeForEditor] should be called, false otherwise
    */
   fun shouldRecomputeForEditor(editor: Editor, uiData: T?): Boolean = true
 
   /**
-   * Should return text ranges and applicable hints for them, invoked on background thread.
+   * Returns text ranges and applicable hints for them, invoked on background thread.
    *
    * Note that this method is not executed under read action.
    */
@@ -60,53 +61,54 @@ interface CodeVisionProvider<T> {
   fun computeForEditor(editor: Editor, uiData: T): List<Pair<TextRange, CodeVisionEntry>> = emptyList()
 
   /**
-   * Should return text ranges and applicable hints for them, invoked on background thread.
+   * Returns text ranges and applicable hints for them, invoked on background thread.
    *
    * Note that this method is not executed under read action.
    */
   fun computeCodeVision(editor: Editor, uiData: T): CodeVisionState = CodeVisionState.Ready(computeForEditor(editor, uiData))
 
-    /**
-   * Handle click on a lens at given range
-   * [java.awt.event.MouseEvent] accessible with [codeVisionEntryMouseEventKey] data key from [CodeVisionEntry]
+  /**
+   * Handles click on a lens at a given range.
+   *
+   * [java.awt.event.MouseEvent] is accessible with [codeVisionEntryMouseEventKey] data key from [CodeVisionEntry].
    */
   fun handleClick(editor: Editor, textRange: TextRange, entry: CodeVisionEntry){
     if (entry is CodeVisionPredefinedActionEntry) entry.onClick(editor)
   }
 
   /**
-   * Handle click on an extra action on a lens at a given range
+   * Handles click on an extra action on a lens at a given range.
    */
   fun handleExtraAction(editor: Editor, textRange: TextRange, actionId: String): Unit = Unit
 
   fun getPlaceholderCollector(editor: Editor, psiFile: PsiFile?) : CodeVisionPlaceholderCollector? = null
 
   /**
-   * User-visible name
+   * User-visible name.
    */
   @get:Nls
   val name: String
 
   /**
-   * Used for the default sorting of providers
+   * Used for the default sorting of providers.
    */
   val relativeOrderings: List<CodeVisionRelativeOrdering>
 
   /**
-   * Specifies default anchor for this provider
+   * Specifies default anchor for this provider.
    */
   val defaultAnchor: CodeVisionAnchorKind
 
   /**
-   * Internal id
+   * Internal ID.
    */
   val id: String
 
 
   /**
-   * Uses to group provider in settings panel and to share same behavior (like position and ext.) and description
+   * Used to group provider in the settings panel and to share same behavior (like position and ext.) and description.
+   * To group different provider implement [com.intellij.codeInsight.codeVision.settings.CodeVisionGroupSettingProvider].
    * @see PlatformCodeVisionIds
-   * To group different provider implement @see [com.intellij.codeInsight.codeVision.settings.CodeVisionGroupSettingProvider]
    */
   val groupId: String
     get() = id

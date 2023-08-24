@@ -44,6 +44,11 @@ import java.util.function.Predicate;
 import static com.intellij.openapi.actionSystem.Anchor.AFTER;
 import static com.intellij.util.containers.ContainerUtil.filter;
 
+/**
+ * Responsible for building the content of the Run or Debug tool window.
+ *
+ * @see <a href="https://plugins.jetbrains.com/docs/intellij/execution.html">Execution (IntelliJ Platform Docs)</a>
+ */
 public final class RunContentBuilder extends RunTab {
   @ApiStatus.Experimental
   public static final String RUN_TOOL_WINDOW_TOP_TOOLBAR_OLD_GROUP = "RunTab.TopToolbar.Old";

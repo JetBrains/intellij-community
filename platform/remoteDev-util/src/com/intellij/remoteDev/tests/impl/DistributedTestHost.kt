@@ -118,6 +118,8 @@ open class DistributedTestHost {
           testClassObject.performInit(testMethod)
           testMethod.invoke(testClassObject)
 
+          session.isResponding.set { _, _ -> RdTask.fromResult(true) }
+
           // Advice for processing events
           session.runNextAction.set { _, _ ->
             var actionTitle: String? = null
@@ -127,7 +129,7 @@ open class DistributedTestHost {
               val action = queue.remove()
               actionTitle = action.title
               logger.info("'$actionTitle': preparing to start action")
-              showNotification(actionTitle)
+              showNotification("${session.agentInfo.id}: $actionTitle")
 
               // Flush all events to process pending protocol events and other things
               //   before actual test method execution

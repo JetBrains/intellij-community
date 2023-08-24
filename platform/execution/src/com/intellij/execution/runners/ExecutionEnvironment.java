@@ -24,7 +24,7 @@ import java.util.concurrent.atomic.AtomicLong;
 /**
  * Aggregates all the settings, information, target, and program runner required to execute a process.
  *
- * @see <a href="https://plugins.jetbrains.com/docs/intellij/run-configuration-execution.html">Run Configurations / Execution (IntelliJ Platform Docs)</a>
+ * @see <a href="https://plugins.jetbrains.com/docs/intellij/execution.html">Execution (IntelliJ Platform Docs)</a>
  */
 public final class ExecutionEnvironment extends UserDataHolderBase implements Disposable {
   private static final AtomicLong myIdHolder = new AtomicLong(1L);

@@ -11,7 +11,10 @@ import java.nio.file.Path
 @ApiStatus.Internal
 interface SettingsSyncIdeMediator {
 
-  fun applyToIde(snapshot: SettingsSnapshot)
+  /**
+   * @param settings if not null, SettingsSync settings will be taken from this object rather than snapshot
+   */
+  fun applyToIde(snapshot: SettingsSnapshot, settings: SettingsSyncState?)
 
   fun activateStreamProvider()
 

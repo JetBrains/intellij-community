@@ -19,3 +19,5 @@ fun foo(s: String, x: X) {
 object O {
     var x: X? = null
 }
+
+// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.replaceWith.DeprecatedSymbolUsageFix

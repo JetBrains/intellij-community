@@ -9,3 +9,4 @@ abstract class Form<T>(val name: String){
 
     abstract protected fun processData(data: T)
 }
+// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.InitializePropertyQuickFixFactory$InitializeWithConstructorParameter

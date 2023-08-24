@@ -1,6 +1,12 @@
 <component name="libraryTable">
   <library name="jsoup" type="repository">
-    <properties maven-id="org.jsoup:jsoup:1.16.1" />
+    <properties maven-id="org.jsoup:jsoup:1.16.1">
+      <verification>
+        <artifact url="file://$MAVEN_REPOSITORY$/org/jsoup/jsoup/1.16.1/jsoup-1.16.1.jar">
+          <sha256sum>1f115726540ddf71958c14bc517ebfc49cf481e91cd917b0face84f01272e901</sha256sum>
+        </artifact>
+      </verification>
+    </properties>
     <CLASSES>
       <root url="jar://$MAVEN_REPOSITORY$/org/jsoup/jsoup/1.16.1/jsoup-1.16.1.jar!/" />
     </CLASSES>

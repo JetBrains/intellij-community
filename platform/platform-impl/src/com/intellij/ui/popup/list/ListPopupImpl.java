@@ -27,10 +27,7 @@ import com.intellij.ui.ScrollingUtil;
 import com.intellij.ui.SeparatorWithText;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.components.JBList;
-import com.intellij.ui.popup.ClosableByLeftArrow;
-import com.intellij.ui.popup.HintUpdateSupply;
-import com.intellij.ui.popup.NextStepHandler;
-import com.intellij.ui.popup.WizardPopup;
+import com.intellij.ui.popup.*;
 import com.intellij.ui.popup.tree.TreePopupImpl;
 import com.intellij.ui.popup.util.PopupImplUtil;
 import com.intellij.util.SlowOperations;
@@ -56,6 +53,7 @@ import static java.awt.event.InputEvent.META_MASK;
 
 public class ListPopupImpl extends WizardPopup implements ListPopup, NextStepHandler {
   static final int NEXT_STEP_AREA_WIDTH = 20;
+  private static final int DEFAULT_MAX_ROW_COUNT = 30;
 
   private static final Logger LOG = Logger.getInstance(ListPopupImpl.class);
   protected final PopupInlineActionsSupport myPopupInlineActionsSupport = PopupInlineActionsSupport.Companion.create(this);
@@ -69,7 +67,6 @@ public class ListPopupImpl extends WizardPopup implements ListPopup, NextStepHan
   private ListPopupModel myListModel;
 
   private int myIndexForShowingChild = -1;
-  private int myMaxRowCount = 30;
   private boolean myAutoHandleBeforeShow;
   private boolean myShowSubmenuOnHover;
 
@@ -96,7 +93,7 @@ public class ListPopupImpl extends WizardPopup implements ListPopup, NextStepHan
 
   public void setMaxRowCount(int maxRowCount) {
     if (maxRowCount <= 0) return;
-    myMaxRowCount = maxRowCount;
+    myList.setVisibleRowCount(maxRowCount);
   }
 
   public void showUnderneathOfLabel(@NotNull JLabel label) {
@@ -115,7 +112,6 @@ public class ListPopupImpl extends WizardPopup implements ListPopup, NextStepHan
   protected boolean beforeShow() {
     myList.addMouseMotionListener(myMouseMotionListener);
     myList.addMouseListener(myMouseListener);
-    myList.setVisibleRowCount(myMaxRowCount);
 
     boolean shouldShow = super.beforeShow();
     if (myAutoHandleBeforeShow) {
@@ -262,6 +258,7 @@ public class ListPopupImpl extends WizardPopup implements ListPopup, NextStepHan
     ListPopupStep<Object> step = getListStep();
     myListModel = new ListPopupModel(this, getSpeedSearch(), step);
     myList = new MyList();
+    myList.setVisibleRowCount(DEFAULT_MAX_ROW_COUNT);
     if (myStep.getTitle() != null) {
       myList.getAccessibleContext().setAccessibleName(myStep.getTitle());
     }
@@ -534,6 +531,10 @@ public class ListPopupImpl extends WizardPopup implements ListPopup, NextStepHan
       String message = String.format("Cannot open submenu for '%s' item. PopupStep is null", valueText);
       LOG.warn(message);
       return;
+    }
+
+    if ((PopupStep<?>)myStep instanceof ActionPopupStep actionPopupStep && nextStep instanceof ActionPopupStep nextActionPopupStep) {
+      nextActionPopupStep.setSubStepContextAdjuster(actionPopupStep.getSubStepContextAdjuster());
     }
 
     Point point = myList.indexToLocation(myList.getSelectedIndex());

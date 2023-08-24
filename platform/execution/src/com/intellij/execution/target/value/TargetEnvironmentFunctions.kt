@@ -130,7 +130,7 @@ fun getTargetEnvironmentValueForLocalPath(localPath: String): TargetEnvironmentF
  * Consider using [targetPath] function, which does not throw an exception if [localPath] cannot be mapped to a target path during the
  * resolution against [TargetEnvironment].
  */
-fun getTargetEnvironmentValueForLocalPath(localPath: Path): TargetEnvironmentFunction<String> {
+fun getTargetEnvironmentValueForLocalPath(localPath: Path): TargetEnvironmentFunction<FullPathOnTarget> {
   return TraceableTargetEnvironmentFunction { targetEnvironment ->
     when (targetEnvironment) {
       is LocalTargetEnvironment -> localPath.toString()

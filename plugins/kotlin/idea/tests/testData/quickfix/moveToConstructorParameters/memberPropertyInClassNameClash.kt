@@ -7,3 +7,4 @@ open class A(n: Int) {
 fun test() {
     val a = A(0)
 }
+// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.InitializePropertyQuickFixFactory$MoveToConstructorParameters

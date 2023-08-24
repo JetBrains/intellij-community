@@ -15,6 +15,7 @@ import com.intellij.vcs.log.impl.HashImpl
 import git4idea.GitCommit
 import git4idea.commands.Git
 import git4idea.commands.GitLineHandler
+import git4idea.telemetry.GitTelemetrySpan
 import java.util.function.Consumer
 
 internal abstract class GitDetailsCollector<R : GitLogRecord, C : VcsCommitMetadata>(protected val project: Project,
@@ -86,7 +87,7 @@ internal abstract class GitDetailsCollector<R : GitLogRecord, C : VcsCommitMetad
     handler.addParameters("--name-status")
     handler.endOptions()
 
-    runWithSpan(TelemetryManager.getInstance().getTracer(VcsScope), "loading details") { span ->
+    runWithSpan(TelemetryManager.getInstance().getTracer(VcsScope), GitTelemetrySpan.Log.LoadingDetails.name) { span ->
       span.setAttribute("rootName", root.name)
 
       val handlerListener = GitLogOutputSplitter(handler, parser, converter)

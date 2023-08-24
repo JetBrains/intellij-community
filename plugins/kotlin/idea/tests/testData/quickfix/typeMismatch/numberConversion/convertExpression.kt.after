@@ -6,3 +6,4 @@ fun foo() {
 
 fun bar(l: Int) {
 }
+// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.NumberConversionFix

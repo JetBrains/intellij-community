@@ -9,18 +9,18 @@ import org.jetbrains.kotlin.idea.base.highlighting.textAttributesForClass
 import org.jetbrains.kotlin.idea.base.highlighting.textAttributesForKtParameterDeclaration
 import org.jetbrains.kotlin.idea.base.highlighting.textAttributesForKtPropertyDeclaration
 import org.jetbrains.kotlin.idea.base.highlighting.visitor.AbstractHighlightingVisitor
+import org.jetbrains.kotlin.idea.highlighter.KotlinHighlightInfoTypeSemanticNames
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.psi.*
-import org.jetbrains.kotlin.idea.highlighter.KotlinHighlightingColors as Colors
 
 internal class DeclarationHighlightingVisitor(holder: HighlightInfoHolder) : AbstractHighlightingVisitor(holder) {
     override fun visitTypeAlias(typeAlias: KtTypeAlias) {
-        highlightNamedDeclaration(typeAlias, Colors.TYPE_ALIAS)
+        highlightNamedDeclaration(typeAlias, KotlinHighlightInfoTypeSemanticNames.TYPE_ALIAS)
         super.visitTypeAlias(typeAlias)
     }
 
     override fun visitObjectDeclaration(declaration: KtObjectDeclaration) {
-        highlightNamedDeclaration(declaration, Colors.OBJECT)
+        highlightNamedDeclaration(declaration, KotlinHighlightInfoTypeSemanticNames.OBJECT)
         super.visitObjectDeclaration(declaration)
     }
 
@@ -40,9 +40,9 @@ internal class DeclarationHighlightingVisitor(holder: HighlightInfoHolder) : Abs
     override fun visitDestructuringDeclaration(destructuringDeclaration: KtDestructuringDeclaration) {
         val isVar = destructuringDeclaration.isVar
         for (entry in destructuringDeclaration.entries) {
-            highlightName(entry, Colors.LOCAL_VARIABLE)
+            highlightName(entry, KotlinHighlightInfoTypeSemanticNames.LOCAL_VARIABLE)
             if (isVar) {
-                highlightName(entry, Colors.MUTABLE_VARIABLE)
+                highlightName(entry, KotlinHighlightInfoTypeSemanticNames.MUTABLE_VARIABLE)
             }
         }
     }
@@ -56,7 +56,7 @@ internal class DeclarationHighlightingVisitor(holder: HighlightInfoHolder) : Abs
 
     private fun <D> highlightMutability(declaration: D) where D : KtValVarKeywordOwner, D : KtNamedDeclaration {
         if (PsiUtilCore.getElementType(declaration.valOrVarKeyword) == KtTokens.VAR_KEYWORD) {
-            highlightNamedDeclaration(declaration, Colors.MUTABLE_VARIABLE)
+            highlightNamedDeclaration(declaration, KotlinHighlightInfoTypeSemanticNames.MUTABLE_VARIABLE)
         }
     }
 }

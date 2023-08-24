@@ -8,3 +8,4 @@ fun foo(arg: Int?, flag: Boolean) {
         }
     }
 }
+// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.SurroundWithNullCheckFix

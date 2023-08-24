@@ -17,3 +17,4 @@ fun test() {
     val b = Builder<Number>()
     b.<caret>addFoo(listOf(1))
 }
+// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.replaceWith.DeprecatedSymbolUsageFix

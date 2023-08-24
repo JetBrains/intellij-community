@@ -868,6 +868,10 @@ public final class JavaCompletionUtil {
           if (parent instanceof PsiLambdaExpression && !LambdaHighlightingUtil.insertSemicolonAfter((PsiLambdaExpression)parent)) {
             insertAdditionalSemicolon = false;
           }
+          if (parent instanceof PsiExpressionStatement && parent.getParent() instanceof PsiForStatement forStatement &&
+              forStatement.getUpdate() == parent) {
+            insertAdditionalSemicolon = false;
+          }
         }
         if (insertAdditionalSemicolon) {
           toInsert = TailType.SEMICOLON;

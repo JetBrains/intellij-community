@@ -5,6 +5,7 @@ import com.intellij.dvcs.branch.BranchType
 import com.intellij.dvcs.getCommonCurrentBranch
 import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.registry.Registry
 import com.intellij.psi.codeStyle.MinusculeMatcher
 import com.intellij.ui.tree.TreePathUtil
 import com.intellij.util.containers.headTail
@@ -21,6 +22,8 @@ private typealias PathAndBranch = Pair<List<String>, GitBranch>
 private typealias MatchResult = Pair<Collection<GitBranch>, GitBranch?>
 
 internal val GitRepository.localBranchesOrCurrent get() = branches.localBranches.ifEmpty { currentBranch?.let(::setOf) ?: emptySet() }
+internal val GitRepository.recentCheckoutBranches
+  get() = branches.recentCheckoutBranches.take(Registry.intValue("git.show.recent.checkout.branches"))
 
 internal val emptyBranchComparator = Comparator<GitBranch> { _, _ -> 0 }
 
@@ -121,7 +124,7 @@ internal fun getPreferredBranch(project: Project,
       val repository = repositories.single()
       val recentBranches = GitVcsSettings.getInstance(project).recentBranchesByRepository
       val recentBranch = recentBranches[repository.root.path]?.let { recentBranchName ->
-        repository.branches.recentCheckoutBranches.find { it.name == recentBranchName }
+        repository.recentCheckoutBranches.find { it.name == recentBranchName }
         ?: localBranchesTree.branches.find { it.name == recentBranchName }
       }
       if (recentBranch != null) {

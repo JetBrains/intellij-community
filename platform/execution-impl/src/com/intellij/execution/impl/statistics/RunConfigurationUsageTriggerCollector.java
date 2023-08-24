@@ -32,11 +32,13 @@ import static com.intellij.execution.impl.statistics.RunConfigurationTypeUsagesC
 
 public final class RunConfigurationUsageTriggerCollector extends CounterUsagesCollector {
   public static final String GROUP_NAME = "run.configuration.exec";
-  private static final EventLogGroup GROUP = new EventLogGroup(GROUP_NAME, 70);
+  private static final EventLogGroup GROUP = new EventLogGroup(GROUP_NAME, 71);
   public static final IntEventField ALTERNATIVE_JRE_VERSION = EventFields.Int("alternative_jre_version");
   private static final ObjectEventField ADDITIONAL_FIELD = EventFields.createAdditionalDataField(GROUP_NAME, "started");
   private static final StringEventField EXECUTOR = EventFields.StringValidatedByCustomRule("executor",
                                                                                            RunConfigurationExecutorUtilValidator.class);
+  private static final BooleanEventField IS_RERUN = EventFields.Boolean("is_rerun");
+
   /**
    * The type of the target the run configuration is being executed with. {@code null} stands for the local machine target.
    * <p>
@@ -50,6 +52,7 @@ public final class RunConfigurationUsageTriggerCollector extends CounterUsagesCo
 
   private static final IdeActivityDefinition ACTIVITY_GROUP = GROUP.registerIdeActivity(null,
                                                                                         new EventField<?>[]{ADDITIONAL_FIELD, EXECUTOR,
+                                                                                          IS_RERUN,
                                                                                           TARGET,
                                                                                           RunConfigurationTypeUsagesCollector.FACTORY_FIELD,
                                                                                           RunConfigurationTypeUsagesCollector.ID_FIELD,
@@ -67,9 +70,10 @@ public final class RunConfigurationUsageTriggerCollector extends CounterUsagesCo
   public static StructuredIdeActivity trigger(@NotNull Project project,
                                               @NotNull ConfigurationFactory factory,
                                               @NotNull Executor executor,
-                                              @Nullable RunConfiguration runConfiguration) {
+                                              @Nullable RunConfiguration runConfiguration,
+                                              boolean isRerun) {
     return ACTIVITY_GROUP
-      .startedAsync(project, () -> ReadAction.nonBlocking(() -> buildContext(project, factory, executor, runConfiguration))
+      .startedAsync(project, () -> ReadAction.nonBlocking(() -> buildContext(project, factory, executor, runConfiguration, isRerun))
         .expireWith(project)
         .submit(NonUrgentExecutor.getInstance()));
   }
@@ -77,11 +81,13 @@ public final class RunConfigurationUsageTriggerCollector extends CounterUsagesCo
   private static @NotNull List<EventPair<?>> buildContext(@NotNull Project project,
                                                           @NotNull ConfigurationFactory factory,
                                                           @NotNull Executor executor,
-                                                          @Nullable RunConfiguration runConfiguration) {
+                                                          @Nullable RunConfiguration runConfiguration,
+                                                          boolean isRerun) {
     final ConfigurationType configurationType = factory.getType();
     List<EventPair<?>> eventPairs = createFeatureUsageData(configurationType, factory);
     ExecutorGroup<?> group = ExecutorGroup.getGroupIfProxy(executor);
     eventPairs.add(EXECUTOR.with(group != null ? group.getId() : executor.getId()));
+    eventPairs.add(IS_RERUN.with(isRerun));
     if (runConfiguration instanceof FusAwareRunConfiguration) {
       List<EventPair<?>> additionalData = ((FusAwareRunConfiguration)runConfiguration).getAdditionalUsageData();
       ObjectEventData objectEventData = new ObjectEventData(additionalData);
@@ -102,7 +108,8 @@ public final class RunConfigurationUsageTriggerCollector extends CounterUsagesCo
       if (effectiveTargetConfiguration != null) {
         return effectiveTargetConfiguration.getTypeId();
       }
-    } else if (runConfiguration instanceof ImplicitTargetAwareRunProfile) {
+    }
+    else if (runConfiguration instanceof ImplicitTargetAwareRunProfile) {
       TargetEnvironmentType<?> targetType = ((ImplicitTargetAwareRunProfile)runConfiguration).getTargetType();
       if (targetType != null) {
         return targetType.getId();
@@ -163,5 +170,5 @@ public final class RunConfigurationUsageTriggerCollector extends CounterUsagesCo
     }
   }
 
-  public enum RunConfigurationFinishType {FAILED_TO_START, UNKNOWN, TERMINATED}
+  public enum RunConfigurationFinishType {FAILED_TO_START, UNKNOWN, TERMINATED_BY_STOP, TERMINATED_DUE_TO_RERUN}
 }

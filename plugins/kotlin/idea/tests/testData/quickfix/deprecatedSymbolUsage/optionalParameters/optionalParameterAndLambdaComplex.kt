@@ -37,3 +37,5 @@ val unDeprecateMe = mutableListOf("Hello").apply {
         println("Yo")
     }
 }
+
+// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.replaceWith.DeprecatedSymbolUsageFix

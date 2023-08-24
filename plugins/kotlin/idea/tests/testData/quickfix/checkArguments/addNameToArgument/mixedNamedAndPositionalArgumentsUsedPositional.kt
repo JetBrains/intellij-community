@@ -6,3 +6,4 @@ fun f(a: String, x: Int, b: String) {}
 fun g() {
     f("BAR", x = 10, <caret>"FOO")
 }
+// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.AddNameToArgumentFix

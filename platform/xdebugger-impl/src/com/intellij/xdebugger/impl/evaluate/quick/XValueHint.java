@@ -160,7 +160,7 @@ public class XValueHint extends AbstractValueHint {
   protected void evaluateAndShowHint() {
     AtomicBoolean showEvaluating = new AtomicBoolean(true);
     EdtExecutorService.getScheduledExecutorInstance().schedule(() -> {
-      if (!isShowing() && showEvaluating.get()) {
+      if (!isHintHidden() && !isShowing() && showEvaluating.get()) {
         SimpleColoredComponent component = HintUtil.createInformationComponent();
         component.append(XDebuggerUIConstants.getEvaluatingExpressionMessage());
         showHint(component);

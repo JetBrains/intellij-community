@@ -6,3 +6,4 @@ class Foo(s: String)
 fun test(name: String) {
     name.also { Foo(it) }
 }
+// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.AddFunctionParametersFix

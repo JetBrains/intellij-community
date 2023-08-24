@@ -2,6 +2,7 @@
 package com.intellij.openapi.externalSystem.project;
 
 import com.intellij.packaging.artifacts.Artifact;
+import com.intellij.packaging.artifacts.ModifiableArtifact;
 import com.intellij.packaging.artifacts.ModifiableArtifactModel;
 import com.intellij.packaging.elements.PackagingElement;
 import com.intellij.packaging.elements.PackagingElementResolvingContext;
@@ -18,6 +19,11 @@ public interface ArtifactExternalDependenciesImporter {
   @Nullable
   ManifestFileConfiguration getManifestFile(@NotNull Artifact artifact, @NotNull PackagingElementResolvingContext context);
 
+  /**
+   * @deprecated elements added via this method are processed synchronously on EDT, and it causes UI freezes; if you need to add custom
+   * elements to the artifact configuration, do it directly via {@link ModifiableArtifact}.
+   */
+  @Deprecated(forRemoval = true)
   List<PackagingElement<?>> getExternalDependenciesList(@NotNull Artifact artifact);
 
   void applyChanges(ModifiableArtifactModel artifactModel, PackagingElementResolvingContext context);

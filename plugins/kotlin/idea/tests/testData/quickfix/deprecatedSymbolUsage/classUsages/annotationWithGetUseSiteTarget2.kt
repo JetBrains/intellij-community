@@ -10,3 +10,4 @@ annotation class Foo
 
 @Target(AnnotationTarget.PROPERTY_GETTER)
 annotation class Bar
+// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.replaceWith.DeprecatedSymbolUsageFix

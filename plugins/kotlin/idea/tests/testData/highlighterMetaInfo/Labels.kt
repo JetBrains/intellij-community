@@ -1,3 +1,5 @@
+// CHECK_SYMBOL_NAMES
+// HIGHLIGHTER_ATTRIBUTES_KEY
 fun bar(block: () -> Int) = block()
 
 fun foo(): Int {

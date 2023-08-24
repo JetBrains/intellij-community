@@ -8,3 +8,5 @@ fun test() {
     anyFoo(a = in<caret>tArrayOf(1))
 }
 /* IGNORE_FIR */
+
+// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.SurroundWithArrayOfWithSpreadOperatorInFunctionFix

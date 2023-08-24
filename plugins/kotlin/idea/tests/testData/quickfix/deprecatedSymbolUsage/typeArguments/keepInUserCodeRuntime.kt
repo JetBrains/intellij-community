@@ -11,3 +11,5 @@ fun newFun(p: List<String>){}
 fun foo() {
     <caret>oldFun(listOf<String>("a"))
 }
+
+// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.replaceWith.DeprecatedSymbolUsageFix

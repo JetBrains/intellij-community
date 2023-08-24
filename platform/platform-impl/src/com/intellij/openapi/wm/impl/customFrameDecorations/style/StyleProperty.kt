@@ -9,6 +9,8 @@ import javax.swing.Icon
 import javax.swing.JComponent
 import javax.swing.border.Border
 
+const val HOVER_KEY = "STYLE_HOVER"
+
 sealed class StyleProperty(
   private val setProperty: (JComponent, Any?) -> Unit,
   val getProperty: (JComponent) -> Any?,
@@ -35,6 +37,12 @@ sealed class StyleProperty(
   object BACKGROUND : StyleProperty(
     { component, background -> component.background = background as Color? },
     { component -> component.background },
+    Color::class.java
+  )
+
+  object HOVER : StyleProperty(
+    { component, background -> component.putClientProperty(HOVER_KEY, background as Color?) },
+    { component -> component.getClientProperty(HOVER_KEY) },
     Color::class.java
   )
 

@@ -14,6 +14,8 @@ import com.intellij.openapi.actionSystem.DataProvider
 import com.intellij.openapi.actionSystem.PlatformCoreDataKeys
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.EDT
+import com.intellij.openapi.application.ModalityState
+import com.intellij.openapi.application.asContextElement
 import com.intellij.openapi.application.readAction
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.editor.*
@@ -285,7 +287,7 @@ open class UsagePreviewPanel @JvmOverloads constructor(project: Project,
   }
 
   override fun updateLayoutLater(infos: List<UsageInfo>?) {
-    cs.launch {
+    cs.launch(ModalityState.current().asContextElement()) {
       previewUsages(infos)
     }
   }

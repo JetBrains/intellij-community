@@ -7,3 +7,4 @@ enum class Baz {
 fun main() {
     Baz.C<caret>
 }
+// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.createFromUsage.createClass.CreateClassFromUsageFix

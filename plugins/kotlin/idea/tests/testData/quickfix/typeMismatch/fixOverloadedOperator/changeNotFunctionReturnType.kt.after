@@ -5,3 +5,4 @@ interface A {
 }
 
 fun foo(a: A): A = a * <caret>!(if (true) a else a)
+// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.ChangeCallableReturnTypeFix$ForCalled

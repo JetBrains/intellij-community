@@ -12,3 +12,5 @@ open class Foo : Base() {
         foo = 2
     }
 }
+
+// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.AddModifierFixFE10

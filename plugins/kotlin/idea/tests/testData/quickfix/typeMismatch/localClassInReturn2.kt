@@ -7,3 +7,4 @@ fun foo() {
 
     return <caret>B()
 }
+// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.ChangeCallableReturnTypeFix$ForEnclosing

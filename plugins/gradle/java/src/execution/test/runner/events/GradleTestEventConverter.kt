@@ -2,7 +2,9 @@
 package org.jetbrains.plugins.gradle.execution.test.runner.events
 
 import com.intellij.execution.testframework.sm.runner.SMTestProxy
+import com.intellij.ide.plugins.PluginManagerCore
 import com.intellij.openapi.application.runReadAction
+import com.intellij.openapi.extensions.PluginId
 import com.intellij.openapi.project.DumbService
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.text.StringUtil
@@ -58,8 +60,14 @@ internal class GradleTestEventConverter(
     isJunit5ParametrizedTestMethod && parentMethodName == null
   }
 
+  private val isEnabledGroovyPlugin: Boolean by lazy {
+    val groovyPluginId = PluginId.findId("org.intellij.groovy")
+    val groovyPlugin = PluginManagerCore.getPluginSet()
+    groovyPluginId != null && groovyPlugin.isPluginEnabled(groovyPluginId)
+  }
+
   private val isSpockTestMethod: Boolean by lazy {
-    isTestMethod && runReadAction {
+    isTestMethod && isEnabledGroovyPlugin && runReadAction {
       DumbService.getInstance(project).computeWithAlternativeResolveEnabled<Boolean, Throwable> {
         val scope = GlobalSearchScope.allScope(project)
         val psiFacade = JavaPsiFacade.getInstance(project)

@@ -2,23 +2,19 @@
 package com.intellij.webSymbols.refactoring
 
 import com.intellij.model.Pointer
-import com.intellij.platform.backend.presentation.TargetPresentation
 import com.intellij.refactoring.rename.api.RenameTarget
 import com.intellij.webSymbols.WebSymbol
+import com.intellij.webSymbols.refactoring.impl.WebSymbolRenameTargetImpl
 
-open class WebSymbolRenameTarget(val symbol: WebSymbol) : RenameTarget {
+interface WebSymbolRenameTarget : RenameTarget {
 
-  override fun createPointer(): Pointer<out RenameTarget> {
-    val symbolPtr = symbol.createPointer()
-    return Pointer {
-      symbolPtr.dereference()?.let { WebSymbolRenameTarget(it) }
-    }
+  val symbol: WebSymbol
+
+  override fun createPointer(): Pointer<out WebSymbolRenameTarget>
+
+  companion object {
+    fun create(symbol: WebSymbol): WebSymbolRenameTarget =
+      WebSymbolRenameTargetImpl(symbol)
   }
 
-  override val targetName: String
-    get() = symbol.name
-
-  override fun presentation(): TargetPresentation {
-    return symbol.presentation
-  }
 }

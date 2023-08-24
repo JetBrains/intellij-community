@@ -1,10 +1,9 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.webSymbols.webTypes.impl
 
-import com.intellij.util.asSafely
 import com.intellij.util.containers.Stack
 import com.intellij.webSymbols.WebSymbol
-import com.intellij.webSymbols.WebSymbolApiStatus
+import com.intellij.webSymbols.WebSymbolApiStatus.Companion.isDeprecatedOrObsolete
 import com.intellij.webSymbols.WebSymbolQualifiedKind
 import com.intellij.webSymbols.WebSymbolsScope
 import com.intellij.webSymbols.completion.WebSymbolCodeCompletionItem
@@ -81,8 +80,8 @@ private class WebTypesComplexPatternConfigProvider(private val pattern: NamePatt
     val delegate = pattern.delegate?.resolve(null, scopeStack, queryParams.queryExecutor)?.firstOrNull()
 
     // Allow delegate pattern to override settings
-    val deprecation = delegate?.apiStatus?.asSafely<WebSymbolApiStatus.Deprecated>()
-                      ?: pattern.toApiStatus(origin)?.asSafely<WebSymbolApiStatus.Deprecated>()
+    val apiStatus = delegate?.apiStatus?.takeIf { it.isDeprecatedOrObsolete() }
+                    ?: pattern.toApiStatus(origin)?.takeIf { it.isDeprecatedOrObsolete() }
     val isRequired = (delegate?.required ?: pattern.required) != false
     val priority = delegate?.priority ?: pattern.priority?.wrap()
     val proximity = delegate?.proximity ?: pattern.proximity
@@ -90,7 +89,7 @@ private class WebTypesComplexPatternConfigProvider(private val pattern: NamePatt
     val unique = pattern.unique != false
 
     val symbolsResolver = createSymbolsResolver(delegate)
-    return ComplexPatternOptions(delegate, deprecation, isRequired, priority, proximity, repeats, unique, symbolsResolver)
+    return ComplexPatternOptions(delegate, apiStatus, isRequired, priority, proximity, repeats, unique, symbolsResolver)
   }
 
   private fun createSymbolsResolver(delegate: WebSymbol?) =
