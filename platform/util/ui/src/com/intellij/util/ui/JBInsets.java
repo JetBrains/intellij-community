@@ -9,6 +9,7 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import javax.swing.plaf.UIResource;
 import java.awt.*;
+import java.util.Arrays;
 import java.util.Objects;
 import java.util.function.Supplier;
 
@@ -124,7 +125,7 @@ public class JBInsets extends Insets {
   }
 
   public static @NotNull JBInsets create(@NotNull String key, @NotNull Insets defaultValue) {
-    return create(() -> UIManager.getInsets(key), defaultValue);
+    return create(new UIDefaultsSupplier(key), defaultValue);
   }
 
   private static @NotNull JBInsets create(@Nullable Supplier<@Nullable Insets> unscaledSupplier, @NotNull Insets unscaledDefault) {
@@ -209,23 +210,12 @@ public class JBInsets extends Insets {
     }
   }
 
-  @SuppressWarnings("UseDPIAwareInsets")
   public static @NotNull JBInsets addInsets(@NotNull Insets @NotNull ... insets) {
     var copies = new JBInsets[insets.length];
     for (int i = 0; i < insets.length; i++) {
       copies[i] = create(insets[i]);
     }
-    Supplier<@Nullable Insets> unscaledSupplier = () -> {
-      Insets unscaled = new Insets(0, 0, 0, 0);
-      for (JBInsets copy : copies) {
-        Insets inset = copy.unscaledNoCopy();
-        unscaled.top += inset.top;
-        unscaled.left += inset.left;
-        unscaled.bottom += inset.bottom;
-        unscaled.right += inset.right;
-      }
-      return unscaled;
-    };
+    Supplier<@Nullable Insets> unscaledSupplier = new SummingSupplier(copies);
     var unscaledDefault = Objects.requireNonNull(unscaledSupplier.get());
     return create(unscaledSupplier, unscaledDefault);
   }
@@ -260,6 +250,55 @@ public class JBInsets extends Insets {
     }
     else {
       return insets;
+    }
+  }
+
+  private static class UIDefaultsSupplier implements Supplier<@Nullable Insets> {
+    private final String key;
+
+    UIDefaultsSupplier(String key) {
+      this.key = key;
+    }
+
+    @Override
+    public @Nullable Insets get() {
+      return UIManager.getInsets(key);
+    }
+
+    @Override
+    public String toString() {
+      return "UIDefaultsSupplier{" +
+             "key='" + key + '\'' +
+             '}';
+    }
+  }
+
+  private static class SummingSupplier implements Supplier<@Nullable Insets> {
+    private final JBInsets[] values;
+
+    SummingSupplier(JBInsets[] values) {
+      this.values = values;
+    }
+
+    @SuppressWarnings("UseDPIAwareInsets")
+    @Override
+    public @Nullable Insets get() {
+      Insets unscaled = new Insets(0, 0, 0, 0);
+      for (JBInsets value : values) {
+        Insets unscaledValue = value.unscaledNoCopy();
+        unscaled.top += unscaledValue.top;
+        unscaled.left += unscaledValue.left;
+        unscaled.bottom += unscaledValue.bottom;
+        unscaled.right += unscaledValue.right;
+      }
+      return unscaled;
+    }
+
+    @Override
+    public String toString() {
+      return "SummingSupplier{" +
+             "values=" + Arrays.toString(values) +
+             '}';
     }
   }
 }
