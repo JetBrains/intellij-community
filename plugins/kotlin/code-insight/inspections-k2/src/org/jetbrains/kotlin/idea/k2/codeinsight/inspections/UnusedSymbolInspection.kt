@@ -230,17 +230,21 @@ internal class UnusedSymbolInspection : LocalInspectionTool(), UnfairLocalInspec
     context(KtAnalysisSession)
     private fun isEntryPoint(declaration: KtNamedDeclaration, isCheapEnough: Lazy<SearchCostResult>): Boolean {
         if (declaration.hasKotlinAdditionalAnnotation()) return true
-        if (declaration is KtClass && declaration.declarations.any { it.hasKotlinAdditionalAnnotation() }) return true
-
-        // Some of the main-function-cases are covered by 'javaInspection.isEntryPoint(lightElement)' call
-        // but not all of them: light method for parameterless main still points to parameterless name
-        // that is not an actual entry point from Java language point of view
-        // TODO: If we would add options for this inspection, then this call should be conditional.
-        if (declaration is KtNamedFunction && KotlinMainFunctionDetector.getInstance().isMain(declaration)) return true
-
         val lightElement: PsiElement = when (declaration) {
-            is KtClassOrObject -> declaration.toLightClass()
-            is KtNamedFunction, is KtSecondaryConstructor -> LightClassUtil.getLightClassMethod(declaration as KtFunction)
+            is KtClass -> {
+                if (declaration.declarations.any { it.hasKotlinAdditionalAnnotation() }) return true
+                declaration.toLightClass()
+            }
+            is KtObjectDeclaration -> declaration.toLightClass()
+            is KtNamedFunction -> {
+                // Some of the main-function-cases are covered by 'javaInspection.isEntryPoint(lightElement)' call
+                // but not all of them: light method for parameterless main still points to parameterless name
+                // that is not an actual entry point from Java language point of view
+                // TODO: If we would add options for this inspection, then this call should be conditional.
+                if (KotlinMainFunctionDetector.getInstance().isMain(declaration)) return true
+                LightClassUtil.getLightClassMethod(declaration as KtFunction)
+            }
+            is KtSecondaryConstructor -> LightClassUtil.getLightClassMethod(declaration as KtFunction)
             is KtProperty, is KtParameter -> {
                 if (declaration is KtParameter && !declaration.hasValOrVar()) return false
                 // we may handle only annotation parameters so far
@@ -714,11 +718,12 @@ internal class UnusedSymbolInspection : LocalInspectionTool(), UnfairLocalInspec
     }
 
     override fun buildVisitor(holder: ProblemsHolder, isOnTheFly: Boolean, session: LocalInspectionToolSession): PsiElementVisitor {
+        if (isOnTheFly) return PsiElementVisitor.EMPTY_VISITOR
+
         return object: KtVisitorVoid() {
             override fun visitNamedDeclaration(element: KtNamedDeclaration) {
-                if (isOnTheFly) return
-                val message = element.describe()?.let { KotlinBaseHighlightingBundle.message("inspection.message.never.used", it) } ?: return
                 if (!isApplicableByPsi(element)) return
+                val message = element.describe()?.let { KotlinBaseHighlightingBundle.message("inspection.message.never.used", it) } ?: return
                 val psiToReportProblem = analyze(element) { getPsiToReportProblem(element) } ?: return
                 holder.registerProblem(psiToReportProblem, message, *createQuickFixes(element).toTypedArray())
             }
