@@ -18,7 +18,7 @@ import kotlinx.coroutines.flow.transformLatest
 import java.awt.BorderLayout
 import java.awt.Window
 
-internal open class StaticNavBarPanel(
+internal class StaticNavBarPanel(
   private val project: Project,
   private val cs: CoroutineScope,
   private val updateRequests: Flow<Any>,
@@ -70,7 +70,7 @@ internal open class StaticNavBarPanel(
   private suspend fun handleWindow(window: Window): Nothing = supervisorScope {
     val vm = NavBarVmImpl(
       this@supervisorScope,
-      initialItems = getDefaultModel(project),
+      initialItems = defaultModel(project),
       contextItems = contextItems(window),
       requestNavigation,
     )
@@ -83,9 +83,7 @@ internal open class StaticNavBarPanel(
     }
   }
 
-  protected open suspend fun getDefaultModel(project: Project): List<NavBarVmItem> = defaultModel(project)
-
-  protected open fun contextItems(window: Window): Flow<List<NavBarVmItem>> {
+  private fun contextItems(window: Window): Flow<List<NavBarVmItem>> {
     @OptIn(ExperimentalCoroutinesApi::class)
     return updateRequests.transformLatest {
       dataContext(window, panel = this@StaticNavBarPanel)?.let {
