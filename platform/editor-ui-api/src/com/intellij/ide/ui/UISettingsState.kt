@@ -165,7 +165,8 @@ class UISettingsState : BaseState() {
   var defaultAutoScrollToSource: Boolean by property(false)
   @get:Transient
   var presentationMode: Boolean = false
-
+  @get:OptionTag("PRESENTATION_MODE_FONT_SIZE")
+  var presentationModeFontSize: Int by property(24)
   @get:OptionTag("MARK_MODIFIED_TABS_WITH_ASTERISK")
   var markModifiedTabsWithAsterisk: Boolean by property(false)
   @get:OptionTag("SHOW_TABS_TOOLTIPS")

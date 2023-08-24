@@ -125,6 +125,16 @@ class NotRoamableUiSettings : SerializablePersistentStateComponent<NotRoamableUi
       }
     }
   }
+
+  internal fun migratePresentationModeIdeScale(presentationModeFontSize: Int) {
+    if (presentationModeIdeScale != 0f) {
+      return
+    }
+    presentationModeIdeScale = if (presentationModeFontSize == 24 || fontSize == 0f)
+      UISettingsUtils.defaultScale(isPresentation = true)
+    else
+      presentationModeFontSize.toFloat() / fontSize
+  }
 }
 
 data class NotRoamableUiOptions(

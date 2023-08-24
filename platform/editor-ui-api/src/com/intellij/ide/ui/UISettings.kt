@@ -688,6 +688,10 @@ class UISettings @NonInjectable constructor(private val notRoamableOptions: NotR
 
   override fun getState(): UISettingsState = state
 
+  override fun noStateLoaded() {
+    notRoamableOptions.migratePresentationModeIdeScale(state.presentationModeFontSize)
+  }
+
   override fun loadState(state: UISettingsState) {
     this.state = state
     updateDeprecatedProperties()
