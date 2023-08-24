@@ -56,7 +56,7 @@ public final class DefaultExternalProject implements ExternalProject, ExternalPr
   public DefaultExternalProject() {
     childProjects = new TreeMap<>();
     tasks = new HashMap<>(0);
-    sourceSets = new HashMap<>(0);
+    sourceSets = new LinkedHashMap<>(0);
     artifacts = new ArrayList<>(0);
     artifactsByConfiguration = new HashMap<>(0);
   }
@@ -90,7 +90,7 @@ public final class DefaultExternalProject implements ExternalProject, ExternalPr
     }
 
     Map<String, ? extends ExternalSourceSet> externalProjectSourceSets = externalProject.getSourceSets();
-    sourceSets = new HashMap<>(externalProjectSourceSets.size());
+    sourceSets = new LinkedHashMap<>(externalProjectSourceSets.size());
     for (Map.Entry<String, ? extends ExternalSourceSet> entry : externalProjectSourceSets.entrySet()) {
       sourceSets.put(entry.getKey(), new DefaultExternalSourceSet(entry.getValue()));
     }
