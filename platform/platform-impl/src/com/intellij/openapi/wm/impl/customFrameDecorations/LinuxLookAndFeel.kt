@@ -56,7 +56,10 @@ class LinuxLookAndFeel {
       return line
     }
 
+    private var isListeningIconThemeChanges = false
     private fun listenIconThemeChanges() {
+      if (isListeningIconThemeChanges) return
+      isListeningIconThemeChanges = true
       thread(start = true) {
         val processBuilder = ProcessBuilder(listOf("dbus-monitor", "member='Notify'"))
         processBuilder.redirectErrorStream(true)
@@ -84,11 +87,8 @@ class LinuxLookAndFeel {
 
     private val subscribers = mutableListOf<() -> Unit>()
     fun onIconThemeChanges(callback: () -> Unit) {
+      listenIconThemeChanges()
       subscribers.add(callback)
-    }
-
-    init {
-      //listenIconThemeChanges()
     }
   }
 }
