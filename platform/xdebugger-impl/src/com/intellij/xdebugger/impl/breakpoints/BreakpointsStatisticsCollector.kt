@@ -111,7 +111,7 @@ class BreakpointsUtilValidator : CustomValidationRule() {
   }
 
   override fun doValidate(data: String, context: EventContext): ValidationResultType {
-    if ("custom".equals(data)) return ValidationResultType.ACCEPTED
+    if ("custom" == data) return ValidationResultType.ACCEPTED
 
     for (breakpoint in XBreakpointType.EXTENSION_POINT_NAME.extensions) {
       if (StringUtil.equals(breakpoint.id, data)) {
