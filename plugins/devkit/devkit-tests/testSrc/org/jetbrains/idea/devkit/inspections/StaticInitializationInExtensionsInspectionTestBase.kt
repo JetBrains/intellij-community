@@ -27,9 +27,7 @@ abstract class StaticInitializationInExtensionsInspectionTestBase : PluginModule
       """
         import com.intellij.openapi.extensions.ExtensionPointName;
         
-        public interface MyExtension {
-          ExtensionPointName<MyExtension> EP_NAME = new ExtensionPointName<>("com.intellij.example.myExtension");
-        }
+        public interface MyExtension { }
       """.trimIndent()
     )
   }

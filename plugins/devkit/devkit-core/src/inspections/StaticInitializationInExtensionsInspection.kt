@@ -17,7 +17,7 @@ import org.jetbrains.uast.UClassInitializer
 import org.jetbrains.uast.getParentOfType
 import org.jetbrains.uast.visitor.AbstractUastNonRecursiveVisitor
 
-class StaticInitializationInExtensionsInspection : DevKitUastInspectionBase() {
+internal class StaticInitializationInExtensionsInspection : DevKitUastInspectionBase() {
 
   override fun buildInternalVisitor(holder: ProblemsHolder, isOnTheFly: Boolean): PsiElementVisitor {
     // UAST doesn't work with Kotlin class initializers (they are UMethod's, not UClassInitializer's),
@@ -38,10 +38,9 @@ class StaticInitializationInExtensionsInspection : DevKitUastInspectionBase() {
           if (!ExtensionUtil.isExtensionPointImplementationCandidate(psiClass)) return true
           if (!ExtensionUtil.isInstantiatedExtension(psiClass) { ExtensionUtil.hasServiceBeanFqn(it) }) return true
 
-          // try using 'static' modifier as anchor
-          val anchor = (node.javaPsi as? PsiModifierListOwner)?.modifierList?.let {
-            findModifierInList(it, PsiModifier.STATIC)
-          } ?: node.javaPsi ?: return true
+          // using 'static' modifier as anchor
+          val modifierList = (node.javaPsi as PsiModifierListOwner).modifierList!!
+          val anchor = findModifierInList(modifierList, PsiModifier.STATIC)!!
 
           holder.registerProblem(
             anchor,
