@@ -53,8 +53,9 @@ import static java.util.Collections.*;
 public final class DependencyResolverImpl implements DependencyResolver {
   private static final Logger LOG = LoggerFactory.getLogger(DependencyResolverImpl.class);
 
-  private static final boolean IS_NEW_DEPENDENCY_RESOLUTION_APPLICABLE =
-    GradleVersion.current().getBaseVersion().compareTo(GradleVersion.version("4.5")) >= 0;
+  private static final GradleVersion GRADLE_BASE_VERSION = GradleVersion.current().getBaseVersion();
+  private static final boolean IS_83_OR_BETTER = GRADLE_BASE_VERSION.compareTo(GradleVersion.version("8.3")) >= 0;
+  private static final boolean IS_NEW_DEPENDENCY_RESOLUTION_APPLICABLE = GRADLE_BASE_VERSION.compareTo(GradleVersion.version("4.5")) >= 0;
 
   private final @NotNull ModelBuilderContext myContext;
   private final @NotNull Project myProject;
@@ -264,7 +265,14 @@ public final class DependencyResolverImpl implements DependencyResolver {
           }
 
           ProjectComponentIdentifier projectComponentIdentifier = (ProjectComponentIdentifier)artifact.getId().getComponentIdentifier();
-          String buildName = projectComponentIdentifier.getBuild().getName();
+          BuildIdentifier buildIdentifier = projectComponentIdentifier.getBuild();
+          String buildName;
+          if (IS_83_OR_BETTER) {
+            buildName = buildIdentifier.getBuildPath();
+          }
+          else {
+            buildName = buildIdentifier.getName();
+          }
           String projectPath = projectComponentIdentifier.getProjectPath();
           String key = buildName + "_" + projectPath + "_" + resolvedDependency.getConfiguration();
           DefaultExternalProjectDependency projectDependency = resolvedProjectDependencies.get(key);
