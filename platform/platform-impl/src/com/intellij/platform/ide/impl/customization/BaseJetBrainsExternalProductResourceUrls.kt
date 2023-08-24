@@ -11,6 +11,7 @@ import com.intellij.platform.ide.customization.FeedbackReporter
 import com.intellij.util.Url
 import com.intellij.util.Urls
 import com.intellij.util.system.CpuArch
+import org.jetbrains.annotations.ApiStatus
 
 /**
  * A base class for implementations of [ExternalProductResourceUrls] describing IDEs developed by JetBrains.
@@ -111,7 +112,8 @@ abstract class BaseJetBrainsExternalProductResourceUrls : ExternalProductResourc
  * * Windows 7 or older - `win-7`[[-64]]
  * * Other - `other-os`
  */
-internal fun currentOsNameForIntelliJSupport(): String = when {
+@ApiStatus.Internal
+fun currentOsNameForIntelliJSupport(): String = when {
   SystemInfo.isWindows -> {
     "win-" +
     when {
