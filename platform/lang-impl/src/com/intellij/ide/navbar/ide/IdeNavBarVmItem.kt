@@ -5,19 +5,27 @@ import com.intellij.ide.navbar.NavBarItem
 import com.intellij.ide.navbar.NavBarItemPresentation
 import com.intellij.ide.navbar.impl.isModuleContentRoot
 import com.intellij.model.Pointer
-import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.readAction
+import com.intellij.util.concurrency.ThreadingAssertions
+import com.intellij.util.concurrency.annotations.RequiresReadLock
 
-internal class IdeNavBarVmItem(
-  override val pointer: Pointer<out NavBarItem>,
-  override val presentation: NavBarItemPresentation,
-  override val isModuleContentRoot: Boolean,
-  itemClass: Class<NavBarItem>,
+internal class IdeNavBarVmItem @RequiresReadLock constructor(
+  item: NavBarItem,
 ) : NavBarVmItem {
+
+  init {
+    ThreadingAssertions.assertReadAccess()
+  }
+
+  override val pointer: Pointer<out NavBarItem> = item.createPointer()
+
+  override val presentation: NavBarItemPresentation = item.presentation()
+
+  override val isModuleContentRoot: Boolean = item.isModuleContentRoot()
 
   // Synthetic string field for fast equality heuristics
   // Used to match element's direct child in the navbar with the same child in its popup
-  private val texts = itemClass.canonicalName + "$" +
+  private val texts = item.javaClass.canonicalName + "$" +
                       presentation.text.replace("$", "$$") + "$" +
                       presentation.popupText?.replace("$", "$$")
 
@@ -44,8 +52,7 @@ internal suspend fun <T> NavBarVmItem.fetch(selector: NavBarItem.() -> T): T? {
 }
 
 internal fun List<NavBarItem>.toVmItems(): List<NavBarVmItem> {
-  ApplicationManager.getApplication().assertReadAccessAllowed()
   return map {
-    IdeNavBarVmItem(it.createPointer(), it.presentation(), it.isModuleContentRoot(), it.javaClass)
+    IdeNavBarVmItem(it)
   }
 }

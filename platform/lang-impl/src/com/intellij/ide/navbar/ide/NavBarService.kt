@@ -167,7 +167,6 @@ private fun contextModelInner(ctx: DataContext): List<NavBarVmItem> {
 
 internal suspend fun defaultModel(project: Project): List<NavBarVmItem> {
   return readAction {
-    val item = ProjectNavBarItem(project)
-    listOf(IdeNavBarVmItem(item.createPointer(), item.presentation(), true, item.javaClass))
+    listOf(IdeNavBarVmItem(ProjectNavBarItem(project)))
   }
 }
