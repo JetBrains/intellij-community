@@ -383,27 +383,27 @@ class VcsLogFiltererTest {
     val storagesByRoot = generate()
 
     data class SingleRootStorage(val hashes: Map<Int, Hash>, val refs: Map<Int, VcsRef>) {
-      val hashesReversed = hashes.entries.map { Pair(it.value, it.key) }.toMap()
-      val refsReversed = refs.entries.map { Pair(it.value, it.key) }.toMap()
+      val hashesReversed = hashes.entries.associate { Pair(it.value, it.key) }
+      val refsReversed = refs.entries.associate { Pair(it.value, it.key) }
     }
 
     private fun generate() :  Map<VirtualFile, SingleRootStorage> {
       var commitIndex = 1
       var refIndex = 1
       return commitsByRoot.mapValues { (root, commits) ->
-        val hashes : Map<Int, Hash> = commits.map {
+        val hashes : Map<Int, Hash> = commits.associate {
           val currentIndex = commitIndex
           commitIndex++
           val hash = generateHashForIndex(currentIndex)
           currentIndex to hash
-        }.toMap()
+        }
 
-        val refs:Map<Int, VcsRef> = refsByRoot.getValue(root).map { ref ->
+        val refs:Map<Int, VcsRef> = refsByRoot.getValue(root).associate { ref ->
           val vcsRef = VcsRefImpl(hashes.getValue(ref.commit), ref.name, BRANCH_TYPE, root)
           val currentIndex = refIndex
           refIndex++
           currentIndex to vcsRef
-        }.toMap()
+        }
 
         SingleRootStorage(hashes, refs)
       }
@@ -427,10 +427,10 @@ class VcsLogFiltererTest {
     override fun getCommitIndex(hash: Hash, root: VirtualFile) = storagesByRoot.getValue(root).hashesReversed.getValue(hash)
 
     override fun getCommitId(commitIndex: Int): CommitId {
-      return storagesByRoot.entries.mapNotNull { (root, storage) ->
+      return storagesByRoot.entries.firstNotNullOf { (root, storage) ->
         val hash = storage.hashes[commitIndex]
         if (hash != null) CommitId(hash, root) else null
-      }.first()
+      }
     }
 
     override fun containsCommit(id: CommitId): Boolean {
@@ -438,7 +438,7 @@ class VcsLogFiltererTest {
     }
 
     override fun getVcsRef(refIndex: Int): VcsRef {
-      return storagesByRoot.values.mapNotNull { storage -> storage.refs[refIndex] }.first()
+      return storagesByRoot.values.firstNotNullOf { storage -> storage.refs[refIndex] }
     }
 
     override fun getRefIndex(ref: VcsRef): Int = storagesByRoot.getValue(ref.root).refsReversed.getValue(ref)
