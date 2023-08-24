@@ -7,6 +7,7 @@ import com.intellij.ide.navbar.NavBarItemPresentation
 import com.intellij.ide.navigationToolbar.NavBarModelExtension
 import com.intellij.ide.projectView.ProjectView
 import com.intellij.ide.projectView.impl.ProjectRootsUtil
+import com.intellij.ide.util.treeView.WeighedItem
 import com.intellij.model.Pointer
 import com.intellij.model.Pointer.hardPointer
 import com.intellij.openapi.editor.colors.CodeInsightColors.ERRORS_ATTRIBUTES
@@ -211,6 +212,10 @@ internal class OrderEntryNavBarItem(data: OrderEntry) : DefaultNavBarItem<OrderE
     is ModuleOrderEntry -> data.module?.let { ModuleType.get(it) }?.icon
     else -> super.getIcon()
   }
+}
+
+internal class WeightedNavBarItem(data: WeighedItem): DefaultNavBarItem<WeighedItem>(data) {
+  override fun weight(): Int = data.weight
 }
 
 @Internal
