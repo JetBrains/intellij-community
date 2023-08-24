@@ -13,7 +13,10 @@ import com.intellij.ide.ui.UISettings
 import com.intellij.lang.documentation.ide.ui.DEFAULT_UI_RESPONSE_TIMEOUT
 import com.intellij.openapi.actionSystem.CommonDataKeys
 import com.intellij.openapi.actionSystem.DataContext
-import com.intellij.openapi.application.*
+import com.intellij.openapi.application.EDT
+import com.intellij.openapi.application.ModalityState
+import com.intellij.openapi.application.asContextElement
+import com.intellij.openapi.application.readAction
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.Service.Level.PROJECT
 import com.intellij.openapi.components.service
@@ -24,7 +27,10 @@ import com.intellij.util.flow.throttle
 import com.intellij.util.ui.EDT
 import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.BufferOverflow.DROP_OLDEST
-import kotlinx.coroutines.flow.*
+import kotlinx.coroutines.flow.MutableSharedFlow
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.collectLatest
+import kotlinx.coroutines.flow.emptyFlow
 import org.jetbrains.annotations.ApiStatus.Internal
 import org.jetbrains.annotations.TestOnly
 import javax.swing.JComponent
@@ -162,6 +168,6 @@ private fun contextModelInner(ctx: DataContext): List<NavBarVmItem> {
 internal suspend fun defaultModel(project: Project): List<NavBarVmItem> {
   return readAction {
     val item = ProjectNavBarItem(project)
-    listOf(NavBarVmItem(item.createPointer(), item.presentation(), true, item.javaClass))
+    listOf(IdeNavBarVmItem(item.createPointer(), item.presentation(), true, item.javaClass))
   }
 }
