@@ -8,7 +8,7 @@ import org.junit.Test
 import java.time.Duration
 import java.time.Instant
 
-class ProjectIndexingHistoryImplTest { //todo[lene] rename the test accordingly to refactoring result
+class ProjectScanningHistoryImplTest {
 
   @Test
   fun `test observation missed the start of suspension (IDEA-281514)`() {
