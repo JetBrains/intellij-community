@@ -44,7 +44,17 @@ public class JavaLiveTemplateTest extends LiveTemplateTestCase {
 
   public void test_not_to_go_to_next_tab_after_insert_if_element_has_call_arguments() {
     myFixture.configureByText("a.java",
-                              "\nimport  java.util.*;\npublic class Main {\n    List<String> getStringList(int i){\n        List<String> ints = null;\n        <caret>\n        return new ArrayList<>(i);\n    }\n}\n");
+                              """
+
+                                import  java.util.*;
+                                public class Main {
+                                    List<String> getStringList(int i){
+                                        List<String> ints = null;
+                                        <caret>
+                                        return new ArrayList<>(i);
+                                    }
+                                }
+                                """);
     Template template =
       getTemplateManager().createTemplate("for", "user", """
         for ($ELEMENT_TYPE$ $VAR$ : $ITERABLE_TYPE$) {
@@ -63,7 +73,17 @@ public class JavaLiveTemplateTest extends LiveTemplateTestCase {
 
   public void test_go_to_next_tab_after_insert_if_element_does_not_have_call_arguments() {
     myFixture.configureByText("a.java",
-                              "\nimport  java.util.*;\npublic class Main {\n    List<String> getStringList(int i){\n        List<String> ints = null;\n        <caret>\n        return new ArrayList<>(i);\n    }\n}\n");
+                              """
+
+                                import  java.util.*;
+                                public class Main {
+                                    List<String> getStringList(int i){
+                                        List<String> ints = null;
+                                        <caret>
+                                        return new ArrayList<>(i);
+                                    }
+                                }
+                                """);
     Template template =
       getTemplateManager().createTemplate("for", "user", """
         for ($ELEMENT_TYPE$ $VAR$ : $ITERABLE_TYPE$) {
@@ -77,7 +97,19 @@ public class JavaLiveTemplateTest extends LiveTemplateTestCase {
     myFixture.type("in\n");
     BaseCompleteMacro.waitForNextTab();
     myFixture.checkResult(
-      "\nimport  java.util.*;\npublic class Main {\n    List<String> getStringList(int i){\n        List<String> ints = null;\n        for (String <selection>item</selection> : ints) {\n            ;\n        }\n        return new ArrayList<>(i);\n    }\n}\n");
+      """
+
+        import  java.util.*;
+        public class Main {
+            List<String> getStringList(int i){
+                List<String> ints = null;
+                for (String <selection>item</selection> : ints) {
+                    ;
+                }
+                return new ArrayList<>(i);
+            }
+        }
+        """);
     assert !getState().isFinished();
   }
 
@@ -99,7 +131,16 @@ public class JavaLiveTemplateTest extends LiveTemplateTestCase {
     startTemplate(template);
 
     myFixture.checkResult(
-      "\nclass Outer {\n  static class Inner implements MyCallback {\n    void aMethod() {\n      MyUtils.doSomethingWithCallback(this)\n    }\n  }\n}\n");
+      """
+
+        class Outer {
+          static class Inner implements MyCallback {
+            void aMethod() {
+              MyUtils.doSomethingWithCallback(this)
+            }
+          }
+        }
+        """);
   }
 
   public void testToar() {
@@ -317,7 +358,15 @@ public class JavaLiveTemplateTest extends LiveTemplateTestCase {
 
   public void test_do_not_strip_type_argument_containing_class() {
     myFixture.configureByText("a.java",
-                              "\nimport java.util.*;\nclass Foo {\n  List<Map.Entry<String, Integer>> foo() {\n    <caret>\n  }\n}\n");
+                              """
+
+                                import java.util.*;
+                                class Foo {
+                                  List<Map.Entry<String, Integer>> foo() {
+                                    <caret>
+                                  }
+                                }
+                                """);
 
     Template template = getTemplateManager().createTemplate("result", "user", "$T$ result;");
     template.addVariable("T", new MacroCallNode(new MethodReturnTypeMacro()), new EmptyNode(), false);
@@ -340,7 +389,13 @@ public class JavaLiveTemplateTest extends LiveTemplateTestCase {
 
   public void test_name_shadowing() {
     myFixture.configureByText("a.java",
-                              "class LiveTemplateVarSuggestion {\n    private Object value;\n    public void setValue(Object value, Object value1){\n      inn<caret>\n    }\n}");
+                              """
+                                class LiveTemplateVarSuggestion {
+                                    private Object value;
+                                    public void setValue(Object value, Object value1){
+                                      inn<caret>
+                                    }
+                                }""");
     myFixture.type("\t");
     assert DefaultGroovyMethods.equals(myFixture.getLookupElementStrings(), new ArrayList<>(Arrays.asList("value", "value1")));
   }
@@ -348,7 +403,14 @@ public class JavaLiveTemplateTest extends LiveTemplateTestCase {
   public void test_escape_string_characters_in_soutv() {
     myFixture.configureByText("a.java", "\nclass Foo {\n  {\n    soutv<caret>\n  }\n}\n");
     myFixture.type("\t\"a\"");
-    myFixture.checkResult("\nclass Foo {\n  {\n      System.out.println(\"\\\"a\\\" = \" + \"a\"<caret>);\n  }\n}\n");
+    myFixture.checkResult("""
+
+                            class Foo {
+                              {
+                                  System.out.println("\\"a\\" = " + "a"<caret>);
+                              }
+                            }
+                            """);
   }
 
   public void test_reuse_static_import() {
@@ -364,7 +426,16 @@ public class JavaLiveTemplateTest extends LiveTemplateTestCase {
     template.setValue(TemplateImpl.Property.USE_STATIC_IMPORT_IF_POSSIBLE, true);
 
     startTemplate(template);
-    myFixture.checkResult("\nimport static foo.Bar.someMethod;\n\nclass Foo {\n  {\n    someMethod(<caret>)\n  }\n}\n");
+    myFixture.checkResult("""
+
+                            import static foo.Bar.someMethod;
+
+                            class Foo {
+                              {
+                                someMethod(<caret>)
+                              }
+                            }
+                            """);
   }
 
   public void test_use_single_member_static_import_first() {
@@ -380,7 +451,15 @@ public class JavaLiveTemplateTest extends LiveTemplateTestCase {
     template.setValue(TemplateImpl.Property.USE_STATIC_IMPORT_IF_POSSIBLE, true);
 
     startTemplate(template);
-    myFixture.checkResult("import static foo.Bar.someMethod;\n\nclass Foo {\n  {\n    someMethod(<caret>)\n  }\n}\n");
+    myFixture.checkResult("""
+                            import static foo.Bar.someMethod;
+
+                            class Foo {
+                              {
+                                someMethod(<caret>)
+                              }
+                            }
+                            """);
   }
 
   public void test_two_static_imports() {
@@ -390,27 +469,58 @@ public class JavaLiveTemplateTest extends LiveTemplateTestCase {
 
     startTemplate(template);
     myFixture.checkResult(
-      "import static java.lang.Math.PI;\nimport static java.lang.Math.abs;\n\nclass Foo {\n  {\n    abs(PI);<caret>\n  }\n}\n");
+      """
+        import static java.lang.Math.PI;
+        import static java.lang.Math.abs;
+
+        class Foo {
+          {
+            abs(PI);<caret>
+          }
+        }
+        """);
   }
 
   public void test_sout_template_in_expression_lambda() {
     myFixture.configureByText("a.java", "class Foo {{\n  strings.stream().forEach(o -> sout<caret>);\n}}\n");
     myFixture.type("\t");
-    myFixture.checkResult("class Foo {{\n  strings.stream().forEach(o -> System.out.println(<caret>));\n}}\n");
+    myFixture.checkResult("""
+                            class Foo {{
+                              strings.stream().forEach(o -> System.out.println(<caret>));
+                            }}
+                            """);
   }
 
   public void test_itar_template_in_expression_lambda() {
     myFixture.configureByText("a.java", "class Foo {\n  void test(int[] arr) {\n    Runnable r = () -> itar<caret>\n  }\n}\n");
     myFixture.type("\t");
     myFixture.checkResult(
-      "class Foo {\n  void test(int[] arr) {\n    Runnable r = () -> {\n        for (int i = 0; i < arr.length; i++) {\n            int i1 = arr[i];\n            \n        }\n    }\n  }\n}\n");
+      """
+        class Foo {
+          void test(int[] arr) {
+            Runnable r = () -> {
+                for (int i = 0; i < arr.length; i++) {
+                    int i1 = arr[i];
+                   \s
+                }
+            }
+          }
+        }
+        """);
   }
 
   public void test_iterate_over_list_with_wildcard_component_type() {
     myFixture.configureByText("a.java", "class C {{\njava.util.List<? extends Integer> list;\n<caret>\n}}");
     myFixture.type("itli\t");
     myFixture.checkResult(
-      "class C {{\njava.util.List<? extends Integer> list;\n    for (int i = 0; i < list.size(); i++) {\n        Integer integer =  list.get(i);\n        \n    }\n}}");
+      """
+        class C {{
+        java.util.List<? extends Integer> list;
+            for (int i = 0; i < list.size(); i++) {
+                Integer integer =  list.get(i);
+               \s
+            }
+        }}""");
   }
 
   private void configure() {
@@ -425,7 +535,13 @@ public class JavaLiveTemplateTest extends LiveTemplateTestCase {
     myFixture.configureByText("a.java", "class A { Iterable<String> getCreatedTags() { }\n{\n  iter<caret>\n}}");
     myFixture.type("\tgetCreatedTags()\n");
     myFixture.checkResult(
-      "class A { Iterable<String> getCreatedTags() { }\n{\n    for (String createdTag : getCreatedTags()) {\n        \n    }\n}}");
+      """
+        class A { Iterable<String> getCreatedTags() { }
+        {
+            for (String createdTag : getCreatedTags()) {
+               \s
+            }
+        }}""");
   }
 
   public void test_overtyping_suggestion_with_a_quote() {
@@ -435,7 +551,14 @@ public class JavaLiveTemplateTest extends LiveTemplateTestCase {
     myFixture.doHighlighting();
     myFixture.launchAction(myFixture.findSingleIntention("Initialize variable"));
     myFixture.type("\"");
-    myFixture.checkResult("\nclass A {\n  {\n    String s = \"null\";\n    s.toString();\n  }\n}");
+    myFixture.checkResult("""
+
+                            class A {
+                              {
+                                String s = "null";
+                                s.toString();
+                              }
+                            }""");
     assert !DefaultGroovyMethods.asBoolean(myFixture.getLookup());
   }
 
@@ -455,7 +578,14 @@ public class JavaLiveTemplateTest extends LiveTemplateTestCase {
     getEditor().getSettings().setVirtualSpace(true);
     myFixture.type("iter\t");
     myFixture.checkResult(
-      "class C {\n    public static void main(String ...args) {\n        for (String arg : args) {\n            \n        }\n    }\n}");
+      """
+        class C {
+            public static void main(String ...args) {
+                for (String arg : args) {
+                   \s
+                }
+            }
+        }""");
   }
 
   public void test_subtypes_macro_works_with_text_argument() {
@@ -475,7 +605,14 @@ public class JavaLiveTemplateTest extends LiveTemplateTestCase {
   }
 
   public void test_methodParameterTypes() {
-    myFixture.configureByText("a.java", "\nclass X {\n  void test(int a, String b, double[] c) {\n    <caret>\n  }\n}\n");
+    myFixture.configureByText("a.java", """
+
+      class X {
+        void test(int a, String b, double[] c) {
+          <caret>
+        }
+      }
+      """);
     Template template = getTemplateManager().createTemplate("xxx", "user", "System.out.println(\"$TYPES$\");");
     template.addVariable("TYPES", "methodParameterTypes()", "", true);
 
@@ -486,7 +623,14 @@ public class JavaLiveTemplateTest extends LiveTemplateTestCase {
   }
 
   public void test_at_equals_token() {
-    myFixture.configureByText("a.java", "\nclass X {\n  void test() {\n    int i <selection>=</selection> 5;\n  }\n}\n");
+    myFixture.configureByText("a.java", """
+
+      class X {
+        void test() {
+          int i <selection>=</selection> 5;
+        }
+      }
+      """);
     TemplateActionContext templateActionContext = TemplateActionContext.surrounding(getFile(), getEditor());
     List<TemplateImpl> templates = TemplateManagerImpl.listApplicableTemplates(templateActionContext);
     assert DefaultGroovyMethods.equals(templates, new ArrayList<>());
@@ -505,7 +649,15 @@ public class JavaLiveTemplateTest extends LiveTemplateTestCase {
 
   public void test_generic_arguments_are_inserted() {
     myFixture.configureByText("a.java",
-                              "\nimport java.util.*;\npublic class Main {\n  List<String> getList(ArrayList<String> list) {\n    <caret>\n  }\n}\n");
+                              """
+
+                                import java.util.*;
+                                public class Main {
+                                  List<String> getList(ArrayList<String> list) {
+                                    <caret>
+                                  }
+                                }
+                                """);
     Template template = getTemplateManager().createTemplate("rlazy", "user", "return $VAR$ == null ? $VAR$ = new $TYPE$($END$) : $VAR$;");
     template.addVariable("VAR", "methodParameterTypes()", "", true);
     template.addVariable("TYPE", "subtypes(typeOfVariable(VAR))", "", true);
@@ -513,7 +665,15 @@ public class JavaLiveTemplateTest extends LiveTemplateTestCase {
     startTemplate(template);
     myFixture.type("list\n\n");
     myFixture.checkResult(
-      "\nimport java.util.*;\npublic class Main {\n  List<String> getList(ArrayList<String> list) {\n      return list == null ? list = new ArrayList<String>() : list;\n  }\n}\n");
+      """
+
+        import java.util.*;
+        public class Main {
+          List<String> getList(ArrayList<String> list) {
+              return list == null ? list = new ArrayList<String>() : list;
+          }
+        }
+        """);
   }
 
   @Override
