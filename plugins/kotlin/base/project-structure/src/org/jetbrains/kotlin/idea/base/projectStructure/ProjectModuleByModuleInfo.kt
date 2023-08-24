@@ -25,11 +25,11 @@ import org.jetbrains.kotlin.config.SourceKotlinRootType
 import org.jetbrains.kotlin.config.TestSourceKotlinRootType
 import org.jetbrains.kotlin.idea.base.projectStructure.moduleInfo.*
 import org.jetbrains.kotlin.idea.base.projectStructure.scope.LibrarySourcesScope
+import org.jetbrains.kotlin.idea.base.util.minus
 import org.jetbrains.kotlin.platform.TargetPlatform
 import org.jetbrains.kotlin.resolve.PlatformDependentAnalyzerServices
 import java.nio.file.Path
 import java.nio.file.Paths
-import org.jetbrains.kotlin.idea.base.util.not
 
 @ApiStatus.Internal
 abstract class KtModuleByModuleInfoBase(moduleInfo: ModuleInfo) {
@@ -106,9 +106,17 @@ class KtSourceModuleByModuleInfoForOutsider(
     override fun hashCode(): Int = fakeVirtualFile.hashCode()
 
     override val contentScope: GlobalSearchScope
-        get() = GlobalSearchScope.fileScope(project, fakeVirtualFile)
-            .uniteWith(super.contentScope)
-            .intersectWith(GlobalSearchScope.fileScope(project, originalVirtualFile).not())
+        get() = adjustContentScope(super.contentScope)
+
+    fun adjustContentScope(scope: GlobalSearchScope): GlobalSearchScope {
+        val scopeWithFakeFile = GlobalSearchScope.fileScope(project, fakeVirtualFile).uniteWith(scope)
+
+        return if (originalVirtualFile != null) {
+            scopeWithFakeFile.minus(GlobalSearchScope.fileScope(project, originalVirtualFile))
+        } else {
+            scopeWithFakeFile
+        }
+    }
 }
 
 fun ModuleSourceInfo.collectDependencies(collectionMode: ModuleDependencyCollector.CollectionMode): List<KtModule> {
