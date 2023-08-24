@@ -1,10 +1,11 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.navbar.ide
 
 import com.intellij.ide.navbar.NavBarItem
 import com.intellij.ide.navbar.NavBarItemPresentation
 import com.intellij.ide.navbar.impl.children
 import com.intellij.ide.navbar.vm.NavBarItemVm
+import com.intellij.ide.navbar.vm.NavBarPopupVm
 import com.intellij.ide.navbar.vm.NavBarVm
 import com.intellij.ide.navbar.vm.NavBarVm.SelectionShift
 import com.intellij.model.Pointer
@@ -33,7 +34,7 @@ internal class NavBarVmImpl(
 
   private val _popupRequests: MutableSharedFlow<Int> = MutableSharedFlow(extraBufferCapacity = 1, onBufferOverflow = DROP_OLDEST)
 
-  private val _popup: MutableStateFlow<NavBarPopupVmImpl?> = MutableStateFlow(null)
+  private val _popup: MutableStateFlow<NavBarPopupVmImpl<DefaultNavBarPopupItem>?> = MutableStateFlow(null)
 
   init {
     cs.launch {
@@ -58,13 +59,15 @@ internal class NavBarVmImpl(
 
   override val selectedIndex: StateFlow<Int> = _selectedIndex.asStateFlow()
 
-  override val popup: StateFlow<NavBarPopupVmImpl?> = _popup.asStateFlow()
+  override val popup: StateFlow<NavBarPopupVm<*>?> = _popup.asStateFlow()
 
   override fun selection(): List<Pointer<out NavBarItem>> {
     EDT.assertIsEdt()
     val popup = _popup.value
     if (popup != null) {
-      return popup.selectedItems.map { it.pointer }
+      return popup.selectedItems.map {
+        it.item.pointer
+      }
     }
     else {
       val selectedIndex = _selectedIndex.value
@@ -129,15 +132,15 @@ internal class NavBarVmImpl(
     }
     val nextItem = items.getOrNull(index + 1)?.item
     popupLoop(items.slice(0..index).map { it.item }, NavBarPopupVmImpl(
-      items = children,
+      items = children.map(::DefaultNavBarPopupItem),
       initialSelectedItemIndex = children.indexOf(nextItem).coerceAtLeast(0),
     ))
   }
 
-  private suspend fun popupLoop(items: List<NavBarVmItem>, popup: NavBarPopupVmImpl) {
+  private suspend fun popupLoop(items: List<NavBarVmItem>, popup: NavBarPopupVmImpl<DefaultNavBarPopupItem>) {
     _popup.value = popup
     val selectedChild = try {
-      popup.result.await()
+      popup.result.await().item
     }
     catch (ce: CancellationException) {
       _popup.value = null
@@ -159,7 +162,7 @@ internal class NavBarVmImpl(
         _items.value = newItemVms
         _selectedIndex.value = lastIndex
         popupLoop(newItems, NavBarPopupVmImpl(
-          items = expandResult.children,
+          items = expandResult.children.map(::DefaultNavBarPopupItem),
           initialSelectedItemIndex = 0,
         ))
       }

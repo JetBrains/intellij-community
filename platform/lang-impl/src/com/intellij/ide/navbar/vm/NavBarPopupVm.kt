@@ -1,13 +1,16 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.navbar.vm
 
-internal interface NavBarPopupVm {
+/**
+ * @param T type of item, only required to have a presentation
+ */
+internal interface NavBarPopupVm<T : NavBarPopupItem> {
 
-  val items: List<NavBarPopupItem>
+  val items: List<T>
 
   val initialSelectedItemIndex: Int
 
-  fun itemsSelected(selectedItems: List<NavBarPopupItem>)
+  fun itemsSelected(selectedItems: List<T>)
 
   fun cancel()
 
