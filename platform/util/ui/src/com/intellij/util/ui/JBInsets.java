@@ -39,8 +39,16 @@ public class JBInsets extends Insets {
    * @param bottom the inset from the bottom.
    * @param right  the inset from the right.
    */
+  @SuppressWarnings("UseDPIAwareInsets")
   public JBInsets(int top, int left, int bottom, int right) {
-    this(null, top, left, bottom, right);
+    this(
+      null,
+      new Insets(top, left, bottom, right),
+      JBUI.scale(top),
+      JBUI.scale(left),
+      JBUI.scale(bottom),
+      JBUI.scale(right)
+    );
   }
 
   @SuppressWarnings("UseDPIAwareInsets")
@@ -56,10 +64,17 @@ public class JBInsets extends Insets {
   }
 
   @SuppressWarnings("UseDPIAwareInsets")
-  private JBInsets(@Nullable Supplier<@Nullable Insets> unscaledSupplier, int top, int left, int bottom, int right) {
-    super(JBUIScale.scale(top), JBUIScale.scale(left), JBUIScale.scale(bottom), JBUIScale.scale(right));
+  private JBInsets(
+    @Nullable Supplier<@Nullable Insets> unscaledSupplier,
+    @NotNull Insets unscaledDefault,
+    int scaledTop,
+    int scaledLeft,
+    int scaledBottom,
+    int scaledRight
+  ) {
+    super(scaledTop, scaledLeft, scaledBottom, scaledRight);
     this.unscaledSupplier = unscaledSupplier;
-    unscaledDefault = new Insets(top, left, bottom, right);
+    this.unscaledDefault = unscaledDefault;
   }
 
   /**
@@ -109,8 +124,14 @@ public class JBInsets extends Insets {
   }
 
   public static @NotNull JBInsets create(@NotNull String key, @NotNull Insets defaultValue) {
-    var unscaledDefault = unwrap(defaultValue);
-    return new JBInsets(() -> UIManager.getInsets(key), unscaledDefault.top, unscaledDefault.left, unscaledDefault.bottom, unscaledDefault.right);
+    return create(() -> UIManager.getInsets(key), defaultValue);
+  }
+
+  private static @NotNull JBInsets create(@Nullable Supplier<@Nullable Insets> unscaledSupplier, @NotNull Insets unscaledDefault) {
+    // zero values will be overwritten by update()
+    var result = new JBInsets(unscaledSupplier, unscaledDefault, 0, 0, 0, 0);
+    result.update();
+    return result;
   }
 
   /**
@@ -205,8 +226,8 @@ public class JBInsets extends Insets {
       }
       return unscaled;
     };
-    var unscaledDefault  = Objects.requireNonNull(unscaledSupplier.get());
-    return new JBInsets(unscaledSupplier, unscaledDefault.top, unscaledDefault.left, unscaledDefault.bottom, unscaledDefault.right);
+    var unscaledDefault = Objects.requireNonNull(unscaledSupplier.get());
+    return create(unscaledSupplier, unscaledDefault);
   }
 
   /**
