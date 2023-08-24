@@ -29,6 +29,9 @@ import javax.swing.border.EmptyBorder;
 import javax.swing.table.TableCellRenderer;
 import javax.swing.table.TableColumnModel;
 import java.awt.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Predicate;
 
@@ -112,14 +115,6 @@ final class ShowUsagesTableCellRenderer implements TableCellRenderer {
       return component;
     }
 
-    // want to be able to right-align the "current" word
-    LayoutManager layout = switch (column) {
-      case USAGE_TEXT_COL -> new BorderLayout();
-      case LINE_NUMBER_COL -> new MyFlowLayout(FlowLayout.RIGHT, 0, 0);
-      case FILE_GROUP_COL -> new ClippingLayoutWrapper(new MyFlowLayout(FlowLayout.LEFT, 0, 0));
-      default -> new MyFlowLayout(FlowLayout.LEFT, 0, 0);
-    };
-
     UsagePresentation presentation = usage.getPresentation();
     UsageNodePresentation cachedPresentation = presentation.getCachedPresentation();
     Color fileBgColor = cachedPresentation == null ? presentation.getBackgroundColor() : cachedPresentation.getBackgroundColor();
@@ -137,6 +132,11 @@ final class ShowUsagesTableCellRenderer implements TableCellRenderer {
         }
         return acc;
       }
+    };
+
+    LayoutManager layout = switch (column) {
+      case USAGE_TEXT_COL -> new BorderLayout();
+      default -> new MyLayout(panel);
     };
 
     panel.setLayout(layout);
@@ -352,10 +352,23 @@ final class ShowUsagesTableCellRenderer implements TableCellRenderer {
     renderer.setOpaque(false);
     renderer.setIcon(group.getIcon());
     SimpleTextAttributes attributes = deriveBgColor(group.getTextAttributes(isSelected), fileBgColor);
-    renderer.append(group.getPresentableGroupText(), attributes);
+    String text = group.getPresentableGroupText();
+    if (isPath(text)) {
+      renderer.appendWithClipping(text, attributes, new PathTextClipping());
+      Dimension minSize = renderer.getMinimumSize();
+      minSize.width = 50;
+      renderer.setMinimumSize(minSize);
+    }
+    else {
+      renderer.append(group.getPresentableGroupText(), attributes);
+    }
     SpeedSearchUtil.applySpeedSearchHighlighting(table, renderer, false, isSelected);
     panel.add(renderer);
     panel.getAccessibleContext().setAccessibleName(IdeBundle.message("ShowUsagesTableCellRenderer.accessible.FILE_GROUP_COL", renderer.getAccessibleContext().getAccessibleName()));
+  }
+
+  private static boolean isPath(String text) {
+    return text.chars().filter(ch -> ch == '/').count() > 1;
   }
 
   /**
@@ -447,9 +460,10 @@ final class ShowUsagesTableCellRenderer implements TableCellRenderer {
     }
   }
 
-  private static final class MyFlowLayout extends FlowLayout {
-    public MyFlowLayout(int align, int hgap, int vgap) {
-      super(align, hgap, vgap);
+  private static final class MyLayout extends BoxLayout {
+
+    public MyLayout(Container target) {
+      super(target, BoxLayout.X_AXIS);
     }
 
     @Override
@@ -461,6 +475,29 @@ final class ShowUsagesTableCellRenderer implements TableCellRenderer {
         component.setBounds(b.x, b.y, b.width, container.getSize().height - insets.top - insets.bottom);
       }
     }
+  }
 
+  private static class PathTextClipping implements SimpleColoredComponent.FragmentTextClipper {
+    @Override
+    public @NotNull String clipText(@NotNull SimpleColoredComponent component, @NotNull Graphics2D g2, int fragmentIndex, @NotNull String text, int availTextWidth) {
+      FontMetrics fm = component.getFontMetrics(g2.getFont());
+      if (fm.stringWidth(text) <= availTextWidth) return text;
+
+      String separator = "/";
+      String ellipsis = "...";
+      List<String> parts = new ArrayList<>(Arrays.asList(text.split(separator)));
+
+      while (!parts.isEmpty() && fm.stringWidth(String.join(separator, parts) + separator + ellipsis) > availTextWidth) {
+        parts.remove(0);
+      }
+
+      if (!parts.isEmpty()) {
+        parts.add(0, ellipsis);
+        return String.join(separator, parts);
+      } else {
+        // Path is too small to display, just show ellipsis
+        return ellipsis;
+      }
+    }
   }
 }

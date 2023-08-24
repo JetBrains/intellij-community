@@ -157,7 +157,11 @@ public class SimpleColoredComponent extends JComponent implements Accessible, Co
    */
   @NotNull
   public final SimpleColoredComponent appendWithClipping(@NotNull @Nls String fragment, @Nullable FragmentTextClipper clipper) {
-    _append(fragment, SimpleTextAttributes.REGULAR_ATTRIBUTES, clipper, myMainTextLastIndex < 0);
+    return appendWithClipping(fragment, SimpleTextAttributes.REGULAR_ATTRIBUTES, clipper);
+  }
+
+  public final SimpleColoredComponent appendWithClipping(@NotNull @Nls String fragment, @NotNull final SimpleTextAttributes attributes, @Nullable FragmentTextClipper clipper) {
+    _append(fragment, attributes, clipper, myMainTextLastIndex < 0);
     revalidateAndRepaint();
     return this;
   }
@@ -407,6 +411,7 @@ public class SimpleColoredComponent extends JComponent implements Accessible, Co
   @Override
   @NotNull
   public Dimension getMinimumSize() {
+    if (isMinimumSizeSet()) return super.getMinimumSize();
     return computePreferredSize(false);
   }
 
