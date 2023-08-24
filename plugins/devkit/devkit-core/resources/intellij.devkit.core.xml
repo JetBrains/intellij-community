@@ -404,6 +404,12 @@
                      enabledByDefault="false" level="WARNING"
                      implementationClass="org.jetbrains.idea.devkit.inspections.StaticInitializationInExtensionsInspection"/>
 
+    <localInspection language="UAST" groupPathKey="inspections.group.path"
+                     projectType="INTELLIJ_PLUGIN"
+                     key="inspections.listener.implementation.must.not.be.disposable.name" groupKey="inspections.group.code"
+                     enabledByDefault="false" level="ERROR"
+                     implementationClass="org.jetbrains.idea.devkit.inspections.ListenerImplementationMustNotBeDisposableInspection"/>
+
 
     <moduleConfigurationEditorProvider implementation="org.jetbrains.idea.devkit.module.PluginModuleEditorsProvider"/>
     <implicitUsageProvider implementation="org.jetbrains.idea.devkit.inspections.DevKitImplicitUsageProvider"/>
