@@ -57,6 +57,10 @@ class DistributedTestBridgeModel private constructor(
     //methods
     //initializer
     init {
+        _syncCall.async = true
+    }
+    
+    init {
         bindableChildren.add("syncCall" to _syncCall)
     }
     

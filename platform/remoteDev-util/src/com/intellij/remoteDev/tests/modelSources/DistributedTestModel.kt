@@ -58,15 +58,14 @@ object DistributedTestModel : Ext(TestRoot) {
     field("debugCategories", immutableList(string))
     property("ready", bool.nullable)
     signal("sendException", RdTestSessionException).async
-    signal("shutdown", void)
+    signal("shutdown", void).async
     signal("showNotification", string)
-    call("closeProject", void, bool)
-    call("closeProjectIfOpened", void, bool)
-    call("runNextAction", void, string.nullable)
-    call("runNextActionBackground", void, string.nullable)
-    call("requestFocus", string, bool)
-    call("makeScreenshot", string, bool)
-    call("isResponding", void, bool)
+    call("closeProject", void, bool).async
+    call("closeProjectIfOpened", void, bool).async
+    call("runNextAction", void, string.nullable).async
+    call("requestFocus", string, bool).async
+    call("makeScreenshot", string, bool).async
+    call("isResponding", void, bool).async
   }
 
   init {

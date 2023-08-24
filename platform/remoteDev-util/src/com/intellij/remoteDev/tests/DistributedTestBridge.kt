@@ -20,6 +20,5 @@ interface DistributedTestBridge {
    *  in protocol `IDE` <-> `IDE` because test framework works via
    *  different protocol `IDE` <-> `Test Process`
    */
-  fun syncProtocolEvents()
-
+  suspend fun syncProtocolEvents()
 }
