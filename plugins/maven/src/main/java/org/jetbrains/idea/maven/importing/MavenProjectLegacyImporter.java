@@ -371,7 +371,7 @@ public class MavenProjectLegacyImporter extends MavenProjectImporterLegacyBase {
         existingMavenProjectToModuleName.put(projectToModule.getKey().getFile(), module.getName());
       }
     }
-    MavenModuleNameMapper.resolveModuleNames(myAllProjects, existingMavenProjectToModuleName, myMavenProjectToModuleName);
+    myMavenProjectToModuleName.putAll(MavenModuleNameMapper.mapModuleNames(myAllProjects, existingMavenProjectToModuleName));
     MavenModulePathMapper.resolveModulePaths(myAllProjects,
                                              myMavenProjectToModule,
                                              myMavenProjectToModuleName,

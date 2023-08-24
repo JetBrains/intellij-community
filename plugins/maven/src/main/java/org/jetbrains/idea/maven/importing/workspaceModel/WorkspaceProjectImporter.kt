@@ -215,22 +215,20 @@ internal class WorkspaceProjectImporter(
   }
 
   private fun buildModuleNameMap(mavenModuleEntities: Sequence<ExternalSystemModuleOptionsEntity>,
-                                 projectToImport: Map<MavenProject, MavenProjectChanges>): HashMap<MavenProject, String> {
+                                 projectToImport: Map<MavenProject, MavenProjectChanges>): Map<MavenProject, String> {
     val existingModuleNames = mavenModuleEntities.filter { it.externalSystem == SerializationConstants.MAVEN_EXTERNAL_SOURCE_ID }
       .filter { it.linkedProjectId != null }
       .associate { LocalFileSystem.getInstance().findFileByPath(it.linkedProjectId!!) to it.module.name }
       .filterKeys { it != null }
       .mapKeys { it.key!! }
 
-    val mavenProjectToModuleName = HashMap<MavenProject, String>()
-    MavenModuleNameMapper.resolveModuleNames(projectToImport.keys, existingModuleNames, mavenProjectToModuleName)
-    return mavenProjectToModuleName
+    return MavenModuleNameMapper.mapModuleNames(projectToImport.keys, existingModuleNames)
   }
 
   private fun importModules(storageBeforeImport: EntityStorage,
                             builder: MutableEntityStorage,
                             projectsToImport: Map<MavenProject, MavenProjectChanges>,
-                            mavenProjectToModuleName: java.util.HashMap<MavenProject, String>,
+                            mavenProjectToModuleName: Map<MavenProject, String>,
                             contextData: UserDataHolderBase,
                             stats: WorkspaceImportStats): List<MavenProjectWithModulesData<ModuleEntity>> {
     val context = MavenProjectImportContextProvider(myProject, myProjectsTree, myImportingSettings,

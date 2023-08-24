@@ -13,9 +13,9 @@ import java.util.*;
 import static java.util.Locale.ROOT;
 
 public final class MavenModuleNameMapper {
-  public static void resolveModuleNames(Collection<MavenProject> projects,
-                                        Map<VirtualFile, String> existingPomModuleName,
-                                        Map<MavenProject, String> mavenProjectToModuleName) {
+  public static Map<MavenProject, String> mapModuleNames(Collection<MavenProject> projects,
+                                                         Map<VirtualFile, String> existingPomModuleName) {
+    var mavenProjectToModuleName = new HashMap<MavenProject, String>();
     NameItem[] names = new NameItem[projects.size()];
 
     int i = 0;
@@ -75,6 +75,8 @@ public final class MavenModuleNameMapper {
     for (NameItem each : names) {
       mavenProjectToModuleName.put(each.project, each.getResultName());
     }
+
+    return mavenProjectToModuleName;
   }
 
   public static String getDefaultModuleName(@NotNull MavenProject mavenProject) {
