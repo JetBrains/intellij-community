@@ -1,6 +1,7 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.coverage.view;
 
+import com.intellij.coverage.BaseCoverageAnnotator;
 import com.intellij.coverage.CoverageSuitesBundle;
 import com.intellij.ide.util.treeView.AbstractTreeNode;
 import com.intellij.ide.util.treeView.AbstractTreeStructure;
@@ -26,6 +27,9 @@ public class CoverageViewTreeStructure extends AbstractTreeStructure {
   @Override
   synchronized public Object getRootElement() {
     if (myRootNode == null) {
+      if (myData.getCoverageEngine().getCoverageAnnotator(myProject) instanceof BaseCoverageAnnotator annotator) {
+        annotator.setVcsFilteredChildren(false);
+      }
       myRootNode = myData.getCoverageEngine().createCoverageViewExtension(myProject, myData, myStateBean).createRootNode();
     }
     return myRootNode;
@@ -33,7 +37,7 @@ public class CoverageViewTreeStructure extends AbstractTreeStructure {
 
   @Override
   public Object @NotNull [] getChildElements(@NotNull final Object element) {
-    if (element instanceof CoverageListNode node) {
+    if (element instanceof AbstractTreeNode<?> node) {
       return ArrayUtil.toObjectArray(node.getChildren());
     }
     return ArrayUtil.EMPTY_OBJECT_ARRAY;
@@ -64,6 +68,10 @@ public class CoverageViewTreeStructure extends AbstractTreeStructure {
   @Override
   public boolean hasSomethingToCommit() {
     return false;
+  }
+
+  public synchronized void reset() {
+    myRootNode = null;
   }
 }
 

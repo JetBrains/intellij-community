@@ -22,10 +22,12 @@ import com.intellij.openapi.wm.ToolWindowAnchor;
 import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.ui.content.Content;
 import com.intellij.ui.content.ContentManager;
+import com.intellij.util.containers.DisposableWrapperList;
 import kotlin.Unit;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -145,6 +147,8 @@ public final class CoverageViewManager implements PersistentStateComponent<Cover
     private boolean myShowOnlyModified = true;
     private boolean myDefaultFilters = true;
 
+    private final DisposableWrapperList<CoverageViewSettingsListener> myListeners = new DisposableWrapperList<>();
+
     public boolean isFlattenPackages() {
       return myFlattenPackages;
     }
@@ -152,6 +156,7 @@ public final class CoverageViewManager implements PersistentStateComponent<Cover
     public void setFlattenPackages(boolean flattenPackages) {
       if (myFlattenPackages != flattenPackages) {
         myFlattenPackages = flattenPackages;
+        fireChanged();
       }
     }
 
@@ -163,6 +168,7 @@ public final class CoverageViewManager implements PersistentStateComponent<Cover
       if (myHideFullyCovered != hideFullyCovered) {
         myHideFullyCovered = hideFullyCovered;
         myDefaultFilters = false;
+        fireChanged();
       }
     }
 
@@ -174,11 +180,27 @@ public final class CoverageViewManager implements PersistentStateComponent<Cover
       if (myShowOnlyModified != showOnlyModified) {
         myShowOnlyModified = showOnlyModified;
         myDefaultFilters = false;
+        fireChanged();
       }
     }
 
     public boolean isDefaultFilters() {
       return myDefaultFilters;
     }
+
+    public void addListener(Disposable disposable, CoverageViewSettingsListener listener) {
+      myListeners.add(listener, disposable);
+    }
+
+
+    private void fireChanged() {
+      for (CoverageViewSettingsListener listener : myListeners) {
+        listener.onSettingsChanged(this);
+      }
+    }
+  }
+
+  public interface CoverageViewSettingsListener {
+    void onSettingsChanged(StateBean stateBean);
   }
 }

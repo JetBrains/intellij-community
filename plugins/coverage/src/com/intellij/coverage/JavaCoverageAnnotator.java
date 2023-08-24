@@ -1,10 +1,13 @@
 // Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.coverage;
 
+import com.intellij.coverage.view.CoverageClassStructure;
 import com.intellij.java.coverage.JavaCoverageBundle;
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.TestSourcesFilter;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
@@ -22,7 +25,7 @@ import java.util.concurrent.TimeUnit;
 /**
  * @author Roman.Chernyatchik
  */
-public class JavaCoverageAnnotator extends BaseCoverageAnnotator {
+public class JavaCoverageAnnotator extends BaseCoverageAnnotator implements Disposable {
   private final Map<String, PackageAnnotator.PackageCoverageInfo> myPackageCoverageInfos = new HashMap<>();
   private final Map<String, PackageAnnotator.PackageCoverageInfo> myFlattenPackageCoverageInfos = new HashMap<>();
   private final Map<VirtualFile, PackageAnnotator.PackageCoverageInfo> myDirCoverageInfos =
@@ -31,9 +34,14 @@ public class JavaCoverageAnnotator extends BaseCoverageAnnotator {
     new HashMap<>();
   private final Map<String, PackageAnnotator.ClassCoverageInfo> myClassCoverageInfos = new ConcurrentHashMap<>();
   private final Map<PsiElement, PackageAnnotator.SummaryCoverageInfo> myExtensionCoverageInfos = new WeakHashMap<>();
+  private CoverageClassStructure myStructure;
 
   public JavaCoverageAnnotator(final Project project) {
     super(project);
+  }
+
+  public CoverageClassStructure getStructure() {
+    return myStructure;
   }
 
   public static JavaCoverageAnnotator getInstance(final Project project) {
@@ -80,6 +88,10 @@ public class JavaCoverageAnnotator extends BaseCoverageAnnotator {
     myTestDirCoverageInfos.clear();
     myClassCoverageInfos.clear();
     myExtensionCoverageInfos.clear();
+    if (myStructure != null) {
+      Disposer.dispose(myStructure);
+    }
+    myStructure = null;
   }
 
   public class JavaPackageAnnotator implements PackageAnnotator.Annotator {
@@ -130,6 +142,8 @@ public class JavaCoverageAnnotator extends BaseCoverageAnnotator {
 
       final int totalRoots = new JavaCoverageClassesEnumerator.RootsCounter(suite, project).getRoots();
       new JavaCoverageClassesAnnotator(suite, project, annotator, totalRoots).visitSuite();
+      myStructure = new CoverageClassStructure(project);
+      Disposer.register(this, myStructure);
       dataManager.triggerPresentationUpdate();
 
       final long endNs = System.nanoTime();
@@ -267,6 +281,10 @@ public class JavaCoverageAnnotator extends BaseCoverageAnnotator {
     return myClassCoverageInfos.get(classFQName);
   }
 
+  public final Map<String, PackageAnnotator.ClassCoverageInfo> getClassesCoverage() {
+    return myClassCoverageInfos;
+  }
+
   @Nullable
   public final PackageAnnotator.SummaryCoverageInfo getExtensionCoverageInfo(@Nullable PsiNamedElement value) {
     if (value == null) return null;
@@ -283,5 +301,9 @@ public class JavaCoverageAnnotator extends BaseCoverageAnnotator {
       }
       return null;
     });
+  }
+
+  @Override
+  public void dispose() {
   }
 }

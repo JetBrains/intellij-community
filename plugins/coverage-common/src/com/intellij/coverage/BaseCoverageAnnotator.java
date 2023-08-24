@@ -13,6 +13,7 @@ import org.jetbrains.annotations.Nullable;
 public abstract class BaseCoverageAnnotator implements CoverageAnnotator {
 
   private final Project myProject;
+  private boolean myHasVcsFilteredChildren;
 
   @Nullable
   protected abstract Runnable createRenewRequest(@NotNull final CoverageSuitesBundle suite, @NotNull final CoverageDataManager dataManager);
@@ -54,6 +55,14 @@ public abstract class BaseCoverageAnnotator implements CoverageAnnotator {
 
   public Project getProject() {
     return myProject;
+  }
+
+  public boolean hasVcsFilteredChildren() {
+    return myHasVcsFilteredChildren;
+  }
+
+  public void setVcsFilteredChildren(boolean hasVcsFilteredChildren) {
+    myHasVcsFilteredChildren = hasVcsFilteredChildren;
   }
 
   public static class FileCoverageInfo {

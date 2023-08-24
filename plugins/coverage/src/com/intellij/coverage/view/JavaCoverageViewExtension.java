@@ -6,11 +6,9 @@ import com.intellij.execution.configurations.RunConfigurationBase;
 import com.intellij.execution.configurations.coverage.JavaCoverageEnabledConfiguration;
 import com.intellij.ide.util.treeView.AbstractTreeNode;
 import com.intellij.java.coverage.JavaCoverageBundle;
-import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
-import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.ui.ColumnInfo;
 import org.jetbrains.annotations.NotNull;
@@ -50,17 +48,18 @@ public class JavaCoverageViewExtension extends CoverageViewExtension {
     return "";
   }
 
+  @Nullable
   private PackageAnnotator.SummaryCoverageInfo getSummaryCoverageForNodeValue(AbstractTreeNode<?> node) {
-    if (node instanceof CoverageListRootNode) {
-      return myAnnotator.getPackageCoverageInfo("", myStateBean.isFlattenPackages());
-    }
-    final JavaCoverageNode javaNode = (JavaCoverageNode)node;
-    if (javaNode.isLeaf()) {
-      return myAnnotator.getClassCoverageInfo(javaNode.getQualifiedName());
-    }
-    else {
-      return myAnnotator.getPackageCoverageInfo(javaNode.getQualifiedName(), myStateBean.isFlattenPackages());
-    }
+    CoverageClassStructure structure = myAnnotator.getStructure();
+    if (structure == null) return null;
+    CoverageNodeInfo info = structure.getNodeInfo(getNodeId(node));
+    if (info == null) return null;
+    return info.getCounter();
+  }
+
+  @NotNull
+  private static String getNodeId(AbstractTreeNode<?> node) {
+    return node instanceof CoverageListRootNode ? "" : ((JavaCoverageNode)node).getQualifiedName();
   }
 
   @Override
@@ -105,161 +104,28 @@ public class JavaCoverageViewExtension extends CoverageViewExtension {
     return new JavaCoverageRootNode(myProject, Objects.requireNonNull(aPackage), mySuitesBundle, myStateBean);
   }
 
-  @NotNull
-  @Override
-  public List<AbstractTreeNode<?>> createTopLevelNodes() {
-    final LinkedHashSet<PsiPackage> packages = new LinkedHashSet<>();
-    final LinkedHashSet<PsiClass> classes = new LinkedHashSet<>();
-    for (CoverageSuite suite : mySuitesBundle.getSuites()) {
-      packages.addAll(((JavaCoverageSuite)suite).getCurrentSuitePackages(myProject));
-      classes.addAll(((JavaCoverageSuite)suite).getCurrentSuiteClasses(myProject));
-    }
-
-    final Set<PsiPackage> packs = new HashSet<>();
-    for (PsiPackage aPackage : packages) {
-      final String qualifiedName = aPackage.getQualifiedName();
-      for (PsiPackage psiPackage : packages) {
-        if (psiPackage.getQualifiedName().startsWith(qualifiedName + ".")) {
-          packs.add(psiPackage);
-          break;
-        }
-      }
-    }
-    packages.removeAll(packs);
-
-    final List<AbstractTreeNode<?>> topLevelNodes = new ArrayList<>();
-    final GlobalSearchScope searchScope = mySuitesBundle.getSearchScope(myProject);
-    for (PsiPackage aPackage : packages) {
-      processSubPackage(aPackage, topLevelNodes, searchScope);
-    }
-
-    for (PsiClass aClass : classes) {
-      final JavaCoverageNode node = new JavaCoverageNode(myProject, aClass, mySuitesBundle, myStateBean);
-      node.setFullyCovered(isFullyCovered(aClass));
-      topLevelNodes.add(node);
-    }
-    return topLevelNodes;
-  }
-
-  private void collectSubPackages(List<AbstractTreeNode<?>> children,
-                                  final PsiPackage rootPackage,
-                                  GlobalSearchScope searchScope) {
-    final PsiPackage[] subPackages = getSubpackages(rootPackage, searchScope);
-    for (final PsiPackage aPackage : subPackages) {
-      processSubPackage(aPackage, children, searchScope);
-    }
-  }
-
-  private void processSubPackage(final PsiPackage aPackage,
-                                 List<AbstractTreeNode<?>> children,
-                                 GlobalSearchScope searchScope) {
-    if (shouldIncludePackage(aPackage, searchScope)) {
-      final JavaCoverageNode node = new JavaCoverageNode(aPackage.getProject(), aPackage, mySuitesBundle, myStateBean);
-      node.setFullyCovered(isFullyCovered(aPackage));
-      children.add(node);
-    }
-    else if (!myStateBean.isFlattenPackages()) {
-      collectSubPackages(children, aPackage, searchScope);
-    }
-    if (myStateBean.isFlattenPackages()) {
-      collectSubPackages(children, aPackage, searchScope);
-    }
-  }
-
-  private boolean shouldIncludePackage(PsiPackage aPackage, GlobalSearchScope searchScope) {
-    return ReadAction.compute(() -> isInCoverageScope(aPackage) &&
-                                    getPackageCoverageInfo(aPackage) != null &&
-                                    !myStateBean.isFlattenPackages() || aPackage.getClasses(searchScope).length != 0);
-  }
-
-  private boolean shouldIncludeClass(PsiClass aClass) {
-    return getClassCoverageInfo(aClass) != null;
-  }
-
-  private boolean isFullyCovered(PsiNamedElement classOrPackage) {
-    final PackageAnnotator.SummaryCoverageInfo info;
-    if (classOrPackage instanceof PsiPackage psiPackage) {
-      info = getPackageCoverageInfo(psiPackage);
-    }
-    else if (classOrPackage instanceof PsiClass psiClass) {
-      info = getClassCoverageInfo(psiClass);
-    }
-    else {
-      return false;
-    }
-    return info != null && info.isFullyCovered();
-  }
-
   @Override
   public List<AbstractTreeNode<?>> getChildrenNodes(final AbstractTreeNode node) {
     List<AbstractTreeNode<?>> children = new ArrayList<>();
-    if (node instanceof CoverageListNode) {
-      final Object val = node.getValue();
-      if (val instanceof PsiClass) return Collections.emptyList();
-
-      //append package classes
-      if (val instanceof PsiPackage psiPackage) {
-        final GlobalSearchScope searchScope = mySuitesBundle.getSearchScope(myProject);
-        if (ReadAction.compute(() -> isInCoverageScope(psiPackage))) {
-          if (!myStateBean.isFlattenPackages()) {
-            collectSubPackages(children, psiPackage, searchScope);
-          }
-
-          final PsiFile[] childFiles = getFiles(psiPackage, searchScope);
-          for (final PsiFile file : childFiles) {
-            collectFileChildren(file, children);
-          }
-        }
-        else if (!myStateBean.isFlattenPackages()) {
-          collectSubPackages(children, (PsiPackage)val, searchScope);
-        }
-      }
-      if (node instanceof CoverageListRootNode) {
-        for (CoverageSuite suite : mySuitesBundle.getSuites()) {
-          final List<PsiClass> classes = ((JavaCoverageSuite)suite).getCurrentSuiteClasses(myProject);
-          for (PsiClass aClass : classes) {
-            final JavaCoverageNode classNode = new JavaCoverageNode(myProject, aClass, mySuitesBundle, myStateBean);
-            classNode.setFullyCovered(isFullyCovered(aClass));
-            children.add(classNode);
-          }
-        }
-      }
-      for (AbstractTreeNode<?> childNode : children) {
-        childNode.setParent(node);
-      }
+    List<CoverageNodeInfo> infos = myAnnotator.getStructure().getChildrenInfo(getNodeId(node));
+    for (CoverageNodeInfo info : infos) {
+      children.add(new JavaCoverageNode(myProject, info.getValue(), mySuitesBundle, myStateBean, info.getName()));
     }
     return children;
   }
 
-  private static PsiFile[] getFiles(PsiPackage psiPackage, GlobalSearchScope searchScope) {
-    return ReadAction.compute(() -> psiPackage.isValid() ? psiPackage.getFiles(searchScope) : PsiFile.EMPTY_ARRAY);
+  @Override
+  public boolean hasFullyCoveredNodes() {
+    CoverageClassStructure structure = myAnnotator.getStructure();
+    if (structure == null) return false;
+    return structure.getHasFullyCoveredChildren();
   }
 
-  private static PsiPackage[] getSubpackages(PsiPackage psiPackage, GlobalSearchScope searchScope) {
-    return ReadAction.compute(() -> psiPackage.isValid() ? psiPackage.getSubPackages(searchScope) : PsiPackage.EMPTY_ARRAY);
-  }
-
-  protected void collectFileChildren(final PsiFile file, List<? super AbstractTreeNode<?>> children) {
-    if (file instanceof PsiClassOwner) {
-      PsiClass[] classes = ReadAction.compute(() -> file.isValid() ? ((PsiClassOwner)file).getClasses() : PsiClass.EMPTY_ARRAY);
-      for (PsiClass aClass : classes) {
-        if (shouldIncludeClass(aClass)) {
-          final JavaCoverageNode node = new JavaCoverageNode(myProject, aClass, mySuitesBundle, myStateBean);
-          node.setFullyCovered(isFullyCovered(aClass));
-          children.add(node);
-        }
-      }
-    }
-  }
-
-  @Nullable
-  private PackageAnnotator.ClassCoverageInfo getClassCoverageInfo(final PsiClass aClass) {
-    return myAnnotator.getClassCoverageInfo(ReadAction.compute(() -> aClass.isValid() ? aClass.getQualifiedName() : null));
-  }
-
-  @Nullable
-  private PackageAnnotator.PackageCoverageInfo getPackageCoverageInfo(final PsiPackage aPackage) {
-    return ReadAction.compute(() -> myAnnotator.getPackageCoverageInfo(aPackage.getQualifiedName(), myStateBean.isFlattenPackages()));
+  @Override
+  public boolean hasVCSFilteredNodes() {
+    CoverageClassStructure structure = myAnnotator.getStructure();
+    if (structure == null) return false;
+    return structure.getHasVCSFilteredChildren();
   }
 
   @Override

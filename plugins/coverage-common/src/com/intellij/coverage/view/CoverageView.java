@@ -48,7 +48,6 @@ import com.intellij.util.ui.StatusText;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.components.BorderLayoutPanel;
 import com.intellij.util.ui.tree.TreeUtil;
-import kotlin.Unit;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -133,29 +132,24 @@ public class CoverageView extends BorderLayoutPanel implements DataProvider, Dis
     }
     CoverageLogger.logViewOpen(project, myStateBean.isShowOnlyModified(), myHasVCSFilter, myStateBean.isHideFullyCovered(), myHasFullyCoveredFilter);
 
-    setUpEmptyText(false, false);
-    if (myTreeStructure.getRootElement() instanceof CoverageListRootNode root) {
-      root.getState().afterChange(this, state -> {
-        if (state.myHasVCSFilteredChildren && myStateBean.isShowOnlyModified()
-            && myStateBean.isDefaultFilters()) {
-          if (root.getChildren().isEmpty()) {
-            myStateBean.setShowOnlyModified(false);
-            resetView();
-            return Unit.INSTANCE;
-          } else {
-            final String message = CoverageBundle.message("coverage.filter.gotit", myViewExtension.getElementsName());
-            final GotItTooltip gotIt = new GotItTooltip("coverage.view.elements.filter", message, this);
-            if (gotIt.canShow()) {
-              final JComponent filterAction = findToolbarActionButtonWithIcon(actionToolbar, FILTER_ICON);
-              if (filterAction != null) {
-                gotIt.show(filterAction, GotItTooltip.BOTTOM_MIDDLE);
-              }
+    if (myTreeStructure.getRootElement() instanceof AbstractTreeNode<?> root) {
+      if (myViewExtension.hasVCSFilteredNodes() && myStateBean.isShowOnlyModified()
+          && myStateBean.isDefaultFilters()) {
+        if (root.getChildren().isEmpty()) {
+          myStateBean.setShowOnlyModified(false);
+          resetView();
+        }
+        else {
+          final String message = CoverageBundle.message("coverage.filter.gotit", myViewExtension.getElementsName());
+          final GotItTooltip gotIt = new GotItTooltip("coverage.view.elements.filter", message, this);
+          if (gotIt.canShow()) {
+            final JComponent filterAction = findToolbarActionButtonWithIcon(actionToolbar, FILTER_ICON);
+            if (filterAction != null) {
+              gotIt.show(filterAction, GotItTooltip.BOTTOM_MIDDLE);
             }
           }
         }
-        ApplicationManager.getApplication().invokeLater(() -> setUpEmptyText(state.myHasVCSFilteredChildren, state.myHasFullyCoveredChildren));
-        return Unit.INSTANCE;
-      });
+      }
     }
     final CoverageRowSorter rowSorter = new CoverageRowSorter(myTable, myModel);
     myTable.setRowSorter(rowSorter);
@@ -203,22 +197,23 @@ public class CoverageView extends BorderLayoutPanel implements DataProvider, Dis
 
       @Override
       public void treeNodesInserted(TreeModelEvent e) {
-        setUpRootVisible(e);
+        onModelUpdate(e);
       }
 
       @Override
       public void treeNodesRemoved(TreeModelEvent e) {
-        setUpRootVisible(e);
+        onModelUpdate(e);
       }
 
       @Override
       public void treeStructureChanged(TreeModelEvent e) {
-        setUpRootVisible(e);
+        onModelUpdate(e);
       }
 
-      private void setUpRootVisible(TreeModelEvent e) {
+      private void onModelUpdate(TreeModelEvent e) {
         final Object root = myModel.getRoot();
         if (e.getTreePath().getLastPathComponent() == root) {
+          setUpEmptyText();
           final int childCount = myModel.getChildCount(root);
           final boolean showRoot = childCount > 1 || childCount == 1 && showFull.get();
           if (showRoot && !myStateBean.isShowOnlyModified() && !myStateBean.isHideFullyCovered()) {
@@ -247,7 +242,9 @@ public class CoverageView extends BorderLayoutPanel implements DataProvider, Dis
     FileStatusManager.getInstance(myProject).addFileStatusListener(fileStatusListener, this);
   }
 
-  private void setUpEmptyText(boolean hasVcsFiltered, boolean hasFullyCovered) {
+  private void setUpEmptyText() {
+    boolean hasVcsFiltered = myViewExtension.hasVCSFilteredNodes();
+    boolean hasFullyCovered = myViewExtension.hasFullyCoveredNodes();
     myTable.getTree().getEmptyText().clear();
     final StatusText emptyText = myTable.getTable().getEmptyText();
     emptyText.setText(CoverageBundle.message("coverage.view.no.coverage.results"));
@@ -470,11 +467,9 @@ public class CoverageView extends BorderLayoutPanel implements DataProvider, Dis
     return null;
   }
 
-  public void resetView() {
-    AppExecutorUtil.getAppExecutorService().execute(() -> {
-      ((CoverageListRootNode)myTreeStructure.getRootElement()).reset();
-      myModel.reset(true);
-    });
+  private void resetView() {
+    myTreeStructure.reset();
+    ApplicationManager.getApplication().executeOnPooledThread(() -> myModel.reset(true));
   }
 
   private final class FlattenPackagesAction extends ToggleAction {
@@ -491,7 +486,7 @@ public class CoverageView extends BorderLayoutPanel implements DataProvider, Dis
     @Override
     public void setSelected(@NotNull AnActionEvent e, boolean state) {
       myStateBean.setFlattenPackages(state);
-      myModel.reset(false);
+      resetView();
     }
 
     @Override

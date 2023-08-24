@@ -7,6 +7,7 @@ import com.intellij.coverage.CoverageSuitesBundle;
 import com.intellij.ide.util.treeView.AbstractTreeNode;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.vcs.FileStatus;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiElement;
@@ -36,24 +37,6 @@ public abstract class CoverageViewExtension {
     myCoverageViewManager = CoverageViewManager.getInstance(myProject);
   }
 
-  /**
-   * @deprecated This method is not used in CoverageView.
-   */
-  @Nullable
-  @Deprecated
-  public String getSummaryForNode(@NotNull AbstractTreeNode<?> ignoredNode) {
-    return null;
-  }
-
-  /**
-   * @deprecated This method is not used in CoverageView.
-   */
-  @Nullable
-  @Deprecated
-  public String getSummaryForRootNode(@NotNull AbstractTreeNode<?> ignoredNode) {
-    return null;
-  }
-
   @Nullable
   public abstract String getPercentage(int columnIdx, @NotNull AbstractTreeNode<?> node);
 
@@ -66,6 +49,14 @@ public abstract class CoverageViewExtension {
 
   @NotNull
   public abstract AbstractTreeNode<?> createRootNode();
+
+  public boolean hasVCSFilteredNodes() {
+    return false;
+  }
+
+  public boolean hasFullyCoveredNodes() {
+    return false;
+  }
 
   public boolean canSelectInCoverageView(Object object) {
     return object instanceof VirtualFile && PsiManager.getInstance(myProject).findFile((VirtualFile)object) != null;
@@ -90,11 +81,6 @@ public abstract class CoverageViewExtension {
     return object instanceof VirtualFile ? (VirtualFile)object : null;
   }
 
-  @NotNull
-  public List<AbstractTreeNode<?>> createTopLevelNodes() {
-    return Collections.emptyList();
-  }
-
   public boolean supportFlattenPackages() {
     return false;
   }
@@ -115,5 +101,38 @@ public abstract class CoverageViewExtension {
 
   public String getElementsCapitalisedName() {
     return CoverageBundle.message("coverage.files.capitalised");
+  }
+
+  /**
+   * @deprecated This method is not used in CoverageView.
+   * The root node should return a correct list of children instead.
+   */
+  @NotNull
+  @Deprecated
+  public List<AbstractTreeNode<?>> createTopLevelNodes() {
+    return Collections.emptyList();
+  }
+
+  /**
+   * @deprecated This method is not used in CoverageView.
+   */
+  @Nullable
+  @Deprecated
+  public String getSummaryForNode(@NotNull AbstractTreeNode<?> ignoredNode) {
+    return null;
+  }
+
+  /**
+   * @deprecated This method is not used in CoverageView.
+   */
+  @Nullable
+  @Deprecated
+  public String getSummaryForRootNode(@NotNull AbstractTreeNode<?> ignoredNode) {
+    return null;
+  }
+
+
+  public static boolean isModified(FileStatus status) {
+    return status == FileStatus.MODIFIED || status == FileStatus.ADDED || status == FileStatus.UNKNOWN;
   }
 }
