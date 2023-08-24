@@ -84,4 +84,11 @@ open class UpdateStrategyCustomization {
     if (ApplicationInfoEx.getInstanceEx().isMajorEAP && forceEapUpdateChannelForEapBuilds())
       IdeBundle.message("updates.settings.channel.locked")
     else null
+
+  /**
+   * Override this property and return `true` to show [What's New][com.intellij.platform.ide.customization.ExternalProductResourceUrls.whatIsNewPageUrl]
+   * page after update.
+   */
+  open val showWhatIsNewPageAfterUpdate: Boolean
+    get() = false
 }

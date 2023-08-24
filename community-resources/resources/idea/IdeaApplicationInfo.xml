@@ -9,6 +9,4 @@
 
   <essential-plugin>com.intellij.java</essential-plugin>
   <essential-plugin>com.intellij.java.ide</essential-plugin>
-
-  <whatsnew show-on-update="true"/>
 </component>
