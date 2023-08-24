@@ -3,7 +3,7 @@ package org.jetbrains.kotlin.idea.quickfix.fixes
 
 import com.intellij.codeInsight.intention.IntentionAction
 import com.intellij.psi.PsiElement
-import org.jetbrains.kotlin.idea.codeInsight.inspections.shared.AddDependencyQuickFixHelper
+import org.jetbrains.kotlin.idea.codeinsights.impl.base.quickFix.AddDependencyQuickFixHelper
 import org.jetbrains.kotlin.idea.codeinsight.api.classic.quickfixes.PsiElementSuitabilityCheckers
 import org.jetbrains.kotlin.idea.codeinsight.api.classic.quickfixes.QuickFixesPsiBasedFactory
 

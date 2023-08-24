@@ -4,7 +4,7 @@ package org.jetbrains.kotlin.idea.quickfix
 
 import com.intellij.codeInsight.intention.IntentionAction
 import org.jetbrains.kotlin.diagnostics.Diagnostic
-import org.jetbrains.kotlin.idea.codeInsight.inspections.shared.AddDependencyQuickFixHelper
+import org.jetbrains.kotlin.idea.codeinsights.impl.base.quickFix.AddDependencyQuickFixHelper
 import org.jetbrains.kotlin.psi.KtSimpleNameExpression
 
 object KotlinAddOrderEntryActionFactory : KotlinIntentionActionsFactory() {
