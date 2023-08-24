@@ -41,13 +41,13 @@ abstract class KotlinLanguageInjectionPerformerBase : LanguageInjectionPerformer
             context,
             language,
             InjectedLanguageManager.FRANKENSTEIN_INJECTION,
-            if (parts.isUnparsable) java.lang.Boolean.TRUE else null
+            if (parts.isUnparsable) true else null
         )
 
         return true
     }
 
-    fun transformToInjectionParts(injection: Injection, literalOrConcatenation: KtElement): InjectionSplitResult? {
+    private fun transformToInjectionParts(injection: Injection, literalOrConcatenation: KtElement): InjectionSplitResult? {
         InjectorUtils.getLanguageByString(injection.injectedLanguageId) ?: return null
 
         val indentHandler = literalOrConcatenation.indentHandler ?: NoIndentHandler

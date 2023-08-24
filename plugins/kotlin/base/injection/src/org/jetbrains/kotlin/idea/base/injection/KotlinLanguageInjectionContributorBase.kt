@@ -42,15 +42,27 @@ import org.jetbrains.kotlin.psi.psiUtil.parents
 import org.jetbrains.kotlin.util.match
 import org.jetbrains.kotlin.utils.SmartList
 import org.jetbrains.kotlin.utils.addToStdlib.firstIsInstanceOrNull
+import com.intellij.lang.injection.general.Injection as GeneralInjection
 
 abstract class KotlinLanguageInjectionContributorBase : LanguageInjectionContributor {
+    // Abstract variables and functions are front-end dependent (K1 or K2).
+    abstract val kotlinSupport: KotlinLanguageInjectionSupportBase?
+
+    abstract fun KtCallExpression.getFqNameAsString(): String?
+
+    abstract fun KtCallExpression.hasFqName(packageName: FqName, callableName: Name): Boolean
+
+    abstract fun resolveReference(reference: PsiReference): PsiElement?
+
+    abstract fun injectionInfoByAnnotation(callableDeclaration: KtCallableDeclaration): InjectionInfo?
+
+    abstract fun injectionInfoByParameterAnnotation(functionReference: KtReference, argumentName: Name?, argumentIndex: Int): InjectionInfo?
+
     private val absentKotlinInjection = BaseInjection("ABSENT_KOTLIN_BASE_INJECTION")
 
     companion object {
         private val STRING_LITERALS_REGEXP = "\"([^\"]*)\"".toRegex()
     }
-
-    abstract val kotlinSupport: KotlinLanguageInjectionSupportBase?
 
     private data class KotlinCachedInjection(val modificationCount: Long, val baseInjection: BaseInjection)
 
@@ -95,7 +107,7 @@ abstract class KotlinLanguageInjectionContributorBase : LanguageInjectionContrib
         }
     }
 
-    override fun getInjection(context: PsiElement): com.intellij.lang.injection.general.Injection? {
+    override fun getInjection(context: PsiElement): GeneralInjection? {
         if (context !is KtElement) return null
         if (!isSupportedElement(context)) return null
         val support = kotlinSupport ?: return null
@@ -127,18 +139,15 @@ abstract class KotlinLanguageInjectionContributorBase : LanguageInjectionContrib
         return findInjectionInfo(unwrapped)?.toBaseInjection(support)
     }
 
-    abstract fun KtCallExpression.getFqNameAsString(): String?
-
     private fun unwrapTrims(ktHost: KtElement): KtElement {
         if (!Registry.`is`("kotlin.injection.handle.trimindent", true)) return ktHost
         val dotQualifiedExpression = ktHost.parent as? KtDotQualifiedExpression ?: return ktHost
         val callExpression = dotQualifiedExpression.selectorExpression.asSafely<KtCallExpression>() ?: return ktHost
-        val callFqn = callExpression.getFqNameAsString()
-        if (callFqn == "kotlin.text.trimIndent") {
+        if (callExpression.hasFqName(FqName("kotlin.text"), Name.identifier("trimIndent"))) {
             ktHost.indentHandler = TrimIndentHandler()
             return dotQualifiedExpression
         }
-        if (callFqn == "kotlin.text.trimMargin") {
+        if (callExpression.hasFqName(FqName("kotlin.text"), Name.identifier("trimMargin"))) {
             val marginChar = callExpression.valueArguments.getOrNull(0)?.getArgumentExpression().asSafely<KtStringTemplateExpression>()
                 ?.entries?.singleOrNull()?.asSafely<KtLiteralStringTemplateEntry>()?.text ?: "|"
             ktHost.indentHandler = TrimIndentHandler(marginChar)
@@ -146,7 +155,6 @@ abstract class KotlinLanguageInjectionContributorBase : LanguageInjectionContrib
         }
         return ktHost
     }
-
 
     private fun findInjectionInfo(place: KtElement, originalHost: Boolean = true): InjectionInfo? {
         return injectWithExplicitCodeInstruction(place)
@@ -159,6 +167,7 @@ abstract class KotlinLanguageInjectionContributorBase : LanguageInjectionContrib
     }
 
     private val stringMutationOperators = listOf(KtTokens.EQ, KtTokens.PLUSEQ)
+
     private fun injectWithMutation(host: KtElement): InjectionInfo? {
         val parent = (host.parent as? KtBinaryExpression)?.takeIf { it.operationToken in stringMutationOperators } ?: return null
         if (parent.right != host) return null
@@ -301,8 +310,6 @@ abstract class KotlinLanguageInjectionContributorBase : LanguageInjectionContrib
         return null
     }
 
-    abstract fun resolveReference(reference: PsiReference): PsiElement?
-
     private fun getNameReference(callee: KtExpression?): KtNameReferenceExpression? {
         if (callee is KtConstructorCalleeExpression)
             return callee.constructorReferenceExpression as? KtNameReferenceExpression
@@ -387,9 +394,6 @@ abstract class KotlinLanguageInjectionContributorBase : LanguageInjectionContrib
         val ktReference = reference as? KtReference ?: return null
         return injectionInfoByParameterAnnotation(ktReference, argumentName, argumentIndex)
     }
-
-    abstract fun injectionInfoByAnnotation(callableDeclaration: KtCallableDeclaration): InjectionInfo?
-    abstract fun injectionInfoByParameterAnnotation(functionReference: KtReference, argumentName: Name?, argumentIndex: Int): InjectionInfo?
 
     private fun findInjection(element: PsiElement?, injections: List<BaseInjection>): InjectionInfo? {
         for (injection in injections) {

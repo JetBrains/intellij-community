@@ -18,6 +18,8 @@ import org.jetbrains.kotlin.idea.base.injection.InjectionInfo
 import org.jetbrains.kotlin.idea.base.injection.KotlinLanguageInjectionContributorBase
 import org.jetbrains.kotlin.idea.references.KtReference
 import org.jetbrains.kotlin.idea.references.mainReference
+import org.jetbrains.kotlin.name.CallableId
+import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.psi.KtCallExpression
 import org.jetbrains.kotlin.psi.KtCallableDeclaration
@@ -34,12 +36,22 @@ class K2KotlinLanguageInjectionContributor : KotlinLanguageInjectionContributorB
         symbol?.callableIdIfNonLocal?.asSingleFqName()?.asString()
     }
 
+    override fun KtCallExpression.hasFqName(packageName: FqName, callableName: Name): Boolean = analyze(this) {
+        val symbol = resolveCall()?.singleFunctionCallOrNull()?.symbol
+        symbol?.callableIdIfNonLocal == CallableId(packageName, callableName)
+    }
+
     override fun resolveReference(reference: PsiReference): PsiElement? = reference.resolve()
 
-    override fun injectionInfoByAnnotation(callableDeclaration: KtCallableDeclaration): InjectionInfo? = analyze(callableDeclaration) {
-        val annotation = callableDeclaration.getSymbol().findAnnotation<LanguageAnnotation>() ?: return null
-        injectionInfoByAnnotation(annotation)
-    }
+    override fun injectionInfoByAnnotation(callableDeclaration: KtCallableDeclaration): InjectionInfo? =
+        if (callableDeclaration.annotationEntries.isEmpty()) {
+            null
+        } else {
+            analyze(callableDeclaration) {
+                val annotation = callableDeclaration.getSymbol().findAnnotation<LanguageAnnotation>() ?: return null
+                injectionInfoByAnnotation(annotation)
+            }
+        }
 
     override fun injectionInfoByParameterAnnotation(
         functionReference: KtReference,
@@ -83,6 +95,7 @@ private fun KtAnnotationApplicationWithArgumentsInfo.getStringValueOfArgument(ar
         arguments.firstOrNull { it.name.asString() == argumentName }?.expression as? KtConstantAnnotationValue ?: return null
     return when (val argumentAsConstant = argumentValueExpression.constantValue) {
         is KtConstantValue.KtStringConstantValue -> argumentAsConstant.value
+        is KtConstantValue.KtErrorConstantValue -> error("We cannot render this argument as a constant")
         else -> argumentAsConstant.renderAsKotlinConstant()
     }
 }

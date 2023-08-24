@@ -5,6 +5,7 @@ import com.intellij.lang.Language
 import com.intellij.lang.html.HTMLLanguage
 import com.intellij.psi.injection.Injectable
 import org.intellij.plugins.intelliLang.inject.InjectLanguageAction
+import org.jetbrains.kotlin.idea.base.injection.AbstractInjectionTest
 import org.junit.internal.runners.JUnit38ClassRunner
 import org.junit.runner.RunWith
 

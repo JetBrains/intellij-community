@@ -19,6 +19,8 @@ import org.jetbrains.kotlin.psi.psiUtil.containingClassOrObject
 abstract class KotlinFunctionPatternBase : PsiElementPattern<KtFunction, KotlinFunctionPatternBase>(KtFunction::class.java) {
     abstract fun KtFunction.matchParameters(vararg parameterTypes: String): Boolean
 
+    abstract fun KtFunction.matchReceiver(receiverFqName: String): Boolean
+
     fun withParameters(vararg parameterTypes: String): KotlinFunctionPatternBase {
         return withPatternCondition("kotlinFunctionPattern-withParameters") { function, _ ->
             if (function.valueParameters.size != parameterTypes.size) return@withPatternCondition false
@@ -27,7 +29,6 @@ abstract class KotlinFunctionPatternBase : PsiElementPattern<KtFunction, KotlinF
         }
     }
 
-    abstract fun KtFunction.matchReceiver(receiverFqName: String): Boolean
     fun withReceiver(receiverFqName: String): KotlinFunctionPatternBase {
         return withPatternCondition("kotlinFunctionPattern-withReceiver") { function, _ ->
             if (function.receiverTypeReference == null) return@withPatternCondition false
@@ -58,6 +59,8 @@ abstract class KotlinFunctionPatternBase : PsiElementPattern<KtFunction, KotlinF
 // Methods in this class are used through reflection during pattern construction
 @Suppress("unused")
 abstract class KtParameterPatternBase : PsiElementPattern<KtParameter, KtParameterPatternBase>(KtParameter::class.java) {
+    abstract fun KtParameter.hasAnnotation(fqName: String): Boolean
+
     fun ofFunction(index: Int, pattern: ElementPattern<Any>): KtParameterPatternBase {
         return with(object : PatternConditionPlus<KtParameter, KtFunction>("KtParameterPattern-ofMethod", pattern) {
             override fun processValues(
@@ -80,7 +83,6 @@ abstract class KtParameterPatternBase : PsiElementPattern<KtParameter, KtParamet
         })
     }
 
-    abstract fun KtParameter.hasAnnotation(fqName: String): Boolean
     fun withAnnotation(fqName: String): KtParameterPatternBase {
         return withPatternCondition("KtParameterPattern-withAnnotation") { ktParameter, _ ->
             if (ktParameter.annotationEntries.isEmpty()) return@withPatternCondition false

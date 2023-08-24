@@ -4,6 +4,7 @@ package org.jetbrains.kotlin.psi
 
 import org.intellij.lang.annotations.Language
 import org.intellij.lang.regexp.RegExpLanguage
+import org.jetbrains.kotlin.idea.base.injection.AbstractInjectionTest
 import org.jetbrains.kotlin.idea.test.KotlinWithJdkAndRuntimeLightProjectDescriptor
 import org.junit.internal.runners.JUnit38ClassRunner
 import org.junit.runner.RunWith

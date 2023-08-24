@@ -11,6 +11,7 @@ import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.injection.Injectable
 import junit.framework.TestCase
 import org.intellij.plugins.intelliLang.inject.InjectLanguageAction
+import org.jetbrains.kotlin.idea.base.injection.AbstractInjectionTest
 import org.junit.internal.runners.JUnit38ClassRunner
 import org.junit.runner.RunWith
 

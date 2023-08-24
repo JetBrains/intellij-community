@@ -134,5 +134,6 @@
     <orderEntry type="module" module-name="kotlin.code-insight.impl-base" scope="TEST" />
     <orderEntry type="library" scope="TEST" name="kotlinc.high-level-api" level="project" />
     <orderEntry type="module" module-name="kotlin.jvm-decompiler" scope="TEST" />
+    <orderEntry type="module" module-name="kotlin.base.injection.tests" scope="TEST" />
   </component>
 </module>

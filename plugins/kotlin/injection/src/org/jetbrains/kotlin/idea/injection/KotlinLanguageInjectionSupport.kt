@@ -3,7 +3,6 @@
 package org.jetbrains.kotlin.idea.injection
 
 import org.jetbrains.kotlin.idea.base.injection.KotlinLanguageInjectionSupportBase
-import org.jetbrains.kotlin.idea.patterns.KotlinPatterns
 import org.jetbrains.kotlin.idea.util.addAnnotation
 import org.jetbrains.kotlin.idea.util.findAnnotation
 import org.jetbrains.kotlin.name.FqName

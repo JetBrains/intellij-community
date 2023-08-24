@@ -1,6 +1,6 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
-package org.jetbrains.kotlin.psi
+package org.jetbrains.kotlin.idea.base.injection
 
 import com.intellij.injected.editor.EditorWindow
 import com.intellij.lang.injection.InjectedLanguageManager
@@ -14,6 +14,8 @@ import org.intellij.plugins.intelliLang.Configuration
 import org.intellij.plugins.intelliLang.inject.InjectLanguageAction
 import org.intellij.plugins.intelliLang.inject.UnInjectLanguageAction
 import org.intellij.plugins.intelliLang.references.FileReferenceInjector
+import org.jetbrains.kotlin.analysis.api.KtAllowAnalysisOnEdt
+import org.jetbrains.kotlin.analysis.api.lifetime.allowAnalysisOnEdt
 import org.jetbrains.kotlin.idea.test.KotlinLightCodeInsightFixtureTestCase
 import org.jetbrains.kotlin.idea.test.KotlinLightProjectDescriptor
 import org.jetbrains.kotlin.idea.test.KotlinWithJdkAndRuntimeLightProjectDescriptor
@@ -40,37 +42,40 @@ abstract class AbstractInjectionTest : KotlinLightCodeInsightFixtureTestCase() {
     val myInjectionFixture: InjectionTestFixture
        get() = InjectionTestFixture(myFixture)
 
+    @OptIn(KtAllowAnalysisOnEdt::class)
     protected fun doInjectionPresentTest(
         @Language("kotlin") text: String, @Language("Java") javaText: String? = null,
         languageId: String? = null, unInjectShouldBePresent: Boolean = true,
         shreds: List<ShredInfo>? = null,
         injectedText: String? = null
     ) {
-        if (javaText != null) {
-            myFixture.configureByText("${getTestName(true)}.java", javaText.trimIndent())
-        }
-
-        myFixture.configureByText("${getTestName(true)}.kt", text.trimIndent())
-
-        assertInjectionPresent(languageId, unInjectShouldBePresent)
-
-        if (shreds != null) {
-            val actualShreds = SmartList<ShredInfo>().apply {
-                val host = InjectedLanguageManager.getInstance(project).getInjectionHost(file.viewProvider)
-                InjectedLanguageManager.getInstance(project).enumerate(host) { _, placesInFile ->
-                    addAll(placesInFile.map {
-                        ShredInfo(it.range, it.rangeInsideHost, it.prefix, it.suffix)
-                    })
-                }
+        allowAnalysisOnEdt {
+            if (javaText != null) {
+                myFixture.configureByText("${getTestName(true)}.java", javaText.trimIndent())
             }
 
-            assertOrderedEquals(
-                actualShreds.sortedBy { it.range.startOffset },
-                shreds.sortedBy { it.range.startOffset })
-        }
+            myFixture.configureByText("${getTestName(true)}.kt", text.trimIndent())
 
-        if (injectedText != null) {
-            TestCase.assertEquals("injected file text", injectedText, myInjectionFixture.injectedElement?.containingFile?.text)
+            assertInjectionPresent(languageId, unInjectShouldBePresent)
+
+            if (shreds != null) {
+                val actualShreds = SmartList<ShredInfo>().apply {
+                    val host = InjectedLanguageManager.getInstance(project).getInjectionHost(file.viewProvider)
+                    InjectedLanguageManager.getInstance(project).enumerate(host) { _, placesInFile ->
+                        addAll(placesInFile.map {
+                            ShredInfo(it.range, it.rangeInsideHost, it.prefix, it.suffix)
+                        })
+                    }
+                }
+
+                assertOrderedEquals(
+                    actualShreds.sortedBy { it.range.startOffset },
+                    shreds.sortedBy { it.range.startOffset })
+            }
+
+            if (injectedText != null) {
+                TestCase.assertEquals("injected file text", injectedText, myInjectionFixture.injectedElement?.containingFile?.text)
+            }
         }
     }
 
@@ -102,13 +107,20 @@ abstract class AbstractInjectionTest : KotlinLightCodeInsightFixtureTestCase() {
         )
     }
 
-    protected open fun doRemoveInjectionTest(@Language("kotlin") before: String, @Language("kotlin") after: String) {
+    /**
+     * Note that we share this class with K2. The K2 counterpart needs [allowAnalysisOnEdt] as we run it on EDT while the injection
+     * uses analysis.
+     */
+    @OptIn(KtAllowAnalysisOnEdt::class)
+    protected fun doRemoveInjectionTest(@Language("kotlin") before: String, @Language("kotlin") after: String) {
         myFixture.setCaresAboutInjection(false)
 
         myFixture.configureByText("${getTestName(true)}.kt", before.trimIndent())
 
         TestCase.assertTrue(UnInjectLanguageAction().isAvailable(project, myFixture.editor, myFixture.file))
-        UnInjectLanguageAction.invokeImpl(project, myFixture.editor, myFixture.file)
+        allowAnalysisOnEdt {
+            UnInjectLanguageAction.invokeImpl(project, myFixture.editor, myFixture.file)
+        }
 
         myFixture.checkResult(after.trimIndent())
     }

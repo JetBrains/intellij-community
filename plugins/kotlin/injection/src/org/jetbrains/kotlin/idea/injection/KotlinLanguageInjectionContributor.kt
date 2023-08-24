@@ -17,6 +17,7 @@ import org.jetbrains.kotlin.idea.caches.resolve.resolveToCall
 import org.jetbrains.kotlin.idea.references.KtReference
 import org.jetbrains.kotlin.idea.references.resolveToDescriptors
 import org.jetbrains.kotlin.idea.search.usagesSearch.descriptor
+import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.psi.KtCallExpression
 import org.jetbrains.kotlin.psi.KtCallableDeclaration
@@ -31,6 +32,11 @@ class KotlinLanguageInjectionContributor : KotlinLanguageInjectionContributorBas
 
     override fun KtCallExpression.getFqNameAsString(): String? =
         resolveToCall(BodyResolveMode.PARTIAL)?.candidateDescriptor?.fqNameOrNull()?.asString()
+
+    override fun KtCallExpression.hasFqName(packageName: FqName, callableName: Name): Boolean {
+        val fqName = resolveToCall(BodyResolveMode.PARTIAL)?.candidateDescriptor?.fqNameOrNull() ?: return false
+        return fqName.parent() == packageName && fqName.shortName() == callableName
+    }
 
     override fun resolveReference(reference: PsiReference): PsiElement? = allowResolveInDispatchThread { reference.resolve() }
 
