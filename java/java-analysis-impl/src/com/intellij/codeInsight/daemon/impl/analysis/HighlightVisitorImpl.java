@@ -17,7 +17,6 @@ import com.intellij.lang.jvm.JvmModifiersOwner;
 import com.intellij.lang.jvm.actions.JvmElementActionFactories;
 import com.intellij.lang.jvm.actions.MemberRequestsKt;
 import com.intellij.openapi.editor.Document;
-import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.IndexNotReadyException;
 import com.intellij.openapi.project.Project;
@@ -215,7 +214,6 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
     try {
       prepare(holder, file);
       if (updateWholeFile) {
-        ProgressIndicator progress = ProgressManager.getInstance().getProgressIndicator();
         GlobalInspectionContextBase.assertUnderDaemonProgress();
         Project project = file.getProject();
         Document document = PsiDocumentManager.getInstance(project).getDocument(file);
@@ -237,7 +235,7 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
         ProgressManager.checkCanceled();
         refCountHolder.storeReadyHolder(file);
         if (document != null) {
-          new PostHighlightingVisitor(file, document, refCountHolder).collectHighlights(holder, progress);
+          new PostHighlightingVisitor(file, document, refCountHolder).collectHighlights(holder);
         }
       }
       else {

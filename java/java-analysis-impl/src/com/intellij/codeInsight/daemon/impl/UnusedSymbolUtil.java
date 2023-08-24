@@ -102,7 +102,7 @@ public final class UnusedSymbolUtil {
       tooltip = XmlStringUtil.wrapInHtml(XmlStringUtil.escapeString(message));
     }
 
-    HighlightInfo.@NotNull Builder info = HighlightInfo.newHighlightInfo(highlightInfoType).range(element)
+    HighlightInfo.Builder info = HighlightInfo.newHighlightInfo(highlightInfoType).range(element)
       .description(message).escapedToolTip(tooltip).group(
       GeneralHighlightingPass.POST_UPDATE_ALL);
 
@@ -115,25 +115,25 @@ public final class UnusedSymbolUtil {
     return info;
   }
 
-  public static boolean isFieldUnused(@NotNull Project project,
-                                      @NotNull PsiFile containingFile,
-                                      @NotNull PsiField field,
-                                      @NotNull ProgressIndicator progress,
-                                      @NotNull GlobalUsageHelper helper) {
+  public static boolean isFieldUsed(@NotNull Project project,
+                                    @NotNull PsiFile containingFile,
+                                    @NotNull PsiField field,
+                                    @NotNull ProgressIndicator progress,
+                                    @NotNull GlobalUsageHelper helper) {
     if (helper.isLocallyUsed(field)) {
-      return false;
+      return true;
     }
     if (field instanceof PsiEnumConstant && isEnumValuesMethodUsed(project, containingFile, field, progress, helper)) {
-      return false;
+      return true;
     }
-    return weAreSureThereAreNoUsages(project, containingFile, field, progress, helper);
+    return !weAreSureThereAreNoUsages(project, containingFile, field, progress, helper);
   }
 
-  public static boolean isMethodReferenced(@NotNull Project project,
-                                           @NotNull PsiFile containingFile,
-                                           @NotNull PsiMethod method,
-                                           @NotNull ProgressIndicator progress,
-                                           @NotNull GlobalUsageHelper helper) {
+  public static boolean isMethodUsed(@NotNull Project project,
+                                     @NotNull PsiFile containingFile,
+                                     @NotNull PsiMethod method,
+                                     @NotNull ProgressIndicator progress,
+                                     @NotNull GlobalUsageHelper helper) {
     if (helper.isLocallyUsed(method)) return true;
 
     boolean isPrivate = method.hasModifierProperty(PsiModifier.PRIVATE);
@@ -302,7 +302,7 @@ public final class UnusedSymbolUtil {
     final PsiClass containingClass = member.getContainingClass();
     if (!(containingClass instanceof PsiClassImpl)) return true;
     final PsiMethod valuesMethod = ((PsiClassImpl)containingClass).getValuesMethod();
-    return valuesMethod == null || isMethodReferenced(project, containingFile, valuesMethod, progress, helper);
+    return valuesMethod == null || isMethodUsed(project, containingFile, valuesMethod, progress, helper);
   }
 
   private static boolean canBeReferencedViaWeirdNames(@NotNull PsiMember member, @NotNull PsiFile containingFile) {
