@@ -739,7 +739,14 @@ private fun checkProductProperties(context: BuildContextImpl) {
   checkPaths2(properties.additionalDirectoriesWithLicenses, "productProperties.additionalDirectoriesWithLicenses")
   checkModules(properties.additionalModulesToCompile, "productProperties.additionalModulesToCompile", context)
   checkModule(properties.applicationInfoModule, "productProperties.applicationInfoModule", context)
-  checkModule(properties.embeddedJetBrainsClientMainModule, "productProperties.embeddedJetBrainsClientMainModule", context)
+  properties.embeddedJetBrainsClientMainModule?.let { embeddedJetBrainsClientMainModule ->
+    checkModule(embeddedJetBrainsClientMainModule, "productProperties.embeddedJetBrainsClientMainModule", context)
+    if (findProductModulesFile(context, embeddedJetBrainsClientMainModule) == null) {
+      context.messages.error("Cannot find product-modules.xml file in sources of '$embeddedJetBrainsClientMainModule' module specified as " +
+                             "'productProperties.embeddedJetBrainsClientMainModule'.")
+    }
+  }
+  
   checkModules(properties.modulesToCompileTests, "productProperties.modulesToCompileTests", context)
 
   context.windowsDistributionCustomizer?.let { winCustomizer ->
