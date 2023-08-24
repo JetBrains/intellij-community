@@ -1,3 +1,4 @@
+// IGNORE_K2
 // WITH_STDLIB
 // EXPECT_VARIANT_IN_ORDER "public open fun <T : (kotlin.Any..kotlin.Any?)> min(p0: (kotlin.collections.MutableCollection<out (T..T?)>..kotlin.collections.Collection<(T..T?)>?)): (T..T?) where T : (kotlin.Comparable<(T..T?)>..kotlin.Comparable<(T..T?)>?) defined in java.util.Collections"
 // EXPECT_VARIANT_IN_ORDER "public inline fun min(a: kotlin.Double, b: kotlin.Double): kotlin.Double defined in kotlin.math"
