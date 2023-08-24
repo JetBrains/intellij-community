@@ -1,6 +1,18 @@
 <component name="libraryTable">
   <library name="jts-io-common" type="repository">
-    <properties maven-id="org.locationtech.jts.io:jts-io-common:1.17.1" />
+    <properties maven-id="org.locationtech.jts.io:jts-io-common:1.17.1">
+      <verification>
+        <artifact url="file://$MAVEN_REPOSITORY$/org/locationtech/jts/io/jts-io-common/1.17.1/jts-io-common-1.17.1.jar">
+          <sha256sum>42ff95af7ef122ee875495cdb0eb342ad686813b4d8035376d43f51581d78885</sha256sum>
+        </artifact>
+        <artifact url="file://$MAVEN_REPOSITORY$/com/googlecode/json-simple/json-simple/1.1.1/json-simple-1.1.1.jar">
+          <sha256sum>4e69696892b88b41c55d49ab2fdcc21eead92bf54acc588c0050596c3b75199c</sha256sum>
+        </artifact>
+        <artifact url="file://$MAVEN_REPOSITORY$/org/locationtech/jts/jts-core/1.17.1/jts-core-1.17.1.jar">
+          <sha256sum>5f87419b7b0104d9ae3ea1648340241495d2c3a1d3e7f44e678641e0b46e8b9e</sha256sum>
+        </artifact>
+      </verification>
+    </properties>
     <CLASSES>
       <root url="jar://$MAVEN_REPOSITORY$/org/locationtech/jts/io/jts-io-common/1.17.1/jts-io-common-1.17.1.jar!/" />
       <root url="jar://$MAVEN_REPOSITORY$/com/googlecode/json-simple/json-simple/1.1.1/json-simple-1.1.1.jar!/" />

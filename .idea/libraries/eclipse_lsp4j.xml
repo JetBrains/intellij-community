@@ -1,6 +1,12 @@
 <component name="libraryTable">
   <library name="eclipse.lsp4j" type="repository">
-    <properties include-transitive-deps="false" maven-id="org.eclipse.lsp4j:org.eclipse.lsp4j:0.19.0" />
+    <properties include-transitive-deps="false" maven-id="org.eclipse.lsp4j:org.eclipse.lsp4j:0.19.0">
+      <verification>
+        <artifact url="file://$MAVEN_REPOSITORY$/org/eclipse/lsp4j/org.eclipse.lsp4j/0.19.0/org.eclipse.lsp4j-0.19.0.jar">
+          <sha256sum>d432390fd296f862f8813d6a8f0559bde3a5e4a54e123b7ab970f0b05ce2f128</sha256sum>
+        </artifact>
+      </verification>
+    </properties>
     <CLASSES>
       <root url="jar://$MAVEN_REPOSITORY$/org/eclipse/lsp4j/org.eclipse.lsp4j/0.19.0/org.eclipse.lsp4j-0.19.0.jar!/" />
     </CLASSES>
