@@ -332,6 +332,12 @@
     <registryKey key="maven.import.compiler.arguments" defaultValue="true"
                  description="Enable importing of the maven compiler plugin arguments"/>
 
+    <registryKey key="maven.import.keep.existing.module.names" defaultValue="true"
+                 description="Keep existing module names after maven project reimport"/>
+
+    <registryKey key="maven.import.module.name.template" defaultValue="artifactId"
+                 description="Defines how IntelliJ IDEA modules are named. Possible values: artifactId, groupId.artifactId, folderName"/>
+
     <registryKey key="maven.create.dummy.module.on.first.import" defaultValue="true"
                  description="Create maven dummy module on import"/>
 

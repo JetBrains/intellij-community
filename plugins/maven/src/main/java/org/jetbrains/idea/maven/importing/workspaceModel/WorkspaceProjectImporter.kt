@@ -25,6 +25,7 @@ import com.intellij.openapi.util.UserDataHolder
 import com.intellij.openapi.util.UserDataHolderBase
 import com.intellij.openapi.util.UserDataHolderEx
 import com.intellij.openapi.util.io.FileUtil
+import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.platform.backend.workspace.WorkspaceModel
@@ -216,11 +217,16 @@ internal class WorkspaceProjectImporter(
 
   private fun buildModuleNameMap(mavenModuleEntities: Sequence<ExternalSystemModuleOptionsEntity>,
                                  projectToImport: Map<MavenProject, MavenProjectChanges>): Map<MavenProject, String> {
-    val existingModuleNames = mavenModuleEntities.filter { it.externalSystem == SerializationConstants.MAVEN_EXTERNAL_SOURCE_ID }
-      .filter { it.linkedProjectId != null }
-      .associate { LocalFileSystem.getInstance().findFileByPath(it.linkedProjectId!!) to it.module.name }
-      .filterKeys { it != null }
-      .mapKeys { it.key!! }
+    val keepExistingModuleNames = Registry.`is`("maven.import.keep.existing.module.names")
+    val existingModuleNames =
+      if (keepExistingModuleNames)
+        mavenModuleEntities.filter { it.externalSystem == SerializationConstants.MAVEN_EXTERNAL_SOURCE_ID }
+          .filter { it.linkedProjectId != null }
+          .associate { LocalFileSystem.getInstance().findFileByPath(it.linkedProjectId!!) to it.module.name }
+          .filterKeys { it != null }
+          .mapKeys { it.key!! }
+      else
+        mapOf()
 
     return MavenModuleNameMapper.mapModuleNames(projectToImport.keys, existingModuleNames)
   }

@@ -1,6 +1,7 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.maven.importing;
 
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
@@ -79,10 +80,16 @@ public final class MavenModuleNameMapper {
     return mavenProjectToModuleName;
   }
 
-  public static String getDefaultModuleName(@NotNull MavenProject mavenProject) {
-    String name = mavenProject.getMavenId().getArtifactId();
-    if (!isValidName(name)) name = mavenProject.getDirectoryFile().getName();
-    return name;
+  private static String getDefaultModuleName(@NotNull MavenProject mavenProject) {
+    var nameTemplate = Registry.stringValue("maven.import.module.name.template");
+    var folderName = mavenProject.getDirectoryFile().getName();
+    var mavenId = mavenProject.getMavenId();
+    var nameCandidate = switch (nameTemplate) {
+      case "folderName" -> folderName;
+      case "groupId.artifactId" -> mavenId.getGroupId() + "." + mavenId.getArtifactId();
+      default -> mavenId.getArtifactId();
+    };
+    return isValidName(nameCandidate) ? nameCandidate : folderName;
   }
 
   private static boolean isValidName(String name) {
