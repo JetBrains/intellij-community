@@ -10,7 +10,7 @@ import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.load.java.JvmAbi
 import org.jetbrains.kotlin.name.ClassId
 import org.jetbrains.kotlin.name.FqName
-import org.jetbrains.kotlin.name.JvmNames
+import org.jetbrains.kotlin.name.JvmStandardClassIds
 import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.containingClassOrObject
@@ -101,7 +101,7 @@ object KotlinPsiHeuristics {
 
     @JvmStatic
     fun getPackageName(file: KtFile): FqName? {
-        val entry = JvmFileClassUtil.findAnnotationEntryOnFileNoResolve(file, JvmNames.JVM_PACKAGE_NAME_SHORT) ?: return null
+        val entry = JvmFileClassUtil.findAnnotationEntryOnFileNoResolve(file, JvmStandardClassIds.JVM_PACKAGE_NAME_SHORT) ?: return null
         val customPackageName = JvmFileClassUtil.getLiteralStringFromAnnotation(entry)
         if (customPackageName != null) {
             return FqName(customPackageName)
