@@ -8,111 +8,76 @@ import com.intellij.ide.navbar.NavBarItem
 import com.intellij.ide.navbar.NavBarItemPresentation
 import com.intellij.ide.navbar.ide.NavBarVmImpl
 import com.intellij.ide.navbar.ide.NavBarVmItem
-import com.intellij.ide.navbar.ide.toVmItems
-import com.intellij.ide.navbar.impl.DefaultNavBarItem
 import com.intellij.ide.navbar.ui.StaticNavBarPanel
 import com.intellij.ide.navbar.vm.NavBarVm
+import com.intellij.model.Pointer
 import com.intellij.openapi.application.EDT
-import com.intellij.openapi.application.readAction
 import com.intellij.openapi.project.Project
+import com.intellij.ui.SimpleTextAttributes.REGULAR_ATTRIBUTES
 import com.intellij.ui.components.JBPanel
-import com.intellij.util.ObjectUtils
 import com.intellij.util.ui.update.Activatable
 import com.intellij.util.ui.update.UiNotifyConnector
 import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.BufferOverflow
-import kotlinx.coroutines.channels.Channel
-import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.flow.*
 import java.awt.BorderLayout
-import java.awt.Window
-import java.util.function.Supplier
-import javax.swing.JComponent
+import java.awt.Component
+import java.util.*
 
-internal class ServiceViewNavBarPanel(project: Project,
-                                      private val cs: CoroutineScope,
-                                      private val viewModel: ServiceViewModel,
-                                      private val selector: ServiceViewNavBarSelector) :
-  JBPanel<ServiceViewNavBarPanel>(BorderLayout()), Activatable {
+internal class ServiceViewNavBarPanel(
+  project: Project,
+  private val cs: CoroutineScope,
+  private val viewModel: ServiceViewModel,
+  private val selector: ServiceViewNavBarSelector,
+) : JBPanel<ServiceViewNavBarPanel>(BorderLayout()) {
 
-  private val delegate: StaticNavBarPanel
+  private val visible: StateFlow<Boolean> = trackVisibility(this)
   private val updateRequests: MutableSharedFlow<Unit> = MutableSharedFlow(replay = 1, onBufferOverflow = BufferOverflow.DROP_OLDEST)
-  private val root = ServiceViewNavBarRoot(ObjectUtils.sentinel("ServiceViewNavBarRoot"))
-
-  @Volatile
-  private var visible = true
-  private val listeners = ArrayList<Supplier<Unit>>()
+  private val root = ServiceViewRootNavBarItem(viewModel)
+  private val _vm: MutableStateFlow<NavBarVm?> = MutableStateFlow(null)
+  val model: NavBarVm? get() = _vm.value
 
   init {
-    val provider: suspend (CoroutineScope, Window, JComponent) -> NavBarVm = { scope, _, _ ->
-      NavBarVmImpl(scope, getDefaultModel(), contextItems(), ::requestNavigation) { getChildren(it) }
-    }
-    delegate = StaticNavBarPanel(project, cs, provider)
-    add(delegate, BorderLayout.CENTER)
-
-    UiNotifyConnector.installOn(this, object : Activatable {
-      override fun showNotify() {
-        visible = true
-      }
-
-      override fun hideNotify() {
-        visible = false
-        notifyListeners()
-      }
-    }, false)
-
+    add(StaticNavBarPanel(project, cs, _vm), BorderLayout.CENTER)
     cs.launch {
-      channelFlow {
-        listeners.add {
-          trySend(Unit)
+      visible.collectLatest {
+        if (it) {
+          handleVisible()
         }
-        awaitClose()
-      }
-        .buffer(Channel.CONFLATED)
-        .collect(updateRequests)
-    }
-  }
-
-  fun updateModel() {
-    if (visible) {
-      notifyListeners()
-    }
-  }
-
-  fun getModel(): NavBarVm? = delegate.model
-
-  private fun notifyListeners() {
-    for (listener in listeners) {
-      listener.get()
-    }
-  }
-
-  private fun requestNavigation(item: NavBarVmItem) {
-    cs.launch {
-      val serviceItem = (item.pointer.dereference() as? ServiceViewNavBarItem)?.data ?: return@launch
-      withContext(Dispatchers.EDT) {
-        selector.select(serviceItem)
       }
     }
   }
 
-  private suspend fun getDefaultModel(): List<NavBarVmItem> = readAction { getItems().toVmItems() }
+  private suspend fun handleVisible(): Nothing = supervisorScope {
+    val vm = NavBarVmImpl(
+      this@supervisorScope,
+      initialItems = getItems(),
+      contextItems = contextItems(),
+    )
+    vm.activationRequests.onEach(::requestNavigation).launchIn(this)
+    _vm.value = vm
+    try {
+      awaitCancellation()
+    }
+    finally {
+      _vm.value = null
+    }
+  }
 
   private fun contextItems(): Flow<List<NavBarVmItem>> {
     @OptIn(ExperimentalCoroutinesApi::class)
     return updateRequests.transformLatest {
-      val path = getItems()
-      emit(readAction { path.toVmItems() })
+      emit(getItems())
     }
   }
 
-  private fun getItems(): List<NavBarItem> {
-    val path = ArrayList<NavBarItem>()
-    var item = if (visible) selector.getSelectedItem() else null
+  private fun getItems(): List<NavBarVmItem> {
+    val path = ArrayList<NavBarVmItem>()
+    var item = selector.getSelectedItem()
     if (item != null) {
       val roots = viewModel.visibleRoots
       do {
-        path.add(ServiceViewNavBarItem(item!!))
+        path.add(ServiceViewNavBarItem(viewModel, item!!))
         item = if (roots.contains(item)) null else item.parent
       }
       while (item != null)
@@ -122,32 +87,104 @@ internal class ServiceViewNavBarPanel(project: Project,
     return path
   }
 
-  private fun getChildren(item: NavBarItem): List<NavBarItem> {
-    if (item == root) {
-      return viewModel.visibleRoots.map { ServiceViewNavBarItem(it) }
+  fun updateModel() {
+    updateRequests.tryEmit(Unit)
+  }
+
+  private fun requestNavigation(pointer: Pointer<out NavBarItem>) {
+    cs.launch(Dispatchers.EDT) {
+      (pointer as? ServiceViewNavBarItem)?.item?.let {
+        selector.select(it)
+      }
     }
-    val serviceViewItem = (item as? ServiceViewNavBarItem)?.data ?: return emptyList()
+  }
+}
+
+private fun trackVisibility(component: Component): StateFlow<Boolean> {
+  val visible = MutableStateFlow(true)
+  UiNotifyConnector.installOn(component, object : Activatable {
+
+    override fun showNotify() {
+      visible.value = true
+    }
+
+    override fun hideNotify() {
+      visible.value = false
+    }
+  }, false)
+  return visible
+}
+
+private class ServiceViewRootNavBarItem(
+  private val viewModel: ServiceViewModel,
+) : NavBarVmItem,
+    NavBarItem,
+    Pointer<ServiceViewRootNavBarItem> {
+
+  override fun equals(other: Any?): Boolean {
+    return this === other || other is ServiceViewRootNavBarItem && viewModel == other.viewModel
+  }
+
+  override fun hashCode(): Int {
+    return viewModel.hashCode()
+  }
+
+  override fun createPointer(): Pointer<out ServiceViewRootNavBarItem> = this
+  override val pointer: Pointer<out ServiceViewRootNavBarItem> get() = this
+  override fun dereference(): ServiceViewRootNavBarItem = this // hard pointer
+
+  override fun presentation(): NavBarItemPresentation = presentation
+  override val presentation: NavBarItemPresentation = NavBarItemPresentation(
+    AllIcons.Nodes.Services, "", null,
+    REGULAR_ATTRIBUTES,
+    REGULAR_ATTRIBUTES, false
+  )
+
+  override suspend fun children(): List<NavBarVmItem> {
+    return viewModel.visibleRoots.map {
+      ServiceViewNavBarItem(viewModel, it)
+    }
+  }
+}
+
+private class ServiceViewNavBarItem(
+  private val viewModel: ServiceViewModel,
+  val item: ServiceViewItem,
+) : NavBarItem,
+    NavBarVmItem,
+    Pointer<ServiceViewNavBarItem> {
+
+  override fun equals(other: Any?): Boolean {
+    return this === other || other is ServiceViewNavBarItem && viewModel == other.viewModel && item == other.item
+  }
+
+  override fun hashCode(): Int {
+    return Objects.hash(viewModel, item)
+  }
+
+  override fun createPointer(): Pointer<out NavBarItem> = this
+  override val pointer: Pointer<out NavBarItem> get() = this
+  override fun dereference(): ServiceViewNavBarItem = this // hard pointer
+
+  override fun presentation(): NavBarItemPresentation = presentation
+  override val presentation: NavBarItemPresentation = run {
+    val icon = item.getViewDescriptor().getPresentation().getIcon(false)
+    val text = ServiceViewDragHelper.getDisplayName(item.getViewDescriptor().getPresentation())
+    NavBarItemPresentation(icon, text, null, REGULAR_ATTRIBUTES, REGULAR_ATTRIBUTES, false)
+  }
+
+  override suspend fun children(): List<NavBarVmItem> {
+    val serviceViewItem = item
     if (serviceViewItem is ServiceModel.ServiceNode) {
       if (serviceViewItem.providingContributor != null && !serviceViewItem.isChildrenInitialized) {
-        viewModel.invoker.invoke(java.lang.Runnable {
+        viewModel.invoker.invoke(Runnable {
           serviceViewItem.getChildren() // initialize children on background thread
         })
         return emptyList()
       }
     }
-    return viewModel.getChildren(serviceViewItem).map { ServiceViewNavBarItem(it) }
-  }
-}
-
-private class ServiceViewNavBarRoot(data: Any) : DefaultNavBarItem<Any>(data) {
-  override fun presentation(): NavBarItemPresentation = NavBarItemPresentation(AllIcons.Nodes.Services, "", null,
-                                                                               getTextAttributes(false), getTextAttributes(true), false)
-}
-
-private class ServiceViewNavBarItem(item: ServiceViewItem): DefaultNavBarItem<ServiceViewItem>(item) {
-  override fun presentation(): NavBarItemPresentation {
-    val icon = data.getViewDescriptor().getPresentation().getIcon(false)
-    val text = ServiceViewDragHelper.getDisplayName(data.getViewDescriptor().getPresentation())
-    return NavBarItemPresentation(icon, text, null, getTextAttributes(false), getTextAttributes(true), false)
+    return viewModel.getChildren(serviceViewItem).map {
+      ServiceViewNavBarItem(viewModel, it)
+    }
   }
 }

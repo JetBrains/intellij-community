@@ -15,7 +15,7 @@ interface NavBarVmItem {
 
   val presentation: NavBarItemPresentation
 
-  val isModuleContentRoot: Boolean
+  val isModuleContentRoot: Boolean get() = false
 
   suspend fun children(): List<NavBarVmItem>?
 
