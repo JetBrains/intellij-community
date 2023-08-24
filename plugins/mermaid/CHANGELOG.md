@@ -3,6 +3,7 @@
 ## [Unreleased]
 
 ## 0.0.14
+- Updated an underlying Mermaid.js version to `10.3.1`
 - [MERMAID-8](https://youtrack.jetbrains.com/issue/MERMAID-8) Added support for Font Awesome icons in mind map diagrams
 - [MERMAID-15](https://youtrack.jetbrains.com/issue/MERMAID-15) Fixed incorrect diagram scaling after restoring from cache
 - [MERMAID-30](https://youtrack.jetbrains.com/issue/MERMAID-30) Added support for YAML language injections into diagram front matter
@@ -13,6 +14,10 @@
 - [MERMAID-92](https://youtrack.jetbrains.com/issue/MERMAID-92) Added more highlighting for Gantt diagram keywords  
 - [MERMAID-93](https://youtrack.jetbrains.com/issue/MERMAID-93) Added highlighting for the special states in state diagrams 
 - [MERMAID-94](https://youtrack.jetbrains.com/issue/MERMAID-94) Added highlighting for data types in class and ER diagrams
+- [MERMAID-105](https://youtrack.jetbrains.com/issue/MERMAID-105) Fixed formatting of graph vertices with HTML markup
+- [MERMAID-106](https://youtrack.jetbrains.com/issue/MERMAID-106) Fixed Git graph rendering in Markdown files when there are custom styles present in the document 
+- [MERMAID-107](https://youtrack.jetbrains.com/issue/MERMAID-107) Fixed incorrect warnings for unresolved branches in Git graph
+- [MERMAID-109](https://youtrack.jetbrains.com/issue/MERMAID-109) Added support for keywords inside flowchart nodes
 
 ## 0.0.13
 - [MERMAID-67](https://youtrack.jetbrains.com/issue/MERMAID-67) Fixed parsing of signals surrounded by spaces in sequence diagrams
