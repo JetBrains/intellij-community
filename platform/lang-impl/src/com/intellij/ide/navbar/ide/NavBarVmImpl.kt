@@ -3,7 +3,6 @@ package com.intellij.ide.navbar.ide
 
 import com.intellij.ide.navbar.NavBarItem
 import com.intellij.ide.navbar.NavBarItemPresentation
-import com.intellij.ide.navbar.impl.children
 import com.intellij.ide.navbar.vm.NavBarItemVm
 import com.intellij.ide.navbar.vm.NavBarPopupVm
 import com.intellij.ide.navbar.vm.NavBarVm
@@ -130,7 +129,7 @@ internal class NavBarVmImpl(
       return
     }
     val items = _items.value
-    val children = items[index].item.childItems() ?: return
+    val children = items[index].item.children() ?: return
     if (children.isEmpty()) {
       return
     }
@@ -218,7 +217,7 @@ private sealed interface ExpandResult {
 private suspend fun autoExpand(child: NavBarVmItem): ExpandResult? {
   var expanded = emptyList<NavBarVmItem>()
   var currentItem = child
-  var (children, navigateOnClick) = currentItem.childItemsAndNavigation() ?: return null
+  var (children, navigateOnClick) = currentItem.expand() ?: return null
 
   if (children.isEmpty() || navigateOnClick) {
     return ExpandResult.NavigateTo(currentItem)
@@ -250,9 +249,9 @@ private suspend fun autoExpand(child: NavBarVmItem): ExpandResult? {
           // Performing auto-expand, keeping invariant
           expanded = expanded + currentItem
           currentItem = children.single()
-          val fetch = currentItem.childItemsAndNavigation() ?: return null
-          children = fetch.first
-          navigateOnClick = fetch.second
+          val fetch = currentItem.expand() ?: return null
+          children = fetch.children
+          navigateOnClick = fetch.navigateOnClick
         }
       }
       else -> {
@@ -261,20 +260,4 @@ private suspend fun autoExpand(child: NavBarVmItem): ExpandResult? {
       }
     }
   }
-}
-
-private suspend fun NavBarVmItem.childItems(): List<NavBarVmItem>? {
-  return fetch {
-    childItems()
-  }
-}
-
-private suspend fun NavBarVmItem.childItemsAndNavigation(): Pair<List<NavBarVmItem>, Boolean>? {
-  return fetch {
-    Pair(childItems(), navigateOnClick())
-  }
-}
-
-private fun NavBarItem.childItems(): List<NavBarVmItem> {
-  return children().toVmItems()
 }

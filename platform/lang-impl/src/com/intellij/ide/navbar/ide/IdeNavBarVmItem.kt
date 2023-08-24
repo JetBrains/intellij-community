@@ -3,6 +3,8 @@ package com.intellij.ide.navbar.ide
 
 import com.intellij.ide.navbar.NavBarItem
 import com.intellij.ide.navbar.NavBarItemPresentation
+import com.intellij.ide.navbar.ide.NavBarVmItem.ItemExpandResult
+import com.intellij.ide.navbar.impl.children
 import com.intellij.ide.navbar.impl.isModuleContentRoot
 import com.intellij.model.Pointer
 import com.intellij.openapi.application.readAction
@@ -22,6 +24,22 @@ internal class IdeNavBarVmItem @RequiresReadLock constructor(
   override val presentation: NavBarItemPresentation = item.presentation()
 
   override val isModuleContentRoot: Boolean = item.isModuleContentRoot()
+
+  override suspend fun children(): List<NavBarVmItem>? {
+    return fetch {
+      childItems()
+    }
+  }
+
+  override suspend fun expand(): ItemExpandResult? {
+    return fetch {
+      ItemExpandResult(childItems(), navigateOnClick())
+    }
+  }
+
+  private fun NavBarItem.childItems(): List<NavBarVmItem> {
+    return children().toVmItems()
+  }
 
   // Synthetic string field for fast equality heuristics
   // Used to match element's direct child in the navbar with the same child in its popup
@@ -45,7 +63,7 @@ internal class IdeNavBarVmItem @RequiresReadLock constructor(
   }
 }
 
-internal suspend fun <T> NavBarVmItem.fetch(selector: NavBarItem.() -> T): T? {
+private suspend fun <T> NavBarVmItem.fetch(selector: NavBarItem.() -> T): T? {
   return readAction {
     pointer.dereference()?.selector()
   }

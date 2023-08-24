@@ -16,4 +16,14 @@ interface NavBarVmItem {
   val presentation: NavBarItemPresentation
 
   val isModuleContentRoot: Boolean
+
+  suspend fun children(): List<NavBarVmItem>?
+
+  suspend fun expand(): ItemExpandResult? {
+    return children()?.let {
+      ItemExpandResult(children = it, navigateOnClick = false)
+    }
+  }
+
+  data class ItemExpandResult(val children: List<NavBarVmItem>, val navigateOnClick: Boolean)
 }
