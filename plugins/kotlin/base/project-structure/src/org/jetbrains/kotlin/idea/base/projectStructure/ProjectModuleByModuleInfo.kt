@@ -94,7 +94,7 @@ open class KtSourceModuleByModuleInfo(private val moduleInfo: ModuleSourceInfo) 
 @ApiStatus.Internal
 class KtSourceModuleByModuleInfoForOutsider(
     val fakeVirtualFile: VirtualFile,
-    val originalVirtualFile: VirtualFile,
+    val originalVirtualFile: VirtualFile?,
     moduleInfo: ModuleSourceInfo,
 ) : KtSourceModuleByModuleInfo(moduleInfo) {
     override fun equals(other: Any?): Boolean {

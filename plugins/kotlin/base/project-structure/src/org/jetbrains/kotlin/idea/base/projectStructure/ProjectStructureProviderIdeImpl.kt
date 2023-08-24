@@ -18,6 +18,7 @@ import org.jetbrains.kotlin.analysis.providers.KotlinModificationTrackerFactory
 import org.jetbrains.kotlin.analyzer.ModuleInfo
 import org.jetbrains.kotlin.idea.base.projectStructure.moduleInfo.*
 import org.jetbrains.kotlin.idea.base.util.getOutsiderFileOrigin
+import org.jetbrains.kotlin.idea.base.util.isOutsiderFile
 import org.jetbrains.kotlin.psi.KtFile
 
 @ApiStatus.Internal
@@ -104,11 +105,9 @@ private fun calculateKtModule(psiElement: PsiElement): KtModule {
     val moduleInfo = ModuleInfoProvider.getInstance(project).firstOrNull(psiElement, config)
         ?: NotUnderContentRootModuleInfo(project, psiElement.containingFile as? KtFile)
 
-    if (virtualFile != null && moduleInfo is ModuleSourceInfo) {
+    if (virtualFile != null && isOutsiderFile(virtualFile) && moduleInfo is ModuleSourceInfo) {
         val originalFile = getOutsiderFileOrigin(project, virtualFile)
-        if (originalFile != null) {
-            return KtSourceModuleByModuleInfoForOutsider(virtualFile, originalFile, moduleInfo)
-        }
+        return KtSourceModuleByModuleInfoForOutsider(virtualFile, originalFile, moduleInfo)
     }
 
     return ProjectStructureProviderIdeImpl.getKtModuleByModuleInfo(moduleInfo)
