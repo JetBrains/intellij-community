@@ -84,7 +84,7 @@ public final class FSRecordsImpl {
   //TODO RC: temporary false, must be LOCK_FREE_PAGE_CACHE_ENABLED by default (and eventually just true)
   public static final boolean USE_ATTRIBUTES_OVER_NEW_FILE_PAGE_CACHE = getBooleanProperty("vfs.attributes-storage.use-lock-free-page-cache", false);
 
-  public static final boolean USE_FAST_NAMES_IMPLEMENTATION = getBooleanProperty("vfs.use-fast-names-enumerator", false);
+  public static final boolean USE_FAST_NAMES_IMPLEMENTATION = getBooleanProperty("vfs.use-fast-names-enumerator", true);
   private static final boolean USE_FILE_NAME_CACHE = getBooleanProperty("vfs.name-cache.enable", true);
   private static final boolean USE_MRU_FILE_NAME_CACHE = getBooleanProperty("vfs.name-cache.use-mru", false);
 
