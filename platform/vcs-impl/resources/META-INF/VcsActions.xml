@@ -429,6 +429,7 @@
     <group id="Vcs.Diff.Commit.KeymapGroup" searchable="false">
       <action id="Vcs.Diff.IncludeChangedLinesIntoCommit" class="com.intellij.openapi.actionSystem.EmptyAction"/>
       <action id="Vcs.Diff.ExcludeChangedLinesFromCommit" class="com.intellij.openapi.actionSystem.EmptyAction"/>
+      <action id="Vcs.Diff.IncludeWholeChangedLinesIntoCommit" class="com.intellij.openapi.actionSystem.EmptyAction"/>
 
       <add-to-group group-id="Diff.KeymapGroup" relative-to-action="Diff.ResolveConflict" anchor="after"/>
     </group>

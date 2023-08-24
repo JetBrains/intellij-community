@@ -82,7 +82,7 @@ import java.util.function.IntUnaryOperator;
 public class UnifiedDiffViewer extends ListenerDiffViewerBase implements DifferencesLabel.DifferencesCounter {
   @NotNull protected final EditorEx myEditor;
   @NotNull protected final Document myDocument;
-  @NotNull private final UnifiedDiffPanel myPanel;
+  @NotNull protected final UnifiedDiffPanel myPanel;
   @NotNull private final OnesideContentPanel myContentPanel;
 
   @NotNull private final SetEditorSettingsAction myEditorSettingsAction;
