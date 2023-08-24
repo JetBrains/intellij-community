@@ -613,7 +613,7 @@ public abstract class DialogWrapper {
     return buttons;
   }
 
-  protected @NotNull JPanel createSouthPanel(@NotNull List<? extends JButton> leftSideButtons,
+  private @NotNull JPanel createSouthPanel(@NotNull List<? extends JButton> leftSideButtons,
                                            @NotNull List<? extends JButton> rightSideButtons,
                                            boolean addHelpToLeftSide) {
     JPanel panel = new SouthPanel(getStyle());

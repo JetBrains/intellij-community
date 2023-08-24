@@ -12,7 +12,6 @@ import com.intellij.ide.ui.laf.darcula.ui.DarculaButtonUI
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.DialogWrapper
 import com.intellij.ui.ClientProperty
-import com.intellij.util.application
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.components.BorderLayoutPanel
@@ -86,20 +85,9 @@ class TransferSettingsDialog(val project: Project,
   }
 
   override fun createSouthPanel(): JComponent {
-    val panel = super.createSouthPanel()
-    getButton(importAction)?.let {
-      ClientProperty.put(it, DarculaButtonUI.DEFAULT_STYLE_KEY, true)
-    }
+    val buttons = super.createSouthPanel()
 
-    return panel
-  }
-
-  override fun createSouthPanel(leftSideButtons: MutableList<out JButton>,
-                                rightSideButtons: MutableList<out JButton>,
-                                addHelpToLeftSide: Boolean): JPanel {
-    val buttons = super.createSouthPanel(leftSideButtons, rightSideButtons, addHelpToLeftSide)
-
-    return BorderLayoutPanel().apply {
+    val panel = BorderLayoutPanel().apply {
       addToCenter(BorderLayoutPanel().apply {
         border = JBUI.Borders.emptyTop(3)
         addToLeft(Box.createHorizontalGlue())
@@ -109,8 +97,13 @@ class TransferSettingsDialog(val project: Project,
         addToRight(progressBar)
       })
       addToRight(buttons)
-
     }
+
+    getButton(importAction)?.let {
+      ClientProperty.put(it, DarculaButtonUI.DEFAULT_STYLE_KEY, true)
+    }
+
+    return panel
   }
 
   override fun createActions(): Array<Action> {
