@@ -54,7 +54,7 @@ internal fun CoroutineScope.scheduleInitUi(initAwtToolkitJob: Job, isHeadless: B
     }
   }
 
-  val task = launch {
+  return launch {
     initAwtToolkitJob.join()
     iconManagerActivateJob.join()
     // SwingDispatcher must be used after Toolkit init
@@ -62,9 +62,12 @@ internal fun CoroutineScope.scheduleInitUi(initAwtToolkitJob: Job, isHeadless: B
       initLafAndScale(isHeadless)
     }
   }
+}
 
+internal suspend fun patchHtmlStyle(initLafJob: Job) {
+  initLafJob.join()
   // separate task - allow other UI tasks to be executed (e.g., show splash)
-  launch(RawSwingDispatcher) {
+  withContext(RawSwingDispatcher) {
     val uiDefaults = span("app-specific laf state initialization") { UIManager.getDefaults() }
     span("html style patching") {
       // create a separate copy for each case
@@ -77,8 +80,6 @@ internal fun CoroutineScope.scheduleInitUi(initAwtToolkitJob: Job, isHeadless: B
       }
     }
   }
-
-  return task
 }
 
 private suspend fun initLafAndScale(isHeadless: Boolean) {
