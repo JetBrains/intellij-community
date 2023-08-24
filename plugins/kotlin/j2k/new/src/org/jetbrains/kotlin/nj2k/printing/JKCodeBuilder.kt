@@ -736,13 +736,12 @@ internal class JKCodeBuilder(context: NewJ2kConverterContext) {
         }
 
         override fun visitLambdaExpressionRaw(lambdaExpression: JKLambdaExpression) {
-            val printLambda = {
+            fun printLambda() {
                 printer.par(ParenthesisKind.CURVED) {
-                    if (lambdaExpression.statement.statements.size > 1)
-                        printer.println()
-                    printer.renderList(lambdaExpression.parameters) {
-                        it.accept(this)
-                    }
+                    val isMultiStatement = lambdaExpression.statement.statements.size > 1
+                    if (isMultiStatement) printer.println()
+
+                    printer.renderList(lambdaExpression.parameters) { it.accept(this) }
                     if (lambdaExpression.parameters.isNotEmpty()) {
                         printer.printWithSurroundingSpaces("->")
                     }
@@ -753,15 +752,15 @@ internal class JKCodeBuilder(context: NewJ2kConverterContext) {
                     } else {
                         statement.accept(this)
                     }
-                    if (lambdaExpression.statement.statements.size > 1) {
-                        printer.println()
-                    }
+
+                    if (isMultiStatement) printer.println()
                 }
             }
+
             if (lambdaExpression.functionalType.present()) {
                 printer.renderType(lambdaExpression.functionalType.type, lambdaExpression)
                 printer.print(" ")
-                printer.par(ParenthesisKind.ROUND, printLambda)
+                printer.par(ParenthesisKind.ROUND, ::printLambda)
             } else {
                 printLambda()
             }
