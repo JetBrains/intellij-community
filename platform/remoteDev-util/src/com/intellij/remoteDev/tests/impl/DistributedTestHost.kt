@@ -327,13 +327,13 @@ open class DistributedTestHost(coroutineScope: CoroutineScope) {
         }
       }
 
-    LOG.info("'$actionTitle': Needed to be focused: '$windowToFocus'")
+    val windowString = "window '${windowToFocus.name}'"
     if (windowToFocus.isFocusAncestor()) {
-      LOG.info("'$actionTitle': Already focused")
+      LOG.info("'$actionTitle': window '$windowString' is already focused")
       return true
     }
     else {
-      LOG.info("'$actionTitle': Requesting project focus")
+      LOG.info("'$actionTitle': Requesting project focus for '$windowString'")
       ProjectUtil.focusProjectWindow(projectOrNull, true)
       if (!windowToFocus.isFocusAncestor()) {
         LOG.error("Failed to request the focus.")
