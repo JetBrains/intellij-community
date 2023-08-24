@@ -24,9 +24,9 @@ import kotlinx.coroutines.withContext
 import java.awt.Point
 import java.net.URL
 
-class GitWidgetStep : NewUiOnboardingStep {
-  private val generalVcsHelpTopic = "version-control-integration.html"
-  private val enableVcsHelpTopic = "enabling-version-control.html"
+open class GitWidgetStep : NewUiOnboardingStep {
+  protected open val generalVcsHelpTopic: String? = "version-control-integration.html"
+  protected open val enableVcsHelpTopic: String? = "enabling-version-control.html"
 
   override suspend fun performStep(project: Project, disposable: CheckedDisposable): NewUiOnboardingStepData? {
     val widget = NewUiOnboardingUtil.findUiComponent(project) { widget: ToolbarComboWidget ->
@@ -47,11 +47,15 @@ class GitWidgetStep : NewUiOnboardingStep {
       GitBundle.message("newUiOnboarding.git.widget.step.text.with.repo")
     }
     else GitBundle.message("newUiOnboarding.git.widget.step.text.no.repo")
-    val helpTopic = if (state is GitWidgetState.Repo) generalVcsHelpTopic else enableVcsHelpTopic
-    val ideHelpLink = NewUiOnboardingUtil.getHelpLink(helpTopic)
+
     val builder = GotItComponentBuilder(text)
       .withHeader(GitBundle.message("newUiOnboarding.git.widget.step.header"))
-      .withBrowserLink(NewUiOnboardingBundle.message("gotIt.learn.more"), URL(ideHelpLink))
+
+    val helpTopic = if (state is GitWidgetState.Repo) generalVcsHelpTopic else enableVcsHelpTopic
+    if (helpTopic != null) {
+      val ideHelpLink = NewUiOnboardingUtil.getHelpLink(helpTopic)
+      builder.withBrowserLink(NewUiOnboardingBundle.message("gotIt.learn.more"), URL(ideHelpLink))
+    }
 
     val popupPoint = Point(popup.content.width + JBUI.scale(4), JBUI.scale(32))
     val point = NewUiOnboardingUtil.convertPointToFrame(project, popup.content, popupPoint) ?: return null
