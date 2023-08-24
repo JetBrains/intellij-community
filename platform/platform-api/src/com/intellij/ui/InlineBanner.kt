@@ -57,9 +57,40 @@ open class InlineBanner(background: Color, private var myBorderColor: Color, ico
   }
 
   init {
+    myCloseButton = createInplaceButton(IdeBundle.message("editor.banner.close.tooltip"), ExpUiIcons.General.Close) {
+      close()
+    }
+
     val gap = JBUI.scale(8)
 
-    layout = BorderLayout(gap, gap)
+    layout = object : BorderLayout(gap, gap) {
+      @Suppress("OVERRIDE_DEPRECATION", "DEPRECATION")
+      override fun addLayoutComponent(name: String?, comp: Component) {
+        if (comp !== myCloseButton && comp !== myGearButton) {
+          super.addLayoutComponent(name, comp)
+        }
+      }
+
+      override fun layoutContainer(target: Container) {
+        super.layoutContainer(target)
+
+        val y = JBUI.scale(9)
+        var x = target.width - JBUI.scale(7)
+
+        if (myCloseButton.isVisible) {
+          val size = myCloseButton.preferredSize
+          x -= size.width
+          myCloseButton.setBounds(x, y, size.width, size.height)
+          x -= JBUI.scale(2)
+        }
+        if (myGearButton != null) {
+          val size = myGearButton!!.preferredSize
+          x -= size.width
+          myGearButton!!.setBounds(x, y, size.width, size.height)
+        }
+      }
+    }
+
     border = JBUI.Borders.empty(12)
     isOpaque = true
     this.background = background
@@ -84,23 +115,17 @@ open class InlineBanner(background: Color, private var myBorderColor: Color, ico
       myMessage.caretPosition = 0
     }
 
-    myCloseButton = createInplaceButton(IdeBundle.message("editor.banner.close.tooltip"), ExpUiIcons.General.Close) {
-      close()
-    }
+    add(myCloseButton)
 
     val titlePanel = JPanel(BorderLayout())
     titlePanel.isOpaque = false
     titlePanel.add(myMessage)
     centerPanel.add(titlePanel)
 
-    myButtonPanel = JPanel(HorizontalLayout(JBUI.scale(2)))
+    myButtonPanel = JPanel()
     myButtonPanel.isOpaque = false
-    myButtonPanel.add(myCloseButton)
-
-    val buttonPanel = JPanel(BorderLayout())
-    buttonPanel.isOpaque = false
-    buttonPanel.add(myButtonPanel, BorderLayout.NORTH)
-    titlePanel.add(buttonPanel, BorderLayout.EAST)
+    updateButtonsSize()
+    titlePanel.add(myButtonPanel, BorderLayout.EAST)
 
     myActionPanel = JPanel(DropDownActionLayout(HorizontalLayout(JBUI.scale(16))))
     myActionPanel.isOpaque = false
@@ -171,6 +196,7 @@ open class InlineBanner(background: Color, private var myBorderColor: Color, ico
 
   fun showCloseButton(visible: Boolean): InlineBanner {
     myCloseButton.isVisible = visible
+    updateButtonsSize()
     return this
   }
 
@@ -193,22 +219,28 @@ open class InlineBanner(background: Color, private var myBorderColor: Color, ico
   }
 
   fun setGearAction(tooltip: @Nls String, action: Runnable): InlineBanner {
-    val oldButton = myGearButton
-    if (oldButton != null) {
-      myButtonPanel.remove(oldButton)
+    if (myGearButton != null) {
+      remove(myGearButton)
     }
 
-    val button = createInplaceButton(tooltip, AllIcons.General.GearPlain) {
+    myGearButton = createInplaceButton(tooltip, AllIcons.General.GearPlain) {
       action.run()
     }
-    myButtonPanel.add(button, 0)
-    myGearButton = button
-
-    val layout = myButtonPanel.layout as HorizontalLayout
-    layout.removeLayoutComponent(myCloseButton)
-    layout.addLayoutComponent(myCloseButton, null)
+    add(myGearButton)
+    updateButtonsSize()
 
     return this
+  }
+
+  private fun updateButtonsSize() {
+    var buttons = 0
+    if (myCloseButton.isVisible) {
+      buttons++
+    }
+    if (myGearButton != null) {
+      buttons++
+    }
+    myButtonPanel.preferredSize = JBDimension(buttons * 22, 16)
   }
 
   override fun paintComponent(g: Graphics) {
