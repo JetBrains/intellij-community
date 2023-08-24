@@ -4,7 +4,7 @@ package com.intellij.jarRepository
 import com.intellij.codeInsight.ExternalAnnotationsArtifactsResolver
 import com.intellij.codeInsight.externalAnnotation.location.AnnotationsLocation
 import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.application.runWriteAction
+import com.intellij.openapi.application.WriteAction
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.AnnotationOrderRootType
@@ -20,6 +20,7 @@ import com.intellij.platform.workspace.jps.entities.LibraryRootTypeId
 import com.intellij.platform.workspace.jps.entities.modifyEntity
 import com.intellij.platform.workspace.storage.MutableEntityStorage
 import com.intellij.platform.workspace.storage.url.VirtualFileUrlManager
+import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.intellij.workspaceModel.ide.getInstance
 import com.intellij.workspaceModel.ide.impl.legacyBridge.library.LibraryBridge
 import com.intellij.workspaceModel.ide.impl.legacyBridge.library.ProjectLibraryTableBridgeImpl.Companion.findLibraryEntity
@@ -61,53 +62,29 @@ class ExternalAnnotationsRepositoryResolver : ExternalAnnotationsArtifactsResolv
     }
 
     ApplicationManager.getApplication().invokeAndWait {
-      updateLibrary(roots, mavenLibDescriptor, library)
+      updateLibrary(roots, library)
     }
 
     return !roots.isNullOrEmpty()
   }
 
   override fun resolve(project: Project, library: Library, location: AnnotationsLocation): Boolean {
-    val descriptor = JpsMavenRepositoryLibraryDescriptor(location.groupId, location.artifactId, location.version, false)
-    val repos = if (location.repositoryUrls.isNotEmpty()) {
-      location.repositoryUrls.mapIndexed { index, url ->
-        val someUniqueId = "id_${url.hashCode()}_$index"
-        RemoteRepositoryDescription(someUniqueId, "name", url)
-      }
-    }
-    else {
-      null
-    }
-
-    val roots = JarRepositoryManager
-                  .loadDependenciesSync(project, descriptor, setOf(ArtifactKind.ANNOTATIONS), repos, null)
+    val roots = resolveNewOrderRoots(location, project)
 
     if (roots.isNullOrEmpty()) {
       return false
     }
 
-    ApplicationManager.getApplication().invokeAndWait { updateLibrary(roots, descriptor, library) }
+    ApplicationManager.getApplication().invokeAndWait { updateLibrary(roots, library) }
     return true
   }
 
   override fun resolve(project: Project, library: Library, location: AnnotationsLocation, diff: MutableEntityStorage): Boolean {
-    val descriptor = JpsMavenRepositoryLibraryDescriptor(location.groupId, location.artifactId, location.version, false)
-    val repos = if (location.repositoryUrls.isNotEmpty()) {
-      location.repositoryUrls.mapIndexed { index, url ->
-        val someUniqueId = "id_${url.hashCode()}_$index"
-        RemoteRepositoryDescription(someUniqueId, "name", url)
-      }
-    }
-    else {
-      null
-    }
-
     if (library !is LibraryBridge || library.isDisposed) {
-      return true;
+      return true
     }
 
-    val newRoots = JarRepositoryManager
-      .loadDependenciesSync(project, descriptor, setOf(ArtifactKind.ANNOTATIONS), repos, null)
+    val newRoots = resolveNewOrderRoots(location, project)
 
     if (newRoots.isNullOrEmpty()) {
       return false
@@ -141,6 +118,27 @@ class ExternalAnnotationsRepositoryResolver : ExternalAnnotationsArtifactsResolv
     return true
   }
 
+  private fun resolveNewOrderRoots(location: AnnotationsLocation,
+                         project: Project): List<OrderRoot>? {
+    val descriptor = JpsMavenRepositoryLibraryDescriptor(location.groupId, location.artifactId, location.version, false)
+    val repos = if (location.repositoryUrls.isNotEmpty()) {
+      location.repositoryUrls.mapIndexed { index, url ->
+        val someUniqueId = "id_${url.hashCode()}_$index"
+        RemoteRepositoryDescription(someUniqueId, "name", url)
+      }
+    }
+    else {
+      null
+    }
+
+    val newRoots = JarRepositoryManager
+      .loadDependenciesSync(project, descriptor, setOf(ArtifactKind.ANNOTATIONS), repos, null)
+    if (newRoots.isNullOrEmpty()) {
+      LOG.info("No annotations found for [$descriptor]")
+    }
+    return newRoots
+  }
+
   override fun resolveAsync(project: Project, library: Library, mavenId: String?): Promise<Library> {
     val mavenLibDescriptor = extractDescriptor(mavenId, library, false) ?: return resolvedPromise(library)
 
@@ -165,39 +163,37 @@ class ExternalAnnotationsRepositoryResolver : ExternalAnnotationsArtifactsResolv
       }.thenAsync { roots ->
         val promise = AsyncPromise<Library>()
         ApplicationManager.getApplication().invokeLater {
-          updateLibrary(roots, mavenLibDescriptor, library)
+          updateLibrary(roots, library)
           promise.setResult(library)
         }
         promise
       }
   }
 
-  private fun updateLibrary(roots: MutableList<OrderRoot>?,
-                    mavenLibDescriptor: JpsMavenRepositoryLibraryDescriptor,
-                    library: Library) {
+  @RequiresEdt
+  private fun updateLibrary(roots: List<OrderRoot>?,
+                            library: Library) {
     if (library !is LibraryEx || library.isDisposed) return
-    if (roots.isNullOrEmpty()) {
-      LOG.info("No annotations found for [$mavenLibDescriptor]")
-    } else {
-        LOG.debug("Found ${roots.size} external annotations for ${library.name}")
-        val editor = ExistingLibraryEditor(library, null)
-        val type = AnnotationOrderRootType.getInstance()
-        val newUrls = roots.map { it.file.url }.toHashSet()
-        editor.getUrls(type).forEach {
-          if (!newUrls.contains(it)) {
-            editor.removeRoot(it, type)
-          } else {
-            newUrls.remove(it)
-          }
-        }
-        if (!newUrls.isEmpty()) {
-          editor.addRoots(roots.filter { newUrls.contains(it.file.url) })
-          runWriteAction {
-            editor.commit()
-          }
+    if (!roots.isNullOrEmpty()) {
+      LOG.debug("Found ${roots.size} external annotations for ${library.name}")
+      val editor = ExistingLibraryEditor(library, null)
+      val type = AnnotationOrderRootType.getInstance()
+      val newUrls = roots.map { it.file.url }.toHashSet()
+      editor.getUrls(type).forEach {
+        if (!newUrls.contains(it)) {
+          editor.removeRoot(it, type)
         } else {
-          Disposer.dispose(editor)
+          newUrls.remove(it)
         }
+      }
+      if (!newUrls.isEmpty()) {
+        editor.addRoots(roots.filter { newUrls.contains(it.file.url) })
+        WriteAction.run<Exception> {
+          editor.commit()
+        }
+      } else {
+        Disposer.dispose(editor)
+      }
     }
   }
 

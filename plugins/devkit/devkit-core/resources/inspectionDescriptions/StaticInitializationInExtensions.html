@@ -1,0 +1,10 @@
+<html>
+<body>
+Reports static initialization in <a href="https://plugins.jetbrains.com/docs/intellij/plugin-extensions.html">IDE extensions</a>.
+<p>
+  Static initialization is performed once the class is loaded, which may cause excessive classloading or early initialization of heavy resources.
+  Since IDE extensions are supposed to be cheap to create, they must not have static initializers.
+</p>
+<p><small>New in 2023.3</small>
+</body>
+</html>

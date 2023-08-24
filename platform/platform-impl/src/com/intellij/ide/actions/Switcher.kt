@@ -7,6 +7,9 @@ import com.intellij.ide.DataManager
 import com.intellij.ide.IdeBundle
 import com.intellij.ide.IdeEventQueue
 import com.intellij.ide.actions.OpenInRightSplitAction.Companion.openInRightSplit
+import com.intellij.ide.actions.SwitcherLogger.NAVIGATED_INDEX
+import com.intellij.ide.actions.SwitcherLogger.SHOWN_TIME_ACTIVITY
+import com.intellij.ide.actions.SwitcherLogger.STATE
 import com.intellij.ide.actions.SwitcherSpeedSearch.Companion.installOn
 import com.intellij.ide.actions.ui.JBListWithOpenInRightSplit
 import com.intellij.ide.lightEdit.LightEdit
@@ -101,6 +104,8 @@ object Switcher : BaseSwitcherAction(null) {
                       onlyEditedFiles: Boolean?,
                       forward: Boolean) : BorderLayoutPanel(), DataProvider, QuickSearchComponent, Disposable {
     val myPopup: JBPopup?
+    val activity = SHOWN_TIME_ACTIVITY.started(project)
+    private var navigationIndex = -1
     val toolWindows: JBList<SwitcherListItem>
     val files: JBList<SwitcherVirtualFile>
     val cbShowOnlyEditedFiles: JCheckBox?
@@ -347,6 +352,12 @@ object Switcher : BaseSwitcherAction(null) {
 
     override fun dispose() {
       project.putUserData(SWITCHER_KEY, null)
+      activity.finished {
+        buildList {
+          STATE.with(navigationIndex != -1)
+          NAVIGATED_INDEX.with(navigationIndex)
+        }
+      }
     }
 
     val isOnlyEditedFilesShown: Boolean

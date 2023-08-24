@@ -7,8 +7,6 @@ import com.intellij.openapi.ui.DialogWrapper
 import com.intellij.ui.EditorNotificationPanel
 import com.intellij.ui.InlineBanner
 import com.intellij.ui.components.panels.VerticalLayout
-import com.intellij.util.ui.JBUI
-import java.awt.Dimension
 import javax.swing.JComponent
 import javax.swing.JPanel
 
@@ -19,8 +17,9 @@ class InlineBannerTestAction : DumbAwareAction() {
   override fun actionPerformed(e: AnActionEvent) {
     val dialog = object : DialogWrapper(e.project) {
       init {
-        setSize(500, 500)
+        setSize(640, 900)
         title = "Inline Banners"
+        isAutoAdjustable = false
         init()
       }
 
@@ -44,15 +43,27 @@ class InlineBannerTestAction : DumbAwareAction() {
 
         panel.add(InlineBanner("Interactive lesson available").setIcon(null).addAction("Open lesson") {})
         panel.add(InlineBanner("Interactive lesson available"))
+        panel.add(InlineBanner("Interactive lesson available").setGearAction("Tooltip", {}).addAction("Open lesson") {})
+        panel.add(InlineBanner("Interactive lesson available").showCloseButton(false).setGearAction("Tooltip", {
+          System.out.println("Gear!")
+        }).addAction("Open lesson", {}).addAction("Open lesson Open lesson", {}).addAction("Open lesson Open lesson Open lesson", {}))
 
-        val banner = InlineBanner("Interactive lesson available")
+        val banner1 = InlineBanner("Interactive lesson available")
         for (i in 1..5) {
-          banner.addAction("Action $i") {
+          banner1.addAction("Action $i") {
             System.out.println("Action $i")
           }
         }
-        banner.preferredSize = Dimension(JBUI.scale(50), banner.preferredSize.height)
-        panel.add(banner)
+        panel.add(banner1)
+
+        val banner2 = InlineBanner()
+        banner2.setMessage("Share your successful solutions with other students and contribute to the learning community. Share your successful solutions with other students and contribute to the learning community. Share your successful solutions with other students and contribute to the learning community.")
+        banner2.addAction("Enable sharing"){}
+        banner2.addAction("Add to bookmarks"){}
+        banner2.addAction("AAAAAAAAAA"){}
+        banner2.addAction("BBBBBB"){}
+        banner2.addAction("CCCCCCCCC"){}
+        panel.add(banner2)
 
         return panel
       }

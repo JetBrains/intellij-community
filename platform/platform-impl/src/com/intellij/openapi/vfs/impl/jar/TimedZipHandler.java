@@ -37,7 +37,7 @@ public final class TimedZipHandler extends ZipHandlerBase {
   private static final int MAX_SIZE = 30;
   @SuppressWarnings("SSBasedInspection")
   private static final Object2ObjectLinkedOpenHashMap<TimedZipHandler, ScheduledFuture<?>> openFileLimitGuard =
-    new Object2ObjectLinkedOpenHashMap<>(MAX_SIZE);
+    new Object2ObjectLinkedOpenHashMap<>(MAX_SIZE + 1);
 
   @ApiStatus.Internal
   public static void closeOpenZipReferences() {

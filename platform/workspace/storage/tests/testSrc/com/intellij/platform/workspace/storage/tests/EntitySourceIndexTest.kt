@@ -1,13 +1,14 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.platform.workspace.storage.tests
 
-import com.intellij.platform.workspace.storage.testEntities.entities.*
 import com.intellij.platform.workspace.storage.impl.ClassToIntConverter
 import com.intellij.platform.workspace.storage.impl.assertConsistency
 import com.intellij.platform.workspace.storage.impl.createEntityId
-import org.junit.Assert.assertEquals
-import org.junit.Assert.assertNull
-import org.junit.Test
+import com.intellij.platform.workspace.storage.testEntities.entities.*
+import org.junit.jupiter.api.Assertions
+import org.junit.jupiter.api.Test
+import org.junit.jupiter.api.assertThrows
+import kotlin.test.assertEquals
 
 class EntitySourceIndexTest {
   @Test
@@ -21,12 +22,12 @@ class EntitySourceIndexTest {
     builder.modifyEntity(entity) {
       this.entitySource = newSource
     }
-    assertNull(builder.indexes.entitySourceIndex.getIdsByEntry(oldSource))
+    Assertions.assertNull(builder.indexes.entitySourceIndex.getIdsByEntry(oldSource))
     assertEquals(entity.id, builder.indexes.entitySourceIndex.getIdsByEntry(newSource)?.single())
 
     builder.removeEntity(entity)
-    assertNull(builder.indexes.entitySourceIndex.getIdsByEntry(oldSource))
-    assertNull(builder.indexes.entitySourceIndex.getIdsByEntry(newSource))
+    Assertions.assertNull(builder.indexes.entitySourceIndex.getIdsByEntry(oldSource))
+    Assertions.assertNull(builder.indexes.entitySourceIndex.getIdsByEntry(newSource))
   }
 
   @Test
@@ -35,16 +36,18 @@ class EntitySourceIndexTest {
     val newSource = SampleEntitySource("newSource")
     val builder = createEmptyBuilder()
     val firstEntity = builder addEntity SourceEntity("one", oldSource)
-    assertEquals((firstEntity as SourceEntityImpl.Builder).id, builder.indexes.entitySourceIndex.getIdsByEntry(oldSource)?.single())
+    assertEquals((firstEntity as SourceEntityImpl.Builder).id,
+                            builder.indexes.entitySourceIndex.getIdsByEntry(oldSource)?.single())
 
     val diff = createBuilderFrom(builder.toSnapshot())
     assertEquals(firstEntity.id, diff.indexes.entitySourceIndex.getIdsByEntry(oldSource)?.single())
-    assertNull(diff.indexes.entitySourceIndex.getIdsByEntry(newSource))
+    Assertions.assertNull(diff.indexes.entitySourceIndex.getIdsByEntry(newSource))
 
     val secondEntity = diff addEntity SourceEntity("two", newSource)
-    assertEquals((secondEntity as SourceEntityImpl.Builder).id, diff.indexes.entitySourceIndex.getIdsByEntry(newSource)?.single())
+    assertEquals((secondEntity as SourceEntityImpl.Builder).id,
+                            diff.indexes.entitySourceIndex.getIdsByEntry(newSource)?.single())
     assertEquals(firstEntity.id, diff.indexes.entitySourceIndex.getIdsByEntry(oldSource)?.single())
-    assertNull(builder.indexes.entitySourceIndex.getIdsByEntry(newSource))
+    Assertions.assertNull(builder.indexes.entitySourceIndex.getIdsByEntry(newSource))
 
     builder.addDiff(diff)
     assertEquals(secondEntity.id, builder.indexes.entitySourceIndex.getIdsByEntry(newSource)?.single())
@@ -56,17 +59,18 @@ class EntitySourceIndexTest {
     val oldSource = SampleEntitySource("oldSource")
     val builder = createEmptyBuilder()
     val firstEntity = builder addEntity SourceEntity("one", oldSource)
-    assertEquals((firstEntity as SourceEntityImpl.Builder).id, builder.indexes.entitySourceIndex.getIdsByEntry(oldSource)?.single())
+    assertEquals((firstEntity as SourceEntityImpl.Builder).id,
+                            builder.indexes.entitySourceIndex.getIdsByEntry(oldSource)?.single())
 
     val diff = createBuilderFrom(builder.toSnapshot())
     assertEquals(firstEntity.id, diff.indexes.entitySourceIndex.getIdsByEntry(oldSource)?.single())
 
     diff.removeEntity(firstEntity.from(diff))
     assertEquals(firstEntity.id, builder.indexes.entitySourceIndex.getIdsByEntry(oldSource)?.single())
-    assertNull(diff.indexes.entitySourceIndex.getIdsByEntry(oldSource))
+    Assertions.assertNull(diff.indexes.entitySourceIndex.getIdsByEntry(oldSource))
 
     builder.addDiff(diff)
-    assertNull(builder.indexes.entitySourceIndex.getIdsByEntry(oldSource))
+    Assertions.assertNull(builder.indexes.entitySourceIndex.getIdsByEntry(oldSource))
   }
 
   @Test
@@ -75,22 +79,23 @@ class EntitySourceIndexTest {
     val newSource = SampleEntitySource("newSource")
     val builder = createEmptyBuilder()
     val firstEntity = builder addEntity SourceEntity("one", oldSource)
-    assertEquals((firstEntity as SourceEntityImpl.Builder).id, builder.indexes.entitySourceIndex.getIdsByEntry(oldSource)?.single())
+    assertEquals((firstEntity as SourceEntityImpl.Builder).id,
+                            builder.indexes.entitySourceIndex.getIdsByEntry(oldSource)?.single())
 
     val diff = createBuilderFrom(builder.toSnapshot())
     assertEquals(firstEntity.id, diff.indexes.entitySourceIndex.getIdsByEntry(oldSource)?.single())
-    assertNull(diff.indexes.entitySourceIndex.getIdsByEntry(newSource))
+    Assertions.assertNull(diff.indexes.entitySourceIndex.getIdsByEntry(newSource))
 
     diff.modifyEntity(firstEntity.from(diff)) {
       this.entitySource = newSource
     }
     assertEquals(firstEntity.id, builder.indexes.entitySourceIndex.getIdsByEntry(oldSource)?.single())
     assertEquals(firstEntity.id, diff.indexes.entitySourceIndex.getIdsByEntry(newSource)?.single())
-    assertNull(builder.indexes.entitySourceIndex.getIdsByEntry(newSource))
+    Assertions.assertNull(builder.indexes.entitySourceIndex.getIdsByEntry(newSource))
 
     builder.addDiff(diff)
     assertEquals(firstEntity.id, builder.indexes.entitySourceIndex.getIdsByEntry(newSource)?.single())
-    assertNull(builder.indexes.entitySourceIndex.getIdsByEntry(oldSource))
+    Assertions.assertNull(builder.indexes.entitySourceIndex.getIdsByEntry(oldSource))
   }
 
   @Test
@@ -109,10 +114,10 @@ class EntitySourceIndexTest {
     builder.removeEntity(firstEntity)
 
     entities = builder.indexes.entitySourceIndex.getIdsByEntry(entitySource)
-    assertNull(entities)
+    Assertions.assertNull(entities)
   }
 
-  @Test(expected = AssertionError::class)
+  @Test
   fun `test incorrect index`() {
     val oldSource = SampleEntitySource("oldSource")
     val builder = createEmptyBuilder()
@@ -120,7 +125,9 @@ class EntitySourceIndexTest {
 
     builder.indexes.entitySourceIndex.index(createEntityId(1, ClassToIntConverter.INSTANCE.getInt(SourceEntity::class.java)), oldSource)
 
-    builder.assertConsistency()
+    assertThrows<AssertionError> {
+      builder.assertConsistency()
+    }
   }
 
   @Test

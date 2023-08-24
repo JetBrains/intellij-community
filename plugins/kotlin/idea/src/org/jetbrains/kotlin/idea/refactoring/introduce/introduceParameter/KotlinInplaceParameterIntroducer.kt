@@ -50,7 +50,7 @@ class KotlinInplaceParameterIntroducer(
     }
 
     enum class PreviewDecorator {
-        FOR_ADD() {
+        FOR_ADD {
             override val textAttributes: TextAttributes = with(TextAttributes()) {
                 effectType = EffectType.ROUNDED_BOX
                 effectColor = JBColor.RED
@@ -58,7 +58,7 @@ class KotlinInplaceParameterIntroducer(
             }
         },
 
-        FOR_REMOVAL() {
+        FOR_REMOVAL {
             override val textAttributes: TextAttributes = with(TextAttributes()) {
                 effectType = EffectType.STRIKEOUT
                 effectColor = Color.BLACK

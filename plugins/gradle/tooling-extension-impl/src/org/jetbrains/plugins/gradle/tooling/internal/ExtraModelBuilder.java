@@ -21,7 +21,7 @@ import org.jetbrains.plugins.gradle.model.internal.TurnOffDefaultTasks;
 import org.jetbrains.plugins.gradle.tooling.Message;
 import org.jetbrains.plugins.gradle.tooling.ModelBuilderContext;
 import org.jetbrains.plugins.gradle.tooling.ModelBuilderService;
-import org.jetbrains.plugins.gradle.tooling.builder.ExternalProjectBuilderImpl;
+import com.intellij.gradle.toolingExtension.impl.projectModel.provider.ExternalProjectBuilderImpl;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -167,6 +167,11 @@ public class ExtraModelBuilder implements ToolingModelBuilder {
       myGradle = gradle;
     }
 
+    @Override
+    public @NotNull Gradle getGradle() {
+      return myGradle;
+    }
+
     @NotNull
     @Override
     public <T> T getData(@NotNull DataProvider<T> provider) {
@@ -178,7 +183,7 @@ public class ExtraModelBuilder implements ToolingModelBuilder {
             //noinspection unchecked
             return (T)secondAttempt;
           }
-          T value = provider.create(myGradle, this);
+          T value = provider.create(this);
           myMap.put(provider, value);
           return value;
         }

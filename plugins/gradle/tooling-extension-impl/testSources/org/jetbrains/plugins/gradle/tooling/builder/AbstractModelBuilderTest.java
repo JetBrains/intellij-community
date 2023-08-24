@@ -182,7 +182,7 @@ public abstract class AbstractModelBuilderTest {
 
   @NotNull
   public static Set<Class<?>> getToolingExtensionClasses() {
-    return ContainerUtil.immutableSet(
+    return new HashSet<>(Arrays.asList(
       // external-system-rt.jar
       ExternalSystemSourceType.class,
       // gradle-tooling-extension-api jar
@@ -197,7 +197,7 @@ public abstract class AbstractModelBuilderTest {
       IonType.class,
       // util-rt jat
       SystemInfoRt.class // !!! do not replace it with SystemInfo.class from util module
-    );
+    ));
   }
 
   @After

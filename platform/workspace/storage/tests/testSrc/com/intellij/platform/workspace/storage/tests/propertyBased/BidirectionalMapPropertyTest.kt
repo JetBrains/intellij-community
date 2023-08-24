@@ -5,8 +5,9 @@ import com.intellij.platform.workspace.storage.impl.containers.BidirectionalMap
 import org.jetbrains.jetCheck.Generator
 import org.jetbrains.jetCheck.ImperativeCommand
 import org.jetbrains.jetCheck.PropertyChecker
-import org.junit.Assert
-import org.junit.Test
+import org.junit.jupiter.api.Test
+import kotlin.test.assertEquals
+import kotlin.test.fail
 import com.intellij.util.containers.BidirectionalMap as OriginalBidirectionalMap
 
 class BidirectionalMapPropertyTest {
@@ -48,7 +49,7 @@ class BidirectionalMapPropertyTest {
                           val originalMap: OriginalBidirectionalMap<Int, Int>) : ImperativeCommand {
     override fun performCommand(env: ImperativeCommand.Environment) {
       val key = selectElement(env, originalMap.keys.toList()) ?: return
-      Assert.assertEquals(originalMap[key], optimizedMap[key])
+      assertEquals(originalMap[key], optimizedMap[key])
     }
   }
 
@@ -87,15 +88,14 @@ private fun selectElement(env: ImperativeCommand.Environment, elements: List<Int
 private fun assertCorrect(optimizedMap: BidirectionalMap<Int, Int>, originalMap: OriginalBidirectionalMap<Int, Int>) {
   val optimizedMapCopy = optimizedMap.copy()
   optimizedMapCopy.assertConsistency()
-  Assert.assertEquals(optimizedMapCopy.size, originalMap.size)
+  assertEquals(optimizedMapCopy.size, originalMap.size)
   originalMap.keys.forEach { key ->
     if (!optimizedMapCopy.containsKey(key)) {
-      Assert.fail("Missing key: $key")
-      return
+      fail("Missing key: $key")
     }
 
     val expectedValues = originalMap[key]
-    Assert.assertEquals(expectedValues, optimizedMapCopy.remove(key))
+    assertEquals(expectedValues, optimizedMapCopy.remove(key))
   }
-  if (!optimizedMapCopy.isEmpty()) Assert.fail("Extra keys")
+  if (!optimizedMapCopy.isEmpty()) fail("Extra keys")
 }

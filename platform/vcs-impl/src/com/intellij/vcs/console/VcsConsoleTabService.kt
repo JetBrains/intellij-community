@@ -46,7 +46,7 @@ interface VcsConsoleTabService {
   fun showConsoleTabAndScrollToTheEnd()
 }
 
-class MockVcsConsoleTabService() : VcsConsoleTabService {
+class MockVcsConsoleTabService : VcsConsoleTabService {
   @CalledInAny
   override fun addMessage(message: @Nls String?, contentType: ConsoleViewContentType) {
   }

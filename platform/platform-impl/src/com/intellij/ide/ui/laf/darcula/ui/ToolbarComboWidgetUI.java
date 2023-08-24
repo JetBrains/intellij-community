@@ -5,6 +5,8 @@ import com.intellij.icons.AllIcons;
 import com.intellij.ide.ProjectWindowCustomizerService;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.wm.impl.DefaultCutStrategy;
+import com.intellij.openapi.wm.impl.TextCutStrategy;
 import com.intellij.openapi.wm.impl.ToolbarComboWidget;
 import com.intellij.ui.ClickListener;
 import com.intellij.ui.JBColor;

@@ -9,37 +9,41 @@ import com.intellij.openapi.actionSystem.ex.CustomComponentAction
 import com.intellij.openapi.ui.popup.JBPopup
 import com.intellij.openapi.ui.popup.JBPopupListener
 import com.intellij.openapi.ui.popup.LightweightWindowEvent
-import java.awt.event.InputEvent
 import javax.swing.JComponent
 
 abstract class ExpandableComboAction : AnAction(), CustomComponentAction {
   override fun createCustomComponent(presentation: Presentation, place: String): JComponent {
-    return object : ToolbarComboWidget() {
-      override fun doExpand(e: InputEvent?) {
-        createPopup(e)?.showUnderneathOf(this)
-      }
+    val model = MyPopupModel()
+    model.addActionListener { actionEvent ->
+      val combo = (actionEvent.source as? ToolbarComboButton) ?: return@addActionListener
+      val dataContext = DataManager.getInstance().getDataContext(combo)
+      val anActionEvent = AnActionEvent.createFromDataContext(place, presentation, dataContext)
+      val popup = createPopup(anActionEvent) ?: return@addActionListener
+      popup.addListener(object : JBPopupListener {
+        override fun beforeShown(event: LightweightWindowEvent) {
+          model.isPopupShown = true
+        }
 
-      override fun createPopup(e: InputEvent?): JBPopup? {
-        val dataContext = DataManager.getInstance().getDataContext(this)
-        val anActionEvent = AnActionEvent.createFromInputEvent(e, place, presentation, dataContext)
-        val popup = createPopup(anActionEvent) ?: return null
-        popup.addListener(object : JBPopupListener {
-          override fun beforeShown(event: LightweightWindowEvent) {
-            isPopupShowing = true
-          }
-
-          override fun onClosed(event: LightweightWindowEvent) {
-            isPopupShowing = false
-          }
-        })
-        return popup
-      }
+        override fun onClosed(event: LightweightWindowEvent) {
+          model.isPopupShown = false
+        }
+      })
+      popup.showUnderneathOf(combo)
     }
+    return ToolbarComboButton(model)
   }
 
   protected abstract fun createPopup(event: AnActionEvent): JBPopup?
 
   override fun actionPerformed(e: AnActionEvent) {
     e.project?.let { createPopup(e)?.showCenteredInCurrentWindow(it) }
+  }
+
+  private class MyPopupModel: DefaultToolbarComboButtonModel() {
+    var isPopupShown: Boolean = false
+
+    override fun isSelected(): Boolean {
+      return super.isSelected() || isPopupShown
+    }
   }
 }

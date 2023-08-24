@@ -15,6 +15,7 @@ import com.intellij.settingsSync.plugins.SettingsSyncPluginManager
 import com.intellij.util.io.inputStreamIfExists
 import com.intellij.util.io.systemIndependentPath
 import com.intellij.util.io.write
+import com.intellij.ui.NewUiValue
 import org.jetbrains.annotations.VisibleForTesting
 import java.io.InputStream
 import java.nio.file.FileVisitResult
@@ -96,8 +97,21 @@ internal class SettingsSyncIdeMediatorImpl(private val componentStore: Component
   }
 
   private fun notifyRestartNeeded() {
-    if (restartRequiredReasons.isEmpty()) return
-    NotificationService.getInstance().notifyRestartNeeded(restartRequiredReasons)
+    val mergedReasons = mergeRestartReasons()
+    if (mergedReasons.isEmpty()) return
+    NotificationService.getInstance().notifyRestartNeeded(mergedReasons)
+  }
+
+  private fun mergeRestartReasons(): List<RestartReason> {
+      return restartRequiredReasons.groupBy { it::class.java }.mapNotNull { (clazz, reasons) ->
+        when (clazz) {
+            RestartForPluginInstall::class.java -> RestartForPluginInstall(reasons.flatMap { (it as RestartForPluginInstall).plugins })
+            RestartForPluginEnable::class.java -> RestartForPluginEnable(reasons.flatMap { (it as RestartForPluginEnable).plugins })
+            RestartForPluginDisable::class.java -> RestartForPluginDisable(reasons.flatMap { (it as RestartForPluginDisable).plugins })
+            RestartForNewUI::class.java -> reasons.lastOrNull()
+            else -> null
+        }
+    }
   }
 
   override fun activateStreamProvider() {
@@ -274,8 +288,9 @@ internal class SettingsSyncIdeMediatorImpl(private val componentStore: Component
       if (lastChanged.isNotEmpty()) {
         componentStore.reloadComponents(lastChanged, emptyList())
       }
-      if (Registry.getInstance().isRestartNeeded) {
-        SettingsSyncEvents.getInstance().fireRestartRequired(RestartForNewUI)
+      val newUI = Registry.get(NewUiValue.KEY)
+      if (newUI.isChangedSinceAppStart) {
+        SettingsSyncEvents.getInstance().fireRestartRequired(RestartForNewUI(newUI.asBoolean()))
       }
     }
   }
@@ -295,8 +310,7 @@ internal class SettingsSyncIdeMediatorImpl(private val componentStore: Component
   private fun getOrCreateLock(fileSpec: String) = fileSpecsToLocks.computeIfAbsent(fileSpec) { ReentrantReadWriteLock() }
 
   companion object {
-    private val LOG = logger<SettingsSyncIdeMediatorImpl>()
-
+    val LOG = logger<SettingsSyncIdeMediatorImpl>()
     internal fun <T: Any> findProviderById(id: String, state: T): SettingsProvider<T>? {
       val provider = SettingsProvider.SETTINGS_PROVIDER_EP.findFirstSafe(Predicate { it.id == id })
       if (provider != null) {

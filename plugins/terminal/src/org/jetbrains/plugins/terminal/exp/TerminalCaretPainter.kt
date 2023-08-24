@@ -1,53 +1,88 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.terminal.exp
 
+import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.invokeLater
+import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.LogicalPosition
 import com.intellij.openapi.editor.colors.EditorColors
 import com.intellij.openapi.editor.ex.EditorEx
+import com.intellij.openapi.editor.ex.FocusChangeListener
 import com.intellij.openapi.editor.impl.EditorImpl
 import com.intellij.openapi.editor.markup.HighlighterLayer
 import com.intellij.openapi.editor.markup.HighlighterTargetArea
 import com.intellij.openapi.editor.markup.RangeHighlighter
 import com.intellij.openapi.editor.markup.TextAttributes
+import com.intellij.openapi.util.Disposer
 import com.intellij.ui.ColorUtil
 import com.intellij.ui.Gray
 import com.intellij.ui.JBColor
+import com.intellij.util.concurrency.EdtExecutorService
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import java.awt.Color
 import java.awt.Font
 import java.awt.Graphics2D
 import java.awt.geom.Rectangle2D
+import java.util.concurrent.ScheduledFuture
+import java.util.concurrent.TimeUnit
 import kotlin.math.ceil
 import kotlin.math.floor
 
 class TerminalCaretPainter(private val caretModel: TerminalCaretModel,
-                           private val editor: EditorEx) : TerminalCaretModel.CaretListener {
+                           private val editor: EditorEx) : TerminalCaretModel.CaretListener, FocusChangeListener {
   private var caretHighlighter: RangeHighlighter? = null
+  private var caretUpdater: BlinkingCaretUpdater? = null
+  private var isFocused: Boolean = false
+
   private val caretColor: Color
     get() = editor.colorsScheme.getColor(EditorColors.CARET_COLOR) ?: JBColor(CARET_DARK, CARET_LIGHT)
 
   init {
     caretModel.addListener(this)
+    editor.addFocusListener(this, caretModel)
   }
 
   @RequiresEdt
   fun repaint() {
-    updateCaretHighlighter(caretModel.caretPosition)
+    updateCaretHighlighter(caretModel.caretPosition, caretModel.isBlinking)
   }
 
   override fun caretPositionChanged(oldPosition: LogicalPosition?, newPosition: LogicalPosition?) {
     invokeLater {
       if (!editor.isDisposed) {
-        updateCaretHighlighter(newPosition)
+        updateCaretHighlighter(newPosition, caretModel.isBlinking)
       }
     }
   }
 
-  private fun updateCaretHighlighter(newPosition: LogicalPosition?) {
+  override fun caretBlinkingChanged(isBlinking: Boolean) {
+    invokeLater {
+      if (!editor.isDisposed) {
+        updateCaretHighlighter(caretModel.caretPosition, isBlinking)
+      }
+    }
+  }
+
+  override fun focusGained(editor: Editor) {
+    isFocused = true
+    repaint()
+  }
+
+  override fun focusLost(editor: Editor) {
+    isFocused = false
+    updateCaretHighlighter(null, caretModel.isBlinking)
+  }
+
+  private fun updateCaretHighlighter(newPosition: LogicalPosition?, isBlinking: Boolean) {
     removeHighlighter()
-    if (newPosition != null) {
+    caretUpdater?.let { Disposer.dispose(it) }
+    caretUpdater = null
+    if (newPosition != null && isFocused) {
       installCaretHighlighter(newPosition)
+      if (isBlinking) {
+        caretUpdater = BlinkingCaretUpdater(newPosition)
+        Disposer.register(caretModel, caretUpdater!!)
+      }
     }
   }
 
@@ -100,6 +135,31 @@ class TerminalCaretPainter(private val caretModel: TerminalCaretModel,
     }
     else ceil(rawCaretInset).toInt()
     return editor.lineHeight - caretInsets
+  }
+
+  private inner class BlinkingCaretUpdater(private val position: LogicalPosition) : Disposable {
+    private val updateFuture: ScheduledFuture<*>
+    private var paintCaret: Boolean = false
+
+    init {
+      val period = editor.settings.caretBlinkPeriod.toLong()
+      updateFuture = EdtExecutorService.getScheduledExecutorInstance().scheduleWithFixedDelay(this::update, period, period,
+                                                                                              TimeUnit.MILLISECONDS)
+    }
+
+    private fun update() {
+      if (!editor.isDisposed) {
+        removeHighlighter()
+        if (paintCaret) {
+          installCaretHighlighter(position)
+        }
+        paintCaret = !paintCaret
+      }
+    }
+
+    override fun dispose() {
+      updateFuture.cancel(false)
+    }
   }
 
   companion object {

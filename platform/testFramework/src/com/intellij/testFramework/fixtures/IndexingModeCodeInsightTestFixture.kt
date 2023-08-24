@@ -11,6 +11,8 @@ open class IndexingModeCodeInsightTestFixture<T : CodeInsightTestFixture> protec
   protected val delegate: T, private val indexingMode: TestIndexingModeSupporter.IndexingMode
 ) : CodeInsightTestFixture by delegate {
 
+  private var indexingModeShutdownToken: TestIndexingModeSupporter.IndexingMode.ShutdownToken? = null
+
   companion object {
     fun wrapFixture(delegate: CodeInsightTestFixture, indexingMode: TestIndexingModeSupporter.IndexingMode): CodeInsightTestFixture {
       return if (indexingMode === TestIndexingModeSupporter.IndexingMode.SMART) {
@@ -23,12 +25,12 @@ open class IndexingModeCodeInsightTestFixture<T : CodeInsightTestFixture> protec
   @Throws(Exception::class)
   override fun setUp() {
     delegate.setUp()
-    indexingMode.setUpTest(project, testRootDisposable)
+    indexingModeShutdownToken = indexingMode.setUpTest(project, testRootDisposable)
   }
 
   @Throws(Exception::class)
   override fun tearDown() {
-    indexingMode.tearDownTest(project)
+    indexingModeShutdownToken?.let { indexingMode.tearDownTest(project, it) }
     delegate.tearDown()
   }
 

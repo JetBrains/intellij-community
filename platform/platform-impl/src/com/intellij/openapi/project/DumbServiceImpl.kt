@@ -165,7 +165,7 @@ open class DumbServiceImpl @NonInjectable @VisibleForTesting constructor(private
     myGuiDumbTaskRunner.guiSuspender().suspendAndRun(activityName, activity)
   }
 
-  override var isDumb: Boolean
+  private var _isDumb: Boolean
     get() {
       if (ALWAYS_SMART) return false
       if (!ApplicationManager.getApplication().isReadAccessAllowed && Registry.`is`("ide.check.is.dumb.contract")) {
@@ -184,6 +184,8 @@ open class DumbServiceImpl @NonInjectable @VisibleForTesting constructor(private
         enterSmartModeIfDumb()
       }
     }
+
+  override val isDumb: Boolean get() = _isDumb
 
   /**
    * This method starts dumb mode (if not started), then runs the runnable, then ends dumb mode (if no other dumb tasks are running).
@@ -207,14 +209,14 @@ open class DumbServiceImpl @NonInjectable @VisibleForTesting constructor(private
   @TestOnly
   fun <T> computeInDumbModeSynchronously(computable: ThrowableComputable<T, in Throwable>): T {
     application.invokeAndWait {
-      isDumb = true
+      _isDumb = true
     }
     try {
       return computable.compute()
     }
     finally {
       application.invokeAndWait {
-        isDumb = false
+        _isDumb = false
       }
     }
   }
@@ -228,14 +230,14 @@ open class DumbServiceImpl @NonInjectable @VisibleForTesting constructor(private
   @TestOnly
   suspend fun <T> runInDumbMode(block: suspend () -> T): T {
     executeImmediatelyOrScheduleOnEDT {
-      isDumb = true
+      _isDumb = true
     }
     try {
       return block()
     }
     finally {
       executeImmediatelyOrScheduleOnEDT {
-        isDumb = false
+        _isDumb = false
       }
     }
   }

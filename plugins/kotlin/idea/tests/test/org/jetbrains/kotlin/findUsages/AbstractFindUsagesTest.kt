@@ -311,9 +311,10 @@ abstract class AbstractFindUsagesTest : KotlinLightCodeInsightFixtureTestCase() 
         internal fun getUsageAdapters(
             filters: Collection<ImportFilteringRule>,
             usageInfos: Collection<UsageInfo>
-        ): Collection<UsageInfo2UsageAdapter> = usageInfos.map(::UsageInfo2UsageAdapter).filter { usageAdapter ->
-            filters.all { it.isVisible(usageAdapter) }
-        }
+        ): Collection<UsageInfo2UsageAdapter> = usageInfos
+          .map(::UsageInfo2UsageAdapter)
+          .onEach { it.updateCachedPresentation() }
+          .filter { usageAdapter -> filters.all { it.isVisible(usageAdapter) } }
 
         val KtDeclaration.descriptor: DeclarationDescriptor?
             get() = if (this is KtParameter) this.resolveToParameterDescriptorIfAny(BodyResolveMode.FULL) else this.resolveToDescriptorIfAny(BodyResolveMode.FULL)

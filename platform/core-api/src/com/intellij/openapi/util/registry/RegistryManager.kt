@@ -10,9 +10,13 @@ import kotlinx.coroutines.launch
 import org.jetbrains.annotations.ApiStatus
 
 interface RegistryManager {
+
   companion object {
+
     @JvmStatic
     fun getInstance(): RegistryManager = ApplicationManager.getApplication().service<RegistryManager>()
+
+    suspend fun getInstanceAsync(): RegistryManager = ApplicationManager.getApplication().serviceAsync()
 
     @Topic.AppLevel
     @ApiStatus.Experimental

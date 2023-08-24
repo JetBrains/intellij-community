@@ -259,7 +259,7 @@ class MacDistributionBuilder(override val context: BuildContext,
     val bootClassPath = context.xBootClassPathJarNames.joinToString(separator = ":") { "\$APP_PACKAGE/Contents/lib/${it}" }
     val classPath = context.bootClassPathJarNames.joinToString(separator = ":") { "\$APP_PACKAGE/Contents/lib/${it}" }
 
-    val fileVmOptions = VmOptionsGenerator.computeVmOptions(context.applicationInfo.isEAP, context.productProperties) +
+    val fileVmOptions = VmOptionsGenerator.computeVmOptions(context) +
                         listOf("-Dapple.awt.application.appearance=system")
     VmOptionsGenerator.writeVmOptions(macDistDir.resolve("bin/${executable}.vmoptions"), fileVmOptions, "\n")
 

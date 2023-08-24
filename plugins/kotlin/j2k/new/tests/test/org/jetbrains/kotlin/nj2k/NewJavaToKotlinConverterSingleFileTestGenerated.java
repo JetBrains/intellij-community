@@ -1463,6 +1463,21 @@ public abstract class NewJavaToKotlinConverterSingleFileTestGenerated extends Ab
             runTest("testData/newJ2k/constructors/secondaryConstructorWithDefaultValues2.java");
         }
 
+        @TestMetadata("secondaryConstructorsChain2.java")
+        public void testSecondaryConstructorsChain2() throws Exception {
+            runTest("testData/newJ2k/constructors/secondaryConstructorsChain2.java");
+        }
+
+        @TestMetadata("secondaryConstructorsChain3.java")
+        public void testSecondaryConstructorsChain3() throws Exception {
+            runTest("testData/newJ2k/constructors/secondaryConstructorsChain3.java");
+        }
+
+        @TestMetadata("secondaryConstructorsChain4.java")
+        public void testSecondaryConstructorsChain4() throws Exception {
+            runTest("testData/newJ2k/constructors/secondaryConstructorsChain4.java");
+        }
+
         @TestMetadata("secondaryConstructorsInInnerClass.java")
         public void testSecondaryConstructorsInInnerClass() throws Exception {
             runTest("testData/newJ2k/constructors/secondaryConstructorsInInnerClass.java");
@@ -2667,11 +2682,6 @@ public abstract class NewJavaToKotlinConverterSingleFileTestGenerated extends Ab
             runTest("testData/newJ2k/function/internalFunctionalInterface.java");
         }
 
-        @TestMetadata("java8Lambdas.java")
-        public void testJava8Lambdas() throws Exception {
-            runTest("testData/newJ2k/function/java8Lambdas.java");
-        }
-
         @TestMetadata("java8MRKFunctionExpectedType.java")
         public void testJava8MRKFunctionExpectedType() throws Exception {
             runTest("testData/newJ2k/function/java8MRKFunctionExpectedType.java");
@@ -3830,6 +3840,11 @@ public abstract class NewJavaToKotlinConverterSingleFileTestGenerated extends Ab
     public static class Lambda extends AbstractNewJavaToKotlinConverterSingleFileTest {
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+        }
+
+        @TestMetadata("lambdas.java")
+        public void testLambdas() throws Exception {
+            runTest("testData/newJ2k/lambda/lambdas.java");
         }
 
         @TestMetadata("parameterReassignment.java")

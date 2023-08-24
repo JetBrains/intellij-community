@@ -618,7 +618,7 @@ public final class ExternalProjectSerializationService implements SerializationS
           }
           else if (externalDependency instanceof DefaultFileCollectionDependency) {
             DefaultFileCollectionDependency fileCollectionDependency = (DefaultFileCollectionDependency)externalDependency;
-            fileCollectionDependency.getFiles().addAll(readFiles(reader));
+            fileCollectionDependency.setFiles(readFiles(reader));
             fileCollectionDependency.setExcludedFromIndexing(readBoolean(reader, "excludedFromIndexing"));
           }
           else if (externalDependency instanceof DefaultUnresolvedExternalDependency) {

@@ -1,18 +1,20 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.platform.workspace.storage.tests
 
-import com.intellij.platform.workspace.storage.testEntities.entities.SampleEntity
-import com.intellij.platform.workspace.storage.testEntities.entities.SampleEntitySource
-import com.intellij.platform.workspace.storage.testEntities.entities.SourceEntity
-import com.intellij.platform.workspace.storage.testEntities.entities.modifyEntity
-import com.intellij.testFramework.UsefulTestCase.assertEmpty
 import com.intellij.platform.workspace.storage.EntityStorage
 import com.intellij.platform.workspace.storage.MutableEntityStorage
 import com.intellij.platform.workspace.storage.impl.external.ExternalEntityMappingImpl
 import com.intellij.platform.workspace.storage.impl.external.MutableExternalEntityMappingImpl
 import com.intellij.platform.workspace.storage.impl.url.VirtualFileUrlManagerImpl
-import org.junit.Assert.*
-import org.junit.Test
+import com.intellij.platform.workspace.storage.testEntities.entities.SampleEntity
+import com.intellij.platform.workspace.storage.testEntities.entities.SampleEntitySource
+import com.intellij.platform.workspace.storage.testEntities.entities.SourceEntity
+import com.intellij.platform.workspace.storage.testEntities.entities.modifyEntity
+import com.intellij.testFramework.UsefulTestCase.assertEmpty
+import org.junit.jupiter.api.Assertions
+import org.junit.jupiter.api.Test
+import kotlin.test.assertEquals
+import kotlin.test.assertTrue
 
 class ExternalEntityMappingTest {
   companion object {
@@ -32,7 +34,7 @@ class ExternalEntityMappingTest {
     val countBeforeRemove = builder.modificationCount
     mapping.removeMapping(entity)
     assertTrue(builder.modificationCount > countBeforeRemove)
-    assertNull(mapping.getDataByEntity(entity))
+    Assertions.assertNull(mapping.getDataByEntity(entity))
     val countBeforeAdd = builder.modificationCount
     mapping.addMapping(entity, 3)
     assertTrue(builder.modificationCount > countBeforeAdd)
@@ -55,7 +57,7 @@ class ExternalEntityMappingTest {
 
     val diff = createBuilderFrom(builder.toSnapshot())
     val diffMapping = diff.getMutableExternalMapping<Int>(INDEX_ID)
-    assertNotEquals(mapping, diffMapping)
+    Assertions.assertNotEquals(mapping, diffMapping)
     assertEquals(1, diffMapping.getDataByEntity(entity))
     diffMapping.addMapping(entity, 2)
     assertEquals(1, mapping.getDataByEntity(entity))
@@ -66,7 +68,7 @@ class ExternalEntityMappingTest {
 
     val storage = builder.toSnapshot()
     val newMapping = storage.getExternalMapping<Int>(INDEX_ID)
-    assertNotEquals(mapping, newMapping)
+    Assertions.assertNotEquals(mapping, newMapping)
     assertEquals(2, newMapping.getDataByEntity(entity))
   }
 
@@ -81,20 +83,20 @@ class ExternalEntityMappingTest {
 
     val diff = createBuilderFrom(builder.toSnapshot())
     val diffMapping = diff.getMutableExternalMapping<Int>(INDEX_ID)
-    assertNotEquals(mapping, diffMapping)
+    Assertions.assertNotEquals(mapping, diffMapping)
     assertEquals(1, diffMapping.getDataByEntity(entity))
     diffMapping.removeMapping(entity)
     assertEquals(1, mapping.getDataByEntity(entity))
-    assertNull(diffMapping.getDataByEntity(entity))
+    Assertions.assertNull(diffMapping.getDataByEntity(entity))
 
     builder.addDiff(diff)
-    assertNull(mapping.getDataByEntity(entity))
+    Assertions.assertNull(mapping.getDataByEntity(entity))
 
     val storage = builder.toSnapshot()
     val newMapping = storage.getExternalMapping<Int>(INDEX_ID)
-    assertNotNull(newMapping)
-    assertNotEquals(mapping, newMapping)
-    assertNull(newMapping.getDataByEntity(entity))
+    Assertions.assertNotNull(newMapping)
+    Assertions.assertNotEquals(mapping, newMapping)
+    Assertions.assertNull(newMapping.getDataByEntity(entity))
   }
 
   @Test
@@ -109,7 +111,7 @@ class ExternalEntityMappingTest {
     val diff = createBuilderFrom(builder.toSnapshot())
     val newEntity = builder addEntity SourceEntity("world", SampleEntitySource("source"))
     val diffMapping = diff.getMutableExternalMapping<Int>(INDEX_ID)
-    assertNotEquals(mapping, diffMapping)
+    Assertions.assertNotEquals(mapping, diffMapping)
     assertEquals(1, diffMapping.getDataByEntity(entity))
     diffMapping.addMapping(newEntity, 2)
     assertEquals(1, mapping.getDataByEntity(entity))
@@ -122,7 +124,7 @@ class ExternalEntityMappingTest {
 
     val storage = builder.toSnapshot()
     val newMapping = storage.getExternalMapping<Int>(INDEX_ID)
-    assertNotEquals(mapping, newMapping)
+    Assertions.assertNotEquals(mapping, newMapping)
     assertEquals(1, newMapping.getDataByEntity(entity))
     assertEquals(2, newMapping.getDataByEntity(newEntity))
     assertEquals(entity, newMapping.getEntities(1).single())
@@ -140,15 +142,15 @@ class ExternalEntityMappingTest {
 
     val diff = createBuilderFrom(builder.toSnapshot())
     diff.indexes.removeExternalMapping(INDEX_ID)
-    assertNull(diff.getExternalMapping<Int>(INDEX_ID).getDataByEntity(entity))
+    Assertions.assertNull(diff.getExternalMapping<Int>(INDEX_ID).getDataByEntity(entity))
     assertEquals(1, mapping.getDataByEntity(entity))
 
     builder.addDiff(diff)
-    assertNull(mapping.getDataByEntity(entity))
-    assertNull(builder.getExternalMapping<Int>(INDEX_ID).getDataByEntity(entity))
+    Assertions.assertNull(mapping.getDataByEntity(entity))
+    Assertions.assertNull(builder.getExternalMapping<Int>(INDEX_ID).getDataByEntity(entity))
 
     val storage = builder.toSnapshot()
-    assertNull(storage.getExternalMapping<Int>(INDEX_ID).getDataByEntity(entity))
+    Assertions.assertNull(storage.getExternalMapping<Int>(INDEX_ID).getDataByEntity(entity))
   }
 
   @Test
@@ -156,23 +158,23 @@ class ExternalEntityMappingTest {
     val builder = createEmptyBuilder()
 
     val entity = builder addEntity SourceEntity("hello", SampleEntitySource("source"))
-    assertNull(builder.getExternalMapping<Int>(INDEX_ID).getDataByEntity(entity))
+    Assertions.assertNull(builder.getExternalMapping<Int>(INDEX_ID).getDataByEntity(entity))
 
     val diff = createBuilderFrom(builder.toSnapshot())
     val diffMapping = diff.getMutableExternalMapping<Int>(INDEX_ID)
     diffMapping.addMapping(entity, 1)
-    assertNull(builder.getExternalMapping<Int>(INDEX_ID).getDataByEntity(entity))
+    Assertions.assertNull(builder.getExternalMapping<Int>(INDEX_ID).getDataByEntity(entity))
     assertEquals(1, diffMapping.getDataByEntity(entity))
 
     builder.addDiff(diff)
     assertEquals(1, diffMapping.getDataByEntity(entity))
     val mapping = builder.getExternalMapping<Int>(INDEX_ID)
-    assertNotEquals(diffMapping, mapping)
+    Assertions.assertNotEquals(diffMapping, mapping)
     assertEquals(1, mapping.getDataByEntity(entity))
 
     val storage = builder.toSnapshot()
     val newMapping = storage.getExternalMapping<Int>(INDEX_ID)
-    assertNotEquals(mapping, newMapping)
+    Assertions.assertNotEquals(mapping, newMapping)
     assertEquals(1, newMapping.getDataByEntity(entity))
   }
 
@@ -201,9 +203,9 @@ class ExternalEntityMappingTest {
 
     fun checkStorage(storage: EntityStorage) {
       val mapping = storage.getExternalMapping<Int>(INDEX_ID)
-      assertNull(mapping.getDataByEntity(entity1))
-      assertNull(mapping.getDataByEntity(entity2))
-      assertNull(mapping.getDataByEntity(entity3))
+      Assertions.assertNull(mapping.getDataByEntity(entity1))
+      Assertions.assertNull(mapping.getDataByEntity(entity2))
+      Assertions.assertNull(mapping.getDataByEntity(entity3))
       assertEmpty(mapping.getEntities(1))
       assertEmpty(mapping.getEntities(2))
       assertEmpty(mapping.getEntities(3))
@@ -335,7 +337,7 @@ class ExternalEntityMappingTest {
 
     assertEquals(1, initialBuilder.getExternalMapping<Int>(INDEX_ID).getDataByEntity(fooEntity))
     assertEquals(2, initialBuilder.getExternalMapping<Int>(ANOTHER_INDEX_ID).getDataByEntity(barEntity))
-    assertNull(initialBuilder.getExternalMapping<Int>(INDEX_ID).getDataByEntity(barEntity))
+    Assertions.assertNull(initialBuilder.getExternalMapping<Int>(INDEX_ID).getDataByEntity(barEntity))
   }
 
   @Test
@@ -391,7 +393,7 @@ class ExternalEntityMappingTest {
     initialBuilder.replaceBySource({ it is SampleEntitySource }, replacement)
 
     assertEquals(1, initialBuilder.getExternalMapping<Int>(INDEX_ID).getDataByEntity(fooEntity))
-    assertNull(initialBuilder.getExternalMapping<Int>(INDEX_ID).getDataByEntity(barEntity))
+    Assertions.assertNull(initialBuilder.getExternalMapping<Int>(INDEX_ID).getDataByEntity(barEntity))
   }
 
   @Test
@@ -404,10 +406,10 @@ class ExternalEntityMappingTest {
 
     val replacement = createBuilderFrom(initialBuilder)
     replacement.removeEntity(fooEntity.from(replacement))
-    assertNull(replacement.getMutableExternalMapping<Int>(INDEX_ID).getDataByEntity(fooEntity))
+    Assertions.assertNull(replacement.getMutableExternalMapping<Int>(INDEX_ID).getDataByEntity(fooEntity))
     initialBuilder.replaceBySource({ it is SampleEntitySource }, replacement)
 
-    assertNull(initialBuilder.getExternalMapping<Int>(INDEX_ID).getDataByEntity(fooEntity))
+    Assertions.assertNull(initialBuilder.getExternalMapping<Int>(INDEX_ID).getDataByEntity(fooEntity))
   }
 
   @Test
@@ -512,12 +514,8 @@ class ExternalEntityMappingTest {
 
     val mapping = initialBuilder.getExternalMapping<String>(INDEX_ID) as ExternalEntityMappingImpl
     assertEquals(2, mapping.size())
-    //suppressed until the https://youtrack.jetbrains.com/issue/KTIJ-21754 is being fixed
-    @Suppress("AssertBetweenInconvertibleTypes")
-    assertEquals(1, mapping.getDataByEntity(fooEntity))
-    //suppressed until the https://youtrack.jetbrains.com/issue/KTIJ-21754 is being fixed
-    @Suppress("AssertBetweenInconvertibleTypes")
-    assertEquals(2, mapping.getDataByEntity(barEntity))
+    Assertions.assertEquals(1, mapping.getDataByEntity(fooEntity))
+    Assertions.assertEquals(2, mapping.getDataByEntity(barEntity))
   }
 
   @Test

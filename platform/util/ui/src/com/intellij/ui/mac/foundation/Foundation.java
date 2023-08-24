@@ -224,8 +224,8 @@ public final @NonNls class Foundation {
 
     private static @NotNull ID create(byte[] utf16Bytes) {
       ID emptyNsString = invoke(nsStringCls, allocSel);
-      ID initializedEmptyNsString = invoke(emptyNsString, initWithBytesLengthEncodingSel, utf16Bytes, utf16Bytes.length, nsEncodingUTF16LE);
-      return invoke(initializedEmptyNsString, autoreleaseSel);
+      ID initializedNsString = invoke(emptyNsString, initWithBytesLengthEncodingSel, utf16Bytes, utf16Bytes.length, nsEncodingUTF16LE);
+      return invoke(initializedNsString, autoreleaseSel);
     }
   }
 

@@ -4,6 +4,7 @@ package com.intellij.codeInsight.codeVision.ui.model
 import com.intellij.codeInsight.codeVision.*
 import com.intellij.codeInsight.codeVision.settings.CodeVisionSettings
 import com.intellij.codeInsight.codeVision.ui.popup.CodeVisionPopup
+import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.Inlay
@@ -12,7 +13,7 @@ import com.intellij.openapi.util.TextRange
 import com.jetbrains.rd.util.reactive.Property
 import com.jetbrains.rd.util.reactive.ViewableMap
 
-
+@Service(Service.Level.PROJECT)
 class ProjectCodeVisionModel private constructor(val project: Project) {
 
   companion object {
@@ -24,26 +25,23 @@ class ProjectCodeVisionModel private constructor(val project: Project) {
   }
 
   val maxVisibleLensCount: ViewableMap<CodeVisionAnchorKind, Int> = ViewableMap()
-  val hoveredInlay: Property<Inlay<*>?> = Property(null)
-  val hoveredEntry: Property<CodeVisionEntry?> = Property(null)
   val lensPopupActive: Property<Boolean> = Property(false)
-
   val moreEntry: AdditionalCodeVisionEntry = AdditionalCodeVisionEntry(MORE_PROVIDER_ID, CodeVisionBundle.message("more"))
 
 
   private fun getCodeVisionHost() = CodeVisionInitializer.getInstance(project).getCodeVisionHost()
 
-  fun handleLensClick(editor: Editor, range: TextRange, entry: CodeVisionEntry) {
+  fun handleLensClick(editor: Editor, range: TextRange, anchorInlay: Inlay<*>, entry: CodeVisionEntry) {
     if (entry.providerId == MORE_PROVIDER_ID) {
-      showMore()
+      showMore(anchorInlay)
       return
     }
 
     getCodeVisionHost().handleLensClick(editor, range, entry)
   }
 
-  fun handleLensRightClick() {
-    showContextPopup()
+  fun handleLensRightClick(clickedEntry: CodeVisionEntry, anchorInlay: Inlay<*>) {
+    showContextPopup(clickedEntry, anchorInlay)
   }
 
   fun handleLensExtraAction(editor: Editor, range: TextRange, entry: CodeVisionEntry, actionId: String) {
@@ -61,42 +59,40 @@ class ProjectCodeVisionModel private constructor(val project: Project) {
     }
 
     getCodeVisionHost().handleLensExtraAction(editor, range, entry, actionId)
-
   }
 
   fun getLensIndex(lens: CodeVisionEntry): Int {
     return getCodeVisionHost().getNumber(lens.providerId) + 1
   }
 
-  private fun showMore() {
-    val inlay = hoveredInlay.value ?: return
-    val model = inlay.getUserData(CodeVisionListData.KEY) ?: return
+  private fun showMore(anchorInlay: Inlay<*>) {
+    val model = anchorInlay.getUserData(CodeVisionListData.KEY) ?: return
 
     CodeVisionPopup.showMorePopup(
       model.lifetime,
-      inlay,
+      anchorInlay,
       moreEntry,
+      lensPopupActive,
       CodeVisionPopup.Disposition.MOUSE_POPUP_DISPOSITION,
       model.rangeCodeVisionModel,
       project
     )
   }
 
-  private fun showContextPopup() {
-    val inlay = hoveredInlay.value ?: return
-    val entry = hoveredEntry.value ?: return
+  private fun showContextPopup(clickedEntry: CodeVisionEntry, anchorInlay: Inlay<*>) {
 
-    if (entry.providerId == MORE_PROVIDER_ID) {
-      showMore()
+    if (clickedEntry.providerId == MORE_PROVIDER_ID) {
+      showMore(anchorInlay)
       return
     }
 
-    val model = inlay.getUserData(CodeVisionListData.KEY) ?: return
+    val model = anchorInlay.getUserData(CodeVisionListData.KEY) ?: return
 
     CodeVisionPopup.showContextPopup(
       model.lifetime,
-      inlay,
-      entry,
+      anchorInlay,
+      clickedEntry,
+      lensPopupActive,
       CodeVisionPopup.Disposition.MOUSE_POPUP_DISPOSITION,
       model,
       project

@@ -3,6 +3,7 @@
 
 package org.jetbrains.plugins.gradle.tooling.util.resolve.deprecated;
 
+import com.intellij.gradle.toolingExtension.impl.sourceSetModel.provider.SourceSetCachedFinder;
 import org.gradle.api.Project;
 import org.gradle.api.Task;
 import org.gradle.api.artifacts.*;
@@ -21,10 +22,10 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.gradle.ExternalDependencyId;
 import org.jetbrains.plugins.gradle.model.ExternalDependency;
 import org.jetbrains.plugins.gradle.model.*;
+import org.jetbrains.plugins.gradle.tooling.ModelBuilderContext;
 import org.jetbrains.plugins.gradle.tooling.util.DependencyResolver;
 import org.jetbrains.plugins.gradle.tooling.util.DependencyTraverser;
 import org.jetbrains.plugins.gradle.tooling.util.JavaPluginUtil;
-import com.intellij.gradle.toolingExtension.impl.modelBuilder.SourceSetCachedFinder;
 
 import java.io.File;
 import java.io.IOException;
@@ -53,24 +54,24 @@ public class DeprecatedDependencyResolver implements DependencyResolver {
   private static final boolean isArtifactResolutionQuerySupported = isDependencySubstitutionsSupported ||
                                                                     (GradleVersion.current().compareTo(GradleVersion.version("2.0")) >= 0);
 
-  @NotNull
-  private final Project myProject;
+  private final @NotNull ModelBuilderContext myContext;
+  private final @NotNull Project myProject;
   private final boolean myIsPreview;
   private final boolean myDownloadJavadoc;
   private final boolean myDownloadSources;
-  @NotNull
-  private final SourceSetCachedFinder mySourceSetFinder;
 
-  public DeprecatedDependencyResolver(@NotNull Project project,
-                                      boolean isPreview,
-                                      boolean downloadJavadoc,
-                                      boolean downloadSources,
-                                      @NotNull SourceSetCachedFinder sourceSetFinder) {
+  public DeprecatedDependencyResolver(
+    @NotNull ModelBuilderContext context,
+    @NotNull Project project,
+    boolean isPreview,
+    boolean downloadJavadoc,
+    boolean downloadSources
+  ) {
+    myContext = context;
     myProject = project;
     myIsPreview = isPreview;
     myDownloadJavadoc = downloadJavadoc;
     myDownloadSources = downloadSources;
-    mySourceSetFinder = sourceSetFinder;
   }
 
   @Override
@@ -96,7 +97,7 @@ public class DeprecatedDependencyResolver implements DependencyResolver {
     final ExternalDepsResolutionResult result;
 
     if (!myIsPreview && isArtifactResolutionQuerySupported) {
-      result = new ArtifactQueryResolver(configuration, scope, myProject, myDownloadJavadoc, myDownloadSources, mySourceSetFinder).resolve();
+      result = new ArtifactQueryResolver(myContext, configuration, scope, myProject, myDownloadJavadoc, myDownloadSources).resolve();
     } else {
       result = new ExternalDepsResolutionResult(findDependencies(configuration, configuration.getAllDependencies(), scope),
                                                 new ArrayList<>());
@@ -306,8 +307,9 @@ public class DeprecatedDependencyResolver implements DependencyResolver {
 
     result.add(fileCollectionDependency);
 
+    SourceSetCachedFinder sourceSetFinder = SourceSetCachedFinder.getInstance(myContext);
     for (File file : files) {
-      SourceSet outputDirSourceSet = mySourceSetFinder.findByArtifact(file.getPath());
+      SourceSet outputDirSourceSet = sourceSetFinder.findByArtifact(file.getPath());
       if (outputDirSourceSet != null) {
         result.addAll(
           collectSourceSetOutputDirsAsSingleEntryLibraries(outputDirSourceSet,
@@ -727,6 +729,7 @@ public class DeprecatedDependencyResolver implements DependencyResolver {
       artifactMap.put(toMyModuleIdentifier(artifact.getModuleVersion().getId()), artifact);
     }
 
+    SourceSetCachedFinder sourceSetFinder = SourceSetCachedFinder.getInstance(myContext);
     for (Dependency it : dependencies) {
       try {
         if (it instanceof ProjectDependency) {
@@ -743,7 +746,7 @@ public class DeprecatedDependencyResolver implements DependencyResolver {
           Set<File> artifacts = new LinkedHashSet<>(targetConfiguration == null ? Collections.emptySet() :
                                                     targetConfiguration.getAllArtifacts().getFiles().getFiles());
           projectDependency.setProjectDependencyArtifacts(artifacts);
-          projectDependency.setProjectDependencyArtifactsSources(mySourceSetFinder.findArtifactSources(artifacts));
+          projectDependency.setProjectDependencyArtifactsSources(sourceSetFinder.findArtifactSources(artifacts));
 
           result.add(projectDependency);
         } else if (it != null) {

@@ -157,15 +157,31 @@ open class HProfScenarioRunner(private val tmpFolder: TemporaryFolder,
 
     val name = file.nameWithoutExtension
     val extension = if (file.extension != "") "." + file.extension else ""
+    val testDataDir = file.parentFile
 
-    val javaSpecSpecificFileName = File(file.parent, "$name.$javaSpecString$extension").toString()
+    val javaVersion = javaSpecString.toIntOrNull()
+    val minimalVersionToScan = 17 // to be compatible with tests on old jre-s
+    if (javaVersion == null || javaVersion <= minimalVersionToScan) {
+      val javaSpecSpecificFile = testDataDir.findTestDataFileByJavaSpec(name, javaSpecString, extension)
+      if (javaSpecSpecificFile != null) {
+        return javaSpecSpecificFile
+      }
+    }
+    else {
+      for (v in javaVersion downTo minimalVersionToScan) {
+        return testDataDir.findTestDataFileByJavaSpec(name, v.toString(), extension) ?: continue
+      }
+    }
+    return Path.of(PlatformTestUtil.getPlatformTestDataPath(), filenameWithPath)
+  }
+
+  private fun File.findTestDataFileByJavaSpec(baseName: String, javaSpec: String, extension: String): Path? {
+    val javaSpecSpecificFileName = File(this, "$baseName.$javaSpec$extension").toString()
     val javaSpecSpecificFile = Path.of(PlatformTestUtil.getPlatformTestDataPath(), javaSpecSpecificFileName);
-
     if (Files.exists(javaSpecSpecificFile)) {
       return javaSpecSpecificFile
     }
-
-    return Path.of(PlatformTestUtil.getPlatformTestDataPath(), filenameWithPath)
+    return null
   }
 
   class MemoryBackedIntList(size: Int) : IntList {

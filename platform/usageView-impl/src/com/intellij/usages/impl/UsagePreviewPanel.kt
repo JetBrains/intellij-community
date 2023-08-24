@@ -12,11 +12,7 @@ import com.intellij.lang.injection.InjectedLanguageManager
 import com.intellij.openapi.actionSystem.CommonDataKeys
 import com.intellij.openapi.actionSystem.DataProvider
 import com.intellij.openapi.actionSystem.PlatformCoreDataKeys
-import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.application.EDT
-import com.intellij.openapi.application.ModalityState
-import com.intellij.openapi.application.asContextElement
-import com.intellij.openapi.application.readAction
+import com.intellij.openapi.application.*
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.editor.*
 import com.intellij.openapi.editor.colors.EditorColors
@@ -53,7 +49,9 @@ import com.intellij.usages.UsageView
 import com.intellij.usages.UsageViewPresentation
 import com.intellij.usages.similarity.clustering.ClusteringSearchSession
 import com.intellij.util.childScope
+import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import com.intellij.util.concurrency.annotations.RequiresEdt
+import com.intellij.util.concurrency.annotations.RequiresReadLock
 import com.intellij.util.containers.ContainerUtil
 import com.intellij.util.ui.PositionTracker
 import com.intellij.util.ui.StatusText
@@ -233,6 +231,7 @@ open class UsagePreviewPanel @JvmOverloads constructor(project: Project,
     }
   }
 
+  @Deprecated("Implementation details of UsagePreviewPanel")
   fun getCannotPreviewMessage(infos: List<UsageInfo>): String? {
     return cannotPreviewMessage(infos)
   }
@@ -518,6 +517,11 @@ open class UsagePreviewPanel @JvmOverloads constructor(project: Project,
       }
       return null
     }
+
+    @RequiresReadLock
+    @RequiresBackgroundThread
+    @JvmStatic
+    fun isOneAndOnlyOnePsiFileInUsages(infos: List<UsageInfo>) = cannotPreviewMessage(infos) == null
 
     private fun isOnlyGroupNodesSelected(infos: List<UsageInfo>, groupNodes: Set<GroupNode>): Boolean {
       return infos.isEmpty() && !groupNodes.isEmpty()

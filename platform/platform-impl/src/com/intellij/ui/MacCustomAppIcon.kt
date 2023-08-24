@@ -20,7 +20,7 @@ import java.util.concurrent.TimeUnit
 import java.util.function.Function
 
 private const val CUSTOM_ICON = "ide.mac.custom.app.icon"
-private const val CUSTOM_ICON_ENABLED_BY_DEFAULT = false
+private const val CUSTOM_ICON_ENABLED_BY_DEFAULT = true
 
 /**
  * @author Alexander Lobas

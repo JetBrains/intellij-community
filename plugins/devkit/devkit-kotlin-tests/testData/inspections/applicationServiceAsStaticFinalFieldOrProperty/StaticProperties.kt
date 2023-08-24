@@ -33,7 +33,7 @@ class AppService(val service3: RegisteredApplicationService = RegisteredApplicat
     val <warning descr="Application service must not be assigned to a static immutable property with a backing field">service6</warning> = RegisteredApplicationService.getInstance()
 
     // static property without backing field, but being an instance
-    val <warning descr="An explicit 'getInstance()' method should be used to retrieve an application service instead of a property">service7</warning>: AppService
+    val <warning descr="Provide explicit 'getInstance()' method to access application service instead of a property">service7</warning>: AppService
       get() = service<AppService>()
 
 

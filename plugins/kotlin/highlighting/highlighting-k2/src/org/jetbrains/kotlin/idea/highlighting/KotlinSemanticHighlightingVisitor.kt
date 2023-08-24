@@ -2,7 +2,6 @@
 
 package org.jetbrains.kotlin.idea.highlighting
 
-import com.intellij.codeHighlighting.TextEditorHighlightingPass
 import com.intellij.codeInsight.daemon.impl.HighlightVisitor
 import com.intellij.codeInsight.daemon.impl.analysis.HighlightInfoHolder
 import com.intellij.psi.PsiElement
@@ -12,7 +11,6 @@ import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.idea.highlighting.highlighters.*
 import org.jetbrains.kotlin.psi.KtElement
 import org.jetbrains.kotlin.psi.KtFile
-import org.jetbrains.kotlin.psi.KtVisitorVoid
 
 /**
  * A highlight visitor which generates a semantic INFORMATION-level highlightings (e.g., for smartcasts) and adds them to the [holder]
@@ -33,6 +31,7 @@ class KotlinSemanticHighlightingVisitor : HighlightVisitor {
             analyzers = createSemanticAnalyzers(kotlinRefsHolder, holder)
             action.run()
         }
+        KotlinUnusedHighlightingVisitor(ktFile as KtFile, kotlinRefsHolder).collectHighlights(holder)
         return true
     }
 
@@ -48,9 +47,6 @@ class KotlinSemanticHighlightingVisitor : HighlightVisitor {
     override fun visit(element: PsiElement) {
         analyzers.forEach { analyzer ->
             element.accept(analyzer)
-        }
-        if (element is KtFile) {
-            KotlinUnusedHighlightingVisitor(element, kotlinRefsHolder).collectHighlights(holder)
         }
     }
 

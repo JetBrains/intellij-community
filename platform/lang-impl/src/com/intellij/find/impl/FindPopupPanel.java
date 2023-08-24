@@ -68,10 +68,10 @@ import com.intellij.ui.popup.list.SelectablePanel;
 import com.intellij.ui.render.RenderingUtil;
 import com.intellij.ui.scale.JBUIScale;
 import com.intellij.ui.table.JBTable;
-import com.intellij.usageView.UsageInfo;
 import com.intellij.usages.*;
 import com.intellij.usages.impl.UsagePreviewPanel;
 import com.intellij.util.*;
+import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.JBIterable;
 import com.intellij.util.ui.*;
@@ -98,8 +98,6 @@ import java.lang.ref.WeakReference;
 import java.util.List;
 import java.util.Vector;
 import java.util.*;
-import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.ExecutionException;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Supplier;
@@ -659,42 +657,37 @@ public final class FindPopupPanel extends JBPanel<FindPopupPanel> implements Fin
         myHelper.updateFindSettings();
       }
       myReplaceSelectedButton.setEnabled(selectedRows.length > 0);
-      List<CompletableFuture<UsageInfo[]>> selectedUsagePromises = new SmartList<>();
+
       String file = null;
+      List<UsageInfoAdapter> adapters = new ArrayList<>();
       for (int row : selectedRows) {
         Object value = myResultsPreviewTable.getModel().getValueAt(row, 0);
         UsageInfoAdapter adapter = ((FindPopupItem)value).getUsage();
         file = adapter.getPath();
-        if (adapter.isValid()) {
-          selectedUsagePromises.add(adapter.getMergedInfosAsync());
-        }
+        adapters.add(adapter);
       }
 
       String selectedFile = file;
-      CompletableFuture.allOf(selectedUsagePromises.toArray(new CompletableFuture[0])).thenAccept(__ -> {
-        List<UsageInfo> selectedUsages = new SmartList<>();
-        for (CompletableFuture<UsageInfo[]> f : selectedUsagePromises) {
-          try {
-            UsageInfo[] usageInfos = f.get();
-            Collections.addAll(selectedUsages, usageInfos);
-          }
-          catch (InterruptedException | ExecutionException e) {
-            throw new RuntimeException(e);
-          }
-        }
-        myReplaceSelectedButton.setText(FindBundle.message("find.popup.replace.selected.button", selectedUsages.size()));
-        FindInProjectUtil.setupViewPresentation(myUsageViewPresentation, myHelper.getModel().clone());
-        myUsagePreviewPanel.updateLayout(selectedUsages);
-        myUsagePreviewTitle.clear();
-        if (myUsagePreviewPanel.getCannotPreviewMessage(selectedUsages) == null && selectedFile != null) {
-          myUsagePreviewTitle.append(PathUtil.getFileName(selectedFile), SimpleTextAttributes.REGULAR_ATTRIBUTES);
-          VirtualFile virtualFile = VfsUtil.findFileByIoFile(new File(selectedFile), true);
-          String locationPath = virtualFile == null ? null : getPresentablePath(myProject, virtualFile.getParent(), 120);
-          if (locationPath != null) {
-            myUsagePreviewTitle.append(spaceAndThinSpace() + locationPath,
-                                       new SimpleTextAttributes(STYLE_PLAIN, UIUtil.getContextHelpForeground()));
-          }
-        }
+
+      UsageAdaptersKt.getUsageInfo(adapters, myProject).thenAccept(selectedUsages -> {
+        ReadAction.nonBlocking(() -> UsagePreviewPanel.isOneAndOnlyOnePsiFileInUsages(selectedUsages))
+          .finishOnUiThread(ModalityState.nonModal(), isOneAndOnlyOnePsiFileInUsages -> {
+            myReplaceSelectedButton.setText(FindBundle.message("find.popup.replace.selected.button", selectedUsages.size()));
+            FindInProjectUtil.setupViewPresentation(myUsageViewPresentation, myHelper.getModel().clone());
+            myUsagePreviewPanel.updateLayout(selectedUsages);
+            myUsagePreviewTitle.clear();
+            if (isOneAndOnlyOnePsiFileInUsages == null && selectedFile != null) {
+              myUsagePreviewTitle.append(PathUtil.getFileName(selectedFile), SimpleTextAttributes.REGULAR_ATTRIBUTES);
+              VirtualFile virtualFile = VfsUtil.findFileByIoFile(new File(selectedFile), true);
+              String locationPath = virtualFile == null ? null : getPresentablePath(myProject, virtualFile.getParent(), 120);
+              if (locationPath != null) {
+                myUsagePreviewTitle.append(spaceAndThinSpace() + locationPath,
+                                           new SimpleTextAttributes(STYLE_PLAIN, UIUtil.getContextHelpForeground()));
+              }
+            }
+          })
+          .expireWith(myDisposable)
+          .submit(AppExecutorUtil.getAppExecutorService());
       });
     };
     myResultsPreviewTable.getSelectionModel().addListSelectionListener(e -> {

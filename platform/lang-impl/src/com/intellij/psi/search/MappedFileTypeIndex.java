@@ -150,15 +150,14 @@ public final class MappedFileTypeIndex extends FileTypeIndexImplBase {
       myForwardIndex = forwardIndex;
       myInvertedIndexChangeCallback = invertedIndexChangeCallback;
     }
-    //FIXME RC: why do we use synchronized in this class? -- all the method calls are protected by RWLock up the
-    // callstack anyway
 
     public void setAssociation(int inputId, short data) throws StorageException {
       short indexedData = getIndexedData(inputId);
       if (indexedData != 0) {
         var indexedSet = myInvertedIndex.get(indexedData);
-        assert indexedSet != null;
-        indexedSet.remove(inputId);
+        assert indexedSet != null : "inputId=" + inputId + " indexedData=" + indexedData;
+        var removed = indexedSet.remove(inputId);
+        assert removed : "inputId=" + inputId + " indexedData=" + indexedData;
       }
       myForwardIndex.set(inputId, data);
       if (data != 0) {
@@ -275,7 +274,6 @@ public final class MappedFileTypeIndex extends FileTypeIndexImplBase {
     private final @NotNull ResilientFileChannel myFileChannel;
     private volatile long myElementsCount;
     private volatile long myModificationsCounter = 0L;
-    private final @NotNull ByteBuffer myDataBuffer = ByteBuffer.allocate(ELEMENT_BYTES);
 
     private ForwardIndexFileControllerOverFile(@NotNull Path storage) throws StorageException {
       try {
@@ -304,11 +302,11 @@ public final class MappedFileTypeIndex extends FileTypeIndexImplBase {
 
     @Override
     public short get(int inputId) throws StorageException {
+      ByteBuffer dataBuf = ByteBuffer.allocate(ELEMENT_BYTES);
       try {
-        myDataBuffer.clear();
         int bytesLeft = ELEMENT_BYTES;
         while (bytesLeft > 0) {
-          int result = myFileChannel.read(myDataBuffer, offsetInFile(inputId) + myDataBuffer.position());
+          int result = myFileChannel.read(dataBuf, offsetInFile(inputId) + dataBuf.position());
           if (result == -1 && bytesLeft == ELEMENT_BYTES) {
             return 0; // read after EOF
           }
@@ -317,8 +315,8 @@ public final class MappedFileTypeIndex extends FileTypeIndexImplBase {
           }
           bytesLeft -= result;
         }
-        myDataBuffer.flip();
-        return myDataBuffer.getShort();
+        dataBuf.flip();
+        return dataBuf.getShort();
       }
       catch (IOException e) {
         throw closeWithException(new StorageException(e));
@@ -327,14 +325,14 @@ public final class MappedFileTypeIndex extends FileTypeIndexImplBase {
 
     @Override
     public void set(int inputId, short value) throws StorageException {
+      ByteBuffer dataBuf = ByteBuffer.allocate(ELEMENT_BYTES);
       try {
         ensureCapacity(inputId);
-        myDataBuffer.clear();
-        myDataBuffer.putShort(value);
-        myDataBuffer.flip();
+        dataBuf.putShort(value);
+        dataBuf.flip();
         int bytesWritten = 0;
         while (bytesWritten < ELEMENT_BYTES) {
-          bytesWritten += myFileChannel.write(myDataBuffer, offsetInFile(inputId) + bytesWritten);
+          bytesWritten += myFileChannel.write(dataBuf, offsetInFile(inputId) + bytesWritten);
         }
       }
       catch (IOException e) {

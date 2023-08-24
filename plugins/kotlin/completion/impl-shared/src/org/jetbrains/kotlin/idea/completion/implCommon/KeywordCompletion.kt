@@ -295,7 +295,7 @@ class KeywordCompletion(private val languageVersionSettingProvider: LanguageVers
         )
     )
 
-    private class CommentFilter() : ElementFilter {
+    private class CommentFilter : ElementFilter {
         override fun isAcceptable(element: Any?, context: PsiElement?) = (element is PsiElement) && KtPsiUtil.isInComment(element)
 
         override fun isClassAcceptable(hintClass: Class<out Any?>) = true

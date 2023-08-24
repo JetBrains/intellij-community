@@ -14,7 +14,6 @@ import com.intellij.openapi.vcs.VcsDataKeys;
 import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.changes.ChangesUtil;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.util.ArrayUtil;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.JBIterable;
@@ -25,7 +24,6 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.tree.TreePath;
-import java.io.File;
 import java.util.List;
 import java.util.Set;
 import java.util.stream.Stream;
@@ -392,6 +390,9 @@ public abstract class VcsTreeModelData {
     else if (VcsDataKeys.CHANGE_LEAD_SELECTION.is(dataId)) {
       return mapToChange(exactlySelected(tree)).toArray(Change.EMPTY_CHANGE_ARRAY);
     }
+    else if (VcsDataKeys.FILE_PATHS.is(dataId)) {
+      return mapToFilePath(selected(tree));
+    }
     return null;
   }
 
@@ -415,9 +416,6 @@ public abstract class VcsTreeModelData {
     else if (CommonDataKeys.NAVIGATABLE_ARRAY.is(slowId)) {
       if (project == null) return null;
       return ChangesUtil.getNavigatableArray(project, mapToNavigatableFile(treeSelection));
-    }
-    else if (VcsDataKeys.IO_FILE_ARRAY.is(slowId)) {
-      return mapToIoFile(treeSelection).toArray(ArrayUtil.EMPTY_FILE_ARRAY);
     }
     return null;
   }
@@ -470,19 +468,6 @@ public abstract class VcsTreeModelData {
       })
       .filterNotNull()
       .filter(VirtualFile::isValid);
-  }
-
-  @NotNull
-  static JBIterable<File> mapToIoFile(@NotNull VcsTreeModelData data) {
-    return data.iterateUserObjects()
-      .map(entry -> {
-        if (entry instanceof Change) {
-          FilePath path = ChangesUtil.getAfterPath((Change)entry);
-          return path != null ? path.getIOFile() : null;
-        }
-        return null;
-      })
-      .filterNotNull();
   }
 
   @NotNull

@@ -1,13 +1,13 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.platform.workspace.storage.tests
 
-import com.intellij.platform.workspace.storage.testEntities.entities.*
-import com.intellij.testFramework.UsefulTestCase.assertOneElement
 import com.intellij.platform.workspace.storage.MutableEntityStorage
 import com.intellij.platform.workspace.storage.impl.assertConsistency
-import org.junit.Assert.assertEquals
-import org.junit.Assert.assertNotNull
-import org.junit.Test
+import com.intellij.platform.workspace.storage.testEntities.entities.*
+import com.intellij.testFramework.UsefulTestCase.assertOneElement
+import org.junit.jupiter.api.Test
+import kotlin.test.assertEquals
+import kotlin.test.assertNotNull
 import kotlin.test.assertTrue
 
 /**
@@ -187,18 +187,10 @@ class SoftLinksTest {
     assertEquals("AnotherData", updatedEntity.inContainer.id.name)
     assertEquals("AnotherData", updatedEntity.inOptionalContainer!!.id.name)
     assertEquals("AnotherData", updatedEntity.inContainerList.single().id.name)
-    assertEquals(
-      "AnotherData",
-      updatedEntity.deepContainer.single().goDeeper.single().goDeep.single().id.name
-    )
+    assertEquals("AnotherData", updatedEntity.deepContainer.single().goDeeper.single().goDeep.single().id.name)
     assertEquals("AnotherData", (updatedEntity.sealedContainer as SealedContainer.BigContainer).id.name)
-    assertEquals(
-      "AnotherData",
-      (updatedEntity.listSealedContainer.single() as SealedContainer.SmallContainer).notId.name
-    )
-    assertEquals(
-      "AnotherData",
-      (updatedEntity.deepSealedClass as DeepSealedOne.DeepSealedTwo.DeepSealedThree.DeepSealedFour).id.name
-    )
+    assertEquals("AnotherData", (updatedEntity.listSealedContainer.single() as SealedContainer.SmallContainer).notId.name)
+    assertEquals("AnotherData",
+                            (updatedEntity.deepSealedClass as DeepSealedOne.DeepSealedTwo.DeepSealedThree.DeepSealedFour).id.name)
   }
 }

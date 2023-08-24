@@ -90,9 +90,7 @@ open class ExperimentalUIConfigurable : BoundSearchableConfigurable(IdeBundle.me
         .bottomGap(BottomGap.SMALL)
 
       row {
-        label("").applyToComponent {
-          icon = AllIcons.Ide.Settings.NewUI
-        }
+        icon(AllIcons.Ide.Settings.NewUI)
       }
       row {
         text(IdeBundle.message("new.ui.description"))

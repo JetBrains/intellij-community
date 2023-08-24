@@ -10,7 +10,6 @@ import org.jetbrains.kotlin.idea.projectModel.*
 import org.jetbrains.kotlin.tooling.core.Interner
 import org.jetbrains.plugins.gradle.tooling.ModelBuilderContext
 import org.jetbrains.plugins.gradle.tooling.util.DependencyResolver
-import com.intellij.gradle.toolingExtension.impl.modelBuilder.SourceSetCachedFinder
 import org.jetbrains.plugins.gradle.tooling.util.resolve.DependencyResolverImpl
 
 interface HasDependencyResolver {
@@ -125,7 +124,7 @@ internal class MultiplatformModelImportingContextImpl(
 
     private val downloadSources = java.lang.Boolean.parseBoolean(System.getProperty("idea.gradle.download.sources", "true"))
 
-    override val dependencyResolver = DependencyResolverImpl(project, false, downloadSources, SourceSetCachedFinder(modelBuilderContext))
+    override val dependencyResolver = DependencyResolverImpl(modelBuilderContext, project, false, downloadSources)
     override val dependencyMapper = KotlinDependencyMapper()
 
     /** see [initializeCompilations] */

@@ -5,8 +5,7 @@ package com.intellij.codeInspection;
  * Defines type used to determine highlighting of {@link ProblemDescriptor}.
  * Please use {@link #GENERIC_ERROR_OR_WARNING}, otherwise user's settings would be ignored.
  * <p/>
- * If you need specific text attributes in the editor, please specify it in the plugin.xml
- * using {@link InspectionEP#editorAttributes} or {@link InspectionProfileEntry#getEditorAttributesKey()}.
+ * If you need specific text attributes in the editor, please specify it in the {@code plugin.xml} using {@link InspectionEP#editorAttributes}
  *
  * @see com.intellij.codeInspection.ProblemDescriptorUtil#getHighlightInfoType
  */

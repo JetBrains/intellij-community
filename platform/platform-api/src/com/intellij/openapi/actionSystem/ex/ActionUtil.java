@@ -33,6 +33,8 @@ import com.intellij.util.ObjectUtils;
 import com.intellij.util.SlowOperations;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.UIUtil;
+import kotlin.coroutines.AbstractCoroutineContextElement;
+import kotlin.coroutines.CoroutineContext;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -48,6 +50,9 @@ import java.util.*;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Consumer;
 import java.util.function.Predicate;
+
+import static com.intellij.concurrency.ThreadContext.currentThreadContext;
+import static com.intellij.concurrency.ThreadContext.installThreadContext;
 
 public final class ActionUtil {
   private static final Logger LOG = Logger.getInstance(ActionUtil.class);
@@ -349,17 +354,18 @@ public final class ActionUtil {
     ActionManagerEx manager = ActionManagerEx.getInstanceEx();
     manager.fireBeforeActionPerformed(action, event);
     Component component = event.getData(PlatformCoreDataKeys.CONTEXT_COMPONENT);
+    String actionId = StringUtil.notNullize(event.getActionManager().getId(action), action.getClass().getName());
     if (component != null && !UIUtil.isShowing(component) &&
         !ActionPlaces.TOUCHBAR_GENERAL.equals(event.getPlace()) &&
         !Boolean.TRUE.equals(ClientProperty.get(component, ALLOW_ACTION_PERFORM_WHEN_HIDDEN))) {
-      String id = StringUtil.notNullize(event.getActionManager().getId(action), action.getClass().getName());
       LOG.warn("Action is not performed because target component is not showing: " +
-               "action=" + id + ", component=" + component.getClass().getName());
+               "action=" + actionId + ", component=" + component.getClass().getName());
       manager.fireAfterActionPerformed(action, event, AnActionResult.IGNORED);
       return;
     }
     AnActionResult result = null;
-    try (AccessToken ignore = SlowOperations.startSection(SlowOperations.ACTION_PERFORM)) {
+    try (AccessToken ignore = SlowOperations.startSection(SlowOperations.ACTION_PERFORM);
+         AccessToken ignore2 = withActionThreadContext(actionId)) {
       performRunnable.run();
       result = AnActionResult.PERFORMED;
     }
@@ -644,5 +650,27 @@ public final class ActionUtil {
     }
 
     return anAction;
+  }
+
+  @ApiStatus.Internal
+  public static @Nullable String getActionThreadContext() {
+    ActionContext context = currentThreadContext().get(ACTION_CONTEXT_KEY);
+    return context == null ? null : context.actionId;
+  }
+
+  private static @NotNull AccessToken withActionThreadContext(@NotNull String actionId) {
+    return installThreadContext(currentThreadContext().plus(new ActionContext(actionId)), true);
+  }
+
+  private static final CoroutineContext.Key<ActionContext> ACTION_CONTEXT_KEY = new CoroutineContext.Key<>() {
+  };
+
+  private static class ActionContext extends AbstractCoroutineContextElement implements CoroutineContext.Element {
+    final String actionId;
+
+    ActionContext(@NotNull String actionId) {
+      super(ACTION_CONTEXT_KEY);
+      this.actionId = actionId;
+    }
   }
 }

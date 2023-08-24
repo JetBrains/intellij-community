@@ -8,9 +8,6 @@ import com.intellij.openapi.editor.impl.EditorImpl
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.registry.Registry
 import com.jetbrains.rd.util.lifetime.Lifetime
-import com.jetbrains.rd.util.reactive.map
-import com.jetbrains.rd.util.throttleLast
-import java.time.Duration
 
 class CodeVisionListData(
   val lifetime: Lifetime,
@@ -37,16 +34,8 @@ class CodeVisionListData(
     }
 
   val visibleLens: ArrayList<CodeVisionEntry> = ArrayList()
-  private var throttle = false
 
   init {
-    projectModel.hoveredInlay.map {
-      it == inlay
-    }.throttleLast(Duration.ofMillis(300), SwingScheduler).advise(lifetime) {
-      throttle = it
-      inlay.repaint()
-    }
-
     updateVisible()
   }
 
@@ -65,7 +54,6 @@ class CodeVisionListData(
   }
 
   fun state(): RangeCodeVisionModel.InlayState = rangeCodeVisionModel.state()
-  fun isMoreLensActive(): Boolean = throttle && Registry.`is`("editor.codeVision.more.inlay")
-  fun isHoveredEntry(entry: CodeVisionEntry): Boolean = projectModel.hoveredEntry.value == entry && projectModel.hoveredInlay.value == inlay
+  fun isMoreLensActive(): Boolean = Registry.`is`("editor.codeVision.more.inlay")
 }
 

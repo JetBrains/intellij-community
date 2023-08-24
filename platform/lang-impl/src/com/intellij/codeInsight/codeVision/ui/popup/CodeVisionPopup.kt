@@ -4,20 +4,20 @@ import com.intellij.codeInsight.codeVision.CodeVisionEntry
 import com.intellij.codeInsight.codeVision.ui.model.CodeVisionListData
 import com.intellij.codeInsight.codeVision.ui.model.RangeCodeVisionModel
 import com.intellij.codeInsight.codeVision.ui.popup.layouter.*
-import com.intellij.codeInsight.codeVision.ui.renderers.CodeVisionRenderer
+import com.intellij.codeInsight.codeVision.ui.renderers.CodeVisionInlayRenderer
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.Inlay
 import com.intellij.openapi.project.Project
 import com.intellij.ui.popup.AbstractPopup
-
 import com.jetbrains.rd.util.lifetime.Lifetime
 import com.jetbrains.rd.util.lifetime.LifetimeDefinition
 import com.jetbrains.rd.util.reactive.IProperty
+import com.jetbrains.rd.util.reactive.Property
 import com.jetbrains.rd.util.reactive.map
 import java.awt.Rectangle
 
 class CodeVisionPopup {
-  enum class Disposition constructor(val list: List<Anchoring2D>) {
+  enum class Disposition(val list: List<Anchoring2D>) {
     MOUSE_POPUP_DISPOSITION(listOf(
       Anchoring2D(Anchoring.FarOutside, Anchoring.NearOutside),
       Anchoring2D(Anchoring.NearOutside, Anchoring.NearOutside),
@@ -50,11 +50,12 @@ class CodeVisionPopup {
       lifetime: Lifetime,
       inlay: Inlay<*>,
       entry: CodeVisionEntry,
+      lensPopupActive: Property<Boolean>,
       disposition: Disposition,
       model: CodeVisionListData,
       project: Project
     ) {
-      showPopup(lifetime, inlay, entry, disposition, model.projectModel.lensPopupActive) {
+      showPopup(lifetime, inlay, entry, disposition, lensPopupActive) {
         CodeVisionContextPopup.createLensList(entry, model, project)
       }
     }
@@ -63,12 +64,13 @@ class CodeVisionPopup {
       lifetime: Lifetime,
       inlay: Inlay<*>,
       entry: CodeVisionEntry,
+      lensPopupActive: IProperty<Boolean>,
       disposition: Disposition,
       model: RangeCodeVisionModel,
       project: Project
     ) {
-      showPopup(lifetime, inlay, entry, disposition, model.lensPopupActive()) {
-        CodeVisionListPopup.createLensList(model, project)
+      showPopup(lifetime, inlay, entry, disposition, lensPopupActive) {
+        CodeVisionListPopup.createLensList(model, project, inlay)
       }
     }
 
@@ -77,15 +79,15 @@ class CodeVisionPopup {
       project: Project,
       editor: Editor,
       offset: Int,
+      lensPopupActive: IProperty<Boolean>,
       disposition: Disposition,
-      model: RangeCodeVisionModel
-    ) {
+      model: RangeCodeVisionModel) {
       val ltd = createNested(lifetime)
 
       val anchor = EditorAnchoringRect.createHorizontalSmartClipRect(ltd, offset, editor)
 
-      showPopup(ltd, project, editor, model.lensPopupActive(), anchor, disposition.list) {
-        CodeVisionListPopup.createLensList(model, project)
+      showPopup(ltd, project, editor, anchor, disposition.list, lensPopupActive) {
+        CodeVisionListPopup.createLensList(model, project, model.inlays.first())
       }
     }
 
@@ -93,9 +95,9 @@ class CodeVisionPopup {
       ltd: LifetimeDefinition,
       project: Project,
       editor: Editor,
-      lensPopupActive: IProperty<Boolean>,
       anchor: AnchoringRect,
       disposition: List<Anchoring2D>,
+      lensPopupActive: IProperty<Boolean>,
       popupFactory: (Lifetime) -> AbstractPopup
     ) {
       val popupLayouter = SimplePopupLayouterSource({ lt ->
@@ -123,8 +125,7 @@ class CodeVisionPopup {
       entry: CodeVisionEntry,
       disposition: Disposition,
       lensPopupActive: IProperty<Boolean>,
-      popupFactory: (Lifetime) -> AbstractPopup
-    ) {
+      popupFactory: (Lifetime) -> AbstractPopup) {
       val editor = inlay.editor
       val project = editor.project ?: return
       val offset = inlay.offset
@@ -133,7 +134,7 @@ class CodeVisionPopup {
       val shift = getPopupShift(inlay, entry) ?: return
       val anchor = EditorAnchoringRect(ltd, editor, offset, shiftDelegate(editor, shift))
 
-      showPopup(ltd, project, editor, lensPopupActive, anchor, disposition.list, popupFactory)
+      showPopup(ltd, project, editor, anchor, disposition.list, lensPopupActive, popupFactory)
     }
 
 
@@ -141,8 +142,8 @@ class CodeVisionPopup {
       val inlayXY = inlay.bounds ?: return null
       val editor = inlay.editor
 
-      val renderer = inlay.renderer as CodeVisionRenderer
-      val entryBounds = renderer.entryBounds(inlay, entry) ?: return null
+      val renderer = inlay.renderer as CodeVisionInlayRenderer
+      val entryBounds = renderer.calculateCodeVisionEntryBounds(entry) ?: return null
 
       val offsetXY = editor.offsetToXY(inlay.offset)
       val shiftX = inlayXY.x - offsetXY.x + entryBounds.x - entryBounds.width

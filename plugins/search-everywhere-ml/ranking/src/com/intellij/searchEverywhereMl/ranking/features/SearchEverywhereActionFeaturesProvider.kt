@@ -7,6 +7,7 @@ import com.intellij.ide.actions.searcheverywhere.TopHitSEContributor
 import com.intellij.ide.util.gotoByName.GotoActionModel
 import com.intellij.ide.util.gotoByName.GotoActionModel.ActionWrapper
 import com.intellij.ide.util.gotoByName.MatchMode
+import com.intellij.internal.statistic.collectors.fus.PluginIdRuleValidator
 import com.intellij.internal.statistic.eventLog.events.EventField
 import com.intellij.internal.statistic.eventLog.events.EventFields
 import com.intellij.internal.statistic.eventLog.events.EventPair
@@ -37,7 +38,7 @@ internal class SearchEverywhereActionFeaturesProvider :
     internal val HAS_ICON_KEY = EventFields.Boolean("withIcon")
     internal val WEIGHT_KEY = EventFields.Double("weight")
     internal val PLUGIN_TYPE = EventFields.StringValidatedByEnum("pluginType", "plugin_type")
-    internal val PLUGIN_ID = EventFields.StringValidatedByCustomRule("pluginId", "plugin")
+    internal val PLUGIN_ID = EventFields.StringValidatedByCustomRule("pluginId", PluginIdRuleValidator::class.java)
 
     private val GLOBAL_STATISTICS_DEFAULT = GlobalStatisticsFields(ActionsGlobalSummaryManager.getDefaultStatisticsVersion())
     private val GLOBAL_STATISTICS_UPDATED = GlobalStatisticsFields(ActionsGlobalSummaryManager.getUpdatedStatisticsVersion())

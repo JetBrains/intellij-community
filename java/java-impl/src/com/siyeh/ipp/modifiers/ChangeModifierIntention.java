@@ -84,7 +84,7 @@ public class ChangeModifierIntention extends BaseElementAtCaretIntentionAction {
   }
 
   @Override
-  public boolean isAvailable(@NotNull Project project, Editor editor, @NotNull PsiElement element) {
+  public boolean isAvailable(@NotNull Project project, @NotNull Editor editor, @NotNull PsiElement element) {
     if (!JavaLanguage.INSTANCE.equals(element.getLanguage())) return false;
     PsiMember member = findMember(element);
     if (!(member instanceof PsiNameIdentifierOwner)) return false;
@@ -132,7 +132,7 @@ public class ChangeModifierIntention extends BaseElementAtCaretIntentionAction {
   }
 
   @Override
-  public void invoke(@NotNull Project project, Editor editor, @NotNull PsiElement element) throws IncorrectOperationException {
+  public void invoke(@NotNull Project project, @NotNull Editor editor, @NotNull PsiElement element) throws IncorrectOperationException {
     PsiMember member = findMember(element);
     if (member == null) return;
     PsiFile file = member.getContainingFile();

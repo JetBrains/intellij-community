@@ -48,7 +48,7 @@ internal class SegmentedBarPainter {
 
     fun paintDecorations(g: Graphics2D, c: JComponent, paint: Paint): Boolean {
 
-      val r = Rectangle(c.getSize())
+      val r = Rectangle(c.size)
       // JBInsets.removeFrom(r, if (DarculaButtonUI.isSmallVariant(c)) c.getInsets() else JBUI.insets(1))
 
       val g2 = g.create() as Graphics2D
@@ -60,11 +60,11 @@ internal class SegmentedBarPainter {
         val arc = DarculaUIUtil.BUTTON_ARC.float
         val bw: Float = 0f //if (DarculaButtonUI.isSmallVariant(c)) 0f else DarculaUIUtil.BW.float
 
-        if (c.isEnabled()) {
+        if (c.isEnabled) {
           g2.paint = paint
 
           c.getClientProperty(SegmentedActionToolbarComponent.CONTROL_BAR_PROPERTY)?.let {
-            paintComponent(g2, Rectangle(c.getSize()), it.toString())
+            paintComponent(g2, Rectangle(c.size), it.toString())
           } ?: g2.fill(RoundRectangle2D.Float(bw, bw, r.width - bw * 2, r.height - bw * 2, arc, arc))
         }
       }
@@ -119,7 +119,7 @@ internal class SegmentedBarPainter {
     val insets = component.insets
     JBInsets.removeFrom(rect, JBUI.insets(insets.top, 0, insets.bottom, 0))
     component.getClientProperty(SegmentedActionToolbarComponent.CONTROL_BAR_PROPERTY)?.let {
-      paintComponent(g as Graphics2D, Rectangle(component.getSize()), it.toString())
+      paintComponent(g as Graphics2D, Rectangle(component.size), it.toString())
     } ?: g.fillRect(rect.x, rect.y, rect.width, rect.height)
   }
 

@@ -26,13 +26,12 @@ open class JsonSortPropertiesIntention : BaseElementAtCaretIntentionAction(), Lo
   override fun getFamilyName(): @Nls(capitalization = Nls.Capitalization.Sentence) String =
     JsonBundle.message("json.intention.sort.properties")
 
-  override fun isAvailable(project: Project, editor: Editor?, element: PsiElement): Boolean {
-    return editor != null && Session(editor, element).hasUnsortedObjects()
+  override fun isAvailable(project: Project, editor: Editor, element: PsiElement): Boolean {
+    return Session(editor, element).hasUnsortedObjects()
   }
 
   @Throws(IncorrectOperationException::class)
-  override fun invoke(project: Project, editor: Editor?, element: PsiElement) {
-    editor ?: return
+  override fun invoke(project: Project, editor: Editor, element: PsiElement) {
     if (!CommonRefactoringUtil.checkReadOnlyStatus(project, element)) {
       CommonRefactoringUtil.showErrorHint(project, editor, JsonBundle.message("file.is.readonly"),
                                           JsonBundle.message("cannot.sort.properties"), null)

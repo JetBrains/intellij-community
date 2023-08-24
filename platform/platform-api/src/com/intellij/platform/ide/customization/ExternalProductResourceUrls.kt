@@ -76,6 +76,45 @@ interface ExternalProductResourceUrls {
    */
   val downloadPageUrl: Url?
     get() = null
+
+  /**
+   * Returns URL of the YouTube channel containing video material for the product. 
+   * It's opened in the browser when a user invokes "`<Product>` on YouTube" action.
+   * If the property returns `null`, the action won't be shown.
+   */
+  val youTubeChannelUrl: Url?
+    get() = null
+  
+  /**
+   * Returns URL of a PDF file describing keyboard shortcuts of the product. 
+   * It's opened in the browser when a user invokes the "Keyboard Shortcuts PDF" action if `help/ReferenceCard.pdf` (`help/ReferenceCardForMac.pdf`
+   * for macOS) is not found.
+   */
+  val keyboardShortcutsPdfUrl: Url?
+    get() = null
+  
+  /**
+   * Returns URL of the page containing information about new features in the product.  
+   * It's opened in the browser or in the editor when a user invokes the "What's New" action.
+   * If the property returns `null`, the action won't be shown.
+   */
+  val whatIsNewPageUrl: Url?
+    get() = null
+  
+  /**
+   * Returns URL of the page containing introductory documentation of the product.  
+   * It's opened in the browser when a user invokes the "Getting Started" action.
+   * If the property returns `null`, the action won't be shown.
+   */
+  val gettingStartedPageUrl: Url?
+    get() = null
+
+  /**
+   * Returns a function which computes URL of a help page by a given `topicId`.
+   * This URL is used by [HelpManager][com.intellij.openapi.help.HelpManager] to show context help.
+   */
+  val helpPageUrl: ((topicId: String) -> Url)?
+    get() = null
 }
 
 /**

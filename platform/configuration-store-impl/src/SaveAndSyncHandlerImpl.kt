@@ -12,6 +12,7 @@ import com.intellij.openapi.application.*
 import com.intellij.openapi.application.impl.LaterInvocator
 import com.intellij.openapi.components.ComponentManager
 import com.intellij.openapi.components.StorageScheme
+import com.intellij.openapi.components.serviceAsync
 import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.diagnostic.getOrLogException
 import com.intellij.openapi.fileEditor.FileDocumentManager
@@ -160,9 +161,7 @@ internal class SaveAndSyncHandlerImpl(private val coroutineScope: CoroutineScope
     // add listeners after some delay - doesn't make sense to listen earlier
     delay(15.seconds)
 
-    val settings = blockingContext {
-      GeneralSettings.getInstance()
-    }
+    val settings = serviceAsync<GeneralSettings>()
 
     if (LISTEN_DELAY >= (settings.inactiveTimeout.seconds)) {
       executeOnIdle()

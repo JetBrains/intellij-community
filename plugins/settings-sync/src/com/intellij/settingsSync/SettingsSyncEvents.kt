@@ -42,6 +42,10 @@ class SettingsSyncEvents : Disposable {
     eventDispatcher.multicaster.restartRequired(reason)
   }
 
+  fun fireLoginStateChanged() {
+    eventDispatcher.multicaster.loginStateChanged()
+  }
+
   companion object {
     fun getInstance(): SettingsSyncEvents = service<SettingsSyncEvents>()
   }
@@ -56,55 +60,66 @@ interface SettingsSyncEventListener : EventListener {
   fun settingChanged(event: SyncSettingsEvent) {}
   fun enabledStateChanged(syncEnabled: Boolean) {}
   fun restartRequired(reason: RestartReason) {}
+  fun loginStateChanged() {}
 }
 
 sealed class RestartReason: Comparable<RestartReason> {
   abstract val sortingPriority: Int
-  abstract fun getNotificationSubMessage(): String
 
   @NlsSafe
-  fun getSingleReasonNotificationMessage(): String {
-    return SettingsSyncBundle.message("sync.restart.notification.message", getNotificationSubMessage())
-  }
+  abstract fun getSingleReasonNotificationMessage(): String
 
   @NlsSafe
-  fun getMultiReasonNotificationListEntry(number: Int): String {
-    return "$number. ${getNotificationSubMessage().capitalize()}\n"
-  }
-
-  private fun String.capitalize() : String {
-    return this.replaceFirstChar { if (it.isLowerCase()) it.titlecase(Locale.getDefault()) else it.toString() }
-  }
+  abstract fun getMultiReasonNotificationListEntry(number: Int): String
 
   override fun compareTo(other: RestartReason): Int {
     return this.sortingPriority.compareTo(other.sortingPriority)
   }
 }
 
-internal class RestartForPluginInstall(private val plugins: Collection<String>) : RestartReason() {
+internal class RestartForPluginInstall(val plugins: Collection<String>) : RestartReason() {
   override val sortingPriority = 0
-  override fun getNotificationSubMessage(): String {
-    return SettingsSyncBundle.message("sync.restart.notification.submessage.plugins", "install", plugins.joinToString(", "))
+
+  override fun getSingleReasonNotificationMessage(): String {
+    return SettingsSyncBundle.message("sync.notification.restart.message.plugin.install", plugins.size, plugins.take(2).joinToString(", "))
+  }
+
+  override fun getMultiReasonNotificationListEntry(number: Int): String {
+    return "$number. " + SettingsSyncBundle.message("sync.notification.restart.message.list.entry.plugin.install", plugins.size, plugins.take(2).joinToString(", "))
   }
 }
 
-internal class RestartForPluginEnable(private val plugins: Collection<String>) : RestartReason() {
+internal class RestartForPluginEnable(val plugins: Collection<String>) : RestartReason() {
   override val sortingPriority = 1
-  override fun getNotificationSubMessage(): String {
-    return SettingsSyncBundle.message("sync.restart.notification.submessage.plugins", "enable", plugins.joinToString(", "))
+
+  override fun getSingleReasonNotificationMessage(): String {
+    return SettingsSyncBundle.message("sync.notification.restart.message.plugin.enable", plugins.size, plugins.take(2).joinToString(", "))
+  }
+
+  override fun getMultiReasonNotificationListEntry(number: Int): String {
+    return "$number. " + SettingsSyncBundle.message("sync.notification.restart.message.list.entry.plugin.enable", plugins.size, plugins.take(2).joinToString(", "))
   }
 }
 
-internal class RestartForPluginDisable(private val plugins: Collection<String>) : RestartReason() {
+internal class RestartForPluginDisable(val plugins: Collection<String>) : RestartReason() {
   override val sortingPriority = 2
-  override fun getNotificationSubMessage(): String {
-    return SettingsSyncBundle.message("sync.restart.notification.submessage.plugins", "disable", plugins.joinToString(", "))
+
+  override fun getSingleReasonNotificationMessage(): String {
+    return SettingsSyncBundle.message("sync.notification.restart.message.plugin.disable", plugins.size, plugins.take(2).joinToString(", "))
+  }
+
+  override fun getMultiReasonNotificationListEntry(number: Int): String {
+    return "$number. " + SettingsSyncBundle.message("sync.notification.restart.message.list.entry.plugin.disable", plugins.size, plugins.take(2).joinToString(", "))
   }
 }
 
-internal object RestartForNewUI : RestartReason() {
+internal class RestartForNewUI(val enable: Boolean) : RestartReason() {
   override val sortingPriority = 3
-  override fun getNotificationSubMessage(): String {
-    return SettingsSyncBundle.message("sync.restart.notification.submessage.registry")
+  override fun getSingleReasonNotificationMessage(): String {
+    return SettingsSyncBundle.message(if (enable) "sync.notification.restart.message.new.ui.enable" else "sync.notification.restart.message.new.ui.disable")
+  }
+
+  override fun getMultiReasonNotificationListEntry(number: Int): String {
+    return "$number. " + SettingsSyncBundle.message(if (enable) "sync.notification.restart.message.list.entry.new.ui.enable" else "sync.notification.restart.message.list.entry.new.ui.disable")
   }
 }

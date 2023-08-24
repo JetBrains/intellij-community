@@ -18,6 +18,7 @@ import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.Key
+import com.intellij.openapi.util.Predicates
 import com.intellij.openapi.util.ProperTextRange
 import com.intellij.psi.PsiElement
 import com.intellij.util.CommonProcessors
@@ -43,7 +44,7 @@ class InlayHintsPass(
 
     Divider.divideInsideAndOutsideAllRoots(myFile, myFile.textRange,
                                            priorityRange,
-                                           { true },
+                                           Predicates.alwaysTrue(),
                                            CommonProcessors.CollectProcessor(allDivided))
     val elementsInside = allDivided.flatMap(Divider.DividedElements::inside)
     val elementsOutside = allDivided.flatMap(Divider.DividedElements::outside)

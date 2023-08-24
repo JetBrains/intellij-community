@@ -32,11 +32,6 @@
       <option name="url" value="https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/grazi/grazie-platform-public" />
     </remote-repository>
     <remote-repository>
-      <option name="id" value="download-pgp-verifier" />
-      <option name="name" value="download-pgp-verifier" />
-      <option name="url" value="https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/dpgpv/maven" />
-    </remote-repository>
-    <remote-repository>
       <option name="id" value="kpm" />
       <option name="name" value="kpm" />
       <option name="url" value="https://packages.jetbrains.team/maven/p/kpm/public" />

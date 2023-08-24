@@ -17,7 +17,7 @@ package org.zmlx.hg4idea.branch
 
 import com.intellij.dvcs.branch.BranchType
 
-enum class HgBranchType constructor(private val myName: String) : BranchType {
+enum class HgBranchType(private val myName: String) : BranchType {
   BRANCH("BRANCH"), BOOKMARK("BOOKMARK");
 
   override fun getName(): String {

@@ -90,7 +90,7 @@ public class JavaSliceProvider implements SliceLanguageSupportProvider, SliceUsa
   @NotNull
   @Override
   public SliceUsageCellRendererBase getRenderer() {
-    return new SliceUsageCellRenderer();
+    return new JavaSliceUsageCellRenderer();
   }
 
   @Override

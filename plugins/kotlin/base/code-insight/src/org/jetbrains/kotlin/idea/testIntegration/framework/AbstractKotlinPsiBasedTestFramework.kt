@@ -2,9 +2,12 @@
 package org.jetbrains.kotlin.idea.testIntegration.framework
 
 import com.intellij.java.library.JavaLibraryUtil
+import com.intellij.util.Processor
 import com.intellij.util.ThreeState
 import com.intellij.util.ThreeState.*
 import org.jetbrains.kotlin.idea.base.util.module
+import org.jetbrains.kotlin.idea.stubindex.KotlinFullClassNameIndex
+import org.jetbrains.kotlin.idea.stubindex.KotlinTopLevelTypeAliasFqNameIndex
 import org.jetbrains.kotlin.idea.testIntegration.framework.KotlinPsiBasedTestFramework.Companion.KOTLIN_TEST_IGNORE
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.psi.*
@@ -15,9 +18,17 @@ abstract class AbstractKotlinPsiBasedTestFramework : KotlinPsiBasedTestFramework
     protected abstract val disabledTestAnnotation: String
     protected abstract val allowTestMethodsInObject: Boolean
 
-    protected fun isFrameworkAvailable(element: KtElement): Boolean {
+    protected fun isFrameworkAvailable(element: KtElement): Boolean =
+        isFrameworkAvailable(element, markerClassFqn, true)
+
+    protected fun isFrameworkAvailable(element: KtElement, markerClassFqn: String, javaOnly: Boolean): Boolean {
         val module = element.module ?: return false
-        return JavaLibraryUtil.hasLibraryClass(module, markerClassFqn)
+        val javaClassExists = JavaLibraryUtil.hasLibraryClass(module, markerClassFqn)
+        if (javaOnly || javaClassExists) return javaClassExists
+        val scope = module.getModuleWithDependenciesAndLibrariesScope(true)
+        val processor = Processor<Any> { false }
+        return !KotlinFullClassNameIndex.processElements(markerClassFqn, element.project, scope, processor) ||
+                !KotlinTopLevelTypeAliasFqNameIndex.processElements(markerClassFqn, element.project, scope, processor)
     }
 
     override fun responsibleFor(declaration: KtNamedDeclaration): Boolean {

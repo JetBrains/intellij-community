@@ -1,5 +1,6 @@
 package com.intellij.settingsSync.notification
 
+import com.intellij.ide.util.propComponentProperty
 import com.intellij.notification.Notification
 import com.intellij.notification.NotificationAction
 import com.intellij.notification.NotificationGroupManager
@@ -10,19 +11,26 @@ import com.intellij.openapi.application.ex.ApplicationEx
 import com.intellij.settingsSync.NOTIFICATION_GROUP
 import com.intellij.settingsSync.RestartReason
 import com.intellij.settingsSync.SettingsSyncBundle
-import java.lang.RuntimeException
 
 internal class NotificationServiceImpl: NotificationService {
   override fun notifyZipSizeExceed() {
-    val notification = buildZipSizeExceedNotification()
+    val notification = buildZipSizeExceedNotification() ?: return
     notification.notify(null)
   }
 
-  override fun buildZipSizeExceedNotification(): Notification {
-    return NotificationGroupManager.getInstance().getNotificationGroup(NOTIFICATION_GROUP)
+  private fun buildZipSizeExceedNotification(): Notification? {
+    var showNotification: Boolean by propComponentProperty(null, "sync.notification.zip.size.exceed.show", defaultValue = true)
+    if (!showNotification) return null
+    val notification = NotificationGroupManager.getInstance().getNotificationGroup(NOTIFICATION_GROUP)
       .createNotification(SettingsSyncBundle.message("sync.notification.size.exceed.title"),
                           SettingsSyncBundle.message("sync.notification.size.exceed.text"),
                           NotificationType.ERROR)
+    notification.addAction(
+      NotificationAction.createSimpleExpiring(SettingsSyncBundle.message("sync.notification.do.not.ask.again")) {
+        showNotification = false
+      }
+    )
+    return notification
   }
 
   override fun notifyRestartNeeded(reasons: Collection<RestartReason>) {
@@ -36,22 +44,21 @@ internal class NotificationServiceImpl: NotificationService {
     notification.notify(null)
   }
 
-  override fun buildRestartNeededNotification(reasons: Collection<RestartReason>): Notification {
+  private fun buildRestartNeededNotification(reasons: Collection<RestartReason>): Notification {
     fun getMultiReasonRestartMessage(): String {
-      assert(reasons.size > 1)
-      val message = StringBuilder(SettingsSyncBundle.message("sync.restart.notification.message.subtitle")).append('\n')
+      val message = StringBuilder(SettingsSyncBundle.message("sync.notification.restart.message.list.title")).append("<br/>")
 
       val sortedRestartReasons = reasons.sorted()
       for ((counter, reason) in sortedRestartReasons.withIndex()) {
         message.append(reason.getMultiReasonNotificationListEntry(counter + 1))
+        if (counter < sortedRestartReasons.lastIndex) message.append("<br/>")
       }
 
-      message.dropLast(0) // we do not need the new line in the end
       return message.toString()
     }
 
     val message = when {
-      reasons.isEmpty() -> throw RuntimeException("No restart reasons provided")
+      reasons.isEmpty() -> ""
       reasons.size == 1 -> reasons.first().getSingleReasonNotificationMessage()
       else -> getMultiReasonRestartMessage()
     }

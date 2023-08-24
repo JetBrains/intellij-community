@@ -11,6 +11,7 @@ import com.intellij.ui.dsl.UiDslException
 import com.intellij.ui.dsl.builder.*
 import com.intellij.ui.dsl.gridLayout.*
 import com.intellij.ui.layout.ComponentPredicate
+import com.intellij.util.ui.JBUI
 import org.jetbrains.annotations.ApiStatus
 import java.awt.Color
 import javax.swing.JComponent
@@ -437,7 +438,7 @@ private fun Panel.createSeparatorRow(@NlsContexts.Separator title: String?): Row
 private fun Panel.createSeparatorRow(title: JBLabel?, background: Color? = null): Row {
   val separator: JComponent
   if (title == null) {
-    separator = SeparatorComponent(0, 0, background ?: OnePixelDivider.BACKGROUND, null)
+    separator = SeparatorComponent(0, 0, background ?: JBUI.CurrentTheme.CustomFrameDecorations.separatorForeground(), null)
   }
   else {
     separator = object : TitledSeparator(title.text) {

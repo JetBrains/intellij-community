@@ -150,7 +150,7 @@ open class HintRenderer(var text: String?) : EditorCustomElementRenderer {
         val xStart = r.x
         val xEnd = r.x + r.width
         val y = r.y + ascent
-        val font = editor.getColorsScheme().getFont(EditorFontType.PLAIN)
+        val font = editor.colorsScheme.getFont(EditorFontType.PLAIN)
         when (effectType) {
           EffectType.LINE_UNDERSCORE -> EffectPainter.LINE_UNDERSCORE.paint(g2d, xStart, y, xEnd - xStart, descent, font)
           EffectType.BOLD_LINE_UNDERSCORE -> EffectPainter.BOLD_LINE_UNDERSCORE.paint(g2d, xStart, y, xEnd - xStart, descent, font)

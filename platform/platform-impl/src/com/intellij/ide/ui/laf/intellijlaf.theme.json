@@ -974,6 +974,14 @@
       "UI": "com.intellij.ide.ui.laf.darcula.ui.ToolbarComboWidgetUI"
     },
 
+    "ToolbarComboButton": {
+      "UI": "com.intellij.ide.ui.laf.darcula.ui.ToolbarComboButtonUI"
+    },
+
+    "ToolbarSplitButton": {
+      "UI": "com.intellij.ide.ui.laf.darcula.ui.ToolbarSplitButtonUI"
+    },
+
     "MainToolbar": {
       "background": "#f2f2f2",
       "Icon": {

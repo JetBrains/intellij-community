@@ -1134,10 +1134,10 @@ public class ApplicationImpl extends ClientAwareComponentManager implements Appl
 
     Window activeWindow = KeyboardFocusManager.getCurrentKeyboardFocusManager().getActiveWindow();
     if (activeWindow != null) {
-      ApplicationActivationStateManager.updateState(this, activeWindow);
+      ApplicationActivationStateManager.INSTANCE.updateState(this, activeWindow);
     }
 
-    return ApplicationActivationStateManager.isActive();
+    return ApplicationActivationStateManager.INSTANCE.isActive();
   }
 
   @Override

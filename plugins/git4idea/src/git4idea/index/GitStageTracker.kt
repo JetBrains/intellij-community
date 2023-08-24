@@ -223,6 +223,10 @@ open class GitStageTracker(val project: Project) : Disposable {
       return State(result)
     }
 
+    fun isEmpty(): Boolean {
+      return rootStates.values.all { it.isEmpty() }
+    }
+
     @NonNls
     override fun toString(): String {
       return "State(${rootStates.toShortenedLogString(separator = "\n") { "${it.key.name}=${it.value}" }}"

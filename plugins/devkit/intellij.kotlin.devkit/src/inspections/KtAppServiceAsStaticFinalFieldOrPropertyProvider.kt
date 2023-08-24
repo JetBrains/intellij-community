@@ -40,7 +40,7 @@ import org.jetbrains.uast.toUElementOfType
 import java.util.function.Supplier
 
 
-private class KtAppServiceAsStaticFinalFieldOrPropertyVisitorProvider : AppServiceAsStaticFinalFieldOrPropertyVisitorProvider {
+internal class KtAppServiceAsStaticFinalFieldOrPropertyVisitorProvider : AppServiceAsStaticFinalFieldOrPropertyVisitorProvider {
 
   override fun getVisitor(holder: ProblemsHolder): PsiElementVisitor {
     return object : KtVisitorVoid() {
@@ -66,7 +66,7 @@ private class KtAppServiceAsStaticFinalFieldOrPropertyVisitorProvider : AppServi
         val anchor = property.nameIdentifier ?: property
 
         // a property is used by service implementation to retrieve a service instance
-        // if it's inside a companion object and returns and instance of containing class
+        // if it's inside a companion object and returns an instance of containing class
         val isInstance = property.parentOfType<KtObjectDeclaration>()?.isCompanion() == true &&
                          property.containingClass() == typeClassElement
 

@@ -64,16 +64,27 @@ public abstract class ApplicationInfoEx extends ApplicationInfo {
   /**
    * Returns URL to plugins repository without trailing slash.
    */
-  public abstract String getPluginManagerUrl();
+  public abstract @NotNull String getPluginManagerUrl();
 
   public abstract boolean usesJetBrainsPluginRepository();
 
-  public abstract String getPluginsListUrl();
+  public abstract @NotNull String getPluginsListUrl();
 
+  /**
+   * @deprecated is not used by the platform anymore
+   */
+  @ApiStatus.ScheduledForRemoval
+  @Deprecated
   public abstract String getChannelsListUrl();
 
-  public abstract String getPluginsDownloadUrl();
+  public abstract @NotNull String getPluginsDownloadUrl();
 
+  /**
+   * @deprecated use {@link com.intellij.ide.plugins.RepositoryHelper#CUSTOM_BUILT_IN_PLUGIN_REPOSITORY_PROPERTY} system property to pass
+   * URL of the built-in custom plugin repository instead
+   */
+  @SuppressWarnings("DeprecatedIsStillUsed")
+  @Deprecated
   public abstract String getBuiltinPluginsUrl();
 
   public abstract String getWebHelpUrl();
@@ -82,9 +93,9 @@ public abstract class ApplicationInfoEx extends ApplicationInfo {
 
   public abstract boolean isShowWhatsNewOnUpdate();
 
-  public abstract String getWinKeymapUrl();
+  public abstract @Nullable String getWinKeymapUrl();
 
-  public abstract String getMacKeymapUrl();
+  public abstract @Nullable String getMacKeymapUrl();
 
   public interface UpdateUrls {
     String getCheckingUrl();

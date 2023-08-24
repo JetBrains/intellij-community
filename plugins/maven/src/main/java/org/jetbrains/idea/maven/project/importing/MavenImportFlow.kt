@@ -274,7 +274,7 @@ class MavenImportFlow {
     val projectManager = MavenProjectsManager.getInstance(project)
     val embeddersManager = projectManager.embeddersManager
     val downloader = MavenArtifactDownloader(project, projectsTree, mavenArtifacts, indicator.indicator, indicator.syncConsole)
-    val settings = MavenWorkspaceSettingsComponent.getInstance(project).settings.getGeneralSettings()
+    val settings = MavenWorkspaceSettingsComponent.getInstance(project).settings.generalSettings
     val consoleToBeRemoved = BTWMavenConsole(project, settings.outputLevel, settings.isPrintErrorStackTraces)
     return downloader.downloadSourcesAndJavadocs(mavenProjects, sources, javadocs, embeddersManager, consoleToBeRemoved)
   }

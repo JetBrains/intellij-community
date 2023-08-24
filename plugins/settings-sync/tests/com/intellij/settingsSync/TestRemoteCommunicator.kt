@@ -1,12 +1,15 @@
 package com.intellij.settingsSync
 
+import com.intellij.util.io.inputStream
+import com.intellij.util.resettableLazy
 import org.junit.Assert
 import java.time.Instant
 import java.util.concurrent.CountDownLatch
-import kotlin.io.path.inputStream
 
 internal open class TestRemoteCommunicator(customServerUrl: String = "http://localhost:7777/cloudconfig")
   : CloudConfigServerCommunicator(customServerUrl) {
+
+  override val _userId = resettableLazy { "it's set to avoid UninitializedPropertyAccessException" }
 
   private lateinit var pushedLatch: CountDownLatch
   private lateinit var pushedSnapshot: SettingsSnapshot

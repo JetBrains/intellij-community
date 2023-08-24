@@ -42,7 +42,6 @@ import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.containingClass
 import org.jetbrains.kotlin.psi.psiUtil.endOffset
 import org.jetbrains.kotlin.psi.psiUtil.getStrictParentOfType
-import org.jetbrains.kotlin.psi.psiUtil.isAbstract
 
 
 class CompanionObjectInExtensionInspection : LocalInspectionTool() {
@@ -54,16 +53,10 @@ class CompanionObjectInExtensionInspection : LocalInspectionTool() {
 
       override fun visitObjectDeclaration(declaration: KtObjectDeclaration) {
         if (!declaration.isCompanion()) return
-        val klass = declaration.getStrictParentOfType<KtClass>() ?: return
 
-        if (klass.isAbstract() ||
-            klass.isInterface() ||
-            klass.isInner() ||
-            klass.isLocal ||
-            klass.isEnum()) return
+        val ktLightClass = declaration.getStrictParentOfType<KtClass>()?.toLightClass() ?: return
 
-        val ktLightClass = klass.toLightClass() ?: return
-
+        if (!ExtensionUtil.isExtensionPointImplementationCandidate(ktLightClass)) return
         if (!ExtensionUtil.isInstantiatedExtension(ktLightClass) { ExtensionUtil.hasServiceBeanFqn(it) }) return
 
         val anchor = declaration.modifierList?.getModifier(KtTokens.COMPANION_KEYWORD) ?: return

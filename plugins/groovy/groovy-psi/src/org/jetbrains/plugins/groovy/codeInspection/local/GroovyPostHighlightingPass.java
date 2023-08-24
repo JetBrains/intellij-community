@@ -115,7 +115,7 @@ public class GroovyPostHighlightingPass extends TextEditorHighlightingPass {
                 usageHelper.shouldCheckContributors = false;
               }
               try {
-                if (!UnusedSymbolUtil.isMethodReferenced(method.getProject(), method.getContainingFile(), method, progress, usageHelper)) {
+                if (!UnusedSymbolUtil.isMethodUsed(method.getProject(), method.getContainingFile(), method, progress, usageHelper)) {
                   String message;
                   if (method.isConstructor()) {
                     message = GroovyBundle.message("text.constructor.0.is.unused", name);
@@ -197,7 +197,7 @@ public class GroovyPostHighlightingPass extends TextEditorHighlightingPass {
   }
 
   private static boolean isFieldUnused(GrField field, ProgressIndicator progress, GlobalUsageHelper usageHelper) {
-    if (!UnusedSymbolUtil.isFieldUnused(field.getProject(), field.getContainingFile(), field, progress, usageHelper)) return false;
+    if (UnusedSymbolUtil.isFieldUsed(field.getProject(), field.getContainingFile(), field, progress, usageHelper)) return false;
     final GrAccessorMethod[] getters = field.getGetters();
     final GrAccessorMethod setter = field.getSetter();
 

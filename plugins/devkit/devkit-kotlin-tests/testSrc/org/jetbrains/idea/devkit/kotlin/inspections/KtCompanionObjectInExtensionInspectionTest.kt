@@ -28,4 +28,8 @@ class KtCompanionObjectInExtensionInspectionTest : KtCompanionObjectInExtensionI
   fun testExtensionWithLoggerAndConstVal() {
     doTest()
   }
+
+  fun testExtensionWithInitBlocks() {
+    doTest()
+  }
 }

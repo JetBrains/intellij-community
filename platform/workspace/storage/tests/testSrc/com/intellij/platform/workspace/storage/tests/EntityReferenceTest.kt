@@ -1,16 +1,18 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.workspace.storage.tests
 
-import com.intellij.platform.workspace.storage.testEntities.entities.SampleEntity
-import com.intellij.platform.workspace.storage.testEntities.entities.SampleEntitySource
 import com.intellij.platform.workspace.storage.impl.MutableEntityStorageImpl
 import com.intellij.platform.workspace.storage.impl.url.VirtualFileUrlManagerImpl
+import com.intellij.platform.workspace.storage.testEntities.entities.SampleEntity
+import com.intellij.platform.workspace.storage.testEntities.entities.SampleEntitySource
 import com.intellij.platform.workspace.storage.toBuilder
 import com.intellij.platform.workspace.storage.url.VirtualFileUrlManager
-import org.junit.jupiter.api.Assertions.*
+import org.junit.jupiter.api.Assertions.assertNotEquals
+import org.junit.jupiter.api.Assertions.assertNull
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Disabled
 import org.junit.jupiter.api.Test
+import kotlin.test.assertEquals
 
 class EntityReferenceTest {
   private lateinit var virtualFileUrlManager: VirtualFileUrlManager

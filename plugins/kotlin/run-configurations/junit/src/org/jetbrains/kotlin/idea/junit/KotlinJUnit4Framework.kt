@@ -8,9 +8,11 @@ import com.intellij.java.analysis.OuterModelsModificationTrackerManager
 import com.intellij.psi.PsiElement
 import com.intellij.psi.util.CachedValueProvider
 import com.intellij.psi.util.CachedValuesManager
+import com.intellij.psi.util.parentOfType
 import com.intellij.util.ThreeState
 import com.intellij.util.ThreeState.*
 import com.siyeh.ig.junit.JUnitCommonClassNames
+import org.jetbrains.kotlin.asJava.elements.KtLightElement
 import org.jetbrains.kotlin.idea.KotlinLanguage
 import org.jetbrains.kotlin.idea.testIntegration.framework.AbstractKotlinPsiBasedTestFramework
 import org.jetbrains.kotlin.idea.testIntegration.framework.KotlinPsiBasedTestFramework
@@ -36,6 +38,19 @@ class KotlinJUnit4Framework: JUnit4Framework(), KotlinPsiBasedTestFramework {
             }
         }
 
+        fun isPotentialTestClass(element: PsiElement): Boolean {
+            if (element.language != KotlinLanguage.INSTANCE) return false
+            val psiElement = (element as? KtLightElement<*, *>)?.kotlinOrigin ?: element
+            val ktClassOrObject = psiElement.parentOfType<KtClassOrObject>(true) ?: return false
+
+            return CachedValuesManager.getCachedValue(ktClassOrObject) {
+                CachedValueProvider.Result.create(
+                    checkJUnit4PotentialTestClass(ktClassOrObject) == YES,
+                    OuterModelsModificationTrackerManager.getInstance(ktClassOrObject.project).tracker
+                )
+            }
+        }
+
         override fun isTestMethod(declaration: KtNamedFunction): Boolean {
             return when {
                 !super.isTestMethod(declaration) -> false
@@ -55,10 +70,22 @@ class KotlinJUnit4Framework: JUnit4Framework(), KotlinPsiBasedTestFramework {
             return isTestClass(classOrObject) && isAnnotated(declaration, testMethodAnnotations)
         }
 
-        private fun checkJUnit4TestClass(declaration: KtClassOrObject): ThreeState {
-            return if (!isFrameworkAvailable(declaration)) {
+        private fun checkJUnit4TestClass(declaration: KtClassOrObject): ThreeState =
+            if (!isFrameworkAvailable(declaration)) {
                 NO
-            } else if (declaration.safeAs<KtClass>()?.isInner() == true) {
+            } else {
+                checkIsJUnit4LikeTestClass(declaration)
+            }
+
+        private fun checkJUnit4PotentialTestClass(declaration: KtClassOrObject): ThreeState =
+            if (!isFrameworkAvailable(declaration) && !isFrameworkAvailable(declaration, KotlinPsiBasedTestFramework.KOTLIN_TEST_TEST, false)) {
+                NO
+            } else {
+                checkIsJUnit4LikeTestClass(declaration)
+            }
+
+        private fun checkIsJUnit4LikeTestClass(declaration: KtClassOrObject): ThreeState {
+            return if (declaration.safeAs<KtClass>()?.isInner() == true) {
                 NO
             } else if (declaration.isTopLevel() && isAnnotated(declaration, JUnitUtil.RUN_WITH)) {
                 YES
@@ -95,6 +122,9 @@ class KotlinJUnit4Framework: JUnit4Framework(), KotlinPsiBasedTestFramework {
             else -> checkTestClass == YES
         }
 
+    override fun isPotentialTestClass(clazz: PsiElement): Boolean =
+        isTestClass(clazz) || psiBasedDelegate.isPotentialTestClass(clazz)
+
     override fun findSetUpMethod(clazz: PsiElement): PsiElement? =
         when (checkTestClass(clazz)) {
             UNSURE -> super.findSetUpMethod(clazz)
@@ -130,11 +160,9 @@ class KotlinJUnit4Framework: JUnit4Framework(), KotlinPsiBasedTestFramework {
 
     override fun isIgnoredMethod(declaration: KtNamedFunction): Boolean =
         psiBasedDelegate.isIgnoredMethod(declaration)
-
-    companion object {
-        private val testMethodAnnotations = setOf(JUnitCommonClassNames.ORG_JUNIT_TEST, KotlinPsiBasedTestFramework.KOTLIN_TEST_TEST)
-        private val setUpAnnotations = setOf(JUnitUtil.BEFORE_ANNOTATION_NAME, KotlinPsiBasedTestFramework.KOTLIN_TEST_BEFORE_TEST)
-        private val tearDownAnnotations = setOf(JUnitUtil.AFTER_ANNOTATION_NAME, KotlinPsiBasedTestFramework.KOTLIN_TEST_AFTER_TEST)
-        private val testableClassMethodAnnotations = testMethodAnnotations + setUpAnnotations + tearDownAnnotations
-    }
 }
+
+private val testMethodAnnotations = setOf(JUnitCommonClassNames.ORG_JUNIT_TEST, KotlinPsiBasedTestFramework.KOTLIN_TEST_TEST)
+private val setUpAnnotations = setOf(JUnitUtil.BEFORE_ANNOTATION_NAME, KotlinPsiBasedTestFramework.KOTLIN_TEST_BEFORE_TEST)
+private val tearDownAnnotations = setOf(JUnitUtil.AFTER_ANNOTATION_NAME, KotlinPsiBasedTestFramework.KOTLIN_TEST_AFTER_TEST)
+private val testableClassMethodAnnotations = testMethodAnnotations + setUpAnnotations + tearDownAnnotations

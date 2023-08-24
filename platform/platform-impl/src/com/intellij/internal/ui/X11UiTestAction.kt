@@ -12,14 +12,21 @@ import com.intellij.openapi.util.SystemInfoRt
 import com.intellij.openapi.wm.ex.WindowManagerEx
 import com.intellij.openapi.wm.impl.IdeFrameImpl
 import com.intellij.openapi.wm.impl.X11UiUtil
+import com.intellij.ui.SimpleListCellRenderer
 import com.intellij.ui.dsl.builder.panel
 import com.intellij.util.Alarm
+import java.awt.Frame
 import javax.swing.JComponent
 import javax.swing.JLabel
+import kotlin.reflect.KProperty0
 
 internal class X11UiTestAction : DumbAwareAction() {
 
   override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.BGT
+
+  override fun update(e: AnActionEvent) {
+    e.presentation.isEnabledAndVisible = SystemInfoRt.isXWindow
+  }
 
   override fun actionPerformed(e: AnActionEvent) {
     FullScreenTestDialog(e.project, templatePresentation.text).show()
@@ -34,7 +41,10 @@ private class FullScreenTestDialog(val project: Project?, dialogTitle: String) :
   private val alarm = Alarm(disposable)
   private lateinit var update: Runnable
   private lateinit var lbIsInFullScreenMode: JLabel
+  private lateinit var lbIsMaximizedVert: JLabel
+  private lateinit var lbIsMaximizedHorz: JLabel
   private lateinit var lbIdeFrameInFullScreen: JLabel
+  private lateinit var lbFrameExtendedState: JLabel
 
   init {
     title = dialogTitle
@@ -42,19 +52,49 @@ private class FullScreenTestDialog(val project: Project?, dialogTitle: String) :
   }
 
   override fun createCenterPanel(): JComponent {
-    if (!SystemInfoRt.isXWindow) {
-      return panel {
-        row { label("Available for Linux only") }
-      }
+    update = Runnable {
+      timerUpdate()
+      alarm.addRequest(update, UPDATE_INTERVAL)
     }
+    alarm.addRequest(update, UPDATE_INTERVAL)
 
-    val result = panel {
+    return panel {
       group("X11UiUtil Values") {
+        row("isInitialized:") {
+          label(X11UiUtil.isInitialized().toString())
+        }
         row("isFullScreenSupported:") {
           label(X11UiUtil.isFullScreenSupported().toString())
         }
         row("isInFullScreenMode:") {
           lbIsInFullScreenMode = label("").component
+
+          button("Toggle") {
+            getFrame()?.let {
+              val value = X11UiUtil.isInFullScreenMode(it)
+              X11UiUtil.setFullScreenMode(it, !value)
+            }
+          }
+
+          comment("If IDE is not in FullScreen mode, then it resets full screen on timer")
+        }
+        row("isMaximizedVert:") {
+          lbIsMaximizedVert = label("").component
+
+          button("Set BOTH maximized") {
+            getFrame()?.let {
+              X11UiUtil.setMaximized(it, true)
+            }
+          }
+        }
+        row("isMaximizedHorz:") {
+          lbIsMaximizedHorz = label("").component
+
+          button("Reset BOTH maximized") {
+            getFrame()?.let {
+              X11UiUtil.setMaximized(it, false)
+            }
+          }
         }
         row("isTileWM:") {
           label(X11UiUtil.isTileWM().toString())
@@ -68,33 +108,50 @@ private class FullScreenTestDialog(val project: Project?, dialogTitle: String) :
         row("IdeFrame.isInFullScreen:") {
           lbIdeFrameInFullScreen = label("").component
         }
-      }
+        row("IdeFrame.extendedState:") {
+          lbFrameExtendedState = label("").component
 
-      group("Actions") {
-        row {
-          button("toggleFullScreenMode") {
+          val cb = comboBox(listOf(Frame::MAXIMIZED_VERT, Frame::MAXIMIZED_HORIZ, Frame::MAXIMIZED_BOTH),
+                            SimpleListCellRenderer.create("") { it.name }).component
+
+          button("Set `state or value`") {
             getFrame()?.let {
-              X11UiUtil.toggleFullScreenMode(it)
+              val state = (cb.selectedItem as KProperty0<Int>).get()
+              it.extendedState = it.extendedState or state
             }
-          }.comment("This action brings IDE to inconsistent state with FullScreenMode")
+          }
+          button("Set `state and value.inv()`") {
+            getFrame()?.let {
+              val state = (cb.selectedItem as KProperty0<Int>).get()
+              it.extendedState = it.extendedState and state.inv()
+            }
+          }
         }
       }
     }
-    update = Runnable {
-      timerUpdate()
-      alarm.addRequest(update, UPDATE_INTERVAL)
-    }
-    alarm.addRequest(update, UPDATE_INTERVAL)
-    return result
   }
 
   private fun timerUpdate() {
     val frame = getFrame()
     lbIsInFullScreenMode.text = if (frame == null) "IdeFrame not found" else X11UiUtil.isInFullScreenMode(frame).toString()
+    lbIsMaximizedVert.text = if (frame == null) "IdeFrame not found" else X11UiUtil.isMaximizedVert(frame).toString()
+    lbIsMaximizedHorz.text = if (frame == null) "IdeFrame not found" else X11UiUtil.isMaximizedHorz(frame).toString()
     lbIdeFrameInFullScreen.text = if (frame == null) "IdeFrame not found" else frame.isInFullScreen.toString()
+    lbFrameExtendedState.text = if (frame == null) "IdeFrame not found" else extendedStateToString(frame.extendedState)
   }
 
   private fun getFrame(): IdeFrameImpl? {
     return WindowManagerEx.getInstanceEx().getFrame(project)
+  }
+
+  private fun extendedStateToString(state: Int): String {
+    val horiz = state and Frame.MAXIMIZED_HORIZ != 0
+    val vert = state and Frame.MAXIMIZED_VERT != 0
+    return if (horiz) {
+      if (vert) "MAXIMIZED_BOTH" else "MAXIMIZED_HORIZ"
+    }
+    else {
+      if (vert) "MAXIMIZED_VERT" else "NORMAL"
+    }
   }
 }

@@ -4,5 +4,4 @@
 
 3 FunParamererKt.foo(<bold>1</bold>);
 5 	fun foo(<bold>n: Int</bold>, s: String = "???") { (in foo(Int, String = ...))
-3 		FunParamererKt.foo(<bold>1</bold>);
-
+3 		JAVA: FunParamererKt.foo(<bold>1</bold>); (in J.test())

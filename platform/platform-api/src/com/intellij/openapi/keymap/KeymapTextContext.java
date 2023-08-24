@@ -192,7 +192,7 @@ public class KeymapTextContext {
 
     if ((modifiers & InputEvent.META_MASK) != 0)      buf.append("Cmd+");
     if ((modifiers & InputEvent.CTRL_MASK) != 0)      buf.append("Ctrl+");
-    if ((modifiers & InputEvent.ALT_MASK) != 0)       buf.append("Opt+");
+    if ((modifiers & InputEvent.ALT_MASK) != 0)       buf.append("Alt+");
     if ((modifiers & InputEvent.SHIFT_MASK) != 0)     buf.append("Shift+");
     if ((modifiers & InputEvent.ALT_GRAPH_MASK) != 0) buf.append("Alt Graph+");
     if ((modifiers & InputEvent.BUTTON1_MASK) != 0)   buf.append("Button1+");

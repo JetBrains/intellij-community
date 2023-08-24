@@ -1,17 +1,13 @@
 // Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.platform.workspace.storage.tests
 
-import com.intellij.platform.workspace.storage.testEntities.entities.*
-import com.intellij.testFramework.UsefulTestCase.assertOneElement
 import com.intellij.platform.workspace.storage.MutableEntityStorage
 import com.intellij.platform.workspace.storage.impl.ModifiableWorkspaceEntityBase
 import com.intellij.platform.workspace.storage.impl.assertConsistency
-import junit.framework.TestCase
-import org.junit.Assert.assertEquals
-import org.junit.Assert.assertTrue
-import org.junit.Test
-import kotlin.test.assertNotNull
-import kotlin.test.assertNull
+import com.intellij.platform.workspace.storage.testEntities.entities.*
+import com.intellij.testFramework.UsefulTestCase.assertOneElement
+import org.junit.jupiter.api.Test
+import kotlin.test.*
 
 class AbstractEntitiesTest {
   @Test
@@ -211,26 +207,26 @@ class AbstractEntitiesTest {
     resultEntity.parentData
     var firstEntityData = (entity as ModifiableWorkspaceEntityBase<*, *>).getEntityData()
     var secondEntityData = (resultEntity as ModifiableWorkspaceEntityBase<*, *>).getEntityData()
-    TestCase.assertSame(firstEntityData, secondEntityData)
+    assertSame(firstEntityData, secondEntityData)
     val originalEntityData = firstEntityData
 
     builder.modifyEntity(resultEntity) {
       this.parentData = "NewParentData"
     }
     val anotherResult = builder.entities(ParentNullableEntity::class.java).single()
-    TestCase.assertEquals(resultEntity.parentData, anotherResult.parentData)
+    assertEquals(resultEntity.parentData, anotherResult.parentData)
 
     firstEntityData = (resultEntity as ModifiableWorkspaceEntityBase<*, *>).getEntityData()
     secondEntityData = (anotherResult as ModifiableWorkspaceEntityBase<*, *>).getEntityData()
-    TestCase.assertSame(firstEntityData, secondEntityData)
-    TestCase.assertNotSame(firstEntityData, originalEntityData)
+    assertSame(firstEntityData, secondEntityData)
+    assertNotSame(firstEntityData, originalEntityData)
 
     builder.modifyEntity(anotherResult) {
       this.parentData = "AnotherParentData"
     }
     val oneMoreResult = builder.entities(ParentNullableEntity::class.java).single()
-    TestCase.assertEquals(resultEntity.parentData, anotherResult.parentData)
-    TestCase.assertEquals(oneMoreResult.parentData, anotherResult.parentData)
-    TestCase.assertEquals(oneMoreResult.parentData, resultEntity.parentData)
+    assertEquals(resultEntity.parentData, anotherResult.parentData)
+    assertEquals(oneMoreResult.parentData, anotherResult.parentData)
+    assertEquals(oneMoreResult.parentData, resultEntity.parentData)
   }
 }

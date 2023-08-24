@@ -45,8 +45,21 @@
             </xs:documentation>
           </xs:annotation>
         </xs:element>
-        <xs:element type="editorType" name="editor" minOccurs="0"/>
-        <xs:element type="pluginsType" name="plugins" minOccurs="0"/>
+        <xs:element type="editorType" name="editor" minOccurs="0">
+          <xs:annotation>
+            <xs:documentation>
+              Deprecated and no longer used by the IDE.
+            </xs:documentation>
+          </xs:annotation>
+        </xs:element>
+        <xs:element type="pluginsType" name="plugins" minOccurs="0">
+          <xs:annotation>
+            <xs:documentation>
+              Specifies custom URLs used by the IDE to search and install plugins. By default, JetBrains Marketplace (https://plugins.jetbrains.com)
+              is used.
+            </xs:documentation>
+          </xs:annotation>
+        </xs:element>
         <xs:element type="update-urlsType" name="update-urls" minOccurs="0"/>
         <xs:element type="helpType" name="help" minOccurs="0"/>
         <xs:element type="urlType" name="documentation" minOccurs="0"/>
@@ -57,7 +70,14 @@
         <xs:element type="keymapType" name="keymap" minOccurs="0"/>
         <xs:element type="urlType" name="jetbrains-tv" minOccurs="0"/>
         <xs:element type="subscriptionsType" name="subscriptions" minOccurs="0"/>
-        <xs:element type="statisticsType" name="statistics" minOccurs="0"/>
+        <xs:element type="statisticsType" name="statistics" minOccurs="0">
+          <xs:annotation>
+            <xs:documentation>
+              Deprecated: is not used by the IDE.
+            </xs:documentation>
+            <xs:documentation>deprecated</xs:documentation>
+          </xs:annotation>
+        </xs:element>
         <xs:element type="default-lafType" name="default-laf" minOccurs="0"/>
       </xs:sequence>
     </xs:complexType>
@@ -374,7 +394,7 @@
     <xs:attribute type="xs:string" name="url" use="required"/>
   </xs:complexType>
   <xs:complexType name="whatsNewUrlType">
-    <xs:attribute type="xs:anyURI" name="url" use="required">
+    <xs:attribute type="xs:anyURI" name="url">
       <xs:annotation>
         <xs:documentation>An URL for the "Help | What's New" action. See also 'show-on-update' attribute.</xs:documentation>
       </xs:annotation>
@@ -395,11 +415,31 @@
     </xs:restriction>
   </xs:simpleType>
   <xs:complexType name="pluginsType">
-    <xs:attribute type="xs:anyURI" name="url"/>
+    <xs:attribute type="xs:anyURI" name="url">
+      <xs:annotation>
+        <xs:documentation>
+          URL of the main plugin repository used by the IDE. By default, JetBrains Marketplace URL is used (https://plugins.jetbrains.com).
+        </xs:documentation>
+      </xs:annotation>
+    </xs:attribute>
     <xs:attribute type="xs:string" name="list-url"/>
-    <xs:attribute type="xs:string" name="channel-list-url"/>
+    <xs:attribute type="xs:string" name="channel-list-url">
+      <xs:annotation>
+        <xs:documentation>
+          Deprecated and no longer used by the IDE.
+        </xs:documentation>
+      </xs:annotation>
+    </xs:attribute>
     <xs:attribute type="xs:string" name="download-url"/>
-    <xs:attribute type="xs:string" name="builtin-url"/>
+    <xs:attribute type="xs:string" name="builtin-url">
+      <xs:annotation>
+        <xs:documentation>
+          Deprecated since 2023.3. 
+          Use 'intellij.plugins.custom.built.in.repository.url' system property to pass URL of built-in custom plugin repository instead.
+        </xs:documentation>
+        <xs:documentation>deprecated</xs:documentation>
+      </xs:annotation>
+    </xs:attribute>
   </xs:complexType>
   <xs:complexType name="keymapType">
     <xs:attribute type="xs:string" name="win" use="required"/>
@@ -447,11 +487,46 @@
     <xs:attribute type="xs:string" name="depends"/>
   </xs:complexType>
   <xs:complexType name="statisticsType">
-    <xs:attribute type="xs:string" name="settings"/>
-    <xs:attribute type="xs:string" name="service"/>
-    <xs:attribute type="xs:string" name="service-key"/>
-    <xs:attribute type="xs:string" name="fus-settings"/>
-    <xs:attribute type="xs:string" name="event-log-settings"/>
+    <xs:attribute type="xs:string" name="settings">
+      <xs:annotation>
+        <xs:documentation>
+          Deprecated: is not used by the IDE.
+        </xs:documentation>
+        <xs:documentation>deprecated</xs:documentation>
+      </xs:annotation>
+    </xs:attribute>
+    <xs:attribute type="xs:string" name="service">
+      <xs:annotation>
+        <xs:documentation>
+          Deprecated: is not used by the IDE.
+        </xs:documentation>
+        <xs:documentation>deprecated</xs:documentation>
+      </xs:annotation>
+    </xs:attribute>
+    <xs:attribute type="xs:string" name="service-key">
+      <xs:annotation>
+        <xs:documentation>
+          Deprecated: is not used by the IDE.
+        </xs:documentation>
+        <xs:documentation>deprecated</xs:documentation>
+      </xs:annotation>
+    </xs:attribute>
+    <xs:attribute type="xs:string" name="fus-settings">
+      <xs:annotation>
+        <xs:documentation>
+          Deprecated: is not used by the IDE.
+        </xs:documentation>
+        <xs:documentation>deprecated</xs:documentation>
+      </xs:annotation>
+    </xs:attribute>
+    <xs:attribute type="xs:string" name="event-log-settings">
+      <xs:annotation>
+        <xs:documentation>
+          Deprecated: is not used by the IDE.
+        </xs:documentation>
+        <xs:documentation>deprecated</xs:documentation>
+      </xs:annotation>
+    </xs:attribute>
   </xs:complexType>
   <xs:complexType name="default-lafType">
     <xs:attribute type="xs:string" name="light"/>
@@ -461,11 +536,29 @@
   </xs:complexType>
   <xs:complexType name="zendeskFormType">
     <xs:sequence>
-      <xs:element name="field" type="zendeskFieldType" minOccurs="0" maxOccurs="unbounded"/>
+      <xs:element name="field" type="zendeskFieldType" minOccurs="0" maxOccurs="unbounded">
+        <xs:annotation>
+          <xs:documentation>
+            Deprecated and no longer used since 2023.3, override ExternalProductResourceUrls::feedbackReporter instead.
+          </xs:documentation>
+        </xs:annotation>
+      </xs:element>
     </xs:sequence>
     <xs:attribute type="xs:string" name="url"/>
-    <xs:attribute type="xs:string" name="zendesk-form-id"/>
-    <xs:attribute type="xs:string" name="zendesk-url"/>
+    <xs:attribute type="xs:string" name="zendesk-form-id">
+      <xs:annotation>
+        <xs:documentation>
+          Deprecated and no longer used since 2023.3, override ExternalProductResourceUrls::feedbackReporter instead.
+        </xs:documentation>
+      </xs:annotation>
+    </xs:attribute>
+    <xs:attribute type="xs:string" name="zendesk-url">
+      <xs:annotation>
+        <xs:documentation>
+          Deprecated and no longer used since 2023.3, override ExternalProductResourceUrls::feedbackReporter instead.
+        </xs:documentation>
+      </xs:annotation>
+    </xs:attribute>
   </xs:complexType>
   <xs:complexType name="zendeskFieldType">
     <xs:attribute type="xs:long" name="id" use="required"/>

@@ -15,11 +15,11 @@ import java.nio.charset.StandardCharsets
 import java.util.function.Function
 import java.util.function.Supplier
 
-class DefaultTemplate constructor(val name: String,
-                                  val extension: String,
-                                  private val textSupplier: Supplier<String>,
-                                  private val descriptionLoader: Function<String, String>?,
-                                  private val descriptionPath: String?) {
+class DefaultTemplate(val name: String,
+                      val extension: String,
+                      private val textSupplier: Supplier<String>,
+                      private val descriptionLoader: Function<String, String>?,
+                      private val descriptionPath: String?) {
   private var text: Reference<String?>? = null
 
   //NON-NLS

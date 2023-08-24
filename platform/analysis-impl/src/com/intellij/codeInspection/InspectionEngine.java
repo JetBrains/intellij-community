@@ -118,7 +118,7 @@ public final class InspectionEngine {
     Divider.divideInsideAndOutsideAllRoots(file, restrictRange, priorityRange, Predicates.alwaysTrue(), new CommonProcessors.CollectProcessor<>(allDivided));
 
     List<PsiElement> elements = ContainerUtil.concat(
-      (List<List<PsiElement>>)ContainerUtil.map(allDivided, d -> ContainerUtil.concat(d.inside, d.outside, d.parents)));
+      ContainerUtil.map(allDivided, d -> ContainerUtil.concat(d.inside(), d.outside(), d.parents())));
 
     Map<LocalInspectionToolWrapper, List<ProblemDescriptor>> map = inspectElements(toolWrappers, file, restrictRange, ignoreSuppressedElements, isOnTheFly, indicator, elements, foundDescriptorCallback);
     if (inspectInjectedPsi) {

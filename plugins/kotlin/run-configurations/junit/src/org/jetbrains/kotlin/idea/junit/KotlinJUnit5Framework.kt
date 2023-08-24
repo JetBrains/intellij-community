@@ -8,8 +8,10 @@ import com.intellij.java.analysis.OuterModelsModificationTrackerManager
 import com.intellij.psi.PsiElement
 import com.intellij.psi.util.CachedValueProvider
 import com.intellij.psi.util.CachedValuesManager
+import com.intellij.psi.util.parentOfType
 import com.intellij.util.ThreeState
 import com.intellij.util.ThreeState.*
+import org.jetbrains.kotlin.asJava.elements.KtLightElement
 import org.jetbrains.kotlin.idea.KotlinLanguage
 import org.jetbrains.kotlin.idea.testIntegration.framework.AbstractKotlinPsiBasedTestFramework
 import org.jetbrains.kotlin.idea.testIntegration.framework.KotlinPsiBasedTestFramework
@@ -38,6 +40,19 @@ class KotlinJUnit5Framework: JUnit5Framework(), KotlinPsiBasedTestFramework {
             }
         }
 
+        fun isPotentialTestClass(element: PsiElement): Boolean {
+            if (element.language != KotlinLanguage.INSTANCE) return false
+            val psiElement = (element as? KtLightElement<*, *>)?.kotlinOrigin ?: element
+            val ktClassOrObject = psiElement.parentOfType<KtClassOrObject>(true) ?: return false
+
+            return CachedValuesManager.getCachedValue(ktClassOrObject) {
+                CachedValueProvider.Result.create(
+                    checkJUnit5PotentialTestClass(ktClassOrObject) == YES,
+                    OuterModelsModificationTrackerManager.getInstance(ktClassOrObject.project).tracker
+                )
+            }
+        }
+
         override fun isTestMethod(declaration: KtNamedFunction): Boolean {
             if (!super.isTestMethod(declaration)) return false
             if (declaration.annotationEntries.isEmpty()) return false
@@ -45,6 +60,20 @@ class KotlinJUnit5Framework: JUnit5Framework(), KotlinPsiBasedTestFramework {
         }
 
         private fun checkJUnit5TestClass(declaration: KtClassOrObject): ThreeState =
+            if (!isFrameworkAvailable(declaration)) {
+                NO
+            } else {
+                checkIsJUnit5LikeTestClass(declaration)
+            }
+
+        private fun checkJUnit5PotentialTestClass(declaration: KtClassOrObject): ThreeState =
+            if (!isFrameworkAvailable(declaration) && !isFrameworkAvailable(declaration, KotlinPsiBasedTestFramework.KOTLIN_TEST_TEST, false)) {
+                NO
+            } else {
+                checkIsJUnit5LikeTestClass(declaration)
+            }
+
+        private fun checkIsJUnit5LikeTestClass(declaration: KtClassOrObject): ThreeState =
             if (!isFrameworkAvailable(declaration)) {
                 NO
             } else if (declaration is KtClass && declaration.isInner() && !isAnnotated(declaration, "org.junit.jupiter.api.Nested")) {
@@ -79,6 +108,9 @@ class KotlinJUnit5Framework: JUnit5Framework(), KotlinPsiBasedTestFramework {
             UNSURE -> super.isTestClass(clazz)
             else -> checkTestClass == YES
         }
+
+    override fun isPotentialTestClass(clazz: PsiElement): Boolean =
+        isTestClass(clazz) || psiBasedDelegate.isPotentialTestClass(clazz)
 
     override fun findSetUpMethod(clazz: PsiElement): PsiElement? =
         when (checkTestClass(clazz)) {

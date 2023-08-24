@@ -29,7 +29,10 @@ import com.intellij.util.indexing.diagnostic.ProjectDumbIndexingHistoryImpl
 import com.intellij.util.indexing.diagnostic.ProjectIndexingHistoryImpl
 import com.intellij.util.indexing.diagnostic.ScanningType
 import com.intellij.util.ui.UIUtil
-import kotlinx.coroutines.*
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
 import org.junit.*
 import org.junit.Assert.*
 import org.junit.runner.RunWith
@@ -191,7 +194,6 @@ class DumbServiceImplTest {
       }
     }
 
-    runInEdtAndWait { dumbService.isDumb = false }
     dumbService.queueTask(task1)
     dumbService.queueTask(task2)
     runInEdtAndWait { Disposer.dispose(dumbService) }

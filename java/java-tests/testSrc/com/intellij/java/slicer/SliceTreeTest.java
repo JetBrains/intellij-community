@@ -8,6 +8,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.slicer.*;
 import com.intellij.toolWindow.ToolWindowHeadlessManagerImpl;
+import com.intellij.util.FontUtil;
 import com.intellij.util.containers.ContainerUtil;
 import it.unimi.dsi.fastutil.ints.IntArrayList;
 import it.unimi.dsi.fastutil.ints.IntList;
@@ -203,78 +204,78 @@ public class SliceTreeTest extends SliceTestCase {
     checkStructure(newRoot, """
       Null Values
         Value: o
-          6|String |l;
-            52|l = |d|;
-              51|void| set(String |d|) {
-                15|set(|o|);
+          6| |String |l;| in X
+            52| |l = |d|;| in X.set(String)
+              51| |void| set(String |d|) {| in X.set(String)
+                15| |set(|o|);| in X.X(String) (filter: null)
         Value: other
-          6|String |l;
-            52|l = |d|;
-              51|void| set(String |d|) {
-                24|set(|other|);
+          6| |String |l;| in X
+            52| |l = |d|;| in X.set(String)
+              51| |void| set(String |d|) {| in X.set(String)
+                24| |set(|other|);| in X.X(String)
         Value: nu()
-          6|String |l;
-            52|l = |d|;
-              51|void| set(String |d|) {
-                29|set(|nu()|);
+          6| |String |l;| in X
+            52| |l = |d|;| in X.set(String)
+              51| |void| set(String |d|) {| in X.set(String)
+                29| |set(|nu()|);| in X.X(String)
         Value: t
-          6|String |l;
-            52|l = |d|;
-              51|void| set(String |d|) {
-                46|x.set(|t|);
+          6| |String |l;| in X
+            52| |l = |d|;| in X.set(String)
+              51| |void| set(String |d|) {| in X.set(String)
+                46| |x.set(|t|);| in X.fs(String, X)
       NotNull Values
         Value: "xxx"
-          6|String |l;
-            52|l = |d|;
-              51|void| set(String |d|) {
-                10|set(|"xxx"|);
+          6| |String |l;| in X
+            52| |l = |d|;| in X.set(String)
+              51| |void| set(String |d|) {| in X.set(String)
+                10| |set(|"xxx"|);| in X.X(String)
         Value: new String()
-          6|String |l;
-            52|l = |d|;
-              51|void| set(String |d|) {
-                17|set(|new| String()|);
+          6| |String |l;| in X
+            52| |l = |d|;| in X.set(String)
+              51| |void| set(String |d|) {| in X.set(String)
+                17| |set(|new| String()|);| in X.X(String) (filter: not-null)
         Value: nn()
-          6|String |l;
-            52|l = |d|;
-              51|void| set(String |d|) {
-                18|set(|nn()|);
+          6| |String |l;| in X
+            52| |l = |d|;| in X.set(String)
+              51| |void| set(String |d|) {| in X.set(String)
+                18| |set(|nn()|);| in X.X(String) (filter: not-null)
         Value: CON
-          6|String |l;
-            52|l = |d|;
-              51|void| set(String |d|) {
-                19|set(|CON|);
+          6| |String |l;| in X
+            52| |l = |d|;| in X.set(String)
+              51| |void| set(String |d|) {| in X.set(String)
+                19| |set(|CON|);| in X.X(String) (filter: "")
         Value: nn
-          6|String |l;
-            52|l = |d|;
-              51|void| set(String |d|) {
-                21|set(|nn|);
+          6| |String |l;| in X
+            52| |l = |d|;| in X.set(String)
+              51| |void| set(String |d|) {| in X.set(String)
+                21| |set(|nn|);| in X.X(String) (filter: not-null)
         Value: g
-          6|String |l;
-            52|l = |d|;
-              51|void| set(String |d|) {
-                27|set(|g|);
+          6| |String |l;| in X
+            52| |l = |d|;| in X.set(String)
+              51| |void| set(String |d|) {| in X.set(String)
+                27| |set(|g|);| in X.X(String) (filter: not-null)
         Value: t == null ? "null" : t
-          6|String |l;
-            52|l = |d|;
-              51|void| set(String |d|) {
-                48|x.set(|t == |null| ? |"null"| : t|);
+          6| |String |l;| in X
+            52| |l = |d|;| in X.set(String)
+              51| |void| set(String |d|) {| in X.set(String)
+                48| |x.set(|t == |null| ? |"null"| : t|);| in X.fs(String, X) (filter: not-null)
         Value: d
-          6|String |l;
-            55|l = |d|;
+          6| |String |l;| in X
+            55| |l = |d|;| in X.setFromNN(String) (filter: not-null)
       Other Values
         Value: private String d;
-          6|String |l;
-            52|l = |d|;
-              51|void| set(String |d|) {
-                30|set(|hz()|);
-                  42|return| |d|;
-                    7|private| String |d;
+          6| |String |l;| in X
+            52| |l = |d|;| in X.set(String)
+              51| |void| set(String |d|) {| in X.set(String)
+                30| |set(|hz()|);| in X.X(String)
+                  42| |return| |d|;| in X.hz()
+                    7| |private| String |d;| in X
         Value: String g
-          6|String |l;
-            52|l = |d|;
-              51|void| set(String |d|) {
-                11|set(|g|);
-                  9|public| X(String |g|) {
+          6| |String |l;| in X
+            52| |l = |d|;| in X.set(String)
+              51| |void| set(String |d|) {| in X.set(String)
+                11| |set(|g|);| in X.X(String)
+                  9| |public| X(String |g|) {| in X.X(String)
       """);
   }
 
@@ -282,7 +283,11 @@ public class SliceTreeTest extends SliceTestCase {
     String dataActual =
       EntryStream.ofTree(root, (depth, node) -> StreamEx.of(node.getChildren()).sorted(SliceTreeBuilder.SLICE_NODE_COMPARATOR))
         .skip(1)
-        .mapKeyValue((depth, node) -> StringUtil.repeat("  ", depth - 1) + node + "\n")
+        .mapKeyValue((depth, node) -> {
+          node.getValue().updateCachedPresentation();
+          String s = StringUtil.repeat("  ", depth - 1) + node + "\n";
+          return s.replace(FontUtil.thinSpace(), "");
+        })
         .joining();
     assertEquals(dataExpected, dataActual);
   }
@@ -299,9 +304,9 @@ public class SliceTreeTest extends SliceTestCase {
     checkStructure(newRoot, """
       Null Values
         Value: null
-          2|String |l;
-            4|l = |null|;
-            7|l = |null|;
+          2| |String |l;| in X
+            4| |l = |null|;| in X
+            7| |l = |null|;| in X
       """);
   }
 

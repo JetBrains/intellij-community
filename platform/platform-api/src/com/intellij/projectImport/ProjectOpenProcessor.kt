@@ -3,6 +3,7 @@ package com.intellij.projectImport
 
 import com.intellij.ide.IdeCoreBundle
 import com.intellij.openapi.extensions.ExtensionPointName
+import com.intellij.openapi.progress.runBlockingMaybeCancellable
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.MessageConstants
 import com.intellij.openapi.ui.MessageDialogBuilder.Companion.yesNoCancel
@@ -101,5 +102,18 @@ abstract class ProjectOpenProcessor {
    *
    * @see .canImportProjectAfterwards
    */
-  open fun importProjectAfterwards(project: Project, file: VirtualFile) {}
+  @Deprecated("use async method instead")
+  open fun importProjectAfterwards(project: Project, file: VirtualFile) {
+    runBlockingMaybeCancellable {
+      importProjectAfterwardsAsync(project, file)
+    }
+  }
+
+  /**
+   * Import the project after it has already been opened in IDEA.
+   *
+   * @see .canImportProjectAfterwards
+   */
+  open suspend fun importProjectAfterwardsAsync(project: Project, file: VirtualFile) {}
+
 }

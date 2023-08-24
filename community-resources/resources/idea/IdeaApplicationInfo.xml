@@ -10,21 +10,5 @@
   <essential-plugin>com.intellij.java</essential-plugin>
   <essential-plugin>com.intellij.java.ide</essential-plugin>
 
-  <editor background-url="/idea_logo_welcome.png"/>
-
-  <plugins url="https://plugins.jetbrains.com/"
-           builtin-url="__BUILTIN_PLUGINS_URL__"/>
-
-  <help webhelp-url="https://www.jetbrains.com/help/idea/"/>
-  <documentation url="https://www.jetbrains.com/idea/resources/"/>
-  <whatsnew url="https://www.jetbrains.com/idea/whatsnew/" show-on-update="true"/>
-  <keymap win="https://www.jetbrains.com/idea/docs/IntelliJIDEA_ReferenceCard.pdf"
-          mac="https://www.jetbrains.com/idea/docs/IntelliJIDEA_ReferenceCard_Mac.pdf"/>
-  <jetbrains-tv url="https://www.youtube.com/user/intellijideavideo"/>
-
-  <statistics settings="https://www.jetbrains.com/idea/statistics/stat-assistant.xml"
-              service="https://www.jetbrains.com/idea/statistics/index.jsp"
-              fus-settings="https://www.jetbrains.com/idea/statistics/fus-assistant.xml"
-              event-log-settings="https://resources.jetbrains.com/storage/fus/config/v4/%s/%s.json"
-  />
+  <whatsnew show-on-update="true"/>
 </component>

@@ -69,8 +69,8 @@ final class InjectedGeneralHighlightingPass extends GeneralHighlightingPass {
     List<Divider.DividedElements> allDivided = new ArrayList<>();
     Divider.divideInsideAndOutsideAllRoots(myFile, myRestrictRange, myPriorityRange, SHOULD_HIGHLIGHT_FILTER, new CommonProcessors.CollectProcessor<>(allDivided));
 
-    List<PsiElement> allInsideElements = ContainerUtil.concat((List<List<PsiElement>>)ContainerUtil.map(allDivided, d -> d.inside));
-    List<PsiElement> allOutsideElements = ContainerUtil.concat((List<List<PsiElement>>)ContainerUtil.map(allDivided, d -> d.outside));
+    List<PsiElement> allInsideElements = ContainerUtil.concat(ContainerUtil.map(allDivided, d -> d.inside()));
+    List<PsiElement> allOutsideElements = ContainerUtil.concat(ContainerUtil.map(allDivided, d -> d.outside()));
 
     List<HighlightInfo> resultInside = new ArrayList<>(100);
     List<HighlightInfo> resultOutside = new ArrayList<>(100);

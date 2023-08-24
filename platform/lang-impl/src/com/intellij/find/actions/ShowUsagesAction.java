@@ -10,6 +10,7 @@ import com.intellij.find.FindManager;
 import com.intellij.find.FindSettings;
 import com.intellij.find.findUsages.*;
 import com.intellij.find.impl.FindManagerImpl;
+import com.intellij.find.impl.UsageAdaptersKt;
 import com.intellij.find.usages.api.SearchTarget;
 import com.intellij.find.usages.impl.Psi2UsageInfo2UsageAdapter;
 import com.intellij.icons.AllIcons;
@@ -95,7 +96,6 @@ import java.beans.PropertyChangeListener;
 import java.util.List;
 import java.util.*;
 import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -966,8 +966,8 @@ public final class ShowUsagesAction extends AnAction implements PopupAction, Hin
       Runnable updatePreviewRunnable = () -> {
         if (popupRef.get().isDisposed()) return;
         int[] selectedRows = table.getSelectedRows();
-        final List<CompletableFuture<UsageInfo[]>> selectedUsagePromises = new SmartList<>();
         String file = null;
+        List<UsageInfoAdapter> adapters = new ArrayList<>();
         for (int row : selectedRows) {
           Object value = table.getModel().getValueAt(row, 0);
 
@@ -975,32 +975,25 @@ public final class ShowUsagesAction extends AnAction implements PopupAction, Hin
             Usage usage = ((UsageNode)value).getUsage();
             if (usage instanceof UsageInfoAdapter adapter) {
               file = adapter.getPath();
-              if (adapter.isValid()) {
-                selectedUsagePromises.add(adapter.getMergedInfosAsync());
-              }
+              adapters.add(adapter);
             }
           }
         }
 
         String selectedFile = file;
-        CompletableFuture.allOf(selectedUsagePromises.toArray(new CompletableFuture[0])).thenAccept(__ -> {
-          final List<UsageInfo> selectedUsages = new ArrayList<>(selectedUsagePromises.size());
-          for (CompletableFuture<UsageInfo[]> f : selectedUsagePromises) {
-            try {
-              UsageInfo[] usageInfos = f.get();
-              Collections.addAll(selectedUsages, usageInfos);
-            }
-            catch (InterruptedException | ExecutionException e) {
-              throw new RuntimeException(e);
-            }
-          }
 
-          usagePreviewPanel.updateLayout(selectedUsages);
-          previewTitle.clear();
+        UsageAdaptersKt.getUsageInfo(adapters, project).thenAccept(selectedUsages -> {
+          ReadAction.nonBlocking(() -> UsagePreviewPanel.isOneAndOnlyOnePsiFileInUsages(selectedUsages))
+              .finishOnUiThread(ModalityState.nonModal(), isOneAndOnlyOnePsiFileInUsages -> {
+                usagePreviewPanel.updateLayout(selectedUsages);
+                previewTitle.clear();
 
-          if (usagePreviewPanel.getCannotPreviewMessage(selectedUsages) == null && selectedFile != null) {
-            previewTitle.append(PathUtil.getFileName(selectedFile), SimpleTextAttributes.REGULAR_ATTRIBUTES);
-          }
+                if (isOneAndOnlyOnePsiFileInUsages && selectedFile != null) {
+                  previewTitle.append(PathUtil.getFileName(selectedFile), SimpleTextAttributes.REGULAR_ATTRIBUTES);
+                }
+              })
+            .expireWith(contentDisposable)
+            .submit(AppExecutorUtil.getAppExecutorService());
         });
       };
 
@@ -1547,7 +1540,7 @@ public final class ShowUsagesAction extends AnAction implements PopupAction, Hin
     }
   }
 
-  @Service
+  @Service(Service.Level.PROJECT)
   private static final class ShowUsagesActionState {
     Runnable continuation;
   }

@@ -7,7 +7,6 @@
   <names product="IDEA" fullname="IntelliJ IDEA"/>
   <productUrl url="https://www.jetbrains.com/idea/"/>
 
-  <plugins url="https://plugins.jetbrains.com/"/>
   <update-urls check="https://www.jetbrains.com/updates/updates.xml"
                patches="https://download.jetbrains.com/idea/"/>
 

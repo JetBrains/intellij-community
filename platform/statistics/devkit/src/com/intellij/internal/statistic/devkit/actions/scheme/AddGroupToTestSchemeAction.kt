@@ -28,7 +28,7 @@ import java.io.IOException
 /**
  * Action adds group which are not yet registered on the server to a test groups scheme for testing.
  */
-class AddGroupToTestSchemeAction constructor(private val recorderId: String = StatisticsDevKitUtil.DEFAULT_RECORDER)
+class AddGroupToTestSchemeAction(private val recorderId: String = StatisticsDevKitUtil.DEFAULT_RECORDER)
   : DumbAwareAction(ActionsBundle.messagePointer("action.AddGroupToTestSchemeAction.text"),
                     ActionsBundle.messagePointer("action.AddGroupToTestSchemeAction.description"),
                     AllIcons.General.Add) {

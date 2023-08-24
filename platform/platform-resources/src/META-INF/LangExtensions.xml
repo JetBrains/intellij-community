@@ -1012,9 +1012,6 @@
     <projectService serviceInterface="com.intellij.execution.ui.RunnerLayoutUi$Factory"
                     serviceImplementation="com.intellij.execution.ui.layout.impl.RunnerLayoutUiFactoryImpl"/>
 
-    <projectService serviceImplementation="com.intellij.codeInsight.codeVision.ui.CodeVisionView"/>
-    <projectService serviceImplementation="com.intellij.codeInsight.codeVision.ui.model.ProjectCodeVisionModel"/>
-
     <applicationService serviceInterface="com.intellij.codeInsight.documentation.render.DocRenderItemManager"
                     serviceImplementation="com.intellij.codeInsight.documentation.render.DocRenderItemManagerImpl" />
 

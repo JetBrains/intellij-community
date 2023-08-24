@@ -51,7 +51,9 @@ public final class UnixPythonSdkFlavor extends CPythonSdkFlavor<PyFlavorData.Emp
   @NotNull
   public static Set<String> getDefaultUnixPythons(@Nullable String rootPrefix) {
     Set<String> candidates = new HashSet<>();
-    collectUnixPythons((rootPrefix != null ? rootPrefix : "") + "/usr/bin", candidates);
+    for (var prefix : new String[]{"/usr/bin", "/usr/local/bin"}) {
+      collectUnixPythons((rootPrefix != null ? rootPrefix : "") + prefix, candidates);
+    }
     return candidates;
   }
 

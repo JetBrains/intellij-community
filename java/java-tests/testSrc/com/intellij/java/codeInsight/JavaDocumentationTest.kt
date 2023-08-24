@@ -132,7 +132,7 @@ class JavaDocumentationTest : LightJavaCodeInsightFixtureTestCase() {
       class Foo {{
         new Bar<String>().f<caret>oo();
       }}""",
-      """<span style="color:#000000;"><a href="psi_element://Bar">Bar</a></span><br/> <span style="color:#000000;"><a href="psi_element://java.util.List">List</a></span><span style="">&lt;</span><span style="color:#000000;">String</span><span style="">&gt;</span> <span style="color:#000000;">foo</span><span style="">(</span><span style="color:#000000;">String</span> <span style="">param</span><span style="">)</span>"""
+      """<span style="color:#000000;"><a href="psi_element://Bar">Bar</a></span><br/> <span style="color:#000000;"><a href="psi_element://java.util.List">List</a></span><span style="">&lt;</span><span style="color:#000000;">String</span><span style="">&gt;</span> <span style="color:#000000;">foo</span><span style="">(</span><span style="color:#000000;">String</span> <span style="color:#000000;">param</span><span style="">)</span>"""
     )
   }
 

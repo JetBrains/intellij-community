@@ -105,7 +105,7 @@ open class EditorCodeVisionContext(
         val anchoringRange = groupedLenses.first().value.first()
         val range = TextRange(anchoringRange.startOffset, anchoringRange.endOffset)
         val handlerLambda = viewService.addCodeLenses(lifetime,
-                                                      editor,
+                                                      editor as EditorImpl,
                                                       range,
                                                       groupedLenses.map {
                                                         it.key to it.value.map { it.codeVisionEntryOrThrow }.sortedBy {

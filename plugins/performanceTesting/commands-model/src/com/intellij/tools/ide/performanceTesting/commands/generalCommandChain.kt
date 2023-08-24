@@ -3,7 +3,6 @@ package com.intellij.tools.ide.performanceTesting.commands
 import java.io.File
 import java.lang.reflect.Modifier
 import java.nio.file.Path
-import kotlin.io.path.absolutePathString
 import kotlin.io.path.listDirectoryEntries
 import kotlin.reflect.KFunction
 import kotlin.reflect.jvm.javaMethod
@@ -755,8 +754,8 @@ fun <T : CommandChain> T.goToDeclaration(expectedOpenedFile: String): T {
   return this
 }
 
-fun <T : CommandChain> T.collectAllFiles(extension: String, fileWithResult: Path): T {
-  this.addCommand("${CMD_PREFIX}collectAllFiles $extension ${fileWithResult.absolutePathString()}")
+fun <T : CommandChain> T.collectAllFiles(extension: String): T {
+  this.addCommand("${CMD_PREFIX}collectAllFiles $extension")
   return this
 }
 

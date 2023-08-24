@@ -30,9 +30,18 @@ abstract class BaseJetBrainsExternalProductResourceUrls : ExternalProductResourc
 
   /**
    * Returns URL of the product page on jetbrains.com site. 
-   * It's supposed that by appending `download` to this URL you get the address of the download page.
+   * It's used to compute URLs of the following resources: 
+   * * [productPageUrl]/download to get the address of the download page;
+   * * [productPageUrl]/whatsnew to get the address of "What's New" page.  
    */
   abstract val productPageUrl: String
+
+  /**
+   * Returns base URL of context help pages. 
+   * The current IDE version number and ID of the requested topic are added to it to obtain the actual URL:
+   * [baseWebHelpUrl]`/<version>/?<topicId>`.
+   */
+  abstract val baseWebHelpUrl: String
 
   /**
    * Returns ID of the form used to contact support at intellij-support.jetbrains.com site 
@@ -81,6 +90,16 @@ abstract class BaseJetBrainsExternalProductResourceUrls : ExternalProductResourc
 
   override val downloadPageUrl: Url?
     get() = Urls.newFromEncoded(productPageUrl).resolve("download")
+
+  override val whatIsNewPageUrl: Url?
+    get() = Urls.newFromEncoded(productPageUrl).resolve("whatsnew")
+
+  override val helpPageUrl: ((topicId: String) -> Url)
+    get() = { topicId ->
+      Urls.newFromEncoded(baseWebHelpUrl).resolve("${ApplicationInfo.getInstance().shortVersion}/").addParameters(mapOf(
+        topicId to ""
+      ))
+    }
 }
 
 /**

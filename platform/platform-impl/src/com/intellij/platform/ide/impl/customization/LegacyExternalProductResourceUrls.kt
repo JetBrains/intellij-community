@@ -5,6 +5,7 @@ import com.intellij.openapi.application.ApplicationInfo
 import com.intellij.openapi.application.ex.ApplicationInfoEx
 import com.intellij.openapi.updateSettings.impl.UpdateRequestParameters
 import com.intellij.openapi.util.BuildNumber
+import com.intellij.openapi.util.SystemInfo
 import com.intellij.platform.ide.customization.ExternalProductResourceUrls
 import com.intellij.platform.ide.customization.FeedbackReporter
 import com.intellij.ui.LicensingFacade
@@ -58,7 +59,7 @@ class LegacyExternalProductResourceUrls : ExternalProductResourceUrls {
           val appInfo = ApplicationInfoEx.getInstanceEx()
           val build = appInfo.getBuild()
           val url = urlTemplate
-            .replace("\$BUILD", URLUtil.encodeURIComponent(if (appInfo.isEAP()) build.asStringWithoutProductCode() else build.asString()))
+            .replace("\$BUILD", URLUtil.encodeURIComponent(if (appInfo.isEAP) build.asStringWithoutProductCode() else build.asString()))
             .replace("\$TIMEZONE", URLUtil.encodeURIComponent(System.getProperty("user.timezone", "")))
             .replace("\$VERSION", URLUtil.encodeURIComponent(appInfo.getFullVersion()))
             .replace("\$EVAL", URLUtil.encodeURIComponent((LicensingFacade.getInstance()?.isEvaluationLicense == true).toString()))
@@ -70,4 +71,30 @@ class LegacyExternalProductResourceUrls : ExternalProductResourceUrls {
 
   override val downloadPageUrl: Url
     get() = Urls.newFromEncoded(ApplicationInfoEx.getInstanceEx().downloadUrl)
+
+  override val youTubeChannelUrl: Url?
+    get() = ApplicationInfoEx.getInstanceEx().jetBrainsTvUrl?.let { Urls.newFromEncoded(it) }
+
+  override val keyboardShortcutsPdfUrl: Url?
+    get() {
+      val appInfo = ApplicationInfoEx.getInstanceEx()
+      val url = if (SystemInfo.isMac) appInfo.getMacKeymapUrl() else appInfo.getWinKeymapUrl()
+      return url?.let { Urls.newFromEncoded(url) }
+    }
+
+  override val whatIsNewPageUrl: Url?
+    get() = ApplicationInfoEx.getInstanceEx().whatsNewUrl?.let { Urls.newFromEncoded(it) }
+
+  override val gettingStartedPageUrl: Url?
+    get() = ApplicationInfoEx.getInstanceEx().documentationUrl?.let { Urls.newFromEncoded(it) }
+
+  override val helpPageUrl: ((topicId: String) -> Url)?
+    get() {
+      val baseHelpUrl = ApplicationInfoEx.getInstanceEx().webHelpUrl ?: return null 
+      return { topicId ->
+        Urls.newFromEncoded(baseHelpUrl).resolve("${ApplicationInfo.getInstance().shortVersion}/").addParameters(mapOf(
+          topicId to ""
+        ))
+      }
+    }
 }

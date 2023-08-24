@@ -9,11 +9,13 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.ThrowableComputable;
 import com.intellij.openapi.util.objectTree.ThrowableInterner;
 import com.intellij.openapi.util.registry.Registry;
+import com.intellij.openapi.util.text.Strings;
 import com.intellij.util.containers.FList;
 import com.intellij.util.ui.EDT;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * A utility to enforce "slow operation on EDT" assertion.
@@ -26,7 +28,8 @@ import org.jetbrains.annotations.NotNull;
 public final class SlowOperations {
   private static final Logger LOG = Logger.getInstance(SlowOperations.class);
 
-  public static final String ERROR_MESSAGE = "Slow operations are prohibited on EDT. See SlowOperations.assertSlowOperationsAreAllowed javadoc.";
+  private static final String ERROR_EDT = "Slow operations are prohibited on EDT. See SlowOperations.assertSlowOperationsAreAllowed javadoc.";
+  private static final String ERROR_RA = "Non-cancelable slow operations are prohibited inside read action. See SlowOperations.assertNonCancelableSlowOperationsAreAllowed javadoc.";
 
   public static final String ACTION_UPDATE = "action.update";     // action update in menus, toolbars, and popups
   public static final String ACTION_PERFORM = "action.perform";   // user triggered actions
@@ -85,37 +88,53 @@ public final class SlowOperations {
    * @see com.intellij.openapi.actionSystem.ex.ActionUtil#underModalProgress
    */
   public static void assertSlowOperationsAreAllowed() {
-    if (!EDT.isCurrentThreadEdt()) {
-      return;
-    }
-    if (isAlwaysAllowed()) {
-      return;
-    }
+    String error = !EDT.isCurrentThreadEdt() ||
+                   isAlwaysAllowed() ||
+                   isSlowOperationAllowed() ? null : ERROR_EDT;
+    if (error == null || isAlreadyReported()) return;
+    LOG.error(error);
+  }
+
+  /**
+   * I/O and native calls in addition to being slow operations must not be called inside read-action (RA)
+   * as such RAs cannot be promptly canceled on an incoming write-action (WA).
+   *
+   * @see #assertSlowOperationsAreAllowed()
+   */
+  public static void assertNonCancelableSlowOperationsAreAllowed() {
+    String error = isAlwaysAllowed() ? null :
+                   EDT.isCurrentThreadEdt() ? (isSlowOperationAllowed() ? null : ERROR_EDT) :
+                   (ApplicationManager.getApplication().isReadAccessAllowed() ? ERROR_RA : null);
+    if (error == null || isAlreadyReported()) return;
+    LOG.error(error);
+  }
+
+  private static boolean isSlowOperationAllowed() {
     boolean forceAssert = isInSection(FORCE_ASSERT);
     if (!forceAssert && !Registry.is("ide.slow.operations.assertion", true)) {
-      return;
+      return true;
     }
     Application application = ApplicationManager.getApplication();
     if (application.isWriteAccessAllowed() && !Registry.is("ide.slow.operations.assertion.write.action")) {
-      return;
+      return true;
     }
     if (ourStack.isEmpty() && !Registry.is("ide.slow.operations.assertion.other", false)) {
-      return;
+      return true;
     }
     for (String activity : ourStack) {
       if (RESET.equals(activity)) {
         break;
       }
       if (!Registry.is("ide.slow.operations.assertion." + activity, true)) {
-        return;
+        return true;
       }
     }
+    return false;
+  }
 
+  private static boolean isAlreadyReported() {
     Throwable throwable = new Throwable();
-    if (ThrowableInterner.intern(throwable) != throwable) {
-      return;
-    }
-    LOG.error(ERROR_MESSAGE);
+    return ThrowableInterner.intern(throwable) != throwable;
   }
 
   @ApiStatus.Internal
@@ -232,5 +251,11 @@ public final class SlowOperations {
         ourStack = prev;
       }
     };
+  }
+
+  @ApiStatus.Internal
+  public static boolean isMyMessage(@Nullable String error) {
+    return Strings.areSameInstance(ERROR_EDT, error) ||
+           Strings.areSameInstance(ERROR_RA, error);
   }
 }

@@ -215,6 +215,7 @@ public abstract class PluginsTab {
     editor.setBorder(JBUI.Borders.empty(0, 6));
     editor.setOpaque(true);
     editor.setBackground(PluginManagerConfigurable.SEARCH_BG_COLOR);
+    editor.getAccessibleContext().setAccessibleName(IdeBundle.message("plugin.manager.search.accessible.name"));
 
     String text = IdeBundle.message("plugin.manager.options.command");
 

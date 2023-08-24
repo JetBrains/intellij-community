@@ -15,8 +15,8 @@ import com.intellij.vcs.log.data.CommitDetailsGetter
 import com.intellij.vcs.log.data.DataPack
 import com.intellij.vcs.log.data.VcsLogStorage
 import com.intellij.vcs.log.data.index.IndexDiagnostic.getDiffFor
-import com.intellij.vcs.log.data.index.IndexDiagnostic.pickIndexedCommits
 import com.intellij.vcs.log.data.index.IndexDiagnostic.pickCommits
+import com.intellij.vcs.log.data.index.IndexDiagnostic.pickIndexedCommits
 import com.intellij.vcs.log.impl.VcsLogErrorHandler
 
 internal class IndexDiagnosticRunner(private val index: VcsLogModifiableIndex,
@@ -78,6 +78,9 @@ internal class IndexDiagnosticRunner(private val index: VcsLogModifiableIndex,
     }
     catch (e: VcsException) {
       thisLogger().error(e)
+    }
+    finally {
+      (dataGetter.indexStorageBackend as? PhmVcsLogStorageBackend)?.clearCaches()
     }
   }
 

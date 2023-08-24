@@ -3,6 +3,7 @@ package com.intellij.openapi.actionSystem.impl
 
 import com.intellij.CommonBundle
 import com.intellij.concurrency.SensitiveProgressWrapper
+import com.intellij.concurrency.resetThreadContext
 import com.intellij.diagnostic.PluginException
 import com.intellij.icons.AllIcons
 import com.intellij.ide.IdeEventQueue
@@ -281,12 +282,14 @@ object Utils {
       val queue = IdeEventQueue.getInstance()
       val contextComponent = PlatformCoreDataKeys.CONTEXT_COMPONENT.getData(wrapped)
       try {
-        cancelOnUserActivityInside(promise, contextComponent, menuItem).use {
-          ourExpandActionGroupImplEDTLoopLevel++
-          list = runLoopAndWaitForFuture(promise, emptyList(), true) {
-            val event = queue.getNextEvent()
-            queue.dispatchEvent(event)
-            true
+        resetThreadContext().use {
+          cancelOnUserActivityInside(promise, contextComponent, menuItem).use {
+            ourExpandActionGroupImplEDTLoopLevel++
+            list = runLoopAndWaitForFuture(promise, emptyList(), true) {
+              val event = queue.getNextEvent()
+              queue.dispatchEvent(event)
+              true
+            }
           }
         }
       }

@@ -46,7 +46,7 @@ public final class ContainerUtil {
   @SafeVarargs
   @Contract(pure = true)
   @Deprecated
-  public static @NotNull <K, V> Map<K, V> newHashMap(@NotNull Pair<? extends K, ? extends V> first, Pair<? extends K,? extends V> @NotNull ... entries) {
+  public static @NotNull <K, V> Map<K, V> newHashMap(@NotNull Pair<? extends K, ? extends V> first, @NotNull Pair<? extends K,? extends V> @NotNull ... entries) {
     Map<K, V> map = new HashMap<>(entries.length + 1);
     map.put(first.getFirst(), first.getSecond());
     for (Pair<? extends K, ? extends V> entry : entries) {
@@ -883,7 +883,12 @@ public final class ContainerUtil {
 
   @Contract(pure = true)
   public static @NotNull <T, K, V> Map<K, V> map2Map(T @NotNull [] collection, @NotNull Function<? super T, ? extends Pair<? extends K, ? extends V>> mapper) {
-    return map2Map(Arrays.asList(collection), mapper);
+    Map<K, V> set = new HashMap<>(collection.length);
+    for (T t : collection) {
+      Pair<? extends K, ? extends V> pair = mapper.fun(t);
+      set.put(pair.first, pair.second);
+    }
+    return set;
   }
 
   @Contract(pure = true)
@@ -900,7 +905,14 @@ public final class ContainerUtil {
   @Contract(pure = true)
   public static @NotNull <T, K, V> Map<K, V> map2MapNotNull(T @NotNull [] collection,
                                                             @NotNull Function<? super T, ? extends @Nullable Pair<? extends K, ? extends V>> mapper) {
-    return map2MapNotNull(Arrays.asList(collection), mapper);
+    Map<K, V> result = new HashMap<>(collection.length);
+    for (T t : collection) {
+      Pair<? extends K, ? extends V> pair = mapper.fun(t);
+      if (pair != null) {
+        result.put(pair.first, pair.second);
+      }
+    }
+    return result;
   }
 
   @Contract(pure = true)
@@ -1109,7 +1121,12 @@ public final class ContainerUtil {
     collection.removeIf(t -> !collected.add(t));
   }
 
+  /**
+   * @deprecated use {@link Map#of}
+   */
   @Contract(pure = true)
+  @Deprecated
+  @ApiStatus.ScheduledForRemoval
   public static @NotNull Map<String, String> stringMap(String @NotNull ... keyValues) {
     Map<String, String> result = new HashMap<>();
     for (int i = 0; i < keyValues.length - 1; i+=2) {
@@ -1322,8 +1339,12 @@ public final class ContainerUtil {
    * @return read-only list consisting of the elements from the {@code collection} of the specified {@code aClass}
    */
   @Contract(pure = true)
-  public static @Unmodifiable @NotNull <T, V> List<T> concat(V @NotNull [] array, @NotNull Function<? super V, ? extends Collection<? extends T>> fun) {
-    return concat(Arrays.asList(array), fun);
+  public static @Unmodifiable @NotNull <T, V> List<T> concat(V @NotNull [] array, @NotNull Function<? super V, ? extends Collection<? extends T>> listGenerator) {
+    List<T> result = new ArrayList<>();
+    for (V v : array) {
+      result.addAll(listGenerator.fun(v));
+    }
+    return result.isEmpty() ? emptyList() : result;
   }
 
   /**
@@ -1349,7 +1370,21 @@ public final class ContainerUtil {
   @Contract(pure = true)
   public static @Unmodifiable @NotNull <T> List<T> append(@NotNull List<? extends T> list, T @NotNull ... values) {
     //noinspection unchecked
-    return values.length == 0 ? (List<T>)list : concat(list, Arrays.asList(values));
+    if (values.length == 0) {
+      return (List<T>)list;
+    }
+
+    return new AbstractList<T>() {
+      @Override
+      public T get(int index) {
+        return index < list.size() ? list.get(index) : values[index - list.size()];
+      }
+
+      @Override
+      public int size() {
+        return list.size() + values.length;
+      }
+    };
   }
 
   /**
@@ -1360,7 +1395,20 @@ public final class ContainerUtil {
   @Contract(pure = true)
   public static @Unmodifiable @NotNull <T> List<T> prepend(@NotNull List<? extends T> list, T @NotNull ... values) {
     //noinspection unchecked
-    return values.length == 0 ? (List<T>)list : concat(Arrays.asList(values), list);
+    if (values.length == 0) {
+      return (List<T>)list;
+    }
+    return new AbstractList<T>() {
+      @Override
+      public T get(int index) {
+        return index < values.length? values[index] : list.get(index - values.length);
+      }
+
+      @Override
+      public int size() {
+        return list.size() + values.length;
+      }
+    };
   }
 
   /**
@@ -1386,11 +1434,7 @@ public final class ContainerUtil {
     return new AbstractList<T>() {
       @Override
       public T get(int index) {
-        if (index < size1) {
-          return list1.get(index);
-        }
-
-        return list2.get(index - size1);
+        return index < size1 ? list1.get(index) : list2.get(index - size1);
       }
 
       @Override
@@ -1442,7 +1486,7 @@ public final class ContainerUtil {
 
   @SafeVarargs
   @Contract(pure = true)
-  public static @NotNull <T> Iterable<T> concat(Iterable<? extends T> @NotNull ... iterables) {
+  public static @NotNull <T> Iterable<T> concat(@NotNull Iterable<? extends T> @NotNull ... iterables) {
     if (iterables.length == 0) return Collections.emptyList();
     if (iterables.length == 1) {
       //noinspection unchecked
@@ -1461,7 +1505,7 @@ public final class ContainerUtil {
 
   @SafeVarargs
   @Contract(pure = true)
-  public static @NotNull <T> Iterator<T> concatIterators(Iterator<? extends T> @NotNull ... iterators) {
+  public static @NotNull <T> Iterator<T> concatIterators(@NotNull Iterator<? extends T> @NotNull ... iterators) {
     return new SequenceIterator<>(iterators);
   }
 
@@ -1488,7 +1532,7 @@ public final class ContainerUtil {
    */
   @SafeVarargs
   @Contract(pure = true)
-  public static @Unmodifiable @NotNull <T> List<T> concat(List<? extends T> @NotNull ... lists) {
+  public static @Unmodifiable @NotNull <T> List<T> concat(@NotNull List<? extends T> @NotNull ... lists) {
     int size = 0;
     for (List<? extends T> each : lists) {
       size += each.size();

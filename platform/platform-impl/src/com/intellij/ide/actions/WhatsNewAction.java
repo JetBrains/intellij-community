@@ -15,13 +15,13 @@ import com.intellij.openapi.application.ApplicationInfo;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.application.IdeUrlTrackingParametersProvider;
-import com.intellij.openapi.application.ex.ApplicationInfoEx;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileEditor.impl.HTMLEditorProvider;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.updateSettings.impl.UpdateChecker;
+import com.intellij.platform.ide.customization.ExternalProductResourceUrls;
 import com.intellij.ui.ExperimentalUI;
 import com.intellij.ui.jcef.JBCefApp;
 import com.intellij.util.Urls;
@@ -41,7 +41,7 @@ public final class WhatsNewAction extends AnAction implements DumbAware {
 
   @Override
   public void update(@NotNull AnActionEvent e) {
-    var available = ApplicationInfoEx.getInstanceEx().getWhatsNewUrl() != null;
+    var available = ExternalProductResourceUrls.getInstance().getWhatIsNewPageUrl() != null;
     e.getPresentation().setEnabledAndVisible(available);
     if (available) {
       e.getPresentation().setText(IdeBundle.messagePointer("whats.new.action.custom.text", ApplicationNamesInfo.getInstance().getFullProductName()));
@@ -56,22 +56,23 @@ public final class WhatsNewAction extends AnAction implements DumbAware {
 
   @Override
   public void actionPerformed(@NotNull AnActionEvent e) {
-    var whatsNewUrl = ApplicationInfoEx.getInstanceEx().getWhatsNewUrl();
+    var whatsNewUrl = ExternalProductResourceUrls.getInstance().getWhatIsNewPageUrl();
     if (whatsNewUrl == null) throw new IllegalStateException();
+    var url = whatsNewUrl.toExternalForm();
 
     if (ApplicationManager.getApplication().isInternal() && (e.getModifiers() & ActionEvent.SHIFT_MASK) != 0) {
       var title = IdeBundle.message("whats.new.action.custom.text", ApplicationNamesInfo.getInstance().getFullProductName());
       var prompt = IdeBundle.message("browser.url.popup");
-      whatsNewUrl = Messages.showInputDialog(e.getProject(), prompt, title, null, whatsNewUrl, null);
-      if (whatsNewUrl == null) return;
+      url = Messages.showInputDialog(e.getProject(), prompt, title, null, url, null);
+      if (url == null) return;
     }
 
     var project = e.getProject();
     if (project != null && JBCefApp.isSupported()) {
-      openWhatsNewPage(project, whatsNewUrl);
+      openWhatsNewPage(project, url);
     }
     else {
-      BrowserUtil.browse(IdeUrlTrackingParametersProvider.getInstance().augmentUrl(whatsNewUrl));
+      BrowserUtil.browse(IdeUrlTrackingParametersProvider.getInstance().augmentUrl(url));
     }
   }
 

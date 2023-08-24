@@ -90,7 +90,7 @@ abstract class BasePasswordSafe(private val coroutineScope: CoroutineScope) : Pa
     get() = settings.providerType == ProviderType.MEMORY_ONLY
 
   override fun get(attributes: CredentialAttributes): Credentials? {
-    SlowOperations.assertSlowOperationsAreAllowed()
+    SlowOperations.assertNonCancelableSlowOperationsAreAllowed()
     val value = currentProvider.get(attributes)
     if ((value == null || value.password.isNullOrEmpty()) && memoryHelperProvider.isInitialized()) {
       // if password was set as `memoryOnly`
@@ -102,7 +102,7 @@ abstract class BasePasswordSafe(private val coroutineScope: CoroutineScope) : Pa
   }
 
   override fun set(attributes: CredentialAttributes, credentials: Credentials?) {
-    SlowOperations.assertSlowOperationsAreAllowed()
+    SlowOperations.assertNonCancelableSlowOperationsAreAllowed()
     currentProvider.set(attributes, credentials)
     if (attributes.isPasswordMemoryOnly && !credentials?.password.isNullOrEmpty()) {
       // we must store because otherwise on get will be no password

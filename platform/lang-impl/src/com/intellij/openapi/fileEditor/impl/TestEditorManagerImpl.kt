@@ -73,7 +73,7 @@ internal class TestEditorManagerImpl(private val project: Project) : FileEditorM
   private val virtualFileToEditor = HashMap<VirtualFile, Editor?>()
   private var activeFile: VirtualFile? = null
 
-  private class MyLightVirtualFile() : LightVirtualFile("Dummy.java") {
+  private class MyLightVirtualFile : LightVirtualFile("Dummy.java") {
     fun clearUserDataOnDispose() {
       clearUserData()
     }

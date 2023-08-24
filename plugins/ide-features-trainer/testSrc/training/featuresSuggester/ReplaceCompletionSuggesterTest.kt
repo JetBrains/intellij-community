@@ -8,6 +8,7 @@ import training.featuresSuggester.FeatureSuggesterTestUtils.deleteSymbolAtCaret
 import training.featuresSuggester.FeatureSuggesterTestUtils.typeAndCommit
 
 abstract class ReplaceCompletionSuggesterTest : FeatureSuggesterTest(), TestIndexingModeSupporter {
+  private var indexingModeShutdownToken: IndexingMode.ShutdownToken? = null
   private var indexingModeValue = IndexingMode.SMART
   override val testingSuggesterId = "Completion with replace"
 
@@ -38,12 +39,12 @@ abstract class ReplaceCompletionSuggesterTest : FeatureSuggesterTest(), TestInde
 
   override fun setUp() {
     super.setUp()
-    indexingModeValue.setUpTest(myFixture.project, myFixture.testRootDisposable)
+    indexingModeShutdownToken = indexingModeValue.setUpTest(myFixture.project, myFixture.testRootDisposable)
   }
 
   override fun tearDown() {
     try {
-      indexingModeValue.tearDownTest(myFixture.project)
+      indexingModeShutdownToken?.let { indexingModeValue.tearDownTest(myFixture.project, it) }
     }
     catch (e: Exception) {
       addSuppressedException(e)

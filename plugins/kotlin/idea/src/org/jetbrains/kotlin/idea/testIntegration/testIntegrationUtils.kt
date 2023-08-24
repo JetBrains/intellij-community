@@ -4,16 +4,31 @@ package org.jetbrains.kotlin.idea.testIntegration
 
 import com.intellij.codeInsight.TestFrameworks
 import com.intellij.testIntegration.TestFramework
-import com.intellij.util.SmartList
 import org.jetbrains.kotlin.asJava.toLightClass
 import org.jetbrains.kotlin.psi.KtClassOrObject
 
 fun findSuitableFrameworks(klass: KtClassOrObject): List<TestFramework> {
     val lightClass = klass.toLightClass() ?: return emptyList()
-    val frameworks =
-        TestFramework.EXTENSION_NAME.extensionList.filter {
-            TestFrameworks.isSuitableByLanguage(klass, it)
+    val testFrameworkNames = mutableSetOf<String>()
+    val testFrameworks = buildList {
+        for (testFramework in TestFramework.EXTENSION_NAME.extensionList) {
+            if (TestFrameworks.isSuitableByLanguage(klass, testFramework) && testFramework.isTestClass(lightClass)) {
+                val name = testFramework.name
+                if (testFrameworkNames.add(name)) {
+                    add(testFramework)
+                }
+            }
         }
-    return frameworks.firstOrNull { it.isTestClass(lightClass) }?.let { listOf(it) }
-        ?: frameworks.filterTo(SmartList()) { it.isPotentialTestClass(lightClass) }
+        if (isEmpty()) {
+            for (testFramework in TestFramework.EXTENSION_NAME.extensionList) {
+                if (TestFrameworks.isSuitableByLanguage(klass, testFramework)  && testFramework.isPotentialTestClass(lightClass) ) {
+                    val name = testFramework.name
+                    if (testFrameworkNames.add(name)) {
+                        add(testFramework)
+                    }
+                }
+            }
+        }
+    }
+    return testFrameworks
 }

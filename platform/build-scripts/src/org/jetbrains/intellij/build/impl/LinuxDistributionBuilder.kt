@@ -124,7 +124,7 @@ class LinuxDistributionBuilder(override val context: BuildContext,
     val fileName = "${context.productProperties.baseFileName}64.vmoptions"
 
     @Suppress("SpellCheckingInspection")
-    val vmOptions = VmOptionsGenerator.computeVmOptions(context.applicationInfo.isEAP, context.productProperties) +
+    val vmOptions = VmOptionsGenerator.computeVmOptions(context) +
                     listOf("-Dsun.tools.attach.tmp.only=true",
                            "-Dawt.lock.fair=true")
     VmOptionsGenerator.writeVmOptions(distBinDir.resolve(fileName), vmOptions, "\n")

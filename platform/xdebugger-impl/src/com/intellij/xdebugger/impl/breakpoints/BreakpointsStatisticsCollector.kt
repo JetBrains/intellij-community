@@ -47,8 +47,8 @@ class BreakpointsStatisticsCollector : ProjectUsagesCollector() {
 
     val res = XBreakpointType.EXTENSION_POINT_NAME.extensionList
       .asSequence()
-      .filter { it.isSuspendThreadSupported() }
-      .filter { breakpointManager.getBreakpointDefaults(it).getSuspendPolicy() != it.getDefaultSuspendPolicy() }
+      .filter { it.isSuspendThreadSupported }
+      .filter { breakpointManager.getBreakpointDefaults(it).suspendPolicy != it.defaultSuspendPolicy }
       .map {
         ProgressManager.checkCanceled()
         val data = mutableListOf<EventPair<*>>()
@@ -70,11 +70,11 @@ class BreakpointsStatisticsCollector : ProjectUsagesCollector() {
     res.add(TOTAL_DISABLED.metric(breakpoints.count { !it.isEnabled }))
     res.add(TOTAL_NON_SUSPENDING.metric(breakpoints.count { it.suspendPolicy == SuspendPolicy.NONE }))
 
-    if (breakpoints.any { !XDebuggerUtilImpl.isEmptyExpression(it.getConditionExpression()) }) {
+    if (breakpoints.any { !XDebuggerUtilImpl.isEmptyExpression(it.conditionExpression) }) {
       res.add(USING_CONDITION.metric(true))
     }
 
-    if (breakpoints.any { !XDebuggerUtilImpl.isEmptyExpression(it.getLogExpressionObject()) }) {
+    if (breakpoints.any { !XDebuggerUtilImpl.isEmptyExpression(it.logExpressionObject) }) {
       res.add(USING_LOG_EXPRESSION.metric(true))
     }
 
@@ -86,11 +86,11 @@ class BreakpointsStatisticsCollector : ProjectUsagesCollector() {
       res.add(USING_DEPENDENT.metric(true))
     }
 
-    if (breakpoints.any { it.isLogMessage() }) {
+    if (breakpoints.any { it.isLogMessage }) {
       res.add(USING_LOG_MESSAGE.metric(true))
     }
 
-    if (breakpoints.any { it.isLogStack() }) {
+    if (breakpoints.any { it.isLogStack }) {
       res.add(USING_LOG_STACK.metric(true))
     }
     return res
@@ -111,10 +111,10 @@ class BreakpointsUtilValidator : CustomValidationRule() {
   }
 
   override fun doValidate(data: String, context: EventContext): ValidationResultType {
-    if ("custom".equals(data)) return ValidationResultType.ACCEPTED
+    if ("custom" == data) return ValidationResultType.ACCEPTED
 
     for (breakpoint in XBreakpointType.EXTENSION_POINT_NAME.extensions) {
-      if (StringUtil.equals(breakpoint.getId(), data)) {
+      if (StringUtil.equals(breakpoint.id, data)) {
         val info = getPluginInfo(breakpoint.javaClass)
         return if (info.isDevelopedByJetBrains()) ValidationResultType.ACCEPTED else ValidationResultType.REJECTED
       }

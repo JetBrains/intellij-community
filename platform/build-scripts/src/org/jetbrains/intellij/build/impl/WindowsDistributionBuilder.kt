@@ -247,9 +247,8 @@ internal class WindowsDistributionBuilder(
   }
 
   private fun generateVMOptions(distBinDir: Path) {
-    val productProperties = context.productProperties
-    val fileName = "${productProperties.baseFileName}64.exe.vmoptions"
-    val vmOptions = VmOptionsGenerator.computeVmOptions(context.applicationInfo.isEAP, productProperties)
+    val fileName = "${context.productProperties.baseFileName}64.exe.vmoptions"
+    val vmOptions = VmOptionsGenerator.computeVmOptions(context)
     VmOptionsGenerator.writeVmOptions(distBinDir.resolve(fileName), vmOptions, "\r\n")
   }
 

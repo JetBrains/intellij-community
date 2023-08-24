@@ -4,8 +4,11 @@ package com.intellij.platform.workspace.storage.tests
 
 import com.intellij.platform.workspace.storage.MutableEntityStorage
 import com.intellij.platform.workspace.storage.testEntities.entities.*
-import junit.framework.TestCase.*
-import org.junit.Test
+import org.junit.jupiter.api.Test
+import kotlin.test.assertEquals
+import kotlin.test.assertNotNull
+import kotlin.test.assertNull
+import kotlin.test.assertTrue
 
 class AddChildrenTest {
   @Test
@@ -116,7 +119,7 @@ class AddChildrenTest {
     builder.modifyEntity(right) {
       this.children = listOf(MiddleEntity("prop", MySource))
     }
-    
+
     assertEquals(right, builder.entities(MiddleEntity::class.java).single().parentEntity)
   }
 

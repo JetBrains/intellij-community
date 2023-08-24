@@ -83,7 +83,6 @@ public final class ApplicationInfoImpl extends ApplicationInfoEx {
   private boolean myHasContextHelp = true;
   private String myWebHelpUrl = "https://www.jetbrains.com/idea/webhelp/";
   private final List<PluginId> essentialPluginsIds = new ArrayList<>();
-  private String myEventLogSettingsUrl = "https://resources.jetbrains.com/storage/fus/config/v4/%s/%s.json";
   private String myJetBrainsTvUrl;
 
   private String mySubscriptionFormId;
@@ -229,11 +228,6 @@ public final class ApplicationInfoImpl extends ApplicationInfoEx {
         }
         break;
 
-        case "statistics": {
-          myEventLogSettingsUrl = child.getAttributeValue("event-log-settings");
-        }
-        break;
-
         case "jetbrains-tv": {
           myJetBrainsTvUrl = child.getAttributeValue("url");
         }
@@ -272,6 +266,10 @@ public final class ApplicationInfoImpl extends ApplicationInfoEx {
       }
     }
 
+    if (myPluginManagerUrl == null) {
+      readPluginInfo(null);
+    }
+    
     requireNonNull(mySvgIconUrl, "Missing attribute: //icon@svg");
     requireNonNull(mySmallSvgIconUrl, "Missing attribute: //icon@svg-small");
 
@@ -495,7 +493,7 @@ public final class ApplicationInfoImpl extends ApplicationInfoEx {
   }
 
   @Override
-  public String getPluginManagerUrl() {
+  public @NotNull String getPluginManagerUrl() {
     return myPluginManagerUrl;
   }
 
@@ -505,7 +503,7 @@ public final class ApplicationInfoImpl extends ApplicationInfoEx {
   }
 
   @Override
-  public String getPluginsListUrl() {
+  public @NotNull String getPluginsListUrl() {
     return myPluginsListUrl;
   }
 
@@ -515,7 +513,7 @@ public final class ApplicationInfoImpl extends ApplicationInfoEx {
   }
 
   @Override
-  public String getPluginsDownloadUrl() {
+  public @NotNull String getPluginsDownloadUrl() {
     return myPluginsDownloadUrl;
   }
 
@@ -567,10 +565,6 @@ public final class ApplicationInfoImpl extends ApplicationInfoEx {
   @Override
   public String getCopyrightStart() {
     return myCopyrightStart;
-  }
-
-  public String getEventLogSettingsUrl() {
-    return myEventLogSettingsUrl;
   }
 
   @Override

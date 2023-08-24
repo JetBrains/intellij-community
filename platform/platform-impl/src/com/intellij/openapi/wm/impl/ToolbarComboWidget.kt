@@ -15,6 +15,7 @@ import kotlin.properties.Delegates
 import kotlin.reflect.KProperty
 
 @Suppress("LeakingThis")
+@Deprecated(message = "Please use ToolbarComboButton or ToolbarSplitButton instead", level = DeprecationLevel.WARNING)
 abstract class ToolbarComboWidget: JComponent(), UiInspectorContextProvider {
   val pressListeners: MutableList<ActionListener> = mutableListOf()
 

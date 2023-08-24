@@ -54,7 +54,7 @@ internal class MavenProjectAsyncBuilder {
 
     val directProjectsSettings = MavenWorkspaceSettingsComponent.getInstance(project).settings
 
-    val importingSettings = directProjectsSettings.getImportingSettings().clone()
+    val importingSettings = directProjectsSettings.importingSettings.clone()
 
     if (isVeryNewProject) {
       blockingContext { ExternalProjectsManagerImpl.setupCreatedProject(project) }
@@ -87,7 +87,7 @@ internal class MavenProjectAsyncBuilder {
     val tree = MavenProjectsTree(project)
     tree.addManagedFilesWithProfiles(files, MavenExplicitProfiles.NONE)
 
-    val generalSettings = directProjectsSettings.getGeneralSettings().clone()
+    val generalSettings = directProjectsSettings.generalSettings.clone()
     generalSettings.updateFromMavenConfig(files)
 
     withBackgroundProgress(project, MavenProjectBundle.message("maven.reading"), false) {
@@ -107,15 +107,15 @@ internal class MavenProjectAsyncBuilder {
     }
 
     val settings = MavenWorkspaceSettingsComponent.getInstance(project).settings
-    settings.setGeneralSettings(generalSettings)
-    settings.setImportingSettings(importingSettings)
+    settings.generalSettings = generalSettings
+    settings.importingSettings = importingSettings
     val settingsFile = System.getProperty("idea.maven.import.settings.file")
     if (!settingsFile.isNullOrBlank()) {
-      settings.getGeneralSettings().setUserSettingsFile(settingsFile.trim { it <= ' ' })
+      settings.generalSettings.setUserSettingsFile(settingsFile.trim { it <= ' ' })
     }
     val distributionUrl = getWrapperDistributionUrl(project.guessProjectDir())
     if (distributionUrl != null) {
-      settings.getGeneralSettings().mavenHomeType = MavenWrapper
+      settings.generalSettings.mavenHomeType = MavenWrapper
     }
     val selectedProfiles = MavenExplicitProfiles.NONE.clone()
     val enabledProfilesList = System.getProperty("idea.maven.import.enabled.profiles")

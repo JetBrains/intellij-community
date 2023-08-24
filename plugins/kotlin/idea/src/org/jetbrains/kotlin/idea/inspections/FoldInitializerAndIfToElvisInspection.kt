@@ -21,6 +21,7 @@ import org.jetbrains.kotlin.idea.intentions.branchedTransformations.elvisPattern
 import org.jetbrains.kotlin.idea.intentions.branchedTransformations.expressionComparedToNull
 import org.jetbrains.kotlin.idea.intentions.branchedTransformations.fromIfKeywordToRightParenthesisTextRangeInThis
 import org.jetbrains.kotlin.idea.intentions.branchedTransformations.shouldBeTransformed
+import org.jetbrains.kotlin.idea.intentions.isComplexInitializer
 import org.jetbrains.kotlin.idea.util.CommentSaver
 import org.jetbrains.kotlin.idea.util.application.runWriteActionIfPhysical
 import org.jetbrains.kotlin.idea.util.hasComments
@@ -60,7 +61,7 @@ class FoldInitializerAndIfToElvisInspection : AbstractApplicabilityBasedInspecti
     companion object {
         private fun applicabilityRange(element: KtIfExpression): TextRange? {
             val data = calcData(element) ?: return null
-            if (data.initializer.isComplex()) return null
+            if (data.initializer.isComplexInitializer()) return null
             val type = data.ifNullExpression.analyze().getType(data.ifNullExpression) ?: return null
             if (!type.isNothing()) return null
 

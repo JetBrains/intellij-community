@@ -15,6 +15,7 @@ import com.intellij.openapi.util.BuildNumber;
 import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.util.Url;
 import com.intellij.util.Urls;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.io.URLUtil;
 import com.intellij.util.text.VersionComparatorUtil;
 import org.jetbrains.annotations.ApiStatus;
@@ -33,6 +34,8 @@ import static com.intellij.ide.plugins.BrokenPluginFileKt.isBrokenPlugin;
  */
 public final class RepositoryHelper {
   private static final Logger LOG = Logger.getInstance(RepositoryHelper.class);
+  /** Duplicates VmOptionsGenerator.CUSTOM_BUILT_IN_PLUGIN_REPOSITORY_PROPERTY */
+  private static final String CUSTOM_BUILT_IN_PLUGIN_REPOSITORY_PROPERTY = "intellij.plugins.custom.built.in.repository.url";
 
   @SuppressWarnings("SpellCheckingInspection") private static final String PLUGIN_LIST_FILE = "availables.xml";
   private static final String MARKETPLACE_PLUGIN_ID = "com.intellij.marketplace";
@@ -42,12 +45,13 @@ public final class RepositoryHelper {
    * Returns a list of configured plugin hosts.
    * Note that the list always ends with {@code null} element denoting a main plugin repository.
    */
-  public static @NotNull List<String> getPluginHosts() {
+  public static @NotNull List<@Nullable String> getPluginHosts() {
     List<String> hosts = new ArrayList<>(UpdateSettings.getInstance().getPluginHosts());
     String pluginsUrl = ApplicationInfoEx.getInstanceEx().getBuiltinPluginsUrl();
     if (pluginsUrl != null && !"__BUILTIN_PLUGINS_URL__".equals(pluginsUrl)) {
       hosts.add(pluginsUrl);
     }
+    ContainerUtil.addIfNotNull(hosts, System.getProperty(CUSTOM_BUILT_IN_PLUGIN_REPOSITORY_PROPERTY));
     List<CustomPluginRepoContributor> repoContributors = CustomPluginRepoContributor.EP_NAME.getExtensionsIfPointIsRegistered();
     for (CustomPluginRepoContributor contributor : repoContributors) {
       hosts.addAll(contributor.getRepoUrls());

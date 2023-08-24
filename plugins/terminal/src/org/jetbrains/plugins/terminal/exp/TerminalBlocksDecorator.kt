@@ -30,13 +30,13 @@ class TerminalBlocksDecorator(private val editor: EditorEx) {
   @RequiresEdt
   fun installDecoration(block: CommandBlock, isFirstBlock: Boolean = false): BlockDecoration {
     // add additional empty space on top of the block, if it is the first block
-    val topInset = TerminalUI.blockTopInset + if (isFirstBlock) TerminalUI.blocksGap else 0
+    val topInset = TerminalUi.blockTopInset + if (isFirstBlock) TerminalUi.blocksGap else 0
     val topRenderer = EmptyWidthInlayRenderer(topInset)
     val topInlay = editor.inlayModel.addBlockElement(block.startOffset, false, true, 1, topRenderer)!!
-    val bottomRenderer = EmptyWidthInlayRenderer(TerminalUI.blockBottomInset + TerminalUI.blocksGap)
+    val bottomRenderer = EmptyWidthInlayRenderer(TerminalUi.blockBottomInset + TerminalUi.blocksGap)
     val bottomInlay = editor.inlayModel.addBlockElement(block.endOffset, true, false, 0, bottomRenderer)!!
 
-    val attributes = TextAttributes(TerminalUI.outputForeground, TerminalUI.blockBackground, null, null, Font.PLAIN)
+    val attributes = TextAttributes(TerminalUi.outputForeground, TerminalUi.blockBackground, null, null, Font.PLAIN)
     val highlighter = editor.markupModel.addRangeHighlighter(block.startOffset, block.endOffset, HighlighterLayer.FIRST - 100,
                                                              attributes, HighlighterTargetArea.LINES_IN_RANGE)
     highlighter.isGreedyToRight = true
@@ -60,10 +60,10 @@ class TerminalBlocksDecorator(private val editor: EditorEx) {
   private class TerminalRightAreaRenderer : CustomHighlighterRenderer {
     override fun paint(editor: Editor, highlighter: RangeHighlighter, g: Graphics) {
       val visibleArea = editor.scrollingModel.visibleArea
-      val width = JBUI.scale(TerminalUI.cornerToBlockInset)
+      val width = JBUI.scale(TerminalUi.cornerToBlockInset)
       val oldColor = g.color
       try {
-        g.color = TerminalUI.terminalBackground
+        g.color = TerminalUi.terminalBackground
         g.fillRect(visibleArea.width - width, visibleArea.y, width, visibleArea.height)
       }
       finally {
@@ -75,10 +75,10 @@ class TerminalBlocksDecorator(private val editor: EditorEx) {
   /** Paints the left part of the rounded block frame in the gutter area. */
   private class TerminalBlockLeftAreaRenderer : LineMarkerRenderer {
     override fun paint(editor: Editor, g: Graphics, r: Rectangle) {
-      val topIns = toFloatAndScale(TerminalUI.blockTopInset)
-      val bottomIns = toFloatAndScale(TerminalUI.blockBottomInset)
-      val width = toFloatAndScale(TerminalUI.blockLeftInset)
-      val arc = toFloatAndScale(TerminalUI.blockArc)
+      val topIns = toFloatAndScale(TerminalUi.blockTopInset)
+      val bottomIns = toFloatAndScale(TerminalUi.blockBottomInset)
+      val width = toFloatAndScale(TerminalUi.blockLeftInset)
+      val arc = toFloatAndScale(TerminalUi.blockArc)
 
       val gutterWidth = (editor as EditorEx).gutterComponentEx.width
       val rect = Rectangle2D.Float(gutterWidth - width, r.y - topIns, width, r.height + topIns + bottomIns)
@@ -96,7 +96,7 @@ class TerminalBlocksDecorator(private val editor: EditorEx) {
       val g2d = g.create() as Graphics2D
       try {
         GraphicsUtil.setupAntialiasing(g2d)
-        g2d.color = TerminalUI.blockBackground
+        g2d.color = TerminalUi.blockBackground
         g2d.fill(path)
       }
       finally {
@@ -113,11 +113,11 @@ class TerminalBlocksDecorator(private val editor: EditorEx) {
    */
   private class TerminalBlockRenderer : CustomHighlighterRenderer {
     override fun paint(editor: Editor, highlighter: RangeHighlighter, g: Graphics) {
-      val topIns = toFloatAndScale(TerminalUI.blockTopInset)
-      val bottomIns = toFloatAndScale(TerminalUI.blockBottomInset)
-      val cornerToBlock = toFloatAndScale(TerminalUI.cornerToBlockInset)
-      val gap = toFloatAndScale(TerminalUI.blocksGap)
-      val arc = toFloatAndScale(TerminalUI.blockArc)
+      val topIns = toFloatAndScale(TerminalUi.blockTopInset)
+      val bottomIns = toFloatAndScale(TerminalUi.blockBottomInset)
+      val cornerToBlock = toFloatAndScale(TerminalUi.cornerToBlockInset)
+      val gap = toFloatAndScale(TerminalUi.blocksGap)
+      val arc = toFloatAndScale(TerminalUi.blockArc)
 
       val visibleArea = editor.scrollingModel.visibleArea
       val width = visibleArea.width - cornerToBlock
@@ -145,10 +145,10 @@ class TerminalBlocksDecorator(private val editor: EditorEx) {
       val g2d = g.create() as Graphics2D
       try {
         GraphicsUtil.setupAntialiasing(g2d)
-        g2d.color = TerminalUI.blockBackground
+        g2d.color = TerminalUi.blockBackground
         g2d.fill(topRect)
         g2d.fill(bottomRect)
-        g2d.color = TerminalUI.terminalBackground
+        g2d.color = TerminalUi.terminalBackground
         g2d.fill(gapRect)
         // override the right corners to make them rounded
         g2d.fill(topCornerPath)

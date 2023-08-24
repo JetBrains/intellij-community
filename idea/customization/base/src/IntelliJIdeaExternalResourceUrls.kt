@@ -1,9 +1,12 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.idea.customization.base
 
+import com.intellij.openapi.util.SystemInfo
 import com.intellij.platform.ide.impl.customization.BaseJetBrainsExternalProductResourceUrls
 import com.intellij.platform.ide.impl.customization.ZenDeskFeedbackFormData
 import com.intellij.platform.ide.impl.customization.ZenDeskFeedbackFormFieldIds
+import com.intellij.util.Url
+import com.intellij.util.Urls
 
 class IntelliJIdeaExternalResourceUrls : BaseJetBrainsExternalProductResourceUrls() {
   override val basePatchDownloadUrl: String
@@ -36,4 +39,19 @@ class IntelliJIdeaExternalResourceUrls : BaseJetBrainsExternalProductResourceUrl
         override val topic: Long = 28116681
       }
     }
+
+  override val youTubeChannelUrl: Url
+    get() = Urls.newFromEncoded("https://www.youtube.com/user/intellijideavideo")
+
+  override val keyboardShortcutsPdfUrl: Url
+    get() {
+      val suffix = if (SystemInfo.isMac) "_Mac" else ""
+      return Urls.newFromEncoded("https://www.jetbrains.com/idea/docs/IntelliJIDEA_ReferenceCard$suffix.pdf")
+    }
+
+  override val gettingStartedPageUrl: Url
+    get() = Urls.newFromEncoded("https://www.jetbrains.com/idea/resources/")
+  
+  override val baseWebHelpUrl: String
+    get() = "https://www.jetbrains.com/help/idea/"
 }

@@ -11,6 +11,7 @@ import com.intellij.openapi.options.Configurable
 import com.intellij.openapi.options.DslConfigurableBase
 import com.intellij.openapi.options.SearchableConfigurable
 import com.intellij.openapi.project.DumbAwareAction
+import com.intellij.openapi.projectRoots.ProjectJdkTable
 import com.intellij.openapi.ui.DialogPanel
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.text.StringUtil
@@ -99,7 +100,7 @@ class AdvancedSettingsConfigurable : DslConfigurableBase(), SearchableConfigurab
   }
 
   private fun createExtensionsSettings(): DialogPanel {
-    val groupedExtensions = AdvancedSettingBean.EP_NAME.extensions.groupBy {
+    val groupedExtensions = AdvancedSettingBean.EP_NAME.extensions.filter { it.isApplicable() }.groupBy {
       it.group() ?: ApplicationBundle.message("group.advanced.settings.other")
     }.toSortedMap()
 
@@ -156,6 +157,12 @@ class AdvancedSettingsConfigurable : DslConfigurableBase(), SearchableConfigurab
       }
     }
   }
+
+  private fun AdvancedSettingBean.isApplicable(): Boolean =
+    when (id) {
+      "project.view.do.not.autoscroll.to.libraries" -> !ProjectJdkTable.getInstance().allJdks.isEmpty()
+      else -> true
+    }
 
   data class AdvancedSettingControl(val cellBuilder: Cell<JComponent>, val isDefault: ComponentPredicate, val reset: () -> Unit)
 

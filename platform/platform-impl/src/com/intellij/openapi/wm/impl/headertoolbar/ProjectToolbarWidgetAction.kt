@@ -7,7 +7,6 @@ import com.intellij.ide.RecentProjectsManagerBase
 import com.intellij.ide.ReopenProjectAction
 import com.intellij.ide.impl.ProjectUtilCore
 import com.intellij.ide.plugins.newui.ListPluginComponent
-import com.intellij.ide.ui.laf.darcula.ui.ToolbarComboWidgetUI
 import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.popup.*
@@ -15,7 +14,7 @@ import com.intellij.openapi.ui.popup.util.PopupUtil
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.wm.impl.ExpandableComboAction
-import com.intellij.openapi.wm.impl.ToolbarComboWidget
+import com.intellij.openapi.wm.impl.ToolbarComboButton
 import com.intellij.ui.GroupHeaderSeparator
 import com.intellij.ui.IdeUICustomization
 import com.intellij.ui.components.panels.NonOpaquePanel
@@ -26,6 +25,7 @@ import com.intellij.ui.dsl.gridLayout.UnscaledGaps
 import com.intellij.ui.popup.PopupFactoryImpl
 import com.intellij.ui.popup.list.ListPopupModel
 import com.intellij.ui.popup.list.SelectablePanel
+import com.intellij.ui.util.maximumWidth
 import com.intellij.util.PathUtil
 import com.intellij.util.ui.JBFont
 import com.intellij.util.ui.JBUI
@@ -51,16 +51,20 @@ private class DefaultOpenProjectSelectionPredicateSupplier : OpenProjectSelectio
 
 class ProjectToolbarWidgetAction : ExpandableComboAction() {
   override fun createPopup(event: AnActionEvent): JBPopup? {
-    val widget = event.getData(PlatformCoreDataKeys.CONTEXT_COMPONENT) as? ToolbarComboWidget?
+    val widget = event.getData(PlatformCoreDataKeys.CONTEXT_COMPONENT) as? ToolbarComboButton?
     val step = createStep(createActionGroup(event), event.dataContext, widget)
     return event.project?.let { createPopup(it = it, step = step) }
   }
 
   override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.BGT
 
+  override fun createCustomComponent(presentation: Presentation, place: String): JComponent {
+    return super.createCustomComponent(presentation, place).apply { maximumWidth = 500 }
+  }
+
   override fun updateCustomComponent(component: JComponent, presentation: Presentation) {
-    val widget = component as? ToolbarComboWidget ?: return
-    (widget.ui as? ToolbarComboWidgetUI)?.setMaxWidth(500)
+    val widget = component as? ToolbarComboButton ?: return
+
     widget.text = presentation.text
     widget.toolTipText = presentation.description
     widget.leftIcons = emptyList()
@@ -75,10 +79,6 @@ class ProjectToolbarWidgetAction : ExpandableComboAction() {
 
     if (customizer.isActive()) {
       val paintingType = customizer.getPaintingType()
-      if (paintingType.isShowIcon() && project != null) {
-        customizer.showGotIt(project, widget)
-      }
-
       if (paintingType.isDropdown() && project != null) {
         widget.highlightBackground = customizer.getBackgroundProjectColor(project)
       }
@@ -140,7 +140,7 @@ class ProjectToolbarWidgetAction : ExpandableComboAction() {
     return result
   }
 
-  private fun createStep(actionGroup: ActionGroup, context: DataContext, widget: ToolbarComboWidget?): ListPopupStep<Any> {
+  private fun createStep(actionGroup: ActionGroup, context: DataContext, widget: JComponent?): ListPopupStep<Any> {
     return JBPopupFactory.getInstance().createActionsStep(actionGroup, context, ActionPlaces.PROJECT_WIDGET_POPUP, false, false,
                                                           null, widget, false, 0, false)
   }
