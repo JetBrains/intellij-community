@@ -6,6 +6,7 @@ import com.intellij.codeWithMe.asContextElement2
 import com.intellij.ide.plugins.ContainerDescriptor
 import com.intellij.ide.plugins.IdeaPluginDescriptorImpl
 import com.intellij.ide.plugins.PluginManagerCore
+import com.intellij.ide.users.LocalUserSettings
 import com.intellij.openapi.application.Application
 import com.intellij.openapi.application.impl.ApplicationImpl
 import com.intellij.openapi.components.ComponentConfig
@@ -153,7 +154,7 @@ abstract class ClientSessionImpl(
 }
 
 @ApiStatus.Internal
-open class ClientAppSessionImpl(
+abstract class ClientAppSessionImpl(
   clientId: ClientId,
   clientType: ClientType,
   application: ApplicationImpl
@@ -174,6 +175,7 @@ open class ClientAppSessionImpl(
 private val sessionConstructorMethodType: MethodType = MethodType.methodType(Void.TYPE, ClientAppSession::class.java)
 private val projectSessionConstructorMethodType: MethodType = MethodType.methodType(Void.TYPE, ClientProjectSession::class.java)
 
+@Suppress("LeakingThis")
 @ApiStatus.Internal
 open class ClientProjectSessionImpl(
   clientId: ClientId,
@@ -205,4 +207,23 @@ open class ClientProjectSessionImpl(
 
   override val appSession: ClientAppSession
     get() = ClientSessionsManager.getAppSession(clientId)!!
+
+  override val name: String
+    get() = appSession.name
+}
+
+@ApiStatus.Experimental
+@ApiStatus.Internal
+open class LocalAppSessionImpl(application: ApplicationImpl) : ClientAppSessionImpl(ClientId.localId, ClientType.LOCAL, application) {
+  override val name: String
+    get() = LocalUserSettings.userName
+}
+
+@ApiStatus.Experimental
+@ApiStatus.Internal
+open class LocalProjectSessionImpl(
+  componentManager: ClientAwareComponentManager,
+  project: Project
+) : ClientProjectSessionImpl(ClientId.localId, ClientType.LOCAL, componentManager, project) {
+  constructor(project: ProjectImpl) : this(componentManager = project, project = project)
 }

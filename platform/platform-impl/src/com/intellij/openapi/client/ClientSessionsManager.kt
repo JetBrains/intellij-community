@@ -140,7 +140,7 @@ open class ClientAppSessionsManager(app: Application) : ClientSessionsManager<Cl
    * Used for [ClientId] overriding in JetBrains Client
    */
   protected open fun createLocalSession(application: ApplicationImpl): ClientAppSessionImpl {
-    return ClientAppSessionImpl(ClientId.localId, ClientType.LOCAL, application)
+    return LocalAppSessionImpl(application)
   }
 }
 
@@ -151,12 +151,12 @@ open class ClientProjectSessionsManager(project: Project) : ClientSessionsManage
       registerSession(project, createLocalSession(project))
     } else if (project.isDefault) {
       (project.actualComponentManager as? ClientAwareComponentManager)?.let { componentManager ->
-        registerSession(project, ClientProjectSessionImpl(ClientId.localId, ClientType.LOCAL, componentManager, project))
+        registerSession(project, LocalProjectSessionImpl(componentManager, project))
       }
     }
   }
 
   protected open fun createLocalSession(project: ProjectImpl): ClientProjectSessionImpl {
-    return ClientProjectSessionImpl(ClientId.localId, ClientType.LOCAL, project)
+    return LocalProjectSessionImpl(project)
   }
 }
