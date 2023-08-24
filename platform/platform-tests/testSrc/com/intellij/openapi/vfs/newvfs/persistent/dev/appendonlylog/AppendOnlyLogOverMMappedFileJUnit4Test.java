@@ -12,13 +12,13 @@ import org.junit.rules.TemporaryFolder;
 
 import java.io.IOException;
 import java.nio.file.Path;
-import java.util.ArrayList;
 import java.util.concurrent.ThreadLocalRandom;
 import java.util.stream.Stream;
 
 import static com.intellij.util.io.IOUtil.readString;
 import static java.nio.charset.StandardCharsets.UTF_8;
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertThrows;
 
 /**
  * FIXME: this junit4 version is temporary copy of {@link AppendOnlyLogOverMMappedFileJUnit5Test}. Both
@@ -53,6 +53,7 @@ public class AppendOnlyLogOverMMappedFileJUnit4Test {
     }
   }
 
+
   @Test
   public void singleRecordWritten_CouldBeReadBackAsIs() throws Exception {
     String dataToWrite = "test data";
@@ -77,71 +78,174 @@ public class AppendOnlyLogOverMMappedFileJUnit4Test {
                  dataReadBackRef.get());
   }
 
+
   @Test
   public void manyRecordsWritten_CouldBeReadBackAsIs() throws Exception {
     String[] stringsToWrite = generateRandomStrings(ENOUGH_RECORDS);
 
-    long[] recordsIds = new long[stringsToWrite.length];
-    for (int i = 0; i < stringsToWrite.length; i++) {
-      final String toWrite = stringsToWrite[i];
-      long recordId = appendOnlyLog.append(toWrite.getBytes(UTF_8));
-      recordsIds[i] = recordId;
-    }
+    long[] recordsIds = writeRecords(stringsToWrite);
 
-    for (int i = 0; i < recordsIds.length; i++) {
-      long recordId = recordsIds[i];
-      String stringReadBack = appendOnlyLog.read(recordId, IOUtil::readString);
-      assertEquals("[" + i + "]: data written must be the data read back",
-                   stringsToWrite[i],
-                   stringReadBack);
-    }
+    checkRecordsReadBack(recordsIds, stringsToWrite);
   }
 
   @Test
   public void manyRecordsWritten_CouldBeReadBackAsIs_viaForEach() throws Exception {
     String[] stringsToWrite = generateRandomStrings(ENOUGH_RECORDS);
 
-    for (final String toWrite : stringsToWrite) {
-      appendOnlyLog.append(toWrite.getBytes(UTF_8));
-    }
+    long[] recordIds = writeRecords(stringsToWrite);
 
+    checkRecordsReadBack_ViaForEach(recordIds, stringsToWrite);
+  }
+
+  @Test
+  public void manyRecordsWritten_AfterReopen_CouldBeReadBackAsIs() throws Exception {
+    String[] stringsToWrite = generateRandomStrings(ENOUGH_RECORDS);
+
+    long[] recordsIds = writeRecords(stringsToWrite);
+
+    appendOnlyLog.close();
+    appendOnlyLog = openLog(appendOnlyLog.storagePath());
+
+    checkRecordsReadBack(recordsIds, stringsToWrite);
+  }
+
+  @Test
+  public void manyRecordsWritten_AfterReopen_CouldBeReadBackAsIs_viaForEach() throws Exception {
+    String[] stringsToWrite = generateRandomStrings(ENOUGH_RECORDS);
+
+    long[] recordIds = writeRecords(stringsToWrite);
+
+    appendOnlyLog.close();
+    appendOnlyLog = openLog(appendOnlyLog.storagePath());
+
+    checkRecordsReadBack_ViaForEach(recordIds, stringsToWrite);
+  }
+
+
+  @Test
+  public void hugeRecordsWritten_CouldBeReadBackAsIs() throws Exception {
+    //Test page-border issues: generate strings of size ~= pageSize
+    int headerSize = Integer.BYTES;
+    ThreadLocalRandom rnd = ThreadLocalRandom.current();
+    String[] stringsToWrite = Stream.generate(
+        () -> BlobStorageTestBase.randomString(rnd, PAGE_SIZE + rnd.nextInt(-16, -headerSize))
+      )
+      .limit(128)
+      .toArray(String[]::new);
+
+    long[] recordsIds = writeRecords(stringsToWrite);
+
+    checkRecordsReadBack(recordsIds, stringsToWrite);
+  }
+
+  @Test
+  public void hugeRecordsWritten_AfterReopen_CouldBeReadBackAsIs() throws Exception {
+    //Test page-border issues: generate strings of size ~= pageSize
+    int headerSize = Integer.BYTES;
+    ThreadLocalRandom rnd = ThreadLocalRandom.current();
+    String[] stringsToWrite = Stream.generate(
+        () -> BlobStorageTestBase.randomString(rnd, PAGE_SIZE + rnd.nextInt(-16, -headerSize))
+      )
+      .limit(128)
+      .toArray(String[]::new);
+
+    long[] recordsIds = writeRecords(stringsToWrite);
+
+    appendOnlyLog.close();
+    appendOnlyLog = openLog(appendOnlyLog.storagePath());
+
+    checkRecordsReadBack(recordsIds, stringsToWrite);
+  }
+
+  @Test
+  public void hugeRecordsWritten_CouldBeReadBackAsIs_viaForEach() throws Exception {
+    //Test page-border issues: generate strings of size ~= pageSize
+    int headerSize = Integer.BYTES;
+    ThreadLocalRandom rnd = ThreadLocalRandom.current();
+    String[] stringsToWrite = Stream.generate(
+        () -> BlobStorageTestBase.randomString(rnd, PAGE_SIZE + rnd.nextInt(-16, -headerSize))
+      )
+      .limit(128)
+      .toArray(String[]::new);
+
+    long[] recordIds = writeRecords(stringsToWrite);
+
+    checkRecordsReadBack_ViaForEach(recordIds, stringsToWrite);
+  }
+
+  @Test
+  public void hugeRecordsWritten_AfterReopen_CouldBeReadBackAsIs_viaForEach() throws Exception {
+    //Test page-border issues: generate strings of size ~= pageSize
+    int headerSize = Integer.BYTES;
+    ThreadLocalRandom rnd = ThreadLocalRandom.current();
+    String[] stringsToWrite = Stream.generate(
+        () -> BlobStorageTestBase.randomString(rnd, PAGE_SIZE + rnd.nextInt(-16, -headerSize))
+      )
+      .limit(128)
+      .toArray(String[]::new);
+
+    long[] recordIds = writeRecords(stringsToWrite);
+
+    appendOnlyLog.close();
+    appendOnlyLog = openLog(appendOnlyLog.storagePath());
+
+    checkRecordsReadBack_ViaForEach(recordIds, stringsToWrite);
+  }
+
+
+  @Test
+  public void logFailsToAppendPayload_LargerOrEqualsToPageSize() throws IOException {
+    int headerSize = Integer.BYTES;
+
+    //Must be OK: max payload size to fit a page
+    appendOnlyLog.append(data -> data, PAGE_SIZE - headerSize);
+
+    assertThrows(
+      "Log must throws exception if full record (payload+header) doesn't fit into a page, ",
+      IllegalArgumentException.class,
+      () -> appendOnlyLog.append(data -> data, PAGE_SIZE - headerSize + 1)
+    );
+  }
+
+
+  //====================== infrastructure: ===========================================================================
+
+  private void checkRecordsReadBack_ViaForEach(long[] recordIds,
+                                               String[] stringsWritten) throws IOException {
     IntRef i = new IntRef(0);
     appendOnlyLog.forEachRecord((recordId, buffer) -> {
       String stringReadBack = readString(buffer);
       assertEquals("[" + i + "]: data written must be the data read back",
-                   stringsToWrite[i.get()],
+                   stringsWritten[i.get()],
                    stringReadBack);
+      assertEquals("[" + i + "]: recordId must be the same for data written back",
+                   recordIds[i.get()],
+                   recordId);
       i.inc();
       return true;
     });
   }
 
-  @Test
-  public void manyRecordsWritten_CouldBeReadBackAsIs_AfterReopen() throws Exception {
-    String[] stringsToWrite = generateRandomStrings(ENOUGH_RECORDS);
+  private void checkRecordsReadBack(long[] recordsIds,
+                                    String[] stringsWritten) throws IOException {
+    for (int i = 0; i < recordsIds.length; i++) {
+      long recordId = recordsIds[i];
+      String stringReadBack = appendOnlyLog.read(recordId, IOUtil::readString);
+      assertEquals("[" + i + "]: data written must be the data read back",
+                   stringsWritten[i],
+                   stringReadBack);
+    }
+  }
 
+  private long[] writeRecords(String[] stringsToWrite) throws IOException {
     long[] recordsIds = new long[stringsToWrite.length];
     for (int i = 0; i < stringsToWrite.length; i++) {
       final String toWrite = stringsToWrite[i];
       long recordId = appendOnlyLog.append(toWrite.getBytes(UTF_8));
       recordsIds[i] = recordId;
     }
-
-    appendOnlyLog.close();
-    appendOnlyLog = openLog(appendOnlyLog.storagePath());
-
-    for (int i = 0; i < recordsIds.length; i++) {
-      long recordId = recordsIds[i];
-      String stringReadBack = appendOnlyLog.read(recordId, buffer -> readString(buffer));
-      assertEquals("[" + i + "]: data written must be the data read back",
-                   stringsToWrite[i],
-                   stringReadBack);
-    }
+    return recordsIds;
   }
-
-
-
-  //====================== infrastructure ===========================================================================
 
   private static @NotNull AppendOnlyLogOverMMappedFile openLog(@NotNull Path storageFile) throws IOException {
     MMappedFileStorage mappedStorage = new MMappedFileStorage(
