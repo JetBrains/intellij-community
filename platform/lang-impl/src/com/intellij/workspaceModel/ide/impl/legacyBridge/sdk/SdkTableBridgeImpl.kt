@@ -103,7 +103,7 @@ class SdkTableBridgeImpl: SdkTableImplementationDelegate {
     val globalWorkspaceModel = GlobalWorkspaceModel.getInstance()
     val sdkMainEntity = (globalWorkspaceModel.currentSnapshot.entities(SdkMainEntity::class.java)
                            .firstOrNull { it.name == originalSdk.name && it.type == originalSdk.sdkType.name }
-                         ?: error("SDK entity for bridge ${originalSdk.name} ${originalSdk.sdkType.name} doesn't exist"))
+                         ?: error("SDK entity for bridge `${originalSdk.name}` `${originalSdk.sdkType.name}` doesn't exist"))
 
 
     globalWorkspaceModel.updateModel("Updating SDK ${originalSdk.name} ${originalSdk.sdkType.name}") {
@@ -113,6 +113,7 @@ class SdkTableBridgeImpl: SdkTableImplementationDelegate {
       }
       (originalSdk as SdkBridgeImpl).applyChangesFrom(modifiedSdk)
     }
+    (originalSdk as SdkBridgeImpl).fireRootSetChanged()
   }
 
   @TestOnly

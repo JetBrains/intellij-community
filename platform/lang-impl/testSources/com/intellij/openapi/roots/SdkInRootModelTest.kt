@@ -228,10 +228,13 @@ class SdkInRootModelTest {
   }
 
   private fun renameSdk(sdk: Sdk, newName: String) {
-    val modificator = sdk.sdkModificator
+    val clone = sdk.clone() as Sdk
+    val modificator = clone.sdkModificator
     modificator.name = newName
+
     runWriteActionAndWait {
-      ProjectJdkTable.getInstance().updateJdk(sdk, modificator as Sdk)
+      modificator.commitChanges()
+      ProjectJdkTable.getInstance().updateJdk(sdk, clone)
     }
   }
 }

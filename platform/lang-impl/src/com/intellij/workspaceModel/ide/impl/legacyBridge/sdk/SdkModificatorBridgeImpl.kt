@@ -16,6 +16,7 @@ import com.intellij.platform.workspace.storage.url.VirtualFileUrlManager
 import com.intellij.util.concurrency.annotations.RequiresWriteLock
 import com.intellij.workspaceModel.ide.getGlobalInstance
 import com.intellij.workspaceModel.ide.impl.GlobalWorkspaceModel
+import com.intellij.workspaceModel.ide.impl.legacyBridge.sdk.SdkTableBridgeImpl.Companion.sdkMap
 import org.jdom.Element
 
 class SdkModificatorBridgeImpl(private val originalEntity: SdkMainEntity.Builder,
@@ -117,9 +118,12 @@ class SdkModificatorBridgeImpl(private val originalEntity: SdkMainEntity.Builder
       JDOMUtil.write(additionalDataElement)
     } else ""
 
-    globalWorkspaceModel.currentSnapshot.resolve(originalEntity.symbolicId)?.let { existingEntity ->
+    //globalWorkspaceModel.currentSnapshot.resolve(originalEntity.symbolicId)
+    // Update only entity existing in the storage
+    val existingEntity = globalWorkspaceModel.currentSnapshot.sdkMap.getFirstEntity(originalSdkBridge) as? SdkMainEntity
+    existingEntity?.let { entity ->
       globalWorkspaceModel.updateModel("Modifying SDK ${originalEntity.symbolicId}") {
-        it.modifyEntity(existingEntity) {
+        it.modifyEntity(entity) {
           this.applyChangesFrom(modifiedSdkEntity)
         }
       }
@@ -127,7 +131,7 @@ class SdkModificatorBridgeImpl(private val originalEntity: SdkMainEntity.Builder
 
     originalEntity.applyChangesFrom(modifiedSdkEntity)
     originalSdkBridge.reloadAdditionalData()
-    originalSdkBridge.fireRootSetChanged()
+    if (existingEntity != null) originalSdkBridge.fireRootSetChanged()
     isCommitted = true
   }
 

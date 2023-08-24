@@ -79,7 +79,7 @@ open class ProjectJdkTableImpl: ProjectJdkTable() {
     ApplicationManager.getApplication().assertWriteAccessAllowed()
 
     val previousName: String = originalSdk.getName()
-    val newName: String = originalSdk.getName()
+    val newName: String = modifiedSdk.getName()
 
     delegate.updateSdk(originalSdk, modifiedSdk)
 
