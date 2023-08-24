@@ -7,6 +7,9 @@ import com.intellij.ide.DataManager
 import com.intellij.ide.IdeBundle
 import com.intellij.ide.IdeEventQueue
 import com.intellij.ide.actions.OpenInRightSplitAction.Companion.openInRightSplit
+import com.intellij.ide.actions.SwitcherLogger.NAVIGATED_INDEX
+import com.intellij.ide.actions.SwitcherLogger.SHOWN_TIME_ACTIVITY
+import com.intellij.ide.actions.SwitcherLogger.STATE
 import com.intellij.ide.actions.SwitcherSpeedSearch.Companion.installOn
 import com.intellij.ide.actions.ui.JBListWithOpenInRightSplit
 import com.intellij.ide.lightEdit.LightEdit
@@ -14,8 +17,6 @@ import com.intellij.ide.lightEdit.LightEditFeatureUsagesUtil
 import com.intellij.ide.lightEdit.LightEditFeatureUsagesUtil.OpenPlace
 import com.intellij.ide.ui.UISettings
 import com.intellij.ide.util.gotoByName.QuickSearchComponent
-import com.intellij.internal.statistic.eventLog.EventLogGroup
-import com.intellij.internal.statistic.eventLog.events.EventFields
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.actionSystem.ex.ActionUtil
@@ -87,10 +88,6 @@ import kotlin.math.min
 object Switcher : BaseSwitcherAction(null) {
   val SWITCHER_KEY: Key<SwitcherPanel> = Key.create("SWITCHER_KEY")
 
-  private val GROUP = EventLogGroup("recent.files.dialog", 1)
-  private val STATE = EventFields.Boolean("navigated")
-  private val SHOWN_TIME_ACTIVITY = GROUP.registerIdeActivity("shown_time", finishEventAdditionalFields = arrayOf(STATE))
-
   @Deprecated("Please use {@link Switcher#createAndShowSwitcher(AnActionEvent, String, boolean, boolean)}")
   @JvmStatic
   fun createAndShowSwitcher(e: AnActionEvent, title: @Nls String, pinned: Boolean, vFiles: Array<VirtualFile?>?): SwitcherPanel? {
@@ -108,7 +105,7 @@ object Switcher : BaseSwitcherAction(null) {
                       forward: Boolean) : BorderLayoutPanel(), DataProvider, QuickSearchComponent, Disposable {
     val myPopup: JBPopup?
     val activity = SHOWN_TIME_ACTIVITY.started(project)
-    var success: Boolean = false
+    private var navigationIndex = -1
     val toolWindows: JBList<SwitcherListItem>
     val files: JBList<SwitcherVirtualFile>
     val cbShowOnlyEditedFiles: JCheckBox?
@@ -355,7 +352,12 @@ object Switcher : BaseSwitcherAction(null) {
 
     override fun dispose() {
       project.putUserData(SWITCHER_KEY, null)
-      activity.finished { arrayListOf(STATE.with(success)) }
+      activity.finished {
+        buildList {
+          STATE.with(navigationIndex != -1)
+          NAVIGATED_INDEX.with(navigationIndex)
+        }
+      }
     }
 
     val isOnlyEditedFilesShown: Boolean
@@ -555,7 +557,6 @@ object Switcher : BaseSwitcherAction(null) {
       val values: List<*> = selectedList!!.selectedValuesList
       val searchQuery = mySpeedSearch?.enteredPrefix
       cancel()
-      success = true
       if (values.isEmpty()) {
         tryToOpenFileSearch(e, searchQuery)
       }
