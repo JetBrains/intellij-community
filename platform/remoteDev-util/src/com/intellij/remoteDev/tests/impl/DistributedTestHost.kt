@@ -10,7 +10,7 @@ import com.intellij.notification.Notification
 import com.intellij.notification.NotificationType
 import com.intellij.notification.Notifications
 import com.intellij.openapi.application.*
-import com.intellij.openapi.diagnostic.logger
+import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.progress.runBlockingCancellable
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ex.ProjectManagerEx
@@ -53,7 +53,8 @@ import kotlin.time.Duration.Companion.milliseconds
 @ApiStatus.Internal
 open class DistributedTestHost(coroutineScope: CoroutineScope) {
   companion object {
-    private val LOG = logger<DistributedTestHost>()
+    // it is easier to sort out logs from just testFramework
+    private val LOG = Logger.getInstance(RdctTestFrameworkLoggerCategory.category + "Host")
 
     fun getDistributedTestPort(): Int? =
       System.getProperty(AgentConstants.protocolPortPropertyName)?.toIntOrNull()
