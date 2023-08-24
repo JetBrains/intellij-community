@@ -14,17 +14,17 @@ import org.junit.runner.RunWith;
  * DO NOT MODIFY MANUALLY.
  */
 @SuppressWarnings("all")
-@TestRoot("idea/tests")
+@TestRoot("fir")
 @TestDataPath("$CONTENT_ROOT")
 @RunWith(JUnit3RunnerWithInners.class)
-@TestMetadata("testData/editor/autoImportExtension")
-public class FilteringAutoImportTestGenerated extends AbstractFilteringAutoImportTest {
+@TestMetadata("../idea/tests/testData/editor/autoImportExtension")
+public class K2FilteringAutoImportTestGenerated extends AbstractK2FilteringAutoImportTest {
     private void runTest(String testDataFilePath) throws Exception {
         KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
     }
 
     @TestMetadata("ambiguousFilter")
     public void testAmbiguousFilter() throws Exception {
-        runTest("testData/editor/autoImportExtension/ambiguousFilter/");
+        runTest("../idea/tests/testData/editor/autoImportExtension/ambiguousFilter/");
     }
 }

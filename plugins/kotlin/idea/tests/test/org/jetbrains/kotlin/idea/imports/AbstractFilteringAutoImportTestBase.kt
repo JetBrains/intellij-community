@@ -20,7 +20,7 @@ private class TestReferenceImporterImpl(val isEnabled: Boolean) : AbstractKotlin
     override val enableAutoImportFilter: Boolean = true
 }
 
-abstract class AbstractFilteringAutoImportTest : AbstractAutoImportTest() {
+abstract class AbstractFilteringAutoImportTestBase : AbstractAutoImportTestBase() {
     override fun setupAutoImportEnvironment(settings: KotlinCodeInsightSettings, withAutoImport: Boolean) {
         // KotlinAutoImportsFilter.forceAutoImportForFile() should work even if addUnambiguousImportsOnTheFly is disabled:
         settings.addUnambiguousImportsOnTheFly = false
@@ -36,3 +36,5 @@ abstract class AbstractFilteringAutoImportTest : AbstractAutoImportTest() {
         )
     }
 }
+
+abstract class AbstractK1FilteringAutoImportTest: AbstractFilteringAutoImportTestBase()

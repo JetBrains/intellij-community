@@ -11,7 +11,6 @@ import com.intellij.psi.PsiFile
 import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
 import org.jetbrains.kotlin.analysis.api.diagnostics.KtDiagnosticWithPsi
 import org.jetbrains.kotlin.idea.codeinsight.api.applicators.BaseKotlinApplicator
-import org.jetbrains.kotlin.idea.codeinsight.api.applicators.KotlinApplicator
 import org.jetbrains.kotlin.idea.codeinsight.api.applicators.KotlinApplicatorInput
 import org.jetbrains.kotlin.idea.codeinsight.api.applicators.KotlinModCommandApplicator
 import org.jetbrains.kotlin.idea.codeinsight.api.classic.quickfixes.QuickFixActionBase

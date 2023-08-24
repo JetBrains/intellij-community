@@ -7,3 +7,5 @@ fun test() {
         1
     )
 }<caret>
+
+// IGNORE_K2

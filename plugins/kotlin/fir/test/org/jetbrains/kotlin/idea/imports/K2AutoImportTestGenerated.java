@@ -14,97 +14,97 @@ import org.junit.runner.RunWith;
  * DO NOT MODIFY MANUALLY.
  */
 @SuppressWarnings("all")
-@TestRoot("idea/tests")
+@TestRoot("fir")
 @TestDataPath("$CONTENT_ROOT")
 @RunWith(JUnit3RunnerWithInners.class)
-@TestMetadata("testData/editor/autoImport")
-public class AutoImportTestGenerated extends AbstractAutoImportTest {
+@TestMetadata("../idea/tests/testData/editor/autoImport")
+public class K2AutoImportTestGenerated extends AbstractK2AutoImportTest {
     private void runTest(String testDataFilePath) throws Exception {
         KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
     }
 
     @TestMetadata("arrayAccessor")
     public void testArrayAccessor() throws Exception {
-        runTest("testData/editor/autoImport/arrayAccessor/");
+        runTest("../idea/tests/testData/editor/autoImport/arrayAccessor/");
     }
 
     @TestMetadata("assignmentPlugin")
     public void testAssignmentPlugin() throws Exception {
-        runTest("testData/editor/autoImport/assignmentPlugin/");
+        runTest("../idea/tests/testData/editor/autoImport/assignmentPlugin/");
     }
 
     @TestMetadata("components")
     public void testComponents() throws Exception {
-        runTest("testData/editor/autoImport/components/");
+        runTest("../idea/tests/testData/editor/autoImport/components/");
     }
 
     @TestMetadata("components2")
     public void testComponents2() throws Exception {
-        runTest("testData/editor/autoImport/components2/");
+        runTest("../idea/tests/testData/editor/autoImport/components2/");
     }
 
     @TestMetadata("constructorReference")
     public void testConstructorReference() throws Exception {
-        runTest("testData/editor/autoImport/constructorReference/");
+        runTest("../idea/tests/testData/editor/autoImport/constructorReference/");
     }
 
     @TestMetadata("delegationExtFunction")
     public void testDelegationExtFunction() throws Exception {
-        runTest("testData/editor/autoImport/delegationExtFunction/");
+        runTest("../idea/tests/testData/editor/autoImport/delegationExtFunction/");
     }
 
     @TestMetadata("delegationExtFunctions")
     public void testDelegationExtFunctions() throws Exception {
-        runTest("testData/editor/autoImport/delegationExtFunctions/");
+        runTest("../idea/tests/testData/editor/autoImport/delegationExtFunctions/");
     }
 
     @TestMetadata("extFunctionWithGenerics")
     public void testExtFunctionWithGenerics() throws Exception {
-        runTest("testData/editor/autoImport/extFunctionWithGenerics/");
+        runTest("../idea/tests/testData/editor/autoImport/extFunctionWithGenerics/");
     }
 
     @TestMetadata("invoke")
     public void testInvoke() throws Exception {
-        runTest("testData/editor/autoImport/invoke/");
+        runTest("../idea/tests/testData/editor/autoImport/invoke/");
     }
 
     @TestMetadata("javaClass")
     public void testJavaClass() throws Exception {
-        runTest("testData/editor/autoImport/javaClass/");
+        runTest("../idea/tests/testData/editor/autoImport/javaClass/");
     }
 
     @TestMetadata("method")
     public void testMethod() throws Exception {
-        runTest("testData/editor/autoImport/method/");
+        runTest("../idea/tests/testData/editor/autoImport/method/");
     }
 
     @TestMetadata("multilineCall")
     public void testMultilineCall() throws Exception {
-        runTest("testData/editor/autoImport/multilineCall/");
+        runTest("../idea/tests/testData/editor/autoImport/multilineCall/");
     }
 
     @TestMetadata("nestedClassifier")
     public void testNestedClassifier() throws Exception {
-        runTest("testData/editor/autoImport/nestedClassifier/");
+        runTest("../idea/tests/testData/editor/autoImport/nestedClassifier/");
     }
 
     @TestMetadata("property")
     public void testProperty() throws Exception {
-        runTest("testData/editor/autoImport/property/");
+        runTest("../idea/tests/testData/editor/autoImport/property/");
     }
 
     @TestMetadata("unresolvedImport")
     public void testUnresolvedImport() throws Exception {
-        runTest("testData/editor/autoImport/unresolvedImport/");
+        runTest("../idea/tests/testData/editor/autoImport/unresolvedImport/");
     }
 
     @TestMetadata("unresolvedImport2")
     public void testUnresolvedImport2() throws Exception {
-        runTest("testData/editor/autoImport/unresolvedImport2/");
+        runTest("../idea/tests/testData/editor/autoImport/unresolvedImport2/");
     }
 
     @TestMetadata("withoutAutoImport")
     public void testWithoutAutoImport() throws Exception {
-        runTest("testData/editor/autoImport/withoutAutoImport/");
+        runTest("../idea/tests/testData/editor/autoImport/withoutAutoImport/");
     }
 }

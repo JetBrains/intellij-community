@@ -301,4 +301,9 @@ class KotlinK2QuickFixRegistrar : KotlinQuickFixRegistrar() {
         multiplatform,
         superType,
     )
+
+    override val importOnTheFlyList: KotlinQuickFixesList = KtQuickFixesListBuilder.registerPsiQuickFix {
+        registerApplicator(ImportQuickFix.unresolvedReferenceFactory)
+        registerApplicator(ImportQuickFix.invisibleReferenceFactory)
+    }
 }

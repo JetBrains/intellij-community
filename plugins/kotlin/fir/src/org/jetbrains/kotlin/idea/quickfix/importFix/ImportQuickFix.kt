@@ -2,9 +2,7 @@
 
 package org.jetbrains.kotlin.idea.quickfix.importFix
 
-import com.intellij.codeInsight.daemon.DaemonCodeAnalyzerSettings
 import com.intellij.codeInsight.daemon.QuickFixBundle
-import com.intellij.codeInsight.daemon.impl.ShowAutoImportPass
 import com.intellij.codeInsight.hint.HintManager
 import com.intellij.codeInsight.hint.QuestionAction
 import com.intellij.codeInsight.intention.HighPriorityAction
@@ -87,12 +85,12 @@ class ImportQuickFix(
         filterSuggestions: (Collection<FqName>) -> Collection<FqName>
     ): QuestionAction? {
         val filteredFqNames = filterSuggestions(importVariants.map { it.fqName }).toSet()
-        if (filteredFqNames.isEmpty() || !ImportFixHelper.suggestionsAreFromSameParent(filteredFqNames)) return null
+        if (filteredFqNames.size != 1) return null
 
-        val filteredSuggestions = importVariants.filter { it.fqName in filteredFqNames }
-        if (filteredSuggestions.any { (it as SymbolBasedAutoImportVariant).canNotBeImportedOnTheFly }) return null
+        val singleSuggestion = importVariants.filter { it.fqName in filteredFqNames }.first()
+        if ((singleSuggestion as SymbolBasedAutoImportVariant).canNotBeImportedOnTheFly) return null
 
-        return ImportQuestionAction(file.project, editor, file, filteredSuggestions)
+        return ImportQuestionAction(file.project, editor, file, listOf(singleSuggestion), onTheFly = true)
     }
 
     private fun createAddImportAction(project: Project, editor: Editor, file: KtFile): QuestionAction {
@@ -125,21 +123,6 @@ class ImportQuickFix(
         return true
     }
 
-    override fun fixSilently(editor: Editor): Boolean {
-        val element = element ?: return false
-        val file = element.containingKtFile
-        if (!DaemonCodeAnalyzerSettings.getInstance().isImportHintEnabled) return false
-        if (!ShowAutoImportPass.isAddUnambiguousImportsOnTheFlyEnabled(file)) return false
-        val project = file.project
-        val addImportAction = createAddImportAction(project, editor, file)
-        if (importVariants.size == 1) {
-            addImportAction.execute()
-            return true
-        } else {
-            return false
-        }
-    }
-
     private val modificationCountOnCreate: Long = PsiModificationTracker.getInstance(element.project).modificationCount
 
     /**
@@ -158,7 +141,8 @@ class ImportQuickFix(
         private val project: Project,
         private val editor: Editor,
         private val file: KtFile,
-        private val importVariants: List<AutoImportVariant>
+        private val importVariants: List<AutoImportVariant>,
+        private val onTheFly: Boolean = false,
     ) : QuestionAction {
 
         init {
@@ -178,6 +162,8 @@ class ImportQuickFix(
                 }
 
                 else -> {
+                    if (onTheFly) return false
+
                     if (ApplicationManager.getApplication().isUnitTestMode) {
                         addImport(importVariants.first())
                         return true
@@ -202,6 +188,10 @@ class ImportQuickFix(
 
     companion object {
         val invisibleReferenceFactory = diagnosticFixFactory(KtFirDiagnostic.InvisibleReference::class) { getFixes(it.psi) }
+
+        // this factory is used only for importing references on the fly; in all other cases import fixes for unresolved references
+        // are created by [org.jetbrains.kotlin.idea.codeInsight.KotlinFirUnresolvedReferenceQuickFixProvider]
+        val unresolvedReferenceFactory = diagnosticFixFactory(KtFirDiagnostic.UnresolvedReference::class) { getFixes(it.psi) }
 
         context(KtAnalysisSession)
         fun getFixes(diagnosticPsi: PsiElement): List<ImportQuickFix> {

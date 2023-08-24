@@ -6,3 +6,5 @@ import some.invoke
 fun testing() {
     Some()("str")
 }
+
+// IGNORE_K2

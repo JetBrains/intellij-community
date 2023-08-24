@@ -11,3 +11,5 @@ class MyPlugin(val myExtension: MyExtension) {
 interface MyExtension {
     val property: Property<String>
 }
+
+// IGNORE_K2

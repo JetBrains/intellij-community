@@ -1,6 +1,6 @@
 package test
 
-import unresolved.foo
+import unresolved.pkg.foo
 
 fun main() {
     foo()<caret>

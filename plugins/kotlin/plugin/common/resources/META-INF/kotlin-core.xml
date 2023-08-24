@@ -151,6 +151,10 @@
             prefix="#kotlinClass/"
             handlerClass="org.jetbrains.kotlin.idea.highlighter.markers.KotlinClassTooltipLinkHandler"/>
 
+    <referenceImporter
+            id="KotlinReferenceImporter"
+            implementation="org.jetbrains.kotlin.idea.codeInsight.KotlinReferenceImporter"/>
+
     <breadcrumbsInfoProvider implementation="org.jetbrains.kotlin.idea.codeInsight.KotlinBreadcrumbsInfoProvider"/>
 
     <gotoDeclarationHandler implementation="org.jetbrains.kotlin.idea.search.ideaExtensions.KotlinImportAliasGotoDeclarationHandler"/>

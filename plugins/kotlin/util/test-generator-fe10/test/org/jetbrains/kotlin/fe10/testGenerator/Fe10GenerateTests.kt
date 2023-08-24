@@ -69,10 +69,10 @@ import org.jetbrains.kotlin.idea.folding.AbstractKotlinFoldingTest
 import org.jetbrains.kotlin.idea.hierarchy.AbstractHierarchyTest
 import org.jetbrains.kotlin.idea.hierarchy.AbstractHierarchyWithLibTest
 import org.jetbrains.kotlin.idea.highlighter.*
-import org.jetbrains.kotlin.idea.imports.AbstractAutoImportTest
-import org.jetbrains.kotlin.idea.imports.AbstractFilteringAutoImportTest
 import org.jetbrains.kotlin.idea.imports.AbstractJsOptimizeImportsTest
 import org.jetbrains.kotlin.idea.imports.AbstractJvmOptimizeImportsTest
+import org.jetbrains.kotlin.idea.imports.AbstractK1AutoImportTest
+import org.jetbrains.kotlin.idea.imports.AbstractK1FilteringAutoImportTest
 import org.jetbrains.kotlin.idea.index.AbstractKotlinTypeAliasByExpansionShortNameIndexTest
 import org.jetbrains.kotlin.idea.inspections.AbstractInspectionTest
 import org.jetbrains.kotlin.idea.inspections.AbstractLocalInspectionTest
@@ -865,11 +865,11 @@ private fun assembleWorkspace(): TWorkspace = workspace {
             model("decompiler/decompiledTextJvm", pattern = Patterns.forRegex("""^([^\.]+)$"""))
         }
 
-        testClass<AbstractAutoImportTest> {
+        testClass<AbstractK1AutoImportTest> {
             model("editor/autoImport", testMethodName = "doTest", testClassName = "WithAutoImport", pattern = DIRECTORY, isRecursive = false)
         }
 
-        testClass<AbstractFilteringAutoImportTest> {
+        testClass<AbstractK1FilteringAutoImportTest> {
             model("editor/autoImportExtension", testMethodName = "doTest", testClassName = "WithAutoImport", pattern = DIRECTORY, isRecursive = false)
         }
 

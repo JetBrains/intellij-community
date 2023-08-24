@@ -37,6 +37,8 @@ import org.jetbrains.kotlin.idea.fir.quickfix.AbstractHighLevelQuickFixTest
 import org.jetbrains.kotlin.idea.fir.resolve.*
 import org.jetbrains.kotlin.idea.fir.search.AbstractHLImplementationSearcherTest
 import org.jetbrains.kotlin.idea.fir.shortenRefs.AbstractFirShortenRefsTest
+import org.jetbrains.kotlin.idea.imports.AbstractK2AutoImportTest
+import org.jetbrains.kotlin.idea.imports.AbstractK2FilteringAutoImportTest
 import org.jetbrains.kotlin.idea.k2.copyright.AbstractFirUpdateKotlinCopyrightTest
 import org.jetbrains.kotlin.idea.k2.refactoring.rename.AbstractFirRenameTest
 import org.jetbrains.kotlin.idea.k2.refactoring.rename.AbstractK2InplaceRenameTest
@@ -212,6 +214,20 @@ private fun assembleWorkspace(): TWorkspace = workspace {
             model(
                 "parameterInfo", pattern = Patterns.forRegex("^([\\w\\-_]+)\\.kt$"), isRecursive = true,
                 excludedDirectories = listOf("withLib1/sharedLib", "withLib2/sharedLib", "withLib3/sharedLib")
+            )
+        }
+
+        testClass<AbstractK2AutoImportTest> {
+            model(
+                "editor/autoImport", testMethodName = "doTest", testClassName = "WithAutoImport",
+                pattern = DIRECTORY, isRecursive = false
+            )
+        }
+
+        testClass<AbstractK2FilteringAutoImportTest> {
+            model(
+                "editor/autoImportExtension", testMethodName = "doTest", testClassName = "WithAutoImport",
+                pattern = DIRECTORY, isRecursive = false
             )
         }
 

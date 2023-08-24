@@ -109,10 +109,6 @@
     <lang.jvm.actions.jvmElementActionsFactory
             implementation="org.jetbrains.kotlin.idea.quickfix.crossLanguage.KotlinElementActionsFactory"/>
 
-    <referenceImporter
-            id="KotlinReferenceImporter"
-            implementation="org.jetbrains.kotlin.idea.codeInsight.KotlinReferenceImporter"/>
-
     <codeInsight.unresolvedReferenceQuickFixProvider
             id="kotlinUnresolvedReferenceQuickFixProvider"
             implementation="org.jetbrains.kotlin.idea.codeInsight.KotlinUnresolvedReferenceQuickFixProvider"/>

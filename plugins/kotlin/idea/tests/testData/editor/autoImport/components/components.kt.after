@@ -7,3 +7,5 @@ import some.component2
 fun testing() {
     val (a, b) = Some()
 }
+
+// IGNORE_K2
