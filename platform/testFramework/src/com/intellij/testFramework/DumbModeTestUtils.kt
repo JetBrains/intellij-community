@@ -1,6 +1,8 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.testFramework
 
+import com.intellij.openapi.progress.runBlockingMaybeCancellable
+import com.intellij.openapi.progress.runWithModalProgressBlocking
 import com.intellij.openapi.project.DumbService
 import com.intellij.openapi.project.DumbServiceImpl
 import com.intellij.openapi.project.Project
@@ -8,8 +10,6 @@ import com.intellij.util.application
 import kotlinx.coroutines.*
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
-import org.junit.jupiter.api.fail
-import kotlin.time.Duration
 import kotlin.time.DurationUnit.SECONDS
 import kotlin.time.toDuration
 
@@ -27,22 +27,36 @@ object DumbModeTestUtils {
    */
   @JvmStatic
   fun startEternalDumbModeTask(project: Project): EternalTaskShutdownToken {
-    var dumbModeJob: Job? = null
-    @Suppress("RAW_RUN_BLOCKING")
-    runBlocking {
-      val dumbModeStarted = CompletableDeferred<Boolean>()
+    val finishDumbTask = CompletableDeferred<Boolean>()
+    runModalIfEdt(project) {
+      val dumbTaskStarted = CompletableDeferred<Boolean>()
       withTimeout(10.toDuration(SECONDS)) {
-        dumbModeJob = CoroutineScope(Dispatchers.Main.immediate + Job()).launch {
-          DumbServiceImpl.getInstance(project).runInDumbMode {
-            dumbModeStarted.complete(true)
-            delay(Duration.INFINITE)
+        DumbServiceImpl.getInstance(project).runInDumbMode {
+          CoroutineScope(Job()).launch {
+            // The trick is that we don't need EDT, neither a write action to start dumb task, if we already in dumb mode.
+            DumbServiceImpl.getInstance(project).runInDumbMode {
+              dumbTaskStarted.complete(true)
+              finishDumbTask.await()
+            }
           }
+          // However, we need to make sure that dumb mode does not finish before the second task is started.
+          // Otherwise, the second task will need write action and EDT (to start a new dumb mode). There will be a deadlock,
+          // if startEternalDumbModeTask is invoked from EDT (because CoroutineScope(Job()).launch started with NON_MODAL modality).
+          dumbTaskStarted.await()
         }
-        dumbModeStarted.await()
       }
     }
     assertTrue("Dumb mode didn't start", DumbService.isDumb(project))
-    return EternalTaskShutdownToken(dumbModeJob ?: fail("Could not start dumb mode task"))
+    return EternalTaskShutdownToken(finishDumbTask)
+  }
+
+  private fun runModalIfEdt(project: Project, action: suspend CoroutineScope.() -> Unit) {
+    if (application.isDispatchThread) {
+      runWithModalProgressBlocking(project, "test", action)
+    }
+    else {
+      runBlockingMaybeCancellable(action)
+    }
   }
 
   @JvmStatic

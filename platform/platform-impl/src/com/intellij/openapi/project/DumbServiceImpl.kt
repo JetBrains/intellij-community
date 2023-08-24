@@ -195,22 +195,26 @@ open class DumbServiceImpl @NonInjectable @VisibleForTesting constructor(private
   @TestOnly
   fun <T> computeInDumbModeSynchronously(computable: ThrowableComputable<T, in Throwable>): T {
     val trace = Throwable()
-    application.invokeAndWait {
-      val old = myState.getAndUpdate { it.incrementDumbCounter() }
-      if (old.isSmart) {
-        dumbModeStartTrace = trace
-        runCatching { myPublisher.enteredDumbMode() }
+    if (myState.getAndUpdate { it.tryIncrementDumbCounter() }.incrementWillChangeDumbState) {
+      application.invokeAndWait {
+        val old = myState.getAndUpdate { it.incrementDumbCounter() }
+        if (old.isSmart) {
+          dumbModeStartTrace = trace
+          runCatching { myPublisher.enteredDumbMode() }
+        }
       }
     }
     try {
       return computable.compute()
     }
     finally {
-      application.invokeAndWait {
-        val new = myState.updateAndGet { it.decrementDumbCounter() }
-        if (new.isSmart) {
-          dumbModeStartTrace = null
-          runCatching { myPublisher.exitDumbMode() }
+      if (myState.getAndUpdate { it.tryDecrementDumbCounter() }.decrementWillChangeDumbState) {
+        application.invokeAndWait {
+          val new = myState.updateAndGet { it.decrementDumbCounter() }
+          if (new.isSmart) {
+            dumbModeStartTrace = null
+            runCatching { myPublisher.exitDumbMode() }
+          }
         }
       }
     }
@@ -225,35 +229,33 @@ open class DumbServiceImpl @NonInjectable @VisibleForTesting constructor(private
   @TestOnly
   suspend fun <T> runInDumbMode(block: suspend () -> T): T {
     val trace = Throwable()
-    executeImmediatelyOrScheduleOnEDT {
-      val old = myState.getAndUpdate { it.incrementDumbCounter() }
-      if (old.isSmart) {
-        dumbModeStartTrace = trace
-        runCatching { myPublisher.enteredDumbMode() }
+    if (myState.getAndUpdate { it.tryIncrementDumbCounter() }.incrementWillChangeDumbState) {
+      // If already dumb - just increment the counter. We don't need a write action (to not interrupt NBRA), neither we need EDT.
+      // Otherwise, increment the counter on EDT under write action (write action requirement is not implemented in tests yet),
+      //   because this will change dumb state
+      withContext(Dispatchers.EDT) {
+        val old = myState.getAndUpdate { it.incrementDumbCounter() }
+        if (old.isSmart) {
+          dumbModeStartTrace = trace
+          runCatching { myPublisher.enteredDumbMode() }
+        }
       }
     }
     try {
       return block()
     }
     finally {
-      executeImmediatelyOrScheduleOnEDT {
-        val new = myState.updateAndGet { it.decrementDumbCounter() }
-        if (new.isSmart) {
-          dumbModeStartTrace = null
-          runCatching { myPublisher.exitDumbMode() }
+      // If there are other dumb tasks - just decrement the counter. We don't need a write action (to not interrupt NBRA), neither we need EDT.
+      // Otherwise, decrement the counter on EDT under write action (write action requirement is not implemented in tests yet)
+      //   because this will change dumb state
+      if (myState.getAndUpdate { it.tryDecrementDumbCounter() }.decrementWillChangeDumbState) {
+        withContext(Dispatchers.EDT) {
+          val new = myState.updateAndGet { it.decrementDumbCounter() }
+          if (new.isSmart) {
+            dumbModeStartTrace = null
+            runCatching { myPublisher.exitDumbMode() }
+          }
         }
-      }
-    }
-  }
-
-  private suspend fun executeImmediatelyOrScheduleOnEDT(block: suspend () -> Unit) {
-    //Dispatchers.EDT, Dispatchers.Main, and even Dispatchers.Main.immediate may never execute if already on EDT. See SwiftAttributeCompletionTest
-    if (application.isDispatchThread) {
-      block()
-    }
-    else {
-      withContext(Dispatchers.EDT) {
-        block()
       }
     }
   }
@@ -541,10 +543,12 @@ open class DumbServiceImpl @NonInjectable @VisibleForTesting constructor(private
       }
     }
 
+    val incrementWillChangeDumbState: Boolean = isSmart
+    val decrementWillChangeDumbState: Boolean = dumbCounter == 1
     fun incrementDumbCounter(): DumbState = nextCounterState(dumbCounter + 1)
     fun decrementDumbCounter(): DumbState = nextCounterState(dumbCounter - 1)
-    fun tryIncrementDumbCounter(): DumbState = if (isDumb) incrementDumbCounter() else this
-    fun tryDecrementDumbCounter(): DumbState = if (dumbCounter > 1) decrementDumbCounter() else this
+    fun tryIncrementDumbCounter(): DumbState = if (incrementWillChangeDumbState) this else incrementDumbCounter()
+    fun tryDecrementDumbCounter(): DumbState = if (decrementWillChangeDumbState) this else decrementDumbCounter()
     val isSmart: Boolean get() = !isDumb
   }
 
