@@ -104,8 +104,8 @@ public class UnusedImportGlobalInspectionTest extends LightJavaCodeInsightFixtur
   public void testNoHighlightingInInvalidCode() {
     myFixture.configureByText("a.java",
                               """
-                                import<EOLError></EOLError>
-                                import java.util.*<error> </error><error>Math.max;</error>
+                                import<EOLError descr="Identifier expected" textAttributesKey="ERRORS_ATTRIBUTES"></EOLError>
+                                import java.util.*<error descr="';' expected" textAttributesKey="ERRORS_ATTRIBUTES"> </error>Math.<error descr="Cannot resolve symbol 'max'" textAttributesKey="WRONG_REFERENCES_ATTRIBUTES">max</error><error descr="Identifier expected" textAttributesKey="ERRORS_ATTRIBUTES">;</error>
                                 class Main {}""");
     myFixture.testHighlighting(true, false, false);
   }
