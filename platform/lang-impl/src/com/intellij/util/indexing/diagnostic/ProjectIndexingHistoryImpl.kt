@@ -387,17 +387,17 @@ data class ProjectScanningHistoryImpl(override val project: Project,
   private sealed interface Event {
     val instant: Instant
 
-    data class StageEvent(val stage: ScanningStage, val started: Boolean, override val instant: Instant) : Event
+    data class StageEvent(val stage: Stage, val started: Boolean, override val instant: Instant) : Event
     data class SuspensionEvent(val started: Boolean, override val instant: Instant = Instant.now()) : Event
   }
 
-  fun startStage(stage: ScanningStage, instant: Instant) {
+  fun startStage(stage: Stage, instant: Instant) {
     synchronized(events) {
       events.add(Event.StageEvent(stage, true, instant))
     }
   }
 
-  fun stopStage(stage: ScanningStage, instant: Instant) {
+  fun stopStage(stage: Stage, instant: Instant) {
     synchronized(events) {
       events.add(Event.StageEvent(stage, false, instant))
     }
@@ -420,7 +420,7 @@ data class ProjectScanningHistoryImpl(override val project: Project,
 
     currentDumbModeStart?.let {
       timesImpl.dumbModeStart = it
-      stopStage(ScanningStage.DumbMode, now.toInstant())
+      stopStage(Stage.DumbMode, now.toInstant())
       timesImpl.dumbModeWithPausesDuration = Duration.between(it, timesImpl.updatingEnd)
     }
 
@@ -438,7 +438,7 @@ data class ProjectScanningHistoryImpl(override val project: Project,
 
   private fun createScanningDumbModeCallBack(): Consumer<ZonedDateTime> = Consumer { now ->
     currentDumbModeStart = now
-    startStage(ScanningStage.DumbMode, now.toInstant())
+    startStage(Stage.DumbMode, now.toInstant())
   }
 
   /**
@@ -492,9 +492,9 @@ data class ProjectScanningHistoryImpl(override val project: Project,
   private fun writeStagesToDurations() {
     val normalizedEvents = getNormalizedEvents()
     var pausedDuration = Duration.ZERO
-    val startMap = hashMapOf<ScanningStage, Instant>()
-    val durationMap = hashMapOf<ScanningStage, Duration>()
-    for (stage in ScanningStage.values()) {
+    val startMap = hashMapOf<Stage, Instant>()
+    val durationMap = hashMapOf<Stage, Duration>()
+    for (stage in Stage.values()) {
       durationMap[stage] = Duration.ZERO
     }
     var suspendStart: Instant? = null
@@ -529,7 +529,7 @@ data class ProjectScanningHistoryImpl(override val project: Project,
         }
       }
 
-      for (stage in ScanningStage.values()) {
+      for (stage in Stage.values()) {
         stage.getProperty().set(timesImpl, durationMap[stage]!!)
       }
     }
@@ -537,7 +537,7 @@ data class ProjectScanningHistoryImpl(override val project: Project,
     var start: Instant? = null
     var concurrentHandlingWallTimeWithPauses = Duration.ZERO
     for (event in normalizedEvents) {
-      if (event !is Event.StageEvent || event.stage != ScanningStage.CollectingIndexableFiles) {
+      if (event !is Event.StageEvent || event.stage != Stage.CollectingIndexableFiles) {
         continue
       }
       if (event.started) {
@@ -553,7 +553,7 @@ data class ProjectScanningHistoryImpl(override val project: Project,
   }
 
   /** Just a stage, don't have to cover whole indexing period, may intersect **/
-  enum class ScanningStage {
+  enum class Stage {
     CreatingIterators {
       override fun getProperty(): KMutableProperty1<ScanningTimesImpl, Duration> = ScanningTimesImpl::creatingIteratorsDuration
     },

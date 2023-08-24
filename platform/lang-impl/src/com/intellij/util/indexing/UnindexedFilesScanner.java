@@ -163,7 +163,7 @@ public class UnindexedFilesScanner implements FilesScanningTask {
                     @NotNull ProgressIndicator indicator,
                     @NotNull Ref<? super StatusMark> markRef) {
     markStage(projectIndexingHistory, ProjectIndexingHistoryImpl.Stage.PushProperties,
-              scanningHistory, ProjectScanningHistoryImpl.ScanningStage.DelayedPushProperties, true);
+              scanningHistory, ProjectScanningHistoryImpl.Stage.DelayedPushProperties, true);
     try {
       if (myPusher instanceof PushedFilePropertiesUpdaterImpl) {
         ((PushedFilePropertiesUpdaterImpl)myPusher).performDelayedPushTasks();
@@ -171,7 +171,7 @@ public class UnindexedFilesScanner implements FilesScanningTask {
     }
     finally {
       markStage(projectIndexingHistory, ProjectIndexingHistoryImpl.Stage.PushProperties,
-                scanningHistory, ProjectScanningHistoryImpl.ScanningStage.DelayedPushProperties, false);
+                scanningHistory, ProjectScanningHistoryImpl.Stage.DelayedPushProperties, false);
     }
     LOG.info(snapshot.getLogResponsivenessSinceCreationMessage("Performing delayed pushing properties tasks for " + myProject.getName()));
 
@@ -183,7 +183,7 @@ public class UnindexedFilesScanner implements FilesScanningTask {
 
     List<IndexableFilesIterator> orderedProviders;
     markStage(projectIndexingHistory, ProjectIndexingHistoryImpl.Stage.CreatingIterators,
-              scanningHistory, ProjectScanningHistoryImpl.ScanningStage.CreatingIterators, true);
+              scanningHistory, ProjectScanningHistoryImpl.Stage.CreatingIterators, true);
     try {
       if (myPredefinedIndexableFilesIterators == null) {
         Pair<@NotNull List<IndexableFilesIterator>, @NotNull StatusMark> pair = collectProviders(myProject, myIndex);
@@ -196,11 +196,11 @@ public class UnindexedFilesScanner implements FilesScanningTask {
     }
     finally {
       markStage(projectIndexingHistory, ProjectIndexingHistoryImpl.Stage.CreatingIterators,
-                scanningHistory, ProjectScanningHistoryImpl.ScanningStage.CreatingIterators, false);
+                scanningHistory, ProjectScanningHistoryImpl.Stage.CreatingIterators, false);
     }
 
     markStage(projectIndexingHistory, ProjectIndexingHistoryImpl.Stage.Scanning,
-              scanningHistory, ProjectScanningHistoryImpl.ScanningStage.CollectingIndexableFiles, true);
+              scanningHistory, ProjectScanningHistoryImpl.Stage.CollectingIndexableFiles, true);
     try {
       collectIndexableFilesConcurrently(myProject, indicator, orderedProviders, projectIndexingHistory, scanningHistory);
       if (isFullIndexUpdate()) {
@@ -209,7 +209,7 @@ public class UnindexedFilesScanner implements FilesScanningTask {
     }
     finally {
       markStage(projectIndexingHistory, ProjectIndexingHistoryImpl.Stage.Scanning,
-                scanningHistory, ProjectScanningHistoryImpl.ScanningStage.CollectingIndexableFiles, false);
+                scanningHistory, ProjectScanningHistoryImpl.Stage.CollectingIndexableFiles, false);
     }
     String scanningCompletedMessage = getLogScanningCompletedStageMessage(projectIndexingHistory);
     LOG.info(snapshot.getLogResponsivenessSinceCreationMessage(scanningCompletedMessage));
@@ -218,7 +218,7 @@ public class UnindexedFilesScanner implements FilesScanningTask {
   private static void markStage(@NotNull ProjectIndexingHistoryImpl projectIndexingHistory,
                                 @NotNull ProjectIndexingHistoryImpl.Stage stage,
                                 @NotNull ProjectScanningHistoryImpl scanningHistory,
-                                @NotNull ProjectScanningHistoryImpl.ScanningStage scanningStage,
+                                @NotNull ProjectScanningHistoryImpl.Stage scanningStage,
                                 boolean isStart) {
     ProgressManager.checkCanceled();
     Instant scanningStageTime = Instant.now();
