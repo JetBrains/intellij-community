@@ -157,7 +157,8 @@ internal fun SdkMainEntity.Builder.applyChangesFrom(fromSdk: SdkMainEntity) {
   type = fromSdk.type
   version = fromSdk.version
   homePath = fromSdk.homePath
-  roots = fromSdk.roots as MutableList<SdkRoot>
+  val sdkRoots = fromSdk.roots.mapTo(mutableListOf()) { SdkRoot(it.url, it.type) }
+  roots = sdkRoots
   additionalData = fromSdk.additionalData
   entitySource = fromSdk.entitySource
 }
