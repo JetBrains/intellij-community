@@ -31,11 +31,50 @@ import com.jetbrains.packagesearch.intellij.plugin.getInstalledDependencies
 import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.InstalledDependenciesUsages
 import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.ProjectDataProvider
 import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.RepositoryModel
-import com.jetbrains.packagesearch.intellij.plugin.util.*
+import com.jetbrains.packagesearch.intellij.plugin.util.BackgroundLoadingBarController
+import com.jetbrains.packagesearch.intellij.plugin.util.PowerSaveModeState
+import com.jetbrains.packagesearch.intellij.plugin.util.TraceInfo
 import com.jetbrains.packagesearch.intellij.plugin.util.TraceInfo.TraceSource.SEARCH_QUERY
+import com.jetbrains.packagesearch.intellij.plugin.util.catchAndLog
+import com.jetbrains.packagesearch.intellij.plugin.util.combineLatest
+import com.jetbrains.packagesearch.intellij.plugin.util.fileOpenedFlow
+import com.jetbrains.packagesearch.intellij.plugin.util.filesChangedEventFlow
+import com.jetbrains.packagesearch.intellij.plugin.util.lifecycleScope
+import com.jetbrains.packagesearch.intellij.plugin.util.loadingContainer
+import com.jetbrains.packagesearch.intellij.plugin.util.map
+import com.jetbrains.packagesearch.intellij.plugin.util.modifiedBy
+import com.jetbrains.packagesearch.intellij.plugin.util.moduleChangesSignalFlow
+import com.jetbrains.packagesearch.intellij.plugin.util.moduleTransformers
+import com.jetbrains.packagesearch.intellij.plugin.util.nativeModulesFlow
+import com.jetbrains.packagesearch.intellij.plugin.util.packageSearchProjectCachesService
+import com.jetbrains.packagesearch.intellij.plugin.util.parallelMap
+import com.jetbrains.packagesearch.intellij.plugin.util.powerSaveModeFlow
+import com.jetbrains.packagesearch.intellij.plugin.util.replayOn
+import com.jetbrains.packagesearch.intellij.plugin.util.send
+import com.jetbrains.packagesearch.intellij.plugin.util.shareInAndCatchAndLog
+import com.jetbrains.packagesearch.intellij.plugin.util.showBackgroundLoadingBar
+import com.jetbrains.packagesearch.intellij.plugin.util.stateInAndCatchAndLog
+import com.jetbrains.packagesearch.intellij.plugin.util.throttle
+import com.jetbrains.packagesearch.intellij.plugin.util.timer
+import com.jetbrains.packagesearch.intellij.plugin.util.trustedProjectFlow
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.channels.Channel
-import kotlinx.coroutines.flow.*
+import kotlinx.coroutines.flow.SharingStarted
+import kotlinx.coroutines.flow.asFlow
+import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.emptyFlow
+import kotlinx.coroutines.flow.filter
+import kotlinx.coroutines.flow.flatMapLatest
+import kotlinx.coroutines.flow.flatMapMerge
+import kotlinx.coroutines.flow.flowOn
+import kotlinx.coroutines.flow.launchIn
+import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.mapNotNull
+import kotlinx.coroutines.flow.onEach
+import kotlinx.coroutines.flow.receiveAsFlow
+import kotlinx.coroutines.flow.shareIn
+import kotlinx.coroutines.flow.stateIn
+import kotlinx.coroutines.flow.take
 import org.jetbrains.idea.packagesearch.api.PackageSearchApiClient
 import kotlin.time.Duration.Companion.hours
 import kotlin.time.Duration.Companion.seconds
@@ -138,13 +177,13 @@ internal class PackageSearchProjectService(private val project: Project) : Dispo
         }
         .catchAndLog()
 
-    val installedDependenciesFlow by combineLatest(
+    val installedDependenciesFlow = combineLatest(
         flow1 = declaredDependenciesByModuleFlow,
         flow2 = remoteData,
         loadingContainer = project.loadingContainer
     ) { packageSearchModules, remoteData ->
         installedDependenciesUsages(project, packageSearchModules, remoteData)
-    }.stateInAndCatchAndLog(project.lifecycleScope, SharingStarted.Lazily, InstalledDependenciesUsages.EMPTY)
+    }.stateIn(project.lifecycleScope, SharingStarted.Lazily, InstalledDependenciesUsages.EMPTY)
 
     init {
 
