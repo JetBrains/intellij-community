@@ -17,30 +17,14 @@ import org.junit.runner.RunWith;
 @TestRoot("idea/tests")
 @TestDataPath("$CONTENT_ROOT")
 @RunWith(JUnit3RunnerWithInners.class)
-public abstract class FilteringAutoImportTestGenerated extends AbstractFilteringAutoImportTest {
-    @RunWith(JUnit3RunnerWithInners.class)
-    @TestMetadata("testData/editor/autoImportExtension")
-    public static class WithAutoImport extends AbstractFilteringAutoImportTest {
-        private void runTest(String testDataFilePath) throws Exception {
-            KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
-        }
-
-        @TestMetadata("ambiguousFilter")
-        public void testAmbiguousFilter() throws Exception {
-            runTest("testData/editor/autoImportExtension/ambiguousFilter/");
-        }
+@TestMetadata("testData/editor/autoImportExtension")
+public class FilteringAutoImportTestGenerated extends AbstractFilteringAutoImportTest {
+    private void runTest(String testDataFilePath) throws Exception {
+        KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
     }
 
-    @RunWith(JUnit3RunnerWithInners.class)
-    @TestMetadata("testData/editor/autoImportExtension")
-    public static class WithoutAutoImport extends AbstractFilteringAutoImportTest {
-        private void runTest(String testDataFilePath) throws Exception {
-            KotlinTestUtils.runTest(this::doTestWithoutAutoImport, this, testDataFilePath);
-        }
-
-        @TestMetadata("ambiguousFilter")
-        public void testAmbiguousFilter() throws Exception {
-            runTest("testData/editor/autoImportExtension/ambiguousFilter/");
-        }
+    @TestMetadata("ambiguousFilter")
+    public void testAmbiguousFilter() throws Exception {
+        runTest("testData/editor/autoImportExtension/ambiguousFilter/");
     }
 }

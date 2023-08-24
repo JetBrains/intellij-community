@@ -11,9 +11,7 @@ import java.io.File
 
 abstract class AbstractAutoImportTest : KotlinLightCodeInsightFixtureTestCase() {
 
-    fun doTest(unused: String) = doTest(true)
-
-    fun doTestWithoutAutoImport(unused: String) = doTest(false)
+    fun doTest(unused: String) = doTest()
 
     override val testDataDirectory: File
         get() = File(TestMetadataUtil.getTestDataPath(javaClass), fileName())
@@ -26,7 +24,7 @@ abstract class AbstractAutoImportTest : KotlinLightCodeInsightFixtureTestCase() 
         settings.addUnambiguousImportsOnTheFly = withAutoImport
     }
 
-    private fun doTest(withAutoImport: Boolean) {
+    private fun doTest() {
         val mainFile = mainFile().also { check(it.exists()) { "$it should exist" } }
         val base = mainFile.parentFile
         val afterFile = File(base, mainFile.name + ".after").also { check(it.exists()) { "$it should exist" } }
@@ -41,6 +39,8 @@ abstract class AbstractAutoImportTest : KotlinLightCodeInsightFixtureTestCase() 
 
         val file = myFixture.configureByText(mainFile.name, FileUtil.loadFile(mainFile, true))
         val originalText = file.text
+
+        val withAutoImport = InTextDirectivesUtils.findStringWithPrefixes(originalText, "// WITHOUT_AUTO_IMPORT") == null
 
         withCustomCompilerOptions(originalText, project, module) {
             val settings = KotlinCodeInsightSettings.getInstance()
