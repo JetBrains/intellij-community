@@ -18,6 +18,8 @@ class K1ReferenceImporterFacility : KotlinReferenceImporterFacility {
             .createUnresolvedReferenceQuickFixesForElement(expression)
             .values.asSequence().flatten()
             .filterIsInstance<ImportFixBase<*>>()
+            // obtained quick fix might be intended for an element different from `useSiteElement`, so we need to check again
+            .filter { importFix -> importFix.element?.let(file::hasUnresolvedImportWhichCanImport) == false }
     }
 }
 

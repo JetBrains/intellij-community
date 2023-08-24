@@ -99,6 +99,11 @@ public abstract class AutoImportTestGenerated extends AbstractAutoImportTest {
         public void testUnresolvedImport() throws Exception {
             runTest("testData/editor/autoImport/unresolvedImport/");
         }
+
+        @TestMetadata("unresolvedImport2")
+        public void testUnresolvedImport2() throws Exception {
+            runTest("testData/editor/autoImport/unresolvedImport2/");
+        }
     }
 
     @RunWith(JUnit3RunnerWithInners.class)
@@ -181,6 +186,11 @@ public abstract class AutoImportTestGenerated extends AbstractAutoImportTest {
         @TestMetadata("unresolvedImport")
         public void testUnresolvedImport() throws Exception {
             runTest("testData/editor/autoImport/unresolvedImport/");
+        }
+
+        @TestMetadata("unresolvedImport2")
+        public void testUnresolvedImport2() throws Exception {
+            runTest("testData/editor/autoImport/unresolvedImport2/");
         }
     }
 }
