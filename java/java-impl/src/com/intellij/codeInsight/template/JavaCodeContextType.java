@@ -173,7 +173,8 @@ public abstract class JavaCodeContextType extends TemplateContextType {
         PsiElement greatGrandParent = grandParent.getParent();
         if (greatGrandParent instanceof PsiMember ||
             greatGrandParent instanceof PsiReferenceParameterList ||
-            greatGrandParent instanceof PsiRecordHeader) {
+            greatGrandParent instanceof PsiRecordHeader ||
+            greatGrandParent instanceof PsiJavaFile) {
           return false;
         }
       }
