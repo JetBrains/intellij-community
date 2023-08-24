@@ -25,7 +25,8 @@ import java.awt.Point
 import java.net.URL
 
 class GitWidgetStep : NewUiOnboardingStep {
-  private val ideHelpTopic = "version-control-integration.html"
+  private val generalVcsHelpTopic = "version-control-integration.html"
+  private val enableVcsHelpTopic = "enabling-version-control.html"
 
   override suspend fun performStep(project: Project, disposable: CheckedDisposable): NewUiOnboardingStepData? {
     val widget = NewUiOnboardingUtil.findUiComponent(project) { widget: ToolbarComboWidget ->
@@ -46,8 +47,8 @@ class GitWidgetStep : NewUiOnboardingStep {
       GitBundle.message("newUiOnboarding.git.widget.step.text.with.repo")
     }
     else GitBundle.message("newUiOnboarding.git.widget.step.text.no.repo")
-
-    val ideHelpLink = NewUiOnboardingUtil.getHelpLink(ideHelpTopic)
+    val helpTopic = if (state is GitWidgetState.Repo) generalVcsHelpTopic else enableVcsHelpTopic
+    val ideHelpLink = NewUiOnboardingUtil.getHelpLink(helpTopic)
     val builder = GotItComponentBuilder(text)
       .withHeader(GitBundle.message("newUiOnboarding.git.widget.step.header"))
       .withBrowserLink(NewUiOnboardingBundle.message("gotIt.learn.more"), URL(ideHelpLink))
