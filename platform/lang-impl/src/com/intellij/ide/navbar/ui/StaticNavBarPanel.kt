@@ -1,8 +1,10 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.navbar.ui
 
+import com.intellij.ide.navbar.NavBarItem
 import com.intellij.ide.navbar.ide.*
 import com.intellij.ide.navbar.vm.NavBarVm
+import com.intellij.model.Pointer
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.project.Project
 import com.intellij.ui.ComponentUtil
@@ -11,10 +13,7 @@ import com.intellij.util.attachAsChildTo
 import com.intellij.util.ui.update.Activatable
 import com.intellij.util.ui.update.UiNotifyConnector
 import kotlinx.coroutines.*
-import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.collectLatest
-import kotlinx.coroutines.flow.transformLatest
+import kotlinx.coroutines.flow.*
 import java.awt.BorderLayout
 import java.awt.Window
 
@@ -22,7 +21,7 @@ internal class StaticNavBarPanel(
   private val project: Project,
   private val cs: CoroutineScope,
   private val updateRequests: Flow<Any>,
-  private val requestNavigation: (NavBarVmItem) -> Unit,
+  private val requestNavigation: (Pointer<out NavBarItem>) -> Unit,
 ) : JBPanel<StaticNavBarPanel>(BorderLayout()), Activatable {
 
   private val _window: MutableStateFlow<Window?> = MutableStateFlow(null)
@@ -72,8 +71,8 @@ internal class StaticNavBarPanel(
       this@supervisorScope,
       initialItems = defaultModel(project),
       contextItems = contextItems(window),
-      requestNavigation,
     )
+    vm.activationRequests.onEach(requestNavigation).launchIn(this)
     _vm.value = vm
     try {
       awaitCancellation()

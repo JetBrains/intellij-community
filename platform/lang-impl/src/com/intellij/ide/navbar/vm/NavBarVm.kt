@@ -3,6 +3,7 @@ package com.intellij.ide.navbar.vm
 
 import com.intellij.ide.navbar.NavBarItem
 import com.intellij.model.Pointer
+import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.StateFlow
 
 internal interface NavBarVm {
@@ -12,6 +13,8 @@ internal interface NavBarVm {
   val selectedIndex: StateFlow<Int>
 
   val popup: StateFlow<NavBarPopupVm<*>?>
+
+  val activationRequests: Flow<Pointer<out NavBarItem>>
 
   fun selection(): List<Pointer<out NavBarItem>>
 

@@ -21,7 +21,6 @@ internal class NavBarVmImpl(
   cs: CoroutineScope,
   initialItems: List<NavBarVmItem>,
   contextItems: Flow<List<NavBarVmItem>>,
-  private val requestNavigation: (NavBarVmItem) -> Unit,
 ) : NavBarVm {
 
   init {
@@ -35,6 +34,9 @@ internal class NavBarVmImpl(
   private val _popupRequests: MutableSharedFlow<Int> = MutableSharedFlow(extraBufferCapacity = 1, onBufferOverflow = DROP_OLDEST)
 
   private val _popup: MutableStateFlow<NavBarPopupVmImpl<DefaultNavBarPopupItem>?> = MutableStateFlow(null)
+
+  private val _activationRequests: MutableSharedFlow<Pointer<out NavBarItem>> =
+    MutableSharedFlow(extraBufferCapacity = 1, onBufferOverflow = DROP_OLDEST)
 
   init {
     cs.launch {
@@ -60,6 +62,8 @@ internal class NavBarVmImpl(
   override val selectedIndex: StateFlow<Int> = _selectedIndex.asStateFlow()
 
   override val popup: StateFlow<NavBarPopupVm<*>?> = _popup.asStateFlow()
+
+  override val activationRequests: Flow<Pointer<out NavBarItem>> = _activationRequests.asSharedFlow()
 
   override fun selection(): List<Pointer<out NavBarItem>> {
     EDT.assertIsEdt()
@@ -150,7 +154,7 @@ internal class NavBarVmImpl(
                        ?: return
     when (expandResult) {
       is ExpandResult.NavigateTo -> {
-        requestNavigation(expandResult.target)
+        _activationRequests.tryEmit(expandResult.target.pointer)
         return
       }
       is ExpandResult.NextPopup -> {
@@ -201,7 +205,7 @@ internal class NavBarVmImpl(
     }
 
     override fun activate() {
-      requestNavigation(item)
+      _activationRequests.tryEmit(item.pointer)
     }
   }
 }
