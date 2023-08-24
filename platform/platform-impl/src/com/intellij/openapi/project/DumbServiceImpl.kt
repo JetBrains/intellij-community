@@ -18,10 +18,7 @@ import com.intellij.openapi.project.MergingTaskQueue.SubmissionReceipt
 import com.intellij.openapi.project.SingleTaskExecutor.AutoclosableProgressive
 import com.intellij.openapi.startup.StartupActivity.RequiredForSmartMode
 import com.intellij.openapi.ui.MessageType
-import com.intellij.openapi.util.Disposer
-import com.intellij.openapi.util.ModificationTracker
-import com.intellij.openapi.util.NlsContexts
-import com.intellij.openapi.util.ThrowableComputable
+import com.intellij.openapi.util.*
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.wm.WindowManager
 import com.intellij.openapi.wm.ex.StatusBarEx
@@ -197,9 +194,14 @@ open class DumbServiceImpl @NonInjectable @VisibleForTesting constructor(private
     val trace = Throwable()
     if (myState.getAndUpdate { it.tryIncrementDumbCounter() }.incrementWillChangeDumbState) {
       application.invokeAndWait {
-        val old = myState.getAndUpdate { it.incrementDumbCounter() }
-        if (old.isSmart) {
+        val enteredDumbMode = application.runWriteAction(Computable {
+          val old = myState.getAndUpdate { it.incrementDumbCounter() }
+          return@Computable old.isSmart
+        })
+
+        if (enteredDumbMode) {
           dumbModeStartTrace = trace
+          LOG.info("enter dumb mode [${project.name}]")
           runCatching { myPublisher.enteredDumbMode() }
         }
       }
@@ -210,9 +212,14 @@ open class DumbServiceImpl @NonInjectable @VisibleForTesting constructor(private
     finally {
       if (myState.getAndUpdate { it.tryDecrementDumbCounter() }.decrementWillChangeDumbState) {
         application.invokeAndWait {
-          val new = myState.updateAndGet { it.decrementDumbCounter() }
-          if (new.isSmart) {
+          val exitDumbMode = application.runWriteAction(Computable {
+            val new = myState.updateAndGet { it.decrementDumbCounter() }
+            return@Computable new.isSmart
+          })
+
+          if (exitDumbMode) {
             dumbModeStartTrace = null
+            LOG.info("exit dumb mode [${project.name}]")
             runCatching { myPublisher.exitDumbMode() }
           }
         }
@@ -224,19 +231,22 @@ open class DumbServiceImpl @NonInjectable @VisibleForTesting constructor(private
    * This method starts dumb mode (if not started), then runs suspend lambda, then ends dumb mode (if no other dumb tasks are running).
    *
    * This method can be invoked from any thread. It will switch to EDT to start/stop dumb mode. Runnable itself will be invoked from
-   * method's invocation thread.
+   * method's invocation context (thread).
    */
   @TestOnly
   suspend fun <T> runInDumbMode(block: suspend () -> T): T {
     val trace = Throwable()
     if (myState.getAndUpdate { it.tryIncrementDumbCounter() }.incrementWillChangeDumbState) {
       // If already dumb - just increment the counter. We don't need a write action (to not interrupt NBRA), neither we need EDT.
-      // Otherwise, increment the counter on EDT under write action (write action requirement is not implemented in tests yet),
-      //   because this will change dumb state
+      // Otherwise, increment the counter under write action because this will change dumb state
       withContext(Dispatchers.EDT) {
-        val old = myState.getAndUpdate { it.incrementDumbCounter() }
-        if (old.isSmart) {
+        val enteredDumb = writeAction {
+          val old = myState.getAndUpdate { it.incrementDumbCounter() }
+          return@writeAction old.isSmart
+        }
+        if (enteredDumb) {
           dumbModeStartTrace = trace
+          LOG.info("enter dumb mode [${project.name}]")
           runCatching { myPublisher.enteredDumbMode() }
         }
       }
@@ -246,13 +256,16 @@ open class DumbServiceImpl @NonInjectable @VisibleForTesting constructor(private
     }
     finally {
       // If there are other dumb tasks - just decrement the counter. We don't need a write action (to not interrupt NBRA), neither we need EDT.
-      // Otherwise, decrement the counter on EDT under write action (write action requirement is not implemented in tests yet)
-      //   because this will change dumb state
+      // Otherwise, decrement the counter under write action because this will change dumb state
       if (myState.getAndUpdate { it.tryDecrementDumbCounter() }.decrementWillChangeDumbState) {
         withContext(Dispatchers.EDT) {
-          val new = myState.updateAndGet { it.decrementDumbCounter() }
-          if (new.isSmart) {
+          val exitDumb = writeAction {
+            val new = myState.updateAndGet { it.decrementDumbCounter() }
+            return@writeAction new.isSmart
+          }
+          if (exitDumb) {
             dumbModeStartTrace = null
+            LOG.info("exit dumb mode [${project.name}]")
             runCatching { myPublisher.exitDumbMode() }
           }
         }
@@ -325,7 +338,7 @@ open class DumbServiceImpl @NonInjectable @VisibleForTesting constructor(private
     }
     if (entered) {
       LOG.info("entered dumb mode [${project.name}]")
-      runCatching(Runnable { myPublisher.enteredDumbMode() })
+      runCatching { myPublisher.enteredDumbMode() }
     }
   }
 
