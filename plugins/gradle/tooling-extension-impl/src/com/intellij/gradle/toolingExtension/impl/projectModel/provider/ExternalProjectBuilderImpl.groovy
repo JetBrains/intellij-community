@@ -1,5 +1,5 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-package org.jetbrains.plugins.gradle.tooling.builder
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package com.intellij.gradle.toolingExtension.impl.projectModel.provider
 
 import com.google.gson.GsonBuilder
 import com.intellij.openapi.externalSystem.model.project.ExternalSystemSourceType
@@ -33,6 +33,8 @@ import org.jetbrains.plugins.gradle.model.*
 import org.jetbrains.plugins.gradle.tooling.AbstractModelBuilderService
 import org.jetbrains.plugins.gradle.tooling.ErrorMessageBuilder
 import org.jetbrains.plugins.gradle.tooling.ModelBuilderContext
+import org.jetbrains.plugins.gradle.tooling.builder.ProjectExtensionsDataBuilderImpl
+import com.intellij.gradle.toolingExtension.impl.taskModel.provider.TasksFactory
 import org.jetbrains.plugins.gradle.tooling.util.JavaPluginUtil
 import org.jetbrains.plugins.gradle.tooling.util.resolve.DependencyResolverImpl
 
@@ -753,7 +755,7 @@ class ExternalProjectBuilderImpl extends AbstractModelBuilderService {
    *
    * @param object
    * @return true if object is safe to resolve using {@link Project#files(java.lang.Object...)}
-   * @see org.jetbrains.plugins.gradle.tooling.builder.ExternalProjectBuilderImpl#tryUnpackPresentProvider
+   * @see ExternalProjectBuilderImpl#tryUnpackPresentProvider
    */
   private static boolean isSafeToResolve(Object param, Project project) {
     Object object = tryUnpackPresentProvider(param, project)

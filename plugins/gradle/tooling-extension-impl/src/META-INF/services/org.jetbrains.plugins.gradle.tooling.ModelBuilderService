@@ -1,10 +1,10 @@
 # Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+com.intellij.gradle.toolingExtension.impl.projectModel.provider.ExternalProjectBuilderImpl
 org.jetbrains.plugins.gradle.tooling.builder.AnnotationProcessingModelBuilder
 org.jetbrains.plugins.gradle.tooling.builder.WarModelBuilderImpl
 org.jetbrains.plugins.gradle.tooling.builder.EarModelBuilderImpl
 org.jetbrains.plugins.gradle.tooling.builder.ModelBuildScriptClasspathBuilderImpl
 org.jetbrains.plugins.gradle.tooling.builder.ScalaModelBuilderImpl
-org.jetbrains.plugins.gradle.tooling.builder.ExternalProjectBuilderImpl
 org.jetbrains.plugins.gradle.tooling.builder.DependencyGraphModelBuilderImpl
 org.jetbrains.plugins.gradle.tooling.builder.ExternalTestsModelBuilderImpl
 org.jetbrains.plugins.gradle.tooling.builder.ProjectExtensionsDataBuilderImpl
