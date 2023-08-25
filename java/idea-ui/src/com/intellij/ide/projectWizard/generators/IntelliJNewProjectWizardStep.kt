@@ -16,6 +16,7 @@ import com.intellij.ide.wizard.NewProjectWizardBaseData
 import com.intellij.ide.wizard.NewProjectWizardStep
 import com.intellij.ide.wizard.NewProjectWizardStep.Companion.ADD_SAMPLE_CODE_PROPERTY_NAME
 import com.intellij.ide.wizard.NewProjectWizardStep.Companion.GENERATE_ONBOARDING_TIPS_NAME
+import com.intellij.openapi.components.service
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory
 import com.intellij.openapi.module.ModuleManager
 import com.intellij.openapi.module.StdModuleTypes
@@ -79,6 +80,12 @@ abstract class IntelliJNewProjectWizardStep<ParentStep>(val parent: ParentStep) 
     contentRootProperty.dependsOn(parent.pathProperty, ::suggestContentRoot)
 
     moduleFileLocationProperty.dependsOn(contentRootProperty, ::suggestModuleFilePath)
+
+    sdkProperty.afterChange {
+      if (it != null) {
+        service<SdkPreIndexingService>().requestPreIndexation(it)
+      }
+    }
   }
 
   protected fun setupJavaSdkUI(builder: Panel) {

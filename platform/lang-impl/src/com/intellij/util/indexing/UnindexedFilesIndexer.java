@@ -37,7 +37,7 @@ import java.util.*;
  * UnindexedFilesIndexer is to index files: explicitly provided (see providerToFiles in constructor), and implicitly marked as dirty, e.g.
  * by VFS (as reported by FileBasedIndexImpl#getFilesToUpdate).
  */
-final class UnindexedFilesIndexer extends DumbModeTask {
+public final class UnindexedFilesIndexer extends DumbModeTask {
   private static final Logger LOG = Logger.getInstance(UnindexedFilesIndexer.class);
   private final @NotNull Project myProject;
   private final FileBasedIndexImpl myIndex;
@@ -55,7 +55,7 @@ final class UnindexedFilesIndexer extends DumbModeTask {
    * <p>
    * if providerToFiles is not empty, providerToFiles files will be indexed in the first order, then files reported by FileBasedIndexImpl#getFilesToUpdate
    */
-  UnindexedFilesIndexer(@NotNull Project project,
+  public UnindexedFilesIndexer(@NotNull Project project,
                         @NotNull Map<@NotNull IndexableFilesIterator, @NotNull Collection<@NotNull VirtualFile>> providerToFiles,
                         @NonNls @NotNull String indexingReason,
                         @NotNull LongSet scanningIds) {

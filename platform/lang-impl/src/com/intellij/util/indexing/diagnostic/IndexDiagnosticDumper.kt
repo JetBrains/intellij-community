@@ -283,7 +283,8 @@ class IndexDiagnosticDumper : Disposable {
 
   fun onDumbIndexingFinished(projectDumbIndexingHistory: ProjectDumbIndexingHistoryImpl) {
     try {
-      if (ApplicationManager.getApplication().isUnitTestMode && !shouldDumpInUnitTestMode) {
+      if ((ApplicationManager.getApplication().isUnitTestMode && !shouldDumpInUnitTestMode) ||
+          projectDumbIndexingHistory.project.isDefault) {
         return
       }
       if (projectDumbIndexingHistory.times.wasInterrupted && !shouldDumpDiagnosticsForInterruptedUpdaters) {
