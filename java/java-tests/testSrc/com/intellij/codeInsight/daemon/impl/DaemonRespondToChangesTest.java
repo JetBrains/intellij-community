@@ -76,7 +76,6 @@ import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressIndicatorProvider;
 import com.intellij.openapi.project.DumbAware;
-import com.intellij.openapi.project.DumbServiceImpl;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.projectRoots.Sdk;
@@ -2532,7 +2531,7 @@ public class DaemonRespondToChangesTest extends DaemonAnalyzerTestCase {
     applied.clear();
 
     myDaemonCodeAnalyzer.mustWaitForSmartMode(false, getTestRootDisposable());
-    DumbServiceImpl.getInstance(myProject).runInDumbModeSynchronously(() -> {
+    DumbModeTestUtils.runInDumbModeSynchronously(myProject, () -> {
       type(' ');
       doHighlighting();
 

@@ -18,14 +18,15 @@ import com.intellij.openapi.project.MergingTaskQueue.SubmissionReceipt
 import com.intellij.openapi.project.SingleTaskExecutor.AutoclosableProgressive
 import com.intellij.openapi.startup.StartupActivity.RequiredForSmartMode
 import com.intellij.openapi.ui.MessageType
-import com.intellij.openapi.util.*
+import com.intellij.openapi.util.Disposer
+import com.intellij.openapi.util.ModificationTracker
+import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.wm.WindowManager
 import com.intellij.openapi.wm.ex.StatusBarEx
 import com.intellij.serviceContainer.NonInjectable
 import com.intellij.util.ConcurrencyUtil
 import com.intellij.util.SystemProperties
-import com.intellij.util.ThrowableRunnable
 import com.intellij.util.application
 import com.intellij.util.indexing.IndexingBundle
 import com.intellij.util.ui.DeprecationStripePanel
@@ -169,63 +170,6 @@ open class DumbServiceImpl @NonInjectable @VisibleForTesting constructor(private
       }
       return myState.value.isDumb
     }
-
-  /**
-   * This method starts dumb mode (if not started), then runs the runnable, then ends dumb mode (if no other dumb tasks are running).
-   *
-   * This method can be invoked from any thread. It will switch to EDT to start/stop dumb mode. Runnable itself will be invoked from
-   * method's invocation thread.
-   */
-  @TestOnly
-  fun runInDumbModeSynchronously(runnable: ThrowableRunnable<in Throwable>) {
-    computeInDumbModeSynchronously {
-      runnable.run()
-    }
-  }
-
-  /**
-   * This method starts dumb mode (if not started), then runs the computable, then ends dumb mode (if no other dumb tasks are running).
-   *
-   * This method can be invoked from any thread. It will switch to EDT to start/stop dumb mode. Runnable itself will be invoked from
-   * method's invocation thread.
-   */
-  @TestOnly
-  fun <T> computeInDumbModeSynchronously(computable: ThrowableComputable<T, in Throwable>): T {
-    val trace = Throwable()
-    if (myState.getAndUpdate { it.tryIncrementDumbCounter() }.incrementWillChangeDumbState) {
-      application.invokeAndWait {
-        val enteredDumbMode = application.runWriteAction(Computable {
-          val old = myState.getAndUpdate { it.incrementDumbCounter() }
-          return@Computable old.isSmart
-        })
-
-        if (enteredDumbMode) {
-          dumbModeStartTrace = trace
-          LOG.info("enter dumb mode [${project.name}]")
-          runCatching { myPublisher.enteredDumbMode() }
-        }
-      }
-    }
-    try {
-      return computable.compute()
-    }
-    finally {
-      if (myState.getAndUpdate { it.tryDecrementDumbCounter() }.decrementWillChangeDumbState) {
-        application.invokeAndWait {
-          val exitDumbMode = application.runWriteAction(Computable {
-            val new = myState.updateAndGet { it.decrementDumbCounter() }
-            return@Computable new.isSmart
-          })
-
-          if (exitDumbMode) {
-            dumbModeStartTrace = null
-            LOG.info("exit dumb mode [${project.name}]")
-            runCatching { myPublisher.exitDumbMode() }
-          }
-        }
-      }
-    }
-  }
 
   /**
    * This method starts dumb mode (if not started), then runs suspend lambda, then ends dumb mode (if no other dumb tasks are running).

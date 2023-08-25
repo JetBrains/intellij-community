@@ -6,6 +6,8 @@ import com.intellij.openapi.progress.runWithModalProgressBlocking
 import com.intellij.openapi.project.DumbService
 import com.intellij.openapi.project.DumbServiceImpl
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.ThrowableComputable
+import com.intellij.util.ThrowableRunnable
 import com.intellij.util.application
 import kotlinx.coroutines.*
 import org.junit.Assert.assertFalse
@@ -68,6 +70,38 @@ object DumbModeTestUtils {
   fun endEternalDumbModeTaskAndWaitForSmartMode(project: Project, task: EternalTaskShutdownToken) {
     endEternalDumbModeTask(task)
     waitForSmartMode(project)
+  }
+
+  /**
+   * This method simulates the situation that someone started dumb task, and then runnable is executed while dumb mode is active.
+   * This artificial dumb task will finish immediately after runnable has finished
+   *
+   * This method can be invoked from any thread. It will switch to EDT to start/stop dumb mode. Runnable itself will be invoked from
+   * method's invocation thread.
+   */
+  @JvmStatic
+  fun runInDumbModeSynchronously(project: Project, runnable: ThrowableRunnable<in Throwable>) {
+    computeInDumbModeSynchronously(project) {
+      runnable.run()
+    }
+  }
+
+  /**
+   * This method simulates the situation that someone started dumb task, and then runnable is executed while dumb mode is active.
+   * This artificial dumb task will finish immediately after runnable has finished
+   *
+   * This method can be invoked from any thread. It will switch to EDT to start/stop dumb mode. Runnable itself will be invoked from
+   * method's invocation thread.
+   */
+  @JvmStatic
+  fun <T> computeInDumbModeSynchronously(project: Project, computable: ThrowableComputable<T, in Throwable>): T {
+    val token = startEternalDumbModeTask(project)
+    try {
+      return computable.compute()
+    }
+    finally {
+      endEternalDumbModeTaskAndWaitForSmartMode(project, token)
+    }
   }
 
   /**

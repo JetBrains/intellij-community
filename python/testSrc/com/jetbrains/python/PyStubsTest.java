@@ -4,7 +4,6 @@ package com.jetbrains.python;
 import com.intellij.lang.FileASTNode;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.editor.Document;
-import com.intellij.openapi.project.DumbServiceImpl;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
@@ -14,6 +13,7 @@ import com.intellij.psi.search.ProjectScope;
 import com.intellij.psi.stubs.StubElement;
 import com.intellij.psi.stubs.StubIndex;
 import com.intellij.psi.util.QualifiedName;
+import com.intellij.testFramework.DumbModeTestUtils;
 import com.intellij.testFramework.TestDataPath;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
@@ -360,7 +360,7 @@ public class PyStubsTest extends PyTestCase {
       fooPyFile.setTreeElementPointer(null);
       //classes = PyClassNameIndex.find("Foo", project, GlobalSearchScope.allScope(project));
       //fooPyFile.unloadContent();
-      DumbServiceImpl.getInstance(project).runInDumbModeSynchronously(() -> {
+      DumbModeTestUtils.runInDumbModeSynchronously(project, () -> {
         assertEquals(1, ((PyFile)fooPyFile).getTopLevelClasses().size());
         assertFalse(fooPyFile.isContentsLoaded());
       });
