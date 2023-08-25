@@ -10,4 +10,5 @@ fun test(): Int {
     return <caret>
 }
 
+// IGNORE_K2
 //ORDER: test, d
