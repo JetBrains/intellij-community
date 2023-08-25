@@ -17,10 +17,9 @@ import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
-import com.intellij.psi.impl.PsiShortNamesCacheImpl;
-import com.intellij.psi.impl.java.stubs.index.JavaStaticMemberNameIndex;
 import com.intellij.psi.impl.source.resolve.graphInference.FunctionalInterfaceParameterizationUtil;
 import com.intellij.psi.search.GlobalSearchScope;
+import com.intellij.psi.search.JavaStaticMethodNameCache;
 import com.intellij.psi.search.PsiShortNamesCache;
 import com.intellij.psi.util.*;
 import com.intellij.util.Processor;
@@ -30,10 +29,7 @@ import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.HashSet;
-import java.util.List;
+import java.util.*;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 import static com.intellij.psi.util.PsiFormatUtil.formatVariable;
@@ -131,23 +127,25 @@ public class JavaQualifierAsArgumentContributor extends CompletionContributor im
       }
     }
 
-    //process java static separately
-    Collection<String> memberNames = JavaStaticMemberNameIndex.getInstance().getAllKeys(project);
-    for (String memberName : matcher.sortMatching(memberNames)) {
+    List<JavaStaticMethodNameCache> staticList = JavaStaticMethodNameCache.EP_NAME.getExtensionList(project);
+    Set<Class<? extends PsiShortNamesCache>> used = new HashSet<>();
+    for (JavaStaticMethodNameCache cache : staticList) {
       ProgressManager.checkCanceled();
-      for (PsiMember member : JavaStaticMemberNameIndex.getInstance().getStaticMembers(memberName, project, scope)) {
+      used.add(cache.replaced());
+      boolean next = cache.processMethodsWithName(name -> matcher.prefixMatches(name), method -> {
         ProgressManager.checkCanceled();
-        if (!psiStaticMethodProcessor.process(member)) {
-          return;
-        }
+        return psiStaticMethodProcessor.process(method);
+      }, scope, null);
+      if (!next) {
+        return;
       }
     }
 
     List<PsiShortNamesCache> list = PsiShortNamesCache.EP_NAME.getExtensionList(project);
     AtomicBoolean stop = new AtomicBoolean(false);
     for (PsiShortNamesCache cache : list) {
-      //skip java
-      if (cache instanceof PsiShortNamesCacheImpl) {
+      //skip processed
+      if (used.contains(cache.getClass())) {
         continue;
       }
       if (stop.get()) {
