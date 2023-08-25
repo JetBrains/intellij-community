@@ -449,7 +449,7 @@ final class RefreshWorker {
     }
   }
 
-  private static class RefreshCancelledException extends RuntimeException {
+  private static final class RefreshCancelledException extends RuntimeException {
     @Override
     public synchronized Throwable fillInStackTrace() {
       return this;

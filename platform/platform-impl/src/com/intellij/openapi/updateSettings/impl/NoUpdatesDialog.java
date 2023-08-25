@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.updateSettings.impl;
 
 import com.intellij.CommonBundle;
@@ -12,7 +12,7 @@ import javax.swing.*;
 /**
  * @author pti
  */
-class NoUpdatesDialog extends AbstractUpdateDialog {
+final class NoUpdatesDialog extends AbstractUpdateDialog {
   NoUpdatesDialog(boolean enableLink) {
     super(enableLink);
     init();
@@ -33,7 +33,7 @@ class NoUpdatesDialog extends AbstractUpdateDialog {
     return new Action[]{getOKAction()};
   }
 
-  private class NoUpdatesPanel {
+  private final class NoUpdatesPanel {
     private JPanel myPanel;
     private JLabel myNothingToUpdateLabel;
     private JEditorPane myMessageArea;

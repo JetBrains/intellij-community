@@ -61,7 +61,7 @@ import java.util.List;
 /**
  * @author Konstantin Bulenkov
  */
-public class ColorPicker extends JPanel implements ColorListener, DocumentListener {
+public final class ColorPicker extends JPanel implements ColorListener, DocumentListener {
   private static final String COLOR_CHOOSER_COLORS_KEY = "ColorChooser.RecentColors";
   private static final String HSB_PROPERTY = "color.picker.is.hsb";
 
@@ -901,7 +901,7 @@ public class ColorPicker extends JPanel implements ColorListener, DocumentListen
     }
   }
 
-  public class NumberDocument extends PlainDocument {
+  public final class NumberDocument extends PlainDocument {
 
     private final boolean myHex;
     private JTextField mySrc;
@@ -1134,7 +1134,7 @@ public class ColorPicker extends JPanel implements ColorListener, DocumentListen
     }
   }
 
-  static class ColorPickerDialog extends DialogWrapper {
+  static final class ColorPickerDialog extends DialogWrapper {
     private final Color myPreselectedColor;
     private final List<? extends ColorPickerListener> myListeners;
     private ColorPicker myColorPicker;
@@ -1196,7 +1196,7 @@ public class ColorPicker extends JPanel implements ColorListener, DocumentListen
     }
   }
 
-  public static class ColorWheelImageProducer extends MemoryImageSource {
+  public static final class ColorWheelImageProducer extends MemoryImageSource {
     private final int[] myPixels;
     private final int myWidth;
     private final int myHeight;

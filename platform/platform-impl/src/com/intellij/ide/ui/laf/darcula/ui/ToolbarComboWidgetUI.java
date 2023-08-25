@@ -375,7 +375,7 @@ public final class ToolbarComboWidgetUI extends ComponentUI implements PropertyC
     }
   }
 
-  private class HoverAreaTracker extends MyMouseTracker {
+  private final class HoverAreaTracker extends MyMouseTracker {
     private boolean mouseInside = false;
     private Rectangle hoverRect;
 
@@ -437,7 +437,7 @@ public final class ToolbarComboWidgetUI extends ComponentUI implements PropertyC
     }
   }
 
-  private static class ToolbarComboWidgetClickListener extends ClickListener {
+  private static final class ToolbarComboWidgetClickListener extends ClickListener {
     private static void notifyPressListeners(MouseEvent e) {
       ToolbarComboWidget comp = (ToolbarComboWidget)e.getComponent();
       ActionEvent ae = new ActionEvent(comp, 0, null, System.currentTimeMillis(), e.getModifiersEx());
@@ -471,7 +471,7 @@ public final class ToolbarComboWidgetUI extends ComponentUI implements PropertyC
     }
   }
 
-  private static class DefaultCutStrategy implements TextCutStrategy {
+  private static final class DefaultCutStrategy implements TextCutStrategy {
 
     private static final int MIN_TEXT_LENGTH = 5;
 

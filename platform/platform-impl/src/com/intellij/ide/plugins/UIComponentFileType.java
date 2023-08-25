@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.plugins;
 
 import com.intellij.openapi.fileTypes.ex.FakeFileType;
@@ -11,7 +11,7 @@ import org.jetbrains.annotations.NotNull;
 /**
  * @author Konstantin Bulenkov
  */
-public class UIComponentFileType extends FakeFileType {
+public final class UIComponentFileType extends FakeFileType {
     public static final UIComponentFileType INSTANCE = new UIComponentFileType();
 
     private UIComponentFileType() {

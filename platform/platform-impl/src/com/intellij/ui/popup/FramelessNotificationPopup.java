@@ -96,7 +96,7 @@ final class FramelessNotificationPopup {
     return myPopup;
   }
 
-  private class ContentComponent extends JPanel {
+  private final class ContentComponent extends JPanel {
     private final MouseAdapter myMouseListener;
 
     ContentComponent(JComponent content) {

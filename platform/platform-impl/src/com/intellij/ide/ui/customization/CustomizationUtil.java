@@ -761,7 +761,7 @@ public final class CustomizationUtil {
     void accept(@NotNull @Nls String text, @Nullable @Nls String description, @Nullable Icon icon);
   }
 
-  private static class PopupComputableActionGroup extends ActionGroup implements ActionWithDelegate<ActionGroup> {
+  private static final class PopupComputableActionGroup extends ActionGroup implements ActionWithDelegate<ActionGroup> {
     private final Supplier<? extends @Nullable ActionGroup> myActionGroupSupplier;
 
     PopupComputableActionGroup(Supplier<? extends @Nullable ActionGroup> actionGroupSupplier) {

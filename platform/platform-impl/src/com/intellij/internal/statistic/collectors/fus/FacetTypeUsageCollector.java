@@ -26,7 +26,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.HashSet;
 import java.util.Set;
 
-public class FacetTypeUsageCollector extends ProjectUsagesCollector {
+public final class FacetTypeUsageCollector extends ProjectUsagesCollector {
   private static final EventLogGroup GROUP = new EventLogGroup("module.facets", 6);
 
   private static final EventField<String> FACET_TYPE = EventFields.StringValidatedByCustomRule("facet", FacetTypeUtilValidator.class);
@@ -52,7 +52,7 @@ public class FacetTypeUsageCollector extends ProjectUsagesCollector {
     );
   }
 
-  public static class FacetTypeUtilValidator extends CustomValidationRule {
+  public static final class FacetTypeUtilValidator extends CustomValidationRule {
     @Override
     public @NotNull String getRuleId() {
       return "facets_type";

@@ -15,7 +15,7 @@ public class GestureActionEvent extends AnActionEvent {
           0);
   }
 
-  public static class Init extends GestureActionEvent {
+  public static final class Init extends GestureActionEvent {
     public Init(final KeyboardGestureProcessor processor) {
       super(processor);
     }
@@ -26,7 +26,7 @@ public class GestureActionEvent extends AnActionEvent {
     }
   }
 
-  public static class PerformAction extends GestureActionEvent {
+  public static final class PerformAction extends GestureActionEvent {
     public PerformAction(final KeyboardGestureProcessor processor) {
       super(processor);
     }
@@ -37,7 +37,7 @@ public class GestureActionEvent extends AnActionEvent {
     }
   }
 
-  public static class Finish extends GestureActionEvent {
+  public static final class Finish extends GestureActionEvent {
     public Finish(final KeyboardGestureProcessor processor) {
       super(processor);
     }

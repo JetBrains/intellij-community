@@ -20,7 +20,7 @@ import static javax.swing.tree.TreeSelectionModel.SINGLE_TREE_SELECTION;
 /**
  * @author Konstantin Bulenkov
  */
-public class TreeSmartSelectProvider implements SmartSelectProvider<JTree> {
+public final class TreeSmartSelectProvider implements SmartSelectProvider<JTree> {
   @Override
   public void increaseSelection(JTree tree) {
     TreePath anchor = getAnchor(tree);

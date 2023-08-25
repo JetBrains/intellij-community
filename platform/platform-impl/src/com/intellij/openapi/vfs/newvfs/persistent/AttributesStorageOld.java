@@ -31,7 +31,7 @@ import static com.intellij.openapi.vfs.newvfs.persistent.AbstractAttributesStora
 /**
  *
  */
-public class AttributesStorageOld implements AbstractAttributesStorage {
+public final class AttributesStorageOld implements AbstractAttributesStorage {
 
   /**
    * RC: this flag influences storage layout, but used nowhere. Seems like it is an unfinished effort to

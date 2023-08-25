@@ -29,7 +29,7 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.util.List;
 
-public class QuickChangeLookAndFeel extends QuickSwitchSchemeAction implements ActionRemoteBehaviorSpecification.Frontend {
+public final class QuickChangeLookAndFeel extends QuickSwitchSchemeAction implements ActionRemoteBehaviorSpecification.Frontend {
   private final Alarm switchAlarm = new Alarm();
 
   @Override

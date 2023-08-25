@@ -532,7 +532,7 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar, QuickAct
 
     AbstractButton clickable = UIUtil.findComponentOfType(customComponent, AbstractButton.class);
     if (clickable != null) {
-      class ToolbarClicksCollectorListener extends MouseAdapter {
+      final class ToolbarClicksCollectorListener extends MouseAdapter {
         @Override
         public void mouseClicked(MouseEvent e) { ToolbarClicksCollector.record(action, myPlace, e, getDataContext()); }
       }

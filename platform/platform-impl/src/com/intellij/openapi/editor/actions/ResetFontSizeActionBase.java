@@ -163,7 +163,7 @@ class ResetFontSizeActionBase extends EditorAction {
     }
   }
 
-  private static class MyHandler extends EditorActionHandler {
+  private static final class MyHandler extends EditorActionHandler {
     private final boolean myGlobal;
 
     MyHandler(boolean forceGlobal) {

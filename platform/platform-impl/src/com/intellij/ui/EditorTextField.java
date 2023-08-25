@@ -1066,7 +1066,7 @@ public class EditorTextField extends NonOpaquePanel implements EditorTextCompone
     mySettingsProviders.add(provider);
   }
 
-  private static class Jdk7DelegatingToRootTraversalPolicy extends AbstractDelegatingToRootTraversalPolicy {
+  private static final class Jdk7DelegatingToRootTraversalPolicy extends AbstractDelegatingToRootTraversalPolicy {
     private boolean invokedFromBeforeOrAfter;
     @Override
     public Component getFirstComponent(Container aContainer) {

@@ -29,7 +29,7 @@ import java.awt.event.KeyEvent;
  * This class is programmatically instantiated and registered when opening and closing projects
  * and therefore not registered in plugin.xml
  */
-public class ProjectWindowAction extends ToggleAction implements DumbAware {
+public final class ProjectWindowAction extends ToggleAction implements DumbAware {
 
   private ProjectWindowAction myPrevious;
   private ProjectWindowAction myNext;

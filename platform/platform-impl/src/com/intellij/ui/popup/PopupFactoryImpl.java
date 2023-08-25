@@ -698,7 +698,7 @@ public class PopupFactoryImpl extends JBPopupFactory {
                                         messageType.getPopupBackground(), listener).setBorderColor(messageType.getBorderColor());
   }
 
-  public static class InlineActionItem implements AnActionHolder {
+  public static final class InlineActionItem implements AnActionHolder {
     private final AnAction myAction;
     private Icon myIcon;
     private Icon mySelectedIcon;
@@ -754,7 +754,7 @@ public class PopupFactoryImpl extends JBPopupFactory {
   }
 
 
-  public static class ActionItem implements ShortcutProvider, AnActionHolder, NumericMnemonicItem {
+  public static final class ActionItem implements ShortcutProvider, AnActionHolder, NumericMnemonicItem {
     private final AnAction myAction;
     private @NlsActions.ActionText String myText;
     private @NlsContexts.DetailedDescription String myDescription;

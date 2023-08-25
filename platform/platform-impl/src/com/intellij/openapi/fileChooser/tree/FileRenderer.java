@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.fileChooser.tree;
 
 import com.intellij.openapi.vfs.VirtualFile;
@@ -19,7 +19,7 @@ import javax.swing.JTree;
 import static com.intellij.openapi.fileChooser.FileElement.isFileHidden;
 import static com.intellij.openapi.util.IconLoader.getTransparentIcon;
 
-public class FileRenderer {
+public final class FileRenderer {
   private static final Color GRAYED = SimpleTextAttributes.GRAYED_ATTRIBUTES.getFgColor();
   private static final Color HIDDEN = SimpleTextAttributes.DARK_TEXT.getFgColor();
 

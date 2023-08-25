@@ -84,7 +84,7 @@ public final class EditorEmbeddedComponentManager {
     }
   }
 
-  public static class Properties {
+  public static final class Properties {
     final ResizePolicy resizePolicy;
     final RendererFactory rendererFactory;
     final boolean relatesToPrecedingText;
@@ -250,7 +250,7 @@ public final class EditorEmbeddedComponentManager {
     }
   }
 
-  public static class FullEditorWidthRenderer extends MyRenderer {
+  public static final class FullEditorWidthRenderer extends MyRenderer {
 
     FullEditorWidthRenderer(@NotNull JComponent component,
                             @NotNull ResizePolicy resizePolicy,
@@ -266,7 +266,7 @@ public final class EditorEmbeddedComponentManager {
     }
   }
 
-  private static class ComponentInlays implements Disposable {
+  private static final class ComponentInlays implements Disposable {
     private static final Logger LOG = Logger.getInstance(ComponentInlays.class);
     private final EditorEx myEditor;
     private final ResizeListener myResizeListener;
@@ -394,7 +394,7 @@ public final class EditorEmbeddedComponentManager {
       // All inlays are already registered in the disposable.
     }
 
-    private static class ResizeInfo {
+    private static final class ResizeInfo {
       final Inlay<? extends MyRenderer> inlay;
       final ResizeDirection direction;
       final int startWidth;
@@ -422,7 +422,7 @@ public final class EditorEmbeddedComponentManager {
       }
     }
 
-    private class ResizeListener implements EditorMouseListener, EditorMouseMotionListener {
+    private final class ResizeListener implements EditorMouseListener, EditorMouseMotionListener {
       private ResizeInfo info;
 
       @Override

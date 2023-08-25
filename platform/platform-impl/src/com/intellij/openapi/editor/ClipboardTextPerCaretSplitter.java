@@ -8,7 +8,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
-public class ClipboardTextPerCaretSplitter {
+public final class ClipboardTextPerCaretSplitter {
   public @NotNull List<String> split(@NotNull String input, @Nullable CaretStateTransferableData caretData, int caretCount) {
     if (caretCount <= 0) {
       throw new IllegalArgumentException("Caret count must be positive");

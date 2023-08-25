@@ -38,7 +38,7 @@ abstract class FontWeightCombo extends ComboBox<FontWeightCombo.MyWeightItem> {
     return selected instanceof MyWeightItem ? ((MyWeightItem)selected).subFamily : null;
   }
 
-  private class MyModel extends AbstractListModel<MyWeightItem> implements ComboBoxModel<MyWeightItem> {
+  private final class MyModel extends AbstractListModel<MyWeightItem> implements ComboBoxModel<MyWeightItem> {
     private final @NotNull List<MyWeightItem> myItems = new ArrayList<>();
 
     private @Nullable MyWeightItem mySelectedItem;
@@ -81,7 +81,7 @@ abstract class FontWeightCombo extends ComboBox<FontWeightCombo.MyWeightItem> {
     }
   }
 
-  private class MyListCellRenderer extends ColoredListCellRenderer<MyWeightItem> {
+  private final class MyListCellRenderer extends ColoredListCellRenderer<MyWeightItem> {
 
     @Override
     protected void customizeCellRenderer(@NotNull JList<? extends MyWeightItem> list,
@@ -96,7 +96,7 @@ abstract class FontWeightCombo extends ComboBox<FontWeightCombo.MyWeightItem> {
     }
   }
 
-  static class MyWeightItem {
+  static final class MyWeightItem {
     private final @NlsSafe String subFamily;
     private final boolean isRecommended;
 

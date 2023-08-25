@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.wm.impl.welcomeScreen;
 
 import com.intellij.ide.IdeBundle;
@@ -45,7 +45,7 @@ public final class WelcomeScreenActionsUtil {
     }
   }
 
-  public static class ToolbarTextButtonWrapper extends AnActionButton.AnActionButtonWrapper implements CustomComponentAction {
+  public static final class ToolbarTextButtonWrapper extends AnActionButton.AnActionButtonWrapper implements CustomComponentAction {
     final JBOptionButton myButton;
 
     ToolbarTextButtonWrapper(@NotNull List<AnAction> actions) {
@@ -102,7 +102,7 @@ public final class WelcomeScreenActionsUtil {
     ActionUtil.performActionDumbAwareWithCallbacks(action, actionEvent);
   }
 
-  static class LargeIconWithTextWrapper extends AnActionButton.AnActionButtonWrapper implements CustomComponentAction {
+  static final class LargeIconWithTextWrapper extends AnActionButton.AnActionButtonWrapper implements CustomComponentAction {
     final JButton myIconButton;
     final JBLabel myLabel;
     private final JPanel myPanel;

@@ -265,7 +265,7 @@ public class CustomizableActionsPanel {
     ((DefaultTreeModel)myActionsTree.getModel()).reload();
   }
 
-  private static class TreePathStringFunction implements Function<TreePath, String> {
+  private static final class TreePathStringFunction implements Function<TreePath, String> {
     @Override
     public String apply(TreePath o) {
       Object node = o.getLastPathComponent();
@@ -299,7 +299,7 @@ public class CustomizableActionsPanel {
     return new MyTreeCellRenderer();
   }
 
-  private static class MyTreeCellRenderer extends ColoredTreeCellRenderer {
+  private static final class MyTreeCellRenderer extends ColoredTreeCellRenderer {
     @Override
     public void customizeCellRenderer(@NotNull JTree tree,
                                       Object value,
@@ -413,7 +413,7 @@ public class CustomizableActionsPanel {
     return true;
   }
 
-  private class EditIconDialog extends DialogWrapper {
+  private final class EditIconDialog extends DialogWrapper {
     private final DefaultMutableTreeNode myNode;
     private final boolean isNodeInsideMenu;
     private BrowseIconsComboBox myComboBox;
@@ -600,7 +600,7 @@ public class CustomizableActionsPanel {
     }
   }
 
-  private class MyActionsTreeModel extends DefaultTreeModel implements EditableModel, RowsDnDSupport.RefinedDropSupport {
+  private final class MyActionsTreeModel extends DefaultTreeModel implements EditableModel, RowsDnDSupport.RefinedDropSupport {
     private MyActionsTreeModel(TreeNode root) {
       super(root);
     }

@@ -16,7 +16,7 @@ import java.awt.geom.RoundRectangle2D;
 import java.util.HashSet;
 import java.util.Set;
 
-public class GlassPanel extends JComponent {
+public final class GlassPanel extends JComponent {
   private final Set<JComponent> myLightComponents = new HashSet<>();
   private final JComponent myPanel;
   private static final Insets EMPTY_INSETS = new Insets(0, 0, 0, 0);

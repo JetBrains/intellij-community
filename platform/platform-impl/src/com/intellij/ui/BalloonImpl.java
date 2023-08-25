@@ -1487,7 +1487,7 @@ public final class BalloonImpl implements Balloon, IdeTooltip.Ui, ScreenAreaCons
     }
   }
 
-  private static class Above extends AbstractPosition {
+  private static final class Above extends AbstractPosition {
     @Override
     public @NotNull Point getShiftedPoint(@NotNull Point targetPoint, int shift) {
       return new Point(targetPoint.x, targetPoint.y - shift);
@@ -1556,7 +1556,7 @@ public final class BalloonImpl implements Balloon, IdeTooltip.Ui, ScreenAreaCons
     }
   }
 
-  private static class AtRight extends AbstractPosition {
+  private static final class AtRight extends AbstractPosition {
     @Override
     public @NotNull Point getShiftedPoint(@NotNull Point targetPoint, int shift) {
       return new Point(targetPoint.x + shift, targetPoint.y);
@@ -1624,7 +1624,7 @@ public final class BalloonImpl implements Balloon, IdeTooltip.Ui, ScreenAreaCons
     }
   }
 
-  private static class AtLeft extends AbstractPosition {
+  private static final class AtLeft extends AbstractPosition {
     @Override
     public @NotNull Point getShiftedPoint(@NotNull Point targetPoint, int shift) {
       return new Point(targetPoint.x - shift, targetPoint.y);

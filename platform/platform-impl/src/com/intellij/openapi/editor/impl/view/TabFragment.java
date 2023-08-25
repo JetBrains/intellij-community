@@ -11,7 +11,7 @@ import java.util.function.Consumer;
 /**
  * A single Tab character
  */
-class TabFragment implements LineFragment {
+final class TabFragment implements LineFragment {
   private final EditorView myView;
   private final Editor myEditor;
 

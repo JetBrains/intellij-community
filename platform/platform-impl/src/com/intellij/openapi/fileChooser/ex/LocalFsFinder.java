@@ -36,7 +36,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 
-public class LocalFsFinder implements Finder {
+public final class LocalFsFinder implements Finder {
   private final boolean myUseVfs;
   private @Nullable Path myBaseDir = Path.of(SystemProperties.getUserHome());
 

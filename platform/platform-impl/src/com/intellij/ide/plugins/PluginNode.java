@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.plugins;
 
 import com.intellij.ide.plugins.marketplace.PluginReviewComment;
@@ -629,7 +629,7 @@ public final class PluginNode implements IdeaPluginDescriptor {
     return String.format("PluginNode{id=%s, name='%s'}", id, name);
   }
 
-  private static class PluginNodeDependency implements IdeaPluginDependency {
+  private static final class PluginNodeDependency implements IdeaPluginDependency {
     private final @NotNull PluginId myPluginId;
     private final boolean myOptional;
 

@@ -23,7 +23,7 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.util.List;
 
-class HttpVirtualFileImpl extends HttpVirtualFile {
+final class HttpVirtualFileImpl extends HttpVirtualFile {
   private final HttpFileSystemBase myFileSystem;
   private final @Nullable RemoteFileInfoImpl myFileInfo;
   private @Nullable FileType myInitialFileType;

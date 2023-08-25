@@ -344,7 +344,7 @@ public final class ScrollingModelImpl implements ScrollingModelEx {
     Disposer.register(parentDisposable, () -> myScrollRequestListeners.remove(scrollRequestListener));
   }
 
-  private class AnimatedScrollingRunnable {
+  private final class AnimatedScrollingRunnable {
 
     private final int myStartHOffset;
     private final int myStartVOffset;

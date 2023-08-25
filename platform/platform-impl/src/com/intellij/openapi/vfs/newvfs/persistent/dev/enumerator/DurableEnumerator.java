@@ -24,7 +24,7 @@ import java.util.function.Supplier;
  * <p>
  * Implementation uses append-only log to store objects, and some (pluggable) Map[object.hash -> id*].
  */
-public class DurableEnumerator<K> implements ScannableDataEnumeratorEx<K>, Flushable, Closeable {
+public final class DurableEnumerator<K> implements ScannableDataEnumeratorEx<K>, Flushable, Closeable {
 
   public static final int DATA_FORMAT_VERSION = 1;
 

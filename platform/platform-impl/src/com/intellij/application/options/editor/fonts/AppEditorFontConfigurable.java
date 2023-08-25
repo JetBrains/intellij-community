@@ -11,7 +11,7 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public class AppEditorFontConfigurable extends AppFontConfigurable {
+public final class AppEditorFontConfigurable extends AppFontConfigurable {
   public static final @NonNls String ID = "editor.preferences.fonts.default";
   
   private AppEditorFontOptionsPanel myPanel;

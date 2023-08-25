@@ -58,7 +58,7 @@ public final class BegTableUI extends BasicTableUI {
     return myAdapter;
   }
 
-  private class StartEditingAction extends AbstractAction {
+  private final class StartEditingAction extends AbstractAction {
     @Override
     public void actionPerformed(ActionEvent e) {
       JTable table = (JTable)e.getSource();

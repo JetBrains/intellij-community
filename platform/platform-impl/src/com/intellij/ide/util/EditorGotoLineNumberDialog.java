@@ -13,7 +13,7 @@ import org.jetbrains.annotations.NotNull;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-public class EditorGotoLineNumberDialog extends GotoLineNumberDialog {
+public final class EditorGotoLineNumberDialog extends GotoLineNumberDialog {
   private final Editor myEditor;
   private static final Pattern relativeNumberPattern = PatternUtil.compileSafe("\\s*([+-]\\d+)\\s*", null);
 

@@ -1716,7 +1716,7 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements Persistent
     return null;
   }
 
-  private class PluginFileTypeConsumer implements FileTypeConsumer {
+  private final class PluginFileTypeConsumer implements FileTypeConsumer {
     private final PluginDescriptor myPluginDescriptor;
 
     PluginFileTypeConsumer(@NotNull PluginDescriptor pluginDescriptor) {

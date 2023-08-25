@@ -272,7 +272,7 @@ public abstract class AbstractSchemesPanel<T extends Scheme, InfoComponent exten
     Disposer.register(ApplicationManager.getApplication(), balloon);
   }
 
-  private static class ShowSchemesActionsListAction extends NonTrivialActionGroup implements DumbAware {
+  private static final class ShowSchemesActionsListAction extends NonTrivialActionGroup implements DumbAware {
     private final AbstractSchemeActions<?> mySchemeActions;
 
     ShowSchemesActionsListAction(AbstractSchemeActions<?> schemeActions) {

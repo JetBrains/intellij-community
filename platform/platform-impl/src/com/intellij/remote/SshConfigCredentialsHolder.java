@@ -7,7 +7,7 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public class SshConfigCredentialsHolder {
+public final class SshConfigCredentialsHolder {
 
   private static final @NonNls String SSH_CREDENTIALS_ID = "SSH_CREDENTIALS_ID";
   private static final @NonNls String SSH_CONFIG_NAME = "SSH_CONFIG_NAME";

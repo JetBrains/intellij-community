@@ -11,7 +11,7 @@ import com.intellij.util.EventDispatcher;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public class SchemesPanel extends SimpleSchemesPanel<EditorColorsScheme> implements SkipSelfSearchComponent {
+public final class SchemesPanel extends SimpleSchemesPanel<EditorColorsScheme> implements SkipSelfSearchComponent {
   private final ColorAndFontOptions myOptions;
 
   private final EventDispatcher<ColorAndFontSettingsListener> myDispatcher = EventDispatcher.create(ColorAndFontSettingsListener.class);

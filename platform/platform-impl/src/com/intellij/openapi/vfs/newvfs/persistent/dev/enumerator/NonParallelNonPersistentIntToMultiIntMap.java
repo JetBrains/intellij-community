@@ -12,7 +12,7 @@ import java.io.UncheckedIOException;
  * Implements {@link IntToMultiIntMap} on top of {@link Int2IntMultimap}
  * Thread-safe but not concurrent -- all operations are just guarded by 'this' lock
  */
-public class NonParallelNonPersistentIntToMultiIntMap implements IntToMultiIntMap {
+public final class NonParallelNonPersistentIntToMultiIntMap implements IntToMultiIntMap {
   private final Int2IntMultimap multimap = new Int2IntMultimap();
 
   @Override

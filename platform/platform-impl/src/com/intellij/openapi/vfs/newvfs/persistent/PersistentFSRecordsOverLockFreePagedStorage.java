@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vfs.newvfs.persistent;
 
 import com.intellij.util.io.PagedFileStorageWithRWLockedPageContent;
@@ -19,7 +19,7 @@ import static com.intellij.openapi.vfs.newvfs.persistent.PersistentFSHeaders.*;
  * Implementation uses new {@link PagedFileStorageWithRWLockedPageContent}
  */
 @ApiStatus.Internal
-public class PersistentFSRecordsOverLockFreePagedStorage implements PersistentFSRecordsStorage, IPersistentFSRecordsStorage {
+public final class PersistentFSRecordsOverLockFreePagedStorage implements PersistentFSRecordsStorage, IPersistentFSRecordsStorage {
 
 
   /* ================ FILE HEADER FIELDS LAYOUT ======================================================= */
@@ -205,7 +205,7 @@ public class PersistentFSRecordsOverLockFreePagedStorage implements PersistentFS
   }
 
 
-  private static class RecordAccessor implements RecordForUpdate {
+  private static final class RecordAccessor implements RecordForUpdate {
     private final int recordId;
     private final int recordOffsetInPage;
     private final Page recordPage;
@@ -335,7 +335,7 @@ public class PersistentFSRecordsOverLockFreePagedStorage implements PersistentFS
     }
   }
 
-  private static class HeaderAccessor implements HeaderForUpdate {
+  private static final class HeaderAccessor implements HeaderForUpdate {
     private final @NotNull PersistentFSRecordsOverLockFreePagedStorage records;
 
     private HeaderAccessor(final @NotNull PersistentFSRecordsOverLockFreePagedStorage records) { this.records = records; }

@@ -10,7 +10,7 @@ import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 
-public class BrowserSettings implements SearchableConfigurable, Configurable.NoScroll {
+public final class BrowserSettings implements SearchableConfigurable, Configurable.NoScroll {
   private BrowserSettingsPanel myPanel;
 
   @Override

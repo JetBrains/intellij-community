@@ -46,7 +46,7 @@ public abstract class ValidatingTableEditor<Item> implements ComponentWithEmptyT
     @NlsContexts.LinkLabel String getTitle();
   }
 
-  private class ColumnInfoWrapper extends ColumnInfo<Item, Object> {
+  private final class ColumnInfoWrapper extends ColumnInfo<Item, Object> {
     private final ColumnInfo<Item, Object> myDelegate;
 
     ColumnInfoWrapper(ColumnInfo<Item, Object> delegate) {
@@ -121,7 +121,7 @@ public abstract class ValidatingTableEditor<Item> implements ComponentWithEmptyT
 
   protected abstract @Nullable Item createItem();
 
-  private class IconColumn extends ColumnInfo<Item, Object> implements RowHeightProvider {
+  private final class IconColumn extends ColumnInfo<Item, Object> implements RowHeightProvider {
     IconColumn() {
       super(" ");
     }
@@ -381,7 +381,7 @@ public abstract class ValidatingTableEditor<Item> implements ComponentWithEmptyT
   }
 
 
-  private static class WarningIconCellRenderer extends DefaultTableCellRenderer {
+  private static final class WarningIconCellRenderer extends DefaultTableCellRenderer {
     private final NullableComputable<@NlsContexts.HintText String> myWarningProvider;
 
     WarningIconCellRenderer(NullableComputable<@NlsContexts.HintText String> warningProvider) {

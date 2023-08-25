@@ -9,7 +9,7 @@ import java.util.concurrent.Callable;
 import java.util.concurrent.Executor;
 import java.util.concurrent.atomic.AtomicLong;
 
-public class AsyncExecutionServiceImpl extends AsyncExecutionService {
+public final class AsyncExecutionServiceImpl extends AsyncExecutionService {
   private static final AtomicLong ourWriteActionCounter = new AtomicLong();
 
   public AsyncExecutionServiceImpl() {

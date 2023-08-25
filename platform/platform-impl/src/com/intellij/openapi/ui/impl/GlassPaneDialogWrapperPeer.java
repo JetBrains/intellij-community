@@ -665,7 +665,7 @@ public final class GlassPaneDialogWrapperPeer extends DialogWrapperPeer {
     }
   }
 
-  public static class GlasspanePeerUnavailableException extends Exception {
+  public static final class GlasspanePeerUnavailableException extends Exception {
   }
 
   public static final class TransparentLayeredPane extends JBLayeredPane {

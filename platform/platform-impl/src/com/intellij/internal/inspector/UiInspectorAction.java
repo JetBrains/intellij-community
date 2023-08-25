@@ -318,7 +318,7 @@ public final class UiInspectorAction extends UiMouseAction implements LightEditC
     }
   }
 
-  static class ToggleHierarchyTraceAction extends ToggleAction implements AWTEventListener {
+  static final class ToggleHierarchyTraceAction extends ToggleAction implements AWTEventListener {
 
     private boolean myEnabled = false;
 

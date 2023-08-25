@@ -10,7 +10,7 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 
-public class BooleanRenderer extends JCheckBox implements PropertyRenderer {
+public final class BooleanRenderer extends JCheckBox implements PropertyRenderer {
   @Override
   public @NotNull JComponent getComponent(@Nullable PropertiesContainer container,
                                           PropertyContext context,

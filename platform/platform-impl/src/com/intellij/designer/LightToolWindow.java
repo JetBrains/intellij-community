@@ -345,7 +345,7 @@ public final class LightToolWindow extends JPanel {
     popupMenu.getComponent().show(component, x, y);
   }
 
-  private class GearAction extends AnAction {
+  private final class GearAction extends AnAction {
     GearAction() {
       Presentation presentation = getTemplatePresentation();
       presentation.setIcon(AllIcons.General.GearPlain);
@@ -365,7 +365,7 @@ public final class LightToolWindow extends JPanel {
     }
   }
 
-  private class HideAction extends AnAction {
+  private final class HideAction extends AnAction {
     HideAction() {
       Presentation presentation = getTemplatePresentation();
       presentation.setText(UIBundle.messagePointer("tool.window.hide.action.name"));
@@ -396,7 +396,7 @@ public final class LightToolWindow extends JPanel {
     }
   }
 
-  private class ActionButton extends Wrapper implements ActionListener {
+  private final class ActionButton extends Wrapper implements ActionListener {
     private final AnAction myAction;
 
     ActionButton(AnAction action) {
@@ -425,7 +425,7 @@ public final class LightToolWindow extends JPanel {
     }
   }
 
-  private static class HeaderPanel extends JPanel {
+  private static final class HeaderPanel extends JPanel {
     @Override
     public Dimension getPreferredSize() {
       Dimension size = super.getPreferredSize();

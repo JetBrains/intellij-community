@@ -9,7 +9,7 @@ import org.jetbrains.annotations.NotNull;
 import java.util.EventObject;
 
 @ApiStatus.Experimental
-public class EditorGutterHoverEvent extends EventObject {
+public final class EditorGutterHoverEvent extends EventObject {
 
   private final @NotNull GutterIconRenderer myGutterIconRenderer;
 

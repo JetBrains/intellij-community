@@ -1909,7 +1909,7 @@ public class AbstractPopup implements JBPopup, ScreenAreaConsumer, AlignedPopup 
     myMouseOutCanceller = null;
   }
 
-  private class Canceller implements AWTEventListener {
+  private final class Canceller implements AWTEventListener {
     private boolean myEverEntered;
 
     @Override
@@ -2115,7 +2115,7 @@ public class AbstractPopup implements JBPopup, ScreenAreaConsumer, AlignedPopup 
     mySpeedSearchAlwaysShown = true;
   }
 
-  private class MyWindowListener extends WindowAdapter {
+  private final class MyWindowListener extends WindowAdapter {
     @Override
     public void windowOpened(WindowEvent e) {
       updateMaskAndAlpha(myWindow);

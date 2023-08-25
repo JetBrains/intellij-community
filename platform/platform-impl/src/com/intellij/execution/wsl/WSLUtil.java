@@ -157,7 +157,7 @@ public final class WSLUtil {
   }
 
 
-  static class WSLToolFlags {
+  static final class WSLToolFlags {
     public final boolean isQuietFlagAvailable;
     public final boolean isVerboseFlagAvailable;
 

@@ -413,7 +413,7 @@ public final class PersistentFSConnection {
   }
 
 
-  static class AttrPageAwareCapacityAllocationPolicy extends CapacityAllocationPolicy {
+  static final class AttrPageAwareCapacityAllocationPolicy extends CapacityAllocationPolicy {
     boolean attrPageRequested;
 
     @Override
@@ -456,7 +456,7 @@ public final class PersistentFSConnection {
   /**
    * Legacy flushing implementation: do some basic precautions against contention, i.e. wait for a period without modifications
    */
-  private class ClassicVFSFlusher implements Runnable, Closeable {
+  private final class ClassicVFSFlusher implements Runnable, Closeable {
 
     /** How often, on average, flush each index to the disk */
     public static final long FLUSHING_PERIOD_MS = SECONDS.toMillis(5);
@@ -497,7 +497,7 @@ public final class PersistentFSConnection {
    * <p>
    * More details in a {@link GentleFlusherBase} javadocs
    */
-  private class GentleVFSFlusher extends GentleFlusherBase {
+  private final class GentleVFSFlusher extends GentleFlusherBase {
     /** How often, on average, flush each index to the disk */
     private static final long FLUSHING_PERIOD_MS = SECONDS.toMillis(FlushingDaemon.FLUSHING_PERIOD_IN_SECONDS);
 
@@ -623,7 +623,7 @@ public final class PersistentFSConnection {
   }
 
   /** Created to make stacktraces easily recognizable in logs */
-  private static class VFSCorruptedException extends Exception {
+  private static final class VFSCorruptedException extends Exception {
     VFSCorruptedException(final String message, final Throwable cause) {
       super(message, cause);
     }

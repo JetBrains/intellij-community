@@ -71,7 +71,7 @@ class MarkerTreeWithPartialSums<T extends RangeMarkerImpl & IntSupplier> extends
     ((Node<T>)node).recalculateSubTreeSum();
   }
 
-  static class Node<T extends RangeMarkerImpl & IntSupplier> extends RMNode<T> {
+  static final class Node<T extends RangeMarkerImpl & IntSupplier> extends RMNode<T> {
     private int subtreeSum;
 
     Node(@NotNull RangeMarkerTree<T> rangeMarkerTree,

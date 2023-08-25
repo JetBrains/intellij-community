@@ -19,7 +19,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 @SuppressWarnings("HardCodedStringLiteral")
-public class ShowProgressTestDialogAction extends AnAction implements DumbAware {
+public final class ShowProgressTestDialogAction extends AnAction implements DumbAware {
   @Override
   public void actionPerformed(@NotNull AnActionEvent e) {
     new MyDialogWrapper(e.getProject()).show();
@@ -30,7 +30,7 @@ public class ShowProgressTestDialogAction extends AnAction implements DumbAware 
     return ActionUpdateThread.BGT;
   }
 
-  private static class MyDialogWrapper extends DialogWrapper {
+  private static final class MyDialogWrapper extends DialogWrapper {
     private final List<JProgressBar> pbList = new ArrayList<>();
     private final Alarm alarm = new Alarm(getDisposable());
 

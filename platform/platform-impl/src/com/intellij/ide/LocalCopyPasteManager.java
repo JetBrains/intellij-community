@@ -27,7 +27,7 @@ import java.util.function.Predicate;
  * estimating the size of {@code Transferable} and {@link #deleteAfterAllowedMaximum()} method for history trimming logic.
  */
 @ApiStatus.Internal
-public class LocalCopyPasteManager implements ClientCopyPasteManager {
+public final class LocalCopyPasteManager implements ClientCopyPasteManager {
   private static final Logger LOG = Logger.getInstance(LocalCopyPasteManager.class);
 
   private final LinkedListWithSum<Transferable> myData = new LinkedListWithSum<>(LocalCopyPasteManager::getSize);

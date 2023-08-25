@@ -34,7 +34,7 @@ import java.util.List;
 /**
  * @author Konstantin Bulenkov
  */
-public class NewRecentProjectPanel extends RecentProjectPanel {
+public final class NewRecentProjectPanel extends RecentProjectPanel {
 
   public NewRecentProjectPanel(@NotNull Disposable parentDisposable) {
     this(parentDisposable, true);

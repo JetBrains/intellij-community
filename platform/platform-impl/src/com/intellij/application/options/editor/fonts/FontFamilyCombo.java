@@ -23,7 +23,7 @@ import java.util.*;
 
 import static com.intellij.ui.AnimatedIcon.ANIMATION_IN_RENDERER_ALLOWED;
 
-class FontFamilyCombo extends AbstractFontCombo<FontFamilyCombo.MyFontItem> {
+final class FontFamilyCombo extends AbstractFontCombo<FontFamilyCombo.MyFontItem> {
 
   public static final int ITEM_WIDTH = 230;
 
@@ -156,19 +156,19 @@ class FontFamilyCombo extends AbstractFontCombo<FontFamilyCombo.MyFontItem> {
     }
   }
 
-  private static class MyNoFontItem extends MyFontItem {
+  private static final class MyNoFontItem extends MyFontItem {
     private MyNoFontItem() {
       super("<None>", false);
     }
   }
 
-  private static class MyWarningItem extends MyFontItem {
+  private static final class MyWarningItem extends MyFontItem {
     private MyWarningItem(@NotNull String missingName) {
       super(ApplicationBundle.message("settings.editor.font.missing.custom.font", missingName), false);
     }
   }
 
-  private static class MyModel extends AbstractListModel<MyFontItem> implements ComboBoxModel<MyFontItem> {
+  private static final class MyModel extends AbstractListModel<MyFontItem> implements ComboBoxModel<MyFontItem> {
 
     /**
      * The list contains bundled fonts and platform-specific default fonts specified in
@@ -274,7 +274,7 @@ class FontFamilyCombo extends AbstractFontCombo<FontFamilyCombo.MyFontItem> {
     }
   }
 
-  private static class MyFontItemComparator implements Comparator<MyFontItem> {
+  private static final class MyFontItemComparator implements Comparator<MyFontItem> {
 
     @Override
     public int compare(MyFontItem item1, MyFontItem item2) {

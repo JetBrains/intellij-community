@@ -197,7 +197,7 @@ public final class ToggleToolbarAction extends ToggleAction implements DumbAware
       .filter(toolbar -> !Boolean.TRUE.equals(toolbar.getComponent().getClientProperty(ActionToolbarImpl.IMPORTANT_TOOLBAR_KEY)));
   }
 
-  private static class OptionsGroup extends NonTrivialActionGroup implements DumbAware {
+  private static final class OptionsGroup extends NonTrivialActionGroup implements DumbAware {
 
     private final ToolWindow myToolWindow;
 

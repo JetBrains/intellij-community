@@ -41,7 +41,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
-public class PluginHostsConfigurable implements Configurable.NoScroll, Configurable {
+public final class PluginHostsConfigurable implements Configurable.NoScroll, Configurable {
   private final ListTableModel<UrlInfo> myModel = new ListTableModel<>() {
     @Override
     public void addRow() {
@@ -285,7 +285,7 @@ public class PluginHostsConfigurable implements Configurable.NoScroll, Configura
     return input;
   }
 
-  private static class UrlInfo {
+  private static final class UrlInfo {
     @NlsSafe String name;
     boolean progress;
     @Nls String errorTooltip;

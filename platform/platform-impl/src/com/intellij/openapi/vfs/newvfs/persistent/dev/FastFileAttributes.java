@@ -61,7 +61,7 @@ public final class FastFileAttributes {
     return new TimestampedBooleanAttributeAccessorImpl(helper);
   }
 
-  public static class Int3FileAttribute implements Closeable {
+  public static final class Int3FileAttribute implements Closeable {
     public static final int FIELDS = 3;
     public static final int ROW_SIZE = FIELDS * Integer.BYTES;
 
@@ -107,7 +107,7 @@ public final class FastFileAttributes {
     }
   }
 
-  private static class TimestampedBooleanAttributeAccessorImpl implements TimestampedBooleanAttributeAccessor, Closeable {
+  private static final class TimestampedBooleanAttributeAccessorImpl implements TimestampedBooleanAttributeAccessor, Closeable {
     public static final int ROW_SIZE = Long.BYTES;
 
     private final MappedFileStorageHelper storageHelper;

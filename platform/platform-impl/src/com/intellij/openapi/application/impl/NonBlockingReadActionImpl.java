@@ -783,7 +783,7 @@ public final class NonBlockingReadActionImpl<T> implements NonBlockingReadAction
   /**
    * Encapsulates OTel monitoring fields and methods
    */
-  private static class OTelMonitor implements AutoCloseable {
+  private static final class OTelMonitor implements AutoCloseable {
 
     /**
      * How many actions were successfully executed until the end of the computation (i.e. return result)
@@ -856,7 +856,7 @@ public final class NonBlockingReadActionImpl<T> implements NonBlockingReadAction
       otelSubscription.close();
     }
 
-    private class MonitoredComputation<V> implements Callable<V> {
+    private final class MonitoredComputation<V> implements Callable<V> {
       private final Callable<V> wrappedComputation;
 
       private MonitoredComputation(@NotNull Callable<V> wrappedComputation) {

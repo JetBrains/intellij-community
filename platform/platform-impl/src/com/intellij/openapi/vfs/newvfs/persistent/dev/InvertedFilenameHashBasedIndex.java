@@ -13,7 +13,7 @@ import java.util.function.IntPredicate;
  * mapping in a specialized (int->int*) hashmap.
  */
 @ApiStatus.Internal
-public class InvertedFilenameHashBasedIndex {
+public final class InvertedFilenameHashBasedIndex {
   // We want (names -> files) mapping, here we have names:Set<String> -> fileIds: IntPredicate
   //  Current implementation (InvertedNameIndex) uses nameId to build a map nameId->(fileId)*
   //  If we can't use (can't rely upon) nameId <-> name bijection, we could try to use name.hash
@@ -81,7 +81,7 @@ public class InvertedFilenameHashBasedIndex {
    * 'empty' and 'deleted' entries.
    */
   @ApiStatus.Internal
-  public static class Int2IntMultimap {
+  public static final class Int2IntMultimap {
     public static final int NO_VALUE = 0;
 
     private final float loadFactor;

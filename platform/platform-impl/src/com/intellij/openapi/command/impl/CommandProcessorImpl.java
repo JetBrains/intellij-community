@@ -14,7 +14,7 @@ import com.intellij.util.ExceptionUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-class CommandProcessorImpl extends CoreCommandProcessor {
+final class CommandProcessorImpl extends CoreCommandProcessor {
   @Override
   public void finishCommand(final @NotNull CommandToken command, final @Nullable Throwable throwable) {
     if (myCurrentCommand != command) return;

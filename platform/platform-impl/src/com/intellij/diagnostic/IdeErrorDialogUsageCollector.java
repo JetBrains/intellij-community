@@ -5,7 +5,7 @@ import com.intellij.internal.statistic.eventLog.EventLogGroup;
 import com.intellij.internal.statistic.eventLog.events.EventId;
 import com.intellij.internal.statistic.service.fus.collectors.CounterUsagesCollector;
 
-class IdeErrorDialogUsageCollector extends CounterUsagesCollector {
+final class IdeErrorDialogUsageCollector extends CounterUsagesCollector {
   private static final EventLogGroup GROUP = new EventLogGroup("ide.error.dialog", 2);
 
   private static final EventId CLEAR_ALL = GROUP.registerEvent("clear.all");

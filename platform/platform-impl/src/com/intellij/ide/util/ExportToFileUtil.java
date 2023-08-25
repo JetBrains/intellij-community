@@ -94,7 +94,7 @@ public final class ExportToFileUtil {
     }
   }
 
-  private static class ExportDialogBase extends DialogWrapper {
+  private static final class ExportDialogBase extends DialogWrapper {
     private final Project myProject;
     private final ExporterToTextFile myExporter;
     protected Editor myTextArea;
@@ -227,7 +227,7 @@ public final class ExportToFileUtil {
       return "#com.intellij.ide.util.ExportDialog";
     }
 
-    protected class CopyToClipboardAction extends AbstractAction {
+    protected final class CopyToClipboardAction extends AbstractAction {
       public CopyToClipboardAction() {
         super(IdeBundle.message("button.copy"));
         putValue(Action.SHORT_DESCRIPTION, IdeBundle.message("description.copy.text.to.clipboard"));

@@ -2369,7 +2369,7 @@ final class EditorGutterComponentImpl extends EditorGutterComponentEx implements
     updateSize();
   }
 
-  private class CloseAnnotationsAction extends DumbAwareAction {
+  private final class CloseAnnotationsAction extends DumbAwareAction {
     CloseAnnotationsAction() {
       super(EditorBundle.messagePointer("close.editor.annotations.action.name"));
     }
@@ -2842,7 +2842,7 @@ final class EditorGutterComponentImpl extends EditorGutterComponentEx implements
     return null;
   }
 
-  private class LineNumbersRepainter implements CaretListener {
+  private final class LineNumbersRepainter implements CaretListener {
     @Override
     public void caretPositionChanged(@NotNull CaretEvent event) {
       if (event.getOldPosition().line != event.getNewPosition().line &&

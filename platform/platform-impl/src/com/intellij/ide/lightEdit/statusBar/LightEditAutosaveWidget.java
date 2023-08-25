@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.lightEdit.statusBar;
 
 import com.intellij.ide.GeneralSettings;
@@ -84,7 +84,7 @@ public final class LightEditAutosaveWidget implements StatusBarWidget, StatusBar
     return this;
   }
 
-  private static class MyModePanel extends JPanel {
+  private static final class MyModePanel extends JPanel {
     private final JCheckBox myModeCb;
 
     MyModePanel() {

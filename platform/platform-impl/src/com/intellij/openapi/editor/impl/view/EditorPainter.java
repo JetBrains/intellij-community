@@ -1604,7 +1604,7 @@ public final class EditorPainter implements TextDrawingCallback {
     void paintAfterLineEnd(IterationState iterationState, int columnStart, float x, int y);
   }
 
-  private static class LineWhitespacePaintingStrategy {
+  private static final class LineWhitespacePaintingStrategy {
     private final boolean myWhitespaceShown;
     private final boolean myLeadingWhitespaceShown;
     private final boolean myInnerWhitespaceShown;
@@ -1815,7 +1815,7 @@ public final class EditorPainter implements TextDrawingCallback {
     }
   }
 
-  private static class CaretDataInView {
+  private static final class CaretDataInView {
     private final int[] selectionStarts;
     private final int[] selectionEnds;
     private final int caretCount;

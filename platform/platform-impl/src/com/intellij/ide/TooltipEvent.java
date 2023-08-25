@@ -7,7 +7,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.awt.event.InputEvent;
 
-public class TooltipEvent {
+public final class TooltipEvent {
 
   private final InputEvent myInputEvent;
   private final boolean myIsEventInsideBalloon;

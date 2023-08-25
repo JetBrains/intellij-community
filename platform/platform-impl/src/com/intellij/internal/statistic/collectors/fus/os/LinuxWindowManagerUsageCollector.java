@@ -17,7 +17,7 @@ import java.util.*;
 /**
  * @author Konstantin Bulenkov
  */
-public class LinuxWindowManagerUsageCollector extends ApplicationUsagesCollector {
+public final class LinuxWindowManagerUsageCollector extends ApplicationUsagesCollector {
   private static final EventLogGroup GROUP = new EventLogGroup("os.linux.wm", 3);
 
   private static final Map<String, String> GNOME_WINDOW_MANAGERS = new LinkedHashMap<>();

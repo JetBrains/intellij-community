@@ -5,7 +5,7 @@ import com.intellij.execution.ExecutionException;
 import com.intellij.execution.configurations.GeneralCommandLine;
 import org.jetbrains.annotations.NotNull;
 
-public class ProcessHandlerFactoryImpl extends ProcessHandlerFactory {
+public final class ProcessHandlerFactoryImpl extends ProcessHandlerFactory {
 
   @Override
   public @NotNull OSProcessHandler createProcessHandler(@NotNull GeneralCommandLine commandLine) throws ExecutionException {

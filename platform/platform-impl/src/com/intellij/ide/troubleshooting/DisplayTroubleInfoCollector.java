@@ -8,7 +8,7 @@ import org.jetbrains.annotations.NotNull;
 
 import java.awt.*;
 
-public class DisplayTroubleInfoCollector implements GeneralTroubleInfoCollector {
+public final class DisplayTroubleInfoCollector implements GeneralTroubleInfoCollector {
   @Override
   public @NotNull String getTitle() {
     return "Displays";

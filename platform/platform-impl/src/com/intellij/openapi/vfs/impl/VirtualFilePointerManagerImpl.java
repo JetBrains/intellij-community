@@ -548,7 +548,7 @@ public final class VirtualFilePointerManagerImpl extends VirtualFilePointerManag
                                  long prepareElapsedMs) {
   }
 
-  static class NodeToUpdate {
+  static final class NodeToUpdate {
     private final FilePartNode parent;
     final FilePartNode node;
     VFileEvent myEvent;

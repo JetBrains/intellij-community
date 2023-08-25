@@ -153,7 +153,7 @@ public final class StatusPanel extends JBPanel {
     return myError;
   }
 
-  public class Action {
+  public final class Action {
     /**
      * Guarded by {@link #myLock}.
      */

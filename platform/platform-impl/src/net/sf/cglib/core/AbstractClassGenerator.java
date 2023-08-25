@@ -47,7 +47,7 @@ implements ClassGenerator
     private String className;
     private boolean attemptLoad;
 
-    protected static class Source {
+    protected static final class Source {
       //change by Peter: made fields final
         final String name;
         final Map cache = new WeakHashMap<>();

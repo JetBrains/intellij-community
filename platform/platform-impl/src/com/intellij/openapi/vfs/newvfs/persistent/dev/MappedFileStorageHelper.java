@@ -47,7 +47,7 @@ import static java.nio.ByteOrder.nativeOrder;
  * one still needs to understand the underlying code.
  */
 @ApiStatus.Internal
-public class MappedFileStorageHelper implements Closeable {
+public final class MappedFileStorageHelper implements Closeable {
   /**
    * Keeps a registry of all {@link MappedFileStorageHelper} -- prevents creating duplicates, i.e. >1 storage
    * for the same path.

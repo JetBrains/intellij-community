@@ -105,7 +105,7 @@ public final class NewErrorTreeEditor extends AbstractCellEditor implements Tree
     return ((ErrorTreeNodeDescriptor)userObject).getElement();
   }
 
-  private static class MyWrapperEditor extends AbstractCellEditor implements TreeCellEditor {
+  private static final class MyWrapperEditor extends AbstractCellEditor implements TreeCellEditor {
     private final TreeCellRenderer myLeft;
     private final TreeCellEditor myRight;
     private final JPanel myPanel;
@@ -165,7 +165,7 @@ public final class NewErrorTreeEditor extends AbstractCellEditor implements Tree
   }
 
 
-  private static class CellEditorDelegate extends AbstractCellEditor implements TreeCellEditor {
+  private static final class CellEditorDelegate extends AbstractCellEditor implements TreeCellEditor {
     private TreeCellEditor myCurrentCallback;
 
     @Override

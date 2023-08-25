@@ -13,7 +13,7 @@ import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 
-public class PathMacroConfigurable implements SearchableConfigurable, Configurable.NoScroll {
+public final class PathMacroConfigurable implements SearchableConfigurable, Configurable.NoScroll {
   public static final @NonNls String HELP_ID = "preferences.pathVariables";
   private PathMacroListEditor myEditor;
 

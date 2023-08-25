@@ -28,7 +28,7 @@ import java.util.stream.Stream;
 /**
  * @author Yura Cangea, dsl
  */
-public class CustomFileTypeEditor extends SettingsEditor<AbstractFileType> {
+public final class CustomFileTypeEditor extends SettingsEditor<AbstractFileType> {
   private final JTextField myFileTypeName = new JTextField();
   private final JTextField myFileTypeDescr = new JTextField();
   private final JCheckBox myIgnoreCase = new JCheckBox(IdeBundle.message("checkbox.customfiletype.ignore.case"));

@@ -11,7 +11,7 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
 
-public class EditorFacadeImpl extends EditorFacade {
+public final class EditorFacadeImpl extends EditorFacade {
 
 
   @Override

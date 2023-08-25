@@ -10,7 +10,7 @@ import java.util.List;
 /**
 * @author Konstantin Bulenkov
 */
-class JBListTableFocusTraversalPolicy extends ComponentsListFocusTraversalPolicy {
+final class JBListTableFocusTraversalPolicy extends ComponentsListFocusTraversalPolicy {
   private final JBTableRowEditor myEditor;
 
   JBListTableFocusTraversalPolicy(JBTableRowEditor editor) {

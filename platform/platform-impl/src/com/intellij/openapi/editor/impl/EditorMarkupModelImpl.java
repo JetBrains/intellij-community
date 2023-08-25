@@ -871,7 +871,7 @@ public final class EditorMarkupModelImpl extends MarkupModelImpl
   }
 
   @DirtyUI
-  private class MyErrorPanel extends ButtonlessScrollBarUI implements MouseMotionListener, MouseListener, MouseWheelListener, UISettingsListener {
+  private final class MyErrorPanel extends ButtonlessScrollBarUI implements MouseMotionListener, MouseListener, MouseWheelListener, UISettingsListener {
     private PopupHandler myHandler;
     private @Nullable BufferedImage myCachedTrack;
     private int myCachedHeight = -1;
@@ -1466,7 +1466,7 @@ public final class EditorMarkupModelImpl extends MarkupModelImpl
   private static final Key<List<StatusItem>> EXPANDED_STATUS = new Key<>("EXPANDED_STATUS");
   private static final Key<Boolean> TRANSLUCENT_STATE = new Key<>("TRANSLUCENT_STATE");
 
-  private class TrafficLightAction extends DumbAwareAction implements CustomComponentAction {
+  private final class TrafficLightAction extends DumbAwareAction implements CustomComponentAction {
     @Override
     public @NotNull ActionUpdateThread getActionUpdateThread() {
       return ActionUpdateThread.EDT;
@@ -1716,7 +1716,7 @@ public final class EditorMarkupModelImpl extends MarkupModelImpl
     }
   }
 
-  private static class StatusComponentLayout implements LayoutManager {
+  private static final class StatusComponentLayout implements LayoutManager {
     private final List<Pair<Component, String>> actionButtons = new ArrayList<>();
 
     @Override
@@ -1811,7 +1811,7 @@ public final class EditorMarkupModelImpl extends MarkupModelImpl
     }
   }
 
-  private class EditorToolbarButtonLook extends ActionButtonLook {
+  private final class EditorToolbarButtonLook extends ActionButtonLook {
     @Override
     public void paintBorder(Graphics g, JComponent component, int state) {}
 
@@ -1846,7 +1846,7 @@ public final class EditorMarkupModelImpl extends MarkupModelImpl
     }
   }
 
-  public class CompactViewAction extends ToggleAction {
+  public final class CompactViewAction extends ToggleAction {
     CompactViewAction() {
       super (EditorBundle.message("iw.compact.view"));
     }

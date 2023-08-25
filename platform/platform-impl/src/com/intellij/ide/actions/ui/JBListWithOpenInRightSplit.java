@@ -26,7 +26,7 @@ import java.awt.*;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 
-public class JBListWithOpenInRightSplit<T> extends JBList<T> {
+public final class JBListWithOpenInRightSplit<T> extends JBList<T> {
 
   public static @NotNull <T> JBList<T> createListWithOpenInRightSplitter(@NotNull ListModel<T> dataModel,
                                                                          @Nullable Condition<? super T> checkRightSplitter) {

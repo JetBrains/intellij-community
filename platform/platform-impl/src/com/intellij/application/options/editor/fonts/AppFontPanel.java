@@ -26,7 +26,7 @@ import javax.swing.event.HyperlinkEvent;
 import javax.swing.event.HyperlinkListener;
 import java.awt.*;
 
-public class AppFontPanel implements Disposable {
+public final class AppFontPanel implements Disposable {
 
   private final @NotNull AppFontOptionsPanel myOptionsPanel;
   private final @NotNull FontEditorPreview   myPreview;

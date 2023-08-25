@@ -6,7 +6,7 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.event.HyperlinkListener;
 
-public class ConnectionState {
+public final class ConnectionState {
   private final String message;
   private final ConnectionStatus status;
   private final HyperlinkListener messageLinkListener;

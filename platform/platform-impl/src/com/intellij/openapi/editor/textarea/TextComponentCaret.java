@@ -15,7 +15,7 @@ import javax.swing.*;
 import javax.swing.text.BadLocationException;
 import javax.swing.text.JTextComponent;
 
-class TextComponentCaret extends UserDataHolderBase implements Caret {
+final class TextComponentCaret extends UserDataHolderBase implements Caret {
   private final TextComponentEditorImpl myEditor;
 
   TextComponentCaret(TextComponentEditorImpl editor) {

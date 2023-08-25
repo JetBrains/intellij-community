@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.roots.ui.configuration;
 
 import com.intellij.openapi.ui.GraphicsConfig;
@@ -13,7 +13,7 @@ import javax.swing.*;
 import javax.swing.border.Border;
 import java.awt.*;
 
-public class SidePanelCountLabel extends JLabel {
+public final class SidePanelCountLabel extends JLabel {
   private boolean mySelected;
 
   public SidePanelCountLabel() {

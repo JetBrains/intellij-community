@@ -84,7 +84,7 @@ public final class MergeAllWindowsAction extends IdeDependentAction {
     });
   }
 
-  private static class RecentProjectsFullScreenTabSupport implements AppLifecycleListener {
+  private static final class RecentProjectsFullScreenTabSupport implements AppLifecycleListener {
     @Override
     public void appStarted() {
       if (JdkEx.isTabbingModeAvailable()) {

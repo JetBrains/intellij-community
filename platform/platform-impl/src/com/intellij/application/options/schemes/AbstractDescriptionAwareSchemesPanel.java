@@ -146,7 +146,7 @@ public abstract class AbstractDescriptionAwareSchemesPanel<T extends Scheme> ext
     showDescription(scheme);
   }
 
-  private static class DescriptionLabel extends JBLabel {
+  private static final class DescriptionLabel extends JBLabel {
     private @Nls String myAllText = "";
 
     DescriptionLabel() {

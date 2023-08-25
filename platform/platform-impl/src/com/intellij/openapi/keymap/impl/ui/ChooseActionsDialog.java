@@ -31,7 +31,7 @@ import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.util.ArrayList;
 
-public class ChooseActionsDialog extends DialogWrapper {
+public final class ChooseActionsDialog extends DialogWrapper {
   private final ActionsTree myActionsTree;
   private FilterComponent myFilterComponent;
   private final TreeExpansionMonitor<?> myTreeExpansionMonitor;

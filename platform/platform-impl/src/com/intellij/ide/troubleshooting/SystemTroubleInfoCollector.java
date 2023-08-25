@@ -6,7 +6,7 @@ import com.intellij.troubleshooting.GeneralTroubleInfoCollector;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
-public class SystemTroubleInfoCollector implements GeneralTroubleInfoCollector {
+public final class SystemTroubleInfoCollector implements GeneralTroubleInfoCollector {
   @Override
   public @NotNull @NonNls String getTitle() {
     return "System";

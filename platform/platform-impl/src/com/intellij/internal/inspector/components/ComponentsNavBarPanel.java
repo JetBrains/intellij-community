@@ -67,7 +67,7 @@ final class ComponentsNavBarPanel extends Breadcrumbs {
     return font != null ? font.deriveFont(13f) : null;
   }
 
-  private class ComponentItem implements Crumb {
+  private final class ComponentItem implements Crumb {
     private final @NotNull Component myComponent;
 
     ComponentItem(@NotNull Component component) {

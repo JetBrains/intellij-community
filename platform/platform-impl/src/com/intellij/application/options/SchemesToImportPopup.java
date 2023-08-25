@@ -45,7 +45,7 @@ public abstract class SchemesToImportPopup<T> {
       showInCenterOf(myParent);
   }
 
-  private static class SchemesToImportListCellRenderer implements ListCellRenderer {
+  private static final class SchemesToImportListCellRenderer implements ListCellRenderer {
     private final JPanel myPanel = new JPanel(new BorderLayout());
     private final JLabel myNameLabel = new JLabel("", SwingConstants.LEFT);
 

@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.editor.actions;
 
 import com.intellij.ide.DataManager;
@@ -15,7 +15,7 @@ import com.intellij.openapi.util.Key;
 import com.intellij.util.text.CharArrayUtil;
 import org.jetbrains.annotations.NotNull;
 
-public class SplitLineAction extends EditorAction {
+public final class SplitLineAction extends EditorAction {
   public static Key<Boolean> SPLIT_LINE_KEY = Key.create("com.intellij.openapi.editor.actions.SplitLineAction");
 
   public SplitLineAction() {
@@ -23,7 +23,7 @@ public class SplitLineAction extends EditorAction {
     setEnabledInModalContext(false);
   }
 
-  private static class Handler extends EditorWriteActionHandler.ForEachCaret {
+  private static final class Handler extends EditorWriteActionHandler.ForEachCaret {
     @Override
     public boolean isEnabledForCaret(@NotNull Editor editor, @NotNull Caret caret, DataContext dataContext) {
       return getEnterHandler().isEnabled(editor, caret, dataContext) &&

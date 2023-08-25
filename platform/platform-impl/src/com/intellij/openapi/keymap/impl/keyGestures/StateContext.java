@@ -10,7 +10,7 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.event.KeyEvent;
 
-class StateContext {
+final class StateContext {
   KeyEvent actionKey;
   KeyStroke actionShortcut;
   KeyboardGestureAction.ModifierType modifierType;

@@ -844,7 +844,7 @@ public class DarculaComboBoxUI extends BasicComboBoxUI implements Border, ErrorB
       return result;
     }
 
-    private class MyDelegateRenderer implements ListCellRenderer {
+    private final class MyDelegateRenderer implements ListCellRenderer {
       @Override
       public Component getListCellRendererComponent(JList list,
                                                     Object value,

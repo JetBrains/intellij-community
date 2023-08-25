@@ -19,7 +19,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
-public class EditorColorSchemesUsagesCollector extends ApplicationUsagesCollector {
+public final class EditorColorSchemesUsagesCollector extends ApplicationUsagesCollector {
 
   private static final int CURR_VERSION = 8;
 

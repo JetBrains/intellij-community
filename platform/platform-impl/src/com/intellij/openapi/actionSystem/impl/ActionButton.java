@@ -638,7 +638,7 @@ public class ActionButton extends JComponent implements ActionButtonComponent, A
     return context;
   }
 
-  protected class AccessibleActionButton extends JComponent.AccessibleJComponent implements AccessibleAction {
+  protected final class AccessibleActionButton extends JComponent.AccessibleJComponent implements AccessibleAction {
     protected AccessibleActionButton() {
     }
 

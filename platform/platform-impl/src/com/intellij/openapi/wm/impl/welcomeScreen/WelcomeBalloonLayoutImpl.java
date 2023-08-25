@@ -221,7 +221,7 @@ public class WelcomeBalloonLayoutImpl extends BalloonLayoutImpl {
     void notificationsChanged(List<NotificationType> types);
   }
 
-  private static class BalloonPanel extends NonOpaquePanel {
+  private static final class BalloonPanel extends NonOpaquePanel {
     private static final int VERTICAL_GAP = JBUIScale.scale(2);
 
     BalloonPanel() {

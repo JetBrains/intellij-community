@@ -29,7 +29,7 @@ import java.util.List;
 @SuppressWarnings("HardCodedStringLiteral")
 public final class NotificationTestAction extends AnAction implements DumbAware {
   public static final String TEST_GROUP_ID = "Test Notification";
-  private static class Holder {
+  private static final class Holder {
     private static final NotificationGroup TEST_STICKY_GROUP =
       NotificationGroupManager.getInstance().getNotificationGroup("Test Sticky Notification");
     private static final NotificationGroup TEST_TOOLWINDOW_GROUP =

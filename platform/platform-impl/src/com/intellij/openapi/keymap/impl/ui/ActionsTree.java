@@ -250,7 +250,7 @@ public final class ActionsTree {
     reset(myKeymap, currentQuickListIds, myFilter, shortcut);
   }
 
-  private class MyModel extends DefaultTreeModel implements TreeTableModel {
+  private final class MyModel extends DefaultTreeModel implements TreeTableModel {
     protected MyModel(DefaultMutableTreeNode root) {
       super(root);
     }
@@ -433,7 +433,7 @@ public final class ActionsTree {
     return layeredIcon;
   }
 
-  private class PathsKeeper {
+  private final class PathsKeeper {
     private ArrayList<String> myPathsToExpand;
     private ArrayList<String> mySelectionPaths;
 
@@ -503,7 +503,7 @@ public final class ActionsTree {
     }
   }
 
-  private class KeymapsRenderer extends ColoredTreeCellRenderer implements UiInspectorTreeRendererContextProvider {
+  private final class KeymapsRenderer extends ColoredTreeCellRenderer implements UiInspectorTreeRendererContextProvider {
 
     private final MyColoredTreeCellRenderer myLink = new MyColoredTreeCellRenderer();
     private boolean myHaveLink;
@@ -705,7 +705,7 @@ public final class ActionsTree {
       return accessibleContext;
     }
 
-    protected class AccessibleKeymapsRenderer extends AccessibleColoredTreeCellRenderer {
+    protected final class AccessibleKeymapsRenderer extends AccessibleColoredTreeCellRenderer {
       @Override
       public String getAccessibleName() {
         String name = super.getAccessibleName();
@@ -740,7 +740,7 @@ public final class ActionsTree {
       }
     }
 
-    private class SelectActionRunnable implements Runnable {
+    private final class SelectActionRunnable implements Runnable {
       private final String myActionId;
 
       SelectActionRunnable(@NonNls String actionId) {
@@ -840,7 +840,7 @@ public final class ActionsTree {
     config.restore();
   }
 
-  private static class MyColoredTreeCellRenderer extends ColoredTreeCellRenderer {
+  private static final class MyColoredTreeCellRenderer extends ColoredTreeCellRenderer {
     @Override
     public void customizeCellRenderer(@NotNull JTree tree,
                                       Object value,

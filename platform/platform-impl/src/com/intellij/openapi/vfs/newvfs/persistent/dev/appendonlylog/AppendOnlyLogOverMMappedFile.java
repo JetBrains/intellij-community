@@ -23,7 +23,7 @@ import static java.nio.ByteOrder.nativeOrder;
  * There are other caveats, pitfalls, and dragons, so beware
  */
 @ApiStatus.Internal
-public class AppendOnlyLogOverMMappedFile implements AppendOnlyLog {
+public final class AppendOnlyLogOverMMappedFile implements AppendOnlyLog {
   private static final VarHandle INT32_OVER_BYTE_BUFFER = byteBufferViewVarHandle(int[].class, nativeOrder()).withInvokeExactBehavior();
   private static final VarHandle INT64_OVER_BYTE_BUFFER = byteBufferViewVarHandle(long[].class, nativeOrder()).withInvokeExactBehavior();
 
@@ -46,7 +46,7 @@ public class AppendOnlyLogOverMMappedFile implements AppendOnlyLog {
   //       'false id' with high probability. This leaves us with 3bytes record length, which is still enough for
   //       the most applications
 
-  private static class HeaderLayout {
+  private static final class HeaderLayout {
     private static final int IMPLEMENTATION_VERSION_OFFSET = 0;
 
     private static final int EXTERNAL_VERSION_OFFSET = IMPLEMENTATION_VERSION_OFFSET + Integer.BYTES;
@@ -61,7 +61,7 @@ public class AppendOnlyLogOverMMappedFile implements AppendOnlyLog {
   }
 
 
-  private static class RecordLayout {
+  private static final class RecordLayout {
     // Record = (header) + (payload)
     // Header = 32 bit, 32-bit-aligned (so it could be read/write as volatile, and not all CPU arch allow memory sync
     //          ops on non-aligned offsets)

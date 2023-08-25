@@ -41,7 +41,7 @@ import java.util.List;
  * <p/>
  * Not thread-safe.
  */
-public class SoftWrapApplianceManager implements Dumpable {
+public final class SoftWrapApplianceManager implements Dumpable {
   private static final Logger LOG = Logger.getInstance(SoftWrapApplianceManager.class);
   private static final int QUICK_DUMMY_WRAPPING = Integer.MAX_VALUE; // special value to request a tentative wrapping
                                                                      // before editor is shown and actual available width is known
@@ -489,7 +489,7 @@ public class SoftWrapApplianceManager implements Dumpable {
     int getVisibleAreaWidth();
   }
 
-  private class DefaultVisibleAreaWidthProvider implements VisibleAreaWidthProvider {
+  private final class DefaultVisibleAreaWidthProvider implements VisibleAreaWidthProvider {
 
     @Override
     public int getVisibleAreaWidth() {

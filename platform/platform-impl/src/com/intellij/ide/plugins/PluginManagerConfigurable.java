@@ -1678,7 +1678,7 @@ public final class PluginManagerConfigurable
     }
   }
 
-  private static class GroupByActionGroup extends DefaultActionGroup implements CheckedActionGroup {
+  private static final class GroupByActionGroup extends DefaultActionGroup implements CheckedActionGroup {
   }
 
   private final class ChangePluginStateAction extends DumbAwareAction {

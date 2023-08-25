@@ -39,7 +39,7 @@ import static com.intellij.platform.diagnostic.telemetry.PlatformScopesKt.Storag
  * record size up to 1Mb large.
  * <p>
  */
-public class LargeSizeStreamlinedBlobStorage implements StreamlinedBlobStorage {
+public final class LargeSizeStreamlinedBlobStorage implements StreamlinedBlobStorage {
   private static final Logger LOG = Logger.getInstance(LargeSizeStreamlinedBlobStorage.class);
 
   /* ======== Persistent format: =================================================================== */

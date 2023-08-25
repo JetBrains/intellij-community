@@ -477,7 +477,7 @@ public abstract class WizardPopup extends AbstractPopup implements ActionListene
   }
 
 
-  private class MyComponentAdapter extends ComponentAdapter {
+  private final class MyComponentAdapter extends ComponentAdapter {
     @Override
     public void componentMoved(final ComponentEvent e) {
       processParentWindowMoved();

@@ -66,7 +66,7 @@ import static com.intellij.ide.ShutdownKt.cancelAndJoinBlocking;
 import static com.intellij.util.concurrency.AppExecutorUtil.propagateContextOrCancellation;
 
 @ApiStatus.Internal
-public class ApplicationImpl extends ClientAwareComponentManager implements ApplicationEx {
+public final class ApplicationImpl extends ClientAwareComponentManager implements ApplicationEx {
   private static @NotNull Logger getLogger() {
     return Logger.getInstance(ApplicationImpl.class);
   }
@@ -1190,7 +1190,7 @@ public class ApplicationImpl extends ClientAwareComponentManager implements Appl
     return new WriteAccessToken(clazz);
   }
 
-  private class WriteAccessToken extends AccessToken {
+  private final class WriteAccessToken extends AccessToken {
     private final @NotNull Class<?> clazz;
 
     WriteAccessToken(@NotNull Class<?> clazz) {

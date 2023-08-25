@@ -455,7 +455,7 @@ public abstract class VirtualFileSystemEntry extends NewVirtualFile {
     return getFileSystem() instanceof LocalFileSystem;
   }
 
-  private static class DebugInvalidation {
+  private static final class DebugInvalidation {
     private static final Logger LOG = Logger.getInstance(VirtualFileSystemEntry.class);
     private static final boolean DEBUG = LOG.isDebugEnabled();
     private static final Key<String> INVALIDATION_REASON = Key.create("INVALIDATION_REASON");

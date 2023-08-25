@@ -102,7 +102,7 @@ public abstract class SchemesCombo<T extends Scheme> extends ComboBox<SchemesCom
     }
   }
 
-  static class MySchemeListItem<T extends Scheme> {
+  static final class MySchemeListItem<T extends Scheme> {
     private final @Nullable T myScheme;
 
     MySchemeListItem(@Nullable T scheme) {

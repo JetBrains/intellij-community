@@ -47,7 +47,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 
 @State(name = "Encoding", storages = @Storage("encoding.xml"), category = SettingsCategory.CODE)
-public class EncodingManagerImpl extends EncodingManager implements PersistentStateComponent<EncodingManagerImpl.State>, Disposable {
+public final class EncodingManagerImpl extends EncodingManager implements PersistentStateComponent<EncodingManagerImpl.State>, Disposable {
   private static final Logger LOG = Logger.getInstance(EncodingManagerImpl.class);
 
   static final class State {

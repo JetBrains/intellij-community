@@ -98,7 +98,7 @@ public abstract class AbstractSchemeActions<T extends Scheme> {
   
   protected void addAdditionalActions(@NotNull List<? super AnAction> defaultActions) {}
 
-  private class CopyToProjectAction extends DumbAwareAction {
+  private final class CopyToProjectAction extends DumbAwareAction {
 
     CopyToProjectAction() {
       super(ApplicationBundle.messagePointer("settings.editor.scheme.copy.to.project"));
@@ -126,7 +126,7 @@ public abstract class AbstractSchemeActions<T extends Scheme> {
 }
 
 
-  private class CopyToIDEAction extends DumbAwareAction {
+  private final class CopyToIDEAction extends DumbAwareAction {
 
     CopyToIDEAction() {
       super(ApplicationBundle.messagePointer("settings.editor.scheme.copy.to.ide"));
@@ -153,7 +153,7 @@ public abstract class AbstractSchemeActions<T extends Scheme> {
     }
 }
   
-  private class ResetAction extends DumbAwareAction {
+  private final class ResetAction extends DumbAwareAction {
     
     ResetAction() {
       super(ApplicationBundle.messagePointer("settings.editor.scheme.reset"));
@@ -188,7 +188,7 @@ public abstract class AbstractSchemeActions<T extends Scheme> {
   }
   
   
-  private class CopyAction extends DumbAwareAction {
+  private final class CopyAction extends DumbAwareAction {
     CopyAction() {
       super(ApplicationBundle.messagePointer("settings.editor.scheme.copy"));
     }
@@ -218,7 +218,7 @@ public abstract class AbstractSchemeActions<T extends Scheme> {
   }
   
   
-  private class RenameAction extends DumbAwareAction {
+  private final class RenameAction extends DumbAwareAction {
     RenameAction() {
       super(ActionsBundle.messagePointer("action.RenameAction.text"));
     }
@@ -242,7 +242,7 @@ public abstract class AbstractSchemeActions<T extends Scheme> {
     }
   }
   
-  private class DeleteAction extends DumbAwareAction {
+  private final class DeleteAction extends DumbAwareAction {
     DeleteAction() {
       super(ApplicationBundle.messagePointer("settings.editor.scheme.delete"));
     }
@@ -309,7 +309,7 @@ public abstract class AbstractSchemeActions<T extends Scheme> {
     protected abstract @NotNull AnAction createAction(@NotNull String actionName);
   }
   
-  private class ImportAction extends DumbAwareAction {
+  private final class ImportAction extends DumbAwareAction {
 
     private final String myImporterName;
 
@@ -325,7 +325,7 @@ public abstract class AbstractSchemeActions<T extends Scheme> {
     }
   }
   
-  private class ExportAction extends DumbAwareAction {
+  private final class ExportAction extends DumbAwareAction {
     private final String myExporterName;
 
     ExportAction(@NotNull String exporterName, @NotNull @NlsActions.ActionText String exporterText) {

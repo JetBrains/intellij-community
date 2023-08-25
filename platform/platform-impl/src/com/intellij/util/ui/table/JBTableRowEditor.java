@@ -61,7 +61,7 @@ public abstract class JBTableRowEditor extends JPanel {
     return panel;
   }
 
-  public class RowEditorChangeListener implements DocumentListener {
+  public final class RowEditorChangeListener implements DocumentListener {
     private final int myColumn;
 
     public RowEditorChangeListener(int column) {

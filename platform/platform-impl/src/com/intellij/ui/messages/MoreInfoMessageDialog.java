@@ -12,7 +12,7 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.awt.*;
 
-class MoreInfoMessageDialog extends MessageDialog {
+final class MoreInfoMessageDialog extends MessageDialog {
   private final @Nullable @Nls String myInfoText;
 
   MoreInfoMessageDialog(Project project,

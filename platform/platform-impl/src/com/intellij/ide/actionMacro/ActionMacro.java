@@ -185,7 +185,7 @@ public final class ActionMacro {
     void generateTo(StringBuffer script);
   }
 
-  public static class TypedDescriptor implements ActionDescriptor {
+  public static final class TypedDescriptor implements ActionDescriptor {
 
     private String myText;
 
@@ -281,7 +281,7 @@ public final class ActionMacro {
     }
   }
 
-  public static class ShortcutActionDescription implements ActionDescriptor {
+  public static final class ShortcutActionDescription implements ActionDescriptor {
 
     private final String myKeyStroke;
 
@@ -313,7 +313,7 @@ public final class ActionMacro {
     }
   }
 
-  public static class IdActionDescriptor implements ActionDescriptor {
+  public static final class IdActionDescriptor implements ActionDescriptor {
     private final String actionId;
 
     public IdActionDescriptor(String id) {

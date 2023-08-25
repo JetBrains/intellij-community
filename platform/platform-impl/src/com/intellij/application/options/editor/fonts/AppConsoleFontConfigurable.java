@@ -66,7 +66,7 @@ public final class AppConsoleFontConfigurable extends AppFontConfigurable {
     super.reset();
   }
 
-  private static class ConsoleFontOptionsPanel extends AppFontOptionsPanel {
+  private static final class ConsoleFontOptionsPanel extends AppFontOptionsPanel {
 
     private JCheckBox myUseEditorFontBox;
 
@@ -126,7 +126,7 @@ public final class AppConsoleFontConfigurable extends AppFontConfigurable {
     }
   }
 
-  public static class Provider extends ConfigurableProvider {
+  public static final class Provider extends ConfigurableProvider {
 
     @Override
     public @Nullable Configurable createConfigurable() {

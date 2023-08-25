@@ -58,7 +58,7 @@ public final class EditorActionManagerImpl extends EditorActionManager {
   }
 
 
-  private static class DefaultReadOnlyFragmentModificationHandler implements ReadonlyFragmentModificationHandler {
+  private static final class DefaultReadOnlyFragmentModificationHandler implements ReadonlyFragmentModificationHandler {
     @Override
     public void handle(ReadOnlyFragmentModificationException e) {
       Messages.showErrorDialog(EditorBundle.message("guarded.block.modification.attempt.error.message"),

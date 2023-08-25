@@ -292,7 +292,7 @@ public class DarculaJBPopupComboPopup<T> implements ComboPopup, ComboBoxPopup.Co
     return accessibleContext;
   }
 
-  private class AccessibleDarculaJBPopupComboPopup extends AccessibleContext implements JBPopupListener {
+  private final class AccessibleDarculaJBPopupComboPopup extends AccessibleContext implements JBPopupListener {
 
     @Override
     public AccessibleRole getAccessibleRole() {

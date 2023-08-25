@@ -852,7 +852,7 @@ public final class GlobalMenuLinux implements LinuxGlobalMenuEventHandler, Dispo
     return false;
   }
 
-  private static class MenuItemInternal {
+  private static final class MenuItemInternal {
     final int rootPos;
     final int uid;
     final int type;
@@ -1129,7 +1129,7 @@ public final class GlobalMenuLinux implements LinuxGlobalMenuEventHandler, Dispo
   private record QueuedEvent(int uid, int eventType, int rootId, long timeMs) {
   }
 
-  private class EventFilter {
+  private final class EventFilter {
     private final ArrayList<QueuedEvent> myQueued = new ArrayList<>();
     private Timer myTimer;
     private long myClosedMs = 0;

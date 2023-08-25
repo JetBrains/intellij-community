@@ -38,7 +38,7 @@ import java.awt.event.ActionListener;
 import java.awt.event.MouseEvent;
 import java.util.*;
 
-public class ExternalDependenciesConfigurable implements SearchableConfigurable {
+public final class ExternalDependenciesConfigurable implements SearchableConfigurable {
   private static final Logger LOG = Logger.getInstance(ExternalDependenciesConfigurable.class);
   private final ExternalDependenciesManager myDependenciesManager;
   private final CollectionListModel<ProjectExternalDependency> myListModel = new CollectionListModel<>();

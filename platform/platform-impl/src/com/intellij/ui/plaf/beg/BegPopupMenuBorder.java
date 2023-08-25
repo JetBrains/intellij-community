@@ -1,5 +1,5 @@
 
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui.plaf.beg;
 
 import com.intellij.ui.paint.LinePainter2D;
@@ -8,7 +8,7 @@ import javax.swing.border.AbstractBorder;
 import javax.swing.plaf.UIResource;
 import java.awt.*;
 
-public class BegPopupMenuBorder extends AbstractBorder implements UIResource {
+public final class BegPopupMenuBorder extends AbstractBorder implements UIResource {
   protected static Insets borderInsets = new Insets(3, 2, 2, 2);
   protected static Color color1 = new Color(214, 211, 206);
   protected static Color color2 = Color.white;

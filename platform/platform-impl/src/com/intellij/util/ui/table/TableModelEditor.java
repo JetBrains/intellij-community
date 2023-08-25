@@ -309,7 +309,7 @@ public class TableModelEditor<T> extends CollectionModelEditor<T, CollectionItem
     model.setItems(new ArrayList<>(items));
   }
 
-  private class MyRemoveAction implements AnActionButtonRunnable, AnActionButtonUpdater, TableUtil.ItemChecker {
+  private final class MyRemoveAction implements AnActionButtonRunnable, AnActionButtonUpdater, TableUtil.ItemChecker {
     @Override
     public void run(AnActionButton button) {
       if (TableUtil.doRemoveSelectedItems(table, model, this)) {

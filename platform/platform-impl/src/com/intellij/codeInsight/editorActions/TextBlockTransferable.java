@@ -21,7 +21,7 @@ import java.io.IOException;
 import java.io.StringReader;
 import java.util.*;
 
-public class TextBlockTransferable implements Transferable, Sizeable {
+public final class TextBlockTransferable implements Transferable, Sizeable {
   private final Collection<? extends TextBlockTransferableData> myExtraData;
   private final RawText myRawText;
   private final String myText;

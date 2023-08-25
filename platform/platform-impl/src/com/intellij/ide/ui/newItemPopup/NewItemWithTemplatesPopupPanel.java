@@ -148,7 +148,7 @@ public class NewItemWithTemplatesPopupPanel<T> extends NewItemSimplePopupPanel {
     }
   }
 
-  private static class JBExtendableTextFieldWithMixedAccessibleContext extends ExtendableTextField {
+  private static final class JBExtendableTextFieldWithMixedAccessibleContext extends ExtendableTextField {
     private AccessibleContext myListContext;
 
     @Override

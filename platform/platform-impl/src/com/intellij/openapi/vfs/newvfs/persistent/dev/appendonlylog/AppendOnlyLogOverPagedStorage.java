@@ -15,7 +15,7 @@ import java.util.concurrent.atomic.AtomicLong;
 /**
  *
  */
-public class AppendOnlyLogOverPagedStorage implements AppendOnlyLog {
+public final class AppendOnlyLogOverPagedStorage implements AppendOnlyLog {
 
   private final PagedFileStorageWithRWLockedPageContent storage;
 

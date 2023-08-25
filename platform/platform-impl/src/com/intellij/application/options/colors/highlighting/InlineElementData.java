@@ -13,7 +13,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.Collection;
 import java.util.Map;
 
-public class InlineElementData extends HighlightData {
+public final class InlineElementData extends HighlightData {
   private final String myText;
   private final boolean myAddBorder;
 

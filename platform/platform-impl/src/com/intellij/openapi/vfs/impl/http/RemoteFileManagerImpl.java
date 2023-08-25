@@ -110,7 +110,7 @@ public final class RemoteFileManagerImpl extends RemoteFileManager implements Di
     myStorage.deleteDownloadedFiles();
   }
 
-  private class MyDownloadingListener extends FileDownloadingAdapter {
+  private final class MyDownloadingListener extends FileDownloadingAdapter {
     private final HttpVirtualFileImpl myFile;
 
     MyDownloadingListener(final HttpVirtualFileImpl file) {

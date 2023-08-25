@@ -14,7 +14,7 @@ import java.util.function.Supplier;
 /**
  * @author Konstantin Bulenkov
  */
-public class EditorGutterLayout {
+public final class EditorGutterLayout {
   private static final String GAP_BETWEEN_AREAS = "Gap between areas";
   private static final String LINE_NUMBERS_AREA = "Line numbers";
   private static final String ADDITIONAL_LINE_NUMBERS_AREA = "Additional line numbers";
@@ -51,7 +51,7 @@ public class EditorGutterLayout {
     return null;
   }
 
-  static class GutterArea {
+  static final class GutterArea {
     private final String id;
     private final Supplier<Integer> widthFunc;
     private EditorMouseEventArea mouseEventAreaType;

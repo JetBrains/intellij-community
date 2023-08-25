@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui.popup;
 
 import com.intellij.openapi.util.SystemInfoRt;
@@ -14,7 +14,7 @@ import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
 import java.lang.reflect.Field;
 
-public class MovablePopup {
+public final class MovablePopup {
   private final HierarchyListener myListener = event -> setVisible(false);
   private Runnable myOnAncestorFocusLost = null;
   private final WindowAdapter myWindowFocusAdapter = new WindowAdapter() {

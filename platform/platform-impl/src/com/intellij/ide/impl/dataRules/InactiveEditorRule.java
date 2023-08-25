@@ -6,7 +6,7 @@ import com.intellij.openapi.actionSystem.DataProvider;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public class InactiveEditorRule implements GetDataRule {
+public final class InactiveEditorRule implements GetDataRule {
   @Override
   public @Nullable Object getData(final @NotNull DataProvider dataProvider) {
     return dataProvider.getData(CommonDataKeys.EDITOR.getName());

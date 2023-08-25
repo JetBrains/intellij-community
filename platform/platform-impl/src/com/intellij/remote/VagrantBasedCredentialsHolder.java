@@ -8,7 +8,7 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public class VagrantBasedCredentialsHolder {
+public final class VagrantBasedCredentialsHolder {
   private static final @NonNls String VAGRANT_FOLDER = "VAGRANT_FOLDER";
   private static final @NonNls String MACHINE_NAME = "MACHINE_NAME";
 

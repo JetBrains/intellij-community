@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.editor.impl;
 
 import com.intellij.codeInsight.editorActions.TextBlockTransferable;
@@ -30,7 +30,7 @@ import java.util.function.BiPredicate;
 
 import static com.intellij.openapi.editor.impl.CopiedFromEmptySelectionPasteMode.*;
 
-public class EditorCopyPasteHelperImpl extends EditorCopyPasteHelper {
+public final class EditorCopyPasteHelperImpl extends EditorCopyPasteHelper {
   public static final String COPIED_FROM_EMPTY_SELECTION_PASTE_MODE = "editor.paste.line.copied.from.empty.selection";
 
   @Override
@@ -267,7 +267,7 @@ public class EditorCopyPasteHelperImpl extends EditorCopyPasteHelper {
     return AdvancedSettings.getEnum(COPIED_FROM_EMPTY_SELECTION_PASTE_MODE, CopiedFromEmptySelectionPasteMode.class);
   }
 
-  public static class CopyPasteOptionsTransferableData implements TextBlockTransferableData, Serializable {
+  public static final class CopyPasteOptionsTransferableData implements TextBlockTransferableData, Serializable {
     private static final DataFlavor FLAVOR = new DataFlavor(CopyPasteOptionsTransferableData.class,
                                                             "Copy/paste options");
 

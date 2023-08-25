@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.notification.impl.widget;
 
 import com.intellij.icons.AllIcons;
@@ -26,7 +26,7 @@ import java.awt.*;
 import java.awt.event.MouseEvent;
 import java.util.List;
 
-public class IdeNotificationArea implements CustomStatusBarWidget, IconLikeCustomStatusBarWidget {
+public final class IdeNotificationArea implements CustomStatusBarWidget, IconLikeCustomStatusBarWidget {
   public static final String WIDGET_ID = "Notifications";
   private static final BadgeIconSupplier NOTIFICATION_ICON = new BadgeIconSupplier(AllIcons.Toolwindows.Notifications);
 
@@ -135,7 +135,7 @@ public class IdeNotificationArea implements CustomStatusBarWidget, IconLikeCusto
     return forToolWindow ? AllIcons.Toolwindows.NoEvents : AllIcons.Ide.Notification.NoEvents;
   }
 
-  private static class TextIcon implements Icon {
+  private static final class TextIcon implements Icon {
     private final String myStr;
     private final JComponent myComponent;
     private final Color myTextColor;

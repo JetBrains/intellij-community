@@ -258,7 +258,7 @@ public final class FeatureUsageTrackerImpl extends FeatureUsageTracker implement
     }
   }
 
-  public static class ProductivityUtilValidator extends CustomValidationRule {
+  public static final class ProductivityUtilValidator extends CustomValidationRule {
     @Override
     public @NotNull String getRuleId() {
       return "productivity";

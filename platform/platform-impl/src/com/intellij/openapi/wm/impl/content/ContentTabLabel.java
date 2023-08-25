@@ -215,7 +215,7 @@ public class ContentTabLabel extends ContentLabel {
     return myContent;
   }
 
-  private class CloseContentTabAction extends ContentTabAction {
+  private final class CloseContentTabAction extends ContentTabAction {
     private CloseContentTabAction() {
       super(new ActiveIcon(myActiveCloseIcon, myRegularCloseIcon));
     }

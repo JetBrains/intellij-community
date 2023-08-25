@@ -19,7 +19,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.VisibleForTesting;
 
-class ConflictingFileTypeMappingTracker {
+final class ConflictingFileTypeMappingTracker {
   /**
    * Somebody tries to assign matcher (which was previously assigned to the oldFileType) to the newFileType.
    * If there is a conflict, show notification "some plugin is going to override file type".

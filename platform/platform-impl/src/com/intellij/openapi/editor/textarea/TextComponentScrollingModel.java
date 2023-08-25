@@ -12,7 +12,7 @@ import javax.swing.text.JTextComponent;
 import java.awt.*;
 
 
-class TextComponentScrollingModel implements ScrollingModel {
+final class TextComponentScrollingModel implements ScrollingModel {
   private final JTextComponent myTextComponent;
 
   TextComponentScrollingModel(@NotNull JTextComponent textComponent) {

@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.diagnostic;
 
 import com.intellij.openapi.application.ApplicationManager;
@@ -25,7 +25,7 @@ public final class MessagePool {
   private static final int MAX_GROUP_SIZE = 20;
   private static final int GROUP_TIME_SPAN_MS = 1000;
 
-  private static class MessagePoolHolder {
+  private static final class MessagePoolHolder {
     private static final MessagePool ourInstance = new MessagePool();
   }
 
@@ -120,7 +120,7 @@ public final class MessagePool {
     notifyEntryAdded();
   }
 
-  private class MessageGrouper implements Runnable {
+  private final class MessageGrouper implements Runnable {
     private final List<AbstractMessage> myMessages = new ArrayList<>();
     private Future<?> myAlarm = CompletableFuture.completedFuture(null);
 

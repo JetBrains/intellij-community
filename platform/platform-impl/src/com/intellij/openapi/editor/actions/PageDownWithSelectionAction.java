@@ -11,8 +11,8 @@ import com.intellij.openapi.editor.actionSystem.EditorActionHandler;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public class PageDownWithSelectionAction extends EditorAction implements ActionRemoteBehaviorSpecification.Frontend {
-  public static class Handler extends EditorActionHandler {
+public final class PageDownWithSelectionAction extends EditorAction implements ActionRemoteBehaviorSpecification.Frontend {
+  public static final class Handler extends EditorActionHandler {
     @Override
     public void doExecute(final @NotNull Editor editor, @Nullable Caret caret, DataContext dataContext) {
       if (!editor.getCaretModel().supportsMultipleCarets()) {

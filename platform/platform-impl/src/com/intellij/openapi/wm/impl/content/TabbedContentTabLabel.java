@@ -79,7 +79,7 @@ public final class TabbedContentTabLabel extends ContentTabLabel {
     return getContent().hasMultipleTabs();
   }
 
-  private class SelectContentTabAction extends ContentTabAction {
+  private final class SelectContentTabAction extends ContentTabAction {
     private SelectContentTabAction() {
       super(new ActiveIcon(JBUI.CurrentTheme.ToolWindow.comboTabIcon(true),
                            JBUI.CurrentTheme.ToolWindow.comboTabIcon(false)));
@@ -96,7 +96,7 @@ public final class TabbedContentTabLabel extends ContentTabLabel {
     }
   }
 
-  protected class TabbedContentTabAdditionalIcon extends ContentAdditionalIcon {
+  protected final class TabbedContentTabAdditionalIcon extends ContentAdditionalIcon {
     public TabbedContentTabAdditionalIcon(@NotNull ContentTabAction action) {
       super(action);
     }

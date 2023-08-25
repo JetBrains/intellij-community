@@ -75,8 +75,8 @@ import java.util.List;
 import java.util.Map;
 
 @DirtyUI
-public class EditorComponentImpl extends JTextComponent implements Scrollable, DataProvider, Queryable, TypingTarget, Accessible,
-                                                                   UISettingsListener, UiInspectorPreciseContextProvider {
+public final class EditorComponentImpl extends JTextComponent implements Scrollable, DataProvider, Queryable, TypingTarget, Accessible,
+                                                                         UISettingsListener, UiInspectorPreciseContextProvider {
   private static final Logger LOG = Logger.getInstance(EditorComponentImpl.class);
 
   private final EditorImpl myEditor;
@@ -404,7 +404,7 @@ public class EditorComponentImpl extends JTextComponent implements Scrollable, D
    *    E.g. the test {@link com.intellij.openapi.editor.impl.EditorComponentCaretListenerTest#testCaretNotificationsCausedByUndo testCaretNotificationsCausedByUndo}
    *    won't get a notification after undoing the pasting
    */
-  private class EditorSwingCaretUpdatesCourier implements CaretListener, CaretActionListener, BulkAwareDocumentListener.Simple {
+  private final class EditorSwingCaretUpdatesCourier implements CaretListener, CaretActionListener, BulkAwareDocumentListener.Simple {
     /** true if {@link #beforeAllCaretsAction} has been called, but {@link #afterAllCaretsAction} - has still not */
     private boolean isInsideCaretsAction = false;
     private boolean isInsideBulkDocumentUpdate = false;
@@ -730,7 +730,7 @@ public class EditorComponentImpl extends JTextComponent implements Scrollable, D
   /** {@linkplain javax.swing.text.PlainDocument} does a lot of work we don't need.
    * This exists simply to be able to send editing events to the screen reader. */
   @SuppressWarnings("UnnecessaryFullyQualifiedName")
-  private class EditorAccessibilityDocument implements javax.swing.text.Document, javax.swing.text.Element {
+  private final class EditorAccessibilityDocument implements javax.swing.text.Document, javax.swing.text.Element {
     private List<javax.swing.event.DocumentListener> myListeners;
 
     public @Nullable List<javax.swing.event.DocumentListener> getListeners() {
@@ -987,7 +987,7 @@ public class EditorComponentImpl extends JTextComponent implements Scrollable, D
 
   /** {@linkplain DefaultCaret} does a lot of work we don't want (listening
    * for focus events etc). This exists simply to be able to send caret events to the screen reader. */
-  private class EditorAccessibilityCaret implements javax.swing.text.Caret {
+  private final class EditorAccessibilityCaret implements javax.swing.text.Caret {
     @Override
     public void install(JTextComponent jTextComponent) {
     }
@@ -1089,7 +1089,7 @@ public class EditorComponentImpl extends JTextComponent implements Scrollable, D
   /**
    * Specialized TextUI intended *only* for accessibility usage. Not all the methods are called; only viewToModel, not modelToView.
    */
-  private class EditorAccessibilityTextUI extends TextUI {
+  private final class EditorAccessibilityTextUI extends TextUI {
     @Override
     public @Nullable Rectangle modelToView(JTextComponent tc, int offset) {
       return modelToView(tc, offset, Position.Bias.Forward);
@@ -1164,7 +1164,7 @@ public class EditorComponentImpl extends JTextComponent implements Scrollable, D
     }
   }
 
-  private class AccessibleEditorComponentImpl extends AccessibleJComponent
+  private final class AccessibleEditorComponentImpl extends AccessibleJComponent
       implements AccessibleText, AccessibleEditableText, AccessibleExtendedText,
                  CaretListener, DocumentListener {
 
@@ -1752,7 +1752,7 @@ public class EditorComponentImpl extends JTextComponent implements Scrollable, D
     }
   }
 
-  private class EditorAccessibleContextDelegate extends AccessibleContextDelegateWithContextMenu implements AccessibleText {
+  private final class EditorAccessibleContextDelegate extends AccessibleContextDelegateWithContextMenu implements AccessibleText {
     public EditorAccessibleContextDelegate() { super(new AccessibleEditorComponentImpl()); }
 
     @Override

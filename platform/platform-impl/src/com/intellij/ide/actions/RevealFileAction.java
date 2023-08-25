@@ -292,7 +292,7 @@ public class RevealFileAction extends DumbAwareAction implements LightEditCompat
     });
   }
 
-  private static class Holder {
+  private static final class Holder {
     private static final String[] supportedFileManagers = {"nautilus", "pantheon-files", "dolphin", "dde-file-manager"};
 
     private static final @Nullable String fileManagerApp;

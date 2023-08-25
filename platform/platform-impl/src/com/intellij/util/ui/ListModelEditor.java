@@ -13,7 +13,7 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.util.List;
 
-public class ListModelEditor<T> extends ListModelEditorBase<T> {
+public final class ListModelEditor<T> extends ListModelEditorBase<T> {
   private final ToolbarDecorator toolbarDecorator;
 
   private final JBList<T> list = new JBList<>(model);

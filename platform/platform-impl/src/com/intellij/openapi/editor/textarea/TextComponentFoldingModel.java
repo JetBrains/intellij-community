@@ -6,7 +6,7 @@ import com.intellij.openapi.editor.FoldingModel;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-class TextComponentFoldingModel implements FoldingModel {
+final class TextComponentFoldingModel implements FoldingModel {
 
   @Override
   public FoldRegion addFoldRegion(int startOffset, int endOffset, @NotNull String placeholderText) {

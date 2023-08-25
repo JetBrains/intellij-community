@@ -345,7 +345,7 @@ public abstract class ContentChooser<Data> extends DialogWrapper {
     return sb.toString();
   }
 
-  private class MyListCellRenderer extends ColoredListCellRenderer<Item> {
+  private final class MyListCellRenderer extends ColoredListCellRenderer<Item> {
     int previewChars = 80;
 
     @Override

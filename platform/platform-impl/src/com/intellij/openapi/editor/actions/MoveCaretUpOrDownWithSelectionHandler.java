@@ -9,7 +9,7 @@ import com.intellij.openapi.editor.actionSystem.EditorActionHandler;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-class MoveCaretUpOrDownWithSelectionHandler extends EditorActionHandler {
+final class MoveCaretUpOrDownWithSelectionHandler extends EditorActionHandler {
   private final @NotNull MoveCaretUpOrDownHandler.Direction myDirection;
 
   MoveCaretUpOrDownWithSelectionHandler(@NotNull MoveCaretUpOrDownHandler.Direction direction) {

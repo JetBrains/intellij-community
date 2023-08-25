@@ -109,7 +109,7 @@ final class ApplierCompleter<T> extends CountedCompleter<Void> {
     }
   }
 
-  static class ComputationAbortedException extends RuntimeException {}
+  static final class ComputationAbortedException extends RuntimeException {}
   // executes tasks one by one and forks right halves if it takes too much time
   // returns the linked list of forked halves - they all need to be joined; null means all tasks have been executed, nothing was forked
   private @Nullable ApplierCompleter<T> execAndForkSubTasks() {

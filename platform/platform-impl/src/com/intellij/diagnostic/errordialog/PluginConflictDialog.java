@@ -28,7 +28,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 
-public class PluginConflictDialog extends DialogWrapper {
+public final class PluginConflictDialog extends DialogWrapper {
   public static final int WIDTH = 450;
 
   private final @NotNull List<PluginId> myConflictingPlugins;
@@ -210,7 +210,7 @@ public class PluginConflictDialog extends DialogWrapper {
     return ((DisableAction)myOKAction);
   }
 
-  private class DisableAction extends DialogWrapperAction {
+  private final class DisableAction extends DialogWrapperAction {
     protected DisableAction() {
       super(IdeBundle.message("plugins.configurable.disable"));
       putValue(DEFAULT_ACTION, Boolean.TRUE);

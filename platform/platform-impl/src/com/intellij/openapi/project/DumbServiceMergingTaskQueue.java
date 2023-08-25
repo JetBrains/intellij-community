@@ -13,7 +13,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.Collections;
 import java.util.concurrent.atomic.AtomicBoolean;
 
-public class DumbServiceMergingTaskQueue extends MergingTaskQueue<DumbModeTask> {
+public final class DumbServiceMergingTaskQueue extends MergingTaskQueue<DumbModeTask> {
 
   private static final ExtensionPointName<DumbServiceInitializationCondition> DUMB_SERVICE_INITIALIZATION_CONDITION_EXTENSION_POINT_NAME =
     ExtensionPointName.create("com.intellij.dumbServiceInitializationCondition");
@@ -42,7 +42,7 @@ public class DumbServiceMergingTaskQueue extends MergingTaskQueue<DumbModeTask> 
     return new QueuedDumbModeTask(task, indicator, childContext);
   }
 
-  class QueuedDumbModeTask extends MergingTaskQueue.QueuedTask<DumbModeTask> {
+  final class QueuedDumbModeTask extends MergingTaskQueue.QueuedTask<DumbModeTask> {
 
     QueuedDumbModeTask(@NotNull DumbModeTask task,
                        @NotNull ProgressIndicatorEx progress,

@@ -569,7 +569,7 @@ public final class BegMenuItemUI extends BasicMenuItemUI {
     return new MyMenuDragMouseHandler();
   }
 
-  private class MyMenuDragMouseHandler implements MenuDragMouseListener {
+  private final class MyMenuDragMouseHandler implements MenuDragMouseListener {
     @Override
     public void menuDragMouseEntered(MenuDragMouseEvent e){}
 

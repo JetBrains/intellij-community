@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.plugins;
 
 import com.intellij.icons.AllIcons;
@@ -126,7 +126,7 @@ class InstallFromDiskAction extends DumbAwareAction {
            null;
   }
 
-  private static class FileChooserDescriptorImpl extends FileChooserDescriptor {
+  private static final class FileChooserDescriptorImpl extends FileChooserDescriptor {
 
     private FileChooserDescriptorImpl() {
       super(false, false, true, true, false, false);

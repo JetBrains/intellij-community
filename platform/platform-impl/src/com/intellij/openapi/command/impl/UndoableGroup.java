@@ -390,7 +390,7 @@ final class UndoableGroup implements Dumpable {
     return result.toString();
   }
 
-  static class UndoableGroupOriginalContext {
+  static final class UndoableGroupOriginalContext {
     private final UndoableGroup myOriginalGroup;
     private final UndoableGroup myCurrentStackGroup;
 

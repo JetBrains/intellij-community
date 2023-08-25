@@ -326,7 +326,7 @@ public final class SpecializedFileAttributes {
     return ((VirtualFileWithId)vFile).getId();
   }
 
-  private static class FileAttributeAccessorHelper implements FileAttributeExAccessor, Closeable {
+  private static final class FileAttributeAccessorHelper implements FileAttributeExAccessor, Closeable {
     protected final @NotNull MappedFileStorageHelper storageHelper;
 
     protected FileAttributeAccessorHelper(@NotNull MappedFileStorageHelper helper) { storageHelper = helper; }

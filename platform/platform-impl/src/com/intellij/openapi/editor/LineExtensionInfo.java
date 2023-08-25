@@ -15,7 +15,7 @@ import java.awt.*;
  *
  * @author Konstantin Bulenkov
  */
-public class LineExtensionInfo {
+public final class LineExtensionInfo {
   private final @NotNull @Nls String myText;
   private final @Nullable Color myColor;
   private final @Nullable EffectType myEffectType;

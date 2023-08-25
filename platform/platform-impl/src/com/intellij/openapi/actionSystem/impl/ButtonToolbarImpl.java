@@ -72,7 +72,7 @@ class ButtonToolbarImpl extends JPanel {
     return DataManager.getInstance().getDataContext(target);
   }
 
-  private class ActionJButton extends JButton {
+  private final class ActionJButton extends JButton {
     private final AnAction myAction;
 
     ActionJButton(final AnAction action) {

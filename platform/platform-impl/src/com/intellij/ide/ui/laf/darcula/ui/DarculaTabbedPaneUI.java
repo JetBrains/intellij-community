@@ -497,7 +497,7 @@ public class DarculaTabbedPaneUI extends BasicTabbedPaneUI {
     return dest;
   }
 
-  private class ShowHiddenTabsButton extends JButton implements UIResource {
+  private final class ShowHiddenTabsButton extends JButton implements UIResource {
     private ShowHiddenTabsButton() {
       super(AllIcons.Actions.FindAndShowNextMatches);
       setToolTipText(IdeBundle.message("show.hidden.tabs"));
@@ -526,7 +526,7 @@ public class DarculaTabbedPaneUI extends BasicTabbedPaneUI {
     }
   }
 
-  private class WrappingLayout extends TabbedPaneLayout {
+  private final class WrappingLayout extends TabbedPaneLayout {
     private final TabbedPaneLayout myDelegate;
 
     private WrappingLayout(TabbedPaneLayout delegate) {

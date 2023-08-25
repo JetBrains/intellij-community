@@ -19,7 +19,7 @@ public final class PluginPathManager {
   private PluginPathManager() {
   }
 
-  private static class SubRepoHolder {
+  private static final class SubRepoHolder {
     private static final @NonNls List<String> ROOT_NAMES =
       List.of(
         "android",

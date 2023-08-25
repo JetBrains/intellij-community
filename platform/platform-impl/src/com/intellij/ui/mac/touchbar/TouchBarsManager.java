@@ -60,8 +60,7 @@ final class TouchBarsManager {
     final boolean areModifiersChanged = lastModifiersEx != oldLastModifiersEx;
 
     if (e instanceof MouseEvent && !areModifiersChanged) {
-      // NOTE: to increase stability of switching normal/alt layouts
-      // we process changes of modifiers mask even from mouse events
+      // NOTE: to increase the stability of switching normal/alt layouts, we process changes of modifier mask even from mouse events
       return;
     }
 
@@ -72,7 +71,7 @@ final class TouchBarsManager {
         && ((KeyEvent)e).getKeyCode() == KeyEvent.VK_ESCAPE
         && lastModifiersEx == 0
     ) {
-      // find current (showing) component corresponding to event window
+      // find current (showing) component corresponding to an event window
       final Window windowOfEvent = getWindow(e.getComponent());
       if (windowOfEvent == null) {
         if (LOG_INPUT_PROCESSING) LOG.debug("INPUT: can't find window of component %s (during isPhisycalEsc processing)", e.getComponent());
@@ -204,20 +203,6 @@ final class TouchBarsManager {
     ourComp2Actions.put(component, new ComponentActions(component, mainLayout, actions, customizations));
   }
 
-  static synchronized void register(@NotNull Component component, @NotNull Map<Long, ActionGroup> actions) {
-    register(component, actions, null);
-  }
-
-  static synchronized void registerAndShow(@NotNull Component component, @NotNull ActionGroup actions) {
-    register(component, actions);
-    showActionsOfComponent(component);
-  }
-
-  static synchronized void registerAndShow(@NotNull Component component, @NotNull Map<Long, ActionGroup> actions) {
-    register(component, actions);
-    showActionsOfComponent(component);
-  }
-
   static synchronized void registerAndShow(@NotNull Component component,
                                            @NotNull Map<Long, ActionGroup> actions,
                                            @Nullable Customizer customizations) {
@@ -339,7 +324,7 @@ final class TouchBarsManager {
   // ComponentActions
   //
 
-  private static class ComponentActions {
+  private static final class ComponentActions {
     private static final Map<ActionGroup, TBPanel> ourActions2Touchbar = new WeakHashMap<>(); // Cached touchbars (per ActionGroup)
 
     final @NotNull WeakReference<Component> component;
@@ -371,9 +356,9 @@ final class TouchBarsManager {
       this.customTouchbar = customTouchbar;
     }
 
-    boolean isPersistent() { return customizer != null && customizer.getCrossEscInfo() != null && customizer.getCrossEscInfo().persistent; }
-
-    boolean isHidden() { return customizer != null && customizer.getCrossEscInfo() != null && customizer.getCrossEscInfo().persistent; }
+    boolean isPersistent() {
+      return customizer != null && customizer.getCrossEscInfo() != null && customizer.getCrossEscInfo().persistent;
+    }
 
     void setCurrent(long altKeyMask) {
       @Nullable TBPanel alt = getTouchbar(altKeyMask, false);
@@ -444,7 +429,7 @@ final class TouchBarsManager {
   //
   // NOTE: use stack (per-window) to simplify such events as touchbar closing (we must show previous touchbar, so must remember it in stack)
   //
-  private static class Stack {
+  private static final class Stack {
     private final @Nullable WeakReference<Window> myWindow;
     private final ArrayDeque<ComponentActions> myStack = new ArrayDeque<>();
 

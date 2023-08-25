@@ -38,7 +38,7 @@ import org.jetbrains.annotations.TestOnly;
 
 import java.awt.*;
 
-public class CaretImpl extends UserDataHolderBase implements Caret, Dumpable {
+public final class CaretImpl extends UserDataHolderBase implements Caret, Dumpable {
   private static final Logger LOG = Logger.getInstance(CaretImpl.class);
   private static final Key<CaretVisualAttributes> VISUAL_ATTRIBUTES_KEY = new Key<>("CaretAttributes");
 

@@ -47,7 +47,7 @@ import static com.intellij.util.ui.JBUI.Panels.simplePanel;
  * @author Konstantin Bulenkov
  */
 @SuppressWarnings("HardCodedStringLiteral")
-public class ShowUIDefaultsAction extends AnAction implements DumbAware {
+public final class ShowUIDefaultsAction extends AnAction implements DumbAware {
   @Override
   public void actionPerformed(@NotNull AnActionEvent e) {
     final Project project = getEventProject(e);
@@ -461,7 +461,7 @@ public class ShowUIDefaultsAction extends AnAction implements DumbAware {
   }
 
 
-  private static class IconWrap implements Icon {
+  private static final class IconWrap implements Icon {
     private final Icon myIcon;
 
     IconWrap(Icon icon) {

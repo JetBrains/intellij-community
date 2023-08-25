@@ -6,7 +6,7 @@ import com.intellij.internal.statistic.eventLog.validator.ValidationResultType;
 import com.intellij.internal.statistic.eventLog.validator.rules.EventContext;
 import org.jetbrains.annotations.NotNull;
 
-public class ActionRuleValidator extends ClassNameRuleValidator {
+public final class ActionRuleValidator extends ClassNameRuleValidator {
   @Override
   public @NotNull String getRuleId() {
     return "action";

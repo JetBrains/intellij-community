@@ -108,7 +108,7 @@ public class ChangeFileEncodingAction extends AnAction implements DumbAware, Lig
                                                        Document document,
                                                        byte[] bytes,
                                                        @Nullable @NlsActions.ActionText String clearItemText) {
-    class MyAction extends ChooseFileEncodingAction {
+    final class MyAction extends ChooseFileEncodingAction {
       MyAction(@Nullable VirtualFile virtualFile) {
         super(virtualFile);
       }

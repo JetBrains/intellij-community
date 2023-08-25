@@ -9,7 +9,7 @@ import org.jetbrains.annotations.NotNull;
 import javax.swing.*;
 
 
-public class LockedIconLayerProvider implements IconLayerProvider {
+public final class LockedIconLayerProvider implements IconLayerProvider {
   @Override
   public Icon getLayerIcon(@NotNull Iconable element, boolean isLocked) {
     return isLocked && Registry.is("ide.locked.icon.enabled", false) ? PlatformIcons.LOCKED_ICON : null;

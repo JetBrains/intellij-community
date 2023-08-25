@@ -203,7 +203,7 @@ final class JBCefBrowserDemo extends AnAction implements DumbAware {
   }
 }
 
-class MyOkCancelDialog<T extends JComponent> extends DialogWrapper {
+final class MyOkCancelDialog<T extends JComponent> extends DialogWrapper {
   T myComp;
   Runnable myOkAction;
 

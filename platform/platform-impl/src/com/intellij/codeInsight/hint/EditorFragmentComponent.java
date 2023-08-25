@@ -324,7 +324,7 @@ public final class EditorFragmentComponent extends JPanel {
     return availableVisualLines;
   }
 
-  private static class MyComponentHint extends LightweightHint {
+  private static final class MyComponentHint extends LightweightHint {
     MyComponentHint(JComponent component) {
       super(component);
       setForceLightweightPopup(true);

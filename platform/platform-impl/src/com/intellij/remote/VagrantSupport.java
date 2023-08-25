@@ -62,6 +62,6 @@ public abstract class VagrantSupport {
   public abstract @Nullable String findVagrantFolder(@NotNull Project project);
 
 
-  public static class MultipleMachinesException extends Exception {
+  public static final class MultipleMachinesException extends Exception {
   }
 }

@@ -26,7 +26,7 @@ import java.awt.event.ComponentEvent;
 /**
  * @author Alexander Lobas
  */
-public class SearchPopup extends ComponentAdapter implements CaretListener {
+public final class SearchPopup extends ComponentAdapter implements CaretListener {
   public final Type type;
 
   private final JBPopupListener myListener;

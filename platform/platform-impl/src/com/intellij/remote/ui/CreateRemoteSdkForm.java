@@ -534,7 +534,7 @@ public abstract class CreateRemoteSdkForm<T extends RemoteSdkAdditionalData> ext
     }
   }
 
-  private class TypeHandlerEx implements TypeHandler {
+  private final class TypeHandlerEx implements TypeHandler {
 
     private final @NotNull JBRadioButton myRadioButton;
     private final @NotNull JPanel myPanel;
@@ -753,7 +753,7 @@ public abstract class CreateRemoteSdkForm<T extends RemoteSdkAdditionalData> ext
 
   private final @NotNull CredentialsEditorLabelsColumnTracker myLabelsColumnTracker = new CredentialsEditorLabelsColumnTracker();
 
-  private class CredentialsEditorLabelsColumnTracker implements ComponentListener, AncestorListener {
+  private final class CredentialsEditorLabelsColumnTracker implements ComponentListener, AncestorListener {
     private final @NotNull Set<JBLabel> myVisibleLabelsColumn = new HashSet<>();
 
     private @Nullable JBLabel myAnchoredLabel;

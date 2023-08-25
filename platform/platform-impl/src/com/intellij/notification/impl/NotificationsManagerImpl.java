@@ -1141,7 +1141,7 @@ public final class NotificationsManagerImpl extends NotificationsManager {
     return app.isUnitTestMode() || app.isCommandLine();
   }
 
-  private static class BalloonPopupSupport extends PopupMenuListenerAdapter implements Disposable {
+  private static final class BalloonPopupSupport extends PopupMenuListenerAdapter implements Disposable {
     private final JPopupMenu myPopupMenu;
     private final JComponent myComponent;
     private final Alarm myAlarm;
@@ -1354,7 +1354,7 @@ public final class NotificationsManagerImpl extends NotificationsManager {
     }
   }
 
-  private static class CenteredLayoutWithActions extends BorderLayout {
+  private static final class CenteredLayoutWithActions extends BorderLayout {
     private final JEditorPane myText;
     private final BalloonLayoutData myLayoutData;
     private JLabel myTitleComponent;
@@ -1540,7 +1540,7 @@ public final class NotificationsManagerImpl extends NotificationsManager {
     }
   }
 
-  private static class TextCaret extends DefaultCaret implements UIResource {
+  private static final class TextCaret extends DefaultCaret implements UIResource {
     private final BalloonLayoutData myLayoutData;
 
     TextCaret(@NotNull BalloonLayoutData layoutData) {

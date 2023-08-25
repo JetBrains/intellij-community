@@ -12,7 +12,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
 
-public class CloseEditorAction extends AnAction implements DumbAware, ActionRemoteBehaviorSpecification.Frontend {
+public final class CloseEditorAction extends AnAction implements DumbAware, ActionRemoteBehaviorSpecification.Frontend {
   @Override
   public void actionPerformed(@NotNull AnActionEvent e) {
     final Project project = e.getData(CommonDataKeys.PROJECT);

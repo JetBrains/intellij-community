@@ -17,7 +17,7 @@ import org.jetbrains.annotations.NotNull;
 import javax.swing.*;
 import java.awt.event.ActionEvent;
 
-public class ShowNotificationIconsDialogAction extends AnAction implements DumbAware {
+public final class ShowNotificationIconsDialogAction extends AnAction implements DumbAware {
   @Override
   public void actionPerformed(@NotNull AnActionEvent e) {
     new DialogWrapper(e.getProject()) {

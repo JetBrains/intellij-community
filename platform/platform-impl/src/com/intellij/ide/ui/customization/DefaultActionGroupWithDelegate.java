@@ -8,7 +8,7 @@ import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 @ApiStatus.Experimental
-public class DefaultActionGroupWithDelegate extends DefaultActionGroup implements ActionWithDelegate<ActionGroup> {
+public final class DefaultActionGroupWithDelegate extends DefaultActionGroup implements ActionWithDelegate<ActionGroup> {
   private final ActionGroup myDelegate;
 
   public DefaultActionGroupWithDelegate(ActionGroup delegate) {

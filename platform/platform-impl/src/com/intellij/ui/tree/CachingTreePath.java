@@ -6,7 +6,7 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.tree.TreePath;
 
-public class CachingTreePath extends TreePath {
+public final class CachingTreePath extends TreePath {
   private final int myPathCount;
 
   public CachingTreePath(@NotNull Object lastPathComponent) {

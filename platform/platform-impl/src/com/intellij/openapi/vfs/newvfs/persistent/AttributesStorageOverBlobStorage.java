@@ -36,7 +36,7 @@ import static com.intellij.util.SystemProperties.getBooleanProperty;
  * Attribute storage implemented on the top of {@link StreamlinedBlobStorage}
  */
 @ApiStatus.Internal
-public class AttributesStorageOverBlobStorage implements AbstractAttributesStorage {
+public final class AttributesStorageOverBlobStorage implements AbstractAttributesStorage {
   public static final int MAX_SUPPORTED_ATTRIBUTE_ID = 1 << AttributeEntry.BIG_ENTRY_ATTR_ID_BITS;
 
   /**
@@ -310,7 +310,7 @@ public class AttributesStorageOverBlobStorage implements AbstractAttributesStora
    * by calling code)
    */
   @VisibleForTesting
-  protected static class AttributesRecord {
+  protected static final class AttributesRecord {
 
     public static final int RECORD_FILE_ID_OFFSET = 0;
     public static final int RECORD_HEADER_SIZE = Integer.BYTES;
@@ -415,7 +415,7 @@ public class AttributesStorageOverBlobStorage implements AbstractAttributesStora
   }
 
   @VisibleForTesting
-  protected static class AttributeEntry {
+  protected static final class AttributeEntry {
     //Entry binary format:
     //    We try hard to be as compact as possible. This is because we have really a lot of very small attributes:
     //    2-10 bytes attributes are very common (and they are the most frequently queried/updated), and >97% of

@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.actions;
 
 import com.intellij.ide.BrowserUtil;
@@ -28,7 +28,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.awt.*;
 
-public class SendFeedbackAction extends AnAction implements DumbAware {
+public final class SendFeedbackAction extends AnAction implements DumbAware {
   @Override
   public void update(@NotNull AnActionEvent e) {
     boolean isSupportedOS = SystemInfo.isMac || SystemInfo.isLinux || SystemInfo.isWindows;

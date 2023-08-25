@@ -284,7 +284,7 @@ public abstract class BreadcrumbsPanel extends JComponent implements Disposable 
     return null;
   }
 
-  protected static class CrumbHighlightInfo {
+  protected static final class CrumbHighlightInfo {
     public final @NotNull TextRange range;
     public final @Nullable CrumbPresentation presentation;
 

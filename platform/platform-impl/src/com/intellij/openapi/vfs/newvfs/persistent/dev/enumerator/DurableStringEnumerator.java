@@ -26,7 +26,7 @@ import static java.nio.charset.StandardCharsets.UTF_8;
  * Persistent enumerator for strings.
  * Uses append-only log to store strings, and in-memory Map[string.hash->id*].
  */
-public class DurableStringEnumerator implements ScannableDataEnumeratorEx<String>, Forceable, Closeable {
+public final class DurableStringEnumerator implements ScannableDataEnumeratorEx<String>, Forceable, Closeable {
 
   public static final int DATA_FORMAT_VERSION = 1;
 

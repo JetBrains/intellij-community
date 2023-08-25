@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.wm.impl.status;
 
 import com.intellij.ide.lightEdit.LightEditCompatible;
@@ -138,7 +138,7 @@ final class ProcessBalloon {
 
     BalloonLayoutImpl balloonLayout = getBalloonLayout(pane);
     if (balloonLayout != null) {
-      class MyListener implements JBPopupListener, Runnable {
+      final class MyListener implements JBPopupListener, Runnable {
         @Override
         public void beforeShown(@NotNull LightweightWindowEvent event) {
           balloonLayout.addListener(this);

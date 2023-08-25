@@ -14,7 +14,7 @@ import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
 
-public class FileAppearanceServiceImpl extends FileAppearanceService {
+public final class FileAppearanceServiceImpl extends FileAppearanceService {
   private static final CellAppearanceEx EMPTY = new CellAppearanceEx() {
     @Override
     public void customize(@NotNull SimpleColoredComponent component) { }

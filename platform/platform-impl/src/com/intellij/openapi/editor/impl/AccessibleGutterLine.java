@@ -325,7 +325,7 @@ final class AccessibleGutterLine extends JPanel {
    *
    * @author tav
    */
-  private class AccessibleGutterElement extends JLabel {
+  private final class AccessibleGutterElement extends JLabel {
     private final @NotNull MySimpleAccessible myAccessible;
 
     AccessibleGutterElement(@NotNull MySimpleAccessible accessible, @NotNull Rectangle bounds) {

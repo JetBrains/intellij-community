@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vfs.newvfs.persistent;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -39,7 +39,7 @@ import static java.nio.file.StandardOpenOption.*;
  * Implementation uses memory-mapped file (real one, not our emulation of it via {@link com.intellij.util.io.FilePageCache}).
  */
 @ApiStatus.Internal
-public class PersistentFSRecordsLockFreeOverMMappedFile implements PersistentFSRecordsStorage, IPersistentFSRecordsStorage {
+public final class PersistentFSRecordsLockFreeOverMMappedFile implements PersistentFSRecordsStorage, IPersistentFSRecordsStorage {
 
   /* ================ FILE HEADER FIELDS LAYOUT ======================================================= */
   /**
@@ -175,7 +175,7 @@ public class PersistentFSRecordsLockFreeOverMMappedFile implements PersistentFSR
   }
 
 
-  private static class RecordAccessor implements RecordForUpdate {
+  private static final class RecordAccessor implements RecordForUpdate {
     private final int recordId;
     private final int recordOffsetInPage;
     private final transient ByteBuffer pageBuffer;
@@ -320,7 +320,7 @@ public class PersistentFSRecordsLockFreeOverMMappedFile implements PersistentFSR
     }
   }
 
-  private static class HeaderAccessor implements HeaderForUpdate {
+  private static final class HeaderAccessor implements HeaderForUpdate {
     private final @NotNull PersistentFSRecordsLockFreeOverMMappedFile records;
 
     private HeaderAccessor(final @NotNull PersistentFSRecordsLockFreeOverMMappedFile records) { this.records = records; }
@@ -862,7 +862,7 @@ public class PersistentFSRecordsLockFreeOverMMappedFile implements PersistentFSR
   }
 
   @ApiStatus.Internal
-  public static class MMappedFileStorage implements Closeable {
+  public static final class MMappedFileStorage implements Closeable {
     private static final Logger LOG = Logger.getInstance(MMappedFileStorage.class);
 
     //Keep track of mapped buffers allocated & their total size, numbers are reported to OTel.Metrics.
@@ -1057,7 +1057,7 @@ public class PersistentFSRecordsLockFreeOverMMappedFile implements PersistentFSR
              ']';
     }
 
-    public static class Page implements AutoCloseable {
+    public static final class Page implements AutoCloseable {
       private final int pageIndex;
       private final long offsetInFile;
       private final ByteBuffer pageBuffer;

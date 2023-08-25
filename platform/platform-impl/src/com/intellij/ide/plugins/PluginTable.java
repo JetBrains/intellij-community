@@ -19,7 +19,7 @@ import javax.swing.table.TableColumn;
 import java.awt.*;
 import java.awt.datatransfer.Transferable;
 
-public class PluginTable extends JBTable {
+public final class PluginTable extends JBTable {
   public PluginTable(final PluginTableModel model) {
     super(model);
     getColumnModel().setColumnMargin(0);

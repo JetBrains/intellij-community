@@ -40,7 +40,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.stream.Stream;
 
-public class EditorFactoryImpl extends EditorFactory {
+public final class EditorFactoryImpl extends EditorFactory {
   private static final ExtensionPointName<EditorFactoryListener> EP = new ExtensionPointName<>("com.intellij.editorFactoryListener");
 
   private static final Logger LOG = Logger.getInstance(EditorFactoryImpl.class);

@@ -203,7 +203,7 @@ final class InspectorTable extends JBSplitter implements DataProvider, Disposabl
     return null;
   }
 
-  private static class MyModel extends AbstractTableModel {
+  private static final class MyModel extends AbstractTableModel {
     final Component myComponent;
     final List<PropertyBean> myProperties = new ArrayList<>();
 
@@ -364,7 +364,7 @@ final class InspectorTable extends JBSplitter implements DataProvider, Disposabl
     }
   }
 
-  private class MyCellSelectionListener implements ListSelectionListener {
+  private final class MyCellSelectionListener implements ListSelectionListener {
     private String selectedProperty = null;
 
     @Override
@@ -513,7 +513,7 @@ final class InspectorTable extends JBSplitter implements DataProvider, Disposabl
     }
   }
 
-  private static class PropertyNameRenderer extends DefaultTableCellRenderer {
+  private static final class PropertyNameRenderer extends DefaultTableCellRenderer {
     @Override
     public Component getTableCellRendererComponent(JTable table,
                                                    Object value,
@@ -539,7 +539,7 @@ final class InspectorTable extends JBSplitter implements DataProvider, Disposabl
     }
   }
 
-  private class MyInspectorTableCopyProvider implements CopyProvider {
+  private final class MyInspectorTableCopyProvider implements CopyProvider {
     @Override
     public @NotNull ActionUpdateThread getActionUpdateThread() {
       return ActionUpdateThread.EDT;

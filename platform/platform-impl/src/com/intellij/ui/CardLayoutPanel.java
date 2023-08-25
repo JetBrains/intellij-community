@@ -228,7 +228,7 @@ public abstract class CardLayoutPanel<K, UI, V extends Component> extends JCompo
     return accessibleContext;
   }
 
-  protected class AccessibleCardLayoutPanel extends AccessibleJComponent {
+  protected final class AccessibleCardLayoutPanel extends AccessibleJComponent {
     @Override
     public AccessibleRole getAccessibleRole() {
       return AccessibleRole.PANEL;

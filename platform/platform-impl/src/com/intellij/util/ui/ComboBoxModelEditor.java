@@ -31,7 +31,7 @@ public final class ComboBoxModelEditor<T> extends ListModelEditorBase<T> {
     return comboBox;
   }
 
-  private class NameEditor extends FixedComboBoxEditor {
+  private final class NameEditor extends FixedComboBoxEditor {
     private T item = null;
     private boolean mutated;
 

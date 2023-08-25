@@ -114,7 +114,7 @@ public class CompositeColorDescriptionPanel extends JPanel implements ColorDescr
     myListeners.add(listener);
   }
 
-  private static class PaintLocker {
+  private static final class PaintLocker {
     private final Container myPaintHolder;
     private final boolean myPaintState;
 

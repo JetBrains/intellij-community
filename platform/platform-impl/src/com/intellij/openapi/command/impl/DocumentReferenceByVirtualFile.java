@@ -8,7 +8,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public class DocumentReferenceByVirtualFile implements DocumentReference {
+public final class DocumentReferenceByVirtualFile implements DocumentReference {
   private VirtualFile myFile;
 
   DocumentReferenceByVirtualFile(@NotNull VirtualFile file) {

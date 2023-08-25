@@ -26,7 +26,7 @@ import java.util.Set;
 /**
  * @author Yura Cangea
  */
-public class FileTreeStructure extends AbstractTreeStructure {
+public final class FileTreeStructure extends AbstractTreeStructure {
   private static final Logger LOG = Logger.getInstance(FileTreeStructure.class);
 
   private final RootFileElement myRootElement;

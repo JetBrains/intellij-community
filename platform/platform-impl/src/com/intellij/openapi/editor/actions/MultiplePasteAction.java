@@ -26,7 +26,7 @@ import java.io.IOException;
 import java.util.Arrays;
 import java.util.List;
 
-public class MultiplePasteAction extends AnAction implements DumbAware {
+public final class MultiplePasteAction extends AnAction implements DumbAware {
 
   public MultiplePasteAction() {
     setEnabledInModalContext(true);
@@ -111,7 +111,7 @@ public class MultiplePasteAction extends AnAction implements DumbAware {
     return DialogWrapper.NEXT_USER_EXIT_CODE;
   }
 
-  private static class ClipboardContentChooser extends ContentChooser<Transferable> {
+  private static final class ClipboardContentChooser extends ContentChooser<Transferable> {
 
     ClipboardContentChooser(Project project) {
       super(project, UIBundle.message("choose.content.to.paste.dialog.title"), true, true);
