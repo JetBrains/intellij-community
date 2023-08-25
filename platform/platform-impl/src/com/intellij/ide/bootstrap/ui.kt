@@ -66,6 +66,9 @@ internal fun CoroutineScope.scheduleInitUi(initAwtToolkitJob: Job, isHeadless: B
 
 internal suspend fun patchHtmlStyle(initLafJob: Job) {
   initLafJob.join()
+
+  Class.forName(GlobalStyleSheetHolder::class.java.name, true, AppStarter::class.java.classLoader)
+
   // separate task - allow other UI tasks to be executed (e.g., show splash)
   withContext(RawSwingDispatcher) {
     val uiDefaults = span("app-specific laf state initialization") { UIManager.getDefaults() }
@@ -142,7 +145,6 @@ internal fun CoroutineScope.scheduleInitAwtToolkit(lockSystemDirsJob: Job, busyT
     Class.forName(JreHiDpiUtil::class.java.name, true, classLoader)
     Class.forName(SynchronizedClearableLazy::class.java.name, true, classLoader)
     Class.forName(ScaleContext::class.java.name, true, classLoader)
-    Class.forName(GlobalStyleSheetHolder::class.java.name, true, classLoader)
     Class.forName(StartupUiUtil::class.java.name, true, classLoader)
   }
   return task

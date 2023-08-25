@@ -9,7 +9,6 @@ import com.intellij.diagnostic.COROUTINE_DUMP_HEADER
 import com.intellij.diagnostic.LoadingState
 import com.intellij.diagnostic.dumpCoroutines
 import com.intellij.diagnostic.enableCoroutineDump
-import com.intellij.icons.AllIcons
 import com.intellij.ide.*
 import com.intellij.ide.gdpr.EndUserAgreement
 import com.intellij.ide.plugins.PluginManagerCore
@@ -43,14 +42,12 @@ import com.intellij.platform.diagnostic.telemetry.TelemetryManager
 import com.intellij.platform.diagnostic.telemetry.impl.TelemetryManagerImpl
 import com.intellij.platform.diagnostic.telemetry.impl.span
 import com.intellij.platform.ide.CoreUiCoroutineScopeHolder
-import com.intellij.ui.AnimatedIcon
 import com.intellij.ui.AppIcon
 import com.intellij.ui.ExperimentalUI
 import com.intellij.util.PlatformUtils
 import com.intellij.util.io.URLUtil
 import com.intellij.util.io.createDirectories
 import com.intellij.util.lang.ZipFilePool
-import com.intellij.util.ui.AsyncProcessIcon
 import com.jetbrains.JBR
 import kotlinx.coroutines.*
 import org.jetbrains.annotations.ApiStatus.Internal
@@ -255,20 +252,12 @@ private suspend fun preInitApp(app: ApplicationImpl,
       app.serviceAsync<LafManager>()
     }
 
-    installIconPatcherJob?.join()
-
     if (!app.isHeadlessEnvironment) {
-      asyncScope.launch(CoroutineName("icons preloading") + Dispatchers.IO) {
-        AsyncProcessIcon.createBig(this)
-        AsyncProcessIcon(this)
-        AnimatedIcon.Blinking(AllIcons.Ide.FatalError)
-        AnimatedIcon.FS()
-      }
-
       asyncScope.launch {
         // preload only when LafManager is ready
         lafJob.join()
-        span("EditorColorsManager preloading") {
+
+        launch(CoroutineName("EditorColorsManager preloading")) {
           app.serviceAsync<EditorColorsManager>()
         }
       }
