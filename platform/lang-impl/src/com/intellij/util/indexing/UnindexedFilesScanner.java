@@ -506,7 +506,6 @@ public class UnindexedFilesScanner implements FilesScanningTask {
     ProjectScanningHistoryImpl scanningHistory = new ProjectScanningHistoryImpl(myProject, myIndexingReason, myScanningType);
     myIndex.loadIndexes();
     myIndex.filesUpdateStarted(myProject, isFullIndexUpdate());
-    IndexDiagnosticDumper.getInstance().onIndexingStarted(projectIndexingHistory);
     IndexDiagnosticDumper.getInstance().onScanningStarted(scanningHistory);
     Ref<StatusMark> markRef = new Ref<>();
     try {
@@ -531,7 +530,6 @@ public class UnindexedFilesScanner implements FilesScanningTask {
         DependenciesIndexedStatusService.getInstance(myProject)
           .indexingFinished(!projectIndexingHistory.getTimes().getWasInterrupted(), markRef.get());
       }
-      IndexDiagnosticDumper.getInstance().onIndexingFinished(projectIndexingHistory);
       IndexDiagnosticDumper.getInstance().onScanningFinished(scanningHistory);
     }
     return scanningHistory;

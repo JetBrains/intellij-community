@@ -176,7 +176,6 @@ public final class UnindexedFilesIndexer extends DumbModeTask {
     }
     ProjectIndexingHistoryImpl projectIndexingHistory = new ProjectIndexingHistoryImpl(myProject, indexingReason, ScanningType.REFRESH);
     ProjectDumbIndexingHistoryImpl projectDumbIndexingHistory = new ProjectDumbIndexingHistoryImpl(myProject);
-    IndexDiagnosticDumper.getInstance().onIndexingStarted(projectIndexingHistory);
     IndexDiagnosticDumper.getInstance().onDumbIndexingStarted(projectDumbIndexingHistory);
     ProgressSuspender suspender = ProgressSuspender.getSuspender(indicator);
     if (suspender != null) {
@@ -213,7 +212,6 @@ public final class UnindexedFilesIndexer extends DumbModeTask {
     }
     finally {
       projectIndexingHistory.finishTotalUpdatingTime();
-      IndexDiagnosticDumper.getInstance().onIndexingFinished(projectIndexingHistory);
       IndexDiagnosticDumper.getInstance().onDumbIndexingFinished(projectDumbIndexingHistory);
     }
   }

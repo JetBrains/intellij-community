@@ -26,7 +26,6 @@ import com.intellij.util.io.createDirectories
 import com.intellij.util.io.delete
 import com.intellij.util.io.directoryStreamIfExists
 import com.intellij.util.io.fileSizeSafe
-import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.TestOnly
 import java.io.Reader
 import java.nio.file.Files
@@ -41,8 +40,6 @@ import kotlin.streams.asSequence
 private const val DIAGNOSTIC_LIMIT_OF_FILES_PROPERTY = "intellij.indexes.diagnostics.limit.of.files"
 
 class IndexDiagnosticDumper : Disposable {
-  private val indexingHistoryListenerPublisher =
-    ApplicationManager.getApplication().messageBus.syncPublisher(ProjectIndexingHistoryListener.TOPIC)
   private val indexingActivityHistoryListenerPublisher =
     ApplicationManager.getApplication().messageBus.syncPublisher(ProjectIndexingActivityHistoryListener.TOPIC)
 
@@ -51,10 +48,6 @@ class IndexDiagnosticDumper : Disposable {
     fun getInstance(): IndexDiagnosticDumper = service()
 
     private const val FILE_NAME_PREFIX = "diagnostic-"
-
-    @JvmStatic
-    val projectIndexingHistoryListenerEpName: ExtensionPointName<ProjectIndexingHistoryListener> =
-      ExtensionPointName.create("com.intellij.projectIndexingHistoryListener")
 
     @JvmStatic
     val projectIndexingActivityHistoryListenerEpName: ExtensionPointName<ProjectIndexingActivityHistoryListener> =
@@ -225,30 +218,6 @@ class IndexDiagnosticDumper : Disposable {
   private var isDisposed = false
 
   private val unsavedIndexingActivityHistories = ConcurrentCollectionFactory.createConcurrentIdentitySet<ProjectIndexingActivityHistory>()
-
-  @Deprecated("Use onDumbIndexingStarted or onScanningStarted instead")
-  @ApiStatus.ScheduledForRemoval
-  fun onIndexingStarted(projectIndexingHistory: ProjectIndexingHistoryImpl) {
-    runAllListenersSafely(projectIndexingHistoryListenerEpName, indexingHistoryListenerPublisher) {
-      onStartedIndexing(projectIndexingHistory)
-    }
-  }
-
-  @Deprecated("Use onDumbIndexingFinished or onScanningFinished instead")
-  @ApiStatus.ScheduledForRemoval
-  fun onIndexingFinished(projectIndexingHistory: ProjectIndexingHistoryImpl) {
-    try {
-      projectIndexingHistory.indexingFinished()
-      if (projectIndexingHistory.times.wasInterrupted && !shouldDumpDiagnosticsForInterruptedUpdaters) {
-        return
-      }
-    }
-    finally {
-      runAllListenersSafely(projectIndexingHistoryListenerEpName, indexingHistoryListenerPublisher) {
-        onFinishedIndexing(projectIndexingHistory)
-      }
-    }
-  }
 
   fun onScanningStarted(history: ProjectScanningHistory) {
     runAllListenersSafely(projectIndexingActivityHistoryListenerEpName, indexingActivityHistoryListenerPublisher) {
