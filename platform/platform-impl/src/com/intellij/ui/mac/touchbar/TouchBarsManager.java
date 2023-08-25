@@ -22,13 +22,14 @@ final class TouchBarsManager {
   private static final Logger LOG = Logger.getInstance(TouchBarsManager.class);
   private static final boolean LOG_FOCUS_PROCESSING = Boolean.getBoolean("touchbar.TouchBarsManager.debug.focus.processing");
   private static final boolean LOG_INPUT_PROCESSING = Boolean.getBoolean("touchbar.TouchBarsManager.debug.input.processing");
-  private static final boolean FORCE_UPDATE_ON_SHOW = Boolean.getBoolean("touchbar.TouchBarsManager.force.update.on.show"); // to debug/experiment
+  private static final boolean FORCE_UPDATE_ON_SHOW = Boolean.getBoolean("touchbar.TouchBarsManager.force.update.on.show");
+  // to debug/experiment
   private static final long CHANGE_DELAY = Long.getLong("touchbar.TouchBarsManager.change.delay", 200);
 
   private static final Map<Window, Stack> ourStacks = new WeakHashMap<>();
   private static final Map<Component, ComponentActions> ourComp2Actions = new WeakHashMap<>();
 
-  private static int ourLastModifiersEx = 0;
+  private static int lastModifiersEx = 0;
 
   static synchronized void processAWTEvent(AWTEvent e) {
     if (e instanceof InputEvent) {
@@ -38,11 +39,11 @@ final class TouchBarsManager {
 
     final int eid = e.getID();
     if (eid == FocusEvent.FOCUS_GAINED ||
-               eid == FocusEvent.FOCUS_LOST ||
-               eid == WindowEvent.WINDOW_ACTIVATED ||
-               eid == WindowEvent.WINDOW_DEACTIVATED ||
-               eid == WindowEvent.WINDOW_LOST_FOCUS ||
-               eid == WindowEvent.WINDOW_GAINED_FOCUS
+        eid == FocusEvent.FOCUS_LOST ||
+        eid == WindowEvent.WINDOW_ACTIVATED ||
+        eid == WindowEvent.WINDOW_DEACTIVATED ||
+        eid == WindowEvent.WINDOW_LOST_FOCUS ||
+        eid == WindowEvent.WINDOW_GAINED_FOCUS
     ) {
       processFocusEvent(e);
     }
@@ -54,9 +55,9 @@ final class TouchBarsManager {
                             InputEvent.CTRL_DOWN_MASK |
                             InputEvent.SHIFT_DOWN_MASK |
                             InputEvent.ALT_GRAPH_DOWN_MASK;
-    final int oldLastModifiersEx = ourLastModifiersEx;
-    ourLastModifiersEx = e.getModifiersEx() & usedKeyMask;
-    final boolean areModifiersChanged = ourLastModifiersEx != oldLastModifiersEx;
+    final int oldLastModifiersEx = lastModifiersEx;
+    lastModifiersEx = e.getModifiersEx() & usedKeyMask;
+    final boolean areModifiersChanged = lastModifiersEx != oldLastModifiersEx;
 
     if (e instanceof MouseEvent && !areModifiersChanged) {
       // NOTE: to increase stability of switching normal/alt layouts
@@ -69,7 +70,7 @@ final class TouchBarsManager {
         && e instanceof KeyEvent
         && e.getID() == KeyEvent.KEY_RELEASED
         && ((KeyEvent)e).getKeyCode() == KeyEvent.VK_ESCAPE
-        && ourLastModifiersEx == 0
+        && lastModifiersEx == 0
     ) {
       // find current (showing) component corresponding to event window
       final Window windowOfEvent = getWindow(e.getComponent());
@@ -92,22 +93,25 @@ final class TouchBarsManager {
       final @Nullable ComponentActions componentActions = getShownActions(windowOfEvent);
       if (componentActions == null) {
         LOG.debug("INPUT: no touchbar actions are shown for window '%s', component '%s'", windowOfEvent, e.getComponent());
-      } else {
-        LOG.debug("INPUT: show actions of component %s, keymask=%d", componentActions.component.get(), ourLastModifiersEx);
+      }
+      else {
+        LOG.debug("INPUT: show actions of component %s, keymask=%d", componentActions.component.get(), lastModifiersEx);
       }
     }
 
     if (areModifiersChanged) {
       // change to alt for all registered components
       for (ComponentActions ca : ourComp2Actions.values()) {
-        if (ca != null)
-          ca.setCurrent(ourLastModifiersEx);
+        if (ca != null) {
+          ca.setCurrent(lastModifiersEx);
+        }
       }
 
       // NOTE: mask-change can be received from popup window, but we must update stack for popup and also at least for main-frame.
       // So update for all windows.
-      for (Stack s : ourStacks.values())
+      for (Stack s : ourStacks.values()) {
         s.updateIfNecessary();
+      }
     }
   }
 
@@ -123,7 +127,7 @@ final class TouchBarsManager {
       final @Nullable ComponentActions shownActions = getShownActions(windowOfEvent);
       final boolean isShownPersistent = shownActions != null && shownActions.isPersistent();
 
-      for(Component p = src; p!=null; p=p.getParent()) {
+      for (Component p = src; p != null; p = p.getParent()) {
         final @Nullable ComponentActions candidateActions = ourComp2Actions.get(p);
         if (candidateActions == null) {
           continue;
@@ -168,7 +172,7 @@ final class TouchBarsManager {
     }
   }
 
-  static int getLastModifiersEx() { return ourLastModifiersEx; }
+  static int getLastModifiersEx() { return lastModifiersEx; }
 
   static synchronized void register(@NotNull Component component, @NotNull ActionGroup actions, @Nullable Customizer customizations) {
     LOG.debug("register actions '%s' for component %s", actions, component);
@@ -180,7 +184,9 @@ final class TouchBarsManager {
     register(component, actions, null);
   }
 
-  static synchronized void register(@NotNull Component component, @NotNull Map<Long, ActionGroup> actions, @Nullable Customizer customizations) {
+  static synchronized void register(@NotNull Component component,
+                                    @NotNull Map<Long, ActionGroup> actions,
+                                    @Nullable Customizer customizations) {
     final ActionGroup mainLayout = actions.get(0L);
     if (mainLayout == null) {
       LOG.debug("can't find main layout for component: %s (actions will not be added)", component);
@@ -188,9 +194,10 @@ final class TouchBarsManager {
     }
     if (LOG.isDebugEnabled()) {
       LOG.debug("register actions '" + mainLayout + "' for component " + component);
-      for (Long key: actions.keySet()) {
-        if (key != 0)
+      for (Long key : actions.keySet()) {
+        if (key != 0) {
           LOG.debug("\talt action '" + actions.get(key));
+        }
       }
     }
     unregister(component); // cleanup for insurance
@@ -211,12 +218,16 @@ final class TouchBarsManager {
     showActionsOfComponent(component);
   }
 
-  static synchronized void registerAndShow(@NotNull Component component, @NotNull Map<Long, ActionGroup> actions, @Nullable Customizer customizations) {
+  static synchronized void registerAndShow(@NotNull Component component,
+                                           @NotNull Map<Long, ActionGroup> actions,
+                                           @Nullable Customizer customizations) {
     register(component, actions, customizations);
     showActionsOfComponent(component);
   }
 
-  static synchronized void registerAndShow(@NotNull Component component, @NotNull ActionGroup actions, @Nullable Customizer customizations) {
+  static synchronized void registerAndShow(@NotNull Component component,
+                                           @NotNull ActionGroup actions,
+                                           @Nullable Customizer customizations) {
     register(component, actions, customizations);
     showActionsOfComponent(component);
   }
@@ -282,7 +293,7 @@ final class TouchBarsManager {
   }
 
   private static void showTouchbar(@NotNull ComponentActions componentActions) {
-    componentActions.setCurrent(ourLastModifiersEx);
+    componentActions.setCurrent(lastModifiersEx);
     getWindowStack(getWindow(componentActions.component.get())).push(componentActions);
   }
 
@@ -304,7 +315,7 @@ final class TouchBarsManager {
   }
 
   static synchronized void hideTouchbar(@NotNull TBPanel tb) {
-    for (Stack stack: ourStacks.values()) {
+    for (Stack stack : ourStacks.values()) {
       stack.removeTouchbar(tb);
     }
   }
@@ -367,7 +378,9 @@ final class TouchBarsManager {
     void setCurrent(long altKeyMask) {
       @Nullable TBPanel alt = getTouchbar(altKeyMask, false);
       if (alt != null && alt != TBPanel.EMPTY) // don't change touchbar when alt-layout wasn't defined (keep previous)
+      {
         current = alt;
+      }
     }
 
     @Nullable TBPanel getCurrent() { return current; }
@@ -406,7 +419,7 @@ final class TouchBarsManager {
       }
 
       if (altActions != null) {
-        for (ActionGroup ag: altActions.values()) {
+        for (ActionGroup ag : altActions.values()) {
           final TBPanel tb = ourActions2Touchbar.remove(ag);
           if (tb != null) tb.release();
         }
@@ -450,6 +463,7 @@ final class TouchBarsManager {
               ((TBPanelActionGroup)ca.getCurrent()).startUpdateTimer();
             }
           }
+
           @Override
           public void windowDeactivated(WindowEvent e) {
             final @Nullable ComponentActions ca = getTopActions();
@@ -494,8 +508,9 @@ final class TouchBarsManager {
       final @Nullable TBPanel top = topCA != null ? topCA.getCurrent() : null;
       myStack.removeIf((ca) -> ca.getCurrent() == tb);
 
-      if (top == tb)
+      if (top == tb) {
         _scheduleUpdateNative();
+      }
     }
 
     synchronized void updateIfNecessary() {
@@ -511,8 +526,9 @@ final class TouchBarsManager {
 
     private void _scheduleUpdateNative() {
       // cancel prev task
-      if (myNativeUpdateTask != null)
+      if (myNativeUpdateTask != null) {
         myNativeUpdateTask.cancel();
+      }
 
       // ensure that top of stack has current touchbar
       final @Nullable ComponentActions ca = myStack.peek();
@@ -523,13 +539,15 @@ final class TouchBarsManager {
         return;
       }
 
-      if (ca.getCurrent() == null) { // current touchbar wasn't set yet, do it now
-        ca.setCurrent(ourLastModifiersEx);
-        if (ca.getCurrent() == null)
+      // the current touchbar wasn't set yet, do it now
+      if (ca.getCurrent() == null) {
+        ca.setCurrent(lastModifiersEx);
+        if (ca.getCurrent() == null) {
           ca.setCurrent(0);
+        }
       }
 
-      // schedule new task
+      // schedule a new task
       myNativeUpdateTask = SimpleTimer.getInstance().setUp(() -> {
         final @Nullable ComponentActions topCA = myStack.peek();
         final @Nullable TBPanel tb = topCA != null ? topCA.getCurrent() : null;
@@ -546,16 +564,18 @@ final class TouchBarsManager {
         if (myLastShownTouchbar instanceof TBPanelActionGroup atb) {
           atb.startUpdateTimer();
 
-          // timer can "sleep" sometimes (when user doesn't send input for expamle)
+          // timer can "sleep" sometimes (when user doesn't send input, for example)
           // so always do force update before showing
           ApplicationManager.getApplication().invokeLater(atb::updateActionItems);
         }
 
         Window window = myWindow != null ? myWindow.get() : null;
-        if (myLastShownTouchbar != null)
+        if (myLastShownTouchbar != null) {
           myLastShownTouchbar.setTo(window);
-        else
+        }
+        else {
           NST.setTouchBar(window, ID.NIL);
+        }
       }, CHANGE_DELAY);
     }
   }

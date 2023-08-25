@@ -49,7 +49,7 @@ internal val pathTransform: AtomicReference<IconTransform> = AtomicReference(
 )
 
 @JvmField
-internal val iconToStrokeIcon: ConcurrentMap<CachedImageIcon, CachedImageIcon> = CollectionFactory.createConcurrentWeakKeyWeakValueMap<CachedImageIcon, CachedImageIcon>()
+internal val iconToStrokeIcon: ConcurrentMap<CachedImageIcon, CachedImageIcon> = CollectionFactory.createConcurrentWeakKeyWeakValueMap()
 
 @TestOnly
 @ApiStatus.Internal
