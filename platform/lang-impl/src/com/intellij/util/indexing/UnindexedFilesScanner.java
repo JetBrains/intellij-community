@@ -238,8 +238,8 @@ public class UnindexedFilesScanner implements FilesScanningTask {
       scanUnindexedFiles(scanningHistory, indicator, markRef);
     }
     finally {
-      // scanning may throw exception (or error). In this case we should either clear or flush indexing queue,
-      // otherwise dumb mode will not end in the project.
+      // Scanning may throw exception (or error).
+      // In this case, we should either clear or flush indexing queue; otherwise, dumb mode will not end in the project.
       if (flushQueueAfterScanning) {
         flushPerProjectIndexingQueue(scanningHistory.getScanningReason(), indicator);
       }
@@ -251,26 +251,11 @@ public class UnindexedFilesScanner implements FilesScanningTask {
                                   @NotNull Ref<? super StatusMark> markRef) {
     LOG.info("Started scanning for indexing of " + myProject.getName() + ". Reason: " + myIndexingReason);
 
-    ProgressSuspender suspender = ProgressSuspender.getSuspender(indicator);
-    if (suspender != null) {
-      ApplicationManager.getApplication().getMessageBus().connect(this)
-        .subscribe(ProgressSuspender.TOPIC, new ProgressSuspender.SuspenderListener() {
-          @Override
-          public void suspendedStatusChanged(@NotNull ProgressSuspender changedSuspender) {
-            if (suspender == changedSuspender) {
-              Instant now = Instant.now();
-              if (suspender.isSuspended()) {
-                scanningHistory.suspendStages(now);
-              }
-              else {
-                scanningHistory.stopSuspendingStages(now);
-              }
-            }
-          }
-        });
-    }
-
+    UnindexedFilesIndexer.trackSuspends(indicator, this,
+                                        () -> scanningHistory.suspendStages(Instant.now()),
+                                        () -> scanningHistory.stopSuspendingStages(Instant.now()));
     if (myStartSuspended) {
+      ProgressSuspender suspender = ProgressSuspender.getSuspender(indicator);
       if (suspender == null) {
         throw new IllegalStateException("Indexing progress indicator must be suspendable!");
       }
@@ -422,7 +407,7 @@ public class UnindexedFilesScanner implements FilesScanningTask {
             rootsAndFiles.add(new Pair<>(root, files));
             return fileOrDir -> {
               // we apply scanners here, because scanners may mark directory as excluded, and we should skip excluded subtrees
-              // (e.g. JSDetectingProjectFileScanner.startSession will exclude "node_modules" directories during scanning)
+              // (e.g., JSDetectingProjectFileScanner.startSession will exclude "node_modules" directories during scanning)
               PushedFilePropertiesUpdaterImpl.applyScannersToFile(fileOrDir, fileScannerVisitors);
               return files.add(fileOrDir);
             };

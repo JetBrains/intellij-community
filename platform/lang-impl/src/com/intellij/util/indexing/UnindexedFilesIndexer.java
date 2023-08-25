@@ -2,6 +2,7 @@
 package com.intellij.util.indexing;
 
 import com.intellij.diagnostic.PerformanceWatcher;
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.ControlFlowException;
 import com.intellij.openapi.diagnostic.Logger;
@@ -32,7 +33,7 @@ import java.time.Instant;
 import java.util.*;
 
 /**
- * UnindexedFilesIndexer is to index files: explicitly provided (see providerToFiles in constructor), and implicitly marked as dirty, e.g.
+ * UnindexedFilesIndexer is to index files: explicitly provided (see providerToFiles in constructor), and implicitly marked as dirty, e.g.,
  * by VFS (as reported by FileBasedIndexImpl#getFilesToUpdate).
  */
 public final class UnindexedFilesIndexer extends DumbModeTask {
@@ -100,7 +101,7 @@ public final class UnindexedFilesIndexer extends DumbModeTask {
       doIndexFiles(projectDumbIndexingHistory, progressIndicator, indexUpdateRunner, fileSets);
     }
 
-    // Order is important: getRefreshedFiles may return some subset of getExplicitlyRequestedFilesSets files (e.g. new files)
+    // Order is important: getRefreshedFiles may return some subset of getExplicitlyRequestedFilesSets files (e.g., new files)
     // We first index explicitly requested files, this will also mark indexed files as "up-to-date", then we index remaining dirty files
     fileSets = getRefreshedFiles(projectDumbIndexingHistory);
     if (!fileSets.isEmpty()) {
@@ -157,30 +158,15 @@ public final class UnindexedFilesIndexer extends DumbModeTask {
 
   @Override
   public void performInDumbMode(@NotNull ProgressIndicator indicator) {
-    myIndex.loadIndexes(); // make sure that indexes are loaded, because we can get here without scanning (e.g. from VFS refresh)
+    myIndex.loadIndexes(); // make sure that indexes are loaded, because we can get here without scanning (e.g., from VFS refresh)
     if (!IndexInfrastructure.hasIndices()) {
       return;
     }
     ProjectDumbIndexingHistoryImpl projectDumbIndexingHistory = new ProjectDumbIndexingHistoryImpl(myProject);
     IndexDiagnosticDumper.getInstance().onDumbIndexingStarted(projectDumbIndexingHistory);
-    ProgressSuspender suspender = ProgressSuspender.getSuspender(indicator);
-    if (suspender != null) {
-      ApplicationManager.getApplication().getMessageBus().connect(this)
-        .subscribe(ProgressSuspender.TOPIC, new ProgressSuspender.SuspenderListener() {
-          @Override
-          public void suspendedStatusChanged(@NotNull ProgressSuspender changedSuspender) {
-            if (suspender == changedSuspender) {
-              Instant now = Instant.now();
-              if (suspender.isSuspended()) {
-                projectDumbIndexingHistory.suspendStages(now);
-              }
-              else {
-                projectDumbIndexingHistory.stopSuspendingStages(now);
-              }
-            }
-          }
-        });
-    }
+    trackSuspends(indicator, this,
+                  () -> projectDumbIndexingHistory.suspendStages(Instant.now()),
+                  () -> projectDumbIndexingHistory.stopSuspendingStages(Instant.now()));
 
     try {
       ((GistManagerImpl)GistManager.getInstance()).
@@ -196,6 +182,31 @@ public final class UnindexedFilesIndexer extends DumbModeTask {
     finally {
       IndexDiagnosticDumper.getInstance().onDumbIndexingFinished(projectDumbIndexingHistory);
     }
+  }
+
+  static void trackSuspends(@NotNull ProgressIndicator indicator,
+                            @NotNull Disposable parentDisposable,
+                            @NotNull Runnable onSuspendStart,
+                            @NotNull Runnable onSuspendStop) {
+    ProgressSuspender suspender = ProgressSuspender.getSuspender(indicator);
+    if (suspender == null) {
+      return;
+    }
+    ApplicationManager.getApplication().getMessageBus().connect(parentDisposable)
+      .subscribe(ProgressSuspender.TOPIC, new ProgressSuspender.SuspenderListener() {
+        @Override
+        public void suspendedStatusChanged(@NotNull ProgressSuspender changedSuspender) {
+          if (suspender != changedSuspender) {
+            return;
+          }
+          if (suspender.isSuspended()) {
+            onSuspendStart.run();
+          }
+          else {
+            onSuspendStop.run();
+          }
+        }
+      });
   }
 
   @Override
@@ -258,7 +269,7 @@ public final class UnindexedFilesIndexer extends DumbModeTask {
     return providerToFiles;
   }
 
-  public final @NotNull String getIndexingReason() {
+  public @NotNull String getIndexingReason() {
     return indexingReason;
   }
 

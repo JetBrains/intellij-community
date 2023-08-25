@@ -160,7 +160,7 @@ class PerProjectIndexingQueue(private val project: Project) {
   private var scanningIds: LongSet = createSetForScanningIds()
 
   // Code under read lock still runs in parallel, so all the counters (e.g. [cntFilesSoFar]) and collections (e.g. [filesSoFar]) still have
-  // to be thread-safe. It is only required that the state must be consistent under write lock (e.g. [cntFilesSoFar] corresponds to total
+  // to be thread-safe. It is only required that the state must be consistent under the write lock (e.g. [cntFilesSoFar] corresponds to total
   // count of files in [filesSoFar])
   private val lock = ReentrantReadWriteLock()
 

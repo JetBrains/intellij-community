@@ -129,11 +129,12 @@ data class ProjectScanningHistoryImpl(override val project: Project,
   }
 
   /**
-   * Some StageEvent may appear between begin and end of suspension, because it actually takes place only on ProgressIndicator's check.
-   * These normalizations move moment of suspension start from declared to after all other events between it and suspension end:
+   * Some StageEvent may appear between the beginning and end of suspension,
+   * because it actually takes place only on ProgressIndicator's check.
+   * These normalizations move the moment of suspension start from declared to after all other events between it and suspension end:
    * suspended, event1, ..., eventN, unsuspended -> event1, ..., eventN, suspended, unsuspended
    *
-   * Suspended and unsuspended events appear only on pairs with none in between.
+   * Suspended and unsuspended events appear only in pairs with none in between.
    */
   private fun getNormalizedEvents(): List<Event> {
     val normalizedEvents = mutableListOf<Event>()
@@ -148,7 +149,7 @@ data class ProjectScanningHistoryImpl(override val project: Project,
               }
             }
             else {
-              //speculate suspension start as time of last meaningful event, if it ever happened
+              //speculate the start of suspension as the time of the last meaningful event if it ever happened
               if (suspensionStartTime == null) {
                 suspensionStartTime = normalizedEvents.lastOrNull()?.instant
               }
@@ -161,7 +162,7 @@ data class ProjectScanningHistoryImpl(override val project: Project,
             }
           }
           is Event.StageEvent -> {
-            //progressIndicator is checked before registering stages, so suspension has definitely ended before that moment;
+            //the progressIndicator is checked before registering stages, so suspension has definitely ended before that moment;
             //event may be registered later, but the milliseconds of difference are not that important
             if (suspensionStartTime != null) {
               normalizedEvents.add(Event.SuspensionEvent(true, suspensionStartTime))
@@ -239,7 +240,7 @@ data class ProjectScanningHistoryImpl(override val project: Project,
     timesImpl.pausedDuration = pausedDuration
   }
 
-  /** Just a stage, don't have to cover whole indexing period, may intersect **/
+  /** Just a stage, don't have to cover the whole scanning period, may intersect **/
   enum class Stage {
     CreatingIterators {
       override fun getProperty(): KMutableProperty1<ScanningTimesImpl, Duration> = ScanningTimesImpl::creatingIteratorsDuration

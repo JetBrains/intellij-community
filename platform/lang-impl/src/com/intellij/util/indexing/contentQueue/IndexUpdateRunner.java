@@ -206,7 +206,7 @@ public final class IndexUpdateRunner {
         }
         Throwable error = indexingJob.myError.get();
         if (error instanceof ProcessCanceledException) {
-          // original error has happened in a different thread. Make stacktrace easier to understand by wrapping PCE into PCE
+          // The original error has happened in a different thread. Make stacktrace easier to understand by wrapping PCE into PCE
           ProcessCanceledException pce = new ProcessCanceledException();
           pce.addSuppressed(error);
           throw pce;
@@ -222,7 +222,7 @@ public final class IndexUpdateRunner {
   }
 
   // Index jobs one by one while there are some. Jobs may belong to different projects, and we index them fairly.
-  // Drops finished, cancelled and failed jobs from {@code ourIndexingJobs}. Does not throw exceptions.
+  // Drops finished, canceled and failed jobs from {@code ourIndexingJobs}. Does not throw exceptions.
   private void indexJobsFairly() {
     while (!ourIndexingJobs.isEmpty()) {
       boolean allJobsAreSuspended = true;
@@ -275,7 +275,7 @@ public final class IndexUpdateRunner {
 
     VirtualFile file = fileIndexingJob.file;
     try {
-      // Propagate ProcessCanceledException and unchecked exceptions. The latter fail the whole indexing (see IndexingJob.myError).
+      // Propagate ProcessCanceledException and unchecked exceptions. The latter fails the whole indexing (see IndexingJob.myError).
       loadingResult = loadContent(indexingJob.myIndicator, file, indexingJob.myContentLoader);
     }
     catch (ProcessCanceledException e) {
@@ -285,7 +285,6 @@ public final class IndexUpdateRunner {
     catch (TooLargeContentException e) {
       indexingJob.oneMoreFileProcessed();
       IndexingFileSetStatistics statistics = indexingJob.getStatistics(fileIndexingJob);
-      //noinspection SynchronizationOnLocalVariableOrMethodParameter
       synchronized (statistics) {
         statistics.addTooLargeForIndexingFile(e.getFile());
       }
@@ -367,7 +366,6 @@ public final class IndexUpdateRunner {
       applier.apply(file);
       long processingTime = System.nanoTime() - startTime;
       IndexingFileSetStatistics statistics = indexingJob.getStatistics(fileIndexingJob);
-      //noinspection SynchronizationOnLocalVariableOrMethodParameter
       synchronized (statistics) {
         statistics.addFileStatistics(file,
                                      applier.stats,
@@ -540,7 +538,7 @@ public final class IndexUpdateRunner {
       int maxFilesCount = fileSets.stream().mapToInt(fileSet -> fileSet.files.size()).sum();
       myQueueOfFiles = new ArrayBlockingQueue<>(maxFilesCount);
       // UnindexedFilesIndexer may produce duplicates during merging.
-      // E.g. Indexer([origin:someFiles]) + Indexer[anotherOrigin:someFiles] => Indexer([origin:someFiles, anotherOrigin:someFiles])
+      // E.g., Indexer([origin:someFiles]) + Indexer[anotherOrigin:someFiles] => Indexer([origin:someFiles, anotherOrigin:someFiles])
       // Don't touch UnindexedFilesIndexer.tryMergeWith now, because eventually we want UnindexedFilesIndexer to process the queue itself
       // instead of processing and merging queue snapshots
       IndexableFilesDeduplicateFilter deduplicateFilter = IndexableFilesDeduplicateFilter.create();
