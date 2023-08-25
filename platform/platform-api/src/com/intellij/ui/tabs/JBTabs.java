@@ -98,7 +98,7 @@ public interface JBTabs extends DropAreaAware {
   @Override
   @NotNull
   default Rectangle getDropArea() {
-    Rectangle r = new Rectangle(getComponent().getBounds());
+    Rectangle r = new Rectangle(new Point(0, 0), getComponent().getSize());
     if (getTabCount() > 0) {
       @SuppressWarnings("UseDPIAwareInsets")
       Insets insets = JBUI.insets(0);
