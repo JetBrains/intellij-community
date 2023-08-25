@@ -688,6 +688,11 @@ public class FirRenameTestGenerated extends AbstractFirRenameTest {
         runTest("../../idea/tests/testData/refactoring/rename/renameJavaMethod/kotlinOverridenMethod.test");
     }
 
+    @TestMetadata("renameJavaOverridenGenericSignature/renameJavaOverridenGenericSignature.test")
+    public void testRenameJavaOverridenGenericSignature_RenameJavaOverridenGenericSignature() throws Exception {
+        runTest("../../idea/tests/testData/refactoring/rename/renameJavaOverridenGenericSignature/renameJavaOverridenGenericSignature.test");
+    }
+
     @TestMetadata("renameJavaSyntheticIsPropertyByGetterRef/renameJavaSyntheticIsPropertyByGetterRef.test")
     public void testRenameJavaSyntheticIsPropertyByGetterRef_RenameJavaSyntheticIsPropertyByGetterRef() throws Exception {
         runTest("../../idea/tests/testData/refactoring/rename/renameJavaSyntheticIsPropertyByGetterRef/renameJavaSyntheticIsPropertyByGetterRef.test");
