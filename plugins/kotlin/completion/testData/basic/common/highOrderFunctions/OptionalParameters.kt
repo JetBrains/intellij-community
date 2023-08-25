@@ -10,6 +10,7 @@ fun test(param: () -> Unit) {
     xfoo<caret>
 }
 
+// IGNORE_K2
 // EXIST: { itemText: "xfoo1", tailText: "(option1: String = ..., option2: Int = ..., p: () -> Unit) (<root>)", typeText:"Unit" }
 // EXIST: { itemText: "xfoo1", tailText: " {...} (..., p: () -> Unit) (<root>)", typeText:"Unit" }
 
