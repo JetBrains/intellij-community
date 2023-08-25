@@ -219,7 +219,9 @@ open class CachedImageIcon internal constructor(
                                    isDarkOverridden = isDark,
                                    localFilterSupplier = localFilterSupplier,
                                    colorPatcher = colorPatcher,
-                                   useStroke = useStroke)
+                                   useStroke = useStroke,
+                                   toolTip = toolTip,
+                                   scaleContext = scaleContext)
           if (isDark) {
             darkVariant = result
           }

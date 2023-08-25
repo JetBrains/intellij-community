@@ -6,10 +6,7 @@ import com.intellij.jna.JnaLoader;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.util.IconLoader;
-import com.intellij.openapi.util.Pair;
-import com.intellij.openapi.util.SystemInfo;
-import com.intellij.openapi.util.SystemInfoRt;
+import com.intellij.openapi.util.*;
 import com.intellij.ui.mac.foundation.ID;
 import com.intellij.util.SystemProperties;
 import com.intellij.util.ui.EmptyIcon;
@@ -37,12 +34,11 @@ import java.util.List;
 final class NST {
   private static final Logger LOG = Logger.getInstance(NST.class);
   private static final String registryKeyTouchbar = "ide.mac.touchbar.use";
-  private static NSTLibrary nstLibrary = null; // NOTE: JNA is stateless (doesn't have any limitations of multithreading use)
-
-  private static final String MIN_OS_VERSION = "10.12.2";
+  // NOTE: JNA is stateless (doesn't have any limitations of multithreading use)
+  private static NSTLibrary nstLibrary = null;
 
   static boolean isSupportedOS() {
-    return SystemInfoRt.isMac && SystemInfo.isOsVersionAtLeast(MIN_OS_VERSION);
+    return SystemInfoRt.isMac;
   }
 
   static void loadLibrary() {
@@ -462,22 +458,28 @@ final class NST {
 
   // returns count of written bytes
   private static @NotNull BufferedImage _drawIconIntoMemory(@NotNull Icon icon, float scale, @NotNull Pointer memory, int offset) {
-    final int w = Math.round(icon.getIconWidth() * scale);
-    final int h = Math.round(icon.getIconHeight() * scale);
-    final int rasterSizeInBytes = w * h * 4;
+    int w = Math.round(icon.getIconWidth() * scale);
+    int h = Math.round(icon.getIconHeight() * scale);
+    int rasterSizeInBytes = w * h * 4;
 
     memory.setMemory(offset, rasterSizeInBytes, (byte)0);
 
     DataBuffer dataBuffer = new DirectDataBufferInt(memory, rasterSizeInBytes, offset);
-    final DirectColorModel colorModel =
+    DirectColorModel colorModel =
       new DirectColorModel(ColorModel.getRGBdefault().getColorSpace(), 32, 0xFF, 0xFF00, 0x00FF0000, 0xff000000/*alpha*/, false,
                            DataBuffer.TYPE_INT);
-    final SampleModel sm = colorModel.createCompatibleSampleModel(w, h);
-    final WritableRaster raster = WritableRasterNative.createNativeRaster(sm, dataBuffer);
-    final BufferedImage image = new BufferedImage(colorModel, raster, false, null);
+    SampleModel sampleModel = colorModel.createCompatibleSampleModel(w, h);
+    WritableRaster raster = WritableRasterNative.createNativeRaster(sampleModel, dataBuffer);
+    //noinspection UndesirableClassUsage
+    BufferedImage image = new BufferedImage(colorModel, raster, false, null);
 
-    final Graphics2D g = image.createGraphics();
-    g.scale(scale, scale);
+    Graphics2D g = image.createGraphics();
+    if (icon instanceof ScalableIcon scalableIcon) {
+      icon = scalableIcon.scale(scale);
+    }
+    else {
+      g.scale(scale, scale);
+    }
     g.setComposite(AlphaComposite.SrcOver);
     icon.paintIcon(null, g, 0, 0);
     g.dispose();
