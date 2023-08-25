@@ -549,6 +549,53 @@ interface LightClassBehaviorTestBase : UastPluginSelection {
         TestCase.assertEquals("kotlin.jvm.functions.Function1<java.lang.Integer,java.lang.Integer>", sum?.type?.canonicalText)
     }
 
+    fun checkUpperBoundForRecursiveTypeParameter(myFixture: JavaCodeInsightTestFixture, isK2: Boolean = false) {
+        myFixture.configureByText(
+            "main.kt", """
+                interface Alarm {
+                  interface Builder<Self : Builder<Self>> {
+                    fun build(): Alarm
+                  }
+                }
+
+                abstract class AbstractAlarm<
+                    Self : AbstractAlarm<Self, Builder>, Builder : AbstractAlarm.Builder<Builder, Self>>
+                internal constructor(
+                    val identifier: String,
+                ) : Alarm {
+                  abstract class Builder<Self : Builder<Self, Built>, Built : AbstractAlarm<Built, Self>> : Alarm.Builder<Self> {
+                    private var identifier: String = ""
+
+                    fun setIdentifier(text: String): Self {
+                      this.identifier = text
+                      return this as Self
+                    }
+
+                    final override fun build(): Built = TODO()
+                  }
+                }
+            """.trimIndent()
+        )
+
+        val uFile = myFixture.file.toUElement()!!
+        val abstractAlarm = uFile.findElementByTextFromPsi<UClass>("AbstractAlarm", strict = false)
+            .orFail("cant find AbstractAlarm")
+        val builder = abstractAlarm.innerClasses.find { it.name == "Builder" }
+            .orFail("cant find AbstractAlarm.Builder")
+        TestCase.assertEquals(2, builder.javaPsi.typeParameters.size)
+        val self = builder.javaPsi.typeParameters[0]
+        TestCase.assertEquals(
+            // TODO(KT-61459): should match
+            if (isK2) "" else "AbstractAlarm.Builder<Self,Built>",
+            self.bounds.joinToString { (it as? PsiType)?.canonicalText ?: "??" }
+        )
+        val built = builder.javaPsi.typeParameters[1]
+        TestCase.assertEquals(
+            "AbstractAlarm<Built,Self>",
+            built.bounds.joinToString { (it as? PsiType)?.canonicalText ?: "??" }
+        )
+    }
+
     fun checkDefaultValueOfAnnotation(myFixture: JavaCodeInsightTestFixture) {
         myFixture.configureByText(
             "main.kt", """
