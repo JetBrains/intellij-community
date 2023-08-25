@@ -221,7 +221,7 @@ public class MainFrame extends JPanel implements DataProvider, Disposable {
     ActionToolbar toolbar = actionManager.createActionToolbar(ActionPlaces.VCS_LOG_TOOLBAR_PLACE, mainGroup, true);
     toolbar.setTargetComponent(this);
 
-    Wrapper textFilter = new Wrapper(myFilterUi.getTextFilterComponent());
+    Wrapper textFilter = new Wrapper(myFilterUi.getTextFilterComponent().getComponent());
     textFilter.setVerticalSizeReferent(toolbar.getComponent());
     String vcsDisplayName = VcsLogUtil.getVcsDisplayName(myLogData.getProject(), myLogData.getLogProviders().values());
     textFilter.getAccessibleContext().setAccessibleName(VcsLogBundle.message("vcs.log.text.filter.accessible.name", vcsDisplayName));
@@ -414,7 +414,7 @@ public class MainFrame extends JPanel implements DataProvider, Disposable {
       return List.of(myGraphTable,
                      myChangesBrowser.getPreferredFocusedComponent(),
                      myDiffPreview.getPreviewDiff().getPreferredFocusedComponent(),
-                     myFilterUi.getTextFilterComponent());
+                     myFilterUi.getTextFilterComponent().getFocusedComponent());
     }
   }
 

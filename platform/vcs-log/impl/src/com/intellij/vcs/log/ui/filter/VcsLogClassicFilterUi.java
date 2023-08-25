@@ -72,7 +72,6 @@ public class VcsLogClassicFilterUi implements VcsLogFilterUiEx {
   private final @NotNull VcsLogData myLogData;
   private final @NotNull MainVcsLogUiProperties myUiProperties;
   private final @NotNull VcsLogColorManager myColorManager;
-  private final @NotNull SearchFieldWithExtension mySearchComponent;
 
   private @NotNull VcsLogDataPack myDataPack;
 
@@ -81,6 +80,8 @@ public class VcsLogClassicFilterUi implements VcsLogFilterUiEx {
   protected final @NotNull FilterModel<VcsLogDateFilter> myDateFilterModel;
   protected final @NotNull FileFilterModel myStructureFilterModel;
   protected final @NotNull TextFilterModel myTextFilterModel;
+
+  private final @NotNull VcsLogTextFilterField myTextFilterField;
 
   private final @NotNull EventDispatcher<VcsLogFilterListener> myFilterListenerDispatcher = EventDispatcher.create(VcsLogFilterListener.class);
 
@@ -104,7 +105,7 @@ public class VcsLogClassicFilterUi implements VcsLogFilterUiEx {
 
     TextFilterField textFilterField = new TextFilterField(myTextFilterModel, parentDisposable);
     ActionToolbar toolbar = createTextActionsToolbar(textFilterField.getTextEditor());
-    mySearchComponent = new SearchFieldWithExtension(toolbar.getComponent(), textFilterField);
+    myTextFilterField = new MyVcsLogTextFilterField(new SearchFieldWithExtension(toolbar.getComponent(), textFilterField));
 
     FilterModel[] models = {myBranchFilterModel, myUserFilterModel, myDateFilterModel, myStructureFilterModel, myTextFilterModel};
     for (FilterModel<?> model : models) {
@@ -168,8 +169,37 @@ public class VcsLogClassicFilterUi implements VcsLogFilterUiEx {
   }
 
   @Override
-  public @NotNull SearchFieldWithExtension getTextFilterComponent() {
-    return mySearchComponent;
+  public @NotNull VcsLogTextFilterField getTextFilterComponent() {
+    return myTextFilterField;
+  }
+
+  private static final class MyVcsLogTextFilterField implements VcsLogTextFilterField {
+    private final @NotNull SearchFieldWithExtension mySearchField;
+
+    private MyVcsLogTextFilterField(@NotNull SearchFieldWithExtension field) { mySearchField = field; }
+
+    @NotNull
+    @Override
+    public JComponent getComponent() {
+      return mySearchField;
+    }
+
+    @NotNull
+    @Override
+    public JComponent getFocusedComponent() {
+      return mySearchField.getTextField();
+    }
+
+    @NotNull
+    @Override
+    public String getText() {
+      return mySearchField.getTextField().getText();
+    }
+
+    @Override
+    public void setText(@NotNull String s) {
+      mySearchField.getTextField().setText(s);
+    }
   }
 
   @Override
