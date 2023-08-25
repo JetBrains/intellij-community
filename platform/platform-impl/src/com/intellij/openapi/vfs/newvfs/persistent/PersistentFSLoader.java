@@ -577,7 +577,9 @@ public final class PersistentFSLoader {
           new PagedFileStorageWithRWLockedPageContent(
             attributesFile,
             PERSISTENT_FS_STORAGE_CONTEXT,
-            PageCacheUtils.DEFAULT_PAGE_SIZE,
+            //RC: make page smaller for the transition period -- new FPCache has quite a small memory budget, and it is
+            //    hard to manage huge 10M pages having only ~100-150Mb budget in total, it ruins large-numbers assumptions.
+            1 << 20, //PageCacheUtils.DEFAULT_PAGE_SIZE,
             /*nativeByteOrder: */  true,
             PageContentLockingStrategy.LOCK_PER_PAGE
           ),
