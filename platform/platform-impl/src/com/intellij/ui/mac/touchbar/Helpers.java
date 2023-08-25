@@ -35,10 +35,11 @@ public final class Helpers {
   private static Future<?> ourIsPhysicalEscFuture = null;
 
   static void emulateKeyPress(int javaKeyEventCode) {
-    Toolkit.getDefaultToolkit().getSystemEventQueue().postEvent(
+    EventQueue systemEventQueue = Toolkit.getDefaultToolkit().getSystemEventQueue();
+    systemEventQueue.postEvent(
       new KeyEvent(new JPanel(), KeyEvent.KEY_PRESSED, System.currentTimeMillis(), 0, javaKeyEventCode, KeyEvent.CHAR_UNDEFINED)
     );
-    Toolkit.getDefaultToolkit().getSystemEventQueue().postEvent(
+    systemEventQueue.postEvent(
       new KeyEvent(new JPanel(), KeyEvent.KEY_RELEASED, System.currentTimeMillis(), 0, javaKeyEventCode, KeyEvent.CHAR_UNDEFINED)
     );
   }

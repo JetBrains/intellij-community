@@ -2,13 +2,14 @@
 package com.intellij.ui.mac.touchbar;
 
 import com.intellij.ide.ui.UISettings;
-import com.intellij.jna.JnaLoader;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.util.*;
+import com.intellij.openapi.util.IconLoader;
+import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.ScalableIcon;
+import com.intellij.openapi.util.SystemInfoRt;
 import com.intellij.ui.mac.foundation.ID;
-import com.intellij.util.SystemProperties;
 import com.intellij.util.ui.EmptyIcon;
 import com.sun.jna.Memory;
 import com.sun.jna.Native;
@@ -33,7 +34,6 @@ import java.util.List;
 
 final class NST {
   private static final Logger LOG = Logger.getInstance(NST.class);
-  private static final String registryKeyTouchbar = "ide.mac.touchbar.use";
   // NOTE: JNA is stateless (doesn't have any limitations of multithreading use)
   private static NSTLibrary nstLibrary = null;
 
@@ -43,54 +43,32 @@ final class NST {
 
   static void loadLibrary() {
     try {
-      if (!isSupportedOS()) {
-        LOG.info("OS doesn't support touchbar, skip nst loading");
-      }
-      else if (GraphicsEnvironment.isHeadless()) {
-        LOG.info("The graphics environment is headless, skip nst loading");
-      }
-      else if (!SystemProperties.getBooleanProperty(registryKeyTouchbar, true)) {
-        LOG.info("system property '" + registryKeyTouchbar + "' is set to false, skip nst loading");
-      }
-      else if (!JnaLoader.isLoaded()) {
-        LOG.info("JNA library is unavailable, skip nst loading");
-      }
-      else if (!Helpers.isTouchBarServerRunning()) {
-        LOG.info("touchbar-server isn't running, skip nst loading");
-      }
-      else {
-        try {
-          loadLibraryImpl();
-        }
-        catch (Throwable e) {
-          LOG.error("Failed to load nst library for touchbar: ", e);
-        }
-
-        if (nstLibrary != null) {
-          // small check that loaded library works
-          try {
-            final ID test = nstLibrary.createTouchBar("test", (uid) -> ID.NIL, null);
-            if (test == null || test.equals(ID.NIL)) {
-              LOG.error("Failed to create native touchbar object, result is null");
-              nstLibrary = null;
-            }
-            else {
-              nstLibrary.releaseNativePeer(test);
-              LOG.info("nst library works properly, successfully created and released native touchbar object");
-            }
-          }
-          catch (Throwable e) {
-            LOG.error("nst library was loaded, but can't be used: ", e);
-            nstLibrary = null;
-          }
-        }
-        else {
-          LOG.error("nst library wasn't loaded");
-        }
-      }
+      loadLibraryImpl();
     }
     catch (Throwable e) {
-      LOG.error(e);
+      LOG.error("Failed to load nst library for touchbar: ", e);
+    }
+
+    if (nstLibrary != null) {
+      // small check that loaded library works
+      try {
+        final ID test = nstLibrary.createTouchBar("test", (uid) -> ID.NIL, null);
+        if (test == null || test.equals(ID.NIL)) {
+          LOG.error("Failed to create native touchbar object, result is null");
+          nstLibrary = null;
+        }
+        else {
+          nstLibrary.releaseNativePeer(test);
+          LOG.info("nst library works properly, successfully created and released native touchbar object");
+        }
+      }
+      catch (Throwable e) {
+        LOG.error("nst library was loaded, but can't be used: ", e);
+        nstLibrary = null;
+      }
+    }
+    else {
+      LOG.error("nst library wasn't loaded");
     }
   }
 
@@ -183,12 +161,12 @@ final class NST {
   ) {
     final Pair<Pointer, Integer> mem = _packItems(items, visibleItems, false, true);
     return nstLibrary.createScrubber(uid, itemWidth, delegate, updater, mem == null ? null : mem.getFirst(),
-                                        mem == null ? 0 : mem.getSecond()); // called from AppKit, uses per-event autorelease-pool
+                                     mem == null ? 0 : mem.getSecond()); // called from AppKit, uses per-event autorelease-pool
   }
 
   static ID createGroupItem(String uid, ID[] items) {
     return nstLibrary.createGroupItem(uid, items == null || items.length == 0 ? null : items,
-                                         items == null ? 0 : items.length); // called from AppKit, uses per-event autorelease-pool
+                                      items == null ? 0 : items.length); // called from AppKit, uses per-event autorelease-pool
   }
 
   static void updateButton(ID buttonObj,
@@ -506,28 +484,5 @@ final class DirectDataBufferInt extends DataBuffer {
   @Override
   public void setElem(int bank, int i, int val) {
     myMemory.setInt(myOffset + i * 4L, val); // same as: *((jint *)((char *)Pointer + offset)) = value
-  }
-}
-
-@SuppressWarnings("unused")
-final
-class DirectDataBufferByte extends DataBuffer {
-  protected Pointer myMemory;
-  private final int myOffset;
-
-  DirectDataBufferByte(Pointer mem, int memLength, int offset) {
-    super(TYPE_BYTE, memLength);
-    this.myMemory = mem;
-    this.myOffset = offset;
-  }
-
-  @Override
-  public int getElem(int bank, int i) {
-    return myMemory.getByte(myOffset + i); // same as: *((jbyte *)((char *)Pointer + offset))
-  }
-
-  @Override
-  public void setElem(int bank, int i, int val) {
-    myMemory.setByte(myOffset + i, (byte)val); // same as: *((jbyte *)((char *)Pointer + offset)) = value
   }
 }
