@@ -49,6 +49,7 @@ import java.util.concurrent.TimeUnit
 import kotlin.io.path.bufferedReader
 import kotlin.io.path.name
 import kotlin.io.path.nameWithoutExtension
+import kotlin.io.path.readText
 
 /**
  * Generates Software Bill Of Materials (SBOM) for each distribution file in [SPDX format](https://spdx.github.io/spdx-spec)
@@ -72,6 +73,13 @@ class SoftwareBillOfMaterials internal constructor(
      * Location of published distributions, for example https://download.jetbrains.com/idea/
      */
     var baseDownloadUrl: String? = null
+    var license: DistributionLicense? = DistributionLicense.JETBRAINS
+
+    class DistributionLicense(val name: String, val text: String, val url: String?) {
+      internal companion object {
+        val JETBRAINS = DistributionLicense(LibraryLicense.JETBRAINS_OWN, LibraryLicense.JETBRAINS_OWN, null)
+      }
+    }
   }
 
   private val specVersion: String = Version.TWO_POINT_THREE_VERSION
@@ -84,6 +92,32 @@ class SoftwareBillOfMaterials internal constructor(
 
   private val baseDownloadUrl: String?
     get() = context.productProperties.baseDownloadUrl?.removeSuffix("/")
+
+  private val license: Options.DistributionLicense by lazy {
+    when (val license = context.options.sbomOptions.license) {
+      null -> throw IllegalArgumentException("Distribution license isn't specified")
+      Options.DistributionLicense.JETBRAINS -> {
+        /**
+         * See [com.intellij.ide.gdpr.EndUserAgreement]
+         */
+        val eula = context.paths.communityHomeDir
+          .resolve("platform/platform-resources/src")
+          .resolve(when {
+                     context.applicationInfo.isEAP -> "euaEap.html"
+                     else -> "eua.html"
+                   })
+        check(eula.exists()) {
+          "$eula is missing"
+        }
+        Options.DistributionLicense(
+          name = "JetBrains User Agreement",
+          text = eula.readText(),
+          url = "https://www.jetbrains.com/legal/docs/toolbox/user/"
+        )
+      }
+      else -> license
+    }
+  }
 
   private val repositories by lazy {
     JpsRemoteRepositoryService.getInstance()
@@ -120,7 +154,7 @@ class SoftwareBillOfMaterials internal constructor(
       SimpleDateFormat(SpdxConstants.SPDX_DATE_FORMAT).format(creationDate)
     )
     document.specVersion = specVersion
-    document.dataLicense = LicenseInfoFactory.parseSPDXLicenseString(SpdxConstants.SPDX_DATA_LICENSE_ID)
+    document.dataLicense = document.parseLicense(SpdxConstants.SPDX_DATA_LICENSE_ID)
     document.setName(name)
     return document
   }
@@ -471,29 +505,37 @@ class SoftwareBillOfMaterials internal constructor(
 
     fun license(document: SpdxDocument): AnyLicenseInfo {
       return when {
-        license.licenseUrl == null || license.license == LibraryLicense.JETBRAINS_OWN -> SpdxNoAssertionLicense()
-        else -> {
-          val licenseRefId = buildString {
-            append("LicenseRef")
-            if (license.license != null) {
-              append("-${license.license}")
-            }
-            append("-${coordinates.artifactId}")
-          }.replace(" ", "_")
-            .replace("/", "_")
-            .replace("+", "_")
-          val licenseInfo = ExtractedLicenseInfo(
-            document.modelStore, document.documentUri, licenseRefId,
-            document.copyManager, true
-          )
-          licenseInfo.extractedText = SpdxConstants.NONE_VALUE
-          licenseInfo.seeAlso.add(license.licenseUrl)
-          licenseInfo.validate()
-          document.addExtractedLicenseInfos(licenseInfo)
-          licenseInfo
-        }
+        license.licenseUrl == null ||
+        license.spdxIdentifier == null ||
+        license.license == LibraryLicense.JETBRAINS_OWN -> SpdxNoAssertionLicense()
+        else -> document.parseLicense(checkNotNull(license.spdxIdentifier))
       }
     }
+  }
+
+  /**
+   * @param id one of [SpdxConstants.LISTED_LICENSE_URL]
+   */
+  private fun SpdxDocument.parseLicense(id: String): AnyLicenseInfo {
+    return LicenseInfoFactory.parseSPDXLicenseString(id, modelStore, documentUri, copyManager)
+  }
+
+  private fun SpdxDocument.extractedLicenseInfo(name: String, text: String, url: String?): ExtractedLicenseInfo {
+    // must only contain letters, numbers, "." and "-" and must begin with "LicenseRef-"
+    val licenseRefId = "LicenseRef-$name"
+      .replace(" ", "-")
+      .replace("/", "-")
+      .replace("+", "-")
+      .replace("_", "-")
+    val licenseInfo = ExtractedLicenseInfo(
+      modelStore, documentUri, licenseRefId,
+      copyManager, true
+    )
+    licenseInfo.extractedText = text
+    if (url != null) licenseInfo.seeAlso.add(url)
+    licenseInfo.validate()
+    addExtractedLicenseInfos(licenseInfo)
+    return licenseInfo
   }
 
   private fun SpdxDocument.spdxPackage(library: MavenLibrary): SpdxPackage {

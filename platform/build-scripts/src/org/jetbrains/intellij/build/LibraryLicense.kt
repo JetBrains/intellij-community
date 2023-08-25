@@ -63,6 +63,11 @@ data class LibraryLicense(
    */
   val licenseUrl: String? = null,
 ) {
+  /**
+   * See [org.spdx.library.SpdxConstants.LISTED_LICENSE_URL]
+   */
+  internal var spdxIdentifier: String? = null
+
   init {
     require(name != null || libraryName != null) { "name or libraryName must be set" }
   }
@@ -106,7 +111,9 @@ data class LibraryLicense(
     return copy(
       license = "Apache 2.0",
       licenseUrl = licenseUrl ?: APACHE_LICENSE_URL,
-    )
+    ).apply {
+      spdxIdentifier = "Apache-2.0"
+    }
   }
 
   fun apache(licenseUrl: String): LibraryLicense {
@@ -114,7 +121,9 @@ data class LibraryLicense(
     return copy(
       license = "Apache 2.0",
       licenseUrl = licenseUrl
-    )
+    ).apply {
+      spdxIdentifier = "Apache-2.0"
+    }
   }
 
   @Deprecated("Please specify exact URL for the BSD license, pointing to the repo of the dependency")
@@ -124,7 +133,9 @@ data class LibraryLicense(
     return copy(
       license = "BSD 2-Clause",
       licenseUrl = licenseUrl ?: "https://opensource.org/licenses/BSD-2-Clause",
-    )
+    ).apply {
+      spdxIdentifier = "BSD-2-Clause"
+    }
   }
 
   fun simplifiedBsd(licenseUrl: String): LibraryLicense {
@@ -132,7 +143,9 @@ data class LibraryLicense(
     return copy(
       license = "BSD 2-Clause",
       licenseUrl = licenseUrl
-    )
+    ).apply {
+      spdxIdentifier = "BSD-2-Clause"
+    }
   }
   @Deprecated("Please specify exact URL for the BSD license, pointing to the repo or Web site of the dependency")
   fun newBsd(): LibraryLicense {
@@ -141,7 +154,9 @@ data class LibraryLicense(
     return copy(
       license = "BSD 3-Clause",
       licenseUrl = licenseUrl ?: "https://opensource.org/licenses/BSD-3-Clause",
-    )
+    ).apply {
+      spdxIdentifier = "BSD-3-Clause"
+    }
   }
 
   fun newBsd(licenseUrl: String): LibraryLicense {
@@ -149,7 +164,9 @@ data class LibraryLicense(
     return copy(
       license = "BSD 3-Clause",
       licenseUrl = licenseUrl
-    )
+    ).apply {
+      spdxIdentifier = "BSD-3-Clause"
+    }
   }
 
   @Deprecated("Please specify exact URL for the MIT license, pointing to the repo or Web site of the dependency")
@@ -159,7 +176,9 @@ data class LibraryLicense(
     return copy(
       license = "MIT",
       licenseUrl = licenseUrl ?: "https://opensource.org/licenses/MIT",
-    )
+    ).apply {
+      spdxIdentifier = "MIT"
+    }
   }
 
   fun mit(licenseUrl: String): LibraryLicense {
@@ -167,7 +186,9 @@ data class LibraryLicense(
     return copy(
       license = "MIT",
       licenseUrl = licenseUrl
-    )
+    ).apply {
+      spdxIdentifier = "MIT"
+    }
   }
 
   fun eplV1(): LibraryLicense = epl(1)
@@ -180,7 +201,9 @@ data class LibraryLicense(
     return copy(
       license = "Eclipse Public License ${v}.0",
       licenseUrl = licenseUrl
-    )
+    ).apply {
+      spdxIdentifier = "EPL-$v.0"
+    }
   }
 
   private fun epl(v: Int): LibraryLicense {
@@ -191,7 +214,9 @@ data class LibraryLicense(
       license = "Eclipse Public License ${v}.0",
       licenseUrl = licenseUrl
                    ?: (if (v == 1) "https://www.eclipse.org/org/documents/epl-v10.html" else "https://www.eclipse.org/legal/epl-2.0")
-    )
+    ).apply {
+      spdxIdentifier = "EPL-$v.0"
+    }
   }
 
   internal var forkedFrom: LibraryUpstream? = null
