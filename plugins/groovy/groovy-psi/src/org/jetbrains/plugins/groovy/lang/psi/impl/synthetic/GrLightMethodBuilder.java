@@ -575,7 +575,7 @@ public class GrLightMethodBuilder extends LightElement implements GrMethod, Orig
     return myConstructor == builder.myConstructor &&
            Objects.equals(myName, builder.myName) &&
            Objects.equals(myMethodKind, builder.myMethodKind) &&
-           Objects.equals(myReturnType, builder.myReturnType) &&
+           Objects.equals(getReturnType(), builder.getReturnType()) &&
            Objects.equals(myModifierList, builder.myModifierList) &&
            Objects.equals(myParameterList, builder.myParameterList) &&
            Arrays.equals(myTypeParameterList.getTypeParameters(), builder.myTypeParameterList.getTypeParameters()) &&
@@ -591,7 +591,7 @@ public class GrLightMethodBuilder extends LightElement implements GrMethod, Orig
       myConstructor,
       myName,
       myMethodKind,
-      myReturnType,
+      getReturnType(),
       myModifierList,
       myParameterList,
       Arrays.hashCode(myTypeParameterList.getTypeParameters()),
