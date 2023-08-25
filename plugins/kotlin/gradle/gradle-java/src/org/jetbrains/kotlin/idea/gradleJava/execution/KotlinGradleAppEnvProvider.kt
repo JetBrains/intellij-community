@@ -25,28 +25,33 @@ class KotlinGradleAppEnvProvider : GradleBaseApplicationEnvironmentProvider<Kotl
     }
 
     override fun generateInitScript(params: GradleInitScriptParameters): String? {
-        // Init script creates the run task only for the project matching 'applicationConfiguration'.
-        // To find the proper one we compare identifiers: the one provided by Gradle and the one we generate based on our project import
-        // data (external module data).
+        return org.jetbrains.kotlin.idea.gradleJava.execution.generateInitScript(params)
+    }
+}
 
-        val extProjectPath = ExternalSystemApiUtil.getExternalProjectPath(params.module) ?: return null
-        val extProjectInfo =
-            ExternalSystemUtil.getExternalProjectInfo(params.module.project, GradleConstants.SYSTEM_ID, extProjectPath) ?: return null
-        val extModuleData = GradleProjectResolverUtil.findModule(extProjectInfo.externalProjectStructure, extProjectPath) ?: return null
+internal fun generateInitScript(params: GradleInitScriptParameters): String? {
+    // Init script creates the run task only for the project matching 'applicationConfiguration'.
+    // To find the proper one we compare identifiers: the one provided by Gradle and the one we generate based on our project import
+    // data (external module data).
 
-        // Pair of 'project.rootProject.name' and 'project.path' is a unique project id in Gradle (including composite builds).
-        // So our one is built using the same principle.
-        val projectPath = extModuleData.data.id
-        val gradleProjectId = if (projectPath.startsWith(':')) { // shortening (is unique project id)
-            val rootProjectName = (extModuleData.parent?.data as? ProjectData)?.externalName ?: ""
-            rootProjectName + projectPath
-        } else {
-            projectPath.takeIf { ':' in it } ?: "$projectPath:" // includes rootProject.name already, for top level projects has no ':'
-        }
+    val extProjectPath = ExternalSystemApiUtil.getExternalProjectPath(params.module) ?: return null
+    val extProjectInfo =
+        ExternalSystemUtil.getExternalProjectInfo(params.module.project, GradleConstants.SYSTEM_ID, extProjectPath) ?: return null
+    val extModuleData = GradleProjectResolverUtil.findModule(extProjectInfo.externalProjectStructure, extProjectPath) ?: return null
 
-        // @formatter:off
-        // @Language("Groovy")
-        val initScript = """
+    // Pair of 'project.rootProject.name' and 'project.path' is a unique project id in Gradle (including composite builds).
+    // So our one is built using the same principle.
+    val projectPath = extModuleData.data.id
+    val gradleProjectId = if (projectPath.startsWith(':')) { // shortening (is unique project id)
+        val rootProjectName = (extModuleData.parent?.data as? ProjectData)?.externalName ?: ""
+        rootProjectName + projectPath
+    } else {
+        projectPath.takeIf { ':' in it } ?: "$projectPath:" // includes rootProject.name already, for top level projects has no ':'
+    }
+
+    // @formatter:off
+    // @Language("Groovy")
+    val initScript = """
     def gradleProjectId = '$gradleProjectId'
     def runAppTaskName = '${params.runAppTaskName}'
     def mainClass = '${params.mainClass}'
@@ -92,7 +97,6 @@ class KotlinGradleAppEnvProvider : GradleBaseApplicationEnvironmentProvider<Kotl
         }
     }
     """
-        // @formatter:on
-        return initScript
-    }
+    // @formatter:on
+    return initScript
 }
