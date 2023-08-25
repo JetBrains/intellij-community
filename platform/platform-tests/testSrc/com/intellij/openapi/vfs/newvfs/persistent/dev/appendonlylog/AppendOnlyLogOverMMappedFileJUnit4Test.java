@@ -207,6 +207,8 @@ public class AppendOnlyLogOverMMappedFileJUnit4Test {
     );
   }
 
+  //TODO test for recordId=NULL_ID processing (exception?)
+  //TODO test for recordId=(padding record) processing (could happen after recovery)
 
   //====================== infrastructure: ===========================================================================
 
