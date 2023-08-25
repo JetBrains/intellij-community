@@ -157,12 +157,13 @@ class SoftwareBillOfMaterials internal constructor(
     return document
   }
 
-  private fun SpdxDocument.write(): Path {
-    val result = context.paths.artifactDir.resolve("${name.get()}.spdx")
-    result.outputStream().use {
+  private val SpdxDocument.outputFile: Path
+    get() = context.paths.artifactDir.resolve("${name.get()}.spdx.json")
+
+  private fun SpdxDocument.write() {
+    outputFile.outputStream().use {
       (modelStore as ISerializableModelStore).serialize(documentUri, it)
     }
-    return result
   }
 
   private fun ModelObject.validate() {
@@ -278,8 +279,9 @@ class SoftwareBillOfMaterials internal constructor(
         }
       }
     }
+    document.write()
     document.validate()
-    return document.write()
+    return document.outputFile
   }
 
   private val distributionFilesChecksums: List<Checksums> by lazy {
