@@ -835,9 +835,9 @@ private fun findAttributeValue(reader: XMLStreamReader2, name: String): String? 
   return null
 }
 
-private fun getNullifiedContent(reader: XMLStreamReader2): String? = reader.elementText.takeIf { !it.isEmpty() }
+private fun getNullifiedContent(reader: XMLStreamReader2): String? = reader.elementText.trim().takeIf { !it.isEmpty() }
 
-private fun getNullifiedAttributeValue(reader: XMLStreamReader2, i: Int) = reader.getAttributeValue(i).takeIf { !it.isEmpty() }
+private fun getNullifiedAttributeValue(reader: XMLStreamReader2, i: Int) = reader.getAttributeValue(i).trim().takeIf { !it.isEmpty() }
 
 interface ReadModuleContext {
   val interner: XmlInterner
