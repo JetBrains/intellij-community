@@ -35,11 +35,11 @@ import java.nio.file.Paths
 
 abstract class AbstractFirUastTest : KotlinLightCodeInsightFixtureTestCase(), UastPluginSelection {
     companion object {
-        private const val IGNORE_FIR_DIRECTIVE = "IGNORE_FIR"
+        private const val IGNORE_K2_DIRECTIVE = "IGNORE_K2"
 
         val String.withIgnoreFirDirective: Boolean
             get() {
-                return IGNORE_FIR_DIRECTIVE in KotlinTestUtils.parseDirectives(this)
+                return IGNORE_K2_DIRECTIVE in KotlinTestUtils.parseDirectives(this)
             }
     }
 

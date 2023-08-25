@@ -2,4 +2,4 @@ package simple
 
 annotation class F
 
-/* IGNORE_FIR */
+/* IGNORE_K2 */

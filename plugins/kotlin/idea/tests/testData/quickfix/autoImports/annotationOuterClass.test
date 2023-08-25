@@ -7,7 +7,7 @@ package foo
 
 @Outer<caret>.Anno
 fun test() {}
-/* IGNORE_FIR */
+/* IGNORE_K2 */
 
 
 // FILE: first.after.kt
@@ -21,7 +21,7 @@ import bar.Outer
 
 @Outer<caret>.Anno
 fun test() {}
-/* IGNORE_FIR */
+/* IGNORE_K2 */
 
 
 // FILE: second.kt

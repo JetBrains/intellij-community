@@ -1,4 +1,4 @@
-// IGNORE_FIR
+// IGNORE_K2
 // KT-61431
 
 plugins {

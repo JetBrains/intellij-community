@@ -18,5 +18,5 @@ fun test() {
     }
 }
 
-// IGNORE_FIR
+// IGNORE_K2
 // IGNORE_FE10

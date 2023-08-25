@@ -14,5 +14,5 @@ class Test {
         t.some()
     }
 }
-/* IGNORE_FIR */
+/* IGNORE_K2 */
 // FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.codeinsights.impl.base.quickFix.ChangeVariableMutabilityFix

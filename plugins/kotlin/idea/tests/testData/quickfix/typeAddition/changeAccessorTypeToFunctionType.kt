@@ -3,6 +3,6 @@ class A {
     val x: (String) -> Int
         get(): Int<caret> = {42}
 }
-/* IGNORE_FIR */
+/* IGNORE_K2 */
 
 // FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.ChangeAccessorTypeFix

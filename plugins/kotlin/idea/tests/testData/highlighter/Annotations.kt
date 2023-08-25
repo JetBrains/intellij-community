@@ -1,4 +1,4 @@
-// IGNORE_FIR
+// IGNORE_K2
 // EXPECTED_DUPLICATED_HIGHLIGHTING
 
 <symbolName descr="null" textAttributesKey="KOTLIN_ANNOTATION">@Target</symbolName>(<symbolName descr="null" textAttributesKey="KOTLIN_ENUM">AnnotationTarget</symbolName>.<symbolName descr="null" textAttributesKey="KOTLIN_ENUM_ENTRY">CLASS</symbolName>, <symbolName descr="null" textAttributesKey="KOTLIN_ENUM">AnnotationTarget</symbolName>.<symbolName descr="null" textAttributesKey="KOTLIN_ENUM_ENTRY">EXPRESSION</symbolName>)

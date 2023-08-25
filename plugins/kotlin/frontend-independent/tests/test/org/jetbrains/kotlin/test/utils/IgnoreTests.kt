@@ -229,18 +229,23 @@ object IgnoreTests {
     }
 
     object DIRECTIVES {
-        @Deprecated(message = "use IGNORE_FIR instead")
+        @Deprecated(message = "use IGNORE_K2 instead")
         const val FIR_COMPARISON = "// FIR_COMPARISON"
-        @Deprecated(message = "use IGNORE_FIR instead")
+        @Deprecated(message = "use IGNORE_K2 instead")
         const val FIR_COMPARISON_MULTILINE_COMMENT = "/* FIR_COMPARISON */"
 
-        const val IGNORE_FIR_LOG = "// IGNORE_FIR_LOG"
-
-        const val IGNORE_FIR = "// IGNORE_FIR"
         const val IGNORE_K2 = "// IGNORE_K2"
+        const val IGNORE_K2_MULTILINE_COMMENT = "/* IGNORE_K2 */"
+        const val IGNORE_K2_LOG = "// IGNORE_K2_LOG"
+
+        @Deprecated(message = "use IGNORE_K2 instead")
+        const val IGNORE_FIR = "// IGNORE_FIR"
+        @Deprecated(message = "use IGNORE_K2_MULTILINE_COMMENT instead")
         const val IGNORE_FIR_MULTILINE_COMMENT = "/* IGNORE_FIR */"
 
         const val FIX_ME = "// FIX_ME: "
+
+        @Deprecated(message = "use IGNORE_K2 instead")
         const val FIR_IDENTICAL = "// FIR_IDENTICAL"
 
         const val IGNORE_FE10_BINDING_BY_FIR = "// IGNORE_FE10_BINDING_BY_FIR"

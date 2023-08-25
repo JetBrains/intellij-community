@@ -6,4 +6,4 @@ object Processor {
     fun shouldProcess(): Boolean = true
 }
 
-// IGNORE_FIR
+// IGNORE_K2

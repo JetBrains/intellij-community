@@ -27,7 +27,7 @@ abstract class AbstractHighLevelQuickFixTest : AbstractQuickFixTest() {
 
     }
 
-    override val disableTestDirective: String get() =  IgnoreTests.DIRECTIVES.IGNORE_FIR_MULTILINE_COMMENT
+    override val disableTestDirective: String get() =  IgnoreTests.DIRECTIVES.IGNORE_K2_MULTILINE_COMMENT
 
     override fun doTest(beforeFileName: String) {
         val firBeforeFileName = getFirBeforeFileName(beforeFileName)

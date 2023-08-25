@@ -1,4 +1,4 @@
-// IGNORE_FIR
+// IGNORE_K2
 // WITH_STDLIB
 
 lateinit var x: java.lang.Readable

@@ -28,7 +28,7 @@ abstract class AbstractK2IntentionTest : AbstractIntentionTestBase() {
     }
 
     override fun doTestFor(mainFile: File, pathToFiles: Map<String, PsiFile>, intentionAction: IntentionAction, fileText: String) {
-        IgnoreTests.runTestIfNotDisabledByFileDirective(mainFile.toPath(), IgnoreTests.DIRECTIVES.IGNORE_FIR) {
+        IgnoreTests.runTestIfNotDisabledByFileDirective(mainFile.toPath(), IgnoreTests.DIRECTIVES.IGNORE_K2) {
             super.doTestFor(mainFile, pathToFiles, intentionAction, fileText)
         }
     }

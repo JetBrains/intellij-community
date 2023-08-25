@@ -10,4 +10,4 @@ object C : A({
     fun foo() = <caret>B.prop.toString()
 })
 
-// IGNORE_FIR
+// IGNORE_K2

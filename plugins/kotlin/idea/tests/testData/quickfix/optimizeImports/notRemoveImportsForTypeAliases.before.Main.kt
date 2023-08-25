@@ -6,4 +6,4 @@ import p1.AnnAlias
 
 @AnnAlias
 val some = SomeAlias()
-/* IGNORE_FIR */
+/* IGNORE_K2 */

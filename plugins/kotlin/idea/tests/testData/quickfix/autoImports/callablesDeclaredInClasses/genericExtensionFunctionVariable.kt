@@ -13,4 +13,4 @@ fun usage() {
 }
 
 // FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.ImportFix
-/* IGNORE_FIR */
+/* IGNORE_K2 */
