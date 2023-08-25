@@ -1,46 +1,5 @@
 package com.intellij.mermaid.lang.lexer
 
-import com.intellij.mermaid.lang.lexer.MermaidTokens.CLOSE_CURLY
-import com.intellij.mermaid.lang.lexer.MermaidTokens.COLON
-import com.intellij.mermaid.lang.lexer.MermaidTokens.DOUBLE_QUOTE
-import com.intellij.mermaid.lang.lexer.MermaidTokens.EOL
-import com.intellij.mermaid.lang.lexer.MermaidTokens.ID
-import com.intellij.mermaid.lang.lexer.MermaidTokens.ID_KEYWORD
-import com.intellij.mermaid.lang.lexer.MermaidTokens.LABEL
-import com.intellij.mermaid.lang.lexer.MermaidTokens.OPEN_CURLY
-import com.intellij.mermaid.lang.lexer.MermaidTokens.Requirement.ANALYSIS
-import com.intellij.mermaid.lang.lexer.MermaidTokens.Requirement.ARROW_LEFT
-import com.intellij.mermaid.lang.lexer.MermaidTokens.Requirement.ARROW_RIGHT
-import com.intellij.mermaid.lang.lexer.MermaidTokens.Requirement.CONTAINS
-import com.intellij.mermaid.lang.lexer.MermaidTokens.Requirement.COPIES
-import com.intellij.mermaid.lang.lexer.MermaidTokens.Requirement.DEMONSTRATION
-import com.intellij.mermaid.lang.lexer.MermaidTokens.Requirement.DERIVES
-import com.intellij.mermaid.lang.lexer.MermaidTokens.Requirement.DESIGN_CONSTRAINT
-import com.intellij.mermaid.lang.lexer.MermaidTokens.Requirement.DOCREF
-import com.intellij.mermaid.lang.lexer.MermaidTokens.Requirement.ELEMENT
-import com.intellij.mermaid.lang.lexer.MermaidTokens.Requirement.FUNCTIONAL_REQUIREMENT
-import com.intellij.mermaid.lang.lexer.MermaidTokens.Requirement.HIGH
-import com.intellij.mermaid.lang.lexer.MermaidTokens.Requirement.INSPECTION
-import com.intellij.mermaid.lang.lexer.MermaidTokens.Requirement.INTERFACE_REQUIREMENT
-import com.intellij.mermaid.lang.lexer.MermaidTokens.Requirement.LOW
-import com.intellij.mermaid.lang.lexer.MermaidTokens.Requirement.MEDIUM
-import com.intellij.mermaid.lang.lexer.MermaidTokens.Requirement.PERFORMANCE_REQUIREMENT
-import com.intellij.mermaid.lang.lexer.MermaidTokens.Requirement.PHYSICAL_REQUIREMENT
-import com.intellij.mermaid.lang.lexer.MermaidTokens.Requirement.REFINES
-import com.intellij.mermaid.lang.lexer.MermaidTokens.Requirement.REQUIREMENT
-import com.intellij.mermaid.lang.lexer.MermaidTokens.Requirement.REQUIREMENT_DIAGRAM
-import com.intellij.mermaid.lang.lexer.MermaidTokens.Requirement.REQ_LINE
-import com.intellij.mermaid.lang.lexer.MermaidTokens.Requirement.RISK
-import com.intellij.mermaid.lang.lexer.MermaidTokens.Requirement.SATISFIES
-import com.intellij.mermaid.lang.lexer.MermaidTokens.Requirement.TEST
-import com.intellij.mermaid.lang.lexer.MermaidTokens.Requirement.TEXT
-import com.intellij.mermaid.lang.lexer.MermaidTokens.Requirement.TRACES
-import com.intellij.mermaid.lang.lexer.MermaidTokens.Requirement.VERIFIES
-import com.intellij.mermaid.lang.lexer.MermaidTokens.Requirement.VERIFY_METHOD
-import com.intellij.mermaid.lang.lexer.MermaidTokens.STRING_VALUE
-import com.intellij.mermaid.lang.lexer.MermaidTokens.TYPE
-import com.intellij.mermaid.lang.lexer.MermaidTokens.WHITE_SPACE
-
 class RequirementTest : MermaidLexerTestCase() {
   override val diagramName: String
     get() = "requirement"

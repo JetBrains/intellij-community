@@ -5,10 +5,7 @@ import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.openapi.vfs.VirtualFile
 import org.junit.jupiter.api.Assumptions
 import org.junit.jupiter.api.extension.*
-import java.nio.file.Path
 import java.util.stream.Stream
-import kotlin.io.path.listDirectoryEntries
-import kotlin.io.path.nameWithoutExtension
 
 internal class OfficialDocumentationExamplesContext: TestTemplateInvocationContextProvider {
   override fun supportsTestTemplate(context: ExtensionContext): Boolean {

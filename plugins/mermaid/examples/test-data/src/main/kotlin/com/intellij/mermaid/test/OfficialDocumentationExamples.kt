@@ -2,10 +2,6 @@ package com.intellij.mermaid.test
 
 import org.jetbrains.annotations.TestOnly
 import java.net.URL
-import java.nio.file.FileSystems
-import java.nio.file.Path
-import kotlin.io.path.listDirectoryEntries
-import kotlin.io.path.toPath
 
 object OfficialDocumentationExamples {
   @TestOnly
