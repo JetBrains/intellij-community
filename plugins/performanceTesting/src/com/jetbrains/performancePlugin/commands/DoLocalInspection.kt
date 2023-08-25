@@ -7,6 +7,7 @@ import com.intellij.codeInsight.daemon.impl.EditorTracker
 import com.intellij.lang.annotation.HighlightSeverity
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.diagnostic.logger
+import com.intellij.openapi.fileEditor.FileEditor
 import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.project.DumbService
 import com.intellij.openapi.project.Project
@@ -52,13 +53,16 @@ class DoLocalInspection(text: String, line: Int) : PlaybackCommandCoroutineAdapt
     var scopeRef: Scope? = null
     suspendCancellableCoroutine { continuation ->
       busConnection.subscribe(DaemonCodeAnalyzer.DAEMON_EVENT_TOPIC, object : DaemonListener {
-        override fun daemonFinished() {
+        override fun daemonFinished(fileEditors: MutableCollection<out FileEditor>) {
           if (spanRef == null) {
             return
           }
           val daemonCodeAnalyzer = DaemonCodeAnalyzer.getInstance(project) as DaemonCodeAnalyzerImpl
           val document = FileEditorManager.getInstance(project).selectedTextEditor!!.document
           val psiFile = PsiDocumentManager.getInstance(project).getPsiFile(document)!!
+          if (fileEditors.find { editor -> editor.file.name == psiFile.name } == null) {
+            return
+          }
           if (!daemonCodeAnalyzer.isErrorAnalyzingFinished(psiFile)) {
             return
           }
@@ -101,7 +105,9 @@ class DoLocalInspection(text: String, line: Int) : PlaybackCommandCoroutineAdapt
         context.message("Local inspections have been started", line)
         spanRef = span.startSpan()
         scopeRef = spanRef!!.makeCurrent()
-        DaemonCodeAnalyzer.getInstance(project).restart()
+        val document = FileEditorManager.getInstance(project).selectedTextEditor!!.document
+        val psiFile = PsiDocumentManager.getInstance(project).getPsiFile(document)!!
+        DaemonCodeAnalyzer.getInstance(project).restart(psiFile)
       }
     }
   }
