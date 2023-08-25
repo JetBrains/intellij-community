@@ -3,6 +3,7 @@ package com.intellij.collaboration.api
 
 import com.intellij.collaboration.api.httpclient.*
 import com.intellij.collaboration.api.httpclient.HttpClientUtil.checkStatusCodeWithLogging
+import com.intellij.collaboration.api.httpclient.HttpClientUtil.inflateAndReadWithErrorHandlingAndLogging
 import com.intellij.collaboration.api.httpclient.response.CancellableWrappingBodyHandler
 import com.intellij.openapi.diagnostic.Logger
 import kotlinx.coroutines.CancellationException
@@ -17,12 +18,33 @@ import javax.imageio.ImageIO
 
 @ApiStatus.Experimental
 interface HttpApiHelper {
+  /**
+   * Creates a request builder from the given URI String.
+   */
   fun request(uri: String): HttpRequest.Builder
+
+  /**
+   * Creates a request builder from the given URI.
+   */
   fun request(uri: URI): HttpRequest.Builder
 
+  /**
+   * Sends the given request and awaits a response in a suspended cancellable way.
+   * The body handler is used to fully handle the body, no additional handling is done by this method.
+   */
   suspend fun <T> sendAndAwaitCancellable(request: HttpRequest, bodyHandler: HttpResponse.BodyHandler<T>): HttpResponse<out T>
+
+  /**
+   * Sends the given request and awaits a response in a suspended cancellable way.
+   * Different from the overloaded function with a [java.net.http.HttpResponse.BodyHandler] parameter,
+   * this function provides an inflating, logging body handler with no additional mapping of the body.
+   */
   suspend fun sendAndAwaitCancellable(request: HttpRequest): HttpResponse<out Unit>
 
+  /**
+   * Sends the given request and awaits a response in a suspended cancellable way.
+   * Maps the body of the response to an [Image] object.
+   */
   suspend fun loadImage(request: HttpRequest): HttpResponse<out Image>
 }
 
@@ -69,9 +91,7 @@ private class HttpApiHelperImpl(
   }
 
   override suspend fun sendAndAwaitCancellable(request: HttpRequest): HttpResponse<out Unit> =
-    sendAndAwaitCancellable(request, InflatedStreamReadingBodyHandler { responseInfo, stream ->
-      HttpClientUtil.readSuccessResponseWithLogging(logger, request, responseInfo, stream) {}
-    })
+    sendAndAwaitCancellable(request, inflateAndReadWithErrorHandlingAndLogging(logger, request) { _, _ -> })
 
   override suspend fun loadImage(request: HttpRequest): HttpResponse<out Image> {
     val bodyHandler = InflatedStreamReadingBodyHandler { responseInfo, stream ->

@@ -4,11 +4,11 @@ package com.intellij.collaboration.api.json
 import com.intellij.collaboration.api.HttpApiHelper
 import com.intellij.collaboration.api.httpclient.ByteArrayProducingBodyPublisher
 import com.intellij.collaboration.api.httpclient.HttpClientUtil
-import com.intellij.collaboration.api.httpclient.HttpClientUtil.readSuccessResponseWithLogging
-import com.intellij.collaboration.api.httpclient.InflatedStreamReadingBodyHandler
+import com.intellij.collaboration.api.httpclient.HttpClientUtil.inflateAndReadWithErrorHandlingAndLogging
 import com.intellij.collaboration.api.logName
 import com.intellij.openapi.diagnostic.Logger
 import org.jetbrains.annotations.ApiStatus
+import java.io.Reader
 import java.net.URI
 import java.net.http.HttpRequest
 import java.net.http.HttpResponse
@@ -70,62 +70,54 @@ private class JsonHttpApiHelperImpl(
   }
 
   override suspend fun <T> loadJsonValueByClass(request: HttpRequest, clazz: Class<T>): HttpResponse<out T> {
-    val bodyHandler = InflatedStreamReadingBodyHandler { responseInfo, stream ->
-      readSuccessResponseWithLogging(logger, request, responseInfo, stream) {
-        try {
-          deserializer.fromJson(it, clazz)
-        }
-        catch (e: Throwable) {
-          logger.warn("API response deserialization failed", e)
-          throw HttpJsonDeserializationException(request.logName(), e)
-        } ?: error("Empty response")
+    val bodyHandler = inflateAndReadWithErrorHandlingAndLogging(logger, request) { reader, _ ->
+      try {
+        deserializer.fromJson(reader, clazz)
       }
+      catch (e: Throwable) {
+        logger.warn("API response deserialization failed", e)
+        throw HttpJsonDeserializationException(request.logName(), e)
+      } ?: error("Empty response")
     }
     return httpHelper.sendAndAwaitCancellable(request, bodyHandler)
   }
 
   override suspend fun <T> loadOptionalJsonValueByClass(request: HttpRequest, clazz: Class<T>): HttpResponse<out T?> {
-    val bodyHandler = InflatedStreamReadingBodyHandler { responseInfo, stream ->
-      readSuccessResponseWithLogging(logger, request, responseInfo, stream) {
-        try {
-          deserializer.fromJson(it, clazz)
-        }
-        catch (e: Throwable) {
-          logger.warn("API response deserialization failed", e)
-          throw HttpJsonDeserializationException(request.logName(), e)
-        }
+    val bodyHandler = inflateAndReadWithErrorHandlingAndLogging(logger, request) { reader, _ ->
+      try {
+        deserializer.fromJson(reader, clazz)
+      }
+      catch (e: Throwable) {
+        logger.warn("API response deserialization failed", e)
+        throw HttpJsonDeserializationException(request.logName(), e)
       }
     }
     return httpHelper.sendAndAwaitCancellable(request, bodyHandler)
   }
 
   override suspend fun <T> loadJsonListByClass(request: HttpRequest, clazz: Class<T>): HttpResponse<out List<T>> {
-    val bodyHandler = InflatedStreamReadingBodyHandler { responseInfo, stream ->
-      readSuccessResponseWithLogging(logger, request, responseInfo, stream) {
-        try {
-          @Suppress("UNCHECKED_CAST")
-          (deserializer.fromJson(it, List::class.java, clazz) as? List<T>)
-        }
-        catch (e: Throwable) {
-          logger.warn("API response deserialization failed", e)
-          throw HttpJsonDeserializationException(request.logName(), e)
-        } ?: error("Empty response")
+    val bodyHandler = inflateAndReadWithErrorHandlingAndLogging(logger, request) { reader, _ ->
+      try {
+        @Suppress("UNCHECKED_CAST")
+        (deserializer.fromJson(reader, List::class.java, clazz) as? List<T>)
       }
+      catch (e: Throwable) {
+        logger.warn("API response deserialization failed", e)
+        throw HttpJsonDeserializationException(request.logName(), e)
+      } ?: error("Empty response")
     }
     return httpHelper.sendAndAwaitCancellable(request, bodyHandler)
   }
 
   override suspend fun <T> loadOptionalJsonListByClass(request: HttpRequest, clazz: Class<T>): HttpResponse<out List<T>?> {
-    val bodyHandler = InflatedStreamReadingBodyHandler { responseInfo, stream ->
-      readSuccessResponseWithLogging(logger, request, responseInfo, stream) {
-        try {
-          @Suppress("UNCHECKED_CAST")
-          deserializer.fromJson(it, List::class.java, clazz) as? List<T>
-        }
-        catch (e: Throwable) {
-          logger.warn("API response deserialization failed", e)
-          throw HttpJsonDeserializationException(request.logName(), e)
-        }
+    val bodyHandler = inflateAndReadWithErrorHandlingAndLogging(logger, request) { reader, _ ->
+      try {
+        @Suppress("UNCHECKED_CAST")
+        deserializer.fromJson(reader, List::class.java, clazz) as? List<T>
+      }
+      catch (e: Throwable) {
+        logger.warn("API response deserialization failed", e)
+        throw HttpJsonDeserializationException(request.logName(), e)
       }
     }
     return httpHelper.sendAndAwaitCancellable(request, bodyHandler)
