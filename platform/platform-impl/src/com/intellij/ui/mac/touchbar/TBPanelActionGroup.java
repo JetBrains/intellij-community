@@ -282,13 +282,13 @@ final class TBPanelActionGroup extends TBPanel {
       if (!butt.myIsVisible)
         continue;
 
-      final long startNs = butt.myActionStats != null ? System.nanoTime() : 0;
+      final long startNs = butt.actionStats != null ? System.nanoTime() : 0;
       butt.setDisabled(!presentation.isEnabled());
 
       boolean isSelected = false;
       if (butt.getAnAction() instanceof Toggleable) {
         isSelected = Toggleable.isSelected(presentation);
-        butt.myUpdateOptions |= NSTLibrary.BUTTON_UPDATE_FLAGS; // permanent update of toggleable-buttons (do we really need this ??)
+        butt.updateOptions |= NSTLibrary.BUTTON_UPDATE_FLAGS; // permanent update of toggleable-buttons (do we really need this ??)
       }
       butt.setSelected(isSelected);
 
@@ -296,13 +296,13 @@ final class TBPanelActionGroup extends TBPanel {
       if (myCustomizer == null || !myCustomizer.applyCustomizations(butt, presentation)) {
         // Customizations weren't found, so use default view style: only icon (if presented, otherwise text)
         butt.setIconFromPresentation(presentation);
-        final boolean hideText = butt.myOriginIcon != null;
+        final boolean hideText = butt.originIcon != null;
         final String text = hideText ? null : presentation.getText();
         butt.setText(text);
       }
 
-      if (butt.myActionStats != null)
-        butt.myActionStats.updateViewNs += System.nanoTime() - startNs;
+      if (butt.actionStats != null)
+        butt.actionStats.updateViewNs += System.nanoTime() - startNs;
 
       // 6. All visual data (img/text/flags) is set now, schedule async update for native peers (and collect buttons with updates)
       butt.updateLater(false);

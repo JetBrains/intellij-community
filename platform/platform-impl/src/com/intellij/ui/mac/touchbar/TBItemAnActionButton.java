@@ -42,12 +42,16 @@ final class TBItemAnActionButton extends TBItemButton {
     final ActionManagerEx actionManagerEx = ActionManagerEx.getInstanceEx();
     final Component src = myComponent != null ? myComponent : Helpers.getCurrentFocusComponent();
     if (src == null) // KeyEvent can't have null source object
+    {
       return;
+    }
 
     final InputEvent ie = new KeyEvent(src, COMPONENT_FIRST, System.currentTimeMillis(), 0, 0, '\0');
     actionManagerEx.tryToExecute(myAnAction, ie, src, ActionPlaces.TOUCHBAR_GENERAL, true);
 
-    if (myAnAction instanceof Toggleable) // to update 'selected'-state after action has been performed
-      myUpdateOptions |= NSTLibrary.BUTTON_UPDATE_FLAGS;
+    // to update 'selected'-state after action has been performed
+    if (myAnAction instanceof Toggleable) {
+      updateOptions |= NSTLibrary.BUTTON_UPDATE_FLAGS;
+    }
   }
 }

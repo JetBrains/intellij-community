@@ -509,7 +509,6 @@ open class RunConfigurable @JvmOverloads constructor(protected val project: Proj
     if (SystemInfo.isMac) {
       val touchbarActions = DefaultActionGroup(toolbarAddAction)
       TouchbarActionCustomizations.setShowText(touchbarActions, true)
-      TouchbarActionCustomizations.setCombineWithDlgButtons(touchbarActions, true)
       Touchbar.setActions(wholePanel!!, touchbarActions)
     }
 
