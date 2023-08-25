@@ -240,10 +240,21 @@ public abstract class AppIcon {
 
     @Override
     public void requestFocus(@Nullable Window window) {
+      EDT.assertIsEdt();
+
       if (window != null) {
         window.toFront();
+
+        try {
+          Desktop.getDesktop().requestForeground(false);
+        }
+        catch (Exception e) {
+          LOG.error(e);
+        }
       }
-      requestFocus();
+      else {
+        requestFocus();
+      }
     }
 
     @Override
