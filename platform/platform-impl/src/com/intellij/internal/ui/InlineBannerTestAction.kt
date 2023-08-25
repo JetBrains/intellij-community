@@ -4,6 +4,7 @@ package com.intellij.internal.ui
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.ui.DialogWrapper
+import com.intellij.openapi.ui.Messages
 import com.intellij.ui.EditorNotificationPanel
 import com.intellij.ui.InlineBanner
 import com.intellij.ui.components.panels.VerticalLayout
@@ -43,7 +44,9 @@ class InlineBannerTestAction : DumbAwareAction() {
 
         panel.add(InlineBanner("Interactive lesson available").setIcon(null).addAction("Open lesson") {})
         panel.add(InlineBanner("Interactive lesson available"))
-        panel.add(InlineBanner("Interactive lesson available").setGearAction("Tooltip", {}).addAction("Open lesson") {})
+        panel.add(InlineBanner("Interactive lesson available").setGearAction("Tooltip", {
+          Messages.showInfoMessage("AAA", "BBB")
+        }).addAction("Open lesson") {})
         panel.add(InlineBanner("Interactive lesson available").showCloseButton(false).setGearAction("Tooltip", {
           System.out.println("Gear!")
         }).addAction("Open lesson", {}).addAction("Open lesson Open lesson", {}).addAction("Open lesson Open lesson Open lesson", {}))
