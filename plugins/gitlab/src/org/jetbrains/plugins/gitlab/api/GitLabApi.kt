@@ -10,6 +10,7 @@ import com.intellij.collaboration.api.json.loadOptionalJsonList
 import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.util.io.HttpSecurityUtil
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.plugins.gitlab.GitLabServersManager
 import org.jetbrains.plugins.gitlab.api.dto.GitLabGraphQLMutationResultDTO
 import org.jetbrains.plugins.gitlab.api.request.getServerMetadataOrVersion
@@ -18,6 +19,7 @@ import java.net.URI
 import java.net.http.HttpRequest
 import java.net.http.HttpResponse
 
+@ApiStatus.Experimental
 sealed interface GitLabApi : HttpApiHelper {
   val graphQL: GraphQL
   val rest: Rest
@@ -27,7 +29,7 @@ sealed interface GitLabApi : HttpApiHelper {
 }
 
 // this dark inheritance magic is required to make extensions work properly
-class GitLabApiImpl(httpHelper: HttpApiHelper) : GitLabApi, HttpApiHelper by httpHelper {
+internal class GitLabApiImpl(httpHelper: HttpApiHelper) : GitLabApi, HttpApiHelper by httpHelper {
 
   constructor(tokenSupplier: () -> String) : this(httpHelper(tokenSupplier))
 

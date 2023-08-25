@@ -17,7 +17,7 @@ import git4idea.checkout.GitCheckoutProvider
 import git4idea.commands.Git
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.*
-import org.jetbrains.plugins.gitlab.api.GitLabApiImpl
+import org.jetbrains.plugins.gitlab.api.GitLabApiManager
 import org.jetbrains.plugins.gitlab.api.request.getCurrentUser
 import org.jetbrains.plugins.gitlab.authentication.accounts.GitLabAccount
 import org.jetbrains.plugins.gitlab.authentication.accounts.GitLabAccountManager
@@ -64,6 +64,7 @@ internal class GitLabCloneRepositoriesViewModelImpl(
   private val accountManager: GitLabAccountManager,
   private val switchToLoginAction: (GitLabAccount) -> Unit
 ) : GitLabCloneRepositoriesViewModel {
+  private val apiManager: GitLabApiManager = service<GitLabApiManager>()
   private val vcsNotifier: VcsNotifier = project.service<VcsNotifier>()
 
   private val cs: CoroutineScope = parentCs.childScope()
@@ -123,7 +124,7 @@ internal class GitLabCloneRepositoriesViewModelImpl(
 
   override val accountDetailsProvider = GitLabAccountsDetailsProvider(cs) { account ->
     val token = accountManager.findCredentials(account) ?: return@GitLabAccountsDetailsProvider null
-    GitLabApiImpl { token }
+    apiManager.getClient { token }
   }
 
   override fun selectItem(item: GitLabCloneListItem?) {
@@ -176,7 +177,7 @@ internal class GitLabCloneRepositoriesViewModelImpl(
         val token = accountManager.findCredentials(account) ?: return@withContext listOf(
           GitLabCloneListItem.Error(account, GitLabCloneException.MissingAccessToken { switchToLoginAction(account) })
         )
-        val apiClient = GitLabApiImpl { token }
+        val apiClient = apiManager.getClient { token }
         val currentUser = apiClient.graphQL.getCurrentUser(account.server) ?: return@withContext listOf(
           GitLabCloneListItem.Error(account, GitLabCloneException.RevokedToken { switchToLoginAction(account) })
         )

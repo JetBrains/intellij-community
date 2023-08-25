@@ -3,6 +3,7 @@ package org.jetbrains.plugins.gitlab.api
 
 import com.intellij.collaboration.util.serviceGet
 import com.intellij.openapi.components.Service
+import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
 import git4idea.remote.hosting.SingleHostedGitRepositoryConnectionManager
 import git4idea.remote.hosting.SingleHostedGitRepositoryConnectionManagerImpl
@@ -21,7 +22,7 @@ internal class GitLabProjectConnectionManager(project: Project, cs: CoroutineSco
 
   private val connectionFactory = ValidatingHostedGitRepositoryConnectionFactory(project.serviceGet<GitLabProjectsManager>(),
                                                                                  serviceGet<GitLabAccountManager>()) { glProject, account, tokenState ->
-    val apiClient = GitLabApiImpl { tokenState.value }
+    val apiClient = service<GitLabApiManager>().getClient { tokenState.value }
     val currentUser = apiClient.graphQL.getCurrentUser(glProject.repository.serverPath) ?: error("Unable to load current user")
     GitLabProjectConnection(project, this, glProject, account, currentUser, apiClient, tokenState)
   }

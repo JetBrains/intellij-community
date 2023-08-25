@@ -1,13 +1,14 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gitlab
 
+import com.intellij.openapi.components.service
 import com.intellij.openapi.util.NlsSafe
 import kotlinx.coroutines.*
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import org.jetbrains.annotations.NonNls
 import org.jetbrains.plugins.gitlab.api.GitLabApi
-import org.jetbrains.plugins.gitlab.api.GitLabApiImpl
+import org.jetbrains.plugins.gitlab.api.GitLabApiManager
 import org.jetbrains.plugins.gitlab.api.GitLabServerPath
 import org.jetbrains.plugins.gitlab.api.dto.GitLabServerMetadataDTO
 import org.jetbrains.plugins.gitlab.api.request.checkIsGitLabServer
@@ -37,7 +38,7 @@ internal class CachingGitLabServersManager(private val cs: CoroutineScope) : Git
   override suspend fun checkIsGitLabServer(server: GitLabServerPath): Boolean =
     testCache.getOrPut(server) {
       cs.async(Dispatchers.IO + CoroutineName("GitLab Server tester")) {
-        GitLabApiImpl().rest.checkIsGitLabServer(server)
+        service<GitLabApiManager>().getUnauthenticatedClient().rest.checkIsGitLabServer(server)
       }
     }.await()
 
