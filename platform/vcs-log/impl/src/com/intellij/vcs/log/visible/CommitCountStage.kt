@@ -13,29 +13,13 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.vcs.log.visible;
+package com.intellij.vcs.log.visible
 
-import org.jetbrains.annotations.NotNull;
+enum class CommitCountStage(val count: Int) {
+  INITIAL(5), FIRST_STEP(2000), ALL(Int.MAX_VALUE);
 
-public enum CommitCountStage {
-
-  INITIAL(5),
-  FIRST_STEP(2000),
-  ALL(Integer.MAX_VALUE);
-
-  private final int myCount;
-
-  CommitCountStage(int count) {
-    myCount = count;
-  }
-
-  @NotNull
-  CommitCountStage next() {
-    CommitCountStage[] values = values();
-    return ordinal() == values.length - 1 ? this : values[ordinal() + 1];
-  }
-
-  public int getCount() {
-    return myCount;
+  fun next(): CommitCountStage {
+    val values = values()
+    return if (ordinal == values.size - 1) this else values[ordinal + 1]
   }
 }
