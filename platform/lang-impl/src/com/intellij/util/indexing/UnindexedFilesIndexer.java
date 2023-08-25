@@ -22,7 +22,6 @@ import com.intellij.util.indexing.diagnostic.ProjectDumbIndexingHistoryImpl;
 import com.intellij.util.indexing.diagnostic.ProjectIndexingHistoryImpl;
 import com.intellij.util.indexing.diagnostic.ScanningType;
 import com.intellij.util.indexing.roots.IndexableFilesIterator;
-import com.intellij.util.indexing.snapshot.SnapshotInputMappingsStatistics;
 import it.unimi.dsi.fastutil.longs.LongArraySet;
 import it.unimi.dsi.fastutil.longs.LongSet;
 import it.unimi.dsi.fastutil.longs.LongSets;
@@ -85,8 +84,6 @@ final class UnindexedFilesIndexer extends DumbModeTask {
     poweredIndicator.setFraction(0);
     poweredIndicator.setText(IndexingBundle.message("progress.indexing.updating"));
 
-    myIndex.resetSnapshotInputMappingStatistics();
-
     projectIndexingHistory.startStage(ProjectIndexingHistoryImpl.Stage.Indexing, Instant.now());
     try {
       doIndexFiles(projectIndexingHistory, projectDumbIndexingHistory, poweredIndicator);
@@ -97,9 +94,6 @@ final class UnindexedFilesIndexer extends DumbModeTask {
 
     LOG.info(
       snapshot.getLogResponsivenessSinceCreationMessage("Finished for " + myProject.getName() + ". Unindexed files update"));
-    List<SnapshotInputMappingsStatistics> snapshotInputMappingsStatistics = myIndex.dumpSnapshotInputMappingStatistics();
-    projectIndexingHistory.addSnapshotInputMappingStatistics(snapshotInputMappingsStatistics);
-    projectDumbIndexingHistory.addSnapshotInputMappingStatistics(snapshotInputMappingsStatistics);
   }
 
   private void doIndexFiles(@NotNull ProjectIndexingHistoryImpl projectIndexingHistory,

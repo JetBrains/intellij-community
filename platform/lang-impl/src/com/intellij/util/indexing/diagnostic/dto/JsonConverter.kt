@@ -263,11 +263,6 @@ private fun ProjectDumbIndexingHistoryImpl.aggregateStatsPerIndexer(): List<Json
       totalNumberOfFilesIndexedByExtensions = stats.totalNumberOfFilesIndexedByExtensions,
       totalFilesSize = JsonFileSize(stats.totalBytes),
       indexValueChangerEvaluationSpeed = indexIdToIndexValueChangerEvaluationSpeed.getValue(indexId),
-      snapshotInputMappingStats = JsonProjectDumbIndexingHistory.JsonStatsPerIndexer.JsonSnapshotInputMappingStats(
-        totalRequests = stats.snapshotInputMappingStats.requests,
-        totalMisses = stats.snapshotInputMappingStats.misses,
-        totalHits = stats.snapshotInputMappingStats.hits
-      )
     )
   }
 }

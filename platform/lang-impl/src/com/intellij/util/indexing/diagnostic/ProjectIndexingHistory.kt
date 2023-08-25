@@ -164,7 +164,6 @@ interface StatsPerIndexer {
   val totalNumberOfFilesIndexedByExtensions: Int
   val totalBytes: BytesNumber
   val totalIndexValueChangerEvaluationTimeInAllThreads: TimeNano
-  val snapshotInputMappingStats: SnapshotInputMappingStats
 }
 
 interface IndexingTimes {
@@ -218,10 +217,4 @@ interface DumbIndexingTimes {
   val appliedAllValuesSeparately: Boolean
   val separateValueApplicationVisibleTime: TimeNano
   val wasInterrupted: Boolean
-}
-
-interface SnapshotInputMappingStats {
-  val requests: Long
-  val misses: Long
-  val hits: Long
 }

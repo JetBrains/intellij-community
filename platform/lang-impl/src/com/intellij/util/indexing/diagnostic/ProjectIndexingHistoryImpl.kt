@@ -8,7 +8,6 @@ import com.intellij.util.indexing.diagnostic.dto.JsonChangedFilesDuringIndexingS
 import com.intellij.util.indexing.diagnostic.dto.JsonFileProviderIndexStatistics
 import com.intellij.util.indexing.diagnostic.dto.JsonScanningStatistics
 import com.intellij.util.indexing.diagnostic.dto.toJsonStatistics
-import com.intellij.util.indexing.snapshot.SnapshotInputMappingsStatistics
 import it.unimi.dsi.fastutil.longs.LongSet
 import org.jetbrains.annotations.ApiStatus
 import java.time.Duration
@@ -83,31 +82,12 @@ data class ProjectIndexingHistoryImpl(override val project: Project,
           totalNumberOfFilesIndexedByExtensions = 0,
           totalBytes = 0,
           totalIndexValueChangerEvaluationTimeInAllThreads = 0,
-          snapshotInputMappingStats = SnapshotInputMappingStatsImpl(
-            requests = 0,
-            misses = 0
-          )
         )
       }
       totalStats.totalNumberOfFiles += stats.numberOfFiles
       totalStats.totalNumberOfFilesIndexedByExtensions += stats.numberOfFilesIndexedByExtensions
       totalStats.totalBytes += stats.totalBytes
       totalStats.totalIndexValueChangerEvaluationTimeInAllThreads += stats.evaluateIndexValueChangerTime
-    }
-  }
-
-  fun addSnapshotInputMappingStatistics(snapshotInputMappingsStatistics: List<SnapshotInputMappingsStatistics>) {
-    for (mappingsStatistic in snapshotInputMappingsStatistics) {
-      val totalStats = totalStatsPerIndexer.getOrPut(mappingsStatistic.indexId.name) {
-        StatsPerIndexerImpl(
-          totalNumberOfFiles = 0,
-          totalNumberOfFilesIndexedByExtensions = 0,
-          totalBytes = 0,
-          totalIndexValueChangerEvaluationTimeInAllThreads = 0,
-          snapshotInputMappingStats = SnapshotInputMappingStatsImpl(requests = 0, misses = 0))
-      }
-      totalStats.snapshotInputMappingStats.requests += mappingsStatistic.totalRequests
-      totalStats.snapshotInputMappingStats.misses += mappingsStatistic.totalMisses
     }
   }
 
@@ -302,7 +282,6 @@ data class ProjectIndexingHistoryImpl(override val project: Project,
     override var totalNumberOfFilesIndexedByExtensions: Int,
     override var totalBytes: BytesNumber,
     override var totalIndexValueChangerEvaluationTimeInAllThreads: TimeNano,
-    override var snapshotInputMappingStats: SnapshotInputMappingStatsImpl
   ): StatsPerIndexer
 
   data class IndexingTimesImpl(
@@ -324,10 +303,6 @@ data class ProjectIndexingHistoryImpl(override val project: Project,
 
     var dumbModeDuration: Duration = Duration.ZERO //just to have the same effect on pause time in old and new diagnostics
   ) : IndexingTimes
-
-  data class SnapshotInputMappingStatsImpl(override var requests: Long, override var misses: Long) : SnapshotInputMappingStats {
-    override val hits: Long get() = requests - misses
-  }
 }
 
 private val indexingActivitySessionIdSequencer = AtomicLong()
@@ -652,31 +627,12 @@ data class ProjectDumbIndexingHistoryImpl(override val project: Project) : Proje
           totalNumberOfFilesIndexedByExtensions = 0,
           totalBytes = 0,
           totalIndexValueChangerEvaluationTimeInAllThreads = 0,
-          snapshotInputMappingStats = SnapshotInputMappingStatsImpl(
-            requests = 0,
-            misses = 0
-          )
         )
       }
       totalStats.totalNumberOfFiles += stats.numberOfFiles
       totalStats.totalNumberOfFilesIndexedByExtensions += stats.numberOfFilesIndexedByExtensions
       totalStats.totalBytes += stats.totalBytes
       totalStats.totalIndexValueChangerEvaluationTimeInAllThreads += stats.evaluateIndexValueChangerTime
-    }
-  }
-
-  fun addSnapshotInputMappingStatistics(snapshotInputMappingsStatistics: List<SnapshotInputMappingsStatistics>) {
-    for (mappingsStatistic in snapshotInputMappingsStatistics) {
-      val totalStats = totalStatsPerIndexer.getOrPut(mappingsStatistic.indexId.name) {
-        StatsPerIndexerImpl(
-          totalNumberOfFiles = 0,
-          totalNumberOfFilesIndexedByExtensions = 0,
-          totalBytes = 0,
-          totalIndexValueChangerEvaluationTimeInAllThreads = 0,
-          snapshotInputMappingStats = SnapshotInputMappingStatsImpl(requests = 0, misses = 0))
-      }
-      totalStats.snapshotInputMappingStats.requests += mappingsStatistic.totalRequests
-      totalStats.snapshotInputMappingStats.misses += mappingsStatistic.totalMisses
     }
   }
 
@@ -749,7 +705,6 @@ data class ProjectDumbIndexingHistoryImpl(override val project: Project) : Proje
     override var totalNumberOfFilesIndexedByExtensions: Int,
     override var totalBytes: BytesNumber,
     override var totalIndexValueChangerEvaluationTimeInAllThreads: TimeNano,
-    override var snapshotInputMappingStats: SnapshotInputMappingStatsImpl
   ) : StatsPerIndexer
 
   data class DumbIndexingTimesImpl(
@@ -764,8 +719,4 @@ data class ProjectDumbIndexingHistoryImpl(override val project: Project) : Proje
     override var separateValueApplicationVisibleTime: TimeNano = 0,
     override var wasInterrupted: Boolean = false
   ) : DumbIndexingTimes
-
-  data class SnapshotInputMappingStatsImpl(override var requests: Long, override var misses: Long) : SnapshotInputMappingStats {
-    override val hits: Long get() = requests - misses
-  }
 }

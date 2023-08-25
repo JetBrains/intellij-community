@@ -896,7 +896,6 @@ private fun JsonProjectDumbIndexingHistory.generateDumbIndexingHtml(target: Appe
                 th("Total number of files indexed by $INDEX_INFRA_EXTENSIONS")
                 th("Total files size")
                 th("Indexing speed (relative to CPU time)")
-                th("Snapshot input mapping statistics")
               }
             }
             tbody {
@@ -908,15 +907,6 @@ private fun JsonProjectDumbIndexingHistory.generateDumbIndexingHtml(target: Appe
                   td(statsPerIndexer.totalNumberOfFilesIndexedByExtensions.toString())
                   td(statsPerIndexer.totalFilesSize.presentableSize())
                   td(statsPerIndexer.indexValueChangerEvaluationSpeed.presentableSpeed())
-
-                  fun JsonProjectDumbIndexingHistory.JsonStatsPerIndexer.JsonSnapshotInputMappingStats.presentable(): String {
-                    val hitsPercentages = JsonPercentages(totalHits, totalRequests)
-                    val missesPercentages = JsonPercentages(totalMisses, totalRequests)
-                    return "requests: $totalRequests, " +
-                           "hits: $totalHits (${hitsPercentages.presentablePercentages()}), " +
-                           "misses: $totalMisses (${missesPercentages.presentablePercentages()})"
-                  }
-                  td(statsPerIndexer.snapshotInputMappingStats.presentable())
                 }
               }
             }

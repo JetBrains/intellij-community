@@ -72,15 +72,10 @@ import com.intellij.util.indexing.events.VfsEventsMerger;
 import com.intellij.util.indexing.impl.MapReduceIndexMappingException;
 import com.intellij.util.indexing.impl.storage.DefaultIndexStorageLayout;
 import com.intellij.util.indexing.impl.storage.TransientFileContentIndex;
-import com.intellij.util.indexing.impl.storage.VfsAwareMapReduceIndex;
 import com.intellij.util.indexing.projectFilter.FileAddStatus;
 import com.intellij.util.indexing.projectFilter.IncrementalProjectIndexableFilesFilterHolder;
 import com.intellij.util.indexing.projectFilter.ProjectIndexableFilesFilterHolder;
 import com.intellij.util.indexing.roots.IndexableFilesContributor;
-import com.intellij.util.indexing.snapshot.SnapshotHashEnumeratorService;
-import com.intellij.util.indexing.snapshot.SnapshotInputMappingException;
-import com.intellij.util.indexing.snapshot.SnapshotInputMappings;
-import com.intellij.util.indexing.snapshot.SnapshotInputMappingsStatistics;
 import com.intellij.util.indexing.storage.VfsAwareIndexStorageLayout;
 import com.intellij.util.io.CorruptedException;
 import com.intellij.util.io.IOUtil;
@@ -344,27 +339,6 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
     ShutDownTracker.getInstance().registerCacheShutdownTask(myShutDownTask);
   }
 
-  @ApiStatus.Internal
-  public void resetSnapshotInputMappingStatistics() {
-    for (ID<?, ?> id : getRegisteredIndexes().getState().getIndexIDs()) {
-      UpdatableIndex<?, ?, FileContent, ?> index = getIndex(id);
-      if (index instanceof VfsAwareMapReduceIndex) {
-        ((VfsAwareMapReduceIndex<?, ?, ?>)index).resetSnapshotInputMappingsStatistics();
-      }
-    }
-  }
-
-  @ApiStatus.Internal
-  public @NotNull List<SnapshotInputMappingsStatistics> dumpSnapshotInputMappingStatistics() {
-    return getRegisteredIndexes().getState().getIndexIDs().stream().map(id -> {
-      UpdatableIndex<?, ?, FileContent, ?> index = getIndex(id);
-      if (index instanceof VfsAwareMapReduceIndex) {
-        return ((VfsAwareMapReduceIndex<?, ?, ?>)index).dumpSnapshotInputMappingsStatistics();
-      }
-      return null;
-    }).filter(Objects::nonNull).collect(Collectors.toList());
-  }
-
   void addStaleIds(@NotNull IntSet staleIds) {
     synchronized (myStaleIds) {
       myStaleIds.addAll(staleIds);
@@ -490,24 +464,13 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
     throws Exception {
     ID<K, V> name = extension.getName();
     InputFilter inputFilter = extension.getInputFilter();
-    boolean contentHashesEnumeratorOk = true;
-
-    try {
-      if (FileBasedIndex.hasSnapshotMapping(extension)) {
-        contentHashesEnumeratorOk = SnapshotHashEnumeratorService.getInstance().initialize();
-      }
-    }
-    catch (Exception e) {
-      state.registerIndexInitializationProblem(name, e);
-      throw e;
-    }
 
     UpdatableIndex<K, V, FileContent, ?> index = null;
 
     int attemptCount = 2;
     for (int attempt = 0; attempt < attemptCount; attempt++) {
       try {
-        VfsAwareIndexStorageLayout<K, V> layout = DefaultIndexStorageLayout.getLayout(extension, contentHashesEnumeratorOk);
+        VfsAwareIndexStorageLayout<K, V> layout = DefaultIndexStorageLayout.getLayout(extension);
         index = createIndex(extension, layout);
 
         for (FileBasedIndexInfrastructureExtension infrastructureExtension : FileBasedIndexInfrastructureExtension.EP_NAME.getExtensionList()) {
@@ -527,7 +490,7 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
         boolean lastAttempt = attempt == attemptCount - 1;
 
         try {
-          VfsAwareIndexStorageLayout<K, V> layout = DefaultIndexStorageLayout.getLayout(extension, contentHashesEnumeratorOk);
+          VfsAwareIndexStorageLayout<K, V> layout = DefaultIndexStorageLayout.getLayout(extension);
           layout.clearIndexData();
         }
         catch (Exception layoutEx) {
@@ -673,7 +636,6 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
 
         IndexDataInitializer.runParallelTasks(indexDisposeTasks, false);
         FileBasedIndexInfrastructureExtension.EP_NAME.getExtensionList().forEach(ex -> ex.shutdown());
-        SnapshotHashEnumeratorService.closeIfCreated();
         if (!keepConnection) {
           myConnection.disconnect();
         }
@@ -1600,11 +1562,6 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
         storageUpdate = index.mapInputAndPrepareUpdate(inputId, currentFC);
       }
       catch (MapReduceIndexMappingException e) {
-        Throwable cause = e.getCause();
-        if (cause instanceof SnapshotInputMappingException) {
-          requestRebuild(indexId, e);
-          return null;
-        }
         setIndexedState(index, currentFC, inputId, false);
         BrokenIndexingDiagnostics.INSTANCE.getExceptionListener().onFileIndexMappingFailed(
           inputId,
@@ -2061,12 +2018,7 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
 
   @ApiStatus.Internal
   static <K, V> int getIndexExtensionVersion(@NotNull FileBasedIndexExtension<K, V> extension) {
-    int version = extension.getVersion();
-
-    if (FileBasedIndex.hasSnapshotMapping(extension)) {
-      version += SnapshotInputMappings.getVersion();
-    }
-    return version;
+    return extension.getVersion();
   }
 
   @Nullable
@@ -2207,8 +2159,6 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
           requestRebuild(indexId, e);
         }
       }
-
-      SnapshotHashEnumeratorService.getInstance().flush();
     }
 
     private boolean betterToInterruptFlushingEarly(final int modCount) {
@@ -2283,13 +2233,6 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
         }
       }
 
-      if (!overallResult.needsMoreToFlush()) {
-        SnapshotHashEnumeratorService snapshotHashEnumeratorService =
-          ApplicationManager.getApplication().getServiceIfCreated(SnapshotHashEnumeratorService.class);
-        if (snapshotHashEnumeratorService != null) {
-          snapshotHashEnumeratorService.flush();
-        }
-      }
       return overallResult;
     }
 
@@ -2304,8 +2247,7 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
           return true;
         }
       }
-
-      return SnapshotHashEnumeratorService.getInstance().isDirty();
+      return false;
     }
 
     @Override

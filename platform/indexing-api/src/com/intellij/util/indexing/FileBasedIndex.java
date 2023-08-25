@@ -392,15 +392,6 @@ public abstract class FileBasedIndex {
   }
 
   @ApiStatus.Internal
-  public static <Key, Value> boolean hasSnapshotMapping(@NotNull IndexExtension<Key, Value, ?> indexExtension) {
-    //noinspection unchecked
-    return indexExtension instanceof FileBasedIndexExtension &&
-           ((FileBasedIndexExtension<Key, Value>)indexExtension).hasSnapshotMapping() &&
-           ourSnapshotMappingsEnabled &&
-           !USE_IN_MEMORY_INDEX;
-  }
-
-  @ApiStatus.Internal
   public void loadIndexes() {
   }
 }

@@ -37,7 +37,6 @@ import com.intellij.util.indexing.impl.MapReduceIndexMappingException;
 import com.intellij.util.indexing.roots.IndexableFilesContributor;
 import com.intellij.util.indexing.roots.IndexableFilesDeduplicateFilter;
 import com.intellij.util.indexing.roots.IndexableFilesIterator;
-import com.intellij.util.indexing.snapshot.SnapshotInputMappingException;
 import it.unimi.dsi.fastutil.ints.*;
 import it.unimi.dsi.fastutil.objects.ObjectIterators;
 import org.jetbrains.annotations.ApiStatus;
@@ -713,10 +712,6 @@ public abstract class FileBasedIndexEx extends FileBasedIndex {
       return null;
     }
     if (e instanceof MapReduceIndexMappingException) {
-      if (e.getCause() instanceof SnapshotInputMappingException) {
-        // IDEA-258515: corrupted snapshot index storage must be rebuilt.
-        return e.getCause();
-      }
       // If exception has happened on input mapping (DataIndexer.map),
       // it is handled as the indexer exception and must not lead to index rebuild.
       return null;
