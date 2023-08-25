@@ -725,6 +725,10 @@ private class BlockState(list: List<CombinedBlockId>, current: CombinedBlockId) 
     blocks.forEachIndexed { index, block ->
       blockByIndex[block] = index
     }
+    // todo: find and fix initial problem in Space review integration
+    if (!blocks.contains(current)) {
+      currentBlock = blocks.first()
+    }
   }
 
   fun indexOf(blockId: CombinedBlockId): Int = blockByIndex[blockId]!!
