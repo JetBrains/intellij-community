@@ -1498,6 +1498,25 @@ public class MavenProjectsManagerTest extends MavenMultiVersionImportingTestCase
     assertSize(0, myProjectsManager.getRootProjects());
   }
 
+  @Test
+  public void testShouldKeepModuleName() {
+    importProject("""
+                    <groupId>test</groupId>
+                    <artifactId>project</artifactId>
+                    <version>1</version>
+                    """);
+
+    assertEquals("project", ModuleManager.getInstance(myProject).getModules()[0].getName());
+
+    importProject("""
+                    <groupId>test</groupId>
+                    <artifactId>project1</artifactId>
+                    <version>1</version>
+                    """);
+
+    assertEquals("project", ModuleManager.getInstance(myProject).getModules()[0].getName());
+  }
+
   @Override
   protected void doImportProjects(List<VirtualFile> files, boolean failOnReadingError, String... profiles) {
     if(isNewImportingProcess){
