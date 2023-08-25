@@ -17,7 +17,8 @@ import com.intellij.openapi.util.CheckedDisposable
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.wm.WindowManager
-import com.intellij.openapi.wm.impl.ToolbarComboWidget
+import com.intellij.openapi.wm.impl.ExpandableComboAction
+import com.intellij.openapi.wm.impl.ToolbarComboButton
 import com.intellij.ui.ColorUtil
 import com.intellij.ui.LottieUtils
 import com.intellij.ui.awt.RelativePoint
@@ -69,10 +70,27 @@ object NewUiOnboardingUtil {
     return component as? T
   }
 
-  fun showToolbarWidgetPopup(widget: ToolbarComboWidget, disposable: CheckedDisposable): JBPopup? {
-    return showNonClosablePopup(disposable,
-                                createPopup = { widget.createPopup(e = null) },
-                                showPopup = { popup -> popup.showUnderneathOf(widget) })
+  fun showToolbarComboButtonPopup(button: ToolbarComboButton, action: ExpandableComboAction, disposable: CheckedDisposable): JBPopup? {
+    return showNonClosablePopup(
+      disposable,
+      createPopup = {
+        val dataContext = DataManager.getInstance().getDataContext(button)
+        val event = AnActionEvent.createFromDataContext(ActionPlaces.NEW_UI_ONBOARDING, action.templatePresentation.clone(), dataContext)
+        ActionUtil.lastUpdateAndCheckDumb(action, event, false)
+        val popup = action.createPopup(event)
+        popup?.addListener(object : JBPopupListener {
+          override fun beforeShown(event: LightweightWindowEvent) {
+            button.model.setSelected(true)
+          }
+
+          override fun onClosed(event: LightweightWindowEvent) {
+            button.model.setSelected(false)
+          }
+        })
+        popup
+      },
+      showPopup = { popup -> popup.showUnderneathOf(button) }
+    )
   }
 
   fun showNonClosablePopup(disposable: CheckedDisposable,

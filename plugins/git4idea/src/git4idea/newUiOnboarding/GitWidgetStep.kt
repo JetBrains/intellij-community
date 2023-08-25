@@ -7,7 +7,7 @@ import com.intellij.openapi.application.readAction
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.popup.Balloon
 import com.intellij.openapi.util.CheckedDisposable
-import com.intellij.openapi.wm.impl.ToolbarComboWidget
+import com.intellij.openapi.wm.impl.ToolbarComboButton
 import com.intellij.platform.ide.newUiOnboarding.NewUiOnboardingBundle
 import com.intellij.platform.ide.newUiOnboarding.NewUiOnboardingStep
 import com.intellij.platform.ide.newUiOnboarding.NewUiOnboardingStepData
@@ -29,13 +29,14 @@ class GitWidgetStep : NewUiOnboardingStep {
   private val enableVcsHelpTopic = "enabling-version-control.html"
 
   override suspend fun performStep(project: Project, disposable: CheckedDisposable): NewUiOnboardingStepData? {
-    val widget = NewUiOnboardingUtil.findUiComponent(project) { widget: ToolbarComboWidget ->
-      ClientProperty.get(widget, CustomComponentAction.ACTION_KEY) is GitToolbarWidgetAction
+    val button = NewUiOnboardingUtil.findUiComponent(project) { button: ToolbarComboButton ->
+      ClientProperty.get(button, CustomComponentAction.ACTION_KEY) is GitToolbarWidgetAction
     } ?: return null
 
-    val popup = NewUiOnboardingUtil.showToolbarWidgetPopup(widget, disposable) ?: return null
+    val action = ClientProperty.get(button, CustomComponentAction.ACTION_KEY) as GitToolbarWidgetAction
+    val popup = NewUiOnboardingUtil.showToolbarComboButtonPopup(button, action, disposable) ?: return null
 
-    val context = DataManager.getInstance().getDataContext(widget)
+    val context = DataManager.getInstance().getDataContext(button)
     val state = withContext(Dispatchers.Default) {
       readAction {
         val gitRepository = GitBranchUtil.guessWidgetRepository(project, context)
