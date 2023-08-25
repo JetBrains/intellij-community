@@ -356,6 +356,7 @@ internal class TestingTasksImpl(private val context: CompilationContext, private
       testClasspath = testRoots.mapNotNull(toStringConverter)
     }
     val bootstrapClasspath = context.getModuleRuntimeClasspath(context.findRequiredModule("intellij.tools.testsBootstrap"), false)
+      .toMutableList()
     val classpathFile = context.paths.tempDir.resolve("junit.classpath")
     Files.createDirectories(classpathFile.parent)
     // this is required to collect tests both on class and module paths
@@ -369,7 +370,7 @@ internal class TestingTasksImpl(private val context: CompilationContext, private
     systemProperties.putIfAbsent(TestingTasks.BOOTSTRAP_TESTCASES_PROPERTY, "com.intellij.AllTests")
     systemProperties.putIfAbsent(TestingOptions.PERFORMANCE_TESTS_ONLY_FLAG, options.isPerformanceTestsOnly.toString())
     val allJvmArgs = ArrayList(jvmArgs)
-    prepareEnvForTestRun(allJvmArgs, systemProperties, bootstrapClasspath.toMutableList(), remoteDebugging)
+    prepareEnvForTestRun(allJvmArgs, systemProperties, bootstrapClasspath, remoteDebugging)
     val messages = context.messages
     if (isRunningInBatchMode) {
       messages.info("Running tests from ${mainModule} matched by '${options.batchTestIncludes}' pattern.")
@@ -449,17 +450,6 @@ internal class TestingTasksImpl(private val context: CompilationContext, private
                                     systemProperties: MutableMap<String, String>,
                                     classPath: MutableList<String>,
                                     remoteDebugging: Boolean) {
-    if (jvmArgs.contains("-Djava.system.class.loader=com.intellij.util.lang.UrlClassLoader")) {
-      val utilModule = context.findRequiredModule("intellij.platform.util")
-      val enumerator = JpsJavaExtensionService.dependencies(utilModule)
-        .recursively()
-        .withoutSdk()
-        .includedIn(JpsJavaClasspathKind.PRODUCTION_RUNTIME)
-      val utilClasspath = enumerator.classes().roots.mapTo(LinkedHashSet()) { it.absolutePath }
-      utilClasspath.removeAll(classPath.toSet())
-      classPath += utilClasspath
-    }
-
     val snapshotsDir = createSnapshotsDirectory()
     val hprofSnapshotFilePath = snapshotsDir.resolve("intellij-tests-oom.hprof").toString()
     jvmArgs.addAll(0, listOf("-XX:+HeapDumpOnOutOfMemoryError", "-XX:HeapDumpPath=${hprofSnapshotFilePath}"))
@@ -548,6 +538,16 @@ internal class TestingTasksImpl(private val context: CompilationContext, private
         ---------------------------------------^------^------^------^------^------^------^----------------------------------------
         """.trimIndent()
       )
+    }
+    if (systemProperties["java.system.class.loader"] == UrlClassLoader::class.java.canonicalName) {
+      val utilModule = context.findRequiredModule("intellij.platform.util")
+      val enumerator = JpsJavaExtensionService.dependencies(utilModule)
+        .recursively()
+        .withoutSdk()
+        .includedIn(JpsJavaClasspathKind.PRODUCTION_RUNTIME)
+      val utilClasspath = enumerator.classes().roots.mapTo(LinkedHashSet()) { it.absolutePath }
+      utilClasspath.removeAll(classPath.toSet())
+      classPath += utilClasspath
     }
   }
 
