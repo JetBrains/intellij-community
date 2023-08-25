@@ -40,7 +40,6 @@ public class MavenImportingSettingsForm {
   private TextFieldWithBrowseButton mySeparateModulesDirChooser;
 
   private JCheckBox myCreateModulesForAggregators;
-  private JCheckBox myCreateGroupsCheckBox;
   private JComboBox<String> myUpdateFoldersOnImportPhaseComboBox;
   private JCheckBox myKeepSourceFoldersCheckBox;
   private JCheckBox myUseMavenOutputCheckBox;
@@ -116,7 +115,6 @@ public class MavenImportingSettingsForm {
 
     myKeepSourceFoldersCheckBox.setVisible(!isWorkspaceImport);
     myCreateModulesForAggregators.setVisible(!isWorkspaceImport);
-    myCreateGroupsCheckBox.setVisible(!isWorkspaceImport);
   }
 
   private void updateModuleDirControls() {
@@ -144,7 +142,6 @@ public class MavenImportingSettingsForm {
     data.setDedicatedModuleDir(mySeparateModulesDirCheckBox.isSelected() ? mySeparateModulesDirChooser.getText() : "");
 
     data.setCreateModulesForAggregators(myCreateModulesForAggregators.isSelected());
-    data.setCreateModuleGroups(myCreateGroupsCheckBox.isSelected());
 
     data.setKeepSourceFolders(myKeepSourceFoldersCheckBox.isSelected());
     data.setExcludeTargetFolder(myExcludeTargetFolderCheckBox.isSelected());
@@ -173,7 +170,6 @@ public class MavenImportingSettingsForm {
     mySeparateModulesDirChooser.setText(data.getDedicatedModuleDir());
 
     myCreateModulesForAggregators.setSelected(data.isCreateModulesForAggregators());
-    myCreateGroupsCheckBox.setSelected(data.isCreateModuleGroups());
 
     myKeepSourceFoldersCheckBox.setSelected(data.isKeepSourceFolders());
     myStoreProjectFilesUnderProjectRoot.setSelected(!isCurrentlyStoredExternally(project));

@@ -24,15 +24,14 @@ interface MavenProjectImporter {
     fun createImporter(project: Project,
                        projectsTree: MavenProjectsTree,
                        projectsToImportWithChanges: Map<MavenProject, MavenProjectChanges>,
-                       importModuleGroupsRequired: Boolean,
                        modelsProvider: IdeModifiableModelsProvider,
                        importingSettings: MavenImportingSettings,
                        previewModule: Module?,
                        importingActivity: StructuredIdeActivity): MavenProjectImporter {
       val importer = createImporter(project, projectsTree, projectsToImportWithChanges,
-                                    importModuleGroupsRequired, modelsProvider, importingSettings, previewModule)
+                                    modelsProvider, importingSettings, previewModule)
       return object : MavenProjectImporter {
-        override fun importProject(): List<MavenProjectsProcessorTask>? {
+        override fun importProject(): List<MavenProjectsProcessorTask> {
           val activity = MavenImportStats.startApplyingModelsActivity(project, importingActivity)
           val startTime = System.currentTimeMillis()
           try {
@@ -84,7 +83,6 @@ interface MavenProjectImporter {
     private fun createImporter(project: Project,
                                projectsTree: MavenProjectsTree,
                                projectsToImportWithChanges: Map<MavenProject, MavenProjectChanges>,
-                               importModuleGroupsRequired: Boolean,
                                modelsProvider: IdeModifiableModelsProvider,
                                importingSettings: MavenImportingSettings,
                                previewModule: Module?): MavenProjectImporter {
@@ -95,7 +93,6 @@ interface MavenProjectImporter {
 
       return MavenProjectLegacyImporter(project, projectsTree,
                                         projectsToImportWithChanges,
-                                        importModuleGroupsRequired,
                                         modelsProvider, importingSettings,
                                         previewModule)
     }

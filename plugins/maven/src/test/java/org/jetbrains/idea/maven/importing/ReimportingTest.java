@@ -3,11 +3,7 @@ package org.jetbrains.idea.maven.importing;
 
 import com.intellij.compiler.CompilerConfiguration;
 import com.intellij.maven.testFramework.MavenMultiVersionImportingTestCase;
-import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.module.LanguageLevelUtil;
-import com.intellij.openapi.module.ModifiableModuleModel;
-import com.intellij.openapi.module.Module;
-import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.roots.ModuleOrderEntry;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.roots.impl.OrderEntryUtil;
@@ -49,21 +45,6 @@ public class ReimportingTest extends MavenMultiVersionImportingTestCase {
       <version>1</version>
       """);
     importProject();
-  }
-
-  @Test
-  public void testKeepingModuleGroups() {
-    final Module m = getModule("project");
-
-    WriteCommandAction.writeCommandAction(myProject).run(() -> {
-      ModifiableModuleModel model = ModuleManager.getInstance(myProject).getModifiableModel();
-      model.setModuleGroupPath(m, new String[]{"group"});
-      model.commit();
-    });
-
-
-    importProject();
-    assertModuleGroupPath("project", true, "group");
   }
 
   @Test

@@ -84,36 +84,33 @@ open class MavenProjectsManagerEx(project: Project) : MavenProjectsManager(proje
 
   private suspend fun importMavenProjects(projectsToImport: Map<MavenProject, MavenProjectChanges>,
                                           modelsProvider: IdeModifiableModelsProvider?): List<Module> {
-    val createdModules = doImportMavenProjects(projectsToImport, false, modelsProvider)
+    val createdModules = doImportMavenProjects(projectsToImport, modelsProvider)
     fireProjectImportCompleted()
     return createdModules
   }
 
   override fun importMavenProjectsSync() {
-    prepareImporter(null, emptyMap(), false).importMavenProjectsBlocking()
+    prepareImporter(null, emptyMap()).importMavenProjectsBlocking()
   }
 
   private suspend fun doImportMavenProjects(projectsToImport: Map<MavenProject, MavenProjectChanges>,
-                                            importModuleGroupsRequired: Boolean,
                                             modelsProvider: IdeModifiableModelsProvider?): List<Module> {
-    return prepareImporter(modelsProvider, projectsToImport, importModuleGroupsRequired).importMavenProjects()
+    return prepareImporter(modelsProvider, projectsToImport).importMavenProjects()
   }
 
   private fun prepareImporter(modelsProvider: IdeModifiableModelsProvider?,
-                              projectsToImport: Map<MavenProject, MavenProjectChanges>,
-                              importModuleGroupsRequired: Boolean): MavenProjectsManagerImporter {
+                              projectsToImport: Map<MavenProject, MavenProjectChanges>): MavenProjectsManagerImporter {
     if (projectsToImport.any { it.key == null }) {
       throw IllegalArgumentException("Null key in projectsToImport")
     }
     val finalModelsProvider = modelsProvider ?: ProjectDataManager.getInstance().createModifiableModelsProvider(myProject)
-    return MavenProjectsManagerImporter(finalModelsProvider, projectsToImport, importModuleGroupsRequired)
+    return MavenProjectsManagerImporter(finalModelsProvider, projectsToImport)
   }
 
   private data class ImportResult(val createdModules: List<Module>, val postTasks: List<MavenProjectsProcessorTask>)
 
   private inner class MavenProjectsManagerImporter(private val modelsProvider: IdeModifiableModelsProvider,
-                                                   private val projectsToImport: Map<MavenProject, MavenProjectChanges>,
-                                                   private val importModuleGroupsRequired: Boolean) {
+                                                   private val projectsToImport: Map<MavenProject, MavenProjectChanges>) {
     @RequiresBlockingContext
     fun importMavenProjectsBlocking(): List<Module> {
       return runBlockingMaybeCancellable { importMavenProjectsBg() }
@@ -167,7 +164,7 @@ open class MavenProjectsManagerEx(project: Project) : MavenProjectsManager(proje
       }
       try {
         val projectImporter = MavenProjectImporter.createImporter(
-          project, projectsTree, projectsToImport, importModuleGroupsRequired,
+          project, projectsTree, projectsToImport,
           modelsProvider, importingSettings, myPreviewModule, activity
         )
         val postTasks = projectImporter.importProject()
@@ -181,15 +178,9 @@ open class MavenProjectsManagerEx(project: Project) : MavenProjectsManager(proje
 
   override fun listenForSettingsChanges() {
     importingSettings.addListener(object : MavenImportingSettings.Listener {
-      override fun createModuleGroupsChanged() {
-        performInBackground {
-          importSettings(true)
-        }
-      }
-
       override fun createModuleForAggregatorsChanged() {
         performInBackground {
-          importSettings(false)
+          doImportMavenProjects(emptyMap(), null)
         }
       }
 
@@ -199,10 +190,6 @@ open class MavenProjectsManagerEx(project: Project) : MavenProjectsManager(proje
         }
       }
     })
-  }
-
-  private suspend fun importSettings(importModuleGroupsRequired: Boolean) {
-    doImportMavenProjects(emptyMap(), importModuleGroupsRequired, null)
   }
 
   private suspend fun importAllProjects() {

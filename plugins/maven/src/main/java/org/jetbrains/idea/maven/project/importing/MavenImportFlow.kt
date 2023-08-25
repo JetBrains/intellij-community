@@ -307,7 +307,6 @@ class MavenImportFlow {
                                                               context.projectsToImport.map {
                                                                 it to MavenProjectChanges.ALL
                                                               }.toMap(),
-                                                              context.initialContext.importingSettings.isCreateModuleGroups,
                                                               modelsProvider, context.initialContext.importingSettings,
                                                               context.initialContext.previewModule, importingActivity)
     val postImportTasks = projectImporter.importProject()

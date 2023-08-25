@@ -33658,13 +33658,6 @@
     <option name="pom" hit="Create IntelliJ IDEA modules for aggregator projects (with 'pom' packaging)" />
     <option name="projects" hit="Create IntelliJ IDEA modules for aggregator projects (with 'pom' packaging)" />
     <option name="with" hit="Create IntelliJ IDEA modules for aggregator projects (with 'pom' packaging)" />
-    <option name="create" hit="Create module groups for multi-module Maven projects" />
-    <option name="for" hit="Create module groups for multi-module Maven projects" />
-    <option name="groups" hit="Create module groups for multi-module Maven projects" />
-    <option name="maven" hit="Create module groups for multi-module Maven projects" />
-    <option name="module" hit="Create module groups for multi-module Maven projects" />
-    <option name="multi-module" hit="Create module groups for multi-module Maven projects" />
-    <option name="projects" hit="Create module groups for multi-module Maven projects" />
     <option name="application" hit="Create run configuration for Spring Boot application" />
     <option name="boot" hit="Create run configuration for Spring Boot application" />
     <option name="configuration" hit="Create run configuration for Spring Boot application" />

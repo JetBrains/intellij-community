@@ -56,7 +56,6 @@ public class MavenImportingSettings implements Cloneable {
 
   private boolean importAutomatically = false;
   private boolean createModulesForAggregators = true;
-  private boolean createModuleGroups = false;
   private boolean excludeTargetFolder = true;
   private boolean keepSourceFolders = true;
   private boolean useMavenOutput = true;
@@ -197,18 +196,6 @@ public class MavenImportingSettings implements Cloneable {
     }
   }
 
-  public boolean isCreateModuleGroups() {
-    return createModuleGroups;
-  }
-
-  public void setCreateModuleGroups(boolean createModuleGroups) {
-    boolean changed = this.createModuleGroups != createModuleGroups;
-    this.createModuleGroups = createModuleGroups;
-    if (changed) {
-      fireCreateModuleGroupsChanged();
-    }
-  }
-
   public boolean isCreateModulesForAggregators() {
     return createModulesForAggregators;
   }
@@ -328,7 +315,6 @@ public class MavenImportingSettings implements Cloneable {
     MavenImportingSettings that = (MavenImportingSettings)o;
 
     if (useWorkspaceImport != that.useWorkspaceImport) return false;
-    if (createModuleGroups != that.createModuleGroups) return false;
     if (createModulesForAggregators != that.createModulesForAggregators) return false;
     if (!dependencyTypes.equals(that.dependencyTypes)) return false;
     if (downloadDocsAutomatically != that.downloadDocsAutomatically) return false;
@@ -362,8 +348,6 @@ public class MavenImportingSettings implements Cloneable {
     if (useWorkspaceImport) result++;
     result <<= 1;
     if (createModulesForAggregators) result++;
-    result <<= 1;
-    if (createModuleGroups) result++;
     result <<= 1;
     if (keepSourceFolders) result++;
     result <<= 1;
@@ -408,12 +392,6 @@ public class MavenImportingSettings implements Cloneable {
     myListeners.remove(l);
   }
 
-  private void fireCreateModuleGroupsChanged() {
-    for (Listener each : myListeners) {
-      each.createModuleGroupsChanged();
-    }
-  }
-
   private void fireCreateModuleForAggregatorsChanged() {
     for (Listener each : myListeners) {
       each.createModuleForAggregatorsChanged();
@@ -427,8 +405,6 @@ public class MavenImportingSettings implements Cloneable {
   }
 
   public interface Listener {
-
-    void createModuleGroupsChanged();
 
     void createModuleForAggregatorsChanged();
 
