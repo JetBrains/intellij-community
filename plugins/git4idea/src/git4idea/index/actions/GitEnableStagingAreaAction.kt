@@ -7,7 +7,9 @@ import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.Presentation
 import com.intellij.openapi.actionSystem.RightAlignedToolbarAction
 import com.intellij.openapi.project.DumbAwareAction
+import com.intellij.openapi.vcs.ProjectLevelVcsManager
 import com.intellij.openapi.vcs.changes.ChangeListManager
+import git4idea.GitVcs
 import git4idea.config.GitVcsApplicationSettings
 import git4idea.i18n.GitBundle
 import git4idea.index.canEnableStagingArea
@@ -21,7 +23,8 @@ class GitEnableStagingAreaAction : DumbAwareAction(), RightAlignedToolbarAction 
 
   override fun update(e: AnActionEvent) {
     val project = e.project
-    if (project == null || !canEnableStagingArea()) {
+    if (project == null || !canEnableStagingArea() ||
+        ProjectLevelVcsManager.getInstance(project).singleVCS?.keyInstanceMethod != GitVcs.getKey()) {
       e.presentation.isEnabledAndVisible = false
       return
     }
