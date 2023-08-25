@@ -95,10 +95,13 @@ internal class KtAppServiceAsStaticFinalFieldOrPropertyVisitorProvider : AppServ
   }
 
   /**
-   * Top-level or being a member of any object.
+   * Top-level or being a member of any non-anonymous object.
    */
   private fun KtProperty.isStatic(): Boolean {
-    return isTopLevel || isMember && containingClassOrObject is KtObjectDeclaration
+    if (isTopLevel) return true
+
+    val containingObject = containingClassOrObject
+    return isMember && containingObject is KtObjectDeclaration && !containingObject.isObjectLiteral()
   }
 
 

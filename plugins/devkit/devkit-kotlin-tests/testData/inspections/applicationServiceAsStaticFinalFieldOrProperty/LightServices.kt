@@ -62,11 +62,14 @@ interface MyInterface {
 fun main() {
   val obj = object : MyInterface {
 
-    val <warning descr="Application service must not be assigned to a static immutable property with a backing field">myAppService1</warning> = LightServiceAppAndProjectLevelAnnotation.getInstance()
+    // inside an anonymous obect
+    val myAppService1 = LightServiceAppAndProjectLevelAnnotation.getInstance()
 
-    val <warning descr="Application service must not be assigned to a static immutable property with a backing field">myAppService2</warning> = LightServiceAppLevelAnnotation.getInstance()
+    // inside an anonymous obect
+    val myAppService2 = LightServiceAppLevelAnnotation.getInstance()
 
-    val <warning descr="Application service must not be assigned to a static immutable property with a backing field">myAppService4</warning> = LightServiceEmptyAnnotation.getInstance()
+    // inside an anonymous obect
+    val myAppService4 = LightServiceEmptyAnnotation.getInstance()
 
     // non final
     var myAppService5 = LightServiceAppAndProjectLevelAnnotation.getInstance()
