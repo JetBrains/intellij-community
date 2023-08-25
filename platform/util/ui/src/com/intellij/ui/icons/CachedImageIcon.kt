@@ -12,7 +12,6 @@ import com.intellij.ui.scale.ScaleType
 import com.intellij.util.SVGLoader
 import com.intellij.util.containers.CollectionFactory
 import com.intellij.util.ui.MultiResolutionImageProvider
-import com.intellij.util.ui.StartupUiUtil
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.TestOnly
 import java.awt.*
@@ -46,7 +45,7 @@ internal fun patchIconPath(originalPath: String, classLoader: ClassLoader): Pair
 
 @JvmField
 internal val pathTransform: AtomicReference<IconTransform> = AtomicReference(
-  IconTransform(StartupUiUtil.isUnderDarcula, arrayOf<IconPathPatcher>(DeprecatedDuplicatesIconPathPatcher()), null)
+  IconTransform(/* dark = */ false, /* patchers = */ arrayOf<IconPathPatcher>(DeprecatedDuplicatesIconPathPatcher()), /* filter = */ null)
 )
 
 @JvmField
