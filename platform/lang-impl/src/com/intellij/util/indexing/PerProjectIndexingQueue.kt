@@ -12,7 +12,6 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.util.indexing.diagnostic.IndexDiagnosticDumper
 import com.intellij.util.indexing.diagnostic.ProjectDumbIndexingHistoryImpl
-import com.intellij.util.indexing.diagnostic.ProjectIndexingHistoryImpl
 import com.intellij.util.indexing.roots.IndexableFilesIterator
 import it.unimi.dsi.fastutil.longs.LongArraySet
 import it.unimi.dsi.fastutil.longs.LongSet
@@ -195,14 +194,13 @@ class PerProjectIndexingQueue(private val project: Project) {
     }
   }
 
-  fun flushNowSync(projectIndexingHistory: ProjectIndexingHistoryImpl, indicator: ProgressIndicator) {
+  fun flushNowSync(indexingReason: String?, indicator: ProgressIndicator) {
     val (filesInQueue, totalFiles, scanningIds) = getAndResetQueuedFiles()
     if (totalFiles > 0) {
-      val indexingReason = projectIndexingHistory.indexingReason ?: "Flushing queue of project ${project.name}"
       val projectDumbIndexingHistory = ProjectDumbIndexingHistoryImpl(project)
       try {
-        UnindexedFilesIndexer(project, filesInQueue, indexingReason, scanningIds).indexFiles(projectIndexingHistory,
-                                                                                             projectDumbIndexingHistory, indicator)
+        UnindexedFilesIndexer(project, filesInQueue, indexingReason ?: "Flushing queue of project ${project.name}", scanningIds).indexFiles(
+          projectDumbIndexingHistory, indicator)
       }
       catch (e: Throwable) {
         projectDumbIndexingHistory.setWasInterrupted()

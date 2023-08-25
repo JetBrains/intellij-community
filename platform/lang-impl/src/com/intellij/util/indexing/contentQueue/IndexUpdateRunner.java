@@ -30,7 +30,6 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.indexing.*;
 import com.intellij.util.indexing.diagnostic.IndexingFileSetStatistics;
 import com.intellij.util.indexing.diagnostic.ProjectDumbIndexingHistoryImpl;
-import com.intellij.util.indexing.diagnostic.ProjectIndexingHistoryImpl;
 import com.intellij.util.indexing.roots.IndexableFilesDeduplicateFilter;
 import com.intellij.util.progress.SubTaskProgressIndicator;
 import org.jetbrains.annotations.ApiStatus;
@@ -134,7 +133,6 @@ public final class IndexUpdateRunner {
   public void indexFiles(@NotNull Project project,
                          @NotNull List<FileSet> fileSets,
                          @NotNull ProgressIndicator indicator,
-                         @NotNull ProjectIndexingHistoryImpl projectIndexingHistory,
                          @NotNull ProjectDumbIndexingHistoryImpl projectDumbIndexingHistory) throws IndexingInterruptedException {
     long startTime = System.nanoTime();
     try {
@@ -146,8 +144,6 @@ public final class IndexUpdateRunner {
     finally {
       long visibleProcessingTime = System.nanoTime() - startTime;
       long totalProcessingTimeInAllThreads = fileSets.stream().mapToLong(b -> b.statistics.getProcessingTimeInAllThreads()).sum();
-      projectIndexingHistory.setVisibleTimeToAllThreadsTimeRatio(totalProcessingTimeInAllThreads == 0
-                                                                 ? 0 : ((double)visibleProcessingTime) / totalProcessingTimeInAllThreads);
       projectDumbIndexingHistory.setVisibleTimeToAllThreadsTimeRatio(totalProcessingTimeInAllThreads == 0
                                                                      ? 0
                                                                      : ((double)visibleProcessingTime) / totalProcessingTimeInAllThreads);
