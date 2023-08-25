@@ -3,6 +3,7 @@ package org.jetbrains.idea.maven.project;
 
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.maven.model.MavenModel;
 
 import java.nio.file.Path;
@@ -10,5 +11,5 @@ import java.nio.file.Path;
 public interface MavenProjectModelReadHelper {
   MavenModel interpolate(@NotNull Path basedir, VirtualFile file, @NotNull MavenModel model);
 
-  MavenModel assembleInheritance(@NotNull Path projectPomDir, @NotNull MavenModel parent, @NotNull MavenModel model);
+  MavenModel assembleInheritance(@NotNull Path projectPomDir, @Nullable MavenModel parent, @NotNull MavenModel model);
 }
