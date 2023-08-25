@@ -123,16 +123,8 @@ class SoftwareBillOfMaterials internal constructor(
       .repositories
   }
 
-  private val DistributionForOsTaskResult.extension: String
-    get() = when (builder.targetOs) {
-      OsFamily.LINUX -> ".tar.gz"
-      OsFamily.MACOS -> ".dmg"
-      OsFamily.WINDOWS -> ".exe"
-    }
-
   private val DistributionForOsTaskResult.files: List<Path>
     get() = when (builder.targetOs) {
-              // only the first existing extension will be processed
               OsFamily.LINUX -> sequenceOf(".tar.gz", ".snap")
               OsFamily.MACOS -> sequenceOf(".dmg", ".sit", ".mac.${arch.name}.zip")
               OsFamily.WINDOWS -> sequenceOf(".exe", ".win.zip")
@@ -140,7 +132,7 @@ class SoftwareBillOfMaterials internal constructor(
       context.paths.artifactDir.resolve(context.productProperties.getBaseArtifactName(context) +
                                         OsSpecificDistributionBuilder.suffix(arch) +
                                         extension)
-    }.filter { it.exists() }.firstOrNull()?.let(::listOf) ?: emptyList()
+    }.filter { it.exists() }.toList()
 
   private fun spdxDocument(name: String): SpdxDocument {
     val uri = "$baseDownloadUrl/$specVersion/$name.spdx"
@@ -178,9 +170,8 @@ class SoftwareBillOfMaterials internal constructor(
       Span.current().addEvent("No distribution was built, skipping")
       return
     }
-    if (baseDownloadUrl == null) {
-      Span.current().addEvent("Base download url isn't specified, skipping")
-      return
+    requireNotNull(baseDownloadUrl) {
+      "Base download url isn't specified"
     }
     check(distributionFiles.any()) {
       "No distribution was built"
@@ -213,13 +204,10 @@ class SoftwareBillOfMaterials internal constructor(
       }
     }.flatMap { (distribution, filesWithChecksums) ->
       filesWithChecksums.map {
-        val name = context.productProperties.getBaseArtifactName(context) +
-                   OsSpecificDistributionBuilder.suffix(distribution.arch) +
-                   distribution.extension
-        val document = spdxDocument(name)
+        val document = spdxDocument(it.path.name)
         val rootPackage = document.spdxPackage(it.path.name, sha256sum = it.sha256sum, sha1sum = it.sha1sum) {
           setVersionInfo(version)
-            .setDownloadLocation("$baseDownloadUrl/$name")
+            .setDownloadLocation("$baseDownloadUrl/${it.path.name}")
             .setSupplier(creator)
         }
         document.documentDescribes.add(rootPackage)
