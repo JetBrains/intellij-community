@@ -101,6 +101,7 @@ public final class TouchbarSupport {
       }
 
       isInitialized = true;
+      enableSupport();
     }
   }
 
@@ -159,9 +160,6 @@ public final class TouchbarSupport {
 
   public static void onApplicationLoaded() {
     initialize();
-    if (isInitialized && isEnabled()) {
-      enableSupport();
-    }
   }
 
   public static boolean isAvailable() {
