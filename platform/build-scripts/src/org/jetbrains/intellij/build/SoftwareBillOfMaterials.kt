@@ -69,10 +69,8 @@ class SoftwareBillOfMaterials internal constructor(
      */
     var creator: String = "Organization: JetBrains s.r.o."
 
-    /**
-     * Location of published distributions, for example https://download.jetbrains.com/idea/
-     */
-    var baseDownloadUrl: String? = null
+    var copyrightText: String? = "Copyright 2000-2023 JetBrains s.r.o. and contributors"
+
     var license: DistributionLicense? = DistributionLicense.JETBRAINS
 
     class DistributionLicense(val name: String, val text: String, val url: String?) {
@@ -246,12 +244,19 @@ class SoftwareBillOfMaterials internal constructor(
           .setSupplier(creator)
       }
       document.documentDescribes.add(rootPackage)
-      generate(document, rootPackage, distributionDir)
+      generate(
+        document, rootPackage, distributionDir,
+        // distributions weren't built
+        claimContainedFiles = false
+      )
     }.toList()
   }
 
-  private fun generate(document: SpdxDocument, rootPackage: SpdxPackage, distributionDir: Path): Path {
+  private fun generate(document: SpdxDocument, rootPackage: SpdxPackage, distributionDir: Path, claimContainedFiles: Boolean = true): Path {
     val filePackages = generatePackagesForDistributionFiles(document, rootPackage, distributionDir)
+    if (claimContainedFiles) {
+      rootPackage.claimContainedFiles(filePackages.values.filterNotNull().flatMap { it.files }, document)
+    }
     val libraryPackages = mavenLibraries.mapNotNull { lib ->
       val libraryPackage = document.spdxPackage(lib)
       val filePackage = filePackages[lib.entry.path] ?: return@mapNotNull null
@@ -304,6 +309,8 @@ class SoftwareBillOfMaterials internal constructor(
           .setSupplier(creator)
       }
       rootPackage.relatesTo(filePackage, RelationshipType.CONTAINS)
+      filePackage.claimContainedFiles(filePackage.files, document)
+      filePackage.validate()
       it.path to filePackage
     }
   }
@@ -617,21 +624,41 @@ class SoftwareBillOfMaterials internal constructor(
     }
   }
 
-  /**
-   * A legal team review is required to set:
-   * * [SpdxPackageBuilder.copyrightText];
-   * * [SpdxPackageBuilder.licenseDeclared];
-   * * [SpdxPackageBuilder.filesAnalyzed] = true;
-   * * [SpdxPackageBuilder.packageVerificationCode] according to https://spdx.github.io/spdx-spec/v2.3/package-information/#79-package-verification-code-field.
-   */
   private fun SpdxDocument.spdxPackage(name: String,
                                        licenseDeclared: AnyLicenseInfo = SpdxNoAssertionLicense(),
                                        init: SpdxPackageBuilder.() -> Unit): SpdxPackage {
     return createPackage(
       modelStore.getNextId(IdType.SpdxId, documentUri), name,
       SpdxNoAssertionLicense(modelStore, documentUri),
-      SpdxConstants.NONE_VALUE,
+      SpdxConstants.NOASSERTION_VALUE,
       licenseDeclared
     ).setFilesAnalyzed(false).apply(init).build()
+  }
+
+  private fun SpdxPackage.claimContainedFiles(files: Collection<SpdxFile>, document: SpdxDocument) {
+    copyrightText = requireNotNull(context.options.sbomOptions.copyrightText) {
+      "Copyright text isn't specified"
+    }
+    licenseDeclared = document.extractedLicenseInfo(
+      name = license.name,
+      text = license.text,
+      url = license.url
+    )
+    setPackageVerificationCode(document.createPackageVerificationCode(
+      packageVerificationCode(files),
+      emptyList()
+    ))
+    setFilesAnalyzed(true)
+  }
+
+  /**
+   * See https://spdx.github.io/spdx-spec/v2.3/package-information/#79-package-verification-code-field
+   */
+  private fun packageVerificationCode(files: Collection<SpdxFile>): String {
+    check(files.any())
+    return files.asSequence()
+      .map { it.sha1 }.sorted()
+      .joinToString(separator = "")
+      .let(DigestUtils::sha1Hex)
   }
 }
