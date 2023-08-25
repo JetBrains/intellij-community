@@ -43,6 +43,9 @@
       <action id="com.intellij.feedback.new_ui.TestShowNewUIFeedbackAction"
               class="com.intellij.feedback.new_ui.TestShowNewUIFeedbackAction"
               internal="true"/>
+      <action id="com.intellij.feedback.ideace.TestIdeaCommunityFeedbackAction"
+              class="com.intellij.feedback.ideace.TestIdeaCommunityFeedbackAction"
+              internal="true"/>
       <action id="com.intellij.feedback.localization.dialog.ShowLocalizationFeedbackDialog"
               class="com.intellij.feedback.localization.dialog.ShowLocalizationFeedbackDialog"
               internal="true"/>

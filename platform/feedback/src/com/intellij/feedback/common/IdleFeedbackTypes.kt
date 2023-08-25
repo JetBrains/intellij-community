@@ -14,6 +14,8 @@ import com.intellij.feedback.common.notification.RequestFeedbackNotification
 import com.intellij.feedback.common.statistics.FeedbackNotificationCountCollector.Companion.logDisableNotificationActionInvoked
 import com.intellij.feedback.common.statistics.FeedbackNotificationCountCollector.Companion.logRequestNotificationShown
 import com.intellij.feedback.common.statistics.FeedbackNotificationCountCollector.Companion.logRespondNotificationActionInvoked
+import com.intellij.feedback.ideace.IdeaCommunityFeedbackBundle
+import com.intellij.feedback.ideace.IdeaCommunityFeedbackService
 import com.intellij.feedback.new_ui.CancelFeedbackNotification
 import com.intellij.feedback.new_ui.bundle.NewUIFeedbackBundle
 import com.intellij.feedback.new_ui.dialog.NewUIFeedbackDialog
@@ -23,8 +25,12 @@ import com.intellij.feedback.pycharmUi.bundle.PyCharmUIFeedbackBundle
 import com.intellij.feedback.pycharmUi.dialog.PyCharmUIFeedbackDialog
 import com.intellij.feedback.pycharmUi.state.PyCharmUIInfoService
 import com.intellij.feedback.pycharmUi.state.PyCharmUIInfoState
+import com.intellij.ide.BrowserUtil
 import com.intellij.notification.Notification
 import com.intellij.notification.NotificationAction
+import com.intellij.openapi.application.ConfigImportHelper
+import com.intellij.openapi.application.ConfigImportHelper.hasPreviousVersionConfigDirs
+import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.application.ex.ApplicationInfoEx
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectManager
@@ -34,6 +40,7 @@ import com.intellij.util.PlatformUtils
 import kotlinx.datetime.*
 import java.time.Duration
 import java.time.LocalDateTime
+import java.time.Month
 
 enum class IdleFeedbackTypes {
   NEW_UI_FEEDBACK {
@@ -306,6 +313,73 @@ enum class IdleFeedbackTypes {
       return state.numberNotificationShowed < maxNumberNotificationShowed
     }
 
+  },
+
+  IDEA_CE_FEEDBACK {
+    override val fusFeedbackId: String = "idea_ce_feedback"
+    override val suitableIdeVersion: String = "2023.2"
+    override fun getWebFormUrl(): String = "https://surveys.jetbrains.com/s3/ij-ccs-23-2-2"
+
+    private val lastDayCollectFeedback: LocalDate = LocalDate(2023, Month.OCTOBER, 1)
+    private val maxNumberNotificationShowed: Int = 1
+
+    override fun isSuitable(): Boolean {
+      val newUIInfoState = NewUIInfoService.getInstance().state
+
+      return checkIdeIsSuitable() &&
+             checkIsNoDeadline() &&
+             checkIdeVersionIsSuitable() &&
+             checkFeedbackNotSent(newUIInfoState) &&
+             checkNotificationNumberNotExceeded(newUIInfoState) &&
+             checkIfExistingUserForSomeTime()
+    }
+
+    private fun checkIfExistingUserForSomeTime(): Boolean {
+      return hasPreviousVersionConfigDirs()
+    }
+
+    private fun checkIdeIsSuitable(): Boolean {
+      return PlatformUtils.isIdeaCommunity()
+    }
+
+    private fun checkIsNoDeadline(): Boolean {
+      return Clock.System.todayIn(TimeZone.currentSystemDefault()) < lastDayCollectFeedback
+    }
+
+    private fun checkFeedbackNotSent(state: NewUIInfoState): Boolean {
+      return !state.feedbackSent
+    }
+
+    override fun createNotification(forTest: Boolean): Notification {
+      return RequestFeedbackNotification(
+        "Feedback In IDE",
+        IdeaCommunityFeedbackBundle.message("notification.request.feedback.title"),
+        IdeaCommunityFeedbackBundle.message("notification.request.feedback.content"))
+    }
+
+    override fun getGiveFeedbackNotificationLabel(): String {
+      return IdeaCommunityFeedbackBundle.getMessage("notification.request.feedback.give_feedback")
+    }
+
+    override fun getCancelFeedbackNotificationLabel(): String {
+      return IdeaCommunityFeedbackBundle.getMessage("notification.request.feedback.cancel.feedback")
+    }
+
+    override fun createFeedbackDialog(project: Project?, forTest: Boolean): DialogWrapper {
+      throw UnsupportedOperationException() // web form URL is set
+    }
+
+    override fun updateStateAfterNotificationShowed() {
+      IdeaCommunityFeedbackService.getInstance().state.numberNotificationShowed += 1
+    }
+
+    override fun updateStateAfterDialogClosedOk() {
+      IdeaCommunityFeedbackService.getInstance().state.feedbackSent = true
+    }
+
+    private fun checkNotificationNumberNotExceeded(state: NewUIInfoState): Boolean {
+      return state.numberNotificationShowed < maxNumberNotificationShowed
+    }
   };
 
   protected abstract val fusFeedbackId: String
@@ -330,6 +404,8 @@ enum class IdleFeedbackTypes {
 
   protected abstract fun updateStateAfterDialogClosedOk()
 
+  protected open fun getWebFormUrl(): String? = null
+
   @NlsSafe
   protected open fun getGiveFeedbackNotificationLabel(): String {
     return CommonFeedbackBundle.message("notification.request.feedback.action.respond.text")
@@ -346,14 +422,24 @@ enum class IdleFeedbackTypes {
 
   fun showNotification(project: Project?, forTest: Boolean = false) {
     val notification = createNotification(forTest)
+
     notification.addAction(
       NotificationAction.createSimpleExpiring(getGiveFeedbackNotificationLabel()) {
         if (!forTest) {
           logRespondNotificationActionInvoked(this)
         }
-        val dialog = createFeedbackDialog(project, forTest)
-        val isOk = dialog.showAndGet()
-        if (isOk) {
+
+        val url = getWebFormUrl()
+
+        if (url == null) {
+          val dialog = createFeedbackDialog(project, forTest)
+          val isOk = dialog.showAndGet()
+          if (isOk) {
+            updateStateAfterDialogClosedOk()
+          }
+        }
+        else {
+          BrowserUtil.browse(url)
           updateStateAfterDialogClosedOk()
         }
       }
