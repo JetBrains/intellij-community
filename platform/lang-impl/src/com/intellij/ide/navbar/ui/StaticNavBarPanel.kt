@@ -15,6 +15,15 @@ import java.awt.BorderLayout
 import java.awt.Window
 import javax.swing.JComponent
 
+// GlobalScope is used to avoid attaching a child, which is never cancelled, to a service scope.
+// Without GlobalScope, each call to `staticNavBarPanel` produces a new child coroutine,
+// which may leak because the component is never disposed, as it's simply removed from the UI hierarchy.
+// Removal from the hierarchy triggers `window.value = null`,
+//   which cancels the `handleWindow` coroutine,
+//   which triggers `staticNavBarVm.value = null`,
+//   which cancels `StaticNavBarPanel.handleVm` coroutine.
+// Once the component is removed from hierarchy, `window` and `staticNavBarVm` flows never emit,
+// their subscriptions are never resumed (and never scheduled), so they are GC-ed together with the component.
 @OptIn(DelicateCoroutinesApi::class)
 fun staticNavBarPanel(
   project: Project,
