@@ -179,10 +179,20 @@ open class DumbServiceImpl @NonInjectable @VisibleForTesting constructor(private
    */
   @TestOnly
   suspend fun <T> runInDumbMode(block: suspend () -> T): T {
-    val trace = Throwable()
+    incrementDumbCounter()
+    try {
+      return block()
+    }
+    finally {
+      decrementDumbCounter()
+    }
+  }
+
+  private suspend fun incrementDumbCounter() {
     if (myState.getAndUpdate { it.tryIncrementDumbCounter() }.incrementWillChangeDumbState) {
       // If already dumb - just increment the counter. We don't need a write action (to not interrupt NBRA), neither we need EDT.
       // Otherwise, increment the counter under write action because this will change dumb state
+      val trace = Throwable()
       withContext(Dispatchers.EDT) {
         val enteredDumb = writeAction {
           val old = myState.getAndUpdate { it.incrementDumbCounter() }
@@ -195,23 +205,21 @@ open class DumbServiceImpl @NonInjectable @VisibleForTesting constructor(private
         }
       }
     }
-    try {
-      return block()
-    }
-    finally {
-      // If there are other dumb tasks - just decrement the counter. We don't need a write action (to not interrupt NBRA), neither we need EDT.
-      // Otherwise, decrement the counter under write action because this will change dumb state
-      if (myState.getAndUpdate { it.tryDecrementDumbCounter() }.decrementWillChangeDumbState) {
-        withContext(Dispatchers.EDT) {
-          val exitDumb = writeAction {
-            val new = myState.updateAndGet { it.decrementDumbCounter() }
-            return@writeAction new.isSmart
-          }
-          if (exitDumb) {
-            dumbModeStartTrace = null
-            LOG.info("exit dumb mode [${project.name}]")
-            runCatching { myPublisher.exitDumbMode() }
-          }
+  }
+
+  private suspend fun decrementDumbCounter() {
+    // If there are other dumb tasks - just decrement the counter. We don't need a write action (to not interrupt NBRA), neither we need EDT.
+    // Otherwise, decrement the counter under write action because this will change dumb state
+    if (myState.getAndUpdate { it.tryDecrementDumbCounter() }.decrementWillChangeDumbState) {
+      withContext(Dispatchers.EDT) {
+        val exitDumb = writeAction {
+          val new = myState.updateAndGet { it.decrementDumbCounter() }
+          return@writeAction new.isSmart
+        }
+        if (exitDumb) {
+          dumbModeStartTrace = null
+          LOG.info("exit dumb mode [${project.name}]")
+          runCatching { myPublisher.exitDumbMode() }
         }
       }
     }
