@@ -7,8 +7,8 @@ import com.intellij.ide.navbar.impl.ProjectNavBarItem
 import com.intellij.ide.navbar.impl.PsiNavBarItem
 import com.intellij.ide.navbar.impl.pathToItem
 import com.intellij.ide.navbar.ui.NewNavBarPanel
-import com.intellij.ide.navbar.ui.StaticNavBarPanel
 import com.intellij.ide.navbar.ui.showHint
+import com.intellij.ide.navbar.ui.staticNavBarPanel
 import com.intellij.ide.ui.UISettings
 import com.intellij.lang.documentation.ide.ui.DEFAULT_UI_RESPONSE_TIMEOUT
 import com.intellij.model.Pointer
@@ -73,7 +73,7 @@ internal class NavBarService(private val project: Project, cs: CoroutineScope) {
 
   fun createNavBarPanel(): JComponent {
     EDT.assertIsEdt()
-    return StaticNavBarPanel(project, cs, updateRequests, ::requestNavigation)
+    return staticNavBarPanel(project, cs, updateRequests, ::requestNavigation)
   }
 
   fun showFloatingNavbar(dataContext: DataContext) {

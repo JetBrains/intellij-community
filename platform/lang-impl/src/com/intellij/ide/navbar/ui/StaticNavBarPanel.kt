@@ -13,67 +13,80 @@ import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.*
 import java.awt.BorderLayout
 import java.awt.Window
+import javax.swing.JComponent
 
-internal class StaticNavBarPanel(
-  private val project: Project,
-  private val cs: CoroutineScope,
-  private val updateRequests: Flow<Any>,
-  private val requestNavigation: (Pointer<out NavBarItem>) -> Unit,
-) : JBPanel<StaticNavBarPanel>(BorderLayout()) {
+@OptIn(DelicateCoroutinesApi::class)
+fun staticNavBarPanel(
+  project: Project,
+  cs: CoroutineScope,
+  updateRequests: Flow<Any>,
+  requestNavigation: (Pointer<out NavBarItem>) -> Unit,
+): JComponent {
 
-  private val _window = trackCurrentWindow(this)
-  private val _vm: MutableStateFlow<NavBarVm?> = MutableStateFlow(null)
-  val model: NavBarVm? get() = _vm.value
+  val staticNavBarVm: MutableStateFlow<NavBarVm?> = MutableStateFlow(null)
+  val panel: JComponent = StaticNavBarPanel(project, GlobalScope, staticNavBarVm)
+  val window: StateFlow<Window?> = trackCurrentWindow(panel)
 
-  init {
-    // This coroutine will GC-ed together with the `StaticNavBarPanel` instance as long as it isn't referenced by anything else,
-    // `attachAsChildTo` makes sure the coroutine refs are cleaned.
-    @OptIn(DelicateCoroutinesApi::class)
-    GlobalScope.launch {
-      _window.collectLatest { window ->
-        if (window != null) {
-          coroutineScope {
-            val windowScope = this@coroutineScope
-            cs.launch {
-              attachAsChildTo(windowScope)
-              handleWindow(window)
-            }
-          }
-        }
-      }
-    }
-
-    @OptIn(DelicateCoroutinesApi::class)
-    GlobalScope.launch(Dispatchers.EDT) {
-      _vm.collectLatest { vm ->
-        if (vm != null) {
-          handleVm(vm)
-        }
+  fun contextItems(window: Window): Flow<List<NavBarVmItem>> {
+    @OptIn(ExperimentalCoroutinesApi::class)
+    return updateRequests.transformLatest {
+      dataContext(window, panel)?.let {
+        emit(contextModel(it, project))
       }
     }
   }
 
-  private suspend fun handleWindow(window: Window): Nothing = supervisorScope {
+  suspend fun handleWindow(window: Window): Nothing = supervisorScope {
     val vm = NavBarVmImpl(
       this@supervisorScope,
       initialItems = defaultModel(project),
       contextItems = contextItems(window),
     )
     vm.activationRequests.onEach(requestNavigation).launchIn(this)
-    _vm.value = vm
+    staticNavBarVm.value = vm
     try {
       awaitCancellation()
     }
     finally {
-      _vm.value = null
+      staticNavBarVm.value = null
     }
   }
 
-  private fun contextItems(window: Window): Flow<List<NavBarVmItem>> {
-    @OptIn(ExperimentalCoroutinesApi::class)
-    return updateRequests.transformLatest {
-      dataContext(window, panel = this@StaticNavBarPanel)?.let {
-        emit(contextModel(it, project))
+  // This coroutine will GC-ed together with the `StaticNavBarPanel` instance as long as it isn't referenced by anything else,
+  // `attachAsChildTo` makes sure the coroutine refs are cleaned.
+  GlobalScope.launch {
+    window.collectLatest { window ->
+      if (window != null) {
+        coroutineScope {
+          val windowScope = this@coroutineScope
+          cs.launch {
+            attachAsChildTo(windowScope)
+            handleWindow(window)
+          }
+        }
+      }
+    }
+  }
+
+  return panel
+}
+
+internal typealias StaticNavBarPanelVm = StateFlow<NavBarVm?>
+
+internal class StaticNavBarPanel(
+  private val project: Project,
+  cs: CoroutineScope,
+  private val _vm: StaticNavBarPanelVm,
+) : JBPanel<StaticNavBarPanel>(BorderLayout()) {
+
+  val model: NavBarVm? get() = _vm.value
+
+  init {
+    cs.launch(Dispatchers.EDT) {
+      _vm.collectLatest { vm ->
+        if (vm != null) {
+          handleVm(vm)
+        }
       }
     }
   }
