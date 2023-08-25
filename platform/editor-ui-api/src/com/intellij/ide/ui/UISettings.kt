@@ -689,7 +689,7 @@ class UISettings @NonInjectable constructor(private val notRoamableOptions: NotR
   override fun getState(): UISettingsState = state
 
   override fun noStateLoaded() {
-    notRoamableOptions.migratePresentationModeIdeScale(state.presentationModeFontSize)
+    migrateFontParameters()
   }
 
   override fun loadState(state: UISettingsState) {
@@ -700,6 +700,7 @@ class UISettings @NonInjectable constructor(private val notRoamableOptions: NotR
     if (migrateOldFontSettings()) {
       notRoamableOptions.fixFontSettings()
     }
+    migrateFontParameters()
 
     // Check tab placement in editor
     val editorTabPlacement = state.editorTabPlacement
@@ -761,6 +762,10 @@ class UISettings @NonInjectable constructor(private val notRoamableOptions: NotR
       migrated = true
     }
     return migrated
+  }
+
+  private fun migrateFontParameters() {
+    notRoamableOptions.migratePresentationModeIdeScale(state.presentationModeFontSize)
   }
 
   //<editor-fold desc="Deprecated stuff.">
