@@ -2583,6 +2583,16 @@ public abstract class K1JvmBasicCompletionTestGenerated extends AbstractK1JvmBas
                 runTest("../testData/basic/common/EnumEntriesQualifiedAbsentWhenFeatureDisabled.kt");
             }
 
+            @TestMetadata("EnumEntryInitializerMethods.kt")
+            public void testEnumEntryInitializerMethods() throws Exception {
+                runTest("../testData/basic/common/EnumEntryInitializerMethods.kt");
+            }
+
+            @TestMetadata("EnumEntryInitializerMethods2.kt")
+            public void testEnumEntryInitializerMethods2() throws Exception {
+                runTest("../testData/basic/common/EnumEntryInitializerMethods2.kt");
+            }
+
             @TestMetadata("EnumItemsThroughChainedTypeAlias.kt")
             public void testEnumItemsThroughChainedTypeAlias() throws Exception {
                 runTest("../testData/basic/common/EnumItemsThroughChainedTypeAlias.kt");
