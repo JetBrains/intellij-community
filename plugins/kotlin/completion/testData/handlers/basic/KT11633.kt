@@ -7,5 +7,6 @@ data class Test(
   val test: Int
 )
 
+// IGNORE_K2
 // ELEMENT: Date
 // TAIL_TEXT: "(...) (java.util)"

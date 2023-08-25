@@ -5,5 +5,6 @@ fun main() {
     foo<caret>
 }
 
+// IGNORE_K2
 // ELEMENT: foo
 // TAIL_TEXT: " { Int, Int, Int -> ... } (f: (Int, Int, Int) -> Unit) (<root>)"
