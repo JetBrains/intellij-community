@@ -73,6 +73,11 @@ class FirLightClassBehaviorTest : KotlinLightCodeInsightFixtureTestCase(), Light
         checkUpperBoundWildcardForVar(myFixture)
     }
 
+    fun testUpperBoundForRecursiveTypeParameter() {
+        // TODO(KT-61459): remove the flag
+        checkUpperBoundForRecursiveTypeParameter(myFixture, isK2 = true)
+    }
+
     fun testDefaultValueOfAnnotation() {
         checkDefaultValueOfAnnotation(myFixture)
     }
