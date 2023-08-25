@@ -101,7 +101,7 @@ public class ProjectViewUpdatingTest extends BaseProjectViewTestCase {
           -PsiDirectory: package1
            Class1
            +Class2.java
-           Class4.java
+           +Class4.java
            Form2.form
            -Form:Form1
             [Form1]
