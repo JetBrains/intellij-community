@@ -37,16 +37,17 @@
     "Blue11": "#99BBFF",
 
     "Green1": "#253627",
-    "Green2": "#375239",
-    "Green3": "#436946",
-    "Green4": "#4E8052",
-    "Green5": "#57965C",
-    "Green6": "#5FAD65",
-    "Green7": "#73BD79",
-    "Green8": "#89CC8E",
-    "Green9": "#A0DBA5",
-    "Green10": "#B9EBBD",
-    "Green11": "#D4FAD7",
+    "Green2": "#273828",
+    "Green3": "#375239",
+    "Green4": "#436946",
+    "Green5": "#4E8052",
+    "Green6": "#57965C",
+    "Green7": "#5FAD65",
+    "Green8": "#73BD79",
+    "Green9": "#89CC8E",
+    "Green10": "#A0DBA5",
+    "Green11": "#B9EBBD",
+    "Green12": "#D4FAD7",
 
     "Yellow1": "#3D3223",
     "Yellow2": "#5E4D33",
@@ -61,16 +62,17 @@
     "Yellow11": "#FFF6BD",
 
     "Red1": "#402929",
-    "Red2": "#5E3838",
-    "Red3": "#7A4343",
-    "Red4": "#9C4E4E",
-    "Red5": "#BD5757",
-    "Red6": "#DB5C5C",
-    "Red7": "#E37774",
-    "Red8": "#EB938D",
-    "Red9": "#F2B1AA",
-    "Red10": "#F7CCC6",
-    "Red11": "#FAE3DE",
+    "Red2": "#472B2B",
+    "Red3": "#5E3838",
+    "Red4": "#7A4343",
+    "Red5": "#9C4E4E",
+    "Red6": "#BD5757",
+    "Red7": "#DB5C5C",
+    "Red8": "#E37774",
+    "Red9": "#EB938D",
+    "Red10": "#F2B1AA",
+    "Red11": "#F7CCC6",
+    "Red12": "#FAE3DE",
 
     "Orange1": "#45322B",
     "Orange2": "#614438",
@@ -86,27 +88,29 @@
 
     "Purple1": "#2F2936",
     "Purple2": "#3B3147",
-    "Purple3": "#583D7A",
-    "Purple4": "#6C469C",
-    "Purple5": "#8150BE",
-    "Purple6": "#955AE0",
-    "Purple7": "#A571E6",
-    "Purple8": "#B589EC",
-    "Purple9": "#C4A0F3",
-    "Purple10": "#D4B8F9",
-    "Purple11": "#E4CEFF",
+    "Purple3": "#433358",
+    "Purple4": "#583D7A",
+    "Purple5": "#6C469C",
+    "Purple6": "#8150BE",
+    "Purple7": "#955AE0",
+    "Purple8": "#A571E6",
+    "Purple9": "#B589EC",
+    "Purple10": "#C4A0F3",
+    "Purple11": "#D4B8F9",
+    "Purple12": "#E4CEFF",
 
     "Teal1": "#1D3838",
-    "Teal2": "#1E4D4A",
-    "Teal3": "#20635D",
-    "Teal4": "#21786F",
-    "Teal5": "#238E82",
-    "Teal6": "#24A394",
-    "Teal7": "#42B1A4",
-    "Teal8": "#60C0B5",
-    "Teal9": "#7DCEC5",
-    "Teal10": "#9BDDD6",
-    "Teal11": "#B9EBE6"
+    "Teal2": "#1D3D3B",
+    "Teal3": "#1E4D4A",
+    "Teal4": "#20635D",
+    "Teal5": "#21786F",
+    "Teal6": "#238E82",
+    "Teal7": "#24A394",
+    "Teal8": "#42B1A4",
+    "Teal9": "#60C0B5",
+    "Teal10": "#7DCEC5",
+    "Teal11": "#9BDDD6",
+    "Teal12": "#B9EBE6"
   },
 
   "ui": {
@@ -227,8 +231,8 @@
         "evaluatingExpressionForeground": "Grey7",
         "changedValueForeground": "Blue8",
         "modifyingValueForeground": "Blue8",
-        "errorMessageForeground": "Red6",
-        "exceptionForeground": "Red6",
+        "errorMessageForeground": "Red7",
+        "exceptionForeground": "Red7",
         "typeForeground": "Grey7"
       },
       "EvaluateExpression.background": "Grey3"
@@ -236,11 +240,11 @@
 
     "FileColor": {
       "Yellow": "Yellow1",
-      "Green": "Green1",
+      "Green": "Green2",
       "Orange": "Orange1",
-      "Rose": "Red1",
+      "Rose": "Red2",
       "Violet": "Purple2",
-      "Blue": "Teal1",
+      "Blue": "Teal2",
       "Gray": "#35363B"
     },
 
@@ -249,8 +253,8 @@
     "Component": {
       "borderColor": "Grey5",
       "focusedBorderColor": "Grey2",
-      "errorFocusColor": "Red4",
-      "inactiveErrorFocusColor": "Red2",
+      "errorFocusColor": "Red5",
+      "inactiveErrorFocusColor": "Red3",
       "warningFocusColor": "Yellow4",
       "inactiveWarningFocusColor": "Yellow2"
     },
@@ -281,7 +285,7 @@
       }
     },
 
-    "Label.errorForeground": "Red6",
+    "Label.errorForeground": "Red7",
 
     "Link": {
       "activeForeground": "Blue9",
@@ -384,12 +388,12 @@
         "warningForeground": "Grey12",
         "informativeForeground": "Grey12",
 
-        "errorBackground": "Red2",
-        "errorBorderColor": "Red3",
+        "errorBackground": "Red3",
+        "errorBorderColor": "Red4",
         "warningBackground": "Yellow1",
         "warningBorderColor": "Yellow2",
         "informativeBackground": "Green1",
-        "informativeBorderColor": "Green2"
+        "informativeBorderColor": "Green3"
       },
       "WelcomeScreen.separatorColor": "#4E5157"
     },
@@ -451,17 +455,17 @@
       "progressColor": "Blue7",
       "indeterminateStartColor": "Blue9",
       "indeterminateEndColor": "Blue5",
-      "passedColor": "Green5",
-      "passedEndColor": "Green8",
-      "failedColor": "Red5",
-      "failedEndColor": "Red8",
+      "passedColor": "Green6",
+      "passedEndColor": "Green9",
+      "failedColor": "Red6",
+      "failedEndColor": "Red9",
       "trackColor": "Grey4"
     },
     "ToolBar.separatorColor": "Grey4",
 
     "SearchField": {
-      "errorForeground": "Red6",
-      "errorBackground": "Red2"
+      "errorForeground": "Red7",
+      "errorBackground": "Red3"
     },
 
     "SearchEverywhere": {
@@ -490,7 +494,7 @@
     "SpeedSearch": {
       "background": "Grey1",
       "borderColor": "Grey3",
-      "errorForeground": "Red6"
+      "errorForeground": "Red7"
     },
 
     "StatusBar": {
@@ -562,8 +566,8 @@
     },
 
     "ValidationTooltip": {
-      "errorBackground": "Red2",
-      "errorBorderColor": "Red2",
+      "errorBackground": "Red3",
+      "errorBorderColor": "Red3",
       "warningBackground": "Yellow2",
       "warningBorderColor": "Yellow2"
     },
@@ -643,9 +647,9 @@
       },
       "GitLog": {
         "headIconColor": "Yellow8",
-        "localBranchIconColor": "Green6",
+        "localBranchIconColor": "Green7",
         "otherIconColor": "Grey8",
-        "remoteBranchIconColor": "Purple8",
+        "remoteBranchIconColor": "Purple9",
         "tagIconColor": "Grey8"
       }
     },
@@ -741,7 +745,7 @@
     "UnattendedHostStatus": {
       "warningBackground": "Yellow7",
       "warningForeground": "Grey3",
-      "dangerBackground": "Red6"
+      "dangerBackground": "Red7"
     },
 
     "CodeWithMe": {
@@ -750,19 +754,19 @@
       },
       "Users": {
         "1": {
-          "Background": "Green6",
+          "Background": "Green7",
           "Foreground": "Grey14",
           "StopFollowingLinkForeground": "Blue1",
           "FollowingBorderTextForeground": "Grey14"
         },
         "2": {
-          "Background": "Red6",
+          "Background": "Red7",
           "Foreground": "Grey14",
           "StopFollowingLinkForeground": "Blue1",
           "FollowingBorderTextForeground": "Grey14"
         },
         "3": {
-          "Background": "Purple6",
+          "Background": "Purple7",
           "Foreground": "Grey14",
           "StopFollowingLinkForeground": "Blue1",
           "FollowingBorderTextForeground": "Grey14"
@@ -774,7 +778,7 @@
           "FollowingBorderTextForeground": "Grey14"
         },
         "5": {
-          "Background": "Teal6",
+          "Background": "Teal7",
           "Foreground": "Grey14",
           "StopFollowingLinkForeground": "Blue1",
           "FollowingBorderTextForeground": "Grey14"
@@ -815,7 +819,7 @@
     "RunWidget" : {
       "foreground": "Grey12",
       "iconColor": "Grey12",
-      "runningBackground": "Green5",
+      "runningBackground": "Green6",
       "runningIconColor": "Grey12",
       "hoverBackground": "#00000019",
       "pressedBackground": "#00000028"
@@ -840,11 +844,11 @@
         "lineColor": "Grey5"
       },
       "CpuChart": {
-        "background": "Green2",
-        "borderColor": "Green5",
+        "background": "Green3",
+        "borderColor": "Green6",
         "inactiveBackground": "Green1",
-        "inactiveBorderColor": "Green2",
-        "pointBackground": "Green5",
+        "inactiveBorderColor": "Green3",
+        "pointBackground": "Green6",
         "pointBorderColor": "Grey2"
       },
       "MemoryChart": {
@@ -876,8 +880,8 @@
       },
       "HotLine" : {
         "labelBackground" : "Red1",
-        "foreground" : "Red6",
-        "hoverBackground" : "Red2"
+        "foreground" : "Red7",
+        "hoverBackground" : "Red3"
       },
       "IgnoredLine" : {
         "labelBackground" : "Grey2",
