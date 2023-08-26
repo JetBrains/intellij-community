@@ -37,9 +37,24 @@ public final class DurableStringEnumerator implements ScannableDataEnumeratorEx<
   //@GuardedBy("hashToId")
   private final Int2IntMultimap valueHashToId = new Int2IntMultimap();
 
+  //@GuardedBy("hashToId")
+  private int maxId = -1;
+
   //FIXME RC: currently .enumerate() and .tryEnumerate() execute under global lock, i.e. not scalable.
   //          It is not worse than PersistentEnumerator does, but we could do better -- we just need
   //          concurrent Map[int->int*] which is definitely possible
+
+  //TODO RC: DateEnumerator contract specifies that .valueOf(id) returns null if id is unknown to the enumerator.
+  //         This is not true for current implementation: we deliver the id to appendOnlyLog, which usually
+  //         throws exception if id is unknown -- but sometimes could just read random garbage. We could protect
+  //         against that (and satisfy the DEnumerator contract) by keeping set of really enumerated id.
+  //         But this creates an overhead I'd like to avoid, because in correct usage it should be no 'unknown id'
+  //         in use -- and it seems silly to pay the (quite high) price for something what shouldn't happen anyway.
+  //         Better option could be to
+  //         1. Specify .valueOf in this class violates original contract, and always throw exception on unknown
+  //            ids (except NULL_ID).
+  //         2. Keep the set of enumerated ids, but only under feature-flag, enabled in debug versions -- and disable
+  //            it in prod, there (supposingly) all mistakes are already fixed
 
 
   public DurableStringEnumerator(@NotNull Path storagePath) throws IOException {
@@ -49,8 +64,11 @@ public final class DurableStringEnumerator implements ScannableDataEnumeratorEx<
     this.valuesLog.forEachRecord((logId, buffer) -> {
       String value = readString(buffer);
       int id = Math.toIntExact(logId);
+
       int valueHash = hashOf(value);
+
       valueHashToId.put(valueHash, id);
+      maxId = Math.max(id, maxId);
       return true;
     });
   }
@@ -96,7 +114,9 @@ public final class DurableStringEnumerator implements ScannableDataEnumeratorEx<
         byte[] valueBytes = value.getBytes(UTF_8);
         long appendedId = valuesLog.append(valueBytes);
         int id = Math.toIntExact(appendedId);
+
         valueHashToId.put(valueHash, id);
+        maxId = Math.max(maxId, id);
         return id;
       }
     }
@@ -118,10 +138,10 @@ public final class DurableStringEnumerator implements ScannableDataEnumeratorEx<
 
   @Override
   public @Nullable String valueOf(int valueId) throws IOException {
-    if (valueId == NULL_ID) {
+    if (valueId <= NULL_ID || valueId > maxId) {
       return null;
     }
-    return valuesLog.read(valueId, IOUtil::readString);
+    return valuesLog.read(valueId, DurableStringEnumerator::readString);
   }
 
   private static int hashOf(@NotNull String value) {
