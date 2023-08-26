@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.uast.kotlin
 
@@ -40,7 +40,7 @@ interface FirKotlinUastResolveProviderService : BaseKotlinUastResolveProviderSer
     private val KtExpression.parentValueArgument: ValueArgument?
         get() = parents.firstOrNull { it is ValueArgument } as? ValueArgument
 
-    fun isSupportedElement(psiElement: PsiElement): Boolean
+    fun isSupportedElement(psiElement: PsiElement): Boolean = true
 
     override fun convertToPsiAnnotation(ktElement: KtElement): PsiAnnotation? {
         return ktElement.toLightAnnotation()
