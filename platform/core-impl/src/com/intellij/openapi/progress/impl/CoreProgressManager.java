@@ -159,10 +159,14 @@ public class CoreProgressManager extends ProgressManager implements Disposable {
   @Override
   public boolean hasModalProgressIndicator() {
     synchronized (threadsUnderIndicator) {
-      return ContainerUtil.or(threadsUnderIndicator.keySet(), i -> i.isModal());
+      for (ProgressIndicator t : threadsUnderIndicator.keySet()) {
+        if (t.isModal()) {
+          return true;
+        }
+      }
+      return false;
     }
   }
-
 
   // run in current thread
   @Override
@@ -765,7 +769,7 @@ public class CoreProgressManager extends ProgressManager implements Disposable {
 
   private static final long MAX_PRIORITIZATION_NANOS = TimeUnit.SECONDS.toNanos(12); // maximum duration of process to run under low priority
   private static final long MIN_PRIORITIZATION_NANOS = TimeUnit.MILLISECONDS.toNanos(5); // minimum duration of process to consider prioritizing it down
-  private final Set<Thread> myPrioritizedThreads = ContainerUtil.newConcurrentSet();
+  private final Set<Thread> myPrioritizedThreads = ConcurrentHashMap.newKeySet();
   private final AtomicInteger myDeprioritizations = new AtomicInteger();
   private volatile long myPrioritizingStartedNanos;
 

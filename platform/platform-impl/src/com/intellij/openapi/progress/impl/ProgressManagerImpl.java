@@ -14,7 +14,6 @@ import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.UserDataHolder;
 import com.intellij.openapi.wm.WindowManager;
 import com.intellij.ui.SystemNotifications;
-import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.io.IOCancellationCallback;
 import com.intellij.util.io.IOCancellationCallbackHolder;
 import com.intellij.util.ui.EDT;
@@ -38,7 +37,17 @@ public final class ProgressManagerImpl extends CoreProgressManager implements Di
 
   @Override
   public boolean hasUnsafeProgressIndicator() {
-    return super.hasUnsafeProgressIndicator() || ContainerUtil.exists(getCurrentIndicators(), ProgressManagerImpl::isUnsafeIndicator);
+    if (super.hasUnsafeProgressIndicator()) {
+      return true;
+    }
+
+    Iterable<? extends ProgressIndicator> iterable = getCurrentIndicators();
+    for (ProgressIndicator t : iterable) {
+      if (isUnsafeIndicator(t)) {
+        return true;
+      }
+    }
+    return false;
   }
 
   private static boolean isUnsafeIndicator(@NotNull ProgressIndicator indicator) {
