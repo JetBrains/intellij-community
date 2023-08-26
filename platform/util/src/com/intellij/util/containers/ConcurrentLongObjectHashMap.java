@@ -5,6 +5,7 @@ package com.intellij.util.containers;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
+import java.lang.reflect.Array;
 import java.lang.reflect.Field;
 import java.util.*;
 import java.util.concurrent.locks.LockSupport;
@@ -869,7 +870,7 @@ public final class ConcurrentLongObjectHashMap<V> implements ConcurrentLongObjec
    * @see #values()
    */
   @Override
-  public @NotNull Enumeration<V> elements() {
+  public @NotNull Iterator<V> elements() {
     Node<V>[] t;
     int f = (t = table) == null ? 0 : t.length;
     return new ValueIterator<>(t, f, 0, f, this);
@@ -2244,8 +2245,7 @@ public final class ConcurrentLongObjectHashMap<V> implements ConcurrentLongObjec
   }
 
 
-  static final class ValueIterator<V> extends BaseIterator<V>
-    implements Iterator<V>, Enumeration<V> {
+  static final class ValueIterator<V> extends BaseIterator<V> implements Iterator<V> {
     ValueIterator(Node<V>[] tab, int index, int size, int limit,
                   ConcurrentLongObjectHashMap<V> map) {
       super(tab, index, size, limit, map);
@@ -2261,11 +2261,6 @@ public final class ConcurrentLongObjectHashMap<V> implements ConcurrentLongObjec
       lastReturned = p;
       advance();
       return v;
-    }
-
-    @Override
-    public V nextElement() {
-      return next();
     }
   }
 
@@ -2400,7 +2395,7 @@ public final class ConcurrentLongObjectHashMap<V> implements ConcurrentLongObjec
       }
       int m = (int)sz;
       T[] r = (a.length >= m) ? a :
-              (T[])java.lang.reflect.Array
+              (T[])Array
                 .newInstance(a.getClass().getComponentType(), m);
       int n = r.length;
       int i = 0;
