@@ -9,7 +9,6 @@ import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.OptionAction;
 import com.intellij.openapi.util.Key;
-import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.SystemInfoRt;
 import com.intellij.ui.ClientProperty;
 import com.intellij.ui.components.JBOptionButton;
@@ -49,7 +48,7 @@ public final class Touchbar {
   }
 
   public static void addActions(@NotNull JComponent component, @Nullable ActionGroup group) {
-    if (!SystemInfo.isMac || !LoadingState.COMPONENTS_REGISTERED.isOccurred() || ApplicationManager.getApplication() == null) {
+    if (!SystemInfoRt.isMac || !LoadingState.COMPONENTS_REGISTERED.isOccurred() || ApplicationManager.getApplication() == null) {
       return;
     }
 
@@ -74,7 +73,7 @@ public final class Touchbar {
                                       Collection<? extends JButton> principal,
                                       JButton defaultButton,
                                       @Nullable ActionGroup extraActions) {
-    if (!SystemInfo.isMac || !LoadingState.COMPONENTS_REGISTERED.isOccurred() || ApplicationManager.getApplication() == null) {
+    if (!SystemInfoRt.isMac || !LoadingState.COMPONENTS_REGISTERED.isOccurred() || ApplicationManager.getApplication() == null) {
       return;
     }
 
