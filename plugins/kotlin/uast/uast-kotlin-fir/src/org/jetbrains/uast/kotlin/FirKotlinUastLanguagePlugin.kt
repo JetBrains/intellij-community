@@ -42,7 +42,7 @@ class FirKotlinUastLanguagePlugin : UastLanguagePlugin {
         }
 
     override fun convertElement(element: PsiElement, parent: UElement?, requiredType: Class<out UElement>?): UElement? {
-        if (!element.isSupportedElement) return null
+        if (parent == null && !element.isSupportedElement) return null
         return convertDeclarationOrElement(element, parent, elementTypes(requiredType))
     }
 
