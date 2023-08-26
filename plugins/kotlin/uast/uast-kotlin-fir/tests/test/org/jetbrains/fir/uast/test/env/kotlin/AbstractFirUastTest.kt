@@ -52,11 +52,13 @@ abstract class AbstractFirUastTest : KotlinLightCodeInsightFixtureTestCase(), Ua
         )
         area.getExtensionPoint(UEvaluatorExtension.EXTENSION_POINT_NAME).registerExtension(KotlinEvaluatorExtension(), project)
         val service = FirCliKotlinUastResolveProviderService()
-        ApplicationManager.getApplication().registerServiceInstance(
+        val application = ApplicationManager.getApplication()
+        application.registerServiceInstance(
             BaseKotlinUastResolveProviderService::class.java,
             service
         )
-        project.registerServiceInstance(
+
+        application.registerServiceInstance(
             FirKotlinUastResolveProviderService::class.java,
             service
         )

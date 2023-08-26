@@ -3,6 +3,7 @@
 package org.jetbrains.uast.kotlin
 
 import com.intellij.lang.Language
+import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.service
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.util.text.StringUtil
@@ -31,7 +32,7 @@ class FirKotlinUastLanguagePlugin : UastLanguagePlugin {
     }
 
     private val PsiElement.isSupportedElement: Boolean
-        get() = project.service<FirKotlinUastResolveProviderService>().isSupportedElement(this)
+        get() = ApplicationManager.getApplication().service<FirKotlinUastResolveProviderService>().isSupportedElement(this)
 
     override fun convertElement(element: PsiElement, parent: UElement?, requiredType: Class<out UElement>?): UElement? {
         if (!element.isSupportedElement) return null
