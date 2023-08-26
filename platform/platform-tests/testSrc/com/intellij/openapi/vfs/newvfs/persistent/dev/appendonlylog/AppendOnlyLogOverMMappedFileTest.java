@@ -20,13 +20,7 @@ import static java.nio.charset.StandardCharsets.UTF_8;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertThrows;
 
-/**
- * FIXME: this junit4 version is temporary copy of {@link AppendOnlyLogOverMMappedFileJUnit5Test}. Both
- * are functionally identical, both junit4 and junit5 versions are succeeded locally -- but junit5
- * version currently fails CI, while junit4 (this) version is OK. After this issue will be investigated
- * and fixed -- remove this test, and leave only junit5 version
- */
-public class AppendOnlyLogOverMMappedFileJUnit4Test {
+public class AppendOnlyLogOverMMappedFileTest {
 
   @Rule
   public final TemporaryFolder temporaryFolder = new TemporaryFolder();

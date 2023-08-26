@@ -9,6 +9,7 @@ import com.intellij.openapi.vfs.newvfs.persistent.dev.blobstorage.ByteBufferWrit
 import com.intellij.util.io.IOUtil;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.VisibleForTesting;
 
 import java.io.IOException;
 import java.lang.invoke.VarHandle;
@@ -725,13 +726,15 @@ public final class AppendOnlyLogOverMMappedFile implements AppendOnlyLog {
   //MAYBE RC: since record offsets are now 32b-aligned, we could drop 2 lowest bits from an offset while
   //          converting it to the id -> this way we could address wider offsets range with int id
 
-  private static long recordOffsetToId(long recordOffset) {
+  @VisibleForTesting
+  static long recordOffsetToId(long recordOffset) {
     assert32bAligned(recordOffset, "recordOffsetInFile");
     //0 is considered invalid id (NULL_ID) everywhere in our code, so '+1' for first id to be 1
     return recordOffset - HeaderLayout.HEADER_SIZE + 1;
   }
 
-  private static long recordIdToOffset(long recordId) {
+  @VisibleForTesting
+  static long recordIdToOffset(long recordId) {
     long offset = recordId - 1 + HeaderLayout.HEADER_SIZE;
     if (!is32bAligned(offset)) {
       throw new IllegalArgumentException("recordId(=" + recordId + ") is invalid: recordOffsetInFile(=" + offset + ") is not 32b-aligned");
