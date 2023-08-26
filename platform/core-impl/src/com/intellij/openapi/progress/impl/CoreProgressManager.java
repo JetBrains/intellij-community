@@ -936,8 +936,10 @@ public class CoreProgressManager extends ProgressManager implements Disposable {
     if (contextModality != null) {
       return contextModality;
     }
-    ModalityState progressModality = ProgressManager.getInstance().getCurrentProgressModality();
-    return progressModality != null ? progressModality : ModalityState.nonModal();
+
+    ProgressManager progressManager = ProgressManager.getInstanceOrNull();
+    ModalityState progressModality = progressManager == null ? null : progressManager.getCurrentProgressModality();
+    return progressModality == null ? ModalityState.nonModal() : progressModality;
   }
 
   private static void setCurrentIndicator(long threadId, ProgressIndicator indicator) {

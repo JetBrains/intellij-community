@@ -69,18 +69,15 @@ public final class PersistentHashMapValueStorage {
       }
     };
 
-    private final @NotNull IOCancellationCallback myIOCancellationCallback;
     private final boolean myReadOnly;
     private final boolean myCompactChunksWithValueDeserialization;
     private final boolean myHasNoChunks;
     private final boolean myUseCompression;
 
-    private CreationTimeOptions(@NotNull IOCancellationCallback callback,
-                                boolean readOnly,
+    private CreationTimeOptions(boolean readOnly,
                                 boolean compactChunksWithValueDeserialization,
                                 boolean hasNoChunks,
                                 boolean doCompression) {
-      myIOCancellationCallback = callback;
       myReadOnly = readOnly;
       myCompactChunksWithValueDeserialization = compactChunksWithValueDeserialization;
       myHasNoChunks = hasNoChunks;
@@ -101,7 +98,6 @@ public final class PersistentHashMapValueStorage {
 
     public CreationTimeOptions setReadOnly() {
       return new CreationTimeOptions(
-        myIOCancellationCallback,
         true,
         myCompactChunksWithValueDeserialization,
         myHasNoChunks,
@@ -111,7 +107,6 @@ public final class PersistentHashMapValueStorage {
 
     public CreationTimeOptions readOnly(final boolean readOnly) {
       return new CreationTimeOptions(
-        myIOCancellationCallback,
         readOnly,
         myCompactChunksWithValueDeserialization,
         myHasNoChunks,
@@ -120,13 +115,13 @@ public final class PersistentHashMapValueStorage {
     }
 
     public CreationTimeOptions setCompactChunksWithValueDeserialization(){
-      return new CreationTimeOptions(myIOCancellationCallback, myReadOnly,
+      return new CreationTimeOptions(myReadOnly,
                                      true,
                                      myHasNoChunks, myUseCompression);
     }
 
     public CreationTimeOptions setHasNoChunks(){
-      return new CreationTimeOptions(myIOCancellationCallback, myReadOnly,
+      return new CreationTimeOptions(myReadOnly,
                                      myCompactChunksWithValueDeserialization,
                                      true,
                                      myUseCompression);
@@ -144,7 +139,6 @@ public final class PersistentHashMapValueStorage {
 
     public static @NotNull CreationTimeOptions threadLocalOptions() {
       return new CreationTimeOptions(
-        IOCancellationCallbackHolder.INSTANCE.getUsedIoCallback(),
         READONLY.get() == Boolean.TRUE,
         COMPACT_CHUNKS_WITH_VALUE_DESERIALIZATION.get() == Boolean.TRUE,
         HAS_NO_CHUNKS.get() == Boolean.TRUE,
@@ -690,8 +684,8 @@ public final class PersistentHashMapValueStorage {
   private static final boolean ourDumpChunkRemovalTime = SystemProperties.getBooleanProperty("idea.phmp.dump.chunk.removal.time", false);
 
   // hook for exceptional termination of long io operation
-  private void checkCancellation() {
-    myOptions.myIOCancellationCallback.checkCancelled();
+  private static void checkCancellation() {
+    IOCancellationCallbackHolder.checkCancelled();
   }
 
   private static int readChunkSize(@NotNull DataInputStream in) throws IOException {

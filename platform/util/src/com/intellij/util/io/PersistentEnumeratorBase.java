@@ -489,7 +489,7 @@ public abstract class PersistentEnumeratorBase<Data> implements DataEnumeratorEx
   }
 
   protected void doClose() throws IOException {
-    IOCancellationCallbackHolder.interactWithUI();
+    IOCancellationCallbackHolder.INSTANCE.interactWithUI();
 
     getWriteLock().lock();
     try {

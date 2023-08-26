@@ -337,20 +337,7 @@ class IdeEventQueue private constructor() : EventQueue() {
       val runnable = InvocationUtil.extractRunnable(event)
       val runnableClass = runnable?.javaClass ?: Runnable::class.java
       val processEventRunnable = Runnable {
-        val app = ApplicationManager.getApplication()
-        val progressManager = if (app != null && !app.isDisposed) {
-          try {
-            ProgressManager.getInstance()
-          }
-          catch (ex: RuntimeException) {
-            Logs.LOG.warn("app services aren't yet initialized", ex)
-            null
-          }
-        }
-        else {
-          null
-        }
-
+        val progressManager = ProgressManager.getInstanceOrNull()
         try {
           runCustomProcessors(finalEvent, preProcessors)
           performActivity(finalEvent) {
