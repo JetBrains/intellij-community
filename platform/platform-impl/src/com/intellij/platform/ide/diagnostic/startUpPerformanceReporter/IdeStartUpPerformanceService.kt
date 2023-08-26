@@ -45,6 +45,9 @@ private class IdeStartUpPerformanceService(coroutineScope: CoroutineScope) : Sta
   }
 
   private fun completed() {
+    if (perfFilePath != null) {
+      return
+    }
 
     StartUpMeasurer.stopPluginCostMeasurement()
     // don't report statistic from here if we want to measure project import duration
