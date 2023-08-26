@@ -1,6 +1,7 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.wm.impl.customFrameDecorations.frameTitleButtons
 
+import com.intellij.icons.AllIcons
 import com.intellij.ide.ui.LafManager
 import com.intellij.openapi.wm.impl.customFrameDecorations.LinuxLookAndFeel
 import com.intellij.openapi.wm.impl.customFrameDecorations.TitleButtonsPanel
@@ -25,19 +26,21 @@ class LinuxFrameTitleButtons(
   override val maximizeButton: JButton? = myMaximizeAction?.let { createButton("Maximize", it) }
   override val minimizeButton: JButton? = myIconifyAction?.let { createButton("Iconify", it) }
 
-  val restore = LinuxLookAndFeel.getLinuxIcon("window-restore-symbolic.svg")
+
+
+  val restore = LinuxLookAndFeel.getLinuxIcon("window-restore-symbolic.svg") ?: AllIcons.Windows.Restore
   override val restoreIcon = restore
   override val restoreInactiveIcon = restore
 
-  val maximize = LinuxLookAndFeel.getLinuxIcon("window-maximize-symbolic.svg")
+  val maximize = LinuxLookAndFeel.getLinuxIcon("window-maximize-symbolic.svg") ?: AllIcons.Windows.Maximize
   override val maximizeIcon = maximize
   override val maximizeInactiveIcon = maximize
 
-  val minimize = LinuxLookAndFeel.getLinuxIcon("window-minimize-symbolic.svg")
+  val minimize = LinuxLookAndFeel.getLinuxIcon("window-minimize-symbolic.svg") ?: AllIcons.Windows.Minimize
   override val minimizeIcon = minimize
   override val minimizeInactiveIcon = minimize
 
-  val close = LinuxLookAndFeel.getLinuxIcon("window-close-symbolic.svg")
+  val close = LinuxLookAndFeel.getLinuxIcon("window-close-symbolic.svg") ?: AllIcons.Windows.CloseActive
   override val closeIcon = close
   override val closeInactiveIcon = close
   override val closeHoverIcon = close
