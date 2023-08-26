@@ -20,7 +20,7 @@ interface GitStageUiSettingsListener : EventListener {
 
 class GitStageUiSettingsImpl(val project: Project) : GitStageUiSettings {
   private val projectSettings by lazy { project.service<GitStageUiProjectSettings>() }
-  private val applicationSettings by lazy { project.service<GitStageUiApplicationSettings>() }
+  private val applicationSettings by lazy { service<GitStageUiApplicationSettings>() }
 
   override var ignoredFilesShown by projectSettings::ignoredFilesShown
   override var isCommitAllEnabled by applicationSettings::isCommitAllEnabled
