@@ -6,6 +6,7 @@ package com.intellij.idea
 
 import com.intellij.BundleBase
 import com.intellij.accessibility.AccessibilityUtils
+import com.intellij.concurrency.ConcurrentCollectionFactory
 import com.intellij.diagnostic.*
 import com.intellij.ide.*
 import com.intellij.ide.bootstrap.*
@@ -36,6 +37,7 @@ import com.intellij.ui.mac.initMacApplication
 import com.intellij.ui.mac.screenmenu.Menu
 import com.intellij.ui.svg.SvgCacheManager
 import com.intellij.util.*
+import com.intellij.util.containers.ConcurrentLongObjectMap
 import com.intellij.util.containers.SLRUMap
 import com.intellij.util.io.*
 import com.intellij.util.lang.ZipFilePool
@@ -729,6 +731,9 @@ class Java11ShimImpl : Java11Shim {
   override fun <E> copyOf(collection: Collection<E>): Set<E> = java.util.Set.copyOf(collection)
 
   override fun <E> copyOfCollection(collection: Collection<E>): List<E> = java.util.List.copyOf(collection)
+  override fun <V : Any> createConcurrentLongObjectMap(): ConcurrentLongObjectMap<V> {
+    return ConcurrentCollectionFactory.createConcurrentLongObjectMap()
+  }
 
   override fun <E> setOf(collection: Array<E>): Set<E> = java.util.Set.of(*collection)
 }
