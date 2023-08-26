@@ -153,7 +153,7 @@ public final class AttributesFlyweight {
 
   private static void writeColor(@NotNull Element element, @NotNull String fieldName, Color color) {
     if (color != null) {
-      String string = Integer.toString(color.getRGB() & 0xFFFFFF, 16);
+      String string = String.format("%06x", 0xFFFFFF & color.getRGB());
       JDOMExternalizerUtil.writeField(element, fieldName, string);
     }
   }

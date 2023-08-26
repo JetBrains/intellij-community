@@ -753,9 +753,9 @@ public abstract class AbstractColorsScheme extends EditorFontCacheImpl implement
 
     String rgb = "";
     if (color != NULL_COLOR_MARKER) {
-      rgb = Integer.toString(0xFFFFFF & color.getRGB(), 16);
+      rgb = String.format("%06x", 0xFFFFFF & color.getRGB());
       int alpha = 0xFF & color.getAlpha();
-      if (alpha != 0xFF) rgb += Integer.toString(alpha, 16);
+      if (alpha != 0xFF) rgb += String.format("%02x", alpha);
     }
     JdomKt.addOptionTag(colorElements, key.getExternalName(), rgb);
   }
