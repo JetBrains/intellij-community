@@ -358,7 +358,7 @@ public class ContainerUtilCollectionsTest extends Assert {
   }
   @Test
   public void testSoftMapMustNotAcceptNullKey() {
-    assertNullKeysMustThrow(ContainerUtil.createSoftMap());
+    assertNullKeysMustThrow(CollectionFactory.createSoftMap());
   }
   @Test
   public void testWeakKeySoftValueMapMustNotAcceptNullKey() {
@@ -370,7 +370,7 @@ public class ContainerUtilCollectionsTest extends Assert {
   }
   @Test
   public void testSoftKeySoftValueMapMustNotAcceptNullKey() {
-    assertNullKeysMustThrow(ContainerUtil.createSoftKeySoftValueMap());
+    assertNullKeysMustThrow(CollectionFactory.createSoftKeySoftValueMap());
   }
   @Test
   public void testSoftValueMapMustNotAcceptNullKey() {
@@ -459,7 +459,7 @@ public class ContainerUtilCollectionsTest extends Assert {
 
   @Test(timeout = TIMEOUT)
   public void testSoftKeySoftValueMapTossed() {
-    Map<Object, Object> map = ContainerUtil.createSoftKeySoftValueMap();
+    Map<Object, Object> map = CollectionFactory.createSoftKeySoftValueMap();
     checkKeyTossedEventually(map);
     checkValueTossedEventually(map);
   }

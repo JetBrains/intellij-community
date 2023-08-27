@@ -4,6 +4,7 @@ package com.intellij.openapi.util;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.util.ExceptionUtil;
+import com.intellij.util.containers.CollectionFactory;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.*;
 
@@ -238,7 +239,7 @@ public final class RecursionManager {
     private int firstLoopStart = Integer.MAX_VALUE; // outermost recursion-prevented frame depth; memoized values are dropped on its change.
     private final LinkedHashMap<MyKey, StackFrame> progressMap = new LinkedHashMap<>();
     private final Map<MyKey, Throwable> preventions = new IdentityHashMap<>();
-    private final Map<@NotNull MyKey, MemoizedValue> intermediateCache = ContainerUtil.createSoftKeySoftValueMap();
+    private final Map<@NotNull MyKey, MemoizedValue> intermediateCache = CollectionFactory.createSoftKeySoftValueMap();
     private int enters;
     private int exits;
 
