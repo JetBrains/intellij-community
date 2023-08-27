@@ -60,7 +60,7 @@ interface TypesTestBase {
           builder.append(psiType)
         }
       }
-      builder.appendln()
+      builder.appendLine()
       level++
       return false
     }

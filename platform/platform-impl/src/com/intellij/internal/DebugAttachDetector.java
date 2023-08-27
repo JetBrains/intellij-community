@@ -111,7 +111,8 @@ public final class DebugAttachDetector {
       return true;
     }
     Properties properties = ApplicationManager.getApplication().getService(DebugAttachDetector.class).myAgentProperties;
-    if (properties == null) { // For now return true if can not detect
+    // for now, return true if you can not detect
+    if (properties == null) {
       return true;
     }
     return isAttached(properties);
