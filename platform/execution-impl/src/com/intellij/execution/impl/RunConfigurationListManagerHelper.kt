@@ -197,7 +197,7 @@ internal class RunConfigurationListManagerHelper(private val manager: RunManager
 
   fun checkIfDependenciesAreStable(configuration: RunConfiguration, list: List<RunnerAndConfigurationSettings>) {
     for (runTask in configuration.beforeRunTasks) {
-      val runTaskSettings = (runTask as? RunConfigurationBeforeRunProvider.RunConfigurableBeforeRunTask)?.settings
+      val runTaskSettings = (runTask as? RunConfigurationBeforeRunProvider.RunConfigurableBeforeRunTask)?.getSettings(manager)
       if (runTaskSettings?.isTemporary == true) {
         manager.makeStable(runTaskSettings)
         checkIfDependenciesAreStable(runTaskSettings.configuration, list)

@@ -60,8 +60,8 @@ public final class RunConfigurationBeforeRunProvider
 
   @Override
   public Icon getTaskIcon(RunConfigurableBeforeRunTask task) {
-    if (task.getSettings() == null) return null;
-    return ProgramRunnerUtil.getConfigurationIcon(task.getSettings(), false);
+    RunnerAndConfigurationSettings settings = task.getSettingsWithTarget(null).first;
+    return settings == null ? null : ProgramRunnerUtil.getConfigurationIcon(settings, false);
   }
 
   @Override
@@ -144,7 +144,7 @@ public final class RunConfigurationBeforeRunProvider
   @Override
   public boolean canExecuteTask(@NotNull RunConfiguration configuration,
                                 @NotNull RunConfigurableBeforeRunTask task) {
-    RunnerAndConfigurationSettings settings = task.getSettings();
+    RunnerAndConfigurationSettings settings = task.getSettingsWithTarget().first;
     if (settings == null) {
       return false;
     }
@@ -321,7 +321,7 @@ public final class RunConfigurationBeforeRunProvider
              settings.getName().equals(typeNameTarget.getName());
     }
 
-    private void init() {
+    private void init(@NotNull RunManagerImpl runManager) {
       if (mySettingsWithTarget != null) {
         return;
       }
@@ -330,7 +330,7 @@ public final class RunConfigurationBeforeRunProvider
       String name = typeNameTarget.getName();
       String targetId = typeNameTarget.getTargetId();
       RunnerAndConfigurationSettings settings = type != null && name != null
-                                                ? RunManagerImpl.getInstanceImpl(myProject).findConfigurationByTypeAndName(type, name)
+                                                ? runManager.findConfigurationByTypeAndName(type, name)
                                                 : null;
       ExecutionTarget target = targetId != null && settings != null
                                ? ((ExecutionTargetManagerImpl)ExecutionTargetManager.getInstance(myProject))
@@ -349,7 +349,7 @@ public final class RunConfigurationBeforeRunProvider
         typeNameTarget.setTargetId(null);
       }
       else {
-        mySettingsWithTarget = Pair.create(settings, target);
+        mySettingsWithTarget = new Pair<>(settings, target);
 
         typeNameTarget.setName(settings.getName());
         typeNameTarget.setType(settings.getType().getId());
@@ -357,12 +357,24 @@ public final class RunConfigurationBeforeRunProvider
       }
     }
 
+    public @Nullable RunnerAndConfigurationSettings getSettings(@NotNull RunManagerImpl runManager) {
+      return getSettingsWithTarget(runManager).first;
+    }
+
     public @Nullable RunnerAndConfigurationSettings getSettings() {
-      return Pair.getFirst(getSettingsWithTarget());
+      return getSettingsWithTarget().first;
+    }
+
+    private @NotNull Pair<@Nullable RunnerAndConfigurationSettings, @Nullable ExecutionTarget> getSettingsWithTarget(@NotNull RunManagerImpl runManager) {
+      init(runManager);
+      return mySettingsWithTarget;
     }
 
     private @NotNull Pair<@Nullable RunnerAndConfigurationSettings, @Nullable ExecutionTarget> getSettingsWithTarget() {
-      init();
+      if (mySettingsWithTarget != null) {
+        return mySettingsWithTarget;
+      }
+      init(RunManagerImpl.getInstanceImpl(myProject));
       return mySettingsWithTarget;
     }
 
