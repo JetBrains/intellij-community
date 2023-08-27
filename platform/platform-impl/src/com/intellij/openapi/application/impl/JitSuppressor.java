@@ -7,6 +7,7 @@ import com.intellij.ide.PowerSaveMode;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.extensions.ExtensionNotApplicableException;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.Strings;
 import com.sun.tools.attach.VirtualMachine;
@@ -55,17 +56,18 @@ final class JitSuppressor extends ApplicationInitializedListenerJavaShim {
   };
   private static final boolean ourBlacklistMode = true;
 
-  @Override
-  public void componentsInitialized() {
+  JitSuppressor() {
     if (!Boolean.getBoolean("enable.jit.suppressor")) {
-      return;
+      throw ExtensionNotApplicableException.create();
     }
-
     // java.specification.version has values "1.8", "1.7" e.t.c. for jdk <= 8 and "9", "10", "11", 12" for others
     if (System.getProperty("java.specification.version").contains(".")) {
-      return;
+      throw ExtensionNotApplicableException.create();
     }
+  }
 
+  @Override
+  public void componentsInitialized() {
     String javaSpecVendor = System.getProperty("java.vm.specification.vendor");
     if (!"Oracle Corporation".equals(javaSpecVendor)) {
       LOG.warn("JitSuppressor functionality is not supported on non-Oracle vm. This one is " + javaSpecVendor);
