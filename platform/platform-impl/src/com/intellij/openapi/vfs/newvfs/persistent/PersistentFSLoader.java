@@ -100,11 +100,10 @@ public final class PersistentFSLoader {
   private final IntSet filesIdsToInvalidate = new IntOpenHashSet();
 
   /**
-   * true if during the recovery content storage was re-created, and previous contentIds are now
-   * invalid (i.e. LocalHistory needs to be cleared then)
+   * true if during the recovery, content storage was re-created, and previous contentIds are now
+   * invalid (i.e., LocalHistory needs to be cleared then)
    */
   private boolean invalidateContentIds;
-
 
   PersistentFSLoader(@NotNull PersistentFSPaths persistentFSPaths,
                      boolean enableVfsLog,
@@ -126,7 +125,7 @@ public final class PersistentFSLoader {
     this.enableVfsLog = enableVfsLog;
   }
 
-  public boolean replaceStoragesIfMarkerPresent() throws IOException {
+  public boolean replaceStoragesIfMarkerPresent() {
     var applied = VfsRecoveryUtils.INSTANCE.applyStoragesReplacementIfMarkerExists(storagesReplacementMarkerFile);
     if (applied) LOG.info("PersistentFS storages replacement was applied");
     return applied;
@@ -147,18 +146,10 @@ public final class PersistentFSLoader {
       vfsLog = null;
     }
 
-    Future<ScannableDataEnumeratorEx<String>> namesStorageFuture = executorService.submit(
-      () -> createFileNamesEnumerator(namesFile)
-    );
-    Future<AbstractAttributesStorage> attributesStorageFuture = executorService.submit(
-      () -> createAttributesStorage(attributesFile)
-    );
-    Future<RefCountingContentStorage> contentsStorageFuture = executorService.submit(
-      () -> createContentStorage(contentsFile)
-    );
-    Future<PersistentFSRecordsStorage> recordsStorageFuture = executorService.submit(
-      () -> createRecordsStorage(recordsFile)
-    );
+    Future<ScannableDataEnumeratorEx<String>> namesStorageFuture = executorService.submit(() -> createFileNamesEnumerator(namesFile));
+    Future<AbstractAttributesStorage> attributesStorageFuture = executorService.submit(() -> createAttributesStorage(attributesFile));
+    Future<RefCountingContentStorage> contentsStorageFuture = executorService.submit(() -> createContentStorage(contentsFile));
+    Future<PersistentFSRecordsStorage> recordsStorageFuture = executorService.submit(() -> createRecordsStorage(recordsFile));
 
     //Initiate async scanning of the recordsStorage to fill both invertedNameIndex and reusableFileIds,
     //  and create lazy-accessors for both.
