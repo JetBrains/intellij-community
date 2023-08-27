@@ -9,7 +9,7 @@ import org.jetbrains.annotations.NotNull;
 import java.io.InputStream;
 import java.io.OutputStream;
 
-public class CloudTerminalProviderImpl extends CloudTerminalProvider {
+public final class CloudTerminalProviderImpl extends CloudTerminalProvider {
 
   @Override
   public @NotNull TerminalHandlerBase createTerminal(@NotNull String presentableName,

@@ -13,7 +13,7 @@ import org.jetbrains.plugins.terminal.action.TerminalNewTabAction;
 
 import java.util.concurrent.TimeUnit;
 
-public class JBTerminalSystemSettingsProvider extends JBTerminalSystemSettingsProviderBase {
+public final class JBTerminalSystemSettingsProvider extends JBTerminalSystemSettingsProviderBase {
 
   @Override
   public @NotNull TerminalActionPresentation getSelectAllActionPresentation() {

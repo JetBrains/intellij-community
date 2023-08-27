@@ -33,7 +33,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicReference;
 
-public class TerminalWorkingDirectoryManager {
+public final class TerminalWorkingDirectoryManager {
   private static final Logger LOG = Logger.getInstance(TerminalWorkingDirectoryManager.class);
   private static final int MERGE_WAIT_MILLIS = 500;
   private static final int FETCH_WAIT_MILLIS = 2000;

@@ -658,7 +658,7 @@ public final class TerminalToolWindowManager implements Disposable {
 }
 
 
-class TerminalToolWindowPanel extends SimpleToolWindowPanel implements UISettingsListener {
+final class TerminalToolWindowPanel extends SimpleToolWindowPanel implements UISettingsListener {
   private final PropertiesComponent myPropertiesComponent;
   private final ToolWindow myWindow;
 
