@@ -9,10 +9,7 @@ import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.util.io.NioFiles
 import com.intellij.ui.hasher
 import com.intellij.ui.seededHasher
-import com.intellij.util.io.DataExternalizer
-import com.intellij.util.io.KeyDescriptor
-import com.intellij.util.io.PersistentHashMap
-import com.intellij.util.io.PersistentMapBuilder
+import com.intellij.util.io.*
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.TimeoutCancellationException
 import kotlinx.coroutines.withContext
@@ -63,11 +60,15 @@ private fun openSvgCache(dbDir: Path): PersistentHashMap<LongArray, IconValue> {
   try {
     return createMap(file)
   }
-  catch (e: Throwable) {
-    logger<SvgCacheManager>().warn("Cannot open database, will be recreated", e)
-    NioFiles.deleteRecursively(dbDir)
-    return createMap(file)
+  catch (e: CorruptedException) {
+    logger<SvgCacheManager>().warn("Icon cache is corrupted (${e.message})")
   }
+  catch (e: Throwable) {
+    logger<SvgCacheManager>().warn("Cannot open icon cache, will be recreated", e)
+  }
+
+  NioFiles.deleteRecursively(dbDir)
+  return createMap(file)
 }
 
 private fun createMap(dbFile: Path): PersistentHashMap<LongArray, IconValue> {
