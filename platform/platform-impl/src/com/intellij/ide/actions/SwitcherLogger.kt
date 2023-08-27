@@ -7,8 +7,12 @@ import com.intellij.internal.statistic.eventLog.events.EventFields
 object SwitcherLogger {
   val GROUP = EventLogGroup("recent.files.dialog", 1)
 
-  val STATE = EventFields.Boolean("navigated")
-  val NAVIGATED_INDEX = EventFields.Int("navigation.index")
+  val NAVIGATED = EventFields.Boolean("navigated")
+  val NAVIGATED_INDEXES = EventFields.IntList("navigated.indexes")
+  val NAVIGATED_ORIGINAL_INDEXES = EventFields.IntList("navigated.original.indexes")
 
-  val SHOWN_TIME_ACTIVITY = GROUP.registerIdeActivity("shown_time", finishEventAdditionalFields = arrayOf(STATE, NAVIGATED_INDEX))
+  val SHOWN_TIME_ACTIVITY = GROUP.registerIdeActivity("shown_time", finishEventAdditionalFields =
+  arrayOf(NAVIGATED, NAVIGATED_ORIGINAL_INDEXES, NAVIGATED_INDEXES))
+
+  data class NavigationData(val navigationOriginalIndexes: List<Int>, val navigationIndexes: List<Int>)
 }
