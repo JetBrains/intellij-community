@@ -10,8 +10,9 @@ import org.jetbrains.annotations.NotNull;
 import java.util.List;
 
 @SuppressWarnings("SameParameterValue")
+final
 class LineFormattingRangesExtender {
-  private final static Logger LOG = Logger.getInstance(ContextFormattingRangesExtender.class);
+  private static final Logger LOG = Logger.getInstance(ContextFormattingRangesExtender.class);
 
   private final Document myDocument;
 

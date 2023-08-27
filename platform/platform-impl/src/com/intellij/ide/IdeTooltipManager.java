@@ -46,7 +46,7 @@ import java.awt.event.MouseEvent;
 import java.lang.reflect.Field;
 
 // Android team doesn't want to use new mockito for now, so, class cannot be final
-public final class IdeTooltipManager implements Disposable {
+public class IdeTooltipManager implements Disposable {
   public static final ColorKey TOOLTIP_COLOR_KEY = ColorKey.createColorKey("TOOLTIP", null);
 
   private static final Key<IdeTooltip> CUSTOM_TOOLTIP = Key.create("custom.tooltip");

@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2012 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.formatting;
 
@@ -21,7 +7,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
-public class AlignmentImpl extends Alignment {
+public final class AlignmentImpl extends Alignment {
   private static final List<LeafBlockWrapper> EMPTY = Collections.emptyList();
   private final boolean myAllowBackwardShift;
   private final Anchor myAnchor;
@@ -43,8 +29,7 @@ public class AlignmentImpl extends Alignment {
     return myAllowBackwardShift;
   }
 
-  @NotNull
-  public Anchor getAnchor() {
+  public @NotNull Anchor getAnchor() {
     return myAnchor;
   }
 
@@ -95,8 +80,7 @@ public class AlignmentImpl extends Alignment {
    * @return          block {@link #setOffsetRespBlock(LeafBlockWrapper) registered} for the current alignment object or
    *                  {@link #setParent(Alignment) its parent} using the algorithm above if any; {@code null} otherwise
    */
-  @Nullable
-  public LeafBlockWrapper getOffsetRespBlockBefore(@Nullable final AbstractBlockWrapper block) {
+  public @Nullable LeafBlockWrapper getOffsetRespBlockBefore(final @Nullable AbstractBlockWrapper block) {
     if (!continueOffsetResponsibleBlockRetrieval(block)) {
       return null;
     }
@@ -136,8 +120,7 @@ public class AlignmentImpl extends Alignment {
     return new HashSet<>(myOffsetRespBlocks);
   }
 
-  @NotNull
-  private static AbstractBlockWrapper extendBlockFromStart(@NotNull AbstractBlockWrapper block) {
+  private static @NotNull AbstractBlockWrapper extendBlockFromStart(@NotNull AbstractBlockWrapper block) {
     while (true) {
       AbstractBlockWrapper parent = block.getParent();
       if (parent != null && parent.getStartOffset() == block.getStartOffset()) {
@@ -149,8 +132,7 @@ public class AlignmentImpl extends Alignment {
     }
   }
 
-  @NotNull
-  private static AbstractBlockWrapper extendBlockFromEnd(@NotNull AbstractBlockWrapper block) {
+  private static @NotNull AbstractBlockWrapper extendBlockFromEnd(@NotNull AbstractBlockWrapper block) {
     while (true) {
       AbstractBlockWrapper parent = block.getParent();
       if (parent != null && parent.getEndOffset() == block.getEndOffset()) {
