@@ -36,7 +36,7 @@ import static com.intellij.util.ExceptionUtil.findCauseAndSuppressed;
 final class PersistentFSConnector {
   private static final Logger LOG = Logger.getInstance(PersistentFSConnector.class);
 
-  //FIXME RC: temporary, 'false' is not really an long-term alternative -- decide shortly about it
+  //FIXME RC: temporary, 'false' is not really a long-term alternative -- decide shortly about it
   private static final boolean PARALLELIZE_VFS_INITIALIZATION = SystemProperties.getBooleanProperty("vfs.parallelize-initialization", true);
 
   //TODO RC: lower down to 3 -- really, never seen even >2 attempts in FUS data for months
@@ -162,17 +162,17 @@ final class PersistentFSConnector {
     //          full VFS rebuild. VFS rebuild itself is not so costly -- but it invalidates all fileIds, which causes Indexes rebuild,
     //          which IS costly.
     //          It would be nicer if VFS be able to just 'upgrade' a minor change in format to a newer version, without full rebuild
-    //          -- but with current approach such functionality it is hard to plug in.
+    //          -- but with the current approach such functionality, it is hard to plug in.
     //          Sketch of a better implementation:
     //          1) VFS currentImplVersion is stored in a single dedicated place, in 'version.txt' file (human-readable)
     //          2) Each VFS storage manages its own on-disk-format-version -- i.e. each storage has its own CURRENT_IMPL_VERSION,
     //             which it stores somewhere in a file(s) header. And each storage is responsible for detecting on-disk version,
-    //             and either read the known format, or read-and-silently-upgrade known but slightly outdated format, or throw
+    //             and either read the known format, or read-and-silently-upgrade the known but slightly outdated format, or throw
     //             an error if it can't deal with on-disk data at all.
     //          VFS.currentImplVersion is changed only on a major format changes, there implement 'upgrade' is too costly, and full
     //          rebuild is the way to go. Another reason for full rebuild is if any of storages is completely confused by on-disk
-    //          data (=likely corruption or too old data format). In other cases VFS could be upgraded 'under the carpet' without
-    //          invalidating fileId, hence Indexes don't need to be rebuild.
+    //          data (=likely corruption or too old data format). In other cases, VFS could be upgraded 'under the carpet' without
+    //          invalidating fileId. Hence, Indexes don't need to be rebuilt.
 
     Path basePath = cachesDir.toAbsolutePath();
     Files.createDirectories(basePath);
@@ -193,7 +193,8 @@ final class PersistentFSConnector {
       if (VfsLog.isVfsTrackingEnabled() && enableVfsLog) {
         if (vfsLoader.recoverCachesFromVfsLogIfAppWasNotClosedProperly()) {
           LOG.info("Recovered caches from VfsLog");
-        } else {
+        }
+        else {
           LOG.info("Failed to recover caches from VfsLog");
         }
       }
