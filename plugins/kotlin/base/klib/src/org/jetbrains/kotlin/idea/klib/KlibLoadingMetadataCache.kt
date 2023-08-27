@@ -1,11 +1,11 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.klib
 
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.util.containers.ContainerUtil
+import com.intellij.util.containers.CollectionFactory
 import org.jetbrains.kotlin.library.KLIB_MANIFEST_FILE_NAME
 import org.jetbrains.kotlin.library.KLIB_METADATA_FILE_EXTENSION
 import org.jetbrains.kotlin.library.KLIB_MODULE_METADATA_FILE_NAME
@@ -33,9 +33,9 @@ class KlibLoadingMetadataCache {
     // ConcurrentWeakValueHashMap does not allow null values.
     private class CacheValue<T : Any>(val value: T?)
 
-    private val packageFragmentCache = ContainerUtil.createConcurrentWeakValueMap<CacheKey, CacheValue<ProtoBuf.PackageFragment>>()
-    private val moduleHeaderCache = ContainerUtil.createConcurrentWeakValueMap<CacheKey, CacheValue<KlibMetadataProtoBuf.Header>>()
-    private val libraryMetadataVersionCache = ContainerUtil.createConcurrentWeakValueMap<CacheKey, CacheValue<KlibMetadataVersion>>()
+    private val packageFragmentCache = CollectionFactory.createConcurrentWeakValueMap<CacheKey, CacheValue<ProtoBuf.PackageFragment>>()
+    private val moduleHeaderCache = CollectionFactory.createConcurrentWeakValueMap<CacheKey, CacheValue<KlibMetadataProtoBuf.Header>>()
+    private val libraryMetadataVersionCache = CollectionFactory.createConcurrentWeakValueMap<CacheKey, CacheValue<KlibMetadataVersion>>()
 
     fun getCachedPackageFragment(packageFragmentFile: VirtualFile): ProtoBuf.PackageFragment? {
         check(packageFragmentFile.extension == KLIB_METADATA_FILE_EXTENSION) {

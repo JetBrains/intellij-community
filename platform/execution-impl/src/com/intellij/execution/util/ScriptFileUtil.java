@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.util;
 
 import com.intellij.execution.CantRunException;
@@ -12,7 +12,7 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.containers.CollectionFactory;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -29,7 +29,7 @@ public final class ScriptFileUtil {
   private static final Logger LOG = Logger.getInstance(ScriptFileUtil.class);
 
   private static final String SCHEME = "mem://";
-  private static final Map<String, VirtualFile> ourFilesMap = ContainerUtil.createConcurrentWeakValueMap();
+  private static final Map<String, VirtualFile> ourFilesMap = CollectionFactory.createConcurrentWeakValueMap();
   private static final AtomicLong ourFileCounter = new AtomicLong();
 
   private ScriptFileUtil() {}

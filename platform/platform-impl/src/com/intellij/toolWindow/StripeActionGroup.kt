@@ -1,3 +1,4 @@
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.toolWindow
 
 import com.intellij.icons.AllIcons
@@ -38,6 +39,7 @@ import com.intellij.ui.ToggleActionButton
 import com.intellij.ui.popup.KeepingPopupOpenAction
 import com.intellij.util.PlatformUtils
 import com.intellij.util.concurrency.annotations.RequiresEdt
+import com.intellij.util.containers.CollectionFactory
 import com.intellij.util.containers.ConcurrentFactoryMap
 import com.intellij.util.containers.ContainerUtil
 import com.intellij.util.ui.UIUtil
@@ -49,7 +51,7 @@ private const val STRIPE_ACTION_GROUP_ID = "TopStripeActionGroup"
 
 class StripeActionGroup: ActionGroup(), DumbAware {
   private val myFactory: Map<ActivateToolWindowAction, AnAction> = ConcurrentFactoryMap.create(::createAction) {
-    ContainerUtil.createConcurrentWeakKeyWeakValueMap()
+    CollectionFactory.createConcurrentWeakKeyWeakValueMap()
   }
   private val myMore = MyMoreAction()
 

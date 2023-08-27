@@ -2568,16 +2568,6 @@ public final class ContainerUtil {
   }
 
   /**
-   * @deprecated Use {@link Stack#Stack()}
-   */
-  @Contract(value = " -> new", pure = true)
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval
-  public static @NotNull <T> Stack<T> newStack() {
-    return new Stack<>();
-  }
-
-  /**
    * @return read-only empty list
    * The only difference from {@link Collections#emptyList()} is that this list doesn't produce garbage in its {@link List#toArray()} method
    */
@@ -2605,7 +2595,7 @@ public final class ContainerUtil {
    */
   @Contract(value = " -> new", pure = true)
   public static @NotNull <T> List<T> createLockFreeCopyOnWriteList() {
-    return createConcurrentList();
+    return new LockFreeCopyOnWriteArrayList<>();
   }
 
   /**

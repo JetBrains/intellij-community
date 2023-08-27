@@ -20,7 +20,7 @@ import com.intellij.openapi.vfs.newvfs.persistent.FSRecordsImpl;
 import com.intellij.openapi.vfs.newvfs.persistent.log.VfsLog;
 import com.intellij.serviceContainer.AlreadyDisposedException;
 import com.intellij.util.concurrency.AppExecutorUtil;
-import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.containers.CollectionFactory;
 import com.intellij.util.containers.FactoryMap;
 import com.intellij.util.io.DataExternalizer;
 import com.intellij.util.io.IOUtil;
@@ -79,7 +79,7 @@ public final class GistStorageImpl extends GistStorage {
     }
   });
 
-  private static final Map<String, GistImpl<?>> knownGists = ContainerUtil.createConcurrentWeakValueMap();
+  private static final Map<String, GistImpl<?>> knownGists = CollectionFactory.createConcurrentWeakValueMap();
 
   private static final Map<Pair<String, Integer>, FileAttribute> knownAttributes = FactoryMap.create(
     key -> new FileAttribute(key.first, key.second, false)

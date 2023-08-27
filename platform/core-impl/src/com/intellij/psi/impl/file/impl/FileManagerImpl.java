@@ -27,6 +27,7 @@ import com.intellij.psi.impl.file.PsiDirectoryFactory;
 import com.intellij.testFramework.LightVirtualFile;
 import com.intellij.util.ConcurrencyUtil;
 import com.intellij.util.concurrency.annotations.RequiresReadLock;
+import com.intellij.util.containers.CollectionFactory;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.messages.MessageBusConnection;
 import org.jetbrains.annotations.ApiStatus;
@@ -91,7 +92,7 @@ public final class FileManagerImpl implements FileManager {
   public @NotNull ConcurrentMap<VirtualFile, FileViewProvider> getVFileToViewProviderMap() {
     ConcurrentMap<VirtualFile, FileViewProvider> map = myVFileToViewProviderMap.get();
     if (map == null) {
-      map = ConcurrencyUtil.cacheOrGet(myVFileToViewProviderMap, ContainerUtil.createConcurrentWeakValueMap());
+      map = ConcurrencyUtil.cacheOrGet(myVFileToViewProviderMap, CollectionFactory.createConcurrentWeakValueMap());
     }
     return map;
   }

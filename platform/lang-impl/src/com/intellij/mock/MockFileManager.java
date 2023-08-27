@@ -8,8 +8,8 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.SingleRootFileViewProvider;
 import com.intellij.psi.impl.PsiManagerEx;
 import com.intellij.psi.impl.file.impl.FileManager;
+import com.intellij.util.containers.CollectionFactory;
 import com.intellij.util.containers.ConcurrentFactoryMap;
-import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -30,7 +30,8 @@ public final class MockFileManager implements FileManager {
 
   public MockFileManager(PsiManagerEx manager) {
     myManager = manager;
-    myViewProviders = ConcurrentFactoryMap.create(key->new SingleRootFileViewProvider(myManager, key), ContainerUtil::createConcurrentWeakKeyWeakValueMap);
+    myViewProviders = ConcurrentFactoryMap.create(key->new SingleRootFileViewProvider(myManager, key),
+                                                  () -> CollectionFactory.createConcurrentWeakKeyWeakValueMap());
   }
 
   @Override

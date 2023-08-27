@@ -4,6 +4,7 @@ package com.intellij.execution.console;
 import com.intellij.ide.ui.UISettings;
 import com.intellij.openapi.util.SimpleModificationTracker;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.util.containers.CollectionFactory;
 import com.intellij.util.containers.ConcurrentFactoryMap;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
@@ -21,7 +22,7 @@ public final class DefaultConsoleHistoryModel extends SimpleModificationTracker 
 
   private final static Map<String, DefaultConsoleHistoryModel> ourModels =
     ConcurrentFactoryMap.create(key -> new DefaultConsoleHistoryModel(null),
-                                   ContainerUtil::createConcurrentWeakValueMap);
+                                () -> CollectionFactory.createConcurrentWeakValueMap());
 
   public static DefaultConsoleHistoryModel createModel(String persistenceId) {
     return ourModels.get(persistenceId).copy();
