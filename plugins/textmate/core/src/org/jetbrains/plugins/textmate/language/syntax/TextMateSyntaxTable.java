@@ -25,7 +25,7 @@ import java.util.concurrent.ConcurrentHashMap;
  * <p/>
  * Scope name of target language can be find in syntax files of TextMate bundles.
  */
-public class TextMateSyntaxTable {
+public final class TextMateSyntaxTable {
   private static final LoggerRt LOG = LoggerRt.getInstance(TextMateSyntaxTable.class);
   private final Map<CharSequence, SyntaxNodeDescriptor> rulesMap = new ConcurrentHashMap<>();
   private Object2IntMap<String> ruleIds; // guarded by this

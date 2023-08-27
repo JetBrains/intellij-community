@@ -17,7 +17,7 @@ import java.util.Map;
 
 import static org.jetbrains.plugins.textmate.plist.PListValue.value;
 
-public class JsonPlistReader implements PlistReader {
+public final class JsonPlistReader implements PlistReader {
   @Override
   public Plist read(@NotNull InputStream inputStream) throws IOException {
     return internalRead(createJsonReader().readValue(new InputStreamReader(inputStream, StandardCharsets.UTF_8), Object.class));

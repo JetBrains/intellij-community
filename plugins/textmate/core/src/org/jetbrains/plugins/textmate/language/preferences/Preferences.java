@@ -6,7 +6,7 @@ import org.jetbrains.plugins.textmate.language.TextMateScopeSelectorOwner;
 
 import java.util.Set;
 
-public class Preferences implements TextMateScopeSelectorOwner {
+public final class Preferences implements TextMateScopeSelectorOwner {
   @NotNull private final CharSequence myScopeRule;
   @Nullable private final Set<TextMateBracePair> myHighlightingPairs;
   @Nullable private final Set<TextMateBracePair> mySmartTypingPairs;

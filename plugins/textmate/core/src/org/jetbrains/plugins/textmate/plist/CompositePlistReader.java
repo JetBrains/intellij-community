@@ -5,7 +5,7 @@ import org.jetbrains.annotations.NotNull;
 import java.io.IOException;
 import java.io.InputStream;
 
-public class CompositePlistReader implements PlistReader {
+public final class CompositePlistReader implements PlistReader {
   private final PlistReader myJsonReader = new JsonPlistReader();
   private final PlistReader myXmlReader = new XmlPlistReader();
 

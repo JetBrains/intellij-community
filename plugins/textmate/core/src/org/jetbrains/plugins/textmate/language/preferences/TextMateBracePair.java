@@ -1,6 +1,6 @@
 package org.jetbrains.plugins.textmate.language.preferences;
 
-public class TextMateBracePair {
+public final class TextMateBracePair {
   public final char leftChar;
   public final char rightChar;
 

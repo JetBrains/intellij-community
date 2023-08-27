@@ -3,7 +3,7 @@ package org.jetbrains.plugins.textmate.regex;
 import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
 
-public class StringWithId {
+public final class StringWithId {
   public final byte[] bytes;
   public final Object id;
 

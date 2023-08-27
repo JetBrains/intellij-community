@@ -3,7 +3,7 @@ package org.jetbrains.plugins.textmate.regex;
 import org.joni.Matcher;
 import org.joni.Option;
 
-public class Searcher {
+public final class Searcher {
   private final Matcher myMatcher;
   private int currentPosition = 0;
   private int currentCharPosition = 0;

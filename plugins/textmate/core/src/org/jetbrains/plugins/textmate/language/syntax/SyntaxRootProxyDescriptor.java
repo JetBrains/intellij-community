@@ -7,7 +7,7 @@ import org.jetbrains.annotations.NotNull;
  * <p/>
  * User: zolotov
  */
-public class SyntaxRootProxyDescriptor extends SyntaxProxyDescriptor {
+public final class SyntaxRootProxyDescriptor extends SyntaxProxyDescriptor {
   SyntaxRootProxyDescriptor(@NotNull SyntaxNodeDescriptor parentNode) {
     super(parentNode);
   }
