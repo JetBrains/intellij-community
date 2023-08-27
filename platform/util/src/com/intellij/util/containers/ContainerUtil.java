@@ -347,15 +347,6 @@ public final class ContainerUtil {
   }
 
   /**
-   * @deprecated Use {@link HashSet#HashSet()}
-   */
-  @Deprecated
-  @Contract(pure = true)
-  public static @NotNull <T> THashSet<T> newTroveSet() {
-    return new THashSet<>();
-  }
-
-  /**
    * Use {@link com.intellij.concurrency.ConcurrentCollectionFactory#createConcurrentSet()} instead, if available
    */
   @Contract(pure = true)
