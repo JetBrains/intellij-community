@@ -642,7 +642,7 @@ open class RunManagerImpl @NonInjectable constructor(val project: Project, share
     if (!isFirstLoadState.get()) {
       lock.read {
         val list = idToSettings.values.toList()
-        list.forEachManaged {
+        list.managedOnly().forEach {
           listManager.checkIfDependenciesAreStable(it.configuration, list)
         }
       }
@@ -664,7 +664,7 @@ open class RunManagerImpl @NonInjectable constructor(val project: Project, share
       }
 
       val recentList = SmartList<String>()
-      recentlyUsedTemporaries.forEachManaged {
+      recentlyUsedTemporaries.managedOnly().forEach {
         recentList.add(it.uniqueID)
       }
       if (!recentList.isEmpty()) {

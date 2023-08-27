@@ -127,7 +127,10 @@ open class StateStorageManagerImpl(@NonNls private val rootTagName: String,
     return storage
   }
 
-  private fun computeStorageKey(storageClass: Class<out StateStorage>, normalizedCollapsedPath: String, collapsedPath: String, storageCreator: StorageCreator?): String {
+  private fun computeStorageKey(storageClass: Class<out StateStorage>,
+                                normalizedCollapsedPath: String,
+                                collapsedPath: String,
+                                storageCreator: StorageCreator?): String {
     if (storageClass != StateStorage::class.java) {
       return storageClass.name
     }
@@ -246,20 +249,27 @@ open class StateStorageManagerImpl(@NonNls private val rootTagName: String,
   protected open fun createDirectoryBasedStorage(file: Path,
                                                  collapsedPath: String,
                                                  @Suppress("DEPRECATION", "removal") splitter: StateSplitter): StateStorage {
-    return object : DirectoryBasedStorage(file, splitter, macroSubstitutor), StorageVirtualFileTracker.TrackedStorage {
+    return object : DirectoryBasedStorage(dir = file,
+                                          splitter = splitter,
+                                          pathMacroSubstitutor = macroSubstitutor), StorageVirtualFileTracker.TrackedStorage {
       override val storageManager = this@StateStorageManagerImpl
     }
   }
 
-  protected open class MyFileStorage(override val storageManager: StateStorageManagerImpl,
-                                     file: Path,
-                                     fileSpec: String,
-                                     rootElementName: String?,
-                                     roamingType: RoamingType,
-                                     pathMacroManager: PathMacroSubstitutor? = null,
-                                     provider: StreamProvider? = null) : FileBasedStorage(file, fileSpec, rootElementName, pathMacroManager,
-                                                                                          roamingType,
-                                                                                          provider), StorageVirtualFileTracker.TrackedStorage {
+  protected open class MyFileStorage(
+    override val storageManager: StateStorageManagerImpl,
+    file: Path,
+    fileSpec: String,
+    rootElementName: String?,
+    roamingType: RoamingType,
+    pathMacroManager: PathMacroSubstitutor? = null,
+    provider: StreamProvider? = null,
+  ) : FileBasedStorage(file = file,
+                       fileSpec = fileSpec,
+                       rootElementName = rootElementName,
+                       pathMacroManager = pathMacroManager,
+                       roamingType = roamingType,
+                       provider = provider), StorageVirtualFileTracker.TrackedStorage {
     override val isUseXmlProlog: Boolean
       get() = rootElementName != null && storageManager.isUseXmlProlog && !isSpecialStorage(fileSpec)
 

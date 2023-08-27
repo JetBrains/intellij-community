@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:Suppress("ReplacePutWithAssignment")
 
 package com.intellij.execution.impl
@@ -101,7 +101,7 @@ internal class RunConfigurationListManagerHelper(val manager: RunManagerImpl) {
     }
 
     val listElement = Element("list")
-    idToSettings.values.forEachManaged {
+    idToSettings.values.managedOnly().forEach {
       listElement.addContent(Element("item").setAttribute("itemvalue", it.uniqueID))
     }
 
@@ -235,12 +235,8 @@ private fun getSortedFolderNames(list: Collection<RunnerAndConfigurationSettings
   return result
 }
 
-internal inline fun Collection<RunnerAndConfigurationSettings>.forEachManaged(handler: (settings: RunnerAndConfigurationSettings) -> Unit) {
-  for (settings in this) {
-    if (settings.type.isManaged) {
-      handler(settings)
-    }
-  }
+internal fun Collection<RunnerAndConfigurationSettings>.managedOnly(): Sequence<RunnerAndConfigurationSettings> {
+  return asSequence().filter { it.type.isManaged  }
 }
 
 internal fun compareTypesForUi(type1: ConfigurationType, type2: ConfigurationType): Int {
