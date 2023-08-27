@@ -90,17 +90,6 @@ open class PsiAwareTextEditorProvider : TextEditorProvider(), AsyncFileEditorPro
     }
   }
 
-  override fun createEditorAsync(project: Project, file: VirtualFile): AsyncFileEditorProvider.Builder {
-    val document = FileDocumentManager.getInstance().getDocument(file, project)!!
-    val factory = EditorFactory.getInstance() as EditorFactoryImpl
-    return object : AsyncFileEditorProvider.Builder() {
-      override fun build(): FileEditor {
-        val editor = factory.createMainEditor(document, project, file)
-        return PsiAwareTextEditorImpl(project = project, file = file, provider = this@PsiAwareTextEditorProvider, editor = editor)
-      }
-    }
-  }
-
   override fun readState(element: Element, project: Project, file: VirtualFile): FileEditorState {
     val state = super<TextEditorProvider>.readState(element, project, file) as TextEditorState
 
