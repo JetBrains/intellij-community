@@ -2687,16 +2687,6 @@ public final class ContainerUtil {
   }
 
   /**
-   * @return read-only list consisting of results of {@code mapper.fun} for each element in {@code array}
-   * @deprecated use {@link #map(Object[], Function)}
-   */
-  @Contract(pure = true)
-  @Deprecated
-  public static @Unmodifiable @NotNull <T, V> List<V> map2List(T @NotNull [] array, @NotNull Function<? super T, ? extends V> mapper) {
-    return map(array, mapper);
-  }
-
-  /**
    * @deprecated use {@link #map(Collection, Function)}
    */
   @Contract(pure = true)
