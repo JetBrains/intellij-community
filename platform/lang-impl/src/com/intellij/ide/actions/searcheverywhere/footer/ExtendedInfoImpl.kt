@@ -14,6 +14,7 @@ import com.intellij.openapi.actionSystem.ex.ActionUtil
 import com.intellij.openapi.actionSystem.impl.SimpleDataContext
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.ReadAction
+import com.intellij.openapi.keymap.KeymapUtil
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.ProjectFileIndex
 import com.intellij.openapi.util.NlsSafe
@@ -58,7 +59,17 @@ class ExtendedInfoComponent(val project: Project?, val advertisement: ExtendedIn
 
   init {
     component.add(text, BorderLayout.WEST)
-    component.add(actionLink, BorderLayout.EAST)
+
+    val actionPanel = JPanel(BorderLayout(2, 0))
+    val shortcutSet = KeymapUtil.getActiveKeymapShortcuts(IdeActions.ACTION_SHOW_INTENTION_ACTIONS)
+    val shortcutText = KeymapUtil.getFirstKeyboardShortcutText(shortcutSet)
+    val shortcutLabel = JBLabel(shortcutText)
+    shortcutLabel.foreground = JBUI.CurrentTheme.ContextHelp.FOREGROUND
+    actionPanel.add(actionLink, BorderLayout.WEST)
+    actionPanel.add(shortcutLabel, BorderLayout.EAST)
+    actionPanel.background = JBUI.CurrentTheme.Advertiser.background()
+
+    component.add(actionPanel, BorderLayout.EAST)
   }
 
   fun updateElement(element: Any, disposable: Disposable) {
