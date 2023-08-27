@@ -33,6 +33,7 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.withContext
+import org.jetbrains.annotations.ApiStatus.Internal
 import java.io.File
 import java.nio.ByteBuffer
 import java.nio.file.Files
@@ -43,6 +44,7 @@ import java.util.concurrent.TimeUnit
 private val LOG: Logger
   get() = logger<StartUpMeasurer>()
 
+@Internal
 open class StartUpPerformanceReporter(private val coroutineScope: CoroutineScope) : StartUpPerformanceService {
   private var pluginCostMap: Map<String, Object2LongMap<String>>? = null
 
@@ -50,8 +52,7 @@ open class StartUpPerformanceReporter(private val coroutineScope: CoroutineScope
   private var lastMetrics = MutableSharedFlow<Object2IntMap<String>>(replay = 1, onBufferOverflow = BufferOverflow.DROP_OLDEST)
 
   companion object {
-    @JvmStatic
-    protected val perfFilePath: String? = System.getProperty("idea.log.perf.stats.file")?.takeIf(String::isNotEmpty)
+    private val perfFilePath: String? = System.getProperty("idea.log.perf.stats.file")?.takeIf(String::isNotEmpty)
 
     internal const val VERSION: String = "38"
 
@@ -123,13 +124,6 @@ private suspend fun logAndClearStats(projectName: String, perfFilePath: String?)
     }
   }
 
-  //System.getProperty("idea.perf.trace.file")?.takeIf(String::isNotEmpty)?.let {
-  //  val file = Path.of(FileUtil.expandUserHome(it))
-  //  Files.createDirectories(file.parent)
-  //  Files.newBufferedWriter(file).use { writer ->
-  //    writeInJaegerJsonFormat(activities.get(ActivityCategory.DEFAULT.jsonName) ?: emptyList(), output = writer)
-  //  }
-  //}
   getOtlpEndPoint()?.let {
     sendStartupTraceUsingOtlp(activities.get(ActivityCategory.DEFAULT.jsonName) ?: emptyList(), endpoint = it)
   }
@@ -153,10 +147,6 @@ private suspend fun logAndClearStats(projectName: String, perfFilePath: String?)
           projectName = projectName)
 
   val currentReport = w.toByteBuffer()
-
-  if (System.getProperty("idea.log.perf.stats", "false").toBoolean()) {
-    w.writeToLog(LOG)
-  }
 
   if (perfFilePath != null) {
     LOG.info("StartUp Measurement report was written to: $perfFilePath")
