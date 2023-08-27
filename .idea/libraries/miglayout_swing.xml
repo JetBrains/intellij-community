@@ -1,12 +1,12 @@
 <component name="libraryTable">
   <library name="miglayout-swing" type="repository">
-    <properties maven-id="com.miglayout:miglayout-swing:11.0">
+    <properties jar-repository-id="central-proxy" maven-id="com.miglayout:miglayout-swing:11.1">
       <verification>
-        <artifact url="file://$MAVEN_REPOSITORY$/com/miglayout/miglayout-swing/11.0/miglayout-swing-11.0.jar">
-          <sha256sum>7aa9da079e0ed628a3672f8ddd1b6b05a5a3ec27639f82370956748943989ba6</sha256sum>
+        <artifact url="file://$MAVEN_REPOSITORY$/com/miglayout/miglayout-swing/11.1/miglayout-swing-11.1.jar">
+          <sha256sum>53ca6af32b37d8586fb9508765e272df4af2d90e4d59ec0cc7febe269d16d9fd</sha256sum>
         </artifact>
-        <artifact url="file://$MAVEN_REPOSITORY$/com/miglayout/miglayout-core/11.0/miglayout-core-11.0.jar">
-          <sha256sum>812b9c8a8f326098a43eb9550229dd31100c49f81680eecdf6649da423f0be9f</sha256sum>
+        <artifact url="file://$MAVEN_REPOSITORY$/com/miglayout/miglayout-core/11.1/miglayout-core-11.1.jar">
+          <sha256sum>eaaa03787989baeca2d715585452f7a164d8c9d505917731e999b4f8e0d9cb04</sha256sum>
         </artifact>
       </verification>
     </properties>
@@ -14,13 +14,13 @@
       <root url="file://$PROJECT_DIR$/lib/annotations/migLayout" />
     </ANNOTATIONS>
     <CLASSES>
-      <root url="jar://$MAVEN_REPOSITORY$/com/miglayout/miglayout-swing/11.0/miglayout-swing-11.0.jar!/" />
-      <root url="jar://$MAVEN_REPOSITORY$/com/miglayout/miglayout-core/11.0/miglayout-core-11.0.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/com/miglayout/miglayout-swing/11.1/miglayout-swing-11.1.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/com/miglayout/miglayout-core/11.1/miglayout-core-11.1.jar!/" />
     </CLASSES>
     <JAVADOC />
     <SOURCES>
-      <root url="jar://$MAVEN_REPOSITORY$/com/miglayout/miglayout-swing/11.0/miglayout-swing-11.0-sources.jar!/" />
-      <root url="jar://$MAVEN_REPOSITORY$/com/miglayout/miglayout-core/11.0/miglayout-core-11.0-sources.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/com/miglayout/miglayout-swing/11.1/miglayout-swing-11.1-sources.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/com/miglayout/miglayout-core/11.1/miglayout-core-11.1-sources.jar!/" />
     </SOURCES>
   </library>
 </component>

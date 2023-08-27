@@ -19,11 +19,11 @@ public final class MatchData {
 
   public static MatchData fromRegion(@Nullable Region matchedRegion) {
     if (matchedRegion != null) {
-      int[] offsets = new int[matchedRegion.numRegs * 2];
-      for (int i = 0; i < matchedRegion.numRegs; i++) {
+      int[] offsets = new int[matchedRegion.getNumRegs() * 2];
+      for (int i = 0; i < matchedRegion.getNumRegs(); i++) {
         int startIndex = i * 2;
-        offsets[startIndex] = Math.max(matchedRegion.beg[i], 0);
-        offsets[startIndex + 1] = Math.max(matchedRegion.end[i], 0);
+        offsets[startIndex] = Math.max(matchedRegion.getBeg(i), 0);
+        offsets[startIndex + 1] = Math.max(matchedRegion.getEnd(i), 0);
       }
       return new MatchData(true, offsets);
     }

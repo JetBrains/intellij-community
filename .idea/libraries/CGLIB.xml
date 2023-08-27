@@ -1,6 +1,6 @@
 <component name="libraryTable">
   <library name="CGLIB" type="repository">
-    <properties maven-id="cglib:cglib-nodep:3.3.0">
+    <properties jar-repository-id="central-proxy" maven-id="cglib:cglib-nodep:3.3.0">
       <verification>
         <artifact url="file://$MAVEN_REPOSITORY$/cglib/cglib-nodep/3.3.0/cglib-nodep-3.3.0.jar">
           <sha256sum>3366d2c88fb576e486d830f521184e8f1839f8c15dcd2151a3f6e1f62b0b37a0</sha256sum>

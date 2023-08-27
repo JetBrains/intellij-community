@@ -1,6 +1,6 @@
 <component name="libraryTable">
   <library name="Slf4j" type="repository">
-    <properties include-transitive-deps="false" maven-id="org.slf4j:slf4j-api:1.7.36">
+    <properties include-transitive-deps="false" jar-repository-id="central-proxy" maven-id="org.slf4j:slf4j-api:1.7.36">
       <verification>
         <artifact url="file://$MAVEN_REPOSITORY$/org/slf4j/slf4j-api/1.7.36/slf4j-api-1.7.36.jar">
           <sha256sum>d3ef575e3e4979678dc01bf1dcce51021493b4d11fb7f1be8ad982877c16a1c0</sha256sum>

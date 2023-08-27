@@ -20,7 +20,7 @@ public class Searcher {
     }
     final int searchResult = myMatcher.search(currentPosition, myStringBytes.length, Option.CAPTURE_GROUP);
     if (searchResult > -1) {
-      setCurrentPosition(myMatcher.getEagerRegion().end[0]);
+      setCurrentPosition(myMatcher.getEagerRegion().getEnd(0));
     }
     else {
       setCurrentPosition(searchResult);

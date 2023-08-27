@@ -1,9 +1,9 @@
 <component name="libraryTable">
   <library name="joni" type="repository">
-    <properties maven-id="org.jruby.joni:joni:2.1.48">
+    <properties jar-repository-id="central-proxy" maven-id="org.jruby.joni:joni:2.2.1">
       <verification>
-        <artifact url="file://$MAVEN_REPOSITORY$/org/jruby/joni/joni/2.1.48/joni-2.1.48.jar">
-          <sha256sum>41cb16ce177877aae3d98aa2024486973702b66306024c683d89819ee978a529</sha256sum>
+        <artifact url="file://$MAVEN_REPOSITORY$/org/jruby/joni/joni/2.2.1/joni-2.2.1.jar">
+          <sha256sum>b3e4b657a3ed1d8f684114f6baa462d553a5932a865c1574695498dda8577748</sha256sum>
         </artifact>
         <artifact url="file://$MAVEN_REPOSITORY$/org/jruby/jcodings/jcodings/1.0.58/jcodings-1.0.58.jar">
           <sha256sum>e2f85def67d6848a7a41c648248645689e3990d17ab8f253ab2fd7e69407df67</sha256sum>
@@ -11,12 +11,12 @@
       </verification>
     </properties>
     <CLASSES>
-      <root url="jar://$MAVEN_REPOSITORY$/org/jruby/joni/joni/2.1.48/joni-2.1.48.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/jruby/joni/joni/2.2.1/joni-2.2.1.jar!/" />
       <root url="jar://$MAVEN_REPOSITORY$/org/jruby/jcodings/jcodings/1.0.58/jcodings-1.0.58.jar!/" />
     </CLASSES>
     <JAVADOC />
     <SOURCES>
-      <root url="jar://$MAVEN_REPOSITORY$/org/jruby/joni/joni/2.1.48/joni-2.1.48-sources.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/jruby/joni/joni/2.2.1/joni-2.2.1-sources.jar!/" />
       <root url="jar://$MAVEN_REPOSITORY$/org/jruby/jcodings/jcodings/1.0.58/jcodings-1.0.58-sources.jar!/" />
     </SOURCES>
   </library>

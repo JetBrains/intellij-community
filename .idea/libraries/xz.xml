@@ -1,6 +1,6 @@
 <component name="libraryTable">
   <library name="xz" type="repository">
-    <properties maven-id="org.tukaani:xz:1.9">
+    <properties jar-repository-id="central-proxy" maven-id="org.tukaani:xz:1.9">
       <verification>
         <artifact url="file://$MAVEN_REPOSITORY$/org/tukaani/xz/1.9/xz-1.9.jar">
           <sha256sum>211b306cfc44f8f96df3a0a3ddaf75ba8c5289eed77d60d72f889bb855f535e5</sha256sum>

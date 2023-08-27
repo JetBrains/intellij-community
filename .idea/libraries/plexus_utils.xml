@@ -1,6 +1,6 @@
 <component name="libraryTable">
   <library name="plexus-utils" type="repository">
-    <properties maven-id="org.codehaus.plexus:plexus-utils:3.5.1">
+    <properties jar-repository-id="central-proxy" maven-id="org.codehaus.plexus:plexus-utils:3.5.1">
       <verification>
         <artifact url="file://$MAVEN_REPOSITORY$/org/codehaus/plexus/plexus-utils/3.5.1/plexus-utils-3.5.1.jar">
           <sha256sum>86e0255d4c879c61b4833ed7f13124e8bb679df47debb127326e7db7dd49a07b</sha256sum>

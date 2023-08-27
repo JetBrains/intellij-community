@@ -1,9 +1,9 @@
 <component name="libraryTable">
   <library name="mockito.kotlin" type="repository">
-    <properties maven-id="org.mockito.kotlin:mockito-kotlin:4.1.0">
+    <properties jar-repository-id="central-proxy" maven-id="org.mockito.kotlin:mockito-kotlin:5.1.0">
       <verification>
-        <artifact url="file://$MAVEN_REPOSITORY$/org/mockito/kotlin/mockito-kotlin/4.1.0/mockito-kotlin-4.1.0.jar">
-          <sha256sum>2d095d500993bf99400dc8ae5d1936f00cf7220dbeda96261c232a258a539f50</sha256sum>
+        <artifact url="file://$MAVEN_REPOSITORY$/org/mockito/kotlin/mockito-kotlin/5.1.0/mockito-kotlin-5.1.0.jar">
+          <sha256sum>f801c56915b57be732f7486acc911f0139a7f5e24f76c58685722f41cecda1d0</sha256sum>
         </artifact>
       </verification>
       <exclude>
@@ -14,11 +14,11 @@
       </exclude>
     </properties>
     <CLASSES>
-      <root url="jar://$MAVEN_REPOSITORY$/org/mockito/kotlin/mockito-kotlin/4.1.0/mockito-kotlin-4.1.0.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/mockito/kotlin/mockito-kotlin/5.1.0/mockito-kotlin-5.1.0.jar!/" />
     </CLASSES>
     <JAVADOC />
     <SOURCES>
-      <root url="jar://$MAVEN_REPOSITORY$/org/mockito/kotlin/mockito-kotlin/4.1.0/mockito-kotlin-4.1.0-sources.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/mockito/kotlin/mockito-kotlin/5.1.0/mockito-kotlin-5.1.0-sources.jar!/" />
     </SOURCES>
   </library>
 </component>
