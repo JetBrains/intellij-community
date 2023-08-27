@@ -224,9 +224,10 @@ class ActionMenu constructor(private val context: DataContext?,
       icon = getDarkIcon(icon, true)
     }
 
-    if (isShowNoIcons) {
-      setIcon(null)
-      setDisabledIcon(null)
+    if (isShowNoIcons &&
+        !(group.getAction() is MainMenuPresentationAware && (group.getAction() as MainMenuPresentationAware).alwaysShowIconInMainMenu())) {
+        setIcon(null)
+        setDisabledIcon(null)
     }
     else {
       setIcon(icon)
