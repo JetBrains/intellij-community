@@ -38,7 +38,7 @@ public final class DurableStringEnumerator implements ScannableDataEnumeratorEx<
   private final Int2IntMultimap valueHashToId = new Int2IntMultimap();
 
   //@GuardedBy("hashToId")
-  private int maxId = -1;
+  private volatile int maxId = -1;
 
   //FIXME RC: currently .enumerate() and .tryEnumerate() execute under global lock, i.e. not scalable.
   //          It is not worse than PersistentEnumerator does, but we could do better -- we just need
@@ -111,9 +111,7 @@ public final class DurableStringEnumerator implements ScannableDataEnumeratorEx<
           return foundId;
         }
 
-        byte[] valueBytes = value.getBytes(UTF_8);
-        long appendedId = valuesLog.append(valueBytes);
-        int id = Math.toIntExact(appendedId);
+        int id = writeString(value, valuesLog);
 
         valueHashToId.put(valueHash, id);
         maxId = Math.max(maxId, id);
@@ -138,22 +136,25 @@ public final class DurableStringEnumerator implements ScannableDataEnumeratorEx<
 
   @Override
   public @Nullable String valueOf(int valueId) throws IOException {
+    //FIXME RC: DataEnumerator.valueOf() specifies that it must return null for unknown (i.e. not enumerated before)
+    //          ids. Current implementation doesn't do that, generally: id is supplied to valuesLog, which most
+    //          likely throws some random exception if supplied id is not a valid record id.
+    //          We could 'fix' it by keeping a set of valid ids here, in enumerator -- but this is quite a memory
+    //          consumption (almost same as .valueHashToId -- which is already quite noticeable), and also adds to
+    //          .valueOf() execution time -- which we want to be as fast as possible. And all this for (almost)
+    //          nothing: generally speaking, supplying random/unknown ids to enumerator is (almost always) a bug in
+    //          code -- it shouldn't happen in a regular scenarios.
+    //          Two approaches how to manage it:
+    //          1. Implement the .knownIds set, but only under feature-flag, and enable it in DEBUG builds, but
+    //             not in prod
+    //          2. Adjust AppendOnlyLog so it stores recordId in the record itself, and checks it on read.
+    //             This is less taxing on memory (consumes native/mapped instead of heap), and also concurrent,
+    //             and also makes more sense by itself.
+
     if (valueId <= NULL_ID || valueId > maxId) {
       return null;
     }
     return valuesLog.read(valueId, DurableStringEnumerator::readString);
-  }
-
-  private static int hashOf(@NotNull String value) {
-    int hash = value.hashCode();
-    if (hash == Int2IntMultimap.NO_VALUE) {
-      //Int2IntMultimap doesn't allow 0 keys/values, hence replace 0 hash with just any value!=0. Hash doesn't
-      // identify name uniquely anyway, hence this replacement just adds another hash collision -- basically,
-      // we replaced original String hashcode with our own, which avoids 0 at the cost of slightly higher chances
-      // of collisions
-      return -1;// any value!=0 will do
-    }
-    return hash;
   }
 
   @Override
@@ -167,6 +168,20 @@ public final class DurableStringEnumerator implements ScannableDataEnumeratorEx<
   @Override
   public void close() throws IOException {
     valuesLog.close();
+  }
+
+  // ===================== implementation: =============================================================== //
+
+  private static int hashOf(@NotNull String value) {
+    int hash = value.hashCode();
+    if (hash == Int2IntMultimap.NO_VALUE) {
+      //Int2IntMultimap doesn't allow 0 keys/values, hence replace 0 hash with just any value!=0. Hash doesn't
+      // identify name uniquely anyway, hence this replacement just adds another hash collision -- basically,
+      // we replaced original String hashcode with our own, which avoids 0 at the cost of slightly higher chances
+      // of collisions
+      return -1;// any value!=0 will do
+    }
+    return hash;
   }
 
   //@GuardedBy("valueHashToId")
@@ -189,10 +204,19 @@ public final class DurableStringEnumerator implements ScannableDataEnumeratorEx<
     return foundIdRef.get();
   }
 
+  //MAYBE RC: instead of converting string bytes to/from UTF8 -- maybe just store String fields as-is?
+  //          i.e. access private .value and .coder fields, and write/read their values? -- this allows
+  //          to bypass 1 array copy, and probably also a character encoding/decoding
+
   private static @NotNull String readString(@NotNull ByteBuffer buffer) {
-    //MAYBE RC: instead of converting string bytes to/from UTF8 -- maybe just store String fields as-is?
-    //          i.e. access private .value and .coder fields, and write/read their values? -- this allows
-    //          to bypass 1 array copy, and probably also a character encoding/decoding
     return IOUtil.readString(buffer);
+  }
+
+  private static int writeString(@NotNull String value,
+                                 @NotNull AppendOnlyLog valuesLog) throws IOException {
+    byte[] valueBytes = value.getBytes(UTF_8);
+    long appendedId = valuesLog.append(valueBytes);
+    int id = Math.toIntExact(appendedId);
+    return id;
   }
 }
