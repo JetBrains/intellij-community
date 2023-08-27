@@ -620,8 +620,8 @@ object Switcher : BaseSwitcherAction(null) {
     private fun createNavigationData(values: List<*>): SwitcherLogger.NavigationData? {
       if (selectedList != files) return null
 
-      val filteringListModel = files.model as FilteringListModel<SwitcherVirtualFile>
-      val collectionListModel = filteringListModel.originalModel as CollectionListModel<SwitcherVirtualFile>
+      val filteringListModel = files.model as? FilteringListModel<SwitcherVirtualFile> ?: return null
+      val collectionListModel = filteringListModel.originalModel as? CollectionListModel<SwitcherVirtualFile> ?: return null
       val originalIndexes = values.filterIsInstance<SwitcherVirtualFile>().map { collectionListModel.getElementIndex(it) }
       val navigatedIndexes = values.filterIsInstance<SwitcherVirtualFile>().map { filteringListModel.getElementIndex(it) }
 
