@@ -516,5 +516,6 @@
       </library>
     </orderEntry>
     <orderEntry type="library" name="kotlinx-html-jvm" level="project" />
+    <orderEntry type="module" module-name="intellij.platform.util.trove" scope="RUNTIME" />
   </component>
 </module>
