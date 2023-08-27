@@ -73,11 +73,11 @@ public final class RunConfigurationBeforeRunProvider
   public String getDescription(RunConfigurableBeforeRunTask task) {
     Pair<RunnerAndConfigurationSettings, ExecutionTarget> settingsWithTarget = task.getSettingsWithTarget();
     if (settingsWithTarget.first == null) {
-      if (task.myTypeNameTarget.getName() == null) {
+      if (task.typeNameTarget.getName() == null) {
         return ExecutionBundle.message("before.launch.run.another.configuration");
       }
       else {
-        return ExecutionBundle.message("before.launch.run.certain.configuration", task.myTypeNameTarget.getName());
+        return ExecutionBundle.message("before.launch.run.certain.configuration", task.typeNameTarget.getName());
       }
     }
     else {
@@ -277,7 +277,7 @@ public final class RunConfigurationBeforeRunProvider
   }
 
   public final class RunConfigurableBeforeRunTask extends BeforeRunTask<RunConfigurableBeforeRunTask> {
-    private final TypeNameTarget myTypeNameTarget = new TypeNameTarget();
+    private final TypeNameTarget typeNameTarget = new TypeNameTarget();
 
     private Pair<@Nullable RunnerAndConfigurationSettings, @Nullable ExecutionTarget> mySettingsWithTarget;
 
@@ -288,14 +288,14 @@ public final class RunConfigurationBeforeRunProvider
     @Override
     public void writeExternal(@NotNull Element element) {
       super.writeExternal(element);
-      if (myTypeNameTarget.getName() != null) {
-        element.setAttribute("run_configuration_name", myTypeNameTarget.getName());
+      if (typeNameTarget.getName() != null) {
+        element.setAttribute("run_configuration_name", typeNameTarget.getName());
       }
-      if (myTypeNameTarget.getType() != null) {
-        element.setAttribute("run_configuration_type", myTypeNameTarget.getType());
+      if (typeNameTarget.getType() != null) {
+        element.setAttribute("run_configuration_type", typeNameTarget.getType());
       }
-      if (myTypeNameTarget.getTargetId() != null) {
-        element.setAttribute("run_configuration_target", myTypeNameTarget.getTargetId());
+      if (typeNameTarget.getTargetId() != null) {
+        element.setAttribute("run_configuration_target", typeNameTarget.getTargetId());
       }
     }
 
@@ -303,9 +303,9 @@ public final class RunConfigurationBeforeRunProvider
     public void readExternal(@NotNull Element element) {
       super.readExternal(element);
 
-      myTypeNameTarget.setName(element.getAttributeValue("run_configuration_name"));
-      myTypeNameTarget.setType(element.getAttributeValue("run_configuration_type"));
-      myTypeNameTarget.setTargetId(element.getAttributeValue("run_configuration_target"));
+      typeNameTarget.setName(element.getAttributeValue("run_configuration_name"));
+      typeNameTarget.setType(element.getAttributeValue("run_configuration_type"));
+      typeNameTarget.setTargetId(element.getAttributeValue("run_configuration_target"));
 
       mySettingsWithTarget = null;
     }
@@ -317,8 +317,8 @@ public final class RunConfigurationBeforeRunProvider
         return mySettingsWithTarget.first == settings;
       }
 
-      return settings.getType().getId().equals(myTypeNameTarget.getType()) &&
-             settings.getName().equals(myTypeNameTarget.getName());
+      return settings.getType().getId().equals(typeNameTarget.getType()) &&
+             settings.getName().equals(typeNameTarget.getName());
     }
 
     private void init() {
@@ -326,9 +326,9 @@ public final class RunConfigurationBeforeRunProvider
         return;
       }
 
-      String type = myTypeNameTarget.getType();
-      String name = myTypeNameTarget.getName();
-      String targetId = myTypeNameTarget.getTargetId();
+      String type = typeNameTarget.getType();
+      String name = typeNameTarget.getName();
+      String targetId = typeNameTarget.getTargetId();
       RunnerAndConfigurationSettings settings = type != null && name != null
                                                 ? RunManagerImpl.getInstanceImpl(myProject).findConfigurationByTypeAndName(type, name)
                                                 : null;
@@ -344,16 +344,16 @@ public final class RunConfigurationBeforeRunProvider
       if (settings == null) {
         mySettingsWithTarget = Pair.empty();
 
-        myTypeNameTarget.setName(null);
-        myTypeNameTarget.setType(null);
-        myTypeNameTarget.setTargetId(null);
+        typeNameTarget.setName(null);
+        typeNameTarget.setType(null);
+        typeNameTarget.setTargetId(null);
       }
       else {
         mySettingsWithTarget = Pair.create(settings, target);
 
-        myTypeNameTarget.setName(settings.getName());
-        myTypeNameTarget.setType(settings.getType().getId());
-        myTypeNameTarget.setTargetId(target != null ? target.getId() : null);
+        typeNameTarget.setName(settings.getName());
+        typeNameTarget.setType(settings.getType().getId());
+        typeNameTarget.setTargetId(target != null ? target.getId() : null);
       }
     }
 
@@ -374,13 +374,13 @@ public final class RunConfigurationBeforeRunProvider
 
       RunConfigurableBeforeRunTask that = (RunConfigurableBeforeRunTask)o;
 
-      return Comparing.equal(myTypeNameTarget, that.myTypeNameTarget);
+      return Comparing.equal(typeNameTarget, that.typeNameTarget);
     }
 
     @Override
     public int hashCode() {
       int result = super.hashCode();
-      result = 31 * result + myTypeNameTarget.hashCode();
+      result = 31 * result + typeNameTarget.hashCode();
       return result;
     }
 
@@ -391,9 +391,9 @@ public final class RunConfigurationBeforeRunProvider
       if (mySettingsWithTarget != null) {
         task.setSettingsWithTarget(mySettingsWithTarget.first, mySettingsWithTarget.second);
       }
-      task.myTypeNameTarget.setType(myTypeNameTarget.getType());
-      task.myTypeNameTarget.setName(myTypeNameTarget.getName());
-      task.myTypeNameTarget.setTargetId(myTypeNameTarget.getTargetId());
+      task.typeNameTarget.setType(typeNameTarget.getType());
+      task.typeNameTarget.setName(typeNameTarget.getName());
+      task.typeNameTarget.setTargetId(typeNameTarget.getTargetId());
       return task;
     }
   }
