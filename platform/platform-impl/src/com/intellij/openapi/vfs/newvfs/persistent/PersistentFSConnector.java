@@ -1,15 +1,13 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vfs.newvfs.persistent;
 
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.vfs.newvfs.persistent.intercept.ConnectionInterceptor;
 import com.intellij.openapi.vfs.newvfs.persistent.log.VfsLog;
 import com.intellij.openapi.vfs.newvfs.persistent.recovery.ContentStoragesRecoverer;
 import com.intellij.openapi.vfs.newvfs.persistent.recovery.VFSInitializationResult;
 import com.intellij.openapi.vfs.newvfs.persistent.recovery.VFSRecoverer;
-import com.intellij.util.ConcurrencyUtil;
-import com.intellij.util.SystemProperties;
-import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.io.CorruptedException;
 import com.intellij.util.io.VersionUpdatedException;
 import org.jetbrains.annotations.NotNull;
@@ -20,7 +18,6 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.concurrent.ExecutorService;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.Condition;
 import java.util.concurrent.locks.Lock;
@@ -35,9 +32,6 @@ import static com.intellij.util.ExceptionUtil.findCauseAndSuppressed;
  */
 final class PersistentFSConnector {
   private static final Logger LOG = Logger.getInstance(PersistentFSConnector.class);
-
-  //FIXME RC: temporary, 'false' is not really a long-term alternative -- decide shortly about it
-  private static final boolean PARALLELIZE_VFS_INITIALIZATION = SystemProperties.getBooleanProperty("vfs.parallelize-initialization", true);
 
   //TODO RC: lower down to 3 -- really, never seen even >2 attempts in FUS data for months
   private static final int MAX_INITIALIZATION_ATTEMPTS = 10;
@@ -179,8 +173,7 @@ final class PersistentFSConnector {
 
     //MAYBE RC: use Dispatchers.IO-kind pool, with many threads (appExecutor has 1 core thread, so needs time to inflate)
     //MAYBE RC: looks like it all could be much easier with coroutines
-    ExecutorService pool = PARALLELIZE_VFS_INITIALIZATION ? AppExecutorUtil.getAppExecutorService()
-                                                          : ConcurrencyUtil.newSameThreadExecutorService();
+    PersistentFSLoaderExecutor pool = ApplicationManager.getApplication().getService(PersistentFsConnectorHelper.class).executor;
 
     PersistentFSPaths persistentFSPaths = new PersistentFSPaths(cachesDir);
     PersistentFSLoader vfsLoader = new PersistentFSLoader(persistentFSPaths, enableVfsLog, pool);
