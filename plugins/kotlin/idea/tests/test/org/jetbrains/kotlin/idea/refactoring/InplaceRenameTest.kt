@@ -8,7 +8,9 @@ import com.intellij.openapi.actionSystem.CommonDataKeys
 import com.intellij.openapi.actionSystem.impl.SimpleDataContext
 import com.intellij.refactoring.BaseRefactoringProcessor
 import com.intellij.refactoring.rename.inplace.VariableInplaceRenameHandler
+import com.intellij.refactoring.util.CommonRefactoringUtil
 import com.intellij.testFramework.LightPlatformCodeInsightTestCase
+import com.intellij.testFramework.LightProjectDescriptor
 import com.intellij.testFramework.fixtures.CodeInsightTestUtil
 import junit.framework.TestCase
 import org.jetbrains.kotlin.idea.refactoring.rename.KotlinMemberInplaceRenameHandler
@@ -16,10 +18,11 @@ import org.jetbrains.kotlin.idea.refactoring.rename.KotlinVariableInplaceRenameH
 import org.jetbrains.kotlin.idea.refactoring.rename.findElementForRename
 import org.jetbrains.kotlin.idea.refactoring.rename.handlers.RenameKotlinImplicitLambdaParameter
 import org.jetbrains.kotlin.idea.test.IDEA_TEST_DATA_DIR
+import org.jetbrains.kotlin.idea.test.InTextDirectivesUtils
+import org.jetbrains.kotlin.idea.test.KotlinWithJdkAndRuntimeLightProjectDescriptor
+import org.jetbrains.kotlin.idea.test.util.slashedPath
 import org.jetbrains.kotlin.idea.util.application.executeWriteCommand
 import org.jetbrains.kotlin.psi.KtNameReferenceExpression
-import org.jetbrains.kotlin.idea.test.InTextDirectivesUtils
-import org.jetbrains.kotlin.idea.test.util.slashedPath
 import org.junit.internal.runners.JUnit38ClassRunner
 import org.junit.runner.RunWith
 import kotlin.test.assertFalse
@@ -27,6 +30,10 @@ import kotlin.test.assertTrue
 
 @RunWith(JUnit38ClassRunner::class)
 class InplaceRenameTest : LightPlatformCodeInsightTestCase() {
+
+    override fun getProjectDescriptor(): LightProjectDescriptor =
+        KotlinWithJdkAndRuntimeLightProjectDescriptor.getInstance()
+
     override fun getTestDataPath() = IDEA_TEST_DATA_DIR.resolve("refactoring/rename/inplace").slashedPath
 
     fun testLocalVal() {
@@ -55,6 +62,10 @@ class InplaceRenameTest : LightPlatformCodeInsightTestCase() {
 
     fun testFunctionLiteralParenthesis() {
         doTestInplaceRename("y")
+    }
+
+    fun testLibraryFunction() {
+        doTestMemberInplaceRename("string")
     }
 
     fun testLocalFunction() {
@@ -224,7 +235,7 @@ class InplaceRenameTest : LightPlatformCodeInsightTestCase() {
         val element = TargetElementUtil.findTargetElement(
             editor,
             TargetElementUtil.ELEMENT_NAME_ACCEPTED or TargetElementUtil.REFERENCED_ELEMENT_ACCEPTED
-        )
+        ) ?: file.findElementForRename<KtNameReferenceExpression>(editor.caretModel.offset)
 
         assertNotNull(element)
 
@@ -240,6 +251,9 @@ class InplaceRenameTest : LightPlatformCodeInsightTestCase() {
             } catch (e: BaseRefactoringProcessor.ConflictsInTestsException) {
                 val expectedMessage = InTextDirectivesUtils.findStringWithPrefixes(file.text, "// SHOULD_FAIL_WITH: ")
                 TestCase.assertEquals(expectedMessage, e.messages.joinToString())
+            } catch (e: CommonRefactoringUtil.RefactoringErrorHintException) {
+                val expectedMessage = InTextDirectivesUtils.findStringWithPrefixes(file.text, "// SHOULD_FAIL_WITH: ")
+                TestCase.assertEquals(expectedMessage, e.message?.replace("\n", " "))
             }
         }
     }
