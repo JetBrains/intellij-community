@@ -57,6 +57,7 @@ import com.intellij.openapi.roots.*;
 import com.intellij.openapi.startup.StartupActivity;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.registry.RegistryManager;
 import com.intellij.openapi.util.registry.RegistryManagerKt;
@@ -469,7 +470,7 @@ public final class BuildManager implements Disposable {
         home = parent;
       }
     }
-    return FileUtil.toSystemIndependentName(home);
+    return FileUtilRt.toSystemIndependentName(home);
   }
 
   private static @NotNull List<Project> getOpenProjects() {
