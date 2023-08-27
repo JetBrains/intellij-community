@@ -25,7 +25,7 @@ import com.intellij.openapi.progress.runWithModalProgressBlocking
 import com.intellij.openapi.project.DumbService
 import com.intellij.openapi.project.DumbService.Companion.isDumb
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.startup.InitProjectActivityJavaShim
+import com.intellij.openapi.startup.InitProjectActivity
 import com.intellij.openapi.ui.playback.PlaybackRunner
 import com.intellij.openapi.util.Pair
 import com.intellij.openapi.util.io.FileUtil
@@ -83,10 +83,10 @@ private fun getTestFile(): File {
 }
 
 @Suppress("SpellCheckingInspection")
-class ProjectLoaded : InitProjectActivityJavaShim(), ApplicationInitializedListener {
+class ProjectLoaded : InitProjectActivity, ApplicationInitializedListener {
   private val alarm = Alarm()
 
-  override fun runActivity(project: Project) {
+  override suspend fun run(project: Project) {
     if (TEST_SCRIPT_FILE_PATH == null || ourScriptStarted) {
       if (!ApplicationManager.getApplication().isUnitTestMode) {
         LOG.info(PerformanceTestingBundle.message("startup.silent"))
@@ -134,7 +134,10 @@ class ProjectLoaded : InitProjectActivityJavaShim(), ApplicationInitializedListe
           runWithModalProgressBlocking(ModalTaskOwner.guess(), "") {
             logStats("LightEditor")
           }
-          runActivity(LightEditService.getInstance().project!!)
+          val project = LightEditService.getInstance().project!!
+          runWithModalProgressBlocking(project, "") {
+            run(project)
+          }
         }
       })
     }
