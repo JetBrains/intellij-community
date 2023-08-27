@@ -8,7 +8,6 @@ import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.ui.LoadingNode;
-import com.intellij.util.ExceptionUtil;
 import com.intellij.util.concurrency.Invoker;
 import com.intellij.util.concurrency.InvokerSupplier;
 import com.intellij.util.containers.ContainerUtil;
@@ -21,6 +20,7 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.concurrency.AsyncPromise;
+import org.jetbrains.concurrency.CancellablePromise;
 import org.jetbrains.concurrency.Obsolescent;
 import org.jetbrains.concurrency.Promise;
 
@@ -30,17 +30,14 @@ import javax.swing.tree.TreeModel;
 import javax.swing.tree.TreePath;
 import java.util.*;
 import java.util.Map.Entry;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.TimeoutException;
-import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.*;
 
 import static java.util.Collections.emptyList;
 import static org.jetbrains.concurrency.Promises.rejectedPromise;
+import static org.jetbrains.concurrency.Promises.resolvedPromise;
 
 public final class AsyncTreeModel extends AbstractTreeModel implements Searchable, TreeVisitor.Acceptor {
   private static final Logger LOG = Logger.getInstance(AsyncTreeModel.class);
-  private final AtomicInteger runningCommands = new AtomicInteger(0);
   private final Invoker foreground;
   private final Invoker background;
   private final Tree tree = new Tree();
@@ -280,7 +277,6 @@ public final class AsyncTreeModel extends AbstractTreeModel implements Searchabl
   public boolean isProcessing() {
     if (foreground.getTaskCount() > 0) return true;
     if (background.getTaskCount() > 0) return true;
-    if (runningCommands.get() != 0) return true;
     Command command = tree.queue.get();
     return command != null && command.isPending();
   }
@@ -290,15 +286,15 @@ public final class AsyncTreeModel extends AbstractTreeModel implements Searchabl
    * and to accept the resulting value on the foreground thread.
    */
   private void submit(@NotNull Command command) {
-    runningCommands.incrementAndGet();
-    background.compute(command).thenAsync(value -> {
-      if (value != null && value.object instanceof AsyncCommandResult r) {
-        return r.promise.thenAsync(value2 -> accept(command, value2));
-      }
-      else {
-        return accept(command, value);
-      }
-    }).onProcessed(x -> runningCommands.decrementAndGet());
+    invokeCommand(command).thenAsync(value -> accept(command, value));
+  }
+
+  @NotNull
+  private CancellablePromise<Node> invokeCommand(@NotNull Command command) {
+    if (command.canRunAsync()) {
+      return background.computeAsync(command::getAsync);
+    }
+    return background.compute(command);
   }
 
   private Promise<Void> accept(@NotNull Command command, Node value) {
@@ -446,6 +442,29 @@ public final class AsyncTreeModel extends AbstractTreeModel implements Searchabl
       if (LOG.isTraceEnabled()) LOG.debug("create command: ", this);
     }
 
+    boolean canRunAsync() {
+      return false;
+    }
+
+    @NotNull
+    Promise<Node> getAsync() {
+      started = true;
+      if (isObsolete()) {
+        if (LOG.isTraceEnabled()) LOG.debug("obsolete command: ", this);
+        return resolvedPromise(null);
+      }
+      else {
+        if (LOG.isTraceEnabled()) LOG.debug("background async command: ", this);
+        return getNodeAsync(object);
+      }
+    }
+
+    @NotNull
+    Promise<Node> getNodeAsync(Object object) {
+      Node node = getNode(object);
+      return resolvedPromise(node);
+    }
+
     abstract Node getNode(Object object);
 
     abstract void setNode(Node node);
@@ -567,42 +586,38 @@ public final class AsyncTreeModel extends AbstractTreeModel implements Searchabl
     }
 
     @Override
-    Node getNode(Object object) {
+    boolean canRunAsync() {
+      return model instanceof AsyncChildrenProvider<?>;
+    }
+
+    @Override
+    @NotNull Promise<Node> getNodeAsync(Object object) {
       Node loaded = new Node(object, LeafState.get(object, model));
-      if (loaded.leafState == LeafState.ALWAYS || isObsolete()) return loaded;
+      if (loaded.leafState == LeafState.ALWAYS || isObsolete()) return resolvedPromise(loaded);
 
       if (model instanceof AsyncChildrenProvider<?> provider) {
         Promise<? extends List<?>> childrenPromise = provider.getChildrenAsync(object);
         if (childrenPromise == null) throw new ProcessCanceledException(); // cancel this command
-        if (childrenPromise.getState() == Promise.State.PENDING) {
-          return new Node(new AsyncCommandResult(childrenPromise.then(children -> {
-            loaded.children = load(children);
-            return loaded;
-          })), LeafState.ALWAYS);
-        }
-        loaded.children = load(getImmediately(childrenPromise));
+        return childrenPromise.then(children -> {
+          loaded.children = load(children);
+          return loaded;
+        });
       }
-      else if (model instanceof ChildrenProvider<?> provider) {
+      return super.getNodeAsync(object);
+    }
+
+    @Override
+    Node getNode(Object object) {
+      Node loaded = new Node(object, LeafState.get(object, model));
+      if (loaded.leafState == LeafState.ALWAYS || isObsolete()) return loaded;
+
+      if (model instanceof ChildrenProvider<?> provider) {
         loaded.children = load(provider.getChildren(object));
       }
       else {
         loaded.children = load(model.getChildCount(object), index -> model.getChild(object, index));
       }
       return loaded;
-    }
-
-    @Nullable
-    private static <T> T getImmediately(Promise<T> promise) {
-      try {
-        return promise.blockingGet(0);
-      }
-      catch (TimeoutException e) {
-        throw new ProcessCanceledException();
-      }
-      catch (ExecutionException e) {
-        ExceptionUtil.rethrow(e.getCause());
-        throw new ProcessCanceledException();
-      }
     }
 
     @Nullable
@@ -1031,6 +1046,4 @@ public final class AsyncTreeModel extends AbstractTreeModel implements Searchabl
   public interface AsyncChildrenProvider<T> {
     Promise<? extends List<? extends T>> getChildrenAsync(Object parent);
   }
-
-  private record AsyncCommandResult(Promise<Node> promise) {}
 }
