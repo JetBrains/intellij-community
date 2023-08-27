@@ -4,9 +4,11 @@ package org.jetbrains.uast.kotlin.analysis
 import com.intellij.lang.Language
 import javaslang.Tuple2
 import javaslang.control.Option
+import org.jetbrains.kotlin.descriptors.ValueDescriptor
 import org.jetbrains.kotlin.descriptors.VariableDescriptor
 import org.jetbrains.kotlin.idea.KotlinLanguage
 import org.jetbrains.kotlin.idea.caches.resolve.analyze
+import org.jetbrains.kotlin.psi.KtDeclaration
 import org.jetbrains.kotlin.psi.KtExpression
 import org.jetbrains.kotlin.psi.KtReferenceExpression
 import org.jetbrains.kotlin.resolve.BindingContext
@@ -14,8 +16,11 @@ import org.jetbrains.kotlin.resolve.calls.smartcasts.DataFlowValue
 import org.jetbrains.kotlin.resolve.calls.smartcasts.IdentifierInfo
 import org.jetbrains.kotlin.resolve.calls.smartcasts.Nullability
 import org.jetbrains.kotlin.types.FlexibleType
+import org.jetbrains.kotlin.types.KotlinType
 import org.jetbrains.kotlin.types.SimpleType
+import org.jetbrains.uast.UDeclaration
 import org.jetbrains.uast.UExpression
+import org.jetbrains.uast.analysis.UDeclarationFact
 import org.jetbrains.uast.analysis.UExpressionFact
 import org.jetbrains.uast.analysis.UNullability
 import org.jetbrains.uast.analysis.UastAnalysisPlugin
@@ -34,6 +39,7 @@ class KotlinUastAnalysisPlugin : UastAnalysisPlugin {
             is IdentifierInfo.Variable -> identifierInfo.variable == descriptor
             is IdentifierInfo.Qualified ->
                 (identifierInfo.selectorInfo as? IdentifierInfo.Variable)?.let { it.variable == descriptor } == true
+
             else -> false
         }
 
@@ -51,7 +57,6 @@ class KotlinUastAnalysisPlugin : UastAnalysisPlugin {
                     isValueCorrespondsToDescriptor(value, variableDescriptor)
                 }
                 when {
-                    typeInfo?.type is SimpleType && typeInfo.type?.isMarkedNullable == false -> UNullability.NOT_NULL
                     variableNullability is Option.Some<*> -> {
                         val (_, info) = variableNullability.get()
                         when (info) {
@@ -60,23 +65,39 @@ class KotlinUastAnalysisPlugin : UastAnalysisPlugin {
                             else -> UNullability.UNKNOWN
                         }
                     }
-                    else -> {
-                        val type = typeInfo?.type
-                        when {
-                            type is FlexibleType -> {
-                                when {
-                                    !type.lowerBound.isMarkedNullable && type.upperBound.isMarkedNullable -> UNullability.UNKNOWN
-                                    type.upperBound.isMarkedNullable -> UNullability.NULLABLE
-                                    else -> UNullability.NOT_NULL
-                                }
-                            }
-                            type?.isMarkedNullable == true -> UNullability.NULLABLE
-                            else -> UNullability.UNKNOWN
-                        }
-                    }
+
+                    else -> typeInfo?.type?.uNullabilityInfo() ?: UNullability.NOT_NULL
                 }
             }
         } as T
+    }
+
+    override fun <T : Any> UDeclaration.getDeclarationFact(fact: UDeclarationFact<T>): T? {
+        val ktParameter = sourcePsi as? KtDeclaration ?: return null
+        @Suppress("UNCHECKED_CAST")
+        return when (fact) {
+            UDeclarationFact.UNullabilityFact -> {
+                val valueDescriptor =
+                    ktParameter.analyze()[BindingContext.DECLARATION_TO_DESCRIPTOR, ktParameter] as? ValueDescriptor
+
+                valueDescriptor?.type?.uNullabilityInfo() ?: UNullability.UNKNOWN
+            }
+        } as T
+    }
+
+    private fun KotlinType.uNullabilityInfo(): UNullability {
+        return when {
+            this is SimpleType && !isMarkedNullable -> UNullability.NOT_NULL
+            this is FlexibleType -> {
+                when {
+                    !lowerBound.isMarkedNullable && upperBound.isMarkedNullable -> UNullability.UNKNOWN
+                    upperBound.isMarkedNullable -> UNullability.NULLABLE
+                    else -> UNullability.NOT_NULL
+                }
+            }
+            isMarkedNullable -> UNullability.NULLABLE
+            else -> UNullability.UNKNOWN
+        }
     }
 
     private operator fun <T1, T2> Tuple2<T1, T2>.component1(): T1 = this._1
