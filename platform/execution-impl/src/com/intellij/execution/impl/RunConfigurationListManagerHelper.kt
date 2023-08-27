@@ -60,7 +60,7 @@ internal class RunConfigurationListManagerHelper(private val manager: RunManager
     folderNames: List<String?>,
     comparator: Comparator<RunnerAndConfigurationSettings>,
   ): Comparator<RunnerAndConfigurationSettings> {
-    return kotlin.Comparator { o1, o2 ->
+    return Comparator { o1, o2 ->
       val type1 = o1.type
       val type2 = o2.type
       if (type1 !== type2) {
@@ -133,8 +133,9 @@ internal class RunConfigurationListManagerHelper(private val manager: RunManager
     }
 
     val folderNames = getSortedFolderNames(idToSettings.values)
-    val list = idToSettings.values.sortedWith(
-      compareByTypeAndFolderAndCustomComparator(folderNames) { o1, o2 -> NaturalComparator.INSTANCE.compare(o1.name, o2.name) })
+    val list = idToSettings.values.sortedWith(compareByTypeAndFolderAndCustomComparator(folderNames) { o1, o2 ->
+      NaturalComparator.INSTANCE.compare(o1.name, o2.name)
+    })
     idToSettings.clear()
     for (settings in list) {
       idToSettings.put(settings.uniqueID, settings)
@@ -204,22 +205,24 @@ internal class RunConfigurationListManagerHelper(private val manager: RunManager
       }
     }
 
-    if (configuration is CompoundRunConfiguration) {
-      val children = configuration.getConfigurationsWithTargets(manager)
-      for (otherSettings in list) {
-        if (!otherSettings.isTemporary) {
-          continue
-        }
+    if (configuration !is CompoundRunConfiguration) {
+      return
+    }
 
-        val otherConfiguration = otherSettings.configuration
-        if (otherConfiguration === configuration) {
-          continue
-        }
+    val children = configuration.getConfigurationsWithTargets(manager)
+    for (otherSettings in list) {
+      if (!otherSettings.isTemporary) {
+        continue
+      }
 
-        if (children.keys.any { it === otherConfiguration } && otherSettings.isTemporary) {
-          manager.makeStable(otherSettings)
-          checkIfDependenciesAreStable(otherConfiguration, list)
-        }
+      val otherConfiguration = otherSettings.configuration
+      if (otherConfiguration === configuration) {
+        continue
+      }
+
+      if (children.keys.any { it === otherConfiguration } && otherSettings.isTemporary) {
+        manager.makeStable(otherSettings)
+        checkIfDependenciesAreStable(otherConfiguration, list)
       }
     }
   }

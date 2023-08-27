@@ -646,7 +646,7 @@ open class RunManagerImpl @NonInjectable constructor(val project: Project, share
       lock.read {
         val list = idToSettings.values.toList()
         list.managedOnly().forEach {
-          listManager.checkIfDependenciesAreStable(it.configuration, list)
+          listManager.checkIfDependenciesAreStable(configuration = it.configuration, list = list)
         }
       }
     }
