@@ -10,6 +10,7 @@ import com.intellij.internal.statistic.eventLog.validator.IntellijSensitiveDataV
 import com.intellij.internal.statistic.utils.StatisticsUploadAssistant
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.Service
+import com.intellij.openapi.components.serviceAsync
 import com.intellij.openapi.extensions.ExtensionNotApplicableException
 import com.intellij.openapi.extensions.InternalIgnoreDependencyViolation
 import com.intellij.openapi.progress.blockingContext
@@ -20,7 +21,7 @@ import kotlin.time.Duration.Companion.minutes
 import kotlin.time.Duration.Companion.seconds
 
 @InternalIgnoreDependencyViolation
-internal class StatisticsJobsScheduler : ApplicationInitializedListener {
+private class StatisticsJobsScheduler : ApplicationInitializedListener {
   init {
     if (ApplicationManager.getApplication().isUnitTestMode) {
       throw ExtensionNotApplicableException.create()
@@ -29,17 +30,20 @@ internal class StatisticsJobsScheduler : ApplicationInitializedListener {
 
   override suspend fun execute(asyncScope: CoroutineScope) {
     asyncScope.launch {
-      val notificationManager = ApplicationManager.getApplication().getService(StatisticsNotificationManager::class.java)
-      notificationManager?.showNotificationIfNeeded()
-    }
-    asyncScope.launch {
-      checkPreviousExternalUploadResult()
-    }
-    asyncScope.launch {
-      runEventLogStatisticsService()
-    }
-    asyncScope.launch {
-      runValidationRulesUpdate()
+      launch {
+        delay(10.seconds)
+
+        ApplicationManager.getApplication().getService(StatisticsNotificationManager::class.java)?.showNotificationIfNeeded()
+      }
+      launch {
+        checkPreviousExternalUploadResult()
+      }
+      launch {
+        runEventLogStatisticsService()
+      }
+      launch {
+        runValidationRulesUpdate()
+      }
     }
   }
 }
@@ -58,7 +62,7 @@ private suspend fun runValidationRulesUpdate() {
         }
       }
     }
-    ApplicationManager.getApplication().getService(StatisticsValidationUpdatedService::class.java).updatedDeferred.complete(Unit)
+    serviceAsync<StatisticsValidationUpdatedService>().updatedDeferred.complete(Unit)
 
     delay(180.minutes)
   }
