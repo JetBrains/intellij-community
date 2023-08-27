@@ -2,13 +2,13 @@
 package com.intellij.openapi.application.impl;
 
 import com.intellij.execution.process.OSProcessUtil;
-import com.intellij.ide.ApplicationInitializedListener;
+import com.intellij.ide.ApplicationInitializedListenerJavaShim;
 import com.intellij.ide.PowerSaveMode;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.util.text.Strings;
 import com.sun.tools.attach.VirtualMachine;
 import org.jetbrains.annotations.NonNls;
 import sun.tools.attach.HotSpotVirtualMachine;
@@ -16,14 +16,14 @@ import sun.tools.attach.HotSpotVirtualMachine;
 import java.io.File;
 
 // NOTE: compile with --add-exports jdk.attach/sun.tools.attach=ALL-UNNAMED in module-aware jdk
-final class JitSuppressor implements ApplicationInitializedListener {
+final class JitSuppressor extends ApplicationInitializedListenerJavaShim {
   private static final Logger LOG = Logger.getInstance(JitSuppressor.class);
   private static final String SELF_ATTACH_PROP = "jdk.attach.allowAttachSelf";
   private static final String EXCLUDE_ALL_FROM_C2_CLAUSE = "{ match : [\"*.*\"], c2 : { Exclude : true }}";
 
   // Limit C2 compilation to the given packages only. The package set was computed by test performance analysis:
-  // it's supposed to make performance tests (not all yet) timing comparable with full C2
-  // and at same time the IDE does not load CPU heavily with this limitation.
+  // it's supposed to make performance tests (not all yet) timing comparable with full C2, and at the same time,
+  //  the IDE does not load CPU heavily with this limitation.
   private static final @NonNls String[] C2_WHITELIST = {
     "com/intellij/openapi/application/*.*",
     "com/intellij/openapi/editor/*.*",
@@ -136,9 +136,9 @@ final class JitSuppressor implements ApplicationInitializedListener {
     }
 
     if (ourBlacklistMode) {
-      return StringUtil.join(C2_BLACKLIST, mask -> "{ match: [\"" + mask + "\"], c2: { Exclude: true, }, },", "");
+      return Strings.join(C2_BLACKLIST, mask -> "{ match: [\"" + mask + "\"], c2: { Exclude: true, }, },", "");
     }
-    return StringUtil.join(C2_WHITELIST, mask -> "{ match: [\"" + mask + "\"], c2: { Exclude: false, }, },", "") +
+    return Strings.join(C2_WHITELIST, mask -> "{ match: [\"" + mask + "\"], c2: { Exclude: false, }, },", "") +
            EXCLUDE_ALL_FROM_C2_CLAUSE;
   }
 }
