@@ -1072,7 +1072,13 @@ public final class PlatformTestUtil {
     Pair<@NotNull ExecutionEnvironment, RunContentDescriptor> result = executeConfiguration(runConfiguration, executorId, null);
     ProcessHandler processHandler = result.second.getProcessHandler();
     assertNotNull("Process handler must not be null!", processHandler);
-    waitWithEventsDispatching("Process failed to finish in " + timeoutInSeconds + " seconds: " + processHandler,
+    waitWithEventsDispatching(() -> {
+                                if (!processHandler.isProcessTerminated()) {
+                                  LOG.debug("Destroying process: " + processHandler);
+                                  processHandler.destroyProcess();
+                                }
+                                return "Process failed to finish in " + timeoutInSeconds + " seconds: " + processHandler;
+                              },
                               processHandler::isProcessTerminated, Math.toIntExact(timeoutInSeconds));
     return result.first;
   }
