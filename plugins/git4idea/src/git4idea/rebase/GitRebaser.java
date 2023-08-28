@@ -77,21 +77,28 @@ public class GitRebaser {
 
   public void abortRebase(@NotNull VirtualFile root) {
     LOG.info("abortRebase " + root);
+
     final GitLineHandler rh = new GitLineHandler(myProject, root, GitCommand.REBASE);
     rh.setStdoutSuppressed(false);
     rh.addParameters("--abort");
-    GitTask task = new GitTask(myProject, rh, GitBundle.message("rebase.update.project.abort.task.title"), myProgressIndicator, null);
-    GitCommandResult commandResult = task.executeInCurrentThread();
-    GitTaskResult taskResult = GitTask.getTaskResult(commandResult);
 
-    GitTaskResultNotificationHandler resultHandler = new GitTaskResultNotificationHandler(
-      myProject,
-      REBASE_ABORT,
-      GitBundle.message("rebase.update.project.notification.abort.success.message"),
-      GitBundle.message("rebase.update.project.notification.abort.cancel.message"),
-      GitBundle.message("rebase.update.project.notification.abort.error.message")
-    );
-    resultHandler.run(taskResult);
+    String oldText = myProgressIndicator.getText();
+    myProgressIndicator.setText(GitBundle.message("rebase.update.project.abort.task.title"));
+    GitCommandResult commandResult = myGit.runCommand(rh);
+    myProgressIndicator.setText(oldText);
+
+    if (commandResult.success()) {
+      VcsNotifier.getInstance(myProject).notifySuccess(REBASE_ABORT, "",
+                                                       GitBundle.message("rebase.update.project.notification.abort.success.message"));
+    }
+    else {
+      VcsNotifier.getInstance(myProject).notifyError(REBASE_ABORT, "",
+                                                     GitBundle.message("rebase.update.project.notification.abort.error.message"));
+    }
+
+    myProgressIndicator.setText2(GitBundle.message("progress.details.refreshing.files.for.root", root.getPath()));
+    root.refresh(false, true);
+
   }
 
   public boolean continueRebase(@NotNull VirtualFile root) {
