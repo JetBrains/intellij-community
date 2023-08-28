@@ -6,6 +6,7 @@ import com.intellij.openapi.vfs.newvfs.FileAttribute;
 import com.intellij.openapi.vfs.newvfs.persistent.FSRecords;
 import com.intellij.openapi.vfs.newvfs.persistent.FSRecordsImpl;
 import com.intellij.openapi.vfs.newvfs.persistent.SpecializedFileAttributes;
+import com.intellij.openapi.vfs.newvfs.persistent.mapped.MappedFileStorageHelper;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -14,7 +15,7 @@ import java.io.Closeable;
 import java.io.IOException;
 import java.util.function.IntUnaryOperator;
 
-import static com.intellij.openapi.vfs.newvfs.persistent.dev.MappedFileStorageHelper.openHelperAndVerifyVersions;
+import static com.intellij.openapi.vfs.newvfs.persistent.mapped.MappedFileStorageHelper.openHelperAndVerifyVersions;
 
 /**
  * (Temporary) Different non-standard kinds of VirtualFile attributes.

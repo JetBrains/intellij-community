@@ -1,5 +1,5 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.openapi.vfs.newvfs.persistent.dev;
+package com.intellij.openapi.vfs.newvfs.persistent.mapped;
 
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -7,8 +7,7 @@ import com.intellij.openapi.vfs.VirtualFileWithId;
 import com.intellij.openapi.vfs.newvfs.persistent.FSRecords;
 import com.intellij.openapi.vfs.newvfs.persistent.FSRecordsImpl;
 import com.intellij.openapi.vfs.newvfs.persistent.PersistentFSConnection;
-import com.intellij.openapi.vfs.newvfs.persistent.PersistentFSRecordsLockFreeOverMMappedFile.MMappedFileStorage;
-import com.intellij.openapi.vfs.newvfs.persistent.PersistentFSRecordsLockFreeOverMMappedFile.MMappedFileStorage.Page;
+import com.intellij.openapi.vfs.newvfs.persistent.mapped.MMappedFileStorage.Page;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.VisibleForTesting;
@@ -32,16 +31,16 @@ import static java.nio.ByteOrder.nativeOrder;
 /**
  * Helper for creating {@link VirtualFileWithId}-associated storages based on memory-mapped file.
  * <p/>
- * Basic idea is: storage is a header and a set of records, one record per each VirtualFile existing in VFS.
+ * Basic idea is: storage is a fixed-size header and a set of fixed-size records, one record per each
+ * {@link VirtualFileWithId} known to VFS.
  * Header is up to 64 bytes, first 4 bytes is a version, next 8 is a VFS tag (creation timestamp),
  * the remaining 52 bytes could be used as needed (see {@link #writeIntHeaderField(int, int)}, {@link #writeLongHeaderField(int, long)}).
  * Record (row) is an arbitrary but fixed size, given in ctor (bytesPerRow).
  * <p/>
- * Keep in mind that atomic/volatile access to X-width word is universally supported only
- * for X-aligned offsets, so if you want to have int64 field in your record, you need to
- * compose record in such a way this field offset is always 8-byte-aligned -- which means
- * bytesPerRow must be a factor of 8, and particular field offset in the record must also
- * be a factor of 8.
+ * Keep in mind that CPUs universally support atomic/volatile access to N-bytes word only for N-aligned
+ * offsets. Which means: if you want int64 field in your record, you need to compose record in such a way
+ * this field's offset is always 8-byte-aligned. Which means bytesPerRow must be a factor of 8 and a
+ * particular field offset in the record must also be a factor of 8.
  * <p/>
  * This is 'helper', not full-fledged implementation, nor a good abstraction/encapsulation -- i.e.
  * one still needs to understand the underlying code.

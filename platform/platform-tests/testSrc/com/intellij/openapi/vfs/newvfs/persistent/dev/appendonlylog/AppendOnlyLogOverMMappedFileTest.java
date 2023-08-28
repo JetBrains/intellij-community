@@ -3,7 +3,7 @@ package com.intellij.openapi.vfs.newvfs.persistent.dev.appendonlylog;
 
 import com.intellij.openapi.util.IntRef;
 import com.intellij.openapi.util.Ref;
-import com.intellij.openapi.vfs.newvfs.persistent.PersistentFSRecordsLockFreeOverMMappedFile.MMappedFileStorage;
+import com.intellij.openapi.vfs.newvfs.persistent.mapped.MMappedFileStorage;
 import com.intellij.openapi.vfs.newvfs.persistent.dev.blobstorage.BlobStorageTestBase;
 import com.intellij.util.io.IOUtil;
 import org.jetbrains.annotations.NotNull;

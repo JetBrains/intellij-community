@@ -2,8 +2,8 @@
 package com.intellij.openapi.vfs.newvfs.persistent.dev.appendonlylog;
 
 import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.openapi.vfs.newvfs.persistent.PersistentFSRecordsLockFreeOverMMappedFile.MMappedFileStorage;
-import com.intellij.openapi.vfs.newvfs.persistent.PersistentFSRecordsLockFreeOverMMappedFile.MMappedFileStorage.Page;
+import com.intellij.openapi.vfs.newvfs.persistent.mapped.MMappedFileStorage;
+import com.intellij.openapi.vfs.newvfs.persistent.mapped.MMappedFileStorage.Page;
 import com.intellij.openapi.vfs.newvfs.persistent.dev.blobstorage.ByteBufferReader;
 import com.intellij.openapi.vfs.newvfs.persistent.dev.blobstorage.ByteBufferWriter;
 import com.intellij.util.io.IOUtil;

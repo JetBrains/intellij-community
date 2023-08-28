@@ -6,7 +6,7 @@ import com.intellij.openapi.vfs.newvfs.persistent.SpecializedFileAttributes.Byte
 import com.intellij.openapi.vfs.newvfs.persistent.SpecializedFileAttributes.IntFileAttributeAccessor;
 import com.intellij.openapi.vfs.newvfs.persistent.SpecializedFileAttributes.LongFileAttributeAccessor;
 import com.intellij.openapi.vfs.newvfs.persistent.SpecializedFileAttributes.ShortFileAttributeAccessor;
-import com.intellij.openapi.vfs.newvfs.persistent.dev.MappedFileStorageHelper;
+import com.intellij.openapi.vfs.newvfs.persistent.mapped.MappedFileStorageHelper;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
