@@ -2,6 +2,7 @@
 package com.intellij.ide.actions;
 
 import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.actionSystem.remoting.ActionRemoteBehaviorSpecification;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.wm.ToolWindow;
@@ -16,7 +17,7 @@ import java.util.List;
 import static java.lang.String.CASE_INSENSITIVE_ORDER;
 import static java.util.Comparator.comparingInt;
 
-public final class ToolWindowsGroup extends ActionGroup implements DumbAware {
+public final class ToolWindowsGroup extends ActionGroup implements DumbAware, ActionRemoteBehaviorSpecification.Frontend {
   @Override
   public void update(@NotNull AnActionEvent e) {
     e.getPresentation().setEnabledAndVisible(getEventProject(e) != null);
