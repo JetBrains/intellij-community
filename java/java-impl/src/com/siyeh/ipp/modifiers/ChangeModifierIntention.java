@@ -1,6 +1,7 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.siyeh.ipp.modifiers;
 
+import com.intellij.codeInsight.daemon.QuickFixBundle;
 import com.intellij.codeInsight.intention.BaseElementAtCaretIntentionAction;
 import com.intellij.core.JavaPsiBundle;
 import com.intellij.java.JavaBundle;
@@ -100,7 +101,7 @@ public class ChangeModifierIntention extends BaseElementAtCaretIntentionAction {
       target = modifiers.get(0);
       String name = identifier.getText();
       if (member instanceof PsiMethod) name += "()";
-      setText(IntentionPowerPackBundle.message("change.modifier.text", name, target));
+      setText(QuickFixBundle.message("add.modifier.fix", name, target));
     }
     else {
       setText(getFamilyName());
