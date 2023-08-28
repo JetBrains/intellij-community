@@ -107,16 +107,6 @@ public abstract class GitTextHandler extends GitHandler {
   protected abstract void processTerminated(int exitCode);
 
   @Override
-  public void destroyProcess() {
-    synchronized (myProcessStateLock) {
-      myIsDestroyed = true;
-      if (myHandler != null) {
-        myHandler.destroyProcess();
-      }
-    }
-  }
-
-  @Override
   protected void waitForProcess() {
     if (myHandler != null) {
       ProgressManager progressManager = ProgressManager.getInstance();

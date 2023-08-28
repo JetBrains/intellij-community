@@ -7,6 +7,8 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.NlsSafe;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.ProjectLevelVcsManager;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.VcsNotifier;
@@ -215,7 +217,7 @@ public class GitRebaser {
       }
     }
     else {
-      List<VcsException> errors = ContainerUtil.map(GitTask.collectErrorOutputLines(commandResult), it -> new VcsException(it));
+      List<VcsException> errors = ContainerUtil.map(collectErrorOutputLines(commandResult), it -> new VcsException(it));
       LOG.info("handleRebaseFailure error");
       VcsNotifier.getInstance(myProject)
         .notifyError(
@@ -225,6 +227,22 @@ public class GitRebaser {
           errors);
       return false;
     }
+  }
+
+  private static @NotNull List<@NlsSafe String> collectErrorOutputLines(@NotNull GitCommandResult result) {
+    List<String> errors = new ArrayList<>();
+    errors.addAll(ContainerUtil.filter(result.getOutput(), line -> GitHandlerUtil.isErrorLine(line.trim())));
+    errors.addAll(ContainerUtil.filter(result.getErrorOutput(), line -> GitHandlerUtil.isErrorLine(line.trim())));
+
+    if (errors.isEmpty() && !result.success()) {
+      errors.addAll(result.getErrorOutput());
+      if (errors.isEmpty()) {
+        List<String> output = result.getOutput();
+        String lastOutput = ContainerUtil.findLast(output, line -> !StringUtil.isEmptyOrSpaces(line));
+        return Collections.singletonList(lastOutput);
+      }
+    }
+    return errors;
   }
 
   private void stageEverything(@NotNull VirtualFile root) throws VcsException {
