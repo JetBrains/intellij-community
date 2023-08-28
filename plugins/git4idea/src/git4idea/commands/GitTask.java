@@ -16,28 +16,22 @@
 package git4idea.commands;
 
 import com.intellij.openapi.progress.ProgressIndicator;
-import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.progress.util.BackgroundTaskUtil;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.NlsContexts;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vcs.VcsException;
+import com.intellij.util.concurrency.annotations.RequiresBackgroundThread;
+import com.intellij.util.containers.ContainerUtil;
 import git4idea.GitDisposable;
-import git4idea.i18n.GitBundle;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-/**
- * All Git commands are cancellable when called via {@link GitHandler}. <br/>
- * To execute the command synchronously, call {@link Git#runCommand(Computable)}.<br/>
- * To execute in the background or under a modal progress, use the standard {@link Task}. <br/>
- * To watch the progress, call {@link GitStandardProgressAnalyzer#createListener(ProgressIndicator)}.
- *
- * @deprecated To remove in IDEA 2017.
- */
-@Deprecated
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+
 public class GitTask {
   private final @NotNull Project myProject;
   private final @NotNull GitLineHandler myHandler;
@@ -57,62 +51,64 @@ public class GitTask {
     myProgressAnalyzer = progressAnalyzer;
   }
 
-  public void executeInCurrentThread(@NotNull GitTaskResultHandler resultHandler) {
+  @RequiresBackgroundThread
+  public @NotNull GitCommandResult executeInCurrentThread() {
     String oldTitle = myProgressIndicator.getText();
-    myProgressIndicator.setText(myTitle);
-    myProgressIndicator.setText2("");
+    try {
+      myProgressIndicator.setText(myTitle);
+      myProgressIndicator.setText2("");
+      myProgressIndicator.setIndeterminate(myProgressAnalyzer == null);
+      myHandler.addLineListener(new MyProgressGitLineListener());
 
-    myProgressIndicator.setIndeterminate(myProgressAnalyzer == null);
-    myHandler.addLineListener(new MyGitLineListener());
-
-    BackgroundTaskUtil.runUnderDisposeAwareIndicator(GitDisposable.getInstance(myProject), () -> {
-      Git.getInstance().runCommand(myHandler);
-    }, myProgressIndicator);
-
-    myProgressIndicator.setText(oldTitle);
-    if (myProgressIndicator.isCanceled()) {
-      resultHandler.run(GitTaskResult.CANCELLED);
+      return BackgroundTaskUtil.runUnderDisposeAwareIndicator(GitDisposable.getInstance(myProject),
+                                                              () -> Git.getInstance().runCommand(myHandler),
+                                                              myProgressIndicator);
     }
-    else {
-      boolean hasErrors = !myHandler.errors().isEmpty();
-      resultHandler.run(hasErrors ? GitTaskResult.GIT_ERROR : GitTaskResult.OK);
+    finally {
+      myProgressIndicator.setText(oldTitle);
     }
   }
 
-  /**
-   * When receives an error line, adds a VcsException to the GitHandler.
-   */
-  private class MyGitLineListener implements GitLineHandlerListener {
-    @Override
-    public void processTerminated(int exitCode) {
-      if (exitCode != 0) {
-        if (myHandler.errors().isEmpty()) {
-          myHandler.addError(new VcsException(myHandler.getLastOutput()));
-        }
+  public static @NotNull List<@NlsSafe String> collectErrorOutputLines(@NotNull GitCommandResult result) {
+    List<String> errors = new ArrayList<>();
+    errors.addAll(ContainerUtil.filter(result.getOutput(), line -> GitHandlerUtil.isErrorLine(line.trim())));
+    errors.addAll(ContainerUtil.filter(result.getErrorOutput(), line -> GitHandlerUtil.isErrorLine(line.trim())));
+
+    if (errors.isEmpty() && !result.success()) {
+      errors.addAll(result.getErrorOutput());
+      if (errors.isEmpty()) {
+        List<String> output = result.getOutput();
+        String lastOutput = ContainerUtil.findLast(output, line -> !StringUtil.isEmptyOrSpaces(line));
+        return Collections.singletonList(lastOutput);
       }
     }
+    return errors;
+  }
 
-    @Override
-    public void startFailed(@NotNull Throwable exception) {
-      myHandler.addError(new VcsException(GitBundle.message("git.executable.unknown.error.message", exception.getMessage()), exception));
+  public static @NotNull GitTaskResult getTaskResult(@NotNull GitCommandResult result) {
+    if (result.cancelled()) {
+      return GitTaskResult.CANCELLED;
     }
+    else if (!result.success() ||
+             !collectErrorOutputLines(result).isEmpty()) {
+      return GitTaskResult.GIT_ERROR;
+    }
+    else {
+      return GitTaskResult.OK;
+    }
+  }
 
+  private class MyProgressGitLineListener implements GitLineHandlerListener {
     @Override
     public void onLineAvailable(String line, Key outputType) {
-      if (GitHandlerUtil.isErrorLine(line.trim())) {
-        myHandler.addError(new VcsException(line));
-      }
-      else if (!StringUtil.isEmptyOrSpaces(line)) {
-        myHandler.addLastOutput(line);
-      }
       myProgressIndicator.setText2(line);
+
       if (myProgressAnalyzer != null) {
-        final double fraction = myProgressAnalyzer.analyzeProgress(line);
+        double fraction = myProgressAnalyzer.analyzeProgress(line);
         if (fraction >= 0) {
           myProgressIndicator.setFraction(fraction);
         }
       }
     }
   }
-
 }

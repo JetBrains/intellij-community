@@ -25,7 +25,7 @@ public abstract class GitTaskResultHandler {
   protected abstract void onException();
   protected abstract void onGitError();
 
-  protected void run(GitTaskResult result) {
+  public final void run(GitTaskResult result) {
     switch (result) {
       case OK -> onSuccess();
       case CANCELLED -> onCancel();
