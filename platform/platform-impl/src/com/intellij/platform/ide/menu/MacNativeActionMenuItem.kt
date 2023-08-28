@@ -7,6 +7,7 @@ import com.intellij.ide.ui.UISettings
 import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.actionSystem.ex.ActionUtil
 import com.intellij.openapi.actionSystem.impl.ActionMenu
+import com.intellij.openapi.actionSystem.impl.ActionPresentationDecorator
 import com.intellij.openapi.actionSystem.impl.EMPTY_MENU_ACTION_ICON
 import com.intellij.openapi.actionSystem.impl.PoppedIcon
 import com.intellij.openapi.actionSystem.impl.actionholder.createActionRef
@@ -66,7 +67,8 @@ internal class MacNativeActionMenuItem(action: AnAction,
       break
     }
 
-    menuItemPeer.setLabel(presentation.getText(isMnemonicEnabled), accelerator)
+    val text = ActionPresentationDecorator.decorateTextIfNeeded(action, presentation.getText(isMnemonicEnabled))
+    menuItemPeer.setLabel(text, accelerator)
     menuItemPeer.setEnabled(presentation.isEnabled)
     menuItemPeer.setActionDelegate {
       // called on AppKit when user activates menu item

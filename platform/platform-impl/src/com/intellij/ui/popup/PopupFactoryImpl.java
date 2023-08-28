@@ -9,6 +9,7 @@ import com.intellij.internal.inspector.UiInspectorUtil;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.impl.ActionMenu;
+import com.intellij.openapi.actionSystem.impl.ActionPresentationDecorator;
 import com.intellij.openapi.actionSystem.impl.PresentationFactory;
 import com.intellij.openapi.actionSystem.impl.Utils;
 import com.intellij.openapi.application.Application;
@@ -842,7 +843,7 @@ public class PopupFactoryImpl extends JBPopupFactory {
       if (text != null && !myMnemonicsEnabled && myHonorActionMnemonics) {
         text = TextWithMnemonic.fromPlainText(text, (char)myAction.getTemplatePresentation().getMnemonic()).toString();
       }
-      myText = text;
+      myText = ActionPresentationDecorator.decorateTextIfNeeded(myAction, text);
       LOG.assertTrue(text != null, "Action in `" + actionPlace + "` has no presentation: " + myAction.getClass().getName());
 
       myDescription =  presentation.getDescription();

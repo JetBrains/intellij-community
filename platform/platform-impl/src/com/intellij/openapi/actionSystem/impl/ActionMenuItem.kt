@@ -119,7 +119,8 @@ class ActionMenuItem internal constructor(action: AnAction,
     // all items must be visible at this point
     //setVisible(presentation.isVisible());
     setEnabled(presentation.isEnabled)
-    setText(presentation.getText(enableMnemonics))
+    val text = ActionPresentationDecorator.decorateTextIfNeeded(actionRef.getAction() ,presentation.getText(enableMnemonics))
+    setText(text)
     mnemonic = presentation.getMnemonic()
     displayedMnemonicIndex = presentation.getDisplayedMnemonicIndex()
     updateIcon(presentation)
