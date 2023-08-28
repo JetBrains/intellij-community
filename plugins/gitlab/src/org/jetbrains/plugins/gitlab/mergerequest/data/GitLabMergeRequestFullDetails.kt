@@ -50,7 +50,7 @@ data class GitLabMergeRequestFullDetails(
       webUrl = dto.webUrl,
       targetProject = dto.targetProject,
       sourceProject = dto.sourceProject,
-      description = dto.description,
+      description = dto.description.orEmpty(),
       approvedBy = dto.approvedBy,
       targetBranch = dto.targetBranch,
       sourceBranch = dto.sourceBranch,
