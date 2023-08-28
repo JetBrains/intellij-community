@@ -2,6 +2,9 @@
 package com.intellij.codeInsight.daemon.impl
 
 import com.intellij.openapi.Disposable
+import com.intellij.openapi.application.ReadAction
+import com.intellij.openapi.application.readAction
+import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.diagnostic.logger
@@ -18,6 +21,7 @@ import com.intellij.openapi.wm.WindowManager
 import com.intellij.openapi.wm.impl.IdeFrameImpl
 import com.intellij.openapi.wm.impl.ProjectFrameHelper
 import com.intellij.psi.PsiDocumentManager
+import com.intellij.psi.PsiFile
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import java.awt.Window
 import java.awt.event.WindowAdapter
@@ -87,7 +91,8 @@ open class EditorTrackerImpl(@JvmField protected val project: Project) : EditorT
     override fun editorCreated(event: EditorFactoryEvent) {
       val editor = event.editor
       val project = editor.project?.takeIf { !it.isDisposed } ?: return
-      if (PsiDocumentManager.getInstance(project).getPsiFile(editor.document) != null) {
+      val psi = runReadAction { PsiDocumentManager.getInstance(project).getPsiFile(editor.document) }
+      if (psi != null) {
         getInstance(project).createEditorImpl(editor = editor, project = project)
       }
     }

@@ -16,6 +16,7 @@
 package com.intellij.util.textCompletion;
 
 import com.intellij.codeInsight.AutoPopupController;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.editor.SpellCheckingEditorCustomizationProvider;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.fileTypes.PlainTextLanguage;
@@ -65,8 +66,12 @@ public class TextFieldWithCompletion extends LanguageTextField {
   @Override
   protected @NotNull EditorEx createEditor() {
     EditorEx editor = super.createEditor();
-    EditorCustomization disableSpellChecking = SpellCheckingEditorCustomizationProvider.getInstance().getDisabledCustomization();
-    if (disableSpellChecking != null) disableSpellChecking.customize(editor);
+    ReadAction.run(() -> {
+      EditorCustomization disableSpellChecking = SpellCheckingEditorCustomizationProvider.getInstance().getDisabledCustomization();
+      if (disableSpellChecking != null) {
+        disableSpellChecking.customize(editor);
+      }
+    });
     editor.putUserData(AutoPopupController.ALWAYS_AUTO_POPUP, myForceAutoPopup);
 
     if (myShowHint) {

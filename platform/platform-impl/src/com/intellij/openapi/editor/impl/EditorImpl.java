@@ -999,10 +999,11 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
       myIgnoreMouseEventsConsecutiveToInitial = true;
     }
 
-    myCaretModel.updateVisualPosition();
-
-    // make sure carets won't appear at invalid positions (e.g., on Tab width change)
-    getCaretModel().doWithCaretMerging(() -> myCaretModel.getAllCarets().forEach(caret -> caret.moveToOffset(caret.getOffset())));
+    ReadAction.run(() -> {
+      myCaretModel.updateVisualPosition();
+      // make sure carets won't appear at invalid positions (e.g., on Tab width change)
+      getCaretModel().doWithCaretMerging(() -> myCaretModel.getAllCarets().forEach(caret -> caret.moveToOffset(caret.getOffset())));
+    });
 
     if (myVirtualFile != null && myProject != null) {
       EditorNotifications.getInstance(myProject).updateNotifications(myVirtualFile);

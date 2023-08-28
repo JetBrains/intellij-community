@@ -5,6 +5,7 @@ import com.intellij.diagnostic.Dumpable;
 import com.intellij.ide.ui.UISettings;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.CustomFoldRegion;
 import com.intellij.openapi.editor.FoldRegion;
@@ -666,9 +667,11 @@ public final class EditorView implements TextDrawingCallback, Disposable, Dumpab
   }
 
   private void invalidateFoldRegionLayouts() {
-    for (FoldRegion region : myEditor.getFoldingModel().getAllFoldRegions()) {
-      invalidateFoldRegionLayout(region);
-    }
+    ReadAction.run(() -> {
+      for (FoldRegion region : myEditor.getFoldingModel().getAllFoldRegions()) {
+        invalidateFoldRegionLayout(region);
+      }
+    });
   }
 
   public void invalidateFoldRegionLayout(FoldRegion region) {

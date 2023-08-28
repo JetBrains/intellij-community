@@ -13,6 +13,7 @@ import com.intellij.openapi.actionSystem.DataProvider;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.command.UndoConfirmationPolicy;
 import com.intellij.openapi.command.impl.UndoManagerImpl;
@@ -622,7 +623,7 @@ public class EditorTextField extends NonOpaquePanel implements EditorTextCompone
     editor.setCaretEnabled(!myIsViewer);
 
     if (project != null) {
-      PsiFile psiFile = PsiDocumentManager.getInstance(project).getPsiFile(editor.getDocument());
+      PsiFile psiFile = ReadAction.compute(() -> PsiDocumentManager.getInstance(project).getPsiFile(editor.getDocument()));
       if (psiFile != null) {
         DaemonCodeAnalyzer.getInstance(project).setHighlightingEnabled(psiFile, !myIsViewer);
       }
@@ -636,44 +637,46 @@ public class EditorTextField extends NonOpaquePanel implements EditorTextCompone
       if (highlighter != null) editor.setHighlighter(highlighter);
     }
 
-    editor.getSettings().setCaretRowShown(false);
+    ReadAction.run(() -> {
+      editor.getSettings().setCaretRowShown(false);
 
-    editor.setOneLineMode(myOneLineMode);
-    editor.getCaretModel().moveToOffset(document.getTextLength());
+      editor.setOneLineMode(myOneLineMode);
+      editor.getCaretModel().moveToOffset(document.getTextLength());
 
-    if (!shouldHaveBorder()) {
-      editor.setBorder(null);
-    }
+      if (!shouldHaveBorder()) {
+        editor.setBorder(null);
+      }
 
-    if (myIsViewer) {
-      editor.getSelectionModel().removeSelection();
-    }
-    else if (myWholeTextSelected) {
-      doSelectAll(editor);
-      myWholeTextSelected = false;
-    }
+      if (myIsViewer) {
+        editor.getSelectionModel().removeSelection();
+      }
+      else if (myWholeTextSelected) {
+        doSelectAll(editor);
+        myWholeTextSelected = false;
+      }
 
-    editor.putUserData(SUPPLEMENTARY_KEY, myIsSupplementary);
-    editor.getContentComponent().setFocusCycleRoot(false);
-    editor.getContentComponent().addFocusListener(this);
-    editor.getContentComponent().addMouseListener(this);
+      editor.putUserData(SUPPLEMENTARY_KEY, myIsSupplementary);
+      editor.getContentComponent().setFocusCycleRoot(false);
+      editor.getContentComponent().addFocusListener(this);
+      editor.getContentComponent().addMouseListener(this);
 
-    editor.setPlaceholder(myHintText);
-    editor.setShowPlaceholderWhenFocused(myShowPlaceholderWhenFocused);
+      editor.setPlaceholder(myHintText);
+      editor.setShowPlaceholderWhenFocused(myShowPlaceholderWhenFocused);
 
-    initOneLineMode(editor);
+      initOneLineMode(editor);
 
-    if (myIsRendererWithSelection) {
-      ((EditorImpl)editor).setPaintSelection(true);
-      editor.getColorsScheme().setColor(EditorColors.SELECTION_BACKGROUND_COLOR, myRendererBg);
-      editor.getColorsScheme().setColor(EditorColors.SELECTION_FOREGROUND_COLOR, myRendererFg);
-      editor.getSelectionModel().setSelection(0, document.getTextLength());
-      editor.setBackgroundColor(myRendererBg);
-    }
+      if (myIsRendererWithSelection) {
+        ((EditorImpl)editor).setPaintSelection(true);
+        editor.getColorsScheme().setColor(EditorColors.SELECTION_BACKGROUND_COLOR, myRendererBg);
+        editor.getColorsScheme().setColor(EditorColors.SELECTION_FOREGROUND_COLOR, myRendererFg);
+        editor.getSelectionModel().setSelection(0, document.getTextLength());
+        editor.setBackgroundColor(myRendererBg);
+      }
 
-    for (EditorSettingsProvider provider : mySettingsProviders) {
-      provider.customizeSettings(editor);
-    }
+      for (EditorSettingsProvider provider : mySettingsProviders) {
+        provider.customizeSettings(editor);
+      }
+    });
 
     return editor;
   }
