@@ -1073,8 +1073,12 @@ public final class PersistentFSRecordsLockFreeOverMMappedFile implements Persist
 
       private MappedByteBuffer map(FileChannel channel,
                                    int pageSize) throws IOException {
-        //TODO RC: this could cause noticeable pauses, hence it may worth to enlarge file in advance, async
-        IOUtil.allocateFileRegion(channel, offsetInFile, pageSize);
+        //MAYBE RC: this could cause noticeable pauses, hence it may worth to enlarge file in advance, async?
+        //          i.e. schedule enlargement as soon as last page is 50% full? It wouldn't work good for
+        //          completely random-access storages, but most our use-cases are either append-only logs,
+        //          or file-attributes, which indexed by fileId, which are growing quite monotonically,
+        //          so it may work
+        IOUtil.allocateFileRegion(channel, offsetInFile + pageSize);
         return channel.map(READ_WRITE, offsetInFile, pageSize);
       }
 

@@ -364,24 +364,20 @@ public final class IOUtil {
   }
 
 
-  private static final ByteBuffer ZEROES = ByteBuffer.allocateDirect(1);
-
   /**
-   * Imitates 'fallocate' linux call: ensures file region [offsetInFile..offsetInFile+size) is allocated on disk.
-   * We can't call 'fallocate' directly, hence just write zeros into the channel.
+   * Imitates 'fallocate' linux call: ensures file region [channel.size()..upUntilSize) is allocated on disk,
+   * and zeroed. We can't call 'fallocate' directly, hence just write zeros into the channel.
    */
-  public static void allocateFileRegion(final FileChannel channel,
-                                        final long offsetInFile,
-                                        final int size) throws IOException {
-    final long channelSize = channel.size();
-    if (channelSize < offsetInFile + size) {
-      //Assumes OS file cache page >= 1024, so writes land on each page at least once, and the write forces each
-      // page to be allocated (consume disk space):
-      final int stride = 1024;
-      for (long pos = Math.max(offsetInFile, channelSize);
-           pos < offsetInFile + size;
-           pos += stride) {
-        channel.write(ZEROES, pos);
+  public static void allocateFileRegion(@NotNull FileChannel channel,
+                                        long upUntilSize) throws IOException {
+    long channelSize = channel.size();
+    if (channelSize < upUntilSize) {
+      int stride = 1024;
+      ByteBuffer zeros = ByteBuffer.allocate(stride);
+      for (long pos = channelSize; pos < upUntilSize; pos += stride) {
+        int remainsToZero = Math.toIntExact(Math.min(stride, upUntilSize - pos));
+        zeros.clear().limit(remainsToZero);
+        channel.write(zeros, pos);
       }
     }
   }
@@ -454,6 +450,4 @@ public final class IOUtil {
     }
     return sb.toString();
   }
-
-
 }
