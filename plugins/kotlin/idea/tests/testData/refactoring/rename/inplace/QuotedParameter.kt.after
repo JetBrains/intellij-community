@@ -1,3 +1,5 @@
+// NEW_NAME: x
+// RENAME: member
 class A(val a: B)
 class B(val b: Int)
 

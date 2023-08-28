@@ -1,2 +1,4 @@
+// NEW_NAME: map1
 // SHOULD_FAIL_WITH: Cannot perform refactoring. This element cannot be renamed
-fun foo(value: Int): String = value.<caret>toString()
+// RENAME: member
+fun foo(list: List<Int>): List<String> = list.map<caret>{ it.toString() }

@@ -1,3 +1,5 @@
+// NEW_NAME: subject2
+// RENAME: member
 public class OneLineKotlin {
     var <caret>subject = 1
     var aux = 1

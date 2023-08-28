@@ -9,6 +9,7 @@ import com.intellij.openapi.actionSystem.impl.SimpleDataContext
 import com.intellij.refactoring.BaseRefactoringProcessor
 import com.intellij.refactoring.rename.inplace.VariableInplaceRenameHandler
 import com.intellij.refactoring.util.CommonRefactoringUtil
+import com.intellij.rt.execution.junit.FileComparisonFailure
 import com.intellij.testFramework.LightPlatformCodeInsightTestCase
 import com.intellij.testFramework.LightProjectDescriptor
 import com.intellij.testFramework.fixtures.CodeInsightTestUtil
@@ -25,6 +26,7 @@ import org.jetbrains.kotlin.idea.util.application.executeWriteCommand
 import org.jetbrains.kotlin.psi.KtNameReferenceExpression
 import org.junit.internal.runners.JUnit38ClassRunner
 import org.junit.runner.RunWith
+import java.io.File
 import kotlin.test.assertFalse
 import kotlin.test.assertTrue
 
@@ -65,7 +67,7 @@ class InplaceRenameTest : LightPlatformCodeInsightTestCase() {
     }
 
     fun testLibraryFunction() {
-        doTestMemberInplaceRename("string")
+        doTestMemberInplaceRename("map1")
     }
 
     fun testLocalFunction() {
@@ -232,6 +234,24 @@ class InplaceRenameTest : LightPlatformCodeInsightTestCase() {
 
     private fun doTestInplaceRename(newName: String?, handler: VariableInplaceRenameHandler = KotlinVariableInplaceRenameHandler()) {
         configureByFile(getTestName(false) + ".kt")
+        val renameDirective = when (handler) {
+            is KotlinMemberInplaceRenameHandler -> "member"
+            is KotlinVariableInplaceRenameHandler -> "variable"
+            is RenameKotlinImplicitLambdaParameter -> "lambdaParameter"
+            else -> error("unknown handler $handler")
+        }
+        val actualRenameDirective = InTextDirectivesUtils.findStringWithPrefixes(file.text, "// RENAME: ")
+        if (renameDirective != actualRenameDirective) {
+            throw FileComparisonFailure("", file.text,"// RENAME: $renameDirective\n${file.text}",
+                                        File(testDataPath, getTestName(false) + ".kt").absolutePath)
+        }
+
+        val actualNewName = InTextDirectivesUtils.findStringWithPrefixes(file.text, "// NEW_NAME: ")
+        if (newName != actualNewName) {
+            throw FileComparisonFailure("", file.text,"// NEW_NAME: $newName\n${file.text}",
+                                        File(testDataPath, getTestName(false) + ".kt").absolutePath)
+        }
+
         val element = TargetElementUtil.findTargetElement(
             editor,
             TargetElementUtil.ELEMENT_NAME_ACCEPTED or TargetElementUtil.REFERENCED_ELEMENT_ACCEPTED

@@ -1,3 +1,5 @@
+// NEW_NAME: get
+// RENAME: member
 class WInvoke {
     operator fun <caret>invoke(body: () -> Unit) { }
 }

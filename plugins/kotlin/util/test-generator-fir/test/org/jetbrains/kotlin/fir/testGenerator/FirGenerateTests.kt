@@ -38,6 +38,7 @@ import org.jetbrains.kotlin.idea.fir.resolve.*
 import org.jetbrains.kotlin.idea.fir.search.AbstractHLImplementationSearcherTest
 import org.jetbrains.kotlin.idea.fir.shortenRefs.AbstractFirShortenRefsTest
 import org.jetbrains.kotlin.idea.k2.refactoring.rename.AbstractFirRenameTest
+import org.jetbrains.kotlin.idea.k2.refactoring.rename.AbstractK2InplaceRenameTest
 import org.jetbrains.kotlin.parcelize.ide.test.AbstractParcelizeK2QuickFixTest
 import org.jetbrains.kotlin.testGenerator.generator.TestGenerator
 import org.jetbrains.kotlin.testGenerator.model.*
@@ -283,7 +284,10 @@ private fun assembleWorkspace(): TWorkspace = workspace {
 
     testGroup("refactorings/rename.k2", testDataPath = "../../idea/tests/testData") {
         testClass<AbstractFirRenameTest> {
-            model("refactoring/rename", pattern = Patterns.TEST, flatten = true)
+            model("refactoring/rename", pattern = TEST, flatten = true)
+        }
+        testClass<AbstractK2InplaceRenameTest> {
+            model("refactoring/rename/inplace", pattern = KT, flatten = true)
         }
     }
 
