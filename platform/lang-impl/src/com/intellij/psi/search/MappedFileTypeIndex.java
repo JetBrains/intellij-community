@@ -28,6 +28,7 @@ import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.nio.file.Path;
 import java.nio.file.StandardOpenOption;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.function.IntConsumer;
 
@@ -143,21 +144,65 @@ public final class MappedFileTypeIndex extends FileTypeIndexImplBase {
     private final @NotNull MappedFileTypeIndex.IndexDataController.ForwardIndexFileController myForwardIndex;
     private final @NotNull IntConsumer myInvertedIndexChangeCallback;
 
+    private static final boolean EXTRA_CONSISTENCY_CHECKS =
+      getBooleanProperty("mapped-file-type-index.extra-consistency-checks", false);
+    private final @Nullable ExtraChecksInfo myExtraChecksInfo;
+    private record ExtraChecksInfo(int initMaxAllocatedId) {}
+
     private IndexDataController(@NotNull Int2ObjectMap<RandomAccessIntContainer> invertedIndex,
                                 @NotNull MappedFileTypeIndex.IndexDataController.ForwardIndexFileController forwardIndex,
                                 @NotNull IntConsumer invertedIndexChangeCallback) {
       myInvertedIndex = invertedIndex;
       myForwardIndex = forwardIndex;
       myInvertedIndexChangeCallback = invertedIndexChangeCallback;
+
+      if (EXTRA_CONSISTENCY_CHECKS) {
+        int[] maxAllocatedId = new int[]{0};
+        try {
+          forwardIndex.processEntries((inputId, data) -> {
+            if (maxAllocatedId[0] < inputId) maxAllocatedId[0] = inputId;
+          });
+        } catch (StorageException e) {
+          LOG.error("MappedFileTypeIndex extra check init fail", e);
+        }
+        myExtraChecksInfo = new ExtraChecksInfo(maxAllocatedId[0]);
+      } else {
+        myExtraChecksInfo = null;
+      }
     }
 
     public void setAssociation(int inputId, short data) throws StorageException {
       short indexedData = getIndexedData(inputId);
+      if (indexedData == data) {
+        if (indexedData != 0 && EXTRA_CONSISTENCY_CHECKS) {
+          var indexedSet = myInvertedIndex.get(indexedData);
+          var ok = indexedSet != null && indexedSet.contains(inputId);
+          if (!ok) {
+            LOG.error("inverted filetype index inconsistency: inputId=" + inputId + " indexedData=data=" + indexedData +
+                      " indexedSet is null(=" + (indexedSet == null) + ") or does not contain inputId, extra info=" + myExtraChecksInfo);
+          }
+        }
+        return;
+      }
+      // indexedData != data
       if (indexedData != 0) {
         var indexedSet = myInvertedIndex.get(indexedData);
-        assert indexedSet != null : "inputId=" + inputId + " indexedData=" + indexedData;
-        var removed = indexedSet.remove(inputId);
-        assert removed : "inputId=" + inputId + " indexedData=" + indexedData;
+        if (indexedSet == null) {
+          LOG.error("inverted filetype index inconsistency: indexed set is null for " +
+                    indexedData + " ([" + inputId + "]=" + indexedData + "->" + data + "), extra info=" + myExtraChecksInfo);
+        } else {
+          var removed = indexedSet.remove(inputId);
+          if (!removed && EXTRA_CONSISTENCY_CHECKS) {
+            var keyWitness = new AtomicInteger(0);
+            myInvertedIndex.forEach((key, fileSet) -> {
+              if (fileSet != null && fileSet.contains(inputId)) {
+                keyWitness.set(key);
+              }
+            });
+            LOG.error("inverted filetype index inconsistency: inputId=" + inputId + " indexedData=" + indexedData + " data=" + data +
+                      ", inputId is in indexed set for key (0 if none)=" + keyWitness.get() + ", extra info=" + myExtraChecksInfo);
+          }
+        }
       }
       myForwardIndex.set(inputId, data);
       if (data != 0) {
