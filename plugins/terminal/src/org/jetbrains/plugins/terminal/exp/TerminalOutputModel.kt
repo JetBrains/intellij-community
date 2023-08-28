@@ -13,7 +13,7 @@ import java.awt.Rectangle
 import java.util.*
 import java.util.concurrent.CopyOnWriteArrayList
 
-class TerminalOutputModel(private val editor: EditorEx) {
+class TerminalOutputModel(val editor: EditorEx) {
   private val blocks: MutableList<CommandBlock> = Collections.synchronizedList(ArrayList())
   private val decorations: MutableMap<CommandBlock, BlockDecoration> = HashMap()
   private val highlightings: MutableMap<CommandBlock, List<HighlightingInfo>> = LinkedHashMap()  // order matters
@@ -80,6 +80,14 @@ class TerminalOutputModel(private val editor: EditorEx) {
   fun getByOffset(offset: Int): CommandBlock? {
     // todo: better to use binary search here, but default implementation doesn't not acquire the lock of the list
     return blocks.find { offset in (it.startOffset..it.endOffset) }
+  }
+
+  fun getByIndex(index: Int): CommandBlock {
+    return blocks[index]
+  }
+
+  fun getIndexOfBlock(block: CommandBlock): Int {
+    return blocks.indexOf(block)
   }
 
   @RequiresEdt

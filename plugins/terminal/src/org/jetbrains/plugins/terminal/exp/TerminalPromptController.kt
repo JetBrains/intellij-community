@@ -7,6 +7,7 @@ import com.intellij.openapi.editor.event.DocumentListener
 import com.intellij.openapi.editor.ex.EditorEx
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.NlsSafe
+import com.intellij.openapi.util.UserDataHolder
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.util.SystemProperties
 import com.intellij.util.concurrency.annotations.RequiresEdt
@@ -18,7 +19,7 @@ class TerminalPromptController(
   private val editor: EditorEx,
   session: TerminalSession,
   private val commandExecutor: TerminalCommandExecutor
-) : ShellCommandListener {
+) : ShellCommandListener, UserDataHolder {
   private val completionManager: TerminalCompletionManager?
   private val commandHistoryManager: CommandHistoryManager
   private val listeners: MutableList<PromptStateListener> = CopyOnWriteArrayList()
@@ -87,6 +88,10 @@ class TerminalPromptController(
     }
     else editor.document.addDocumentListener(listener)
   }
+
+  override fun <T : Any?> getUserData(key: Key<T>): T? = editor.getUserData(key)
+
+  override fun <T : Any?> putUserData(key: Key<T>, value: T?) = editor.putUserData(key, value)
 
   interface PromptStateListener {
     fun promptLabelChanged(newText: @NlsSafe String) {}

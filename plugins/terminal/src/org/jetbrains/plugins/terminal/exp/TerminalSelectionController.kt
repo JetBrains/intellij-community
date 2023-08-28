@@ -3,23 +3,80 @@ package org.jetbrains.plugins.terminal.exp
 
 import com.intellij.openapi.editor.event.EditorMouseEvent
 import com.intellij.openapi.editor.event.EditorMouseListener
-import com.intellij.openapi.editor.ex.EditorEx
+import com.intellij.openapi.util.Key
+import com.intellij.util.MathUtil
+import kotlin.math.min
 
-class TerminalSelectionController(private val selectionModel: TerminalSelectionModel,
-                                  private val outputModel: TerminalOutputModel,
-                                  editor: EditorEx) : EditorMouseListener {
+class TerminalSelectionController(
+  private val focusController: TerminalFocusController,
+  private val selectionModel: TerminalSelectionModel,
+  private val outputModel: TerminalOutputModel
+) : EditorMouseListener {
+  val primarySelection: CommandBlock?
+    get() = selectionModel.primarySelection
+
   init {
-    editor.addEditorMouseListener(this)
+    outputModel.editor.addEditorMouseListener(this)
+  }
+
+  fun selectRelativeBlock(isBelow: Boolean) {
+    val selectedBlock = selectionModel.primarySelection
+    if (selectedBlock != null) {
+      val curIndex = outputModel.getIndexOfBlock(selectedBlock)
+      if (curIndex >= 0) {
+        val newIndex = if (isBelow) curIndex + 1 else curIndex - 1
+        if (newIndex in (0 until outputModel.getBlocksSize())) {
+          val newBlock = outputModel.getByIndex(newIndex)
+          selectionModel.selectedBlocks = listOf(newBlock)
+          makeBlockVisible(newBlock)
+        }
+      }
+    }
+  }
+
+  fun selectLastBlock() {
+    val block = outputModel.getLastBlock() ?: return
+    selectionModel.selectedBlocks = listOf(block)
+    makeBlockVisible(block)
+  }
+
+  fun clearSelection() {
+    selectionModel.selectedBlocks = emptyList()
+    outputModel.editor.selectionModel.removeSelection()
+    focusController.focusPrompt()
   }
 
   override fun mouseClicked(event: EditorMouseEvent) {
     val block = outputModel.getByOffset(event.offset)
-    val selection = if (block != null) {
+    if (block != null) {
       // check that click is right inside the block
       val bounds = outputModel.getBlockBounds(block)
-      if (bounds.contains(event.mouseEvent.point)) listOf(block) else emptyList()
+      if (bounds.contains(event.mouseEvent.point)) {
+        selectionModel.selectedBlocks = listOf(block)
+        return
+      }
     }
-    else emptyList()
-    selectionModel.selectedBlocks = selection
+    clearSelection()
+  }
+
+  private fun makeBlockVisible(block: CommandBlock) {
+    val editor = outputModel.editor
+    val bounds = outputModel.getBlockBounds(block)
+    val visibleArea = editor.scrollingModel.visibleArea
+    if (bounds.y !in visibleArea.y until (visibleArea.y + visibleArea.height)) {
+      val scrollOffset = if (bounds.y < visibleArea.y) {
+        bounds.y - TerminalUi.blocksGap
+      }
+      else { // make top part of the block visible
+        val blockMaxHeight = min(bounds.height + TerminalUi.blocksGap, visibleArea.height)
+        bounds.y + blockMaxHeight - visibleArea.height
+      }
+      val offset = MathUtil.clamp(scrollOffset, 0, editor.contentComponent.height)
+      editor.scrollingModel.scrollVertically(offset)
+    }
+  }
+
+  companion object {
+    val KEY: Key<TerminalSelectionController> = Key.create("TerminalSelectionController")
   }
 }

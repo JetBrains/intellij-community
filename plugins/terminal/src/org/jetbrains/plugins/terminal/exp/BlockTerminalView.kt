@@ -12,6 +12,7 @@ import com.intellij.ui.util.preferredHeight
 import com.intellij.util.ui.JBInsets
 import com.jediterm.core.util.TermSize
 import org.jetbrains.plugins.terminal.exp.TerminalPromptController.PromptStateListener
+import org.jetbrains.plugins.terminal.exp.TerminalSelectionModel.TerminalSelectionListener
 import java.awt.*
 import java.awt.event.ComponentAdapter
 import java.awt.event.ComponentEvent
@@ -71,7 +72,17 @@ class BlockTerminalView(
       }
     })
 
-    controller = BlockTerminalController(session, outputView.controller, promptView.controller)
+    val focusController = TerminalFocusController(project, outputView, promptView)
+    controller = BlockTerminalController(session, focusController, outputView.controller, promptView.controller)
+
+    controller.addSelectionListener(object : TerminalSelectionListener {
+      override fun selectionChanged(oldSelection: List<CommandBlock>, newSelection: List<CommandBlock>) {
+        if (newSelection.isNotEmpty()) {
+          focusController.focusOutput()
+        }
+        else focusController.focusPrompt()
+      }
+    })
 
     component.addComponentListener(object : ComponentAdapter() {
       override fun componentResized(e: ComponentEvent?) {
