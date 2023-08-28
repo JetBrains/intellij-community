@@ -69,10 +69,10 @@ interface SpacingConfiguration {
   /**
    * Gaps between dialog content and its content
    */
-  @Deprecated("Use dialogUnscaledGaps instead",
-              ReplaceWith("dialogUnscaledGaps", "com.intellij.ui.dsl.gridLayout.UnscaledGaps"))
   val dialogGap: Gaps
     @ApiStatus.ScheduledForRemoval
+    @Deprecated("Use dialogUnscaledGaps instead",
+                ReplaceWith("dialogUnscaledGaps", "com.intellij.ui.dsl.gridLayout.UnscaledGaps"))
     get() = Gaps.EMPTY
 
   /**
