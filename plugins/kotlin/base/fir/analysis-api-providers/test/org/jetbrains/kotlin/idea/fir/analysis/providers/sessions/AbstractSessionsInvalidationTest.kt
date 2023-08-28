@@ -2,9 +2,7 @@
 
 package org.jetbrains.kotlin.idea.fir.analysis.providers.sessions
 
-import com.google.gson.JsonObject
 import com.intellij.openapi.application.runWriteAction
-import com.intellij.openapi.module.Module
 import com.intellij.openapi.module.ModuleManager
 import org.jetbrains.kotlin.analysis.low.level.api.fir.LLFirResolveSessionService
 import org.jetbrains.kotlin.analysis.low.level.api.fir.sessions.LLFirModuleSession
@@ -14,15 +12,10 @@ import org.jetbrains.kotlin.analysis.project.structure.KtSourceModule
 import org.jetbrains.kotlin.idea.base.projectStructure.getMainKtSourceModule
 import org.jetbrains.kotlin.idea.base.projectStructure.sourceModuleInfos
 import org.jetbrains.kotlin.idea.base.projectStructure.toKtModule
-import org.jetbrains.kotlin.idea.fir.analysis.providers.TestProjectModule
-import org.jetbrains.kotlin.idea.fir.analysis.providers.TestProjectStructure
-import org.jetbrains.kotlin.idea.jsonUtils.getString
 import org.jetbrains.kotlin.idea.base.test.KotlinRoot
-import java.io.File
 import org.jetbrains.kotlin.idea.fir.analysis.providers.AbstractProjectStructureTest
-import org.jetbrains.kotlin.idea.fir.analysis.providers.TestProjectLibrary
-import org.jetbrains.kotlin.idea.fir.analysis.providers.TestProjectStructureParser
 import org.jetbrains.kotlin.idea.util.publishModuleOutOfBlockModification
+import java.io.File
 
 abstract class AbstractSessionsInvalidationTest : AbstractProjectStructureTest<SessionInvalidationTestProjectStructure>() {
     override fun isFirPlugin(): Boolean = true
@@ -97,31 +90,4 @@ abstract class AbstractSessionsInvalidationTest : AbstractProjectStructureTest<S
         val resolveSession = LLFirResolveSessionService.getInstance(project).getFirResolveSession(mainModule)
         return projectModules.map(resolveSession::getSessionFor)
     }
-}
-
-data class SessionInvalidationTestProjectStructure(
-    override val libraries: List<TestProjectLibrary>,
-    override val modules: List<TestProjectModule>,
-    val rootModule: String,
-    val modulesToMakeOOBM: List<String>,
-    val expectedInvalidatedModules: List<String>,
-) : TestProjectStructure
-
-private object SessionInvalidationTestProjectStructureParser : TestProjectStructureParser<SessionInvalidationTestProjectStructure> {
-    private const val ROOT_MODULE_FIELD = "rootModule"
-    private const val MODULES_TO_MAKE_OOBM_IN_FIELD = "modulesToMakeOOBM"
-    private const val EXPECTED_INVALIDATED_MODULES_FIELD = "expectedInvalidatedModules"
-
-    override fun parse(
-        libraries: List<TestProjectLibrary>,
-        modules: List<TestProjectModule>,
-        json: JsonObject,
-    ): SessionInvalidationTestProjectStructure =
-        SessionInvalidationTestProjectStructure(
-            libraries,
-            modules,
-            json.getString(ROOT_MODULE_FIELD),
-            json.getAsJsonArray(MODULES_TO_MAKE_OOBM_IN_FIELD)!!.map { it.asString }.sorted(),
-            json.getAsJsonArray(EXPECTED_INVALIDATED_MODULES_FIELD)!!.map { it.asString }.sorted(),
-        )
 }
