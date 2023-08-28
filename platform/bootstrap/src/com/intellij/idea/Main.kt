@@ -349,7 +349,7 @@ private class BytecodeTransformerAdapter(private val impl: BytecodeTransformer) 
     return impl.isApplicable(className, loader, null)
   }
 
-  override fun transform(loader: ClassLoader, className: String, classBytes: ByteArray): ByteArray {
+  override fun transform(loader: ClassLoader, className: String, classBytes: ByteArray): ByteArray? {
     return impl.transform(loader, className, null, classBytes)
   }
 }
