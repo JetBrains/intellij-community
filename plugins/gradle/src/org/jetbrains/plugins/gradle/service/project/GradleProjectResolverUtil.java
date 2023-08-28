@@ -36,6 +36,7 @@ import org.jetbrains.plugins.gradle.ExternalDependencyId;
 import org.jetbrains.plugins.gradle.issue.UnresolvedDependencySyncIssue;
 import org.jetbrains.plugins.gradle.model.*;
 import org.jetbrains.plugins.gradle.model.data.GradleSourceSetData;
+import org.jetbrains.plugins.gradle.service.cache.GradleLocalCacheHelper;
 import org.jetbrains.plugins.gradle.settings.GradleExecutionWorkspace;
 import org.jetbrains.plugins.gradle.util.GradleConstants;
 import org.jetbrains.plugins.gradle.util.GradleModuleDataKt;
@@ -44,8 +45,10 @@ import org.jetbrains.plugins.gradle.util.GradleUtil;
 import java.io.File;
 import java.io.IOException;
 import java.lang.reflect.Constructor;
-import java.nio.file.*;
-import java.nio.file.attribute.BasicFileAttributes;
+import java.nio.file.Files;
+import java.nio.file.InvalidPathException;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -441,7 +444,13 @@ public final class GradleProjectResolverUtil {
         if (pathsCache != null) {
           pathsCache.put(path, collectedPaths);
         }
-        collectSourcesAndJavadocsFor(path, collectedPaths, sourceResolved, docResolved);
+        GradleLocalCacheHelper.ArtifactCoordinates coordinates = GradleLocalCacheHelper.parseCoordinates(libraryData.getExternalName());
+        if (coordinates != null && path.contains("/caches/modules-2/files-2.1")) {
+          collectSourcesAndJavadocsFor(coordinates, collectedPaths, gradleUserHomeDir.toPath(), sourceResolved, docResolved);
+        }
+        else {
+          collectSourcesAndJavadocsFor(path, collectedPaths, sourceResolved, docResolved);
+        }
       }
 
       for (Map.Entry<LibraryPathType, List<String>> each : collectedPaths.entrySet()) {
@@ -452,8 +461,18 @@ public final class GradleProjectResolverUtil {
     }
   }
 
-  @ApiStatus.Internal
-  public static void collectSourcesAndJavadocsFor(@NonNls @NotNull String binaryPath,
+  private static void collectSourcesAndJavadocsFor(@NotNull GradleLocalCacheHelper.ArtifactCoordinates artifactCoordinates,
+                                                   @NotNull Map<LibraryPathType, List<String>> collect,
+                                                   @NotNull Path gradleUserHome,
+                                                   boolean sourceResolved,
+                                                   boolean docResolved) {
+    Set<LibraryPathType> requiredComponentTypes = getRequiredComponentTypes(sourceResolved, docResolved);
+    Map<LibraryPathType, List<Path>> components =
+      GradleLocalCacheHelper.findArtifactComponents(artifactCoordinates, gradleUserHome, requiredComponentTypes);
+    mergeCollectedArtifacts(collect, components);
+  }
+
+  private static void collectSourcesAndJavadocsFor(@NonNls @NotNull String binaryPath,
                                                    @NotNull Map<LibraryPathType, List<String>> collect,
                                                    boolean sourceResolved, boolean docResolved) {
     if (sourceResolved && docResolved) {
@@ -477,45 +496,31 @@ public final class GradleProjectResolverUtil {
                                                                boolean sourceResolved,
                                                                boolean docResolved) throws IOException {
     final Path file = Paths.get(binaryPath);
-    Path binaryFileParent = file.getParent();
-    Path grandParentFile = binaryFileParent.getParent();
+    Set<LibraryPathType> requiredComponentTypes = getRequiredComponentTypes(sourceResolved, docResolved);
+    Map<LibraryPathType, List<Path>> components = GradleLocalCacheHelper.findAdjacentComponents(file, requiredComponentTypes);
+    mergeCollectedArtifacts(collect, components);
+  }
 
-    final boolean[] sourceFound = {sourceResolved};
-    final boolean[] docFound = {docResolved};
+  private static void mergeCollectedArtifacts(@NotNull Map<LibraryPathType, List<String>> target,
+                                              @NotNull Map<LibraryPathType, List<Path>> collected) {
+    for (Map.Entry<LibraryPathType, List<Path>> entry : collected.entrySet()) {
+      Set<String> pathStrings = entry.getValue()
+        .stream()
+        .map(v -> v.toString())
+        .collect(Collectors.toSet());
+      target.computeIfAbsent(entry.getKey(), ignore -> new SmartList<>()).addAll(pathStrings);
+    }
+  }
 
-    Files.walkFileTree(grandParentFile, EnumSet.noneOf(FileVisitOption.class), 2, new SimpleFileVisitor<>() {
-      @Override
-      public FileVisitResult preVisitDirectory(Path dir, BasicFileAttributes attrs) throws IOException {
-        if (binaryFileParent.equals(dir)) {
-          return FileVisitResult.SKIP_SUBTREE;
-        }
-        return super.preVisitDirectory(dir, attrs);
-      }
-
-      @Override
-      public FileVisitResult visitFile(Path sourceCandidate, BasicFileAttributes attrs) throws IOException {
-        if (!sourceCandidate.getParent().getParent().equals(grandParentFile)) {
-          return FileVisitResult.SKIP_SIBLINGS;
-        }
-        if (attrs.isRegularFile()) {
-          String candidateFileName = sourceCandidate.getFileName().toString();
-          if (!sourceFound[0] && StringUtil.endsWith(candidateFileName, SOURCE_JAR_SUFFIX)) {
-            collect.computeIfAbsent(LibraryPathType.SOURCE, type -> new SmartList<>())
-              .add(sourceCandidate.toFile().getPath());
-            sourceFound[0] = true;
-          }
-          else if (!docFound[0] && StringUtil.endsWith(candidateFileName, JAVADOC_JAR_SUFFIX)) {
-            collect.computeIfAbsent(LibraryPathType.DOC, type -> new SmartList<>())
-              .add(sourceCandidate.toFile().getPath());
-            docFound[0] = true;
-          }
-        }
-        if (sourceFound[0] && docFound[0]) {
-          return FileVisitResult.TERMINATE;
-        }
-        return super.visitFile(sourceCandidate, attrs);
-      }
-    });
+  private static @NotNull Set<LibraryPathType> getRequiredComponentTypes(boolean sourceResolved, boolean docResolved) {
+    Set<LibraryPathType> requiredComponentTypes = EnumSet.noneOf(LibraryPathType.class);
+    if (!sourceResolved) {
+      requiredComponentTypes.add(LibraryPathType.SOURCE);
+    }
+    if (!docResolved) {
+      requiredComponentTypes.add(LibraryPathType.DOC);
+    }
+    return requiredComponentTypes;
   }
 
   private static void collectSourcesAndJavadocsFromTheSameFolder(@NotNull String binaryPath,

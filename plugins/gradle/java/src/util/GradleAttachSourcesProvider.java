@@ -31,6 +31,10 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.VisibleForTesting;
 import org.jetbrains.plugins.gradle.execution.build.CachedModuleDataFinder;
+import org.jetbrains.plugins.gradle.execution.target.GradleTargetUtil;
+import org.jetbrains.plugins.gradle.service.GradleInstallationManager;
+import org.jetbrains.plugins.gradle.service.cache.GradleLocalCacheHelper;
+import org.jetbrains.plugins.gradle.service.execution.BuildLayoutParameters;
 import org.jetbrains.plugins.gradle.service.execution.GradleInitScriptUtil;
 import org.jetbrains.plugins.gradle.service.task.GradleTaskManager;
 import org.jetbrains.plugins.gradle.service.task.LazyVersionSpecificInitScript;
@@ -48,7 +52,6 @@ import java.util.*;
 import java.util.function.Predicate;
 
 import static com.intellij.jarFinder.InternetAttachSourceProvider.attachSourceJar;
-import static org.jetbrains.plugins.gradle.service.project.GradleProjectResolverUtil.collectSourcesAndJavadocsFor;
 
 /**
  * @author Vladislav.Soroka
@@ -109,11 +112,6 @@ final class GradleAttachSourcesProvider implements AttachSourcesProvider {
       if (StringUtil.equals(libraryName, artifactCoordinates)) {
         return ActionCallback.REJECTED;
       }
-      String cachedSourcesPath = lookupSourcesPathFromCache(libraryOrderEntry);
-      if (cachedSourcesPath != null && isValidJar(cachedSourcesPath)) {
-        attachSources(new File(cachedSourcesPath), orderEntries);
-        return ActionCallback.DONE;
-      }
       String externalProjectPath = ExternalSystemApiUtil.getExternalRootProjectPath(module);
       if (externalProjectPath == null) {
         return ActionCallback.REJECTED;
@@ -122,26 +120,46 @@ final class GradleAttachSourcesProvider implements AttachSourcesProvider {
         VirtualFile[] rootFiles = libraryOrderEntry.getRootFiles(OrderRootType.CLASSES);
         return rootFiles.length == 0 || ContainerUtil.exists(rootFiles, file -> file.getName().startsWith(artifactIdCandidate));
       });
+      String cachedSourcesPath = lookupSourcesPathFromCache(libraryOrderEntry, sourceArtifactNotation, psiFile.getProject(),
+                                                            externalProjectPath);
+      if (cachedSourcesPath != null && isValidJar(cachedSourcesPath)) {
+        attachSources(new File(cachedSourcesPath), orderEntries);
+        return ActionCallback.DONE;
+      }
       return downloadSources(psiFile, sourceArtifactNotation, artifactCoordinates, externalProjectPath);
     }
 
-    private static @Nullable String lookupSourcesPathFromCache(@NotNull LibraryOrderEntry libraryOrderEntry) {
+    private static @Nullable String lookupSourcesPathFromCache(@NotNull LibraryOrderEntry libraryOrderEntry,
+                                                               @NotNull String sourceArtifactNotation,
+                                                               @NotNull Project project,
+                                                               @Nullable String projectPath) {
       VirtualFile[] rootFiles = libraryOrderEntry.getRootFiles(OrderRootType.CLASSES);
       if (rootFiles.length == 0) {
         return null;
       }
-      VirtualFile classesFile = rootFiles[0];
-      String path = classesFile.getPath();
-      if (path.contains("/caches/transforms-")) {
+      BuildLayoutParameters buildLayoutParameters = GradleInstallationManager.getInstance().guessBuildLayoutParameters(project,
+                                                                                                                       projectPath);
+      String gradleUserHome = GradleTargetUtil.maybeGetLocalValue(buildLayoutParameters.getGradleUserHome());
+      if (gradleUserHome == null) {
         return null;
       }
-      Map<LibraryPathType, List<String>> target = new HashMap<>();
-      collectSourcesAndJavadocsFor(path, target, /*source resolved*/ false, /*javadoc resolved*/ true);
-      List<String> sources = target.get(LibraryPathType.SOURCE);
+      if (!rootFiles[0].getPath().contains(gradleUserHome)) {
+        return null;
+      }
+      GradleLocalCacheHelper.ArtifactCoordinates coordinates = GradleLocalCacheHelper.parseCoordinates(sourceArtifactNotation);
+      if (coordinates == null) {
+        return null;
+      }
+      Map<LibraryPathType, List<Path>> localArtifacts = GradleLocalCacheHelper.findArtifactComponents(
+        coordinates,
+        Path.of(gradleUserHome),
+        EnumSet.of(LibraryPathType.SOURCE)
+      );
+      List<Path> sources = localArtifacts.get(LibraryPathType.SOURCE);
       if (sources == null || sources.isEmpty()) {
         return null;
       }
-      return sources.iterator().next();
+      return sources.iterator().next().toString();
     }
 
     private @NotNull ActionCallback downloadSources(@NotNull PsiFile psiFile,

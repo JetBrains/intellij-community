@@ -2,6 +2,7 @@
 package org.jetbrains.plugins.gradle.util
 
 import com.intellij.openapi.application.runReadAction
+import com.intellij.openapi.externalSystem.model.project.LibraryPathType
 import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskId
 import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskNotificationListenerAdapter
 import com.intellij.openapi.externalSystem.service.notification.ExternalSystemProgressNotificationManager
@@ -10,15 +11,14 @@ import com.intellij.openapi.roots.OrderRootType
 import com.intellij.psi.JavaPsiFacade
 import com.intellij.psi.search.GlobalSearchScope
 import org.assertj.core.api.Assertions.assertThat
-import org.gradle.initialization.BuildLayoutParameters
 import org.jetbrains.plugins.gradle.importing.GradleImportingTestCase
 import org.jetbrains.plugins.gradle.importing.TestGradleBuildScriptBuilder
-import org.jetbrains.plugins.gradle.settings.GradleSettings
+import org.jetbrains.plugins.gradle.service.cache.GradleLocalCacheHelper
 import org.jetbrains.plugins.gradle.testFramework.util.importProject
 import org.jetbrains.plugins.gradle.tooling.annotation.TargetVersions
 import org.junit.Test
-import java.io.File
 import java.nio.file.Path
+import java.util.*
 import java.util.function.Consumer
 
 class GradleAttachSourcesProviderTest : GradleImportingTestCase() {
@@ -49,6 +49,20 @@ class GradleAttachSourcesProviderTest : GradleImportingTestCase() {
     }
     assertModules("project", "project.main", "project.test")
     assertSourcesDownloadedAndAttached(targetModule = "project.test")
+  }
+
+  @Test
+  fun `test sources available in gradle cache after task execution`() {
+    importProject {
+      withJavaPlugin()
+      withIdeaPlugin()
+      withMavenCentral()
+      addTestImplementationDependency(DEPENDENCY)
+      addPrefix("idea.module.downloadSources = false")
+    }
+    assertModules("project", "project.main", "project.test")
+    assertSourcesDownloadedAndAttached(targetModule = "project.test")
+    assertThat(findArtifactComponentsInGradleCache(DEPENDENCY)[LibraryPathType.SOURCE]).isNotEmpty
   }
 
   @Test
@@ -95,6 +109,12 @@ class GradleAttachSourcesProviderTest : GradleImportingTestCase() {
     assertThat(getModuleLibDeps("project.projectB.test", DEPENDENCY_NAME)).isEmpty()
   }
 
+  private fun findArtifactComponentsInGradleCache(dependencyNotation: String): Map<LibraryPathType, List<Path>> {
+    val coordinates = GradleLocalCacheHelper.parseCoordinates(dependencyNotation)
+                      ?: throw IllegalStateException("Artifact coordinates should be parsed!")
+    return GradleLocalCacheHelper.findArtifactComponents(coordinates, gradleUserHome, EnumSet.allOf(LibraryPathType::class.java))
+  }
+
   private fun assertSourcesDownloadedAndAttached(dependencyName: String = DEPENDENCY_NAME,
                                                  dependencyJar: String = DEPENDENCY_JAR,
                                                  dependencySourcesJar: String = DEPENDENCY_SOURCES_JAR,
@@ -139,10 +159,8 @@ class GradleAttachSourcesProviderTest : GradleImportingTestCase() {
   }
 
   private fun removeCachedLibrary(cachePath: String = DEPENDENCY_SOURCES_JAR_CACHE_PATH) {
-    val serviceDirectory = GradleSettings.getInstance(myProject).serviceDirectoryPath
-    val gradleUserHome = if (serviceDirectory != null) Path.of(serviceDirectory) else BuildLayoutParameters().gradleUserHomeDir.toPath()
-    val junitPath = "$gradleUserHome/$cachePath"
-    val cachedSource = File(junitPath)
+    val jarPath = gradleUserHome.resolve(cachePath)
+    val cachedSource = jarPath.toFile()
     if (cachedSource.exists()) {
       if (!cachedSource.delete()) {
         throw IllegalStateException("Unable to prepare test execution environment")
