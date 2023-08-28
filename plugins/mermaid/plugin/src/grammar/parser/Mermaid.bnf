@@ -34,13 +34,15 @@
   implements="com.intellij.mermaid.lang.psi.MermaidPsiElement"
 }
 
-file ::= [frontmatter EOL] start
-private start ::= EOL start | directive start | diagram
+file ::= [frontmatter EOL] (oldStart | newStart)
+
+private oldStart ::= EOL oldStart | directive oldStart | oldDiagram
+private newStart ::= EOL newStart | newDiagram
 
 frontmatter ::= FRONTMATTER_START EOL frontmatterContent FRONTMATTER_END
 external frontmatterContent ::= frontmatterParser
 
-private diagram ::= pieHeader EOL* [pieBody]
+private oldDiagram ::= pieHeader EOL* [pieBody]
   | journeyHeader EOL* [journeyBody]
   | flowchartHeader EOL* [flowchartBody]
   | sequenceHeader EOL* [sequenceBody]
@@ -54,7 +56,8 @@ private diagram ::= pieHeader EOL* [pieBody]
   | mindmapHeader EOL* mindmapBody
   | timelineHeader EOL* [timelineBody]
   | quadrantHeader EOL* [quadrantBody]
-  | ZEN_UML
+
+private newDiagram ::= ZEN_UML
   | sankeyHeader EOL* [sankeyBody]
 
 titleStatement ::= TITLE complexTitleValue

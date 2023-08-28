@@ -111,6 +111,15 @@
                      editorAttributes="NOT_USED_ELEMENT_ATTRIBUTES"
                      implementationClass="com.intellij.mermaid.lang.intention.ThemeInspection"/>
 
+    <localInspection language="Mermaid" shortName="UnsupportedDirective"
+                     groupKey="annotator.unsupported.directive"
+                     bundle="messages.MermaidBundle"
+                     key="annotator.unsupported.directive"
+                     enabledByDefault="true"
+                     level="ERROR"
+                     editorAttributes="NOT_USED_ELEMENT_ATTRIBUTES"
+                     implementationClass="com.intellij.mermaid.lang.intention.UnsupportedDirectiveInspection"/>
+
     <spellchecker.support language="Mermaid" implementationClass="com.intellij.mermaid.lang.MermaidSpellcheckingStrategy"/>
 
     <todoIndexer filetype="Mermaid" implementationClass="com.intellij.mermaid.lang.highlighting.MermaidTodoIndexer"/>

@@ -1349,35 +1349,6 @@
             }
           }
         },
-        "sankey": {
-          "properties": {
-            "useWidth": {
-              "type": "number"
-            },
-            "useMaxWidth": {
-              "type": "boolean"
-            },
-            "width": {
-              "type": "number"
-            },
-            "height": {
-              "type": "number"
-            },
-            "linkColor": {
-              "anyOf": [
-                {
-                  "$ref": "#/definitions/sankeyLinkColor"
-                },
-                {
-                  "type": "string"
-                }
-              ]
-            },
-            "nodeAlignment": {
-              "$ref": "#/definitions/sankeyNodeAlignment"
-            }
-          }
-        },
         "wrap": {
           "type": "boolean"
         },
@@ -1404,23 +1375,6 @@
               ]
             }
           }
-        },
-        "sankeyLinkColor": {
-          "type": "string",
-          "enum": [
-            "source",
-            "target",
-            "gradient"
-          ]
-        },
-        "sankeyNodeAlignment": {
-          "type": "string",
-          "enum": [
-            "left",
-            "right",
-            "center",
-            "justify"
-          ]
         }
       }
     }
