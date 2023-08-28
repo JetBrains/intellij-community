@@ -82,6 +82,16 @@ abstract class CodeVisionInlayRendererBase(theme: CodeVisionTheme = CodeVisionTh
     updateMouseState(false, null)
   }
 
+  // Consuming to prevent showing context menu
+  override fun mousePressed(event: MouseEvent, translated: Point) {
+    hoveredEntry.value ?: return
+    when {
+      event.isShiftDown -> return
+      SwingUtilities.isLeftMouseButton(event) -> event.consume()
+      SwingUtilities.isRightMouseButton(event) -> event.consume()
+    }
+  }
+
   override fun mouseReleased(event: MouseEvent, translated: Point) {
     val clickedEntry = hoveredEntry.value ?: return
     clickedEntry.putUserData(codeVisionEntryMouseEventKey, event)
