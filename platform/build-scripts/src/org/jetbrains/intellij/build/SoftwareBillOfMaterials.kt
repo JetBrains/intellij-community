@@ -6,16 +6,14 @@ import com.jetbrains.plugin.structure.base.utils.outputStream
 import io.opentelemetry.api.common.AttributeKey
 import io.opentelemetry.api.common.Attributes
 import io.opentelemetry.api.trace.Span
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.async
-import kotlinx.coroutines.runBlocking
-import kotlinx.coroutines.withContext
+import kotlinx.coroutines.*
 import org.apache.commons.codec.digest.DigestUtils
 import org.apache.maven.model.Model
 import org.apache.maven.model.io.xpp3.MavenXpp3Reader
 import org.jetbrains.intellij.build.impl.*
 import org.jetbrains.intellij.build.impl.projectStructureMapping.*
 import org.jetbrains.intellij.build.io.readZipFile
+import org.jetbrains.intellij.build.io.runProcess
 import org.jetbrains.jps.model.jarRepository.JpsRemoteRepositoryService
 import org.jetbrains.jps.model.java.JpsJavaClasspathKind
 import org.jetbrains.jps.model.java.JpsJavaExtensionService
@@ -188,6 +186,7 @@ class SoftwareBillOfMaterials internal constructor(
     documents.forEach {
       Span.current().addEvent("SBOM document generated", Attributes.of(AttributeKey.stringKey("file"), "$it"))
     }
+    checkNtiaConformance(documents)
   }
 
   private class Checksums(val path: Path) {
@@ -650,5 +649,31 @@ class SoftwareBillOfMaterials internal constructor(
       .map { it.sha1 }.sorted()
       .joinToString(separator = "")
       .let(DigestUtils::sha1Hex)
+  }
+
+  /**
+   * See https://pypi.org/project/ntia-conformance-checker/
+   */
+  private suspend fun checkNtiaConformance(documents: List<Path>) {
+    if (Docker.isAvailable) {
+      val ntiaChecker = "ntia-checker"
+      suspendingRetryWithExponentialBackOff {
+        runProcess(
+          "docker", "build", ".", "--tag", ntiaChecker,
+          workingDir = context.paths.communityHomeDir.resolve("platform/build-scripts/resources/sbom/$ntiaChecker")
+        )
+      }
+      coroutineScope {
+        documents.forEach {
+          launch {
+            runProcess(
+              "docker", "run", "--rm",
+              "--volume=${it.parent}:${it.parent}:ro",
+              ntiaChecker, "--file", "${it.toAbsolutePath()}", "--verbose"
+            )
+          }
+        }
+      }
+    }
   }
 }

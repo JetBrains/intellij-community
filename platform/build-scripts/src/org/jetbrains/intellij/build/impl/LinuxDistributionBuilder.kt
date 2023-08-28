@@ -255,6 +255,9 @@ class LinuxDistributionBuilder(override val context: BuildContext,
         Files.createDirectories(resultDir)
         span.addEvent("build package")
         val snapArtifact = snapName + "_" + version + "_amd64.snap"
+        check(Docker.isAvailable) {
+          "Docker is required to build snaps"
+        }
         runProcess(
           args = listOf(
             "docker", "run", "--rm", "--volume=$snapcraftConfig:/build/snapcraft.yaml:ro",
