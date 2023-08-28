@@ -44,11 +44,12 @@ abstract class GroupedComboBoxRenderer<T>(val combo: ComboBox<T>? = null) : Grou
   open fun getIcon(item: T): Icon? = null
 
   private lateinit var coloredComponent: SimpleColoredComponent
+  private var selectionForeground: Color? = null
 
   open val maxWidth: Int = -1
 
   /**
-   * Appends text fragments to the item [SimpleColoredComponent].
+   * Appends text fragments to the [SimpleColoredComponent] item.
    */
   open fun customize(item: SimpleColoredComponent,
                      value: T,
@@ -97,7 +98,15 @@ abstract class GroupedComboBoxRenderer<T>(val combo: ComboBox<T>? = null) : Grou
   }
 
   override fun createItemComponent(): JComponent {
-    coloredComponent = SimpleColoredComponent()
+    coloredComponent = object: SimpleColoredComponent() {
+      override fun append(fragment: String, attributes: SimpleTextAttributes, isMainText: Boolean) {
+        super.append(
+          fragment,
+          if (selectionForeground == null) { attributes } else { SimpleTextAttributes(attributes.style, selectionForeground) },
+          isMainText
+        )
+      }
+    }
     return layoutComponent(coloredComponent)
   }
 
@@ -123,6 +132,7 @@ abstract class GroupedComboBoxRenderer<T>(val combo: ComboBox<T>? = null) : Grou
                                             cellHasFocus: Boolean): Component {
     coloredComponent.apply {
       clear()
+      selectionForeground = if (isSelected) { list?.selectionForeground } else { null }
       customize(this, value, index, isSelected, cellHasFocus)
     }
 
