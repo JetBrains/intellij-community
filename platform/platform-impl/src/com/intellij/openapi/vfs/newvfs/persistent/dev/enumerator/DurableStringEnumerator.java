@@ -3,7 +3,6 @@ package com.intellij.openapi.vfs.newvfs.persistent.dev.enumerator;
 
 import com.intellij.openapi.Forceable;
 import com.intellij.openapi.util.IntRef;
-import com.intellij.openapi.util.ThrowableComputable;
 import com.intellij.openapi.vfs.newvfs.persistent.VFSAsyncTaskExecutor;
 import com.intellij.openapi.vfs.newvfs.persistent.mapped.MMappedFileStorage;
 import com.intellij.openapi.vfs.newvfs.persistent.dev.InvertedFilenameHashBasedIndex.Int2IntMultimap;
@@ -39,7 +38,7 @@ public final class DurableStringEnumerator implements ScannableDataEnumeratorEx<
   private final AppendOnlyLog valuesLog;
 
 
-  private final @NotNull ThrowableComputable<Int2IntMultimap, ? extends IOException> valueHashToIdBuilder;
+  private final @NotNull CompletableFuture<Int2IntMultimap> valueHashToIdFuture;
 
   private final Object valueHashLock = new Object();
 
@@ -66,11 +65,15 @@ public final class DurableStringEnumerator implements ScannableDataEnumeratorEx<
   //         2. Keep the set of enumerated ids, but only under feature-flag, enabled in debug versions -- and disable
   //            it in prod, there (supposingly) all mistakes are already fixed
 
+  public DurableStringEnumerator(@NotNull AppendOnlyLogOverMMappedFile valuesLog,
+                                 @NotNull Int2IntMultimap valueHashToId) {
+    this(valuesLog, CompletableFuture.completedFuture(valueHashToId));
+  }
 
   public DurableStringEnumerator(@NotNull AppendOnlyLogOverMMappedFile valuesLog,
-                                 @NotNull ThrowableComputable<Int2IntMultimap, ? extends IOException> valueHashToIdBuilder) {
+                                 @NotNull CompletableFuture<Int2IntMultimap> valueHashToIdFuture) {
     this.valuesLog = valuesLog;
-    this.valueHashToIdBuilder = valueHashToIdBuilder;
+    this.valueHashToIdFuture = valueHashToIdFuture;
   }
 
   public static @NotNull DurableStringEnumerator open(@NotNull Path storagePath) throws IOException {
@@ -78,7 +81,7 @@ public final class DurableStringEnumerator implements ScannableDataEnumeratorEx<
 
     return new DurableStringEnumerator(
       valuesLog,
-      () -> buildValueToIdIndex(valuesLog)
+      buildValueToIdIndex(valuesLog)
     );
   }
 
@@ -89,14 +92,7 @@ public final class DurableStringEnumerator implements ScannableDataEnumeratorEx<
     CompletableFuture<Int2IntMultimap> indexBuildingFuture = executor.async(() -> buildValueToIdIndex(valuesLog));
     return new DurableStringEnumerator(
       valuesLog,
-      () -> {
-        try {
-          return indexBuildingFuture.get();
-        }
-        catch (ExecutionException | InterruptedException e) {
-          throw new IOException(e);
-        }
-      }
+      indexBuildingFuture
     );
   }
 
@@ -183,10 +179,18 @@ public final class DurableStringEnumerator implements ScannableDataEnumeratorEx<
 
   //@GuardedBy("valueHashLock")
   private @NotNull Int2IntMultimap valueHashToId() throws IOException {
-    if (valueHashToId == null) {
-      valueHashToId = valueHashToIdBuilder.compute();
+    try {
+      if (valueHashToId == null) {
+        valueHashToId = valueHashToIdFuture.get();
+      }
+      return valueHashToId;
     }
-    return valueHashToId;
+    catch (InterruptedException e) {
+      throw new IOException(e);
+    }
+    catch (ExecutionException e) {
+      throw new IOException(e.getCause());
+    }
   }
 
   private static int hashOf(@NotNull String value) {
