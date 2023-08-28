@@ -38,7 +38,6 @@ class GitNotificationIdsHolder : NotificationIdsHolder {
       DELETE_BRANCH_ON_MERGE,
       FETCH_ERROR,
       FETCH_SUCCESS,
-      FETCH_CANCELLED,
       FETCH_DETAILS,
       FETCH_RESULT,
       FETCH_RESULT_ERROR,
@@ -146,7 +145,6 @@ class GitNotificationIdsHolder : NotificationIdsHolder {
     const val DELETE_BRANCH_ON_MERGE = "git.delete.branch.on.merge"
     const val FETCH_ERROR = "git.fetch.error"
     const val FETCH_SUCCESS = "git.fetch.success"
-    const val FETCH_CANCELLED = "git.fetch.cancelled"
     const val FETCH_DETAILS = "git.fetch.details"
     const val FETCH_RESULT = "git.fetch.result"
     const val FETCH_RESULT_ERROR = "git.fetch.result.error"

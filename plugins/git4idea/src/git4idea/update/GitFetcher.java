@@ -12,7 +12,10 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.VcsNotifier;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.ArrayUtilRt;
-import git4idea.*;
+import git4idea.GitLocalBranch;
+import git4idea.GitRemoteBranch;
+import git4idea.GitUtil;
+import git4idea.GitVcs;
 import git4idea.branch.GitBranchUtil;
 import git4idea.commands.Git;
 import git4idea.commands.GitCommandResult;
@@ -189,9 +192,6 @@ public class GitFetcher {
       BackgroundTaskUtil.syncPublisher(repository.getProject(), GIT_AUTHENTICATION_SUCCESS).authenticationSucceeded(repository, remote);
       fetchResult = GitFetchResult.success();
     }
-    else if (result.cancelled()) {
-      fetchResult = GitFetchResult.cancel();
-    }
     else {
       fetchResult = GitFetchResult.error(result.getErrorOutputAsJoinedString());
     }
@@ -225,10 +225,6 @@ public class GitFetcher {
     if (result.isSuccess()) {
       notifier.notifySuccess(FETCH_SUCCESS, "",
                              GitBundle.message("notification.content.fetched.successfully") + result.getAdditionalInfo());
-    }
-    else if (result.isCancelled()) {
-      notifier.notifyMinorWarning(GitNotificationIdsHolder.FETCH_CANCELLED,
-                                  GitBundle.message("notification.content.fetch.cancelled.by.user") + result.getAdditionalInfo());
     }
     else if (result.isNotAuthorized()) {
       if (errorNotificationTitle != null) {
