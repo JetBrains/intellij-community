@@ -14,7 +14,7 @@ import kotlinx.datetime.LocalDate
 
 class DemoInIdeFeedbackSurveyConfig : InIdeFeedbackSurveyConfig {
 
-  override val surveyId: String = "demo_survey"
+  override val surveyId: String = "in_ide_demo_survey"
   override val lastDayOfFeedbackCollection: LocalDate = LocalDate(1999, 6, 11)
   override val requireIdeEAP: Boolean = true
 
