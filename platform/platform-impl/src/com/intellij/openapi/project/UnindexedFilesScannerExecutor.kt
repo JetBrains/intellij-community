@@ -51,7 +51,7 @@ class UnindexedFilesScannerExecutor(project: Project)
 
   private fun startTaskInSmartMode(task: FilesScanningTask) {
     taskQueue.addTask(task)
-    startBackgroundProcess()
+    startBackgroundProcess(onFinish = {})
   }
 
   private fun startTaskInDumbMode(task: FilesScanningTask) {

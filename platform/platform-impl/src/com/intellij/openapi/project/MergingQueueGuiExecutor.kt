@@ -136,38 +136,53 @@ open class MergingQueueGuiExecutor<T : MergeableQueueTask<T>> protected construc
 
   /**
    * Start task queue processing in background in SINGLE thread. If background process is already running, this method does nothing.
+   *
+   * It is guaranteed that this method invokes onFinish, even if the method itself threw an exception
    */
-  fun startBackgroundProcess() {
-    if (mySuspended.get()) return
-    if (taskQueue.isEmpty) return  // there is no race: client first adds a task to myTaskQueue, then invokes startBackgroundProcess
-    // this means that if myTaskQueue empty, then recently added task is already handled
-    mySingleTaskExecutor.tryStartProcess { task: AutoclosableProgressive ->
-      try {
-        backgroundTasksSubmitted.incrementAndGet()
-        ProgressManager.getInstance().run(object : Task.Backgroundable(project, myProgressTitle, false) {
-          override fun run(visibleIndicator: ProgressIndicator) {
-            try {
-              task.use { it.run(visibleIndicator) }
+  fun startBackgroundProcess(onFinish: () -> Unit) {
+    var startedInBackground = false
+    try {
+      if (mySuspended.get()) return
+      if (taskQueue.isEmpty) return  // there is no race: client first adds a task to myTaskQueue, then invokes startBackgroundProcess
+      // this means that if myTaskQueue empty, then recently added task is already handled
+
+      startedInBackground = mySingleTaskExecutor.tryStartProcess { task: AutoclosableProgressive ->
+        try {
+          backgroundTasksSubmitted.incrementAndGet()
+          ProgressManager.getInstance().run(object : Task.Backgroundable(project, myProgressTitle, false) {
+            override fun run(visibleIndicator: ProgressIndicator) {
+              try {
+                task.use { it.run(visibleIndicator) }
+              }
+              catch (pce: ProcessCanceledException) {
+                throw pce
+              }
+              catch (t: Throwable) {
+                LOG.error("Failed to execute background index update task", t)
+              } finally {
+                onFinish()
+              }
             }
-            catch (pce: ProcessCanceledException) {
-              throw pce
-            }
-            catch (t: Throwable) {
-              LOG.error("Failed to execute background index update task", t)
-            }
-          }
-        })
+          })
+        }
+        catch (pce: ProcessCanceledException) {
+          task.close()
+          onFinish()
+          throw pce
+        }
+        catch (t: Throwable) {
+          task.close()
+          mySingleTaskExecutor.clearScheduledFlag()
+          onFinish()
+          LOG.error("Failed to start background index update task", t)
+          throw t
+        }
       }
-      catch (pce: ProcessCanceledException) {
-        task.close()
-        throw pce
-      }
-      catch (t: Throwable) {
-        task.close()
-        mySingleTaskExecutor.clearScheduledFlag()
-        LOG.error("Failed to start background index update task", t)
-        throw t
-      }
+    }
+    finally {
+      if (!startedInBackground) {
+        onFinish()
+      } // else - will be invoked from a background process
     }
   }
 
@@ -253,10 +268,10 @@ open class MergingQueueGuiExecutor<T : MergeableQueueTask<T>> protected construc
    * Resumes queue in this executor after [suspendQueue]. All the queued tasks will be scheduled for execution immediately.
    * Does nothing if the queue was not suspended.
    */
-  fun resumeQueue() {
+  fun resumeQueue(onFinish: () -> Unit) {
     if (mySuspended.compareAndSet(true, false)) {
       if (!taskQueue.isEmpty) {
-        startBackgroundProcess()
+        startBackgroundProcess(onFinish)
       }
     }
   }

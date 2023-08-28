@@ -91,7 +91,7 @@ class FileBasedIndexTumbler(private val reason: @NonNls String) {
         }
         if (!headless) {
           for (project in ProjectUtil.getOpenProjects()) {
-            project.getService(UnindexedFilesScannerExecutor::class.java).resumeQueue()
+            project.getService(UnindexedFilesScannerExecutor::class.java).resumeQueue(onFinish = {})
             project.getService(PerProjectIndexingQueue::class.java).resumeQueue()
           }
           dumbModeSemaphore.up()

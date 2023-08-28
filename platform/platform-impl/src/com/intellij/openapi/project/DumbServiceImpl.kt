@@ -265,7 +265,7 @@ open class DumbServiceImpl @NonInjectable @VisibleForTesting constructor(private
     // drain the queue synchronously under modal progress
     myCancellableLaterEdtInvoker.invokeLaterWithDumbStartModality {
       try {
-        myGuiDumbTaskRunner.startBackgroundProcess()
+        myGuiDumbTaskRunner.startBackgroundProcess(onFinish = {})
       }
       catch (t: Throwable) {
         // There are no evidences that returning to smart mode is a good strategy. Let it be like this until the opposite is needed.
