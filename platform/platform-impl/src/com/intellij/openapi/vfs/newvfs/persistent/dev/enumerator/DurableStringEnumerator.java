@@ -3,6 +3,8 @@ package com.intellij.openapi.vfs.newvfs.persistent.dev.enumerator;
 
 import com.intellij.openapi.Forceable;
 import com.intellij.openapi.util.IntRef;
+import com.intellij.openapi.util.ThrowableComputable;
+import com.intellij.openapi.vfs.newvfs.persistent.PersistentFSLoaderExecutor;
 import com.intellij.openapi.vfs.newvfs.persistent.mapped.MMappedFileStorage;
 import com.intellij.openapi.vfs.newvfs.persistent.dev.InvertedFilenameHashBasedIndex.Int2IntMultimap;
 import com.intellij.openapi.vfs.newvfs.persistent.dev.appendonlylog.AppendOnlyLog;
@@ -13,12 +15,14 @@ import com.intellij.util.io.ScannableDataEnumeratorEx;
 import com.intellij.util.io.VersionUpdatedException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jsoup.UncheckedIOException;
 
 import java.io.Closeable;
 import java.io.IOException;
+import java.io.UncheckedIOException;
 import java.nio.ByteBuffer;
 import java.nio.file.Path;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ExecutionException;
 
 import static java.nio.charset.StandardCharsets.UTF_8;
 
@@ -34,11 +38,17 @@ public final class DurableStringEnumerator implements ScannableDataEnumeratorEx<
 
   private final AppendOnlyLog valuesLog;
 
-  //@GuardedBy("hashToId")
-  private final Int2IntMultimap valueHashToId = new Int2IntMultimap();
 
-  //@GuardedBy("hashToId")
-  private volatile int maxId = -1;
+  private final @NotNull ThrowableComputable<Int2IntMultimap, ? extends IOException> valueHashToIdBuilder;
+
+  private final Object valueHashLock = new Object();
+
+  /** Lazily initialized in {@link #valueHashToId()} */
+  //@GuardedBy("valueHashLock")
+  private Int2IntMultimap valueHashToId = null;
+
+  //@GuardedBy("valueHashLock")
+  //private volatile int maxId = -1;
 
   //FIXME RC: currently .enumerate() and .tryEnumerate() execute under global lock, i.e. not scalable.
   //          It is not worse than PersistentEnumerator does, but we could do better -- we just need
@@ -57,35 +67,37 @@ public final class DurableStringEnumerator implements ScannableDataEnumeratorEx<
   //            it in prod, there (supposingly) all mistakes are already fixed
 
 
-  public DurableStringEnumerator(@NotNull Path storagePath) throws IOException {
-    this.valuesLog = openValuesLog(storagePath);
-    //fill the in-memory mapping:
-    //MAYBE RC: could be filled async -- to not delay initialization
-    this.valuesLog.forEachRecord((logId, buffer) -> {
-      String value = readString(buffer);
-      int id = Math.toIntExact(logId);
-
-      int valueHash = hashOf(value);
-
-      valueHashToId.put(valueHash, id);
-      maxId = Math.max(id, maxId);
-      return true;
-    });
+  public DurableStringEnumerator(@NotNull AppendOnlyLogOverMMappedFile valuesLog,
+                                 @NotNull ThrowableComputable<Int2IntMultimap, ? extends IOException> valueHashToIdBuilder) {
+    this.valuesLog = valuesLog;
+    this.valueHashToIdBuilder = valueHashToIdBuilder;
   }
 
-  private static @NotNull AppendOnlyLogOverMMappedFile openValuesLog(@NotNull Path storagePath) throws IOException {
-    AppendOnlyLogOverMMappedFile valuesLog = new AppendOnlyLogOverMMappedFile(
-      new MMappedFileStorage(storagePath, PAGE_SIZE)
+  public static @NotNull DurableStringEnumerator open(@NotNull Path storagePath) throws IOException {
+    AppendOnlyLogOverMMappedFile valuesLog = openValuesLog(storagePath);
+
+    return new DurableStringEnumerator(
+      valuesLog,
+      () -> buildValueToIdIndex(valuesLog)
     );
-    int dataFormatVersion = valuesLog.getDataVersion();
-    if (dataFormatVersion == 0) {//FIXME RC: also check log is empty
-      valuesLog.setDataVersion(DATA_FORMAT_VERSION);
-    }
-    else if (dataFormatVersion != DATA_FORMAT_VERSION) {
-      valuesLog.close();
-      throw new VersionUpdatedException(storagePath, DATA_FORMAT_VERSION, dataFormatVersion);
-    }
-    return valuesLog;
+  }
+
+  public static @NotNull DurableStringEnumerator openAsync(@NotNull Path storagePath,
+                                                           @NotNull PersistentFSLoaderExecutor executor) throws IOException {
+    AppendOnlyLogOverMMappedFile valuesLog = openValuesLog(storagePath);
+    CompletableFuture<Int2IntMultimap> future = executor.async(() -> buildValueToIdIndex(valuesLog));
+
+    return new DurableStringEnumerator(
+      valuesLog,
+      () -> {
+        try {
+          return future.get();
+        }
+        catch (ExecutionException | InterruptedException e) {
+          throw new IOException(e);
+        }
+      }
+    );
   }
 
   @Override
@@ -103,23 +115,18 @@ public final class DurableStringEnumerator implements ScannableDataEnumeratorEx<
     if (value == null) {
       return NULL_ID;
     }
-    try {
-      int valueHash = hashOf(value);
-      synchronized (valueHashToId) {
-        int foundId = lookupValue(value, valueHash);
-        if (foundId != NULL_ID) {
-          return foundId;
-        }
-
-        int id = writeString(value, valuesLog);
-
-        valueHashToId.put(valueHash, id);
-        maxId = Math.max(maxId, id);
-        return id;
+    int valueHash = hashOf(value);
+    synchronized (valueHashLock) {
+      Int2IntMultimap valueHashToId = valueHashToId();
+      int foundId = lookupValue(valueHashToId, value, valueHash);
+      if (foundId != NULL_ID) {
+        return foundId;
       }
-    }
-    catch (UncheckedIOException uiox) {
-      throw uiox.ioException();
+
+      int id = writeString(value, valuesLog);
+
+      valueHashToId.put(valueHash, id);
+      return id;
     }
   }
 
@@ -129,8 +136,9 @@ public final class DurableStringEnumerator implements ScannableDataEnumeratorEx<
       return NULL_ID;
     }
     int valueHash = hashOf(value);
-    synchronized (valueHashToId) {
-      return lookupValue(value, valueHash);
+    synchronized (valueHashLock) {
+      Int2IntMultimap valueHashToId = valueHashToId();
+      return lookupValue(valueHashToId, value, valueHash);
     }
   }
 
@@ -151,7 +159,7 @@ public final class DurableStringEnumerator implements ScannableDataEnumeratorEx<
     //             This is less taxing on memory (consumes native/mapped instead of heap), and also concurrent,
     //             and also makes more sense by itself.
 
-    if (valueId <= NULL_ID || valueId > maxId) {
+    if (valueId <= NULL_ID) {
       return null;
     }
     return valuesLog.read(valueId, DurableStringEnumerator::readString);
@@ -170,7 +178,16 @@ public final class DurableStringEnumerator implements ScannableDataEnumeratorEx<
     valuesLog.close();
   }
 
+
   // ===================== implementation: =============================================================== //
+
+  //@GuardedBy("valueHashLock")
+  private @NotNull Int2IntMultimap valueHashToId() throws IOException {
+    if (valueHashToId == null) {
+      valueHashToId = valueHashToIdBuilder.compute();
+    }
+    return valueHashToId;
+  }
 
   private static int hashOf(@NotNull String value) {
     int hash = value.hashCode();
@@ -184,24 +201,30 @@ public final class DurableStringEnumerator implements ScannableDataEnumeratorEx<
     return hash;
   }
 
-  //@GuardedBy("valueHashToId")
-  private int lookupValue(@NotNull String value,
-                          int hash) {
+  //@GuardedBy("valueHashLock")
+  private int lookupValue(@NotNull Int2IntMultimap valueHashToId,
+                          @NotNull String value,
+                          int hash) throws IOException {
     IntRef foundIdRef = new IntRef(NULL_ID);
-    valueHashToId.lookup(hash, candidateId -> {
-      try {
-        String candidateValue = valuesLog.read(candidateId, DurableStringEnumerator::readString);
-        if (candidateValue.equals(value)) {
-          foundIdRef.set(candidateId);
-          return false;//stop
+    try {
+      valueHashToId.lookup(hash, candidateId -> {
+        try {
+          String candidateValue = valuesLog.read(candidateId, DurableStringEnumerator::readString);
+          if (candidateValue.equals(value)) {
+            foundIdRef.set(candidateId);
+            return false;//stop
+          }
+          return true;
         }
-        return true;
-      }
-      catch (IOException ex) {
-        throw new UncheckedIOException(ex);
-      }
-    });
-    return foundIdRef.get();
+        catch (IOException ex) {
+          throw new UncheckedIOException(ex);
+        }
+      });
+      return foundIdRef.get();
+    }
+    catch (UncheckedIOException ex) {
+      throw ex.getCause();
+    }
   }
 
   //MAYBE RC: instead of converting string bytes to/from UTF8 -- maybe just store String fields as-is?
@@ -218,5 +241,35 @@ public final class DurableStringEnumerator implements ScannableDataEnumeratorEx<
     long appendedId = valuesLog.append(valueBytes);
     int id = Math.toIntExact(appendedId);
     return id;
+  }
+
+
+  private static @NotNull Int2IntMultimap buildValueToIdIndex(AppendOnlyLogOverMMappedFile valuesLog) throws IOException {
+    Int2IntMultimap valueHashToId = new Int2IntMultimap();
+    valuesLog.forEachRecord((logId, buffer) -> {
+      String value = readString(buffer);
+      int id = Math.toIntExact(logId);
+
+      int valueHash = hashOf(value);
+
+      valueHashToId.put(valueHash, id);
+      return true;
+    });
+    return valueHashToId;
+  }
+
+  private static @NotNull AppendOnlyLogOverMMappedFile openValuesLog(@NotNull Path storagePath) throws IOException {
+    AppendOnlyLogOverMMappedFile valuesLog = new AppendOnlyLogOverMMappedFile(
+      new MMappedFileStorage(storagePath, PAGE_SIZE)
+    );
+    int dataFormatVersion = valuesLog.getDataVersion();
+    if (dataFormatVersion == 0) {//FIXME RC: also check log is empty
+      valuesLog.setDataVersion(DATA_FORMAT_VERSION);
+    }
+    else if (dataFormatVersion != DATA_FORMAT_VERSION) {
+      valuesLog.close();
+      throw new VersionUpdatedException(storagePath, DATA_FORMAT_VERSION, dataFormatVersion);
+    }
+    return valuesLog;
   }
 }

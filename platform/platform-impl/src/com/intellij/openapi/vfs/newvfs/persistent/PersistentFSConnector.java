@@ -1,7 +1,6 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vfs.newvfs.persistent;
 
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.vfs.newvfs.persistent.intercept.ConnectionInterceptor;
 import com.intellij.openapi.vfs.newvfs.persistent.log.VfsLog;
@@ -171,9 +170,8 @@ final class PersistentFSConnector {
     Path basePath = cachesDir.toAbsolutePath();
     Files.createDirectories(basePath);
 
-    //MAYBE RC: use Dispatchers.IO-kind pool, with many threads (appExecutor has 1 core thread, so needs time to inflate)
     //MAYBE RC: looks like it all could be much easier with coroutines
-    PersistentFSLoaderExecutor pool = ApplicationManager.getApplication().getService(PersistentFsConnectorHelper.class).executor;
+    PersistentFSLoaderExecutor pool = PersistentFsConnectorHelper.INSTANCE.executor();
 
     PersistentFSPaths persistentFSPaths = new PersistentFSPaths(cachesDir);
     PersistentFSLoader vfsLoader = new PersistentFSLoader(persistentFSPaths, enableVfsLog, pool);

@@ -9,7 +9,7 @@ import kotlin.io.path.absolute
 
 class DurableStringEnumeratorApp: App {
   private class DSE : StringEnum {
-    val instance = DurableStringEnumerator(Path.of("pse.data").absolute())
+    val instance = DurableStringEnumerator.open(Path.of("pse.data").absolute())
 
     override fun enumerate(s: String): Int {
       return instance.enumerate(s)

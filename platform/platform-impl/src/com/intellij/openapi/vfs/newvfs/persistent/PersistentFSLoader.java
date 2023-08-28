@@ -145,8 +145,10 @@ public final class PersistentFSLoader {
       vfsLog = null;
     }
 
-    CompletableFuture<ScannableDataEnumeratorEx<String>> namesStorageFuture = executorService.async(() -> createFileNamesEnumerator(namesFile));
-    CompletableFuture<AbstractAttributesStorage> attributesStorageFuture = executorService.async(() -> createAttributesStorage(attributesFile));
+    CompletableFuture<ScannableDataEnumeratorEx<String>> namesStorageFuture =
+      executorService.async(() -> createFileNamesEnumerator(namesFile));
+    CompletableFuture<AbstractAttributesStorage> attributesStorageFuture =
+      executorService.async(() -> createAttributesStorage(attributesFile));
     CompletableFuture<RefCountingContentStorage> contentsStorageFuture = executorService.async(() -> createContentStorage(contentsFile));
     CompletableFuture<PersistentFSRecordsStorage> recordsStorageFuture = executorService.async(() -> createRecordsStorage(recordsFile));
 
@@ -608,7 +610,7 @@ public final class PersistentFSLoader {
     }
   }
 
-  public static @NotNull ScannableDataEnumeratorEx<String> createFileNamesEnumerator(@NotNull Path namesFile) throws IOException {
+  private @NotNull ScannableDataEnumeratorEx<String> createFileNamesEnumerator(@NotNull Path namesFile) throws IOException {
     if (FSRecordsImpl.USE_FAST_NAMES_IMPLEMENTATION) {
       LOG.info("VFS uses 'fast' (hash) names enumerator");
       //if we use _same_ namesFile for fast/regular enumerator (which seems natural at a first glance), then
@@ -617,7 +619,7 @@ public final class PersistentFSLoader {
       //To get an expected exception on transition, we need regular/fast enumerator to use different files,
       // e.g. 'names.dat' / 'names.dat.mmap'
       Path namesPathEx = Path.of(namesFile + ".mmap");
-      return new DurableStringEnumerator(namesPathEx);
+      return DurableStringEnumerator.openAsync(namesPathEx, executorService);
     }
     else {
       LOG.info("VFS uses regular (btree) names enumerator");
