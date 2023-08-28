@@ -52,7 +52,7 @@ public class GitRebaser {
                                 @NotNull List<String> parameters,
                                 @Nullable final Runnable onCancel,
                                 @Nullable GitLineHandlerListener lineListener) {
-    final GitLineHandler rebaseHandler = createHandler(root);
+    final GitLineHandler rebaseHandler = new GitLineHandler(myProject, root, GitCommand.REBASE);
     rebaseHandler.setStdoutSuppressed(false);
     rebaseHandler.addParameters(parameters);
     if (lineListener != null) {
@@ -82,10 +82,6 @@ public class GitRebaser {
       }
       return GitUpdateResult.CANCEL;
     }
-  }
-
-  protected GitLineHandler createHandler(VirtualFile root) {
-    return new GitLineHandler(myProject, root, GitCommand.REBASE);
   }
 
   public void abortRebase(@NotNull VirtualFile root) {
