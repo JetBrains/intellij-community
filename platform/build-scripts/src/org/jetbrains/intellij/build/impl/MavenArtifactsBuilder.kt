@@ -172,7 +172,7 @@ open class MavenArtifactsBuilder(protected val context: BuildContext, private va
     for ((dependency, scope) in scopedDependencies(module)) {
       if (dependency is JpsModuleDependency) {
         val depModule = dependency.module
-        if (shouldSkipModule(depModule!!.name, true)) {
+        if (depModule == null || shouldSkipModule(depModule.name, true)) {
           continue
         }
 
