@@ -30,6 +30,7 @@ import javax.accessibility.Accessible;
 import javax.accessibility.AccessibleContext;
 import javax.accessibility.AccessibleRole;
 import javax.swing.*;
+import javax.swing.border.EmptyBorder;
 import java.awt.*;
 import java.awt.event.*;
 import java.util.List;
@@ -517,11 +518,11 @@ public class TabLabel extends JPanel implements Accessible, DataProvider {
     }
 
     MergedUiDecoration resultDec = mergeUiDecorations(decoration, JBTabsImpl.defaultDecorator.getDecoration());
-    setBorder(IdeBorderFactory.createEmptyBorder(resultDec.labelInsets()));
+    setBorder(new EmptyBorder(resultDec.labelInsets()));
     myLabel.setIconTextGap(resultDec.iconTextGap());
 
     Insets contentInsets = resultDec.contentInsetsSupplier().apply(getActionsPosition());
-    myLabelPlaceholder.setBorder(IdeBorderFactory.createEmptyBorder(contentInsets));
+    myLabelPlaceholder.setBorder(new EmptyBorder(contentInsets));
   }
 
   public static MergedUiDecoration mergeUiDecorations(@NotNull UiDecorator.UiDecoration customDec,
@@ -542,8 +543,8 @@ public class TabLabel extends JPanel implements Accessible, DataProvider {
 
   private static @NotNull Insets mergeInsets(@Nullable Insets custom, @NotNull Insets def) {
     if (custom != null) {
-      return JBInsets.addInsets(new Insets(getValue(def.top, custom.top), getValue(def.left, custom.left),
-                                           getValue(def.bottom, custom.bottom), getValue(def.right, custom.right)));
+      return new Insets(getValue(def.top, custom.top), getValue(def.left, custom.left),
+                        getValue(def.bottom, custom.bottom), getValue(def.right, custom.right));
     }
     return def;
   }
