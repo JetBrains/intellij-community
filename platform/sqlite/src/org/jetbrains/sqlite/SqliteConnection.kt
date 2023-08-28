@@ -267,6 +267,17 @@ internal fun sqlBind(pointer: Long, index: Int, v: Any?, db: SqliteDb) {
   }
 }
 
+val SQLITE_ALLOWED_TYPES = setOf(
+  Int::class.java,
+  java.lang.Integer::class.java,
+  Long::class.java,
+  String::class.java,
+  Short::class.java,
+  Float::class.java,
+  Double::class.java,
+  ByteArray::class.java
+)
+
 internal fun stepInBatch(statementPointer: Long, db: NativeDB, batchIndex: Int) {
   val status = db.step(statementPointer)
   if (status != SqliteCodes.SQLITE_DONE) {
