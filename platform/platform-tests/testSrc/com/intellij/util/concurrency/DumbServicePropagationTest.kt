@@ -4,6 +4,7 @@ package com.intellij.util.concurrency
 import com.intellij.concurrency.TestElement
 import com.intellij.concurrency.TestElementKey
 import com.intellij.concurrency.currentThreadContext
+import com.intellij.idea.IgnoreJUnit3
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.blockingContext
@@ -89,7 +90,8 @@ class DumbServicePropagationTest : BasePlatformTestCase() {
     assertTrue("runWhenSmart should be completed", callTracker.isCompleted)
   }
 
-  fun testDumbTaskIsAwaited() = doPropagationApplicationTest(propagateCancellation = true) {
+  @IgnoreJUnit3(reason = "Dumb service currently does not propagate cancellation.")
+  fun ignoreDumbTaskIsAwaited() = doPropagationApplicationTest(propagateCancellation = true) {
     val dumbSemaphore = Semaphore(1)
     val queueingComplete = Semaphore(1)
     disposeOnTearDown(Disposable { // do not give up semaphore in case of test failure
@@ -131,7 +133,8 @@ class DumbServicePropagationTest : BasePlatformTestCase() {
     job.join()
   }
 
-  fun testDoubleScheduledTaskIsEaten() = doPropagationApplicationTest(propagateCancellation = true) {
+  @IgnoreJUnit3(reason = "Dumb service currently does not propagate cancellation.")
+  fun ignoreDoubleScheduledTaskIsEaten() = doPropagationApplicationTest(propagateCancellation = true) {
     var job by AtomicReference<Job>(null)
     var invocationCounter by AtomicReference(0)
     val tasksAreScheduled = CountDownLatch(1)
