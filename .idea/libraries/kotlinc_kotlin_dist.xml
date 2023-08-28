@@ -1,12 +1,6 @@
 <component name="libraryTable">
   <library name="kotlinc.kotlin-dist" type="repository">
-    <properties include-transitive-deps="false" maven-id="org.jetbrains.kotlin:kotlin-dist-for-ide:1.9.0-release-358">
-      <verification>
-        <artifact url="file://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-dist-for-ide/1.9.0-release-358/kotlin-dist-for-ide-1.9.0-release-358.jar">
-          <sha256sum>1b85efa55643f31e348f8388484af2cf3623023c020cb1b6416667f25111e6d2</sha256sum>
-        </artifact>
-      </verification>
-    </properties>
+    <properties include-transitive-deps="false" maven-id="org.jetbrains.kotlin:kotlin-dist-for-ide:1.9.0-release-358" />
     <CLASSES>
       <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-dist-for-ide/1.9.0-release-358/kotlin-dist-for-ide-1.9.0-release-358.jar!/" />
     </CLASSES>

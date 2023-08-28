@@ -1,18 +1,12 @@
 <component name="libraryTable">
   <library name="kotlinc.kotlin-compiler-common" type="repository">
-    <properties include-transitive-deps="false" maven-id="org.jetbrains.kotlin:kotlin-compiler-common-for-ide:1.9.20-dev-5606">
-      <verification>
-        <artifact url="file://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-compiler-common-for-ide/1.9.20-dev-5606/kotlin-compiler-common-for-ide-1.9.20-dev-5606.jar">
-          <sha256sum>d0e5e3f968385e15cf3ca507295cf9eabb4e409f4b3b847d496cc47db9963064</sha256sum>
-        </artifact>
-      </verification>
-    </properties>
+    <properties include-transitive-deps="false" maven-id="org.jetbrains.kotlin:kotlin-compiler-common-for-ide:1.9.20-Beta-72" />
     <CLASSES>
-      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-compiler-common-for-ide/1.9.20-dev-5606/kotlin-compiler-common-for-ide-1.9.20-dev-5606.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-compiler-common-for-ide/1.9.20-Beta-72/kotlin-compiler-common-for-ide-1.9.20-Beta-72.jar!/" />
     </CLASSES>
     <JAVADOC />
     <SOURCES>
-      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-compiler-common-for-ide/1.9.20-dev-5606/kotlin-compiler-common-for-ide-1.9.20-dev-5606-sources.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-compiler-common-for-ide/1.9.20-Beta-72/kotlin-compiler-common-for-ide-1.9.20-Beta-72-sources.jar!/" />
     </SOURCES>
   </library>
 </component>

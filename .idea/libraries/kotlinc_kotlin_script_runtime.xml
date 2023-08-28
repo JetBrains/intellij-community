@@ -1,18 +1,12 @@
 <component name="libraryTable">
   <library name="kotlinc.kotlin-script-runtime" type="repository">
-    <properties maven-id="org.jetbrains.kotlin:kotlin-script-runtime:1.9.20-dev-5606">
-      <verification>
-        <artifact url="file://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-script-runtime/1.9.20-dev-5606/kotlin-script-runtime-1.9.20-dev-5606.jar">
-          <sha256sum>98a629b8f67ae72e46e5356198ed1cd7c46ef51144e0f085fb911aa50e9338fe</sha256sum>
-        </artifact>
-      </verification>
-    </properties>
+    <properties maven-id="org.jetbrains.kotlin:kotlin-script-runtime:1.9.20-Beta-72" />
     <CLASSES>
-      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-script-runtime/1.9.20-dev-5606/kotlin-script-runtime-1.9.20-dev-5606.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-script-runtime/1.9.20-Beta-72/kotlin-script-runtime-1.9.20-Beta-72.jar!/" />
     </CLASSES>
     <JAVADOC />
     <SOURCES>
-      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-script-runtime/1.9.20-dev-5606/kotlin-script-runtime-1.9.20-dev-5606-sources.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-script-runtime/1.9.20-Beta-72/kotlin-script-runtime-1.9.20-Beta-72-sources.jar!/" />
     </SOURCES>
   </library>
 </component>
