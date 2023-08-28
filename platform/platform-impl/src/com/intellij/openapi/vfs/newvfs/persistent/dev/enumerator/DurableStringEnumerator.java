@@ -145,7 +145,7 @@ public final class DurableStringEnumerator implements ScannableDataEnumeratorEx<
   @Override
   public @Nullable String valueOf(int valueId) throws IOException {
     //FIXME RC: DataEnumerator.valueOf() specifies that it must return null for unknown (i.e. not enumerated before)
-    //          ids. Current implementation doesn't do that, generally: id is supplied to valuesLog, which most
+    //          ids. Current implementation generally doesn't comply: id is supplied to valuesLog, which most
     //          likely throws some random exception if supplied id is not a valid record id.
     //          We could 'fix' it by keeping a set of valid ids here, in enumerator -- but this is quite a memory
     //          consumption (almost same as .valueHashToId -- which is already quite noticeable), and also adds to
@@ -159,7 +159,7 @@ public final class DurableStringEnumerator implements ScannableDataEnumeratorEx<
     //             This is less taxing on memory (consumes native/mapped instead of heap), and also concurrent,
     //             and also makes more sense by itself.
 
-    if (valueId <= NULL_ID) {
+    if (!valuesLog.isValidId(valueId)) {
       return null;
     }
     return valuesLog.read(valueId, DurableStringEnumerator::readString);

@@ -53,6 +53,12 @@ public final class AppendOnlyLogOverPagedStorage implements AppendOnlyLog {
   }
 
   @Override
+  public boolean isValidId(long id) {
+    //TODO please, implement me
+    throw new UnsupportedOperationException("Method is not implemented yet");
+  }
+
+  @Override
   public boolean forEachRecord(@NotNull RecordReader reader) throws IOException {
     //TODO please, implement me
     throw new UnsupportedOperationException("Method is not implemented yet");

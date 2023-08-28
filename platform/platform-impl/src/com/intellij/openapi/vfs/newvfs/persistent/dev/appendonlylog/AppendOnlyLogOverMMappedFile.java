@@ -401,6 +401,18 @@ public final class AppendOnlyLogOverMMappedFile implements AppendOnlyLog {
   }
 
   @Override
+  public boolean isValidId(long recordId) {
+    if (recordId <= 0) {
+      return false;
+    }
+    long recordOffset = recordIdToOffsetUnchecked(recordId);
+    if (!is32bAligned(recordOffset)) {
+      return false;
+    }
+    return recordOffset < firstUnAllocatedOffset();
+  }
+
+  @Override
   public boolean forEachRecord(@NotNull RecordReader reader) throws IOException {
     int pageSize = storage.pageSize();
     long firstUnallocatedOffset = firstUnAllocatedOffset();
@@ -735,11 +747,15 @@ public final class AppendOnlyLogOverMMappedFile implements AppendOnlyLog {
 
   @VisibleForTesting
   static long recordIdToOffset(long recordId) {
-    long offset = recordId - 1 + HeaderLayout.HEADER_SIZE;
+    long offset = recordIdToOffsetUnchecked(recordId);
     if (!is32bAligned(offset)) {
       throw new IllegalArgumentException("recordId(=" + recordId + ") is invalid: recordOffsetInFile(=" + offset + ") is not 32b-aligned");
     }
     return offset;
+  }
+
+  private static long recordIdToOffsetUnchecked(long recordId) {
+    return recordId - 1 + HeaderLayout.HEADER_SIZE;
   }
 
 
