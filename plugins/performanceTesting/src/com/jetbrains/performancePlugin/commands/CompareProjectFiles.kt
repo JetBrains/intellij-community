@@ -1,6 +1,5 @@
 package com.jetbrains.performancePlugin.commands
 
-import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.Task
@@ -192,8 +191,12 @@ class CompareProjectFiles(text: String, line: Int) : AbstractCommand(text, line)
     val input = text.substring(PREFIX.length).trim()
 
     val index = input.split(" ")
-    val expectedDirectory = Paths.get(index[0])
-    val actualDirectory = Paths.get(index[1])
+    val property  = System.getProperty("dump.project.files.directory")
+    val expectedDirectory = if(property != null) Paths.get(property) else {
+      actionCallback.reject("dump.project.files.directory property must be specified")
+      return actionCallback.toPromise()
+    }
+    val actualDirectory = Paths.get(index[0])
 
     val failureDiagnosticDirectory = getFailureDiagnosticDirectory()
 

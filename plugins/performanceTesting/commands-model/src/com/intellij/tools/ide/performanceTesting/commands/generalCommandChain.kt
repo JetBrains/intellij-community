@@ -372,8 +372,8 @@ fun <T : CommandChain> T.dumpProjectFiles(): T {
 
 const val COMPARE_PROJECT_FILES_CMD_PREFIX = "${CMD_PREFIX}compareProjectFiles"
 
-fun <T : CommandChain> T.compareProjectFiles(firstDir: String, secondDir: String): T {
-  addCommand(COMPARE_PROJECT_FILES_CMD_PREFIX, firstDir, secondDir)
+fun <T : CommandChain> T.compareProjectFiles(previousDir: String): T {
+  addCommand(COMPARE_PROJECT_FILES_CMD_PREFIX, previousDir)
   return this
 }
 
