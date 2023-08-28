@@ -107,6 +107,6 @@ public final class AppExecutorUtil {
 
   @ApiStatus.Internal
   public static boolean propagateContextOrCancellation() {
-    return LoadingState.APP_STARTED.isOccurred() && (Propagation.isPropagateThreadContext() || Propagation.isPropagateCancellation());
+    return LoadingState.COMPONENTS_LOADED.isOccurred() && (Propagation.isPropagateThreadContext() || Propagation.isPropagateCancellation());
   }
 }
