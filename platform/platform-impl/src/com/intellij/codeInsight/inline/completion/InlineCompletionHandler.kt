@@ -18,6 +18,7 @@ import com.intellij.psi.PsiFile
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.collectIndexed
+import kotlinx.coroutines.flow.emptyFlow
 import kotlinx.coroutines.flow.transformWhile
 import org.jetbrains.annotations.ApiStatus
 import java.util.concurrent.atomic.AtomicBoolean
@@ -27,7 +28,13 @@ class InlineCompletionHandler(private val scope: CoroutineScope) : CodeInsightAc
   private var runningJob: Job? = null
 
   private fun getProvider(event: InlineCompletionEvent): InlineCompletionProvider? {
-    return InlineCompletionProvider.extensions().firstOrNull { it.isEnabled(event) }
+    return InlineCompletionProvider.extensions().firstOrNull {
+      try {
+        it.isEnabled(event)
+      } catch (e: Throwable) {
+        false
+      }
+    }
   }
 
   override fun invoke(project: Project, editor: Editor, file: PsiFile) {
@@ -53,7 +60,12 @@ class InlineCompletionHandler(private val scope: CoroutineScope) : CodeInsightAc
     runningJob = scope.launch {
       val modificationStamp = request.document.modificationStamp
       val resultFlow = withContext(Dispatchers.IO) {
-        provider.getProposals(request)
+        try {
+          provider.getProposals(request)
+        } catch (e: Throwable) {
+          e.printStackTrace()
+          emptyFlow()
+        }
       }
 
       val editor = request.editor
