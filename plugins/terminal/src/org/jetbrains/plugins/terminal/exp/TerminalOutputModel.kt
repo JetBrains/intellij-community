@@ -1,6 +1,7 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.terminal.exp
 
+import com.intellij.openapi.Disposable
 import com.intellij.openapi.editor.Document
 import com.intellij.openapi.editor.RangeMarker
 import com.intellij.openapi.editor.ex.EditorEx
@@ -8,14 +9,25 @@ import com.intellij.openapi.editor.impl.RangeMarkerImpl
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.TextRange
 import com.intellij.util.concurrency.annotations.RequiresEdt
+import java.awt.Rectangle
 import java.util.*
+import java.util.concurrent.CopyOnWriteArrayList
 
 class TerminalOutputModel(private val editor: EditorEx) {
   private val blocks: MutableList<CommandBlock> = Collections.synchronizedList(ArrayList())
   private val decorations: MutableMap<CommandBlock, BlockDecoration> = HashMap()
   private val highlightings: MutableMap<CommandBlock, List<HighlightingInfo>> = LinkedHashMap()  // order matters
+  private val blockStates: MutableMap<CommandBlock, List<BlockDecorationState>> = HashMap()
 
   private val document: Document = editor.document
+  private val listeners: MutableList<TerminalOutputListener> = CopyOnWriteArrayList()
+
+  fun addListener(listener: TerminalOutputListener, disposable: Disposable? = null) {
+    listeners.add(listener)
+    if (disposable != null) {
+      Disposer.register(disposable) { listeners.remove(listener) }
+    }
+  }
 
   @RequiresEdt
   fun createBlock(command: String?): CommandBlock {
@@ -58,10 +70,24 @@ class TerminalOutputModel(private val editor: EditorEx) {
     blocks.remove(block)
     decorations.remove(block)
     highlightings.remove(block)
+    blockStates.remove(block)
   }
 
   fun getLastBlock(): CommandBlock? {
     return blocks.lastOrNull()
+  }
+
+  fun getByOffset(offset: Int): CommandBlock? {
+    // todo: better to use binary search here, but default implementation doesn't not acquire the lock of the list
+    return blocks.find { offset in (it.startOffset..it.endOffset) }
+  }
+
+  @RequiresEdt
+  fun getBlockBounds(block: CommandBlock): Rectangle {
+    val topY = editor.offsetToXY(block.startOffset).y - TerminalUi.blockTopInset
+    val bottomY = editor.offsetToXY(block.endOffset).y + editor.lineHeight + TerminalUi.blockBottomInset
+    val width = editor.scrollingModel.visibleArea.width - TerminalUi.cornerToBlockInset
+    return Rectangle(0, topY, width, bottomY - topY)
   }
 
   fun getBlocksSize(): Int = blocks.size
@@ -89,6 +115,37 @@ class TerminalOutputModel(private val editor: EditorEx) {
   @RequiresEdt
   fun putHighlightings(block: CommandBlock, highlightings: List<HighlightingInfo>) {
     this.highlightings[block] = highlightings
+  }
+
+  @RequiresEdt
+  fun getBlockState(block: CommandBlock): List<BlockDecorationState> {
+    return blockStates[block] ?: emptyList()
+  }
+
+  @RequiresEdt
+  fun addBlockState(block: CommandBlock, state: BlockDecorationState) {
+    val curStates = blockStates[block] ?: listOf()
+    if (curStates.find { it.name == state.name } == null) {
+      updateBlockStates(block, curStates, curStates.toMutableList() + state)
+    }
+  }
+
+  @RequiresEdt
+  fun removeBlockState(block: CommandBlock, stateName: String) {
+    val curStates = blockStates[block]
+    if (curStates?.find { it.name == stateName } != null) {
+      updateBlockStates(block, curStates, curStates.filter { it.name != stateName })
+    }
+  }
+
+  private fun updateBlockStates(block: CommandBlock, oldStates: List<BlockDecorationState>, newStates: List<BlockDecorationState>) {
+    blockStates[block] = newStates
+    listeners.forEach { it.blockDecorationStateChanged(block, oldStates, newStates) }
+  }
+
+  interface TerminalOutputListener {
+    fun blockRemoved(block: CommandBlock) {}
+    fun blockDecorationStateChanged(block: CommandBlock, oldStates: List<BlockDecorationState>, newStates: List<BlockDecorationState>) {}
   }
 }
 

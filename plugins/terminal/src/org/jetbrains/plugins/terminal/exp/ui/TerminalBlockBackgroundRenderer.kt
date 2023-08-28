@@ -5,20 +5,21 @@ import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.markup.CustomHighlighterOrder
 import com.intellij.openapi.editor.markup.CustomHighlighterRenderer
 import com.intellij.openapi.editor.markup.RangeHighlighter
-import com.intellij.util.ui.GraphicsUtil
-import org.jetbrains.plugins.terminal.exp.TerminalBlocksDecorator
 import org.jetbrains.plugins.terminal.exp.TerminalUi
 import org.jetbrains.plugins.terminal.exp.TerminalUiUtils.toFloatAndScale
+import java.awt.Color
 import java.awt.GradientPaint
 import java.awt.Graphics
 import java.awt.Graphics2D
 import java.awt.geom.Rectangle2D
 
 /**
- * Paints the gradient background of the block, but only in the area of the text (without top, left and bottom corners).
+ * Paints the background of the block, but only in the area of the text (without top, left and bottom corners).
  * So the selection can be painted on top of it.
+ * Paints the linear gradient from the left to right if [backgroundEnd] is specified.
  */
-class TerminalBlockBackgroundRenderer : CustomHighlighterRenderer {
+class TerminalBlockBackgroundRenderer(private val backgroundStart: Color,
+                                      private val backgroundEnd: Color? = null) : CustomHighlighterRenderer {
   override fun getOrder(): CustomHighlighterOrder = CustomHighlighterOrder.BEFORE_BACKGROUND
 
   override fun paint(editor: Editor, highlighter: RangeHighlighter, g: Graphics) {
@@ -30,9 +31,11 @@ class TerminalBlockBackgroundRenderer : CustomHighlighterRenderer {
 
     val g2d = g.create() as Graphics2D
     try {
-      GraphicsUtil.setupAntialiasing(g2d)
-      g2d.paint = GradientPaint(0f, topY, TerminalUi.blockBackgroundStart,
-                                width, topY, TerminalUi.blockBackgroundEnd)
+      val paint = if (backgroundEnd != null) {
+        GradientPaint(0f, topY, backgroundStart, width, topY, backgroundEnd)
+      }
+      else backgroundStart
+      g2d.paint = paint
       g2d.fill(rect)
     }
     finally {

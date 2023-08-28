@@ -11,13 +11,12 @@ import com.intellij.openapi.editor.markup.HighlighterTargetArea
 import com.intellij.openapi.editor.markup.RangeHighlighter
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.intellij.util.ui.JBUI
-import org.jetbrains.plugins.terminal.exp.ui.TerminalBlockBackgroundRenderer
-import org.jetbrains.plugins.terminal.exp.ui.TerminalBlockCornersRenderer
-import org.jetbrains.plugins.terminal.exp.ui.TerminalBlockLeftAreaRenderer
 import java.awt.Graphics
 
-class TerminalBlocksDecorator(private val editor: EditorEx) {
+class TerminalBlocksDecorator(private val outputModel: TerminalOutputModel,
+                              private val editor: EditorEx) : TerminalOutputModel.TerminalOutputListener {
   init {
+    outputModel.addListener(this)
     editor.markupModel.addRangeHighlighter(0, 0,
                                            // the order doesn't matter because there is only custom renderer with its own order
                                            HighlighterLayer.LAST, null,
@@ -29,7 +28,7 @@ class TerminalBlocksDecorator(private val editor: EditorEx) {
   }
 
   @RequiresEdt
-  fun installDecoration(block: CommandBlock, isFirstBlock: Boolean = false): BlockDecoration {
+  fun installDecoration(block: CommandBlock, isFirstBlock: Boolean = false) {
     // add additional empty space on top of the block, if it is the first block
     val topInset = TerminalUi.blockTopInset + if (isFirstBlock) TerminalUi.blocksGap else 0
     val topRenderer = EmptyWidthInlayRenderer(topInset)
@@ -40,19 +39,32 @@ class TerminalBlocksDecorator(private val editor: EditorEx) {
     val bgHighlighter = editor.markupModel.addRangeHighlighter(block.startOffset, block.endOffset,
                                                                // the order doesn't matter because there is only custom renderer with its own order
                                                                HighlighterLayer.LAST, null,
-                                                               HighlighterTargetArea.LINES_IN_RANGE).apply {
-      isGreedyToRight = true
-      customRenderer = TerminalBlockBackgroundRenderer()
-    }
+                                                               HighlighterTargetArea.LINES_IN_RANGE)
+    bgHighlighter.isGreedyToRight = true
     val cornersHighlighter = editor.markupModel.addRangeHighlighter(block.startOffset, block.endOffset,
                                                                     // the line marker should be painted first, because it is painting the block background
                                                                     HighlighterLayer.FIRST - 100, null,
-                                                                    HighlighterTargetArea.LINES_IN_RANGE).apply {
-      isGreedyToRight = true
-      lineMarkerRenderer = TerminalBlockLeftAreaRenderer()
-      customRenderer = TerminalBlockCornersRenderer()
+                                                                    HighlighterTargetArea.LINES_IN_RANGE)
+    cornersHighlighter.isGreedyToRight = true
+
+    val decoration = BlockDecoration(bgHighlighter, cornersHighlighter, topInlay, bottomInlay)
+    outputModel.putDecoration(block, decoration)
+    outputModel.addBlockState(block, DefaultBlockDecorationState())
+  }
+
+  override fun blockDecorationStateChanged(block: CommandBlock,
+                                           oldStates: List<BlockDecorationState>,
+                                           newStates: List<BlockDecorationState>) {
+    val decoration = outputModel.getDecoration(block) ?: return
+    val state = newStates.maxByOrNull { it.priority } ?: return
+    with(decoration) {
+      backgroundHighlighter.customRenderer = state.backgroundRenderer
+      cornersHighlighter.customRenderer = state.cornersRenderer
+      cornersHighlighter.lineMarkerRenderer = state.leftAreaRenderer
     }
-    return BlockDecoration(bgHighlighter, cornersHighlighter, topInlay, bottomInlay)
+
+    val bounds = outputModel.getBlockBounds(block)
+    editor.component.repaint(bounds)
   }
 
   /** Inlay to just create the space between lines */

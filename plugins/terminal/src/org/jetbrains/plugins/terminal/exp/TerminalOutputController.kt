@@ -29,10 +29,14 @@ class TerminalOutputController(
 ) : TerminalModel.TerminalListener {
   private val outputModel: TerminalOutputModel = TerminalOutputModel(editor)
   private val terminalModel: TerminalModel = session.model
-  private val blocksDecorator: TerminalBlocksDecorator = TerminalBlocksDecorator(editor)
+  private val blocksDecorator: TerminalBlocksDecorator = TerminalBlocksDecorator(outputModel, editor)
   private val textHighlighter: TerminalTextHighlighter = TerminalTextHighlighter(outputModel)
+
   private val caretModel: TerminalCaretModel = TerminalCaretModel(session, outputModel, editor)
   private val caretPainter: TerminalCaretPainter = TerminalCaretPainter(caretModel, editor)
+
+  private val selectionModel: TerminalSelectionModel = TerminalSelectionModel(outputModel)
+  private val selectionController: TerminalSelectionController = TerminalSelectionController(selectionModel, outputModel, editor)
 
   private val palette: ColorPalette
     get() = settings.terminalColorPalette
@@ -183,8 +187,7 @@ class TerminalOutputController(
     if (outputModel.getDecoration(block) == null
         && content.text.isNotBlank()
         && content.text.trim() != "%") {
-      val decoration = blocksDecorator.installDecoration(block, isFirstBlock = outputModel.getBlocksSize() == 1)
-      outputModel.putDecoration(block, decoration)
+      blocksDecorator.installDecoration(block, isFirstBlock = outputModel.getBlocksSize() == 1)
     }
 
     editor.caretModel.moveToOffset(block.endOffset)
