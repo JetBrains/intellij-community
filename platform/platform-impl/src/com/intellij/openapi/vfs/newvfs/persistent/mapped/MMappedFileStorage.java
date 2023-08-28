@@ -44,6 +44,8 @@ public final class MMappedFileStorage implements Closeable {
   private static final AtomicInteger storages = new AtomicInteger();
   private static final AtomicInteger totalPagesMapped = new AtomicInteger();
   private static final AtomicLong totalBytesMapped = new AtomicLong();
+  /** total time (nanos) spent inside {@link Page#map(FileChannel, int)} call */
+  private static final AtomicLong totalTimeForPageMapNs = new AtomicLong();
 
   /** Log warn if > PAGES_TO_WARN_THRESHOLD pages were mapped */
   private static final int PAGES_TO_WARN_THRESHOLD = getIntProperty("vfs.memory-mapped-storage.pages-to-warn-threshold", 256);
@@ -63,13 +65,19 @@ public final class MMappedFileStorage implements Closeable {
       .setUnit("bytes")
       .ofLongs()
       .buildObserver();
+    ObservableLongMeasurement mappingTimeCounter = meter.gaugeBuilder("MappedFileStorage.totalTimeSpentOnMapping")
+      .setDescription("Total time (ns) spent inside Page.map() method (file enlargement/zeroing + map)")
+      .setUnit("ns")
+      .ofLongs()
+      .buildObserver();
     meter.batchCallback(
       () -> {
         storagesCounter.record(storages.get());
         pagesCounter.record(totalPagesMapped.get());
         pagesBytesCounter.record(totalBytesMapped.get());
+        mappingTimeCounter.record(totalTimeForPageMapNs.get());
       },
-      storagesCounter, pagesCounter, pagesBytesCounter
+      storagesCounter, pagesCounter, pagesBytesCounter, mappingTimeCounter
     );
   }
 
@@ -251,8 +259,15 @@ public final class MMappedFileStorage implements Closeable {
       //          completely random-access storages, but most our use-cases are either append-only logs,
       //          or file-attributes, which indexed by fileId, which are growing quite monotonically,
       //          so it may work
-      IOUtil.allocateFileRegion(channel, offsetInFile + pageSize);
-      return channel.map(READ_WRITE, offsetInFile, pageSize);
+      long startedAtNs = System.nanoTime();
+      try {
+        IOUtil.allocateFileRegion(channel, offsetInFile + pageSize);
+        return channel.map(READ_WRITE, offsetInFile, pageSize);
+      }
+      finally {
+        long timeSpentNs = System.nanoTime() - startedAtNs;
+        totalTimeForPageMapNs.addAndGet(timeSpentNs);
+      }
     }
 
     @Override
