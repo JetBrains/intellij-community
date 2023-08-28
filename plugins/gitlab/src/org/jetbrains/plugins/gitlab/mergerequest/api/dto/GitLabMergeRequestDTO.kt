@@ -18,7 +18,7 @@ class GitLabMergeRequestDTO(
   val id: String,
   val iid: String,
   val title: String,
-  val description: String,
+  val description: String?,
   val webUrl: String,
   val createdAt: Date,
   val targetBranch: String,
