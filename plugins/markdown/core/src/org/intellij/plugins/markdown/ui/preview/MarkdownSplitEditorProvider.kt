@@ -61,7 +61,7 @@ class MarkdownSplitEditorProvider : SplitTextEditorProvider(PsiAwareTextEditorPr
 
   private fun writeSplitLayoutState(layout: TextEditorWithPreview.Layout?, project: Project, targetElement: Element) {
     val value = layout?.name ?: return
-    writeSplitLayoutState(value, project, targetElement)
+    writeSplitLayoutState(value, targetElement)
   }
 
   private fun writeUnderlyingState(state: FileEditorState, project: Project, targetElement: Element) {
