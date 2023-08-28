@@ -130,22 +130,24 @@ public class GitRebaser {
     final GitLineHandler rh = new GitLineHandler(myProject, root, GitCommand.REBASE);
     rh.setStdoutSuppressed(false);
     rh.addParameters(skip ? "--skip" : "--continue");
+
     final GitRebaseProblemDetector rebaseConflictDetector = new GitRebaseProblemDetector();
     rh.addLineListener(rebaseConflictDetector);
+    rh.addLineListener(GitStandardProgressAnalyzer.createListener(myProgressIndicator));
 
     // TODO If interactive rebase with commit rewording was invoked, this should take the reworded message
     GitRebaser.TrivialEditor editor = new GitRebaser.TrivialEditor();
     try (GitHandlerRebaseEditorManager ignored = GitHandlerRebaseEditorManager.prepareEditor(rh, editor)) {
-      final GitTask rebaseTask = new GitTask(myProject, rh,
-                                             GitBundle.message("rebase.progress.indicator.continue.title"),
-                                             myProgressIndicator,
-                                             new GitStandardProgressAnalyzer());
-      GitCommandResult commandResult = rebaseTask.executeInCurrentThread();
-      GitTaskResult taskResult = GitTask.getTaskResult(commandResult);
-      if (taskResult == GitTaskResult.GIT_ERROR) {
-        return handleRebaseFailure(root, commandResult, rebaseConflictDetector);
-      }
-      return taskResult != GitTaskResult.CANCELLED;
+      String oldText = myProgressIndicator.getText();
+      myProgressIndicator.setText(GitBundle.message("rebase.progress.indicator.title"));
+      GitCommandResult result = myGit.runCommand(rh);
+      myProgressIndicator.setText(oldText);
+      if (result.success()) return true;
+
+      return handleRebaseContinueFailure(root, result, rebaseConflictDetector);
+    }
+    catch (ProcessCanceledException pce) {
+      return false;
     }
   }
 
@@ -165,9 +167,9 @@ public class GitRebaser {
   /**
    * @return true if the failure situation was resolved successfully, false if we failed to resolve the problem.
    */
-  private boolean handleRebaseFailure(final VirtualFile root,
-                                      @NotNull GitCommandResult commandResult,
-                                      @NotNull GitRebaseProblemDetector rebaseConflictDetector) {
+  private boolean handleRebaseContinueFailure(final VirtualFile root,
+                                              @NotNull GitCommandResult commandResult,
+                                              @NotNull GitRebaseProblemDetector rebaseConflictDetector) {
     if (rebaseConflictDetector.isMergeConflict()) {
       LOG.info("handleRebaseFailure merge conflict");
       return new GitConflictResolver(myProject, Collections.singleton(root), makeParams(myProject)) {
