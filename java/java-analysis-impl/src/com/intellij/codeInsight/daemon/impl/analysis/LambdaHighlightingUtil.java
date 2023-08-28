@@ -75,17 +75,23 @@ public final class LambdaHighlightingUtil {
     if (functionalInterfaceType instanceof PsiIntersectionType) {
       Set<MethodSignature> signatures = new HashSet<>();
       for (PsiType type : ((PsiIntersectionType)functionalInterfaceType).getConjuncts()) {
-        if (checkInterfaceFunctional(type) == null) {
-          MethodSignature signature = LambdaUtil.getFunction(PsiUtil.resolveClassInType(type));
+        String error = checkInterfaceFunctional(type);
+        if (error == null) {
+          MethodSignature signature = LambdaUtil.getLambdaSignatureWithCommonSubstitutor(type);
           LOG.assertTrue(signature != null, type.getCanonicalText());
           signatures.add(signature);
+        }
+        else {
+          if (!error.equals(JavaErrorBundle.message("target.method.is.generic"))) {
+            return error;
+          }
         }
       }
 
       if (signatures.size() > 1) {
         return JavaErrorBundle.message("multiple.non.overriding.abstract.methods.found.in.0", functionalInterfaceType.getPresentableText());
       }
-      return null;
+      return signatures.isEmpty() ? JavaErrorBundle.message("not.a.functional.interface",functionalInterfaceType.getPresentableText()) : null;
     }
     PsiClassType.ClassResolveResult resolveResult = PsiUtil.resolveGenericsClassInType(functionalInterfaceType);
     PsiClass aClass = resolveResult.getElement();
