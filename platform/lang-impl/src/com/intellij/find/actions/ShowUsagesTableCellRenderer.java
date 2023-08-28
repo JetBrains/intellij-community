@@ -29,9 +29,6 @@ import javax.swing.border.EmptyBorder;
 import javax.swing.table.TableCellRenderer;
 import javax.swing.table.TableColumnModel;
 import java.awt.*;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Predicate;
 
@@ -354,7 +351,7 @@ final class ShowUsagesTableCellRenderer implements TableCellRenderer {
     SimpleTextAttributes attributes = deriveBgColor(group.getTextAttributes(isSelected), fileBgColor);
     String text = group.getPresentableGroupText();
     if (isPath(text)) {
-      renderer.appendWithClipping(text, attributes, new PathTextClipping());
+      renderer.appendWithClipping(text, attributes, PathTextClipping.getInstance());
       Dimension minSize = renderer.getMinimumSize();
       minSize.width = 50;
       renderer.setMinimumSize(minSize);
@@ -473,30 +470,6 @@ final class ShowUsagesTableCellRenderer implements TableCellRenderer {
         Rectangle b = component.getBounds();
         Insets insets = container.getInsets();
         component.setBounds(b.x, b.y, b.width, container.getSize().height - insets.top - insets.bottom);
-      }
-    }
-  }
-
-  private static class PathTextClipping implements SimpleColoredComponent.FragmentTextClipper {
-    @Override
-    public @NotNull String clipText(@NotNull SimpleColoredComponent component, @NotNull Graphics2D g2, int fragmentIndex, @NotNull String text, int availTextWidth) {
-      FontMetrics fm = component.getFontMetrics(g2.getFont());
-      if (fm.stringWidth(text) <= availTextWidth) return text;
-
-      String separator = "/";
-      String ellipsis = "...";
-      List<String> parts = new ArrayList<>(Arrays.asList(text.split(separator)));
-
-      while (!parts.isEmpty() && fm.stringWidth(String.join(separator, parts) + separator + ellipsis) > availTextWidth) {
-        parts.remove(0);
-      }
-
-      if (!parts.isEmpty()) {
-        parts.add(0, ellipsis);
-        return String.join(separator, parts);
-      } else {
-        // Path is too small to display, just show ellipsis
-        return ellipsis;
       }
     }
   }
