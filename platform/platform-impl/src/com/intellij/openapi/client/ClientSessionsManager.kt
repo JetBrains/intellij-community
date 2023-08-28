@@ -128,35 +128,36 @@ sealed class ClientSessionsManager<T : ClientSession> {
 }
 
 @Suppress("NonDefaultConstructor")
-open class ClientAppSessionsManager(app: Application) : ClientSessionsManager<ClientAppSession>() {
+open class ClientAppSessionsManager(application: Application) : ClientSessionsManager<ClientAppSession>() {
   init {
-    if (app is ApplicationImpl) {
-      @Suppress("LeakingThis")
-      registerSession(app, createLocalSession(app))
-    }
+    @Suppress("LeakingThis")
+    registerLocalSession(application)
   }
 
   /**
    * Used for [ClientId] overriding in JetBrains Client
    */
-  protected open fun createLocalSession(application: ApplicationImpl): ClientAppSessionImpl {
-    return LocalAppSessionImpl(application)
+  protected open fun registerLocalSession(application: Application) {
+    if (application is ApplicationImpl) {
+      registerSession(application, LocalAppSessionImpl(application))
+    }
   }
 }
 
 open class ClientProjectSessionsManager(project: Project) : ClientSessionsManager<ClientProjectSession>() {
   init {
+    @Suppress("LeakingThis")
+    registerLocalSession(project)
+  }
+
+  protected open fun registerLocalSession(project: Project) {
     if (project is ProjectImpl) {
-      @Suppress("LeakingThis")
-      registerSession(project, createLocalSession(project))
-    } else if (project.isDefault) {
+      registerSession(project, LocalProjectSessionImpl(project))
+    }
+    else if (project.isDefault) {
       (project.actualComponentManager as? ClientAwareComponentManager)?.let { componentManager ->
         registerSession(project, LocalProjectSessionImpl(componentManager, project))
       }
     }
-  }
-
-  protected open fun createLocalSession(project: ProjectImpl): ClientProjectSessionImpl {
-    return LocalProjectSessionImpl(project)
   }
 }
