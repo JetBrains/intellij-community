@@ -27,6 +27,7 @@ import static com.intellij.util.SystemProperties.getIntProperty;
 import static java.nio.ByteOrder.nativeOrder;
 import static java.nio.channels.FileChannel.MapMode.READ_WRITE;
 import static java.nio.file.StandardOpenOption.*;
+import static java.util.concurrent.TimeUnit.NANOSECONDS;
 
 /**
  * Storage over memory-mapped file.
@@ -65,9 +66,9 @@ public final class MMappedFileStorage implements Closeable {
       .setUnit("bytes")
       .ofLongs()
       .buildObserver();
-    ObservableLongMeasurement mappingTimeCounter = meter.gaugeBuilder("MappedFileStorage.totalTimeSpentOnMapping")
-      .setDescription("Total time (ns) spent inside Page.map() method (file enlargement/zeroing + map)")
-      .setUnit("ns")
+    ObservableLongMeasurement mappingTimeCounter = meter.gaugeBuilder("MappedFileStorage.totalTimeSpentOnMappingUs")
+      .setDescription("Total time (us) spent inside Page.map() method (file enlargement/zeroing + map)")
+      .setUnit("us")
       .ofLongs()
       .buildObserver();
     meter.batchCallback(
@@ -75,7 +76,7 @@ public final class MMappedFileStorage implements Closeable {
         storagesCounter.record(storages.get());
         pagesCounter.record(totalPagesMapped.get());
         pagesBytesCounter.record(totalBytesMapped.get());
-        mappingTimeCounter.record(totalTimeForPageMapNs.get());
+        mappingTimeCounter.record(NANOSECONDS.toMicros(totalTimeForPageMapNs.get()));
       },
       storagesCounter, pagesCounter, pagesBytesCounter, mappingTimeCounter
     );
