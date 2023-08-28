@@ -14,6 +14,7 @@ import com.intellij.psi.impl.light.LightEmptyImplementsList;
 import com.intellij.psi.impl.light.LightReferenceListBuilder;
 import com.intellij.psi.javadoc.PsiDocComment;
 import com.intellij.psi.scope.PsiScopeProcessor;
+import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.LocalSearchScope;
 import com.intellij.psi.search.SearchScope;
 import com.intellij.psi.util.PsiUtil;
@@ -89,7 +90,8 @@ public class PsiUnnamedClassImpl extends JavaStubPsiElement<PsiClassStub<?>> imp
 
   @Override
   public PsiClass @NotNull [] getSupers() {
-    return PsiClass.EMPTY_ARRAY;
+    JavaPsiFacade facade = JavaPsiFacade.getInstance(getProject());
+    return new PsiClass[]{facade.findClass(CommonClassNames.JAVA_LANG_OBJECT, GlobalSearchScope.allScope(getProject()))};
   }
 
   @Override
