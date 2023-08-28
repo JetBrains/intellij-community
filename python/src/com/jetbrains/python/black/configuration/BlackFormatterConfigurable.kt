@@ -36,7 +36,6 @@ import com.jetbrains.python.black.configuration.BlackFormatterConfiguration.Blac
 import com.jetbrains.python.newProject.steps.createPythonSdkComboBox
 import com.jetbrains.python.packaging.PyPackageManagers
 import com.jetbrains.python.packaging.PyPackagesNotificationPanel
-import com.jetbrains.python.sdk.PythonSdkAdditionalData
 import com.jetbrains.python.sdk.pythonSdk
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
@@ -280,7 +279,7 @@ class BlackFormatterConfigurable(val project: Project) : BoundConfigurable(PyBun
     enabledOnReformat = enableOnReformatCheckBox.isSelected
     enabledOnSave = enableOnSaveCheckBox.isSelected
     cmdArguments = cliArgumentsTextField.text
-    sdkUUID = (sdkSelectionComboBox.item?.sdkAdditionalData as? PythonSdkAdditionalData)?.uuid?.toString()
+    sdkName = selectedSdk?.name
 
     pathToExecutable = if (blackExecutableValidationInfo() == null) {
       blackExecutablePathField.text.nullize() ?: BlackFormatterUtil.detectBlackExecutable()?.absolutePath
