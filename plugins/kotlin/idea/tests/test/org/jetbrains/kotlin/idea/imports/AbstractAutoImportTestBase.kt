@@ -6,6 +6,7 @@ import com.intellij.openapi.util.io.FileUtil
 import com.intellij.testFramework.fixtures.impl.CodeInsightTestFixtureImpl
 import com.intellij.util.concurrency.AppExecutorUtil
 import org.jetbrains.kotlin.idea.codeInsight.KotlinCodeInsightSettings
+import org.jetbrains.kotlin.idea.formatter.kotlinCustomSettings
 import org.jetbrains.kotlin.idea.test.*
 import org.jetbrains.kotlin.test.utils.IgnoreTests
 import java.io.File
@@ -61,6 +62,9 @@ abstract class AbstractAutoImportTestBase : KotlinLightCodeInsightFixtureTestCas
                 try {
                     setupAutoImportEnvironment(settings, withAutoImport)
 
+                    val nameCountToUseStarImport = InTextDirectivesUtils.getPrefixedInt(originalText, "// NAME_COUNT_TO_USE_STAR_IMPORT:")
+
+                    nameCountToUseStarImport?.let { file.kotlinCustomSettings.NAME_COUNT_TO_USE_STAR_IMPORT = it }
                     // same as myFixture.doHighlighting() but allow to change PSI during highlighting (due to addUnambiguousImportsOnTheFly)
                     CodeInsightTestFixtureImpl.instantiateAndRun(
                         getFile(),

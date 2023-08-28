@@ -83,6 +83,16 @@ public class K2AutoImportTestGenerated extends AbstractK2AutoImportTest {
         runTest("../idea/tests/testData/editor/autoImport/multilineCall/");
     }
 
+    @TestMetadata("multipleCandidates")
+    public void testMultipleCandidates() throws Exception {
+        runTest("../idea/tests/testData/editor/autoImport/multipleCandidates/");
+    }
+
+    @TestMetadata("multipleCandidates2")
+    public void testMultipleCandidates2() throws Exception {
+        runTest("../idea/tests/testData/editor/autoImport/multipleCandidates2/");
+    }
+
     @TestMetadata("nestedClassifier")
     public void testNestedClassifier() throws Exception {
         runTest("../idea/tests/testData/editor/autoImport/nestedClassifier/");
@@ -91,6 +101,21 @@ public class K2AutoImportTestGenerated extends AbstractK2AutoImportTest {
     @TestMetadata("property")
     public void testProperty() throws Exception {
         runTest("../idea/tests/testData/editor/autoImport/property/");
+    }
+
+    @TestMetadata("starImport")
+    public void testStarImport() throws Exception {
+        runTest("../idea/tests/testData/editor/autoImport/starImport/");
+    }
+
+    @TestMetadata("typeReference")
+    public void testTypeReference() throws Exception {
+        runTest("../idea/tests/testData/editor/autoImport/typeReference/");
+    }
+
+    @TestMetadata("typealias")
+    public void testTypealias() throws Exception {
+        runTest("../idea/tests/testData/editor/autoImport/typealias/");
     }
 
     @TestMetadata("unresolvedImport")
