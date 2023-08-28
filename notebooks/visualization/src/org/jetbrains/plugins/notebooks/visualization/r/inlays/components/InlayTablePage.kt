@@ -169,7 +169,7 @@ class InlayTablePage : JPanel(BorderLayout()), ToolBarProvider {
 
   private fun addTableFilterHeader() {
     filterHeader = TableFilterHeader()
-    filterHeader!!.table = table
+    filterHeader!!.installTable(table)
   }
 
   override fun createActions(): List<AnAction> {
@@ -196,7 +196,7 @@ class InlayTablePage : JPanel(BorderLayout()), ToolBarProvider {
           addTableFilterHeader()
         }
         else {
-          filterHeader?.table = null
+          filterHeader?.installTable(null)
           filterHeader = null
         }
       }

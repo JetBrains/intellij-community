@@ -7,10 +7,8 @@ package org.jetbrains.plugins.notebooks.visualization.r.inlays.table.filters.gui
 import com.intellij.ui.Gray;
 import com.intellij.ui.IdeBorderFactory;
 import com.intellij.ui.SideBorder;
-import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.notebooks.visualization.r.inlays.table.filters.IFilter;
 import org.jetbrains.plugins.notebooks.visualization.r.inlays.table.filters.IFilterObserver;
-import org.jetbrains.plugins.notebooks.visualization.r.inlays.table.filters.IParser;
 import org.jetbrains.plugins.notebooks.visualization.r.inlays.table.filters.gui.editor.FilterEditor;
 
 import javax.swing.*;
@@ -27,7 +25,6 @@ import java.awt.event.ComponentAdapter;
 import java.awt.event.ComponentEvent;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
-import java.text.Format;
 import java.util.*;
 
 
@@ -59,9 +56,6 @@ public class TableFilterHeader extends JPanel implements PropertyChangeListener 
 
     private static final long serialVersionUID = 5217701111228491294L;
 
-    /** Minimum number of visible choices -if there are choices-. */
-    private static final int MIN_VISIBLE_CHOICES = 4;
-
     /**
      * <p>Location of the header in relation to the table</p>
      *
@@ -87,9 +81,6 @@ public class TableFilterHeader extends JPanel implements PropertyChangeListener 
 
     /** Flag to handle instant filtering support. */
     boolean instantFilteringEnabled = FilterSettings.instantFiltering;
-
-    /** Flag to handle allowance for vanishing during instant filtering */
-    boolean instantVanishingEnabled = FilterSettings.allowInstantVanishing;
 
     /** Flag to handle auto completion support. */
     boolean autoCompletionEnabled = FilterSettings.autoCompletion;
@@ -133,21 +124,6 @@ public class TableFilterHeader extends JPanel implements PropertyChangeListener 
         this(null, filtersHandler);
     }
 
-    ///** Basic constructor, using default {@link IParserModel}. */
-    //public TableFilterHeader(JTable table) {
-    //    this(table, null, null);
-    //}
-    //
-    ///** Advanced constructor, enabling setting the {@link AutoChoices} mode */
-    //public TableFilterHeader(JTable table, AutoChoices mode) {
-    //    this(table, null, mode);
-    //}
-    //
-    ///** Advanced constructor. */
-    //public TableFilterHeader(JTable table, IParserModel parserModel) {
-    //	this(table, parserModel, null);
-    //}
-
     /** Full constructor. */
     public TableFilterHeader(JTable table, AbstractFiltersHandler filtersHandler) {
         super(new BorderLayout());
@@ -164,7 +140,7 @@ public class TableFilterHeader extends JPanel implements PropertyChangeListener 
         add(panel, BorderLayout.CENTER); // do not take all width
         this.filtersHandler = filtersHandler;
         setPosition(FilterSettings.headerPosition);
-        setTable(table);
+        installTable(table);
     }
 
     public TableFilterHeader(JTable table, IParserModel parserModel, AutoChoices mode) {
@@ -176,17 +152,14 @@ public class TableFilterHeader extends JPanel implements PropertyChangeListener 
     public IFilterEditor getFilterEditor(int modelColumn) {
         return (columnsController == null)
             ? null
-            : columnsController.getFilterEditor(getTable()
-                    .convertColumnIndexToView(modelColumn));
+            : columnsController.getFilterEditor(getTable().convertColumnIndexToView(modelColumn));
     }
 
     /** Required to track model changes on the table */
     @Override public void propertyChange(PropertyChangeEvent evt) {
-    	if ("model".equals(evt.getPropertyName())){
-    		recreateController();
-    	} else if ("componentOrientation".equals(evt.getPropertyName())){
-            recreateController();
-        }
+      if ("model".equals(evt.getPropertyName()) || "componentOrientation".equals(evt.getPropertyName())) {
+        recreateController();
+      }
     }
 
     /**
@@ -200,7 +173,7 @@ public class TableFilterHeader extends JPanel implements PropertyChangeListener 
      * the {@link Position} is set to NONE, also implies removing the filter
      * header from the GUI-.</p>
      */
-    public void setTable(JTable table) {
+    public void installTable(JTable table) {
         filtersHandler.enableNotifications(false);
 
         JTable oldTable = getTable();
@@ -230,132 +203,9 @@ public class TableFilterHeader extends JPanel implements PropertyChangeListener 
         return (filtersHandler == null) ? null : filtersHandler.getTable();
     }
 
-    /**
-     * Sets the {@link IParserModel}, used to define the parsing of text on the
-     * filter editors.
-     */
-    public void setParserModel(IParserModel parserModel) {
-        filtersHandler.setParserModel(parserModel);
-    }
-
-    /**
-     * Retrieves the current {@link IParserModel}; The returned reference is
-     * required to update properties like {@link Format} or {@link Comparator}
-     * instances associated to each class, or whether to ignore case.
-     */
-    public IParserModel getParserModel() {
-        return filtersHandler.getParserModel();
-    }
-
-    /**
-     * Sets the auto choices flag. When set, all editors are automatically
-     * populated with choices extracted from the table's content -and updated as
-     * the table is updated-.
-     */
-    public void setAutoChoices(AutoChoices set) {
-        filtersHandler.setAutoChoices(set);
-    }
-
-    /** Returns the auto choices flag. */
-    public AutoChoices getAutoChoices() {
-        return filtersHandler.getAutoChoices();
-    }
-
     /** Sets the adaptive choices mode. */
     public void setAdaptiveChoices(boolean enable) {
         filtersHandler.setAdaptiveChoices(enable);
-    }
-
-    /** Returns the adaptive choices mode. */
-    public boolean isAdaptiveChoices() {
-        return filtersHandler.isAdaptiveChoices();
-    }
-
-    /**
-     * Enables instant filtering, as the user edits the filter's text<br>
-     * The exact way the instant filtering works depends on the associated.
-     *
-     * @see  IParser#parseInstantText(String)
-     */
-    public void setInstantFiltering(boolean enable) {
-        if (this.instantFilteringEnabled != enable) {
-            this.instantFilteringEnabled = enable;
-            if (columnsController != null) {
-                for (FilterEditor fe : columnsController) {
-                    fe.setInstantFiltering(enable);
-                }
-            }
-        }
-    }
-
-    /** Returns true if instant filtering is enabled. */
-    public boolean isInstantFiltering() {
-        return this.instantFilteringEnabled;
-    }
-
-    /**
-     * Enables vanishing during instant filtering<br>
-     * If enabled, entering a filter expression that produces no rows
-     * will hide; otherwise, the filter is just marked with warning color.
-     */
-    public void setAllowedInstantVanishing(boolean enable) {
-        if (this.instantVanishingEnabled != enable) {
-            this.instantVanishingEnabled = enable;
-            if (columnsController != null) {
-                for (FilterEditor fe : columnsController) {
-                    fe.setAllowedInstantVanishing(enable);
-                }
-            }
-        }
-    }
-
-    /** Returns true if vanishing is enabled during instant filtering */
-    public boolean isAllowedInstantVanishing() {
-        return this.instantVanishingEnabled;
-    }
-
-    /** Enables auto completion, as the user edits the filter's text. */
-    public void setAutoCompletion(boolean enable) {
-        if (this.autoCompletionEnabled != enable) {
-            this.autoCompletionEnabled = enable;
-            if (columnsController != null) {
-                for (FilterEditor fe : columnsController) {
-                    fe.setAutoCompletion(enable);
-                }
-            }
-        }
-    }
-
-    /** Returns true if auto completion is enabled. */
-    public boolean isAutoCompletion() {
-        return this.autoCompletionEnabled;
-    }
-
-    /** Enables / Disables auto selection mode */
-    public void setAutoSelection(boolean enable) {
-        filtersHandler.setAutoSelection(enable);
-    }
-
-    /** Returns true if auto selection is enabled. */
-    public boolean isAutoSelection() {
-        return filtersHandler.isAutoSelection();
-    }
-
-    /**
-     * Sets the filter on updates flag.<br>
-     * It sets the sortOnUpdates flag on the underlying {@link DefaultRowSorter}
-     * it is, in fact, just a helper to set this flag without accessing directly
-     * the row sorter.
-     *
-     * @see  DefaultRowSorter#setSortsOnUpdates(boolean)
-     */
-    public void setFilterOnUpdates(boolean enable) {
-        filtersHandler.setFilterOnUpdates(enable);
-    }
-
-    /** Returns true if the filter is reapplied on updates. */
-    public boolean isFilterOnUpdates() {
-        return filtersHandler.isFilterOnUpdates();
     }
 
     /** Hides / makes visible the header. */
@@ -393,62 +243,6 @@ public class TableFilterHeader extends JPanel implements PropertyChangeListener 
         return positionHelper.getPosition();
     }
 
-    /**
-     * Sets the maximum history size, always lower than the max number of
-     * visible rows.
-     */
-    public void setMaxHistory(int maxHistory) {
-        this.maxHistory = maxHistory;
-        if (columnsController != null) {
-            for (FilterEditor fe : columnsController) {
-                fe.setMaxHistory(maxHistory);
-            }
-        }
-    }
-
-    /** Returns the maximum history size. */
-    public int getMaxHistory() {
-        return maxHistory;
-    }
-
-    /** Adds a filter -user specified- to the filter header. */
-    public void addFilter(IFilter... filter) {
-        filtersHandler.addFilter(filter);
-    }
-
-    /** Adds a filter -user specified- to the filter header. */
-    public void removeFilter(IFilter... filter) {
-        filtersHandler.removeFilter(filter);
-    }
-
-    /** Adds a new observer to the header. */
-    public void addHeaderObserver(IFilterHeaderObserver observer) {
-        observers.add(observer);
-    }
-
-    /** Removes an existing observer from the header. */
-    public void removeHeaderObserver(IFilterHeaderObserver observer) {
-        observers.remove(observer);
-    }
-
-    /**
-     * <p>Invokes resetFilter on all the editor filters.</p>
-     *
-     * @see  IFilterEditor#resetFilter()
-     */
-    public void resetFilter() {
-
-        if (columnsController != null) {
-            filtersHandler.enableNotifications(false);
-            for (FilterEditor fe : columnsController) {
-                fe.resetFilter();
-            }
-
-            filtersHandler.enableNotifications(true);
-        }
-    }
-
-
     /** Method automatically invoked when the class ancestor changes. */
     @Override public void addNotify() {
         super.addNotify();
@@ -457,20 +251,13 @@ public class TableFilterHeader extends JPanel implements PropertyChangeListener 
 
     /**
      * removes the current columnsController.
-     *
-     * @return  true if there was a controller
      */
-    private boolean removeController() {
-
+    private void removeController() {
         if (columnsController != null) {
             columnsController.detach();
             remove(columnsController);
             columnsController = null;
-
-            return true;
         }
-
-        return false;
     }
 
     /** creates/recreates the current columnsController. */
@@ -491,8 +278,7 @@ public class TableFilterHeader extends JPanel implements PropertyChangeListener 
      * are sorted in the Table. That is, if the user changes the order of two or
      * more columns, this class reacts by reordering internal data structures
      */
-    private class FilterColumnsControllerPanel extends JPanel
-        implements TableColumnModelListener, Runnable, Iterable<FilterEditor> {
+    private class FilterColumnsControllerPanel extends JPanel implements TableColumnModelListener {
 
         private static final long serialVersionUID = -5183169239497633085L;
 
@@ -533,19 +319,14 @@ public class TableFilterHeader extends JPanel implements PropertyChangeListener 
          * It will automatically create an editor of the current EditorMode for
          * each column.
          */
-        public FilterColumnsControllerPanel(Font  font,
-                                            Color foreground,
-                                            Color background) {
+        FilterColumnsControllerPanel(Font font, Color foreground) {
             super(null);
             super.setFont(font);
-
 
             super.setForeground(foreground);
 
             setOpaque(false);
             setBackground(Gray.TRANSPARENT);
-
-         //   super.setBackground(background);
 
             this.tableColumnModel = getTable().getColumnModel();
             this.tableModel = getTable().getModel();
@@ -556,34 +337,9 @@ public class TableFilterHeader extends JPanel implements PropertyChangeListener 
             for (int i = 0; i < count; i++) {
                 createColumn(i, enabled);
             }
-            preferredSize = new Dimension(0,
-                    (count == 0) ? 0
-                                 : (columns.get(0).h + filterRowHeightDelta));
+          preferredSize = new Dimension(0, (count == 0) ? 0 : (columns.get(0).h + filterRowHeightDelta));
             placeComponents();
             tableColumnModel.addColumnModelListener(this);
-        }
-
-        /** {@link Iterable} interface. */
-        @Override public @NotNull Iterator<FilterEditor> iterator() {
-            final Iterator<FilterColumnPanel> it = columns.iterator();
-
-            return new Iterator<>() {
-
-              @Override
-              public void remove() {
-                // not supported
-              }
-
-              @Override
-              public FilterEditor next() {
-                return it.next().editor;
-              }
-
-              @Override
-              public boolean hasNext() {
-                return it.hasNext();
-              }
-            };
         }
 
         /** Creates the FilterColumnPanel for the given column number. */
@@ -612,7 +368,6 @@ public class TableFilterHeader extends JPanel implements PropertyChangeListener 
 
         /** Detaches the current instance from any registered listeners. */
         public void detach() {
-
             for (FilterColumnPanel column : columns) {
                 column.detach();
             }
@@ -625,8 +380,9 @@ public class TableFilterHeader extends JPanel implements PropertyChangeListener 
          * not exist.
          */
         public FilterEditor getFilterEditor(int viewColumn) {
-            return (columns.size() > viewColumn)
-                ? columns.get(viewColumn).editor : null;
+          return (columns.size() > viewColumn)
+                 ? columns.get(viewColumn).editor
+                 : null;
         }
 
         /** Computes the proper preferred height -width is not important-. */
@@ -754,10 +510,9 @@ public class TableFilterHeader extends JPanel implements PropertyChangeListener 
         	}
         }
 
-        /** {@link TableColumnModelListener} interface. */
-        @Override public void columnSelectionChanged(ListSelectionEvent e) {
-            // nothing needed here
-        }
+      /** {@link TableColumnModelListener} interface. Nothing is needed here */
+      @Override
+      public void columnSelectionChanged(ListSelectionEvent e) {}
 
         private boolean isCorrectModel() {
         	JTable table = getTable();
@@ -772,13 +527,13 @@ public class TableFilterHeader extends JPanel implements PropertyChangeListener 
         private void update() {
             autoRun += 1;
             if (SwingUtilities.isEventDispatchThread()) {
-                SwingUtilities.invokeLater(this);
+                SwingUtilities.invokeLater(this::updateColumnsHeight);
             } else {
-                run();
+                updateColumnsHeight();
             }
         }
 
-        @Override public void run() {
+        public void updateColumnsHeight() {
             // see the comment on columnAdded
             if ((--autoRun == 0) && (getTable() != null)) {
                 handlerEnabled = null;
@@ -821,8 +576,7 @@ public class TableFilterHeader extends JPanel implements PropertyChangeListener 
          * It resizes itself automatically as the associated table column is
          * resized.
          */
-        private class FilterColumnPanel extends JPanel
-            implements PropertyChangeListener, IFilterObserver {
+        private class FilterColumnPanel extends JPanel implements PropertyChangeListener, IFilterObserver {
 
             private static final long serialVersionUID = 6858728575542289815L;
 
@@ -840,7 +594,7 @@ public class TableFilterHeader extends JPanel implements PropertyChangeListener 
             TableColumn tc;
 
             /** Constructor. */
-            public FilterColumnPanel(TableColumn tc, FilterEditor editor) {
+            FilterColumnPanel(TableColumn tc, FilterEditor editor) {
                 super(new BorderLayout());
 
                 setOpaque(false);
@@ -864,7 +618,6 @@ public class TableFilterHeader extends JPanel implements PropertyChangeListener 
              * Performs any cleaning required before removing this component.
              */
             public void detach() {
-
                 if (editor != null) {
                     filtersHandler.removeFilterEditor(editor);
                     remove(editor);
