@@ -227,13 +227,14 @@ public abstract class ContentLabel extends BaseLabel {
       }
     }
 
+    //noinspection UseDPIAwareBorders
     setBorder(new EmptyBorder(0, left, 0, right));
     myIconWithInsetsWidth = rightIconWidth + right + left;
 
     if (ExperimentalUI.isNewUI()) {
       JBInsets insets = JBUI.CurrentTheme.ToolWindow.headerTabLeftRightInsets();
       insets.left = Math.max(left, insets.left);
-      setBorder(new JBEmptyBorder(insets));
+      setBorder(new EmptyBorder(insets));
       myIconWithInsetsWidth = rightIconWidth + right + left;
     }
 
