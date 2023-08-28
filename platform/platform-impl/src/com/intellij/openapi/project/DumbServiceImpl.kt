@@ -31,6 +31,7 @@ import com.intellij.util.application
 import com.intellij.util.indexing.IndexingBundle
 import com.intellij.util.ui.DeprecationStripePanel
 import com.intellij.util.ui.UIUtil
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.withContext
@@ -45,7 +46,8 @@ import javax.swing.JComponent
 
 @ApiStatus.Internal
 open class DumbServiceImpl @NonInjectable @VisibleForTesting constructor(private val myProject: Project,
-                                                                         publisher: DumbModeListener) : DumbService(), Disposable, ModificationTracker, DumbServiceBalloon.Service {
+                                                                         private val myPublisher: DumbModeListener,
+                                                                         private val scope: CoroutineScope) : DumbService(), Disposable, ModificationTracker, DumbServiceBalloon.Service {
   private val myState: MutableStateFlow<DumbState> = MutableStateFlow(DumbState(!myProject.isDefault, 0L, 0))
 
   override val project: Project = myProject
@@ -60,7 +62,6 @@ open class DumbServiceImpl @NonInjectable @VisibleForTesting constructor(private
   @Volatile
   var dumbModeStartTrace: Throwable? = null
     private set
-  private val myPublisher: DumbModeListener
   private val myCancellableLaterEdtInvoker: CancellableLaterEdtInvoker = CancellableLaterEdtInvoker(myProject)
   private val myTaskQueue: DumbServiceMergingTaskQueue = DumbServiceMergingTaskQueue()
   private val myGuiDumbTaskRunner: DumbServiceGuiExecutor
@@ -109,12 +110,11 @@ open class DumbServiceImpl @NonInjectable @VisibleForTesting constructor(private
     }
   }
 
-  constructor(project: Project) : this(project, project.messageBus.syncPublisher<DumbModeListener>(DUMB_MODE))
+  constructor(project: Project, scope: CoroutineScope) : this(project, project.messageBus.syncPublisher<DumbModeListener>(DUMB_MODE), scope)
 
   init {
     myGuiDumbTaskRunner = DumbServiceGuiExecutor(myProject, myTaskQueue, DumbTaskListener())
     mySyncDumbTaskRunner = DumbServiceSyncTaskQueue(myProject, myTaskQueue)
-    myPublisher = publisher
     if (Registry.`is`("scanning.should.pause.dumb.queue", false)) {
       myProject.service<DumbServiceScanningListener>().subscribe()
     }

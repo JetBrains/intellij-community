@@ -145,9 +145,9 @@ class DumbServiceImplTest {
   }
 
   @Test
-  fun `test no task leak on dispose`() {
+  fun `test no task leak on dispose`() = runBlocking {
     // pass empty publisher to make sure that shared SmartModeScheduler is not affected
-    val dumbService = DumbServiceImpl(project, object : DumbService.DumbModeListener {})
+    val dumbService = DumbServiceImpl(project, object : DumbService.DumbModeListener {}, this)
     val exception = AtomicReference<Throwable?>()
 
     val disposes = CountDownLatch(2)
@@ -369,9 +369,9 @@ class DumbServiceImplTest {
   }
 
   @Test
-  fun `test dispose cancels all the tasks submitted via queueTask from other threads with no race`() {
+  fun `test dispose cancels all the tasks submitted via queueTask from other threads with no race`() = runBlocking {
     // pass empty publisher to make sure that shared SmartModeScheduler is not affected
-    val dumbService = DumbServiceImpl(project, object : DumbService.DumbModeListener {})
+    val dumbService = DumbServiceImpl(project, object : DumbService.DumbModeListener {}, this)
 
     val queuedTaskInvoked = AtomicBoolean(false)
     val dumbTaskFinished = CountDownLatch(1)

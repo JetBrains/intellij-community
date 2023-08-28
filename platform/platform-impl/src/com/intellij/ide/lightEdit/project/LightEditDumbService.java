@@ -6,14 +6,15 @@ import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.project.DumbModeTask;
 import com.intellij.openapi.project.DumbServiceImpl;
 import com.intellij.openapi.project.Project;
+import kotlinx.coroutines.CoroutineScope;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 
 public final class LightEditDumbService extends DumbServiceImpl {
-  public LightEditDumbService(Project project) {
-    super(project);
+  public LightEditDumbService(Project project, CoroutineScope scope) {
+    super(project, scope);
   }
 
   @Override
