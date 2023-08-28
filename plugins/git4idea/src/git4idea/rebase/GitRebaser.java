@@ -21,7 +21,6 @@ import git4idea.update.GitUpdateResult;
 import git4idea.util.GitUntrackedFilesHelper;
 import git4idea.util.LocalChangesWouldBeOverwrittenHelper;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 import java.util.*;
@@ -49,15 +48,10 @@ public class GitRebaser {
   }
 
   public GitUpdateResult rebase(@NotNull VirtualFile root,
-                                @NotNull List<String> parameters,
-                                @Nullable final Runnable onCancel,
-                                @Nullable GitLineHandlerListener lineListener) {
+                                @NotNull List<String> parameters) {
     final GitLineHandler rebaseHandler = new GitLineHandler(myProject, root, GitCommand.REBASE);
     rebaseHandler.setStdoutSuppressed(false);
     rebaseHandler.addParameters(parameters);
-    if (lineListener != null) {
-      rebaseHandler.addLineListener(lineListener);
-    }
 
     final GitRebaseProblemDetector rebaseConflictDetector = new GitRebaseProblemDetector();
     rebaseHandler.addLineListener(rebaseConflictDetector);
@@ -77,9 +71,6 @@ public class GitRebaser {
              handleRebaseFailure(rebaseHandler, root, result, rebaseConflictDetector, untrackedFilesDetector, localChangesDetector);
     }
     catch (ProcessCanceledException pce) {
-      if (onCancel != null) {
-        onCancel.run();
-      }
       return GitUpdateResult.CANCEL;
     }
   }

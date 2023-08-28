@@ -62,7 +62,11 @@ public final class GitRebaseUpdater extends GitUpdater {
     LOG.info("doUpdate ");
     String remoteBranch = getRemoteBranchToMerge();
     List<String> params = Collections.singletonList(remoteBranch);
-    return myRebaser.rebase(myRoot, params, () -> cancel(), null);
+    GitUpdateResult result = myRebaser.rebase(myRoot, params);
+    if (result == GitUpdateResult.CANCEL) {
+      onCancel();
+    }
+    return result;
   }
 
   @NotNull
@@ -70,7 +74,7 @@ public final class GitRebaseUpdater extends GitUpdater {
     return myBranchPair.getTarget().getName();
   }
 
-  public void cancel() {
+  private void onCancel() {
     myRebaser.abortRebase(myRoot);
     myProgressIndicator.setText2(GitBundle.message("progress.details.refreshing.files.for.root", myRoot.getPath()));
     myRoot.refresh(false, true);
