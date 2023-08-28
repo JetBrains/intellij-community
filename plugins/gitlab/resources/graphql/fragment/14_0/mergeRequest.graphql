@@ -1,4 +1,4 @@
-# Diff with EE: approved not included
+# <14.0 mergeStatusEnum removed
 fragment mergeRequest on MergeRequest {
   id
   iid
@@ -30,7 +30,6 @@ fragment mergeRequest on MergeRequest {
   headPipeline {
     ...pipeline
   }
-  mergeStatusEnum
   mergeable
   state
   draft
@@ -78,15 +77,6 @@ fragment mergeRequest on MergeRequest {
     }
   }
 
-  commits(first: 1000) {
-    pageInfo {
-      ...pageInfo
-    }
-
-    nodes {
-      ...glCommit
-    }
-  }
   userPermissions {
     ...mergeRequestPermissions
   }

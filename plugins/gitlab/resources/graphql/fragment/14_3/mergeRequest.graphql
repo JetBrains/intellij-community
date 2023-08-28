@@ -1,4 +1,4 @@
-# Diff with EE: approved not included
+# <14.3 approved removed, CE and EE MergeRequests are equal for us
 fragment mergeRequest on MergeRequest {
   id
   iid
@@ -78,15 +78,6 @@ fragment mergeRequest on MergeRequest {
     }
   }
 
-  commits(first: 1000) {
-    pageInfo {
-      ...pageInfo
-    }
-
-    nodes {
-      ...glCommit
-    }
-  }
   userPermissions {
     ...mergeRequestPermissions
   }

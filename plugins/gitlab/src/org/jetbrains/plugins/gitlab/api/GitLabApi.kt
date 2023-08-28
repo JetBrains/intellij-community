@@ -79,12 +79,7 @@ suspend fun GitLabApi.GraphQL.gitLabQuery(query: GitLabGQLQuery, variablesObject
   }
 
   val serverMeta = getMetadata()
-  val queryLoader = if (serverMeta.edition != GitLabEdition.Enterprise) {
-    GitLabGQLQueryLoaders.community
-  }
-  else {
-    GitLabGQLQueryLoaders.default
-  }
+  val queryLoader = GitLabGQLQueryLoaders.forMetadata(serverMeta)
 
   return query(server.gqlApiUri, { queryLoader.loadQuery(query.filePath) }, variablesObject)
 }
