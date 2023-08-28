@@ -2,9 +2,14 @@
 package com.intellij.platform.ide.diagnostic.startUpPerformanceReporter
 
 import com.intellij.diagnostic.StartUpMeasurer
+import com.intellij.ide.AppLifecycleListener
+import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.progress.ModalTaskOwner
+import com.intellij.openapi.progress.runWithModalProgressBlocking
 import com.intellij.openapi.project.ex.ProjectManagerEx
 import com.intellij.platform.diagnostic.startUpPerformanceReporter.StartUpPerformanceReporter
 import kotlinx.coroutines.CoroutineScope
+import java.util.concurrent.atomic.AtomicBoolean
 
 private class IdeStartUpPerformanceService(coroutineScope: CoroutineScope) : StartUpPerformanceReporter(coroutineScope) {
   @Volatile
@@ -12,6 +17,25 @@ private class IdeStartUpPerformanceService(coroutineScope: CoroutineScope) : Sta
 
   @Volatile
   private var projectOpenedActivitiesPassed = false
+
+  private val isReported = AtomicBoolean()
+
+  init {
+    if (perfFilePath != null) {
+      val projectName = ProjectManagerEx.getOpenProjects().firstOrNull()?.name ?: "unknown"
+      ApplicationManager.getApplication().messageBus.simpleConnect().subscribe(AppLifecycleListener.TOPIC, object : AppLifecycleListener {
+        override fun appWillBeClosed(isRestart: Boolean) {
+          if (!isReported.compareAndSet(false, true)) {
+            return
+          }
+
+          runWithModalProgressBlocking(ModalTaskOwner.guess(), "") {
+            logStats(projectName)
+          }
+        }
+      })
+    }
+  }
 
   override fun projectDumbAwareActivitiesFinished() {
     projectOpenedActivitiesPassed = true
@@ -28,6 +52,10 @@ private class IdeStartUpPerformanceService(coroutineScope: CoroutineScope) : Sta
   }
 
   private fun completed() {
+    if (!isReported.compareAndSet(false, true)) {
+      return
+    }
+
     StartUpMeasurer.stopPluginCostMeasurement()
     // don't report statistic from here if we want to measure project import duration
     if (!java.lang.Boolean.getBoolean("idea.collect.project.import.performance")) {

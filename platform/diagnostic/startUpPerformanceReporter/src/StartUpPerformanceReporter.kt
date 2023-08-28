@@ -52,7 +52,8 @@ open class StartUpPerformanceReporter(private val coroutineScope: CoroutineScope
   private var lastMetrics = MutableSharedFlow<Object2IntMap<String>>(replay = 1, onBufferOverflow = BufferOverflow.DROP_OLDEST)
 
   companion object {
-    private val perfFilePath: String? = System.getProperty("idea.log.perf.stats.file")?.takeIf(String::isNotEmpty)
+    @JvmStatic
+    protected val perfFilePath: String? = System.getProperty("idea.log.perf.stats.file")?.takeIf(String::isNotEmpty)
 
     internal const val VERSION: String = "38"
 
