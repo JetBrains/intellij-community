@@ -983,14 +983,16 @@ open class FileEditorManagerImpl(
       }
 
       // A file is not opened yet. In this case, we have to create editors and select the created EditorComposite.
-      newProviders = FileEditorProviderManager.getInstance().getProviderList(project, file).map { provider ->
-        provider to if (provider is AsyncFileEditorProvider) {
-          ApplicationManager.getApplication().runReadAction<AsyncFileEditorProvider.Builder?, RuntimeException> {
-            provider.createEditorAsync(project, file)
-          }
+      if (EDT.isCurrentThreadEdt()) {
+        newProviders = FileEditorProviderManager.getInstance().getProviderList(project, file).map { provider ->
+          provider to null
         }
-        else {
-          null
+      }
+      else {
+        newProviders = runBlockingCancellable {
+          FileEditorProviderManager.getInstance().getProvidersAsync(project, file).map { provider ->
+            provider to (if (provider is AsyncFileEditorProvider) provider.createEditorBuilder(project, file) else null)
+          }
         }
       }
     }

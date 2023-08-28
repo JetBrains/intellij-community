@@ -39,6 +39,16 @@ abstract class SplitTextEditorProvider(private val firstProvider: FileEditorProv
     }
   }
 
+  override suspend fun createEditorBuilder(project: Project, file: VirtualFile): AsyncFileEditorProvider.Builder {
+    val firstBuilder = getBuilderFromEditorProviderAsync(provider = firstProvider, project = project, file = file)
+    val secondBuilder = getBuilderFromEditorProviderAsync(provider = secondProvider, project = project, file = file)
+    return object : AsyncFileEditorProvider.Builder() {
+      override fun build(): FileEditor {
+        return createSplitEditor(firstEditor = firstBuilder.build(), secondEditor = secondBuilder.build())
+      }
+    }
+  }
+
   protected fun readFirstProviderState(sourceElement: Element, project: Project, file: VirtualFile): FileEditorState? {
     val child = sourceElement.getChild(FIRST_EDITOR) ?: return null
     return firstProvider.readState(/* sourceElement = */ child, /* project = */ project, /* file = */ file)
@@ -102,6 +112,21 @@ private fun getBuilderFromEditorProvider(provider: FileEditorProvider,
                                          file: VirtualFile): AsyncFileEditorProvider.Builder {
   if (provider is AsyncFileEditorProvider) {
     return provider.createEditorAsync(project, file)
+  }
+  else {
+    return object : AsyncFileEditorProvider.Builder() {
+      override fun build(): FileEditor {
+        return provider.createEditor(project, file)
+      }
+    }
+  }
+}
+
+private suspend fun getBuilderFromEditorProviderAsync(provider: FileEditorProvider,
+                                                      project: Project,
+                                                      file: VirtualFile): AsyncFileEditorProvider.Builder {
+  if (provider is AsyncFileEditorProvider) {
+    return provider.createEditorBuilder(project, file)
   }
   else {
     return object : AsyncFileEditorProvider.Builder() {
