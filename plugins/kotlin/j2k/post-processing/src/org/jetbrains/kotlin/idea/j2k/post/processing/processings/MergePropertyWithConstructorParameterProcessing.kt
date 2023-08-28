@@ -119,7 +119,7 @@ internal class MergePropertyWithConstructorParameterProcessing : ElementsBasedPo
         parameter.addAfter(KtPsiFactory(property.project).createWhiteSpace(), parameter.valOrVarKeyword!!)
         parameter.rename(property.name!!)
         parameter.setVisibility(property.visibilityModifierTypeOrDefault())
-        val commentSaver = CommentSaver(property, saveLineBreaks = true)
+        val commentSaver = CommentSaver(property)
 
         parameter.annotationEntries.forEach {
             if (it.useSiteTarget == null) it.addUseSiteTarget(CONSTRUCTOR_PARAMETER, property.project)

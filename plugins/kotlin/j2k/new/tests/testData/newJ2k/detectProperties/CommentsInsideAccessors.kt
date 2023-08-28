@@ -24,5 +24,4 @@ internal class AccessorsAreRemoved {
 // get footer
 // get header
     var someInt: Int = 1
-
 }

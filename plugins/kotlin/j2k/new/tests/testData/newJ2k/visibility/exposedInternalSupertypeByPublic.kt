@@ -3,5 +3,6 @@ abstract class Base {
 }
 
 class Test : Base() {
-    override fun test() {}
+    override fun test() {
+    }
 }

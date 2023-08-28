@@ -4,6 +4,7 @@ class A {
         list.add("1")
     }
 
-    fun bar() {}
+    fun bar() {
+    }
 
 }

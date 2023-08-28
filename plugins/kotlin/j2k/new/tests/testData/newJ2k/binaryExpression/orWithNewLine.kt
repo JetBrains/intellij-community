@@ -17,7 +17,10 @@ object A {
                 * 2
                 * 3)
         val DIV = (1
+
                 / 2
+
+
                 / 3)
         val PERC = (1
                 % 2

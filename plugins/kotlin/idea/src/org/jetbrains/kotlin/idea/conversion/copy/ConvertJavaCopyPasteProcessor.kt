@@ -276,7 +276,7 @@ internal fun ElementAndTextList.convertCodeToKotlin(project: Project, targetModu
 
             val result = results[resultIndex++]
             if (result != null) {
-                convertedCodeBuilder.append(result.text)
+                convertedCodeBuilder.append(result.text.trimEnd('\n'))
                 if (parseContext == null) { // use parse context of the first converted element as parse context for the whole text
                     parseContext = result.parseContext
                 }

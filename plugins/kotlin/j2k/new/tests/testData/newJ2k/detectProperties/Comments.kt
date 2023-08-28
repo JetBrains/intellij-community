@@ -1,7 +1,6 @@
 internal class A(// comment for field2 setter
     // comment for field2 getter
-    var field2 // comment for field2
-    : Int
+    var field2: Int // comment for field2
 ) {
     /**
      * Comment for field1 setter
@@ -19,5 +18,6 @@ internal class A(// comment for field2 setter
         // comment for getProperty
         get() = 1 // end of getProperty
         // comment for setProperty
-        set(value) {} // end of setProperty
+        set(value) {
+        } // end of setProperty
 }

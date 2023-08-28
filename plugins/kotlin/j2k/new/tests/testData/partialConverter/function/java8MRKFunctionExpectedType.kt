@@ -23,6 +23,7 @@ internal class Test {
 
 internal class Java8Class {
     private val field: Java8Class = TODO("_root_ide_package_")
+
     fun testStaticFunction() {
         TODO("_root_ide_package_")
     }

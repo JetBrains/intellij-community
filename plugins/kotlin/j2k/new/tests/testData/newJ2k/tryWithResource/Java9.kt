@@ -6,6 +6,7 @@ class Java9 {
     @Throws(IOException::class)
     fun check() {
         val br = BufferedReader(InputStreamReader(System.`in`))
+
         br.use {
             BufferedReader(InputStreamReader(System.`in`)).use { br2 ->
                 br.readLine()

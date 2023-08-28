@@ -81,9 +81,8 @@ internal class JKCodeBuilder(context: NewJ2kConverterContext) {
                     printRightNonCodeElements(modifierElement)
                 } else {
                     modifierElement.accept(this)
+                    printer.print(" ")
                 }
-
-                printer.print(" ")
             }
         }
 
@@ -166,12 +165,11 @@ internal class JKCodeBuilder(context: NewJ2kConverterContext) {
             file.declarationList.forEach { it.accept(this) }
         }
 
-
         override fun visitPackageDeclarationRaw(packageDeclaration: JKPackageDeclaration) {
             printer.print("package ")
             val packageNameEscaped = packageDeclaration.name.value.escapedAsQualifiedName()
             printer.print(packageNameEscaped)
-            printer.println()
+            if (!packageDeclaration.hasLineBreakAfter) printer.println()
         }
 
         override fun visitImportListRaw(importList: JKImportList) {
@@ -183,7 +181,7 @@ internal class JKCodeBuilder(context: NewJ2kConverterContext) {
             val importNameEscaped =
                 importStatement.name.value.escapedAsQualifiedName()
             printer.print(importNameEscaped)
-            printer.println()
+            if (!importStatement.hasLineBreakAfter) printer.println()
         }
 
         override fun visitBreakStatementRaw(breakStatement: JKBreakStatement) {
@@ -194,7 +192,7 @@ internal class JKCodeBuilder(context: NewJ2kConverterContext) {
         override fun visitClassRaw(klass: JKClass) {
             klass.annotationList.accept(this)
             if (klass.hasAnnotations) {
-                printer.println()
+                ensureLineBreak()
             }
             renderModifiersList(klass)
             printer.print(klass.classKind.text)
@@ -246,7 +244,7 @@ internal class JKCodeBuilder(context: NewJ2kConverterContext) {
         override fun visitFieldRaw(field: JKField) {
             field.annotationList.accept(this)
             if (field.hasAnnotations) {
-                printer.println()
+                ensureLineBreak()
             }
             renderModifiersList(field)
             field.name.accept(this)
@@ -265,7 +263,7 @@ internal class JKCodeBuilder(context: NewJ2kConverterContext) {
             enumConstant.name.accept(this)
             if (enumConstant.arguments.arguments.isNotEmpty()) {
                 printer.par {
-                    enumConstant.arguments.accept(this)
+                    renderArgumentList(enumConstant.arguments)
                 }
             }
             if (enumConstant.body.declarations.isNotEmpty()) {
@@ -332,17 +330,17 @@ internal class JKCodeBuilder(context: NewJ2kConverterContext) {
             method.annotationList.accept(this)
             renderModifiersList(method)
             printer.printWithSurroundingSpaces("fun")
-            method.typeParameterList.accept(this)
+
+            if (method.typeParameterList.typeParameters.isNotEmpty()) {
+                method.typeParameterList.accept(this)
+            }
 
             elementInfoStorage.getOrCreateInfoForElement(method).let {
                 printer.print(it.render())
             }
             method.name.accept(this)
-            renderTokenElement(method.leftParen)
-            printer.renderList(method.parameters) {
-                it.accept(this)
-            }
-            renderTokenElement(method.rightParen)
+            renderParameterList(method)
+
             if (!method.returnType.type.isUnit()) {
                 printer.print(": ")
                 method.returnType.accept(this)
@@ -469,9 +467,23 @@ internal class JKCodeBuilder(context: NewJ2kConverterContext) {
             qualifiedExpression.selector.accept(this)
         }
 
-
         override fun visitArgumentListRaw(argumentList: JKArgumentList) {
-            printer.renderList(argumentList.arguments) { it.accept(this) }
+            renderArgumentList(argumentList)
+        }
+
+        private fun renderArgumentList(argumentList: JKArgumentList) {
+            for ((i, argument) in argumentList.arguments.withIndex()) {
+                printLeftNonCodeElements(argument)
+
+                if (argument is JKNamedArgument) {
+                    visitNamedArgumentRaw(argument)
+                } else {
+                    visitArgumentRaw(argument)
+                }
+
+                if (i < argumentList.arguments.lastIndex) printer.print(", ")
+                printRightNonCodeElements(argument)
+            }
         }
 
         override fun visitArgumentRaw(argument: JKArgument) {
@@ -510,7 +522,7 @@ internal class JKCodeBuilder(context: NewJ2kConverterContext) {
         }
 
         override fun visitDeclarationStatementRaw(declarationStatement: JKDeclarationStatement) {
-            printer.renderList(declarationStatement.declaredStatements, { printer.println() }) {
+            printer.renderList(declarationStatement.declaredStatements, ::ensureLineBreak) {
                 it.accept(this)
             }
         }
@@ -555,11 +567,10 @@ internal class JKCodeBuilder(context: NewJ2kConverterContext) {
             ktConvertedFromForLoopSyntheticWhileStatement: JKKtConvertedFromForLoopSyntheticWhileStatement
         ) {
             printer.renderList(
-                ktConvertedFromForLoopSyntheticWhileStatement.variableDeclarations,
-                { printer.println() }) {
+                ktConvertedFromForLoopSyntheticWhileStatement.variableDeclarations, ::ensureLineBreak) {
                 it.accept(this)
             }
-            printer.println()
+            ensureLineBreak()
             ktConvertedFromForLoopSyntheticWhileStatement.whileStatement.accept(this)
         }
 
@@ -590,44 +601,58 @@ internal class JKCodeBuilder(context: NewJ2kConverterContext) {
 
             printer.print(" ")
             renderTokenElement(classBody.leftBrace)
+
             if (declarations.isNotEmpty()) {
-                val isEnum = (classBody.parent as? JKClass)?.classKind == ENUM
-                renderDeclarations(declarations, isEnum)
+                ensureLineBreak()
+                if ((classBody.parent as? JKClass)?.classKind == ENUM) {
+                    renderEnumDeclarations(declarations)
+                } else {
+                    renderDeclarations(declarations)
+                }
             }
+
             renderTokenElement(classBody.rightBrace)
         }
 
-        private fun renderDeclarations(declarations: List<JKDeclaration>, isEnum: Boolean) {
+        private fun renderDeclarations(declarations: List<JKDeclaration>) {
             printer.indented {
-                printer.println()
+                printer.renderList(declarations, ::ensureLineBreak) {
+                    it.accept(this)
+                }
+            }
+        }
+
+        private fun renderEnumDeclarations(declarations: List<JKDeclaration>) {
+            printer.indented {
                 val enumConstants = declarations.filterIsInstance<JKEnumConstant>()
                 val otherDeclarations = declarations.filterNot { it is JKEnumConstant }
-                renderEnumConstants(enumConstants)
-                if (isEnum && otherDeclarations.isNotEmpty()) {
+
+                for ((i, enumConstant) in enumConstants.withIndex()) {
+                    printLeftNonCodeElements(enumConstant)
+                    visitEnumConstantRaw(enumConstant)
+
+                    if (i < enumConstants.lastIndex) {
+                        // all enum entries except last
+                        printer.print(", ")
+                    } else if (otherDeclarations.isNotEmpty()) {
+                        // last enum entry
+                        printer.print(";")
+                    }
+
+                    printRightNonCodeElements(enumConstant)
+                }
+
+                ensureLineBreak()
+
+                if (enumConstants.isEmpty() && otherDeclarations.isNotEmpty()) {
+                    // Special case: Kotlin parser requires the semicolon in a non-empty Enum
                     printer.print(";")
                     printer.println()
                 }
-                if (enumConstants.isNotEmpty() && otherDeclarations.isNotEmpty()) {
-                    printer.println()
+
+                printer.renderList(otherDeclarations, ::ensureLineBreak) {
+                    it.accept(this)
                 }
-                renderNonEnumClassDeclarations(otherDeclarations)
-            }
-            printer.println()
-        }
-
-        private fun renderEnumConstants(enumConstants: List<JKEnumConstant>) {
-            val separator = {
-                printer.print(",")
-                printer.println()
-            }
-            printer.renderList(enumConstants, separator) {
-                it.accept(this)
-            }
-        }
-
-        private fun renderNonEnumClassDeclarations(declarations: List<JKDeclaration>) {
-            printer.renderList(declarations, { printer.println() }) {
-                it.accept(this)
             }
         }
 
@@ -640,19 +665,24 @@ internal class JKCodeBuilder(context: NewJ2kConverterContext) {
             printer.print(" ")
             renderTokenElement(block.leftBrace)
             if (block.statements.isNotEmpty()) {
+                ensureLineBreak()
                 printer.indented {
-                    printer.println()
-                    printer.renderList(block.statements, { printer.println() }) {
+                    printer.renderList(block.statements, ::ensureLineBreak) {
                         it.accept(this)
                     }
                 }
-                printer.println()
             }
             renderTokenElement(block.rightBrace)
         }
 
+        private fun ensureLineBreak() {
+            // Make sure that statements are separated by at least one line break,
+            // but if the previous statement already has a line break, don't add another one.
+            if (!printer.lastSymbolIsLineBreak) printer.println()
+        }
+
         override fun visitBlockStatementWithoutBracketsRaw(blockStatementWithoutBrackets: JKBlockStatementWithoutBrackets) {
-            printer.renderList(blockStatementWithoutBrackets.statements, { printer.println() }) {
+            printer.renderList(blockStatementWithoutBrackets.statements, ::ensureLineBreak) {
                 it.accept(this)
             }
         }
@@ -695,22 +725,26 @@ internal class JKCodeBuilder(context: NewJ2kConverterContext) {
             }
         }
 
-        private fun renderParameterList(parameters: List<JKParameter>) {
-            printer.par(ParenthesisKind.ROUND) {
-                printer.renderList(parameters) {
-                    it.accept(this)
-                }
+        private fun renderParameterList(method: JKMethod) {
+            renderTokenElement(method.leftParen)
+
+            for ((i, parameter) in method.parameters.withIndex()) {
+                printLeftNonCodeElements(parameter)
+                visitParameterRaw(parameter)
+                if (i < method.parameters.lastIndex) printer.print(", ")
+                printRightNonCodeElements(parameter)
             }
+
+            renderTokenElement(method.rightParen)
         }
 
         override fun visitConstructorRaw(constructor: JKConstructor) {
             constructor.annotationList.accept(this)
-            if (constructor.hasAnnotations) {
-                printer.println()
-            }
+            if (constructor.hasAnnotations) ensureLineBreak()
             renderModifiersList(constructor)
             printer.print("constructor")
-            renderParameterList(constructor.parameters)
+            renderParameterList(constructor)
+
             if (constructor.delegationCall !is JKStubExpression) {
                 printer.printWithSurroundingSpaces(":")
                 constructor.delegationCall.accept(this)
@@ -729,7 +763,7 @@ internal class JKCodeBuilder(context: NewJ2kConverterContext) {
             }
 
             if (ktPrimaryConstructor.parameters.isNotEmpty()) {
-                renderParameterList(ktPrimaryConstructor.parameters)
+                renderParameterList(ktPrimaryConstructor)
             } else {
                 printer.print("()")
             }
@@ -748,7 +782,7 @@ internal class JKCodeBuilder(context: NewJ2kConverterContext) {
 
                     val statement = lambdaExpression.statement
                     if (statement is JKBlockStatement) {
-                        printer.renderList(statement.block.statements, { printer.println() }) { it.accept(this) }
+                        printer.renderList(statement.block.statements, ::ensureLineBreak) { it.accept(this) }
                     } else {
                         statement.accept(this)
                     }
@@ -801,7 +835,7 @@ internal class JKCodeBuilder(context: NewJ2kConverterContext) {
             ktWhenBlock.expression.accept(this)
             printer.print(")")
             printer.block {
-                printer.renderList(ktWhenBlock.cases, { printer.println() }) {
+                printer.renderList(ktWhenBlock.cases, ::ensureLineBreak) {
                     it.accept(this)
                 }
             }
@@ -819,7 +853,7 @@ internal class JKCodeBuilder(context: NewJ2kConverterContext) {
             printer.renderList(annotationList.annotations, " ") {
                 it.accept(this)
             }
-            if (annotationList.annotations.isNotEmpty()) {
+            if (annotationList.annotations.isNotEmpty() && !printer.lastSymbolIsLineBreak) {
                 printer.print(" ")
             }
         }

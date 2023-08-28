@@ -5,6 +5,7 @@ internal class A {
         println("1")
         print("1")
         print(1)
+
         System.err.println()
         System.err.println(1)
     }

@@ -2,6 +2,7 @@
 @JvmRecord
 data class J(val x: Int) {
     fun i(y: Int) {}
+
     fun f1() {
         i(x + x + x + x)
     }

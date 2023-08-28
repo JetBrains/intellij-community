@@ -11,6 +11,7 @@ internal object One {
 }
 
 internal class StringContainer(s: String?)
+
 internal class Test {
     fun putString(s: String?) {}
     fun test() {

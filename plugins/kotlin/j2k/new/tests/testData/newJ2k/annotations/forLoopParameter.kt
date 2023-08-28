@@ -3,6 +3,7 @@ internal annotation class Ann1
 
 @Target(AnnotationTarget.LOCAL_VARIABLE, AnnotationTarget.VALUE_PARAMETER)
 internal annotation class Ann2
+
 class C {
     fun f1() {
         @Ann1 val control = 0

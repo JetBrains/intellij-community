@@ -6,6 +6,7 @@ internal object Test {
         var c = true
         var d = true
         val e = true
+
         if (e.let { d = d and it; d }.also { c = it }.let { b = b or it; b }.also { a = it });
         while (b.also { a = it });
         do {

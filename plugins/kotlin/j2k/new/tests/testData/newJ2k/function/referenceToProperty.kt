@@ -5,5 +5,6 @@ class Test {
         bar(Foo::content)
     }
 
-    private fun bar(mapper: Function<Foo, String>) {}
+    private fun bar(mapper: Function<Foo, String>) {
+    }
 }

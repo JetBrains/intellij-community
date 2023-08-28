@@ -1242,6 +1242,11 @@ public abstract class NewJavaToKotlinConverterSingleFileTestGenerated extends Ab
             runTest("testData/newJ2k/comments/fieldsInitializedFromParams.java");
         }
 
+        @TestMetadata("identicalComments.java")
+        public void testIdenticalComments() throws Exception {
+            runTest("testData/newJ2k/comments/identicalComments.java");
+        }
+
         @TestMetadata("removeNoInspectionComment.java")
         public void testRemoveNoInspectionComment() throws Exception {
             runTest("testData/newJ2k/comments/removeNoInspectionComment.java");
@@ -2584,6 +2589,16 @@ public abstract class NewJavaToKotlinConverterSingleFileTestGenerated extends Ab
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
         }
 
+        @TestMetadata("argumentList.java")
+        public void testArgumentList() throws Exception {
+            runTest("testData/newJ2k/formatting/argumentList.java");
+        }
+
+        @TestMetadata("assignment.java")
+        public void testAssignment() throws Exception {
+            runTest("testData/newJ2k/formatting/assignment.java");
+        }
+
         @TestMetadata("chainedCall.java")
         public void testChainedCall() throws Exception {
             runTest("testData/newJ2k/formatting/chainedCall.java");
@@ -2607,6 +2622,11 @@ public abstract class NewJavaToKotlinConverterSingleFileTestGenerated extends Ab
         @TestMetadata("parameterList.java")
         public void testParameterList() throws Exception {
             runTest("testData/newJ2k/formatting/parameterList.java");
+        }
+
+        @TestMetadata("simpleLineBreaks.java")
+        public void testSimpleLineBreaks() throws Exception {
+            runTest("testData/newJ2k/formatting/simpleLineBreaks.java");
         }
 
         @TestMetadata("staticAndNonStaticMembersWithComments.java")

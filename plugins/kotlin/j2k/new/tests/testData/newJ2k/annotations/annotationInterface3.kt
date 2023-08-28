@@ -1,7 +1,6 @@
 internal annotation class Anon(val value: String) {
     enum class E {
-        A,
-        B
+        A, B
     }
 
     companion object {

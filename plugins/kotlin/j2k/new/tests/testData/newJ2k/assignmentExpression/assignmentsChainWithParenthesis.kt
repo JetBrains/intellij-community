@@ -6,6 +6,7 @@ internal object Test {
         var c = 0
         var d = 0
         val e = 0
+
         c = e.let { d *= it; d }
         b += c
         a = b

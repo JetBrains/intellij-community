@@ -19,6 +19,7 @@ class J {
         val b = if (a != 0.0) a else (1 + 2 * 3).toDouble()
     }
 
+
     fun sameType() {
         val a = 3.0
         val b = if (a != 0.0) 1.0 else a

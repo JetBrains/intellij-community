@@ -13,5 +13,6 @@ internal class C {
         }
 
     fun foo(i: I?) {}
+
     var string: String? = null
 }

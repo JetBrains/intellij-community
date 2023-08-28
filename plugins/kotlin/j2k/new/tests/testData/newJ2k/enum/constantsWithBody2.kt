@@ -4,10 +4,13 @@ enum class E(protected val p: Int) {
             foo(p)
         }
     },
+
     B(2) {
-        override fun bar() {}
+        override fun bar() {
+        }
     };
 
     fun foo(p: Int) {}
+
     abstract fun bar()
 }

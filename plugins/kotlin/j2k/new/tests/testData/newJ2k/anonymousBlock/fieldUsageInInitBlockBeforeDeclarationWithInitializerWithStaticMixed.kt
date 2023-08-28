@@ -5,6 +5,7 @@ internal class C {
         a = 2
     }
 
+
     init {
         a = 4
     }

@@ -2,6 +2,7 @@ package test
 
 open class BaseInheritorSamePackage {
     constructor()
+
     protected constructor(x: Int)
 
     fun foo() {

@@ -16,7 +16,7 @@ internal open class JKPrinterBase {
     private val stringBuilder: StringBuilder = StringBuilder()
     var currentIndent = 0
     private val indentSymbol = " ".repeat(4)
-    private var lastSymbolIsLineBreak = false
+    var lastSymbolIsLineBreak = false
     private var lastSymbolIsSingleSpace = false
 
     override fun toString(): String = stringBuilder.toString()
@@ -47,7 +47,6 @@ internal open class JKPrinterBase {
         lastSymbolIsSingleSpace = false
         repeat(lineBreaks) { append("\n") }
     }
-
 
     inline fun indented(block: () -> Unit) {
         currentIndent++

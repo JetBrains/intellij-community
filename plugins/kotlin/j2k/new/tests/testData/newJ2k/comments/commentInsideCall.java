@@ -10,7 +10,7 @@ public class Test {
                 // Comment1
                 .foo()
                 // Comment2
-                .indexOf("s")
+                .indexOf("s");
     }
 
     public static String foo() {

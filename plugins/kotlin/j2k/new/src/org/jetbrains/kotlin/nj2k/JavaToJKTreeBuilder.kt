@@ -188,8 +188,11 @@ class JavaToJKTreeBuilder(
 
         private fun PsiPolyadicExpression.toJK(): JKExpression {
             val token = JKOperatorToken.fromElementType(operationTokenType)
-            val jkOperandsWithPsiTypes: List<Pair<JKExpression, PsiType?>> =
-                operands.map { it.toJK().withLineBreaksFrom(it).parenthesizeIfCompoundExpression() to it.type }
+            val jkOperandsWithPsiTypes: List<Pair<JKExpression, PsiType?>> = operands.mapIndexed { i, operand ->
+                val jkOperand = operand.toJK().withLineBreaksFrom(operand, copyLineBreaksBefore = i != 0)
+                    .parenthesizeIfCompoundExpression()
+                jkOperand to operand.type
+            }
 
             val binaryExpression = jkOperandsWithPsiTypes.reduce { (left, leftType), (right, rightType) ->
                 val psiType = calcTypeForBinaryExpression(leftType, rightType, operationTokenType, true)
@@ -207,7 +210,7 @@ class JavaToJKTreeBuilder(
         private fun PsiAssignmentExpression.toJK(): JKJavaAssignmentExpression =
             JKJavaAssignmentExpression(
                 lExpression.toJK(),
-                rExpression.toJK(),
+                rExpression.toJK().withLineBreaksFrom(rExpression, copyLineBreaksBefore = true),
                 createOperator(operationSign.tokenType, type)
             )
 
@@ -224,7 +227,7 @@ class JavaToJKTreeBuilder(
             }
             return JKBinaryExpression(
                 lOperand.toJK().withLineBreaksFrom(lOperand),
-                rOperand.toJK().withLineBreaksFrom(rOperand),
+                rOperand.toJK().withLineBreaksFrom(rOperand, copyLineBreaksBefore = true),
                 JKKtOperatorImpl(
                     token,
                     type?.toJK() ?: typeFactory.types.nullableAny
@@ -561,7 +564,9 @@ class JavaToJKTreeBuilder(
             JKParenthesizedExpression(expression.toJK())
 
         fun PsiExpressionList.toJK(): JKArgumentList {
-            val jkExpressions = expressions.map { it.toJK().withLineBreaksFrom(it) }
+            val jkExpressions = expressions.mapIndexed { i, argument ->
+                argument.toJK().withLineBreaksFrom(argument, copyLineBreaksBefore = i == 0)
+            }
             return ((parent as? PsiCall)?.resolveMethod()
                 ?.let { method ->
                     val lastExpressionType = expressions.lastOrNull()?.type
@@ -575,8 +580,8 @@ class JavaToJKTreeBuilder(
                                 JKKtSpreadOperator(lastExpressionType.toJK())
                             ).withFormattingFrom(jkExpressions.last())
                         staredExpression.expression.also {
-                            it.hasLineBreakAfter = false
-                            it.hasLineBreakBefore = false
+                            it.lineBreaksBefore = 0
+                            it.lineBreaksAfter = 0
                         }
                         jkExpressions.dropLast(1) + staredExpression
                     } else jkExpressions
@@ -634,7 +639,7 @@ class JavaToJKTreeBuilder(
             ).also { klass ->
                 klass.psi = this
                 symbolProvider.provideUniverseSymbol(this, klass)
-                klass.withFormattingFrom(this, assignLineBreaks = true)
+                klass.withFormattingFrom(this)
             }
 
         private fun PsiClass.recordComponents(): List<JKJavaRecordComponent> =
@@ -691,7 +696,7 @@ class JavaToJKTreeBuilder(
             ).also {
                 it.leftBrace.withFormattingFrom(
                     lBrace,
-                    takeCommentsAfter = false
+                    copyCommentsAfter = false
                 ) // do not capture comments which belongs to following declarations
                 it.rightBrace.withFormattingFrom(rBrace)
                 it.declarations.lastOrNull()?.let { lastMember ->
@@ -807,7 +812,11 @@ class JavaToJKTreeBuilder(
                     }
                 }
             ).also {
-                it.withFormattingFrom(this)
+                // Not saving line breaks here is a compromise.
+                // It's easier to not save them here than to manually remove redundant line breaks
+                // after various processings (for example, when properties are moved to primary constructor, etc.)
+                // Usually, original line breaks in annotations are not important anyway.
+                it.withFormattingFrom(this, copyLineBreaks = false)
             }
         }
 
@@ -910,7 +919,7 @@ class JavaToJKTreeBuilder(
             return JKLocalVariable(
                 JKTypeElement(type.toJK(), typeElement.annotationList()).withFormattingFrom(typeElement),
                 nameIdentifier.toJK(),
-                with(expressionTreeMapper) { initializer.toJK() },
+                with(expressionTreeMapper) { initializer.toJK().withLineBreaksFrom(initializer, copyLineBreaksBefore = true) },
                 JKMutabilityModifierElement(
                     if (hasModifierProperty(PsiModifier.FINAL)) IMMUTABLE else UNKNOWN
                 ),
@@ -1179,22 +1188,24 @@ class JavaToJKTreeBuilder(
 
     private fun <T : JKFormattingOwner> T.withFormattingFrom(
         psi: PsiElement?,
-        assignLineBreaks: Boolean = false,
-        takeCommentsBefore: Boolean = true,
-        takeCommentsAfter: Boolean = psi?.takeCommentsAfterNeeded() ?: false
+        copyLineBreaks: Boolean = true,
+        copyLineBreaksBefore: Boolean = false,
+        copyCommentsBefore: Boolean = true,
+        copyCommentsAfter: Boolean = psi?.takeCommentsAfterNeeded() ?: false
     ): T = with(formattingCollector) {
-        takeFormattingFrom(this@withFormattingFrom, psi, assignLineBreaks, takeCommentsBefore, takeCommentsAfter)
+        copyFormattingFrom(this@withFormattingFrom, psi, copyLineBreaks, copyLineBreaksBefore, copyCommentsBefore, copyCommentsAfter)
         this@withFormattingFrom
     }
 
-    // we don't want to capture comments of previous declaration/statement
+    // we don't want to capture comments of next declaration/statement
     private fun PsiElement.takeCommentsAfterNeeded() =
         this !is PsiMember && this !is PsiStatement
 
-    private fun <O : JKFormattingOwner> O.withLineBreaksFrom(psi: PsiElement?) = with(formattingCollector) {
-        takeLineBreaksFrom(this@withLineBreaksFrom, psi)
-        this@withLineBreaksFrom
-    }
+    private fun <O : JKFormattingOwner> O.withLineBreaksFrom(psi: PsiElement?, copyLineBreaksBefore: Boolean = false) =
+        with(formattingCollector) {
+            copyLineBreaksFrom(this@withLineBreaksFrom, psi, copyLineBreaksBefore)
+            this@withLineBreaksFrom
+        }
 
     private fun <O : JKFormattingOwner> O.withCommentsAfterWithParent(psi: PsiElement?) = with(formattingCollector) {
         if (psi == null) return@with this@withCommentsAfterWithParent

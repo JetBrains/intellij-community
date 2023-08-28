@@ -1,19 +1,23 @@
 internal class Test {
     val c: Char = 1.toChar()
     val i: Int = 1
+
     fun operationsWithChar() {
         b(i > c.code)
         b(i >= c.code)
         b(i < c.code)
         b(i <= c.code)
+
         b(c.code > i)
         b(c.code >= i)
         b(c.code < i)
         b(c.code <= i)
+
         b(c.code == i)
         b(c.code != i)
         b(i == c.code)
         b(i != c.code)
+
         i(i + c.code)
         i(i - c.code)
         i(i / c.code)
@@ -28,6 +32,7 @@ internal class Test {
         i( /*operand 'i'*/i /*plus*/ +  /*operand 'c'*/c.code)
         i( /*operand 'i'*/i /*xor*/ xor  /*operand 'c'*/c.code)
         i( /*operand 'i'*/i /*shr*/ ushr  /*operand 'c'*/c.code)
+
         i(c.code + i)
         i(c.code - i)
         i(c.code / i)
@@ -39,6 +44,7 @@ internal class Test {
         i(c.code shl i)
         i(c.code shr i)
         i(c.code ushr i)
+
         i(c.code.inv())
         i(-c.code)
         i(+c.code)
@@ -52,26 +58,34 @@ internal class Test {
         b('0' >= c)
         b('0' < c)
         b('0' <= c)
+
         b(c > '0')
         b(c >= '0')
         b(c < '0')
         b(c <= '0')
+
         b(c == '0')
         b(c != '0')
+
         b('0' == c)
         b('0' != c)
+
         b(i > '0'.code)
         b(i >= '0'.code)
         b(i < '0'.code)
         b(i <= '0'.code)
+
         b('0'.code > i)
         b('0'.code >= i)
         b('0'.code < i)
         b('0'.code <= i)
+
         b('0'.code == i)
         b('0'.code != i)
+
         b(i == '0'.code)
         b(i != '0'.code)
+
         i(i + '0'.code)
         i(i - '0'.code)
         i(i / '0'.code)
@@ -83,6 +97,7 @@ internal class Test {
         i(i shl '0'.code)
         i(i shr '0'.code)
         i(i ushr '0'.code)
+
         i(c.code + '0'.code)
         i(c.code - '0'.code)
         i(c.code / '0'.code)
@@ -94,6 +109,7 @@ internal class Test {
         i(c.code shl '0'.code)
         i(c.code shr '0'.code)
         i(c.code ushr '0'.code)
+
         i('0'.code + i)
         i('0'.code - i)
         i('0'.code / i)
@@ -105,6 +121,7 @@ internal class Test {
         i('0'.code shl i)
         i('0'.code shr i)
         i('0'.code ushr i)
+
         i('0'.code + c.code)
         i('0'.code - c.code)
         i('0'.code / c.code)
@@ -116,6 +133,7 @@ internal class Test {
         i('0'.code shl c.code)
         i('0'.code shr c.code)
         i('0'.code ushr c.code)
+
         i('0'.code.inv())
         i(-'0'.code)
         i(+'0'.code)
@@ -126,8 +144,10 @@ internal class Test {
         b('A' >= '0')
         b('A' < '0')
         b('A' <= '0')
+
         b('0' == 'A')
         b('0' != 'A')
+
         i('A'.code + '0'.code)
         i('A'.code - '0'.code)
         i('A'.code / '0'.code)
@@ -144,6 +164,9 @@ internal class Test {
         i( /*operand 'A'*/'A'.code ushr  /*shr*/ /*operand '0'*/'0'.code)
     }
 
-    fun b(b: Boolean) {}
-    fun i(i: Int) {}
+    fun b(b: Boolean) {
+    }
+
+    fun i(i: Int) {
+    }
 }

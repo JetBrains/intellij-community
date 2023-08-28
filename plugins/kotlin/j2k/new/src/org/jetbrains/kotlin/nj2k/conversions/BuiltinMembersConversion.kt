@@ -484,7 +484,7 @@ private class ConversionsHolder(private val symbolProvider: JKSymbolProvider, pr
                 val secondArgument = expression.arguments.arguments.first()::value.detached()
 
                 // Drop the line break to avoid awkward formatting of binary expression with operator on next line
-                firstArgument.hasLineBreakAfter = false
+                firstArgument.lineBreaksAfter = 0
 
                 JKBinaryExpression(
                     firstArgument,

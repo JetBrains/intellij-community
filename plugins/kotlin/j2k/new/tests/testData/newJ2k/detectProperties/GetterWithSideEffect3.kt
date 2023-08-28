@@ -1,5 +1,6 @@
 class C {
     var x: String = ""
+
     fun getX(): String {
         println("getter invoked")
         return x

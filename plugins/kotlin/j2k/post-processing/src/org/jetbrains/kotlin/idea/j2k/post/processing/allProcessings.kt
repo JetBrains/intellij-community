@@ -176,6 +176,7 @@ private val optimizingImportsAndFormattingCodePostProcessingGroup = NamedPostPro
     listOf(
         ShortenReferenceProcessing(),
         OptimizeImportsProcessing(),
+        RemoveRedundantEmptyLinesProcessing(),
         FormatCodeProcessing()
     )
 )

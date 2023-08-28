@@ -1,5 +1,6 @@
 internal class C {
     var c: Int = 4
+
     var a: Int = 0
 
     init {
@@ -12,6 +13,7 @@ internal class C {
         println(c)
         b = 2
     }
+
 
     init {
         a = 4

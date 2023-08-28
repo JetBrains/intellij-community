@@ -36,12 +36,11 @@ abstract class JKBlock : JKTreeElement() {
     val rightBrace = JKTokenElementImpl("}")
 }
 
-
 object JKBodyStub : JKBlock() {
     override val commentsBefore: MutableList<JKComment> = mutableListOf()
     override val commentsAfter: MutableList<JKComment> = mutableListOf()
-    override var hasLineBreakBefore = false
-    override var hasLineBreakAfter = false
+    override var lineBreaksBefore: Int = 0
+    override var lineBreaksAfter: Int = 0
 
     override fun copy(): JKTreeElement = this
 
@@ -59,7 +58,6 @@ object JKBodyStub : JKBlock() {
     override fun attach(to: JKElement) {}
     override fun accept(visitor: JKVisitor) = Unit
 }
-
 
 class JKInheritanceInfo(
     extends: List<JKTypeElement>,
@@ -127,11 +125,19 @@ class JKNamedArgument(
     override var value by child(value)
     val name by child(name)
     override fun accept(visitor: JKVisitor) = visitor.visitNamedArgument(this)
+
+    init {
+        this.takeFormattingFrom(value)
+    }
 }
 
 class JKArgumentImpl(value: JKExpression) : JKArgument() {
     override var value by child(value)
     override fun accept(visitor: JKVisitor) = visitor.visitArgument(this)
+
+    init {
+        this.takeFormattingFrom(value)
+    }
 }
 
 class JKArgumentList(arguments: List<JKArgument> = emptyList()) : JKTreeElement() {

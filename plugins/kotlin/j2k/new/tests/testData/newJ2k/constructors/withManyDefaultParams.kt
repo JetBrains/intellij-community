@@ -10,6 +10,7 @@ class Test {
     protected var g: Char = 0.toChar()
 
     constructor()
+
     constructor(name: String?) {
         myName = foo(name)
     }

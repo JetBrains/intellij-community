@@ -22,6 +22,7 @@ class Java8Class {
             helper()
             "42"
         }
+
         foo1 { i: Int? -> "42" }
         foo1 { i: Int? -> "42" }
         foo1 { i: Int ->
@@ -31,11 +32,13 @@ class Java8Class {
             }
             "43"
         }
+
         foo2 { i: Int?, j: Int? -> "42" }
         foo2 { i: Int?, j: Int? ->
             helper()
             "42"
         }
+
         val f: Function2<Int, Int, String> = label@{ i: Int, k: Int? ->
             helper()
             if (i > 1) {
@@ -43,6 +46,7 @@ class Java8Class {
             }
             "43"
         }
+
         val f1 = label@{ i1: Int, k1: Int ->
             val f2: Function2<Int, Int, String> = label@{ i2: Int, k2: Int? ->
                 helper()
@@ -56,7 +60,9 @@ class Java8Class {
             }
             f.invoke(i1, k1)
         }
+
         val runnable = Runnable {}
+
         foo1 { i: Int ->
             if (i > 1) {
                 return@foo1 "42"

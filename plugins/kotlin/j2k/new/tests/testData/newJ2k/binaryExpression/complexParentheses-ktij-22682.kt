@@ -8,7 +8,6 @@ object Test {
     }
 
     internal enum class Foo {
-        GOOD,
-        BAD
+        GOOD, BAD
     }
 }

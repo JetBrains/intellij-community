@@ -9,6 +9,7 @@ internal class A {
                 j++
             }
         }
+
         var j = 1
         while (j < 2000) {
             println(j)

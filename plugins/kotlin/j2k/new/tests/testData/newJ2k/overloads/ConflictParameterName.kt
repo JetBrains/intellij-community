@@ -1,13 +1,17 @@
 class Test {
     private var x = 1
+
     private val a = true
+
     private val b = true
+
     private fun c(): Boolean {
         return true
     }
 
     private val isD: Boolean
         get() = true
+
     private val e = E()
 
     class E {

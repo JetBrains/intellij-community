@@ -1,5 +1,6 @@
 class J {
     private val s = S()
+
     fun test() {
         s.prop = ""
     }

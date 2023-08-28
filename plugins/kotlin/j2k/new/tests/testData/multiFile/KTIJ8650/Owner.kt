@@ -1,5 +1,6 @@
 class Owner {
     private var string: String? = null
+
     @Synchronized
     fun getString(): String {
         if (string == null) {
