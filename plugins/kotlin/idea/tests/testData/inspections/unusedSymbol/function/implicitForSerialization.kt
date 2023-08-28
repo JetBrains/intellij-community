@@ -17,5 +17,6 @@ class Foo : java.io.Serializable {
 }
 
 fun main(args: Array<String>) {
+    println(args)
     Foo()
 }

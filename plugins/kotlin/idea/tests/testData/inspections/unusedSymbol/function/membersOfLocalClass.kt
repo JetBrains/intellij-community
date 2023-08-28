@@ -1,4 +1,5 @@
 fun main(args: Array<String>) {
+    println(args)
     class LocalClass {
         fun f() {
         }
