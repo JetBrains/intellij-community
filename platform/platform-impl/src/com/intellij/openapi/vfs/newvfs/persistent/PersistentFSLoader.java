@@ -61,7 +61,7 @@ public final class PersistentFSLoader {
 
   private final PersistentFSPaths vfsPaths;
 
-  private final PersistentFSLoaderExecutor executorService;
+  private final VFSAsyncTaskExecutor executorService;
 
   public final boolean enableVfsLog;
 
@@ -106,7 +106,7 @@ public final class PersistentFSLoader {
 
   PersistentFSLoader(@NotNull PersistentFSPaths persistentFSPaths,
                      boolean enableVfsLog,
-                     @NotNull PersistentFSLoaderExecutor pool) {
+                     @NotNull VFSAsyncTaskExecutor pool) {
     recordsFile = persistentFSPaths.storagePath("records");
     namesFile = persistentFSPaths.storagePath("names");
     attributesFile = persistentFSPaths.storagePath("attributes");

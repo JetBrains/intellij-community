@@ -4,7 +4,7 @@ package com.intellij.openapi.vfs.newvfs.persistent.dev.enumerator;
 import com.intellij.openapi.Forceable;
 import com.intellij.openapi.util.IntRef;
 import com.intellij.openapi.util.ThrowableComputable;
-import com.intellij.openapi.vfs.newvfs.persistent.PersistentFSLoaderExecutor;
+import com.intellij.openapi.vfs.newvfs.persistent.VFSAsyncTaskExecutor;
 import com.intellij.openapi.vfs.newvfs.persistent.mapped.MMappedFileStorage;
 import com.intellij.openapi.vfs.newvfs.persistent.dev.InvertedFilenameHashBasedIndex.Int2IntMultimap;
 import com.intellij.openapi.vfs.newvfs.persistent.dev.appendonlylog.AppendOnlyLog;
@@ -83,7 +83,7 @@ public final class DurableStringEnumerator implements ScannableDataEnumeratorEx<
   }
 
   public static @NotNull DurableStringEnumerator openAsync(@NotNull Path storagePath,
-                                                           @NotNull PersistentFSLoaderExecutor executor) throws IOException {
+                                                           @NotNull VFSAsyncTaskExecutor executor) throws IOException {
     AppendOnlyLogOverMMappedFile valuesLog = openValuesLog(storagePath);
     CompletableFuture<Int2IntMultimap> future = executor.async(() -> buildValueToIdIndex(valuesLog));
 

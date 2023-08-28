@@ -15,12 +15,12 @@ import java.util.concurrent.Callable
 import java.util.concurrent.CompletableFuture
 
 /** Abstracts out specific way to run async tasks during VFS initialization */
-internal interface PersistentFSLoaderExecutor {
+internal interface VFSAsyncTaskExecutor {
   fun <T> async(task: Callable<T>): CompletableFuture<T>
 }
 
 @Service
-internal class ExecuteOnCoroutine(private val coroutineScope: CoroutineScope) : PersistentFSLoaderExecutor {
+internal class ExecuteOnCoroutine(private val coroutineScope: CoroutineScope) : VFSAsyncTaskExecutor {
   private val dispatcherAndName = CoroutineName("PersistentFsLoader") + Dispatchers.IO
   override fun <T> async(task: Callable<T>): CompletableFuture<T> {
     return coroutineScope.async(dispatcherAndName) {
@@ -31,7 +31,7 @@ internal class ExecuteOnCoroutine(private val coroutineScope: CoroutineScope) : 
   }
 }
 
-internal object ExecuteOnThreadPool : PersistentFSLoaderExecutor {
+internal object ExecuteOnThreadPool : VFSAsyncTaskExecutor {
   override fun <T> async(task: Callable<T>): CompletableFuture<T> {
     //MAYBE RC: use Dispatchers.IO-kind pool, with many threads (appExecutor has 1 core thread, so needs time to inflate)
     val pool = AppExecutorUtil.getAppExecutorService()
@@ -42,7 +42,7 @@ internal object ExecuteOnThreadPool : PersistentFSLoaderExecutor {
   }
 }
 
-internal object ExecuteOnCallingThread : PersistentFSLoaderExecutor {
+internal object ExecuteOnCallingThread : VFSAsyncTaskExecutor {
   override fun <T> async(task: Callable<T>): CompletableFuture<T> {
     try {
       return CompletableFuture.completedFuture(task.call())
@@ -58,7 +58,7 @@ internal object PersistentFsConnectorHelper {
   private val PARALLELIZE_VFS_INITIALIZATION = System.getProperty("vfs.parallelize-initialization", "true").toBoolean()
   private val USE_COROUTINES_DISPATCHER = System.getProperty("vfs.use-coroutines-dispatcher", "true").toBoolean()
 
-  fun executor(): PersistentFSLoaderExecutor {
+  fun executor(): VFSAsyncTaskExecutor {
     if (!PARALLELIZE_VFS_INITIALIZATION) {
       return ExecuteOnCallingThread
     }

@@ -171,7 +171,7 @@ final class PersistentFSConnector {
     Files.createDirectories(basePath);
 
     //MAYBE RC: looks like it all could be much easier with coroutines
-    PersistentFSLoaderExecutor pool = PersistentFsConnectorHelper.INSTANCE.executor();
+    VFSAsyncTaskExecutor pool = PersistentFsConnectorHelper.INSTANCE.executor();
 
     PersistentFSPaths persistentFSPaths = new PersistentFSPaths(cachesDir);
     PersistentFSLoader vfsLoader = new PersistentFSLoader(persistentFSPaths, enableVfsLog, pool);
