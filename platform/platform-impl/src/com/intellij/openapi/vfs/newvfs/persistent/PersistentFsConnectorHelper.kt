@@ -31,7 +31,7 @@ internal class ExecuteOnCoroutine(private val coroutineScope: CoroutineScope) : 
   }
 }
 
-internal object ExecuteOnThreadPool : VFSAsyncTaskExecutor {
+internal object ExecuteOnAppThreadPool : VFSAsyncTaskExecutor {
   override fun <T> async(task: Callable<T>): CompletableFuture<T> {
     //MAYBE RC: use Dispatchers.IO-kind pool, with many threads (appExecutor has 1 core thread, so needs time to inflate)
     val pool = AppExecutorUtil.getAppExecutorService()
@@ -54,7 +54,6 @@ internal object ExecuteOnCallingThread : VFSAsyncTaskExecutor {
 }
 
 internal object PersistentFsConnectorHelper {
-  //FIXME RC: temporary, 'false' is not really a long-term alternative -- decide shortly about it
   private val PARALLELIZE_VFS_INITIALIZATION = System.getProperty("vfs.parallelize-initialization", "true").toBoolean()
   private val USE_COROUTINES_DISPATCHER = System.getProperty("vfs.use-coroutines-dispatcher", "true").toBoolean()
 
@@ -72,7 +71,7 @@ internal object PersistentFsConnectorHelper {
       }
     }
     else {
-      return ExecuteOnThreadPool
+      return ExecuteOnAppThreadPool
     }
   }
 }

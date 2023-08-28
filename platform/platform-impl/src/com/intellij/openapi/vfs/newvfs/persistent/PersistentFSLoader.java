@@ -502,7 +502,7 @@ public final class PersistentFSLoader {
                    "file[#" + fileId + "].nameId(=" + nameId + ") is not present in namesEnumerator");
         return false;
       }
-      else {
+      else if (!FSRecordsImpl.USE_FAST_NAMES_IMPLEMENTATION) {
         int reCheckNameId = namesStorage.tryEnumerate(name);
         if (reCheckNameId != nameId) {
           addProblem(NAME_STORAGE_INCOMPLETE,
@@ -511,6 +511,10 @@ public final class PersistentFSLoader {
           );
           return false;
         }
+        //Fast (DurableStringEnumerator) implementation persists only forward (id->name) index, and re-build inverse
+        // (name->id) index in memory, on each loading, so:
+        // 1) no need to check inverse index since it can't be corrupted on disk
+        // 2) inverse index is building async, so by trying to check it we force the building and ruin async-ness
       }
     }
     catch (Throwable t) {

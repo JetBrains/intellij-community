@@ -85,13 +85,13 @@ public final class DurableStringEnumerator implements ScannableDataEnumeratorEx<
   public static @NotNull DurableStringEnumerator openAsync(@NotNull Path storagePath,
                                                            @NotNull VFSAsyncTaskExecutor executor) throws IOException {
     AppendOnlyLogOverMMappedFile valuesLog = openValuesLog(storagePath);
-    CompletableFuture<Int2IntMultimap> future = executor.async(() -> buildValueToIdIndex(valuesLog));
 
+    CompletableFuture<Int2IntMultimap> indexBuildingFuture = executor.async(() -> buildValueToIdIndex(valuesLog));
     return new DurableStringEnumerator(
       valuesLog,
       () -> {
         try {
-          return future.get();
+          return indexBuildingFuture.get();
         }
         catch (ExecutionException | InterruptedException e) {
           throw new IOException(e);
@@ -244,7 +244,7 @@ public final class DurableStringEnumerator implements ScannableDataEnumeratorEx<
   }
 
 
-  private static @NotNull Int2IntMultimap buildValueToIdIndex(AppendOnlyLogOverMMappedFile valuesLog) throws IOException {
+  private static @NotNull Int2IntMultimap buildValueToIdIndex(@NotNull AppendOnlyLogOverMMappedFile valuesLog) throws IOException {
     Int2IntMultimap valueHashToId = new Int2IntMultimap();
     valuesLog.forEachRecord((logId, buffer) -> {
       String value = readString(buffer);

@@ -118,6 +118,22 @@ public class VFSInitializationBenchmark {
     }
   }
 
+  @Benchmark
+  public void initVFS_OverAlreadyExistingFiles_AndWaitForNameEnumerator(Context context) throws Exception {
+    int version = FSRecordsImpl.currentImplementationVersion();
+    Path cachesDir = context.realFolder;
+    if (cachesDir != null) {
+      PersistentFSConnection connection = initVFS(cachesDir, version);
+      context.connectionToClose = connection;
+
+      int maxAllocatedID = connection.getRecords().maxAllocatedID();
+      assert maxAllocatedID > 100_000 : "maxAllocatedID" + maxAllocatedID + " is too low, probably already existing files are dummy?";
+
+      //force name-to-id index loading:
+      connection.getNames().tryEnumerate("abc");
+    }
+  }
+
   private static PersistentFSConnection initVFS(Path cachesDir,
                                                 int version) {
     VFSInitializationResult initResult = PersistentFSConnector.connect(
