@@ -4,6 +4,7 @@
 package org.jetbrains.intellij.build
 
 import org.jetbrains.annotations.ApiStatus.Internal
+import org.jetbrains.intellij.build.LibraryLicense.Companion.PREDEFINED_LICENSE_URLS
 
 /**
  * Describes a library which is included into distribution of an IntelliJ-based IDE. This information is used to show list of Third-party
@@ -66,7 +67,35 @@ data class LibraryLicense(
   /**
    * See [org.spdx.library.SpdxConstants.LISTED_LICENSE_URL]
    */
-  internal var spdxIdentifier: String? = null
+  @Internal
+  var spdxIdentifier: String? = null
+
+  /**
+   * See:
+   * * https://spdx.github.io/spdx-spec/v2.3/package-information/#75-package-supplier-field
+   * * https://package-search.jetbrains.com/
+   */
+  internal var supplier: String? = null
+    set(value) {
+      require(value == null || value.startsWith("Organization: ") || value.startsWith("Person: ")) {
+        "$value should start either with 'Organization: ' or with 'Person: ' prefix"
+      }
+      field = value
+    }
+
+  @Internal
+  fun suppliedByOrganizations(vararg organizations: String): LibraryLicense {
+    require(organizations.any())
+    supplier = organizations.joinToString(prefix = "Organization: ")
+    return this
+  }
+
+  @Internal
+  fun suppliedByPersons(vararg persons: String): LibraryLicense {
+    require(persons.any())
+    supplier = persons.joinToString(prefix = "Person: ")
+    return this
+  }
 
   init {
     require(name != null || libraryName != null) { "name or libraryName must be set" }
@@ -225,7 +254,8 @@ data class LibraryLicense(
   fun forkedFrom(groupId: String, artifactId: String,
                  version: String? = null, revision: String? = null,
                  mavenRepositoryUrl: String? = null,
-                 sourceCodeUrl: String? = null): LibraryLicense {
+                 sourceCodeUrl: String? = null,
+                 authors: String? = null): LibraryLicense {
     return copy().apply {
       forkedFrom = LibraryUpstream(
         mavenRepositoryUrl = mavenRepositoryUrl,
@@ -237,7 +267,9 @@ data class LibraryLicense(
           version = version, url = sourceCodeUrl,
           licenseUrl = this.licenseUrl,
           license = this.license,
-        )
+        ).let {
+          it.suppliedByPersons(authors ?: return@let it)
+        }
       )
     }
   }

@@ -10,6 +10,7 @@ import kotlinx.coroutines.*
 import org.apache.commons.codec.digest.DigestUtils
 import org.apache.maven.model.Model
 import org.apache.maven.model.io.xpp3.MavenXpp3Reader
+import org.jetbrains.annotations.ApiStatus.Internal
 import org.jetbrains.intellij.build.impl.*
 import org.jetbrains.intellij.build.impl.projectStructureMapping.*
 import org.jetbrains.intellij.build.io.readZipFile
@@ -59,13 +60,20 @@ class SoftwareBillOfMaterials internal constructor(
 ) {
   companion object {
     const val STEP_ID: String = "sbom"
+
+    @Internal
+    object Suppliers {
+      const val JETBRAINS: String = "JetBrains s.r.o."
+      const val GOOGLE: String = "Google LLC"
+      const val APACHE: String = "The Apache Software Foundation"
+    }
   }
 
   class Options {
     /**
      * [Specification](https://spdx.github.io/spdx-spec/v2.3/document-creation-information/#68-creator-field)
      */
-    var creator: String = "Organization: JetBrains s.r.o."
+    var creator: String = "Organization: ${Suppliers.JETBRAINS}"
 
     var copyrightText: String? = "Copyright 2000-2023 JetBrains s.r.o. and contributors"
 
@@ -92,27 +100,29 @@ class SoftwareBillOfMaterials internal constructor(
   private val license: Options.DistributionLicense by lazy {
     when (val license = context.options.sbomOptions.license) {
       null -> throw IllegalArgumentException("Distribution license isn't specified")
-      Options.DistributionLicense.JETBRAINS -> {
-        /**
-         * See [com.intellij.ide.gdpr.EndUserAgreement]
-         */
-        val eula = context.paths.communityHomeDir
-          .resolve("platform/platform-resources/src")
-          .resolve(when {
-                     context.applicationInfo.isEAP -> "euaEap.html"
-                     else -> "eua.html"
-                   })
-        check(eula.exists()) {
-          "$eula is missing"
-        }
-        Options.DistributionLicense(
-          name = "JetBrains User Agreement",
-          text = eula.readText(),
-          url = "https://www.jetbrains.com/legal/docs/toolbox/user/"
-        )
-      }
+      Options.DistributionLicense.JETBRAINS -> jetBrainsOwnLicense
       else -> license
     }
+  }
+
+  /**
+   * See [com.intellij.ide.gdpr.EndUserAgreement]
+   */
+  private val jetBrainsOwnLicense: Options.DistributionLicense by lazy {
+    val eula = context.paths.communityHomeDir
+      .resolve("platform/platform-resources/src")
+      .resolve(when {
+                 context.applicationInfo.isEAP -> "euaEap.html"
+                 else -> "eua.html"
+               })
+    check(eula.exists()) {
+      "$eula is missing"
+    }
+    Options.DistributionLicense(
+      name = "JetBrains User Agreement",
+      text = eula.readText(),
+      url = "https://www.jetbrains.com/legal/docs/toolbox/user/"
+    )
   }
 
   private val repositories by lazy {
@@ -446,23 +456,10 @@ class SoftwareBillOfMaterials internal constructor(
                                       locator, null)
   }
 
-  private val LibraryLicense.supplier: String?
-    get() {
-      val website = url ?: ""
-      return "Organization: " + when {
-        license == LibraryLicense.JETBRAINS_OWN ||
-        website.startsWith("https://github.com/JetBrains/") ||
-        website.startsWith("https://github.com/Kotlin/") -> "JetBrains s.r.o."
-        website.startsWith("https://github.com/google/") ||
-        website.startsWith("https://source.android.com/") -> "Google LLC"
-        else -> return null
-      }
-    }
-
   private fun translateSupplier(supplier: String): String {
     return when (supplier) {
-      "JetBrains" -> "JetBrains s.r.o."
-      "Google" -> "Google LLC"
+      "JetBrains" -> Suppliers.JETBRAINS
+      "Google" -> Suppliers.GOOGLE
       else -> supplier
     }
   }
@@ -481,29 +478,39 @@ class SoftwareBillOfMaterials internal constructor(
     val pomXmlUrl: String? = null,
     pomXmlModel: Model?
   ) {
-    val supplier: String? =
-      (pomXmlModel?.organization?.name ?: pomXmlModel
-        ?.developers?.asSequence()
-        ?.mapNotNull { it.organization }
-        ?.distinct()
-        ?.singleOrNull())
-        ?.takeIf { it.isNotBlank() }
-        ?.let(::translateSupplier)
-        ?.let { "Organization: $it" }
-      ?: pomXmlModel?.developers?.singleOrNull()?.let {
-        "Person: " + when {
-          it.name?.isNotBlank() == true && it.email?.isNotBlank() == true -> "${it.name} <${it.email}>"
-          it.name?.isNotBlank() == true -> it.name
+    val organizations = (pomXmlModel?.organization?.name ?: pomXmlModel
+      ?.developers?.asSequence()
+      ?.mapNotNull { it.organization }
+      ?.filter { it.isNotBlank() }
+      ?.map(::translateSupplier)
+      ?.distinct()
+      ?.joinToString())
+      ?.takeIf { it.isNotBlank() }
+      ?.let { "Organization: $it" }
+
+    val developers = pomXmlModel?.developers?.asSequence()
+      ?.mapNotNull {
+        when {
+          it.name?.isNotBlank() == true && it.email?.isNotBlank() == true -> "${translateSupplier(it.name)} <${it.email}>"
+          it.name?.isNotBlank() == true -> translateSupplier(it.name)
           it.email?.isNotBlank() == true -> "<${it.email}>"
-          else -> return@let null
+          else -> return@mapNotNull null
         }
-      } ?: license.supplier
+      }?.distinct()
+      ?.joinToString()
+      ?.takeIf { it.isNotBlank() }
+      ?.let { "Person: $it" }
+
+    val supplier: String? = license.supplier ?: organizations ?: developers
 
     fun license(document: SpdxDocument): AnyLicenseInfo {
       return when {
-        license.licenseUrl == null ||
-        license.spdxIdentifier == null ||
-        license.license == LibraryLicense.JETBRAINS_OWN -> SpdxNoAssertionLicense()
+        license.licenseUrl == null || license.spdxIdentifier == null -> SpdxNoAssertionLicense()
+        license.license == LibraryLicense.JETBRAINS_OWN -> document.extractedLicenseInfo(
+          name = jetBrainsOwnLicense.name,
+          text = jetBrainsOwnLicense.text,
+          url = jetBrainsOwnLicense.url
+        )
         else -> document.parseLicense(checkNotNull(license.spdxIdentifier))
       }
     }
@@ -542,7 +549,6 @@ class SoftwareBillOfMaterials internal constructor(
         "Missing version for ${library.coordinates}"
       })
       setDownloadLocation(library.downloadUrl ?: SpdxConstants.NOASSERTION_VALUE)
-      setSupplier(library.supplier ?: SpdxConstants.NOASSERTION_VALUE)
       setOrigin(library, upstreamPackage)
       addChecksum(createChecksum(ChecksumAlgorithm.SHA256, library.sha256Checksum))
       if (library.repositoryUrl != null) {
@@ -579,16 +585,32 @@ class SoftwareBillOfMaterials internal constructor(
   }
 
   private fun SpdxPackageBuilder.setOrigin(library: MavenLibrary, upstreamPackage: SpdxPackage?) {
-    val upstream = library.license.forkedFrom
     when {
-      library.supplier == null -> {
-        check(upstream == null && upstreamPackage == null) {
-          "Missing supplier for ${library.coordinates} which is a fork of ${upstream?.groupId}:${upstream?.artifactId}"
-        }
+      library.supplier != null -> setSupplier(library.supplier)
+      library.license.license == LibraryLicense.JETBRAINS_OWN ||
+      library.license.url?.startsWith("https://github.com/JetBrains/") == true ||
+      library.license.licenseUrl?.startsWith("https://github.com/JetBrains/") == true ||
+      library.license.url?.startsWith("https://github.com/Kotlin/") == true ||
+      library.license.licenseUrl?.startsWith("https://github.com/Kotlin/") == true -> {
+        setSupplier("Organization: ${Suppliers.JETBRAINS}")
+      }
+      library.license.url?.startsWith("https://github.com/apache/") == true ||
+      library.license.licenseUrl?.startsWith("https://github.com/apache/") == true -> {
+        setSupplier("Organization: ${Suppliers.APACHE}")
+      }
+      library.license.url?.startsWith("https://github.com/google/") == true ||
+      library.license.licenseUrl?.startsWith("https://github.com/google/") == true -> {
+        setSupplier("Organization: ${Suppliers.GOOGLE}")
+      }
+      else -> {
+        setSupplier(SpdxConstants.NOASSERTION_VALUE)
         if (library.pomXmlUrl != null) {
           setSourceInfo("Supplier information is not available in ${library.pomXmlUrl}")
         }
       }
+    }
+    val upstream = library.license.forkedFrom
+    when {
       upstreamPackage != null -> setOriginator(upstreamPackage.supplier.get())
       upstream?.revision != null && upstream.sourceCodeUrl != null -> {
         setSourceInfo("Forked from a revision ${upstream.revision} of ${upstream.sourceCodeUrl}")
