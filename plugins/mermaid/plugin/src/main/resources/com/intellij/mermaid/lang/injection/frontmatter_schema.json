@@ -1388,6 +1388,15 @@
                 "center",
                 "justify"
               ]
+            },
+            "showValues": {
+              "type": "boolean"
+            },
+            "prefix": {
+              "type": "string"
+            },
+            "suffix": {
+              "type": "string"
             }
           }
         },
