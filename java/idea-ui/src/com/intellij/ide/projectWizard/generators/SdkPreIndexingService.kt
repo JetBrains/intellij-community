@@ -35,7 +35,7 @@ internal class SdkPreIndexingRequiredForSmartModeActivity: StartupActivity.Requi
 @Service
 internal class SdkPreIndexingService: Disposable {
   private companion object {
-    val isEnabled = SystemProperties.getBooleanProperty("sdk.pre.indexing", true)
+    val isEnabled = SystemProperties.getBooleanProperty("sdk.pre.indexing", false)
   }
 
   @Volatile
