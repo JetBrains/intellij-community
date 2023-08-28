@@ -7,19 +7,22 @@ import com.intellij.openapi.vfs.newvfs.persistent.dev.enumerator.DurableStringEn
 import java.nio.file.Path
 import kotlin.io.path.absolute
 
-class DurableStringEnumeratorApp: App {
+class DurableStringEnumeratorApp : App {
+
   private class DSE : StringEnum {
     val instance = DurableStringEnumerator.open(Path.of("pse.data").absolute())
 
     override fun enumerate(s: String): Int {
       return instance.enumerate(s)
-        //.also { instance.force() }
+      //.also { instance.force() }
     }
 
     override fun valueOf(idx: Int): String? {
       try {
         return instance.valueOf(idx)
-      } catch (_: IllegalArgumentException) {
+      }
+      catch (ex: IllegalArgumentException) {
+        ex.printStackTrace()
         return null
       }
     }

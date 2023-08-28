@@ -68,15 +68,13 @@ object StressTestUtil {
         require(it.java.interfaces.contains(App::class.java)) { "${it.qualifiedName} class does not implement App (see Domain.kt)" }
       } as KClass<out App>
 
-      val appRun = appClass.memberFunctions.find { it.name == "run" }
-                   ?: throw IllegalStateException("no run method in ${appClass.qualifiedName}")
       val appAgent = object : AppAgent {
         override val input: InputStream
           get() = System.`in`
         override val output: OutputStream
           get() = System.out
       }
-      appRun.call(appClass.createInstance(), appAgent)
+      appClass.createInstance().run(appAgent)
     }
 
     private val currentProcessInfo by lazy {
@@ -159,7 +157,7 @@ object StressTestUtil {
       try {
         val userAgent = UserAgentImpl(id, stressTestReport, appClass, tempDir)
         repeat(iterations) {
-          userRunSession.call(userClass.createInstance(), userAgent)
+          userClass.createInstance().run(userAgent)
           iterationsPassed.incrementAndGet()
         }
       }
