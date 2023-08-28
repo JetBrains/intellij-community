@@ -595,6 +595,11 @@ public abstract class K2LocalInspectionTestGenerated extends AbstractK2LocalInsp
             runTest("../../../idea/tests/testData/inspectionsLocal/conventionNameCalls/replaceGetOrSet/setValueUsed.kt");
         }
 
+        @TestMetadata("setValueUsedWithUnitReturnType.kt")
+        public void testSetValueUsedWithUnitReturnType() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/conventionNameCalls/replaceGetOrSet/setValueUsedWithUnitReturnType.kt");
+        }
+
         @TestMetadata("setWithNoParameters.kt")
         public void testSetWithNoParameters() throws Exception {
             runTest("../../../idea/tests/testData/inspectionsLocal/conventionNameCalls/replaceGetOrSet/setWithNoParameters.kt");
