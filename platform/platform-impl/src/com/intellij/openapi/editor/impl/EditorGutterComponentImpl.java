@@ -94,6 +94,7 @@ import it.unimi.dsi.fastutil.objects.ReferenceOpenHashSet;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.VisibleForTesting;
 
 import javax.accessibility.Accessible;
 import javax.accessibility.AccessibleContext;
@@ -1156,6 +1157,22 @@ final class EditorGutterComponentImpl extends EditorGutterComponentEx implements
       buildGutterRenderersCache();
     }
     return Int2ObjectMaps.fastIterable(myLineToGutterRenderers);
+  }
+
+  @VisibleForTesting
+  public Collection<GutterIconWithLocation> getLineGutterMarks() {
+    List<GutterIconWithLocation> list = new ArrayList<>();
+    for (Int2ObjectMap.Entry<List<GutterMark>> entry : processGutterRenderers()) {
+      List<GutterMark> marks = entry.getValue();
+      int line = entry.getIntKey();
+      for (GutterMark mark : marks) {
+        if (mark instanceof GutterIconRenderer) {
+          Point markLocation = getCenterPoint((GutterIconRenderer)mark);
+          list.add(new GutterIconWithLocation(mark, line, markLocation));
+        }
+      }
+    }
+    return list;
   }
 
   private boolean isHighlighterVisible(RangeHighlighter highlighter) {
