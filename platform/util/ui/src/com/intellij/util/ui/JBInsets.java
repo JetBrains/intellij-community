@@ -125,7 +125,8 @@ public class JBInsets extends Insets {
   }
 
   public static @NotNull JBInsets create(@NotNull String key, @NotNull Insets defaultValue) {
-    return create(new UIDefaultsSupplier(key), defaultValue);
+    var defInsets = defaultValue instanceof JBInsets jbInsets ? jbInsets.unscaledDefault : defaultValue;
+    return create(new UIDefaultsSupplier(key), defInsets);
   }
 
   private static @NotNull JBInsets create(@Nullable Supplier<@Nullable Insets> unscaledSupplier, @NotNull Insets unscaledDefault) {
