@@ -53,6 +53,8 @@ class JpsProjectSerializersImpl(directorySerializersFactories: List<JpsDirectory
   // Map of module serializer to boolean that defines whenever modules.xml is external or not
   private val moduleSerializerToExternalSourceBool = mutableMapOf<JpsFileEntitiesSerializer<*>, Boolean>()
 
+  private val additionalModuleRelatedEntities: List<Class<out WorkspaceEntity>>
+
   init {
     synchronized(lock) {
       for (factory in directorySerializersFactories) {
@@ -81,6 +83,8 @@ class JpsProjectSerializersImpl(directorySerializersFactories: List<JpsDirectory
       allFileSerializers.forEach {
         fileSerializersByUrl.put(it.fileUrl.url, it)
       }
+
+      additionalModuleRelatedEntities = context.customFacetRelatedEntitySerializers.map { it.rootEntityType }
     }
   }
 
@@ -685,7 +689,7 @@ class JpsProjectSerializersImpl(directorySerializersFactories: List<JpsDirectory
     entitiesToSave.forEach { (source, entities) ->
       val actualFileSource = getActualFileSource(source)
       if (actualFileSource is JpsProjectFileEntitySource.FileInDirectory) {
-        val fileNameByEntity = calculateFileNameForEntity(actualFileSource, source, entities)
+        val fileNameByEntity = calculateFileNameForEntity(actualFileSource, source, storage, entities)
         val oldFileName = fileIdToFileName.get(actualFileSource.fileNameId)
         if (oldFileName != fileNameByEntity) {
           // Don't convert to links[key] = ... because it *may* became autoboxing
@@ -732,11 +736,11 @@ class JpsProjectSerializersImpl(directorySerializersFactories: List<JpsDirectory
       val internalSource = getInternalFileSource(source)
       if (url != null && internalSource != null
           && (ModuleEntity::class.java in entities
-              || FacetEntity::class.java in entities
               || ModuleGroupPathEntity::class.java in entities
               || ContentRootEntity::class.java in entities
               || SourceRootEntity::class.java in entities
               || ExcludeUrlEntity::class.java in entities
+              || additionalModuleRelatedEntities.any { it in entities }
              )) {
 
         val existingSerializers = fileSerializersByUrl.getValues(
@@ -814,22 +818,23 @@ class JpsProjectSerializersImpl(directorySerializersFactories: List<JpsDirectory
 
   private fun calculateFileNameForEntity(source: JpsProjectFileEntitySource.FileInDirectory,
                                          originalSource: EntitySource,
+                                         storage: EntityStorage,
                                          entities: Map<Class<out WorkspaceEntity>, List<WorkspaceEntity>>): String? {
     val directoryFactory = directorySerializerFactoriesByUrl[source.directory.url]
     if (directoryFactory != null) {
       return getDefaultFileNameForEntity(directoryFactory, entities)
     }
     if (ModuleEntity::class.java in entities
-        || FacetEntity::class.java in entities
         || ContentRootEntity::class.java in entities
         || SourceRootEntity::class.java in entities
         || ExcludeUrlEntity::class.java in entities
+        || additionalModuleRelatedEntities.any { it in entities }
     ) {
       val moduleListSerializer = moduleListSerializersByUrl.values.find {
         it.entitySourceFilter(originalSource)
       }
       if (moduleListSerializer != null) {
-        return getFileNameForModuleEntity(moduleListSerializer, entities)
+        return getFileNameForModuleEntity(moduleListSerializer, storage, entities)
       }
     }
     return null
@@ -842,6 +847,7 @@ class JpsProjectSerializersImpl(directorySerializersFactories: List<JpsDirectory
   }
 
   private fun getFileNameForModuleEntity(moduleListSerializer: JpsModuleListSerializer,
+                                         storage: EntityStorage,
                                          entities: Map<Class<out WorkspaceEntity>, List<WorkspaceEntity>>): String? {
     val entity = entities[ModuleEntity::class.java]?.singleOrNull() as? ModuleEntity
     if (entity != null) {
@@ -860,8 +866,11 @@ class JpsProjectSerializersImpl(directorySerializersFactories: List<JpsDirectory
     if (module != null) {
       return moduleListSerializer.getFileName(module)
     }
-    val additionalEntity = entities[FacetEntity::class.java]?.firstOrNull() as? FacetEntity ?: return null
-    return moduleListSerializer.getFileName(additionalEntity.module)
+    val moduleEntity = additionalModuleRelatedEntities.mapNotNull {
+      val moduleId = (entities[it]?.firstOrNull() as? ModuleSettingsBase)?.moduleId ?: return@mapNotNull null
+      storage.resolve(moduleId)
+    }.firstOrNull() ?: return null
+    return moduleListSerializer.getFileName(moduleEntity)
   }
 
   private fun <E : WorkspaceEntity> getFilteredEntitiesForSerializer(serializer: JpsFileEntityTypeSerializer<E>,
