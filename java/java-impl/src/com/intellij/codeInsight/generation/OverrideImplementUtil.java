@@ -502,6 +502,11 @@ public final class OverrideImplementUtil extends OverrideImplementExploreUtil {
     return prepareJavaOverrideImplementChooser(aClass, toImplement, candidates, secondary);
   }
 
+
+  /**
+   * @deprecated use {@link OverrideImplementUtil#showJavaOverrideImplementChooser(Editor, PsiElement, boolean, Collection, Collection, java.util.function.Consumer)}
+   */
+  @Deprecated
   @Nullable
   public static MemberChooser<PsiMethodMember> showOverrideImplementChooser(@NotNull Editor editor,
                                                                             @NotNull PsiElement aClass,
@@ -512,8 +517,9 @@ public final class OverrideImplementUtil extends OverrideImplementExploreUtil {
   }
 
   /**
-   * @param candidates, secondary should allow modifications
+   * @deprecated use {@link OverrideImplementUtil#showJavaOverrideImplementChooser(Editor, PsiElement, boolean, Collection, Collection, java.util.function.Consumer)}
    */
+  @Deprecated
   @Nullable
   public static JavaOverrideImplementMemberChooser showJavaOverrideImplementChooser(@NotNull Editor editor,
                                                                                     @NotNull PsiElement aClass,
@@ -526,6 +532,26 @@ public final class OverrideImplementUtil extends OverrideImplementExploreUtil {
       return null;
     }
     return showJavaOverrideImplementChooser(container, editor, aClass);
+  }
+
+  /**
+   * @param candidates, secondary should allow modifications
+   */
+  public static void showJavaOverrideImplementChooser(@NotNull Editor editor,
+                                                      @NotNull PsiElement aClass,
+                                                      final boolean toImplement,
+                                                      @NotNull Collection<CandidateInfo> candidates,
+                                                      @NotNull Collection<CandidateInfo> secondary,
+                                                      @NotNull java.util.function.Consumer<JavaOverrideImplementMemberChooser> callback) {
+    ReadAction.nonBlocking(() -> {
+        return prepareJavaOverrideImplementChooser(aClass, toImplement, candidates, secondary);
+      })
+      .finishOnUiThread(ModalityState.defaultModalityState(), container -> {
+        JavaOverrideImplementMemberChooser chooser = showJavaOverrideImplementChooser(container, editor, aClass);
+        callback.accept(chooser);
+      })
+      .expireWhen(() -> !aClass.isValid())
+      .submit(AppExecutorUtil.getAppExecutorService());
   }
 
   @Nullable
