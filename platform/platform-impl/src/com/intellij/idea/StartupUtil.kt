@@ -567,6 +567,13 @@ private fun checkDirectory(directory: Path,
     return true
   }
   catch (e: Exception) {
+    if (checkExec) {
+      val exception = e.message
+      if (exception != null && exception.endsWith("error=26, Text file busy")) {
+        // Ran into https://bugs.openjdk.org/browse/JDK-8068370, but this is sufficient evidence the script was executable
+        return true
+      }
+    }
     val title = BootstrapBundle.message("bootstrap.error.title.invalid.ide.directory.type.0.directory", kind)
     val advice = if (SystemInfoRt.isMac && PathManager.getSystemPath().contains(MAGIC_MAC_PATH)) {
       BootstrapBundle.message("bootstrap.error.message.invalid.ide.directory.trans.located.macos.directory.advice")
