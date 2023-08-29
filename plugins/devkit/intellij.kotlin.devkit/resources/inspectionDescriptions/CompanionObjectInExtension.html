@@ -2,7 +2,7 @@
 <body>
 Reports incorrect companion objects' usage in <a href="https://plugins.jetbrains.com/docs/intellij/plugin-extensions.html">extensions</a>.
 <p>
-  Kotlin companion object is always created once you try to load its containing class, and extension point implementations` are supposed to be cheap to create.
+  Kotlin companion object is always created once you try to load its containing class, and extension point implementations are supposed to be cheap to create.
   Excessive classloading in plugins is a huge problem for IDE startup.
 </p>
 <p>Bad pattern:</p>
