@@ -19,7 +19,6 @@ import kotlin.io.path.name
 import kotlin.random.Random
 import kotlin.reflect.KClass
 import kotlin.reflect.full.createInstance
-import kotlin.reflect.full.memberFunctions
 import kotlin.time.ExperimentalTime
 import kotlin.time.measureTime
 
@@ -147,8 +146,6 @@ object StressTestUtil {
                                 userClass: KClass<out User>,
                                 appClass: KClass<out App>,
                                 iterations: Int): Thread {
-    val userRunSession = userClass.memberFunctions.find { it.name == "run" }
-                         ?: throw IllegalStateException("no run method in ${userClass.qualifiedName}")
     val tempDir = FileUtil.createTempDirectory("stress-test", id.toString()).toPath()
     tempDir.forEachDirectoryEntry {
       it.delete(true)

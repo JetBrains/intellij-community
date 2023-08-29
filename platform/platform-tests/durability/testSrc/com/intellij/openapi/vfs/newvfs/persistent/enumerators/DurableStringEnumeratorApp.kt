@@ -10,6 +10,8 @@ import kotlin.io.path.absolute
 class DurableStringEnumeratorApp : App {
 
   private class DSE : StringEnum {
+    //DurableStringEnumeratorApp is running in it's own process, and process pwd set to
+    // temporary dir, hence pse.data will be unique each time.
     val instance = DurableStringEnumerator.open(Path.of("pse.data").absolute())
 
     override fun enumerate(s: String): Int {

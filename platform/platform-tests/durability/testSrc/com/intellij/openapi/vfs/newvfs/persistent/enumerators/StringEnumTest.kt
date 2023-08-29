@@ -167,7 +167,7 @@ internal class StringEnumUser : User {
       //println("enumerate $str")
       val id = enumerate(str, afterRequest)
       //println("enumerate $str -> $id")
-      check(id > state.lastSeenId) { "lastSeenId ${state.lastSeenId} vs got $id" }
+      check(id > state.lastSeenId) { "Expect new id from enumerate(new string), but got $id <= lastSeenId: ${state.lastSeenId} (new string: '$str')" }
       state.lastSeenId = id
       state.forward[id] = str
       state.inverse[str] = id
@@ -176,10 +176,13 @@ internal class StringEnumUser : User {
 
     val randomValueOfExisting: API.(() -> Unit) -> Unit = { afterRequest ->
       check(state.unconfirmedCommitted == null)
-      val id = state.forward.keys.toList().let { it[random.nextInt(it.size)] }
-      val expectedStr = state.forward[id]!!
-      val actualStr = valueOf(id, afterRequest)
-      check(actualStr == expectedStr) { "expected $expectedStr != actual $actualStr" }
+      val forwardKeys = state.forward.keys.toList()
+      if(!forwardKeys.isEmpty()) {
+        val id = forwardKeys.let { it[random.nextInt(it.size)] }
+        val expectedStr = state.forward[id]!!
+        val actualStr = valueOf(id, afterRequest)
+        check(actualStr == expectedStr) { "valueOf($id): expected '$expectedStr' != actual '$actualStr'" }
+      }
     }
 
     fun API.randomRequest(afterRequest: () -> Unit, vararg options: API.(() -> Unit) -> Unit) {
