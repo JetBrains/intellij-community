@@ -16,7 +16,11 @@ internal class IdeViewForBookmarksView(private val view: BookmarksView) : IdeVie
   override fun getDirectories(): Array<PsiDirectory> {
     val paths = TreeUtil.getSelectedPathsIfAll(view.tree) { it.findFolderNode != null } ?: return PsiDirectory.EMPTY_ARRAY
     val manager = PsiManager.getInstance(view.project)
-    val directories = paths.mapNotNull { it.asAbstractTreeNode?.asVirtualFile?.run { manager.findDirectory(this) } }
+    val directories = paths.mapNotNull { path ->
+      path.asAbstractTreeNode?.asVirtualFile?.let { virtualFile ->
+        manager.findDirectory(virtualFile)
+      }
+    }
     return if (directories.isEmpty()) PsiDirectory.EMPTY_ARRAY else directories.toTypedArray()
   }
 
