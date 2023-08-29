@@ -375,7 +375,7 @@ import static com.intellij.mermaid.lang.lexer.MermaidTokens.Pie;
   "destroy" { yybegin(sequence_id); return Sequence.DESTROY; }
   "activate" { return Sequence.ACTIVATE; }
   "deactivate" { return Sequence.DEACTIVATE; }
-  "Note" { return NOTE; }
+  [Nn]"ote" { return NOTE; }
   "right of" { return RIGHT_OF; }
   "left of" { return LEFT_OF; }
   "over" { return Sequence.OVER; }
