@@ -539,7 +539,18 @@ public final class LambdaUtil {
       }
       conjunct = psiType;
     }
-
+    if (conjunct == null) {
+      return null;
+    }
+    for (PsiType typeConjunct : type.getConjuncts()) {
+      if (typeConjunct == conjunct) {
+        continue;
+      }
+      if (TypeConversionUtil.isAssignable(conjunct, typeConjunct) &&
+          getFunction(PsiUtil.resolveClassInClassTypeOnly(typeConjunct)) == null) {
+        return null;
+      }
+    }
     return conjunct;
   }
 
