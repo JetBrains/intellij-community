@@ -147,14 +147,14 @@ object StressTestUtil {
                                 appClass: KClass<out App>,
                                 iterations: Int): Thread {
     val tempDir = FileUtil.createTempDirectory("stress-test", id.toString()).toPath()
-    tempDir.forEachDirectoryEntry {
-      it.delete(true)
-    }
     return thread {
       try {
         val userAgent = UserAgentImpl(id, stressTestReport, appClass, tempDir)
         repeat(iterations) {
+          tempDir.forEachDirectoryEntry { it.delete(true) }
+
           userClass.createInstance().run(userAgent)
+
           iterationsPassed.incrementAndGet()
         }
       }
