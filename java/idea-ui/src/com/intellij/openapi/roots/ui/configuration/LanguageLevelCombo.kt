@@ -17,13 +17,11 @@ import org.jetbrains.annotations.Nls
 import org.jetbrains.annotations.NonNls
 import javax.swing.DefaultComboBoxModel
 
-abstract class LanguageLevelCombo(
+abstract class LanguageLevelCombo @JvmOverloads constructor(
   defaultItem: @Nls String?,
   // It could be an open method but since we use it in constructor we have a leaking this problem
-  levelFilter: (LanguageLevel) -> Boolean
+  levelFilter: (LanguageLevel) -> Boolean = {true}
 ) : ComboBox<Any>() {
-
-  constructor(defaultItem: @Nls String?): this(defaultItem, {true})
 
   init {
     val items = mutableListOf<Any>()
