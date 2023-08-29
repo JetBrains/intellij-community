@@ -118,6 +118,7 @@ internal sealed interface ReadTrace {
   ) : ReadTrace
 }
 
+@Suppress("UNCHECKED_CAST")
 internal fun Map<Class<*>, List<EntityChange<*>>>.toTraces(): Set<ReadTrace> {
   return buildSet {
     this@toTraces.forEach { (key, changes) ->
@@ -131,7 +132,12 @@ internal fun Map<Class<*>, List<EntityChange<*>>>.toTraces(): Set<ReadTrace> {
         when (change) {
           is EntityChange.Added -> Unit
           is EntityChange.Removed -> Unit
-          is EntityChange.Replaced -> add(ReadTrace.SomeFieldAccess((change.newEntity as WorkspaceEntityBase).id))
+          is EntityChange.Replaced -> {
+            add(ReadTrace.SomeFieldAccess((change.newEntity as WorkspaceEntityBase).id))
+
+            // We generate this event to cause `entities` note to react on change of fields. However, this approach is questionable.
+            add(ReadTrace.EntitiesOfType(key as Class<out WorkspaceEntity>))
+          }
         }
       }
     }

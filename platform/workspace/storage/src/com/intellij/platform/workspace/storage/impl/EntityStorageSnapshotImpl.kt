@@ -8,6 +8,8 @@ import com.intellij.platform.diagnostic.telemetry.JPS
 import com.intellij.platform.diagnostic.telemetry.TelemetryManager
 import com.intellij.platform.diagnostic.telemetry.helpers.addElapsedTimeMs
 import com.intellij.platform.workspace.storage.*
+import com.intellij.platform.workspace.storage.impl.cache.SnapshotCache
+import com.intellij.platform.workspace.storage.impl.cache.SnapshotCacheImpl
 import com.intellij.platform.workspace.storage.impl.containers.getDiff
 import com.intellij.platform.workspace.storage.impl.exceptions.AddDiffException
 import com.intellij.platform.workspace.storage.impl.exceptions.SymbolicIdAlreadyExistsException
@@ -19,6 +21,7 @@ import com.intellij.platform.workspace.storage.instrumentation.EntityStorageInst
 import com.intellij.platform.workspace.storage.instrumentation.EntityStorageInstrumentationApi
 import com.intellij.platform.workspace.storage.instrumentation.EntityStorageSnapshotInstrumentation
 import com.intellij.platform.workspace.storage.instrumentation.MutableEntityStorageInstrumentation
+import com.intellij.platform.workspace.storage.query.StorageQuery
 import com.intellij.platform.workspace.storage.url.MutableVirtualFileUrlIndex
 import com.intellij.platform.workspace.storage.url.VirtualFileUrlIndex
 import com.intellij.util.ExceptionUtil
@@ -56,8 +59,13 @@ internal data class EntityReferenceImpl<E : WorkspaceEntity>(internal val id: En
 internal class EntityStorageSnapshotImpl(
   override val entitiesByType: ImmutableEntitiesBarrel,
   override val refs: RefsTable,
-  override val indexes: StorageIndexes
+  override val indexes: StorageIndexes,
+  internal val snapshotCache: SnapshotCache = SnapshotCacheImpl(),
 ) : EntityStorageSnapshotInstrumentation, AbstractEntityStorage() {
+
+  init {
+    this.snapshotCache.initSnapshot(this)
+  }
 
   // This cache should not be transferred to other versions of storage
   private val symbolicIdCache = ConcurrentHashMap<SymbolicEntityId<*>, WorkspaceEntity>()
@@ -65,6 +73,10 @@ internal class EntityStorageSnapshotImpl(
   // I suppose that we can use some kind of array of arrays to get a quicker access (just two accesses by-index)
   // However, it's not implemented currently because I'm not sure about threading.
   private val entitiesCache = ConcurrentHashMap<EntityId, WorkspaceEntity>()
+
+  override fun <T> cached(query: StorageQuery<T>): T {
+    return snapshotCache.cached(query)
+  }
 
   @Suppress("UNCHECKED_CAST")
   override fun <E : WorkspaceEntityWithSymbolicId> resolve(id: SymbolicEntityId<E>): E? {
@@ -721,6 +733,16 @@ internal class MutableEntityStorageImpl(
         }
       }
     }
+  }
+
+  override fun toSnapshot(previousSnapshot: EntityStorage, changes: Map<Class<*>, List<EntityChange<*>>>): EntityStorageSnapshot {
+    val newEntities = entitiesByType.toImmutable()
+    val newRefs = refs.toImmutable()
+    val newIndexes = indexes.toImmutable()
+    val cache = SnapshotCacheImpl()
+    val newCreatedSnapshot = EntityStorageSnapshotImpl(newEntities, newRefs, newIndexes, cache)
+    cache.pullCache((previousSnapshot as EntityStorageSnapshotImpl).snapshotCache, changes)
+    return newCreatedSnapshot
   }
 
   override fun hasChanges(): Boolean = changeLog.changeLog.isNotEmpty()

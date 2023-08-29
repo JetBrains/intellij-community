@@ -2,7 +2,9 @@
 package com.intellij.platform.workspace.storage
 
 import com.intellij.platform.workspace.storage.impl.EntityStorageSnapshotImpl
+import com.intellij.platform.workspace.storage.query.StorageQuery
 import com.intellij.platform.workspace.storage.url.VirtualFileUrlIndex
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.NonNls
 
 /**
@@ -68,6 +70,12 @@ public interface EntityStorage {
  * Use [com.intellij.platform.backend.workspace.WorkspaceModel.currentSnapshot] to get an instance representing entities inside the IDE process. 
  */
 public interface EntityStorageSnapshot : EntityStorage {
+  /**
+   * This function is under development, please don't use it.
+   */
+  @ApiStatus.Experimental
+  public fun <T> cached(query: StorageQuery<T>): T
+
   public companion object {
     public fun empty(): EntityStorageSnapshot = EntityStorageSnapshotImpl.EMPTY
   }
