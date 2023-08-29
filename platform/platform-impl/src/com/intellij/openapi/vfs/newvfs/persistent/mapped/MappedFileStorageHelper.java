@@ -289,21 +289,10 @@ public final class MappedFileStorageHelper implements Closeable {
   }
 
   private void clearImpl(boolean clearHeaders) throws IOException {
-    int pagesCount = storage.allocatedPages();
-    int pageSize = storage.pageSize();
+    int startOffsetInFile = clearHeaders ? 0 : HeaderLayout.HEADER_SIZE;
+    long endOffsetInFile = (maxAllocatedFileID() * (long)bytesPerRow) + HeaderLayout.HEADER_SIZE - 1;
+    storage.zeroRegion(startOffsetInFile, endOffsetInFile);
 
-    Page headerPage = storage.pageByOffset(0);
-    for (int offset = clearHeaders ? 0 : HeaderLayout.HEADER_SIZE; offset < pageSize; offset += Long.BYTES) {
-      headerPage.rawPageBuffer().putLong(offset, 0L);
-    }
-
-    for (int pageIndex = 1; pageIndex < pagesCount; pageIndex++) {
-      Page page = storage.pageByOffset((long)pageIndex * pageSize);
-      ByteBuffer pageBuffer = page.rawPageBuffer();
-      for (int offset = 0; offset < pageSize; offset += Long.BYTES) {
-        pageBuffer.putLong(offset, 0L);
-      }
-    }
     //TODO RC: which memory semantics .clear() should have? Now it is just 'plain write', while
     //         all other access methods uses 'volatile read/write'. For current use-case
     //         (initialization) it is OK, since values are safe-published anyway, but for other

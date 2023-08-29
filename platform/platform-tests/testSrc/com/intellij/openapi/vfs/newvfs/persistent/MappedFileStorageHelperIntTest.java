@@ -209,6 +209,35 @@ public class MappedFileStorageHelperIntTest {
   }
 
   @Test
+  public void clearRecords_doesntTouchHeaders() throws Exception {
+    long creationTag = Long.MAX_VALUE;
+    int version = 42;
+    storageHelper.setVersion(version);
+    storageHelper.setVFSCreationTag(creationTag);
+
+    storageHelper.clearRecords();
+    assertEquals(version, storageHelper.getVersion(),
+                 "Version must be read back as-is");
+    assertEquals(creationTag, storageHelper.getVFSCreationTag(),
+                 "VFSCreationTag must be read back as-is");
+  }
+
+  @Test
+  public void clear_clearsHeadersAlso() throws Exception {
+    long creationTag = Long.MAX_VALUE;
+    int version = 42;
+    storageHelper.setVersion(version);
+    storageHelper.setVFSCreationTag(creationTag);
+
+    storageHelper.clear();
+    assertEquals(0, storageHelper.getVersion(),
+                 "Version must be cleared");
+    assertEquals(0, storageHelper.getVFSCreationTag(),
+                 "VFSCreationTag must be cleared");
+  }
+
+
+  @Test
   public void ifVFSCreationTag_NotMatchedVFSCreationTimestamp_StorageContentIsCleared() throws Exception {
     storageHelper.setVersion(1);
     //Emulate 'wrong' vfsCreationTag:

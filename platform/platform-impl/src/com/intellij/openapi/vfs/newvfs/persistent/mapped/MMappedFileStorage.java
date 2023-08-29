@@ -230,6 +230,26 @@ public final class MMappedFileStorage implements Closeable {
     return channel.isOpen();
   }
 
+  /** fill with zeroes a region {@code [startOffsetInFile..endOffsetInFile]} (both ends inclusive) */
+  public void zeroRegion(long startOffsetInFile,
+                         long endOffsetInFile) throws IOException {
+    for (long offset = startOffsetInFile; offset <= endOffsetInFile; ) {
+      Page page = pageByOffset(offset);
+      ByteBuffer pageBuffer = page.rawPageBuffer();
+
+      int startOffsetInPage = toOffsetInPage(offset);
+      int endOffsetInPage = endOffsetInFile > page.lastOffsetInFile() ?
+                            pageSize - 1 : toOffsetInPage(endOffsetInFile);
+      //MAYBE RC: it could be done much faster -- with putLong(), with preallocated array of zeroes,
+      //          with Unsafe.setMemory() -- but does it worth it?
+      for (int pos = startOffsetInPage; pos <= endOffsetInPage; pos++) {
+        pageBuffer.put(pos, (byte)0);
+      }
+
+      offset += (endOffsetInPage - startOffsetInPage) + 1;
+    }
+  }
+
   public int allocatedPages() throws IOException {
     synchronized (pages) {
       long channelSize = channel.size();
@@ -251,6 +271,7 @@ public final class MMappedFileStorage implements Closeable {
 
   public static final class Page implements AutoCloseable {
     private final int pageIndex;
+    private final int pageSize;
     private final long offsetInFile;
     private final ByteBuffer pageBuffer;
 
@@ -258,6 +279,7 @@ public final class MMappedFileStorage implements Closeable {
                  FileChannel channel,
                  int pageSize) throws IOException {
       this.pageIndex = pageIndex;
+      this.pageSize = pageSize;
       this.offsetInFile = pageIndex * (long)pageSize;
       this.pageBuffer = map(channel, pageSize);
       pageBuffer.order(nativeOrder());
@@ -288,6 +310,14 @@ public final class MMappedFileStorage implements Closeable {
 
     public ByteBuffer rawPageBuffer() {
       return pageBuffer;
+    }
+
+    public long firstOffsetInFile() {
+      return offsetInFile;
+    }
+
+    public long lastOffsetInFile() {
+      return offsetInFile + pageSize - 1;
     }
 
     @Override
