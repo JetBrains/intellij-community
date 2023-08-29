@@ -25,6 +25,12 @@ import org.jetbrains.kotlin.analysis.project.structure.ProjectStructureProvider
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.codeInsight.lineMarkers.shared.NavigationPopupDescriptor
 import org.jetbrains.kotlin.idea.codeInsight.lineMarkers.shared.TestableLineMarkerNavigator
+import org.jetbrains.kotlin.idea.codeInsight.lineMarkers.shared.buildNavigateToExpectedDeclarationsPopup
+import org.jetbrains.kotlin.idea.codeInsight.lineMarkers.shared.buildNavigateToActualDeclarationsPopup
+import org.jetbrains.kotlin.idea.codeInsight.lineMarkers.shared.areMarkersForbidden
+import org.jetbrains.kotlin.idea.codeInsight.lineMarkers.shared.expectOrActualAnchor
+import org.jetbrains.kotlin.idea.codeInsight.lineMarkers.shared.markerDeclaration
+import org.jetbrains.kotlin.idea.codeInsight.lineMarkers.shared.findMarkerBoundDeclarations
 import org.jetbrains.kotlin.idea.highlighter.markers.*
 import org.jetbrains.kotlin.idea.stubindex.KotlinFullClassNameIndex
 import org.jetbrains.kotlin.idea.stubindex.KotlinTopLevelFunctionFqnNameIndex

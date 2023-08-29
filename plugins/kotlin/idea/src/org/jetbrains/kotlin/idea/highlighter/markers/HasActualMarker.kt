@@ -6,6 +6,8 @@ import com.intellij.psi.PsiElement
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.codeInsight.lineMarkers.shared.NavigationPopupDescriptor
+import org.jetbrains.kotlin.idea.codeInsight.lineMarkers.shared.buildNavigateToActualDeclarationsPopup
+import org.jetbrains.kotlin.idea.codeInsight.lineMarkers.shared.findMarkerBoundDeclarations
 import org.jetbrains.kotlin.idea.core.toDescriptor
 import org.jetbrains.kotlin.idea.util.actualsForExpected
 import org.jetbrains.kotlin.psi.KtDeclaration
