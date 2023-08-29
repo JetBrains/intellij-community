@@ -8,7 +8,6 @@ import com.intellij.openapi.application.*;
 import com.intellij.openapi.application.ex.ApplicationEx;
 import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.progress.util.ProgressIndicatorUtils;
 import com.intellij.openapi.progress.util.ProgressIndicatorWithDelayedPresentation;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.AsyncFileListener;
@@ -119,7 +118,7 @@ final class RefreshSessionImpl extends RefreshSession {
     ((RefreshQueueImpl)RefreshQueue.getInstance()).execute(this);
   }
 
-  void scan(long timeInQueue) {
+  void scan(long timeInQueue, RefreshWorkerHelper helper) {
     if (myWorkQueue.isEmpty()) return;
     var workQueue = myWorkQueue;
     myWorkQueue = new ArrayList<>();
@@ -163,7 +162,7 @@ final class RefreshSessionImpl extends RefreshSession {
     do {
       if (LOG.isTraceEnabled()) LOG.trace("try=" + count);
 
-      var worker = new RefreshWorker(refreshRoots, myIsRecursive);
+      var worker = new RefreshWorker(refreshRoots, myIsRecursive, helper);
       myWorker = worker;
       myEvents.addAll(worker.scan());
       myWorker = null;
