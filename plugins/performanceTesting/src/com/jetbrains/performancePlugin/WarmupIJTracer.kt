@@ -2,19 +2,26 @@ package com.jetbrains.performancePlugin
 
 import com.intellij.platform.diagnostic.telemetry.IJTracer
 import com.intellij.platform.diagnostic.telemetry.TracerLevel
-import com.jetbrains.performancePlugin.utils.SpanAttributes
 import io.opentelemetry.api.trace.SpanBuilder
 
-class WarmupIJTracer(private val tracer: IJTracer): IJTracer {
+/**
+ * Create spans with the attribute 'warmup` warmup span doesn't use in metrics processing
+ * and mean that this action was produced for IDE warmup
+ */
+class WarmupIJTracer(private val tracer: IJTracer) : IJTracer {
   override fun spanBuilder(spanName: String, level: TracerLevel): SpanBuilder {
     return tracer.spanBuilder(spanName, level).also {
-      SpanAttributes.setWarmup(it)
+      setWarmup(it)
     }
   }
 
   override fun spanBuilder(spanName: String): SpanBuilder {
     return tracer.spanBuilder(spanName).also {
-      SpanAttributes.setWarmup(it)
+      setWarmup(it)
     }
+  }
+
+  private fun setWarmup(span: SpanBuilder) {
+    span.setAttribute("warmup", true)
   }
 }
