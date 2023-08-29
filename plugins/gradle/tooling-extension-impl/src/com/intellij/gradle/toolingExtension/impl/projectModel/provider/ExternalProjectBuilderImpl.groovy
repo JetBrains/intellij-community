@@ -2,7 +2,6 @@
 package com.intellij.gradle.toolingExtension.impl.projectModel.provider
 
 import com.google.gson.GsonBuilder
-import com.intellij.gradle.toolingExtension.impl.taskModel.provider.TasksFactory
 import com.intellij.openapi.externalSystem.model.project.ExternalSystemSourceType
 import groovy.transform.CompileDynamic
 import groovy.transform.CompileStatic
@@ -35,19 +34,18 @@ import org.jetbrains.plugins.gradle.tooling.AbstractModelBuilderService
 import org.jetbrains.plugins.gradle.tooling.ErrorMessageBuilder
 import org.jetbrains.plugins.gradle.tooling.ModelBuilderContext
 import org.jetbrains.plugins.gradle.tooling.builder.ProjectExtensionsDataBuilderImpl
+import com.intellij.gradle.toolingExtension.impl.taskModel.provider.TasksFactory
 import org.jetbrains.plugins.gradle.tooling.util.JavaPluginUtil
 import org.jetbrains.plugins.gradle.tooling.util.resolve.DependencyResolverImpl
 
 import java.lang.reflect.InvocationTargetException
 import java.lang.reflect.Method
 import java.nio.file.Path
-import java.util.concurrent.ConcurrentHashMap
-import java.util.concurrent.ConcurrentMap
 
-import static org.jetbrains.plugins.gradle.tooling.ModelBuilderContext.DataProvider
 import static org.jetbrains.plugins.gradle.tooling.util.ReflectionUtil.dynamicCheckInstanceOf
 import static org.jetbrains.plugins.gradle.tooling.util.ReflectionUtil.reflectiveGetProperty
 import static org.jetbrains.plugins.gradle.tooling.util.StringUtils.toCamelCase
+
 /**
  * @author Vladislav.Soroka
  */
@@ -62,9 +60,6 @@ class ExternalProjectBuilderImpl extends AbstractModelBuilderService {
   public static final boolean is74OrBetter = gradleBaseVersion >= GradleVersion.version("7.4")
   public static final boolean is80OrBetter = gradleBaseVersion >= GradleVersion.version("8.0")
 
-  private static final @NotNull DataProvider<? extends ConcurrentMap<Project, ExternalProject>> PROJECTS_PROVIDER =
-    __ -> new ConcurrentHashMap<Project, ExternalProject>()
-
   @Override
   boolean canBuild(String modelName) {
     return ExternalProject.name == modelName || ExternalProjectPreview.name == modelName
@@ -73,28 +68,22 @@ class ExternalProjectBuilderImpl extends AbstractModelBuilderService {
   @Nullable
   @Override
   Object buildAll(@NotNull final String modelName, @NotNull final Project project, @NotNull ModelBuilderContext context) {
-    if (project != project.rootProject) return null
     if (System.properties.'idea.internal.failEsModelBuilder' as boolean) {
       throw new RuntimeException("Boom!")
     }
-    def cache = context.getData(PROJECTS_PROVIDER)
-    return doBuild(project, context, cache)
+    return buildExternalProject(project, context)
   }
 
   @NotNull
-  private static Object doBuild(
+  private static DefaultExternalProject buildExternalProject(
     @NotNull Project project,
-    @NotNull ModelBuilderContext context,
-    @NotNull ConcurrentMap<Project, ExternalProject> cache
+    @NotNull ModelBuilderContext context
   ) {
-    ExternalProject externalProject = cache[project]
-    if (externalProject != null) return externalProject
-
-    DefaultExternalProject defaultExternalProject = new DefaultExternalProject()
-    defaultExternalProject.externalSystemId = "GRADLE"
-    defaultExternalProject.name = project.name
+    DefaultExternalProject externalProject = new DefaultExternalProject()
+    externalProject.externalSystemId = "GRADLE"
+    externalProject.name = project.name
     def qName = ":" == project.path ? project.name : project.path
-    defaultExternalProject.QName = qName
+    externalProject.QName = qName
     final IdeaPlugin ideaPlugin = project.getPlugins().findPlugin(IdeaPlugin.class)
     def ideaPluginModule = ideaPlugin?.model?.module
     def ideaModuleName = ideaPluginModule?.name ?: project.name
@@ -111,36 +100,23 @@ class ExternalProjectBuilderImpl extends AbstractModelBuilderService {
     def projectIdentityPath = GradleVersion.current() >= GradleVersion.version("3.3") ?
                               (project as ProjectInternal).identityPath.path : project.path
 
-    defaultExternalProject.id = projectIdentityPath == ":" ? ideaModuleName : projectIdentityPath
-    defaultExternalProject.path = project.path
-    defaultExternalProject.identityPath = projectIdentityPath
-    defaultExternalProject.version = wrap(project.version)
-    defaultExternalProject.description = project.description
-    defaultExternalProject.buildDir = project.buildDir
-    defaultExternalProject.buildFile = project.buildFile
-    defaultExternalProject.group = wrap(project.group)
-    defaultExternalProject.projectDir = project.projectDir
-    defaultExternalProject.sourceSets = getSourceSets(project, context)
-    defaultExternalProject.tasks = getTasks(project, context)
-    defaultExternalProject.sourceCompatibility = getSourceCompatibility(project)
-    defaultExternalProject.targetCompatibility = getTargetCompatibility(project)
+    externalProject.id = projectIdentityPath == ":" ? ideaModuleName : projectIdentityPath
+    externalProject.path = project.path
+    externalProject.identityPath = projectIdentityPath
+    externalProject.version = wrap(project.version)
+    externalProject.description = project.description
+    externalProject.buildDir = project.buildDir
+    externalProject.buildFile = project.buildFile
+    externalProject.group = wrap(project.group)
+    externalProject.projectDir = project.projectDir
+    externalProject.sourceSets = getSourceSets(project, context)
+    externalProject.tasks = getTasks(project, context)
+    externalProject.sourceCompatibility = getSourceCompatibility(project)
+    externalProject.targetCompatibility = getTargetCompatibility(project)
 
-    addArtifactsData(project, defaultExternalProject)
+    addArtifactsData(project, externalProject)
 
-    final Map<String, DefaultExternalProject> childProjects = new TreeMap<String, DefaultExternalProject>()
-    for (Map.Entry<String, Project> projectEntry : project.getChildProjects().entrySet()) {
-      final Object externalProjectChild = doBuild(projectEntry.getValue(), context, cache)
-      if (externalProjectChild instanceof DefaultExternalProject) {
-        childProjects.put(projectEntry.getKey(), (DefaultExternalProject)externalProjectChild)
-      }
-      else if (externalProjectChild instanceof ExternalProject) {
-        // convert from proxy to our model class
-        childProjects.put(projectEntry.getKey(), new DefaultExternalProject((ExternalProject)externalProjectChild))
-      }
-    }
-    defaultExternalProject.setChildProjects(childProjects)
-    def calculatedProject = cache.putIfAbsent(project, defaultExternalProject)
-    return calculatedProject != null ? calculatedProject : defaultExternalProject
+    return externalProject
   }
 
   static void addArtifactsData(final Project project, DefaultExternalProject externalProject) {
