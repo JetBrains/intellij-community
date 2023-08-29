@@ -18,7 +18,12 @@ internal class IdeViewForBookmarksView(private val view: BookmarksView) : IdeVie
     val manager = PsiManager.getInstance(view.project)
     val directories = paths.mapNotNull { path ->
       path.asAbstractTreeNode?.asVirtualFile?.let { virtualFile ->
-        manager.findDirectory(virtualFile)
+        if (virtualFile.isValid) {
+          manager.findDirectory(virtualFile)
+        }
+        else {
+          null
+        }
       }
     }
     return if (directories.isEmpty()) PsiDirectory.EMPTY_ARRAY else directories.toTypedArray()
