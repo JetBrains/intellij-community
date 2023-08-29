@@ -5,8 +5,8 @@ import com.intellij.openapi.components.*
 import kotlinx.serialization.Serializable
 
 @Service(Service.Level.APP)
-@State(name = "NewUIInfoState",
-       storages = [Storage(StoragePathMacros.NON_ROAMABLE_FILE, deprecated = true), Storage("NewUIInfoService.xml")])
+@State(name = "IdeaCommunityFeedbackState",
+       storages = [Storage(StoragePathMacros.NON_ROAMABLE_FILE, deprecated = true), Storage("IdeaCommunityFeedbackService.xml")])
 class IdeaCommunityFeedbackService : PersistentStateComponent<IdeaCommunityFeedbackState> {
   companion object {
     @JvmStatic

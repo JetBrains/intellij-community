@@ -16,6 +16,7 @@ import com.intellij.feedback.common.statistics.FeedbackNotificationCountCollecto
 import com.intellij.feedback.common.statistics.FeedbackNotificationCountCollector.Companion.logRespondNotificationActionInvoked
 import com.intellij.feedback.ideace.IdeaCommunityFeedbackBundle
 import com.intellij.feedback.ideace.IdeaCommunityFeedbackService
+import com.intellij.feedback.ideace.IdeaCommunityFeedbackState
 import com.intellij.feedback.new_ui.CancelFeedbackNotification
 import com.intellij.feedback.new_ui.bundle.NewUIFeedbackBundle
 import com.intellij.feedback.new_ui.dialog.NewUIFeedbackDialog
@@ -28,9 +29,7 @@ import com.intellij.feedback.pycharmUi.state.PyCharmUIInfoState
 import com.intellij.ide.BrowserUtil
 import com.intellij.notification.Notification
 import com.intellij.notification.NotificationAction
-import com.intellij.openapi.application.ConfigImportHelper
 import com.intellij.openapi.application.ConfigImportHelper.hasPreviousVersionConfigDirs
-import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.application.ex.ApplicationInfoEx
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectManager
@@ -324,13 +323,13 @@ enum class IdleFeedbackTypes {
     private val maxNumberNotificationShowed: Int = 1
 
     override fun isSuitable(): Boolean {
-      val newUIInfoState = NewUIInfoService.getInstance().state
+      val state = IdeaCommunityFeedbackService.getInstance().state
 
       return checkIdeIsSuitable() &&
              checkIsNoDeadline() &&
              checkIdeVersionIsSuitable() &&
-             checkFeedbackNotSent(newUIInfoState) &&
-             checkNotificationNumberNotExceeded(newUIInfoState) &&
+             checkFeedbackNotSent(state) &&
+             checkNotificationNumberNotExceeded(state) &&
              checkIfExistingUserForSomeTime()
     }
 
@@ -346,7 +345,7 @@ enum class IdleFeedbackTypes {
       return Clock.System.todayIn(TimeZone.currentSystemDefault()) < lastDayCollectFeedback
     }
 
-    private fun checkFeedbackNotSent(state: NewUIInfoState): Boolean {
+    private fun checkFeedbackNotSent(state: IdeaCommunityFeedbackState): Boolean {
       return !state.feedbackSent
     }
 
@@ -377,7 +376,7 @@ enum class IdleFeedbackTypes {
       IdeaCommunityFeedbackService.getInstance().state.feedbackSent = true
     }
 
-    private fun checkNotificationNumberNotExceeded(state: NewUIInfoState): Boolean {
+    private fun checkNotificationNumberNotExceeded(state: IdeaCommunityFeedbackState): Boolean {
       return state.numberNotificationShowed < maxNumberNotificationShowed
     }
   };
