@@ -63,7 +63,7 @@ public final class JBCefScrollbarsHelper {
     }
 
     int trackSizePx = getTrackSizePx();
-    int thumbPaddingPx = getThumbPuddingPx();
+    int thumbPaddingPx = getThumbPaddingPx();
     int thumbRadiusPx = getThumbRadiusPx();
 
     return
@@ -153,13 +153,13 @@ public final class JBCefScrollbarsHelper {
 
     final int thumbBorderWidthPx = 1;
     int trackSizePx = getTrackSizePx();
-    int thumbPaddingPx = getThumbPuddingPx();
+    int thumbPaddingPx = getThumbPaddingPx();
     int thumbRadiusPx = getThumbRadiusPx();
+    int thumbSizePercent = 100;
 
     return ".os-scrollbar {\n" +
            "  --os-size: " + trackSizePx + "px;\n" +
-           "  --os-padding-perpendicular: " + thumbPaddingPx + "px;\n" +
-           "  --os-padding-axis: " + thumbPaddingPx + "px;\n" +
+           "  --os-padding-perpendicular: " + (thumbPaddingPx + thumbBorderWidthPx) + "px;\n" +
            "  --os-handle-border-radius: " + thumbRadiusPx + "px;\n" +
            "  --os-track-border-radius: 0;" +
 
@@ -170,6 +170,9 @@ public final class JBCefScrollbarsHelper {
            "  --os-handle-bg: " + thumbColor + ";\n" +
            "  --os-handle-bg-active: " + thumbColor + ";\n" +
            "  --os-handle-bg-hover: " + thumbHoveredColor + ";\n" +
+           "  --os-handle-perpendicular-size: " + thumbSizePercent + "%;\n" +
+           "  --os-handle-perpendicular-size-hover: " + thumbSizePercent + "%;\n" +
+           "  --os-handle-perpendicular-size-active: " + thumbSizePercent + "%;\n" +
            "}\n" +
            ".os-scrollbar-handle {" +
            "  outline: " + thumbBorderWidthPx + "px solid " + thumbBorderColor + ";\n" +
@@ -187,7 +190,7 @@ public final class JBCefScrollbarsHelper {
     return (int)(JBCefApp.normalizeScaledSize(SystemInfo.isMac ? 14 : 10) * UISettingsUtils.getInstance().getCurrentIdeScale());
   }
 
-  private static int getThumbPuddingPx() {
+  private static int getThumbPaddingPx() {
     return (int)(JBCefApp.normalizeScaledSize(SystemInfo.isMac ? 3 : 1) * UISettingsUtils.getInstance().getCurrentIdeScale());
   }
 
