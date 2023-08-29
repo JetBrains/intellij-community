@@ -1,6 +1,7 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.uiDesigner.propertyInspector;
 
+import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.ex.MultiLineLabel;
 import com.intellij.openapi.util.Comparing;
@@ -16,6 +17,7 @@ import com.intellij.uiDesigner.designSurface.GuiEditor;
 import com.intellij.uiDesigner.quickFixes.QuickFixManager;
 import com.intellij.uiDesigner.radComponents.*;
 import com.intellij.util.IJSwingUtilities;
+import com.intellij.util.SlowOperations;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
@@ -125,20 +127,22 @@ public final class PropertyInspector extends JPanel{
   }
 
   public void synchWithTree(final boolean forceSynch) {
-    final CardLayout cardLayout = (CardLayout)getLayout();
-    if (!showSelectedColumnProperties()) {
-      final RadComponent[] selectedComponents = myComponentTree.getSelectedComponents();
-      if(selectedComponents.length >= 1){
-        cardLayout.show(this, INSPECTOR_CARD);
-        myInspectorTable.synchWithTree(forceSynch);
-      }
-      else{
-        List<RadButtonGroup> buttonGroups = myComponentTree.getSelectedElements(RadButtonGroup.class);
-        if (buttonGroups.size() > 0) {
-          showButtonGroupProperties(buttonGroups.get(0));
+    try (AccessToken ignore = SlowOperations.knownIssue("IDEA-307701")) {
+      final CardLayout cardLayout = (CardLayout)getLayout();
+      if (!showSelectedColumnProperties()) {
+        final RadComponent[] selectedComponents = myComponentTree.getSelectedComponents();
+        if (selectedComponents.length >= 1) {
+          cardLayout.show(this, INSPECTOR_CARD);
+          myInspectorTable.synchWithTree(forceSynch);
         }
         else {
-          cardLayout.show(this, EMPTY_CARD);
+          List<RadButtonGroup> buttonGroups = myComponentTree.getSelectedElements(RadButtonGroup.class);
+          if (buttonGroups.size() > 0) {
+            showButtonGroupProperties(buttonGroups.get(0));
+          }
+          else {
+            cardLayout.show(this, EMPTY_CARD);
+          }
         }
       }
     }

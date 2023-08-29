@@ -3,6 +3,7 @@ package com.intellij.uiDesigner;
 
 import com.intellij.ProjectTopics;
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtilCore;
@@ -16,6 +17,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.openapi.vfs.impl.jar.JarFileSystemImpl;
 import com.intellij.uiDesigner.core.Spacer;
+import com.intellij.util.SlowOperations;
 import com.intellij.util.containers.CollectionFactory;
 import com.intellij.util.lang.UrlClassLoader;
 import com.intellij.util.messages.MessageBusConnection;
@@ -98,7 +100,7 @@ public final class LoaderFactory implements Disposable {
     final StringTokenizer tokenizer = new StringTokenizer(runClasspath, File.pathSeparator);
     while (tokenizer.hasMoreTokens()) {
       final String s = tokenizer.nextToken();
-      try {
+      try (AccessToken ignore = SlowOperations.knownIssue("IDEA-307701")) {
         VirtualFile vFile = manager.findFileByUrl(VfsUtilCore.pathToUrl(s));
         File realFile = fileSystem.getMirroredFile(vFile);
         files.add(realFile == null ? new File(s).toPath() : realFile.toPath());

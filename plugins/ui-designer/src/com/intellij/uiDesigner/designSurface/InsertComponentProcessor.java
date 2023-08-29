@@ -4,6 +4,7 @@ package com.intellij.uiDesigner.designSurface;
 import com.intellij.CommonBundle;
 import com.intellij.codeInsight.FileModificationService;
 import com.intellij.ide.palette.impl.PaletteToolWindowManager;
+import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.command.CommandProcessor;
@@ -32,6 +33,7 @@ import com.intellij.uiDesigner.palette.ComponentItemDialog;
 import com.intellij.uiDesigner.palette.Palette;
 import com.intellij.uiDesigner.quickFixes.CreateFieldFix;
 import com.intellij.uiDesigner.radComponents.*;
+import com.intellij.util.SlowOperations;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -318,19 +320,21 @@ public final class InsertComponentProcessor extends EventProcessor {
       // this is mostly required for IDEA developers, so that developers don't receive prompt to offer ui-designer-impl dependency
       return true;
     }
-    PsiManager manager = PsiManager.getInstance(myEditor.getProject());
-    final GlobalSearchScope projectScope = GlobalSearchScope.allScope(myEditor.getProject());
-    final GlobalSearchScope moduleScope = GlobalSearchScope.moduleWithDependenciesAndLibrariesScope(myEditor.getModule());
-    final PsiClass componentClass = JavaPsiFacade.getInstance(manager.getProject()).findClass(item.getClassName(), projectScope);
-    if (componentClass != null && JavaPsiFacade.getInstance(manager.getProject()).findClass(item.getClassName(), moduleScope) == null) {
-      final ProjectFileIndex fileIndex = ProjectRootManager.getInstance(myEditor.getProject()).getFileIndex();
-      List<OrderEntry> entries = fileIndex.getOrderEntriesForFile(componentClass.getContainingFile().getVirtualFile());
-      if (entries.size() > 0) {
-        if (entries.get(0) instanceof ModuleSourceOrderEntry) {
-          if (!checkAddModuleDependency(item, (ModuleSourceOrderEntry)entries.get(0))) return false;
-        }
-        else if (entries.get(0) instanceof LibraryOrderEntry) {
-          if (!checkAddLibraryDependency(item, (LibraryOrderEntry)entries.get(0))) return false;
+    try (AccessToken ignore = SlowOperations.knownIssue("IDEA-307701, EA-681545")) {
+      PsiManager manager = PsiManager.getInstance(myEditor.getProject());
+      final GlobalSearchScope projectScope = GlobalSearchScope.allScope(myEditor.getProject());
+      final GlobalSearchScope moduleScope = GlobalSearchScope.moduleWithDependenciesAndLibrariesScope(myEditor.getModule());
+      final PsiClass componentClass = JavaPsiFacade.getInstance(manager.getProject()).findClass(item.getClassName(), projectScope);
+      if (componentClass != null && JavaPsiFacade.getInstance(manager.getProject()).findClass(item.getClassName(), moduleScope) == null) {
+        final ProjectFileIndex fileIndex = ProjectRootManager.getInstance(myEditor.getProject()).getFileIndex();
+        List<OrderEntry> entries = fileIndex.getOrderEntriesForFile(componentClass.getContainingFile().getVirtualFile());
+        if (entries.size() > 0) {
+          if (entries.get(0) instanceof ModuleSourceOrderEntry) {
+            if (!checkAddModuleDependency(item, (ModuleSourceOrderEntry)entries.get(0))) return false;
+          }
+          else if (entries.get(0) instanceof LibraryOrderEntry) {
+            if (!checkAddLibraryDependency(item, (LibraryOrderEntry)entries.get(0))) return false;
+          }
         }
       }
     }

@@ -2,6 +2,7 @@
 package com.intellij.uiDesigner.propertyInspector.properties;
 
 import com.intellij.CommonBundle;
+import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.diagnostic.Logger;
@@ -39,6 +40,7 @@ import com.intellij.uiDesigner.quickFixes.CreateFieldFix;
 import com.intellij.uiDesigner.radComponents.RadComponent;
 import com.intellij.uiDesigner.radComponents.RadRootContainer;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.SlowOperations;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -176,8 +178,10 @@ public final class BindingProperty extends Property<RadComponent, String> {
       return;
     }
 
-    final RenameProcessor processor = new RenameProcessor(project, oldField, newName, true, true);
-    processor.run();
+    try (AccessToken ignore = SlowOperations.knownIssue("IDEA-307701, EA-337740")) {
+      final RenameProcessor processor = new RenameProcessor(project, oldField, newName, true, true);
+      processor.run();
+    }
   }
 
 
@@ -201,12 +205,14 @@ public final class BindingProperty extends Property<RadComponent, String> {
     final Project project = root.getProject();
     final String classToBind = root.getClassToBind();
     if (classToBind != null) {
-      final PsiManager manager = PsiManager.getInstance(project);
-      PsiClass aClass = JavaPsiFacade.getInstance(manager.getProject()).findClass(classToBind, GlobalSearchScope.allScope(project));
-      if (aClass != null) {
-        final PsiField oldBindingField = aClass.findFieldByName(fieldName, false);
-        if (oldBindingField != null) {
-          return oldBindingField;
+      try (AccessToken ignore = SlowOperations.knownIssue("IDEA-307701, EA-267358")) {
+        final PsiManager manager = PsiManager.getInstance(project);
+        PsiClass aClass = JavaPsiFacade.getInstance(manager.getProject()).findClass(classToBind, GlobalSearchScope.allScope(project));
+        if (aClass != null) {
+          final PsiField oldBindingField = aClass.findFieldByName(fieldName, false);
+          if (oldBindingField != null) {
+            return oldBindingField;
+          }
         }
       }
     }
@@ -263,7 +269,7 @@ public final class BindingProperty extends Property<RadComponent, String> {
   }
 
   private static boolean isFieldUnreferenced(final PsiField field) {
-    try {
+    try (AccessToken ignore = SlowOperations.knownIssue("IDEA-307701, EA-722024")) {
       return ReferencesSearch.search(field).forEach(t -> {
         PsiFile f = t.getElement().getContainingFile();
         if (f != null && f.getFileType().equals(GuiFormFileType.INSTANCE)) {

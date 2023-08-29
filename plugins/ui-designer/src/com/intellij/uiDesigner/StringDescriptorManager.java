@@ -5,6 +5,7 @@ import com.intellij.ProjectTopics;
 import com.intellij.lang.properties.IProperty;
 import com.intellij.lang.properties.PropertiesUtilBase;
 import com.intellij.lang.properties.psi.PropertiesFile;
+import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.roots.ModuleRootEvent;
 import com.intellij.openapi.roots.ModuleRootListener;
@@ -12,6 +13,7 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.uiDesigner.lw.StringDescriptor;
 import com.intellij.uiDesigner.radComponents.RadComponent;
 import com.intellij.uiDesigner.radComponents.RadRootContainer;
+import com.intellij.util.SlowOperations;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -78,18 +80,22 @@ public final class StringDescriptorManager {
       propertiesFile = myPropertiesFileCache.get(cacheKey);
     }
     if (propertiesFile == null || !propertiesFile.getContainingFile().isValid()) {
-      propertiesFile = PropertiesUtilBase.getPropertiesFile(propFileName, myModule, locale);
-      synchronized (myPropertiesFileCache) {
-        if (propertiesFile != null) {
-          myPropertiesFileCache.put(cacheKey, propertiesFile);
+      try (AccessToken ignore = SlowOperations.knownIssue("IDEA-307701, EA-723514")) {
+        propertiesFile = PropertiesUtilBase.getPropertiesFile(propFileName, myModule, locale);
+        synchronized (myPropertiesFileCache) {
+          if (propertiesFile != null) {
+            myPropertiesFileCache.put(cacheKey, propertiesFile);
+          }
         }
       }
     }
 
     if (propertiesFile != null) {
-      final IProperty propertyByKey = propertiesFile.findPropertyByKey(descriptor.getKey());
-      if (propertyByKey != null) {
-        return propertyByKey;
+      try (AccessToken ignore = SlowOperations.knownIssue("IDEA-307701, EA-254373")) {
+        final IProperty propertyByKey = propertiesFile.findPropertyByKey(descriptor.getKey());
+        if (propertyByKey != null) {
+          return propertyByKey;
+        }
       }
     }
     return null;
