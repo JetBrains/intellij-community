@@ -206,7 +206,7 @@ public class PlaybackRunner {
 
       @Override
       public boolean isDisposed() {
-        return myTimeStamp != myContextTimestamp;
+        return myTimeStamp != myContextTimestamp || isStopRequested;
       }
 
       @Override
