@@ -1367,11 +1367,13 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
     EdtTestUtil.runInEdtAndWait(() -> {
       myProjectFixture.setUp();
       myTempDirFixture.setUp();
+    });
 
-      VirtualFile tempDir = myTempDirFixture.getFile("");
-      assertNotNull(tempDir);
-      HeavyPlatformTestCase.synchronizeTempDirVfs(tempDir);
+    VirtualFile tempDir = myTempDirFixture.getFile("");
+    assertNotNull(tempDir);
+    HeavyPlatformTestCase.synchronizeTempDirVfs(tempDir);
 
+    EdtTestUtil.runInEdtAndWait(() -> {
       myPsiManager = (PsiManagerImpl)PsiManager.getInstance(getProject());
       InspectionsKt.configureInspections(LocalInspectionTool.EMPTY_ARRAY, getProject(), myProjectFixture.getTestRootDisposable());
 
