@@ -1506,6 +1506,11 @@ public abstract class K1JvmBasicCompletionTestGenerated extends AbstractK1JvmBas
                 runTest("../testData/basic/common/noCompletion/DoNotCompleteForErrorReceiversForce.kt");
             }
 
+            @TestMetadata("DoWhileLoop.kt")
+            public void testDoWhileLoop() throws Exception {
+                runTest("../testData/basic/common/noCompletion/DoWhileLoop.kt");
+            }
+
             @TestMetadata("InPackageBegin.kt")
             public void testInPackageBegin() throws Exception {
                 runTest("../testData/basic/common/noCompletion/InPackageBegin.kt");
@@ -1529,6 +1534,11 @@ public abstract class K1JvmBasicCompletionTestGenerated extends AbstractK1JvmBas
             @TestMetadata("NoCompletionAfterLong.kt")
             public void testNoCompletionAfterLong() throws Exception {
                 runTest("../testData/basic/common/noCompletion/NoCompletionAfterLong.kt");
+            }
+
+            @TestMetadata("UnresolvedCallWithLambdaArgument.kt")
+            public void testUnresolvedCallWithLambdaArgument() throws Exception {
+                runTest("../testData/basic/common/noCompletion/UnresolvedCallWithLambdaArgument.kt");
             }
         }
 
@@ -3696,6 +3706,11 @@ public abstract class K1JvmBasicCompletionTestGenerated extends AbstractK1JvmBas
                 runTest("../testData/basic/java/AutoForceCompletion.kt");
             }
 
+            @TestMetadata("Break.kt")
+            public void testBreak() throws Exception {
+                runTest("../testData/basic/java/Break.kt");
+            }
+
             @TestMetadata("ClassFromDependency.kt")
             public void testClassFromDependency() throws Exception {
                 runTest("../testData/basic/java/ClassFromDependency.kt");
@@ -3704,6 +3719,11 @@ public abstract class K1JvmBasicCompletionTestGenerated extends AbstractK1JvmBas
             @TestMetadata("CompletionForExcludedWhenInternalUse.kt")
             public void testCompletionForExcludedWhenInternalUse() throws Exception {
                 runTest("../testData/basic/java/CompletionForExcludedWhenInternalUse.kt");
+            }
+
+            @TestMetadata("Continue.kt")
+            public void testContinue() throws Exception {
+                runTest("../testData/basic/java/Continue.kt");
             }
 
             @TestMetadata("ExtensionFromStandardLibrary.kt")
@@ -3791,6 +3811,11 @@ public abstract class K1JvmBasicCompletionTestGenerated extends AbstractK1JvmBas
                 runTest("../testData/basic/java/ReadlineMethodUsualPriorityInInOldVersions.kt");
             }
 
+            @TestMetadata("Return.kt")
+            public void testReturn() throws Exception {
+                runTest("../testData/basic/java/Return.kt");
+            }
+
             @TestMetadata("SAMAdaptersStatic.kt")
             public void testSAMAdaptersStatic() throws Exception {
                 runTest("../testData/basic/java/SAMAdaptersStatic.kt");
@@ -3804,6 +3829,11 @@ public abstract class K1JvmBasicCompletionTestGenerated extends AbstractK1JvmBas
             @TestMetadata("StandardKotlinTypeAliasFirst.kt")
             public void testStandardKotlinTypeAliasFirst() throws Exception {
                 runTest("../testData/basic/java/StandardKotlinTypeAliasFirst.kt");
+            }
+
+            @TestMetadata("Throw.kt")
+            public void testThrow() throws Exception {
+                runTest("../testData/basic/java/Throw.kt");
             }
 
             @TestMetadata("TopLevelFromStandardLibrary.kt")

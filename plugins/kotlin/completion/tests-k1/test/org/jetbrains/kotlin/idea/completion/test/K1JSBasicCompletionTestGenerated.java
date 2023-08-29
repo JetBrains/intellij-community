@@ -1506,6 +1506,11 @@ public abstract class K1JSBasicCompletionTestGenerated extends AbstractK1JSBasic
                 runTest("../testData/basic/common/noCompletion/DoNotCompleteForErrorReceiversForce.kt");
             }
 
+            @TestMetadata("DoWhileLoop.kt")
+            public void testDoWhileLoop() throws Exception {
+                runTest("../testData/basic/common/noCompletion/DoWhileLoop.kt");
+            }
+
             @TestMetadata("InPackageBegin.kt")
             public void testInPackageBegin() throws Exception {
                 runTest("../testData/basic/common/noCompletion/InPackageBegin.kt");
@@ -1529,6 +1534,11 @@ public abstract class K1JSBasicCompletionTestGenerated extends AbstractK1JSBasic
             @TestMetadata("NoCompletionAfterLong.kt")
             public void testNoCompletionAfterLong() throws Exception {
                 runTest("../testData/basic/common/noCompletion/NoCompletionAfterLong.kt");
+            }
+
+            @TestMetadata("UnresolvedCallWithLambdaArgument.kt")
+            public void testUnresolvedCallWithLambdaArgument() throws Exception {
+                runTest("../testData/basic/common/noCompletion/UnresolvedCallWithLambdaArgument.kt");
             }
         }
 
