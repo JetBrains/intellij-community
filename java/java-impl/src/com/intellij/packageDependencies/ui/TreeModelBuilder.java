@@ -219,7 +219,8 @@ public class TreeModelBuilder {
     myTotalFileCount++;
     final ProgressIndicator indicator = ProgressManager.getInstance().getProgressIndicator();
     if (indicator != null) {
-      ((PanelProgressIndicator)indicator).update(getScanningPackagesMessage(), true, 0);
+      indicator.setText(getScanningPackagesMessage());
+      indicator.setIndeterminate(true);
     }
   }
 
@@ -255,7 +256,8 @@ public class TreeModelBuilder {
   private PackageDependenciesNode buildFileNode(@NotNull VirtualFile file, @Nullable PackageDependenciesNode parent) {
     final ProgressIndicator indicator = ProgressManager.getInstance().getProgressIndicator();
     if (indicator != null) {
-      ((PanelProgressIndicator)indicator).update(getScanningPackagesMessage(), false, ((double)myScannedFileCount++) / myTotalFileCount);
+      indicator.setText(getScanningPackagesMessage());
+      indicator.setFraction(((double)myScannedFileCount++) / myTotalFileCount);
     }
 
     boolean isMarked = myMarker != null && myMarker.isMarked(file);

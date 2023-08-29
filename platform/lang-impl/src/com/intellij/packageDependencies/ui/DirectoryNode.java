@@ -37,6 +37,7 @@ public final class DirectoryNode extends PackageDependenciesNode {
   private boolean myCompactPackages = true;
   private String myFQName = null;
   private final VirtualFile myVDirectory;
+  private Icon myIcon = AllIcons.Nodes.Package;
 
   public DirectoryNode(VirtualFile aDirectory,
                        Project project,
@@ -223,6 +224,16 @@ public final class DirectoryNode extends PackageDependenciesNode {
 
   @Override
   public Icon getIcon() {
+    return myIcon;
+  }
+
+  @Override
+  public void update() {
+    super.update();
+    myIcon = doGetIcon();
+  }
+
+  private Icon doGetIcon() {
     if (myVDirectory != null) {
       final VirtualFile jarRoot = JarFileSystem.getInstance().getRootByEntry(myVDirectory);
       return myVDirectory.equals(jarRoot) ? PlatformIcons.JAR_ICON : SourceRootIconProvider.getDirectoryIcon(myVDirectory, myProject);
