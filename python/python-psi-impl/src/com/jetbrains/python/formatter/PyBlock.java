@@ -50,7 +50,8 @@ public class PyBlock implements ASTBlock {
                                                                       PyElementTypes.GENERATOR_EXPRESSION,
                                                                       PyElementTypes.SEQUENCE_PATTERN,
                                                                       PyElementTypes.MAPPING_PATTERN,
-                                                                      PyElementTypes.PATTERN_ARGUMENT_LIST);
+                                                                      PyElementTypes.PATTERN_ARGUMENT_LIST,
+                                                                      PyElementTypes.TYPE_PARAMETER_LIST);
 
   private static final TokenSet ourCollectionLiteralTypes = TokenSet.create(PyElementTypes.LIST_LITERAL_EXPRESSION,
                                                                             PyElementTypes.LIST_COMP_EXPRESSION,
@@ -76,7 +77,8 @@ public class PyBlock implements ASTBlock {
                                                                          PyElementTypes.SEQUENCE_PATTERN,
                                                                          PyElementTypes.MAPPING_PATTERN,
                                                                          PyElementTypes.PATTERN_ARGUMENT_LIST,
-                                                                         PyElementTypes.WITH_STATEMENT);
+                                                                         PyElementTypes.WITH_STATEMENT,
+                                                                         PyElementTypes.TYPE_PARAMETER_LIST);
 
   private static final boolean ALIGN_CONDITIONS_WITHOUT_PARENTHESES = false;
 

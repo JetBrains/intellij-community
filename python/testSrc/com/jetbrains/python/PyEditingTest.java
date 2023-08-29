@@ -1216,6 +1216,46 @@ public class PyEditingTest extends PyTestCase {
         """, true);
   }
 
+  // PY-61854
+  public void testEnterInsideTypeParameterListInTypeAliasStatement() {
+    doTestEnter(
+      """
+        type myType[A, B, C,<caret> D, E, F] = None
+        """,
+      """
+        type myType[A, B, C,
+                    D, E, F] = None
+        """);
+  }
+
+  // PY-61854
+  public void testEnterInsideTypeParameterListInFunctionDeclaration() {
+    doTestEnter(
+      """
+        def foo[A, B, C,<caret> D, E, F]():
+            pass
+        """,
+      """
+        def foo[A, B, C,
+                D, E, F]():
+            pass
+        """);
+  }
+
+  // PY-61854
+  public void testEnterInsideTypeParameterListInClassDeclaration() {
+    doTestEnter(
+      """
+        class Clazz[A, B, C,<caret> D, E, F]:
+            pass
+        """,
+      """
+        class Clazz[A, B, C,
+                    D, E, F]:
+            pass
+        """);
+  }
+
   @NotNull
   private PyCodeStyleSettings getPythonCodeStyleSettings() {
     return getCodeStyleSettings().getCustomSettings(PyCodeStyleSettings.class);
