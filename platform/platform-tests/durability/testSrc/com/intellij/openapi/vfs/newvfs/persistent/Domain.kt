@@ -35,7 +35,7 @@ interface AppAgent {
   val output: OutputStream
 }
 
-interface AppController: AutoCloseable {
+interface AppController : AutoCloseable {
   fun kill()
   fun isAlive(): Boolean
   fun exitCode(): Int

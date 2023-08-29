@@ -7,6 +7,7 @@ import com.intellij.openapi.vfs.newvfs.persistent.dev.enumerator.DurableStringEn
 import java.nio.file.Path
 import kotlin.io.path.absolute
 
+@Suppress("unused")
 class DurableStringEnumeratorApp : App {
 
   private class DSE : StringEnum {
@@ -14,32 +15,19 @@ class DurableStringEnumeratorApp : App {
     // hence 'pse.data' file will be in unique folder each time.
     val instance = DurableStringEnumerator.open(Path.of("pse.data").absolute())
 
-    override fun enumerate(s: String): Int {
-      return instance.enumerate(s)
-      //.also { instance.force() }
-    }
+    override fun tryEnumerate(s: String): Int = instance.tryEnumerate(s)
 
-    override fun valueOf(idx: Int): String? {
-      try {
-        return instance.valueOf(idx)
-      }
-      catch (ex: IllegalArgumentException) {
-        ex.printStackTrace()
-        return null
-      }
-    }
+    override fun enumerate(s: String): Int = instance.enumerate(s)
 
-    override fun flush() {
-      return instance.force()
-    }
+    override fun valueOf(idx: Int): String? = instance.valueOf(idx)
 
-    override fun close() {
-      return instance.close()
-    }
+    override fun flush() = instance.force()
+
+    override fun close() = instance.close()
   }
 
   override fun run(appAgent: AppAgent) {
     val backend = DSE()
-    StringEnumApp(backend).run(appAgent)
+    StringEnumeratorAppHelper(backend).run(appAgent)
   }
 }
