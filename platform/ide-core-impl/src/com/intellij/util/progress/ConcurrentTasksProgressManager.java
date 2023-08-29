@@ -31,8 +31,7 @@ public final class ConcurrentTasksProgressManager {
     myRemainingTotalWeight = new AtomicInteger(totalWeight);
   }
 
-  @NotNull
-  public SubTaskProgressIndicator createSubTaskIndicator(int taskWeight) {
+  public @NotNull SubTaskProgressIndicator createSubTaskIndicator(int taskWeight) {
     if (taskWeight < 0) {
       throw new IllegalArgumentException("Task weight must not be negative: " + taskWeight);
     }

@@ -30,19 +30,16 @@ import java.util.Set;
 
 @State(name = "EditorSettings", storages = @Storage("editor.xml"), category = SettingsCategory.CODE)
 public class EditorSettingsExternalizable implements PersistentStateComponent<EditorSettingsExternalizable.OptionSet> {
-  @NonNls
-  public static final String PROP_VIRTUAL_SPACE = "VirtualSpace";
-  @NonNls
-  public static final String PROP_BREADCRUMBS_PER_LANGUAGE = "BreadcrumbsPerLanguage";
+  public static final @NonNls String PROP_VIRTUAL_SPACE = "VirtualSpace";
+  public static final @NonNls String PROP_BREADCRUMBS_PER_LANGUAGE = "BreadcrumbsPerLanguage";
 
-  @NonNls
-  public static final String PROP_DOC_COMMENT_RENDERING = "DocCommentRendering";
+  public static final @NonNls String PROP_DOC_COMMENT_RENDERING = "DocCommentRendering";
 
   public static final UINumericRange BLINKING_RANGE = new UINumericRange(500, 10, 1500);
   public static final UINumericRange TOOLTIPS_DELAY_RANGE = new UINumericRange(500, 1, 5000);
 
   private static final String SOFT_WRAP_FILE_MASKS_ENABLED_DEFAULT = "*";
-  @NonNls private static final String SOFT_WRAP_FILE_MASKS_DISABLED_DEFAULT = "*.md; *.txt; *.rst; *.adoc";
+  private static final @NonNls String SOFT_WRAP_FILE_MASKS_DISABLED_DEFAULT = "*.md; *.txt; *.rst; *.adoc";
 
   //Q: make it interface?
   public static final class OptionSet {
@@ -57,7 +54,7 @@ public class EditorSettingsExternalizable implements PersistentStateComponent<Ed
     public int HORIZONTAL_SCROLL_OFFSET = 3;
     public int HORIZONTAL_SCROLL_JUMP = 0;
     public boolean IS_CARET_INSIDE_TABS;
-    @NonNls public String STRIP_TRAILING_SPACES = STRIP_TRAILING_SPACES_CHANGED;
+    public @NonNls String STRIP_TRAILING_SPACES = STRIP_TRAILING_SPACES_CHANGED;
     public boolean IS_ENSURE_NEWLINE_AT_EOF = false;
     public boolean REMOVE_TRAILING_BLANK_LINES = false;
     public boolean SHOW_QUICK_DOC_ON_MOUSE_OVER_ELEMENT = true;
@@ -163,7 +160,7 @@ public class EditorSettingsExternalizable implements PersistentStateComponent<Ed
 
   private static final String COMPOSITE_PROPERTY_SEPARATOR = ":";
 
-  @NotNull private final OsSpecificState myOsSpecificState;
+  private final @NotNull OsSpecificState myOsSpecificState;
 
   private final Set<SoftWrapAppliancePlaces> myPlacesToUseSoftWraps = EnumSet.noneOf(SoftWrapAppliancePlaces.class);
   private OptionSet myOptions = new OptionSet();
@@ -172,9 +169,9 @@ public class EditorSettingsExternalizable implements PersistentStateComponent<Ed
 
   private int myBlockIndent;
 
-  @NonNls public static final String STRIP_TRAILING_SPACES_NONE = "None";
-  @NonNls public static final String STRIP_TRAILING_SPACES_CHANGED = "Changed";
-  @NonNls public static final String STRIP_TRAILING_SPACES_WHOLE = "Whole";
+  public static final @NonNls String STRIP_TRAILING_SPACES_NONE = "None";
+  public static final @NonNls String STRIP_TRAILING_SPACES_CHANGED = "Changed";
+  public static final @NonNls String STRIP_TRAILING_SPACES_WHOLE = "Whole";
 
   @MagicConstant(stringValues = {STRIP_TRAILING_SPACES_NONE, STRIP_TRAILING_SPACES_CHANGED, STRIP_TRAILING_SPACES_WHOLE})
   public @interface StripTrailingSpaces {}
@@ -201,9 +198,8 @@ public class EditorSettingsExternalizable implements PersistentStateComponent<Ed
     myPropertyChangeSupport.firePropertyChange(propertyName, oldValue, newValue);
   }
 
-  @NotNull
   @Override
-  public OptionSet getState() {
+  public @NotNull OptionSet getState() {
     return myOptions;
   }
 
@@ -794,8 +790,7 @@ public class EditorSettingsExternalizable implements PersistentStateComponent<Ed
     myOptions.KEEP_TRAILING_SPACE_ON_CARET_LINE = keep;
   }
 
-  @NotNull
-  public String getSoftWrapFileMasks() {
+  public @NotNull String getSoftWrapFileMasks() {
     String storedValue = myOptions.SOFT_WRAP_FILE_MASKS;
     if (storedValue != null) {
       return storedValue;
@@ -807,8 +802,7 @@ public class EditorSettingsExternalizable implements PersistentStateComponent<Ed
     myOptions.SOFT_WRAP_FILE_MASKS = value;
   }
 
-  @NotNull
-  public CaretStopOptions getCaretStopOptions() {
+  public @NotNull CaretStopOptions getCaretStopOptions() {
     return myOsSpecificState.CARET_STOP_OPTIONS;
   }
 

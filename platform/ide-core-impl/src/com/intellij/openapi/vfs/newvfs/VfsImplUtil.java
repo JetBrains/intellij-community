@@ -1,7 +1,6 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vfs.newvfs;
 
-import com.intellij.concurrency.ThreadContext;
 import com.intellij.execution.process.ProcessIOExecutorService;
 import com.intellij.ide.plugins.DynamicPluginListener;
 import com.intellij.ide.plugins.IdeaPluginDescriptor;
@@ -352,7 +351,7 @@ public final class VfsImplUtil {
     return state;
   }
 
-  private static class InvalidationState {
+  private static final class InvalidationState {
     private Set<Pair<String, ArchiveFileSystem>> myRootsToRefresh;
 
     private void registerPathToRefresh(@NotNull String path, @NotNull ArchiveFileSystem vfs) {
