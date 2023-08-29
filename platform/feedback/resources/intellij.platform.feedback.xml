@@ -17,6 +17,7 @@
                  description="Explicitly sets the number of seconds until the feedback notification is displayed."/>
     <statistics.applicationUsagesCollector implementation="com.intellij.feedback.common.statistics.DontShowAgainValueCollector"/>
     <statistics.counterUsagesCollector implementationClass="com.intellij.feedback.common.statistics.FeedbackNotificationCountCollector"/>
+    <statistics.counterUsagesCollector implementationClass="com.intellij.feedback.evaluation.statistics.EvaluationFeedbackCountCollector"/>
   </extensions>
 
   <applicationListeners>
