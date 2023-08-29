@@ -16,6 +16,10 @@ class KotlinClassShortNameIndex internal constructor() : StringStubIndexExtensio
             return KotlinClassShortNameIndex()
         }
 
+        @JvmField
+        @Deprecated("Use the Helper object instead", level = DeprecationLevel.ERROR)
+        val INSTANCE: KotlinClassShortNameIndex = KotlinClassShortNameIndex()
+
         override val indexKey: StubIndexKey<String, KtClassOrObject> =
             StubIndexKey.createIndexKey("org.jetbrains.kotlin.idea.stubindex.KotlinClassShortNameIndex")
     }
