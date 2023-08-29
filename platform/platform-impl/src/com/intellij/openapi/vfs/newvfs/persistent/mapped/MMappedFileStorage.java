@@ -268,7 +268,7 @@ public final class MMappedFileStorage implements Closeable {
            ']';
   }
 
-  public static final class Page  {
+  public static final class Page {
     private final int pageIndex;
     private final int pageSize;
     private final long offsetInFile;

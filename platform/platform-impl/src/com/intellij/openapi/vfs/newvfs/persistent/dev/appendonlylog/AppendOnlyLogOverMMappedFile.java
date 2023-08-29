@@ -14,6 +14,7 @@ import org.jetbrains.annotations.VisibleForTesting;
 import java.io.IOException;
 import java.lang.invoke.VarHandle;
 import java.nio.ByteBuffer;
+import java.nio.file.Files;
 import java.nio.file.Path;
 
 import static com.intellij.util.SystemProperties.getBooleanProperty;
@@ -28,7 +29,7 @@ import static java.nio.ByteOrder.nativeOrder;
 public final class AppendOnlyLogOverMMappedFile implements AppendOnlyLog {
   //@formatter:off
   private static final boolean MORE_DIAGNOSTIC_INFORMATION = getBooleanProperty("AppendOnlyLogOverMMappedFile.MORE_DIAGNOSTIC_INFORMATION", true);
-  private static final boolean ADD_LOG_CONTENT = getBooleanProperty("AppendOnlyLogOverMMappedFile.ADD_LOG_CONTENT", false);
+  private static final boolean ADD_LOG_CONTENT = getBooleanProperty("AppendOnlyLogOverMMappedFile.ADD_LOG_CONTENT", true);
   //@formatter:on
 
 
@@ -262,17 +263,26 @@ public final class AppendOnlyLogOverMMappedFile implements AppendOnlyLog {
       //storage wasn't closed correctly -- probably forced restart? -> need to recover
 
       //For recovery we need 2 things:
-      // - convert all non-commited records to padding
-      // - clear everything after nextRecordToBeAllocatedOffset (everything after nextRecordToBeAllocatedOffset must be 0)
+      // - convert all non-commited records to padding records (we can't remove them, but can't recover either)
+      // - clear everything after nextRecordToBeAllocatedOffset (log mechanics assumes file tail after
+      //   .nextRecordToBeAllocatedOffset is always filled with 0)
       startOfRecoveredRegion = nextRecordToBeCommittedOffset;
       endOfRecoveredRegion = nextRecordToBeAllocatedOffset;
       long successfullyRecoveredUntil = recoverRegion(nextRecordToBeCommittedOffset, nextRecordToBeAllocatedOffset);
 
-      //MAYBE RC: really we should take actual file size, and zero it from nextRecordToBeCommittedOffset and till
-      //          the end
-      Page page = storage.pageByOffset(successfullyRecoveredUntil);
-      int offsetInPage = storage.toOffsetInPage(successfullyRecoveredUntil);
-      page.rawPageBuffer().put(new byte[pageSize - offsetInPage]);
+      Path storagePath = storage.storagePath();
+      long fileSize = Files.size(storagePath);
+      if (fileSize < successfullyRecoveredUntil) {
+        //Mapped storage must enlarge file so that all non-0 values in mapped buffers are within file bounds (because
+        // to have something in mapped buffer beyond actual end-of-file is 'undefined behavior') -- and there are non-0
+        // values until successfullyRecoveredUntil, because at least record header is non-0 for valid records. So this
+        // shouldn't happen:
+        throw new AssertionError(
+          "file(=" + storagePath + ").size(=" + fileSize + ") < recoveredUntil(=" + successfullyRecoveredUntil + ")");
+      }
+      //zero region [successfullyRecoveredUntil...<end of file>]:
+      storage.zeroRegion(successfullyRecoveredUntil, fileSize - 1);
+
 
       nextRecordToBeCommittedOffset = successfullyRecoveredUntil;
       nextRecordToBeAllocatedOffset = successfullyRecoveredUntil;
@@ -384,7 +394,8 @@ public final class AppendOnlyLogOverMMappedFile implements AppendOnlyLog {
     if (!RecordLayout.isRecordCommitted(recordHeader)) {
       throw new IOException("record[" + recordId + "][@" + recordOffsetInFile + "] is not commited: " +
                             "(header=" + Integer.toHexString(recordHeader) + ") either not yet written or corrupted. " +
-                            moreDiagnosticInfo(recordOffsetInFile)
+                            moreDiagnosticInfo(recordOffsetInFile) +
+                            (ADD_LOG_CONTENT ? "\n" + dumpContentAroundId(recordId, 1024) : "")
       );
     }
     int payloadLength = RecordLayout.extractPayloadLength(recordHeader);
@@ -523,7 +534,9 @@ public final class AppendOnlyLogOverMMappedFile implements AppendOnlyLog {
    */
   private String dumpContentAroundId(long aroundRecordId,
                                      int regionWidth) throws IOException {
-    StringBuilder sb = new StringBuilder("Log content around id: " + aroundRecordId + " +/- " + regionWidth + "\n");
+    StringBuilder sb = new StringBuilder("Log content around id: " + aroundRecordId + " +/- " + regionWidth +
+                                         " (first uncommitted offset: " + firstUnCommittedOffset() +
+                                         ", first unallocated: " + firstUnAllocatedOffset() + ")\n");
     forEachRecord((recordId, buffer) -> {
       if (aroundRecordId - regionWidth <= recordId && recordId <= aroundRecordId + regionWidth) {
         String bufferAsHex = IOUtil.toHexString(buffer);
