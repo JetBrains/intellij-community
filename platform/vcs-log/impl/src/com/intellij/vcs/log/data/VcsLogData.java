@@ -152,6 +152,12 @@ public final class VcsLogData implements Disposable, VcsLogDataProvider {
       LOG.info("Vcs log index is turned off for project " + myProject.getName());
       return new EmptyIndex();
     }
+
+    if (myStorage instanceof InMemoryStorage) {
+      LOG.info("Can not create index for the in-memory storage");
+      return new EmptyIndex();
+    }
+
     VcsLogPersistentIndex index = VcsLogPersistentIndex.create(myProject, myStorage, logId, myLogProviders, progress, myErrorHandler, this);
     if (index == null) {
       LOG.error("Cannot create vcs log index for project " + myProject.getName());
