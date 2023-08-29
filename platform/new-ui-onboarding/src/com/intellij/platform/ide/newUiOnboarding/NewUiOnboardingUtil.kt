@@ -19,7 +19,7 @@ import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.wm.WindowManager
 import com.intellij.openapi.wm.impl.ToolbarComboWidget
 import com.intellij.ui.ColorUtil
-import com.intellij.ui.LottieUtils
+import com.intellij.ui.WebAnimationUtils
 import com.intellij.ui.awt.RelativePoint
 import com.intellij.ui.popup.AbstractPopup
 import com.intellij.ui.popup.WizardPopup
@@ -148,7 +148,7 @@ object NewUiOnboardingUtil {
       return null
     }
     val background = JBUI.CurrentTheme.GotItTooltip.animationBackground(false)
-    val htmlPage = LottieUtils.createLottieAnimationPage(lottieJson, lottieScript, background)
+    val htmlPage = WebAnimationUtils.createLottieAnimationPage(lottieJson, lottieScript, background)
     return htmlPage to size
   }
 
@@ -180,7 +180,7 @@ object NewUiOnboardingUtil {
 
   private fun getLottieImageSize(lottieJson: String): Dimension? {
     return try {
-      LottieUtils.getLottieImageSize(lottieJson)
+      WebAnimationUtils.getLottieImageSize(lottieJson)
     }
     catch (t: Throwable) {
       LOG.error("Failed to parse lottie json", t)
