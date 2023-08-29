@@ -526,71 +526,21 @@ public final class LambdaUtil {
   private static @Nullable PsiType extractFunctionalConjunct(PsiIntersectionType type) {
     PsiType conjunct = null;
     MethodSignature commonSignature = null;
-    PsiType commonSignatureType = null;
-
     for (PsiType psiType : type.getConjuncts()) {
-      MethodSignature signature = getLambdaSignature(psiType);
-      if (signature == null) continue;
-      commonSignature = signature;
-      commonSignatureType = psiType;
-      conjunct = psiType;
-      break;
-    }
-    if (commonSignature == null) {
-      return null;
-    }
-    for (PsiType psiType : type.getConjuncts()) {
-      if (psiType == commonSignatureType) continue;
-      PsiClassType.ClassResolveResult classResolveResult = PsiUtil.resolveGenericsClassInType(psiType);
-      PsiClass aClass = classResolveResult.getElement();
+      PsiClass aClass = PsiUtil.resolveClassInClassTypeOnly(psiType);
       if (aClass instanceof PsiTypeParameter) continue;
-      MethodSignature signature = getLambdaSignature(psiType);
-      if (signature == null) {
-        //psiType is child and doesn't have function methods, so the method is implemented
-        if (TypeConversionUtil.isAssignable(commonSignatureType, psiType)) {
-          return null;
-        }
-        else {
-          continue;
-        }
+      MethodSignature signature = getFunction(aClass);
+      if (signature == null) continue;
+      if (commonSignature == null) {
+        commonSignature = signature;
       }
-      if (!MethodSignatureUtil.areSignaturesEqual(commonSignature, signature)) {
-        if (TypeConversionUtil.isAssignable(commonSignatureType, psiType) ||
-            TypeConversionUtil.isAssignable(psiType, commonSignatureType)) {
-          MethodSignature signatureWithInheritance = getLambdaSignatureWithCommonSubstitutor(psiType);
-          MethodSignature commonSignatureWithInheritance = getLambdaSignatureWithCommonSubstitutor(commonSignatureType);
-          if (commonSignatureWithInheritance == null ||
-              signatureWithInheritance == null ||
-              !MethodSignatureUtil.areSignaturesEqual(commonSignatureWithInheritance, signatureWithInheritance)) {
-            return null;
-          }
-        }
-        else {
-          return null;
-        }
+      else if (!MethodSignatureUtil.areSignaturesEqual(commonSignature, signature)) {
+        return null;
       }
       conjunct = psiType;
     }
 
     return conjunct;
-  }
-
-  @Nullable
-  public static MethodSignature getLambdaSignatureWithCommonSubstitutor(PsiType psiType) {
-    PsiClassType.ClassResolveResult classResolveResult = PsiUtil.resolveGenericsClassInType(psiType);
-    MethodSignature signatureFromFunction = getLambdaSignature(psiType);
-    if (signatureFromFunction == null) return null;
-    PsiMethod method = getFunctionalInterfaceMethod(psiType);
-    if (method == null) return null;
-    PsiSubstitutor fullSubstitutor = classResolveResult.getSubstitutor().putAll(signatureFromFunction.getSubstitutor());
-    return method.getSignature(fullSubstitutor);
-  }
-  @Nullable
-  public static MethodSignature getLambdaSignature(PsiType psiType) {
-    PsiClassType.ClassResolveResult classResolveResult = PsiUtil.resolveGenericsClassInType(psiType);
-    PsiClass aClass = classResolveResult.getElement();
-    if (aClass instanceof PsiTypeParameter) return null;
-    return getFunction(aClass);
   }
 
   private static PsiType getFunctionalInterfaceTypeByContainingLambda(@NotNull PsiLambdaExpression parentLambda) {
