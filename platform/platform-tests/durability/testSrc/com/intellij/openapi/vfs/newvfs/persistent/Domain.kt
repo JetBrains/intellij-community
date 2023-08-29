@@ -6,6 +6,15 @@ import java.io.OutputStream
 import java.nio.file.Path
 import kotlin.random.Random
 
+/**
+ * [User] runs in the current process, and deliver some commands to [App] via [UserAgent].
+ * [App] runs in another process, and receives commands from [User] with help of [AppAgent], applies
+ * those commands to the component-under-test, and returns result(s) back to [User].
+ * [AppController] is a handle to dedicated process App runs into -- provides stdin/stdout, isAlive, kill.
+ *
+ */
+
+
 interface User {
   fun run(userAgent: UserAgent)
 }

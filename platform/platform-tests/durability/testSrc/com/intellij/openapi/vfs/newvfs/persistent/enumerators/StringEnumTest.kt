@@ -14,6 +14,10 @@ import kotlin.random.nextInt
 import kotlin.time.Duration.Companion.milliseconds
 
 
+/**
+ * This should be just [DataEnumerator], but we create dedicated interface to slightly adjust the
+ * contract -- e.g. remove nullability -- and to have more control over it
+ */
 internal interface StringEnum {
   fun enumerate(s: String): Int
   fun valueOf(idx: Int): String?
@@ -197,6 +201,7 @@ internal class StringEnumUser : User {
         userAgent.runApplication { app ->
           val api = API(app)
 
+          //check the state (initial/after kill):
           for (id in state.forward.keys) {
             val expected = state.forward[id]!!
             check(state.inverse[expected] == id)
@@ -278,6 +283,7 @@ internal class StringEnumUser : User {
             app.kill()
           }
           try {
+            //Now _kill_ the App at some random moment, while _continuing_ to fill it with more data:
             while (true) {
               api.randomRequest(
                 afterRequest = {
