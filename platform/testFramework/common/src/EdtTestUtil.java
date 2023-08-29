@@ -4,6 +4,8 @@ package com.intellij.testFramework;
 import com.intellij.ide.IdeEventQueue;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ex.ApplicationEx;
+import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.ThrowableComputable;
 import com.intellij.util.ThrowableRunnable;
@@ -43,7 +45,7 @@ public final class EdtTestUtil {
   @kotlin.Deprecated(message = "Use Kotlin runInEdtAndWait { ... } instead")  // this warning is only visible in Kotlin files
   @TestOnly
   public static <T extends Throwable> void runInEdtAndWait(@NotNull ThrowableRunnable<T> runnable, boolean writeIntent) throws T {
-    Application app = ApplicationManager.getApplication();
+    ApplicationEx app = ApplicationManagerEx.getApplicationEx();
     if (app != null && app.isDispatchThread()) {
       if (writeIntent) {
         app.runWriteIntentReadAction(() -> {
@@ -99,6 +101,11 @@ public final class EdtTestUtil {
       app.invokeAndWait(r);
     }
     else {
+      if (app != null) {
+        Runnable pr = r;
+        // Wrap r to writeIntent unlock, or it will be passed through wrapping around IdeEventQueue.dispatchEvent():385
+        r = () -> app.runUnlockingIntendedWrite(() -> { pr.run(); return null; });
+      }
       try {
         SwingUtilities.invokeAndWait(r);
       }
