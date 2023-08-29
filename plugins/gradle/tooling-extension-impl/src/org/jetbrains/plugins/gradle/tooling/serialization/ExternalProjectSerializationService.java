@@ -290,9 +290,7 @@ public final class ExternalProjectSerializationService implements SerializationS
           writer.writeString(FileCollectionDependency.class.getSimpleName());
           writeDependencyCommonFields(writer, context, dependency);
           writeFiles(writer, "files", dependency.getFiles());
-          if (dependency instanceof DefaultFileCollectionDependency) {
-            writeBoolean(writer, "excludedFromIndexing", ((DefaultFileCollectionDependency)dependency).isExcludedFromIndexing());
-          }
+          writeBoolean(writer, "excludedFromIndexing", dependency.isExcludedFromIndexing());
         }
         writer.stepOut();
       }
