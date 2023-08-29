@@ -450,43 +450,56 @@ public final class OverrideImplementUtil extends OverrideImplementExploreUtil {
                                                          @NotNull PsiClass aClass,
                                                          final boolean toImplement) {
     ReadAction.nonBlocking(() -> {
-        PsiUtilCore.ensureValid(aClass);
-        Collection<CandidateInfo> candidates = getMethodsToOverrideImplement(aClass, toImplement);
-        Collection<CandidateInfo> secondary =
-          toImplement || aClass.isInterface() ? new ArrayList<>() : getMethodsToOverrideImplement(aClass, true);
-        return prepareJavaOverrideImplementChooser(aClass, toImplement, candidates, secondary);
+        return prepareChooser(aClass, toImplement);
       })
       .finishOnUiThread(ModalityState.defaultModalityState(), container -> {
-        JavaOverrideImplementMemberChooser showedChooser = showJavaOverrideImplementChooser(container, editor, aClass);
-        if (showedChooser == null) return;
-
-        final List<PsiMethodMember> selectedElements = showedChooser.getSelectedElements();
-        if (selectedElements == null || selectedElements.isEmpty()) return;
-        PsiUtilCore.ensureValid(aClass);
-        final ThrowableRunnable<RuntimeException> performImplementOverrideRunnable =
-          () -> overrideOrImplementMethodsInRightPlace(editor, aClass, selectedElements, showedChooser.getOptions());
-        if (Registry.is("run.refactorings.under.progress")) {
-          if (!FileModificationService.getInstance().preparePsiElementsForWrite(aClass)) {
-            return;
-          }
-          final String commandName = CommandProcessor.getInstance().getCurrentCommandName();
-          String title = ObjectUtils.notNull(commandName, getChooserTitle(toImplement, false));
-          Runnable runnable = () -> ApplicationManagerEx.getApplicationEx()
-            .runWriteActionWithCancellableProgressInDispatchThread(title, project, null,
-                                                                   indicator -> performImplementOverrideRunnable.run());
-          if (commandName == null) {
-            CommandProcessor.getInstance().executeCommand(project, runnable, title, null);
-          }
-          else {
-            runnable.run();
-          }
-        }
-        else {
-          WriteCommandAction.writeCommandAction(project, aClass.getContainingFile()).run(performImplementOverrideRunnable);
-        }
+        showAndPerform(project, editor, aClass, toImplement, container);
       })
       .expireWhen(() -> !aClass.isValid())
       .submit(AppExecutorUtil.getAppExecutorService());
+  }
+
+  public static void showAndPerform(@NotNull Project project,
+                                @NotNull Editor editor,
+                                @NotNull PsiClass aClass,
+                                boolean toImplement,
+                                @Nullable JavaOverrideImplementMemberChooserContainer container) {
+    JavaOverrideImplementMemberChooser showedChooser = showJavaOverrideImplementChooser(container, editor, aClass);
+    if (showedChooser == null) return;
+
+    final List<PsiMethodMember> selectedElements = showedChooser.getSelectedElements();
+    if (selectedElements == null || selectedElements.isEmpty()) return;
+    PsiUtilCore.ensureValid(aClass);
+    final ThrowableRunnable<RuntimeException> performImplementOverrideRunnable =
+      () -> overrideOrImplementMethodsInRightPlace(editor, aClass, selectedElements, showedChooser.getOptions());
+    if (Registry.is("run.refactorings.under.progress")) {
+      if (!FileModificationService.getInstance().preparePsiElementsForWrite(aClass)) {
+        return;
+      }
+      final String commandName = CommandProcessor.getInstance().getCurrentCommandName();
+      String title = ObjectUtils.notNull(commandName, getChooserTitle(toImplement, false));
+      Runnable runnable = () -> ApplicationManagerEx.getApplicationEx()
+        .runWriteActionWithCancellableProgressInDispatchThread(title, project, null,
+                                                               indicator -> performImplementOverrideRunnable.run());
+      if (commandName == null) {
+        CommandProcessor.getInstance().executeCommand(project, runnable, title, null);
+      }
+      else {
+        runnable.run();
+      }
+    }
+    else {
+      WriteCommandAction.writeCommandAction(project, aClass.getContainingFile()).run(performImplementOverrideRunnable);
+    }
+  }
+
+  @Nullable
+  public static JavaOverrideImplementMemberChooserContainer prepareChooser(@NotNull PsiClass aClass, boolean toImplement) {
+    PsiUtilCore.ensureValid(aClass);
+    Collection<CandidateInfo> candidates = getMethodsToOverrideImplement(aClass, toImplement);
+    Collection<CandidateInfo> secondary =
+      toImplement || aClass.isInterface() ? new ArrayList<>() : getMethodsToOverrideImplement(aClass, true);
+    return prepareJavaOverrideImplementChooser(aClass, toImplement, candidates, secondary);
   }
 
   @Nullable

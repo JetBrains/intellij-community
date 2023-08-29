@@ -53,10 +53,9 @@ public class OverrideImplementFromLibraryTest extends CodeInsightFixtureTestCase
       }
       else {
         OverrideImplementUtil.chooseAndOverrideOrImplementMethods(getProject(), getEditor(), psiClass, toImplement);
-        NonBlockingReadActionImpl.waitForAsyncTaskCompletion();
       }
     });
-
+    NonBlockingReadActionImpl.waitForAsyncTaskCompletion();
     myFixture.checkResultByFile(BASE_DIR + "after" + name + ".java");
   }
 }

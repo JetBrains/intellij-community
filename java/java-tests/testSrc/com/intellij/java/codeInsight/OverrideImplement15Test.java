@@ -196,10 +196,9 @@ public class OverrideImplement15Test extends LightJavaCodeInsightTestCase {
       }
       else {
         OverrideImplementUtil.chooseAndOverrideOrImplementMethods(getProject(), getEditor(), psiClass, toImplement);
-        NonBlockingReadActionImpl.waitForAsyncTaskCompletion();
       }
     });
-
+    NonBlockingReadActionImpl.waitForAsyncTaskCompletion();
     checkResultByFile(BASE_DIR + "after" + name + ".java");
   }
 }
