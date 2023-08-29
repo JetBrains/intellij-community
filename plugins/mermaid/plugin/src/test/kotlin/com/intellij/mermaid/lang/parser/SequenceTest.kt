@@ -22,4 +22,6 @@ class SequenceTest : MermaidParserTestCase("sequence") {
   fun `test par_over`() = doTest(true)
 
   fun `test directives`() = doTest(true)
+
+  fun `test entity codes`() = doTest(true)
 }

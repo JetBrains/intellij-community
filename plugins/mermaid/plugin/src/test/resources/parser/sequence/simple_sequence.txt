@@ -76,4 +76,5 @@ FILE
       PsiWhiteSpace(' ')
       MermaidComplexMessageImpl(COMPLEX_MESSAGE)
         PsiElement(Sequence.MESSAGE)('Great!')
-    PsiElement(IGNORED)(' # And you? J -->> A B')
+    PsiWhiteSpace(' ')
+    PsiElement(IGNORED)('# And you? J -->> A B')

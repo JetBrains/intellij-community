@@ -422,8 +422,13 @@ import static com.intellij.mermaid.lang.lexer.MermaidTokens.Pie;
   [\n\r] { yypopstate(); return EOL; }
   \S+ { return BAD_CHARACTER; }
 }
+<sequence_message> {
+  [^\S\n\r]+ { return WHITE_SPACE; }
+  [^#\s;]* { return Sequence.MESSAGE; }
+  "#"[^#\s;]+";" { return Sequence.MESSAGE; }
+}
 <sequence_id, sequence_alias, sequence_message, sequence, sequence_control_id> {
-  \s?(#[^\n\r]*)/[\n\r]? { yybegin(sequence); return IGNORED; }
+  (#[^#;\n\r]*)/[\n\r]? { yybegin(sequence); return IGNORED; }
   [\n\r] { yybegin(sequence); return EOL; }
   ";" { yybegin(sequence); return SEMICOLON; }
 }
@@ -435,10 +440,6 @@ import static com.intellij.mermaid.lang.lexer.MermaidTokens.Pie;
 <sequence_alias> {
   [^#\s;]* { return ALIAS; }
   [^\S\n\r]+ { return WHITE_SPACE; }
-}
-<sequence_message> {
-  [^\S\n\r]+ { return WHITE_SPACE; }
-  [^#\s;]* { return Sequence.MESSAGE; }
 }
 <sequence_control_id> {
   [^\S\n\r]+ { return WHITE_SPACE; }
