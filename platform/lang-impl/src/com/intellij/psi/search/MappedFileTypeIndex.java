@@ -55,6 +55,21 @@ public final class MappedFileTypeIndex extends FileTypeIndexImplBase {
     });
   }
 
+  private static @NotNull MappedFileTypeIndex.IndexDataController loadIndexToMemory(@NotNull Path forwardIndexStorageFile,
+                                                                                    @NotNull IntConsumer invertedIndexChangeCallback)
+    throws StorageException {
+    var forwardIndex = FORWARD_INDEX_OVER_MMAPPED_ATTRIBUTE ?
+                       new ForwardIndexFileControllerOverMappedFile() :
+                       new ForwardIndexFileControllerOverFile(forwardIndexStorageFile);
+    Int2ObjectMap<RandomAccessIntContainer> invertedIndex = new Int2ObjectOpenHashMap<>();
+    forwardIndex.processEntries((inputId, data) -> {
+      if (data != 0) {
+        invertedIndex.computeIfAbsent(data, __ -> createContainerForInvertedIndex()).add(inputId);
+      }
+    });
+    return new IndexDataController(invertedIndex, forwardIndex, invertedIndexChangeCallback);
+  }
+
   private static short checkFileTypeIdIsShort(int fileTypeId) {
     assert fileTypeId < Short.MAX_VALUE : "file type id = " + fileTypeId;
     return (short)fileTypeId;
@@ -147,7 +162,8 @@ public final class MappedFileTypeIndex extends FileTypeIndexImplBase {
     private static final boolean EXTRA_CONSISTENCY_CHECKS =
       getBooleanProperty("mapped-file-type-index.extra-consistency-checks", false);
     private final @Nullable ExtraChecksInfo myExtraChecksInfo;
-    private record ExtraChecksInfo(int initMaxAllocatedId) {}
+
+    private record ExtraChecksInfo(int initMaxAllocatedId) { }
 
     private IndexDataController(@NotNull Int2ObjectMap<RandomAccessIntContainer> invertedIndex,
                                 @NotNull MappedFileTypeIndex.IndexDataController.ForwardIndexFileController forwardIndex,
@@ -190,7 +206,8 @@ public final class MappedFileTypeIndex extends FileTypeIndexImplBase {
         if (indexedSet == null) {
           LOG.error("inverted filetype index inconsistency: indexed set is null for " +
                     indexedData + " ([" + inputId + "]=" + indexedData + "->" + data + "), extra info=" + myExtraChecksInfo);
-        } else {
+        }
+        else {
           var removed = indexedSet.remove(inputId);
           if (!removed && EXTRA_CONSISTENCY_CHECKS) {
             var keyWitness = new AtomicInteger(0);
@@ -293,22 +310,6 @@ public final class MappedFileTypeIndex extends FileTypeIndexImplBase {
         return new BitSetAsRAIntContainer(maxId + 1);
       }
     );
-  }
-
-  private static @NotNull MappedFileTypeIndex.IndexDataController loadIndexToMemory(
-    @NotNull Path forwardIndexStorageFile,
-    @NotNull IntConsumer invertedIndexChangeCallback) throws StorageException {
-
-    var forwardIndex = FORWARD_INDEX_OVER_MMAPPED_ATTRIBUTE ?
-                       new ForwardIndexFileControllerOverMappedFile() :
-                       new ForwardIndexFileControllerOverFile(forwardIndexStorageFile);
-    Int2ObjectMap<RandomAccessIntContainer> invertedIndex = new Int2ObjectOpenHashMap<>();
-    forwardIndex.processEntries((inputId, data) -> {
-      if (data != 0) {
-        invertedIndex.computeIfAbsent(data, __ -> createContainerForInvertedIndex()).add(inputId);
-      }
-    });
-    return new IndexDataController(invertedIndex, forwardIndex, invertedIndexChangeCallback);
   }
 
   private static final class ForwardIndexFileControllerOverFile implements IndexDataController.ForwardIndexFileController {
