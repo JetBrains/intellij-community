@@ -6,6 +6,7 @@ import com.intellij.openapi.diagnostic.trace
 import com.intellij.platform.workspace.storage.*
 import com.intellij.platform.workspace.storage.impl.EntityId
 import com.intellij.platform.workspace.storage.impl.WorkspaceEntityBase
+import com.intellij.platform.workspace.storage.impl.asBase
 import com.intellij.platform.workspace.storage.instrumentation.EntityStorageInstrumentationApi
 import com.intellij.platform.workspace.storage.instrumentation.EntityStorageSnapshotInstrumentation
 import com.intellij.platform.workspace.storage.url.VirtualFileUrlIndex
@@ -25,9 +26,10 @@ internal class ReadTracker(
     log.trace { "Read trace of `entities` function: $trace" }
     onRead(trace)
     return snapshot.entities(entityClass)
-      // TODO Get rid of this
       .onEach {
-        (it as WorkspaceEntityBase).snapshot = this
+        // We have to pass this snapshot because the entity is created in internals of the original snapshot and there is no way to pass
+        //  a different snapshot while creation. I hope I can get rid of this line.
+        it.asBase().snapshot = this
 
         // TODO check if we need to keep this
         //(it as WorkspaceEntityBase).readTrace = onRead
@@ -47,13 +49,20 @@ internal class ReadTracker(
     log.trace { "Read trace of `referrers` function: $trace" }
     onRead(trace)
     return snapshot.referrers(id, entityClass)
+      .onEach {
+        // We have to pass this snapshot because the entity is created in internals of the original snapshot and there is no way to pass
+        //  a different snapshot while creation. I hope I can get rid of this line.
+        it.asBase().snapshot = this
+      }
   }
 
   override fun <E : WorkspaceEntityWithSymbolicId> resolve(id: SymbolicEntityId<E>): E? {
     val trace = ReadTrace.Resolve(id)
     log.trace { "Read trace of `resolve` function: $trace" }
     onRead(trace)
-    return snapshot.resolve(id)
+    return snapshot.resolve(id)?.also {
+      it.asBase().snapshot = this
+    }
   }
 
   override fun <E : WorkspaceEntityWithSymbolicId> contains(id: SymbolicEntityId<E>): Boolean {
@@ -75,22 +84,9 @@ internal class ReadTracker(
     TODO("The entitiesBySource is not supported for read tracing at the moment")
   }
 
-  override fun <T : WorkspaceEntity> initializeEntity(entityId: EntityId, newInstance: () -> T): T {
-    val newEntity = newInstance()
-    newEntity as WorkspaceEntityBase
-    newEntity.snapshot = this
-    return newEntity
-  }
-
   override fun <T : WorkspaceEntity> resolveReference(reference: EntityReference<T>): T? {
     val entity = snapshot.resolveReference(reference)
-    if (entity != null) {
-      entity as WorkspaceEntityBase
-      entity.snapshot = this
-
-      // TODO Check if we need to get this back
-      //entity.readTrace = this.onRead
-    }
+    entity?.asBase()?.snapshot = this
     return entity
   }
 
