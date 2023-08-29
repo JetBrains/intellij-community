@@ -244,6 +244,5 @@ The Kotlin plugin provides language support in IntelliJ IDEA and Android Studio.
 
   <!-- IJ/AS-INCOMPATIBLE-PLACEHOLDER -->
 
-  <xi:include href="k1.xml" includeUnless="idea.kotlin.plugin.use.k2"/>
-  <xi:include href="k2.xml" includeIf="idea.kotlin.plugin.use.k2"/>
+  <xi:include href="k1.xml"/>
 </idea-plugin>
