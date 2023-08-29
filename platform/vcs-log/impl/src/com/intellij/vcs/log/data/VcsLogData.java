@@ -22,6 +22,7 @@ import com.intellij.vcs.log.*;
 import com.intellij.vcs.log.data.index.*;
 import com.intellij.vcs.log.impl.VcsLogCachesInvalidator;
 import com.intellij.vcs.log.impl.VcsLogErrorHandler;
+import com.intellij.vcs.log.impl.VcsLogIndexer;
 import com.intellij.vcs.log.impl.VcsLogSharedSettings;
 import com.intellij.vcs.log.util.PersistentUtil;
 import io.opentelemetry.api.trace.Span;
@@ -30,10 +31,7 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
 
 import java.io.IOException;
-import java.util.Collection;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 import java.util.concurrent.*;
 
 import static com.intellij.openapi.vcs.VcsScopeKt.VcsScope;
@@ -158,12 +156,22 @@ public final class VcsLogData implements Disposable, VcsLogDataProvider {
       return new EmptyIndex();
     }
 
-    VcsLogPersistentIndex index = VcsLogPersistentIndex.create(myProject, myStorage, logId, myLogProviders, progress, myErrorHandler, this);
-    if (index == null) {
+    Map<VirtualFile, VcsLogIndexer> indexers = VcsLogPersistentIndex.getAvailableIndexers(myLogProviders);
+
+    VcsLogStorageBackend backend;
+    if (myStorage instanceof VcsLogStorageBackend) {
+      backend = (VcsLogStorageBackend)myStorage;
+    }
+    else {
+      backend = PhmVcsLogStorageBackend.create(myProject, myStorage, new LinkedHashSet<>(indexers.keySet()), logId, myErrorHandler, this);
+    }
+
+    if (backend == null) {
       LOG.error("Cannot create vcs log index for project " + myProject.getName());
       return new EmptyIndex();
     }
-    return index;
+
+    return new VcsLogPersistentIndex(myProject, myLogProviders, indexers, myStorage, backend, progress, myErrorHandler, this);
   }
 
   public void initialize() {

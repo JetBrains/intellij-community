@@ -30,14 +30,15 @@ fun setUpIndex(project: Project,
   val errorConsumer = FailingErrorHandler()
 
   val logId = PersistentUtil.calcLogId(project, providersMap)
-  val storage = if (useSqlite) {
-    SqliteVcsLogStorageBackend(project = project, logId = logId, logProviders = providersMap, errorHandler = errorConsumer,
-                               disposable = disposable)
-  }
-  else {
-    VcsLogStorageImpl(project, logId, providersMap, errorConsumer, disposable)
-  }
-  return VcsLogPersistentIndex.create(project, storage, logId, providersMap, VcsLogProgress(disposable), errorConsumer, disposable)!!
+
+  val storage = if (useSqlite) SqliteVcsLogStorageBackend(project, logId, providersMap, errorConsumer, disposable)
+  else VcsLogStorageImpl(project, logId, providersMap, errorConsumer, disposable)
+
+  val backend = if (storage is VcsLogStorageBackend) storage
+  else PhmVcsLogStorageBackend.create(project, storage, setOf(root), logId, errorConsumer, disposable)!!
+
+  val indexers = VcsLogPersistentIndex.getAvailableIndexers(providersMap)
+  return VcsLogPersistentIndex(project, providersMap, indexers, storage, backend, VcsLogProgress(disposable), errorConsumer, disposable)
 }
 
 private class FailingErrorHandler : VcsLogErrorHandler {

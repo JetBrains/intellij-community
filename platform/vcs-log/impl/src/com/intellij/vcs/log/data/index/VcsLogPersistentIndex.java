@@ -38,7 +38,6 @@ import io.opentelemetry.context.Scope;
 import it.unimi.dsi.fastutil.ints.IntOpenHashSet;
 import it.unimi.dsi.fastutil.ints.IntSet;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
 import org.jetbrains.sqlite.AlreadyClosedException;
 
@@ -88,15 +87,14 @@ public final class VcsLogPersistentIndex implements VcsLogModifiableIndex, Dispo
 
   private final @NotNull IdleVcsLogIndexer myIdleIndexer;
 
-  private VcsLogPersistentIndex(@NotNull Project project,
-                                @NotNull Map<VirtualFile, VcsLogProvider> providers,
-                                @NotNull Map<VirtualFile, VcsLogIndexer> indexers,
-                                @NotNull LinkedHashSet<VirtualFile> roots,
-                                @NotNull VcsLogStorage storage,
-                                @NotNull VcsLogStorageBackend backend,
-                                @NotNull VcsLogProgress progress,
-                                @NotNull VcsLogErrorHandler errorHandler,
-                                @NotNull Disposable disposableParent) {
+  public VcsLogPersistentIndex(@NotNull Project project,
+                               @NotNull Map<VirtualFile, VcsLogProvider> providers,
+                               @NotNull Map<VirtualFile, VcsLogIndexer> indexers,
+                               @NotNull VcsLogStorage storage,
+                               @NotNull VcsLogStorageBackend backend,
+                               @NotNull VcsLogProgress progress,
+                               @NotNull VcsLogErrorHandler errorHandler,
+                               @NotNull Disposable disposableParent) {
     myStorage = storage;
     myProject = project;
     myProgress = progress;
@@ -105,7 +103,7 @@ public final class VcsLogPersistentIndex implements VcsLogModifiableIndex, Dispo
     myIndexCollector = VcsLogIndexCollector.getInstance(myProject);
 
     myIndexers = indexers;
-    myRoots = roots;
+    myRoots = new LinkedHashSet<>(indexers.keySet());
 
     myBackend = backend;
     myDataGetter = new IndexDataGetter(myProject, ContainerUtil.filter(providers, root -> myRoots.contains(root)),
@@ -273,28 +271,6 @@ public final class VcsLogPersistentIndex implements VcsLogModifiableIndex, Dispo
       }
     }
     return indexers;
-  }
-
-  public static @Nullable VcsLogPersistentIndex create(@NotNull Project project,
-                                                       @NotNull VcsLogStorage storage,
-                                                       @NotNull String logId,
-                                                       @NotNull Map<VirtualFile, VcsLogProvider> providers,
-                                                       @NotNull VcsLogProgress progress,
-                                                       @NotNull VcsLogErrorHandler errorHandler,
-                                                       @NotNull Disposable disposableParent) {
-    Map<VirtualFile, VcsLogIndexer> indexers = getAvailableIndexers(providers);
-    LinkedHashSet<VirtualFile> roots = new LinkedHashSet<>(indexers.keySet());
-
-    VcsLogStorageBackend backend;
-    if (storage instanceof VcsLogStorageBackend) {
-      backend = (VcsLogStorageBackend)storage;
-    }
-    else {
-      backend = PhmVcsLogStorageBackend.create(project, storage, roots, logId, errorHandler, disposableParent);
-    }
-    if (backend == null) return null;
-
-    return new VcsLogPersistentIndex(project, providers, indexers, roots, storage, backend, progress, errorHandler, disposableParent);
   }
 
   private final class MyHeavyAwareListener extends HeavyAwareListener {
