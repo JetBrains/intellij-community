@@ -73,11 +73,6 @@ public final class MappedFileStorageHelper implements Closeable {
     Path storagePath = fastAttributesDir.resolve(storageName).toAbsolutePath();
 
     long maxFileSize = HeaderLayout.HEADER_SIZE + bytesPerRow * (long)Integer.MAX_VALUE;
-    MMappedFileStorage storage = new MMappedFileStorage(
-      storagePath,
-      DEFAULT_PAGE_SIZE,
-      maxFileSize
-    );
     var recordsStorage = connection.getRecords();
 
     synchronized (storagesRegistry) {
@@ -93,7 +88,11 @@ public final class MappedFileStorageHelper implements Closeable {
       }
 
       MappedFileStorageHelper storageHelper = new MappedFileStorageHelper(
-        storage,
+        new MMappedFileStorage(
+          storagePath,
+          DEFAULT_PAGE_SIZE,
+          maxFileSize
+        ),
         bytesPerRow,
         recordsStorage::maxAllocatedID,
         checkFileIdsBelowMax
