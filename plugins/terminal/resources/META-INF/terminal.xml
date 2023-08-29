@@ -37,8 +37,10 @@
                          id="terminalUp" order="first"/>
     <editorActionHandler action="EditorDown" implementationClass="org.jetbrains.plugins.terminal.exp.TerminalCaretDownHandler"
                          id="terminalDown" order="first"/>
-    <editorActionHandler action="EditorEscape" implementationClass="org.jetbrains.plugins.terminal.exp.TerminalEscapeHandler"
-                         id="terminalEscape" order="first"/>
+    <editorActionHandler action="EditorEscape" implementationClass="org.jetbrains.plugins.terminal.exp.TerminalCloseHistoryHandler"
+                         id="terminalCloseHistory" order="first"/>
+    <editorActionHandler action="EditorEscape" implementationClass="org.jetbrains.plugins.terminal.exp.TerminalSelectPromptHandler"
+                         id="terminalSelectPrompt" order="first"/>
     <typedHandler implementation="org.jetbrains.plugins.terminal.exp.TerminalCompletionAutoPopupHandler"
                   id="terminalCompletionAutoPopup" order="first"/>
     <lookup.charFilter implementation="org.jetbrains.plugins.terminal.exp.TerminalCharFilter"

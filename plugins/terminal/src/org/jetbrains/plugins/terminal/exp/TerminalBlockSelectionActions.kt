@@ -3,6 +3,10 @@ package org.jetbrains.plugins.terminal.exp
 
 import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
+import com.intellij.openapi.actionSystem.DataContext
+import com.intellij.openapi.editor.Caret
+import com.intellij.openapi.editor.Editor
+import com.intellij.openapi.editor.actionSystem.EditorActionHandler
 
 /** Can be invoked only from the Prompt */
 class TerminalSelectLastBlockAction : TerminalPromotedDumbAwareAction() {
@@ -41,5 +45,22 @@ class TerminalSelectBlockBelowAction : TerminalOutputSelectionAction() {
 class TerminalSelectBlockAboveAction : TerminalOutputSelectionAction() {
   override fun actionPerformed(e: AnActionEvent) {
     e.selectionController?.selectRelativeBlock(isBelow = false)
+  }
+}
+
+class TerminalSelectPromptHandler(private val originalHandler: EditorActionHandler) : EditorActionHandler() {
+  override fun doExecute(editor: Editor, caret: Caret?, dataContext: DataContext?) {
+    val selectionController = editor.getUserData(TerminalSelectionController.KEY)
+    if (selectionController != null) {
+      // clear selection to move the focus to the prompt
+      selectionController.clearSelection()
+    }
+    else originalHandler.execute(editor, caret, dataContext)
+  }
+
+  override fun isEnabledForCaret(editor: Editor, caret: Caret, dataContext: DataContext?): Boolean {
+    return editor.getUserData(TerminalOutputController.KEY) != null
+           && editor.getUserData(TerminalSelectionController.KEY) != null
+           || originalHandler.isEnabled(editor, caret, dataContext)
   }
 }
