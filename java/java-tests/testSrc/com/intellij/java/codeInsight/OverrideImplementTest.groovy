@@ -8,8 +8,8 @@ import com.intellij.codeInsight.generation.OverrideImplementsAnnotationsHandler
 import com.intellij.idea.ActionsBundle
 import com.intellij.openapi.actionSystem.Presentation
 import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.application.impl.NonBlockingReadActionImpl
 import com.intellij.openapi.command.CommandProcessor
-import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiClass
 import com.intellij.psi.PsiFile
 import com.intellij.psi.util.PsiTreeUtil
@@ -355,5 +355,6 @@ public class Test implements Runnable{
     PsiClass psiClass = PsiTreeUtil.findElementOfClassAtOffset(myFixture.getFile(), offset, PsiClass.class, false)
     assert psiClass != null
     OverrideImplementUtil.chooseAndOverrideOrImplementMethods(getProject(), myFixture.getEditor(), psiClass, toImplement)
+    NonBlockingReadActionImpl.waitForAsyncTaskCompletion();
   }
 }
