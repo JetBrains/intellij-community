@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.find.findUsages;
 
 import com.intellij.codeInsight.hint.HintManager;
@@ -27,6 +27,7 @@ import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.progress.impl.ProgressManagerImpl;
 import com.intellij.openapi.progress.util.ProgressIndicatorBase;
 import com.intellij.openapi.project.DumbService;
+import com.intellij.openapi.project.DumbModeBlockedFunctionality;
 import com.intellij.openapi.project.IndexNotReadyException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectFileIndex;
@@ -46,7 +47,6 @@ import com.intellij.usageView.UsageInfo;
 import com.intellij.usageView.UsageViewContentManager;
 import com.intellij.usageView.UsageViewUtil;
 import com.intellij.usages.*;
-import com.intellij.usages.impl.UsageViewStatisticsCollector;
 import com.intellij.usages.similarity.clustering.ClusteringSearchSession;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.CommonProcessors;
@@ -401,8 +401,9 @@ public final class FindUsagesManager {
               searcher.processElementUsages(element, processor, optionsClone);
             }
             catch (IndexNotReadyException e) {
-              DumbService.getInstance(element.getProject()).showDumbModeNotification(
-                FindBundle.message("notification.find.usages.is.not.available.during.indexing"));
+              DumbService.getInstance(element.getProject()).showDumbModeNotificationForFunctionality(
+                FindBundle.message("notification.find.usages.is.not.available.during.indexing"),
+                DumbModeBlockedFunctionality.FindUsages);
             }
             catch (ProcessCanceledException e) {
               throw e;

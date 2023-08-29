@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.project
 
 import com.intellij.openapi.Disposable
@@ -16,6 +16,7 @@ import com.intellij.util.ThrowableRunnable
 import com.intellij.util.messages.Topic
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.ApiStatus.Experimental
+import org.jetbrains.annotations.ApiStatus.Obsolete
 import org.jetbrains.annotations.Contract
 import javax.swing.JComponent
 
@@ -77,13 +78,24 @@ abstract class DumbService {
     return result.get()
   }
 
-  fun <T> tryRunReadActionInSmartMode(task: Computable<T>, notification: @NlsContexts.PopupContent String?): T? {
+  /**
+   * Backward compatibility for plugins, use [tryRunReadActionInSmartMode] with [DumbModeBlockedFunctionality] instead
+   */
+  @Obsolete
+  fun <T> tryRunReadActionInSmartMode(task: Computable<T>,
+                                      notification: @NlsContexts.PopupContent String?): T? {
+    return tryRunReadActionInSmartMode(task, notification, DumbModeBlockedFunctionality.Other)
+  }
+
+  fun <T> tryRunReadActionInSmartMode(task: Computable<T>,
+                                      notification: @NlsContexts.PopupContent String?,
+                                      functionality: DumbModeBlockedFunctionality): T? {
     return if (ApplicationManager.getApplication().isReadAccessAllowed) {
       try {
         task.compute()
       }
       catch (e: IndexNotReadyException) {
-        notification?.let { showDumbModeNotification(it) }
+        notification?.let { showDumbModeNotificationForFunctionality(it, functionality) }
         null
       }
     }
@@ -252,16 +264,26 @@ abstract class DumbService {
   }
 
   /**
-   * Show a notification when given action is not available during dumb mode.
+   * Use [showDumbModeNotificationForAction] or [showDumbModeNotificationForFunctionality] instead
    */
+  @Obsolete
   abstract fun showDumbModeNotification(message: @NlsContexts.PopupContent String)
+
+  /**
+   * Show a notification when given functionality is not available during dumb mode.
+   */
+  abstract fun showDumbModeNotificationForFunctionality(message: @NlsContexts.PopupContent String,
+                                                        functionality: DumbModeBlockedFunctionality)
+
+  abstract fun showDumbModeNotificationForAction(message: @NlsContexts.PopupContent String, actionId: String?)
 
   /**
    * Shows balloon about indexing blocking those actions until it is hidden (by key input, mouse event, etc.) or indexing stops.
    * @param runWhenSmartAndBalloonStillShowing will be executed in smart mode on EDT, balloon won't be dismissed by user's actions
    */
   abstract fun showDumbModeActionBalloon(balloonText: @NlsContexts.PopupContent String,
-                                         runWhenSmartAndBalloonStillShowing: Runnable)
+                                         runWhenSmartAndBalloonStillShowing: Runnable,
+                                         actionIds: List<String>)
 
   abstract val project: Project
 

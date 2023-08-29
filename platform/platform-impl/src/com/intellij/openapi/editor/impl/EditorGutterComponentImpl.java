@@ -61,6 +61,7 @@ import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.progress.util.ProgressIndicatorBase;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.DumbService;
+import com.intellij.openapi.project.DumbModeBlockedFunctionality;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.Balloon;
 import com.intellij.openapi.util.*;
@@ -2290,8 +2291,9 @@ final class EditorGutterComponentImpl extends EditorGutterComponentEx implements
   private void notifyNotDumbAware() {
     Project project = myEditor.getProject();
     if (project != null) {
-      DumbService.getInstance(project).showDumbModeNotification(
-        IdeBundle.message("message.this.functionality.is.not.available.during.indexing"));
+      DumbService.getInstance(project).showDumbModeNotificationForFunctionality(
+        IdeBundle.message("message.this.functionality.is.not.available.during.indexing"),
+        DumbModeBlockedFunctionality.EditorGutterComponent);
     }
   }
 

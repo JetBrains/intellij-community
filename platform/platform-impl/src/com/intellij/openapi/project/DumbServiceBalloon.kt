@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.project
 
 import com.intellij.icons.AllIcons
@@ -41,7 +41,8 @@ class DumbServiceBalloon(private val myProject: Project,
   }
 
   fun showDumbModeActionBalloon(balloonText: @NlsContexts.PopupContent String,
-                                runWhenSmartAndBalloonStillShowing: Runnable) {
+                                runWhenSmartAndBalloonStillShowing: Runnable,
+                                runWhenCancelled: Runnable) {
     if (LightEdit.owns(myProject)) return
     ApplicationManager.getApplication().assertIsDispatchThread()
     if (!myService.isDumb) {
@@ -53,11 +54,12 @@ class DumbServiceBalloon(private val myProject: Project,
       //here should be an assertion that it does not happen, but now we have two dispatches of one InputEvent, see IDEA-227444
       return
     }
-    tryShowBalloonTillSmartMode(balloonText, runWhenSmartAndBalloonStillShowing)
+    tryShowBalloonTillSmartMode(balloonText, runWhenSmartAndBalloonStillShowing, runWhenCancelled)
   }
 
   private fun tryShowBalloonTillSmartMode(balloonText: @NlsContexts.PopupContent String,
-                                          runWhenSmartAndBalloonNotHidden: Runnable) {
+                                          runWhenSmartAndBalloonNotHidden: Runnable,
+                                          runWhenCancelled: Runnable) {
     LOG.assertTrue(myBalloon == null)
     val startTimestamp = System.nanoTime()
     DumbModeBalloonRequested.log(myProject)
@@ -70,6 +72,7 @@ class DumbServiceBalloon(private val myProject: Project,
           return
         }
         DumbModeBalloonCancelled.log(myProject)
+        runWhenCancelled.run()
         myBalloon = null
       }
     })

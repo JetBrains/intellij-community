@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.packageDependencies.actions;
 
 import com.intellij.analysis.AnalysisScope;
@@ -10,6 +10,7 @@ import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.DumbService;
+import com.intellij.openapi.project.DumbModeBlockedFunctionality;
 import com.intellij.openapi.project.IndexNotReadyException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.NlsContexts;
@@ -98,8 +99,8 @@ public abstract class DependenciesHandlerBase {
       snapshot.logResponsivenessSinceCreation("Dependency analysis");
     }
     catch (IndexNotReadyException e) {
-      DumbService.getInstance(myProject).showDumbModeNotification(
-        CodeInsightBundle.message("analyze.dependencies.not.available.notification.indexing"));
+      DumbService.getInstance(myProject).showDumbModeNotificationForFunctionality(
+        CodeInsightBundle.message("analyze.dependencies.not.available.notification.indexing"), DumbModeBlockedFunctionality.PackageDependencies);
       throw new ProcessCanceledException();
     }
   }

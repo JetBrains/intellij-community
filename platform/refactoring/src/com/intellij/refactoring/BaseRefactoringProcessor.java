@@ -22,6 +22,7 @@ import com.intellij.openapi.module.UnloadedModuleDescription;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.DumbService;
+import com.intellij.openapi.project.DumbModeBlockedFunctionality;
 import com.intellij.openapi.project.IndexNotReadyException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.messages.MessagesService;
@@ -213,7 +214,8 @@ public abstract class BaseRefactoringProcessor implements Runnable {
       return;
     }
     if (!indexNotReadyException.isNull() || DumbService.isDumb(myProject)) {
-      DumbService.getInstance(myProject).showDumbModeNotification(RefactoringBundle.message("refactoring.dumb.mode.notification"));
+      DumbService.getInstance(myProject).showDumbModeNotificationForFunctionality(RefactoringBundle.message("refactoring.dumb.mode.notification"),
+                                                                                  DumbModeBlockedFunctionality.Refactoring);
       return;
     }
     if (!refProcessCanceled.isNull()) {

@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.actionSystem.ex;
 
 import com.intellij.diagnostic.PluginException;
@@ -69,7 +69,9 @@ public final class ActionUtil {
   private ActionUtil() {
   }
 
-  public static void showDumbModeWarning(@Nullable Project project, AnActionEvent @NotNull ... events) {
+  public static void showDumbModeWarning(@Nullable Project project,
+                                         @NotNull AnAction action,
+                                         AnActionEvent @NotNull ... events) {
     List<String> actionNames = new ArrayList<>();
     for (AnActionEvent event : events) {
       String s = event.getPresentation().getText();
@@ -81,7 +83,8 @@ public final class ActionUtil {
       LOG.debug("Showing dumb mode warning for " + Arrays.asList(events), new Throwable());
     }
     if (project == null) return;
-    DumbService.getInstance(project).showDumbModeNotification(getActionUnavailableMessage(actionNames));
+    DumbService.getInstance(project).showDumbModeNotificationForAction(getActionUnavailableMessage(actionNames),
+                                                                       ActionManager.getInstance().getId(action));
   }
 
   private static @NotNull @NlsContexts.PopupContent String getActionUnavailableMessage(@NotNull List<String> actionNames) {
@@ -296,7 +299,7 @@ public final class ActionUtil {
         return false;
       }
 
-      showDumbModeWarning(project, e);
+      showDumbModeWarning(project, action, e);
       return false;
     }
 
@@ -383,7 +386,7 @@ public final class ActionUtil {
     }
     if (indexError != null) {
       LOG.info(indexError);
-      showDumbModeWarning(project, event);
+      showDumbModeWarning(project, action, event);
     }
   }
 
@@ -399,7 +402,7 @@ public final class ActionUtil {
     }
     catch (IndexNotReadyException ex) {
       LOG.info(ex);
-      showDumbModeWarning(project, event);
+      showDumbModeWarning(project, action, event);
     }
   }
 

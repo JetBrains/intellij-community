@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.navigation;
 
 import com.intellij.codeInsight.CodeInsightBundle;
@@ -18,6 +18,7 @@ import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.ex.EditorGutterComponentEx;
 import com.intellij.openapi.progress.ProgressIndicator;
+import com.intellij.openapi.project.DumbModeBlockedFunctionality;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.FileIndexFacade;
@@ -174,7 +175,7 @@ public class GotoImplementationHandler extends GotoTargetHandler {
                                         @NlsContexts.PopupContent String dumbModeMessage) {
     Project project = baseElement.getProject();
     if (DumbService.isDumb(project)) {
-      DumbService.getInstance(project).showDumbModeNotification(dumbModeMessage);
+      DumbService.getInstance(project).showDumbModeNotificationForFunctionality(dumbModeMessage, DumbModeBlockedFunctionality.GotoImplementations);
       return;
     }
     PsiUtilCore.ensureValid(baseElement);

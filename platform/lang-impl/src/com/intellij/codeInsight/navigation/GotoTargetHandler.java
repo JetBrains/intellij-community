@@ -20,6 +20,7 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.ex.util.EditorUtil;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.DumbService;
+import com.intellij.openapi.project.DumbModeBlockedFunctionality;
 import com.intellij.openapi.project.IndexNotReadyException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.IPopupChooserBuilder;
@@ -79,8 +80,9 @@ public abstract class GotoTargetHandler implements CodeInsightActionHandler {
       }
     }
     catch (IndexNotReadyException e) {
-      DumbService.getInstance(project).showDumbModeNotification(
-        CodeInsightBundle.message("message.navigation.is.not.available.here.during.index.update"));
+      DumbService.getInstance(project).showDumbModeNotificationForFunctionality(
+        CodeInsightBundle.message("message.navigation.is.not.available.here.during.index.update"),
+        DumbModeBlockedFunctionality.GotoTarget);
     }
   }
 
@@ -216,8 +218,9 @@ public abstract class GotoTargetHandler implements CodeInsightActionHandler {
       }
     }
     catch (IndexNotReadyException e) {
-      DumbService.getInstance(project).showDumbModeNotification(
-        CodeInsightBundle.message("notification.navigation.is.not.available.while.indexing"));
+      DumbService.getInstance(project).showDumbModeNotificationForFunctionality(
+        CodeInsightBundle.message("notification.navigation.is.not.available.while.indexing"),
+        DumbModeBlockedFunctionality.GotoTarget);
     }
   }
 

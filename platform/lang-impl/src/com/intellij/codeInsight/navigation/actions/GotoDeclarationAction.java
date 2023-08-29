@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.navigation.actions;
 
 import com.intellij.codeInsight.CodeInsightActionHandler;
@@ -100,7 +100,8 @@ public class GotoDeclarationAction extends BaseCodeInsightAction implements Dumb
     if (DumbService.getInstance(project).isDumb()) {
       AnAction action = ActionManager.getInstance().getAction(ShowUsagesAction.ID);
       String name = action.getTemplatePresentation().getText();
-      DumbService.getInstance(project).showDumbModeNotification(ActionUtil.getUnavailableMessage(name, false));
+      DumbService.getInstance(project).showDumbModeNotificationForAction(ActionUtil.getUnavailableMessage(name, false),
+                                                                         ShowUsagesAction.ID);
     }
     else {
       RelativePoint popupPosition = point != null ? point : JBPopupFactory.getInstance().guessBestPopupLocation(editor);

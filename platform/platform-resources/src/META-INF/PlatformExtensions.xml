@@ -514,6 +514,7 @@
 
     <projectService serviceInterface="com.intellij.openapi.project.DumbService" serviceImplementation="com.intellij.openapi.project.DumbServiceImpl"/>
     <postStartupActivity implementation="com.intellij.openapi.project.SmartModeScheduler$SmartModeSchedulerStartupActivity" order="last"/>
+    <statistics.counterUsagesCollector implementationClass="com.intellij.openapi.project.DumbModeBlockedFunctionalityCollector"/>
 
     <projectService serviceInterface="com.intellij.openapi.project.DumbUtil" serviceImplementation="com.intellij.openapi.project.DumbUtilImpl"/>
     

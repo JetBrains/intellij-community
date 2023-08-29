@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:Suppress("ReplacePutWithAssignment", "ReplaceGetOrSet")
 
 package com.intellij.openapi.keymap.impl
@@ -591,6 +591,7 @@ class IdeKeyEventDispatcher(private val queue: IdeEventQueue?) {
       waitSecondStroke(chosenAction = chosen!!.first, presentation = chosen.second.presentation)
     }
     else if (!wouldBeEnabledIfNotDumb.isEmpty()) {
+      val actionManager = ActionManager.getInstance()
       showDumbModeBalloonLater(project = project,
                                message = getActionUnavailableMessage(wouldBeEnabledIfNotDumb),
                                retryRunnable = {
@@ -607,7 +608,8 @@ class IdeKeyEventDispatcher(private val queue: IdeEventQueue?) {
                                    }
                                  }
                                },
-                               expired = { e.isConsumed })
+                               expired = { e.isConsumed },
+                               actionIds = actions.mapNotNull { action -> actionManager.getId(action) })
     }
     return chosen != null
   }
@@ -866,7 +868,11 @@ private fun doPerformActionInner(e: InputEvent,
   }
 }
 
-private fun showDumbModeBalloonLater(project: Project?, message: @Nls String, retryRunnable: Runnable, expired: Condition<Any?>) {
+private fun showDumbModeBalloonLater(project: Project?,
+                                     message: @Nls String,
+                                     retryRunnable: Runnable,
+                                     expired: Condition<Any?>,
+                                     actionIds: List<String>) {
   if (project == null || expired.value(null)) {
     return
   }
@@ -875,7 +881,8 @@ private fun showDumbModeBalloonLater(project: Project?, message: @Nls String, re
                                                     if (expired.value(null)) {
                                                       return@invokeLater
                                                     }
-                                                    DumbService.getInstance(project).showDumbModeActionBalloon(message, retryRunnable)
+                                                    DumbService.getInstance(project).showDumbModeActionBalloon(message, retryRunnable,
+                                                                                                               actionIds)
                                                   }, Conditions.or(expired, project.disposed))
 }
 

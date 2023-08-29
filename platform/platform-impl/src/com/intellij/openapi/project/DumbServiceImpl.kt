@@ -311,6 +311,16 @@ open class DumbServiceImpl @NonInjectable @VisibleForTesting constructor(private
   }
 
   override fun showDumbModeNotification(message: @NlsContexts.PopupContent String) {
+    showDumbModeNotificationForFunctionality(message, DumbModeBlockedFunctionality.Other)
+  }
+
+  override fun showDumbModeNotificationForFunctionality(message: @NlsContexts.PopupContent String,
+                                                        functionality: DumbModeBlockedFunctionality) {
+    DumbModeBlockedFunctionalityCollector.logFunctionalityBlocked(project, functionality)
+    doShowDumbModeNotification(message)
+  }
+
+  private fun doShowDumbModeNotification(message: @NlsContexts.PopupContent String) {
     UIUtil.invokeLaterIfNeeded {
       val ideFrame = WindowManager.getInstance().getIdeFrame(myProject)
       if (ideFrame != null) {
@@ -320,9 +330,23 @@ open class DumbServiceImpl @NonInjectable @VisibleForTesting constructor(private
     }
   }
 
+  override fun showDumbModeNotificationForAction(message: @NlsContexts.PopupContent String, actionId: String?) {
+    if (actionId == null) {
+      DumbModeBlockedFunctionalityCollector.logFunctionalityBlocked(project, DumbModeBlockedFunctionality.ActionWithoutId)
+    }
+    else {
+      DumbModeBlockedFunctionalityCollector.logActionBlocked(project, actionId)
+    }
+    doShowDumbModeNotification(message)
+  }
+
   override fun showDumbModeActionBalloon(balloonText: @NlsContexts.PopupContent String,
-                                         runWhenSmartAndBalloonStillShowing: Runnable) {
-    myBalloon.showDumbModeActionBalloon(balloonText, runWhenSmartAndBalloonStillShowing)
+                                         runWhenSmartAndBalloonStillShowing: Runnable,
+                                         actionIds: List<String>) {
+    myBalloon.showDumbModeActionBalloon(balloonText, {
+      DumbModeBlockedFunctionalityCollector.logActionsBlocked(project, actionIds, true)
+      runWhenSmartAndBalloonStillShowing.run()
+    }, { DumbModeBlockedFunctionalityCollector.logActionsBlocked(project, actionIds, false) })
   }
 
   override fun cancelAllTasksAndWait() {

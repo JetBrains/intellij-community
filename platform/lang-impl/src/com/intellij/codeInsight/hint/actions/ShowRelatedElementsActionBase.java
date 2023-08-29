@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.hint.actions;
 
 import com.intellij.codeInsight.hint.ImplementationPopupManager;
@@ -6,10 +6,7 @@ import com.intellij.codeInsight.hint.ImplementationViewElement;
 import com.intellij.codeInsight.hint.ImplementationViewSession;
 import com.intellij.codeInsight.hint.ImplementationViewSessionFactory;
 import com.intellij.ide.actions.searcheverywhere.PSIPresentationBgRendererWrapper;
-import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.actionSystem.CommonDataKeys;
-import com.intellij.openapi.actionSystem.DataContext;
-import com.intellij.openapi.actionSystem.PopupAction;
+import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.IndexNotReadyException;
@@ -69,7 +66,7 @@ public abstract class ShowRelatedElementsActionBase extends DumbAwareAction impl
       }
     }
     catch (IndexNotReadyException e) {
-      DumbService.getInstance(project).showDumbModeNotification(getIndexNotReadyMessage());
+      DumbService.getInstance(project).showDumbModeNotificationForAction(getIndexNotReadyMessage(), ActionManager.getInstance().getId(this));
     }
   }
 

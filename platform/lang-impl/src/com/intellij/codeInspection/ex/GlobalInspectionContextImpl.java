@@ -357,7 +357,7 @@ public class GlobalInspectionContextImpl extends GlobalInspectionContextEx {
           updateProfile(virtualFile, System.currentTimeMillis() - start);
         }
         return true;
-      }, LangBundle.message("popup.content.inspect.code.not.available.until.indices.are.ready"));
+      }, LangBundle.message("popup.content.inspect.code.not.available.until.indices.are.ready"), DumbModeBlockedFunctionality.GlobalInspectionContext);
       if (readActionSuccess == null || !readActionSuccess) {
         throw new ProcessCanceledException();
       }

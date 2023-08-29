@@ -11,6 +11,8 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.module.Module;
+import com.intellij.openapi.project.DumbModeBlockedFunctionality;
+import com.intellij.openapi.project.DumbModeBlockedFunctionalityCollector;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
@@ -383,6 +385,7 @@ public abstract class ProjectViewDropTarget implements DnDNativeTarget {
       if (targetElement == null || sources == null) return;
 
       if (DumbService.isDumb(myProject)) {
+        DumbModeBlockedFunctionalityCollector.INSTANCE.logFunctionalityBlocked(myProject, DumbModeBlockedFunctionality.ProjectView);
         Messages.showMessageDialog(myProject, LangBundle.message("dialog.message.copy.refactoring.available.while.indexing.in.progress"),
                                    LangBundle.message("dialog.title.indexing"), null);
         return;
