@@ -41,17 +41,26 @@ public final class PsiFragmentImpl extends LeafPsiElement implements PsiFragment
 
   private static String getFragmentContent(PsiFragment fragment) {
     final IElementType tokenType = fragment.getTokenType();
-    final String text = fragment.getText();
+
     if (tokenType == JavaTokenType.STRING_TEMPLATE_BEGIN || tokenType == JavaTokenType.STRING_TEMPLATE_MID) {
+      String text = fragment.getText();
       return text.substring(1, text.length() - 2);
     }
     else if (tokenType == JavaTokenType.STRING_TEMPLATE_END) {
+      String text = fragment.getText();
       if (!(text.endsWith("\""))) {
         return null;
       }
       return text.substring(1, text.length() - 1);
     }
 
+    return getTextBlockFragmentContent(fragment);
+  }
+
+  @Nullable
+  private static String getTextBlockFragmentContent(PsiFragment fragment) {
+    final IElementType tokenType = fragment.getTokenType();
+    final String text = fragment.getText();
     String content;
     if (tokenType == JavaTokenType.TEXT_BLOCK_TEMPLATE_BEGIN) {
       if (!(text.startsWith("\"\"\""))) {
@@ -80,9 +89,11 @@ public final class PsiFragmentImpl extends LeafPsiElement implements PsiFragment
       return null;
     }
 
-    final int indent = getTextBlockFragmentIndent(fragment);
-    if (indent < 0) return null;
+    int indent = getTextBlockFragmentIndent(fragment);
+    return (indent < 0) ? null : stripTextBlockIndent(tokenType, content, indent);
+  }
 
+  private static @NotNull String stripTextBlockIndent(IElementType tokenType, String content, int indent) {
     final StringBuilder result = new StringBuilder();
     int strip = (tokenType == JavaTokenType.TEXT_BLOCK_TEMPLATE_BEGIN) ? 0 : -1;
     for (int i = 0, length = content.length(); i < length; i++) {
