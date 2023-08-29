@@ -557,8 +557,8 @@ public final class LambdaUtil {
       if (!MethodSignatureUtil.areSignaturesEqual(commonSignature, signature)) {
         if (TypeConversionUtil.isAssignable(commonSignatureType, psiType) ||
             TypeConversionUtil.isAssignable(psiType, commonSignatureType)) {
-          MethodSignature signatureWithInheritance = getLambdaSignatureWithCommonSubstitutor(psiType);
-          MethodSignature commonSignatureWithInheritance = getLambdaSignatureWithCommonSubstitutor(commonSignatureType);
+          MethodSignature signatureWithInheritance = getLambdaSignatureWithTypeSubstitutor(psiType);
+          MethodSignature commonSignatureWithInheritance = getLambdaSignatureWithTypeSubstitutor(commonSignatureType);
           if (commonSignatureWithInheritance == null ||
               signatureWithInheritance == null ||
               !MethodSignatureUtil.areSignaturesEqual(commonSignatureWithInheritance, signatureWithInheritance)) {
@@ -576,7 +576,7 @@ public final class LambdaUtil {
   }
 
   @Nullable
-  public static MethodSignature getLambdaSignatureWithCommonSubstitutor(PsiType psiType) {
+  public static MethodSignature getLambdaSignatureWithTypeSubstitutor(PsiType psiType) {
     PsiClassType.ClassResolveResult classResolveResult = PsiUtil.resolveGenericsClassInType(psiType);
     MethodSignature signatureFromFunction = getLambdaSignature(psiType);
     if (signatureFromFunction == null) return null;
