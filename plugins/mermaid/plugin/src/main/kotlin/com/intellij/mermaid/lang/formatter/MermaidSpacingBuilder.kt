@@ -11,7 +11,6 @@ import com.intellij.mermaid.lang.lexer.MermaidTokens
 import com.intellij.mermaid.lang.parser.MermaidElements
 import com.intellij.mermaid.lang.parser.ParserUtils
 import com.intellij.psi.codeStyle.CodeStyleSettings
-import com.intellij.psi.codeStyle.CommonCodeStyleSettings
 import com.intellij.psi.tree.TokenSet
 import com.intellij.util.applyIf
 
@@ -147,14 +146,12 @@ internal object MermaidSpacingBuilder {
 
   fun get(settings: CodeStyleSettings): SpacingBuilder {
     val mermaid = settings.getCustomSettings(MermaidCustomCodeStyleSettings::class.java)
-    val indentOptions = settings.getLanguageIndentOptions(MermaidLanguage)
     return SpacingBuilder(settings, MermaidLanguage)
       .addRulesRequiredByMermaid()
       .addCustomizableRules(mermaid)
       .applyIf(mermaid.FORCE_ONE_SPACE_BETWEEN_WORDS) {
         addForceOneSpaceBetweenWordsRule()
       }
-      .addIndentRules(indentOptions)
       .addBlankLinesRules(mermaid)
   }
 
@@ -332,12 +329,6 @@ internal object MermaidSpacingBuilder {
       .between(MermaidTokens.Gantt.AXIS_FORMAT, MermaidTokens.Gantt.GANTT_VALUE).spaces(1)
       // Sankey
       .between(MermaidTokens.Sankey.SANKEY_TEXT, MermaidTokens.Sankey.SANKEY_TEXT).spaces(1)
-  }
-
-  private fun SpacingBuilder.addIndentRules(indentOptions: CommonCodeStyleSettings.IndentOptions): SpacingBuilder {
-    return between(MermaidElements.SEQUENCE_BODY, MermaidTokens.END).spaces(indentOptions.INDENT_SIZE)
-      .between(MermaidElements.SUBGRAPH_BLOCK, MermaidTokens.END).spaces(indentOptions.INDENT_SIZE)
-      .between(MermaidElements.COMPLEX_NOTE_CONTENT, MermaidTokens.END).spaces(indentOptions.INDENT_SIZE)
   }
 
   private fun SpacingBuilder.addBlankLinesRules(mermaid: MermaidCustomCodeStyleSettings): SpacingBuilder {
