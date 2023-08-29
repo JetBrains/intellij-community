@@ -45,9 +45,7 @@ public final class JBCefScrollbarsHelper {
   }
 
   public static @NotNull String buildScrollbarsStyle() {
-    var backgroundColor = getCssColor(ScrollBarPainter.BACKGROUND);
-    var trackColor = getCssColor(ScrollBarPainter.TRACK_OPAQUE_BACKGROUND);
-    var trackHoveredColor = getCssColor(ScrollBarPainter.TRACK_OPAQUE_HOVERED_BACKGROUND);
+    final String transparent = "rgba(0, 0, 0, 0)";
 
     var thumbColor = getCssColor(ScrollBarPainter.THUMB_OPAQUE_BACKGROUND);
     var thumbHoveredColor = getCssColor(ScrollBarPainter.THUMB_OPAQUE_HOVERED_BACKGROUND);
@@ -77,21 +75,21 @@ public final class JBCefScrollbarsHelper {
             height: %dpx;
             background-color: %s;
           }
-          """, trackSizePx, trackSizePx, backgroundColor) +
+          """, trackSizePx, trackSizePx, transparent) +
       String.format(
         Locale.ROOT,
         """
           ::-webkit-scrollbar-track {
             background-color: %s;
           }
-          """, trackColor) +
+          """, transparent) +
       String.format(
         Locale.ROOT,
         """
           ::-webkit-scrollbar-track:hover {
             background-color: %s;
           }
-          """, trackHoveredColor) +
+          """, transparent) +
       String.format(
         Locale.ROOT,
         """
@@ -105,7 +103,7 @@ public final class JBCefScrollbarsHelper {
             outline: 1px solid %s;
             outline-offset: -%dpx;
           }
-          """, thumbColor, thumbRadiusPx, thumbPaddingPx, trackColor, thumbBorderColor, thumbPaddingPx) +
+          """, thumbColor, thumbRadiusPx, thumbPaddingPx, transparent, thumbBorderColor, thumbPaddingPx) +
       String.format(
         Locale.ROOT,
         """
@@ -119,14 +117,14 @@ public final class JBCefScrollbarsHelper {
             outline: 1px solid %s;
             outline-offset: -%dpx;
           }
-          """, thumbHoveredColor, thumbRadiusPx, thumbPaddingPx, trackColor, thumbBorderHoveredColor, thumbPaddingPx) +
+          """, thumbHoveredColor, thumbRadiusPx, thumbPaddingPx, transparent, thumbBorderHoveredColor, thumbPaddingPx) +
       String.format(
         Locale.ROOT,
         """
           ::-webkit-scrollbar-corner {
             background-color: %s;
           }
-          """, backgroundColor) +
+          """, transparent) +
       """
         ::-webkit-scrollbar-button {
           display:none;
