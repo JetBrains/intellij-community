@@ -243,7 +243,7 @@ class JCefImageViewer(private val myFile: VirtualFile,
         myState = jsonParser.decodeFromString(s)
       }
       catch (_: Exception) {
-        myUIComponent.showError()
+        SwingUtilities.invokeLater { myUIComponent.showError() }
         return@addHandler JBCefJSQuery.Response(null, 255, "Failed to parse the viewer state")
       }
 
