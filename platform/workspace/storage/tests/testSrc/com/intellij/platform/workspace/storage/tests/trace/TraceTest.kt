@@ -4,6 +4,7 @@
 package com.intellij.platform.workspace.storage.tests.trace
 
 import com.intellij.platform.workspace.storage.EntityStorageSnapshot
+import com.intellij.platform.workspace.storage.impl.WorkspaceEntityBase
 import com.intellij.platform.workspace.storage.instrumentation.EntityStorageInstrumentationApi
 import com.intellij.platform.workspace.storage.instrumentation.instrumentation
 import com.intellij.platform.workspace.storage.testEntities.entities.MySource
@@ -15,6 +16,7 @@ import com.intellij.platform.workspace.storage.trace.ReadTracker
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import kotlin.test.assertEquals
+import kotlin.test.assertIs
 
 class TraceTest {
   lateinit var snapshot: EntityStorageSnapshot
@@ -24,6 +26,15 @@ class TraceTest {
     val builder = createEmptyBuilder()
     builder addEntity NamedEntity("name", MySource)
     snapshot = builder.toSnapshot()
+  }
+
+  @Test
+  fun `traced storage creates traced entities`() {
+    trace(snapshot) {
+      val entity = it.entities(NamedEntity::class.java).single()
+      val createdSnapshot = (entity as WorkspaceEntityBase).snapshot
+      assertIs<ReadTracker>(createdSnapshot)
+    }
   }
 
   @Test
