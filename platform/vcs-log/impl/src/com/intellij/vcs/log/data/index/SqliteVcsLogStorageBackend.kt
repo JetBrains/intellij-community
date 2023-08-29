@@ -158,9 +158,6 @@ internal class SqliteVcsLogStorageBackend(project: Project,
     Disposer.register(disposable, it)
   }
 
-  override val storageId: StorageId.File
-    get() = connectionManager.storageId
-
   private val userRegistry = project.service<VcsUserRegistry>()
 
   private val sortedRoots = logProviders.keys.sortedWith(Comparator.comparing(VirtualFile::getPath))
@@ -168,6 +165,9 @@ internal class SqliteVcsLogStorageBackend(project: Project,
   private val rootsToPosition = Object2IntOpenHashMap<VirtualFile>().apply {
     sortedRoots.forEachIndexed { index, root -> put(root, index) }
   }
+
+  override val storageId: StorageId.File
+    get() = connectionManager.storageId
 
   override var isFresh: Boolean
     get() = connectionManager.isFresh
