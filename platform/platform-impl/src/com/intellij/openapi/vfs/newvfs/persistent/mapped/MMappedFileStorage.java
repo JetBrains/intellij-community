@@ -230,6 +230,16 @@ public final class MMappedFileStorage implements Closeable {
     return channel.isOpen();
   }
 
+  public int allocatedPages() throws IOException {
+    synchronized (pages) {
+      long channelSize = channel.size();
+      if ((channelSize & pageSizeMask) != 0) {
+        LOG.error("channel size(=" + channelSize + ") is not aligned with page size(=" + pageSize + ")");
+      }
+      return (int)(channel.size() >> pageSizeBits);
+    }
+  }
+
   @Override
   public String toString() {
     return "MMappedFileStorage[" + storagePath + "]" +
