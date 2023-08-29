@@ -7,7 +7,8 @@ versionControl:
     updateMethod: rebase
     gcAuto: "50000"
     coreLongpaths: "true"
-    coreFsMonitor: "true"
+    # Android Studio: enabling fsmonitor causes git-status to hang indefinitely in some cases.
+    # coreFsMonitor: "true"
     coreUntrackedCache: "true"
     featureManyFiles: "true"
 
