@@ -250,6 +250,7 @@ internal object MermaidSpacingBuilder {
       .around(MermaidTokens.Directives.CLOSE_DIRECTIVE).spaceIf(false)
       .after(MermaidTokens.Directives.OPEN_DIRECTIVE).spaceIf(false)
       .beforeInside(MermaidTokens.COLON, GIT_GRAPH_ATTRIBUTES).spaceIf(false)
+      .before(MermaidTokens.IGNORED).spaceIf(false)
   }
 
   private fun SpacingBuilder.addForceOneSpaceBetweenWordsRule(): SpacingBuilder {
