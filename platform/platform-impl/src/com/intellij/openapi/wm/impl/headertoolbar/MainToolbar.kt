@@ -38,6 +38,7 @@ import com.intellij.util.ui.JBInsets
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.JBUI.CurrentTheme.Toolbar.mainToolbarButtonInsets
 import com.jetbrains.WindowDecorations
+import org.jetbrains.annotations.ApiStatus
 import java.awt.*
 import java.awt.event.MouseEvent
 import java.beans.PropertyChangeListener
@@ -50,7 +51,8 @@ import javax.swing.JPanel
 private const val MAIN_TOOLBAR_ID = IdeActions.GROUP_MAIN_TOOLBAR_NEW_UI
 private val LOG = logger<MainToolbar>()
 
-internal class MainToolbar: JPanel(HorizontalLayout(10)) {
+@ApiStatus.Internal
+class MainToolbar: JPanel(HorizontalLayout(10)) {
   private val disposable = Disposer.newDisposable()
   private val mainMenuButton: MainMenuButton?
   private val expandableMenu: ExpandableMenu?
