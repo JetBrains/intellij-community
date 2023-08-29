@@ -5,6 +5,7 @@ import com.intellij.AppTopics;
 import com.intellij.codeInsight.hint.LineTooltipRenderer;
 import com.intellij.codeInsight.hint.TooltipController;
 import com.intellij.codeInsight.hint.TooltipGroup;
+import com.intellij.codeInsight.hint.*;
 import com.intellij.execution.ExecutionException;
 import com.intellij.execution.Executor;
 import com.intellij.execution.executors.DefaultDebugExecutor;
@@ -24,6 +25,8 @@ import com.intellij.notification.NotificationGroupManager;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.ActionUtil;
+import com.intellij.openapi.actionSystem.impl.ActionToolbarImpl;
+import com.intellij.openapi.actionSystem.impl.ToolbarUtils;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.PersistentStateComponent;
 import com.intellij.openapi.components.State;
@@ -39,24 +42,23 @@ import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileEditor.FileDocumentManagerListener;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.Balloon;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.IdeGlassPaneUtil;
 import com.intellij.openapi.wm.ToolWindowId;
 import com.intellij.ui.ExperimentalUI;
 import com.intellij.ui.HintHint;
+import com.intellij.ui.LightweightHint;
 import com.intellij.ui.awt.RelativePoint;
+import com.intellij.ui.components.panels.NonOpaquePanel;
 import com.intellij.util.DocumentUtil;
-import com.intellij.util.ObjectUtils;
-import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.messages.MessageBusConnection;
+import com.intellij.util.ui.JBDimension;
+import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
-import com.intellij.xdebugger.XDebugProcess;
-import com.intellij.xdebugger.XDebugProcessStarter;
-import com.intellij.xdebugger.XDebugSession;
-import com.intellij.xdebugger.XDebuggerManager;
+import com.intellij.xdebugger.*;
 import com.intellij.xdebugger.breakpoints.XBreakpoint;
 import com.intellij.xdebugger.breakpoints.XBreakpointListener;
-import com.intellij.xdebugger.breakpoints.XBreakpointType;
 import com.intellij.xdebugger.impl.actions.XDebuggerActions;
 import com.intellij.xdebugger.impl.breakpoints.XBreakpointManagerImpl;
 import com.intellij.xdebugger.impl.evaluate.quick.common.ValueLookupManager;
@@ -75,6 +77,7 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.MouseEvent;
+import java.lang.ref.WeakReference;
 import java.util.List;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicReference;
@@ -172,12 +175,17 @@ public final class XDebuggerManagerImpl extends XDebuggerManager implements Pers
       }
     });
 
-    DebuggerEditorListener listener = new DebuggerEditorListener();
-    BreakpointPromoterEditorListener bpPromoter = new BreakpointPromoterEditorListener(coroutineScope);
+    GutterUiRunToCursorEditorListener listener = new GutterUiRunToCursorEditorListener();
+    EditorMouseMotionListener bpPromoter = new BreakpointPromoterEditorListener(coroutineScope);
     EditorEventMulticaster eventMulticaster = EditorFactory.getInstance().getEventMulticaster();
     eventMulticaster.addEditorMouseMotionListener(listener, this);
     eventMulticaster.addEditorMouseListener(listener, this);
     eventMulticaster.addEditorMouseMotionListener(bpPromoter, this);
+    if (ExperimentalUI.isNewUI()) {
+      InlayRunToCursorEditorListener newRunToCursorListener = new InlayRunToCursorEditorListener();
+      eventMulticaster.addEditorMouseMotionListener(newRunToCursorListener, this);
+      eventMulticaster.addEditorMouseListener(newRunToCursorListener, this);
+    }
   }
 
   @Override
@@ -399,7 +407,7 @@ public final class XDebuggerManagerImpl extends XDebuggerManager implements Pers
     return NotificationGroupManager.getInstance().getNotificationGroup("Debugger messages");
   }
 
-  private final class BreakpointPromoterEditorListener implements EditorMouseMotionListener, EditorMouseListener {
+  private final class BreakpointPromoterEditorListener implements EditorMouseMotionListener {
     private XSourcePositionImpl myLastPosition = null;
     private Icon myLastIcon = null;
 
@@ -473,10 +481,146 @@ public final class XDebuggerManagerImpl extends XDebuggerManager implements Pers
     }
   }
 
-  private final class DebuggerEditorListener implements EditorMouseMotionListener, EditorMouseListener {
+  private static final class RunToCursorHint extends LightweightHint {
+    private final InlayRunToCursorEditorListener listener;
+    RunToCursorHint(@NotNull JComponent component, InlayRunToCursorEditorListener listener) {
+      super(component);
+      this.listener = listener;
+    }
+
+    @Override
+    public void show(@NotNull JComponent parentComponent, int x, int y, JComponent focusBackComponent, @NotNull HintHint hintHint) {
+      super.show(parentComponent, x, y, focusBackComponent, new HintHint(parentComponent, new Point(x, y)));
+    }
+
+    @Override
+    public void hide(boolean ok) {
+      listener.reset(this);
+      super.hide(ok);
+    }
+  }
+
+  private final class InlayRunToCursorEditorListener implements EditorMouseMotionListener, EditorMouseListener {
+    private WeakReference<RunToCursorHint> myCurrentHint = new WeakReference<>(null);
+    private WeakReference<Editor> myEditor = new WeakReference<>(null);
+    private int myLineNumber = -1;
+
+    @Override
+    public void mouseMoved(@NotNull EditorMouseEvent e) {
+      if (!Registry.is("debugger.inlayRunToCursor")) return;
+      boolean wasShown = showInlayRunToCursor(e);
+      if (!wasShown) {
+        hideHint();
+      }
+    }
+
+    void reset(@NotNull RunToCursorHint hint) {
+      if (hint != myCurrentHint.get()) {
+        return;
+      }
+      myCurrentHint.clear();
+      myEditor = new WeakReference<>(null);
+      myLineNumber = -1;
+    }
+
+    private void hideHint() {
+      RunToCursorHint hint = myCurrentHint.get();
+      if (hint != null) {
+        hint.hide();
+      }
+    }
+
+    private boolean showInlayRunToCursor(@NotNull EditorMouseEvent e) {
+      XDebugSessionImpl session = getCurrentSession();
+      if (session == null || !session.isPaused() || session.isReadOnly()) {
+        return false;
+      }
+
+      int lineNumber = getLineNumber(e);
+      if (lineNumber < 0) {
+        return false;
+      }
+
+      Editor editor = e.getEditor();
+
+      if (myEditor.get() == editor && myLineNumber == lineNumber) {
+        return true;
+      }
+
+      myEditor = new WeakReference<>(editor);
+      myLineNumber = lineNumber;
+
+      int lineY = editor.visualPositionToXY(new VisualPosition(lineNumber, 0)).y;
+
+      Point position = SwingUtilities.convertPoint(editor.getContentComponent(), new Point(0, lineY),
+                                                editor.getComponent().getRootPane().getLayeredPane());
+
+      DefaultActionGroup group = new DefaultActionGroup();
+
+      XSourcePosition pausePosition = session.getCurrentPosition();
+      if (pausePosition != null && pausePosition.getFile().equals(editor.getVirtualFile()) && pausePosition.getLine() == lineNumber) {
+        group.add(ActionManager.getInstance().getAction(XDebuggerActions.RESUME));
+      }
+      else {
+        group.add(ActionManager.getInstance().getAction(IdeActions.ACTION_RUN_TO_CURSOR));
+      }
+
+      int caretLine = editor.getCaretModel().getLogicalPosition().line;
+      if (caretLine == lineNumber) {
+        group.add(ActionManager.getInstance().getAction(IdeActions.ACTION_SHOW_INTENTION_ACTIONS));
+      }
+
+      ActionToolbarImpl toolbarImpl = (ActionToolbarImpl)ToolbarUtils.INSTANCE.createImmediatelyUpdatedToolbar(group, ActionPlaces.EDITOR_HINT, editor.getComponent(), true, (t) -> Unit.INSTANCE);
+      toolbarImpl.setLayoutPolicy(ActionToolbar.NOWRAP_LAYOUT_POLICY);
+
+      int sideButtonOffset = 2;
+      toolbarImpl.setActionButtonBorder(JBUI.Borders.empty(0, sideButtonOffset));
+      toolbarImpl.setBorder(null);
+      toolbarImpl.setOpaque(false);
+      toolbarImpl.setAdditionalDataProvider((dataId) -> {
+        if (XDebuggerUtilImpl.LINE_NUMBER.is(dataId)) {
+          return lineNumber;
+        }
+        return null;
+      });
+
+      JPanel justPanel = new NonOpaquePanel();
+
+      justPanel.setPreferredSize(new JBDimension(
+        (2 * sideButtonOffset + ActionToolbar.DEFAULT_MINIMUM_BUTTON_SIZE.width) * group.getChildrenCount(),
+        ActionToolbar.DEFAULT_MINIMUM_BUTTON_SIZE.height
+      ));
+
+      justPanel.add(toolbarImpl.getComponent());
+
+      RunToCursorHint hint = new RunToCursorHint(justPanel, this);
+
+      myCurrentHint = new WeakReference<>(hint);
+
+      QuestionAction questionAction = new PriorityQuestionAction() {
+        @Override
+        public boolean execute() {
+          return true;
+        }
+
+        @Override
+        public int getPriority() {
+          return INTENTION_BULB_PRIORITY;
+        }
+      };
+      int offset = editor.getCaretModel().getOffset();
+
+      HintManagerImpl.getInstanceImpl().showQuestionHint(editor, position, offset, offset, hint, questionAction, HintManager.RIGHT);
+      return true;
+    }
+  }
+
+  private final class GutterUiRunToCursorEditorListener implements EditorMouseMotionListener, EditorMouseListener {
     RangeHighlighter myCurrentHighlighter;
 
     boolean isEnabled(@NotNull EditorMouseEvent e) {
+      if (Registry.is("debugger.inlayRunToCursor") && ExperimentalUI.isNewUI()) return false;
+
       Editor editor = e.getEditor();
       if (ExperimentalUI.isNewUI() && ShowBreakpointsOverLineNumbersAction.isSelected()) {
         //todo[kb] make it possible to do run to cursor by clicking on the gutter

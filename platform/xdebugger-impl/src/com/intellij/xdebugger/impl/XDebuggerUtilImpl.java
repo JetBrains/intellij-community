@@ -6,10 +6,7 @@ import com.intellij.execution.ui.ConsoleView;
 import com.intellij.execution.ui.ConsoleViewContentType;
 import com.intellij.icons.AllIcons;
 import com.intellij.lang.Language;
-import com.intellij.openapi.actionSystem.CommonDataKeys;
-import com.intellij.openapi.actionSystem.DataContext;
-import com.intellij.openapi.actionSystem.IdeActions;
-import com.intellij.openapi.actionSystem.PlatformDataKeys;
+import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.ReadAction;
@@ -81,6 +78,8 @@ import static org.jetbrains.concurrency.Promises.resolvedPromise;
 
 public class XDebuggerUtilImpl extends XDebuggerUtil {
   private static final Ref<Boolean> SHOW_BREAKPOINT_AD = new Ref<>(true);
+
+  public static final DataKey<Integer> LINE_NUMBER = DataKey.create("x.debugger.line.number");
 
   @Override
   public XLineBreakpointType<?>[] getLineBreakpointTypes() {
@@ -418,6 +417,11 @@ public class XDebuggerUtilImpl extends XDebuggerUtil {
   public static XSourcePosition getCaretPosition(@NotNull Project project, DataContext context) {
     Editor editor = getEditor(project, context);
     if (editor == null) return null;
+
+    Integer lineNumber = LINE_NUMBER.getData(context);
+    if (lineNumber != null) {
+      return XSourcePositionImpl.create(editor.getVirtualFile(), lineNumber);
+    }
 
     final Document document = editor.getDocument();
     int offset = editor.getCaretModel().getOffset();

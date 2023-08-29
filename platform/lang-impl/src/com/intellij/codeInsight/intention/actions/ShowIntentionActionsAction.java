@@ -5,6 +5,7 @@ package com.intellij.codeInsight.intention.actions;
 import com.intellij.codeInsight.actions.BaseCodeInsightAction;
 import com.intellij.codeInsight.hint.HintManagerImpl;
 import com.intellij.codeInsight.intention.impl.ShowIntentionActionsHandler;
+import com.intellij.icons.AllIcons;
 import com.intellij.ide.lightEdit.LightEdit;
 import com.intellij.ide.lightEdit.LightEditCompatible;
 import com.intellij.openapi.actionSystem.ActionManager;
@@ -39,6 +40,9 @@ public final class ShowIntentionActionsAction extends BaseCodeInsightAction impl
       return;
     }
     super.update(event);
+    if (ActionPlaces.EDITOR_HINT.equals(event.getPlace())) {
+      presentation.setIcon(AllIcons.Actions.IntentionBulb);
+    }
   }
 
   @Override
