@@ -1376,8 +1376,6 @@ public final class HighlightUtil {
         }
         return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(expression).descriptionAndTooltip(message);
       }
-      final HighlightInfo.Builder info1 = checkStringTemplateEscapes(expression, text, level, file, description);
-      if (info1 != null) return info1;
       int rawLength = rawText.length();
       StringBuilder chars = new StringBuilder(rawLength);
       int[] offsets = new int[rawLength + 1];
