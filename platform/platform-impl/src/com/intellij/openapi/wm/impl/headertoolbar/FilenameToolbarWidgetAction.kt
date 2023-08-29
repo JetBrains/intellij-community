@@ -44,6 +44,7 @@ class FilenameToolbarWidgetAction: DumbAwareAction(), CustomComponentAction {
   companion object {
     private val FILE_COLOR: Key<Color> = Key.create("FILENAME_WIDGET_FILE_COLOR")
     private val FILE_FULL_PATH: Key<String?> = Key.create("FILENAME_WIDGET_FILE_PATH")
+    private const val isIDEA331002Fixed = false //todo[mikhail.sokolov]
   }
 
   override fun actionPerformed(e: AnActionEvent) {
@@ -54,7 +55,7 @@ class FilenameToolbarWidgetAction: DumbAwareAction(), CustomComponentAction {
   override fun update(e: AnActionEvent) {
     e.presentation.isEnabledAndVisible = false
     val uiSettings = UISettings.getInstance()
-    if (uiSettings.editorTabPlacement != UISettings.TABS_NONE && !uiSettings.fullPathsInWindowHeader) return
+    if (uiSettings.editorTabPlacement != UISettings.TABS_NONE && !(uiSettings.fullPathsInWindowHeader && isIDEA331002Fixed)) return
     val project = e.project ?: return
     val file = FileEditorManager.getInstance(project).selectedFiles.firstOrNull() ?: return
     updatePresentationFromFile(project, file, e.presentation)
@@ -153,7 +154,7 @@ class FilenameToolbarWidgetAction: DumbAwareAction(), CustomComponentAction {
       icon = presentation.icon
       foreground = presentation.getClientProperty(FILE_COLOR)
       text = presentation.description
-      if (path != null) {
+      if (path != null && isIDEA331002Fixed) {
         val htmlColor = ColorUtil.toHtmlColor(JBColor.namedColor("Component.infoForeground", foreground))
         @Suppress("HardCodedStringLiteral")
         text = "<html><body>$text <font color='$htmlColor'>[$path]</font></body></html>"
