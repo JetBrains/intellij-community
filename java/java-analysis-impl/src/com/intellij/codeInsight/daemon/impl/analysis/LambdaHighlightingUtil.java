@@ -7,13 +7,16 @@ import com.intellij.codeInsight.daemon.impl.HighlightInfoType;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.psi.*;
-import com.intellij.psi.util.*;
-import com.intellij.util.containers.MultiMap;
+import com.intellij.psi.util.MethodSignature;
+import com.intellij.psi.util.PsiTypesUtil;
+import com.intellij.psi.util.PsiUtil;
+import com.intellij.psi.util.TypeConversionUtil;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.Collection;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 public final class LambdaHighlightingUtil {
   private static final Logger LOG = Logger.getInstance(LambdaHighlightingUtil.class);
@@ -70,13 +73,13 @@ public final class LambdaHighlightingUtil {
 
   public static @NlsContexts.DetailedDescription String checkInterfaceFunctional(@NotNull PsiType functionalInterfaceType) {
     if (functionalInterfaceType instanceof PsiIntersectionType) {
-      MultiMap<MethodSignature, PsiType> signatures = new MultiMap<>();
+      Set<MethodSignature> signatures = new HashSet<>();
       for (PsiType type : ((PsiIntersectionType)functionalInterfaceType).getConjuncts()) {
         String error = checkInterfaceFunctional(type);
         if (error == null) {
-          MethodSignature signature = LambdaUtil.getLambdaSignature(type);
+          MethodSignature signature = LambdaUtil.getLambdaSignatureWithCommonSubstitutor(type);
           LOG.assertTrue(signature != null, type.getCanonicalText());
-          signatures.putValue(signature, type);
+          signatures.add(signature);
         }
         else {
           if (!error.equals(JavaErrorBundle.message("target.method.is.generic"))) {
@@ -86,32 +89,9 @@ public final class LambdaHighlightingUtil {
       }
 
       if (signatures.size() > 1) {
-        Collection<PsiType> equalMethodsTypes = signatures.values();
-        if (!equalMethodsTypes.isEmpty()) {
-          PsiType base = equalMethodsTypes.iterator().next();
-          MethodSignature baseSignature = LambdaUtil.getLambdaSignatureWithTypeSubstitutor(base);
-          for (PsiType type : equalMethodsTypes) {
-            if (type == base) {
-              continue;
-            }
-            if (!TypeConversionUtil.isAssignable(type, base) &&
-                !TypeConversionUtil.isAssignable(base, type)) {
-                  return JavaErrorBundle.message("multiple.non.overriding.abstract.methods.found.in.0",
-                                                 functionalInterfaceType.getPresentableText());
-                }
-            MethodSignature currentSignature = LambdaUtil.getLambdaSignatureWithTypeSubstitutor(type);
-            if (currentSignature==null ||
-                baseSignature==null ||
-                !MethodSignatureUtil.areSignaturesEqual(currentSignature, baseSignature)) {
-              return JavaErrorBundle.message("multiple.non.overriding.abstract.methods.found.in.0",
-                                             functionalInterfaceType.getPresentableText());
-            }
-          }
-        }
+        return JavaErrorBundle.message("multiple.non.overriding.abstract.methods.found.in.0", functionalInterfaceType.getPresentableText());
       }
-      return signatures.isEmpty()
-             ? JavaErrorBundle.message("not.a.functional.interface", functionalInterfaceType.getPresentableText())
-             : null;
+      return signatures.isEmpty() ? JavaErrorBundle.message("not.a.functional.interface",functionalInterfaceType.getPresentableText()) : null;
     }
     PsiClassType.ClassResolveResult resolveResult = PsiUtil.resolveGenericsClassInType(functionalInterfaceType);
     PsiClass aClass = resolveResult.getElement();
