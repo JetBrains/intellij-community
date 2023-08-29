@@ -12,6 +12,10 @@ class KotlinTopLevelTypeAliasFqNameIndex internal constructor() : StringStubInde
     companion object Helper : KotlinStringStubIndexHelper<KtTypeAlias>(KtTypeAlias::class.java) {
         override val indexKey: StubIndexKey<String, KtTypeAlias> =
             StubIndexKey.createIndexKey("org.jetbrains.kotlin.idea.stubindex.KotlinTopLevelTypeAliasFqNameIndex")
+
+        @JvmField
+        @Deprecated("Use the Helper object instead", level = DeprecationLevel.ERROR)
+        val INSTANCE: KotlinTopLevelTypeAliasFqNameIndex = KotlinTopLevelTypeAliasFqNameIndex()
     }
 
     override fun getKey(): StubIndexKey<String, KtTypeAlias> = indexKey
