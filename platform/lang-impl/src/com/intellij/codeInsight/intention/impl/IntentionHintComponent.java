@@ -2,6 +2,7 @@
 package com.intellij.codeInsight.intention.impl;
 
 import com.intellij.codeInsight.CodeInsightBundle;
+import com.intellij.codeInsight.daemon.impl.IntentionsUIImpl;
 import com.intellij.codeInsight.hint.*;
 import com.intellij.codeInsight.intention.CustomizableIntentionAction;
 import com.intellij.codeInsight.intention.IntentionAction;
@@ -133,7 +134,7 @@ public final class IntentionHintComponent implements Disposable, ScrollAwareHint
                                                                   @NotNull IntentionContainer cachedIntentions) {
     IntentionHintComponent component = new IntentionHintComponent(project, file, editor, cachedIntentions);
 
-    if (editor.getSettings().isShowIntentionBulb()) {
+    if (editor.getSettings().isShowIntentionBulb() && !IntentionsUIImpl.DISABLE_INTENTION_BULB.get(project, false)) {
       component.showIntentionHintImpl(!showExpanded);
     }
     if (showExpanded) {

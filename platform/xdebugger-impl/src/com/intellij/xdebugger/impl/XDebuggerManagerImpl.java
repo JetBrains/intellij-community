@@ -2,9 +2,7 @@
 package com.intellij.xdebugger.impl;
 
 import com.intellij.AppTopics;
-import com.intellij.codeInsight.hint.LineTooltipRenderer;
-import com.intellij.codeInsight.hint.TooltipController;
-import com.intellij.codeInsight.hint.TooltipGroup;
+import com.intellij.codeInsight.daemon.impl.IntentionsUIImpl;
 import com.intellij.codeInsight.hint.*;
 import com.intellij.execution.ExecutionException;
 import com.intellij.execution.Executor;
@@ -507,7 +505,10 @@ public final class XDebuggerManagerImpl extends XDebuggerManager implements Pers
 
     @Override
     public void mouseMoved(@NotNull EditorMouseEvent e) {
-      if (!Registry.is("debugger.inlayRunToCursor")) return;
+      if (!Registry.is("debugger.inlayRunToCursor")) {
+        IntentionsUIImpl.DISABLE_INTENTION_BULB.set(myProject, false);
+        return;
+      }
       boolean wasShown = showInlayRunToCursor(e);
       if (!wasShown) {
         hideHint();
@@ -533,8 +534,10 @@ public final class XDebuggerManagerImpl extends XDebuggerManager implements Pers
     private boolean showInlayRunToCursor(@NotNull EditorMouseEvent e) {
       XDebugSessionImpl session = getCurrentSession();
       if (session == null || !session.isPaused() || session.isReadOnly()) {
+        IntentionsUIImpl.DISABLE_INTENTION_BULB.set(myProject, false);
         return false;
       }
+      IntentionsUIImpl.DISABLE_INTENTION_BULB.set(myProject, true);
 
       int lineNumber = getLineNumber(e);
       if (lineNumber < 0) {
