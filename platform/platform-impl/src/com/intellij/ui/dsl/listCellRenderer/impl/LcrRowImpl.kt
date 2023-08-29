@@ -3,7 +3,9 @@ package com.intellij.ui.dsl.listCellRenderer.impl
 
 import com.intellij.ui.ExperimentalUI
 import com.intellij.ui.dsl.gridLayout.GridLayout
+import com.intellij.ui.dsl.gridLayout.HorizontalAlign
 import com.intellij.ui.dsl.gridLayout.UnscaledGaps
+import com.intellij.ui.dsl.gridLayout.VerticalAlign
 import com.intellij.ui.dsl.gridLayout.builders.RowsGridBuilder
 import com.intellij.ui.dsl.listCellRenderer.LcrIconInitParams
 import com.intellij.ui.dsl.listCellRenderer.LcrRow
@@ -142,7 +144,13 @@ internal class LcrRowImpl<T>(private val renderer: LcrRow<T>.() -> Unit) : LcrRo
     builder.resizableRow()
 
     for (cell in cells) {
-      builder.cell(cell.lcrCell.component, gaps = if (builder.x == 0) UnscaledGaps.EMPTY else UnscaledGaps(left = HORIZONTAL_GAP),
+      // Row height is usually even. If components height is odd the component cannot be placed right in center.
+      // Because of rounding it's placed a little bit higher which looks not good, especially for text. This patch fixes that
+      val roundingTopGapPatch = cell.lcrCell.component.preferredSize.height % 2
+
+      builder.cell(cell.lcrCell.component, gaps = UnscaledGaps(top = roundingTopGapPatch, left = if (builder.x == 0) 0 else HORIZONTAL_GAP),
+                   horizontalAlign = if (cell.resizableColumn) HorizontalAlign.FILL else HorizontalAlign.LEFT,
+                   verticalAlign = VerticalAlign.CENTER,
                    resizableColumn = cell.resizableColumn, baselineAlign = cell.baselineAlign)
     }
 

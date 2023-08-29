@@ -95,6 +95,9 @@ public final class ComponentPropertiesCollector {
 
   private void collectProperties(@NotNull Component component) {
     addProperties("", component, PROPERTIES);
+
+    myProperties.add(new PropertyBean("baseline", component.getBaseline(component.getWidth(), component.getHeight())));
+
     Pair<String, String> addedAt = getAddedAtStacktrace(component);
     myProperties.add(new PropertyBean(addedAt.first, addedAt.second, addedAt.second != null));
 
