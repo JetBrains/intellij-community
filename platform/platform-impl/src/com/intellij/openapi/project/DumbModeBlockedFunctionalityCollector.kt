@@ -39,14 +39,18 @@ object DumbModeBlockedFunctionalityCollector : CounterUsagesCollector() {
   }
 
   fun logActionsBlocked(project: Project, actionIds: List<String>, executedAfterBlock: Boolean) {
-    if (actionIds.size == 1) {
-      logActionBlocked(project, actionIds[0])
-    }
-    else {
-      lastEqualityObjectReference.set(null)
-      FUNCTIONALITY_BLOCKED.log(project,
-                                FUNCTIONALITY_SOURCE.with(DumbModeBlockedFunctionality.MultipleActionIds),
-                                EXECUTED_WHEN_SMART.with(executedAfterBlock))
+    lastEqualityObjectReference.set(null)
+    when (actionIds.size) {
+      0 -> FUNCTIONALITY_BLOCKED.log(project,
+                                     FUNCTIONALITY_SOURCE.with(DumbModeBlockedFunctionality.ActionWithoutId),
+                                     EXECUTED_WHEN_SMART.with(executedAfterBlock))
+      1 -> FUNCTIONALITY_BLOCKED.log(project,
+                                     ACTION_ID.with(actionIds[0]),
+                                     FUNCTIONALITY_SOURCE.with(DumbModeBlockedFunctionality.Action),
+                                     EXECUTED_WHEN_SMART.with(executedAfterBlock))
+      else -> FUNCTIONALITY_BLOCKED.log(project,
+                                        FUNCTIONALITY_SOURCE.with(DumbModeBlockedFunctionality.MultipleActionIds),
+                                        EXECUTED_WHEN_SMART.with(executedAfterBlock))
     }
   }
 
