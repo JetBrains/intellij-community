@@ -1,12 +1,12 @@
 <component name="libraryTable">
   <library name="kotlinc.scripting-compiler-plugin" type="repository">
-    <properties include-transitive-deps="false" maven-id="org.jetbrains.kotlin:scripting-compiler-plugin-for-ide:1.9.20-Beta-72" />
+    <properties include-transitive-deps="false" maven-id="org.jetbrains.kotlin:scripting-compiler-plugin-for-ide:1.9.20-Beta-136" />
     <CLASSES>
-      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/scripting-compiler-plugin-for-ide/1.9.20-Beta-72/scripting-compiler-plugin-for-ide-1.9.20-Beta-72.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/scripting-compiler-plugin-for-ide/1.9.20-Beta-136/scripting-compiler-plugin-for-ide-1.9.20-Beta-136.jar!/" />
     </CLASSES>
     <JAVADOC />
     <SOURCES>
-      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/scripting-compiler-plugin-for-ide/1.9.20-Beta-72/scripting-compiler-plugin-for-ide-1.9.20-Beta-72-sources.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/scripting-compiler-plugin-for-ide/1.9.20-Beta-136/scripting-compiler-plugin-for-ide-1.9.20-Beta-136-sources.jar!/" />
     </SOURCES>
   </library>
 </component>

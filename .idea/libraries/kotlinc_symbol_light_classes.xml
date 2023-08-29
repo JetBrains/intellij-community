@@ -1,12 +1,12 @@
 <component name="libraryTable">
   <library name="kotlinc.symbol-light-classes" type="repository">
-    <properties include-transitive-deps="false" maven-id="org.jetbrains.kotlin:symbol-light-classes-for-ide:1.9.20-Beta-72" />
+    <properties include-transitive-deps="false" maven-id="org.jetbrains.kotlin:symbol-light-classes-for-ide:1.9.20-Beta-136" />
     <CLASSES>
-      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/symbol-light-classes-for-ide/1.9.20-Beta-72/symbol-light-classes-for-ide-1.9.20-Beta-72.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/symbol-light-classes-for-ide/1.9.20-Beta-136/symbol-light-classes-for-ide-1.9.20-Beta-136.jar!/" />
     </CLASSES>
     <JAVADOC />
     <SOURCES>
-      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/symbol-light-classes-for-ide/1.9.20-Beta-72/symbol-light-classes-for-ide-1.9.20-Beta-72-sources.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/symbol-light-classes-for-ide/1.9.20-Beta-136/symbol-light-classes-for-ide-1.9.20-Beta-136-sources.jar!/" />
     </SOURCES>
   </library>
 </component>

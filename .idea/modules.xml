@@ -773,7 +773,6 @@
       <module fileurl="file://$PROJECT_DIR$/plugins/keymaps/xcode-keymap/intellij.keymap.xcode.iml" filepath="$PROJECT_DIR$/plugins/keymaps/xcode-keymap/intellij.keymap.xcode.iml" />
       <module fileurl="file://$PROJECT_DIR$/plugins/devkit/intellij.kotlin.devkit/intellij.kotlin.devkit.iml" filepath="$PROJECT_DIR$/plugins/devkit/intellij.kotlin.devkit/intellij.kotlin.devkit.iml" />
       <module fileurl="file://$PROJECT_DIR$/plugins/kotlin/gradle/multiplatform-tests/intellij.kotlin.gradle.multiplatformTests.iml" filepath="$PROJECT_DIR$/plugins/kotlin/gradle/multiplatform-tests/intellij.kotlin.gradle.multiplatformTests.iml" />
-      <module fileurl="file://$PROJECT_DIR$/plugins/kotlin/intellij.kotlin.plugin.community.main.iml" filepath="$PROJECT_DIR$/plugins/kotlin/intellij.kotlin.plugin.community.main.iml" />
       <module fileurl="file://$PROJECT_DIR$/plugins/laf/macos/intellij.laf.macos.iml" filepath="$PROJECT_DIR$/plugins/laf/macos/intellij.laf.macos.iml" />
       <module fileurl="file://$PROJECT_DIR$/plugins/laf/win10/intellij.laf.win10.iml" filepath="$PROJECT_DIR$/plugins/laf/win10/intellij.laf.win10.iml" />
       <module fileurl="file://$PROJECT_DIR$/plugins/lombok/intellij.lombok.iml" filepath="$PROJECT_DIR$/plugins/lombok/intellij.lombok.iml" />
@@ -1127,7 +1126,7 @@
       <module fileurl="file://$PROJECT_DIR$/plugins/yaml/intellij.yaml.iml" filepath="$PROJECT_DIR$/plugins/yaml/intellij.yaml.iml" />
       <module fileurl="file://$PROJECT_DIR$/plugins/kotlin/all-tests/kotlin.all-tests.iml" filepath="$PROJECT_DIR$/plugins/kotlin/all-tests/kotlin.all-tests.iml" />
       <module fileurl="file://$PROJECT_DIR$/plugins/kotlin/base/analysis/kotlin.base.analysis.iml" filepath="$PROJECT_DIR$/plugins/kotlin/base/analysis/kotlin.base.analysis.iml" />
-      <module fileurl="file://$PROJECT_DIR$/plugins/kotlin/base/analysis-api-providers/kotlin.base.analysis-api-providers.iml" filepath="$PROJECT_DIR$/plugins/kotlin/base/analysis-api-providers/kotlin.base.analysis-api-providers.iml"/>
+      <module fileurl="file://$PROJECT_DIR$/plugins/kotlin/base/analysis-api-providers/kotlin.base.analysis-api-providers.iml" filepath="$PROJECT_DIR$/plugins/kotlin/base/analysis-api-providers/kotlin.base.analysis-api-providers.iml" />
       <module fileurl="file://$PROJECT_DIR$/plugins/kotlin/base/analysis-api/analysis-api-utils/kotlin.base.analysis-api.utils.iml" filepath="$PROJECT_DIR$/plugins/kotlin/base/analysis-api/analysis-api-utils/kotlin.base.analysis-api.utils.iml" />
       <module fileurl="file://$PROJECT_DIR$/plugins/kotlin/base/analysis/tests/kotlin.base.analysis.tests.iml" filepath="$PROJECT_DIR$/plugins/kotlin/base/analysis/tests/kotlin.base.analysis.tests.iml" />
       <module fileurl="file://$PROJECT_DIR$/plugins/kotlin/base/code-insight/kotlin.base.code-insight.iml" filepath="$PROJECT_DIR$/plugins/kotlin/base/code-insight/kotlin.base.code-insight.iml" />
@@ -1222,8 +1221,8 @@
       <module fileurl="file://$PROJECT_DIR$/plugins/kotlin/coverage/tests/kotlin.coverage.tests.iml" filepath="$PROJECT_DIR$/plugins/kotlin/coverage/tests/kotlin.coverage.tests.iml" />
       <module fileurl="file://$PROJECT_DIR$/plugins/kotlin/features-trainer/kotlin.features-trainer.iml" filepath="$PROJECT_DIR$/plugins/kotlin/features-trainer/kotlin.features-trainer.iml" />
       <module fileurl="file://$PROJECT_DIR$/plugins/kotlin/features-trainer/tests/kotlin.features-trainer.tests.iml" filepath="$PROJECT_DIR$/plugins/kotlin/features-trainer/tests/kotlin.features-trainer.tests.iml" />
-      <module fileurl="file://$PROJECT_DIR$/plugins/kotlin/frontend-independent/kotlin.fir.frontend-independent.iml" filepath="$PROJECT_DIR$/plugins/kotlin/frontend-independent/kotlin.fir.frontend-independent.iml"/>
-      <module fileurl="file://$PROJECT_DIR$/plugins/kotlin/frontend-independent/tests/kotlin.fir.frontend-independent.tests.iml" filepath="$PROJECT_DIR$/plugins/kotlin/frontend-independent/tests/kotlin.fir.frontend-independent.tests.iml"/>
+      <module fileurl="file://$PROJECT_DIR$/plugins/kotlin/frontend-independent/kotlin.fir.frontend-independent.iml" filepath="$PROJECT_DIR$/plugins/kotlin/frontend-independent/kotlin.fir.frontend-independent.iml" />
+      <module fileurl="file://$PROJECT_DIR$/plugins/kotlin/frontend-independent/tests/kotlin.fir.frontend-independent.tests.iml" filepath="$PROJECT_DIR$/plugins/kotlin/frontend-independent/tests/kotlin.fir.frontend-independent.tests.iml" />
       <module fileurl="file://$PROJECT_DIR$/plugins/kotlin/formatter/kotlin.formatter.iml" filepath="$PROJECT_DIR$/plugins/kotlin/formatter/kotlin.formatter.iml" />
       <module fileurl="file://$PROJECT_DIR$/plugins/kotlin/git/kotlin.git.iml" filepath="$PROJECT_DIR$/plugins/kotlin/git/kotlin.git.iml" />
       <module fileurl="file://$PROJECT_DIR$/plugins/kotlin/gradle/code-insight-common/kotlin.gradle.code-insight-common.iml" filepath="$PROJECT_DIR$/plugins/kotlin/gradle/code-insight-common/kotlin.gradle.code-insight-common.iml" />
@@ -1236,7 +1235,6 @@
       <module fileurl="file://$PROJECT_DIR$/plugins/kotlin/gradle/gradle-tooling/tests/kotlin.gradle.gradle-tooling.tests.iml" filepath="$PROJECT_DIR$/plugins/kotlin/gradle/gradle-tooling/tests/kotlin.gradle.gradle-tooling.tests.iml" />
       <module fileurl="file://$PROJECT_DIR$/plugins/kotlin/gradle/gradle/tests/kotlin.gradle.gradle.tests.iml" filepath="$PROJECT_DIR$/plugins/kotlin/gradle/gradle/tests/kotlin.gradle.gradle.tests.iml" />
       <module fileurl="file://$PROJECT_DIR$/plugins/kotlin/grazie/kotlin.grazie.iml" filepath="$PROJECT_DIR$/plugins/kotlin/grazie/kotlin.grazie.iml" />
-      <module fileurl="file://$PROJECT_DIR$/plugins/kotlin/highlighting/kotlin.highlighting.iml" filepath="$PROJECT_DIR$/plugins/kotlin/highlighting/kotlin.highlighting.iml" />
       <module fileurl="file://$PROJECT_DIR$/plugins/kotlin/i18n/kotlin.i18n.iml" filepath="$PROJECT_DIR$/plugins/kotlin/i18n/kotlin.i18n.iml" />
       <module fileurl="file://$PROJECT_DIR$/plugins/kotlin/i18n/tests/kotlin.i18n.tests.iml" filepath="$PROJECT_DIR$/plugins/kotlin/i18n/tests/kotlin.i18n.tests.iml" />
       <module fileurl="file://$PROJECT_DIR$/plugins/kotlin/idea/kotlin.idea.iml" filepath="$PROJECT_DIR$/plugins/kotlin/idea/kotlin.idea.iml" />
@@ -1270,8 +1268,6 @@
       <module fileurl="file://$PROJECT_DIR$/plugins/kotlin/ml-completion/tests/kotlin.ml-completion.tests.iml" filepath="$PROJECT_DIR$/plugins/kotlin/ml-completion/tests/kotlin.ml-completion.tests.iml" />
       <module fileurl="file://$PROJECT_DIR$/plugins/kotlin/native/kotlin.native.iml" filepath="$PROJECT_DIR$/plugins/kotlin/native/kotlin.native.iml" />
       <module fileurl="file://$PROJECT_DIR$/plugins/kotlin/native/tests/kotlin.native.tests.iml" filepath="$PROJECT_DIR$/plugins/kotlin/native/tests/kotlin.native.tests.iml" />
-      <module fileurl="file://$PROJECT_DIR$/plugins/kotlin/navigation/kotlin.navigation.iml" filepath="$PROJECT_DIR$/plugins/kotlin/navigation/kotlin.navigation.iml" />
-      <module fileurl="file://$PROJECT_DIR$/plugins/kotlin/navigation/tests/kotlin.navigation.tests.iml" filepath="$PROJECT_DIR$/plugins/kotlin/navigation/tests/kotlin.navigation.tests.iml" />
       <module fileurl="file://$PROJECT_DIR$/plugins/kotlin/performance-tests/kotlin.performance-tests.iml" filepath="$PROJECT_DIR$/plugins/kotlin/performance-tests/kotlin.performance-tests.iml" />
       <module fileurl="file://$PROJECT_DIR$/plugins/kotlin/performance-tests/performance-test-utils/kotlin.performance-tests.performance-test-utils.iml" filepath="$PROJECT_DIR$/plugins/kotlin/performance-tests/performance-test-utils/kotlin.performance-tests.performance-test-utils.iml" />
       <module fileurl="file://$PROJECT_DIR$/plugins/kotlin/kotlin.performanceExtendedPlugin/kotlin.performanceExtendedPlugin.iml" filepath="$PROJECT_DIR$/plugins/kotlin/kotlin.performanceExtendedPlugin/kotlin.performanceExtendedPlugin.iml" />
@@ -1315,7 +1311,6 @@
       <module fileurl="file://$PROJECT_DIR$/plugins/kotlin/kotlin-compiler-classpath/kotlin.util.compiler-classpath.iml" filepath="$PROJECT_DIR$/plugins/kotlin/kotlin-compiler-classpath/kotlin.util.compiler-classpath.iml" />
       <module fileurl="file://$PROJECT_DIR$/plugins/kotlin/util/compiler-dependencies/kotlin.util.compiler-dependencies.iml" filepath="$PROJECT_DIR$/plugins/kotlin/util/compiler-dependencies/kotlin.util.compiler-dependencies.iml" />
       <module fileurl="file://$PROJECT_DIR$/plugins/kotlin/util/project-model-updater/kotlin.util.project-model-updater.iml" filepath="$PROJECT_DIR$/plugins/kotlin/util/project-model-updater/kotlin.util.project-model-updater.iml" />
-      <module fileurl="file://$PROJECT_DIR$/plugins/kotlin/util/test-generator-all/kotlin.util.test-generator-all.iml" filepath="$PROJECT_DIR$/plugins/kotlin/util/test-generator-all/kotlin.util.test-generator-all.iml" />
       <module fileurl="file://$PROJECT_DIR$/plugins/kotlin/util/test-generator-api/kotlin.util.test-generator-api.iml" filepath="$PROJECT_DIR$/plugins/kotlin/util/test-generator-api/kotlin.util.test-generator-api.iml" />
       <module fileurl="file://$PROJECT_DIR$/plugins/kotlin/util/test-generator-fe10/kotlin.util.test-generator-fe10.iml" filepath="$PROJECT_DIR$/plugins/kotlin/util/test-generator-fe10/kotlin.util.test-generator-fe10.iml" />
     </modules>
