@@ -23,7 +23,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
 
-public class SelectionHistoryDialog extends FileHistoryDialog {
+public final class SelectionHistoryDialog extends FileHistoryDialog {
   private final int myFrom;
   private final int myTo;
 

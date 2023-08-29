@@ -75,8 +75,7 @@ public final class SelectionCalculator {
     return result;
   }
 
-  @Nullable
-  private String getRevisionContent(Revision r) {
+  private @Nullable String getRevisionContent(Revision r) {
     Entry e = r.findEntry();
     if (e == null) return null;
     Content c = e.getContent();
@@ -84,6 +83,6 @@ public final class SelectionCalculator {
     return c.getString(e, myGateway);
   }
 
-  private static class ContentIsUnavailableException extends RuntimeException {
+  private static final class ContentIsUnavailableException extends RuntimeException {
   }
 }

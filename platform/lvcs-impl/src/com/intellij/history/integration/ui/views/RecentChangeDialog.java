@@ -15,7 +15,7 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 
-public class RecentChangeDialog extends DirectoryHistoryDialog {
+public final class RecentChangeDialog extends DirectoryHistoryDialog {
   private final RecentChange myChange;
 
   public RecentChangeDialog(Project p, IdeaGateway gw, RecentChange c) {

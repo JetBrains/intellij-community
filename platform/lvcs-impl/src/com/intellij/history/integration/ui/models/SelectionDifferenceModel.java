@@ -28,7 +28,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.vfs.VirtualFile;
 
-public class SelectionDifferenceModel extends FileDifferenceModel {
+public final class SelectionDifferenceModel extends FileDifferenceModel {
   private final SelectionCalculator myCalculator;
   private final Revision myLeftRevision;
   private final Revision myRightRevision;

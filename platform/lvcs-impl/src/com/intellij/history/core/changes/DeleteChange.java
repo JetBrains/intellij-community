@@ -28,7 +28,7 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
-public class DeleteChange extends StructuralChange {
+public final class DeleteChange extends StructuralChange {
   private final Entry myDeletedEntry;
 
   public DeleteChange(long id, String path, Entry deletedEntry) {

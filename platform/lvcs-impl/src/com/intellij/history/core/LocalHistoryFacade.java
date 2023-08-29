@@ -103,7 +103,7 @@ public class LocalHistoryFacade {
     addChange(c);
   }
 
-  private LabelImpl putLabel(@NotNull final PutLabelChange c) {
+  private LabelImpl putLabel(final @NotNull PutLabelChange c) {
     addChange(c);
     return new LabelImpl() {
 
@@ -160,7 +160,7 @@ public class LocalHistoryFacade {
     myChangeList.accept(v);
   }
 
-  public String revertUpTo(@NotNull final RootEntry root,
+  public String revertUpTo(final @NotNull RootEntry root,
                            @NotNull String path,
                            final ChangeSet targetChangeSet,
                            final Change targetChange,
@@ -198,7 +198,7 @@ public class LocalHistoryFacade {
     return result[0];
   }
 
-  public void addListener(@NotNull final Listener l, @Nullable Disposable parent) {
+  public void addListener(final @NotNull Listener l, @Nullable Disposable parent) {
     myListeners.add(l);
 
     if (parent != null) {

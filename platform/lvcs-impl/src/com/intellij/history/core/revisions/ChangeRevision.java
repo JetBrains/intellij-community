@@ -30,10 +30,10 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
 
-public class ChangeRevision extends Revision {
+public final class ChangeRevision extends Revision {
   private final LocalHistoryFacade myFacade;
   private final RootEntry myRoot;
-  @NotNull private final String myEntryPath;
+  private final @NotNull String myEntryPath;
   private final long myTimestamp;
   private final Change myChangeToRevert;
 

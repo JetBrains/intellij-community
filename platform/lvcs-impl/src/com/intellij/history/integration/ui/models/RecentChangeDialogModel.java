@@ -26,7 +26,7 @@ import com.intellij.openapi.util.Pair;
 import java.util.Collections;
 import java.util.List;
 
-public class RecentChangeDialogModel extends DirectoryHistoryDialogModel {
+public final class RecentChangeDialogModel extends DirectoryHistoryDialogModel {
   private final RecentChange myChange;
 
   public RecentChangeDialogModel(Project p, IdeaGateway gw, LocalHistoryFacade vcs, RecentChange c) {

@@ -81,8 +81,7 @@ public abstract class Entry {
     DataStreamUtil.writeString(out, getName());
   }
 
-  @NlsSafe
-  public String getName() {
+  public @NlsSafe String getName() {
     CharSequence sequence = fromNameId(myNameId);
     if (sequence != null && !(sequence instanceof String)) {
       return sequence.toString();
@@ -90,8 +89,7 @@ public abstract class Entry {
     return (String)sequence;
   }
 
-  @NlsSafe
-  public CharSequence getNameSequence() {
+  public @NlsSafe CharSequence getNameSequence() {
     return fromNameId(myNameId);
   }
 
@@ -103,8 +101,7 @@ public abstract class Entry {
     return myNameHash;
   }
 
-  @NlsSafe
-  public String getPath() {
+  public @NlsSafe String getPath() {
     StringBuilder builder = new StringBuilder();
     buildPath(this, builder);
     return builder.toString();
@@ -179,8 +176,7 @@ public abstract class Entry {
     throw new UnsupportedOperationException(formatAddRemove(child));
   }
 
-  @NonNls
-  private String formatAddRemove(Entry child) {
+  private @NonNls String formatAddRemove(Entry child) {
     return "add/remove " + child.formatPath() + " to " + formatPath();
   }
 
@@ -204,8 +200,7 @@ public abstract class Entry {
     return findEntry(path) != null;
   }
 
-  @NotNull
-  public Entry getEntry(@NonNls String path) {
+  public @NotNull Entry getEntry(@NonNls String path) {
     Entry result = findEntry(path);
     if (result == null) {
       throw new RuntimeException(format("entry '%s' not found", path));
@@ -213,8 +208,7 @@ public abstract class Entry {
     return result;
   }
 
-  @Nullable
-  public Entry findEntry(@NonNls String relativePath) {
+  public @Nullable Entry findEntry(@NonNls String relativePath) {
     Iterable<String> parts = Paths.split(relativePath);
     Entry result = this;
     for (String each : parts) {
@@ -225,8 +219,7 @@ public abstract class Entry {
     return result;
   }
 
-  @NotNull
-  public abstract Entry copy();
+  public abstract @NotNull Entry copy();
 
   public void setName(@NonNls String newName) {
     if (myParent != null) myParent.checkDoesNotExist(this, newName);
@@ -262,8 +255,7 @@ public abstract class Entry {
     return getName();
   }
 
-  @NonNls
-  private String formatPath() {
+  private @NonNls String formatPath() {
     String type = isDirectory() ? "dir: " : "file: ";
     return type + getPath();
   }

@@ -188,8 +188,7 @@ public final class RevisionsList {
     sm.setValueIsAdjusting(false);
   }
 
-  @NotNull
-  private List<Object> storeSelection() {
+  private @NotNull List<Object> storeSelection() {
     ListSelectionModel sm = table.getSelectionModel();
     sm.setValueIsAdjusting(true);
     List<Object> sel = new ArrayList<>();
@@ -222,13 +221,12 @@ public final class RevisionsList {
       myDisplayString = displayString;
     }
 
-    @NlsContexts.Label
-    public String getDisplayString() {
+    public @NlsContexts.Label String getDisplayString() {
       return myDisplayString;
     }
   }
 
-  public static class MyModel extends AbstractTableModel {
+  public static final class MyModel extends AbstractTableModel {
     private final List<? extends RevisionItem> myRevisions;
     private final Map<RevisionItem, Period> myPeriods;
 
@@ -257,7 +255,7 @@ public final class RevisionsList {
     }
   }
 
-  public static class MyCellRenderer implements TableCellRenderer {
+  public static final class MyCellRenderer implements TableCellRenderer {
     private static final Color USER_LABEL_COLOR = new JBColor(new Color(230, 230, 250), new Color(89, 96, 74));
     private static final Insets BORDER_INSETS = new Insets(2, 5, 2, 5);
 
@@ -420,8 +418,7 @@ public final class RevisionsList {
       return myWrapperPanel;
     }
 
-    @NlsContexts.Label
-    private static String ensureString(@NlsContexts.Label String s) {
+    private static @NlsContexts.Label String ensureString(@NlsContexts.Label String s) {
       return StringUtil.isEmpty(s) ? " " : s;
     }
 
@@ -454,7 +451,7 @@ public final class RevisionsList {
      * combining all these strings so that screen readers announce these
      * strings as the active list item changes.
      */
-    private class MyWrapperPanel extends JPanel {
+    private final class MyWrapperPanel extends JPanel {
       @Override
       public AccessibleContext getAccessibleContext() {
         if (accessibleContext == null) {
@@ -463,7 +460,7 @@ public final class RevisionsList {
         return accessibleContext;
       }
 
-      protected class AccessibleMyWrapperPanel extends AccessibleJPanel {
+      protected final class AccessibleMyWrapperPanel extends AccessibleJPanel {
         @Override
         public AccessibleRole getAccessibleRole() {
           return AccessibleRole.LABEL;
@@ -550,7 +547,7 @@ public final class RevisionsList {
     }
 
     private static final class MyCopyProvider implements CopyProvider {
-      @NotNull private final JBTable myTable;
+      private final @NotNull JBTable myTable;
 
       private MyCopyProvider(@NotNull JBTable table) {
         myTable = table;
