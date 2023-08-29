@@ -15,3 +15,10 @@ public inline fun <reified T, K> EntityBoundCollectionQuery<T>.map(noinline mapp
 public inline fun <reified T, K> EntityBoundCollectionQuery<T>.flatMap(noinline mapping: (T) -> Iterable<K>): EntityBoundCollectionQuery<K> {
   return EntityBoundCollectionQuery.FlatMapTo(this, mapping)
 }
+
+public fun <T, K, V> EntityBoundCollectionQuery<T>.groupBy(
+  keySelector: (T) -> K,
+  valueTransformer: (T) -> V,
+): EntityBoundAssociationQuery<K, List<V>> {
+  return EntityBoundAssociationQuery.GroupBy(this, keySelector, valueTransformer)
+}

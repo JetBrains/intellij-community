@@ -9,5 +9,14 @@ public sealed interface StorageQuery<T>
 
 public sealed interface EntityBoundCollectionQuery<T> : StorageQuery<Collection<T>> {
   public class EachOfType<T : WorkspaceEntity>(public val type: KClass<T>) : EntityBoundCollectionQuery<T>
-  public class FlatMapTo<T, K>(public val from: EntityBoundCollectionQuery<T>, public val map: (T) -> Iterable<K>) : EntityBoundCollectionQuery<K>
+  public class FlatMapTo<T, K>(public val from: EntityBoundCollectionQuery<T>,
+                               public val map: (T) -> Iterable<K>) : EntityBoundCollectionQuery<K>
+}
+
+public sealed interface EntityBoundAssociationQuery<K, V> : StorageQuery<Map<K, V>> {
+  public class GroupBy<T, K, V>(
+    public val from: EntityBoundCollectionQuery<T>,
+    public val keySelector: (T) -> K,
+    public val valueTransformer: (T) -> V,
+  ) : EntityBoundAssociationQuery<K, List<V>>
 }

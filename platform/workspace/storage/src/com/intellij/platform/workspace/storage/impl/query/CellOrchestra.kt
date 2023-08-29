@@ -162,6 +162,66 @@ public class FlatMapCell<T, K>(
   override fun data(): List<K> = memory.values.flatten().toList()
 }
 
+public class GroupByCell<T, K, V>(
+  public val keySelector: (T) -> K,
+  public val valueTransform: (T) -> V,
+  public val memory: PersistentMap<EntityId, PersistentList<Pair<K, V>>> = persistentMapOf(),
+) : AssociationCell<K, List<V>>() {
+
+  private var mapCache: Map<K, List<V>>? = null
+
+  override fun input(prevData: List<Token>): Pair<Cell<Map<K, List<V>>>, List<Token>> {
+    val generatedTokens = mutableListOf<Token>()
+    val newMemory = memory.mutate { myMemory ->
+      prevData.forEach { token ->
+        when (token.isAdded) {
+          Operation.ADDED -> {
+            val origData = token.info as T
+            val key = keySelector(origData)
+            val value = valueTransform(origData)
+            myMemory[token.index] = myMemory.getOrDefault(token.index, persistentListOf()).mutate { list -> list.add(key to value) }
+            generatedTokens += Token(Operation.ADDED, token.index, key to value)
+          }
+          Operation.REMOVED -> {
+            val removedEntity = myMemory.remove(token.index) ?: error("Value expected")
+            removedEntity.forEach { (key, value) ->
+              generatedTokens += Token(Operation.REMOVED, token.index, key to value)
+            }
+          }
+          Operation.MODIFIED -> {
+            val removedEntity = myMemory.remove(token.index) ?: error("Value expected")
+            removedEntity.forEach { (key, value) ->
+              generatedTokens += Token(Operation.REMOVED, token.index, key to value)
+            }
+
+            val origData = token.info as T
+            val key = keySelector(origData)
+            val value = valueTransform(origData)
+            myMemory[token.index] = myMemory.getOrDefault(token.index, persistentListOf()).mutate { list -> list.add(key to value) }
+            generatedTokens += Token(Operation.ADDED, token.index, key to value)
+          }
+        }
+      }
+    }
+    return GroupByCell(keySelector, valueTransform, newMemory) to generatedTokens
+  }
+
+  override fun data(): Map<K, List<V>> = buildAndGetMap()
+
+  private fun buildAndGetMap(): Map<K, List<V>> {
+    val myMapCache = mapCache
+    if (myMapCache != null) return myMapCache
+    val res = mutableMapOf<K, MutableList<V>>()
+    memory.forEach { (_, items) ->
+      items.forEach { (k, v) ->
+        res.getOrPut(k) { ArrayList() }.add(v)
+      }
+    }
+    mapCache = res
+    return res
+  }
+}
+
 public class Token(
   public val isAdded: Operation,
   public val index: EntityId,
