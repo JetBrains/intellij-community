@@ -533,16 +533,6 @@ public final class XDebuggerManagerImpl extends XDebuggerManager implements Pers
       }
     }
 
-    private static int getLineNumber(EditorMouseEvent event) {
-      Editor editor = event.getEditor();
-      if (event.getVisualPosition().line >= ((EditorImpl)editor).getVisibleLineCount()) {
-        return -1;
-      }
-      int lineStartOffset = EditorUtil.getNotFoldedLineStartOffset(editor, event.getOffset());
-      int documentLine = editor.getDocument().getLineNumber(lineStartOffset);
-      return documentLine < editor.getDocument().getLineCount() ? documentLine : -1;
-    }
-
     @Override
     public void mousePressed(@NotNull EditorMouseEvent e) {
       if (e.getMouseEvent().getButton() == MouseEvent.BUTTON1 && isEnabled(e)) {
@@ -561,5 +551,15 @@ public final class XDebuggerManagerImpl extends XDebuggerManager implements Pers
         }
       }
     }
+  }
+
+  private static int getLineNumber(@NotNull EditorMouseEvent event) {
+    Editor editor = event.getEditor();
+    if (event.getVisualPosition().line >= ((EditorImpl)editor).getVisibleLineCount()) {
+      return -1;
+    }
+    int lineStartOffset = EditorUtil.getNotFoldedLineStartOffset(editor, event.getOffset());
+    int documentLine = editor.getDocument().getLineNumber(lineStartOffset);
+    return documentLine < editor.getDocument().getLineCount() ? documentLine : -1;
   }
 }
