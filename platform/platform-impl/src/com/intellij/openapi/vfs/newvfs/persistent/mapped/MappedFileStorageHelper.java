@@ -443,32 +443,28 @@ public final class MappedFileStorageHelper implements Closeable {
 
   public int readIntHeaderField(int headerRelativeOffset) throws IOException {
     checkHeaderFieldOffset(headerRelativeOffset);
-    try (Page page = storage.pageByOffset(headerRelativeOffset)) {
-      return (int)INT_HANDLE.getVolatile(page.rawPageBuffer(), headerRelativeOffset);
-    }
+    Page page = storage.pageByOffset(headerRelativeOffset);
+    return (int)INT_HANDLE.getVolatile(page.rawPageBuffer(), headerRelativeOffset);
   }
 
   public long readLongHeaderField(int headerRelativeOffset) throws IOException {
     checkHeaderFieldOffset(headerRelativeOffset);
-    try (Page page = storage.pageByOffset(headerRelativeOffset)) {
-      return (long)LONG_HANDLE.getVolatile(page.rawPageBuffer(), headerRelativeOffset);
-    }
+    Page page = storage.pageByOffset(headerRelativeOffset);
+    return (long)LONG_HANDLE.getVolatile(page.rawPageBuffer(), headerRelativeOffset);
   }
 
   public void writeIntHeaderField(int headerRelativeOffset,
                                   int headerFieldValue) throws IOException {
     checkHeaderFieldOffset(headerRelativeOffset);
-    try (Page page = storage.pageByOffset(headerRelativeOffset)) {
-      INT_HANDLE.setVolatile(page.rawPageBuffer(), headerRelativeOffset, headerFieldValue);
-    }
+    Page page = storage.pageByOffset(headerRelativeOffset);
+    INT_HANDLE.setVolatile(page.rawPageBuffer(), headerRelativeOffset, headerFieldValue);
   }
 
   public void writeLongHeaderField(int headerRelativeOffset,
                                    long headerFieldValue) throws IOException {
     checkHeaderFieldOffset(headerRelativeOffset);
-    try (Page page = storage.pageByOffset(headerRelativeOffset)) {
-      LONG_HANDLE.setVolatile(page.rawPageBuffer(), headerRelativeOffset, headerFieldValue);
-    }
+    Page page = storage.pageByOffset(headerRelativeOffset);
+    LONG_HANDLE.setVolatile(page.rawPageBuffer(), headerRelativeOffset, headerFieldValue);
   }
 
 

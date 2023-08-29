@@ -117,10 +117,9 @@ public final class PersistentFSRecordsLockFreeOverMMappedFile implements Persist
                                                final @NotNull RecordReader<R, E> reader) throws E, IOException {
     final long recordOffsetInFile = recordOffsetInFile(recordId);
     final int recordOffsetOnPage = storage.toOffsetInPage(recordOffsetInFile);
-    try (final Page page = storage.pageByOffset(recordOffsetInFile)) {
-      final RecordAccessor recordAccessor = new RecordAccessor(recordId, recordOffsetOnPage, page, allocatedRecordsCount);
-      return reader.readRecord(recordAccessor);
-    }
+    final Page page = storage.pageByOffset(recordOffsetInFile);
+    final RecordAccessor recordAccessor = new RecordAccessor(recordId, recordOffsetOnPage, page, allocatedRecordsCount);
+    return reader.readRecord(recordAccessor);
   }
 
   @Override
@@ -131,32 +130,26 @@ public final class PersistentFSRecordsLockFreeOverMMappedFile implements Persist
                              recordId;
     final long recordOffsetInFile = recordOffsetInFile(recordId);
     final int recordOffsetOnPage = storage.toOffsetInPage(recordOffsetInFile);
-    try (final Page page = storage.pageByOffset(recordOffsetInFile)) {
-      //RC: hope EscapeAnalysis removes the allocation here:
-      final RecordAccessor recordAccessor = new RecordAccessor(recordId, recordOffsetOnPage, page, allocatedRecordsCount);
-      final boolean updated = updater.updateRecord(recordAccessor);
-      if (updated) {
-        incrementRecordVersion(recordAccessor.pageBuffer, recordOffsetOnPage);
-      }
-      return trueRecordId;
+    final Page page = storage.pageByOffset(recordOffsetInFile);
+    //RC: hope EscapeAnalysis removes the allocation here:
+    final RecordAccessor recordAccessor = new RecordAccessor(recordId, recordOffsetOnPage, page, allocatedRecordsCount);
+    boolean updated = updater.updateRecord(recordAccessor);
+    if (updated) {
+      incrementRecordVersion(recordAccessor.pageBuffer, recordOffsetOnPage);
     }
+    return trueRecordId;
   }
 
   @Override
   public <R, E extends Throwable> R readHeader(final @NotNull HeaderReader<R, E> reader) throws E, IOException {
-    //'acquire' page in advance -- ensure page will not be evicted during .readHeader()
-    try (final Page page = storage.pageByOffset(0)) {
-      return reader.readHeader(headerAccessor);
-    }
+    return reader.readHeader(headerAccessor);
   }
 
   @Override
   public <E extends Throwable> void updateHeader(final @NotNull HeaderUpdater<E> updater) throws E, IOException {
-    try (final Page page = storage.pageByOffset(0)) {
-      if (updater.updateHeader(headerAccessor)) {
-        globalModCount.incrementAndGet();
-        dirty.compareAndSet(true, false);
-      }
+    if (updater.updateHeader(headerAccessor)) {
+      globalModCount.incrementAndGet();
+      dirty.compareAndSet(true, false);
     }
   }
 
@@ -395,11 +388,10 @@ public final class PersistentFSRecordsLockFreeOverMMappedFile implements Persist
                           final @PersistentFS.Attributes int newFlags) throws IOException {
     final long recordOffsetInFile = recordOffsetInFile(recordId);
     final int recordOffsetOnPage = storage.toOffsetInPage(recordOffsetInFile);
-    try (final Page page = storage.pageByOffset(recordOffsetInFile)) {
-      final ByteBuffer pageBuffer = page.rawPageBuffer();
+    final Page page = storage.pageByOffset(recordOffsetInFile);
+    final ByteBuffer pageBuffer = page.rawPageBuffer();
 
-      return setIntFieldIfChanged(pageBuffer, recordOffsetOnPage, FLAGS_OFFSET, newFlags);
-    }
+    return setIntFieldIfChanged(pageBuffer, recordOffsetOnPage, FLAGS_OFFSET, newFlags);
   }
 
   @Override
@@ -419,17 +411,16 @@ public final class PersistentFSRecordsLockFreeOverMMappedFile implements Persist
     final long recordOffsetInFile = recordOffsetInFile(recordId);
     final int recordOffsetOnPage = storage.toOffsetInPage(recordOffsetInFile);
     final int fieldOffsetOnPage = recordOffsetOnPage + LENGTH_OFFSET;
-    try (final Page page = storage.pageByOffset(recordOffsetInFile)) {
-      final ByteBuffer pageBuffer = page.rawPageBuffer();
-      final long storedLength = (long)LONG_HANDLE.getVolatile(pageBuffer, fieldOffsetOnPage);
-      if (storedLength != newLength) {
-        setLongVolatile(pageBuffer, fieldOffsetOnPage, newLength);
-        incrementRecordVersion(pageBuffer, recordOffsetOnPage);
+    final Page page = storage.pageByOffset(recordOffsetInFile);
+    final ByteBuffer pageBuffer = page.rawPageBuffer();
+    final long storedLength = (long)LONG_HANDLE.getVolatile(pageBuffer, fieldOffsetOnPage);
+    if (storedLength != newLength) {
+      setLongVolatile(pageBuffer, fieldOffsetOnPage, newLength);
+      incrementRecordVersion(pageBuffer, recordOffsetOnPage);
 
-        return true;
-      }
-      return false;
+      return true;
     }
+    return false;
   }
 
 
@@ -443,11 +434,10 @@ public final class PersistentFSRecordsLockFreeOverMMappedFile implements Persist
                               final long newTimestamp) throws IOException {
     final long recordOffsetInFile = recordOffsetInFile(recordId);
     final int recordOffsetOnPage = storage.toOffsetInPage(recordOffsetInFile);
-    try (final Page page = storage.pageByOffset(recordOffsetInFile)) {
-      final ByteBuffer pageBuffer = page.rawPageBuffer();
+    final Page page = storage.pageByOffset(recordOffsetInFile);
+    final ByteBuffer pageBuffer = page.rawPageBuffer();
 
-      return setLongFieldIfChanged(pageBuffer, recordOffsetOnPage, TIMESTAMP_OFFSET, newTimestamp);
-    }
+    return setLongFieldIfChanged(pageBuffer, recordOffsetOnPage, TIMESTAMP_OFFSET, newTimestamp);
   }
 
   @Override
@@ -466,10 +456,9 @@ public final class PersistentFSRecordsLockFreeOverMMappedFile implements Persist
     checkValidIdField(recordId, newContentRecordId, "contentRecordId");
     final long recordOffsetInFile = recordOffsetInFile(recordId);
     final int recordOffsetOnPage = storage.toOffsetInPage(recordOffsetInFile);
-    try (final Page page = storage.pageByOffset(recordOffsetInFile)) {
-      final ByteBuffer pageBuffer = page.rawPageBuffer();
-      return setIntFieldIfChanged(pageBuffer, recordOffsetOnPage, CONTENT_REF_OFFSET, newContentRecordId);
-    }
+    final Page page = storage.pageByOffset(recordOffsetInFile);
+    final ByteBuffer pageBuffer = page.rawPageBuffer();
+    return setIntFieldIfChanged(pageBuffer, recordOffsetOnPage, CONTENT_REF_OFFSET, newContentRecordId);
   }
 
   @Override
@@ -482,28 +471,26 @@ public final class PersistentFSRecordsLockFreeOverMMappedFile implements Persist
                          final boolean overwriteAttrRef) throws IOException {
     final long recordOffsetInFile = recordOffsetInFile(recordId);
     final int recordOffsetOnPage = storage.toOffsetInPage(recordOffsetInFile);
-    try (final Page page = storage.pageByOffset(recordOffsetInFile)) {
-      final ByteBuffer pageBuffer = page.rawPageBuffer();
-      setIntVolatile(pageBuffer, recordOffsetOnPage + PARENT_REF_OFFSET, parentId);
-      setIntVolatile(pageBuffer, recordOffsetOnPage + NAME_REF_OFFSET, nameId);
-      setIntVolatile(pageBuffer, recordOffsetOnPage + FLAGS_OFFSET, flags);
-      if (overwriteAttrRef) {
-        setIntVolatile(pageBuffer, recordOffsetOnPage + ATTR_REF_OFFSET, 0);
-      }
-      setLongVolatile(pageBuffer, recordOffsetOnPage + TIMESTAMP_OFFSET, timestamp);
-      setLongVolatile(pageBuffer, recordOffsetOnPage + LENGTH_OFFSET, length);
-
-      incrementRecordVersion(pageBuffer, recordOffsetOnPage);
+    final Page page = storage.pageByOffset(recordOffsetInFile);
+    final ByteBuffer pageBuffer = page.rawPageBuffer();
+    setIntVolatile(pageBuffer, recordOffsetOnPage + PARENT_REF_OFFSET, parentId);
+    setIntVolatile(pageBuffer, recordOffsetOnPage + NAME_REF_OFFSET, nameId);
+    setIntVolatile(pageBuffer, recordOffsetOnPage + FLAGS_OFFSET, flags);
+    if (overwriteAttrRef) {
+      setIntVolatile(pageBuffer, recordOffsetOnPage + ATTR_REF_OFFSET, 0);
     }
+    setLongVolatile(pageBuffer, recordOffsetOnPage + TIMESTAMP_OFFSET, timestamp);
+    setLongVolatile(pageBuffer, recordOffsetOnPage + LENGTH_OFFSET, length);
+
+    incrementRecordVersion(pageBuffer, recordOffsetOnPage);
   }
 
   @Override
   public void markRecordAsModified(final int recordId) throws IOException {
     final long recordOffsetInFile = recordOffsetInFile(recordId);
     final int recordOffsetOnPage = storage.toOffsetInPage(recordOffsetInFile);
-    try (final Page page = storage.pageByOffset(recordOffsetInFile)) {
-      incrementRecordVersion(page.rawPageBuffer(), recordOffsetOnPage);
-    }
+    final Page page = storage.pageByOffset(recordOffsetInFile);
+    incrementRecordVersion(page.rawPageBuffer(), recordOffsetOnPage);
   }
 
   @Override
@@ -516,12 +503,11 @@ public final class PersistentFSRecordsLockFreeOverMMappedFile implements Persist
 
     final long recordOffsetInFile = recordOffsetInFile(recordId);
     final int recordOffsetOnPage = storage.toOffsetInPage(recordOffsetInFile);
-    try (final Page page = storage.pageByOffset(recordOffsetInFile)) {
-      final ByteBuffer pageBuffer = page.rawPageBuffer();
-      for (int wordNo = 0; wordNo < recordSizeInInts; wordNo++) {
-        final int offsetOfWord = recordOffsetOnPage + wordNo * Integer.BYTES;
-        setIntVolatile(pageBuffer, offsetOfWord, 0);
-      }
+    final Page page = storage.pageByOffset(recordOffsetInFile);
+    final ByteBuffer pageBuffer = page.rawPageBuffer();
+    for (int wordNo = 0; wordNo < recordSizeInInts; wordNo++) {
+      final int offsetOfWord = recordOffsetOnPage + wordNo * Integer.BYTES;
+      setIntVolatile(pageBuffer, offsetOfWord, 0);
     }
   }
 
@@ -719,21 +705,19 @@ public final class PersistentFSRecordsLockFreeOverMMappedFile implements Persist
                             final long fieldValue) throws IOException {
     final long recordOffsetInFile = recordOffsetInFile(recordId);
     final int recordOffsetOnPage = storage.toOffsetInPage(recordOffsetInFile);
-    try (final Page page = storage.pageByOffset(recordOffsetInFile)) {
-      final ByteBuffer pageBuffer = page.rawPageBuffer();
-      setLongVolatile(pageBuffer, recordOffsetOnPage + fieldRelativeOffset, fieldValue);
-      incrementRecordVersion(pageBuffer, recordOffsetOnPage);
-    }
+    final Page page = storage.pageByOffset(recordOffsetInFile);
+    final ByteBuffer pageBuffer = page.rawPageBuffer();
+    setLongVolatile(pageBuffer, recordOffsetOnPage + fieldRelativeOffset, fieldValue);
+    incrementRecordVersion(pageBuffer, recordOffsetOnPage);
   }
 
   private long getLongField(final int recordId,
                             final int fieldRelativeOffset) throws IOException {
     final long recordOffsetInFile = recordOffsetInFile(recordId);
     final int recordOffsetOnPage = storage.toOffsetInPage(recordOffsetInFile);
-    try (final Page page = storage.pageByOffset(recordOffsetInFile)) {
-      final ByteBuffer pageBuffer = page.rawPageBuffer();
-      return (long)LONG_HANDLE.getVolatile(pageBuffer, recordOffsetOnPage + fieldRelativeOffset);
-    }
+    final Page page = storage.pageByOffset(recordOffsetInFile);
+    final ByteBuffer pageBuffer = page.rawPageBuffer();
+    return (long)LONG_HANDLE.getVolatile(pageBuffer, recordOffsetOnPage + fieldRelativeOffset);
   }
 
   private boolean setLongFieldIfChanged(final ByteBuffer pageBuffer,
@@ -756,21 +740,19 @@ public final class PersistentFSRecordsLockFreeOverMMappedFile implements Persist
                            final int fieldValue) throws IOException {
     final long recordOffsetInFile = recordOffsetInFile(recordId);
     final int recordOffsetOnPage = storage.toOffsetInPage(recordOffsetInFile);
-    try (final Page page = storage.pageByOffset(recordOffsetInFile)) {
-      final ByteBuffer pageBuffer = page.rawPageBuffer();
-      setIntVolatile(pageBuffer, recordOffsetOnPage + fieldRelativeOffset, fieldValue);
-      incrementRecordVersion(pageBuffer, recordOffsetOnPage);
-    }
+    final Page page = storage.pageByOffset(recordOffsetInFile);
+    final ByteBuffer pageBuffer = page.rawPageBuffer();
+    setIntVolatile(pageBuffer, recordOffsetOnPage + fieldRelativeOffset, fieldValue);
+    incrementRecordVersion(pageBuffer, recordOffsetOnPage);
   }
 
   private int getIntField(final int recordId,
                           final int fieldRelativeOffset) throws IOException {
     final long recordOffsetInFile = recordOffsetInFile(recordId);
     final int recordOffsetOnPage = storage.toOffsetInPage(recordOffsetInFile);
-    try (final Page page = storage.pageByOffset(recordOffsetInFile)) {
-      final ByteBuffer pageBuffer = page.rawPageBuffer();
-      return (int)INT_HANDLE.getVolatile(pageBuffer, recordOffsetOnPage + fieldRelativeOffset);
-    }
+    final Page page = storage.pageByOffset(recordOffsetInFile);
+    final ByteBuffer pageBuffer = page.rawPageBuffer();
+    return (int)INT_HANDLE.getVolatile(pageBuffer, recordOffsetOnPage + fieldRelativeOffset);
   }
 
   private boolean setIntFieldIfChanged(final ByteBuffer pageBuffer,
@@ -800,32 +782,28 @@ public final class PersistentFSRecordsLockFreeOverMMappedFile implements Persist
   private void setLongHeaderField(final @HeaderOffset int headerRelativeOffsetBytes,
                                   final long headerValue) throws IOException {
     checkHeaderOffset(headerRelativeOffsetBytes);
-    try (final Page page = storage.pageByOffset(headerRelativeOffsetBytes)) {
-      setLongVolatile(page.rawPageBuffer(), headerRelativeOffsetBytes, headerValue);
-    }
+    final Page page = storage.pageByOffset(headerRelativeOffsetBytes);
+    setLongVolatile(page.rawPageBuffer(), headerRelativeOffsetBytes, headerValue);
   }
 
   private long getLongHeaderField(final @HeaderOffset int headerRelativeOffsetBytes) throws IOException {
     checkHeaderOffset(headerRelativeOffsetBytes);
-    try (final Page page = storage.pageByOffset(headerRelativeOffsetBytes)) {
-      return (long)LONG_HANDLE.getVolatile(page.rawPageBuffer(), headerRelativeOffsetBytes);
-    }
+    final Page page = storage.pageByOffset(headerRelativeOffsetBytes);
+    return (long)LONG_HANDLE.getVolatile(page.rawPageBuffer(), headerRelativeOffsetBytes);
   }
 
   private void setIntHeaderField(final @HeaderOffset int headerRelativeOffsetBytes,
                                  final int headerValue) throws IOException {
     checkHeaderOffset(headerRelativeOffsetBytes);
-    try (final Page page = storage.pageByOffset(headerRelativeOffsetBytes)) {
-      setIntVolatile(page.rawPageBuffer(), headerRelativeOffsetBytes, headerValue);
-    }
+    final Page page = storage.pageByOffset(headerRelativeOffsetBytes);
+    setIntVolatile(page.rawPageBuffer(), headerRelativeOffsetBytes, headerValue);
   }
 
 
   private int getIntHeaderField(final @HeaderOffset int headerRelativeOffsetBytes) throws IOException {
     checkHeaderOffset(headerRelativeOffsetBytes);
-    try (final Page page = storage.pageByOffset(headerRelativeOffsetBytes)) {
+    final Page page = storage.pageByOffset(headerRelativeOffsetBytes);
       return (int)INT_HANDLE.getVolatile(page.rawPageBuffer(), headerRelativeOffsetBytes);
-    }
   }
 
   private static void checkHeaderOffset(final int headerRelativeOffset) {

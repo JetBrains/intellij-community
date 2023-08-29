@@ -200,7 +200,6 @@ public final class MMappedFileStorage implements Closeable {
         for (int i = 0; i < pages.length(); i++) {
           final Page page = pages.get(i);
           if (page != null) {
-            page.close();
             //actual buffer releasing happens later, by GC, but at least we don't keep it
             totalPagesMapped.decrementAndGet();
             totalBytesMapped.addAndGet(-pageSize);
@@ -269,7 +268,7 @@ public final class MMappedFileStorage implements Closeable {
            ']';
   }
 
-  public static final class Page implements AutoCloseable {
+  public static final class Page  {
     private final int pageIndex;
     private final int pageSize;
     private final long offsetInFile;
@@ -301,11 +300,6 @@ public final class MMappedFileStorage implements Closeable {
         long timeSpentNs = System.nanoTime() - startedAtNs;
         totalTimeForPageMapNs.addAndGet(timeSpentNs);
       }
-    }
-
-    @Override
-    public void close() {
-      //nothing so far, reserved for future
     }
 
     public ByteBuffer rawPageBuffer() {
