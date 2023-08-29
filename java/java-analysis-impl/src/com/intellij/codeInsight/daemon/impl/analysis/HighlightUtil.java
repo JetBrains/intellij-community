@@ -2277,6 +2277,9 @@ public final class HighlightUtil {
   }
 
   static HighlightInfo.Builder checkTemplateExpression(@NotNull PsiTemplateExpression templateExpression) {
+    HighlightInfo.Builder builder = checkFeature(templateExpression, HighlightingFeature.STRING_TEMPLATES,
+                                                 PsiUtil.getLanguageLevel(templateExpression), templateExpression.getContainingFile());
+    if (builder != null) return builder;
     PsiExpression processor = templateExpression.getProcessor();
     if (processor == null) {
       String message = JavaErrorBundle.message("processor.missing.from.string.template.expression");
