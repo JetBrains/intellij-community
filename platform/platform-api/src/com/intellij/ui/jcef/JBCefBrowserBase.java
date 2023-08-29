@@ -90,7 +90,7 @@ public abstract class JBCefBrowserBase implements JBCefDisposable {
   private @NotNull String myLastRequestedUrl = "";
   private final @NotNull Object myLastRequestedUrlLock = new Object();
   private volatile @Nullable ErrorPage myErrorPage;
-  protected final @NotNull PropertiesHelper myPropertiesHelper = new PropertiesHelper();
+  private final @NotNull PropertiesHelper myPropertiesHelper = new PropertiesHelper();
   private final @NotNull AtomicBoolean myIsCreateStarted = new AtomicBoolean(false);
   private @Nullable CefRequestHandler myHrefProcessingRequestHandler;
 
