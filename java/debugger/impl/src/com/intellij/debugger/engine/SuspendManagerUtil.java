@@ -1,6 +1,8 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.debugger.engine;
 
+import com.intellij.debugger.engine.events.DebuggerCommandImpl;
+import com.intellij.debugger.engine.events.SuspendContextCommandImpl;
 import com.intellij.debugger.jdi.ThreadReferenceProxyImpl;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.util.containers.ContainerUtil;
@@ -39,10 +41,20 @@ public final class SuspendManagerUtil {
     return null;
   }
 
-  public static void assertSuspendContext(SuspendContextImpl context) {
-    if (LOG.isDebugEnabled()) {
-      LOG.assertTrue(context.myInProgress, "You can invoke methods only inside commands invoked for SuspendContext");
+  @Nullable
+  public static SuspendContextImpl getContextForEvaluation(@NotNull SuspendManager suspendManager) {
+    // first try to take the context from the current command, if any
+    DebuggerCommandImpl currentCommand = DebuggerManagerThreadImpl.getCurrentCommand();
+    SuspendContextImpl currentSuspendContext =
+      currentCommand instanceof SuspendContextCommandImpl suspendContextCommand ? suspendContextCommand.getSuspendContext() : null;
+    if (currentSuspendContext != null) {
+      return currentSuspendContext;
     }
+    return suspendManager.getPausedContext();
+  }
+
+  public static void assertSuspendContext(SuspendContextImpl context) {
+    LOG.assertTrue(context.myInProgress, "You can invoke methods only inside commands invoked for SuspendContext");
   }
 
   @NotNull
