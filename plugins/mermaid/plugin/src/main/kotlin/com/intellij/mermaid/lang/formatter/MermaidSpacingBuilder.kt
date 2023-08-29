@@ -170,7 +170,7 @@ internal object MermaidSpacingBuilder {
 
       .before(MermaidTokens.OPEN_CURLY).spaceIf(mermaid.BEFORE_OPEN_CURLY)
       .between(MermaidElements.CLASS_HEADER, MermaidElements.CLASS_BLOCK).spaceIf(mermaid.BEFORE_OPEN_CURLY)
-      .between(MermaidElements.NAMESPACE_IDENTIFIER, MermaidElements.NAMESPACE_BLOCK).spaceIf(mermaid.BEFORE_OPEN_CURLY)
+      .between(MermaidElements.NAMESPACE_HEADER, MermaidElements.NAMESPACE_BLOCK).spaceIf(mermaid.BEFORE_OPEN_CURLY)
       .between(MermaidElements.STATE_DECLARATION_HEADER, MermaidElements.STATE_BLOCK).spaceIf(mermaid.BEFORE_OPEN_CURLY)
       .between(MermaidElements.ER_IDENTIFIER, MermaidElements.ER_ENTITY_BLOCK).spaceIf(mermaid.BEFORE_OPEN_CURLY)
       .between(MermaidElements.REQUIREMENT_HEADER, MermaidElements.REQUIREMENT_BLOCK).spaceIf(mermaid.BEFORE_OPEN_CURLY)
