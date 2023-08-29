@@ -45,7 +45,8 @@ class SimpleTerminalController(
     terminalModel.isCommandRunning = true
 
     setupContentListener()
-    setupKeyEventDispatcher(editor, settings, eventsHandler, disposable = this, this::isFocused)
+    val selectionModel = TerminalSelectionModel(outputModel)  // fake model, that won't be changed
+    setupKeyEventDispatcher(editor, settings, eventsHandler, outputModel, selectionModel, disposable = this)
     setupMouseListener(editor, settings, terminalModel, eventsHandler, disposable = this)
     terminalModel.withContentLock {
       updateEditorContent()

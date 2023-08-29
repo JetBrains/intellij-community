@@ -63,7 +63,8 @@ class TerminalOutputController(
     val disposable = Disposer.newDisposable().also { Disposer.register(session, it) }
     runningListenersDisposable = disposable
     val eventsHandler = TerminalEventsHandler(session, settings)
-    setupKeyEventDispatcher(editor, settings, eventsHandler, disposable, this::isFocused)
+    val selectionModel = editor.getUserData(TerminalSelectionController.KEY)!!.selectionModel
+    setupKeyEventDispatcher(editor, settings, eventsHandler, outputModel, selectionModel, disposable)
     setupMouseListener(editor, settings, session.model, eventsHandler, disposable)
     setupContentListener(disposable)
   }

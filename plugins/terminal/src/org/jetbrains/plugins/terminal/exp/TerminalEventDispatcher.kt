@@ -24,6 +24,7 @@ import com.intellij.openapi.util.registry.Registry
 import com.intellij.terminal.JBTerminalSystemSettingsProviderBase
 import com.jediterm.terminal.emulator.mouse.MouseMode
 import org.jetbrains.annotations.NonNls
+import org.jetbrains.plugins.terminal.exp.TerminalSelectionModel.TerminalSelectionListener
 import java.awt.AWTEvent
 import java.awt.event.InputEvent
 import java.awt.event.KeyEvent
@@ -48,16 +49,11 @@ internal abstract class TerminalEventDispatcher(private val parentDisposable: Di
 
   private fun dispatchKeyEvent(e: KeyEvent) {
     if (!skipAction(e)) {
-      if (isFocused()) {
-        handleKeyEvent(e)
-      }
-      else unregister()
+      handleKeyEvent(e)
     }
   }
 
   protected abstract fun handleKeyEvent(e: KeyEvent)
-
-  protected abstract fun isFocused(): Boolean
 
   fun register(actionsToSkip: List<AnAction>) {
     ApplicationManager.getApplication().assertIsDispatchThread()
@@ -110,6 +106,7 @@ internal abstract class TerminalEventDispatcher(private val parentDisposable: Di
       "ActivateServicesToolWindow",
       "ActivateCommitToolWindow",
       "ActivateVersionControlToolWindow",
+      "EditorEscape",
       "HideActiveWindow",
       "HideAllWindows",
       "NextWindow",
@@ -158,8 +155,9 @@ internal abstract class TerminalEventDispatcher(private val parentDisposable: Di
 internal fun setupKeyEventDispatcher(editor: EditorEx,
                                      settings: JBTerminalSystemSettingsProviderBase,
                                      eventsHandler: TerminalEventsHandler,
-                                     disposable: Disposable,
-                                     isFocused: () -> Boolean) {
+                                     outputModel: TerminalOutputModel,
+                                     selectionModel: TerminalSelectionModel,
+                                     disposable: Disposable) {
   // Key events forwarding from the editor to terminal panel
   val eventDispatcher: TerminalEventDispatcher = object : TerminalEventDispatcher(disposable) {
     override fun handleKeyEvent(e: KeyEvent) {
@@ -170,15 +168,16 @@ internal fun setupKeyEventDispatcher(editor: EditorEx,
         eventsHandler.handleKeyPressed(e)
       }
     }
-
-    override fun isFocused(): Boolean = isFocused()
   }
 
   editor.addFocusListener(object : FocusChangeListener {
     override fun focusGained(editor: Editor) {
       if (settings.overrideIdeShortcuts()) {
-        val actionsToSkip = TerminalEventDispatcher.getActionsToSkip()
-        eventDispatcher.register(actionsToSkip)
+        val selectedBlock = selectionModel.primarySelection
+        if (selectedBlock == null || selectedBlock == outputModel.getLastBlock()) {
+          val actionsToSkip = TerminalEventDispatcher.getActionsToSkip()
+          eventDispatcher.register(actionsToSkip)
+        }
       }
       else {
         eventDispatcher.unregister()
@@ -193,6 +192,17 @@ internal fun setupKeyEventDispatcher(editor: EditorEx,
     override fun focusLost(editor: Editor) {
       eventDispatcher.unregister()
       SaveAndSyncHandler.getInstance().scheduleRefresh()
+    }
+  }, disposable)
+
+  selectionModel.addListener(object : TerminalSelectionListener {
+    override fun selectionChanged(oldSelection: List<CommandBlock>, newSelection: List<CommandBlock>) {
+      val selectedBlock = selectionModel.primarySelection
+      if (selectedBlock == null || selectedBlock == outputModel.getLastBlock()) {
+        val actionsToSkip = TerminalEventDispatcher.getActionsToSkip()
+        eventDispatcher.register(actionsToSkip)
+      }
+      else eventDispatcher.unregister()
     }
   }, disposable)
 }

@@ -9,7 +9,7 @@ import kotlin.math.min
 
 class TerminalSelectionController(
   private val focusController: TerminalFocusController,
-  private val selectionModel: TerminalSelectionModel,
+  val selectionModel: TerminalSelectionModel,
   private val outputModel: TerminalOutputModel
 ) : EditorMouseListener {
   val primarySelection: CommandBlock?
