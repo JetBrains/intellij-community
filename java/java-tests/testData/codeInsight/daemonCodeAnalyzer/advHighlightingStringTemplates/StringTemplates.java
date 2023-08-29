@@ -100,4 +100,8 @@ class X {
     }
     catch (Ex ex) {}
   }
+
+  public static void testCapturedWilcard(StringTemplate.Processor<?, ?> str) {
+    Object s = <error descr="Unhandled exception: java.lang.Throwable">str."";</error>
+  }
 }
