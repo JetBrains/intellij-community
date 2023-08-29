@@ -213,7 +213,7 @@ public final class IntentionHintComponent implements Disposable, ScrollAwareHint
 
       @Override
       public int getPriority() {
-        return -10;
+        return INTENTION_BULB_PRIORITY;
       }
     };
     if (hintManager.canShowQuestionAction(action)) {
