@@ -56,8 +56,8 @@ abstract class AdditionalTableHeader : JPanel(BorderLayout()), PropertyChangeLis
     }
   }
 
-  private fun disposeOldTable(oldTable: JTable?, table: JTable?) {
-    changeTableAtPositionHelper(oldTable, table)
+  private fun disposeOldTable(oldTable: JTable?, newTable: JTable?) {
+    changeTableAtPositionHelper(oldTable, newTable)
     if (oldTable != null) {
       oldTable.removeComponentListener(resizer)
       oldTable.removePropertyChangeListener("model", this)
@@ -73,7 +73,7 @@ abstract class AdditionalTableHeader : JPanel(BorderLayout()), PropertyChangeLis
       positionHelper.position = location
     }
 
-  var columnsController: ColumnsControllerPanel? = null
+  protected var columnsController: ColumnsControllerPanel? = null
 
   /** The helper to handle the location of the additional header in the table header.  */
   protected val positionHelper: AdditionalTableHeaderPositionHelper = AdditionalTableHeaderPositionHelper(this)
@@ -182,7 +182,6 @@ abstract class AdditionalTableHeader : JPanel(BorderLayout()), PropertyChangeLis
       }
     }
 
-    // In previous version this method was called run
     abstract fun updateColumns()
 
     /** [TableColumnModelListener] interface.  */

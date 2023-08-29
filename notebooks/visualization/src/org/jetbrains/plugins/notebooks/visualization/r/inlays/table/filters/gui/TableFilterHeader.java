@@ -19,19 +19,17 @@ import java.awt.*;
 import java.util.*;
 
 public class TableFilterHeader extends AdditionalTableHeader {
-  private static final long serialVersionUID = 5217701111228491294L;
-
   /** Flag to handle instant filtering support. */
-  boolean instantFilteringEnabled = FilterSettings.instantFiltering;
+  private final boolean instantFilteringEnabled = FilterSettings.instantFiltering;
 
   /** Flag to handle auto completion support. */
-  boolean autoCompletionEnabled = FilterSettings.autoCompletion;
+  private final boolean autoCompletionEnabled = FilterSettings.autoCompletion;
 
   /** This is the total max number of visible rows (history PLUS choices). */
-  int maxHistory = FilterSettings.maxPopupHistory;
+  private final int maxHistory = FilterSettings.maxPopupHistory;
 
   /** Setting to add / decrease height to the filter row. */
-  int filterRowHeightDelta = FilterSettings.filterRowHeightDelta;
+  private final int filterRowHeightDelta = FilterSettings.filterRowHeightDelta;
 
   /**
    * The columnsController is a glue component, controlling the filters
@@ -43,10 +41,10 @@ public class TableFilterHeader extends AdditionalTableHeader {
    * The privately owned instance of FiltersHandler that conforms the filter
    * defined by the TableFilterHeader.
    */
-  AbstractFiltersHandler filtersHandler;
+  private final AbstractFiltersHandler filtersHandler;
 
   /** The set of currently subscribed observers. */
-  Set<IFilterHeaderObserver> observers = new HashSet<>();
+  private final Set<IFilterHeaderObserver> observers = new HashSet<>();
 
   /** Basic constructor, requires an attached table. */
   public TableFilterHeader() {
@@ -225,7 +223,7 @@ public class TableFilterHeader extends AdditionalTableHeader {
     }
 
     /** {@link TableColumnModelListener} interface. Here we add handlerEnable processing. */
-    @Override public void columnAdded(TableColumnModelEvent e) {
+    @Override public void columnAdded(@NotNull TableColumnModelEvent e) {
 
       //Support the case where a model is being changed
       if (isCorrectModel()) {
@@ -254,7 +252,7 @@ public class TableFilterHeader extends AdditionalTableHeader {
     }
 
     /** {@link TableColumnModelListener} interface. Here we add handlerEnable processing. */
-    @Override public void columnRemoved(TableColumnModelEvent e) {
+    @Override public void columnRemoved(@NotNull TableColumnModelEvent e) {
       //Support the case where a model is being changed
       if (isCorrectModel()) {
         // see the comment on columnAdded
@@ -288,8 +286,6 @@ public class TableFilterHeader extends AdditionalTableHeader {
      * resized.
      */
     class FilterColumnPanel extends AdditionalPanel implements IFilterObserver {
-
-      private static final long serialVersionUID = 6858728575542289815L;
 
       /** The associated editor. */
       public FilterEditor editor;
