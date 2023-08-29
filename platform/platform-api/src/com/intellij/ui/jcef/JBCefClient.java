@@ -645,6 +645,21 @@ public final class JBCefClient implements JBCefDisposable {
     myRequestHandler.remove(handler, browser, () -> myCefClient.removeRequestHandler());
   }
 
+  public void removeAllHandlers(CefBrowser browser) {
+    myContextMenuHandler.removeAll(browser);
+    myDialogHandler.removeAll(browser);
+    myDisplayHandler.removeAll(browser);
+    myDownloadHandler.removeAll(browser);
+    myDragHandler.removeAll(browser);
+    myPermissionHandler.removeAll(browser);
+    myFocusHandler.removeAll(browser);
+    myJSDialogHandler.removeAll(browser);
+    myKeyboardHandler.removeAll(browser);
+    myLifeSpanHandler.removeAll(browser);
+    myLoadHandler.removeAll(browser);
+    myRequestHandler.removeAll(browser);
+  }
+
   private class HandlerSupport<T> {
     private volatile Map<CefBrowser, List<T>> myMap;
 
@@ -701,6 +716,12 @@ public final class JBCefClient implements JBCefDisposable {
     public void clear() {
       if (myMap != null) {
         myMap.clear();
+      }
+    }
+
+    public void removeAll(CefBrowser browser) {
+      if (myMap != null) {
+        myMap.remove(browser);
       }
     }
 
