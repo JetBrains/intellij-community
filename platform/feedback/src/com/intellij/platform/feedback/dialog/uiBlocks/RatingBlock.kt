@@ -18,7 +18,11 @@ class RatingBlock(@NlsContexts.Label private val myLabel: String,
       row {
         rating()
           .label(myLabel, LabelPosition.TOP)
-          .bind({ it.myRating }, { _, _ -> }, ::myProperty.toMutableProperty())
+          .apply {
+            onApply {
+              myProperty = this.component.myRating
+            }
+          }
           .errorOnApply(CommonFeedbackBundle.message("dialog.feedback.rating.required")) {
             it.myRating == 0
           }
@@ -34,15 +38,16 @@ class RatingBlock(@NlsContexts.Label private val myLabel: String,
     }
   }
 
-  private fun Row.rating(): Cell<RatingComponent> {
-    val ratingComponent = RatingComponent()
-    return cell(ratingComponent)
-  }
-
   override fun collectBlockDataToJson(jsonObjectBuilder: JsonObjectBuilder) {
     jsonObjectBuilder.apply {
       put(myJsonElementName, myProperty)
     }
   }
 }
+
+internal fun Row.rating(): Cell<RatingComponent> {
+  val ratingComponent = RatingComponent()
+  return cell(ratingComponent)
+}
+
 
