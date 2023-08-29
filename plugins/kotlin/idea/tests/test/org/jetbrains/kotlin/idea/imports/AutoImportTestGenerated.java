@@ -40,6 +40,11 @@ public abstract class AutoImportTestGenerated extends AbstractAutoImportTest {
             runTest("testData/editor/autoImport/components/");
         }
 
+        @TestMetadata("constructorReference")
+        public void testConstructorReference() throws Exception {
+            runTest("testData/editor/autoImport/constructorReference/");
+        }
+
         @TestMetadata("delegationExtFunction")
         public void testDelegationExtFunction() throws Exception {
             runTest("testData/editor/autoImport/delegationExtFunction/");
@@ -106,6 +111,11 @@ public abstract class AutoImportTestGenerated extends AbstractAutoImportTest {
         @TestMetadata("components")
         public void testComponents() throws Exception {
             runTest("testData/editor/autoImport/components/");
+        }
+
+        @TestMetadata("constructorReference")
+        public void testConstructorReference() throws Exception {
+            runTest("testData/editor/autoImport/constructorReference/");
         }
 
         @TestMetadata("delegationExtFunction")
