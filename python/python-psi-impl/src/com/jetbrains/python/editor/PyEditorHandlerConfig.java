@@ -20,6 +20,7 @@ public final class PyEditorHandlerConfig {
     PySequencePattern.class,
     PyMappingPattern.class,
     PyPatternArgumentList.class,
+    PyTypeParameterList.class,
   };
   public static final Class[] WRAPPABLE_CLASSES = new Class[]{
     PsiComment.class,
@@ -39,6 +40,7 @@ public final class PyEditorHandlerConfig {
     PyGroupPattern.class,
     PyMappingPattern.class,
     PyPatternArgumentList.class,
+    PyTypeParameterList.class,
   };
 
   static final Class[] CLASSES_TO_PARENTHESISE_ON_ENTER = new Class[]{
