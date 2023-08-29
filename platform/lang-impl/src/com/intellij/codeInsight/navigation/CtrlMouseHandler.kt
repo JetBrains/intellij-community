@@ -35,7 +35,7 @@ import com.intellij.openapi.fileEditor.FileEditorManagerListener.FILE_EDITOR_MAN
 import com.intellij.openapi.keymap.KeymapManager
 import com.intellij.openapi.progress.blockingContext
 import com.intellij.openapi.project.DumbModeBlockedFunctionality
-import com.intellij.openapi.project.DumbService
+import com.intellij.openapi.project.DumbServiceImpl
 import com.intellij.openapi.project.IndexNotReadyException
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.startup.ProjectActivity
@@ -221,13 +221,11 @@ class CtrlMouseHandler2(
       }
     }
     catch (e: IndexNotReadyException) {
-     /*
-        Currently, this code is executed on every MouseMove event
-
-        DumbService.getInstance(project).showDumbModeNotificationForFunctionality(
+      DumbServiceImpl.getInstance(project).showDumbModeNotificationForFunctionalityWithCoalescing(
         CodeInsightBundle.message("notification.element.information.is.not.available.during.index.update"),
-        DumbModeBlockedFunctionality.CtrlMouseHandler
-      )*/
+        DumbModeBlockedFunctionality.CtrlMouseHandler,
+        Pair(request.action, request.editor)
+      )
       null
     }
   }

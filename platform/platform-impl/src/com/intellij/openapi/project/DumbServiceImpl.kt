@@ -320,6 +320,16 @@ open class DumbServiceImpl @NonInjectable @VisibleForTesting constructor(private
     doShowDumbModeNotification(message)
   }
 
+  /**
+   * Doesn't log new event if the equality object is equal to the previous one
+   */
+  fun showDumbModeNotificationForFunctionalityWithCoalescing(message: @NlsContexts.PopupContent String,
+                                                             functionality: DumbModeBlockedFunctionality,
+                                                             equality: Any) {
+    DumbModeBlockedFunctionalityCollector.logFunctionalityBlockedWithCoalescing(project, functionality, equality)
+    doShowDumbModeNotification(message)
+  }
+
   private fun doShowDumbModeNotification(message: @NlsContexts.PopupContent String) {
     UIUtil.invokeLaterIfNeeded {
       val ideFrame = WindowManager.getInstance().getIdeFrame(myProject)

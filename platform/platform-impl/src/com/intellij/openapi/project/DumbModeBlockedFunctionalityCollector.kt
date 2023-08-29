@@ -8,6 +8,7 @@ import com.intellij.internal.statistic.eventLog.events.EventFields.StringValidat
 import com.intellij.internal.statistic.service.fus.collectors.CounterUsagesCollector
 import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.project.DumbModeBlockedFunctionalityCollector.logActionBlocked
+import java.util.concurrent.atomic.AtomicReference
 
 /**
  * Reports cases when some functionality is reported unavailable for user due to dumb mode.
@@ -31,6 +32,7 @@ object DumbModeBlockedFunctionalityCollector : CounterUsagesCollector() {
                                                                 EXECUTED_WHEN_SMART)
 
   fun logActionBlocked(project: Project, actionId: String) {
+    lastEqualityObjectReference.set(null)
     FUNCTIONALITY_BLOCKED.log(project,
                               ACTION_ID.with(actionId),
                               FUNCTIONALITY_SOURCE.with(DumbModeBlockedFunctionality.Action))
@@ -41,15 +43,32 @@ object DumbModeBlockedFunctionalityCollector : CounterUsagesCollector() {
       logActionBlocked(project, actionIds[0])
     }
     else {
+      lastEqualityObjectReference.set(null)
       FUNCTIONALITY_BLOCKED.log(project,
                                 FUNCTIONALITY_SOURCE.with(DumbModeBlockedFunctionality.MultipleActionIds),
                                 EXECUTED_WHEN_SMART.with(executedAfterBlock))
     }
   }
 
+  private val lastEqualityObjectReference = AtomicReference<Any?>(null)
+
   fun logFunctionalityBlocked(project: Project, functionality: DumbModeBlockedFunctionality) {
+    doLogFunctionalityBlocked(project, functionality, null)
+  }
+
+  fun logFunctionalityBlockedWithCoalescing(project: Project, functionality: DumbModeBlockedFunctionality, equalityObject: Any) {
+    doLogFunctionalityBlocked(project, functionality, equalityObject)
+  }
+
+  private fun doLogFunctionalityBlocked(project: Project, functionality: DumbModeBlockedFunctionality, equalityObject: Any? = null) {
     if (functionality == DumbModeBlockedFunctionality.Action) {
       thisLogger().error("Use DumbModeBlockingFunctionalityCollector.Companion.logActionBlocked instead")
+    }
+    if (equalityObject == null) {
+      lastEqualityObjectReference.set(null)
+    }
+    else if (equalityObject == lastEqualityObjectReference.getAndSet(equalityObject)) {
+      return
     }
     FUNCTIONALITY_BLOCKED.log(project,
                               FUNCTIONALITY_SOURCE.with(functionality))
