@@ -12,12 +12,14 @@ import com.intellij.platform.ide.newUiOnboarding.NewUiOnboardingStepData
 import com.intellij.ui.GotItComponentBuilder
 import com.intellij.ui.awt.RelativePoint
 import com.intellij.util.ui.JBPoint
+import com.intellij.util.ui.JBUI
 
 class NavigationBarStep : NewUiOnboardingStep {
   override suspend fun performStep(project: Project, disposable: CheckedDisposable): NewUiOnboardingStepData? {
     val statusBar = WindowManager.getInstance().getStatusBar(project).component ?: return null
     val builder = GotItComponentBuilder(NewUiOnboardingBundle.message("navigation.bar.step.text"))
       .withHeader(NewUiOnboardingBundle.message("navigation.bar.step.header"))
+      .withMaxWidth(JBUI.scale(300))  // make the text fit in three lines
 
     val relativePoint = RelativePoint(statusBar, JBPoint(80, -2))
     return NewUiOnboardingStepData(builder, relativePoint, Balloon.Position.above)
