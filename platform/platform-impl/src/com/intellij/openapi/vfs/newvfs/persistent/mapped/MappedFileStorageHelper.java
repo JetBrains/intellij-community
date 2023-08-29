@@ -289,18 +289,19 @@ public final class MappedFileStorageHelper implements Closeable {
   }
 
   private void clearImpl(boolean clearHeaders) throws IOException {
-    int maxAllocatedFileId = maxAllocatedFileID();
-    long maxOffset = maxAllocatedFileId * (long)bytesPerRow + HeaderLayout.HEADER_SIZE;
+    int pagesCount = storage.allocatedPages();
     int pageSize = storage.pageSize();
-    for (long offset = clearHeaders ? 0 : HeaderLayout.HEADER_SIZE;
-         offset < maxOffset;
-         offset += pageSize) {
-      Page page = storage.pageByOffset(offset);
+
+    Page headerPage = storage.pageByOffset(0);
+    for (int offset = clearHeaders ? 0 : HeaderLayout.HEADER_SIZE; offset < pageSize; offset += Long.BYTES) {
+      headerPage.rawPageBuffer().putLong(offset, 0L);
+    }
+
+    for (int pageIndex = 1; pageIndex < pagesCount; pageIndex++) {
+      Page page = storage.pageByOffset((long)pageIndex * pageSize);
       ByteBuffer pageBuffer = page.rawPageBuffer();
-      //MAYBE RC: it could be done much faster -- use putLong(), use preallocated array of zeroes,
-      //          use Unsafe.setMemory() -- but does it worth it?
-      for (int pos = 0; pos < pageSize; pos++) {
-        pageBuffer.put(pos, (byte)0);
+      for (int offset = 0; offset < pageSize; offset += Long.BYTES) {
+        pageBuffer.putLong(offset, 0L);
       }
     }
     //TODO RC: which memory semantics .clear() should have? Now it is just 'plain write', while
