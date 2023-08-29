@@ -11,6 +11,7 @@ import com.intellij.ui.dsl.listCellRenderer.LcrIconInitParams
 import com.intellij.ui.dsl.listCellRenderer.LcrRow
 import com.intellij.ui.dsl.listCellRenderer.LcrTextInitParams
 import com.intellij.ui.popup.list.SelectablePanel
+import com.intellij.ui.render.RenderingUtil
 import com.intellij.util.ui.JBInsets
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.UIUtil
@@ -21,10 +22,12 @@ import java.awt.Color
 import java.awt.Component
 import java.util.function.Supplier
 import javax.swing.Icon
+import javax.swing.JLabel
 import javax.swing.JList
 import javax.swing.JPanel
 import javax.swing.ListCellRenderer
 import javax.swing.plaf.basic.BasicComboPopup
+import kotlin.math.max
 
 private const val HORIZONTAL_GAP = 4
 
@@ -32,7 +35,31 @@ private const val HORIZONTAL_GAP = 4
 internal class LcrRowImpl<T>(private val renderer: LcrRow<T>.() -> Unit) : LcrRow<T>, ListCellRenderer<T> {
 
   private var listCellRendererParams: ListCellRendererParams<T>? = null
-  private val selectablePanel = SelectablePanel()
+
+  private val selectablePanel = object : SelectablePanel() {
+    override fun getBaseline(width: Int, height: Int): Int {
+      val baselineComponents = cells.filter { it.baselineAlign }.map { it.lcrCell.component }
+
+      // JLabel doesn't have baseline if empty. Workaround similar like in BasicComboBoxUI.getBaseline method
+      for (component in baselineComponents) {
+        if (component is JLabel && component.text.isNullOrEmpty()) {
+          component.text = " "
+        }
+      }
+      setSize(width, height)
+      doLayout()
+      content.doLayout()
+      var result = -1
+      for (component in baselineComponents) {
+        val componentBaseline = component.getBaseline(component.width, component.height)
+        if (componentBaseline >= 0) {
+          result = max(result, content.y + component.y + componentBaseline)
+        }
+      }
+      return result
+    }
+  }
+
   private val lcrCellCache = LcrCellCache()
 
   /**
@@ -103,7 +130,7 @@ internal class LcrRowImpl<T>(private val renderer: LcrRow<T>.() -> Unit) : LcrRo
     content.removeAll()
     lcrCellCache.release()
 
-    val bg = if (isSelected) JBUI.CurrentTheme.List.Selection.background(cellHasFocus) else list.background
+    val bg = if (isSelected) RenderingUtil.getSelectionBackground(list) else list.background
     if (ExperimentalUI.isNewUI()) {
       // Update height/insets every time, so IDE scaling is applied
       selectablePanel.apply {
