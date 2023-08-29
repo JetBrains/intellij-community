@@ -3,10 +3,7 @@ package com.intellij.openapi.project
 
 import com.intellij.internal.statistic.StructuredIdeActivity
 import com.intellij.openapi.diagnostic.Logger
-import com.intellij.openapi.progress.ProcessCanceledException
-import com.intellij.openapi.progress.ProgressIndicator
-import com.intellij.openapi.progress.ProgressManager
-import com.intellij.openapi.progress.Task
+import com.intellij.openapi.progress.*
 import com.intellij.openapi.progress.impl.ProgressManagerImpl
 import com.intellij.openapi.progress.impl.ProgressSuspender
 import com.intellij.openapi.progress.util.AbstractProgressIndicatorExBase
@@ -149,21 +146,20 @@ open class MergingQueueGuiExecutor<T : MergeableQueueTask<T>> protected construc
       startedInBackground = mySingleTaskExecutor.tryStartProcess { task: AutoclosableProgressive ->
         try {
           backgroundTasksSubmitted.incrementAndGet()
-          ProgressManager.getInstance().run(object : Task.Backgroundable(project, myProgressTitle, false) {
-            override fun run(visibleIndicator: ProgressIndicator) {
-              try {
-                task.use { it.run(visibleIndicator) }
-              }
-              catch (pce: ProcessCanceledException) {
-                throw pce
-              }
-              catch (t: Throwable) {
-                LOG.error("Failed to execute background index update task", t)
-              } finally {
-                onFinish()
-              }
+          startInBackgroundWithVisibleOrInvisibleProgress { visibleOrInvisibleIndicator ->
+            try {
+              task.use { it.run(visibleOrInvisibleIndicator) }
             }
-          })
+            catch (pce: ProcessCanceledException) {
+              throw pce
+            }
+            catch (t: Throwable) {
+              LOG.error("Failed to execute background index update task", t)
+            }
+            finally {
+              onFinish()
+            }
+          }
         }
         catch (pce: ProcessCanceledException) {
           task.close()
@@ -183,6 +179,23 @@ open class MergingQueueGuiExecutor<T : MergeableQueueTask<T>> protected construc
       if (!startedInBackground) {
         onFinish()
       } // else - will be invoked from a background process
+    }
+  }
+
+  open fun shouldShowProgressIndicator(): Boolean = true
+
+  private fun startInBackgroundWithVisibleOrInvisibleProgress(task: (ProgressIndicator) -> Unit) {
+    val backgroundableTask = object : Task.Backgroundable(project, myProgressTitle, false) {
+      override fun run(visibleIndicator: ProgressIndicator) {
+        task(visibleIndicator)
+      }
+    }
+
+    if (shouldShowProgressIndicator()) {
+      ProgressManager.getInstance().run(backgroundableTask)
+    }
+    else {
+      ProgressManager.getInstance().runProcessWithProgressAsynchronously(backgroundableTask, EmptyProgressIndicator())
     }
   }
 
