@@ -91,8 +91,9 @@ public final class VcsLogData implements Disposable, VcsLogDataProvider {
     VcsLogProgress progress = new VcsLogProgress(this);
 
     if (VcsLogCachesInvalidator.getInstance().isValid()) {
-      myStorage = createStorage();
-      myIndex = createIndex(logProviders, progress);
+      String logId = PersistentUtil.calcLogId(myProject, myLogProviders);
+      myStorage = createStorage(logId);
+      myIndex = createIndex(logId, progress);
     }
     else {
       // this is not recoverable
@@ -132,12 +133,12 @@ public final class VcsLogData implements Disposable, VcsLogDataProvider {
     Disposer.register(this, myDisposableFlag);
   }
 
-  private @NotNull VcsLogStorage createStorage() {
+  private @NotNull VcsLogStorage createStorage(@NotNull String logId) {
     try {
       if (Registry.is("vcs.log.index.sqlite.storage", false)) {
-        return new SqliteVcsLogStorageBackend(myProject, myLogProviders, myErrorHandler, this);
+        return new SqliteVcsLogStorageBackend(myProject, logId, myLogProviders, myErrorHandler, this);
       }
-      return new VcsLogStorageImpl(myProject, myLogProviders, myErrorHandler, this);
+      return new VcsLogStorageImpl(myProject, logId, myLogProviders, myErrorHandler, this);
     }
     catch (IOException e) {
       LOG.error("Falling back to in-memory hashes", e);
@@ -146,12 +147,12 @@ public final class VcsLogData implements Disposable, VcsLogDataProvider {
   }
 
   @NotNull
-  private VcsLogModifiableIndex createIndex(@NotNull Map<VirtualFile, VcsLogProvider> logProviders, @NotNull VcsLogProgress progress) {
+  private VcsLogModifiableIndex createIndex(@NotNull String logId, @NotNull VcsLogProgress progress) {
     if (!VcsLogSharedSettings.isIndexSwitchedOn(myProject)) {
       LOG.info("Vcs log index is turned off for project " + myProject.getName());
       return new EmptyIndex();
     }
-    VcsLogPersistentIndex index = VcsLogPersistentIndex.create(myProject, myStorage, logProviders, progress, myErrorHandler, this);
+    VcsLogPersistentIndex index = VcsLogPersistentIndex.create(myProject, myStorage, logId, myLogProviders, progress, myErrorHandler, this);
     if (index == null) {
       LOG.error("Cannot create vcs log index for project " + myProject.getName());
       return new EmptyIndex();

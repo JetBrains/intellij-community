@@ -54,7 +54,6 @@ import java.util.function.Consumer;
 import java.util.stream.IntStream;
 
 import static com.intellij.openapi.vcs.VcsScopeKt.VcsScope;
-import static com.intellij.vcs.log.util.PersistentUtil.calcLogId;
 
 public final class VcsLogPersistentIndex implements VcsLogModifiableIndex, Disposable {
   static final Logger LOG = Logger.getInstance(VcsLogPersistentIndex.class);
@@ -282,6 +281,7 @@ public final class VcsLogPersistentIndex implements VcsLogModifiableIndex, Dispo
 
   public static @Nullable VcsLogPersistentIndex create(@NotNull Project project,
                                                        @NotNull VcsLogStorage storage,
+                                                       @NotNull String logId,
                                                        @NotNull Map<VirtualFile, VcsLogProvider> providers,
                                                        @NotNull VcsLogProgress progress,
                                                        @NotNull VcsLogErrorHandler errorHandler,
@@ -294,7 +294,7 @@ public final class VcsLogPersistentIndex implements VcsLogModifiableIndex, Dispo
       backend = (VcsLogStorageBackend)storage;
     }
     else {
-      backend = PhmVcsLogStorageBackend.create(project, storage, roots, calcLogId(project, providers), errorHandler, disposableParent);
+      backend = PhmVcsLogStorageBackend.create(project, storage, roots, logId, errorHandler, disposableParent);
     }
     if (backend == null) return null;
 
