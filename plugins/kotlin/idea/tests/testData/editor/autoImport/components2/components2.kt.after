@@ -1,0 +1,8 @@
+package testing
+
+import pkg.component1
+import pkg.component2
+
+fun testing() {
+    val (a, b) = ""
+}

@@ -9,19 +9,17 @@ import com.intellij.openapi.util.TextRange
 import com.intellij.psi.PsiFile
 import org.jetbrains.kotlin.diagnostics.Severity
 import org.jetbrains.kotlin.idea.actions.KotlinAddImportAction
-import org.jetbrains.kotlin.idea.actions.createGroupedImportsAction
 import org.jetbrains.kotlin.idea.caches.resolve.analyze
-import org.jetbrains.kotlin.idea.caches.resolve.resolveImportReference
 import org.jetbrains.kotlin.idea.core.targetDescriptors
 import org.jetbrains.kotlin.idea.highlighter.Fe10QuickFixProvider
 import org.jetbrains.kotlin.idea.quickfix.ImportFixBase
 import org.jetbrains.kotlin.name.FqName
+import org.jetbrains.kotlin.psi.KtExpression
 import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.psi.KtSimpleNameExpression
 import org.jetbrains.kotlin.psi.psiUtil.collectDescendantsOfType
 import org.jetbrains.kotlin.psi.psiUtil.elementsInRange
 import org.jetbrains.kotlin.psi.psiUtil.endOffset
-import org.jetbrains.kotlin.psi.psiUtil.startOffset
 import org.jetbrains.kotlin.resolve.lazy.BodyResolveMode
 import java.util.function.BooleanSupplier
 
@@ -49,19 +47,16 @@ abstract class AbstractKotlinReferenceImporter : ReferenceImporter {
         (it.isAllUnder || it.importPath?.importedName?.asString() == name) && it.targetDescriptors().isEmpty()
     }
 
-    private fun computeAutoImport(file: KtFile,
-                                  editor: Editor,
-                                  reference: KtSimpleNameExpression,
-                                  startOffset: Int,
-                                  endOffset: Int): KotlinAddImportAction? {
-        if (hasUnresolvedImportWhichCanImport(file, reference.getReferencedName())) return null
+    private fun computeAutoImport(file: KtFile, editor: Editor, expression: KtExpression): KotlinAddImportAction? {
+        val referencedName = (expression as? KtSimpleNameExpression)?.getReferencedName()
+        if (referencedName != null && hasUnresolvedImportWhichCanImport(file, referencedName)) return null
 
-        val bindingContext = reference.analyze(BodyResolveMode.PARTIAL_WITH_DIAGNOSTICS)
+        val bindingContext = expression.analyze(BodyResolveMode.PARTIAL_WITH_DIAGNOSTICS)
         val diagnostics = bindingContext.diagnostics.filter {
-            it.severity == Severity.ERROR && startOffset <= it.psiElement.startOffset && it.psiElement.endOffset <= endOffset
+            it.severity == Severity.ERROR && expression.textRange in it.psiElement.textRange
         }.ifEmpty { return null }
 
-        val quickFixProvider = Fe10QuickFixProvider.getInstance(reference.project)
+        val quickFixProvider = Fe10QuickFixProvider.getInstance(expression.project)
 
         return sequence {
             diagnostics.groupBy { it.psiElement }.forEach { (_, sameElementDiagnostics) ->
@@ -86,10 +81,10 @@ abstract class AbstractKotlinReferenceImporter : ReferenceImporter {
         val lineNumber = document.getLineNumber(offset)
         val startOffset = document.getLineStartOffset(lineNumber)
         val endOffset = document.getLineEndOffset(lineNumber)
-        val nameExpressions = file.elementsInRange(TextRange(startOffset, endOffset))
-            .flatMap { it.collectDescendantsOfType<KtSimpleNameExpression>() }
-        val action: KotlinAddImportAction = nameExpressions.firstNotNullOfOrNull { ref ->
-            if (ref.endOffset != offset) computeAutoImport(file, editor, ref, startOffset, endOffset) else null
+        val expressions = file.elementsInRange(TextRange(startOffset, endOffset))
+            .flatMap { it.collectDescendantsOfType<KtExpression>() }
+        val action: KotlinAddImportAction = expressions.firstNotNullOfOrNull { expression ->
+            if (expression.endOffset != offset) computeAutoImport(file, editor, expression) else null
         } ?: return null
 
         return BooleanSupplier {

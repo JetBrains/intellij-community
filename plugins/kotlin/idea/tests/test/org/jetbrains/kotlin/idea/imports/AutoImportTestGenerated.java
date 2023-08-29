@@ -40,6 +40,11 @@ public abstract class AutoImportTestGenerated extends AbstractAutoImportTest {
             runTest("testData/editor/autoImport/components/");
         }
 
+        @TestMetadata("components2")
+        public void testComponents2() throws Exception {
+            runTest("testData/editor/autoImport/components2/");
+        }
+
         @TestMetadata("constructorReference")
         public void testConstructorReference() throws Exception {
             runTest("testData/editor/autoImport/constructorReference/");
@@ -73,6 +78,11 @@ public abstract class AutoImportTestGenerated extends AbstractAutoImportTest {
         @TestMetadata("method")
         public void testMethod() throws Exception {
             runTest("testData/editor/autoImport/method/");
+        }
+
+        @TestMetadata("multilineCall")
+        public void testMultilineCall() throws Exception {
+            runTest("testData/editor/autoImport/multilineCall/");
         }
 
         @TestMetadata("nestedClassifier")
@@ -113,6 +123,11 @@ public abstract class AutoImportTestGenerated extends AbstractAutoImportTest {
             runTest("testData/editor/autoImport/components/");
         }
 
+        @TestMetadata("components2")
+        public void testComponents2() throws Exception {
+            runTest("testData/editor/autoImport/components2/");
+        }
+
         @TestMetadata("constructorReference")
         public void testConstructorReference() throws Exception {
             runTest("testData/editor/autoImport/constructorReference/");
@@ -146,6 +161,11 @@ public abstract class AutoImportTestGenerated extends AbstractAutoImportTest {
         @TestMetadata("method")
         public void testMethod() throws Exception {
             runTest("testData/editor/autoImport/method/");
+        }
+
+        @TestMetadata("multilineCall")
+        public void testMultilineCall() throws Exception {
+            runTest("testData/editor/autoImport/multilineCall/");
         }
 
         @TestMetadata("nestedClassifier")
