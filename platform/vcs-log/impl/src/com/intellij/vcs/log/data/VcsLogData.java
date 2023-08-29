@@ -157,6 +157,10 @@ public final class VcsLogData implements Disposable, VcsLogDataProvider {
     }
 
     Map<VirtualFile, VcsLogIndexer> indexers = VcsLogPersistentIndex.getAvailableIndexers(myLogProviders);
+    if (indexers.isEmpty()) {
+      LOG.info("No indexers found for project " + myProject.getName());
+      return new EmptyIndex();
+    }
 
     VcsLogStorageBackend backend;
     if (myStorage instanceof VcsLogStorageBackend) {
