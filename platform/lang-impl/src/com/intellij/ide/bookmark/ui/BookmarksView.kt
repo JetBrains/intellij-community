@@ -23,8 +23,10 @@ import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.ModalityState.stateForComponent
 import com.intellij.openapi.fileEditor.impl.FileEditorManagerImpl.Companion.OPEN_IN_PREVIEW_TAB
 import com.intellij.openapi.fileTypes.FileTypes
+import com.intellij.openapi.module.ModuleUtilCore
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.openapi.vfs.validOrNull
 import com.intellij.ui.OnePixelSplitter
 import com.intellij.ui.PopupHandler
 import com.intellij.ui.ScrollPaneFactory.createScrollPane
@@ -71,7 +73,6 @@ class BookmarksView(val project: Project, showToolbar: Boolean?)
   private val treeExpander = DefaultTreeExpander(tree)
   private val panel = BorderLayoutPanel()
   private val updater = FolderNodeUpdater(this)
-  private val ideView = IdeViewForBookmarksView(this)
 
   val selectedNode: AbstractTreeNode<*>?
     get() = TreeUtil.getAbstractTreeNode(TreeUtil.getSelectedPathIfOne(tree))
@@ -96,7 +97,6 @@ class BookmarksView(val project: Project, showToolbar: Boolean?)
 
   override fun getData(dataId: String): Any? = when {
     BOOKMARKS_VIEW.`is`(dataId) -> this
-    LangDataKeys.IDE_VIEW.`is`(dataId) -> ideView
     PlatformDataKeys.TREE_EXPANDER.`is`(dataId) -> treeExpander
     PlatformDataKeys.SELECTED_ITEMS.`is`(dataId) -> selectedNodes?.toArray(emptyArray<Any>())
     PlatformDataKeys.SELECTED_ITEM.`is`(dataId) -> selectedNodes?.firstOrNull()
@@ -111,10 +111,13 @@ class BookmarksView(val project: Project, showToolbar: Boolean?)
 
   @RequiresBackgroundThread
   private fun getSlowData(dataId: String, selection: List<AbstractTreeNode<*>>?): Any? = when {
-    PlatformDataKeys.VIRTUAL_FILE.`is`(dataId) -> selection?.firstOrNull()?.asVirtualFile
-    PlatformDataKeys.VIRTUAL_FILE_ARRAY.`is`(dataId) -> selection?.mapNotNull { it.asVirtualFile }?.ifEmpty { null }?.toTypedArray()
-    PlatformCoreDataKeys.MODULE.`is`(dataId) -> selection?.firstOrNull()?.module
-    Location.DATA_KEY.`is`(dataId) -> selection?.firstOrNull()?.location
+    PlatformDataKeys.VIRTUAL_FILE.`is`(dataId) -> selection?.firstOrNull()?.asVirtualFile()
+    PlatformDataKeys.VIRTUAL_FILE_ARRAY.`is`(dataId) -> selection?.mapNotNull { it.asVirtualFile() }?.ifEmpty { null }?.toTypedArray()
+    PlatformCoreDataKeys.MODULE.`is`(dataId) -> selection?.firstOrNull()?.asVirtualFile()?.validOrNull()?.let {
+      ModuleUtilCore.findModuleForFile(it, project)
+    }
+    Location.DATA_KEY.`is`(dataId) -> selection?.firstOrNull()?.toLocation()
+    LangDataKeys.IDE_VIEW.`is`(dataId) -> IdeViewForBookmarksView(this, selection)
     else -> null
   }
 
@@ -200,7 +203,7 @@ class BookmarksView(val project: Project, showToolbar: Boolean?)
 
   private fun selectionChanged(autoScroll: Boolean = tree.hasFocus()) {
     if (isPopup || !openInPreviewTab.isEnabled) {
-      preview.open(selectedNode?.asDescriptor)
+      preview.open(selectedNode?.toOpenFileDescriptor())
     }
     else {
       preview.close()
@@ -212,7 +215,7 @@ class BookmarksView(val project: Project, showToolbar: Boolean?)
 
   private fun navigateToSource(requestFocus: Boolean) {
     val node = selectedNode ?: return
-    if (node.asVirtualFile?.fileType == FileTypes.UNKNOWN) { return }
+    if (node.asVirtualFile()?.fileType == FileTypes.UNKNOWN) { return }
     val task = Runnable { OpenSourceUtil.navigateToSource(requestFocus, false, node) }
     ApplicationManager.getApplication()?.invokeLater(task, stateForComponent(tree)) { project.isDisposed }
   }

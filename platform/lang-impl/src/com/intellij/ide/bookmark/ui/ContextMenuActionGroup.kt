@@ -1,6 +1,7 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.bookmark.ui
 
+import com.intellij.ide.bookmark.ui.tree.FolderNode
 import com.intellij.ide.bookmark.ui.tree.GroupNode
 import com.intellij.ide.ui.customization.CustomActionsSchema
 import com.intellij.openapi.actionSystem.ActionGroup
@@ -8,6 +9,7 @@ import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.Separator
 import com.intellij.openapi.project.DumbAware
+import com.intellij.util.containers.nullize
 import com.intellij.util.ui.tree.TreeUtil
 import javax.swing.JTree
 import javax.swing.tree.DefaultMutableTreeNode
@@ -15,7 +17,9 @@ import javax.swing.tree.DefaultMutableTreeNode
 internal class ContextMenuActionGroup(private val tree: JTree) : DumbAware, ActionGroup() {
 
   override fun getChildren(event: AnActionEvent?): Array<AnAction> {
-    val paths = TreeUtil.getSelectedPathsIfAll(tree) { it.parentPath?.findFolderNode != null }
+    val paths = tree.selectionPaths.nullize()?.apply {
+      if (any { TreeUtil.findObjectInPath(it.parentPath, FolderNode::class.java) == null}) null else this
+    }
     val actions = mutableListOf<AnAction>()
 
     val addGroup: (String) -> Unit = {

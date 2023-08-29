@@ -1304,21 +1304,16 @@ public final class TreeUtil {
     return getLastUserObject(AbstractTreeNode.class, path);
   }
 
+  public static <T> @Nullable T getParentNodeOfType(@Nullable AbstractTreeNode<?> node, @NotNull Class<T> aClass) {
+    for (AbstractTreeNode<?> cur = node; cur != null; cur = cur.getParent()) {
+      if (aClass.isInstance(cur)) return (T)cur;
+    }
+    return null;
+  }
+
   public static @Nullable TreePath getSelectedPathIfOne(@Nullable JTree tree) {
     TreePath[] paths = tree == null ? null : tree.getSelectionPaths();
     return paths != null && paths.length == 1 ? paths[0] : null;
-  }
-
-  /**
-   * @param tree      a tree, which selection is requested
-   * @param predicate a predicate that validates selected paths
-   * @return an array with all selected paths if all of them are valid
-   */
-  public static TreePath @Nullable [] getSelectedPathsIfAll(@Nullable JTree tree, @NotNull Predicate<? super TreePath> predicate) {
-    TreePath[] paths = tree == null ? null : tree.getSelectionPaths();
-    if (paths == null || paths.length == 0) return null;
-    for (TreePath path : paths) if (path == null || !predicate.test(path)) return null;
-    return paths;
   }
 
   /** @deprecated use TreeUtil#treePathTraverser() */
