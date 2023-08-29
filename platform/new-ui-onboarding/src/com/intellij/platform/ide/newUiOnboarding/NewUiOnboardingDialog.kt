@@ -8,7 +8,6 @@ import com.intellij.openapi.application.invokeLater
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.DialogWrapper
 import com.intellij.openapi.util.IconLoader
-import com.intellij.openapi.util.text.HtmlChunk
 import com.intellij.ui.*
 import com.intellij.ui.dsl.builder.panel
 import com.intellij.ui.dsl.gridLayout.UnscaledGaps
@@ -121,31 +120,11 @@ class NewUiOnboardingDialog(project: Project)
     }, browser.cefBrowser)
 
     val videoBase64 = readVideoAsBase64()
-    val pageHtml = createVideoHtmlPage(videoBase64)
+    val pageHtml = WebAnimationUtils.createVideoHtmlPage(videoBase64, backgroundColor)
     browser.loadHTML(pageHtml)
 
     multiPanel.select(BROWSER_KEY, true)
     return multiPanel
-  }
-
-  private fun createVideoHtmlPage(videoBase64: String): String {
-    val componentId = "video"
-    val head = HtmlChunk.head().child(LottieUtils.getSingleContentCssStyles(backgroundColor, componentId))
-
-    val videoTag = HtmlChunk.tag("video")
-      .attr("id", componentId)
-      .attr("autoplay")
-      .attr("loop")
-      .attr("muted")
-      .child(HtmlChunk.tag("source")
-               .attr("type", "video/webm")
-               .attr("src", "data:video/webm;base64,$videoBase64"))
-    val body = HtmlChunk.body().child(videoTag)
-
-    return HtmlChunk.html()
-      .child(head)
-      .child(body)
-      .toString()
   }
 
   private fun readVideoAsBase64(): String {

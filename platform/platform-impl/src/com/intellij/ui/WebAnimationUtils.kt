@@ -1,7 +1,6 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui
 
-import com.intellij.openapi.util.text.HtmlBuilder
 import com.intellij.openapi.util.text.HtmlChunk
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
@@ -13,23 +12,18 @@ import java.awt.Dimension
 
 @ApiStatus.Experimental
 @ApiStatus.Internal
-object LottieUtils {
+object WebAnimationUtils {
   @Suppress("HardCodedStringLiteral")
   fun createLottieAnimationPage(lottieJson: String, lottieScript: String? = null, background: Color): String {
     val componentId = "lottie"
-    val head = HtmlBuilder()
-      .append(getSingleContentCssStyles(background, componentId))
-      .wrapWith(HtmlChunk.head())
-
     val script = if (lottieScript != null) {
       HtmlChunk.tag("script").addRaw(lottieScript)
     }
     else createDownloadableLottieScriptTag()
-
-    val body = HtmlBuilder()
-      .append(script)
-      .append(HtmlChunk.div().attr("id", componentId).addRaw(""))
-      .append(HtmlChunk.tag("script").addRaw("""
+    val body = HtmlChunk.body()
+      .child(script)
+      .child(HtmlChunk.div().attr("id", componentId).addRaw(""))
+      .child(HtmlChunk.tag("script").addRaw("""
            const animationData = $lottieJson;
            const params = {
                container: document.getElementById('lottie'),
@@ -40,17 +34,33 @@ object LottieUtils {
            };
            lottie.loadAnimation(params);
            """.trimIndent()))
-      .wrapWith(HtmlChunk.body())
+    return createSingleContentHtmlPage(body, background, componentId)
+  }
 
-    return HtmlBuilder()
-      .append(head)
-      .append(body)
-      .wrapWith(HtmlChunk.html())
+  fun createVideoHtmlPage(videoBase64: String, background: Color): String {
+    val componentId = "video"
+    val videoTag = HtmlChunk.tag("video")
+      .attr("id", componentId)
+      .attr("autoplay")
+      .attr("loop")
+      .attr("muted")
+      .child(HtmlChunk.tag("source")
+               .attr("type", "video/webm")
+               .attr("src", "data:video/webm;base64,$videoBase64"))
+    val body = HtmlChunk.body().child(videoTag)
+    return createSingleContentHtmlPage(body, background, componentId)
+  }
+
+  private fun createSingleContentHtmlPage(body: HtmlChunk, background: Color, componentId: String): String {
+    val head = HtmlChunk.head().child(getSingleContentCssStyles(background, componentId))
+    return HtmlChunk.html()
+      .child(head)
+      .child(body)
       .toString()
   }
 
   @Suppress("HardCodedStringLiteral")
-  fun getSingleContentCssStyles(background: Color, componentId: String): HtmlChunk {
+  private fun getSingleContentCssStyles(background: Color, componentId: String): HtmlChunk {
     return HtmlChunk.tag("style").addRaw("""
           body {
               background-color: #${ColorUtil.toHex(background)};
