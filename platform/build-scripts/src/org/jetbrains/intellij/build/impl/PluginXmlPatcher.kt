@@ -14,6 +14,11 @@ internal val pluginDateFormat = DateTimeFormatter.ofPattern("yyyyMMdd")
 private val buildNumberRegex = Regex("(\\d+\\.)+\\d+")
 
 fun getCompatiblePlatformVersionRange(compatibleBuildRange: CompatibleBuildRange, buildNumber: String): Pair<String, String> {
+  // Android Studio (b/297428302): use the 3-component API version for plugin compatibility purposes
+  if (buildNumber.endsWith("__BUILD_NUMBER__")) {
+    val shortBuildNumber = buildNumber.split(".").take(3).joinToString(".")
+    return Pair(shortBuildNumber, "$shortBuildNumber.*")
+  }
   if (compatibleBuildRange == CompatibleBuildRange.EXACT || !buildNumber.matches(buildNumberRegex)) {
     return Pair(buildNumber, buildNumber)
   }
