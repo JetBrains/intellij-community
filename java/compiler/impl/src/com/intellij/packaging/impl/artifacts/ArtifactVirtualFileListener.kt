@@ -17,11 +17,14 @@ import com.intellij.packaging.impl.artifacts.workspacemodel.ArtifactManagerBridg
 import com.intellij.packaging.impl.elements.FileOrDirectoryCopyPackagingElement
 import com.intellij.util.PathUtil
 import com.intellij.platform.backend.workspace.WorkspaceModel.Companion.getInstance
-import com.intellij.platform.workspace.storage.CachedValue
-import com.intellij.platform.workspace.storage.EntityStorage
-import com.intellij.platform.workspace.storage.ExternalEntityMapping
 import com.intellij.java.workspace.entities.ArtifactEntity
 import com.intellij.java.workspace.entities.FileOrDirectoryPackagingElementEntity
+import com.intellij.platform.backend.workspace.useNewWorkspaceModelApi
+import com.intellij.platform.backend.workspace.workspaceModel
+import com.intellij.platform.workspace.storage.*
+import com.intellij.platform.workspace.storage.query.entities
+import com.intellij.platform.workspace.storage.query.flatMap
+import com.intellij.platform.workspace.storage.query.groupBy
 
 internal class ArtifactVirtualFileListener(private val project: Project) : BulkFileListener {
   private val parentPathsToArtifacts: CachedValue<Map<String, List<ArtifactEntity>>> = CachedValue { storage: EntityStorage ->
@@ -40,7 +43,14 @@ internal class ArtifactVirtualFileListener(private val project: Project) : BulkF
   }
 
   private fun filePathChanged(oldPath: String, newPath: String) {
-    val artifactEntities = parentPathToArtifacts[oldPath] ?: return
+    val artifactEntities = if (useNewWorkspaceModelApi()) {
+      val refs = parentPathToArtifactReferences[oldPath]?.asSequence() ?: return
+      val storage = project.workspaceModel.entityStorage.current
+      refs.map { it.resolve(storage)!! }
+    }
+    else {
+      parentPathToArtifacts[oldPath]?.asSequence() ?: return
+    }
     val artifactManager = ArtifactManager.getInstance(project)
 
     //this is needed to set up mapping from ArtifactEntity to ArtifactBridge
@@ -64,6 +74,12 @@ internal class ArtifactVirtualFileListener(private val project: Project) : BulkF
     model.commit()
   }
 
+  private val parentPathToArtifactReferences: Map<String, List<EntityReference<ArtifactEntity>>>
+    get() {
+      val storage = project.workspaceModel.entityStorage.current
+      return (storage as EntityStorageSnapshot).cached(query)
+    }
+
   private val parentPathToArtifacts: Map<String, List<ArtifactEntity>>
     get() = getInstance(project).entityStorage.cachedValue(parentPathsToArtifacts)
 
@@ -79,6 +95,21 @@ internal class ArtifactVirtualFileListener(private val project: Project) : BulkF
 
   companion object {
     private val LOG = Logger.getInstance(ArtifactVirtualFileListener::class.java)
+
+    private val query = entities<ArtifactEntity>()
+      .flatMap { artifactEntity ->
+        buildList {
+          processFileOrDirectoryCopyElements(artifactEntity) { entity ->
+            var path = VfsUtilCore.urlToPath(entity.filePath.url)
+            while (path.isNotEmpty()) {
+              add(artifactEntity.createReference<ArtifactEntity>() to path)
+              path = PathUtil.getParentPath(path)
+            }
+            true
+          }
+        }
+      }
+      .groupBy({ it.second }, { it.first })
 
     private fun computeParentPathToArtifactMap(storage: EntityStorage): Map<String, MutableList<ArtifactEntity>> {
       val result: MutableMap<String, MutableList<ArtifactEntity>> = HashMap()
