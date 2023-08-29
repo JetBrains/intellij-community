@@ -26,11 +26,11 @@ class ConversionToKotlinTest : KotlinGradleImportingTestCase() {
                 val collector = NotificationMessageCollector.create(myProject)
                 val (kotlinVersionsAndModules, rootModuleKotlinVersion) = getKotlinVersionsAndModules(myProject, configurator)
                 configurator.configureWithVersion(
-                  myProject,
-                  listOf(subModule),
-                  IdeKotlinVersion.get("1.9.0"),
-                  collector,
-                  kotlinVersionsAndModules,
+                    myProject,
+                    listOf(subModule),
+                    IdeKotlinVersion.get("1.9.0"),
+                    collector,
+                    kotlinVersionsAndModules,
                 )
 
                 val subModules = listOf("app", "app1")
@@ -521,6 +521,56 @@ class ConversionToKotlinTest : KotlinGradleImportingTestCase() {
                     kotlinVersionsAndModules,
                 )
                 checkFiles(files)
+            }
+        }
+    }
+
+    @Test
+    @TargetVersions("7.6+")
+    fun testConfigureKotlinConventionPluginsGroovy() {
+        val files = importProjectFromTestData()
+
+        runInEdtAndWait {
+            runWriteAction {
+                val module = ModuleManager.getInstance(myProject).findModuleByName("conventions.javamodule")!!
+                val configurator = findGradleModuleConfigurator()
+                val collector = NotificationMessageCollector.create(myProject)
+                val (kotlinVersionsAndModules, rootModuleKotlinVersion) = getKotlinVersionsAndModules(myProject, configurator)
+                configurator.configureWithVersion(
+                    myProject,
+                    listOf(module),
+                    IdeKotlinVersion.get("1.8.22"),
+                    collector,
+                    kotlinVersionsAndModules,
+                )
+
+                val subModules = listOf("javamodule", "kotlinmodule", "buildSrc")
+                checkFilesInMultimoduleProject(files, subModules)
+            }
+        }
+    }
+
+    @Test
+    @TargetVersions("7.6+")
+    fun testConfigureKotlinConventionPluginsKotlin() {
+        val files = importProjectFromTestData()
+
+        runInEdtAndWait {
+            runWriteAction {
+                val module = ModuleManager.getInstance(myProject).findModuleByName("conventions.javamodule")!!
+                val configurator = findGradleModuleConfigurator()
+                val collector = NotificationMessageCollector.create(myProject)
+                val (kotlinVersionsAndModules, rootModuleKotlinVersion) = getKotlinVersionsAndModules(myProject, configurator)
+                configurator.configureWithVersion(
+                    myProject,
+                    listOf(module),
+                    IdeKotlinVersion.get("1.8.22"),
+                    collector,
+                    kotlinVersionsAndModules,
+                )
+
+                val subModules = listOf("javamodule", "kotlinmodule", "buildSrc")
+                checkFilesInMultimoduleProject(files, subModules)
             }
         }
     }
