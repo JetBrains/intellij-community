@@ -15,9 +15,9 @@ import com.intellij.openapi.project.ProjectManager;
 import com.intellij.ui.ExperimentalUI;
 import org.jetbrains.annotations.NotNull;
 
-public class EditRunConfigurationsAction extends DumbAwareAction {
+public final class EditRunConfigurationsAction extends DumbAwareAction {
   @Override
-  public void actionPerformed(@NotNull final AnActionEvent e) {
+  public void actionPerformed(final @NotNull AnActionEvent e) {
     Project project = e.getData(CommonDataKeys.PROJECT);
     if (project != null && project.isDisposed()) {
       return;
@@ -41,7 +41,7 @@ public class EditRunConfigurationsAction extends DumbAwareAction {
   }
 
   @Override
-  public void update(@NotNull final AnActionEvent e) {
+  public void update(final @NotNull AnActionEvent e) {
     Presentation presentation = e.getPresentation();
     // we always show it enabled even in DumbMode,
     // 99% chances there will be some editable run configuration inside

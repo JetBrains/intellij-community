@@ -47,8 +47,7 @@ public final class ScriptFileUtil {
     return url;
   }
 
-  @Nullable
-  public static VirtualFile findScriptFileByPath(@Nullable String path) {
+  public static @Nullable VirtualFile findScriptFileByPath(@Nullable String path) {
     if (StringUtil.isEmpty(path)) return null;
     if (!path.startsWith(SCHEME)) {
       return LocalFileSystem.getInstance().findFileByPath(path);
@@ -56,8 +55,7 @@ public final class ScriptFileUtil {
     return ourFilesMap.get(path);
   }
 
-  @NotNull
-  public static String getLocalFilePath(@NotNull String scriptPath) throws CantRunException {
+  public static @NotNull String getLocalFilePath(@NotNull String scriptPath) throws CantRunException {
     if (isMemoryScriptPath(scriptPath)) {
       File tmpFile = copyToTempFile(scriptPath);
       return tmpFile.getAbsolutePath();
@@ -65,8 +63,7 @@ public final class ScriptFileUtil {
     return scriptPath;
   }
 
-  @NotNull
-  public static File copyToTempFile(@NotNull @NlsSafe String path) throws CantRunException {
+  public static @NotNull File copyToTempFile(@NotNull @NlsSafe String path) throws CantRunException {
     VirtualFile virtualFile = findScriptFileByPath(path);
     if (virtualFile == null) {
       throw new CantRunException(ExecutionBundle.message("script.exception.file.not.found", path));
@@ -98,8 +95,7 @@ public final class ScriptFileUtil {
     FileUtil.writeToFile(destFile, result, false);
   }
 
-  @NotNull
-  private static CharSequence getContent(@NotNull VirtualFile file) {
+  private static @NotNull CharSequence getContent(@NotNull VirtualFile file) {
     Document document = FileDocumentManager.getInstance().getCachedDocument(file);
     if (document != null) {
       return document.getText();

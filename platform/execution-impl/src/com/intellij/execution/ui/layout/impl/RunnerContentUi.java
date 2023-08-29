@@ -84,10 +84,10 @@ public final class RunnerContentUi implements ContentUI, Disposable, CellTransfo
   public static final DataKey<RunnerContentUi> KEY = DataKey.create("DebuggerContentUI");
   public static final Key<Boolean> LIGHTWEIGHT_CONTENT_MARKER = Key.create("LightweightContent");
 
-  @NonNls private static final String LAYOUT = "Runner.Layout";
-  @NonNls private static final String SETTINGS = "XDebugger.Settings";
-  @NonNls private static final String VIEW_POPUP = "Runner.View.Popup";
-  @NonNls static final String VIEW_TOOLBAR = "Runner.View.Toolbar";
+  private static final @NonNls String LAYOUT = "Runner.Layout";
+  private static final @NonNls String SETTINGS = "XDebugger.Settings";
+  private static final @NonNls String VIEW_POPUP = "Runner.View.Popup";
+  static final @NonNls String VIEW_TOOLBAR = "Runner.View.Toolbar";
 
   private ShowDebugContentAction myShowDebugContentAction = null;
 
@@ -478,8 +478,7 @@ public final class RunnerContentUi implements ContentUI, Disposable, CellTransfo
     return myWindow;
   }
 
-  @NotNull
-  public JBTabs getTabs() { return myTabs; }
+  public @NotNull JBTabs getTabs() { return myTabs; }
 
   public AnAction @NotNull[] getViewActions() {
     return myViewActions.getChildren(null);
@@ -1536,7 +1535,7 @@ public final class RunnerContentUi implements ContentUI, Disposable, CellTransfo
     return myToDisposeRemovedContent;
   }
 
-  private static class MyDropAreaPainter extends AbstractPainter {
+  private static final class MyDropAreaPainter extends AbstractPainter {
     private Shape myBoundingBox;
 
     @Override
@@ -1608,7 +1607,7 @@ public final class RunnerContentUi implements ContentUI, Disposable, CellTransfo
     }
   }
 
-  private class MyComponent extends NonOpaquePanel implements DataProvider, QuickActionProvider {
+  private final class MyComponent extends NonOpaquePanel implements DataProvider, QuickActionProvider {
     private boolean myWasEverAdded;
 
     MyComponent() {
@@ -1919,7 +1918,7 @@ public final class RunnerContentUi implements ContentUI, Disposable, CellTransfo
     return (DockManagerImpl)DockManager.getInstance(myProject);
   }
 
-  class MyDragOutDelegate implements TabInfo.DragOutDelegate {
+  final class MyDragOutDelegate implements TabInfo.DragOutDelegate {
     private DragSession mySession;
 
     @Override
@@ -1961,7 +1960,7 @@ public final class RunnerContentUi implements ContentUI, Disposable, CellTransfo
     }
   }
 
-  class DockableGrid implements DockableContent<List<Content>> {
+  final class DockableGrid implements DockableContent<List<Content>> {
     private final Image myImg;
     private final Presentation myPresentation;
     private final Dimension myPreferredSize;
@@ -2022,7 +2021,7 @@ public final class RunnerContentUi implements ContentUI, Disposable, CellTransfo
     }
   }
 
-  public static class ShowDebugContentAction extends AnAction implements DumbAware {
+  public static final class ShowDebugContentAction extends AnAction implements DumbAware {
     public static final String ACTION_ID = "ShowDebugContent";
 
     private RunnerContentUi myContentUi;
@@ -2054,7 +2053,7 @@ public final class RunnerContentUi implements ContentUI, Disposable, CellTransfo
     }
   }
 
-  private static class ToggleSeparateWatches extends DumbAwareToggleAction {
+  private static final class ToggleSeparateWatches extends DumbAwareToggleAction {
 
     private final @NotNull ToggleAction delegate;
     private final boolean myInverted;

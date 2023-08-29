@@ -36,7 +36,7 @@ import java.util.List;
 /**
  * @author Vassiliy Kudryashov
  */
-public class RunConfigurationBeforeRunProvider
+public final class RunConfigurationBeforeRunProvider
   extends BeforeRunTaskProvider<RunConfigurationBeforeRunProvider.RunConfigurableBeforeRunTask> implements DumbAware {
   public static final Key<RunConfigurableBeforeRunTask> ID = Key.create("RunConfigurationTask");
 
@@ -92,8 +92,7 @@ public class RunConfigurationBeforeRunProvider
   }
 
   @Override
-  @Nullable
-  public RunConfigurableBeforeRunTask createTask(@NotNull RunConfiguration runConfiguration) {
+  public @Nullable RunConfigurableBeforeRunTask createTask(@NotNull RunConfiguration runConfiguration) {
     return new RunConfigurableBeforeRunTask();
   }
 
@@ -123,8 +122,7 @@ public class RunConfigurationBeforeRunProvider
     return result;
   }
 
-  @NotNull
-  private static List<RunnerAndConfigurationSettings> getAvailableConfigurations(@NotNull RunConfiguration runConfiguration) {
+  private static @NotNull List<RunnerAndConfigurationSettings> getAvailableConfigurations(@NotNull RunConfiguration runConfiguration) {
     Project project = runConfiguration.getProject();
     if (project == null || !project.isInitialized()) {
       return Collections.emptyList();
@@ -157,9 +155,9 @@ public class RunConfigurationBeforeRunProvider
   }
 
   @Override
-  public boolean executeTask(@NotNull final DataContext dataContext,
+  public boolean executeTask(final @NotNull DataContext dataContext,
                              @NotNull RunConfiguration configuration,
-                             @NotNull final ExecutionEnvironment env,
+                             final @NotNull ExecutionEnvironment env,
                              @NotNull RunConfigurableBeforeRunTask task) {
     Pair<RunnerAndConfigurationSettings, ExecutionTarget> settings = task.getSettingsWithTarget();
     if (settings.first == null) {
@@ -168,9 +166,9 @@ public class RunConfigurationBeforeRunProvider
     return doExecuteTask(env, settings.first, settings.second);
   }
 
-  public static boolean doExecuteTask(@NotNull final ExecutionEnvironment env,
-                                      @NotNull final RunnerAndConfigurationSettings settings,
-                                      @Nullable final ExecutionTarget target) {
+  public static boolean doExecuteTask(final @NotNull ExecutionEnvironment env,
+                                      final @NotNull RunnerAndConfigurationSettings settings,
+                                      final @Nullable ExecutionTarget target) {
     RunConfiguration configuration = settings.getConfiguration();
     Executor executor = configuration instanceof BeforeRunTaskAwareConfiguration &&
                         ((BeforeRunTaskAwareConfiguration)configuration).useRunExecutor()
@@ -220,14 +218,14 @@ public class RunConfigurationBeforeRunProvider
 
     environment.getProject().getMessageBus().connect(disposable).subscribe(ExecutionManager.EXECUTION_TOPIC, new ExecutionListener() {
       @Override
-      public void processStartScheduled(@NotNull final String executorIdLocal, @NotNull final ExecutionEnvironment environmentLocal) {
+      public void processStartScheduled(final @NotNull String executorIdLocal, final @NotNull ExecutionEnvironment environmentLocal) {
         if (executorId.equals(executorIdLocal) && environment.equals(environmentLocal)) {
           targetDone.down();
         }
       }
 
       @Override
-      public void processNotStarted(@NotNull final String executorIdLocal, @NotNull final ExecutionEnvironment environmentLocal) {
+      public void processNotStarted(final @NotNull String executorIdLocal, final @NotNull ExecutionEnvironment environmentLocal) {
         if (executorId.equals(executorIdLocal) && environment.equals(environmentLocal)) {
           Boolean skipRun = environment.getUserData(ExecutionManagerImpl.EXECUTION_SKIP_RUN);
           if (skipRun != null && skipRun) {
@@ -278,7 +276,7 @@ public class RunConfigurationBeforeRunProvider
     }
   }
 
-  public class RunConfigurableBeforeRunTask extends BeforeRunTask<RunConfigurableBeforeRunTask> {
+  public final class RunConfigurableBeforeRunTask extends BeforeRunTask<RunConfigurableBeforeRunTask> {
     private final TypeNameTarget myTypeNameTarget = new TypeNameTarget();
 
     private Pair<@Nullable RunnerAndConfigurationSettings, @Nullable ExecutionTarget> mySettingsWithTarget;
@@ -359,8 +357,7 @@ public class RunConfigurationBeforeRunProvider
       }
     }
 
-    @Nullable
-    public RunnerAndConfigurationSettings getSettings() {
+    public @Nullable RunnerAndConfigurationSettings getSettings() {
       return Pair.getFirst(getSettingsWithTarget());
     }
 

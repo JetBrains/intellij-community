@@ -32,8 +32,7 @@ public abstract class RunLineMarkerContributor {
   /**
    * Creates test run line marker info with a given icon and available executor actions.
    */
-  @NotNull
-  public static Info withExecutorActions(@NotNull Icon icon) {
+  public static @NotNull Info withExecutorActions(@NotNull Icon icon) {
     return new Info(icon, ExecutorAction.getActions(1), RUN_TEST_TOOLTIP_PROVIDER);
   }
 
@@ -81,8 +80,7 @@ public abstract class RunLineMarkerContributor {
   /**
    * Returns information about gutter icon, its tooltip, and available run actions for a given PSI element.
    */
-  @Nullable
-  public abstract Info getInfo(@NotNull PsiElement element);
+  public abstract @Nullable Info getInfo(@NotNull PsiElement element);
 
   /**
    * Returns information about gutter icon, its tooltip, and available run actions for a given PSI element.
@@ -102,8 +100,7 @@ public abstract class RunLineMarkerContributor {
     return true;
   }
 
-  @Nullable("null means disabled")
-  protected static String getText(@NotNull AnAction action, @NotNull PsiElement element) {
+  protected static @Nullable("null means disabled") String getText(@NotNull AnAction action, @NotNull PsiElement element) {
     if (!(action instanceof ExecutorAction)) {
       return null;
     }
@@ -119,13 +116,11 @@ public abstract class RunLineMarkerContributor {
     return event.getPresentation().getText();
   }
 
-  @NotNull
-  protected static Icon getTestStateIcon(String url, @NotNull Project project, boolean isClass) {
+  protected static @NotNull Icon getTestStateIcon(String url, @NotNull Project project, boolean isClass) {
     return getTestStateIcon(TestStateStorage.getInstance(project).getState(url), isClass);
   }
 
-  @NotNull
-  protected static Icon getTestStateIcon(@Nullable TestStateStorage.Record state, boolean isClass) {
+  protected static @NotNull Icon getTestStateIcon(@Nullable TestStateStorage.Record state, boolean isClass) {
     if (state != null) {
       TestStateInfo.Magnitude magnitude = TestIconMapper.getMagnitude(state.magnitude);
       if (magnitude != null) {

@@ -13,7 +13,7 @@ import com.intellij.openapi.util.Comparing;
 import javax.swing.*;
 import java.awt.*;
 
-public class TargetPathFragment<T extends TargetEnvironmentAwareRunProfile> extends SettingsEditorFragment<T, LabeledComponent<JTextField>> {
+public final class TargetPathFragment<T extends TargetEnvironmentAwareRunProfile> extends SettingsEditorFragment<T, LabeledComponent<JTextField>> {
 
   public static final String ID = "target.project.path";
 

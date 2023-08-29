@@ -67,7 +67,7 @@ public abstract class BaseContentCloseListener implements VetoableProjectManager
   }
 
   @Override
-  public void contentRemoved(@NotNull final ContentManagerEvent event) {
+  public void contentRemoved(final @NotNull ContentManagerEvent event) {
     final Content content = event.getContent();
     if (content == myContent && !Content.TEMPORARY_REMOVED_KEY.get(content, false)) {
       Disposer.dispose(this);
@@ -238,6 +238,6 @@ public abstract class BaseContentCloseListener implements VetoableProjectManager
     }
 
     @Override
-    abstract public void onCancel(); //force user to override
+    public abstract void onCancel(); //force user to override
   }
 }

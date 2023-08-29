@@ -70,7 +70,7 @@ public class EditConfigurationsDialog extends SingleConfigurableEditor implement
     return (RunConfigurable)super.getConfigurable();
   }
 
-  private void addRunConfiguration(@NotNull final ConfigurationFactory factory) {
+  private void addRunConfiguration(final @NotNull ConfigurationFactory factory) {
     final RunConfigurable configurable = getConfigurable();
     final SingleConfigurationConfigurable<RunConfiguration> configuration = configurable.createNewConfiguration(factory);
 
@@ -95,9 +95,8 @@ public class EditConfigurationsDialog extends SingleConfigurableEditor implement
     }
   }
 
-  @Nullable
   @Override
-  public Executor getExecutor() {
+  public @Nullable Executor getExecutor() {
     return myExecutor;
   }
 

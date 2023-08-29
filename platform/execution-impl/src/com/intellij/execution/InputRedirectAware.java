@@ -17,15 +17,13 @@ public interface InputRedirectAware extends RunConfiguration {
   @NotNull
   InputRedirectOptions getInputRedirectOptions();
 
-  @Nullable
-  static InputRedirectOptions getInputRedirectOptions(@NotNull RunConfiguration runConfiguration) {
+  static @Nullable InputRedirectOptions getInputRedirectOptions(@NotNull RunConfiguration runConfiguration) {
     return (runConfiguration instanceof InputRedirectAware)
            ? ((InputRedirectAware)runConfiguration).getInputRedirectOptions()
            : null;
   }
 
-  @Nullable
-  static File getInputFile(@NotNull RunConfiguration configuration) {
+  static @Nullable File getInputFile(@NotNull RunConfiguration configuration) {
     InputRedirectOptions inputRedirectOptions = getInputRedirectOptions(configuration);
 
     if (inputRedirectOptions == null || !inputRedirectOptions.isRedirectInput()) {
@@ -65,7 +63,7 @@ public interface InputRedirectAware extends RunConfiguration {
     public static final String REDIRECT_INPUT = "REDIRECT_INPUT";
     public static final String INPUT_FILE = "INPUT_FILE";
 
-    @Nullable public String myInputFile = null;
+    public @Nullable String myInputFile = null;
     public boolean myRedirectInput = false;
 
     public void readExternal(@NotNull Element element) {
@@ -82,8 +80,7 @@ public interface InputRedirectAware extends RunConfiguration {
       }
     }
 
-    @NotNull
-    public InputRedirectOptionsImpl copy() {
+    public @NotNull InputRedirectOptionsImpl copy() {
       InputRedirectOptionsImpl options = new InputRedirectOptionsImpl();
       options.myRedirectInput = myRedirectInput;
       options.myInputFile = myInputFile;
@@ -100,9 +97,8 @@ public interface InputRedirectAware extends RunConfiguration {
       myRedirectInput = value;
     }
 
-    @Nullable
     @Override
-    public String getRedirectInputPath() {
+    public @Nullable String getRedirectInputPath() {
       return myInputFile;
     }
 

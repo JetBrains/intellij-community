@@ -7,14 +7,13 @@ import com.intellij.execution.configurations.RunConfiguration;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public class RunNewConfigurationContextAction extends RunContextAction {
+public final class RunNewConfigurationContextAction extends RunContextAction {
   public RunNewConfigurationContextAction(@NotNull Executor executor) {
     super(executor);
   }
 
-  @Nullable
   @Override
-  protected RunnerAndConfigurationSettings findExisting(ConfigurationContext context) {
+  protected @Nullable RunnerAndConfigurationSettings findExisting(ConfigurationContext context) {
     return null;
   }
 

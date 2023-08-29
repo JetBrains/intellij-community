@@ -35,8 +35,8 @@ public abstract class LogConsoleManagerBase implements LogConsoleManager, Dispos
   }
 
   @Override
-  public void addLogConsole(@NlsContexts.TabTitle @NotNull final String name,
-                            @NotNull final String path,
+  public void addLogConsole(final @NlsContexts.TabTitle @NotNull String name,
+                            final @NotNull String path,
                             @NotNull Charset charset,
                             final long skippedContent,
                             @NotNull RunConfigurationBase runConfiguration) {
@@ -49,7 +49,7 @@ public abstract class LogConsoleManagerBase implements LogConsoleManager, Dispos
     }, path, getDefaultIcon(), runConfiguration);
   }
 
-  private void doAddLogConsole(@NotNull final LogConsoleBase log, String id, Icon icon, @Nullable RunProfile runProfile) {
+  private void doAddLogConsole(final @NotNull LogConsoleBase log, String id, Icon icon, @Nullable RunProfile runProfile) {
     if (runProfile instanceof RunConfigurationBase) {
       ((RunConfigurationBase<?>)runProfile).customizeLogConsole(log);
     }
@@ -58,7 +58,7 @@ public abstract class LogConsoleManagerBase implements LogConsoleManager, Dispos
 
     getUi().addListener(new ContentManagerListener() {
       @Override
-      public void selectionChanged(@NotNull final ContentManagerEvent event) {
+      public void selectionChanged(final @NotNull ContentManagerEvent event) {
         log.activate();
       }
     }, log);

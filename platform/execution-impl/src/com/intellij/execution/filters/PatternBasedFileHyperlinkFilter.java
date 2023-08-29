@@ -33,9 +33,8 @@ public class PatternBasedFileHyperlinkFilter extends AbstractFileHyperlinkFilter
     myFinder = finder;
   }
 
-  @NotNull
   @Override
-  public List<FileHyperlinkRawData> parse(@NotNull String line) {
+  public @NotNull List<FileHyperlinkRawData> parse(@NotNull String line) {
     return myFinder.find(line);
   }
 }

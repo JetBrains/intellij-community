@@ -53,7 +53,7 @@ import java.util.List;
 import java.util.Set;
 
 final class ProjectStartupConfigurable implements SearchableConfigurable, Configurable.NoScroll {
-  final static class ProjectStartupConfigurableProvider extends ConfigurableProvider {
+  static final class ProjectStartupConfigurableProvider extends ConfigurableProvider {
     private final Project myProject;
 
     ProjectStartupConfigurableProvider(@NotNull Project project) {
@@ -80,27 +80,23 @@ final class ProjectStartupConfigurable implements SearchableConfigurable, Config
     myProject = project;
   }
 
-  @NotNull
   @Override
-  public String getId() {
+  public @NotNull String getId() {
     return "preferences.startup.tasks";
   }
 
-  @Nls
   @Override
-  public String getDisplayName() {
+  public @Nls String getDisplayName() {
     return ExecutionBundle.message("configurable.ProjectStartupConfigurable.display.name");
   }
 
-  @NotNull
   @Override
-  public String getHelpTopic() {
+  public @NotNull String getHelpTopic() {
     return "reference.settings.startup.tasks";
   }
 
-  @NotNull
   @Override
-  public JComponent createComponent() {
+  public @NotNull JComponent createComponent() {
     myModel = new ProjectStartupTasksTableModel();
     myTable = new JBTable(myModel);
     myTable.setShowGrid(false);
@@ -210,7 +206,7 @@ final class ProjectStartupConfigurable implements SearchableConfigurable, Config
       }
 
       @Override
-      public void perform(@NotNull final Project project, @NotNull final Executor executor, @NotNull DataContext context) {
+      public void perform(final @NotNull Project project, final @NotNull Executor executor, @NotNull DataContext context) {
         final RunManagerImpl runManager = RunManagerImpl.getInstanceImpl(project);
         List<ConfigurationType> typesToShow =
           ContainerUtil.filter(ConfigurationType.CONFIGURATION_TYPE_EP.getExtensionList(), configurationType -> {

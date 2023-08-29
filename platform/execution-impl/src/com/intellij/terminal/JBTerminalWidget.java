@@ -91,8 +91,7 @@ public class JBTerminalWidget extends JediTermWidget implements Disposable, Data
     });
   }
 
-  @Nullable
-  private LinkResult runFilters(@NotNull Project project, @NotNull String line) {
+  private @Nullable LinkResult runFilters(@NotNull Project project, @NotNull String line) {
     Filter.Result r = ReadAction.compute(() -> {
       if (project.isDisposed()) {
         return null;
@@ -291,9 +290,8 @@ public class JBTerminalWidget extends JediTermWidget implements Disposable, Data
     }
   }
 
-  @Nullable
   @Override
-  public Object getData(@NotNull String dataId) {
+  public @Nullable Object getData(@NotNull String dataId) {
     if (SELECTED_TEXT_DATA_KEY.is(dataId)) {
       return getSelectedText();
     }
@@ -368,7 +366,7 @@ public class JBTerminalWidget extends JediTermWidget implements Disposable, Data
     return widget instanceof TerminalWidgetBridge bridge ? bridge.widget() : null;
   }
 
-  private class TerminalWidgetBridge implements TerminalWidget {
+  private final class TerminalWidgetBridge implements TerminalWidget {
 
     private final TtyConnectorAccessor myTtyConnectorAccessor = new TtyConnectorAccessor();
 
@@ -386,9 +384,8 @@ public class JBTerminalWidget extends JediTermWidget implements Disposable, Data
       return widget().getPreferredFocusableComponent();
     }
 
-    @NotNull
     @Override
-    public TerminalTitle getTerminalTitle() {
+    public @NotNull TerminalTitle getTerminalTitle() {
       return widget().myTerminalTitle;
     }
 

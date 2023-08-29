@@ -49,9 +49,8 @@ public abstract class AbstractFileHyperlinkFilter implements Filter {
     return false;
   }
 
-  @Nullable
   @Override
-  public final Result applyFilter(@NotNull String line, int entireLength) {
+  public final @Nullable Result applyFilter(@NotNull String line, int entireLength) {
     List<FileHyperlinkRawData> links;
     try {
       links = parse(line);
@@ -88,8 +87,7 @@ public abstract class AbstractFileHyperlinkFilter implements Filter {
     return items.isEmpty() ? null : new Result(items);
   }
 
-  @Nullable
-  private File findIoFile(@NotNull String filePath) {
+  private @Nullable File findIoFile(@NotNull String filePath) {
     File ioFile = new File(filePath);
     if (ioFile.isAbsolute() && ioFile.isFile()) {
       return ioFile;
@@ -110,8 +108,7 @@ public abstract class AbstractFileHyperlinkFilter implements Filter {
     return !fileIndex.isInContent(file) || fileIndex.isInLibrary(file);
   }
 
-  @NotNull
-  private ProjectFileIndex getFileIndex() {
+  private @NotNull ProjectFileIndex getFileIndex() {
     ProjectFileIndex fileIndex = myFileIndex;
     if (fileIndex == null) {
       fileIndex = ProjectFileIndex.getInstance(myProject);
@@ -120,11 +117,9 @@ public abstract class AbstractFileHyperlinkFilter implements Filter {
     return fileIndex;
   }
 
-  @NotNull
-  public abstract List<FileHyperlinkRawData> parse(@NotNull String line);
+  public abstract @NotNull List<FileHyperlinkRawData> parse(@NotNull String line);
 
-  @Nullable
-  public VirtualFile findFile(@NotNull String filePath) {
+  public @Nullable VirtualFile findFile(@NotNull String filePath) {
     VirtualFile file = LocalFileFinder.findFile(filePath);
     if (file == null && SystemInfo.isWindows && OSAgnosticPathUtil.isUncPath(filePath)) {
       file = LocalFileSystem.getInstance().findFileByPath(filePath);
@@ -135,7 +130,7 @@ public abstract class AbstractFileHyperlinkFilter implements Filter {
     return file;
   }
 
-  private static class MyFileHyperlinkInfo implements HyperlinkInfo {
+  private static final class MyFileHyperlinkInfo implements HyperlinkInfo {
 
     private final File myIoFile;
     private final int myDocumentLine;

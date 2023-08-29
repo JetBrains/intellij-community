@@ -50,7 +50,7 @@ public class StopProcessAction extends DumbAwareAction {
   }
 
   @Override
-  public void update(@NotNull final AnActionEvent e) {
+  public void update(final @NotNull AnActionEvent e) {
     update(e.getPresentation(), getTemplatePresentation(), myProcessHandler);
   }
 

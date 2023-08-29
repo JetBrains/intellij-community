@@ -58,8 +58,8 @@ public final class SingleConfigurationConfigurable<Config extends RunConfigurati
 
   private final PlainDocument myNameDocument = new PlainDocument();
 
-  @NotNull private final Project myProject;
-  @Nullable private final Executor myExecutor;
+  private final @NotNull Project myProject;
+  private final @Nullable Executor myExecutor;
   private MyValidatableComponent myComponent;
   private final @NlsContexts.ConfigurableName String myDisplayName;
   private final String myHelpTopic;
@@ -110,9 +110,8 @@ public final class SingleConfigurationConfigurable<Config extends RunConfigurati
     myRunOnTargetPanel = new RunOnTargetPanel(settings, getEditor());
   }
 
-  @NotNull
-  public static <Config extends RunConfiguration> SingleConfigurationConfigurable<Config> editSettings(@NotNull RunnerAndConfigurationSettings settings,
-                                                                                                       @Nullable Executor executor) {
+  public static @NotNull <Config extends RunConfiguration> SingleConfigurationConfigurable<Config> editSettings(@NotNull RunnerAndConfigurationSettings settings,
+                                                                                                                @Nullable Executor executor) {
     SingleConfigurationConfigurable<Config> configurable = new SingleConfigurationConfigurable<>(settings, executor);
     configurable.reset();
     return configurable;
@@ -322,8 +321,7 @@ public final class SingleConfigurationConfigurable<Config extends RunConfigurati
       getQuickFix(snapshot, e));
   }
 
-  @Nullable
-  private Runnable getQuickFix(RunnerAndConfigurationSettings snapshot, ConfigurationException exception) {
+  private @Nullable Runnable getQuickFix(RunnerAndConfigurationSettings snapshot, ConfigurationException exception) {
     ConfigurationQuickFix quickFix = exception.getConfigurationQuickFix();
     if (quickFix != null && snapshot != null) {
       return () -> {
@@ -404,14 +402,12 @@ public final class SingleConfigurationConfigurable<Config extends RunConfigurati
     return myHelpTopic;
   }
 
-  @NotNull
-  public Config getConfiguration() {
+  public @NotNull Config getConfiguration() {
     //noinspection unchecked
     return (Config)getSettings().getConfiguration();
   }
 
-  @NotNull
-  public RunnerAndConfigurationSettings createSnapshot(boolean cloneBeforeRunTasks) throws ConfigurationException {
+  public @NotNull RunnerAndConfigurationSettings createSnapshot(boolean cloneBeforeRunTasks) throws ConfigurationException {
     RunnerAndConfigurationSettings snapshot = getEditor().getSnapshot();
     RunConfiguration runConfiguration = snapshot.getConfiguration();
     runConfiguration.setAllowRunningInParallel(myIsAllowRunningInParallel);
@@ -436,12 +432,11 @@ public final class SingleConfigurationConfigurable<Config extends RunConfigurati
     }
   }
 
-  @Nullable
-  public String getFolderName() {
+  public @Nullable String getFolderName() {
     return myFolderName;
   }
 
-  private class MyValidatableComponent {
+  private final class MyValidatableComponent {
     private JLabel myNameLabel;
     private JTextField myNameText;
     private JComponent myWholePanel;

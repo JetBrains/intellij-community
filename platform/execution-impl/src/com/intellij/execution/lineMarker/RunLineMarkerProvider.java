@@ -35,7 +35,9 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import java.util.*;
+import java.util.Collection;
+import java.util.Comparator;
+import java.util.List;
 
 /**
  * @author Dmitry Avdeev
@@ -131,7 +133,7 @@ public class RunLineMarkerProvider extends LineMarkerProviderDescriptor {
   }
 
   // must provide sensible equals() to be able to reuse LineMarker on change
-  private static class EquatableTooltipProvider implements Function<PsiElement, String> {
+  private static final class EquatableTooltipProvider implements Function<PsiElement, String> {
     private final @NotNull List<? extends Info> myInfos;
 
     EquatableTooltipProvider(@NotNull List<? extends Info> infos) { myInfos = infos; }
@@ -178,7 +180,7 @@ public class RunLineMarkerProvider extends LineMarkerProviderDescriptor {
     }
   }
 
-  static class RunLineMarkerInfo extends MergeableLineMarkerInfo<PsiElement> {
+  static final class RunLineMarkerInfo extends MergeableLineMarkerInfo<PsiElement> {
     private final DefaultActionGroup myActionGroup;
     private final AnAction mySingleAction;
 
@@ -213,9 +215,8 @@ public class RunLineMarkerProvider extends LineMarkerProviderDescriptor {
       };
     }
 
-    @NotNull
     @Override
-    public MarkupEditorFilter getEditorFilter() {
+    public @NotNull MarkupEditorFilter getEditorFilter() {
       return MarkupEditorFilterFactory.createIsNotDiffFilter();
     }
 
@@ -230,22 +231,19 @@ public class RunLineMarkerProvider extends LineMarkerProviderDescriptor {
     }
   }
 
-  @NotNull
   @Override
-  public String getName() {
+  public @NotNull String getName() {
     return ExecutionBundle.message("run.line.marker.name");
   }
 
-  @Nullable
   @Override
-  public Icon getIcon() {
+  public @Nullable Icon getIcon() {
     return AllIcons.RunConfigurations.TestState.Run;
   }
 
   private static final Key<Boolean> HAS_ANYTHING_RUNNABLE = Key.create("HAS_ANYTHING_RUNNABLE");
 
-  @NotNull
-  public static ThreeState hadAnythingRunnable(@NotNull VirtualFile file) {
+  public static @NotNull ThreeState hadAnythingRunnable(@NotNull VirtualFile file) {
     Boolean data = file.getUserData(HAS_ANYTHING_RUNNABLE);
     return data == null ? ThreeState.UNSURE : ThreeState.fromBoolean(data);
   }

@@ -199,16 +199,13 @@ public final class RunConfigurationStorageUi {
     return GEAR_WITH_DROPDOWN_ICON;
   }
 
-  @NonNls
-  @NotNull
-  private static String getFileNameByRCName(@NotNull String rcName) {
+  private static @NonNls @NotNull String getFileNameByRCName(@NotNull String rcName) {
     return Scheme_implKt.getMODERN_NAME_CONVERTER().invoke(rcName) + ".run.xml";
   }
 
-  @Nullable
   @Contract("_,null -> !null")
-  private static String getErrorIfBadFolderPathForStoringInArbitraryFile(@NotNull Project project,
-                                                                         @Nullable @NonNls @SystemIndependent String path) {
+  private static @Nullable String getErrorIfBadFolderPathForStoringInArbitraryFile(@NotNull Project project,
+                                                                                   @Nullable @NonNls @SystemIndependent String path) {
     if (getDotIdeaStoragePath(project).equals(path)) return null; // that's ok
 
     if (StringUtil.isEmpty(path)) return ExecutionBundle.message("run.configuration.storage.folder.path.not.specified");
@@ -249,9 +246,7 @@ public final class RunConfigurationStorageUi {
   /**
    * @return full path to .idea/runConfigurations folder (for directory-based projects) or full path to the project.ipr file (for file-based projects)
    */
-  @NonNls
-  @NotNull
-  private static String getDotIdeaStoragePath(@NotNull Project project) {
+  private static @NonNls @NotNull String getDotIdeaStoragePath(@NotNull Project project) {
     // notNullize is to make inspections happy. Paths can't be null for non-default project
     return ProjectKt.isDirectoryBased(project)
            ? RunManagerImpl.getInstanceImpl(project).getDotIdeaRunConfigurationsPath$intellij_platform_execution_impl()
@@ -411,7 +406,7 @@ public final class RunConfigurationStorageUi {
     }
   }
 
-  private static class RunConfigurationStoragePopup {
+  private static final class RunConfigurationStoragePopup {
     private final JPanel myMainPanel;
     private final ComboBox<String> myPathComboBox;
 

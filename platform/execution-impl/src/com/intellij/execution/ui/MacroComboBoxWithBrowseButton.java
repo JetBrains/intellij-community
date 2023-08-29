@@ -32,7 +32,7 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.awt.*;
 
-public class MacroComboBoxWithBrowseButton extends ComboBox<String> implements TextAccessor {
+public final class MacroComboBoxWithBrowseButton extends ComboBox<String> implements TextAccessor {
   private Module module;
   private boolean always;
 
@@ -47,18 +47,16 @@ public class MacroComboBoxWithBrowseButton extends ComboBox<String> implements T
         return module;
       }
 
-      @Nullable
       @Override
-      protected Project getProject() {
+      protected @Nullable Project getProject() {
         Project project = super.getProject();
         if (project != null) return project;
         Module module = getModule();
         return module == null ? null : module.getProject();
       }
 
-      @NotNull
       @Override
-      protected String expandPath(@NotNull String path) {
+      protected @NotNull String expandPath(@NotNull String path) {
         Project project = getProject();
         if (project != null) path = PathMacroManager.getInstance(project).expandPath(path);
 

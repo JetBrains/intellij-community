@@ -22,7 +22,7 @@ public final class LogFilesManager {
   private final List<LogFile> myLogFiles = new ArrayList<>();
   private final SingleAlarm myUpdateAlarm;
 
-  public LogFilesManager(@NotNull final Project project, @NotNull LogConsoleManager manager, @NotNull Disposable parentDisposable) {
+  public LogFilesManager(final @NotNull Project project, @NotNull LogConsoleManager manager, @NotNull Disposable parentDisposable) {
     myManager = manager;
 
     myUpdateAlarm = new SingleAlarm(new Runnable() {

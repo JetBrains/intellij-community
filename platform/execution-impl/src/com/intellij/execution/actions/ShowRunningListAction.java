@@ -51,7 +51,7 @@ final class ShowRunningListAction extends AnAction {
   }
 
   @Override
-  public void actionPerformed(@NotNull final AnActionEvent e) {
+  public void actionPerformed(final @NotNull AnActionEvent e) {
     final Project project = e.getProject();
     if (project == null || project.isDisposed()) return;
     final Ref<Pair<? extends JComponent, String>> stateRef = new Ref<>();

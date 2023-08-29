@@ -211,9 +211,8 @@ public class JBTerminalPanel extends TerminalPanel implements FocusListener, Dis
     UISettings.setupAntialiasing(graphics);
   }
 
-  @NotNull
   @Override
-  protected TerminalCopyPasteHandler createCopyPasteHandler() {
+  protected @NotNull TerminalCopyPasteHandler createCopyPasteHandler() {
     return new IdeTerminalCopyPasteHandler();
   }
 
@@ -300,8 +299,7 @@ public class JBTerminalPanel extends TerminalPanel implements FocusListener, Dis
     }
   }
 
-  @NotNull
-  private static List<AnAction> setupActionsToSkip() {
+  private static @NotNull List<AnAction> setupActionsToSkip() {
     List<AnAction> res = new ArrayList<>();
     ActionManager actionManager = ActionManager.getInstance();
     for (String actionId : ACTIONS_TO_SKIP) {
@@ -368,7 +366,7 @@ public class JBTerminalPanel extends TerminalPanel implements FocusListener, Dis
    * Adds "Override IDE shortcuts" terminal feature allowing terminal to process all the key events.
    * Without own IdeEventQueue.EventDispatcher, terminal won't receive key events corresponding to IDE action shortcuts.
    */
-  private class TerminalEventDispatcher implements IdeEventQueue.EventDispatcher {
+  private final class TerminalEventDispatcher implements IdeEventQueue.EventDispatcher {
 
     private boolean myRegistered = false;
 

@@ -215,10 +215,9 @@ public class ProgramParametersConfigurator {
     }
   }
 
-  @SystemIndependent
-  public @Nullable String getWorkingDir(@NotNull CommonProgramRunConfigurationParameters configuration,
-                                        @NotNull Project project,
-                                        @Nullable Module module) {
+  public @SystemIndependent @Nullable String getWorkingDir(@NotNull CommonProgramRunConfigurationParameters configuration,
+                                                           @NotNull Project project,
+                                                           @Nullable Module module) {
     String workingDirectory = PathUtil.toSystemIndependentName(configuration.getWorkingDirectory());
 
     String projectDirectory = getDefaultWorkingDir(project);
@@ -306,7 +305,7 @@ public class ProgramParametersConfigurator {
     return cp instanceof ModuleBasedConfiguration ? ((ModuleBasedConfiguration<?, ?>)cp).getConfigurationModule().getModule() : null;
   }
 
-  public static class ParametersConfiguratorException extends RuntimeException {
+  public static final class ParametersConfiguratorException extends RuntimeException {
     public ParametersConfiguratorException(@Nls String message, Throwable cause) {
       super(message, cause);
     }

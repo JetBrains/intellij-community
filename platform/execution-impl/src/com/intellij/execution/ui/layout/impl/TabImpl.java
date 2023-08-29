@@ -7,7 +7,7 @@ import com.intellij.openapi.util.NlsSafe;
 
 import javax.swing.*;
 
-public class TabImpl extends AbstractTab implements Tab {
+public final class TabImpl extends AbstractTab implements Tab {
   TabImpl() {
   }
 
@@ -21,8 +21,7 @@ public class TabImpl extends AbstractTab implements Tab {
     return myDefaultIndex >= 0 ? myDefaultIndex : myIndex;
   }
 
-  @NlsSafe
-  public String getDisplayName() {
+  public @NlsSafe String getDisplayName() {
     return myDisplayName;
   }
 

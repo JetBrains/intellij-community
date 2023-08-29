@@ -104,13 +104,12 @@ public class RunContextAction extends BaseRunConfigurationAction {
     return getRunner(configuration) != null;
   }
 
-  @Nullable
-  private ProgramRunner<?> getRunner(@NotNull RunConfiguration configuration) {
+  private @Nullable ProgramRunner<?> getRunner(@NotNull RunConfiguration configuration) {
     return ProgramRunner.getRunner(myExecutor.getId(), configuration);
   }
 
   @Override
-  protected void updatePresentation(final Presentation presentation, @NotNull final String actionText, final ConfigurationContext context) {
+  protected void updatePresentation(final Presentation presentation, final @NotNull String actionText, final ConfigurationContext context) {
     presentation.setText(myExecutor.getStartActionText(actionText), true);
 
     Pair<Boolean, Boolean> b = isEnabledAndVisible(context);
@@ -140,10 +139,9 @@ public class RunContextAction extends BaseRunConfigurationAction {
     return Pair.create(!ExecutionManager.getInstance(project).isStarting(myExecutor.getId(), runner.getRunnerId()), true);
   }
 
-  @NotNull
   @Override
-  protected List<AnAction> createChildActions(@NotNull ConfigurationContext context,
-                                              @NotNull List<? extends ConfigurationFromContext> configurations) {
+  protected @NotNull List<AnAction> createChildActions(@NotNull ConfigurationContext context,
+                                                       @NotNull List<? extends ConfigurationFromContext> configurations) {
     final List<AnAction> childActions = new ArrayList<>(super.createChildActions(context, configurations));
     boolean isMultipleConfigurationsFromAlternativeLocations =
       configurations.size() > 1 && configurations.get(0).isFromAlternativeLocation();
@@ -155,9 +153,8 @@ public class RunContextAction extends BaseRunConfigurationAction {
     return childActions;
   }
 
-  @NotNull
-  private AnAction runAllConfigurationsAction(@NotNull ConfigurationContext context,
-                                              @NotNull List<? extends ConfigurationFromContext> configurationsFromContext) {
+  private @NotNull AnAction runAllConfigurationsAction(@NotNull ConfigurationContext context,
+                                                       @NotNull List<? extends ConfigurationFromContext> configurationsFromContext) {
     return new AnAction(
       CommonBundle.message("action.text.run.all"),
       ExecutionBundle.message("run.all.configurations.available.in.this.context"),

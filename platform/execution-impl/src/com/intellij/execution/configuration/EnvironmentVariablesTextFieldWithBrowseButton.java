@@ -86,16 +86,14 @@ public class EnvironmentVariablesTextFieldWithBrowseButton extends TextFieldWith
     return (ExtendableTextField)super.getTextField();
   }
 
-  @NotNull
-  protected EnvironmentVariablesDialog createDialog() {
+  protected @NotNull EnvironmentVariablesDialog createDialog() {
     return new EnvironmentVariablesDialog(this);
   }
 
   /**
    * @return unmodifiable Map instance
    */
-  @NotNull
-  public Map<String, String> getEnvs() {
+  public @NotNull Map<String, String> getEnvs() {
     return myData.getEnvs();
   }
 
@@ -107,8 +105,7 @@ public class EnvironmentVariablesTextFieldWithBrowseButton extends TextFieldWith
     setData(myData.with(envs));
   }
 
-  @NotNull
-  public EnvironmentVariablesData getData() {
+  public @NotNull EnvironmentVariablesData getData() {
     return myData;
   }
 
@@ -121,15 +118,13 @@ public class EnvironmentVariablesTextFieldWithBrowseButton extends TextFieldWith
     }
   }
 
-  @NotNull
   @Override
-  protected Icon getDefaultIcon() {
+  protected @NotNull Icon getDefaultIcon() {
     return AllIcons.General.InlineVariables;
   }
 
-  @NotNull
   @Override
-  protected Icon getHoveredIcon() {
+  protected @NotNull Icon getHoveredIcon() {
     return AllIcons.General.InlineVariablesHover;
   }
 
@@ -150,8 +145,7 @@ public class EnvironmentVariablesTextFieldWithBrowseButton extends TextFieldWith
     setText(getEnvText());
   }
 
-  @NotNull
-  protected String stringifyEnvs(@NotNull EnvironmentVariablesData evd) {
+  protected @NotNull String stringifyEnvs(@NotNull EnvironmentVariablesData evd) {
     StringBuilder buf = new StringBuilder();
     for (Map.Entry<String, String> entry : evd.getEnvs().entrySet()) {
       if (!buf.isEmpty()) {
