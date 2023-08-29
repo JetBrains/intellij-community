@@ -5,8 +5,13 @@ import com.intellij.openapi.util.IntellijInternalApi
 import kotlinx.coroutines.*
 import org.jetbrains.annotations.ApiStatus.Internal
 import java.io.BufferedReader
+import java.io.InputStream
+import java.io.OutputStream
+import java.net.SocketTimeoutException
 import java.util.concurrent.CancellationException
 import java.util.concurrent.TimeUnit
+import kotlin.coroutines.coroutineContext
+import kotlin.math.min
 import kotlin.time.Duration
 
 /**
@@ -62,4 +67,50 @@ suspend fun BufferedReader.readLineAsync(): String? = computeDetached {
   runInterruptible(blockingDispatcher) {
     readLine()
   }
+}
+
+/**
+ * Behaves like [InputStream.copyTo], but doesn't block _current_ coroutine context even for a second.
+ * Due to unavailability of non-blocking IO for [InputStream], all blocking calls are executed on some daemonic thread, and some I/O
+ * operations may outlive current coroutine context.
+ */
+@OptIn(DelicateCoroutinesApi::class)
+suspend fun InputStream.copyToAsync(outputStream: OutputStream, bufferSize: Int = DEFAULT_BUFFER_SIZE, limit: Long = Long.MAX_VALUE) {
+  // Jumping to GlobalScope in order to not block current coroutine scope with I/O.
+  // All threads in GlobalScope are daemonic.
+  val copyCoroutine = GlobalScope.async(Dispatchers.IO + CoroutineName("copyToAsync: $this => $outputStream")) {
+    val buffer = ByteArray(bufferSize)
+    var totalRead = 0L
+    while (totalRead < limit) {
+      yield()
+      val read =
+        try {
+          read(buffer, 0, min(limit - totalRead, buffer.size.toLong()).toInt())
+        }
+        catch (ignored: SocketTimeoutException) {
+          continue
+        }
+      when {
+        read < 0 -> break
+        read > 0 -> {
+          totalRead += read
+          yield()
+          outputStream.write(buffer, 0, read)
+        }
+        else -> Unit
+      }
+    }
+  }
+  // `copyCoroutine` doesn't inherit current coroutine context in order to not propagate I/O exceptions.
+  GlobalScope.launch(coroutineContext + CoroutineName("copyToAsync watchdog: $this => $outputStream")) {
+    try {
+      while (true) {
+        delay(Long.MAX_VALUE)
+      }
+    }
+    finally {
+      copyCoroutine.cancel()
+    }
+  }
+  copyCoroutine.await()
 }
