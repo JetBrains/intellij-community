@@ -16,24 +16,13 @@
 
 package com.intellij.completion.ml.personalization
 
-import com.intellij.ide.plugins.PluginManager
-import com.intellij.lang.Language
-import com.intellij.openapi.application.ApplicationInfo
-import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.service
-import com.intellij.openapi.extensions.PluginId
 
 /**
  * @author Vitaliy.Bibaev
  */
 interface UserFactorsManager {
   companion object {
-    fun shouldUseUserFactors(language: Language? = null) =
-      ApplicationManager.getApplication().isEAP ||
-      ApplicationInfo.getInstance().versionName == "PyCharm" &&
-      (language == null || language.isKindOf("Python")) &&
-      PluginManager.isPluginInstalled(PluginId.getId("org.jetbrains.completion.full.line"))
-
     fun getInstance(): UserFactorsManager = service()
   }
 

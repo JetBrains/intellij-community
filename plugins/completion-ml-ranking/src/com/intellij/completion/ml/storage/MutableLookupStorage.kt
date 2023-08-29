@@ -134,8 +134,8 @@ class MutableLookupStorage(
   }
 
   @RequiresReadLock
-  fun initUserFactors(project: Project, language: Language? = null) {
-    if (_userFactors == null && UserFactorsManager.shouldUseUserFactors(language)) {
+  fun initUserFactors(project: Project) {
+    if (_userFactors == null) {
       val userFactorValues = mutableMapOf<String, String>()
       val userFactors = UserFactorsManager.getInstance().getAllFactors()
       val applicationStorage: UserFactorStorage = UserFactorStorage.getInstance()

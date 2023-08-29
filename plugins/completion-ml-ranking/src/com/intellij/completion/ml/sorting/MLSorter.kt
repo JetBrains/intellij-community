@@ -15,11 +15,11 @@ import com.intellij.completion.ml.personalization.session.SessionFactorsUtils
 import com.intellij.completion.ml.settings.CompletionMLRankingSettings
 import com.intellij.completion.ml.storage.MutableLookupStorage
 import com.intellij.completion.ml.util.RelevanceUtil
-import com.intellij.completion.ml.util.language
 import com.intellij.completion.ml.util.prefix
 import com.intellij.completion.ml.util.queryLength
 import com.intellij.internal.ml.completion.DecoratingItemsPolicy
 import com.intellij.lang.Language
+import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.util.Pair
 import com.intellij.openapi.util.registry.Registry
@@ -122,7 +122,9 @@ class MLSorter : CompletionFinalSorter() {
 
     val rankingModel = lookupStorage.model
 
-    lookupStorage.initUserFactors(lookup.project, lookup.language())
+    if (ApplicationManager.getApplication().isEAP) {
+      lookupStorage.initUserFactors(lookup.project)
+    }
     val meaningfulRelevanceExtractor = MeaningfulFeaturesExtractor()
     val relevanceObjects = lookup.getRelevanceObjects(items, false)
     val calculatedElementFeatures = mutableListOf<ElementFeatures>()
