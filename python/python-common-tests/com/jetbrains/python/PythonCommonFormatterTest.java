@@ -1336,4 +1336,29 @@ public abstract class PythonCommonFormatterTest extends PythonCommonTestCase {
   public void testNoAlignmentForSplitByBackslashesTupleInYieldStatement() {
     doTest();
   }
+
+  // PY-61854
+  public void testSpaceAfterTypeKeywordInTypeAliasStatement() {
+    doTest();
+  }
+
+  // PY-61854
+  public void testSpaceAfterCommaInTypeParameterList() {
+    doTest();
+  }
+
+  // PY-61854
+  public void testAlignmentInMultilineTypeParameterListInTypeAliasStatement() {
+    doTest();
+  }
+
+  // PY-61854
+  public void testAlignmentInMultilineTypeParameterListInFunctionDefinition() {
+    doTest();
+  }
+
+  // PY-61854
+  public void testAlignmentInMultilineTypeParameterListInClassDefinition() {
+    doTest();
+  }
 }
