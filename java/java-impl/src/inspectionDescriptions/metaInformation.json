@@ -1,0 +1,12 @@
+{
+  "inspections" : [
+    {
+      "id" : "ConstantValue",
+      "cweIds": [570, 571]
+    },
+    {
+      "id" : "NullableProblems",
+      "cweIds": [476]
+    }
+  ]
+}
