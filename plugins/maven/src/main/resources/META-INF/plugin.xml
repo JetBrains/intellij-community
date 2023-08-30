@@ -641,9 +641,6 @@
     <action id="Maven.OpenSettingsXml"
             class="org.jetbrains.idea.maven.project.actions.OpenOrCreateSettingsXmlAction"/>
 
-    <action id="Maven.OpenProfilesXml"
-            class="org.jetbrains.idea.maven.project.actions.OpenOrCreateProfilesXmlAction"/>
-
     <action id="Maven.IgnoreProjects"
             class="org.jetbrains.idea.maven.project.actions.ToggleIgnoredProjectsAction">
     </action>
@@ -787,7 +784,6 @@
       <reference id="Maven.RemoveManagedFiles"/>
       <separator/>
       <reference id="Maven.OpenSettingsXml"/>
-      <reference id="Maven.OpenProfilesXml"/>
       <separator/>
       <reference id="Maven.DownloadAllGroup"/>
       <separator/>
