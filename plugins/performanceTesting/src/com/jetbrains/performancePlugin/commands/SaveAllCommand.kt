@@ -3,7 +3,6 @@ package com.jetbrains.performancePlugin.commands
 import com.intellij.ide.SaveAndSyncHandler
 import com.intellij.ide.lightEdit.LightEdit
 import com.intellij.ide.lightEdit.LightEditService
-import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.ui.playback.PlaybackContext
 
@@ -15,7 +14,6 @@ class SaveAllCommand(text: String, line: Int) : PerformanceCommandCoroutineAdapt
   companion object {
     const val NAME = "saveAll"
     const val PREFIX = CMD_PREFIX + NAME
-    private val LOG = logger<WaitVcsLogIndexingCommand>()
   }
 
   override suspend fun doExecute(context: PlaybackContext) {
@@ -26,5 +24,5 @@ class SaveAllCommand(text: String, line: Int) : PerformanceCommandCoroutineAdapt
     SaveAndSyncHandler.getInstance().scheduleSave(SaveAndSyncHandler.SaveTask(project = context.project, forceSavingAllSettings = true), forceExecuteImmediately = true)
   }
 
-  override fun getName(): String = WaitVcsLogIndexingCommand.NAME
+  override fun getName(): String = NAME
 }
