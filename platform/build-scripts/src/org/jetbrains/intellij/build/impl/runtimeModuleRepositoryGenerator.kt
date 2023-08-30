@@ -14,8 +14,6 @@ import com.intellij.util.containers.MultiMap
 import com.jetbrains.plugin.structure.base.utils.exists
 import org.jetbrains.intellij.build.BuildContext
 import org.jetbrains.intellij.build.CompilationTasks
-import org.jetbrains.intellij.build.impl.PlatformJarNames.APP_JAR
-import org.jetbrains.intellij.build.impl.PlatformJarNames.PRODUCT_JAR
 import org.jetbrains.intellij.build.impl.projectStructureMapping.*
 import org.jetbrains.jps.model.library.JpsOrderRootType
 import java.io.IOException
@@ -59,12 +57,7 @@ internal fun generateRuntimeModuleRepository(entries: List<DistributionFileEntry
         continue
       }
       val pathInDist = context.paths.distAllDir.relativize(entry.path).pathString
-      val realPathInDist = when {
-        //product.jar is merged into app.jar unless embedded JetBrains Client is enabled
-        pathInDist == "lib/$PRODUCT_JAR" && !context.isEmbeddedJetBrainsClientEnabled -> "lib/$APP_JAR"
-        else -> pathInDist
-      }
-      resourcePathMapping.putValue(moduleId.stringId, realPathInDist)
+      resourcePathMapping.putValue(moduleId.stringId, pathInDist)
     }
   }
 

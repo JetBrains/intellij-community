@@ -19,13 +19,9 @@ import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.withContext
 import org.jetbrains.intellij.build.*
 import org.jetbrains.intellij.build.TraceManager.spanBuilder
-import org.jetbrains.intellij.build.impl.PlatformJarNames.APP_JAR
 import org.jetbrains.intellij.build.impl.PlatformJarNames.PRODUCT_CLIENT_JAR
 import org.jetbrains.intellij.build.impl.PlatformJarNames.PRODUCT_JAR
 import org.jetbrains.intellij.build.impl.projectStructureMapping.*
-import org.jetbrains.intellij.build.io.PackageIndexBuilder
-import org.jetbrains.intellij.build.io.copyZipRaw
-import org.jetbrains.intellij.build.io.transformZipUsingTempFile
 import org.jetbrains.jps.model.java.JpsJavaClasspathKind
 import org.jetbrains.jps.model.java.JpsJavaExtensionService
 import org.jetbrains.jps.model.library.JpsLibrary
@@ -736,8 +732,7 @@ private suspend fun buildJars(descriptors: Collection<JarDescriptor>,
             }
           }
 
-        // app.jar is combined later with other JARs and then re-ordered
-        if (!dryRun && item.pathInClassLog.isNotEmpty() && item.pathInClassLog != "lib/$APP_JAR") {
+        if (!dryRun && item.pathInClassLog.isNotEmpty()) {
           reorderJar(relativePath = item.pathInClassLog, file = file)
         }
         nativeFileHandler?.sourceToNativeFiles ?: emptyMap()
@@ -783,23 +778,4 @@ private fun createJarDescriptor(outputDir: Path, targetFile: Path, context: Buil
   }
 
   return JarDescriptor(file = targetFile, pathInClassLog = pathInClassLog)
-}
-
-internal fun mergeProductJar(appFile: Path, libDir: Path) {
-  // packing to product.jar maybe disabled
-  val productJar = libDir.resolve(PRODUCT_JAR)
-  if (Files.notExists(productJar)) {
-    return
-  }
-
-  spanBuilder("merge $PRODUCT_JAR into $APP_JAR").setAttribute("file", appFile.toString()).use {
-    transformZipUsingTempFile(appFile) { zipCreator ->
-      val packageIndexBuilder = PackageIndexBuilder()
-      copyZipRaw(appFile, packageIndexBuilder, zipCreator)
-      copyZipRaw(productJar, packageIndexBuilder, zipCreator)
-      packageIndexBuilder.writePackageIndex(zipCreator)
-    }
-
-    Files.delete(productJar)
-  }
 }

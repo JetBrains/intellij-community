@@ -26,8 +26,6 @@ import org.jetbrains.annotations.TestOnly
 import org.jetbrains.intellij.build.*
 import org.jetbrains.intellij.build.TraceManager.spanBuilder
 import org.jetbrains.intellij.build.fus.createStatisticsRecorderBundledMetadataProviderTask
-import org.jetbrains.intellij.build.impl.PlatformJarNames.APP_CLIENT_JAR
-import org.jetbrains.intellij.build.impl.PlatformJarNames.APP_JAR
 import org.jetbrains.intellij.build.impl.projectStructureMapping.*
 import org.jetbrains.intellij.build.io.*
 import org.jetbrains.jps.model.artifact.JpsArtifact
@@ -102,18 +100,6 @@ internal suspend fun buildDistribution(state: DistributionBuilderState,
 
         val distAllDir = context.paths.distAllDir
         val libDir = distAllDir.resolve("lib")
-        val appFile = libDir.resolve(APP_JAR)
-        if (!context.isEmbeddedJetBrainsClientEnabled) {
-          /* in order to support running JetBrains Client from the IDE's distribution, we should not merge scrambled product.jar and
-          product-client.jar to app.jar */
-          mergeProductJar(appFile, libDir)
-        }
-        if (!context.isStepSkipped(BuildOptions.GENERATE_JAR_ORDER_STEP)) {
-          reorderJar("lib/$APP_JAR", appFile)
-          if (context.isEmbeddedJetBrainsClientEnabled) {
-            reorderJar("lib/$APP_CLIENT_JAR", libDir.resolve(APP_CLIENT_JAR))
-          }
-        }
         context.bootClassPathJarNames =
           if (context.useModularLoader) persistentListOf(PLATFORM_LOADER_JAR)
           else generateClasspath(homeDir = distAllDir, libDir = libDir, antTargetFile = antTargetFile)
