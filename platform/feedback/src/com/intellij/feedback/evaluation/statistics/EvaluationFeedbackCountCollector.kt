@@ -22,6 +22,9 @@ class EvaluationFeedbackCountCollector : CounterUsagesCollector() {
                                                                      EventFields.Int("feature_set_rating"),
                                                                      EventFields.Int("performance_rating"))
 
+    private val EVALUATION_FEEDBACK_DIALOG_SHOWN = GROUP.registerVarargEvent("evaluation.feedback.dialog.shown", EventFields.Count)
+    private val EVALUATION_FEEDBACK_DIALOG_CANCELED = GROUP.registerVarargEvent("evaluation.feedback.dialog.canceled", EventFields.Count)
+
     fun logEvaluationFeedbackSent(interfaceRating: Int,
                                   priceRating: Int,
                                   stabilityRating: Int,
@@ -35,6 +38,14 @@ class EvaluationFeedbackCountCollector : CounterUsagesCollector() {
         FEATURE_SET_RATING_FIELD.with(featureSetRating),
         PERFORMANCE_RATING_FIELD.with(performanceRating)
       )
+    }
+
+    fun logEvaluationFeedbackDialogShown() {
+      EVALUATION_FEEDBACK_DIALOG_SHOWN.log()
+    }
+
+    fun logEvaluationFeedbackDialogCanceled() {
+      EVALUATION_FEEDBACK_DIALOG_CANCELED.log()
     }
   }
 
