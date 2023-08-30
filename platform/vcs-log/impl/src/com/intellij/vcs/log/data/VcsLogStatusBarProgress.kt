@@ -22,10 +22,9 @@ import com.intellij.vcs.log.data.index.VcsLogBigRepositoriesList
 import com.intellij.vcs.log.data.index.VcsLogPersistentIndex
 import com.intellij.vcs.log.util.VcsLogUtil
 
-class VcsLogStatusBarProgress(project: Project, logProviders: Map<VirtualFile, VcsLogProvider>,
+class VcsLogStatusBarProgress(project: Project, logProviders: Map<VirtualFile, VcsLogProvider>, private val roots: Set<VirtualFile>,
                               vcsLogProgress: VcsLogProgress) : Disposable {
   private val disposableFlag = Disposer.newCheckedDisposable()
-  private val roots = VcsLogPersistentIndex.getRootsForIndexing(logProviders)
   private val vcsName = VcsLogUtil.getVcsDisplayName(project, roots.mapNotNull { logProviders[it] })
   private val statusBar: StatusBarEx by lazy {
     (WindowManager.getInstance() as WindowManagerEx).findFrameFor(project)!!.statusBar as StatusBarEx
