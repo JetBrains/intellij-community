@@ -1,6 +1,7 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.terminal.exp
 
+import com.intellij.openapi.editor.SelectionModel
 import com.intellij.openapi.editor.event.EditorMouseEvent
 import com.intellij.openapi.editor.event.EditorMouseListener
 import com.intellij.openapi.editor.event.SelectionEvent
@@ -11,6 +12,7 @@ import com.intellij.util.concurrency.annotations.RequiresEdt
 import org.jetbrains.plugins.terminal.exp.TerminalSelectionModel.TerminalSelectionListener
 import java.awt.event.FocusAdapter
 import java.awt.event.FocusEvent
+import javax.swing.SwingUtilities
 import kotlin.math.min
 
 class TerminalSelectionController(
@@ -18,8 +20,14 @@ class TerminalSelectionController(
   private val selectionModel: TerminalSelectionModel,
   private val outputModel: TerminalOutputModel
 ) : EditorMouseListener, TerminalSelectionListener {
+  val selectedBlocks: List<CommandBlock>
+    get() = selectionModel.selectedBlocks
+
   val primarySelection: CommandBlock?
     get() = selectionModel.primarySelection
+
+  private val textSelectionModel: SelectionModel
+    get() = outputModel.editor.selectionModel
 
   init {
     outputModel.editor.addEditorMouseListener(this)
@@ -29,7 +37,7 @@ class TerminalSelectionController(
         clearSelection()   // clear selection if user selected the prompt using the mouse
       }
     })
-    outputModel.editor.selectionModel.addSelectionListener(object : SelectionListener {
+    textSelectionModel.addSelectionListener(object : SelectionListener {
       override fun selectionChanged(e: SelectionEvent) {
         if (!e.newRange.isEmpty) {
           selectionModel.selectedBlocks = emptyList()
@@ -64,28 +72,52 @@ class TerminalSelectionController(
   @RequiresEdt
   fun clearSelection() {
     selectionModel.selectedBlocks = emptyList()
-    outputModel.editor.selectionModel.removeSelection()
+    textSelectionModel.removeSelection()
     focusModel.focusPrompt()
   }
 
   override fun mouseClicked(event: EditorMouseEvent) {
+    val block = getBlockUnderMouse(event)
+    if (block != null) {
+      selectionModel.selectedBlocks = listOf(block)
+    }
+    else clearSelection()
+  }
+
+  override fun mousePressed(event: EditorMouseEvent) {
+    if (!SwingUtilities.isRightMouseButton(event.mouseEvent)) {
+      return
+    }
+    val block = getBlockUnderMouse(event)
+    if (block != null) {
+      val insideTextSelection = textSelectionModel.let { event.offset in (it.selectionStart..it.selectionEnd) }
+      if (!selectionModel.selectedBlocks.contains(block) && !insideTextSelection) {
+        selectionModel.selectedBlocks = listOf(block)
+      }
+    }
+    else clearSelection()
+  }
+
+  override fun selectionChanged(oldSelection: List<CommandBlock>, newSelection: List<CommandBlock>) {
+    if (newSelection.isNotEmpty()) {
+      textSelectionModel.removeSelection()
+      focusModel.focusOutput()
+    }
+    else if (!textSelectionModel.hasSelection()) {
+      focusModel.focusPrompt()
+    }
+  }
+
+  private fun getBlockUnderMouse(event: EditorMouseEvent): CommandBlock? {
     val block = outputModel.getByOffset(event.offset)
     if (block != null) {
       // check that click is right inside the block
       val bounds = outputModel.getBlockBounds(block)
       if (bounds.contains(event.mouseEvent.point)) {
-        selectionModel.selectedBlocks = listOf(block)
-        return
+        return block
       }
     }
-    clearSelection()
-  }
-
-  override fun selectionChanged(oldSelection: List<CommandBlock>, newSelection: List<CommandBlock>) {
-    if (newSelection.isNotEmpty()) {
-      focusModel.focusOutput()
-    }
-    else focusModel.focusPrompt()
+    return null
   }
 
   private fun makeBlockVisible(block: CommandBlock) {

@@ -115,10 +115,11 @@
       <keyboard-shortcut first-keystroke="DOWN" keymap="$default"/>
     </action>
 
-    <action id="Terminal.CopyOutput" class="org.jetbrains.plugins.terminal.action.CopyTerminalOutputAction" />
+    <action id="Terminal.Copy" class="org.jetbrains.plugins.terminal.action.TerminalCopyAction"
+            use-shortcut-of="$Copy" icon="AllIcons.Actions.Copy"/>
 
     <group id="Terminal.PopupMenu">
-      <reference ref="Terminal.CopyOutput"/>
+      <reference ref="Terminal.Copy"/>
     </group>
   </actions>
 
