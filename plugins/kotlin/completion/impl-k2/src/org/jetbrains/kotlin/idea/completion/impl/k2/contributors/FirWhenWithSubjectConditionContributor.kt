@@ -116,7 +116,6 @@ internal class FirWhenWithSubjectConditionContributor(
                     classifier.name.asString(),
                     classifier,
                     (classifier as? KtNamedClassOrObjectSymbol)?.classIdIfNonLocal?.asSingleFqName(),
-                    isPrefixNeeded(classifier),
                     isSingleCondition,
                 )
             }
@@ -130,21 +129,23 @@ internal class FirWhenWithSubjectConditionContributor(
                         classifier.name.asString(),
                         classifier,
                         (classifier as? KtNamedClassOrObjectSymbol)?.classIdIfNonLocal?.asSingleFqName(),
-                        isPrefixNeeded(classifier),
                         isSingleCondition,
-                        availableWithoutImport = false,
                     )
                 }
         }
     }
 
     context(KtAnalysisSession)
-    private fun isPrefixNeeded(classifier: KtClassifierSymbol): Boolean {
-        return when (classifier) {
+    private fun isPrefixNeeded(symbol: KtNamedSymbol): Boolean {
+        return when (symbol) {
             is KtAnonymousObjectSymbol -> return false
-            is KtNamedClassOrObjectSymbol -> onTypingIsKeyword || !classifier.classKind.isObject
-            is KtTypeAliasSymbol -> (classifier.expandedType as? KtNonErrorClassType)?.classSymbol?.let { isPrefixNeeded(it) } == true
+            is KtNamedClassOrObjectSymbol -> onTypingIsKeyword || !symbol.classKind.isObject
+            is KtTypeAliasSymbol -> {
+                (symbol.expandedType as? KtNonErrorClassType)?.classSymbol?.let { it is KtNamedSymbol && isPrefixNeeded(it) } == true
+            }
+
             is KtTypeParameterSymbol -> true
+            else -> false
         }
     }
 
@@ -170,8 +171,7 @@ internal class FirWhenWithSubjectConditionContributor(
                     classId.relativeClassName.asString(),
                     inheritor,
                     classId.asSingleFqName(),
-                    isPrefixNeeded(inheritor),
-                    isSingleCondition
+                    isSingleCondition,
                 )
             }
 
@@ -241,7 +241,6 @@ internal class FirWhenWithSubjectConditionContributor(
                     "${classSymbol.name.asString()}.${entry.name.asString()}",
                     entry,
                     entry.callableIdIfNonLocal?.asSingleFqName(),
-                    isPrefixNeeded = false,
                     isSingleCondition,
                 )
             }
@@ -257,10 +256,9 @@ internal class FirWhenWithSubjectConditionContributor(
         lookupString: String,
         symbol: KtNamedSymbol,
         fqName: FqName?,
-        isPrefixNeeded: Boolean,
         isSingleCondition: Boolean,
-        availableWithoutImport: Boolean = true,
     ) {
+        val isPrefixNeeded = isPrefixNeeded(symbol)
         val typeArgumentsCount = (symbol as? KtSymbolWithTypeParameters)?.typeParameters?.size ?: 0
         val lookupObject = WhenConditionLookupObject(symbol.name, fqName, isPrefixNeeded, isSingleCondition, typeArgumentsCount)
 
