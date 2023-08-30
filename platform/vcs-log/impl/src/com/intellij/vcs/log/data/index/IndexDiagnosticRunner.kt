@@ -65,7 +65,7 @@ internal class IndexDiagnosticRunner(private val index: VcsLogModifiableIndex,
 
     try {
       val commitDetails = commitDetailsGetter.getCommitDetails(commits)
-      val diffReport = dataGetter.getDiffFor(commits, commitDetails)
+      val diffReport = dataGetter.getDiffFor(commits, commitDetails, checkAllCommits = false)
       if (diffReport.isNotBlank()) {
         val exception = RuntimeException("Index is corrupted")
         thisLogger().error(exception.message, exception, Attachment("VcsLogIndexDiagnosticReport.txt", diffReport))

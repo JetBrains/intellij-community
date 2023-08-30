@@ -22,12 +22,13 @@ internal object IndexDiagnostic {
   private const val COMMITS_TO_CHECK = 10
   private const val INDEXED_COMMITS_ITERATIONS_LIMIT = 5_000
 
-  fun IndexDataGetter.getDiffFor(commitsIdList: List<Int>, commitDetailsList: List<VcsFullCommitDetails>): String {
+  fun IndexDataGetter.getDiffFor(commitsIdList: List<Int>, commitDetailsList: List<VcsFullCommitDetails>, checkAllCommits: Boolean = true): String {
     val report = StringBuilder()
     for ((commitId, commitDetails) in commitsIdList.zip(commitDetailsList)) {
       getDiffFor(commitId, commitDetails)?.let { commitReport ->
         report.append(commitReport).append("\n")
       }
+      if (!checkAllCommits && report.isNotBlank()) return report.toString()
     }
     return report.toString()
   }
