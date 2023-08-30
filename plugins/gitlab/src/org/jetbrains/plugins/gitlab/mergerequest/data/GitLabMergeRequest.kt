@@ -13,11 +13,8 @@ import com.intellij.util.childScope
 import com.intellij.vcsUtil.VcsFileUtil
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.*
-import org.jetbrains.plugins.gitlab.api.GitLabApi
-import org.jetbrains.plugins.gitlab.api.GitLabProjectCoordinates
+import org.jetbrains.plugins.gitlab.api.*
 import org.jetbrains.plugins.gitlab.api.dto.*
-import org.jetbrains.plugins.gitlab.api.getResultOrThrow
-import org.jetbrains.plugins.gitlab.api.loadUpdatableJsonList
 import org.jetbrains.plugins.gitlab.mergerequest.api.dto.GitLabDiffPositionInput
 import org.jetbrains.plugins.gitlab.mergerequest.api.dto.GitLabMergeRequestDTO
 import org.jetbrains.plugins.gitlab.mergerequest.api.request.*
@@ -308,6 +305,7 @@ internal class LoadedGitLabMergeRequest(
 
   override suspend fun addNote(position: GitLabDiffPositionInput, body: String) = discussionsContainer.addNote(position, body)
 
+  @SinceGitLab("15.11")
   override suspend fun submitDraftNotes() = discussionsContainer.submitDraftNotes()
 
   override fun getRelativeFilePath(virtualFile: VirtualFile): FilePath? {

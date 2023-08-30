@@ -11,12 +11,10 @@ import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
-import org.jetbrains.plugins.gitlab.api.GitLabApi
-import org.jetbrains.plugins.gitlab.api.GitLabProjectCoordinates
+import org.jetbrains.plugins.gitlab.api.*
 import org.jetbrains.plugins.gitlab.api.dto.GitLabMergeRequestDraftNoteRestDTO
 import org.jetbrains.plugins.gitlab.api.dto.GitLabNoteDTO
 import org.jetbrains.plugins.gitlab.api.dto.GitLabUserDTO
-import org.jetbrains.plugins.gitlab.api.getResultOrThrow
 import org.jetbrains.plugins.gitlab.mergerequest.api.request.deleteDraftNote
 import org.jetbrains.plugins.gitlab.mergerequest.api.request.deleteNote
 import org.jetbrains.plugins.gitlab.mergerequest.api.request.updateDraftNote
@@ -35,6 +33,11 @@ interface GitLabNote {
 
 interface MutableGitLabNote : GitLabNote {
   val canAdmin: Boolean
+
+  /**
+   * Whether the note can be edited.
+   */
+  suspend fun canEdit(): Boolean
 
   suspend fun setBody(newText: String)
   suspend fun delete()
@@ -80,6 +83,7 @@ class MutableGitLabMergeRequestNote(
     it.position?.let(GitLabNotePosition::from)
   }
   override val positionMapping: Flow<GitLabMergeRequestNotePositionMapping?> = position.mapPosition(mr).modelFlow(cs, LOG)
+  override suspend fun canEdit(): Boolean = true
 
   override suspend fun setBody(newText: String) {
     withContext(cs.coroutineContext) {
@@ -138,10 +142,15 @@ class GitLabMergeRequestDraftNoteImpl(
   override val position: StateFlow<GitLabNotePosition?> = data.mapState(cs) { it.position.let(GitLabNotePosition::from) }
   override val positionMapping: Flow<GitLabMergeRequestNotePositionMapping?> = position.mapPosition(mr).modelFlow(cs, LOG)
 
+  override suspend fun canEdit(): Boolean =
+    GitLabVersion(15, 10) <= api.getMetadata().version
+
+  @SinceGitLab("15.10")
   override suspend fun setBody(newText: String) {
     withContext(cs.coroutineContext) {
       operationsGuard.withLock {
         withContext(Dispatchers.IO) {
+          // Checked by canEdit
           api.rest.updateDraftNote(project, mr.iid, noteData.id, newText)
         }
       }
@@ -153,6 +162,8 @@ class GitLabMergeRequestDraftNoteImpl(
     withContext(cs.coroutineContext) {
       operationsGuard.withLock {
         withContext(Dispatchers.IO) {
+          // Shouldn't require extra check, delete and get draft notes was introduced in
+          // the same update
           api.rest.deleteDraftNote(project, mr.iid, noteData.id)
         }
       }

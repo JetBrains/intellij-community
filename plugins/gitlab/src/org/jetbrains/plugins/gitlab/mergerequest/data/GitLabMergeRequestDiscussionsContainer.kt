@@ -12,14 +12,11 @@ import kotlinx.coroutines.channels.BufferOverflow
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
-import org.jetbrains.plugins.gitlab.api.GitLabApi
-import org.jetbrains.plugins.gitlab.api.GitLabProjectCoordinates
+import org.jetbrains.plugins.gitlab.api.*
 import org.jetbrains.plugins.gitlab.api.dto.GitLabDiscussionDTO
 import org.jetbrains.plugins.gitlab.api.dto.GitLabMergeRequestDraftNoteRestDTO
 import org.jetbrains.plugins.gitlab.api.dto.GitLabNoteDTO
 import org.jetbrains.plugins.gitlab.api.dto.GitLabUserDTO
-import org.jetbrains.plugins.gitlab.api.getResultOrThrow
-import org.jetbrains.plugins.gitlab.api.loadUpdatableJsonList
 import org.jetbrains.plugins.gitlab.api.request.getCurrentUser
 import org.jetbrains.plugins.gitlab.mergerequest.api.dto.GitLabDiffPositionInput
 import org.jetbrains.plugins.gitlab.mergerequest.api.request.*
@@ -38,6 +35,7 @@ interface GitLabMergeRequestDiscussionsContainer {
   // not a great idea to pass a dto, but otherwise it's a pain in the neck to calc positions
   suspend fun addNote(position: GitLabDiffPositionInput, body: String)
 
+  @SinceGitLab("15.11")
   suspend fun submitDraftNotes()
 }
 
@@ -159,6 +157,12 @@ class GitLabMergeRequestDiscussionsContainerImpl(
 
   private suspend fun FlowCollector<List<DraftNoteWithAuthor>>.collectDraftNotes() {
     supervisorScope {
+      val metadata = api.getMetadataOrNull()
+      if (metadata == null || metadata.version < GitLabVersion(15, 9)) {
+        emit(listOf())
+        currentCoroutineContext().cancel()
+      }
+
       // we shouldn't get another user's draft notes
       val currentUser = api.graphQL.getCurrentUser() ?: error("Unable to load current user")
 
@@ -275,6 +279,11 @@ class GitLabMergeRequestDiscussionsContainerImpl(
 
   override suspend fun submitDraftNotes() {
     withContext(cs.coroutineContext) {
+      // Don't do anything if the endpoint is not implemented
+      if (api.getMetadata().version < GitLabVersion(15, 11)) {
+        return@withContext
+      }
+
       withContext(Dispatchers.IO) {
         api.rest.submitDraftNotes(glProject, mr.iid)
       }

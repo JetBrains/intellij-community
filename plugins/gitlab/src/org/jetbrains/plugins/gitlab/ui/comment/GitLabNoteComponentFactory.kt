@@ -91,7 +91,10 @@ object GitLabNoteComponentFactory {
           removeAll()
           coroutineScope {
             CodeReviewCommentUIUtil.createEditButton { _ -> it.startEditing() }.apply {
-              bindDisabledIn(this@coroutineScope, it.busy)
+              isEnabled = false
+              if (it.canEdit()) {
+                bindDisabledIn(this@coroutineScope, it.busy)
+              }
             }.also(::add)
             CodeReviewCommentUIUtil.createDeleteCommentIconButton { _ -> it.delete() }.apply {
               bindDisabledIn(this@coroutineScope, it.busy)
