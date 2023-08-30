@@ -73,7 +73,13 @@ object StressTestUtil {
         override val output: OutputStream
           get() = System.out
       }
-      appClass.createInstance().run(appAgent)
+      try {
+        appClass.createInstance().run(appAgent)
+      }
+      catch (e: Throwable) {
+        System.err.println("Error while running App: ${e.message} -> app exiting")
+        e.printStackTrace()
+      }
     }
 
     private val currentProcessInfo by lazy {
@@ -82,6 +88,8 @@ object StressTestUtil {
 
     fun buildRunnerCommand(appClass: KClass<*>): List<String> {
       var adjustedArgs = currentProcessInfo.arguments().get().toList()
+        .filterNot{ it.startsWith("-agentlib:jdwp=") }//remove debugger conf -- can't start 2 debugs with same conf
+        .filterNot{ it.startsWith("-javaagent:") && it.endsWith("capture.props") }    //remove debugger support agent: not working without debug
       val testUtilArg = adjustedArgs.indexOf(StressTestUtil::class.java.name)
       check(testUtilArg >= 0) { currentProcessInfo }
       adjustedArgs = listOf(currentProcessInfo.command().get()) +

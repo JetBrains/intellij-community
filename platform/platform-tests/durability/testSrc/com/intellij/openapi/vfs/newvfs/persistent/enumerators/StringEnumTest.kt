@@ -115,8 +115,8 @@ internal class StringEnumeratorAppHelper(private val enumeratorBackend: StringEn
         }
       }
       catch (e: Throwable) {
-        e.printStackTrace()
         appAgent.output.writeProto(Proto.Response.Failure(e.message ?: e.javaClass.name))
+        throw e
       }
     }
   }
