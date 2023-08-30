@@ -5,18 +5,20 @@ import com.intellij.openapi.editor.event.EditorMouseEvent
 import com.intellij.openapi.editor.event.EditorMouseListener
 import com.intellij.openapi.util.Key
 import com.intellij.util.MathUtil
+import org.jetbrains.plugins.terminal.exp.TerminalSelectionModel.TerminalSelectionListener
 import kotlin.math.min
 
 class TerminalSelectionController(
-  private val focusController: TerminalFocusController,
-  val selectionModel: TerminalSelectionModel,
+  private val focusModel: TerminalFocusModel,
+  private val selectionModel: TerminalSelectionModel,
   private val outputModel: TerminalOutputModel
-) : EditorMouseListener {
+) : EditorMouseListener, TerminalSelectionListener {
   val primarySelection: CommandBlock?
     get() = selectionModel.primarySelection
 
   init {
     outputModel.editor.addEditorMouseListener(this)
+    selectionModel.addListener(this)
   }
 
   fun selectRelativeBlock(isBelow: Boolean) {
@@ -43,7 +45,7 @@ class TerminalSelectionController(
   fun clearSelection() {
     selectionModel.selectedBlocks = emptyList()
     outputModel.editor.selectionModel.removeSelection()
-    focusController.focusPrompt()
+    focusModel.focusPrompt()
   }
 
   override fun mouseClicked(event: EditorMouseEvent) {
@@ -57,6 +59,13 @@ class TerminalSelectionController(
       }
     }
     clearSelection()
+  }
+
+  override fun selectionChanged(oldSelection: List<CommandBlock>, newSelection: List<CommandBlock>) {
+    if (newSelection.isNotEmpty()) {
+      focusModel.focusOutput()
+    }
+    else focusModel.focusPrompt()
   }
 
   private fun makeBlockVisible(block: CommandBlock) {

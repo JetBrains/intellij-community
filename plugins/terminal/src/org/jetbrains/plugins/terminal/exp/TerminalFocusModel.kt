@@ -5,9 +5,9 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.wm.IdeFocusManager
 import javax.swing.JComponent
 
-class TerminalFocusController(private val project: Project,
-                              private val outputView: TerminalOutputView,
-                              private val promptView: TerminalPromptView) {
+class TerminalFocusModel(private val project: Project,
+                         private val outputView: TerminalOutputView,
+                         private val promptView: TerminalPromptView) {
   fun focusOutput() {
     requestFocus(outputView.preferredFocusableComponent)
   }

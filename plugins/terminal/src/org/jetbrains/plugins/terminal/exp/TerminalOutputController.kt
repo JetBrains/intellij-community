@@ -6,7 +6,6 @@ import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.invokeLater
 import com.intellij.openapi.editor.ScrollType
 import com.intellij.openapi.editor.event.DocumentListener
-import com.intellij.openapi.editor.event.EditorMouseListener
 import com.intellij.openapi.editor.ex.EditorEx
 import com.intellij.openapi.editor.markup.EffectType
 import com.intellij.openapi.editor.markup.TextAttributes
@@ -31,6 +30,7 @@ class TerminalOutputController(
   private val settings: JBTerminalSystemSettingsProviderBase
 ) : TerminalModel.TerminalListener, UserDataHolder {
   val outputModel: TerminalOutputModel = TerminalOutputModel(editor)
+  val selectionModel: TerminalSelectionModel = TerminalSelectionModel(outputModel)
   private val terminalModel: TerminalModel = session.model
   private val blocksDecorator: TerminalBlocksDecorator = TerminalBlocksDecorator(outputModel, editor)
   private val textHighlighter: TerminalTextHighlighter = TerminalTextHighlighter(outputModel)
@@ -40,8 +40,6 @@ class TerminalOutputController(
 
   private val palette: ColorPalette
     get() = settings.terminalColorPalette
-
-  var isFocused: Boolean = false
 
   @Volatile
   private var runningListenersDisposable: Disposable? = null
@@ -63,7 +61,6 @@ class TerminalOutputController(
     val disposable = Disposer.newDisposable().also { Disposer.register(session, it) }
     runningListenersDisposable = disposable
     val eventsHandler = TerminalEventsHandler(session, settings)
-    val selectionModel = editor.getUserData(TerminalSelectionController.KEY)!!.selectionModel
     setupKeyEventDispatcher(editor, settings, eventsHandler, outputModel, selectionModel, disposable)
     setupMouseListener(editor, settings, session.model, eventsHandler, disposable)
     setupContentListener(disposable)

@@ -1,22 +1,19 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.terminal.exp
 
-import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.invokeLater
 import com.intellij.openapi.diagnostic.thisLogger
 import com.jediterm.core.util.TermSize
-import org.jetbrains.plugins.terminal.exp.TerminalSelectionModel.TerminalSelectionListener
 
 class BlockTerminalController(
   private val session: TerminalSession,
-  focusController: TerminalFocusController,
+  focusModel: TerminalFocusModel,
   private val outputController: TerminalOutputController,
   private val promptController: TerminalPromptController
 ) : ShellCommandListener {
-  private val selectionModel: TerminalSelectionModel = TerminalSelectionModel(outputController.outputModel)
-  private val selectionController: TerminalSelectionController = TerminalSelectionController(focusController,
-                                                                                             selectionModel,
+  private val selectionController: TerminalSelectionController = TerminalSelectionController(focusModel,
+                                                                                             outputController.selectionModel,
                                                                                              outputController.outputModel)
 
   init {
@@ -28,17 +25,12 @@ class BlockTerminalController(
     // Show initial terminal output (prior to the first prompt) in a separate block.
     // `initialized` event will finish the block.
     outputController.startCommandBlock(null)
-    outputController.isFocused = true
     promptController.promptIsVisible = false
     session.model.isCommandRunning = true
   }
 
   fun resize(newSize: TermSize) {
     session.postResize(newSize)
-  }
-
-  fun addSelectionListener(listener: TerminalSelectionListener, disposable: Disposable? = null) {
-    selectionModel.addListener(listener, disposable)
   }
 
   fun startCommandExecution(command: String) {

@@ -4,9 +4,7 @@ package org.jetbrains.plugins.terminal.exp
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.CommonDataKeys
 import com.intellij.openapi.actionSystem.DataProvider
-import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.EditorFactory
-import com.intellij.openapi.editor.ex.FocusChangeListener
 import com.intellij.openapi.editor.impl.DocumentImpl
 import com.intellij.openapi.editor.impl.EditorImpl
 import com.intellij.openapi.project.Project
@@ -42,16 +40,6 @@ class TerminalOutputView(
     editor = createEditor(settings)
     controller = TerminalOutputController(editor, session, settings)
     component = TerminalOutputPanel()
-
-    editor.addFocusListener(object : FocusChangeListener {
-      override fun focusGained(editor: Editor) {
-        controller.isFocused = true
-      }
-
-      override fun focusLost(editor: Editor) {
-        controller.isFocused = false
-      }
-    })
   }
 
   private fun createEditor(settings: JBTerminalSystemSettingsProviderBase): EditorImpl {
