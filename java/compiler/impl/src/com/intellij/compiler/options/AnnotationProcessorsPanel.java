@@ -94,7 +94,7 @@ public class AnnotationProcessorsPanel extends JPanel {
     TreeUIHelper.getInstance().installTreeSpeedSearch(myTree, path -> {
       Object node = path.getLastPathComponent();
       if (node instanceof MyModuleNode moduleNode) {
-        return ((Module)moduleNode.getUserObject()).getName();
+        return moduleNode.getModule().getName();
       }
       else if (node instanceof ProfileNode profileNode) {
         return profileNode.myProfile.getName();
@@ -302,6 +302,10 @@ public class AnnotationProcessorsPanel extends JPanel {
       setParent(parent);
       setAllowsChildren(false);
     }
+
+    Module getModule() {
+      return (Module)getUserObject();
+    }
   }
 
   private static class MyCellRenderer extends ColoredTreeCellRenderer {
@@ -311,7 +315,7 @@ public class AnnotationProcessorsPanel extends JPanel {
         append(((ProfileNode)value).myProfile.getName());
       }
       else if (value instanceof MyModuleNode) {
-        final Module module = (Module)((MyModuleNode)value).getUserObject();
+        final Module module = ((MyModuleNode)value).getModule();
         setIcon(AllIcons.Nodes.Module);
         append(module.getName());
       }
@@ -345,12 +349,12 @@ public class AnnotationProcessorsPanel extends JPanel {
         .createPopupChooserBuilder(profiles)
         .setTitle(JavaCompilerBundle.message("action.text.move.to"))
         .setItemChosenCallback((chosenProfile) -> {
-          final Module toSelect = (Module)node.getUserObject();
+          final Module toSelect = node.getModule();
           if (selectedNodes != null) {
             for (TreePath selectedNode : selectedNodes) {
               final Object node1 = selectedNode.getLastPathComponent();
               if (node1 instanceof MyModuleNode) {
-                final Module module = (Module)((MyModuleNode)node1).getUserObject();
+                final Module module = ((MyModuleNode)node1).getModule();
                 if (nodeProfile != myDefaultProfile) {
                   nodeProfile.removeModuleName(module.getName());
                 }
