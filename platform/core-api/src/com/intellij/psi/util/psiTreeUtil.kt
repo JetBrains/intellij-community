@@ -13,6 +13,8 @@ import org.jetbrains.annotations.ApiStatus
 import java.util.*
 import kotlin.reflect.KClass
 
+fun PsiElement.validOrNull() = if (isValid) this else null
+
 // ----------- Walking children/siblings/parents -------------------------------------------------------------------------------------------
 
 inline fun PsiElement.findParentInFile(withSelf: Boolean = false, predicate: (PsiElement) -> Boolean): PsiElement? {

@@ -19,6 +19,7 @@ import java.io.IOException
 import java.nio.file.Path
 import kotlin.io.path.pathString
 
+fun VirtualFile.validOrNull() = if (isValid) this else null
 
 val VirtualFile.isFile: Boolean
   get() = isValid && !isDirectory
