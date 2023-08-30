@@ -14,6 +14,7 @@ import com.intellij.openapi.roots.*
 import com.intellij.openapi.roots.libraries.Library
 import com.intellij.openapi.util.UserDataHolder
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.psi.PsiDirectory
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
 import org.jetbrains.annotations.ApiStatus
@@ -68,7 +69,8 @@ class ModuleInfoProvider(private val project: Project) {
 
         fun getInstance(project: Project): ModuleInfoProvider = project.service()
 
-        fun findAnchorFile(element: PsiElement): PsiFile? = when {
+        fun findAnchorElement(element: PsiElement): PsiElement? = when {
+            element is PsiDirectory -> element
             element !is KtLightElement<*, *> -> element.containingFile
             /**
              * We shouldn't unwrap decompiled classes
@@ -76,7 +78,7 @@ class ModuleInfoProvider(private val project: Project) {
              */
             element.getNonStrictParentOfType<KtLightClassForDecompiledDeclaration>() != null -> null
             element is KtLightClassForFacade -> element.files.first()
-            else -> element.kotlinOrigin?.let(::findAnchorFile)
+            else -> element.kotlinOrigin?.let(::findAnchorElement)
         }
     }
 
@@ -116,6 +118,11 @@ class ModuleInfoProvider(private val project: Project) {
             if (moduleInfo is IdeaModuleInfo) {
                 register(moduleInfo)
             }
+        }
+
+        if (element is PsiDirectory) {
+            collectByFile(element.virtualFile, isLibrarySource = false, config)
+            return
         }
 
         if (element is KtLightElement<*, *>) {

@@ -68,8 +68,7 @@ class KotlinProjectStructureTest : AbstractMultiModuleTest() {
         val file = getFile("Main.kt")
         val psiDirectory = file.parent as PsiDirectory
 
-        // Should be KtSourceModule
-        assertKtModuleType<KtNotUnderContentRootModule>(psiDirectory)
+        assertKtModuleType<KtSourceModule>(psiDirectory)
     }
 
     fun `test out of content module`() {

@@ -7,7 +7,6 @@ import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.ProjectRootModificationTracker
 import com.intellij.psi.PsiElement
-import com.intellij.psi.PsiFile
 import com.intellij.psi.util.CachedValueProvider
 import com.intellij.psi.util.CachedValuesManager
 import org.jetbrains.annotations.ApiStatus
@@ -49,9 +48,9 @@ internal class ProjectStructureProviderIdeImpl(private val project: Project) : P
             }
         }
 
-        val psiFile = ModuleInfoProvider.findAnchorFile(element)
-        return if (psiFile != null) {
-            cachedKtModule(psiFile)
+        val anchorElement = ModuleInfoProvider.findAnchorElement(element)
+        return if (anchorElement != null) {
+            cachedKtModule(anchorElement)
         } else {
             calculateKtModule(element)
         }
@@ -63,10 +62,10 @@ internal class ProjectStructureProviderIdeImpl(private val project: Project) : P
     }
 }
 
-private fun cachedKtModule(psiFile: PsiFile): KtModule = CachedValuesManager.getCachedValue<KtModule>(psiFile) {
-    val project = psiFile.project
+private fun cachedKtModule(anchorElement: PsiElement): KtModule = CachedValuesManager.getCachedValue<KtModule>(anchorElement) {
+    val project = anchorElement.project
     CachedValueProvider.Result.create(
-        calculateKtModule(psiFile),
+        calculateKtModule(anchorElement),
         ProjectRootModificationTracker.getInstance(project),
         JavaLibraryModificationTracker.getInstance(project),
         KotlinModificationTrackerFactory.getInstance(project).createProjectWideOutOfBlockModificationTracker(),
