@@ -23,7 +23,6 @@ import org.jetbrains.idea.maven.project.MavenProjectBundle
 import org.jetbrains.idea.maven.project.MavenProjectsManager
 import java.io.IOException
 import java.nio.file.Files
-import java.nio.file.Path
 
 internal class MavenAttachSourcesProvider : AttachSourcesProvider {
   override fun getActions(orderEntries: List<LibraryOrderEntry>,
@@ -31,14 +30,9 @@ internal class MavenAttachSourcesProvider : AttachSourcesProvider {
     val projects = getMavenProjects(psiFile)
     if (projects.isEmpty()) return listOf()
     return if (findArtifacts(projects, orderEntries).isEmpty()) listOf()
-    else java.util.List.of(object : AttachSourcesAction {
-      override fun getName(): String {
-        return MavenProjectBundle.message("maven.action.download.sources")
-      }
-
-      override fun getBusyText(): String {
-        return MavenProjectBundle.message("maven.action.download.sources.busy.text")
-      }
+    else listOf(object : AttachSourcesAction {
+      override fun getName() = MavenProjectBundle.message("maven.action.download.sources")
+      override fun getBusyText() = MavenProjectBundle.message("maven.action.download.sources.busy.text")
 
       override fun perform(orderEntriesContainingFile: List<LibraryOrderEntry>): ActionCallback {
         // may have been changed by this time...
@@ -49,22 +43,21 @@ internal class MavenAttachSourcesProvider : AttachSourcesProvider {
         val manager = MavenProjectsManager.getInstance(psiFile.getProject())
         val artifacts = findArtifacts(mavenProjects, orderEntries)
         if (artifacts.isEmpty()) return ActionCallback.REJECTED
+
+        // TODO: use downloadArtifacts
         val downloadResult = manager.downloadArtifactsSync(mavenProjects, artifacts, true, false)
+
         val resultWrapper = ActionCallback()
-        var builder: HtmlBuilder? = null
         if (!downloadResult.unresolvedSources.isEmpty()) {
-          builder = HtmlBuilder()
+          val builder = HtmlBuilder()
           builder.append(MavenProjectBundle.message("sources.not.found.for"))
-          var count = 0
-          for (each in downloadResult.unresolvedSources) {
-            if (count++ > 5) {
+          for ((count, each) in downloadResult.unresolvedSources.withIndex()) {
+            if (count > 5) {
               builder.append(HtmlChunk.br()).append(MavenProjectBundle.message("and.more"))
               break
             }
             builder.append(HtmlChunk.br()).append(each.displayString)
           }
-        }
-        if (builder != null) {
           cleanUpUnresolvedSourceFiles(psiFile.getProject(), downloadResult.unresolvedSources)
           Notifications.Bus.notify(Notification(MavenUtil.MAVEN_NOTIFICATION_GROUP,
                                                 MavenProjectBundle.message("maven.sources.cannot.download"),
@@ -89,14 +82,13 @@ internal class MavenAttachSourcesProvider : AttachSourcesProvider {
         val parentFile = MavenUtil.getRepositoryParentFile(project, mavenId) ?: continue
         try {
           Files.list(parentFile).use { paths ->
-            paths
-              .filter { path: Path -> isTargetFile(path.fileName.toString(), MavenExtraArtifactType.SOURCES) }
-              .forEach { path: Path ->
+            paths.filter { isTargetFile(it.fileName.toString(), MavenExtraArtifactType.SOURCES) }
+              .forEach {
                 try {
-                  FileUtil.delete(path)
+                  FileUtil.delete(it)
                 }
                 catch (e: IOException) {
-                  MavenLog.LOG.warn("$path not deleted", e)
+                  MavenLog.LOG.warn("$it not deleted", e)
                 }
               }
           }
