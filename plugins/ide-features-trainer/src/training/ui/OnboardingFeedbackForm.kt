@@ -18,6 +18,7 @@ import com.intellij.platform.feedback.dialog.COMMON_FEEDBACK_SYSTEM_INFO_VERSION
 import com.intellij.platform.feedback.dialog.CommonFeedbackSystemData
 import com.intellij.platform.feedback.dialog.showFeedbackSystemInfoDialog
 import com.intellij.platform.feedback.impl.*
+import com.intellij.platform.feedback.impl.notification.ThanksForFeedbackNotification
 import com.intellij.ui.ColorUtil
 import com.intellij.ui.HyperlinkAdapter
 import com.intellij.ui.JBColor
@@ -234,6 +235,7 @@ fun showOnboardingLessonFeedbackForm(project: Project?,
     )
 
     submitFeedback(feedbackData, {}, {}, getFeedbackRequestType())
+    ThanksForFeedbackNotification().notify(project)
   }
   StatisticBase.logOnboardingFeedbackDialogResult(
     place = getFeedbackEntryPlace(project),
