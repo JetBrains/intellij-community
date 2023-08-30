@@ -28,7 +28,8 @@ internal class ListenerImplementationMustNotBeDisposableInspection : DevKitUastI
           if (psiClass.classKind != JvmClassKind.CLASS ||
               PsiUtil.isAbstractClass(psiClass) ||
               PsiUtil.isLocalOrAnonymousClass(psiClass) ||
-              PsiUtil.isInnerClass(psiClass)) return true
+              PsiUtil.isInnerClass(psiClass) ||
+              psiClass.qualifiedName == null) return true
 
           if (!InheritanceUtil.isInheritor(psiClass, Disposable::class.java.canonicalName)) return true
 
