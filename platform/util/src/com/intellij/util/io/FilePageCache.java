@@ -3,6 +3,7 @@ package com.intellij.util.io;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.util.SmartList;
+import com.intellij.util.SystemProperties;
 import com.intellij.util.containers.hash.LinkedHashMap;
 import com.intellij.util.containers.hash.LongLinkedHashMap;
 import com.intellij.util.io.stats.FilePageCacheStatistics;
@@ -18,6 +19,7 @@ import java.nio.file.Path;
 import java.util.*;
 import java.util.concurrent.locks.ReentrantLock;
 
+import static com.intellij.util.SystemProperties.getBooleanProperty;
 import static java.util.concurrent.TimeUnit.NANOSECONDS;
 
 /**
@@ -43,6 +45,9 @@ import static java.util.concurrent.TimeUnit.NANOSECONDS;
 @ApiStatus.Internal
 final class FilePageCache {
   private static final Logger LOG = Logger.getInstance(FilePageCache.class);
+  //@formatter:off
+  private static final boolean KEEP_STACK_TRACE_AT_STORAGE_REGISTRATION = getBooleanProperty("FilePageCache.KEEP_STACK_TRACE_AT_STORAGE_REGISTRATION", true);
+  //@formatter:on
 
   /**
    * Measure times of page loading/disposing.
@@ -55,11 +60,11 @@ final class FilePageCache {
   static final long MAX_PAGES_COUNT = 0xFFFF_FFFFL;
   private static final long FILE_INDEX_MASK = 0xFFFF_FFFF_0000_0000L;
 
-  /**
-   * storageId -> storage
-   */
+  /** storageId -> storage */
   //@GuardedBy("storageById")
   private final Int2ObjectMap<PagedFileStorage> storageById = new Int2ObjectOpenHashMap<>();
+  //@GuardedBy("storageById")
+  private final Map<Path, Exception> stackTracesOfStorageRegistration = KEEP_STACK_TRACE_AT_STORAGE_REGISTRATION ? new HashMap<>() : null;
   //@GuardedBy("storageById")
   private final Map<Path, PagedFileStorage> storageByPath = new HashMap<>();
 
@@ -343,6 +348,9 @@ final class FilePageCache {
       if (removedStorage != null) {
         Path storageFile = removedStorage.getFile();
         storageByPath.remove(storageFile);
+        if (KEEP_STACK_TRACE_AT_STORAGE_REGISTRATION) {
+          stackTracesOfStorageRegistration.remove(storageFile);
+        }
       }
     }
   }
@@ -385,7 +393,16 @@ final class FilePageCache {
       Path storageFile = storage.getFile();
       PagedFileStorage alreadyRegisteredStorage = storageByPath.get(storageFile);
       if (alreadyRegisteredStorage != null) {
-        throw new IllegalStateException("Storage for [" + storageFile.toAbsolutePath() + "] is already registered");
+        IllegalStateException ex = new IllegalStateException(
+          "Storage for [" + storageFile.toAbsolutePath() + "] is already registered"
+        );
+        if (KEEP_STACK_TRACE_AT_STORAGE_REGISTRATION) {
+          Exception stackTraceHolder = stackTracesOfStorageRegistration.get(storageFile);
+          if (stackTraceHolder != null) {
+            ex.addSuppressed(stackTraceHolder);
+          }
+        }
+        throw ex;
       }
 
       //Generate unique 'id' (index) for a new storage: just find the number not occupied yet. Assume
@@ -397,6 +414,9 @@ final class FilePageCache {
       }
       storageById.put(storageIndex, storage);
       storageByPath.put(storageFile, storage);
+      if (KEEP_STACK_TRACE_AT_STORAGE_REGISTRATION) {
+        stackTracesOfStorageRegistration.put(storageFile, new Exception("Storage[" + storageFile + "] registration stack trace"));
+      }
       myMaxRegisteredFiles = Math.max(myMaxRegisteredFiles, storageById.size());
       return (long)storageIndex << 32;
     }
