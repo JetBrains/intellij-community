@@ -22,7 +22,6 @@ public class MavenRunnerSettings implements Cloneable {
   @NonNls public static final String USE_JAVA_HOME = ExternalSystemJdkUtil.USE_JAVA_HOME;
 
   private boolean delegateBuildToMaven = false;
-  private boolean runMavenInBackground = true;
   @NotNull private String jreName = USE_PROJECT_JDK;
   @NotNull private String vmOptions = "";
   private boolean skipTests = false;
@@ -41,12 +40,13 @@ public class MavenRunnerSettings implements Cloneable {
     this.delegateBuildToMaven = delegateBuildToMaven;
   }
 
+  @Deprecated(forRemoval = true)
   public boolean isRunMavenInBackground() {
-    return runMavenInBackground;
+    return true;
   }
 
-  public void setRunMavenInBackground(boolean runMavenInBackground) {
-    this.runMavenInBackground = runMavenInBackground;
+  @Deprecated(forRemoval = true)
+  public void setRunMavenInBackground(boolean ignored) {
   }
 
   @NotNull
@@ -136,7 +136,6 @@ public class MavenRunnerSettings implements Cloneable {
     final MavenRunnerSettings that = (MavenRunnerSettings)o;
 
     if (delegateBuildToMaven != that.delegateBuildToMaven) return false;
-    if (runMavenInBackground != that.runMavenInBackground) return false;
     if (skipTests != that.skipTests) return false;
     if (!jreName.equals(that.jreName)) return false;
     if (mavenProperties != null ? !mavenProperties.equals(that.mavenProperties) : that.mavenProperties != null) return false;
@@ -150,7 +149,6 @@ public class MavenRunnerSettings implements Cloneable {
   public int hashCode() {
     int result;
     result = (delegateBuildToMaven ? 1 : 0);
-    result = 31 * result + (runMavenInBackground ? 1 : 0);
     result = 31 * result + jreName.hashCode();
     result = 31 * result + vmOptions.hashCode();
     result = 31 * result + (skipTests ? 1 : 0);
