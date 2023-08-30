@@ -289,8 +289,11 @@ public final class MappedFileStorageHelper implements Closeable {
 
   private void clearImpl(boolean clearHeaders) throws IOException {
     int startOffsetInFile = clearHeaders ? 0 : HeaderLayout.HEADER_SIZE;
-    long endOffsetInFile = (maxAllocatedFileID() * (long)bytesPerRow) + HeaderLayout.HEADER_SIZE - 1;
-    storage.zeroRegion(startOffsetInFile, endOffsetInFile);
+    //IDEA-330224: It is important to zeroize until the EOF, not until the current maxAllocatedID
+    // rows, because storage could be created and filled with previous VFS there maxAllocatedID=1e6,
+    // but now VFS rebuilds itself, and maxAllocatedID=1e3 -- and there are rows [1e3..1e6] filled
+    // with outdated data, which won't be cleared
+    storage.zeroizeTillEOF(startOffsetInFile);
 
     //TODO RC: which memory semantics .clear() should have? Now it is just 'plain write', while
     //         all other access methods uses 'volatile read/write'. For current use-case

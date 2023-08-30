@@ -3,7 +3,6 @@ package com.intellij.openapi.vfs.newvfs.persistent.mapped;
 
 import com.intellij.openapi.vfs.newvfs.persistent.mapped.MMappedFileStorage.Page;
 import org.junit.jupiter.api.AfterEach;
-import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
@@ -61,7 +60,7 @@ public class MMappedFileStorageTest {
 
     int startOffsetInFile = PAGE_SIZE / 2;
     int endOffsetInFile = PAGE_SIZE * 5 / 2;
-    storage.zeroRegion(startOffsetInFile, endOffsetInFile);
+    storage.zeroizeRegion(startOffsetInFile, endOffsetInFile);
 
     for (long pos = 0; pos < startOffsetInFile; pos++) {
       int offsetInPage = storage.toOffsetInPage(pos);

@@ -270,18 +270,18 @@ public final class AppendOnlyLogOverMMappedFile implements AppendOnlyLog {
       endOfRecoveredRegion = nextRecordToBeAllocatedOffset;
       long successfullyRecoveredUntil = recoverRegion(nextRecordToBeCommittedOffset, nextRecordToBeAllocatedOffset);
 
-      Path storagePath = storage.storagePath();
-      long fileSize = Files.size(storagePath);
+      long fileSize = storage.actualFileSize();
       if (fileSize < successfullyRecoveredUntil) {
-        //Mapped storage must enlarge file so that all non-0 values in mapped buffers are within file bounds (because
-        // to have something in mapped buffer beyond actual end-of-file is 'undefined behavior') -- and there are non-0
-        // values until successfullyRecoveredUntil, because at least record header is non-0 for valid records. So this
-        // shouldn't happen:
+        //Mapped storage must enlarge file so that all non-0 values in mapped buffers are within file bounds
+        // (because it is 'undefined behavior' to have something in mapped buffer beyond the actual end-of-file)
+        // -- and there are non-0 values up until successfullyRecoveredUntil, because at least record header is
+        // non-0 for valid records.
+        // So fileSize < successfullyRecoveredUntil must never happen:
         throw new AssertionError(
-          "file(=" + storagePath + ").size(=" + fileSize + ") < recoveredUntil(=" + successfullyRecoveredUntil + ")");
+          "file(=" + storage.storagePath() + ").size(=" + fileSize + ") < recoveredUntil(=" + successfullyRecoveredUntil + ")");
       }
-      //zero region [successfullyRecoveredUntil...<end of file>]:
-      storage.zeroRegion(successfullyRecoveredUntil, fileSize - 1);
+      //zero file suffix:
+      storage.zeroizeTillEOF(successfullyRecoveredUntil);
 
 
       nextRecordToBeCommittedOffset = successfullyRecoveredUntil;

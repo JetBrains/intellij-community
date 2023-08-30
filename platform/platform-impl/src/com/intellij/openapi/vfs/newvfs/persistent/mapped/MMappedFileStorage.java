@@ -229,9 +229,22 @@ public final class MMappedFileStorage implements Closeable {
     return channel.isOpen();
   }
 
-  /** fill with zeroes a region {@code [startOffsetInFile..endOffsetInFile]} (both ends inclusive) */
-  public void zeroRegion(long startOffsetInFile,
-                         long endOffsetInFile) throws IOException {
+  /**
+   * Fills with zeroes a region {@code [startOffsetInFile..endOffsetInFile]} (both ends inclusive)
+   * </p>
+   * <b>BEWARE</b>: Method checks offsets for negativity, and throws {@link IllegalArgumentException}, but doesn't
+   * check anything else, just does what was asked: i.e.
+   * 1) if (end < start)         => method zeroize nothing
+   * 2) if (end   > end-of-file) => method zeroize until the end requested, _expanding_ file along the way
+   */
+  public void zeroizeRegion(long startOffsetInFile,
+                            long endOffsetInFile) throws IOException {
+    if (startOffsetInFile < 0) {
+      throw new IllegalArgumentException("startOffsetInFile(=" + startOffsetInFile + ") must be >=0");
+    }
+    if (endOffsetInFile < 0) {
+      throw new IllegalArgumentException("endOffsetInFile(=" + endOffsetInFile + ") must be >=0");
+    }
     for (long offset = startOffsetInFile; offset <= endOffsetInFile; ) {
       Page page = pageByOffset(offset);
       ByteBuffer pageBuffer = page.rawPageBuffer();
@@ -242,6 +255,7 @@ public final class MMappedFileStorage implements Closeable {
       //MAYBE RC: it could be done much faster -- with putLong(), with preallocated array of zeroes,
       //          with Unsafe.setMemory() -- but does it worth it?
       for (int pos = startOffsetInPage; pos <= endOffsetInPage; pos++) {
+        //TODO RC: make putLong() (but check both startOffsetInPage and endOffsetInPage are 64-aligned)
         pageBuffer.put(pos, (byte)0);
       }
 
@@ -249,13 +263,33 @@ public final class MMappedFileStorage implements Closeable {
     }
   }
 
-  public int allocatedPages() throws IOException {
+  public void zeroizeTillEOF(long startOffsetInFile) throws IOException {
+    long actualFileSize = actualFileSize();
+    if (actualFileSize == 0) {
+      return;
+    }
+    zeroizeRegion(startOffsetInFile, actualFileSize - 1);
+  }
+
+  /**
+   * @return current file size. Returned size is always N*pageSize
+   * </p>
+   * <b>BEWARE</b>: file pages are mapped <i>lazily</i>, hence if file size = N*pageSize -- it does NOT mean there
+   * are N {@link Page}s currently mapped into memory -- it could be only pages #0, 5, 8, N-1 are mapped, but
+   * pages in between those were never requested, hence not mapped (yet?).
+   */
+  public long actualFileSize() throws IOException {
     synchronized (pages) {
+      //RC: Lock the pages to prevent file expansion, which also acquires .pages lock, see .pageByOffset()
+      //    If file is expanded concurrently with this method, we could see not-pageSize-aligned file size,
+      //    which is confusing to deal with.
+      //    Better to just prohibit such cases: file expansion (=new page allocation) is a relatively rare
+      //    event, so this lock is mostly uncontended, so the cost is negligible.
       long channelSize = channel.size();
       if ((channelSize & pageSizeMask) != 0) {
-        LOG.error("channel size(=" + channelSize + ") is not aligned with page size(=" + pageSize + ")");
+        throw new AssertionError("Bug: channelSize(=" + channelSize + ") is not pageSize(=" + pageSize + ")-aligned");
       }
-      return (int)(channel.size() >> pageSizeBits);
+      return channelSize;
     }
   }
 
