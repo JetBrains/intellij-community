@@ -8,10 +8,10 @@ object SwitcherLogger {
   val GROUP = EventLogGroup("recent.files.dialog", 1)
 
   val NAVIGATED = EventFields.Boolean("navigated")
-  val NAVIGATED_INDEXES = EventFields.IntList("navigated.indexes")
-  val NAVIGATED_ORIGINAL_INDEXES = EventFields.IntList("navigated.original.indexes")
+  val NAVIGATED_INDEXES = EventFields.IntList("navigated_indexes")
+  val NAVIGATED_ORIGINAL_INDEXES = EventFields.IntList("navigated_indexes_original")
 
-  val SHOWN_TIME_ACTIVITY = GROUP.registerIdeActivity("shown_time", finishEventAdditionalFields =
+  val SHOWN_TIME_ACTIVITY = GROUP.registerIdeActivity("dialog.time", finishEventAdditionalFields =
   arrayOf(NAVIGATED, NAVIGATED_ORIGINAL_INDEXES, NAVIGATED_INDEXES))
 
   data class NavigationData(val navigationOriginalIndexes: List<Int>, val navigationIndexes: List<Int>)
