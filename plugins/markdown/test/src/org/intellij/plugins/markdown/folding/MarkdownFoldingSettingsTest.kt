@@ -10,34 +10,30 @@ class MarkdownFoldingSettingsTest: BasePlatformTestCase() {
   }
 
   fun `test no collapse by default`() {
-    MarkdownCodeFoldingSettings.getInstance().update {
-      MarkdownCodeFoldingSettings.State(
-        collapseLinks = false,
-        collapseFrontMatter = false,
-        collapseTables = false,
-        collapseCodeFences = false,
-        collapseTableOfContents = false
-      )
+    MarkdownCodeFoldingSettings.getInstance().state.apply {
+      collapseLinks = false
+      collapseFrontMatter = false
+      collapseTables = false
+      collapseCodeFences = false
+      collapseTableOfContents = false
     }
     checkFolding()
   }
 
   fun `test collapse all by default`() {
-    MarkdownCodeFoldingSettings.getInstance().update {
-      MarkdownCodeFoldingSettings.State(
-        collapseLinks = true,
-        collapseFrontMatter = true,
-        collapseTables = true,
-        collapseCodeFences = true,
-        collapseTableOfContents = true
-      )
+    MarkdownCodeFoldingSettings.getInstance().state.apply {
+      collapseLinks = true
+      collapseFrontMatter = true
+      collapseTables = true
+      collapseCodeFences = true
+      collapseTableOfContents = true
     }
     checkFolding()
   }
 
   override fun tearDown() {
     try {
-      MarkdownCodeFoldingSettings.getInstance().update { MarkdownCodeFoldingSettings.State() }
+      MarkdownCodeFoldingSettings.getInstance().reset()
     } catch (exception: Exception) {
       addSuppressedException(exception)
     } finally {
