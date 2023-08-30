@@ -406,7 +406,7 @@ class ImportQuickFix(
             unresolvedName: Name,
             isVisible: (KtClassLikeSymbol) -> Boolean
         ): List<KtClassLikeSymbol> {
-            val isAnnotationClassExpected = position.isTypeReferenceInAnnotationEntry()
+            val isAnnotationClassExpected = position.isNameReferenceInAnnotationEntry()
 
             val classesCandidates = sequence {
                 yieldAll(indexProvider.getKotlinClassesByName(unresolvedName) { ktClassLikeDeclaration ->
@@ -422,8 +422,8 @@ class ImportQuickFix(
                 .toList()
         }
 
-        private fun KtElement.isTypeReferenceInAnnotationEntry(): Boolean =
-            ((this as? KtTypeReference)?.parent as? KtConstructorCalleeExpression)?.parent is KtAnnotationEntry
+        private fun KtElement.isNameReferenceInAnnotationEntry(): Boolean =
+            ((this as? KtNameReferenceExpression)?.parent?.parent?.parent as? KtConstructorCalleeExpression)?.parent is KtAnnotationEntry
 
         private fun KtClassLikeDeclaration.isAnnotation(): Boolean =
             this is KtClassOrObject && isAnnotation()

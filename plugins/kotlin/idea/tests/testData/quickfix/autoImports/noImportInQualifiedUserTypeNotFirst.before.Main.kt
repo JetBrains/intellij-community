@@ -6,4 +6,3 @@
 package testing
 
 class Some: testing.<caret>SomeTest
-/* IGNORE_K2 */
