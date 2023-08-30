@@ -3,6 +3,8 @@ package org.jetbrains.plugins.terminal.exp
 
 import com.intellij.openapi.editor.event.EditorMouseEvent
 import com.intellij.openapi.editor.event.EditorMouseListener
+import com.intellij.openapi.editor.event.SelectionEvent
+import com.intellij.openapi.editor.event.SelectionListener
 import com.intellij.openapi.util.Key
 import com.intellij.util.MathUtil
 import org.jetbrains.plugins.terminal.exp.TerminalSelectionModel.TerminalSelectionListener
@@ -24,6 +26,13 @@ class TerminalSelectionController(
     focusModel.addPromptFocusListener(object : FocusAdapter() {
       override fun focusGained(e: FocusEvent?) {
         clearSelection()   // clear selection if user selected the prompt using the mouse
+      }
+    })
+    outputModel.editor.selectionModel.addSelectionListener(object : SelectionListener {
+      override fun selectionChanged(e: SelectionEvent) {
+        if (!e.newRange.isEmpty) {
+          selectionModel.selectedBlocks = emptyList()
+        }
       }
     })
   }
