@@ -49,8 +49,6 @@ public class MavenGeneralSettings implements Cloneable {
   private MavenExecutionOptions.FailureMode failureBehavior = MavenExecutionOptions.FailureMode.NOT_SET;
 
   private transient File myEffectiveLocalRepositoryCache;
-  private transient File myEffectiveLocalHomeCache;
-  private transient VirtualFile myEffectiveSuperPomCache;
   private transient MavenConfig mavenConfigCache;
 
   private int myBulkUpdateLevel = 0;
@@ -85,8 +83,6 @@ public class MavenGeneralSettings implements Cloneable {
     if (myBulkUpdateLevel > 0) return;
 
     myEffectiveLocalRepositoryCache = null;
-    myEffectiveLocalHomeCache = null;
-    myEffectiveSuperPomCache = null;
     mavenConfigCache = null;
     if (fireUpdate) {
       fireChanged();
