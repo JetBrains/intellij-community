@@ -9,6 +9,7 @@ import com.intellij.codeInsight.inline.completion.InlineCompletionContext.Compan
 import com.intellij.codeInsight.inline.completion.InlineState.Companion.getInlineCompletionState
 import com.intellij.codeInsight.inline.completion.InlineState.Companion.initOrGetInlineCompletionState
 import com.intellij.codeInsight.lookup.LookupEvent
+import com.intellij.openapi.actionSystem.DataContext
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.editor.Caret
 import com.intellij.openapi.editor.Editor
@@ -42,7 +43,8 @@ class InlineCompletionHandler(private val scope: CoroutineScope) : CodeInsightAc
   fun invoke(event: DocumentEvent, editor: Editor) = invoke(InlineCompletionEvent.DocumentChange(event, editor))
   fun invoke(event: EditorMouseEvent) = invoke(InlineCompletionEvent.CaretMove(event))
   fun invoke(event: LookupEvent) = invoke(InlineCompletionEvent.LookupChange(event))
-  fun invoke(editor: Editor, file: PsiFile, caret: Caret) = invoke(InlineCompletionEvent.DirectCall(editor, file, caret))
+  fun invoke(editor: Editor, file: PsiFile, caret: Caret, context: DataContext?) =
+    invoke(InlineCompletionEvent.DirectCall(editor, file, caret, context))
 
   private fun shouldShowPlaceholder(): Boolean = Registry.`is`("inline.completion.show.placeholder")
 

@@ -3,6 +3,7 @@ package com.intellij.codeInsight.inline.completion
 
 import com.intellij.codeInsight.lookup.LookupElement
 import com.intellij.codeInsight.lookup.LookupEvent
+import com.intellij.openapi.actionSystem.DataContext
 import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.editor.Caret
 import com.intellij.openapi.editor.Document
@@ -40,7 +41,11 @@ sealed interface InlineCompletionEvent {
    * A class representing a direct call in the code editor by [InsertInlineCompletionAction].
    */
   @ApiStatus.Experimental
-  class DirectCall(val editor: Editor, val file: PsiFile, val caret: EditorCaret) : InlineCompletionEvent {
+  class DirectCall(val editor: Editor,
+                   val file: PsiFile,
+                   val caret: EditorCaret,
+                   val context: DataContext? = null,
+  ) : InlineCompletionEvent {
     override fun toRequest(): InlineCompletionRequest {
       return InlineCompletionRequest(this, file, editor, editor.document, caret.offset, caret.offset)
     }
