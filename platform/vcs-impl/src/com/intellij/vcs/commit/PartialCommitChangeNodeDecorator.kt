@@ -8,7 +8,7 @@ import com.intellij.openapi.vcs.changes.Change
 import com.intellij.openapi.vcs.changes.ChangeListChange
 import com.intellij.openapi.vcs.changes.ui.ChangeNodeDecorator
 import com.intellij.openapi.vcs.changes.ui.ChangesBrowserNodeRenderer
-import com.intellij.openapi.vcs.ex.RangeExclusionState
+import com.intellij.openapi.vcs.ex.countAffectedVisibleChanges
 import com.intellij.openapi.vcs.impl.PartialChangesUtil
 import com.intellij.ui.SimpleColoredComponent
 import com.intellij.ui.SimpleTextAttributes.GRAY_ITALIC_ATTRIBUTES
@@ -29,20 +29,9 @@ class PartialCommitChangeNodeDecorator @JvmOverloads constructor(
   private fun appendPartialCommitState(change: Change, renderer: SimpleColoredComponent) {
     val changeListId = (change as? ChangeListChange)?.changeListId ?: return
     val ranges = PartialChangesUtil.getPartialTracker(project, change)?.getRanges() ?: return
-    val rangesToCommit = ranges.filter { it.changelistId == changeListId }.sumOf {
-      when (val exclusionState = it.exclusionState) {
-        RangeExclusionState.Excluded -> 0
-        RangeExclusionState.Included -> 1
-        is RangeExclusionState.Partial -> exclusionState.includedDeletionsCount + exclusionState.includedAdditionsCount
-      }
-    }
-    val totalRanges = ranges.sumOf {
-      when (val exclusionState = it.exclusionState) {
-        RangeExclusionState.Excluded -> 1
-        RangeExclusionState.Included -> 1
-        is RangeExclusionState.Partial -> exclusionState.deletionsCount + exclusionState.additionsCount
-      }
-    }
+    val rangesToCommit = ranges.filter { it.changelistId == changeListId }
+      .sumOf { it.exclusionState.countAffectedVisibleChanges(true) }
+    val totalRanges = ranges.sumOf { it.exclusionState.countAffectedVisibleChanges(false) }
     if (rangesToCommit != 0 && rangesToCommit != totalRanges) {
       renderer.append(spaceAndThinSpace()).append(VcsBundle.message("ranges.to.commit.of.ranges.size.changes", rangesToCommit, totalRanges),
                                                   GRAY_ITALIC_ATTRIBUTES)

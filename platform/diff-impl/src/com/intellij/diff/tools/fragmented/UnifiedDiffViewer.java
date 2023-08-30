@@ -70,6 +70,7 @@ import com.intellij.util.ui.update.MergingUpdateQueue;
 import com.intellij.util.ui.update.UiNotifyConnector;
 import com.intellij.util.ui.update.Update;
 import com.intellij.xml.breadcrumbs.NavigatableCrumb;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -97,7 +98,7 @@ public class UnifiedDiffViewer extends ListenerDiffViewerBase implements Differe
 
   @NotNull protected Side myMasterSide = Side.RIGHT;
 
-  @NotNull private final UnifiedDiffModel myModel = new UnifiedDiffModel(this);
+  @NotNull protected final UnifiedDiffModel myModel = new UnifiedDiffModel(this);
 
   private final boolean[] myForceReadOnlyFlags;
   private boolean myReadOnlyLockSet = false;
@@ -1098,14 +1099,19 @@ public class UnifiedDiffViewer extends ListenerDiffViewerBase implements Differe
     @Nullable
     @Override
     protected String getMessage() {
-      ChangedBlockData blockData = myModel.getData();
-      if (blockData == null) return null;
-
-      List<UnifiedDiffChange> allChanges = blockData.getDiffChanges();
-      return DiffUtil.getStatusText(allChanges.size(),
-                                    ContainerUtil.count(allChanges, it -> it.isExcluded()),
-                                    myModel.isContentsEqual());
+      return getStatusTextMessage();
     }
+  }
+
+  @Nullable
+  protected @Nls String getStatusTextMessage() {
+    ChangedBlockData blockData = myModel.getData();
+    if (blockData == null) return null;
+
+    List<UnifiedDiffChange> allChanges = blockData.getDiffChanges();
+    return DiffUtil.getStatusText(allChanges.size(),
+                                  ContainerUtil.count(allChanges, it -> it.isExcluded()),
+                                  myModel.isContentsEqual());
   }
 
   private class MyInitialScrollHelper extends InitialScrollPositionSupport.TwosideInitialScrollHelper {

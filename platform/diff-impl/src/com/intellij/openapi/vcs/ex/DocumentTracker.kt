@@ -1323,3 +1323,23 @@ sealed class RangeExclusionState {
     }
   }
 }
+
+/**
+ * Used to display files status
+ */
+fun RangeExclusionState.countAffectedVisibleChanges(includedIntoCommitOnly: Boolean): Int {
+  if (includedIntoCommitOnly) {
+    return when (this) {
+      RangeExclusionState.Excluded -> 0
+      RangeExclusionState.Included -> 1
+      is RangeExclusionState.Partial -> includedDeletionsCount + includedAdditionsCount
+    }
+  }
+  else {
+    return when (this) {
+      RangeExclusionState.Excluded -> 1
+      RangeExclusionState.Included -> 1
+      is RangeExclusionState.Partial -> deletionsCount + additionsCount
+    }
+  }
+}
