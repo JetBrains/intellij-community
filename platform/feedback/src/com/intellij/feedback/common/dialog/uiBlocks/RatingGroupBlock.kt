@@ -2,6 +2,7 @@
 package com.intellij.feedback.common.dialog.uiBlocks
 
 import com.intellij.feedback.common.bundle.CommonFeedbackBundle
+import com.intellij.ide.feedback.RatingComponent
 import com.intellij.ui.components.JBLabel
 import com.intellij.ui.dsl.builder.BottomGap
 import com.intellij.ui.dsl.builder.Panel
@@ -18,9 +19,14 @@ class RatingGroupBlock(@Nls private val topLabel: String,
   private var myRandomOrder: Boolean = false
 
   override fun addToPanel(panel: Panel) {
+    val allRatings: ArrayList<RatingComponent> = arrayListOf()
+
     panel.apply {
       row {
-        label(topLabel).bold()
+        label(topLabel).bold().errorOnApply(CommonFeedbackBundle.message("dialog.feedback.block.required")) {
+          allRatings.any { it.myRating == 0 }
+        }
+
         myHint?.let { rowComment(it) }
       }.bottomGap(BottomGap.NONE)
       val positions = getPositionsList()
@@ -30,9 +36,8 @@ class RatingGroupBlock(@Nls private val topLabel: String,
         val label = JBLabel(ratingItem.label)
         row(label) {
           rating()
-            .errorOnApply(CommonFeedbackBundle.message("dialog.feedback.block.required")) {
-              it.myRating == 0
-            }.apply {
+            .apply {
+              allRatings.add(this.component)
               onApply {
                 myRatingValues[ratingItem.jsonElementName] = this.component.myRating
               }
