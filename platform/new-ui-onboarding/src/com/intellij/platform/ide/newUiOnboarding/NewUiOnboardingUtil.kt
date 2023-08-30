@@ -16,6 +16,7 @@ import com.intellij.openapi.ui.popup.LightweightWindowEvent
 import com.intellij.openapi.util.CheckedDisposable
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.registry.Registry
+import com.intellij.openapi.util.text.TextWithMnemonic
 import com.intellij.openapi.wm.WindowManager
 import com.intellij.openapi.wm.impl.ExpandableComboAction
 import com.intellij.openapi.wm.impl.ToolbarComboButton
@@ -29,6 +30,7 @@ import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.StartupUiUtil
 import com.intellij.util.ui.UIUtil
 import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.annotations.Nls
 import java.awt.Component
 import java.awt.Dimension
 import java.awt.Point
@@ -52,6 +54,10 @@ object NewUiOnboardingUtil {
   fun getHelpLink(topic: String): String {
     val ideHelpName = NewUiOnboardingBean.getInstance().ideHelpName
     return "https://www.jetbrains.com/help/$ideHelpName/$topic"
+  }
+
+  fun @Nls String.dropMnemonic(): @Nls String {
+    return TextWithMnemonic.parse(this).dropMnemonic(true).text
   }
 
   inline fun <reified T : Component> findUiComponent(project: Project, predicate: (T) -> Boolean): T? {
