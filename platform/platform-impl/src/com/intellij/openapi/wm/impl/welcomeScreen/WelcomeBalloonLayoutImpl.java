@@ -219,6 +219,7 @@ public class WelcomeBalloonLayoutImpl extends BalloonLayoutImpl {
 
   public interface BalloonNotificationListener {
     void notificationsChanged(List<NotificationType> types);
+    default void newNotifications() {}
   }
 
   private static final class BalloonPanel extends NonOpaquePanel {

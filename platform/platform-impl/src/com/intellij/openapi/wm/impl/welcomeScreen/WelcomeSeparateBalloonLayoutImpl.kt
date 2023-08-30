@@ -73,6 +73,7 @@ class WelcomeSeparateBalloonLayoutImpl(parent: JRootPane, insets: Insets) : Welc
         newBalloon.component.isVisible = myVisible
       }
       updateBalloons()
+      ApplicationManager.getApplication().getMessageBus().syncPublisher(BALLOON_NOTIFICATION_TOPIC).newNotifications()
     }
     else {
       super.add(newBalloon, layoutData)
