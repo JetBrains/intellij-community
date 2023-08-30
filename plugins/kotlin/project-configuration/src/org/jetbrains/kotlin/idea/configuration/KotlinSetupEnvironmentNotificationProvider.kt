@@ -41,7 +41,7 @@ import javax.swing.JComponent
 // Code is partially copied from com.intellij.codeInsight.daemon.impl.SetupSDKNotificationProvider
 class KotlinSetupEnvironmentNotificationProvider : EditorNotificationProvider {
     override fun collectNotificationData(project: Project, file: VirtualFile): Function<in FileEditor, out JComponent?>? {
-        if (!Registry.`is`("unknown.sdk.show.editor.actions")) {
+        if (!Registry.`is`("kotlin.not.configured.show.notification")) {
             return null
         }
 
