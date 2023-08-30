@@ -9,7 +9,7 @@ import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.containingClassOrObject
 
-val KtNamedDeclaration.expectOrActualAnchor
+val KtNamedDeclaration.expectOrActualAnchor: PsiElement
     @ApiStatus.Internal
     get() = nameIdentifier ?: when (this) {
         is KtConstructor<*> -> getConstructorKeyword() ?: valueParameterList?.leftParenthesis
@@ -17,7 +17,7 @@ val KtNamedDeclaration.expectOrActualAnchor
         else -> null
     } ?: this
 
-val PsiElement.markerDeclaration
+val PsiElement.markerDeclaration: KtDeclaration?
     @ApiStatus.Internal
     get() = (this as? KtDeclaration) ?: (parent as? KtDeclaration)
 
@@ -106,7 +106,7 @@ fun KtNamedDeclaration.areMarkersForbidden(
 }
 
 class ActualExpectedPsiElementCellRenderer : DefaultPsiElementCellRenderer() {
-    override fun getContainerText(element: PsiElement?, name: String?) = ""
+    override fun getContainerText(element: PsiElement?, name: String?): String = ""
 }
 
 @ApiStatus.Internal

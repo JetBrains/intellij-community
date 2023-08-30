@@ -6,6 +6,6 @@ import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.kotlin.psi.KtDeclaration
 
 @Deprecated("use org.jetbrains.kotlin.idea.codeInsight.lineMarkers.shared.markerDeclaration", level = DeprecationLevel.ERROR)
-val PsiElement.markerDeclaration
+val PsiElement.markerDeclaration: KtDeclaration?
     @ApiStatus.Internal
     get() = (this as? KtDeclaration) ?: (parent as? KtDeclaration)

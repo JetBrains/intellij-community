@@ -84,21 +84,21 @@ class KotlinLineMarkerProvider : AbstractKotlinLineMarkerProvider() {
     }
 }
 
-val SUBCLASSED_CLASS = MarkerType(
+val SUBCLASSED_CLASS: MarkerType = MarkerType(
     "SUBCLASSED_CLASS",
     { getPsiClass(it)?.let(::getModuleSpecificSubclassedClassTooltip) },
     object : InheritorsLineMarkerNavigator() {
         override fun getMessageForDumbMode() = JavaBundle.message("notification.navigation.to.overriding.classes")
     })
 
-val OVERRIDDEN_FUNCTION = MarkerType(
+val OVERRIDDEN_FUNCTION: MarkerType = MarkerType(
     "OVERRIDDEN_FUNCTION",
     { getPsiMethod(it)?.let(::getOverriddenMethodTooltip) },
     object : InheritorsLineMarkerNavigator() {
         override fun getMessageForDumbMode() = KotlinBundle.message("highlighter.notification.text.navigation.to.overriding.classes.is.not.possible.during.index.update")
     })
 
-val OVERRIDDEN_PROPERTY = MarkerType(
+val OVERRIDDEN_PROPERTY: MarkerType = MarkerType(
     "OVERRIDDEN_PROPERTY",
     { it?.let { getOverriddenPropertyTooltip(it.parent as KtNamedDeclaration) } },
     object : InheritorsLineMarkerNavigator() {

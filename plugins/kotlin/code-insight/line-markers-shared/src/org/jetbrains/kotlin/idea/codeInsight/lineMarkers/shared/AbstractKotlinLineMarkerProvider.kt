@@ -23,7 +23,7 @@ import org.jetbrains.kotlin.psi.psiUtil.getPrevSiblingIgnoringWhitespaceAndComme
 typealias LineMarkerInfos = MutableCollection<in LineMarkerInfo<*>>
 
 abstract class AbstractKotlinLineMarkerProvider : LineMarkerProviderDescriptor() {
-    override fun getName() = KotlinLineMarkersSharedBundle.message("highlighter.name.kotlin.line.markers")
+    override fun getName(): String = KotlinLineMarkersSharedBundle.message("highlighter.name.kotlin.line.markers")
 
     override fun getOptions(): Array<Option> = KotlinLineMarkerOptions.options
 
@@ -43,13 +43,13 @@ abstract class AbstractKotlinLineMarkerProvider : LineMarkerProviderDescriptor()
     }
 
 
-    private fun PsiElement?.canHaveSeparator() =
+    private fun PsiElement?.canHaveSeparator(): Boolean =
         this is KtFunction
                 || this is KtClassInitializer
                 || (this is KtProperty && !isLocal)
                 || ((this is KtObjectDeclaration && this.isCompanion()))
 
-    private fun PsiElement.wantsSeparator() = this is KtFunction || StringUtil.getLineBreakCount(text) > 0
+    private fun PsiElement.wantsSeparator(): Boolean = this is KtFunction || StringUtil.getLineBreakCount(text) > 0
 
     private fun createLineSeparatorByElement(element: PsiElement): LineMarkerInfo<PsiElement> {
         val anchor = PsiTreeUtil.getDeepestFirst(element)
@@ -60,7 +60,7 @@ abstract class AbstractKotlinLineMarkerProvider : LineMarkerProviderDescriptor()
         return info
     }
 
-    override final fun collectSlowLineMarkers(elements: List<PsiElement>, result: LineMarkerInfos) {
+    final override fun collectSlowLineMarkers(elements: List<PsiElement>, result: LineMarkerInfos) {
         if (elements.isEmpty()) return
         if (KotlinLineMarkerOptions.options.none { option -> option.isEnabled }) return
 
