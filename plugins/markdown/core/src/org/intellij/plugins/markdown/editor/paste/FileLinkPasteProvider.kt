@@ -39,7 +39,7 @@ internal class FileLinkPasteProvider: PasteProvider {
   }
 
   override fun isPasteEnabled(dataContext: DataContext): Boolean {
-    if (!MarkdownCodeInsightSettings.getInstance().state.enableFilesDrop) {
+    if (!MarkdownCodeInsightSettings.getInstance().state.enableFileDrop) {
       return false
     }
     val file = dataContext.getData(CommonDataKeys.VIRTUAL_FILE) ?: return false
