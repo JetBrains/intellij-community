@@ -4,18 +4,21 @@ package com.intellij.codeInsight.daemon.impl.analysis;
 import com.intellij.codeInsight.daemon.JavaErrorBundle;
 import com.intellij.codeInsight.daemon.impl.HighlightInfo;
 import com.intellij.codeInsight.daemon.impl.HighlightInfoType;
+import com.intellij.lang.jvm.JvmModifier;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.psi.*;
-import com.intellij.psi.util.*;
-import com.intellij.util.containers.MultiMap;
+import com.intellij.psi.util.MethodSignature;
+import com.intellij.psi.util.PsiTypesUtil;
+import com.intellij.psi.util.PsiUtil;
+import com.intellij.psi.util.TypeConversionUtil;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
-import java.util.List;
+import java.util.*;
 
 import static com.intellij.psi.LambdaUtil.getFunction;
+import static com.intellij.psi.LambdaUtil.getTargetMethod;
 
 public final class LambdaHighlightingUtil {
   private static final Logger LOG = Logger.getInstance(LambdaHighlightingUtil.class);
@@ -72,42 +75,52 @@ public final class LambdaHighlightingUtil {
 
   public static @NlsContexts.DetailedDescription String checkInterfaceFunctional(@NotNull PsiType functionalInterfaceType) {
     if (functionalInterfaceType instanceof PsiIntersectionType) {
-      MultiMap<MethodSignature, PsiType> signatures = new MultiMap<>();
+      Set<MethodSignature> signatures = new HashSet<>();
+      Map<PsiType, MethodSignature> typeAndSignature = new HashMap<>();
       for (PsiType type : ((PsiIntersectionType)functionalInterfaceType).getConjuncts()) {
         if (checkInterfaceFunctional(type) == null) {
           MethodSignature signature = getFunction(PsiUtil.resolveClassInType(type));
           LOG.assertTrue(signature != null, type.getCanonicalText());
-          signatures.putValue(signature, type);
+          signatures.add(signature);
+          typeAndSignature.put(type, signature);
         }
       }
-
+      PsiType baseType = typeAndSignature.entrySet().iterator().next().getKey();
+      MethodSignature baseSignature = typeAndSignature.get(baseType);
+      LambdaUtil.TargetMethodContainer baseContainer = getTargetMethod(baseType, baseSignature, baseType);
+      if (baseContainer == null) {
+        return JavaErrorBundle.message("no.target.method.found");
+      }
+      PsiMethod baseMethod = baseContainer.targetMethod;
       if (signatures.size() > 1) {
-        PsiType baseType = signatures.entrySet().iterator().next().getValue().iterator().next();
-        MethodSignature baseSignature = getLambdaSignatureWithCommonSubstitutor(baseType);
-        for (PsiType type : signatures.values()) {
-          if (baseType == type) {
+        for (Map.Entry<PsiType, MethodSignature> entry : typeAndSignature.entrySet()) {
+          if (baseType == entry.getKey()) {
             continue;
           }
-          if (!TypeConversionUtil.isAssignable(baseType, type) &&
-              !TypeConversionUtil.isAssignable(type, baseType)) {
+          LambdaUtil.TargetMethodContainer container = getTargetMethod(entry.getKey(), baseSignature, baseType);
+          if (container == null) {
             return JavaErrorBundle.message("multiple.non.overriding.abstract.methods.found.in.0",
                                            functionalInterfaceType.getPresentableText());
           }
-          MethodSignature currentSignature = getLambdaSignatureWithCommonSubstitutor(baseType);
-          if (baseSignature == null ||
-              currentSignature == null ||
-              !MethodSignatureUtil.areSignaturesEqual(baseSignature, currentSignature)) {
+          if (!LambdaUtil.isLambdaSubsignature(baseMethod, baseType, container.targetMethod, entry.getKey()) ||
+              !container.inheritor.hasModifier(JvmModifier.ABSTRACT)) {
             return JavaErrorBundle.message("multiple.non.overriding.abstract.methods.found.in.0",
                                            functionalInterfaceType.getPresentableText());
           }
         }
       }
-      if (signatures.size() == 1) {
-        PsiType baseType = signatures.entrySet().iterator().next().getValue().iterator().next();
-        for (PsiType type : ((PsiIntersectionType)functionalInterfaceType).getConjuncts()) {
-          if (TypeConversionUtil.isAssignable(baseType, type) && getFunction(PsiUtil.resolveClassInType(type)) == null) {
-            return JavaErrorBundle.message("no.target.method.found");
-          }
+      for (PsiType type : ((PsiIntersectionType)functionalInterfaceType).getConjuncts()) {
+        if (typeAndSignature.containsKey(type)) {
+          continue;
+        }
+        LambdaUtil.TargetMethodContainer container = getTargetMethod(type, baseSignature, baseType);
+        if (container == null) {
+          continue;
+        }
+        PsiMethod inheritor = container.inheritor;
+        PsiMethod target = container.targetMethod;
+        if (!inheritor.hasModifier(JvmModifier.ABSTRACT) && LambdaUtil.isLambdaSubsignature(baseMethod, baseType, target, type)) {
+          return JavaErrorBundle.message("no.target.method.found");
         }
       }
       return null;
@@ -126,24 +139,6 @@ public final class LambdaHighlightingUtil {
     return JavaErrorBundle.message("not.a.functional.interface", functionalInterfaceType.getPresentableText());
   }
 
-  @Nullable
-  private static MethodSignature getLambdaSignature(PsiType psiType) {
-    PsiClassType.ClassResolveResult classResolveResult = PsiUtil.resolveGenericsClassInType(psiType);
-    PsiClass aClass = classResolveResult.getElement();
-    if (aClass instanceof PsiTypeParameter) return null;
-    return LambdaUtil.getFunction(aClass);
-  }
-
-  @Nullable
-  private static MethodSignature getLambdaSignatureWithCommonSubstitutor(PsiType psiType) {
-    PsiClassType.ClassResolveResult classResolveResult = PsiUtil.resolveGenericsClassInType(psiType);
-    MethodSignature signatureFromFunction = getLambdaSignature(psiType);
-    if (signatureFromFunction == null) return null;
-    PsiMethod method = LambdaUtil.getFunctionalInterfaceMethod(psiType);
-    if (method == null) return null;
-    PsiSubstitutor fullSubstitutor = classResolveResult.getSubstitutor().putAll(signatureFromFunction.getSubstitutor());
-    return method.getSignature(fullSubstitutor);
-  }
   static HighlightInfo.Builder checkConsistentParameterDeclaration(@NotNull PsiLambdaExpression expression) {
     PsiParameter[] parameters = expression.getParameterList().getParameters();
     if (parameters.length < 2) return null;
