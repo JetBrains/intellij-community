@@ -84,6 +84,7 @@ public class UnindexedFilesScanner extends FilesScanningTaskBase {
                                @Nullable StatusMark mark,
                                @Nullable @NonNls String indexingReason,
                                @NotNull ScanningType scanningType) {
+    super(project);
     myProject = project;
     myStartSuspended = startSuspended;
     myOnProjectOpen = onProjectOpen;
@@ -102,11 +103,6 @@ public class UnindexedFilesScanner extends FilesScanningTaskBase {
   @Override
   public boolean isFullIndexUpdate() {
     return myPredefinedIndexableFilesIterators == null;
-  }
-
-  @Override
-  public void dispose() {
-
   }
 
   @Override

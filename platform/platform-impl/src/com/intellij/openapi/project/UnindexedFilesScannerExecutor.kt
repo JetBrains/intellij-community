@@ -86,6 +86,8 @@ class UnindexedFilesScannerExecutor(project: Project)
     taskQueue.disposePendingTasks()
   }
 
+  override fun shouldShowProgressIndicator(): Boolean = false // will be reported asynchronously via IndexingProgressUIReporter
+
   /**
    * This method does not have "happens before" semantics. It requests GUI suspender to suspend and executes runnable without waiting for
    * all the running tasks to pause.
