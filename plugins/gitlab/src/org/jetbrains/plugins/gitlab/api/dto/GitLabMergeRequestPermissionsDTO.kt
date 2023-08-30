@@ -7,7 +7,7 @@ import org.jetbrains.plugins.gitlab.api.SinceGitLab
 @SinceGitLab("12.0")
 @GraphQLFragment("/graphql/fragment/mergeRequestPermissions.graphql")
 data class GitLabMergeRequestPermissionsDTO(
-  @SinceGitLab("15.9") val canApprove: Boolean,
+  @SinceGitLab("15.9") val canApprove: Boolean?,
   @SinceGitLab("13.4") val canMerge: Boolean,
   val createNote: Boolean,
   val updateMergeRequest: Boolean
