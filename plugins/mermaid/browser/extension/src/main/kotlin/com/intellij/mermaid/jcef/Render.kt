@@ -55,11 +55,11 @@ private fun Element.findSvgElement(): Element? {
 }
 
 private fun Element.convertExplicitHeightAndWidthAttributesToStyle() {
+  removeAttribute("height")
   if (hasAttribute("style")) return
 
   val width = getAttribute("width")?.toDoubleOrNull() ?: return
   setAttribute("width", "100%")
-  removeAttribute("height")
 
   setAttribute("style", "max-width: ${width}px;")
 }
