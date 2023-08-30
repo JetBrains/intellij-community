@@ -20,6 +20,8 @@ abstract class TerminalPromotedDumbAwareAction : DumbAwareAction(), ActionPromot
     get() = editor?.getUserData(TerminalOutputController.KEY)
   protected val AnActionEvent.promptController: TerminalPromptController?
     get() = editor?.getUserData(TerminalPromptController.KEY)
+  protected val AnActionEvent.simpleTerminalController: SimpleTerminalController?
+    get() = editor?.getUserData(SimpleTerminalController.KEY)
   protected val AnActionEvent.selectionController: TerminalSelectionController?
     get() = editor?.getUserData(TerminalSelectionController.KEY)
 }

@@ -23,7 +23,8 @@ class TerminalCopyAction : TerminalPromotedDumbAwareAction() {
   }
 
   override fun update(e: AnActionEvent) {
-    e.presentation.isEnabledAndVisible = e.outputController != null && (e.selectionController?.primarySelection != null
+    e.presentation.isEnabledAndVisible = (e.outputController != null || e.simpleTerminalController != null)
+                                         && (e.selectionController?.primarySelection != null
                                              || e.editor?.selectionModel?.hasSelection() == true)
   }
 
