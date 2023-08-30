@@ -13,12 +13,13 @@ import org.jetbrains.plugins.gitlab.api.dto.GitLabGraphQLMutationResultDTO
 import org.jetbrains.plugins.gitlab.api.dto.GitLabReviewerDTO
 import org.jetbrains.plugins.gitlab.api.dto.GitLabUserDTO
 import org.jetbrains.plugins.gitlab.mergerequest.api.dto.GitLabMergeRequestDTO
+import org.jetbrains.plugins.gitlab.mergerequest.api.dto.GitLabMergeRequestIidDTO
 import org.jetbrains.plugins.gitlab.mergerequest.api.dto.GitLabMergeRequestRebaseDTO
 import org.jetbrains.plugins.gitlab.mergerequest.api.dto.GitLabMergeRequestShortRestDTO
-import org.jetbrains.plugins.gitlab.mergerequest.api.dto.GitLabMergeRequestIidDTO
 import org.jetbrains.plugins.gitlab.util.GitLabApiRequestName
 import java.net.URI
 import java.net.http.HttpRequest
+import java.net.http.HttpRequest.BodyPublishers
 import java.net.http.HttpResponse
 
 @SinceGitLab("7.0", note = "?search available since 10.4, ?scope since 9.5")
@@ -31,6 +32,7 @@ suspend fun GitLabApi.Rest.loadMergeRequests(project: GitLabProjectCoordinates,
   }
 }
 
+@SinceGitLab("12.0")
 suspend fun GitLabApi.GraphQL.loadMergeRequest(
   project: GitLabProjectCoordinates,
   mrIid: String
@@ -45,6 +47,7 @@ suspend fun GitLabApi.GraphQL.loadMergeRequest(
   }
 }
 
+@SinceGitLab("13.1")
 suspend fun GitLabApi.GraphQL.findMergeRequestsByBranch(project: GitLabProjectCoordinates, branch: String)
   : HttpResponse<out GraphQLConnectionDTO<GitLabMergeRequestIidDTO>?> {
   val parameters = mapOf(
@@ -104,6 +107,7 @@ suspend fun GitLabApi.Rest.mergeRequestUnApprove(
   }
 }
 
+@SinceGitLab("11.6")
 suspend fun GitLabApi.Rest.mergeRequestRebase(
   project: GitLabProjectCoordinates,
   mrIid: String
@@ -118,6 +122,7 @@ suspend fun GitLabApi.Rest.mergeRequestRebase(
   }
 }
 
+@SinceGitLab("13.9")
 suspend fun GitLabApi.GraphQL.mergeRequestUpdate(
   project: GitLabProjectCoordinates,
   mrIid: String,
@@ -134,6 +139,25 @@ suspend fun GitLabApi.GraphQL.mergeRequestUpdate(
   }
 }
 
+@SinceGitLab("13.8")
+suspend fun GitLabApi.Rest.mergeRequestSetReviewers(
+  project: GitLabProjectCoordinates,
+  mrIid: String,
+  reviewers: List<GitLabUserDTO>
+): HttpResponse<out Unit> {
+  val uri = URI(project.restApiUri
+                  .resolveRelative("merge_requests")
+                  .resolveRelative(mrIid).toString()
+                // Dumb hack: IDs are of course URLs rather than numbers, but this endpoint requires a number.
+                + "?reviewer_ids=${reviewers.joinToString(",") { it.id.substringAfterLast('/') }}")
+  val request = request(uri)
+    .PUT(BodyPublishers.noBody()).build()
+  return withErrorStats(GitLabApiRequestName.REST_PUT_MERGE_REQUEST_REVIEWERS) {
+    sendAndAwaitCancellable(request)
+  }
+}
+
+@SinceGitLab("15.3")
 suspend fun GitLabApi.GraphQL.mergeRequestSetReviewers(
   project: GitLabProjectCoordinates,
   mrIid: String,
@@ -150,6 +174,7 @@ suspend fun GitLabApi.GraphQL.mergeRequestSetReviewers(
   }
 }
 
+@SinceGitLab("13.10")
 suspend fun GitLabApi.GraphQL.mergeRequestAccept(
   project: GitLabProjectCoordinates,
   mrIid: String,
@@ -170,6 +195,7 @@ suspend fun GitLabApi.GraphQL.mergeRequestAccept(
   }
 }
 
+@SinceGitLab("13.12")
 suspend fun GitLabApi.GraphQL.mergeRequestSetDraft(
   project: GitLabProjectCoordinates,
   mrIid: String,
@@ -186,6 +212,7 @@ suspend fun GitLabApi.GraphQL.mergeRequestSetDraft(
   }
 }
 
+@SinceGitLab("13.9")
 suspend fun GitLabApi.GraphQL.mergeRequestReviewerRereview(
   project: GitLabProjectCoordinates,
   mrIid: String,

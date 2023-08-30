@@ -36,7 +36,7 @@ internal class GitLabMergeRequestRequestReviewAction(
     val parentComponent = event.source as? JComponent ?: return
     val point = RelativePoint.getSouthWestOf(parentComponent)
     scope.launch {
-      val reviewers = reviewFlowVm.reviewers.first()
+      val reviewers = reviewFlowVm.reviewers.value
       val selectedUser = ChooserPopupUtil.showAsyncChooserPopup(
         point,
         reviewFlowVm.potentialReviewers.throwFailure(),

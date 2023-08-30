@@ -271,10 +271,17 @@ internal class LoadedGitLabMergeRequest(
     GitLabStatistics.logMrActionExecuted(project, GitLabStatistics.MergeRequestAction.POST_REVIEW)
   }
 
+  @SinceGitLab("13.8")
   override suspend fun setReviewers(reviewers: List<GitLabUserDTO>) {
     withContext(cs.coroutineContext + Dispatchers.IO) {
-      val updatedMergeRequest = api.graphQL.mergeRequestSetReviewers(glProject, iid, reviewers)
-        .getResultOrThrow()
+      val updatedMergeRequest = if (GitLabVersion(15, 3) <= api.getMetadata().version) {
+        api.graphQL.mergeRequestSetReviewers(glProject, iid, reviewers).getResultOrThrow()
+      }
+      else {
+        api.rest.mergeRequestSetReviewers(glProject, iid, reviewers).body()
+        api.graphQL.loadMergeRequest(glProject, iid).body() ?: error("Merge request could not be loaded")
+      }
+
       mergeRequestDetailsState.value = GitLabMergeRequestFullDetails.fromGraphQL(updatedMergeRequest)
     }
     discussionsContainer.checkUpdates()
