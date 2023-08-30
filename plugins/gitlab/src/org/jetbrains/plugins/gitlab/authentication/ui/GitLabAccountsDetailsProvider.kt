@@ -9,10 +9,10 @@ import kotlinx.coroutines.CoroutineScope
 import org.jetbrains.plugins.gitlab.GitLabServersManager
 import org.jetbrains.plugins.gitlab.api.GitLabApi
 import org.jetbrains.plugins.gitlab.api.dto.GitLabUserDTO
+import org.jetbrains.plugins.gitlab.api.getMetadata
 import org.jetbrains.plugins.gitlab.api.request.getCurrentUser
 import org.jetbrains.plugins.gitlab.api.request.loadImage
 import org.jetbrains.plugins.gitlab.authentication.accounts.GitLabAccount
-import org.jetbrains.plugins.gitlab.isServerVersionSupported
 import org.jetbrains.plugins.gitlab.util.GitLabBundle
 import java.awt.Image
 
@@ -24,7 +24,8 @@ internal class GitLabAccountsDetailsProvider(scope: CoroutineScope,
     val api = apiClientSupplier(account) ?: return Result.Error(CollaborationToolsBundle.message("account.token.missing"), true)
     val details = api.graphQL.getCurrentUser() ?: return Result.Error(CollaborationToolsBundle.message("account.token.invalid"), true)
     try {
-      val supported = service<GitLabServersManager>().isServerVersionSupported(account.server, api)
+      val serversManager = service<GitLabServersManager>()
+      val supported = serversManager.earliestSupportedVersion <= api.getMetadata().version
       if (!supported) return Result.Error(GitLabBundle.message("server.version.unsupported.short"), false)
     }
     catch (e: Exception) {

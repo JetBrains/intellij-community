@@ -11,6 +11,7 @@ import com.intellij.internal.statistic.service.fus.collectors.CounterUsagesColle
 import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
 import org.jetbrains.plugins.gitlab.api.GitLabGQLQuery
+import org.jetbrains.plugins.gitlab.api.GitLabVersion
 import org.jetbrains.plugins.gitlab.authentication.accounts.GitLabAccountManager
 import org.jetbrains.plugins.gitlab.mergerequest.ui.filters.GitLabMergeRequestsFiltersValue
 
@@ -45,8 +46,8 @@ internal object GitLabStatistics {
                                                                 EventFields.Boolean("is_default_server"),
                                                                 EventFields.Version)
 
-  fun logServerError(request: GitLabApiRequestName, isDefaultServer: Boolean, serverVersion: String?): Unit =
-    SERVER_ERROR_EVENT.log(request, isDefaultServer, serverVersion)
+  fun logServerError(request: GitLabApiRequestName, isDefaultServer: Boolean, serverVersion: GitLabVersion?): Unit =
+    SERVER_ERROR_EVENT.log(request, isDefaultServer, serverVersion?.toString())
 
   /**
    * Server returned error about missing GQL fields
@@ -56,8 +57,8 @@ internal object GitLabStatistics {
                                  EventFields.Enum("query", GitLabGQLQuery::class.java),
                                  EventFields.Version)
 
-  fun logGqlModelError(query: GitLabGQLQuery, serverVersion: String?): Unit =
-    GQL_MODEL_ERROR_EVENT.log(query, serverVersion)
+  fun logGqlModelError(query: GitLabGQLQuery, serverVersion: GitLabVersion?): Unit =
+    GQL_MODEL_ERROR_EVENT.log(query, serverVersion?.toString())
 
   /**
    * Error occurred during response parsing
@@ -67,8 +68,8 @@ internal object GitLabStatistics {
                                  EventFields.Class("class"),
                                  EventFields.Version)
 
-  fun logJsonDeserializationError(clazz: Class<*>, serverVersion: String?): Unit =
-    JSON_DESERIALIZATION_ERROR_EVENT.log(clazz, serverVersion)
+  fun logJsonDeserializationError(clazz: Class<*>, serverVersion: GitLabVersion?): Unit =
+    JSON_DESERIALIZATION_ERROR_EVENT.log(clazz, serverVersion?.toString())
 
   internal class GitLabCountersCollector : CounterUsagesCollector() {
     override fun getGroup(): EventLogGroup = COUNTERS_GROUP
@@ -184,6 +185,7 @@ enum class GitLabApiRequestName {
   REST_GET_MERGE_REQUEST_LABEL_EVENTS,
   REST_GET_MERGE_REQUEST_MILESTONE_EVENTS,
 
+  GQL_GET_METADATA,
   GQL_GET_CURRENT_USER,
   GQL_GET_MERGE_REQUEST,
   GQL_FIND_MERGE_REQUEST,
@@ -206,6 +208,7 @@ enum class GitLabApiRequestName {
 
   companion object {
     fun of(gqlQuery: GitLabGQLQuery): GitLabApiRequestName = when (gqlQuery) {
+      GitLabGQLQuery.GET_METADATA -> GQL_GET_METADATA
       GitLabGQLQuery.GET_CURRENT_USER -> GQL_GET_CURRENT_USER
       GitLabGQLQuery.GET_MERGE_REQUEST -> GQL_GET_MERGE_REQUEST
       GitLabGQLQuery.FIND_MERGE_REQUESTS -> GQL_FIND_MERGE_REQUEST

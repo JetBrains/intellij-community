@@ -2,14 +2,17 @@
 package org.jetbrains.plugins.gitlab.api.request
 
 import com.intellij.collaboration.api.HttpStatusErrorException
+import com.intellij.collaboration.api.graphql.loadResponse
 import com.intellij.collaboration.api.httpclient.HttpClientUtil.inflateAndReadWithErrorHandlingAndLogging
 import com.intellij.collaboration.api.json.loadJsonValue
 import com.intellij.collaboration.util.resolveRelative
-import org.jetbrains.plugins.gitlab.api.GitLabApi
-import org.jetbrains.plugins.gitlab.api.SinceGitLab
 import com.intellij.openapi.diagnostic.logger
+import org.jetbrains.plugins.gitlab.api.*
+import org.jetbrains.plugins.gitlab.api.GitLabEdition.Community
+import org.jetbrains.plugins.gitlab.api.GitLabEdition.Enterprise
 import org.jetbrains.plugins.gitlab.api.dto.GitLabServerMetadataDTO
 import org.jetbrains.plugins.gitlab.api.dto.GitLabServerVersionDTO
+import org.jsoup.Jsoup
 import java.net.http.HttpResponse
 
 private val LOG = logger<GitLabApi>()
@@ -40,29 +43,32 @@ suspend fun GitLabApi.Rest.checkIsGitLabServer(): Boolean {
   }
 }
 
-// should not have statistics to avoid recursion
-@SinceGitLab("15.2")
-suspend fun GitLabApi.Rest.getServerMetadata(): HttpResponse<out GitLabServerMetadataDTO> {
-  val uri = server.restApiUri.resolveRelative("metadata")
+// Unauthenticated
+@SinceGitLab("9.0")
+suspend fun GitLabApi.Rest.guessServerEdition(): GitLabEdition? {
+  val uri = server.toURI().resolveRelative("help")
   val request = request(uri).GET().build()
-  return loadJsonValue(request)
+  val bodyHandler = inflateAndReadWithErrorHandlingAndLogging(LOG, request) { reader, _ ->
+    // Parses the /help page and attempts to find and parse the header containing edition info
+    val titleText = Jsoup.parse(reader.readText()).select("h1").text()
+    if (!titleText.contains("GitLab", true)) return@inflateAndReadWithErrorHandlingAndLogging null
+    if (titleText.contains("Enterprise", true)) Enterprise else Community
+  }
+  return sendAndAwaitCancellable(request, bodyHandler).body()
 }
 
+// Authenticated
+// should not have statistics to avoid recursion
+@SinceGitLab("12.0")
+suspend fun GitLabApi.GraphQL.getServerMetadata(): HttpResponse<out GitLabServerMetadataDTO?> {
+  val request = gitLabQuery(GitLabGQLQuery.GET_METADATA)
+  return loadResponse(request, "metadata")
+}
+
+// Authenticated
 @SinceGitLab("8.13", deprecatedIn = "15.5")
 suspend fun GitLabApi.Rest.getServerVersion(): HttpResponse<out GitLabServerVersionDTO> {
   val uri = server.restApiUri.resolveRelative("version")
   val request = request(uri).GET().build()
   return loadJsonValue(request)
 }
-
-@SinceGitLab("8.13", note = "Enterprise/Community only detectable after 15.6, community is assumed by default")
-suspend fun GitLabApi.Rest.getServerMetadataOrVersion(): GitLabServerMetadataDTO =
-  try {
-    getServerMetadata().body()
-  }
-  catch (e: Exception) {
-    getServerVersion().body().let {
-      // TODO: find a way to check CE vs EE
-      GitLabServerMetadataDTO(it.version, it.revision, false)
-    }
-  }

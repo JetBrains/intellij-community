@@ -1,0 +1,5 @@
+fragment metadata on Metadata {
+  version
+  revision
+  enterprise
+}

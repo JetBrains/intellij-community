@@ -65,5 +65,6 @@
     <orderEntry type="module" module-name="intellij.platform.diff.impl" />
     <orderEntry type="module" module-name="intellij.platform.lang.impl" />
     <orderEntry type="module" module-name="intellij.platform.statistics" />
+    <orderEntry type="library" name="jsoup" level="project" />
   </component>
 </module>

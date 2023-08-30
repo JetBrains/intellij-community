@@ -13,7 +13,6 @@ import com.intellij.util.io.HttpSecurityUtil
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.plugins.gitlab.GitLabServersManager
 import org.jetbrains.plugins.gitlab.api.dto.GitLabGraphQLMutationResultDTO
-import org.jetbrains.plugins.gitlab.api.request.getServerMetadataOrVersion
 import org.jetbrains.plugins.gitlab.util.GitLabApiRequestName
 import java.net.URI
 import java.net.http.HttpRequest
@@ -25,6 +24,8 @@ sealed interface GitLabApi : HttpApiHelper {
 
   val graphQL: GraphQL
   val rest: Rest
+
+  suspend fun getMetadataOrNull(): GitLabServerMetadata?
 
   interface GraphQL : GraphQLApiHelper, GitLabApi
   interface Rest : JsonHttpApiHelper, GitLabApi
@@ -39,6 +40,9 @@ internal class GitLabApiImpl(
     server: GitLabServerPath,
     tokenSupplier: (() -> String)? = null
   ) : this(server, tokenSupplier?.let { httpHelper(it) } ?: httpHelper())
+
+  override suspend fun getMetadataOrNull(): GitLabServerMetadata? =
+    service<GitLabServersManager>().getMetadataOrNull(this)
 
   override val graphQL: GitLabApi.GraphQL =
     GraphQLImpl(GraphQLApiHelper(logger<GitLabApi>(),
@@ -63,16 +67,25 @@ internal class GitLabApiImpl(
     JsonHttpApiHelper by helper
 }
 
+suspend fun GitLabApi.getMetadata(): GitLabServerMetadata {
+  val metadata = getMetadataOrNull()
+  requireNotNull(metadata)
+  return metadata
+}
+
 suspend fun GitLabApi.GraphQL.gitLabQuery(query: GitLabGQLQuery, variablesObject: Any? = null): HttpRequest {
-  val serverMeta = service<GitLabServersManager>().getMetadata(server) {
-    runCatching { rest.getServerMetadataOrVersion() }
+  if (query == GitLabGQLQuery.GET_METADATA) {
+    return query(server.gqlApiUri, { GitLabGQLQueryLoaders.default.loadQuery(query.filePath) }, variablesObject)
   }
-  val queryLoader = if (serverMeta?.enterprise == false) {
+
+  val serverMeta = getMetadata()
+  val queryLoader = if (serverMeta.edition != GitLabEdition.Enterprise) {
     GitLabGQLQueryLoaders.community
   }
   else {
     GitLabGQLQueryLoaders.default
   }
+
   return query(server.gqlApiUri, { queryLoader.loadQuery(query.filePath) }, variablesObject)
 }
 
