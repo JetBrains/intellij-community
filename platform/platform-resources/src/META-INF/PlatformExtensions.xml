@@ -292,6 +292,7 @@
     <trustedProjectsLocator implementation="com.intellij.ide.trustedProjects.impl.DefaultTrustedProjectsLocator"/>
 
     <activityInProgressPredicate implementation="com.intellij.openapi.project.DumbServiceInProgressPredicate"/>
+    <activityInProgressPredicate implementation="com.intellij.openapi.project.ScanningInProgressPredicate"/>
 
     <colorAndFontPanelFactory implementation="com.intellij.openapi.diff.impl.settings.DiffColorsPageFactory"/>
     <colorAndFontDescriptorProvider implementation="com.intellij.openapi.diff.impl.settings.DiffColorsPageFactory"/>
