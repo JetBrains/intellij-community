@@ -21,7 +21,9 @@ import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.map
 import org.jetbrains.plugins.gitlab.api.GitLabApi
 import org.jetbrains.plugins.gitlab.api.dto.GitLabCommitDTO
+import org.jetbrains.plugins.gitlab.api.GitLabVersion
 import org.jetbrains.plugins.gitlab.api.dto.GitLabDiffDTO
+import org.jetbrains.plugins.gitlab.api.getMetadata
 import org.jetbrains.plugins.gitlab.mergerequest.api.request.*
 import org.jetbrains.plugins.gitlab.util.GitLabProjectMapping
 import java.nio.charset.StandardCharsets
@@ -75,9 +77,16 @@ class GitLabMergeRequestChangesImpl(
       }
     }
     val headPatches = withContext(Dispatchers.IO) {
-      ApiPageUtil.createPagesFlowByLinkHeader(getMergeRequestDiffsURI(glProject, mergeRequestDetails.iid)) {
-        api.rest.loadMergeRequestDiffs(it)
-      }.map { it.body() }.foldToList(GitLabDiffDTO::toPatch)
+      if (api.getMetadata().version < GitLabVersion(15, 7)) {
+        ApiPageUtil.createPagesFlowByLinkHeader(api.getMergeRequestChangesURI(glProject, mergeRequestDetails.iid)) {
+          api.rest.loadMergeRequestChanges(it)
+        }.map { it.body().changes }.foldToList(GitLabDiffDTO::toPatch)
+      }
+      else {
+        ApiPageUtil.createPagesFlowByLinkHeader(api.getMergeRequestDiffsURI(glProject, mergeRequestDetails.iid)) {
+          api.rest.loadMergeRequestDiffs(it)
+        }.map { it.body() }.foldToList(GitLabDiffDTO::toPatch)
+      }
     }
     return GitBranchComparisonResultImpl(repository.project, repository.root, baseSha, mergeBaseSha, commitsWithPatches, headPatches)
   }

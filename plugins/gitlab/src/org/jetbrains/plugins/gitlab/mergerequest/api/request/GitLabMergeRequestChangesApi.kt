@@ -11,20 +11,47 @@ import org.jetbrains.plugins.gitlab.util.GitLabApiRequestName
 import java.net.URI
 import java.net.http.HttpResponse
 
-@SinceGitLab("15.7", note = "Older version is merge_requests/:iid/changes")
-suspend fun GitLabApi.Rest.loadMergeRequestDiffs(uri: URI): HttpResponse<out List<GitLabDiffDTO>> {
+data class GitLabChangesHolderDTO(
+  val changes: List<GitLabDiffDTO>
+)
+
+@SinceGitLab("9.0", deprecatedIn = "15.7", note = "Deprecated in favour of /diffs")
+suspend fun GitLabApi.Rest.loadMergeRequestChanges(uri: URI): HttpResponse<out GitLabChangesHolderDTO> {
   val request = request(uri).GET().build()
-  return withErrorStats(GitLabApiRequestName.REST_GET_MERGE_REQUEST_DIFF) {
-    loadJsonList(request)
+  return withErrorStats(GitLabApiRequestName.REST_GET_MERGE_REQUEST_CHANGES) {
+    loadJsonValue<GitLabChangesHolderDTO>(request)
   }
 }
 
-@SinceGitLab("15.7", note = "Older version is merge_requests/:iid/changes")
-fun getMergeRequestDiffsURI(project: GitLabProjectCoordinates, mrIid: String): URI =
-  project.restApiUri
+@SinceGitLab("9.0", deprecatedIn = "15.7", note = "Deprecated in favour of /diffs")
+suspend fun GitLabApi.getMergeRequestChangesURI(project: GitLabProjectCoordinates, mrIid: String): URI {
+  val metadata = getMetadataOrNull()
+  requireNotNull(metadata)
+
+  return project.restApiUri
     .resolveRelative("merge_requests")
     .resolveRelative(mrIid)
-    .resolveRelative("diffs")
+    .resolveRelative("changes")
+}
+
+@SinceGitLab("15.7")
+suspend fun GitLabApi.Rest.loadMergeRequestDiffs(uri: URI): HttpResponse<out List<GitLabDiffDTO>> {
+  val request = request(uri).GET().build()
+  return withErrorStats(GitLabApiRequestName.REST_GET_MERGE_REQUEST_DIFF) {
+    loadJsonList<GitLabDiffDTO>(request)
+  }
+}
+
+@SinceGitLab("15.7")
+suspend fun GitLabApi.getMergeRequestDiffsURI(project: GitLabProjectCoordinates, mrIid: String): URI {
+  val metadata = getMetadataOrNull()
+  requireNotNull(metadata)
+
+  return project.restApiUri
+      .resolveRelative("merge_requests")
+      .resolveRelative(mrIid)
+      .resolveRelative("diffs")
+}
 
 @SinceGitLab("7.0")
 suspend fun GitLabApi.Rest.loadCommitDiffs(uri: URI): HttpResponse<out List<GitLabDiffDTO>> {
