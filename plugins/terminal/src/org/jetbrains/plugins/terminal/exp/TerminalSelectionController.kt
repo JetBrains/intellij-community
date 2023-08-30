@@ -77,11 +77,13 @@ class TerminalSelectionController(
   }
 
   override fun mouseClicked(event: EditorMouseEvent) {
-    val block = getBlockUnderMouse(event)
-    if (block != null) {
-      selectionModel.selectedBlocks = listOf(block)
+    if (event.mouseEvent.clickCount == 1) {
+      val block = getBlockUnderMouse(event)
+      if (block != null) {
+        selectionModel.selectedBlocks = listOf(block)
+      }
+      else clearSelection()
     }
-    else clearSelection()
   }
 
   override fun mousePressed(event: EditorMouseEvent) {
