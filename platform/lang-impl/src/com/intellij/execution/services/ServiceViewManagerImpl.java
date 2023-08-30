@@ -684,12 +684,13 @@ public final class ServiceViewManagerImpl implements ServiceViewManager, Persist
 
   @Override
   public @NotNull State getState() {
-    List<String> services = ContainerUtil.map(myGroups.getOrDefault(ToolWindowId.SERVICES, Collections.emptyList()),
-                                              contributor -> contributor.getViewDescriptor(myProject).getId());
+    List<String> services = ContainerUtil.mapNotNull(myGroups.getOrDefault(ToolWindowId.SERVICES, Collections.emptyList()),
+                                                     contributor -> contributor.getViewDescriptor(myProject).getId());
     List<String> includedByDefault = new ArrayList<>();
     List<String> excludedByDefault = new ArrayList<>();
     for (ServiceViewContributor<?> contributor : CONTRIBUTOR_EP_NAME.getExtensionList()) {
       String id = contributor.getViewDescriptor(myProject).getId();
+      if (id == null) continue;
       if (getContributorToolWindowDescriptor(contributor).isExcludedByDefault()) {
         excludedByDefault.add(id);
       }
