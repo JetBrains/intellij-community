@@ -83,10 +83,4 @@ class EvaluationFeedbackDialog(project: Project?,
       collectedData[performanceJsonElementName].toString().toInt()
     )
   }
-
-  override fun sendFeedbackData() {
-    super.sendFeedbackData()
-
-    //  TODO: Send to old Zendesk
-  }
 }
