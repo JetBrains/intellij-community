@@ -85,6 +85,11 @@ object IgnoreTests {
         additionalFiles: List<Path>,
         test: () -> Unit
     ) {
+        check(!
+              (directive is EnableOrDisableTestDirective.Enable && (
+                     directive.directiveText == DIRECTIVES.FIR_IDENTICAL || directive.directiveText == DIRECTIVES.FIR_COMPARISON))) {
+            "It's not allowed to run runTestIfEnabledByDirective with FIR_IDENTICAL or FIR_COMPARISON"
+        }
         if (ALWAYS_CONSIDER_TEST_AS_PASSING) {
             test()
             return
@@ -245,7 +250,6 @@ object IgnoreTests {
 
         const val FIX_ME = "// FIX_ME: "
 
-        @Deprecated(message = "use IGNORE_K2 instead")
         const val FIR_IDENTICAL = "// FIR_IDENTICAL"
 
         const val IGNORE_FE10_BINDING_BY_FIR = "// IGNORE_FE10_BINDING_BY_FIR"
