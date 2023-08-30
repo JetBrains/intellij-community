@@ -91,7 +91,9 @@ public class PsiUnnamedClassImpl extends JavaStubPsiElement<PsiClassStub<?>> imp
   @Override
   public PsiClass @NotNull [] getSupers() {
     JavaPsiFacade facade = JavaPsiFacade.getInstance(getProject());
-    return new PsiClass[]{facade.findClass(CommonClassNames.JAVA_LANG_OBJECT, GlobalSearchScope.allScope(getProject()))};
+    PsiClass javaLangObject = facade.findClass(CommonClassNames.JAVA_LANG_OBJECT, GlobalSearchScope.allScope(getProject()));
+    if (javaLangObject == null) return PsiClass.EMPTY_ARRAY;
+    return new PsiClass[]{javaLangObject};
   }
 
   @Override
