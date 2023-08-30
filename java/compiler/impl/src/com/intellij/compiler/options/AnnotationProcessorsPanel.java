@@ -19,6 +19,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.AnActionButton;
 import com.intellij.ui.ColoredTreeCellRenderer;
 import com.intellij.ui.ToolbarDecorator;
+import com.intellij.ui.TreeUIHelper;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.treeStructure.Tree;
 import com.intellij.util.SmartList;
@@ -90,6 +91,18 @@ public class AnnotationProcessorsPanel extends JPanel {
         }
       }
     });
+    TreeUIHelper.getInstance().installTreeSpeedSearch(myTree, path -> {
+      Object node = path.getLastPathComponent();
+      if (node instanceof MyModuleNode moduleNode) {
+        return ((Module)moduleNode.getUserObject()).getName();
+      }
+      else if (node instanceof ProfileNode profileNode) {
+        return profileNode.myProfile.getName();
+      }
+      else {
+        return "";
+      }
+    }, false);
     myProfilePanel = new ProcessorProfilePanel(project);
     myProfilePanel.setBorder(JBUI.Borders.emptyLeft(6));
     splitter.setSecondComponent(myProfilePanel);
