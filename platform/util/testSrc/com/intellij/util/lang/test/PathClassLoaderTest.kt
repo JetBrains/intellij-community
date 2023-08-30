@@ -1,9 +1,12 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:Suppress("UsePropertyAccessSyntax")
 
-package com.intellij.util.lang
+package com.intellij.util.lang.test
 
 import com.intellij.util.io.Compressor
+import com.intellij.util.lang.ClassPath
+import com.intellij.util.lang.PathClassLoader
+import com.intellij.util.lang.UrlClassLoader
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.io.TempDir
@@ -21,7 +24,7 @@ class PathClassLoaderTest {
       compressor.addFile("help/help.html", "<img draggable=\"false\" src=\"screenshot.png\" alt=\"Settings\">".toByteArray(Charsets.UTF_8))
       compressor.addFile("help/screenshot.png", expectedData)
     }
-    val classPath = ClassPath(listOf(file), UrlClassLoader.Builder(), PathClassLoader.RESOURCE_FILE_FACTORY, true)
+    val classPath = ClassPath(listOf(file), UrlClassLoader.build(), PathClassLoader.getResourceFileFactory(), true)
     val resource = classPath.findResource("help/help.html")
     assertThat(resource).isNotNull()
     assertThat(URL(resource!!.url, "screenshot.png").content).isEqualTo(expectedData)
@@ -35,7 +38,7 @@ class PathClassLoaderTest {
       compressor.addFile("resource.txt", "contents".encodeToByteArray())
     }
     val jarRelativePath = Paths.get("").toAbsolutePath().relativize(jarAbsolutePath)
-    val classPath = ClassPath(listOf(jarRelativePath), UrlClassLoader.build(), PathClassLoader.RESOURCE_FILE_FACTORY, true)
+    val classPath = ClassPath(listOf(jarRelativePath), UrlClassLoader.build(), PathClassLoader.getResourceFileFactory(), true)
     val resource = checkNotNull(classPath.findResource("resource.txt"))
     assertThat(resource.url.toString()).isEqualTo("jar:file:${jarAbsolutePath.invariantSeparatorsPathString}!/resource.txt")
   }
