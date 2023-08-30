@@ -33,7 +33,7 @@ internal class GitLabSilentHttpAuthDataProvider : SilentHostedGitHttpAuthDataPro
 
   override suspend fun getAccountLogin(account: GitLabAccount, token: String): String? {
     return try {
-      service<GitLabApiManager>().getClient(token).graphQL.getCurrentUser(account.server)?.username
+      service<GitLabApiManager>().getClient(account.server, token).graphQL.getCurrentUser()?.username
     }
     catch (e: ProcessCanceledException) {
       null

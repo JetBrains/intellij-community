@@ -113,7 +113,7 @@ class CachingGitLabProjectMergeRequestsStore(private val project: Project,
     return withContext(Dispatchers.IO) {
       val body = api.graphQL.loadMergeRequest(glProject, iid).body()
       if (body == null) {
-        api.rest.getCurrentUser(glProject.serverPath) // Exception is generated automatically if status code >= 400
+        api.rest.getCurrentUser() // Exception is generated automatically if status code >= 400
         error(CollaborationToolsBundle.message("graphql.errors", "empty response"))
       }
       if (body.sourceProject == null) {

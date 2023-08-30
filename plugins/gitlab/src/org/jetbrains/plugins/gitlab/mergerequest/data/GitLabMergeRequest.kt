@@ -109,7 +109,7 @@ internal class LoadedGitLabMergeRequest(
     GitLabETagUpdatableListLoader<GitLabResourceStateEventDTO>(getMergeRequestStateEventsUri(glProject, iid)
     ) { uri, eTag ->
       api.rest.loadUpdatableJsonList<GitLabResourceStateEventDTO>(
-        glProject.serverPath, GitLabApiRequestName.REST_GET_MERGE_REQUEST_STATE_EVENTS, uri, eTag
+        GitLabApiRequestName.REST_GET_MERGE_REQUEST_STATE_EVENTS, uri, eTag
       )
     }
   override val stateEvents = stateEventsLoader.batches.collectBatches()
@@ -120,7 +120,7 @@ internal class LoadedGitLabMergeRequest(
     GitLabETagUpdatableListLoader<GitLabResourceLabelEventDTO>(getMergeRequestLabelEventsUri(glProject, iid)
     ) { uri, eTag ->
       api.rest.loadUpdatableJsonList<GitLabResourceLabelEventDTO>(
-        glProject.serverPath, GitLabApiRequestName.REST_GET_MERGE_REQUEST_LABEL_EVENTS, uri, eTag
+        GitLabApiRequestName.REST_GET_MERGE_REQUEST_LABEL_EVENTS, uri, eTag
       )
     }
   override val labelEvents = labelEventsLoader.batches.collectBatches()
@@ -131,7 +131,7 @@ internal class LoadedGitLabMergeRequest(
     GitLabETagUpdatableListLoader<GitLabResourceMilestoneEventDTO>(getMergeRequestMilestoneEventsUri(glProject, iid)
     ) { uri, eTag ->
       api.rest.loadUpdatableJsonList<GitLabResourceMilestoneEventDTO>(
-        glProject.serverPath, GitLabApiRequestName.REST_GET_MERGE_REQUEST_MILESTONE_EVENTS, uri, eTag
+        GitLabApiRequestName.REST_GET_MERGE_REQUEST_MILESTONE_EVENTS, uri, eTag
       )
     }
   override val milestoneEvents = milestoneEventsLoader.batches.collectBatches()

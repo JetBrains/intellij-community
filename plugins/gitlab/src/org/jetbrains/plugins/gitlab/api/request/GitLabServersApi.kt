@@ -11,7 +11,7 @@ import org.jetbrains.plugins.gitlab.api.dto.GitLabServerVersionDTO
 import java.net.http.HttpResponse
 
 @SinceGitLab("?", note = "It is undocumented since when headers with 'gitlab' were sent back")
-suspend fun GitLabApi.Rest.checkIsGitLabServer(server: GitLabServerPath): Boolean {
+suspend fun GitLabApi.Rest.checkIsGitLabServer(): Boolean {
   val uri = server.restApiUri.resolveRelative("metadata")
   val request = request(uri).GET().build()
   val response = sendAndAwaitCancellable(request, HttpResponse.BodyHandlers.discarding())
@@ -22,26 +22,26 @@ suspend fun GitLabApi.Rest.checkIsGitLabServer(server: GitLabServerPath): Boolea
 
 // should not have statistics to avoid recursion
 @SinceGitLab("15.2")
-suspend fun GitLabApi.Rest.getServerMetadata(server: GitLabServerPath): HttpResponse<out GitLabServerMetadataDTO> {
+suspend fun GitLabApi.Rest.getServerMetadata(): HttpResponse<out GitLabServerMetadataDTO> {
   val uri = server.restApiUri.resolveRelative("metadata")
   val request = request(uri).GET().build()
   return loadJsonValue(request)
 }
 
 @SinceGitLab("8.13", deprecatedIn = "15.5")
-suspend fun GitLabApi.Rest.getServerVersion(server: GitLabServerPath): HttpResponse<out GitLabServerVersionDTO> {
+suspend fun GitLabApi.Rest.getServerVersion(): HttpResponse<out GitLabServerVersionDTO> {
   val uri = server.restApiUri.resolveRelative("version")
   val request = request(uri).GET().build()
   return loadJsonValue(request)
 }
 
 @SinceGitLab("8.13", note = "Enterprise/Community only detectable after 15.6, community is assumed by default")
-suspend fun GitLabApi.Rest.getServerMetadataOrVersion(server: GitLabServerPath): GitLabServerMetadataDTO =
+suspend fun GitLabApi.Rest.getServerMetadataOrVersion(): GitLabServerMetadataDTO =
   try {
-    getServerMetadata(server).body()
+    getServerMetadata().body()
   }
   catch (e: Exception) {
-    getServerVersion(server).body().let {
+    getServerVersion().body().let {
       // TODO: find a way to check CE vs EE
       GitLabServerMetadataDTO(it.version, it.revision, false)
     }

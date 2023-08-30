@@ -160,7 +160,7 @@ class GitLabMergeRequestDiscussionsContainerImpl(
   private suspend fun FlowCollector<List<DraftNoteWithAuthor>>.collectDraftNotes() {
     supervisorScope {
       // we shouldn't get another user's draft notes
-      val currentUser = api.graphQL.getCurrentUser(glProject.serverPath) ?: error("Unable to load current user")
+      val currentUser = api.graphQL.getCurrentUser() ?: error("Unable to load current user")
 
       val notesGuard = Mutex()
       val draftNotes = LinkedHashMap<String, GitLabMergeRequestDraftNoteRestDTO>()
@@ -169,7 +169,7 @@ class GitLabMergeRequestDiscussionsContainerImpl(
       val uri = getMergeRequestDraftNotesUri(glProject, mr.iid)
       ApiPageUtil.createPagesFlowByLinkHeader(uri) {
         api.rest.loadUpdatableJsonList<GitLabMergeRequestDraftNoteRestDTO>(
-          glProject.serverPath, GitLabApiRequestName.REST_GET_DRAFT_NOTES, it
+          GitLabApiRequestName.REST_GET_DRAFT_NOTES, it
         )
       }.collect {
         val newNotes = it.body() ?: error("Empty response")
@@ -185,7 +185,7 @@ class GitLabMergeRequestDiscussionsContainerImpl(
         launchNow {
           updateRequests.collect {
             val response = api.rest.loadUpdatableJsonList<GitLabMergeRequestDraftNoteRestDTO>(
-              glProject.serverPath, GitLabApiRequestName.REST_GET_DRAFT_NOTES, uri, lastETag
+              GitLabApiRequestName.REST_GET_DRAFT_NOTES, uri, lastETag
             )
             val newNotes = response.body()
             if (newNotes != null) {
@@ -250,7 +250,7 @@ class GitLabMergeRequestDiscussionsContainerImpl(
   override suspend fun addNote(body: String) {
     withContext(cs.coroutineContext) {
       withContext(Dispatchers.IO) {
-        api.graphQL.addNote(glProject, mr.gid, body).getResultOrThrow()
+        api.graphQL.addNote(mr.gid, body).getResultOrThrow()
       }.also {
         withContext(NonCancellable) {
           discussionEvents.emit(GitLabDiscussionEvent.Added(it))
@@ -263,7 +263,7 @@ class GitLabMergeRequestDiscussionsContainerImpl(
   override suspend fun addNote(position: GitLabDiffPositionInput, body: String) {
     withContext(cs.coroutineContext) {
       withContext(Dispatchers.IO) {
-        api.graphQL.addDiffNote(glProject, mr.gid, position, body).getResultOrThrow()
+        api.graphQL.addDiffNote(mr.gid, position, body).getResultOrThrow()
       }.also {
         withContext(NonCancellable) {
           discussionEvents.emit(GitLabDiscussionEvent.Added(it))

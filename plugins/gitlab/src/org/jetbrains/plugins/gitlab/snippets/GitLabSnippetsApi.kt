@@ -26,13 +26,11 @@ private class CreateSnippetResult(snippet: GitLabSnippetDTO?, errors: List<Strin
  * Provides a flow for underlying queries to the GitLab GQL API that lookup the projects
  * the user is a member of and can create snippets on.
  */
-internal fun GitLabApi.GraphQL.getSnippetAllowedProjects(
-  serverPath: GitLabServerPath
-): Flow<List<GitLabProjectCoordinates>> =
+internal fun GitLabApi.GraphQL.getSnippetAllowedProjects(): Flow<List<GitLabProjectCoordinates>> =
   ApiPageUtil.createGQLPagesFlow { page ->
     val parameters = page.asParameters()
-    val request = gitLabQuery(serverPath, GitLabGQLQuery.GET_MEMBER_PROJECTS, parameters)
-    withErrorStats(serverPath, GitLabGQLQuery.GET_MEMBER_PROJECTS) {
+    val request = gitLabQuery(GitLabGQLQuery.GET_MEMBER_PROJECTS, parameters)
+    withErrorStats(GitLabGQLQuery.GET_MEMBER_PROJECTS) {
       loadResponse<GitLabProjectsDTO>(request, "projects").body()
     }
   }.map {
@@ -40,7 +38,7 @@ internal fun GitLabApi.GraphQL.getSnippetAllowedProjects(
       .filter { project -> project.userPermissions.createSnippet }
       .map { project ->
         val projectPath = GitLabProjectPath(project.ownerPath, project.name)
-        GitLabProjectCoordinates(serverPath, projectPath)
+        GitLabProjectCoordinates(server, projectPath)
       }
   }.collectBatches()
 
@@ -51,7 +49,6 @@ internal fun GitLabApi.GraphQL.getSnippetAllowedProjects(
  * into a file name.
  */
 internal suspend fun GitLabApi.GraphQL.createSnippet(
-  serverPath: GitLabServerPath,
   project: GitLabProjectCoordinates?,
   title: String,
   description: String?,
@@ -65,8 +62,8 @@ internal suspend fun GitLabApi.GraphQL.createSnippet(
     "projectPath" to project?.projectPath?.fullPath(),
     "blobActions" to snippetBlobActions
   )
-  val request = gitLabQuery(serverPath, GitLabGQLQuery.CREATE_SNIPPET, parameters)
-  return withErrorStats(serverPath, GitLabGQLQuery.CREATE_SNIPPET) {
+  val request = gitLabQuery(GitLabGQLQuery.CREATE_SNIPPET, parameters)
+  return withErrorStats(GitLabGQLQuery.CREATE_SNIPPET) {
     loadResponse<CreateSnippetResult>(request, "createSnippet")
   }
 }

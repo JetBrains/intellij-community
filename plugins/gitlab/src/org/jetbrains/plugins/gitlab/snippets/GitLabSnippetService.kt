@@ -81,7 +81,7 @@ class GitLabSnippetService(private val project: Project, private val serviceScop
           GitLabLoginUtil.isAccountUnique(accounts, server, name)
         }
 
-        token?.let(apiManager::getClient)
+        token?.let { apiManager.getClient(result.account.server, it) }
       }.await()
     }
   }
@@ -99,10 +99,9 @@ class GitLabSnippetService(private val project: Project, private val serviceScop
                                     files: List<VirtualFile>) {
     // Process result by creating the snippet, copying url, etc.
     val data = result.data
-    val api = accountManager.findCredentials(result.account)?.let(apiManager::getClient)
+    val api = accountManager.findCredentials(result.account)?.let { apiManager.getClient(result.account.server, it) }
               ?: reattemptLogin(apiManager, accountManager.accountsState.value, result)
               ?: return
-    val server = result.account.server
 
     val fileNameExtractor = getFileNameExtractor(project, files, data.pathHandlingMode)
     val contents = readAction {
@@ -119,7 +118,6 @@ class GitLabSnippetService(private val project: Project, private val serviceScop
     }
 
     val httpResult = api.graphQL.createSnippet(
-      server,
       data.onProject,
       data.title,
       data.description,

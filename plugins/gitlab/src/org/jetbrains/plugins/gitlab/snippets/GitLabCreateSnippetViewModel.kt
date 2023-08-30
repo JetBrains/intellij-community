@@ -2,16 +2,11 @@
 package org.jetbrains.plugins.gitlab.snippets
 
 import com.intellij.collaboration.async.modelFlow
-import com.intellij.openapi.application.readAction
-import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.logger
-import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.project.guessProjectDir
-import com.intellij.openapi.roots.ProjectFileIndex
-import com.intellij.openapi.vfs.VfsUtilCore
 import com.intellij.openapi.vfs.VirtualFile
-import kotlinx.coroutines.*
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.*
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
@@ -19,7 +14,6 @@ import org.jetbrains.plugins.gitlab.api.GitLabApiManager
 import org.jetbrains.plugins.gitlab.api.GitLabProjectCoordinates
 import org.jetbrains.plugins.gitlab.authentication.accounts.GitLabAccount
 import org.jetbrains.plugins.gitlab.authentication.accounts.GitLabAccountManager
-import org.jetbrains.plugins.gitlab.util.GitLabBundle.message
 
 private val LOG = logger<GitLabCreateSnippetViewModel>()
 
@@ -80,8 +74,8 @@ internal class GitLabCreateSnippetViewModel(
         cache.computeIfAbsent(credentials) { _ ->
           val (account, tokenOrNull) = credentials
           val token = tokenOrNull ?: return@computeIfAbsent flowOf(listOf())
-          glApiManager.getClient(token).graphQL
-            .getSnippetAllowedProjects(account.server)
+          glApiManager.getClient(account.server, token).graphQL
+            .getSnippetAllowedProjects()
             .shareIn(flowCs, SharingStarted.Lazily, 1) // Let this live for as long as the repositories flow lives
         }.collectLatest { send(it) }
       }

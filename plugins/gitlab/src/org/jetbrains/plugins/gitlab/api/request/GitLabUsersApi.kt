@@ -12,18 +12,18 @@ import java.awt.Image
 import java.net.http.HttpResponse
 
 @SinceGitLab("7.0", note = "No exact version")
-suspend fun GitLabApi.Rest.getCurrentUser(server: GitLabServerPath): HttpResponse<out GitLabUserRestDTO> {
+suspend fun GitLabApi.Rest.getCurrentUser(): HttpResponse<out GitLabUserRestDTO> {
   val uri = server.restApiUri.resolveRelative("user")
   val request = request(uri).GET().build()
-  return withErrorStats(server, GitLabApiRequestName.REST_GET_CURRENT_USER) {
+  return withErrorStats(GitLabApiRequestName.REST_GET_CURRENT_USER) {
     loadJsonValue(request)
   }
 }
 
 @SinceGitLab("12.5", note = "No exact version")
-suspend fun GitLabApi.GraphQL.getCurrentUser(server: GitLabServerPath): GitLabUserDetailedDTO? {
-  val request = gitLabQuery(server, GitLabGQLQuery.GET_CURRENT_USER)
-  return withErrorStats(server, GitLabGQLQuery.GET_CURRENT_USER) {
+suspend fun GitLabApi.GraphQL.getCurrentUser(): GitLabUserDetailedDTO? {
+  val request = gitLabQuery(GitLabGQLQuery.GET_CURRENT_USER)
+  return withErrorStats(GitLabGQLQuery.GET_CURRENT_USER) {
     loadResponse<GitLabUserDetailedDTO>(request, "currentUser").body()
   }
 }

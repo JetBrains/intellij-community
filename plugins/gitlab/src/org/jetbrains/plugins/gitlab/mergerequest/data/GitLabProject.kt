@@ -51,7 +51,7 @@ class GitLabLazyProject(
       .modelFlow(parentCs, LOG)
   override val members: Flow<Result<List<GitLabUserDTO>>> =
     ApiPageUtil.createPagesFlowByLinkHeader(getProjectUsersURI(projectMapping.repository)) {
-      api.rest.getProjectUsers(projectMapping.repository.serverPath, it)
+      api.rest.getProjectUsers(it)
     }
       .map { it.body().map(GitLabUserDTO::fromRestDTO) }
       .collectBatches()

@@ -8,8 +8,6 @@ import com.intellij.openapi.components.Service
  */
 @Service
 class GitLabApiManager {
-  private val unauthenticatedApi by lazy { GitLabApiImpl() }
-
   /**
    * Gets a client for the given token. The created client can make authenticated
    * requests to a GitLab server of choice. Because a token is passed when constructing
@@ -18,7 +16,7 @@ class GitLabApiManager {
    *
    * For a more robust client, use the overloaded version with a token supplier.
    */
-  fun getClient(token: String): GitLabApi = getClient { token }
+  fun getClient(server: GitLabServerPath, token: String): GitLabApi = getClient(server) { token }
 
   /**
    * Gets a client that fetches tokens using the given supplier. The created client
@@ -27,11 +25,11 @@ class GitLabApiManager {
    * intended to only be used for a single intended server. New tokens could be
    * supplied by the token supplier, however.
    */
-  fun getClient(tokenSupplier: () -> String): GitLabApi = GitLabApiImpl(tokenSupplier)
+  fun getClient(server: GitLabServerPath, tokenSupplier: () -> String): GitLabApi = GitLabApiImpl(server, tokenSupplier)
 
   /**
    * Gets an unauthenticated API Client that can be used for requests that are sure
    * to need no authentication. For any other requests, please use [getClient].
    */
-  fun getUnauthenticatedClient(): GitLabApi = unauthenticatedApi
+  fun getUnauthenticatedClient(server: GitLabServerPath): GitLabApi = GitLabApiImpl(server)
 }

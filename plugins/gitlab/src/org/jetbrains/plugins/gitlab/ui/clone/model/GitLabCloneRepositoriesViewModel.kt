@@ -124,7 +124,7 @@ internal class GitLabCloneRepositoriesViewModelImpl(
 
   override val accountDetailsProvider = GitLabAccountsDetailsProvider(cs) { account ->
     val token = accountManager.findCredentials(account) ?: return@GitLabAccountsDetailsProvider null
-    apiManager.getClient { token }
+    apiManager.getClient(account.server) { token }
   }
 
   override fun selectItem(item: GitLabCloneListItem?) {
@@ -177,8 +177,8 @@ internal class GitLabCloneRepositoriesViewModelImpl(
         val token = accountManager.findCredentials(account) ?: return@withContext listOf(
           GitLabCloneListItem.Error(account, GitLabCloneException.MissingAccessToken { switchToLoginAction(account) })
         )
-        val apiClient = apiManager.getClient { token }
-        val currentUser = apiClient.graphQL.getCurrentUser(account.server) ?: return@withContext listOf(
+        val apiClient = apiManager.getClient(account.server) { token }
+        val currentUser = apiClient.graphQL.getCurrentUser() ?: return@withContext listOf(
           GitLabCloneListItem.Error(account, GitLabCloneException.RevokedToken { switchToLoginAction(account) })
         )
         val accountRepositories = currentUser.projectMemberships.map { projectMember ->

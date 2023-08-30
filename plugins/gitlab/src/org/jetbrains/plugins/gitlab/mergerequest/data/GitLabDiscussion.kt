@@ -126,7 +126,7 @@ class LoadedGitLabDiscussion(
       operationsGuard.withLock {
         val resolved = resolved.first()
         val result = withContext(Dispatchers.IO) {
-          api.graphQL.changeMergeRequestDiscussionResolve(glProject, apiId, !resolved).getResultOrThrow()
+          api.graphQL.changeMergeRequestDiscussionResolve(apiId, !resolved).getResultOrThrow()
         }
         noteEvents.emit(GitLabNoteEvent.Changed(result.notes))
       }
@@ -137,7 +137,7 @@ class LoadedGitLabDiscussion(
   override suspend fun addNote(body: String) {
     withContext(cs.coroutineContext) {
       withContext(Dispatchers.IO) {
-        api.graphQL.createReplyNote(glProject, mr.gid, id, body).getResultOrThrow()
+        api.graphQL.createReplyNote(mr.gid, id, body).getResultOrThrow()
       }.also {
         withContext(NonCancellable) {
           noteEvents.emit(GitLabNoteEvent.Added(it))

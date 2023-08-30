@@ -23,9 +23,9 @@ class GitLabTokenLoginPanelModel(var requiredUsername: String? = null,
 
   override suspend fun checkToken(): String {
     val server = createServerPath(serverUri)
-    val api = service<GitLabApiManager>().getClient(token)
+    val api = service<GitLabApiManager>().getClient(server, token)
     val user = withContext(Dispatchers.IO) {
-      api.graphQL.getCurrentUser(server)
+      api.graphQL.getCurrentUser()
     } ?: throw IllegalArgumentException(CollaborationToolsBundle.message("account.token.invalid"))
 
     service<GitLabServersManager>().validateServerVersion(server, api)

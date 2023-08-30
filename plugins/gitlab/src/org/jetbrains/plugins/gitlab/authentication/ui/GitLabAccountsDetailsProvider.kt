@@ -22,7 +22,7 @@ internal class GitLabAccountsDetailsProvider(scope: CoroutineScope,
 
   override suspend fun loadDetails(account: GitLabAccount): Result<GitLabUserDTO> {
     val api = apiClientSupplier(account) ?: return Result.Error(CollaborationToolsBundle.message("account.token.missing"), true)
-    val details = api.graphQL.getCurrentUser(account.server) ?: return Result.Error(CollaborationToolsBundle.message("account.token.invalid"), true)
+    val details = api.graphQL.getCurrentUser() ?: return Result.Error(CollaborationToolsBundle.message("account.token.invalid"), true)
     try {
       val supported = service<GitLabServersManager>().isServerVersionSupported(account.server, api)
       if (!supported) return Result.Error(GitLabBundle.message("server.version.unsupported.short"), false)

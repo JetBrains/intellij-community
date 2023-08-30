@@ -20,10 +20,12 @@ import org.jetbrains.plugins.gitlab.util.GitLabProjectMapping
 internal class GitLabProjectConnectionManager(project: Project, cs: CoroutineScope) :
   SingleHostedGitRepositoryConnectionManager<GitLabProjectMapping, GitLabAccount, GitLabProjectConnection> {
 
-  private val connectionFactory = ValidatingHostedGitRepositoryConnectionFactory(project.serviceGet<GitLabProjectsManager>(),
-                                                                                 serviceGet<GitLabAccountManager>()) { glProject, account, tokenState ->
-    val apiClient = service<GitLabApiManager>().getClient { tokenState.value }
-    val currentUser = apiClient.graphQL.getCurrentUser(glProject.repository.serverPath) ?: error("Unable to load current user")
+  private val connectionFactory = ValidatingHostedGitRepositoryConnectionFactory(
+    project.serviceGet<GitLabProjectsManager>(),
+    serviceGet<GitLabAccountManager>()
+  ) { glProject, account, tokenState ->
+    val apiClient = service<GitLabApiManager>().getClient(account.server) { tokenState.value }
+    val currentUser = apiClient.graphQL.getCurrentUser() ?: error("Unable to load current user")
     GitLabProjectConnection(project, this, glProject, account, currentUser, apiClient, tokenState)
   }
 

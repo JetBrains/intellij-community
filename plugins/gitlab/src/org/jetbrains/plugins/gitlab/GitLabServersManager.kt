@@ -38,7 +38,7 @@ internal class CachingGitLabServersManager(private val cs: CoroutineScope) : Git
   override suspend fun checkIsGitLabServer(server: GitLabServerPath): Boolean =
     testCache.getOrPut(server) {
       cs.async(Dispatchers.IO + CoroutineName("GitLab Server tester")) {
-        service<GitLabApiManager>().getUnauthenticatedClient().rest.checkIsGitLabServer(server)
+        service<GitLabApiManager>().getUnauthenticatedClient(server).rest.checkIsGitLabServer()
       }
     }.await()
 
@@ -92,7 +92,7 @@ private suspend fun GitLabServersManager.getMetadataCached(server: GitLabServerP
   withContext(Dispatchers.IO) {
     getMetadata(server) {
       runCatching {
-        api.rest.getServerMetadataOrVersion(server)
+        api.rest.getServerMetadataOrVersion()
       }
     }.let {
       requireNotNull(it) { GitLabBundle.message("server.version.error") }

@@ -12,9 +12,9 @@ import java.net.URI
 import java.net.http.HttpResponse
 
 @SinceGitLab("15.7", note = "Older version is merge_requests/:iid/changes")
-suspend fun GitLabApi.Rest.loadMergeRequestDiffs(serverPath: GitLabServerPath, uri: URI): HttpResponse<out List<GitLabDiffDTO>> {
+suspend fun GitLabApi.Rest.loadMergeRequestDiffs(uri: URI): HttpResponse<out List<GitLabDiffDTO>> {
   val request = request(uri).GET().build()
-  return withErrorStats(serverPath, GitLabApiRequestName.REST_GET_MERGE_REQUEST_DIFF) {
+  return withErrorStats(GitLabApiRequestName.REST_GET_MERGE_REQUEST_DIFF) {
     loadJsonList(request)
   }
 }
@@ -27,9 +27,9 @@ fun getMergeRequestDiffsURI(project: GitLabProjectCoordinates, mrIid: String): U
     .resolveRelative("diffs")
 
 @SinceGitLab("7.0")
-suspend fun GitLabApi.Rest.loadCommitDiffs(serverPath: GitLabServerPath, uri: URI): HttpResponse<out List<GitLabDiffDTO>> {
+suspend fun GitLabApi.Rest.loadCommitDiffs(uri: URI): HttpResponse<out List<GitLabDiffDTO>> {
   val request = request(uri).GET().build()
-  return withErrorStats(serverPath, GitLabApiRequestName.REST_GET_COMMIT_DIFF) {
+  return withErrorStats(GitLabApiRequestName.REST_GET_COMMIT_DIFF) {
     loadJsonList(request)
   }
 }
@@ -50,7 +50,7 @@ suspend fun GitLabApi.Rest.loadCommit(project: GitLabProjectCoordinates,
     .resolveRelative("commits")
     .resolveRelative(commitSha)
   val request = request(uri).GET().build()
-  return withErrorStats(project.serverPath, GitLabApiRequestName.REST_GET_COMMIT) {
+  return withErrorStats(GitLabApiRequestName.REST_GET_COMMIT) {
     loadJsonValue(request)
   }
 }

@@ -67,7 +67,7 @@ class GitLabMergeRequestChangesImpl(
           async {
             val commitWithParents = api.rest.loadCommit(glProject, commit.sha).body()!!
             val patches = ApiPageUtil.createPagesFlowByLinkHeader(getCommitDiffsURI(glProject, commit.sha)) {
-              api.rest.loadCommitDiffs(glProject.serverPath, it)
+              api.rest.loadCommitDiffs(it)
             }.map { it.body() }.foldToList(GitLabDiffDTO::toPatch)
             GitCommitShaWithPatches(commit.sha, commitWithParents.parentIds, patches)
           }
@@ -76,7 +76,7 @@ class GitLabMergeRequestChangesImpl(
     }
     val headPatches = withContext(Dispatchers.IO) {
       ApiPageUtil.createPagesFlowByLinkHeader(getMergeRequestDiffsURI(glProject, mergeRequestDetails.iid)) {
-        api.rest.loadMergeRequestDiffs(glProject.serverPath, it)
+        api.rest.loadMergeRequestDiffs(it)
       }.map { it.body() }.foldToList(GitLabDiffDTO::toPatch)
     }
     return GitBranchComparisonResultImpl(repository.project, repository.root, baseSha, mergeBaseSha, commitsWithPatches, headPatches)
