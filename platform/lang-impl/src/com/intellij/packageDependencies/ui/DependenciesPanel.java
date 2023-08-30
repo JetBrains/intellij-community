@@ -363,10 +363,18 @@ public final class DependenciesPanel extends JPanel implements Disposable, DataP
       }
     }
     deps.removeAll(scope);
-    myRightTreeExpansionMonitor.freeze();
-    myRightTree.setModel(buildTreeModel(deps, myRightTreeMarker));
-    myRightTreeExpansionMonitor.restore();
+    replaceModel(myRightTree, buildTreeModel(deps, myRightTreeMarker), myRightTreeExpansionMonitor);
     expandFirstLevel(myRightTree);
+  }
+
+  private static void replaceModel(@NotNull MyTree tree, @NotNull AsyncTreeModel model, @NotNull TreeExpansionMonitor<?> monitor) {
+    monitor.freeze();
+    var oldModel = tree.getModel();
+    if (oldModel instanceof Disposable disposable) {
+      Disposer.dispose(disposable);
+    }
+    tree.setModel(model);
+    monitor.restore();
   }
 
   private ActionGroup createTreePopupActions(boolean isRightTree) {
@@ -398,9 +406,7 @@ public final class DependenciesPanel extends JPanel implements Disposable, DataP
 
   private void updateLeftTreeModel() {
     Set<PsiFile> psiFiles = myDependencies.keySet();
-    myLeftTreeExpansionMonitor.freeze();
-    myLeftTree.setModel(buildTreeModel(psiFiles, myLeftTreeMarker));
-    myLeftTreeExpansionMonitor.restore();
+    replaceModel(myLeftTree, buildTreeModel(psiFiles, myLeftTreeMarker), myLeftTreeExpansionMonitor);
     expandFirstLevel(myLeftTree);
   }
 
