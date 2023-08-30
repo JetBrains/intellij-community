@@ -12,6 +12,7 @@ fun foo(e: SEALED) {
     }
 }
 
+// WITH_ORDER
 // EXIST: BBBB
 // EXIST: { lookupString: "else -> "}
 // NOTHING_ELSE

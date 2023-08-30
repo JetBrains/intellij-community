@@ -3482,6 +3482,11 @@ public abstract class K1JvmBasicCompletionTestGenerated extends AbstractK1JvmBas
                 runTest("../testData/basic/common/when/nonSealedClassInWhen.kt");
             }
 
+            @TestMetadata("nonSealedClassInWhen2.kt")
+            public void testNonSealedClassInWhen2() throws Exception {
+                runTest("../testData/basic/common/when/nonSealedClassInWhen2.kt");
+            }
+
             @TestMetadata("nonSealedClassWithTypeArgs.kt")
             public void testNonSealedClassWithTypeArgs() throws Exception {
                 runTest("../testData/basic/common/when/nonSealedClassWithTypeArgs.kt");

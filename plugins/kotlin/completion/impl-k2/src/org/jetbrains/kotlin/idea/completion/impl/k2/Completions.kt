@@ -147,6 +147,7 @@ internal object Completions {
             WeighingContext.createWeighingContext(receiver, expectedType, implicitReceivers = emptyList(), positionContext.position)
         }
 
+        is FirWithSubjectEntryPositionContext -> createWeighingContextForNameReference(basicContext, positionContext)
         is FirExpressionNameReferencePositionContext -> createWeighingContextForNameReference(basicContext, positionContext)
         is FirInfixCallPositionContext -> createWeighingContextForNameReference(basicContext, positionContext)
 

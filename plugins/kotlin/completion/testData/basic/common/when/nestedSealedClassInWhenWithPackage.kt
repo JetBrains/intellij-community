@@ -14,6 +14,7 @@ fun foo(e: SEALED) {
     }
 }
 
+// WITH_ORDER
 // EXIST: is SEALED.AAAA
 // EXIST: SEALED.BBBB
 // EXIST: is SEALED.CCCC

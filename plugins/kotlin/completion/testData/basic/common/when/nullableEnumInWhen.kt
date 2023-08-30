@@ -10,10 +10,11 @@ fun foo(e: ENUM?) {
     }
 }
 
+// WITH_ORDER
+// EXIST: null
 // EXIST: ENUM.AAAA
 // EXIST: ENUM.BBBB
 // EXIST: ENUM.CCCC
 // EXIST: { lookupString: "else -> "}
-// EXIST: null
 // NOTHING_ELSE
 // FIR_COMPARISON
