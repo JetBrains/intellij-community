@@ -20,21 +20,24 @@ sealed class GitLabNotePosition(
     sha: String,
     filePathBefore: String?,
     filePathAfter: String?,
-    val location: DiffLineLocation
+    val lineIndexLeft: Int?,
+    val lineIndexRight: Int?
   ) : GitLabNotePosition(parentSha, sha, filePathBefore, filePathAfter) {
     override fun equals(other: Any?): Boolean {
       if (this === other) return true
-      if (javaClass != other?.javaClass) return false
+      if (other !is Text) return false
       if (!super.equals(other)) return false
 
-      other as Text
+      if (lineIndexLeft != other.lineIndexLeft) return false
+      if (lineIndexRight != other.lineIndexRight) return false
 
-      return location == other.location
+      return true
     }
 
     override fun hashCode(): Int {
       var result = super.hashCode()
-      result = 31 * result + location.hashCode()
+      result = 31 * result + (lineIndexLeft ?: 0)
+      result = 31 * result + (lineIndexRight ?: 0)
       return result
     }
   }
@@ -66,15 +69,7 @@ sealed class GitLabNotePosition(
       val sha = position.diffRefs.headSha
 
       return when (position.positionType) {
-        "text" -> {
-          val location = if (position.oldLine != null) {
-            DiffLineLocation(Side.LEFT, position.oldLine - 1)
-          }
-          else {
-            DiffLineLocation(Side.RIGHT, position.newLine!! - 1)
-          }
-          Text(parentSha, sha, position.oldPath, position.newPath, location)
-        }
+        "text" -> Text(parentSha, sha, position.oldPath, position.newPath, position.oldLine?.dec(), position.newLine?.dec())
         else -> Image(parentSha, sha, position.oldPath, position.newPath)
       }
     }
@@ -90,15 +85,7 @@ sealed class GitLabNotePosition(
       val sha = position.headSha ?: return null
 
       return when (position.positionType) {
-        "text" -> {
-          val location = if (position.oldLine != null) {
-            DiffLineLocation(Side.LEFT, position.oldLine - 1)
-          }
-          else {
-            DiffLineLocation(Side.RIGHT, position.newLine!! - 1)
-          }
-          Text(parentSha, sha, position.oldPath, position.newPath, location)
-        }
+        "text" -> Text(parentSha, sha, position.oldPath, position.newPath, position.oldLine?.dec(), position.newLine?.dec())
         else -> Image(parentSha, sha, position.oldPath, position.newPath)
       }
     }
@@ -128,15 +115,31 @@ sealed class GitLabNotePosition(
 val GitLabNotePosition.filePath: String
   get() = (filePathAfter ?: filePathBefore)!!
 
-fun GitLabNotePosition.mapToLocation(diffData: GitTextFilePatchWithHistory): DiffLineLocation? {
+fun GitLabNotePosition.getLocation(contextSide: Side = Side.LEFT): DiffLineLocation? {
   if (this !is GitLabNotePosition.Text) return null
 
+  return when {
+    lineIndexLeft != null && lineIndexRight != null -> {
+      when (contextSide) {
+        Side.LEFT -> DiffLineLocation(Side.LEFT, lineIndexLeft)
+        Side.RIGHT -> DiffLineLocation(Side.RIGHT, lineIndexRight)
+      }
+    }
+    lineIndexLeft != null -> {
+      DiffLineLocation(Side.LEFT, lineIndexLeft)
+    }
+    lineIndexRight != null -> {
+      DiffLineLocation(Side.RIGHT, lineIndexRight)
+    }
+    else -> null
+  }
+}
+
+fun GitLabNotePosition.mapToLocation(diffData: GitTextFilePatchWithHistory, contextSide: Side = Side.LEFT): DiffLineLocation? {
+  val (side, lineIndex) = getLocation(contextSide) ?: return null
   if ((filePathBefore != null && !diffData.contains(parentSha, filePathBefore)) &&
       (filePathAfter != null && !diffData.contains(sha, filePathAfter))) return null
 
-  val (side, lineIndex) = location
-  // context should be mapped to the left side
   val commitSha = side.select(parentSha, sha)!!
-
   return diffData.mapLine(commitSha, lineIndex, side)
 }
