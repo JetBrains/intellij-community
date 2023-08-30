@@ -6,6 +6,8 @@ import com.intellij.openapi.editor.event.EditorMouseListener
 import com.intellij.openapi.util.Key
 import com.intellij.util.MathUtil
 import org.jetbrains.plugins.terminal.exp.TerminalSelectionModel.TerminalSelectionListener
+import java.awt.event.FocusAdapter
+import java.awt.event.FocusEvent
 import kotlin.math.min
 
 class TerminalSelectionController(
@@ -19,6 +21,11 @@ class TerminalSelectionController(
   init {
     outputModel.editor.addEditorMouseListener(this)
     selectionModel.addListener(this)
+    focusModel.addPromptFocusListener(object : FocusAdapter() {
+      override fun focusGained(e: FocusEvent?) {
+        clearSelection()   // clear selection if user selected the prompt using the mouse
+      }
+    })
   }
 
   fun selectRelativeBlock(isBelow: Boolean) {
