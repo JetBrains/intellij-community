@@ -1,10 +1,7 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.feedback.common.dialog.uiBlocks
+package com.intellij.platform.feedback.dialog.uiBlocks
 
-import com.intellij.platform.feedback.dialog.uiBlocks.FeedbackBlock
-import com.intellij.platform.feedback.dialog.uiBlocks.JsonDataProvider
-import com.intellij.platform.feedback.dialog.uiBlocks.TextDescriptionProvider
-import com.intellij.platform.feedback.dialog.uiBlocks.rating
+import com.intellij.ide.feedback.RatingComponent
 import com.intellij.platform.feedback.impl.bundle.CommonFeedbackBundle
 import com.intellij.ui.components.JBLabel
 import com.intellij.ui.dsl.builder.BottomGap
@@ -22,9 +19,14 @@ class RatingGroupBlock(@Nls private val topLabel: String,
   private var myRandomOrder: Boolean = false
 
   override fun addToPanel(panel: Panel) {
+    val allRatings: ArrayList<RatingComponent> = arrayListOf()
+
     panel.apply {
       row {
-        label(topLabel).bold()
+        label(topLabel).bold().errorOnApply(CommonFeedbackBundle.message("dialog.feedback.block.required")) {
+          allRatings.any { it.myRating == 0 }
+        }
+
         myHint?.let { rowComment(it) }
       }.bottomGap(BottomGap.NONE)
       val positions = getPositionsList()
@@ -34,9 +36,8 @@ class RatingGroupBlock(@Nls private val topLabel: String,
         val label = JBLabel(ratingItem.label)
         row(label) {
           rating()
-            .errorOnApply(CommonFeedbackBundle.message("dialog.feedback.block.required")) {
-              it.myRating == 0
-            }.apply {
+            .apply {
+              allRatings.add(this.component)
               onApply {
                 myRatingValues[ratingItem.jsonElementName] = this.component.myRating
               }
