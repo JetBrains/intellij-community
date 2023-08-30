@@ -20,6 +20,10 @@ class KtListenerImplementationMustNotBeDisposableInspectionTest : ListenerImplem
     doTest()
   }
 
+  fun testDisposableListenerDeepInheritance() {
+    doTest()
+  }
+
   fun testDisposableUnregisteredListener() {
     doTest()
   }
