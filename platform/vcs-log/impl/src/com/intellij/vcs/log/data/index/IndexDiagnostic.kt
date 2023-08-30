@@ -1,6 +1,7 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.vcs.log.data.index
 
+import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.vcs.changes.ChangesUtil
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.util.applyIf
@@ -29,6 +30,7 @@ internal object IndexDiagnostic {
         report.append(commitReport).append("\n")
       }
       if (!checkAllCommits && report.isNotBlank()) return report.toString()
+      ProgressManager.checkCanceled()
     }
     return report.toString()
   }
@@ -82,6 +84,7 @@ internal object IndexDiagnostic {
         sb.append(VcsLogBundle.message("vcs.log.index.diagnostic.error.filter", filter, details.id.toShortString()))
           .append("\n")
       }
+      ProgressManager.checkCanceled()
     }
     if (sb.isEmpty()) return null
     return sb.toString()
