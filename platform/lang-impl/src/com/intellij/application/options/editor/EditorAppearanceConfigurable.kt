@@ -18,9 +18,9 @@ import com.intellij.openapi.options.Configurable
 import com.intellij.openapi.options.UnnamedConfigurable
 import com.intellij.openapi.options.ex.ConfigurableWrapper
 import com.intellij.openapi.ui.DialogPanel
-import com.intellij.ui.SimpleListCellRenderer
 import com.intellij.ui.components.JBCheckBox
 import com.intellij.ui.dsl.builder.*
+import com.intellij.ui.dsl.listCellRenderer.textListCellRenderer
 import com.intellij.util.PlatformUtils
 import javax.swing.DefaultComboBoxModel
 
@@ -73,13 +73,12 @@ internal class EditorAppearanceConfigurable : BoundCompositeSearchableConfigurab
         checkBox(myCbShowLineNumbers)
         comboBox(
           DefaultComboBoxModel(EditorSettings.LineNumerationType.values()),
-          renderer = SimpleListCellRenderer.create("")
-          {
+          renderer = textListCellRenderer {
             when (it) {
               EditorSettings.LineNumerationType.ABSOLUTE -> ApplicationBundle.message("line.numeration.type.absolute")
               EditorSettings.LineNumerationType.RELATIVE -> ApplicationBundle.message("line.numeration.type.relative")
               EditorSettings.LineNumerationType.HYBRID -> ApplicationBundle.message("line.numeration.type.hybrid")
-              else -> "null"
+              null -> ""
             }
           }
         ).bindItem(model::getLineNumeration, model::setLineNumeration)

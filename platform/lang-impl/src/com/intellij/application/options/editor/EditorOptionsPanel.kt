@@ -43,6 +43,7 @@ import com.intellij.ui.ClientProperty
 import com.intellij.ui.SimpleListCellRenderer
 import com.intellij.ui.components.JBCheckBox
 import com.intellij.ui.dsl.builder.*
+import com.intellij.ui.dsl.listCellRenderer.textListCellRenderer
 import com.intellij.ui.layout.selected
 import com.intellij.util.ui.UIUtil
 import org.jetbrains.annotations.Contract
@@ -281,10 +282,11 @@ class EditorOptionsPanel : BoundCompositeConfigurable<UnnamedConfigurable>(messa
           val editorColorsManager = EditorColorsManager.getInstance()
           val schemes = listOf(RichCopySettings.ACTIVE_GLOBAL_SCHEME_MARKER) +
                         editorColorsManager.allSchemes.map { Scheme.getBaseName(it.name) }
-          comboBox<String>(
-            DefaultComboBoxModel(schemes.toTypedArray()),
-            renderer = SimpleListCellRenderer.create("") {
+          comboBox(
+            schemes,
+            renderer = textListCellRenderer {
               when (it) {
+                null -> ""
                 RichCopySettings.ACTIVE_GLOBAL_SCHEME_MARKER ->
                   message("combobox.richcopy.color.scheme.active")
                 else -> editorColorsManager.getScheme(it)?.displayName ?: it
@@ -306,7 +308,7 @@ class EditorOptionsPanel : BoundCompositeConfigurable<UnnamedConfigurable>(messa
           )
           comboBox(
             model,
-            renderer = SimpleListCellRenderer.create("") {
+            renderer = textListCellRenderer {
               when (it) {
                 EditorSettingsExternalizable.STRIP_TRAILING_SPACES_CHANGED -> message("combobox.strip.modified.lines")
                 EditorSettingsExternalizable.STRIP_TRAILING_SPACES_WHOLE -> message("combobox.strip.all")

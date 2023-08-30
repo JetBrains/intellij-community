@@ -15,10 +15,10 @@ import com.intellij.openapi.options.UiDslUnnamedConfigurable
 import com.intellij.openapi.options.ex.Settings
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectManager
-import com.intellij.ui.CollectionComboBoxModel
 import com.intellij.ui.ContextHelpLabel
 import com.intellij.ui.IdeUICustomization
 import com.intellij.ui.dsl.builder.*
+import com.intellij.ui.dsl.listCellRenderer.textListCellRenderer
 import javax.swing.JComponent
 
 class JavaAutoImportOptions(val project: Project) : UiDslUnnamedConfigurable.Simple(), AutoImportOptionsProvider {
@@ -40,9 +40,9 @@ class JavaAutoImportOptions(val project: Project) : UiDslUnnamedConfigurable.Sim
       }.layout(RowLayout.INDEPENDENT)
       row(JavaBundle.message("combobox.paste.insert.imports")) {
         comboBox(
-          CollectionComboBoxModel(listOf(CodeInsightSettings.YES, CodeInsightSettings.NO, CodeInsightSettings.ASK)),
-          listCellRenderer {
-            text = when (it) {
+          listOf(CodeInsightSettings.YES, CodeInsightSettings.NO, CodeInsightSettings.ASK),
+          textListCellRenderer {
+            when (it) {
               CodeInsightSettings.YES -> ApplicationBundle.message("combobox.insert.imports.all")
               CodeInsightSettings.NO -> ApplicationBundle.message("combobox.insert.imports.none")
               CodeInsightSettings.ASK -> ApplicationBundle.message("combobox.insert.imports.ask")
