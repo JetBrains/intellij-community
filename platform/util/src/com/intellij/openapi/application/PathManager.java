@@ -650,7 +650,7 @@ public final class PathManager {
       }
     }
     catch (Throwable e) {
-      log(e.getMessage());
+      log("Failed to set up '" + property + "' as PathCustomizer: " + e);
     }
   }
 
