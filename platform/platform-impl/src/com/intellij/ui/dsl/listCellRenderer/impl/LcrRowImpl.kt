@@ -34,6 +34,7 @@ internal class LcrRowImpl<T>(private val renderer: LcrRow<T>.() -> Unit) : LcrRo
   private var listCellRendererParams: ListCellRendererParams<T>? = null
 
   private val selectablePanel = object : SelectablePanel(), KotlinUIDslRenderer {
+
     override fun getBaseline(width: Int, height: Int): Int {
       val baselineComponents = cells.filter { it.baselineAlign }.map { it.lcrCell.component }
 
@@ -54,6 +55,21 @@ internal class LcrRowImpl<T>(private val renderer: LcrRow<T>.() -> Unit) : LcrRo
         }
       }
       return result
+    }
+
+    // Support disabled combobox color. Can be reworked later
+    override fun setForeground(fg: Color?) {
+      super.setForeground(fg)
+
+      @Suppress("SENSELESS_COMPARISON")
+      if (cells == null) {
+        // Called while initialization
+        return
+      }
+
+      for (cell in cells) {
+        cell.lcrCell.component.foreground = fg
+      }
     }
   }
 

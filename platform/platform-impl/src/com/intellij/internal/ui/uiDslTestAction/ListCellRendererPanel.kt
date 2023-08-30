@@ -9,10 +9,13 @@ import com.intellij.ui.components.JBScrollPane
 import com.intellij.ui.dsl.builder.Align
 import com.intellij.ui.dsl.builder.Row
 import com.intellij.ui.dsl.builder.panel
+import com.intellij.ui.dsl.builder.selected
 import com.intellij.ui.dsl.listCellRenderer.listCellRenderer
 import com.intellij.ui.dsl.listCellRenderer.textListCellRenderer
+import com.intellij.ui.layout.selected
 import com.intellij.util.ui.JBDimension
 import org.jetbrains.annotations.ApiStatus
+import javax.swing.JCheckBox
 import javax.swing.JComponent
 import javax.swing.ListCellRenderer
 
@@ -32,25 +35,33 @@ internal class ListCellRendererPanel {
     }
 
     group("ComboBox") {
-      row("Empty:") {
-        comboBox(emptyList<String>(), textListCellRenderer { it })
+      lateinit var enabled: JCheckBox
+      row {
+        enabled = checkBox("Enabled")
+          .selected(true)
+          .component
       }
-      row("No selection:") {
-        comboBox(listOf("First", "Second", "Last"), textListCellRenderer { it })
-          .applyToComponent { selectedItem = null }
-      }
-      row("Few items:") {
-        comboBox(listOf("First", "Second", "Try with y", "Try with ()"), textListCellRenderer { it })
-      }
-      row("Items with icon:") {
-        comboBox((1..100).map { "Item $it" }, listCellRenderer {
-          icon(if (index % 2 == 0) AllIcons.General.Add else AllIcons.General.Gear)
-          text(value ?: "")
-        })
-      }
-      row("Long items:") {
-        comboBox((1..100).map { "$it " + "Item".repeat(10) }, textListCellRenderer { it }).component
-      }
+      indent {
+        row("Empty:") {
+          comboBox(emptyList<String>(), textListCellRenderer { it })
+        }
+        row("No selection:") {
+          comboBox(listOf("First", "Second", "Last"), textListCellRenderer { it })
+            .applyToComponent { selectedItem = null }
+        }
+        row("Few items:") {
+          comboBox(listOf("First", "Second", "Try with y", "Try with ()"), textListCellRenderer { it })
+        }
+        row("Items with icon:") {
+          comboBox((1..100).map { "Item $it" }, listCellRenderer {
+            icon(if (index % 2 == 0) AllIcons.General.Add else AllIcons.General.Gear)
+            text(value ?: "")
+          })
+        }
+        row("Long items:") {
+          comboBox((1..100).map { "$it " + "Item".repeat(10) }, textListCellRenderer { it }).component
+        }
+      }.enabledIf(enabled.selected)
     }
 
     group("Renderers") {
