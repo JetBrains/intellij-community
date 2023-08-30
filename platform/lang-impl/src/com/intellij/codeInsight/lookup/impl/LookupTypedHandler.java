@@ -26,6 +26,7 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.EditorModificationUtil;
 import com.intellij.openapi.editor.actionSystem.TypedActionHandler;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Key;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.util.PsiUtilBase;
@@ -33,6 +34,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public final class LookupTypedHandler extends TypedActionHandlerBase {
+  public static final Key<Character> CANCELLATION_CHAR = Key.create("CANCELLATION_CHAR");
   private static final Logger LOG = Logger.getInstance(LookupTypedHandler.class);
 
   public LookupTypedHandler(@Nullable TypedActionHandler originalHandler) {
@@ -138,6 +140,7 @@ public final class LookupTypedHandler extends TypedActionHandlerBase {
       }
     }
 
+    lookup.putUserData(CANCELLATION_CHAR, charTyped);
     lookup.hide();
     TypedHandler.autoPopupCompletion(editor, charTyped, project, file);
     return false;

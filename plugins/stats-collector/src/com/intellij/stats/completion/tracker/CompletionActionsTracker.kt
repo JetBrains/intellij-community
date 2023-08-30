@@ -1,14 +1,15 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.stats.completion.tracker
 
 import com.intellij.codeInsight.lookup.LookupElement
 import com.intellij.codeInsight.lookup.LookupEvent
 import com.intellij.codeInsight.lookup.impl.LookupImpl
-import com.intellij.openapi.application.ApplicationManager
+import com.intellij.codeInsight.lookup.impl.LookupTypedHandler
 import com.intellij.completion.ml.experiment.ExperimentInfo
 import com.intellij.completion.ml.storage.LookupStorage
 import com.intellij.completion.ml.util.prefix
+import com.intellij.openapi.application.ApplicationManager
 
 class CompletionActionsTracker(private val lookup: LookupImpl,
                                private val lookupStorage: LookupStorage,
@@ -148,7 +149,12 @@ class CompletionActionsTracker(private val lookup: LookupImpl,
     private fun isSelectedByTyping(item: LookupElement?): Boolean {
         if (item != null) {
             val pattern = lookup.itemPattern(item)
-            return item.lookupString == pattern
+            val lookupString = item.lookupString
+            val cancellationChar = lookup.getUserData(LookupTypedHandler.CANCELLATION_CHAR)
+            if (cancellationChar != null && lookupString.endsWith(cancellationChar)) {
+              return lookupString.dropLast(1) == pattern
+            }
+            return lookupString == pattern
         }
         return false
     }
