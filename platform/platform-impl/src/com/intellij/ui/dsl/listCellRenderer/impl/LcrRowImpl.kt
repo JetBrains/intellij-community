@@ -7,6 +7,7 @@ import com.intellij.ui.dsl.gridLayout.HorizontalAlign
 import com.intellij.ui.dsl.gridLayout.UnscaledGaps
 import com.intellij.ui.dsl.gridLayout.VerticalAlign
 import com.intellij.ui.dsl.gridLayout.builders.RowsGridBuilder
+import com.intellij.ui.dsl.listCellRenderer.KotlinUIDslRenderer
 import com.intellij.ui.dsl.listCellRenderer.LcrIconInitParams
 import com.intellij.ui.dsl.listCellRenderer.LcrRow
 import com.intellij.ui.dsl.listCellRenderer.LcrTextInitParams
@@ -21,11 +22,7 @@ import java.awt.BorderLayout
 import java.awt.Color
 import java.awt.Component
 import java.util.function.Supplier
-import javax.swing.Icon
-import javax.swing.JLabel
-import javax.swing.JList
-import javax.swing.JPanel
-import javax.swing.ListCellRenderer
+import javax.swing.*
 import javax.swing.plaf.basic.BasicComboPopup
 import kotlin.math.max
 
@@ -36,7 +33,7 @@ internal class LcrRowImpl<T>(private val renderer: LcrRow<T>.() -> Unit) : LcrRo
 
   private var listCellRendererParams: ListCellRendererParams<T>? = null
 
-  private val selectablePanel = object : SelectablePanel() {
+  private val selectablePanel = object : SelectablePanel(), KotlinUIDslRenderer {
     override fun getBaseline(width: Int, height: Int): Int {
       val baselineComponents = cells.filter { it.baselineAlign }.map { it.lcrCell.component }
 
@@ -117,7 +114,7 @@ internal class LcrRowImpl<T>(private val renderer: LcrRow<T>.() -> Unit) : LcrRo
     }
 
     val result = lcrCellCache.occupyText()
-    result.init(text, initParams, list, selected, hasFocus)
+    result.init(text, initParams, list, selected)
     cells.add(CellInfo(result, initParams.grow, true))
   }
 
@@ -131,11 +128,12 @@ internal class LcrRowImpl<T>(private val renderer: LcrRow<T>.() -> Unit) : LcrRo
     lcrCellCache.release()
 
     val bg = if (isSelected) RenderingUtil.getSelectionBackground(list) else list.background
+    val isComboBox = isComboBox(list)
     if (ExperimentalUI.isNewUI()) {
       // Update height/insets every time, so IDE scaling is applied
       selectablePanel.apply {
-        if (isComboBox(list) && index == -1) {
-          // Renderer for selected item in ComboBox component
+        if (isComboBox && index == -1) {
+          // Renderer for selected item in collapsed ComboBox component
           selectablePanel.isOpaque = false
           selectionArc = 0
           selectionInsets = JBInsets.emptyInsets()
@@ -148,8 +146,15 @@ internal class LcrRowImpl<T>(private val renderer: LcrRow<T>.() -> Unit) : LcrRo
         else {
           selectablePanel.isOpaque = true
           selectionArc = 8
-          selectionInsets = JBInsets.create(0, 12)
-          border = JBUI.Borders.empty(0, 20)
+          if (isComboBox) {
+            // todo borders for comboBox mode should be updated with implementation of IDEA-316042 Fix lists that open from dropdowns and combo boxes
+            selectionInsets = JBInsets.create(0, 0)
+            border = JBUI.Borders.empty(0, 8)
+          }
+          else {
+            selectionInsets = JBInsets.create(0, 12)
+            border = JBUI.Borders.empty(0, 20)
+          }
           preferredHeight = JBUI.CurrentTheme.List.rowHeight()
 
           background = list.background
