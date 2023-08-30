@@ -136,8 +136,9 @@ private object DaemonFusCollector : CounterUsagesCollector() {
   val LINES: IntEventField = EventFields.Int("lines")
   @JvmField
     /**
-     * `true` if the daemon was started with the entire file range,
-     * `false` when the daemon was started with sub-range of the file, for example, after the change inside a code block
+     * `true` if the daemon started [GeneralHighlightingPass] with the entire file range,
+     * `false` when the daemon was started with sub-range of the file, for example, after the change inside a code block,
+     *         or the [GeneralHighlightingPass] was skipped altogether
      */
   val ENTIRE_FILE_HIGHLIGHTED: BooleanEventField = EventFields.Boolean("entireFileHighlighted")
 
