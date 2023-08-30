@@ -20,6 +20,7 @@ import org.jetbrains.kotlin.idea.test.KotlinTestUtils
 import org.jetbrains.kotlin.idea.test.KotlinWithJdkAndRuntimeLightProjectDescriptor
 import org.jetbrains.kotlin.idea.test.runAll
 import org.jetbrains.kotlin.test.KtAssert
+import org.jetbrains.kotlin.test.utils.IgnoreTests
 import org.jetbrains.uast.UFile
 import org.jetbrains.uast.UastFacade
 import org.jetbrains.uast.UastLanguagePlugin
@@ -35,11 +36,10 @@ import java.nio.file.Paths
 
 abstract class AbstractFirUastTest : KotlinLightCodeInsightFixtureTestCase(), UastPluginSelection {
     companion object {
-        private const val IGNORE_K2_DIRECTIVE = "IGNORE_K2"
 
         val String.withIgnoreFirDirective: Boolean
             get() {
-                return IGNORE_K2_DIRECTIVE in KotlinTestUtils.parseDirectives(this)
+                return IgnoreTests.DIRECTIVES.IGNORE_K2.replace("// ", "") in KotlinTestUtils.parseDirectives(this)
             }
     }
 
