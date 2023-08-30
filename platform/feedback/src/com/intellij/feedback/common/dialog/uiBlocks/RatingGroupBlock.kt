@@ -13,8 +13,8 @@ import org.jetbrains.annotations.Nls
 
 class RatingGroupBlock(@Nls private val topLabel: String,
                        private val ratingItems: List<RatingItem>) : FeedbackBlock, TextDescriptionProvider, JsonDataProvider {
-  @Nls
-  private var myHint: String? = null
+
+  private var myHint: @Nls String? = null
   private val myRatingValues: HashMap<String, Int> = HashMap(ratingItems.associate { Pair(it.jsonElementName, 0) })
   private var myRandomOrder: Boolean = false
 
