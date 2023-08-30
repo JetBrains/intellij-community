@@ -205,7 +205,7 @@ fun KtDeclaration.isExpectDeclaration(): Boolean {
 fun hasExpectForActual(declaration: KtDeclaration): Boolean {
     return analyze(declaration) {
         val symbol: KtDeclarationSymbol = declaration.getSymbol()
-        symbol.getExpectForActual() != null
+        symbol.getExpectsForActual().isNotEmpty()
     }
 }
 
@@ -232,7 +232,7 @@ fun expectTooltip(navigatableDeclarations: Collection<SmartPsiElementPointer<KtD
 }
 
 internal fun KtDeclaration.allNavigatableExpectedDeclarations(): List<SmartPsiElementPointer<KtDeclaration>> {
-    return listOfNotNull(expectedDeclarationIfAny()) + findMarkerBoundDeclarations().mapNotNull { it.expectedDeclarationIfAny() }
+    return expectedDeclarationIfAny() + findMarkerBoundDeclarations().flatMap { it.expectedDeclarationIfAny() }
 }
 
 internal fun buildNavigateToExpectedDeclarationsPopup(
@@ -241,11 +241,11 @@ internal fun buildNavigateToExpectedDeclarationsPopup(
 ): NavigationPopupDescriptor? =
     buildNavigateToExpectedDeclarationsPopup(element) { navigatableExpectedDeclarations?.mapNotNull { it.element } ?: emptyList() }
 
-internal fun KtDeclaration.expectedDeclarationIfAny(): SmartPsiElementPointer<KtDeclaration>? {
+internal fun KtDeclaration.expectedDeclarationIfAny(): List<SmartPsiElementPointer<KtDeclaration>> {
     val declaration = this
     return analyze(this) {
         val symbol: KtDeclarationSymbol = declaration.getSymbol()
-        (symbol.getExpectForActual()?.psi as? KtDeclaration)?.createSmartPointer()
+        symbol.getExpectsForActual().mapNotNull { (it.psi as? KtDeclaration)?.createSmartPointer() }
     }
 }
 
@@ -313,8 +313,7 @@ private fun KtDeclaration.matchesWithActual(actualDeclaration: KtDeclaration): B
     val declaration = this
     return declaration.hasActualModifier() && analyze(declaration) {
         val symbol: KtDeclarationSymbol = declaration.getSymbol()
-        val psi = symbol.getExpectForActual()?.psi as? KtDeclaration
-        psi == actualDeclaration
+        return symbol.getExpectsForActual().any { it.psi == actualDeclaration }
     }
 }
 
