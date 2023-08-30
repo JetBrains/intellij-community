@@ -41,10 +41,10 @@ class MavenPluginResolver(private val myTree: MavenProjectsTree) {
     try {
       val mavenPluginIdsToResolve = collectMavenPluginIdsToResolve(mavenProjects)
       val mavenPluginIds = mavenPluginIdsToResolve.map { it.first }
-      MavenLog.LOG.warn("maven plugin resolution started: $mavenPluginIds")
+      MavenLog.LOG.info("maven plugin resolution started: $mavenPluginIds")
       val resolutionResults = embedder.resolvePlugins(mavenPluginIdsToResolve, process, syncConsole, console)
       val unresolvedPlugins = resolutionResults.filter { !it.isResolved }.map { it.mavenPluginId }
-      MavenLog.LOG.warn("maven plugin resolution finished, unresolved: $unresolvedPlugins")
+      MavenLog.LOG.info("maven plugin resolution finished, unresolved: $unresolvedPlugins")
       val artifacts = resolutionResults.flatMap { it.artifacts }
       for (artifact in artifacts) {
         val pluginJar = artifact.file.toPath()
