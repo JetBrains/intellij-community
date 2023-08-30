@@ -180,7 +180,7 @@ class KotlinLineBreakpointType :
 
         val lambdaOrdinal = javaBreakpointProperties.lambdaOrdinal ?: return null
         val function = getLambdaByOrdinal(sourcePosition, lambdaOrdinal) ?: return null
-        val firstStatement = function.bodyBlockExpression?.statements?.firstOrNull() ?: return null
+        val firstStatement = function.bodyBlockExpression?.statements?.firstOrNull() ?: function.bodyExpression ?: return null
         return runReadAction {
             val linePosition = SourcePosition.createFromElement(firstStatement) ?: return@runReadAction null
             DebuggerUtilsEx.toXSourcePosition(

@@ -1160,6 +1160,11 @@ public abstract class K2IndyLambdaKotlinSteppingTestGenerated extends AbstractK2
             runTest("../testData/stepping/custom/breakpointInLambdaWithNestedLambda.kt");
         }
 
+        @TestMetadata("breakpointInOneLineAnonymousFun.kt")
+        public void testBreakpointInOneLineAnonymousFun() throws Exception {
+            runTest("../testData/stepping/custom/breakpointInOneLineAnonymousFun.kt");
+        }
+
         @TestMetadata("breakpointInOneLineLambda.kt")
         public void testBreakpointInOneLineLambda() throws Exception {
             runTest("../testData/stepping/custom/breakpointInOneLineLambda.kt");
