@@ -141,7 +141,7 @@ public final class LookupTypedHandler extends TypedActionHandlerBase {
     }
 
     lookup.putUserData(CANCELLATION_CHAR, charTyped);
-    lookup.hide();
+    lookup.hideLookup(false);
     TypedHandler.autoPopupCompletion(editor, charTyped, project, file);
     return false;
   }
