@@ -26,17 +26,17 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.text.MessageFormat;
-import java.util.HashMap;
 import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 
 public class MarkdownElementType extends IElementType {
 
   @NotNull
   private static final Map<org.intellij.markdown.IElementType, IElementType> markdownToPlatformTypeMap =
-    new HashMap<>();
+    new ConcurrentHashMap<>();
   @NotNull
   private static final Map<IElementType, org.intellij.markdown.IElementType> platformToMarkdownTypeMap =
-    new HashMap<>();
+    new ConcurrentHashMap<>();
 
   public MarkdownElementType(@NotNull @NonNls String debugName) {
     super(debugName, MarkdownLanguage.INSTANCE);
@@ -48,7 +48,7 @@ public class MarkdownElementType extends IElementType {
   }
 
   @Contract("null -> null; !null -> !null")
-  public synchronized static IElementType platformType(@Nullable org.intellij.markdown.IElementType markdownType) {
+  public static IElementType platformType(@Nullable org.intellij.markdown.IElementType markdownType) {
     if (markdownType == null) {
       return null;
     }
@@ -57,22 +57,25 @@ public class MarkdownElementType extends IElementType {
       return markdownToPlatformTypeMap.get(markdownType);
     }
 
-    final IElementType result;
-    if (markdownType == MarkdownElementTypes.PARAGRAPH
-        || markdownType == MarkdownTokenTypes.ATX_CONTENT
-        || markdownType == MarkdownTokenTypes.SETEXT_CONTENT
-        || markdownType == GFMTokenTypes.CELL) {
-      result = new MarkdownLazyElementType(markdownType.toString());
+    synchronized (platformToMarkdownTypeMap) {
+      return markdownToPlatformTypeMap.computeIfAbsent(markdownType, type -> {
+        final IElementType result;
+        if (type == MarkdownElementTypes.PARAGRAPH
+            || type == MarkdownTokenTypes.ATX_CONTENT
+            || type == MarkdownTokenTypes.SETEXT_CONTENT
+            || type == GFMTokenTypes.CELL) {
+          result = new MarkdownLazyElementType(type.toString());
+        }
+        else if (isHeaderElementType(type)) {
+          result = new MarkdownHeaderStubElementType(type.toString());
+        }
+        else {
+          result = new MarkdownElementType(type.toString());
+        }
+        platformToMarkdownTypeMap.put(result, type);
+        return result;
+      });
     }
-    else if (isHeaderElementType(markdownType)) {
-      result = new MarkdownHeaderStubElementType(markdownType.toString());
-    }
-    else {
-      result = new MarkdownElementType(markdownType.toString());
-    }
-    markdownToPlatformTypeMap.put(markdownType, result);
-    platformToMarkdownTypeMap.put(result, markdownType);
-    return result;
   }
 
   private static boolean isHeaderElementType(@NotNull org.intellij.markdown.IElementType markdownType) {
@@ -87,10 +90,16 @@ public class MarkdownElementType extends IElementType {
   }
 
   @Contract("!null -> !null")
-  public synchronized static org.intellij.markdown.IElementType markdownType(@Nullable IElementType platformType) {
+  public static org.intellij.markdown.IElementType markdownType(@Nullable IElementType platformType) {
     if (platformType == null) {
       return null;
     }
-    return platformToMarkdownTypeMap.get(platformType);
+    var result = platformToMarkdownTypeMap.get(platformType);
+    if (result != null) {
+      return result;
+    }
+    synchronized (platformToMarkdownTypeMap) {
+      return platformToMarkdownTypeMap.get(platformType);
+    }
   }
 }
