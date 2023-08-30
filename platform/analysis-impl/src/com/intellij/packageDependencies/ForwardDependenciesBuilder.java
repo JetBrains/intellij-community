@@ -66,7 +66,7 @@ public class ForwardDependenciesBuilder extends DependenciesBuilder {
   }
 
   @Override
-  public void analyze() {
+  public void doAnalyze() {
     final PsiManager psiManager = PsiManager.getInstance(getProject());
     psiManager.runInBatchFilesMode(() -> {
       final ProjectFileIndex fileIndex = ProjectRootManager.getInstance(getProject()).getFileIndex();

@@ -16,6 +16,7 @@
 package com.intellij.packageDependencies;
 
 import com.intellij.analysis.AnalysisScope;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectUtilCore;
 import com.intellij.openapi.util.NlsSafe;
@@ -35,6 +36,7 @@ public abstract class DependenciesBuilder {
   private final Project myProject;
   private final AnalysisScope myScope;
   private final Map<PsiFile, Set<PsiFile>> myDependencies = new HashMap<>();
+  private Map<PsiFile, Map<DependencyRule, Set<PsiFile>>> myIllegalDependencies = Collections.emptyMap();
   protected int myTotalFileCount;
   protected int myFileCount = 0;
 
@@ -78,9 +80,18 @@ public abstract class DependenciesBuilder {
 
   public abstract boolean isBackward();
 
-  public abstract void analyze();
+  public void analyze() {
+    doAnalyze();
+    myIllegalDependencies = ReadAction.compute(this::doGetIllegalDependencies);
+  }
 
-  public Map<PsiFile, Map<DependencyRule, Set<PsiFile>>> getIllegalDependencies(){
+  public abstract void doAnalyze();
+
+  public Map<PsiFile, Map<DependencyRule, Set<PsiFile>>> getIllegalDependencies() {
+    return myIllegalDependencies;
+  }
+
+  private Map<PsiFile, Map<DependencyRule, Set<PsiFile>>> doGetIllegalDependencies(){
     Map<PsiFile, Map<DependencyRule, Set<PsiFile>>> result = new HashMap<>();
     DependencyValidationManager validator = DependencyValidationManager.getInstance(myProject);
     for (PsiFile file : getDirectDependencies().keySet()) {
