@@ -47,8 +47,8 @@ class GitLabMergeRequestStatusViewModel(
   }
 
   private fun GitLabCiJobDTO.convert(): CodeReviewCIJob {
-    val jobUrl: URI = serverPath.toURI().resolveRelative(webPath)
-    return CodeReviewCIJob(name, status.toCiState(), jobUrl.toString())
+    val jobUrl: URI? = webPath?.let { serverPath.toURI().resolveRelative(it) }
+    return CodeReviewCIJob(name, status.toCiState(), jobUrl?.toString())
   }
 
   // TODO: Add more states (CodeReviewCIJobState.SKIPPED -> MANUAL, SKIPPED)

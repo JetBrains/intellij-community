@@ -243,7 +243,12 @@ object CodeReviewDetailsStatusComponentFactory {
                                               cellHasFocus: Boolean): Component {
       component.apply {
         clear()
-        append(value.name, SimpleTextAttributes.LINK_PLAIN_ATTRIBUTES, SimpleColoredComponent.BrowserLauncherTag(value.detailsUrl))
+
+        if (value.detailsUrl != null) {
+          append(value.name, SimpleTextAttributes.LINK_PLAIN_ATTRIBUTES, SimpleColoredComponent.BrowserLauncherTag(value.detailsUrl))
+        } else {
+          append(value.name, SimpleTextAttributes.REGULAR_ATTRIBUTES)
+        }
       }
       component.icon = when (value.status) {
         CodeReviewCIJobState.SUCCESS -> if (ExperimentalUI.isNewUI()) ExpUiIcons.Status.Success else AllIcons.RunConfigurations.TestPassed
