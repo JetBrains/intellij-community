@@ -5,10 +5,12 @@ import com.intellij.concurrency.ConcurrentCollectionFactory
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.diagnostic.Attachment
 import com.intellij.openapi.diagnostic.thisLogger
-import com.intellij.openapi.progress.util.BackgroundTaskUtil
+import com.intellij.openapi.progress.util.BackgroundTaskUtil.BackgroundTask
+import com.intellij.openapi.progress.util.BackgroundTaskUtil.submitTask
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.vcs.VcsException
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.util.concurrency.AppExecutorUtil
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import com.intellij.vcs.log.data.AbstractDataGetter.Companion.getCommitDetails
 import com.intellij.vcs.log.data.CommitDetailsGetter
@@ -18,6 +20,7 @@ import com.intellij.vcs.log.data.index.IndexDiagnostic.getDiffFor
 import com.intellij.vcs.log.data.index.IndexDiagnostic.pickCommits
 import com.intellij.vcs.log.data.index.IndexDiagnostic.pickIndexedCommits
 import com.intellij.vcs.log.impl.VcsLogErrorHandler
+import java.util.concurrent.TimeUnit
 
 internal class IndexDiagnosticRunner(private val index: VcsLogModifiableIndex,
                                      private val storage: VcsLogStorage,
@@ -37,8 +40,11 @@ internal class IndexDiagnosticRunner(private val index: VcsLogModifiableIndex,
   }
 
   private fun runDiagnostic(rootsToCheck: Collection<VirtualFile>) {
-    BackgroundTaskUtil.executeOnPooledThread(this) {
+    val backgroundTask = submitTask(AppExecutorUtil.getAppExecutorService(), this) {
       doRunDiagnostic(rootsToCheck)
+    }
+    backgroundTask.cancelAfter(3 * 60) {
+      thisLogger<IndexDiagnosticRunner>().warn("Index diagnostic for $rootsToCheck is cancelled by timeout")
     }
   }
 
@@ -95,4 +101,13 @@ internal class IndexDiagnosticRunner(private val index: VcsLogModifiableIndex,
   private inner class MyBigRepositoriesListListener : VcsLogBigRepositoriesList.Listener {
     override fun onRepositoryAdded(root: VirtualFile) = runDiagnostic(listOf(root))
   }
+}
+
+private fun BackgroundTask<*>.cancelAfter(delaySeconds: Long, onCancel: () -> Unit) {
+  val cancelTask = {
+    this.cancel()
+    onCancel()
+  }
+  val cancelFuture = AppExecutorUtil.getAppScheduledExecutorService().schedule(cancelTask, delaySeconds, TimeUnit.SECONDS)
+  this.future.whenComplete { _, _ -> cancelFuture.cancel(false) }
 }
