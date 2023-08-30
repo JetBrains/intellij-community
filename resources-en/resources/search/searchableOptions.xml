@@ -33794,9 +33794,6 @@
     <option name="print" hit="Print exception stack traces" />
     <option name="stack" hit="Print exception stack traces" />
     <option name="traces" hit="Print exception stack traces" />
-    <option name="plugin" hit="Use plugin registry" />
-    <option name="registry" hit="Use plugin registry" />
-    <option name="use" hit="Use plugin registry" />
     <option name="file" hit="User settings file:" />
     <option name="settings" hit="User settings file:" />
     <option name="user" hit="User settings file:" />

@@ -41,7 +41,6 @@ class MavenSettingsCollector : ProjectUsagesCollector() {
     usages.add(ALWAYS_UPDATE_SNAPSHOTS.metric(generalSettings.isAlwaysUpdateSnapshots))
     usages.add(NON_RECURSIVE.metric(generalSettings.isNonRecursive))
     usages.add(PRINT_ERROR_STACK_TRACES.metric(generalSettings.isPrintErrorStackTraces))
-    usages.add(USE_PLUGIN_REGISTRY.metric(generalSettings.isUsePluginRegistry))
     usages.add(WORK_OFFLINE.metric(generalSettings.isWorkOffline))
     usages.add(OUTPUT_LEVEL.metric(generalSettings.outputLevel))
     @Suppress("DEPRECATION")
@@ -102,12 +101,11 @@ class MavenSettingsCollector : ProjectUsagesCollector() {
   }
 
   companion object {
-    private val GROUP = EventLogGroup("build.maven.state", 9)
+    private val GROUP = EventLogGroup("build.maven.state", 10)
     private val HAS_MAVEN_PROJECT = GROUP.registerEvent("hasMavenProject", EventFields.Enabled)
     private val ALWAYS_UPDATE_SNAPSHOTS = GROUP.registerEvent("alwaysUpdateSnapshots", EventFields.Enabled)
     private val NON_RECURSIVE = GROUP.registerEvent("nonRecursive", EventFields.Enabled)
     private val PRINT_ERROR_STACK_TRACES = GROUP.registerEvent("printErrorStackTraces", EventFields.Enabled)
-    private val USE_PLUGIN_REGISTRY = GROUP.registerEvent("usePluginRegistry", EventFields.Enabled)
     private val WORK_OFFLINE = GROUP.registerEvent("workOffline", EventFields.Enabled)
     private val LOCAL_REPOSITORY = GROUP.registerEvent("localRepository", EventFields.Enabled)
     private val USER_SETTINGS_FILE = GROUP.registerEvent("userSettingsFile", EventFields.Enabled)
