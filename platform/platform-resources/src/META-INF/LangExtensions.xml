@@ -115,6 +115,8 @@
                  description="Rescan delta of AdditionalLibraryProvider, IndexableSetContributor, DirectoryIndexExcludePolicy values instead of full project."/>
     <registryKey defaultValue="true" key="scanning.in.smart.mode" restartRequired="false"
                  description="Scan project in smart mode under regular progress indicator."/>
+    <registryKey defaultValue="false" key="scanning.hide.progress.in.smart.mode" restartRequired="false"
+                 description="Hide scanning progress indicator while scanning can continue in smart mode."/>
     <registryKey defaultValue="20" key="scanning.dumb.mode.threshold" restartRequired="true"
                  description="Dumb mode during scanning will be triggered as soon as IDE discovers this count of unindexed files."/>
     <registryKey defaultValue="false" key="scanning.should.pause.dumb.queue" restartRequired="true"

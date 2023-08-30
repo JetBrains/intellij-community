@@ -2,6 +2,7 @@
 package com.intellij.util.indexing
 
 import com.intellij.openapi.application.EDT
+import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.impl.ProgressSuspender
@@ -12,6 +13,7 @@ import com.intellij.openapi.project.FilesScanningTask
 import com.intellij.openapi.project.MergeableQueueTask
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.NlsContexts.*
+import com.intellij.openapi.util.registry.Registry
 import kotlinx.collections.immutable.persistentListOf
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.*
@@ -23,7 +25,13 @@ abstract class FilesScanningTaskBase(private val project: Project) : MergeableQu
 
   final override fun perform(indicator: ProgressIndicator) {
     val progressReporter = IndexingProgressReporter(indicator)
-    val shouldShowProgress: StateFlow<Boolean> = MutableStateFlow(true) // TODO
+    val hideProgressInSmartMode = Registry.`is`("scanning.hide.progress.in.smart.mode", false)
+    val shouldShowProgress: StateFlow<Boolean> = if (hideProgressInSmartMode) {
+      project.service<DumbModeWhileScanningTrigger>().isDumbModeForScanningActive()
+    }
+    else {
+      MutableStateFlow(true)
+    }
 
     IndexingProgressUIReporter(project, shouldShowProgress, progressReporter, IndexingBundle.message("progress.indexing.scanning")).use {
       perform(CheckCancelOnlyProgressIndicator(indicator), progressReporter)
