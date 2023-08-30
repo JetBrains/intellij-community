@@ -2,4 +2,4 @@ val x: Int by lazy {
   <caret>
 }
 
-// OUT_OF_BLOCK: false
+// OUT_OF_BLOCK: true
