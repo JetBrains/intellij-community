@@ -3,6 +3,7 @@ package com.intellij.codeInsight.daemon.impl;
 
 import com.intellij.ide.highlighter.JavaFileType;
 import com.intellij.internal.statistic.FUCollectorTestCase;
+import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.testFramework.fixtures.BasePlatformTestCase;
@@ -18,7 +19,7 @@ public class DaemonFusReporterTest extends BasePlatformTestCase {
         void f() {<caret>
         }
       }""");
-    List<LogEvent> events = collectFUSEvents(() -> myFixture.doHighlighting());
+    List<LogEvent> events = collectFUSEvents(() -> assertEmpty(myFixture.doHighlighting(HighlightSeverity.ERROR)));
     boolean entireFileHighlightedExists = events.stream()
       .filter(e -> e.getGroup().getId().equals(DaemonFusCollector.GROUP.getId()))
       .filter(e -> e.getEvent().getId().equals(DaemonFusCollector.FINISHED.getEventId()))
@@ -27,7 +28,7 @@ public class DaemonFusReporterTest extends BasePlatformTestCase {
     assertTrue("There must be an event with entireFileHighlighted=true", entireFileHighlightedExists);
     List<LogEvent> events2 = collectFUSEvents(() -> {
       myFixture.type("xxx//");
-      myFixture.doHighlighting();
+      assertNotEmpty(myFixture.doHighlighting(HighlightSeverity.ERROR));
     });
     boolean daemonSuccessfullyFinishedExists = events2.stream()
       .filter(e -> e.getGroup().getId().equals(DaemonFusCollector.GROUP.getId()))
