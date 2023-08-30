@@ -72,8 +72,8 @@ fun showOnboardingFeedbackNotification(project: Project?, onboardingFeedbackData
                                                              NotificationType.INFORMATION)
   notification.addAction(object : NotificationAction(LearnBundle.message("onboarding.feedback.notification.action")) {
     override fun actionPerformed(e: AnActionEvent, notification: Notification) {
-      showOnboardingLessonFeedbackForm(project, onboardingFeedbackData, true)
       notification.expire()
+      showOnboardingLessonFeedbackForm(project, onboardingFeedbackData, true)
     }
   })
   notification.notify(project)
