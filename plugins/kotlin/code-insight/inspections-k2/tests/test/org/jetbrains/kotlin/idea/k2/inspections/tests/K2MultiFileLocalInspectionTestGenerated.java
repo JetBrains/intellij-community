@@ -88,6 +88,75 @@ public abstract class K2MultiFileLocalInspectionTestGenerated extends AbstractK2
     }
 
     @RunWith(JUnit3RunnerWithInners.class)
+    @TestMetadata("../../../idea/tests/testData/multiFileLocalInspections/redundantQualifierName")
+    public abstract static class RedundantQualifierName extends AbstractK2MultiFileLocalInspectionTest {
+        @RunWith(JUnit3RunnerWithInners.class)
+        @TestMetadata("../../../idea/tests/testData/multiFileLocalInspections/redundantQualifierName/javaStatic")
+        public static class JavaStatic extends AbstractK2MultiFileLocalInspectionTest {
+            private void runTest(String testDataFilePath) throws Exception {
+                KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+            }
+
+            @TestMetadata("fromKotlinTest.test")
+            public void testFromKotlinTest() throws Exception {
+                runTest("../../../idea/tests/testData/multiFileLocalInspections/redundantQualifierName/javaStatic/fromKotlinTest.test");
+            }
+        }
+
+        @RunWith(JUnit3RunnerWithInners.class)
+        @TestMetadata("../../../idea/tests/testData/multiFileLocalInspections/redundantQualifierName/javaStatic2")
+        public static class JavaStatic2 extends AbstractK2MultiFileLocalInspectionTest {
+            private void runTest(String testDataFilePath) throws Exception {
+                KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+            }
+
+            @TestMetadata("fromKotlinTest.test")
+            public void testFromKotlinTest() throws Exception {
+                runTest("../../../idea/tests/testData/multiFileLocalInspections/redundantQualifierName/javaStatic2/fromKotlinTest.test");
+            }
+        }
+
+        @RunWith(JUnit3RunnerWithInners.class)
+        @TestMetadata("../../../idea/tests/testData/multiFileLocalInspections/redundantQualifierName/unnecessaryNonDirectParentClassQualifier")
+        public static class UnnecessaryNonDirectParentClassQualifier extends AbstractK2MultiFileLocalInspectionTest {
+            private void runTest(String testDataFilePath) throws Exception {
+                KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+            }
+
+            @TestMetadata("fromKotlinTest.test")
+            public void testFromKotlinTest() throws Exception {
+                runTest("../../../idea/tests/testData/multiFileLocalInspections/redundantQualifierName/unnecessaryNonDirectParentClassQualifier/fromKotlinTest.test");
+            }
+        }
+
+        @RunWith(JUnit3RunnerWithInners.class)
+        @TestMetadata("../../../idea/tests/testData/multiFileLocalInspections/redundantQualifierName/unnecessaryNonDirectParentClassQualifierAmbiguous")
+        public static class UnnecessaryNonDirectParentClassQualifierAmbiguous extends AbstractK2MultiFileLocalInspectionTest {
+            private void runTest(String testDataFilePath) throws Exception {
+                KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+            }
+
+            @TestMetadata("fromKotlinTest.test")
+            public void testFromKotlinTest() throws Exception {
+                runTest("../../../idea/tests/testData/multiFileLocalInspections/redundantQualifierName/unnecessaryNonDirectParentClassQualifierAmbiguous/fromKotlinTest.test");
+            }
+        }
+
+        @RunWith(JUnit3RunnerWithInners.class)
+        @TestMetadata("../../../idea/tests/testData/multiFileLocalInspections/redundantQualifierName/unnecessaryNonDirectParentClassQualifierDisabled")
+        public static class UnnecessaryNonDirectParentClassQualifierDisabled extends AbstractK2MultiFileLocalInspectionTest {
+            private void runTest(String testDataFilePath) throws Exception {
+                KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+            }
+
+            @TestMetadata("fromKotlinTest.test")
+            public void testFromKotlinTest() throws Exception {
+                runTest("../../../idea/tests/testData/multiFileLocalInspections/redundantQualifierName/unnecessaryNonDirectParentClassQualifierDisabled/fromKotlinTest.test");
+            }
+        }
+    }
+
+    @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/multiFileInspectionsLocal")
     public abstract static class MultiFileInspectionsLocal extends AbstractK2MultiFileLocalInspectionTest {
         @RunWith(JUnit3RunnerWithInners.class)

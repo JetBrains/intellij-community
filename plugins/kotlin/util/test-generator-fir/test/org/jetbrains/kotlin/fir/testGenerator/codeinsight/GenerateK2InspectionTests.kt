@@ -85,6 +85,7 @@ internal fun MutableTWorkspace.generateK2InspectionTests() {
         testClass<AbstractK2MultiFileLocalInspectionTest> {
             val pattern = Patterns.forRegex("^([\\w\\-_]+)\\.test$")
             model("${idea}/multiFileLocalInspections/unusedSymbol", pattern = pattern)
+            model("${idea}/multiFileLocalInspections/redundantQualifierName", pattern = pattern)
             model("code-insight/inspections-k2/tests/testData/multiFileInspectionsLocal", pattern = pattern)
         }
     }
