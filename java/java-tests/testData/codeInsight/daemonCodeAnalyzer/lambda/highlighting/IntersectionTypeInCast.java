@@ -7,13 +7,13 @@ class Test {
   }
   public static void main(String... args) {
     var shouldCompile = (Consumer<Integer> & IntConsumerAdapter1)
-      i -> System.out.println("Cons3uming dd" + i);
+      i -> System.out.println("Consuming" + i);
     System.out.println(shouldCompile.getClass());
     shouldCompile.accept(42);
     shouldCompile.accept(Integer.valueOf(52));
 
     var shouldNotCompile = (Consumer<Integer> & IntConsumerAdapter2)
-      <error descr="No target method found">i -> System.out.println("Consumins2gs " + i)</error>;
+      <error descr="No target method found">i -> System.out.println("Consuming " + i)</error>;
     shouldNotCompile.accept(42);
     shouldNotCompile.accept(Integer.valueOf(52));
   }
