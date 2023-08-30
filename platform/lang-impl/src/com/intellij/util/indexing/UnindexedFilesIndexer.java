@@ -164,7 +164,7 @@ public final class UnindexedFilesIndexer extends DumbModeTask {
     }
     ProjectDumbIndexingHistoryImpl projectDumbIndexingHistory = new ProjectDumbIndexingHistoryImpl(myProject);
     IndexDiagnosticDumper.getInstance().onDumbIndexingStarted(projectDumbIndexingHistory);
-    trackSuspends(indicator, this,
+    trackSuspends(ProgressSuspender.getSuspender(indicator), this,
                   () -> projectDumbIndexingHistory.suspendStages(Instant.now()),
                   () -> projectDumbIndexingHistory.stopSuspendingStages(Instant.now()));
 
@@ -184,11 +184,10 @@ public final class UnindexedFilesIndexer extends DumbModeTask {
     }
   }
 
-  static void trackSuspends(@NotNull ProgressIndicator indicator,
+  static void trackSuspends(@Nullable ProgressSuspender suspender,
                             @NotNull Disposable parentDisposable,
                             @NotNull Runnable onSuspendStart,
                             @NotNull Runnable onSuspendStop) {
-    ProgressSuspender suspender = ProgressSuspender.getSuspender(indicator);
     if (suspender == null) {
       return;
     }
