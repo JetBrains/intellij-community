@@ -36,7 +36,7 @@ class TerminalOutputController(
   private val textHighlighter: TerminalTextHighlighter = TerminalTextHighlighter(outputModel)
 
   private val caretModel: TerminalCaretModel = TerminalCaretModel(session, outputModel, editor)
-  private val caretPainter: TerminalCaretPainter = TerminalCaretPainter(caretModel, editor)
+  private val caretPainter: TerminalCaretPainter = TerminalCaretPainter(caretModel, outputModel, selectionModel, editor)
 
   private val palette: ColorPalette
     get() = settings.terminalColorPalette

@@ -34,8 +34,9 @@ class SimpleTerminalController(
     get() = session.model
 
   private val outputModel: TerminalOutputModel = TerminalOutputModel(editor)
+  private val selectionModel = TerminalSelectionModel(outputModel)  // fake model, that won't be changed
   private val caretModel: TerminalCaretModel = TerminalCaretModel(session, outputModel, editor)
-  private val caretPainter: TerminalCaretPainter = TerminalCaretPainter(caretModel, editor)
+  private val caretPainter: TerminalCaretPainter = TerminalCaretPainter(caretModel, outputModel, selectionModel, editor)
 
   var isFocused: Boolean = false
 
@@ -45,7 +46,6 @@ class SimpleTerminalController(
     terminalModel.isCommandRunning = true
 
     setupContentListener()
-    val selectionModel = TerminalSelectionModel(outputModel)  // fake model, that won't be changed
     setupKeyEventDispatcher(editor, settings, eventsHandler, outputModel, selectionModel, disposable = this)
     setupMouseListener(editor, settings, terminalModel, eventsHandler, disposable = this)
     terminalModel.withContentLock {
