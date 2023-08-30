@@ -67,6 +67,12 @@ object IconLoader {
   }
 
   @JvmStatic
+  @Internal
+  fun installPostPathPatcher(patcher: IconPathPatcher) {
+    updateTransform { it.withPostPathPatcher(patcher) }
+  }
+
+  @JvmStatic
   fun removePathPatcher(patcher: IconPathPatcher) {
     updateTransform { it.withoutPathPatcher(patcher) }
   }

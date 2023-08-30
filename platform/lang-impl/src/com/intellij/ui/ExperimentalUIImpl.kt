@@ -79,7 +79,7 @@ private class ExperimentalUIImpl : ExperimentalUI() {
     val patcher = iconMapping.takeIf { it.isNotEmpty() }?.let { createPathPatcher(it) }
     iconPathPatcher = patcher
     if (patcher != null) {
-      IconLoader.installPathPatcher(patcher)
+      IconLoader.installPostPathPatcher(patcher)
     }
   }
 
