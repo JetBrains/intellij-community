@@ -9,6 +9,8 @@ import com.intellij.platform.feedback.dialog.CommonFeedbackSystemData
 import com.intellij.platform.feedback.dialog.showFeedbackSystemInfoDialog
 import com.intellij.platform.feedback.dialog.uiBlocks.*
 import com.intellij.platform.feedback.evaluation.bundle.EvaluationFeedbackBundle
+import com.intellij.platform.feedback.evaluation.statistics.EvaluationFeedbackCountCollector.Companion.logEvaluationFeedbackDialogCanceled
+import com.intellij.platform.feedback.evaluation.statistics.EvaluationFeedbackCountCollector.Companion.logEvaluationFeedbackDialogShown
 import com.intellij.platform.feedback.evaluation.statistics.EvaluationFeedbackCountCollector.Companion.logEvaluationFeedbackSent
 import com.intellij.platform.feedback.impl.notification.ThanksForFeedbackNotification
 import javax.swing.Action
@@ -57,6 +59,7 @@ class EvaluationFeedbackDialog(project: Project?,
 
   init {
     init()
+    logEvaluationFeedbackDialogShown()
   }
 
   override fun showThanksNotification() {
@@ -69,6 +72,11 @@ class EvaluationFeedbackDialog(project: Project?,
     val cancelAction = super.getCancelAction()
     cancelAction.putValue(Action.NAME, EvaluationFeedbackBundle.message("evaluation.dialog.cancel.label"))
     return cancelAction
+  }
+
+  override fun doCancelAction() {
+    super.doCancelAction()
+    logEvaluationFeedbackDialogCanceled()
   }
 
   override fun doOKAction() {
