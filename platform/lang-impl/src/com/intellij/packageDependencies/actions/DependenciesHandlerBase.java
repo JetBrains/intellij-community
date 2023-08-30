@@ -40,7 +40,7 @@ public abstract class DependenciesHandlerBase {
   }
 
   public void analyze() {
-    final DependencyAnalysisResult result = new DependencyAnalysisResult();
+    final DependencyAnalysisResult result = createAnalysisResult();
 
     final Task task;
     if (canStartInBackground()) {
@@ -73,6 +73,11 @@ public abstract class DependenciesHandlerBase {
     ProgressManager.getInstance().run(task);
   }
 
+  @NotNull
+  protected DependencyAnalysisResult createAnalysisResult() {
+    return new DependencyAnalysisResult();
+  }
+
   protected boolean canStartInBackground() {
     return true;
   }
@@ -96,7 +101,7 @@ public abstract class DependenciesHandlerBase {
       for (DependenciesBuilder builder : result.getBuilders()) {
         builder.analyze();
       }
-      result.panelDisplayName = getPanelDisplayName(result.getBuilders().get(0).getScope());
+      bgtPostAnalyze(result);
       snapshot.logResponsivenessSinceCreation("Dependency analysis");
     }
     catch (IndexNotReadyException e) {
@@ -104,6 +109,10 @@ public abstract class DependenciesHandlerBase {
         CodeInsightBundle.message("analyze.dependencies.not.available.notification.indexing"), DumbModeBlockedFunctionality.PackageDependencies);
       throw new ProcessCanceledException();
     }
+  }
+
+  protected void bgtPostAnalyze(DependencyAnalysisResult result) {
+    result.panelDisplayName = getPanelDisplayName(result.getBuilders().get(0).getScope());
   }
 
   private void onSuccess(final DependencyAnalysisResult result) {

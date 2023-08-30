@@ -68,7 +68,7 @@ class AnalyzeModuleDependencyAction extends AnAction {
                                                     GlobalSearchScope.union(scopes.toArray(GlobalSearchScope.EMPTY_ARRAY))) {
       @Override
       protected boolean shouldShowDependenciesPanel(@NotNull DependencyAnalysisResult result) {
-        Set<GlobalSearchScope> usedScopes = findUsedScopes(result.getBuilders(), scopes);
+        Set<GlobalSearchScope> usedScopes = ((MyAnalyzeResult)result).usedScopes;
         if (usedScopes.contains(mainScope)) {
           Messages.showInfoMessage(myProject,
                                    JavaUiBundle
@@ -124,6 +124,17 @@ class AnalyzeModuleDependencyAction extends AnAction {
           case 1 -> true;
           default -> false;
         };
+      }
+
+      @Override
+      protected @NotNull DependencyAnalysisResult createAnalysisResult() {
+        return new MyAnalyzeResult();
+      }
+
+      @Override
+      protected void bgtPostAnalyze(DependencyAnalysisResult result) {
+        super.bgtPostAnalyze(result);
+        ((MyAnalyzeResult)result).usedScopes = findUsedScopes(result.getBuilders(), scopes);
       }
 
       @Override
@@ -185,5 +196,9 @@ class AnalyzeModuleDependencyAction extends AnAction {
   @Override
   public @NotNull ActionUpdateThread getActionUpdateThread() {
     return ActionUpdateThread.EDT;
+  }
+
+  private static class MyAnalyzeResult extends DependencyAnalysisResult {
+    Set<GlobalSearchScope> usedScopes;
   }
 }

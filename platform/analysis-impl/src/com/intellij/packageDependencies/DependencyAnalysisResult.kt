@@ -5,7 +5,7 @@ import com.intellij.openapi.util.NlsContexts
 import org.jetbrains.annotations.ApiStatus.Internal
 
 @Internal
-class DependencyAnalysisResult(
+open class DependencyAnalysisResult(
   val builders: MutableList<DependenciesBuilder> = arrayListOf()
 ) {
 
