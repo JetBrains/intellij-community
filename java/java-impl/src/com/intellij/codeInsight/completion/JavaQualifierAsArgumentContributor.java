@@ -8,6 +8,7 @@ import com.intellij.codeInsight.lookup.DefaultLookupItemRenderer;
 import com.intellij.codeInsight.lookup.LookupElementPresentation;
 import com.intellij.codeInsight.lookup.impl.JavaElementLookupRenderer;
 import com.intellij.lang.jvm.JvmModifier;
+import com.intellij.openapi.options.advanced.AdvancedSettings;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
@@ -43,12 +44,13 @@ public class JavaQualifierAsArgumentContributor extends CompletionContributor im
   @Override
   public void fillCompletionVariants(@NotNull CompletionParameters parameters, @NotNull final CompletionResultSet result) {
     result.runRemainingContributors(parameters, true);
-    if (!Registry.is("java.completion.qualifier.as.argument")) {
+    if (!Registry.is("java.completion.qualifier.as.argument") &&
+        !AdvancedSettings.getBoolean("java.completion.qualifier.as.argument")) {
       return;
     }
 
     if ((parameters.getCompletionType() != CompletionType.BASIC && parameters.getCompletionType() != CompletionType.SMART) ||
-        parameters.getInvocationCount() < 2) {
+        parameters.getInvocationCount() < 3) {
       return;
     }
     PsiElement position = parameters.getPosition();
