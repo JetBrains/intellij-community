@@ -7,6 +7,7 @@ import com.intellij.openapi.editor.event.SelectionEvent
 import com.intellij.openapi.editor.event.SelectionListener
 import com.intellij.openapi.util.Key
 import com.intellij.util.MathUtil
+import com.intellij.util.concurrency.annotations.RequiresEdt
 import org.jetbrains.plugins.terminal.exp.TerminalSelectionModel.TerminalSelectionListener
 import java.awt.event.FocusAdapter
 import java.awt.event.FocusEvent
@@ -37,6 +38,7 @@ class TerminalSelectionController(
     })
   }
 
+  @RequiresEdt
   fun selectRelativeBlock(isBelow: Boolean) {
     val selectedBlock = selectionModel.primarySelection
     if (selectedBlock != null) {
@@ -52,12 +54,14 @@ class TerminalSelectionController(
     }
   }
 
+  @RequiresEdt
   fun selectLastBlock() {
     val block = outputModel.getLastBlock() ?: return
     selectionModel.selectedBlocks = listOf(block)
     makeBlockVisible(block)
   }
 
+  @RequiresEdt
   fun clearSelection() {
     selectionModel.selectedBlocks = emptyList()
     outputModel.editor.selectionModel.removeSelection()

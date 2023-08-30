@@ -5,20 +5,24 @@ import com.intellij.openapi.Disposable
 import com.intellij.openapi.observable.util.addFocusListener
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.wm.IdeFocusManager
+import com.intellij.util.concurrency.annotations.RequiresEdt
 import java.awt.event.FocusListener
 import javax.swing.JComponent
 
 class TerminalFocusModel(private val project: Project,
                          private val outputView: TerminalOutputView,
                          private val promptView: TerminalPromptView) {
+  @RequiresEdt
   fun focusOutput() {
     requestFocus(outputView.preferredFocusableComponent)
   }
 
+  @RequiresEdt
   fun focusPrompt() {
     requestFocus(promptView.preferredFocusableComponent)
   }
 
+  @RequiresEdt
   fun addPromptFocusListener(focusListener: FocusListener, disposable: Disposable? = null) {
     promptView.preferredFocusableComponent.addFocusListener(disposable, focusListener)
   }
