@@ -628,27 +628,30 @@ public final class ApplicationImpl extends ClientAwareComponentManager implement
 
       LifecycleUsageTriggerCollector.onIdeClose(restart);
 
-      boolean success = TraceUtil.computeWithSpanThrows(tracer, "disposeProjects", (span) -> {
-        ProjectManagerEx manager = ProjectManagerEx.getInstanceExIfCreated();
-        if (manager != null) {
-          try {
-            if (!manager.closeAndDisposeAllProjects(!force)) {
-              return false;
-            }
-          }
-          catch (Throwable e) {
-            getLogger().error(e);
-          }
-        }
+      boolean success = true;
+      ProjectManagerEx manager = ProjectManagerEx.getInstanceExIfCreated();
+      if (manager != null) {
         try {
-          //noinspection TestOnlyProblems
-          disposeContainer();
+          boolean projectsClosedSuccessfully = TraceUtil.computeWithSpanThrows(tracer, "disposeProjects", (span) -> {
+            return manager.closeAndDisposeAllProjects(!force);
+          });
+          if (!projectsClosedSuccessfully) {
+            success = false;
+          }
         }
-        catch (Throwable t) {
-          getLogger().error(t);
+        catch (Throwable e) {
+          getLogger().error(e);
         }
-        return true;
-      });
+      }
+      try {
+        scope.close();
+        exitSpan.end();
+        //noinspection TestOnlyProblems
+        disposeContainer();
+      }
+      catch (Throwable t) {
+        getLogger().error(t);
+      }
 
       //noinspection SpellCheckingInspection
       if (!success || isUnitTestMode() || Boolean.getBoolean("idea.test.guimode")) {
@@ -672,8 +675,6 @@ public final class ApplicationImpl extends ClientAwareComponentManager implement
           }
         }
       }
-      scope.close();
-      exitSpan.end();
       System.exit(exitCode);
     }
     finally {
