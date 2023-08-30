@@ -263,7 +263,7 @@ public final class VcsLogPersistentIndex implements VcsLogModifiableIndex, Dispo
     return myRoots;
   }
 
-  private static @NotNull Map<VirtualFile, VcsLogIndexer> getAvailableIndexers(@NotNull Map<VirtualFile, VcsLogProvider> providers) {
+  public static @NotNull Map<VirtualFile, VcsLogIndexer> getAvailableIndexers(@NotNull Map<VirtualFile, VcsLogProvider> providers) {
     Map<VirtualFile, VcsLogIndexer> indexers = new LinkedHashMap<>();
     for (Map.Entry<VirtualFile, VcsLogProvider> entry : providers.entrySet()) {
       VirtualFile root = entry.getKey();
@@ -273,10 +273,6 @@ public final class VcsLogPersistentIndex implements VcsLogModifiableIndex, Dispo
       }
     }
     return indexers;
-  }
-
-  public static @NotNull Set<VirtualFile> getRootsForIndexing(@NotNull Map<VirtualFile, VcsLogProvider> providers) {
-    return getAvailableIndexers(providers).keySet();
   }
 
   public static @Nullable VcsLogPersistentIndex create(@NotNull Project project,
