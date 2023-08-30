@@ -109,7 +109,7 @@ public final class ScopeEditorPanel implements Disposable {
     myTreeToolbar.setLayout(new BorderLayout());
     myTreeToolbar.add(createTreeToolbar(), BorderLayout.WEST);
 
-    myTreeExpansionMonitor = PackageTreeExpansionMonitor.install(myPackageTree, myProject);
+    myTreeExpansionMonitor = PackageTreeExpansionMonitor.install(myPackageTree);
 
     myTreeMarker = new Marker() {
       @Override

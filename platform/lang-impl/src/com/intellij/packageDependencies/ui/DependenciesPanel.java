@@ -142,8 +142,8 @@ public final class DependenciesPanel extends JPanel implements Disposable, DataP
     toolbar.setTargetComponent(treeSplitter);
     add(toolbar.getComponent(), BorderLayout.NORTH);
 
-    myRightTreeExpansionMonitor = PackageTreeExpansionMonitor.install(myRightTree, myProject);
-    myLeftTreeExpansionMonitor = PackageTreeExpansionMonitor.install(myLeftTree, myProject);
+    myRightTreeExpansionMonitor = PackageTreeExpansionMonitor.install(myRightTree);
+    myLeftTreeExpansionMonitor = PackageTreeExpansionMonitor.install(myLeftTree);
 
     myRightTreeMarker = new Marker() {
       @Override

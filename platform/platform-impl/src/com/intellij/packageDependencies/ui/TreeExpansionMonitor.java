@@ -3,6 +3,7 @@ package com.intellij.packageDependencies.ui;
 
 import com.intellij.openapi.util.Comparing;
 import com.intellij.util.ui.tree.TreeUtil;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import javax.swing.event.TreeExpansionEvent;
@@ -10,6 +11,7 @@ import javax.swing.event.TreeExpansionListener;
 import javax.swing.event.TreeSelectionEvent;
 import javax.swing.event.TreeSelectionListener;
 import javax.swing.tree.DefaultMutableTreeNode;
+import javax.swing.tree.TreeNode;
 import javax.swing.tree.TreePath;
 import java.util.*;
 import java.util.function.BiPredicate;
@@ -25,9 +27,9 @@ public abstract class TreeExpansionMonitor<T> {
     return new TreeExpansionMonitor<>(tree) {
       @Override
       protected TreePath findPathByNode(final DefaultMutableTreeNode node) {
-        Enumeration enumeration = ((DefaultMutableTreeNode)tree.getModel().getRoot()).breadthFirstEnumeration();
+        Enumeration<TreeNode> enumeration = ((DefaultMutableTreeNode)tree.getModel().getRoot()).breadthFirstEnumeration();
         while (enumeration.hasMoreElements()) {
-          final Object nextElement = enumeration.nextElement();
+          final TreeNode nextElement = enumeration.nextElement();
           if (nextElement instanceof DefaultMutableTreeNode child) {
             if (equality.test(child, node)) {
               return new TreePath(child.getPath());
@@ -54,7 +56,7 @@ public abstract class TreeExpansionMonitor<T> {
         TreePath[] paths = myTree.getSelectionPaths();
         if (paths != null) {
           for (TreePath path : paths) {
-            mySelectionNodes.add((T)path.getLastPathComponent());
+            mySelectionNodes.add(getLastNode(path));
           }
         }
       }
@@ -97,7 +99,7 @@ public abstract class TreeExpansionMonitor<T> {
   public void restore() {
     freeze();
     for (final TreePath myExpandedPath : myExpandedPaths) {
-      myTree.expandPath(findPathByNode((T)myExpandedPath.getLastPathComponent()));
+      myTree.expandPath(findPathByNode(getLastNode(myExpandedPath)));
     }
     for (T mySelectionNode : mySelectionNodes) {
       myTree.getSelectionModel().addSelectionPath(findPathByNode(mySelectionNode));
@@ -113,5 +115,10 @@ public abstract class TreeExpansionMonitor<T> {
 
   public boolean isFreeze() {
     return myFrozen;
+  }
+
+  @SuppressWarnings("unchecked")
+  private T getLastNode(@NotNull TreePath path) {
+    return (T)path.getLastPathComponent();
   }
 }
