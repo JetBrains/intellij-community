@@ -9,7 +9,6 @@ import com.intellij.openapi.progress.blockingContextScope
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.vcs.ProjectLevelVcsManager
-import com.intellij.vcs.log.data.index.VcsLogModifiableIndex
 import com.intellij.vcs.log.impl.VcsLogManager
 import com.intellij.vcs.log.impl.VcsLogProjectTabsProperties
 import com.intellij.vcs.log.impl.VcsLogSharedSettings
@@ -61,7 +60,7 @@ class GitWarmupConfigurator : WarmupConfigurator {
     withContext(Dispatchers.EDT) {
       assert(manager.isLogUpToDate)
     }
-    val modifiableIndex = manager.dataManager.index as VcsLogModifiableIndex
-    assert(modifiableIndex.indexingRoots.all { !modifiableIndex.isIndexingEnabled(it) || modifiableIndex.isIndexed(it) })
+    val index = manager.dataManager.index
+    assert(index.indexingRoots.all { !index.isIndexingEnabled(it) || index.isIndexed(it) })
   }
 }

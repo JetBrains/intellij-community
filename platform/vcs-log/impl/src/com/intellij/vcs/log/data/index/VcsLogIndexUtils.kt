@@ -7,9 +7,9 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.util.concurrency.annotations.RequiresEdt
 
 /**
- * Check if any of [VcsLogModifiableIndex.getIndexingRoots] need to be indexed.
+ * Check if any of [VcsLogIndex.getIndexingRoots] need to be indexed.
  */
-fun VcsLogModifiableIndex.needIndexing(): Boolean {
+fun VcsLogIndex.needIndexing(): Boolean {
   val rootsForIndexing = indexingRoots
   if (rootsForIndexing.isEmpty()) return false
 
@@ -20,21 +20,21 @@ fun VcsLogModifiableIndex.needIndexing(): Boolean {
 }
 
 /**
- * Check if VCS log indexing was paused in all of [VcsLogModifiableIndex.getIndexingRoots].
+ * Check if VCS log indexing was paused in all of [VcsLogIndex.getIndexingRoots].
  */
-fun VcsLogModifiableIndex.isIndexingPaused(): Boolean {
+fun VcsLogIndex.isIndexingPaused(): Boolean {
   return indexingRoots.all { isIndexingPausedFor(it) }
 }
 
 /**
- * Check if VCS Log indexing was scheduled in any of the [VcsLogModifiableIndex.getIndexingRoots].
+ * Check if VCS Log indexing was scheduled in any of the [VcsLogIndex.getIndexingRoots].
  */
-fun VcsLogModifiableIndex.isIndexingScheduled(): Boolean {
+fun VcsLogIndex.isIndexingScheduled(): Boolean {
   return indexingRoots.any { isScheduledForIndexing(it) }
 }
 
 /**
- * Pause VCS Log indexing if it is scheduled for any of the [VcsLogModifiableIndex.getIndexingRoots], try to resume it otherwise.
+ * Pause VCS Log indexing if it is scheduled for any of the [VcsLogIndex.getIndexingRoots], try to resume it otherwise.
  */
 @RequiresEdt
 internal fun VcsLogModifiableIndex.toggleIndexing() {
