@@ -4,6 +4,7 @@ package com.intellij.feedback.common.dialog.uiBlocks
 import com.intellij.feedback.common.dialog.TEXT_AREA_COLUMN_SIZE
 import com.intellij.feedback.common.dialog.TEXT_AREA_ROW_SIZE
 import com.intellij.feedback.common.dialog.adjustBehaviourForFeedbackForm
+import com.intellij.feedback.common.dialog.createBoldJBLabel
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.ui.dsl.builder.*
 import kotlinx.serialization.json.JsonObjectBuilder
@@ -23,7 +24,7 @@ class TextAreaBlock(@NlsContexts.Label private val myLabel: String,
           .bindText(::myProperty)
           .rows(myTextAreaRowSize)
           .columns(myTextAreaColumnSize)
-          .label(myLabel, LabelPosition.TOP)
+          .label(createBoldJBLabel(myLabel), LabelPosition.TOP)
           .applyToComponent {
             adjustBehaviourForFeedbackForm()
           }

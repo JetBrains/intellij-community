@@ -20,7 +20,7 @@ class RatingGroupBlock(@Nls private val topLabel: String,
   override fun addToPanel(panel: Panel) {
     panel.apply {
       row {
-        label(topLabel)
+        label(topLabel).bold()
         myHint?.let { rowComment(it) }
       }.bottomGap(BottomGap.NONE)
       val positions = getPositionsList()
