@@ -1149,6 +1149,8 @@
       <module fileurl="file://$PROJECT_DIR$/plugins/kotlin/base/frontend-agnostic/kotlin.base.frontend-agnostic.iml" filepath="$PROJECT_DIR$/plugins/kotlin/base/frontend-agnostic/kotlin.base.frontend-agnostic.iml" />
       <module fileurl="file://$PROJECT_DIR$/plugins/kotlin/base/highlighting/kotlin.base.highlighting.iml" filepath="$PROJECT_DIR$/plugins/kotlin/base/highlighting/kotlin.base.highlighting.iml" />
       <module fileurl="file://$PROJECT_DIR$/plugins/kotlin/base/indices/kotlin.base.indices.iml" filepath="$PROJECT_DIR$/plugins/kotlin/base/indices/kotlin.base.indices.iml" />
+      <module fileurl="file://$PROJECT_DIR$/plugins/kotlin/injection/base/kotlin.base.injection.iml" filepath="$PROJECT_DIR$/plugins/kotlin/injection/base/kotlin.base.injection.iml" />
+      <module fileurl="file://$PROJECT_DIR$/plugins/kotlin/injection/base/tests/kotlin.base.injection.tests.iml" filepath="$PROJECT_DIR$/plugins/kotlin/injection/base/tests/kotlin.base.injection.tests.iml" />
       <module fileurl="file://$PROJECT_DIR$/plugins/kotlin/base/jps/kotlin.base.jps.iml" filepath="$PROJECT_DIR$/plugins/kotlin/base/jps/kotlin.base.jps.iml" />
       <module fileurl="file://$PROJECT_DIR$/plugins/kotlin/base/kdoc/kotlin.base.kdoc.iml" filepath="$PROJECT_DIR$/plugins/kotlin/base/kdoc/kotlin.base.kdoc.iml" />
       <module fileurl="file://$PROJECT_DIR$/plugins/kotlin/base/klib/kotlin.base.klib.iml" filepath="$PROJECT_DIR$/plugins/kotlin/base/klib/kotlin.base.klib.iml" />
@@ -1266,7 +1268,8 @@
       <module fileurl="file://$PROJECT_DIR$/plugins/kotlin/i18n/tests/kotlin.i18n.tests.iml" filepath="$PROJECT_DIR$/plugins/kotlin/i18n/tests/kotlin.i18n.tests.iml" />
       <module fileurl="file://$PROJECT_DIR$/plugins/kotlin/idea/kotlin.idea.iml" filepath="$PROJECT_DIR$/plugins/kotlin/idea/kotlin.idea.iml" />
       <module fileurl="file://$PROJECT_DIR$/plugins/kotlin/idea/tests/kotlin.idea.tests.iml" filepath="$PROJECT_DIR$/plugins/kotlin/idea/tests/kotlin.idea.tests.iml" />
-      <module fileurl="file://$PROJECT_DIR$/plugins/kotlin/injection/kotlin.injection.iml" filepath="$PROJECT_DIR$/plugins/kotlin/injection/kotlin.injection.iml" />
+      <module fileurl="file://$PROJECT_DIR$/plugins/kotlin/injection/k1/kotlin.injection.iml" filepath="$PROJECT_DIR$/plugins/kotlin/injection/k1/kotlin.injection.iml" />
+      <module fileurl="file://$PROJECT_DIR$/plugins/kotlin/injection/k1/tests/kotlin.injection.tests.iml" filepath="$PROJECT_DIR$/plugins/kotlin/injection/k1/tests/kotlin.injection.tests.iml" />
       <module fileurl="file://$PROJECT_DIR$/plugins/kotlin/inspections/kotlin.inspections.iml" filepath="$PROJECT_DIR$/plugins/kotlin/inspections/kotlin.inspections.iml" />
       <module fileurl="file://$PROJECT_DIR$/plugins/kotlin/inspections-fe10/kotlin.inspections-fe10.iml" filepath="$PROJECT_DIR$/plugins/kotlin/inspections-fe10/kotlin.inspections-fe10.iml" />
       <module fileurl="file://$PROJECT_DIR$/plugins/kotlin/j2k/idea/kotlin.j2k.idea.iml" filepath="$PROJECT_DIR$/plugins/kotlin/j2k/idea/kotlin.j2k.idea.iml" />
