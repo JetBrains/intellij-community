@@ -57,7 +57,8 @@ internal abstract class FirCompletionContributorBase<C : FirRawPositionCompletio
     constructor(basicContext: FirBasicCompletionContext, priority: Int) :
             this(basicContext, FirCompletionContributorOptions(priority))
 
-    protected val prefixMatcher: PrefixMatcher get() = basicContext.prefixMatcher
+    protected open val prefixMatcher: PrefixMatcher get() = basicContext.prefixMatcher
+
     protected val parameters: CompletionParameters get() = basicContext.parameters
     protected val sink: LookupElementSink = basicContext.sink.withPriority(options.priority)
     protected val originalKtFile: KtFile get() = basicContext.originalKtFile

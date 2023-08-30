@@ -3,6 +3,7 @@
 package org.jetbrains.kotlin.idea.completion.contributors
 
 import com.intellij.codeInsight.completion.InsertionContext
+import com.intellij.codeInsight.completion.PrefixMatcher
 import com.intellij.codeInsight.lookup.LookupElement
 import com.intellij.codeInsight.lookup.LookupElementBuilder
 import com.intellij.openapi.util.TextRange
@@ -43,6 +44,11 @@ internal class FirWhenWithSubjectConditionContributor(
     basicContext: FirBasicCompletionContext,
     priority: Int,
 ) : FirCompletionContributorBase<FirWithSubjectEntryPositionContext>(basicContext, priority) {
+    private val prefix: String get() = basicContext.prefixMatcher.prefix
+    private val onTypingIsKeyword: Boolean = prefix.isNotEmpty() && KtTokens.IS_KEYWORD.value.startsWith(prefix)
+
+    override val prefixMatcher: PrefixMatcher = if (onTypingIsKeyword) basicContext.prefixMatcher.cloneWithPrefix("") else super.prefixMatcher
+
     context(KtAnalysisSession)
     override fun complete(
         positionContext: FirWithSubjectEntryPositionContext,
@@ -136,7 +142,7 @@ internal class FirWhenWithSubjectConditionContributor(
     private fun isPrefixNeeded(classifier: KtClassifierSymbol): Boolean {
         return when (classifier) {
             is KtAnonymousObjectSymbol -> return false
-            is KtNamedClassOrObjectSymbol -> !classifier.classKind.isObject
+            is KtNamedClassOrObjectSymbol -> onTypingIsKeyword || !classifier.classKind.isObject
             is KtTypeAliasSymbol -> (classifier.expandedType as? KtNonErrorClassType)?.classSymbol?.let { isPrefixNeeded(it) } == true
             is KtTypeParameterSymbol -> true
         }

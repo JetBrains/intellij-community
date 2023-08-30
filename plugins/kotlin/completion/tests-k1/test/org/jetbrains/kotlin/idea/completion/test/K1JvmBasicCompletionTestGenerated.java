@@ -3497,6 +3497,11 @@ public abstract class K1JvmBasicCompletionTestGenerated extends AbstractK1JvmBas
                 runTest("../testData/basic/common/when/nullableSealedClassInWhen.kt");
             }
 
+            @TestMetadata("onTyping.kt")
+            public void testOnTyping() throws Exception {
+                runTest("../testData/basic/common/when/onTyping.kt");
+            }
+
             @TestMetadata("sealedClassInWhen.kt")
             public void testSealedClassInWhen() throws Exception {
                 runTest("../testData/basic/common/when/sealedClassInWhen.kt");
