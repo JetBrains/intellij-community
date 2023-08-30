@@ -3,6 +3,7 @@ package org.jetbrains.plugins.gradle.tooling;
 
 import org.gradle.api.invocation.Gradle;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * @author Vladislav.Soroka
@@ -13,6 +14,14 @@ public interface ModelBuilderContext extends MessageReporter {
    */
   @NotNull
   Gradle getRootGradle();
+
+  // Android Studio (b/298214044): Added this API back in 231 and 232 in order to allow Kotlin Plugin built against 231 and 232 Intellij
+  // platform to use this API. Platform 233 does not have this API, and we can remove it once it is merged.
+  /**
+   * @return the value of the parameter passed to the builder, if the parametrized version of {@link BuildController#getModel} is used.
+   */
+  @Nullable
+  String getParameter();
 
   /**
    * @return cached data if it's already created, newly created data otherwise

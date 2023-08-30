@@ -15,6 +15,7 @@ import org.gradle.tooling.provider.model.ToolingModelBuilder;
 import org.gradle.util.GradleVersion;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
 import org.jetbrains.plugins.gradle.model.internal.DummyModel;
 import org.jetbrains.plugins.gradle.model.internal.TurnOffDefaultTasks;
@@ -96,6 +97,9 @@ public class ExtraModelBuilder implements ToolingModelBuilder {
       Gradle rootGradle = getRootGradle(project.getGradle());
       myModelBuilderContext = new MyModelBuilderContext(rootGradle);
     }
+    // Android Studio (b/298214044): Added this back in 231 and 232 in order to allow Kotlin Plugin built against 231 and 232 Intellij
+    // platform to use this API. Platform 233 does not have this API, and we can remove it once it is merged.
+    myModelBuilderContext.setParameter(parameter);
 
     for (ModelBuilderService service : modelBuilderServices) {
       if (service.canBuild(modelName)) {
@@ -162,6 +166,7 @@ public class ExtraModelBuilder implements ToolingModelBuilder {
 
     private final Map<DataProvider, Object> myMap = new IdentityHashMap<>();
     private final Gradle myGradle;
+    @Nullable private ModelBuilderService.Parameter myParameter = null;
 
     private MyModelBuilderContext(Gradle gradle) {
       myGradle = gradle;
@@ -171,6 +176,18 @@ public class ExtraModelBuilder implements ToolingModelBuilder {
     @Override
     public Gradle getRootGradle() {
       return myGradle;
+    }
+
+    // Android Studio (b/298214044): Added this back in 231 and 232 in order to allow Kotlin Plugin built against 231 and 232 Intellij
+    // platform to use this API. Platform 233 does not have this API, and we can remove it once it is merged.
+    @Nullable
+    @Override
+    public String getParameter() {
+      return myParameter != null ? myParameter.getValue() : null;
+    }
+
+    private void setParameter(@Nullable ModelBuilderService.Parameter parameter) {
+      myParameter = parameter;
     }
 
     @NotNull
