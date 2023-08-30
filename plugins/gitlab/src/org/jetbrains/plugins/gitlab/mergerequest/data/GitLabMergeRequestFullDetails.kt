@@ -46,7 +46,7 @@ data class GitLabMergeRequestFullDetails(
       title = dto.title,
       createdAt = dto.createdAt,
       author = dto.author,
-      mergeStatus = dto.mergeStatusEnum,
+      mergeStatus = dto.mergeStatusEnum ?: GitLabMergeStatus.UNCHECKED,
       isMergeable = dto.mergeable,
       state = dto.state,
       draft = dto.draft,

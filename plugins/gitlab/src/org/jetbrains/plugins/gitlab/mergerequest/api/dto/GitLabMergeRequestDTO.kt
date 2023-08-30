@@ -27,7 +27,7 @@ class GitLabMergeRequestDTO(
   @SinceGitLab("14.3", editions = [Enterprise]) val approved: Boolean?,
   @SinceGitLab("13.4") val conflicts: Boolean,
   val headPipeline: GitLabPipelineDTO?,
-  @SinceGitLab("14.0") val mergeStatusEnum: GitLabMergeStatus,
+  @SinceGitLab("14.0") val mergeStatusEnum: GitLabMergeStatus?,
   @SinceGitLab("13.7") val mergeable: Boolean,
   val state: GitLabMergeRequestState,
   @SinceGitLab("13.12") val draft: Boolean,
