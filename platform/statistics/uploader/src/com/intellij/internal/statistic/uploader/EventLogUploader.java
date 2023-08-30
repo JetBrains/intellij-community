@@ -130,13 +130,14 @@ public final class EventLogUploader {
     String userAgent = options.get(EventLogUploaderOptions.USER_AGENT_OPTION);
     String headersString = options.get(EventLogUploaderOptions.EXTRA_HEADERS);
     Map<String, String> extraHeaders = ExtraHTTPHeadersParser.parse(headersString);
+    int baselineVersion = Integer.parseInt(options.get(EventLogUploaderOptions.BASELINE_VERSION));
     if (url != null && productCode != null) {
       boolean isInternal = options.containsKey(EventLogUploaderOptions.INTERNAL_OPTION);
       boolean isTest = options.containsKey(EventLogUploaderOptions.TEST_OPTION);
       boolean isEAP = options.containsKey(EventLogUploaderOptions.EAP_OPTION);
       return new EventLogExternalApplicationInfo(
-        url, productCode, productVersion, userAgent, isInternal, isTest, isEAP, extraHeaders, logger, eventLogger
-      );
+        url, productCode, productVersion, userAgent, isInternal, isTest, isEAP, extraHeaders, logger, eventLogger,
+        baselineVersion);
     }
     return null;
   }

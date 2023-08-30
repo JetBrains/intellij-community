@@ -9,6 +9,9 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.Map;
 
+/**
+ * External version of the EventLogApplicationInfo, which is provided to an 'external' uploader process (not IDEA) via arguments
+ */
 public class EventLogExternalApplicationInfo implements EventLogApplicationInfo {
   private final DataCollectorDebugLogger myLogger;
   private final DataCollectorSystemEventLogger myEventLogger;
@@ -16,6 +19,7 @@ public class EventLogExternalApplicationInfo implements EventLogApplicationInfo 
   private final String myTemplateUrl;
   private final String myProductCode;
   private final String myProductVersion;
+  private final int myBaselineVersion;
   private final EventLogBasicConnectionSettings myConnectionSettings;
 
   private final boolean myIsInternal;
@@ -27,10 +31,12 @@ public class EventLogExternalApplicationInfo implements EventLogApplicationInfo 
                                          boolean isInternal, boolean isTest, boolean isEAP,
                                          @NotNull Map<String, String> extraHeaders,
                                          @NotNull DataCollectorDebugLogger logger,
-                                         @NotNull DataCollectorSystemEventLogger eventLogger) {
+                                         @NotNull DataCollectorSystemEventLogger eventLogger,
+                                         int baselineVersion) {
     myTemplateUrl = templateUrl;
     myProductCode = productCode;
     myProductVersion = productVersion;
+    myBaselineVersion = baselineVersion;
     String externalUserAgent = (userAgent == null ? "IntelliJ": userAgent) + "(External)";
     myConnectionSettings = new EventLogBasicConnectionSettings(externalUserAgent, extraHeaders);
     myIsInternal = isInternal;
@@ -54,6 +60,11 @@ public class EventLogExternalApplicationInfo implements EventLogApplicationInfo 
   @Override
   public @NotNull String getProductVersion() {
     return myProductVersion;
+  }
+
+  @Override
+  public int getBaselineVersion() {
+    return myBaselineVersion;
   }
 
   @NotNull

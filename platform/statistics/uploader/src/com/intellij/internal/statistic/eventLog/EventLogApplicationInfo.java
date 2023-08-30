@@ -16,6 +16,8 @@ public interface EventLogApplicationInfo {
   @NotNull
   String getProductVersion();
 
+  int getBaselineVersion();
+
   @NotNull
   EventLogConnectionSettings getConnectionSettings();
 
