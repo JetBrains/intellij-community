@@ -6,6 +6,7 @@ import com.intellij.codeInsight.AttachSourcesProvider.AttachSourcesAction
 import com.intellij.notification.Notification
 import com.intellij.notification.NotificationType
 import com.intellij.notification.Notifications
+import com.intellij.openapi.application.EDT
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.LibraryOrderEntry
 import com.intellij.openapi.roots.ProjectRootManager
@@ -14,6 +15,9 @@ import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.text.HtmlBuilder
 import com.intellij.openapi.util.text.HtmlChunk
 import com.intellij.psi.PsiFile
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import org.jetbrains.idea.maven.importing.MavenExtraArtifactType
 import org.jetbrains.idea.maven.importing.MavenRootModelAdapter
 import org.jetbrains.idea.maven.model.MavenArtifact
@@ -40,37 +44,44 @@ internal class MavenAttachSourcesProvider : AttachSourcesProvider {
         if (mavenProjects.isEmpty()) {
           return ActionCallback.REJECTED
         }
-        val manager = MavenProjectsManager.getInstance(psiFile.getProject())
+        val project = psiFile.getProject()
+        val manager = MavenProjectsManager.getInstance(project)
         val artifacts = findArtifacts(mavenProjects, orderEntries)
         if (artifacts.isEmpty()) return ActionCallback.REJECTED
 
-        // TODO: use downloadArtifacts
-        val downloadResult = manager.downloadArtifactsSync(mavenProjects, artifacts, true, false)
-
         val resultWrapper = ActionCallback()
-        if (!downloadResult.unresolvedSources.isEmpty()) {
-          val builder = HtmlBuilder()
-          builder.append(MavenProjectBundle.message("sources.not.found.for"))
-          for ((count, each) in downloadResult.unresolvedSources.withIndex()) {
-            if (count > 5) {
-              builder.append(HtmlChunk.br()).append(MavenProjectBundle.message("and.more"))
-              break
+        val cs = MavenCoroutineScopeProvider.getCoroutineScope(project)
+        cs.launch {
+          val downloadResult = manager.downloadArtifacts(mavenProjects, artifacts, true, false)
+
+          withContext(Dispatchers.EDT) {
+            if (!downloadResult.unresolvedSources.isEmpty()) {
+              val builder = HtmlBuilder()
+              builder.append(MavenProjectBundle.message("sources.not.found.for"))
+              for ((count, each) in downloadResult.unresolvedSources.withIndex()) {
+                if (count > 5) {
+                  builder.append(HtmlChunk.br()).append(MavenProjectBundle.message("and.more"))
+                  break
+                }
+                builder.append(HtmlChunk.br()).append(each.displayString)
+              }
+              cleanUpUnresolvedSourceFiles(project, downloadResult.unresolvedSources)
+              Notifications.Bus.notify(Notification(MavenUtil.MAVEN_NOTIFICATION_GROUP,
+                                                    MavenProjectBundle.message("maven.sources.cannot.download"),
+                                                    builder.wrapWithHtmlBody().toString(),
+                                                    NotificationType.WARNING),
+                                       project)
             }
-            builder.append(HtmlChunk.br()).append(each.displayString)
+
+            if (downloadResult.resolvedSources.isEmpty()) {
+              resultWrapper.setRejected()
+            }
+            else {
+              resultWrapper.setDone()
+            }
           }
-          cleanUpUnresolvedSourceFiles(psiFile.getProject(), downloadResult.unresolvedSources)
-          Notifications.Bus.notify(Notification(MavenUtil.MAVEN_NOTIFICATION_GROUP,
-                                                MavenProjectBundle.message("maven.sources.cannot.download"),
-                                                builder.wrapWithHtmlBody().toString(),
-                                                NotificationType.WARNING),
-                                   psiFile.getProject())
         }
-        if (downloadResult.resolvedSources.isEmpty()) {
-          resultWrapper.setRejected()
-        }
-        else {
-          resultWrapper.setDone()
-        }
+
         return resultWrapper
       }
     })
