@@ -210,7 +210,10 @@ public class UrlClassLoader extends ClassLoader implements ClassPath.ClassDataCo
     // see XxHash3Test.packages
     if (isSystemClassLoader &&
         (packageNameHash == -9217824570049207139L || packageNameHash == -1976620678582843062L || packageNameHash == 4571982292824530778L)) {
-      return appClassLoader.loadClass(name);
+      //these two classes from com.intellij.util.lang are located in intellij.platform.util module, which shouldn't be loaded by appClassLoader (IDEA-331043)
+      if (!fileNameWithoutExtension.endsWith("/CompoundRuntimeException") && !fileNameWithoutExtension.endsWith("/JavaVersion")) {
+        return appClassLoader.loadClass(name);
+      }
     }
 
     Class<?> clazz;
