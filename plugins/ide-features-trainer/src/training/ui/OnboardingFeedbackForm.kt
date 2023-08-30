@@ -9,14 +9,11 @@ import com.intellij.notification.NotificationAction
 import com.intellij.notification.NotificationType
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.application.ApplicationBundle
-import com.intellij.openapi.application.invokeLater
 import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.DialogWrapper
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.util.registry.Registry
-import com.intellij.openapi.wm.impl.welcomeScreen.WelcomeBalloonLayoutImpl
-import com.intellij.openapi.wm.impl.welcomeScreen.WelcomeFrame
 import com.intellij.platform.feedback.dialog.COMMON_FEEDBACK_SYSTEM_INFO_VERSION
 import com.intellij.platform.feedback.dialog.CommonFeedbackSystemData
 import com.intellij.platform.feedback.dialog.showFeedbackSystemInfoDialog
@@ -74,14 +71,8 @@ fun showOnboardingFeedbackNotification(project: Project?, onboardingFeedbackData
                                                              NotificationType.INFORMATION)
   notification.addAction(object : NotificationAction(LearnBundle.message("onboarding.feedback.notification.action")) {
     override fun actionPerformed(e: AnActionEvent, notification: Notification) {
-      val feedbackHasBeenSent = showOnboardingLessonFeedbackForm(project, onboardingFeedbackData, true)
+      showOnboardingLessonFeedbackForm(project, onboardingFeedbackData, true)
       notification.expire()
-      if (feedbackHasBeenSent) {
-        invokeLater {
-          // It is needed to show "Thank you" notification
-          (WelcomeFrame.getInstance()?.balloonLayout as? WelcomeBalloonLayoutImpl)?.showPopup()
-        }
-      }
     }
   })
   notification.notify(project)

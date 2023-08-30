@@ -8,8 +8,6 @@ import com.intellij.openapi.application.invokeLater
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.wm.BannerStartPagePromoter
-import com.intellij.openapi.wm.impl.welcomeScreen.WelcomeBalloonLayoutImpl
-import com.intellij.openapi.wm.impl.welcomeScreen.WelcomeFrame
 import com.intellij.ui.scale.JBUIScale
 import com.intellij.util.ui.JBUI
 import org.jetbrains.annotations.ApiStatus
@@ -81,12 +79,8 @@ open class OnboardingLessonPromoter(@NonNls private val lessonId: String,
     val langSupport = LangManager.getInstance().getLangSupport() ?: return false
     val onboardingFeedbackData = langSupport.onboardingFeedbackData ?: return false
     langSupport.onboardingFeedbackData = null
-
     invokeLater {
       showOnboardingFeedbackNotification(null, onboardingFeedbackData)
-      invokeLater {
-        (WelcomeFrame.getInstance()?.balloonLayout as? WelcomeBalloonLayoutImpl)?.showPopup()
-      }
     }
     return true
   }
