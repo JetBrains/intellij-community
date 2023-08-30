@@ -58,6 +58,29 @@ private class JsonHttpApiHelperImpl(
   private val serializer: JsonDataSerializer,
   private val deserializer: JsonDataDeserializer)
   : JsonHttpApiHelper, HttpApiHelper by httpHelper {
+  /**
+   * Performs the given HTTP request and processes the response. The response body is inflated if necessary,
+   * status code is checked to be OK, the body is passed to the [load] and [map] functions, and errors are
+   * logged and rethrown when they occur in the [load] function.
+   */
+  private suspend inline fun <T, R> loadWithMapperAndLogErrors(
+    request: HttpRequest,
+    crossinline map: (T?) -> R,
+    crossinline load: (Reader) -> T?
+  ): HttpResponse<out R> {
+    val bodyHandler = inflateAndReadWithErrorHandlingAndLogging(logger, request) { reader, _ ->
+      val result = try {
+        load(reader)
+      }
+      catch (e: Throwable) {
+        logger.warn("API response deserialization failed", e)
+        throw HttpJsonDeserializationException(request.logName(), e)
+      }
+
+      map(result)
+    }
+    return httpHelper.sendAndAwaitCancellable(request, bodyHandler)
+  }
 
   override fun jsonBodyPublisher(uri: URI, body: Any): HttpRequest.BodyPublisher {
     return ByteArrayProducingBodyPublisher {
@@ -69,57 +92,17 @@ private class JsonHttpApiHelperImpl(
     }
   }
 
-  override suspend fun <T> loadJsonValueByClass(request: HttpRequest, clazz: Class<T>): HttpResponse<out T> {
-    val bodyHandler = inflateAndReadWithErrorHandlingAndLogging(logger, request) { reader, _ ->
-      try {
-        deserializer.fromJson(reader, clazz)
-      }
-      catch (e: Throwable) {
-        logger.warn("API response deserialization failed", e)
-        throw HttpJsonDeserializationException(request.logName(), e)
-      } ?: error("Empty response")
-    }
-    return httpHelper.sendAndAwaitCancellable(request, bodyHandler)
-  }
+  override suspend fun <T> loadJsonValueByClass(request: HttpRequest, clazz: Class<T>): HttpResponse<out T> =
+    loadWithMapperAndLogErrors(request, { it ?: error("Empty response") }) { reader -> deserializer.fromJson(reader, clazz) }
 
-  override suspend fun <T> loadOptionalJsonValueByClass(request: HttpRequest, clazz: Class<T>): HttpResponse<out T?> {
-    val bodyHandler = inflateAndReadWithErrorHandlingAndLogging(logger, request) { reader, _ ->
-      try {
-        deserializer.fromJson(reader, clazz)
-      }
-      catch (e: Throwable) {
-        logger.warn("API response deserialization failed", e)
-        throw HttpJsonDeserializationException(request.logName(), e)
-      }
-    }
-    return httpHelper.sendAndAwaitCancellable(request, bodyHandler)
-  }
+  override suspend fun <T> loadOptionalJsonValueByClass(request: HttpRequest, clazz: Class<T>): HttpResponse<out T?> =
+    loadWithMapperAndLogErrors(request, { it }) { reader -> deserializer.fromJson(reader, clazz) }
 
-  override suspend fun <T> loadJsonListByClass(request: HttpRequest, clazz: Class<T>): HttpResponse<out List<T>> {
-    val bodyHandler = inflateAndReadWithErrorHandlingAndLogging(logger, request) { reader, _ ->
-      try {
-        @Suppress("UNCHECKED_CAST")
-        (deserializer.fromJson(reader, List::class.java, clazz) as? List<T>)
-      }
-      catch (e: Throwable) {
-        logger.warn("API response deserialization failed", e)
-        throw HttpJsonDeserializationException(request.logName(), e)
-      } ?: error("Empty response")
-    }
-    return httpHelper.sendAndAwaitCancellable(request, bodyHandler)
-  }
+  @Suppress("UNCHECKED_CAST")
+  override suspend fun <T> loadJsonListByClass(request: HttpRequest, clazz: Class<T>): HttpResponse<out List<T>> =
+    loadWithMapperAndLogErrors(request, { it ?: error("Empty response") }) { reader -> (deserializer.fromJson(reader, List::class.java, clazz) as? List<T>) }
 
-  override suspend fun <T> loadOptionalJsonListByClass(request: HttpRequest, clazz: Class<T>): HttpResponse<out List<T>?> {
-    val bodyHandler = inflateAndReadWithErrorHandlingAndLogging(logger, request) { reader, _ ->
-      try {
-        @Suppress("UNCHECKED_CAST")
-        deserializer.fromJson(reader, List::class.java, clazz) as? List<T>
-      }
-      catch (e: Throwable) {
-        logger.warn("API response deserialization failed", e)
-        throw HttpJsonDeserializationException(request.logName(), e)
-      }
-    }
-    return httpHelper.sendAndAwaitCancellable(request, bodyHandler)
-  }
+  @Suppress("UNCHECKED_CAST")
+  override suspend fun <T> loadOptionalJsonListByClass(request: HttpRequest, clazz: Class<T>): HttpResponse<out List<T>?> =
+    loadWithMapperAndLogErrors(request, { it }) { reader -> (deserializer.fromJson(reader, List::class.java, clazz) as? List<T>) }
 }
