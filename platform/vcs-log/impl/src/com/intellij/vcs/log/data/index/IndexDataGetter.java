@@ -3,6 +3,7 @@ package com.intellij.vcs.log.data.index;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProcessCanceledException;
+import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Throwable2Computable;
 import com.intellij.openapi.vcs.FilePath;
@@ -196,6 +197,7 @@ public final class IndexDataGetter {
       IntSet result = new IntOpenHashSet();
       for (FilePath path : paths) {
         result.addAll(createFileHistoryData(path).build().getCommits());
+        ProgressManager.checkCanceled();
       }
       return result;
     }, new IntOpenHashSet());
