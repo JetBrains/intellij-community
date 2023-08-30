@@ -374,7 +374,7 @@ public final class DependenciesPanel extends JPanel implements Disposable, DataP
       Disposer.dispose(disposable);
     }
     tree.setModel(model);
-    monitor.restore();
+    monitor.restoreAsync();
   }
 
   private ActionGroup createTreePopupActions(boolean isRightTree) {
