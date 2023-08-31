@@ -44,7 +44,10 @@ fun main(rawArgs: Array<String>) {
   val startTimeUnixNano = System.currentTimeMillis() * 1000000
   startupTimings.add("startup begin")
   startupTimings.add(startTimeNano)
+  mainImpl(rawArgs, startupTimings, startTimeUnixNano)
+}
 
+internal fun mainImpl(rawArgs: Array<String>, startupTimings: ArrayList<Any>, startTimeUnixNano: Long) {
   val args = preprocessArgs(rawArgs)
   AppMode.setFlags(args)
   addBootstrapTiming("AppMode.setFlags", startupTimings)

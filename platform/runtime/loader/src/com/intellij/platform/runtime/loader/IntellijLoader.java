@@ -10,6 +10,7 @@ import java.lang.invoke.MethodHandle;
 import java.lang.invoke.MethodHandles;
 import java.lang.invoke.MethodType;
 import java.nio.file.Path;
+import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -21,13 +22,23 @@ public final class IntellijLoader {
   private static final String RUNTIME_REPOSITORY_PATH_PROPERTY = "intellij.platform.runtime.repository.path";
 
   public static void main(String[] args) throws Throwable {
+    long startTimeNano = System.nanoTime();
+    long startTimeUnixNano = System.currentTimeMillis() * 1_000_000;
+    ArrayList<Object> startupTimings = new ArrayList<>(16);
+    startupTimings.add("startup begin");
+    startupTimings.add(startTimeNano);
+
     String repositoryPathString = System.getProperty(RUNTIME_REPOSITORY_PATH_PROPERTY);
     if (repositoryPathString == null) {
       reportError(RUNTIME_REPOSITORY_PATH_PROPERTY + " is not specified");
     }
     
     RuntimeModuleRepository repository = RuntimeModuleRepository.create(Path.of(repositoryPathString));
-    List<Path> bootstrapClasspath = repository.getBootstrapClasspath("intellij.platform.bootstrap");
+    String bootstrapModuleName = System.getProperty("intellij.platform.bootstrap.module", "intellij.platform.bootstrap");
+    List<Path> bootstrapClasspath = repository.getBootstrapClasspath(bootstrapModuleName);
+    startupTimings.add("calculating bootstrap classpath");
+    startupTimings.add(System.nanoTime());
+    
     ClassLoader appClassLoader = IntellijLoader.class.getClassLoader();
     if (!(appClassLoader instanceof PathClassLoader)) {
       reportError("JVM for IntelliJ must be started with -Djava.system.class.loader=com.intellij.util.lang.PathClassLoader parameter");
@@ -38,8 +49,11 @@ public final class IntellijLoader {
     Class<?> bootstrapClass = Class.forName(bootstrapClassName, true, appClassLoader);
     MethodHandle methodHandle = MethodHandles.publicLookup()
       .findStatic(bootstrapClass, "main",
-                  MethodType.methodType(void.class, RuntimeModuleRepository.class, String[].class));
-    methodHandle.invokeExact(repository, args);
+                  MethodType.methodType(void.class, RuntimeModuleRepository.class, String[].class, ArrayList.class, long.class));
+    startupTimings.add("obtaining main method handle");
+    startupTimings.add(System.nanoTime());
+    
+    methodHandle.invokeExact(repository, args, startupTimings, startTimeUnixNano);
   }
 
   @Contract("_ -> fail")
