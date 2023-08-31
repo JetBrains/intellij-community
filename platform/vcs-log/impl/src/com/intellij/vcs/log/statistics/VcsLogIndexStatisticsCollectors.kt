@@ -10,6 +10,7 @@ import com.intellij.internal.statistic.service.fus.collectors.ProjectUsagesColle
 import com.intellij.openapi.components.*
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.registry.Registry
+import com.intellij.vcs.log.data.VcsLogData
 import com.intellij.vcs.log.data.index.VcsLogBigRepositoriesList
 import com.intellij.vcs.log.impl.VcsLogSharedSettings
 import org.jetbrains.annotations.NonNls
@@ -27,7 +28,7 @@ internal class VcsLogIndexApplicationStatisticsCollector : ApplicationUsagesColl
 
   override fun getMetrics(): MutableSet<MetricEvent> {
     val metricEvents = mutableSetOf<MetricEvent>()
-    if (!Registry.`is`("vcs.log.index.git")) {
+    if (!VcsLogData.isIndexSwitchedOnInRegistry()) {
       metricEvents.add(INDEX_DISABLED_IN_REGISTRY.metric(true))
     }
 

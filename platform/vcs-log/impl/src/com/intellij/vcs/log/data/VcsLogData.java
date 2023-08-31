@@ -13,6 +13,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.CheckedDisposable;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.registry.Registry;
+import com.intellij.openapi.util.registry.RegistryValue;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.telemetry.VcsTelemetrySpan.LogData;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -148,6 +149,11 @@ public final class VcsLogData implements Disposable, VcsLogDataProvider {
   private VcsLogModifiableIndex createIndex(@NotNull String logId, @NotNull VcsLogProgress progress) {
     if (!VcsLogSharedSettings.isIndexSwitchedOn(myProject)) {
       LOG.info("Vcs log index is turned off for project " + myProject.getName());
+      return new EmptyIndex();
+    }
+
+    if (!isIndexSwitchedOnInRegistry()) {
+      LOG.info("Vcs log index is turned off in the registry");
       return new EmptyIndex();
     }
 
@@ -423,5 +429,13 @@ public final class VcsLogData implements Disposable, VcsLogDataProvider {
     public void dispose() {
       removeDataPackChangeListener(myListener);
     }
+  }
+
+  public static boolean isIndexSwitchedOnInRegistry() {
+    return getIndexingRegistryValue().asBoolean();
+  }
+
+  public static @NotNull RegistryValue getIndexingRegistryValue() {
+    return Registry.get("vcs.log.index.git");
   }
 }
