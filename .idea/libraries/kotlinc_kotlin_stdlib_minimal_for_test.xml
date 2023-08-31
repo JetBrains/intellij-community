@@ -1,18 +1,11 @@
 <component name="libraryTable">
-  <library name="kotlinc.kotlin-stdlib-minimal-for-test" type="repository">
-    <properties include-transitive-deps="false" maven-id="org.jetbrains.kotlin:kotlin-stdlib-minimal-for-test-for-ide:1.9.30-dev-2142">
-      <verification>
-        <artifact url="file://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-stdlib-minimal-for-test-for-ide/1.9.30-dev-2142/kotlin-stdlib-minimal-for-test-for-ide-1.9.30-dev-2142.jar">
-          <sha256sum>431034bcbefffe3b61422ac8c1e2e53c297c978e0ac94521cbdfa6755026d100</sha256sum>
-        </artifact>
-      </verification>
-    </properties>
+  <library name="kotlinc.kotlin-stdlib-minimal-for-test">
     <CLASSES>
-      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-stdlib-minimal-for-test-for-ide/1.9.30-dev-2142/kotlin-stdlib-minimal-for-test-for-ide-1.9.30-dev-2142.jar!/" />
+      <root url="jar://$PROJECT_DIR$/../build/repo/org/jetbrains/kotlin/kotlin-stdlib-minimal-for-test-for-ide/1.9.255/kotlin-stdlib-minimal-for-test-for-ide-1.9.255.jar!/" />
     </CLASSES>
     <JAVADOC />
     <SOURCES>
-      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-stdlib-minimal-for-test-for-ide/1.9.30-dev-2142/kotlin-stdlib-minimal-for-test-for-ide-1.9.30-dev-2142-sources.jar!/" />
+      <root url="jar://$PROJECT_DIR$/../build/repo/org/jetbrains/kotlin/kotlin-stdlib-minimal-for-test-for-ide/1.9.255/kotlin-stdlib-minimal-for-test-for-ide-1.9.255-sources.jar!/" />
     </SOURCES>
   </library>
 </component>
