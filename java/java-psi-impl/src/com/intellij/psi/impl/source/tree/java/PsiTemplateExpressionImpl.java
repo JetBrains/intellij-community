@@ -124,7 +124,7 @@ public final class PsiTemplateExpressionImpl extends ExpressionPsiElement implem
     for (PsiClassType classType : PsiTypesUtil.getClassTypeComponents(type)) {
       PsiType substituted = PsiUtil.substituteTypeParameter(classType, CommonClassNames.JAVA_LANG_STRING_TEMPLATE_PROCESSOR, 0, false);
       if (substituted != null) {
-        return substituted;
+        return PsiUtil.captureToplevelWildcards(substituted, this);
       }
     }
     return null;

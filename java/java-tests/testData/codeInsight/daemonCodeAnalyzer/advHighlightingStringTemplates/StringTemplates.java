@@ -104,6 +104,13 @@ class X {
   public static void testCapturedWilcard(StringTemplate.Processor<?, ?> str) {
     Object s = <error descr="Unhandled exception: java.lang.Throwable">str."";</error>
   }
+
+  void testCapturedWildcard2() {
+    StringTemplate.Processor<StringTemplate.Processor<?, ? extends Exception>, RuntimeException> processor = null;
+    Object o = <error descr="Unhandled exception: java.lang.Exception">processor."""
+                """."""
+                """;</error>
+  }
   
   public static void noNewlineAfterTextBlockOpeningQuotes() {
     System.out.println(STR.<error descr="Illegal text block start: missing new line after opening quotes">"""</error>\{}""");
