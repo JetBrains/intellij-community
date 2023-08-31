@@ -1,0 +1,8 @@
+0(1) element: null
+1(2) element: PyTypeParameter
+2(3) WRITE ACCESS: T
+3(4) element: PyTypeParameter
+4(5) WRITE ACCESS: U
+5(6) WRITE ACCESS: a
+6(7) WRITE ACCESS: b
+7() element: null

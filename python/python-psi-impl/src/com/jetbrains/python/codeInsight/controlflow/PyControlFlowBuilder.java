@@ -58,10 +58,12 @@ public class PyControlFlowBuilder extends PyRecursiveElementVisitor {
     return this.myBuilder;
   }
 
+
   @Override
   public void visitPyFunction(final @NotNull PyFunction node) {
     // Create node and stop here
     myBuilder.startNode(node);
+
     visitParameterListExpressions(node.getParameterList());
     visitDecorators(node.getDecoratorList());
     final PyAnnotation annotation = node.getAnnotation();
@@ -106,6 +108,7 @@ public class PyControlFlowBuilder extends PyRecursiveElementVisitor {
   public void visitPyClass(final @NotNull PyClass node) {
     // Create node and stop here
     myBuilder.startNode(node);
+
     for (PsiElement element : node.getSuperClassExpressions()) {
       element.accept(this);
     }
@@ -990,6 +993,20 @@ public class PyControlFlowBuilder extends PyRecursiveElementVisitor {
 
     final PyTargetExpression target = node.getTarget();
     if (target != null) target.accept(this);
+  }
+
+  @Override
+  public void visitPyTypeAliasStatement(@NotNull PyTypeAliasStatement node) {
+    myBuilder.startNode(node);
+
+    PyExpression typeExpression = node.getTypeExpression();
+    if (typeExpression != null) {
+      typeExpression.accept(this);
+    }
+
+    final ReadWriteInstruction instruction = ReadWriteInstruction.write(myBuilder, node, node.getName());
+    myBuilder.addNode(instruction);
+    myBuilder.checkPending(instruction);
   }
 
   private static boolean isCallOfNoReturnFunction(@NotNull PyExpression callee) {
