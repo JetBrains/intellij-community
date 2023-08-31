@@ -1092,7 +1092,7 @@ final class EditorGutterComponentImpl extends EditorGutterComponentEx implements
       }
     });
 
-    int minWidth = areIconsShown() ? scaleWidth(myStartIconAreaWidth) : 0;
+    int minWidth = areIconsShown() ? EditorUIUtil.scaleWidth(myStartIconAreaWidth, myEditor) : 0;
     myIconsAreaWidth = canShrink ? minWidth : Math.max(myIconsAreaWidth, minWidth);
 
     for (Int2ObjectMap.Entry<List<GutterMark>> entry : processGutterRenderers()) {
@@ -1349,23 +1349,8 @@ final class EditorGutterComponentImpl extends EditorGutterComponentEx implements
     void process(int x, int y, @NotNull GutterMark renderer);
   }
 
-  private float getEditorScaleFactor() {
-    if (Registry.is("editor.scale.gutter.icons")) {
-      float scale = myEditor.getScale();
-      if (Math.abs(1f - scale) > 0.10f) {
-        return scale;
-      }
-    }
-    return 1f;
-  }
-
   Icon scaleIcon(Icon icon) {
-    float scale = getEditorScaleFactor();
-    return scale == 1 ? icon : IconUtil.scale(icon, this, scale);
-  }
-
-  private int scaleWidth(int width) {
-    return (int)(getEditorScaleFactor() * width);
+    return EditorUIUtil.scaleIcon(icon, myEditor);
   }
 
   void processIconsRow(int line, @NotNull List<? extends GutterMark> row, @NotNull LineGutterIconRendererProcessor processor) {
@@ -1888,7 +1873,7 @@ final class EditorGutterComponentImpl extends EditorGutterComponentEx implements
   }
 
   int getGapAfterIconsArea() {
-    return isRealEditor() && areIconsShown() ? ExperimentalUI.isNewUI() ? scaleWidth(2) : getGapBetweenAreas() : 0;
+    return isRealEditor() && areIconsShown() ? ExperimentalUI.isNewUI() ? EditorUIUtil.scaleWidth(2, myEditor) : getGapBetweenAreas() : 0;
   }
 
   private boolean isMirrored() {
