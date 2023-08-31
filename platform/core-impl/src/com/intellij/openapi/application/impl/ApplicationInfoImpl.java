@@ -472,12 +472,9 @@ public final class ApplicationInfoImpl extends ApplicationInfoEx {
     else {
       result = requireNonNullElse(myMajorVersion) + '.' + requireNonNullElse(myMinorVersion);
     }
-/* Android Studio: removed by Change I2708044e / commit e1454d7
-    // In Android Studio we don't want the EAP suffix in version names
     if (myVersionSuffix != null && !myVersionSuffix.isEmpty()) {
       result += " " + myVersionSuffix;
     }
-Android Studio: removed by Change I2708044e / commit e1454d7 */
     return result;
   }
 
