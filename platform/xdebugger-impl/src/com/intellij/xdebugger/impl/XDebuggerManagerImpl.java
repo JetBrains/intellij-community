@@ -538,6 +538,10 @@ public final class XDebuggerManagerImpl extends XDebuggerManager implements Pers
         return false;
       }
 
+      if (editor.getScrollingModel().getHorizontalScrollOffset() != 0) {
+        return false;
+      }
+
       XDebugSessionImpl session = getCurrentSession();
       if (session == null || !session.isPaused() || session.isReadOnly()) {
         IntentionsUIImpl.DISABLE_INTENTION_BULB.set(myProject, false);
