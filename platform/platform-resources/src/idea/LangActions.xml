@@ -1716,6 +1716,9 @@
     <action id="ForceIndexRescanning" internal="true" class="com.intellij.util.indexing.ForceIndexRescanningAction" icon="AllIcons.Actions.Refresh"/>
     <action id="ForceIndexRebuild" internal="true" class="com.intellij.util.indexing.ForceIndexRebuildAction" icon="AllIcons.Actions.Refresh"/>
 
+    <action id="ToggleFileBasedIndexes" internal="true" class="com.intellij.util.indexing.internal.ToggleFileBasedIndexesAction"/>
+    <action id="PauseScanningAndIndexing" internal="true" class="com.intellij.util.indexing.internal.PauseScanningAndIndexingAction"/>
+
     <action class="com.intellij.internal.ClearFileTemplateNameInternalAction" internal="true"/>
 
     <group id="Internal.Dump" internal="true" popup="true">
