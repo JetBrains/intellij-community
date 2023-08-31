@@ -42,7 +42,6 @@ object GitHistoryNotificationPanel {
         VcsLogBigRepositoriesList.getInstance().removeRepository(root)
         if (!VcsLogData.isIndexSwitchedOnInRegistry()) {
           VcsLogData.getIndexingRegistryValue().setValue(true)
-          RegistryBooleanOptionDescriptor.suggestRestartIfNecessary(this)
         }
         else {
           (VcsProjectLog.getInstance(project).dataManager?.index as? VcsLogModifiableIndex)?.scheduleIndex(false)
