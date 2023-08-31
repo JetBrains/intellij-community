@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 @file:JvmName("DebuggerUtil")
 
@@ -6,7 +6,9 @@ package org.jetbrains.kotlin.idea.debugger.core
 
 import com.intellij.debugger.engine.DebugProcessImpl
 import com.intellij.debugger.engine.DebuggerManagerThreadImpl
+import com.intellij.debugger.engine.SuspendContextImpl
 import com.intellij.debugger.engine.events.DebuggerCommandImpl
+import com.intellij.debugger.engine.events.DebuggerContextCommandImpl
 import com.intellij.debugger.impl.DebuggerContextImpl
 import com.intellij.debugger.impl.DebuggerUtilsAsync
 import com.intellij.debugger.jdi.StackFrameProxyImpl
@@ -102,19 +104,20 @@ private fun isInlinedArgument(localVariables: List<LocalVariable>, inlineArgumen
 
 fun <T : Any> DebugProcessImpl.invokeInManagerThread(f: (DebuggerContextImpl) -> T?): T? {
     var result: T? = null
-    val command: DebuggerCommandImpl = object : DebuggerCommandImpl() {
-        override fun action() {
-            result = f(debuggerContext)
-        }
+    if (DebuggerManagerThreadImpl.isManagerThread()) {
+        managerThread.invoke(object : DebuggerCommandImpl() {
+            override fun action() {
+                result = f(debuggerContext)
+            }
+        })
     }
-
-    when {
-        DebuggerManagerThreadImpl.isManagerThread() ->
-            managerThread.invoke(command)
-        else ->
-            managerThread.invokeAndWait(command)
+    else {
+        managerThread.invokeAndWait(object : DebuggerContextCommandImpl(debuggerContext) {
+            override fun threadAction(suspendContext: SuspendContextImpl) {
+                result = f(debuggerContext)
+            }
+        })
     }
-
     return result
 }
 
