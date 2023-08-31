@@ -134,13 +134,13 @@ public class PerProcessPathCustomizer implements PathCustomizer {
             NioFiles.deleteRecursively(path);
           }
           catch (IOException e) {
-            System.err.println(e.getMessage());
+            System.err.println("Failed to delete " + path + ": " + e);
           }
         }
       });
     }
     catch (IOException e) {
-      System.err.println(e.getMessage());
+      System.err.println("Failed to clean directory " + directory + ": " + e);
     }
   }
 }
