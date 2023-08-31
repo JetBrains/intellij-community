@@ -83,7 +83,7 @@ public class SuppressManagerImpl extends SuppressManager implements RedundantSup
   }
 
   @Override
-  public LocalQuickFix createRemoveRedundantSuppressionFix(@NotNull String toolId) {
+  public @NotNull LocalQuickFix createRemoveRedundantSuppressionFix(@NotNull String toolId) {
     return new RemoveSuppressWarningAction(toolId);
   }
 }

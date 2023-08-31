@@ -28,14 +28,14 @@ import java.util.List;
 import java.util.Objects;
 
 public class OfflineProblemDescriptor {
-  public String myType;
-  public String myFQName;
-  public @InspectionMessage String myDescription;
-  public List<String> myHints;
-  public int myProblemIndex;
-  public int myLine;
-  public int myOffset;
-  public String myModuleName;
+  private String myType;
+  private String myFQName;
+  private @InspectionMessage String myDescription;
+  private List<String> myHints;
+  private int myProblemIndex;
+  private int myLine;
+  private int myOffset;
+  private String myModuleName;
 
   public String getType() {
     return myType;
@@ -65,7 +65,7 @@ public class OfflineProblemDescriptor {
     return myHints;
   }
 
-  public void setHints(List<String> hints) {
+  public void setHints(@NotNull List<@NotNull String> hints) {
     myHints = hints;
   }
 
