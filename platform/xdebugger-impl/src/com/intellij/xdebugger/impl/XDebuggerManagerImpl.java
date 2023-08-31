@@ -620,10 +620,7 @@ public final class XDebuggerManagerImpl extends XDebuggerManager implements Pers
 
       JPanel justPanel = new NonOpaquePanel();
 
-      justPanel.setPreferredSize(new JBDimension(
-        (2 * sideButtonOffset + ActionToolbar.DEFAULT_MINIMUM_BUTTON_SIZE.width) * group.getChildrenCount(),
-        ActionToolbar.DEFAULT_MINIMUM_BUTTON_SIZE.height
-      ));
+      justPanel.setPreferredSize(new JBDimension((2 * sideButtonOffset + 22) * group.getChildrenCount(),22));
 
       justPanel.add(toolbarImpl.getComponent());
 
