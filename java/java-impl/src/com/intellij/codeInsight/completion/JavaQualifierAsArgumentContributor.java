@@ -39,7 +39,7 @@ import static com.intellij.psi.util.PsiFormatUtilBase.MAX_PARAMS_TO_SHOW;
 @ApiStatus.Experimental
 public class JavaQualifierAsArgumentContributor extends CompletionContributor implements DumbAware {
 
-  private static final int MAX_SIZE = 100;
+  private static final int MAX_SIZE = 50;
 
   @Override
   public void fillCompletionVariants(@NotNull CompletionParameters parameters, @NotNull final CompletionResultSet result) {
