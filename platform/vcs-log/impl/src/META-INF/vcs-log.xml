@@ -256,6 +256,7 @@
       <reference id="Vcs.FileHistory.PresentationSettings"/>
       <separator/>
       <reference id="VcsHistoryActionsGroup.Toolbar"/>
+      <reference id="Vcs.Log.ResumeIndexing"/>
     </group>
 
     <group id="Vcs.Log.Internal" internal="true" popup="true">
