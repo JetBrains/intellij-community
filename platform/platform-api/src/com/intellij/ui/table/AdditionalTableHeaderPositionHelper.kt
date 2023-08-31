@@ -1,228 +1,195 @@
-/*
- * Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
- */
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package com.intellij.ui.table
 
-package org.jetbrains.plugins.notebooks.visualization.r.inlays.table.filters.gui;
+import java.awt.BorderLayout
+import java.awt.Component
+import java.beans.PropertyChangeEvent
+import java.beans.PropertyChangeListener
+import javax.swing.JScrollPane
+import javax.swing.JTable
+import javax.swing.JViewport
+import javax.swing.table.JTableHeader
 
-import com.intellij.ui.Gray;
-import org.jetbrains.plugins.notebooks.visualization.r.inlays.table.filters.gui.TableFilterHeader.Position;
-
-import javax.swing.*;
-import javax.swing.table.JTableHeader;
-import java.awt.*;
-import java.beans.PropertyChangeEvent;
-import java.beans.PropertyChangeListener;
 
 /**
- * <p>Helper class to locate the filter header on the expected place by the
- * table header</p>
+ * Helper class to locate the additional header on the expected place by the table header
  */
-class PositionHelper implements PropertyChangeListener {
+class AdditionalTableHeaderPositionHelper(var statisticsHeader: AdditionalTableHeader) : PropertyChangeListener {
+  /** This variable defines how to handle the position of the header.  */
+  var myLocation: AdditionalTableHeader.Position? = null
 
-    /** This variable defines how to handle the position of the header. */
-    Position location;
+  /**
+   * The viewport associated to this header. It is null if the location is not
+   * automatically managed
+   */
+  private var headerViewport: JViewport? = null
 
-    /**
-     * The viewport associated to this header. It is null if the location is not
-     * automatically managed
-     */
-    JViewport headerViewport;
+  /** The previous viewport of the associated table.  */
+  private var previousTableViewport: Component? = null
 
-    /** The previous viewport of the associated table. */
-    Component previousTableViewport;
-
-    /** The handled filter header. */
-    TableFilterHeader filterHeader;
-
-    public PositionHelper(TableFilterHeader filterHeader) {
-        this.filterHeader = filterHeader;
+  var position: AdditionalTableHeader.Position?
+    /** Returns the mode currently associated to the TableHeader.  */
+    get() = myLocation
+    /** Sets the position of the header related to the table.  */
+    set(location) {
+      myLocation = location
+      val table = statisticsHeader.table
+      changeTable(table, table)
     }
 
-
-    /** Sets the position of the header related to the table. */
-    public void setPosition(Position location) {
-        this.location = location;
-
-        JTable table = filterHeader.getTable();
-        changeTable(table, table);
+  fun headerVisibilityChanged(visible: Boolean) {
+    val table = statisticsHeader.table
+    changeTable(table, null)
+    if (visible && table != null) {
+      changeTable(null, table)
     }
+  }
 
-
-    /** Returns the mode currently associated to the TableHeader. */
-    public Position getPosition() {
-        return location;
+  /**
+   * The additional header reports that the table being handled is going to
+   * change.
+   */
+  fun changeTable(oldTable: JTable?, newTable: JTable?) {
+    oldTable?.removePropertyChangeListener("ancestor", this)
+    cleanUp()
+    if (newTable != null) {
+      newTable.addPropertyChangeListener("ancestor", this)
+      trySetUp(newTable)
     }
+  }
 
-    /** The associated TableFilterHeader reports a change on its visibility. */
-    public void headerVisibilityChanged(boolean visible) {
-        JTable table = filterHeader.getTable();
-        changeTable(table, null);
-        if (visible && (table != null)) {
-            changeTable(null, table);
+  /** Method automatically invoked when the class ancestor changes.  */
+  fun currentHeaderContainmentUpdate() {
+    if (!canHeaderLocationBeManaged()) {
+      cleanUp()
+    }
+  }
+
+  /** [PropertyChangeListener] interface.  */
+  override fun propertyChange(evt: PropertyChangeEvent) {
+
+    // the table has changed containment. clean up status and prepare again,
+    // if possible; however, do nothing if the current setup is fine
+    if (previousTableViewport !== evt.newValue || evt.source !== statisticsHeader.table) {
+      previousTableViewport = null
+      cleanUp()
+      trySetUp(statisticsHeader.table)
+    }
+  }
+
+  /**
+   * Returns true if the header location can be automatically controlled.
+   *
+   * @return  false if the component has been explicitly included in a
+   * container
+   */
+  private fun canHeaderLocationBeManaged(): Boolean {
+    if (myLocation == AdditionalTableHeader.Position.NONE) {
+      return false
+    }
+    val parent = statisticsHeader.parent
+    return parent == null || parent === headerViewport
+  }
+
+  /** Tries to setup the filter header automatically for the given table.  */
+  private fun trySetUp(table: JTable?) {
+    if (table != null && table.isVisible && canHeaderLocationBeManaged()
+        && statisticsHeader.isVisible) {
+      val p = table.parent
+      if (p is JViewport) {
+        val gp = p.getParent()
+        if (gp is JScrollPane) {
+          val viewport: JViewport = gp.viewport
+          if (viewport.view === table) {
+            setUp(gp)
+            previousTableViewport = p
+          }
         }
+      }
     }
+  }
 
+  /** Sets up the header, placing it on a new viewport for the given Scrollpane. */
+  private fun setUp(scrollPane: JScrollPane) {
+    headerViewport = object : JViewport() {
+      private val serialVersionUID = 7109623726722227105L
 
-    /**
-     * The filter header reports that the table being handled is going to
-     * change.
-     */
-    public void changeTable(JTable oldTable, JTable newTable) {
-        if (oldTable != null) {
-            oldTable.removePropertyChangeListener("ancestor", this);
+      init {
+        isOpaque = false
+      }
+
+      override fun setView(view: Component?) {
+        // if the view is not a table header, somebody is doing
+        // funny stuff. not much to do!
+        if (view is JTableHeader) {
+          removeTableHeader()
+          // the view is always added, even if set non-visible
+          // this way, it can be recovered if the position changes
+          view.setVisible(myLocation != AdditionalTableHeader.Position.REPLACE)
+          view.setOpaque(false)
+          statisticsHeader.add(view, if (myLocation == AdditionalTableHeader.Position.INLINE) BorderLayout.NORTH else BorderLayout.SOUTH)
+          statisticsHeader.revalidate()
+          super.setView(statisticsHeader)
         }
+      }
 
-        cleanUp();
-        if (newTable != null) {
-            newTable.addPropertyChangeListener("ancestor", this);
-            trySetUp(newTable);
+      /**
+       * Removes the current JTableHeader in the filterHeader, returning
+       * it. it does nothing if there is no such JTableHeader
+       */
+      private fun removeTableHeader(): Component? {
+        val tableHeader = findTableHeader()
+        if (tableHeader != null) {
+          statisticsHeader.remove(tableHeader)
         }
+        return tableHeader
+      }
     }
+    val currentColumnHeader = scrollPane.columnHeader
+    if (currentColumnHeader != null) {
+      // this happens if the table has not been yet added to the
+      // scrollPane
+      val view = currentColumnHeader.view
+      if (view != null) {
+        headerViewport!!.setView(view)
+      }
+    }
+    scrollPane.setColumnHeader(headerViewport)
+  }
 
-    /** Method automatically invoked when the class ancestor changes. */
-    public void filterHeaderContainmentUpdate() {
-        if (!canHeaderLocationBeManaged()) {
-            cleanUp();
+  /** Removes the current viewport, setting it up to clean status.  */
+  private fun cleanUp() {
+    val currentViewport = headerViewport
+    headerViewport = null
+    if (currentViewport != null) {
+      currentViewport.remove(statisticsHeader)
+      val parent = currentViewport.parent
+      if (parent is JScrollPane) {
+        if (parent.columnHeader === currentViewport) {
+          val tableHeader = findTableHeader()
+          val newView = tableHeader?.let { createCleanViewport(it) }
+          parent.setColumnHeader(newView)
         }
+      }
     }
+  }
 
-    /** PropertyChangeListener interface. */
-    @Override public void propertyChange(PropertyChangeEvent evt) {
+  /** Creates a simple JViewport with the given component as view.  */
+  private fun createCleanViewport(tableHeader: Component): JViewport {
+    val ret = JViewport()
+    ret.setView(tableHeader)
+    return ret
+  }
 
-        // the table has changed containment. clean up status and prepare again,
-        // if possible; however, do nothing if the current setup is fine
-        if ((previousTableViewport != evt.getNewValue()) || (evt.getSource() != filterHeader.getTable())) {
-            previousTableViewport = null;
-            cleanUp();
-            trySetUp(filterHeader.getTable());
-        }
+  /** Returns the JTableHeader in the filterHeader, if any.  */
+  fun findTableHeader(): Component? {
+    for (component in statisticsHeader.components) {
+      // there should be just one (the header's controller)
+      // or two components (with the table header)
+      if (component is JTableHeader) {
+        return component
+      }
     }
-
-    /**
-     * Returns true if the header location can be automatically controlled.
-     *
-     * @return  false if the component has been explicitly included in a
-     *          container
-     */
-    private boolean canHeaderLocationBeManaged() {
-        if (location == Position.NONE) {
-            return false;
-        }
-
-        Container parent = filterHeader.getParent();
-
-        return (parent == null) || (parent == headerViewport);
-    }
-
-
-    /** Tries to setup the filter header automatically for the given table. */
-    private void trySetUp(JTable table) {
-        if ((table != null) && table.isVisible() && canHeaderLocationBeManaged()
-                && filterHeader.isVisible()) {
-            Container p = table.getParent();
-            if (p instanceof JViewport) {
-                Container gp = p.getParent();
-                if (gp instanceof JScrollPane scrollPane) {
-                  JViewport viewport = scrollPane.getViewport();
-                    if ((viewport != null) && (viewport.getView() == table)) {
-                        setUp(scrollPane);
-                        previousTableViewport = p;
-                    }
-                }
-            }
-        }
-    }
-
-    /**
-     * Sets up the header, placing it on a new viewport for the given
-     * Scrollpane.
-     */
-    private void setUp(JScrollPane scrollPane) {
-        headerViewport = new JViewport() {
-
-            private static final long serialVersionUID = 7109623726722227105L;
-
-            @Override public void setView(Component view) {
-                // if the view is not a table header, somebody is doing
-                // funny stuff. not much to do!
-                if (view instanceof JTableHeader) {
-                    removeTableHeader();
-                    // the view is always added, even if set non visible
-                    // this way, it can be recovered if the position changes
-                    view.setVisible(location != Position.REPLACE);
-                    ((JTableHeader)view).setOpaque(false);
-                    view.setBackground(Gray.TRANSPARENT);
-                    filterHeader.add(view, location == Position.INLINE ? BorderLayout.NORTH : BorderLayout.SOUTH);
-                    filterHeader.revalidate();
-                    super.setView(filterHeader);
-                }
-            }
-
-            /**
-             * Removes the current JTableHeader in the filterHeader, returning
-             * it. it does nothing if there is no such JTableHeader
-             */
-            private Component removeTableHeader() {
-                Component tableHeader = getTableHeader();
-                if (tableHeader != null) {
-                    filterHeader.remove(tableHeader);
-                }
-
-                return tableHeader;
-            }
-
-        };
-
-        JViewport currentColumnHeader = scrollPane.getColumnHeader();
-        if (currentColumnHeader != null) {
-            // this happens if the table has not been yet added to the
-            // scrollPane
-            Component view = currentColumnHeader.getView();
-            if (view != null) {
-                headerViewport.setView(view);
-            }
-        }
-
-        scrollPane.setColumnHeader(headerViewport);
-    }
-
-    /** Removes the current viewport, setting it up to clean status. */
-    private void cleanUp() {
-        JViewport currentViewport = headerViewport;
-        headerViewport = null;
-        if (currentViewport != null) {
-            currentViewport.remove(filterHeader);
-
-            Container parent = currentViewport.getParent();
-            if (parent instanceof JScrollPane scrollPane) {
-              if (scrollPane.getColumnHeader() == currentViewport) {
-                    Component tableHeader = getTableHeader();
-                    JViewport newView = (tableHeader == null) ? null : createCleanViewport(tableHeader);
-                    scrollPane.setColumnHeader(newView);
-                }
-            }
-        }
-    }
-
-    /** Creates a simple JViewport with the given component as view. */
-    private JViewport createCleanViewport(Component tableHeader) {
-        JViewport ret = new JViewport();
-        ret.setView(tableHeader);
-
-        return ret;
-    }
-
-    /** Returns the JTableHeader in the filterHeader, if any. */
-    Component getTableHeader() {
-        for (Component component : filterHeader.getComponents()) {
-            // there should be just one (the header's controller)
-            // or two components (with the table header)
-            if (component instanceof JTableHeader) {
-                return component;
-            }
-        }
-
-        return null;
-    }
-
+    return null
+  }
 }
