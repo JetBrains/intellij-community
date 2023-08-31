@@ -43,7 +43,6 @@ import org.jetbrains.kotlin.psi.psiUtil.containingClass
 import org.jetbrains.kotlin.psi.psiUtil.endOffset
 import org.jetbrains.kotlin.psi.psiUtil.getStrictParentOfType
 
-
 class CompanionObjectInExtensionInspection : LocalInspectionTool() {
 
   override fun buildVisitor(holder: ProblemsHolder, isOnTheFly: Boolean): PsiElementVisitor {
@@ -68,21 +67,20 @@ class CompanionObjectInExtensionInspection : LocalInspectionTool() {
             ProblemHighlightType.WARNING,
             RemoveEmptyCompanionObjectFix(declaration)
           )
-          return
         }
+        else {
+          val prohibitedDeclarations = declaration.namedDeclarations.filterNot { it.isAllowedInsideCompanionObject() }
+          if (prohibitedDeclarations.isEmpty()) return
 
-        val prohibitedDeclarations = declaration.namedDeclarations.filterNot { it.isAllowedInsideCompanionObject() }
-        if (prohibitedDeclarations.isEmpty()) return
-
-        holder.registerProblem(
-          anchor,
-          DevKitKotlinBundle.message("inspections.companion.object.in.extension.message"),
-          ProblemHighlightType.WARNING,
-          MoveProhibitedDeclarationsToTopLevelFix(declaration),
-          CreateObjectAndMoveProhibitedDeclarationsQuickFix(declaration)
-        )
+          holder.registerProblem(
+            anchor,
+            DevKitKotlinBundle.message("inspections.companion.object.in.extension.message"),
+            ProblemHighlightType.WARNING,
+            MoveProhibitedDeclarationsToTopLevelFix(declaration),
+            CreateObjectAndMoveProhibitedDeclarationsQuickFix(declaration)
+          )
+        }
       }
-
     }
   }
 }
@@ -137,9 +135,9 @@ private class CreateObjectAndMoveProhibitedDeclarationsQuickFix(
   }
 
   /**
-   *  1. Creates a new standalone object
-   *  2. Moves prohibited declarations from companion object to the created object
-   *  3. Invokes `rename fix` on the created object
+   *  1. Creates a new standalone object.
+   *  2. Moves prohibited declarations from the companion object to the created object.
+   *  3. Invokes `rename fix` on the created object.
    */
   override fun invoke(project: Project, file: PsiFile, startElement: PsiElement, endElement: PsiElement) {
     CommandProcessor.getInstance().runUndoTransparentAction {
@@ -215,7 +213,7 @@ private class MoveProhibitedDeclarationsToTopLevelFix(companionObject: KtObjectD
   }
 
   /**
-   * Moves prohibited declarations from companion object to top-level.
+   * Moves prohibited declarations from the companion object to top-level.
    */
   override fun invoke(project: Project, file: PsiFile, startElement: PsiElement, endElement: PsiElement) {
     val companionObject = startElement as KtObjectDeclaration
@@ -292,8 +290,8 @@ private fun KtNamedDeclaration.removeJvmStaticAnnotationIfPresent(): KtNamedDecl
  * Moves [declarationsToMove] out of [companionObject] to the [moveTarget],
  * calling [preprocessDeclaration] on every declaration right before moving.
  *
- * Calls [onRefactoringExit] when refactoring is finished, both in cases when it was successfully performed or cancelled,
- * and, if [canShowConflictsInView] is true, when conflicts were open in the view but the refactoring can be started over or cancelled.
+ * Calls [onRefactoringExit] when refactoring is finished, both in cases when it was successfully performed or canceled,
+ * and, if [canShowConflictsInView] is true, when conflicts were open in the view but the refactoring can be started over or canceled.
  *
  * Setting the [canShowConflictsInView] parameter helps to track the way the refactoring exited in
  * and perform subsequent actions.
@@ -350,4 +348,3 @@ private fun moveDeclarationsOutOfCompanionObject(
 
   moveProcessor.run()
 }
-
