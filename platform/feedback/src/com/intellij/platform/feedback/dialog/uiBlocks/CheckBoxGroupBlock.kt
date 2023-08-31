@@ -18,7 +18,6 @@ class CheckBoxGroupBlock(
 
   override fun addToPanel(panel: Panel) {
     panel.apply {
-      @Suppress("DialogTitleCapitalization")
       buttonsGroup(indent = false) {
         row {
           label(myGroupLabel).bold()

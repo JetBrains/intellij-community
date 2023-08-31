@@ -3,30 +3,25 @@ package com.intellij.platform.feedback.dialog.uiBlocks
 
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.platform.feedback.dialog.COMBOBOX_COLUMN_SIZE
+import com.intellij.platform.feedback.dialog.createBoldJBLabel
 import com.intellij.platform.feedback.impl.bundle.CommonFeedbackBundle
-import com.intellij.ui.components.JBLabel
 import com.intellij.ui.dsl.builder.*
-import com.intellij.util.ui.JBFont
 import kotlinx.serialization.json.JsonObjectBuilder
 import kotlinx.serialization.json.put
-import java.awt.Font
 
 class ComboBoxBlock(@NlsContexts.Label private val myLabel: String,
                     private val myItems: List<String>,
                     private val myJsonElementName: String) : FeedbackBlock, TextDescriptionProvider, JsonDataProvider {
 
   private var myProperty: String? = ""
-  private var myComment: String? = null
+  private var myComment: @NlsContexts.DetailedDescription String? = null
   private var myColumnSize: Int = COMBOBOX_COLUMN_SIZE
 
   override fun addToPanel(panel: Panel) {
     panel.apply {
       row {
-        val boldLabel = JBLabel(myLabel).apply {
-          font = JBFont.create(font.deriveFont(Font.BOLD), false)
-        }
         comboBox(myItems)
-          .label(boldLabel, LabelPosition.TOP)
+          .label(createBoldJBLabel(myLabel), LabelPosition.TOP)
           .bindItem(::myProperty.toMutableProperty())
           .columns(myColumnSize).applyToComponent {
             selectedItem = null
