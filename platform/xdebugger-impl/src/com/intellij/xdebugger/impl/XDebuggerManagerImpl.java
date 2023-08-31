@@ -555,7 +555,7 @@ public final class XDebuggerManagerImpl extends XDebuggerManager implements Pers
 
       int lineY = editor.logicalPositionToXY(new LogicalPosition(lineNumber, 0)).y;
 
-      Point position = SwingUtilities.convertPoint(editor.getContentComponent(), new Point(0, lineY),
+      Point position = SwingUtilities.convertPoint(editor.getContentComponent(), new Point(-JBUI.scale(6), lineY),
                                                 editor.getComponent().getRootPane().getLayeredPane());
 
       DefaultActionGroup group = new DefaultActionGroup();
