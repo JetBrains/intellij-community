@@ -46,7 +46,7 @@ abstract class AbstractCompletionHandlerTest(private val defaultCompletionType: 
                 )
             }
         } else {
-            runTestIfNotDisabledByFileDirective(dataFilePath(), IgnoreTests.DIRECTIVES.IGNORE_FE10, ".after") {
+            runTestIfNotDisabledByFileDirective(dataFilePath(), IgnoreTests.DIRECTIVES.IGNORE_K1, ".after") {
                 test(testPath)
             }
         }

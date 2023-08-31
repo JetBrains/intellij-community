@@ -19,4 +19,4 @@ fun test() {
 }
 
 // IGNORE_K2
-// IGNORE_FE10
+// IGNORE_K1
