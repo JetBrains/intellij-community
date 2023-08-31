@@ -64,6 +64,10 @@
   </extensionPoints>
 
   <extensions defaultExtensionNs="com.intellij">
+    <applicationService serviceInterface="org.jetbrains.kotlin.analysis.decompiler.psi.BuiltInsVirtualFileProvider"
+                        serviceImplementation="org.jetbrains.kotlin.idea.base.analysis.builtins.IdeBuiltInsVirtualFileProviderImpl"/>
+    
+    <aboutPopupDescriptionProvider implementation="org.jetbrains.kotlin.idea.base.plugin.KotlinPluginKindAboutPopupDescriptionProvider"/>
     <applicationService serviceImplementation="org.jetbrains.kotlin.idea.PluginStartupApplicationService" />
     <applicationService serviceImplementation="org.jetbrains.kotlin.idea.KotlinPluginUpdater"/>
     <applicationService serviceImplementation="org.jetbrains.kotlin.idea.quickfix.QuickFixes"/>
@@ -102,10 +106,11 @@
 
     <applicationConfigurable
             groupId="language"
-            bundle="messages.KotlinBundle"
+            bundle="messages.KotlinPreferencesBundle"
             key="kotlin.language.configurable"
             id="preferences.language.Kotlin"
             instance="org.jetbrains.kotlin.idea.configuration.KotlinLanguageConfiguration"/>
+    <search.optionContributor implementation="org.jetbrains.kotlin.idea.configuration.KotlinPluginSwitchSearchOptionContributor"/>
 
     <projectConfigurable
             instance="org.jetbrains.kotlin.idea.base.compilerPreferences.configuration.KotlinCompilerConfigurableTab"

@@ -17,8 +17,8 @@ import java.io.File
 
 /**
  * [CyclicDependenciesSymbolResolutionTest] ensures that sessions with cyclic dependencies can not only be created (which
- * [AbstractSessionsInvalidationTest] already ensures), but also that these sessions' dependency symbol providers don't run into any stack
- * overflow errors.
+ * [AbstractLocalSessionInvalidationTest] already ensures), but also that these sessions' dependency symbol providers don't run into any
+ * stack overflow errors.
  *
  * A corresponding (or replacement) test on the Analysis API side does not exist yet, because the Analysis API test infrastructure does not
  * support cyclic module dependencies, which makes this strictly an issue of JPS project structures.

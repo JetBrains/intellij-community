@@ -27,7 +27,7 @@ import com.intellij.testFramework.IdeaTestUtil
 import com.intellij.testFramework.PsiTestUtil
 import com.intellij.util.ThrowableRunnable
 import org.jetbrains.kotlin.config.CompilerSettings
-import org.jetbrains.kotlin.config.KotlinFacetSettings
+import org.jetbrains.kotlin.config.IKotlinFacetSettings
 import org.jetbrains.kotlin.config.KotlinFacetSettingsProvider
 import org.jetbrains.kotlin.idea.core.util.toPsiFile
 import org.jetbrains.kotlin.idea.facet.getOrCreateFacet
@@ -275,7 +275,7 @@ fun Module.createMultiplatformFacetM3(
 private fun Module.createFacetWithAdditionalSetup(
     platformKind: TargetPlatform?,
     useProjectSettings: Boolean,
-    additionalSetup: KotlinFacetSettings.() -> Unit
+    additionalSetup: IKotlinFacetSettings.() -> Unit
 ) {
     WriteAction.run<Throwable> {
         val modelsProvider = ProjectDataManager.getInstance().createModifiableModelsProvider(project)

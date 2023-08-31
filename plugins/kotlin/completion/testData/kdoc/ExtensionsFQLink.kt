@@ -26,6 +26,7 @@ val A.wrongExtVal: String
 
 fun I.extForSuper(){}
 
+// IGNORE_K2
 // EXIST: ext
 // EXIST: extVal
 // ABSENT: wrongExt

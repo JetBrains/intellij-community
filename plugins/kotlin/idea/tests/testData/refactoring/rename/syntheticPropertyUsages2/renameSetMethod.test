@@ -2,5 +2,6 @@
   "type": "JAVA_METHOD",
   "classId": "testing/JavaClass",
   "methodSignature": "void setSomething(int value)",
-  "newName": "setSomethingNew"
+  "newName": "setSomethingNew",
+  "enabledInK2": "true"
 }

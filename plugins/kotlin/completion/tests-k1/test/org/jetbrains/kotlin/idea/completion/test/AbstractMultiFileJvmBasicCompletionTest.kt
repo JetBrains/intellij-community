@@ -8,6 +8,7 @@ import org.jetbrains.kotlin.idea.test.CompilerTestDirectives
 import org.jetbrains.kotlin.platform.jvm.JvmPlatforms
 import org.jetbrains.kotlin.idea.test.KotlinTestUtils
 import org.jetbrains.kotlin.idea.test.withCustomCompilerOptions
+import org.jetbrains.kotlin.test.utils.IgnoreTests
 import java.io.File
 
 abstract class AbstractMultiFileJvmBasicCompletionTest : KotlinCompletionTestCase() {
@@ -27,7 +28,7 @@ abstract class AbstractMultiFileJvmBasicCompletionTest : KotlinCompletionTestCas
                     },
                     defaultCompletionType = CompletionType.BASIC,
                     defaultInvocationCount = 0,
-                    additionalValidDirectives = CompilerTestDirectives.ALL_COMPILER_TEST_DIRECTIVES,
+                    additionalValidDirectives = CompilerTestDirectives.ALL_COMPILER_TEST_DIRECTIVES + IgnoreTests.DIRECTIVES.IGNORE_K2,
                 )
             }
         }

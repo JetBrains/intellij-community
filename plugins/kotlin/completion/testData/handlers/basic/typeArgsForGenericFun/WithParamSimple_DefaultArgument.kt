@@ -6,4 +6,5 @@ fun test() {
     val list: List<Int> = create().<caret>
 }
 
+// IGNORE_K2
 // ELEMENT: subList

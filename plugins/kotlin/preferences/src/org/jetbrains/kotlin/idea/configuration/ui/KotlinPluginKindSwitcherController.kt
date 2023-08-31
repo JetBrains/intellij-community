@@ -7,7 +7,6 @@ import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.ApplicationNamesInfo
 import com.intellij.openapi.application.ex.ApplicationEx
 import com.intellij.openapi.ui.Messages
-import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.ui.components.JBCheckBox
 import com.intellij.ui.dsl.builder.AlignY
@@ -18,6 +17,7 @@ import com.intellij.util.IconUtil
 import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginKind
 import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginKindProvider
 import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginKindSwitcher
+import org.jetbrains.kotlin.idea.base.plugin.getPluginKindDescription
 import org.jetbrains.kotlin.idea.preferences.KotlinPreferencesBundle
 import javax.swing.JComponent
 
@@ -59,11 +59,11 @@ internal class KotlinPluginKindSwitcherController {
     fun createComponent(): JComponent = panel {
         currentPluginPanel = panel {
             row {
-                text(KotlinPreferencesBundle.message("label.your.current.plugin", KotlinPluginKindProvider.currentPluginKind.text()))
+                text(KotlinPreferencesBundle.message("label.your.current.plugin", KotlinPluginKindProvider.currentPluginKind.getPluginKindDescription()))
             }
             row {
                 val otherPlugin = KotlinPluginKindProvider.currentPluginKind.other()
-                text(KotlinPreferencesBundle.message("label.plugin.will.be.switched.after.ide.restart", otherPlugin.text()))
+                text(KotlinPreferencesBundle.message("label.plugin.will.be.switched.after.ide.restart", otherPlugin.getPluginKindDescription()))
             }
             row {
                 link(
@@ -136,11 +136,6 @@ internal class KotlinPluginKindSwitcherController {
         if (result == Messages.OK) {
             application.restart(/* exitConfirmed = */ true)
         }
-    }
-
-    private fun KotlinPluginKind.text(): @NlsContexts.RadioButton String = when (this) {
-        KotlinPluginKind.FE10_PLUGIN -> KotlinPreferencesBundle.message("kotlin.plugin.type.k1")
-        KotlinPluginKind.FIR_PLUGIN -> KotlinPreferencesBundle.message("kotlin.plugin.type.k2")
     }
 
     companion object {

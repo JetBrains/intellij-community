@@ -1,4 +1,4 @@
-// IGNORE_FIR
+// IGNORE_K2
 // EXPECTED_DUPLICATED_HIGHLIGHTING
 
 val <symbolName descr="null" textAttributesKey="KOTLIN_PACKAGE_PROPERTY">fnType</symbolName> : <symbolName descr="null" textAttributesKey="KOTLIN_BUILTIN_ANNOTATION">suspend</symbolName> () -> <symbolName descr="null" textAttributesKey="KOTLIN_OBJECT">Unit</symbolName> = {}

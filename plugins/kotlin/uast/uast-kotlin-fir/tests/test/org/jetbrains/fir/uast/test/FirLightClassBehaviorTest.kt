@@ -32,6 +32,10 @@ class FirLightClassBehaviorTest : KotlinLightCodeInsightFixtureTestCase(), Light
         checkPropertyAccessorModifierListOffsets(myFixture)
     }
 
+    fun testLocalClassCaching() {
+        checkLocalClassCaching(myFixture)
+    }
+
     fun testThrowsList() {
         checkThrowsList(myFixture)
     }
@@ -67,6 +71,11 @@ class FirLightClassBehaviorTest : KotlinLightCodeInsightFixtureTestCase(), Light
 
     fun testUpperBoundWildcardForVar() {
         checkUpperBoundWildcardForVar(myFixture)
+    }
+
+    fun testUpperBoundForRecursiveTypeParameter() {
+        // TODO(KT-61459): remove the flag
+        checkUpperBoundForRecursiveTypeParameter(myFixture, isK2 = true)
     }
 
     fun testDefaultValueOfAnnotation() {

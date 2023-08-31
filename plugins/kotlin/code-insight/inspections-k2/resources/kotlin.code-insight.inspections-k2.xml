@@ -42,17 +42,6 @@
                      language="kotlin"
                      key="inspection.redundant.modality.modifier.display.name" bundle="messages.KotlinBundle"/>
 
-    <localInspection implementationClass="org.jetbrains.kotlin.idea.k2.codeinsight.inspections.KotlinUnusedImportInspection"
-                     groupPath="Kotlin"
-                     groupBundle="messages.KotlinBundle" groupKey="group.names.redundant.constructs"
-                     enabledByDefault="true"
-                     cleanupTool="true"
-                     level="WARNING" editorAttributes="NOT_USED_ELEMENT_ATTRIBUTES"
-                     runForWholeFile="true"
-                     language="kotlin"
-                     suppressId="UnusedImport"
-                     key="inspection.kotlin.unused.import.display.name" bundle="messages.KotlinBundle"/>
-
     <localInspection implementationClass="org.jetbrains.kotlin.idea.k2.codeinsight.inspections.diagnosticBased.UnusedVariableInspection"
                      groupPath="Kotlin"
                      groupBundle="messages.KotlinBundle" groupKey="group.names.redundant.constructs"

@@ -1,3 +1,4 @@
+// IGNORE_K2
 import Outer.Nested
 import Outer.Companion.ClassObjectNested
 import Outer.C.Inner

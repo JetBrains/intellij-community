@@ -176,7 +176,7 @@ public class KotlinCompilerConfigurableTab implements SearchableConfigurable {
                     module -> {
                         KotlinFacet facet = KotlinFacet.Companion.get(module);
                         if (facet == null) return null;
-                        KotlinFacetSettings facetSettings = facet.getConfiguration().getSettings();
+                        IKotlinFacetSettings facetSettings = facet.getConfiguration().getSettings();
                         if (facetSettings.getUseProjectSettings()) return null;
                         return module.getName();
                     }

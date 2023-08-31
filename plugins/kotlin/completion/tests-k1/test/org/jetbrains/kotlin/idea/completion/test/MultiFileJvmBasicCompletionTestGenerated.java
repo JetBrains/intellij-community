@@ -183,6 +183,11 @@ public class MultiFileJvmBasicCompletionTestGenerated extends AbstractMultiFileJ
         runTest("../testData/basic/multifile/JavaCallableReference/");
     }
 
+    @TestMetadata("JavaEnum")
+    public void testJavaEnum() throws Exception {
+        runTest("../testData/basic/multifile/JavaEnum/");
+    }
+
     @TestMetadata("JavaInnerClasses")
     public void testJavaInnerClasses() throws Exception {
         runTest("../testData/basic/multifile/JavaInnerClasses/");

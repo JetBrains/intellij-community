@@ -3,5 +3,6 @@ fun buildTemplates() {
     Arrays.bina<caret>
 }
 
+// IGNORE_K2
 // ELEMENT: binarySearch
 // TAIL_TEXT: "(IntArray, Int) for Arrays in java.util"

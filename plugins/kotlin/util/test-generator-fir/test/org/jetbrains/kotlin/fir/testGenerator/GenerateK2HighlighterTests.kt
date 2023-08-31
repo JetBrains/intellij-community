@@ -11,7 +11,7 @@ import org.jetbrains.kotlin.testGenerator.model.*
 internal fun MutableTWorkspace.generateK2HighlighterTests() {
     testGroup("highlighting/highlighting-k2", testDataPath = "../../idea/tests/testData") {
         testClass<AbstractK2HighlightingMetaInfoTest> {
-            model("highlighterMetaInfo")
+            model("highlighterMetaInfo", pattern = Patterns.KT_OR_KTS)
         }
 
         testClass<AbstractK2BundledCompilerPluginsHighlightingMetaInfoTest> {

@@ -15,6 +15,7 @@ fun C.foo() {
     val v = ::<caret>
 }
 
+// IGNORE_K2
 // ABSENT: memberFun
 // ABSENT: memberVal
 // ABSENT: hashCode

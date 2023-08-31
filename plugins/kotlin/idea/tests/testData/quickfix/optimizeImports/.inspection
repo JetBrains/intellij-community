@@ -1,1 +1,1 @@
-org.jetbrains.kotlin.idea.inspections.KotlinUnusedImportInspection
+org.jetbrains.kotlin.idea.codeInsight.inspections.shared.KotlinUnusedImportInspection

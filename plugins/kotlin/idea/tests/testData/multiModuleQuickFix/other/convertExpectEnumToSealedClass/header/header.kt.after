@@ -1,4 +1,5 @@
 // "Convert to sealed class" "true"
+// IGNORE_K2
 
 expect sealed class <caret>E {
     data object A : E

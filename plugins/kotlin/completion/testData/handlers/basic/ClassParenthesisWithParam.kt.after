@@ -8,4 +8,5 @@ fun foo() {
     val some = Some(<caret>)
 }
 
+// IGNORE_K2
 // ELEMENT: Some

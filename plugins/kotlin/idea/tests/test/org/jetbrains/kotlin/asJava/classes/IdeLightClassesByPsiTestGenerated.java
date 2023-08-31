@@ -103,6 +103,11 @@ public abstract class IdeLightClassesByPsiTestGenerated extends AbstractIdeLight
             runTest(compilerTestData("compiler/testData/asJava/lightClasses/lightClassByPsi/facades/valueClassInSignature.kt"));
         }
 
+        @TestMetadata("varargParameterWithoutType.kt")
+        public void testVarargParameterWithoutType() throws Exception {
+            runTest(compilerTestData("compiler/testData/asJava/lightClasses/lightClassByPsi/facades/varargParameterWithoutType.kt"));
+        }
+
         @TestMetadata("wildcardOptimization.kt")
         public void testWildcardOptimization() throws Exception {
             runTest(compilerTestData("compiler/testData/asJava/lightClasses/lightClassByPsi/facades/wildcardOptimization.kt"));

@@ -3,16 +3,13 @@ package org.jetbrains.kotlin.gradle.multiplatformTests.testFeatures.checkers.fac
 
 import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.module.Module
-import org.jetbrains.kotlin.config.CompilerSettings
-import org.jetbrains.kotlin.config.KotlinFacetSettings
-import org.jetbrains.kotlin.config.KotlinFacetSettingsProvider
-import org.jetbrains.kotlin.config.LanguageVersion
+import org.jetbrains.kotlin.config.*
 import org.jetbrains.kotlin.gradle.multiplatformTests.TestConfiguration
 import org.jetbrains.kotlin.gradle.multiplatformTests.workspace.*
 import org.jetbrains.kotlin.platform.TargetPlatform
 import kotlin.reflect.KProperty1
 
-internal typealias FacetField = KProperty1<KotlinFacetSettings, *>
+internal typealias FacetField = KProperty1<IKotlinFacetSettings, *>
 
 object KotlinFacetSettingsChecker : WorkspaceModelChecker<KotlinFacetSettingsChecksConfiguration>(respectOrder = true) {
     override fun createDefaultConfiguration(): KotlinFacetSettingsChecksConfiguration = KotlinFacetSettingsChecksConfiguration()
@@ -89,14 +86,14 @@ object KotlinFacetSettingsChecker : WorkspaceModelChecker<KotlinFacetSettingsChe
     }
 
     private val ALL_FACET_FIELDS_TO_PRINT = setOf<FacetField>(
-        KotlinFacetSettings::externalProjectId,
-        KotlinFacetSettings::languageLevel,
-        KotlinFacetSettings::apiLevel,
-        KotlinFacetSettings::mppVersion,
-        KotlinFacetSettings::dependsOnModuleNames,
-        KotlinFacetSettings::additionalVisibleModuleNames,
-        KotlinFacetSettings::targetPlatform,
-        KotlinFacetSettings::compilerSettings
+        IKotlinFacetSettings::externalProjectId,
+        IKotlinFacetSettings::languageLevel,
+        IKotlinFacetSettings::apiLevel,
+        IKotlinFacetSettings::mppVersion,
+        IKotlinFacetSettings::dependsOnModuleNames,
+        IKotlinFacetSettings::additionalVisibleModuleNames,
+        IKotlinFacetSettings::targetPlatform,
+        IKotlinFacetSettings::compilerSettings
     )
 
     private val CURRENT_KGP_LANGUAGE_VERSION_PLACEHOLDER = "{{LATEST_STABLE}}"

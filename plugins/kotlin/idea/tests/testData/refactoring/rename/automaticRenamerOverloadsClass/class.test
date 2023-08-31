@@ -3,5 +3,6 @@
   "classId": "testing/Klass",
   "oldName": "foo",
   "newName": "bar",
-  "mainFile": "Klass.kt"
+  "mainFile": "Klass.kt",
+  "enabledInK2": "true"
 }

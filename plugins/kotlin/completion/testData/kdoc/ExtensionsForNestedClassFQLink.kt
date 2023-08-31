@@ -27,6 +27,7 @@ val C.B.topExtVal: String
     get() = ""
 
 
+// IGNORE_K2
 // EXIST: ext
 // EXIST: extVal
 // EXIST: topExt

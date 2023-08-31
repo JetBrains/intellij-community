@@ -1,5 +1,6 @@
 {
   "type": "AUTO_DETECT",
   "mainFile": "Y.kt",
-  "newName": "getFoo"
+  "newName": "getFoo",
+  "enabledInK2": "true"
 }

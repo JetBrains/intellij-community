@@ -1,4 +1,4 @@
-// IGNORE_FIR
+// IGNORE_K2
 
 <symbolName textAttributesKey="KOTLIN_BUILTIN_ANNOTATION">annotation</symbolName> class <symbolName textAttributesKey="KOTLIN_ANNOTATION">Anno</symbolName>
 typealias <symbolName textAttributesKey="KOTLIN_ANNOTATION">AnnoAlias</symbolName> = <symbolName textAttributesKey="KOTLIN_ANNOTATION">Anno</symbolName>

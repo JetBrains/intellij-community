@@ -17,70 +17,189 @@ import org.junit.runner.RunWith;
 @TestRoot("code-insight/inspections-k2/tests")
 @TestDataPath("$CONTENT_ROOT")
 @RunWith(JUnit3RunnerWithInners.class)
-@TestMetadata("../../../idea/tests/testData/multiFileLocalInspections/unusedSymbol")
 public abstract class K2MultiFileLocalInspectionTestGenerated extends AbstractK2MultiFileLocalInspectionTest {
     @RunWith(JUnit3RunnerWithInners.class)
-    @TestMetadata("../../../idea/tests/testData/multiFileLocalInspections/unusedSymbol/fromKotlinTest")
-    public static class FromKotlinTest extends AbstractK2MultiFileLocalInspectionTest {
-        private void runTest(String testDataFilePath) throws Exception {
-            KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+    @TestMetadata("../../../idea/tests/testData/multiFileLocalInspections/unusedSymbol")
+    public abstract static class UnusedSymbol extends AbstractK2MultiFileLocalInspectionTest {
+        @RunWith(JUnit3RunnerWithInners.class)
+        @TestMetadata("../../../idea/tests/testData/multiFileLocalInspections/unusedSymbol/fromKotlinTest")
+        public static class FromKotlinTest extends AbstractK2MultiFileLocalInspectionTest {
+            private void runTest(String testDataFilePath) throws Exception {
+                KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+            }
+
+            @TestMetadata("fromKotlinTest.test")
+            public void testFromKotlinTest() throws Exception {
+                runTest("../../../idea/tests/testData/multiFileLocalInspections/unusedSymbol/fromKotlinTest/fromKotlinTest.test");
+            }
         }
 
-        @TestMetadata("fromKotlinTest.test")
-        public void testFromKotlinTest() throws Exception {
-            runTest("../../../idea/tests/testData/multiFileLocalInspections/unusedSymbol/fromKotlinTest/fromKotlinTest.test");
+        @RunWith(JUnit3RunnerWithInners.class)
+        @TestMetadata("../../../idea/tests/testData/multiFileLocalInspections/unusedSymbol/fromKotlinTestClass")
+        public static class FromKotlinTestClass extends AbstractK2MultiFileLocalInspectionTest {
+            private void runTest(String testDataFilePath) throws Exception {
+                KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+            }
+
+            @TestMetadata("fromKotlinTestClass.test")
+            public void testFromKotlinTestClass() throws Exception {
+                runTest("../../../idea/tests/testData/multiFileLocalInspections/unusedSymbol/fromKotlinTestClass/fromKotlinTestClass.test");
+            }
+        }
+
+        @RunWith(JUnit3RunnerWithInners.class)
+        @TestMetadata("../../../idea/tests/testData/multiFileLocalInspections/unusedSymbol/inlineClassesImplInterface")
+        public static class InlineClassesImplInterface extends AbstractK2MultiFileLocalInspectionTest {
+            private void runTest(String testDataFilePath) throws Exception {
+                KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+            }
+
+            @TestMetadata("inlineClassesImplInterface.test")
+            public void testInlineClassesImplInterface() throws Exception {
+                runTest("../../../idea/tests/testData/multiFileLocalInspections/unusedSymbol/inlineClassesImplInterface/inlineClassesImplInterface.test");
+            }
+        }
+
+        @RunWith(JUnit3RunnerWithInners.class)
+        @TestMetadata("../../../idea/tests/testData/multiFileLocalInspections/unusedSymbol/internalConstructorUsedInJava")
+        public static class InternalConstructorUsedInJava extends AbstractK2MultiFileLocalInspectionTest {
+            private void runTest(String testDataFilePath) throws Exception {
+                KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+            }
+
+            @TestMetadata("internalConstructorUsedInJava.test")
+            public void testInternalConstructorUsedInJava() throws Exception {
+                runTest("../../../idea/tests/testData/multiFileLocalInspections/unusedSymbol/internalConstructorUsedInJava/internalConstructorUsedInJava.test");
+            }
+        }
+
+        @RunWith(JUnit3RunnerWithInners.class)
+        @TestMetadata("../../../idea/tests/testData/multiFileLocalInspections/unusedSymbol/propertyWithJvmNameAnnotation")
+        public static class PropertyWithJvmNameAnnotation extends AbstractK2MultiFileLocalInspectionTest {
+            private void runTest(String testDataFilePath) throws Exception {
+                KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+            }
+
+            @TestMetadata("propertyWithJvmNameAnnotation.test")
+            public void testPropertyWithJvmNameAnnotation() throws Exception {
+                runTest("../../../idea/tests/testData/multiFileLocalInspections/unusedSymbol/propertyWithJvmNameAnnotation/propertyWithJvmNameAnnotation.test");
+            }
         }
     }
 
     @RunWith(JUnit3RunnerWithInners.class)
-    @TestMetadata("../../../idea/tests/testData/multiFileLocalInspections/unusedSymbol/fromKotlinTestClass")
-    public static class FromKotlinTestClass extends AbstractK2MultiFileLocalInspectionTest {
-        private void runTest(String testDataFilePath) throws Exception {
-            KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+    @TestMetadata("../../../idea/tests/testData/multiFileLocalInspections/redundantQualifierName")
+    public abstract static class RedundantQualifierName extends AbstractK2MultiFileLocalInspectionTest {
+        @RunWith(JUnit3RunnerWithInners.class)
+        @TestMetadata("../../../idea/tests/testData/multiFileLocalInspections/redundantQualifierName/javaStatic")
+        public static class JavaStatic extends AbstractK2MultiFileLocalInspectionTest {
+            private void runTest(String testDataFilePath) throws Exception {
+                KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+            }
+
+            @TestMetadata("fromKotlinTest.test")
+            public void testFromKotlinTest() throws Exception {
+                runTest("../../../idea/tests/testData/multiFileLocalInspections/redundantQualifierName/javaStatic/fromKotlinTest.test");
+            }
         }
 
-        @TestMetadata("fromKotlinTestClass.test")
-        public void testFromKotlinTestClass() throws Exception {
-            runTest("../../../idea/tests/testData/multiFileLocalInspections/unusedSymbol/fromKotlinTestClass/fromKotlinTestClass.test");
+        @RunWith(JUnit3RunnerWithInners.class)
+        @TestMetadata("../../../idea/tests/testData/multiFileLocalInspections/redundantQualifierName/javaStatic2")
+        public static class JavaStatic2 extends AbstractK2MultiFileLocalInspectionTest {
+            private void runTest(String testDataFilePath) throws Exception {
+                KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+            }
+
+            @TestMetadata("fromKotlinTest.test")
+            public void testFromKotlinTest() throws Exception {
+                runTest("../../../idea/tests/testData/multiFileLocalInspections/redundantQualifierName/javaStatic2/fromKotlinTest.test");
+            }
+        }
+
+        @RunWith(JUnit3RunnerWithInners.class)
+        @TestMetadata("../../../idea/tests/testData/multiFileLocalInspections/redundantQualifierName/unnecessaryNonDirectParentClassQualifier")
+        public static class UnnecessaryNonDirectParentClassQualifier extends AbstractK2MultiFileLocalInspectionTest {
+            private void runTest(String testDataFilePath) throws Exception {
+                KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+            }
+
+            @TestMetadata("fromKotlinTest.test")
+            public void testFromKotlinTest() throws Exception {
+                runTest("../../../idea/tests/testData/multiFileLocalInspections/redundantQualifierName/unnecessaryNonDirectParentClassQualifier/fromKotlinTest.test");
+            }
+        }
+
+        @RunWith(JUnit3RunnerWithInners.class)
+        @TestMetadata("../../../idea/tests/testData/multiFileLocalInspections/redundantQualifierName/unnecessaryNonDirectParentClassQualifierAmbiguous")
+        public static class UnnecessaryNonDirectParentClassQualifierAmbiguous extends AbstractK2MultiFileLocalInspectionTest {
+            private void runTest(String testDataFilePath) throws Exception {
+                KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+            }
+
+            @TestMetadata("fromKotlinTest.test")
+            public void testFromKotlinTest() throws Exception {
+                runTest("../../../idea/tests/testData/multiFileLocalInspections/redundantQualifierName/unnecessaryNonDirectParentClassQualifierAmbiguous/fromKotlinTest.test");
+            }
+        }
+
+        @RunWith(JUnit3RunnerWithInners.class)
+        @TestMetadata("../../../idea/tests/testData/multiFileLocalInspections/redundantQualifierName/unnecessaryNonDirectParentClassQualifierDisabled")
+        public static class UnnecessaryNonDirectParentClassQualifierDisabled extends AbstractK2MultiFileLocalInspectionTest {
+            private void runTest(String testDataFilePath) throws Exception {
+                KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+            }
+
+            @TestMetadata("fromKotlinTest.test")
+            public void testFromKotlinTest() throws Exception {
+                runTest("../../../idea/tests/testData/multiFileLocalInspections/redundantQualifierName/unnecessaryNonDirectParentClassQualifierDisabled/fromKotlinTest.test");
+            }
         }
     }
 
     @RunWith(JUnit3RunnerWithInners.class)
-    @TestMetadata("../../../idea/tests/testData/multiFileLocalInspections/unusedSymbol/inlineClassesImplInterface")
-    public static class InlineClassesImplInterface extends AbstractK2MultiFileLocalInspectionTest {
-        private void runTest(String testDataFilePath) throws Exception {
-            KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
-        }
+    @TestMetadata("testData/multiFileInspectionsLocal")
+    public abstract static class MultiFileInspectionsLocal extends AbstractK2MultiFileLocalInspectionTest {
+        @RunWith(JUnit3RunnerWithInners.class)
+        @TestMetadata("testData/multiFileInspectionsLocal/removeSingleExpressionStringTemplate")
+        public abstract static class RemoveSingleExpressionStringTemplate extends AbstractK2MultiFileLocalInspectionTest {
+            @RunWith(JUnit3RunnerWithInners.class)
+            @TestMetadata("testData/multiFileInspectionsLocal/removeSingleExpressionStringTemplate/javaNotNull")
+            public static class JavaNotNull extends AbstractK2MultiFileLocalInspectionTest {
+                private void runTest(String testDataFilePath) throws Exception {
+                    KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+                }
 
-        @TestMetadata("inlineClassesImplInterface.test")
-        public void testInlineClassesImplInterface() throws Exception {
-            runTest("../../../idea/tests/testData/multiFileLocalInspections/unusedSymbol/inlineClassesImplInterface/inlineClassesImplInterface.test");
-        }
-    }
+                @TestMetadata("javaNotNull.test")
+                public void testJavaNotNull() throws Exception {
+                    runTest("testData/multiFileInspectionsLocal/removeSingleExpressionStringTemplate/javaNotNull/javaNotNull.test");
+                }
+            }
 
-    @RunWith(JUnit3RunnerWithInners.class)
-    @TestMetadata("../../../idea/tests/testData/multiFileLocalInspections/unusedSymbol/internalConstructorUsedInJava")
-    public static class InternalConstructorUsedInJava extends AbstractK2MultiFileLocalInspectionTest {
-        private void runTest(String testDataFilePath) throws Exception {
-            KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
-        }
+            @RunWith(JUnit3RunnerWithInners.class)
+            @TestMetadata("testData/multiFileInspectionsLocal/removeSingleExpressionStringTemplate/javaNullable")
+            public static class JavaNullable extends AbstractK2MultiFileLocalInspectionTest {
+                private void runTest(String testDataFilePath) throws Exception {
+                    KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+                }
 
-        @TestMetadata("internalConstructorUsedInJava.test")
-        public void testInternalConstructorUsedInJava() throws Exception {
-            runTest("../../../idea/tests/testData/multiFileLocalInspections/unusedSymbol/internalConstructorUsedInJava/internalConstructorUsedInJava.test");
-        }
-    }
+                @TestMetadata("javaNullable.test")
+                public void testJavaNullable() throws Exception {
+                    runTest("testData/multiFileInspectionsLocal/removeSingleExpressionStringTemplate/javaNullable/javaNullable.test");
+                }
+            }
 
-    @RunWith(JUnit3RunnerWithInners.class)
-    @TestMetadata("../../../idea/tests/testData/multiFileLocalInspections/unusedSymbol/propertyWithJvmNameAnnotation")
-    public static class PropertyWithJvmNameAnnotation extends AbstractK2MultiFileLocalInspectionTest {
-        private void runTest(String testDataFilePath) throws Exception {
-            KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
-        }
+            @RunWith(JUnit3RunnerWithInners.class)
+            @TestMetadata("testData/multiFileInspectionsLocal/removeSingleExpressionStringTemplate/javaPlatformType")
+            public static class JavaPlatformType extends AbstractK2MultiFileLocalInspectionTest {
+                private void runTest(String testDataFilePath) throws Exception {
+                    KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+                }
 
-        @TestMetadata("propertyWithJvmNameAnnotation.test")
-        public void testPropertyWithJvmNameAnnotation() throws Exception {
-            runTest("../../../idea/tests/testData/multiFileLocalInspections/unusedSymbol/propertyWithJvmNameAnnotation/propertyWithJvmNameAnnotation.test");
+                @TestMetadata("javaPlatformType.test")
+                public void testJavaPlatformType() throws Exception {
+                    runTest("testData/multiFileInspectionsLocal/removeSingleExpressionStringTemplate/javaPlatformType/javaPlatformType.test");
+                }
+            }
         }
     }
 }

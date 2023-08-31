@@ -21,7 +21,7 @@ import kotlin.io.path.Path
 
 abstract class AbstractLineMarkersK2Test : AbstractLineMarkersTest() {
     override fun doTest(path: String) {
-        IgnoreTests.runTestIfNotDisabledByFileDirective(Path(path), IgnoreTests.DIRECTIVES.IGNORE_FIR) {
+        IgnoreTests.runTestIfNotDisabledByFileDirective(Path(path), IgnoreTests.DIRECTIVES.IGNORE_K2) {
             super.doTest(path)
         }
     }

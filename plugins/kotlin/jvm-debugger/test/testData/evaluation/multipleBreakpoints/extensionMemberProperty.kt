@@ -122,5 +122,3 @@ class MemberClass {
 class ExtClass {
     val a = 1
 }
-
-// IGNORE_K2

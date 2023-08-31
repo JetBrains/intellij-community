@@ -2,4 +2,4 @@
 // K2_INSPECTION_CLASS: org.jetbrains.kotlin.idea.k2.codeinsight.inspections.UnusedSymbolInspection
 // COMPILER_ARGUMENTS: -XXLanguage:+EnumEntries -opt-in=kotlin.ExperimentalStdlibApi
 // WITH_STDLIB
-// IGNORE_FIR
+// IGNORE_K2

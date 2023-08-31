@@ -126,7 +126,7 @@ abstract class AbstractOverrideImplementTest<T : ClassMember> : KotlinLightCodeI
     }
 
     private fun doMultiOverrideImplement(handler: AbstractGenerateMembersHandler<T>) {
-        if (isFirPlugin && InTextDirectivesUtils.isDirectiveDefined(myFixture.file.text, IgnoreTests.DIRECTIVES.IGNORE_FIR)) {
+        if (isFirPlugin && InTextDirectivesUtils.isDirectiveDefined(myFixture.file.text, IgnoreTests.DIRECTIVES.IGNORE_K2)) {
             return
         }
         val elementAtCaret = myFixture.file.findElementAt(myFixture.editor.caretModel.offset)
@@ -176,7 +176,7 @@ abstract class AbstractOverrideImplementTest<T : ClassMember> : KotlinLightCodeI
         val resultFile = if (isFirPlugin) {
             if (InTextDirectivesUtils.isDirectiveDefined(
                     goldenResultFile.readText(StandardCharsets.UTF_8),
-                    IgnoreTests.DIRECTIVES.IGNORE_FIR
+                    IgnoreTests.DIRECTIVES.IGNORE_K2
                 )
             ) {
                 return

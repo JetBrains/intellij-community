@@ -7,6 +7,6 @@ fun foo(n: Int): Boolean {
     }
 }
 
-/* IGNORE_FIR */
+/* IGNORE_K2 */
 
 // FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.ChangeCallableReturnTypeFix$ForEnclosing

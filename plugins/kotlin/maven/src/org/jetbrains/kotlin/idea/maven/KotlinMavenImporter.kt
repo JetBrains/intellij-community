@@ -198,7 +198,7 @@ class KotlinMavenImporter : MavenImporter(KOTLIN_PLUGIN_GROUP_ID, KOTLIN_PLUGIN_
     private fun configureJSOutputPaths(
         mavenProject: MavenProject,
         modifiableRootModel: ModifiableRootModel,
-        facetSettings: KotlinFacetSettings,
+        facetSettings: IKotlinFacetSettings,
         mavenPlugin: MavenPlugin
     ) {
         fun parentPath(path: String): String =

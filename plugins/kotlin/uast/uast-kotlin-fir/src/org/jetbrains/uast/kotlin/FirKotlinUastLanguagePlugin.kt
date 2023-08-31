@@ -3,6 +3,7 @@
 package org.jetbrains.uast.kotlin
 
 import com.intellij.lang.Language
+import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.service
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.util.text.StringUtil
@@ -22,19 +23,26 @@ class FirKotlinUastLanguagePlugin : UastLanguagePlugin {
     override val language: Language
         get() = KotlinLanguage.INSTANCE
 
-    override fun isFileSupported(fileName: String): Boolean {
-        return when {
-            fileName.endsWith(".kt", false) -> true
-            fileName.endsWith(".kts", false) -> Registry.`is`("kotlin.k2.scripting.enabled", false)
-            else -> false
-        }
+    override fun isFileSupported(fileName: String): Boolean = when {
+        fileName.endsWith(".kt", false) -> true
+        fileName.endsWith(".kts", false) -> Registry.`is`("kotlin.k2.scripting.enabled", false)
+        else -> false
     }
 
     private val PsiElement.isSupportedElement: Boolean
-        get() = project.service<FirKotlinUastResolveProviderService>().isSupportedElement(this)
+        get() {
+            val ktFile = containingFile?.let(::unwrapFakeFileForLightClass) as? KtFile ?: return false
+            if (!ApplicationManager.getApplication().service<FirKotlinUastResolveProviderService>().isSupportedFile(ktFile)) {
+                return false
+            }
+
+            // Disable UAST for script files in K2 until scripting support is properly implemented in the K2 plugin.
+            // UAST should not analyze script files.
+            return !ktFile.isScript() || Registry.`is`("kotlin.k2.scripting.enabled", false)
+        }
 
     override fun convertElement(element: PsiElement, parent: UElement?, requiredType: Class<out UElement>?): UElement? {
-        if (!element.isSupportedElement) return null
+        if (parent == null && !element.isSupportedElement) return null
         return convertDeclarationOrElement(element, parent, elementTypes(requiredType))
     }
 

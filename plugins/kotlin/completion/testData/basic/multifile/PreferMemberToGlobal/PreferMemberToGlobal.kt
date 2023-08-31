@@ -11,6 +11,7 @@ class C {
     }
 }
 
+// IGNORE_K2
 // EXIST: { lookupString: "xxx", itemText: "xxx", tailText: "()", typeText: "Unit", icon: "Method"}
 // EXIST: { lookupString: "xxy", itemText: "xxy", tailText: "()", typeText: "Unit", icon: "Method"}
 // EXIST: { lookupString: "xxz", itemText: "xxz", tailText: "(p: Int)", typeText: "Unit", icon: "Method"}

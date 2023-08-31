@@ -1,4 +1,4 @@
-// IGNORE_FIR
+// IGNORE_K2
 
 interface <symbolName textAttributesKey="KOTLIN_TRAIT">Zoo</symbolName><<symbolName textAttributesKey="KOTLIN_TYPE_PARAMETER">T</symbolName>> {
     <error descr="[WRONG_MODIFIER_TARGET] Modifier 'inner' is not applicable to 'enum class'" textAttributesKey="ERRORS_ATTRIBUTES"><symbolName textAttributesKey="KOTLIN_BUILTIN_ANNOTATION">inner</symbolName></error> <symbolName textAttributesKey="KOTLIN_BUILTIN_ANNOTATION">enum</symbolName> class <symbolName textAttributesKey="KOTLIN_ENUM">Var</symbolName> : <symbolName textAttributesKey="KOTLIN_TRAIT">Zoo</symbolName><<error descr="[INACCESSIBLE_OUTER_CLASS_EXPRESSION] Expression is inaccessible from a nested class 'Var'" textAttributesKey="ERRORS_ATTRIBUTES"><symbolName descr="null" textAttributesKey="KOTLIN_TYPE_PARAMETER">T</symbolName></error>>

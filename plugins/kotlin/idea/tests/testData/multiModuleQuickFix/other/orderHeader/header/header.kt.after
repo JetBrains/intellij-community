@@ -1,3 +1,4 @@
 // "Replace with 'expect'" "true"
+// IGNORE_K2
 
 public expect open class My

@@ -11,6 +11,7 @@ import org.jetbrains.kotlin.descriptors.DeclarationDescriptor
 import org.jetbrains.kotlin.descriptors.TypeAliasDescriptor
 import org.jetbrains.kotlin.descriptors.impl.TypeAliasConstructorDescriptor
 import org.jetbrains.kotlin.idea.FrontendInternals
+import org.jetbrains.kotlin.idea.base.psi.imports.KotlinImportPathComparator
 import org.jetbrains.kotlin.idea.caches.resolve.analyzeAsReplacement
 import org.jetbrains.kotlin.idea.caches.resolve.analyze
 import org.jetbrains.kotlin.idea.caches.resolve.getResolutionFacade
@@ -180,7 +181,7 @@ class OptimizedImportsBuilder(
         // now check that there are no conflicts and all classes are really imported
         addExplicitImportsForClassesWhenRequired(classNamesToCheck, descriptorsByParentFqName, importsToGenerate, file)
 
-        val sortedImportsToGenerate = importsToGenerate.sortedWith(importInsertHelper.getImportSortComparator(file))
+        val sortedImportsToGenerate = importsToGenerate.sortedWith(KotlinImportPathComparator.create(file))
 
         // check if no changes to imports required
         val oldImports = file.importDirectives

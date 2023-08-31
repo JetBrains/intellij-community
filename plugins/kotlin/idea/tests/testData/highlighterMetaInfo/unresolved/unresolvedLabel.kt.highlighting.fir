@@ -4,6 +4,6 @@
 
 class <!HIGHLIGHTING("severity='SYMBOL_TYPE_SEVERITY'; highlightingTextAttributesKey='KOTLIN_CLASS'")!>A<!> {
     <!HIGHLIGHTING("severity='SYMBOL_TYPE_SEVERITY'; highlightingTextAttributesKey='KOTLIN_KEYWORD'")!>init<!> {
-        this<!HIGHLIGHTING("severity='ERROR'; descr='[UNRESOLVED_LABEL] Unresolved label'; highlightingTextAttributesKey='WRONG_REFERENCES_ATTRIBUTES'"), HIGHLIGHTING("severity='SYMBOL_TYPE_SEVERITY'; highlightingTextAttributesKey='KOTLIN_LABEL'")!>@B<!>
+        this<!HIGHLIGHTING("severity='ERROR'; descr='[UNRESOLVED_LABEL] Unresolved label.'; highlightingTextAttributesKey='WRONG_REFERENCES_ATTRIBUTES'"), HIGHLIGHTING("severity='SYMBOL_TYPE_SEVERITY'; highlightingTextAttributesKey='KOTLIN_LABEL'")!>@B<!>
     }
 }

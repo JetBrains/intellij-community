@@ -10,7 +10,7 @@ fun bar(p: Int) {
     <caret>if (p > 0) v2 = true else v1 = false
 }
 
-// IGNORE_FIR
+// IGNORE_K2
 // Note: K2 does not support all of inspections, intentions, and quickfixes yet. When enabling K2,
 // this test fails because the last two actions are missing at this moment. After implementing all
-// inspections/intentions/quickfixes based on K2, we should remove the above "IGNORE_FIR" directive.
+// inspections/intentions/quickfixes based on K2, we should remove the above "IGNORE_K2" directive.

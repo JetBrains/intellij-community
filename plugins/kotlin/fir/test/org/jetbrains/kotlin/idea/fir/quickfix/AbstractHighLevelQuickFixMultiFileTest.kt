@@ -22,7 +22,7 @@ abstract class AbstractHighLevelQuickFixMultiFileTest : AbstractQuickFixMultiFil
     override fun doTestWithExtraFile(beforeFileName: String) {
         IgnoreTests.runTestIfNotDisabledByFileDirective(
             Paths.get(beforeFileName),
-            disableTestDirective = IgnoreTests.DIRECTIVES.IGNORE_FIR_MULTILINE_COMMENT,
+            disableTestDirective = IgnoreTests.DIRECTIVES.IGNORE_K2_MULTILINE_COMMENT,
             directivePosition = IgnoreTests.DirectivePosition.LAST_LINE_IN_FILE,
             computeAdditionalFiles = { mainTestFile -> listOfNotNull(mainTestFile.getAfterFileIfExists()) },
             test = { super.doTestWithExtraFile(beforeFileName) }

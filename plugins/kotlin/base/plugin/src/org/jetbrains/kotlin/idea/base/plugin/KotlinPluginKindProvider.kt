@@ -2,6 +2,7 @@
 package org.jetbrains.kotlin.idea.base.plugin
 
 import com.intellij.openapi.application.ApplicationManager
+import org.jetbrains.annotations.Nls
 
 interface KotlinPluginKindProvider {
     val pluginKind: KotlinPluginKind
@@ -21,6 +22,13 @@ enum class KotlinPluginKind {
     };
 
     abstract fun other(): KotlinPluginKind
+}
+
+fun KotlinPluginKind.getPluginKindDescription(): @Nls String {
+    return when (this) {
+        KotlinPluginKind.FE10_PLUGIN -> KotlinBasePluginBundle.message("kotlin.plugin.kind.k1")
+        KotlinPluginKind.FIR_PLUGIN -> KotlinBasePluginBundle.message("kotlin.plugin.kind.k2")
+    }
 }
 
 

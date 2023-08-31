@@ -7,8 +7,8 @@ import com.intellij.openapi.fileTypes.SyntaxHighlighter
 import com.intellij.openapi.fileTypes.SyntaxHighlighterProvider
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
+import org.jetbrains.kotlin.analysis.decompiler.konan.KlibMetaFileType
 import org.jetbrains.kotlin.analysis.decompiler.psi.KotlinBuiltInFileType
-import org.jetbrains.kotlin.idea.base.psi.fileTypes.KlibMetaFileType
 import org.jetbrains.kotlin.idea.highlighter.KotlinHighlighter
 
 internal class KotlinSyntaxHighlighterFactory : SingleLazyInstanceSyntaxHighlighterFactory(), SyntaxHighlighterProvider {
