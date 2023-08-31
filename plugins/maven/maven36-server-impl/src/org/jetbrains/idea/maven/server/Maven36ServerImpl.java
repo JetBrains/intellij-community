@@ -9,7 +9,6 @@ import org.jetbrains.idea.maven.server.security.MavenToken;
 import java.io.File;
 import java.rmi.RemoteException;
 import java.rmi.server.UnicastRemoteObject;
-import java.util.Collection;
 import java.util.HashSet;
 
 public class Maven36ServerImpl extends MavenServerBase {
@@ -82,5 +81,14 @@ public class Maven36ServerImpl extends MavenServerBase {
     catch (Throwable e) {
       throw wrapToSerializableRuntimeException(e);
     }
+  }
+
+  @Override
+  public MavenServerStatus getDebugStatus(boolean clean) {
+    MavenServerStatus status = new MavenServerStatus();
+    if (!MavenServerStatsCollector.collectStatistics) return new MavenServerStatus();
+    status.statusCollected = true;
+    MavenServerStatsCollector.fill(status, clean);
+    return status;
   }
 }

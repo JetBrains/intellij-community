@@ -12,7 +12,6 @@ import org.jetbrains.idea.maven.server.security.MavenToken;
 import java.io.File;
 import java.rmi.RemoteException;
 import java.rmi.server.UnicastRemoteObject;
-import java.util.Collection;
 import java.util.HashSet;
 import java.util.logging.Handler;
 import java.util.logging.Level;
@@ -128,5 +127,11 @@ public class MavenServerForIndexer extends MavenWatchdogAware implements MavenSe
   @Override
   public MavenPullDownloadListener createPullDownloadListener(MavenToken token) throws RemoteException {
     throw new UnsupportedOperationException("indexing server");
+  }
+
+  public MavenServerStatus getDebugStatus(boolean clean) {
+    MavenServerStatus result = new MavenServerStatus();
+    result.statusCollected = false;
+    return result;
   }
 }

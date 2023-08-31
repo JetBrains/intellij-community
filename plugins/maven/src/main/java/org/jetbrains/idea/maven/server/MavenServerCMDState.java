@@ -90,6 +90,9 @@ public class MavenServerCMDState extends CommandLineState {
     }
 
     params.getVMParametersList().addProperty("maven.defaultProjectBuilder.disableGlobalModelCache", "true");
+    if (Registry.is("maven.collect.stat")) {
+      params.getVMParametersList().addProperty("maven.collect.stat", "true");
+    }
 
     String xmxProperty = null;
     String xmsProperty = null;

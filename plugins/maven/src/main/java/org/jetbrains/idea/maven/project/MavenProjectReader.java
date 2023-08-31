@@ -10,6 +10,7 @@ import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.maven.dom.converters.MavenConsumerPomUtil;
+import org.jetbrains.idea.maven.internal.ReadStatisticsCollector;
 import org.jetbrains.idea.maven.model.*;
 import org.jetbrains.idea.maven.server.MavenEmbedderWrapper;
 import org.jetbrains.idea.maven.server.MavenServerManager;
@@ -558,6 +559,9 @@ public final class MavenProjectReader {
   private static Element readXml(final VirtualFile file,
                                  final Collection<MavenProjectProblem> problems,
                                  final MavenProjectProblem.ProblemType type) {
+
+    ReadStatisticsCollector.getInstance().fileRead(file);
+
     return MavenJDOMUtil.read(file, new MavenJDOMUtil.ErrorHandler() {
       @Override
       public void onReadError(IOException e) {

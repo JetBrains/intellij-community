@@ -65,6 +65,8 @@ public interface MavenServerConnector extends Disposable {
 
   List<String> getMultimoduleDirectories();
 
+  MavenServerStatus getDebugStatus(boolean clean);
+
   enum State {
     STARTING,
     RUNNING,

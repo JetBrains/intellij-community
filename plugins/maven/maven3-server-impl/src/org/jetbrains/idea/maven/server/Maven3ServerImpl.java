@@ -80,4 +80,8 @@ public class Maven3ServerImpl extends MavenServerBase {
       throw wrapToSerializableRuntimeException(e);
     }
   }
+  @Override
+  public MavenServerStatus getDebugStatus(boolean clean) {
+    return new MavenServerStatus();
+  }
 }
