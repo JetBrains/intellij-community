@@ -13,4 +13,4 @@ expect <caret>class A : I
 // FUS_K2_QUICKFIX_NAME: org.jetbrains.kotlin.idea.codeinsight.api.applicators.fixes.IntentionActionAsQuickFixWrapper
 
 // Because KT-59739 is implemented only for K2
-/* IGNORE_FIR */
+/* IGNORE_K2 */
