@@ -126,6 +126,8 @@ interface IjentSessionProvider {
 interface IjentApi {
   suspend fun executeProcess(exe: String, vararg args: String, env: Map<String, String> = emptyMap()): ExecuteProcessResult
 
+  suspend fun fetchLoginShellEnvVariables(): Map<String, String>
+
   sealed interface ExecuteProcessResult {
     class Success(val process: IjentChildProcess) : ExecuteProcessResult
     data class Failure(val errno: Int, val message: String) : ExecuteProcessResult
