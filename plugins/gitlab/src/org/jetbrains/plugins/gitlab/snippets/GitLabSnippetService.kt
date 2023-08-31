@@ -50,10 +50,13 @@ class GitLabSnippetService(private val project: Project, private val serviceScop
         val files = collectNonBinaryFiles(editor?.virtualFile?.let(::listOf)
                                           ?: selectedFiles
                                           ?: listOfNotNull(selectedFile))
+        val initialTitle = selectedFile?.name
+                           ?: selectedFiles?.firstOrNull()?.name
+                           ?: files.first().name
 
         val accountManager = service<GitLabAccountManager>()
         val apiManager = service<GitLabApiManager>()
-        val result = showDialog(apiManager, files) ?: return@launch
+        val result = showDialog(initialTitle, apiManager, files) ?: return@launch
 
         withBackgroundProgress(project, message("snippet.create.action.progress"), true) {
           createSnippet(accountManager, apiManager, result, editor, files)
@@ -161,7 +164,8 @@ class GitLabSnippetService(private val project: Project, private val serviceScop
   /**
    * Shows the 'Create Snippet' dialog and returns a view-model representing the final state of the user inputs.
    */
-  private suspend fun showDialog(apiManager: GitLabApiManager,
+  private suspend fun showDialog(initialTitle: String,
+                                 apiManager: GitLabApiManager,
                                  files: List<VirtualFile>): GitLabCreateSnippetResult? =
     coroutineScope {
       val availablePathHandlingModes =
@@ -178,7 +182,7 @@ class GitLabSnippetService(private val project: Project, private val serviceScop
         apiManager,
         availablePathHandlingModes.toSet(),
         GitLabCreateSnippetViewModelData(
-          "",
+          initialTitle,
           "",
 
           true,

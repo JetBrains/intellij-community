@@ -4,12 +4,12 @@ package org.jetbrains.plugins.gitlab.snippets
 import com.intellij.collaboration.async.modelFlow
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.vfs.VirtualFile
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.*
 import org.jetbrains.annotations.ApiStatus
-import org.jetbrains.annotations.Nls
 import org.jetbrains.plugins.gitlab.api.GitLabApiManager
 import org.jetbrains.plugins.gitlab.api.GitLabProjectCoordinates
 import org.jetbrains.plugins.gitlab.authentication.accounts.GitLabAccount
@@ -110,8 +110,8 @@ internal data class GitLabCreateSnippetResult(
  * Data that can be stored and changed representing the inputs from the create-snippet dialog.
  */
 internal data class GitLabCreateSnippetViewModelData(
-  val title: @Nls String,
-  val description: @Nls String,
+  val title: @NlsSafe String,
+  val description: @NlsSafe String,
 
   val isPrivate: Boolean,
   val isCopyUrl: Boolean,
