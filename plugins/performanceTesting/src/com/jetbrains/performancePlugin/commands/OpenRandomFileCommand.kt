@@ -79,6 +79,7 @@ internal fun fileTypeOf(extension: String): FileType {
       return when (extension) {
         "kt" -> "Kotlin"
         "java" -> "JAVA"
+        "scala" -> "Scala"
         else -> {
           "default"
         }
