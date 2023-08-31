@@ -71,8 +71,6 @@ internal class ProjectIndexingHistoryFusReporterListener : ProjectIndexingActivi
 }
 
 private object ProjectIndexingHistoryFusHandler {
-  val GROUP = EventLogGroup("indexing.statistics", 7)
-
   private val indexingSessionId = EventFields.Long("indexing_session_id")
   private val activityType = EventFields.Enum<IndexingActivityType>("indexing_activity_type") { type -> type.text }
   private val scanningIds = EventFields.LongList("scanning_ids")
@@ -90,13 +88,13 @@ private object ProjectIndexingHistoryFusHandler {
   private val numberOfFilesIndexedByExtensions = EventFields.Int("number_of_files_indexed_by_extensions")
   private val isCancelled = EventFields.Boolean("is_cancelled")
 
-  private val indexingStarted = GROUP.registerVarargEvent(
+  private val indexingStarted = IndexStatisticGroup.GROUP.registerVarargEvent(
     "started",
     indexingSessionId,
     activityType
   )
 
-  private val indexingActivityFinished = GROUP.registerVarargEvent(
+  private val indexingActivityFinished = IndexStatisticGroup.GROUP.registerVarargEvent(
     "finished",
     indexingSessionId,
     activityType,
@@ -186,5 +184,5 @@ private object ProjectIndexingHistoryFusHandler {
 }
 
 class ProjectIndexingHistoryFusReporter : CounterUsagesCollector() {
-  override fun getGroup(): EventLogGroup = ProjectIndexingHistoryFusHandler.GROUP
+  override fun getGroup(): EventLogGroup = IndexStatisticGroup.GROUP
 }
