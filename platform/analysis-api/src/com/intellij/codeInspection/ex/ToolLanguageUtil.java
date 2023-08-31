@@ -69,20 +69,19 @@ public final class ToolLanguageUtil {
     return false;
   }
 
-  public static boolean isToolLanguageOneOf(@NotNull Set<String> elementDialectIds, @NotNull String languageId, boolean applyToDialects) {
-    if (elementDialectIds.contains(languageId)) {
+  public static boolean isToolLanguageOneOf(@NotNull Set<String> elementDialectIds, @NotNull String toolLanguageId, boolean applyToDialects) {
+    if (elementDialectIds.contains(toolLanguageId)) {
       return true;
     }
-    Language language = Language.findLanguageByID(languageId);
+    Language language = Language.findLanguageByID(toolLanguageId);
     if (language == null) {
       // unknown language in plugin.xml, ignore
       return false;
     }
 
-    if (language instanceof MetaLanguage) {
-      return !ContainerUtil.process(Language.getRegisteredLanguages(), registeredLanguage ->
-        !((MetaLanguage)language).matchesLanguage(registeredLanguage)
-        || !existsDialectOneOf(elementDialectIds, registeredLanguage, applyToDialects));
+    if (language instanceof MetaLanguage metaLanguage) {
+      return ContainerUtil.exists(metaLanguage.getMatchingLanguages(), registeredLanguage ->
+        existsDialectOneOf(elementDialectIds, registeredLanguage, applyToDialects));
     }
     return existsDialectOneOf(elementDialectIds, language, applyToDialects);
   }
