@@ -42,7 +42,6 @@ import java.io.File;
 import java.io.IOException;
 import java.lang.reflect.Constructor;
 import java.nio.file.Files;
-import java.nio.file.InvalidPathException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.*;
@@ -441,12 +440,19 @@ public final class GradleProjectResolverUtil {
         if (pathsCache != null) {
           pathsCache.put(path, collectedPaths);
         }
-        GradleLocalCacheHelper.ArtifactCoordinates coordinates = GradleLocalCacheHelper.parseCoordinates(libraryData.getExternalName());
-        if (coordinates != null && path.contains("/caches/modules-2/files-2.1")) {
-          collectSourcesAndJavadocsFor(coordinates, collectedPaths, gradleUserHomeDir.toPath(), sourceResolved, docResolved);
+        if (path.contains("/caches/modules-2/files-2.1") || path.contains("/caches/transforms-")) {
+          String libraryDataExternalName = libraryData.getExternalName().replace("@aar", "");
+          GradleLocalCacheHelper.ArtifactCoordinates coordinates = GradleLocalCacheHelper.parseCoordinates(libraryDataExternalName);
+          Set<LibraryPathType> requiredComponentTypes = getRequiredComponentTypes(sourceResolved, docResolved);
+          if (coordinates != null) {
+            collectSourcesAndJavadocsFor(coordinates, collectedPaths, gradleUserHomeDir.toPath(), requiredComponentTypes);
+          }
+          else {
+            collectSourcesAndJavadocsFromGradleCache(path, collectedPaths, requiredComponentTypes);
+          }
         }
         else {
-          collectSourcesAndJavadocsFor(path, collectedPaths, sourceResolved, docResolved);
+          collectSourcesAndJavadocsFromTheSameFolder(path, collectedPaths, sourceResolved, docResolved);
         }
       }
 
@@ -461,40 +467,17 @@ public final class GradleProjectResolverUtil {
   private static void collectSourcesAndJavadocsFor(@NotNull GradleLocalCacheHelper.ArtifactCoordinates artifactCoordinates,
                                                    @NotNull Map<LibraryPathType, List<String>> collect,
                                                    @NotNull Path gradleUserHome,
-                                                   boolean sourceResolved,
-                                                   boolean docResolved) {
-    Set<LibraryPathType> requiredComponentTypes = getRequiredComponentTypes(sourceResolved, docResolved);
+                                                   @NotNull Set<LibraryPathType> requiredComponentTypes) {
     Map<LibraryPathType, List<Path>> components =
       GradleLocalCacheHelper.findArtifactComponents(artifactCoordinates, gradleUserHome, requiredComponentTypes);
     mergeCollectedArtifacts(collect, components);
   }
 
-  private static void collectSourcesAndJavadocsFor(@NonNls @NotNull String binaryPath,
-                                                   @NotNull Map<LibraryPathType, List<String>> collect,
-                                                   boolean sourceResolved, boolean docResolved) {
-    if (sourceResolved && docResolved) {
-      return;
-    }
-    try {
-      if (binaryPath.contains("/caches/modules-2/files-2.1/")) {
-        collectSourcesAndJavadocsFromGradleCache(binaryPath, collect, sourceResolved, docResolved);
-      }
-      else {
-        collectSourcesAndJavadocsFromTheSameFolder(binaryPath, collect, sourceResolved, docResolved);
-      }
-    }
-    catch (IOException | InvalidPathException e) {
-      LOG.debug(e);
-    }
-  }
-
   private static void collectSourcesAndJavadocsFromGradleCache(@NotNull String binaryPath,
                                                                @NotNull Map<LibraryPathType, List<String>> collect,
-                                                               boolean sourceResolved,
-                                                               boolean docResolved) throws IOException {
+                                                               @NotNull Set<LibraryPathType> requiredComponentTypes) {
     final Path file = Paths.get(binaryPath);
-    Set<LibraryPathType> requiredComponentTypes = getRequiredComponentTypes(sourceResolved, docResolved);
-    Map<LibraryPathType, List<Path>> components = GradleLocalCacheHelper.findAdjacentComponents(file, requiredComponentTypes);
+    Map<LibraryPathType, List<Path>> components = findAdjacentComponents(file, requiredComponentTypes);
     mergeCollectedArtifacts(collect, components);
   }
 
@@ -523,7 +506,7 @@ public final class GradleProjectResolverUtil {
   private static void collectSourcesAndJavadocsFromTheSameFolder(@NotNull String binaryPath,
                                                                  @NotNull Map<LibraryPathType, List<String>> collect,
                                                                  boolean sourceResolved,
-                                                                 boolean docResolved) throws IOException {
+                                                                 boolean docResolved) {
     final Path file = Paths.get(binaryPath);
     Path binaryFileParent = file.getParent();
     if (!Files.isDirectory(binaryFileParent)) return;
@@ -545,6 +528,9 @@ public final class GradleProjectResolverUtil {
           return;
         }
       }
+    }
+    catch (IOException e) {
+      LOG.debug(e);
     }
   }
 
@@ -820,6 +806,13 @@ public final class GradleProjectResolverUtil {
       transitiveDependencies.addAll(dependency.getDependencies());
     }
     return dependencyMap;
+  }
+
+  private static @NotNull Map<LibraryPathType, List<Path>> findAdjacentComponents(@NotNull Path binaryPath,
+                                                                                  @NotNull Set<LibraryPathType> requestedComponents) {
+    var parent = binaryPath.getParent();
+    var cachedArtifactRoot = parent.getParent();
+    return GradleLocalCacheHelper.findAdjacentComponents(cachedArtifactRoot, requestedComponents);
   }
 
   public static boolean isTestSourceSet(@NotNull ExternalSourceSet sourceSet) {

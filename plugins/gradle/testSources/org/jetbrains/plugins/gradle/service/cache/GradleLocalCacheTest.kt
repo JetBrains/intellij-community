@@ -2,11 +2,13 @@
 package org.jetbrains.plugins.gradle.service.cache
 
 import com.intellij.openapi.externalSystem.model.project.LibraryPathType
+import com.intellij.util.io.delete
 import org.assertj.core.api.Assertions.assertThat
 import org.jetbrains.plugins.gradle.importing.GradleImportingTestCase
 import org.jetbrains.plugins.gradle.settings.GradleSettings
 import org.jetbrains.plugins.gradle.testFramework.util.importProject
 import org.junit.Test
+import kotlin.io.path.exists
 
 class GradleLocalCacheTest : GradleImportingTestCase() {
 
@@ -53,19 +55,14 @@ class GradleLocalCacheTest : GradleImportingTestCase() {
       withMavenCentral()
       addTestImplementationDependency(DEPENDENCY)
     }
-    val jarPath = gradleUserHome.resolve(DEPENDENCY_JAR_CACHE_PATH)
-    val components = GradleLocalCacheHelper.findAdjacentComponents(jarPath, setOf(LibraryPathType.BINARY, LibraryPathType.SOURCE))
-    assertThat(components[LibraryPathType.BINARY]).hasSize(1).first().isEqualTo(jarPath)
+    val dependencyRootPath = gradleUserHome.resolve(DEPENDENCY_CACHE_ROOT)
+    val components = GradleLocalCacheHelper.findAdjacentComponents(dependencyRootPath,
+                                                                   setOf(LibraryPathType.BINARY, LibraryPathType.SOURCE))
+    assertThat(components[LibraryPathType.BINARY]).hasSize(1).first().isEqualTo(gradleUserHome.resolve(DEPENDENCY_JAR_CACHE_PATH))
     assertThat(components[LibraryPathType.SOURCE]).hasSize(1).first().isEqualTo(gradleUserHome.resolve(DEPENDENCY_SOURCES_JAR_CACHE_PATH))
   }
 
-  private fun removeGradleCacheEntry(cachePath: String) {
-    val jarPath = gradleUserHome.resolve(cachePath)
-    val cachedSource = jarPath.toFile()
-    if (cachedSource.exists()) {
-      if (!cachedSource.delete()) {
-        throw IllegalStateException("Unable to prepare test execution environment")
-      }
-    }
+  private fun removeGradleCacheEntry(cachePath: String) = gradleUserHome.resolve(cachePath).run {
+    if (exists()) delete(false)
   }
 }

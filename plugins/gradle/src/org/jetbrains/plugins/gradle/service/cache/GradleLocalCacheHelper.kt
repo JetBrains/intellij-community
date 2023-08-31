@@ -9,6 +9,8 @@ import java.io.IOException
 import java.nio.file.*
 import java.nio.file.attribute.BasicFileAttributes
 import java.util.*
+import kotlin.io.path.exists
+import kotlin.io.path.isDirectory
 
 @ApiStatus.Experimental
 object GradleLocalCacheHelper {
@@ -30,7 +32,7 @@ object GradleLocalCacheHelper {
    */
   @JvmStatic
   fun parseCoordinates(artifactNotation: String): ArtifactCoordinates? = artifactNotation.split(":").let {
-    return if (it.size < 3) null else ArtifactCoordinates(it[0], it[1], it[2].removeSuffix("@aar"))
+    return if (it.size < 3) null else ArtifactCoordinates(it[0], it[1], it[2])
   }
 
   /**
@@ -46,38 +48,21 @@ object GradleLocalCacheHelper {
   fun findArtifactComponents(coordinates: ArtifactCoordinates,
                              gradleUserHome: Path,
                              requestedComponents: Set<LibraryPathType>): Map<LibraryPathType, List<Path>> {
-    if (requestedComponents.isEmpty()) {
-      return emptyMap()
-    }
     val cachedArtifactRoot = coordinates.toCachedArtifactRoot(gradleUserHome)
-    return walkThroughCache(cachedArtifactRoot, requestedComponents)
+    return findAdjacentComponents(cachedArtifactRoot, requestedComponents)
   }
 
   /**
-   * Search for adjacent components in the Gradle user home folder.
+   * Search for adjacent components in the Gradle artifact cache folder.
    *
-   * @param adjacentComponent - path to the ancestor of the component.
+   * @param cachedArtifactRoot - path to the ancestor of the component.
    *                            E.g "%GRADLE_USER_HOME%/caches/modules-2/files-2.1/org.group/artifact/version/"
    * @param requestedComponents - the set of required components.
    * @return collected artifact components.
    */
   @JvmStatic
-  fun findAdjacentComponents(adjacentComponent: Path, requestedComponents: Set<LibraryPathType>): Map<LibraryPathType, List<Path>> {
-    if (requestedComponents.isEmpty() || !adjacentComponent.toString().contains(CACHED_FILES_ROOT_PATH)) {
-      return emptyMap()
-    }
-    val parent = adjacentComponent.parent
-    val cachedArtifactRoot = parent?.parent
-    if (cachedArtifactRoot == null) {
-      return emptyMap()
-    }
-    return walkThroughCache(cachedArtifactRoot, requestedComponents)
-  }
-
-  private fun walkThroughCache(cachedArtifactRoot: Path,
-                               requestedComponents: Set<LibraryPathType>): Map<LibraryPathType, List<Path>> {
-    val artifactRoot = cachedArtifactRoot.toFile()
-    if (!artifactRoot.exists() || !artifactRoot.isDirectory) {
+  fun findAdjacentComponents(cachedArtifactRoot: Path, requestedComponents: Set<LibraryPathType>): Map<LibraryPathType, List<Path>> {
+    if (!cachedArtifactRoot.exists() || !cachedArtifactRoot.isDirectory()) {
       return emptyMap()
     }
     return GradleCacheVisitor(cachedArtifactRoot, requestedComponents)
@@ -104,8 +89,8 @@ object GradleLocalCacheHelper {
                                                                                         requestedComponents)
           candidateFileName.endsWith(JAVADOC_JAR_SUFFIX) -> target.addPathIfTypeRequired(sourceCandidate, LibraryPathType.DOC,
                                                                                          requestedComponents)
-          candidateFileName.endsWith(JAR_SUFFIX) && (candidateFileName.endsWith(JAVADOC_JAR_SUFFIX) || candidateFileName.endsWith(
-            SOURCE_JAR_SUFFIX)).not() -> target.addPathIfTypeRequired(sourceCandidate, LibraryPathType.BINARY, requestedComponents)
+          candidateFileName.endsWith(JAR_SUFFIX) -> target.addPathIfTypeRequired(sourceCandidate, LibraryPathType.BINARY,
+                                                                                 requestedComponents)
         }
       }
       return if (target.keys.containsAll(requestedComponents)) {

@@ -10,6 +10,7 @@ import com.intellij.openapi.roots.LibraryOrderEntry
 import com.intellij.openapi.roots.OrderRootType
 import com.intellij.psi.JavaPsiFacade
 import com.intellij.psi.search.GlobalSearchScope
+import com.intellij.util.io.delete
 import org.assertj.core.api.Assertions.assertThat
 import org.jetbrains.plugins.gradle.importing.GradleImportingTestCase
 import org.jetbrains.plugins.gradle.importing.TestGradleBuildScriptBuilder
@@ -20,6 +21,7 @@ import org.junit.Test
 import java.nio.file.Path
 import java.util.*
 import java.util.function.Consumer
+import kotlin.io.path.exists
 
 class GradleAttachSourcesProviderTest : GradleImportingTestCase() {
 
@@ -158,13 +160,7 @@ class GradleAttachSourcesProviderTest : GradleImportingTestCase() {
       .allSatisfy(Consumer { assertEquals(dependencySourcesJar, it.name) })
   }
 
-  private fun removeCachedLibrary(cachePath: String = DEPENDENCY_SOURCES_JAR_CACHE_PATH) {
-    val jarPath = gradleUserHome.resolve(cachePath)
-    val cachedSource = jarPath.toFile()
-    if (cachedSource.exists()) {
-      if (!cachedSource.delete()) {
-        throw IllegalStateException("Unable to prepare test execution environment")
-      }
-    }
+  private fun removeCachedLibrary(cachePath: String = DEPENDENCY_SOURCES_JAR_CACHE_PATH) = gradleUserHome.resolve(cachePath).run {
+    if (exists()) delete(false)
   }
 }

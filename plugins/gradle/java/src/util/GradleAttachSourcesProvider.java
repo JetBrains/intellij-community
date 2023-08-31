@@ -120,19 +120,19 @@ final class GradleAttachSourcesProvider implements AttachSourcesProvider {
         VirtualFile[] rootFiles = libraryOrderEntry.getRootFiles(OrderRootType.CLASSES);
         return rootFiles.length == 0 || ContainerUtil.exists(rootFiles, file -> file.getName().startsWith(artifactIdCandidate));
       });
-      String cachedSourcesPath = lookupSourcesPathFromCache(libraryOrderEntry, sourceArtifactNotation, psiFile.getProject(),
+      Path cachedSourcesPath = lookupSourcesPathFromCache(libraryOrderEntry, sourceArtifactNotation, psiFile.getProject(),
                                                             externalProjectPath);
       if (cachedSourcesPath != null && isValidJar(cachedSourcesPath)) {
-        attachSources(new File(cachedSourcesPath), orderEntries);
+        attachSources(cachedSourcesPath.toFile(), orderEntries);
         return ActionCallback.DONE;
       }
       return downloadSources(psiFile, sourceArtifactNotation, artifactCoordinates, externalProjectPath);
     }
 
-    private static @Nullable String lookupSourcesPathFromCache(@NotNull LibraryOrderEntry libraryOrderEntry,
-                                                               @NotNull String sourceArtifactNotation,
-                                                               @NotNull Project project,
-                                                               @Nullable String projectPath) {
+    private static @Nullable Path lookupSourcesPathFromCache(@NotNull LibraryOrderEntry libraryOrderEntry,
+                                                             @NotNull String sourceArtifactNotation,
+                                                             @NotNull Project project,
+                                                             @Nullable String projectPath) {
       VirtualFile[] rootFiles = libraryOrderEntry.getRootFiles(OrderRootType.CLASSES);
       if (rootFiles.length == 0) {
         return null;
@@ -143,10 +143,11 @@ final class GradleAttachSourcesProvider implements AttachSourcesProvider {
       if (gradleUserHome == null) {
         return null;
       }
-      if (!rootFiles[0].getPath().contains(gradleUserHome)) {
+      if (!FileUtil.isAncestor(gradleUserHome, rootFiles[0].getPath(), false)) {
         return null;
       }
-      GradleLocalCacheHelper.ArtifactCoordinates coordinates = GradleLocalCacheHelper.parseCoordinates(sourceArtifactNotation);
+      String plainArtifactNotation = sourceArtifactNotation.replace("@aar", "");
+      GradleLocalCacheHelper.ArtifactCoordinates coordinates = GradleLocalCacheHelper.parseCoordinates(plainArtifactNotation);
       if (coordinates == null) {
         return null;
       }
@@ -159,7 +160,7 @@ final class GradleAttachSourcesProvider implements AttachSourcesProvider {
       if (sources == null || sources.isEmpty()) {
         return null;
       }
-      return sources.iterator().next().toString();
+      return sources.iterator().next();
     }
 
     private @NotNull ActionCallback downloadSources(@NotNull PsiFile psiFile,
@@ -195,14 +196,14 @@ final class GradleAttachSourcesProvider implements AttachSourcesProvider {
           public void onSuccess() {
             File sourceJar;
             try {
-              String downloadedArtifactPath = FileUtil.loadFile(sourcesLocationFile);
+              Path downloadedArtifactPath = Path.of(FileUtil.loadFile(sourcesLocationFile));
               if (!isValidJar(downloadedArtifactPath)) {
                 GradleLog.LOG.warn("Incorrect file header: " + downloadedArtifactPath + ". Unable to process downloaded file as a JAR file");
                 FileUtil.delete(sourcesLocationFile);
                 resultWrapper.setRejected();
                 return;
               }
-              sourceJar = new File(downloadedArtifactPath);
+              sourceJar = downloadedArtifactPath.toFile();
               FileUtil.delete(sourcesLocationFile);
             }
             catch (IOException e) {
@@ -291,8 +292,8 @@ final class GradleAttachSourcesProvider implements AttachSourcesProvider {
     return result;
   }
 
-  private static boolean isValidJar(@NotNull String rawPath) {
-    try (InputStream is = Files.newInputStream(Path.of(rawPath), StandardOpenOption.READ, LinkOption.NOFOLLOW_LINKS)) {
+  private static boolean isValidJar(@NotNull Path path) {
+    try (InputStream is = Files.newInputStream(path, StandardOpenOption.READ, LinkOption.NOFOLLOW_LINKS)) {
       byte[] head = is.readNBytes(2);
       if (head.length < 2) {
         return false;
