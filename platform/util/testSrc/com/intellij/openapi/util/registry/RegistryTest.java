@@ -197,6 +197,21 @@ public class RegistryTest {
     );
   }
 
+  @Test
+  public void beforeListenerDoesNotChangeValueWhenSetting() {
+    String registryValue = "testBoolean";
+    RegistryValue regValue = new RegistryValue(Registry.getInstance(), registryValue, null);
+    regValue.setValue(false);
+    Registry.setValueChangeListener(new RegistryValueListener() {
+      @Override
+      public void beforeValueChanged(@NotNull RegistryValue value) {
+        regValue.asBoolean();
+      }
+    });
+    regValue.setValue(true);
+    assertTrue(regValue.asBoolean());
+  }
+
 
   private Element registryElementFromMap(Map<String, String> map){
     Element registryElement = new Element("registry");
