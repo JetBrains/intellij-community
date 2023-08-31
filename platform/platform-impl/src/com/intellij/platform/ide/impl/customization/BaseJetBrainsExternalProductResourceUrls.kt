@@ -58,6 +58,10 @@ abstract class BaseJetBrainsExternalProductResourceUrls : ExternalProductResourc
 
   override val updatesMetadataXmlUrl: Url
     get() {
+      val customUrl = System.getProperty("idea.updates.url")
+      if (customUrl != null) {
+        return Urls.newFromEncoded(customUrl)
+      }
       return UpdateRequestParameters.amendUpdateRequest(Urls.newFromEncoded("https://www.jetbrains.com/updates/updates.xml"))
     }
 

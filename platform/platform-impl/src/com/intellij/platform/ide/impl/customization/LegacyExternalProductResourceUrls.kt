@@ -17,6 +17,10 @@ import java.util.regex.Pattern
 class LegacyExternalProductResourceUrls : ExternalProductResourceUrls {
   override val updatesMetadataXmlUrl: Url?
     get() {
+      val customUrl = System.getProperty("idea.updates.url")
+      if (customUrl != null) {
+        return Urls.newFromEncoded(customUrl)
+      }
       val baseUrl = ApplicationInfoEx.getInstanceEx().updateUrls?.checkingUrl ?: return null
       return UpdateRequestParameters.amendUpdateRequest(Urls.newFromEncoded(baseUrl))
     }
