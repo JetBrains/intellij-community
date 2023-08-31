@@ -561,6 +561,29 @@ public final class XDebuggerManagerImpl extends XDebuggerManager implements Pers
       myEditor = new WeakReference<>(editor);
       myLineNumber = lineNumber;
 
+      int firstNonSpaceSymbol = editor.getDocument().getLineStartOffset(lineNumber);
+      CharSequence charsSequence = editor.getDocument().getCharsSequence();
+
+      while (true) {
+        if (firstNonSpaceSymbol >= charsSequence.length()) {
+          return false; //end of file
+        }
+        char c = charsSequence.charAt(firstNonSpaceSymbol);
+        if (c == '\n') {
+          return false; // empty line
+        }
+        if (!Character.isWhitespace(c)) {
+          break;
+        }
+        firstNonSpaceSymbol++;
+      }
+
+      Point firstNonSpacePos = editor.offsetToXY(firstNonSpaceSymbol);
+
+      if (firstNonSpacePos.x < JBUI.scale(16)) {
+        return false;
+      }
+
       int lineY = editor.logicalPositionToXY(new LogicalPosition(lineNumber, 0)).y;
 
       Point position = SwingUtilities.convertPoint(editor.getContentComponent(), new Point(-JBUI.scale(6), lineY),
@@ -577,7 +600,7 @@ public final class XDebuggerManagerImpl extends XDebuggerManager implements Pers
       }
 
       int caretLine = editor.getCaretModel().getLogicalPosition().line;
-      if (caretLine == lineNumber) {
+      if (caretLine == lineNumber && firstNonSpacePos.x >= JBUI.scale(4 + 22*2)) {
         group.add(ActionManager.getInstance().getAction(IdeActions.ACTION_SHOW_INTENTION_ACTIONS));
       }
 
