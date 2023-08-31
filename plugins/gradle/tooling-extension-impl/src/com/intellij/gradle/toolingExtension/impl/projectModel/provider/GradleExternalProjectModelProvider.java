@@ -6,6 +6,7 @@ import com.intellij.openapi.util.Pair;
 import org.gradle.tooling.BuildController;
 import org.gradle.tooling.model.gradle.BasicGradleProject;
 import org.gradle.tooling.model.gradle.GradleBuild;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.gradle.model.ExternalProject;
@@ -16,6 +17,7 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Queue;
 
+@ApiStatus.Internal
 public class GradleExternalProjectModelProvider implements ProjectImportModelProvider {
 
   private static final long serialVersionUID = 1L;

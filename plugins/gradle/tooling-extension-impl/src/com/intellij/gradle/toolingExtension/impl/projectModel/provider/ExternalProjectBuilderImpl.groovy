@@ -2,6 +2,7 @@
 package com.intellij.gradle.toolingExtension.impl.projectModel.provider
 
 import com.google.gson.GsonBuilder
+import com.intellij.gradle.toolingExtension.impl.taskModel.GradleTaskCache
 import com.intellij.openapi.externalSystem.model.project.ExternalSystemSourceType
 import groovy.transform.CompileDynamic
 import groovy.transform.CompileStatic
@@ -27,6 +28,7 @@ import org.gradle.api.tasks.util.PatternFilterable
 import org.gradle.jvm.toolchain.internal.JavaToolchain
 import org.gradle.plugins.ide.idea.IdeaPlugin
 import org.gradle.util.GradleVersion
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.NotNull
 import org.jetbrains.annotations.Nullable
 import org.jetbrains.plugins.gradle.model.*
@@ -34,7 +36,6 @@ import org.jetbrains.plugins.gradle.tooling.AbstractModelBuilderService
 import org.jetbrains.plugins.gradle.tooling.ErrorMessageBuilder
 import org.jetbrains.plugins.gradle.tooling.ModelBuilderContext
 import org.jetbrains.plugins.gradle.tooling.builder.ProjectExtensionsDataBuilderImpl
-import com.intellij.gradle.toolingExtension.impl.taskModel.provider.TasksFactory
 import org.jetbrains.plugins.gradle.tooling.util.JavaPluginUtil
 import org.jetbrains.plugins.gradle.tooling.util.resolve.DependencyResolverImpl
 
@@ -50,6 +51,7 @@ import static org.jetbrains.plugins.gradle.tooling.util.StringUtils.toCamelCase
  * @author Vladislav.Soroka
  */
 @CompileStatic
+@ApiStatus.Internal
 class ExternalProjectBuilderImpl extends AbstractModelBuilderService {
 
   private static final GradleVersion gradleBaseVersion = GradleVersion.current().baseVersion
@@ -160,8 +162,8 @@ class ExternalProjectBuilderImpl extends AbstractModelBuilderService {
   static Map<String, DefaultExternalTask> getTasks(@NotNull Project project, @NotNull ModelBuilderContext context) {
     def result = [:] as Map<String, DefaultExternalTask>
 
-    def tasksFactory = TasksFactory.getInstance(context)
-    for (Task task in tasksFactory.getTasks(project)) {
+    def taskCache = GradleTaskCache.getInstance(context)
+    for (Task task in taskCache.getTasks(project)) {
       DefaultExternalTask externalTask = result.get(task.name)
       if (externalTask == null) {
         externalTask = new DefaultExternalTask()

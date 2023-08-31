@@ -4,6 +4,7 @@ package org.jetbrains.plugins.gradle.service.project;
 import com.intellij.build.events.MessageEvent;
 import com.intellij.build.issue.BuildIssue;
 import com.intellij.gradle.toolingExtension.impl.projectModel.provider.GradleExternalProjectModelProvider;
+import com.intellij.gradle.toolingExtension.impl.taskModel.GradleTaskModelProvider;
 import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.diagnostic.Logger;
@@ -770,7 +771,11 @@ public final class CommonGradleProjectResolverExtension extends AbstractProjectR
 
   @Override
   public @NotNull List<ProjectImportModelProvider> getModelProviders() {
-    return ContainerUtil.append(super.getModelProviders(), new GradleExternalProjectModelProvider());
+    return ContainerUtil.append(
+      super.getModelProviders(),
+      new GradleTaskModelProvider(),
+      new GradleExternalProjectModelProvider()
+    );
   }
 
   @Override
