@@ -13,6 +13,7 @@ import com.intellij.openapi.util.ActionCallback
 import com.intellij.platform.backend.workspace.WorkspaceModel
 import com.intellij.platform.workspace.jps.entities.SourceRootEntity
 import com.intellij.util.DisposeAwareRunnable
+import com.intellij.workspaceModel.ide.JpsProjectLoadingManager
 import com.jetbrains.performancePlugin.utils.ActionCallbackProfilerStopper
 import org.jetbrains.concurrency.AsyncPromise
 import org.jetbrains.concurrency.Promise
@@ -69,25 +70,27 @@ class ImportMavenProjectCommand(text: String, line: Int) : AbstractCommand(text,
     context.message("Waiting for fully open and initialized maven project", line)
     ExternalProjectsManagerImpl.getInstance(project).runWhenInitialized {
       MavenUtil.runWhenInitialized(project) {
-        ApplicationManager.getApplication().executeOnPooledThread {
-          waitForCurrentMavenImportActivities(context, project)
-          context.message("Import of the project has been started", line)
-          val mavenManager = MavenProjectsManager.getInstance(project)
-          if (!mavenManager.isMavenizedProject) {
-            mavenManager.addManagedFiles(mavenManager.collectAllAvailablePomFiles())
+        JpsProjectLoadingManager.getInstance(project).jpsProjectLoaded {
+          ApplicationManager.getApplication().executeOnPooledThread {
+            waitForCurrentMavenImportActivities(context, project)
+            context.message("Import of the project has been started", line)
+            val mavenManager = MavenProjectsManager.getInstance(project)
+            if (!mavenManager.isMavenizedProject) {
+              mavenManager.addManagedFiles(mavenManager.collectAllAvailablePomFiles())
+            }
+            runBlockingMaybeCancellable {
+              mavenManager.updateAllMavenProjects(MavenImportSpec.EXPLICIT_IMPORT)
+            }
+            waitForCurrentMavenImportActivities(context, project)
+            context.message("Import of the maven project has been finished", line)
+            projectTrackerSettings.autoReloadType = currentAutoReloadType
+            DumbService.getInstance(project).runWhenSmart(DisposeAwareRunnable.create(runnable, project))
+            val storageVersion = WorkspaceModel.getInstance(project).entityStorage.version
+            val storage = WorkspaceModel.getInstance(project).currentSnapshot
+            val sourceRoots = storage.entities(SourceRootEntity::class.java).map { it.url.url }.toList()
+            context.message("Entity storage version: $storageVersion, snapshot: $storage", line)
+            context.message("source roots: $sourceRoots", line)
           }
-          runBlockingMaybeCancellable {
-            mavenManager.updateAllMavenProjects(MavenImportSpec.EXPLICIT_IMPORT)
-          }
-          waitForCurrentMavenImportActivities(context, project)
-          context.message("Import of the maven project has been finished", line)
-          projectTrackerSettings.autoReloadType = currentAutoReloadType
-          DumbService.getInstance(project).runWhenSmart(DisposeAwareRunnable.create(runnable, project))
-          val storageVersion = WorkspaceModel.getInstance(project).entityStorage.version
-          val storage = WorkspaceModel.getInstance(project).currentSnapshot
-          val sourceRoots = storage.entities(SourceRootEntity::class.java).map { it.url.url }.toList()
-          context.message("Entity storage version: $storageVersion, snapshot: $storage", line)
-          context.message("source roots: $sourceRoots", line)
         }
       }
     }
