@@ -46,6 +46,6 @@ public abstract class MetaLanguage extends Language {
    * Returns the list of all languages matching this meta-language.
    */
   public @NotNull Collection<Language> getMatchingLanguages() {
-    return ContainerUtil.filter(Language.getRegisteredLanguages(), this::matchesLanguage);
+    return ContainerUtil.filter(Language.getRegisteredLanguages(), language -> matchesLanguage(language));
   }
 }

@@ -86,7 +86,7 @@ class InspectionRunner {
     final @NotNull LocalInspectionToolWrapper tool;
     final @NotNull InspectionProblemHolder holder;
     final @NotNull PsiElementVisitor visitor;
-    volatile PsiElement myFavoriteElement; // the element during visiting which some diagnostics were generated in the previous run
+    volatile PsiElement myFavoriteElement; // the element during visiting which, some diagnostics were generated in the previous run
   }
 
   @NotNull List<? extends InspectionContext> inspect(@NotNull List<? extends LocalInspectionToolWrapper> toolWrappers,
@@ -408,10 +408,7 @@ class InspectionRunner {
                registerSuppressedElements(host, wrapper.getID(), wrapper.getAlternativeID());
                return false;
              }
-             if (myIsOnTheFly) {
-               return addDescriptorIncrementallyCallback.test(descriptor, wrapper);
-             }
-             return true;
+             return !myIsOnTheFly || addDescriptorIncrementallyCallback.test(descriptor, wrapper);
            };
 
            if (shouldInspect(injectedPsi)) {

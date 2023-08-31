@@ -409,13 +409,13 @@ public final class InspectionEngine {
     Map<String, Boolean> resultsWithDialects = new HashMap<>();
     Map<String, Boolean> resultsNoDialects = new HashMap<>();
     return ContainerUtil.filter(tools, tool -> {
-      String language = tool.getLanguage();
-      if (language == null || language.isBlank() || "any".equals(language)) return true;
+      String toolLanguage = tool.getLanguage();
+      if (toolLanguage == null || toolLanguage.isBlank() || "any".equals(toolLanguage)) return true;
 
       boolean applyToDialects = tool.applyToDialects();
       Map<String, Boolean> map = applyToDialects ? resultsWithDialects : resultsNoDialects;
-      return map.computeIfAbsent(language, __ ->
-        ToolLanguageUtil.isToolLanguageOneOf(elementDialectIds, language, applyToDialects));
+      return map.computeIfAbsent(toolLanguage, __ ->
+        ToolLanguageUtil.isToolLanguageOneOf(elementDialectIds, toolLanguage, applyToDialects));
     });
   }
 
