@@ -553,7 +553,7 @@ public final class XDebuggerManagerImpl extends XDebuggerManager implements Pers
       myEditor = new WeakReference<>(editor);
       myLineNumber = lineNumber;
 
-      int lineY = editor.visualPositionToXY(new VisualPosition(lineNumber, 0)).y;
+      int lineY = editor.logicalPositionToXY(new LogicalPosition(lineNumber, 0)).y;
 
       Point position = SwingUtilities.convertPoint(editor.getContentComponent(), new Point(0, lineY),
                                                 editor.getComponent().getRootPane().getLayeredPane());
