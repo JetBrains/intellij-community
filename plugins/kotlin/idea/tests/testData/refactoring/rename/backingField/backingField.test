@@ -4,5 +4,5 @@
   "newName": "Bar",
   "forceInlineRename": "false",
   "hint": "Rename is not applicable to backing field reference",
-  "enabledInK2": "false"
+  "enabledInK2": "true"
 }

@@ -4,5 +4,5 @@
   "newName": "SameScopeB",
   "withRuntime": "true",
   "hint": "Class 'SameScopeB' is already declared in package 'test'",
-  "enabledInK2": "false"
+  "enabledInK2": "true"
 }

@@ -3,5 +3,5 @@
   "mainFile": "SyntheticProperty.java",
   "newName": "foo",
   "withRuntime": "true",
-  "enabledInK2": "false"
+  "enabledInK2": "true"
 }

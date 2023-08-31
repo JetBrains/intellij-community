@@ -38,8 +38,6 @@ abstract class AbstractFirRenameTest : AbstractRenameTest() {
         val renameObject = loadTestConfiguration(dataFile())
         val testIsEnabledInK2 = renameObject.get("enabledInK2")?.asBoolean ?: error("`enabledInK2` has to be specified explicitly")
 
-        if (!testIsEnabledInK2) return
-
         val result = allowAnalysisOnEdt { runCatching { super.doTest(path) } }
         result.fold(
             onSuccess = { require(testIsEnabledInK2) { "This test passes and should be enabled!" } },

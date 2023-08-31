@@ -4,5 +4,5 @@
   "newName": "b",
   "withRuntime": "true",
   "hint": "Property 'b' is already declared in class 'Foo'",
-  "enabledInK2": "false"
+  "enabledInK2": "true"
 }

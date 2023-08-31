@@ -4,5 +4,5 @@
   "newName": "b",
   "withRuntime": "true",
   "hint": "Parameter 'b' is already declared in function 'foo'",
-  "enabledInK2": "false"
+  "enabledInK2": "true"
 }

@@ -4,5 +4,5 @@
   "newName": "foo",
   "withRuntime": "true",
   "hint": "Property 'foo' is already declared in package 'test'",
-  "enabledInK2": "false"
+  "enabledInK2": "true"
 }

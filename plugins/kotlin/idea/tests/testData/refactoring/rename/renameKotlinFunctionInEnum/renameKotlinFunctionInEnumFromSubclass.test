@@ -3,5 +3,5 @@
   "classId": "test/E.A",
   "oldName": "foo",
   "newName": "bar",
-  "enabledInK2": "false"
+  "enabledInK2": "true"
 }

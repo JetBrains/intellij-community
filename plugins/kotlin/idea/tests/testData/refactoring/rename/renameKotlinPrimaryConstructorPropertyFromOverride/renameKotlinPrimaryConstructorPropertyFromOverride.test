@@ -2,5 +2,5 @@
   "type": "MARKED_ELEMENT",
   "newName": "second",
   "mainFile": "RenameKotlinPrimaryConstructorPropertyFromOverride.kt",
-  "enabledInK2": "false"
+  "enabledInK2": "true"
 }

@@ -4,5 +4,5 @@
   "newName": "Foo",
   "withRuntime": "true",
   "hint": "Class 'Foo' is already declared in class 'A'",
-  "enabledInK2": "false"
+  "enabledInK2": "true"
 }

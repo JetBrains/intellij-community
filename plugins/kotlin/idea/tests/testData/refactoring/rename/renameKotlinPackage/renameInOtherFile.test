@@ -4,5 +4,5 @@
   "newName": "bar",
   "mainFile": "ForClassImport.kt",
   "comment": "KT-365 Support renaming packages",
-  "enabledInK2": "false"
+  "enabledInK2": "true"
 }

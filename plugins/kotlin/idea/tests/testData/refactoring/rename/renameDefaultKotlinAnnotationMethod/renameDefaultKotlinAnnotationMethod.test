@@ -3,5 +3,5 @@
   "mainFile": "test/KAnn.kt",
   "newName": "valueNew",
   "withRuntime": "true",
-  "enabledInK2": "false"
+  "enabledInK2": "true"
 }

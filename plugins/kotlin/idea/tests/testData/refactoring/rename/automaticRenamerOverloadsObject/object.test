@@ -4,5 +4,5 @@
   "oldName": "foo",
   "newName": "bar",
   "mainFile": "Object.kt",
-  "enabledInK2": "false"
+  "enabledInK2": "true"
 }

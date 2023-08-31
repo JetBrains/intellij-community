@@ -3,5 +3,5 @@
   "mainFile": "test.kt",
   "classId": "test/Foo",
   "newName": "Bar",
-  "enabledInK2": "false"
+  "enabledInK2": "true"
 }

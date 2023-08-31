@@ -4,5 +4,5 @@
   "newName": "bar",
   "withRuntime": "true",
   "hint": "Property after rename will clash with existing property 'bar' in class 'B'",
-  "enabledInK2": "false"
+  "enabledInK2": "true"
 }

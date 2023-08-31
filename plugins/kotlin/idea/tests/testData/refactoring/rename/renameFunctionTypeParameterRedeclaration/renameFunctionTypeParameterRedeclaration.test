@@ -3,5 +3,5 @@
   "mainFile": "test.kt",
   "newName": "V",
   "hint": "Type parameter 'V' is already declared in function 'foo'",
-  "enabledInK2": "false"
+  "enabledInK2": "true"
 }

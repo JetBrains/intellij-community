@@ -3,5 +3,5 @@
   "mainFile": "test1.kt",
   "newName": "bar",
   "hint": "Property 'bar' is already declared in package 'p'",
-  "enabledInK2": "false"
+  "enabledInK2": "true"
 }

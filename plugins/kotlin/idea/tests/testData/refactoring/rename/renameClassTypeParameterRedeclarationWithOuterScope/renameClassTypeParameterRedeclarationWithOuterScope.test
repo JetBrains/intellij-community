@@ -3,5 +3,5 @@
   "mainFile": "test.kt",
   "newName": "T",
   "hint": "Type parameter 'T' is already declared in class 'A'",
-  "enabledInK2": "false"
+  "enabledInK2": "true"
 }
