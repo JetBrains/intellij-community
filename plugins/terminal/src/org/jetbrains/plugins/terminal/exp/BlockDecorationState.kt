@@ -29,7 +29,7 @@ class DefaultBlockDecorationState : AbstractBlockDecorationState(NAME, priority 
   }
 }
 
-class SelectedBlockDecorationState : AbstractBlockDecorationState(NAME, priority = 1) {
+class SelectedBlockDecorationState : AbstractBlockDecorationState(NAME, priority = 2) {
   override val backgroundRenderer: CustomHighlighterRenderer = TerminalBlockBackgroundRenderer(TerminalUi.selectedBlockBackground)
   override val cornersRenderer: CustomHighlighterRenderer = TerminalBlockCornersRenderer(TerminalUi.selectedBlockBackground,
                                                                                          backgroundEnd = null,
@@ -41,5 +41,20 @@ class SelectedBlockDecorationState : AbstractBlockDecorationState(NAME, priority
 
   companion object {
     const val NAME: String = "SELECTED"
+  }
+}
+
+class ErrorBlockDecorationState : AbstractBlockDecorationState(NAME, priority = 1) {
+  override val backgroundRenderer: CustomHighlighterRenderer = TerminalBlockBackgroundRenderer(TerminalUi.errorBlockBackground)
+  override val cornersRenderer: CustomHighlighterRenderer = TerminalBlockCornersRenderer(TerminalUi.errorBlockBackground,
+                                                                                         backgroundEnd = null,
+                                                                                         TerminalUi.errorBlockStrokeColor,
+                                                                                         strokeWidth = 1)
+  override val leftAreaRenderer: LineMarkerRenderer = TerminalBlockLeftAreaRenderer(TerminalUi.errorBlockBackground,
+                                                                                    TerminalUi.errorBlockStrokeColor,
+                                                                                    strokeWidth = 1)
+
+  companion object {
+    const val NAME: String = "ERROR"
   }
 }

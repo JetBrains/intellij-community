@@ -71,12 +71,12 @@ __jetbrains_intellij_command_started() {
 __jetbrains_intellij_initialized=""
 
 __jetbrains_intellij_command_terminated() {
+  builtin local last_exit_code="$?"
   if [ -n "${__JETBRAINS_INTELLIJ_GENERATOR_COMMAND-}" ]
   then
     unset __JETBRAINS_INTELLIJ_GENERATOR_COMMAND
     return 0
   fi
-  builtin local last_exit_code="$?"
 
   # Show completions on first TAB if there are more than one suitable option
   # (by default Bash show all options only after second TAB in a such case)

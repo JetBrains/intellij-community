@@ -57,15 +57,15 @@ class BlockTerminalController(
   }
 
   override fun initialized() {
-    finishCommandBlock()
+    finishCommandBlock(exitCode = 0)
   }
 
   override fun commandFinished(command: String, exitCode: Int, duration: Long) {
-    finishCommandBlock()
+    finishCommandBlock(exitCode)
   }
 
-  private fun finishCommandBlock() {
-    outputController.finishCommandBlock()
+  private fun finishCommandBlock(exitCode: Int) {
+    outputController.finishCommandBlock(exitCode)
 
     val model = session.model
     model.isCommandRunning = false

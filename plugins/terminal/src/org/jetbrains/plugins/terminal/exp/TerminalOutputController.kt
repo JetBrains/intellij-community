@@ -66,7 +66,7 @@ class TerminalOutputController(
     setupContentListener(disposable)
   }
 
-  fun finishCommandBlock() {
+  fun finishCommandBlock(exitCode: Int) {
     runningListenersDisposable?.let { Disposer.dispose(it) }
     runningListenersDisposable = null
     invokeLater {
@@ -87,6 +87,9 @@ class TerminalOutputController(
       }
       if (document.getText(block.textRange).isBlank()) {
         outputModel.removeBlock(block)
+      }
+      else if (exitCode != 0) {
+        outputModel.addBlockState(block, ErrorBlockDecorationState())
       }
     }
   }
