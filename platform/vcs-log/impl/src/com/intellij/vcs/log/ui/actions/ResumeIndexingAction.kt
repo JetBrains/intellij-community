@@ -7,8 +7,8 @@ import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.vcs.log.VcsLogBundle
+import com.intellij.vcs.log.data.VcsLogData
 import com.intellij.vcs.log.data.index.*
-import com.intellij.vcs.log.data.index.toggleIndexing
 import com.intellij.vcs.log.impl.VcsLogSharedSettings
 import com.intellij.vcs.log.statistics.VcsLogUsageTriggerCollector
 import com.intellij.vcs.log.ui.VcsLogInternalDataKeys
@@ -21,6 +21,19 @@ class ResumeIndexingAction : DumbAwareAction() {
     val index = data?.index as? VcsLogModifiableIndex
     if (data == null || project == null || !VcsLogSharedSettings.isIndexSwitchedOn(project) || index == null) {
       e.presentation.isEnabledAndVisible = false
+      return
+    }
+
+    if (!VcsLogData.isIndexSwitchedOnInRegistry()) {
+      val availableIndexers = VcsLogPersistentIndex.getAvailableIndexers(data.logProviders)
+      if (availableIndexers.isEmpty()) {
+        e.presentation.isEnabledAndVisible = false
+        return
+      }
+      val vcsDisplayName = VcsLogUtil.getVcsDisplayName(project, availableIndexers.keys.map { data.getLogProvider(it) })
+      e.presentation.text = VcsLogBundle.message("action.title.enable.indexing", vcsDisplayName)
+      e.presentation.description = VcsLogBundle.message("action.description.was.disabled", vcsDisplayName)
+      e.presentation.icon = AllIcons.Process.ProgressResumeSmall
       return
     }
 
@@ -59,7 +72,15 @@ class ResumeIndexingAction : DumbAwareAction() {
   override fun actionPerformed(e: AnActionEvent) {
     VcsLogUsageTriggerCollector.triggerUsage(e, this)
 
-    val index = e.getRequiredData(VcsLogInternalDataKeys.LOG_DATA).index as? VcsLogModifiableIndex ?: return
+    val data = e.getRequiredData(VcsLogInternalDataKeys.LOG_DATA)
+
+    if (!VcsLogData.isIndexSwitchedOnInRegistry()) {
+      val rootsForIndexing = VcsLogPersistentIndex.getAvailableIndexers(data.logProviders).keys
+      rootsForIndexing.forEach { VcsLogBigRepositoriesList.getInstance().removeRepository(it) }
+      VcsLogData.getIndexingRegistryValue().setValue(true)
+    }
+
+    val index = data.index as? VcsLogModifiableIndex ?: return
     if (index.indexingRoots.isEmpty()) return
 
     index.toggleIndexing()
