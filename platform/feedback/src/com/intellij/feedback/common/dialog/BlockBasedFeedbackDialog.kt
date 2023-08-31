@@ -69,7 +69,7 @@ abstract class BlockBasedFeedbackDialog<T : JsonSerializable>(
 
       addFooterToPanel(this)
     }.also { dialog ->
-      dialog.border = JBEmptyBorder(JBUI.scale(0), JBUI.scale(10), JBUI.scale(0), JBUI.scale(10))
+      dialog.border = JBEmptyBorder(0, 10, 0, 10)
     }
 
     val scrollablePane = JBScrollPane(
