@@ -1,16 +1,30 @@
 <component name="libraryTable">
-  <library name="kotlinc.kotlin-stdlib">
+  <library name="kotlinc.kotlin-stdlib" type="repository">
+    <properties maven-id="org.jetbrains.kotlin:kotlin-stdlib-jdk8:1.9.30-dev-2142">
+      <verification>
+        <artifact url="file://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-stdlib-jdk8/1.9.30-dev-2142/kotlin-stdlib-jdk8-1.9.30-dev-2142.jar">
+          <sha256sum>e7e8909f1b36bd87cf98d6f1af6e6fcad57da0b7c3afd381de2d812bc5b8e95f</sha256sum>
+        </artifact>
+        <artifact url="file://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-stdlib/1.9.30-dev-2142/kotlin-stdlib-1.9.30-dev-2142.jar">
+          <sha256sum>ebb3b36fff5f7f8273fdc7f23d97d9532fbda3813d0c55cb6fbf7d412d7b7a9c</sha256sum>
+        </artifact>
+      </verification>
+      <exclude>
+        <dependency maven-id="org.jetbrains:annotations" />
+        <dependency maven-id="org.jetbrains.kotlin:kotlin-stdlib-jdk7" />
+      </exclude>
+    </properties>
     <ANNOTATIONS>
       <root url="file://$PROJECT_DIR$/lib/annotations/kotlin" />
     </ANNOTATIONS>
     <CLASSES>
-      <root url="jar://$PROJECT_DIR$/../build/repo/org/jetbrains/kotlin/kotlin-stdlib-jdk8/1.9.255/kotlin-stdlib-jdk8-1.9.255.jar!/" />
-      <root url="jar://$PROJECT_DIR$/../build/repo/org/jetbrains/kotlin/kotlin-stdlib/1.9.255/kotlin-stdlib-1.9.255.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-stdlib-jdk8/1.9.30-dev-2142/kotlin-stdlib-jdk8-1.9.30-dev-2142.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-stdlib/1.9.30-dev-2142/kotlin-stdlib-1.9.30-dev-2142.jar!/" />
     </CLASSES>
     <JAVADOC />
     <SOURCES>
-      <root url="jar://$PROJECT_DIR$/../build/repo/org/jetbrains/kotlin/kotlin-stdlib-jdk8/1.9.255/kotlin-stdlib-jdk8-1.9.255-sources.jar!/" />
-      <root url="jar://$PROJECT_DIR$/../build/repo/org/jetbrains/kotlin/kotlin-stdlib/1.9.255/kotlin-stdlib-1.9.255-sources.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-stdlib-jdk8/1.9.30-dev-2142/kotlin-stdlib-jdk8-1.9.30-dev-2142-sources.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-stdlib/1.9.30-dev-2142/kotlin-stdlib-1.9.30-dev-2142-sources.jar!/" />
     </SOURCES>
   </library>
 </component>

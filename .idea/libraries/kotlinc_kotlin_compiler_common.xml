@@ -1,11 +1,18 @@
 <component name="libraryTable">
-  <library name="kotlinc.kotlin-compiler-common">
+  <library name="kotlinc.kotlin-compiler-common" type="repository">
+    <properties include-transitive-deps="false" maven-id="org.jetbrains.kotlin:kotlin-compiler-common-for-ide:1.9.30-dev-2142">
+      <verification>
+        <artifact url="file://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-compiler-common-for-ide/1.9.30-dev-2142/kotlin-compiler-common-for-ide-1.9.30-dev-2142.jar">
+          <sha256sum>a0eb18b359b298dd94d98688c2d120ea7dbf6b5ec9f8fd635b34067df3d5e356</sha256sum>
+        </artifact>
+      </verification>
+    </properties>
     <CLASSES>
-      <root url="jar://$PROJECT_DIR$/../build/repo/org/jetbrains/kotlin/kotlin-compiler-common-for-ide/1.9.255/kotlin-compiler-common-for-ide-1.9.255.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-compiler-common-for-ide/1.9.30-dev-2142/kotlin-compiler-common-for-ide-1.9.30-dev-2142.jar!/" />
     </CLASSES>
     <JAVADOC />
     <SOURCES>
-      <root url="jar://$PROJECT_DIR$/../build/repo/org/jetbrains/kotlin/kotlin-compiler-common-for-ide/1.9.255/kotlin-compiler-common-for-ide-1.9.255-sources.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-compiler-common-for-ide/1.9.30-dev-2142/kotlin-compiler-common-for-ide-1.9.30-dev-2142-sources.jar!/" />
     </SOURCES>
   </library>
 </component>
