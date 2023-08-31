@@ -68,7 +68,7 @@ internal open class FrameHeader(protected val frame: JFrame) : CustomHeader(fram
   private fun updateActions() {
     myState = frame.extendedState
     if (frame.isResizable) {
-      if (myState and Frame.MAXIMIZED_BOTH == Frame.MAXIMIZED_BOTH) {
+      if (myState and Frame.MAXIMIZED_BOTH != 0) {
         maximizeAction.isEnabled = false
         restoreAction.isEnabled = true
       }
