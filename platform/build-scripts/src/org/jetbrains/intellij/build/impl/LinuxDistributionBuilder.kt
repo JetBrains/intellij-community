@@ -12,7 +12,6 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import org.jetbrains.intellij.build.*
 import org.jetbrains.intellij.build.TraceManager.spanBuilder
-import org.jetbrains.intellij.build.impl.BundledRuntimeImpl.Companion.getProductPrefix
 import org.jetbrains.intellij.build.impl.OsSpecificDistributionBuilder.Companion.suffix
 import org.jetbrains.intellij.build.impl.productInfo.*
 import org.jetbrains.intellij.build.impl.support.RepairUtilityBuilder
@@ -28,7 +27,7 @@ import kotlin.time.Duration.Companion.minutes
 class LinuxDistributionBuilder(override val context: BuildContext,
                                private val customizer: LinuxDistributionCustomizer,
                                private val ideaProperties: Path?) : OsSpecificDistributionBuilder {
-  private companion object {
+  internal companion object {
     const val NO_RUNTIME_SUFFIX = "-no-jbr"
   }
 
@@ -88,7 +87,7 @@ class LinuxDistributionBuilder(override val context: BuildContext,
         }
       }
 
-      val runtimeDir = context.bundledRuntime.extract(getProductPrefix(context), OsFamily.LINUX, arch)
+      val runtimeDir = context.bundledRuntime.extract(os = OsFamily.LINUX, arch = arch)
       val tarGzPath = buildTarGz(arch = arch, runtimeDir = runtimeDir, unixDistPath = osAndArchSpecificDistPath, suffix = suffix(arch))
       launch {
         if (arch == JvmArchitecture.x64) {

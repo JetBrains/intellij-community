@@ -7,6 +7,10 @@ import io.opentelemetry.api.common.AttributeKey
 import io.opentelemetry.api.common.Attributes
 import io.opentelemetry.api.trace.Span
 import kotlinx.coroutines.*
+import kotlinx.coroutines.flow.asFlow
+import kotlinx.coroutines.flow.filter
+import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.toList
 import org.apache.commons.codec.digest.DigestUtils
 import org.apache.maven.model.Model
 import org.apache.maven.model.io.xpp3.MavenXpp3Reader
@@ -220,17 +224,68 @@ class SoftwareBillOfMaterials internal constructor(
             .setSupplier(creator)
         }
         document.documentDescribes.add(rootPackage)
-        generate(document, rootPackage, distribution.outDir)
+        val runtimePackage = if (isRuntimeBundled(it.path, distribution.builder.targetOs)) {
+          document.runtimePackage(distribution.builder.targetOs, distribution.arch)
+        } else null
+        generate(
+          document, rootPackage,
+          runtimePackage = runtimePackage,
+          distributionDir = distribution.outDir
+        )
       }
     }
+  }
+
+  private fun isRuntimeBundled(file: Path, os: OsFamily): Boolean {
+    return os == OsFamily.LINUX && !file.name.contains(LinuxDistributionBuilder.NO_RUNTIME_SUFFIX) ||
+           os == OsFamily.MACOS && !file.name.contains(MacDistributionBuilder.NO_RUNTIME_SUFFIX)
+  }
+
+  /**
+   * Used until external document reference for Runtime is supplied,
+   * then should be replaced with [addRuntimeDocumentRef]
+   */
+  private suspend fun SpdxDocument.runtimePackage(os: OsFamily, arch: JvmArchitecture): SpdxPackage {
+    val checksums = context.bundledRuntime.findArchive(os = os, arch = arch).let(::Checksums)
+    val runtimePackage = spdxPackage(name = context.bundledRuntime.archiveName(os = os, arch = arch),
+                                     sha256sum = checksums.sha256sum, sha1sum = checksums.sha1sum,
+                                     licenseDeclared = jetBrainsOwnLicense) {
+      setVersionInfo(context.bundledRuntime.prefix + context.bundledRuntime.build)
+        .setDownloadLocation(context.bundledRuntime.downloadUrlFor(os = os, arch = arch))
+        .setSupplier("Organization: ${Suppliers.JETBRAINS}")
+    }
+    runtimePackage.claimContainedFiles(document = this)
+    runtimePackage.validate()
+    return runtimePackage
+  }
+
+  /**
+   * @param runtimeDocumentId expected format: https://github.com/JetBrains/JetBrainsRuntime/[specVersion]/${[BundledRuntime.prefix] + [BundledRuntime.build]}.spdx
+   * @param runtimeRootPackageId expected format: ${[SpdxConstants.SPDX_ELEMENT_REF_PRENUM] + [InMemSpdxStore.GENERATED] + 0}
+   */
+  @Suppress("unused")
+  private fun SpdxDocument.addRuntimeDocumentRef(
+    rootPackage: SpdxPackage,
+    runtimeDocumentId: String,
+    runtimeDocumentChecksum: Checksum,
+    runtimeRootPackageId: String,
+  ) {
+    val runtimeRef = createExternalDocumentRef(
+      modelStore.getNextId(IdType.DocumentRef, documentUri),
+      runtimeDocumentId, runtimeDocumentChecksum
+    )
+    externalDocumentRefs.add(runtimeRef)
+    val runtimePackage = ExternalSpdxElement(modelStore, documentUri, "${runtimeRef.id}:$runtimeRootPackageId", copyManager, true)
+    runtimePackage.validate()
+    rootPackage.relatesTo(runtimePackage, RelationshipType.CONTAINS)
   }
 
   /**
    * [org.jetbrains.intellij.build.BuildOptions.OS_SPECIFIC_DISTRIBUTIONS_STEP] step is skipped,
    * but documents with all distributions content specified will be built anyway.
    */
-  private fun generateFromContentReport(): List<Path> {
-    return SUPPORTED_DISTRIBUTIONS.asSequence().filter { (os, arch) ->
+  private suspend fun generateFromContentReport(): List<Path> {
+    return SUPPORTED_DISTRIBUTIONS.asFlow().filter { (os, arch) ->
       context.shouldBuildDistributionForOS(os, arch)
     }.map { (os, arch) ->
       val distributionDir = getOsAndArchSpecificDistDirectory(os, arch, context)
@@ -243,17 +298,33 @@ class SoftwareBillOfMaterials internal constructor(
       }
       document.documentDescribes.add(rootPackage)
       generate(
-        document, rootPackage, distributionDir,
+        document, rootPackage,
+        runtimePackage = document.runtimePackage(os, arch),
+        distributionDir = distributionDir,
         // distributions weren't built
         claimContainedFiles = false
       )
     }.toList()
   }
 
-  private fun generate(document: SpdxDocument, rootPackage: SpdxPackage, distributionDir: Path, claimContainedFiles: Boolean = true): Path {
-    val filePackages = generatePackagesForDistributionFiles(document, rootPackage, distributionDir)
+  private fun generate(
+    document: SpdxDocument,
+    rootPackage: SpdxPackage,
+    runtimePackage: SpdxPackage?,
+    distributionDir: Path,
+    claimContainedFiles: Boolean = true
+  ): Path {
+    val filePackages = generatePackagesForDistributionFiles(document, distributionDir)
     if (claimContainedFiles) {
-      rootPackage.claimContainedFiles(filePackages.values.filterNotNull().flatMap { it.files }, document)
+      val containedPackages = filePackages.values
+        .asSequence()
+        .plus(runtimePackage)
+        .filterNotNull()
+        .toList()
+      containedPackages.forEach {
+        rootPackage.relatesTo(it, RelationshipType.CONTAINS)
+      }
+      rootPackage.claimContainedFiles(containedPackages.flatMap { it.files }, document)
     }
     val libraryPackages = mavenLibraries.mapNotNull { lib ->
       val libraryPackage = document.spdxPackage(lib)
@@ -293,9 +364,7 @@ class SoftwareBillOfMaterials internal constructor(
     }
   }
 
-  private fun generatePackagesForDistributionFiles(document: SpdxDocument,
-                                                   rootPackage: SpdxPackage,
-                                                   distributionDir: Path): Map<Path, SpdxPackage?> {
+  private fun generatePackagesForDistributionFiles(document: SpdxDocument, distributionDir: Path): Map<Path, SpdxPackage?> {
     return distributionFilesChecksums.associate {
       val filePath = when {
         it.path.startsWith(distributionDir) -> distributionDir.relativize(it.path)
@@ -307,14 +376,13 @@ class SoftwareBillOfMaterials internal constructor(
           .setDownloadLocation(SpdxConstants.NOASSERTION_VALUE)
           .setSupplier(creator)
       }
-      rootPackage.relatesTo(filePackage, RelationshipType.CONTAINS)
-      filePackage.claimContainedFiles(filePackage.files, document)
+      filePackage.claimContainedFiles(document = document)
       filePackage.validate()
       it.path to filePackage
     }
   }
 
-  private fun SpdxPackage.relatesTo(other: SpdxPackage, type: RelationshipType, comment: String? = null) {
+  private fun SpdxPackage.relatesTo(other: SpdxElement, type: RelationshipType, comment: String? = null) {
     val relationship = createRelationship(other, type, comment)
     addRelationship(relationship)
   }
@@ -506,15 +574,18 @@ class SoftwareBillOfMaterials internal constructor(
     fun license(document: SpdxDocument): AnyLicenseInfo {
       return when {
         license.licenseUrl == null || license.spdxIdentifier == null -> SpdxNoAssertionLicense()
-        license.license == LibraryLicense.JETBRAINS_OWN -> document.extractedLicenseInfo(
-          name = jetBrainsOwnLicense.name,
-          text = jetBrainsOwnLicense.text,
-          url = jetBrainsOwnLicense.url
-        )
+        license.license == LibraryLicense.JETBRAINS_OWN -> document.jetBrainsOwnLicense
         else -> document.parseLicense(checkNotNull(license.spdxIdentifier))
       }
     }
   }
+
+  private val SpdxDocument.jetBrainsOwnLicense: AnyLicenseInfo
+    get() = extractedLicenseInfo(
+      name = this@SoftwareBillOfMaterials.jetBrainsOwnLicense.name,
+      text = this@SoftwareBillOfMaterials.jetBrainsOwnLicense.text,
+      url = this@SoftwareBillOfMaterials.jetBrainsOwnLicense.url
+    )
 
   /**
    * @param id one of [SpdxConstants.LISTED_LICENSE_URL]
@@ -646,7 +717,7 @@ class SoftwareBillOfMaterials internal constructor(
     ).setFilesAnalyzed(false).apply(init).build()
   }
 
-  private fun SpdxPackage.claimContainedFiles(files: Collection<SpdxFile>, document: SpdxDocument) {
+  private fun SpdxPackage.claimContainedFiles(files: Collection<SpdxFile> = this.files, document: SpdxDocument) {
     copyrightText = requireNotNull(context.options.sbomOptions.copyrightText) {
       "Copyright text isn't specified"
     }

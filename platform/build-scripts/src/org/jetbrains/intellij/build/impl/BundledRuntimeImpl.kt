@@ -1,15 +1,14 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.intellij.build.impl
 
-import com.intellij.platform.diagnostic.telemetry.helpers.use
 import com.intellij.openapi.util.SystemInfoRt
 import com.intellij.openapi.util.io.NioFiles
+import com.intellij.platform.diagnostic.telemetry.helpers.use
 import org.apache.commons.compress.archivers.tar.TarArchiveInputStream
 import org.jetbrains.intellij.build.*
 import org.jetbrains.intellij.build.TraceManager.spanBuilder
 import org.jetbrains.intellij.build.dependencies.BuildDependenciesDownloader
 import org.jetbrains.intellij.build.dependencies.BuildDependenciesExtractOptions
-import org.jetbrains.intellij.build.dependencies.DependenciesProperties
 import java.nio.file.FileVisitResult
 import java.nio.file.Files
 import java.nio.file.Path
@@ -20,55 +19,43 @@ import java.nio.file.attribute.PosixFilePermission.*
 import java.util.*
 import java.util.zip.GZIPInputStream
 
-class BundledRuntimeImpl(
-  private val options: BuildOptions,
-  private val paths: BuildPaths,
-  private val dependenciesProperties: DependenciesProperties,
-  private val error: (String) -> Unit,
-  private val info: (String) -> Unit) : BundledRuntime {
-  companion object {
-    fun getProductPrefix(context: BuildContext): String {
-      return context.options.bundledRuntimePrefix ?: context.productProperties.runtimeDistribution.artifactPrefix
+class BundledRuntimeImpl(private val context: CompilationContext) : BundledRuntime {
+  override val prefix: String
+    get() {
+      val bundledRuntimePrefix = context.options.bundledRuntimePrefix
+      return when {
+        // required as a runtime for debugger tests
+        System.getProperty("intellij.build.jbr.setupSdk", "false").toBoolean() -> "jbrsdk-"
+        bundledRuntimePrefix != null -> bundledRuntimePrefix
+        context is BuildContext -> context.productProperties.runtimeDistribution.artifactPrefix
+        else -> JetBrainsRuntimeDistribution.JCEF.artifactPrefix
+      }
     }
-  }
 
-  private val build by lazy {
-    dependenciesProperties.property("runtimeBuild")
+  override val build: String by lazy {
+    context.dependenciesProperties.property("runtimeBuild")
   }
 
   override suspend fun getHomeForCurrentOsAndArch(): Path {
-    var prefix = "jbr_jcef-"
     val os = OsFamily.currentOs
     val arch = JvmArchitecture.currentJvmArch
-    if (System.getProperty("intellij.build.jbr.setupSdk", "false").toBoolean()) {
-      // required as a runtime for debugger tests
-      prefix = "jbrsdk-"
-    }
-    else {
-      options.bundledRuntimePrefix?.let {
-        prefix = it
-      }
-    }
-    val path = extract(prefix, os, arch)
-
+    val path = extract(os = os, arch = arch)
     val home = if (os == OsFamily.MACOS) path.resolve("jbr/Contents/Home") else path.resolve("jbr")
     val releaseFile = home.resolve("release")
     check(Files.exists(releaseFile)) {
       "Unable to find release file $releaseFile after extracting JBR at $path"
     }
-
     return home
   }
 
-  // contract: returns a directory, where only one subdirectory is available: 'jbr', which contains specified JBR
   override suspend fun extract(prefix: String, os: OsFamily, arch: JvmArchitecture): Path {
-    val targetDir = paths.communityHomeDir.resolve("build/download/${prefix}${build}-${os.jbrArchiveSuffix}-$arch")
+    val targetDir = context.paths.communityHomeDir.resolve("build/download/${prefix}${build}-${os.jbrArchiveSuffix}-$arch")
     val jbrDir = targetDir.resolve("jbr")
 
     val archive = findArchive(prefix, os, arch)
     BuildDependenciesDownloader.extractFile(
       archive, jbrDir,
-      paths.communityHomeDirRoot,
+      context.paths.communityHomeDirRoot,
       BuildDependenciesExtractOptions.STRIP_ROOT,
     )
     fixPermissions(jbrDir, os == OsFamily.WINDOWS)
@@ -82,14 +69,17 @@ class BundledRuntimeImpl(
     return targetDir
   }
 
-  override suspend fun extractTo(prefix: String, os: OsFamily, destinationDir: Path, arch: JvmArchitecture) {
+  override suspend fun extractTo(os: OsFamily, destinationDir: Path, arch: JvmArchitecture) {
     doExtract(findArchive(prefix, os, arch), destinationDir, os)
   }
 
-  private suspend fun findArchive(prefix: String, os: OsFamily, arch: JvmArchitecture): Path {
+  override fun downloadUrlFor(prefix: String, os: OsFamily, arch: JvmArchitecture): String {
     val archiveName = archiveName(prefix = prefix, arch = arch, os = os)
-    val url = "https://cache-redirector.jetbrains.com/intellij-jbr/$archiveName"
-    return downloadFileToCacheLocation(url = url, communityRoot = paths.communityHomeDirRoot)
+    return "https://cache-redirector.jetbrains.com/intellij-jbr/$archiveName"
+  }
+
+  override suspend fun findArchive(prefix: String, os: OsFamily, arch: JvmArchitecture): Path {
+    return downloadFileToCacheLocation(url = downloadUrlFor(prefix, os, arch), communityRoot = context.paths.communityHomeDirRoot)
   }
 
   /**
@@ -110,13 +100,13 @@ class BundledRuntimeImpl(
   }
 
   private fun runtimeBuildPrefix(): String {
-    if (!options.runtimeDebug) {
+    if (!context.options.runtimeDebug) {
       return ""
     }
-    if (!options.isTestBuild && !options.isInDevelopmentMode) {
+    if (!context.options.isTestBuild && !context.options.isInDevelopmentMode) {
       error("Either test or development mode is required to use fastdebug runtime build")
     }
-    info("Fastdebug runtime build is requested")
+    context.messages.info("Fastdebug runtime build is requested")
     return "fastdebug-"
   }
 
