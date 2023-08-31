@@ -24,7 +24,7 @@ class UnindexedFilesScannerExecutor(project: Project)
     MergingQueueGuiExecutor<FilesScanningTask>(project, MergingTaskQueue(), TaskQueueListener(),
                                                IndexingBundle.message("progress.indexing.scanning"),
                                                IndexingBundle.message("progress.indexing.scanning.paused")) {
-  private val runningTask = AtomicReference<ProgressIndicator>()
+  private val runningDumbTask = AtomicReference<ProgressIndicator>()
 
   private class TaskQueueListener : ExecutorStateListener {
     override fun beforeFirstTask(): Boolean = true
@@ -60,11 +60,11 @@ class UnindexedFilesScannerExecutor(project: Project)
 
   @VisibleForTesting
   fun wrapAsDumbTask(task: FilesScanningTask): DumbModeTask {
-    return FilesScanningTaskAsDumbModeTaskWrapper(project, task, runningTask)
+    return FilesScanningTaskAsDumbModeTaskWrapper(project, task, runningDumbTask)
   }
 
   private fun cancelRunningScannerTaskInDumbQueue() {
-    val indicator = runningTask.get()
+    val indicator = runningDumbTask.get()
     if (indicator != null) {
       indicator.cancel()
       val suspender = ProgressSuspender.getSuspender(indicator)
