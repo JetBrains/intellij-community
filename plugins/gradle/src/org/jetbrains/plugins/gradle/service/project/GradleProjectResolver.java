@@ -150,7 +150,7 @@ public class GradleProjectResolver implements ExternalSystemProjectResolver<Grad
     myCancellationMap.putValue(resolverContext.getExternalSystemTaskId(), cancellationTokenSource);
 
     final long activityId = resolverContext.getExternalSystemTaskId().getId();
-    ExternalSystemSyncActionsCollector.logSyncStarted(null, activityId);
+    ExternalSystemSyncActionsCollector.logSyncStarted(resolverContext.getExternalSystemTaskId().findProject(), activityId);
     syncMetrics.getOrStartSpan(ExternalSystemSyncDiagnostic.gradleSyncSpanName);
 
     try {
@@ -861,9 +861,10 @@ public class GradleProjectResolver implements ExternalSystemProjectResolver<Grad
 
     @Override
     public DataNode<ProjectData> fun(ProjectConnection connection) {
-      final long activityId = myResolverContext.getExternalSystemTaskId().getId();
+      ExternalSystemTaskId taskId = myResolverContext.getExternalSystemTaskId();
+      final long activityId = taskId.getId();
       try {
-        myCancellationMap.putValue(myResolverContext.getExternalSystemTaskId(), myResolverContext.getCancellationTokenSource());
+        myCancellationMap.putValue(taskId, myResolverContext.getCancellationTokenSource());
         myResolverContext.setConnection(connection);
         return doResolveProjectInfo(myResolverContext, myProjectResolverChain, myIsBuildSrcProject);
       }
@@ -876,15 +877,15 @@ public class GradleProjectResolver implements ExternalSystemProjectResolver<Grad
         if (esException != null && esException != e) {
           LOG.info("\nCaused by: " + esException.getOriginalReason());
         }
-        ExternalSystemSyncActionsCollector.logError(null, activityId, extractCause(e));
-        ExternalSystemSyncActionsCollector.logSyncFinished(null, activityId, false);
+        ExternalSystemSyncActionsCollector.logError(taskId.findProject(), activityId, extractCause(e));
+        ExternalSystemSyncActionsCollector.logSyncFinished(taskId.findProject(), activityId, false);
         syncMetrics.endSpan(ExternalSystemSyncDiagnostic.gradleSyncSpanName, (span) -> span.setAttribute("project", ""));
 
         throw myProjectResolverChain.getUserFriendlyError(
           myResolverContext.getBuildEnvironment(), e, myResolverContext.getProjectPath(), null);
       }
       finally {
-        myCancellationMap.remove(myResolverContext.getExternalSystemTaskId(), myResolverContext.getCancellationTokenSource());
+        myCancellationMap.remove(taskId, myResolverContext.getCancellationTokenSource());
       }
     }
   }

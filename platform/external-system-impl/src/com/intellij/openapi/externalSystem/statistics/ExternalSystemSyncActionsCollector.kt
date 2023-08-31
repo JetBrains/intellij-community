@@ -32,13 +32,13 @@ class ExternalSystemSyncActionsCollector : CounterUsagesCollector() {
   override fun getGroup(): EventLogGroup = GROUP
 
   companion object {
-    val GROUP = EventLogGroup("build.gradle.import", 7)
+    val GROUP = EventLogGroup("build.gradle.import", 8)
 
     private val activityIdField = EventFields.Long("ide_activity_id")
     private val importPhaseField = EventFields.Enum<Phase>("phase")
 
     private val syncStartedEvent = GROUP.registerEvent("gradle.sync.started", activityIdField)
-    private val syncFinishedEvent = GROUP.registerEvent("gradle.sync.finished", activityIdField, Boolean("sync_successful"))
+    private val syncFinishedEvent = GROUP.registerEvent("gradle.sync.finished", activityIdField, DurationMs, Boolean("sync_successful"))
     private val phaseStartedEvent = GROUP.registerEvent("phase.started", activityIdField, importPhaseField)
     private val phaseFinishedEvent = GROUP.registerVarargEvent("phase.finished",
                                                                activityIdField,
@@ -61,10 +61,30 @@ class ExternalSystemSyncActionsCollector : CounterUsagesCollector() {
 
     private val ourErrorsRateThrottle = EventsRateThrottle(100, 5L * 60 * 1000) // 100 errors per 5 minutes
 
+    private const val tsCacheCapasity = 100
+    private val idToStartTS = object: LinkedHashMap<Long, Long>(tsCacheCapasity) {
+      override fun removeEldestEntry(eldest: MutableMap.MutableEntry<Long, Long>?): Boolean {
+        return size > tsCacheCapasity
+      }
+    }
+
     @JvmStatic
-    fun logSyncStarted(project: Project?, activityId: Long) =  syncStartedEvent.log(project, activityId)
+    fun logSyncStarted(project: Project?, activityId: Long) {
+      idToStartTS[activityId] = System.currentTimeMillis()
+      syncStartedEvent.log(project, activityId)
+    }
+
     @JvmStatic
-    fun logSyncFinished(project: Project?, activityId: Long, success: Boolean) =  syncFinishedEvent.log(project, activityId, success)
+    fun logSyncFinished(project: Project?, activityId: Long, success: Boolean) {
+      val nowTS = System.currentTimeMillis()
+      val startTS = idToStartTS[activityId]
+      val duration = if (startTS == null) {
+        -1
+      } else {
+        nowTS - startTS
+      }
+      syncFinishedEvent.log(project, activityId, duration, success)
+    }
 
     @JvmStatic
     fun logPhaseStarted(project: Project?, activityId: Long, phase: Phase) = phaseStartedEvent.log(project, activityId, phase)
