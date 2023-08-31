@@ -27,7 +27,7 @@ class SimpleTerminalView(
   private val withVerticalScroll: Boolean = true
 ) : Disposable {
   private val editor: EditorImpl
-  private val controller: SimpleTerminalController
+  val controller: SimpleTerminalController
 
   val component: JComponent
   val preferredFocusableComponent: JComponent

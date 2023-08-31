@@ -6,6 +6,7 @@ import com.intellij.codeInsight.lookup.Lookup
 import com.intellij.codeInsight.lookup.LookupElement
 import com.intellij.codeInsight.lookup.impl.LookupImpl
 import com.intellij.openapi.util.UserDataHolder
+import org.jetbrains.plugins.terminal.exp.TerminalDataContextUtils.isPromptEditor
 
 class TerminalCharFilter : CharFilter() {
   override fun acceptChar(c: Char, prefixLength: Int, lookup: Lookup): Result? {
@@ -14,7 +15,7 @@ class TerminalCharFilter : CharFilter() {
       // Close lookup on any char typed
       Result.HIDE_LOOKUP
     }
-    else if (lookup.editor.getUserData(TerminalPromptController.KEY) != null) {
+    else if (lookup.editor.isPromptEditor) {
       // It is command completion lookup
       val matches = lookup.items.filter { matchesAfterAppendingChar(lookup, it, c) }
       if (matches.isNotEmpty()) {

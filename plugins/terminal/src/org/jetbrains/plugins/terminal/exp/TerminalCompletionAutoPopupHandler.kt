@@ -11,6 +11,7 @@ import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.EditorModificationUtil
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiFile
+import org.jetbrains.plugins.terminal.exp.TerminalDataContextUtils.isPromptEditor
 
 /**
  * Logic is mostly copied from [com.intellij.codeInsight.editorActions.CompletionAutoPopupHandler].
@@ -18,7 +19,7 @@ import com.intellij.psi.PsiFile
  */
 class TerminalCompletionAutoPopupHandler : TypedHandlerDelegate() {
   override fun checkAutoPopup(charTyped: Char, project: Project, editor: Editor, file: PsiFile): Result {
-    if (editor.getUserData(TerminalPromptController.KEY) == null) {
+    if (!editor.isPromptEditor) {
       return Result.CONTINUE
     }
 

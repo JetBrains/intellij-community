@@ -2,6 +2,7 @@
 package org.jetbrains.plugins.terminal.exp
 
 import com.intellij.openapi.Disposable
+import com.intellij.openapi.actionSystem.DataKey
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.invokeLater
 import com.intellij.openapi.editor.Document
@@ -11,7 +12,6 @@ import com.intellij.openapi.editor.ex.EditorEx
 import com.intellij.openapi.editor.markup.EffectType
 import com.intellij.openapi.editor.markup.TextAttributes
 import com.intellij.openapi.util.Disposer
-import com.intellij.openapi.util.Key
 import com.intellij.terminal.JBTerminalSystemSettingsProviderBase
 import com.jediterm.terminal.StyledTextConsumer
 import com.jediterm.terminal.TextStyle
@@ -42,7 +42,7 @@ class SimpleTerminalController(
   var isFocused: Boolean = false
 
   init {
-    editor.putUserData(KEY, this)
+    editor.putUserData(TerminalDataContextUtils.IS_ALTERNATE_BUFFER_EDITOR_KEY, true)
 
     // create dummy logical block, that will cover all the output, needed only for caret model
     outputModel.createBlock(command = null)
@@ -170,6 +170,6 @@ class SimpleTerminalController(
   private data class TerminalContent(val text: String, val highlightings: List<HighlightingInfo>)
 
   companion object {
-    val KEY: Key<SimpleTerminalController> = Key.create("SimpleTerminalController")
+    val KEY: DataKey<SimpleTerminalController> = DataKey.create("SimpleTerminalController")
   }
 }

@@ -7,6 +7,10 @@ import com.intellij.openapi.actionSystem.DataContext
 import com.intellij.openapi.editor.Caret
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.actionSystem.EditorActionHandler
+import org.jetbrains.plugins.terminal.exp.TerminalDataContextUtils.editor
+import org.jetbrains.plugins.terminal.exp.TerminalDataContextUtils.isOutputEditor
+import org.jetbrains.plugins.terminal.exp.TerminalDataContextUtils.isPromptEditor
+import org.jetbrains.plugins.terminal.exp.TerminalDataContextUtils.selectionController
 
 /** Can be invoked only from the Prompt */
 class TerminalSelectLastBlockAction : TerminalPromotedDumbAwareAction() {
@@ -15,7 +19,7 @@ class TerminalSelectLastBlockAction : TerminalPromotedDumbAwareAction() {
   }
 
   override fun update(e: AnActionEvent) {
-    e.presentation.isEnabledAndVisible = e.promptController != null && e.selectionController != null
+    e.presentation.isEnabledAndVisible = e.editor?.isPromptEditor == true
   }
 
   override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.BGT
@@ -23,7 +27,7 @@ class TerminalSelectLastBlockAction : TerminalPromotedDumbAwareAction() {
 
 abstract class TerminalOutputSelectionAction : TerminalPromotedDumbAwareAction() {
   override fun update(e: AnActionEvent) {
-    e.presentation.isEnabledAndVisible = e.outputController != null && e.selectionController != null
+    e.presentation.isEnabledAndVisible = e.editor?.isOutputEditor == true
   }
 
   override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.BGT
@@ -49,8 +53,8 @@ class TerminalSelectBlockAboveAction : TerminalOutputSelectionAction() {
 }
 
 class TerminalSelectPromptHandler(private val originalHandler: EditorActionHandler) : EditorActionHandler() {
-  override fun doExecute(editor: Editor, caret: Caret?, dataContext: DataContext?) {
-    val selectionController = editor.getUserData(TerminalSelectionController.KEY)
+  override fun doExecute(editor: Editor, caret: Caret?, dataContext: DataContext) {
+    val selectionController = dataContext.selectionController
     if (selectionController != null) {
       // clear selection to move the focus to the prompt
       selectionController.clearSelection()
@@ -58,9 +62,7 @@ class TerminalSelectPromptHandler(private val originalHandler: EditorActionHandl
     else originalHandler.execute(editor, caret, dataContext)
   }
 
-  override fun isEnabledForCaret(editor: Editor, caret: Caret, dataContext: DataContext?): Boolean {
-    return editor.getUserData(TerminalOutputController.KEY) != null
-           && editor.getUserData(TerminalSelectionController.KEY) != null
-           || originalHandler.isEnabled(editor, caret, dataContext)
+  override fun isEnabledForCaret(editor: Editor, caret: Caret, dataContext: DataContext): Boolean {
+    return dataContext.editor?.isOutputEditor == true || originalHandler.isEnabled(editor, caret, dataContext)
   }
 }

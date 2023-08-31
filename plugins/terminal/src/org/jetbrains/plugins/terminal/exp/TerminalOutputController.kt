@@ -2,6 +2,7 @@
 package org.jetbrains.plugins.terminal.exp
 
 import com.intellij.openapi.Disposable
+import com.intellij.openapi.actionSystem.DataKey
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.invokeLater
 import com.intellij.openapi.editor.ScrollType
@@ -10,9 +11,7 @@ import com.intellij.openapi.editor.ex.EditorEx
 import com.intellij.openapi.editor.markup.EffectType
 import com.intellij.openapi.editor.markup.TextAttributes
 import com.intellij.openapi.util.Disposer
-import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.TextRange
-import com.intellij.openapi.util.UserDataHolder
 import com.intellij.terminal.JBTerminalSystemSettingsProviderBase
 import com.intellij.terminal.TerminalUiSettingsManager
 import com.intellij.util.concurrency.annotations.RequiresEdt
@@ -21,6 +20,7 @@ import com.jediterm.terminal.TextStyle
 import com.jediterm.terminal.emulator.ColorPalette
 import com.jediterm.terminal.model.CharBuffer
 import com.jediterm.terminal.ui.AwtTransformers
+import org.jetbrains.plugins.terminal.exp.TerminalDataContextUtils.IS_OUTPUT_EDITOR_KEY
 import java.awt.Color
 import java.awt.Font
 
@@ -28,7 +28,7 @@ class TerminalOutputController(
   private val editor: EditorEx,
   private val session: TerminalSession,
   private val settings: JBTerminalSystemSettingsProviderBase
-) : TerminalModel.TerminalListener, UserDataHolder {
+) : TerminalModel.TerminalListener {
   val outputModel: TerminalOutputModel = TerminalOutputModel(editor)
   val selectionModel: TerminalSelectionModel = TerminalSelectionModel(outputModel)
   private val terminalModel: TerminalModel = session.model
@@ -45,7 +45,7 @@ class TerminalOutputController(
   private var runningListenersDisposable: Disposable? = null
 
   init {
-    editor.putUserData(KEY, this)
+    editor.putUserData(IS_OUTPUT_EDITOR_KEY, true)
     editor.highlighter = textHighlighter
     session.model.addTerminalListener(this)
     Disposer.register(session, caretModel)
@@ -240,13 +240,9 @@ class TerminalOutputController(
     else editor.document.addDocumentListener(listener)
   }
 
-  override fun <T : Any?> getUserData(key: Key<T>): T? = editor.getUserData(key)
-
-  override fun <T : Any?> putUserData(key: Key<T>, value: T?) = editor.putUserData(key, value)
-
   private data class TerminalContent(val text: String, val highlightings: List<HighlightingInfo>)
 
   companion object {
-    val KEY: Key<TerminalOutputController> = Key.create("TerminalOutputController")
+    val KEY: DataKey<TerminalOutputController> = DataKey.create("TerminalOutputController")
   }
 }

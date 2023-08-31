@@ -1,6 +1,7 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.terminal.exp
 
+import com.intellij.openapi.actionSystem.DataProvider
 import com.intellij.openapi.application.invokeLater
 import com.intellij.openapi.editor.event.DocumentEvent
 import com.intellij.openapi.editor.event.DocumentListener
@@ -26,12 +27,13 @@ class BlockTerminalView(
   private val settings: JBTerminalSystemSettingsProviderBase
 ) : TerminalContentView, TerminalCommandExecutor {
   private val controller: BlockTerminalController
+  private val selectionController: TerminalSelectionController
 
   private val outputView: TerminalOutputView = TerminalOutputView(project, session, settings)
   private val promptView: TerminalPromptView = TerminalPromptView(project, settings, session, this)
   private var alternateBufferView: SimpleTerminalView? = null
 
-  override val component: JComponent = JPanel()
+  override val component: JComponent = BlockTerminalPanel()
 
   override val preferredFocusableComponent: JComponent
     get() = when {
@@ -72,7 +74,8 @@ class BlockTerminalView(
     })
 
     val focusModel = TerminalFocusModel(project, outputView, promptView)
-    controller = BlockTerminalController(session, focusModel, outputView.controller, promptView.controller)
+    controller = BlockTerminalController(session, outputView.controller, promptView.controller)
+    selectionController = TerminalSelectionController(focusModel, outputView.controller.selectionModel, outputView.controller.outputModel)
 
     component.addComponentListener(object : ComponentAdapter() {
       override fun componentResized(e: ComponentEvent?) {
@@ -88,7 +91,6 @@ class BlockTerminalView(
       }
     })
 
-    component.background = TerminalUi.terminalBackground
     installPromptAndOutput()
   }
 
@@ -156,6 +158,22 @@ class BlockTerminalView(
   }
 
   override fun dispose() {}
+
+  private inner class BlockTerminalPanel : JPanel(), DataProvider {
+    init {
+      background = TerminalUi.terminalBackground
+    }
+
+    override fun getData(dataId: String): Any? {
+      return when (dataId) {
+        TerminalPromptController.KEY.name -> promptView.controller
+        TerminalOutputController.KEY.name -> outputView.controller
+        SimpleTerminalController.KEY.name -> alternateBufferView?.controller
+        TerminalSelectionController.KEY.name -> selectionController
+        else -> null
+      }
+    }
+  }
 
   /**
    * This layout is needed to place [TOP] component (command blocks) over the [BOTTOM] component (prompt).
