@@ -10,9 +10,8 @@ import org.jetbrains.kotlin.analysis.api.symbols.markers.KtSymbolWithVisibility
 import org.jetbrains.kotlin.idea.base.utils.fqname.isJavaClassNotToBeUsedInKotlin
 import org.jetbrains.kotlin.idea.completion.context.FirBasicCompletionContext
 import org.jetbrains.kotlin.idea.util.positionContext.KDocNameReferencePositionContext
-import org.jetbrains.kotlin.idea.util.positionContext.KotlinNameReferencePositionContext
 import org.jetbrains.kotlin.idea.util.positionContext.KotlinRawPositionContext
-import org.jetbrains.kotlin.psi.KtExpression
+import org.jetbrains.kotlin.idea.util.positionContext.KotlinSimpleNameReferencePositionContext
 import org.jetbrains.kotlin.resolve.deprecation.DeprecationLevelValue
 
 internal fun interface CompletionVisibilityChecker {
@@ -51,7 +50,7 @@ internal fun interface CompletionVisibilityChecker {
                 return isVisible(
                     symbol,
                     basicContext.originalKtFile.getFileSymbol(),
-                    (positionContext as? KotlinNameReferencePositionContext)?.explicitReceiver as? KtExpression,
+                    (positionContext as? KotlinSimpleNameReferencePositionContext)?.explicitReceiver,
                     positionContext.position
                 )
             }

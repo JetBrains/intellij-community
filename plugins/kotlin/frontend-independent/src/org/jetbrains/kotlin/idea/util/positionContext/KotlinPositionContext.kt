@@ -58,19 +58,25 @@ sealed class KotlinNameReferencePositionContext : KotlinRawPositionContext() {
     abstract val explicitReceiver: KtElement?
 }
 
+sealed class KotlinSimpleNameReferencePositionContext : KotlinNameReferencePositionContext() {
+    abstract override val reference: KtSimpleNameReference
+    abstract override val nameExpression: KtSimpleNameExpression
+    abstract override val explicitReceiver: KtExpression?
+}
+
 class KotlinImportDirectivePositionContext(
     override val position: PsiElement,
     override val reference: KtSimpleNameReference,
     override val nameExpression: KtSimpleNameExpression,
     override val explicitReceiver: KtExpression?,
-) : KotlinNameReferencePositionContext()
+) : KotlinSimpleNameReferencePositionContext()
 
 class KotlinPackageDirectivePositionContext(
     override val position: PsiElement,
     override val reference: KtSimpleNameReference,
     override val nameExpression: KtSimpleNameExpression,
     override val explicitReceiver: KtExpression?,
-) : KotlinNameReferencePositionContext()
+) : KotlinSimpleNameReferencePositionContext()
 
 
 class KotlinTypeNameReferencePositionContext(
@@ -79,7 +85,7 @@ class KotlinTypeNameReferencePositionContext(
     override val nameExpression: KtSimpleNameExpression,
     override val explicitReceiver: KtExpression?,
     val typeReference: KtTypeReference?,
-) : KotlinNameReferencePositionContext()
+) : KotlinSimpleNameReferencePositionContext()
 
 class KotlinAnnotationTypeNameReferencePositionContext(
     override val position: PsiElement,
@@ -87,7 +93,7 @@ class KotlinAnnotationTypeNameReferencePositionContext(
     override val nameExpression: KtSimpleNameExpression,
     override val explicitReceiver: KtExpression?,
     val annotationEntry: KtAnnotationEntry,
-) : KotlinNameReferencePositionContext()
+) : KotlinSimpleNameReferencePositionContext()
 
 /**
  * Example
@@ -105,7 +111,7 @@ class KotlinSuperTypeCallNameReferencePositionContext(
     override val nameExpression: KtSimpleNameExpression,
     override val explicitReceiver: KtExpression?,
     val superExpression: KtSuperExpression,
-) : KotlinNameReferencePositionContext()
+) : KotlinSimpleNameReferencePositionContext()
 
 /**
  * Example
@@ -123,21 +129,21 @@ class KotlinSuperReceiverNameReferencePositionContext(
     override val nameExpression: KtSimpleNameExpression,
     override val explicitReceiver: KtExpression?,
     val superExpression: KtSuperExpression,
-) : KotlinNameReferencePositionContext()
+) : KotlinSimpleNameReferencePositionContext()
 
 class KotlinExpressionNameReferencePositionContext(
     override val position: PsiElement,
     override val reference: KtSimpleNameReference,
     override val nameExpression: KtSimpleNameExpression,
     override val explicitReceiver: KtExpression?
-) : KotlinNameReferencePositionContext()
+) : KotlinSimpleNameReferencePositionContext()
 
 class KotlinInfixCallPositionContext(
     override val position: PsiElement,
     override val reference: KtSimpleNameReference,
     override val nameExpression: KtSimpleNameExpression,
     override val explicitReceiver: KtExpression?
-) : KotlinNameReferencePositionContext()
+) : KotlinSimpleNameReferencePositionContext()
 
 
 class KotlinWithSubjectEntryPositionContext(
@@ -147,14 +153,14 @@ class KotlinWithSubjectEntryPositionContext(
     override val explicitReceiver: KtExpression?,
     val subjectExpression: KtExpression,
     val whenCondition: KtWhenCondition,
-) : KotlinNameReferencePositionContext()
+) : KotlinSimpleNameReferencePositionContext()
 
 class KotlinCallableReferencePositionContext(
     override val position: PsiElement,
     override val reference: KtSimpleNameReference,
     override val nameExpression: KtSimpleNameExpression,
     override val explicitReceiver: KtExpression?
-) : KotlinNameReferencePositionContext()
+) : KotlinSimpleNameReferencePositionContext()
 
 /**
  * Position in class body, on which member declaration or class initializer is expected
@@ -175,7 +181,11 @@ class KotlinMemberDeclarationExpectedPositionContext(
     val classBody: KtClassBody
 ) : KotlinRawPositionContext()
 
-sealed class KDocNameReferencePositionContext : KotlinNameReferencePositionContext()
+sealed class KDocNameReferencePositionContext : KotlinNameReferencePositionContext() {
+    abstract override val reference: KDocReference
+    abstract override val nameExpression: KDocName
+    abstract override val explicitReceiver: KDocName?
+}
 
 class KDocParameterNamePositionContext(
     override val position: PsiElement,

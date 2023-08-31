@@ -8,7 +8,6 @@ import com.intellij.psi.PsiElement
 import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
 import org.jetbrains.kotlin.idea.base.projectStructure.languageVersionSettings
 import org.jetbrains.kotlin.idea.completion.FirCompletionSessionParameters
-import org.jetbrains.kotlin.util.match
 import org.jetbrains.kotlin.idea.completion.KeywordCompletion
 import org.jetbrains.kotlin.idea.completion.context.*
 import org.jetbrains.kotlin.idea.completion.contributors.keywords.OverrideKeywordHandler
@@ -22,7 +21,6 @@ import org.jetbrains.kotlin.idea.completion.keywords.DefaultCompletionKeywordHan
 import org.jetbrains.kotlin.idea.completion.keywords.createLookups
 import org.jetbrains.kotlin.idea.completion.weighers.Weighers
 import org.jetbrains.kotlin.idea.completion.weighers.WeighingContext
-import org.jetbrains.kotlin.idea.references.KtSimpleNameReference
 import org.jetbrains.kotlin.idea.util.positionContext.*
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.platform.jvm.isJvm
@@ -31,6 +29,7 @@ import org.jetbrains.kotlin.psi.KtExpression
 import org.jetbrains.kotlin.psi.KtExpressionWithLabel
 import org.jetbrains.kotlin.psi.KtLabelReferenceExpression
 import org.jetbrains.kotlin.psi.psiUtil.parentsWithSelf
+import org.jetbrains.kotlin.util.match
 
 internal class FirKeywordCompletionContributor(basicContext: FirBasicCompletionContext, priority: Int) :
     FirCompletionContributorBase<KotlinRawPositionContext>(basicContext, priority) {
@@ -48,7 +47,7 @@ internal class FirKeywordCompletionContributor(basicContext: FirBasicCompletionC
         sessionParameters: FirCompletionSessionParameters,
     ) {
         val expression = when (positionContext) {
-            is KotlinNameReferencePositionContext -> (positionContext.reference as? KtSimpleNameReference)?.expression?.let {
+            is KotlinSimpleNameReferencePositionContext -> positionContext.reference.expression.let {
                 it.parentsWithSelf.match(KtLabelReferenceExpression::class, KtContainerNode::class, last = KtExpressionWithLabel::class)
                     ?: it
             }
@@ -58,6 +57,7 @@ internal class FirKeywordCompletionContributor(basicContext: FirBasicCompletionC
 
             is KotlinValueParameterPositionContext,
             is KotlinMemberDeclarationExpectedPositionContext,
+            is KDocNameReferencePositionContext,
             is KotlinUnknownPositionContext -> null
         }
         completeWithResolve(expression ?: positionContext.position, expression, weighingContext)

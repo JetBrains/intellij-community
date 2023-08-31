@@ -40,6 +40,7 @@ import org.jetbrains.kotlin.idea.completion.lookups.factories.FunctionInsertionH
 import org.jetbrains.kotlin.idea.completion.weighers.WeighingContext
 import org.jetbrains.kotlin.idea.references.mainReference
 import org.jetbrains.kotlin.idea.util.positionContext.KotlinNameReferencePositionContext
+import org.jetbrains.kotlin.idea.util.positionContext.KotlinSimpleNameReferencePositionContext
 import org.jetbrains.kotlin.kdoc.psi.impl.KDocName
 import org.jetbrains.kotlin.name.StandardClassIds
 import org.jetbrains.kotlin.psi.*
@@ -122,10 +123,7 @@ internal open class FirCallableCompletionContributor(
         val visibilityChecker = CompletionVisibilityChecker.create(basicContext, positionContext)
         val scopesContext = originalKtFile.getScopeContextForPosition(nameExpression)
 
-        val expression = nameExpression
-        val receiver = explicitReceiver
-
-        val extensionChecker = if (expression is KtSimpleNameExpression && receiver is KtExpression?) {
+        val extensionChecker = if (positionContext is KotlinSimpleNameReferencePositionContext) {
             object : ExtensionApplicabilityChecker {
                 /**
                  * Cached applicability results for callable extension symbols.
@@ -142,11 +140,13 @@ internal open class FirCallableCompletionContributor(
                 private val cache: MutableMap<KtCallableSymbol, KtExtensionApplicabilityResult> = mutableMapOf()
 
                 context(KtAnalysisSession)
-                override fun checkApplicability(symbol: KtCallableSymbol): KtExtensionApplicabilityResult =
-                    cache.getOrPut(symbol) { symbol.checkExtensionIsSuitable(originalKtFile, expression, receiver) }
+                override fun checkApplicability(symbol: KtCallableSymbol): KtExtensionApplicabilityResult = cache.getOrPut(symbol) {
+                    symbol.checkExtensionIsSuitable(originalKtFile, positionContext.nameExpression, positionContext.explicitReceiver)
+                }
             }
         } else null
 
+        val receiver = explicitReceiver
         val weighingContextWithoutExpectedType = weighingContext.withoutExpectedType()
 
         val callablesWithMetadata: Sequence<CallableWithMetadataForCompletion> = when {
