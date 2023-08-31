@@ -176,7 +176,7 @@ abstract class AbstractMultiModuleTest : DaemonAnalyzerTestCase() {
 
         facetSettings.useProjectSettings = false
         facetSettings.compilerSettings = CompilerSettings().apply {
-            additionalArguments += " -Xmulti-platform $additionalCompilerArguments"
+            additionalArguments += " -Xmulti-platform -Xexpect-actual-classes $additionalCompilerArguments"
         }
     }
 
