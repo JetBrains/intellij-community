@@ -345,8 +345,7 @@ internal class PhmVcsLogStorageBackend(
           }
         }
       }
-      catch (e: IOException) {
-        errorHandler.handleError(VcsLogErrorHandler.Source.Index, e)
+      catch (_: IOException) {
       }
       return null
     }
