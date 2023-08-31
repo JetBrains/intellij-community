@@ -436,6 +436,6 @@ public final class VcsLogData implements Disposable, VcsLogDataProvider {
   }
 
   public static @NotNull RegistryValue getIndexingRegistryValue() {
-    return Registry.get("vcs.log.index.git");
+    return Registry.get("vcs.log.index.enable");
   }
 }
