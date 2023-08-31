@@ -66,7 +66,8 @@ abstract class BaseJetBrainsExternalProductResourceUrls : ExternalProductResourc
     }
 
   override fun computePatchUrl(from: BuildNumber, to: BuildNumber): Url? {
-    return Urls.newFromEncoded(basePatchDownloadUrl).resolve(computePatchFileName(from, to)) 
+    return computeCustomPatchDownloadUrl(from, to)
+           ?: Urls.newFromEncoded(basePatchDownloadUrl).resolve(computePatchFileName(from, to)) 
   }
 
   override val bugReportUrl: ((String) -> Url)?
@@ -141,4 +142,9 @@ internal fun computePatchFileName(from: BuildNumber, to: BuildNumber): String {
   val product = ApplicationInfo.getInstance().build.productCode
   val runtime = if (CpuArch.isArm64()) "-aarch64" else ""
   return "${product}-${from.withoutProductCode().asString()}-${to.withoutProductCode().asString()}-patch${runtime}-${PatchInfo.OS_SUFFIX}.jar"
+}
+
+internal fun computeCustomPatchDownloadUrl(from: BuildNumber, to: BuildNumber): Url? {
+  val customPatchesUrl = System.getProperty("idea.patches.url") ?: return null
+  return Urls.newFromEncoded(customPatchesUrl).resolve(computePatchFileName(from, to))
 }

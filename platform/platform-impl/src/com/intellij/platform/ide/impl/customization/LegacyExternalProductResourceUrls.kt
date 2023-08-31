@@ -26,6 +26,10 @@ class LegacyExternalProductResourceUrls : ExternalProductResourceUrls {
     }
 
   override fun computePatchUrl(from: BuildNumber, to: BuildNumber): Url? {
+    val customUrl = computeCustomPatchDownloadUrl(from, to)
+    if (customUrl != null) {
+      return customUrl
+    }
     val baseUrl = ApplicationInfoEx.getInstanceEx().updateUrls?.patchesUrl ?: return null
     return Urls.newFromEncoded(baseUrl).resolve(computePatchFileName(from, to))
   }

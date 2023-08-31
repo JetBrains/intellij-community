@@ -12,8 +12,6 @@ import com.intellij.openapi.util.BuildNumber
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.platform.ide.customization.ExternalProductResourceUrls
-import com.intellij.platform.ide.impl.customization.computePatchFileName
-import com.intellij.util.Urls
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import com.intellij.util.io.HttpRequests
 import com.intellij.util.io.copy
@@ -44,16 +42,9 @@ internal object UpdateInstaller {
     for (i in 1 until chain.size) {
       val from = chain[i - 1]
       val to = chain[i]
-      val patchFileName = computePatchFileName(from, to)
-      val patchFile = File(getTempDir(), patchFileName)
-      val customPatchesUrl = System.getProperty("idea.patches.url")
-      val url = if (customPatchesUrl != null) {
-        Urls.newFromEncoded(customPatchesUrl).resolve(patchFileName)
-      }
-      else {
-        ExternalProductResourceUrls.getInstance().computePatchUrl(from, to) 
-        ?: error("Metadata contains information about patch '$from' -> '$to', but 'computePatchUrl' returns 'null'")
-      }
+      val patchFile = File(getTempDir(), "patch-${from.withoutProductCode().asString()}-${to.withoutProductCode().asString()}.jar")
+      val url = ExternalProductResourceUrls.getInstance().computePatchUrl(from, to)
+                ?: error("Metadata contains information about patch '$from' -> '$to', but 'computePatchUrl' returns 'null'")
       val partIndicator = object : DelegatingProgressIndicator(indicator) {
         override fun setFraction(fraction: Double) {
           super.setFraction((i - 1) * share + fraction / share)
