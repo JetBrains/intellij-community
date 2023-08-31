@@ -7,8 +7,11 @@ import com.intellij.codeInsight.completion.addingPolicy.PolicyController
 import com.intellij.patterns.PlatformPatterns.psiElement
 import com.intellij.patterns.PsiJavaPatterns
 import com.intellij.patterns.StandardPatterns
+import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.util.ProcessingContext
 import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
+import org.jetbrains.kotlin.analysis.api.analyze
+import org.jetbrains.kotlin.analysis.api.analyzeInDependedAnalysisSession
 import org.jetbrains.kotlin.config.LanguageFeature
 import org.jetbrains.kotlin.idea.base.projectStructure.languageVersionSettings
 import org.jetbrains.kotlin.idea.base.projectStructure.moduleInfo
@@ -19,6 +22,7 @@ import org.jetbrains.kotlin.idea.completion.weighers.Weighers
 import org.jetbrains.kotlin.kdoc.lexer.KDocTokens
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.platform.isMultiPlatform
+import org.jetbrains.kotlin.psi.KtDeclaration
 import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.psi.KtNamedFunction
 import org.jetbrains.kotlin.psi.KtProperty
@@ -74,7 +78,7 @@ private object KotlinFirCompletionProvider : CompletionProvider<CompletionParame
         val (resultController, resultSet) = createResultSet(parameters, positionContext, result)
         val basicContext = FirBasicCompletionContext.createFromParameters(parameters, resultSet) ?: return
 
-        FirPositionCompletionContextDetector.analyzeInContext(basicContext, positionContext) {
+        analyzeInContext(basicContext, positionContext) {
             recordOriginalFile(basicContext)
             complete(basicContext, positionContext, resultController)
         }
@@ -95,12 +99,69 @@ private object KotlinFirCompletionProvider : CompletionProvider<CompletionParame
         }
     }
 
+    private inline fun analyzeInContext(
+        basicContext: FirBasicCompletionContext,
+        positionContext: FirRawPositionCompletionContext,
+        action: KtAnalysisSession.() -> Unit
+    ) {
+        return when (positionContext) {
+            is FirUnknownPositionContext,
+            is FirImportDirectivePositionContext,
+            is FirPackageDirectivePositionContext,
+            is FirTypeConstraintNameInWhereClausePositionContext,
+            is FirIncorrectPositionContext,
+            is FirKDocNameReferencePositionContext -> {
+                analyze(basicContext.originalKtFile, action = action)
+            }
+
+            is FirSimpleParameterPositionContext -> {
+                analyze(basicContext.originalKtFile) {
+                    recordOriginalDeclaration(basicContext.originalKtFile, positionContext.ktParameter)
+                    action()
+                }
+            }
+
+            is FirClassifierNamePositionContext -> {
+                analyze(basicContext.originalKtFile) {
+                    recordOriginalDeclaration(basicContext.originalKtFile, positionContext.classLikeDeclaration)
+                    action()
+                }
+            }
+
+            is FirNameReferencePositionContext -> analyzeInDependedAnalysisSession(
+                basicContext.originalKtFile,
+                positionContext.nameExpression,
+                action = action
+            )
+
+            is FirMemberDeclarationExpectedPositionContext -> analyzeInDependedAnalysisSession(
+                basicContext.originalKtFile,
+                positionContext.classBody,
+                action = action
+            )
+
+            is FirPrimaryConstructorParameterPositionContext -> analyzeInDependedAnalysisSession(
+                basicContext.originalKtFile,
+                positionContext.ktParameter,
+                action = action
+            )
+        }
+    }
 
     context(KtAnalysisSession)
     private fun recordOriginalFile(basicCompletionContext: FirBasicCompletionContext) {
         val originalFile = basicCompletionContext.originalKtFile
         val fakeFile = basicCompletionContext.fakeKtFile
         fakeFile.recordOriginalKtFile(originalFile)
+    }
+
+    context(KtAnalysisSession)
+    private fun recordOriginalDeclaration(originalFile: KtFile, declaration: KtDeclaration) {
+        try {
+            declaration.recordOriginalDeclaration(PsiTreeUtil.findSameElementInCopy(declaration, originalFile))
+        } catch (ignore: IllegalStateException) {
+            //declaration is written at empty space
+        }
     }
 
     private fun createResultSet(

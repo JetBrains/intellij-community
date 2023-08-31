@@ -4,11 +4,7 @@ package org.jetbrains.kotlin.idea.completion.context
 
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiErrorElement
-import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.psi.util.parentOfType
-import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
-import org.jetbrains.kotlin.analysis.api.analyze
-import org.jetbrains.kotlin.analysis.api.analyzeInDependedAnalysisSession
 import org.jetbrains.kotlin.idea.references.KDocReference
 import org.jetbrains.kotlin.idea.references.KtReference
 import org.jetbrains.kotlin.idea.references.KtSimpleNameReference
@@ -39,8 +35,8 @@ internal class FirSimpleParameterPositionContext(
 ) : FirValueParameterPositionContext()
 
 /**
- * Primary constructor parameters can override properties from superclasses, so they should be analyzed with
- * [analyzeInDependedAnalysisSession], which is why a separate position context is required.
+ * Primary constructor parameters can override properties from superclasses, so they should be analyzed
+ * in dependent analysis session, which is why a separate position context is required.
  */
 internal class FirPrimaryConstructorParameterPositionContext(
     override val position: PsiElement,
@@ -374,63 +370,5 @@ internal object FirPositionCompletionContextDetector {
 
             else -> null
         } ?: FirTypeNameReferencePositionContext(position, reference, nameExpression, explicitReceiver, typeReference)
-    }
-
-    inline fun analyzeInContext(
-        basicContext: FirBasicCompletionContext,
-        positionContext: FirRawPositionCompletionContext,
-        action: KtAnalysisSession.() -> Unit
-    ) {
-        return when (positionContext) {
-            is FirUnknownPositionContext,
-            is FirImportDirectivePositionContext,
-            is FirPackageDirectivePositionContext,
-            is FirTypeConstraintNameInWhereClausePositionContext,
-            is FirIncorrectPositionContext,
-            is FirKDocNameReferencePositionContext -> {
-                analyze(basicContext.originalKtFile, action = action)
-            }
-
-            is FirSimpleParameterPositionContext -> {
-                analyze(basicContext.originalKtFile) {
-                    recordOriginalDeclaration(basicContext.originalKtFile, positionContext.ktParameter)
-                    action()
-                }
-            }
-
-            is FirClassifierNamePositionContext -> {
-                analyze(basicContext.originalKtFile) {
-                    recordOriginalDeclaration(basicContext.originalKtFile, positionContext.classLikeDeclaration)
-                    action()
-                }
-            }
-
-            is FirNameReferencePositionContext -> analyzeInDependedAnalysisSession(
-                basicContext.originalKtFile,
-                positionContext.nameExpression,
-                action = action
-            )
-
-            is FirMemberDeclarationExpectedPositionContext -> analyzeInDependedAnalysisSession(
-                basicContext.originalKtFile,
-                positionContext.classBody,
-                action = action
-            )
-
-            is FirPrimaryConstructorParameterPositionContext -> analyzeInDependedAnalysisSession(
-                basicContext.originalKtFile,
-                positionContext.ktParameter,
-                action = action
-            )
-        }
-    }
-
-    context(KtAnalysisSession)
-private fun recordOriginalDeclaration(originalFile: KtFile, declaration: KtDeclaration) {
-        try {
-            declaration.recordOriginalDeclaration(PsiTreeUtil.findSameElementInCopy(declaration, originalFile))
-        } catch (ignore: IllegalStateException) {
-            //declaration is written at empty space
-        }
     }
 }
