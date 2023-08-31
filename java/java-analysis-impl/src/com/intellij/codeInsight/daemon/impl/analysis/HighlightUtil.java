@@ -1455,21 +1455,10 @@ public final class HighlightUtil {
           return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(p, p).endOfLine().descriptionAndTooltip(message);
         }
         else if (text.length() > 3) {
-          int i = 3;
-          char c = text.charAt(i);
-          while (PsiLiteralUtil.isTextBlockWhiteSpace(c)) {
-            i++;
-            c = text.charAt(i);
-          }
-          if (c != '\n' && c != '\r') {
-            String message = JavaErrorBundle.message("text.block.new.line");
-            if (description != null) {
-              description.set(message);
-            }
-            return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(expression).descriptionAndTooltip(message);
-          }
-          final HighlightInfo.Builder info = checkStringTemplateEscapes(expression, text, level, file, description);
-          if (info != null) return info;
+          final HighlightInfo.Builder info1 = checkTextBlockNewlineAfterOpeningQuotes(expression, text, description);
+          if (info1 != null) return info1;
+          final HighlightInfo.Builder info2 = checkStringTemplateEscapes(expression, text, level, file, description);
+          if (info2 != null) return info2;
           final int rawLength = rawText.length();
           StringBuilder chars = new StringBuilder(rawLength);
           int[] offsets = new int[rawLength + 1];
@@ -1525,8 +1514,31 @@ public final class HighlightUtil {
     return null;
   }
 
+  private static HighlightInfo.Builder checkTextBlockNewlineAfterOpeningQuotes(@NotNull PsiElement expression,
+                                                                               String text,
+                                                                               @Nullable Ref<? super String> description) {
+    int i = 3;
+    char c = text.charAt(i);
+    while (PsiLiteralUtil.isTextBlockWhiteSpace(c)) {
+      i++;
+      c = text.charAt(i);
+    }
+    if (c != '\n' && c != '\r') {
+      String message = JavaErrorBundle.message("text.block.new.line");
+      if (description != null) {
+        description.set(message);
+      }
+      return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(expression, TextRange.from(0, 3)).descriptionAndTooltip(message);
+    }
+    return null;
+  }
+
   public static HighlightInfo.Builder checkFragmentError(PsiFragment fragment) {
     String text = fragment.getText();
+    if (fragment.getTokenType() == JavaTokenType.TEXT_BLOCK_TEMPLATE_BEGIN) {
+      final HighlightInfo.Builder info1 = checkTextBlockNewlineAfterOpeningQuotes(fragment, text, null);
+      if (info1 != null) return info1;
+    }
     int length = text.length();
     if (fragment.getTokenType() == JavaTokenType.STRING_TEMPLATE_END) {
       if (!StringUtil.endsWithChar(text, '\"') || length == 1) {
