@@ -624,5 +624,10 @@ public abstract class BasicCompletionWeigherTestGenerated extends AbstractBasicC
         public void testUnavailableDslReceiver() throws Exception {
             runTest("../testData/weighers/basic/UnavailableDslReceiver.kt");
         }
+
+        @TestMetadata("WhenWithSubject.kt")
+        public void testWhenWithSubject() throws Exception {
+            runTest("../testData/weighers/basic/WhenWithSubject.kt");
+        }
     }
 }

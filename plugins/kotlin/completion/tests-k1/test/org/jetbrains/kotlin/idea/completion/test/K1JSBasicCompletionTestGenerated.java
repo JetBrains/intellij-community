@@ -3447,6 +3447,16 @@ public abstract class K1JSBasicCompletionTestGenerated extends AbstractK1JSBasic
                 KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
             }
 
+            @TestMetadata("callable.kt")
+            public void testCallable() throws Exception {
+                runTest("../testData/basic/common/when/callable.kt");
+            }
+
+            @TestMetadata("callable2.kt")
+            public void testCallable2() throws Exception {
+                runTest("../testData/basic/common/when/callable2.kt");
+            }
+
             @TestMetadata("enumInEmptyWhen.kt")
             public void testEnumInEmptyWhen() throws Exception {
                 runTest("../testData/basic/common/when/enumInEmptyWhen.kt");

@@ -149,6 +149,7 @@ internal class FirWithSubjectEntryPositionContext(
     override val reference: KtSimpleNameReference,
     override val nameExpression: KtSimpleNameExpression,
     override val explicitReceiver: KtExpression?,
+    val subjectExpression: KtExpression,
     val whenCondition: KtWhenCondition,
 ) : FirNameReferencePositionContext()
 
@@ -237,6 +238,7 @@ internal object FirPositionCompletionContextDetector {
             ?: return null
         val explicitReceiver = nameExpression.getReceiverExpression()
         val parent = nameExpression.parent
+        val subjectExpressionForWhenCondition = (parent as? KtWhenCondition)?.getSubjectExpression()
 
         return when {
             parent is KtUserType -> {
@@ -249,12 +251,14 @@ internal object FirPositionCompletionContextDetector {
                 )
             }
 
-            parent is KtWhenCondition && parent.isConditionOnWhenWithSubject() -> {
+            parent is KtWhenCondition && subjectExpressionForWhenCondition != null -> {
                 FirWithSubjectEntryPositionContext(
                     position,
                     reference,
                     nameExpression,
-                    explicitReceiver, parent
+                    explicitReceiver,
+                    subjectExpressionForWhenCondition,
+                    whenCondition = parent,
                 )
             }
 
@@ -313,10 +317,10 @@ internal object FirPositionCompletionContextDetector {
         }
     }
 
-    private fun KtWhenCondition.isConditionOnWhenWithSubject(): Boolean {
-        val whenEntry = (parent as? KtWhenEntry) ?: return false
-        val whenExpression = whenEntry.parent as? KtWhenExpression ?: return false
-        return whenExpression.subjectExpression != null
+    private fun KtWhenCondition.getSubjectExpression(): KtExpression? {
+        val whenEntry = (parent as? KtWhenEntry) ?: return null
+        val whenExpression = whenEntry.parent as? KtWhenExpression ?: return null
+        return whenExpression.subjectExpression
     }
 
     private fun KtExpression.isReferenceExpressionInImportDirective() = when (val parent = parent) {
