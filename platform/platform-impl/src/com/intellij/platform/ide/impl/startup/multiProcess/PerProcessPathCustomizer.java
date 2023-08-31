@@ -5,6 +5,7 @@ import com.intellij.idea.StartupUtil;
 import com.intellij.openapi.application.PathCustomizer;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.util.io.NioFiles;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -15,9 +16,15 @@ import java.nio.file.*;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 
+/**
+ * An implementation of {@link PathCustomizer} which configures separate config, system and log paths for each process started from the IDE
+ * distribution. This is needed to allo running multiple processes of the same IDE.
+ */
 @SuppressWarnings({"AssignmentToStaticFieldFromInstanceMethod", "FieldCanBeLocal", "UseOfSystemOutOrSystemErr"})
+@ApiStatus.Experimental
+@ApiStatus.Internal
 public class PerProcessPathCustomizer implements PathCustomizer {
-  private static final String LOCK_FILE_NAME = "jbc.lock";
+  private static final String LOCK_FILE_NAME = "process.lock";
 
   private static Path ourOriginalConfigPath;
   
@@ -41,7 +48,7 @@ public class PerProcessPathCustomizer implements PathCustomizer {
 
     int directoryCounter = 0;
     while (true) {
-      newConfig = tempFolder.resolve("jbc_config_" + directoryCounter);
+      newConfig = tempFolder.resolve("per_process_config_" + directoryCounter);
 
       FileLock configLock = tryLockDirectory(newConfig);
       if (configLock != null) {
@@ -57,7 +64,7 @@ public class PerProcessPathCustomizer implements PathCustomizer {
       directoryCounter++;
     }
 
-    Path newSystem = tempFolder.resolve("jbc_system_" + directoryCounter);
+    Path newSystem = tempFolder.resolve("per_process_system_" + directoryCounter);
     Path baseLogDir = PathManager.getLogDir();
     Path newLog = computeLogDirPath(baseLogDir, directoryCounter);
     if (newLog == null) {
