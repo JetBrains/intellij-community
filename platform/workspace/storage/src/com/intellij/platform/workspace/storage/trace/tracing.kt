@@ -83,15 +83,24 @@ internal class ReadTracker(
   }
 
   override fun getOneChild(connectionId: ConnectionId, parent: WorkspaceEntity): WorkspaceEntity? {
-    TODO("Not yet implemented")
+    val trace = ReadTrace.SomeFieldAccess(parent.asBase().id)
+    log.trace { "Read trace of `getOneChild` function: $trace" }
+    onRead(trace)
+    return snapshot.getOneChild(connectionId, parent)
   }
 
   override fun getManyChildren(connectionId: ConnectionId, parent: WorkspaceEntity): Sequence<WorkspaceEntity> {
-    TODO("Not yet implemented")
+    val trace = ReadTrace.SomeFieldAccess(parent.asBase().id)
+    log.trace { "Read trace of `getManyChildren` function: $trace" }
+    onRead(trace)
+    return snapshot.getManyChildren(connectionId, parent)
   }
 
   override fun getParent(connectionId: ConnectionId, child: WorkspaceEntity): WorkspaceEntity? {
-    TODO("Not yet implemented")
+    val trace = ReadTrace.SomeFieldAccess(child.asBase().id)
+    log.trace { "Read trace of `getParent` function: $trace" }
+    onRead(trace)
+    return snapshot.getParent(connectionId, child)
   }
 
   override fun <T : WorkspaceEntity> resolveReference(reference: EntityReference<T>): T? {
