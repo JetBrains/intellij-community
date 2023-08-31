@@ -106,7 +106,7 @@ class KotlinEvaluator(val codeFragment: KtCodeFragment, private val sourcePositi
             return context.debugProcess.virtualMachineProxy.mirrorOfVoid()
         }
 
-        ReadAction.run<Throwable> {
+        runReadAction {
             if (DumbService.getInstance(codeFragment.project).isDumb) {
                 evaluationException(KotlinDebuggerEvaluationBundle.message("error.dumb.mode"))
             }
