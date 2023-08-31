@@ -2,10 +2,12 @@
 package com.intellij.testFramework;
 
 import com.intellij.ide.IdeEventQueue;
+import com.intellij.mock.MockApplication;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ex.ApplicationEx;
 import com.intellij.openapi.application.ex.ApplicationManagerEx;
+import com.intellij.openapi.application.impl.ApplicationImpl;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.ThrowableComputable;
 import com.intellij.util.ThrowableRunnable;
@@ -45,7 +47,8 @@ public final class EdtTestUtil {
   @kotlin.Deprecated(message = "Use Kotlin runInEdtAndWait { ... } instead")  // this warning is only visible in Kotlin files
   @TestOnly
   public static <T extends Throwable> void runInEdtAndWait(@NotNull ThrowableRunnable<T> runnable, boolean writeIntent) throws T {
-    ApplicationEx app = ApplicationManagerEx.getApplicationEx();
+    ApplicationEx a = ApplicationManagerEx.getApplicationEx();
+    ApplicationEx app = a instanceof MockApplication ? null : a;
     if (app != null && app.isDispatchThread()) {
       if (writeIntent) {
         app.runWriteIntentReadAction(() -> {
