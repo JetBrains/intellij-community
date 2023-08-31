@@ -20,6 +20,7 @@ import org.jetbrains.plugins.gitlab.api.request.getCurrentUser
 import org.jetbrains.plugins.gitlab.mergerequest.api.dto.GitLabMergeRequestDTO
 import org.jetbrains.plugins.gitlab.mergerequest.api.dto.GitLabMergeRequestIidDTO
 import org.jetbrains.plugins.gitlab.mergerequest.api.request.findMergeRequestsByBranch
+import org.jetbrains.plugins.gitlab.mergerequest.api.request.getMergeRequestCommits
 import org.jetbrains.plugins.gitlab.mergerequest.api.request.loadMergeRequest
 import org.jetbrains.plugins.gitlab.mergerequest.data.loaders.GitLabMergeRequestsListLoader
 import org.jetbrains.plugins.gitlab.util.GitLabBundle
@@ -89,7 +90,12 @@ class CachingGitLabProjectMergeRequestsStore(private val project: Project,
             // TODO: create from cached details
             val cs = this
             val mrData = loadMergeRequest(mrId)
-            LoadedGitLabMergeRequest(project, cs, api, projectMapping, mrData)
+            val commits =
+              if (mrData.commits == null)
+                api.rest.getMergeRequestCommits(projectMapping.repository, mrId).body() ?: listOf()
+              else listOf()
+
+            LoadedGitLabMergeRequest(project, cs, api, projectMapping, mrData, commits)
           }
         }.shareIn(cs, SharingStarted.WhileSubscribed(0, 0), 1)
       // this the model will only be alive while it's needed

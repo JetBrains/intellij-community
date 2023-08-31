@@ -20,7 +20,6 @@ import git4idea.fetch.GitFetchSupport
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.map
 import org.jetbrains.plugins.gitlab.api.GitLabApi
-import org.jetbrains.plugins.gitlab.api.dto.GitLabCommitDTO
 import org.jetbrains.plugins.gitlab.api.GitLabVersion
 import org.jetbrains.plugins.gitlab.api.dto.GitLabDiffDTO
 import org.jetbrains.plugins.gitlab.api.getMetadata
@@ -29,7 +28,7 @@ import org.jetbrains.plugins.gitlab.util.GitLabProjectMapping
 import java.nio.charset.StandardCharsets
 
 interface GitLabMergeRequestChanges {
-  val commits: List<GitLabCommitDTO>
+  val commits: List<GitLabCommit>
 
   suspend fun getParsedChanges(): GitBranchComparisonResult
 
@@ -50,7 +49,7 @@ class GitLabMergeRequestChangesImpl(
 
   private val glProject = projectMapping.repository
 
-  override val commits: List<GitLabCommitDTO> = mergeRequestDetails.commits.asReversed()
+  override val commits: List<GitLabCommit> = mergeRequestDetails.commits.asReversed()
 
   private val parsedChanges = cs.async(start = CoroutineStart.LAZY) {
     loadChanges(commits)
@@ -58,7 +57,7 @@ class GitLabMergeRequestChangesImpl(
 
   override suspend fun getParsedChanges(): GitBranchComparisonResult = parsedChanges.await()
 
-  private suspend fun loadChanges(commits: List<GitLabCommitDTO>): GitBranchComparisonResult {
+  private suspend fun loadChanges(commits: List<GitLabCommit>): GitBranchComparisonResult {
     val repository = projectMapping.remote.repository
     val baseSha = mergeRequestDetails.diffRefs.startSha
     val mergeBaseSha = mergeRequestDetails.diffRefs.baseSha ?: error("Missing merge base revision")

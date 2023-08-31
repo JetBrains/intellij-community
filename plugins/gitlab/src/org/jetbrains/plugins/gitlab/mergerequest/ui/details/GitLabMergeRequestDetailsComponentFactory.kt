@@ -27,9 +27,9 @@ import net.miginfocom.layout.AC
 import net.miginfocom.layout.CC
 import net.miginfocom.layout.LC
 import net.miginfocom.swing.MigLayout
-import org.jetbrains.plugins.gitlab.api.dto.GitLabCommitDTO
 import org.jetbrains.plugins.gitlab.api.dto.GitLabUserDTO
 import org.jetbrains.plugins.gitlab.authentication.accounts.GitLabAccountViewModel
+import org.jetbrains.plugins.gitlab.mergerequest.data.GitLabCommit
 import org.jetbrains.plugins.gitlab.mergerequest.ui.details.model.GitLabMergeRequestChangeListViewModel
 import org.jetbrains.plugins.gitlab.mergerequest.ui.details.model.GitLabMergeRequestDetailsLoadingViewModel
 import org.jetbrains.plugins.gitlab.mergerequest.ui.details.model.GitLabMergeRequestDetailsViewModel
@@ -142,7 +142,7 @@ internal object GitLabMergeRequestDetailsComponentFactory {
     }
   }
 
-  private fun createCommitInfoPresenter(commit: GitLabCommitDTO, issueProcessor: ((String) -> String)? = null): CommitPresentation {
+  private fun createCommitInfoPresenter(commit: GitLabCommit, issueProcessor: ((String) -> String)? = null): CommitPresentation {
     val title = commit.fullTitle.orEmpty()
     val description = commit.description?.removePrefix(title).orEmpty()
     return CommitPresentation(

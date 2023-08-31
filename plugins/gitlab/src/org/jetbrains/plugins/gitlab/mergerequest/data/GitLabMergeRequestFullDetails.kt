@@ -28,7 +28,7 @@ data class GitLabMergeRequestFullDetails(
   val sourceBranch: String,
   val isApproved: Boolean,
   val conflicts: Boolean,
-  val commits: List<GitLabCommitDTO>,
+  val commits: List<GitLabCommit>,
   val diffRefs: GitLabDiffRefs,
   val headPipeline: GitLabPipelineDTO?,
   val userPermissions: GitLabMergeRequestPermissionsDTO,
@@ -37,7 +37,11 @@ data class GitLabMergeRequestFullDetails(
 ) {
 
   companion object {
-    fun fromGraphQL(dto: GitLabMergeRequestDTO) = GitLabMergeRequestFullDetails(
+    /**
+     * @param backupCommits The list of commits in case the DTO contains no such list
+     * (solution for compatibility issues with GitLab <=14.7
+     */
+    fun fromGraphQL(dto: GitLabMergeRequestDTO, backupCommits: List<GitLabCommitRestDTO>) = GitLabMergeRequestFullDetails(
       iid = dto.iid,
       title = dto.title,
       createdAt = dto.createdAt,
@@ -57,7 +61,8 @@ data class GitLabMergeRequestFullDetails(
       sourceBranch = dto.sourceBranch,
       isApproved = dto.approved ?: true,
       conflicts = dto.conflicts,
-      commits = dto.commits,
+      commits = dto.commits?.map(GitLabCommit.Companion::fromGraphQLDTO)
+                ?: backupCommits.map(GitLabCommit.Companion::fromRestDTO),
       diffRefs = dto.diffRefs,
       headPipeline = dto.headPipeline,
       userPermissions = dto.userPermissions,

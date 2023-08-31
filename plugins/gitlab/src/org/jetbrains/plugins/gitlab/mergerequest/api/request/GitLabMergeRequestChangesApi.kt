@@ -5,11 +5,24 @@ import com.intellij.collaboration.api.json.loadJsonList
 import com.intellij.collaboration.api.json.loadJsonValue
 import com.intellij.collaboration.util.resolveRelative
 import org.jetbrains.plugins.gitlab.api.*
+import org.jetbrains.plugins.gitlab.api.dto.GitLabCommitDetailedRestDTO
 import org.jetbrains.plugins.gitlab.api.dto.GitLabCommitRestDTO
 import org.jetbrains.plugins.gitlab.api.dto.GitLabDiffDTO
 import org.jetbrains.plugins.gitlab.util.GitLabApiRequestName
 import java.net.URI
 import java.net.http.HttpResponse
+
+@SinceGitLab("9.0", note = "Not an exact version")
+suspend fun GitLabApi.Rest.getMergeRequestCommits(project: GitLabProjectCoordinates,
+                                                  mrIid: String): HttpResponse<out List<GitLabCommitRestDTO>> {
+  val request = request(project.restApiUri
+                          .resolveRelative("merge_requests")
+                          .resolveRelative(mrIid)
+                          .resolveRelative("commits")).GET().build()
+  return withErrorStats(GitLabApiRequestName.REST_GET_MERGE_REQUEST_COMMITS) {
+    loadJsonList<GitLabCommitRestDTO>(request)
+  }
+}
 
 data class GitLabChangesHolderDTO(
   val changes: List<GitLabDiffDTO>
@@ -71,7 +84,7 @@ fun getCommitDiffsURI(project: GitLabProjectCoordinates, commitSha: String): URI
 
 @SinceGitLab("7.0")
 suspend fun GitLabApi.Rest.loadCommit(project: GitLabProjectCoordinates,
-                                      commitSha: String): HttpResponse<out GitLabCommitRestDTO> {
+                                      commitSha: String): HttpResponse<out GitLabCommitDetailedRestDTO> {
   val uri = project.restApiUri
     .resolveRelative("repository")
     .resolveRelative("commits")
