@@ -6,16 +6,12 @@ import com.github.benmanes.caffeine.cache.Caffeine
 import com.intellij.platform.workspace.storage.*
 import java.util.concurrent.atomic.AtomicReference
 
-internal class ValuesCache {
+private class ValuesCache {
   private val cachedValues: Cache<CachedValue<*>, Any?> = Caffeine.newBuilder().build()
   private val cachedValuesWithParameter: Cache<Pair<CachedValueWithParameter<*, *>, *>, Any?> =
     Caffeine.newBuilder().build()
 
-  fun <R> cachedValue(value: CachedValue<R>, storage: EntityStorage): R {
-    if (storage is MutableEntityStorage) {
-      error("storage must be immutable")
-    }
-
+  fun <R> cachedValue(value: CachedValue<R>, storage: EntityStorageSnapshot): R {
     val o = cachedValues.getIfPresent(value)
     // recursive update - loading get cannot be used
     if (o != null) {
@@ -29,11 +25,7 @@ internal class ValuesCache {
     }
   }
 
-  fun <P, R> cachedValue(value: CachedValueWithParameter<P, R>, parameter: P, storage: EntityStorage): R {
-    if (storage is MutableEntityStorage) {
-      error("storage must be immutable")
-    }
-
+  fun <P, R> cachedValue(value: CachedValueWithParameter<P, R>, parameter: P, storage: EntityStorageSnapshot): R {
     // recursive update - loading get cannot be used
     val o = cachedValuesWithParameter.getIfPresent(value to parameter)
     if (o != null) {
@@ -64,7 +56,7 @@ public class VersionedEntityStorageOnBuilder(private val builder: MutableEntityS
   override val version: Long
     get() = builder.modificationCount
 
-  override val current: EntityStorage
+  override val current: EntityStorageSnapshot
     get() = getCurrentSnapshot().storage
 
   override val base: MutableEntityStorage
@@ -96,7 +88,7 @@ public class VersionedEntityStorageOnSnapshot(private val storage: EntityStorage
   override val version: Long
     get() = 0
 
-  override val current: EntityStorage
+  override val current: EntityStorageSnapshot
     get() = storage
 
   override val base: EntityStorage
@@ -201,4 +193,4 @@ private class VersionedStorageChangeImpl(
   override fun getAllChanges(): Sequence<EntityChange<*>> = changes.values.asSequence().flatten()
 }
 
-private data class StorageSnapshotCache(val storageVersion: Long, val cache: ValuesCache, val storage: EntityStorage)
+private data class StorageSnapshotCache(val storageVersion: Long, val cache: ValuesCache, val storage: EntityStorageSnapshot)
