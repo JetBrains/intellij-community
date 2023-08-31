@@ -75,8 +75,7 @@ internal class KotlinVersionChooser(project: Project, minimumVersion: String): D
     fun createPanel(): DialogPanel {
         return panel {
             row(KotlinProjectConfigurationBundle.message("kotlin.compiler.and.runtime.version")) {
-                @Suppress("HardCodedStringLiteral") // List of dynamically loaded content
-                comboBox(comboBoxModel, listCellRenderer { text = it })
+                comboBox(comboBoxModel)
                     .resizableColumn()
                     .align(AlignX.FILL)
                     .customize(UnscaledGaps(0))

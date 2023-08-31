@@ -7,7 +7,7 @@ import com.intellij.openapi.application.ApplicationBundle.message
 import com.intellij.ui.CollectionComboBoxModel
 import com.intellij.ui.dsl.builder.Row
 import com.intellij.ui.dsl.builder.bindItem
-import com.intellij.ui.dsl.builder.listCellRenderer
+import com.intellij.ui.dsl.listCellRenderer.textListCellRenderer
 import org.jetbrains.annotations.Nls
 import org.jetbrains.annotations.NonNls
 
@@ -18,11 +18,12 @@ private const val NONE = "None"
 private val items = listOf(LEFT, RIGHT, NONE)
 
 @Nls
-private fun optionName(@NonNls option: String): String {
+private fun optionName(@NonNls option: String?): String {
   return when (option) {
     LEFT -> message("combobox.tab.placement.left")
     RIGHT -> message("combobox.tab.placement.right")
-    else -> message("combobox.tab.placement.none")
+    NONE -> message("combobox.tab.placement.none")
+    else -> ""
   }
 }
 
@@ -30,7 +31,7 @@ internal val CLOSE_BUTTON_POSITION: String
   get() = message("tabs.close.button.placement")
 
 internal fun Row.closeButtonPositionComboBox() {
-  comboBox(CollectionComboBoxModel(items), listCellRenderer { text = optionName(it) })
+  comboBox(CollectionComboBoxModel(items), textListCellRenderer { optionName(it) })
     .bindItem(::getCloseButtonPlacement, ::set)
 }
 

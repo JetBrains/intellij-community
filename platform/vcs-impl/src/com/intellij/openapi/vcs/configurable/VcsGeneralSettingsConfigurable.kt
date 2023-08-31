@@ -25,6 +25,7 @@ import com.intellij.openapi.vcs.impl.VcsEP
 import com.intellij.openapi.vcs.impl.projectlevelman.PersistentVcsSetting
 import com.intellij.ui.EnumComboBoxModel
 import com.intellij.ui.dsl.builder.*
+import com.intellij.ui.dsl.listCellRenderer.textListCellRenderer
 import com.intellij.ui.layout.ComponentPredicate
 import com.intellij.vcsUtil.VcsUtil
 import org.jetbrains.annotations.Nls
@@ -76,11 +77,12 @@ class VcsGeneralSettingsConfigurable(val project: Project) : BoundCompositeSearc
             .gap(RightGap.SMALL)
           val addComboBox = comboBox(
             EnumComboBoxModel(VcsShowConfirmationOption.Value::class.java),
-            renderer = listCellRenderer {
-              text = when (it) {
+            renderer = textListCellRenderer {
+              when (it) {
                 VcsShowConfirmationOption.Value.SHOW_CONFIRMATION -> message("radio.after.creation.show.options")
                 VcsShowConfirmationOption.Value.DO_ACTION_SILENTLY -> message("radio.after.creation.add.silently")
                 VcsShowConfirmationOption.Value.DO_NOTHING_SILENTLY -> message("radio.after.creation.do.not.add")
+                null -> ""
               }
             })
             .bindItem(addConfirmation::getValue, addConfirmation::setValue)
@@ -98,11 +100,12 @@ class VcsGeneralSettingsConfigurable(val project: Project) : BoundCompositeSearc
             .withApplicableVcsesTooltip(removeConfirmation, vcsListeners)
             .gap(RightGap.SMALL)
           comboBox(EnumComboBoxModel(VcsShowConfirmationOption.Value::class.java),
-                   renderer = listCellRenderer {
-                     text = when (it) {
+                   renderer = textListCellRenderer {
+                     when (it) {
                        VcsShowConfirmationOption.Value.SHOW_CONFIRMATION -> message("radio.after.deletion.show.options")
                        VcsShowConfirmationOption.Value.DO_ACTION_SILENTLY -> message("radio.after.deletion.remove.silently")
                        VcsShowConfirmationOption.Value.DO_NOTHING_SILENTLY -> message("radio.after.deletion.do.not.remove")
+                       null -> ""
                      }
                    })
             .bindItem(removeConfirmation::getValue, removeConfirmation::setValue)
