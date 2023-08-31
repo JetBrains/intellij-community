@@ -2,6 +2,7 @@
 package com.intellij.platform.workspace.storage.impl.cache
 
 import com.intellij.platform.workspace.storage.EntityChange
+import com.intellij.platform.workspace.storage.EntityStorage
 import com.intellij.platform.workspace.storage.impl.query.CellOrchestra
 import com.intellij.platform.workspace.storage.impl.query.compile
 import com.intellij.platform.workspace.storage.instrumentation.EntityStorageInstrumentationApi
@@ -12,8 +13,41 @@ import com.intellij.platform.workspace.storage.trace.ReadTracker
 import com.intellij.platform.workspace.storage.trace.toTraces
 import java.util.concurrent.ConcurrentHashMap
 
+internal class EntityStorageCacheImpl : EntityStorageCache {
+  private lateinit var storage: EntityStorage
+  private val readLock = Any()
+  private val values: ConcurrentHashMap<StorageQuery<*>, CellOrchestra> = ConcurrentHashMap()
+
+  override fun init(storage: EntityStorage) {
+    this.storage = storage
+  }
+
+  override fun <T> cached(query: StorageQuery<T>): T {
+    val existingCell = values[query]
+    if (existingCell != null) {
+      return existingCell.data()
+    }
+
+    synchronized(readLock) {
+      val doubleCheckCell = values[query]
+      if (doubleCheckCell != null) {
+        return doubleCheckCell.data()
+      }
+
+      val emptyCellOrchestra = compile(query)
+      val newOrchestra = emptyCellOrchestra.snapshotInput(storage.toSnapshot())
+      values[query] = newOrchestra
+      return newOrchestra.data()
+    }
+  }
+
+  override fun isEmpty(): Boolean {
+    return values.isEmpty()
+  }
+}
+
 @OptIn(EntityStorageInstrumentationApi::class)
-internal class SnapshotCacheImpl : SnapshotCache {
+internal class TracedSnapshotCacheImpl : TracedSnapshotCache {
 
   private lateinit var snapshot: EntityStorageSnapshotInstrumentation
 
@@ -21,8 +55,8 @@ internal class SnapshotCacheImpl : SnapshotCache {
   private val values: ConcurrentHashMap<StorageQuery<*>, CellOrchestra> = ConcurrentHashMap()
   private val readTraces: ConcurrentHashMap<StorageQuery<*>, Set<ReadTrace>> = ConcurrentHashMap()
 
-  override fun pullCache(from: SnapshotCache, changes: Map<Class<*>, List<EntityChange<*>>>) {
-    if (from !is SnapshotCacheImpl) return
+  override fun pullCache(from: TracedSnapshotCache, changes: Map<Class<*>, List<EntityChange<*>>>) {
+    if (from !is TracedSnapshotCacheImpl) return
     this.values.putAll(from.values)
     this.readTraces.putAll(from.readTraces)
     val newTraces = changes.toTraces()

@@ -8,8 +8,9 @@ import com.intellij.platform.diagnostic.telemetry.JPS
 import com.intellij.platform.diagnostic.telemetry.TelemetryManager
 import com.intellij.platform.diagnostic.telemetry.helpers.addElapsedTimeMs
 import com.intellij.platform.workspace.storage.*
-import com.intellij.platform.workspace.storage.impl.cache.SnapshotCache
-import com.intellij.platform.workspace.storage.impl.cache.SnapshotCacheImpl
+import com.intellij.platform.workspace.storage.impl.cache.EntityStorageCacheImpl
+import com.intellij.platform.workspace.storage.impl.cache.TracedSnapshotCache
+import com.intellij.platform.workspace.storage.impl.cache.TracedSnapshotCacheImpl
 import com.intellij.platform.workspace.storage.impl.containers.getDiff
 import com.intellij.platform.workspace.storage.impl.exceptions.AddDiffException
 import com.intellij.platform.workspace.storage.impl.exceptions.SymbolicIdAlreadyExistsException
@@ -60,7 +61,7 @@ internal open class EntityStorageSnapshotImpl(
   override val entitiesByType: ImmutableEntitiesBarrel,
   override val refs: RefsTable,
   override val indexes: StorageIndexes,
-  internal val snapshotCache: SnapshotCache = SnapshotCacheImpl(),
+  internal val snapshotCache: TracedSnapshotCache = TracedSnapshotCacheImpl(),
 ) : EntityStorageSnapshotInstrumentation, AbstractEntityStorage() {
 
   init {
@@ -113,6 +114,12 @@ internal class MutableEntityStorageImpl(
   private var trackStackTrace: Boolean = false
 ) : MutableEntityStorageInstrumentation, AbstractEntityStorage() {
 
+  private var calculationCache = EntityStorageCacheImpl()
+
+  init {
+    calculationCache.init(this)
+  }
+
   /**
    * This log collects the log of operations, not the log of state changes.
    * This means, that if we remove child entity, we'll record only remove event without "modify" event for its parent.
@@ -130,6 +137,10 @@ internal class MutableEntityStorageImpl(
 
   override val modificationCount: Long
     get() = this.changeLog.modificationCount
+
+  override fun <T> calculate(query: StorageQuery<T>): T {
+    return calculationCache.cached(query)
+  }
 
   private val writingFlag = AtomicBoolean()
 
@@ -257,6 +268,8 @@ internal class MutableEntityStorageImpl(
 
       // Update indexes
       indexes.entityAdded(newEntityData)
+
+      updateCalculationCache()
     }
     finally {
       unlockWrite()
@@ -356,6 +369,8 @@ internal class MutableEntityStorageImpl(
 
       this.indexes.updateSymbolicIdIndexes(this, updatedEntity, beforeSymbolicId, copiedData, modifiableEntity)
 
+      updateCalculationCache()
+
       updatedEntity
     }
     finally {
@@ -412,6 +427,8 @@ internal class MutableEntityStorageImpl(
       }
       upgradeEngine?.let { it(rbsEngine) }
       rbsEngine.replace(this, replaceWith, sourceFilter)
+
+      updateCalculationCache()
     }
     finally {
       unlockWrite()
@@ -658,6 +675,8 @@ internal class MutableEntityStorageImpl(
         }
       }
     }
+
+    updateCalculationCache()
   }
 
   override fun addChild(connectionId: ConnectionId, parent: WorkspaceEntity?, child: WorkspaceEntity) {
@@ -724,13 +743,15 @@ internal class MutableEntityStorageImpl(
         }
       }
     }
+
+    updateCalculationCache()
   }
 
   override fun toSnapshot(previousSnapshot: EntityStorage, changes: Map<Class<*>, List<EntityChange<*>>>): EntityStorageSnapshot {
     val newEntities = entitiesByType.toImmutable()
     val newRefs = refs.toImmutable()
     val newIndexes = indexes.toImmutable()
-    val cache = SnapshotCacheImpl()
+    val cache = TracedSnapshotCacheImpl()
     val newCreatedSnapshot = EntityStorageSnapshotImpl(newEntities, newRefs, newIndexes, cache)
     cache.pullCache((previousSnapshot as EntityStorageSnapshotImpl).snapshotCache, changes)
     return newCreatedSnapshot
@@ -747,6 +768,8 @@ internal class MutableEntityStorageImpl(
       val addDiffOperation = AddDiffOperation(this, diff)
       upgradeAddDiffEngine?.invoke(addDiffOperation)
       addDiffOperation.addDiff()
+
+      updateCalculationCache()
     }
     finally {
       unlockWrite()
@@ -838,6 +861,8 @@ internal class MutableEntityStorageImpl(
       LOG.debug { "Cascade removing: ${ClassToIntConverter.INSTANCE.getClassOrDie(it.clazz)}-${it.arrayId}" }
       this.changeLog.addRemoveEvent(it, originals[it]!!.first, originals[it]!!.second)
     }
+
+    updateCalculationCache()
     return true
   }
 
@@ -891,6 +916,13 @@ internal class MutableEntityStorageImpl(
     val parents = refs.getParentRefsOfChild(id.asChild())
     for ((connectionId, parent) in parents) {
       refs.removeParentToChildRef(connectionId, parent, id.asChild())
+    }
+  }
+
+  private fun updateCalculationCache() {
+    if (!calculationCache.isEmpty()) {
+      this.calculationCache = EntityStorageCacheImpl()
+      this.calculationCache.init(this)
     }
   }
 

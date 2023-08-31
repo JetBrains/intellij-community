@@ -2,6 +2,7 @@
 package com.intellij.platform.workspace.storage
 
 import com.intellij.platform.workspace.storage.impl.MutableEntityStorageImpl
+import com.intellij.platform.workspace.storage.query.StorageQuery
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.NonNls
 
@@ -209,11 +210,19 @@ public interface MutableEntityStorage : EntityStorage {
    * * rider.backend.id
    */
   public fun <T> getMutableExternalMapping(identifier: @NonNls String): MutableExternalEntityMapping<T>
-  
+
   /**
    * Returns a number which is incremented after each change in the storage.
    */
   public val modificationCount: Long
+
+  /**
+   * This function is under development, please don't use it.
+   *
+   * Calculates a value of [query] and caches it until the builder is modified
+   */
+  @ApiStatus.Experimental
+  public fun <T> calculate(query: StorageQuery<T>): T
 
   public companion object {
     /**
