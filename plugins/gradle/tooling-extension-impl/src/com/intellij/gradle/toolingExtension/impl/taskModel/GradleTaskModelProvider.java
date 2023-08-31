@@ -23,6 +23,6 @@ public class GradleTaskModelProvider implements ProjectImportModelProvider {
     @NotNull GradleBuild buildModel,
     @NotNull BuildModelConsumer consumer
   ) {
-    GradleModelProviderUtil.buildModelsInParallel(controller, buildModel.getProjects(), GradleTaskModel.class);
+    GradleModelProviderUtil.buildModels(controller, buildModel.getProjects(), GradleTaskModel.class);
   }
 }
