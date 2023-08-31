@@ -137,7 +137,7 @@ public final class VcsLogData implements Disposable, VcsLogDataProvider {
       if (Registry.is("vcs.log.index.sqlite.storage", false)) {
         return new SqliteVcsLogStorageBackend(myProject, logId, myLogProviders, myErrorHandler, this);
       }
-      return new VcsLogStorageImpl(myProject, logId, myLogProviders, myErrorHandler, this);
+      return VcsLogStorageImpl.create(myProject, logId, myLogProviders, myErrorHandler, this);
     }
     catch (IOException e) {
       LOG.error("Falling back to in-memory hashes", e);

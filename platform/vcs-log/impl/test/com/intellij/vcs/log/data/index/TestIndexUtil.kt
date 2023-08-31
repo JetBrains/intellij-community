@@ -32,7 +32,7 @@ fun setUpIndex(project: Project,
   val logId = PersistentUtil.calcLogId(project, providersMap)
 
   val storage = if (useSqlite) SqliteVcsLogStorageBackend(project, logId, providersMap, errorConsumer, disposable)
-  else VcsLogStorageImpl(project, logId, providersMap, errorConsumer, disposable)
+  else VcsLogStorageImpl.create(project, logId, providersMap, errorConsumer, disposable)
 
   val backend = if (storage is VcsLogStorageBackend) storage
   else PhmVcsLogStorageBackend.create(project, storage, setOf(root), logId, errorConsumer, disposable)!!

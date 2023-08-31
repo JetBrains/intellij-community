@@ -52,29 +52,51 @@ public final class VcsLogStorageImpl implements Disposable, VcsLogStorage {
   private final @NotNull VcsLogErrorHandler myErrorHandler;
   private volatile boolean myDisposed = false;
 
-  public VcsLogStorageImpl(@NotNull Project project,
-                           @NotNull String logId,
-                           @NotNull Map<VirtualFile, VcsLogProvider> logProviders,
-                           @NotNull VcsLogErrorHandler errorHandler,
-                           @NotNull Disposable parent) throws IOException {
+  private VcsLogStorageImpl(@NotNull Map<VirtualFile, VcsLogProvider> logProviders,
+                            @NotNull StorageId.Directory hashesStorageId,
+                            @NotNull StorageId.Directory refsStorageId,
+                            @NotNull VcsLogErrorHandler errorHandler,
+                            @NotNull Disposable parent) throws IOException {
     myErrorHandler = errorHandler;
 
-    List<VirtualFile> roots = logProviders.keySet().stream().sorted(Comparator.comparing(VirtualFile::getPath)).toList();
-    MyCommitIdKeyDescriptor commitIdKeyDescriptor = new MyCommitIdKeyDescriptor(roots);
-    myHashesStorageId = new StorageId.Directory(project.getName(), HASHES_STORAGE, logId, VERSION);
-    StorageLockContext storageLockContext = new StorageLockContext();
-
-    myCommitIdEnumerator = IOUtil.openCleanOrResetBroken(() -> new MyPersistentBTreeEnumerator(myHashesStorageId, commitIdKeyDescriptor,
-                                                                                               storageLockContext),
-                                                         myHashesStorageId.getStorageFile(STORAGE));
-
-    VcsRefKeyDescriptor refsKeyDescriptor = new VcsRefKeyDescriptor(logProviders, commitIdKeyDescriptor);
-    myRefsStorageId = new StorageId.Directory(project.getName(), REFS_STORAGE, logId, VERSION + REFS_VERSION);
-    myRefsEnumerator = IOUtil.openCleanOrResetBroken(() -> new PersistentEnumerator<>(myRefsStorageId.getStorageFile(STORAGE),
-                                                                                      refsKeyDescriptor, AbstractStorage.PAGE_SIZE,
-                                                                                      storageLockContext, myRefsStorageId.getVersion()),
-                                                     myRefsStorageId.getStorageFile(STORAGE).toFile());
     Disposer.register(parent, this);
+
+    try {
+      StorageLockContext storageLockContext = new StorageLockContext();
+
+      List<VirtualFile> roots = logProviders.keySet().stream().sorted(Comparator.comparing(VirtualFile::getPath)).toList();
+      MyCommitIdKeyDescriptor commitIdKeyDescriptor = new MyCommitIdKeyDescriptor(roots);
+      myHashesStorageId = hashesStorageId;
+      myCommitIdEnumerator = new MyPersistentBTreeEnumerator(myHashesStorageId, commitIdKeyDescriptor, storageLockContext);
+      Disposer.register(this, () -> {
+        try {
+          myCommitIdEnumerator.close();
+        }
+        catch (IOException e) {
+          LOG.warn(e);
+        }
+      });
+
+      VcsRefKeyDescriptor refsKeyDescriptor = new VcsRefKeyDescriptor(logProviders, commitIdKeyDescriptor);
+      myRefsStorageId = refsStorageId;
+      myRefsEnumerator = new PersistentEnumerator<>(myRefsStorageId.getStorageFile(STORAGE), refsKeyDescriptor, AbstractStorage.PAGE_SIZE,
+                                                    storageLockContext, myRefsStorageId.getVersion());
+      Disposer.register(this, () -> {
+        try {
+          myRefsEnumerator.close();
+        }
+        catch (IOException e) {
+          LOG.warn(e);
+        }
+      });
+
+      Disposer.register(this, () -> myDisposed = true);
+    }
+    catch (Throwable t) {
+      myDisposed = true;
+      Disposer.dispose(this);
+      throw t;
+    }
   }
 
   public static @NotNull Function<Integer, Hash> createHashGetter(@NotNull VcsLogStorage storage) {
@@ -189,14 +211,6 @@ public final class VcsLogStorageImpl implements Disposable, VcsLogStorage {
 
   @Override
   public void dispose() {
-    try {
-      myDisposed = true;
-      myCommitIdEnumerator.close();
-      myRefsEnumerator.close();
-    }
-    catch (IOException e) {
-      LOG.warn(e);
-    }
   }
 
   private void checkDisposed() {
@@ -293,5 +307,27 @@ public final class VcsLogStorageImpl implements Disposable, VcsLogStorage {
     public boolean contains(@NotNull CommitId id) throws IOException {
       return tryEnumerate(id) != NULL_ID;
     }
+  }
+
+  public static @NotNull VcsLogStorage create(@NotNull Project project,
+                                              @NotNull String logId,
+                                              @NotNull Map<VirtualFile, VcsLogProvider> logProviders,
+                                              @NotNull VcsLogErrorHandler errorHandler,
+                                              @NotNull Disposable parent)
+    throws IOException {
+    StorageId.Directory hashesStorageId = new StorageId.Directory(project.getName(), HASHES_STORAGE, logId, VERSION);
+    StorageId.Directory refsStorageId = new StorageId.Directory(project.getName(), REFS_STORAGE, logId, VERSION + REFS_VERSION);
+
+    List<StorageId.Directory> storageIds = List.of(hashesStorageId, refsStorageId);
+
+    return IOUtil.openCleanOrResetBroken(() -> {
+      return new VcsLogStorageImpl(logProviders, hashesStorageId, refsStorageId, errorHandler, parent);
+    }, () -> {
+      for (StorageId.Directory storageId : storageIds) {
+        if (!storageId.cleanupAllStorageFiles()) {
+          LOG.error("Could not clean up storage files in " + storageId.getStoragePath());
+        }
+      }
+    });
   }
 }
