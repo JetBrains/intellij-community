@@ -532,6 +532,12 @@ public final class XDebuggerManagerImpl extends XDebuggerManager implements Pers
     }
 
     private boolean showInlayRunToCursor(@NotNull EditorMouseEvent e) {
+      Editor editor = e.getEditor();
+
+      if (editor.getEditorKind() != EditorKind.MAIN_EDITOR) {
+        return false;
+      }
+
       XDebugSessionImpl session = getCurrentSession();
       if (session == null || !session.isPaused() || session.isReadOnly()) {
         IntentionsUIImpl.DISABLE_INTENTION_BULB.set(myProject, false);
@@ -543,8 +549,6 @@ public final class XDebuggerManagerImpl extends XDebuggerManager implements Pers
       if (lineNumber < 0) {
         return false;
       }
-
-      Editor editor = e.getEditor();
 
       if (myEditor.get() == editor && myLineNumber == lineNumber) {
         return true;
