@@ -90,11 +90,7 @@ public class VersionedEntityStorageOnBuilder(private val builder: MutableEntityS
   }
 }
 
-public class VersionedEntityStorageOnStorage(private val storage: EntityStorage) : VersionedEntityStorage {
-  init {
-    if (storage is MutableEntityStorage) error("storage must be immutable, but got: ${storage.javaClass.name}")
-  }
-
+public class VersionedEntityStorageOnSnapshot(private val storage: EntityStorageSnapshot) : VersionedEntityStorage {
   private val valuesCache = ValuesCache()
 
   override val version: Long
