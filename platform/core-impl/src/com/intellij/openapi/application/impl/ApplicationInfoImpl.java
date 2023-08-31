@@ -15,7 +15,6 @@ import com.intellij.openapi.extensions.PluginId;
 import com.intellij.openapi.util.BuildNumber;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.serviceContainer.NonInjectable;
-import com.intellij.util.PlatformUtils;
 import com.intellij.util.xml.dom.XmlElement;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
@@ -430,15 +429,6 @@ public final class ApplicationInfoImpl extends ApplicationInfoEx {
       if (api != null) {
         return api;
       }
-    }
-    // Android Studio: Create API version from the first 3 values of build number
-    else if (PlatformUtils.isAndroidStudio()) {
-      assert build.getComponents().length >= 3;
-      BuildNumber apiBuildNumber = new BuildNumber("AI",
-                                                   build.getComponents()[0],
-                                                   build.getComponents()[1],
-                                                   build.getComponents()[2]);
-      return apiBuildNumber;
     }
     return build;
   }
