@@ -183,6 +183,11 @@ public class HighLevelMultiFileJvmBasicCompletionTestGenerated extends AbstractH
         runTest("../completion/testData/basic/multifile/JavaCallableReference/");
     }
 
+    @TestMetadata("JavaEnum")
+    public void testJavaEnum() throws Exception {
+        runTest("../completion/testData/basic/multifile/JavaEnum/");
+    }
+
     @TestMetadata("JavaInnerClasses")
     public void testJavaInnerClasses() throws Exception {
         runTest("../completion/testData/basic/multifile/JavaInnerClasses/");

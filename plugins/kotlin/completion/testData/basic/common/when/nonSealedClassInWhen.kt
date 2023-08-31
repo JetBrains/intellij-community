@@ -1,6 +1,6 @@
 // FIR_IDENTICAL
 // FIR_COMPARISON
-// IGNORE_FE10
+// IGNORE_K1
 
 abstract class SEALED
 class AAAA: SEALED()

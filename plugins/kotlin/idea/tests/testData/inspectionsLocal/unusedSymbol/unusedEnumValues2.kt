@@ -10,4 +10,4 @@ enum class SomeEnum {
         }
     }
 }
-// IGNORE_FIR
+// IGNORE_K2

@@ -7,16 +7,17 @@ import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.ProjectRootModificationTracker
 import com.intellij.psi.PsiElement
-import com.intellij.psi.PsiFile
 import com.intellij.psi.util.CachedValueProvider
 import com.intellij.psi.util.CachedValuesManager
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.kotlin.analysis.project.structure.KtModule
+import org.jetbrains.kotlin.analysis.project.structure.KtScriptDependencyModule
 import org.jetbrains.kotlin.analysis.project.structure.ProjectStructureProvider
 import org.jetbrains.kotlin.analysis.providers.KotlinModificationTrackerFactory
 import org.jetbrains.kotlin.analyzer.ModuleInfo
 import org.jetbrains.kotlin.idea.base.projectStructure.moduleInfo.*
 import org.jetbrains.kotlin.idea.base.util.getOutsiderFileOrigin
+import org.jetbrains.kotlin.idea.base.util.isOutsiderFile
 import org.jetbrains.kotlin.psi.KtFile
 
 @ApiStatus.Internal
@@ -40,16 +41,16 @@ inline fun <reified T : KtModule> IdeaModuleInfo.toKtModuleOfType(): @kotlin.int
 
 internal class ProjectStructureProviderIdeImpl(private val project: Project) : ProjectStructureProvider() {
     override fun getModule(element: PsiElement, contextualModule: KtModule?): KtModule {
-        if (contextualModule is KtSourceModuleByModuleInfoForOutsider) {
+        if (contextualModule is KtSourceModuleByModuleInfoForOutsider || contextualModule is KtScriptDependencyModule) {
             val virtualFile = element.containingFile?.virtualFile
             if (virtualFile != null && virtualFile in contextualModule.contentScope) {
                 return contextualModule
             }
         }
 
-        val psiFile = ModuleInfoProvider.findAnchorFile(element)
-        return if (psiFile != null) {
-            cachedKtModule(psiFile)
+        val anchorElement = ModuleInfoProvider.findAnchorElement(element)
+        return if (anchorElement != null) {
+            cachedKtModule(anchorElement)
         } else {
             calculateKtModule(element)
         }
@@ -61,10 +62,10 @@ internal class ProjectStructureProviderIdeImpl(private val project: Project) : P
     }
 }
 
-private fun cachedKtModule(psiFile: PsiFile): KtModule = CachedValuesManager.getCachedValue<KtModule>(psiFile) {
-    val project = psiFile.project
+private fun cachedKtModule(anchorElement: PsiElement): KtModule = CachedValuesManager.getCachedValue<KtModule>(anchorElement) {
+    val project = anchorElement.project
     CachedValueProvider.Result.create(
-        calculateKtModule(psiFile),
+        calculateKtModule(anchorElement),
         ProjectRootModificationTracker.getInstance(project),
         JavaLibraryModificationTracker.getInstance(project),
         KotlinModificationTrackerFactory.getInstance(project).createProjectWideOutOfBlockModificationTracker(),
@@ -95,15 +96,17 @@ private fun createKtModuleByModuleInfo(moduleInfo: ModuleInfo): KtModule {
 private fun calculateKtModule(psiElement: PsiElement): KtModule {
     val virtualFile = psiElement.containingFile?.virtualFile
     val project = psiElement.project
-    val config = ModuleInfoProvider.Configuration(createSourceLibraryInfoForLibraryBinaries = false)
+    val config = ModuleInfoProvider.Configuration(
+        createSourceLibraryInfoForLibraryBinaries = false,
+        preferModulesFromExtensions = virtualFile?.nameSequence?.endsWith(".kts") == true
+    )
+
     val moduleInfo = ModuleInfoProvider.getInstance(project).firstOrNull(psiElement, config)
         ?: NotUnderContentRootModuleInfo(project, psiElement.containingFile as? KtFile)
 
-    if (virtualFile != null && moduleInfo is ModuleSourceInfo) {
+    if (virtualFile != null && isOutsiderFile(virtualFile) && moduleInfo is ModuleSourceInfo) {
         val originalFile = getOutsiderFileOrigin(project, virtualFile)
-        if (originalFile != null) {
-            return KtSourceModuleByModuleInfoForOutsider(virtualFile, originalFile, moduleInfo)
-        }
+        return KtSourceModuleByModuleInfoForOutsider(virtualFile, originalFile, moduleInfo)
     }
 
     return ProjectStructureProviderIdeImpl.getKtModuleByModuleInfo(moduleInfo)

@@ -30,7 +30,7 @@ abstract class AbstractFirWithMppStdlibCompletionTest : KotlinFixtureCompletionB
     override fun fileName(): String = firFileName(super.fileName(), testDataDirectory)
 
     override fun executeTest(test: () -> Unit) {
-        IgnoreTests.runTestIfEnabledByFileDirective(dataFile().toPath(), IgnoreTests.DIRECTIVES.FIR_COMPARISON) {
+        IgnoreTests.runTestIfNotDisabledByFileDirective(dataFile().toPath(), IgnoreTests.DIRECTIVES.IGNORE_K2) {
             super.executeTest(test)
             IgnoreTests.cleanUpIdenticalFirTestFile(dataFile())
         }

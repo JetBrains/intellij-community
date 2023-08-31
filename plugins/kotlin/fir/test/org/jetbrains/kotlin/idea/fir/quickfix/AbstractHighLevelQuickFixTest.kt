@@ -12,7 +12,6 @@ import org.jetbrains.kotlin.idea.test.KotlinWithJdkAndRuntimeLightProjectDescrip
 import org.jetbrains.kotlin.idea.test.runAll
 import org.jetbrains.kotlin.test.utils.IgnoreTests
 import java.io.File
-import java.nio.file.Paths
 
 abstract class AbstractHighLevelQuickFixTest : AbstractQuickFixTest() {
     override fun getDefaultProjectDescriptor(): KotlinLightProjectDescriptor {
@@ -27,16 +26,12 @@ abstract class AbstractHighLevelQuickFixTest : AbstractQuickFixTest() {
         )
 
     }
+
+    override val disableTestDirective: String get() =  IgnoreTests.DIRECTIVES.IGNORE_K2_MULTILINE_COMMENT
+
     override fun doTest(beforeFileName: String) {
         val firBeforeFileName = getFirBeforeFileName(beforeFileName)
-        IgnoreTests.runTestIfNotDisabledByFileDirective(
-            Paths.get(firBeforeFileName),
-            disableTestDirective = IgnoreTests.DIRECTIVES.IGNORE_FIR_MULTILINE_COMMENT,
-            directivePosition = IgnoreTests.DirectivePosition.LAST_LINE_IN_FILE,
-            additionalFilesExtensions = arrayOf("after")
-        ) {
-            super.doTest(firBeforeFileName)
-        }
+        super.doTest(firBeforeFileName)
     }
 
     private fun getFirBeforeFileName(beforeFileName: String): String {

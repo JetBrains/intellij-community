@@ -8,4 +8,4 @@ fun foo(i : Int) {
     }
 }
 
-// IGNORE_FIR
+// IGNORE_K2

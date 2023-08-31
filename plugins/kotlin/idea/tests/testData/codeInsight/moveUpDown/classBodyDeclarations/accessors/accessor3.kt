@@ -7,4 +7,4 @@ var x: String
         // test
     }
 
-// IGNORE_FIR
+// IGNORE_K2

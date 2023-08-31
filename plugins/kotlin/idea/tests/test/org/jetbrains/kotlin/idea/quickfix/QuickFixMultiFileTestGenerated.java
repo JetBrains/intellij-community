@@ -255,6 +255,16 @@ public abstract class QuickFixMultiFileTestGenerated extends AbstractQuickFixMul
                 runTest("testData/quickfix/autoImports/ambiguousNamePreferWithImportsFromPackage.before.Main.kt");
             }
 
+            @TestMetadata("annotation2.test")
+            public void testAnnotation2() throws Exception {
+                runTest("testData/quickfix/autoImports/annotation2.test");
+            }
+
+            @TestMetadata("annotationOuterClass.test")
+            public void testAnnotationOuterClass() throws Exception {
+                runTest("testData/quickfix/autoImports/annotationOuterClass.test");
+            }
+
             @TestMetadata("callWithTrailingComma.before.Main.kt")
             public void testCallWithTrailingComma() throws Exception {
                 runTest("testData/quickfix/autoImports/callWithTrailingComma.before.Main.kt");
@@ -758,6 +768,11 @@ public abstract class QuickFixMultiFileTestGenerated extends AbstractQuickFixMul
             @TestMetadata("noImportOfExtensionWhenMatchingReceiverIsMissing.test")
             public void testNoImportOfExtensionWhenMatchingReceiverIsMissing() throws Exception {
                 runTest("testData/quickfix/autoImports/noImportOfExtensionWhenMatchingReceiverIsMissing.test");
+            }
+
+            @TestMetadata("noImportOfNonAnnotationClass.test")
+            public void testNoImportOfNonAnnotationClass() throws Exception {
+                runTest("testData/quickfix/autoImports/noImportOfNonAnnotationClass.test");
             }
 
             @TestMetadata("noImportsForClassInExcludedPackage.before.Main.kt")

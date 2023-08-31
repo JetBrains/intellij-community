@@ -23,6 +23,8 @@ import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 object KotlinPsiHeuristics {
     @JvmStatic
     fun unwrapImportAlias(file: KtFile, aliasName: String): Collection<String> {
+        if (!file.hasImportAlias()) return emptyList()
+
         return file.aliasImportMap[aliasName]
     }
 
@@ -34,6 +36,8 @@ object KotlinPsiHeuristics {
 
     @JvmStatic
     fun getImportAliases(file: KtFile, names: Set<String>): Set<String> {
+        if (!file.hasImportAlias()) return emptySet()
+
         val result = LinkedHashSet<String>()
         for ((aliasName, name) in file.aliasImportMap.entries()) {
             if (name in names) {
@@ -71,6 +75,7 @@ object KotlinPsiHeuristics {
         val file = type.containingKotlinFileStub?.psi as? KtFile ?: return false
 
         // TODO: support type aliases
+        if (!file.hasImportAlias()) return false
         return file.aliasImportMap[referencedName].contains("Nothing")
     }
 

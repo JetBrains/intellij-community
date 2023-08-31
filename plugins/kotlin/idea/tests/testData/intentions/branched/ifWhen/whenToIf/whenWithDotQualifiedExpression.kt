@@ -12,4 +12,4 @@ fun test(x: Int, y: Int): String {
     }
 }
 
-// IGNORE_FIR
+// IGNORE_K2

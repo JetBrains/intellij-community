@@ -1,6 +1,7 @@
 // "Optimize imports" "false"
 // WITH_STDLIB
 // ACTION: Introduce import alias
+// IGNORE_K2
 package ppp
 
 import ppp.invoke<caret>

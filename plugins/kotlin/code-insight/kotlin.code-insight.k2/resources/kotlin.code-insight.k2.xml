@@ -21,5 +21,12 @@
     <codeInsight.gotoSuper
             language="kotlin"
             implementationClass="org.jetbrains.kotlin.idea.k2.codeinsight.KotlinGoToSuperDeclarationsHandler"/>
+
+    <applicationService
+            serviceInterface="org.jetbrains.kotlin.idea.base.codeInsight.KotlinOptimizeImportsFacility"
+            serviceImplementation="org.jetbrains.kotlin.idea.k2.codeinsight.K2OptimizeImportsFacility"/>
+    <constantExpressionEvaluator
+            language="kotlin"
+            implementationClass="org.jetbrains.kotlin.idea.k2.codeinsight.KotlinFirConstantExpressionEvaluator"/>
   </extensions>
 </idea-plugin>

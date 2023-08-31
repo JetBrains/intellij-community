@@ -27,7 +27,7 @@ abstract class AbstractK2MultiFileLocalInspectionTest: AbstractMultiFileLocalIns
 
     override fun doTest(pathInString: String) {
         val path = Path(pathInString)
-        IgnoreTests.runTestIfNotDisabledByFileDirective(path, IgnoreTests.DIRECTIVES.IGNORE_FIR, "after") {
+        IgnoreTests.runTestIfNotDisabledByFileDirective(path, IgnoreTests.DIRECTIVES.IGNORE_K2, "after") {
             super.doTest(pathInString)
         }
     }

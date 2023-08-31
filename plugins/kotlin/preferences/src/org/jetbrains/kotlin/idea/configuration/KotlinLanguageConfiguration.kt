@@ -4,6 +4,8 @@ package org.jetbrains.kotlin.idea.configuration
 
 import com.intellij.ide.IdeBundle
 import com.intellij.ide.plugins.PluginUpdateStatus
+import com.intellij.ide.ui.search.SearchableOptionContributor
+import com.intellij.ide.ui.search.SearchableOptionProcessor
 import com.intellij.openapi.options.Configurable
 import com.intellij.openapi.options.SearchableConfigurable
 import com.intellij.openapi.updateSettings.impl.UpdateSettings
@@ -222,3 +224,17 @@ class KotlinLanguageConfiguration : SearchableConfigurable, Configurable.NoScrol
     }
 }
 
+
+class KotlinPluginSwitchSearchOptionContributor : SearchableOptionContributor() {
+    override fun processOptions(processor: SearchableOptionProcessor) {
+        val displayName = KotlinPreferencesBundle.message("kotlin.language.configurable")
+        processor.addOptions(
+            KotlinPreferencesBundle.message("checkbox.enable.k2.based.kotlin.plugin"),
+            null,
+            displayName,
+            KotlinLanguageConfiguration.ID,
+            displayName,
+            false
+        )
+    }
+}

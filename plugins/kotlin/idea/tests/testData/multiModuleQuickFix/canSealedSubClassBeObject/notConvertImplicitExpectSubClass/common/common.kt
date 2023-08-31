@@ -4,7 +4,7 @@
 // ACTION: Make internal
 // ACTION: Make protected
 // ERROR: Expected class 'SealedClass' has no actual declaration in module testModule_Common
-
+// IGNORE_K2
 expect sealed class SealedClass {
     cla<caret>ss Child : SealedClass
 }

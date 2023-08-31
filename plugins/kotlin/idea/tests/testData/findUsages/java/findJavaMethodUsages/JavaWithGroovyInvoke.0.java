@@ -12,4 +12,4 @@ public class JavaWithGroovyInvoke_0 {
 
 // CRI_IGNORE
 
-// IGNORE_FIR_LOG
+// IGNORE_K2_LOG

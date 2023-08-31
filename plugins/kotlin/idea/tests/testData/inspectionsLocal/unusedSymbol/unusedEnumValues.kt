@@ -13,4 +13,4 @@ val Any.foo get() = Fake
 fun foo() {
     SomeEnum.foo.values()
 }
-// IGNORE_FIR
+// IGNORE_K2

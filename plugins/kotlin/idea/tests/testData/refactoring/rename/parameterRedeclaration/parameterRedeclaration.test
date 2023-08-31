@@ -3,5 +3,6 @@
   "mainFile": "test/test.kt",
   "newName": "b",
   "withRuntime": "true",
-  "hint": "Parameter 'b' is already declared in function 'foo'"
+  "hint": "Parameter 'b' is already declared in function 'foo'",
+  "enabledInK2": "true"
 }

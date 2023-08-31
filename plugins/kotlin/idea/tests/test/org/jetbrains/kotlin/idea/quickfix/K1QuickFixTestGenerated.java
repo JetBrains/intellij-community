@@ -16496,6 +16496,11 @@ public abstract class K1QuickFixTestGenerated extends AbstractK1QuickFixTest {
                     KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
                 }
 
+                @TestMetadata("anonymousFunctionReturnType.kt")
+                public void testAnonymousFunctionReturnType() throws Exception {
+                    runTest("testData/quickfix/typeMismatch/typeMismatchOnReturnedExpression/anonymousFunctionReturnType.kt");
+                }
+
                 @TestMetadata("assignmentTypeMismatch.kt")
                 public void testAssignmentTypeMismatch() throws Exception {
                     runTest("testData/quickfix/typeMismatch/typeMismatchOnReturnedExpression/assignmentTypeMismatch.kt");

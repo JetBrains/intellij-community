@@ -2,6 +2,7 @@ package first
 
 import second.<caret>
 
+// IGNORE_K2
 // EXIST: { itemText: "extensionFun", tailText: "() for String in second", attributes: "" }
 // EXIST: { itemText: "extensionVal", tailText: " for Int in second", attributes: "" }
 // EXIST: { itemText: "topLevelFun1", tailText: "(p: (String, Int) -> Unit) (second)", attributes: "" }

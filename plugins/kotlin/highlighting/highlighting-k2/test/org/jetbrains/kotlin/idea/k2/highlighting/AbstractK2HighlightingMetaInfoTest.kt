@@ -29,7 +29,7 @@ abstract class AbstractK2HighlightingMetaInfoTest : AbstractHighlightingMetaInfo
 
         IgnoreTests.runTestIfNotDisabledByFileDirective(
             testKtFile.toPath(),
-            disableTestDirective = IgnoreTests.DIRECTIVES.IGNORE_FIR,
+            disableTestDirective = IgnoreTests.DIRECTIVES.IGNORE_K2,
             additionalFilesExtensions = arrayOf(HIGHLIGHTING_EXTENSION, HIGHLIGHTING_FIR_EXTENSION)
         ) {
             // warnings are not supported yet

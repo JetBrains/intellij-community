@@ -3913,6 +3913,11 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
                 runTest("testData/inspectionsLocal/conventionNameCalls/replaceGetOrSet/setValueUsed.kt");
             }
 
+            @TestMetadata("setValueUsedWithUnitReturnType.kt")
+            public void testSetValueUsedWithUnitReturnType() throws Exception {
+                runTest("testData/inspectionsLocal/conventionNameCalls/replaceGetOrSet/setValueUsedWithUnitReturnType.kt");
+            }
+
             @TestMetadata("setWithNoParameters.kt")
             public void testSetWithNoParameters() throws Exception {
                 runTest("testData/inspectionsLocal/conventionNameCalls/replaceGetOrSet/setWithNoParameters.kt");

@@ -4,6 +4,7 @@ fun foo() {
     singl<caret>
 }
 
+// IGNORE_K2
 // INVOCATION_COUNT: 1
 // EXIST_JAVA_ONLY: {"lookupString":"singleton","tailText":"(T!) (java.util)","typeText":"(Mutable)Set<T!>","attributes":"","allLookupStrings":"singleton","itemText":"Collections.singleton"}
 // ABSENT: { itemText: "Collections.singletonList" }

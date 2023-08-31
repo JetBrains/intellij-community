@@ -36,14 +36,12 @@ abstract class AbstractFirRenameTest : AbstractRenameTest() {
     @OptIn(KtAllowAnalysisOnEdt::class)
     override fun doTest(path: String) {
         val renameObject = loadTestConfiguration(dataFile())
-        val testIsDisabledInK2 = renameObject.get("enabledInK2")?.asBoolean == false
-
-        if (testIsDisabledInK2) return
+        val testIsEnabledInK2 = renameObject.get("enabledInK2")?.asBoolean ?: error("`enabledInK2` has to be specified explicitly")
 
         val result = allowAnalysisOnEdt { runCatching { super.doTest(path) } }
         result.fold(
-            onSuccess = { require(!testIsDisabledInK2) { "This test passes and should be enabled!" } },
-            onFailure = { exception -> if (!testIsDisabledInK2) throw exception }
+            onSuccess = { require(testIsEnabledInK2) { "This test passes and should be enabled!" } },
+            onFailure = { exception -> if (testIsEnabledInK2) throw exception }
         )
     }
 

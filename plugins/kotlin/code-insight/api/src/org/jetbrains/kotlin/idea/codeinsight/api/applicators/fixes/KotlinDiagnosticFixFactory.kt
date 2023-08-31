@@ -37,8 +37,9 @@ private class KotlinDiagnosticFixFactoryUsingQuickFixActionBase<DIAGNOSTIC : KtD
     private val createQuickFixes: context(KtAnalysisSession)(DIAGNOSTIC) -> List<QuickFixActionBase<*>>
 ) : KotlinDiagnosticFixFactory<DIAGNOSTIC>() {
     context(KtAnalysisSession)
-    override fun createQuickFixes(diagnostic: DIAGNOSTIC): List<QuickFixActionBase<*>> =
-        createQuickFixes.invoke(this@KtAnalysisSession, diagnostic)
+    override fun createQuickFixes(diagnostic: DIAGNOSTIC): List<QuickFixActionBase<*>> {
+        return createQuickFixes.invoke(this@KtAnalysisSession, diagnostic)
+    }
 }
 
 context(KtAnalysisSession)

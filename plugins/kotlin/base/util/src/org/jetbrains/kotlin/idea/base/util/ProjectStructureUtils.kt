@@ -54,8 +54,22 @@ fun Project.invalidateProjectRoots(info: RootsChangeRescanningInfo) {
 val VirtualFile.parentsWithSelf: Sequence<VirtualFile>
     get() = generateSequence(this) { it.parent }
 
+/**
+ * Checks if [file] is marked as outsider.
+ *
+ * N.B. The file might be marked as outsider, but calling [getOutsiderFileOrigin] for it might
+ * still return `null` - if the original file was deleted, for example.
+ */
+fun isOutsiderFile(file: VirtualFile): Boolean {
+    return OutsidersPsiFileSupport.isOutsiderFile(file)
+}
+
+fun markAsOutsiderFile(file: VirtualFile, originalFile: VirtualFile?) {
+    OutsidersPsiFileSupport.markFileWithUrl(file, originalFile?.url)
+}
+
 fun getOutsiderFileOrigin(project: Project, file: VirtualFile): VirtualFile? {
-    if (!OutsidersPsiFileSupport.isOutsiderFile(file)) {
+    if (!isOutsiderFile(file)) {
         return null
     }
 

@@ -11,5 +11,3 @@ fun main() {
 
 // EXPRESSION: listOf(1, 2, 3, 4, 5).filter { it > a }
 // RESULT: instance of java.util.ArrayList(id=ID): Ljava/util/ArrayList;
-
-// IGNORE_K2

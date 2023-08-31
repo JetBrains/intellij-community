@@ -5,7 +5,7 @@ import org.jetbrains.kotlin.test.utils.IgnoreTests
 
 abstract class AbstractK1JSBasicCompletionTest : AbstractJSBasicCompletionTestBase() {
     override fun executeTest(test: () -> Unit) {
-        IgnoreTests.runTestIfNotDisabledByFileDirective(dataFile().toPath(), IgnoreTests.DIRECTIVES.IGNORE_FE10) {
+        IgnoreTests.runTestIfNotDisabledByFileDirective(dataFile().toPath(), IgnoreTests.DIRECTIVES.IGNORE_K1) {
             super.executeTest(test)
         }
     }

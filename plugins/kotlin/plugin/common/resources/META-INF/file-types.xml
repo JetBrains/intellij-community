@@ -16,7 +16,7 @@
     <fileType name="Kotlin" fieldName="INSTANCE" language="kotlin" extensions="kt;kts"
               implementationClass="org.jetbrains.kotlin.idea.KotlinFileType"/>
     <fileType name="KNM" fieldName="INSTANCE" extensions="knm"
-              implementationClass="org.jetbrains.kotlin.idea.base.psi.fileTypes.KlibMetaFileType"/>
+              implementationClass="org.jetbrains.kotlin.analysis.decompiler.konan.KlibMetaFileType"/>
     <fileType name="KJSM" fieldName="INSTANCE" extensions="kjsm"
               implementationClass="org.jetbrains.kotlin.idea.base.psi.fileTypes.KotlinJavaScriptMetaFileType"/>
     <fileType name="kotlin_builtins" fieldName="INSTANCE" extensions="kotlin_builtins;kotlin_metadata"

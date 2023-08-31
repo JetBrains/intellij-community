@@ -9,4 +9,4 @@ import another.topVal
 fun use() {
     topVal<caret>()
 }
-/* IGNORE_FIR */
+/* IGNORE_K2 */

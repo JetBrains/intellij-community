@@ -1,0 +1,10 @@
+// DISABLE-ERRORS
+annotation class Ann
+
+interface I {
+  fun foo() {}
+}
+
+expect class Foo : I {
+  override fun foo()
+}

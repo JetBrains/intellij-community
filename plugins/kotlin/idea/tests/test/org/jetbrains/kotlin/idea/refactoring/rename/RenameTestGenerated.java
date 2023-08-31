@@ -168,6 +168,11 @@ public class RenameTestGenerated extends AbstractRenameTest {
         runTest("testData/refactoring/rename/classUsagesInTextFiles/classUsagesInTextFiles.test");
     }
 
+    @TestMetadata("companionFullRef/companionFullRef.test")
+    public void testCompanionFullRef_CompanionFullRef() throws Exception {
+        runTest("testData/refactoring/rename/companionFullRef/companionFullRef.test");
+    }
+
     @TestMetadata("companionObjectWithDefaultName/companionObject.test")
     public void testCompanionObjectWithDefaultName_CompanionObject() throws Exception {
         runTest("testData/refactoring/rename/companionObjectWithDefaultName/companionObject.test");

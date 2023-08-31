@@ -1186,6 +1186,16 @@ public abstract class BasicCompletionHandlerTestGenerated extends AbstractBasicC
             runTest("../testData/handlers/basic/AmbiguousSuperMethodWithArgument.kt");
         }
 
+        @TestMetadata("AnonymousFunctionAnnotation.kt")
+        public void testAnonymousFunctionAnnotation() throws Exception {
+            runTest("../testData/handlers/basic/AnonymousFunctionAnnotation.kt");
+        }
+
+        @TestMetadata("AnonymousFunctionReturnType.kt")
+        public void testAnonymousFunctionReturnType() throws Exception {
+            runTest("../testData/handlers/basic/AnonymousFunctionReturnType.kt");
+        }
+
         @TestMetadata("BeforeCallee.kt")
         public void testBeforeCallee() throws Exception {
             runTest("../testData/handlers/basic/BeforeCallee.kt");

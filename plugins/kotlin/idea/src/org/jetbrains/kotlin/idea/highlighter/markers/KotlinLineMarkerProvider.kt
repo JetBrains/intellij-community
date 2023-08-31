@@ -29,6 +29,9 @@ import org.jetbrains.kotlin.idea.codeInsight.lineMarkers.shared.AbstractKotlinLi
 import org.jetbrains.kotlin.idea.codeInsight.lineMarkers.shared.LineMarkerInfos
 import org.jetbrains.kotlin.idea.codeInsight.lineMarkers.shared.NavigationPopupDescriptor
 import org.jetbrains.kotlin.idea.codeInsight.lineMarkers.shared.TestableLineMarkerNavigator
+import org.jetbrains.kotlin.idea.codeInsight.lineMarkers.shared.areMarkersForbidden
+import org.jetbrains.kotlin.idea.codeInsight.lineMarkers.shared.expectOrActualAnchor
+import org.jetbrains.kotlin.idea.codeInsight.lineMarkers.shared.markerDeclaration
 import org.jetbrains.kotlin.idea.core.isInheritable
 import org.jetbrains.kotlin.idea.core.isOverridable
 import org.jetbrains.kotlin.idea.search.declarationsSearch.toPossiblyFakeLightMethods
@@ -81,28 +84,28 @@ class KotlinLineMarkerProvider : AbstractKotlinLineMarkerProvider() {
     }
 }
 
-val SUBCLASSED_CLASS = MarkerType(
+val SUBCLASSED_CLASS: MarkerType = MarkerType(
     "SUBCLASSED_CLASS",
     { getPsiClass(it)?.let(::getModuleSpecificSubclassedClassTooltip) },
     object : InheritorsLineMarkerNavigator() {
         override fun getMessageForDumbMode() = JavaBundle.message("notification.navigation.to.overriding.classes")
     })
 
-val OVERRIDDEN_FUNCTION = MarkerType(
+val OVERRIDDEN_FUNCTION: MarkerType = MarkerType(
     "OVERRIDDEN_FUNCTION",
     { getPsiMethod(it)?.let(::getOverriddenMethodTooltip) },
     object : InheritorsLineMarkerNavigator() {
         override fun getMessageForDumbMode() = KotlinBundle.message("highlighter.notification.text.navigation.to.overriding.classes.is.not.possible.during.index.update")
     })
 
-val OVERRIDDEN_PROPERTY = MarkerType(
+val OVERRIDDEN_PROPERTY: MarkerType = MarkerType(
     "OVERRIDDEN_PROPERTY",
     { it?.let { getOverriddenPropertyTooltip(it.parent as KtNamedDeclaration) } },
     object : InheritorsLineMarkerNavigator() {
         override fun getMessageForDumbMode() = KotlinBundle.message("highlighter.notification.text.navigation.to.overriding.classes.is.not.possible.during.index.update")
     })
 
-private val PLATFORM_ACTUAL = object : MarkerType(
+private val PLATFORM_ACTUAL: MarkerType = object : MarkerType(
     "PLATFORM_ACTUAL",
     { element -> element?.markerDeclaration?.let { getPlatformActualTooltip(it) } },
     object : LineMarkerNavigator() {
@@ -124,7 +127,7 @@ private val PLATFORM_ACTUAL = object : MarkerType(
     }
 }
 
-private val EXPECTED_DECLARATION = object : MarkerType(
+private val EXPECTED_DECLARATION: MarkerType = object : MarkerType(
     "EXPECTED_DECLARATION",
     { element -> element?.markerDeclaration?.let { getExpectedDeclarationTooltip(it) } },
     object : LineMarkerNavigator() {
