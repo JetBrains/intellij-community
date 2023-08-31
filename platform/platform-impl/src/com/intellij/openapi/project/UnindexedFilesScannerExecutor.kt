@@ -12,6 +12,11 @@ import com.intellij.openapi.project.MergingTaskQueue.SubmissionReceipt
 import com.intellij.openapi.util.NlsContexts.ProgressText
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.util.indexing.IndexingBundle
+import kotlinx.collections.immutable.PersistentList
+import kotlinx.collections.immutable.persistentListOf
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.update
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.VisibleForTesting
 import java.util.concurrent.atomic.AtomicReference
@@ -25,6 +30,10 @@ class UnindexedFilesScannerExecutor(project: Project)
                                                IndexingBundle.message("progress.indexing.scanning"),
                                                IndexingBundle.message("progress.indexing.scanning.paused")) {
   private val runningDumbTask = AtomicReference<ProgressIndicator>()
+
+  // note that shouldShowProgressIndicator = false in UnindexedFilesScannerExecutor, so there is no suspender for the progress indicator
+  private val pauseReason = MutableStateFlow<PersistentList<String>>(persistentListOf())
+  fun getPauseReason(): StateFlow<PersistentList<String>> = pauseReason
 
   private class TaskQueueListener : ExecutorStateListener {
     override fun beforeFirstTask(): Boolean = true
@@ -93,7 +102,15 @@ class UnindexedFilesScannerExecutor(project: Project)
    * all the running tasks to pause.
    */
   fun suspendScanningAndIndexingThenRun(activityName: @ProgressText String, runnable: Runnable) {
-    suspendAndRun(activityName) { DumbService.getInstance(project).suspendIndexingAndRun(activityName, runnable) }
+    suspendAndRun(activityName) { // we only need this call to suspend legacy dumb scanning mode
+      pauseReason.update { it.add(activityName) }
+      try {
+        DumbService.getInstance(project).suspendIndexingAndRun(activityName, runnable)
+      }
+      finally {
+        pauseReason.update { it.remove(activityName) }
+      }
+    }
   }
 
   companion object {

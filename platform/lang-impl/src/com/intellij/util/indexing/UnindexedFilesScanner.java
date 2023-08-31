@@ -7,8 +7,10 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.ControlFlowException;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProcessCanceledException;
+import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
-import com.intellij.openapi.progress.impl.ProgressSuspender;
+import com.intellij.openapi.progress.Task;
+import com.intellij.openapi.progress.util.ProgressIndicatorUtils;
 import com.intellij.openapi.project.DumbModeProgressTitle;
 import com.intellij.openapi.project.FilesScanningTask;
 import com.intellij.openapi.project.Project;
@@ -43,6 +45,8 @@ import org.jetbrains.annotations.*;
 
 import java.time.Instant;
 import java.util.*;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.locks.LockSupport;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
@@ -248,17 +252,17 @@ public class UnindexedFilesScanner extends FilesScanningTaskBase {
                                   @NotNull Ref<? super StatusMark> markRef) {
     LOG.info("Started scanning for indexing of " + myProject.getName() + ". Reason: " + myIndexingReason);
 
-    UnindexedFilesIndexer.trackSuspends(indicator.getSuspender(), this,
-                                        () -> scanningHistory.suspendStages(Instant.now()),
-                                        () -> scanningHistory.stopSuspendingStages(Instant.now()));
+    indicator.onPausedStateChanged(paused -> {
+      if (paused) {
+        scanningHistory.suspendStages(Instant.now());
+      }
+      else {
+        scanningHistory.stopSuspendingStages(Instant.now());
+      }
+    });
+
     if (myStartSuspended) {
-      ProgressSuspender suspender = indicator.getSuspender();
-      if (suspender == null) {
-        throw new IllegalStateException("Indexing progress indicator must be suspendable!");
-      }
-      if (!suspender.isSuspended()) {
-        suspender.suspendProcess(IndexingBundle.message("progress.indexing.started.as.suspended"));
-      }
+      freezeUntilAllowed();
     }
 
     progressReporter.setIndeterminate(true);
@@ -283,6 +287,28 @@ public class UnindexedFilesScanner extends FilesScanningTaskBase {
       // the full VFS refresh makes sense only after it's loaded, i.e. after scanning files to index is finished
       InitialRefreshKt.scheduleInitialVfsRefresh(myProject, LOG);
     }
+  }
+
+  private void freezeUntilAllowed() {
+    CountDownLatch latch = new CountDownLatch(1);
+    ProgressManager.getInstance().run(
+      new Task.Backgroundable(myProject, IndexingBundle.message("progress.indexing.started.as.suspended"), true) {
+        @Override
+        public void run(@NotNull ProgressIndicator indicator1) {
+          try {
+            //noinspection InfiniteLoopStatement
+            while (true) {
+              LockSupport.parkNanos(100_000);
+              ProgressManager.checkCanceled();
+            }
+          }
+          finally {
+            latch.countDown();
+          }
+        }
+      }
+    );
+    ProgressIndicatorUtils.awaitWithCheckCanceled(latch);
   }
 
   private void flushPerProjectIndexingQueue(@Nullable String indexingReason,

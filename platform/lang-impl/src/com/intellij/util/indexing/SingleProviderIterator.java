@@ -74,7 +74,8 @@ final class SingleProviderIterator implements ContentIterator {
 
   @Override
   public boolean processFile(@NotNull VirtualFile fileOrDir) {
-    ProgressManager.checkCanceled(); // give a chance to suspend indexing
+    indicator.freezeIfPaused(); // give a chance to suspend indexing
+    ProgressManager.checkCanceled();
     if (indicator.isCanceled()) {
       return false;
     }

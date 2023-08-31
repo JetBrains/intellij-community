@@ -289,11 +289,11 @@ open class MergingQueueGuiExecutor<T : MergeableQueueTask<T>> protected construc
     }
   }
 
-  fun suspendAndRun(activityName: @ProgressText String, activity: Runnable) {
+  internal fun suspendAndRun(activityName: @ProgressText String, activity: Runnable) {
     guiSuspender.suspendAndRun(activityName, activity)
   }
 
-  fun cancelAllTasks() {
+  internal fun cancelAllTasks() {
     taskQueue.cancelAllTasks()
     guiSuspender.resumeProgressIfPossible()
   }

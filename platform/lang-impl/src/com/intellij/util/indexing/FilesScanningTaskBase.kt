@@ -1,23 +1,25 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.indexing
 
+import com.intellij.ide.IdeBundle
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.thisLogger
-import com.intellij.openapi.progress.ProgressIndicator
-import com.intellij.openapi.progress.impl.ProgressSuspender
-import com.intellij.openapi.progress.rawProgressReporter
-import com.intellij.openapi.progress.withBackgroundProgress
-import com.intellij.openapi.progress.withRawProgressReporter
+import com.intellij.openapi.progress.*
 import com.intellij.openapi.project.FilesScanningTask
 import com.intellij.openapi.project.MergeableQueueTask
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.project.UnindexedFilesScannerExecutor
 import com.intellij.openapi.util.NlsContexts.*
 import com.intellij.openapi.util.registry.Registry
+import com.intellij.util.application
+import com.intellij.util.flow.mapStateIn
+import kotlinx.collections.immutable.PersistentList
 import kotlinx.collections.immutable.persistentListOf
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.*
 import org.jetbrains.annotations.ApiStatus.Internal
+import java.util.function.Consumer
 
 @Internal
 abstract class FilesScanningTaskBase(private val project: Project) : MergeableQueueTask<FilesScanningTask>, FilesScanningTask {
@@ -33,64 +35,112 @@ abstract class FilesScanningTaskBase(private val project: Project) : MergeableQu
       MutableStateFlow(true)
     }
 
-    IndexingProgressUIReporter(project, shouldShowProgress, progressReporter, IndexingBundle.message("progress.indexing.scanning")).use {
-      perform(CheckCancelOnlyProgressIndicator(indicator), progressReporter)
+    val taskScope = CoroutineScope(Dispatchers.Default + Job())
+    try {
+      val pauseReason = project.service<UnindexedFilesScannerExecutor>().getPauseReason()
+      val taskIndicator = CheckCancelOnlyProgressIndicator(indicator, taskScope, pauseReason)
+      launchIndexingProgressUIReporter(taskScope, project, shouldShowProgress, progressReporter,
+                                       IndexingBundle.message("progress.indexing.scanning"),
+                                       taskIndicator.getPauseReason())
+      perform(taskIndicator, progressReporter)
+    }
+    finally {
+      taskScope.cancel()
     }
   }
 
   abstract fun perform(indicator: CheckCancelOnlyProgressIndicator, progressReporter: IndexingProgressReporter)
 
-  private class IndexingProgressUIReporter(
+  private fun launchIndexingProgressUIReporter(
+    progressReportingScope: CoroutineScope,
     project: Project,
     shouldShowProgress: Flow<Boolean>,
     progressReporter: IndexingProgressReporter,
     progressTitle: @ProgressTitle String,
-  ) : AutoCloseable {
-    private val progressReportingScope = CoroutineScope(Dispatchers.Default + Job())
+    pauseReason: Flow<@ProgressText String?>,
+  ) {
+    progressReportingScope.launch {
+      while (true) {
+        shouldShowProgress.first { it }
 
-    init {
-      progressReportingScope.launch {
-        while (true) {
-          shouldShowProgress.first { it }
-
-          withBackgroundProgress(project, progressTitle, cancellable = false) {
-            withRawProgressReporter {
-              coroutineScope {
-                async(Dispatchers.EDT) {
-                  progressReporter.subTaskTexts.collect {
-                    rawProgressReporter!!.details(it.firstOrNull())
-                  }
+        withBackgroundProgress(project, progressTitle, cancellable = false) {
+          withRawProgressReporter {
+            coroutineScope {
+              async(Dispatchers.EDT) {
+                pauseReason.collect { paused ->
+                  rawProgressReporter!!.text(
+                    if (paused != null) IdeBundle.message("dumb.service.indexing.paused.due.to", paused)
+                    else progressTitle
+                  )
                 }
-                async(Dispatchers.EDT) {
-                  progressReporter.subTasksFinished.collect {
-                    val subTasksCount = progressReporter.subTasksCount
-                    if (subTasksCount > 0) {
-                      val newValue = (it.toDouble() / subTasksCount).coerceIn(0.0, 1.0)
-                      rawProgressReporter!!.fraction(newValue)
-                    }
-                    else {
-                      rawProgressReporter!!.fraction(0.0)
-                    }
-                  }
-                }
-                shouldShowProgress.first { !it }
-                coroutineContext.cancelChildren() // cancel started async coroutines
               }
+              async(Dispatchers.EDT) {
+                progressReporter.subTaskTexts.collect {
+                  rawProgressReporter!!.details(it.firstOrNull())
+                }
+              }
+              async(Dispatchers.EDT) {
+                progressReporter.subTasksFinished.collect {
+                  val subTasksCount = progressReporter.subTasksCount
+                  if (subTasksCount > 0) {
+                    val newValue = (it.toDouble() / subTasksCount).coerceIn(0.0, 1.0)
+                    rawProgressReporter!!.fraction(newValue)
+                  }
+                  else {
+                    rawProgressReporter!!.fraction(0.0)
+                  }
+                }
+              }
+              shouldShowProgress.first { !it }
+              coroutineContext.cancelChildren() // cancel started async coroutines
             }
           }
         }
       }
     }
-
-    override fun close() {
-      progressReportingScope.cancel()
-    }
   }
 
-  class CheckCancelOnlyProgressIndicator(private val original: ProgressIndicator) {
+  class CheckCancelOnlyProgressIndicator(private val original: ProgressIndicator,
+                                         private val taskScope: CoroutineScope,
+                                         private val pauseReason: StateFlow<PersistentList<@ProgressText String>>) {
+    private var paused = getPauseReason().mapStateIn(taskScope) { it != null }
+    fun getPauseReason(): StateFlow<@ProgressText String?> = pauseReason.mapStateIn(taskScope) { it.firstOrNull() }
+    fun onPausedStateChanged(action: Consumer<Boolean>) {
+      taskScope.launch {
+        paused.collect {
+          action.accept(it)
+        }
+      }
+    }
     fun originalIndicatorOnlyToFlushIndexingQueueSynchronously(): ProgressIndicator = original
     fun isCanceled(): Boolean = original.isCanceled
-    fun getSuspender(): ProgressSuspender? = ProgressSuspender.getSuspender(original)
+
+    fun freezeIfPaused() {
+      if (isCanceled()) {
+        original.checkCanceled() // throw if canceled,
+        return // or just return if inside non-cancellable section
+      }
+      if (!paused.value) return
+      if (application.isDispatchThread) {
+        thisLogger().error("Ignore pause, because freezeIfPaused invoked on EDT")
+      }
+      else {
+        runBlockingCancellable {
+          withContext(taskScope.coroutineContext) {
+            coroutineScope {
+              async {
+                while (true) {
+                  original.checkCanceled()
+                  delay(100)
+                }
+              }
+              paused.first { !it } // wait until paused==false, or taskScope is canceled, or progress indicator is canceled
+              coroutineContext.cancelChildren()
+            }
+          }
+        }
+      }
+    }
   }
 
   // This class is thread safe
