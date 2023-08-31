@@ -73,10 +73,17 @@ internal fun generateRuntimeModuleRepository(entries: List<DistributionFileEntry
       continue
     }
     
-    //this is a temporary workaround to skip dependencies which aren't used in production and aren't included in the distribution
-    val dependenciesToSkip = dependenciesUsedOnlyWhenRunningFromSources[descriptor.id] ?: emptySet()
-    
-    distDescriptors.add(RawRuntimeModuleDescriptor(moduleId, resourcePaths.toList(), descriptor.dependencies - dependenciesToSkip))
+    //this is a temporary workaround to skip optional dependencies which aren't included in the distribution
+    val dependenciesToSkip = dependenciesToSkip[descriptor.id] ?: emptySet()
+
+    val actualDependencies = descriptor.dependencies.mapNotNull { dependency ->
+      when (dependency) {
+        in dependenciesToSkip -> null
+        "lib.jetbrains-annotations-java5" -> "lib.jetbrains-annotations" //'jetbrains-annotations-java5' isn't included in distribution, 'jetbrains-annotations' is included instead
+        else -> dependency
+      }
+    }
+    distDescriptors.add(RawRuntimeModuleDescriptor(moduleId, resourcePaths.toList(), actualDependencies))
   }
 
   /* include descriptors of aggregating modules which don't have own resources (and therefore don't have DistributionFileEntry),
@@ -191,7 +198,13 @@ private val DistributionFileEntry.runtimeModuleId: RuntimeModuleId
     is ProjectLibraryEntry -> RuntimeModuleId.projectLibrary(data.libraryName)
   }
 
-private val dependenciesUsedOnlyWhenRunningFromSources = mapOf(
+private val dependenciesToSkip = mapOf(
   //may be removed when IJPL-125 is fixed
-  "intellij.platform.buildScripts.downloader" to setOf("lib.zstd-jni", "lib.zstd-jni-windows-aarch64"), 
+  "intellij.platform.buildScripts.downloader" to setOf("lib.zstd-jni", "lib.zstd-jni-windows-aarch64"),
+  //RDCT-488
+  "intellij.performanceTesting" to setOf(
+    "intellij.platform.vcs.impl", 
+    "intellij.platform.vcs.log",
+    "intellij.platform.vcs.log.impl",
+  )
 )
