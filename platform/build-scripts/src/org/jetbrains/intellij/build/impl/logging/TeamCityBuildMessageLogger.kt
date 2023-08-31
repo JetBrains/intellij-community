@@ -86,6 +86,7 @@ class TeamCityBuildMessageLogger : BuildMessageLogger() {
           print(ServiceMessageTypes.BUILD_PORBLEM, "description" to message.text)
         }
       }
+      BUILD_CANCEL -> print(ServiceMessageTypes.BUILD_STOP, "comment" to message.text, "readdToQueue" to "false")
     }
   }
 

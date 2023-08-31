@@ -37,4 +37,6 @@ interface BuildMessages: System.Logger {
   fun reportStatisticValue(key: String, value: String)
 
   fun reportBuildProblem(description: String, identity: String? = null)
+
+  fun cancelBuild(reason: String)
 }
