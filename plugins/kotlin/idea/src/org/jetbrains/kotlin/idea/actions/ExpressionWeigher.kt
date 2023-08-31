@@ -25,7 +25,7 @@ import org.jetbrains.kotlin.types.typeUtil.makeNotNullable
 import org.jetbrains.kotlin.types.typeUtil.replaceArgumentsWithStarProjections
 
 /**
- * Implementation in K2: [org.jetbrains.kotlin.idea.quickfix.fixes.ExpressionImportWeigher]
+ * Implementation in K2: [org.jetbrains.kotlin.idea.quickfix.importFix.ExpressionImportWeigher]
  */
 internal interface ExpressionWeigher {
 
