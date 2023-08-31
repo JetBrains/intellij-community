@@ -17,6 +17,7 @@ import com.intellij.debugger.ui.impl.watch.NodeDescriptorProvider;
 import com.intellij.ide.highlighter.JavaClassFileType;
 import com.intellij.ide.highlighter.JavaFileType;
 import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.actionSystem.remoting.ActionRemoteBehaviorSpecification;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
@@ -33,7 +34,7 @@ import com.intellij.xdebugger.impl.ui.tree.actions.XDebuggerTreeActionBase;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public class ToggleFieldBreakpointAction extends AnAction {
+public class ToggleFieldBreakpointAction extends AnAction implements ActionRemoteBehaviorSpecification.Disabled {
 
   @Override
   public void actionPerformed(@NotNull AnActionEvent e) {
