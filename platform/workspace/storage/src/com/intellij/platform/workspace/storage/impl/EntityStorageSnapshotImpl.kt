@@ -56,7 +56,7 @@ internal data class EntityReferenceImpl<E : WorkspaceEntity>(internal val id: En
 }
 
 @OptIn(EntityStorageInstrumentationApi::class)
-internal class EntityStorageSnapshotImpl(
+internal open class EntityStorageSnapshotImpl(
   override val entitiesByType: ImmutableEntitiesBarrel,
   override val refs: RefsTable,
   override val indexes: StorageIndexes,

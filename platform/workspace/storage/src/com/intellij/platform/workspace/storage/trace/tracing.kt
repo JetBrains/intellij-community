@@ -5,40 +5,43 @@ import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.diagnostic.trace
 import com.intellij.platform.workspace.storage.*
 import com.intellij.platform.workspace.storage.impl.*
-import com.intellij.platform.workspace.storage.instrumentation.EntityStorageInstrumentationApi
-import com.intellij.platform.workspace.storage.instrumentation.EntityStorageSnapshotInstrumentation
 import com.intellij.platform.workspace.storage.url.VirtualFileUrlIndex
 
 
 /**
  * EntityStorageSnapshot tracer. The snapshot can be wrapped with this tracer
  *   and all reads of the original snapshot will produce a read trace that will be passed to [onRead] function
+ *
+ * Implementation note: There could be two options for attaching the tracker. One is an inheritance, the second is delegation. Fleet uses
+ *   delegation, we use inheritance.
+ * The decision to use inheritance comes from how we create entities. For that, we internally call the method [initializeEntity].
+ * As this is an internal call from [EntityStorageSnapshotImpl], the deligation won't override it and this will cause two problems:
+ *   - The storage in entity will be [EntityStorageSnapshotImpl], but it should be [ReadTracker].
+ *   - Since the [EntityStorageSnapshotImpl] caches entities, we'll leak entities with read tracker attached.
+ *
+ * The argument for deligation is clearer architecture ([EntityStorageSnapshotImpl] is not open).
  */
-@OptIn(EntityStorageInstrumentationApi::class)
 internal class ReadTracker(
-  internal val snapshot: EntityStorageSnapshotInstrumentation,
-  private val onRead: (ReadTrace) -> Unit
-) : EntityStorageSnapshotInstrumentation by snapshot {
+  snapshot: EntityStorageSnapshot,
+  private val onRead: (ReadTrace) -> Unit,
+) : EntityStorageSnapshotImpl(
+  (snapshot as EntityStorageSnapshotImpl).entitiesByType,
+  snapshot.refs,
+  snapshot.indexes,
+  snapshot.snapshotCache,
+) {
   override fun <E : WorkspaceEntity> entities(entityClass: Class<E>): Sequence<E> {
     val trace = ReadTrace.EntitiesOfType(entityClass)
     log.trace { "Read trace of `entities` function: $trace" }
     onRead(trace)
-    return snapshot.entities(entityClass)
-      .onEach {
-        // We have to pass this snapshot because the entity is created in internals of the original snapshot and there is no way to pass
-        //  a different snapshot while creation. I hope I can get rid of this line.
-        it.asBase().snapshot = this
-
-        // TODO check if we need to keep this
-        //(it as WorkspaceEntityBase).readTrace = onRead
-      }
+    return super.entities(entityClass)
   }
 
   override fun <E : WorkspaceEntity> entitiesAmount(entityClass: Class<E>): Int {
     val trace = ReadTrace.EntitiesOfType(entityClass)
     log.trace { "Read trace of `entitiesAmount` function: $trace" }
     onRead(trace)
-    return snapshot.entitiesAmount(entityClass)
+    return super.entitiesAmount(entityClass)
   }
 
   override fun <E : WorkspaceEntityWithSymbolicId, R : WorkspaceEntity> referrers(id: SymbolicEntityId<E>,
@@ -46,28 +49,21 @@ internal class ReadTracker(
     val trace = ReadTrace.HasSymbolicLinkTo(id, entityClass)
     log.trace { "Read trace of `referrers` function: $trace" }
     onRead(trace)
-    return snapshot.referrers(id, entityClass)
-      .onEach {
-        // We have to pass this snapshot because the entity is created in internals of the original snapshot and there is no way to pass
-        //  a different snapshot while creation. I hope I can get rid of this line.
-        it.asBase().snapshot = this
-      }
+    return super.referrers(id, entityClass)
   }
 
   override fun <E : WorkspaceEntityWithSymbolicId> resolve(id: SymbolicEntityId<E>): E? {
     val trace = ReadTrace.Resolve(id)
     log.trace { "Read trace of `resolve` function: $trace" }
     onRead(trace)
-    return snapshot.resolve(id)?.also {
-      it.asBase().snapshot = this
-    }
+    return super.resolve(id)
   }
 
   override fun <E : WorkspaceEntityWithSymbolicId> contains(id: SymbolicEntityId<E>): Boolean {
     val trace = ReadTrace.Resolve(id)
     log.trace { "Read trace of `contains` function: $trace" }
     onRead(trace)
-    return snapshot.contains(id)
+    return super.contains(id)
   }
 
   override fun <T> getExternalMapping(identifier: String): ExternalEntityMapping<T> {
@@ -86,27 +82,25 @@ internal class ReadTracker(
     val trace = ReadTrace.SomeFieldAccess(parent.asBase().id)
     log.trace { "Read trace of `getOneChild` function: $trace" }
     onRead(trace)
-    return snapshot.getOneChild(connectionId, parent)
+    return super.getOneChild(connectionId, parent)
   }
 
   override fun getManyChildren(connectionId: ConnectionId, parent: WorkspaceEntity): Sequence<WorkspaceEntity> {
     val trace = ReadTrace.SomeFieldAccess(parent.asBase().id)
     log.trace { "Read trace of `getManyChildren` function: $trace" }
     onRead(trace)
-    return snapshot.getManyChildren(connectionId, parent)
+    return super.getManyChildren(connectionId, parent)
   }
 
   override fun getParent(connectionId: ConnectionId, child: WorkspaceEntity): WorkspaceEntity? {
     val trace = ReadTrace.SomeFieldAccess(child.asBase().id)
     log.trace { "Read trace of `getParent` function: $trace" }
     onRead(trace)
-    return snapshot.getParent(connectionId, child)
+    return super.getParent(connectionId, child)
   }
 
-  override fun <T : WorkspaceEntity> resolveReference(reference: EntityReference<T>): T? {
-    val entity = snapshot.resolveReference(reference)
-    entity?.asBase()?.snapshot = this
-    return entity
+  override fun <T : WorkspaceEntity> initializeEntity(entityId: EntityId, newInstance: () -> T): T {
+    return newInstance()
   }
 
   companion object {
@@ -145,7 +139,7 @@ internal fun Map<Class<*>, List<EntityChange<*>>>.toTraces(): Set<ReadTrace> {
             add(ReadTrace.EntitiesOfType(key as Class<out WorkspaceEntity>))
 
             val id = entity.asBase().id
-            val entityData = entity.asBase().snapshot.abstract().entityDataByIdOrDie(id)
+            val entityData = (entity.asBase().snapshot as AbstractEntityStorage).entityDataByIdOrDie(id)
             if (entityData is SoftLinkable) {
               entityData.getLinks().forEach { link ->
                 add(ReadTrace.HasSymbolicLinkTo(link, key))
@@ -162,7 +156,7 @@ internal fun Map<Class<*>, List<EntityChange<*>>>.toTraces(): Set<ReadTrace> {
             add(ReadTrace.EntitiesOfType(key as Class<out WorkspaceEntity>))
 
             val id = entity.asBase().id
-            val entityData = entity.asBase().snapshot.abstract().entityDataByIdOrDie(id)
+            val entityData = (entity.asBase().snapshot as AbstractEntityStorage).entityDataByIdOrDie(id)
             if (entityData is SoftLinkable) {
               entityData.getLinks().forEach { link ->
                 add(ReadTrace.HasSymbolicLinkTo(link, key))
@@ -183,7 +177,7 @@ internal fun Map<Class<*>, List<EntityChange<*>>>.toTraces(): Set<ReadTrace> {
 
             // Becase maybe we update the field with links
             val id = entity.asBase().id
-            val entityData = entity.asBase().snapshot.abstract().entityDataByIdOrDie(id)
+            val entityData = (entity.asBase().snapshot as AbstractEntityStorage).entityDataByIdOrDie(id)
             if (entityData is SoftLinkable) {
               entityData.getLinks().forEach { link ->
                 add(ReadTrace.HasSymbolicLinkTo(link, key))
@@ -201,12 +195,3 @@ internal fun Map<Class<*>, List<EntityChange<*>>>.toTraces(): Set<ReadTrace> {
   }
 }
 
-@OptIn(EntityStorageInstrumentationApi::class)
-private fun EntityStorage.abstract(): AbstractEntityStorage {
-  if (this is ReadTracker) {
-    return this.snapshot as AbstractEntityStorage
-  }
-  else {
-    return this as AbstractEntityStorage
-  }
-}
