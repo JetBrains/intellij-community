@@ -78,7 +78,7 @@ class ExtractKotlinFunctionHandler(
         }
     }
 
-    class InplaceExtractionHelper(private val allContainersEnabled: Boolean) : ExtractionEngineHelper(EXTRACT_FUNCTION) {
+    open class InplaceExtractionHelper(private val allContainersEnabled: Boolean) : ExtractionEngineHelper(EXTRACT_FUNCTION) {
         override fun configureAndRun(
             project: Project,
             editor: Editor,
@@ -152,11 +152,11 @@ class ExtractKotlinFunctionHandler(
             return RefactoringBundle.message("inplace.refactoring.advertisement.text", KeymapUtil.getShortcutText(shortcut))
         }
 
-        private fun rangeOf(element: PsiElement): TextRange {
+        protected fun rangeOf(element: PsiElement): TextRange {
             return (element as? KtExpression)?.extractableSubstringInfo?.contentRange ?: element.textRange
         }
 
-        private fun createSmartRangeProvider(container: PsiElement, range: TextRange): () -> TextRange? {
+        protected fun createSmartRangeProvider(container: PsiElement, range: TextRange): () -> TextRange? {
             val offsetFromStart = range.startOffset - container.textRange.startOffset
             val offsetFromEnd = container.textRange.endOffset - range.endOffset
             val pointer = SmartPointerManager.createPointer(container)
@@ -180,7 +180,7 @@ class ExtractKotlinFunctionHandler(
             }
         }
 
-        private fun findSingleCallExpression(file: KtFile, range: TextRange?): KtCallExpression? {
+        protected fun findSingleCallExpression(file: KtFile, range: TextRange?): KtCallExpression? {
             if (range == null) return null
             val container = PsiTreeUtil.findCommonParent(file.findElementAt(range.startOffset), file.findElementAt(range.endOffset))
             val callExpressions = PsiTreeUtil.findChildrenOfType(container, KtCallExpression::class.java)
