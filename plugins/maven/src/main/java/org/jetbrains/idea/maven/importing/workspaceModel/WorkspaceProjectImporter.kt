@@ -28,6 +28,7 @@ import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VfsUtil
+import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.platform.backend.workspace.WorkspaceModel
 import com.intellij.platform.workspace.jps.JpsImportedEntitySource
 import com.intellij.platform.workspace.jps.entities.*
@@ -44,6 +45,8 @@ import org.jetbrains.annotations.ApiStatus.Internal
 import org.jetbrains.annotations.TestOnly
 import org.jetbrains.idea.maven.execution.SyncBundle
 import org.jetbrains.idea.maven.importing.*
+import org.jetbrains.idea.maven.importing.MavenImportUtil.MAIN_SUFFIX
+import org.jetbrains.idea.maven.importing.MavenImportUtil.TEST_SUFFIX
 import org.jetbrains.idea.maven.importing.tree.MavenModuleImportContext
 import org.jetbrains.idea.maven.importing.tree.MavenProjectImportContextProvider
 import org.jetbrains.idea.maven.importing.tree.MavenTreeModuleImportData
@@ -215,20 +218,29 @@ internal class WorkspaceProjectImporter(
     return ProjectChangesInfo(hasChanges, allProjectsToChanges)
   }
 
-  private fun buildModuleNameMap(mavenModuleEntities: Sequence<ExternalSystemModuleOptionsEntity>,
-                                 projectToImport: Map<MavenProject, MavenProjectChanges>): Map<MavenProject, String> {
+  private fun getExistingModuleNames(externalSystemModuleEntities: Sequence<ExternalSystemModuleOptionsEntity>): Map<VirtualFile, String> {
     val keepExistingModuleNames = Registry.`is`("maven.import.keep.existing.module.names")
-    val existingModuleNames =
-      if (keepExistingModuleNames)
-        mavenModuleEntities.filter { it.externalSystem == SerializationConstants.MAVEN_EXTERNAL_SOURCE_ID }
-          .filter { it.linkedProjectId != null }
-          .associate { LocalFileSystem.getInstance().findFileByPath(it.linkedProjectId!!) to it.module.name }
-          .filterKeys { it != null }
-          .mapKeys { it.key!! }
-      else
-        mapOf()
+    if (!keepExistingModuleNames) return mapOf()
 
-    return MavenModuleNameMapper.mapModuleNames(projectToImport.keys, existingModuleNames)
+    // in case of compound modules, module, module.main and module.test are all mapped to the same file; module must be returned
+    fun selectModuleName(moduleNames: List<String>) : String {
+      for (moduleName in moduleNames) {
+        if (!moduleName.endsWith(MAIN_SUFFIX) && !moduleName.endsWith(TEST_SUFFIX)) return moduleName
+      }
+      return moduleNames[0]
+    }
+
+    return externalSystemModuleEntities.filter { it.externalSystem == SerializationConstants.MAVEN_EXTERNAL_SOURCE_ID }
+      .filter { it.linkedProjectId != null }
+      .groupBy({ LocalFileSystem.getInstance().findFileByPath(it.linkedProjectId!!) }, { it.module.name })
+      .filterKeys { it != null }
+      .mapKeys { it.key!! }
+      .mapValues { selectModuleName(it.value) }
+  }
+
+  private fun buildModuleNameMap(externalSystemModuleEntities: Sequence<ExternalSystemModuleOptionsEntity>,
+                                 projectToImport: Map<MavenProject, MavenProjectChanges>): Map<MavenProject, String> {
+    return MavenModuleNameMapper.mapModuleNames(projectToImport.keys, getExistingModuleNames(externalSystemModuleEntities))
   }
 
   private fun importModules(storageBeforeImport: EntityStorage,
