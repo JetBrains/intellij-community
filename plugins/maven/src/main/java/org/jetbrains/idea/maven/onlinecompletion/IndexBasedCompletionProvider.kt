@@ -19,7 +19,7 @@ internal class IndexBasedCompletionProvider(private val myIndex: MavenIndex) : D
   override fun fulltextSearch(searchString: String): CompletableFuture<List<RepositoryArtifactData>> =
     search(MavenId(searchString))
 
-  override fun suggestPrefix(groupId: String?, artifactId: String?): CompletableFuture<List<RepositoryArtifactData>> =
+  override fun suggestPrefix(groupId: String, artifactId: String): CompletableFuture<List<RepositoryArtifactData>> =
     search(MavenId(groupId, artifactId, null))
 
   private fun search(mavenId: MavenId): CompletableFuture<List<RepositoryArtifactData>> = CompletableFuture.supplyAsync {
