@@ -4,7 +4,7 @@ package org.jetbrains.kotlin.idea.completion.contributors
 
 import com.intellij.codeInsight.lookup.LookupElementBuilder
 import org.jetbrains.kotlin.idea.completion.context.FirBasicCompletionContext
-import org.jetbrains.kotlin.idea.completion.context.FirClassifierNamePositionContext
+import org.jetbrains.kotlin.idea.completion.context.KotlinClassifierNamePositionContext
 import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
 import org.jetbrains.kotlin.idea.completion.FirCompletionSessionParameters
 import org.jetbrains.kotlin.idea.completion.weighers.WeighingContext
@@ -15,11 +15,11 @@ import org.jetbrains.kotlin.renderer.render
 internal class FirSameAsFileClassifierNameCompletionContributor(
     basicContext: FirBasicCompletionContext,
     priority: Int
-) : FirCompletionContributorBase<FirClassifierNamePositionContext>(basicContext, priority) {
+) : FirCompletionContributorBase<KotlinClassifierNamePositionContext>(basicContext, priority) {
 
     context(KtAnalysisSession)
     override fun complete(
-        positionContext: FirClassifierNamePositionContext,
+        positionContext: KotlinClassifierNamePositionContext,
         weighingContext: WeighingContext,
         sessionParameters: FirCompletionSessionParameters,
     ) {

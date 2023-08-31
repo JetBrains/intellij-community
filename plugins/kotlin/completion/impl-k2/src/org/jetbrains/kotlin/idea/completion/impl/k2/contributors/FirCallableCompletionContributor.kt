@@ -32,7 +32,7 @@ import org.jetbrains.kotlin.idea.completion.checkers.ApplicableExtension
 import org.jetbrains.kotlin.idea.completion.checkers.CompletionVisibilityChecker
 import org.jetbrains.kotlin.idea.completion.checkers.ExtensionApplicabilityChecker
 import org.jetbrains.kotlin.idea.completion.context.FirBasicCompletionContext
-import org.jetbrains.kotlin.idea.completion.context.FirNameReferencePositionContext
+import org.jetbrains.kotlin.idea.completion.context.KotlinNameReferencePositionContext
 import org.jetbrains.kotlin.idea.completion.contributors.helpers.*
 import org.jetbrains.kotlin.idea.completion.lookups.CallableInsertionOptions
 import org.jetbrains.kotlin.idea.completion.lookups.CallableInsertionStrategy
@@ -49,7 +49,7 @@ import org.jetbrains.kotlin.resolve.ArrayFqNames
 internal open class FirCallableCompletionContributor(
     basicContext: FirBasicCompletionContext,
     priority: Int,
-) : FirCompletionContributorBase<FirNameReferencePositionContext>(basicContext, priority) {
+) : FirCompletionContributorBase<KotlinNameReferencePositionContext>(basicContext, priority) {
     context(KtAnalysisSession)
     protected open fun getImportStrategy(signature: KtCallableSignature<*>, noImportRequired: Boolean): ImportStrategy =
         if (noImportRequired) {
@@ -115,7 +115,7 @@ internal open class FirCallableCompletionContributor(
 
     context(KtAnalysisSession)
     override fun complete(
-        positionContext: FirNameReferencePositionContext,
+        positionContext: KotlinNameReferencePositionContext,
         weighingContext: WeighingContext,
         sessionParameters: FirCompletionSessionParameters,
     ): Unit = with(positionContext) {

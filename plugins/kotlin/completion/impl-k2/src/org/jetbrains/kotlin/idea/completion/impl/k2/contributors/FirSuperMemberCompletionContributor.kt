@@ -16,14 +16,12 @@ import org.jetbrains.kotlin.analysis.api.symbols.markers.KtSymbolWithModality
 import org.jetbrains.kotlin.analysis.api.types.KtIntersectionType
 import org.jetbrains.kotlin.analysis.api.types.KtType
 import org.jetbrains.kotlin.analysis.api.types.KtUsualClassType
-import org.jetbrains.kotlin.config.LanguageFeature
 import org.jetbrains.kotlin.descriptors.Modality
-import org.jetbrains.kotlin.idea.base.projectStructure.languageVersionSettings
 import org.jetbrains.kotlin.idea.completion.FirCompletionSessionParameters
 import org.jetbrains.kotlin.idea.completion.ItemPriority
 import org.jetbrains.kotlin.idea.completion.checkers.CompletionVisibilityChecker
 import org.jetbrains.kotlin.idea.completion.context.FirBasicCompletionContext
-import org.jetbrains.kotlin.idea.completion.context.FirSuperReceiverNameReferencePositionContext
+import org.jetbrains.kotlin.idea.completion.context.KotlinSuperReceiverNameReferencePositionContext
 import org.jetbrains.kotlin.idea.completion.contributors.helpers.CompletionSymbolOrigin
 import org.jetbrains.kotlin.idea.completion.contributors.helpers.collectNonExtensionsForType
 import org.jetbrains.kotlin.idea.completion.lookups.CallableInsertionOptions
@@ -37,12 +35,12 @@ import org.jetbrains.kotlin.psi.KtSuperExpression
 internal class FirSuperMemberCompletionContributor(
     basicContext: FirBasicCompletionContext,
     priority: Int
-) : FirCompletionContributorBase<FirSuperReceiverNameReferencePositionContext>(basicContext, priority) {
+) : FirCompletionContributorBase<KotlinSuperReceiverNameReferencePositionContext>(basicContext, priority) {
     private data class CallableInfo(
         private val _type: KtType,
         private val _signature: KtCallableSignature<*>,
         val scopeKind: KtScopeKind
-    ): KtLifetimeOwner {
+    ) : KtLifetimeOwner {
         override val token: KtLifetimeToken
             get() = _signature.token
         val type: KtType get() = withValidityAssertion { _type }
@@ -51,7 +49,7 @@ internal class FirSuperMemberCompletionContributor(
 
     context(KtAnalysisSession)
     override fun complete(
-        positionContext: FirSuperReceiverNameReferencePositionContext,
+        positionContext: KotlinSuperReceiverNameReferencePositionContext,
         weighingContext: WeighingContext,
         sessionParameters: FirCompletionSessionParameters,
     ) = with(positionContext) {

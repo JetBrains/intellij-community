@@ -3,10 +3,10 @@ package org.jetbrains.kotlin.idea.completion.impl.k2.contributors
 
 import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
 import org.jetbrains.kotlin.idea.completion.FirCompletionSessionParameters
-import org.jetbrains.kotlin.idea.completion.context.FirRawPositionCompletionContext
+import org.jetbrains.kotlin.idea.completion.context.KotlinRawPositionContext
 import org.jetbrains.kotlin.idea.completion.weighers.WeighingContext
 
-internal interface FirCompletionContributor<C : FirRawPositionCompletionContext> {
+internal interface FirCompletionContributor<C : KotlinRawPositionContext> {
     context(KtAnalysisSession)
     fun complete(
         positionContext: C,

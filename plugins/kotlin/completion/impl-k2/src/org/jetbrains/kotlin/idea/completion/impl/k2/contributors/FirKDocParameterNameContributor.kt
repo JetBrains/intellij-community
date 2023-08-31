@@ -11,7 +11,7 @@ import org.jetbrains.kotlin.analysis.api.symbols.KtValueParameterSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.markers.KtNamedSymbol
 import org.jetbrains.kotlin.idea.completion.FirCompletionSessionParameters
 import org.jetbrains.kotlin.idea.completion.context.FirBasicCompletionContext
-import org.jetbrains.kotlin.idea.completion.context.FirKDocParameterNamePositionContext
+import org.jetbrains.kotlin.idea.completion.context.KDocParameterNamePositionContext
 import org.jetbrains.kotlin.idea.completion.contributors.helpers.CompletionSymbolOrigin
 import org.jetbrains.kotlin.idea.completion.contributors.helpers.KtSymbolWithOrigin
 import org.jetbrains.kotlin.idea.completion.lookups.CallableInsertionOptions
@@ -22,10 +22,10 @@ import org.jetbrains.kotlin.idea.completion.weighers.WeighingContext
 internal open class FirKDocParameterNameContributor(
     basicContext: FirBasicCompletionContext,
     priority: Int,
-) : FirCompletionContributorBase<FirKDocParameterNamePositionContext>(basicContext, priority) {
+) : FirCompletionContributorBase<KDocParameterNamePositionContext>(basicContext, priority) {
     context(KtAnalysisSession)
     override fun complete(
-        positionContext: FirKDocParameterNamePositionContext,
+        positionContext: KDocParameterNamePositionContext,
         weighingContext: WeighingContext,
         sessionParameters: FirCompletionSessionParameters
     ) {

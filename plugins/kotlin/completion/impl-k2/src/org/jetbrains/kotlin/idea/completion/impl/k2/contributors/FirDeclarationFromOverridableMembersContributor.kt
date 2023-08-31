@@ -5,9 +5,9 @@ package org.jetbrains.kotlin.idea.completion.contributors
 import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
 import org.jetbrains.kotlin.idea.completion.FirCompletionSessionParameters
 import org.jetbrains.kotlin.idea.completion.context.FirBasicCompletionContext
-import org.jetbrains.kotlin.idea.completion.context.FirRawPositionCompletionContext
-import org.jetbrains.kotlin.idea.completion.context.FirTypeNameReferencePositionContext
-import org.jetbrains.kotlin.idea.completion.context.FirValueParameterPositionContext
+import org.jetbrains.kotlin.idea.completion.context.KotlinRawPositionContext
+import org.jetbrains.kotlin.idea.completion.context.KotlinTypeNameReferencePositionContext
+import org.jetbrains.kotlin.idea.completion.context.KotlinValueParameterPositionContext
 import org.jetbrains.kotlin.idea.completion.contributors.keywords.OverrideKeywordHandler
 import org.jetbrains.kotlin.idea.completion.weighers.WeighingContext
 import org.jetbrains.kotlin.lexer.KtTokens
@@ -35,18 +35,18 @@ import org.jetbrains.kotlin.psi.KtTypeReference
 internal class FirDeclarationFromOverridableMembersContributor(
     basicContext: FirBasicCompletionContext,
     priority: Int,
-) : FirCompletionContributorBase<FirRawPositionCompletionContext>(basicContext, priority) {
+) : FirCompletionContributorBase<KotlinRawPositionContext>(basicContext, priority) {
 
     context(KtAnalysisSession)
     override fun complete(
-        positionContext: FirRawPositionCompletionContext,
+        positionContext: KotlinRawPositionContext,
         weighingContext: WeighingContext,
         sessionParameters: FirCompletionSessionParameters,
     ) {
         val declaration = when (positionContext) {
-            is FirValueParameterPositionContext -> positionContext.ktParameter
+            is KotlinValueParameterPositionContext -> positionContext.ktParameter
             // In a fake file a callable declaration under construction is appended with "X.f$", which is parsed as a type reference.
-            is FirTypeNameReferencePositionContext -> positionContext.typeReference?.let { getDeclarationFromReceiverTypeReference(it) }
+            is KotlinTypeNameReferencePositionContext -> positionContext.typeReference?.let { getDeclarationFromReceiverTypeReference(it) }
             else -> null
         } ?: return
 

@@ -23,7 +23,7 @@ import org.jetbrains.kotlin.idea.completion.FirCompletionSessionParameters
 import org.jetbrains.kotlin.idea.completion.InsertionHandlerBase
 import org.jetbrains.kotlin.idea.completion.checkers.CompletionVisibilityChecker
 import org.jetbrains.kotlin.idea.completion.context.FirBasicCompletionContext
-import org.jetbrains.kotlin.idea.completion.context.FirWithSubjectEntryPositionContext
+import org.jetbrains.kotlin.idea.completion.context.KotlinWithSubjectEntryPositionContext
 import org.jetbrains.kotlin.idea.completion.contributors.helpers.CompletionSymbolOrigin
 import org.jetbrains.kotlin.idea.completion.contributors.helpers.FirClassifierProvider.getAvailableClassifiersCurrentScope
 import org.jetbrains.kotlin.idea.completion.contributors.helpers.FirClassifierProvider.getAvailableClassifiersFromIndex
@@ -46,7 +46,7 @@ import org.jetbrains.kotlin.renderer.render
 internal class FirWhenWithSubjectConditionContributor(
     basicContext: FirBasicCompletionContext,
     priority: Int,
-) : FirCompletionContributorBase<FirWithSubjectEntryPositionContext>(basicContext, priority) {
+) : FirCompletionContributorBase<KotlinWithSubjectEntryPositionContext>(basicContext, priority) {
     private val prefix: String get() = basicContext.prefixMatcher.prefix
     private val onTypingIsKeyword: Boolean = prefix.isNotEmpty() && KtTokens.IS_KEYWORD.value.startsWith(prefix)
 
@@ -54,7 +54,7 @@ internal class FirWhenWithSubjectConditionContributor(
 
     context(KtAnalysisSession)
     override fun complete(
-        positionContext: FirWithSubjectEntryPositionContext,
+        positionContext: KotlinWithSubjectEntryPositionContext,
         weighingContext: WeighingContext,
         sessionParameters: FirCompletionSessionParameters,
     ) {

@@ -26,9 +26,9 @@ import org.jetbrains.kotlin.idea.base.codeInsight.KotlinNameSuggester
 import org.jetbrains.kotlin.idea.completion.*
 import org.jetbrains.kotlin.idea.completion.checkers.CompletionVisibilityChecker
 import org.jetbrains.kotlin.idea.completion.context.FirBasicCompletionContext
-import org.jetbrains.kotlin.idea.completion.context.FirRawPositionCompletionContext
-import org.jetbrains.kotlin.idea.completion.context.FirTypeNameReferencePositionContext
-import org.jetbrains.kotlin.idea.completion.context.FirValueParameterPositionContext
+import org.jetbrains.kotlin.idea.completion.context.KotlinRawPositionContext
+import org.jetbrains.kotlin.idea.completion.context.KotlinTypeNameReferencePositionContext
+import org.jetbrains.kotlin.idea.completion.context.KotlinValueParameterPositionContext
 import org.jetbrains.kotlin.idea.completion.contributors.helpers.CompletionSymbolOrigin
 import org.jetbrains.kotlin.idea.completion.contributors.helpers.FirClassifierProvider.getAvailableClassifiersFromIndex
 import org.jetbrains.kotlin.idea.completion.contributors.helpers.KtSymbolWithOrigin
@@ -43,19 +43,19 @@ import org.jetbrains.kotlin.psi.psiUtil.collectDescendantsOfType
 internal class FirVariableOrParameterNameWithTypeCompletionContributor(
     basicContext: FirBasicCompletionContext,
     priority: Int
-) : FirCompletionContributorBase<FirRawPositionCompletionContext>(basicContext, priority) {
+) : FirCompletionContributorBase<KotlinRawPositionContext>(basicContext, priority) {
 
     private val nameFiltersWithUserPrefixes: List<Pair<NameFilter, String>> = getNameFiltersWithUserPrefixes()
 
     context(KtAnalysisSession)
     override fun complete(
-        positionContext: FirRawPositionCompletionContext,
+        positionContext: KotlinRawPositionContext,
         weighingContext: WeighingContext,
         sessionParameters: FirCompletionSessionParameters,
     ) {
         val variableOrParameter: KtCallableDeclaration = when (positionContext) {
-            is FirValueParameterPositionContext -> positionContext.ktParameter.takeIf { NameWithTypeCompletion.shouldCompleteParameter(it) }
-            is FirTypeNameReferencePositionContext ->
+            is KotlinValueParameterPositionContext -> positionContext.ktParameter.takeIf { NameWithTypeCompletion.shouldCompleteParameter(it) }
+            is KotlinTypeNameReferencePositionContext ->
                 positionContext.typeReference?.let { getDeclarationFromReceiverTypeReference(it) } as? KtProperty
 
             else -> null

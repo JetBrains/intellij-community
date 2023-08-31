@@ -19,7 +19,7 @@ import org.jetbrains.kotlin.idea.base.analysis.api.utils.KtSymbolFromIndexProvid
 import org.jetbrains.kotlin.idea.base.analysis.api.utils.shortenReferencesInRange
 import org.jetbrains.kotlin.idea.completion.*
 import org.jetbrains.kotlin.idea.completion.context.FirBasicCompletionContext
-import org.jetbrains.kotlin.idea.completion.context.FirRawPositionCompletionContext
+import org.jetbrains.kotlin.idea.completion.context.KotlinRawPositionContext
 import org.jetbrains.kotlin.idea.completion.contributors.helpers.CallableMetadataProvider
 import org.jetbrains.kotlin.idea.completion.contributors.helpers.CompletionSymbolOrigin
 import org.jetbrains.kotlin.idea.completion.contributors.helpers.KtSymbolWithOrigin
@@ -45,7 +45,7 @@ internal class FirCompletionContributorOptions(
     }
 }
 
-internal abstract class FirCompletionContributorBase<C : FirRawPositionCompletionContext>(
+internal abstract class FirCompletionContributorBase<C : KotlinRawPositionContext>(
     protected val basicContext: FirBasicCompletionContext,
     options: FirCompletionContributorOptions,
 ) : FirCompletionContributor<C> {
@@ -173,7 +173,7 @@ internal abstract class FirCompletionContributorBase<C : FirRawPositionCompletio
     }
 }
 
-internal fun <C : FirRawPositionCompletionContext> KtAnalysisSession.complete(
+internal fun <C : KotlinRawPositionContext> KtAnalysisSession.complete(
     contextContributor: FirCompletionContributor<C>,
     positionContext: C,
     weighingContext: WeighingContext,

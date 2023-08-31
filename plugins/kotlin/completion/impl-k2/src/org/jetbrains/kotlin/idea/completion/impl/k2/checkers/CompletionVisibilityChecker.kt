@@ -9,9 +9,9 @@ import org.jetbrains.kotlin.analysis.api.symbols.KtClassifierSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.markers.KtSymbolWithVisibility
 import org.jetbrains.kotlin.idea.base.utils.fqname.isJavaClassNotToBeUsedInKotlin
 import org.jetbrains.kotlin.idea.completion.context.FirBasicCompletionContext
-import org.jetbrains.kotlin.idea.completion.context.FirKDocNameReferencePositionContext
-import org.jetbrains.kotlin.idea.completion.context.FirNameReferencePositionContext
-import org.jetbrains.kotlin.idea.completion.context.FirRawPositionCompletionContext
+import org.jetbrains.kotlin.idea.completion.context.KDocNameReferencePositionContext
+import org.jetbrains.kotlin.idea.completion.context.KotlinNameReferencePositionContext
+import org.jetbrains.kotlin.idea.completion.context.KotlinRawPositionContext
 import org.jetbrains.kotlin.psi.KtExpression
 import org.jetbrains.kotlin.resolve.deprecation.DeprecationLevelValue
 
@@ -32,11 +32,11 @@ internal fun interface CompletionVisibilityChecker {
     companion object {
         fun create(
             basicContext: FirBasicCompletionContext,
-            positionContext: FirRawPositionCompletionContext
+            positionContext: KotlinRawPositionContext
         ): CompletionVisibilityChecker = object : CompletionVisibilityChecker {
             context(KtAnalysisSession)
             override fun isVisible(symbol: KtSymbolWithVisibility): Boolean {
-                if (positionContext is FirKDocNameReferencePositionContext) return true
+                if (positionContext is KDocNameReferencePositionContext) return true
 
                 // Don't offer any deprecated items that could lead to compile errors.
                 if (symbol.deprecationStatus?.deprecationLevel == DeprecationLevelValue.HIDDEN) return false
@@ -51,7 +51,7 @@ internal fun interface CompletionVisibilityChecker {
                 return isVisible(
                     symbol,
                     basicContext.originalKtFile.getFileSymbol(),
-                    (positionContext as? FirNameReferencePositionContext)?.explicitReceiver as? KtExpression,
+                    (positionContext as? KotlinNameReferencePositionContext)?.explicitReceiver as? KtExpression,
                     positionContext.position
                 )
             }

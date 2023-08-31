@@ -11,7 +11,7 @@ import org.jetbrains.kotlin.analysis.api.types.KtType
 import org.jetbrains.kotlin.idea.completion.FirCompletionSessionParameters
 import org.jetbrains.kotlin.idea.completion.ItemPriority
 import org.jetbrains.kotlin.idea.completion.context.FirBasicCompletionContext
-import org.jetbrains.kotlin.idea.completion.context.FirRawPositionCompletionContext
+import org.jetbrains.kotlin.idea.completion.context.KotlinRawPositionContext
 import org.jetbrains.kotlin.idea.completion.priority
 import org.jetbrains.kotlin.idea.completion.referenceScope
 import org.jetbrains.kotlin.idea.completion.suppressAutoInsertion
@@ -31,10 +31,10 @@ import org.jetbrains.kotlin.psi.psiUtil.startOffset
 internal class FirDeclarationFromUnresolvedNameContributor(
     basicContext: FirBasicCompletionContext,
     priority: Int,
-) : FirCompletionContributorBase<FirRawPositionCompletionContext>(basicContext, priority) {
+) : FirCompletionContributorBase<KotlinRawPositionContext>(basicContext, priority) {
     context(KtAnalysisSession)
     override fun complete(
-        positionContext: FirRawPositionCompletionContext,
+        positionContext: KotlinRawPositionContext,
         weighingContext: WeighingContext,
         sessionParameters: FirCompletionSessionParameters,
     ) {

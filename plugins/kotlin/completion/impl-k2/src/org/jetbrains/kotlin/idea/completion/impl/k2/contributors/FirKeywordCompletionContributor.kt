@@ -32,7 +32,7 @@ import org.jetbrains.kotlin.psi.KtLabelReferenceExpression
 import org.jetbrains.kotlin.psi.psiUtil.parentsWithSelf
 
 internal class FirKeywordCompletionContributor(basicContext: FirBasicCompletionContext, priority: Int) :
-    FirCompletionContributorBase<FirRawPositionCompletionContext>(basicContext, priority) {
+    FirCompletionContributorBase<KotlinRawPositionContext>(basicContext, priority) {
     private val keywordCompletion = KeywordCompletion(object : KeywordCompletion.LanguageVersionSettingProvider {
         override fun getLanguageVersionSetting(element: PsiElement) = element.languageVersionSettings
         override fun getLanguageVersionSetting(module: Module) = module.languageVersionSettings
@@ -42,22 +42,22 @@ internal class FirKeywordCompletionContributor(basicContext: FirBasicCompletionC
 
     context(KtAnalysisSession)
     override fun complete(
-        positionContext: FirRawPositionCompletionContext,
+        positionContext: KotlinRawPositionContext,
         weighingContext: WeighingContext,
         sessionParameters: FirCompletionSessionParameters,
     ) {
         val expression = when (positionContext) {
-            is FirNameReferencePositionContext -> (positionContext.reference as? KtSimpleNameReference)?.expression?.let {
+            is KotlinNameReferencePositionContext -> (positionContext.reference as? KtSimpleNameReference)?.expression?.let {
                 it.parentsWithSelf.match(KtLabelReferenceExpression::class, KtContainerNode::class, last = KtExpressionWithLabel::class)
                     ?: it
             }
 
-            is FirTypeConstraintNameInWhereClausePositionContext, is FirIncorrectPositionContext, is FirClassifierNamePositionContext ->
+            is KotlinTypeConstraintNameInWhereClausePositionContext, is KotlinIncorrectPositionContext, is KotlinClassifierNamePositionContext ->
                 error("keyword completion should not be called for ${positionContext::class.simpleName}")
 
-            is FirValueParameterPositionContext,
-            is FirMemberDeclarationExpectedPositionContext,
-            is FirUnknownPositionContext -> null
+            is KotlinValueParameterPositionContext,
+            is KotlinMemberDeclarationExpectedPositionContext,
+            is KotlinUnknownPositionContext -> null
         }
         completeWithResolve(expression ?: positionContext.position, expression, weighingContext)
     }

@@ -8,7 +8,7 @@ import com.intellij.codeInsight.lookup.LookupElement
 import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
 import org.jetbrains.kotlin.idea.base.codeInsight.LOOKUP_ELEMENT_CONTRIBUTOR
 import org.jetbrains.kotlin.idea.completion.FirCompletionSessionParameters
-import org.jetbrains.kotlin.idea.completion.context.FirRawPositionCompletionContext
+import org.jetbrains.kotlin.idea.completion.context.KotlinRawPositionContext
 import org.jetbrains.kotlin.idea.completion.impl.k2.contributors.FirCompletionContributor
 import org.jetbrains.kotlin.idea.completion.weighers.WeighingContext
 
@@ -28,7 +28,7 @@ internal class ToUserDataRecordingPolicy(private val contributor: FirCompletionC
     }
 }
 
-internal class RecordingFirCompletionContributorDelegate<C : FirRawPositionCompletionContext>(
+internal class RecordingFirCompletionContributorDelegate<C : KotlinRawPositionContext>(
     private val originalContributor: FirCompletionContributor<C>,
     private val resultController: PolicyController,
 ) : FirCompletionContributor<C> {
@@ -44,6 +44,6 @@ internal class RecordingFirCompletionContributorDelegate<C : FirRawPositionCompl
     }
 }
 
-internal fun <C : FirRawPositionCompletionContext> FirCompletionContributor<C>.recording(resultController: PolicyController): FirCompletionContributor<C> {
+internal fun <C : KotlinRawPositionContext> FirCompletionContributor<C>.recording(resultController: PolicyController): FirCompletionContributor<C> {
     return RecordingFirCompletionContributorDelegate(this, resultController)
 }

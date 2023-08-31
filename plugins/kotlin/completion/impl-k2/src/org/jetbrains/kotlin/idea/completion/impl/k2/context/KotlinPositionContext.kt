@@ -16,78 +16,78 @@ import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.getReceiverExpression
 import org.jetbrains.kotlin.psi.psiUtil.getStrictParentOfType
 
-internal sealed class FirRawPositionCompletionContext {
+internal sealed class KotlinRawPositionContext {
     abstract val position: PsiElement
 }
 
-internal class FirClassifierNamePositionContext(
+internal class KotlinClassifierNamePositionContext(
     override val position: PsiElement,
     val classLikeDeclaration: KtClassLikeDeclaration,
-) : FirRawPositionCompletionContext()
+) : KotlinRawPositionContext()
 
-internal sealed class FirValueParameterPositionContext : FirRawPositionCompletionContext() {
+internal sealed class KotlinValueParameterPositionContext : KotlinRawPositionContext() {
     abstract val ktParameter: KtParameter
 }
 
-internal class FirSimpleParameterPositionContext(
+internal class KotlinSimpleParameterPositionContext(
     override val position: PsiElement,
     override val ktParameter: KtParameter,
-) : FirValueParameterPositionContext()
+) : KotlinValueParameterPositionContext()
 
 /**
  * Primary constructor parameters can override properties from superclasses, so they should be analyzed
  * in dependent analysis session, which is why a separate position context is required.
  */
-internal class FirPrimaryConstructorParameterPositionContext(
+internal class KotlinPrimaryConstructorParameterPositionContext(
     override val position: PsiElement,
     override val ktParameter: KtParameter,
-) : FirValueParameterPositionContext()
+) : KotlinValueParameterPositionContext()
 
-internal class FirIncorrectPositionContext(
+internal class KotlinIncorrectPositionContext(
     override val position: PsiElement
-) : FirRawPositionCompletionContext()
+) : KotlinRawPositionContext()
 
-internal class FirTypeConstraintNameInWhereClausePositionContext(
+internal class KotlinTypeConstraintNameInWhereClausePositionContext(
     override val position: PsiElement,
     val typeParametersOwner: KtTypeParameterListOwner
-) : FirRawPositionCompletionContext()
+) : KotlinRawPositionContext()
 
-internal sealed class FirNameReferencePositionContext : FirRawPositionCompletionContext() {
+internal sealed class KotlinNameReferencePositionContext : KotlinRawPositionContext() {
     abstract val reference: KtReference
     abstract val nameExpression: KtElement
     abstract val explicitReceiver: KtElement?
 }
 
-internal class FirImportDirectivePositionContext(
+internal class KotlinImportDirectivePositionContext(
     override val position: PsiElement,
     override val reference: KtSimpleNameReference,
     override val nameExpression: KtSimpleNameExpression,
     override val explicitReceiver: KtExpression?,
-) : FirNameReferencePositionContext()
+) : KotlinNameReferencePositionContext()
 
-internal class FirPackageDirectivePositionContext(
+internal class KotlinPackageDirectivePositionContext(
     override val position: PsiElement,
     override val reference: KtSimpleNameReference,
     override val nameExpression: KtSimpleNameExpression,
     override val explicitReceiver: KtExpression?,
-) : FirNameReferencePositionContext()
+) : KotlinNameReferencePositionContext()
 
 
-internal class FirTypeNameReferencePositionContext(
+internal class KotlinTypeNameReferencePositionContext(
     override val position: PsiElement,
     override val reference: KtSimpleNameReference,
     override val nameExpression: KtSimpleNameExpression,
     override val explicitReceiver: KtExpression?,
     val typeReference: KtTypeReference?,
-) : FirNameReferencePositionContext()
+) : KotlinNameReferencePositionContext()
 
-internal class FirAnnotationTypeNameReferencePositionContext(
+internal class KotlinAnnotationTypeNameReferencePositionContext(
     override val position: PsiElement,
     override val reference: KtSimpleNameReference,
     override val nameExpression: KtSimpleNameExpression,
     override val explicitReceiver: KtExpression?,
     val annotationEntry: KtAnnotationEntry,
-) : FirNameReferencePositionContext()
+) : KotlinNameReferencePositionContext()
 
 /**
  * Example
@@ -99,13 +99,13 @@ internal class FirAnnotationTypeNameReferencePositionContext(
  * }
  * ```
  */
-internal class FirSuperTypeCallNameReferencePositionContext(
+internal class KotlinSuperTypeCallNameReferencePositionContext(
     override val position: PsiElement,
     override val reference: KtSimpleNameReference,
     override val nameExpression: KtSimpleNameExpression,
     override val explicitReceiver: KtExpression?,
     val superExpression: KtSuperExpression,
-) : FirNameReferencePositionContext()
+) : KotlinNameReferencePositionContext()
 
 /**
  * Example
@@ -117,44 +117,44 @@ internal class FirSuperTypeCallNameReferencePositionContext(
  * }
  * ```
  */
-internal class FirSuperReceiverNameReferencePositionContext(
+internal class KotlinSuperReceiverNameReferencePositionContext(
     override val position: PsiElement,
     override val reference: KtSimpleNameReference,
     override val nameExpression: KtSimpleNameExpression,
     override val explicitReceiver: KtExpression?,
     val superExpression: KtSuperExpression,
-) : FirNameReferencePositionContext()
+) : KotlinNameReferencePositionContext()
 
-internal class FirExpressionNameReferencePositionContext(
+internal class KotlinExpressionNameReferencePositionContext(
     override val position: PsiElement,
     override val reference: KtSimpleNameReference,
     override val nameExpression: KtSimpleNameExpression,
     override val explicitReceiver: KtExpression?
-) : FirNameReferencePositionContext()
+) : KotlinNameReferencePositionContext()
 
-internal class FirInfixCallPositionContext(
+internal class KotlinInfixCallPositionContext(
     override val position: PsiElement,
     override val reference: KtSimpleNameReference,
     override val nameExpression: KtSimpleNameExpression,
     override val explicitReceiver: KtExpression?
-) : FirNameReferencePositionContext()
+) : KotlinNameReferencePositionContext()
 
 
-internal class FirWithSubjectEntryPositionContext(
+internal class KotlinWithSubjectEntryPositionContext(
     override val position: PsiElement,
     override val reference: KtSimpleNameReference,
     override val nameExpression: KtSimpleNameExpression,
     override val explicitReceiver: KtExpression?,
     val subjectExpression: KtExpression,
     val whenCondition: KtWhenCondition,
-) : FirNameReferencePositionContext()
+) : KotlinNameReferencePositionContext()
 
-internal class FirCallableReferencePositionContext(
+internal class KotlinCallableReferencePositionContext(
     override val position: PsiElement,
     override val reference: KtSimpleNameReference,
     override val nameExpression: KtSimpleNameExpression,
     override val explicitReceiver: KtExpression?
-) : FirNameReferencePositionContext()
+) : KotlinNameReferencePositionContext()
 
 /**
  * Position in class body, on which member declaration or class initializer is expected
@@ -170,64 +170,64 @@ internal class FirCallableReferencePositionContext(
  * }
  * ```
  */
-internal class FirMemberDeclarationExpectedPositionContext(
+internal class KotlinMemberDeclarationExpectedPositionContext(
     override val position: PsiElement,
     val classBody: KtClassBody
-) : FirRawPositionCompletionContext()
+) : KotlinRawPositionContext()
 
-internal sealed class FirKDocNameReferencePositionContext : FirNameReferencePositionContext()
+internal sealed class KDocNameReferencePositionContext : KotlinNameReferencePositionContext()
 
-internal class FirKDocParameterNamePositionContext(
+internal class KDocParameterNamePositionContext(
     override val position: PsiElement,
     override val reference: KDocReference,
     override val nameExpression: KDocName,
     override val explicitReceiver: KDocName?,
-) : FirKDocNameReferencePositionContext()
+) : KDocNameReferencePositionContext()
 
-internal class FirKDocLinkNamePositionContext(
+internal class KDocLinkNamePositionContext(
     override val position: PsiElement,
     override val reference: KDocReference,
     override val nameExpression: KDocName,
     override val explicitReceiver: KDocName?,
-) : FirKDocNameReferencePositionContext()
+) : KDocNameReferencePositionContext()
 
-internal class FirUnknownPositionContext(
+internal class KotlinUnknownPositionContext(
     override val position: PsiElement
-) : FirRawPositionCompletionContext()
+) : KotlinRawPositionContext()
 
-internal object FirPositionCompletionContextDetector {
-    fun detect(position: PsiElement): FirRawPositionCompletionContext {
+internal object KotlinPositionContextDetector {
+    fun detect(position: PsiElement): KotlinRawPositionContext {
         return detectForPositionWithSimpleNameReference(position)
             ?: detectForPositionWithKDocReference(position)
             ?: detectForPositionWithoutReference(position)
-            ?: FirUnknownPositionContext(position)
+            ?: KotlinUnknownPositionContext(position)
     }
 
-    private fun detectForPositionWithoutReference(position: PsiElement): FirRawPositionCompletionContext? {
+    private fun detectForPositionWithoutReference(position: PsiElement): KotlinRawPositionContext? {
         val parent = position.parent ?: return null
         val grandparent = parent.parent
         return when {
             parent is KtClassLikeDeclaration && parent.nameIdentifier == position -> {
-                FirClassifierNamePositionContext(position, parent)
+                KotlinClassifierNamePositionContext(position, parent)
             }
 
             parent is KtParameter -> {
                 if (parent.ownerFunction is KtPrimaryConstructor) {
-                    FirPrimaryConstructorParameterPositionContext(position, parent)
+                    KotlinPrimaryConstructorParameterPositionContext(position, parent)
                 } else {
-                    FirSimpleParameterPositionContext(position, parent)
+                    KotlinSimpleParameterPositionContext(position, parent)
                 }
             }
 
             parent is PsiErrorElement && grandparent is KtClassBody -> {
-                FirMemberDeclarationExpectedPositionContext(position, grandparent)
+                KotlinMemberDeclarationExpectedPositionContext(position, grandparent)
             }
 
             else -> null
         }
     }
 
-    private fun detectForPositionWithSimpleNameReference(position: PsiElement): FirRawPositionCompletionContext? {
+    private fun detectForPositionWithSimpleNameReference(position: PsiElement): KotlinRawPositionContext? {
         val reference = (position.parent as? KtSimpleNameExpression)?.mainReference
             ?: return null
         val nameExpression = reference.expression.takeIf { it !is KtLabelReferenceExpression }
@@ -242,13 +242,13 @@ internal object FirPositionCompletionContextDetector {
             }
 
             parent is KtCallableReferenceExpression -> {
-                FirCallableReferencePositionContext(
+                KotlinCallableReferencePositionContext(
                     position, reference, nameExpression, parent.receiverExpression
                 )
             }
 
             parent is KtWhenCondition && subjectExpressionForWhenCondition != null -> {
-                FirWithSubjectEntryPositionContext(
+                KotlinWithSubjectEntryPositionContext(
                     position,
                     reference,
                     nameExpression,
@@ -259,7 +259,7 @@ internal object FirPositionCompletionContextDetector {
             }
 
             nameExpression.isReferenceExpressionInImportDirective() -> {
-                FirImportDirectivePositionContext(
+                KotlinImportDirectivePositionContext(
                     position,
                     reference,
                     nameExpression,
@@ -268,7 +268,7 @@ internal object FirPositionCompletionContextDetector {
             }
 
             nameExpression.isImportExpressionInsidePackageDirective() -> {
-                FirPackageDirectivePositionContext(
+                KotlinPackageDirectivePositionContext(
                     position,
                     reference,
                     nameExpression,
@@ -276,18 +276,18 @@ internal object FirPositionCompletionContextDetector {
                 )
             }
 
-            parent is KtTypeConstraint -> FirTypeConstraintNameInWhereClausePositionContext(
+            parent is KtTypeConstraint -> KotlinTypeConstraintNameInWhereClausePositionContext(
                 position,
                 position.parentOfType()!!,
             )
 
             parent is KtBinaryExpression && parent.operationReference == nameExpression -> {
-                FirInfixCallPositionContext(
+                KotlinInfixCallPositionContext(
                     position, reference, nameExpression, explicitReceiver
                 )
             }
 
-            explicitReceiver is KtSuperExpression -> FirSuperReceiverNameReferencePositionContext(
+            explicitReceiver is KtSuperExpression -> KotlinSuperReceiverNameReferencePositionContext(
                 position,
                 reference,
                 nameExpression,
@@ -296,20 +296,20 @@ internal object FirPositionCompletionContextDetector {
             )
 
             else -> {
-                FirExpressionNameReferencePositionContext(position, reference, nameExpression, explicitReceiver)
+                KotlinExpressionNameReferencePositionContext(position, reference, nameExpression, explicitReceiver)
             }
         }
     }
 
-    private fun detectForPositionWithKDocReference(position: PsiElement): FirNameReferencePositionContext? {
+    private fun detectForPositionWithKDocReference(position: PsiElement): KotlinNameReferencePositionContext? {
         val kDocName = position.getStrictParentOfType<KDocName>() ?: return null
         val kDocLink = kDocName.getStrictParentOfType<KDocLink>() ?: return null
         val kDocReference = kDocName.mainReference
         val kDocNameQualifier = kDocName.getQualifier()
 
         return when (kDocLink.getTagIfSubject()?.knownTag) {
-            KDocKnownTag.PARAM -> FirKDocParameterNamePositionContext(position, kDocReference, kDocName, kDocNameQualifier)
-            else -> FirKDocLinkNamePositionContext(position, kDocReference, kDocName, kDocNameQualifier)
+            KDocKnownTag.PARAM -> KDocParameterNamePositionContext(position, kDocReference, kDocName, kDocNameQualifier)
+            else -> KDocLinkNamePositionContext(position, kDocReference, kDocName, kDocNameQualifier)
         }
     }
 
@@ -345,7 +345,7 @@ internal object FirPositionCompletionContextDetector {
         reference: KtSimpleNameReference,
         nameExpression: KtSimpleNameExpression,
         explicitReceiver: KtExpression?
-    ): FirRawPositionCompletionContext {
+    ): KotlinRawPositionContext {
         val typeReference = (userType.parent as? KtTypeReference)?.takeIf { it.typeElement == userType }
         val typeReferenceOwner = typeReference?.parent
         return when {
@@ -353,22 +353,22 @@ internal object FirPositionCompletionContextDetector {
                 val constructorCall = typeReferenceOwner.takeIf { it.typeReference == typeReference }
                 val annotationEntry = (constructorCall?.parent as? KtAnnotationEntry)?.takeIf { it.calleeExpression == constructorCall }
                 annotationEntry?.let {
-                    FirAnnotationTypeNameReferencePositionContext(position, reference, nameExpression, explicitReceiver, it)
+                    KotlinAnnotationTypeNameReferencePositionContext(position, reference, nameExpression, explicitReceiver, it)
                 }
             }
 
             typeReferenceOwner is KtSuperExpression -> {
                 val superTypeCallEntry = typeReferenceOwner.takeIf { it.superTypeQualifier == typeReference }
                 superTypeCallEntry?.let {
-                    FirSuperTypeCallNameReferencePositionContext(position, reference, nameExpression, explicitReceiver, it)
+                    KotlinSuperTypeCallNameReferencePositionContext(position, reference, nameExpression, explicitReceiver, it)
                 }
             }
 
             typeReferenceOwner is KtTypeConstraint && typeReferenceOwner.children.any { it is PsiErrorElement } -> {
-                FirIncorrectPositionContext(position)
+                KotlinIncorrectPositionContext(position)
             }
 
             else -> null
-        } ?: FirTypeNameReferencePositionContext(position, reference, nameExpression, explicitReceiver, typeReference)
+        } ?: KotlinTypeNameReferencePositionContext(position, reference, nameExpression, explicitReceiver, typeReference)
     }
 }
