@@ -36,6 +36,7 @@ import java.util.concurrent.ConcurrentMap;
  * The language coming from file type can be changed by {@link com.intellij.psi.LanguageSubstitutor}.
  */
 public abstract class Language extends UserDataHolderBase {
+  public static final Language[] EMPTY_ARRAY = new Language[0];
   private static final Map<Class<? extends Language>, Language> ourRegisteredLanguages = new ConcurrentHashMap<>();
   private static final ConcurrentMap<String, List<Language>> ourRegisteredMimeTypes = new ConcurrentHashMap<>();
   private static final Map<String, Language> ourRegisteredIDs = new ConcurrentHashMap<>();
