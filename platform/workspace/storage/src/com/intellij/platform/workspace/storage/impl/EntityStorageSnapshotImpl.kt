@@ -124,9 +124,6 @@ internal class MutableEntityStorageImpl(
    */
   internal val changeLog = WorkspaceBuilderChangeLog()
 
-  // Temporal solution for accessing error in deft project.
-  private var throwExceptionOnError = false
-
   internal fun incModificationCount() {
     this.changeLog.modificationCount++
   }
@@ -287,9 +284,6 @@ internal class MutableEntityStorageImpl(
               Broken consistency: $brokenConsistency
             """.trimIndent(), SymbolicIdAlreadyExistsException(symbolicId)
         )
-        if (throwExceptionOnError) {
-          throw SymbolicIdAlreadyExistsException(symbolicId)
-        }
       }
     }
   }
@@ -343,9 +337,6 @@ internal class MutableEntityStorageImpl(
               
               Broken consistency: $brokenConsistency
             """.trimIndent(), SymbolicIdAlreadyExistsException(newSymbolicId))
-            if (throwExceptionOnError) {
-              throw SymbolicIdAlreadyExistsException(newSymbolicId)
-            }
           }
         }
         else {
