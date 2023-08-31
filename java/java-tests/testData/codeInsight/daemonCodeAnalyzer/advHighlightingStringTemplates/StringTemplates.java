@@ -108,4 +108,9 @@ class X {
   public static void noNewlineAfterTextBlockOpeningQuotes() {
     System.out.println(STR.<error descr="Illegal text block start: missing new line after opening quotes">"""</error>\{}""");
   }
+  
+  public static void voidExpression() {
+    String a = STR."\{<error descr="Expression with type 'void' not allowed as string template embedded expression">voidExpression()</error>}";
+    System.out.println(a);
+  }
 }

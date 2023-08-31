@@ -921,6 +921,18 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
   }
 
   @Override
+  public void visitTemplate(@NotNull PsiTemplate template) {
+    super.visitTemplate(template);
+
+    for (PsiExpression embeddedExpression : template.getEmbeddedExpressions()) {
+      if (PsiTypes.voidType().equals(embeddedExpression.getType())) {
+        String message = JavaErrorBundle.message("expression.with.type.void.not.allowed.as.string.template.embedded.expression");
+        add(HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(embeddedExpression).descriptionAndTooltip(message));
+      }
+    }
+  }
+
+  @Override
   public void visitFragment(@NotNull PsiFragment fragment) {
     super.visitFragment(fragment);
 
