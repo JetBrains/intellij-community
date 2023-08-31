@@ -3,7 +3,6 @@ package com.intellij.platform.bootstrap;
 
 import com.intellij.ide.plugins.ProductLoadingStrategy;
 import com.intellij.idea.Main;
-import com.intellij.platform.runtime.repository.ProductModules;
 import com.intellij.platform.runtime.repository.RuntimeModuleRepository;
 import org.jetbrains.annotations.NotNull;
 
@@ -14,9 +13,9 @@ import org.jetbrains.annotations.NotNull;
 @SuppressWarnings("unused")
 public final class ModularMain {
   @SuppressWarnings("ConfusingMainMethod")
-  public static void main(@NotNull RuntimeModuleRepository moduleRepository, @NotNull ProductModules productModules, String @NotNull [] args) {
+  public static void main(@NotNull RuntimeModuleRepository moduleRepository, String @NotNull [] args) {
     //when this new way to load the platform will become default, strategy instance may be passed explicitly instead
-    ProductLoadingStrategy.setStrategy(new ModuleBasedProductLoadingStrategy(productModules));
+    ProductLoadingStrategy.setStrategy(new ModuleBasedProductLoadingStrategy(moduleRepository));
     Main.main(args);
   }
 }

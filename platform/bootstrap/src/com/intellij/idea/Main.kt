@@ -8,6 +8,7 @@ import com.intellij.concurrency.IdeaForkJoinWorkerThreadFactory
 import com.intellij.diagnostic.StartUpMeasurer
 import com.intellij.ide.BootstrapBundle
 import com.intellij.ide.BytecodeTransformer
+import com.intellij.ide.plugins.ProductLoadingStrategy
 import com.intellij.ide.plugins.StartupAbortedException
 import com.intellij.ide.startup.StartupActionScriptManager
 import com.intellij.openapi.application.ApplicationNamesInfo
@@ -56,9 +57,15 @@ fun main(rawArgs: Array<String>) {
         addBootstrapTiming("init scope creating", startupTimings)
         StartUpMeasurer.addTimings(startupTimings, "bootstrap", startTimeUnixNano)
         span("startApplication") {
+          val mainClassLoaderDeferred = async(CoroutineName("main class loader initializing")) {
+            val classLoader = AppStarter::class.java.classLoader
+            ProductLoadingStrategy.strategy.addMainModuleGroupToClassPath(classLoader)
+            return@async classLoader
+          }
+          
           // not IO-, but CPU-bound due to descrambling, don't use here IO dispatcher
           val appStarterDeferred = async(CoroutineName("main class loading")) {
-            val aClass = AppStarter::class.java.classLoader.loadClass("com.intellij.idea.MainImpl")
+            val aClass = mainClassLoaderDeferred.await().loadClass("com.intellij.idea.MainImpl")
             MethodHandles.lookup().findConstructor(aClass, MethodType.methodType(Void.TYPE)).invoke() as AppStarter
           }
 
@@ -72,7 +79,7 @@ fun main(rawArgs: Array<String>) {
             }
           }
 
-          startApplication(args = args, appStarterDeferred = appStarterDeferred, mainScope = this@runBlocking, busyThread = busyThread)
+          startApplication(args = args, mainClassLoaderDeferred = mainClassLoaderDeferred, appStarterDeferred = appStarterDeferred, mainScope = this@runBlocking, busyThread = busyThread)
         }
       }
 

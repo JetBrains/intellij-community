@@ -98,8 +98,9 @@ private val commandProcessor: AtomicReference<(List<String>) -> Deferred<CliResu
 internal var shellEnvDeferred: Deferred<Boolean?>? = null
   private set
 
-// the main thread's dispatcher is sequential - use it with care
+  // the main thread's dispatcher is sequential - use it with care
 fun CoroutineScope.startApplication(args: List<String>,
+                                    mainClassLoaderDeferred: Deferred<ClassLoader>,
                                     appStarterDeferred: Deferred<AppStarter>,
                                     mainScope: CoroutineScope,
                                     busyThread: Thread) {
@@ -113,6 +114,7 @@ fun CoroutineScope.startApplication(args: List<String>,
   }
 
   val appInfoDeferred = async(CoroutineName("app info")) {
+    mainClassLoaderDeferred.await()
     // required for DisabledPluginsState and EUA
     ApplicationInfoImpl.getShadowInstance()
   }
@@ -241,6 +243,7 @@ fun CoroutineScope.startApplication(args: List<String>,
 
     PluginManagerCore.scheduleDescriptorLoading(coroutineScope = asyncScope,
                                                 zipFilePoolDeferred = zipFilePoolDeferred,
+                                                mainClassLoaderDeferred = mainClassLoaderDeferred,
                                                 logDeferred = logDeferred)
   }
 
@@ -745,5 +748,14 @@ fun getServer(): BuiltInServer? {
   instance.waitForStart()
   val candidate = instance.serverDisposable
   return if (candidate is BuiltInServer) candidate else null
+}
+
+@Deprecated("Use 'startApplication' with 'mainClassLoaderDeferred' parameter instead",
+            ReplaceWith(
+              "startApplication(args, CompletableDeferred(AppStarter::class.java.classLoader), appStarterDeferred, mainScope, busyThread)",
+              "kotlinx.coroutines.CompletableDeferred"))
+fun CoroutineScope.startApplication(args: List<String>, appStarterDeferred: Deferred<AppStarter>, mainScope: CoroutineScope,
+                                    busyThread: Thread) {
+  startApplication(args, CompletableDeferred(AppStarter::class.java.classLoader), appStarterDeferred, mainScope, busyThread)
 }
 //</editor-fold>
