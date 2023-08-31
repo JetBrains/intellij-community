@@ -15,10 +15,10 @@ import org.jetbrains.kotlin.idea.base.analysis.api.utils.CallParameterInfoProvid
 import org.jetbrains.kotlin.idea.base.analysis.api.utils.collectCallCandidates
 import org.jetbrains.kotlin.idea.completion.FirCompletionSessionParameters
 import org.jetbrains.kotlin.idea.completion.context.FirBasicCompletionContext
-import org.jetbrains.kotlin.idea.completion.context.KotlinExpressionNameReferencePositionContext
 import org.jetbrains.kotlin.idea.completion.findValueArgument
 import org.jetbrains.kotlin.idea.completion.weighers.Weighers
 import org.jetbrains.kotlin.idea.completion.weighers.WeighingContext
+import org.jetbrains.kotlin.idea.util.positionContext.KotlinExpressionNameReferencePositionContext
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.psi.KtCallElement

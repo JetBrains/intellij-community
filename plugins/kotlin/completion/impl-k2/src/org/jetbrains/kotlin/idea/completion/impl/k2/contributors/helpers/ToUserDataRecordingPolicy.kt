@@ -8,9 +8,9 @@ import com.intellij.codeInsight.lookup.LookupElement
 import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
 import org.jetbrains.kotlin.idea.base.codeInsight.LOOKUP_ELEMENT_CONTRIBUTOR
 import org.jetbrains.kotlin.idea.completion.FirCompletionSessionParameters
-import org.jetbrains.kotlin.idea.completion.context.KotlinRawPositionContext
 import org.jetbrains.kotlin.idea.completion.impl.k2.contributors.FirCompletionContributor
 import org.jetbrains.kotlin.idea.completion.weighers.WeighingContext
+import org.jetbrains.kotlin.idea.util.positionContext.KotlinRawPositionContext
 
 internal class ToUserDataRecordingPolicy(private val contributor: FirCompletionContributor<*>) : ElementsAddingPolicy.Default {
     override fun addElement(result: CompletionResultSet, element: LookupElement) {

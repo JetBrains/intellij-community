@@ -5,11 +5,11 @@ package org.jetbrains.kotlin.idea.completion.contributors
 import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
 import org.jetbrains.kotlin.idea.completion.FirCompletionSessionParameters
 import org.jetbrains.kotlin.idea.completion.context.FirBasicCompletionContext
-import org.jetbrains.kotlin.idea.completion.context.KotlinRawPositionContext
-import org.jetbrains.kotlin.idea.completion.context.KotlinTypeNameReferencePositionContext
-import org.jetbrains.kotlin.idea.completion.context.KotlinValueParameterPositionContext
 import org.jetbrains.kotlin.idea.completion.contributors.keywords.OverrideKeywordHandler
 import org.jetbrains.kotlin.idea.completion.weighers.WeighingContext
+import org.jetbrains.kotlin.idea.util.positionContext.KotlinRawPositionContext
+import org.jetbrains.kotlin.idea.util.positionContext.KotlinTypeNameReferencePositionContext
+import org.jetbrains.kotlin.idea.util.positionContext.KotlinValueParameterPositionContext
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.psi.KtCallableDeclaration
 import org.jetbrains.kotlin.psi.KtTypeReference

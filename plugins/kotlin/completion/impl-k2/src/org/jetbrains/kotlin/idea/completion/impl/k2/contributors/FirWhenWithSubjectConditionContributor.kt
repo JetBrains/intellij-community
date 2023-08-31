@@ -23,7 +23,6 @@ import org.jetbrains.kotlin.idea.completion.FirCompletionSessionParameters
 import org.jetbrains.kotlin.idea.completion.InsertionHandlerBase
 import org.jetbrains.kotlin.idea.completion.checkers.CompletionVisibilityChecker
 import org.jetbrains.kotlin.idea.completion.context.FirBasicCompletionContext
-import org.jetbrains.kotlin.idea.completion.context.KotlinWithSubjectEntryPositionContext
 import org.jetbrains.kotlin.idea.completion.contributors.helpers.CompletionSymbolOrigin
 import org.jetbrains.kotlin.idea.completion.contributors.helpers.FirClassifierProvider.getAvailableClassifiersCurrentScope
 import org.jetbrains.kotlin.idea.completion.contributors.helpers.FirClassifierProvider.getAvailableClassifiersFromIndex
@@ -36,6 +35,7 @@ import org.jetbrains.kotlin.idea.completion.createKeywordElement
 import org.jetbrains.kotlin.idea.completion.lookups.KotlinLookupObject
 import org.jetbrains.kotlin.idea.completion.weighers.Weighers.applyWeighsToLookupElement
 import org.jetbrains.kotlin.idea.completion.weighers.WeighingContext
+import org.jetbrains.kotlin.idea.util.positionContext.KotlinWithSubjectEntryPositionContext
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.name.ClassId
 import org.jetbrains.kotlin.name.FqName

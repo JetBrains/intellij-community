@@ -19,7 +19,6 @@ import org.jetbrains.kotlin.idea.base.analysis.api.utils.KtSymbolFromIndexProvid
 import org.jetbrains.kotlin.idea.base.analysis.api.utils.shortenReferencesInRange
 import org.jetbrains.kotlin.idea.completion.*
 import org.jetbrains.kotlin.idea.completion.context.FirBasicCompletionContext
-import org.jetbrains.kotlin.idea.completion.context.KotlinRawPositionContext
 import org.jetbrains.kotlin.idea.completion.contributors.helpers.CallableMetadataProvider
 import org.jetbrains.kotlin.idea.completion.contributors.helpers.CompletionSymbolOrigin
 import org.jetbrains.kotlin.idea.completion.contributors.helpers.KtSymbolWithOrigin
@@ -33,6 +32,7 @@ import org.jetbrains.kotlin.idea.completion.weighers.Weighers
 import org.jetbrains.kotlin.idea.completion.weighers.Weighers.applyWeighsToLookupElement
 import org.jetbrains.kotlin.idea.completion.weighers.WeighingContext
 import org.jetbrains.kotlin.idea.references.mainReference
+import org.jetbrains.kotlin.idea.util.positionContext.KotlinRawPositionContext
 import org.jetbrains.kotlin.platform.TargetPlatform
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.types.Variance

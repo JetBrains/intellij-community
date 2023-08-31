@@ -9,9 +9,9 @@ import org.jetbrains.kotlin.analysis.api.symbols.KtClassifierSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.markers.KtSymbolWithVisibility
 import org.jetbrains.kotlin.idea.base.utils.fqname.isJavaClassNotToBeUsedInKotlin
 import org.jetbrains.kotlin.idea.completion.context.FirBasicCompletionContext
-import org.jetbrains.kotlin.idea.completion.context.KDocNameReferencePositionContext
-import org.jetbrains.kotlin.idea.completion.context.KotlinNameReferencePositionContext
-import org.jetbrains.kotlin.idea.completion.context.KotlinRawPositionContext
+import org.jetbrains.kotlin.idea.util.positionContext.KDocNameReferencePositionContext
+import org.jetbrains.kotlin.idea.util.positionContext.KotlinNameReferencePositionContext
+import org.jetbrains.kotlin.idea.util.positionContext.KotlinRawPositionContext
 import org.jetbrains.kotlin.psi.KtExpression
 import org.jetbrains.kotlin.resolve.deprecation.DeprecationLevelValue
 

@@ -3,8 +3,8 @@ package org.jetbrains.kotlin.idea.completion.impl.k2.contributors
 
 import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
 import org.jetbrains.kotlin.idea.completion.FirCompletionSessionParameters
-import org.jetbrains.kotlin.idea.completion.context.KotlinRawPositionContext
 import org.jetbrains.kotlin.idea.completion.weighers.WeighingContext
+import org.jetbrains.kotlin.idea.util.positionContext.KotlinRawPositionContext
 
 internal interface FirCompletionContributor<C : KotlinRawPositionContext> {
     context(KtAnalysisSession)

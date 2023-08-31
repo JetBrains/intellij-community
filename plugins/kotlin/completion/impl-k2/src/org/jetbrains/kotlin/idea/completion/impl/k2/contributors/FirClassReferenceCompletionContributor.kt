@@ -3,11 +3,11 @@
 package org.jetbrains.kotlin.idea.completion.contributors
 
 import org.jetbrains.kotlin.idea.completion.context.FirBasicCompletionContext
-import org.jetbrains.kotlin.idea.completion.context.KotlinCallableReferencePositionContext
 import org.jetbrains.kotlin.idea.completion.createKeywordElement
 import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
 import org.jetbrains.kotlin.idea.completion.FirCompletionSessionParameters
 import org.jetbrains.kotlin.idea.completion.weighers.WeighingContext
+import org.jetbrains.kotlin.idea.util.positionContext.KotlinCallableReferencePositionContext
 import org.jetbrains.kotlin.platform.jvm.isJvm
 
 internal class FirClassReferenceCompletionContributor(

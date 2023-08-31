@@ -1,6 +1,6 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
-package org.jetbrains.kotlin.idea.completion.context
+package org.jetbrains.kotlin.idea.util.positionContext
 
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiErrorElement
@@ -16,20 +16,20 @@ import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.getReceiverExpression
 import org.jetbrains.kotlin.psi.psiUtil.getStrictParentOfType
 
-internal sealed class KotlinRawPositionContext {
+sealed class KotlinRawPositionContext {
     abstract val position: PsiElement
 }
 
-internal class KotlinClassifierNamePositionContext(
+class KotlinClassifierNamePositionContext(
     override val position: PsiElement,
     val classLikeDeclaration: KtClassLikeDeclaration,
 ) : KotlinRawPositionContext()
 
-internal sealed class KotlinValueParameterPositionContext : KotlinRawPositionContext() {
+sealed class KotlinValueParameterPositionContext : KotlinRawPositionContext() {
     abstract val ktParameter: KtParameter
 }
 
-internal class KotlinSimpleParameterPositionContext(
+class KotlinSimpleParameterPositionContext(
     override val position: PsiElement,
     override val ktParameter: KtParameter,
 ) : KotlinValueParameterPositionContext()
@@ -38,34 +38,34 @@ internal class KotlinSimpleParameterPositionContext(
  * Primary constructor parameters can override properties from superclasses, so they should be analyzed
  * in dependent analysis session, which is why a separate position context is required.
  */
-internal class KotlinPrimaryConstructorParameterPositionContext(
+class KotlinPrimaryConstructorParameterPositionContext(
     override val position: PsiElement,
     override val ktParameter: KtParameter,
 ) : KotlinValueParameterPositionContext()
 
-internal class KotlinIncorrectPositionContext(
+class KotlinIncorrectPositionContext(
     override val position: PsiElement
 ) : KotlinRawPositionContext()
 
-internal class KotlinTypeConstraintNameInWhereClausePositionContext(
+class KotlinTypeConstraintNameInWhereClausePositionContext(
     override val position: PsiElement,
     val typeParametersOwner: KtTypeParameterListOwner
 ) : KotlinRawPositionContext()
 
-internal sealed class KotlinNameReferencePositionContext : KotlinRawPositionContext() {
+sealed class KotlinNameReferencePositionContext : KotlinRawPositionContext() {
     abstract val reference: KtReference
     abstract val nameExpression: KtElement
     abstract val explicitReceiver: KtElement?
 }
 
-internal class KotlinImportDirectivePositionContext(
+class KotlinImportDirectivePositionContext(
     override val position: PsiElement,
     override val reference: KtSimpleNameReference,
     override val nameExpression: KtSimpleNameExpression,
     override val explicitReceiver: KtExpression?,
 ) : KotlinNameReferencePositionContext()
 
-internal class KotlinPackageDirectivePositionContext(
+class KotlinPackageDirectivePositionContext(
     override val position: PsiElement,
     override val reference: KtSimpleNameReference,
     override val nameExpression: KtSimpleNameExpression,
@@ -73,7 +73,7 @@ internal class KotlinPackageDirectivePositionContext(
 ) : KotlinNameReferencePositionContext()
 
 
-internal class KotlinTypeNameReferencePositionContext(
+class KotlinTypeNameReferencePositionContext(
     override val position: PsiElement,
     override val reference: KtSimpleNameReference,
     override val nameExpression: KtSimpleNameExpression,
@@ -81,7 +81,7 @@ internal class KotlinTypeNameReferencePositionContext(
     val typeReference: KtTypeReference?,
 ) : KotlinNameReferencePositionContext()
 
-internal class KotlinAnnotationTypeNameReferencePositionContext(
+class KotlinAnnotationTypeNameReferencePositionContext(
     override val position: PsiElement,
     override val reference: KtSimpleNameReference,
     override val nameExpression: KtSimpleNameExpression,
@@ -99,7 +99,7 @@ internal class KotlinAnnotationTypeNameReferencePositionContext(
  * }
  * ```
  */
-internal class KotlinSuperTypeCallNameReferencePositionContext(
+class KotlinSuperTypeCallNameReferencePositionContext(
     override val position: PsiElement,
     override val reference: KtSimpleNameReference,
     override val nameExpression: KtSimpleNameExpression,
@@ -117,7 +117,7 @@ internal class KotlinSuperTypeCallNameReferencePositionContext(
  * }
  * ```
  */
-internal class KotlinSuperReceiverNameReferencePositionContext(
+class KotlinSuperReceiverNameReferencePositionContext(
     override val position: PsiElement,
     override val reference: KtSimpleNameReference,
     override val nameExpression: KtSimpleNameExpression,
@@ -125,14 +125,14 @@ internal class KotlinSuperReceiverNameReferencePositionContext(
     val superExpression: KtSuperExpression,
 ) : KotlinNameReferencePositionContext()
 
-internal class KotlinExpressionNameReferencePositionContext(
+class KotlinExpressionNameReferencePositionContext(
     override val position: PsiElement,
     override val reference: KtSimpleNameReference,
     override val nameExpression: KtSimpleNameExpression,
     override val explicitReceiver: KtExpression?
 ) : KotlinNameReferencePositionContext()
 
-internal class KotlinInfixCallPositionContext(
+class KotlinInfixCallPositionContext(
     override val position: PsiElement,
     override val reference: KtSimpleNameReference,
     override val nameExpression: KtSimpleNameExpression,
@@ -140,7 +140,7 @@ internal class KotlinInfixCallPositionContext(
 ) : KotlinNameReferencePositionContext()
 
 
-internal class KotlinWithSubjectEntryPositionContext(
+class KotlinWithSubjectEntryPositionContext(
     override val position: PsiElement,
     override val reference: KtSimpleNameReference,
     override val nameExpression: KtSimpleNameExpression,
@@ -149,7 +149,7 @@ internal class KotlinWithSubjectEntryPositionContext(
     val whenCondition: KtWhenCondition,
 ) : KotlinNameReferencePositionContext()
 
-internal class KotlinCallableReferencePositionContext(
+class KotlinCallableReferencePositionContext(
     override val position: PsiElement,
     override val reference: KtSimpleNameReference,
     override val nameExpression: KtSimpleNameExpression,
@@ -170,32 +170,32 @@ internal class KotlinCallableReferencePositionContext(
  * }
  * ```
  */
-internal class KotlinMemberDeclarationExpectedPositionContext(
+class KotlinMemberDeclarationExpectedPositionContext(
     override val position: PsiElement,
     val classBody: KtClassBody
 ) : KotlinRawPositionContext()
 
-internal sealed class KDocNameReferencePositionContext : KotlinNameReferencePositionContext()
+sealed class KDocNameReferencePositionContext : KotlinNameReferencePositionContext()
 
-internal class KDocParameterNamePositionContext(
+class KDocParameterNamePositionContext(
     override val position: PsiElement,
     override val reference: KDocReference,
     override val nameExpression: KDocName,
     override val explicitReceiver: KDocName?,
 ) : KDocNameReferencePositionContext()
 
-internal class KDocLinkNamePositionContext(
+class KDocLinkNamePositionContext(
     override val position: PsiElement,
     override val reference: KDocReference,
     override val nameExpression: KDocName,
     override val explicitReceiver: KDocName?,
 ) : KDocNameReferencePositionContext()
 
-internal class KotlinUnknownPositionContext(
+class KotlinUnknownPositionContext(
     override val position: PsiElement
 ) : KotlinRawPositionContext()
 
-internal object KotlinPositionContextDetector {
+object KotlinPositionContextDetector {
     fun detect(position: PsiElement): KotlinRawPositionContext {
         return detectForPositionWithSimpleNameReference(position)
             ?: detectForPositionWithKDocReference(position)

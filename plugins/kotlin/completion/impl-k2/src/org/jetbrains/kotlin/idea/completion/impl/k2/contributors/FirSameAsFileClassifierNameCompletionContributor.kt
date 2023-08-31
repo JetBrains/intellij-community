@@ -4,10 +4,10 @@ package org.jetbrains.kotlin.idea.completion.contributors
 
 import com.intellij.codeInsight.lookup.LookupElementBuilder
 import org.jetbrains.kotlin.idea.completion.context.FirBasicCompletionContext
-import org.jetbrains.kotlin.idea.completion.context.KotlinClassifierNamePositionContext
 import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
 import org.jetbrains.kotlin.idea.completion.FirCompletionSessionParameters
 import org.jetbrains.kotlin.idea.completion.weighers.WeighingContext
+import org.jetbrains.kotlin.idea.util.positionContext.KotlinClassifierNamePositionContext
 import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.psi.KtClassOrObject
 import org.jetbrains.kotlin.renderer.render
@@ -23,9 +23,7 @@ internal class FirSameAsFileClassifierNameCompletionContributor(
         weighingContext: WeighingContext,
         sessionParameters: FirCompletionSessionParameters,
     ) {
-        if (positionContext.classLikeDeclaration is KtClassOrObject) {
-            completeTopLevelClassName(positionContext.classLikeDeclaration)
-        }
+        (positionContext.classLikeDeclaration as? KtClassOrObject)?.let { completeTopLevelClassName(it) }
     }
 
     private fun completeTopLevelClassName(classOrObject: KtClassOrObject) {

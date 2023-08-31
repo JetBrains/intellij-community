@@ -26,9 +26,6 @@ import org.jetbrains.kotlin.idea.base.codeInsight.KotlinNameSuggester
 import org.jetbrains.kotlin.idea.completion.*
 import org.jetbrains.kotlin.idea.completion.checkers.CompletionVisibilityChecker
 import org.jetbrains.kotlin.idea.completion.context.FirBasicCompletionContext
-import org.jetbrains.kotlin.idea.completion.context.KotlinRawPositionContext
-import org.jetbrains.kotlin.idea.completion.context.KotlinTypeNameReferencePositionContext
-import org.jetbrains.kotlin.idea.completion.context.KotlinValueParameterPositionContext
 import org.jetbrains.kotlin.idea.completion.contributors.helpers.CompletionSymbolOrigin
 import org.jetbrains.kotlin.idea.completion.contributors.helpers.FirClassifierProvider.getAvailableClassifiersFromIndex
 import org.jetbrains.kotlin.idea.completion.contributors.helpers.KtSymbolWithOrigin
@@ -36,6 +33,9 @@ import org.jetbrains.kotlin.idea.completion.impl.k2.lookups.factories.TypeLookup
 import org.jetbrains.kotlin.idea.completion.weighers.VariableOrParameterNameWithTypeWeigher.nameWithTypePriority
 import org.jetbrains.kotlin.idea.completion.weighers.Weighers.applyWeighsToLookupElement
 import org.jetbrains.kotlin.idea.completion.weighers.WeighingContext
+import org.jetbrains.kotlin.idea.util.positionContext.KotlinRawPositionContext
+import org.jetbrains.kotlin.idea.util.positionContext.KotlinTypeNameReferencePositionContext
+import org.jetbrains.kotlin.idea.util.positionContext.KotlinValueParameterPositionContext
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.collectDescendantsOfType

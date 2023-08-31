@@ -4,13 +4,13 @@ package org.jetbrains.kotlin.idea.completion.contributors
 
 import com.intellij.codeInsight.lookup.LookupElementBuilder
 import org.jetbrains.kotlin.idea.completion.context.FirBasicCompletionContext
-import org.jetbrains.kotlin.idea.completion.context.KotlinSuperTypeCallNameReferencePositionContext
 import org.jetbrains.kotlin.idea.completion.contributors.helpers.FirSuperEntriesProvider.getSuperClassesAvailableForSuperCall
 import org.jetbrains.kotlin.idea.completion.contributors.helpers.SuperCallLookupObject
 import org.jetbrains.kotlin.idea.completion.contributors.helpers.SuperCallInsertionHandler
 import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
 import org.jetbrains.kotlin.idea.completion.FirCompletionSessionParameters
 import org.jetbrains.kotlin.idea.completion.weighers.WeighingContext
+import org.jetbrains.kotlin.idea.util.positionContext.KotlinSuperTypeCallNameReferencePositionContext
 import org.jetbrains.kotlin.name.ClassId
 import org.jetbrains.kotlin.name.Name
 

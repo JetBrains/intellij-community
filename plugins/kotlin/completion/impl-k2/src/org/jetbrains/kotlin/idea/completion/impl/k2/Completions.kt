@@ -13,6 +13,7 @@ import org.jetbrains.kotlin.idea.completion.contributors.FirCompletionContributo
 import org.jetbrains.kotlin.idea.completion.contributors.complete
 import org.jetbrains.kotlin.idea.completion.weighers.WeighingContext
 import org.jetbrains.kotlin.idea.references.mainReference
+import org.jetbrains.kotlin.idea.util.positionContext.*
 import org.jetbrains.kotlin.psi.KtCallElement
 import org.jetbrains.kotlin.psi.KtSimpleNameExpression
 import org.jetbrains.kotlin.psi.KtValueArgumentList

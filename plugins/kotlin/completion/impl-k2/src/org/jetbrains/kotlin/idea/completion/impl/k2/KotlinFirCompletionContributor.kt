@@ -16,12 +16,10 @@ import org.jetbrains.kotlin.config.LanguageFeature
 import org.jetbrains.kotlin.idea.base.projectStructure.languageVersionSettings
 import org.jetbrains.kotlin.idea.base.projectStructure.moduleInfo
 import org.jetbrains.kotlin.idea.completion.api.CompletionDummyIdentifierProviderService
-import org.jetbrains.kotlin.idea.completion.context.*
 import org.jetbrains.kotlin.idea.completion.context.FirBasicCompletionContext
-import org.jetbrains.kotlin.idea.completion.context.KotlinPositionContextDetector
-import org.jetbrains.kotlin.idea.completion.context.KotlinRawPositionContext
 import org.jetbrains.kotlin.idea.completion.contributors.FirCompletionContributorFactory
 import org.jetbrains.kotlin.idea.completion.weighers.Weighers
+import org.jetbrains.kotlin.idea.util.positionContext.*
 import org.jetbrains.kotlin.kdoc.lexer.KDocTokens
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.platform.isMultiPlatform
