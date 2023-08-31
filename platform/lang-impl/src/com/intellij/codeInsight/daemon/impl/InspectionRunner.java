@@ -137,7 +137,7 @@ class InspectionRunner {
               afterOutsideProcessedCallback.accept(context);
       };
       visitElements(session, init, outside, false, finalPriorityRange, TOMB_STONE, afterOutside, foundInjected, injectedContexts,
-                    toolWrappers, empty(), enabledToolsPredicate);
+                    toolWrappers, empty, enabledToolsPredicate);
       reportIdsOfInspectionsReportedAnyProblemToFUS(init);
 
       boolean isWholeFileInspectionsPass = !init.isEmpty() && init.get(0).tool.runForWholeFile();
@@ -177,7 +177,7 @@ class InspectionRunner {
 
   private @NotNull InspectionContext createTombStone() {
     LocalInspectionToolWrapper tool = new LocalInspectionToolWrapper(new LocalInspectionEP());
-    InspectionProblemHolder holder = new InspectionProblemHolder(myPsiFile, tool, false, myInspectionProfileWrapper, empty());
+    InspectionProblemHolder holder = new InspectionProblemHolder(myPsiFile, tool, false, myInspectionProfileWrapper, empty);
     return new InspectionContext(tool, holder, new PsiElementVisitor() {});
   }
 
@@ -265,12 +265,12 @@ class InspectionRunner {
     List<LocalInspectionToolWrapper> wrappers = Collections.singletonList(new LocalInspectionToolWrapper(localTool));
     InspectionRunner runner = new InspectionRunner(myPsiFile, myRestrictRange, myPriorityRange, myInspectInjected, true, myProgress, false,
                                                    myInspectionProfileWrapper, mySuppressedElements);
-    result.addAll(runner.inspect(wrappers, HighlightSeverity.WARNING, false, empty(), emptyCallback(), emptyCallback(), null));
+    result.addAll(runner.inspect(wrappers, HighlightSeverity.WARNING, false, empty, emptyCallback, emptyCallback, null));
   }
 
-  private static @NotNull Consumer<InspectionContext> emptyCallback() { return __ -> { }; }
+  private static final @NotNull Consumer<InspectionContext> emptyCallback = __ -> { };
 
-  private static @NotNull BiPredicate<ProblemDescriptor, LocalInspectionToolWrapper> empty() { return (_1, _2) -> true; }
+  private static final @NotNull BiPredicate<ProblemDescriptor, LocalInspectionToolWrapper> empty = (_1, _2) -> true;
 
   private void visitElements(@NotNull LocalInspectionToolSession session,
                              @NotNull List<? extends InspectionContext> init,
@@ -420,7 +420,7 @@ class InspectionRunner {
                                     myIgnoreSuppressed, myInspectionProfileWrapper, mySuppressedElements);
              List<? extends InspectionContext> injectedContexts = injectedRunner.inspect(
                wrappers, session.getMinimumSeverity(), true, cc,
-               emptyCallback(), emptyCallback(), enabledToolsPredicate);
+               emptyCallback, emptyCallback, enabledToolsPredicate);
              outInjectedContexts.addAll(injectedContexts);
            }
            return true;
