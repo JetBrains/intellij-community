@@ -82,17 +82,15 @@ public final class LanguageUtil {
     return ParserDefinition.SpaceRequirements.MAY;
   }
 
+  /**
+   * @deprecated see {@link Language#getTransitiveDialects()}
+   */
+  @Deprecated
   public static @NotNull Set<Language> getAllDerivedLanguages(@NotNull Language base) {
     Set<Language> result = new HashSet<>();
-    getAllDerivedLanguages(base, result);
-    return result;
-  }
-
-  private static void getAllDerivedLanguages(@NotNull Language base, @NotNull Set<? super Language> result) {
     result.add(base);
-    for (Language dialect : base.getDialects()) {
-      getAllDerivedLanguages(dialect, result);
-    }
+    result.addAll(base.getTransitiveDialects());
+    return result;
   }
 
   public static boolean isInTemplateLanguageFile(@NotNull PsiElement element) {

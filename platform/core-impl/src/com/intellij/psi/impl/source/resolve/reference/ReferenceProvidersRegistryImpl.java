@@ -3,7 +3,6 @@ package com.intellij.psi.impl.source.resolve.reference;
 
 import com.intellij.lang.Language;
 import com.intellij.lang.LanguageExtension;
-import com.intellij.lang.LanguageUtil;
 import com.intellij.lang.MetaLanguage;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
@@ -57,10 +56,13 @@ public final class ReferenceProvidersRegistryImpl extends ReferenceProvidersRegi
           }
         }
 
-        private void registerContributorForLanguageAndDialects(Language language, PsiReferenceContributor instance) {
-          Set<Language> languageAndDialects = LanguageUtil.getAllDerivedLanguages(language);
-          for (Language languageOrDialect : languageAndDialects) {
-            PsiReferenceRegistrarImpl registrar = myRegistrars.get(languageOrDialect);
+        private void registerContributorForLanguageAndDialects(@NotNull Language language, @NotNull PsiReferenceContributor instance) {
+          PsiReferenceRegistrarImpl registrar = myRegistrars.get(language);
+          if (registrar != null) {
+            registerContributedReferenceProviders(registrar, instance);
+          }
+          for (Language dialect : language.getTransitiveDialects()) {
+            registrar = myRegistrars.get(dialect);
             if (registrar != null) {
               registerContributedReferenceProviders(registrar, instance);
             }

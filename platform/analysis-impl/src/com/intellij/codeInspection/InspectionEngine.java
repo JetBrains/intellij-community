@@ -448,9 +448,10 @@ public final class InspectionEngine {
                                   @NotNull Set<? super Language> outProcessedLanguages,
                                   @NotNull Set<? super String> outDialectIds) {
     if (outProcessedLanguages.add(language)) {
-      for (Language dialect : language.getDialects()) {
+      Collection<Language> dialects = language.getTransitiveDialects();
+      outProcessedLanguages.addAll(dialects);
+      for (Language dialect : dialects) {
         outDialectIds.add(dialect.getID());
-        addDialects(dialect, outProcessedLanguages, outDialectIds);
       }
     }
   }
