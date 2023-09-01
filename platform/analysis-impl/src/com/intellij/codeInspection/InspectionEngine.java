@@ -42,8 +42,6 @@ import java.util.stream.Collectors;
 
 public final class InspectionEngine {
   private static final Logger LOG = Logger.getInstance(InspectionEngine.class);
-  private static final Set<Class<? extends LocalInspectionTool>> RECURSIVE_VISITOR_TOOL_CLASSES = ConcurrentCollectionFactory.createConcurrentSet();
-
   private static boolean createVisitorAndAcceptElements(@NotNull LocalInspectionTool tool,
                                                      @NotNull ProblemsHolder holder,
                                                      boolean isOnTheFly,
@@ -69,7 +67,7 @@ public final class InspectionEngine {
     if (visitor == null) {
       LOG.error("Tool " + tool + " (" + tool.getClass() + ") must not return null from the buildVisitor() method");
     }
-    else if (visitor instanceof PsiRecursiveVisitor && RECURSIVE_VISITOR_TOOL_CLASSES.add(tool.getClass())) {
+    else if (visitor instanceof PsiRecursiveVisitor) {
       LOG.error("The visitor returned from LocalInspectionTool.buildVisitor() must not be recursive: " + tool);
     }
     return visitor;
