@@ -66,6 +66,9 @@ public class DebuggerManagerThreadImpl extends InvokeAndWaitThread<DebuggerComma
       processEvent(managerCommand);
     }
     else {
+      if (isManagerThread()) {
+        LOG.error("Schedule from a different DebuggerManagerThread");
+      }
       schedule(managerCommand);
     }
   }
