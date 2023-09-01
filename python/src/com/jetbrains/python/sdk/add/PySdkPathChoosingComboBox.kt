@@ -47,7 +47,7 @@ import javax.swing.plaf.basic.BasicComboBoxEditor
 class PySdkPathChoosingComboBox @JvmOverloads constructor(sdks: List<Sdk> = emptyList(),
                                                           suggestedFile: VirtualFile? = null,
                                                           private val newPySdkComboBoxItem: NewPySdkComboBoxItem? = null,
-                                                          private val targetEnvironmentConfiguration: TargetEnvironmentConfiguration? = null) :
+                                                          targetEnvironmentConfiguration: TargetEnvironmentConfiguration? = null) :
   ComponentWithBrowseButton<ComboBoxWithWidePopup<PySdkComboBoxItem>>(ComboBoxWithWidePopup(buildSdkArray(sdks, newPySdkComboBoxItem)),
                                                                       null) {
 
