@@ -1339,10 +1339,8 @@ public class MergeThreesideViewer extends ThreesideTextDiffViewerEx {
     }
 
     @Override
-    protected void paint(@NotNull Editor editor, @NotNull Graphics g) {
+    protected void paintGutterMarkers(@NotNull Editor editor, @NotNull List<? extends Range> ranges, @NotNull Graphics g) {
       int framingBorder = JBUIScale.scale(2);
-      List<? extends Range> ranges = getRanges();
-      if (ranges == null) return;
       LineStatusMarkerDrawUtil.paintDefault(editor, g, ranges, DefaultFlagsProvider.DEFAULT, framingBorder);
     }
   }

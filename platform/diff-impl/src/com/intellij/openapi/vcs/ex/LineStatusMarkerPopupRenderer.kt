@@ -12,11 +12,13 @@ import com.intellij.ide.lightEdit.LightEditCompatible
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.actionSystem.ex.ActionUtil
+import com.intellij.openapi.diff.DefaultFlagsProvider
 import com.intellij.openapi.diff.DiffBundle
 import com.intellij.openapi.diff.LineStatusMarkerDrawUtil
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.ScrollType
 import com.intellij.openapi.editor.ex.EditorEx
+import com.intellij.openapi.editor.markup.LineMarkerRenderer
 import com.intellij.openapi.fileTypes.FileType
 import com.intellij.openapi.fileTypes.PlainTextFileType
 import com.intellij.openapi.keymap.KeymapUtil
@@ -26,7 +28,9 @@ import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.util.Disposer
 import com.intellij.ui.EditorTextField
 import org.jetbrains.annotations.NonNls
+import java.awt.Graphics
 import java.awt.Point
+import java.awt.Rectangle
 import java.awt.event.MouseEvent
 import javax.swing.JComponent
 import javax.swing.SwingUtilities
@@ -34,16 +38,38 @@ import kotlin.math.min
 
 abstract class LineStatusMarkerPopupRenderer(tracker: LineStatusTrackerI<*>) : LineStatusMarkerRenderer(tracker) {
 
-  override fun canDoAction(editor: Editor, ranges: List<Range>, e: MouseEvent): Boolean = LineStatusMarkerDrawUtil.isInsideMarkerArea(e)
+  /**
+   * @return true if gutter markers should be painted, false otherwise
+   */
+  protected open fun shouldPaintGutter(): Boolean = true
 
-  override fun doAction(editor: Editor, ranges: List<Range>, e: MouseEvent) {
-    val range = ranges[0]
-    if (ranges.size > 1) {
-      scrollAndShow(editor, range)
+  final override fun createGutterMarkerRenderer(): LineMarkerRenderer = object : ActiveLineStatusGutterMarkerRenderer() {
+    override fun getPaintedRanges(): List<Range>? {
+      if (!shouldPaintGutter()) return null
+      return tracker.getRanges().orEmpty()
     }
-    else {
-      showHint(editor, range, e)
+
+    override fun paint(editor: Editor, g: Graphics, r: Rectangle) {
+      val ranges = getPaintedRanges() ?: return
+      paintGutterMarkers(editor, ranges, g)
     }
+
+    override fun canDoAction(editor: Editor, ranges: List<Range>, e: MouseEvent): Boolean =
+      LineStatusMarkerDrawUtil.isInsideMarkerArea(e)
+
+    override fun doAction(editor: Editor, ranges: List<Range>, e: MouseEvent) {
+      val range = ranges[0]
+      if (ranges.size > 1) {
+        scrollAndShow(editor, range)
+      }
+      else {
+        showHint(editor, range, e)
+      }
+    }
+  }
+
+  protected open fun paintGutterMarkers(editor: Editor, ranges: List<Range>, g: Graphics) {
+    LineStatusMarkerDrawUtil.paintDefault(editor, g, ranges, DefaultFlagsProvider.DEFAULT, 0)
   }
 
   open fun scrollAndShow(editor: Editor, range: Range) {

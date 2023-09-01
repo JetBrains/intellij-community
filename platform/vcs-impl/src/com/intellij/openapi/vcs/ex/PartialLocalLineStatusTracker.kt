@@ -627,9 +627,8 @@ class ChangelistsLocalLineStatusTracker internal constructor(project: Project,
   private class MyLineStatusMarkerRenderer(override val localTracker: ChangelistsLocalLineStatusTracker) :
     LocalLineStatusMarkerRenderer(localTracker) {
 
-    override fun paint(editor: Editor, g: Graphics) {
+    override fun paintGutterMarkers(editor: Editor, ranges: List<Range>, g: Graphics) {
       val flagsProvider = MyFlagsProvider(localTracker.defaultMarker.changelistId)
-      val ranges = getRanges() ?: return
       LineStatusMarkerDrawUtil.paintDefault(editor, g, ranges, flagsProvider, 0)
     }
 

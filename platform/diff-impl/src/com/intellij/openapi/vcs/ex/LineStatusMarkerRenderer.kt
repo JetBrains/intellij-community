@@ -8,17 +8,16 @@ import com.intellij.ide.plugins.IdeaPluginDescriptor
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.diagnostic.Logger
-import com.intellij.openapi.diff.DefaultFlagsProvider
-import com.intellij.openapi.diff.DiffBundle
-import com.intellij.openapi.diff.LineStatusMarkerDrawUtil
 import com.intellij.openapi.diff.LineStatusMarkerDrawUtil.DiffStripeTextAttributes
-import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.EditorFactory
 import com.intellij.openapi.editor.ex.EditorEx
 import com.intellij.openapi.editor.ex.MarkupModelEx
 import com.intellij.openapi.editor.ex.RangeHighlighterEx
 import com.intellij.openapi.editor.impl.DocumentMarkupModel
-import com.intellij.openapi.editor.markup.*
+import com.intellij.openapi.editor.markup.HighlighterTargetArea
+import com.intellij.openapi.editor.markup.LineMarkerRenderer
+import com.intellij.openapi.editor.markup.MarkupEditorFilter
+import com.intellij.openapi.editor.markup.RangeHighlighter
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.TextRange
@@ -27,9 +26,6 @@ import com.intellij.util.containers.PeekableIterator
 import com.intellij.util.containers.PeekableIteratorWrapper
 import com.intellij.util.ui.update.DisposableUpdate
 import com.intellij.util.ui.update.MergingUpdateQueue
-import java.awt.Graphics
-import java.awt.Rectangle
-import java.awt.event.MouseEvent
 
 abstract class LineStatusMarkerRenderer internal constructor(
   @JvmField protected val tracker: LineStatusTrackerI<*>
@@ -83,13 +79,17 @@ abstract class LineStatusMarkerRenderer internal constructor(
                                                               false) { it: RangeHighlighterEx ->
       it.setGreedyToLeft(true)
       it.setGreedyToRight(true)
-      it.setLineMarkerRenderer(MyActiveGutterRenderer())
+      it.setLineMarkerRenderer(createGutterMarkerRenderer())
       val filter = editorFilter
       if (filter != null) it.setEditorFilter(filter)
 
       // ensure key is there in MarkupModelListener.afterAdded event
       it.putUserData(MAIN_KEY, true)
     }
+  }
+
+  protected open fun createGutterMarkerRenderer(): LineMarkerRenderer = object : LineStatusGutterMarkerRenderer() {
+    override fun getPaintedRanges(): List<Range> = tracker.getRanges().orEmpty()
   }
 
   @RequiresEdt
@@ -178,79 +178,10 @@ abstract class LineStatusMarkerRenderer internal constructor(
     errorStripeHighlighters.clear()
   }
 
-  private fun canDoAction(editor: Editor, e: MouseEvent): Boolean {
-    val ranges = getSelectedRanges(editor, e.y)
-    return !ranges.isEmpty() && canDoAction(editor, ranges, e)
-  }
-
-  private fun doAction(editor: Editor, e: MouseEvent) {
-    val ranges = getSelectedRanges(editor, e.y)
-    if (!ranges.isEmpty()) {
-      e.consume()
-      doAction(editor, ranges, e)
-    }
-  }
-
-  private fun getSelectedRanges(editor: Editor, y: Int): List<Range> {
-    val ranges = getRanges()
-    if (ranges == null) return emptyList()
-    return LineStatusMarkerDrawUtil.getSelectedRanges(ranges, editor, y)
-  }
-
-  protected open fun canDoAction(editor: Editor, ranges: List<Range>, e: MouseEvent): Boolean = false
-
-  protected open fun doAction(editor: Editor, ranges: List<Range>, e: MouseEvent) {}
-
-  //
-  // Gutter painting
-  //
-  private fun calcBounds(editor: Editor, lineNum: Int, bounds: Rectangle): Rectangle? {
-    val ranges = getRanges()
-    if (ranges == null) return null
-    return LineStatusMarkerDrawUtil.calcBounds(ranges, editor, lineNum)
-  }
-
-  /**
-   * @return true if gutter markers should be painted, false otherwise
-   */
-  protected open fun shouldPaintGutter(): Boolean = true
-
   /**
    * @return true if markers in the error stripe (near the scrollbar) should be painted, false otherwise
    */
-  protected open fun shouldPaintErrorStripeMarkers(): Boolean = shouldPaintGutter()
-
-  protected open fun paint(editor: Editor, g: Graphics) {
-    val ranges = getRanges() ?: return
-    LineStatusMarkerDrawUtil.paintDefault(editor, g, ranges, DefaultFlagsProvider.DEFAULT, 0)
-  }
-
-  private inner class MyActiveGutterRenderer : ActiveGutterRenderer, LineMarkerRendererEx {
-    override fun paint(editor: Editor, g: Graphics, r: Rectangle) {
-      if (shouldPaintGutter()) {
-        this@LineStatusMarkerRenderer.paint(editor, g)
-      }
-    }
-
-    override fun canDoAction(editor: Editor, e: MouseEvent): Boolean {
-      return shouldPaintGutter() && this@LineStatusMarkerRenderer.canDoAction(editor, e)
-    }
-
-    override fun doAction(editor: Editor, e: MouseEvent) {
-      if (shouldPaintGutter()) {
-        this@LineStatusMarkerRenderer.doAction(editor, e)
-      }
-    }
-
-    override fun calcBounds(editor: Editor, lineNum: Int, preferredBounds: Rectangle): Rectangle? {
-      if (!shouldPaintGutter()) return Rectangle(-1, -1, 0, 0)
-      return this@LineStatusMarkerRenderer.calcBounds(editor, lineNum, preferredBounds)
-    }
-
-    override fun getPosition(): LineMarkerRendererEx.Position = LineMarkerRendererEx.Position.CUSTOM
-
-    override fun getAccessibleName(): String = DiffBundle.message("vcs.marker.changed.line")
-  }
+  protected open fun shouldPaintErrorStripeMarkers(): Boolean = true
 
   class MarkerData(val type: Byte)
 

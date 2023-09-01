@@ -352,9 +352,7 @@ class GitStageLineStatusTracker(
       return stageTracker.mode.isVisible && stageTracker.mode.showErrorStripeMarkers
     }
 
-    override fun paint(editor: Editor, g: Graphics) {
-      val ranges = stageTracker.getRanges() ?: return
-
+    override fun paintGutterMarkers(editor: Editor, ranges: List<Range>, g: Graphics) {
       val blocks: List<ChangesBlock<StageLineFlags>> = VisibleRangeMerger.merge(editor, ranges, MyLineFlagProvider, g.clipBounds)
       for (block in blocks) {
         paintStageLines(g as Graphics2D, editor, block.changes)
