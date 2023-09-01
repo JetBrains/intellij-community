@@ -126,19 +126,19 @@
     <orderEntry type="module" module-name="intellij.platform.backend.workspace" />
     <orderEntry type="module-library">
       <library name="completion-ranking-python-with-full-line" type="repository">
-        <properties maven-id="org.jetbrains.intellij.deps.completion:completion-ranking-python-with-full-line:0.0.4">
+        <properties maven-id="org.jetbrains.intellij.deps.completion:completion-ranking-python-with-full-line:0.0.5">
           <verification>
-            <artifact url="file://$MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/completion/completion-ranking-python-with-full-line/0.0.4/completion-ranking-python-with-full-line-0.0.4.jar">
-              <sha256sum>2cb2bfecf2a70412f85d40bf32fb6248926a04647d942f6b907944eb3e44df09</sha256sum>
+            <artifact url="file://$MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/completion/completion-ranking-python-with-full-line/0.0.5/completion-ranking-python-with-full-line-0.0.5.jar">
+              <sha256sum>9f82410163d8dd2929ca5a3bfe25e4323757e72f2110db56d18ba84112cdef2f</sha256sum>
             </artifact>
           </verification>
         </properties>
         <CLASSES>
-          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/completion/completion-ranking-python-with-full-line/0.0.4/completion-ranking-python-with-full-line-0.0.4.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/completion/completion-ranking-python-with-full-line/0.0.5/completion-ranking-python-with-full-line-0.0.5.jar!/" />
         </CLASSES>
         <JAVADOC />
         <SOURCES>
-          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/completion/completion-ranking-python-with-full-line/0.0.4/completion-ranking-python-with-full-line-0.0.4-sources.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/completion/completion-ranking-python-with-full-line/0.0.5/completion-ranking-python-with-full-line-0.0.5-sources.jar!/" />
         </SOURCES>
       </library>
     </orderEntry>
