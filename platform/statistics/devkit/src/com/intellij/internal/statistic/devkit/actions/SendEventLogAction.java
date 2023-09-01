@@ -116,7 +116,7 @@ final class SendEventLogAction extends AnAction {
 
   private static final class EventLogTestApplication extends EventLogInternalApplicationInfo {
     private EventLogTestApplication() {
-      super(true);
+      super(false, true);
     }
 
     @Override

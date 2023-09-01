@@ -19,6 +19,7 @@ public interface EventLogUploaderOptions {
   String USER_AGENT_OPTION = "--user-agent";
   String EXTRA_HEADERS = "--extra-headers";
   String INTERNAL_OPTION = "--internal";
-  String TEST_OPTION = "--test";
+  String TEST_SEND_ENDPOINT = "--test-send-endpoint";
+  String TEST_CONFIG = "--test-config";
   String EAP_OPTION = "--eap";
 }

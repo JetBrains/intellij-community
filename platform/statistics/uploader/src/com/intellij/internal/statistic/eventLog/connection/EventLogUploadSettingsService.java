@@ -31,15 +31,15 @@ public class EventLogUploadSettingsService extends SettingsConnectionService imp
                                        @NotNull EventLogApplicationInfo appInfo,
                                        long settingsCacheTimeoutMs) {
     super(
-      getConfigUrl(recorderId, appInfo.getProductCode(), appInfo.getTemplateUrl(), appInfo.isTest()),
+      getConfigUrl(recorderId, appInfo.getProductCode(), appInfo.getTemplateUrl(), appInfo.isTestConfig()),
       recorderId, appInfo, settingsCacheTimeoutMs
     );
     myApplicationInfo = appInfo;
   }
 
   @NotNull
-  private static String getConfigUrl(@NotNull String recorderId, @NotNull String productCode, @NotNull String templateUrl, boolean isTest) {
-    if (isTest) {
+  private static String getConfigUrl(@NotNull String recorderId, @NotNull String productCode, @NotNull String templateUrl, boolean isTestConfig) {
+    if (isTestConfig) {
       return String.format(templateUrl, "test/" + recorderId, productCode);
     }
     return String.format(templateUrl, recorderId, productCode);

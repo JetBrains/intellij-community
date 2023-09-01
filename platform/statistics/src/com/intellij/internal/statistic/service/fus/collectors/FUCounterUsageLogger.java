@@ -39,7 +39,7 @@ import static com.intellij.internal.statistic.service.fus.collectors.UsageCollec
 @ApiStatus.Internal
 public final class FUCounterUsageLogger {
   private static final int LOG_REGISTERED_DELAY_MIN = 24 * 60;
-  private static final int LOG_REGISTERED_INITIAL_DELAY_MIN = StatisticsUploadAssistant.isUseTestStatisticsConfig() ? 1 : 5;
+  private static final int LOG_REGISTERED_INITIAL_DELAY_MIN = StatisticsUploadAssistant.isUseTestStatisticsSendEndpoint() ? 1 : 5;
 
   private static final Logger LOG = Logger.getInstance(FUCounterUsageLogger.class);
 

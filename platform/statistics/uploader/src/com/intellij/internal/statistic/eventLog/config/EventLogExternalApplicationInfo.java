@@ -23,12 +23,14 @@ public class EventLogExternalApplicationInfo implements EventLogApplicationInfo 
   private final EventLogBasicConnectionSettings myConnectionSettings;
 
   private final boolean myIsInternal;
-  private final boolean myIsTest;
+  private final boolean myIsTestConfig;
+  private final boolean myIsTestSendEndpoint;
+
   private final boolean myIsEAP;
 
   public EventLogExternalApplicationInfo(@NotNull String templateUrl, @NotNull String productCode,
                                          @NotNull String productVersion, @Nullable String userAgent,
-                                         boolean isInternal, boolean isTest, boolean isEAP,
+                                         boolean isInternal, boolean isTestConfig, boolean isTestSendEndpoint, boolean isEAP,
                                          @NotNull Map<String, String> extraHeaders,
                                          @NotNull DataCollectorDebugLogger logger,
                                          @NotNull DataCollectorSystemEventLogger eventLogger,
@@ -40,7 +42,8 @@ public class EventLogExternalApplicationInfo implements EventLogApplicationInfo 
     String externalUserAgent = (userAgent == null ? "IntelliJ": userAgent) + "(External)";
     myConnectionSettings = new EventLogBasicConnectionSettings(externalUserAgent, extraHeaders);
     myIsInternal = isInternal;
-    myIsTest = isTest;
+    myIsTestConfig = isTestConfig;
+    myIsTestSendEndpoint = isTestSendEndpoint;
     myIsEAP = isEAP;
     myLogger = logger;
     myEventLogger = eventLogger;
@@ -79,8 +82,13 @@ public class EventLogExternalApplicationInfo implements EventLogApplicationInfo 
   }
 
   @Override
-  public boolean isTest() {
-    return myIsTest;
+  public boolean isTestConfig() {
+    return myIsTestConfig;
+  }
+
+  @Override
+  public boolean isTestSendEndpoint() {
+    return myIsTestSendEndpoint;
   }
 
   @Override

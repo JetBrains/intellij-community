@@ -23,7 +23,16 @@ public interface EventLogApplicationInfo {
 
   boolean isInternal();
 
-  boolean isTest();
+  /**
+   *
+   * Defines if fus test config url should be used
+   */
+  boolean isTestConfig();
+
+  /**
+   * Defines if staging metadata endpoint should be used to report events
+   */
+  boolean isTestSendEndpoint();
 
   boolean isEAP();
 

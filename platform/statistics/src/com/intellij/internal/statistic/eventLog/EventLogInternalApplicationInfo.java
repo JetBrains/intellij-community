@@ -16,21 +16,14 @@ public class EventLogInternalApplicationInfo implements EventLogApplicationInfo 
     new InternalDataCollectorDebugLogger(Logger.getInstance(EventLogStatisticsService.class));
   private static final String EVENT_LOG_SETTINGS_URL_TEMPLATE = "https://resources.jetbrains.com/storage/fus/config/v4/%s/%s.json";
 
-  private final boolean myIsTest;
+  private final boolean myIsTestSendEndpoint;
+  private final boolean myIsTestConfig;
   private final DataCollectorSystemEventLogger myEventLogger;
   private final EventLogAppConnectionSettings myConnectionSettings;
 
-  /**
-   * @deprecated EventLogApplicationInfo should not depend on recorderId
-   * use {@link EventLogInternalApplicationInfo#EventLogInternalApplicationInfo(boolean)}
-   */
-  @Deprecated(forRemoval = true)
-  public EventLogInternalApplicationInfo(@NotNull String recorderId, boolean isTest) {
-    this(isTest);
-  }
-
-  public EventLogInternalApplicationInfo(boolean isTest) {
-    myIsTest = isTest;
+  public EventLogInternalApplicationInfo(boolean isTestConfig, boolean isTestSendEndpoint) {
+    myIsTestConfig = isTestConfig;
+    myIsTestSendEndpoint = isTestSendEndpoint;
     myConnectionSettings = new EventLogAppConnectionSettings();
     myEventLogger = new DataCollectorSystemEventLogger() {
       @Override
@@ -76,8 +69,13 @@ public class EventLogInternalApplicationInfo implements EventLogApplicationInfo 
   }
 
   @Override
-  public boolean isTest() {
-    return myIsTest;
+  public boolean isTestConfig() {
+    return myIsTestConfig;
+  }
+
+  @Override
+  public boolean isTestSendEndpoint() {
+    return myIsTestSendEndpoint;
   }
 
   @Override

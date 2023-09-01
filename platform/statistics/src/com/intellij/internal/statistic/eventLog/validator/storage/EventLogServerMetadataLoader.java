@@ -16,7 +16,11 @@ public class EventLogServerMetadataLoader implements EventLogMetadataLoader {
   private final EventLogUploadSettingsService mySettingsService;
 
   public EventLogServerMetadataLoader(@NotNull String recorderId) {
-    mySettingsService = StatisticsUploadAssistant.createExternalSettings(recorderId, false, TimeUnit.HOURS.toMillis(1));
+    mySettingsService = StatisticsUploadAssistant.createExternalSettings(
+      recorderId,
+      StatisticsUploadAssistant.isUseTestStatisticsConfig(),
+      StatisticsUploadAssistant.isUseTestStatisticsSendEndpoint(),
+      TimeUnit.HOURS.toMillis(1));
   }
 
   @Override
