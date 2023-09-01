@@ -600,7 +600,7 @@ public final class XDebuggerManagerImpl extends XDebuggerManager implements Pers
       }
 
       int caretLine = editor.getCaretModel().getLogicalPosition().line;
-      if (caretLine == lineNumber && firstNonSpacePos.x >= JBUI.scale(4 + 22*2)) {
+      if (editor.getSettings().isShowIntentionBulb() && caretLine == lineNumber && firstNonSpacePos.x >= JBUI.scale(4 + 22*2)) {
         group.add(ActionManager.getInstance().getAction(IdeActions.ACTION_SHOW_INTENTION_ACTIONS));
       }
 
