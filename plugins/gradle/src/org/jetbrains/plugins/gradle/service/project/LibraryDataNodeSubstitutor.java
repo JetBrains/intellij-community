@@ -81,7 +81,7 @@ public class LibraryDataNodeSubstitutor {
       for (ModuleLookupResult result : lookupResults) {
         if (createAndMaybeAttachNewModuleDependency(libraryDependencyDataNode, result, libraryPaths,
                                                     shouldKeepTransitiveDependencies,
-                                                    unprocessedPaths, classpathOrderShift)) {
+                                                    unprocessedPaths, classpathOrderShift, path)) {
           classpathOrderShift++;
         }
       }
@@ -138,7 +138,7 @@ public class LibraryDataNodeSubstitutor {
                                                                  @NotNull Set<String> libraryPaths,
                                                                  boolean shouldKeepTransitiveDependencies,
                                                                  @NotNull ArrayDeque<String> unprocessedPaths,
-                                                                 int classpathOrderShift) {
+                                                                 int classpathOrderShift, String path) {
 
     boolean addedNewDependency = false;
     LibraryDependencyData libraryDependencyData = libraryDependencyDataNode.getData();
@@ -158,6 +158,7 @@ public class LibraryDataNodeSubstitutor {
     final ModuleDependencyData moduleDependencyData = new ModuleDependencyData(ownerModule, targetModuleData);
     moduleDependencyData.setScope(libraryDependencyData.getScope());
     moduleDependencyData.setOrder(libraryDependencyData.getOrder() + classpathOrderShift + 1);
+    moduleDependencyData.setModuleDependencyArtifacts(Collections.singleton(path));
 
     if (targetExternalSourceSet != null && isTestSourceSet(targetExternalSourceSet)) {
       moduleDependencyData.setProductionOnTestDependency(true);
