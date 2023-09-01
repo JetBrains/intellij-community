@@ -363,6 +363,7 @@ public class TestCaseLoader {
     System.out.println("Fair bucketing initialization started ...");
 
     var testCaseClasses = loadClassesForWarmup();
+    Collections.shuffle(testCaseClasses, new Random(TEST_RUNNERS_COUNT));
 
     testCaseClasses.forEach(testCaseClass -> matchesCurrentBucketFair(testCaseClass.getName(), TEST_RUNNERS_COUNT, TEST_RUNNER_INDEX));
     System.out.println("Fair bucketing initialization finished.");
