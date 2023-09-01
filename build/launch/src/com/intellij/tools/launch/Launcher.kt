@@ -67,7 +67,7 @@ object Launcher {
       "-Dshared.indexes.download.auto.consent=true"
     )
 
-    val optionsOpenedFile = paths.communityRootFolder.resolve("plugins/devkit/devkit-core/src/run/OpenedPackages.txt")
+    val optionsOpenedFile = paths.communityRootFolder.resolve("platform/platform-impl/resources/META-INF/OpenedPackages.txt")
     val optionsOpenedPackages = JavaModuleOptions.readOptions(optionsOpenedFile.toPath(), OS.CURRENT)
     cmd.addAll(optionsOpenedPackages)
 

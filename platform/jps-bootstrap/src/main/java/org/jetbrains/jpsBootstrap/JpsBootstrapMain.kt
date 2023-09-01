@@ -182,7 +182,7 @@ class JpsBootstrapMain(args: Array<String>?) {
   @get:Throws(Exception::class)
   private val openedPackages: List<String>
     get() {
-      val openedPackagesPath = communityHome.communityRoot.resolve("plugins/devkit/devkit-core/src/run/OpenedPackages.txt")
+      val openedPackagesPath = communityHome.communityRoot.resolve("platform/platform-impl/resources/META-INF/OpenedPackages.txt")
       val openedPackages = openedPackagesPath.readLines().filter { it.isNotBlank() }.toMutableList()
       val unknownPackages = mutableListOf<String>()
       if (!SystemInfo.isWindows) {
