@@ -29,29 +29,23 @@ internal open class JKPrinterBase {
 
     fun print(value: String) {
         if (value.isEmpty()) return
-        lastSymbolIsLineBreak = false
 
         if (value == " ") {
             // To prettify the printed code for easier debugging, don't try to print multiple single spaces in a row
             val prevLastSymbolIsSingleSpace = lastSymbolIsSingleSpace
             lastSymbolIsSingleSpace = true
             if (!prevLastSymbolIsSingleSpace) {
-                stringBuilder.append(" ")
+                append(" ")
             }
         } else {
             lastSymbolIsSingleSpace = false
-            stringBuilder.append(value)
+            append(value)
         }
     }
 
-    fun println() {
-        if (lastSymbolIsLineBreak) return
-        stringBuilder.append('\n')
+    fun println(lineBreaks: Int = 1) {
         lastSymbolIsSingleSpace = false
-        repeat(currentIndent) {
-            stringBuilder.append(indentSymbol)
-        }
-        lastSymbolIsLineBreak = true
+        repeat(lineBreaks) { append("\n") }
     }
 
 
@@ -83,6 +77,15 @@ internal open class JKPrinterBase {
             separator()
             renderElement(element)
         }
+    }
+
+    private fun append(text: String) {
+        if (lastSymbolIsLineBreak) {
+            stringBuilder.append(indentSymbol.repeat(currentIndent))
+        }
+        stringBuilder.append(text)
+
+        lastSymbolIsLineBreak = stringBuilder.lastOrNull() == '\n'
     }
 
     enum class ParenthesisKind(val open: String, val close: String) {
