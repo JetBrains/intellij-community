@@ -6,10 +6,10 @@ import com.intellij.codeInsight.daemon.impl.DaemonCodeAnalyzerImpl
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.application.invokeLater
-import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.fileEditor.FileEditor
 import com.intellij.openapi.fileEditor.TextEditor
+import com.intellij.openapi.project.DumbService
 import com.intellij.openapi.ui.playback.PlaybackContext
 import com.intellij.openapi.ui.playback.commands.AbstractCommand
 import com.intellij.openapi.util.Ref
@@ -33,7 +33,6 @@ class WaitForFinishedCodeAnalysis(text: String, line: Int) : AbstractCommand(tex
     val actionCallback = ActionCallbackProfilerStopper()
     val project = context.project
     val connection = project.messageBus.simpleConnect()
-    val dateTimeWhenCodeAnalysisFinished = Ref<LocalDateTime>()
     LOG.info("Subscribing")
     val wasEntireFileHighlighted = Ref<Boolean>(false)
     connection.subscribe(DaemonCodeAnalyzer.DAEMON_EVENT_TOPIC, object : DaemonListener {
@@ -52,7 +51,7 @@ class WaitForFinishedCodeAnalysis(text: String, line: Int) : AbstractCommand(tex
         val editor = fileEditors.filterIsInstance<TextEditor>().firstOrNull() ?: return
         val entireFileHighlighted = DaemonCodeAnalyzerImpl.isHighlightingCompleted(editor, project)
 
-        if (!canceled && entireFileHighlighted) {
+        if (!canceled && entireFileHighlighted && !DumbService.isDumb(project)) {
           // ensure other listeners have been executed
           ApplicationManager.getApplication().assertIsDispatchThread()
           invokeLater {
