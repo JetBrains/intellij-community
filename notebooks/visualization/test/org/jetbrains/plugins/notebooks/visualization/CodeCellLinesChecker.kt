@@ -2,6 +2,7 @@ package org.jetbrains.plugins.notebooks.visualization
 
 import com.intellij.lang.Language
 import com.intellij.openapi.editor.impl.EditorImpl
+import com.intellij.util.keyFMap.KeyFMap
 import org.assertj.core.api.Assertions.assertThat
 
 class CodeCellLinesChecker(private val description: String,
@@ -21,7 +22,7 @@ class CodeCellLinesChecker(private val description: String,
     fun marker(cellType: NotebookCellLines.CellType, offset: Int, length: Int, language: Language) {
       markers!!.add(
         NotebookCellLinesLexer.Marker(ordinal = markers!!.size + markersStartOrdinal, type = cellType, offset = offset, length = length,
-                                      language = language))
+                                      data = makeLanguageData(language)))
     }
   }
 
@@ -37,7 +38,7 @@ class CodeCellLinesChecker(private val description: String,
                  lines: IntRange,
                  markers: NotebookCellLines.MarkersAtLines,
                  language: Language) {
-      list += NotebookCellLines.Interval(list.size + startOrdinal, cellType, lines, markers, language)
+      list += NotebookCellLines.Interval(list.size + startOrdinal, cellType, lines, markers, makeLanguageData(language))
     }
 
     fun interval(cellType: NotebookCellLines.CellType, lines: IntRange, language: Language) {
@@ -150,3 +151,6 @@ class CodeCellLinesChecker(private val description: String,
       .isEqualTo(expectedIntervalListenerCalls.prettyListeners())
   }
 }
+
+private fun makeLanguageData(language: Language) =
+  KeyFMap.EMPTY_MAP.plus(NotebookCellLines.INTERVAL_LANGUAGE_KEY, language)
