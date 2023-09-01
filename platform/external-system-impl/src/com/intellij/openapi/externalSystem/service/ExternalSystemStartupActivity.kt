@@ -21,9 +21,7 @@ import kotlinx.coroutines.withContext
 
 internal class ExternalSystemStartupActivity : ProjectActivity {
 
-  private suspend fun Project.tracker() : ExternalSystemInProgressService = serviceAsync<ExternalSystemInProgressService>()
-
-  override suspend fun execute(project: Project) = project.tracker().trackConfigurationActivity {
+  override suspend fun execute(project: Project) = project.serviceAsync<ExternalSystemInProgressService>().trackConfigurationActivity {
     val esProjectsManager = readAction {
       ExternalProjectsManagerImpl.getInstance(project)
     }
