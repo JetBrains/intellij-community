@@ -22,7 +22,6 @@ import org.jetbrains.plugins.gitlab.api.data.GitLabVisibilityLevel
 import org.jetbrains.plugins.gitlab.api.dto.GitLabSnippetBlobAction
 import org.jetbrains.plugins.gitlab.api.getResultOrThrow
 import org.jetbrains.plugins.gitlab.authentication.GitLabLoginUtil
-import org.jetbrains.plugins.gitlab.authentication.accounts.GitLabAccount
 import org.jetbrains.plugins.gitlab.authentication.accounts.GitLabAccountManager
 import org.jetbrains.plugins.gitlab.snippets.PathHandlingMode.Companion.getFileNameExtractor
 import org.jetbrains.plugins.gitlab.util.GitLabBundle.message
@@ -76,15 +75,18 @@ class GitLabSnippetService(private val project: Project, private val serviceScop
    * If the user could still not be authenticated could be done, `null` is returned.
    */
   private suspend fun reattemptLogin(apiManager: GitLabApiManager,
-                                     accounts: Set<GitLabAccount>,
+                                     accountManager: GitLabAccountManager,
                                      result: GitLabCreateSnippetResult): GitLabApi? {
     return coroutineScope {
       async(Dispatchers.Main) {
         val token = GitLabLoginUtil.updateToken(project, null, result.account) { server, name ->
-          GitLabLoginUtil.isAccountUnique(accounts, server, name)
+          GitLabLoginUtil.isAccountUnique(accountManager.accountsState.value, server, name)
         }
 
-        token?.let { apiManager.getClient(result.account.server, it) }
+        token?.let {
+          accountManager.updateAccount(result.account, it)
+          apiManager.getClient(result.account.server, it)
+        }
       }.await()
     }
   }
@@ -103,7 +105,7 @@ class GitLabSnippetService(private val project: Project, private val serviceScop
     // Process result by creating the snippet, copying url, etc.
     val data = result.data
     val api = accountManager.findCredentials(result.account)?.let { apiManager.getClient(result.account.server, it) }
-              ?: reattemptLogin(apiManager, accountManager.accountsState.value, result)
+              ?: reattemptLogin(apiManager, accountManager, result)
               ?: return
 
     val fileNameExtractor = getFileNameExtractor(project, files, data.pathHandlingMode)
