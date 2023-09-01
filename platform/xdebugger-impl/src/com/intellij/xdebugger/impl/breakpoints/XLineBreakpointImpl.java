@@ -81,6 +81,8 @@ public final class XLineBreakpointImpl<P extends XBreakpointProperties> extends 
     }
 
     ReadAction.nonBlocking(() -> {
+      if (isDisposed()) return;
+
       // try not to decompile files
       Document document = FileDocumentManager.getInstance().getCachedDocument(file);
       if (document == null) {
@@ -108,6 +110,8 @@ public final class XLineBreakpointImpl<P extends XBreakpointProperties> extends 
 
       Document finalDocument = document;
       ApplicationManager.getApplication().invokeLater(() -> {
+        if (isDisposed()) return;
+
         if (myHighlighter != null && !(myHighlighter instanceof RangeHighlighter)) {
           removeHighlighter();
           myHighlighter = null;
