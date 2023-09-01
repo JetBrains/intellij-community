@@ -144,8 +144,6 @@ open class IdeaCommunityProperties(private val communityHomeDir: Path) : BaseIde
     init {
       icnsPath = "${communityHomeDir}/build/conf/ideaCE/mac/images/idea.icns"
       icnsPathForEAP = "${communityHomeDir}/build/conf/ideaCE/mac/images/communityEAP.icns"
-      icnsPathForAlternativeIcon = "${communityHomeDir}/build/conf/ideaCE/mac/images/idea_com_bigsur.icns"
-      icnsPathForAlternativeIconForEAP = "${communityHomeDir}/build/conf/ideaCE/mac/images/idea_com_EAP_bigsur.icns"
       urlSchemes = listOf("idea")
       associateIpr = true
       fileAssociations = FileAssociation.from("java", "groovy", "kt", "kts")
