@@ -2,8 +2,9 @@
 package com.intellij.xdebugger.impl;
 
 import com.intellij.AppTopics;
-import com.intellij.codeInsight.daemon.impl.IntentionsUIImpl;
-import com.intellij.codeInsight.hint.*;
+import com.intellij.codeInsight.hint.LineTooltipRenderer;
+import com.intellij.codeInsight.hint.TooltipController;
+import com.intellij.codeInsight.hint.TooltipGroup;
 import com.intellij.execution.ExecutionException;
 import com.intellij.execution.Executor;
 import com.intellij.execution.executors.DefaultDebugExecutor;
@@ -23,8 +24,6 @@ import com.intellij.notification.NotificationGroupManager;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.ActionUtil;
-import com.intellij.openapi.actionSystem.impl.ActionToolbarImpl;
-import com.intellij.openapi.actionSystem.impl.ToolbarUtils;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.PersistentStateComponent;
 import com.intellij.openapi.components.State;
@@ -46,15 +45,14 @@ import com.intellij.openapi.wm.IdeGlassPaneUtil;
 import com.intellij.openapi.wm.ToolWindowId;
 import com.intellij.ui.ExperimentalUI;
 import com.intellij.ui.HintHint;
-import com.intellij.ui.LightweightHint;
 import com.intellij.ui.awt.RelativePoint;
-import com.intellij.ui.components.panels.NonOpaquePanel;
 import com.intellij.util.DocumentUtil;
 import com.intellij.util.messages.MessageBusConnection;
-import com.intellij.util.ui.JBDimension;
-import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
-import com.intellij.xdebugger.*;
+import com.intellij.xdebugger.XDebugProcess;
+import com.intellij.xdebugger.XDebugProcessStarter;
+import com.intellij.xdebugger.XDebugSession;
+import com.intellij.xdebugger.XDebuggerManager;
 import com.intellij.xdebugger.breakpoints.XBreakpoint;
 import com.intellij.xdebugger.breakpoints.XBreakpointListener;
 import com.intellij.xdebugger.impl.actions.XDebuggerActions;
@@ -75,7 +73,6 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.MouseEvent;
-import java.lang.ref.WeakReference;
 import java.util.List;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicReference;
@@ -182,7 +179,7 @@ public final class XDebuggerManagerImpl extends XDebuggerManager implements Pers
     eventMulticaster.addEditorMouseListener(listener, this);
     eventMulticaster.addEditorMouseMotionListener(bpPromoter, this);
     if (ExperimentalUI.isNewUI()) {
-      InlayRunToCursorEditorListener newRunToCursorListener = new InlayRunToCursorEditorListener();
+      InlayRunToCursorEditorListener newRunToCursorListener = new InlayRunToCursorEditorListener(myProject);
       eventMulticaster.addEditorMouseMotionListener(newRunToCursorListener, this);
       eventMulticaster.addEditorMouseListener(newRunToCursorListener, this);
     }
@@ -481,173 +478,6 @@ public final class XDebuggerManagerImpl extends XDebuggerManager implements Pers
     }
   }
 
-  private static final class RunToCursorHint extends LightweightHint {
-    private final InlayRunToCursorEditorListener listener;
-    RunToCursorHint(@NotNull JComponent component, InlayRunToCursorEditorListener listener) {
-      super(component);
-      this.listener = listener;
-    }
-
-    @Override
-    public void show(@NotNull JComponent parentComponent, int x, int y, JComponent focusBackComponent, @NotNull HintHint hintHint) {
-      super.show(parentComponent, x, y, focusBackComponent, new HintHint(parentComponent, new Point(x, y)));
-    }
-
-    @Override
-    public void hide(boolean ok) {
-      listener.reset(this);
-      super.hide(ok);
-    }
-  }
-
-  private final class InlayRunToCursorEditorListener implements EditorMouseMotionListener, EditorMouseListener {
-    private WeakReference<RunToCursorHint> myCurrentHint = new WeakReference<>(null);
-    private WeakReference<Editor> myEditor = new WeakReference<>(null);
-    private int myLineNumber = -1;
-
-    @Override
-    public void mouseMoved(@NotNull EditorMouseEvent e) {
-      if (!Registry.is("debugger.inlayRunToCursor")) {
-        IntentionsUIImpl.DISABLE_INTENTION_BULB.set(myProject, false);
-        return;
-      }
-      boolean wasShown = showInlayRunToCursor(e);
-      if (!wasShown) {
-        hideHint();
-      }
-    }
-
-    void reset(@NotNull RunToCursorHint hint) {
-      if (hint != myCurrentHint.get()) {
-        return;
-      }
-      myCurrentHint.clear();
-      myEditor = new WeakReference<>(null);
-      myLineNumber = -1;
-    }
-
-    private void hideHint() {
-      RunToCursorHint hint = myCurrentHint.get();
-      if (hint != null) {
-        hint.hide();
-      }
-    }
-
-    private boolean showInlayRunToCursor(@NotNull EditorMouseEvent e) {
-      Editor editor = e.getEditor();
-
-      if (editor.getEditorKind() != EditorKind.MAIN_EDITOR) {
-        return false;
-      }
-
-      if (editor.getScrollingModel().getHorizontalScrollOffset() != 0) {
-        return false;
-      }
-
-      XDebugSessionImpl session = getCurrentSession();
-      if (session == null || !session.isPaused() || session.isReadOnly()) {
-        IntentionsUIImpl.DISABLE_INTENTION_BULB.set(myProject, false);
-        return false;
-      }
-      IntentionsUIImpl.DISABLE_INTENTION_BULB.set(myProject, true);
-
-      int lineNumber = getLineNumber(e);
-      if (lineNumber < 0) {
-        return false;
-      }
-
-      if (myEditor.get() == editor && myLineNumber == lineNumber) {
-        return true;
-      }
-
-      myEditor = new WeakReference<>(editor);
-      myLineNumber = lineNumber;
-
-      int firstNonSpaceSymbol = editor.getDocument().getLineStartOffset(lineNumber);
-      CharSequence charsSequence = editor.getDocument().getCharsSequence();
-
-      while (true) {
-        if (firstNonSpaceSymbol >= charsSequence.length()) {
-          return false; //end of file
-        }
-        char c = charsSequence.charAt(firstNonSpaceSymbol);
-        if (c == '\n') {
-          return false; // empty line
-        }
-        if (!Character.isWhitespace(c)) {
-          break;
-        }
-        firstNonSpaceSymbol++;
-      }
-
-      Point firstNonSpacePos = editor.offsetToXY(firstNonSpaceSymbol);
-
-      if (firstNonSpacePos.x < JBUI.scale(16)) {
-        return false;
-      }
-
-      int lineY = editor.logicalPositionToXY(new LogicalPosition(lineNumber, 0)).y;
-
-      Point position = SwingUtilities.convertPoint(editor.getContentComponent(), new Point(-JBUI.scale(6), lineY),
-                                                editor.getComponent().getRootPane().getLayeredPane());
-
-      DefaultActionGroup group = new DefaultActionGroup();
-
-      XSourcePosition pausePosition = session.getCurrentPosition();
-      if (pausePosition != null && pausePosition.getFile().equals(editor.getVirtualFile()) && pausePosition.getLine() == lineNumber) {
-        group.add(ActionManager.getInstance().getAction(XDebuggerActions.RESUME));
-      }
-      else {
-        group.add(ActionManager.getInstance().getAction(IdeActions.ACTION_RUN_TO_CURSOR));
-      }
-
-      int caretLine = editor.getCaretModel().getLogicalPosition().line;
-      if (editor.getSettings().isShowIntentionBulb() && caretLine == lineNumber && firstNonSpacePos.x >= JBUI.scale(4 + 22*2)) {
-        group.add(ActionManager.getInstance().getAction(IdeActions.ACTION_SHOW_INTENTION_ACTIONS));
-      }
-
-      ActionToolbarImpl toolbarImpl = (ActionToolbarImpl)ToolbarUtils.INSTANCE.createImmediatelyUpdatedToolbar(group, ActionPlaces.EDITOR_HINT, editor.getComponent(), true, (t) -> Unit.INSTANCE);
-      toolbarImpl.setLayoutPolicy(ActionToolbar.NOWRAP_LAYOUT_POLICY);
-
-      int sideButtonOffset = 2;
-      toolbarImpl.setActionButtonBorder(JBUI.Borders.empty(0, sideButtonOffset));
-      toolbarImpl.setBorder(null);
-      toolbarImpl.setOpaque(false);
-      toolbarImpl.setAdditionalDataProvider((dataId) -> {
-        if (XDebuggerUtilImpl.LINE_NUMBER.is(dataId)) {
-          return lineNumber;
-        }
-        return null;
-      });
-
-      JPanel justPanel = new NonOpaquePanel();
-
-      justPanel.setPreferredSize(new JBDimension((2 * sideButtonOffset + 22) * group.getChildrenCount(),22));
-
-      justPanel.add(toolbarImpl.getComponent());
-
-      RunToCursorHint hint = new RunToCursorHint(justPanel, this);
-
-      myCurrentHint = new WeakReference<>(hint);
-
-      QuestionAction questionAction = new PriorityQuestionAction() {
-        @Override
-        public boolean execute() {
-          return true;
-        }
-
-        @Override
-        public int getPriority() {
-          return INTENTION_BULB_PRIORITY;
-        }
-      };
-      int offset = editor.getCaretModel().getOffset();
-
-      HintManagerImpl.getInstanceImpl().showQuestionHint(editor, position, offset, offset, hint, questionAction, HintManager.RIGHT);
-      return true;
-    }
-  }
-
   private final class GutterUiRunToCursorEditorListener implements EditorMouseMotionListener, EditorMouseListener {
     RangeHighlighter myCurrentHighlighter;
 
@@ -730,7 +560,7 @@ public final class XDebuggerManagerImpl extends XDebuggerManager implements Pers
     }
   }
 
-  private static int getLineNumber(@NotNull EditorMouseEvent event) {
+  static int getLineNumber(@NotNull EditorMouseEvent event) {
     Editor editor = event.getEditor();
     if (event.getVisualPosition().line >= ((EditorImpl)editor).getVisibleLineCount()) {
       return -1;
