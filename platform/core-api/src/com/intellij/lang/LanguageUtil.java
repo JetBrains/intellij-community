@@ -1,14 +1,13 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.lang;
 
+import com.intellij.ReviseWhenPortedToJDK;
 import com.intellij.lexer.Lexer;
-import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.LanguageFileType;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
-import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
@@ -19,7 +18,6 @@ import com.intellij.util.containers.JBIterable;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.lang.ref.SoftReference;
 import java.util.*;
 import java.util.function.Predicate;
 
@@ -157,14 +155,13 @@ public final class LanguageUtil {
     return provider.getBaseLanguage();
   }
 
-  private static final Key<Pair<SoftReference<Application>,Set<MetaLanguage>>> MATCHING_LANGUAGES = Key.create("language.matching");
+  private static final Key<Collection<MetaLanguage>> MATCHING_META_LANGUAGES = Key.create("MATCHING_META_LANGUAGES");
 
+  @ReviseWhenPortedToJDK(value = "9", description = "use List.of() instead of deprecated immutableList()")
   static @NotNull Collection<MetaLanguage> matchingMetaLanguages(@NotNull Language language) {
-    // A mock application may cause incorrect caching during tests. It does not fire extension point removed events.
-    // Ensure that we have cached against correct application.
-    Pair<SoftReference<Application>, Set<MetaLanguage>> cached = language.getUserData(MATCHING_LANGUAGES);
-    if (cached != null && cached.first.get() == ApplicationManager.getApplication()) {
-      return cached.second;
+    Collection<MetaLanguage> cached = language.getUserData(MATCHING_META_LANGUAGES);
+    if (cached != null) {
+      return cached;
     }
 
     if (!ApplicationManager.getApplication().getExtensionArea().hasExtensionPoint(MetaLanguage.EP_NAME)) {
@@ -172,26 +169,25 @@ public final class LanguageUtil {
       return Collections.emptyList();
     }
 
-    Set<MetaLanguage> result;
+    Collection<MetaLanguage> toCache;
     if (language instanceof MetaLanguage) {
-      result = Collections.emptySet();
+      toCache = Collections.emptySet();
     }
     else {
-      result = new HashSet<>();
+      Set<MetaLanguage> result = new HashSet<>();
       MetaLanguage.EP_NAME.forEachExtensionSafe(metaLanguage -> {
         if (metaLanguage.matchesLanguage(language)) {
           result.add(metaLanguage);
         }
       });
+      toCache = result.isEmpty() ? Collections.emptySet() : ContainerUtil.immutableList(result.toArray(new MetaLanguage[0]));
     }
-    Pair<SoftReference<Application>, Set<MetaLanguage>> toCache =
-      Pair.create(new SoftReference<>(ApplicationManager.getApplication()), result);
-    language.putUserData(MATCHING_LANGUAGES, toCache);
-    return result;
+    language.putUserData(MATCHING_META_LANGUAGES, toCache);
+    return toCache;
   }
 
-  static void clearMatchingMetaLanguages(@NotNull Language language) {
-    language.putUserData(MATCHING_LANGUAGES, null);
+  static void clearMatchingMetaLanguagesCache(@NotNull Language language) {
+    language.putUserData(MATCHING_META_LANGUAGES, null);
   }
 
   public static @NotNull JBIterable<Language> getBaseLanguages(@NotNull Language language) {
@@ -202,7 +198,6 @@ public final class LanguageUtil {
     final Language language = Language.findLanguageByID(langValueText);
     if (language != null) return language;
 
-    return ContainerUtil.find(Language.getRegisteredLanguages(),
-                              e -> e.getID().equalsIgnoreCase(langValueText));
+    return ContainerUtil.find(Language.getRegisteredLanguages(), e -> e.getID().equalsIgnoreCase(langValueText));
   }
 }
