@@ -7,7 +7,7 @@ import com.intellij.internal.statistic.service.fus.collectors.CounterUsagesColle
 
 class EvaluationFeedbackCountCollector : CounterUsagesCollector() {
   companion object {
-    private val GROUP = EventLogGroup("evaluation.feedback", 1)
+    private val GROUP = EventLogGroup("evaluation.feedback", 2)
 
     private val INTERFACE_RATING_FIELD = EventFields.Int("interface_rating")
     private val PRICE_RATING_FIELD = EventFields.Int("price_rating")
@@ -22,8 +22,8 @@ class EvaluationFeedbackCountCollector : CounterUsagesCollector() {
                                                                      EventFields.Int("feature_set_rating"),
                                                                      EventFields.Int("performance_rating"))
 
-    private val EVALUATION_FEEDBACK_DIALOG_SHOWN = GROUP.registerVarargEvent("evaluation.feedback.dialog.shown", EventFields.Count)
-    private val EVALUATION_FEEDBACK_DIALOG_CANCELED = GROUP.registerVarargEvent("evaluation.feedback.dialog.canceled", EventFields.Count)
+    private val EVALUATION_FEEDBACK_DIALOG_SHOWN = GROUP.registerVarargEvent("evaluation.feedback.shown", EventFields.Count)
+    private val EVALUATION_FEEDBACK_DIALOG_CANCELED = GROUP.registerVarargEvent("evaluation.feedback.cancelled", EventFields.Count)
 
     fun logEvaluationFeedbackSent(interfaceRating: Int,
                                   priceRating: Int,
