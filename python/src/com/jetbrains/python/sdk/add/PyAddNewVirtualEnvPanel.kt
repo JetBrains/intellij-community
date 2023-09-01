@@ -15,8 +15,8 @@ import com.intellij.util.ui.FormBuilder
 import com.jetbrains.python.PyBundle
 import com.jetbrains.python.PySdkBundle
 import com.jetbrains.python.newProject.collector.InterpreterStatisticsInfo
-import com.jetbrains.python.sdk.PySdkSettings
 import com.jetbrains.python.pathValidation.PlatformAndRoot
+import com.jetbrains.python.sdk.PySdkSettings
 import com.jetbrains.python.sdk.basePath
 import com.jetbrains.python.sdk.configuration.PyProjectVirtualEnvConfiguration
 import com.jetbrains.python.statistics.InterpreterTarget
