@@ -28,10 +28,10 @@ import javax.swing.Icon
 import javax.swing.event.DocumentEvent
 
 open class PyAddNewVirtualEnvPanel(private val project: Project?,
-                              private val module: Module?,
-                              private val existingSdks: List<Sdk>,
-                              newProjectPath: String?,
-                              private val context: UserDataHolder) : PyAddNewEnvPanel() {
+                                   private val module: Module?,
+                                   private val existingSdks: List<Sdk>,
+                                   newProjectPath: String?,
+                                   private val context: UserDataHolder) : PyAddNewEnvPanel() {
   override val envName: String = "Virtualenv"
 
   override var newProjectPath: String? = newProjectPath
