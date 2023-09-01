@@ -3,6 +3,7 @@ package org.jetbrains.plugins.gitlab.snippets
 
 import com.intellij.collaboration.async.cancelAndJoinSilently
 import com.intellij.ide.BrowserUtil
+import com.intellij.notification.NotificationListener
 import com.intellij.openapi.application.readAction
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
@@ -10,6 +11,7 @@ import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.ide.CopyPasteManager
 import com.intellij.openapi.progress.withBackgroundProgress
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.text.HtmlChunk
 import com.intellij.openapi.vcs.VcsNotifier
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.isFile
@@ -140,9 +142,10 @@ class GitLabSnippetService(private val project: Project, private val serviceScop
     }
 
     VcsNotifier.getInstance(project)
-      .notifyInfo(GL_NOTIFICATION_CREATE_SNIPPET_SUCCESS,
-                  message("snippet.create.action.success.title"),
-                  message("snippet.create.action.success.description", url))
+      .notifyMinorInfo(GL_NOTIFICATION_CREATE_SNIPPET_SUCCESS,
+                       message("snippet.create.action.success.title"),
+                       HtmlChunk.link(url, message("snippet.create.action.success.description")).toString())
+      .setListener(NotificationListener.URL_OPENING_LISTENER)
   }
 
   /**
