@@ -4,14 +4,6 @@ project
 project.commonMain
 
 project.commonTest
-    fqName: null
-    name: CommonTest_usagesKt.use
-    type: Gradle
-    tasks: [:cleanJvmTest, :jvmTest, --tests, "kmmApplication.CommonTest_usagesKt.use"]
-    scriptParameters:
-    isDebugAllEnabled: false
-    isRunAsTest: true
-
 
 project.iosArm64Main
 
@@ -28,14 +20,6 @@ project.iosX64Test
 project.jvmMain
 
 project.jvmTest
-    fqName: null
-    name: JvmTest_usagesKt.use
-    type: Gradle
-    tasks: [:cleanJvmTest, :jvmTest, --tests, "kmmApplication.JvmTest_usagesKt.use"]
-    scriptParameters:
-    isDebugAllEnabled: false
-    isRunAsTest: true
-
 
 
 Test configuration:
