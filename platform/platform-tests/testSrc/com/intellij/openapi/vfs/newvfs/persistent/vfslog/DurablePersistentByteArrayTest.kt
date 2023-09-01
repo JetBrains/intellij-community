@@ -17,7 +17,7 @@ class DurablePersistentByteArrayTest {
     val path = tempDir / "array.dat"
     if (path.exists()) path.deleteExisting()
     val initArr = ByteArray(16).also { it[0] = 1; it[8] = 1 }
-    val durableArray = DurablePersistentByteArray(
+    val durableArray = DurablePersistentByteArray.open(
       path, OpenMode.ReadWrite, 16
     ) { initArr }
     assertContentEquals(initArr, durableArray.getLastSnapshot())
@@ -29,7 +29,7 @@ class DurablePersistentByteArrayTest {
     assertContentEquals(initArr, upd)
     assertContentEquals(upd, durableArray.getLastSnapshot())
     durableArray.close()
-    val durableArray2 = DurablePersistentByteArray(
+    val durableArray2 = DurablePersistentByteArray.open(
       path, OpenMode.ReadWrite, 16
     ) { throw AssertionError() }
     assertContentEquals(upd, durableArray2.getLastSnapshot())

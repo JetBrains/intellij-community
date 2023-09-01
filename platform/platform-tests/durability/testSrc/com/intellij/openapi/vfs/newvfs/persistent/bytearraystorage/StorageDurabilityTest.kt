@@ -5,6 +5,7 @@ import com.intellij.openapi.vfs.newvfs.persistent.*
 import kotlinx.coroutines.*
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.Json
+import java.io.EOFException
 import java.io.IOException
 import java.io.InputStream
 import java.io.OutputStream
@@ -61,9 +62,9 @@ private fun OutputStream.writeProto(obj: Proto) {
   flush()
 }
 
-private fun InputStream.readProto(): Proto? {
+private fun InputStream.readProto(): Proto {
   val sizeArr = readNBytes(4)
-  if (sizeArr.isEmpty()) return null // EOF
+  if (sizeArr.isEmpty()) throw EOFException("EOF") // EOF
   check(sizeArr.size == 4) { "sizeArr.size != 4, != 0" } // partial msg
   val size = ByteBuffer.wrap(sizeArr).getInt()
   val data = readNBytes(size)
@@ -78,41 +79,43 @@ internal class StorageApp(private val storageBackend: Storage) : App {
   }
 
   override fun run(appAgent: AppAgent) {
-    while (true) {
-      when (val req = appAgent.input.readProto() as? Proto.Request) {
-        is Proto.Request.Close -> {
-          storageBackend.close()
-          appAgent.output.writeProto(Proto.Response.Ok)
-          break
-        }
-        is Proto.Request.ReadBytes -> {
-          val bytes = storageBackend.getBytes(req.offset, req.size)
-          appAgent.output.writeProto(Proto.Response.ReadBytes(bytes))
-        }
-        is Proto.Request.SetBytes -> {
-          if (!ENFORCE_PER_PAGE_WRITES) {
-            storageBackend.setBytes(req.bytes, req.offset)
+    try {
+      while (true) {
+        when (val req = appAgent.input.readProto() as Proto.Request) {
+          is Proto.Request.Close -> {
+            storageBackend.close()
+            appAgent.output.writeProto(Proto.Response.Ok)
+            break
           }
-          else {
-            val firstPage = req.offset / PAGE_SIZE
-            val lastPage = (req.offset + req.bytes.size - 1) / PAGE_SIZE
-            for (page in firstPage..lastPage) {
-              val begin = (page * PAGE_SIZE).coerceAtLeast(req.offset)
-              val end = ((page + 1) * PAGE_SIZE).coerceAtMost(req.offset + req.bytes.size)
-              storageBackend.setBytes(req.bytes.copyOfRange(begin - req.offset, end - req.offset), begin)
+          is Proto.Request.ReadBytes -> {
+            val bytes = storageBackend.getBytes(req.offset, req.size)
+            appAgent.output.writeProto(Proto.Response.ReadBytes(bytes))
+          }
+          is Proto.Request.SetBytes -> {
+            if (!ENFORCE_PER_PAGE_WRITES) {
+              storageBackend.setBytes(req.bytes, req.offset)
             }
+            else {
+              val firstPage = req.offset / PAGE_SIZE
+              val lastPage = (req.offset + req.bytes.size - 1) / PAGE_SIZE
+              for (page in firstPage..lastPage) {
+                val begin = (page * PAGE_SIZE).coerceAtLeast(req.offset)
+                val end = ((page + 1) * PAGE_SIZE).coerceAtMost(req.offset + req.bytes.size)
+                storageBackend.setBytes(req.bytes.copyOfRange(begin - req.offset, end - req.offset), begin)
+              }
+            }
+            appAgent.output.writeProto(Proto.Response.Ok)
           }
-          appAgent.output.writeProto(Proto.Response.Ok)
-        }
-        is Proto.Request.Flush -> {
-          storageBackend.flush()
-          appAgent.output.writeProto(Proto.Response.Ok)
-        }
-        null -> { // connection closed
-          storageBackend.close()
-          break
+          is Proto.Request.Flush -> {
+            storageBackend.flush()
+            appAgent.output.writeProto(Proto.Response.Ok)
+          }
         }
       }
+    }
+    catch (e: EOFException) {
+      storageBackend.close()
+      return
     }
   }
 }
@@ -205,7 +208,9 @@ internal class StorageUser : User {
               else {
                 userAgent.addInteractionResult(
                   InteractionResult(false, "state mismatch (with unconfirmed commit)",
-                                    "full state check failed: diff with last acknowledged state=${buildDiff(lastAcknowledgedState, fullState)}, " +
+                                    "full state check failed: diff with last acknowledged state=${
+                                      buildDiff(lastAcknowledgedState, fullState)
+                                    }, " +
                                     "diff with possible valid state=${buildDiff(possibleState, fullState)}")
                 )
                 foundFail = true
@@ -215,7 +220,9 @@ internal class StorageUser : User {
             else {
               userAgent.addInteractionResult(
                 InteractionResult(false, "state mismatch",
-                                  "full state check failed: diff with last acknowledged state=${buildDiff(lastAcknowledgedState, fullState)}")
+                                  "full state check failed: diff with last acknowledged state=${
+                                    buildDiff(lastAcknowledgedState, fullState)
+                                  }")
               )
               foundFail = true
               return@runApplication
@@ -245,10 +252,8 @@ internal class StorageUser : User {
               )
             }
           }
-          catch (_: IllegalStateException) {
-          } // EOF from requests
           catch (_: IOException) {
-          } // EOF from requests
+          }
           catch (e: Throwable) {
             System.err.println("unexpected error after kill: ${e.message}")
             e.printStackTrace()
