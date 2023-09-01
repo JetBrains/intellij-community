@@ -34,8 +34,7 @@ public final class IntellijLoader {
     }
     
     RuntimeModuleRepository repository = RuntimeModuleRepository.create(Path.of(repositoryPathString));
-    String bootstrapModuleName = System.getProperty("intellij.platform.bootstrap.module", "intellij.platform.bootstrap");
-    List<Path> bootstrapClasspath = repository.getBootstrapClasspath(bootstrapModuleName);
+    List<Path> bootstrapClasspath = repository.getBootstrapClasspath("intellij.platform.bootstrap");
     startupTimings.add("calculating bootstrap classpath");
     startupTimings.add(System.nanoTime());
     
