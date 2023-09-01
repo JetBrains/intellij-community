@@ -46,7 +46,7 @@ private const val SECTION_INDEXING_TITLE = "Indexing"
 
 /**
  * For now, we have only Shared Indexes implementation of FileBasedIndexInfrastructureExtension,
- * so for simplicity let's use this name instead of a general "index infrastructure extensions".
+ * so for simplicity let's use this name instead of quite general name "index infrastructure extensions".
  */
 private const val INDEX_INFRA_EXTENSIONS = "shared indexes"
 
@@ -126,26 +126,7 @@ private fun JsonProjectScanningHistory.generateScanningHtml(target: Appendable,
     body {
       div(classes = "navigation-bar") {
         ul {
-          li {
-            a("#$SECTION_PROJECT_NAME_ID") {
-              text(SECTION_PROJECT_NAME_TITLE)
-            }
-          }
-          li {
-            a("#$SECTION_APP_INFO_ID") {
-              text(SECTION_APP_INFO_TITLE)
-            }
-          }
-          li {
-            a("#$SECTION_RUNTIME_INFO_ID") {
-              text(SECTION_RUNTIME_INFO_TITLE)
-            }
-          }
-          li {
-            a("#$SECTION_INDEXING_INFO_ID") {
-              text(SECTION_OVERVIEW_TITLE)
-            }
-          }
+          printProjectAppOverviewNavigation()
           li {
             a("#$SECTION_SCANNING_CONCURRENT_PART_ID") {
               text(SECTION_SCANNING_CONCURRENT_PART_TITLE)
@@ -157,31 +138,7 @@ private fun JsonProjectScanningHistory.generateScanningHtml(target: Appendable,
             }
           }
         }
-        hr("solid")
-        ul {
-          li {
-            label {
-              attributes["for"] = "id-hide-minor-data-checkbox"
-              text("Hide minor data")
-              input {
-                checked = HIDE_MINOR_DATA_INITIAL
-                id = "id-hide-minor-data-checkbox"
-                type = InputType.checkBox
-                onClick = "hideElementsHavingClass('minor-data', this.checked)"
-                style {
-                  unsafe {
-                    +"padding-left: 10px"
-                  }
-                }
-              }
-            }
-          }
-        }
-        div(classes = "jetbrains-logo") {
-          unsafe {
-            +JETBRAINS_GRAYSCALE_LOGO_SVG
-          }
-        }
+        printMinorDataCheckbox()
       }
 
       div(classes = "stats-activity-content") {
@@ -350,6 +307,34 @@ private fun JsonProjectScanningHistory.generateScanningHtml(target: Appendable,
   }.toString()
 }
 
+private fun DIV.printMinorDataCheckbox() {
+  hr("solid")
+  ul {
+    li {
+      label {
+        attributes["for"] = "id-hide-minor-data-checkbox"
+        text("Hide minor data")
+        input {
+          checked = HIDE_MINOR_DATA_INITIAL
+          id = "id-hide-minor-data-checkbox"
+          type = InputType.checkBox
+          onClick = "hideElementsHavingClass('minor-data', this.checked)"
+          style {
+            unsafe {
+              +"padding-left: 10px"
+            }
+          }
+        }
+      }
+    }
+  }
+  div(classes = "jetbrains-logo") {
+    unsafe {
+      +JETBRAINS_GRAYSCALE_LOGO_SVG
+    }
+  }
+}
+
 private fun DIV.printDurationDescription() {
   text("All durations are wall time; they include pauses unless specified otherwise")
 }
@@ -374,26 +359,7 @@ private fun JsonProjectDumbIndexingHistory.generateDumbIndexingHtml(target: Appe
     body {
       div(classes = "navigation-bar") {
         ul {
-          li {
-            a("#$SECTION_PROJECT_NAME_ID") {
-              text(SECTION_PROJECT_NAME_TITLE)
-            }
-          }
-          li {
-            a("#$SECTION_APP_INFO_ID") {
-              text(SECTION_APP_INFO_TITLE)
-            }
-          }
-          li {
-            a("#$SECTION_RUNTIME_INFO_ID") {
-              text(SECTION_RUNTIME_INFO_TITLE)
-            }
-          }
-          li {
-            a("#$SECTION_INDEXING_INFO_ID") {
-              text(SECTION_OVERVIEW_TITLE)
-            }
-          }
+          printProjectAppOverviewNavigation()
           li {
             a("#$SECTION_SLOW_FILES_ID") {
               text(SECTION_SLOW_FILES_TITLE)
@@ -415,31 +381,7 @@ private fun JsonProjectDumbIndexingHistory.generateDumbIndexingHtml(target: Appe
             }
           }
         }
-        hr("solid")
-        ul {
-          li {
-            label {
-              attributes["for"] = "id-hide-minor-data-checkbox"
-              text("Hide minor data")
-              input {
-                checked = HIDE_MINOR_DATA_INITIAL
-                id = "id-hide-minor-data-checkbox"
-                type = InputType.checkBox
-                onClick = "hideElementsHavingClass('minor-data', this.checked)"
-                style {
-                  unsafe {
-                    +"padding-left: 10px"
-                  }
-                }
-              }
-            }
-          }
-        }
-        div(classes = "jetbrains-logo") {
-          unsafe {
-            +JETBRAINS_GRAYSCALE_LOGO_SVG
-          }
-        }
+        printMinorDataCheckbox()
       }
 
       div(classes = "stats-activity-content") {
@@ -682,6 +624,29 @@ private fun JsonProjectDumbIndexingHistory.generateDumbIndexingHtml(target: Appe
       }
     }
   }.toString()
+}
+
+private fun UL.printProjectAppOverviewNavigation() {
+  li {
+    a("#$SECTION_PROJECT_NAME_ID") {
+      text(SECTION_PROJECT_NAME_TITLE)
+    }
+  }
+  li {
+    a("#$SECTION_APP_INFO_ID") {
+      text(SECTION_APP_INFO_TITLE)
+    }
+  }
+  li {
+    a("#$SECTION_RUNTIME_INFO_ID") {
+      text(SECTION_RUNTIME_INFO_TITLE)
+    }
+  }
+  li {
+    a("#$SECTION_INDEXING_INFO_ID") {
+      text(SECTION_OVERVIEW_TITLE)
+    }
+  }
 }
 
 private fun DIV.printProjectNameForActivity(projectName: String) {
