@@ -120,6 +120,8 @@ private val cdShowMenuIcons
 private val cdDifferentiateProjects
   get() = CheckboxDescriptor(message("checkbox.use.solution.colors.in.main.toolbar"), settings::differentiateProjects,
                              message("text.use.solution.colors.in.main.toolbar"), groupName = uiOptionGroupName)
+private val cdMinimizeHeader
+  get() = CheckboxDescriptor(message("checkbox.minimize.header"), settings::minimizeHeader, groupName = uiOptionGroupName)
 
 internal fun getAppearanceOptionDescriptors(): Sequence<OptionDescription> {
   return sequenceOf(
@@ -134,6 +136,7 @@ internal fun getAppearanceOptionDescriptors(): Sequence<OptionDescription> {
     cdUseCompactTreeIndents,
     cdShowTreeIndents,
     cdDnDWithAlt,
+    cdMinimizeHeader.takeIf { NewUiValue.isEnabled() },
     cdFullPathsInTitleBar,
     cdSeparateMainMenu.takeUnless { SystemInfo.isMac },
     cdDifferentiateProjects
@@ -333,6 +336,9 @@ internal class AppearanceConfigurable : BoundSearchableConfigurable(message("tit
               checkBox(message("checkbox.ide.mac.app.icon")).comment(message("ide.restart.required.comment"))
                 .bindSelected({ MacCustomAppIcon.isCustom() }, { MacCustomAppIcon.setCustom(it, true) })
             }
+          }
+          if (NewUiValue.isEnabled()) {
+            yield { checkBox(cdMinimizeHeader) }
           }
         }
         val rightColumnControls = sequence<Row.() -> Unit> {

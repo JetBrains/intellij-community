@@ -72,6 +72,8 @@ class UISettingsState : BaseState() {
   var allowMergeButtons: Boolean by property(true)
   @get:OptionTag("SHOW_MAIN_TOOLBAR")
   var showMainToolbar: Boolean by property(false)
+  @get:OptionTag("MINIMIZE_HEADER")
+  var minimizeHeader: Boolean by property(false)
   @get:OptionTag("SHOW_STATUS_BAR")
   var showStatusBar: Boolean by property(true)
   @get:OptionTag("SHOW_MAIN_MENU")

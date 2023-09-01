@@ -237,6 +237,12 @@ class UISettings @NonInjectable constructor(private val notRoamableOptions: NotR
       toolbarSettingsState.showNewMainToolbar = !value && toolbarSettingsState.showNewMainToolbar
     }
 
+  var minimizeHeader: Boolean
+    get() = state.minimizeHeader
+    set(value) {
+      state.minimizeHeader = value
+    }
+
   var showIconsInMenus: Boolean
     get() = state.showIconsInMenus
     set(value) {
