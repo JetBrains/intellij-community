@@ -115,7 +115,7 @@ public class LocalInspectionsPass extends ProgressableTextEditorHighlightingPass
                                                                                    applyIncrementallyCallback,
                                                                                    afterInsideProcessedCallback,
                                                                                    afterOutsideProcessedCallback,
-                                                                                         wrapper -> !wrapper.getTool().isSuppressedFor(myFile));
+                                                                                   wrapper -> !wrapper.getTool().isSuppressedFor(myFile));
       ProgressManager.checkCanceled();
       myInfos = createHighlightsFromContexts(contexts);
     }

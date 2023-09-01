@@ -168,7 +168,7 @@ final class InspectionProfilerDataHolder {
    * - last, contexts with inspection tools which produced all other problems in previous run, ordered by latency to the 1st created problem
    * store the favorite element (i.e., the one with the lowest latency saved from the previous inspection run) to the {@link InspectionRunner.InspectionContext#myFavoriteElement}
    */
-  void sortAndRetrieveFavoriteElement(@NotNull PsiFile psiFile, @NotNull List<? extends InspectionRunner.InspectionContext> init) {
+  void sortAndRetrieveFavoriteElement(@NotNull PsiFile psiFile, @NotNull List<InspectionRunner.InspectionContext> init) {
     InspectionFileData data = this.data.get(psiFile);
     if (data == null) {
       // no statistics => do nothing
