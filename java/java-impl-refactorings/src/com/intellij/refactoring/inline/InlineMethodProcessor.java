@@ -795,7 +795,7 @@ public class InlineMethodProcessor extends BaseRefactoringProcessor {
   @Nullable
   private PsiLocalVariable declareThis(PsiSubstitutor callSubstitutor, PsiCodeBlock block) {
     PsiClass containingClass = myMethod.getContainingClass();
-    if (myMethod.hasModifierProperty(PsiModifier.STATIC) || containingClass == null) return null;
+    if (myMethod.hasModifierProperty(PsiModifier.STATIC) || containingClass == null || containingClass instanceof PsiUnnamedClass) return null;
     PsiType thisType = GenericsUtil.getVariableTypeByExpressionType(myFactory.createType(containingClass, callSubstitutor));
     String[] names = myJavaCodeStyle.suggestVariableName(VariableKind.LOCAL_VARIABLE, null, null, thisType).names;
     String thisVarName = names[0];
