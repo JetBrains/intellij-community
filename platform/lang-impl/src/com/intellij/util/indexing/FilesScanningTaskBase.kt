@@ -121,6 +121,7 @@ abstract class FilesScanningTaskBase(private val project: Project) : MergeableQu
         return // or just return if inside non-cancellable section
       }
       if (!paused.value) return
+      if (application.isUnitTestMode) return // do not pause in unit tests, because some tests do not expect pausing
       if (application.isDispatchThread) {
         thisLogger().error("Ignore pause, because freezeIfPaused invoked on EDT")
       }
