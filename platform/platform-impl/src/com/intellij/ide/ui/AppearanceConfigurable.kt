@@ -135,9 +135,9 @@ internal fun getAppearanceOptionDescriptors(): Sequence<OptionDescription> {
     cdShowTreeIndents,
     cdDnDWithAlt,
     cdFullPathsInTitleBar,
-    cdSeparateMainMenu,
+    cdSeparateMainMenu.takeUnless { SystemInfo.isMac },
     cdDifferentiateProjects
-  ).map(CheckboxDescriptor::asUiOptionDescriptor)
+  ).filterNotNull().map(CheckboxDescriptor::asUiOptionDescriptor)
 }
 
 internal class AppearanceConfigurable : BoundSearchableConfigurable(message("title.appearance"), "preferences.lookFeel") {
