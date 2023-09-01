@@ -2,6 +2,8 @@
 package com.siyeh.ig.naming;
 
 import com.intellij.codeInspection.InspectionProfileEntry;
+import com.intellij.pom.java.LanguageLevel;
+import com.intellij.testFramework.IdeaTestUtil;
 import com.siyeh.ig.LightJavaInspectionTestCase;
 import org.jetbrains.annotations.Nullable;
 
@@ -17,5 +19,11 @@ public class ConfusingMainMethodInspectionTest extends LightJavaInspectionTestCa
 
   public void testConfusingMainMethod() {
     doTest();
+  }
+
+  public void testConfusingMainMethodInUnnamedClass() {
+    IdeaTestUtil.withLevel(getModule(), LanguageLevel.JDK_21_PREVIEW, () -> {
+      doTest();
+    });
   }
 }
