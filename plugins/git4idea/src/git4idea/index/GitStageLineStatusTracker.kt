@@ -340,16 +340,16 @@ class GitStageLineStatusTracker(
     }
   }
 
-  private class MyLineStatusMarkerPopupRenderer(val stageTracker: GitStageLineStatusTracker)
-    : LineStatusMarkerPopupRenderer(stageTracker) {
+  private class MyLineStatusMarkerPopupRenderer(override val tracker: GitStageLineStatusTracker)
+    : LineStatusMarkerPopupRenderer(tracker) {
     override val editorFilter: MarkupEditorFilter = MarkupEditorFilterFactory.createIsNotDiffFilter()
 
     override fun shouldPaintGutter(): Boolean {
-      return stageTracker.mode.isVisible
+      return tracker.mode.isVisible
     }
 
     override fun shouldPaintErrorStripeMarkers(): Boolean {
-      return stageTracker.mode.isVisible && stageTracker.mode.showErrorStripeMarkers
+      return tracker.mode.isVisible && tracker.mode.showErrorStripeMarkers
     }
 
     override fun paintGutterMarkers(editor: Editor, ranges: List<Range>, g: Graphics) {
@@ -509,8 +509,7 @@ class GitStageLineStatusTracker(
     }
 
     override fun showHintAt(editor: Editor, range: Range, mousePosition: Point?) {
-      if (!stageTracker.isValid()) return
-      stageTracker as GitStageLineStatusTracker
+      if (!tracker.isValid()) return
       range as StagedRange
 
       if (!range.hasStaged || !range.hasUnstaged) {
@@ -520,8 +519,8 @@ class GitStageLineStatusTracker(
 
       val disposable = Disposer.newDisposable()
 
-      val stagedTextField = createTextField(editor, stageTracker.stagedDocument, range.stagedLine1, range.stagedLine2)
-      val vcsTextField = createTextField(editor, stageTracker.vcsDocument, range.vcsLine1, range.vcsLine2)
+      val stagedTextField = createTextField(editor, tracker.stagedDocument, range.stagedLine1, range.stagedLine2)
+      val vcsTextField = createTextField(editor, tracker.vcsDocument, range.vcsLine1, range.vcsLine2)
       installWordDiff(editor, stagedTextField, vcsTextField, range, disposable)
 
       val editorsPanel = createEditorComponent(editor, stagedTextField, vcsTextField)
@@ -566,7 +565,7 @@ class GitStageLineStatusTracker(
       val textRange = DiffUtil.getLinesRange(document, line1, line2)
       val content = textRange.subSequence(document.immutableCharSequence).toString()
       val textField = LineStatusMarkerPopupPanel.createTextField(editor, content)
-      LineStatusMarkerPopupPanel.installBaseEditorSyntaxHighlighters(stageTracker.project, textField, document, textRange, fileType)
+      LineStatusMarkerPopupPanel.installBaseEditorSyntaxHighlighters(tracker.project, textField, document, textRange, fileType)
       return textField
     }
 
@@ -575,13 +574,12 @@ class GitStageLineStatusTracker(
                                 vcsTextField: EditorTextField,
                                 range: StagedRange,
                                 disposable: Disposable) {
-      stageTracker as GitStageLineStatusTracker
       if (!DiffApplicationSettings.getInstance().SHOW_LST_WORD_DIFFERENCES) return
       if (!range.hasLines()) return
 
-      val currentContent = DiffUtil.getLinesContent(stageTracker.document, range.line1, range.line2)
-      val stagedContent = DiffUtil.getLinesContent(stageTracker.stagedDocument, range.stagedLine1, range.stagedLine2)
-      val vcsContent = DiffUtil.getLinesContent(stageTracker.vcsDocument, range.vcsLine1, range.vcsLine2)
+      val currentContent = DiffUtil.getLinesContent(tracker.document, range.line1, range.line2)
+      val stagedContent = DiffUtil.getLinesContent(tracker.stagedDocument, range.stagedLine1, range.stagedLine2)
+      val vcsContent = DiffUtil.getLinesContent(tracker.vcsDocument, range.vcsLine1, range.vcsLine2)
       val (stagedWordDiff, vcsWordDiff) = BackgroundTaskUtil.tryComputeFast(
         { indicator ->
           Pair(if (range.hasStagedLines()) ByWord.compare(stagedContent, currentContent, ComparisonPolicy.DEFAULT, indicator) else null,
@@ -715,7 +713,7 @@ class GitStageLineStatusTracker(
         val stageLink = createStageLinkButton(editor, disposable, "Git.Stage.Add",
                                               GitBundle.message("action.label.add.unstaged.range"),
                                               GitBundle.message("action.label.add.unstaged.range.tooltip")) {
-          stageTracker.stageChanges(range)
+          tracker.stageChanges(range)
           reopenRange(editor, range, mousePosition)
         }
         panel.add(stageLink)
@@ -727,7 +725,7 @@ class GitStageLineStatusTracker(
         val unstageLink = createStageLinkButton(editor, disposable, "Git.Stage.Reset",
                                                 GitBundle.message("action.label.reset.staged.range"),
                                                 GitBundle.message("action.label.reset.staged.range.tooltip")) {
-          stageTracker.unstageChanges(range)
+          tracker.unstageChanges(range)
           reopenRange(editor, range, mousePosition)
         }
         panel.add(unstageLink)
@@ -774,7 +772,7 @@ class GitStageLineStatusTracker(
       override fun isEnabled(editor: Editor, range: Range): Boolean = (range as StagedRange).hasUnstaged
 
       override fun actionPerformed(editor: Editor, range: Range) {
-        RollbackLineStatusAction.rollback(stageTracker, range, editor)
+        RollbackLineStatusAction.rollback(tracker, range, editor)
       }
     }
 
@@ -784,18 +782,17 @@ class GitStageLineStatusTracker(
 
       override fun actionPerformed(editor: Editor, range: Range) {
         range as StagedRange
-        stageTracker as GitStageLineStatusTracker
 
         val canExpandBefore = range.line1 != 0 && range.stagedLine1 != 0 && range.vcsLine1 != 0
-        val canExpandAfter = range.line2 < DiffUtil.getLineCount(stageTracker.document) &&
-                             range.stagedLine2 < DiffUtil.getLineCount(stageTracker.stagedDocument) &&
-                             range.vcsLine2 < DiffUtil.getLineCount(stageTracker.vcsDocument)
+        val canExpandAfter = range.line2 < DiffUtil.getLineCount(tracker.document) &&
+                             range.stagedLine2 < DiffUtil.getLineCount(tracker.stagedDocument) &&
+                             range.vcsLine2 < DiffUtil.getLineCount(tracker.vcsDocument)
 
-        val currentContent = createDiffContent(stageTracker.document, range.line1, range.line2,
+        val currentContent = createDiffContent(tracker.document, range.line1, range.line2,
                                                canExpandBefore, canExpandAfter)
-        val stagedContent = createDiffContent(stageTracker.stagedDocument, range.stagedLine1, range.stagedLine2,
+        val stagedContent = createDiffContent(tracker.stagedDocument, range.stagedLine1, range.stagedLine2,
                                               canExpandBefore, canExpandAfter)
-        val vcsContent = createDiffContent(stageTracker.vcsDocument, range.vcsLine1, range.vcsLine2,
+        val vcsContent = createDiffContent(tracker.vcsDocument, range.vcsLine1, range.vcsLine2,
                                            canExpandBefore, canExpandAfter)
 
         val request = SimpleDiffRequest(
@@ -808,7 +805,7 @@ class GitStageLineStatusTracker(
                             DiffBundle.message("action.presentation.diff.revert.text"))
         request.putUserData(DiffUserDataKeysEx.VCS_DIFF_ACCEPT_LEFT_TO_BASE_ACTION_TEXT,
                             GitBundle.message("action.label.reset.staged.range"))
-        DiffManager.getInstance().showDiff(stageTracker.project, request)
+        DiffManager.getInstance().showDiff(tracker.project, request)
       }
 
       private fun createDiffContent(document: Document, line1: Int, line2: Int,
@@ -816,8 +813,8 @@ class GitStageLineStatusTracker(
         val textRange = DiffUtil.getLinesRange(document,
                                                line1 - if (canExpandBefore) 1 else 0,
                                                line2 + if (canExpandAfter) 1 else 0)
-        val content = DiffContentFactory.getInstance().create(stageTracker.project, document, stageTracker.virtualFile)
-        return DiffContentFactory.getInstance().createFragment(stageTracker.project, content, textRange)
+        val content = DiffContentFactory.getInstance().create(tracker.project, document, tracker.virtualFile)
+        return DiffContentFactory.getInstance().createFragment(tracker.project, content, textRange)
       }
     }
   }

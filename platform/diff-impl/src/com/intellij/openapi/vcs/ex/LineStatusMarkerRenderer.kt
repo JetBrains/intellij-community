@@ -9,6 +9,7 @@ import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.diff.LineStatusMarkerDrawUtil.DiffStripeTextAttributes
+import com.intellij.openapi.editor.Document
 import com.intellij.openapi.editor.EditorFactory
 import com.intellij.openapi.editor.ex.EditorEx
 import com.intellij.openapi.editor.ex.MarkupModelEx
@@ -18,6 +19,7 @@ import com.intellij.openapi.editor.markup.HighlighterTargetArea
 import com.intellij.openapi.editor.markup.LineMarkerRenderer
 import com.intellij.openapi.editor.markup.MarkupEditorFilter
 import com.intellij.openapi.editor.markup.RangeHighlighter
+import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.TextRange
@@ -28,20 +30,19 @@ import com.intellij.util.ui.update.DisposableUpdate
 import com.intellij.util.ui.update.MergingUpdateQueue
 
 abstract class LineStatusMarkerRenderer internal constructor(
-  @JvmField protected val tracker: LineStatusTrackerI<*>
+  private val project: Project?,
+  private val document: Document,
+  disposable: Disposable
 ) {
-  private val disposable = tracker.disposable
   private val updateQueue = MergingUpdateQueue("LineStatusMarkerRenderer", 100, true, MergingUpdateQueue.ANY_COMPONENT, disposable)
   private var disposed = false
-
-  private val project = tracker.project
-  private val document = tracker.document
-  protected fun getRanges() = tracker.getRanges()
 
   private var gutterHighlighter: RangeHighlighter = createGutterHighlighter()
   private val errorStripeHighlighters: MutableList<RangeHighlighter> = ArrayList()
 
   protected open val editorFilter: MarkupEditorFilter? = null
+
+  protected abstract fun getRanges(): List<Range>?
 
   init {
     Disposer.register(disposable, Disposable {
@@ -89,7 +90,7 @@ abstract class LineStatusMarkerRenderer internal constructor(
   }
 
   protected open fun createGutterMarkerRenderer(): LineMarkerRenderer = object : LineStatusGutterMarkerRenderer() {
-    override fun getPaintedRanges(): List<Range> = tracker.getRanges().orEmpty()
+    override fun getPaintedRanges(): List<Range> = getRanges().orEmpty()
   }
 
   @RequiresEdt

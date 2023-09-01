@@ -36,7 +36,10 @@ import javax.swing.JComponent
 import javax.swing.SwingUtilities
 import kotlin.math.min
 
-abstract class LineStatusMarkerPopupRenderer(tracker: LineStatusTrackerI<*>) : LineStatusMarkerRenderer(tracker) {
+abstract class LineStatusMarkerPopupRenderer(protected open val tracker: LineStatusTrackerI<*>)
+  : LineStatusMarkerRenderer(tracker.project, tracker.document, tracker.disposable) {
+
+  override fun getRanges(): List<Range>? = tracker.getRanges()
 
   /**
    * @return true if gutter markers should be painted, false otherwise
@@ -46,7 +49,7 @@ abstract class LineStatusMarkerPopupRenderer(tracker: LineStatusTrackerI<*>) : L
   final override fun createGutterMarkerRenderer(): LineMarkerRenderer = object : ActiveLineStatusGutterMarkerRenderer() {
     override fun getPaintedRanges(): List<Range>? {
       if (!shouldPaintGutter()) return null
-      return tracker.getRanges().orEmpty()
+      return getRanges().orEmpty()
     }
 
     override fun paint(editor: Editor, g: Graphics, r: Rectangle) {

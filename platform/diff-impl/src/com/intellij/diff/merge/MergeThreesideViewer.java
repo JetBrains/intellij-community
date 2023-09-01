@@ -1290,8 +1290,8 @@ public class MergeThreesideViewer extends ThreesideTextDiffViewerEx {
 
     @Override
     public void scrollAndShow(@NotNull Editor editor, @NotNull com.intellij.openapi.vcs.ex.Range range) {
-      if (!tracker.isValid()) return;
-      final Document document = tracker.getDocument();
+      if (!getTracker().isValid()) return;
+      final Document document = getTracker().getDocument();
       int line = Math.min(!range.hasLines() ? range.getLine2() : range.getLine2() - 1, getLineCount(document) - 1);
 
       int[] startLines = new int[]{
@@ -1334,7 +1334,7 @@ public class MergeThreesideViewer extends ThreesideTextDiffViewerEx {
       @Override
       protected void actionPerformed(@NotNull Editor editor, @NotNull com.intellij.openapi.vcs.ex.Range range) {
         DiffUtil.moveCaretToLineRangeIfNeeded(editor, range.getLine1(), range.getLine2());
-        tracker.rollbackChanges(range);
+        getTracker().rollbackChanges(range);
       }
     }
 

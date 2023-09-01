@@ -624,11 +624,11 @@ class ChangelistsLocalLineStatusTracker internal constructor(project: Project,
     }
   }
 
-  private class MyLineStatusMarkerRenderer(override val localTracker: ChangelistsLocalLineStatusTracker) :
-    LocalLineStatusMarkerRenderer(localTracker) {
+  private class MyLineStatusMarkerRenderer(override val tracker: ChangelistsLocalLineStatusTracker) :
+    LocalLineStatusMarkerRenderer(tracker) {
 
     override fun paintGutterMarkers(editor: Editor, ranges: List<Range>, g: Graphics) {
-      val flagsProvider = MyFlagsProvider(localTracker.defaultMarker.changelistId)
+      val flagsProvider = MyFlagsProvider(tracker.defaultMarker.changelistId)
       LineStatusMarkerDrawUtil.paintDefault(editor, g, ranges, flagsProvider, 0)
     }
 
@@ -645,7 +645,7 @@ class ChangelistsLocalLineStatusTracker internal constructor(project: Project,
                                            disposable: Disposable): JComponent? {
       if (range !is LocalRange) return null
 
-      val changeLists = ChangeListManager.getInstance(localTracker.project).changeLists
+      val changeLists = ChangeListManager.getInstance(tracker.project).changeLists
       val rangeList = changeLists.find { it.id == range.changelistId } ?: return null
 
       val group = DefaultActionGroup()
@@ -693,7 +693,7 @@ class ChangelistsLocalLineStatusTracker internal constructor(project: Project,
       override fun isEnabled(editor: Editor, range: Range): Boolean = range is LocalRange
 
       override fun actionPerformed(editor: Editor, range: Range) {
-        MoveChangesLineStatusAction.moveToAnotherChangelist(localTracker, range as LocalRange)
+        MoveChangesLineStatusAction.moveToAnotherChangelist(tracker, range as LocalRange)
         reopenRange(editor, range, mousePosition)
       }
     }
@@ -707,7 +707,7 @@ class ChangelistsLocalLineStatusTracker internal constructor(project: Project,
       override fun isEnabled(editor: Editor, range: Range): Boolean = range is LocalRange
 
       override fun actionPerformed(editor: Editor, range: Range) {
-        localTracker.moveToChangelist(range, changelist)
+        tracker.moveToChangelist(range, changelist)
         reopenRange(editor, range, mousePosition)
       }
     }

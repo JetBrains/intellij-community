@@ -124,17 +124,17 @@ abstract class LocalLineStatusTrackerImpl<R : Range>(
   }
 
   protected open class LocalLineStatusMarkerRenderer(
-    open val localTracker: LocalLineStatusTrackerImpl<*>
-  ): LineStatusMarkerPopupRenderer(localTracker) {
+    override val tracker: LocalLineStatusTrackerImpl<*>
+  ): LineStatusMarkerPopupRenderer(tracker) {
 
     override val editorFilter: MarkupEditorFilter = MarkupEditorFilterFactory.createIsNotDiffFilter()
 
     override fun shouldPaintGutter(): Boolean {
-      return localTracker.mode.isVisible
+      return tracker.mode.isVisible
     }
 
     override fun shouldPaintErrorStripeMarkers(): Boolean {
-      return localTracker.mode.isVisible && localTracker.mode.showErrorStripeMarkers
+      return tracker.mode.isVisible && tracker.mode.showErrorStripeMarkers
     }
 
     override fun createToolbarActions(editor: Editor, range: Range, mousePosition: Point?): List<AnAction> {
@@ -153,7 +153,7 @@ abstract class LocalLineStatusTrackerImpl<R : Range>(
       override fun isEnabled(editor: Editor, range: Range): Boolean = true
 
       override fun actionPerformed(editor: Editor, range: Range) {
-        rollback(localTracker, range, editor)
+        rollback(tracker, range, editor)
       }
     }
   }
