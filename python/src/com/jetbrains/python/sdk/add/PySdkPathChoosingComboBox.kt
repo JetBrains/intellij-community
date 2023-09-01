@@ -72,8 +72,8 @@ class PySdkPathChoosingComboBox @JvmOverloads constructor(sdks: List<Sdk> = empt
       ActionListener {
         val pythonSdkType = PythonSdkType.getInstance()
         val descriptor = pythonSdkType.homeChooserDescriptor
-        FileChooser.chooseFiles(descriptor, null, suggestedFile) {
-          val virtualFile = it.firstOrNull() ?: return@chooseFiles
+        FileChooser.chooseFiles(descriptor, null, suggestedFile) { chosenFiles ->
+          val virtualFile = chosenFiles.firstOrNull() ?: return@chooseFiles
           val path = PathUtil.toSystemDependentName(virtualFile.path)
           selectedSdk =
             items.find { it.homePath == path } ?: createDetectedSdk(path, isLocal = true).apply {
