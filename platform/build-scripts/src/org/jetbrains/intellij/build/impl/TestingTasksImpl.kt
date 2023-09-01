@@ -607,6 +607,10 @@ internal class TestingTasksImpl(private val context: CompilationContext, private
       stream.map { FileUtilRt.toSystemIndependentName(root.relativize(it).toString()) }.filter { pattern.matcher(it).matches() }.toList()
     }
 
+    if (options.batchOnlyClasses) {
+      context.messages.info("Batching whole test classes is enabled")
+    }
+
     if (testClasses.isEmpty()) {
       throw RuntimeException("No tests were found in ${root} with ${pattern}")
     }
@@ -632,13 +636,23 @@ internal class TestingTasksImpl(private val context: CompilationContext, private
 
         val jUnit4And5TestMethods = getAnnotatedTestMethods(aClass, testAnnotation4, testAnnotation5, testFactoryAnnotation5)
 
-        // Run JUnit 4 and 5 test methods separately if any
-        for (method in jUnit4And5TestMethods) {
+        // Run JUnit 4 and 5 whole test classes separately
+        if (options.batchOnlyClasses && jUnit4And5TestMethods.isNotEmpty()) {
           val exitCode = runJUnit5Engine(
             systemProperties, jvmArgs, envVariables, bootstrapClasspath, null, testClasspath,
-            qName, method)
+            qName, null)
           noTests = noTests && exitCode == NO_TESTS_ERROR
         }
+        // Run JUnit 4 and 5 test methods separately if any
+        else if (jUnit4And5TestMethods.isNotEmpty()) {
+          for (method in jUnit4And5TestMethods) {
+            val exitCode = runJUnit5Engine(
+              systemProperties, jvmArgs, envVariables, bootstrapClasspath, null, testClasspath,
+              qName, method)
+            noTests = noTests && exitCode == NO_TESTS_ERROR
+          }
+        }
+
         // Fallback to running whole class (JUnit 3)
         if (noTests) {
           val exitCode = runJUnit5Engine(
