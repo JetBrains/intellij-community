@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package git4idea
 
 import com.intellij.notification.impl.NotificationIdsHolder
@@ -83,6 +83,7 @@ class GitNotificationIdsHolder : NotificationIdsHolder {
       REVERT_ABORT_SUCCESS,
       STAGE_COMMIT_ERROR,
       STAGE_COMMIT_SUCCESS,
+      STAGE_OPERATION_FAILED,
       STASH_FAILED,
       STASH_LOCAL_CHANGES_DETECTED,
       TAG_CREATED,
@@ -190,6 +191,7 @@ class GitNotificationIdsHolder : NotificationIdsHolder {
     const val REVERT_ABORT_SUCCESS = "git.revert.abort.success"
     const val STAGE_COMMIT_ERROR = "git.stage.commit.error"
     const val STAGE_COMMIT_SUCCESS = "git.stage.commit.successful"
+    const val STAGE_OPERATION_FAILED = "git.stage.operation.error"
     const val STASH_FAILED = "git.stash.failed"
     const val STASH_LOCAL_CHANGES_DETECTED = "git.stash.local.changes.detected"
     const val TAG_CREATED = "git.tag.created"

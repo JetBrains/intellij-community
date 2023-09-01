@@ -23,7 +23,7 @@ interface StagingAreaOperation {
   val actionText: Supplier<@NlsActions.ActionText String>
   val progressTitle: @NlsContexts.ProgressTitle String
   val icon: Icon?
-  val errorMessage: @NlsContexts.NotificationContent String
+  val errorMessage: @NlsContexts.NotificationTitle String
   val shortcutText: String? get() = null
 
   fun matches(statusNode: GitFileStatusNode): Boolean
