@@ -46,12 +46,10 @@ project.iosX64Test
 project.jsMain
     languageLevel = 1.7
     apiLevel = 1.7
-    compilerSettings = -main call
 
 project.jsTest
     languageLevel = 1.7
     apiLevel = 1.7
-    compilerSettings = -main call
 
 project.jvmMain
     languageLevel = {{LATEST_STABLE}}
