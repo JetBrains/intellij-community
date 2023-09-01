@@ -117,6 +117,8 @@ public class PythonConsoleView extends LanguageConsoleImpl implements Observable
   private Dimension commandQueueDimension;
   private boolean isShowQueue;
 
+  private @Nullable OnClearCallback myOnClearCallback;
+
   private ActionToolbar myToolbar;
   private boolean myIsToolwindowHorizontal = true;
 
@@ -710,6 +712,19 @@ public class PythonConsoleView extends LanguageConsoleImpl implements Observable
     return mySplitView.getTree().getRoot();
   }
 
+  public void setOnClearCallback(@Nullable OnClearCallback onClearCallback) {
+    myOnClearCallback = onClearCallback;
+  }
+
+  @Override
+  public void clear() {
+    super.clear();
+    OnClearCallback onClearCallback = myOnClearCallback;
+    if (onClearCallback != null) {
+      onClearCallback.onClear();
+    }
+  }
+
   @Override
   public void dispose() {
     super.dispose();
@@ -762,5 +777,9 @@ public class PythonConsoleView extends LanguageConsoleImpl implements Observable
   @Override
   public @NotNull ActionUpdateThread getActionUpdateThread() {
     return super.getActionUpdateThread();
+  }
+
+  public interface OnClearCallback {
+    void onClear();
   }
 }
