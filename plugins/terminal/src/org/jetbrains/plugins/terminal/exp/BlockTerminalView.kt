@@ -1,6 +1,7 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.terminal.exp
 
+import com.intellij.find.SearchSession
 import com.intellij.openapi.actionSystem.DataProvider
 import com.intellij.openapi.application.invokeLater
 import com.intellij.openapi.editor.event.DocumentEvent
@@ -10,16 +11,15 @@ import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.wm.IdeFocusManager
 import com.intellij.terminal.JBTerminalSystemSettingsProviderBase
 import com.intellij.ui.util.preferredHeight
-import com.intellij.util.ui.JBInsets
 import com.jediterm.core.util.TermSize
+import org.jetbrains.plugins.terminal.exp.BlockTerminalController.BlockTerminalControllerListener
 import org.jetbrains.plugins.terminal.exp.TerminalPromptController.PromptStateListener
-import java.awt.*
+import java.awt.BorderLayout
+import java.awt.Dimension
 import java.awt.event.ComponentAdapter
 import java.awt.event.ComponentEvent
 import javax.swing.JComponent
 import javax.swing.JPanel
-import kotlin.math.max
-import kotlin.math.min
 
 class BlockTerminalView(
   private val project: Project,
@@ -64,18 +64,9 @@ class BlockTerminalView(
       }
     })
 
-    outputView.controller.addDocumentListener(object : DocumentListener {
-      override fun documentChanged(event: DocumentEvent) {
-        if (outputView.component.height < component.height    // do not revalidate if output already occupied all height
-            && outputView.component.preferredHeight > outputView.component.height) { // revalidate if output no more fit in current bounds
-          component.revalidate()
-        }
-      }
-    })
-
     val focusModel = TerminalFocusModel(project, outputView, promptView)
-    controller = BlockTerminalController(session, outputView.controller, promptView.controller)
     selectionController = TerminalSelectionController(focusModel, outputView.controller.selectionModel, outputView.controller.outputModel)
+    controller = BlockTerminalController(project, session, outputView.controller, promptView.controller, selectionController, focusModel)
 
     component.addComponentListener(object : ComponentAdapter() {
       override fun componentResized(e: ComponentEvent?) {
@@ -88,6 +79,16 @@ class BlockTerminalView(
         invokeLater {
           alternateBufferStateChanged(enabled)
         }
+      }
+    })
+
+    controller.addListener(object : BlockTerminalControllerListener {
+      override fun searchSessionStarted(session: SearchSession) {
+        outputView.installSearchComponent(session.component)
+      }
+
+      override fun searchSessionFinished(session: SearchSession) {
+        outputView.removeSearchComponent(session.component)
       }
     })
 
@@ -117,7 +118,6 @@ class BlockTerminalView(
 
     with(component) {
       removeAll()
-      layout = BorderLayout()
       add(view.component, BorderLayout.CENTER)
       revalidate()
     }
@@ -126,9 +126,8 @@ class BlockTerminalView(
   private fun installPromptAndOutput() {
     with(component) {
       removeAll()
-      layout = BlockTerminalLayout()
-      add(outputView.component, BlockTerminalLayout.TOP)
-      add(promptView.component, BlockTerminalLayout.BOTTOM)
+      add(outputView.component, BorderLayout.CENTER)
+      add(promptView.component, BorderLayout.SOUTH)
       revalidate()
     }
   }
@@ -162,6 +161,7 @@ class BlockTerminalView(
   private inner class BlockTerminalPanel : JPanel(), DataProvider {
     init {
       background = TerminalUi.terminalBackground
+      layout = BorderLayout()
     }
 
     override fun getData(dataId: String): Any? {
@@ -169,79 +169,10 @@ class BlockTerminalView(
         TerminalPromptController.KEY.name -> promptView.controller
         TerminalOutputController.KEY.name -> outputView.controller
         SimpleTerminalController.KEY.name -> alternateBufferView?.controller
+        BlockTerminalController.KEY.name -> controller
         TerminalSelectionController.KEY.name -> selectionController
         else -> null
       }
     }
-  }
-
-  /**
-   * This layout is needed to place [TOP] component (command blocks) over the [BOTTOM] component (prompt).
-   * The height of the [TOP] component is limited by the container size minus preferred height of the [BOTTOM].
-   * [com.intellij.ui.components.panels.VerticalLayout] and [com.intellij.ui.components.panels.ListLayout] can not be used instead,
-   * since they set height to preferred height of the components.
-   */
-  private class BlockTerminalLayout : LayoutManager2 {
-    companion object {
-      const val TOP = "TOP"
-      const val BOTTOM = "BOTTOM"
-    }
-
-    private var topComponent: Component? = null
-    private var bottomComponent: Component? = null
-
-    override fun addLayoutComponent(comp: Component?, constraints: Any?) {
-      when (constraints) {
-        TOP -> topComponent = comp
-        BOTTOM -> bottomComponent = comp
-        else -> throw IllegalArgumentException("Unknown constraint: $constraints")
-      }
-    }
-
-    override fun addLayoutComponent(name: String?, comp: Component?) {
-      addLayoutComponent(comp, name)
-    }
-
-    override fun layoutContainer(container: Container) {
-      val size = container.size
-      JBInsets.removeFrom(size, container.insets)
-      val bottomHeight = bottomComponent?.let { doLayout(it, size.height, size.width) } ?: 0
-      topComponent?.let { doLayout(it, size.height - bottomHeight, size.width) }
-    }
-
-    private fun doLayout(component: Component, bottomY: Int, maxWidth: Int): Int {
-      val prefSize = if (component.isVisible) component.preferredSize else Dimension(0, 0)
-      val minSize = if (component.isVisible) component.minimumSize else Dimension(0, 0)
-      val width = max(maxWidth, minSize.width)
-      val height = max(minSize.height, min(prefSize.height, bottomY))
-      component.setBounds(0, bottomY - height, width, height)
-      return height
-    }
-
-    override fun preferredLayoutSize(parent: Container?): Dimension = calculateSize { preferredSize }
-
-    override fun minimumLayoutSize(parent: Container?): Dimension = calculateSize { minimumSize }
-
-    override fun maximumLayoutSize(target: Container?): Dimension = calculateSize { maximumSize }
-
-    private fun calculateSize(getSize: Component.() -> Dimension): Dimension {
-      val sizes = listOfNotNull(topComponent, bottomComponent).map { getSize(it) }
-      val width = sizes.maxOfOrNull { it.width } ?: 0
-      val height = sizes.maxOfOrNull { it.height } ?: 0
-      return Dimension(width, height)
-    }
-
-    override fun removeLayoutComponent(comp: Component?) {
-      when (comp) {
-        topComponent -> topComponent = null
-        bottomComponent -> bottomComponent = null
-      }
-    }
-
-    override fun getLayoutAlignmentX(target: Container?): Float = Component.CENTER_ALIGNMENT
-
-    override fun getLayoutAlignmentY(target: Container?): Float = Component.BOTTOM_ALIGNMENT
-
-    override fun invalidateLayout(target: Container?) {}
   }
 }

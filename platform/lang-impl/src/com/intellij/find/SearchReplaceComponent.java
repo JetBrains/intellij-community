@@ -10,7 +10,6 @@ import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.ActionUtil;
 import com.intellij.openapi.actionSystem.impl.ActionToolbarImpl;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.impl.EditorHeaderComponent;
 import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.project.DumbAwareAction;
@@ -724,11 +723,11 @@ public final class SearchReplaceComponent extends EditorHeaderComponent implemen
   }
 
   public interface Listener extends EventListener {
-    void searchFieldDocumentChanged();
+    default void searchFieldDocumentChanged() {}
 
-    void replaceFieldDocumentChanged();
+    default void replaceFieldDocumentChanged() {}
 
-    void multilineStateChanged();
+    default void multilineStateChanged() {}
 
     default void toggleSearchReplaceMode() {}
   }

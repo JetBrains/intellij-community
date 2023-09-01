@@ -27,6 +27,8 @@ object TerminalDataContextUtils {
     get() = getData(TerminalPromptController.KEY)
   val DataContext.simpleTerminalController: SimpleTerminalController?
     get() = getData(SimpleTerminalController.KEY)
+  val DataContext.blockTerminalController: BlockTerminalController?
+    get() = getData(BlockTerminalController.KEY)
   val DataContext.selectionController: TerminalSelectionController?
     get() = getData(TerminalSelectionController.KEY)
 
