@@ -41,7 +41,7 @@ class GameTools(private val context: BuildContext, private val os: OsFamily, pri
   private fun getJavaArgs() : List<String> {
     val args = mutableListOf<String>()
 
-    args.addAll(context.getAdditionalJvmArguments(os, arch))
+    args.addAll(context.getAdditionalJvmArguments(os, arch, isScript = true))
 
     // We disable plugins ("-Didea.load.plugins=false") because AndroidGameDevelopmentToolsPlugin.xml directly
     // references the components (and not the plugins) to avoid including unused functionality (e.g. shift-shift to find
@@ -69,7 +69,7 @@ class GameTools(private val context: BuildContext, private val os: OsFamily, pri
     val classPaths = getClassPaths()
 
     if (os == OsFamily.WINDOWS) {
-      map["class_path"] = "SET CLASS_PATH=\"" + classPaths.joinToString(";") { "%IDE_HOME%\\${it}" } + "\""
+      map["class_path"] = "SET CLASS_PATH=" + classPaths.joinToString(";") { "%IDE_HOME%\\${it}" }
       map["vm_options"] = "${context.productProperties.baseFileName}64.exe"
       map["base_name"] = "game_tools"
     }
