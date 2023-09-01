@@ -3,6 +3,7 @@ package org.jetbrains.plugins.gradle.service.project;
 
 import com.intellij.build.events.MessageEvent;
 import com.intellij.build.issue.BuildIssue;
+import com.intellij.buildsystem.model.unified.UnifiedCoordinates;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.externalSystem.model.DataNode;
 import com.intellij.openapi.externalSystem.model.ProjectKeys;
@@ -48,6 +49,9 @@ import java.util.*;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
+
+import static com.intellij.openapi.util.NullUtils.hasNull;
+import static org.jetbrains.plugins.gradle.service.cache.GradleLocalCacheHelper.findArtifactComponents;
 
 /**
  * @author Vladislav.Soroka
@@ -441,15 +445,16 @@ public final class GradleProjectResolverUtil {
           pathsCache.put(path, collectedPaths);
         }
         if (path.contains("/caches/modules-2/files-2.1") || path.contains("/caches/transforms-")) {
-          String libraryDataExternalName = libraryData.getExternalName().replace("@aar", "");
-          GradleLocalCacheHelper.ArtifactCoordinates coordinates = GradleLocalCacheHelper.parseCoordinates(libraryDataExternalName);
+          UnifiedCoordinates coordinates = getLibraryCoordinates(libraryData);
           Set<LibraryPathType> requiredComponentTypes = getRequiredComponentTypes(sourceResolved, docResolved);
+          final Map<LibraryPathType, List<Path>> cachedComponents;
           if (coordinates != null) {
-            collectSourcesAndJavadocsFor(coordinates, collectedPaths, gradleUserHomeDir.toPath(), requiredComponentTypes);
+            cachedComponents = findArtifactComponents(coordinates, gradleUserHomeDir.toPath(), requiredComponentTypes);
           }
           else {
-            collectSourcesAndJavadocsFromGradleCache(path, collectedPaths, requiredComponentTypes);
+            cachedComponents = findAdjacentComponents(Paths.get(path), requiredComponentTypes);
           }
+          mergeCollectedArtifacts(collectedPaths, cachedComponents);
         }
         else {
           collectSourcesAndJavadocsFromTheSameFolder(path, collectedPaths, sourceResolved, docResolved);
@@ -462,23 +467,6 @@ public final class GradleProjectResolverUtil {
         }
       }
     }
-  }
-
-  private static void collectSourcesAndJavadocsFor(@NotNull GradleLocalCacheHelper.ArtifactCoordinates artifactCoordinates,
-                                                   @NotNull Map<LibraryPathType, List<String>> collect,
-                                                   @NotNull Path gradleUserHome,
-                                                   @NotNull Set<LibraryPathType> requiredComponentTypes) {
-    Map<LibraryPathType, List<Path>> components =
-      GradleLocalCacheHelper.findArtifactComponents(artifactCoordinates, gradleUserHome, requiredComponentTypes);
-    mergeCollectedArtifacts(collect, components);
-  }
-
-  private static void collectSourcesAndJavadocsFromGradleCache(@NotNull String binaryPath,
-                                                               @NotNull Map<LibraryPathType, List<String>> collect,
-                                                               @NotNull Set<LibraryPathType> requiredComponentTypes) {
-    final Path file = Paths.get(binaryPath);
-    Map<LibraryPathType, List<Path>> components = findAdjacentComponents(file, requiredComponentTypes);
-    mergeCollectedArtifacts(collect, components);
   }
 
   private static void mergeCollectedArtifacts(@NotNull Map<LibraryPathType, List<String>> target,
@@ -532,6 +520,29 @@ public final class GradleProjectResolverUtil {
     catch (IOException e) {
       LOG.debug(e);
     }
+  }
+
+  private static @Nullable UnifiedCoordinates getLibraryCoordinates(@NotNull LibraryData libraryData) {
+    String group = libraryData.getGroupId();
+    String artifact = libraryData.getArtifactId();
+    String version = libraryData.getVersion();
+    if (hasNull(group, artifact, version)) {
+      String externalName = libraryData.getExternalName();
+      if (StringUtil.isEmpty(externalName)) {
+        return null;
+      }
+      String[] externalNameParticles = externalName.split(":");
+      if (externalNameParticles.length == 3) {
+        group = externalNameParticles[0];
+        artifact = externalNameParticles[1];
+        version = externalNameParticles[2];
+      }
+    }
+    if (hasNull(group, artifact, version)) {
+      return null;
+    }
+    version = version.replace("@aar", "");
+    return new UnifiedCoordinates(group, artifact, version);
   }
 
   public static void buildDependencies(@NotNull ProjectResolverContext resolverCtx,

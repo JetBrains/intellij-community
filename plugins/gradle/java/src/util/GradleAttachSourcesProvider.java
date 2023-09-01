@@ -1,6 +1,7 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gradle.util;
 
+import com.intellij.buildsystem.model.unified.UnifiedCoordinates;
 import com.intellij.codeInsight.AttachSourcesProvider;
 import com.intellij.execution.executors.DefaultRunExecutor;
 import com.intellij.openapi.application.ApplicationManager;
@@ -147,7 +148,7 @@ final class GradleAttachSourcesProvider implements AttachSourcesProvider {
         return null;
       }
       String plainArtifactNotation = sourceArtifactNotation.replace("@aar", "");
-      GradleLocalCacheHelper.ArtifactCoordinates coordinates = GradleLocalCacheHelper.parseCoordinates(plainArtifactNotation);
+      UnifiedCoordinates coordinates = getLibraryUnifiedCoordinates(plainArtifactNotation);
       if (coordinates == null) {
         return null;
       }
@@ -303,5 +304,14 @@ final class GradleAttachSourcesProvider implements AttachSourcesProvider {
     catch (IOException e) {
       return false;
     }
+  }
+
+  private static @Nullable UnifiedCoordinates getLibraryUnifiedCoordinates(@NotNull String sourceArtifactNotation) {
+    String notation = sourceArtifactNotation.replace("@aar", "");
+    String[] particles = notation.split(":");
+    if (particles.length < 3) {
+      return null;
+    }
+    return new UnifiedCoordinates(particles[0], particles[1], particles[2]);
   }
 }

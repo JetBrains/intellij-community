@@ -1,6 +1,7 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gradle.util
 
+import com.intellij.buildsystem.model.unified.UnifiedCoordinates
 import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.externalSystem.model.project.LibraryPathType
 import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskId
@@ -112,8 +113,7 @@ class GradleAttachSourcesProviderTest : GradleImportingTestCase() {
   }
 
   private fun findArtifactComponentsInGradleCache(dependencyNotation: String): Map<LibraryPathType, List<Path>> {
-    val coordinates = GradleLocalCacheHelper.parseCoordinates(dependencyNotation)
-                      ?: throw IllegalStateException("Artifact coordinates should be parsed!")
+    val coordinates = dependencyNotation.split(":").let { UnifiedCoordinates(it[0], it[1], it[2]) }
     return GradleLocalCacheHelper.findArtifactComponents(coordinates, gradleUserHome, EnumSet.allOf(LibraryPathType::class.java))
   }
 

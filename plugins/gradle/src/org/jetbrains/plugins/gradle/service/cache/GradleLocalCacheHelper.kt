@@ -1,8 +1,8 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gradle.service.cache
 
+import com.intellij.buildsystem.model.unified.UnifiedCoordinates
 import com.intellij.openapi.externalSystem.model.project.LibraryPathType
-import com.intellij.openapi.util.NlsSafe
 import com.intellij.util.SmartList
 import org.jetbrains.annotations.ApiStatus
 import java.io.IOException
@@ -20,21 +20,6 @@ object GradleLocalCacheHelper {
   private const val JAR_SUFFIX = ".jar"
   private const val CACHED_FILES_ROOT_PATH = "caches/modules-2/files-2.1"
 
-  data class ArtifactCoordinates(val groupId: @NlsSafe String,
-                                 val artifactId: @NlsSafe String,
-                                 val version: @NlsSafe String)
-
-  /**
-   * Convert artifact notation to ArtifactCoordinates.
-   *
-   * @param artifactNotation - artifact notation as a colon-separated String in the format of group:artifact:version.
-   * @return ArtifactCoordinates if it was possible to parse the notation, null otherwise.
-   */
-  @JvmStatic
-  fun parseCoordinates(artifactNotation: String): ArtifactCoordinates? = artifactNotation.split(":").let {
-    return if (it.size < 3) null else ArtifactCoordinates(it[0], it[1], it[2])
-  }
-
   /**
    * Search for the required artifact components in the Gradle user's home folder.
    * File walker will continue to check files until all requested artifacts are found or until all files have been checked.
@@ -45,12 +30,10 @@ object GradleLocalCacheHelper {
    * @return collected artifact components.
    */
   @JvmStatic
-  fun findArtifactComponents(coordinates: ArtifactCoordinates,
+  fun findArtifactComponents(coordinates: UnifiedCoordinates,
                              gradleUserHome: Path,
-                             requestedComponents: Set<LibraryPathType>): Map<LibraryPathType, List<Path>> {
-    val cachedArtifactRoot = coordinates.toCachedArtifactRoot(gradleUserHome)
-    return findAdjacentComponents(cachedArtifactRoot, requestedComponents)
-  }
+                             requestedComponents: Set<LibraryPathType>): Map<LibraryPathType, List<Path>> = coordinates.toCachedArtifactRoot(
+    gradleUserHome)?.let { findAdjacentComponents(it, requestedComponents) } ?: emptyMap()
 
   /**
    * Search for adjacent components in the Gradle artifact cache folder.
@@ -111,8 +94,13 @@ object GradleLocalCacheHelper {
     }
   }
 
-  private fun ArtifactCoordinates.toCachedArtifactRoot(gradleUserHome: Path): Path = gradleUserHome.resolve(CACHED_FILES_ROOT_PATH)
-    .resolve(groupId)
-    .resolve(artifactId)
-    .resolve(version)
+  private fun UnifiedCoordinates.toCachedArtifactRoot(gradleUserHome: Path): Path? {
+    if (groupId == null || artifactId == null || version == null) {
+      return null
+    }
+    return gradleUserHome.resolve(CACHED_FILES_ROOT_PATH)
+      .resolve(groupId)
+      .resolve(artifactId)
+      .resolve(version)
+  }
 }

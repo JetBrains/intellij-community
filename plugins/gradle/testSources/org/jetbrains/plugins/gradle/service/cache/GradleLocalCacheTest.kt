@@ -1,6 +1,7 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gradle.service.cache
 
+import com.intellij.buildsystem.model.unified.UnifiedCoordinates
 import com.intellij.openapi.externalSystem.model.project.LibraryPathType
 import com.intellij.util.io.delete
 import org.assertj.core.api.Assertions.assertThat
@@ -37,9 +38,9 @@ class GradleLocalCacheTest : GradleImportingTestCase() {
       withMavenCentral()
       addTestImplementationDependency(DEPENDENCY)
     }
-    val components = GradleLocalCacheHelper.parseCoordinates(DEPENDENCY)
-      .let {
-        GradleLocalCacheHelper.findArtifactComponents(it!!, gradleUserHome, setOf(LibraryPathType.BINARY, LibraryPathType.SOURCE))
+    val components = DEPENDENCY.split(":").let {
+      val coordinates = UnifiedCoordinates(it[0], it[1], it[2])
+      GradleLocalCacheHelper.findArtifactComponents(coordinates, gradleUserHome, setOf(LibraryPathType.BINARY, LibraryPathType.SOURCE))
       }
     assertThat(components.size).isEqualTo(2)
     assertThat(components[LibraryPathType.BINARY]).hasSize(1).first().isEqualTo(gradleUserHome.resolve(DEPENDENCY_JAR_CACHE_PATH))
