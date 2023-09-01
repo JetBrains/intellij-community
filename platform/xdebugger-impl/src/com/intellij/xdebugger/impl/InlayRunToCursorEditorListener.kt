@@ -35,6 +35,11 @@ import javax.swing.JComponent
 import javax.swing.JPanel
 import javax.swing.SwingUtilities
 
+private const val NEGATIVE_INLAY_PANEL_SHIFT = -6 // it is needed to fit into 2-space tabulation
+private const val MINIMAL_TEXT_OFFSET = 16
+private const val ACTION_BUTTON_SIZE = 22
+private const val ACTION_BUTTON_GAP = 2
+
 internal class InlayRunToCursorEditorListener(private val project: Project) : EditorMouseMotionListener, EditorMouseListener {
   private var currentHint = WeakReference<RunToCursorHint?>(null)
   private var currentEditor = WeakReference<Editor?>(null)
@@ -102,11 +107,11 @@ internal class InlayRunToCursorEditorListener(private val project: Project) : Ed
       firstNonSpaceSymbol++
     }
     val firstNonSpacePos = editor.offsetToXY(firstNonSpaceSymbol)
-    if (firstNonSpacePos.x < JBUI.scale(16)) {
+    if (firstNonSpacePos.x < JBUI.scale(MINIMAL_TEXT_OFFSET)) {
       return true
     }
     val lineY = editor.logicalPositionToXY(LogicalPosition(lineNumber, 0)).y
-    val position = SwingUtilities.convertPoint(editor.getContentComponent(), Point(-JBUI.scale(6), lineY),
+    val position = SwingUtilities.convertPoint(editor.getContentComponent(), Point(JBUI.scale(NEGATIVE_INLAY_PANEL_SHIFT), lineY),
                                                editor.getComponent().rootPane.layeredPane)
     val group = DefaultActionGroup()
     val pausePosition = session.currentPosition
@@ -122,11 +127,10 @@ internal class InlayRunToCursorEditorListener(private val project: Project) : Ed
         ApplicationManager.getApplication().runReadAction {
           val types = XBreakpointUtil.getAvailableLineBreakpointTypes(project, hoverPosition, editor)
           val hasGeneralBreakpoint = types.any { it.enabledIcon === AllIcons.Debugger.Db_set_breakpoint }
-          if (!hasGeneralBreakpoint) {
-            return@runReadAction
-          }
           ApplicationManager.getApplication().invokeLater {
-            group.add(ActionManager.getInstance().getAction(IdeActions.ACTION_RUN_TO_CURSOR))
+            if (hasGeneralBreakpoint) {
+              group.add(ActionManager.getInstance().getAction(IdeActions.ACTION_RUN_TO_CURSOR))
+            }
             showHint(editor, lineNumber, firstNonSpacePos, group, position)
           }
         }
@@ -140,13 +144,13 @@ internal class InlayRunToCursorEditorListener(private val project: Project) : Ed
     currentEditor = WeakReference(editor)
     currentLineNumber = lineNumber
     val caretLine = editor.getCaretModel().logicalPosition.line
-    if (editor.getSettings().isShowIntentionBulb() && caretLine == lineNumber && firstNonSpacePos.x >= JBUI.scale(4 + 22 * 2)) {
+    val minimalOffsetBeforeText = MINIMAL_TEXT_OFFSET + (ACTION_BUTTON_GAP * 2 + ACTION_BUTTON_SIZE) * group.childrenCount
+    if (editor.getSettings().isShowIntentionBulb() && caretLine == lineNumber && firstNonSpacePos.x >= JBUI.scale(minimalOffsetBeforeText)) {
       group.add(ActionManager.getInstance().getAction(IdeActions.ACTION_SHOW_INTENTION_ACTIONS))
     }
     val toolbarImpl = createImmediatelyUpdatedToolbar(group, ActionPlaces.EDITOR_HINT, editor.getComponent(), true) {} as ActionToolbarImpl
     toolbarImpl.setLayoutPolicy(ActionToolbar.NOWRAP_LAYOUT_POLICY)
-    val sideButtonOffset = 2
-    toolbarImpl.setActionButtonBorder(JBUI.Borders.empty(0, sideButtonOffset))
+    toolbarImpl.setActionButtonBorder(JBUI.Borders.empty(0, ACTION_BUTTON_GAP))
     toolbarImpl.setBorder(null)
     toolbarImpl.setOpaque(false)
     toolbarImpl.setAdditionalDataProvider { dataId: String? ->
@@ -156,7 +160,7 @@ internal class InlayRunToCursorEditorListener(private val project: Project) : Ed
       null
     }
     val justPanel: JPanel = NonOpaquePanel()
-    justPanel.preferredSize = JBDimension((2 * sideButtonOffset + 22) * group.childrenCount, 22)
+    justPanel.preferredSize = JBDimension((2 * ACTION_BUTTON_GAP + ACTION_BUTTON_SIZE) * group.childrenCount, ACTION_BUTTON_SIZE)
     justPanel.add(toolbarImpl.component)
     val hint = RunToCursorHint(justPanel, this)
     currentHint = WeakReference(hint)
