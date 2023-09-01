@@ -1,89 +1,75 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.openapi.vcs.ex;
+package com.intellij.openapi.vcs.ex
 
-import com.intellij.diff.DiffContentFactory;
-import com.intellij.diff.DiffManager;
-import com.intellij.diff.contents.DiffContent;
-import com.intellij.diff.contents.DocumentContent;
-import com.intellij.diff.requests.SimpleDiffRequest;
-import com.intellij.diff.util.DiffUtil;
-import com.intellij.openapi.diff.DiffBundle;
-import com.intellij.openapi.editor.Document;
-import com.intellij.openapi.ide.CopyPasteManager;
-import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.TextRange;
-import com.intellij.openapi.vfs.VirtualFile;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import com.intellij.diff.DiffContentFactory
+import com.intellij.diff.DiffManager
+import com.intellij.diff.contents.DiffContent
+import com.intellij.diff.requests.SimpleDiffRequest
+import com.intellij.diff.util.DiffUtil
+import com.intellij.openapi.diff.DiffBundle
+import com.intellij.openapi.editor.Document
+import com.intellij.openapi.ide.CopyPasteManager
+import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.TextRange
+import com.intellij.openapi.vfs.VirtualFile
+import java.awt.datatransfer.StringSelection
 
-import java.awt.datatransfer.StringSelection;
-
-import static com.intellij.diff.util.DiffUtil.getLineCount;
-
-public final class LineStatusMarkerPopupActions {
-  public static void showDiff(@NotNull LineStatusTrackerI<?> tracker, @NotNull Range range) {
-    Project project = tracker.getProject();
-    Range ourRange = expand(range, tracker.getDocument(), tracker.getVcsDocument());
-
-    DiffContent vcsContent = createDiffContent(project,
-                                               tracker.getVcsDocument(),
-                                               tracker.getVirtualFile(),
-                                               getVcsTextRange(tracker, ourRange));
-    DiffContent currentContent = createDiffContent(project,
-                                                   tracker.getDocument(),
-                                                   tracker.getVirtualFile(),
-                                                   getCurrentTextRange(tracker, ourRange));
-
-    SimpleDiffRequest request = new SimpleDiffRequest(DiffBundle.message("dialog.title.diff.for.range"),
-                                                      vcsContent, currentContent,
-                                                      DiffBundle.message("diff.content.title.up.to.date"),
-                                                      DiffBundle.message("diff.content.title.current.range"));
-
-    DiffManager.getInstance().showDiff(project, request);
+object LineStatusMarkerPopupActions {
+  @JvmStatic
+  fun showDiff(tracker: LineStatusTrackerI<*>, range: Range) {
+    val project = tracker.project
+    val ourRange = expand(range, tracker.document, tracker.vcsDocument)
+    val vcsContent = createDiffContent(project,
+                                       tracker.vcsDocument,
+                                       tracker.virtualFile,
+                                       getVcsTextRange(tracker, ourRange))
+    val currentContent = createDiffContent(project,
+                                           tracker.document,
+                                           tracker.virtualFile,
+                                           getCurrentTextRange(tracker, ourRange))
+    val request = SimpleDiffRequest(DiffBundle.message("dialog.title.diff.for.range"),
+                                    vcsContent, currentContent,
+                                    DiffBundle.message("diff.content.title.up.to.date"),
+                                    DiffBundle.message("diff.content.title.current.range"))
+    DiffManager.getInstance().showDiff(project, request)
   }
 
-  @NotNull
-  private static DiffContent createDiffContent(@Nullable Project project,
-                                               @NotNull Document document,
-                                               @Nullable VirtualFile highlightFile,
-                                               @NotNull TextRange textRange) {
-    DocumentContent content = DiffContentFactory.getInstance().create(project, document, highlightFile);
-    return DiffContentFactory.getInstance().createFragment(project, content, textRange);
+  private fun createDiffContent(project: Project?,
+                                document: Document,
+                                highlightFile: VirtualFile?,
+                                textRange: TextRange): DiffContent {
+    val content = DiffContentFactory.getInstance().create(project, document, highlightFile)
+    return DiffContentFactory.getInstance().createFragment(project, content, textRange)
   }
 
-  @NotNull
-  private static Range expand(@NotNull Range range, @NotNull Document document, @NotNull Document uDocument) {
-    boolean canExpandBefore = range.getLine1() != 0 && range.getVcsLine1() != 0;
-    boolean canExpandAfter = range.getLine2() < getLineCount(document) && range.getVcsLine2() < getLineCount(uDocument);
-    int offset1 = range.getLine1() - (canExpandBefore ? 1 : 0);
-    int uOffset1 = range.getVcsLine1() - (canExpandBefore ? 1 : 0);
-    int offset2 = range.getLine2() + (canExpandAfter ? 1 : 0);
-    int uOffset2 = range.getVcsLine2() + (canExpandAfter ? 1 : 0);
-    return new Range(offset1, offset2, uOffset1, uOffset2);
+  private fun expand(range: Range, document: Document, uDocument: Document): Range {
+    val canExpandBefore = range.line1 != 0 && range.vcsLine1 != 0
+    val canExpandAfter = range.line2 < DiffUtil.getLineCount(document) && range.vcsLine2 < DiffUtil.getLineCount(uDocument)
+    val offset1 = range.line1 - if (canExpandBefore) 1 else 0
+    val uOffset1 = range.vcsLine1 - if (canExpandBefore) 1 else 0
+    val offset2 = range.line2 + if (canExpandAfter) 1 else 0
+    val uOffset2 = range.vcsLine2 + if (canExpandAfter) 1 else 0
+    return Range(offset1, offset2, uOffset1, uOffset2)
   }
 
-  public static void copyVcsContent(@NotNull LineStatusTrackerI<?> tracker, @NotNull Range range) {
-    final String content = getVcsContent(tracker, range) + "\n";
-    CopyPasteManager.getInstance().setContents(new StringSelection(content));
+  fun copyVcsContent(tracker: LineStatusTrackerI<*>, range: Range) {
+    val content = getVcsContent(tracker, range).toString() + "\n"
+    CopyPasteManager.getInstance().setContents(StringSelection(content))
   }
 
-  @NotNull
-  public static CharSequence getCurrentContent(@NotNull LineStatusTrackerI<?> tracker, @NotNull Range range) {
-    return DiffUtil.getLinesContent(tracker.getDocument(), range.getLine1(), range.getLine2());
+  fun getCurrentContent(tracker: LineStatusTrackerI<*>, range: Range): CharSequence {
+    return DiffUtil.getLinesContent(tracker.document, range.line1, range.line2)
   }
 
-  @NotNull
-  public static CharSequence getVcsContent(@NotNull LineStatusTrackerI<?> tracker, @NotNull Range range) {
-    return DiffUtil.getLinesContent(tracker.getVcsDocument(), range.getVcsLine1(), range.getVcsLine2());
+  fun getVcsContent(tracker: LineStatusTrackerI<*>, range: Range): CharSequence {
+    return DiffUtil.getLinesContent(tracker.vcsDocument, range.vcsLine1, range.vcsLine2)
   }
 
-  @NotNull
-  public static TextRange getCurrentTextRange(@NotNull LineStatusTrackerI<?> tracker, @NotNull Range range) {
-    return DiffUtil.getLinesRange(tracker.getDocument(), range.getLine1(), range.getLine2());
+  fun getCurrentTextRange(tracker: LineStatusTrackerI<*>, range: Range): TextRange {
+    return DiffUtil.getLinesRange(tracker.document, range.line1, range.line2)
   }
 
-  @NotNull
-  public static TextRange getVcsTextRange(@NotNull LineStatusTrackerI<?> tracker, @NotNull Range range) {
-    return DiffUtil.getLinesRange(tracker.getVcsDocument(), range.getVcsLine1(), range.getVcsLine2());
+  fun getVcsTextRange(tracker: LineStatusTrackerI<*>, range: Range): TextRange {
+    return DiffUtil.getLinesRange(tracker.vcsDocument, range.vcsLine1, range.vcsLine2)
   }
 }
