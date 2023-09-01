@@ -377,7 +377,7 @@
                  defaultValue="600000"
                  description="Interval in milliseconds defining how often Markdown plugin caches (e.g. PlantUML diagrams) should be cleared"/>
     <registryKey key="markdown.plantuml.download.link"
-                 defaultValue="https://download.jetbrains.com/grazie/markdown/extensions/plantuml/plantuml-1.2023.0-7.jar"
+                 defaultValue="https://download.jetbrains.com/grazie/markdown/extensions/plantuml/plantuml-1.2023.10-15.jar"
                  description="Link which Markdown plugin will use to download PlantUML JAR"/>
     <registryKey key="markdown.open.link.in.external.browser"
                  defaultValue="true"
