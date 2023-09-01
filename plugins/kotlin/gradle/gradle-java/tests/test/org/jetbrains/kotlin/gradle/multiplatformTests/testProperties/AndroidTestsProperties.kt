@@ -9,7 +9,7 @@ object AndroidGradlePluginVersionTestsProperty : KotlinTestsResolvableProperty {
     enum class Value(val acronym: String, val version: String) {
         MinSupported("MIN", "7.4.2"),
         LatestStable("STABLE", "8.0.2"),
-        Beta("BETA", "8.1.0-beta05"),
+        Beta("BETA", "8.1.0-alpha05"),
         Alpha("ALPHA", "8.2.0-alpha08")
     }
 
