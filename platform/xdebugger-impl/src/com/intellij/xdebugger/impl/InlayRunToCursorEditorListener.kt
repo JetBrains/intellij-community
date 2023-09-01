@@ -6,24 +6,29 @@ import com.intellij.codeInsight.hint.HintManager
 import com.intellij.codeInsight.hint.HintManagerImpl
 import com.intellij.codeInsight.hint.PriorityQuestionAction
 import com.intellij.codeInsight.hint.QuestionAction
+import com.intellij.icons.AllIcons
 import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.actionSystem.impl.ActionToolbarImpl
 import com.intellij.openapi.actionSystem.impl.ToolbarUtils.createImmediatelyUpdatedToolbar
+import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.EditorKind
 import com.intellij.openapi.editor.LogicalPosition
 import com.intellij.openapi.editor.event.EditorMouseEvent
 import com.intellij.openapi.editor.event.EditorMouseListener
 import com.intellij.openapi.editor.event.EditorMouseMotionListener
+import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.ui.HintHint
 import com.intellij.ui.LightweightHint
 import com.intellij.ui.components.panels.NonOpaquePanel
+import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.intellij.util.ui.JBDimension
 import com.intellij.util.ui.JBUI
 import com.intellij.xdebugger.XDebuggerManager
 import com.intellij.xdebugger.impl.actions.XDebuggerActions
+import com.intellij.xdebugger.impl.breakpoints.XBreakpointUtil
 import java.awt.Point
 import java.lang.ref.WeakReference
 import javax.swing.JComponent
@@ -40,8 +45,8 @@ internal class InlayRunToCursorEditorListener(private val project: Project) : Ed
       IntentionsUIImpl.DISABLE_INTENTION_BULB[project] = false
       return
     }
-    val wasShown = showInlayRunToCursor(e)
-    if (!wasShown) {
+    val shouldHideCurrentHint = scheduleInlayRunToCursor(e)
+    if (shouldHideCurrentHint) {
       hideHint()
     }
   }
@@ -60,38 +65,36 @@ internal class InlayRunToCursorEditorListener(private val project: Project) : Ed
     hint?.hide()
   }
 
-  private fun showInlayRunToCursor(e: EditorMouseEvent): Boolean {
+  private fun scheduleInlayRunToCursor(e: EditorMouseEvent): Boolean {
     val editor = e.editor
     if (editor.getEditorKind() != EditorKind.MAIN_EDITOR) {
-      return false
+      return true
     }
     if (editor.getScrollingModel().getHorizontalScrollOffset() != 0) {
-      return false
+      return true
     }
     val session = XDebuggerManager.getInstance(project).getCurrentSession() as XDebugSessionImpl?
     if (session == null || !session.isPaused || session.isReadOnly) {
       IntentionsUIImpl.DISABLE_INTENTION_BULB[project] = false
-      return false
+      return true
     }
     IntentionsUIImpl.DISABLE_INTENTION_BULB[project] = true
     val lineNumber = XDebuggerManagerImpl.getLineNumber(e)
     if (lineNumber < 0) {
-      return false
-    }
-    if (currentEditor.get() === editor && currentLineNumber == lineNumber) {
       return true
     }
-    currentEditor = WeakReference(editor)
-    currentLineNumber = lineNumber
+    if (currentEditor.get() === editor && currentLineNumber == lineNumber) {
+      return false
+    }
     var firstNonSpaceSymbol = editor.getDocument().getLineStartOffset(lineNumber)
     val charsSequence = editor.getDocument().charsSequence
     while (true) {
       if (firstNonSpaceSymbol >= charsSequence.length) {
-        return false //end of file
+        return true //end of file
       }
       val c = charsSequence[firstNonSpaceSymbol]
       if (c == '\n') {
-        return false // empty line
+        return true // empty line
       }
       if (!Character.isWhitespace(c)) {
         break
@@ -100,7 +103,7 @@ internal class InlayRunToCursorEditorListener(private val project: Project) : Ed
     }
     val firstNonSpacePos = editor.offsetToXY(firstNonSpaceSymbol)
     if (firstNonSpacePos.x < JBUI.scale(16)) {
-      return false
+      return true
     }
     val lineY = editor.logicalPositionToXY(LogicalPosition(lineNumber, 0)).y
     val position = SwingUtilities.convertPoint(editor.getContentComponent(), Point(-JBUI.scale(6), lineY),
@@ -109,10 +112,33 @@ internal class InlayRunToCursorEditorListener(private val project: Project) : Ed
     val pausePosition = session.currentPosition
     if (pausePosition != null && pausePosition.getFile() == editor.virtualFile && pausePosition.getLine() == lineNumber) {
       group.add(ActionManager.getInstance().getAction(XDebuggerActions.RESUME))
+      ApplicationManager.getApplication().invokeLater {
+        showHint(editor, lineNumber, firstNonSpacePos, group, position)
+      }
     }
     else {
-      group.add(ActionManager.getInstance().getAction(IdeActions.ACTION_RUN_TO_CURSOR))
+      val hoverPosition = XSourcePositionImpl.create(FileDocumentManager.getInstance().getFile(editor.getDocument()), lineNumber)
+      ApplicationManager.getApplication().executeOnPooledThread {
+        ApplicationManager.getApplication().runReadAction {
+          val types = XBreakpointUtil.getAvailableLineBreakpointTypes(project, hoverPosition, editor)
+          val hasGeneralBreakpoint = types.any { it.enabledIcon === AllIcons.Debugger.Db_set_breakpoint }
+          if (!hasGeneralBreakpoint) {
+            return@runReadAction
+          }
+          ApplicationManager.getApplication().invokeLater {
+            group.add(ActionManager.getInstance().getAction(IdeActions.ACTION_RUN_TO_CURSOR))
+            showHint(editor, lineNumber, firstNonSpacePos, group, position)
+          }
+        }
+      }
     }
+    return true
+  }
+
+  @RequiresEdt
+  private fun showHint(editor: Editor, lineNumber: Int, firstNonSpacePos: Point, group: DefaultActionGroup, position: Point) {
+    currentEditor = WeakReference(editor)
+    currentLineNumber = lineNumber
     val caretLine = editor.getCaretModel().logicalPosition.line
     if (editor.getSettings().isShowIntentionBulb() && caretLine == lineNumber && firstNonSpacePos.x >= JBUI.scale(4 + 22 * 2)) {
       group.add(ActionManager.getInstance().getAction(IdeActions.ACTION_SHOW_INTENTION_ACTIONS))
@@ -145,7 +171,6 @@ internal class InlayRunToCursorEditorListener(private val project: Project) : Ed
     }
     val offset = editor.getCaretModel().offset
     HintManagerImpl.getInstanceImpl().showQuestionHint(editor, position, offset, offset, hint, questionAction, HintManager.RIGHT)
-    return true
   }
 
   private class RunToCursorHint(component: JComponent, private val listener: InlayRunToCursorEditorListener) : LightweightHint(component) {
