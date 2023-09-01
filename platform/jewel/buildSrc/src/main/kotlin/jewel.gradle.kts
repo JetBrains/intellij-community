@@ -68,7 +68,8 @@ tasks {
         }
     }
     withType<LintTask> {
-        exclude { it.file.absolutePath.startsWith(layout.buildDirectory.asFile.get().absolutePath) }
+        exclude { it.file.absolutePath.contains("build/generated") }
+
         val sarifReport = layout.buildDirectory.file("reports/ktlint-${project.name}.sarif")
         reports = provider {
             mapOf(

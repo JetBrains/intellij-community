@@ -115,7 +115,6 @@ private fun ButtonImpl(
     val shape = RoundedCornerShape(style.metrics.cornerSize)
     val colors = style.colors
     val borderColor by colors.borderFor(buttonState)
-    println("state: $buttonState ($enabled) -> $borderColor")
 
     Box(
         modifier = modifier
