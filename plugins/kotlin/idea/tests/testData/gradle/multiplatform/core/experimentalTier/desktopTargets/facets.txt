@@ -70,7 +70,7 @@ project.linuxTest
 project.linuxX64Main
     externalProjectId = project
     languageLevel = {{LATEST_STABLE}}
-    apiLevel = 1.9
+    apiLevel = {{LATEST_STABLE}}
     mppVersion = M3
     dependsOnModuleNames = project:commonMain, project:linuxMain, project:nativeMain
     targetPlatform = Native (linux_x64)
