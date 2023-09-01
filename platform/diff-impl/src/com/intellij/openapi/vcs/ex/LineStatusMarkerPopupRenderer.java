@@ -67,7 +67,7 @@ public abstract class LineStatusMarkerPopupRenderer extends LineStatusMarkerRend
 
   @NotNull
   protected FileType getFileType() {
-    VirtualFile virtualFile = myTracker.getVirtualFile();
+    VirtualFile virtualFile = tracker.getVirtualFile();
     return virtualFile != null ? virtualFile.getFileType() : PlainTextFileType.INSTANCE;
   }
 
@@ -81,7 +81,7 @@ public abstract class LineStatusMarkerPopupRenderer extends LineStatusMarkerRend
 
 
   public void scrollAndShow(@NotNull Editor editor, @NotNull Range range) {
-    if (!myTracker.isValid()) return;
+    if (!tracker.isValid()) return;
     moveToRange(editor, range);
     showAfterScroll(editor, range);
   }
@@ -110,16 +110,16 @@ public abstract class LineStatusMarkerPopupRenderer extends LineStatusMarkerRend
   }
 
   public void showHintAt(@NotNull Editor editor, @NotNull Range range, @Nullable Point mousePosition) {
-    if (!myTracker.isValid()) return;
+    if (!tracker.isValid()) return;
     final Disposable disposable = Disposer.newDisposable();
 
     JComponent editorComponent = null;
     if (range.hasVcsLines()) {
-      String content = getVcsContent(myTracker, range).toString();
+      String content = getVcsContent(tracker, range).toString();
       EditorTextField textField = LineStatusMarkerPopupPanel.createTextField(editor, content);
 
-      LineStatusMarkerPopupPanel.installBaseEditorSyntaxHighlighters(myTracker.getProject(), textField, myTracker.getVcsDocument(),
-                                                                     getVcsTextRange(myTracker, range), getFileType());
+      LineStatusMarkerPopupPanel.installBaseEditorSyntaxHighlighters(tracker.getProject(), textField, tracker.getVcsDocument(),
+                                                                     getVcsTextRange(tracker, range), getFileType());
 
       installWordDiff(editor, textField, range, disposable);
 
@@ -135,7 +135,7 @@ public abstract class LineStatusMarkerPopupRenderer extends LineStatusMarkerRend
   }
 
   protected void reopenRange(@NotNull Editor editor, @NotNull Range range, @Nullable Point mousePosition) {
-    Range newRange = myTracker.findRange(range);
+    Range newRange = tracker.findRange(range);
     if (newRange != null) {
       showHintAt(editor, newRange, mousePosition);
     }
@@ -151,8 +151,8 @@ public abstract class LineStatusMarkerPopupRenderer extends LineStatusMarkerRend
     if (!DiffApplicationSettings.getInstance().SHOW_LST_WORD_DIFFERENCES) return;
     if (!range.hasLines() || !range.hasVcsLines()) return;
 
-    CharSequence vcsContent = getVcsContent(myTracker, range);
-    CharSequence currentContent = getCurrentContent(myTracker, range);
+    CharSequence vcsContent = getVcsContent(tracker, range);
+    CharSequence currentContent = getCurrentContent(tracker, range);
 
     List<DiffFragment> wordDiff = BackgroundTaskUtil.tryComputeFast(
       indicator -> ByWord.compare(vcsContent, currentContent, ComparisonPolicy.DEFAULT, indicator), 200);
@@ -180,13 +180,13 @@ public abstract class LineStatusMarkerPopupRenderer extends LineStatusMarkerRend
 
     @Override
     public void update(@NotNull AnActionEvent e) {
-      Range newRange = myTracker.findRange(myRange);
+      Range newRange = tracker.findRange(myRange);
       e.getPresentation().setEnabled(newRange != null && !myEditor.isDisposed() && isEnabled(myEditor, newRange));
     }
 
     @Override
     public void actionPerformed(@NotNull AnActionEvent e) {
-      Range newRange = myTracker.findRange(myRange);
+      Range newRange = tracker.findRange(myRange);
       if (newRange != null) actionPerformed(myEditor, newRange);
     }
 
@@ -202,12 +202,12 @@ public abstract class LineStatusMarkerPopupRenderer extends LineStatusMarkerRend
 
     @Override
     protected boolean isEnabled(@NotNull Editor editor, @NotNull Range range) {
-      return myTracker.getNextRange(range.getLine1()) != null;
+      return tracker.getNextRange(range.getLine1()) != null;
     }
 
     @Override
     protected void actionPerformed(@NotNull Editor editor, @NotNull Range range) {
-      Range targetRange = myTracker.getNextRange(range.getLine1());
+      Range targetRange = tracker.getNextRange(range.getLine1());
       if (targetRange != null) {
         scrollAndShow(editor, targetRange);
       }
@@ -221,12 +221,12 @@ public abstract class LineStatusMarkerPopupRenderer extends LineStatusMarkerRend
 
     @Override
     protected boolean isEnabled(@NotNull Editor editor, @NotNull Range range) {
-      return myTracker.getPrevRange(range.getLine1()) != null;
+      return tracker.getPrevRange(range.getLine1()) != null;
     }
 
     @Override
     protected void actionPerformed(@NotNull Editor editor, @NotNull Range range) {
-      Range targetRange = myTracker.getPrevRange(range.getLine1());
+      Range targetRange = tracker.getPrevRange(range.getLine1());
       if (targetRange != null) {
         scrollAndShow(editor, targetRange);
       }
@@ -245,7 +245,7 @@ public abstract class LineStatusMarkerPopupRenderer extends LineStatusMarkerRend
 
     @Override
     protected void actionPerformed(@NotNull Editor editor, @NotNull Range range) {
-      copyVcsContent(myTracker, range);
+      copyVcsContent(tracker, range);
     }
   }
 
@@ -263,7 +263,7 @@ public abstract class LineStatusMarkerPopupRenderer extends LineStatusMarkerRend
 
     @Override
     protected void actionPerformed(@NotNull Editor editor, @NotNull Range range) {
-      showDiff(myTracker, range);
+      showDiff(tracker, range);
     }
   }
 
@@ -293,7 +293,7 @@ public abstract class LineStatusMarkerPopupRenderer extends LineStatusMarkerRend
 
     @Override
     public void setSelected(@NotNull AnActionEvent e, boolean state) {
-      if (!myTracker.isValid()) return;
+      if (!tracker.isValid()) return;
       DiffApplicationSettings.getInstance().SHOW_LST_WORD_DIFFERENCES = state;
 
       reopenRange(myEditor, myRange, myMousePosition);

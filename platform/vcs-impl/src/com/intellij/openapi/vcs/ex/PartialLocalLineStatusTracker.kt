@@ -624,12 +624,12 @@ class ChangelistsLocalLineStatusTracker internal constructor(project: Project,
     }
   }
 
-  private class MyLineStatusMarkerRenderer(override val tracker: ChangelistsLocalLineStatusTracker) :
-    LocalLineStatusMarkerRenderer(tracker) {
+  private class MyLineStatusMarkerRenderer(override val localTracker: ChangelistsLocalLineStatusTracker) :
+    LocalLineStatusMarkerRenderer(localTracker) {
 
     override fun paint(editor: Editor, g: Graphics) {
-      val flagsProvider = MyFlagsProvider(tracker.defaultMarker.changelistId)
-      LineStatusMarkerDrawUtil.paintDefault(editor, g, myTracker, flagsProvider, 0)
+      val flagsProvider = MyFlagsProvider(localTracker.defaultMarker.changelistId)
+      LineStatusMarkerDrawUtil.paintDefault(editor, g, tracker, flagsProvider, 0)
     }
 
     class MyFlagsProvider(private val defaultChangelistId: String) : DefaultFlagsProvider() {
@@ -645,7 +645,7 @@ class ChangelistsLocalLineStatusTracker internal constructor(project: Project,
                                            disposable: Disposable): JComponent? {
       if (range !is LocalRange) return null
 
-      val changeLists = ChangeListManager.getInstance(tracker.project).changeLists
+      val changeLists = ChangeListManager.getInstance(localTracker.project).changeLists
       val rangeList = changeLists.find { it.id == range.changelistId } ?: return null
 
       val group = DefaultActionGroup()
@@ -693,7 +693,7 @@ class ChangelistsLocalLineStatusTracker internal constructor(project: Project,
       override fun isEnabled(editor: Editor, range: Range): Boolean = range is LocalRange
 
       override fun actionPerformed(editor: Editor, range: Range) {
-        MoveChangesLineStatusAction.moveToAnotherChangelist(tracker, range as LocalRange)
+        MoveChangesLineStatusAction.moveToAnotherChangelist(localTracker, range as LocalRange)
         reopenRange(editor, range, mousePosition)
       }
     }
@@ -707,7 +707,7 @@ class ChangelistsLocalLineStatusTracker internal constructor(project: Project,
       override fun isEnabled(editor: Editor, range: Range): Boolean = range is LocalRange
 
       override fun actionPerformed(editor: Editor, range: Range) {
-        tracker.moveToChangelist(range, changelist)
+        localTracker.moveToChangelist(range, changelist)
         reopenRange(editor, range, mousePosition)
       }
     }

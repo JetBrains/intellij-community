@@ -78,8 +78,8 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ActionEvent;
-import java.util.*;
 import java.util.List;
+import java.util.*;
 
 import static com.intellij.diff.util.DiffUtil.getLineCount;
 import static com.intellij.util.containers.ContainerUtil.ar;
@@ -1290,8 +1290,8 @@ public class MergeThreesideViewer extends ThreesideTextDiffViewerEx {
 
     @Override
     public void scrollAndShow(@NotNull Editor editor, @NotNull com.intellij.openapi.vcs.ex.Range range) {
-      if (!myTracker.isValid()) return;
-      final Document document = myTracker.getDocument();
+      if (!tracker.isValid()) return;
+      final Document document = tracker.getDocument();
       int line = Math.min(!range.hasLines() ? range.getLine2() : range.getLine2() - 1, getLineCount(document) - 1);
 
       int[] startLines = new int[]{
@@ -1334,13 +1334,13 @@ public class MergeThreesideViewer extends ThreesideTextDiffViewerEx {
       @Override
       protected void actionPerformed(@NotNull Editor editor, @NotNull com.intellij.openapi.vcs.ex.Range range) {
         DiffUtil.moveCaretToLineRangeIfNeeded(editor, range.getLine1(), range.getLine2());
-        myTracker.rollbackChanges(range);
+        tracker.rollbackChanges(range);
       }
     }
 
     @Override
     protected void paint(@NotNull Editor editor, @NotNull Graphics g) {
-      LineStatusMarkerDrawUtil.paintDefault(editor, g, myTracker, DefaultFlagsProvider.DEFAULT, JBUIScale.scale(2));
+      LineStatusMarkerDrawUtil.paintDefault(editor, g, tracker, DefaultFlagsProvider.DEFAULT, JBUIScale.scale(2));
     }
   }
 

@@ -1,328 +1,271 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.openapi.vcs.ex;
+package com.intellij.openapi.vcs.ex
 
-import com.intellij.diff.util.DiffDrawUtil;
-import com.intellij.diff.util.DiffUtil;
-import com.intellij.ide.plugins.DynamicPluginListener;
-import com.intellij.ide.plugins.IdeaPluginDescriptor;
-import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.diff.DefaultFlagsProvider;
-import com.intellij.openapi.diff.DiffBundle;
-import com.intellij.openapi.diff.LineStatusMarkerDrawUtil;
-import com.intellij.openapi.editor.Document;
-import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.editor.EditorFactory;
-import com.intellij.openapi.editor.ex.EditorEx;
-import com.intellij.openapi.editor.ex.MarkupModelEx;
-import com.intellij.openapi.editor.impl.DocumentMarkupModel;
-import com.intellij.openapi.editor.markup.*;
-import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.util.Key;
-import com.intellij.openapi.util.TextRange;
-import com.intellij.util.concurrency.annotations.RequiresEdt;
-import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.containers.PeekableIterator;
-import com.intellij.util.containers.PeekableIteratorWrapper;
-import com.intellij.util.ui.update.DisposableUpdate;
-import com.intellij.util.ui.update.MergingUpdateQueue;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import com.intellij.diff.util.DiffDrawUtil
+import com.intellij.diff.util.DiffUtil
+import com.intellij.ide.plugins.DynamicPluginListener
+import com.intellij.ide.plugins.IdeaPluginDescriptor
+import com.intellij.openapi.Disposable
+import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.diagnostic.Logger
+import com.intellij.openapi.diff.DefaultFlagsProvider
+import com.intellij.openapi.diff.DiffBundle
+import com.intellij.openapi.diff.LineStatusMarkerDrawUtil
+import com.intellij.openapi.diff.LineStatusMarkerDrawUtil.DiffStripeTextAttributes
+import com.intellij.openapi.editor.Editor
+import com.intellij.openapi.editor.EditorFactory
+import com.intellij.openapi.editor.ex.EditorEx
+import com.intellij.openapi.editor.ex.MarkupModelEx
+import com.intellij.openapi.editor.ex.RangeHighlighterEx
+import com.intellij.openapi.editor.impl.DocumentMarkupModel
+import com.intellij.openapi.editor.markup.*
+import com.intellij.openapi.util.Disposer
+import com.intellij.openapi.util.Key
+import com.intellij.openapi.util.TextRange
+import com.intellij.util.concurrency.annotations.RequiresEdt
+import com.intellij.util.containers.PeekableIterator
+import com.intellij.util.containers.PeekableIteratorWrapper
+import com.intellij.util.ui.update.DisposableUpdate
+import com.intellij.util.ui.update.MergingUpdateQueue
+import java.awt.Graphics
+import java.awt.Rectangle
+import java.awt.event.MouseEvent
 
-import java.awt.*;
-import java.awt.event.MouseEvent;
-import java.util.ArrayList;
-import java.util.List;
+abstract class LineStatusMarkerRenderer internal constructor(
+  @JvmField protected val tracker: LineStatusTrackerI<*>
+) {
+  private val disposable = tracker.disposable
+  private val updateQueue = MergingUpdateQueue("LineStatusMarkerRenderer", 100, true, MergingUpdateQueue.ANY_COMPONENT, disposable)
+  private var disposed = false
 
-import static com.intellij.openapi.diagnostic.Logger.getInstance;
-import static com.intellij.util.ui.update.MergingUpdateQueue.ANY_COMPONENT;
-import static java.util.Collections.emptyList;
+  private val project = tracker.project
+  private val document = tracker.document
+  private fun getRanges() = tracker.getRanges()
 
-public abstract class LineStatusMarkerRenderer {
-  private static final Logger LOG = getInstance(LineStatusMarkerRenderer.class);
+  private var gutterHighlighter: RangeHighlighter = createGutterHighlighter()
+  private val errorStripeHighlighters: MutableList<RangeHighlighter> = ArrayList()
 
-  public static final Key<MarkerData> TOOLTIP_KEY = Key.create("LineStatusMarkerRenderer.Tooltip.Id");
-  public static final Key<Boolean> MAIN_KEY = Key.create("LineStatusMarkerRenderer.Main.Id");
+  protected open val editorFilter: MarkupEditorFilter? = null
 
-  @NotNull protected final LineStatusTrackerI<?> myTracker;
-  private final MarkupEditorFilter myEditorFilter;
-
-  @NotNull private final MergingUpdateQueue myUpdateQueue;
-  private boolean myDisposed;
-  @NotNull private RangeHighlighter myHighlighter;
-  @NotNull private final List<RangeHighlighter> myErrorStripeHighlighters = new ArrayList<>();
-
-  LineStatusMarkerRenderer(@NotNull LineStatusTrackerI<?> tracker) {
-    myTracker = tracker;
-    myEditorFilter = getEditorFilter();
-    myUpdateQueue = new MergingUpdateQueue("LineStatusMarkerRenderer", 100, true, ANY_COMPONENT, myTracker.getDisposable());
-
-    myHighlighter = createGutterHighlighter();
-
-    Disposer.register(myTracker.getDisposable(), () -> {
-      myDisposed = true;
-      destroyHighlighters();
-    });
-
-    ApplicationManager.getApplication().getMessageBus().connect(myTracker.getDisposable())
-      .subscribe(DynamicPluginListener.TOPIC, new DynamicPluginListener() {
-        @Override
-        public void pluginUnloaded(@NotNull IdeaPluginDescriptor pluginDescriptor, boolean isUpdate) {
-          scheduleValidateHighlighter();
+  init {
+    Disposer.register(disposable, Disposable {
+      disposed = true
+      destroyHighlighters()
+    })
+    ApplicationManager.getApplication().getMessageBus().connect(disposable)
+      .subscribe(DynamicPluginListener.TOPIC, object : DynamicPluginListener {
+        override fun pluginUnloaded(pluginDescriptor: IdeaPluginDescriptor, isUpdate: Boolean) {
+          scheduleValidateHighlighter()
         }
-      });
-
-    scheduleUpdate();
+      })
+    scheduleUpdate()
   }
 
-  public void scheduleUpdate() {
-    myUpdateQueue.queue(DisposableUpdate.createDisposable(myUpdateQueue, "update", () -> {
-      updateHighlighters();
-    }));
+  fun scheduleUpdate() {
+    updateQueue.queue(DisposableUpdate.createDisposable(updateQueue, "update", Runnable { updateHighlighters() }))
   }
 
-  public void scheduleValidateHighlighter() {
+  private fun scheduleValidateHighlighter() {
     // IDEA-246614
-    myUpdateQueue.queue(DisposableUpdate.createDisposable(myUpdateQueue, "validate highlighter", () -> {
-      if (myDisposed || myHighlighter.isValid()) return;
-      disposeHighlighter(myHighlighter);
-      myHighlighter = createGutterHighlighter();
-
-      updateHighlighters();
-    }));
+    updateQueue.queue(DisposableUpdate.createDisposable(updateQueue, "validate highlighter", Runnable {
+      if (disposed || gutterHighlighter.isValid()) return@Runnable
+      disposeHighlighter(gutterHighlighter)
+      gutterHighlighter = createGutterHighlighter()
+      updateHighlighters()
+    }))
   }
 
-  @NotNull
-  private RangeHighlighter createGutterHighlighter() {
-    Document document = myTracker.getDocument();
-    MarkupModelEx markupModel = (MarkupModelEx)DocumentMarkupModel.forDocument(document, myTracker.getProject(), true);
-    return markupModel.addRangeHighlighterAndChangeAttributes(null, 0, document.getTextLength(),
+  private fun createGutterHighlighter(): RangeHighlighter {
+    val markupModel = DocumentMarkupModel.forDocument(document, project, true) as MarkupModelEx
+    return markupModel.addRangeHighlighterAndChangeAttributes(null, 0, document.textLength,
                                                               DiffDrawUtil.LST_LINE_MARKER_LAYER,
                                                               HighlighterTargetArea.LINES_IN_RANGE,
-                                                              false, it -> {
-        it.setGreedyToLeft(true);
-        it.setGreedyToRight(true);
+                                                              false) { it: RangeHighlighterEx ->
+      it.setGreedyToLeft(true)
+      it.setGreedyToRight(true)
+      it.setLineMarkerRenderer(MyActiveGutterRenderer())
+      val filter = editorFilter
+      if (filter != null) it.setEditorFilter(filter)
 
-        it.setLineMarkerRenderer(new MyActiveGutterRenderer());
-        if (myEditorFilter != null) it.setEditorFilter(myEditorFilter);
-
-        // ensure key is there in MarkupModelListener.afterAdded event
-        it.putUserData(MAIN_KEY, true);
-      });
+      // ensure key is there in MarkupModelListener.afterAdded event
+      it.putUserData(MAIN_KEY, true)
+    }
   }
 
   @RequiresEdt
-  private void updateHighlighters() {
-    if (myDisposed) return;
-
-    EditorFactory.getInstance().editors(myTracker.getDocument())
-      .forEach(editor -> {
-        if (editor instanceof EditorEx) ((EditorEx)editor).getGutterComponentEx().repaint();
-      });
-
-    updateErrorStripeHighlighters();
-  }
-
-  @RequiresEdt
-  private void updateErrorStripeHighlighters() {
-    List<? extends Range> ranges = shouldPaintErrorStripeMarkers() ? myTracker.getRanges() : null;
-    if (ContainerUtil.isEmpty(ranges)) {
-      for (RangeHighlighter highlighter : myErrorStripeHighlighters) {
-        disposeHighlighter(highlighter);
+  private fun updateHighlighters() {
+    if (disposed) return
+    EditorFactory.getInstance().editors(document).forEach {
+      if (it is EditorEx) {
+        it.gutterComponentEx.repaint()
       }
-      myErrorStripeHighlighters.clear();
-      return;
+    }
+    updateErrorStripeHighlighters()
+  }
+
+  @RequiresEdt
+  private fun updateErrorStripeHighlighters() {
+    val ranges = getRanges()
+    if (!shouldPaintErrorStripeMarkers() || ranges.isNullOrEmpty()) {
+      for (highlighter in errorStripeHighlighters) {
+        disposeHighlighter(highlighter)
+      }
+      errorStripeHighlighters.clear()
+      return
     }
 
-    MarkupModelEx markupModel = (MarkupModelEx)DocumentMarkupModel.forDocument(myTracker.getDocument(), myTracker.getProject(), true);
-    PeekableIterator<RangeHighlighter> highlighterIt = new PeekableIteratorWrapper<>(myErrorStripeHighlighters.iterator());
-    List<RangeHighlighter> newHighlighters = new ArrayList<>();
-    List<RangeHighlighter> oldHighlighters = new ArrayList<>();
-
-    for (Range range : ranges) {
-      TextRange textRange = DiffUtil.getLinesRange(markupModel.getDocument(), range.getLine1(), range.getLine2(), false);
-
-      while (highlighterIt.hasNext() &&
-             highlighterIt.peek().getStartOffset() < textRange.getStartOffset()) {
-        oldHighlighters.add(highlighterIt.next());
+    val markupModel = DocumentMarkupModel.forDocument(document, project, true) as MarkupModelEx
+    val highlighterIt: PeekableIterator<RangeHighlighter> = PeekableIteratorWrapper(errorStripeHighlighters.iterator())
+    val newHighlighters = mutableListOf<RangeHighlighter>()
+    val oldHighlighters = mutableListOf<RangeHighlighter>()
+    for (range in ranges) {
+      val textRange = DiffUtil.getLinesRange(markupModel.getDocument(), range.line1, range.line2, false)
+      while (highlighterIt.hasNext() && highlighterIt.peek().getStartOffset() < textRange.startOffset) {
+        oldHighlighters.add(highlighterIt.next())
       }
-
-      RangeHighlighter oldHighlighter = highlighterIt.hasNext() ? highlighterIt.peek() : null;
-      MarkerData oldMarkerData = oldHighlighter != null ? oldHighlighter.getUserData(TOOLTIP_KEY) : null;
-      if (oldHighlighter != null && oldHighlighter.isValid() &&
-          oldMarkerData != null && oldMarkerData.type == range.getType() &&
-          oldHighlighter.getStartOffset() == textRange.getStartOffset() &&
-          oldHighlighter.getEndOffset() == textRange.getEndOffset()) {
+      val oldHighlighter = if (highlighterIt.hasNext()) highlighterIt.peek() else null
+      val oldMarkerData = oldHighlighter?.getUserData(TOOLTIP_KEY)
+      if (oldHighlighter != null && oldHighlighter.isValid()
+          && oldMarkerData != null && oldMarkerData.type == range.type
+          && oldHighlighter.getStartOffset() == textRange.startOffset
+          && oldHighlighter.getEndOffset() == textRange.endOffset) {
         // reuse existing highlighter if possible
-        newHighlighters.add(oldHighlighter);
-        highlighterIt.next();
+        newHighlighters.add(oldHighlighter)
+        highlighterIt.next()
       }
       else {
-        newHighlighters.add(createErrorStripeHighlighter(markupModel, textRange, range.getType()));
+        newHighlighters.add(createErrorStripeHighlighter(markupModel, textRange, range.type))
       }
     }
 
     while (highlighterIt.hasNext()) {
-      oldHighlighters.add(highlighterIt.next());
+      oldHighlighters.add(highlighterIt.next())
     }
 
-    for (RangeHighlighter highlighter : oldHighlighters) {
-      disposeHighlighter(highlighter);
+    for (highlighter in oldHighlighters) {
+      disposeHighlighter(highlighter)
     }
-    myErrorStripeHighlighters.clear();
-    myErrorStripeHighlighters.addAll(newHighlighters);
+
+    errorStripeHighlighters.clear()
+    errorStripeHighlighters.addAll(newHighlighters)
   }
 
-  @NotNull
-  private RangeHighlighter createErrorStripeHighlighter(@NotNull MarkupModelEx markupModel, @NotNull TextRange textRange, byte diffType) {
-    return markupModel.addRangeHighlighterAndChangeAttributes(null, textRange.getStartOffset(), textRange.getEndOffset(),
-                                                              DiffDrawUtil.LST_LINE_MARKER_LAYER,
-                                                              HighlighterTargetArea.LINES_IN_RANGE,
-                                                              false, it -> {
-        it.setThinErrorStripeMark(true);
-        it.setGreedyToLeft(true);
-        it.setGreedyToRight(true);
+  private fun createErrorStripeHighlighter(markupModel: MarkupModelEx, textRange: TextRange, diffType: Byte): RangeHighlighter =
+    markupModel.addRangeHighlighterAndChangeAttributes(null, textRange.startOffset, textRange.endOffset,
+                                                       DiffDrawUtil.LST_LINE_MARKER_LAYER,
+                                                       HighlighterTargetArea.LINES_IN_RANGE,
+                                                       false) { it: RangeHighlighterEx ->
+      it.setThinErrorStripeMark(true)
+      it.setGreedyToLeft(true)
+      it.setGreedyToRight(true)
+      it.setTextAttributes(DiffStripeTextAttributes(diffType))
+      val filter = editorFilter
+      if (filter != null) it.setEditorFilter(filter)
 
-        it.setTextAttributes(new LineStatusMarkerDrawUtil.DiffStripeTextAttributes(diffType));
-        if (myEditorFilter != null) it.setEditorFilter(myEditorFilter);
-
-        // ensure key is there in MarkupModelListener.afterAdded event
-        it.putUserData(TOOLTIP_KEY, new MarkerData(diffType));
-      });
-  }
-
-  private void destroyHighlighters() {
-    if (!myHighlighter.isValid() ||
-        myHighlighter.getStartOffset() != 0 ||
-        myHighlighter.getEndOffset() != myTracker.getDocument().getTextLength()) {
-      LOG.warn(String.format("Highlighter is damaged for %s, isValid: %s", myTracker, myHighlighter.isValid()));
+      // ensure key is there in MarkupModelListener.afterAdded event
+      it.putUserData(TOOLTIP_KEY, MarkerData(diffType))
     }
 
-    disposeHighlighter(myHighlighter);
-
-    for (RangeHighlighter highlighter : myErrorStripeHighlighters) {
-      disposeHighlighter(highlighter);
+  private fun destroyHighlighters() {
+    val gutterHighlighter = gutterHighlighter
+    if (!gutterHighlighter.isValid() || gutterHighlighter.getStartOffset() != 0 || gutterHighlighter.getEndOffset() != document.textLength) {
+      LOG.warn(String.format("Highlighter is damaged for %s, isValid: %s", tracker, gutterHighlighter.isValid()))
     }
-    myErrorStripeHighlighters.clear();
+    disposeHighlighter(gutterHighlighter)
+    for (highlighter in errorStripeHighlighters) {
+      disposeHighlighter(highlighter)
+    }
+    errorStripeHighlighters.clear()
   }
 
-  private static void disposeHighlighter(@NotNull RangeHighlighter highlighter) {
-    try {
-      highlighter.dispose();
-    }
-    catch (Exception e) {
-      LOG.error(e);
-    }
+  private fun canDoAction(editor: Editor, e: MouseEvent): Boolean {
+    val ranges = getSelectedRanges(editor, e.y)
+    return !ranges.isEmpty() && canDoAction(editor, ranges, e)
   }
 
-  private boolean canDoAction(@NotNull Editor editor, @NotNull MouseEvent e) {
-    List<? extends Range> ranges = getSelectedRanges(editor, e.getY());
-    return !ranges.isEmpty() && canDoAction(editor, ranges, e);
-  }
-
-  private void doAction(@NotNull Editor editor, @NotNull MouseEvent e) {
-    List<? extends Range> ranges = getSelectedRanges(editor, e.getY());
+  private fun doAction(editor: Editor, e: MouseEvent) {
+    val ranges = getSelectedRanges(editor, e.y)
     if (!ranges.isEmpty()) {
-      e.consume();
-      doAction(editor, ranges, e);
+      e.consume()
+      doAction(editor, ranges, e)
     }
   }
 
-  @NotNull
-  private List<? extends Range> getSelectedRanges(@NotNull Editor editor, int y) {
-    List<? extends Range> ranges = myTracker.getRanges();
-    if (ranges == null) return emptyList();
-
-    return LineStatusMarkerDrawUtil.getSelectedRanges(ranges, editor, y);
+  private fun getSelectedRanges(editor: Editor, y: Int): List<Range> {
+    val ranges = getRanges()
+    if (ranges == null) return emptyList()
+    return LineStatusMarkerDrawUtil.getSelectedRanges(ranges, editor, y)
   }
 
-  protected boolean canDoAction(@NotNull Editor editor, @NotNull List<? extends Range> ranges, @NotNull MouseEvent e) {
-    return false;
-  }
+  protected open fun canDoAction(editor: Editor, ranges: List<Range>, e: MouseEvent): Boolean = false
 
-  protected void doAction(@NotNull Editor editor, @NotNull List<? extends Range> ranges, @NotNull MouseEvent e) {
-  }
-
-  @Nullable
-  protected MarkupEditorFilter getEditorFilter() {
-    return null;
-  }
+  protected open fun doAction(editor: Editor, ranges: List<Range>, e: MouseEvent) {}
 
   //
   // Gutter painting
   //
-
-  private Rectangle calcBounds(Editor editor, int lineNum, Rectangle bounds) {
-    List<? extends Range> ranges = myTracker.getRanges();
-    if (ranges == null) return null;
-
-    return LineStatusMarkerDrawUtil.calcBounds(ranges, editor, lineNum);
+  private fun calcBounds(editor: Editor, lineNum: Int, bounds: Rectangle): Rectangle? {
+    val ranges = getRanges()
+    if (ranges == null) return null
+    return LineStatusMarkerDrawUtil.calcBounds(ranges, editor, lineNum)
   }
 
   /**
    * @return true if gutter markers should be painted, false otherwise
    */
-  protected boolean shouldPaintGutter() {
-    return true;
-  }
+  protected open fun shouldPaintGutter(): Boolean = true
 
   /**
    * @return true if markers in the error stripe (near the scrollbar) should be painted, false otherwise
    */
-  protected boolean shouldPaintErrorStripeMarkers() {
-    return shouldPaintGutter();
+  protected open fun shouldPaintErrorStripeMarkers(): Boolean = shouldPaintGutter()
+
+  protected open fun paint(editor: Editor, g: Graphics) {
+    LineStatusMarkerDrawUtil.paintDefault(editor, g, tracker, DefaultFlagsProvider.DEFAULT, 0)
   }
 
-  protected void paint(@NotNull Editor editor, @NotNull Graphics g) {
-    LineStatusMarkerDrawUtil.paintDefault(editor, g, myTracker, DefaultFlagsProvider.DEFAULT, 0);
-  }
-
-
-  private class MyActiveGutterRenderer implements ActiveGutterRenderer, LineMarkerRendererEx {
-    @Override
-    public void paint(@NotNull Editor editor, @NotNull Graphics g, @NotNull Rectangle r) {
+  private inner class MyActiveGutterRenderer : ActiveGutterRenderer, LineMarkerRendererEx {
+    override fun paint(editor: Editor, g: Graphics, r: Rectangle) {
       if (shouldPaintGutter()) {
-        LineStatusMarkerRenderer.this.paint(editor, g);
+        this@LineStatusMarkerRenderer.paint(editor, g)
       }
     }
 
-    @Override
-    public boolean canDoAction(@NotNull Editor editor, @NotNull MouseEvent e) {
-      return shouldPaintGutter() &&
-             LineStatusMarkerRenderer.this.canDoAction(editor, e);
+    override fun canDoAction(editor: Editor, e: MouseEvent): Boolean {
+      return shouldPaintGutter() && this@LineStatusMarkerRenderer.canDoAction(editor, e)
     }
 
-    @Override
-    public void doAction(@NotNull Editor editor, @NotNull MouseEvent e) {
+    override fun doAction(editor: Editor, e: MouseEvent) {
       if (shouldPaintGutter()) {
-        LineStatusMarkerRenderer.this.doAction(editor, e);
+        this@LineStatusMarkerRenderer.doAction(editor, e)
       }
     }
 
-    @Nullable
-    @Override
-    public Rectangle calcBounds(@NotNull Editor editor, int lineNum, @NotNull Rectangle preferredBounds) {
-      if (!shouldPaintGutter()) return new Rectangle(-1, -1, 0, 0);
-      return LineStatusMarkerRenderer.this.calcBounds(editor, lineNum, preferredBounds);
+    override fun calcBounds(editor: Editor, lineNum: Int, preferredBounds: Rectangle): Rectangle? {
+      if (!shouldPaintGutter()) return Rectangle(-1, -1, 0, 0)
+      return this@LineStatusMarkerRenderer.calcBounds(editor, lineNum, preferredBounds)
     }
 
-    @Override
-    public @NotNull Position getPosition() {
-      return Position.CUSTOM;
-    }
+    override fun getPosition(): LineMarkerRendererEx.Position = LineMarkerRendererEx.Position.CUSTOM
 
-    @NotNull
-    @Override
-    public String getAccessibleName() {
-      return DiffBundle.message("vcs.marker.changed.line");
-    }
+    override fun getAccessibleName(): String = DiffBundle.message("vcs.marker.changed.line")
   }
 
-  public static class MarkerData {
-    public final byte type;
+  class MarkerData(val type: Byte)
 
-    public MarkerData(byte type) {
-      this.type = type;
+  companion object {
+    private val LOG = Logger.getInstance(LineStatusMarkerRenderer::class.java)
+
+    val TOOLTIP_KEY: Key<MarkerData> = Key.create("LineStatusMarkerRenderer.Tooltip.Id")
+    val MAIN_KEY: Key<Boolean> = Key.create("LineStatusMarkerRenderer.Main.Id")
+
+    private fun disposeHighlighter(highlighter: RangeHighlighter) {
+      try {
+        highlighter.dispose()
+      }
+      catch (e: Exception) {
+        LOG.error(e)
+      }
     }
   }
 }
