@@ -21,6 +21,7 @@ import org.jetbrains.kotlin.cli.jvm.compiler.findMainClass
 import org.jetbrains.kotlin.config.*
 import org.jetbrains.kotlin.idea.base.plugin.artifacts.TestKotlinArtifacts
 import org.jetbrains.kotlin.idea.codegen.CodegenTestUtil
+import org.jetbrains.kotlin.idea.resolve.ResolutionFacade
 import org.jetbrains.kotlin.idea.resolve.languageVersionSettings
 import org.jetbrains.kotlin.idea.test.KotlinBaseTest.TestFile
 import org.jetbrains.kotlin.idea.test.KotlinCompilerStandalone
@@ -304,7 +305,7 @@ private fun splitByLanguage(files: List<TestFileWithModule>): TestFilesByLanguag
     val java = mutableListOf<TestFileWithModule>()
     val resources = mutableListOf<TestFileWithModule>()
 
-    for (file in files.withPlatformCheck()) {
+    for (file in files) {
         @Suppress("MoveVariableDeclarationIntoWhen")
         val extension = file.name.substringAfterLast(".", missingDelimiterValue = "")
 
@@ -328,20 +329,3 @@ private fun splitByLanguage(files: List<TestFileWithModule>): TestFilesByLanguag
         java = java, resources = resources
     )
 }
-
-private fun List<TestFileWithModule>.withPlatformCheck() = map { fileWithModule ->
-    val actualModule = when (fileWithModule.content.specifiedPlatform()) {
-        "jvm" -> DebuggerTestModule.Jvm(fileWithModule.module.dependenciesSymbols)
-        "common" -> DebuggerTestModule.Common(fileWithModule.module.name, fileWithModule.module.dependenciesSymbols)
-        else -> return@map fileWithModule
-    }
-    TestFileWithModule(actualModule, fileWithModule.name, fileWithModule.content, fileWithModule.directives)
-}
-
-private fun String.specifiedPlatform(): String? = lines().mapNotNull {
-    val platform = removePrefix("// PLATFORM: ")
-    if (platform === this) {
-        return@mapNotNull null
-    }
-    return@mapNotNull platform.trimEnd()
-}.firstOrNull()
