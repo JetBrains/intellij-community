@@ -42,8 +42,7 @@ import java.util.stream.Collectors;
 
 public final class InspectionEngine {
   private static final Logger LOG = Logger.getInstance(InspectionEngine.class);
-  private static final Set<Class<? extends LocalInspectionTool>> RECURSIVE_VISITOR_TOOL_CLASSES =
-    ConcurrentCollectionFactory.createConcurrentSet();
+  private static final Set<Class<? extends LocalInspectionTool>> RECURSIVE_VISITOR_TOOL_CLASSES = ConcurrentCollectionFactory.createConcurrentSet();
 
   private static boolean createVisitorAndAcceptElements(@NotNull LocalInspectionTool tool,
                                                      @NotNull ProblemsHolder holder,
@@ -91,19 +90,19 @@ public final class InspectionEngine {
   @Deprecated
   // returns map (toolName -> problem descriptors)
   public static @NotNull Map<String, List<ProblemDescriptor>> inspectEx(@NotNull List<? extends LocalInspectionToolWrapper> toolWrappers,
-                                                                        @NotNull PsiFile file,
+                                                                        @NotNull PsiFile psiFile,
                                                                         @NotNull InspectionManager iManager,
                                                                         boolean isOnTheFly,
                                                                         @NotNull ProgressIndicator indicator) {
     Map<LocalInspectionToolWrapper, List<ProblemDescriptor>> map =
-      inspectEx(toolWrappers, file, file.getTextRange(), file.getTextRange(), isOnTheFly, false, true, indicator, PairProcessor.alwaysTrue());
+      inspectEx(toolWrappers, psiFile, psiFile.getTextRange(), psiFile.getTextRange(), isOnTheFly, false, true, indicator, PairProcessor.alwaysTrue());
     return map.entrySet().stream().map(e->Pair.create(e.getKey().getShortName(), e.getValue())).collect(Collectors.toMap(p->p.getFirst(), p->p.getSecond()));
   }
 
   // returns map (tool -> problem descriptors)
   @NotNull
   public static Map<LocalInspectionToolWrapper, List<ProblemDescriptor>> inspectEx(@NotNull List<? extends LocalInspectionToolWrapper> toolWrappers,
-                                                                                   @NotNull PsiFile file,
+                                                                                   @NotNull PsiFile psiFile,
                                                                                    @NotNull TextRange restrictRange,
                                                                                    @NotNull TextRange priorityRange,
                                                                                    boolean isOnTheFly,
@@ -115,14 +114,14 @@ public final class InspectionEngine {
     if (toolWrappers.isEmpty()) return Collections.emptyMap();
 
     List<Divider.DividedElements> allDivided = new ArrayList<>();
-    Divider.divideInsideAndOutsideAllRoots(file, restrictRange, priorityRange, Predicates.alwaysTrue(), new CommonProcessors.CollectProcessor<>(allDivided));
+    Divider.divideInsideAndOutsideAllRoots(psiFile, restrictRange, priorityRange, Predicates.alwaysTrue(), new CommonProcessors.CollectProcessor<>(allDivided));
 
     List<PsiElement> elements = ContainerUtil.concat(
       ContainerUtil.map(allDivided, d -> ContainerUtil.concat(d.inside(), d.outside(), d.parents())));
 
-    Map<LocalInspectionToolWrapper, List<ProblemDescriptor>> map = inspectElements(toolWrappers, file, restrictRange, ignoreSuppressedElements, isOnTheFly, indicator, elements, foundDescriptorCallback);
+    Map<LocalInspectionToolWrapper, List<ProblemDescriptor>> map = inspectElements(toolWrappers, psiFile, restrictRange, ignoreSuppressedElements, isOnTheFly, indicator, elements, foundDescriptorCallback);
     if (inspectInjectedPsi) {
-      InjectedLanguageManager injectedLanguageManager = InjectedLanguageManager.getInstance(file.getProject());
+      InjectedLanguageManager injectedLanguageManager = InjectedLanguageManager.getInstance(psiFile.getProject());
       Set<Pair<PsiFile, PsiElement>> injectedFiles = new HashSet<>();
       for (PsiElement element : elements) {
         if (element instanceof PsiLanguageInjectionHost) {
@@ -162,10 +161,10 @@ public final class InspectionEngine {
     return map;
   }
 
-  private static void getAllElementsAndDialectsFrom(@NotNull PsiFile file,
+  private static void getAllElementsAndDialectsFrom(@NotNull PsiFile psiFile,
                                                     @NotNull List<? super PsiElement> outElements,
                                                     @NotNull Set<? super String> outDialects) {
-    FileViewProvider viewProvider = file.getViewProvider();
+    FileViewProvider viewProvider = psiFile.getViewProvider();
     Set<Language> processedLanguages = new SmartHashSet<>();
     // we hope that injected file here is small enough for PsiRecursiveElementVisitor
     PsiElementVisitor visitor = new PsiRecursiveElementVisitor() {
@@ -183,7 +182,7 @@ public final class InspectionEngine {
     };
     for (Language language : viewProvider.getLanguages()) {
       PsiFile psiRoot = viewProvider.getPsi(language);
-      if (psiRoot == null || !HighlightingLevelManager.getInstance(file.getProject()).shouldInspect(psiRoot)) {
+      if (psiRoot == null || !HighlightingLevelManager.getInstance(psiFile.getProject()).shouldInspect(psiRoot)) {
         continue;
       }
       outElements.add(psiRoot);
@@ -206,7 +205,7 @@ public final class InspectionEngine {
 
   // returns map tool -> list of descriptors found
   public static @NotNull Map<LocalInspectionToolWrapper, List<ProblemDescriptor>> inspectElements(@NotNull List<? extends LocalInspectionToolWrapper> toolWrappers,
-                                                                                                  @NotNull PsiFile file,
+                                                                                                  @NotNull PsiFile psiFile,
                                                                                                   @NotNull TextRange restrictRange,
                                                                                                   boolean ignoreSuppressedElements,
                                                                                                   boolean isOnTheFly,
@@ -214,25 +213,49 @@ public final class InspectionEngine {
                                                                                                   @NotNull List<? extends PsiElement> elements,
                                                                                                   // when returned true -> add to the holder, false -> do not add to the holder
                                                                                                   @NotNull PairProcessor<? super LocalInspectionToolWrapper, ? super ProblemDescriptor> foundDescriptorCallback) {
-    return inspectElements(toolWrappers, file, restrictRange, isOnTheFly, indicator, ignoreSuppressedElements, elements, calcElementDialectIds(elements),
+    return inspectElements(toolWrappers, psiFile, restrictRange, isOnTheFly, indicator, ignoreSuppressedElements, elements, calcElementDialectIds(elements),
                            foundDescriptorCallback);
   }
 
   @ApiStatus.Internal
-  public static void withSession(@NotNull PsiFile file,
+  public static void withSession(@NotNull PsiFile psiFile,
                                  @NotNull TextRange restrictRange,
                                  @NotNull TextRange priorityRange,
                                  @Nullable HighlightSeverity minimumSeverity,
                                  boolean isOnTheFly,
                                  @NotNull Consumer<? super LocalInspectionToolSession> runnable) {
-    LocalInspectionToolSession session = new LocalInspectionToolSession(file, priorityRange, restrictRange, minimumSeverity);
+    LocalInspectionToolSession session = new LocalInspectionToolSession(psiFile, priorityRange, restrictRange, minimumSeverity);
     runnable.accept(session);
   }
 
   private static final Set<String> ourToolsWithInformationProblems = ConcurrentCollectionFactory.createConcurrentSet();
 
+  private static boolean warnAboutInformationLevelInBatchMode(@NotNull ProblemHighlightType highlightType,
+                                                              @NotNull LocalInspectionToolWrapper toolWrapper,
+                                                              @NotNull PsiFile psiFile) {
+    if (highlightType == ProblemHighlightType.INFORMATION) {
+      String shortName = toolWrapper.getShortName();
+      if (ourToolsWithInformationProblems.add(shortName)) {
+        String message = "Tool #" + shortName + " (" + toolWrapper.getTool().getClass()+")"+
+                         " registers 'INFORMATION'-level problem in batch mode on " + psiFile + ". " +
+                         "Warnings of the 'INFORMATION' level are invisible in the editor and should not become visible in batch mode. " +
+                         "Moreover, since 'INFORMATION'-level fixes act more like intention actions, they could e.g. change semantics and " +
+                         "thus should not be suggested for batch transformations";
+        LocalInspectionEP extension = toolWrapper.getExtension();
+        if (extension == null) {
+          LOG.error(message);
+        }
+        else {
+          LOG.error(new PluginException(message, extension.getPluginDescriptor().getPluginId()));
+        }
+      }
+      return true;
+    }
+    return false;
+  }
+
   private static @NotNull Map<LocalInspectionToolWrapper, List<ProblemDescriptor>> inspectElements(@NotNull List<? extends LocalInspectionToolWrapper> toolWrappers,
-                                                                                                   @NotNull PsiFile file,
+                                                                                                   @NotNull PsiFile psiFile,
                                                                                                    @NotNull TextRange restrictRange,
                                                                                                    boolean isOnTheFly,
                                                                                                    @NotNull ProgressIndicator indicator,
@@ -242,31 +265,16 @@ public final class InspectionEngine {
                                                                                                    // when returned true -> add to the holder, false -> do not add to the holder
                                                                                                    @NotNull PairProcessor<? super LocalInspectionToolWrapper, ? super ProblemDescriptor> foundDescriptorCallback) {
     Map<LocalInspectionToolWrapper, List<ProblemDescriptor>> resultDescriptors = new ConcurrentHashMap<>();
-    withSession(file, restrictRange, restrictRange, HighlightSeverity.INFORMATION, isOnTheFly, session -> {
-      InspectListener publisher = file.getProject().getMessageBus().syncPublisher(GlobalInspectionContextEx.INSPECT_TOPIC);
-      List<LocalInspectionToolWrapper> filtered = filterToolsApplicableByLanguage(toolWrappers, elementDialectIds);
+    withSession(psiFile, restrictRange, restrictRange, HighlightSeverity.INFORMATION, isOnTheFly, session -> {
+      InspectListener publisher = psiFile.getProject().getMessageBus().syncPublisher(GlobalInspectionContextEx.INSPECT_TOPIC);
+      List<LocalInspectionToolWrapper> applicableTools = filterToolsApplicableByLanguage(toolWrappers, elementDialectIds);
       Processor<LocalInspectionToolWrapper> processor = toolWrapper -> {
-        ProblemsHolder holder = new ProblemsHolder(InspectionManager.getInstance(file.getProject()), file, isOnTheFly){
+        ProblemsHolder holder = new ProblemsHolder(InspectionManager.getInstance(psiFile.getProject()), psiFile, isOnTheFly){
           @Override
           public void registerProblem(@NotNull ProblemDescriptor descriptor) {
             if (!isOnTheFly) {
               ProblemHighlightType highlightType = descriptor.getHighlightType();
-              if (highlightType == ProblemHighlightType.INFORMATION) {
-                String shortName = toolWrapper.getShortName();
-                if (ourToolsWithInformationProblems.add(shortName)) {
-                  String message = "Tool #" + shortName + " (" + toolWrapper.getTool().getClass()+")"+
-                                   " registers 'INFORMATION'-level problem in batch mode on " + file + ". " +
-                                   "Warnings of the 'INFORMATION' level are invisible in the editor and should not become visible in batch mode. " +
-                                   "Moreover, since 'INFORMATION'-level fixes act more like intention actions, they could e.g. change semantics and " +
-                                   "thus should not be suggested for batch transformations";
-                  LocalInspectionEP extension = toolWrapper.getExtension();
-                  if (extension != null) {
-                    LOG.error(new PluginException(message, extension.getPluginDescriptor().getPluginId()));
-                  }
-                  else {
-                    LOG.error(message);
-                  }
-                }
+              if (warnAboutInformationLevelInBatchMode(highlightType, toolWrapper, psiFile)) {
                 return;
               }
               if (highlightType == ProblemHighlightType.POSSIBLE_PROBLEM) {
@@ -288,7 +296,7 @@ public final class InspectionEngine {
         boolean needToReportStatsToQodana = inspectionWasRun && !isOnTheFly;
         if (needToReportStatsToQodana) {
           publisher.inspectionFinished(inspectionDuration, Thread.currentThread().getId(), holder.getResultCount(), toolWrapper,
-                                       InspectListener.InspectionKind.LOCAL, file, file.getProject());
+                                       InspectListener.InspectionKind.LOCAL, psiFile, psiFile.getProject());
         }
 
         if (holder.hasResults()) {
@@ -301,16 +309,16 @@ public final class InspectionEngine {
 
         return true;
       };
-      JobLauncher.getInstance().invokeConcurrentlyUnderProgress(filtered, indicator, processor);
+      JobLauncher.getInstance().invokeConcurrentlyUnderProgress(applicableTools, indicator, processor);
     });
 
     return resultDescriptors;
   }
 
-  public static @NotNull @Unmodifiable List<ProblemDescriptor> runInspectionOnFile(@NotNull PsiFile file,
+  public static @NotNull @Unmodifiable List<ProblemDescriptor> runInspectionOnFile(@NotNull PsiFile psiFile,
                                                                                    @NotNull InspectionToolWrapper<?, ?> toolWrapper,
                                                                                    @NotNull GlobalInspectionContext inspectionContext) {
-    InspectionManager inspectionManager = InspectionManager.getInstance(file.getProject());
+    InspectionManager inspectionManager = InspectionManager.getInstance(psiFile.getProject());
     toolWrapper.initialize(inspectionContext);
     RefManagerImpl refManager = (RefManagerImpl)inspectionContext.getRefManager();
     List<ProblemDescriptor> result = new ArrayList<>();
@@ -318,7 +326,7 @@ public final class InspectionEngine {
       try {
         if (toolWrapper instanceof LocalInspectionToolWrapper) {
           Map<LocalInspectionToolWrapper, List<ProblemDescriptor>> problemDescriptors =
-            inspectEx(Collections.singletonList((LocalInspectionToolWrapper)toolWrapper), file, file.getTextRange(), file.getTextRange(),
+            inspectEx(Collections.singletonList((LocalInspectionToolWrapper)toolWrapper), psiFile, psiFile.getTextRange(), psiFile.getTextRange(),
                       false,
                       false, true, new EmptyProgressIndicator(), PairProcessor.alwaysTrue());
 
@@ -329,7 +337,7 @@ public final class InspectionEngine {
         else if (toolWrapper instanceof GlobalInspectionToolWrapper) {
           GlobalInspectionTool globalTool = ((GlobalInspectionToolWrapper)toolWrapper).getTool();
           if (globalTool instanceof GlobalSimpleInspectionTool simpleTool) {
-            ProblemsHolder problemsHolder = new ProblemsHolder(inspectionManager, file, false);
+            ProblemsHolder problemsHolder = new ProblemsHolder(inspectionManager, psiFile, false);
             ProblemDescriptionsProcessor collectProcessor = new ProblemDescriptionsProcessor() {
               @Override
               public CommonProblemDescriptor[] getDescriptions(@NotNull RefEntity refEntity) {
@@ -358,18 +366,18 @@ public final class InspectionEngine {
                 throw new RuntimeException();
               }
             };
-            simpleTool.checkFile(file, inspectionManager, problemsHolder, inspectionContext, collectProcessor);
+            simpleTool.checkFile(psiFile, inspectionManager, problemsHolder, inspectionContext, collectProcessor);
           }
           else {
-            RefElement fileRef = refManager.getReference(file);
-            AnalysisScope scope = new AnalysisScope(file);
+            RefElement fileRef = refManager.getReference(psiFile);
+            AnalysisScope scope = new AnalysisScope(psiFile);
             assert fileRef != null;
             fileRef.accept(new RefVisitor() {
               @Override
               public void visitElement(@NotNull RefEntity elem) {
                 CommonProblemDescriptor[] elemDescriptors = globalTool.checkElement(elem, scope, inspectionManager, inspectionContext);
                 if (elemDescriptors != null) {
-                  convertToProblemDescriptors(file, elemDescriptors, result);
+                  convertToProblemDescriptors(psiFile, elemDescriptors, result);
                 }
 
                 for (RefEntity child : elem.getChildren()) {
@@ -381,7 +389,7 @@ public final class InspectionEngine {
         }
       }
       finally {
-        toolWrapper.cleanup(file.getProject());
+        toolWrapper.cleanup(psiFile.getProject());
         inspectionContext.cleanup();
       }
     });
@@ -409,13 +417,13 @@ public final class InspectionEngine {
     Map<String, Boolean> resultsWithDialects = new HashMap<>();
     Map<String, Boolean> resultsNoDialects = new HashMap<>();
     return ContainerUtil.filter(tools, tool -> {
-      String toolLanguage = tool.getLanguage();
-      if (toolLanguage == null || toolLanguage.isBlank() || "any".equals(toolLanguage)) return true;
+      String toolLanguageId = tool.getLanguage();
+      if (toolLanguageId == null || toolLanguageId.isBlank() || "any".equals(toolLanguageId)) return true;
 
       boolean applyToDialects = tool.applyToDialects();
       Map<String, Boolean> map = applyToDialects ? resultsWithDialects : resultsNoDialects;
-      return map.computeIfAbsent(toolLanguage, __ ->
-        ToolLanguageUtil.isToolLanguageOneOf(elementDialectIds, toolLanguage, applyToDialects));
+      return map.computeIfAbsent(toolLanguageId, __ ->
+        ToolLanguageUtil.isToolLanguageOneOf(elementDialectIds, toolLanguageId, applyToDialects));
     });
   }
 
