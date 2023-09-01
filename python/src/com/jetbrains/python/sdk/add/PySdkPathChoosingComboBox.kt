@@ -15,7 +15,6 @@
  */
 package com.jetbrains.python.sdk.add
 
-import com.intellij.execution.Platform
 import com.intellij.execution.target.*
 import com.intellij.openapi.fileChooser.FileChooser
 import com.intellij.openapi.project.ProjectManager
