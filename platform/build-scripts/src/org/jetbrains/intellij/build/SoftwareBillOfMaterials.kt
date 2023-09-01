@@ -137,14 +137,21 @@ class SoftwareBillOfMaterials internal constructor(
 
   private val DistributionForOsTaskResult.files: List<Path>
     get() = when (builder.targetOs) {
-              OsFamily.LINUX -> sequenceOf(".tar.gz", ".snap")
-              OsFamily.MACOS -> sequenceOf(".dmg", ".sit", ".mac.${arch.name}.zip")
-              OsFamily.WINDOWS -> sequenceOf(".exe", ".win.zip")
-            }.map { extension ->
-      context.paths.artifactDir.resolve(context.productProperties.getBaseArtifactName(context) +
-                                        OsSpecificDistributionBuilder.suffix(arch) +
-                                        extension)
-    }.filter { it.exists() }.toList()
+      OsFamily.LINUX -> sequenceOf(".tar.gz")
+      OsFamily.MACOS -> sequenceOf(".dmg", ".sit", ".mac.${arch.name}.zip")
+      OsFamily.WINDOWS -> sequenceOf(".exe", ".win.zip")
+    }.map { extension ->
+      context.productProperties.getBaseArtifactName(context) +
+      OsSpecificDistributionBuilder.suffix(arch) +
+      extension
+    }.plus(
+      when {
+        builder is LinuxDistributionBuilder -> builder.snapArtifactName
+        else -> null
+      }
+    ).filterNotNull()
+      .map(context.paths.artifactDir::resolve)
+      .filter { it.exists() }.toList()
 
   private fun spdxDocument(name: String): SpdxDocument {
     val uri = "$baseDownloadUrl/$specVersion/$name.spdx"

@@ -176,9 +176,24 @@ class LinuxDistributionBuilder(override val context: BuildContext,
     tarPath
   }
 
+  private val snapVersion: String by lazy {
+    val appInfo = context.applicationInfo
+    val versionSuffix = appInfo.versionSuffix?.replace(' ', '-') ?: ""
+    "${appInfo.majorVersion}.${appInfo.minorVersion}${if (versionSuffix.isEmpty()) "" else "-${versionSuffix}"}"
+  }
+
+  internal val snapArtifactName: String? by lazy {
+    "${customizer.snapName ?: return@lazy null}_${snapVersion}_amd64.snap"
+  }
+
   private suspend fun buildSnapPackage(runtimeDir: Path, unixDistPath: Path, arch: JvmArchitecture) {
-    val snapName = customizer.snapName ?: return
+    val snapName = customizer.snapName
+    if (snapName == null) {
+      Span.current().addEvent("Linux .snap package build skipped because of missing snapName in ${customizer::class.java.simpleName}")
+      return
+    }
     if (!context.options.buildUnixSnaps) {
+      Span.current().addEvent("Linux .snap package build is disabled")
       return
     }
 
@@ -214,8 +229,6 @@ class LinuxDistributionBuilder(override val context: BuildContext,
         copyFile(iconPngPath, snapDir.resolve("$snapName.png"))
         val snapcraftTemplate = context.paths.communityHomeDir.resolve(
           "platform/build-scripts/resources/linux/snap/snapcraft-template.yaml")
-        val versionSuffix = appInfo.versionSuffix?.replace(' ', '-') ?: ""
-        val version = "${appInfo.majorVersion}.${appInfo.minorVersion}${if (versionSuffix.isEmpty()) "" else "-${versionSuffix}"}"
         val snapcraftConfig = snapDir.resolve("snapcraft.yaml")
         substituteTemplatePlaceholders(
           inputFile = snapcraftTemplate,
@@ -223,7 +236,7 @@ class LinuxDistributionBuilder(override val context: BuildContext,
           placeholder = "$",
           values = listOf(
             Pair("NAME", snapName),
-            Pair("VERSION", version),
+            Pair("VERSION", snapVersion),
             Pair("SUMMARY", productName),
             Pair("DESCRIPTION", customizer.snapDescription ?: ""),
             Pair("GRADE", if (appInfo.isEAP) "devel" else "stable"),
@@ -253,7 +266,6 @@ class LinuxDistributionBuilder(override val context: BuildContext,
         val resultDir = snapDir.resolve("result")
         Files.createDirectories(resultDir)
         span.addEvent("build package")
-        val snapArtifact = snapName + "_" + version + "_amd64.snap"
         check(Docker.isAvailable) {
           "Docker is required to build snaps"
         }
@@ -269,12 +281,12 @@ class LinuxDistributionBuilder(override val context: BuildContext,
             "--workdir=/build",
             context.options.snapDockerImage,
             "snapcraft",
-            "snap", "-o", "result/$snapArtifact"
+            "snap", "-o", "result/$snapArtifactName"
           ),
           workingDir = snapDir,
           timeout = context.options.snapDockerBuildTimeoutMin.minutes,
         )
-        val snapArtifactPath = moveFileToDir(resultDir.resolve(snapArtifact), context.paths.artifactDir)
+        val snapArtifactPath = moveFileToDir(resultDir.resolve(snapArtifactName), context.paths.artifactDir)
         context.notifyArtifactBuilt(snapArtifactPath)
         checkExecutablePermissions(unSquashSnap(snapArtifactPath), root = "", includeRuntime = true, arch = arch)
       }
