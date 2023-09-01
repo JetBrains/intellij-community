@@ -2,6 +2,7 @@
 package org.jetbrains.idea.devkit.kotlin.inspections
 
 import com.intellij.codeInsight.FileModificationService
+import com.intellij.codeInsight.intention.HighPriorityAction
 import com.intellij.codeInsight.intention.QuickFixFactory
 import com.intellij.codeInsight.intention.preview.IntentionPreviewInfo
 import com.intellij.codeInspection.*
@@ -202,7 +203,9 @@ private class CreateObjectAndMoveProhibitedDeclarationsQuickFix(
   }
 }
 
-private class MoveProhibitedDeclarationsToTopLevelFix(companionObject: KtObjectDeclaration) : LocalQuickFixOnPsiElement(companionObject) {
+private class MoveProhibitedDeclarationsToTopLevelFix(companionObject: KtObjectDeclaration)
+  : LocalQuickFixOnPsiElement(companionObject), HighPriorityAction {
+
   override fun getFamilyName(): String = DevKitKotlinBundle.message("inspections.move.prohibited.declarations.to.top.level.fix.text")
   override fun getText(): String = familyName
 
