@@ -113,6 +113,11 @@ abstract class AbstractKotlinEvaluateExpressionTest : KotlinDescriptorTestCaseWi
             }
         }
 
+    fun doJvmMultiModuleTest(path: String) {
+        isMultipleBreakpointsTest = false
+        doTest(path)
+    }
+
     fun doMultipleBreakpointsTest(path: String) {
         isMultipleBreakpointsTest = true
         doTest(path)

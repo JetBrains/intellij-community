@@ -1877,4 +1877,10 @@ public abstract class KotlinEvaluateExpressionTestGenerated extends AbstractKotl
             }
         }
     }
+
+    @RunWith(JUnit3RunnerWithInners.class)
+    @TestMetadata("testData/evaluation/jvmMultiModule")
+    public abstract static class JvmMultiModule extends AbstractKotlinEvaluateExpressionTest {
+
+    }
 }

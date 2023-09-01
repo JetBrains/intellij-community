@@ -65,7 +65,7 @@ internal const val KOTLIN_LIBRARY_NAME = "KotlinJavaRuntime"
 internal const val TEST_LIBRARY_NAME = "TestLibrary"
 internal const val COMMON_SOURCES_DIR = "commonSrc"
 internal const val SCRIPT_SOURCES_DIR = "scripts"
-internal const val JVM_MODULE_NAME = "jvm"
+internal const val JVM_MODULE_NAME_START = "jvm"
 
 abstract class KotlinDescriptorTestCase : DescriptorTestCase(), IgnorableTestCase {
     private lateinit var testAppDirectory: File
@@ -547,8 +547,8 @@ internal fun createTestFiles(wholeFile: File, wholeFileContents: String): TestFi
                 dependencies: MutableList<String>,
                 friends: MutableList<String>
             ) =
-                when (name) {
-                    JVM_MODULE_NAME -> DebuggerTestModule.Jvm(dependencies)
+                when {
+                    name.startsWith(JVM_MODULE_NAME_START) -> DebuggerTestModule.Jvm(name, dependencies)
                     else -> DebuggerTestModule.Common(name, dependencies)
                 }
         }
@@ -562,9 +562,9 @@ class TestFiles(val originalFile: File, val wholeFile: TestFile, files: List<Tes
 
 sealed class DebuggerTestModule(name: String, dependencies: List<String>) : KotlinBaseTest.TestModule(name, dependencies, emptyList())  {
     class Common(name: String, dependencies: List<String>) : DebuggerTestModule(name, dependencies)
-    class Jvm(dependencies: List<String>) : DebuggerTestModule(JVM_MODULE_NAME, dependencies) {
+    class Jvm(name: String, dependencies: List<String>) : DebuggerTestModule(name, dependencies) {
         companion object {
-            val Default = Jvm(dependencies = emptyList())
+            val Default = Jvm(JVM_MODULE_NAME_START, dependencies = emptyList())
         }
     }
 }

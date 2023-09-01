@@ -1877,4 +1877,10 @@ public abstract class K1IdeK2CodeKotlinEvaluateExpressionTestGenerated extends A
             }
         }
     }
+
+    @RunWith(JUnit3RunnerWithInners.class)
+    @TestMetadata("testData/evaluation/jvmMultiModule")
+    public abstract static class JvmMultiModule extends AbstractK1IdeK2CodeKotlinEvaluateExpressionTest {
+
+    }
 }

@@ -1877,4 +1877,10 @@ public abstract class IndyLambdaKotlinEvaluateExpressionTestGenerated extends Ab
             }
         }
     }
+
+    @RunWith(JUnit3RunnerWithInners.class)
+    @TestMetadata("testData/evaluation/jvmMultiModule")
+    public abstract static class JvmMultiModule extends AbstractIndyLambdaKotlinEvaluateExpressionTest {
+
+    }
 }

@@ -205,11 +205,13 @@ private fun assembleWorkspace(): TWorkspace = workspace {
         testClass<AbstractKotlinEvaluateExpressionTest> {
             model("evaluation/singleBreakpoint", testMethodName = "doSingleBreakpointTest", targetBackend = TargetBackend.JVM_WITH_OLD_EVALUATOR)
             model("evaluation/multipleBreakpoints", testMethodName = "doMultipleBreakpointsTest", targetBackend = TargetBackend.JVM_WITH_OLD_EVALUATOR)
+            model("evaluation/jvmMultiModule", testMethodName = "doJvmMultiModuleTest", targetBackend = TargetBackend.JVM_WITH_OLD_EVALUATOR)
         }
 
         testClass<AbstractIrKotlinEvaluateExpressionTest> {
             model("evaluation/singleBreakpoint", testMethodName = "doSingleBreakpointTest", targetBackend = TargetBackend.JVM_IR_WITH_OLD_EVALUATOR)
             model("evaluation/multipleBreakpoints", testMethodName = "doMultipleBreakpointsTest", targetBackend = TargetBackend.JVM_IR_WITH_OLD_EVALUATOR)
+            model("evaluation/jvmMultiModule", testMethodName = "doJvmMultiModuleTest", targetBackend = TargetBackend.JVM_IR_WITH_OLD_EVALUATOR)
         }
 
         listOf(
@@ -220,6 +222,7 @@ private fun assembleWorkspace(): TWorkspace = workspace {
             testClass(it) {
                 model("evaluation/singleBreakpoint", testMethodName = "doSingleBreakpointTest", targetBackend = TargetBackend.JVM_IR_WITH_IR_EVALUATOR)
                 model("evaluation/multipleBreakpoints", testMethodName = "doMultipleBreakpointsTest", targetBackend = TargetBackend.JVM_IR_WITH_IR_EVALUATOR)
+                model("evaluation/jvmMultiModule", testMethodName = "doJvmMultiModuleTest", targetBackend = TargetBackend.JVM_IR_WITH_IR_EVALUATOR)
             }
         }
 
