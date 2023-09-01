@@ -10,7 +10,6 @@ import com.intellij.codeInsight.hint.QuestionAction
 import com.intellij.codeInsight.intention.HighPriorityAction
 import com.intellij.codeInspection.HintAction
 import com.intellij.codeInspection.util.IntentionName
-import com.intellij.lang.jvm.JvmModifier
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
@@ -18,8 +17,7 @@ import com.intellij.psi.*
 import com.intellij.psi.statistics.StatisticsInfo
 import com.intellij.psi.statistics.StatisticsManager
 import com.intellij.psi.util.PsiModificationTracker
-import com.intellij.psi.util.parentOfType
-import com.intellij.psi.util.parentsOfType
+import com.intellij.refactoring.suggested.startOffset
 import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
 import org.jetbrains.kotlin.analysis.api.fir.diagnostics.KtFirDiagnostic
 import org.jetbrains.kotlin.analysis.api.renderer.base.annotations.KtRendererAnnotationsFilter
@@ -29,7 +27,6 @@ import org.jetbrains.kotlin.analysis.api.renderer.declarations.impl.KtDeclaratio
 import org.jetbrains.kotlin.analysis.api.renderer.declarations.modifiers.renderers.KtRendererVisibilityModifierProvider
 import org.jetbrains.kotlin.analysis.api.symbols.*
 import org.jetbrains.kotlin.analysis.api.symbols.markers.KtNamedSymbol
-import org.jetbrains.kotlin.analysis.api.symbols.markers.KtSymbolWithVisibility
 import org.jetbrains.kotlin.analysis.utils.printer.prettyPrint
 import org.jetbrains.kotlin.idea.actions.KotlinAddImportActionInfo.executeListener
 import org.jetbrains.kotlin.idea.base.analysis.api.utils.KtSymbolFromIndexProvider
@@ -44,19 +41,13 @@ import org.jetbrains.kotlin.idea.codeInsight.K2StatisticsInfoProvider
 import org.jetbrains.kotlin.idea.codeinsight.api.applicators.fixes.diagnosticFixFactory
 import org.jetbrains.kotlin.idea.codeinsight.api.classic.quickfixes.QuickFixActionBase
 import org.jetbrains.kotlin.idea.codeinsight.utils.getFqNameIfPackageOrNonLocal
-import org.jetbrains.kotlin.idea.base.analysis.api.utils.collectReceiverTypesForElement
 import org.jetbrains.kotlin.idea.quickfix.AutoImportVariant
 import org.jetbrains.kotlin.idea.quickfix.ImportFixHelper
 import org.jetbrains.kotlin.idea.quickfix.ImportPrioritizer
 import org.jetbrains.kotlin.idea.util.application.executeWriteCommand
-import org.jetbrains.kotlin.lexer.KtTokens
+import org.jetbrains.kotlin.idea.util.positionContext.*
 import org.jetbrains.kotlin.name.FqName
-import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.psi.*
-import org.jetbrains.kotlin.psi.psiUtil.containingClassOrObject
-import org.jetbrains.kotlin.psi.psiUtil.findDescendantOfType
-import org.jetbrains.kotlin.psi.psiUtil.getReceiverExpression
-import org.jetbrains.kotlin.psi.psiUtil.isExtensionDeclaration
 import org.jetbrains.kotlin.resolve.ImportPath
 import javax.swing.Icon
 
@@ -200,16 +191,51 @@ class ImportQuickFix(
 
         context(KtAnalysisSession)
         fun getFixes(diagnosticPsi: PsiElement): List<ImportQuickFix> {
-            val position = diagnosticPsi.findDescendantOfType<KtSimpleNameExpression> { it.textRange == diagnosticPsi.textRange }
-                ?: return emptyList()
+            val position = diagnosticPsi.containingFile.findElementAt(diagnosticPsi.startOffset)
+            val positionContext = position?.let { KotlinPositionContextDetector.detect(it) }
 
-            val indexProvider = KtSymbolFromIndexProvider.createForElement(position)
+            if (positionContext !is KotlinNameReferencePositionContext) return emptyList()
 
-            val quickFix = if (position.parentOfType<KtTypeReference>() != null) {
-                createImportTypeFix(indexProvider, position)
-            } else {
-                createImportNameFix(indexProvider, position, position.getReferencedNameAsName())
+            val indexProvider = KtSymbolFromIndexProvider.createForElement(positionContext.nameExpression)
+            val candidateProviders = buildList {
+                when (positionContext) {
+                    is KotlinSuperTypeCallNameReferencePositionContext,
+                    is KotlinTypeNameReferencePositionContext -> {
+                        add(ClassifierImportCandidatesProvider(positionContext, indexProvider))
+                    }
+
+                    is KotlinAnnotationTypeNameReferencePositionContext -> {
+                        add(AnnotationImportCandidatesProvider(positionContext, indexProvider))
+                    }
+
+                    is KotlinWithSubjectEntryPositionContext,
+                    is KotlinExpressionNameReferencePositionContext -> {
+                        add(CallableImportCandidatesProvider(positionContext, indexProvider))
+                        add(ClassifierImportCandidatesProvider(positionContext, indexProvider))
+                    }
+
+                    is KotlinInfixCallPositionContext -> {
+                        add(InfixCallableImportCandidatesProvider(positionContext, indexProvider))
+                    }
+
+                    is KDocLinkNamePositionContext -> {
+                        // TODO
+                    }
+
+                    is KotlinCallableReferencePositionContext -> {
+                        // TODO
+                    }
+
+                    is KotlinImportDirectivePositionContext,
+                    is KotlinPackageDirectivePositionContext,
+                    is KotlinSuperReceiverNameReferencePositionContext,
+                    is KDocParameterNamePositionContext -> {
+                    }
+                }
             }
+
+            val candidates = candidateProviders.flatMap { it.collectCandidates() }
+            val quickFix = createImportFix(positionContext.nameExpression, candidates)
 
             return listOfNotNull(quickFix)
         }
@@ -334,119 +360,5 @@ class ImportQuickFix(
                 fqName = symbol.getFqName(),
                 expressionWeight = expressionImportWeigher.weigh(symbol),
             )
-
-        context(KtAnalysisSession)
-        fun createImportNameFix(
-            indexProvider: KtSymbolFromIndexProvider,
-            position: KtSimpleNameExpression,
-            unresolvedName: Name
-        ): ImportQuickFix? {
-            val firFile = position.containingKtFile.getFileSymbol()
-
-            val isVisible: (KtSymbol) -> Boolean =
-                { it !is KtSymbolWithVisibility || isVisible(it, firFile, receiverExpression = null, position) }
-
-            val candidateSymbols = buildList {
-                addAll(collectCallableCandidates(indexProvider, position, unresolvedName, isVisible))
-                addAll(collectTypesCandidates(indexProvider, position, unresolvedName, isVisible))
-            }
-
-            return createImportFix(position, candidateSymbols)
-        }
-
-        context(KtAnalysisSession)
-        private fun createImportTypeFix(
-            indexProvider: KtSymbolFromIndexProvider,
-            position: KtSimpleNameExpression,
-        ): ImportQuickFix? {
-            val firFile = position.containingKtFile.getFileSymbol()
-            val unresolvedName = position.getReferencedNameAsName()
-
-            val isVisible: (KtClassLikeSymbol) -> Boolean =
-                { it is KtSymbolWithVisibility && isVisible(it, firFile, receiverExpression = null, position) }
-
-            return createImportFix(position, collectTypesCandidates(indexProvider, position, unresolvedName, isVisible))
-        }
-
-        context(KtAnalysisSession)
-        private fun collectCallableCandidates(
-            indexProvider: KtSymbolFromIndexProvider,
-            position: KtSimpleNameExpression,
-            unresolvedName: Name,
-            isVisible: (KtCallableSymbol) -> Boolean
-        ): List<KtDeclarationSymbol> {
-            val explicitReceiver = position.getReceiverExpression()
-
-            val callablesCandidates = buildList {
-                if (explicitReceiver == null) {
-                    addAll(indexProvider.getKotlinCallableSymbolsByName(unresolvedName) { declaration ->
-                        // filter out extensions here, because they are added later with the use of information about receiver types
-                        declaration.canBeImported() && !declaration.isExtensionDeclaration()
-                    })
-                    addAll(indexProvider.getJavaCallableSymbolsByName(unresolvedName) { it.canBeImported() })
-                }
-
-                val receiverTypes = collectReceiverTypesForElement(position, explicitReceiver)
-                val isInfixFunctionExpected = (position.parent as? KtBinaryExpression)?.operationReference == position
-
-                addAll(indexProvider.getTopLevelExtensionCallableSymbolsByName(unresolvedName, receiverTypes) { declaration ->
-                    declaration.canBeImported() && (!isInfixFunctionExpected || declaration.hasModifier(KtTokens.INFIX_KEYWORD))
-                })
-            }
-
-            return callablesCandidates
-                .filter { isVisible(it) && it.callableIdIfNonLocal != null }
-                .toList()
-        }
-
-        context(KtAnalysisSession)
-        private fun collectTypesCandidates(
-            indexProvider: KtSymbolFromIndexProvider,
-            position: KtSimpleNameExpression,
-            unresolvedName: Name,
-            isVisible: (KtClassLikeSymbol) -> Boolean
-        ): List<KtClassLikeSymbol> {
-            if (position.getReceiverExpression() != null) return emptyList()
-
-            val isAnnotationClassExpected = position.isNameReferenceInAnnotationEntry()
-
-            val classesCandidates = sequence {
-                yieldAll(indexProvider.getKotlinClassesByName(unresolvedName) { ktClassLikeDeclaration ->
-                    ktClassLikeDeclaration.canBeImported() && (!isAnnotationClassExpected || ktClassLikeDeclaration.isAnnotation())
-                })
-                yieldAll(indexProvider.getJavaClassesByName(unresolvedName) { psiClass ->
-                    psiClass.canBeImported() && (!isAnnotationClassExpected || psiClass.isAnnotationType)
-                })
-            }
-
-            return classesCandidates
-                .filter { isVisible(it) && it.classIdIfNonLocal != null }
-                .toList()
-        }
-
-        private fun KtElement.isNameReferenceInAnnotationEntry(): Boolean =
-            ((this as? KtNameReferenceExpression)?.parent?.parent?.parent as? KtConstructorCalleeExpression)?.parent is KtAnnotationEntry
-
-        private fun KtClassLikeDeclaration.isAnnotation(): Boolean =
-            this is KtClassOrObject && isAnnotation()
-    }
-}
-
-private fun PsiMember.canBeImported(): Boolean {
-    return when (this) {
-        is PsiClass -> qualifiedName != null && (containingClass == null || hasModifier(JvmModifier.STATIC))
-        is PsiField, is PsiMethod -> hasModifier(JvmModifier.STATIC) && containingClass?.qualifiedName != null
-        else -> false
-    }
-}
-
-private fun KtDeclaration.canBeImported(): Boolean {
-    return when (this) {
-        is KtProperty -> isTopLevel || containingClassOrObject is KtObjectDeclaration
-        is KtNamedFunction -> isTopLevel || containingClassOrObject is KtObjectDeclaration
-        is KtClassLikeDeclaration ->
-            getClassId() != null && parentsOfType<KtClassLikeDeclaration>(withSelf = true).none { it.hasModifier(KtTokens.INNER_KEYWORD) }
-
-        else -> false
     }
 }

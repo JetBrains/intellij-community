@@ -12,6 +12,7 @@ import org.jetbrains.kotlin.idea.references.mainReference
 import org.jetbrains.kotlin.kdoc.parser.KDocKnownTag
 import org.jetbrains.kotlin.kdoc.psi.impl.KDocLink
 import org.jetbrains.kotlin.kdoc.psi.impl.KDocName
+import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.getReceiverExpression
 import org.jetbrains.kotlin.psi.psiUtil.getStrictParentOfType
@@ -56,12 +57,16 @@ sealed class KotlinNameReferencePositionContext : KotlinRawPositionContext() {
     abstract val reference: KtReference
     abstract val nameExpression: KtElement
     abstract val explicitReceiver: KtElement?
+
+    abstract fun getName(): Name
 }
 
 sealed class KotlinSimpleNameReferencePositionContext : KotlinNameReferencePositionContext() {
     abstract override val reference: KtSimpleNameReference
     abstract override val nameExpression: KtSimpleNameExpression
     abstract override val explicitReceiver: KtExpression?
+
+    override fun getName(): Name = nameExpression.getReferencedNameAsName()
 }
 
 class KotlinImportDirectivePositionContext(
@@ -185,6 +190,8 @@ sealed class KDocNameReferencePositionContext : KotlinNameReferencePositionConte
     abstract override val reference: KDocReference
     abstract override val nameExpression: KDocName
     abstract override val explicitReceiver: KDocName?
+
+    override fun getName(): Name = nameExpression.getQualifiedNameAsFqName().shortName()
 }
 
 class KDocParameterNamePositionContext(

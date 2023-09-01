@@ -8,15 +8,13 @@ import org.jetbrains.kotlin.analysis.project.structure.KtCompilerPluginsProvider
 import org.jetbrains.kotlin.analysis.project.structure.KtCompilerPluginsProvider.CompilerPluginType
 import org.jetbrains.kotlin.analysis.project.structure.KtSourceModule
 import org.jetbrains.kotlin.analysis.project.structure.ProjectStructureProvider
-import org.jetbrains.kotlin.idea.base.analysis.api.utils.KtSymbolFromIndexProvider
 import org.jetbrains.kotlin.idea.codeinsight.api.applicators.fixes.KotlinQuickFixRegistrar
 import org.jetbrains.kotlin.idea.codeinsight.api.applicators.fixes.KotlinQuickFixesList
 import org.jetbrains.kotlin.idea.codeinsight.api.applicators.fixes.KtQuickFixesListBuilder
 import org.jetbrains.kotlin.idea.codeinsight.api.applicators.fixes.diagnosticFixFactory
-import org.jetbrains.kotlin.idea.quickfix.importFix.ImportQuickFix.Companion.createImportNameFix
+import org.jetbrains.kotlin.idea.quickfix.importFix.ImportQuickFix
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.psi.KtBinaryExpression
-import org.jetbrains.kotlin.types.expressions.OperatorConventions
 
 internal class FirAssignmentPluginQuickFixRegistrar : KotlinQuickFixRegistrar() {
 
@@ -31,17 +29,11 @@ private val FACTORY = diagnosticFixFactory(KtFirDiagnostic.UnresolvedReference::
     val element = diagnostic.psi
     val project = element.project
 
-    val quickFix = if (element is KtBinaryExpression
-        && element.operationToken == KtTokens.EQ
-        && isAssignmentPluginEnabled(project, element)
-    ) {
-        val indexProvider = KtSymbolFromIndexProvider.createForElement(element)
-        createImportNameFix(indexProvider, element.operationReference, OperatorConventions.ASSIGN_METHOD)
+    if (element is KtBinaryExpression && element.operationToken == KtTokens.EQ && isAssignmentPluginEnabled(project, element)) {
+        ImportQuickFix.getFixes(element.operationReference)
     } else {
-        null
+        emptyList()
     }
-
-    listOfNotNull(quickFix)
 }
 
 private fun isAssignmentPluginEnabled(project: Project, element: PsiElement): Boolean {
