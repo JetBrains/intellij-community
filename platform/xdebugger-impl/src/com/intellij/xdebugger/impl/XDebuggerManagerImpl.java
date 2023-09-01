@@ -88,6 +88,8 @@ public final class XDebuggerManagerImpl extends XDebuggerManager implements Pers
   @Deprecated(forRemoval = true)
   public static final NotificationGroup NOTIFICATION_GROUP = getNotificationGroup();
 
+  public static final DataKey<Integer> ACTIVE_LINE_NUMBER = DataKey.create("active.line.number");
+
   private final Project myProject;
   private final XBreakpointManagerImpl myBreakpointManager;
   private final XDebuggerWatchesManager myWatchesManager;
