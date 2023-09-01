@@ -18,6 +18,9 @@ class JavaSourceToSinkFlowInspectionContextTest : SourceToSinkFlowInspectionTest
       untaintedParameterWithPlacePlaceMethod.add("getWriter")
       checkedTypes.add("java.util.List")
       depthInside = 10
+      depthOutsideMethods = 1
+      getUntaintedMethodMatcher().classNames.add("com.example.sqlinjection.utils.Utils")
+      getUntaintedMethodMatcher().methodNamePatterns.add("safe")
     }
 
   override fun getBasePath(): String {
@@ -26,6 +29,26 @@ class JavaSourceToSinkFlowInspectionContextTest : SourceToSinkFlowInspectionTest
 
   fun `test simple with context`() {
     myFixture.testHighlighting("Simple.java")
+  }
+  fun `test static propagation`(){
+    prepareCheckFramework()
+    val configureByText = myFixture.configureByText("Utils.java", """
+      package com.example.sqlinjection.utils;
+
+      public class Utils {
+          public static String encodeForHTML(String param) {
+              return safe(param);
+          }
+
+          public static String safe(String p) {
+              StringBuilder builder = new StringBuilder();
+              builder.append(p);
+              return builder.toString();
+          }
+      }
+    """.trimIndent())
+    myFixture.allowTreeAccessForFile(configureByText.virtualFile)
+    myFixture.testHighlighting("StaticPropagation.java")
   }
   fun `test for not string as a parameter`() {
     myFixture.testHighlighting("SimpleObject.java")
