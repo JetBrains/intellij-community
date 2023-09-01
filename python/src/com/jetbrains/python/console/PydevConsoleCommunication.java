@@ -291,19 +291,21 @@ public abstract class PydevConsoleCommunication extends AbstractConsoleCommunica
 
     // add code fragment to myConsoleView.getHistoryPsiFile()
     PsiFile psi = getHistoryPsiFile();
-      if (myConsoleView != null && psi != null) {
-        WriteCommandAction.runWriteCommandAction(myProject, null, null,
-                                                 () -> {
-                                                   PsiElement[] newElems =
-                                                     PyElementGenerator.getInstance(myProject)
-                                                       .createDummyFile(LanguageLevel.forElement(myConsoleView.getFile()), command.getText())
-                                                       .getChildren();
-                                                   for (PsiElement elem : newElems) {
-                                                     psi.add(elem);
-                                                   }
-                                                 },
-                                                 psi);
-      }
+    if (myConsoleView != null && psi != null) {
+      ApplicationManager.getApplication().invokeLater(
+        () -> WriteCommandAction.runWriteCommandAction(myProject, null, null,
+                                                       () -> {
+                                                         PsiElement[] newElems =
+                                                           PyElementGenerator.getInstance(myProject)
+                                                             .createDummyFile(LanguageLevel.forElement(myConsoleView.getFile()),
+                                                                              command.getText())
+                                                             .getChildren();
+                                                         for (PsiElement elem : newElems) {
+                                                           psi.add(elem);
+                                                         }
+                                                       },
+                                                       psi));
+    }
 
     boolean more;
     try {
