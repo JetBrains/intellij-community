@@ -3,7 +3,7 @@ package org.jetbrains.plugins.gradle.service.project;
 
 import com.intellij.build.events.MessageEvent;
 import com.intellij.build.issue.BuildIssue;
-import com.intellij.gradle.toolingExtension.impl.projectModel.provider.GradleExternalProjectModelProvider;
+import com.intellij.gradle.toolingExtension.impl.projectModel.GradleExternalProjectModelProvider;
 import com.intellij.gradle.toolingExtension.impl.taskModel.GradleTaskModelProvider;
 import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.application.PathManager;

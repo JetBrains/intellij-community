@@ -3,7 +3,7 @@
 
 package org.jetbrains.plugins.gradle.tooling.util.resolve.deprecated;
 
-import com.intellij.gradle.toolingExtension.impl.sourceSetModel.provider.SourceSetCachedFinder;
+import com.intellij.gradle.toolingExtension.impl.sourceSetModel.SourceSetCachedFinder;
 import org.gradle.api.Project;
 import org.gradle.api.Task;
 import org.gradle.api.artifacts.*;

@@ -1,5 +1,5 @@
 # Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-com.intellij.gradle.toolingExtension.impl.projectModel.provider.ExternalProjectBuilderImpl
+com.intellij.gradle.toolingExtension.impl.projectModel.ExternalProjectBuilderImpl
 com.intellij.gradle.toolingExtension.impl.taskModel.GradleTaskModelBuilder
 org.jetbrains.plugins.gradle.tooling.builder.AnnotationProcessingModelBuilder
 org.jetbrains.plugins.gradle.tooling.builder.WarModelBuilderImpl
