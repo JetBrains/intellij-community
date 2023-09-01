@@ -744,8 +744,9 @@ fun ExtractionData.performAnalysis(): AnalysisResult {
         )
     }
 
-    val enclosingDeclaration = commonParent.getStrictParentOfType<KtDeclaration>()!!
-    checkDeclarationsMovingOutOfScope(enclosingDeclaration, controlFlow, bindingContext)?.let { messages.add(it) }
+    commonParent.getStrictParentOfType<KtDeclaration>()?.let { enclosingDeclaration ->
+        checkDeclarationsMovingOutOfScope(enclosingDeclaration, controlFlow, bindingContext)?.let { messages.add(it) }
+    }
 
     controlFlow.jumpOutputValue?.elementToInsertAfterCall?.accept(
         object : KtTreeVisitorVoid() {
