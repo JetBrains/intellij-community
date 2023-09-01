@@ -3,7 +3,6 @@ package com.intellij.updater;
 
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.io.IoTestUtil;
-import com.intellij.testFramework.RunFirst;
 import com.intellij.util.containers.ContainerUtil;
 import org.junit.Before;
 import org.junit.Test;
@@ -28,11 +27,19 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.Assert.*;
 import static org.junit.Assume.assumeFalse;
 
-@RunFirst
+@SuppressWarnings("JUnit3StyleTestMethodInJUnit4Class")
 public abstract class PatchApplyingRevertingTest extends PatchTestCase {
+  @SuppressWarnings("JUnitTestCaseWithNoTests")
+  public static final class StandardModeTest extends PatchApplyingRevertingTest { }
+
+  @SuppressWarnings("JUnitTestCaseWithNoTests")
+  public static final class NoBackupTest extends PatchApplyingRevertingTest { }
+
   private File myFile;
   private PatchSpec myPatchSpec;
   private boolean myDoBackup;
+
+  private PatchApplyingRevertingTest() { }
 
   @Before
   @Override
@@ -41,17 +48,8 @@ public abstract class PatchApplyingRevertingTest extends PatchTestCase {
     myFile = getTempFile("patch.zip");
     myPatchSpec = new PatchSpec()
       .setOldFolder(myOlderDir.getAbsolutePath())
-      .setNewFolder(myNewerDir.getAbsolutePath())
-      .setBinary(isBinary());
-    myDoBackup = isBackup();
-  }
-
-  protected boolean isBinary() {
-    return false;
-  }
-
-  protected boolean isBackup() {
-    return true;
+      .setNewFolder(myNewerDir.getAbsolutePath());
+    myDoBackup = !(this instanceof NoBackupTest);
   }
 
   @Test
@@ -286,18 +284,7 @@ public abstract class PatchApplyingRevertingTest extends PatchTestCase {
 
     FileUtil.delete(new File(myOlderDir, "lib/annotations.jar"));
 
-    if (isBinary()) {
-      assertAppliedAndReverted();
-    }
-    else {
-      PatchFileCreator.PreparationResult preparationResult = PatchFileCreator.prepareAndValidate(myFile, myOlderDir, TEST_UI);
-      assertThat(preparationResult.validationResults).containsExactly(
-        new ValidationResult(ValidationResult.Kind.ERROR,
-                             "lib/annotations.jar",
-                             ValidationResult.Action.UPDATE,
-                             ValidationResult.ABSENT_MESSAGE,
-                             ValidationResult.Option.NONE));
-    }
+    assertAppliedAndReverted();
   }
 
   @Test
@@ -392,8 +379,7 @@ public abstract class PatchApplyingRevertingTest extends PatchTestCase {
 
     PatchFileCreator.PreparationResult preparationResult = PatchFileCreator.prepareAndValidate(myFile, myOlderDir, TEST_UI);
     assertThat(preparationResult.validationResults).isEmpty();
-    long hash = myPatchSpec.isBinary() ? CHECKSUMS.BOOTSTRAP_JAR_BIN : CHECKSUMS.BOOTSTRAP_JAR;
-    assertAppliedAndReverted(preparationResult, expected -> expected.put("lib/boot.jar", hash));
+    assertAppliedAndReverted(preparationResult, expected -> expected.put("lib/boot.jar", CHECKSUMS.BOOTSTRAP_JAR));
   }
 
   @Test

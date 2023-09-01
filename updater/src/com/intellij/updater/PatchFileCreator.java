@@ -120,7 +120,7 @@ public final class PatchFileCreator {
              '-' +
              Long.toHexString(action.getChecksum()) +
              '-' +
-             Long.toHexString(Digester.digestRegularFile(action.getFile(newerDir), false));
+             Long.toHexString(Digester.digestRegularFile(action.getFile(newerDir)));
     }
     catch (IOException ignored) {
       return null;

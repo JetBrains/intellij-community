@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.updater;
 
 import java.io.*;
@@ -191,7 +191,7 @@ public abstract class PatchAction {
     if (toFile.exists()) {
       if (isModified(toFile)) {
         ValidationResult.Option[] options = calculateOptions();
-        String details = "expected 0x" + Long.toHexString(myChecksum) + ", actual 0x" + Long.toHexString(myPatch.digestFile(toFile, myPatch.isNormalized()));
+        String details = "expected 0x" + Long.toHexString(myChecksum) + ", actual 0x" + Long.toHexString(myPatch.digestFile(toFile));
         return new ValidationResult(ValidationResult.Kind.ERROR, getReportPath(), action, ValidationResult.MODIFIED_MESSAGE, details, options);
       }
     }
@@ -225,7 +225,7 @@ public abstract class PatchAction {
   }
 
   protected boolean isModified(File toFile) throws IOException {
-    return myChecksum == Digester.INVALID || myChecksum != myPatch.digestFile(toFile, myPatch.isNormalized());
+    return myChecksum == Digester.INVALID || myChecksum != myPatch.digestFile(toFile);
   }
 
   public boolean mandatoryBackup() {

@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.updater;
 
 import java.io.*;
@@ -15,16 +15,13 @@ import static com.intellij.updater.Runner.*;
 public class Patch {
   private static final int CREATE_ACTION_KEY = 1;
   private static final int UPDATE_ACTION_KEY = 2;
-  private static final int UPDATE_ZIP_ACTION_KEY = 3;
   private static final int DELETE_ACTION_KEY = 4;
   private static final int VALIDATE_ACTION_KEY = 5;
 
   private final String myOldBuild;
   private final String myNewBuild;
   private final String myRoot;
-  private final boolean myIsBinary;
   private final boolean myIsStrict;
-  private final boolean myIsNormalized;
   private final Map<String, String> myWarnings;
   private final List<String> myDeleteFiles;
   private final int myTimeout;
@@ -34,9 +31,7 @@ public class Patch {
     myOldBuild = spec.getOldVersionDescription();
     myNewBuild = spec.getNewVersionDescription();
     myRoot = spec.getRoot();
-    myIsBinary = spec.isBinary();
     myIsStrict = spec.isStrict();
-    myIsNormalized = spec.isNormalized();
     myWarnings = spec.getWarnings();
     myDeleteFiles = spec.getDeleteFiles();
     myTimeout = spec.getTimeout();
@@ -48,9 +43,9 @@ public class Patch {
     myOldBuild = in.readUTF();
     myNewBuild = in.readUTF();
     myRoot = in.readUTF();
-    myIsBinary = in.readBoolean();
+    /*myIsBinary =*/ in.readBoolean();
     myIsStrict = in.readBoolean();
-    myIsNormalized = in.readBoolean();
+    /*myIsNormalized =*/ in.readBoolean();
     myWarnings = readMap(in);
     myDeleteFiles = readList(in);
     myTimeout = 0;
@@ -69,8 +64,8 @@ public class Patch {
     Set<String> optional = new HashSet<>(spec.getOptionalFiles());
     Set<String> strict = new HashSet<>(spec.getStrictFiles());
 
-    Map<String, Long> oldChecksums = digestFiles(olderDir, ignored, isNormalized());
-    Map<String, Long> newChecksums = digestFiles(newerDir, ignored, false);
+    Map<String, Long> oldChecksums = digestFiles(olderDir, ignored);
+    Map<String, Long> newChecksums = digestFiles(newerDir, ignored);
     DiffCalculator.Result diff = DiffCalculator.calculate(oldChecksums, newChecksums, critical, optional, true);
 
     LOG.info("Preparing actions...");
@@ -78,7 +73,7 @@ public class Patch {
 
     List<PatchAction> tempActions = new ArrayList<>();
 
-    // 'delete' actions before 'create' actions to prevent newly created files to be deleted if the names differ only on case.
+    // 'delete' actions before 'create' actions to prevent newly created files to be deleted if the names differ only in case.
     for (Map.Entry<String, Long> each : diff.filesToDelete.entrySet()) {
       // Add them in reverse order so directory structures start deleting the files before the directory itself.
       tempActions.add(0, new DeleteAction(this, each.getKey(), each.getValue()));
@@ -90,12 +85,7 @@ public class Patch {
 
     for (Map.Entry<String, DiffCalculator.Update> each : diff.filesToUpdate.entrySet()) {
       DiffCalculator.Update update = each.getValue();
-      if (!spec.isBinary() && !update.move && Utils.isZipFile(each.getKey())) {
-        tempActions.add(new UpdateZipAction(this, each.getKey(), update.source, update.checksum));
-      }
-      else {
-        tempActions.add(new UpdateAction(this, each.getKey(), update.source, update.checksum, update.move));
-      }
+      tempActions.add(new UpdateAction(this, each.getKey(), update.source, update.checksum, update.move));
     }
 
     if (spec.isStrict()) {
@@ -127,9 +117,9 @@ public class Patch {
       dataOut.writeUTF(myOldBuild);
       dataOut.writeUTF(myNewBuild);
       dataOut.writeUTF(myRoot);
-      dataOut.writeBoolean(myIsBinary);
+      dataOut.writeBoolean(/*myIsBinary*/ true);
       dataOut.writeBoolean(myIsStrict);
-      dataOut.writeBoolean(myIsNormalized);
+      dataOut.writeBoolean(/*myIsNormalized*/ false);
       writeMap(dataOut, myWarnings);
       writeList(dataOut, myDeleteFiles);
       writeActions(dataOut, myActions);
@@ -161,7 +151,6 @@ public class Patch {
       Class<?> clazz = each.getClass();
       if (clazz == CreateAction.class) key = CREATE_ACTION_KEY;
       else if (clazz == UpdateAction.class) key = UPDATE_ACTION_KEY;
-      else if (clazz == UpdateZipAction.class) key = UPDATE_ZIP_ACTION_KEY;
       else if (clazz == DeleteAction.class) key = DELETE_ACTION_KEY;
       else if (clazz == ValidateAction.class) key = VALIDATE_ACTION_KEY;
       else throw new RuntimeException("Unknown action " + each);
@@ -201,9 +190,6 @@ public class Patch {
           break;
         case UPDATE_ACTION_KEY:
           a = new UpdateAction(this, in);
-          break;
-        case UPDATE_ZIP_ACTION_KEY:
-          a = new UpdateZipAction(this, in);
           break;
         case DELETE_ACTION_KEY:
           a = new DeleteAction(this, in);
@@ -412,21 +398,16 @@ public class Patch {
     ui.checkCancelled();
   }
 
-  public long digestFile(File toFile, boolean normalize) throws IOException {
-    if (!myIsBinary && Utils.isZipFile(toFile.getName())) {
-      return Digester.digestZipFile(toFile);
-    }
-    else {
-      return Digester.digestRegularFile(toFile, normalize);
-    }
+  public long digestFile(File toFile) throws IOException {
+    return Digester.digestRegularFile(toFile);
   }
 
-  public Map<String, Long> digestFiles(File dir, Set<String> ignoredFiles, boolean normalize) throws IOException {
+  public Map<String, Long> digestFiles(File dir, Set<String> ignoredFiles) throws IOException {
     Map<String, Long> result = new LinkedHashMap<>();
     Utils.collectRelativePaths(dir.toPath()).parallelStream().forEachOrdered(path -> {
       if (!ignoredFiles.contains(path)) {
         try {
-          long hash = digestFile(new File(dir, path), normalize);
+          long hash = digestFile(new File(dir, path));
           synchronized (result) {
             result.put(path, hash);
           }
@@ -447,10 +428,6 @@ public class Patch {
 
   public boolean isStrict() {
     return myIsStrict;
-  }
-
-  public boolean isNormalized() {
-    return myIsNormalized;
   }
 
   public boolean validateDeletion(String path) {

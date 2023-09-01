@@ -123,9 +123,7 @@ public final class Runner {
 
       LOG.info("case-sensitive: " + ourCaseSensitiveFs);
 
-      boolean binary = hasArgument(args, "zip_as_binary");
       boolean strict = hasArgument(args, "strict");
-      boolean normalized = hasArgument(args, "normalized");
 
       String root = getArgument(args, "root");
       if (root == null) {
@@ -156,8 +154,6 @@ public final class Runner {
         .setPatchFile(patchFile)
         .setJarFile(jarFile)
         .setStrict(strict)
-        .setBinary(binary)
-        .setNormalized(normalized)
         .setIgnoredFiles(ignoredFiles)
         .setCriticalFiles(criticalFiles)
         .setStrictFiles(strictFiles)
@@ -286,7 +282,6 @@ public final class Runner {
       "    optional: A set of files that is okay for them not to exist when applying the patch.\n" +
       "    delete: A set of regular expressions for paths that is safe to delete without user confirmation.\n" +
       "  <flags>: Can be:\n" +
-      "    --zip_as_binary: Zip and jar files will be treated as binary files and not inspected internally.\n" +
       "    --strict:     The created patch will contain extra information to fully validate an installation. A strict\n" +
       "                  patch will only be applied if it is guaranteed that the patched version will match exactly\n" +
       "                  the source of the patch. This means that unexpected files will be deleted and all existing files\n" +
@@ -296,11 +291,6 @@ public final class Runner {
       "    --root=<dir>: Sets dir as the root directory of the patch. The root directory is the directory where the patch should be\n" +
       "                  applied to. For example on Mac, you can diff the two .app folders and set Contents as the root.\n" +
       "                  The root directory is relative to <old_folder> and uses forwards-slashes as separators.\n" +
-      "    --normalized: This creates a normalized patch. This flag only makes sense in addition to --zip_as_binary\n" +
-      "                  A normalized patch must be used to move from an installation that was patched\n" +
-      "                  in a non-binary way to a fully binary patch. This will yield a larger patch, but\n" +
-      "                  the generated patch can be applied on versions where non-binary patches have been applied to and it\n" +
-      "                  guarantees that the patched version will match exactly the original one.\n" +
       "    --timeout=<T> A time budget for building a 'bsdiff' patch between a pair of files, in seconds.\n" +
       "                  If exceeded, the new version is included into the patch as a whole.\n" +
       "  <folder>: The folder where product was installed. For example: c:/Program Files/JetBrains/IntelliJ IDEA 2017.3.4");
