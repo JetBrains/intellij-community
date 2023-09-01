@@ -29,11 +29,9 @@ import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.TextStyle
 import org.jetbrains.jewel.CommonStateBitMask.Active
 import org.jetbrains.jewel.CommonStateBitMask.Enabled
-import org.jetbrains.jewel.CommonStateBitMask.Error
 import org.jetbrains.jewel.CommonStateBitMask.Focused
 import org.jetbrains.jewel.CommonStateBitMask.Hovered
 import org.jetbrains.jewel.CommonStateBitMask.Pressed
-import org.jetbrains.jewel.CommonStateBitMask.Warning
 import org.jetbrains.jewel.foundation.Stroke
 import org.jetbrains.jewel.foundation.border
 import org.jetbrains.jewel.styling.ButtonStyle
@@ -55,7 +53,7 @@ fun DefaultButton(
         interactionSource = interactionSource,
         style = style,
         content = content,
-        textStyle = textStyle
+        textStyle = textStyle,
     )
 }
 
@@ -76,7 +74,7 @@ fun OutlinedButton(
         interactionSource = interactionSource,
         style = style,
         content = content,
-        textStyle = textStyle
+        textStyle = textStyle,
     )
 }
 
@@ -117,23 +115,27 @@ private fun ButtonImpl(
     val shape = RoundedCornerShape(style.metrics.cornerSize)
     val colors = style.colors
     val borderColor by colors.borderFor(buttonState)
+    println("state: $buttonState ($enabled) -> $borderColor")
 
     Box(
-        modifier.clickable(
-            onClick = onClick,
-            enabled = enabled,
-            role = Role.Button,
-            interactionSource = interactionSource,
-            indication = null
-        ).background(colors.backgroundFor(buttonState).value, shape)
+        modifier = modifier
+            .clickable(
+                onClick = onClick,
+                enabled = enabled,
+                role = Role.Button,
+                interactionSource = interactionSource,
+                indication = null,
+            )
+            .background(colors.backgroundFor(buttonState).value, shape)
             .border(Stroke.Alignment.Center, style.metrics.borderWidth, borderColor, shape)
             .focusOutline(buttonState, shape),
-        propagateMinConstraints = true
+        propagateMinConstraints = true,
     ) {
         val contentColor by colors.contentFor(buttonState)
+
         CompositionLocalProvider(
             LocalContentColor provides contentColor.takeOrElse { textStyle.color },
-            LocalTextStyle provides textStyle.copy(color = contentColor.takeOrElse { textStyle.color })
+            LocalTextStyle provides textStyle.copy(color = contentColor.takeOrElse { textStyle.color }),
         ) {
             Row(
                 Modifier
@@ -141,7 +143,7 @@ private fun ButtonImpl(
                     .padding(style.metrics.padding),
                 horizontalArrangement = Arrangement.Center,
                 verticalAlignment = Alignment.CenterVertically,
-                content = content
+                content = content,
             )
         }
     }
@@ -182,7 +184,7 @@ value class ButtonState(val state: ULong) : FocusableComponentState {
         focused = focused,
         pressed = pressed,
         hovered = hovered,
-        active = active
+        active = active,
     )
 
     override fun toString() =
@@ -194,19 +196,15 @@ value class ButtonState(val state: ULong) : FocusableComponentState {
         fun of(
             enabled: Boolean = true,
             focused: Boolean = false,
-            error: Boolean = false,
             pressed: Boolean = false,
             hovered: Boolean = false,
-            warning: Boolean = false,
             active: Boolean = true,
         ) = ButtonState(
             state = (if (enabled) Enabled else 0UL) or
                 (if (focused) Focused else 0UL) or
                 (if (hovered) Hovered else 0UL) or
                 (if (pressed) Pressed else 0UL) or
-                (if (warning) Warning else 0UL) or
-                (if (error) Error else 0UL) or
-                (if (active) Active else 0UL)
+                (if (active) Active else 0UL),
         )
     }
 }

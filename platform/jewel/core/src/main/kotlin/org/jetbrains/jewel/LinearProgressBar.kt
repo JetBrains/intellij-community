@@ -24,6 +24,8 @@ import androidx.compose.ui.unit.Density
 import androidx.compose.ui.unit.LayoutDirection
 import org.jetbrains.jewel.styling.HorizontalProgressBarStyle
 
+// TODO implement green/red/yellow variants based on com.intellij.openapi.progress.util.ColorProgressBar
+
 @Composable
 fun HorizontalProgressBar(
     progress: Float, // from 0 to 1
@@ -48,9 +50,9 @@ fun HorizontalProgressBar(
                     color = colors.progress,
                     topLeft = Offset(progressX, 0f),
                     size = size.copy(width = progressWidth),
-                    cornerRadius = cornerRadius
+                    cornerRadius = cornerRadius,
                 )
-            }
+            },
     )
 }
 
@@ -67,13 +69,13 @@ fun IndeterminateHorizontalProgressBar(
         targetValue = 2f,
         animationSpec = infiniteRepeatable(
             tween(durationMillis = cycleDurationMillis, easing = LinearEasing),
-            repeatMode = RepeatMode.Restart
-        )
+            repeatMode = RepeatMode.Restart,
+        ),
     )
 
     val highlightWidth = style.metrics.indeterminateHighlightWidth
     val colors = style.colors
-    val colorsList by remember { mutableStateOf(listOf(colors.progress, colors.indeterminateHighlight)) }
+    val colorsList by remember { mutableStateOf(listOf(colors.indeterminateBase, colors.indeterminateHighlight)) }
     val shape = RoundedCornerShape(style.metrics.cornerSize)
 
     Box(
@@ -90,9 +92,9 @@ fun IndeterminateHorizontalProgressBar(
                         colors = colorsList,
                         start = Offset(x, 0f),
                         end = Offset(x + highlightWidth.value, 0f),
-                        TileMode.Mirror
-                    )
+                        TileMode.Mirror,
+                    ),
                 )
-            }
+            },
     )
 }

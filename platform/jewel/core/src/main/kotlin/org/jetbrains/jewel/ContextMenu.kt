@@ -15,7 +15,9 @@ import androidx.compose.ui.input.InputMode
 import androidx.compose.ui.input.InputModeManager
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.platform.LocalInputModeManager
+import androidx.compose.ui.res.ResourceLoader
 import androidx.compose.ui.window.Popup
+import androidx.compose.ui.window.PopupProperties
 import androidx.compose.ui.window.rememberCursorPositionProvider
 import org.jetbrains.jewel.styling.MenuStyle
 
@@ -31,7 +33,8 @@ object IntelliJContextMenuRepresentation : ContextMenuRepresentation {
                     state.status = ContextMenuState.Status.Closed
                     true
                 },
-                style = IntelliJTheme.menuStyle
+                style = IntelliJTheme.menuStyle,
+                resourceLoader = LocalResourceLoader.current,
             ) {
                 contextItems(items)
             }
@@ -42,8 +45,9 @@ object IntelliJContextMenuRepresentation : ContextMenuRepresentation {
 @Composable
 internal fun ContextMenu(
     onDismissRequest: (InputMode) -> Boolean,
-    focusable: Boolean = true,
+    resourceLoader: ResourceLoader,
     modifier: Modifier = Modifier,
+    focusable: Boolean = true,
     style: MenuStyle = IntelliJTheme.menuStyle,
     content: MenuScope.() -> Unit,
 ) {
@@ -51,31 +55,33 @@ internal fun ContextMenu(
     var inputModeManager: InputModeManager? by mutableStateOf(null)
     val menuManager = remember(onDismissRequest) {
         MenuManager(
-            onDismissRequest = onDismissRequest
+            onDismissRequest = onDismissRequest,
         )
     }
 
     Popup(
-        focusable = focusable,
+        popupPositionProvider = rememberCursorPositionProvider(style.metrics.offset),
         onDismissRequest = {
             onDismissRequest(InputMode.Touch)
         },
-        popupPositionProvider = rememberCursorPositionProvider(style.metrics.offset),
+        properties = PopupProperties(focusable = focusable),
+        onPreviewKeyEvent = { false },
         onKeyEvent = {
             val currentFocusManager = checkNotNull(focusManager) { "FocusManager must not be null" }
             val currentInputModeManager = checkNotNull(inputModeManager) { "InputModeManager must not be null" }
             handlePopupMenuOnKeyEvent(it, currentFocusManager, currentInputModeManager, menuManager)
-        }
+        },
     ) {
         focusManager = LocalFocusManager.current
         inputModeManager = LocalInputModeManager.current
 
         CompositionLocalProvider(
-            LocalMenuManager provides menuManager
+            LocalMenuManager provides menuManager,
         ) {
             MenuContent(
                 modifier = modifier,
-                content = content
+                content = content,
+                resourceLoader = resourceLoader,
             )
         }
     }
@@ -85,7 +91,7 @@ private fun MenuScope.contextItems(items: () -> List<ContextMenuItem>) {
     items().forEach { item ->
         when (item) {
             is ContextMenuDivider -> {
-                divider()
+                separator()
             }
 
             is ContextSubmenu -> {
@@ -99,7 +105,7 @@ private fun MenuScope.contextItems(items: () -> List<ContextMenuItem>) {
             else -> {
                 selectableItem(
                     selected = false,
-                    onClick = item.onClick
+                    onClick = item.onClick,
                 ) {
                     Text(item.label)
                 }

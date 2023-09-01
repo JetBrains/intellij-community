@@ -2,7 +2,6 @@ package org.jetbrains.jewel.buildlogic.theme
 
 import com.squareup.kotlinpoet.ClassName
 import io.gitlab.arturbosch.detekt.Detekt
-import java.net.URL
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonElement
@@ -23,7 +22,8 @@ import org.gradle.kotlin.dsl.register
 import org.gradle.kotlin.dsl.withType
 import org.gradle.util.internal.GUtil
 import org.jetbrains.kotlin.gradle.dsl.KotlinJvmProjectExtension
-import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
+import org.jetbrains.kotlin.gradle.tasks.BaseKotlinCompile
+import java.net.URL
 
 abstract class IntelliJThemeGeneratorPlugin : Plugin<Project> {
 
@@ -42,7 +42,7 @@ abstract class IntelliJThemeGeneratorPlugin : Plugin<Project> {
                 ideaVersion.set(this@all.ideaVersion)
                 themeFile.set(this@all.themeFile)
             }
-            tasks.withType<KotlinCompile> {
+            tasks.withType<BaseKotlinCompile> {
                 dependsOn(task)
             }
             tasks.withType<Detekt> {

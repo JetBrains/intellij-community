@@ -6,6 +6,5 @@ plugins {
 
 dependencies {
     api(projects.composeUtils)
-    api(projects.foundation)
     api(compose.desktop.common)
 }

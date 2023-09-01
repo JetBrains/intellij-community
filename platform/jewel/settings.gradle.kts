@@ -26,10 +26,10 @@ dependencyResolutionManagement {
 
 include(
     ":core",
-    ":foundation",
     ":compose-utils",
-//    ":ide-laf-bridge",
+    ":ide-laf-bridge",
     ":samples:standalone",
+    ":samples:ide-plugin",
     ":themes:int-ui:int-ui-core",
     ":themes:int-ui:int-ui-standalone",
 )

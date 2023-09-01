@@ -83,7 +83,7 @@ internal data class AnchorVerticalMenuPositionProvider(
             left = leftMargin,
             top = topMargin,
             right = windowSize.width - rightMargin,
-            bottom = windowSize.height - bottomMargin
+            bottom = windowSize.height - bottomMargin,
         )
 
         // The content offset specified using the dropdown offset parameter.
@@ -136,7 +136,7 @@ internal data class AnchorHorizontalMenuPositionProvider(
             left = leftMargin,
             top = topMargin,
             right = windowSize.width - rightMargin,
-            bottom = windowSize.height - bottomMargin
+            bottom = windowSize.height - bottomMargin,
         )
 
         // The content offset specified using the dropdown offset parameter.

@@ -19,23 +19,23 @@ import org.jetbrains.jewel.styling.TextFieldStyle
 
 @Stable
 class IntelliJComponentStyling(
-    val defaultButtonStyle: ButtonStyle,
-    val outlinedButtonStyle: ButtonStyle,
     val checkboxStyle: CheckboxStyle,
     val chipStyle: ChipStyle,
+    val defaultButtonStyle: ButtonStyle,
+    val defaultTabStyle: TabStyle,
     val dropdownStyle: DropdownStyle,
+    val editorTabStyle: TabStyle,
     val groupHeaderStyle: GroupHeaderStyle,
+    val horizontalProgressBarStyle: HorizontalProgressBarStyle,
     val labelledTextFieldStyle: LabelledTextFieldStyle,
+    val lazyTreeStyle: LazyTreeStyle,
     val linkStyle: LinkStyle,
     val menuStyle: MenuStyle,
-    val horizontalProgressBarStyle: HorizontalProgressBarStyle,
+    val outlinedButtonStyle: ButtonStyle,
     val radioButtonStyle: RadioButtonStyle,
     val scrollbarStyle: ScrollbarStyle,
     val textAreaStyle: TextAreaStyle,
     val textFieldStyle: TextFieldStyle,
-    val lazyTreeStyle: LazyTreeStyle,
-    val defaultTabStyle: TabStyle,
-    val editorTabStyle: TabStyle,
 ) {
 
     override fun equals(other: Any?): Boolean {
@@ -85,4 +85,13 @@ class IntelliJComponentStyling(
         result = 31 * result + editorTabStyle.hashCode()
         return result
     }
+
+    override fun toString(): String =
+        "IntelliJComponentStyling(checkboxStyle=$checkboxStyle, chipStyle=$chipStyle, " +
+            "defaultButtonStyle=$defaultButtonStyle, defaultTabStyle=$defaultTabStyle, dropdownStyle=$dropdownStyle, " +
+            "editorTabStyle=$editorTabStyle, groupHeaderStyle=$groupHeaderStyle, " +
+            "horizontalProgressBarStyle=$horizontalProgressBarStyle, labelledTextFieldStyle=$labelledTextFieldStyle, " +
+            "lazyTreeStyle=$lazyTreeStyle, linkStyle=$linkStyle, menuStyle=$menuStyle, " +
+            "outlinedButtonStyle=$outlinedButtonStyle, radioButtonStyle=$radioButtonStyle, " +
+            "scrollbarStyle=$scrollbarStyle, textAreaStyle=$textAreaStyle, textFieldStyle=$textFieldStyle)"
 }

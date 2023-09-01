@@ -31,21 +31,17 @@ interface DropdownColors {
     val backgroundFocused: Color
     val backgroundPressed: Color
     val backgroundHovered: Color
-    val backgroundWarning: Color
-    val backgroundError: Color
 
     @Composable
     fun backgroundFor(state: DropdownState) = rememberUpdatedState(
-        state.chooseValueWithOutline(
+        state.chooseValue(
             normal = background,
             disabled = backgroundDisabled,
             focused = backgroundFocused,
             pressed = backgroundPressed,
             hovered = backgroundHovered,
-            warning = backgroundWarning,
-            error = backgroundError,
-            active = background
-        )
+            active = background,
+        ),
     )
 
     val content: Color
@@ -53,21 +49,17 @@ interface DropdownColors {
     val contentFocused: Color
     val contentPressed: Color
     val contentHovered: Color
-    val contentWarning: Color
-    val contentError: Color
 
     @Composable
     fun contentFor(state: DropdownState) = rememberUpdatedState(
-        state.chooseValueWithOutline(
+        state.chooseValue(
             normal = content,
             disabled = contentDisabled,
             focused = contentFocused,
             pressed = contentPressed,
             hovered = contentHovered,
-            warning = contentWarning,
-            error = contentError,
-            active = content
-        )
+            active = content,
+        ),
     )
 
     val border: Color
@@ -75,21 +67,17 @@ interface DropdownColors {
     val borderFocused: Color
     val borderPressed: Color
     val borderHovered: Color
-    val borderWarning: Color
-    val borderError: Color
 
     @Composable
     fun borderFor(state: DropdownState) = rememberUpdatedState(
-        state.chooseValueWithOutline(
+        state.chooseValue(
             normal = border,
             disabled = borderDisabled,
             focused = borderFocused,
             pressed = borderPressed,
             hovered = borderHovered,
-            warning = borderWarning,
-            error = borderError,
-            active = border
-        )
+            active = border,
+        ),
     )
 
     val iconTint: Color
@@ -97,27 +85,24 @@ interface DropdownColors {
     val iconTintFocused: Color
     val iconTintPressed: Color
     val iconTintHovered: Color
-    val iconTintWarning: Color
-    val iconTintError: Color
 
     @Composable
     fun iconTintFor(state: DropdownState) = rememberUpdatedState(
-        state.chooseValueWithOutline(
+        state.chooseValue(
             normal = iconTint,
             disabled = iconTintDisabled,
             focused = iconTintFocused,
             pressed = iconTintPressed,
             hovered = iconTintHovered,
-            warning = iconTintWarning,
-            error = iconTintError,
-            active = iconTint
-        )
+            active = iconTint,
+        ),
     )
 }
 
 @Stable
 interface DropdownMetrics {
 
+    val arrowMinSize: DpSize
     val minSize: DpSize
     val cornerSize: CornerSize
     val contentPadding: PaddingValues

@@ -9,14 +9,19 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import org.jetbrains.jewel.Chip
 import org.jetbrains.jewel.GroupHeader
 import org.jetbrains.jewel.LazyTree
 import org.jetbrains.jewel.LocalResourceLoader
+import org.jetbrains.jewel.RadioButtonChip
 import org.jetbrains.jewel.Text
+import org.jetbrains.jewel.ToggleableChip
 import org.jetbrains.jewel.foundation.tree.buildTree
 
 @Composable
@@ -35,16 +40,55 @@ fun ChipsAndTree() {
 
 @Composable
 fun ChipsRow(modifier: Modifier = Modifier) {
-    Row(modifier) {
+    Row(modifier, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+        var selectedIndex by remember { mutableStateOf(-1) }
+        RadioButtonChip(
+            selected = selectedIndex == 0,
+            onClick = { selectedIndex = 0 },
+            enabled = true,
+        ) {
+            Text("First")
+        }
+
+        RadioButtonChip(
+            selected = selectedIndex == 1,
+            onClick = { selectedIndex = 1 },
+            enabled = true,
+        ) {
+            Text("Second")
+        }
+
+        RadioButtonChip(
+            selected = selectedIndex == 2,
+            onClick = { selectedIndex = 2 },
+            enabled = true,
+        ) {
+            Text("Third")
+        }
+    }
+    Row(modifier, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+        var isChecked by remember { mutableStateOf(false) }
+        ToggleableChip(
+            checked = isChecked,
+            onClick = {
+                isChecked = it
+            },
+            enabled = true,
+        ) {
+            Text("Toggleable")
+        }
+
+        var count by remember { mutableStateOf(1) }
         Chip(
             enabled = true,
-            onChipClick = {}
+            onClick = { count++ },
         ) {
-            Text("Enabled")
+            Text("Clicks: $count")
         }
+
         Chip(
             enabled = false,
-            onChipClick = {}
+            onClick = {},
         ) {
             Text("Disabled")
         }
@@ -79,7 +123,7 @@ fun TreeSample(modifier: Modifier = Modifier) {
         onElementClick = {},
         onElementDoubleClick = {},
         tree = tree,
-        resourceLoader = resourceLoader
+        resourceLoader = resourceLoader,
     ) { element ->
         Box(Modifier.fillMaxWidth()) {
             Text(element.data, modifier.padding(2.dp))

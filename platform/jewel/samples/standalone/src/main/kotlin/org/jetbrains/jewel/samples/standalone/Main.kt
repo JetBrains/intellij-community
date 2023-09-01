@@ -49,7 +49,7 @@ fun main() {
     val icon = svgResource("icons/jewel-logo.svg")
     singleWindowApplication(
         title = "Jewel component catalog",
-        icon = icon
+        icon = icon,
     ) {
         var isDark by remember { mutableStateOf(false) }
         var swingCompat by remember { mutableStateOf(false) }
@@ -68,7 +68,7 @@ fun main() {
                 Row(
                     modifier = Modifier.fillMaxWidth().padding(8.dp),
                     horizontalArrangement = Arrangement.spacedBy(16.dp, Alignment.CenterHorizontally),
-                    verticalAlignment = Alignment.CenterVertically
+                    verticalAlignment = Alignment.CenterVertically,
                 ) {
                     CheckboxRow("Dark", isDark, resourceLoader, { isDark = it })
                     CheckboxRow("Swing compat", swingCompat, resourceLoader, { swingCompat = it })
@@ -91,8 +91,8 @@ private fun ComponentShowcase() {
             Modifier.width(IntrinsicSize.Max)
                 .verticalScroll(verticalScrollState)
                 .padding(24.dp),
-            verticalArrangement = Arrangement.spacedBy(10.dp, Alignment.CenterVertically),
-            horizontalAlignment = Alignment.CenterHorizontally
+            verticalArrangement = Arrangement.spacedBy(16.dp),
+            horizontalAlignment = Alignment.Start,
         ) {
             Borders()
             Buttons()
@@ -100,16 +100,16 @@ private fun ComponentShowcase() {
             Checkboxes()
             RadioButtons()
             Links()
+            TextFields()
             TextAreas()
             ProgressBar()
-            TextFields()
-            Tabs()
             ChipsAndTree()
+            Tabs()
         }
 
         VerticalScrollbar(
             modifier = Modifier.align(Alignment.CenterEnd).fillMaxHeight(),
-            adapter = rememberScrollbarAdapter(verticalScrollState)
+            adapter = rememberScrollbarAdapter(verticalScrollState),
         )
     }
 }

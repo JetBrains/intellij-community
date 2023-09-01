@@ -5,18 +5,20 @@ import androidx.compose.foundation.shape.CornerSize
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.Immutable
 import androidx.compose.runtime.Stable
-import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.DpOffset
 import androidx.compose.ui.unit.dp
+import org.jetbrains.jewel.MenuItemState
+import org.jetbrains.jewel.SvgLoader
 import org.jetbrains.jewel.styling.MenuColors
 import org.jetbrains.jewel.styling.MenuIcons
 import org.jetbrains.jewel.styling.MenuItemColors
 import org.jetbrains.jewel.styling.MenuItemMetrics
 import org.jetbrains.jewel.styling.MenuMetrics
 import org.jetbrains.jewel.styling.MenuStyle
+import org.jetbrains.jewel.styling.ResourcePainterProvider
+import org.jetbrains.jewel.styling.StatefulPainterProvider
 import org.jetbrains.jewel.styling.SubmenuMetrics
 import org.jetbrains.jewel.themes.intui.core.theme.IntUiDarkTheme
 import org.jetbrains.jewel.themes.intui.core.theme.IntUiLightTheme
@@ -32,23 +34,25 @@ data class IntUiMenuStyle(
 
         @Composable
         fun light(
+            svgLoader: SvgLoader,
             colors: IntUiMenuColors = IntUiMenuColors.light(),
             metrics: IntUiMenuMetrics = IntUiMenuMetrics(),
-            icons: IntUiMenuIcons = IntUiMenuIcons(),
+            icons: IntUiMenuIcons = intUiMenuIcons(svgLoader),
         ) = IntUiMenuStyle(colors, metrics, icons)
 
         @Composable
         fun dark(
+            svgLoader: SvgLoader,
             colors: IntUiMenuColors = IntUiMenuColors.dark(),
             metrics: IntUiMenuMetrics = IntUiMenuMetrics(),
-            icons: IntUiMenuIcons = IntUiMenuIcons(),
+            icons: IntUiMenuIcons = intUiMenuIcons(svgLoader),
         ) = IntUiMenuStyle(colors, metrics, icons)
     }
 }
 
 @Immutable
 data class IntUiMenuColors(
-    override val background: Brush,
+    override val background: Color,
     override val border: Color,
     override val shadow: Color,
     override val itemColors: IntUiMenuItemColors,
@@ -58,7 +62,7 @@ data class IntUiMenuColors(
 
         @Composable
         fun light(
-            background: Brush = SolidColor(IntUiLightTheme.colors.grey(14)),
+            background: Color = IntUiLightTheme.colors.grey(14),
             border: Color = IntUiLightTheme.colors.grey(9),
             shadow: Color = Color(0x78919191), // Not a palette color
             itemColors: IntUiMenuItemColors = IntUiMenuItemColors.light(),
@@ -66,7 +70,7 @@ data class IntUiMenuColors(
 
         @Composable
         fun dark(
-            background: Brush = SolidColor(IntUiDarkTheme.colors.grey(2)),
+            background: Color = IntUiDarkTheme.colors.grey(2),
             border: Color = IntUiDarkTheme.colors.grey(3),
             shadow: Color = Color(0x66000000), // Not a palette color
             itemColors: IntUiMenuItemColors = IntUiMenuItemColors.dark(),
@@ -130,7 +134,7 @@ data class IntUiMenuItemColors(
             iconTintFocused,
             iconTintPressed,
             iconTintHovered,
-            separator
+            separator,
         )
 
         @Composable
@@ -167,7 +171,7 @@ data class IntUiMenuItemColors(
             iconTintFocused,
             iconTintPressed,
             iconTintHovered,
-            separator
+            separator,
         )
     }
 }
@@ -175,8 +179,7 @@ data class IntUiMenuItemColors(
 @Stable
 data class IntUiMenuMetrics(
     override val cornerSize: CornerSize = CornerSize(8.dp),
-    override val margin: PaddingValues = PaddingValues(8.dp),
-    override val padding: PaddingValues = PaddingValues(12.dp),
+    override val menuMargin: PaddingValues = PaddingValues(vertical = 6.dp),
     override val contentPadding: PaddingValues = PaddingValues(vertical = 8.dp),
     override val offset: DpOffset = DpOffset(0.dp, 2.dp),
     override val shadowSize: Dp = 12.dp,
@@ -187,19 +190,37 @@ data class IntUiMenuMetrics(
 
 @Stable
 data class IntUiMenuItemMetrics(
-    override val cornerSize: CornerSize = CornerSize(8.dp),
-    override val padding: PaddingValues = PaddingValues(horizontal = 12.dp),
-    override val contentPadding: PaddingValues = PaddingValues(horizontal = 8.dp, vertical = 4.dp),
+    override val selectionCornerSize: CornerSize = CornerSize(4.dp),
+    override val outerPadding: PaddingValues = PaddingValues(horizontal = 4.dp),
+    override val contentPadding: PaddingValues = PaddingValues(horizontal = 12.dp, vertical = 4.dp),
     override val separatorPadding: PaddingValues = PaddingValues(horizontal = 12.dp, vertical = 4.dp),
+    override val separatorThickness: Dp = 1.dp,
 ) : MenuItemMetrics
 
 @Stable
 data class IntUiSubmenuMetrics(
-    override val offset: DpOffset = DpOffset(2.dp, (-8).dp),
-    override val itemPadding: PaddingValues = PaddingValues(start = 8.dp, top = 4.dp, bottom = 4.dp),
+    override val offset: DpOffset = DpOffset(0.dp, (-8).dp),
 ) : SubmenuMetrics
 
 @Immutable
 data class IntUiMenuIcons(
-    override val submenuChevron: String = "icons/intui/chevronRight.svg",
-) : MenuIcons
+    override val submenuChevron: StatefulPainterProvider<MenuItemState>,
+) : MenuIcons {
+
+    companion object {
+
+        @Composable
+        fun submenuChevron(
+            svgLoader: SvgLoader,
+            basePath: String = "icons/intui/chevronRight.svg",
+        ): StatefulPainterProvider<MenuItemState> =
+            ResourcePainterProvider(basePath, svgLoader)
+    }
+}
+
+@Composable
+fun intUiMenuIcons(
+    svgLoader: SvgLoader,
+    submenuChevron: StatefulPainterProvider<MenuItemState> = IntUiMenuIcons.submenuChevron(svgLoader),
+) =
+    IntUiMenuIcons(submenuChevron)

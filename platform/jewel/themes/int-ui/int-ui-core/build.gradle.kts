@@ -9,7 +9,6 @@ plugins {
 dependencies {
     api(projects.core)
     api(projects.composeUtils)
-    api(projects.foundation)
 }
 
 intelliJThemeGenerator {

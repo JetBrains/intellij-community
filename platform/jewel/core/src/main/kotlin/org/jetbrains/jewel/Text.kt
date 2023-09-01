@@ -3,7 +3,6 @@ package org.jetbrains.jewel
 import androidx.compose.foundation.text.BasicText
 import androidx.compose.foundation.text.InlineTextContent
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.staticCompositionLocalOf
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -36,7 +35,7 @@ fun Text(
     softWrap: Boolean = true,
     maxLines: Int = Int.MAX_VALUE,
     onTextLayout: (TextLayoutResult) -> Unit = {},
-    style: TextStyle = LocalTextStyle.current,
+    style: TextStyle = IntelliJTheme.defaultTextStyle,
 ) {
     Text(
         AnnotatedString(text),
@@ -55,7 +54,7 @@ fun Text(
         maxLines,
         emptyMap(),
         onTextLayout,
-        style
+        style,
     )
 }
 
@@ -77,7 +76,7 @@ fun Text(
     maxLines: Int = Int.MAX_VALUE,
     inlineContent: Map<String, InlineTextContent> = emptyMap(),
     onTextLayout: (TextLayoutResult) -> Unit = {},
-    style: TextStyle = LocalTextStyle.current,
+    style: TextStyle = IntelliJTheme.defaultTextStyle,
 ) {
     val textColor = color.takeOrElse {
         style.color.takeOrElse {
@@ -97,8 +96,8 @@ fun Text(
             fontFamily = fontFamily,
             textDecoration = textDecoration,
             fontStyle = fontStyle,
-            letterSpacing = letterSpacing
-        )
+            letterSpacing = letterSpacing,
+        ),
     )
     BasicText(text, modifier, mergedStyle, onTextLayout, overflow, softWrap, maxLines, minLines = 1, inlineContent)
 }
@@ -109,10 +108,4 @@ val LocalTextStyle = staticCompositionLocalOf<TextStyle> {
 
 val LocalContentColor = staticCompositionLocalOf<Color> {
     error("No ContentColor provided")
-}
-
-@Composable
-fun ProvideTextStyle(value: TextStyle, content: @Composable () -> Unit) {
-    val mergedStyle = LocalTextStyle.current.merge(value)
-    CompositionLocalProvider(LocalTextStyle provides mergedStyle, content = content)
 }

@@ -39,13 +39,15 @@ jobs:
         run: chmod +x gradlew
 
       - name: Run :check task
-        run: ./gradlew check
+        run: ./gradlew check --continue
 
       - name: Merge SARIF reports
         # Necessary because upload-sarif only takes up to 15 SARIF files and we have more
         run: ./gradlew :mergeSarifReports
+        if: ${{ always() }}
 
       - uses: github/codeql-action/upload-sarif@v2
+        if: ${{ always() }}
         with:
           sarif_file: ${{ github.workspace }}/build/reports/static-analysis.sarif
           checkout_path: ${{ github.workspace }}

@@ -15,7 +15,7 @@ import org.jetbrains.jewel.SvgLoader
 import org.jetbrains.jewel.painterResource
 
 @Immutable
-class ResourcePainterProvider<T : InteractiveComponentState>(
+open class ResourcePainterProvider<T : InteractiveComponentState>(
     private val basePath: String,
     private val svgLoader: SvgLoader,
     private val prefixTokensProvider: (state: T) -> String = { "" },
@@ -26,9 +26,9 @@ class ResourcePainterProvider<T : InteractiveComponentState>(
     override fun getPainter(state: T, resourceLoader: ResourceLoader): State<Painter> {
         val isSvg = basePath.endsWith(".svg", ignoreCase = true)
         val painter = if (isSvg) {
-            svgLoader.loadSvgResource(basePath, resourceLoader) { patchPath(state, basePath) }
+            svgLoader.loadSvgResource(basePath, resourceLoader) { patchPath(state, basePath, resourceLoader) }
         } else {
-            val patchedPath = patchPath(state, basePath)
+            val patchedPath = patchPath(state, basePath, resourceLoader)
             painterResource(patchedPath, resourceLoader)
         }
 
@@ -36,7 +36,7 @@ class ResourcePainterProvider<T : InteractiveComponentState>(
     }
 
     @Composable
-    private fun patchPath(state: T, basePath: String): String = buildString {
+    protected open fun patchPath(state: T, basePath: String, resourceLoader: ResourceLoader): String = buildString {
         append(basePath.substringBeforeLast('/', ""))
         append('/')
         append(basePath.substringBeforeLast('.').substringAfterLast('/'))

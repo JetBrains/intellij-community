@@ -36,6 +36,6 @@ fun Divider(
         modifier
             .then(indentMod)
             .then(orientationModifier)
-            .background(color = color)
+            .background(color = color),
     )
 }

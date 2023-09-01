@@ -55,7 +55,7 @@ object PaletteMapperFactory {
         "Checkbox.Focus.Thin.Selected" to "#ACCFF7",
         "Checkbox.Focus.Thin.Selected.Dark" to "#466D94",
         "Tree.iconColor" to "#808080",
-        "Tree.iconColor.Dark" to "#AFB1B3"
+        "Tree.iconColor.Dark" to "#AFB1B3",
     )
 
     fun create(

@@ -104,7 +104,9 @@ style:
     includeLineWrapping: false
   ForbiddenComment:
     active: true
-    values: [ 'STOPSHIP' ]
+    comments:
+      - value: 'STOPSHIP'
+        reason: 'Forbidden STOPSHIP marker in comment, please address before shipping'
     allowedPatterns: ''
   LoopWithTooManyJumpStatements:
     active: true

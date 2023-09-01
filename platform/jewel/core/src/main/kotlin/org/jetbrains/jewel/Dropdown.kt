@@ -34,13 +34,12 @@ import androidx.compose.ui.platform.LocalInputModeManager
 import androidx.compose.ui.res.ResourceLoader
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.window.Popup
+import androidx.compose.ui.window.PopupProperties
 import org.jetbrains.jewel.CommonStateBitMask.Active
 import org.jetbrains.jewel.CommonStateBitMask.Enabled
-import org.jetbrains.jewel.CommonStateBitMask.Error
 import org.jetbrains.jewel.CommonStateBitMask.Focused
 import org.jetbrains.jewel.CommonStateBitMask.Hovered
 import org.jetbrains.jewel.CommonStateBitMask.Pressed
-import org.jetbrains.jewel.CommonStateBitMask.Warning
 import org.jetbrains.jewel.foundation.Stroke
 import org.jetbrains.jewel.foundation.border
 import org.jetbrains.jewel.styling.DropdownStyle
@@ -64,11 +63,11 @@ fun Dropdown(
         var skipNextClick by remember { mutableStateOf(false) }
 
         var dropdownState by remember(interactionSource) {
-            mutableStateOf(DropdownState.of(enabled = enabled, outline = outline))
+            mutableStateOf(DropdownState.of(enabled = enabled))
         }
 
-        remember(enabled, outline) {
-            dropdownState = dropdownState.copy(enabled = enabled, outline = Outline.Error)
+        remember(enabled) {
+            dropdownState = dropdownState.copy(enabled = enabled)
         }
 
         LaunchedEffect(interactionSource) {
@@ -91,6 +90,7 @@ fun Dropdown(
         val metrics = style.metrics
         val shape = RoundedCornerShape(style.metrics.cornerSize)
         val minSize = metrics.minSize
+        val arrowMinSize = style.metrics.arrowMinSize
         val borderColor by colors.borderFor(dropdownState)
 
         Box(
@@ -105,33 +105,37 @@ fun Dropdown(
                 enabled = enabled,
                 role = Role.Button,
                 interactionSource = interactionSource,
-                indication = null
-            ).background(colors.backgroundFor(dropdownState).value, shape)
+                indication = null,
+            )
+                .background(colors.backgroundFor(dropdownState).value, shape)
                 .border(Stroke.Alignment.Center, style.metrics.borderWidth, borderColor, shape)
-                .defaultMinSize(minSize.width, minSize.height),
-            contentAlignment = Alignment.CenterStart
+                .outline(dropdownState, outline, shape)
+                .defaultMinSize(minSize.width, minSize.height.coerceAtLeast(arrowMinSize.height)),
+            contentAlignment = Alignment.CenterStart,
         ) {
             CompositionLocalProvider(
-                LocalContentColor provides colors.contentFor(dropdownState).value
+                LocalContentColor provides colors.contentFor(dropdownState).value,
             ) {
                 Row(
-                    Modifier.padding(style.metrics.contentPadding).padding(end = minSize.height),
+                    modifier = Modifier.padding(style.metrics.contentPadding)
+                        .padding(end = minSize.height),
                     horizontalArrangement = Arrangement.Start,
                     verticalAlignment = Alignment.CenterVertically,
                     content = {
                         content()
-                    }
+                    },
                 )
 
                 Box(
-                    modifier = Modifier.size(minSize.height).align(Alignment.CenterEnd),
-                    contentAlignment = Alignment.Center
+                    modifier = Modifier.size(arrowMinSize)
+                        .align(Alignment.CenterEnd),
+                    contentAlignment = Alignment.Center,
                 ) {
                     val chevronIcon by style.icons.chevronDown.getPainter(dropdownState, resourceLoader)
                     Icon(
                         painter = chevronIcon,
                         contentDescription = null,
-                        tint = colors.iconTintFor(dropdownState).value
+                        tint = colors.iconTintFor(dropdownState).value,
                     )
                 }
             }
@@ -149,7 +153,8 @@ fun Dropdown(
                 modifier = menuModifier,
                 style = style.menuStyle,
                 horizontalAlignment = Alignment.Start,
-                content = menuContent
+                content = menuContent,
+                resourceLoader = resourceLoader,
             )
         }
     }
@@ -159,6 +164,7 @@ fun Dropdown(
 internal fun DropdownMenu(
     onDismissRequest: (InputMode) -> Boolean,
     horizontalAlignment: Alignment.Horizontal,
+    resourceLoader: ResourceLoader,
     modifier: Modifier = Modifier,
     style: MenuStyle,
     content: MenuScope.() -> Unit,
@@ -167,9 +173,9 @@ internal fun DropdownMenu(
 
     val popupPositionProvider = AnchorVerticalMenuPositionProvider(
         contentOffset = style.metrics.offset,
-        contentMargin = style.metrics.margin,
+        contentMargin = style.metrics.menuMargin,
         alignment = horizontalAlignment,
-        density = density
+        density = density,
     )
 
     var focusManager: FocusManager? by mutableStateOf(null)
@@ -179,25 +185,27 @@ internal fun DropdownMenu(
     }
 
     Popup(
-        onDismissRequest = { onDismissRequest(InputMode.Touch) },
         popupPositionProvider = popupPositionProvider,
+        onDismissRequest = { onDismissRequest(InputMode.Touch) },
+        properties = PopupProperties(focusable = true),
+        onPreviewKeyEvent = { false },
         onKeyEvent = {
             val currentFocusManager = checkNotNull(focusManager) { "FocusManager must not be null" }
             val currentInputModeManager = checkNotNull(inputModeManager) { "InputModeManager must not be null" }
             handlePopupMenuOnKeyEvent(it, currentFocusManager, currentInputModeManager, menuManager)
         },
-        focusable = true
     ) {
         focusManager = LocalFocusManager.current
         inputModeManager = LocalInputModeManager.current
 
         CompositionLocalProvider(
             LocalMenuManager provides menuManager,
-            LocalMenuStyle provides style
+            LocalMenuStyle provides style,
         ) {
             MenuContent(
                 modifier = modifier,
-                content = content
+                content = content,
+                resourceLoader = resourceLoader,
             )
         }
     }
@@ -205,7 +213,7 @@ internal fun DropdownMenu(
 
 @Immutable
 @JvmInline
-value class DropdownState(val state: ULong) : StateWithOutline {
+value class DropdownState(val state: ULong) : FocusableComponentState {
 
     @Stable
     override val isActive: Boolean
@@ -220,14 +228,6 @@ value class DropdownState(val state: ULong) : StateWithOutline {
         get() = state and Focused != 0UL
 
     @Stable
-    override val isError: Boolean
-        get() = state and Error != 0UL
-
-    @Stable
-    override val isWarning: Boolean
-        get() = state and Warning != 0UL
-
-    @Stable
     override val isHovered: Boolean
         get() = state and Hovered != 0UL
 
@@ -240,19 +240,17 @@ value class DropdownState(val state: ULong) : StateWithOutline {
         focused: Boolean = isFocused,
         pressed: Boolean = isPressed,
         hovered: Boolean = isHovered,
-        outline: Outline = Outline.of(isWarning, isError),
         active: Boolean = isActive,
     ) = of(
         enabled = enabled,
         focused = focused,
         pressed = pressed,
         hovered = hovered,
-        outline = outline,
-        active = active
+        active = active,
     )
 
     override fun toString() =
-        "${javaClass.simpleName}(isEnabled=$isEnabled, isFocused=$isFocused, isError=$isError, isWarning=$isWarning, " +
+        "${javaClass.simpleName}(isEnabled=$isEnabled, isFocused=$isFocused, " +
             "isHovered=$isHovered, isPressed=$isPressed, isActive=$isActive)"
 
     companion object {
@@ -262,7 +260,6 @@ value class DropdownState(val state: ULong) : StateWithOutline {
             focused: Boolean = false,
             pressed: Boolean = false,
             hovered: Boolean = false,
-            outline: Outline = Outline.None,
             active: Boolean = false,
         ) = DropdownState(
             if (enabled) {
@@ -272,10 +269,8 @@ value class DropdownState(val state: ULong) : StateWithOutline {
                     (if (focused) Focused else 0UL) or
                     (if (pressed) Pressed else 0UL) or
                     (if (hovered) Hovered else 0UL) or
-                    (if (outline == Outline.Error) Error else 0UL) or
-                    (if (outline == Outline.Warning) Warning else 0UL) or
                     (if (active) Active else 0UL)
-            }
+            },
         )
     }
 }

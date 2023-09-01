@@ -158,7 +158,7 @@ data class IntUiTabColors(
             underlineFocused,
             underlinePressed,
             underlineHovered,
-            underlineSelected
+            underlineSelected,
         )
 
         fun dark(
@@ -198,7 +198,7 @@ data class IntUiTabColors(
             underlineFocused,
             underlinePressed,
             underlineHovered,
-            underlineSelected
+            underlineSelected,
         )
     }
 
@@ -241,7 +241,7 @@ data class IntUiTabColors(
             underlineFocused,
             underlinePressed,
             underlineHovered,
-            underlineSelected
+            underlineSelected,
         )
 
         fun dark(
@@ -283,7 +283,7 @@ data class IntUiTabColors(
             underlineFocused,
             underlinePressed,
             underlineHovered,
-            underlineSelected
+            underlineSelected,
         )
     }
 }
@@ -331,7 +331,7 @@ data class IntUiTabContentAlpha(
             labelFocused,
             labelPressed,
             labelHovered,
-            labelSelected
+            labelSelected,
         )
 
         fun editor(
@@ -360,7 +360,7 @@ data class IntUiTabContentAlpha(
                 labelFocused,
                 labelPressed,
                 labelHovered,
-                labelSelected
+                labelSelected,
             )
     }
 }

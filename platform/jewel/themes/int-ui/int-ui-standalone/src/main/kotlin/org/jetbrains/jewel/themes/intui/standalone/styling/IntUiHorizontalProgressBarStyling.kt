@@ -43,6 +43,7 @@ data class IntUiHorizontalProgressBarStyle(
 data class IntUiHorizontalProgressBarColors(
     override val track: Color,
     override val progress: Color,
+    override val indeterminateBase: Color,
     override val indeterminateHighlight: Color,
 ) : HorizontalProgressBarColors {
 
@@ -52,21 +53,23 @@ data class IntUiHorizontalProgressBarColors(
         fun light(
             track: Color = IntUiLightTheme.colors.grey(11),
             progress: Color = IntUiLightTheme.colors.blue(4),
-            indeterminateHighlight: Color = IntUiLightTheme.colors.grey(9),
-        ) = IntUiHorizontalProgressBarColors(track, progress, indeterminateHighlight)
+            indeterminateBase: Color = IntUiLightTheme.colors.blue(9),
+            indeterminateHighlight: Color = IntUiLightTheme.colors.blue(4),
+        ) = IntUiHorizontalProgressBarColors(track, progress, indeterminateBase, indeterminateHighlight)
 
         @Composable
         fun dark(
             track: Color = IntUiDarkTheme.colors.grey(4),
-            progress: Color = IntUiDarkTheme.colors.blue(6),
-            indeterminateHighlight: Color = IntUiDarkTheme.colors.grey(11),
-        ) = IntUiHorizontalProgressBarColors(track, progress, indeterminateHighlight)
+            progress: Color = IntUiDarkTheme.colors.blue(7),
+            indeterminateBase: Color = IntUiDarkTheme.colors.blue(9),
+            indeterminateHighlight: Color = IntUiDarkTheme.colors.blue(5),
+        ) = IntUiHorizontalProgressBarColors(track, progress, indeterminateBase, indeterminateHighlight)
     }
 }
 
 @Immutable
 data class IntUiHorizontalProgressBarMetrics(
-    override val cornerSize: CornerSize = CornerSize(2.dp),
+    override val cornerSize: CornerSize = CornerSize(100),
     override val minHeight: Dp = 4.dp,
     override val indeterminateHighlightWidth: Dp = 140.dp,
 ) : HorizontalProgressBarMetrics

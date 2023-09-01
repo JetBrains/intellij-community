@@ -23,11 +23,14 @@ import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.unit.Constraints
-import androidx.compose.ui.unit.Density
 import androidx.compose.ui.unit.offset
 import org.jetbrains.jewel.styling.TextFieldStyle
 import kotlin.math.max
 
+/**
+ * @param placeholder the optional placeholder to be displayed over the
+ *     component when the [value] is empty.
+ */
 @Composable
 fun TextField(
     value: String,
@@ -35,7 +38,7 @@ fun TextField(
     modifier: Modifier = Modifier,
     enabled: Boolean = true,
     readOnly: Boolean = false,
-    isError: Boolean = false,
+    outline: Outline = Outline.None,
     placeholder: @Composable (() -> Unit)? = null,
     trailingIcon: @Composable (() -> Unit)? = null,
     undecorated: Boolean = false,
@@ -65,7 +68,7 @@ fun TextField(
         modifier = modifier,
         enabled = enabled,
         readOnly = readOnly,
-        isError = isError,
+        outline = outline,
         placeholder = placeholder,
         trailingIcon = trailingIcon,
         undecorated = undecorated,
@@ -74,10 +77,14 @@ fun TextField(
         keyboardActions = keyboardActions,
         onTextLayout = onTextLayout,
         style = style,
-        interactionSource = interactionSource
+        interactionSource = interactionSource,
     )
 }
 
+/**
+ * @param placeholder the optional placeholder to be displayed over the
+ *     component when the [value] is empty.
+ */
 @Composable
 fun TextField(
     value: TextFieldValue,
@@ -85,7 +92,7 @@ fun TextField(
     modifier: Modifier = Modifier,
     enabled: Boolean = true,
     readOnly: Boolean = false,
-    isError: Boolean = false,
+    outline: Outline = Outline.None,
     placeholder: @Composable (() -> Unit)? = null,
     trailingIcon: @Composable (() -> Unit)? = null,
     undecorated: Boolean = false,
@@ -103,7 +110,7 @@ fun TextField(
         modifier = modifier,
         enabled = enabled,
         readOnly = readOnly,
-        isError = isError,
+        outline = outline,
         undecorated = undecorated,
         visualTransformation = visualTransformation,
         keyboardOptions = keyboardOptions,
@@ -113,17 +120,18 @@ fun TextField(
         onTextLayout = onTextLayout,
         style = style,
         textStyle = textStyle,
-        interactionSource = interactionSource
+        interactionSource = interactionSource,
     ) { innerTextField, _ ->
         val minSize = style.metrics.minSize
 
         TextFieldDecorationBox(
-            modifier = Modifier.defaultMinSize(minHeight = minSize.width, minWidth = minSize.height)
+            modifier = Modifier.defaultMinSize(minWidth = minSize.width, minHeight = minSize.height)
                 .padding(style.metrics.contentPadding),
             innerTextField = innerTextField,
+            textStyle = textStyle,
             placeholderTextColor = style.colors.placeholder,
             placeholder = if (value.text.isEmpty()) placeholder else null,
-            trailingIcon = trailingIcon
+            trailingIcon = trailingIcon,
         )
     }
 }
@@ -132,6 +140,7 @@ fun TextField(
 private fun TextFieldDecorationBox(
     modifier: Modifier = Modifier,
     innerTextField: @Composable () -> Unit,
+    textStyle: TextStyle,
     placeholderTextColor: Color,
     placeholder: @Composable (() -> Unit)? = null,
     trailingIcon: @Composable (() -> Unit)? = null,
@@ -147,8 +156,9 @@ private fun TextFieldDecorationBox(
             if (placeholder != null) {
                 Box(modifier = Modifier.layoutId(PLACEHOLDER_ID), contentAlignment = Alignment.Center) {
                     CompositionLocalProvider(
+                        LocalTextStyle provides textStyle.copy(color = placeholderTextColor),
                         LocalContentColor provides placeholderTextColor,
-                        content = placeholder
+                        content = placeholder,
                     )
                 }
             }
@@ -156,40 +166,37 @@ private fun TextFieldDecorationBox(
             Box(modifier = Modifier.layoutId(TEXT_FIELD_ID), propagateMinConstraints = true) {
                 innerTextField()
             }
-        }
+        },
     ) { measurables, incomingConstraints ->
         // used to calculate the constraints for measuring elements that will be placed in a row
         var occupiedSpaceHorizontally = 0
-
-        val constraintsWithoutPadding = incomingConstraints
-
-        val iconsConstraints = constraintsWithoutPadding.copy(minWidth = 0, minHeight = 0)
+        val iconConstraints = incomingConstraints.copy(minWidth = 0, minHeight = 0)
 
         // measure trailing icon
         val trailingPlaceable = measurables.find { it.layoutId == TRAILING_ID }
-            ?.measure(iconsConstraints)
+            ?.measure(iconConstraints)
         occupiedSpaceHorizontally += trailingPlaceable?.width ?: 0
 
-        val textConstraints = constraintsWithoutPadding.offset(
-            horizontal = -occupiedSpaceHorizontally
+        val textFieldConstraints = incomingConstraints.offset(
+            horizontal = -occupiedSpaceHorizontally,
         ).copy(minHeight = 0)
-        val textFieldPlaceable = measurables.first { it.layoutId == TEXT_FIELD_ID }.measure(textConstraints)
+        val textFieldPlaceable = measurables.first { it.layoutId == TEXT_FIELD_ID }.measure(textFieldConstraints)
 
         // measure placeholder
-        val placeholderConstraints = textConstraints.copy(minWidth = 0)
+        val placeholderConstraints = textFieldConstraints.copy(minWidth = 0)
         val placeholderPlaceable = measurables.find { it.layoutId == PLACEHOLDER_ID }?.measure(placeholderConstraints)
 
         val width = calculateWidth(
             trailingPlaceable,
             textFieldPlaceable,
             placeholderPlaceable,
-            incomingConstraints
+            incomingConstraints,
         )
         val height = calculateHeight(
             trailingPlaceable,
             textFieldPlaceable,
             placeholderPlaceable,
-            incomingConstraints
+            incomingConstraints,
         )
 
         layout(width, height) {
@@ -199,7 +206,6 @@ private fun TextFieldDecorationBox(
                 trailingPlaceable,
                 textFieldPlaceable,
                 placeholderPlaceable,
-                this@Layout
             )
         }
     }
@@ -213,7 +219,7 @@ private fun calculateWidth(
 ): Int {
     val middleSection = maxOf(
         textFieldPlaceable.width,
-        placeholderPlaceable?.width ?: 0
+        placeholderPlaceable?.width ?: 0,
     )
     val wrappedWidth = middleSection + (trailingPlaceable?.width ?: 0)
     return max(wrappedWidth, constraints.minWidth)
@@ -224,14 +230,12 @@ private fun calculateHeight(
     textFieldPlaceable: Placeable,
     placeholderPlaceable: Placeable?,
     constraints: Constraints,
-): Int {
-    return maxOf(
-        textFieldPlaceable.height,
-        placeholderPlaceable?.height ?: 0,
-        trailingPlaceable?.height ?: 0,
-        constraints.minHeight
-    )
-}
+): Int = maxOf(
+    textFieldPlaceable.height,
+    placeholderPlaceable?.height ?: 0,
+    trailingPlaceable?.height ?: 0,
+    constraints.minHeight,
+)
 
 private fun Placeable.PlacementScope.place(
     height: Int,
@@ -239,28 +243,24 @@ private fun Placeable.PlacementScope.place(
     trailingPlaceable: Placeable?,
     textFieldPlaceable: Placeable,
     placeholderPlaceable: Placeable?,
-    density: Density,
-) = with(density) {
+) {
     // placed center vertically and to the end edge horizontally
     trailingPlaceable?.placeRelative(
         width - trailingPlaceable.width,
-        Alignment.CenterVertically.align(trailingPlaceable.height, height)
+        Alignment.CenterVertically.align(trailingPlaceable.height, height),
     )
 
-    // placed center vertically and after the leading icon horizontally if single line text field
-    // placed to the top with padding for multi line text field
+    // placed center vertically
     textFieldPlaceable.placeRelative(
         0,
-        Alignment.CenterVertically.align(textFieldPlaceable.height, height)
+        Alignment.CenterVertically.align(textFieldPlaceable.height, height),
     )
 
     // placed similar to the input text above
-    placeholderPlaceable?.let {
-        it.placeRelative(
-            0,
-            Alignment.CenterVertically.align(it.height, height)
-        )
-    }
+    placeholderPlaceable?.placeRelative(
+        0,
+        Alignment.CenterVertically.align(placeholderPlaceable.height, height),
+    )
 }
 
 private const val PLACEHOLDER_ID = "Placeholder"

@@ -10,12 +10,18 @@ import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.sp
-import org.jetbrains.jewel.ExperimentalJewelApi
 import org.jetbrains.jewel.GlobalColors
 import org.jetbrains.jewel.GlobalMetrics
 import org.jetbrains.jewel.IntelliJComponentStyling
+import org.jetbrains.jewel.IntelliJSvgLoader
 import org.jetbrains.jewel.IntelliJThemeIconData
+import org.jetbrains.jewel.LocalColorPalette
+import org.jetbrains.jewel.LocalContentColor
+import org.jetbrains.jewel.LocalGlobalColors
+import org.jetbrains.jewel.LocalGlobalMetrics
+import org.jetbrains.jewel.LocalIconData
 import org.jetbrains.jewel.LocalResourceLoader
+import org.jetbrains.jewel.LocalTextStyle
 import org.jetbrains.jewel.SvgLoader
 import org.jetbrains.jewel.styling.ButtonStyle
 import org.jetbrains.jewel.styling.CheckboxStyle
@@ -35,7 +41,6 @@ import org.jetbrains.jewel.themes.PaletteMapperFactory
 import org.jetbrains.jewel.themes.intui.core.BaseIntUiTheme
 import org.jetbrains.jewel.themes.intui.core.IntUiThemeColorPalette
 import org.jetbrains.jewel.themes.intui.core.IntUiThemeDefinition
-import org.jetbrains.jewel.themes.intui.core.IntelliJSvgLoader
 import org.jetbrains.jewel.themes.intui.core.IntelliJSvgPatcher
 import org.jetbrains.jewel.themes.intui.core.theme.IntUiDarkTheme
 import org.jetbrains.jewel.themes.intui.core.theme.IntUiLightTheme
@@ -62,7 +67,7 @@ object IntUiTheme : BaseIntUiTheme {
         fontFamily = FontFamily.Inter,
         fontSize = 13.sp,
         fontWeight = FontWeight.Normal,
-        fontStyle = FontStyle.Normal
+        fontStyle = FontStyle.Normal,
     )
 
     override val defaultLightTextStyle = intUiDefaultTextStyle.copy(color = IntUiLightTheme.colors.grey(1))
@@ -87,8 +92,20 @@ object IntUiTheme : BaseIntUiTheme {
     ) = IntUiThemeDefinition(isDark = true, colors, palette, icons, metrics, defaultTextStyle)
 
     @Composable
-    fun defaultComponentStyling(isDark: Boolean, svgLoader: SvgLoader) =
-        if (isDark) darkComponentStyling(svgLoader) else lightComponentStyling(svgLoader)
+    fun defaultComponentStyling(theme: IntUiThemeDefinition, svgLoader: SvgLoader): IntelliJComponentStyling {
+        lateinit var styling: IntelliJComponentStyling
+        CompositionLocalProvider(
+            LocalColorPalette provides theme.colorPalette,
+            LocalTextStyle provides theme.defaultTextStyle,
+            LocalContentColor provides theme.defaultTextStyle.color,
+            LocalIconData provides theme.iconData,
+            LocalGlobalColors provides theme.globalColors,
+            LocalGlobalMetrics provides theme.globalMetrics,
+        ) {
+            styling = if (theme.isDark) darkComponentStyling(svgLoader) else lightComponentStyling(svgLoader)
+        }
+        return styling
+    }
 
     @Composable
     fun darkComponentStyling(
@@ -101,34 +118,34 @@ object IntUiTheme : BaseIntUiTheme {
         groupHeaderStyle: GroupHeaderStyle = IntUiGroupHeaderStyle.dark(),
         labelledTextFieldStyle: LabelledTextFieldStyle = IntUiLabelledTextFieldStyle.dark(),
         linkStyle: LinkStyle = IntUiLinkStyle.dark(svgLoader),
-        menuStyle: MenuStyle = IntUiMenuStyle.dark(),
+        menuStyle: MenuStyle = IntUiMenuStyle.dark(svgLoader),
         horizontalProgressBarStyle: HorizontalProgressBarStyle = IntUiHorizontalProgressBarStyle.dark(),
         radioButtonStyle: RadioButtonStyle = IntUiRadioButtonStyle.dark(svgLoader),
         scrollbarStyle: ScrollbarStyle = IntUiScrollbarStyle.dark(),
         textAreaStyle: IntUiTextAreaStyle = IntUiTextAreaStyle.dark(),
         textFieldStyle: TextFieldStyle = IntUiTextFieldStyle.dark(),
-        lazyTreeStyle: LazyTreeStyle = IntUiLazyTreeStyle.dark(),
+        lazyTreeStyle: LazyTreeStyle = IntUiLazyTreeStyle.dark(svgLoader),
         defaultTabStyle: TabStyle = IntUiTabStyle.Default.dark(svgLoader),
         editorTabStyle: TabStyle = IntUiTabStyle.Editor.dark(svgLoader),
     ) =
         IntelliJComponentStyling(
-            defaultButtonStyle = defaultButtonStyle,
-            outlinedButtonStyle = outlinedButtonStyle,
             checkboxStyle = checkboxStyle,
             chipStyle = chipStyle,
+            defaultButtonStyle = defaultButtonStyle,
+            defaultTabStyle = defaultTabStyle,
             dropdownStyle = dropdownStyle,
+            editorTabStyle = editorTabStyle,
             groupHeaderStyle = groupHeaderStyle,
+            horizontalProgressBarStyle = horizontalProgressBarStyle,
             labelledTextFieldStyle = labelledTextFieldStyle,
+            lazyTreeStyle = lazyTreeStyle,
             linkStyle = linkStyle,
             menuStyle = menuStyle,
-            horizontalProgressBarStyle = horizontalProgressBarStyle,
+            outlinedButtonStyle = outlinedButtonStyle,
             radioButtonStyle = radioButtonStyle,
             scrollbarStyle = scrollbarStyle,
             textAreaStyle = textAreaStyle,
             textFieldStyle = textFieldStyle,
-            lazyTreeStyle = lazyTreeStyle,
-            defaultTabStyle = defaultTabStyle,
-            editorTabStyle = editorTabStyle
         )
 
     @Composable
@@ -142,51 +159,54 @@ object IntUiTheme : BaseIntUiTheme {
         groupHeaderStyle: GroupHeaderStyle = IntUiGroupHeaderStyle.light(),
         labelledTextFieldStyle: LabelledTextFieldStyle = IntUiLabelledTextFieldStyle.light(),
         linkStyle: LinkStyle = IntUiLinkStyle.light(svgLoader),
-        menuStyle: MenuStyle = IntUiMenuStyle.light(),
+        menuStyle: MenuStyle = IntUiMenuStyle.light(svgLoader),
         horizontalProgressBarStyle: HorizontalProgressBarStyle = IntUiHorizontalProgressBarStyle.light(),
         radioButtonStyle: RadioButtonStyle = IntUiRadioButtonStyle.light(svgLoader),
         scrollbarStyle: ScrollbarStyle = IntUiScrollbarStyle.light(),
         textAreaStyle: IntUiTextAreaStyle = IntUiTextAreaStyle.light(),
         textFieldStyle: TextFieldStyle = IntUiTextFieldStyle.light(),
-        lazyTreeStyle: LazyTreeStyle = IntUiLazyTreeStyle.light(),
+        lazyTreeStyle: LazyTreeStyle = IntUiLazyTreeStyle.light(svgLoader),
         defaultTabStyle: TabStyle = IntUiTabStyle.Default.light(svgLoader),
         editorTabStyle: TabStyle = IntUiTabStyle.Editor.light(svgLoader),
     ) =
         IntelliJComponentStyling(
-            defaultButtonStyle = defaultButtonStyle,
-            outlinedButtonStyle = outlinedButtonStyle,
             checkboxStyle = checkboxStyle,
             chipStyle = chipStyle,
+            defaultButtonStyle = defaultButtonStyle,
+            defaultTabStyle = defaultTabStyle,
             dropdownStyle = dropdownStyle,
+            editorTabStyle = editorTabStyle,
             groupHeaderStyle = groupHeaderStyle,
+            horizontalProgressBarStyle = horizontalProgressBarStyle,
             labelledTextFieldStyle = labelledTextFieldStyle,
+            lazyTreeStyle = lazyTreeStyle,
             linkStyle = linkStyle,
             menuStyle = menuStyle,
-            horizontalProgressBarStyle = horizontalProgressBarStyle,
+            outlinedButtonStyle = outlinedButtonStyle,
             radioButtonStyle = radioButtonStyle,
             scrollbarStyle = scrollbarStyle,
             textAreaStyle = textAreaStyle,
             textFieldStyle = textFieldStyle,
-            lazyTreeStyle = lazyTreeStyle,
-            defaultTabStyle = defaultTabStyle,
-            editorTabStyle = editorTabStyle
         )
 }
 
-@OptIn(ExperimentalJewelApi::class)
 @Composable
-fun IntUiTheme(theme: IntUiThemeDefinition, swingCompatMode: Boolean = false, content: @Composable () -> Unit) {
-    val svgLoader by remember(theme.isDark, theme.iconData, theme.colorPalette) {
-        val paletteMapper = PaletteMapperFactory.create(theme.isDark, theme.iconData, theme.colorPalette)
+fun IntUiTheme(
+    themeDefinition: IntUiThemeDefinition,
+    swingCompatMode: Boolean = false,
+    content: @Composable () -> Unit,
+) {
+    val svgLoader by remember(themeDefinition.isDark, themeDefinition.iconData, themeDefinition.colorPalette) {
+        val paletteMapper =
+            PaletteMapperFactory.create(themeDefinition.isDark, themeDefinition.iconData, themeDefinition.colorPalette)
         val svgPatcher = IntelliJSvgPatcher(paletteMapper)
         mutableStateOf(IntelliJSvgLoader(svgPatcher))
     }
 
-    val componentStyling = defaultComponentStyling(theme.isDark, svgLoader)
-    IntUiTheme(theme, componentStyling, swingCompatMode, content)
+    val componentStyling = defaultComponentStyling(themeDefinition, svgLoader)
+    IntUiTheme(themeDefinition, componentStyling, swingCompatMode, content)
 }
 
-@ExperimentalJewelApi
 @Composable
 fun IntUiTheme(
     theme: IntUiThemeDefinition,

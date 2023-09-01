@@ -58,7 +58,7 @@ fun RadioButton(
         interactionSource = interactionSource,
         style = style,
         textStyle = textStyle,
-        content = null
+        content = null,
     )
 }
 
@@ -84,7 +84,7 @@ fun RadioButtonRow(
         resourceLoader = resourceLoader,
         interactionSource = interactionSource,
         style = style,
-        textStyle = textStyle
+        textStyle = textStyle,
     ) {
         Text(text)
     }
@@ -113,7 +113,7 @@ fun RadioButtonRow(
         style = style,
         textStyle = textStyle,
         resourceLoader = resourceLoader,
-        content = content
+        content = content,
     )
 }
 
@@ -159,7 +159,7 @@ private fun RadioButtonImpl(
         enabled = enabled,
         role = Role.RadioButton,
         interactionSource = interactionSource,
-        indication = null
+        indication = null,
     )
 
     val colors = style.colors
@@ -174,14 +174,14 @@ private fun RadioButtonImpl(
         Row(
             wrapperModifier,
             horizontalArrangement = Arrangement.spacedBy(metrics.iconContentGap),
-            verticalAlignment = Alignment.CenterVertically
+            verticalAlignment = Alignment.CenterVertically,
         ) {
             RadioButtonImage(Modifier, radioButtonPainter, radioButtonModifier)
 
             val contentColor by colors.contentFor(radioButtonState)
             CompositionLocalProvider(
                 LocalTextStyle provides textStyle.copy(color = contentColor.takeOrElse { textStyle.color }),
-                LocalContentColor provides contentColor.takeOrElse { textStyle.color }
+                LocalContentColor provides contentColor.takeOrElse { textStyle.color },
             ) {
                 content()
             }
@@ -238,7 +238,7 @@ value class RadioButtonState(val state: ULong) : SelectableComponentState {
         focused = focused,
         pressed = pressed,
         hovered = hovered,
-        active = active
+        active = active,
     )
 
     override fun toString() =
@@ -264,7 +264,7 @@ value class RadioButtonState(val state: ULong) : SelectableComponentState {
                 (if (focused) Focused else 0UL) or
                 (if (pressed) Pressed else 0UL) or
                 (if (hovered) Hovered else 0UL) or
-                (if (active) Active else 0UL)
+                (if (active) Active else 0UL),
         )
     }
 }

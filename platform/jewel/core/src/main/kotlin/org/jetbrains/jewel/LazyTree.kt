@@ -1,12 +1,11 @@
 package org.jetbrains.jewel
 
 import androidx.compose.foundation.interaction.MutableInteractionSource
-import androidx.compose.foundation.layout.Box
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.graphics.takeOrElse
 import androidx.compose.ui.res.ResourceLoader
 import org.jetbrains.jewel.foundation.lazy.SelectableLazyItemScope
@@ -52,14 +51,10 @@ fun <T> LazyTree(
         onElementDoubleClick = onElementDoubleClick,
         interactionSource = interactionSource,
         keyActions = keyActions,
-        chevronContent = { state ->
-            Box(Modifier.rotate(if (state.isExpanded) 90f else 0f)) {
-                Icon(
-                    painter = painterResource(style.icons.nodeChevron, resourceLoader),
-                    contentDescription = "Dropdown link",
-                    tint = colors.chevronTintFor(state).value
-                )
-            }
+        chevronContent = { elementState ->
+            val painterProvider = style.icons.nodeChevron(elementState.isExpanded)
+            val painter by painterProvider.getPainter(elementState, resourceLoader)
+            Icon(painter = painter, contentDescription = null)
         },
         nodeContent = {
             CompositionLocalProvider(
@@ -68,12 +63,12 @@ fun <T> LazyTree(
                         TreeElementState.of(
                             isFocused,
                             isSelected,
-                            false
-                        )
+                            false,
+                        ),
                     ).value
                         .takeOrElse { LocalContentColor.current }
-                    )
+                    ),
             ) { nodeContent(it) }
-        }
+        },
     )
 }

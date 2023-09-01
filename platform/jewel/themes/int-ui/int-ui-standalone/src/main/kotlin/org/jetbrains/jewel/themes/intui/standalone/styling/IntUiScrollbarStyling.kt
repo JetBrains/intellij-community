@@ -66,5 +66,5 @@ data class IntUiScrollbarMetrics(
     override val thumbCornerSize: CornerSize = CornerSize(100),
     override val thumbThickness: Dp = 8.dp,
     override val minThumbLength: Dp = 16.dp,
-    override val trackPadding: PaddingValues = PaddingValues(4.dp),
+    override val trackPadding: PaddingValues = PaddingValues(start = 7.dp, end = 3.dp),
 ) : ScrollbarMetrics

@@ -8,10 +8,8 @@ import androidx.compose.runtime.Stable
 import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.staticCompositionLocalOf
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.res.ResourceLoader
 import androidx.compose.ui.unit.Dp
 import org.jetbrains.jewel.foundation.tree.TreeElementState
-import org.jetbrains.jewel.painterResource
 
 @Stable
 interface LazyTreeStyle {
@@ -33,11 +31,6 @@ interface LazyTreeColors {
     val contentSelected: Color
     val contentSelectedFocused: Color
 
-    val chevronTint: Color
-    val chevronTintSelected: Color
-    val chevronTintFocused: Color
-    val chevronTintSelectedFocused: Color
-
     @Composable
     fun contentFor(state: TreeElementState) = rememberUpdatedState(
         when {
@@ -45,17 +38,7 @@ interface LazyTreeColors {
             state.isFocused -> contentFocused
             state.isSelected -> contentSelected
             else -> content
-        }
-    )
-
-    @Composable
-    fun chevronTintFor(state: TreeElementState) = rememberUpdatedState(
-        when {
-            state.isSelected && state.isFocused -> chevronTintSelectedFocused
-            state.isFocused -> chevronTintFocused
-            state.isSelected -> chevronTintSelected
-            else -> chevronTint
-        }
+        },
     )
 }
 
@@ -73,10 +56,12 @@ interface LazyTreeMetrics {
 @Immutable
 interface LazyTreeIcons {
 
-    val nodeChevron: String
+    val nodeChevronCollapsed: StatefulPainterProvider<TreeElementState>
+    val nodeChevronExpanded: StatefulPainterProvider<TreeElementState>
 
     @Composable
-    fun nodeChevronPainter(resourceLoader: ResourceLoader) = painterResource(nodeChevron, resourceLoader)
+    fun nodeChevron(isExpanded: Boolean) =
+        if (isExpanded) nodeChevronExpanded else nodeChevronCollapsed
 }
 
 val LocalLazyTreeStyle = staticCompositionLocalOf<LazyTreeStyle> {

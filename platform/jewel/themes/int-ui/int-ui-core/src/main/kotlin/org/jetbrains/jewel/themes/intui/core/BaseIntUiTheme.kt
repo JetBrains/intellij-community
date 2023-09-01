@@ -4,8 +4,8 @@ import androidx.compose.foundation.LocalContextMenuRepresentation
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.ReadOnlyComposable
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.TextStyle
-import org.jetbrains.jewel.ExperimentalJewelApi
 import org.jetbrains.jewel.GlobalColors
 import org.jetbrains.jewel.GlobalMetrics
 import org.jetbrains.jewel.IntelliJComponentStyling
@@ -66,6 +66,11 @@ interface BaseIntUiTheme : IntelliJTheme {
         @Composable
         @ReadOnlyComposable
         get() = IntelliJTheme.defaultTextStyle
+
+    val contentColor: Color
+        @Composable
+        @ReadOnlyComposable
+        get() = IntelliJTheme.contentColor
 
     val isDark: Boolean
         @Composable
@@ -173,13 +178,15 @@ interface BaseIntUiTheme : IntelliJTheme {
         get() = IntelliJTheme.editorTabStyle
 }
 
-@OptIn(ExperimentalJewelApi::class)
 @Composable
-fun BaseIntUiTheme(theme: IntUiThemeDefinition, componentStyling: IntelliJComponentStyling, content: @Composable () -> Unit) {
+fun BaseIntUiTheme(
+    theme: IntUiThemeDefinition,
+    componentStyling: IntelliJComponentStyling,
+    content: @Composable () -> Unit,
+) {
     BaseIntUiTheme(theme, componentStyling, swingCompatMode = false, content)
 }
 
-@ExperimentalJewelApi
 @Composable
 fun BaseIntUiTheme(
     theme: IntUiThemeDefinition,
@@ -207,7 +214,7 @@ fun BaseIntUiTheme(
         LocalTextAreaStyle provides componentStyling.textAreaStyle,
         LocalTextFieldStyle provides componentStyling.textFieldStyle,
         LocalDefaultTabStyle provides componentStyling.defaultTabStyle,
-        LocalEditorTabStyle provides componentStyling.editorTabStyle
+        LocalEditorTabStyle provides componentStyling.editorTabStyle,
     ) {
         IntelliJTheme(theme, swingCompatMode, content)
     }

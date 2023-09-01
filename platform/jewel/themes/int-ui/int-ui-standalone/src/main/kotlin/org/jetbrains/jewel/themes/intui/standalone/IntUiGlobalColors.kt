@@ -6,7 +6,6 @@ import androidx.compose.ui.graphics.Color
 import org.jetbrains.jewel.BorderColors
 import org.jetbrains.jewel.GlobalColors
 import org.jetbrains.jewel.OutlineColors
-import org.jetbrains.jewel.SwingLafKey
 import org.jetbrains.jewel.themes.intui.core.theme.IntUiDarkTheme
 import org.jetbrains.jewel.themes.intui.core.theme.IntUiLightTheme
 
@@ -14,7 +13,7 @@ import org.jetbrains.jewel.themes.intui.core.theme.IntUiLightTheme
 class IntUiGlobalColors(
     override val borders: BorderColors,
     override val outlines: OutlineColors,
-    @SwingLafKey("*.infoForeground") override val infoContent: Color,
+    override val infoContent: Color,
 ) : GlobalColors {
 
     override fun equals(other: Any?): Boolean {
@@ -46,31 +45,31 @@ class IntUiGlobalColors(
         fun light(
             borders: BorderColors = IntUiBorderColors.light(),
             outlines: OutlineColors = IntUiOutlineColors.light(),
-            @SwingLafKey("*.infoForeground") infoContent: Color = IntUiTheme.colorPalette.grey(7),
+            infoContent: Color = IntUiTheme.colorPalette.grey(7),
         ) = IntUiGlobalColors(
             borders = borders,
             outlines = outlines,
-            infoContent = infoContent
+            infoContent = infoContent,
         )
 
         @Composable
         fun dark(
             borders: BorderColors = IntUiBorderColors.dark(),
             outlines: OutlineColors = IntUiOutlineColors.dark(),
-            @SwingLafKey("*.infoForeground") infoContent: Color = IntUiTheme.colorPalette.grey(7),
+            infoContent: Color = IntUiTheme.colorPalette.grey(7),
         ) = IntUiGlobalColors(
             borders = borders,
             outlines = outlines,
-            infoContent = infoContent
+            infoContent = infoContent,
         )
     }
 }
 
 @Immutable
 class IntUiBorderColors(
-    @SwingLafKey("Component.borderColor") override val normal: Color,
-    @SwingLafKey("Component.focusedBorderColor") override val focused: Color,
-    @SwingLafKey("*.disabledBorderColor") override val disabled: Color,
+    override val normal: Color,
+    override val focused: Color,
+    override val disabled: Color,
 ) : BorderColors {
 
     override fun equals(other: Any?): Boolean {
@@ -116,11 +115,11 @@ class IntUiBorderColors(
 
 @Immutable
 class IntUiOutlineColors(
-    @SwingLafKey("*.focusColor") override val focused: Color,
-    @SwingLafKey("Component.warningFocusColor") override val focusedWarning: Color,
-    @SwingLafKey("Component.errorFocusColor") override val focusedError: Color,
-    @SwingLafKey("Component.inactiveWarningFocusColor") override val warning: Color,
-    @SwingLafKey("Component.inactiveErrorFocusColor") override val error: Color,
+    override val focused: Color,
+    override val focusedWarning: Color,
+    override val focusedError: Color,
+    override val warning: Color,
+    override val error: Color,
 ) : OutlineColors {
 
     override fun equals(other: Any?): Boolean {

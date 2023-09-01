@@ -1,12 +1,11 @@
 package org.jetbrains.jewel.samples.standalone.components
 
-import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import org.jetbrains.jewel.DefaultButton
 import org.jetbrains.jewel.GroupHeader
@@ -14,31 +13,27 @@ import org.jetbrains.jewel.OutlinedButton
 import org.jetbrains.jewel.Text
 
 @Composable
-fun ColumnScope.Buttons() {
+fun Buttons() {
     GroupHeader("Buttons")
     Row(
-        horizontalArrangement = Arrangement.spacedBy(10.dp),
-        verticalAlignment = Alignment.CenterVertically
+        modifier = Modifier.fillMaxWidth(),
+        horizontalArrangement = Arrangement.spacedBy(16.dp),
+        verticalAlignment = Alignment.CenterVertically,
     ) {
-        OutlinedButton({
-        }) {
-            Text("Cancel")
+        OutlinedButton(onClick = { }) {
+            Text("Outlined")
         }
-        OutlinedButton({
-        }) {
-            Text("Apply")
+
+        OutlinedButton(onClick = {}, enabled = false) {
+            Text("Outlined Disabled")
         }
-        OutlinedButton({}, enabled = false) {
-            Text("Disabled")
+
+        DefaultButton(onClick = {}) {
+            Text("Default")
         }
-        DefaultButton(
-            {
-            },
-            interactionSource = remember {
-                MutableInteractionSource()
-            }
-        ) {
-            Text("OK")
+
+        DefaultButton(onClick = {}, enabled = false) {
+            Text("Default disabled")
         }
     }
 }

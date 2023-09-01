@@ -32,32 +32,32 @@ internal fun Borders() {
 
     Row(
         horizontalArrangement = Arrangement.spacedBy(10.dp),
-        verticalAlignment = Alignment.CenterVertically
+        verticalAlignment = Alignment.CenterVertically,
     ) {
         RadioButtonRow(
             text = "Inside",
             selected = borderAlignment == Stroke.Alignment.Inside,
             resourceLoader = resourceLoader,
-            onClick = { borderAlignment = Stroke.Alignment.Inside }
+            onClick = { borderAlignment = Stroke.Alignment.Inside },
         )
         RadioButtonRow(
             text = "Center",
             selected = borderAlignment == Stroke.Alignment.Center,
             resourceLoader = resourceLoader,
-            onClick = { borderAlignment = Stroke.Alignment.Center }
+            onClick = { borderAlignment = Stroke.Alignment.Center },
         )
         RadioButtonRow(
             text = "Outside",
             selected = borderAlignment == Stroke.Alignment.Outside,
             resourceLoader = resourceLoader,
-            onClick = { borderAlignment = Stroke.Alignment.Outside }
+            onClick = { borderAlignment = Stroke.Alignment.Outside },
         )
     }
     var width by remember { mutableStateOf(1.dp) }
     var expand by remember { mutableStateOf(0.dp) }
     Row(
         horizontalArrangement = Arrangement.spacedBy(10.dp),
-        verticalAlignment = Alignment.CenterVertically
+        verticalAlignment = Alignment.CenterVertically,
     ) {
         OutlinedButton({
             width += 1.dp
@@ -82,7 +82,7 @@ internal fun Borders() {
     }
     Row(
         horizontalArrangement = Arrangement.spacedBy(10.dp),
-        verticalAlignment = Alignment.CenterVertically
+        verticalAlignment = Alignment.CenterVertically,
     ) {
         Box(
             Modifier.size(28.dp, 28.dp)
@@ -91,8 +91,8 @@ internal fun Borders() {
                     width,
                     IntUiTheme.colorPalette.blue(4),
                     CircleShape,
-                    expand
-                )
+                    expand,
+                ),
         )
         Box(
             Modifier.size(72.dp, 28.dp)
@@ -101,8 +101,8 @@ internal fun Borders() {
                     width,
                     IntUiTheme.colorPalette.blue(4),
                     RectangleShape,
-                    expand
-                )
+                    expand,
+                ),
         )
         Box(
             Modifier.size(72.dp, 28.dp)
@@ -111,8 +111,8 @@ internal fun Borders() {
                     width,
                     IntUiTheme.colorPalette.blue(4),
                     RoundedCornerShape(4.dp),
-                    expand
-                )
+                    expand,
+                ),
         )
         Box(
             Modifier.size(72.dp, 28.dp)
@@ -121,8 +121,8 @@ internal fun Borders() {
                     width,
                     IntUiTheme.colorPalette.blue(4),
                     RoundedCornerShape(4.dp, 0.dp, 4.dp, 0.dp),
-                    expand
-                )
+                    expand,
+                ),
         )
     }
 }

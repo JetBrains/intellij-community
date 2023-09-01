@@ -15,7 +15,7 @@ fun GroupHeader(
     style: GroupHeaderStyle = LocalGroupHeaderStyle.current,
 ) {
     CompositionLocalProvider(
-        LocalContentColor provides style.colors.content
+        LocalContentColor provides style.colors.content,
     ) {
         Row(modifier, verticalAlignment = Alignment.CenterVertically) {
             Text(text)
@@ -23,7 +23,7 @@ fun GroupHeader(
                 color = style.colors.divider,
                 orientation = Orientation.Horizontal,
                 startIndent = style.metrics.indent,
-                thickness = style.metrics.dividerThickness
+                thickness = style.metrics.dividerThickness,
             )
         }
     }

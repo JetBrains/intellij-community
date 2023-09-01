@@ -1,5 +1,3 @@
-import org.gradle.kotlin.dsl.projects
-
 plugins {
     jewel
     alias(libs.plugins.composeDesktop)
@@ -7,15 +5,15 @@ plugins {
 }
 
 intellij {
-    pluginName.set("Jewel")
-    version.set("LATEST-EAP-SNAPSHOT")
+    pluginName.set("Jewel Demo")
     plugins.set(listOf("org.jetbrains.kotlin"))
-    version.set("2022.3")
+    version.set("2023.2.1")
 }
 
 // TODO remove this once the IJ Gradle plugin fixes their repositories bug
 // See https://github.com/JetBrains/gradle-intellij-plugin/issues/776
 repositories {
+    maven("https://maven.pkg.jetbrains.space/public/p/compose/dev")
     maven("https://androidx.dev/storage/compose-compiler/repository/")
     maven("https://www.jetbrains.com/intellij-repository/releases")
     maven("https://cache-redirector.jetbrains.com/intellij-dependencies")
@@ -23,6 +21,7 @@ repositories {
 }
 
 dependencies {
-    implementation(projects.themes.darcula.darculaIde)
-    api(projects.foundation)
+    implementation(compose.desktop.currentOs)
+    implementation(projects.themes.intUi.intUiStandalone)
+    implementation(projects.ideLafBridge)
 }

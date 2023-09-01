@@ -8,7 +8,7 @@ interface IntelliJThemeDefinition {
 
     val isDark: Boolean
     val globalColors: GlobalColors
-    val metrics: GlobalMetrics
+    val globalMetrics: GlobalMetrics
     val defaultTextStyle: TextStyle
 
     val colorPalette: IntelliJThemeColorPalette

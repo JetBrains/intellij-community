@@ -14,14 +14,14 @@ import org.jetbrains.jewel.GroupHeader
 import org.jetbrains.jewel.LocalResourceLoader
 import org.jetbrains.jewel.Outline
 import org.jetbrains.jewel.Text
-import org.jetbrains.jewel.divider
+import org.jetbrains.jewel.separator
 
 @Composable
 fun Dropdowns() {
     GroupHeader("Dropdowns")
     Row(
         horizontalArrangement = Arrangement.spacedBy(10.dp),
-        verticalAlignment = Alignment.CenterVertically
+        verticalAlignment = Alignment.CenterVertically,
     ) {
         val items = remember {
             listOf(
@@ -30,7 +30,7 @@ fun Dropdowns() {
                 "---",
                 "High Contrast",
                 "Darcula",
-                "IntelliJ Light"
+                "IntelliJ Light",
             )
         }
         var selected by remember { mutableStateOf(items.first()) }
@@ -40,7 +40,7 @@ fun Dropdowns() {
             enabled = false,
             resourceLoader = resourceLoader,
             menuContent = {
-            }
+            },
         ) {
             Text(selected)
         }
@@ -49,7 +49,7 @@ fun Dropdowns() {
             menuContent = {
                 items.forEach {
                     if (it == "---") {
-                        divider()
+                        separator()
                     } else {
                         selectableItem(selected == it, {
                             selected = it
@@ -58,11 +58,11 @@ fun Dropdowns() {
                         }
                     }
                 }
-                divider()
+                separator()
                 submenu(submenu = {
                     items.forEach {
                         if (it == "---") {
-                            divider()
+                            separator()
                         } else {
                             selectableItem(selected == it, {
                                 selected = it
@@ -71,11 +71,11 @@ fun Dropdowns() {
                             }
                         }
                     }
-                    divider()
+                    separator()
                     submenu(submenu = {
                         items.forEach {
                             if (it == "---") {
-                                divider()
+                                separator()
                             } else {
                                 selectableItem(selected == it, {
                                     selected = it
@@ -90,7 +90,7 @@ fun Dropdowns() {
                 }) {
                     Text("Submenu")
                 }
-            }
+            },
         ) {
             Text(selected)
         }
@@ -100,7 +100,7 @@ fun Dropdowns() {
             menuContent = {
                 items.forEach {
                     if (it == "---") {
-                        divider()
+                        separator()
                     } else {
                         selectableItem(selected == it, {
                             selected = it
@@ -109,7 +109,7 @@ fun Dropdowns() {
                         }
                     }
                 }
-            }
+            },
         ) {
             Text(selected)
         }

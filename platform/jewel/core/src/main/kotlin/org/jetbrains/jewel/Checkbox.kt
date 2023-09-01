@@ -71,7 +71,7 @@ fun Checkbox(
         icons = icons,
         textStyle = textStyle,
         resourceLoader = resourceLoader,
-        content = null
+        content = null,
     )
 }
 
@@ -101,7 +101,7 @@ fun TriStateCheckbox(
         icons = icons,
         textStyle = textStyle,
         resourceLoader = resourceLoader,
-        content = null
+        content = null,
     )
 }
 
@@ -131,7 +131,7 @@ fun TriStateCheckboxRow(
         metrics = metrics,
         icons = icons,
         resourceLoader = resourceLoader,
-        textStyle = textStyle
+        textStyle = textStyle,
     ) {
         Text(text)
     }
@@ -165,7 +165,7 @@ fun CheckboxRow(
         metrics = metrics,
         icons = icons,
         resourceLoader = resourceLoader,
-        textStyle = textStyle
+        textStyle = textStyle,
     ) {
         Text(text)
     }
@@ -200,7 +200,7 @@ fun CheckboxRow(
         icons = icons,
         resourceLoader = resourceLoader,
         textStyle = textStyle,
-        content = content
+        content = content,
     )
 }
 
@@ -231,7 +231,7 @@ fun TriStateCheckboxRow(
         icons = icons,
         resourceLoader = resourceLoader,
         textStyle = textStyle,
-        content = content
+        content = content,
     )
 }
 
@@ -280,16 +280,16 @@ private fun CheckboxImpl(
         enabled = enabled,
         role = Role.Checkbox,
         interactionSource = interactionSource,
-        indication = null
+        indication = null,
     )
 
     val checkBoxImageModifier = Modifier.size(metrics.checkboxSize)
         .outline(
             state = checkboxState,
             outline = outline,
-            alignment = Stroke.Alignment.Center,
             outlineShape = RoundedCornerShape(metrics.checkboxCornerSize),
-            outlineWidth = metrics.outlineWidth
+            alignment = Stroke.Alignment.Center,
+            outlineWidth = metrics.outlineWidth,
         )
 
     val checkboxPainter by icons.checkbox.getPainter(checkboxState, resourceLoader)
@@ -300,14 +300,14 @@ private fun CheckboxImpl(
         Row(
             wrapperModifier,
             horizontalArrangement = Arrangement.spacedBy(metrics.iconContentGap),
-            verticalAlignment = Alignment.CenterVertically
+            verticalAlignment = Alignment.CenterVertically,
         ) {
             CheckBoxImage(Modifier, checkboxPainter, checkBoxImageModifier)
 
             val contentColor by colors.contentFor(checkboxState)
             CompositionLocalProvider(
                 LocalTextStyle provides textStyle.copy(color = contentColor.takeOrElse { textStyle.color }),
-                LocalContentColor provides contentColor.takeOrElse { textStyle.color }
+                LocalContentColor provides contentColor.takeOrElse { textStyle.color },
             ) {
                 content()
             }
@@ -367,7 +367,7 @@ value class CheckboxState(private val state: ULong) : ToggleableComponentState {
         focused = focused,
         pressed = pressed,
         hovered = hovered,
-        active = active
+        active = active,
     )
 
     override fun toString() =
@@ -390,7 +390,7 @@ value class CheckboxState(private val state: ULong) : ToggleableComponentState {
                 (if (pressed) Pressed else 0UL) or
                 (if (toggleableState != ToggleableState.Off) Selected else 0UL) or
                 (if (toggleableState == ToggleableState.Indeterminate) Indeterminate else 0UL) or
-                (if (active) Active else 0UL)
+                (if (active) Active else 0UL),
         )
     }
 }

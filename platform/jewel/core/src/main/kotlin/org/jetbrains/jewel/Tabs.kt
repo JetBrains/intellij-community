@@ -78,7 +78,7 @@ internal fun TabImpl(
 
     CompositionLocalProvider(
         LocalIndication provides NoIndication,
-        LocalContentColor provides tabStyle.colors.contentFor(tabState).value
+        LocalContentColor provides tabStyle.colors.contentFor(tabState).value,
     ) {
         val labelAlpha by tabStyle.contentAlpha.labelFor(tabState)
         val iconAlpha by tabStyle.contentAlpha.iconFor(tabState)
@@ -92,7 +92,7 @@ internal fun TabImpl(
                     selected = tabData.selected,
                     interactionSource = interactionSource,
                     indication = NoIndication,
-                    role = Role.Tab
+                    role = Role.Tab,
                 )
                 .drawBehind {
                     val strokeThickness = lineThickness.toPx()
@@ -105,12 +105,12 @@ internal fun TabImpl(
                         start = Offset(0 + capDxFix, startY),
                         end = Offset(endX - capDxFix, startY),
                         strokeWidth = strokeThickness,
-                        cap = StrokeCap.Round
+                        cap = StrokeCap.Round,
                     )
                 }
                 .padding(tabStyle.metrics.tabPadding),
             horizontalArrangement = Arrangement.spacedBy(tabStyle.metrics.closeContentGap),
-            verticalAlignment = Alignment.CenterVertically
+            verticalAlignment = Alignment.CenterVertically,
         ) {
             tabData.tabIconResource?.let { icon ->
                 val iconPainter = painterResource(icon, LocalResourceLoader.current)
@@ -120,7 +120,7 @@ internal fun TabImpl(
             Text(
                 modifier = Modifier.alpha(labelAlpha),
                 text = tabData.label,
-                color = tabStyle.colors.contentFor(tabState).value
+                color = tabStyle.colors.contentFor(tabState).value,
             )
             val showCloseIcon = when (tabData) {
                 is TabData.Default -> tabData.closable
@@ -147,10 +147,10 @@ internal fun TabImpl(
                         interactionSource = closeActionInteractionSource,
                         indication = null,
                         onClick = tabData.onClose,
-                        role = Role.Button
+                        role = Role.Button,
                     ).size(16.dp),
                     painter = closePainter,
-                    contentDescription = "Close tab ${tabData.label}"
+                    contentDescription = "Close tab ${tabData.label}",
                 )
             } else if (tabData.closable) {
                 Spacer(Modifier.size(16.dp))
@@ -215,7 +215,7 @@ value class TabState(val state: ULong) : SelectableComponentState {
         focused = focused,
         pressed = pressed,
         hovered = hovered,
-        active = active
+        active = active,
     )
 
     override fun toString() =
@@ -237,7 +237,7 @@ value class TabState(val state: ULong) : SelectableComponentState {
                 (if (focused) Focused else 0UL) or
                 (if (pressed) Pressed else 0UL) or
                 (if (hovered) Hovered else 0UL) or
-                (if (active) Active else 0UL)
+                (if (active) Active else 0UL),
         )
     }
 }

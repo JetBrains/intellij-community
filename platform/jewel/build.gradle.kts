@@ -10,7 +10,6 @@ val sarif: Configuration by configurations.creating {
 }
 
 dependencies {
-    sarif(projects.foundation)
     sarif(projects.core)
     sarif(projects.composeUtils)
     sarif(projects.samples.standalone)

@@ -7,13 +7,13 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.size
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.staticCompositionLocalOf
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.paint
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.graphics.ImageBitmap
+import androidx.compose.ui.graphics.isSpecified
 import androidx.compose.ui.graphics.painter.BitmapPainter
 import androidx.compose.ui.graphics.painter.Painter
 import androidx.compose.ui.graphics.toolingGraphicsLayer
@@ -32,7 +32,6 @@ import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.dp
 import org.xml.sax.InputSource
 import java.io.InputStream
-import java.util.jar.JarFile
 
 /**
  * Icon component that draws [imageVector] using [tint], defaulting to
@@ -58,7 +57,7 @@ fun Icon(
         painter = rememberVectorPainter(imageVector),
         contentDescription = contentDescription,
         modifier = modifier,
-        tint = tint
+        tint = tint,
     )
 }
 
@@ -87,7 +86,7 @@ fun Icon(
         painter = painter,
         contentDescription = contentDescription,
         modifier = modifier,
-        tint = tint
+        tint = tint,
     )
 }
 
@@ -95,15 +94,15 @@ fun Icon(
 fun Icon(
     resource: String,
     contentDescription: String?,
-    resourceLoader: ResourceLoader = LocalResourceLoader.current,
     modifier: Modifier = Modifier,
+    resourceLoader: ResourceLoader = LocalResourceLoader.current,
     tint: Color = Color.Unspecified,
 ) {
     Icon(
         painter = painterResource(resource, resourceLoader),
         contentDescription = contentDescription,
         modifier = modifier,
-        tint = tint
+        tint = tint,
     )
 }
 
@@ -123,11 +122,32 @@ fun Icon(
 @Composable
 fun Icon(
     painter: Painter,
-    contentDescription: String? = null,
+    contentDescription: String?,
     modifier: Modifier = Modifier,
     tint: Color = Color.Unspecified,
 ) {
-    val colorFilter = if (tint == Color.Unspecified) null else ColorFilter.tint(tint)
+    val colorFilter = if (tint.isSpecified) ColorFilter.tint(tint) else null
+    Icon(painter, contentDescription, colorFilter, modifier)
+}
+
+/**
+ * Icon component that draws a [painter] using a [colorFilter]
+ *
+ * @param painter [Painter] to draw inside this Icon
+ * @param contentDescription text used by accessibility services to
+ *     describe what this icon represents. This should always be
+ *     provided unless this icon is used for decorative purposes, and
+ *     does not represent a meaningful action that a user can take.
+ * @param modifier optional [Modifier] for this Icon
+ * @param colorFilter color filter to be applied to [painter]
+ */
+@Composable
+fun Icon(
+    painter: Painter,
+    contentDescription: String?,
+    colorFilter: ColorFilter?,
+    modifier: Modifier = Modifier,
+) {
     val semantics = if (contentDescription != null) {
         Modifier.semantics {
             this.contentDescription = contentDescription
@@ -142,9 +162,9 @@ fun Icon(
             .paint(
                 painter,
                 colorFilter = colorFilter,
-                contentScale = ContentScale.Fit
+                contentScale = ContentScale.Fit,
             )
-            .then(semantics)
+            .then(semantics),
     )
 }
 
@@ -202,47 +222,16 @@ private inline fun <T> useResource(
     block: (InputStream) -> T,
 ): T = loader.load(resourcePath).use(block)
 
-val LocalResourceLoader = staticCompositionLocalOf<ResourceLoader> {
-    ResourceLoader.Default
-}
-
 private fun Modifier.defaultSizeFor(painter: Painter) =
-    this.then(
+    then(
         if (painter.intrinsicSize == Size.Unspecified || painter.intrinsicSize.isInfinite()) {
             DefaultIconSizeModifier
         } else {
             Modifier
-        }
+        },
     )
 
 private fun Size.isInfinite() = width.isInfinite() && height.isInfinite()
 
 // Default icon size, for icons with no intrinsic size information
 private val DefaultIconSizeModifier = Modifier.size(16.dp)
-
-fun getJarPath(klass: Class<*>): String? {
-    val className = klass.name.replace('.', '/') + ".class"
-    val classPath = klass.classLoader.getResource(className)?.toString() ?: return null
-    if (!classPath.startsWith("jar")) {
-        // Class not from a JAR
-        return null
-    }
-    return classPath.substringBefore("!").removePrefix("jar:file:")
-}
-
-fun extractFileFromJar(jarPath: String, filePath: String) =
-    JarFile(jarPath).use { jar ->
-        jar.getEntry(filePath)?.let { entry ->
-            jar.getInputStream(entry).use { it.readBytes().inputStream() }
-        }
-    }
-
-inline fun <reified T> getJarPath(): String? = getJarPath(T::class.java)
-
-class RawJarResourceLoader(private val jars: List<String>) : ResourceLoader {
-
-    override fun load(resourcePath: String): InputStream =
-        jars.mapNotNull { jarPath ->
-            extractFileFromJar(jarPath, resourcePath)
-        }.firstOrNull() ?: error("Resource $resourcePath not found in jars $jars")
-}

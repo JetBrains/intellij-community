@@ -57,7 +57,7 @@ private fun DefaultTabShowcase() {
                             .coerceIn(0..maxPossibleIndex)
                     }
                 },
-                onClick = { selectedTabIndex = index }
+                onClick = { selectedTabIndex = index },
             )
         }
     }
@@ -92,7 +92,7 @@ private fun EditorTabShowcase() {
                             .coerceIn(0..maxPossibleIndex)
                     }
                 },
-                onClick = { selectedTabIndex = index }
+                onClick = { selectedTabIndex = index },
             )
         }
     }
@@ -119,7 +119,7 @@ private fun TabStripWithAddButton(
 
         IconButton(
             onClick = onAddClick,
-            modifier = Modifier.size(IntelliJTheme.defaultTabStyle.metrics.tabHeight)
+            modifier = Modifier.size(IntelliJTheme.defaultTabStyle.metrics.tabHeight),
         ) {
             Icon("icons/intui/add.svg", contentDescription = "Add a tab")
         }

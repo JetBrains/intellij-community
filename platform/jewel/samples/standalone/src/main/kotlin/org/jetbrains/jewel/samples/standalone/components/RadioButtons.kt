@@ -19,7 +19,7 @@ fun RadioButtons() {
     GroupHeader("RadioButtons")
     Row(
         horizontalArrangement = Arrangement.spacedBy(10.dp),
-        verticalAlignment = Alignment.CenterVertically
+        verticalAlignment = Alignment.CenterVertically,
     ) {
         val resourceLoader = LocalResourceLoader.current
         var index by remember { mutableStateOf(0) }
@@ -27,7 +27,7 @@ fun RadioButtons() {
             text = "Default",
             selected = index == 0,
             onClick = { index = 0 },
-            resourceLoader = resourceLoader
+            resourceLoader = resourceLoader,
         )
 
         RadioButtonRow(
@@ -35,7 +35,7 @@ fun RadioButtons() {
             selected = index == 1,
             onClick = { index = 1 },
             outline = Outline.Error,
-            resourceLoader = resourceLoader
+            resourceLoader = resourceLoader,
         )
 
         RadioButtonRow(
@@ -43,7 +43,7 @@ fun RadioButtons() {
             selected = index == 2,
             onClick = { index = 2 },
             outline = Outline.Warning,
-            resourceLoader = resourceLoader
+            resourceLoader = resourceLoader,
         )
 
         RadioButtonRow(
@@ -51,7 +51,7 @@ fun RadioButtons() {
             selected = index == 3,
             onClick = { index = 3 },
             enabled = false,
-            resourceLoader = resourceLoader
+            resourceLoader = resourceLoader,
         )
     }
 }

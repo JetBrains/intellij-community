@@ -60,8 +60,6 @@ data class IntUiLinkColors(
     override val contentPressed: Color,
     override val contentHovered: Color,
     override val contentVisited: Color,
-    override val iconTint: Color,
-    override val iconTintDisabled: Color,
 ) : LinkColors {
 
     companion object {
@@ -74,8 +72,6 @@ data class IntUiLinkColors(
             contentPressed: Color = content,
             contentHovered: Color = content,
             contentVisited: Color = content,
-            iconTint: Color = Color.Unspecified,
-            iconTintDisabled: Color = IntUiLightTheme.colors.grey(9),
         ) = IntUiLinkColors(
             content,
             contentDisabled,
@@ -83,8 +79,6 @@ data class IntUiLinkColors(
             contentPressed,
             contentHovered,
             contentVisited,
-            iconTint,
-            iconTintDisabled
         )
 
         @Composable
@@ -95,8 +89,6 @@ data class IntUiLinkColors(
             contentPressed: Color = content,
             contentHovered: Color = content,
             contentVisited: Color = content,
-            iconTint: Color = Color.Unspecified,
-            iconTintDisabled: Color = IntUiDarkTheme.colors.grey(6),
         ) = IntUiLinkColors(
             content,
             contentDisabled,
@@ -104,8 +96,6 @@ data class IntUiLinkColors(
             contentPressed,
             contentHovered,
             contentVisited,
-            iconTint,
-            iconTintDisabled
         )
     }
 }

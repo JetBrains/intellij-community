@@ -33,7 +33,7 @@ interface CheckboxColors {
             !state.isEnabled -> checkboxBackgroundDisabled
             state.toggleableState == ToggleableState.On -> checkboxBackgroundSelected
             else -> checkboxBackground
-        }
+        },
     )
 
     val content: Color
@@ -46,20 +46,7 @@ interface CheckboxColors {
             !state.isEnabled -> contentDisabled
             state.toggleableState == ToggleableState.On -> contentSelected
             else -> content
-        }
-    )
-
-    val checkboxBorder: Color
-    val checkboxBorderDisabled: Color
-    val checkboxBorderSelected: Color
-
-    @Composable
-    fun borderFor(state: CheckboxState) = rememberUpdatedState(
-        when {
-            !state.isEnabled -> checkboxBorderDisabled
-            state.toggleableState == ToggleableState.On -> checkboxBorderSelected
-            else -> checkboxBorder
-        }
+        },
     )
 }
 

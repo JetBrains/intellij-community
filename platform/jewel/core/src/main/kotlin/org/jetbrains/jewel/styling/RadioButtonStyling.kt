@@ -36,65 +36,7 @@ interface RadioButtonColors {
             state.isSelected -> contentSelected
             state.isHovered -> contentHovered
             else -> content
-        }
-    )
-
-    val buttonColors: RadioButtonButtonColors
-}
-
-// TODO these should be used to tint the SVGs
-@Immutable
-interface RadioButtonButtonColors {
-    val fill: Color
-    val fillHovered: Color
-    val fillDisabled: Color
-    val fillSelected: Color
-    val fillSelectedHovered: Color
-    val fillSelectedDisabled: Color
-
-    @Composable
-    fun fillFor(state: RadioButtonState) = rememberUpdatedState(
-        when {
-            !state.isEnabled && state.isSelected -> fillSelectedDisabled
-            !state.isEnabled -> fillDisabled
-            state.isSelected && state.isHovered -> fillSelectedHovered
-            state.isSelected -> fillSelected
-            state.isHovered -> fillHovered
-            else -> fill
-        }
-    )
-
-    val border: Color
-    val borderHovered: Color
-    val borderDisabled: Color
-    val borderSelected: Color
-    val borderSelectedHovered: Color
-    val borderSelectedDisabled: Color
-
-    @Composable
-    fun borderFor(state: RadioButtonState) = rememberUpdatedState(
-        when {
-            !state.isEnabled && state.isSelected -> borderSelectedDisabled
-            !state.isEnabled -> borderDisabled
-            state.isSelected && state.isHovered -> borderSelectedHovered
-            state.isSelected -> borderSelected
-            state.isHovered -> borderHovered
-            else -> border
-        }
-    )
-
-    val markSelected: Color
-    val markSelectedHovered: Color
-    val markSelectedDisabled: Color
-
-    @Composable
-    fun markFor(state: RadioButtonState) = rememberUpdatedState(
-        when {
-            !state.isSelected -> Color.Unspecified
-            !state.isEnabled -> markSelectedDisabled
-            state.isHovered -> markSelectedHovered
-            else -> markSelected
-        }
+        },
     )
 }
 

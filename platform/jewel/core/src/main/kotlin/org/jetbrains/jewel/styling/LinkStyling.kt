@@ -39,12 +39,9 @@ interface LinkColors {
             pressed = contentPressed,
             hovered = contentHovered,
             visited = contentVisited,
-            active = content
-        )
+            active = content,
+        ),
     )
-
-    val iconTint: Color
-    val iconTintDisabled: Color
 }
 
 @Immutable
@@ -81,8 +78,8 @@ interface LinkTextStyles {
             pressed = pressed,
             hovered = hovered,
             visited = visited,
-            active = normal
-        )
+            active = normal,
+        ),
     )
 }
 

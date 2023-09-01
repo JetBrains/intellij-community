@@ -69,9 +69,9 @@ interface TabColors {
                 focused = contentFocused,
                 pressed = contentPressed,
                 hovered = contentHovered,
-                active = content
+                active = content,
             )
-        }
+        },
     )
 
     @Composable
@@ -84,7 +84,7 @@ interface TabColors {
             state.isActive -> background
             state.isSelected -> backgroundSelected
             else -> background
-        }
+        },
     )
 
     @Composable
@@ -97,9 +97,9 @@ interface TabColors {
                 focused = underlineFocused,
                 pressed = underlinePressed,
                 hovered = underlineHovered,
-                active = underline
+                active = underline,
             )
-        }
+        },
     )
 }
 
@@ -123,9 +123,9 @@ interface TabContentAlpha {
                 focused = iconFocused,
                 pressed = iconPressed,
                 hovered = iconHovered,
-                active = iconNormal
+                active = iconNormal,
             )
-        }
+        },
     )
 
     val labelNormal: Float
@@ -145,9 +145,9 @@ interface TabContentAlpha {
                 focused = labelFocused,
                 pressed = labelPressed,
                 hovered = labelHovered,
-                active = labelNormal
+                active = labelNormal,
             )
-        }
+        },
     )
 }
 

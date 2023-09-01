@@ -20,6 +20,7 @@ interface HorizontalProgressBarColors {
 
     val track: Color
     val progress: Color
+    val indeterminateBase: Color
     val indeterminateHighlight: Color
 }
 

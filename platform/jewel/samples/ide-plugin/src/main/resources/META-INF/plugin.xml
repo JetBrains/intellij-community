@@ -1,0 +1,19 @@
+<idea-plugin>
+    <id>org.jetbrains.jewel.demo</id>
+    <name>Jewel Demo</name>
+    <vendor>JetBrains</vendor>
+
+    <description><![CDATA[
+A plugin that demonstrates the capabilities of the Jewel library and Compose.
+
+See the <a href="https://github.com/JetBrains/jewel">Jewel repository</a> for more information.
+    ]]></description>
+
+    <depends>com.intellij.modules.platform</depends>
+
+    <extensions defaultExtensionNs="com.intellij">
+
+        <toolWindow id="JewelDemo" anchor="bottom" secondary="false" canCloseContents="false"
+            factoryClass="org.jetbrains.jewel.samples.ideplugin.JewelDemoToolWindow" />
+    </extensions>
+</idea-plugin>

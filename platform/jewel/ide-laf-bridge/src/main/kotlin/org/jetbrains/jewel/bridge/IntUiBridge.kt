@@ -1,212 +1,873 @@
 package org.jetbrains.jewel.bridge
 
 import androidx.compose.foundation.layout.PaddingValues
-import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.ui.graphics.Brush
+import androidx.compose.foundation.shape.CornerSize
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.SolidColor
+import androidx.compose.ui.graphics.takeOrElse
+import androidx.compose.ui.state.ToggleableState
+import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.unit.DpOffset
+import androidx.compose.ui.unit.DpSize
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.takeOrElse
+import com.intellij.ide.ui.laf.darcula.DarculaUIUtil
+import com.intellij.ide.ui.laf.darcula.ui.DarculaCheckBoxUI
+import com.intellij.ide.ui.laf.intellij.IdeaPopupMenuUI
 import com.intellij.openapi.diagnostic.Logger
-import com.intellij.util.ui.StartupUiUtil
-import org.jetbrains.jewel.ButtonDefaults
-import org.jetbrains.jewel.CheckboxDefaults
-import org.jetbrains.jewel.IntelliJColors
-import org.jetbrains.jewel.IntelliJTheme
-import org.jetbrains.jewel.buttonColors
-import org.jetbrains.jewel.checkBoxColors
-import org.jetbrains.jewel.foundation.Stroke
-import org.jetbrains.jewel.themes.intui.core.IntUiColorPalette
+import com.intellij.openapi.util.registry.Registry
+import com.intellij.ui.JBColor
+import com.intellij.util.ui.DirProvider
+import com.intellij.util.ui.JBUI
+import com.intellij.util.ui.NamedColorUtil
+import com.intellij.util.ui.StatusText
+import org.jetbrains.jewel.CheckboxState
+import org.jetbrains.jewel.IntelliJComponentStyling
+import org.jetbrains.jewel.IntelliJThemeIconData
+import org.jetbrains.jewel.SvgLoader
+import org.jetbrains.jewel.styling.InputFieldStyle
+import org.jetbrains.jewel.themes.intui.core.IntUiThemeDefinition
+import org.jetbrains.jewel.themes.intui.standalone.styling.IntUiButtonColors
+import org.jetbrains.jewel.themes.intui.standalone.styling.IntUiButtonMetrics
+import org.jetbrains.jewel.themes.intui.standalone.styling.IntUiButtonStyle
+import org.jetbrains.jewel.themes.intui.standalone.styling.IntUiCheckboxColors
+import org.jetbrains.jewel.themes.intui.standalone.styling.IntUiCheckboxIcons
+import org.jetbrains.jewel.themes.intui.standalone.styling.IntUiCheckboxMetrics
+import org.jetbrains.jewel.themes.intui.standalone.styling.IntUiCheckboxStyle
+import org.jetbrains.jewel.themes.intui.standalone.styling.IntUiChipColors
+import org.jetbrains.jewel.themes.intui.standalone.styling.IntUiChipMetrics
+import org.jetbrains.jewel.themes.intui.standalone.styling.IntUiChipStyle
+import org.jetbrains.jewel.themes.intui.standalone.styling.IntUiDropdownColors
+import org.jetbrains.jewel.themes.intui.standalone.styling.IntUiDropdownIcons
+import org.jetbrains.jewel.themes.intui.standalone.styling.IntUiDropdownMetrics
+import org.jetbrains.jewel.themes.intui.standalone.styling.IntUiDropdownStyle
+import org.jetbrains.jewel.themes.intui.standalone.styling.IntUiGroupHeaderColors
+import org.jetbrains.jewel.themes.intui.standalone.styling.IntUiGroupHeaderMetrics
+import org.jetbrains.jewel.themes.intui.standalone.styling.IntUiGroupHeaderStyle
+import org.jetbrains.jewel.themes.intui.standalone.styling.IntUiHorizontalProgressBarColors
+import org.jetbrains.jewel.themes.intui.standalone.styling.IntUiHorizontalProgressBarMetrics
+import org.jetbrains.jewel.themes.intui.standalone.styling.IntUiHorizontalProgressBarStyle
+import org.jetbrains.jewel.themes.intui.standalone.styling.IntUiLabelledTextFieldColors
+import org.jetbrains.jewel.themes.intui.standalone.styling.IntUiLabelledTextFieldMetrics
+import org.jetbrains.jewel.themes.intui.standalone.styling.IntUiLabelledTextFieldStyle
+import org.jetbrains.jewel.themes.intui.standalone.styling.IntUiLabelledTextFieldTextStyles
+import org.jetbrains.jewel.themes.intui.standalone.styling.IntUiLazyTreeColors
+import org.jetbrains.jewel.themes.intui.standalone.styling.IntUiLazyTreeIcons
+import org.jetbrains.jewel.themes.intui.standalone.styling.IntUiLazyTreeMetrics
+import org.jetbrains.jewel.themes.intui.standalone.styling.IntUiLazyTreeStyle
+import org.jetbrains.jewel.themes.intui.standalone.styling.IntUiLinkColors
+import org.jetbrains.jewel.themes.intui.standalone.styling.IntUiLinkIcons
+import org.jetbrains.jewel.themes.intui.standalone.styling.IntUiLinkMetrics
+import org.jetbrains.jewel.themes.intui.standalone.styling.IntUiLinkStyle
+import org.jetbrains.jewel.themes.intui.standalone.styling.IntUiLinkTextStyles
+import org.jetbrains.jewel.themes.intui.standalone.styling.IntUiMenuColors
+import org.jetbrains.jewel.themes.intui.standalone.styling.IntUiMenuIcons
+import org.jetbrains.jewel.themes.intui.standalone.styling.IntUiMenuItemColors
+import org.jetbrains.jewel.themes.intui.standalone.styling.IntUiMenuItemMetrics
+import org.jetbrains.jewel.themes.intui.standalone.styling.IntUiMenuMetrics
+import org.jetbrains.jewel.themes.intui.standalone.styling.IntUiMenuStyle
+import org.jetbrains.jewel.themes.intui.standalone.styling.IntUiRadioButtonColors
+import org.jetbrains.jewel.themes.intui.standalone.styling.IntUiRadioButtonIcons
+import org.jetbrains.jewel.themes.intui.standalone.styling.IntUiRadioButtonMetrics
+import org.jetbrains.jewel.themes.intui.standalone.styling.IntUiRadioButtonStyle
+import org.jetbrains.jewel.themes.intui.standalone.styling.IntUiScrollbarColors
+import org.jetbrains.jewel.themes.intui.standalone.styling.IntUiScrollbarMetrics
+import org.jetbrains.jewel.themes.intui.standalone.styling.IntUiScrollbarStyle
+import org.jetbrains.jewel.themes.intui.standalone.styling.IntUiSubmenuMetrics
+import org.jetbrains.jewel.themes.intui.standalone.styling.IntUiTabColors
+import org.jetbrains.jewel.themes.intui.standalone.styling.IntUiTabContentAlpha
+import org.jetbrains.jewel.themes.intui.standalone.styling.IntUiTabIcons
+import org.jetbrains.jewel.themes.intui.standalone.styling.IntUiTabMetrics
+import org.jetbrains.jewel.themes.intui.standalone.styling.IntUiTabStyle
+import org.jetbrains.jewel.themes.intui.standalone.styling.IntUiTextAreaColors
+import org.jetbrains.jewel.themes.intui.standalone.styling.IntUiTextAreaMetrics
+import org.jetbrains.jewel.themes.intui.standalone.styling.IntUiTextAreaStyle
+import org.jetbrains.jewel.themes.intui.standalone.styling.IntUiTextFieldColors
+import org.jetbrains.jewel.themes.intui.standalone.styling.IntUiTextFieldMetrics
+import org.jetbrains.jewel.themes.intui.standalone.styling.IntUiTextFieldStyle
 import javax.swing.UIManager
+import kotlin.time.Duration.Companion.milliseconds
 
 private val logger = Logger.getInstance("JewelIntUiBridge")
 
-private val uiDefaults
+internal val uiDefaults
     get() = UIManager.getDefaults()
 
-internal fun bridgeIntUi(): IntelliJTheme {
-    val isDark = StartupUiUtil.isUnderDarcula()
-
-    return IntUiBridgeTheme(
-        isDark,
-        readIntUiColorPalette(isDark),
-        readIntelliJColors(),
-        readButtonDefaults(),
-        readCheckboxDefaults(),
-        groupHeaderDefaults,
-        linkDefaults,
-        textFieldDefaults,
-        labelledTextFieldDefaults,
-        textAreaDefaults,
-        radioButtonDefaults,
-        dropdownDefaults,
-        contextMenuDefaults,
-        defaultTextStyle,
-        treeDefaults,
-        chipDefaults,
-        scrollThumbDefaults,
-        progressBarDefaults,
-    )
+internal suspend fun createBridgeIntUiDefinition(): IntUiThemeDefinition {
+    val textStyle = retrieveTextStyle("Label.font", "Label.foreground")
+    return createBridgeIntUiDefinition(textStyle)
 }
 
-private fun readIntUiColorPalette(isDark: Boolean) =
-    IntUiColorPalette(
+internal fun createBridgeIntUiDefinition(textStyle: TextStyle): IntUiThemeDefinition {
+    val isDark = !JBColor.isBright()
+
+    logger.debug("Obtaining Int UI theme definition from Swing...")
+
+    return IntUiThemeDefinition(
         isDark = isDark,
-        grey = readPaletteColors("Grey"),
-        blue = readPaletteColors("Blue"),
-        green = readPaletteColors("Green"),
-        red = readPaletteColors("Red"),
-        yellow = readPaletteColors("Yellow"),
-        orange = readPaletteColors("Orange"),
-        purple = readPaletteColors("Purple"),
-        teal = readPaletteColors("Teal"),
+        globalColors = BridgeGlobalColors.readFromLaF(),
+        colorPalette = BridgeThemeColorPalette.readFromLaF(),
+        iconData = BridgeIconData.readFromLaF(),
+        globalMetrics = BridgeGlobalMetrics.readFromLaF(),
+        defaultTextStyle = textStyle,
     )
-
-private fun readPaletteColors(colorName: String): List<Color> {
-    val defaults = uiDefaults
-    val allKeys = defaults.keys
-    val colorNameLength = colorName.length
-
-    val lastColorIndex = allKeys.asSequence()
-        .filterIsInstance(String::class.java)
-        .filter { it.startsWith(colorName) }
-        .mapNotNull {
-            val afterName = it.substring(colorNameLength)
-            afterName.toIntOrNull()
-        }
-        .max()
-
-    return buildList {
-        for (i in 1..lastColorIndex) {
-            val value = defaults["$colorName$i"] as? java.awt.Color
-            if (value == null) {
-                logger.error("Unable to find color value for palette key '$colorName$i'")
-                continue
-            }
-
-            add(value.toComposeColor())
-        }
-    }
 }
 
-private fun readIntelliJColors() = IntelliJColors(
-    foreground = retrieveColorOrUnspecified("Label.foreground"),
-    background = retrieveColorOrUnspecified("Panel.background"),
-    borderColor = retrieveColorOrUnspecified("Component.borderColor"),
-    disabledForeground = retrieveColorOrUnspecified("Label.disabledForeground"),
-    disabledBorderColor = retrieveColorOrUnspecified("Component.disabledBorderColor"),
+internal suspend fun createSwingIntUiComponentStyling(
+    theme: IntUiThemeDefinition,
+    svgLoader: SvgLoader,
+): IntelliJComponentStyling = createSwingIntUiComponentStyling(
+    theme = theme,
+    svgLoader = svgLoader,
+    textAreaTextStyle = retrieveTextStyle("TextArea.font", "TextArea.foreground"),
+    textFieldTextStyle = retrieveTextStyle("TextField.font", "TextField.foreground"),
+    dropdownTextStyle = retrieveTextStyle("ComboBox.font"),
+    labelTextStyle = retrieveTextStyle("Label.font"),
+    linkTextStyle = retrieveTextStyle("Label.font"),
 )
 
-// Hardcoded values come from DarculaButtonUI (they may be derived from multiple values)
-private fun readButtonDefaults(): ButtonDefaults {
-    val backgroundBrush = Brush.verticalGradient(retrieveColorsOrUnspecified("Button.startBackground", "Button.endBackground"))
-    val contentColor = retrieveColorOrUnspecified("Button.foreground")
-    val borderStroke = Stroke(
-        width = 1.dp,
-        brush = Brush.verticalGradient(retrieveColorsOrUnspecified("Button.startBorderColor", "Button.endBorderColor")),
-        alignment = Stroke.Alignment.Center
+internal fun createSwingIntUiComponentStyling(
+    theme: IntUiThemeDefinition,
+    svgLoader: SvgLoader,
+    textFieldTextStyle: TextStyle,
+    textAreaTextStyle: TextStyle,
+    dropdownTextStyle: TextStyle,
+    labelTextStyle: TextStyle,
+    linkTextStyle: TextStyle,
+): IntelliJComponentStyling {
+    logger.debug("Obtaining Int UI component styling from Swing...")
+
+    val textFieldStyle = readTextFieldStyle(textFieldTextStyle)
+    val menuStyle = readMenuStyle(theme.iconData, svgLoader)
+
+    return IntelliJComponentStyling(
+        checkboxStyle = readCheckboxStyle(theme.iconData, svgLoader),
+        chipStyle = readChipStyle(),
+        defaultButtonStyle = readDefaultButtonStyle(),
+        defaultTabStyle = readDefaultTabStyle(theme.iconData, svgLoader),
+        dropdownStyle = readDropdownStyle(theme.iconData, svgLoader, menuStyle, dropdownTextStyle),
+        editorTabStyle = readEditorTabStyle(theme.iconData, svgLoader),
+        groupHeaderStyle = readGroupHeaderStyle(),
+        horizontalProgressBarStyle = readHorizontalProgressBarStyle(),
+        labelledTextFieldStyle = readLabelledTextFieldStyle(textFieldStyle, labelTextStyle),
+        lazyTreeStyle = readLazyTreeStyle(theme.iconData, svgLoader),
+        linkStyle = readLinkStyle(theme.iconData, svgLoader, linkTextStyle),
+        menuStyle = menuStyle,
+        outlinedButtonStyle = readOutlinedButtonStyle(),
+        radioButtonStyle = readRadioButtonStyle(theme.iconData, svgLoader),
+        scrollbarStyle = readScrollbarStyle(theme.isDark),
+        textAreaStyle = readTextAreaStyle(textAreaTextStyle, textFieldStyle.metrics),
+        textFieldStyle = textFieldStyle,
     )
-    val haloStroke = Stroke(
-        width = retrieveIntAsDp("Component.focusWidth"),
-        color = retrieveColorOrUnspecified("Component.focusColor"),
-        alignment = Stroke.Alignment.Outside
+}
+
+private fun readDefaultButtonStyle(): IntUiButtonStyle {
+    val normalBackground =
+        retrieveColorsOrUnspecified(
+            "Button.default.startBackground",
+            "Button.default.endBackground",
+        ).createVerticalBrush()
+    val normalContent = retrieveColorOrUnspecified("Button.default.foreground")
+    val normalBorder =
+        retrieveColorsOrUnspecified("Button.default.startBorderColor", "Button.default.endBorderColor")
+            .createVerticalBrush()
+
+    val colors = IntUiButtonColors(
+        background = normalBackground,
+        backgroundDisabled = SolidColor(Color.Transparent),
+        backgroundFocused = normalBackground,
+        backgroundPressed = normalBackground,
+        backgroundHovered = normalBackground,
+        content = normalContent,
+        contentDisabled = retrieveColorOrUnspecified("Button.default.disabledText"),
+        contentFocused = normalContent,
+        contentPressed = normalContent,
+        contentHovered = normalContent,
+        border = normalBorder,
+        borderDisabled = SolidColor(retrieveColorOrUnspecified("Button.default.disabledBorderColor")),
+        borderFocused = SolidColor(retrieveColorOrUnspecified("Button.default.focusedBorderColor")),
+        borderPressed = normalBorder,
+        borderHovered = normalBorder,
     )
 
-    val defaultBackgroundBrush = Brush.verticalGradient(retrieveColorsOrUnspecified("Button.default.startBackground", "Button.default.endBackground"))
-    val defaultContentColor = retrieveColorOrUnspecified("Button.default.foreground")
-    val defaultBorderStroke = Stroke(
-        width = 1.dp,
-        brush = Brush.verticalGradient(retrieveColorsOrUnspecified("Button.default.startBorderColor", "Button.default.endBorderColor")),
-        alignment = Stroke.Alignment.Center
-    )
-    val defaultHaloStroke = Stroke(
-        width = retrieveIntAsDp("Component.focusWidth"),
-        color = retrieveColorOrUnspecified("Button.default.focusColor"),
-        alignment = Stroke.Alignment.Outside
-    )
-
-    val transparentBrush = SolidColor(Color.Transparent)
-    val disabledContentColor = retrieveColorOrUnspecified("Button.disabledText")
-    val disabledBorderStroke = Stroke(
-        width = 1.dp,
-        brush = SolidColor(retrieveColorOrUnspecified("Button.disabledBorderColor")),
-        alignment = Stroke.Alignment.Center
-    )
-
-    return ButtonDefaults(
-        shape = RoundedCornerShape(retrieveIntAsDp("Button.arc") * 2), // Swing arcs are the diameter
-        contentPadding = PaddingValues(horizontal = 16.dp),
-        minWidth = 72.dp,
-        minHeight = 24.dp, // From DarculaUIUtil#MINIMUM_HEIGHT
-        outlinedButtonColors = buttonColors(
-            backgroundBrush = backgroundBrush,
-            contentColor = contentColor,
-            borderStroke = borderStroke,
-            disabledBackgroundBrush = transparentBrush,
-            disabledContentColor = disabledContentColor,
-            disabledBorderStroke = disabledBorderStroke,
-            hoveredBackgroundBrush = backgroundBrush,
-            hoveredContentColor = contentColor,
-            hoveredBorderStroke = borderStroke,
-            pressedBackgroundBrush = backgroundBrush,
-            pressedContentColor = contentColor,
-            pressedBorderStroke = borderStroke,
-            focusedBackgroundBrush = backgroundBrush,
-            focusedContentColor = contentColor,
-            focusedBorderStroke = borderStroke,
-            focusHaloStroke = haloStroke
-        ),
-        primaryButtonColors = buttonColors(
-            backgroundBrush = defaultBackgroundBrush,
-            contentColor = defaultContentColor,
-            borderStroke = defaultBorderStroke,
-            disabledBackgroundBrush = transparentBrush,
-            disabledContentColor = disabledContentColor,
-            disabledBorderStroke = disabledBorderStroke,
-            hoveredBackgroundBrush = defaultBackgroundBrush,
-            hoveredContentColor = defaultContentColor,
-            hoveredBorderStroke = defaultBorderStroke,
-            pressedBackgroundBrush = defaultBackgroundBrush,
-            pressedContentColor = defaultContentColor,
-            pressedBorderStroke = defaultBorderStroke,
-            focusedBackgroundBrush = defaultBackgroundBrush,
-            focusedContentColor = defaultContentColor,
-            focusedBorderStroke = defaultBorderStroke,
-            focusHaloStroke = defaultHaloStroke
+    return IntUiButtonStyle(
+        colors = colors,
+        metrics = IntUiButtonMetrics(
+            cornerSize = retrieveArcAsCornerSizeWithFallbacks("Button.default.arc", "Button.arc"),
+            padding = PaddingValues(horizontal = 14.dp), // see DarculaButtonUI.HORIZONTAL_PADDING
+            minSize = DpSize(DarculaUIUtil.MINIMUM_WIDTH.dp, DarculaUIUtil.MINIMUM_HEIGHT.dp),
+            borderWidth = DarculaUIUtil.LW.dp,
         ),
     )
 }
 
-private fun readCheckboxDefaults() = CheckboxDefaults(
-    colors = checkBoxColors(
-        checkmarkTintColor = Color.Unspecified, // There is no tint for the checkmark icon
-        contentColor = retrieveColorOrUnspecified("Checkbox.foreground"),
-        uncheckedBackground = retrieveColorOrUnspecified("Checkbox.background"),
-        uncheckedStroke = ,
-        uncheckedFocusedStroke =,
-        uncheckedFocusHoloStroke =,
-        uncheckedErrorHoloStroke =,
-        uncheckedHoveredBackground = retrieveColorOrUnspecified("Checkbox.background"),
-        uncheckedHoveredStroke =,
-        uncheckedDisabledBackground = retrieveColorOrUnspecified("Checkbox.background"),
-        uncheckedDisabledStroke =,
-        checkedBackground = retrieveColorOrUnspecified("Checkbox.background"),
-        checkedStroke =,
-        checkedFocusedStroke =,
-        checkedFocusHoloStroke =,
-        checkedErrorHoloStroke =,
-        checkedHoveredBackground = retrieveColorOrUnspecified("Checkbox.background"),
-        checkedHoveredStroke =,
-        checkedDisabledBackground = retrieveColorOrUnspecified("Checkbox.background"),
-        checkedDisabledStroke =,
-        disabledCheckmarkColor =,
-        disabledTextColor =,
+private fun readOutlinedButtonStyle(): IntUiButtonStyle {
+    val normalBackground =
+        retrieveColorsOrUnspecified("Button.startBackground", "Button.endBackground")
+            .createVerticalBrush()
+    val normalContent = retrieveColorOrUnspecified("Button.foreground")
+    val normalBorder =
+        retrieveColorsOrUnspecified("Button.startBorderColor", "Button.endBorderColor")
+            .createVerticalBrush()
+
+    val colors = IntUiButtonColors(
+        background = normalBackground,
+        backgroundDisabled = SolidColor(Color.Transparent),
+        backgroundFocused = normalBackground,
+        backgroundPressed = normalBackground,
+        backgroundHovered = normalBackground,
+        content = normalContent,
+        contentDisabled = retrieveColorOrUnspecified("Button.disabledText"),
+        contentFocused = normalContent,
+        contentPressed = normalContent,
+        contentHovered = normalContent,
+        border = normalBorder,
+        borderDisabled = SolidColor(retrieveColorOrUnspecified("Button.disabledBorderColor")),
+        borderFocused = SolidColor(retrieveColorOrUnspecified("Button.focusedBorderColor")),
+        borderPressed = normalBorder,
+        borderHovered = normalBorder,
+    )
+
+    return IntUiButtonStyle(
+        colors = colors,
+        metrics = IntUiButtonMetrics(
+            cornerSize = CornerSize(DarculaUIUtil.BUTTON_ARC.dp / 2),
+            padding = PaddingValues(horizontal = 14.dp), // see DarculaButtonUI.HORIZONTAL_PADDING
+            minSize = DpSize(DarculaUIUtil.MINIMUM_WIDTH.dp, DarculaUIUtil.MINIMUM_HEIGHT.dp),
+            borderWidth = DarculaUIUtil.LW.dp,
+        ),
+    )
+}
+
+private val iconsBasePath
+    get() = DirProvider().dir()
+
+private fun readCheckboxStyle(iconData: IntelliJThemeIconData, svgLoader: SvgLoader): IntUiCheckboxStyle {
+    val background = retrieveColorOrUnspecified("CheckBox.background")
+    val textColor = retrieveColorOrUnspecified("CheckBox.foreground")
+    val colors = IntUiCheckboxColors(
+        checkboxBackground = background,
+        checkboxBackgroundDisabled = background,
+        checkboxBackgroundSelected = background,
+        content = textColor,
+        contentDisabled = retrieveColorOrUnspecified("CheckBox.disabledText"),
+        contentSelected = textColor,
+    )
+
+    return IntUiCheckboxStyle(
+        colors = colors,
+        metrics = IntUiCheckboxMetrics(
+            checkboxSize = DarculaCheckBoxUI().defaultIcon.let { DpSize(it.iconWidth.dp, it.iconHeight.dp) },
+            checkboxCornerSize = CornerSize(3.dp), // See DarculaCheckBoxUI#drawCheckIcon
+            outlineWidth = 3.dp, // See DarculaCheckBoxUI#drawCheckIcon
+            iconContentGap = 5.dp, // See DarculaCheckBoxUI#textIconGap
+        ),
+        icons = IntUiCheckboxIcons(
+            checkbox = retrieveIcon(
+                baseIconPath = "${iconsBasePath}checkBox.svg",
+                iconData = iconData,
+                svgLoader = svgLoader,
+                prefixTokensProvider = { state: CheckboxState ->
+                    if (state.toggleableState == ToggleableState.Indeterminate) "Indeterminate" else ""
+                },
+            ),
+        ),
+    )
+}
+
+// Note: there isn't a chip spec, nor a chip UI, so we're deriving this from the
+// styling defined in com.intellij.ide.ui.experimental.meetNewUi.MeetNewUiButton
+// To note:
+//  1. There is no real disabled state, we're making it sort of up
+//  2. Chips can be used as buttons (see run configs) or as radio buttons (see MeetNewUi)
+//  3. We also have a toggleable version because why not
+private fun readChipStyle(): IntUiChipStyle {
+    val normalBackground =
+        retrieveColorsOrUnspecified("Button.startBackground", "Button.endBackground")
+            .createVerticalBrush()
+    val normalContent = retrieveColorOrUnspecified("Label.foreground")
+    val normalBorder = retrieveColorOrUnspecified("Button.startBorderColor")
+    val disabledBorder = retrieveColorOrUnspecified("Button.disabledBorderColor")
+    val selectedBorder = retrieveColorOrUnspecified("Component.focusColor")
+
+    val colors = IntUiChipColors(
+        background = normalBackground,
+        backgroundDisabled = normalBackground,
+        backgroundFocused = normalBackground,
+        backgroundPressed = normalBackground,
+        backgroundHovered = normalBackground,
+        backgroundSelected = normalBackground,
+        backgroundSelectedDisabled = normalBackground,
+        backgroundSelectedPressed = normalBackground,
+        backgroundSelectedFocused = normalBackground,
+        backgroundSelectedHovered = normalBackground,
+        content = normalContent,
+        contentDisabled = normalContent,
+        contentFocused = normalContent,
+        contentPressed = normalContent,
+        contentHovered = normalContent,
+        contentSelected = normalContent,
+        contentSelectedDisabled = normalContent,
+        contentSelectedPressed = normalContent,
+        contentSelectedFocused = normalContent,
+        contentSelectedHovered = normalContent,
+        border = normalBorder,
+        borderDisabled = disabledBorder,
+        borderFocused = normalBorder,
+        borderPressed = normalBorder,
+        borderHovered = normalBorder,
+        borderSelected = selectedBorder,
+        borderSelectedDisabled = disabledBorder,
+        borderSelectedPressed = selectedBorder,
+        borderSelectedFocused = selectedBorder,
+        borderSelectedHovered = selectedBorder,
+    )
+    return IntUiChipStyle(
+        colors = colors,
+        metrics = IntUiChipMetrics(
+            cornerSize = CornerSize(6.dp),
+            padding = PaddingValues(horizontal = 12.dp, vertical = 8.dp),
+            borderWidth = 1.dp,
+            borderWidthSelected = 2.dp,
+        ),
+    )
+}
+
+private fun readDropdownStyle(
+    iconData: IntelliJThemeIconData,
+    svgLoader: SvgLoader,
+    menuStyle: IntUiMenuStyle,
+    dropdownTextStyle: TextStyle,
+): IntUiDropdownStyle {
+    val normalBackground = retrieveColorOrUnspecified("ComboBox.nonEditableBackground")
+    val normalContent = retrieveColorOrUnspecified("ComboBox.foreground")
+    val normalBorder = retrieveColorOrUnspecified("Component.borderColor")
+    val focusedBorder = retrieveColorOrUnspecified("Component.focusedBorderColor")
+
+    val colors = IntUiDropdownColors(
+        background = normalBackground,
+        backgroundDisabled = retrieveColorOrUnspecified("ComboBox.disabledBackground"),
+        backgroundFocused = normalBackground,
+        backgroundPressed = normalBackground,
+        backgroundHovered = normalBackground,
+        content = normalContent,
+        contentDisabled = retrieveColorOrUnspecified("ComboBox.disabledForeground"),
+        contentFocused = normalContent,
+        contentPressed = normalContent,
+        contentHovered = normalContent,
+        border = normalBorder,
+        borderDisabled = retrieveColorOrUnspecified("Component.disabledBorderColor"),
+        borderFocused = focusedBorder,
+        borderPressed = focusedBorder,
+        borderHovered = normalBorder,
+        iconTint = Color.Unspecified,
+        iconTintDisabled = Color.Unspecified,
+        iconTintFocused = Color.Unspecified,
+        iconTintPressed = Color.Unspecified,
+        iconTintHovered = Color.Unspecified,
+    )
+
+    val arrowWidth = DarculaUIUtil.ARROW_BUTTON_WIDTH.dp
+    return IntUiDropdownStyle(
+        colors = colors,
+        metrics = IntUiDropdownMetrics(
+            arrowMinSize = DpSize(arrowWidth, DarculaUIUtil.MINIMUM_HEIGHT.dp),
+            minSize = DpSize(
+                DarculaUIUtil.MINIMUM_WIDTH.dp + arrowWidth,
+                DarculaUIUtil.MINIMUM_HEIGHT.dp,
+            ),
+            cornerSize = CornerSize(DarculaUIUtil.COMPONENT_ARC.dp),
+            contentPadding = retrieveInsetsAsPaddingValues("ComboBox.padding"),
+            borderWidth = DarculaUIUtil.BW.dp,
+        ),
+        icons = IntUiDropdownIcons(
+            chevronDown = retrieveIcon(
+                baseIconPath = "${iconsBasePath}general/chevron-down.svg",
+                iconData = iconData,
+                svgLoader = svgLoader,
+            ),
+        ),
+        textStyle = dropdownTextStyle,
+        menuStyle = menuStyle,
+    )
+}
+
+private fun readGroupHeaderStyle() = IntUiGroupHeaderStyle(
+    colors = IntUiGroupHeaderColors(
+        content = retrieveColorOrUnspecified("Separator.foreground"),
+        divider = retrieveColorOrUnspecified("Separator.separatorColor"),
     ),
-    shape = RoundedCornerShape(),
-    width =,
-    height =,
-    contentSpacing =,
-    textStyle =,
-    checkMarkOn =,
-    checkMarkOff =,
-    checkMarkIndeterminate =,
+    metrics = IntUiGroupHeaderMetrics(
+        dividerThickness = 1.dp, // see DarculaSeparatorUI
+        indent = 1.dp, // see DarculaSeparatorUI
+    ),
 )
+
+private fun readHorizontalProgressBarStyle() = IntUiHorizontalProgressBarStyle(
+    colors = IntUiHorizontalProgressBarColors(
+        track = retrieveColorOrUnspecified("ProgressBar.trackColor"),
+        progress = retrieveColorOrUnspecified("ProgressBar.progressColor"),
+        indeterminateBase = retrieveColorOrUnspecified("ProgressBar.indeterminateStartColor"),
+        indeterminateHighlight = retrieveColorOrUnspecified("ProgressBar.indeterminateEndColor"),
+    ),
+    metrics = IntUiHorizontalProgressBarMetrics(
+        cornerSize = CornerSize(100),
+        minHeight = 4.dp, // See DarculaProgressBarUI.DEFAULT_WIDTH
+        // See DarculaProgressBarUI.CYCLE_TIME_DEFAULT, DarculaProgressBarUI.REPAINT_INTERVAL_DEFAULT,
+        // and the "step" constant in DarculaProgressBarUI#paintIndeterminate
+        indeterminateHighlightWidth = (800 / 50 * 6).dp,
+    ),
+    indeterminateCycleDuration = 800.milliseconds, // See DarculaProgressBarUI.CYCLE_TIME_DEFAULT
+)
+
+private fun readLabelledTextFieldStyle(
+    inputFieldStyle: InputFieldStyle,
+    labelTextStyle: TextStyle,
+): IntUiLabelledTextFieldStyle {
+    val colors = IntUiLabelledTextFieldColors(
+        background = inputFieldStyle.colors.background,
+        backgroundDisabled = inputFieldStyle.colors.backgroundDisabled,
+        backgroundFocused = inputFieldStyle.colors.backgroundFocused,
+        backgroundPressed = inputFieldStyle.colors.backgroundPressed,
+        backgroundHovered = inputFieldStyle.colors.backgroundHovered,
+        content = inputFieldStyle.colors.content,
+        contentDisabled = inputFieldStyle.colors.contentDisabled,
+        contentFocused = inputFieldStyle.colors.contentFocused,
+        contentPressed = inputFieldStyle.colors.contentPressed,
+        contentHovered = inputFieldStyle.colors.contentHovered,
+        border = inputFieldStyle.colors.border,
+        borderDisabled = inputFieldStyle.colors.borderDisabled,
+        borderFocused = inputFieldStyle.colors.borderFocused,
+        borderPressed = inputFieldStyle.colors.borderPressed,
+        borderHovered = inputFieldStyle.colors.borderHovered,
+        caret = inputFieldStyle.colors.caret,
+        caretDisabled = inputFieldStyle.colors.caretDisabled,
+        caretFocused = inputFieldStyle.colors.caretFocused,
+        caretPressed = inputFieldStyle.colors.caretPressed,
+        caretHovered = inputFieldStyle.colors.caretHovered,
+        placeholder = retrieveColorOrUnspecified("Label.infoForeground"),
+        label = retrieveColorOrUnspecified("Label.foreground"),
+        hint = StatusText.DEFAULT_ATTRIBUTES.fgColor.toComposeColor(),
+    )
+
+    return IntUiLabelledTextFieldStyle(
+        colors = colors,
+        metrics = IntUiLabelledTextFieldMetrics(
+            cornerSize = inputFieldStyle.metrics.cornerSize,
+            contentPadding = inputFieldStyle.metrics.contentPadding,
+            minSize = inputFieldStyle.metrics.minSize,
+            borderWidth = inputFieldStyle.metrics.borderWidth,
+            labelSpacing = 6.dp,
+            hintSpacing = 6.dp,
+        ),
+        textStyle = inputFieldStyle.textStyle,
+        textStyles = IntUiLabelledTextFieldTextStyles(
+            label = labelTextStyle,
+            hint = labelTextStyle.copy(fontSize = labelTextStyle.fontSize - 1f),
+        ),
+    )
+}
+
+private fun readLinkStyle(
+    iconData: IntelliJThemeIconData,
+    svgLoader: SvgLoader,
+    linkTextStyle: TextStyle,
+): IntUiLinkStyle {
+    val normalContent =
+        retrieveColorOrUnspecified("Link.activeForeground").takeOrElse { retrieveColorOrUnspecified("Link.activeForeground") }
+
+    val colors = IntUiLinkColors(
+        content = normalContent,
+        contentDisabled = retrieveColorOrUnspecified("Link.disabledForeground").takeOrElse {
+            retrieveColorOrUnspecified(
+                "Label.disabledForeground",
+            )
+        },
+        contentFocused = normalContent,
+        contentPressed = retrieveColorOrUnspecified("Link.pressedForeground").takeOrElse { retrieveColorOrUnspecified("link.pressed.foreground") },
+        contentHovered = retrieveColorOrUnspecified("Link.hoverForeground").takeOrElse { retrieveColorOrUnspecified("link.hover.foreground") },
+        contentVisited = retrieveColorOrUnspecified("Link.visitedForeground").takeOrElse { retrieveColorOrUnspecified("link.visited.foreground") },
+    )
+
+    return IntUiLinkStyle(
+        colors = colors,
+        metrics = IntUiLinkMetrics(
+            focusHaloCornerSize = CornerSize(Registry.intValue("ide.link.button.focus.round.arc", 4).dp),
+            textIconGap = 4.dp,
+            iconSize = DpSize.Unspecified,
+        ),
+        icons = IntUiLinkIcons(
+            dropdownChevron = retrieveIcon(
+                baseIconPath = "${iconsBasePath}general/chevron-down.svg",
+                iconData = iconData,
+                svgLoader = svgLoader,
+            ),
+            externalLink = retrieveIcon(
+                baseIconPath = "${iconsBasePath}ide/external_link_arrow.svg",
+                iconData = iconData,
+                svgLoader = svgLoader,
+            ),
+        ),
+        textStyles = IntUiLinkTextStyles(
+            normal = linkTextStyle,
+            disabled = linkTextStyle,
+            focused = linkTextStyle,
+            pressed = linkTextStyle,
+            hovered = linkTextStyle,
+            visited = linkTextStyle,
+        ),
+    )
+}
+
+private fun readMenuStyle(iconData: IntelliJThemeIconData, svgLoader: SvgLoader): IntUiMenuStyle {
+    val backgroundSelected = retrieveColorOrUnspecified("MenuItem.selectionBackground")
+    val foregroundSelected = retrieveColorOrUnspecified("MenuItem.selectionForeground")
+
+    val colors = IntUiMenuColors(
+        background = retrieveColorOrUnspecified("PopupMenu.background"),
+        border = retrieveColorOrUnspecified("Popup.borderColor").takeOrElse { retrieveColorOrUnspecified("Popup.Border.color") },
+        shadow = Color.Black.copy(alpha = .6f),
+        itemColors = IntUiMenuItemColors(
+            background = retrieveColorOrUnspecified("MenuItem.background"),
+            backgroundDisabled = retrieveColorOrUnspecified("MenuItem.disabledBackground"),
+            backgroundFocused = backgroundSelected,
+            backgroundPressed = backgroundSelected,
+            backgroundHovered = backgroundSelected,
+            content = retrieveColorOrUnspecified("PopupMenu.foreground"),
+            contentDisabled = retrieveColorOrUnspecified("PopupMenu.disabledForeground"),
+            contentFocused = foregroundSelected,
+            contentPressed = foregroundSelected,
+            contentHovered = foregroundSelected,
+            iconTint = Color.Unspecified,
+            iconTintDisabled = Color.Unspecified,
+            iconTintFocused = Color.Unspecified,
+            iconTintPressed = Color.Unspecified,
+            iconTintHovered = Color.Unspecified,
+            separator = retrieveColorOrUnspecified("Menu.separatorColor"),
+        ),
+    )
+
+    return IntUiMenuStyle(
+        colors = colors,
+        metrics = IntUiMenuMetrics(
+            cornerSize = CornerSize(IdeaPopupMenuUI.CORNER_RADIUS.dp),
+            menuMargin = PaddingValues(0.dp),
+            contentPadding = PaddingValues(horizontal = 8.dp, vertical = 12.dp),
+            offset = DpOffset(0.dp, 2.dp),
+            shadowSize = 12.dp,
+            borderWidth = retrieveIntAsDpOrUnspecified("Popup.borderWidth").takeOrElse { 1.dp },
+            itemMetrics = IntUiMenuItemMetrics(
+                selectionCornerSize = CornerSize(JBUI.CurrentTheme.PopupMenu.Selection.ARC.dp),
+                outerPadding = PaddingValues(horizontal = 6.dp),
+                contentPadding = PaddingValues(horizontal = 10.dp, vertical = 1.dp),
+                separatorPadding = PaddingValues(
+                    horizontal = retrieveIntAsDpOrUnspecified("PopupMenuSeparator.withToEdge").takeOrElse { 0.dp },
+                    vertical = retrieveIntAsDpOrUnspecified("PopupMenuSeparator.stripeIndent").takeOrElse { 0.dp },
+                ),
+                separatorThickness = retrieveIntAsDpOrUnspecified("PopupMenuSeparator.stripeWidth").takeOrElse { 0.dp },
+            ),
+            submenuMetrics = IntUiSubmenuMetrics(
+                offset = DpOffset(0.dp, (-8).dp),
+            ),
+        ),
+        icons = IntUiMenuIcons(
+            submenuChevron = retrieveIcon(
+                baseIconPath = "${iconsBasePath}general/chevron-down.svg",
+                iconData = iconData,
+                svgLoader = svgLoader,
+            ),
+        ),
+    )
+}
+
+private fun readRadioButtonStyle(iconData: IntelliJThemeIconData, svgLoader: SvgLoader): IntUiRadioButtonStyle {
+    val normalContent = retrieveColorOrUnspecified("RadioButton.foreground")
+    val disabledContent = retrieveColorOrUnspecified("RadioButton.disabledText")
+    val colors = IntUiRadioButtonColors(
+        content = normalContent,
+        contentHovered = normalContent,
+        contentDisabled = disabledContent,
+        contentSelected = normalContent,
+        contentSelectedHovered = normalContent,
+        contentSelectedDisabled = disabledContent,
+    )
+
+    return IntUiRadioButtonStyle(
+        colors = colors,
+        metrics = IntUiRadioButtonMetrics(
+            radioButtonSize = DpSize(19.dp, 19.dp),
+            iconContentGap = retrieveIntAsDpOrUnspecified("RadioButton.textIconGap").takeOrElse { 4.dp },
+        ),
+        icons = IntUiRadioButtonIcons(
+            radioButton = retrieveIcon(
+                baseIconPath = "${iconsBasePath}darcula/radio.svg",
+                iconData = iconData,
+                svgLoader = svgLoader,
+            ),
+        ),
+    )
+}
+
+private fun readScrollbarStyle(isDark: Boolean) = IntUiScrollbarStyle(
+    colors = IntUiScrollbarColors(
+        // See ScrollBarPainter.THUMB_BACKGROUND
+        thumbBackground = retrieveColorOrUnspecified("ScrollBar.Mac.Transparent.thumbColor")
+            .takeOrElse { if (isDark) Color(0x00000000) else Color(0x00808080) },
+        // See ScrollBarPainter.THUMB_HOVERED_BACKGROUND
+        thumbBackgroundHovered = retrieveColorOrUnspecified("ScrollBar.Mac.Transparent.hoverThumbColor")
+            .takeOrElse { if (isDark) Color(0x00000000) else Color(0x00808080) },
+    ),
+    metrics = IntUiScrollbarMetrics(
+        thumbCornerSize = CornerSize(100),
+        thumbThickness = 8.dp,
+        minThumbLength = 16.dp,
+        trackPadding = PaddingValues(start = 7.dp, end = 3.dp),
+    ),
+    hoverDuration = 300.milliseconds,
+)
+
+private fun readTextAreaStyle(textStyle: TextStyle, metrics: IntUiTextFieldMetrics): IntUiTextAreaStyle {
+    val normalBackground = retrieveColorOrUnspecified("TextArea.background")
+    val normalContent = retrieveColorOrUnspecified("TextArea.foreground")
+    val normalBorder = DarculaUIUtil.getOutlineColor(true, false).toComposeColor()
+    val focusedBorder = DarculaUIUtil.getOutlineColor(true, true).toComposeColor()
+    val normalCaret = retrieveColorOrUnspecified("TextArea.caretForeground")
+
+    val colors = IntUiTextAreaColors(
+        background = normalBackground,
+        backgroundDisabled = retrieveColorOrUnspecified("TextArea.disabledBackground"),
+        backgroundFocused = normalBackground,
+        backgroundPressed = normalBackground,
+        backgroundHovered = normalBackground,
+        content = normalContent,
+        contentDisabled = retrieveColorOrUnspecified("TextArea.inactiveForeground"),
+        contentFocused = normalContent,
+        contentPressed = normalContent,
+        contentHovered = normalContent,
+        border = normalBorder,
+        borderDisabled = DarculaUIUtil.getOutlineColor(false, false).toComposeColor(),
+        borderFocused = focusedBorder,
+        borderPressed = focusedBorder,
+        borderHovered = normalBorder,
+        caret = normalCaret,
+        caretDisabled = normalCaret,
+        caretFocused = normalCaret,
+        caretPressed = normalCaret,
+        caretHovered = normalCaret,
+        placeholder = NamedColorUtil.getInactiveTextColor().toComposeColor(),
+    )
+
+    return IntUiTextAreaStyle(
+        colors = colors,
+        metrics = IntUiTextAreaMetrics(
+            cornerSize = metrics.cornerSize,
+            contentPadding = metrics.contentPadding,
+            minSize = metrics.minSize,
+            borderWidth = metrics.borderWidth,
+        ),
+        textStyle = textStyle,
+    )
+}
+
+private fun readTextFieldStyle(textFieldStyle: TextStyle): IntUiTextFieldStyle {
+    val normalBackground = retrieveColorOrUnspecified("TextField.background")
+    val normalContent = retrieveColorOrUnspecified("TextField.foreground")
+    val normalBorder = DarculaUIUtil.getOutlineColor(true, false).toComposeColor()
+    val focusedBorder = DarculaUIUtil.getOutlineColor(true, true).toComposeColor()
+    val normalCaret = retrieveColorOrUnspecified("TextField.caretForeground")
+
+    val colors = IntUiTextFieldColors(
+        background = normalBackground,
+        backgroundDisabled = retrieveColorOrUnspecified("TextField.disabledBackground"),
+        backgroundFocused = normalBackground,
+        backgroundPressed = normalBackground,
+        backgroundHovered = normalBackground,
+        content = normalContent,
+        contentDisabled = retrieveColorOrUnspecified("TextField.inactiveForeground"),
+        contentFocused = normalContent,
+        contentPressed = normalContent,
+        contentHovered = normalContent,
+        border = normalBorder,
+        borderDisabled = DarculaUIUtil.getOutlineColor(false, false).toComposeColor(),
+        borderFocused = focusedBorder,
+        borderPressed = focusedBorder,
+        borderHovered = normalBorder,
+        caret = normalCaret,
+        caretDisabled = normalCaret,
+        caretFocused = normalCaret,
+        caretPressed = normalCaret,
+        caretHovered = normalCaret,
+        placeholder = NamedColorUtil.getInactiveTextColor().toComposeColor(),
+    )
+
+    return IntUiTextFieldStyle(
+        colors = colors,
+        metrics = IntUiTextFieldMetrics(
+            cornerSize = CornerSize(DarculaUIUtil.COMPONENT_ARC.dp),
+            contentPadding = PaddingValues(horizontal = 9.dp, vertical = 2.dp),
+            minSize = DpSize(DarculaUIUtil.MINIMUM_WIDTH.dp, DarculaUIUtil.MINIMUM_HEIGHT.dp),
+            borderWidth = DarculaUIUtil.LW.dp,
+        ),
+        textStyle = textFieldStyle,
+    )
+}
+
+private fun readLazyTreeStyle(iconData: IntelliJThemeIconData, svgLoader: SvgLoader): IntUiLazyTreeStyle {
+    val normalContent = retrieveColorOrUnspecified("Tree.foreground")
+    val selectedContent = retrieveColorOrUnspecified("Tree.selectionForeground")
+    val selectedElementBackground = retrieveColorOrUnspecified("Tree.selectionBackground")
+
+    val colors = IntUiLazyTreeColors(
+        content = normalContent,
+        contentFocused = normalContent,
+        contentSelected = selectedContent,
+        contentSelectedFocused = selectedContent,
+        elementBackgroundFocused = Color.Transparent,
+        elementBackgroundSelected = selectedElementBackground,
+        elementBackgroundSelectedFocused = selectedElementBackground,
+    )
+
+    return IntUiLazyTreeStyle(
+        colors = colors,
+        metrics = IntUiLazyTreeMetrics(
+            indentSize = retrieveIntAsDpOrUnspecified("Tree.leftChildIndent").takeOrElse { 7.dp } +
+                retrieveIntAsDpOrUnspecified("Tree.rightChildIndent").takeOrElse { 11.dp },
+            elementBackgroundCornerSize = CornerSize(JBUI.CurrentTheme.Tree.ARC.dp),
+            elementPadding = PaddingValues(horizontal = 12.dp),
+            elementContentPadding = PaddingValues(4.dp),
+            elementMinHeight = retrieveIntAsDpOrUnspecified("Tree.rowHeight").takeOrElse { 24.dp },
+            chevronContentGap = 2.dp, // See com.intellij.ui.tree.ui.ClassicPainter.GAP
+        ),
+        icons = IntUiLazyTreeIcons(
+            nodeChevronCollapsed = retrieveIcon(
+                baseIconPath = "${iconsBasePath}general/chevron-right.svg",
+                iconData = iconData,
+                svgLoader = svgLoader,
+            ),
+            nodeChevronExpanded = retrieveIcon(
+                baseIconPath = "${iconsBasePath}general/chevron-down.svg",
+                iconData = iconData,
+                svgLoader = svgLoader,
+            ),
+        ),
+    )
+}
+
+// See com.intellij.ui.tabs.impl.themes.DefaultTabTheme
+private fun readDefaultTabStyle(iconData: IntelliJThemeIconData, svgLoader: SvgLoader): IntUiTabStyle {
+    val normalBackground = JBUI.CurrentTheme.DefaultTabs.background().toComposeColor()
+    val selectedBackground = JBUI.CurrentTheme.DefaultTabs.underlinedTabBackground().toComposeColorOrUnspecified()
+    val normalContent = retrieveColorOrUnspecified("TabbedPane.foreground")
+    val selectedUnderline = retrieveColorOrUnspecified("TabbedPane.underlineColor")
+
+    val colors = IntUiTabColors(
+        background = normalBackground,
+        backgroundDisabled = normalBackground,
+        backgroundFocused = normalBackground,
+        backgroundPressed = selectedBackground,
+        backgroundHovered = JBUI.CurrentTheme.DefaultTabs.hoverBackground().toComposeColor(),
+        backgroundSelected = selectedBackground,
+        content = normalContent,
+        contentDisabled = retrieveColorOrUnspecified("TabbedPane.disabledForeground"),
+        contentFocused = normalContent,
+        contentPressed = normalContent,
+        contentHovered = normalContent,
+        contentSelected = normalContent,
+        underline = Color.Transparent,
+        underlineDisabled = retrieveColorOrUnspecified("TabbedPane.disabledUnderlineColor"),
+        underlineFocused = Color.Transparent,
+        underlinePressed = selectedUnderline,
+        underlineHovered = Color.Transparent,
+        underlineSelected = selectedUnderline,
+    )
+
+    return IntUiTabStyle(
+        colors = colors,
+        metrics = IntUiTabMetrics(
+            underlineThickness = retrieveIntAsDpOrUnspecified("TabbedPane.tabSelectionHeight").takeOrElse { 2.dp },
+            tabPadding = retrieveInsetsAsPaddingValues("TabbedPane.tabInsets"),
+            closeContentGap = 4.dp,
+            tabHeight = retrieveIntAsDpOrUnspecified("TabbedPane.tabHeight").takeOrElse { 24.dp },
+        ),
+        icons = IntUiTabIcons(
+            close = retrieveIcon(
+                baseIconPath = "${iconsBasePath}expui/general/closeSmall.svg",
+                iconData = iconData,
+                svgLoader = svgLoader,
+            ),
+        ),
+        contentAlpha = IntUiTabContentAlpha(
+            iconNormal = 1f,
+            iconDisabled = 1f,
+            iconFocused = 1f,
+            iconPressed = 1f,
+            iconHovered = 1f,
+            iconSelected = 1f,
+            labelNormal = 1f,
+            labelDisabled = 1f,
+            labelFocused = 1f,
+            labelPressed = 1f,
+            labelHovered = 1f,
+            labelSelected = 1f,
+        ),
+    )
+}
+
+private fun readEditorTabStyle(iconData: IntelliJThemeIconData, svgLoader: SvgLoader): IntUiTabStyle {
+    val normalBackground = JBUI.CurrentTheme.EditorTabs.background().toComposeColor()
+    val selectedBackground = JBUI.CurrentTheme.EditorTabs.underlinedTabBackground().toComposeColorOrUnspecified()
+    val normalContent = retrieveColorOrUnspecified("TabbedPane.foreground")
+    val selectedUnderline = retrieveColorOrUnspecified("TabbedPane.underlineColor")
+
+    val colors = IntUiTabColors(
+        background = normalBackground,
+        backgroundDisabled = normalBackground,
+        backgroundFocused = normalBackground,
+        backgroundPressed = selectedBackground,
+        backgroundHovered = JBUI.CurrentTheme.EditorTabs.hoverBackground().toComposeColor(),
+        backgroundSelected = selectedBackground,
+        content = normalContent,
+        contentDisabled = retrieveColorOrUnspecified("TabbedPane.disabledForeground"),
+        contentFocused = normalContent,
+        contentPressed = normalContent,
+        contentHovered = normalContent,
+        contentSelected = normalContent,
+        underline = Color.Transparent,
+        underlineDisabled = retrieveColorOrUnspecified("TabbedPane.disabledUnderlineColor"),
+        underlineFocused = Color.Transparent,
+        underlinePressed = selectedUnderline,
+        underlineHovered = Color.Transparent,
+        underlineSelected = selectedUnderline,
+    )
+
+    return IntUiTabStyle(
+        colors = colors,
+        metrics = IntUiTabMetrics(
+            underlineThickness = retrieveIntAsDpOrUnspecified("TabbedPane.tabSelectionHeight").takeOrElse { 2.dp },
+            tabPadding = retrieveInsetsAsPaddingValues("TabbedPane.tabInsets"),
+            closeContentGap = 4.dp,
+            tabHeight = retrieveIntAsDpOrUnspecified("TabbedPane.tabHeight").takeOrElse { 24.dp },
+        ),
+        icons = IntUiTabIcons(
+            close = retrieveIcon(
+                baseIconPath = "${iconsBasePath}expui/general/closeSmall.svg",
+                iconData = iconData,
+                svgLoader = svgLoader,
+            ),
+        ),
+        contentAlpha = IntUiTabContentAlpha(
+            iconNormal = .7f,
+            iconDisabled = .7f,
+            iconFocused = .7f,
+            iconPressed = 1f,
+            iconHovered = 1f,
+            iconSelected = 1f,
+            labelNormal = .7f,
+            labelDisabled = .7f,
+            labelFocused = .7f,
+            labelPressed = 1f,
+            labelHovered = 1f,
+            labelSelected = 1f,
+        ),
+    )
+}

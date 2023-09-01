@@ -1,6 +1,5 @@
 package org.jetbrains.jewel
 
-import androidx.compose.foundation.shape.CornerSize
 import androidx.compose.runtime.Immutable
 import androidx.compose.runtime.staticCompositionLocalOf
 import androidx.compose.ui.unit.Dp
@@ -9,7 +8,6 @@ import androidx.compose.ui.unit.Dp
 interface GlobalMetrics {
 
     val outlineWidth: Dp
-    val outlineCornerSize: CornerSize
 }
 
 val LocalGlobalMetrics = staticCompositionLocalOf<GlobalMetrics> {

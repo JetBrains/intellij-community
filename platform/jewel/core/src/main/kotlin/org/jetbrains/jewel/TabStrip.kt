@@ -42,7 +42,7 @@ fun TabStrip(
     Box(
         modifier
             .focusable(true, remember { MutableInteractionSource() })
-            .onHover { tabStripState = tabStripState.copy(hovered = it) }
+            .onHover { tabStripState = tabStripState.copy(hovered = it) },
     ) {
         Row(
             modifier = Modifier
@@ -52,12 +52,12 @@ fun TabStrip(
                     reverseDirection = ScrollableDefaults.reverseDirection(
                         LocalLayoutDirection.current,
                         Orientation.Vertical,
-                        false
+                        false,
                     ),
                     state = scrollState,
-                    interactionSource = remember { MutableInteractionSource() }
+                    interactionSource = remember { MutableInteractionSource() },
                 )
-                .selectableGroup()
+                .selectableGroup(),
         ) {
             tabs.forEach {
                 TabImpl(isActive = tabStripState.isActive, tabData = it)
@@ -69,20 +69,20 @@ fun TabStrip(
                 animationSpec = tween(
                     durationMillis = 125,
                     delayMillis = 0,
-                    easing = LinearEasing
-                )
+                    easing = LinearEasing,
+                ),
             ),
             exit = fadeOut(
                 animationSpec = tween(
                     durationMillis = 125,
                     delayMillis = 700,
-                    easing = LinearEasing
-                )
-            )
+                    easing = LinearEasing,
+                ),
+            ),
         ) {
             TabStripHorizontalScrollbar(
                 adapter = rememberScrollbarAdapter(scrollState),
-                modifier = Modifier.fillMaxWidth()
+                modifier = Modifier.fillMaxWidth(),
             )
         }
     }
@@ -208,7 +208,7 @@ value class TabStripState(val state: ULong) : FocusableComponentState {
         focused = focused,
         pressed = pressed,
         hovered = hovered,
-        active = active
+        active = active,
     )
 
     override fun toString() =
@@ -232,7 +232,7 @@ value class TabStripState(val state: ULong) : FocusableComponentState {
                 (if (pressed) CommonStateBitMask.Pressed else 0UL) or
                 (if (warning) CommonStateBitMask.Warning else 0UL) or
                 (if (error) CommonStateBitMask.Error else 0UL) or
-                (if (active) CommonStateBitMask.Active else 0UL)
+                (if (active) CommonStateBitMask.Active else 0UL),
         )
     }
 }

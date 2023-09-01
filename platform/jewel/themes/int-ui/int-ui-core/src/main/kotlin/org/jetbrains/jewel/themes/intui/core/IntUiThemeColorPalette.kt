@@ -1,8 +1,10 @@
 package org.jetbrains.jewel.themes.intui.core
 
+import androidx.compose.runtime.Immutable
 import androidx.compose.ui.graphics.Color
 import org.jetbrains.jewel.IntelliJThemeColorPalette
 
+@Immutable
 interface IntUiThemeColorPalette : IntelliJThemeColorPalette {
 
     fun grey(): List<Color>

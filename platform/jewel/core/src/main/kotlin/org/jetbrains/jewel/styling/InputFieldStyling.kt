@@ -6,7 +6,6 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.Immutable
 import androidx.compose.runtime.Stable
 import androidx.compose.runtime.rememberUpdatedState
-import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.unit.Dp
@@ -29,21 +28,17 @@ interface InputFieldColors {
     val backgroundFocused: Color
     val backgroundPressed: Color
     val backgroundHovered: Color
-    val backgroundWarning: Color
-    val backgroundError: Color
 
     @Composable
     fun backgroundFor(state: InputFieldState) = rememberUpdatedState(
-        state.chooseValueWithOutline(
+        state.chooseValue(
             normal = background,
             disabled = backgroundDisabled,
             focused = backgroundFocused,
             pressed = backgroundPressed,
             hovered = backgroundHovered,
-            warning = backgroundWarning,
-            error = backgroundError,
-            active = background
-        )
+            active = background,
+        ),
     )
 
     val content: Color
@@ -51,21 +46,17 @@ interface InputFieldColors {
     val contentFocused: Color
     val contentPressed: Color
     val contentHovered: Color
-    val contentWarning: Color
-    val contentError: Color
 
     @Composable
     fun contentFor(state: InputFieldState) = rememberUpdatedState(
-        state.chooseValueWithOutline(
+        state.chooseValue(
             normal = content,
             disabled = contentDisabled,
             focused = contentFocused,
             pressed = contentPressed,
             hovered = contentHovered,
-            warning = contentWarning,
-            error = contentError,
-            active = content
-        )
+            active = content,
+        ),
     )
 
     val border: Color
@@ -73,43 +64,35 @@ interface InputFieldColors {
     val borderFocused: Color
     val borderPressed: Color
     val borderHovered: Color
-    val borderWarning: Color
-    val borderError: Color
 
     @Composable
     fun borderFor(state: InputFieldState) = rememberUpdatedState(
-        state.chooseValueWithOutline(
+        state.chooseValue(
             normal = border,
             disabled = borderDisabled,
             focused = borderFocused,
             pressed = borderPressed,
             hovered = borderHovered,
-            warning = borderWarning,
-            error = borderError,
-            active = border
-        )
+            active = border,
+        ),
     )
 
-    val cursor: Brush
-    val cursorDisabled: Brush
-    val cursorFocused: Brush
-    val cursorPressed: Brush
-    val cursorHovered: Brush
-    val cursorWarning: Brush
-    val cursorError: Brush
+    val caret: Color
+    val caretDisabled: Color
+    val caretFocused: Color
+    val caretPressed: Color
+    val caretHovered: Color
 
     @Composable
-    fun cursorFor(state: InputFieldState) = rememberUpdatedState(
-        state.chooseValueWithOutline(
-            normal = cursor,
-            disabled = cursorDisabled,
-            focused = cursorFocused,
-            pressed = cursorPressed,
-            hovered = cursorHovered,
-            warning = cursorWarning,
-            error = cursorError,
-            active = cursor
-        )
+    fun caretFor(state: InputFieldState) = rememberUpdatedState(
+        state.chooseValue(
+            normal = caret,
+            disabled = caretDisabled,
+            focused = caretFocused,
+            pressed = caretPressed,
+            hovered = caretHovered,
+            active = caret,
+        ),
     )
 }
 

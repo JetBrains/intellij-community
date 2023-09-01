@@ -54,9 +54,6 @@ data class IntUiCheckboxColors(
     override val content: Color,
     override val contentDisabled: Color,
     override val contentSelected: Color,
-    override val checkboxBorder: Color,
-    override val checkboxBorderDisabled: Color,
-    override val checkboxBorderSelected: Color,
 ) : CheckboxColors {
 
     companion object {
@@ -69,9 +66,6 @@ data class IntUiCheckboxColors(
             content: Color = IntUiLightTheme.colors.grey(1),
             contentDisabled: Color = IntUiLightTheme.colors.grey(8),
             contentSelected: Color = content,
-            checkboxBorder: Color = IntUiLightTheme.colors.grey(8),
-            borderDisabled: Color = IntUiLightTheme.colors.grey(11),
-            borderSelected: Color = IntUiLightTheme.colors.blue(4),
         ) = IntUiCheckboxColors(
             background,
             backgroundDisabled,
@@ -79,9 +73,6 @@ data class IntUiCheckboxColors(
             content,
             contentDisabled,
             contentSelected,
-            checkboxBorder,
-            borderDisabled,
-            borderSelected
         )
 
         @Composable
@@ -92,9 +83,6 @@ data class IntUiCheckboxColors(
             content: Color = IntUiDarkTheme.colors.grey(12),
             contentDisabled: Color = IntUiDarkTheme.colors.grey(7),
             contentSelected: Color = content,
-            checkboxBorder: Color = IntUiDarkTheme.colors.grey(6),
-            borderDisabled: Color = IntUiDarkTheme.colors.grey(6),
-            borderSelected: Color = Color.Unspecified,
         ) = IntUiCheckboxColors(
             background,
             backgroundDisabled,
@@ -102,9 +90,6 @@ data class IntUiCheckboxColors(
             content,
             contentDisabled,
             contentSelected,
-            checkboxBorder,
-            borderDisabled,
-            borderSelected
         )
     }
 }
@@ -124,7 +109,6 @@ data class IntUiCheckboxIcons(
 
     companion object {
 
-        @Composable
         fun checkbox(
             svgLoader: SvgLoader,
             basePath: String = "icons/intui/checkBox.svg",
@@ -134,12 +118,11 @@ data class IntUiCheckboxIcons(
                 svgLoader,
                 prefixTokensProvider = { state: CheckboxState ->
                     if (state.toggleableState == ToggleableState.Indeterminate) "Indeterminate" else ""
-                }
+                },
             )
     }
 }
 
-@Composable
 fun intUiCheckboxIcons(
     svgLoader: SvgLoader,
     checkbox: StatefulPainterProvider<CheckboxState> = IntUiCheckboxIcons.checkbox(svgLoader),

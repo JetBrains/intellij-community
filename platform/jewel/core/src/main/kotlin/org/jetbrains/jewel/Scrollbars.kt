@@ -36,15 +36,15 @@ fun VerticalScrollbar(
             shape = shape,
             hoverDurationMillis = hoverDurationMillis,
             unhoverColor = style.colors.thumbBackground,
-            hoverColor = style.colors.thumbBackgroundHovered
-        )
+            hoverColor = style.colors.thumbBackgroundHovered,
+        ),
     ) {
         VerticalScrollbar(
             adapter = adapter,
             modifier = modifier.padding(style.metrics.trackPadding),
             reverseLayout = reverseLayout,
             style = LocalScrollbarStyle.current,
-            interactionSource = interactionSource
+            interactionSource = interactionSource,
         )
     }
 }
@@ -67,15 +67,15 @@ fun HorizontalScrollbar(
             shape = shape,
             hoverDurationMillis = hoverDurationMillis,
             unhoverColor = style.colors.thumbBackground,
-            hoverColor = style.colors.thumbBackgroundHovered
-        )
+            hoverColor = style.colors.thumbBackgroundHovered,
+        ),
     ) {
         HorizontalScrollbar(
             adapter = adapter,
             modifier = modifier.padding(style.metrics.trackPadding),
             reverseLayout = reverseLayout,
             style = LocalScrollbarStyle.current,
-            interactionSource = interactionSource
+            interactionSource = interactionSource,
         )
     }
 }
@@ -98,15 +98,15 @@ fun TabStripHorizontalScrollbar(
             shape = shape,
             hoverDurationMillis = hoverDurationMillis,
             unhoverColor = style.colors.thumbBackground,
-            hoverColor = style.colors.thumbBackgroundHovered
-        )
+            hoverColor = style.colors.thumbBackgroundHovered,
+        ),
     ) {
         HorizontalScrollbar(
             adapter = adapter,
             modifier = modifier.padding(1.dp),
             reverseLayout = reverseLayout,
             style = LocalScrollbarStyle.current,
-            interactionSource = interactionSource
+            interactionSource = interactionSource,
         )
     }
 }

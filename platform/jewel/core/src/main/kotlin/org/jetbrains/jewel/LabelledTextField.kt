@@ -21,16 +21,23 @@ import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.unit.offset
 import org.jetbrains.jewel.styling.LabelledTextFieldStyle
 
+/**
+ * @param placeholder the optional placeholder to be displayed over the component when
+ * the [value] is empty.
+ * @param hint the optional hint to be displayed underneath the component. By default it
+ * will have a greyed out appearance and smaller text.
+ * @param label the label to display above the component.
+ */
 @Composable
 fun LabelledTextField(
-    label: @Composable () -> Unit,
     value: String,
     onValueChange: (String) -> Unit,
+    label: @Composable () -> Unit,
     modifier: Modifier = Modifier,
     textFieldModifier: Modifier = Modifier,
     enabled: Boolean = true,
     readOnly: Boolean = false,
-    isError: Boolean = false,
+    outline: Outline = Outline.None,
     hint: @Composable (() -> Unit)? = null,
     placeholder: @Composable (() -> Unit)? = null,
     trailingIcon: @Composable (() -> Unit)? = null,
@@ -61,7 +68,7 @@ fun LabelledTextField(
         textFieldModifier = textFieldModifier,
         enabled = enabled,
         readOnly = readOnly,
-        isError = isError,
+        outline = outline,
         hint = hint,
         placeholder = placeholder,
         trailingIcon = trailingIcon,
@@ -72,10 +79,17 @@ fun LabelledTextField(
         onTextLayout = onTextLayout,
         style = style,
         textStyle = textStyle,
-        interactionSource = interactionSource
+        interactionSource = interactionSource,
     )
 }
 
+/**
+ * @param placeholder the optional placeholder to be displayed over the component when
+ * the [value] is empty.
+ * @param hint the optional hint to be displayed underneath the component. By default it
+ * will have a greyed out appearance and smaller text.
+ * @param label the label to display above the component.
+ */
 @Composable
 fun LabelledTextField(
     label: @Composable () -> Unit,
@@ -85,7 +99,7 @@ fun LabelledTextField(
     textFieldModifier: Modifier = Modifier,
     enabled: Boolean = true,
     readOnly: Boolean = false,
-    isError: Boolean = false,
+    outline: Outline = Outline.None,
     hint: @Composable (() -> Unit)? = null,
     placeholder: @Composable (() -> Unit)? = null,
     trailingIcon: @Composable (() -> Unit)? = null,
@@ -104,7 +118,7 @@ fun LabelledTextField(
             CompositionLocalProvider(
                 LocalTextStyle provides style.textStyles.label,
                 LocalContentColor provides style.colors.label,
-                content = label
+                content = label,
             )
         },
         textField = {
@@ -114,7 +128,7 @@ fun LabelledTextField(
                 modifier = textFieldModifier,
                 enabled = enabled,
                 readOnly = readOnly,
-                isError = isError,
+                outline = outline,
                 placeholder = placeholder,
                 trailingIcon = trailingIcon,
                 undecorated = undecorated,
@@ -124,7 +138,7 @@ fun LabelledTextField(
                 onTextLayout = onTextLayout,
                 style = style,
                 textStyle = textStyle,
-                interactionSource = interactionSource
+                interactionSource = interactionSource,
             )
         },
         hint = hint?.let {
@@ -132,11 +146,11 @@ fun LabelledTextField(
                 CompositionLocalProvider(
                     LocalTextStyle provides style.textStyles.hint,
                     LocalContentColor provides style.colors.hint,
-                    content = it
+                    content = it,
                 )
             }
         },
-        style = style
+        style = style,
     )
 }
 
@@ -164,7 +178,7 @@ private fun LabelledTextFieldLayout(
                     hint()
                 }
             }
-        }
+        },
     ) { measurables, incomingConstraints ->
         val hintMeasurable = measurables.firstOrNull { it.layoutId == HINT_ID }
 
@@ -173,7 +187,7 @@ private fun LabelledTextFieldLayout(
 
         val constraintsWithoutSpacing = incomingConstraints.offset(
             horizontal = -horizontalSpacing,
-            vertical = -verticalSpacing
+            vertical = -verticalSpacing,
         )
 
         val textFieldPlaceable = measurables.first { it.layoutId == TEXT_FIELD_ID }
@@ -185,7 +199,7 @@ private fun LabelledTextFieldLayout(
         val hintPlaceable = hintMeasurable?.measure(
             constraintsWithoutSpacing
                 .offset(vertical = -textFieldPlaceable.height)
-                .copy(maxWidth = textFieldPlaceable.width)
+                .copy(maxWidth = textFieldPlaceable.width),
         )
 
         val width = labelPlaceable.width + textFieldPlaceable.width + horizontalSpacing
@@ -194,15 +208,15 @@ private fun LabelledTextFieldLayout(
         layout(width, height) {
             labelPlaceable.placeRelative(
                 x = 0,
-                y = Alignment.CenterVertically.align(labelPlaceable.height, textFieldPlaceable.height)
+                y = Alignment.CenterVertically.align(labelPlaceable.height, textFieldPlaceable.height),
             )
             textFieldPlaceable.placeRelative(
                 x = labelPlaceable.width + horizontalSpacing,
-                y = 0
+                y = 0,
             )
             hintPlaceable?.placeRelative(
                 x = labelPlaceable.width + horizontalSpacing,
-                y = textFieldPlaceable.height + verticalSpacing
+                y = textFieldPlaceable.height + verticalSpacing,
             )
         }
     }
