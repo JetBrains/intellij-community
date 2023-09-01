@@ -50,7 +50,6 @@ class NewUiOnboardingDialog(project: Project)
         cell(createAnimationPanel())
           .customize(UnscaledGaps.EMPTY)
           .applyToComponent {
-            WindowMoveListener(this).installTo(components?.firstOrNull() ?: this)
             preferredSize = videoSize
           }
       }
@@ -96,14 +95,16 @@ class NewUiOnboardingDialog(project: Project)
 
   private fun createAnimationPanel(): JComponent {
     val browser = JBCefBrowser.createBuilder().setMouseWheelEventEnable(false).build()
-    UIUtil.setNotOpaqueRecursively(browser.component)
+    val browserComponent = browser.component
+    WindowMoveListener(browserComponent).installTo(browserComponent.components.firstOrNull() ?: browserComponent)
+    UIUtil.setNotOpaqueRecursively(browserComponent)
 
     val banner = IconLoader.findIcon(BANNER_PATH, NewUiOnboardingDialog::class.java.classLoader)
     val bannerLabel = JLabel(banner)
     val multiPanel = object : MultiPanel() {
       override fun create(key: Int): JComponent = when (key) {
         BANNER_KEY -> bannerLabel
-        BROWSER_KEY -> browser.component
+        BROWSER_KEY -> browserComponent
         else -> throw IllegalArgumentException("Unknown key: ${key}")
       }
     }
