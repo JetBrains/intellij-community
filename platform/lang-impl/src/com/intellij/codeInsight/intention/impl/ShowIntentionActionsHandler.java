@@ -385,7 +385,7 @@ public class ShowIntentionActionsHandler implements CodeInsightActionHandler {
       return Pair.create(hostFile, null);
     }
 
-    PsiFile injectedFile = InjectedLanguageUtil.findInjectedPsiNoCommit(hostFile, hostEditor.getCaretModel().getOffset());
+    PsiFile injectedFile = InjectedLanguageUtilBase.findInjectedPsiNoCommit(hostFile, hostEditor.getCaretModel().getOffset());
     return chooseBetweenHostAndInjected(
       hostFile, hostEditor, injectedFile,
       (psiFile, editor) -> availableFor(psiFile, editor, action)
