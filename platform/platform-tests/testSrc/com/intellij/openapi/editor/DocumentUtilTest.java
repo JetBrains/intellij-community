@@ -11,7 +11,9 @@ public class DocumentUtilTest {
   @Test
   public void testGetIndent() {
     final Document doc = new DocumentImpl("line1\n" +
-                                          " \t line2");
-    assertEquals(" \t ", DocumentUtil.getIndent(doc, doc.getTextLength() - 1).toString());
+                                          " \t line2\n");
+    assertEquals("", DocumentUtil.getIndent(doc, doc.getLineStartOffset(0) + 2).toString());
+    assertEquals(" \t ", DocumentUtil.getIndent(doc, doc.getLineStartOffset(1) + 2).toString());
+    assertEquals("", DocumentUtil.getIndent(doc, doc.getLineStartOffset(2)).toString());
   }
 }
