@@ -1340,7 +1340,10 @@ public class MergeThreesideViewer extends ThreesideTextDiffViewerEx {
 
     @Override
     protected void paint(@NotNull Editor editor, @NotNull Graphics g) {
-      LineStatusMarkerDrawUtil.paintDefault(editor, g, tracker, DefaultFlagsProvider.DEFAULT, JBUIScale.scale(2));
+      int framingBorder = JBUIScale.scale(2);
+      List<? extends Range> ranges = getRanges();
+      if (ranges == null) return;
+      LineStatusMarkerDrawUtil.paintDefault(editor, g, ranges, DefaultFlagsProvider.DEFAULT, framingBorder);
     }
   }
 

@@ -40,7 +40,7 @@ abstract class LineStatusMarkerRenderer internal constructor(
 
   private val project = tracker.project
   private val document = tracker.document
-  private fun getRanges() = tracker.getRanges()
+  protected fun getRanges() = tracker.getRanges()
 
   private var gutterHighlighter: RangeHighlighter = createGutterHighlighter()
   private val errorStripeHighlighters: MutableList<RangeHighlighter> = ArrayList()
@@ -169,7 +169,7 @@ abstract class LineStatusMarkerRenderer internal constructor(
   private fun destroyHighlighters() {
     val gutterHighlighter = gutterHighlighter
     if (!gutterHighlighter.isValid() || gutterHighlighter.getStartOffset() != 0 || gutterHighlighter.getEndOffset() != document.textLength) {
-      LOG.warn(String.format("Highlighter is damaged for %s, isValid: %s", tracker, gutterHighlighter.isValid()))
+      LOG.warn(String.format("Highlighter is damaged for %s, isValid: %s", this, gutterHighlighter.isValid()))
     }
     disposeHighlighter(gutterHighlighter)
     for (highlighter in errorStripeHighlighters) {
@@ -221,7 +221,8 @@ abstract class LineStatusMarkerRenderer internal constructor(
   protected open fun shouldPaintErrorStripeMarkers(): Boolean = shouldPaintGutter()
 
   protected open fun paint(editor: Editor, g: Graphics) {
-    LineStatusMarkerDrawUtil.paintDefault(editor, g, tracker, DefaultFlagsProvider.DEFAULT, 0)
+    val ranges = getRanges() ?: return
+    LineStatusMarkerDrawUtil.paintDefault(editor, g, ranges, DefaultFlagsProvider.DEFAULT, 0)
   }
 
   private inner class MyActiveGutterRenderer : ActiveGutterRenderer, LineMarkerRendererEx {
