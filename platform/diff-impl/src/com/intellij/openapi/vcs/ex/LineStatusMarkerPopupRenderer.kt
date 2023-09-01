@@ -1,302 +1,214 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-package com.intellij.openapi.vcs.ex;
+package com.intellij.openapi.vcs.ex
 
-import com.intellij.codeInsight.hint.HintManager;
-import com.intellij.codeInsight.hint.HintManagerImpl;
-import com.intellij.diff.DiffApplicationSettings;
-import com.intellij.diff.comparison.ByWord;
-import com.intellij.diff.comparison.ComparisonPolicy;
-import com.intellij.diff.fragments.DiffFragment;
-import com.intellij.icons.AllIcons;
-import com.intellij.ide.lightEdit.LightEditCompatible;
-import com.intellij.openapi.Disposable;
-import com.intellij.openapi.actionSystem.*;
-import com.intellij.openapi.actionSystem.ex.ActionUtil;
-import com.intellij.openapi.diff.DiffBundle;
-import com.intellij.openapi.diff.LineStatusMarkerDrawUtil;
-import com.intellij.openapi.editor.Document;
-import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.editor.ScrollType;
-import com.intellij.openapi.editor.ex.EditorEx;
-import com.intellij.openapi.fileTypes.FileType;
-import com.intellij.openapi.fileTypes.PlainTextFileType;
-import com.intellij.openapi.keymap.KeymapUtil;
-import com.intellij.openapi.progress.util.BackgroundTaskUtil;
-import com.intellij.openapi.project.DumbAware;
-import com.intellij.openapi.project.DumbAwareAction;
-import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.ui.EditorTextField;
-import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import com.intellij.codeInsight.hint.HintManager
+import com.intellij.codeInsight.hint.HintManagerImpl
+import com.intellij.diff.DiffApplicationSettings
+import com.intellij.diff.comparison.ByWord
+import com.intellij.diff.comparison.ComparisonPolicy
+import com.intellij.diff.util.DiffUtil
+import com.intellij.icons.AllIcons
+import com.intellij.ide.lightEdit.LightEditCompatible
+import com.intellij.openapi.Disposable
+import com.intellij.openapi.actionSystem.*
+import com.intellij.openapi.actionSystem.ex.ActionUtil
+import com.intellij.openapi.diff.DiffBundle
+import com.intellij.openapi.diff.LineStatusMarkerDrawUtil
+import com.intellij.openapi.editor.Editor
+import com.intellij.openapi.editor.ScrollType
+import com.intellij.openapi.editor.ex.EditorEx
+import com.intellij.openapi.fileTypes.FileType
+import com.intellij.openapi.fileTypes.PlainTextFileType
+import com.intellij.openapi.keymap.KeymapUtil
+import com.intellij.openapi.progress.util.BackgroundTaskUtil
+import com.intellij.openapi.project.DumbAware
+import com.intellij.openapi.project.DumbAwareAction
+import com.intellij.openapi.util.Disposer
+import com.intellij.ui.EditorTextField
+import org.jetbrains.annotations.NonNls
+import java.awt.Point
+import java.awt.event.MouseEvent
+import javax.swing.JComponent
+import javax.swing.SwingUtilities
+import kotlin.math.min
 
-import javax.swing.*;
-import java.awt.*;
-import java.awt.event.MouseEvent;
-import java.util.List;
+abstract class LineStatusMarkerPopupRenderer(tracker: LineStatusTrackerI<*>) : LineStatusMarkerRenderer(tracker) {
 
-import static com.intellij.diff.util.DiffUtil.getLineCount;
-import static com.intellij.openapi.vcs.ex.LineStatusMarkerPopupActions.*;
+  override fun canDoAction(editor: Editor, ranges: List<Range>, e: MouseEvent): Boolean = LineStatusMarkerDrawUtil.isInsideMarkerArea(e)
 
-public abstract class LineStatusMarkerPopupRenderer extends LineStatusMarkerRenderer {
-
-  public LineStatusMarkerPopupRenderer(@NotNull LineStatusTrackerI<?> tracker) {
-    super(tracker);
-  }
-
-  @Override
-  protected boolean canDoAction(@NotNull Editor editor, @NotNull List<? extends Range> ranges, @NotNull MouseEvent e) {
-    return LineStatusMarkerDrawUtil.isInsideMarkerArea(e);
-  }
-
-  @Override
-  protected void doAction(@NotNull Editor editor, @NotNull List<? extends Range> ranges, @NotNull MouseEvent e) {
-    Range range = ranges.get(0);
-    if (ranges.size() > 1) {
-      scrollAndShow(editor, range);
+  override fun doAction(editor: Editor, ranges: List<Range>, e: MouseEvent) {
+    val range = ranges[0]
+    if (ranges.size > 1) {
+      scrollAndShow(editor, range)
     }
     else {
-      showHint(editor, range, e);
+      showHint(editor, range, e)
     }
   }
 
-
-  @NotNull
-  protected abstract List<AnAction> createToolbarActions(@NotNull Editor editor, @NotNull Range range, @Nullable Point mousePosition);
-
-  @NotNull
-  protected FileType getFileType() {
-    VirtualFile virtualFile = tracker.getVirtualFile();
-    return virtualFile != null ? virtualFile.getFileType() : PlainTextFileType.INSTANCE;
+  open fun scrollAndShow(editor: Editor, range: Range) {
+    if (!tracker.isValid()) return
+    moveToRange(editor, range)
+    showAfterScroll(editor, range)
   }
 
-  @Nullable
-  protected JComponent createAdditionalInfoPanel(@NotNull Editor editor,
-                                                 @NotNull Range range,
-                                                 @Nullable Point mousePosition,
-                                                 @NotNull Disposable disposable) {
-    return null;
+  fun showAfterScroll(editor: Editor, range: Range) {
+    editor.getScrollingModel().runActionOnScrollingFinished(Runnable { reopenRange(editor, range, null) })
   }
 
-
-  public void scrollAndShow(@NotNull Editor editor, @NotNull Range range) {
-    if (!tracker.isValid()) return;
-    moveToRange(editor, range);
-    showAfterScroll(editor, range);
+  private fun showHint(editor: Editor, range: Range, e: MouseEvent) {
+    val comp = e.component as JComponent // shall be EditorGutterComponent, cast is safe.
+    val layeredPane = comp.rootPane.layeredPane
+    val point = SwingUtilities.convertPoint(comp, (editor as EditorEx).getGutterComponentEx().width, e.y, layeredPane)
+    showHintAt(editor, range, point)
+    e.consume()
   }
 
-  public static void moveToRange(@NotNull Editor editor, @NotNull Range range) {
-    final Document document = editor.getDocument();
-    int targetLine = !range.hasLines() ? range.getLine2() : range.getLine2() - 1;
-    int line = Math.min(targetLine, getLineCount(document) - 1);
-    int lastOffset = document.getLineStartOffset(line);
-    editor.getCaretModel().moveToOffset(lastOffset);
-    editor.getScrollingModel().scrollToCaret(ScrollType.CENTER);
-  }
-
-  public void showAfterScroll(@NotNull Editor editor, @NotNull Range range) {
-    editor.getScrollingModel().runActionOnScrollingFinished(() -> {
-      reopenRange(editor, range, null);
-    });
-  }
-
-  public void showHint(@NotNull Editor editor, @NotNull Range range, @NotNull MouseEvent e) {
-    final JComponent comp = (JComponent)e.getComponent(); // shall be EditorGutterComponent, cast is safe.
-    final JLayeredPane layeredPane = comp.getRootPane().getLayeredPane();
-    final Point point = SwingUtilities.convertPoint(comp, ((EditorEx)editor).getGutterComponentEx().getWidth(), e.getY(), layeredPane);
-    showHintAt(editor, range, point);
-    e.consume();
-  }
-
-  public void showHintAt(@NotNull Editor editor, @NotNull Range range, @Nullable Point mousePosition) {
-    if (!tracker.isValid()) return;
-    final Disposable disposable = Disposer.newDisposable();
-
-    JComponent editorComponent = null;
+  open fun showHintAt(editor: Editor, range: Range, mousePosition: Point?) {
+    if (!tracker.isValid()) return
+    val disposable = Disposer.newDisposable()
+    var editorComponent: JComponent? = null
     if (range.hasVcsLines()) {
-      String content = getVcsContent(tracker, range).toString();
-      EditorTextField textField = LineStatusMarkerPopupPanel.createTextField(editor, content);
-
-      LineStatusMarkerPopupPanel.installBaseEditorSyntaxHighlighters(tracker.getProject(), textField, tracker.getVcsDocument(),
-                                                                     getVcsTextRange(tracker, range), getFileType());
-
-      installWordDiff(editor, textField, range, disposable);
-
-      editorComponent = LineStatusMarkerPopupPanel.createEditorComponent(editor, textField);
+      val content = LineStatusMarkerPopupActions.getVcsContent(tracker, range).toString()
+      val textField = LineStatusMarkerPopupPanel.createTextField(editor, content)
+      LineStatusMarkerPopupPanel.installBaseEditorSyntaxHighlighters(tracker.project, textField, tracker.vcsDocument,
+                                                                     LineStatusMarkerPopupActions.getVcsTextRange(tracker, range),
+                                                                     fileType)
+      installWordDiff(editor, textField, range, disposable)
+      editorComponent = LineStatusMarkerPopupPanel.createEditorComponent(editor, textField)
     }
-
-    List<AnAction> actions = createToolbarActions(editor, range, mousePosition);
-    ActionToolbar toolbar = LineStatusMarkerPopupPanel.buildToolbar(editor, actions, disposable);
-
-    JComponent additionalInfoPanel = createAdditionalInfoPanel(editor, range, mousePosition, disposable);
-
-    LineStatusMarkerPopupPanel.showPopupAt(editor, toolbar, editorComponent, additionalInfoPanel, mousePosition, disposable, null);
+    val actions = createToolbarActions(editor, range, mousePosition)
+    val toolbar = LineStatusMarkerPopupPanel.buildToolbar(editor, actions, disposable)
+    val additionalInfoPanel = createAdditionalInfoPanel(editor, range, mousePosition, disposable)
+    LineStatusMarkerPopupPanel.showPopupAt(editor, toolbar, editorComponent, additionalInfoPanel, mousePosition, disposable, null)
   }
 
-  protected void reopenRange(@NotNull Editor editor, @NotNull Range range, @Nullable Point mousePosition) {
-    Range newRange = tracker.findRange(range);
+  protected val fileType: FileType
+    get() {
+      val virtualFile = tracker.virtualFile
+      return virtualFile?.fileType ?: PlainTextFileType.INSTANCE
+    }
+
+  protected open fun createToolbarActions(editor: Editor, range: Range, mousePosition: Point?): List<AnAction> = emptyList()
+
+  protected open fun createAdditionalInfoPanel(editor: Editor,
+                                               range: Range,
+                                               mousePosition: Point?,
+                                               disposable: Disposable): JComponent? = null
+
+  private fun installWordDiff(editor: Editor,
+                              textField: EditorTextField,
+                              range: Range,
+                              disposable: Disposable) {
+    if (!DiffApplicationSettings.getInstance().SHOW_LST_WORD_DIFFERENCES) return
+    if (!range.hasLines() || !range.hasVcsLines()) return
+
+    val vcsContent = LineStatusMarkerPopupActions.getVcsContent(tracker, range)
+    val currentContent = LineStatusMarkerPopupActions.getCurrentContent(tracker, range)
+    val wordDiff = BackgroundTaskUtil
+                     .tryComputeFast({ indicator -> ByWord.compare(vcsContent, currentContent, ComparisonPolicy.DEFAULT, indicator) }, 200)
+                   ?: return
+    LineStatusMarkerPopupPanel.installMasterEditorWordHighlighters(editor, range.line1, range.line2, wordDiff, disposable)
+    LineStatusMarkerPopupPanel.installPopupEditorWordHighlighters(textField, wordDiff)
+  }
+
+  protected fun reopenRange(editor: Editor, range: Range, mousePosition: Point?) {
+    val newRange = tracker.findRange(range)
     if (newRange != null) {
-      showHintAt(editor, newRange, mousePosition);
+      showHintAt(editor, newRange, mousePosition)
     }
     else {
-      HintManagerImpl.getInstanceImpl().hideHints(HintManager.HIDE_BY_SCROLLING, false, false);
+      HintManagerImpl.getInstanceImpl().hideHints(HintManager.HIDE_BY_SCROLLING, false, false)
     }
   }
 
-  private void installWordDiff(@NotNull Editor editor,
-                               @NotNull EditorTextField textField,
-                               @NotNull Range range,
-                               @NotNull Disposable disposable) {
-    if (!DiffApplicationSettings.getInstance().SHOW_LST_WORD_DIFFERENCES) return;
-    if (!range.hasLines() || !range.hasVcsLines()) return;
+  abstract inner class RangeMarkerAction(private val editor: Editor,
+                                         private val range: Range,
+                                         actionId: @NonNls String?) : DumbAwareAction() {
+    init {
+      if (actionId != null) ActionUtil.copyFrom(this, actionId)
+    }
 
-    CharSequence vcsContent = getVcsContent(tracker, range);
-    CharSequence currentContent = getCurrentContent(tracker, range);
+    override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.EDT
 
-    List<DiffFragment> wordDiff = BackgroundTaskUtil.tryComputeFast(
-      indicator -> ByWord.compare(vcsContent, currentContent, ComparisonPolicy.DEFAULT, indicator), 200);
-    if (wordDiff == null) return;
+    override fun update(e: AnActionEvent) {
+      val newRange = tracker.findRange(range)
+      e.presentation.setEnabled(newRange != null && !editor.isDisposed() && isEnabled(editor, newRange))
+    }
 
-    LineStatusMarkerPopupPanel.installMasterEditorWordHighlighters(editor, range.getLine1(), range.getLine2(), wordDiff, disposable);
-    LineStatusMarkerPopupPanel.installPopupEditorWordHighlighters(textField, wordDiff);
+    override fun actionPerformed(e: AnActionEvent) {
+      val newRange = tracker.findRange(range)
+      if (newRange != null) actionPerformed(editor, newRange)
+    }
+
+    protected abstract fun isEnabled(editor: Editor, range: Range): Boolean
+    protected abstract fun actionPerformed(editor: Editor, range: Range)
   }
 
+  inner class ShowNextChangeMarkerAction(editor: Editor, range: Range)
+    : RangeMarkerAction(editor, range, "VcsShowNextChangeMarker"), LightEditCompatible {
+    override fun isEnabled(editor: Editor, range: Range): Boolean = tracker.getNextRange(range.line1) != null
 
-  protected abstract class RangeMarkerAction extends DumbAwareAction {
-    @NotNull private final Range myRange;
-    @NotNull private final Editor myEditor;
-
-    public RangeMarkerAction(@NotNull Editor editor, @NotNull Range range, @Nullable @NonNls String actionId) {
-      myRange = range;
-      myEditor = editor;
-      if (actionId != null) ActionUtil.copyFrom(this, actionId);
-    }
-
-    @Override
-    public @NotNull ActionUpdateThread getActionUpdateThread() {
-      return ActionUpdateThread.EDT;
-    }
-
-    @Override
-    public void update(@NotNull AnActionEvent e) {
-      Range newRange = tracker.findRange(myRange);
-      e.getPresentation().setEnabled(newRange != null && !myEditor.isDisposed() && isEnabled(myEditor, newRange));
-    }
-
-    @Override
-    public void actionPerformed(@NotNull AnActionEvent e) {
-      Range newRange = tracker.findRange(myRange);
-      if (newRange != null) actionPerformed(myEditor, newRange);
-    }
-
-    protected abstract boolean isEnabled(@NotNull Editor editor, @NotNull Range range);
-
-    protected abstract void actionPerformed(@NotNull Editor editor, @NotNull Range range);
-  }
-
-  public class ShowNextChangeMarkerAction extends RangeMarkerAction implements LightEditCompatible {
-    public ShowNextChangeMarkerAction(@NotNull Editor editor, @NotNull Range range) {
-      super(editor, range, "VcsShowNextChangeMarker");
-    }
-
-    @Override
-    protected boolean isEnabled(@NotNull Editor editor, @NotNull Range range) {
-      return tracker.getNextRange(range.getLine1()) != null;
-    }
-
-    @Override
-    protected void actionPerformed(@NotNull Editor editor, @NotNull Range range) {
-      Range targetRange = tracker.getNextRange(range.getLine1());
+    override fun actionPerformed(editor: Editor, range: Range) {
+      val targetRange = tracker.getNextRange(range.line1)
       if (targetRange != null) {
-        scrollAndShow(editor, targetRange);
+        scrollAndShow(editor, targetRange)
       }
     }
   }
 
-  public class ShowPrevChangeMarkerAction extends RangeMarkerAction implements LightEditCompatible {
-    public ShowPrevChangeMarkerAction(@NotNull Editor editor, @NotNull Range range) {
-      super(editor, range, "VcsShowPrevChangeMarker");
-    }
+  inner class ShowPrevChangeMarkerAction(editor: Editor, range: Range)
+    : RangeMarkerAction(editor, range, "VcsShowPrevChangeMarker"), LightEditCompatible {
+    override fun isEnabled(editor: Editor, range: Range): Boolean = tracker.getPrevRange(range.line1) != null
 
-    @Override
-    protected boolean isEnabled(@NotNull Editor editor, @NotNull Range range) {
-      return tracker.getPrevRange(range.getLine1()) != null;
-    }
-
-    @Override
-    protected void actionPerformed(@NotNull Editor editor, @NotNull Range range) {
-      Range targetRange = tracker.getPrevRange(range.getLine1());
+    override fun actionPerformed(editor: Editor, range: Range) {
+      val targetRange = tracker.getPrevRange(range.line1)
       if (targetRange != null) {
-        scrollAndShow(editor, targetRange);
+        scrollAndShow(editor, targetRange)
       }
     }
   }
 
-  public class CopyLineStatusRangeAction extends RangeMarkerAction implements LightEditCompatible {
-    public CopyLineStatusRangeAction(@NotNull Editor editor, @NotNull Range range) {
-      super(editor, range, IdeActions.ACTION_COPY);
-    }
-
-    @Override
-    protected boolean isEnabled(@NotNull Editor editor, @NotNull Range range) {
-      return range.hasVcsLines();
-    }
-
-    @Override
-    protected void actionPerformed(@NotNull Editor editor, @NotNull Range range) {
-      copyVcsContent(tracker, range);
-    }
+  inner class CopyLineStatusRangeAction(editor: Editor, range: Range)
+    : RangeMarkerAction(editor, range, IdeActions.ACTION_COPY), LightEditCompatible {
+    override fun isEnabled(editor: Editor, range: Range): Boolean = range.hasVcsLines()
+    override fun actionPerformed(editor: Editor, range: Range) = LineStatusMarkerPopupActions.copyVcsContent(tracker, range)
   }
 
-  public class ShowLineStatusRangeDiffAction extends RangeMarkerAction implements LightEditCompatible {
-    public ShowLineStatusRangeDiffAction(@NotNull Editor editor, @NotNull Range range) {
-      super(editor, range, "Vcs.ShowDiffChangedLines");
-      setShortcutSet(new CompositeShortcutSet(KeymapUtil.getActiveKeymapShortcuts("Vcs.ShowDiffChangedLines"),
-                                              KeymapUtil.getActiveKeymapShortcuts(IdeActions.ACTION_SHOW_DIFF_COMMON)));
+  inner class ShowLineStatusRangeDiffAction(editor: Editor, range: Range)
+    : RangeMarkerAction(editor, range, "Vcs.ShowDiffChangedLines"), LightEditCompatible {
+    init {
+      setShortcutSet(CompositeShortcutSet(KeymapUtil.getActiveKeymapShortcuts("Vcs.ShowDiffChangedLines"),
+                                          KeymapUtil.getActiveKeymapShortcuts(IdeActions.ACTION_SHOW_DIFF_COMMON)))
     }
 
-    @Override
-    protected boolean isEnabled(@NotNull Editor editor, @NotNull Range range) {
-      return true;
-    }
-
-    @Override
-    protected void actionPerformed(@NotNull Editor editor, @NotNull Range range) {
-      showDiff(tracker, range);
-    }
+    override fun isEnabled(editor: Editor, range: Range): Boolean = true
+    override fun actionPerformed(editor: Editor, range: Range) = LineStatusMarkerPopupActions.showDiff(tracker, range)
   }
 
-  public class ToggleByWordDiffAction extends ToggleAction implements DumbAware, LightEditCompatible {
-    @NotNull private final Editor myEditor;
-    @NotNull private final Range myRange;
-    @Nullable private final Point myMousePosition;
+  inner class ToggleByWordDiffAction(private val myEditor: Editor,
+                                     private val myRange: Range,
+                                     private val myMousePosition: Point?)
+    : ToggleAction(DiffBundle.message("highlight.words"), null, AllIcons.Actions.Highlighting), DumbAware, LightEditCompatible {
+    override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.EDT
 
-    public ToggleByWordDiffAction(@NotNull Editor editor,
-                                  @NotNull Range range,
-                                  @Nullable Point position) {
-      super(DiffBundle.message("highlight.words"), null, AllIcons.Actions.Highlighting);
-      myEditor = editor;
-      myRange = range;
-      myMousePosition = position;
-    }
+    override fun isSelected(e: AnActionEvent): Boolean = DiffApplicationSettings.getInstance().SHOW_LST_WORD_DIFFERENCES
 
-    @Override
-    public @NotNull ActionUpdateThread getActionUpdateThread() {
-      return ActionUpdateThread.EDT;
-    }
-
-    @Override
-    public boolean isSelected(@NotNull AnActionEvent e) {
-      return DiffApplicationSettings.getInstance().SHOW_LST_WORD_DIFFERENCES;
-    }
-
-    @Override
-    public void setSelected(@NotNull AnActionEvent e, boolean state) {
-      if (!tracker.isValid()) return;
-      DiffApplicationSettings.getInstance().SHOW_LST_WORD_DIFFERENCES = state;
-
-      reopenRange(myEditor, myRange, myMousePosition);
+    override fun setSelected(e: AnActionEvent, state: Boolean) {
+      if (!tracker.isValid()) return
+      DiffApplicationSettings.getInstance().SHOW_LST_WORD_DIFFERENCES = state
+      reopenRange(myEditor, myRange, myMousePosition)
     }
   }
+}
+
+private fun moveToRange(editor: Editor, range: Range) {
+  val document = editor.getDocument()
+
+  val targetLine = if (!range.hasLines()) range.line2 else range.line2 - 1
+  val line = min(targetLine, DiffUtil.getLineCount(document) - 1)
+
+  val lastOffset = document.getLineStartOffset(line)
+  editor.getCaretModel().moveToOffset(lastOffset)
+  editor.getScrollingModel().scrollToCaret(ScrollType.CENTER)
 }
