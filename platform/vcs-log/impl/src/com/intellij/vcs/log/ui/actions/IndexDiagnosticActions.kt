@@ -6,18 +6,18 @@ import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.fileEditor.OpenFileDescriptor
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.project.DumbAwareAction
-import com.intellij.openapi.ui.MessageType
 import com.intellij.openapi.util.NlsActions
 import com.intellij.openapi.util.ThrowableComputable
-import com.intellij.openapi.vcs.ui.VcsBalloonProblemNotifier
+import com.intellij.openapi.vcs.VcsNotifier
 import com.intellij.testFramework.LightVirtualFile
 import com.intellij.util.text.DateFormatUtil
-import com.intellij.vcs.log.*
+import com.intellij.vcs.log.VcsLogBundle
+import com.intellij.vcs.log.VcsLogCommitSelection
+import com.intellij.vcs.log.VcsLogDataKeys
 import com.intellij.vcs.log.data.AbstractDataGetter.Companion.getCommitDetails
 import com.intellij.vcs.log.data.VcsLogData
 import com.intellij.vcs.log.data.index.IndexDiagnostic.getDiffFor
 import com.intellij.vcs.log.data.index.IndexDiagnostic.pickCommits
-import com.intellij.vcs.log.data.index.VcsLogPersistentIndex
 import com.intellij.vcs.log.impl.VcsLogManager
 import com.intellij.vcs.log.impl.VcsProjectLog
 import java.util.*
@@ -57,10 +57,8 @@ abstract class IndexDiagnosticActionBase(dynamicText: Supplier<@NlsActions.Actio
       return@ThrowableComputable dataGetter.getDiffFor(commitIds, detailsList)
     }, VcsLogBundle.message("vcs.log.index.diagnostic.progress.title"), false, project)
     if (report.isBlank()) {
-      VcsBalloonProblemNotifier.showOverVersionControlView(project,
-                                                           VcsLogBundle.message("vcs.log.index.diagnostic.success.message",
-                                                                                commitIds.size),
-                                                           MessageType.INFO)
+      VcsNotifier.getInstance(project).notifyInfo(null, "", VcsLogBundle.message("vcs.log.index.diagnostic.success.message",
+                                                                                 commitIds.size))
       return
     }
 
@@ -93,9 +91,8 @@ class CheckSelectedCommits :
 
     val selectedIndexedCommits = selectedCommits.filter { vcsLogData.index.isIndexed(it) }
     if (selectedIndexedCommits.isEmpty() && reportNotIndexed) {
-      VcsBalloonProblemNotifier.showOverVersionControlView(vcsLogData.project,
-                                                           VcsLogBundle.message("vcs.log.index.diagnostic.selected.non.indexed.warning.message"),
-                                                           MessageType.WARNING)
+      VcsNotifier.getInstance(vcsLogData.project).notifyWarning(null, "",
+                                                                VcsLogBundle.message("vcs.log.index.diagnostic.selected.non.indexed.warning.message"))
     }
     return selectedIndexedCommits
   }

@@ -2,10 +2,9 @@
 package com.intellij.vcs.log.impl
 
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.ui.MessageType
 import com.intellij.openapi.util.NlsContexts
+import com.intellij.openapi.vcs.VcsNotifier
 import com.intellij.openapi.vcs.changes.ui.ChangesViewContentManager
-import com.intellij.openapi.vcs.ui.VcsBalloonProblemNotifier
 import com.intellij.openapi.wm.ToolWindow
 import com.intellij.openapi.wm.ToolWindowManager
 import com.intellij.ui.content.Content
@@ -19,6 +18,7 @@ import com.intellij.vcs.log.VcsLogBundle
 import com.intellij.vcs.log.VcsLogUi
 import com.intellij.vcs.log.impl.VcsLogManager.VcsLogUiFactory
 import com.intellij.vcs.log.ui.MainVcsLogUi
+import com.intellij.vcs.log.ui.VcsLogNotificationIdsHolder
 import com.intellij.vcs.log.ui.VcsLogPanel
 import com.intellij.vcs.log.ui.VcsLogUiEx
 import java.util.function.Function
@@ -102,7 +102,8 @@ object VcsLogContentUtil {
 
   @RequiresEdt
   fun showLogIsNotAvailableMessage(project: Project) {
-    VcsBalloonProblemNotifier.showOverChangesView(project, VcsLogBundle.message("vcs.log.is.not.available"), MessageType.WARNING)
+    VcsNotifier.getInstance(project).notifyWarning(VcsLogNotificationIdsHolder.LOG_NOT_AVAILABLE, "",
+                                                   VcsLogBundle.message("vcs.log.is.not.available"))
   }
 
   internal fun findMainLog(cm: ContentManager): Content? {

@@ -8,12 +8,11 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.ui.MessageType;
 import com.intellij.openapi.util.CheckedDisposable;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Conditions;
 import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.vcs.ui.VcsBalloonProblemNotifier;
+import com.intellij.openapi.vcs.VcsNotifier;
 import com.intellij.util.PairFunction;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.UIUtil;
@@ -181,7 +180,7 @@ public abstract class AbstractVcsLogUi implements VcsLogUiEx, Disposable {
                                           boolean commitExists,
                                           @NotNull PairFunction<? super VisiblePack, ? super T, Integer> rowGetter) {
     String message = getCommitNotFoundMessage(commitId, commitExists);
-    VcsBalloonProblemNotifier.showOverChangesView(myProject, message, MessageType.WARNING);
+    VcsNotifier.getInstance(myProject).notifyWarning(VcsLogNotificationIdsHolder.COMMIT_NOT_FOUND, "", message);
   }
 
   protected static @NotNull @Nls <T> String getCommitNotFoundMessage(@NotNull T commitId, boolean exists) {

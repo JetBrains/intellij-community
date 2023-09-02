@@ -7,12 +7,11 @@ import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.ui.MessageType;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.objectTree.ThrowableInterner;
 import com.intellij.openapi.vcs.AbstractVcs;
+import com.intellij.openapi.vcs.VcsNotifier;
 import com.intellij.openapi.vcs.VcsRoot;
-import com.intellij.openapi.vcs.ui.VcsBalloonProblemNotifier;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.PairConsumer;
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread;
@@ -297,7 +296,7 @@ public class VcsLogManager implements Disposable {
 
     @Override
     public void displayMessage(@Nls @NotNull String message) {
-      VcsBalloonProblemNotifier.showOverChangesView(myProject, message, MessageType.ERROR);
+      VcsNotifier.getInstance(myProject).notifyError(VcsLogNotificationIdsHolder.FATAL_ERROR, "", message);
     }
   }
 
