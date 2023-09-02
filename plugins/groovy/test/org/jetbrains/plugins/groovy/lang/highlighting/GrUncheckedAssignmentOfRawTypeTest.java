@@ -1,47 +1,44 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-package org.jetbrains.plugins.groovy.lang.highlighting
+package org.jetbrains.plugins.groovy.lang.highlighting;
 
-import com.intellij.codeInspection.LocalInspectionTool
-import groovy.transform.CompileStatic
-import org.jetbrains.plugins.groovy.codeInspection.assignment.GroovyUncheckedAssignmentOfMemberOfRawTypeInspection
-import org.jetbrains.plugins.groovy.util.GroovyLatestTest
-import org.jetbrains.plugins.groovy.util.HighlightingTest
-import org.junit.Test
+import com.intellij.codeInspection.LocalInspectionTool;
+import org.codehaus.groovy.runtime.StringGroovyMethods;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.plugins.groovy.codeInspection.assignment.GroovyUncheckedAssignmentOfMemberOfRawTypeInspection;
+import org.jetbrains.plugins.groovy.util.GroovyLatestTest;
+import org.jetbrains.plugins.groovy.util.HighlightingTest;
+import org.junit.Test;
 
-import static java.util.Collections.singletonList
+import java.util.Collections;
+import java.util.List;
 
-@CompileStatic
-class GrUncheckedAssignmentOfRawTypeTest extends GroovyLatestTest implements HighlightingTest {
-
-  GrUncheckedAssignmentOfRawTypeTest() {
-    super('highlighting')
+public class GrUncheckedAssignmentOfRawTypeTest extends GroovyLatestTest implements HighlightingTest {
+  public GrUncheckedAssignmentOfRawTypeTest() {
+    super("highlighting");
   }
 
   @Override
-  String getTestName() {
-    return super.getTestName().capitalize()
+  public String getTestName() {
+    return StringGroovyMethods.capitalize(super.getTestName());
   }
 
-  final Collection<Class<? extends LocalInspectionTool>> inspections = singletonList(GroovyUncheckedAssignmentOfMemberOfRawTypeInspection)
+  @Test
+  public void rawMethodAccess() { fileHighlightingTest(); }
 
   @Test
-  void rawMethodAccess() { fileHighlightingTest() }
+  public void rawFieldAccess() { fileHighlightingTest(); }
 
   @Test
-  void rawFieldAccess() { fileHighlightingTest() }
+  public void rawArrayStyleAccess() { fileHighlightingTest(); }
 
   @Test
-  void rawArrayStyleAccess() { fileHighlightingTest() }
+  public void rawArrayStyleAccessToMap() { fileHighlightingTest(); }
 
   @Test
-  void rawArrayStyleAccessToMap() { fileHighlightingTest() }
+  public void rawArrayStyleAccessToList() { fileHighlightingTest(); }
 
   @Test
-  void rawArrayStyleAccessToList() { fileHighlightingTest() }
-
-  @Test
-  void rawClosureReturnType() {
-    highlightingTest '''\
+  public void rawClosureReturnType() {
+    highlightingTest("""
 class A<T> {
   A(T t) {this.t = t}
 
@@ -54,6 +51,11 @@ class A<T> {
 
 def a = new A(new Date())
 Date d = <warning descr="Cannot assign 'Object' to 'Date'">a.cl()</warning>
-'''
+""");
+  }
+
+  @Override
+  public final @NotNull List<Class<? extends LocalInspectionTool>> getInspections() {
+    return Collections.singletonList(GroovyUncheckedAssignmentOfMemberOfRawTypeInspection.class);
   }
 }

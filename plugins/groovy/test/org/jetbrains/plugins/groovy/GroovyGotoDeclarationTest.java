@@ -1,29 +1,35 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-package org.jetbrains.plugins.groovy
+package org.jetbrains.plugins.groovy;
 
-import com.intellij.testFramework.LightProjectDescriptor
-import groovy.transform.CompileStatic
-import org.jetbrains.plugins.groovy.util.TestUtils
+import com.intellij.testFramework.LightProjectDescriptor;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.plugins.groovy.util.TestUtils;
 
-@CompileStatic
-class GroovyGotoDeclarationTest extends LightGroovyTestCase {
-
-  final String basePath = TestUtils.testDataPath + "gotoDeclaration/"
-
-  final LightProjectDescriptor projectDescriptor = GroovyProjectDescriptors.GROOVY_LATEST
-
+public class GroovyGotoDeclarationTest extends LightGroovyTestCase {
   private void doTest() {
-    def name = getTestName()
-    fixture.configureByFile "${name}.groovy"
-    fixture.performEditorAction "GotoDeclaration"
-    fixture.checkResultByFile("${name}_after.groovy")
+    final String name = getTestName();
+    getFixture().configureByFile(name + ".groovy");
+    getFixture().performEditorAction("GotoDeclaration");
+    getFixture().checkResultByFile(name + "_after.groovy");
   }
 
-  void 'test default constructor'() {
-    doTest()
+  public void testDefaultConstructor() {
+    doTest();
   }
 
-  void 'test qualifier in new'() {
-    doTest()
+  public void testQualifierInNew() {
+    doTest();
   }
+
+  @Override
+  public final String getBasePath() {
+    return basePath;
+  }
+
+  @Override
+  public final @NotNull LightProjectDescriptor getProjectDescriptor() {
+    return projectDescriptor;
+  }
+
+  private final String basePath = TestUtils.getTestDataPath() + "gotoDeclaration/";
+  private final LightProjectDescriptor projectDescriptor = GroovyProjectDescriptors.GROOVY_LATEST;
 }

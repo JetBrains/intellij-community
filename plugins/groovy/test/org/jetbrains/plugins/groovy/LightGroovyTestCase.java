@@ -1,59 +1,62 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-package org.jetbrains.plugins.groovy
+package org.jetbrains.plugins.groovy;
 
+import com.intellij.codeInspection.ex.EntryPointsManagerBase;
+import com.intellij.openapi.application.PathManager;
+import com.intellij.psi.PsiIntersectionType;
+import com.intellij.psi.PsiType;
+import com.intellij.testFramework.LightProjectDescriptor;
+import com.intellij.testFramework.fixtures.JavaCodeInsightTestFixture;
+import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase;
+import junit.framework.TestCase;
+import org.codehaus.groovy.runtime.DefaultGroovyMethods;
+import org.codehaus.groovy.runtime.StringGroovyMethods;
+import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
-import com.intellij.codeInspection.ex.EntryPointsManagerBase
-import com.intellij.psi.PsiIntersectionType
-import com.intellij.psi.PsiType
-import com.intellij.testFramework.LightProjectDescriptor
-import com.intellij.testFramework.fixtures.JavaCodeInsightTestFixture
-import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase
-import groovy.transform.CompileStatic
-import org.jetbrains.annotations.NonNls
-import org.jetbrains.annotations.NotNull
-import org.jetbrains.annotations.Nullable
-abstract class LightGroovyTestCase extends LightJavaCodeInsightFixtureTestCase {
+import java.util.Arrays;
+import java.util.stream.Collectors;
 
+public abstract class LightGroovyTestCase extends LightJavaCodeInsightFixtureTestCase {
   @NotNull
-  JavaCodeInsightTestFixture getFixture() {
-    myFixture
+  public JavaCodeInsightTestFixture getFixture() {
+    return myFixture;
   }
 
   @Override
-  void setUp() throws Exception {
-    super.setUp()
+  public void setUp() throws Exception {
+    super.setUp();
     // avoid PSI/document/model changes are not allowed during highlighting
-    EntryPointsManagerBase.DEAD_CODE_EP_NAME.getExtensionList()
+    EntryPointsManagerBase.DEAD_CODE_EP_NAME.getExtensionList();
   }
 
   @Override
-  void tearDown() throws Exception {
-    super.tearDown()
+  public void tearDown() throws Exception {
+    super.tearDown();
   }
 
   @Override
   @NotNull
   protected LightProjectDescriptor getProjectDescriptor() {
-    return GroovyProjectDescriptors.GROOVY_2_1
+    return GroovyProjectDescriptors.GROOVY_2_1;
   }
 
   /**
    * Return relative path to the test data. Path is relative to the
-   * {@link com.intellij.openapi.application.PathManager#getHomePath()}
+   * {@link PathManager#getHomePath()}
    *
    * @return relative path to the test data.
    */
   @Override
   @NonNls
-  protected String getBasePath() { null }
-
+  protected String getBasePath() { return null; }
 
   protected void addGroovyTransformField() {
-    myFixture.addClass('''package groovy.transform; public @interface Field{}''')
+    myFixture.addClass("package groovy.transform; public @interface Field{}");
   }
 
-  protected void addGroovyObject() throws IOException {
-    myFixture.addClass('''\
+  protected void addGroovyObject() {
+    myFixture.addClass("""
 package groovy.lang;
 public interface GroovyObject {
     java.lang.Object invokeMethod(java.lang.String s, java.lang.Object o);
@@ -62,50 +65,48 @@ public interface GroovyObject {
     groovy.lang.MetaClass getMetaClass();
     void setMetaClass(groovy.lang.MetaClass metaClass);
 }
-''')
+""");
   }
 
-
-  public static final String IMPORT_COMPILE_STATIC = 'import groovy.transform.CompileStatic'
-  void addCompileStatic() {
-   myFixture.addClass('''\
+  public void addCompileStatic() {
+    myFixture.addClass("""
 package groovy.transform;
 public @interface CompileStatic{
 }
-''')
+""");
   }
 
   protected void addBigDecimal() {
-    myFixture.addClass('''\
+    myFixture.addClass("""
 package java.math;
 
 public class BigDecimal extends Number implements Comparable<BigDecimal> {
 }
-''')
+""");
   }
 
   protected void addBigInteger() {
-    myFixture.addClass('''\
+    myFixture.addClass("""
 package java.math;
 
 public class BigInteger extends Number implements Comparable<BigInteger> {
 }
-''')
+""");
   }
 
   protected void addHashSet() {
-    myFixture.addClass('''\
+    myFixture.addClass("""
 package java.util;
 
 public class HashSet<E>
     extends AbstractSet<E>
     implements Set<E>, Cloneable, java.io.Serializable
 {}
-''')
+""");
   }
 
   protected final void addAnnotationCollector() {
-    myFixture.addClass '''\
+    myFixture.addClass("""
 package groovy.transform;
 
 @java.lang.annotation.Documented
@@ -115,7 +116,7 @@ public @interface AnnotationCollector {
     String processor() default "org.codehaus.groovy.transform.AnnotationCollectorTransform";
     Class[] value() default {};
 }
-'''
+""");
   }
 
   /*void addHashMap() {
@@ -132,15 +133,14 @@ public class HashMap<K,V> extends AbstractMap<K,V> implements Map<K,V>, Cloneabl
   }*/
 
   protected final void addTestCase() {
-    myFixture.addClass('''\
-
+    myFixture.addClass("""
   // IntelliJ API Decompiler stub source generated from a class file
   // Implementation of methods is not available
 
-package junit.framework;
+                         package junit.framework;
 
-@SuppressWarnings({"Contract", "MethodOverridesStaticMethodOfSuperclass", "RedundantThrows"}) 
-public abstract class TestCase extends junit.framework.Assert implements junit.framework.Test {
+                         @SuppressWarnings({"Contract", "MethodOverridesStaticMethodOfSuperclass", "RedundantThrows"})
+                         public abstract class TestCase extends junit.framework.Assert implements junit.framework.Test {
     private java.lang.String fName;
 
     public TestCase() { /* compiled code */ }
@@ -245,39 +245,44 @@ public abstract class TestCase extends junit.framework.Assert implements junit.f
 
     public void setName(java.lang.String name) { /* compiled code */ }
 }
-''')
+""");
   }
 
-  @CompileStatic
-  static void assertType(@Nullable String expected, @Nullable PsiType actual) {
-    if (expected == null) {
-      assert actual == null
-      return
+  public static void assertType(@Nullable String expected, @Nullable PsiType actual) {
+    if (expected == null){
+      assertNull(actual);
+      return;
     }
 
-    assert actual != null
-    if (actual instanceof PsiIntersectionType) {
-      assertEquals(expected, genIntersectionTypeText(actual))
+    assertNotNull(actual);
+    if (actual instanceof PsiIntersectionType){
+      TestCase.assertEquals(expected, genIntersectionTypeText((PsiIntersectionType)actual));
     }
     else {
-      assertEquals(expected, actual.canonicalText)
+      TestCase.assertEquals(expected, actual.getCanonicalText());
     }
   }
 
   private static String genIntersectionTypeText(PsiIntersectionType t) {
-    StringBuilder b = new StringBuilder('[')
-    for (PsiType c : t.conjuncts) {
-      b << c.canonicalText << ','
+    StringBuilder b = new StringBuilder("[");
+    for(PsiType c : t.getConjuncts()){
+      StringGroovyMethods.leftShift(StringGroovyMethods.leftShift(b, c.getCanonicalText()), ",");
     }
-    if (t.conjuncts) {
-      b.replace(b.length() - 1, b.length(), ']')
+
+    if (DefaultGroovyMethods.asBoolean(t.getConjuncts())){
+      b.replace(b.length() - 1, b.length(), "]");
     }
-    return b
+
+    return b.toString();
   }
 
-
-  @CompileStatic
-  String getTestName() {
-    return (getTestName(true) - 'test').split(' ')*.capitalize().join('').uncapitalize()
+  public String getTestName() {
+    String[] split = getTestName(true)
+      .replaceFirst("test", "")
+      .split(" ");
+    String joined = Arrays.stream(split)
+      .map(s -> StringGroovyMethods.capitalize(s))
+      .collect(Collectors.joining());
+    return StringGroovyMethods.uncapitalize(joined);
   }
 }

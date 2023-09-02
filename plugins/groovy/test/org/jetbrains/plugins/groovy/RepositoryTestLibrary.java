@@ -1,70 +1,72 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-package org.jetbrains.plugins.groovy
+package org.jetbrains.plugins.groovy;
 
-import com.intellij.jarRepository.JarRepositoryManager
-import com.intellij.jarRepository.RemoteRepositoryDescription
-import com.intellij.openapi.application.WriteAction
-import com.intellij.openapi.module.Module
-import com.intellij.openapi.project.Project
-import com.intellij.openapi.roots.DependencyScope
-import com.intellij.openapi.roots.ModifiableRootModel
-import com.intellij.openapi.roots.libraries.ui.OrderRoot
-import com.intellij.project.IntelliJProjectConfiguration
-import groovy.transform.CompileStatic
-import org.jetbrains.annotations.NotNull
-import org.jetbrains.idea.maven.utils.library.RepositoryLibraryProperties
+import com.intellij.jarRepository.JarRepositoryManager;
+import com.intellij.jarRepository.RemoteRepositoryDescription;
+import com.intellij.openapi.application.WriteAction;
+import com.intellij.openapi.module.Module;
+import com.intellij.openapi.project.Project;
+import com.intellij.openapi.roots.DependencyScope;
+import com.intellij.openapi.roots.ModifiableRootModel;
+import com.intellij.openapi.roots.libraries.Library;
+import com.intellij.openapi.roots.libraries.LibraryTable;
+import com.intellij.openapi.roots.libraries.ui.OrderRoot;
+import com.intellij.project.IntelliJProjectConfiguration;
+import com.intellij.util.containers.ContainerUtil;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.idea.maven.utils.library.RepositoryLibraryProperties;
 
-@CompileStatic
-final class RepositoryTestLibrary implements TestLibrary {
+import java.util.Collection;
+import java.util.List;
 
-  private final String[] myCoordinates
-  private final DependencyScope myDependencyScope
-
-  RepositoryTestLibrary(String... coordinates) {
-    this(DependencyScope.COMPILE, coordinates)
+public final class RepositoryTestLibrary implements TestLibrary {
+  public RepositoryTestLibrary(String... coordinates) {
+    this(DependencyScope.COMPILE, coordinates);
   }
 
-  RepositoryTestLibrary(String coordinates, DependencyScope dependencyScope) {
-    this(dependencyScope, coordinates)
+  public RepositoryTestLibrary(String coordinates, DependencyScope dependencyScope) {
+    this(dependencyScope, coordinates);
   }
 
   private RepositoryTestLibrary(DependencyScope dependencyScope, String... coordinates) {
-    assert coordinates.length > 0
-    myCoordinates = coordinates
-    myDependencyScope = dependencyScope
+    assert coordinates.length > 0;
+    myCoordinates = coordinates;
+    myDependencyScope = dependencyScope;
   }
 
   @Override
-  void addTo(@NotNull Module module, @NotNull ModifiableRootModel model) {
-    def tableModel = model.moduleLibraryTable.modifiableModel
-    def library = tableModel.createLibrary(myCoordinates[0])
-    def libraryModel = library.modifiableModel
+  public void addTo(@NotNull Module module, @NotNull ModifiableRootModel model) {
+    final LibraryTable.ModifiableModel tableModel = model.getModuleLibraryTable().getModifiableModel();
+    Library library = tableModel.createLibrary(myCoordinates[0]);
+    final Library.ModifiableModel libraryModel = library.getModifiableModel();
 
-    for (coordinates in myCoordinates) {
-      def roots = loadRoots(module.project, coordinates)
-      for (root in roots) {
-        libraryModel.addRoot(root.file, root.type)
+    for (String coordinates : myCoordinates) {
+      Collection<OrderRoot> roots = loadRoots(module.getProject(), coordinates);
+      for (OrderRoot root : roots) {
+        libraryModel.addRoot(root.getFile(), root.getType());
       }
     }
 
-    WriteAction.runAndWait({
-      libraryModel.commit()
-      tableModel.commit()
-    })
+    WriteAction.runAndWait(() -> {
+      libraryModel.commit();
+      tableModel.commit();
+    });
 
-    model.findLibraryOrderEntry(library).scope = myDependencyScope
+    model.findLibraryOrderEntry(library).setScope(myDependencyScope);
   }
 
-  static Collection<OrderRoot> loadRoots(Project project, String coordinates) {
-    def libraryProperties = new RepositoryLibraryProperties(coordinates, true)
-    def roots = JarRepositoryManager.loadDependenciesModal(project, libraryProperties, false, false, null, remoteRepositoryDescriptions)
-    assert !roots.isEmpty()
-    return roots
+  public static Collection<OrderRoot> loadRoots(Project project, String coordinates) {
+    RepositoryLibraryProperties libraryProperties = new RepositoryLibraryProperties(coordinates, true);
+    Collection<OrderRoot> roots = JarRepositoryManager.loadDependenciesModal(project, libraryProperties, false, false, null, getRemoteRepositoryDescriptions());
+    assert !roots.isEmpty();
+    return roots;
   }
 
   private static List<RemoteRepositoryDescription> getRemoteRepositoryDescriptions() {
-    IntelliJProjectConfiguration.remoteRepositoryDescriptions.collect { repository ->
-      new RemoteRepositoryDescription(repository.id, repository.name, repository.url)
-    }
+    return ContainerUtil.map(IntelliJProjectConfiguration.getRemoteRepositoryDescriptions(), repository -> {
+      return new RemoteRepositoryDescription(repository.getId(), repository.getName(), repository.getUrl());
+    });
   }
+
+  private final String[] myCoordinates;
+  private final DependencyScope myDependencyScope;
 }

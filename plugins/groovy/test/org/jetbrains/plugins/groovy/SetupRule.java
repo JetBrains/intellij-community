@@ -1,37 +1,45 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-package org.jetbrains.plugins.groovy
+package org.jetbrains.plugins.groovy;
 
-import com.intellij.testFramework.EdtTestUtil
-import com.intellij.testFramework.LightProjectDescriptor
-import groovy.transform.CompileStatic
-import org.junit.rules.TestRule
-import org.junit.runner.Description
-import org.junit.runners.model.Statement
+import com.intellij.testFramework.EdtTestUtil;
+import com.intellij.testFramework.LightProjectDescriptor;
+import org.jetbrains.annotations.NotNull;
+import org.junit.rules.TestRule;
+import org.junit.runner.Description;
+import org.junit.runners.model.Statement;
 
-import static org.jetbrains.plugins.groovy.GroovyProjectDescriptors.GROOVY_LATEST_REAL_JDK
+import static org.jetbrains.plugins.groovy.GroovyProjectDescriptors.GROOVY_LATEST_REAL_JDK;
 
-@CompileStatic
-class SetupRule implements TestRule {
-
-  final LightGroovyTestCase testCase = new LightGroovyTestCase() {
-    LightProjectDescriptor projectDescriptor = GROOVY_LATEST_REAL_JDK
-  }
-
+public class SetupRule implements TestRule {
   @Override
-  Statement apply(Statement base, Description description) {
-    new Statement() {
+  public Statement apply(final Statement base, Description description) {
+    return new Statement() {
       @Override
-      void evaluate() throws Throwable {
-        testCase.setUp()
+      public void evaluate() throws Throwable {
+        getTestCase().setUp();
         try {
-          EdtTestUtil.runInEdtAndWait {
-            base.evaluate()
-          }
+          EdtTestUtil.runInEdtAndWait(() -> base.evaluate());
         }
         finally {
-          testCase.tearDown()
+          getTestCase().tearDown();
         }
       }
-    }
+    };
   }
+
+  public final LightGroovyTestCase getTestCase() {
+    return testCase;
+  }
+
+  private final LightGroovyTestCase testCase = new LightGroovyTestCase() {
+    @Override
+    public @NotNull LightProjectDescriptor getProjectDescriptor() {
+      return projectDescriptor;
+    }
+
+    public void setProjectDescriptor(LightProjectDescriptor projectDescriptor) {
+      this.projectDescriptor = projectDescriptor;
+    }
+
+    private LightProjectDescriptor projectDescriptor = GROOVY_LATEST_REAL_JDK;
+  };
 }
