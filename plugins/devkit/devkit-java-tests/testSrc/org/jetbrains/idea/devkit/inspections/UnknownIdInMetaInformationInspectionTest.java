@@ -8,6 +8,7 @@ import com.intellij.testFramework.builders.JavaModuleFixtureBuilder;
 import com.intellij.testFramework.fixtures.JavaCodeInsightFixtureTestCase;
 import com.intellij.util.PathUtil;
 import org.jetbrains.idea.devkit.DevkitJavaTestsUtil;
+import org.jetbrains.idea.devkit.inspections.metaInformation.UnknownIdInMetaInformationInspection;
 
 @TestDataPath("$CONTENT_ROOT/testData/inspections/metaInformation")
 public class UnknownIdInMetaInformationInspectionTest extends JavaCodeInsightFixtureTestCase {

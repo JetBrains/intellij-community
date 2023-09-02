@@ -1,5 +1,5 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package org.jetbrains.idea.devkit.inspections
+package org.jetbrains.idea.devkit.inspections.metaInformation
 
 import com.intellij.codeInspection.LocalInspectionTool
 import com.intellij.codeInspection.ProblemHighlightType
@@ -16,6 +16,9 @@ import com.intellij.util.xml.DomManager
 import org.jetbrains.idea.devkit.DevKitBundle
 import org.jetbrains.idea.devkit.dom.Extension
 import org.jetbrains.idea.devkit.dom.index.ExtensionPointIndex
+import org.jetbrains.idea.devkit.inspections.DescriptionCheckerUtil
+import org.jetbrains.idea.devkit.inspections.DescriptionType
+import org.jetbrains.idea.devkit.inspections.DevKitInspectionUtil
 import org.jetbrains.idea.devkit.util.DevKitDomUtil
 import org.jetbrains.idea.devkit.util.PluginRelatedLocatorsUtils
 import org.jetbrains.idea.devkit.util.locateExtensionsByExtensionPoint
