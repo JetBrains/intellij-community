@@ -1,92 +1,94 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.ide.ui;
+package com.intellij.ide.ui
 
-import com.intellij.diagnostic.PluginException;
-import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.extensions.ExtensionPointName;
-import com.intellij.openapi.extensions.PluginAware;
-import com.intellij.openapi.extensions.PluginDescriptor;
-import com.intellij.openapi.extensions.RequiredElement;
-import com.intellij.util.ResourceUtil;
-import com.intellij.util.xmlb.annotations.Attribute;
-import org.jetbrains.annotations.ApiStatus;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
-
-import java.io.IOException;
-import java.util.function.Function;
+import com.intellij.diagnostic.PluginException
+import com.intellij.openapi.diagnostic.thisLogger
+import com.intellij.openapi.extensions.ExtensionPointName
+import com.intellij.openapi.extensions.PluginAware
+import com.intellij.openapi.extensions.PluginDescriptor
+import com.intellij.openapi.extensions.RequiredElement
+import com.intellij.util.ResourceUtil
+import com.intellij.util.xmlb.annotations.Attribute
+import org.jetbrains.annotations.ApiStatus.Internal
+import java.io.IOException
+import java.util.function.Function
 
 /**
  * Extension point for adding UI themes.
- * <br/>
- * Read more about <a href=https://plugins.jetbrains.com/docs/intellij/theme-structure.html>themes development</a>.
+ * Read more about [themes development](https://plugins.jetbrains.com/docs/intellij/theme-structure.html).
  *
  * @author Konstantin Bulenkov
  */
-public final class UIThemeProvider implements PluginAware {
-  public static final ExtensionPointName<UIThemeProvider> EP_NAME = new ExtensionPointName<>("com.intellij.themeProvider");
-  private PluginDescriptor pluginDescriptor;
+class UIThemeProvider : PluginAware {
+  companion object {
+    @JvmField
+    val EP_NAME: ExtensionPointName<UIThemeProvider> = ExtensionPointName("com.intellij.themeProvider")
+  }
+
+  private var pluginDescriptor: PluginDescriptor? = null
 
   /**
-   * Path to {@code *.theme.json} file
+   * Path to `*.theme.json` file
    */
   @Attribute("path")
   @RequiredElement
-  public String path;
+  @JvmField
+  var path: String? = null
 
   /**
    * Unique theme identifier. For example, MyTheme123
    */
   @Attribute("id")
   @RequiredElement
-  public String id;
+  @JvmField
+  var id: String? = null
 
   @Attribute("parentTheme")
-  public @Nullable String parentTheme;
+  var parentTheme: String? = null
 
-  @Attribute("targetUi") public @NotNull TargetUIType targetUI = TargetUIType.UNSPECIFIED;
+  @Attribute("targetUi")
+  @JvmField
+  var targetUI: TargetUIType = TargetUIType.UNSPECIFIED
 
-  @ApiStatus.Internal
-  public byte[] getThemeJson() throws IOException {
-    String path = this.path;
-    path = path.charAt(0) == '/' ? path.substring(1) : path;
-    return ResourceUtil.getResourceAsBytes(path, pluginDescriptor.getClassLoader());
+  @Throws(IOException::class)
+  @Internal
+  fun getThemeJson(): ByteArray? {
+    var path = path!!
+    path = if (path[0] == '/') path.substring(1) else path
+    return ResourceUtil.getResourceAsBytes(path, pluginDescriptor!!.getClassLoader())
   }
 
-  public @Nullable UITheme createTheme(
-    @Nullable UITheme parentTheme,
-    @Nullable UITheme defaultDarkParent,
-    @Nullable UITheme defaultLightParent) {
-    if (defaultDarkParent != null && defaultDarkParent.getId().equals(id)) {
-      return defaultDarkParent;
+  fun createTheme(parentTheme: UITheme?, defaultDarkParent: UITheme?, defaultLightParent: UITheme?): UITheme? {
+    if (defaultDarkParent != null && defaultDarkParent.id == id) {
+      return defaultDarkParent
     }
-    if (defaultLightParent != null && defaultLightParent.getId().equals(id)) {
-      return defaultLightParent;
+    if (defaultLightParent != null && defaultLightParent.id == id) {
+      return defaultLightParent
     }
+
     try {
-      ClassLoader classLoader = pluginDescriptor.getPluginClassLoader();
-      byte[] stream = getThemeJson();
+      val classLoader = pluginDescriptor!!.getPluginClassLoader()
+      val stream = getThemeJson()
       if (stream == null) {
-        Logger.getInstance(getClass()).warn(new PluginException(
-          "Cannot find theme resource: " + path + " (classLoader=" + classLoader + ", pluginDescriptor=" + pluginDescriptor + ")",
-          pluginDescriptor.getPluginId()
-        ));
-        return null;
+        thisLogger().warn(PluginException(
+          "Cannot find theme resource: $path (classLoader=$classLoader, pluginDescriptor=$pluginDescriptor)",
+          pluginDescriptor!!.getPluginId()
+        ))
+        return null
       }
-      return UITheme.loadFromJson(parentTheme, stream, id, classLoader, Function.identity(), defaultDarkParent, defaultLightParent);
+      return UITheme.loadFromJson(parentTheme, stream, id!!, classLoader, Function.identity(), defaultDarkParent, defaultLightParent)
     }
-    catch (Throwable e) {
-      Logger.getInstance(getClass()).warn(new PluginException(
-        "error loading UITheme '" + path + "', pluginDescriptor=" + pluginDescriptor,
+    catch (e: Throwable) {
+      thisLogger().warn(PluginException(
+        "error loading UITheme '$path', pluginDescriptor=$pluginDescriptor",
         e,
-        pluginDescriptor.getPluginId()
-      ));
-      return null;
+        pluginDescriptor!!.getPluginId()
+      ))
+      return null
     }
   }
 
-  @Override
-  public void setPluginDescriptor(@NotNull PluginDescriptor pluginDescriptor) {
-    this.pluginDescriptor = pluginDescriptor;
+  override fun setPluginDescriptor(pluginDescriptor: PluginDescriptor) {
+    this.pluginDescriptor = pluginDescriptor
   }
 }
