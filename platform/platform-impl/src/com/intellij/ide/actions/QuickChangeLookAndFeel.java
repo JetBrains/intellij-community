@@ -37,7 +37,7 @@ public final class QuickChangeLookAndFeel extends QuickSwitchSchemeAction implem
   protected void fillActions(Project project, @NotNull DefaultActionGroup group, @NotNull DataContext dataContext) {
     UIThemeLookAndFeelInfo initialLaf = LafManager.getInstance().getCurrentUIThemeLookAndFeel();
 
-    for (List<UIThemeLookAndFeelInfo> list : ThemesListProvider.getInstance().getShownThemes()) {
+    for (List<UIThemeLookAndFeelInfo> list : ThemesListProvider.Companion.getInstance().getShownThemes()) {
       if (group.getChildrenCount() > 0) group.addSeparator();
       for (UIManager.LookAndFeelInfo lf : list) group.add(new LafChangeAction(lf, initialLaf == lf));
     }

@@ -3,6 +3,7 @@ package com.intellij.ide.ui
 
 import com.intellij.ide.ui.laf.UIThemeLookAndFeelInfo
 import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.components.service
 import org.jetbrains.annotations.ApiStatus
 
 /**
@@ -10,10 +11,8 @@ import org.jetbrains.annotations.ApiStatus
  */
 @ApiStatus.Internal
 interface ThemesListProvider {
-
   companion object {
-    @JvmStatic
-    fun getInstance(): ThemesListProvider = ApplicationManager.getApplication().getService(ThemesListProvider::class.java)
+    fun getInstance(): ThemesListProvider = ApplicationManager.getApplication().service<ThemesListProvider>()
   }
 
   /**
@@ -21,5 +20,4 @@ interface ThemesListProvider {
    * Themes are divided to groups, groups should be split by separators in all UIs
    */
   fun getShownThemes(): List<List<UIThemeLookAndFeelInfo>>
-
 }
