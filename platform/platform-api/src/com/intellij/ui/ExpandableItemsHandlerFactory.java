@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui;
 
 import com.intellij.diagnostic.LoadingState;
@@ -19,8 +19,7 @@ public abstract class ExpandableItemsHandlerFactory {
     return (ExpandableItemsHandler<T>)(handler == null ? NULL : handler);
   }
 
-  @Nullable
-  private static ExpandableItemsHandlerFactory getInstance() {
+  private static @Nullable ExpandableItemsHandlerFactory getInstance() {
     if (!LoadingState.COMPONENTS_REGISTERED.isOccurred() || !Registry.is("ide.windowSystem.showListItemsPopup", true)) {
       return null;
     }
@@ -39,9 +38,8 @@ public abstract class ExpandableItemsHandlerFactory {
       return false;
     }
 
-    @NotNull
     @Override
-    public Collection<Object> getExpandedItems() {
+    public @NotNull Collection<Object> getExpandedItems() {
       return Collections.emptyList();
     }
   };

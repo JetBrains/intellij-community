@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui.tabs.impl;
 
 import com.intellij.ide.IdeBundle;
@@ -266,8 +266,7 @@ public class DragHelper extends MouseDragHelper<JBTabsImpl> {
   }
 
 
-  @Nullable
-  private TabLabel findLabel(Point dragPoint) {
+  private @Nullable TabLabel findLabel(Point dragPoint) {
     final Component at = myTabs.findComponentAt(dragPoint);
     if (at instanceof InplaceButton) return null;
     final TabLabel label = findLabel(at);
@@ -276,8 +275,7 @@ public class DragHelper extends MouseDragHelper<JBTabsImpl> {
 
   }
 
-  @Nullable
-  private TabLabel findLabel(Component c) {
+  private @Nullable TabLabel findLabel(Component c) {
     Component eachParent = c;
     while (eachParent != null && eachParent != myTabs) {
       if (eachParent instanceof TabLabel) return (TabLabel)eachParent;

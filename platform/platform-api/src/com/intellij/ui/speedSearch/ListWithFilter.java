@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui.speedSearch;
 
 import com.intellij.openapi.actionSystem.DataProvider;
@@ -42,28 +42,25 @@ public final class ListWithFilter<T> extends JPanel implements DataProvider {
     return null;
   }
 
-  @NotNull
-  public static <T> JComponent wrap(@NotNull JList<? extends T> list,
-                                    @NotNull JScrollPane scrollPane,
-                                    @Nullable Function<? super T, String> namer) {
+  public static @NotNull <T> JComponent wrap(@NotNull JList<? extends T> list,
+                                             @NotNull JScrollPane scrollPane,
+                                             @Nullable Function<? super T, String> namer) {
     return wrap(list, scrollPane, namer, false);
   }
 
-  @NotNull
-  public static <T> JComponent wrap(@NotNull JList<? extends T> list,
-                                    @NotNull JScrollPane scrollPane,
-                                    @Nullable Function<? super T, String> namer,
-                                    boolean highlightAllOccurrences) {
+  public static @NotNull <T> JComponent wrap(@NotNull JList<? extends T> list,
+                                             @NotNull JScrollPane scrollPane,
+                                             @Nullable Function<? super T, String> namer,
+                                             boolean highlightAllOccurrences) {
     return new ListWithFilter<>(list, scrollPane, namer, highlightAllOccurrences, false, false);
   }
 
-  @NotNull
-  public static <T> JComponent wrap(@NotNull JList<? extends T> list,
-                                    @NotNull JScrollPane scrollPane,
-                                    @Nullable Function<? super T, String> namer,
-                                    boolean highlightAllOccurrences,
-                                    boolean searchFieldAlwaysVisible,
-                                    boolean searchFieldWithoutBorder) {
+  public static @NotNull <T> JComponent wrap(@NotNull JList<? extends T> list,
+                                             @NotNull JScrollPane scrollPane,
+                                             @Nullable Function<? super T, String> namer,
+                                             boolean highlightAllOccurrences,
+                                             boolean searchFieldAlwaysVisible,
+                                             boolean searchFieldWithoutBorder) {
     return new ListWithFilter<>(list, scrollPane, namer, highlightAllOccurrences, searchFieldAlwaysVisible, searchFieldWithoutBorder);
   }
 
@@ -221,13 +218,11 @@ public final class ListWithFilter<T> extends JPanel implements DataProvider {
     }
   }
 
-  @NotNull
-  public JList<T> getList() {
+  public @NotNull JList<T> getList() {
     return myList;
   }
 
-  @NotNull
-  public JScrollPane getScrollPane() {
+  public @NotNull JScrollPane getScrollPane() {
     return myScrollPane;
   }
 

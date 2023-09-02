@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui.treeStructure.filtered;
 
 import com.intellij.ide.util.treeView.AbstractTreeBuilder;
@@ -54,9 +54,8 @@ public class FilteringTreeBuilder extends AbstractTreeBuilder {
 
     if (filter instanceof ElementFilter.Active) {
       ((ElementFilter.Active)filter).addListener(new ElementFilter.Listener() {
-        @NotNull
         @Override
-        public Promise<?> update(final Object preferredSelection, final boolean adjustSelection, final boolean now) {
+        public @NotNull Promise<?> update(final Object preferredSelection, final boolean adjustSelection, final boolean now) {
           return refilter(preferredSelection, adjustSelection, now);
         }
       }, this);
@@ -114,20 +113,17 @@ public class FilteringTreeBuilder extends AbstractTreeBuilder {
   /**
    * @deprecated use {@link #refilter(Object, boolean, boolean)}
    */
-  @NotNull
   @Deprecated(forRemoval = true)
-  public ActionCallback refilter() {
+  public @NotNull ActionCallback refilter() {
     return Promises.toActionCallback(refilter(null, true, false));
   }
 
   @SuppressWarnings("UnusedReturnValue")
-  @NotNull
-  public Promise<?> refilterAsync() {
+  public @NotNull Promise<?> refilterAsync() {
     return refilter(null, true, false);
   }
 
-  @NotNull
-  public Promise<?> refilter(@Nullable final Object preferredSelection, final boolean adjustSelection, final boolean now) {
+  public @NotNull Promise<?> refilter(final @Nullable Object preferredSelection, final boolean adjustSelection, final boolean now) {
     if (myRefilterQueue != null) {
       myRefilterQueue.cancelAllUpdates();
     }
@@ -171,8 +167,7 @@ public class FilteringTreeBuilder extends AbstractTreeBuilder {
   }
 
 
-  @NotNull
-  protected Promise<?> refilterNow(Object preferredSelection, boolean adjustSelection) {
+  protected @NotNull Promise<?> refilterNow(Object preferredSelection, boolean adjustSelection) {
     final ActionCallback selectionDone = new ActionCallback();
 
     getFilteredStructure().refilter();
@@ -261,8 +256,7 @@ public class FilteringTreeBuilder extends AbstractTreeBuilder {
     return getOriginalNode(object);
   }
 
-  @Nullable
-  public Object getElementFor(Object node) {
+  public @Nullable Object getElementFor(Object node) {
     AbstractTreeUi ui = getUi();
     return ui == null ? null : ui.getElementFor(node);
   }

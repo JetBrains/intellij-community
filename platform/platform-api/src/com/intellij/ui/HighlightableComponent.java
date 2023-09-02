@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui;
 
 import com.intellij.ide.ui.AntialiasingType;
@@ -26,8 +26,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 public class HighlightableComponent extends JComponent implements Accessible {
-  @Nls
-  protected String myText = "";
+  protected @Nls String myText = "";
   protected Icon myIcon;
   protected int myIconTextGap;
   protected ArrayList<HighlightedRegion> myHighlightedRegions;
@@ -360,8 +359,7 @@ public class HighlightableComponent extends JComponent implements Accessible {
     return isIconAtRight() ? getWidth() - myIcon.getIconWidth() : 0;
   }
 
-  @Nullable
-  public HighlightedRegion findRegionByX(int x) {
+  public @Nullable HighlightedRegion findRegionByX(int x) {
     FontMetrics defFontMetrics = getFontMetrics(getFont());
 
     int width = getTextOffset();
@@ -385,8 +383,7 @@ public class HighlightableComponent extends JComponent implements Accessible {
     return null;
   }
 
-  @NotNull
-  public Map<String, Rectangle> getHighlightedRegionsBoundsMap() {
+  public @NotNull Map<String, Rectangle> getHighlightedRegionsBoundsMap() {
 
     HashMap<String, Rectangle> map = new HashMap<>();
     FontMetrics defFontMetrics = getFontMetrics(getFont());

@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.actionSystem;
 
 import com.intellij.openapi.util.NlsActions.ActionDescription;
@@ -71,18 +71,14 @@ public class ToggleOptionAction extends ToggleAction {
     /**
      * @return a string to override an action name
      */
-    @Nullable
-    @ActionText
-    default String getName() {
+    default @Nullable @ActionText String getName() {
       return null;
     }
 
     /**
      * @return a string to override an action description
      */
-    @Nullable
-    @ActionDescription
-    default String getDescription() {
+    default @Nullable @ActionDescription String getDescription() {
       return null;
     }
 

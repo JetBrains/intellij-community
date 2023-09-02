@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui.jcef;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -23,7 +23,7 @@ import java.nio.charset.StandardCharsets;
 final class JBCefLoadHtmlResourceHandler extends CefResourceHandlerAdapter {
   private static final Logger LOG = Logger.getInstance(JBCefLoadHtmlResourceHandler.class.getName());
 
-  @NotNull private final InputStream myInputStream;
+  private final @NotNull InputStream myInputStream;
 
   JBCefLoadHtmlResourceHandler(@NotNull String html) {
     myInputStream = new ByteArrayInputStream(html.getBytes(StandardCharsets.UTF_8));

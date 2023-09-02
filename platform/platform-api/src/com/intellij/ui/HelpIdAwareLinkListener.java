@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui;
 
 import com.intellij.ide.BrowserUtil;
@@ -17,11 +17,10 @@ import javax.swing.event.HyperlinkEvent;
 @ApiStatus.Experimental
 public final class HelpIdAwareLinkListener extends BrowserHyperlinkListener {
 
-  @NonNls private static final String HELP_LINK_MARKER = "helpInstance:";
-  @NonNls private static final String URL_TEMPLATE = "https://www.jetbrains.com/help/%s?%s&utm_version=%s";
+  private static final @NonNls String HELP_LINK_MARKER = "helpInstance:";
+  private static final @NonNls String URL_TEMPLATE = "https://www.jetbrains.com/help/%s?%s&utm_version=%s";
 
-  @NotNull
-  public static HelpIdAwareLinkListener getInstance() {
+  public static @NotNull HelpIdAwareLinkListener getInstance() {
     return ApplicationManager.getApplication().getService(HelpIdAwareLinkListener.class);
   }
 

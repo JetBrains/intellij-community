@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.ui;
 
 import com.intellij.CommonBundle;
@@ -48,8 +48,8 @@ public abstract class MasterDetailsComponent implements Configurable, DetailsCom
   protected NamedConfigurable myCurrentConfigurable;
   private final JBSplitter mySplitter;
 
-  @NonNls public static final String TREE_OBJECT = "treeObject";
-  @NonNls public static final String TREE_NAME = "treeName";
+  public static final @NonNls String TREE_OBJECT = "treeObject";
+  public static final @NonNls String TREE_NAME = "treeName";
 
   protected History myHistory = new History(new Place.Navigator() {
     @Override
@@ -271,8 +271,7 @@ public abstract class MasterDetailsComponent implements Configurable, DetailsCom
   }
 
   @Override
-  @NotNull
-  public JComponent createComponent() {
+  public @NotNull JComponent createComponent() {
     myTree.updateUI();
     reInitWholePanelIfNeeded();
 
@@ -386,14 +385,11 @@ public abstract class MasterDetailsComponent implements Configurable, DetailsCom
     return path.toString();
   }
 
-  @Nullable
-  @NonNls
-  protected String getComponentStateKey() {
+  protected @Nullable @NonNls String getComponentStateKey() {
     return null;
   }
 
-  @Nullable
-  protected MasterDetailsStateService getStateService() {
+  protected @Nullable MasterDetailsStateService getStateService() {
     return null;
   }
 
@@ -430,8 +426,7 @@ public abstract class MasterDetailsComponent implements Configurable, DetailsCom
     myRoot.removeAllChildren();
   }
 
-  @Nullable
-  protected List<AnAction> createActions(boolean fromPopup) {
+  protected @Nullable List<AnAction> createActions(boolean fromPopup) {
     return null;
   }
 
@@ -458,8 +453,7 @@ public abstract class MasterDetailsComponent implements Configurable, DetailsCom
     }
   }
 
-  @Nullable
-  protected ArrayList<AnAction> getAdditionalActions() {
+  protected @Nullable ArrayList<AnAction> getAdditionalActions() {
     return null;
   }
 
@@ -523,8 +517,7 @@ public abstract class MasterDetailsComponent implements Configurable, DetailsCom
     return TreeUtil.selectFirstNode(myTree);
   }
 
-  @Nullable
-  public Object getSelectedObject() {
+  public @Nullable Object getSelectedObject() {
     final TreePath selectionPath = myTree.getSelectionPath();
     if (selectionPath != null && selectionPath.getLastPathComponent() instanceof MyNode node) {
       final NamedConfigurable configurable = node.getConfigurable();
@@ -539,8 +532,7 @@ public abstract class MasterDetailsComponent implements Configurable, DetailsCom
     return path != null ? (MyNode)path.getLastPathComponent() : null;
   }
 
-  @Nullable
-  public NamedConfigurable getSelectedConfigurable() {
+  public @Nullable NamedConfigurable getSelectedConfigurable() {
     MyNode selectedNode = getSelectedNode();
     if (selectedNode != null) {
       final NamedConfigurable configurable = selectedNode.getConfigurable();
@@ -559,14 +551,12 @@ public abstract class MasterDetailsComponent implements Configurable, DetailsCom
     selectNodeInTree(findNodeByObject(myRoot, object), true);
   }
 
-  @Nullable
-  protected static MyNode findNodeByName(final TreeNode root, final String profileName) {
+  protected static @Nullable MyNode findNodeByName(final TreeNode root, final String profileName) {
     if (profileName == null) return null; //do not suggest root node
     return findNodeByCondition(root, configurable -> Comparing.strEqual(profileName, configurable.getDisplayName()));
   }
 
-  @Nullable
-  public static MyNode findNodeByObject(final TreeNode root, final Object editableObject) {
+  public static @Nullable MyNode findNodeByObject(final TreeNode root, final Object editableObject) {
     if (editableObject == null) return null; //do not suggest root node
     return findNodeByCondition(root, configurable -> Comparing.equal(editableObject, configurable.getEditableObject()));
   }
@@ -625,9 +615,7 @@ public abstract class MasterDetailsComponent implements Configurable, DetailsCom
     return null;
   }
 
-  @NlsContexts.StatusText
-  @Nullable
-  protected String getEmptySelectionString() {
+  protected @NlsContexts.StatusText @Nullable String getEmptySelectionString() {
     return null;
   }
 
@@ -851,8 +839,7 @@ public abstract class MasterDetailsComponent implements Configurable, DetailsCom
       myDisplayInBold = displayInBold;
     }
 
-    @NotNull
-    public @NlsSafe String getDisplayName() {
+    public @NotNull @NlsSafe String getDisplayName() {
       final NamedConfigurable configurable = (NamedConfigurable)getUserObject();
       if (configurable != null) return configurable.getDisplayName();
       LOG.debug("Tree was already disposed"); // workaround for IDEA-206547
@@ -871,8 +858,7 @@ public abstract class MasterDetailsComponent implements Configurable, DetailsCom
       myDisplayInBold = displayInBold;
     }
 
-    @Nullable
-    public Icon getIcon(boolean expanded) {
+    public @Nullable Icon getIcon(boolean expanded) {
       // thanks to invokeLater() in TreeUtil.showAndSelect(), we can get calls to getIcon() after the tree has been disposed
       final NamedConfigurable configurable = getConfigurable();
       if (configurable != null) {

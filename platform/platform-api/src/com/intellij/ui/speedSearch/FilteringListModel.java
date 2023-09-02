@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui.speedSearch;
 
 import com.intellij.openapi.util.Condition;
@@ -72,8 +72,7 @@ public class FilteringListModel<T> extends AbstractListModel<T> {
     }
   }
 
-  @NotNull
-  protected Collection<T> getElementsToFilter() {
+  protected @NotNull Collection<T> getElementsToFilter() {
     ArrayList<T> result = new ArrayList<>();
     for (int i = 0; i < myOriginalModel.getSize(); i++) {
       result.add(myOriginalModel.getElementAt(i));
@@ -107,8 +106,7 @@ public class FilteringListModel<T> extends AbstractListModel<T> {
     return myData.contains(value);
   }
 
-  @NotNull
-  public ListModel<T> getOriginalModel() {
+  public @NotNull ListModel<T> getOriginalModel() {
     return myOriginalModel;
   }
 

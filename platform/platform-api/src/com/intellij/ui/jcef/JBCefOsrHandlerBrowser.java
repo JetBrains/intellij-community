@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui.jcef;
 
 import org.cef.browser.CefBrowser;
@@ -32,8 +32,7 @@ public abstract class JBCefOsrHandlerBrowser extends JBCefBrowserBase {
    * In order to use {@link JBCefJSQuery} create the browser via {@link #create(String, CefRenderHandler, boolean)} or
    * {@link #create(String, CefRenderHandler, JBCefClient, boolean)}.
    */
-  @NotNull
-  public static JBCefOsrHandlerBrowser create(@NotNull String url, @NotNull CefRenderHandler renderHandler) {
+  public static @NotNull JBCefOsrHandlerBrowser create(@NotNull String url, @NotNull CefRenderHandler renderHandler) {
     return create(url, renderHandler, true);
   }
 
@@ -47,8 +46,7 @@ public abstract class JBCefOsrHandlerBrowser extends JBCefBrowserBase {
    *
    * @see CefBrowser#createImmediately()
    */
-  @NotNull
-  public static JBCefOsrHandlerBrowser create(@NotNull String url, @NotNull CefRenderHandler renderHandler, boolean createImmediately) {
+  public static @NotNull JBCefOsrHandlerBrowser create(@NotNull String url, @NotNull CefRenderHandler renderHandler, boolean createImmediately) {
     return new JBCefOsrHandlerBrowser(null, url, renderHandler, createImmediately) {
       @Override
       public @Nullable JComponent getComponent() {
@@ -62,8 +60,7 @@ public abstract class JBCefOsrHandlerBrowser extends JBCefBrowserBase {
    * <p></p>
    * In order to use {@link JBCefJSQuery} set {@link JBCefClient.Properties#JS_QUERY_POOL_SIZE} before passing the client.
    */
-  @NotNull
-  public static JBCefOsrHandlerBrowser create(@NotNull String url, @NotNull CefRenderHandler renderHandler, @NotNull JBCefClient client) {
+  public static @NotNull JBCefOsrHandlerBrowser create(@NotNull String url, @NotNull CefRenderHandler renderHandler, @NotNull JBCefClient client) {
     return create(url, renderHandler, client, true);
   }
 
@@ -78,8 +75,7 @@ public abstract class JBCefOsrHandlerBrowser extends JBCefBrowserBase {
    *
    * @see CefBrowser#createImmediately()
    */
-  @NotNull
-  public static JBCefOsrHandlerBrowser create(@NotNull String url,
+  public static @NotNull JBCefOsrHandlerBrowser create(@NotNull String url,
                                               @NotNull CefRenderHandler renderHandler,
                                               @NotNull JBCefClient client,
                                               boolean createImmediately)

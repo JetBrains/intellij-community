@@ -1558,15 +1558,13 @@ public final class TreeUtil {
       this.promise = promise;
     }
 
-    @Nullable
     @Override
-    public Action preVisitEDT(@NotNull TreePath path) {
+    public @Nullable Action preVisitEDT(@NotNull TreePath path) {
       return promise.isCancelled() ? TreeVisitor.Action.SKIP_SIBLINGS : null;
     }
 
-    @NotNull
     @Override
-    public Action postVisitEDT(@NotNull TreePath path, @NotNull TreeVisitor.Action action) {
+    public @NotNull Action postVisitEDT(@NotNull TreePath path, @NotNull TreeVisitor.Action action) {
       if (action == TreeVisitor.Action.CONTINUE || action == TreeVisitor.Action.INTERRUPT) {
         // do not expand children if parent path is collapsed
         if (!tree.isVisible(path)) {

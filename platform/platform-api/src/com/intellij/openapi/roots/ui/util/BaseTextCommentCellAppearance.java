@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.roots.ui.util;
 
 import com.intellij.openapi.roots.ui.CellAppearanceEx;
@@ -21,7 +21,7 @@ public abstract class BaseTextCommentCellAppearance implements CellAppearanceEx 
   protected abstract @Nls String getPrimaryText();
 
   @Override
-  public void customize(@NotNull final SimpleColoredComponent component) {
+  public void customize(final @NotNull SimpleColoredComponent component) {
     component.setIcon(getIcon());
     component.append(getPrimaryText(), myTextAttributes);
     final String secondaryText = getSecondaryText();
@@ -31,8 +31,7 @@ public abstract class BaseTextCommentCellAppearance implements CellAppearanceEx 
   }
 
   @Override
-  @NotNull
-  public String getText() {
+  public @NotNull String getText() {
     String secondaryText = getSecondaryText();
     if (secondaryText != null && secondaryText.length() > 0) {
       return getPrimaryText() + " (" + secondaryText + ")";

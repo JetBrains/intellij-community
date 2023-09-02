@@ -1,10 +1,10 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.text;
 
 import com.intellij.configurationStore.XmlSerializer;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.components.SettingsCategory;
 import com.intellij.openapi.components.PersistentStateComponent;
+import com.intellij.openapi.components.SettingsCategory;
 import com.intellij.openapi.components.State;
 import com.intellij.openapi.components.Storage;
 import com.intellij.util.xmlb.XmlSerializerUtil;
@@ -28,9 +28,8 @@ public final class DateTimeFormatManager implements PersistentStateComponent<Ele
   private boolean myOverrideSystemDateFormat = false;
   private boolean myUse24HourTime = true;
 
-  @Nullable
   @Override
-  public Element getState() {
+  public @Nullable Element getState() {
     return XmlSerializer.serialize(this);
   }
   @Override
@@ -59,8 +58,7 @@ public final class DateTimeFormatManager implements PersistentStateComponent<Ele
     myPrettyFormattingAllowed = prettyFormattingAllowed;
   }
 
-  @Nullable
-  public DateFormat getDateFormat() {
+  public @Nullable DateFormat getDateFormat() {
     try {
       return new SimpleDateFormat(myPattern);
     }
@@ -74,8 +72,7 @@ public final class DateTimeFormatManager implements PersistentStateComponent<Ele
     return DateTimeFormatterBean.EP_NAME.getExtensionList().stream().map(bean -> bean.id).collect(Collectors.toSet());
   }
 
-  @NotNull
-  public String getDateFormatPattern() {
+  public @NotNull String getDateFormatPattern() {
     return myPattern;
   }
 

@@ -70,8 +70,7 @@ public final class EmptyAction extends AnAction {
    * ActionManager.getInstance().getAction(id).registerCustomShortcutSet(shortcutSet, component) shouldn't be used directly,
    * because it will erase shortcuts, assigned to this action in keymap.
    */
-  @NotNull
-  public static AnAction registerWithShortcutSet(@NotNull String id, @NotNull ShortcutSet shortcutSet, @NotNull JComponent component) {
+  public static @NotNull AnAction registerWithShortcutSet(@NotNull String id, @NotNull ShortcutSet shortcutSet, @NotNull JComponent component) {
     AnAction newAction = wrap(ActionManager.getInstance().getAction(id));
     newAction.registerCustomShortcutSet(shortcutSet, component);
     return newAction;
