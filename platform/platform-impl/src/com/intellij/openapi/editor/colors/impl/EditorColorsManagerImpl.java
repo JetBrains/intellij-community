@@ -319,7 +319,7 @@ public final class EditorColorsManagerImpl extends EditorColorsManager implement
 
     for (UIThemeLookAndFeelInfo laf : UiThemeProviderListManager.Companion.getInstance().getLaFs()) {
       UITheme theme = laf.getTheme();
-      String[] schemes = theme.getAdditionalEditorSchemes();
+      List<String> schemes = theme.getAdditionalEditorSchemes();
       PluginDescriptor pluginDescriptor = getPluginDescriptor(theme);
       if (schemes != null) {
         for (String scheme : schemes) {

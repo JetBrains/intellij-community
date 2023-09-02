@@ -138,11 +138,12 @@ private fun readDataFromJson(parser: JsonParser, result: MutableMap<String, Stri
 }
 
 private fun addWithCheck(result: MutableMap<String, String>, parser: JsonParser, path: StringBuilder) {
-  val oldValue = result.get(parser.text)
-  if (oldValue != null && oldValue != path.toString()) {
-    logger<IconMapLoader>().error("Double icon mapping: ${parser.text} -> $oldValue or $path")
+  val key = parser.text
+  val p = path.toString()
+  val oldValue = result.put(key, p)
+  if (oldValue != null && oldValue != p) {
+    logger<IconMapLoader>().error("Double icon mapping: $key -> $oldValue or $path")
   }
-  result.put(parser.text, path.toString())
 }
 
 private fun logError(parser: JsonParser) {

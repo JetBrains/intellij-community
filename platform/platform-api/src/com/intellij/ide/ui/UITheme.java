@@ -1,14 +1,13 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.ui;
 
-import com.fasterxml.jackson.jr.ob.JSON;
+import com.fasterxml.jackson.core.JsonFactory;
 import com.intellij.AbstractBundle;
 import com.intellij.DynamicBundle;
 import com.intellij.ide.plugins.cl.PluginAwareClassLoader;
 import com.intellij.ide.ui.laf.UIThemeLookAndFeelInfo;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.IconPathPatcher;
-import com.intellij.openapi.util.SystemInfoRt;
 import com.intellij.ui.ColorHexUtil;
 import com.intellij.ui.Gray;
 import com.intellij.ui.icons.ImageDataByPathLoader;
@@ -31,6 +30,7 @@ import java.awt.*;
 import java.io.IOException;
 import java.io.InputStream;
 import java.lang.reflect.Constructor;
+import java.util.List;
 import java.util.*;
 import java.util.function.Function;
 
@@ -43,11 +43,6 @@ public final class UITheme {
   private static final Logger LOG = Logger.getInstance(UITheme.class);
 
   private final UIThemeBean bean;
-
-  private static final String OS_MACOS_KEY = "os.mac";
-  private static final String OS_WINDOWS_KEY = "os.windows";
-  private static final String OS_LINUX_KEY = "os.linux";
-  private static final String OS_DEFAULT_KEY = "os.default";
 
   private UITheme(@NotNull UIThemeBean bean) {
     this.bean = bean;
@@ -73,18 +68,9 @@ public final class UITheme {
     return bean.author;
   }
 
-  // it caches classes - must be not extracted to util class
-  // .disable(JSON.Feature.PRESERVE_FIELD_ORDERING) - cannot be disabled, for unknown reason order is important,
-  // for example, button label font color for light theme is not white, but black
-  private static final JSON JSON_READER = JSON.builder()
-    .enable(JSON.Feature.READ_ONLY)
-    .disable(JSON.Feature.USE_DEFERRED_MAPS)
-    .disable(JSON.Feature.HANDLE_JAVA_BEANS)
-    .build();
-
   @ApiStatus.Internal
   public static @NotNull UITheme loadFromJson(@NotNull InputStream stream, @NotNull @NonNls String themeId) throws IOException {
-    UIThemeBean theme = JSON_READER.beanFrom(UIThemeBean.class, stream);
+    UIThemeBean theme = UIThemeBean.Companion.readTheme(new JsonFactory().createParser(stream));
     theme.id = themeId;
     return postProcessTheme(theme, findParentTheme(theme), null, Function.identity());
   }
@@ -93,7 +79,7 @@ public final class UITheme {
                                               @NotNull @NonNls String themeId,
                                               @Nullable ClassLoader provider,
                                               @NotNull Function<? super String, String> iconsMapper) throws IOException {
-    UIThemeBean theme = JSON_READER.beanFrom(UIThemeBean.class, data);
+    UIThemeBean theme = UIThemeBean.Companion.readTheme(new JsonFactory().createParser(data));
     theme.id = themeId;
     return postProcessTheme(theme, findParentTheme(theme), provider, iconsMapper);
   }
@@ -105,7 +91,7 @@ public final class UITheme {
                                               @NotNull Function<? super String, String> iconsMapper,
                                               @Nullable UITheme defaultDarkParent,
                                               @Nullable UITheme defaultLightParent) throws IOException {
-    UIThemeBean theme = JSON_READER.beanFrom(UIThemeBean.class, data);
+    UIThemeBean theme = UIThemeBean.Companion.readTheme(new JsonFactory().createParser(data));
     theme.id = themeId;
     if (theme.dark && parentTheme == null) {
       return postProcessTheme(theme, defaultDarkParent, provider, iconsMapper);
@@ -120,11 +106,9 @@ public final class UITheme {
                                                    @Nullable UITheme parentTheme,
                                                    @Nullable ClassLoader provider,
                                                    @NotNull Function<? super String, String> iconsMapper) throws IllegalStateException {
-    normalizeKeyPaths(theme);
     if (parentTheme != null) {
       UIThemeBean.Companion.importFromParentTheme(theme, parentTheme.bean);
     }
-    UIThemeBean.Companion.putDefaultsIfAbsent(theme);
     return new UITheme(loadFromJson(theme, provider, iconsMapper));
   }
 
@@ -141,60 +125,6 @@ public final class UITheme {
       }
     }
     return null;
-  }
-
-  /**
-   * Flatten
-   * <pre>{@code "Editor": { "SearchField" : { "borderInsets" : "7,10,7,8" } }}</pre>
-   * to
-   * <pre>{@code "Editor.SearchField.borderInsets" : "7,10,7,8"}</pre>
-   * in internal representation.
-   * <p>
-   * We also resolve per-OS keys here:
-   * <pre> {@code
-   *  "Menu.borderColor": {
-   *      "os.default": "Grey12",
-   *      "os.windows": "Blue12"
-   *  }
-   * }</pre>
-   * <p>
-   * This is helpful when we need to check if some key was already set in {@link UIThemeBean.Companion#putDefaultsIfAbsent},
-   * and to make overriding parentTheme keys independent of used form.
-   * <p>
-   * NB: we intentionally do not expand "*" patterns here.
-   */
-  private static void normalizeKeyPaths(@NotNull UIThemeBean theme) {
-    if (theme.ui == null) {
-      return;
-    }
-
-    Map<String, Object> result = new LinkedHashMap<>();
-    for (Map.Entry<String, ?> entry : theme.ui.entrySet()) {
-      normalizeKeyValue(entry.getKey(), entry.getValue(), result);
-    }
-    theme.ui = result;
-  }
-
-  private static void normalizeKeyValue(@NotNull String keyPrefix,
-                                        @NotNull Object value,
-                                        @NotNull Map<String, Object> result) {
-    if (value instanceof Map) {
-      @SuppressWarnings("unchecked") Map<String, Object> valueMap = (Map<String, Object>)value;
-
-      Object osValue = getOSCustomization(valueMap);
-      if (osValue == null) {
-        for (Map.Entry<String, Object> entry : valueMap.entrySet()) {
-          String uiKey = createUIKey(keyPrefix, entry.getKey());
-          normalizeKeyValue(uiKey, entry.getValue(), result);
-        }
-      }
-      else {
-        normalizeKeyValue(keyPrefix, osValue, result);
-      }
-    }
-    else {
-      result.put(keyPrefix, value);
-    }
   }
 
   private static @NotNull UIThemeBean loadFromJson(@NotNull UIThemeBean theme,
@@ -422,7 +352,7 @@ public final class UITheme {
     return bean.editorScheme;
   }
 
-  public String @Nullable [] getAdditionalEditorSchemes() {
+  public @Nullable List<String> getAdditionalEditorSchemes() {
     return bean.additionalEditorSchemes;
   }
 
@@ -527,18 +457,6 @@ public final class UITheme {
     }
     else {
       return key + "." + propertyName;
-    }
-  }
-
-  private static @Nullable Object getOSCustomization(@NotNull Map<String, Object> map) {
-    String osKey = SystemInfoRt.isWindows ? OS_WINDOWS_KEY :
-                   SystemInfoRt.isMac ? OS_MACOS_KEY :
-                   SystemInfoRt.isLinux ? OS_LINUX_KEY : null;
-    if (osKey != null && map.containsKey(osKey)) {
-      return map.get(osKey);
-    }
-    else {
-      return map.get(OS_DEFAULT_KEY);
     }
   }
 
