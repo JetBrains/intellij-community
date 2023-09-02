@@ -15,7 +15,7 @@ import java.util.*
  *
  * Pay attention to [isValid] and [isOperational].
  */
-interface LineStatusTrackerI<out R : Range> {
+interface LineStatusTrackerI<out R : Range> : LineStatusMarkerRangesSource<R> {
   val project: Project?
   val disposable: Disposable
 
@@ -40,21 +40,21 @@ interface LineStatusTrackerI<out R : Range> {
    *
    * Returns `false` if tracker is not [isOperational] or is frozen [doFrozen].
    */
-  fun isValid(): Boolean
+  override fun isValid(): Boolean
 
   /**
    * Changed line ranges between documents.
    *
    * Requires an Application readLock.
    */
-  fun getRanges(): List<R>?
+  override fun getRanges(): List<R>?
 
   fun getRangesForLines(lines: BitSet): List<R>?
   fun getRangeForLine(line: Int): R?
 
   fun getNextRange(line: Int): R?
   fun getPrevRange(line: Int): R?
-  fun findRange(range: Range): R?
+  override fun findRange(range: Range): R?
 
 
   fun isLineModified(line: Int): Boolean

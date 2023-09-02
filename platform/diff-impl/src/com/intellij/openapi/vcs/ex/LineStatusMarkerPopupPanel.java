@@ -24,6 +24,7 @@ import com.intellij.openapi.editor.highlighter.EditorHighlighterFactory;
 import com.intellij.openapi.editor.highlighter.FragmentedEditorHighlighter;
 import com.intellij.openapi.editor.markup.RangeHighlighter;
 import com.intellij.openapi.fileTypes.FileType;
+import com.intellij.openapi.fileTypes.PlainTextFileType;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.TextRange;
@@ -264,8 +265,9 @@ public class LineStatusMarkerPopupPanel extends JPanel {
                                                          @NotNull EditorTextField textField,
                                                          @NotNull Document vcsDocument,
                                                          TextRange vcsTextRange,
-                                                         @NotNull FileType fileType) {
-    EditorHighlighter highlighter = EditorHighlighterFactory.getInstance().createEditorHighlighter(project, fileType);
+                                                         @Nullable FileType fileType) {
+    FileType type = fileType != null ? fileType : PlainTextFileType.INSTANCE;
+    EditorHighlighter highlighter = EditorHighlighterFactory.getInstance().createEditorHighlighter(project, type);
     highlighter.setText(vcsDocument.getImmutableCharSequence());
     FragmentedEditorHighlighter fragmentedHighlighter = new FragmentedEditorHighlighter(highlighter, vcsTextRange);
     textField.addSettingsProvider(uEditor -> uEditor.setHighlighter(fragmentedHighlighter));

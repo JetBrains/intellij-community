@@ -58,10 +58,8 @@ import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.LineTokenizer;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vcs.ex.LineStatusMarkerPopupRenderer;
-import com.intellij.openapi.vcs.ex.LineStatusTrackerBase;
 import com.intellij.openapi.vcs.ex.Range;
-import com.intellij.openapi.vcs.ex.SimpleLineStatusTracker;
+import com.intellij.openapi.vcs.ex.*;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.scale.JBUIScale;
 import com.intellij.util.Alarm;
@@ -1277,9 +1275,12 @@ public class MergeThreesideViewer extends ThreesideTextDiffViewerEx {
     }
   }
 
-  private class MyLineStatusMarkerRenderer extends LineStatusMarkerPopupRenderer {
+  private class MyLineStatusMarkerRenderer extends LineStatusMarkerRendererWithPopup {
+    private final @NotNull LineStatusTrackerBase<?> myTracker;
+
     MyLineStatusMarkerRenderer(@NotNull LineStatusTrackerBase<?> tracker) {
       super(tracker);
+      myTracker = tracker;
     }
 
     @Nullable
@@ -1290,8 +1291,8 @@ public class MergeThreesideViewer extends ThreesideTextDiffViewerEx {
 
     @Override
     public void scrollAndShow(@NotNull Editor editor, @NotNull com.intellij.openapi.vcs.ex.Range range) {
-      if (!getTracker().isValid()) return;
-      final Document document = getTracker().getDocument();
+      if (!myTracker.isValid()) return;
+      final Document document = myTracker.getDocument();
       int line = Math.min(!range.hasLines() ? range.getLine2() : range.getLine2() - 1, getLineCount(document) - 1);
 
       int[] startLines = new int[]{
@@ -1312,18 +1313,18 @@ public class MergeThreesideViewer extends ThreesideTextDiffViewerEx {
     @Override
     protected List<AnAction> createToolbarActions(@NotNull Editor editor, @NotNull com.intellij.openapi.vcs.ex.Range range, @Nullable Point mousePosition) {
       List<AnAction> actions = new ArrayList<>();
-      actions.add(new ShowPrevChangeMarkerAction(editor, range));
-      actions.add(new ShowNextChangeMarkerAction(editor, range));
+      actions.add(new LineStatusMarkerPopupActions.ShowPrevChangeMarkerAction(editor, myTracker, range, this));
+      actions.add(new LineStatusMarkerPopupActions.ShowNextChangeMarkerAction(editor, myTracker, range, this));
       actions.add(new MyRollbackLineStatusRangeAction(editor, range));
-      actions.add(new ShowLineStatusRangeDiffAction(editor, range));
-      actions.add(new CopyLineStatusRangeAction(editor, range));
-      actions.add(new ToggleByWordDiffAction(editor, range, mousePosition));
+      actions.add(new LineStatusMarkerPopupActions.ShowLineStatusRangeDiffAction(editor, myTracker, range));
+      actions.add(new LineStatusMarkerPopupActions.CopyLineStatusRangeAction(editor, myTracker, range));
+      actions.add(new LineStatusMarkerPopupActions.ToggleByWordDiffAction(editor, myTracker, range, mousePosition, this));
       return actions;
     }
 
-    private final class MyRollbackLineStatusRangeAction extends RangeMarkerAction {
+    private final class MyRollbackLineStatusRangeAction extends LineStatusMarkerPopupActions.RangeMarkerAction {
       private MyRollbackLineStatusRangeAction(@NotNull Editor editor, @NotNull com.intellij.openapi.vcs.ex.Range range) {
-        super(editor, range, IdeActions.SELECTED_CHANGES_ROLLBACK);
+        super(editor, myTracker, range, IdeActions.SELECTED_CHANGES_ROLLBACK);
       }
 
       @Override
@@ -1334,7 +1335,7 @@ public class MergeThreesideViewer extends ThreesideTextDiffViewerEx {
       @Override
       protected void actionPerformed(@NotNull Editor editor, @NotNull com.intellij.openapi.vcs.ex.Range range) {
         DiffUtil.moveCaretToLineRangeIfNeeded(editor, range.getLine1(), range.getLine2());
-        getTracker().rollbackChanges(range);
+        myTracker.rollbackChanges(range);
       }
     }
 

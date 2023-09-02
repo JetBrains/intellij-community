@@ -30,8 +30,8 @@ import com.intellij.util.ui.update.DisposableUpdate
 import com.intellij.util.ui.update.MergingUpdateQueue
 
 abstract class LineStatusMarkerRenderer internal constructor(
-  private val project: Project?,
-  private val document: Document,
+  protected val project: Project?,
+  protected val document: Document,
   disposable: Disposable
 ) {
   private val updateQueue = MergingUpdateQueue("LineStatusMarkerRenderer", 100, true, MergingUpdateQueue.ANY_COMPONENT, disposable)

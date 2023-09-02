@@ -124,8 +124,8 @@ abstract class LocalLineStatusTrackerImpl<R : Range>(
   }
 
   protected open class LocalLineStatusMarkerRenderer(
-    override val tracker: LocalLineStatusTrackerImpl<*>
-  ): LineStatusMarkerPopupRenderer(tracker) {
+    protected open val tracker: LocalLineStatusTrackerImpl<*>
+  ): LineStatusMarkerRendererWithPopup(tracker) {
 
     override val editorFilter: MarkupEditorFilter = MarkupEditorFilterFactory.createIsNotDiffFilter()
 
@@ -139,17 +139,17 @@ abstract class LocalLineStatusTrackerImpl<R : Range>(
 
     override fun createToolbarActions(editor: Editor, range: Range, mousePosition: Point?): List<AnAction> {
       val actions = ArrayList<AnAction>()
-      actions.add(ShowPrevChangeMarkerAction(editor, range))
-      actions.add(ShowNextChangeMarkerAction(editor, range))
+      actions.add(LineStatusMarkerPopupActions.ShowPrevChangeMarkerAction(editor, tracker, range, this))
+      actions.add(LineStatusMarkerPopupActions.ShowNextChangeMarkerAction(editor, tracker, range, this))
       actions.add(RollbackLineStatusRangeAction(editor, range))
-      actions.add(ShowLineStatusRangeDiffAction(editor, range))
-      actions.add(CopyLineStatusRangeAction(editor, range))
-      actions.add(ToggleByWordDiffAction(editor, range, mousePosition))
+      actions.add(LineStatusMarkerPopupActions.ShowLineStatusRangeDiffAction(editor, tracker, range))
+      actions.add(LineStatusMarkerPopupActions.CopyLineStatusRangeAction(editor, tracker, range))
+      actions.add(LineStatusMarkerPopupActions.ToggleByWordDiffAction(editor, tracker, range, mousePosition, this))
       return actions
     }
 
     private inner class RollbackLineStatusRangeAction(editor: Editor, range: Range)
-      : RangeMarkerAction(editor, range, IdeActions.SELECTED_CHANGES_ROLLBACK), LightEditCompatible {
+      : LineStatusMarkerPopupActions.RangeMarkerAction(editor, tracker, range, IdeActions.SELECTED_CHANGES_ROLLBACK), LightEditCompatible {
       override fun isEnabled(editor: Editor, range: Range): Boolean = true
 
       override fun actionPerformed(editor: Editor, range: Range) {

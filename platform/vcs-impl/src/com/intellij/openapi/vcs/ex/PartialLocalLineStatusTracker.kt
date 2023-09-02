@@ -685,7 +685,7 @@ class ChangelistsLocalLineStatusTracker internal constructor(project: Project,
     }
 
     private inner class MoveToAnotherChangeListAction(editor: Editor, range: Range, val mousePosition: Point?)
-      : RangeMarkerAction(editor, range, null) {
+      : LineStatusMarkerPopupActions.RangeMarkerAction(editor, tracker, range, null) {
       init {
         templatePresentation.text = VcsBundle.message("ex.new.changelist")
       }
@@ -699,7 +699,7 @@ class ChangelistsLocalLineStatusTracker internal constructor(project: Project,
     }
 
     private inner class MoveToChangeListAction(editor: Editor, range: Range, val mousePosition: Point?, val changelist: LocalChangeList)
-      : RangeMarkerAction(editor, range, null) {
+      : LineStatusMarkerPopupActions.RangeMarkerAction(editor, tracker, range, null) {
       init {
         templatePresentation.setText(StringUtil.trimMiddle(changelist.name, 60), false)
       }

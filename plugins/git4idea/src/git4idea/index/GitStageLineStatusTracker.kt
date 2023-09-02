@@ -340,8 +340,9 @@ class GitStageLineStatusTracker(
     }
   }
 
-  private class MyLineStatusMarkerPopupRenderer(override val tracker: GitStageLineStatusTracker)
-    : LineStatusMarkerPopupRenderer(tracker) {
+  private class MyLineStatusMarkerPopupRenderer(
+    private val tracker: GitStageLineStatusTracker
+  ) : LineStatusMarkerRendererWithPopup(tracker) {
     override val editorFilter: MarkupEditorFilter = MarkupEditorFilterFactory.createIsNotDiffFilter()
 
     override fun shouldPaintGutter(): Boolean {
@@ -400,7 +401,8 @@ class GitStageLineStatusTracker(
 
             if (isNewUi && LineStatusMarkerDrawUtil.isRangeHovered(editor, hoveredLine, x, start, end)) {
               LineStatusMarkerDrawUtil.paintRect(g, null, stagedBorderColor, x - 1, start, endX + 1, end)
-            } else {
+            }
+            else {
               LineStatusMarkerDrawUtil.paintRect(g, null, stagedBorderColor, x, start, endX, end)
             }
           }
@@ -409,7 +411,8 @@ class GitStageLineStatusTracker(
       else if (y != endY) {
         if (isNewUi && LineStatusMarkerDrawUtil.isRangeHovered(editor, hoveredLine, x, y, endY)) {
           LineStatusMarkerDrawUtil.paintRect(g, null, borderColor, x - 1, y, endX + 1, endY)
-        } else {
+        }
+        else {
           LineStatusMarkerDrawUtil.paintRect(g, null, borderColor, x, y, endX, endY)
         }
       }
@@ -565,7 +568,7 @@ class GitStageLineStatusTracker(
       val textRange = DiffUtil.getLinesRange(document, line1, line2)
       val content = textRange.subSequence(document.immutableCharSequence).toString()
       val textField = LineStatusMarkerPopupPanel.createTextField(editor, content)
-      LineStatusMarkerPopupPanel.installBaseEditorSyntaxHighlighters(tracker.project, textField, document, textRange, fileType)
+      LineStatusMarkerPopupPanel.installBaseEditorSyntaxHighlighters(tracker.project, textField, document, textRange, virtualFile?.fileType)
       return textField
     }
 
@@ -758,17 +761,17 @@ class GitStageLineStatusTracker(
 
     override fun createToolbarActions(editor: Editor, range: Range, mousePosition: Point?): List<AnAction> {
       val actions = ArrayList<AnAction>()
-      actions.add(ShowPrevChangeMarkerAction(editor, range))
-      actions.add(ShowNextChangeMarkerAction(editor, range))
+      actions.add(LineStatusMarkerPopupActions.ShowPrevChangeMarkerAction(editor, tracker, range, this))
+      actions.add(LineStatusMarkerPopupActions.ShowNextChangeMarkerAction(editor, tracker, range, this))
       actions.add(RollbackLineStatusRangeAction(editor, range))
       actions.add(StageShowDiffAction(editor, range))
-      actions.add(CopyLineStatusRangeAction(editor, range))
-      actions.add(ToggleByWordDiffAction(editor, range, mousePosition))
+      actions.add(LineStatusMarkerPopupActions.CopyLineStatusRangeAction(editor, tracker, range))
+      actions.add(LineStatusMarkerPopupActions.ToggleByWordDiffAction(editor, tracker, range, mousePosition, this))
       return actions
     }
 
     private inner class RollbackLineStatusRangeAction(editor: Editor, range: Range)
-      : RangeMarkerAction(editor, range, IdeActions.SELECTED_CHANGES_ROLLBACK) {
+      : LineStatusMarkerPopupActions.RangeMarkerAction(editor, tracker, range, IdeActions.SELECTED_CHANGES_ROLLBACK) {
       override fun isEnabled(editor: Editor, range: Range): Boolean = (range as StagedRange).hasUnstaged
 
       override fun actionPerformed(editor: Editor, range: Range) {
@@ -777,7 +780,7 @@ class GitStageLineStatusTracker(
     }
 
     private inner class StageShowDiffAction(editor: Editor, range: Range)
-      : RangeMarkerAction(editor, range, IdeActions.ACTION_SHOW_DIFF_COMMON), LightEditCompatible {
+      : LineStatusMarkerPopupActions.RangeMarkerAction(editor, tracker, range, IdeActions.ACTION_SHOW_DIFF_COMMON), LightEditCompatible {
       override fun isEnabled(editor: Editor, range: Range): Boolean = true
 
       override fun actionPerformed(editor: Editor, range: Range) {
