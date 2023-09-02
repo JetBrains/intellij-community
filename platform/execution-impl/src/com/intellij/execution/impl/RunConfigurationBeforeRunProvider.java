@@ -60,7 +60,7 @@ public final class RunConfigurationBeforeRunProvider
 
   @Override
   public Icon getTaskIcon(RunConfigurableBeforeRunTask task) {
-    RunnerAndConfigurationSettings settings = task.getSettingsWithTarget(null).first;
+    RunnerAndConfigurationSettings settings = task.getSettingsWithTarget().first;
     return settings == null ? null : ProgramRunnerUtil.getConfigurationIcon(settings, false);
   }
 
@@ -92,7 +92,7 @@ public final class RunConfigurationBeforeRunProvider
   }
 
   @Override
-  public @Nullable RunConfigurableBeforeRunTask createTask(@NotNull RunConfiguration runConfiguration) {
+  public @NotNull RunConfigurableBeforeRunTask createTask(@NotNull RunConfiguration runConfiguration) {
     return new RunConfigurableBeforeRunTask();
   }
 
