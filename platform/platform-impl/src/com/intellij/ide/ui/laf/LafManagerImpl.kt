@@ -916,7 +916,7 @@ class LafManagerImpl(private val coroutineScope: CoroutineScope) : LafManager(),
       get() {
         val lightLaFs = ArrayList<UIThemeLookAndFeelInfo>()
         val darkLaFs = ArrayList<UIThemeLookAndFeelInfo>()
-        for (lafInfo in ThemeListProvider.getInstance().getShownThemes().flatten()) {
+        for (lafInfo in ThemeListProvider.getInstance().getShownThemes().asSequence().flatten()) {
           if (lafInfo.theme.isDark) {
             darkLaFs.add(lafInfo)
           }
