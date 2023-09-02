@@ -10,9 +10,9 @@ import org.jetbrains.annotations.ApiStatus
  * Provides all available LaFs sorted and grouped for popups/combobox lists
  */
 @ApiStatus.Internal
-interface ThemesListProvider {
+interface ThemeListProvider {
   companion object {
-    fun getInstance(): ThemesListProvider = ApplicationManager.getApplication().service<ThemesListProvider>()
+    fun getInstance(): ThemeListProvider = ApplicationManager.getApplication().service<ThemeListProvider>()
   }
 
   /**

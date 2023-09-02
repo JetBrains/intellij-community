@@ -436,7 +436,7 @@ class LafManagerImpl(private val coroutineScope: CoroutineScope) : LafManager(),
   private val allReferences: List<LafReference>
     get() {
       val result = ArrayList<LafReference>()
-      for (group in ThemesListProvider.getInstance().getShownThemes()) {
+      for (group in ThemeListProvider.getInstance().getShownThemes()) {
         if (!result.isEmpty()) {
           result.add(SEPARATOR)
         }
@@ -916,7 +916,7 @@ class LafManagerImpl(private val coroutineScope: CoroutineScope) : LafManager(),
       get() {
         val lightLaFs = ArrayList<UIThemeLookAndFeelInfo>()
         val darkLaFs = ArrayList<UIThemeLookAndFeelInfo>()
-        for (lafInfo in ThemesListProvider.getInstance().getShownThemes().flatten()) {
+        for (lafInfo in ThemeListProvider.getInstance().getShownThemes().flatten()) {
           if (lafInfo.theme.isDark) {
             darkLaFs.add(lafInfo)
           }

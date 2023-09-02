@@ -5,7 +5,7 @@ import com.intellij.icons.AllIcons;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.ui.LafManager;
 import com.intellij.ide.ui.LafManagerListener;
-import com.intellij.ide.ui.ThemesListProvider;
+import com.intellij.ide.ui.ThemeListProvider;
 import com.intellij.ide.ui.laf.UIThemeLookAndFeelInfo;
 import com.intellij.ide.ui.laf.darcula.DarculaInstaller;
 import com.intellij.openapi.Disposable;
@@ -37,7 +37,7 @@ public final class QuickChangeLookAndFeel extends QuickSwitchSchemeAction implem
   protected void fillActions(Project project, @NotNull DefaultActionGroup group, @NotNull DataContext dataContext) {
     UIThemeLookAndFeelInfo initialLaf = LafManager.getInstance().getCurrentUIThemeLookAndFeel();
 
-    for (List<UIThemeLookAndFeelInfo> list : ThemesListProvider.Companion.getInstance().getShownThemes()) {
+    for (List<UIThemeLookAndFeelInfo> list : ThemeListProvider.Companion.getInstance().getShownThemes()) {
       if (group.getChildrenCount() > 0) group.addSeparator();
       for (UIManager.LookAndFeelInfo lf : list) group.add(new LafChangeAction(lf, initialLaf == lf));
     }
