@@ -22,6 +22,8 @@ import java.util.Optional;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+import static de.plushnikov.intellij.plugin.thirdparty.LombokAddNullAnnotations.createRelevantNonNullAnnotation;
+
 public class SuperBuilderHandler extends BuilderHandler {
 
   private static final String SELF_METHOD = "self";
@@ -136,6 +138,8 @@ public class SuperBuilderHandler extends BuilderHandler {
     final String blockText = String.format("return new %s();", PsiClassUtil.getTypeWithGenerics(builderImplClass).getCanonicalText(false));
     methodBuilder.withBodyText(blockText);
 
+    createRelevantNonNullAnnotation(containingClass, methodBuilder);
+
     return Optional.of(methodBuilder);
   }
 
@@ -158,6 +162,8 @@ public class SuperBuilderHandler extends BuilderHandler {
                                            PsiClassUtil.getTypeWithGenerics(builderImplClass).getCanonicalText(false),
                                            FILL_VALUES_METHOD_NAME);
     methodBuilder.withBodyText(blockText);
+
+    createRelevantNonNullAnnotation(containingClass, methodBuilder);
 
     return Optional.of(methodBuilder);
   }
@@ -364,6 +370,9 @@ public class SuperBuilderHandler extends BuilderHandler {
         .withNavigationElement(psiClass)
         .withModifier(PsiModifier.ABSTRACT)
         .withModifier(PsiModifier.PUBLIC);
+
+      createRelevantNonNullAnnotation(psiClass, buildMethod);
+
       result.add(buildMethod);
     }
 
@@ -451,6 +460,9 @@ public class SuperBuilderHandler extends BuilderHandler {
       final String buildCodeBlockText =
         String.format("return new %s(this);", PsiClassUtil.getTypeWithGenerics(psiClass).getCanonicalText(false));
       buildMethod.withBodyText(buildCodeBlockText);
+
+      createRelevantNonNullAnnotation(psiClass, buildMethod);
+
       result.add(buildMethod);
     }
 

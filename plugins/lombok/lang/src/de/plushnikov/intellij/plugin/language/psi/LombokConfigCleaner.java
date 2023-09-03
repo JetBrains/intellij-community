@@ -6,7 +6,6 @@ import org.jetbrains.annotations.*;
 import com.intellij.psi.PsiElement;
 
 public interface LombokConfigCleaner extends PsiElement {
-
   String getKey();
 
 }

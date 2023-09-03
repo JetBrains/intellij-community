@@ -10,6 +10,7 @@ import de.plushnikov.intellij.plugin.processor.handler.EqualsAndHashCodeToString
 import de.plushnikov.intellij.plugin.processor.handler.EqualsAndHashCodeToStringHandler.MemberInfo;
 import de.plushnikov.intellij.plugin.psi.LombokLightMethodBuilder;
 import de.plushnikov.intellij.plugin.quickfix.PsiQuickFixFactory;
+import de.plushnikov.intellij.plugin.thirdparty.LombokAddNullAnnotations;
 import de.plushnikov.intellij.plugin.util.PsiAnnotationUtil;
 import de.plushnikov.intellij.plugin.util.PsiClassUtil;
 import de.plushnikov.intellij.plugin.util.PsiMethodUtil;
@@ -114,12 +115,16 @@ public final class ToStringProcessor extends AbstractClassProcessor {
     final String paramString = createParamString(psiClass, memberInfos, psiAnnotation, forceCallSuper);
     final String blockText = String.format("return \"%s(%s)\";", getSimpleClassName(psiClass), paramString);
 
-    return new LombokLightMethodBuilder(psiManager, TO_STRING_METHOD_NAME)
+    final LombokLightMethodBuilder methodBuilder = new LombokLightMethodBuilder(psiManager, TO_STRING_METHOD_NAME)
       .withMethodReturnType(PsiType.getJavaLangString(psiManager, GlobalSearchScope.allScope(psiClass.getProject())))
       .withContainingClass(psiClass)
       .withNavigationElement(psiAnnotation)
       .withModifier(PsiModifier.PUBLIC)
       .withBodyText(blockText);
+
+    LombokAddNullAnnotations.createRelevantNonNullAnnotation(psiClass, methodBuilder);
+
+    return methodBuilder;
   }
 
   private static String getSimpleClassName(@NotNull PsiClass psiClass) {
@@ -127,7 +132,7 @@ public final class ToStringProcessor extends AbstractClassProcessor {
 
     PsiClass containingClass = psiClass;
     do {
-      if (psiClassName.length() > 0) {
+      if (!psiClassName.isEmpty()) {
         psiClassName.insert(0, '.');
       }
       psiClassName.insert(0, containingClass.getName());

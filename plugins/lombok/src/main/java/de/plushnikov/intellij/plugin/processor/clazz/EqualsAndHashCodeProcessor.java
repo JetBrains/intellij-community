@@ -12,6 +12,7 @@ import de.plushnikov.intellij.plugin.processor.handler.EqualsAndHashCodeToString
 import de.plushnikov.intellij.plugin.psi.LombokLightMethodBuilder;
 import de.plushnikov.intellij.plugin.psi.LombokLightParameter;
 import de.plushnikov.intellij.plugin.quickfix.PsiQuickFixFactory;
+import de.plushnikov.intellij.plugin.thirdparty.LombokAddNullAnnotations;
 import de.plushnikov.intellij.plugin.thirdparty.LombokCopyableAnnotations;
 import de.plushnikov.intellij.plugin.util.PsiAnnotationSearchUtil;
 import de.plushnikov.intellij.plugin.util.PsiAnnotationUtil;
@@ -186,13 +187,17 @@ public final class EqualsAndHashCodeProcessor extends AbstractClassProcessor {
       .withNavigationElement(psiAnnotation)
       .withFinalParameter("o", PsiType.getJavaLangObject(psiManager, psiClass.getResolveScope()));
 
-    copyOnXAnnotationsForFirstParam(psiAnnotation, methodBuilder);
+    LombokLightParameter parameter = methodBuilder.getParameterList().getParameter(0);
+    if (null != parameter) {
+      LombokAddNullAnnotations.createRelevantNullableAnnotation(psiClass, parameter);
+      copyOnXAnnotationsForFirstParam(psiAnnotation, parameter);
+    }
 
     methodBuilder.withBodyText(m -> {
-      PsiClass aClass = m.getContainingClass();
+      PsiClass containingClass = m.getContainingClass();
       PsiAnnotation anno = (PsiAnnotation)m.getNavigationElement();
-      return createEqualsBlockString(aClass, anno, hasCanEqualMethod,
-                                     EqualsAndHashCodeToStringHandler.filterMembers(aClass, anno, true, INCLUDE_ANNOTATION_METHOD, null));
+      return createEqualsBlockString(containingClass, anno, hasCanEqualMethod,
+                                     EqualsAndHashCodeToStringHandler.filterMembers(containingClass, anno, true, INCLUDE_ANNOTATION_METHOD, null));
     });
     return methodBuilder;
   }
@@ -207,10 +212,10 @@ public final class EqualsAndHashCodeProcessor extends AbstractClassProcessor {
       .withContainingClass(psiClass)
       .withNavigationElement(psiAnnotation)
       .withBodyText(m -> {
-        PsiClass aClass = m.getContainingClass();
+        PsiClass containingClass = m.getContainingClass();
         PsiAnnotation anno = (PsiAnnotation)m.getNavigationElement();
-        return createHashcodeBlockString(aClass, anno,
-                                         EqualsAndHashCodeToStringHandler.filterMembers(aClass, anno, true, INCLUDE_ANNOTATION_METHOD,
+        return createHashcodeBlockString(containingClass, anno,
+                                         EqualsAndHashCodeToStringHandler.filterMembers(containingClass, anno, true, INCLUDE_ANNOTATION_METHOD,
                                                                                         null));
       });
   }
@@ -227,18 +232,19 @@ public final class EqualsAndHashCodeProcessor extends AbstractClassProcessor {
       .withNavigationElement(psiAnnotation)
       .withFinalParameter("other", PsiType.getJavaLangObject(psiManager, psiClass.getResolveScope()));
 
-    copyOnXAnnotationsForFirstParam(psiAnnotation, methodBuilder);
+    LombokLightParameter parameter = methodBuilder.getParameterList().getParameter(0);
+    if (null != parameter) {
+      LombokAddNullAnnotations.createRelevantNullableAnnotation(psiClass, parameter);
+      copyOnXAnnotationsForFirstParam(psiAnnotation, parameter);
+    }
 
     methodBuilder.withBodyText(blockText);
     return methodBuilder;
   }
 
-  private static void copyOnXAnnotationsForFirstParam(@NotNull PsiAnnotation psiAnnotation, LombokLightMethodBuilder methodBuilder) {
-    LombokLightParameter parameter = methodBuilder.getParameterList().getParameter(0);
-    if (null != parameter) {
-      PsiModifierList methodParameterModifierList = parameter.getModifierList();
+  private static void copyOnXAnnotationsForFirstParam(@NotNull PsiAnnotation psiAnnotation, @NotNull LombokLightParameter lightParameter) {
+      PsiModifierList methodParameterModifierList = lightParameter.getModifierList();
       LombokCopyableAnnotations.copyOnXAnnotations(psiAnnotation, methodParameterModifierList, "onParam");
-    }
   }
 
   private @NotNull String createEqualsBlockString(@NotNull PsiClass psiClass,

@@ -15,6 +15,8 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 
+import static de.plushnikov.intellij.plugin.thirdparty.LombokAddNullAnnotations.createRelevantNonNullAnnotation;
+
 class NonSingularHandler implements BuilderElementHandler {
   NonSingularHandler() {
   }
@@ -50,6 +52,9 @@ class NonSingularHandler implements BuilderElementHandler {
     if(info.getVariable() instanceof PsiField psiField) {
       LombokCopyableAnnotations.copyCopyableAnnotations(psiField, methodBuilder.getModifierList(), LombokCopyableAnnotations.COPY_TO_SETTER);
     }
+
+    createRelevantNonNullAnnotation(info.getNullAnnotationLibrary(), methodBuilder);
+
     return Collections.singleton(methodBuilder);
   }
 
