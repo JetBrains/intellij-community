@@ -7,7 +7,6 @@ import com.intellij.util.indexing.IdFilter
 internal class IncrementalProjectIndexableFilesFilter : IdFilter() {
   @Volatile
   private var fileIds: ConcurrentBitSet = ConcurrentBitSet.create()
-  private var previousFileIds: ConcurrentBitSet? = null
 
   override fun getFilteringScopeType(): FilterScopeType = FilterScopeType.PROJECT_AND_LIBRARIES
 
@@ -24,8 +23,7 @@ internal class IncrementalProjectIndexableFilesFilter : IdFilter() {
 
     if (add()) {
       _fileIds.set(fileId)
-      val _previousFileIds = previousFileIds
-      return if (_previousFileIds == null || !_previousFileIds.get(fileId)) FileAddStatus.ADDED else FileAddStatus.PRESENT
+      return FileAddStatus.PRESENT
     }
     return FileAddStatus.SKIPPED
   }
@@ -35,14 +33,7 @@ internal class IncrementalProjectIndexableFilesFilter : IdFilter() {
     fileIds.clear(fileId)
   }
 
-  fun memoizeAndResetFileIds() {
-    // called in sequential UnindexedFileUpdater tasks
-    previousFileIds = fileIds
+  fun resetFileIds() {
     fileIds = ConcurrentBitSet.create()
-  }
-
-  fun resetPreviousFileIds() {
-    // called in sequential UnindexedFileUpdater tasks
-    previousFileIds = null
   }
 }
