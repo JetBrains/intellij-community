@@ -232,6 +232,9 @@ public final class ScopeViewPane extends AbstractProjectViewPane {
   @Override
   public void select(Object object, VirtualFile file, boolean requestFocus) {
     if (myTreeModel == null) {
+      if (SelectInProjectViewImplKt.getLOG().isDebugEnabled()) {
+        SelectInProjectViewImplKt.getLOG().debug("Can NOT select " + object + " / " + file + " in " + this + " because the scope pane isn't initialized yet");
+      }
       // not initialized yet
       return;
     }
@@ -254,36 +257,88 @@ public final class ScopeViewPane extends AbstractProjectViewPane {
   }
 
   private boolean select(PsiElement element, VirtualFile file, boolean requestFocus, VirtualFileFilter filter) {
+    if (SelectInProjectViewImplKt.getLOG().isDebugEnabled()) {
+      SelectInProjectViewImplKt.getLOG().debug(
+        "ScopeViewPane.select: " +
+        "pane=" + this +
+        ", element=" + element +
+        ", file=" + file +
+        ", requestFocus=" + requestFocus +
+        ", filter=" + filter
+      );
+    }
     if (filter == null || !filter.accept(file)) {
       return false;
     }
 
     String subId = filter.toString();
     if (!Objects.equals(subId, getSubId())) {
-      if (!requestFocus) return true;
-      selectScopeView(subId);
+      if (requestFocus) {
+        if (SelectInProjectViewImplKt.getLOG().isDebugEnabled()) {
+          SelectInProjectViewImplKt.getLOG().debug(
+            "Selected subId=" + getSubId() +
+            ", requested subId=" + subId +
+            ", changing the scope"
+          );
+        }
+        selectScopeView(subId);
+      }
+      else {
+        if (SelectInProjectViewImplKt.getLOG().isDebugEnabled()) {
+          SelectInProjectViewImplKt.getLOG().debug(
+            "Selected subId=" + getSubId() +
+            ", requested subId=" + subId +
+            ", changing not allowed because requestFocus=false, aborting"
+          );
+        }
+        return true;
+      }
     }
     LOG.debug("select element: ", element, " in file: ", file);
     TreeVisitor visitor = AbstractProjectViewPane.createVisitor(element, file);
-    if (visitor == null) return true;
+    if (visitor == null) {
+      if (SelectInProjectViewImplKt.getLOG().isDebugEnabled()) {
+        SelectInProjectViewImplKt.getLOG().debug("Not selecting anything because both the pointer and file are null");
+      }
+      return true;
+    }
     JTree tree = myTree;
-    myTreeModel.getUpdater().updateImmediately(() -> TreeState.expand(tree, promise -> TreeUtil.visit(tree, visitor, path -> {
-      if (selectPath(tree, path) || element == null || Registry.is("async.project.view.support.extra.select.disabled")) {
-        promise.setResult(null);
-      }
-      else {
-        // try to search the specified file instead of element,
-        // because Kotlin files cannot represent containing functions
-        TreeUtil.visit(tree, AbstractProjectViewPane.createVisitor(file), path2 -> {
-          selectPath(tree, path2);
+    SelectInProjectViewImplKt.getLOG().debug("Start updating the tree. Will continue once updated");
+    myTreeModel.getUpdater().updateImmediately(() -> {
+      SelectInProjectViewImplKt.getLOG().debug("Updated. Start expanding the tree and looking for the path to select");
+      TreeState.expand(tree, promise -> TreeUtil.visit(tree, visitor, path -> {
+        if (SelectInProjectViewImplKt.getLOG().isDebugEnabled()) {
+          SelectInProjectViewImplKt.getLOG().debug("Expanded. The path to select is " + path);
+        }
+        if (selectPath(tree, path) || element == null || Registry.is("async.project.view.support.extra.select.disabled")) {
           promise.setResult(null);
-        });
-      }
-    })));
+          if (SelectInProjectViewImplKt.getLOG().isDebugEnabled()) {
+            SelectInProjectViewImplKt.getLOG().debug("Selected. Done");
+          }
+        }
+        else {
+          if (SelectInProjectViewImplKt.getLOG().isDebugEnabled()) {
+            SelectInProjectViewImplKt.getLOG().debug("Not selected. Trying to look for the file without the pointer instead");
+          }
+          // try to search the specified file instead of element,
+          // because Kotlin files cannot represent containing functions
+          TreeUtil.visit(tree, AbstractProjectViewPane.createVisitor(file), path2 -> {
+            selectPath(tree, path2);
+            promise.setResult(null);
+            if (SelectInProjectViewImplKt.getLOG().isDebugEnabled()) {
+              SelectInProjectViewImplKt.getLOG().debug("Found and selected " + path2);
+            }
+          });
+        }
+      }));
+    });
     return true;
   }
 
-  private static boolean selectPath(@NotNull JTree tree, TreePath path) {
+  private boolean selectPath(@NotNull JTree tree, TreePath path) {
+    if (SelectInProjectViewImplKt.getLOG().isDebugEnabled()) {
+      SelectInProjectViewImplKt.getLOG().debug("selectPath: " + path + " in " + this);
+    }
     if (path == null) {
       return false;
     }
@@ -422,5 +477,10 @@ public final class ScopeViewPane extends AbstractProjectViewPane {
   @Override
   public boolean supportsShowModules() {
     return PlatformUtils.isIntelliJ();
+  }
+
+  @Override
+  public String toString() {
+    return "ScopeViewPane{id=" + getId() + ",subId=" + getSubId() + "}";
   }
 }
