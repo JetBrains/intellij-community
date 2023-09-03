@@ -6,6 +6,7 @@ import de.plushnikov.intellij.plugin.psi.LombokLightFieldBuilder;
 import de.plushnikov.intellij.plugin.psi.LombokLightMethodBuilder;
 import de.plushnikov.intellij.plugin.thirdparty.CapitalizationStrategy;
 import de.plushnikov.intellij.plugin.thirdparty.LombokCopyableAnnotations;
+import de.plushnikov.intellij.plugin.thirdparty.LombokUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -59,9 +60,9 @@ class NonSingularHandler implements BuilderElementHandler {
   }
 
   @Override
-  public List<String> getBuilderMethodNames(@NotNull String newName, @Nullable PsiAnnotation singularAnnotation,
+  public List<String> getBuilderMethodNames(@NotNull String fieldName, @NotNull String prefix, @Nullable PsiAnnotation singularAnnotation,
                                             CapitalizationStrategy capitalizationStrategy) {
-    return Collections.singletonList(newName);
+    return Collections.singletonList(LombokUtils.buildAccessorName(prefix, fieldName, capitalizationStrategy));
   }
 
   @Override

@@ -30,8 +30,8 @@ class EmptyBuilderElementHandler implements BuilderElementHandler {
   }
 
   @Override
-  public List<String> getBuilderMethodNames(@NotNull String newName, @Nullable PsiAnnotation singularAnnotation,
-                                            CapitalizationStrategy capitalizationStrategy) {
+  public List<String> getBuilderMethodNames(@NotNull String fieldName, @NotNull String prefix,
+                                            @Nullable PsiAnnotation singularAnnotation, CapitalizationStrategy capitalizationStrategy) {
     return Collections.emptyList();
   }
 

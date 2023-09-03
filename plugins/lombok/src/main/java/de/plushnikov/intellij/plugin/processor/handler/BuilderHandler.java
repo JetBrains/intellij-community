@@ -47,7 +47,7 @@ public class BuilderHandler {
   private final static String ANNOTATION_BUILDER_CLASS_NAME = "builderClassName";
   private static final String ANNOTATION_BUILD_METHOD_NAME = "buildMethodName";
   private static final String ANNOTATION_BUILDER_METHOD_NAME = "builderMethodName";
-  private static final String ANNOTATION_SETTER_PREFIX = "setterPrefix";
+  public static final String ANNOTATION_SETTER_PREFIX = "setterPrefix";
 
   private final static String BUILD_METHOD_NAME = "build";
   private final static String BUILDER_METHOD_NAME = "builder";

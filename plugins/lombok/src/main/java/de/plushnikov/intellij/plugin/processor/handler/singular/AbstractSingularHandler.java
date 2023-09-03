@@ -119,10 +119,11 @@ public abstract class AbstractSingularHandler implements BuilderElementHandler {
   }
 
   @Override
-  public List<String> getBuilderMethodNames(@NotNull String fieldName, @Nullable PsiAnnotation singularAnnotation,
+  public List<String> getBuilderMethodNames(@NotNull String fieldName, @NotNull String prefix, @Nullable PsiAnnotation singularAnnotation,
                                             CapitalizationStrategy capitalizationStrategy) {
-    return Arrays.asList(createSingularName(singularAnnotation, fieldName),
-                         fieldName,
+    final String accessorName = LombokUtils.buildAccessorName(prefix, fieldName, capitalizationStrategy);
+    return Arrays.asList(createSingularName(singularAnnotation, accessorName),
+                         accessorName,
                          createSingularClearMethodName(fieldName, capitalizationStrategy));
   }
 
