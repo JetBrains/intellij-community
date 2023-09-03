@@ -1261,7 +1261,7 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
     final VirtualFile file = fileContent.getVirtualFile();
     if (getChangedFilesCollector().isScheduledForUpdate(file)) {
       try {
-        indexFileContent(project, fileContent, null).apply(file);
+        indexFileContent(project, fileContent, null).apply(file, null, true);
       }
       finally {
         IndexingStamp.flushCache(getFileId(file));

@@ -90,7 +90,7 @@ public final class UnindexedFilesUpdater {
     if (threadCount <= 0) {
       threadCount =
         Math.max(1, Math.min(useConservativeThreadCountPolicy
-                             ? DEFAULT_MAX_INDEXER_THREADS : getMaxBackgroundThreadCount(), getMaxBackgroundThreadCount()));
+                             ? DEFAULT_MAX_INDEXER_THREADS : getMaxNumberOfIndexingThreads(), getMaxNumberOfIndexingThreads()));
     }
     return threadCount;
   }
@@ -101,7 +101,11 @@ public final class UnindexedFilesUpdater {
   public static int getMaxNumberOfIndexingThreads() {
     // Change of the registry option requires IDE restart.
     int threadCount = INDEXER_THREAD_COUNT;
-    return Math.max(1, threadCount <= 0 ? getMaxBackgroundThreadCount() : threadCount);
+    if (threadCount > 0) {
+      return threadCount;
+    }
+
+    return Math.max(1, Runtime.getRuntime().availableProcessors() - 1);
   }
 
   /**
