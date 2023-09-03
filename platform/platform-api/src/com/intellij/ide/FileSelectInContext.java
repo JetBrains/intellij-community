@@ -57,4 +57,13 @@ public class FileSelectInContext implements SelectInContext {
     FileEditorManager manager = FileEditorManager.getInstance(project);
     return manager == null ? null : () -> getFirstElement(manager.openFile(file, false));
   }
+
+  @Override
+  public String toString() {
+    return "FileSelectInContext{" +
+           "myProject=" + myProject +
+           ", myFile=" + myFile +
+           ", myProvider=" + myProvider +
+           '}';
+  }
 }
