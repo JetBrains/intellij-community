@@ -109,13 +109,6 @@ private const val INTER_SIZE = 13
        reportStatistic = false)
 class LafManagerImpl(private val coroutineScope: CoroutineScope) : LafManager(), PersistentStateComponent<Element> {
   private val eventDispatcher = EventDispatcher.create(LafManagerListener::class.java)
-  private val lafMap = SynchronizedClearableLazy {
-    runActivity("compute LaF list") {
-      UiThemeProviderListManager.getInstance().getLaFsWithUITypes()
-    }
-  }
-  private val lafList: Set<UIThemeLookAndFeelInfo>
-    get() = lafMap.value.keys
 
   private val defaultDarkTheme = SynchronizedClearableLazy {
     val name = ApplicationInfoEx.getInstanceEx().defaultDarkLaf
@@ -381,9 +374,9 @@ class LafManagerImpl(private val coroutineScope: CoroutineScope) : LafManager(),
     }
   }
 
-  private fun loadThemeState(element: Element, attrName: @NonNls String): UIThemeLookAndFeelInfo? {
-    val lafElement = element.getChild(attrName) ?: return null
-    return lafList.singleOrNull { it.theme.id == lafElement.getAttributeValue(ATTRIBUTE_THEME_NAME) }
+  private fun loadThemeState(element: Element, attributeName: @NonNls String): UIThemeLookAndFeelInfo? {
+    val id = element.getChild(attributeName)?.getAttributeValue(ATTRIBUTE_THEME_NAME) ?: return null
+    return UiThemeProviderListManager.getInstance().findThemeById(id)
   }
 
   override fun noStateLoaded() {
@@ -395,19 +388,19 @@ class LafManagerImpl(private val coroutineScope: CoroutineScope) : LafManager(),
     autodetect = false
   }
 
-  override fun getState(): Element? {
+  override fun getState(): Element {
     val element = Element("state")
     if (autodetect) {
       element.setAttribute(ATTRIBUTE_AUTODETECT, java.lang.Boolean.toString(autodetect))
     }
     if (currentTheme?.theme?.id != defaultThemeId) {
-      getThemeState(element, ELEMENT_LAF, currentUIThemeLookAndFeel)
+      writeThemeState(element, ELEMENT_LAF, currentUIThemeLookAndFeel)
     }
     if (preferredLightTheme != null && preferredLightTheme !== defaultLightLaf) {
-      getThemeState(element, ELEMENT_PREFERRED_LIGHT_LAF, preferredLightTheme)
+      writeThemeState(element, ELEMENT_PREFERRED_LIGHT_LAF, preferredLightTheme)
     }
     if (preferredDarkTheme != null && preferredDarkTheme !== defaultDarkLaf) {
-      getThemeState(element, ELEMENT_PREFERRED_DARK_LAF, preferredDarkTheme)
+      writeThemeState(element, ELEMENT_PREFERRED_DARK_LAF, preferredDarkTheme)
     }
 
     if (lafToPreviousScheme.isNotEmpty()) {
@@ -422,15 +415,19 @@ class LafManagerImpl(private val coroutineScope: CoroutineScope) : LafManager(),
       element.addContent(lafsToSchemes)
     }
 
-    return if (element.isEmpty) null else element
+    return element
   }
 
-  override fun getInstalledLookAndFeels(): Array<UIThemeLookAndFeelInfo> = lafList.toTypedArray()
+  override fun getInstalledLookAndFeels(): Array<UIThemeLookAndFeelInfo> {
+    return UiThemeProviderListManager.getInstance().getLaFs().toList().toTypedArray()
+  }
 
   override fun getLafComboBoxModel(): CollectionComboBoxModel<LafReference> = lafComboBoxModel.value
 
-  fun getThemeListForTargetUI(targetUI: TargetUIType): List<UIThemeLookAndFeelInfo> {
-    return lafMap.value.filterValues { it == targetUI }.keys.toList()
+  fun getThemeListForTargetUI(targetUI: TargetUIType): Sequence<UIThemeLookAndFeelInfo> {
+    return UiThemeProviderListManager.getInstance().getLaFsWithUITypes().asSequence()
+      .filter { it.targetUiType == targetUI }
+      .mapNotNull { it.theme.get() }
   }
 
   private val allReferences: List<LafReference>
@@ -458,7 +455,11 @@ class LafManagerImpl(private val coroutineScope: CoroutineScope) : LafManager(),
   }
 
   override fun findLaf(reference: LafReference): UIThemeLookAndFeelInfo {
-    return lafList.singleOrNull { it.theme.id == reference.themeId } ?: error("Theme not found for themeId: ${reference.themeId}")
+    return UiThemeProviderListManager.getInstance().getLaFsWithUITypes()
+             .singleOrNull { it.id == reference.themeId }
+             ?.theme
+             ?.get()
+           ?: error("Theme not found for themeId: ${reference.themeId}")
   }
 
   @Suppress("removal")
@@ -473,18 +474,18 @@ class LafManagerImpl(private val coroutineScope: CoroutineScope) : LafManager(),
   override fun getSettingsToolbar(): JComponent = settingsToolbar.value.component
 
   private fun loadDefaultTheme(): UIThemeLookAndFeelInfo {
-    // Use HighContrast theme for IDE in Windows if HighContrast desktop mode is set.
+    // use HighContrast theme for IDE in Windows if HighContrast desktop mode is set
     if (SystemInfoRt.isWindows && Toolkit.getDefaultToolkit().getDesktopProperty("win.highContrast.on") == true) {
-      for (laf in lafList) {
-        if (HIGH_CONTRAST_THEME_ID == laf.theme.id) {
-          return laf
-        }
+      UiThemeProviderListManager.getInstance().findThemeById(HIGH_CONTRAST_THEME_ID)?.let {
+        return it
       }
     }
     return defaultDarkLaf
   }
 
-  private fun findLafByName(name: String): UIThemeLookAndFeelInfo? = installedLookAndFeels.firstOrNull { name == it.name }
+  private fun findLafByName(name: String): UIThemeLookAndFeelInfo? {
+    return UiThemeProviderListManager.getInstance().findThemeByName(name)
+  }
 
   /**
    * Sets current LAF. The method doesn't update component hierarchy.
@@ -829,22 +830,17 @@ class LafManagerImpl(private val coroutineScope: CoroutineScope) : LafManager(),
 
   private inner class UiThemeEpListener : ExtensionPointListener<UIThemeProvider> {
     override fun extensionAdded(extension: UIThemeProvider, pluginDescriptor: PluginDescriptor) {
-      val newLaF = UiThemeProviderListManager.getInstance().themeProviderAdded(extension) ?: return
-      val oldLaFsMap = lafMap.value
-      val newLaFsMap = mutableMapOf<UIThemeLookAndFeelInfo, TargetUIType>()
-      newLaFsMap.putAll(oldLaFsMap)
-      newLaFsMap.put(newLaF, extension.targetUI)
-      lafMap.value = newLaFsMap
+      val uiThemeProviderListManager = UiThemeProviderListManager.getInstance()
+      val newLaF = uiThemeProviderListManager.themeProviderAdded(extension) ?: return
       updateLafComboboxModel()
 
       // when updating a theme plugin that doesn't provide the current theme, don't select any of its themes as current
       val newTheme = newLaF.theme
-      val pluginClassLoader = pluginDescriptor.pluginClassLoader
-      if (pluginClassLoader != null) {
-        newTheme.setProviderClassLoader(pluginClassLoader)
+      pluginDescriptor.pluginClassLoader?.let {
+        newTheme.setProviderClassLoader(it)
       }
       if (!autodetect && (!isUpdatingPlugin || newTheme.id == themeIdBeforePluginUpdate)) {
-        setLookAndFeelImpl(newLaF, true, false)
+        setLookAndFeelImpl(lookAndFeelInfo = newLaF, installEditorScheme = true, processChangeSynchronously = false)
         JBColor.setDark(newTheme.isDark)
         updateUI()
       }
@@ -861,16 +857,9 @@ class LafManagerImpl(private val coroutineScope: CoroutineScope) : LafManager(),
       else {
         null
       }
-      val newLaFs = mutableMapOf<UIThemeLookAndFeelInfo, TargetUIType>()
-      for (laf in lafMap.value) {
-        if (laf.key !== oldLaF) {
-          newLaFs.put(laf.key, laf.value)
-        }
-      }
-      lafMap.value = newLaFs
       updateLafComboboxModel()
       if (defaultLaF != null) {
-        setLookAndFeelImpl(defaultLaF, true, true)
+        setLookAndFeelImpl(lookAndFeelInfo = defaultLaF, installEditorScheme = true, processChangeSynchronously = true)
         if (ExperimentalUI.isNewUI()) {
           JBColor.setDark(defaultDarkTheme.isInitialized() && isDark)
         }
@@ -1131,8 +1120,8 @@ private class OurPopupFactory(private val delegate: PopupFactory) : PopupFactory
   }
 }
 
-private fun getThemeState(element: Element, attributeName: @NonNls String?, suggestedLaf: UIThemeLookAndFeelInfo?) {
-  val laf = (if (suggestedLaf is TempUIThemeLookAndFeelInfo) suggestedLaf.previousLaf else null) ?: return
+private fun writeThemeState(element: Element, attributeName: @NonNls String?, suggestedLaf: UIThemeLookAndFeelInfo?) {
+  val laf = (if (suggestedLaf is TempUIThemeLookAndFeelInfo) suggestedLaf.previousLaf else suggestedLaf) ?: return
   val child = Element(attributeName)
   child.setAttribute(ATTRIBUTE_THEME_NAME, laf.theme.id)
   element.addContent(child)

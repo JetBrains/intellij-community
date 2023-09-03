@@ -66,6 +66,7 @@ import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.util.ui.StartupUiUtil;
 import com.intellij.util.xmlb.annotations.OptionTag;
 import kotlin.jvm.functions.Function1;
+import kotlin.sequences.SequencesKt;
 import org.jdom.Element;
 import org.jetbrains.annotations.*;
 
@@ -284,18 +285,15 @@ public final class EditorColorsManagerImpl extends EditorColorsManager implement
   @TestOnly
   public @Nullable EditorColorsScheme loadBundledScheme(@NotNull String themeName) {
     assert ApplicationManager.getApplication().isUnitTestMode() : "Test-only method";
-    for (UIThemeLookAndFeelInfo laf : UiThemeProviderListManager.Companion.getInstance().getLaFs()) {
-      UITheme theme = laf.getTheme();
-      if (themeName.equals(theme.getName())) {
-        String scheme = theme.getEditorScheme();
-        if (scheme != null) {
-          EditorColorsScheme bundledScheme = loadBundledScheme(scheme, theme, null);
-          initEditableBundledSchemesCopies();
-          return bundledScheme;
-        }
-      }
+    UIThemeLookAndFeelInfo theme = UiThemeProviderListManager.Companion.getInstance().findThemeByName(themeName);
+    String scheme = theme == null ? null : theme.getTheme().getEditorScheme();
+    if (scheme == null) {
+      return null;
     }
-    return null;
+
+    EditorColorsScheme bundledScheme = loadBundledScheme(scheme, theme, null);
+    initEditableBundledSchemesCopies();
+    return bundledScheme;
   }
   
   @TestOnly
@@ -317,7 +315,7 @@ public final class EditorColorsManagerImpl extends EditorColorsManager implement
       return;
     }
 
-    for (UIThemeLookAndFeelInfo laf : UiThemeProviderListManager.Companion.getInstance().getLaFs()) {
+    for (UIThemeLookAndFeelInfo laf : SequencesKt.asIterable(UiThemeProviderListManager.Companion.getInstance().getLaFs())) {
       UITheme theme = laf.getTheme();
       List<String> schemes = theme.getAdditionalEditorSchemes();
       PluginDescriptor pluginDescriptor = getPluginDescriptor(theme);
@@ -764,25 +762,18 @@ public final class EditorColorsManagerImpl extends EditorColorsManager implement
           boolean isDark = ColorUtil.isDark(scheme.getDefaultBackground());
           String neededThemeName = isDark ? "Solarized Dark" : "Solarized Light";
 
-          UIThemeLookAndFeelInfo neededTheme = null;
-          for (UIThemeLookAndFeelInfo theme : UiThemeProviderListManager.Companion.getInstance().getLaFs()) {
-            if (theme.getName().equals(neededThemeName)) {
-              neededTheme = theme;
-              break;
-            }
-          }
+          UIThemeLookAndFeelInfo neededTheme = UiThemeProviderListManager.Companion.getInstance().findThemeByName(neededThemeName);
           Notification notification = new Notification("ColorSchemeDeprecation",
                                                        IdeBundle.message("notification.title.solarized.color.scheme.deprecation"),
                                                        "",
                                                        NotificationType.ERROR);
           if (neededTheme != null) {
             notification.setContent(IdeBundle.message("notification.content.solarized.color.scheme.deprecation.enable", name, neededThemeName));
-            UIThemeLookAndFeelInfo finalNeededTheme = neededTheme;
             notification.addAction(new NotificationAction(IdeBundle.message("notification.title.enable.action.solarized.color.scheme.deprecation", neededThemeName)) {
               @Override
               public void actionPerformed(@NotNull AnActionEvent e, @NotNull Notification notification) {
                 LafManager lafManager = LafManager.getInstance();
-                lafManager.setCurrentLookAndFeel(finalNeededTheme, false);
+                lafManager.setCurrentLookAndFeel(neededTheme, false);
                 lafManager.updateUI();
                 notification.expire();
               }

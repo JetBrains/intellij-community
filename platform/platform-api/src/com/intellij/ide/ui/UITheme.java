@@ -33,6 +33,7 @@ import java.lang.reflect.Constructor;
 import java.util.List;
 import java.util.*;
 import java.util.function.Function;
+import java.util.function.Supplier;
 
 /**
  * @author Konstantin Bulenkov
@@ -85,21 +86,25 @@ public final class UITheme {
   }
 
   public static @NotNull UITheme loadFromJson(@Nullable UITheme parentTheme,
-                                              byte[] data,
+                                              byte @NotNull [] data,
                                               @NotNull @NonNls String themeId,
                                               @Nullable ClassLoader provider,
                                               @NotNull Function<? super String, String> iconsMapper,
-                                              @Nullable UITheme defaultDarkParent,
-                                              @Nullable UITheme defaultLightParent) throws IOException {
+                                              @Nullable Supplier<UITheme> defaultDarkParent,
+                                              @Nullable Supplier<UITheme> defaultLightParent) throws IOException {
     UIThemeBean theme = UIThemeBean.Companion.readTheme(new JsonFactory().createParser(data));
     theme.id = themeId;
-    if (theme.dark && parentTheme == null) {
-      return postProcessTheme(theme, defaultDarkParent, provider, iconsMapper);
+    if (parentTheme == null) {
+      if (theme.dark) {
+        return postProcessTheme(theme, defaultDarkParent == null ? null : defaultDarkParent.get(), provider, iconsMapper);
+      }
+      else {
+        return postProcessTheme(theme, defaultLightParent == null ? null : defaultLightParent.get(), provider, iconsMapper);
+      }
     }
-    if (!theme.dark && parentTheme == null) {
-      return postProcessTheme(theme, defaultLightParent, provider, iconsMapper);
+    else {
+      return postProcessTheme(theme, parentTheme, provider, iconsMapper);
     }
-    return postProcessTheme(theme, parentTheme, provider, iconsMapper);
   }
 
   private static @NotNull UITheme postProcessTheme(@NotNull UIThemeBean theme,
@@ -448,15 +453,6 @@ public final class UITheme {
     }
     else {
       defaults.put(key, value);
-    }
-  }
-
-  private static @NotNull String createUIKey(String key, String propertyName) {
-    if ("UI".equals(propertyName)) {
-      return key + propertyName;
-    }
-    else {
-      return key + "." + propertyName;
     }
   }
 

@@ -11,10 +11,10 @@ private class ThemeListProviderImpl : ThemeListProvider {
     val lafManager = LafManager.getInstance() as? LafManagerImpl ?: return emptyList()
     val result = mutableListOf<List<UIThemeLookAndFeelInfo>>()
     if (ExperimentalUI.isNewUI()) {
-      result.add(lafManager.getThemeListForTargetUI(TargetUIType.NEW).sortedBy { it.name })
+      result.add(lafManager.getThemeListForTargetUI(TargetUIType.NEW).sortedBy { it.name }.toList())
     }
     result.add((lafManager.getThemeListForTargetUI(TargetUIType.CLASSIC).filterNot { it.theme.id == "IntelliJ" }
-                + lafManager.getThemeListForTargetUI(TargetUIType.UNSPECIFIED)).sortedBy { it.name })
+                + lafManager.getThemeListForTargetUI(TargetUIType.UNSPECIFIED)).sortedBy { it.name }.toList())
     return result
   }
 }
