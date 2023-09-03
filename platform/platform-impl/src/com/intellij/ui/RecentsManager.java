@@ -17,7 +17,7 @@ import java.util.List;
 import java.util.Map;
 
 @State(name = "RecentsManager", storages = @Storage(StoragePathMacros.WORKSPACE_FILE))
-public class RecentsManager implements PersistentStateComponent<Element> {
+public final class RecentsManager implements PersistentStateComponent<Element> {
   private static final @NonNls String KEY_ELEMENT_NAME = "key";
   private static final @NonNls String RECENT_ELEMENT_NAME = "recent";
   protected static final @NonNls String NAME_ATTR = "name";

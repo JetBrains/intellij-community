@@ -6,7 +6,7 @@ import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
-public class WebDeploymentCredentialsHolder {
+public final class WebDeploymentCredentialsHolder {
   private static final @NonNls String SFTP_DEPLOYMENT_PREFIX = "sftp://";
 
   public static final @NonNls String WEB_SERVER_CREDENTIALS_ID = "WEB_SERVER_CREDENTIALS_ID";

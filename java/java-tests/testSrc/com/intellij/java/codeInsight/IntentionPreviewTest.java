@@ -227,13 +227,6 @@ public class IntentionPreviewTest extends LightJavaCodeInsightFixtureTestCase {
     myFixture.checkIntentionPreviewHtml(action, "<p><icon src=\"file\"/>&nbsp;Test.java &rarr; <icon src=\"file\"/>&nbsp;Best.java</p>");
   }
 
-  public void testMoveMemberIntoClass() {
-    myFixture.configureByText("Test.java", "public class Test {} void <caret>method() {}");
-    IntentionAction action = myFixture.findSingleIntention("Move member into class");
-    myFixture.checkIntentionPreviewHtml(action,
-                                        "<p><icon src=\"source_method\"/>&nbsp;method &rarr; <icon src=\"target_Test\"/>&nbsp;Test</p>");
-  }
-
   public void testNavigate() {
     myFixture.configureByText("Test.java", "public class Test {} class <caret>Test {}");
     IntentionAction action = myFixture.findSingleIntention("Navigate to duplicate class");

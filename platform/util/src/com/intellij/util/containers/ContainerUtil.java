@@ -5,7 +5,6 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.*;
 import com.intellij.util.*;
-import gnu.trove.THashSet;
 import org.jetbrains.annotations.*;
 
 import java.util.WeakHashMap;
@@ -344,15 +343,6 @@ public final class ContainerUtil {
   @Contract(pure = true)
   public static @NotNull <T> LinkedHashSet<T> newLinkedHashSet(T @NotNull ... elements) {
     return new LinkedHashSet<>(Arrays.asList(elements));
-  }
-
-  /**
-   * @deprecated Use {@link HashSet#HashSet()}
-   */
-  @Deprecated
-  @Contract(pure = true)
-  public static @NotNull <T> THashSet<T> newTroveSet() {
-    return new THashSet<>();
   }
 
   /**
@@ -2568,16 +2558,6 @@ public final class ContainerUtil {
   }
 
   /**
-   * @deprecated Use {@link Stack#Stack()}
-   */
-  @Contract(value = " -> new", pure = true)
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval
-  public static @NotNull <T> Stack<T> newStack() {
-    return new Stack<>();
-  }
-
-  /**
    * @return read-only empty list
    * The only difference from {@link Collections#emptyList()} is that this list doesn't produce garbage in its {@link List#toArray()} method
    */
@@ -2605,7 +2585,7 @@ public final class ContainerUtil {
    */
   @Contract(value = " -> new", pure = true)
   public static @NotNull <T> List<T> createLockFreeCopyOnWriteList() {
-    return createConcurrentList();
+    return new LockFreeCopyOnWriteArrayList<>();
   }
 
   /**
@@ -2617,16 +2597,6 @@ public final class ContainerUtil {
   @Contract(value = "_ -> new", pure = true)
   public static @NotNull <T> List<T> createLockFreeCopyOnWriteList(@NotNull Collection<? extends T> c) {
     return new LockFreeCopyOnWriteArrayList<>(c);
-  }
-
-  /**
-   * @deprecated Use {@link com.intellij.concurrency.ConcurrentCollectionFactory#createConcurrentLongObjectMap()} instead
-   */
-  @ApiStatus.ScheduledForRemoval
-  @Deprecated
-  @Contract(value = " -> new", pure = true)
-  public static @NotNull <V> ConcurrentLongObjectMap<@NotNull V> createConcurrentLongObjectMap() {
-    return new ConcurrentLongObjectHashMap<>();
   }
 
   /**
@@ -2704,16 +2674,6 @@ public final class ContainerUtil {
     if (element != null) {
       result.add(element);
     }
-  }
-
-  /**
-   * @return read-only list consisting of results of {@code mapper.fun} for each element in {@code array}
-   * @deprecated use {@link #map(Object[], Function)}
-   */
-  @Contract(pure = true)
-  @Deprecated
-  public static @Unmodifiable @NotNull <T, V> List<V> map2List(T @NotNull [] array, @NotNull Function<? super T, ? extends V> mapper) {
-    return map(array, mapper);
   }
 
   /**

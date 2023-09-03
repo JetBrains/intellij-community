@@ -170,7 +170,7 @@ public final class CommandMerger {
     }
   }
 
-  private static class MyEmptyUndoableAction extends BasicUndoableAction {
+  private static final class MyEmptyUndoableAction extends BasicUndoableAction {
     MyEmptyUndoableAction(DocumentReference @NotNull [] refs) {
       super(refs);
     }

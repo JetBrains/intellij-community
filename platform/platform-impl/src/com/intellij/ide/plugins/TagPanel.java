@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.plugins;
 
 import com.intellij.ide.plugins.newui.HorizontalLayout;
@@ -18,7 +18,7 @@ import java.util.List;
 /**
  * @author Alexander Lobas
  */
-public class TagPanel extends NonOpaquePanel {
+public final class TagPanel extends NonOpaquePanel {
   private final LinkListener<Object> mySearchListener;
 
   public TagPanel(@NotNull LinkListener<Object> searchListener) {

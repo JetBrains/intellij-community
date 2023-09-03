@@ -54,6 +54,8 @@ interface GradleBuildScriptManipulator<out Psi : PsiFile> {
 
     fun getKotlinVersionFromBuildScript(): IdeKotlinVersion?
 
+    fun hasExplicitlyDefinedKotlinVersion(): Boolean
+
     fun findAndRemoveKotlinVersionFromBuildScript(): Boolean
 
     fun findKotlinPluginManagementVersion(): IdeKotlinVersion?

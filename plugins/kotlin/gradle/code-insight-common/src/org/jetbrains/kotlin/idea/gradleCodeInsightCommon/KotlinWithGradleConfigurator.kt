@@ -315,10 +315,16 @@ abstract class KotlinWithGradleConfigurator : KotlinProjectConfigurator {
         var addVersionToModuleBuildScript = definedVersionInPluginSettings != kotlinVersion
 
         if (rootModule != null) {
+            val allKotlinModules = kotlinVersionsAndModules.values.flatMap { it.values }
             val hasDefinedVersion = kotlinVersionsAndModules.filter { it.key != kotlinVersion.artifactVersion }.isNotEmpty()
+            val kotlinVersionDefinedExplicitlyEverywhere = allKotlinModules.all { module ->
+                module.getBuildScriptPsiFile()?.let {
+                    GradleBuildScriptSupport.getManipulator(it)
+                }?.hasExplicitlyDefinedKotlinVersion() ?: false
+            }
             val addVersionToSettings: Boolean
             // If there are different Kotlin versions in the project, don't add to settings
-            if (hasDefinedVersion || definedVersionInPluginSettings != null) {
+            if (hasDefinedVersion || definedVersionInPluginSettings != null || !kotlinVersionDefinedExplicitlyEverywhere) {
                 addVersionToSettings = false
             } else {
                 // If we have any version in the root module, don't need to add the version to the settings file

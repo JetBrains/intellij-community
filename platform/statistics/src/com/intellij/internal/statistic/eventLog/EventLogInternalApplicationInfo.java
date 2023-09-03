@@ -58,6 +58,12 @@ public class EventLogInternalApplicationInfo implements EventLogApplicationInfo 
     return info.getMajorVersion() + "." + info.getMinorVersion();
   }
 
+  @Override
+  public int getBaselineVersion() {
+    final ApplicationInfo info = ApplicationInfo.getInstance();
+    return info.getBuild().getBaselineVersion();
+  }
+
   @NotNull
   @Override
   public EventLogConnectionSettings getConnectionSettings() {

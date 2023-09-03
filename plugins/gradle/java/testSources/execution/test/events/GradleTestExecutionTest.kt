@@ -77,7 +77,12 @@ class GradleTestExecutionTest : GradleExecutionTestCase() {
                 }
               }
             }
-            assertNode("There were failing tests. See the report at: .*".toRegex())
+            if (!isTestLauncherUsed()) {
+              assertNode("There were failing tests. See the report at: .*".toRegex())
+            }
+          }
+          if (isTestLauncherUsed()) {
+            assertNode("Test failed.")
           }
         }
       }

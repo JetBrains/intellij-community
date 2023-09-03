@@ -91,7 +91,7 @@ open class DarculaLaf : BasicLookAndFeel(), UserDataHolder {
   }
 
   protected open val prefix: String
-    get() = "com/intellij/ide/ui/laf/darcula/darcula"
+    get() = "themes/darcula"
   protected open val systemPrefix: String?
     get() = null
 

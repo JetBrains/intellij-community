@@ -19,7 +19,7 @@ import javax.swing.border.Border;
 import java.awt.*;
 import java.util.List;
 
-public class WindowWrapperBuilder {
+public final class WindowWrapperBuilder {
   private final @NotNull Mode myMode;
   private final @NotNull JComponent myComponent;
   private @Nullable Project myProject;
@@ -87,7 +87,7 @@ public class WindowWrapperBuilder {
     UIUtil.runWhenWindowOpened(window, onShowCallback);
   }
 
-  private static class DialogWindowWrapper implements WindowWrapper {
+  private static final class DialogWindowWrapper implements WindowWrapper {
     private final @Nullable Project myProject;
     private final @NotNull JComponent myComponent;
     private final @NotNull Mode myMode;
@@ -167,7 +167,7 @@ public class WindowWrapperBuilder {
       myDialog.close(DialogWrapper.CANCEL_EXIT_CODE);
     }
 
-    private static class MyDialogWrapper extends DialogWrapper {
+    private static final class MyDialogWrapper extends DialogWrapper {
       private final @NotNull JComponent myComponent;
       private @Nullable @NonNls String myDimensionServiceKey;
       private @Nullable Computable<? extends JComponent> myPreferredFocusedComponent;
@@ -231,7 +231,7 @@ public class WindowWrapperBuilder {
     }
   }
 
-  private static class FrameWindowWrapper implements WindowWrapper {
+  private static final class FrameWindowWrapper implements WindowWrapper {
     private final @Nullable Project myProject;
     private final @NotNull JComponent myComponent;
     private final @NotNull Mode myMode;
@@ -319,7 +319,7 @@ public class WindowWrapperBuilder {
       Disposer.dispose(myFrame);
     }
 
-    private static class MyFrameWrapper extends FrameWrapper {
+    private static final class MyFrameWrapper extends FrameWrapper {
       private Computable<? extends JComponent> myPreferredFocusedComponent;
 
       MyFrameWrapper(Project project, @Nullable @NonNls String dimensionServiceKey) {

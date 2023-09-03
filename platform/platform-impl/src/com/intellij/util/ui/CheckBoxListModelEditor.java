@@ -23,7 +23,7 @@ import javax.swing.*;
 import java.util.ArrayList;
 import java.util.List;
 
-public class CheckBoxListModelEditor<T> {
+public final class CheckBoxListModelEditor<T> {
   private final CheckBoxList<T> list;
   private final ToolbarDecorator toolbarDecorator;
   private final Function<? super T, @NlsContexts.Checkbox String> toNameConverter;

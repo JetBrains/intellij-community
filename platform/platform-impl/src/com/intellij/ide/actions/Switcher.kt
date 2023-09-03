@@ -7,9 +7,10 @@ import com.intellij.ide.DataManager
 import com.intellij.ide.IdeBundle
 import com.intellij.ide.IdeEventQueue
 import com.intellij.ide.actions.OpenInRightSplitAction.Companion.openInRightSplit
-import com.intellij.ide.actions.SwitcherLogger.NAVIGATED_INDEX
+import com.intellij.ide.actions.SwitcherLogger.NAVIGATED
+import com.intellij.ide.actions.SwitcherLogger.NAVIGATED_INDEXES
+import com.intellij.ide.actions.SwitcherLogger.NAVIGATED_ORIGINAL_INDEXES
 import com.intellij.ide.actions.SwitcherLogger.SHOWN_TIME_ACTIVITY
-import com.intellij.ide.actions.SwitcherLogger.STATE
 import com.intellij.ide.actions.SwitcherSpeedSearch.Companion.installOn
 import com.intellij.ide.actions.ui.JBListWithOpenInRightSplit
 import com.intellij.ide.lightEdit.LightEdit
@@ -105,7 +106,7 @@ object Switcher : BaseSwitcherAction(null) {
                       forward: Boolean) : BorderLayoutPanel(), DataProvider, QuickSearchComponent, Disposable {
     val myPopup: JBPopup?
     val activity = SHOWN_TIME_ACTIVITY.started(project)
-    private var navigationIndex = -1
+    var navigationData: SwitcherLogger.NavigationData? = null
     val toolWindows: JBList<SwitcherListItem>
     val files: JBList<SwitcherVirtualFile>
     val cbShowOnlyEditedFiles: JCheckBox?
@@ -354,8 +355,11 @@ object Switcher : BaseSwitcherAction(null) {
       project.putUserData(SWITCHER_KEY, null)
       activity.finished {
         buildList {
-          STATE.with(navigationIndex != -1)
-          NAVIGATED_INDEX.with(navigationIndex)
+          NAVIGATED.with(navigationData != null && navigationData!!.navigationIndexes.isNotEmpty())
+          if (navigationData != null) {
+            NAVIGATED_ORIGINAL_INDEXES.with(navigationData!!.navigationOriginalIndexes)
+            NAVIGATED_INDEXES.with(navigationData!!.navigationIndexes)
+          }
         }
       }
     }
@@ -556,6 +560,9 @@ object Switcher : BaseSwitcherAction(null) {
       val mode = if (e == null) FileEditorManagerImpl.OpenMode.DEFAULT else getOpenMode(e)
       val values: List<*> = selectedList!!.selectedValuesList
       val searchQuery = mySpeedSearch?.enteredPrefix
+
+      navigationData = createNavigationData(values)
+
       cancel()
       if (values.isEmpty()) {
         tryToOpenFileSearch(e, searchQuery)
@@ -608,6 +615,17 @@ object Switcher : BaseSwitcherAction(null) {
         val item = values[0] as SwitcherListItem
         IdeFocusManager.getInstance(project).doWhenFocusSettlesDown({ item.navigate(this, mode) }, ModalityState.current())
       }
+    }
+
+    private fun createNavigationData(values: List<*>): SwitcherLogger.NavigationData? {
+      if (selectedList != files) return null
+
+      val filteringListModel = files.model as? FilteringListModel<SwitcherVirtualFile> ?: return null
+      val collectionListModel = filteringListModel.originalModel as? CollectionListModel<SwitcherVirtualFile> ?: return null
+      val originalIndexes = values.filterIsInstance<SwitcherVirtualFile>().map { collectionListModel.getElementIndex(it) }
+      val navigatedIndexes = values.filterIsInstance<SwitcherVirtualFile>().map { filteringListModel.getElementIndex(it) }
+
+      return SwitcherLogger.NavigationData(originalIndexes, navigatedIndexes)
     }
 
     private fun tryToOpenFileSearch(e: InputEvent?, fileName: String?) {

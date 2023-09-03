@@ -19,7 +19,7 @@ abstract class AbstractK2InspectionTest : AbstractInspectionTest() {
     }
 
     override fun doTest(path: String) {
-        IgnoreTests.runTestIfNotDisabledByFileDirective(Path(path), IgnoreTests.DIRECTIVES.IGNORE_FIR) {
+        IgnoreTests.runTestIfNotDisabledByFileDirective(Path(path), IgnoreTests.DIRECTIVES.IGNORE_K2) {
             super.doTest(path)
         }
     }

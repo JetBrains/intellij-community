@@ -12,6 +12,7 @@ import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PropertyMemberType;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -514,6 +515,11 @@ public abstract class QuickFixFactory {
 
   public abstract @NotNull IntentionAction createRemoveDuplicateExtendsAction(@NotNull String className);
 
+  /**
+   * @deprecated error elements are not provided anymore for members declared out of class.
+   * Now they are members of an unnamed class and can be moved as usual members.
+   */
+  @Deprecated
   public abstract @NotNull IntentionAction createMoveMemberIntoClassFix(@NotNull PsiErrorElement errorElement);
 
   /**
@@ -623,4 +629,8 @@ public abstract class QuickFixFactory {
    */
   @NotNull
   public abstract IntentionAction createDeleteFix(@NotNull PsiElement @NotNull [] elements, @NotNull @Nls String text);
+
+  @ApiStatus.Experimental
+  @NotNull
+  public abstract IntentionAction createAddMainMethodFix(@NotNull PsiUnnamedClass unnamedClass);
 }

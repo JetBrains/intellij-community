@@ -7,10 +7,13 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.NlsSafe;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.ProjectLevelVcsManager;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.VcsNotifier;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.containers.ContainerUtil;
 import git4idea.GitUtil;
 import git4idea.GitVcs;
 import git4idea.commands.*;
@@ -20,11 +23,9 @@ import git4idea.update.GitUpdateResult;
 import git4idea.util.GitUntrackedFilesHelper;
 import git4idea.util.LocalChangesWouldBeOverwrittenHelper;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 import java.util.*;
-import java.util.concurrent.atomic.AtomicBoolean;
 
 import static git4idea.GitNotificationIdsHolder.*;
 import static git4idea.commands.GitLocalChangesWouldBeOverwrittenDetector.Operation.CHECKOUT;
@@ -49,15 +50,10 @@ public class GitRebaser {
   }
 
   public GitUpdateResult rebase(@NotNull VirtualFile root,
-                                @NotNull List<String> parameters,
-                                @Nullable final Runnable onCancel,
-                                @Nullable GitLineHandlerListener lineListener) {
-    final GitLineHandler rebaseHandler = createHandler(root);
+                                @NotNull List<String> parameters) {
+    final GitLineHandler rebaseHandler = new GitLineHandler(myProject, root, GitCommand.REBASE);
     rebaseHandler.setStdoutSuppressed(false);
     rebaseHandler.addParameters(parameters);
-    if (lineListener != null) {
-      rebaseHandler.addLineListener(lineListener);
-    }
 
     final GitRebaseProblemDetector rebaseConflictDetector = new GitRebaseProblemDetector();
     rebaseHandler.addLineListener(rebaseConflictDetector);
@@ -77,31 +73,34 @@ public class GitRebaser {
              handleRebaseFailure(rebaseHandler, root, result, rebaseConflictDetector, untrackedFilesDetector, localChangesDetector);
     }
     catch (ProcessCanceledException pce) {
-      if (onCancel != null) {
-        onCancel.run();
-      }
       return GitUpdateResult.CANCEL;
     }
   }
 
-  protected GitLineHandler createHandler(VirtualFile root) {
-    return new GitLineHandler(myProject, root, GitCommand.REBASE);
-  }
-
   public void abortRebase(@NotNull VirtualFile root) {
     LOG.info("abortRebase " + root);
+
     final GitLineHandler rh = new GitLineHandler(myProject, root, GitCommand.REBASE);
     rh.setStdoutSuppressed(false);
     rh.addParameters("--abort");
-    GitTask task = new GitTask(myProject, rh, GitBundle.message("rebase.update.project.abort.task.title"));
-    task.setProgressIndicator(myProgressIndicator);
-    task.executeAsync(new GitTaskResultNotificationHandler(
-      myProject,
-      REBASE_ABORT,
-      GitBundle.message("rebase.update.project.notification.abort.success.message"),
-      GitBundle.message("rebase.update.project.notification.abort.cancel.message"),
-      GitBundle.message("rebase.update.project.notification.abort.error.message")
-    ));
+
+    String oldText = myProgressIndicator.getText();
+    myProgressIndicator.setText(GitBundle.message("rebase.update.project.abort.task.title"));
+    GitCommandResult commandResult = myGit.runCommand(rh);
+    myProgressIndicator.setText(oldText);
+
+    if (commandResult.success()) {
+      VcsNotifier.getInstance(myProject).notifySuccess(REBASE_ABORT, "",
+                                                       GitBundle.message("rebase.update.project.notification.abort.success.message"));
+    }
+    else {
+      VcsNotifier.getInstance(myProject).notifyError(REBASE_ABORT, "",
+                                                     GitBundle.message("rebase.update.project.notification.abort.error.message"));
+    }
+
+    myProgressIndicator.setText2(GitBundle.message("progress.details.refreshing.files.for.root", root.getPath()));
+    root.refresh(false, true);
+
   }
 
   public boolean continueRebase(@NotNull VirtualFile root) {
@@ -133,16 +132,24 @@ public class GitRebaser {
     final GitLineHandler rh = new GitLineHandler(myProject, root, GitCommand.REBASE);
     rh.setStdoutSuppressed(false);
     rh.addParameters(skip ? "--skip" : "--continue");
+
     final GitRebaseProblemDetector rebaseConflictDetector = new GitRebaseProblemDetector();
     rh.addLineListener(rebaseConflictDetector);
+    rh.addLineListener(GitStandardProgressAnalyzer.createListener(myProgressIndicator));
 
     // TODO If interactive rebase with commit rewording was invoked, this should take the reworded message
     GitRebaser.TrivialEditor editor = new GitRebaser.TrivialEditor();
     try (GitHandlerRebaseEditorManager ignored = GitHandlerRebaseEditorManager.prepareEditor(rh, editor)) {
-      final GitTask rebaseTask = new GitTask(myProject, rh, GitBundle.message("rebase.progress.indicator.continue.title"));
-      rebaseTask.setProgressAnalyzer(new GitStandardProgressAnalyzer());
-      rebaseTask.setProgressIndicator(myProgressIndicator);
-      return executeRebaseTaskInBackground(root, rh, rebaseConflictDetector, rebaseTask);
+      String oldText = myProgressIndicator.getText();
+      myProgressIndicator.setText(GitBundle.message("rebase.progress.indicator.title"));
+      GitCommandResult result = myGit.runCommand(rh);
+      myProgressIndicator.setText(oldText);
+      if (result.success()) return true;
+
+      return handleRebaseContinueFailure(root, result, rebaseConflictDetector);
+    }
+    catch (ProcessCanceledException pce) {
+      return false;
     }
   }
 
@@ -159,32 +166,12 @@ public class GitRebaser {
     return rebasingRoots;
   }
 
-  private boolean executeRebaseTaskInBackground(VirtualFile root, GitLineHandler h, GitRebaseProblemDetector rebaseConflictDetector, GitTask rebaseTask) {
-    final AtomicBoolean result = new AtomicBoolean();
-    final AtomicBoolean failure = new AtomicBoolean();
-    rebaseTask.executeInBackground(true, new GitTaskResultHandlerAdapter() {
-      @Override protected void onSuccess() {
-        result.set(true);
-      }
-
-      @Override protected void onCancel() {
-        result.set(false);
-      }
-
-      @Override protected void onFailure() {
-        failure.set(true);
-      }
-    });
-    if (failure.get()) {
-      result.set(handleRebaseFailure(root, h, rebaseConflictDetector));
-    }
-    return result.get();
-  }
-
   /**
    * @return true if the failure situation was resolved successfully, false if we failed to resolve the problem.
    */
-  private boolean handleRebaseFailure(final VirtualFile root, final GitLineHandler h, GitRebaseProblemDetector rebaseConflictDetector) {
+  private boolean handleRebaseContinueFailure(final VirtualFile root,
+                                              @NotNull GitCommandResult commandResult,
+                                              @NotNull GitRebaseProblemDetector rebaseConflictDetector) {
     if (rebaseConflictDetector.isMergeConflict()) {
       LOG.info("handleRebaseFailure merge conflict");
       return new GitConflictResolver(myProject, Collections.singleton(root), makeParams(myProject)) {
@@ -230,15 +217,32 @@ public class GitRebaser {
       }
     }
     else {
-      LOG.info("handleRebaseFailure error " + h.errors());
+      List<VcsException> errors = ContainerUtil.map(collectErrorOutputLines(commandResult), it -> new VcsException(it));
+      LOG.info("handleRebaseFailure error");
       VcsNotifier.getInstance(myProject)
         .notifyError(
           REBASE_UPDATE_PROJECT_ERROR,
           GitBundle.message("rebase.update.project.notification.failed.title"),
           "",
-          h.errors());
+          errors);
       return false;
     }
+  }
+
+  private static @NotNull List<@NlsSafe String> collectErrorOutputLines(@NotNull GitCommandResult result) {
+    List<String> errors = new ArrayList<>();
+    errors.addAll(ContainerUtil.filter(result.getOutput(), line -> GitHandlerUtil.isErrorLine(line.trim())));
+    errors.addAll(ContainerUtil.filter(result.getErrorOutput(), line -> GitHandlerUtil.isErrorLine(line.trim())));
+
+    if (errors.isEmpty() && !result.success()) {
+      errors.addAll(result.getErrorOutput());
+      if (errors.isEmpty()) {
+        List<String> output = result.getOutput();
+        String lastOutput = ContainerUtil.findLast(output, line -> !StringUtil.isEmptyOrSpaces(line));
+        return Collections.singletonList(lastOutput);
+      }
+    }
+    return errors;
   }
 
   private void stageEverything(@NotNull VirtualFile root) throws VcsException {
@@ -304,7 +308,7 @@ public class GitRebaser {
       return GitUpdateResult.ERROR;
     }
     else {
-      LOG.info("handleRebaseFailure error " + handler.errors());
+      LOG.info("handleRebaseFailure error");
       VcsNotifier.getInstance(myProject).notifyError(REBASE_UPDATE_PROJECT_ERROR,
                                                      GitBundle.message("rebase.update.project.notification.failed.title"),
                                                      result.getErrorOutputAsHtmlString(),
@@ -323,11 +327,13 @@ public class GitRebaser {
       myRoot = root;
     }
 
-    @Override protected boolean proceedIfNothingToMerge() {
+    @Override
+    protected boolean proceedIfNothingToMerge() {
       return myRebaser.continueRebase(myRoot);
     }
 
-    @Override protected boolean proceedAfterAllMerged() {
+    @Override
+    protected boolean proceedAfterAllMerged() {
       return myRebaser.continueRebase(myRoot);
     }
   }

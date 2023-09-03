@@ -23,6 +23,7 @@ import com.intellij.openapi.fileEditor.ex.FileEditorWithProvider
 import com.intellij.openapi.fileEditor.impl.text.TextEditorImpl
 import com.intellij.openapi.fileEditor.impl.text.TextEditorProvider
 import com.intellij.openapi.fileEditor.impl.text.TextEditorPsiDataProvider
+import com.intellij.openapi.progress.runWithModalProgressBlocking
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectCloseListener
 import com.intellij.openapi.util.Disposer
@@ -137,7 +138,14 @@ internal class TestEditorManagerImpl(private val project: Project) : FileEditorM
     val fileEditor: FileEditor
     val editor: Editor?
     if (provider != null && provider.accept(project, file)) {
-      fileEditor = provider.createEditor(project, file)
+      if (provider is AsyncFileEditorProvider) {
+        fileEditor = runWithModalProgressBlocking(project, "") {
+          (provider as AsyncFileEditorProvider).createEditorBuilder(project, file)
+        }.build()
+      }
+      else {
+        fileEditor = provider.createEditor(project, file)
+      }
       if (fileEditor is TextEditor) {
         editor = fileEditor.editor
         TextEditorProvider.putTextEditor(editor, fileEditor)

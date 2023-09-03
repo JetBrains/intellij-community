@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui.jcef;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -62,8 +62,7 @@ public final class JBCefCookieManager {
   }
 
   @SuppressWarnings("unused")
-  @NotNull
-  public CefCookieManager getCefCookieManager() {
+  public @NotNull CefCookieManager getCefCookieManager() {
     return myCefCookieManager;
   }
 

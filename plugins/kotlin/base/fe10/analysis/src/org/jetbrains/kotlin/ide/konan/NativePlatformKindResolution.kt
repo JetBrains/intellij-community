@@ -3,6 +3,7 @@
 package org.jetbrains.kotlin.ide.konan
 
 import com.intellij.openapi.components.service
+import org.jetbrains.kotlin.analysis.decompiler.konan.CachingIdeKlibMetadataLoader
 import org.jetbrains.kotlin.analyzer.*
 import org.jetbrains.kotlin.builtins.DefaultBuiltIns
 import org.jetbrains.kotlin.builtins.KotlinBuiltIns
@@ -17,7 +18,6 @@ import org.jetbrains.kotlin.descriptors.impl.CompositePackageFragmentProvider
 import org.jetbrains.kotlin.ide.konan.analyzer.NativeResolverForModuleFactory
 import org.jetbrains.kotlin.idea.base.projectStructure.moduleInfo.*
 import org.jetbrains.kotlin.idea.caches.resolve.BuiltInsCacheKey
-import org.jetbrains.kotlin.idea.klib.CachingIdeKlibMetadataLoader
 import org.jetbrains.kotlin.incremental.components.LookupTracker
 import org.jetbrains.kotlin.library.KotlinLibrary
 import org.jetbrains.kotlin.library.metadata.DeserializedKlibModuleOrigin

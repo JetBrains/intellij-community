@@ -51,8 +51,7 @@ public abstract class HistoryDialogModel {
     myGateway = gw;
   }
 
-  @NlsContexts.DialogTitle
-  public String getTitle() {
+  public @NlsContexts.DialogTitle String getTitle() {
     return FileUtil.toSystemDependentName(myFile.getPath());
   }
 

@@ -12,7 +12,6 @@ import com.intellij.ui.scale.ScaleType
 import com.intellij.util.SVGLoader
 import com.intellij.util.containers.CollectionFactory
 import com.intellij.util.ui.MultiResolutionImageProvider
-import com.intellij.util.ui.StartupUiUtil
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.TestOnly
 import java.awt.*
@@ -46,11 +45,11 @@ internal fun patchIconPath(originalPath: String, classLoader: ClassLoader): Pair
 
 @JvmField
 internal val pathTransform: AtomicReference<IconTransform> = AtomicReference(
-  IconTransform(StartupUiUtil.isUnderDarcula, arrayOf<IconPathPatcher>(DeprecatedDuplicatesIconPathPatcher()), null)
+  IconTransform(/* dark = */ false, /* patchers = */ arrayOf<IconPathPatcher>(DeprecatedDuplicatesIconPathPatcher()), /* filter = */ null)
 )
 
 @JvmField
-internal val iconToStrokeIcon: ConcurrentMap<CachedImageIcon, CachedImageIcon> = CollectionFactory.createConcurrentWeakKeyWeakValueMap<CachedImageIcon, CachedImageIcon>()
+internal val iconToStrokeIcon: ConcurrentMap<CachedImageIcon, CachedImageIcon> = CollectionFactory.createConcurrentWeakKeyWeakValueMap()
 
 @TestOnly
 @ApiStatus.Internal
@@ -220,7 +219,9 @@ open class CachedImageIcon internal constructor(
                                    isDarkOverridden = isDark,
                                    localFilterSupplier = localFilterSupplier,
                                    colorPatcher = colorPatcher,
-                                   useStroke = useStroke)
+                                   useStroke = useStroke,
+                                   toolTip = toolTip,
+                                   scaleContext = scaleContext)
           if (isDark) {
             darkVariant = result
           }

@@ -90,7 +90,7 @@ public abstract class SplitterWithSecondHideable {
     return myTitledSeparator.myOn;
   }
 
-  private class MyTitledSeparator extends AbstractTitledSeparatorWithIcon {
+  private final class MyTitledSeparator extends AbstractTitledSeparatorWithIcon {
     MyTitledSeparator(@NotNull @NlsContexts.Separator String separatorText, boolean vertical) {
       super(ArrowRight, vertical ? ArrowDown : Objects.requireNonNull(IconLoader.getDisabledIcon(ArrowRight)), separatorText);
     }
@@ -141,7 +141,7 @@ public abstract class SplitterWithSecondHideable {
     }
   }
 
-  private class MySplitter extends PseudoSplitter {
+  private final class MySplitter extends PseudoSplitter {
     private final @NotNull MouseEventHandler myMouseListener = new MouseEventHandler() {
       @Override
       public void mouseEntered(MouseEvent event) {
@@ -187,7 +187,7 @@ public abstract class SplitterWithSecondHideable {
       return isVertical() ? myTitledSeparator.getHeight() : myTitledSeparator.getWidth();
     }
 
-    private class MyDivider extends DividerImpl {
+    private final class MyDivider extends DividerImpl {
       @Override
       public void processMouseMotionEvent(MouseEvent e) {
         super.processMouseMotionEvent(e);

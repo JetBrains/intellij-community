@@ -9,7 +9,6 @@ import org.jetbrains.intellij.build.CompilationErrorsLogMessage
 import org.jetbrains.intellij.build.LogMessage
 import org.jetbrains.intellij.build.LogMessage.Kind.*
 import java.io.PrintStream
-import java.util.concurrent.ConcurrentLinkedDeque
 
 class TeamCityBuildMessageLogger : BuildMessageLogger() {
   companion object {
@@ -32,8 +31,6 @@ class TeamCityBuildMessageLogger : BuildMessageLogger() {
     }
   }
 
-  private val delayedBlockStartMessages = ConcurrentLinkedDeque<LogMessage>()
-
   override fun processMessage(message: LogMessage) {
     when (message.kind) {
       INFO -> logPlainMessage(message, "")
@@ -52,12 +49,8 @@ class TeamCityBuildMessageLogger : BuildMessageLogger() {
         }
       }
       PROGRESS -> print(ServiceMessageTypes.PROGRESS_MESSAGE, message.text)
-      BLOCK_STARTED -> delayedBlockStartMessages.addLast(message)
-      BLOCK_FINISHED -> {
-        if (!dropDelayedBlockStartMessageIfSame(message)) {
-          print(ServiceMessageTypes.BLOCK_CLOSED, "name" to message.text)
-        }
-      }
+      BLOCK_STARTED -> print(ServiceMessageTypes.BLOCK_OPENED, "name" to message.text)
+      BLOCK_FINISHED -> print(ServiceMessageTypes.BLOCK_CLOSED, "name" to message.text)
       ARTIFACT_BUILT -> print(ServiceMessageTypes.PUBLISH_ARTIFACTS, message.text)
       BUILD_STATUS -> print(ServiceMessageTypes.BUILD_STATUS, "text" to message.text)
       BUILD_STATUS_CHANGED_TO_SUCCESSFUL -> print(ServiceMessageTypes.BUILD_STATUS, "status" to "SUCCESS", "text" to message.text)
@@ -97,7 +90,6 @@ class TeamCityBuildMessageLogger : BuildMessageLogger() {
   }
 
   private fun logPlainMessage(message: LogMessage, status: String) {
-    printDelayedBlockStartMessages()
     if (status.isNotBlank()) {
       print(ServiceMessageTypes.MESSAGE, "text" to message.text, "status" to status)
     }
@@ -107,31 +99,6 @@ class TeamCityBuildMessageLogger : BuildMessageLogger() {
   }
 
   private fun print(messageId: String, argument: String) {
-    printDelayedBlockStartMessages()
     TeamCityBuildMessageLogger.print(messageId, argument)
-  }
-
-
-  private fun printDelayedBlockStartMessages() {
-    var message = delayedBlockStartMessages.pollFirst()
-    while (message != null) {
-      print(ServiceMessageTypes.BLOCK_OPENED, "name" to message.text)
-      message = delayedBlockStartMessages.pollFirst()
-    }
-  }
-
-  private fun dropDelayedBlockStartMessageIfSame(message: LogMessage): Boolean {
-    var last = delayedBlockStartMessages.peekLast()
-    if (last == null) return false
-    if (message.text != last.text) {
-      return false
-    }
-    last = delayedBlockStartMessages.pollLast()
-    if (message.text != last.text) {
-      // it's different since peek, return it back, hopefully no one notice that
-      delayedBlockStartMessages.addLast(last)
-      return false
-    }
-    return true
   }
 }

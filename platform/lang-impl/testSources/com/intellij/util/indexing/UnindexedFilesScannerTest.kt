@@ -8,7 +8,6 @@ import com.intellij.openapi.fileTypes.FileType
 import com.intellij.openapi.fileTypes.FileTypeManager
 import com.intellij.openapi.fileTypes.impl.FileTypeManagerImpl
 import com.intellij.openapi.progress.EmptyProgressIndicator
-import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.ContentIterator
@@ -345,8 +344,9 @@ class UnindexedFilesScannerTest {
   private fun scanFiles(filesAndDirs: IndexableFilesIterator): Pair<ProjectScanningHistory, Map<IndexableFilesIterator, Collection<VirtualFile>>> {
     val scanningHistoryRef = Ref<ProjectScanningHistory>()
     val scanningTask = object : UnindexedFilesScanner(project, false, false, listOf(filesAndDirs), null, "Test", ScanningType.PARTIAL) {
-      override fun performScanningAndIndexing(indicator: ProgressIndicator): ProjectScanningHistory {
-        return super.performScanningAndIndexing(indicator).also(scanningHistoryRef::set)
+      override fun performScanningAndIndexing(indicator: CheckCancelOnlyProgressIndicator,
+                                              progressReporter: IndexingProgressReporter): ProjectScanningHistory {
+        return super.performScanningAndIndexing(indicator, progressReporter).also(scanningHistoryRef::set)
       }
     }
     scanningTask.setFlushQueueAfterScanning(false)

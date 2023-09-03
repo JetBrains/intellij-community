@@ -22,7 +22,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 
-public class EditorFilteringMarkupModelEx implements MarkupModelEx {
+public final class EditorFilteringMarkupModelEx implements MarkupModelEx {
   private final @NotNull EditorImpl myEditor;
   private final @NotNull MarkupModelEx myDelegate;
 

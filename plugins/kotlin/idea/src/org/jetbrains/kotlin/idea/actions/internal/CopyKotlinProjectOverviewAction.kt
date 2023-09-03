@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.actions.internal
 
@@ -9,6 +9,7 @@ import com.intellij.openapi.application.ApplicationNamesInfo
 import com.intellij.openapi.application.ex.ApplicationInfoEx
 import com.intellij.openapi.application.impl.ApplicationInfoImpl
 import com.intellij.openapi.module.ModuleManager
+import com.intellij.openapi.project.DumbModeBlockedFunctionality
 import com.intellij.openapi.project.DumbService
 import com.intellij.openapi.project.IndexNotReadyException
 import com.intellij.openapi.project.Project
@@ -39,7 +40,9 @@ class CopyKotlinProjectOverviewAction : AnAction() {
             val clipboard = Toolkit.getDefaultToolkit().systemClipboard
             clipboard.setContents(StringSelection(result), EmptyClipboardOwner.INSTANCE)
         } catch (_: IndexNotReadyException) {
-            DumbService.getInstance(project).showDumbModeNotification(KotlinBundle.message("can.t.finish.while.indexing.is.in.progress"))
+            DumbService.getInstance(project).showDumbModeNotificationForFunctionality(KotlinBundle.message("can.t.finish.while.indexing.is.in.progress"),
+                                                                                      DumbModeBlockedFunctionality.Kotlin
+            )
         }
     }
 

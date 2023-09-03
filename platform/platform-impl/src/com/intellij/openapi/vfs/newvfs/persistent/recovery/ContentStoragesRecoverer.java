@@ -26,7 +26,7 @@ import static com.intellij.openapi.vfs.newvfs.persistent.VFSInitException.ErrorC
  *    later on)</li>
  * </ol>
  */
-public class ContentStoragesRecoverer implements VFSRecoverer {
+public final class ContentStoragesRecoverer implements VFSRecoverer {
   private static final Logger LOG = Logger.getInstance(ContentStoragesRecoverer.class);
 
   @Override

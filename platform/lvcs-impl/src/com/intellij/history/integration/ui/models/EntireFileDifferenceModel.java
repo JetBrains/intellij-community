@@ -11,7 +11,7 @@ import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 
-public class EntireFileDifferenceModel extends FileDifferenceModel {
+public final class EntireFileDifferenceModel extends FileDifferenceModel {
   private final Entry myLeft;
   private final Entry myRight;
 

@@ -14,6 +14,7 @@ import com.intellij.lang.xhtml.XHTMLLanguage;
 import com.intellij.lang.xml.XMLLanguage;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.command.CommandEvent;
 import com.intellij.openapi.command.CommandListener;
 import com.intellij.openapi.command.undo.UndoManager;
@@ -124,7 +125,7 @@ public final class XmlTagNameSynchronizer implements EditorFactoryListener {
   public static class MyEditorFactoryListener implements EditorFactoryListener {
     @Override
     public void editorCreated(@NotNull EditorFactoryEvent event) {
-      createSynchronizerFor(event.getEditor());
+      ReadAction.compute(() -> { createSynchronizerFor(event.getEditor()); return null; });
     }
   }
 

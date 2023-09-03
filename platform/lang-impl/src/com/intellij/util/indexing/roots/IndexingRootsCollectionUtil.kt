@@ -299,12 +299,10 @@ internal class WorkspaceIndexingRootsBuilder(private val ignoreModuleRoots: Bool
 
   companion object {
     @JvmOverloads
-    fun registerEntitiesFromContributors(project: Project,
-                                         entityStorage: EntityStorage,
+    fun registerEntitiesFromContributors(entityStorage: EntityStorage,
                                          settings: Settings = Settings.DEFAULT): WorkspaceIndexingRootsBuilder {
       val builder = WorkspaceIndexingRootsBuilder(!settings.collectExplicitRootsForModules)
-      val contributors = (WorkspaceFileIndex.getInstance(project) as WorkspaceFileIndexImpl).contributors
-      for (contributor in contributors) {
+      for (contributor in WorkspaceFileIndexImpl.EP_NAME.extensionList) {
         ProgressManager.checkCanceled()
         if (settings.shouldIgnore(contributor)) {
           continue

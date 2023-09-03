@@ -1670,7 +1670,7 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
    * (in idToDirCache). From that (grand)parent we climb down (findDescendantByIdPath) back to fileId,
    * resolving every child on the way via idToDirCache:
    */
-  class ParentFinder {
+  final class ParentFinder {
 
     /**
      * List of parentIds towards the root (or first cached directory).

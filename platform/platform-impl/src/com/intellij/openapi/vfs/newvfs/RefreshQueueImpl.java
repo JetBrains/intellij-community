@@ -18,11 +18,11 @@ import com.intellij.openapi.vfs.newvfs.events.VFileCreateEvent;
 import com.intellij.openapi.vfs.newvfs.events.VFileEvent;
 import com.intellij.openapi.vfs.newvfs.monitoring.VfsUsageCollector;
 import com.intellij.util.SmartList;
-import com.intellij.util.concurrency.AppExecutorUtil;
-import com.intellij.util.concurrency.BoundedTaskExecutor;
+import com.intellij.util.concurrency.CoroutineDispatcherBackedExecutor;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.io.storage.HeavyProcessLatch;
 import com.intellij.util.ui.EDT;
+import kotlinx.coroutines.CoroutineScope;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
@@ -33,20 +33,26 @@ import java.util.concurrent.atomic.AtomicLong;
 import java.util.function.Consumer;
 
 import static com.intellij.openapi.util.Pair.pair;
+import static com.intellij.util.concurrency.AppJavaExecutorUtil.createSingleTaskApplicationPoolExecutor;
 import static java.util.concurrent.TimeUnit.NANOSECONDS;
 
 public final class RefreshQueueImpl extends RefreshQueue implements Disposable {
   private static final Logger LOG = Logger.getInstance(RefreshQueueImpl.class);
 
-  private final Executor myQueue =
-    AppExecutorUtil.createBoundedApplicationPoolExecutor("RefreshQueue Pool", AppExecutorUtil.getAppExecutorService(), 1, this);
-  private final Executor myEventProcessingQueue =
-    AppExecutorUtil.createBoundedApplicationPoolExecutor("Async Refresh Event Processing", AppExecutorUtil.getAppExecutorService(), 1, this);
+  private final RefreshWorkerHelper helper = ApplicationManager.getApplication().getService(RefreshWorkerHelper.class);
+
+  private final Executor myQueue;
+  private final Executor myEventProcessingQueue;
 
   private final ProgressIndicator myRefreshIndicator = RefreshProgress.create();
   private final Map<Long, RefreshSessionImpl> mySessions = Collections.synchronizedMap(new HashMap<>());
   private final FrequentEventDetector myEventCounter = new FrequentEventDetector(100, 100, FrequentEventDetector.Level.WARN);
   private int myActivityCounter;
+
+  public RefreshQueueImpl(@NotNull CoroutineScope coroutineScope) {
+    myQueue = createSingleTaskApplicationPoolExecutor("RefreshQueue Pool", coroutineScope);
+    myEventProcessingQueue = createSingleTaskApplicationPoolExecutor("Async Refresh Event Processing", coroutineScope);
+  }
 
   void execute(@NotNull RefreshSessionImpl session) {
     ApplicationEx app;
@@ -160,7 +166,7 @@ public final class RefreshQueueImpl extends RefreshQueue implements Disposable {
   private void runRefreshSession(RefreshSessionImpl session, long timeInQueue) {
     try {
       mySessions.put(session.getId(), session);
-      session.scan(timeInQueue);
+      session.scan(timeInQueue, helper);
     }
     finally {
       mySessions.remove(session.getId());
@@ -201,7 +207,7 @@ public final class RefreshQueueImpl extends RefreshQueue implements Disposable {
 
   public static boolean isRefreshInProgress() {
     RefreshQueueImpl refreshQueue = (RefreshQueueImpl)RefreshQueue.getInstance();
-    return !(((BoundedTaskExecutor)refreshQueue.myQueue).isEmpty() && refreshQueue.mySessions.isEmpty());
+    return !refreshQueue.mySessions.isEmpty() || !((CoroutineDispatcherBackedExecutor)refreshQueue.myQueue).isEmpty();
   }
 
   @TestOnly

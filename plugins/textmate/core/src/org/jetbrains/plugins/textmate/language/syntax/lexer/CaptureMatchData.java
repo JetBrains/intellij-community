@@ -5,7 +5,7 @@ import org.jetbrains.plugins.textmate.regex.TextMateRange;
 
 import java.util.Comparator;
 
-public class CaptureMatchData {
+public final class CaptureMatchData {
   public static final Comparator<CaptureMatchData> START_OFFSET_ORDERING = (o1, o2) -> {
     int result = Integer.compare(o2.range.start, o1.range.start);
     return result != 0 ? result : Integer.compare(o2.group, o1.group);

@@ -595,6 +595,11 @@ public abstract class K2LocalInspectionTestGenerated extends AbstractK2LocalInsp
             runTest("../../../idea/tests/testData/inspectionsLocal/conventionNameCalls/replaceGetOrSet/setValueUsed.kt");
         }
 
+        @TestMetadata("setValueUsedWithUnitReturnType.kt")
+        public void testSetValueUsedWithUnitReturnType() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/conventionNameCalls/replaceGetOrSet/setValueUsedWithUnitReturnType.kt");
+        }
+
         @TestMetadata("setWithNoParameters.kt")
         public void testSetWithNoParameters() throws Exception {
             runTest("../../../idea/tests/testData/inspectionsLocal/conventionNameCalls/replaceGetOrSet/setWithNoParameters.kt");
@@ -3087,6 +3092,11 @@ public abstract class K2LocalInspectionTestGenerated extends AbstractK2LocalInsp
             @TestMetadata("singleExpressionStringTemplate.kt")
             public void testSingleExpressionStringTemplate() throws Exception {
                 runTest("testData/inspectionsLocal/removeSingleExpressionStringTemplate/singleExpressionStringTemplate.kt");
+            }
+
+            @TestMetadata("singleExpressionStringTemplateNullableString.kt")
+            public void testSingleExpressionStringTemplateNullableString() throws Exception {
+                runTest("testData/inspectionsLocal/removeSingleExpressionStringTemplate/singleExpressionStringTemplateNullableString.kt");
             }
 
             @TestMetadata("singleExpressionStringTemplateWithMethodCall.kt")

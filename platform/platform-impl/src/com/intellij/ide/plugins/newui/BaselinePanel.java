@@ -17,7 +17,7 @@ import java.util.List;
 /**
  * @author Alexander Lobas
  */
-public class BaselinePanel extends NonOpaquePanel {
+public final class BaselinePanel extends NonOpaquePanel {
   private Component myBaseComponent;
   private final List<Component> myButtonComponents = new ArrayList<>();
   private boolean[] myButtonEnableStates;

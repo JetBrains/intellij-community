@@ -19,7 +19,7 @@ import java.util.List;
 import java.util.Set;
 
 
-public class KeymapUsageCollector extends ApplicationUsagesCollector {
+public final class KeymapUsageCollector extends ApplicationUsagesCollector {
   private static final EventLogGroup GROUP = new EventLogGroup("keymaps.name", 2);
   private static final StringEventField KEYMAP_NAME = EventFields.StringValidatedByEnum("keymap_name", "keymaps");
   private static final StringEventField BASED_ON = EventFields.StringValidatedByEnum("based_on", "keymaps");

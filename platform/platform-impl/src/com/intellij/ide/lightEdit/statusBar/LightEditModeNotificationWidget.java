@@ -159,7 +159,7 @@ public final class LightEditModeNotificationWidget implements CustomStatusBarWid
     );
   }
 
-  private static class LightEditDelegatingAction extends DumbAwareAction implements LightEditCompatible {
+  private static final class LightEditDelegatingAction extends DumbAwareAction implements LightEditCompatible {
     private final AnAction myDelegate;
 
     private LightEditDelegatingAction(@Nullable AnAction delegate, @NotNull Supplier<@Nls String> textSupplier) {

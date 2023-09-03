@@ -24,8 +24,8 @@ public final class ToolLanguageUtil {
     }
 
     Set<String> result;
-    if (language instanceof MetaLanguage) {
-      Collection<Language> matchingLanguages = ((MetaLanguage)language).getMatchingLanguages();
+    if (language instanceof MetaLanguage metaLanguage) {
+      Collection<Language> matchingLanguages = metaLanguage.getMatchingLanguages();
       result = new HashSet<>();
       for (Language matchingLanguage : matchingLanguages) {
         result.addAll(getLanguageWithDialects(matchingLanguage, applyToDialects));
@@ -42,26 +42,22 @@ public final class ToolLanguageUtil {
     List<Language> dialects = language.getDialects();
     if (!applyToDialects || dialects.isEmpty()) return Set.of(language.getID());
 
-    Set<String> result = new HashSet<>(1 + dialects.size());
+    Collection<@NotNull Language> transitiveDialects = language.getTransitiveDialects();
+    Set<String> result = new HashSet<>(1 + transitiveDialects.size());
     result.add(language.getID());
-    addDialects(language, result);
+    for (Language dialect : transitiveDialects) {
+      result.add(dialect.getID());
+    }
     return result;
   }
 
-  private static void addDialects(@NotNull Language language, @NotNull Set<? super String> result) {
-    for (Language dialect : language.getDialects()) {
-      if (result.add(dialect.getID())) {
-        addDialects(dialect, result);
-      }
-    }
-  }
   private static boolean existsDialectOneOf(@NotNull Set<String> elementDialectIds, @NotNull Language language, boolean applyToDialects) {
     if (elementDialectIds.contains(language.getID())) {
       return true;
     }
     if (applyToDialects) {
-      for (Language dialect : language.getDialects()) {
-        if (existsDialectOneOf(elementDialectIds, dialect, applyToDialects)) {
+      for (Language dialect : language.getTransitiveDialects()) {
+        if (elementDialectIds.contains(dialect.getID())) {
           return true;
         }
       }
@@ -69,20 +65,19 @@ public final class ToolLanguageUtil {
     return false;
   }
 
-  public static boolean isToolLanguageOneOf(@NotNull Set<String> elementDialectIds, @NotNull String languageId, boolean applyToDialects) {
-    if (elementDialectIds.contains(languageId)) {
+  public static boolean isToolLanguageOneOf(@NotNull Set<String> elementDialectIds, @NotNull String toolLanguageId, boolean applyToDialects) {
+    if (elementDialectIds.contains(toolLanguageId)) {
       return true;
     }
-    Language language = Language.findLanguageByID(languageId);
+    Language language = Language.findLanguageByID(toolLanguageId);
     if (language == null) {
       // unknown language in plugin.xml, ignore
       return false;
     }
 
-    if (language instanceof MetaLanguage) {
-      return !ContainerUtil.process(Language.getRegisteredLanguages(), registeredLanguage ->
-        !((MetaLanguage)language).matchesLanguage(registeredLanguage)
-        || !existsDialectOneOf(elementDialectIds, registeredLanguage, applyToDialects));
+    if (language instanceof MetaLanguage metaLanguage) {
+      return ContainerUtil.exists(metaLanguage.getMatchingLanguages(), registeredLanguage ->
+        existsDialectOneOf(elementDialectIds, registeredLanguage, applyToDialects));
     }
     return existsDialectOneOf(elementDialectIds, language, applyToDialects);
   }

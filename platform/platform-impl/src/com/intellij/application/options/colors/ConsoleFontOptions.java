@@ -17,7 +17,7 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.awt.*;
 
-public class ConsoleFontOptions extends FontOptions {
+public final class ConsoleFontOptions extends FontOptions {
   public ConsoleFontOptions(ColorAndFontOptions options) {
     super(options);
   }

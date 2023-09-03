@@ -17,7 +17,7 @@ import java.awt.event.ActionListener;
 import java.util.ArrayList;
 import java.util.List;
 
-public class LightEditConfirmationDialog extends DialogWrapper {
+public final class LightEditConfirmationDialog extends DialogWrapper {
   static final int STAY_IN_LIGHT_EDIT = 100;
   static final int PROCEED_TO_PROJECT = 101;
 

@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.devkit.dom.index;
 
 import com.intellij.openapi.project.Project;
@@ -7,6 +7,7 @@ import com.intellij.psi.PsiManager;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.ClassUtil;
 import com.intellij.util.SmartList;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.FactoryMap;
 import com.intellij.util.indexing.FileBasedIndex;
 import com.intellij.util.indexing.ID;
@@ -138,7 +139,7 @@ public class ExtensionPointClassIndex extends PluginXmlIndexBase<String, IntList
 
     FileBasedIndex.getInstance().processValues(NAME, key, null, (file, value) -> {
       for (Integer integer : value) {
-        result.add(ExtensionPointIndex.getExtensionPointDom(psiManager, domManager, file, integer));
+        ContainerUtil.addIfNotNull(result, ExtensionPointIndex.getExtensionPointDom(psiManager, domManager, file, integer));
       }
       return true;
     }, scope);

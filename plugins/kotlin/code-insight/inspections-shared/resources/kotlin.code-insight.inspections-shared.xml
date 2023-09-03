@@ -220,5 +220,15 @@
             language="kotlin"
             key="inspection.filter.is.instance.call.with.class.literal.argument.display.name" bundle="messages.KotlinBundle"/>
 
+    <localInspection implementationClass="org.jetbrains.kotlin.idea.codeInsight.inspections.shared.KotlinUnusedImportInspection"
+                     groupPath="Kotlin"
+                     groupBundle="messages.KotlinBundle" groupKey="group.names.redundant.constructs"
+                     enabledByDefault="true"
+                     level="WARNING"
+                     runForWholeFile="true"
+                     language="kotlin"
+                     suppressId="UnusedImport" editorAttributes="NOT_USED_ELEMENT_ATTRIBUTES"
+                     key="inspection.kotlin.unused.import.display.name" bundle="messages.KotlinBundle"/>
+
   </extensions>
 </idea-plugin>

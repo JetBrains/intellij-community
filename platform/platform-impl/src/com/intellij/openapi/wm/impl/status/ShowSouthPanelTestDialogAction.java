@@ -16,7 +16,7 @@ import javax.swing.*;
 import java.awt.event.ActionEvent;
 
 @SuppressWarnings("HardCodedStringLiteral")
-public class ShowSouthPanelTestDialogAction extends AnAction implements DumbAware {
+public final class ShowSouthPanelTestDialogAction extends AnAction implements DumbAware {
   @Override
   public void actionPerformed(@NotNull AnActionEvent e) {
     new MyDialogWrapper(e.getProject()).show();
@@ -27,7 +27,7 @@ public class ShowSouthPanelTestDialogAction extends AnAction implements DumbAwar
     return ActionUpdateThread.BGT;
   }
 
-  private static class MyDialogWrapper extends DialogWrapper {
+  private static final class MyDialogWrapper extends DialogWrapper {
     private final Wrapper mySouthPanel = new Wrapper();
 
     private final JButton myRefresh = new JButton("Refresh");
@@ -112,7 +112,7 @@ public class ShowSouthPanelTestDialogAction extends AnAction implements DumbAwar
       return myMoveErrorTextToButtons.isSelected();
     }
 
-    private static class MyOptionAction extends MyAction implements OptionAction {
+    private static final class MyOptionAction extends MyAction implements OptionAction {
       private final Action[] myActions;
 
       MyOptionAction() {

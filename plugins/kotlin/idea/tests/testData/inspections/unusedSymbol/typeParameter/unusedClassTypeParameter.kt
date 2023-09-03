@@ -1,5 +1,5 @@
 class UnusedClassTypeParameter<T>(p: String) {
-    {
+    init {
         println(p)
     }
 }
@@ -36,6 +36,7 @@ class UnusedClassTypeParameter4<T> {
 
 
 fun main(args: Array<String>) {
+    println(args)
     UnusedClassTypeParameter("")
     UnusedClassTypeParameter2<Int>().test()
     foo3<Int>(UnusedClassTypeParameter3())

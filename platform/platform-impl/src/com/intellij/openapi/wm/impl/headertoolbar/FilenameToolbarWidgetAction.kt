@@ -42,7 +42,9 @@ import javax.swing.JComponent
 class FilenameToolbarWidgetAction: DumbAwareAction(), CustomComponentAction {
 
   companion object {
-    private val FILE_COLOR: Key<Color> = Key.create("FILE_COLOR")
+    private val FILE_COLOR: Key<Color> = Key.create("FILENAME_WIDGET_FILE_COLOR")
+    private val FILE_FULL_PATH: Key<String?> = Key.create("FILENAME_WIDGET_FILE_PATH")
+    private const val isIDEA331002Fixed = false //todo[mikhail.sokolov]
   }
 
   override fun actionPerformed(e: AnActionEvent) {
@@ -52,7 +54,8 @@ class FilenameToolbarWidgetAction: DumbAwareAction(), CustomComponentAction {
 
   override fun update(e: AnActionEvent) {
     e.presentation.isEnabledAndVisible = false
-    if (UISettings.getInstance().editorTabPlacement != UISettings.TABS_NONE) return
+    val uiSettings = UISettings.getInstance()
+    if (uiSettings.editorTabPlacement != UISettings.TABS_NONE && !(uiSettings.fullPathsInWindowHeader && isIDEA331002Fixed)) return
     val project = e.project ?: return
     val file = FileEditorManager.getInstance(project).selectedFiles.firstOrNull() ?: return
     updatePresentationFromFile(project, file, e.presentation)
@@ -63,8 +66,7 @@ class FilenameToolbarWidgetAction: DumbAwareAction(), CustomComponentAction {
     var fg:Color?
 
     var icon = IconUtil.getIcon(file, Iconable.ICON_FLAG_READ_STATUS, project)
-    @Suppress("UseJBColor")
-    if (JBColor.isBright() && ColorUtil.isDark(JBColor.namedColor("MainToolbar.background", Color.WHITE))) {
+    if (JBColor.isBright() && isDarkToolbar()) {
       icon = IconLoader.getDarkIcon(icon, true)
       fg = EditorColorsManager.getInstance().getScheme("Dark").getColor(status.colorKey)
     }
@@ -81,9 +83,13 @@ class FilenameToolbarWidgetAction: DumbAwareAction(), CustomComponentAction {
     val filename = VfsPresentationUtil.getUniquePresentableNameForUI(project, file)
     presentation.isEnabledAndVisible = true
     presentation.putClientProperty(FILE_COLOR, fg)
+    presentation.putClientProperty(FILE_FULL_PATH, if (UISettings.getInstance().fullPathsInWindowHeader) file.path else null)
     presentation.description = StringUtil.shortenTextWithEllipsis(filename, 60, 30)
     presentation.icon = icon
   }
+
+  @Suppress("UseJBColor")
+  private fun isDarkToolbar() = ColorUtil.isDark(JBColor.namedColor("MainToolbar.background", Color.WHITE))
 
   override fun createCustomComponent(presentation: Presentation, place: String): JBLabel = JBLabel().apply {
     isOpaque = false
@@ -140,11 +146,19 @@ class FilenameToolbarWidgetAction: DumbAwareAction(), CustomComponentAction {
   }
 
   override fun updateCustomComponent(component: JComponent, presentation: Presentation) {
-    component as JBLabel
-    component.isOpaque = false
-    component.iconTextGap = JBUI.scale(4)
-    component.icon = presentation.icon
-    component.text = presentation.description
-    component.foreground = presentation.getClientProperty(FILE_COLOR)
+    (component as JBLabel).apply {
+      @Suppress("HardCodedStringLiteral")
+      val path = presentation.getClientProperty(FILE_FULL_PATH)
+      isOpaque = false
+      iconTextGap = JBUI.scale(4)
+      icon = presentation.icon
+      foreground = presentation.getClientProperty(FILE_COLOR)
+      text = presentation.description
+      if (path != null && isIDEA331002Fixed) {
+        val htmlColor = ColorUtil.toHtmlColor(JBColor.namedColor("Component.infoForeground", foreground))
+        @Suppress("HardCodedStringLiteral")
+        text = "<html><body>$text <font color='$htmlColor'>[$path]</font></body></html>"
+      }
+    }
   }
 }

@@ -4,6 +4,7 @@ fun buz() {
     Color.<caret>
 }
 
+// IGNORE_K2
 // EXIST: RED
 // EXIST: GREEN
 // EXIST: BLUE

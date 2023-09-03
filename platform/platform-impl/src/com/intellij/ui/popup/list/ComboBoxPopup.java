@@ -169,7 +169,7 @@ public class ComboBoxPopup<T> extends ListPopupImpl {
     }
   }
 
-  private class MyDelegateRenderer implements ListCellRenderer<T> {
+  private final class MyDelegateRenderer implements ListCellRenderer<T> {
     @Override
     public Component getListCellRendererComponent(JList list,
                                                   Object value,

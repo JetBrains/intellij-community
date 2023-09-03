@@ -10,7 +10,7 @@ import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-class CustomizedSwitcherPanel extends CompositeColorDescriptionPanel {
+final class CustomizedSwitcherPanel extends CompositeColorDescriptionPanel {
   private final ColorSettingsPage myPage;
   private final PreviewPanel myPreviewPanel;
 

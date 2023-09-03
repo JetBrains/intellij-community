@@ -68,7 +68,10 @@ import org.jetbrains.plugins.terminal.ui.TerminalContainer;
 import org.jetbrains.plugins.terminal.vfs.TerminalSessionVirtualFileImpl;
 
 import javax.swing.*;
-import java.awt.event.*;
+import java.awt.event.ActionEvent;
+import java.awt.event.FocusEvent;
+import java.awt.event.FocusListener;
+import java.awt.event.KeyEvent;
 import java.nio.file.Path;
 import java.util.*;
 import java.util.concurrent.CopyOnWriteArrayList;
@@ -333,8 +336,7 @@ public final class TerminalToolWindowManager implements Disposable {
     myTerminalSetupHandlers.forEach(consumer -> consumer.accept(finalWidget));
     panel.updateDFState();
 
-    updatePreferredFocusableComponent(content, widget);
-
+    content.setPreferredFocusedComponent(() -> finalWidget.getPreferredFocusableComponent());
     return content;
   }
 
@@ -448,12 +450,6 @@ public final class TerminalToolWindowManager implements Disposable {
         TerminalToolWindowManager.this.gotoNextSplitTerminal(widget, forward);
       }
     });
-    terminalWidget.getTerminalPanel().addFocusListener(new FocusAdapter() {
-      @Override
-      public void focusGained(FocusEvent e) {
-        updatePreferredFocusableComponent(content, widget);
-      }
-    });
   }
 
   private static void updateTabTitle(@NotNull TerminalTitle terminalTitle,
@@ -464,10 +460,6 @@ public final class TerminalToolWindowManager implements Disposable {
       .filter(c -> c!= content)
       .map(c -> c.getDisplayName()).toList();
     content.setDisplayName(generateUniqueName(title, tabs));
-  }
-
-  private static void updatePreferredFocusableComponent(@NotNull Content content, @NotNull TerminalWidget terminalWidget) {
-    content.setPreferredFocusableComponent(terminalWidget.getPreferredFocusableComponent());
   }
 
   public boolean isSplitTerminal(@NotNull JBTerminalWidget widget) {
@@ -658,7 +650,7 @@ public final class TerminalToolWindowManager implements Disposable {
 }
 
 
-class TerminalToolWindowPanel extends SimpleToolWindowPanel implements UISettingsListener {
+final class TerminalToolWindowPanel extends SimpleToolWindowPanel implements UISettingsListener {
   private final PropertiesComponent myPropertiesComponent;
   private final ToolWindow myWindow;
 

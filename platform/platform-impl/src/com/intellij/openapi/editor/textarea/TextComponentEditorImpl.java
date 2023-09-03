@@ -26,7 +26,6 @@ import java.awt.geom.Point2D;
 import java.util.Arrays;
 import java.util.concurrent.atomic.AtomicBoolean;
 
-
 public class TextComponentEditorImpl extends UserDataHolderBase implements TextComponentEditor {
   private final Project myProject;
   private final JTextComponent myTextComponent;

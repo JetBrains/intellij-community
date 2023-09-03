@@ -10,6 +10,8 @@ import com.intellij.psi.tree.IElementType;
 import com.intellij.util.containers.CollectionFactory;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.text.CharArrayUtil;
+import it.unimi.dsi.fastutil.ints.IntArrayList;
+import it.unimi.dsi.fastutil.ints.IntStack;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -48,15 +50,13 @@ public final class JavaLexer extends LexerBase {
 
   private final _JavaLexer myFlexLexer;
   private final boolean myStringTemplates;
+  private final IntStack myStateStack = new IntArrayList(1);
   private CharSequence myBuffer;
   private char @Nullable [] myBufferArray;
   private int myBufferIndex;
   private int myBufferEndOffset;
   private int myTokenEndOffset;  // positioned after the last symbol of the current token
   private IElementType myTokenType;
-  private short myState = 0;
-  private short[] myBraceCounts = new short[1];
-  private int myTemplateDepth = -1;
 
   /** The length of the last valid unicode escape (6 or greater), or 1 when no unicode escape was found. */
   private int mySymbolLength = 1;
@@ -75,20 +75,13 @@ public final class JavaLexer extends LexerBase {
     myTokenType = null;
     myTokenEndOffset = startOffset;
     mySymbolLength = 1;
-    if (initialState != 0) {
-      myState = (short)initialState;
-      short braceCount = (short)(initialState >> 16);
-      if (braceCount > 0) {
-        myBraceCounts[0] = braceCount;
-        myTemplateDepth = 0;
-      }
-    }
+    myStateStack.push(initialState);
     myFlexLexer.reset(myBuffer, startOffset, endOffset, 0);
   }
 
   @Override
   public int getState() {
-    return myTemplateDepth < 0 ? 0 : myBraceCounts[myTemplateDepth] << 16 | myState;
+    return myStateStack.topInt();
   }
 
   @Override
@@ -140,30 +133,33 @@ public final class JavaLexer extends LexerBase {
         break;
 
       case '{':
-        if (myTemplateDepth >= 0) {
-          myBraceCounts[myTemplateDepth]++;
+        if (myStringTemplates) {
+          int count = myStateStack.topInt() >> 16;
+          if (count > 0) myStateStack.push((myStateStack.popInt() & STATE_TEXT_BLOCK_TEMPLATE) | ((count + 1) << 16));
         }
         myTokenType = JavaTokenType.LBRACE;
         myTokenEndOffset = myBufferIndex + mySymbolLength;
         break;
       case '}':
-        if (myTemplateDepth >= 0) {
-          if (--myBraceCounts[myTemplateDepth] == 0) {
-            myTemplateDepth--;
-            if (myState == STATE_TEXT_BLOCK_TEMPLATE) {
-              if (locateLiteralEnd(myBufferIndex + mySymbolLength, LiteralType.TEXT_BLOCK)) {
-                myTokenType = JavaTokenType.TEXT_BLOCK_TEMPLATE_MID;
-              }
-              else {
-                myState = STATE_DEFAULT;
-                myTokenType = JavaTokenType.TEXT_BLOCK_TEMPLATE_END;
-              }
+        if (myStringTemplates) {
+          int count = myStateStack.topInt() >> 16;
+          if (count > 0) {
+            if (count != 1) {
+              myStateStack.push((myStateStack.popInt() & STATE_TEXT_BLOCK_TEMPLATE) | ((count - 1) << 16));
             }
             else {
-              boolean fragment = locateLiteralEnd(myBufferIndex + mySymbolLength, LiteralType.STRING);
-              myTokenType = fragment ? JavaTokenType.STRING_TEMPLATE_MID : JavaTokenType.STRING_TEMPLATE_END;
+              int state = myStateStack.popInt();
+              if (myStateStack.isEmpty()) myStateStack.push(STATE_DEFAULT);
+              if ((state & STATE_TEXT_BLOCK_TEMPLATE) != 0) {
+                boolean fragment = locateLiteralEnd(myBufferIndex + mySymbolLength, LiteralType.TEXT_BLOCK);
+                myTokenType = fragment ? JavaTokenType.TEXT_BLOCK_TEMPLATE_MID : JavaTokenType.TEXT_BLOCK_TEMPLATE_END;
+              }
+              else {
+                boolean fragment = locateLiteralEnd(myBufferIndex + mySymbolLength, LiteralType.STRING);
+                myTokenType = fragment ? JavaTokenType.STRING_TEMPLATE_MID : JavaTokenType.STRING_TEMPLATE_END;
+              }
+              break;
             }
-            break;
           }
         }
         myTokenType = JavaTokenType.RBRACE;
@@ -226,13 +222,7 @@ public final class JavaLexer extends LexerBase {
           int l2 = mySymbolLength;
           if (myBufferIndex + l1 + l2 < myBufferEndOffset && locateCharAt(myBufferIndex + l1 + l2) == '"') {
             boolean fragment = locateLiteralEnd(myBufferIndex + l1 + l2 + mySymbolLength, LiteralType.TEXT_BLOCK);
-            if (fragment) {
-              myState = STATE_TEXT_BLOCK_TEMPLATE;
-              myTokenType = JavaTokenType.TEXT_BLOCK_TEMPLATE_BEGIN;
-            }
-            else {
-              myTokenType = JavaTokenType.TEXT_BLOCK_LITERAL;
-            }
+            myTokenType = fragment ? JavaTokenType.TEXT_BLOCK_TEMPLATE_BEGIN : JavaTokenType.TEXT_BLOCK_LITERAL;
           }
           else {
             myTokenType = JavaTokenType.STRING_LITERAL;
@@ -292,12 +282,14 @@ public final class JavaLexer extends LexerBase {
         if (pos < myBufferEndOffset) {
           if (locateCharAt(pos) == '{' && myStringTemplates && literalType != LiteralType.CHAR) {
             pos += mySymbolLength;
-            myTemplateDepth++;
-            if (myTemplateDepth == myBraceCounts.length) {
-              myBraceCounts = Arrays.copyOf(myBraceCounts, myTemplateDepth * 2);
-            }
-            myBraceCounts[myTemplateDepth] = 1;
             myTokenEndOffset = pos;
+            if (myStateStack.topInt() == 0) myStateStack.popInt();
+            if (literalType == LiteralType.TEXT_BLOCK) {
+              myStateStack.push(STATE_TEXT_BLOCK_TEMPLATE | (1 << 16));
+            }
+            else {
+              myStateStack.push(STATE_DEFAULT | (1 << 16));
+            }
             return true;
           }
         }

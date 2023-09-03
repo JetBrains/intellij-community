@@ -624,7 +624,7 @@ public abstract class FinderRecursivePanel<T> extends OnePixelSplitter implement
     return 200;
   }
 
-  private class MyListCellRenderer extends ColoredListCellRenderer<T> {
+  private final class MyListCellRenderer extends ColoredListCellRenderer<T> {
     private static final @NonNls String ITEM_PROPERTY = "FINDER_RECURSIVE_PANEL_ITEM_PROPERTY";
 
     @Override
@@ -716,7 +716,7 @@ public abstract class FinderRecursivePanel<T> extends OnePixelSplitter implement
    * in order to dispose created objects on selection change.
    * {@link DisposablePanel} could be used as a right component in that case.
    */
-  protected static class DisposablePanel extends JPanel implements Disposable {
+  protected static final class DisposablePanel extends JPanel implements Disposable {
     public DisposablePanel(LayoutManager layout, @Nullable Disposable parent) {
       super(layout);
       if (parent != null) {

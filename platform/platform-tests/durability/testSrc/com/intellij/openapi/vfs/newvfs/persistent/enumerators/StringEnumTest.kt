@@ -2,6 +2,8 @@
 package com.intellij.openapi.vfs.newvfs.persistent.enumerators
 
 import com.intellij.openapi.vfs.newvfs.persistent.*
+import com.intellij.util.io.DataEnumerator
+import com.intellij.util.io.DataEnumeratorEx
 import kotlinx.coroutines.*
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.Json
@@ -14,7 +16,12 @@ import kotlin.random.nextInt
 import kotlin.time.Duration.Companion.milliseconds
 
 
+/**
+ * This should be just [DataEnumerator], but we create dedicated interface to slightly adjust the
+ * contract -- e.g. nullability -- and also just to have more control over it
+ */
 internal interface StringEnum {
+  fun tryEnumerate(s: String): Int
   fun enumerate(s: String): Int
   fun valueOf(idx: Int): String?
   fun flush()
@@ -25,6 +32,9 @@ internal interface StringEnum {
 internal sealed interface Proto {
   @Serializable
   sealed interface Request : Proto {
+    @Serializable
+    data class TryEnumerate(val s: String) : Request
+
     @Serializable
     data class Enumerate(val s: String) : Request
 
@@ -44,7 +54,10 @@ internal sealed interface Proto {
     object Ok : Response
 
     @Serializable
-    data class Enumerate(val idx: Int) : Response
+    data class Failure(val message: String) : Response
+
+    @Serializable
+    data class Enumerated(val idx: Int) : Response
 
     @Serializable
     data class ValueOf(val s: String?) : Response
@@ -70,30 +83,40 @@ private fun InputStream.readProto(): Proto {
   return Json.decodeFromString(data.decodeToString())
 }
 
-internal class StringEnumApp(private val enumBackend: StringEnum) : App {
-  override fun run(appAgent: AppAgent) {
+internal class StringEnumeratorAppHelper(private val enumeratorBackend: StringEnum) {
+  fun run(appAgent: AppAgent) {
     while (true) {
-      when (val req = appAgent.input.readProto() as? Proto.Request) {
-        is Proto.Request.Flush -> {
-          enumBackend.flush()
-          appAgent.output.writeProto(Proto.Response.Ok)
+      try {
+        when (val req = appAgent.input.readProto() as? Proto.Request) {
+          is Proto.Request.Flush -> {
+            enumeratorBackend.flush()
+            appAgent.output.writeProto(Proto.Response.Ok)
+          }
+          is Proto.Request.Close -> {
+            enumeratorBackend.close()
+            appAgent.output.writeProto(Proto.Response.Ok)
+          }
+          is Proto.Request.Enumerate -> {
+            val id = enumeratorBackend.enumerate(req.s)
+            appAgent.output.writeProto(Proto.Response.Enumerated(id))
+          }
+          is Proto.Request.TryEnumerate -> {
+            val id = enumeratorBackend.tryEnumerate(req.s)
+            appAgent.output.writeProto(Proto.Response.Enumerated(id))
+          }
+          is Proto.Request.ValueOf -> {
+            val s = enumeratorBackend.valueOf(req.idx)
+            appAgent.output.writeProto(Proto.Response.ValueOf(s))
+          }
+          null -> { // connection closed
+            enumeratorBackend.close()
+            break
+          }
         }
-        is Proto.Request.Close -> {
-          enumBackend.close()
-          appAgent.output.writeProto(Proto.Response.Ok)
-        }
-        is Proto.Request.Enumerate -> {
-          val id = enumBackend.enumerate(req.s)
-          appAgent.output.writeProto(Proto.Response.Enumerate(id))
-        }
-        is Proto.Request.ValueOf -> {
-          val s = enumBackend.valueOf(req.idx)
-          appAgent.output.writeProto(Proto.Response.ValueOf(s))
-        }
-        null -> { // connection closed
-          enumBackend.close()
-          break
-        }
+      }
+      catch (e: Throwable) {
+        appAgent.output.writeProto(Proto.Response.Failure(e.message ?: e.javaClass.name))
+        throw e
       }
     }
   }
@@ -105,7 +128,15 @@ internal class StringEnumUser : User {
       appController.appInput.writeProto(Proto.Request.Enumerate(s))
       afterRequest()
       val result = appController.appOutput.readProto()
-      check(result is Proto.Response.Enumerate) { "$result" }
+      check(result is Proto.Response.Enumerated) { "$result" }
+      return result.idx
+    }
+
+    fun tryEnumerate(s: String, afterRequest: () -> Unit = {}): Int {
+      appController.appInput.writeProto(Proto.Request.TryEnumerate(s))
+      afterRequest()
+      val result = appController.appOutput.readProto()
+      check(result is Proto.Response.Enumerated) { "$result" }
       return result.idx
     }
 
@@ -158,28 +189,44 @@ internal class StringEnumUser : User {
           if (s !in inverse && s != unconfirmedCommitted) return s
         }
       }
+
+      fun randomEnumeratedString(): String = forward.values.random(random)
     }
 
-    val randomEnumerateNew: API.(() -> Unit) -> Unit = { afterRequest ->
+    val enumerateRandomNewString: API.(() -> Unit) -> Unit = { afterRequest ->
       check(state.unconfirmedCommitted == null)
       val str = state.newRandomString()
       state.unconfirmedCommitted = str
       //println("enumerate $str")
       val id = enumerate(str, afterRequest)
       //println("enumerate $str -> $id")
-      check(id > state.lastSeenId) { "lastSeenId ${state.lastSeenId} vs got $id" }
+      check(id > state.lastSeenId) {
+        "Expect new id from enumerate(new string), but got $id <= lastSeenId: ${state.lastSeenId} (new string: '$str')"
+      }
       state.lastSeenId = id
       state.forward[id] = str
       state.inverse[str] = id
       state.unconfirmedCommitted = null
     }
 
-    val randomValueOfExisting: API.(() -> Unit) -> Unit = { afterRequest ->
+    val tryEnumerateRandomKnownString: API.(() -> Unit) -> Unit = {
+      if (!state.forward.isEmpty()) {
+        val knownString = state.randomEnumeratedString()
+        val expectedId = state.inverse[knownString]
+        val id = tryEnumerate(knownString)
+        check(expectedId == id) { "tryEnumerate('$knownString') must be $expectedId, but returns $id instead" }
+      }
+    }
+
+    val valueOfRandomKnownId: API.(() -> Unit) -> Unit = { afterRequest ->
       check(state.unconfirmedCommitted == null)
-      val id = state.forward.keys.toList().let { it[random.nextInt(it.size)] }
-      val expectedStr = state.forward[id]!!
-      val actualStr = valueOf(id, afterRequest)
-      check(actualStr == expectedStr) { "expected $expectedStr != actual $actualStr" }
+      val forwardKeys = state.forward.keys.toList()
+      if (!forwardKeys.isEmpty()) {
+        val id = forwardKeys.let { it[random.nextInt(it.size)] }
+        val expectedStr = state.forward[id]!!
+        val actualStr = valueOf(id, afterRequest)
+        check(actualStr == expectedStr) { "valueOf($id): expected '$expectedStr' != actual '$actualStr'" }
+      }
     }
 
     fun API.randomRequest(afterRequest: () -> Unit, vararg options: API.(() -> Unit) -> Unit) {
@@ -190,82 +237,69 @@ internal class StringEnumUser : User {
     try {
       repeat(timesToKill + 1) { runCounter ->
         if (foundFail) return@repeat
-        val requestsBeforeKill = random.nextInt(0, 200)
         userAgent.runApplication { app ->
           val api = API(app)
 
+          //check the state (initial/after kill):
           for (id in state.forward.keys) {
-            val expected = state.forward[id]!!
-            check(state.inverse[expected] == id)
+            val expectedStr = state.forward[id]!!
+            check(state.inverse[expectedStr] == id) {
+              "Bug: state self-check failed: forward[$id]='$expectedStr', while inverse[$expectedStr]=${state.inverse[expectedStr]}"
+            }
             val actualStr = api.valueOf(id)
-            if (actualStr != expected) {
+            if (actualStr != expectedStr) {
               userAgent.addInteractionResult(
-                InteractionResult(false, "state mismatch (string)", "id=$id, expected=$expected, got=$actualStr")
+                InteractionResult(false, "state mismatch (valueOf)", "valueOf($id): expected='$expectedStr', got='$actualStr'")
               )
               foundFail = true
               return@runApplication
             }
-            val actualId = api.enumerate(expected)
+            val actualId = api.tryEnumerate(expectedStr)
             if (actualId != id) {
               userAgent.addInteractionResult(
-                InteractionResult(false, "state mismatch (id)", "string=$expected, expected id=$id, got=$actualId")
+                InteractionResult(false, "state mismatch (tryEnumerate)", "tryEnumerate('$expectedStr'): expected id=$id, got=$actualId")
               )
               foundFail = true
               return@runApplication
             }
           }
 
-          var unconfirmedCommittedIsOk = true
-          var unconfirmedCommittedWitness: String? = null
-
-          if (state.unconfirmedCommitted != null) {
-            for (possibleId in (state.lastSeenId + 1)..(state.lastSeenId + 150)) {
-              val valueOf = api.valueOf(possibleId)
-              if (valueOf != null) {
-                if (valueOf == state.unconfirmedCommitted) {
-                  unconfirmedCommittedIsOk = true
-                  unconfirmedCommittedWitness = valueOf
-                  state.lastSeenId = possibleId
-                  state.unconfirmedCommitted = null
-                  state.forward[possibleId] = valueOf
-                  state.inverse[valueOf] = possibleId
-                }
-                else {
-                  unconfirmedCommittedIsOk = false
-                  unconfirmedCommittedWitness = valueOf
-                }
-                break
+          val unconfirmedString = state.unconfirmedCommitted
+          if (unconfirmedString != null) {
+            val unconfirmedIdOrZero = api.tryEnumerate(unconfirmedString)
+            if (unconfirmedIdOrZero != DataEnumeratorEx.NULL_ID) {
+              check(state.lastSeenId < unconfirmedIdOrZero) {
+                "Last (unconfirmed) enumerate($unconfirmedString) got id($unconfirmedString) < lastSeenId(${state.lastSeenId})"
               }
-            }
-          }
-          else {
-            val nextValueOf = api.valueOf(state.lastSeenId + 1)
-            if (nextValueOf != null) {
-              unconfirmedCommittedIsOk = false
-              unconfirmedCommittedWitness = nextValueOf
-            }
-          }
-
-          if (!unconfirmedCommittedIsOk) {
-            userAgent.addInteractionResult(
-              InteractionResult(false, "state mismatch (unconfirmed committed)",
-                                "unconfirmed committed=${state.unconfirmedCommitted}, nextExpectedId=${state.lastSeenId}, got=$unconfirmedCommittedWitness")
-            )
-            foundFail = true
-            return@runApplication
-          }
-          else {
-            userAgent.addInteractionResult(
-              InteractionResult(true, "state match" + if (state.unconfirmedCommitted != null) " (unconfirmed committed)" else "")
-            )
+              val unconfirmedIdResolvedBack = api.valueOf(unconfirmedIdOrZero)
+              if (unconfirmedIdResolvedBack == unconfirmedString) {
+                state.lastSeenId = unconfirmedIdOrZero
+                state.forward[unconfirmedIdOrZero] = unconfirmedString
+                state.inverse[unconfirmedString] = unconfirmedIdOrZero
+                userAgent.addInteractionResult(
+                  InteractionResult(true, "state match (unconfirmed .enumerate() found to be committed)")
+                )
+              }
+              else {
+                userAgent.addInteractionResult(
+                  InteractionResult(false, "state mismatch (unconfirmed .enumerate() found to be wrongly committed)",
+                                    "Unconfirmed .enumerate(${unconfirmedString}) = $unconfirmedIdOrZero, but .valueOf($unconfirmedIdOrZero)='$unconfirmedIdResolvedBack' (lastSeenId=${state.lastSeenId})")
+                )
+                foundFail = true
+                return@runApplication
+              }
+            } // else: unconfirmed committed wasn't really commited -> it's OK
             state.unconfirmedCommitted = null
           }
 
+          //first fill enumerator up with _some_ initial data:
+          val requestsBeforeKill = random.nextInt(0, 200)
           repeat(requestsBeforeKill) {
             api.randomRequest(
               afterRequest = {},
-              randomEnumerateNew, randomEnumerateNew, randomEnumerateNew, randomEnumerateNew, // 80%
-              randomValueOfExisting // 20%
+              enumerateRandomNewString, enumerateRandomNewString, enumerateRandomNewString, enumerateRandomNewString, // =4/6
+              tryEnumerateRandomKnownString,  // =1/6
+              valueOfRandomKnownId            // =1/6
             )
           }
 
@@ -275,12 +309,13 @@ internal class StringEnumUser : User {
             app.kill()
           }
           try {
+            //Now _kill_ the App at some random moment, while _continuing_ to fill it with more data:
             while (true) {
               api.randomRequest(
                 afterRequest = {
                   if (random.nextInt(5) == 0) killerJob.start()
                 },
-                randomEnumerateNew, randomValueOfExisting
+                enumerateRandomNewString, valueOfRandomKnownId
               )
             }
           }

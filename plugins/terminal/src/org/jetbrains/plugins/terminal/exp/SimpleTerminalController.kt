@@ -11,6 +11,7 @@ import com.intellij.openapi.editor.ex.EditorEx
 import com.intellij.openapi.editor.markup.EffectType
 import com.intellij.openapi.editor.markup.TextAttributes
 import com.intellij.openapi.util.Disposer
+import com.intellij.openapi.util.Key
 import com.intellij.terminal.JBTerminalSystemSettingsProviderBase
 import com.jediterm.terminal.StyledTextConsumer
 import com.jediterm.terminal.TextStyle
@@ -34,18 +35,21 @@ class SimpleTerminalController(
     get() = session.model
 
   private val outputModel: TerminalOutputModel = TerminalOutputModel(editor)
+  private val selectionModel = TerminalSelectionModel(outputModel)  // fake model, that won't be changed
   private val caretModel: TerminalCaretModel = TerminalCaretModel(session, outputModel, editor)
-  private val caretPainter: TerminalCaretPainter = TerminalCaretPainter(caretModel, editor)
+  private val caretPainter: TerminalCaretPainter = TerminalCaretPainter(caretModel, outputModel, selectionModel, editor)
 
   var isFocused: Boolean = false
 
   init {
+    editor.putUserData(KEY, this)
+
     // create dummy logical block, that will cover all the output, needed only for caret model
     outputModel.createBlock(command = null)
     terminalModel.isCommandRunning = true
 
     setupContentListener()
-    setupKeyEventDispatcher(editor, settings, eventsHandler, disposable = this, this::isFocused)
+    setupKeyEventDispatcher(editor, settings, eventsHandler, outputModel, selectionModel, disposable = this)
     setupMouseListener(editor, settings, terminalModel, eventsHandler, disposable = this)
     terminalModel.withContentLock {
       updateEditorContent()
@@ -164,4 +168,8 @@ class SimpleTerminalController(
   }
 
   private data class TerminalContent(val text: String, val highlightings: List<HighlightingInfo>)
+
+  companion object {
+    val KEY: Key<SimpleTerminalController> = Key.create("SimpleTerminalController")
+  }
 }

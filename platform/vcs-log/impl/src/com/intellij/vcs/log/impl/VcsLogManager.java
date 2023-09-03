@@ -74,7 +74,8 @@ public class VcsLogManager implements Disposable {
     refreshLogOnVcsEvents(logProviders, myPostponableRefresher, myLogData);
 
     myColorManager = VcsLogColorManagerFactory.create(logProviders.keySet());
-    myStatusBarProgress = new VcsLogStatusBarProgress(myProject, logProviders, myLogData.getProgress());
+    myStatusBarProgress = new VcsLogStatusBarProgress(myProject, logProviders, myLogData.getIndex().getIndexingRoots(),
+                                                      myLogData.getProgress());
 
     if (scheduleRefreshImmediately) {
       scheduleInitialization();

@@ -26,9 +26,9 @@ class DependencySearchServiceTest : LightPlatformTestCase() {
     val testProviderLocal1 = object : TestSearchProvider() {
       override fun isLocal() = true
 
-      override fun suggestPrefix(groupId: String?, artifactId: String?): CompletableFuture<List<RepositoryArtifactData>> {
+      override fun suggestPrefix(groupId: String, artifactId: String): CompletableFuture<List<RepositoryArtifactData>> {
         return CompletableFuture.supplyAsync {
-          listOf(MavenRepositoryArtifactInfo(groupId!!, artifactId!!, listOf("0", "1")))
+          listOf(MavenRepositoryArtifactInfo(groupId, artifactId, listOf("0", "1")))
         }
       }
     }
@@ -36,9 +36,9 @@ class DependencySearchServiceTest : LightPlatformTestCase() {
     val testProviderLocal2 = object : TestSearchProvider() {
       override fun isLocal() = true
 
-      override fun suggestPrefix(groupId: String?, artifactId: String?): CompletableFuture<List<RepositoryArtifactData>> {
+      override fun suggestPrefix(groupId: String, artifactId: String): CompletableFuture<List<RepositoryArtifactData>> {
         return CompletableFuture.supplyAsync {
-          listOf(MavenRepositoryArtifactInfo(groupId!!, artifactId!!, listOf("2")))
+          listOf(MavenRepositoryArtifactInfo(groupId, artifactId, listOf("2")))
         }
       }
     }
@@ -46,9 +46,9 @@ class DependencySearchServiceTest : LightPlatformTestCase() {
     val testProviderRemote3 = object : TestSearchProvider() {
       override fun isLocal() = false
 
-      override fun suggestPrefix(groupId: String?, artifactId: String?): CompletableFuture<List<RepositoryArtifactData>> {
+      override fun suggestPrefix(groupId: String, artifactId: String): CompletableFuture<List<RepositoryArtifactData>> {
         return CompletableFuture.supplyAsync {
-          listOf(MavenRepositoryArtifactInfo(groupId!!, artifactId!!, listOf("3")))
+          listOf(MavenRepositoryArtifactInfo(groupId, artifactId, listOf("3")))
         }
       }
     }
@@ -56,9 +56,9 @@ class DependencySearchServiceTest : LightPlatformTestCase() {
     val testProviderRemote4 = object : TestSearchProvider() {
       override fun isLocal() = false
 
-      override fun suggestPrefix(groupId: String?, artifactId: String?): CompletableFuture<List<RepositoryArtifactData>> {
+      override fun suggestPrefix(groupId: String, artifactId: String): CompletableFuture<List<RepositoryArtifactData>> {
         return CompletableFuture.supplyAsync {
-          listOf(MavenRepositoryArtifactInfo(groupId!!, artifactId!!, listOf("4")))
+          listOf(MavenRepositoryArtifactInfo(groupId, artifactId, listOf("4")))
         }
       }
     }
@@ -128,7 +128,7 @@ class DependencySearchServiceTest : LightPlatformTestCase() {
       TODO("Not yet implemented")
     }
 
-    override fun suggestPrefix(groupId: String?, artifactId: String?): CompletableFuture<List<RepositoryArtifactData>> {
+    override fun suggestPrefix(groupId: String, artifactId: String): CompletableFuture<List<RepositoryArtifactData>> {
       TODO("Not yet implemented")
     }
 

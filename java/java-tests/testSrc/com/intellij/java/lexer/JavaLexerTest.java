@@ -279,8 +279,7 @@ public class JavaLexerTest extends LexerTestCase {
       LBRACE ('{')
       RBRACE ('}')
       RBRACE ('}')
-      STRING_TEMPLATE_END ('}"')
-      """);
+      STRING_TEMPLATE_END ('}"')""");
     doTest("\"\"\"\n\\{new int[][] {{}}}\"\"\"", """
       TEXT_BLOCK_TEMPLATE_BEGIN ('""\"\\n\\{')
       NEW_KEYWORD ('new')
@@ -295,8 +294,7 @@ public class JavaLexerTest extends LexerTestCase {
       LBRACE ('{')
       RBRACE ('}')
       RBRACE ('}')
-      TEXT_BLOCK_TEMPLATE_END ('}""\"')
-      """);
+      TEXT_BLOCK_TEMPLATE_END ('}""\"')""");
     doTest("\"\\{x} + \\{y} = \\{x + y}\"", """
       STRING_TEMPLATE_BEGIN ('"\\{')
       IDENTIFIER ('x')
@@ -390,15 +388,28 @@ public class JavaLexerTest extends LexerTestCase {
              STRING_TEMPLATE_END ('}"')
              STRING_TEMPLATE_END ('}"')
              STRING_TEMPLATE_END ('}"')
-             WHITE_SPACE ('\\n')
-             """);
+             WHITE_SPACE ('\\n')""");
     doTest("""
              ""\"
                    "\\{}""\"""",
            """
              TEXT_BLOCK_TEMPLATE_BEGIN ('""\"\\n      "\\{')
-             TEXT_BLOCK_TEMPLATE_END ('}""\"')
-             """);
+             TEXT_BLOCK_TEMPLATE_END ('}""\"')""");
+    doTest("""
+             STR.""\"
+             xx
+             \\{STR."String \\{a} String"}
+             xx""\"""",
+           """
+             IDENTIFIER ('STR')
+             DOT ('.')
+             TEXT_BLOCK_TEMPLATE_BEGIN ('""\"\\nxx\\n\\{')
+             IDENTIFIER ('STR')
+             DOT ('.')
+             STRING_TEMPLATE_BEGIN ('"String \\{')
+             IDENTIFIER ('a')
+             STRING_TEMPLATE_END ('} String"')
+             TEXT_BLOCK_TEMPLATE_END ('}\\nxx""\"')""");
   }
 
   public void testStringLiterals() {

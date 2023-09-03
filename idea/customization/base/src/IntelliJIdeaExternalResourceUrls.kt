@@ -9,11 +9,11 @@ import com.intellij.util.Url
 import com.intellij.util.Urls
 
 class IntelliJIdeaExternalResourceUrls : BaseJetBrainsExternalProductResourceUrls() {
-  override val basePatchDownloadUrl: String
-    get() = "https://download.jetbrains.com/idea/"
+  override val basePatchDownloadUrl: Url
+    get() = Urls.newFromEncoded("https://download.jetbrains.com/idea/")
   
-  override val productPageUrl: String
-    get() = "https://www.jetbrains.com/idea/"
+  override val productPageUrl: Url
+    get() = Urls.newFromEncoded("https://www.jetbrains.com/idea/")
   
   override val youtrackProjectId: String
     get() = "IDEA"
@@ -52,6 +52,6 @@ class IntelliJIdeaExternalResourceUrls : BaseJetBrainsExternalProductResourceUrl
   override val gettingStartedPageUrl: Url
     get() = Urls.newFromEncoded("https://www.jetbrains.com/idea/resources/")
   
-  override val baseWebHelpUrl: String
-    get() = "https://www.jetbrains.com/help/idea/"
+  override val baseWebHelpUrl: Url
+    get() = Urls.newFromEncoded("https://www.jetbrains.com/help/idea/")
 }

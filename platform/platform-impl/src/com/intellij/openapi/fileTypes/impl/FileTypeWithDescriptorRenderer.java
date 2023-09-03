@@ -17,7 +17,7 @@ import javax.swing.event.ListDataListener;
 import java.util.*;
 import java.util.function.Function;
 
-class FileTypeWithDescriptorRenderer<T> extends SimpleListCellRenderer<T> implements UiInspectorListRendererContextProvider {
+final class FileTypeWithDescriptorRenderer<T> extends SimpleListCellRenderer<T> implements UiInspectorListRendererContextProvider {
   private static final Icon EMPTY_ICON = EmptyIcon.ICON_18;
 
   private final @NotNull ListModel<? extends T> myModel;

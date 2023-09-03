@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vfs.ex.dummy;
 
 import com.intellij.openapi.application.Application;
@@ -10,8 +10,8 @@ import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.containers.CollectionFactory;
 import com.intellij.util.containers.ConcurrentFactoryMap;
-import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -27,7 +27,7 @@ import java.util.stream.Collectors;
 public abstract class DummyCachingFileSystem<T extends VirtualFile> extends DummyFileSystem {
   private final String myProtocol;
   private final Map<String, T> myCachedFiles = ConcurrentFactoryMap.create(
-    this::findFileByPathInner, ContainerUtil::createConcurrentWeakValueMap);
+    this::findFileByPathInner, () -> CollectionFactory.createConcurrentWeakValueMap());
 
   public DummyCachingFileSystem(@NotNull String protocol) {
     myProtocol = protocol;

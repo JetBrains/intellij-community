@@ -13,6 +13,7 @@ import org.junit.rules.TemporaryFolder;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Objects;
+import java.util.Random;
 import java.util.concurrent.ThreadLocalRandom;
 import java.util.function.IntSupplier;
 import java.util.stream.Stream;
@@ -284,7 +285,7 @@ public abstract class BlobStorageTestBase<S> {
   
 
   @NotNull
-  public static String randomString(final ThreadLocalRandom rnd,
+  public static String randomString(final Random rnd,
                                     final int size) {
     final char[] chars = new char[size];
     for (int i = 0; i < chars.length; i++) {

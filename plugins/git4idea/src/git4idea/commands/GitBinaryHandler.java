@@ -99,11 +99,6 @@ public class GitBinaryHandler extends GitHandler {
   }
 
   @Override
-  public void destroyProcess() {
-    myProcess.destroy();
-  }
-
-  @Override
   protected void waitForProcess() {
     int exitCode;
     try {

@@ -89,28 +89,28 @@ final class ValueCellRenderer implements TableCellRenderer {
     abstract void setValue(@NotNull T value);
   }
 
-  private static class PointRenderer extends Renderer<Point> {
+  private static final class PointRenderer extends Renderer<Point> {
     @Override
     public void setValue(final @NotNull Point value) {
       setText(String.valueOf(value.x) + ':' + value.y);
     }
   }
 
-  private static class DimensionRenderer extends Renderer<Dimension> {
+  private static final class DimensionRenderer extends Renderer<Dimension> {
     @Override
     public void setValue(final @NotNull Dimension value) {
       setText(value.width + "x" + value.height);
     }
   }
 
-  private static class InsetsRenderer extends Renderer<Insets> {
+  private static final class InsetsRenderer extends Renderer<Insets> {
     @Override
     public void setValue(final @NotNull Insets value) {
       setText("top: " + value.top + " left:" + value.left + " bottom:" + value.bottom + " right:" + value.right);
     }
   }
 
-  static class RectangleRenderer extends Renderer<Rectangle> {
+  static final class RectangleRenderer extends Renderer<Rectangle> {
     @Override
     public void setValue(final @NotNull Rectangle value) {
       setText(toString(value));
@@ -121,7 +121,7 @@ final class ValueCellRenderer implements TableCellRenderer {
     }
   }
 
-  private static class ColorRenderer extends Renderer<Color> {
+  private static final class ColorRenderer extends Renderer<Color> {
     @Override
     public void setValue(final @NotNull Color value) {
       StringBuilder sb = new StringBuilder();
@@ -147,7 +147,7 @@ final class ValueCellRenderer implements TableCellRenderer {
     }
   }
 
-  private static class FontRenderer extends Renderer<Font> {
+  private static final class FontRenderer extends Renderer<Font> {
     @Override
     public void setValue(final @NotNull Font value) {
       StringBuilder sb = new StringBuilder();
@@ -172,14 +172,14 @@ final class ValueCellRenderer implements TableCellRenderer {
     }
   }
 
-  private static class BooleanRenderer extends Renderer<Boolean> {
+  private static final class BooleanRenderer extends Renderer<Boolean> {
     @Override
     public void setValue(final @NotNull Boolean value) {
       setText(value ? "Yes" : "No");
     }
   }
 
-  private static class IconRenderer extends Renderer<Icon> {
+  private static final class IconRenderer extends Renderer<Icon> {
     @Override
     public void setValue(final @NotNull Icon value) {
       setIcon(value);
@@ -205,7 +205,7 @@ final class ValueCellRenderer implements TableCellRenderer {
     }
   }
 
-  private static class BorderRenderer extends Renderer<Border> {
+  private static final class BorderRenderer extends Renderer<Border> {
     @Override
     public void setValue(final @NotNull Border value) {
       setText(getTextDescription(value));
@@ -287,7 +287,7 @@ final class ValueCellRenderer implements TableCellRenderer {
     }
   }
 
-  private static class ObjectRenderer extends Renderer<Object> {
+  private static final class ObjectRenderer extends Renderer<Object> {
     {
       putClientProperty("html.disable", Boolean.TRUE);
     }

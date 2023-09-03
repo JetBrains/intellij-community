@@ -27,8 +27,7 @@ public final class InMemoryChangeListStorage implements ChangeListStorage {
   }
 
   @Override
-  @Nullable
-  public ChangeSetHolder readPrevious(int id, IntSet recursionGuard) {
+  public @Nullable ChangeSetHolder readPrevious(int id, IntSet recursionGuard) {
     if (mySets.isEmpty()) return null;
     if (id == -1) return new ChangeSetHolder(mySets.size() - 1, mySets.get(mySets.size() - 1));
     return id == 0 ? null : new ChangeSetHolder(id -1, mySets.get(id - 1));

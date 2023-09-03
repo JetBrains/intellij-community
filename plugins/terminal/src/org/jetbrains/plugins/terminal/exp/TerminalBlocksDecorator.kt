@@ -5,22 +5,22 @@ import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.EditorCustomElementRenderer
 import com.intellij.openapi.editor.Inlay
 import com.intellij.openapi.editor.ex.EditorEx
-import com.intellij.openapi.editor.markup.*
-import com.intellij.ui.scale.JBUIScale
+import com.intellij.openapi.editor.markup.CustomHighlighterRenderer
+import com.intellij.openapi.editor.markup.HighlighterLayer
+import com.intellij.openapi.editor.markup.HighlighterTargetArea
+import com.intellij.openapi.editor.markup.RangeHighlighter
 import com.intellij.util.concurrency.annotations.RequiresEdt
-import com.intellij.util.ui.GraphicsUtil
 import com.intellij.util.ui.JBUI
-import java.awt.Font
 import java.awt.Graphics
-import java.awt.Graphics2D
-import java.awt.Rectangle
-import java.awt.geom.Path2D
-import java.awt.geom.Rectangle2D
 
-class TerminalBlocksDecorator(private val editor: EditorEx) {
+class TerminalBlocksDecorator(private val outputModel: TerminalOutputModel,
+                              private val editor: EditorEx) : TerminalOutputModel.TerminalOutputListener {
   init {
-    editor.markupModel.addRangeHighlighter(0, 0, HighlighterLayer.LAST,
-                                           null, HighlighterTargetArea.LINES_IN_RANGE).apply {
+    outputModel.addListener(this)
+    editor.markupModel.addRangeHighlighter(0, 0,
+                                           // the order doesn't matter because there is only custom renderer with its own order
+                                           HighlighterLayer.LAST, null,
+                                           HighlighterTargetArea.LINES_IN_RANGE).apply {
       isGreedyToLeft = true
       isGreedyToRight = true
       customRenderer = TerminalRightAreaRenderer()
@@ -28,7 +28,7 @@ class TerminalBlocksDecorator(private val editor: EditorEx) {
   }
 
   @RequiresEdt
-  fun installDecoration(block: CommandBlock, isFirstBlock: Boolean = false): BlockDecoration {
+  fun installDecoration(block: CommandBlock, isFirstBlock: Boolean = false) {
     // add additional empty space on top of the block, if it is the first block
     val topInset = TerminalUi.blockTopInset + if (isFirstBlock) TerminalUi.blocksGap else 0
     val topRenderer = EmptyWidthInlayRenderer(topInset)
@@ -36,13 +36,35 @@ class TerminalBlocksDecorator(private val editor: EditorEx) {
     val bottomRenderer = EmptyWidthInlayRenderer(TerminalUi.blockBottomInset + TerminalUi.blocksGap)
     val bottomInlay = editor.inlayModel.addBlockElement(block.endOffset, true, false, 0, bottomRenderer)!!
 
-    val attributes = TextAttributes(TerminalUi.outputForeground, TerminalUi.blockBackground, null, null, Font.PLAIN)
-    val highlighter = editor.markupModel.addRangeHighlighter(block.startOffset, block.endOffset, HighlighterLayer.FIRST - 100,
-                                                             attributes, HighlighterTargetArea.LINES_IN_RANGE)
-    highlighter.isGreedyToRight = true
-    highlighter.lineMarkerRenderer = TerminalBlockLeftAreaRenderer()
-    highlighter.customRenderer = TerminalBlockRenderer()
-    return BlockDecoration(highlighter, topInlay, bottomInlay)
+    val bgHighlighter = editor.markupModel.addRangeHighlighter(block.startOffset, block.endOffset,
+                                                               // the order doesn't matter because there is only custom renderer with its own order
+                                                               HighlighterLayer.LAST, null,
+                                                               HighlighterTargetArea.LINES_IN_RANGE)
+    bgHighlighter.isGreedyToRight = true
+    val cornersHighlighter = editor.markupModel.addRangeHighlighter(block.startOffset, block.endOffset,
+                                                                    // the line marker should be painted first, because it is painting the block background
+                                                                    HighlighterLayer.FIRST - 100, null,
+                                                                    HighlighterTargetArea.LINES_IN_RANGE)
+    cornersHighlighter.isGreedyToRight = true
+
+    val decoration = BlockDecoration(bgHighlighter, cornersHighlighter, topInlay, bottomInlay)
+    outputModel.putDecoration(block, decoration)
+    outputModel.addBlockState(block, DefaultBlockDecorationState())
+  }
+
+  override fun blockDecorationStateChanged(block: CommandBlock,
+                                           oldStates: List<BlockDecorationState>,
+                                           newStates: List<BlockDecorationState>) {
+    val decoration = outputModel.getDecoration(block) ?: return
+    val state = newStates.maxByOrNull { it.priority } ?: return
+    with(decoration) {
+      backgroundHighlighter.customRenderer = state.backgroundRenderer
+      cornersHighlighter.customRenderer = state.cornersRenderer
+      cornersHighlighter.lineMarkerRenderer = state.leftAreaRenderer
+    }
+
+    val bounds = outputModel.getBlockBounds(block)
+    editor.component.repaint(bounds)
   }
 
   /** Inlay to just create the space between lines */
@@ -53,9 +75,9 @@ class TerminalBlocksDecorator(private val editor: EditorEx) {
   }
 
   /**
-   * By default, the background is painted for the whole width of the editor.
+   * By default, the selection is painted for the whole width of the editor.
    * This renderer overrides the background between blocks' right corner and terminal right corner,
-   * so there will be visual separation between the block and the terminal right corner.
+   * so there will be visual separation between the block and the terminal right corner when there is the selection.
    */
   private class TerminalRightAreaRenderer : CustomHighlighterRenderer {
     override fun paint(editor: Editor, highlighter: RangeHighlighter, g: Graphics) {
@@ -71,100 +93,9 @@ class TerminalBlocksDecorator(private val editor: EditorEx) {
       }
     }
   }
-
-  /** Paints the left part of the rounded block frame in the gutter area. */
-  private class TerminalBlockLeftAreaRenderer : LineMarkerRenderer {
-    override fun paint(editor: Editor, g: Graphics, r: Rectangle) {
-      val topIns = toFloatAndScale(TerminalUi.blockTopInset)
-      val bottomIns = toFloatAndScale(TerminalUi.blockBottomInset)
-      val width = toFloatAndScale(TerminalUi.blockLeftInset)
-      val arc = toFloatAndScale(TerminalUi.blockArc)
-
-      val gutterWidth = (editor as EditorEx).gutterComponentEx.width
-      val rect = Rectangle2D.Float(gutterWidth - width, r.y - topIns, width, r.height + topIns + bottomIns)
-
-      val path = Path2D.Float(Path2D.WIND_EVEN_ODD).apply {
-        moveTo(rect.x, rect.y + topIns)
-        quadTo(rect.x, rect.y, rect.x + arc, rect.y)
-        lineTo(rect.x + rect.width, rect.y)
-        lineTo(rect.x + rect.width, rect.y + rect.height)
-        lineTo(rect.x + arc, rect.y + rect.height)
-        quadTo(rect.x, rect.y + rect.height, rect.x, rect.y + rect.height - arc)
-        lineTo(rect.x, rect.y + topIns)
-        closePath()
-      }
-      val g2d = g.create() as Graphics2D
-      try {
-        GraphicsUtil.setupAntialiasing(g2d)
-        g2d.color = TerminalUi.blockBackground
-        g2d.fill(path)
-      }
-      finally {
-        g2d.dispose()
-      }
-    }
-  }
-
-  /**
-   * Paints the following:
-   * 1. Top area of the block with a rounded corner on the right
-   * 2. Bottom area of the block with a rounded corner on the right
-   * 3. Gap between the blocks (needed to not paint selection color here)
-   */
-  private class TerminalBlockRenderer : CustomHighlighterRenderer {
-    override fun paint(editor: Editor, highlighter: RangeHighlighter, g: Graphics) {
-      val topIns = toFloatAndScale(TerminalUi.blockTopInset)
-      val bottomIns = toFloatAndScale(TerminalUi.blockBottomInset)
-      val cornerToBlock = toFloatAndScale(TerminalUi.cornerToBlockInset)
-      val gap = toFloatAndScale(TerminalUi.blocksGap)
-      val arc = toFloatAndScale(TerminalUi.blockArc)
-
-      val visibleArea = editor.scrollingModel.visibleArea
-      val width = visibleArea.width - cornerToBlock
-      val topY = editor.offsetToXY(highlighter.startOffset).y - topIns
-      val bottomY = editor.offsetToXY(highlighter.endOffset).y + editor.lineHeight + bottomIns
-
-      val topRect = Rectangle2D.Float(0f, topY, width, topIns)
-      val bottomRect = Rectangle2D.Float(0f, bottomY - bottomIns, width, bottomIns)
-      val gapRect = Rectangle2D.Float(0f, bottomY, width, gap)
-      val topCornerPath = Path2D.Float(Path2D.WIND_EVEN_ODD).apply {
-        moveTo(width - arc, topY)
-        lineTo(width, topY)
-        lineTo(width, topY + arc)
-        quadTo(width, topY, width - arc, topY)
-        closePath()
-      }
-      val bottomCornerPath = Path2D.Float(Path2D.WIND_EVEN_ODD).apply {
-        moveTo(width, bottomY - arc)
-        lineTo(width, bottomY)
-        lineTo(width - arc, bottomY)
-        quadTo(width, bottomY, width, bottomY - arc)
-        closePath()
-      }
-
-      val g2d = g.create() as Graphics2D
-      try {
-        GraphicsUtil.setupAntialiasing(g2d)
-        g2d.color = TerminalUi.blockBackground
-        g2d.fill(topRect)
-        g2d.fill(bottomRect)
-        g2d.color = TerminalUi.terminalBackground
-        g2d.fill(gapRect)
-        // override the right corners to make them rounded
-        g2d.fill(topCornerPath)
-        g2d.fill(bottomCornerPath)
-      }
-      finally {
-        g2d.dispose()
-      }
-    }
-  }
-
-  companion object {
-    private fun toFloatAndScale(value: Int): Float = JBUIScale.scale(value.toFloat())
-  }
 }
 
-data class BlockDecoration(val highlighter: RangeHighlighter,
+data class BlockDecoration(val backgroundHighlighter: RangeHighlighter,
+                           val cornersHighlighter: RangeHighlighter,
                            val topInlay: Inlay<*>,
                            val bottomInlay: Inlay<*>)

@@ -10,6 +10,7 @@ import com.intellij.ide.ui.customization.CustomActionsSchema
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.actionSystem.impl.ActionButton
+import com.intellij.openapi.actionSystem.impl.ActionMenu
 import com.intellij.openapi.actionSystem.impl.PresentationFactory
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.diagnostic.logger
@@ -19,6 +20,7 @@ import com.intellij.openapi.keymap.KeymapManagerListener
 import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.ui.popup.JBPopupFactory
 import com.intellij.openapi.util.Disposer
+import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.wm.IdeFocusManager
 import com.intellij.openapi.wm.impl.IdeMenuBar
 import com.intellij.ui.popup.PopupFactoryImpl
@@ -28,13 +30,9 @@ import com.intellij.util.ui.JBUI
 import org.jetbrains.annotations.ApiStatus
 import java.awt.Dimension
 import java.awt.event.ActionEvent
-import java.awt.event.ActionListener
 import java.awt.event.HierarchyEvent
 import java.awt.event.KeyEvent
-import javax.swing.JComponent
-import javax.swing.JRootPane
-import javax.swing.KeyStroke
-import javax.swing.SwingUtilities
+import javax.swing.*
 
 @ApiStatus.Internal
 class MainMenuButton {
@@ -116,9 +114,7 @@ class MainMenuButton {
 
     val ideMenuBar = expandableMenu?.ideMenu
     if (button.isShowing && ideMenuBar != null) {
-      rootPane?.let {
-        subMenuShortcutsManager.init(it, ideMenuBar)
-      }
+      subMenuShortcutsManager.init(ideMenuBar)
     }
   }
 
@@ -169,7 +165,12 @@ class MainMenuButton {
     }
   }
 
-  private inner class ShowSubMenuAction(private val actionToShow: AnAction) : ActionListener {
+  private inner class ShowSubMenuAction(actionMenu: ActionMenu) : AbstractAction() {
+
+    private val actionToShow = actionMenu.anAction
+    private val keyStroke = KeyStroke.getKeyStroke(actionMenu.mnemonic, KeyEvent.ALT_DOWN_MASK)
+    @NlsSafe
+    private val actionMapKey = "MainMenuButton action ${actionToShow.templateText}"
 
     override fun actionPerformed(e: ActionEvent?) {
       if (!UISettings.getInstance().disableMnemonics) {
@@ -181,64 +182,78 @@ class MainMenuButton {
         }
       }
     }
+
+    fun register(shortcutsOwner: JComponent) {
+      val inputMap = shortcutsOwner.getInputMap(JComponent.WHEN_IN_FOCUSED_WINDOW)
+      val actionMap = shortcutsOwner.actionMap
+      inputMap.put(keyStroke, actionMapKey)
+      actionMap.put(actionMapKey, this)
+    }
+
+    fun unregister(shortcutsOwner: JComponent) {
+      val inputMap = shortcutsOwner.getInputMap(JComponent.WHEN_IN_FOCUSED_WINDOW)
+      val actionMap = shortcutsOwner.actionMap
+      inputMap.remove(keyStroke)
+      actionMap.remove(actionMapKey)
+    }
+
+    fun isSame(other: ShowSubMenuAction): Boolean {
+      return actionToShow === other.actionToShow &&
+             keyStroke.equals(other.keyStroke) &&
+             actionMapKey == other.actionMapKey
+    }
   }
 
   private inner class SubMenuShortcutsManager {
 
-    private var shortcutsOwner: JComponent? = null
     private var ideMenuBar: IdeMenuBar? = null
     private val listener = Runnable {
-      resetKeyStrokes()
-      initKeyStrokes()
+      ideMenuBar?.let {
+        updateKeyStrokes(it.rootMenuItems)
+      }
     }
-    private var registeredKeyStrokes = mutableListOf<KeyStroke>()
+    private var registeredActions = mutableListOf<ShowSubMenuAction>()
 
-    fun init(shortcutsOwner: JComponent, ideMenuBar: IdeMenuBar) {
+    fun init(ideMenuBar: IdeMenuBar) {
       reset()
-      this.shortcutsOwner = shortcutsOwner
       this.ideMenuBar = ideMenuBar
       ideMenuBar.addUpdateGlobalMenuRootsListener(listener)
-
-      initKeyStrokes()
+      updateKeyStrokes(ideMenuBar.rootMenuItems)
     }
 
     fun reset() {
-      resetKeyStrokes()
+      updateKeyStrokes(emptyList())
       ideMenuBar?.removeUpdateGlobalMenuRootsListener(listener)
-      shortcutsOwner = null
       ideMenuBar = null
     }
 
-    private fun initKeyStrokes() {
-      val ideMenuBarCopy = ideMenuBar
-      val shortcutsOwnerCopy = shortcutsOwner
+    /**
+     * Already registered actions are not re-registered, otherwise they will take higher priority over existing mnemonics in
+     * other places of IDE
+     */
+    private fun updateKeyStrokes(actionMenus: List<ActionMenu>) {
+      val existingActionMenus = mutableListOf<ShowSubMenuAction>()
+      val newActionMenus = actionMenus.mapNotNull { if (it.mnemonic > 0) ShowSubMenuAction(it) else null }.toMutableList()
 
-      if (ideMenuBarCopy == null || shortcutsOwnerCopy == null) {
-        return
-      }
-
-      for (item in ideMenuBarCopy.rootMenuItems) {
-        val action = item.anAction
-        val mnemonic = item.mnemonic
-        if (mnemonic > 0) {
-          val keyStroke = KeyStroke.getKeyStroke(mnemonic, KeyEvent.ALT_DOWN_MASK)
-          shortcutsOwnerCopy.registerKeyboardAction(ShowSubMenuAction(action), keyStroke, JComponent.WHEN_IN_FOCUSED_WINDOW)
-          registeredKeyStrokes.add(keyStroke)
+      for (action in registeredActions) {
+        val index = newActionMenus.indexOfFirst { it.isSame(action) }
+        if (index >= 0) {
+          existingActionMenus.add(newActionMenus.removeAt(index))
+        } else {
+          action.unregister(button)
         }
       }
-    }
+      registeredActions.clear()
 
-    private fun resetKeyStrokes() {
-      shortcutsOwner?.let {
-        for (keyStroke in registeredKeyStrokes) {
-          it.unregisterKeyboardAction(keyStroke)
-        }
+      for (action in newActionMenus) {
+        action.register(button)
       }
-      registeredKeyStrokes.clear()
+
+      registeredActions.addAll(existingActionMenus)
+      registeredActions.addAll(newActionMenus)
     }
   }
 }
-
 
 private fun createMenuButton(action: AnAction): ActionButton {
   val button = object : ActionButton(action, PresentationFactory().getPresentation(action),

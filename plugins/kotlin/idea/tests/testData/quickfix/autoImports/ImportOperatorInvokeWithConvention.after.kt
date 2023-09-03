@@ -10,4 +10,4 @@ import another.topVal
 fun use() {
     topVal<selection></selection>()
 }
-/* IGNORE_FIR */
+/* IGNORE_K2 */

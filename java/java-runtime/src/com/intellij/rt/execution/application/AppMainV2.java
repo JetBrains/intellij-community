@@ -5,6 +5,7 @@ import java.io.BufferedReader;
 import java.io.File;
 import java.io.InputStreamReader;
 import java.lang.instrument.Instrumentation;
+import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
@@ -92,15 +93,14 @@ public final class AppMainV2 {
       m = appClass.getMethod("main", String[].class);
     }
     catch (NoSuchMethodException e) {
-      if (!startJavaFXApplication(params, appClass)) {
-        throw e;
+      try {
+        m = appClass.getMethod("main");
+      } catch (NoSuchMethodException inner) {
+        if (!startJavaFXApplication(params, appClass)) {
+          throw inner;
+        }
+        return;
       }
-      return;
-    }
-
-    if (!Modifier.isStatic(m.getModifiers())) {
-      System.err.println("main method should be static");
-      return;
     }
 
     if (!void.class.isAssignableFrom(m.getReturnType())) {
@@ -108,9 +108,32 @@ public final class AppMainV2 {
       return;
     }
 
+    Constructor<?> declaredConstructor;
+    try {
+      declaredConstructor = appClass.getDeclaredConstructor();
+    } catch (NoSuchMethodException e) {
+      System.err.println("Class must have constructor with no parameters");
+      return;
+    }
+
     try {
       m.setAccessible(true);
-      m.invoke(null, new Object[]{params});
+      int parameterCount = m.getParameterTypes().length;
+      if (Modifier.isStatic(m.getModifiers())) {
+        if (parameterCount == 0) {
+          m.invoke(null);
+        } else {
+          m.invoke(null, new Object[]{params});
+        }
+      } else {
+        declaredConstructor.setAccessible(true);
+        Object objInstance = declaredConstructor.newInstance();
+        if (parameterCount == 0) {
+          m.invoke(objInstance);
+        } else {
+          m.invoke(objInstance, new Object[]{params});
+        }
+      }
     }
     catch (InvocationTargetException ite) {
       throw ite.getTargetException();

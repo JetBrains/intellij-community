@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.actions;
 
 import com.intellij.ide.IdeBundle;
@@ -16,7 +16,7 @@ import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
 
-public class PruneEmptyDirectoriesAction extends AnAction {
+public final class PruneEmptyDirectoriesAction extends AnAction {
   @Override
   public void update(@NotNull AnActionEvent e) {
     VirtualFile[] files = e.getData(CommonDataKeys.VIRTUAL_FILE_ARRAY);

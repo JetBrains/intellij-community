@@ -66,7 +66,7 @@ import static com.intellij.ide.ShutdownKt.cancelAndJoinBlocking;
 import static com.intellij.util.concurrency.AppExecutorUtil.propagateContextOrCancellation;
 
 @ApiStatus.Internal
-public class ApplicationImpl extends ClientAwareComponentManager implements ApplicationEx {
+public final class ApplicationImpl extends ClientAwareComponentManager implements ApplicationEx {
   private static @NotNull Logger getLogger() {
     return Logger.getInstance(ApplicationImpl.class);
   }
@@ -628,27 +628,30 @@ public class ApplicationImpl extends ClientAwareComponentManager implements Appl
 
       LifecycleUsageTriggerCollector.onIdeClose(restart);
 
-      boolean success = TraceUtil.computeWithSpanThrows(tracer, "disposeProjects", (span) -> {
-        ProjectManagerEx manager = ProjectManagerEx.getInstanceExIfCreated();
-        if (manager != null) {
-          try {
-            if (!manager.closeAndDisposeAllProjects(!force)) {
-              return false;
-            }
-          }
-          catch (Throwable e) {
-            getLogger().error(e);
-          }
-        }
+      boolean success = true;
+      ProjectManagerEx manager = ProjectManagerEx.getInstanceExIfCreated();
+      if (manager != null) {
         try {
-          //noinspection TestOnlyProblems
-          disposeContainer();
+          boolean projectsClosedSuccessfully = TraceUtil.computeWithSpanThrows(tracer, "disposeProjects", (span) -> {
+            return manager.closeAndDisposeAllProjects(!force);
+          });
+          if (!projectsClosedSuccessfully) {
+            success = false;
+          }
         }
-        catch (Throwable t) {
-          getLogger().error(t);
+        catch (Throwable e) {
+          getLogger().error(e);
         }
-        return true;
-      });
+      }
+      try {
+        scope.close();
+        exitSpan.end();
+        //noinspection TestOnlyProblems
+        disposeContainer();
+      }
+      catch (Throwable t) {
+        getLogger().error(t);
+      }
 
       //noinspection SpellCheckingInspection
       if (!success || isUnitTestMode() || Boolean.getBoolean("idea.test.guimode")) {
@@ -672,8 +675,6 @@ public class ApplicationImpl extends ClientAwareComponentManager implements Appl
           }
         }
       }
-      scope.close();
-      exitSpan.end();
       System.exit(exitCode);
     }
     finally {
@@ -1190,7 +1191,7 @@ public class ApplicationImpl extends ClientAwareComponentManager implements Appl
     return new WriteAccessToken(clazz);
   }
 
-  private class WriteAccessToken extends AccessToken {
+  private final class WriteAccessToken extends AccessToken {
     private final @NotNull Class<?> clazz;
 
     WriteAccessToken(@NotNull Class<?> clazz) {
@@ -1295,19 +1296,6 @@ public class ApplicationImpl extends ClientAwareComponentManager implements Appl
   @Override
   public boolean isWriteActionInProgress() {
     return myLock.isWriteAcquired();
-  }
-
-  private void runWithDisabledImplicitRead(@NotNull Runnable runnable) {
-    // This method is used to allow easily finding stack traces which violate disabled ImplicitRead
-    ReadMostlyRWLock lock = myLock;
-    boolean oldVal = lock.isImplicitReadAllowed();
-    try {
-      lock.setAllowImplicitRead(false);
-      runnable.run();
-    }
-    finally {
-      lock.setAllowImplicitRead(oldVal);
-    }
   }
 
   private static void runModalProgress(@Nullable Project project,
@@ -1441,11 +1429,12 @@ public class ApplicationImpl extends ClientAwareComponentManager implements Appl
 
   @Override
   public void runWithoutImplicitRead(@NotNull Runnable runnable) {
-    if (!StartupUtil.isImplicitReadOnEDTDisabled()) {
-      runnable.run();
-      return;
-    }
-    runWithDisabledImplicitRead(runnable);
+    IdeEventQueue.getInstance().getRwLockHolder().runWithoutImplicitRead(runnable);
+  }
+
+  @Override
+  public void runWithImplicitRead(@NotNull Runnable runnable) {
+    IdeEventQueue.getInstance().getRwLockHolder().runWithImplicitRead(runnable);
   }
 
   @ApiStatus.Internal

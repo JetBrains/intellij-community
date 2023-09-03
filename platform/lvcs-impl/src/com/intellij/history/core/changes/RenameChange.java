@@ -25,7 +25,7 @@ import java.io.DataInput;
 import java.io.DataOutput;
 import java.io.IOException;
 
-public class RenameChange extends StructuralChange {
+public final class RenameChange extends StructuralChange {
   private final String myOldName;
 
   public RenameChange(long id, String path, String oldName) {

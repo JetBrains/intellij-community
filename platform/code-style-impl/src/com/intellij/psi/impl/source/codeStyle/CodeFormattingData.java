@@ -17,7 +17,7 @@ import java.util.*;
 
 public final class CodeFormattingData {
 
-  private final static Key<CodeFormattingData> CODE_FORMATTING_DATA_KEY = Key.create("code.formatting.data");
+  private static final Key<CodeFormattingData> CODE_FORMATTING_DATA_KEY = Key.create("code.formatting.data");
 
   private final @NotNull Map<Integer, Set<TextRange>> injectedFileRangesMap = new HashMap<>();
 
@@ -91,8 +91,7 @@ public final class CodeFormattingData {
     return injectedFileRangesSet;
   }
 
-  @NotNull
-  private static Collection<PsiLanguageInjectionHost> collectInjectionHosts(@NotNull PsiFile file, @NotNull TextRange range) {
+  private static @NotNull Collection<PsiLanguageInjectionHost> collectInjectionHosts(@NotNull PsiFile file, @NotNull TextRange range) {
     Stack<PsiElement> toProcess = new Stack<>();
     for (PsiElement e = file.findElementAt(range.getStartOffset()); e != null; e = e.getNextSibling()) {
       if (e.getTextRange().getStartOffset() >= range.getEndOffset()) {

@@ -7,7 +7,7 @@ import org.jetbrains.annotations.NotNull;
 
 import static com.intellij.openapi.vfs.VfsUtilCore.isAncestor;
 
-public class FileNodeVisitor extends TreeVisitor.ByComponent<VirtualFile, VirtualFile> {
+public final class FileNodeVisitor extends TreeVisitor.ByComponent<VirtualFile, VirtualFile> {
 
   public FileNodeVisitor(@NotNull VirtualFile file) {
     super(file, object -> {

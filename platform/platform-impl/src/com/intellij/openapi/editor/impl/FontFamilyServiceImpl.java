@@ -290,7 +290,7 @@ final class FontFamilyServiceImpl extends FontFamilyService {
         }
         OurWeightMap baseSet = nonItalicsByWeight.isEmpty() ? italicsByWeight : nonItalicsByWeight;
 
-        class Candidate {
+        final class Candidate {
           final int desiredWeight;
           String bestSubFamily;
           int bestDistance = Integer.MAX_VALUE;

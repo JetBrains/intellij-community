@@ -199,7 +199,7 @@ public class TableSpeedSearch extends TableSpeedSearchBase<JTable> {
     return false;
   }
 
-  private static class MySelectAllAction extends DumbAwareAction {
+  private static final class MySelectAllAction extends DumbAwareAction {
     private final @NotNull JTable myTable;
     private final @NotNull TableSpeedSearch mySearch;
 

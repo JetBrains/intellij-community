@@ -31,7 +31,7 @@ import static java.nio.file.StandardOpenOption.WRITE;
  */
 @ApiStatus.Internal
 @TestOnly
-public class PersistentInMemoryFSRecordsStorage implements PersistentFSRecordsStorage {
+public final class PersistentInMemoryFSRecordsStorage implements PersistentFSRecordsStorage {
 
   /* ================ RECORD FIELDS LAYOUT (in ints = 4 bytes) ======================================== */
 

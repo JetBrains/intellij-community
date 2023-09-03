@@ -65,6 +65,7 @@ abstract class ToolbarComboWidget: JComponent(), UiInspectorContextProvider {
   }
 
   private fun fireUpdateEvents(prop: KProperty<*>, oldValue: Any?, newValue: Any?) {
+    if (oldValue?.equals(newValue) == true) return
     firePropertyChange(prop.name, oldValue, newValue)
     invalidate()
     repaint()

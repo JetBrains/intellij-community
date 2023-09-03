@@ -188,7 +188,7 @@ private constructor(parentCs: CoroutineScope,
         val cs = this
         val diffBridge = getDiffBridge(mrIid)
         mrResult.mapCatching {
-          LoadAllGitLabMergeRequestTimelineViewModel(cs, project.service(), connection.currentUser, it).also {
+          LoadAllGitLabMergeRequestTimelineViewModel(project, cs, project.service(), connection.currentUser, it).also {
             cs.launchNow {
               it.diffRequests.collect { change ->
                 diffBridge.setChanges(change)
@@ -209,7 +209,7 @@ private constructor(parentCs: CoroutineScope,
         val cs = this
         val diffBridge = getDiffBridge(mrIid)
         mrResult.mapCatching {
-          GitLabMergeRequestDiffViewModelImpl(cs, connection.currentUser, it, diffBridge, avatarIconProvider)
+          GitLabMergeRequestDiffViewModelImpl(project, cs, connection.currentUser, it, diffBridge, avatarIconProvider)
         }
       }.shareIn(cs, SharingStarted.WhileSubscribed(0, 0), 1)
     }

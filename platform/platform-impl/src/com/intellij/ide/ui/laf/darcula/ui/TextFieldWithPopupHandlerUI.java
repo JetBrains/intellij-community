@@ -703,7 +703,7 @@ public abstract class TextFieldWithPopupHandlerUI extends BasicTextFieldUI imple
     }
   }
 
-  private class ClearExtension implements Extension {
+  private final class ClearExtension implements Extension {
     @Override
     public Icon getIcon(boolean hovered) {
       return getClearIcon(hovered, hasText());
@@ -748,7 +748,7 @@ public abstract class TextFieldWithPopupHandlerUI extends BasicTextFieldUI imple
     }
   }
 
-  static class MouseDragAwareCaret extends MarginAwareCaret {
+  static final class MouseDragAwareCaret extends MarginAwareCaret {
 
     private final MouseDragSelectionEventHandler handler = new MouseDragSelectionEventHandler(e -> {
       super.mouseDragged(e);

@@ -26,7 +26,6 @@ import kotlin.time.DurationUnit
 internal abstract class IdeaFormatWriter(private val activities: Map<String, MutableList<ActivityImpl>>,
                                          private val threadNameManager: ThreadNameManager,
                                          private val version: String) {
-  private val logPrefix: String = "=== Start: StartUp Measurement ===\n"
   protected val stringWriter: ExposingCharArrayWriter = ExposingCharArrayWriter()
 
   fun write(timeOffset: Long,
@@ -34,8 +33,6 @@ internal abstract class IdeaFormatWriter(private val activities: Map<String, Mut
             instantEvents: List<ActivityImpl>,
             end: Long,
             projectName: String) {
-    stringWriter.write(logPrefix)
-
     val writer = createJsonGenerator(stringWriter)
     writer.use {
       writer.obj {
@@ -84,7 +81,7 @@ internal abstract class IdeaFormatWriter(private val activities: Map<String, Mut
   }
 
   fun toByteBuffer(): ByteBuffer {
-    return stringWriter.toByteBuffer(logPrefix.length)
+    return stringWriter.toByteBuffer()
   }
 
   private fun writeParallelActivities(startTime: Long, writer: JsonGenerator) {
@@ -210,8 +207,8 @@ private fun writeCommonFields(event: ActivityImpl, writer: JsonGenerator, timeOf
 }
 
 class ExposingCharArrayWriter : CharArrayWriter(8192) {
-  fun toByteBuffer(offset: Int): ByteBuffer {
-    return Charsets.UTF_8.encode(CharBuffer.wrap(buf, offset, count - offset))
+  fun toByteBuffer(): ByteBuffer {
+    return Charsets.UTF_8.encode(CharBuffer.wrap(buf, 0, count))
   }
 }
 

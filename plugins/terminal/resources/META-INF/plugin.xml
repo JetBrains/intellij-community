@@ -92,10 +92,34 @@
       <keyboard-shortcut first-keystroke="meta K" keymap="Mac OS X"/>
       <keyboard-shortcut first-keystroke="meta K" keymap="Mac OS X 10.5+"/>
     </action>
-    <action id="Terminal.CopyOutput" class="org.jetbrains.plugins.terminal.action.CopyTerminalOutputAction" />
+
+
+    <!--  New Terminal Actions  -->
+    <action id="Terminal.SelectLastBlock" class="org.jetbrains.plugins.terminal.exp.TerminalSelectLastBlockAction">
+      <keyboard-shortcut first-keystroke="control UP" keymap="$default"/>
+      <keyboard-shortcut first-keystroke="meta UP" keymap="Mac OS X" replace-all="true"/>
+      <keyboard-shortcut first-keystroke="meta UP" keymap="Mac OS X 10.5+" replace-all="true"/>
+    </action>
+    <action id="Terminal.SelectPrompt" class="org.jetbrains.plugins.terminal.exp.TerminalSelectPromptAction">
+      <keyboard-shortcut first-keystroke="control DOWN" keymap="$default"/>
+      <keyboard-shortcut first-keystroke="meta DOWN" keymap="Mac OS X" replace-all="true"/>
+      <keyboard-shortcut first-keystroke="meta DOWN" keymap="Mac OS X 10.5+" replace-all="true"/>
+    </action>
+    <action id="Terminal.SelectBlockAbove" class="org.jetbrains.plugins.terminal.exp.TerminalSelectBlockAboveAction">
+      <keyboard-shortcut first-keystroke="UP" keymap="$default"/>
+      <keyboard-shortcut first-keystroke="control UP" keymap="$default"/>
+      <keyboard-shortcut first-keystroke="meta UP" keymap="Mac OS X"/>
+      <keyboard-shortcut first-keystroke="meta UP" keymap="Mac OS X 10.5+"/>
+    </action>
+    <action id="Terminal.SelectBlockBelow" class="org.jetbrains.plugins.terminal.exp.TerminalSelectBlockBelowAction">
+      <keyboard-shortcut first-keystroke="DOWN" keymap="$default"/>
+    </action>
+
+    <action id="Terminal.Copy" class="org.jetbrains.plugins.terminal.action.TerminalCopyAction"
+            use-shortcut-of="$Copy" icon="AllIcons.Actions.Copy"/>
 
     <group id="Terminal.PopupMenu">
-      <reference ref="Terminal.CopyOutput"/>
+      <reference ref="Terminal.Copy"/>
     </group>
   </actions>
 

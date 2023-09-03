@@ -54,6 +54,7 @@ fun restoreStdlibCanonicalPath(qName: QualifiedName): QualifiedName? {
     "ntpath", "posixpath", "path", "macpath", "os2emxpath", "genericpath" -> qName.replaceHead("os.path")
     "_sqlite3" -> qName.replaceHead("sqlite3")
     "_pickle" -> qName.replaceHead("pickle")
+    "_decimal" -> qName.replaceHead("decimal")
     else -> null
   }
 }

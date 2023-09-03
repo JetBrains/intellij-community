@@ -99,7 +99,7 @@ public class StubBuildingVisitor<T> extends ClassVisitor {
     boolean isRecord = isSet(flags, Opcodes.ACC_RECORD);
     short stubFlags = PsiClassStubImpl.packFlags(
       isDeprecated, isInterface, isEnum, false, false, isAnnotationType, false, false, myAnonymousInner, myLocalClassInner, false,
-      isRecord);
+      isRecord, false);
     myResult = new PsiClassStubImpl<>(JavaStubElementTypes.CLASS, myParent, fqn, shortName, null, stubFlags);
 
     int classFlags = packClassFlags(flags);

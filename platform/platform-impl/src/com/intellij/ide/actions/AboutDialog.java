@@ -65,7 +65,7 @@ import static java.util.Objects.requireNonNullElse;
 import static javax.swing.ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER;
 import static javax.swing.ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED;
 
-public class AboutDialog extends DialogWrapper {
+public final class AboutDialog extends DialogWrapper {
   private static final ExtensionPointName<AboutPopupDescriptionProvider> EP_NAME = new ExtensionPointName<>("com.intellij.aboutPopupDescriptionProvider");
 
   /**

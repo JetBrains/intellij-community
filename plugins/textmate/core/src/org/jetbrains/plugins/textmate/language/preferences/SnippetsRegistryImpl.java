@@ -5,10 +5,13 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.textmate.language.TextMateScopeComparator;
 import org.jetbrains.plugins.textmate.language.syntax.lexer.TextMateScope;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
-public class SnippetsRegistryImpl implements SnippetsRegistry {
+public final class SnippetsRegistryImpl implements SnippetsRegistry {
   @NotNull private final Map<String, Collection<TextMateSnippet>> mySnippets = new ConcurrentHashMap<>();
 
   public void register(@NotNull TextMateSnippet snippet) {

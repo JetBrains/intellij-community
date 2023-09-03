@@ -12,7 +12,7 @@ import javax.swing.*;
 import java.awt.*;
 import java.nio.charset.Charset;
 
-public class ChooseEncodingDialog extends DialogWrapper {
+public final class ChooseEncodingDialog extends DialogWrapper {
   private final Charset[] myCharsets;
   private final Charset myDefaultCharset;
   private JList myList;

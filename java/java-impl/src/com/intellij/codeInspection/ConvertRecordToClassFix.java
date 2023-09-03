@@ -15,9 +15,7 @@ import com.intellij.modcommand.ActionContext;
 import com.intellij.modcommand.ModPsiUpdater;
 import com.intellij.modcommand.Presentation;
 import com.intellij.modcommand.PsiUpdateModCommandAction;
-import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.TextRange;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
@@ -81,8 +79,12 @@ public class ConvertRecordToClassFix extends PsiUpdateModCommandAction<PsiElemen
   @Override
   protected void invoke(@NotNull ActionContext context, @NotNull PsiElement startElement, @NotNull ModPsiUpdater updater) {
     PsiClass recordClass;
-    if (startElement instanceof PsiErrorElement) {
-      recordClass = tryMakeRecord(startElement);
+    PsiElement toReplace = startElement;
+    if (startElement instanceof PsiJavaCodeReferenceElement ref && ref.textMatches("record")) {
+      PsiMethod method = PsiTreeUtil.getParentOfType(startElement, PsiMethod.class);
+      if (method == null) return;
+      recordClass = tryMakeRecord(method);
+      toReplace = method;
     } else {
       recordClass = ObjectUtils.tryCast(startElement, PsiClass.class);
     }
@@ -97,28 +99,8 @@ public class ConvertRecordToClassFix extends PsiUpdateModCommandAction<PsiElemen
     DummyHolder holder = DummyHolderFactory.createHolder(file.getManager(), dummyElement, recordClass);
     PsiClass converted = (PsiClass)Objects.requireNonNull(SourceTreeToPsiMap.treeElementToPsi(holder.getTreeElement().getFirstChildNode()));
     postProcessAnnotations(recordClass, converted);
-    PsiClass result = replace(project, file, startElement, converted);
+    PsiClass result = (PsiClass)toReplace.replace(converted);
     CodeStyleManager.getInstance(project).reformat(JavaCodeStyleManager.getInstance(project).shortenClassReferences(result));
-  }
-
-  private static @NotNull PsiClass replace(@NotNull Project project,
-                                           @NotNull PsiFile file,
-                                           @NotNull PsiElement startElement,
-                                           @NotNull PsiClass converted) {
-    if (startElement instanceof PsiErrorElement) {
-      // Older Java version: try to extract part of code which looks like a record
-      TextRange range = startElement.getTextRange();
-      Document document = file.getViewProvider().getDocument();
-      if (document != null) {
-        document.replaceString(range.getStartOffset(), range.getEndOffset(), converted.getText());
-        PsiDocumentManager.getInstance(project).commitDocument(document);
-        PsiClass pastedClass = PsiTreeUtil.getParentOfType(file.findElementAt(range.getStartOffset()), PsiClass.class);
-        if (pastedClass != null) {
-          return pastedClass;
-        }
-      }
-    }
-    return (PsiClass)startElement.replace(converted);
   }
 
   @NotNull

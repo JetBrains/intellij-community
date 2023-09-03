@@ -1,0 +1,14 @@
+PsiJavaFile:UnnamedClass2.java
+  PsiImportList
+    <empty list>
+  PsiUnnamedClass
+    PsiClassInitializer
+      PsiModifierList:static
+        PsiKeyword:static('static')
+      PsiWhiteSpace(' ')
+      PsiCodeBlock
+        PsiJavaToken:LBRACE('{')
+        PsiWhiteSpace(' ')
+        PsiComment(END_OF_LINE_COMMENT)('// it is forbidden in grammar, but we will parse it anyway')
+        PsiWhiteSpace('\n\n')
+        PsiJavaToken:RBRACE('}')

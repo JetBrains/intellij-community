@@ -5,16 +5,16 @@ import com.intellij.openapi.actionSystem.Presentation
 import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.ui.MessageType
 import com.intellij.openapi.util.NlsContexts
-import com.intellij.openapi.util.NlsContexts.NotificationContent
+import com.intellij.openapi.util.NlsContexts.NotificationTitle
 import com.intellij.openapi.util.ThrowableComputable
 import com.intellij.openapi.util.text.HtmlBuilder
 import com.intellij.openapi.util.text.HtmlChunk
 import com.intellij.openapi.vcs.VcsException
-import com.intellij.openapi.vcs.ui.VcsBalloonProblemNotifier
+import com.intellij.openapi.vcs.VcsNotifier
 import com.intellij.vcsUtil.VcsFileUtil
 import git4idea.GitContentRevision
+import git4idea.GitNotificationIdsHolder
 import git4idea.index.ui.GitFileStatusNode
 import git4idea.repo.GitRepository
 import git4idea.repo.GitRepositoryManager
@@ -88,10 +88,7 @@ fun <T> runProcess(project: Project, @NlsContexts.ProgressTitle title: String, c
                                                                            title, canBeCancelled, project)
 }
 
-private fun showErrorMessage(project: Project, @NotificationContent messageTitle: String, exceptions: Collection<Exception>) {
-  val message = HtmlBuilder().append(HtmlChunk.text("$messageTitle:").bold())
-    .br()
-    .appendWithSeparators(HtmlChunk.br(), exceptions.map { HtmlChunk.text(it.localizedMessage) })
-
-  VcsBalloonProblemNotifier.showOverVersionControlView(project, message.toString(), MessageType.ERROR)
+private fun showErrorMessage(project: Project, @NotificationTitle messageTitle: String, exceptions: Collection<Exception>) {
+  val message = HtmlBuilder().appendWithSeparators(HtmlChunk.br(), exceptions.map { HtmlChunk.text(it.localizedMessage) })
+  VcsNotifier.getInstance(project).notifyError(GitNotificationIdsHolder.STAGE_OPERATION_FAILED, messageTitle, message.toString())
 }

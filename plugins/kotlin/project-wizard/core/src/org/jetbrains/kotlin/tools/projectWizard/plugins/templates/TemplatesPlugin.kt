@@ -3,7 +3,6 @@ package org.jetbrains.kotlin.tools.projectWizard.plugins.templates
 
 
 import org.jetbrains.kotlin.tools.projectWizard.core.*
-import org.jetbrains.kotlin.tools.projectWizard.core.Defaults.SRC_DIR
 import org.jetbrains.kotlin.tools.projectWizard.core.entity.PipelineTask
 import org.jetbrains.kotlin.tools.projectWizard.core.entity.Task1
 import org.jetbrains.kotlin.tools.projectWizard.core.entity.properties.Property
@@ -26,7 +25,6 @@ import org.jetbrains.kotlin.tools.projectWizard.transformers.interceptors.Interc
 import org.jetbrains.kotlin.tools.projectWizard.transformers.interceptors.TemplateInterceptionApplicationState
 import org.jetbrains.kotlin.tools.projectWizard.transformers.interceptors.applyAll
 import java.nio.file.Path
-import java.util.*
 
 class TemplatesPlugin(context: Context) : Plugin(context) {
     override val path = pluginPath
@@ -169,23 +167,11 @@ class TemplatesPlugin(context: Context) : Plugin(context) {
                 && filePath.sourcesetType == SourcesetType.test
                 && settingValue(module.originalModule, JvmModuleConfigurator.testFramework) == KotlinTestFramework.NONE
             ) return null
-            val moduleConfigurator = module.originalModule.configurator
-            return when (module) {
-                is SingleplatformModuleIR -> {
-                    when (filePath) {
-                        is SrcFilePath -> SRC_DIR / filePath.sourcesetType.toString() / moduleConfigurator.kotlinDirectoryName
-                        is ResourcesFilePath -> SRC_DIR / filePath.sourcesetType.toString() / moduleConfigurator.resourcesDirectoryName
-                    }
-                }
 
-                is MultiplatformModuleIR -> {
-                    val directory = when (filePath) {
-                        is SrcFilePath -> moduleConfigurator.kotlinDirectoryName
-                        is ResourcesFilePath -> moduleConfigurator.resourcesDirectoryName
-                    }
-                    SRC_DIR / "${module.name}${filePath.sourcesetType.name.capitalize(Locale.US)}" / directory
-                }
-                else -> error("Not supported for ${module.javaClass}")
+            val sourceset = module.sourcesets.firstOrNull { it.sourcesetType == filePath.sourcesetType } ?: return null
+            return when (filePath) {
+                is SrcFilePath -> sourceset.sourcePaths[SourcesetSourceType.KOTLIN]
+                is ResourcesFilePath -> sourceset.sourcePaths[SourcesetSourceType.RESOURCES]
             }
         }
     }

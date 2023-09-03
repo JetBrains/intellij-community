@@ -448,22 +448,32 @@ public class ClsClassImpl extends ClsMemberImpl<PsiClassStub<?>> implements PsiE
     setMirrorIfPresent(getDocComment(), mirror.getDocComment());
 
     PsiModifierList modifierList = getModifierList();
-    if (modifierList != null) setMirror(modifierList, mirror.getModifierList());
-    setMirror(getNameIdentifier(), mirror.getNameIdentifier());
-    setMirror(getTypeParameterList(), mirror.getTypeParameterList());
-    setMirror(getExtendsList(), mirror.getExtendsList());
-    setMirror(getImplementsList(), mirror.getImplementsList());
+    if (modifierList != null && mirror.getModifierList() != null) setMirror(modifierList, mirror.getModifierList());
+    if (mirror.getNameIdentifier() != null) setMirrorChecked(getNameIdentifier(), mirror.getNameIdentifier());
+    if (mirror.getTypeParameterList() != null) setMirrorChecked(getTypeParameterList(), mirror.getTypeParameterList());
+    if (mirror.getExtendsList() != null) setMirrorChecked(getExtendsList(), mirror.getExtendsList());
+    if (mirror.getImplementsList() != null) setMirrorChecked(getImplementsList(), mirror.getImplementsList());
 
     if (mirror instanceof PsiExtensibleClass) {
       PsiExtensibleClass extMirror = (PsiExtensibleClass)mirror;
-      setMirrors(getOwnFields(), extMirror.getOwnFields());
-      setMirrors(getOwnMethods(), extMirror.getOwnMethods());
-      setMirrors(getOwnInnerClasses(), extMirror.getOwnInnerClasses());
+      setMirrorsChecked(getOwnFields(), extMirror.getOwnFields());
+      setMirrorsChecked(getOwnMethods(), extMirror.getOwnMethods());
+      setMirrorsChecked(getOwnInnerClasses(), extMirror.getOwnInnerClasses());
     }
     else {
-      setMirrors(getOwnFields(), asList(mirror.getFields()));
-      setMirrors(getOwnMethods(), asList(mirror.getMethods()));
-      setMirrors(getOwnInnerClasses(), asList(mirror.getInnerClasses()));
+      setMirrorsChecked(getOwnFields(), asList(mirror.getFields()));
+      setMirrorsChecked(getOwnMethods(), asList(mirror.getMethods()));
+      setMirrorsChecked(getOwnInnerClasses(), asList(mirror.getInnerClasses()));
+    }
+  }
+
+  private static <T extends  PsiElement> void setMirrorChecked(@NotNull T stub, @NotNull T mirror) {
+    setMirror(stub, mirror);
+  }
+
+  private static <T extends  PsiElement> void setMirrorsChecked(@NotNull List<T> stub, @NotNull List<T> mirror) {
+    if (stub.size() == mirror.size()) {
+      setMirrors(stub, mirror);
     }
   }
 

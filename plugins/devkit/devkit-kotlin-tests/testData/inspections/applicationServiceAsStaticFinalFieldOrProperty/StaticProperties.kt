@@ -68,8 +68,8 @@ class AppService(val service3: RegisteredApplicationService = RegisteredApplicat
       val service13 = RegisteredApplicationService.getInstance()
 
       val ojb = object : MyInterface {
-        // static property with backing field
-        val <warning descr="Application service must not be assigned to a static immutable property with a backing field">service10</warning> = RegisteredApplicationService.getInstance()
+        // inside an anonymous object
+        val service10 = RegisteredApplicationService.getInstance()
 
         override fun bar() { }
       }

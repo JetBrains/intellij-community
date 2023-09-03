@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui.components.panels;
 
 import com.intellij.util.containers.ContainerUtil;
@@ -246,8 +246,7 @@ public final class VerticalLayout implements LayoutManager2 {
     }
   }
 
-  @NotNull
-  public List<? extends Component> getComponents() {
+  public @NotNull List<? extends Component> getComponents() {
     return ContainerUtil.concat(myTop, myCenter, myBottom);
   }
 }

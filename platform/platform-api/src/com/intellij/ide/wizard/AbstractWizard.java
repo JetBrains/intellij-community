@@ -40,7 +40,7 @@ import java.util.*;
 public abstract class AbstractWizard<T extends Step> extends DialogWrapper {
   private static final Logger LOG = Logger.getInstance(AbstractWizard.class);
 
-  public final static Key<AbstractWizard<?>> KEY = Key.create("AbstractWizard");
+  public static final Key<AbstractWizard<?>> KEY = Key.create("AbstractWizard");
 
   protected int myCurrentStep;
   protected final ArrayList<T> mySteps;
@@ -66,7 +66,7 @@ public abstract class AbstractWizard<T extends Step> extends DialogWrapper {
     initWizard(title);
   }
 
-  public AbstractWizard(@NlsContexts.DialogTitle String title, @Nullable final Project project) {
+  public AbstractWizard(@NlsContexts.DialogTitle String title, final @Nullable Project project) {
     super(project, true);
     mySteps = new ArrayList<>();
     initWizard(title);
@@ -253,7 +253,7 @@ public abstract class AbstractWizard<T extends Step> extends DialogWrapper {
 
   private static void add(final GroupLayout.Group hGroup,
                           final GroupLayout.Group vGroup,
-                          @Nullable final Collection<? super Component> collection,
+                          final @Nullable Collection<? super Component> collection,
                           final Component... components) {
     for (Component component : components) {
       hGroup.addComponent(component);
@@ -335,11 +335,11 @@ public abstract class AbstractWizard<T extends Step> extends DialogWrapper {
     return mySteps.get(myCurrentStep);
   }
 
-  public void addStep(@NotNull final T step) {
+  public void addStep(final @NotNull T step) {
     addStep(step, mySteps.size());
   }
 
-  public void addStep(@NotNull final T step, int index) {
+  public void addStep(final @NotNull T step, int index) {
     mySteps.add(index, step);
 
     if (step instanceof StepAdapter) {
@@ -610,7 +610,5 @@ public abstract class AbstractWizard<T extends Step> extends DialogWrapper {
     return mySteps.size();
   }
 
-  @Nullable
-  @NonNls
-  protected abstract String getHelpID();
+  protected abstract @Nullable @NonNls String getHelpID();
 }

@@ -14,7 +14,9 @@ import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.UserDataHolder;
 import com.intellij.openapi.wm.WindowManager;
 import com.intellij.ui.SystemNotifications;
-import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.io.IOCancellationCallback;
+import com.intellij.util.io.IOCancellationCallbackHolder;
+import com.intellij.util.ui.EDT;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
@@ -30,11 +32,22 @@ public final class ProgressManagerImpl extends CoreProgressManager implements Di
 
   public ProgressManagerImpl() {
     ExtensionPointImpl.setCheckCanceledAction(ProgressManager::checkCanceled);
+    IOCancellationCallbackHolder.INSTANCE.setIoCancellationCallback(new IdeIOCancellationCallback());
   }
 
   @Override
   public boolean hasUnsafeProgressIndicator() {
-    return super.hasUnsafeProgressIndicator() || ContainerUtil.exists(getCurrentIndicators(), ProgressManagerImpl::isUnsafeIndicator);
+    if (super.hasUnsafeProgressIndicator()) {
+      return true;
+    }
+
+    Iterable<? extends ProgressIndicator> iterable = getCurrentIndicators();
+    for (ProgressIndicator t : iterable) {
+      if (isUnsafeIndicator(t)) {
+        return true;
+      }
+    }
+    return false;
   }
 
   private static boolean isUnsafeIndicator(@NotNull ProgressIndicator indicator) {
@@ -50,8 +63,10 @@ public final class ProgressManagerImpl extends CoreProgressManager implements Di
 
   @Override
   public void executeProcessUnderProgress(@NotNull Runnable process, ProgressIndicator progress) throws ProcessCanceledException {
-    CheckCanceledHook hook = progress instanceof PingProgress && ApplicationManager.getApplication().isDispatchThread()
-                             ? p -> { ((PingProgress)progress).interact(); return true; }
+    CheckCanceledHook hook = progress instanceof PingProgress && EDT.isCurrentThreadEdt() ?p -> {
+      ((PingProgress)progress).interact();
+      return true;
+    }
                              : null;
     if (hook != null) {
       addCheckCanceledHook(hook);
@@ -218,5 +233,17 @@ public final class ProgressManagerImpl extends CoreProgressManager implements Di
     return ApplicationManager.getApplication()
       .getMessageBus()
       .syncPublisher(ProgressManagerListener.TOPIC);
+  }
+
+  private static final class IdeIOCancellationCallback implements IOCancellationCallback {
+    @Override
+    public void checkCancelled() throws ProcessCanceledException {
+      ProgressManager.checkCanceled();
+    }
+
+    @Override
+    public void interactWithUI() {
+      PingProgress.interactWithEdtProgress();
+    }
   }
 }

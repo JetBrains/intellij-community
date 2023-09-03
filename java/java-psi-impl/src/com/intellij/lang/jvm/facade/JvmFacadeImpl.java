@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.lang.jvm.facade;
 
 import com.intellij.lang.jvm.JvmClass;
@@ -25,7 +11,7 @@ import com.intellij.psi.PsiClass;
 import com.intellij.psi.impl.JavaPsiFacadeImpl;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.PsiModificationTracker;
-import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.containers.CollectionFactory;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
@@ -33,14 +19,12 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 
-import static com.intellij.util.containers.ContainerUtil.createConcurrentWeakKeySoftValueMap;
-
 public final class JvmFacadeImpl implements JvmFacade {
   private static final Logger LOG = Logger.getInstance(JvmFacadeImpl.class);
 
   private final DumbService myDumbService;
   private final JavaPsiFacadeImpl myJavaPsiFacade;
-  private final Map<GlobalSearchScope, Map<String, List<JvmClass>>> myClassCache = createConcurrentWeakKeySoftValueMap();
+  private final Map<GlobalSearchScope, Map<String, List<JvmClass>>> myClassCache = CollectionFactory.createConcurrentWeakKeySoftValueMap();
 
   public JvmFacadeImpl(@NotNull Project project) {
     myDumbService = DumbService.getInstance(project);
@@ -51,7 +35,7 @@ public final class JvmFacadeImpl implements JvmFacade {
   @Override
   @NotNull
   public List<? extends JvmClass> findClasses(@NotNull String qualifiedName, @NotNull GlobalSearchScope scope) {
-    Map<String, List<JvmClass>> map = myClassCache.computeIfAbsent(scope, s -> ContainerUtil.createConcurrentWeakValueMap());
+    Map<String, List<JvmClass>> map = myClassCache.computeIfAbsent(scope, s -> CollectionFactory.createConcurrentWeakValueMap());
     return map.computeIfAbsent(qualifiedName, fqn -> doFindClassesWithJavaFacade(fqn, scope));
   }
 

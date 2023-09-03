@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2009 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.formatting;
 
@@ -21,7 +7,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
-public class WrapImpl extends Wrap {
+public final class WrapImpl extends Wrap {
   private static final int MAX_IS_CHILD_OF_CALCULATION_ITERATIONS = 50;
 
   /**
@@ -43,11 +29,11 @@ public class WrapImpl extends Wrap {
   private static final Type[] myTypes = Type.values();
 
 
-  public boolean isChildOf(@Nullable final WrapImpl wrap, LeafBlockWrapper leaf) {
+  public boolean isChildOf(final @Nullable WrapImpl wrap, LeafBlockWrapper leaf) {
     return isChildOf(wrap, leaf, new FormatterIterationMonitor<>(MAX_IS_CHILD_OF_CALCULATION_ITERATIONS, false));
   }
 
-  public boolean isChildOf(@Nullable final WrapImpl wrap, LeafBlockWrapper leaf, @NotNull FormatterIterationMonitor<Boolean> iterationMonitor) {
+  public boolean isChildOf(final @Nullable WrapImpl wrap, LeafBlockWrapper leaf, @NotNull FormatterIterationMonitor<Boolean> iterationMonitor) {
     if (getIgnoreParentWraps()) return false;
     if (!iterationMonitor.iterate()) return iterationMonitor.getFallbackValue();
     if (leaf != null && myIgnoredWraps != null) {
@@ -119,7 +105,7 @@ public class WrapImpl extends Wrap {
    * @param wrap          target wrap
    * @param currentBlock  target block for which given wrap should be ignored
    */
-  public void ignoreParentWrap(@Nullable final WrapImpl wrap, final LeafBlockWrapper currentBlock) {
+  public void ignoreParentWrap(final @Nullable WrapImpl wrap, final LeafBlockWrapper currentBlock) {
     if (myIgnoredWraps == null) {
       myIgnoredWraps = new HashMap<>(5);
     }

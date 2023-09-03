@@ -71,9 +71,8 @@ public final class RunConfigurationTypeUsagesCollector extends ProjectUsagesColl
     return GROUP;
   }
 
-  @NotNull
   @Override
-  public Set<MetricEvent> getMetrics(@NotNull Project project) {
+  public @NotNull Set<MetricEvent> getMetrics(@NotNull Project project) {
     Object2IntMap<Template> templates = new Object2IntOpenHashMap<>();
     if (project.isDisposed()) {
       return Collections.emptySet();
@@ -198,8 +197,7 @@ public final class RunConfigurationTypeUsagesCollector extends ProjectUsagesColl
       myEventPairs = pairs;
     }
 
-    @NotNull
-    private MetricEvent createMetricEvent(int count) {
+    private @NotNull MetricEvent createMetricEvent(int count) {
       myEventPairs.add(COUNT_FIELD.with(count));
       return myEventId.metric(myEventPairs);
     }
@@ -219,10 +217,9 @@ public final class RunConfigurationTypeUsagesCollector extends ProjectUsagesColl
     }
   }
 
-  public static class RunConfigurationUtilValidator extends CustomValidationRule {
-    @NotNull
+  public static final class RunConfigurationUtilValidator extends CustomValidationRule {
     @Override
-    public String getRuleId() {
+    public @NotNull String getRuleId() {
       return "run_config_id";
     }
 
@@ -231,9 +228,8 @@ public final class RunConfigurationTypeUsagesCollector extends ProjectUsagesColl
       return getRuleId().equals(ruleId) || "run_config_factory".equals(ruleId);
     }
 
-    @NotNull
     @Override
-    protected ValidationResultType doValidate(@NotNull String data, @NotNull EventContext context) {
+    protected @NotNull ValidationResultType doValidate(@NotNull String data, @NotNull EventContext context) {
       if (isThirdPartyValue(data) || "unknown".equals(data)) return ValidationResultType.ACCEPTED;
 
       final String configurationId = getEventDataField(context, ID_FIELD.getName());
@@ -257,9 +253,8 @@ public final class RunConfigurationTypeUsagesCollector extends ProjectUsagesColl
       return ValidationResultType.REJECTED;
     }
 
-    @NotNull
-    private static Pair<ConfigurationType, ConfigurationFactory> findConfigurationAndFactory(@NotNull String configurationId,
-                                                                                             @Nullable String factoryId) {
+    private static @NotNull Pair<ConfigurationType, ConfigurationFactory> findConfigurationAndFactory(@NotNull String configurationId,
+                                                                                                      @Nullable String factoryId) {
       final ConfigurationType configuration = findRunConfigurationById(configurationId);
       if (configuration == null) {
         return Pair.empty();
@@ -269,8 +264,7 @@ public final class RunConfigurationTypeUsagesCollector extends ProjectUsagesColl
       return Pair.create(configuration, factory);
     }
 
-    @Nullable
-    private static ConfigurationType findRunConfigurationById(@NotNull String configuration) {
+    private static @Nullable ConfigurationType findRunConfigurationById(@NotNull String configuration) {
       final ConfigurationType[] types = ConfigurationType.CONFIGURATION_TYPE_EP.getExtensions();
       for (ConfigurationType type : types) {
         if (StringUtil.equals(type.getId(), configuration)) {
@@ -280,8 +274,7 @@ public final class RunConfigurationTypeUsagesCollector extends ProjectUsagesColl
       return null;
     }
 
-    @Nullable
-    private static ConfigurationFactory findFactoryById(@NotNull ConfigurationType configuration, @NotNull String factoryId) {
+    private static @Nullable ConfigurationFactory findFactoryById(@NotNull ConfigurationType configuration, @NotNull String factoryId) {
       for (ConfigurationFactory factory : configuration.getConfigurationFactories()) {
         if (StringUtil.equals(factory.getId(), factoryId)) {
           return factory;

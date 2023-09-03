@@ -6,6 +6,7 @@ import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.DataContext;
+import com.intellij.openapi.actionSystem.remoting.ActionRemoteBehaviorSpecification;
 import com.intellij.openapi.project.DumbAwareToggleAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
@@ -29,7 +30,7 @@ import javax.swing.*;
  * <p>The initial visibility is set by {@link #markAsEvaluateExpressionField(JComponent)}
  * Use {@link #isEvaluateExpressionFieldEnabled()} to get current state of the option.</p>
  */
-public class XToggleEvaluateExpressionFieldAction extends DumbAwareToggleAction {
+public class XToggleEvaluateExpressionFieldAction extends DumbAwareToggleAction implements ActionRemoteBehaviorSpecification.Frontend {
 
   private static final Key<String> EVALUATE_EXPRESSION_FIELD = Key.create("Evaluate Expression Field");
   private static final String PROP_KEY = "XToggleEvaluateFieldAction.EvaluateExpressionField.enabled";

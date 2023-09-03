@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.versions
 
@@ -11,6 +11,7 @@ import com.intellij.openapi.fileEditor.FileEditor
 import com.intellij.openapi.fileEditor.OpenFileDescriptor
 import com.intellij.openapi.module.ModuleUtilCore
 import com.intellij.openapi.progress.ProcessCanceledException
+import com.intellij.openapi.project.DumbModeBlockedFunctionality
 import com.intellij.openapi.project.DumbService
 import com.intellij.openapi.project.IndexNotReadyException
 import com.intellij.openapi.project.Project
@@ -178,7 +179,8 @@ class UnsupportedAbiVersionNotificationPanelProvider : EditorNotificationProvide
             }
             DumbService.getInstance(project).tryRunReadActionInSmartMode(
                 task,
-                KotlinPluginUpdaterBundle.message("can.t.show.all.paths.during.index.update")
+                KotlinPluginUpdaterBundle.message("can.t.show.all.paths.during.index.update"),
+                DumbModeBlockedFunctionality.Kotlin
             )
         }
     }

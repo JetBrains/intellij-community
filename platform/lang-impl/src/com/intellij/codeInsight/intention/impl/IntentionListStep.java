@@ -11,6 +11,7 @@ import com.intellij.codeInsight.intention.IntentionActionDelegate;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.project.DumbModeBlockedFunctionality;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.*;
@@ -118,8 +119,9 @@ public class IntentionListStep implements ListPopupStep<IntentionActionWithTextC
       }
 
       if (DumbService.isDumb(myProject) && !DumbService.isDumbAware(cachedAction)) {
-        DumbService.getInstance(myProject).showDumbModeNotification(
-          CodeInsightBundle.message("notification.0.is.not.available.during.indexing", cachedAction.getText()));
+        DumbService.getInstance(myProject).showDumbModeNotificationForFunctionality(
+          CodeInsightBundle.message("notification.0.is.not.available.during.indexing", cachedAction.getText()),
+          DumbModeBlockedFunctionality.Intentions);
         return;
       }
 

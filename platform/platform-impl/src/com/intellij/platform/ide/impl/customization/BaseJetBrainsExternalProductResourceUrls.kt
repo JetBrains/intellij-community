@@ -11,12 +11,13 @@ import com.intellij.platform.ide.customization.FeedbackReporter
 import com.intellij.util.Url
 import com.intellij.util.Urls
 import com.intellij.util.system.CpuArch
+import org.jetbrains.annotations.ApiStatus
 
 /**
  * A base class for implementations of [ExternalProductResourceUrls] describing IDEs developed by JetBrains.
  */
 abstract class BaseJetBrainsExternalProductResourceUrls : ExternalProductResourceUrls {
-  abstract val basePatchDownloadUrl: String
+  abstract val basePatchDownloadUrl: Url
 
   /**
    * Returns ID of YouTrack Project which will be used by "Submit a Bug Report" action.
@@ -34,14 +35,14 @@ abstract class BaseJetBrainsExternalProductResourceUrls : ExternalProductResourc
    * * [productPageUrl]/download to get the address of the download page;
    * * [productPageUrl]/whatsnew to get the address of "What's New" page.  
    */
-  abstract val productPageUrl: String
+  abstract val productPageUrl: Url
 
   /**
    * Returns base URL of context help pages. 
    * The current IDE version number and ID of the requested topic are added to it to obtain the actual URL:
    * [baseWebHelpUrl]`/<version>/?<topicId>`.
    */
-  abstract val baseWebHelpUrl: String
+  abstract val baseWebHelpUrl: Url
 
   /**
    * Returns ID of the form used to contact support at intellij-support.jetbrains.com site 
@@ -57,11 +58,16 @@ abstract class BaseJetBrainsExternalProductResourceUrls : ExternalProductResourc
 
   override val updatesMetadataXmlUrl: Url
     get() {
+      val customUrl = System.getProperty("idea.updates.url")
+      if (customUrl != null) {
+        return Urls.newFromEncoded(customUrl)
+      }
       return UpdateRequestParameters.amendUpdateRequest(Urls.newFromEncoded("https://www.jetbrains.com/updates/updates.xml"))
     }
 
   override fun computePatchUrl(from: BuildNumber, to: BuildNumber): Url? {
-    return Urls.newFromEncoded(basePatchDownloadUrl).resolve(computePatchFileName(from, to)) 
+    return computeCustomPatchDownloadUrl(from, to)
+           ?: basePatchDownloadUrl.resolve(computePatchFileName(from, to)) 
   }
 
   override val bugReportUrl: ((String) -> Url)?
@@ -89,14 +95,14 @@ abstract class BaseJetBrainsExternalProductResourceUrls : ExternalProductResourc
     get() = JetBrainsFeedbackReporter(shortProductNameUsedInForms, zenDeskFeedbackFormData)
 
   override val downloadPageUrl: Url?
-    get() = Urls.newFromEncoded(productPageUrl).resolve("download")
+    get() = productPageUrl.resolve("download")
 
   override val whatIsNewPageUrl: Url?
-    get() = Urls.newFromEncoded(productPageUrl).resolve("whatsnew")
+    get() = productPageUrl.resolve("whatsnew")
 
   override val helpPageUrl: ((topicId: String) -> Url)
     get() = { topicId ->
-      Urls.newFromEncoded(baseWebHelpUrl).resolve("${ApplicationInfo.getInstance().shortVersion}/").addParameters(mapOf(
+      baseWebHelpUrl.resolve("${ApplicationInfo.getInstance().shortVersion}/").addParameters(mapOf(
         topicId to ""
       ))
     }
@@ -111,7 +117,8 @@ abstract class BaseJetBrainsExternalProductResourceUrls : ExternalProductResourc
  * * Windows 7 or older - `win-7`[[-64]]
  * * Other - `other-os`
  */
-internal fun currentOsNameForIntelliJSupport(): String = when {
+@ApiStatus.Internal
+fun currentOsNameForIntelliJSupport(): String = when {
   SystemInfo.isWindows -> {
     "win-" +
     when {
@@ -135,4 +142,9 @@ internal fun computePatchFileName(from: BuildNumber, to: BuildNumber): String {
   val product = ApplicationInfo.getInstance().build.productCode
   val runtime = if (CpuArch.isArm64()) "-aarch64" else ""
   return "${product}-${from.withoutProductCode().asString()}-${to.withoutProductCode().asString()}-patch${runtime}-${PatchInfo.OS_SUFFIX}.jar"
+}
+
+internal fun computeCustomPatchDownloadUrl(from: BuildNumber, to: BuildNumber): Url? {
+  val customPatchesUrl = System.getProperty("idea.patches.url") ?: return null
+  return Urls.newFromEncoded(customPatchesUrl).resolve(computePatchFileName(from, to))
 }

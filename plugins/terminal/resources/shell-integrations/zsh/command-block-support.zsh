@@ -68,12 +68,12 @@ __jetbrains_intellij_command_preexec() {
 }
 
 __jetbrains_intellij_command_precmd() {
+  builtin local LAST_EXIT_CODE="$?"
   if [ ! -z $__JETBRAINS_INTELLIJ_GENERATOR_COMMAND ]
   then
     unset __JETBRAINS_INTELLIJ_GENERATOR_COMMAND
     return 0
   fi
-  builtin local LAST_EXIT_CODE="$?"
   builtin local current_directory="$PWD"
   builtin printf '\e]1341;command_finished;exit_code=%s;current_directory=%s\a' \
     "$LAST_EXIT_CODE" "$(__jetbrains_intellij_encode "${current_directory}")"

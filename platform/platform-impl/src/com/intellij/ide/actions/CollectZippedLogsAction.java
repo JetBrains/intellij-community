@@ -42,7 +42,7 @@ import java.util.Date;
 import java.util.Locale;
 import java.util.function.Consumer;
 
-public class CollectZippedLogsAction extends AnAction implements DumbAware {
+public final class CollectZippedLogsAction extends AnAction implements DumbAware {
   private static final String CONFIRMATION_DIALOG = "zipped.logs.action.show.confirmation.dialog";
   public static final String NOTIFICATION_GROUP = "Collect Zipped Logs";
 

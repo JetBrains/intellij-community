@@ -4,7 +4,7 @@ package com.intellij.openapi.vfs.newvfs.persistent;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileWithId;
 import com.intellij.openapi.vfs.newvfs.FileAttribute;
-import com.intellij.openapi.vfs.newvfs.persistent.dev.MappedFileStorageHelper;
+import com.intellij.openapi.vfs.newvfs.persistent.mapped.MappedFileStorageHelper;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
@@ -326,7 +326,7 @@ public final class SpecializedFileAttributes {
     return ((VirtualFileWithId)vFile).getId();
   }
 
-  private static class FileAttributeAccessorHelper implements FileAttributeExAccessor, Closeable {
+  private static final class FileAttributeAccessorHelper implements FileAttributeExAccessor, Closeable {
     protected final @NotNull MappedFileStorageHelper storageHelper;
 
     protected FileAttributeAccessorHelper(@NotNull MappedFileStorageHelper helper) { storageHelper = helper; }

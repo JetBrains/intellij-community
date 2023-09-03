@@ -58,10 +58,6 @@ public class MavenSettingsTest extends MavenTestCase {
     MavenImportingSettings s = new MavenImportingSettings();
     s.addListener(new MavenImportingSettings.Listener() {
       @Override
-      public void createModuleGroupsChanged() {
-      }
-
-      @Override
       public void createModuleForAggregatorsChanged() {
         log[0] += "changed ";
       }

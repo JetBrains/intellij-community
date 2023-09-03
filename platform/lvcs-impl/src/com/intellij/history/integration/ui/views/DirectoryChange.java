@@ -20,7 +20,7 @@ import com.intellij.history.core.revisions.Difference;
 import com.intellij.history.integration.ui.models.DirectoryChangeModel;
 import com.intellij.openapi.vcs.changes.Change;
 
-public class DirectoryChange extends Change {
+public final class DirectoryChange extends Change {
   private final DirectoryChangeModel myModel;
 
   public DirectoryChange(DirectoryChangeModel m) {

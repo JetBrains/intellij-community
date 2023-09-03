@@ -7,7 +7,7 @@ import com.intellij.openapi.editor.markup.TextAttributes;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-class TextComponentSelectionModel implements SelectionModel {
+final class TextComponentSelectionModel implements SelectionModel {
   private final TextComponentEditor myEditor;
 
   TextComponentSelectionModel(@NotNull TextComponentEditorImpl textComponentEditor) {

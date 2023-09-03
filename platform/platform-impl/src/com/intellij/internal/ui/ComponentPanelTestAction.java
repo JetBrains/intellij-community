@@ -792,7 +792,7 @@ final class ComponentPanelTestAction extends DumbAwareAction {
       JPanel pane = new JPanel(new MigLayout("fillx, debug, novisualpadding, ins 0, gap 5"));
       pane.add(new JLabel("Shows a combobox with custom JBPopup and multiple layers of items"), "baseline, wrap");
 
-      class Item {
+      final class Item {
         final Icon myIcon;
         final String myText;
         final List<Item> myChildren;
@@ -808,7 +808,7 @@ final class ComponentPanelTestAction extends DumbAwareAction {
         }
       }
 
-      class Model extends DefaultComboBoxModel<Item> implements ComboBoxPopupState<Item> {
+      final class Model extends DefaultComboBoxModel<Item> implements ComboBoxPopupState<Item> {
         Model(List<Item> items) {
           super(items.toArray(new Item[0]));
         }

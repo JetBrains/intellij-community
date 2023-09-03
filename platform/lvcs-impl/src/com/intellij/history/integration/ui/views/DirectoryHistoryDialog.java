@@ -153,7 +153,7 @@ public class DirectoryHistoryDialog extends HistoryDialog<DirectoryHistoryDialog
     return (List)myChangesTree.getSelectedChanges();
   }
 
-  private class ShowDifferenceAction extends ActionOnSelection {
+  private final class ShowDifferenceAction extends ActionOnSelection {
     ShowDifferenceAction() {
       super(message("action.show.difference"), AllIcons.Actions.Diff);
       setShortcutSet(CommonShortcuts.getDiff());
@@ -183,7 +183,7 @@ public class DirectoryHistoryDialog extends HistoryDialog<DirectoryHistoryDialog
     }
   }
 
-  private class RevertSelectionAction extends ActionOnSelection {
+  private final class RevertSelectionAction extends ActionOnSelection {
     RevertSelectionAction() {
       super(message("action.revert.selection"), AllIcons.Actions.Rollback);
     }

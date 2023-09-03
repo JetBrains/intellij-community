@@ -15,7 +15,7 @@ import org.jetbrains.annotations.Nullable;
 import java.awt.datatransfer.StringSelection;
 import java.util.regex.Matcher;
 
-public class CopyUrlAction extends DumbAwareAction {
+public final class CopyUrlAction extends DumbAwareAction {
   @Override
   public void actionPerformed(@NotNull AnActionEvent e) {
     String url = findUrlAtCaret(e);

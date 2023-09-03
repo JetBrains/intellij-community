@@ -19,6 +19,10 @@ class ListenerImplementationMustNotBeDisposableInspectionTest : ListenerImplemen
     doTest()
   }
 
+  fun testDisposableListenerDeepInheritance() {
+    doTest()
+  }
+
   fun testDisposableUnregisteredListener() {
     doTest()
   }

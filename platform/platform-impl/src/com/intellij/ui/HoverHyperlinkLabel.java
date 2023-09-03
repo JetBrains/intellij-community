@@ -22,7 +22,7 @@ import java.util.List;
 /**
  * @author Eugene Belyaev
  */
-public class HoverHyperlinkLabel extends JLabel {
+public final class HoverHyperlinkLabel extends JLabel {
   private @NlsContexts.LinkLabel String myOriginalText;
   private final List<HyperlinkListener> myListeners = ContainerUtil.createLockFreeCopyOnWriteList();
 

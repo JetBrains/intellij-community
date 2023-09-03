@@ -25,7 +25,6 @@ import org.jetbrains.idea.maven.server.security.MavenToken;
 import java.io.File;
 import java.rmi.Remote;
 import java.rmi.RemoteException;
-import java.util.Collection;
 import java.util.HashSet;
 
 public interface MavenServer extends Remote, IdeaWatchdogAware {
@@ -51,4 +50,6 @@ public interface MavenServer extends Remote, IdeaWatchdogAware {
   MavenPullDownloadListener createPullDownloadListener(MavenToken token) throws RemoteException;
 
   boolean ping(MavenToken token) throws RemoteException;
+
+  MavenServerStatus getDebugStatus(boolean clean) throws RemoteException;
 }

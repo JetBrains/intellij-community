@@ -102,6 +102,10 @@ class DummyMavenServer(val project: Project) : MavenServer {
   override fun ping(token: MavenToken?): Boolean {
     return true
   }
+
+  override fun getDebugStatus(clean: Boolean): MavenServerStatus {
+    throw RuntimeException("not supported")
+  }
 }
 
 class DummyIndexer : MavenServerIndexer {

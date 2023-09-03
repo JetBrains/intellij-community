@@ -14,7 +14,7 @@ import java.util.List;
 /**
  * @author Dmitry Avdeev
  */
-public class ControlBinder {
+public final class ControlBinder {
 
   private static final Logger LOG = Logger.getInstance(ControlBinder.class);
 

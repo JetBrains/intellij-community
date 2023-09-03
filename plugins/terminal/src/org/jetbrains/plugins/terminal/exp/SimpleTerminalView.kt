@@ -2,6 +2,8 @@
 package org.jetbrains.plugins.terminal.exp
 
 import com.intellij.openapi.Disposable
+import com.intellij.openapi.actionSystem.CommonDataKeys
+import com.intellij.openapi.actionSystem.DataProvider
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.EditorFactory
 import com.intellij.openapi.editor.ex.FocusChangeListener
@@ -27,7 +29,7 @@ class SimpleTerminalView(
   private val editor: EditorImpl
   private val controller: SimpleTerminalController
 
-  val component: JComponent = JPanel()
+  val component: JComponent
   val preferredFocusableComponent: JComponent
     get() = editor.contentComponent
 
@@ -44,6 +46,7 @@ class SimpleTerminalView(
   init {
     editor = createEditor()
     controller = SimpleTerminalController(settings, session, editor, eventsHandler)
+    component = SimpleTerminalPanel()
     editor.addFocusListener(object : FocusChangeListener {
       override fun focusGained(editor: Editor) {
         controller.isFocused = true
@@ -53,11 +56,6 @@ class SimpleTerminalView(
         controller.isFocused = false
       }
     })
-
-    component.background = TerminalUi.terminalBackground
-    component.border = JBUI.Borders.emptyLeft(TerminalUi.alternateBufferLeftInset)
-    component.layout = BorderLayout()
-    component.add(editor.component, BorderLayout.CENTER)
   }
 
   private fun createEditor(): EditorImpl {
@@ -76,5 +74,25 @@ class SimpleTerminalView(
   override fun dispose() {
     EditorFactory.getInstance().releaseEditor(editor)
     Disposer.dispose(controller)
+  }
+
+  /**
+   * This wrapper is needed to provide the editor to the DataContext.
+   * Editor is not proving it itself, because renderer mode is enabled ([EditorImpl.isRendererMode]).
+   */
+  private inner class SimpleTerminalPanel : JPanel(), DataProvider {
+    init {
+      background = TerminalUi.terminalBackground
+      border = JBUI.Borders.emptyLeft(TerminalUi.alternateBufferLeftInset)
+      layout = BorderLayout()
+      add(editor.component, BorderLayout.CENTER)
+    }
+
+    override fun getData(dataId: String): Any? {
+      return if (CommonDataKeys.EDITOR.`is`(dataId)) {
+        editor
+      }
+      else null
+    }
   }
 }

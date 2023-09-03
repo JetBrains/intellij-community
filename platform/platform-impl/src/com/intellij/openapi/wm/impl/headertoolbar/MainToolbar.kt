@@ -40,6 +40,7 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.withContext
+import org.jetbrains.annotations.ApiStatus
 import java.awt.*
 import java.awt.event.MouseEvent
 import java.beans.PropertyChangeListener
@@ -77,7 +78,8 @@ private class MenuButtonInToolbarMainToolbarFlavor(coroutineScope: CoroutineScop
 
 private object DefaultMainToolbarFlavor : MainToolbarFlavor
 
-internal class MainToolbar(
+@ApiStatus.Internal
+class MainToolbar(
   private val coroutineScope: CoroutineScope,
   frame: JFrame,
   isOpaque: Boolean = false,

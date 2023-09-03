@@ -45,7 +45,7 @@ abstract class KeyGestureState {
     throw new IllegalStateException(getClass().getName());
   }
 
-  static class WaitForStart extends KeyGestureState {
+  static final class WaitForStart extends KeyGestureState {
 
     WaitForStart(final KeyboardGestureProcessor processor) {
       super(processor);
@@ -64,7 +64,7 @@ abstract class KeyGestureState {
     }
   }
 
-  static class ModifierPressed extends KeyGestureState {
+  static final class ModifierPressed extends KeyGestureState {
 
     ModifierPressed(final KeyboardGestureProcessor processor) {
       super(processor);
@@ -91,7 +91,7 @@ abstract class KeyGestureState {
     }
   }
 
-  static class WaitForDblClick extends KeyGestureState {
+  static final class WaitForDblClick extends KeyGestureState {
 
     WaitForDblClick(final KeyboardGestureProcessor processor) {
       super(processor);
@@ -121,7 +121,7 @@ abstract class KeyGestureState {
 
   }
 
-  static class WaitForAction extends KeyGestureState {
+  static final class WaitForAction extends KeyGestureState {
 
     WaitForAction(final KeyboardGestureProcessor processor) {
       super(processor);
@@ -157,7 +157,7 @@ abstract class KeyGestureState {
     }
   }
 
-  static class ProcessFinish extends KeyGestureState {
+  static final class ProcessFinish extends KeyGestureState {
     ProcessFinish(final KeyboardGestureProcessor processor) {
       super(processor);
     }
@@ -175,7 +175,7 @@ abstract class KeyGestureState {
     }
   }
 
-  static class WaitForActionEnd extends KeyGestureState {
+  static final class WaitForActionEnd extends KeyGestureState {
 
     WaitForActionEnd(final KeyboardGestureProcessor processor) {
       super(processor);

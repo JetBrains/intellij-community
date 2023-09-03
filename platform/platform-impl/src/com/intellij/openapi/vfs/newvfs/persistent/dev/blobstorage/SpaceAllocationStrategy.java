@@ -20,7 +20,7 @@ public interface SpaceAllocationStrategy {
   int capacity(final int actualLength,
                final int currentCapacity);
 
-  class WriterDecidesStrategy implements SpaceAllocationStrategy {
+  final class WriterDecidesStrategy implements SpaceAllocationStrategy {
     private final int defaultCapacity;
 
     public WriterDecidesStrategy(final int defaultCapacity) {
@@ -58,7 +58,7 @@ public interface SpaceAllocationStrategy {
     }
   }
 
-  class DataLengthPlusFixedPercentStrategy implements SpaceAllocationStrategy {
+  final class DataLengthPlusFixedPercentStrategy implements SpaceAllocationStrategy {
     private final int defaultCapacity;
     private final int minCapacity;
     private final int percentOnTheTop;

@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.updater;
 
 import java.io.*;
@@ -69,6 +69,11 @@ public abstract class PatchAction {
     return myChecksum;
   }
 
+  /**
+   * See javadoc for {@link Runner#printUsage()} for details of this flag
+   * <p>
+   * If the file is critical, we store the full file in the patch instead of calculating the diff.
+   */
   public boolean isCritical() {
     return (myFlags & CRITICAL) != 0;
   }
@@ -77,6 +82,7 @@ public abstract class PatchAction {
     if (critical) myFlags |= CRITICAL; else myFlags &= ~CRITICAL;
   }
 
+  /** See javadoc for {@link Runner#printUsage()} for details of this flag */
   public boolean isOptional() {
     return (myFlags & OPTIONAL) != 0;
   }
@@ -85,6 +91,7 @@ public abstract class PatchAction {
     if (optional) myFlags |= OPTIONAL; else myFlags &= ~OPTIONAL;
   }
 
+  /** See javadoc for {@link Runner#printUsage()} for details of this flag */
   public boolean isStrict() {
     return (myFlags & STRICT) != 0;
   }
@@ -183,37 +190,42 @@ public abstract class PatchAction {
   protected ValidationResult doValidateNotChanged(File toFile, ValidationResult.Action action) throws IOException {
     if (toFile.exists()) {
       if (isModified(toFile)) {
-        ValidationResult.Option[] options;
-        if (myPatch.isStrict() || isStrict()) {
-          if (isCritical()) {
-            options = new ValidationResult.Option[]{ValidationResult.Option.REPLACE};
-          }
-          else {
-            options = new ValidationResult.Option[]{ValidationResult.Option.NONE};
-          }
-        }
-        else {
-          if (isCritical()) {
-            options = new ValidationResult.Option[]{ValidationResult.Option.REPLACE, ValidationResult.Option.IGNORE};
-          }
-          else {
-            options = new ValidationResult.Option[]{ValidationResult.Option.IGNORE};
-          }
-        }
-        String details = "expected 0x" + Long.toHexString(myChecksum) + ", actual 0x" + Long.toHexString(myPatch.digestFile(toFile, myPatch.isNormalized()));
+        ValidationResult.Option[] options = calculateOptions();
+        String details = "expected 0x" + Long.toHexString(myChecksum) + ", actual 0x" + Long.toHexString(myPatch.digestFile(toFile));
         return new ValidationResult(ValidationResult.Kind.ERROR, getReportPath(), action, ValidationResult.MODIFIED_MESSAGE, details, options);
       }
     }
     else if (!isOptional()) {
-      ValidationResult.Option[] options = {myPatch.isStrict() || isStrict() ? ValidationResult.Option.NONE : ValidationResult.Option.IGNORE};
+      ValidationResult.Option[] options = calculateOptions();
       return new ValidationResult(ValidationResult.Kind.ERROR, getReportPath(), action, ValidationResult.ABSENT_MESSAGE, options);
     }
 
     return null;
   }
 
+  private ValidationResult.Option[] calculateOptions() {
+    ValidationResult.Option[] options;
+    if (myPatch.isStrict() || isStrict()) {
+      if (isCritical()) {
+        options = new ValidationResult.Option[]{ValidationResult.Option.REPLACE};
+      }
+      else {
+        options = new ValidationResult.Option[]{ValidationResult.Option.NONE};
+      }
+    }
+    else {
+      if (isCritical()) {
+        options = new ValidationResult.Option[]{ValidationResult.Option.REPLACE, ValidationResult.Option.IGNORE};
+      }
+      else {
+        options = new ValidationResult.Option[]{ValidationResult.Option.IGNORE};
+      }
+    }
+    return options;
+  }
+
   protected boolean isModified(File toFile) throws IOException {
-    return myChecksum == Digester.INVALID || myChecksum != myPatch.digestFile(toFile, myPatch.isNormalized());
+    return myChecksum == Digester.INVALID || myChecksum != myPatch.digestFile(toFile);
   }
 
   public boolean mandatoryBackup() {

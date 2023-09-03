@@ -3,12 +3,14 @@ package com.intellij.xml.breadcrumbs;
 
 import com.intellij.codeInsight.breadcrumbs.FileBreadcrumbsCollector;
 import com.intellij.codeInsight.highlighting.HighlightManager;
+import com.intellij.codeWithMe.ClientId;
 import com.intellij.ide.ui.UISettings;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.editor.ClientEditorManager;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.EditorGutter;
 import com.intellij.openapi.editor.colors.EditorColors;
@@ -88,9 +90,6 @@ public abstract class BreadcrumbsPanel extends JComponent implements Disposable 
   public BreadcrumbsPanel(final @NotNull Editor editor) {
     myEditor = editor;
     putBreadcrumbsComponent(myEditor, this);
-    if (editor instanceof EditorEx) {
-      ((EditorEx)editor).addPropertyChangeListener(this::updateEditorFont, this);
-    }
 
     final Project project = editor.getProject();
     assert project != null;
@@ -104,6 +103,39 @@ public abstract class BreadcrumbsPanel extends JComponent implements Disposable 
       }
     }, this);
 
+    if (ClientId.isLocal(ClientEditorManager.getClientId(myEditor))) {
+      attachEditorListeners(editor);
+
+      breadcrumbs.onHover(this::itemHovered);
+      breadcrumbs.onSelect(this::itemSelected);
+      breadcrumbs.setFont(getNewFont(myEditor));
+
+      JScrollPane pane = createScrollPane(breadcrumbs, true);
+      pane.setVerticalScrollBarPolicy(ScrollPaneConstants.VERTICAL_SCROLLBAR_NEVER);
+      pane.getHorizontalScrollBar().setEnabled(false);
+      setLayout(new BorderLayout());
+      add(BorderLayout.CENTER, pane);
+
+      Disposer.register(this, UiNotifyConnector.installOn(breadcrumbs, myQueue));
+    }
+
+    Disposer.register(this, myQueue);
+
+    BreadcrumbsProvider.EP_NAME.addChangeListener(() -> updateCrumbsSync(), this);
+    BreadcrumbsPresentationProvider.EP_NAME.addChangeListener(() -> updateCrumbsSync(), this);
+
+    if (ApplicationManager.getApplication().isHeadlessEnvironment()) {
+      myQueue.setPassThrough(true);
+    }
+
+    queueUpdate();
+  }
+
+  private void attachEditorListeners(final @NotNull Editor editor) {
+    if (editor instanceof EditorEx) {
+      ((EditorEx)editor).addPropertyChangeListener(this::updateEditorFont, this);
+    }
+
     final CaretListener caretListener = new CaretListener() {
       @Override
       public void caretPositionChanged(final @NotNull CaretEvent e) {
@@ -116,16 +148,6 @@ public abstract class BreadcrumbsPanel extends JComponent implements Disposable 
     };
 
     editor.getCaretModel().addCaretListener(caretListener, this);
-
-    breadcrumbs.onHover(this::itemHovered);
-    breadcrumbs.onSelect(this::itemSelected);
-    breadcrumbs.setFont(getNewFont(myEditor));
-
-    JScrollPane pane = createScrollPane(breadcrumbs, true);
-    pane.setVerticalScrollBarPolicy(ScrollPaneConstants.VERTICAL_SCROLLBAR_NEVER);
-    pane.getHorizontalScrollBar().setEnabled(false);
-    setLayout(new BorderLayout());
-    add(BorderLayout.CENTER, pane);
 
     EditorGutter gutter = editor.getGutter();
     if (gutter instanceof EditorGutterComponentEx gutterComponent) {
@@ -164,17 +186,6 @@ public abstract class BreadcrumbsPanel extends JComponent implements Disposable 
         breadcrumbs.removeMouseListener(mouseListener);
       });
     }
-    Disposer.register(this, UiNotifyConnector.installOn(breadcrumbs, myQueue));
-    Disposer.register(this, myQueue);
-
-    BreadcrumbsProvider.EP_NAME.addChangeListener(() -> updateCrumbsSync(), this);
-    BreadcrumbsPresentationProvider.EP_NAME.addChangeListener(() -> updateCrumbsSync(), this);
-
-    if (ApplicationManager.getApplication().isHeadlessEnvironment()) {
-      myQueue.setPassThrough(true);
-    }
-
-    queueUpdate();
   }
 
   public Breadcrumbs getBreadcrumbs() {
@@ -200,7 +211,9 @@ public abstract class BreadcrumbsPanel extends JComponent implements Disposable 
   }
 
   private void applyCrumbs(Iterable<? extends Crumb> _crumbs) {
-    boolean areCrumbsVisible = breadcrumbs.isShowing() || ApplicationManager.getApplication().isHeadlessEnvironment();
+    boolean areCrumbsVisible = breadcrumbs.isShowing() ||
+                               !ClientId.isLocal(ClientEditorManager.getClientId(myEditor)) ||
+                               ApplicationManager.getApplication().isHeadlessEnvironment();
     Iterable<? extends Crumb> crumbs = _crumbs != null && areCrumbsVisible ? _crumbs : EMPTY_BREADCRUMBS;
     breadcrumbs.setFont(getNewFont(myEditor));
     breadcrumbs.setCrumbs(crumbs);
@@ -284,7 +297,7 @@ public abstract class BreadcrumbsPanel extends JComponent implements Disposable 
     return null;
   }
 
-  protected static class CrumbHighlightInfo {
+  protected static final class CrumbHighlightInfo {
     public final @NotNull TextRange range;
     public final @Nullable CrumbPresentation presentation;
 

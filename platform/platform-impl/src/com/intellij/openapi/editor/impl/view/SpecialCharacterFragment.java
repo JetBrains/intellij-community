@@ -13,7 +13,7 @@ import org.jetbrains.annotations.Nullable;
 import java.awt.*;
 import java.util.function.Consumer;
 
-class SpecialCharacterFragment implements LineFragment {
+final class SpecialCharacterFragment implements LineFragment {
   private static final @NonNls Int2ObjectMap<String> SPECIAL_CHAR_CODES = new Int2ObjectOpenHashMap<>(
   // @formatter:off
     new int[] {

@@ -898,6 +898,7 @@ public abstract class Maven3XServerEmbedder extends Maven3ServerEmbedder {
                                                  List<Dependency> pluginDependencies,
                                                  List<RemoteRepository> remoteRepos,
                                                  RepositorySystemSession session) {
+    MavenServerStatsCollector.pluginResolve(mavenPluginId.toString());
     long startTime = System.currentTimeMillis();
     List<MavenArtifact> artifacts = new ArrayList<>();
     if (task.isCanceled()) return new PluginResolutionResponse(mavenPluginId, false, artifacts);

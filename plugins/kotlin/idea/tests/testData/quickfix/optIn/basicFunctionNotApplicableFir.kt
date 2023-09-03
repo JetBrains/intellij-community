@@ -1,5 +1,5 @@
 // "Propagate 'MyExperimentalAPI' opt-in requirement to 'bar'" "false"
-// IGNORE_FE10
+// IGNORE_K1
 // COMPILER_ARGUMENTS: -opt-in=kotlin.RequiresOptIn
 // WITH_STDLIB
 // ACTION: Opt in for 'MyExperimentalAPI' in containing file 'basicFunctionNotApplicableFir.kt'

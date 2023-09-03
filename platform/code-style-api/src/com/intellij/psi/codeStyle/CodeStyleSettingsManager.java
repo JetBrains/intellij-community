@@ -62,8 +62,9 @@ public class CodeStyleSettingsManager implements PersistentStateComponentWithMod
   @TestOnly
   @NotNull
   public final CodeStyleSettings createTemporarySettings() {
-    myTemporarySettings = new CodeStyleSettings(true, false);
-    return myTemporarySettings;
+    CodeStyleSettings temporarySettings = new CodeStyleSettings(true, false);
+    myTemporarySettings = temporarySettings;
+    return temporarySettings;
   }
 
   @SuppressWarnings("MethodMayBeStatic")

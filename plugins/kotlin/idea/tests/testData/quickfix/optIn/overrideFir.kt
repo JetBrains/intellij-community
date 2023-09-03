@@ -1,5 +1,5 @@
 // "Propagate 'MyExperimentalAPI' opt-in requirement to containing class 'Derived'" "false"
-// IGNORE_FE10
+// IGNORE_K1
 // COMPILER_ARGUMENTS: -opt-in=kotlin.RequiresOptIn
 // WITH_STDLIB
 // ACTION: Enable a trailing comma by default in the formatter

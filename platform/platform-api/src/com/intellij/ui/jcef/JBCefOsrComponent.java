@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui.jcef;
 
 import com.intellij.openapi.Disposable;
@@ -336,9 +336,8 @@ class JBCefOsrComponent extends JPanel {
       return candidateWindowPosition;
     }
 
-    @Nullable
     @Override
-    public TextHitInfo getLocationOffset(int x, int y) {
+    public @Nullable TextHitInfo getLocationOffset(int x, int y) {
       Point p = new Point(x, y);
       var componentLocation = getLocationOnScreen();
       p.translate(-componentLocation.x, -componentLocation.y);
@@ -374,17 +373,15 @@ class JBCefOsrComponent extends JPanel {
       return 0;
     }
 
-    @Nullable
     @Override
-    public AttributedCharacterIterator cancelLatestCommittedText(AttributedCharacterIterator.Attribute[] attributes) {
+    public @Nullable AttributedCharacterIterator cancelLatestCommittedText(AttributedCharacterIterator.Attribute[] attributes) {
       System.out.println("cancelLatestCommittedText");
       myBrowser.ImeCancelComposing();
       return null;
     }
 
-    @Nullable
     @Override
-    public AttributedCharacterIterator getSelectedText(AttributedCharacterIterator.Attribute[] attributes) {
+    public @Nullable AttributedCharacterIterator getSelectedText(AttributedCharacterIterator.Attribute[] attributes) {
       return new AttributedString(myRenderHandler.getSelectedText()).getIterator();
     }
 

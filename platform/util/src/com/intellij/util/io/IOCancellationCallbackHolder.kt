@@ -1,27 +1,29 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.io
 
-import java.util.*
+import org.jetbrains.annotations.ApiStatus.Internal
 
-internal object IOCancellationCallbackHolder {
-  val usedIoCallback: IOCancellationCallback by lazy { loadSingleCallback() }
-
-  private fun loadSingleCallback(): IOCancellationCallback {
-    val serviceLoader = ServiceLoader.load(IOCancellationCallback::class.java, IOCancellationCallback::class.java.classLoader)
-    val allCallbacks = serviceLoader.toList()
-    if (allCallbacks.size > 1) {
-      throw IllegalStateException("Few io cancellation callbacks are registered: ${allCallbacks.map { it.javaClass.name }}")
+@Internal
+object IOCancellationCallbackHolder {
+  // not volatile - ok without it
+  private var usedIoCallback: IOCancellationCallback = object : IOCancellationCallback {
+    override fun checkCancelled() {
     }
-    return allCallbacks.firstOrNull() ?: object : IOCancellationCallback {
-      override fun checkCancelled() = Unit
 
-      override fun interactWithUI() = Unit
+    override fun interactWithUI() {
     }
   }
 
-  @JvmStatic
-  fun checkCancelled(): Unit = usedIoCallback.checkCancelled()
+  fun setIoCancellationCallback(callback: IOCancellationCallback) {
+    usedIoCallback = callback
+  }
 
   @JvmStatic
-  fun interactWithUI(): Unit = usedIoCallback.interactWithUI()
+  fun checkCancelled() {
+    usedIoCallback.checkCancelled()
+  }
+
+  fun interactWithUI() {
+    usedIoCallback.interactWithUI()
+  }
 }

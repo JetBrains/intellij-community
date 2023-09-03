@@ -14,9 +14,9 @@ abstract class AbstractFirJvmOptimizeImportsTest : AbstractImportsTest() {
     override fun isFirPlugin(): Boolean = true
 
     override fun doTest(unused: String) {
-        IgnoreTests.runTestIfEnabledByFileDirective(
+        IgnoreTests.runTestIfNotDisabledByFileDirective(
           dataFile().toPath(),
-          IgnoreTests.DIRECTIVES.FIR_COMPARISON,
+          IgnoreTests.DIRECTIVES.IGNORE_K2,
           ".after",
           test = { super.doTest(unused) }
         )

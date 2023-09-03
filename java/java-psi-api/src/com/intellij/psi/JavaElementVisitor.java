@@ -480,6 +480,10 @@ public abstract class JavaElementVisitor extends PsiElementVisitor {
     visitExpression(expression);
   }
 
+  public void visitUnnamedClass(@NotNull PsiUnnamedClass aClass) {
+    visitClass(aClass);
+  }
+
   public void visitUnnamedPattern(@NotNull PsiUnnamedPattern pattern) {
     visitPattern(pattern);
   }

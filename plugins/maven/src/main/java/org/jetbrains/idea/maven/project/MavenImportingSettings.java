@@ -48,15 +48,12 @@ public class MavenImportingSettings implements Cloneable {
     "jar, test-jar, maven-plugin, ejb, ejb-client, jboss-har, jboss-sar, war, ear, bundle";
 
   private boolean useWorkspaceImport = true;
-  @Deprecated
-  private boolean importToTreeStructure = false;
 
   @NotNull @NlsSafe private String dedicatedModuleDir = "";
   private boolean lookForNested = false;
 
   private boolean importAutomatically = false;
   private boolean createModulesForAggregators = true;
-  private boolean createModuleGroups = false;
   private boolean excludeTargetFolder = true;
   private boolean keepSourceFolders = true;
   private boolean useMavenOutput = true;
@@ -171,41 +168,8 @@ public class MavenImportingSettings implements Cloneable {
     boolean changedValue = useWorkspaceImport != enabled;
     useWorkspaceImport = enabled;
 
-    // make sure workspace import is not re-enabled on restart, because of the enabled tree import
-    if (!useWorkspaceImport) {
-      importToTreeStructure = false;
-    }
-
     if (changedValue) {
       fireUpdateAllProjectStructure();
-    }
-  }
-
-  @Deprecated
-  @ApiStatus.Internal // remains for settings backward compatibility until Workspace import is a defaul option
-  public boolean isImportToTreeStructure() {
-    return importToTreeStructure;
-  }
-
-  @Deprecated
-  @ApiStatus.Internal // remains for settings backward compatibility until Workspace import is a default option
-  public void setImportToTreeStructure(boolean importToTreeStructure) {
-    this.importToTreeStructure = importToTreeStructure;
-    // make sure users who enabled tree structure import have workspace import enabled, which supports the tree import.
-    if (importToTreeStructure) {
-      setWorkspaceImportEnabled(true);
-    }
-  }
-
-  public boolean isCreateModuleGroups() {
-    return createModuleGroups;
-  }
-
-  public void setCreateModuleGroups(boolean createModuleGroups) {
-    boolean changed = this.createModuleGroups != createModuleGroups;
-    this.createModuleGroups = createModuleGroups;
-    if (changed) {
-      fireCreateModuleGroupsChanged();
     }
   }
 
@@ -328,14 +292,12 @@ public class MavenImportingSettings implements Cloneable {
     MavenImportingSettings that = (MavenImportingSettings)o;
 
     if (useWorkspaceImport != that.useWorkspaceImport) return false;
-    if (createModuleGroups != that.createModuleGroups) return false;
     if (createModulesForAggregators != that.createModulesForAggregators) return false;
     if (!dependencyTypes.equals(that.dependencyTypes)) return false;
     if (downloadDocsAutomatically != that.downloadDocsAutomatically) return false;
     if (downloadSourcesAutomatically != that.downloadSourcesAutomatically) return false;
     if (downloadAnnotationsAutomatically != that.downloadAnnotationsAutomatically) return false;
     if (autoDetectCompiler != that.autoDetectCompiler) return false;
-    if (importToTreeStructure != that.importToTreeStructure) return false;
     //if (lookForNested != that.lookForNested) return false;
     if (keepSourceFolders != that.keepSourceFolders) return false;
     if (excludeTargetFolder != that.excludeTargetFolder) return false;
@@ -363,8 +325,6 @@ public class MavenImportingSettings implements Cloneable {
     result <<= 1;
     if (createModulesForAggregators) result++;
     result <<= 1;
-    if (createModuleGroups) result++;
-    result <<= 1;
     if (keepSourceFolders) result++;
     result <<= 1;
     if (useMavenOutput) result++;
@@ -376,8 +336,6 @@ public class MavenImportingSettings implements Cloneable {
     if (downloadAnnotationsAutomatically) result++;
     result <<= 1;
     if (autoDetectCompiler) result++;
-    result <<= 1;
-    if (importToTreeStructure) result++;
     result <<= 1;
 
     result = 31 * result + (updateFoldersOnImportPhase != null ? updateFoldersOnImportPhase.hashCode() : 0);
@@ -408,12 +366,6 @@ public class MavenImportingSettings implements Cloneable {
     myListeners.remove(l);
   }
 
-  private void fireCreateModuleGroupsChanged() {
-    for (Listener each : myListeners) {
-      each.createModuleGroupsChanged();
-    }
-  }
-
   private void fireCreateModuleForAggregatorsChanged() {
     for (Listener each : myListeners) {
       each.createModuleForAggregatorsChanged();
@@ -427,8 +379,6 @@ public class MavenImportingSettings implements Cloneable {
   }
 
   public interface Listener {
-
-    void createModuleGroupsChanged();
 
     void createModuleForAggregatorsChanged();
 

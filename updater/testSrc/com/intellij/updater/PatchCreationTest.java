@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.updater;
 
 import com.intellij.openapi.util.SystemInfo;
@@ -13,7 +13,6 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 
@@ -27,7 +26,7 @@ public class PatchCreationTest extends PatchTestCase {
   public void testDigestFiles() throws Exception {
     Patch patch = createPatch();
     Map<String, Long> checkSums = digest(patch, myOlderDir);
-    assertThat(checkSums).hasSize(11);
+    assertThat(checkSums).hasSize(10);
   }
 
   @Test
@@ -38,16 +37,8 @@ public class PatchCreationTest extends PatchTestCase {
       new CreateAction(patch, "newDir/"),
       new CreateAction(patch, "newDir/newFile.txt"),
       new UpdateAction(patch, "Readme.txt", CHECKSUMS.README_TXT),
-      new UpdateZipAction(patch, "lib/annotations.jar",
-                          singletonList("org/jetbrains/annotations/NewClass.class"),
-                          singletonList("org/jetbrains/annotations/Nullable.class"),
-                          singletonList("org/jetbrains/annotations/TestOnly.class"),
-                          CHECKSUMS.ANNOTATIONS_JAR),
-      new UpdateZipAction(patch, "lib/bootstrap.jar",
-                          Collections.emptyList(),
-                          Collections.emptyList(),
-                          singletonList("com/intellij/ide/ClassloaderUtil.class"),
-                          CHECKSUMS.BOOTSTRAP_JAR));
+      new UpdateAction(patch, "lib/annotations.jar", CHECKSUMS.ANNOTATIONS_JAR),
+      new UpdateAction(patch, "lib/bootstrap.jar", CHECKSUMS.BOOTSTRAP_JAR));
   }
 
   @Test
@@ -61,16 +52,8 @@ public class PatchCreationTest extends PatchTestCase {
     assertThat(sortActions(patch.getActions())).containsExactly(
       new CreateAction(patch, "newDir/"),
       new CreateAction(patch, "newDir/newFile.txt"),
-      new UpdateZipAction(patch, "lib/annotations.jar",
-                          singletonList("org/jetbrains/annotations/NewClass.class"),
-                          singletonList("org/jetbrains/annotations/Nullable.class"),
-                          singletonList("org/jetbrains/annotations/TestOnly.class"),
-                          CHECKSUMS.ANNOTATIONS_JAR),
-      new UpdateZipAction(patch, "lib/bootstrap.jar",
-                          Collections.emptyList(),
-                          Collections.emptyList(),
-                          singletonList("com/intellij/ide/ClassloaderUtil.class"),
-                          CHECKSUMS.BOOTSTRAP_JAR));
+      new UpdateAction(patch, "lib/annotations.jar", CHECKSUMS.ANNOTATIONS_JAR),
+      new UpdateAction(patch, "lib/bootstrap.jar", CHECKSUMS.BOOTSTRAP_JAR));
   }
 
   @Test
@@ -218,11 +201,7 @@ public class PatchCreationTest extends PatchTestCase {
     assertThat(sortActions(patch.getActions())).containsExactly(
       new DeleteAction(patch, "lib/annotations.jar", CHECKSUMS.ANNOTATIONS_JAR),
       new CreateAction(patch, "lib/redist/"),
-      new UpdateZipAction(patch, "lib/redist/annotations.jar", "lib/annotations.jar",
-                          singletonList("org/jetbrains/annotations/NewClass.class"),
-                          singletonList("org/jetbrains/annotations/Nullable.class"),
-                          singletonList("org/jetbrains/annotations/TestOnly.class"),
-                          CHECKSUMS.ANNOTATIONS_JAR));
+      new UpdateAction(patch, "lib/redist/annotations.jar", "lib/annotations.jar", CHECKSUMS.ANNOTATIONS_JAR, false));
   }
 
   @Test
@@ -252,12 +231,12 @@ public class PatchCreationTest extends PatchTestCase {
 
     Patch patch = createPatch(spec -> spec.setOptionalFiles(asList("lib/annotations.bin", "lib/redist/annotations.bin")));
     assertThat(sortActions(patch.getActions())).containsExactly(
-      new DeleteAction(patch, "lib/annotations.bin", CHECKSUMS.ANNOTATIONS_JAR_BIN),
-      new DeleteAction(patch, "lib64/annotations.bin", CHECKSUMS.ANNOTATIONS_CHANGED_JAR_BIN),
+      new DeleteAction(patch, "lib/annotations.bin", CHECKSUMS.ANNOTATIONS_JAR),
+      new DeleteAction(patch, "lib64/annotations.bin", CHECKSUMS.ANNOTATIONS_CHANGED_JAR),
       new CreateAction(patch, "lib/redist/"),
       new CreateAction(patch, "lib64/redist/"),
-      new UpdateAction(patch, "lib/redist/annotations.bin", "lib/annotations.bin", CHECKSUMS.ANNOTATIONS_JAR_BIN, true),
-      new UpdateAction(patch, "lib64/redist/annotations.bin", "lib64/annotations.bin", CHECKSUMS.ANNOTATIONS_CHANGED_JAR_BIN, false));
+      new UpdateAction(patch, "lib/redist/annotations.bin", "lib/annotations.bin", CHECKSUMS.ANNOTATIONS_JAR, true),
+      new UpdateAction(patch, "lib64/redist/annotations.bin", "lib64/annotations.bin", CHECKSUMS.ANNOTATIONS_CHANGED_JAR, false));
   }
 
   @Test
@@ -270,12 +249,12 @@ public class PatchCreationTest extends PatchTestCase {
 
     Patch patch = createPatch(spec -> spec.setOptionalFiles(asList("lib/annotations.bin", "lib/redist/annotations.bin")));
     assertThat(sortActions(patch.getActions())).containsExactly(
-      new DeleteAction(patch, "lib/annotations.bin", CHECKSUMS.ANNOTATIONS_CHANGED_JAR_BIN),
-      new DeleteAction(patch, "lib64/annotations.bin", CHECKSUMS.ANNOTATIONS_JAR_BIN),
+      new DeleteAction(patch, "lib/annotations.bin", CHECKSUMS.ANNOTATIONS_CHANGED_JAR),
+      new DeleteAction(patch, "lib64/annotations.bin", CHECKSUMS.ANNOTATIONS_JAR),
       new CreateAction(patch, "lib/redist/"),
       new CreateAction(patch, "lib64/redist/"),
-      new UpdateAction(patch, "lib/redist/annotations.bin", "lib64/annotations.bin", CHECKSUMS.ANNOTATIONS_JAR_BIN, true),
-      new UpdateAction(patch, "lib64/redist/annotations.bin", "lib64/annotations.bin", CHECKSUMS.ANNOTATIONS_JAR_BIN, true));
+      new UpdateAction(patch, "lib/redist/annotations.bin", "lib64/annotations.bin", CHECKSUMS.ANNOTATIONS_JAR, true),
+      new UpdateAction(patch, "lib64/redist/annotations.bin", "lib64/annotations.bin", CHECKSUMS.ANNOTATIONS_JAR, true));
   }
 
   @Test

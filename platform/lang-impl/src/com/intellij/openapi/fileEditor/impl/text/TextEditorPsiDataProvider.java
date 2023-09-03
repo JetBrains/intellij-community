@@ -154,7 +154,7 @@ public class TextEditorPsiDataProvider implements EditorDataProvider {
       if (psiFile != null) {
         addIfNotNull(set, psiFile.getViewProvider().getBaseLanguage());
       }
-      return set.toArray(new Language[0]);
+      return set.toArray(Language.EMPTY_ARRAY);
     }
     return null;
   }

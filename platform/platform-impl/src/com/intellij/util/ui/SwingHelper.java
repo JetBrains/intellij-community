@@ -498,7 +498,7 @@ public final class SwingHelper {
     }
   }
 
-  public static class HtmlViewerBuilder {
+  public static final class HtmlViewerBuilder {
     private boolean myCarryTextOver;
     private String myDisabledHtml;
     private Font myFont;

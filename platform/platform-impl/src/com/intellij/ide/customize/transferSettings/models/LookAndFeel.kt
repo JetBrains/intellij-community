@@ -2,15 +2,16 @@
 package com.intellij.ide.customize.transferSettings.models
 
 import com.intellij.ide.ui.LafManager
-import javax.swing.UIManager
+import com.intellij.ide.ui.laf.UIThemeLookAndFeelInfo
 
 interface ILookAndFeel {
-  fun getPreview(): UIManager.LookAndFeelInfo
+  fun getPreview(): UIThemeLookAndFeelInfo
 }
 
-class BundledLookAndFeel(val lafInfo: UIManager.LookAndFeelInfo): ILookAndFeel {
+class BundledLookAndFeel(val lafInfo: UIThemeLookAndFeelInfo): ILookAndFeel {
   companion object {
-    fun fromManager(lafName: String): BundledLookAndFeel = LafManager.getInstance().installedLookAndFeels.first { it.name == lafName }
+    fun fromManager(lafName: String): BundledLookAndFeel = LafManager.getInstance().installedLookAndFeels
+      .map { it as? UIThemeLookAndFeelInfo }.first { it?.name == lafName }
       ?.let { BundledLookAndFeel(it) } ?: error("LookAndFeel $lafName not found")
   }
 

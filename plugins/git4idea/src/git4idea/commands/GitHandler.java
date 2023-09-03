@@ -521,8 +521,6 @@ public abstract class GitHandler {
   @Deprecated
   private Integer myExitCode; // exit code or null if exit code is not yet available
   @Deprecated
-  private final List<String> myLastOutput = Collections.synchronizedList(new ArrayList<>());
-  @Deprecated
   private static final int LAST_OUTPUT_SIZE = 5;
   @Deprecated
   private final List<VcsException> myErrors = Collections.synchronizedList(new ArrayList<>());
@@ -554,28 +552,6 @@ public abstract class GitHandler {
   }
 
   /**
-   * @deprecated only used in {@link GitTask}
-   */
-  @Deprecated
-  public void addLastOutput(String line) {
-    if (myLastOutput.size() < LAST_OUTPUT_SIZE) {
-      myLastOutput.add(line);
-    }
-    else {
-      myLastOutput.add(0, line);
-      Collections.rotate(myLastOutput, -1);
-    }
-  }
-
-  /**
-   * @deprecated only used in {@link GitTask}
-   */
-  @Deprecated
-  public List<String> getLastOutput() {
-    return myLastOutput;
-  }
-
-  /**
    * @deprecated remove together with {@link GitHandlerUtil}
    */
   @Deprecated
@@ -595,18 +571,10 @@ public abstract class GitHandler {
   }
 
   /**
-   * Destroy process
-   *
-   * @deprecated only used in {@link GitTask}
-   */
-  @Deprecated
-  abstract void destroyProcess();
-
-  /**
    * add error to the error list
    *
    * @param ex an error to add to the list
-   * @deprecated remove together with {@link GitHandlerUtil} and {@link GitTask}
+   * @deprecated remove together with {@link GitHandlerUtil}
    */
   @Deprecated
   public void addError(VcsException ex) {
@@ -615,7 +583,7 @@ public abstract class GitHandler {
 
   /**
    * @return unmodifiable list of errors.
-   * @deprecated remove together with {@link GitHandlerUtil} and {@link GitTask}
+   * @deprecated remove together with {@link GitHandlerUtil}
    */
   @Deprecated(forRemoval = true)
   public List<VcsException> errors() {

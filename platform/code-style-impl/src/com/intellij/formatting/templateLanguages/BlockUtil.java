@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.formatting.templateLanguages;
 
 import com.intellij.formatting.Block;
@@ -17,7 +17,7 @@ final class BlockUtil {
   private BlockUtil() {
   }
 
-  public static List<DataLanguageBlockWrapper> buildChildWrappers(@NotNull final Block parent) {
+  public static List<DataLanguageBlockWrapper> buildChildWrappers(final @NotNull Block parent) {
     assert !(parent instanceof DataLanguageBlockWrapper) : parent.getClass();
     List<Block> children = parent.getSubBlocks();
     if (children.size() == 0) return Collections.emptyList();
@@ -63,8 +63,7 @@ final class BlockUtil {
     }
   }
 
-  @Nullable
-  private static DataLanguageBlockWrapper createAndAddBlock(List<? super DataLanguageBlockWrapper> list, Block block, @Nullable final Indent indent) {
+  private static @Nullable DataLanguageBlockWrapper createAndAddBlock(List<? super DataLanguageBlockWrapper> list, Block block, final @Nullable Indent indent) {
     DataLanguageBlockWrapper wrapper = DataLanguageBlockWrapper.create(block, indent);
     if (wrapper != null) {
       list.add(wrapper);
@@ -151,8 +150,7 @@ final class BlockUtil {
                     tlBlocks.get(tlBlocks.size() - 1).getTextRange().getEndOffset());
   }
 
-  @NotNull
-  public static List<DataLanguageBlockWrapper> filterBlocksByRange(@NotNull List<DataLanguageBlockWrapper> list, @NotNull TextRange textRange) {
+  public static @NotNull List<DataLanguageBlockWrapper> filterBlocksByRange(@NotNull List<DataLanguageBlockWrapper> list, @NotNull TextRange textRange) {
     int i = 0;
     while (i < list.size()) {
       final DataLanguageBlockWrapper wrapper = list.get(i);

@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package git4idea.index.actions
 
 import com.intellij.diff.DiffDialogHints
@@ -28,7 +28,7 @@ class GitStageDiffAction : AnActionExtensionProvider {
 
   override fun actionPerformed(e: AnActionEvent) {
     val producers = e.getRequiredData(GitStageDataKeys.GIT_STAGE_TREE).statusNodesListSelection(true)
-      .map { createTwoSidesDiffRequestProducer(e.project!!, it) }
+      .map { createTwoSidesDiffRequestProducer(e.project!!, it, forDiffPreview = false) }
     DiffManager.getInstance().showDiff(e.project, ChangeDiffRequestChain(producers), DiffDialogHints.DEFAULT)
   }
 
@@ -60,7 +60,7 @@ class GitStageThreeSideDiffAction : DumbAwareAction() {
 
   override fun actionPerformed(e: AnActionEvent) {
     val producers = e.getRequiredData(GitStageDataKeys.GIT_STAGE_TREE).statusNodesListSelection(false)
-      .map { createThreeSidesDiffRequestProducer(e.project!!, it) }
+      .map { createThreeSidesDiffRequestProducer(e.project!!, it, forDiffPreview = false) }
     DiffManager.getInstance().showDiff(e.project, ChangeDiffRequestChain(producers), DiffDialogHints.DEFAULT)
   }
 }

@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.editor.impl;
 
 import com.intellij.codeWithMe.ClientId;
@@ -956,7 +956,7 @@ public final class FoldingModelImpl extends InlayModel.SimpleAdapter
       }
     }
 
-    private class FRNode extends RangeMarkerTree.RMNode<FoldRegionImpl> {
+    private final class FRNode extends RangeMarkerTree.RMNode<FoldRegionImpl> {
       static final byte CUSTOM_FLAG = STICK_TO_RIGHT_FLAG<<1;
 
       private FRNode(@NotNull RangeMarkerTree<FoldRegionImpl> rangeMarkerTree, @NotNull FoldRegionImpl key, int start, int end) {

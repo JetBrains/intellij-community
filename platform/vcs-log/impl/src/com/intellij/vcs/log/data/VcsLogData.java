@@ -22,6 +22,7 @@ import com.intellij.vcs.log.*;
 import com.intellij.vcs.log.data.index.*;
 import com.intellij.vcs.log.impl.VcsLogCachesInvalidator;
 import com.intellij.vcs.log.impl.VcsLogErrorHandler;
+import com.intellij.vcs.log.impl.VcsLogIndexer;
 import com.intellij.vcs.log.impl.VcsLogSharedSettings;
 import com.intellij.vcs.log.util.PersistentUtil;
 import io.opentelemetry.api.trace.Span;
@@ -30,10 +31,7 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
 
 import java.io.IOException;
-import java.util.Collection;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 import java.util.concurrent.*;
 
 import static com.intellij.openapi.vcs.VcsScopeKt.VcsScope;
@@ -91,8 +89,9 @@ public final class VcsLogData implements Disposable, VcsLogDataProvider {
     VcsLogProgress progress = new VcsLogProgress(this);
 
     if (VcsLogCachesInvalidator.getInstance().isValid()) {
-      myStorage = createStorage();
-      myIndex = createIndex(logProviders, progress);
+      String logId = PersistentUtil.calcLogId(myProject, myLogProviders);
+      myStorage = createStorage(logId);
+      myIndex = createIndex(logId, progress);
     }
     else {
       // this is not recoverable
@@ -132,12 +131,12 @@ public final class VcsLogData implements Disposable, VcsLogDataProvider {
     Disposer.register(this, myDisposableFlag);
   }
 
-  private @NotNull VcsLogStorage createStorage() {
+  private @NotNull VcsLogStorage createStorage(@NotNull String logId) {
     try {
       if (Registry.is("vcs.log.index.sqlite.storage", false)) {
-        return new SqliteVcsLogStorageBackend(myProject, myLogProviders, myErrorHandler, this);
+        return new SqliteVcsLogStorageBackend(myProject, logId, myLogProviders, myErrorHandler, this);
       }
-      return new VcsLogStorageImpl(myProject, myLogProviders, myErrorHandler, this);
+      return new VcsLogStorageImpl(myProject, logId, myLogProviders, myErrorHandler, this);
     }
     catch (IOException e) {
       LOG.error("Falling back to in-memory hashes", e);
@@ -146,17 +145,37 @@ public final class VcsLogData implements Disposable, VcsLogDataProvider {
   }
 
   @NotNull
-  private VcsLogModifiableIndex createIndex(@NotNull Map<VirtualFile, VcsLogProvider> logProviders, @NotNull VcsLogProgress progress) {
+  private VcsLogModifiableIndex createIndex(@NotNull String logId, @NotNull VcsLogProgress progress) {
     if (!VcsLogSharedSettings.isIndexSwitchedOn(myProject)) {
       LOG.info("Vcs log index is turned off for project " + myProject.getName());
       return new EmptyIndex();
     }
-    VcsLogPersistentIndex index = VcsLogPersistentIndex.create(myProject, myStorage, logProviders, progress, myErrorHandler, this);
-    if (index == null) {
+
+    if (myStorage instanceof InMemoryStorage) {
+      LOG.info("Can not create index for the in-memory storage");
+      return new EmptyIndex();
+    }
+
+    Map<VirtualFile, VcsLogIndexer> indexers = VcsLogPersistentIndex.getAvailableIndexers(myLogProviders);
+    if (indexers.isEmpty()) {
+      LOG.info("No indexers found for project " + myProject.getName());
+      return new EmptyIndex();
+    }
+
+    VcsLogStorageBackend backend;
+    if (myStorage instanceof VcsLogStorageBackend) {
+      backend = (VcsLogStorageBackend)myStorage;
+    }
+    else {
+      backend = PhmVcsLogStorageBackend.create(myProject, myStorage, new LinkedHashSet<>(indexers.keySet()), logId, myErrorHandler, this);
+    }
+
+    if (backend == null) {
       LOG.error("Cannot create vcs log index for project " + myProject.getName());
       return new EmptyIndex();
     }
-    return index;
+
+    return new VcsLogPersistentIndex(myProject, myLogProviders, indexers, myStorage, backend, progress, myErrorHandler, this);
   }
 
   public void initialize() {

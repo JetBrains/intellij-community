@@ -230,7 +230,7 @@ public final class ProjectFileTreeModel extends BaseTreeModel<ProjectFileNode> i
   }
 
 
-  private static class ProjectNode extends Node {
+  private static final class ProjectNode extends Node {
     volatile VirtualFileFilter filter;
     volatile boolean showExcludedFiles;
     volatile boolean showModules;
@@ -290,7 +290,7 @@ public final class ProjectFileTreeModel extends BaseTreeModel<ProjectFileNode> i
   }
 
 
-  private static class FileNode extends Node implements ProjectFileNode {
+  private static final class FileNode extends Node implements ProjectFileNode {
     final VirtualFile file;
     final Object id;
 

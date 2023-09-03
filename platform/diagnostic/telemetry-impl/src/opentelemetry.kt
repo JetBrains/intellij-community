@@ -47,8 +47,7 @@ suspend fun writeInProtobufFormat(startTimeUnixNanoDiff: Long, activities: List<
       rootSpan
     }
     else {
-      val span = activityToSpan.get(activity.parent)
-      span!!
+      activityToSpan.get(activity.parent)
     }
 
     val span = Span(
@@ -57,7 +56,7 @@ suspend fun writeInProtobufFormat(startTimeUnixNanoDiff: Long, activities: List<
       name = activity.name,
       startTimeUnixNano = startTimeUnixNanoDiff + activity.start,
       endTimeUnixNano = startTimeUnixNanoDiff + activity.end,
-      parentSpanId = parentSpan.spanId
+      parentSpanId = parentSpan?.spanId
     )
 
     check(activityToSpan.put(activity, span) == null)

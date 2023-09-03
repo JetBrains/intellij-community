@@ -797,12 +797,23 @@ public class EnhancedSwitchMigrationInspection extends AbstractBaseJavaLocalInsp
                                                                                                   @NotNull PsiStatement statement) {
     if (assignedVariable == null) return null;
     PsiExpression initializer = assignedVariable.getInitializer();
-    if (isRightAfterDeclaration && initializer != null) {
+    if (isRightAfterDeclaration && initializer instanceof PsiLiteralExpression) {
       return SwitchBranch.createDefault(new SwitchRuleExpressionResult(initializer));
     }
     PsiDeclarationStatement declaration = tryCast(assignedVariable.getParent(), PsiDeclarationStatement.class);
-    if (declaration == null) return null;
-    if (!VariableAccessUtils.variableIsAssignedAtPoint(assignedVariable, declaration.getParent(), statement)) return null;
+    if (declaration == null || declaration.getParent()==null) return null;
+    try {
+      final LocalsOrMyInstanceFieldsControlFlowPolicy policy = LocalsOrMyInstanceFieldsControlFlowPolicy.getInstance();
+      final ControlFlow controlFlow = ControlFlowFactory.getInstance(declaration.getProject()).getControlFlow(declaration.getParent(), policy);
+      final int switchStart = controlFlow.getStartOffset(statement);
+      final ControlFlow beforeFlow = new ControlFlowSubRange(controlFlow, 0, switchStart);
+      if (!ControlFlowUtil.isVariableDefinitelyAssigned(assignedVariable, beforeFlow)) {
+        return null;
+      }
+    }
+    catch (AnalysisCanceledException e) {
+      return null;
+    }
     Project project = assignedVariable.getProject();
     PsiElementFactory factory = JavaPsiFacade.getInstance(project).getElementFactory();
     PsiExpression reference = factory.createExpressionFromText(assignedVariable.getName(), assignedVariable);

@@ -32,7 +32,7 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.beans.PropertyChangeListener;
 
-public class RemoteFilePanel {
+public final class RemoteFilePanel {
   private static final Logger LOG = Logger.getInstance(RemoteFilePanel.class);
   private static final @NonNls String ERROR_CARD = "error";
   private static final @NonNls String DOWNLOADING_CARD = "downloading";
@@ -167,7 +167,7 @@ public class RemoteFilePanel {
     }
   }
 
-  private class MyDownloadingListener implements FileDownloadingListener {
+  private final class MyDownloadingListener implements FileDownloadingListener {
     @Override
     public void fileDownloaded(final @NotNull VirtualFile localFile) {
       switchEditor();

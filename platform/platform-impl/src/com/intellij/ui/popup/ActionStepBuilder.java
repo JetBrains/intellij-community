@@ -21,7 +21,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
 
-class ActionStepBuilder {
+final class ActionStepBuilder {
   private final List<PopupFactoryImpl.ActionItem> myListModel;
   private final DataContext myDataContext;
   private final boolean                         myShowNumbers;

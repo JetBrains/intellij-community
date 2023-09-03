@@ -163,14 +163,18 @@ public abstract class GradleImportingTestCase extends JavaExternalSystemImportin
     myDistribution = configureWrapper();
   }
 
+  protected Path getGradleUserHome() {
+    String serviceDirectory = GradleSettings.getInstance(myProject).getServiceDirectoryPath();
+    return serviceDirectory != null ? Path.of(serviceDirectory) : new BuildLayoutParameters().getGradleUserHomeDir().toPath();
+  }
+
   /**
    * This is a workaround for the following issue on windows:
    * "C:\Users\builduser\.gradle\caches\jars-1\cache.properties (The system cannot find the file specified)"
    */
   private void cleanScriptsCacheIfNeeded() {
     if (SystemInfo.isWindows && isGradleOlderThan("3.5")) {
-      String serviceDirectory = GradleSettings.getInstance(myProject).getServiceDirectoryPath();
-      Path gradleUserHome = serviceDirectory != null ? Path.of(serviceDirectory) : new BuildLayoutParameters().getGradleUserHomeDir().toPath();
+      Path gradleUserHome = getGradleUserHome();
       Path cacheFile = gradleUserHome.resolve("caches/jars-1/cache.properties");
       if (Files.notExists(cacheFile)) {
         try {

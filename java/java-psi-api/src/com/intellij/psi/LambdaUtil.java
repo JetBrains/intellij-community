@@ -3,6 +3,7 @@ package com.intellij.psi;
 
 import com.intellij.codeInsight.AnnotationTargetUtil;
 import com.intellij.core.JavaPsiBundle;
+import com.intellij.lang.jvm.JvmModifier;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.registry.Registry;
@@ -523,8 +524,10 @@ public final class LambdaUtil {
     return null;
   }
 
+
   private static @Nullable PsiType extractFunctionalConjunct(PsiIntersectionType type) {
     PsiType conjunct = null;
+    PsiClass commonClass = null;
     MethodSignature commonSignature = null;
     for (PsiType psiType : type.getConjuncts()) {
       PsiClass aClass = PsiUtil.resolveClassInClassTypeOnly(psiType);
@@ -533,14 +536,118 @@ public final class LambdaUtil {
       if (signature == null) continue;
       if (commonSignature == null) {
         commonSignature = signature;
+        commonClass = aClass;
       }
       else if (!MethodSignatureUtil.areSignaturesEqual(commonSignature, signature)) {
         return null;
       }
       conjunct = psiType;
     }
-
+    if (conjunct == null) {
+      return null;
+    }
+    PsiMethod method = getMethod(commonClass, commonSignature);
+    if (method == null) {
+      return null;
+    }
+    for (PsiType typeConjunct : type.getConjuncts()) {
+      if (typeConjunct == conjunct) {
+        continue;
+      }
+      TargetMethodContainer container = getTargetMethod(typeConjunct, commonSignature, conjunct);
+      if (container == null) {
+        continue;
+      }
+      PsiMethod inheritor = container.inheritor;
+      PsiMethod target = container.targetMethod;
+      if (!inheritor.hasModifier(JvmModifier.ABSTRACT) &&
+          isLambdaSubsignature(method, conjunct, target, typeConjunct)) {
+        return null;
+      }
+    }
     return conjunct;
+  }
+
+
+  public static class TargetMethodContainer{
+    @NotNull
+    public final PsiMethod targetMethod;
+    @NotNull
+    public final PsiMethod inheritor;
+
+    private TargetMethodContainer(@NotNull PsiMethod method, @NotNull PsiMethod inheritor) {
+      this.targetMethod = method;
+      this.inheritor = inheritor;
+    }
+  }
+
+  /**
+   * Returns the target method based on the given type, method signature, and base type.
+   *
+   * @param type         the type to find the target method in
+   * @param signature    the method signature of the target method
+   * @param baseType     the base type to resolve the class from
+   * @return the target method if found, or null if not found
+   */
+  @Nullable
+  public static TargetMethodContainer getTargetMethod(@NotNull PsiType type, @NotNull MethodSignature signature, @NotNull PsiType baseType) {
+    PsiClass baseClass = PsiUtil.resolveClassInClassTypeOnly(baseType);
+    if (baseClass == null) {
+      return null;
+    }
+    PsiMethod method = getMethod(baseClass, signature);
+    if (method == null) {
+      return null;
+    }
+    MethodSignature emptyCommonSignature = method.getSignature(PsiSubstitutor.EMPTY);
+    PsiClassType.ClassResolveResult classResolveResult = PsiUtil.resolveGenericsClassInType(type);
+    PsiClass aClass = classResolveResult.getElement();
+    if (aClass == null) {
+      return null;
+    }
+    PsiMethod methodBySignature = MethodSignatureUtil.findMethodBySignature(aClass, emptyCommonSignature, true);
+    if (methodBySignature == null) {
+      return null;
+    }
+    PsiMethod inheritor = MethodSignatureUtil.findMethodBySuperMethod(aClass, methodBySignature, true);
+    if (inheritor == null) {
+      return null;
+    }
+    return new TargetMethodContainer(methodBySignature, inheritor);
+  }
+
+  public static boolean isLambdaSubsignature(@NotNull PsiMethod method1,
+                                             @NotNull PsiType type1,
+                                             @NotNull PsiMethod method2,
+                                             @NotNull PsiType type2) {
+    MethodSignature signature1 = method1.getSignature(PsiSubstitutor.EMPTY);
+    MethodSignature signature2 = method2.getSignature(PsiSubstitutor.EMPTY);
+    if (!MethodSignatureUtil.isSubsignature(signature1, signature2) &&
+        !MethodSignatureUtil.isSubsignature(signature2, signature1)) {
+      return false;
+    }
+    signature1 = getSignatureWithSubstitutors(method1, type1);
+    signature2 = getSignatureWithSubstitutors(method2, type2);
+    if (!MethodSignatureUtil.isSubsignature(signature1, signature2) &&
+        !MethodSignatureUtil.isSubsignature(signature2, signature1)) {
+      return false;
+    }
+
+    return true;
+  }
+
+  @NotNull
+  private static MethodSignature getSignatureWithSubstitutors(@NotNull PsiMethod method, @NotNull PsiType type) {
+    PsiClassType.ClassResolveResult classResolveResult = PsiUtil.resolveGenericsClassInType(type);
+    final PsiClass aClass = classResolveResult.getElement();
+    if (aClass == null) return method.getSignature(PsiSubstitutor.EMPTY);
+    PsiClass methodContainingClass = method.getContainingClass();
+    if (methodContainingClass == null) return method.getSignature(PsiSubstitutor.EMPTY);
+    PsiSubstitutor substitutor = TypeConversionUtil.getClassSubstitutor(methodContainingClass, aClass, classResolveResult.getSubstitutor());
+    if (substitutor == null) {
+      substitutor = PsiSubstitutor.EMPTY;
+    }
+    return method.getSignature(substitutor);
   }
 
   private static PsiType getFunctionalInterfaceTypeByContainingLambda(@NotNull PsiLambdaExpression parentLambda) {

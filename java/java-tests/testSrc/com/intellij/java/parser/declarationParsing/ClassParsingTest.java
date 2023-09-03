@@ -65,10 +65,30 @@ public class ClassParsingTest extends JavaParsingTestCase {
   public void testSealedInterface() {
     doTest(true);
   }
+  public void testSealedClassOldLanguageLevel() {
+    setLanguageLevel(LanguageLevel.JDK_1_8);
+    doTest(true);
+  }
   public void testNonSealedClass() {
     doTest(true);
   }
   public void testProvidesList() {
+    doTest(true);
+  }
+
+  public void testUnnamedClass0() {
+    doTest(true);
+  }
+  public void testUnnamedClass1() {
+    doTest(true);
+  }
+  public void testUnnamedClass2() {
+    doTest(true);
+  }
+  public void testUnnamedClass3() {
+    doTest(true);
+  }
+  public void testUnnamedClass4() {
     doTest(true);
   }
 }

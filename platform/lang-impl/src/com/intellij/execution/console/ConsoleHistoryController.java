@@ -86,6 +86,7 @@ public class ConsoleHistoryController implements Disposable {
   private boolean myMultiline;
   private ModelHelper myHelper;
   private long myLastSaveStamp;
+  private boolean isMoveCaretToTheFirstLine = false;
 
   /**
    * @deprecated use {@link #ConsoleHistoryController(ConsoleRootType, String, LanguageConsoleView)} or {@link #ConsoleHistoryController(ConsoleRootType, String, LanguageConsoleView, ConsoleHistoryModel)}
@@ -104,6 +105,12 @@ public class ConsoleHistoryController implements Disposable {
                                    @NotNull LanguageConsoleView console, @NotNull ConsoleHistoryModel model) {
     myHelper = new ModelHelper(rootType, persistenceId, model);
     myConsole = console;
+  }
+
+  public ConsoleHistoryController(@NotNull ConsoleRootType rootType, @Nullable String persistenceId,
+                                  @NotNull LanguageConsoleView console, boolean moveCaretToTheFirstLine) {
+    this(rootType, persistenceId, console);
+    isMoveCaretToTheFirstLine = moveCaretToTheFirstLine;
   }
 
   @TestOnly
@@ -302,6 +309,10 @@ public class ConsoleHistoryController implements Disposable {
       Entry command = myNext ? getModel().getHistoryNext() : getModel().getHistoryPrev();
       if (!myMultiline && command == null || !hasHistory && !myNext) return;
       setConsoleText(command, !hasHistory, true);
+      if (isMoveCaretToTheFirstLine && myNext) {
+        EditorEx consoleEditor = myConsole.getConsoleEditor();
+        consoleEditor.getCaretModel().moveToOffset(consoleEditor.getDocument().getLineEndOffset(0));
+      }
     }
 
     @Override

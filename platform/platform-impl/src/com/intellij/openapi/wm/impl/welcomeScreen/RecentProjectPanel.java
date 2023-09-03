@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.wm.impl.welcomeScreen;
 
 import com.intellij.CommonBundle;
@@ -394,7 +394,7 @@ public class RecentProjectPanel extends JPanel {
       return mySize == null ? super.getPreferredScrollableViewportSize() : mySize;
     }
 
-    class MyPopupMouseHandler extends PopupHandler {
+    final class MyPopupMouseHandler extends PopupHandler {
       @Override
       public void mouseEntered(MouseEvent e) {
         myMousePoint = e != null ? e.getPoint() : null;
@@ -569,7 +569,7 @@ public class RecentProjectPanel extends JPanel {
     }
   }
 
-  public static class FilePathChecker implements Disposable, ApplicationActivationListener, PowerSaveMode.Listener {
+  public static final class FilePathChecker implements Disposable, ApplicationActivationListener, PowerSaveMode.Listener {
     private static final int MIN_AUTO_UPDATE_MILLIS = 2500;
     private ScheduledExecutorService myService;
     private final Set<String> myInvalidPaths = Collections.synchronizedSet(new HashSet<>());

@@ -6,11 +6,11 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.NotNullLazyValue;
 import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.openapi.vfs.newvfs.persistent.dev.enumerator.DurableStringEnumerator;
 import com.intellij.openapi.vfs.newvfs.persistent.dev.blobstorage.LargeSizeStreamlinedBlobStorage;
 import com.intellij.openapi.vfs.newvfs.persistent.dev.blobstorage.SpaceAllocationStrategy;
 import com.intellij.openapi.vfs.newvfs.persistent.dev.blobstorage.StreamlinedBlobStorage;
 import com.intellij.openapi.vfs.newvfs.persistent.dev.blobstorage.StreamlinedBlobStorageOverLockFreePagesStorage;
+import com.intellij.openapi.vfs.newvfs.persistent.dev.enumerator.DurableStringEnumerator;
 import com.intellij.openapi.vfs.newvfs.persistent.intercept.*;
 import com.intellij.openapi.vfs.newvfs.persistent.log.VfsLogEx;
 import com.intellij.openapi.vfs.newvfs.persistent.log.VfsLogImpl;
@@ -34,10 +34,8 @@ import org.jetbrains.annotations.Nullable;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.util.*;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Future;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 import static com.intellij.openapi.vfs.newvfs.persistent.PersistentFSRecordAccessor.hasDeletedFlag;
@@ -62,7 +60,8 @@ public final class PersistentFSLoader {
   private static final StorageLockContext PERSISTENT_FS_STORAGE_CONTEXT = new StorageLockContext(false, true);
 
   private final PersistentFSPaths vfsPaths;
-  private final ExecutorService executorService;
+
+  private final VFSAsyncTaskExecutor executorService;
 
   public final boolean enableVfsLog;
 
@@ -86,7 +85,7 @@ public final class PersistentFSLoader {
   private SimpleStringPersistentEnumerator attributesEnumerator = null;
 
   //lazy property reusableFileIds and its calculating future (for closing)
-  private Future<IntList> collectDeletedFileRecordsTask;
+  private CompletableFuture<IntList> collectDeletedFileRecordsTask;
   private NotNullLazyValue<IntList> reusableFileIdsLazy = null;
 
 
@@ -100,15 +99,14 @@ public final class PersistentFSLoader {
   private final IntSet filesIdsToInvalidate = new IntOpenHashSet();
 
   /**
-   * true if during the recovery content storage was re-created, and previous contentIds are now
-   * invalid (i.e. LocalHistory needs to be cleared then)
+   * true if during the recovery, content storage was re-created, and previous contentIds are now
+   * invalid (i.e., LocalHistory needs to be cleared then)
    */
   private boolean invalidateContentIds;
 
-
   PersistentFSLoader(@NotNull PersistentFSPaths persistentFSPaths,
                      boolean enableVfsLog,
-                     ExecutorService pool) {
+                     @NotNull VFSAsyncTaskExecutor pool) {
     recordsFile = persistentFSPaths.storagePath("records");
     namesFile = persistentFSPaths.storagePath("names");
     attributesFile = persistentFSPaths.storagePath("attributes");
@@ -126,7 +124,7 @@ public final class PersistentFSLoader {
     this.enableVfsLog = enableVfsLog;
   }
 
-  public boolean replaceStoragesIfMarkerPresent() throws IOException {
+  public boolean replaceStoragesIfMarkerPresent() {
     var applied = VfsRecoveryUtils.INSTANCE.applyStoragesReplacementIfMarkerExists(storagesReplacementMarkerFile);
     if (applied) LOG.info("PersistentFS storages replacement was applied");
     return applied;
@@ -147,25 +145,19 @@ public final class PersistentFSLoader {
       vfsLog = null;
     }
 
-    Future<ScannableDataEnumeratorEx<String>> namesStorageFuture = executorService.submit(
-      () -> createFileNamesEnumerator(namesFile)
-    );
-    Future<AbstractAttributesStorage> attributesStorageFuture = executorService.submit(
-      () -> createAttributesStorage(attributesFile)
-    );
-    Future<RefCountingContentStorage> contentsStorageFuture = executorService.submit(
-      () -> createContentStorage(contentsFile)
-    );
-    Future<PersistentFSRecordsStorage> recordsStorageFuture = executorService.submit(
-      () -> createRecordsStorage(recordsFile)
-    );
+    CompletableFuture<ScannableDataEnumeratorEx<String>> namesStorageFuture =
+      executorService.async(() -> createFileNamesEnumerator(namesFile));
+    CompletableFuture<AbstractAttributesStorage> attributesStorageFuture =
+      executorService.async(() -> createAttributesStorage(attributesFile));
+    CompletableFuture<RefCountingContentStorage> contentsStorageFuture = executorService.async(() -> createContentStorage(contentsFile));
+    CompletableFuture<PersistentFSRecordsStorage> recordsStorageFuture = executorService.async(() -> createRecordsStorage(recordsFile));
 
     //Initiate async scanning of the recordsStorage to fill both invertedNameIndex and reusableFileIds,
     //  and create lazy-accessors for both.
-    collectDeletedFileRecordsTask = executorService.submit(() -> {
+    collectDeletedFileRecordsTask = executorService.async(() -> {
       IntList reusableFileIds = new IntArrayList(1024);
       //fill up reusable (=deleted) records:
-      PersistentFSRecordsStorage storage = recordsStorageFuture.get();
+      PersistentFSRecordsStorage storage = recordsStorageFuture.join();
       storage.processAllRecords((fileId, nameId, flags, parentId, attributeRecordId, contentId, corrupted) -> {
         if (hasDeletedFlag(flags)) {
           reusableFileIds.add(fileId);
@@ -178,7 +170,7 @@ public final class PersistentFSLoader {
     //    So _there could be_ a data race, but it is a benign race.
     reusableFileIdsLazy = NotNullLazyValue.lazy(() -> {
       try {
-        return collectDeletedFileRecordsTask.get();
+        return collectDeletedFileRecordsTask.join();
       }
       catch (Throwable e) {
         throw new IllegalStateException("Lazy reusableFileIds computation is failed", e);
@@ -186,9 +178,9 @@ public final class PersistentFSLoader {
     });
 
 
-    Future<ContentHashEnumerator> contentHashesEnumeratorFuture = executorService.submit(
-      () -> createContentHashStorage(contentsHashesFile)
-    );
+    CompletableFuture<ContentHashEnumerator> contentHashesEnumeratorFuture = executorService.async(() -> {
+      return createContentHashStorage(contentsHashesFile);
+    });
 
     ExceptionUtil.runAllAndRethrowAllExceptions(
       new IOException(),
@@ -201,19 +193,19 @@ public final class PersistentFSLoader {
         attributesEnumerator = new SimpleStringPersistentEnumerator(enumeratedAttributesFile);
       },
       () -> {
-        recordsStorage = recordsStorageFuture.get();
+        recordsStorage = recordsStorageFuture.join();
       },
       () -> {
-        namesStorage = namesStorageFuture.get();
+        namesStorage = namesStorageFuture.join();
       },
       () -> {
-        attributesStorage = attributesStorageFuture.get();
+        attributesStorage = attributesStorageFuture.join();
       },
       () -> {
-        contentsStorage = contentsStorageFuture.get();
+        contentsStorage = contentsStorageFuture.join();
       },
       () -> {
-        contentHashesEnumerator = contentHashesEnumeratorFuture.get();
+        contentHashesEnumerator = contentHashesEnumeratorFuture.join();
       }
     );
   }
@@ -295,7 +287,7 @@ public final class PersistentFSLoader {
     // Must wait for scanRecords task to finish, since the task uses mapped file, and we can't remove
     //  the mapped file (on Win) while there are usages.
     try {
-      collectDeletedFileRecordsTask.get();
+      collectDeletedFileRecordsTask.join();
     }
     catch (Throwable t) {
       LOG.trace(t);
@@ -510,7 +502,7 @@ public final class PersistentFSLoader {
                    "file[#" + fileId + "].nameId(=" + nameId + ") is not present in namesEnumerator");
         return false;
       }
-      else {
+      else if (!FSRecordsImpl.USE_FAST_NAMES_IMPLEMENTATION) {
         int reCheckNameId = namesStorage.tryEnumerate(name);
         if (reCheckNameId != nameId) {
           addProblem(NAME_STORAGE_INCOMPLETE,
@@ -519,6 +511,10 @@ public final class PersistentFSLoader {
           );
           return false;
         }
+        //Fast (DurableStringEnumerator) implementation persists only forward (id->name) index, and re-build inverse
+        // (name->id) index in memory, on each loading, so:
+        // 1) no need to check inverse index since it can't be corrupted on disk
+        // 2) inverse index is building async, so by trying to check it we force the building and ruin async-ness
       }
     }
     catch (Throwable t) {
@@ -577,7 +573,9 @@ public final class PersistentFSLoader {
           new PagedFileStorageWithRWLockedPageContent(
             attributesFile,
             PERSISTENT_FS_STORAGE_CONTEXT,
-            PageCacheUtils.DEFAULT_PAGE_SIZE,
+            //RC: make page smaller for the transition period -- new FPCache has quite a small memory bud
+            //    hard to manage huge 10M pages having only ~100-150Mb budget in total, it ruins large-numbers assumptions.
+            1 << 20, //PageCacheUtils.DEFAULT_PAGE_SIZE,
             /*nativeByteOrder: */  true,
             PageContentLockingStrategy.LOCK_PER_PAGE
           ),
@@ -616,7 +614,7 @@ public final class PersistentFSLoader {
     }
   }
 
-  public static @NotNull ScannableDataEnumeratorEx<String> createFileNamesEnumerator(@NotNull Path namesFile) throws IOException {
+  private @NotNull ScannableDataEnumeratorEx<String> createFileNamesEnumerator(@NotNull Path namesFile) throws IOException {
     if (FSRecordsImpl.USE_FAST_NAMES_IMPLEMENTATION) {
       LOG.info("VFS uses 'fast' (hash) names enumerator");
       //if we use _same_ namesFile for fast/regular enumerator (which seems natural at a first glance), then
@@ -624,8 +622,8 @@ public final class PersistentFSLoader {
       // bizare exception => VFS is rebuilt, but with rebuildCause=UNRECOGNIZED instead of 'version mismatch'.
       //To get an expected exception on transition, we need regular/fast enumerator to use different files,
       // e.g. 'names.dat' / 'names.dat.mmap'
-      Path namesPathEx = Paths.get(namesFile + ".mmap");
-      return new DurableStringEnumerator(namesPathEx);
+      Path namesPathEx = Path.of(namesFile + ".mmap");
+      return DurableStringEnumerator.openAsync(namesPathEx, executorService);
     }
     else {
       LOG.info("VFS uses regular (btree) names enumerator");

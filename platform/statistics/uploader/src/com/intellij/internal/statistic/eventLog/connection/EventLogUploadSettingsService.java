@@ -10,10 +10,7 @@ import com.intellij.internal.statistic.eventLog.EventLogBuild;
 import com.intellij.internal.statistic.eventLog.connection.metadata.EventGroupsFilterRules;
 import com.intellij.internal.statistic.eventLog.connection.metadata.EventLogMetadataUtils;
 import com.intellij.internal.statistic.eventLog.filters.*;
-import org.jetbrains.annotations.ApiStatus;
-import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.*;
 
 import java.util.concurrent.TimeUnit;
 
@@ -118,6 +115,6 @@ public class EventLogUploadSettingsService extends SettingsConnectionService imp
   public String getMetadataProductUrl() {
     String baseMetadataUrl = getEndpointValue(METADATA);
     if (baseMetadataUrl == null) return null;
-    return baseMetadataUrl + myApplicationInfo.getProductCode() + ".json";
+    return baseMetadataUrl + myApplicationInfo.getBaselineVersion() + "/" + myApplicationInfo.getProductCode() + ".json";
   }
 }

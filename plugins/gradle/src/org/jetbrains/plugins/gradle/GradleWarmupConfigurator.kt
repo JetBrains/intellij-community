@@ -147,7 +147,7 @@ class GradleWarmupConfigurator : WarmupConfigurator {
     return false
   }
 
-  private class StateExternalAnnotationNotificationListener : ExternalAnnotationsProgressNotificationListener {
+  class StateExternalAnnotationNotificationListener : ExternalAnnotationsProgressNotificationListener {
 
     override fun onStartResolve(id: ExternalAnnotationsTaskId) {
       LOG.info("Gradle resolving external annotations started ${id.projectId}")

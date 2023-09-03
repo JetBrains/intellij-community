@@ -57,5 +57,8 @@
               class="com.intellij.platform.feedback.kafka.TestShowKafkaProducerFeedbackAction" internal="true"/>
       <add-to-group group-id="Internal.UI" anchor="last"/>
     </group>
+
+    <action class="com.intellij.platform.feedback.demo.action.ShowExternalDemoFeedbackWithStatsAction" internal="true"/>
+    <action class="com.intellij.platform.feedback.demo.action.ShowInIdeDemoFeedbackWithStatsAction" internal="true"/>
   </actions>
 </idea-plugin>

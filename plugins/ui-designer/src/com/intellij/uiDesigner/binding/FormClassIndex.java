@@ -1,6 +1,7 @@
 // Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.uiDesigner.binding;
 
+import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.project.IndexNotReadyException;
 import com.intellij.openapi.project.Project;
@@ -12,6 +13,7 @@ import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.ProjectScope;
 import com.intellij.uiDesigner.GuiFormFileType;
 import com.intellij.uiDesigner.compiler.Utils;
+import com.intellij.util.SlowOperations;
 import com.intellij.util.indexing.*;
 import com.intellij.util.io.EnumeratorStringDescriptor;
 import com.intellij.util.io.KeyDescriptor;
@@ -84,26 +86,28 @@ public class FormClassIndex extends ScalarIndexExtension<String> {
   public static List<PsiFile> findFormsBoundToClass(final Project project,
                                                     final String className,
                                                     final GlobalSearchScope scope) {
-    return ReadAction.compute(() -> {
-      final Collection<VirtualFile> files;
-      try {
-        files = FileBasedIndex.getInstance().getContainingFiles(NAME, className,
-                                                                GlobalSearchScope.projectScope(project).intersectWith(scope));
-      }
-      catch (IndexNotReadyException e) {
-        return Collections.emptyList();
-      }
-      if (files.isEmpty()) return Collections.emptyList();
-      List<PsiFile> result = new ArrayList<>();
-      for (VirtualFile file : files) {
-        if (!file.isValid()) continue;
-        PsiFile psiFile = PsiManager.getInstance(project).findFile(file);
-        if (psiFile != null) {
-          result.add(psiFile);
+    try (AccessToken ignore = SlowOperations.knownIssue("IDEA-307701, EA-648610")) {
+      return ReadAction.compute(() -> {
+        final Collection<VirtualFile> files;
+        try {
+          files = FileBasedIndex.getInstance().getContainingFiles(NAME, className,
+                                                                  GlobalSearchScope.projectScope(project).intersectWith(scope));
         }
-      }
-      return result;
-    });
+        catch (IndexNotReadyException e) {
+          return Collections.emptyList();
+        }
+        if (files.isEmpty()) return Collections.emptyList();
+        List<PsiFile> result = new ArrayList<>();
+        for (VirtualFile file : files) {
+          if (!file.isValid()) continue;
+          PsiFile psiFile = PsiManager.getInstance(project).findFile(file);
+          if (psiFile != null) {
+            result.add(psiFile);
+          }
+        }
+        return result;
+      });
+    }
   }
 
   public static List<PsiFile> findFormsBoundToClass(Project project, @NotNull PsiClass psiClass) {

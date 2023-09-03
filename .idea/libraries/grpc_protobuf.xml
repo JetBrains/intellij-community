@@ -1,15 +1,15 @@
 <component name="libraryTable">
   <library name="grpc-protobuf" type="repository">
-    <properties maven-id="io.grpc:grpc-protobuf:1.53.0">
+    <properties jar-repository-id="central-proxy" maven-id="io.grpc:grpc-protobuf:1.57.2">
       <verification>
-        <artifact url="file://$MAVEN_REPOSITORY$/io/grpc/grpc-protobuf/1.53.0/grpc-protobuf-1.53.0.jar">
-          <sha256sum>eb3c2107f6a6397d9c09179e814e2c6ebc5ff901d67bbf76588e8ef5bb51ca05</sha256sum>
+        <artifact url="file://$MAVEN_REPOSITORY$/io/grpc/grpc-protobuf/1.57.2/grpc-protobuf-1.57.2.jar">
+          <sha256sum>31630d8a9e9f08a959862015e30a4863908be3680c3a686f4c1f08d2ffeaf706</sha256sum>
         </artifact>
-        <artifact url="file://$MAVEN_REPOSITORY$/com/google/api/grpc/proto-google-common-protos/2.9.0/proto-google-common-protos-2.9.0.jar">
-          <sha256sum>0d830380ec66bd7e25eee63aa0a5a08578e46ad187fb72d99b44d9ba22827f91</sha256sum>
+        <artifact url="file://$MAVEN_REPOSITORY$/com/google/api/grpc/proto-google-common-protos/2.17.0/proto-google-common-protos-2.17.0.jar">
+          <sha256sum>4ef1fe0c327fc1521d1d753b0b1c4a875a54bd14ebded3afff0ca395320b6ea9</sha256sum>
         </artifact>
-        <artifact url="file://$MAVEN_REPOSITORY$/io/grpc/grpc-protobuf-lite/1.53.0/grpc-protobuf-lite-1.53.0.jar">
-          <sha256sum>0e0b234188894ae282f770f85f717f3a2376b5afb5f80c00d664de22fa6cdaa8</sha256sum>
+        <artifact url="file://$MAVEN_REPOSITORY$/io/grpc/grpc-protobuf-lite/1.57.2/grpc-protobuf-lite-1.57.2.jar">
+          <sha256sum>fc4917dc5d419ac810fb3f27523c14e75e1fe50372154fab29324215ee6a955a</sha256sum>
         </artifact>
       </verification>
       <exclude>
@@ -22,15 +22,15 @@
       </exclude>
     </properties>
     <CLASSES>
-      <root url="jar://$MAVEN_REPOSITORY$/io/grpc/grpc-protobuf/1.53.0/grpc-protobuf-1.53.0.jar!/" />
-      <root url="jar://$MAVEN_REPOSITORY$/com/google/api/grpc/proto-google-common-protos/2.9.0/proto-google-common-protos-2.9.0.jar!/" />
-      <root url="jar://$MAVEN_REPOSITORY$/io/grpc/grpc-protobuf-lite/1.53.0/grpc-protobuf-lite-1.53.0.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/io/grpc/grpc-protobuf/1.57.2/grpc-protobuf-1.57.2.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/com/google/api/grpc/proto-google-common-protos/2.17.0/proto-google-common-protos-2.17.0.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/io/grpc/grpc-protobuf-lite/1.57.2/grpc-protobuf-lite-1.57.2.jar!/" />
     </CLASSES>
     <JAVADOC />
     <SOURCES>
-      <root url="jar://$MAVEN_REPOSITORY$/io/grpc/grpc-protobuf/1.53.0/grpc-protobuf-1.53.0-sources.jar!/" />
-      <root url="jar://$MAVEN_REPOSITORY$/com/google/api/grpc/proto-google-common-protos/2.9.0/proto-google-common-protos-2.9.0-sources.jar!/" />
-      <root url="jar://$MAVEN_REPOSITORY$/io/grpc/grpc-protobuf-lite/1.53.0/grpc-protobuf-lite-1.53.0-sources.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/io/grpc/grpc-protobuf/1.57.2/grpc-protobuf-1.57.2-sources.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/com/google/api/grpc/proto-google-common-protos/2.17.0/proto-google-common-protos-2.17.0-sources.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/io/grpc/grpc-protobuf-lite/1.57.2/grpc-protobuf-lite-1.57.2-sources.jar!/" />
     </SOURCES>
   </library>
 </component>

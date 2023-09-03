@@ -23,9 +23,7 @@ import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.platform.workspace.jps.serialization.impl.ModulePath;
 import com.intellij.util.ArrayUtil;
-import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.containers.Stack;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -45,7 +43,6 @@ public class MavenProjectLegacyImporter extends MavenProjectImporterLegacyBase {
   private static final Logger LOG = Logger.getInstance(MavenProjectLegacyImporter.class);
   private final Map<VirtualFile, Module> myFileToModuleMapping;
   private volatile Set<MavenProject> myAllProjects;
-  private final boolean myImportModuleGroupsRequired;
 
   private Module myPreviewModule;
 
@@ -58,13 +55,11 @@ public class MavenProjectLegacyImporter extends MavenProjectImporterLegacyBase {
   MavenProjectLegacyImporter(@NotNull Project p,
                              @NotNull MavenProjectsTree projectsTree,
                              @NotNull Map<MavenProject, MavenProjectChanges> projectsToImportWithChanges,
-                             boolean importModuleGroupsRequired,
                              @NotNull IdeModifiableModelsProvider modelsProvider,
                              @NotNull MavenImportingSettings importingSettings,
                              @Nullable Module previewModule) {
     super(p, projectsTree, importingSettings, projectsToImportWithChanges, modelsProvider);
     myFileToModuleMapping = getFileToModuleMapping(p, previewModule, modelsProvider);
-    myImportModuleGroupsRequired = importModuleGroupsRequired;
     myPreviewModule = previewModule;
   }
 
@@ -100,11 +95,6 @@ public class MavenProjectLegacyImporter extends MavenProjectImporterLegacyBase {
         scheduleRefreshResolvedArtifacts(postTasks, myProjectsToImportWithChanges.keySet());
       }
       createModulesPhase.finished();
-    }
-
-    if (projectsHaveChanges || myImportModuleGroupsRequired) {
-      hasChanges = true;
-      configModuleGroups();
     }
 
     if (myProject.isDisposed()) return null;
@@ -371,7 +361,7 @@ public class MavenProjectLegacyImporter extends MavenProjectImporterLegacyBase {
         existingMavenProjectToModuleName.put(projectToModule.getKey().getFile(), module.getName());
       }
     }
-    MavenModuleNameMapper.resolveModuleNames(myAllProjects, existingMavenProjectToModuleName, myMavenProjectToModuleName);
+    myMavenProjectToModuleName.putAll(MavenModuleNameMapper.mapModuleNames(myAllProjects, existingMavenProjectToModuleName));
     MavenModulePathMapper.resolveModulePaths(myAllProjects,
                                              myMavenProjectToModule,
                                              myMavenProjectToModuleName,
@@ -489,55 +479,6 @@ public class MavenProjectLegacyImporter extends MavenProjectImporterLegacyBase {
       changes,
       myMavenProjectToModuleName,
       false);
-  }
-
-  private void configModuleGroups() {
-    if (!myImportingSettings.isCreateModuleGroups()) return;
-
-    final Stack<String> groups = new Stack<>();
-    final boolean createTopLevelGroup = myProjectsTree.getRootProjects().size() > 1;
-
-    myProjectsTree.visit(new MavenProjectsTree.SimpleVisitor() {
-      int depth = 0;
-
-      @Override
-      public boolean shouldVisit(MavenProject project) {
-        // in case some project has been added while we were importing
-        return myMavenProjectToModuleName.containsKey(project);
-      }
-
-      @Override
-      public void visit(MavenProject each) {
-        depth++;
-
-        String name = myMavenProjectToModuleName.get(each);
-
-        if (shouldCreateGroup(each)) {
-          groups.push(MavenProjectBundle.message("module.group.name", name));
-        }
-
-        if (!shouldCreateModuleFor(each)) {
-          return;
-        }
-
-        Module module = myModuleModel.findModuleByName(name);
-        if (module == null) return;
-        myModuleModel.setModuleGroupPath(module, groups.isEmpty() ? null : ArrayUtilRt.toStringArray(groups));
-      }
-
-      @Override
-      public void leave(MavenProject each) {
-        if (shouldCreateGroup(each)) {
-          groups.pop();
-        }
-        depth--;
-      }
-
-      private boolean shouldCreateGroup(MavenProject project) {
-        return !myProjectsTree.getModules(project).isEmpty()
-               && (createTopLevelGroup || depth > 1);
-      }
-    });
   }
 
   private boolean removeUnusedProjectLibraries() {

@@ -33,7 +33,7 @@ internal class MarkdownFileDropHandler: CustomFileDropHandler() {
     if (editor == null || !editor.document.isWritable) {
       return false
     }
-    if (!MarkdownCodeInsightSettings.getInstance().state.enableFilesDrop) {
+    if (!MarkdownCodeInsightSettings.getInstance().state.enableFileDrop) {
       return false
     }
     val project = editor.project ?: return false

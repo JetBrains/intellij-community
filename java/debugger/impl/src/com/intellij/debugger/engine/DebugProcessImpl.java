@@ -130,7 +130,7 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
   private final Semaphore myWaitFor = new Semaphore();
   private final AtomicBoolean myIsFailed = new AtomicBoolean(false);
   private final AtomicBoolean myIsStopped = new AtomicBoolean(false);
-  protected DebuggerSession mySession;
+  protected volatile DebuggerSession mySession;
   @Nullable protected MethodReturnValueWatcher myReturnValueWatcher;
   protected final Disposable myDisposable = Disposer.newDisposable();
   private final Alarm myStatusUpdateAlarm = new Alarm();
@@ -335,7 +335,10 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
         DumbService.getInstance(myProject).runWhenSmart(
           () -> getManagerThread().schedule(PrioritizedTask.Priority.HIGH, () -> {
             myPositionManager.clearCache();
-            DebuggerUIUtil.invokeLater(() -> mySession.refresh(true));
+            DebuggerSession session = mySession;
+            if (session != null && session.isAttached()) {
+              DebuggerUIUtil.invokeLater(() -> session.refresh(true));
+            }
           }));
       }
     });
@@ -2112,8 +2115,8 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
   }
 
   @Nullable
-  public ExecutionResult attachVirtualMachine(final DebugEnvironment environment,
-                                              final DebuggerSession session) throws ExecutionException {
+  public ExecutionResult attachVirtualMachine(@NotNull DebugEnvironment environment,
+                                              @NotNull DebuggerSession session) throws ExecutionException {
     mySession = session;
     myWaitFor.down();
 

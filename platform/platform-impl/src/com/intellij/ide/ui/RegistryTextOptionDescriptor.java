@@ -19,7 +19,7 @@ import java.awt.*;
  * @author Konstantin Bulenkov
  */
 @SuppressWarnings("HardCodedStringLiteral")
-public class RegistryTextOptionDescriptor extends OptionDescription implements Changeable {
+public final class RegistryTextOptionDescriptor extends OptionDescription implements Changeable {
   private final RegistryValue myValue;
 
   public RegistryTextOptionDescriptor(RegistryValue value) {

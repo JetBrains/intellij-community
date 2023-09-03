@@ -16,7 +16,7 @@ import java.util.function.Supplier;
 /**
  * @author Alexander Lobas
  */
-public class LinkPanel {
+public final class LinkPanel {
   private final JLabel myTextLabel = new JLabel();
   private final JLabel myLinkLabel;
   private Runnable myRunnable;

@@ -19,7 +19,7 @@ envs {
   String python39version = "3.9.13"
   String python310version = "3.10.8"
   String python311version = "3.11.0"
-  String python312version = "3.12.0b3"
+  String python312version = "3.12.0rc1"
 
   def customBuildDir = System.getenv().get("PYCHARM_BUILD_DIR")
   project.buildDir = customBuildDir? new File(customBuildDir): buildDir
@@ -51,7 +51,7 @@ envs {
   virtualenv "py311_64", "python311_64", ["cython"]
 
   python "python312_64", python312version, "64"
-  virtualenv "py312_64", "python312_64", ["cython"]
+  virtualenv "py312_64", "python312_64", ["cython", "setuptools"]
 
   if (isWindows) {
     python "python27_32", python27version, "32"
@@ -76,7 +76,7 @@ envs {
     virtualenv "py311_32", "python311_32", ["cython"]
 
     python "python312_32", python312version, "32"
-    virtualenv "py312_32", "python312_32", ["cython"]
+    virtualenv "py312_32", "python312_32", ["cython", "setuptools"]
   }
 }
 

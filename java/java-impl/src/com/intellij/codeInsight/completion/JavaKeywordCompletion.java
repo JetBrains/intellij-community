@@ -787,7 +787,19 @@ public class JavaKeywordCompletion {
   private LookupElement createTypeDeclaration(String keyword, String className) {
     LookupElement element;
     PsiElement nextElement = PsiTreeUtil.skipWhitespacesAndCommentsForward(PsiTreeUtil.nextLeaf(myPosition));
-    IElementType nextToken = nextElement instanceof PsiJavaToken ? ((PsiJavaToken)nextElement).getTokenType() : null;
+    IElementType nextToken;
+    if (nextElement instanceof PsiJavaToken) {
+      nextToken = ((PsiJavaToken)nextElement).getTokenType();
+    }
+    else {
+      if (nextElement instanceof PsiParameterList l && l.getFirstChild() instanceof PsiJavaToken t) {
+        nextToken = t.getTokenType();
+      } else if (nextElement instanceof PsiCodeBlock b && b.getFirstChild() instanceof PsiJavaToken t) {
+        nextToken = t.getTokenType();
+      } else {
+        nextToken = null;
+      }
+    }
     element = LookupElementBuilder.create(keyword + " " + className).withPresentableText(keyword).bold()
       .withTailText(" " + className, false)
       .withIcon(CreateClassKind.valueOf(keyword.toUpperCase(Locale.ROOT)).getKindIcon())
@@ -822,8 +834,10 @@ public class JavaKeywordCompletion {
   private String recommendClassName() {
     if (myPrevLeaf == null) return null;
     if (!myPrevLeaf.textMatches(PsiKeyword.PUBLIC) || !(myPrevLeaf.getParent() instanceof PsiModifierList)) return null;
-    if (PsiTreeUtil.skipWhitespacesAndCommentsForward(PsiTreeUtil.nextLeaf(myPosition)) instanceof PsiIdentifier) return null;
-    PsiJavaFile file = ObjectUtils.tryCast(myPrevLeaf.getParent().getParent(), PsiJavaFile.class);
+
+    if (nextIsIdentifier(myPosition)) return null;
+
+    PsiJavaFile file = getFileForDeclaration(myPrevLeaf);
     if (file == null) return null;
     String name = file.getName();
     if (!StringUtil.endsWithIgnoreCase(name, JavaFileType.DOT_DEFAULT_EXTENSION)) return null;
@@ -832,6 +846,30 @@ public class JavaKeywordCompletion {
       return candidate;
     }
     return null;
+  }
+
+  private static boolean nextIsIdentifier(@NotNull PsiElement position) {
+    PsiElement nextLeaf = PsiTreeUtil.nextLeaf(position);
+    if (nextLeaf == null) return false;
+    PsiElement parent = nextLeaf.getParent();
+    if (!(parent instanceof PsiJavaCodeReferenceElement)) return false;
+    PsiElement grandParent = parent.getParent();
+    if (!(grandParent instanceof PsiTypeElement)) return false;
+    return PsiTreeUtil.skipWhitespacesAndCommentsForward(grandParent) instanceof PsiIdentifier;
+  }
+
+  @Nullable
+  private static PsiJavaFile getFileForDeclaration(@NotNull PsiElement elementBeforeName) {
+    PsiElement parent = elementBeforeName.getParent();
+    if (parent == null) return null;
+    PsiElement grandParent = parent.getParent();
+    if (grandParent == null) return null;
+    if (grandParent instanceof PsiJavaFile f) {
+      return f;
+    }
+    PsiElement grandGrandParent = grandParent.getParent();
+    if (grandGrandParent == null) return null;
+    return ObjectUtils.tryCast(grandGrandParent.getParent(), PsiJavaFile.class);
   }
 
   private void addClassLiteral() {
@@ -1200,7 +1238,7 @@ public class JavaKeywordCompletion {
   }
 
   private void addModuleKeywords() {
-    PsiElement context = PsiTreeUtil.skipParentsOfType(myPosition.getParent(), PsiErrorElement.class);
+    PsiElement context = PsiTreeUtil.skipParentsOfType(myPosition.getParent(), PsiErrorElement.class, PsiJavaCodeReferenceElement.class, PsiTypeElement.class);
     PsiElement prevElement = PsiTreeUtil.skipWhitespacesAndCommentsBackward(myPosition.getParent());
 
     if (context instanceof PsiJavaFile && !(prevElement instanceof  PsiJavaModule) || context instanceof PsiImportList) {

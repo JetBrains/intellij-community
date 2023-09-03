@@ -409,7 +409,7 @@ public class VFSInitializationTest {
   @Test
   public void benchmarkVfsInitializationTime() throws Exception {
     PlatformTestUtil.startPerformanceTest(
-        "create VFS from scratch", 100,
+        "create VFS from scratch", 200,
         () -> {
           Path cachesDir = temporaryDirectory.createDir();
           int version = 1;

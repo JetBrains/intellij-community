@@ -30,8 +30,6 @@ import com.intellij.openapi.util.text.HtmlBuilder
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.wm.impl.welcomeScreen.WelcomeFrame
 import com.intellij.platform.ide.customization.ExternalProductResourceUrls
-import com.intellij.util.Url
-import com.intellij.util.Urls
 import com.intellij.util.concurrency.AppExecutorUtil
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import com.intellij.util.concurrency.annotations.RequiresEdt
@@ -105,15 +103,6 @@ private class UpdateCheckerHelper(private val coroutineScope: CoroutineScope) {
 object UpdateChecker {
   const val MACHINE_ID_DISABLED_PROPERTY: String = "machine.id.disabled"
   const val MACHINE_ID_PARAMETER: String = "mid"
-
-  private val updateUrl: Url?
-    get() {
-      val customUrl = System.getProperty("idea.updates.url")
-      if (customUrl != null) {
-        return Urls.newFromEncoded(customUrl)
-      }
-      return ExternalProductResourceUrls.getInstance().updatesMetadataXmlUrl
-    }
 
   private val productDataLock = ReentrantLock()
   private var productDataCache: SoftReference<Result<Product?>>? = null
@@ -220,7 +209,7 @@ object UpdateChecker {
     productDataLock.withLock {
       val cached = productDataCache?.get()
       if (cached != null) return@withLock cached.getOrThrow()
-      val url = updateUrl ?: return@withLock null
+      val url = ExternalProductResourceUrls.getInstance().updatesMetadataXmlUrl ?: return@withLock null
 
       val result = runCatching {
         LOG.debug { "loading ${url}" }

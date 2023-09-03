@@ -9,12 +9,15 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import javax.swing.plaf.UIResource;
 import java.awt.*;
+import java.util.Arrays;
+import java.util.Objects;
+import java.util.function.Supplier;
 
 /**
  * @author Konstantin Bulenkov
  */
 public class JBInsets extends Insets {
-  private final @Nullable String key;
+  private final @Nullable Supplier<@Nullable Insets> unscaledSupplier;
   private final @NotNull Insets unscaledDefault;
 
   @ApiStatus.Internal
@@ -37,14 +40,22 @@ public class JBInsets extends Insets {
    * @param bottom the inset from the bottom.
    * @param right  the inset from the right.
    */
+  @SuppressWarnings("UseDPIAwareInsets")
   public JBInsets(int top, int left, int bottom, int right) {
-    this(null, top, left, bottom, right);
+    this(
+      null,
+      new Insets(top, left, bottom, right),
+      JBUI.scale(top),
+      JBUI.scale(left),
+      JBUI.scale(bottom),
+      JBUI.scale(right)
+    );
   }
 
   @SuppressWarnings("UseDPIAwareInsets")
   private JBInsets(@NotNull JBInsets other) {
     super(other.top, other.left, other.bottom, other.right);
-    this.key = other.key;
+    this.unscaledSupplier = other.unscaledSupplier;
     this.unscaledDefault = new Insets(
       other.unscaledDefault.top,
       other.unscaledDefault.left,
@@ -54,10 +65,17 @@ public class JBInsets extends Insets {
   }
 
   @SuppressWarnings("UseDPIAwareInsets")
-  private JBInsets(@Nullable String key, int top, int left, int bottom, int right) {
-    super(JBUIScale.scale(top), JBUIScale.scale(left), JBUIScale.scale(bottom), JBUIScale.scale(right));
-    this.key = key;
-    unscaledDefault = new Insets(top, left, bottom, right);
+  private JBInsets(
+    @Nullable Supplier<@Nullable Insets> unscaledSupplier,
+    @NotNull Insets unscaledDefault,
+    int scaledTop,
+    int scaledLeft,
+    int scaledBottom,
+    int scaledRight
+  ) {
+    super(scaledTop, scaledLeft, scaledBottom, scaledRight);
+    this.unscaledSupplier = unscaledSupplier;
+    this.unscaledDefault = unscaledDefault;
   }
 
   /**
@@ -77,7 +95,7 @@ public class JBInsets extends Insets {
   }
 
   private @NotNull Insets unscaledNoCopy() {
-    var result = key != null ? UIManager.getInsets(key) : unscaledDefault;
+    var result = unscaledSupplier != null ? unscaledSupplier.get() : unscaledDefault;
     if (result == null) {
       result = unscaledDefault;
     }
@@ -107,8 +125,15 @@ public class JBInsets extends Insets {
   }
 
   public static @NotNull JBInsets create(@NotNull String key, @NotNull Insets defaultValue) {
-    var unscaledDefault = unwrap(defaultValue);
-    return new JBInsets(key, unscaledDefault.top, unscaledDefault.left, unscaledDefault.bottom, unscaledDefault.right);
+    var defInsets = defaultValue instanceof JBInsets jbInsets ? jbInsets.unscaledDefault : defaultValue;
+    return create(new UIDefaultsSupplier(key), defInsets);
+  }
+
+  private static @NotNull JBInsets create(@Nullable Supplier<@Nullable Insets> unscaledSupplier, @NotNull Insets unscaledDefault) {
+    // zero values will be overwritten by update()
+    var result = new JBInsets(unscaledSupplier, unscaledDefault, 0, 0, 0, 0);
+    result.update();
+    return result;
   }
 
   /**
@@ -125,7 +150,7 @@ public class JBInsets extends Insets {
   }
 
   static boolean isZero(Insets insets) {
-    if (insets instanceof JBInsets jbInsets && jbInsets.key != null) {
+    if (insets instanceof JBInsets jbInsets && jbInsets.unscaledSupplier != null) {
       return false; // Even if these are zero now, they can be non-zero later (e.g. if the theme is changed or compact mode toggled).
     }
     // Scaling doesn't matter here, as zero is zero regardless of scaling:
@@ -187,14 +212,13 @@ public class JBInsets extends Insets {
   }
 
   public static @NotNull JBInsets addInsets(@NotNull Insets @NotNull ... insets) {
-    JBInsets result = emptyInsets();
-    for (Insets inset : insets) {
-      result.top += inset.top;
-      result.left += inset.left;
-      result.bottom += inset.bottom;
-      result.right += inset.right;
+    var copies = new JBInsets[insets.length];
+    for (int i = 0; i < insets.length; i++) {
+      copies[i] = create(insets[i]);
     }
-    return result;
+    Supplier<@Nullable Insets> unscaledSupplier = new SummingSupplier(copies);
+    var unscaledDefault = Objects.requireNonNull(unscaledSupplier.get());
+    return create(unscaledSupplier, unscaledDefault);
   }
 
   /**
@@ -227,6 +251,55 @@ public class JBInsets extends Insets {
     }
     else {
       return insets;
+    }
+  }
+
+  private static class UIDefaultsSupplier implements Supplier<@Nullable Insets> {
+    private final String key;
+
+    UIDefaultsSupplier(String key) {
+      this.key = key;
+    }
+
+    @Override
+    public @Nullable Insets get() {
+      return UIManager.getInsets(key);
+    }
+
+    @Override
+    public String toString() {
+      return "UIDefaultsSupplier{" +
+             "key='" + key + '\'' +
+             '}';
+    }
+  }
+
+  private static class SummingSupplier implements Supplier<@Nullable Insets> {
+    private final JBInsets[] values;
+
+    SummingSupplier(JBInsets[] values) {
+      this.values = values;
+    }
+
+    @SuppressWarnings("UseDPIAwareInsets")
+    @Override
+    public @Nullable Insets get() {
+      Insets unscaled = new Insets(0, 0, 0, 0);
+      for (JBInsets value : values) {
+        Insets unscaledValue = value.unscaledNoCopy();
+        unscaled.top += unscaledValue.top;
+        unscaled.left += unscaledValue.left;
+        unscaled.bottom += unscaledValue.bottom;
+        unscaled.right += unscaledValue.right;
+      }
+      return unscaled;
+    }
+
+    @Override
+    public String toString() {
+      return "SummingSupplier{" +
+             "values=" + Arrays.toString(values) +
+             '}';
     }
   }
 }

@@ -27,7 +27,7 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import javax.swing.event.AncestorEvent;
 
-public class StartBrowserPanel {
+public final class StartBrowserPanel {
   private JCheckBox myStartBrowserCheckBox;
   private JComponent myBrowserComboBox;
 

@@ -42,7 +42,8 @@ class RdCoroutineHost(coroutineScope: CoroutineScope) : RdCoroutineScope() {
     }
 
     override fun isDispatchNeeded(context: CoroutineContext): Boolean {
-      if (!ApplicationManager.getApplication().isDispatchThread) {
+      val application = ApplicationManager.getApplication()
+      if (!application.isDispatchThread || !application.isWriteIntentLockAcquired) {
         return true
       }
 

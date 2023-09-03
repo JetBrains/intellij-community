@@ -9,7 +9,7 @@ import javax.swing.tree.TreePath;
 import java.awt.*;
 import java.awt.event.MouseEvent;
 
-public class TreeNodePartListener extends LinkMouseListenerBase {
+public final class TreeNodePartListener extends LinkMouseListenerBase {
   private final ClickableTreeCellRenderer myRenderer;
   //recalc optimization
   private DefaultMutableTreeNode myLastHitNode;

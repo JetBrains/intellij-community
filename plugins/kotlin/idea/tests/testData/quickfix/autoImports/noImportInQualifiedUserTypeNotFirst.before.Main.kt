@@ -6,4 +6,4 @@
 package testing
 
 class Some: testing.<caret>SomeTest
-/* IGNORE_FIR */
+/* IGNORE_K2 */

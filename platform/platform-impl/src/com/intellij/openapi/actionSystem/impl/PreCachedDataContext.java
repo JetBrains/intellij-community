@@ -365,7 +365,7 @@ class PreCachedDataContext implements AsyncDataContext, UserDataHolder, AnAction
     }
   }
 
-  private static class InjectedDataContext extends PreCachedDataContext {
+  private static final class InjectedDataContext extends PreCachedDataContext {
     InjectedDataContext(@NotNull ComponentRef compRef,
                         @NotNull FList<ProviderData> cachedData,
                         @NotNull AtomicReference<KeyFMap> userData,
@@ -383,13 +383,13 @@ class PreCachedDataContext implements AsyncDataContext, UserDataHolder, AnAction
     }
   }
 
-  private static class ProviderData extends ConcurrentHashMap<String, Object> {
+  private static final class ProviderData extends ConcurrentHashMap<String, Object> {
     final ConcurrentBitSet nullsByRules = ConcurrentBitSet.create();
     final ConcurrentBitSet nullsByContextRules = ConcurrentBitSet.create();
     final ConcurrentBitSet valueByRules = ConcurrentBitSet.create();
   }
 
-  private static class ComponentRef {
+  private static final class ComponentRef {
     final Reference<Component> ref;
     final ModalityState modalityState;
     final Boolean modalContext;

@@ -18,7 +18,7 @@ import javax.swing.*;
 import java.awt.event.ActionEvent;
 import java.nio.charset.Charset;
 
-public class IncompatibleEncodingDialog extends DialogWrapper {
+public final class IncompatibleEncodingDialog extends DialogWrapper {
   private final @NotNull VirtualFile virtualFile;
   private final @NotNull Charset charset;
   private final @NotNull EncodingUtil.Magic8 safeToReload;

@@ -10,7 +10,7 @@ import org.jetbrains.plugins.textmate.language.PreferencesReadUtil;
 
 import java.util.*;
 
-class SyntaxNodeDescriptorImpl implements MutableSyntaxNodeDescriptor {
+final class SyntaxNodeDescriptorImpl implements MutableSyntaxNodeDescriptor {
   private static final LoggerRt LOG = LoggerRt.getInstance(SyntaxNodeDescriptor.class);
 
   private Int2ObjectMap<SyntaxNodeDescriptor> myRepository = new Int2ObjectOpenHashMap<>();

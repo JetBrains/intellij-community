@@ -11,10 +11,11 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.module.Module;
+import com.intellij.openapi.project.DumbModeBlockedFunctionality;
+import com.intellij.openapi.project.DumbModeBlockedFunctionalityCollector;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
-import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
@@ -73,19 +74,9 @@ public abstract class ProjectViewDropTarget implements DnDNativeTarget {
     TreePath[] sources = getSourcePaths(event.getAttachedObject());
     if (sources != null) {
       if (ArrayUtilRt.find(sources, target) != -1) return false;//TODO???? nodes
-      if (!handler.isValidSource(sources, target)) return false;
-      if (Stream.of(sources).allMatch(source -> handler.isDropRedundant(source, target))) return false;
     }
     else if (!FileCopyPasteUtil.isFileListFlavorAvailable(event)) {
       return false;
-    }
-    else {
-      // it seems like it's not possible to obtain dragged items _before_ accepting _drop_ on Macs, so just skip this check
-      if (!SystemInfo.isMac) {
-        PsiFileSystemItem[] psiFiles = getPsiFiles(FileCopyPasteUtil.getFileListFromAttachedObject(event.getAttachedObject()));
-        if (psiFiles == null || psiFiles.length == 0) return false;
-        if (!MoveHandler.isValidTarget(getPsiElement(target), psiFiles)) return false;
-      }
     }
     event.setHighlighting(new RelativeRectangle(myTree, bounds), DnDEvent.DropTargetHighlightingType.RECTANGLE);
     event.setDropPossible(true);
@@ -394,6 +385,7 @@ public abstract class ProjectViewDropTarget implements DnDNativeTarget {
       if (targetElement == null || sources == null) return;
 
       if (DumbService.isDumb(myProject)) {
+        DumbModeBlockedFunctionalityCollector.INSTANCE.logFunctionalityBlocked(myProject, DumbModeBlockedFunctionality.ProjectView);
         Messages.showMessageDialog(myProject, LangBundle.message("dialog.message.copy.refactoring.available.while.indexing.in.progress"),
                                    LangBundle.message("dialog.title.indexing"), null);
         return;

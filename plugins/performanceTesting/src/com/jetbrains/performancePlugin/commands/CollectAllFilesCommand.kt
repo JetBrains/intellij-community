@@ -24,7 +24,7 @@ class CollectAllFilesCommand(text: String, line: Int) : PlaybackCommandCoroutine
   override suspend fun doExecute(context: PlaybackContext) {
     val project = context.project
     val parameters = extractCommandArgument(PREFIX).split(" ")
-    if (parameters.size != 2) {
+    if (parameters.size != 1) {
       throw IllegalArgumentException("Wrong parameters for command $parameters")
     }
     val extension = parameters[0]
@@ -37,7 +37,7 @@ class CollectAllFilesCommand(text: String, line: Int) : PlaybackCommandCoroutine
     withContext(Dispatchers.EDT) {
       val index = ProjectFileIndex.getInstance(project)
       val fileProcessor = { file: VirtualFile ->
-        if (file.extension != "kts" && !index.isInLibrary(file) && (index.isInSourceContent(file) || index.isInTestSourceContent(file))) {
+        if (file.extension != "kts" && !index.isInLibrary(file) && index.isInSourceContent(file)) {
           bufferedWriter.write(file.path)
           bufferedWriter.newLine()
         }

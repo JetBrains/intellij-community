@@ -151,6 +151,10 @@ private class CompatibleMavenServerConnector(private val project: Project,
     return mutableListOf()
   }
 
+  override fun getDebugStatus(clean: Boolean): MavenServerStatus {
+    throw RuntimeException("not implemented")
+  }
+
 }
 
 private class StoppedMavenServerConnector : MavenServerConnector {
@@ -232,6 +236,10 @@ private class StoppedMavenServerConnector : MavenServerConnector {
   }
 
   override fun getMultimoduleDirectories(): MutableList<String> {
+    throw RuntimeException("not implemented")
+  }
+
+  override fun getDebugStatus(clean: Boolean) : MavenServerStatus{
     throw RuntimeException("not implemented")
   }
 

@@ -6,6 +6,7 @@ operator fun Some.<caret>() {
 
 }
 
+// IGNORE_K2
 // EXIST: {"lookupString":"compareTo","typeText":"< > <= >="}
 // EXIST: {"lookupString":"contains","typeText":"in !in"}
 // EXIST: {"lookupString":"dec","typeText":"--"}

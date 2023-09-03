@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui.components;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -196,9 +196,8 @@ class MacScrollBarUI extends DefaultScrollBarUI {
     NextPage, JumpToSpot;
 
     private static final Native<Behavior> CURRENT = new Native<>() {
-      @NotNull
       @Override
-      public Behavior produce() {
+      public @NotNull Behavior produce() {
         ID defaults = invoke("NSUserDefaults", "standardUserDefaults");
         invoke(defaults, "synchronize");
         ID behavior = invoke(defaults, "boolForKey:", nsString("AppleScrollerPagingBehavior"));
@@ -246,9 +245,8 @@ class MacScrollBarUI extends DefaultScrollBarUI {
         }
       }
 
-      @NotNull
       @Override
-      public Style produce() {
+      public @NotNull Style produce() {
         ID style = invoke(getObjcClass("NSScroller"), "preferredScrollerStyle");
         Style value = 1 == style.intValue() ? Overlay : Legacy;
         Logger.getInstance(MacScrollBarUI.class).debug("scroll bar style ", value, " from ", style);
@@ -273,7 +271,7 @@ class MacScrollBarUI extends DefaultScrollBarUI {
     };
   }
 
-  private static abstract class Native<T> implements Callback, Runnable, NotNullProducer<T> {
+  private abstract static class Native<T> implements Callback, Runnable, NotNullProducer<T> {
     private T myValue;
 
     Native() {

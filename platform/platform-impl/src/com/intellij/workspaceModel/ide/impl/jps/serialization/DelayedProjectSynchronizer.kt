@@ -20,6 +20,9 @@ import kotlin.system.measureTimeMillis
  *
  * Initially IJ loads the state of workspace model from the cache. In this startup activity it synchronizes the state
  * of workspace model with project model files (iml/xml).
+ *
+ * If this synchronizer overrides your changes and you'd like to postpone the changes to be after this synchronization,
+ *   you can use [com.intellij.workspaceModel.ide.JpsProjectLoadingManager].
  */
 @VisibleForTesting
 class DelayedProjectSynchronizer : ProjectActivity {

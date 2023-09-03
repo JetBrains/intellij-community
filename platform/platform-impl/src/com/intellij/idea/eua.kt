@@ -35,6 +35,7 @@ internal suspend fun prepareShowEuaIfNeededTask(document: EndUserAgreement.Docum
     updateCached.join()
     withContext(RawSwingDispatcher) {
       if (UIManager.getLookAndFeel() !is IntelliJLaf) {
+        //todo need a way to set default light theme
         UIManager.setLookAndFeel(IntelliJLaf())
       }
       task()

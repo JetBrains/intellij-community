@@ -36,7 +36,7 @@ import java.util.*;
 import static com.intellij.util.ObjectUtils.tryCast;
 import static com.intellij.xml.breadcrumbs.BreadcrumbsUtilEx.findProvider;
 
-public class PsiFileBreadcrumbsCollector extends FileBreadcrumbsCollector {
+public final class PsiFileBreadcrumbsCollector extends FileBreadcrumbsCollector {
   private static final Logger LOG = Logger.getInstance(PsiFileBreadcrumbsCollector.class);
 
   private final Project myProject;

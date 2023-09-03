@@ -16,7 +16,7 @@ import javax.swing.border.Border;
 import java.awt.*;
 import java.awt.event.MouseEvent;
 
-public class HintHint {
+public final class HintHint {
 
   private Component myOriginalComponent;
   private Point myOriginalPoint;

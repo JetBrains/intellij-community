@@ -7,30 +7,24 @@ import com.intellij.util.io.PersistentStringEnumerator
 import java.nio.file.Path
 import kotlin.io.path.absolute
 
+@Suppress("unused")
 class PersistentStringEnumeratorApp : App {
   private class PSE : StringEnum {
     val instance = PersistentStringEnumerator(Path.of("pse.data").absolute())
 
-    override fun enumerate(s: String): Int {
-      return instance.enumerate(s)
-        .also { flush() }
-    }
+    override fun tryEnumerate(s: String): Int  = instance.tryEnumerate(s)
 
-    override fun valueOf(idx: Int): String? {
-      return instance.valueOf(idx)
-    }
+    override fun enumerate(s: String): Int = instance.enumerate(s).also { flush() }
 
-    override fun flush() {
-      return instance.force()
-    }
+    override fun valueOf(idx: Int): String? = instance.valueOf(idx)
 
-    override fun close() {
-      return instance.close()
-    }
+    override fun flush() = instance.force()
+
+    override fun close() = instance.close()
   }
 
   override fun run(appAgent: AppAgent) {
     val backend = PSE()
-    StringEnumApp(backend).run(appAgent)
+    StringEnumeratorAppHelper(backend).run(appAgent)
   }
 }

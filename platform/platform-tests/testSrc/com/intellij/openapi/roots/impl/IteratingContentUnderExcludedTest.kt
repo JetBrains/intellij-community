@@ -23,7 +23,7 @@ import java.io.File
 import kotlin.io.path.pathString
 
 @TestApplication
-@RunInEdt
+@RunInEdt(writeIntent = true)
 class IteratingContentUnderExcludedTest {
   @JvmField
   @RegisterExtension

@@ -23,6 +23,7 @@ class NewUiOnboardingStartupActivity : ProjectActivity {
     }
 
     if (NewUiOnboardingUtil.isOnboardingEnabled
+        && ExperimentalUI.isNewUI()
         && propertiesComponent.getBoolean(ExperimentalUI.NEW_UI_SWITCH)
         && !propertiesComponent.getBoolean(NEW_UI_ON_FIRST_STARTUP)
         && !propertiesComponent.isValueSet(ONBOARDING_PROPOSED_VERSION)) {

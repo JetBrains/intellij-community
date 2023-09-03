@@ -52,8 +52,7 @@ public abstract class RunTab implements DataProvider, Disposable {
   @ApiStatus.Experimental
   public static final DataKey<RunTab> KEY = DataKey.create("RunTab");
 
-  @NotNull
-  protected final RunnerLayoutUi myUi;
+  protected final @NotNull RunnerLayoutUi myUi;
   private LogFilesManager myManager;
   protected RunContentDescriptor myRunContentDescriptor;
 
@@ -88,9 +87,8 @@ public abstract class RunTab implements DataProvider, Disposable {
     myUi.getContentManager().addDataProvider(this);
   }
 
-  @Nullable
   @Override
-  public Object getData(@NotNull @NonNls String dataId) {
+  public @Nullable Object getData(@NotNull @NonNls String dataId) {
     if (LangDataKeys.RUN_PROFILE.is(dataId)) {
       return myEnvironment == null ? null : myEnvironment.getRunProfile();
     }
@@ -107,13 +105,11 @@ public abstract class RunTab implements DataProvider, Disposable {
     return null;
   }
 
-  @Nullable
-  protected SingleContentSupplier getSupplier() {
+  protected @Nullable SingleContentSupplier getSupplier() {
     return null;
   }
 
-  @NotNull
-  public LogConsoleManagerBase getLogConsoleManager() {
+  public @NotNull LogConsoleManagerBase getLogConsoleManager() {
     if (logConsoleManager == null) {
       logConsoleManager = new LogConsoleManagerBase(myProject, mySearchScope) {
         @Override
@@ -154,8 +150,7 @@ public abstract class RunTab implements DataProvider, Disposable {
    */
   protected class RunTabSupplier implements SingleContentSupplier {
 
-    @Nullable
-    private final ActionGroup myActionGroup;
+    private final @Nullable ActionGroup myActionGroup;
     private final Map<TabInfo, Content> myTabInfoContentMap = new LinkedHashMap<>();
     private boolean myMoveToolbar = false;
 
@@ -189,22 +184,19 @@ public abstract class RunTab implements DataProvider, Disposable {
       layoutActionGroup.getTemplatePresentation().putClientProperty(ActionButton.HIDE_DROPDOWN_ICON, Boolean.TRUE);
     }
 
-    @NotNull
     @Override
-    public JBTabs getTabs() {
+    public @NotNull JBTabs getTabs() {
       RunnerContentUi contentUi = RunnerContentUi.KEY.getData((DataProvider)myUi);
       return Objects.requireNonNull(contentUi).getTabs();
     }
 
-    @Nullable
     @Override
-    public ActionGroup getToolbarActions() {
+    public @Nullable ActionGroup getToolbarActions() {
       return myActionGroup;
     }
 
-    @NotNull
     @Override
-    public List<AnAction> getContentActions() {
+    public @NotNull List<AnAction> getContentActions() {
       return List.of(layoutActionGroup);
     }
 
@@ -247,9 +239,8 @@ public abstract class RunTab implements DataProvider, Disposable {
       myTabInfoContentMap.put(tabInfo, content);
     }
 
-    @NotNull
     @Override
-    public Collection<Content> getSubContents() {
+    public @NotNull Collection<Content> getSubContents() {
       return myTabInfoContentMap.values();
     }
 

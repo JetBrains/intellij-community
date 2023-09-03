@@ -86,7 +86,7 @@ final class ActionPopupMenuImpl implements ActionPopupMenu, ApplicationActivatio
     myDataContextProvider = dataProvider;
   }
 
-  private class MyMenu extends JBPopupMenu implements PlaceProvider {
+  private final class MyMenu extends JBPopupMenu implements PlaceProvider {
     private final @NotNull String myPlace;
     private final @NotNull ActionGroup myGroup;
     private DataContext myContext;
@@ -184,7 +184,7 @@ final class ActionPopupMenuImpl implements ActionPopupMenu, ApplicationActivatio
       }
     }
 
-    private class MyPopupMenuListener implements PopupMenuListener {
+    private final class MyPopupMenuListener implements PopupMenuListener {
       Component targetComponent;
 
       @Override

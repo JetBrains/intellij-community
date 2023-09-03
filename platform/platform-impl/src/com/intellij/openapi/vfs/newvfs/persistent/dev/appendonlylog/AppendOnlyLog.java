@@ -27,6 +27,8 @@ public interface AppendOnlyLog extends Closeable {
   <T> T read(long recordId,
              @NotNull ByteBufferReader<T> reader) throws IOException;
 
+  boolean isValidId(long id);
+
   /**
    * @return true if all the records were read, false if reader stops the reading prematurely (by
    * returning false from {@link RecordReader#read(long, ByteBuffer)} method )

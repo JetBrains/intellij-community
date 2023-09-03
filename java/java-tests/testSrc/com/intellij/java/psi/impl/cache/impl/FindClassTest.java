@@ -12,7 +12,6 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.module.StdModuleTypes;
 import com.intellij.openapi.project.DumbService;
-import com.intellij.openapi.project.DumbServiceImpl;
 import com.intellij.openapi.roots.ContentEntry;
 import com.intellij.openapi.roots.ModifiableRootModel;
 import com.intellij.openapi.roots.ModuleRootManager;
@@ -25,6 +24,7 @@ import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.PackageScope;
 import com.intellij.psi.util.FindClassUtil;
+import com.intellij.testFramework.DumbModeTestUtils;
 import com.intellij.testFramework.JavaPsiTestCase;
 import com.intellij.testFramework.PsiTestUtil;
 import org.jetbrains.jps.model.java.JavaResourceRootType;
@@ -202,7 +202,7 @@ public class FindClassTest extends JavaPsiTestCase {
   }
 
   public void testFindClassInDumbMode() {
-    DumbServiceImpl.getInstance(myProject).runInDumbModeSynchronously(() -> {
+    DumbModeTestUtils.runInDumbModeSynchronously(myProject, () -> {
       DumbService.getInstance(myProject).withAlternativeResolveEnabled(() -> {
         assertNotNull(myJavaFacade.findClass("p.A", GlobalSearchScope.allScope(myProject)));
         assertNotNull(myJavaFacade.findClass("p.A", new PackageScope(myJavaFacade.findPackage("p"), true, true)));

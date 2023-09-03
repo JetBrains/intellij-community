@@ -3,6 +3,7 @@ package org.intellij.plugins.markdown.ui.preview.jcef
 
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.io.FileUtil
+import com.intellij.openapi.util.registry.Registry
 import com.intellij.util.io.HttpRequests
 import org.intellij.plugins.markdown.MarkdownBundle
 import org.intellij.plugins.markdown.ui.MarkdownNotifications
@@ -13,18 +14,35 @@ import java.io.File
 import java.io.IOException
 import java.util.*
 
-data class HtmlResourceSavingSettings(val isSaved: Boolean, val resourceDir: String)
+internal data class HtmlResourceSavingSettings(val isSaved: Boolean, val resourceDir: String)
 
-class HtmlExporter(htmlSource: String,
-                   private val savingSettings: HtmlResourceSavingSettings,
-                   private val project: Project,
-                   private val targetFile: File) {
+private val defaultCspContent = """
+default-src 'none';
+script-src 'self';
+style-src 'unsafe-inline';
+img-src file: *;
+connect-src 'none';
+font-src * data: *;
+object-src 'none';
+media-src 'none';
+child-src 'none';
+""".trimIndent()
+
+private val shouldEnforceCsp: Boolean
+  get() = Registry.`is`("markdown.export.html.enforce.csp", true)
+
+internal class HtmlExporter(
+  htmlSource: String,
+  private val savingSettings: HtmlResourceSavingSettings,
+  private val project: Project,
+  private val targetFile: File
+) {
   private val document = Jsoup.parse(htmlSource)
 
   fun export() {
     with(document.head()) {
       getElementsByTag("script").remove()
-      getElementsByTag("meta").remove()
+      processMetaElements(this)
       appendInlineStylesContent(select("link[rel=\"stylesheet\"]"))
     }
 
@@ -37,6 +55,20 @@ class HtmlExporter(htmlSource: String,
     }
 
     targetFile.writeText(document.html())
+  }
+
+  private fun processMetaElements(head: Element) {
+    val metas = head.getElementsByTag("meta").asSequence()
+    val csp = metas.firstOrNull { it.attr("http-equiv") == "Content-Security-Policy" }
+    for (element in metas.filterNot { it == csp }) {
+      element.remove()
+    }
+    if (csp != null) {
+      when {
+        shouldEnforceCsp -> csp.attr("content", defaultCspContent)
+        else -> csp.remove()
+      }
+    }
   }
 
   private fun appendInlineStylesContent(styles: Elements) {

@@ -475,7 +475,7 @@ final class VisualLineFragmentsIterator implements Iterator<VisualLineFragmentsI
     }
   }
 
-  class RightAlignedFragment extends Fragment {
+  final class RightAlignedFragment extends Fragment {
     private final float xOffset;
 
     RightAlignedFragment(float offset) {

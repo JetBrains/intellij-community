@@ -170,8 +170,7 @@ public final class ChangeListStorageImpl implements ChangeListStorage {
   }
 
   @Override
-  @Nullable
-  public synchronized ChangeSetHolder readPrevious(int id, IntSet recursionGuard) {
+  public synchronized @Nullable ChangeSetHolder readPrevious(int id, IntSet recursionGuard) {
     if (isCompletelyBroken) return null;
 
     int prevId = 0;
@@ -206,8 +205,7 @@ public final class ChangeListStorageImpl implements ChangeListStorage {
     }
   }
 
-  @NotNull
-  private ChangeSetHolder doReadBlock(int id) throws IOException {
+  private @NotNull ChangeSetHolder doReadBlock(int id) throws IOException {
     try (DataInputStream in = myStorage.readStream(id)) {
       return new ChangeSetHolder(id, new ChangeSet(in));
     }

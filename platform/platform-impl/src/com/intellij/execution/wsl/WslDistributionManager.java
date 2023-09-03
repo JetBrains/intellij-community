@@ -163,7 +163,7 @@ public abstract class WslDistributionManager implements Disposable {
   public abstract @NotNull List<WslDistributionAndVersion> loadInstalledDistributionsWithVersions()
     throws IOException, IllegalStateException;
 
-  private static class CachedDistributions {
+  private static final class CachedDistributions {
     private final @NotNull List<WSLDistribution> myInstalledDistributions;
     private final long myExternalChangesCount;
 

@@ -66,25 +66,25 @@ public abstract class ChangeEditorFontSizeAction extends AnAction implements Dum
     e.getPresentation().setEnabled(getEditor(e) != null);
   }
 
-  public static class IncreaseEditorFontSize extends ChangeEditorFontSizeAction {
+  public static final class IncreaseEditorFontSize extends ChangeEditorFontSizeAction {
     protected IncreaseEditorFontSize() {
       super(EditorBundle.messagePointer("increase.editor.font"), 1, false);
     }
   }
 
-  public static class DecreaseEditorFontSize extends ChangeEditorFontSizeAction {
+  public static final class DecreaseEditorFontSize extends ChangeEditorFontSizeAction {
     protected DecreaseEditorFontSize() {
       super(EditorBundle.messagePointer("decrease.editor.font"), -1, false);
     }
   }
 
-  public static class IncreaseEditorFontSizeGlobal extends ChangeEditorFontSizeAction {
+  public static final class IncreaseEditorFontSizeGlobal extends ChangeEditorFontSizeAction {
     protected IncreaseEditorFontSizeGlobal() {
       super(EditorBundle.messagePointer("increase.all.editors.font"), 1, true);
     }
   }
 
-  public static class DecreaseEditorFontSizeGlobal extends ChangeEditorFontSizeAction {
+  public static final class DecreaseEditorFontSizeGlobal extends ChangeEditorFontSizeAction {
     protected DecreaseEditorFontSizeGlobal() {
       super(EditorBundle.messagePointer("decrease.all.editors.font"), -1, true);
     }

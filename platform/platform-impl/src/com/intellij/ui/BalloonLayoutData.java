@@ -80,7 +80,7 @@ public final class BalloonLayoutData {
     return ids;
   }
 
-  public static class ID {
+  public static final class ID {
     final @NotNull String notificationId;
     final @Nullable String notificationDisplayId;
 
@@ -90,7 +90,7 @@ public final class BalloonLayoutData {
     }
   }
 
-  public static class MergeInfo {
+  public static final class MergeInfo {
     public List<ID> linkIds;
     public int count;
 

@@ -445,7 +445,7 @@ public class ColorAndFontOptions extends SearchableConfigurable.Parent.Abstract
     return ApplicationBundle.message("title.colors.scheme.font");
   }
 
-  private static class FontConfigurableFactory implements ColorAndFontPanelFactoryEx {
+  private static final class FontConfigurableFactory implements ColorAndFontPanelFactoryEx {
     @Override
     public @NotNull NewColorAndFontPanel createPanel(@NotNull ColorAndFontOptions options) {
       FontEditorPreview previewPanel = new FontEditorPreview(()->options.getSelectedScheme(), true);
@@ -468,7 +468,7 @@ public class ColorAndFontOptions extends SearchableConfigurable.Parent.Abstract
     }
   }
 
-   private static class ConsoleFontConfigurableFactory implements ColorAndFontPanelFactoryEx {
+   private static final class ConsoleFontConfigurableFactory implements ColorAndFontPanelFactoryEx {
     @Override
     public @NotNull NewColorAndFontPanel createPanel(@NotNull ColorAndFontOptions options) {
       FontEditorPreview previewPanel = new FontEditorPreview(()->options.getSelectedScheme(), true) {
@@ -807,7 +807,7 @@ public class ColorAndFontOptions extends SearchableConfigurable.Parent.Abstract
     }
   }
 
-  private static class EditorSettingColorDescription extends ColorAndFontDescription implements UiInspectorContextProvider {
+  private static final class EditorSettingColorDescription extends ColorAndFontDescription implements UiInspectorContextProvider {
     private final ColorKey myColorKey;
     private final @NotNull ColorDescriptor.Kind myKind;
     private final Color myInitialColor;

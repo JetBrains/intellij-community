@@ -12,7 +12,7 @@ import org.jetbrains.annotations.Nls
 import java.io.File
 
 @ApiStatus.Experimental
-interface MarkdownExportProvider {
+internal interface MarkdownExportProvider {
   val formatDescription: MarkdownFileActionFormat
 
   fun exportFile(project: Project, mdFile: VirtualFile, outputFile: String)

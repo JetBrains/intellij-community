@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.ui;
 
 import com.intellij.openapi.project.Project;
@@ -24,10 +24,8 @@ public abstract class OptionsMessageDialog extends OptionsDialog{
     setTitle(title);
   }
 
-  @ActionText
-  protected abstract String getOkActionName();
-  @ActionText
-  protected abstract String getCancelActionName();
+  protected abstract @ActionText String getOkActionName();
+  protected abstract @ActionText String getCancelActionName();
 
   @Override
   protected Action @NotNull [] createActions() {
@@ -51,8 +49,7 @@ public abstract class OptionsMessageDialog extends OptionsDialog{
   }
 
   @Override
-  @NotNull
-  protected JComponent createNorthPanel() {
+  protected @NotNull JComponent createNorthPanel() {
     JPanel panel = new JPanel(new BorderLayout(15, 0));
     if (myIcon != null) {
       JLabel iconLabel = new JLabel(myIcon);

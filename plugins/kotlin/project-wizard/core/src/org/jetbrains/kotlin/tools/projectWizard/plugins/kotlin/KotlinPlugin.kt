@@ -18,8 +18,8 @@ import org.jetbrains.kotlin.tools.projectWizard.core.service.KotlinVersionProvid
 import org.jetbrains.kotlin.tools.projectWizard.core.service.WizardKotlinVersion
 import org.jetbrains.kotlin.tools.projectWizard.ir.buildsystem.BuildFileIR
 import org.jetbrains.kotlin.tools.projectWizard.ir.buildsystem.RepositoryIR
+import org.jetbrains.kotlin.tools.projectWizard.ir.buildsystem.SourcesetSourceType
 import org.jetbrains.kotlin.tools.projectWizard.ir.buildsystem.withIrs
-import org.jetbrains.kotlin.tools.projectWizard.moduleConfigurators.ModuleConfigurator
 import org.jetbrains.kotlin.tools.projectWizard.phases.GenerationPhase
 import org.jetbrains.kotlin.tools.projectWizard.plugins.StructurePlugin
 import org.jetbrains.kotlin.tools.projectWizard.plugins.buildSystem.BuildSystemPlugin
@@ -29,7 +29,6 @@ import org.jetbrains.kotlin.tools.projectWizard.plugins.pomIR
 import org.jetbrains.kotlin.tools.projectWizard.plugins.projectPath
 import org.jetbrains.kotlin.tools.projectWizard.settings.DisplayableSettingItem
 import org.jetbrains.kotlin.tools.projectWizard.settings.buildsystem.*
-import java.nio.file.Path
 
 class KotlinPlugin(context: Context) : Plugin(context) {
     override val path = pluginPath
@@ -156,21 +155,15 @@ class KotlinPlugin(context: Context) : Plugin(context) {
         val createSourcesetDirectories by pipelineTask(GenerationPhase.PROJECT_GENERATION) {
             runAfter(createModules)
             withAction {
-                fun Path?.createKotlinAndResourceDirectories(moduleConfigurator: ModuleConfigurator): TaskResult<Unit> {
-                    if (this == null) return UNIT_SUCCESS
-                    return with(service<FileSystemWizardService>()) {
-                        createDirectory(this@createKotlinAndResourceDirectories / moduleConfigurator.kotlinDirectoryName) andThen
-                                if (createResourceDirectories.settingValue) {
-                                    createDirectory(this@createKotlinAndResourceDirectories / moduleConfigurator.resourcesDirectoryName)
-                                } else {
-                                    UNIT_SUCCESS
-                                }
-                    }
-                }
-
                 forEachModule { moduleIR ->
                     moduleIR.sourcesets.mapSequenceIgnore { sourcesetIR ->
-                        sourcesetIR.path.createKotlinAndResourceDirectories(moduleIR.originalModule.configurator)
+                        sourcesetIR.sourcePaths.filter {
+                          it.key != SourcesetSourceType.RESOURCES || createResourceDirectories.settingValue
+                        }.values.mapSequence {
+                            with(service<FileSystemWizardService>()) {
+                                createDirectory(it)
+                            }
+                        }
                     }
                 }
             }

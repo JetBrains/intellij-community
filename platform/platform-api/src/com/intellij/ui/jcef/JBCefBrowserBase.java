@@ -90,7 +90,7 @@ public abstract class JBCefBrowserBase implements JBCefDisposable {
   private @NotNull String myLastRequestedUrl = "";
   private final @NotNull Object myLastRequestedUrlLock = new Object();
   private volatile @Nullable ErrorPage myErrorPage;
-  protected final @NotNull PropertiesHelper myPropertiesHelper = new PropertiesHelper();
+  private final @NotNull PropertiesHelper myPropertiesHelper = new PropertiesHelper();
   private final @NotNull AtomicBoolean myIsCreateStarted = new AtomicBoolean(false);
   private @Nullable CefRequestHandler myHrefProcessingRequestHandler;
 
@@ -139,7 +139,6 @@ public abstract class JBCefBrowserBase implements JBCefDisposable {
   protected final @NotNull CefBrowser myCefBrowser;
   private final boolean myIsOffScreenRendering;
   private final boolean myEnableOpenDevToolsMenuItem;
-  private final @Nullable CefLifeSpanHandler myLifeSpanHandler;
   private final @Nullable CefLoadHandler myLoadHandler;
   private final @Nullable CefRequestHandler myRequestHandler;
   private final @Nullable CefContextMenuHandler myContextMenuHandler;
@@ -176,7 +175,7 @@ public abstract class JBCefBrowserBase implements JBCefDisposable {
     myCefBrowser = cefBrowser;
 
     if (isDefaultBrowserCreated) {
-      myCefClient.addLifeSpanHandler(myLifeSpanHandler = new CefLifeSpanHandlerAdapter() {
+      myCefClient.addLifeSpanHandler(new CefLifeSpanHandlerAdapter() {
         @Override
         public void onAfterCreated(CefBrowser browser) {
           LoadDeferrer loader = myLoadDeferrer;
@@ -184,6 +183,14 @@ public abstract class JBCefBrowserBase implements JBCefDisposable {
             loader.load();
             myLoadDeferrer = null;
           }
+        }
+
+        @Override
+        public void onBeforeClose(CefBrowser browser) {
+          // Release all references to the browser and clean up the references list.
+          // It's expected to be called by method JBCefClient#HandlerSupport<CefLifeSpanHandler>#handle() that keeps the reference to the
+          // clients handlers list until all handlers are used.
+          myCefClient.removeAllHandlers(getCefBrowser());
         }
       }, getCefBrowser());
 
@@ -257,7 +264,6 @@ public abstract class JBCefBrowserBase implements JBCefDisposable {
       myCefClient.addContextMenuHandler(myContextMenuHandler = createDefaultContextMenuHandler(), getCefBrowser());
     }
     else {
-      myLifeSpanHandler = null;
       myLoadHandler = null;
       myRequestHandler = null;
       myContextMenuHandler = null;
@@ -355,8 +361,7 @@ public abstract class JBCefBrowserBase implements JBCefDisposable {
     loadHTML(html, BLANK_URI);
   }
 
-  @NotNull
-  public final CefBrowser getCefBrowser() {
+  public final @NotNull CefBrowser getCefBrowser() {
     return myCefBrowser;
   }
 
@@ -385,8 +390,7 @@ public abstract class JBCefBrowserBase implements JBCefDisposable {
     return Math.pow(ZOOM_COMMON_RATIO, myCefBrowser.getZoomLevel());
   }
 
-  @NotNull
-  public final JBCefClient getJBCefClient() {
+  public final @NotNull JBCefClient getJBCefClient() {
     return myCefClient;
   }
 
@@ -394,8 +398,7 @@ public abstract class JBCefBrowserBase implements JBCefDisposable {
     return new JBCefCookieManager(CefCookieManager.getGlobalManager());
   }
 
-  @NotNull
-  public final JBCefCookieManager getJBCefCookieManager() {
+  public final @NotNull JBCefCookieManager getJBCefCookieManager() {
     myCookieManagerLock.lock();
     try {
       if (myJBCefCookieManager == null) {
@@ -506,11 +509,11 @@ public abstract class JBCefBrowserBase implements JBCefDisposable {
     myDisposeHelper.dispose(() -> {
       if (subDisposer != null) subDisposer.run();
 
-      if (myLifeSpanHandler != null) getJBCefClient().removeLifeSpanHandler(myLifeSpanHandler, getCefBrowser());
       if (myLoadHandler != null) getJBCefClient().removeLoadHandler(myLoadHandler, getCefBrowser());
       if (myRequestHandler != null) getJBCefClient().removeRequestHandler(myRequestHandler, getCefBrowser());
       if (myHrefProcessingRequestHandler != null) getJBCefClient().removeRequestHandler(myHrefProcessingRequestHandler, getCefBrowser());
       if (myContextMenuHandler != null) getJBCefClient().removeContextMenuHandler(myContextMenuHandler, getCefBrowser());
+      // There is also a CefLifeSpanHandler(see the class constructor) that has to remove himself at onBeforeClose()
 
       CertificateManager.getInstance().getCustomTrustManager().removeListener(myCertificateListener);
 
@@ -530,8 +533,7 @@ public abstract class JBCefBrowserBase implements JBCefDisposable {
   /**
    * Returns {@code JBCefBrowser} instance associated with this {@code CefBrowser}.
    */
-  @Nullable
-  public static JBCefBrowser getJBCefBrowser(@NotNull CefBrowser browser) {
+  public static @Nullable JBCefBrowser getJBCefBrowser(@NotNull CefBrowser browser) {
     Component uiComp = browser.getUIComponent();
     if (uiComp != null) {
       Component parentComp = uiComp.getParent();
@@ -668,8 +670,7 @@ public abstract class JBCefBrowserBase implements JBCefDisposable {
   /**
    * @see #setProperty(String, Object)
    */
-  @Nullable
-  public Object getProperty(@NotNull String name) {
+  public @Nullable Object getProperty(@NotNull String name) {
     return myPropertiesHelper.getProperty(name);
   }
 
@@ -768,8 +769,8 @@ public abstract class JBCefBrowserBase implements JBCefDisposable {
   }
 
   private final class LoadDeferrer {
-    @Nullable private final String myHtml;
-    @NotNull private final String myUrl;
+    private final @Nullable String myHtml;
+    private final @NotNull String myUrl;
 
     private LoadDeferrer(@Nullable String html, @NotNull String url) {
       myHtml = html;

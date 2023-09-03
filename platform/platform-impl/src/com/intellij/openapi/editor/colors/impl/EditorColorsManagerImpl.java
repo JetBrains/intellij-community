@@ -17,8 +17,8 @@ import com.intellij.ide.plugins.cl.PluginClassLoader;
 import com.intellij.ide.ui.LafManager;
 import com.intellij.ide.ui.LafManagerListener;
 import com.intellij.ide.ui.UITheme;
-import com.intellij.ide.ui.laf.TempUIThemeBasedLookAndFeelInfo;
-import com.intellij.ide.ui.laf.UIThemeBasedLookAndFeelInfo;
+import com.intellij.ide.ui.laf.TempUIThemeLookAndFeelInfo;
+import com.intellij.ide.ui.laf.UIThemeLookAndFeelInfo;
 import com.intellij.ide.ui.laf.UiThemeProviderListManager;
 import com.intellij.ide.util.RunOnceUtil;
 import com.intellij.notification.Notification;
@@ -257,8 +257,8 @@ public final class EditorColorsManagerImpl extends EditorColorsManager implement
     EditorColorsScheme scheme = null;
 
     if (!themeIsCustomized) {
-      if (currentLaf instanceof UIThemeBasedLookAndFeelInfo) {
-        String schemeName = ((UIThemeBasedLookAndFeelInfo)currentLaf).getTheme().getEditorSchemeName();
+      if (currentLaf instanceof UIThemeLookAndFeelInfo) {
+        String schemeName = ((UIThemeLookAndFeelInfo)currentLaf).getTheme().getEditorSchemeName();
         if (schemeName != null) {
           scheme = getScheme(schemeName);
         }
@@ -284,7 +284,7 @@ public final class EditorColorsManagerImpl extends EditorColorsManager implement
   @TestOnly
   public @Nullable EditorColorsScheme loadBundledScheme(@NotNull String themeName) {
     assert ApplicationManager.getApplication().isUnitTestMode() : "Test-only method";
-    for (UIThemeBasedLookAndFeelInfo laf : UiThemeProviderListManager.Companion.getInstance().getLaFs()) {
+    for (UIThemeLookAndFeelInfo laf : UiThemeProviderListManager.Companion.getInstance().getLaFs()) {
       UITheme theme = laf.getTheme();
       if (themeName.equals(theme.getName())) {
         String scheme = theme.getEditorScheme();
@@ -317,7 +317,7 @@ public final class EditorColorsManagerImpl extends EditorColorsManager implement
       return;
     }
 
-    for (UIThemeBasedLookAndFeelInfo laf : UiThemeProviderListManager.Companion.getInstance().getLaFs()) {
+    for (UIThemeLookAndFeelInfo laf : UiThemeProviderListManager.Companion.getInstance().getLaFs()) {
       UITheme theme = laf.getTheme();
       String[] schemes = theme.getAdditionalEditorSchemes();
       PluginDescriptor pluginDescriptor = getPluginDescriptor(theme);
@@ -656,7 +656,7 @@ public final class EditorColorsManagerImpl extends EditorColorsManager implement
   public void initializeComponent() {
     Activity activity = StartUpMeasurer.startActivity("editor color scheme initialization");
     // LafManager is initialized in EDT, so, that's ok to call it here
-    LookAndFeelInfo laf = ApplicationManager.getApplication().isUnitTestMode() ? null : LafManager.getInstance().getCurrentLookAndFeel();
+    LookAndFeelInfo laf = ApplicationManager.getApplication().isUnitTestMode() ? null : LafManager.getInstance().getCurrentUIThemeLookAndFeel();
     // null in a headless mode
     if (laf != null) {
       initScheme(laf);
@@ -671,16 +671,16 @@ public final class EditorColorsManagerImpl extends EditorColorsManager implement
 
   @Override
   public @NotNull EditorColorsScheme getSchemeForCurrentUITheme() {
-    LookAndFeelInfo lookAndFeelInfo = LafManager.getInstance().getCurrentLookAndFeel();
+    LookAndFeelInfo lookAndFeelInfo = LafManager.getInstance().getCurrentUIThemeLookAndFeel();
     EditorColorsScheme scheme = null;
-    if (lookAndFeelInfo instanceof TempUIThemeBasedLookAndFeelInfo) {
+    if (lookAndFeelInfo instanceof TempUIThemeLookAndFeelInfo) {
       EditorColorsScheme globalScheme = EditorColorsManager.getInstance().getGlobalScheme();
       if (isTempScheme(globalScheme)) {
         return globalScheme;
       }
     }
-    if (lookAndFeelInfo instanceof UIThemeBasedLookAndFeelInfo) {
-      UITheme theme = ((UIThemeBasedLookAndFeelInfo)lookAndFeelInfo).getTheme();
+    if (lookAndFeelInfo instanceof UIThemeLookAndFeelInfo) {
+      UITheme theme = ((UIThemeLookAndFeelInfo)lookAndFeelInfo).getTheme();
       String schemeName = theme.getEditorSchemeName();
       if (schemeName != null) {
         scheme = getScheme(schemeName);
@@ -764,8 +764,8 @@ public final class EditorColorsManagerImpl extends EditorColorsManager implement
           boolean isDark = ColorUtil.isDark(scheme.getDefaultBackground());
           String neededThemeName = isDark ? "Solarized Dark" : "Solarized Light";
 
-          UIThemeBasedLookAndFeelInfo neededTheme = null;
-          for (UIThemeBasedLookAndFeelInfo theme : UiThemeProviderListManager.Companion.getInstance().getLaFs()) {
+          UIThemeLookAndFeelInfo neededTheme = null;
+          for (UIThemeLookAndFeelInfo theme : UiThemeProviderListManager.Companion.getInstance().getLaFs()) {
             if (theme.getName().equals(neededThemeName)) {
               neededTheme = theme;
               break;
@@ -777,7 +777,7 @@ public final class EditorColorsManagerImpl extends EditorColorsManager implement
                                                        NotificationType.ERROR);
           if (neededTheme != null) {
             notification.setContent(IdeBundle.message("notification.content.solarized.color.scheme.deprecation.enable", name, neededThemeName));
-            UIThemeBasedLookAndFeelInfo finalNeededTheme = neededTheme;
+            UIThemeLookAndFeelInfo finalNeededTheme = neededTheme;
             notification.addAction(new NotificationAction(IdeBundle.message("notification.title.enable.action.solarized.color.scheme.deprecation", neededThemeName)) {
               @Override
               public void actionPerformed(@NotNull AnActionEvent e, @NotNull Notification notification) {
@@ -796,13 +796,12 @@ public final class EditorColorsManagerImpl extends EditorColorsManager implement
                 // Needed to enable matching theme after plugin install. Since the plugin provides 2 themes,
                 // we need to wait to both of them to be added (and applied) to reapply the needed one if it wasn't added last.
                 connection.subscribe(LafManagerListener.TOPIC, new LafManagerListener() {
-                  UIThemeBasedLookAndFeelInfo matchingTheme = null;
+                  UIThemeLookAndFeelInfo matchingTheme = null;
                   boolean otherWasSet = false;
 
                   @Override
                   public void lookAndFeelChanged(@NotNull LafManager source) {
-                    if (!(source.getCurrentLookAndFeel() instanceof UIThemeBasedLookAndFeelInfo themeInfo)) return;
-
+                    UIThemeLookAndFeelInfo themeInfo = source.getCurrentUIThemeLookAndFeel();
                     if (themeInfo.getName().contains("Solarized")) {
                       if (isDark && themeInfo.getTheme().isDark() || !isDark && !themeInfo.getTheme().isDark()) {
                         matchingTheme = themeInfo;
@@ -816,7 +815,7 @@ public final class EditorColorsManagerImpl extends EditorColorsManager implement
                       connection.disconnect();
 
                       LafManager lafManager = LafManager.getInstance();
-                      if (!lafManager.getCurrentLookAndFeel().equals(matchingTheme)) {
+                      if (!lafManager.getCurrentUIThemeLookAndFeel().equals(matchingTheme)) {
                         lafManager.setCurrentLookAndFeel(matchingTheme, false);
                         lafManager.updateUI();
                       }

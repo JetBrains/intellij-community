@@ -730,7 +730,7 @@ public final class WindowTabsComponent extends JBTabsImpl {
     }, coroutineScope);
   }
 
-  private class TabsDockContainer implements DockContainer {
+  private final class TabsDockContainer implements DockContainer {
     boolean enabled;
     TabInfo myDropTab;
     Image myDropImage;
@@ -793,7 +793,7 @@ public final class WindowTabsComponent extends JBTabsImpl {
     }
   }
 
-  private static class WindowFrameDockableContent implements DockableContent<IdeFrameImpl>, DockableContentContainer {
+  private static final class WindowFrameDockableContent implements DockableContent<IdeFrameImpl>, DockableContentContainer {
     private final Dimension mySize;
     private final WindowTabsComponent myTabsComponent;
     private final TabInfo myInfo;
@@ -854,7 +854,7 @@ public final class WindowTabsComponent extends JBTabsImpl {
     }
   }
 
-  private static class WindowDropAreaPainter extends AbstractPainter {
+  private static final class WindowDropAreaPainter extends AbstractPainter {
     private final Shape myArea;
 
     WindowDropAreaPainter(@NotNull IdeFrameImpl frame) {

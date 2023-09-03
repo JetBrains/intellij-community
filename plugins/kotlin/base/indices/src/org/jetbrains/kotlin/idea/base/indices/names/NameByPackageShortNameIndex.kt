@@ -9,10 +9,10 @@ import com.intellij.util.indexing.*
 import com.intellij.util.io.DataExternalizer
 import com.intellij.util.io.IOUtil
 import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.kotlin.analysis.decompiler.konan.FileWithMetadata
+import org.jetbrains.kotlin.analysis.decompiler.konan.KlibMetaFileType
 import org.jetbrains.kotlin.analysis.decompiler.psi.KotlinBuiltInFileType
 import org.jetbrains.kotlin.idea.KotlinFileType
-import org.jetbrains.kotlin.idea.base.psi.fileTypes.KlibMetaFileType
-import org.jetbrains.kotlin.idea.klib.FileWithMetadata
 import org.jetbrains.kotlin.idea.vfilefinder.FqNameKeyDescriptor
 import org.jetbrains.kotlin.idea.vfilefinder.KotlinPartialPackageNamesIndex
 import org.jetbrains.kotlin.load.kotlin.KotlinBinaryClassCache
@@ -49,10 +49,10 @@ abstract class NameByPackageShortNameIndex : FileBasedIndexExtension<FqName, Lis
 
     override fun getInputFilter(): DefaultFileTypeSpecificInputFilter =
         DefaultFileTypeSpecificInputFilter(
-          KotlinFileType.INSTANCE,
-          JavaClassFileType.INSTANCE,
-          KotlinBuiltInFileType,
-          KlibMetaFileType,
+            KotlinFileType.INSTANCE,
+            JavaClassFileType.INSTANCE,
+            KotlinBuiltInFileType,
+            KlibMetaFileType,
         )
 
     override fun getIndexer() = DataIndexer<FqName, List<Name>, FileContent> { fileContent ->

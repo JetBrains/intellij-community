@@ -5,10 +5,12 @@ import com.intellij.codeInsight.inline.completion.InlineCompletionElement
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.EditorCustomElementRenderer
 import com.intellij.openapi.editor.Inlay
+import com.intellij.openapi.editor.VisualPosition
 import com.intellij.openapi.editor.ex.util.EditorActionAvailabilityHint
 import com.intellij.openapi.editor.ex.util.addActionAvailabilityHint
 import com.intellij.openapi.editor.markup.TextAttributes
 import com.intellij.openapi.util.Disposer
+import com.intellij.openapi.util.registry.Registry
 import org.jetbrains.annotations.ApiStatus
 import java.awt.Graphics
 import java.awt.Rectangle
@@ -59,6 +61,15 @@ class EditorInlineInlineCompletion(private val editor: Editor) : InlineCompletio
   }
 
   private fun renderSuffix(editor: Editor, lines: List<String>, offset: Int) {
+    // the following is a hacky solution to the effect described in ML-977
+    if (Registry.`is`("inline.completion.caret.forceLeanLeft")) {
+      val visualPosition = editor.caretModel.visualPosition
+      if (visualPosition.leansRight) {
+        val leftLeaningPosition = VisualPosition(visualPosition.line, visualPosition.column, false)
+        editor.caretModel.moveToVisualPosition(leftLeaningPosition)
+      }
+    }
+
     val line = lines.first()
     if (line.isBlank()) {
       suffixInlay = editor.inlayModel.addInlineElement(editor.caretModel.offset, object: EditorCustomElementRenderer {

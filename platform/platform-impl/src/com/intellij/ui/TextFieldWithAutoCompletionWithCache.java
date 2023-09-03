@@ -14,7 +14,7 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 
-public class TextFieldWithAutoCompletionWithCache<T> extends TextFieldWithAutoCompletion<T> {
+public final class TextFieldWithAutoCompletionWithCache<T> extends TextFieldWithAutoCompletion<T> {
   private final boolean myShowBottomPanel;
   private final boolean myAllowAutoPopupWithSlash;
 
@@ -85,7 +85,7 @@ public class TextFieldWithAutoCompletionWithCache<T> extends TextFieldWithAutoCo
     return editor;
   }
 
-  private static class StringsCompletionWithCacheProvider extends TextFieldWithAutoCompletionWithCacheListProvider<String> implements DumbAware {
+  private static final class StringsCompletionWithCacheProvider extends TextFieldWithAutoCompletionWithCacheListProvider<String> implements DumbAware {
     private final @Nullable Icon myIcon;
     private final boolean myPrefixMatchesOnly;
 

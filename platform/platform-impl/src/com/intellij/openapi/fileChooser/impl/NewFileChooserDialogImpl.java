@@ -187,7 +187,7 @@ final class NewFileChooserDialogImpl extends DialogWrapper implements FileChoose
     return "select.path.dialog";
   }
 
-  private class ChooserDialogPanel extends JPanel implements DataProvider {
+  private final class ChooserDialogPanel extends JPanel implements DataProvider {
     private ChooserDialogPanel() {
       super(new BorderLayout());
       setDropTarget(new DropTarget(this, DnDConstants.ACTION_COPY, new ChooserDropTarget()));
@@ -199,7 +199,7 @@ final class NewFileChooserDialogImpl extends DialogWrapper implements FileChoose
     }
   }
 
-  private class ChooserDropTarget extends DropTargetAdapter {
+  private final class ChooserDropTarget extends DropTargetAdapter {
     @Override
     public void dragEnter(DropTargetDragEvent e) {
       if (FileCopyPasteUtil.isFileListFlavorAvailable(e.getCurrentDataFlavors())) {

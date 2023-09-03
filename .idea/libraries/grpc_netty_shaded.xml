@@ -1,12 +1,12 @@
 <component name="libraryTable">
   <library name="grpc-netty-shaded" type="repository">
-    <properties maven-id="io.grpc:grpc-netty-shaded:1.53.0">
+    <properties jar-repository-id="central-proxy" maven-id="io.grpc:grpc-netty-shaded:1.57.2">
       <verification>
-        <artifact url="file://$MAVEN_REPOSITORY$/io/grpc/grpc-netty-shaded/1.53.0/grpc-netty-shaded-1.53.0.jar">
-          <sha256sum>516f3879970d5526af4651d220d2b776f370ecdeb0bd9f6badbe4be88692fea2</sha256sum>
+        <artifact url="file://$MAVEN_REPOSITORY$/io/grpc/grpc-netty-shaded/1.57.2/grpc-netty-shaded-1.57.2.jar">
+          <sha256sum>7908b69ef12c9fd2aebcb241bac1c54f39cc8db17c864ae9f486a4c226a96ff6</sha256sum>
         </artifact>
-        <artifact url="file://$MAVEN_REPOSITORY$/com/google/errorprone/error_prone_annotations/2.14.0/error_prone_annotations-2.14.0.jar">
-          <sha256sum>1494e24e7bd5496e7d6f705169dddd46081cefb882ea4fc60b4a58ca50767f34</sha256sum>
+        <artifact url="file://$MAVEN_REPOSITORY$/com/google/errorprone/error_prone_annotations/2.18.0/error_prone_annotations-2.18.0.jar">
+          <sha256sum>9e6814cb71816988a4fd1b07a993a8f21bb7058d522c162b1de849e19bea54ae</sha256sum>
         </artifact>
       </verification>
       <exclude>
@@ -16,13 +16,13 @@
       </exclude>
     </properties>
     <CLASSES>
-      <root url="jar://$MAVEN_REPOSITORY$/io/grpc/grpc-netty-shaded/1.53.0/grpc-netty-shaded-1.53.0.jar!/" />
-      <root url="jar://$MAVEN_REPOSITORY$/com/google/errorprone/error_prone_annotations/2.14.0/error_prone_annotations-2.14.0.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/io/grpc/grpc-netty-shaded/1.57.2/grpc-netty-shaded-1.57.2.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/com/google/errorprone/error_prone_annotations/2.18.0/error_prone_annotations-2.18.0.jar!/" />
     </CLASSES>
     <JAVADOC />
     <SOURCES>
-      <root url="jar://$MAVEN_REPOSITORY$/io/grpc/grpc-netty-shaded/1.53.0/grpc-netty-shaded-1.53.0-sources.jar!/" />
-      <root url="jar://$MAVEN_REPOSITORY$/com/google/errorprone/error_prone_annotations/2.14.0/error_prone_annotations-2.14.0-sources.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/io/grpc/grpc-netty-shaded/1.57.2/grpc-netty-shaded-1.57.2-sources.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/com/google/errorprone/error_prone_annotations/2.18.0/error_prone_annotations-2.18.0-sources.jar!/" />
     </SOURCES>
   </library>
 </component>

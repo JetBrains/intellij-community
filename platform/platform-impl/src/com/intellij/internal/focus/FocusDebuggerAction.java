@@ -63,7 +63,7 @@ final class FocusDebuggerAction extends AnAction implements DumbAware {
                          InternalActionsBundle.messagePointer("action.presentation.FocusDebuggerAction.text.start.focus.debugger"));
   }
 
-  private static class FocusDrawer extends Thread implements AWTEventListener, ApplicationActivationListener {
+  private static final class FocusDrawer extends Thread implements AWTEventListener, ApplicationActivationListener {
     private Component myCurrent;
     private Component myPrevious;
     private boolean myTemporary;

@@ -13,7 +13,7 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.awt.*;
 
-public class DeprecationStripePanel extends JPanel {
+public final class DeprecationStripePanel extends JPanel {
   public DeprecationStripePanel(@NlsContexts.Label @NotNull String mainText, @Nullable Icon icon) {
     super(new FlowLayout(FlowLayout.CENTER));
     setBorder(new BottomLineBorder());

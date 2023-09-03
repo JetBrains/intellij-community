@@ -348,7 +348,7 @@ public class FileDocumentManagerImpl extends FileDocumentManagerBase implements 
     }
   }
 
-  private static class SaveVetoException extends Exception {}
+  private static final class SaveVetoException extends Exception {}
 
   private void doSaveDocument(@NotNull Document document, boolean isExplicit) throws IOException, SaveVetoException {
     VirtualFile file = getFile(document);

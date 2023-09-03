@@ -78,6 +78,13 @@ class KotlinBuildScriptManipulator(
         return scriptFile.getKotlinVersion()
     }
 
+    override fun hasExplicitlyDefinedKotlinVersion(): Boolean {
+        val pluginsBlock = scriptFile.findScriptInitializer("plugins")?.getBlock() ?: return false
+        return pluginsBlock.findPluginExpressions {
+            it.isKotlinPluginIdentifier()
+        }?.versionExpression != null
+    }
+
     override fun findAndRemoveKotlinVersionFromBuildScript(): Boolean {
         val pluginsBlock = scriptFile.findScriptInitializer("plugins")?.getBlock() ?: return false
         val pluginExpression = pluginsBlock.findPluginExpressions {

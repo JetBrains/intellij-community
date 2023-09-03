@@ -118,6 +118,99 @@ public abstract class HighLevelQuickFixMultiModuleTestGenerated extends Abstract
     }
 
     @RunWith(JUnit3RunnerWithInners.class)
+    @TestMetadata("../idea/tests/testData/multiModuleQuickFix/actualAnnotationsNotMatchExpect")
+    public static class ActualAnnotationsNotMatchExpect extends AbstractHighLevelQuickFixMultiModuleTest {
+        private void runTest(String testDataFilePath) throws Exception {
+            KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+        }
+
+        @TestMetadata("copyNotSuggestedWhenActualFakeOverride")
+        public void testCopyNotSuggestedWhenActualFakeOverride() throws Exception {
+            runTest("../idea/tests/testData/multiModuleQuickFix/actualAnnotationsNotMatchExpect/copyNotSuggestedWhenActualFakeOverride/");
+        }
+
+        @TestMetadata("copyNotSuggestedWhenActualTypealias")
+        public void testCopyNotSuggestedWhenActualTypealias() throws Exception {
+            runTest("../idea/tests/testData/multiModuleQuickFix/actualAnnotationsNotMatchExpect/copyNotSuggestedWhenActualTypealias/");
+        }
+
+        @TestMetadata("copyToActualConstExpression")
+        public void testCopyToActualConstExpression() throws Exception {
+            runTest("../idea/tests/testData/multiModuleQuickFix/actualAnnotationsNotMatchExpect/copyToActualConstExpression/");
+        }
+
+        @TestMetadata("copyToActualNoArg")
+        public void testCopyToActualNoArg() throws Exception {
+            runTest("../idea/tests/testData/multiModuleQuickFix/actualAnnotationsNotMatchExpect/copyToActualNoArg/");
+        }
+
+        @TestMetadata("copyToActualPrimaryConstructor")
+        public void testCopyToActualPrimaryConstructor() throws Exception {
+            runTest("../idea/tests/testData/multiModuleQuickFix/actualAnnotationsNotMatchExpect/copyToActualPrimaryConstructor/");
+        }
+
+        @TestMetadata("copyToActualSecondaryConstructor")
+        public void testCopyToActualSecondaryConstructor() throws Exception {
+            runTest("../idea/tests/testData/multiModuleQuickFix/actualAnnotationsNotMatchExpect/copyToActualSecondaryConstructor/");
+        }
+
+        @TestMetadata("copyToActualSingleArg")
+        public void testCopyToActualSingleArg() throws Exception {
+            runTest("../idea/tests/testData/multiModuleQuickFix/actualAnnotationsNotMatchExpect/copyToActualSingleArg/");
+        }
+
+        @TestMetadata("copyToActualWithImport")
+        public void testCopyToActualWithImport() throws Exception {
+            runTest("../idea/tests/testData/multiModuleQuickFix/actualAnnotationsNotMatchExpect/copyToActualWithImport/");
+        }
+
+        @TestMetadata("removeFromExpect")
+        public void testRemoveFromExpect() throws Exception {
+            runTest("../idea/tests/testData/multiModuleQuickFix/actualAnnotationsNotMatchExpect/removeFromExpect/");
+        }
+
+        @TestMetadata("removeFromExpectSuggestedWhenActualFakeOverride")
+        public void testRemoveFromExpectSuggestedWhenActualFakeOverride() throws Exception {
+            runTest("../idea/tests/testData/multiModuleQuickFix/actualAnnotationsNotMatchExpect/removeFromExpectSuggestedWhenActualFakeOverride/");
+        }
+
+        @TestMetadata("removeFromExpectSuggestedWhenActualHasNoSource")
+        public void testRemoveFromExpectSuggestedWhenActualHasNoSource() throws Exception {
+            runTest("../idea/tests/testData/multiModuleQuickFix/actualAnnotationsNotMatchExpect/removeFromExpectSuggestedWhenActualHasNoSource/");
+        }
+
+        @TestMetadata("removeFromExpectSuggestedWhenActualTypealias")
+        public void testRemoveFromExpectSuggestedWhenActualTypealias() throws Exception {
+            runTest("../idea/tests/testData/multiModuleQuickFix/actualAnnotationsNotMatchExpect/removeFromExpectSuggestedWhenActualTypealias/");
+        }
+
+        @TestMetadata("replaceArgsOnActual")
+        public void testReplaceArgsOnActual() throws Exception {
+            runTest("../idea/tests/testData/multiModuleQuickFix/actualAnnotationsNotMatchExpect/replaceArgsOnActual/");
+        }
+
+        @TestMetadata("replaceArgsOnActualDifferentArgsOrder")
+        public void testReplaceArgsOnActualDifferentArgsOrder() throws Exception {
+            runTest("../idea/tests/testData/multiModuleQuickFix/actualAnnotationsNotMatchExpect/replaceArgsOnActualDifferentArgsOrder/");
+        }
+
+        @TestMetadata("replaceArgsOnActualOverrideEmptyWithNonEmpty")
+        public void testReplaceArgsOnActualOverrideEmptyWithNonEmpty() throws Exception {
+            runTest("../idea/tests/testData/multiModuleQuickFix/actualAnnotationsNotMatchExpect/replaceArgsOnActualOverrideEmptyWithNonEmpty/");
+        }
+
+        @TestMetadata("replaceArgsOnActualOverrideWithEmpty")
+        public void testReplaceArgsOnActualOverrideWithEmpty() throws Exception {
+            runTest("../idea/tests/testData/multiModuleQuickFix/actualAnnotationsNotMatchExpect/replaceArgsOnActualOverrideWithEmpty/");
+        }
+
+        @TestMetadata("replaceArgsOnExpect")
+        public void testReplaceArgsOnExpect() throws Exception {
+            runTest("../idea/tests/testData/multiModuleQuickFix/actualAnnotationsNotMatchExpect/replaceArgsOnExpect/");
+        }
+    }
+
+    @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("../idea/tests/testData/multiModuleQuickFix/addDependency")
     public static class AddDependency extends AbstractHighLevelQuickFixMultiModuleTest {
         private void runTest(String testDataFilePath) throws Exception {

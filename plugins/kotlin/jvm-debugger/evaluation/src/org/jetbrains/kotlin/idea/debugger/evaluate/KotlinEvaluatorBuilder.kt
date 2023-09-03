@@ -17,6 +17,7 @@ import com.intellij.openapi.diagnostic.Attachment
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.project.DumbService
+import com.intellij.openapi.project.IndexNotReadyException
 import com.intellij.psi.PsiElement
 import com.intellij.psi.util.CachedValueProvider
 import com.intellij.psi.util.CachedValuesManager
@@ -135,6 +136,8 @@ class KotlinEvaluator(val codeFragment: KtCodeFragment, private val sourcePositi
             evaluationException(e.reason)
         } catch (e: EvaluateException) {
             throw e
+        } catch (e: IndexNotReadyException) {
+            evaluationException(KotlinDebuggerEvaluationBundle.message("error.dumb.mode"))
         } catch (e: ProcessCanceledException) {
             evaluationException(e)
         } catch (e: Eval4JInterpretingException) {

@@ -5,7 +5,7 @@ import com.intellij.util.indexing.FileContent
 import com.intellij.util.indexing.ID
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.kotlin.analysis.decompiler.psi.BuiltInDefinitionFile
-import org.jetbrains.kotlin.idea.klib.FileWithMetadata
+import org.jetbrains.kotlin.analysis.decompiler.konan.FileWithMetadata
 import org.jetbrains.kotlin.load.kotlin.KotlinJvmBinaryClass
 import org.jetbrains.kotlin.load.kotlin.header.KotlinClassHeader
 import org.jetbrains.kotlin.name.FqName

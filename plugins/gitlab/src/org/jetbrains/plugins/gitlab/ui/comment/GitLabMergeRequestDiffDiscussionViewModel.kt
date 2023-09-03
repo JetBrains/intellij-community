@@ -8,6 +8,7 @@ import com.intellij.collaboration.ui.codereview.diff.DiffLineLocation
 import com.intellij.collaboration.ui.codereview.diff.DiscussionsViewOption
 import com.intellij.collaboration.ui.codereview.diff.viewer.DiffMapped
 import com.intellij.openapi.diagnostic.logger
+import com.intellij.openapi.project.Project
 import com.intellij.util.childScope
 import git4idea.changes.GitTextFilePatchWithHistory
 import kotlinx.coroutines.*
@@ -42,6 +43,7 @@ interface GitLabMergeRequestDiffDiscussionViewModel : DiffMapped {
 private val LOG = logger<GitLabMergeRequestDiffDiscussionViewModel>()
 
 class GitLabMergeRequestDiffDiscussionViewModelImpl(
+  project: Project,
   parentCs: CoroutineScope,
   diffData: GitTextFilePatchWithHistory,
   currentUser: GitLabUserDTO,
@@ -71,7 +73,7 @@ class GitLabMergeRequestDiffDiscussionViewModelImpl(
     }
   }.mapCaching(
     GitLabNote::id,
-    { note -> GitLabNoteViewModelImpl(this, note, discussion.notes.map { it.firstOrNull()?.id == note.id }, glProject) },
+    { note -> GitLabNoteViewModelImpl(project, this, note, discussion.notes.map { it.firstOrNull()?.id == note.id }, glProject) },
     GitLabNoteViewModelImpl::destroy
   ).combine(expandRequested) { notes, expanded ->
     if (initialNotesSize!! <= 3 || notes.size <= 3 || expanded) {
@@ -109,6 +111,7 @@ class GitLabMergeRequestDiffDiscussionViewModelImpl(
 }
 
 class GitLabMergeRequestDiffDraftDiscussionViewModel(
+  project: Project,
   parentCs: CoroutineScope,
   diffData: GitTextFilePatchWithHistory,
   note: GitLabMergeRequestDraftNote,
@@ -120,7 +123,7 @@ class GitLabMergeRequestDiffDraftDiscussionViewModel(
   override val id: String = note.id
 
   override val notes: Flow<List<NoteItem>> = flowOf(
-    listOf(NoteItem.Note(GitLabNoteViewModelImpl(cs, note, flowOf(true), glProject)))
+    listOf(NoteItem.Note(GitLabNoteViewModelImpl(project, cs, note, flowOf(true), glProject)))
   )
 
   override val location: Flow<DiffLineLocation?> = note.position.map {

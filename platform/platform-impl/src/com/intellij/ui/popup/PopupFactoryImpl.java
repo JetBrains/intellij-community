@@ -9,6 +9,7 @@ import com.intellij.internal.inspector.UiInspectorUtil;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.impl.ActionMenu;
+import com.intellij.openapi.actionSystem.impl.ActionPresentationDecorator;
 import com.intellij.openapi.actionSystem.impl.PresentationFactory;
 import com.intellij.openapi.actionSystem.impl.Utils;
 import com.intellij.openapi.application.Application;
@@ -698,7 +699,7 @@ public class PopupFactoryImpl extends JBPopupFactory {
                                         messageType.getPopupBackground(), listener).setBorderColor(messageType.getBorderColor());
   }
 
-  public static class InlineActionItem implements AnActionHolder {
+  public static final class InlineActionItem implements AnActionHolder {
     private final AnAction myAction;
     private Icon myIcon;
     private Icon mySelectedIcon;
@@ -754,7 +755,7 @@ public class PopupFactoryImpl extends JBPopupFactory {
   }
 
 
-  public static class ActionItem implements ShortcutProvider, AnActionHolder, NumericMnemonicItem {
+  public static final class ActionItem implements ShortcutProvider, AnActionHolder, NumericMnemonicItem {
     private final AnAction myAction;
     private @NlsActions.ActionText String myText;
     private @NlsContexts.DetailedDescription String myDescription;
@@ -842,7 +843,7 @@ public class PopupFactoryImpl extends JBPopupFactory {
       if (text != null && !myMnemonicsEnabled && myHonorActionMnemonics) {
         text = TextWithMnemonic.fromPlainText(text, (char)myAction.getTemplatePresentation().getMnemonic()).toString();
       }
-      myText = text;
+      myText = ActionPresentationDecorator.decorateTextIfNeeded(myAction, text);
       LOG.assertTrue(text != null, "Action in `" + actionPlace + "` has no presentation: " + myAction.getClass().getName());
 
       myDescription =  presentation.getDescription();

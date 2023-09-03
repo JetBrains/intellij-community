@@ -26,7 +26,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 
 import static org.jetbrains.concurrency.Promises.rejectedPromise;
 
-public class RemoteFileInfoImpl implements RemoteContentProvider.DownloadingCallback, RemoteFileInfo {
+public final class RemoteFileInfoImpl implements RemoteContentProvider.DownloadingCallback, RemoteFileInfo {
   private static final Logger LOG = Logger.getInstance(RemoteFileInfoImpl.class);
   private final Object myLock = new Object();
   private final Url myUrl;
@@ -244,7 +244,7 @@ public class RemoteFileInfoImpl implements RemoteContentProvider.DownloadingCall
     }
   }
 
-  private class MyRefreshingDownloadingListener extends FileDownloadingAdapter {
+  private final class MyRefreshingDownloadingListener extends FileDownloadingAdapter {
     private final Runnable myPostRunnable;
 
     MyRefreshingDownloadingListener(final Runnable postRunnable) {

@@ -25,7 +25,7 @@ import org.jetbrains.annotations.NotNull;
 import java.util.*;
 
 // todo disable in guest (no file types)
-public class FileTypeUsagesCollector extends ProjectUsagesCollector {
+public final class FileTypeUsagesCollector extends ProjectUsagesCollector {
   private static final String DEFAULT_ID = "third.party";
 
   private final EventLogGroup GROUP = new EventLogGroup("file.types", 7);
@@ -86,7 +86,7 @@ public class FileTypeUsagesCollector extends ProjectUsagesCollector {
     return info.isDevelopedByJetBrains() ? fileType.getName() : DEFAULT_ID;
   }
 
-  public static class ValidationRule extends CustomValidationRule {
+  public static final class ValidationRule extends CustomValidationRule {
     @Override
     public @NotNull String getRuleId() {
       return "file_type";

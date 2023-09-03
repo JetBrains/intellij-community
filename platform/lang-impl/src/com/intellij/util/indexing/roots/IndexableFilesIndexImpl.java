@@ -128,7 +128,7 @@ public final class IndexableFilesIndexImpl implements IndexableFilesIndex {
     settings.setCollectExplicitRootsForModules(false);
     settings.setRetainCondition(contributor -> contributor.getStorageKind() == EntityStorageKind.MAIN);
     WorkspaceIndexingRootsBuilder builder =
-      WorkspaceIndexingRootsBuilder.Companion.registerEntitiesFromContributors(project, entityStorage, settings);
+      WorkspaceIndexingRootsBuilder.Companion.registerEntitiesFromContributors(entityStorage, settings);
     builder.addIteratorsFromRoots(iterators, libraryOrigins, entityStorage);
 
     boolean addedFromDependenciesIndexedStatusService = false;

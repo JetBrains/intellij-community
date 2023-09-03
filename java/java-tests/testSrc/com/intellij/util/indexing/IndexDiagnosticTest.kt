@@ -190,7 +190,6 @@ class IndexDiagnosticTest : JavaCodeInsightFixtureTestCase() {
             555,
             JsonFileSize(123),
             JsonProcessingSpeed(111, 222),
-            JsonProjectDumbIndexingHistory.JsonStatsPerIndexer.JsonSnapshotInputMappingStats(33, 44, 55)
           )
         ),
         fileProviderStatistics = listOf(

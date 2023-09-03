@@ -31,7 +31,12 @@ final class HeadlessLafManagerImpl extends LafManager {
   }
 
   @Override
-  public UIManager.LookAndFeelInfo getCurrentLookAndFeel() {
+  public UIThemeLookAndFeelInfo getCurrentLookAndFeel() {
+    return null;
+  }
+
+  @Override
+  public UIThemeLookAndFeelInfo getCurrentUIThemeLookAndFeel() {
     return null;
   }
 
@@ -59,7 +64,7 @@ final class HeadlessLafManagerImpl extends LafManager {
   }
 
   @Override
-  public UIManager.LookAndFeelInfo findLaf(LafReference reference) {
+  public UIThemeLookAndFeelInfo findLaf(LafReference reference) {
     return null;
   }
 
@@ -83,13 +88,13 @@ final class HeadlessLafManagerImpl extends LafManager {
   }
 
   @Override
-  public void setPreferredDarkLaf(UIManager.@NotNull LookAndFeelInfo value) { }
+  public void setPreferredDarkLaf(@NotNull UIThemeLookAndFeelInfo value) { }
 
   @Override
-  public void setPreferredLightLaf(UIManager.@NotNull LookAndFeelInfo value) { }
+  public void setPreferredLightLaf(@NotNull UIThemeLookAndFeelInfo value) { }
 
   @Override
-  public @Nullable EditorColorsScheme getPreviousSchemeForLaf(UIManager.@NotNull LookAndFeelInfo lookAndFeelInfo) {
+  public @Nullable EditorColorsScheme getPreviousSchemeForLaf(@NotNull UIThemeLookAndFeelInfo value) {
     return null;
   }
 
@@ -106,8 +111,8 @@ final class HeadlessLafManagerImpl extends LafManager {
   public void removeLafManagerListener(@NotNull LafManagerListener listener) { }
 
   @Override
-  public UIManager.LookAndFeelInfo getDefaultLightLaf() { return null; }
+  public UIThemeLookAndFeelInfo getDefaultLightLaf() { return null; }
 
   @Override
-  public UIManager.LookAndFeelInfo getDefaultDarkLaf() { return null; }
+  public UIThemeLookAndFeelInfo getDefaultDarkLaf() { return null; }
 }

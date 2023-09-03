@@ -15,7 +15,7 @@ import java.util.Set;
 
 import static com.intellij.ide.ui.search.SearchableOptionsRegistrar.SETTINGS_GROUP_SEPARATOR;
 
-public class Group implements KeymapGroup {
+public final class Group implements KeymapGroup {
   private Group myParent;
   private final @NlsActions.ActionText String myName;
   private final String myId;

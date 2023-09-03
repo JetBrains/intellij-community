@@ -81,7 +81,7 @@ public abstract class WizardStep<T extends WizardModel> {
     return myHelpId;
   }
 
-  public static class Empty extends WizardStep {
+  public static final class Empty extends WizardStep {
     @Override
     public JComponent prepare(WizardNavigationState state) {
       return null;

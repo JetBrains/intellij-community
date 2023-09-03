@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.actions;
 
 import com.intellij.CommonBundle;
@@ -19,7 +19,7 @@ import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 
-public class ShowSettingsAction extends AnAction implements DumbAware, LightEditCompatible, ActionRemoteBehaviorSpecification.Frontend {
+public final class ShowSettingsAction extends AnAction implements DumbAware, LightEditCompatible, ActionRemoteBehaviorSpecification.Frontend {
   private static final Logger LOG = Logger.getInstance(ShowSettingsAction.class);
 
   public ShowSettingsAction() {

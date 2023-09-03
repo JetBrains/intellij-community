@@ -54,7 +54,7 @@ final class EditorActionPlan implements ActionPlan {
     return myCaretOffset - myEditor.getCaretModel().getOffset();
   }
 
-  static class Replacement {
+  static final class Replacement {
     private final int myBegin;
     private final int myEnd;
     private final String myText;

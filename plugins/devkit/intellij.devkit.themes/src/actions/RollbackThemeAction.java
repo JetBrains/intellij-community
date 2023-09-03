@@ -2,7 +2,8 @@
 package org.jetbrains.idea.devkit.themes.actions;
 
 import com.intellij.ide.ui.LafManager;
-import com.intellij.ide.ui.laf.TempUIThemeBasedLookAndFeelInfo;
+import com.intellij.ide.ui.laf.TempUIThemeLookAndFeelInfo;
+import com.intellij.ide.ui.laf.UIThemeLookAndFeelInfo;
 import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
@@ -27,12 +28,12 @@ final class RollbackThemeAction extends DumbAwareAction {
       colorsManager.getSchemeManager().removeScheme(scheme);
       colorsManager.loadState(colorsManager.getState());
     }
-    UIManager.LookAndFeelInfo feel = LafManager.getInstance().getCurrentLookAndFeel();
-    if (feel instanceof TempUIThemeBasedLookAndFeelInfo) {
-      LafManager.getInstance().setCurrentLookAndFeel(((TempUIThemeBasedLookAndFeelInfo)feel).getPreviousLaf());
+    UIThemeLookAndFeelInfo feel = LafManager.getInstance().getCurrentUIThemeLookAndFeel();
+    if (feel instanceof TempUIThemeLookAndFeelInfo) {
+      LafManager.getInstance().setCurrentUIThemeLookAndFeel(((TempUIThemeLookAndFeelInfo)feel).getPreviousLaf());
     }
     else {
-      LafManager.getInstance().setCurrentLookAndFeel(feel);
+      LafManager.getInstance().setCurrentUIThemeLookAndFeel(feel);
     }
 
     EditorColorsManagerImpl manager = (EditorColorsManagerImpl)EditorColorsManager.getInstance();
@@ -48,10 +49,10 @@ final class RollbackThemeAction extends DumbAwareAction {
 
   @Override
   public void update(@NotNull AnActionEvent e) {
-    UIManager.LookAndFeelInfo feel = LafManager.getInstance().getCurrentLookAndFeel();
+    UIManager.LookAndFeelInfo feel = LafManager.getInstance().getCurrentUIThemeLookAndFeel();
     EditorColorsScheme scheme = EditorColorsManager.getInstance().getGlobalScheme();
 
-    e.getPresentation().setEnabled(feel instanceof TempUIThemeBasedLookAndFeelInfo
+    e.getPresentation().setEnabled(feel instanceof TempUIThemeLookAndFeelInfo
                                    || EditorColorsManagerImpl.isTempScheme(scheme));
   }
 }

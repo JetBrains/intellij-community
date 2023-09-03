@@ -29,7 +29,7 @@ import java.awt.event.FocusListener;
 /**
  * @author MYakovlev
  */
-public class SelectInEditorManagerImpl extends SelectInEditorManager implements Disposable, FocusListener, CaretListener{
+public final class SelectInEditorManagerImpl extends SelectInEditorManager implements Disposable, FocusListener, CaretListener{
   private final Project myProject;
   private RangeHighlighter mySegmentHighlighter;
   private Editor myEditor;

@@ -166,8 +166,12 @@ public class GitCommandResult {
     return new GitCommandResult(false, 1, Collections.singletonList(error), Collections.emptyList());
   }
 
+  /**
+   * @deprecated {@link GitHandler} throws {@link com.intellij.openapi.progress.ProcessCanceledException} instead of returning this state.
+   */
+  @Deprecated
   public boolean cancelled() {
-    return false; // will be implemented later
+    return false;
   }
 
   @NotNull

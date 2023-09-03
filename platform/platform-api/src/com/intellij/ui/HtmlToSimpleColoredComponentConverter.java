@@ -129,8 +129,8 @@ public class HtmlToSimpleColoredComponentConverter {
    * Describes colored fragment (part of {@link SimpleColoredComponent} component)
    */
   public static class Fragment {
-    @NotNull @Nls private final String myText;
-    @NotNull private final SimpleTextAttributes myAttributes;
+    private final @NotNull @Nls String myText;
+    private final @NotNull SimpleTextAttributes myAttributes;
 
     public Fragment(@NotNull @Nls String text, @NotNull SimpleTextAttributes attributes) {
       myText = text;

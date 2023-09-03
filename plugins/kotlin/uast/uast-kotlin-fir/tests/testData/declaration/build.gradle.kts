@@ -1,3 +1,6 @@
+// IGNORE_K2
+// KT-61431
+
 plugins {
     id("com.android.application") version "2.3.3"
     // Deprecated version of the above (shouldn't be used in real KTS file,

@@ -9,7 +9,6 @@ import com.intellij.psi.PsiElement
 import org.jetbrains.kotlin.descriptors.*
 import org.jetbrains.kotlin.idea.base.facet.platform.platform
 import org.jetbrains.kotlin.idea.base.projectStructure.compositeAnalysis.findAnalyzerServices
-import org.jetbrains.kotlin.idea.base.psi.imports.KotlinImportPathComparator
 import org.jetbrains.kotlin.idea.base.utils.fqname.isImported
 import org.jetbrains.kotlin.idea.caches.resolve.getResolutionFacade
 import org.jetbrains.kotlin.idea.core.formatter.KotlinCodeStyleSettings
@@ -39,9 +38,6 @@ import org.jetbrains.kotlin.idea.base.psi.imports.addImport as _addImport
 
 class ImportInsertHelperImpl(private val project: Project) : ImportInsertHelper() {
     private fun getCodeStyleSettings(contextFile: KtFile): KotlinCodeStyleSettings = contextFile.kotlinCustomSettings
-
-    override fun getImportSortComparator(contextFile: KtFile): Comparator<ImportPath> =
-        KotlinImportPathComparator.create(contextFile)
 
     override fun isImportedWithDefault(importPath: ImportPath, contextFile: KtFile): Boolean =
         isInDefaultImports(importPath, contextFile)

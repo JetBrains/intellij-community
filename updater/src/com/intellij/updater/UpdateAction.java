@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.updater;
 
 import java.io.*;
@@ -23,6 +23,16 @@ public class UpdateAction extends BaseUpdateAction {
   }
 
   @Override
+  protected boolean doShouldApply(File toDir) {
+    // if the file is optional in may not exist
+    // If file is critical, we can restore it.
+    if (isOptional() && !isCritical()) {
+      return getSource(toDir).exists();
+    }
+    return true;
+  }
+
+  @Override
   protected void doBuildPatchFile(File olderFile, File newerFile, ZipOutputStream patchOutput) throws IOException {
     if (!isMove()) {
       patchOutput.putNextEntry(new ZipEntry(getPath()));
@@ -30,7 +40,7 @@ public class UpdateAction extends BaseUpdateAction {
       FileType type = getFileType(newerFile);
       if (type == FileType.SYMLINK) throw new IOException("Unexpected symlink: " + newerFile);
       writeFileType(patchOutput, type);
-      try (InputStream olderFileIn = new BufferedInputStream(Utils.newFileInputStream(olderFile, myPatch.isNormalized()));
+      try (InputStream olderFileIn = new BufferedInputStream(Utils.newFileInputStream(olderFile));
            InputStream newerFileIn = new BufferedInputStream(new FileInputStream(newerFile))) {
         writeDiff(olderFileIn, newerFileIn, patchOutput);
       }
@@ -52,9 +62,17 @@ public class UpdateAction extends BaseUpdateAction {
 
         FileType type = readFileType(in);
         File tempFile = Utils.getTempFile(toFile.getName());
-        try (OutputStream out = new BufferedOutputStream(new FileOutputStream(tempFile));
-             InputStream oldFileIn = Utils.newFileInputStream(source, myPatch.isNormalized())) {
-          applyDiff(in, oldFileIn, out);
+        if (isCritical()) {
+          // If the file is critical, we always store the full file in the patch. So, we can just restore it from the patch.
+          try (OutputStream out = new BufferedOutputStream(new FileOutputStream(tempFile))) {
+            applyDiff(in, null, out);
+          }
+        }
+        else {
+          try (OutputStream out = new BufferedOutputStream(new FileOutputStream(tempFile));
+               InputStream oldFileIn = source.exists() ? Utils.newFileInputStream(source) : null) {
+            applyDiff(in, oldFileIn, out);
+          }
         }
 
         if (type == FileType.EXECUTABLE_FILE) {

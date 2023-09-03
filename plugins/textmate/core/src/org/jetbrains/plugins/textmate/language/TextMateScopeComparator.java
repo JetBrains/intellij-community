@@ -16,7 +16,7 @@ import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-public class TextMateScopeComparator<T> implements Comparator<T> {
+public final class TextMateScopeComparator<T> implements Comparator<T> {
   @NotNull
   private static final TextMateSelectorWeigher myWeigher = new TextMateSelectorCachingWeigher(new TextMateSelectorWeigherImpl());
 

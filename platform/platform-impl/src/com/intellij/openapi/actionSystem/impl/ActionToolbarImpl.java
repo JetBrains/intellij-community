@@ -196,6 +196,8 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar, QuickAct
 
   private @NotNull Function<? super String, ? extends Component> mySeparatorCreator = (name) -> new MySeparator(name);
 
+  private @Nullable DataProvider myAdditionalDataProvider = null;
+
   public ActionToolbarImpl(@NotNull String place, @NotNull ActionGroup actionGroup, boolean horizontal) {
     this(place, actionGroup, horizontal, false, true);
   }
@@ -532,7 +534,7 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar, QuickAct
 
     AbstractButton clickable = UIUtil.findComponentOfType(customComponent, AbstractButton.class);
     if (clickable != null) {
-      class ToolbarClicksCollectorListener extends MouseAdapter {
+      final class ToolbarClicksCollectorListener extends MouseAdapter {
         @Override
         public void mouseClicked(MouseEvent e) { ToolbarClicksCollector.record(action, myPlace, e, getDataContext()); }
       }
@@ -1545,7 +1547,12 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar, QuickAct
                "Please call toolbar.setTargetComponent() explicitly.", myCreationTrace);
     }
     Component target = myTargetComponent != null ? myTargetComponent : IJSwingUtilities.getFocusedComponentInWindowOrSelf(this);
-    return DataManager.getInstance().getDataContext(target);
+    DataContext context = DataManager.getInstance().getDataContext(target);
+    if (myAdditionalDataProvider != null) {
+      return CustomizedDataContext.create(context, myAdditionalDataProvider);
+    } else {
+      return context;
+    }
   }
 
   @Override
@@ -1930,6 +1937,11 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar, QuickAct
     }
 
     return accessibleContext;
+  }
+
+  @ApiStatus.Internal
+  public void setAdditionalDataProvider(@Nullable DataProvider additionalDataProvider) {
+    myAdditionalDataProvider = additionalDataProvider;
   }
 
   private final class AccessibleActionToolbar extends AccessibleJPanel {

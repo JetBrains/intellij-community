@@ -5,7 +5,6 @@ import com.intellij.diagnostic.CoreAttachmentFactory
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.diagnostic.Attachment
-import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.diagnostic.RuntimeExceptionWithAttachments
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.progress.ProgressIndicator
@@ -496,7 +495,7 @@ internal class CompareIndices(text: String, line: Int) : AbstractCommand(text, l
     val propertyName = "index_root_path"
     val oldValue = System.setProperty(propertyName, storedIndexDir.toAbsolutePath().toString())
     try {
-      return VfsAwareMapReduceIndex<K, V, IndexerIdHolder>(extension, DefaultIndexStorageLayout.getLayout(extension, true))
+      return VfsAwareMapReduceIndex<K, V, IndexerIdHolder>(extension, DefaultIndexStorageLayout.getLayout(extension))
     }
     finally {
       SystemProperties.setProperty(propertyName, oldValue)

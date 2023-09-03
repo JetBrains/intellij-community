@@ -1,7 +1,8 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package git4idea.index.actions
 
 import com.intellij.icons.AllIcons
+import com.intellij.openapi.keymap.KeymapUtil
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.NlsActions
 import com.intellij.openapi.util.NlsContexts
@@ -22,7 +23,8 @@ interface StagingAreaOperation {
   val actionText: Supplier<@NlsActions.ActionText String>
   val progressTitle: @NlsContexts.ProgressTitle String
   val icon: Icon?
-  val errorMessage: @NlsContexts.NotificationContent String
+  val errorMessage: @NlsContexts.NotificationTitle String
+  val shortcutText: String? get() = null
 
   fun matches(statusNode: GitFileStatusNode): Boolean
 
@@ -35,6 +37,7 @@ object GitAddOperation : StagingAreaOperation {
   override val progressTitle get() = GitBundle.message("stage.add.process")
   override val icon = AllIcons.General.Add
   override val errorMessage: String get() = GitBundle.message("stage.add.error.title")
+  override val shortcutText: String get() = KeymapUtil.getFirstKeyboardShortcutText("Git.Stage.Add")
 
   override fun matches(statusNode: GitFileStatusNode) = statusNode.kind == NodeKind.UNSTAGED || statusNode.kind == NodeKind.UNTRACKED
 
@@ -61,6 +64,7 @@ object GitResetOperation : StagingAreaOperation {
   override val progressTitle get() = GitBundle.message("stage.reset.process")
   override val icon = AllIcons.General.Remove
   override val errorMessage: String get() = GitBundle.message("stage.reset.error.title")
+  override val shortcutText: String get() = KeymapUtil.getFirstKeyboardShortcutText("Git.Stage.Reset")
 
   override fun matches(statusNode: GitFileStatusNode) = statusNode.kind == NodeKind.STAGED
 

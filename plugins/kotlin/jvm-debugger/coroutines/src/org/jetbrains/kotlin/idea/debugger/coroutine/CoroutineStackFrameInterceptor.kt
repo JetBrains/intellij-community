@@ -1,9 +1,10 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.debugger.coroutine
 
 import com.intellij.debugger.actions.AsyncStacksToggleAction
 import com.intellij.debugger.engine.DebugProcessImpl
+import com.intellij.debugger.engine.SuspendManagerUtil
 import com.intellij.debugger.jdi.StackFrameProxyImpl
 import com.intellij.execution.ui.layout.impl.RunnerContentUi
 import com.intellij.execution.ui.layout.impl.RunnerLayoutUiImpl
@@ -15,7 +16,6 @@ import com.sun.jdi.Location
 import org.jetbrains.kotlin.idea.debugger.core.StackFrameInterceptor
 import org.jetbrains.kotlin.idea.debugger.coroutine.proxy.SkipCoroutineStackFrameProxyImpl
 import org.jetbrains.kotlin.idea.debugger.coroutine.util.CoroutineFrameBuilder
-import org.jetbrains.kotlin.idea.util.application.isUnitTestMode
 import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 
 class CoroutineStackFrameInterceptor(val project: Project) : StackFrameInterceptor {
@@ -23,10 +23,7 @@ class CoroutineStackFrameInterceptor(val project: Project) : StackFrameIntercept
         if (debugProcess.xdebugProcess?.session is XDebugSessionImpl
             && frame !is SkipCoroutineStackFrameProxyImpl
             && AsyncStacksToggleAction.isAsyncStacksEnabled(debugProcess.xdebugProcess?.session as XDebugSessionImpl)) {
-            val suspendContextImpl = when {
-                isUnitTestMode() -> debugProcess.suspendManager.pausedContext
-                else -> debugProcess.debuggerContext.suspendContext
-            }
+            val suspendContextImpl = SuspendManagerUtil.getContextForEvaluation(debugProcess.suspendManager)
             val stackFrame = suspendContextImpl?.let {
                 CoroutineFrameBuilder.coroutineExitFrame(frame, it)
             }

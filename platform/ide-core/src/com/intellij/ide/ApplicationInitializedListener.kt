@@ -15,15 +15,30 @@ import org.jetbrains.annotations.ApiStatus
 @ApiStatus.Internal
 interface ApplicationInitializedListener {
   /**
-   * Invoked when all application level components are initialized.
-   * Write actions and time-consuming activities are not recommended because directly affects application start time.
+   * Invoked when application level is nearly initialized.
+   * Write actions and time-consuming activities are forbidden because it directly affects application start time.
    */
-  suspend fun execute(asyncScope: CoroutineScope): Unit = blockingContext {
-    @Suppress("DEPRECATION")
-    componentsInitialized()
+  suspend fun execute(asyncScope: CoroutineScope) {
+    blockingContext {
+      @Suppress("DEPRECATION")
+      componentsInitialized()
+    }
   }
 
-  @Deprecated("Use {@link #execute()}", ReplaceWith("execute()"))
-  fun componentsInitialized() {
+   @Deprecated("Use {@link #execute()}", ReplaceWith("execute()"))
+   fun componentsInitialized() {
+   }
+}
+
+@Deprecated("Consider avoiding using of ApplicationInitializedListener")
+abstract class ApplicationInitializedListenerJavaShim : ApplicationInitializedListener {
+  final override suspend fun execute(asyncScope: CoroutineScope) {
+    blockingContext {
+      @Suppress("DEPRECATION")
+      componentsInitialized()
+    }
   }
+
+  @Suppress("OVERRIDE_DEPRECATION")
+  abstract override fun componentsInitialized()
 }

@@ -8,6 +8,9 @@ import com.intellij.platform.diagnostic.telemetry.JPS
 import com.intellij.platform.diagnostic.telemetry.TelemetryManager
 import com.intellij.platform.diagnostic.telemetry.helpers.addElapsedTimeMs
 import com.intellij.platform.workspace.storage.*
+import com.intellij.platform.workspace.storage.impl.cache.EntityStorageCacheImpl
+import com.intellij.platform.workspace.storage.impl.cache.TracedSnapshotCache
+import com.intellij.platform.workspace.storage.impl.cache.TracedSnapshotCacheImpl
 import com.intellij.platform.workspace.storage.impl.containers.getDiff
 import com.intellij.platform.workspace.storage.impl.exceptions.AddDiffException
 import com.intellij.platform.workspace.storage.impl.exceptions.SymbolicIdAlreadyExistsException
@@ -19,6 +22,7 @@ import com.intellij.platform.workspace.storage.instrumentation.EntityStorageInst
 import com.intellij.platform.workspace.storage.instrumentation.EntityStorageInstrumentationApi
 import com.intellij.platform.workspace.storage.instrumentation.EntityStorageSnapshotInstrumentation
 import com.intellij.platform.workspace.storage.instrumentation.MutableEntityStorageInstrumentation
+import com.intellij.platform.workspace.storage.query.StorageQuery
 import com.intellij.platform.workspace.storage.url.MutableVirtualFileUrlIndex
 import com.intellij.platform.workspace.storage.url.VirtualFileUrlIndex
 import com.intellij.util.ExceptionUtil
@@ -53,11 +57,16 @@ internal data class EntityReferenceImpl<E : WorkspaceEntity>(internal val id: En
 }
 
 @OptIn(EntityStorageInstrumentationApi::class)
-internal class EntityStorageSnapshotImpl(
+internal open class EntityStorageSnapshotImpl(
   override val entitiesByType: ImmutableEntitiesBarrel,
   override val refs: RefsTable,
-  override val indexes: StorageIndexes
+  override val indexes: StorageIndexes,
+  internal val snapshotCache: TracedSnapshotCache = TracedSnapshotCacheImpl(),
 ) : EntityStorageSnapshotInstrumentation, AbstractEntityStorage() {
+
+  init {
+    this.snapshotCache.initSnapshot(this)
+  }
 
   // This cache should not be transferred to other versions of storage
   private val symbolicIdCache = ConcurrentHashMap<SymbolicEntityId<*>, WorkspaceEntity>()
@@ -65,6 +74,10 @@ internal class EntityStorageSnapshotImpl(
   // I suppose that we can use some kind of array of arrays to get a quicker access (just two accesses by-index)
   // However, it's not implemented currently because I'm not sure about threading.
   private val entitiesCache = ConcurrentHashMap<EntityId, WorkspaceEntity>()
+
+  override fun <T> cached(query: StorageQuery<T>): T {
+    return snapshotCache.cached(query)
+  }
 
   @Suppress("UNCHECKED_CAST")
   override fun <E : WorkspaceEntityWithSymbolicId> resolve(id: SymbolicEntityId<E>): E? {
@@ -101,6 +114,12 @@ internal class MutableEntityStorageImpl(
   private var trackStackTrace: Boolean = false
 ) : MutableEntityStorageInstrumentation, AbstractEntityStorage() {
 
+  private var calculationCache = EntityStorageCacheImpl()
+
+  init {
+    calculationCache.init(this)
+  }
+
   /**
    * This log collects the log of operations, not the log of state changes.
    * This means, that if we remove child entity, we'll record only remove event without "modify" event for its parent.
@@ -112,15 +131,16 @@ internal class MutableEntityStorageImpl(
    */
   internal val changeLog = WorkspaceBuilderChangeLog()
 
-  // Temporal solution for accessing error in deft project.
-  private var throwExceptionOnError = false
-
   internal fun incModificationCount() {
     this.changeLog.modificationCount++
   }
 
   override val modificationCount: Long
     get() = this.changeLog.modificationCount
+
+  override fun <T> calculate(query: StorageQuery<T>): T {
+    return calculationCache.cached(query)
+  }
 
   private val writingFlag = AtomicBoolean()
 
@@ -248,6 +268,8 @@ internal class MutableEntityStorageImpl(
 
       // Update indexes
       indexes.entityAdded(newEntityData)
+
+      updateCalculationCache()
     }
     finally {
       unlockWrite()
@@ -275,9 +297,6 @@ internal class MutableEntityStorageImpl(
               Broken consistency: $brokenConsistency
             """.trimIndent(), SymbolicIdAlreadyExistsException(symbolicId)
         )
-        if (throwExceptionOnError) {
-          throw SymbolicIdAlreadyExistsException(symbolicId)
-        }
       }
     }
   }
@@ -331,9 +350,6 @@ internal class MutableEntityStorageImpl(
               
               Broken consistency: $brokenConsistency
             """.trimIndent(), SymbolicIdAlreadyExistsException(newSymbolicId))
-            if (throwExceptionOnError) {
-              throw SymbolicIdAlreadyExistsException(newSymbolicId)
-            }
           }
         }
         else {
@@ -352,6 +368,8 @@ internal class MutableEntityStorageImpl(
       val updatedEntity = copiedData.createEntity(this)
 
       this.indexes.updateSymbolicIdIndexes(this, updatedEntity, beforeSymbolicId, copiedData, modifiableEntity)
+
+      updateCalculationCache()
 
       updatedEntity
     }
@@ -409,6 +427,8 @@ internal class MutableEntityStorageImpl(
       }
       upgradeEngine?.let { it(rbsEngine) }
       rbsEngine.replace(this, replaceWith, sourceFilter)
+
+      updateCalculationCache()
     }
     finally {
       unlockWrite()
@@ -655,6 +675,8 @@ internal class MutableEntityStorageImpl(
         }
       }
     }
+
+    updateCalculationCache()
   }
 
   override fun addChild(connectionId: ConnectionId, parent: WorkspaceEntity?, child: WorkspaceEntity) {
@@ -721,6 +743,18 @@ internal class MutableEntityStorageImpl(
         }
       }
     }
+
+    updateCalculationCache()
+  }
+
+  override fun toSnapshot(previousSnapshot: EntityStorage, changes: Map<Class<*>, List<EntityChange<*>>>): EntityStorageSnapshot {
+    val newEntities = entitiesByType.toImmutable()
+    val newRefs = refs.toImmutable()
+    val newIndexes = indexes.toImmutable()
+    val cache = TracedSnapshotCacheImpl()
+    val newCreatedSnapshot = EntityStorageSnapshotImpl(newEntities, newRefs, newIndexes, cache)
+    cache.pullCache((previousSnapshot as EntityStorageSnapshotImpl).snapshotCache, changes)
+    return newCreatedSnapshot
   }
 
   override fun hasChanges(): Boolean = changeLog.changeLog.isNotEmpty()
@@ -734,6 +768,8 @@ internal class MutableEntityStorageImpl(
       val addDiffOperation = AddDiffOperation(this, diff)
       upgradeAddDiffEngine?.invoke(addDiffOperation)
       addDiffOperation.addDiff()
+
+      updateCalculationCache()
     }
     finally {
       unlockWrite()
@@ -825,6 +861,8 @@ internal class MutableEntityStorageImpl(
       LOG.debug { "Cascade removing: ${ClassToIntConverter.INSTANCE.getClassOrDie(it.clazz)}-${it.arrayId}" }
       this.changeLog.addRemoveEvent(it, originals[it]!!.first, originals[it]!!.second)
     }
+
+    updateCalculationCache()
     return true
   }
 
@@ -878,6 +916,13 @@ internal class MutableEntityStorageImpl(
     val parents = refs.getParentRefsOfChild(id.asChild())
     for ((connectionId, parent) in parents) {
       refs.removeParentToChildRef(connectionId, parent, id.asChild())
+    }
+  }
+
+  private fun updateCalculationCache() {
+    if (!calculationCache.isEmpty()) {
+      this.calculationCache = EntityStorageCacheImpl()
+      this.calculationCache.init(this)
     }
   }
 

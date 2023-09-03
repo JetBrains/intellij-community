@@ -4,8 +4,8 @@ package org.jetbrains.kotlin.idea.vfilefinder
 
 import com.intellij.util.indexing.DefaultFileTypeSpecificInputFilter
 import com.intellij.util.indexing.ID
-import org.jetbrains.kotlin.idea.base.psi.fileTypes.KlibMetaFileType
-import org.jetbrains.kotlin.idea.klib.KlibLoadingMetadataCache
+import org.jetbrains.kotlin.analysis.decompiler.konan.KlibLoadingMetadataCache
+import org.jetbrains.kotlin.analysis.decompiler.konan.KlibMetaFileType
 import org.jetbrains.kotlin.library.metadata.KlibMetadataProtoBuf
 import org.jetbrains.kotlin.name.FqName
 

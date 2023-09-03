@@ -1,5 +1,5 @@
 // "Propagate 'SubclassOptInRequired(UnstableApi::class)' opt-in requirement to 'SomeImplementation'" "false"
-// IGNORE_FE10
+// IGNORE_K1
 // ERROR: This declaration needs opt-in. Its usage must be marked with '@UnstableApi' or '@OptIn(UnstableApi::class)'
 // ACTION: Opt in for 'UnstableApi' in containing file 'propagateOptIn8Fir.kt'
 // ACTION: Opt in for 'UnstableApi' on 'foo'

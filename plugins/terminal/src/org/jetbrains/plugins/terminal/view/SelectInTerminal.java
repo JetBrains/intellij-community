@@ -15,7 +15,7 @@ import org.jetbrains.plugins.terminal.TerminalToolWindowManager;
 /**
  * @see org.jetbrains.plugins.terminal.action.RevealFileInTerminalAction
  */
-public class SelectInTerminal implements SelectInTarget {
+public final class SelectInTerminal implements SelectInTarget {
 
   @Override
   public String toString() {

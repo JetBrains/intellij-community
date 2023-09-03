@@ -26,15 +26,13 @@ import java.util.function.BiPredicate;
 @State(name = "ExecutionTargetManager", storages = @Storage(StoragePathMacros.WORKSPACE_FILE))
 public final class ExecutionTargetManagerImpl extends ExecutionTargetManager implements PersistentStateComponent<Element> {
   public static final ExecutionTarget MULTIPLE_TARGETS = new ExecutionTarget() {
-    @NotNull
     @Override
-    public String getId() {
+    public @NotNull String getId() {
       return "multiple_targets";
     }
 
-    @NotNull
     @Override
-    public String getDisplayName() {
+    public @NotNull String getDisplayName() {
       return ExecutionBundle.message("multiple.specified");
     }
 
@@ -49,11 +47,11 @@ public final class ExecutionTargetManagerImpl extends ExecutionTargetManager imp
     }
   };
 
-  @NotNull private final Project myProject;
-  @NotNull private final Object myActiveTargetLock = new Object();
-  @Nullable private ExecutionTarget myActiveTarget;
+  private final @NotNull Project myProject;
+  private final @NotNull Object myActiveTargetLock = new Object();
+  private @Nullable ExecutionTarget myActiveTarget;
 
-  @Nullable private String mySavedActiveTargetId;
+  private @Nullable String mySavedActiveTargetId;
 
   public ExecutionTargetManagerImpl(@NotNull Project project) {
     myProject = project;
@@ -73,11 +71,9 @@ public final class ExecutionTargetManagerImpl extends ExecutionTargetManager imp
     });
   }
 
-  @Nullable
-  private RunManagerImpl myRunManager;
+  private @Nullable RunManagerImpl myRunManager;
 
-  @NotNull
-  private RunManagerImpl getRunManager() {
+  private @NotNull RunManagerImpl getRunManager() {
     RunManagerImpl runManager = myRunManager;
     if (runManager == null) {
       runManager = RunManagerImpl.getInstanceImpl(myProject);
@@ -111,9 +107,8 @@ public final class ExecutionTargetManagerImpl extends ExecutionTargetManager imp
     }
   }
 
-  @NotNull
   @Override
-  public ExecutionTarget getActiveTarget() {
+  public @NotNull ExecutionTarget getActiveTarget() {
     synchronized (myActiveTargetLock) {
       if (myActiveTarget == null) {
         updateActiveTarget();
@@ -181,8 +176,7 @@ public final class ExecutionTargetManagerImpl extends ExecutionTargetManager imp
     return  result != null ? result : DefaultExecutionTarget.INSTANCE;
   }
 
-  @Nullable
-  private ExecutionTarget doSetActiveTarget(@NotNull ExecutionTarget newTarget) {
+  private @Nullable ExecutionTarget doSetActiveTarget(@NotNull ExecutionTarget newTarget) {
     if (!DefaultExecutionTarget.INSTANCE.equals(newTarget)) {
       mySavedActiveTargetId = newTarget.getId();
     }
@@ -224,9 +218,8 @@ public final class ExecutionTargetManagerImpl extends ExecutionTargetManager imp
     });
   }
 
-  @NotNull
   @Override
-  public List<ExecutionTarget> getTargetsFor(@Nullable RunConfiguration configuration) {
+  public @NotNull List<ExecutionTarget> getTargetsFor(@Nullable RunConfiguration configuration) {
     if (configuration == null) {
       return Collections.emptyList();
     }
@@ -284,8 +277,7 @@ public final class ExecutionTargetManagerImpl extends ExecutionTargetManager imp
     return true;
   }
 
-  @Nullable
-  public ExecutionTarget findTargetByIdFor(@Nullable RunConfiguration configuration, @Nullable String id) {
+  public @Nullable ExecutionTarget findTargetByIdFor(@Nullable RunConfiguration configuration, @Nullable String id) {
     if (id == null) {
       return null;
     }

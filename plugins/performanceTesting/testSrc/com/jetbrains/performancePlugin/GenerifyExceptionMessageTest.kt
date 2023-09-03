@@ -67,16 +67,16 @@ class GenerifyExceptionMessageTest {
 
   @Test
   fun replaceNumbersTest() {
-    replaceNumberTestTemplate(ProjectLoaded::generifyErrorMessage)
+    replaceNumberTestTemplate(::generifyErrorMessage)
   }
 
   @Test
   fun replaceIDTest() {
-    replaceIDTestTemplate(ProjectLoaded::generifyErrorMessage)
+    replaceIDTestTemplate(::generifyErrorMessage)
   }
 
   @Test
   fun replaceHashesTest() {
-    replaceHashesTestTemplate(ProjectLoaded::generifyErrorMessage)
+    replaceHashesTestTemplate(::generifyErrorMessage)
   }
 }

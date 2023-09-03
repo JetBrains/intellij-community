@@ -1191,7 +1191,7 @@ public final class EditorUtil {
     };
   }
 
-  private static class EditorNotification {
+  private static final class EditorNotification {
     private static final Key<Long> LAST_MAX_CARETS_NOTIFY_TIMESTAMP = Key.create("last.max.carets.notify.timestamp");
     private static final long MAX_CARETS_NOTIFY_INTERVAL_MS = 10_000;
   }

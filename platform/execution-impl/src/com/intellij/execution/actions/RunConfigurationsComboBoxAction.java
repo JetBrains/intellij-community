@@ -204,9 +204,8 @@ public class RunConfigurationsComboBoxAction extends ComboBoxAction implements D
     return true;
   }
 
-  @NotNull
   @Override
-  public JComponent createCustomComponent(@NotNull final Presentation presentation, @NotNull String place) {
+  public @NotNull JComponent createCustomComponent(final @NotNull Presentation presentation, @NotNull String place) {
     ComboBoxButton button = new RunConfigurationsComboBoxButton(presentation);
     if (isNoWrapping(place)) return button;
 
@@ -228,8 +227,7 @@ public class RunConfigurationsComboBoxAction extends ComboBoxAction implements D
   }
 
   @Override
-  @NotNull
-  protected DefaultActionGroup createPopupActionGroup(@NotNull JComponent button, @NotNull DataContext context) {
+  protected @NotNull DefaultActionGroup createPopupActionGroup(@NotNull JComponent button, @NotNull DataContext context) {
     final DefaultActionGroup allActionsGroup = new DefaultActionGroup();
     final Project project = CommonDataKeys.PROJECT.getData(DataManager.getInstance().getDataContext(button));
     if (project == null) {
@@ -307,11 +305,11 @@ public class RunConfigurationsComboBoxAction extends ComboBoxAction implements D
     return ActionManager.getInstance().getAction(IdeActions.ACTION_EDIT_RUN_CONFIGURATIONS);
   }
 
-  protected AnAction createFinalAction(@NotNull final RunnerAndConfigurationSettings configuration, @NotNull final Project project) {
+  protected AnAction createFinalAction(final @NotNull RunnerAndConfigurationSettings configuration, final @NotNull Project project) {
     return new SelectConfigAction(configuration, project, executor -> true);
   }
 
-  public class RunConfigurationsComboBoxButton extends ComboBoxButton {
+  public final class RunConfigurationsComboBoxButton extends ComboBoxButton {
 
     public RunConfigurationsComboBoxButton(@NotNull Presentation presentation) {
       super(presentation);
@@ -360,7 +358,7 @@ public class RunConfigurationsComboBoxAction extends ComboBoxAction implements D
     }
 
     @Override
-    public void actionPerformed(@NotNull final AnActionEvent e) {
+    public void actionPerformed(final @NotNull AnActionEvent e) {
       final Project project = e.getData(CommonDataKeys.PROJECT);
       if (project != null) {
         RunnerAndConfigurationSettings settings = chooseTempSettings(project);
@@ -372,7 +370,7 @@ public class RunConfigurationsComboBoxAction extends ComboBoxAction implements D
     }
 
     @Override
-    public void update(@NotNull final AnActionEvent e) {
+    public void update(final @NotNull AnActionEvent e) {
       final Presentation presentation = e.getPresentation();
       final Project project = e.getData(CommonDataKeys.PROJECT);
       if (project == null) {
@@ -400,8 +398,7 @@ public class RunConfigurationsComboBoxAction extends ComboBoxAction implements D
       presentation.setEnabledAndVisible(false);
     }
 
-    @Nullable
-    private static RunnerAndConfigurationSettings chooseTempSettings(@NotNull Project project) {
+    private static @Nullable RunnerAndConfigurationSettings chooseTempSettings(@NotNull Project project) {
       RunnerAndConfigurationSettings selectedConfiguration = RunManager.getInstance(project).getSelectedConfiguration();
       if (selectedConfiguration != null && selectedConfiguration.isTemporary()) {
         return selectedConfiguration;
@@ -585,13 +582,13 @@ public class RunConfigurationsComboBoxAction extends ComboBoxAction implements D
     }
 
     @Override
-    public void actionPerformed(@NotNull final AnActionEvent e) {
+    public void actionPerformed(final @NotNull AnActionEvent e) {
       RunManager.getInstance(myProject).setSelectedConfiguration(myConfiguration);
       updatePresentation(ExecutionTargetManager.getActiveTarget(myProject), myConfiguration, myProject, e.getPresentation(), e.getPlace());
     }
 
     @Override
-    public void update(@NotNull final AnActionEvent e) {
+    public void update(final @NotNull AnActionEvent e) {
       super.update(e);
       updateIcon(e.getPresentation());
     }

@@ -1126,7 +1126,7 @@ public final class ListPluginComponent extends JPanel {
     return label;
   }
 
-  public static class ButtonAnAction extends DumbAwareAction {
+  public static final class ButtonAnAction extends DumbAwareAction {
     private final JButton[] myButtons;
 
     ButtonAnAction(JButton @NotNull ... buttons) {
@@ -1143,7 +1143,7 @@ public final class ListPluginComponent extends JPanel {
     }
   }
 
-  private class PluginIdUiInspectorContextProvider implements UiInspectorContextProvider {
+  private final class PluginIdUiInspectorContextProvider implements UiInspectorContextProvider {
     @Override
     public @NotNull List<PropertyBean> getUiInspectorContext() {
       ArrayList<PropertyBean> result = new ArrayList<>();
@@ -1155,7 +1155,7 @@ public final class ListPluginComponent extends JPanel {
     }
   }
 
-  private class BaselineLayout extends AbstractLayoutManager {
+  private final class BaselineLayout extends AbstractLayoutManager {
     private final JBValue myHGap = new JBValue.Float(10);
     private final JBValue myHOffset = new JBValue.Float(8);
     private final JBValue myButtonOffset = new JBValue.Float(6);

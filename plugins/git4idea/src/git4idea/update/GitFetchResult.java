@@ -37,7 +37,6 @@ public final class GitFetchResult {
 
   public enum Type {
     SUCCESS,
-    CANCELLED,
     NOT_AUTHORIZED,
     ERROR
   }
@@ -49,11 +48,6 @@ public final class GitFetchResult {
   @NotNull
   public static GitFetchResult success() {
     return new GitFetchResult(Type.SUCCESS);
-  }
-
-  @NotNull
-  public static GitFetchResult cancel() {
-    return new GitFetchResult(Type.CANCELLED);
   }
 
   @NotNull
@@ -75,10 +69,6 @@ public final class GitFetchResult {
   
   public boolean isSuccess() {
     return myType == Type.SUCCESS;
-  }
-
-  public boolean isCancelled() {
-    return myType == Type.CANCELLED;
   }
 
   public boolean isNotAuthorized() {

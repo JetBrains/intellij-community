@@ -35,7 +35,7 @@ public class VFSInitializationBenchmark {
   @State(Scope.Benchmark)
   public static class Context {
 
-    @Param({"true", "false"})
+    @Param({"true"})
     public boolean warmupOpenTelemetry;
 
     public Path temporaryFolder;
@@ -92,9 +92,9 @@ public class VFSInitializationBenchmark {
     Path cachesDir = context.realFolder;
     if (cachesDir != null) {
       PersistentFSConnection connection = initVFS(cachesDir, version);
+      context.connectionToClose = connection;
       int maxAllocatedID = connection.getRecords().maxAllocatedID();
       assert maxAllocatedID > 100_000 : "maxAllocatedID" + maxAllocatedID + " is too low, probably already existing files are dummy?";
-      context.connectionToClose = initVFS(cachesDir, version);
     }
   }
 
@@ -104,6 +104,7 @@ public class VFSInitializationBenchmark {
     Path cachesDir = context.realFolder;
     if (cachesDir != null) {
       PersistentFSConnection connection = initVFS(cachesDir, version);
+      context.connectionToClose = connection;
       
       NotNullLazyValue<InvertedNameIndex> invertedNameIndexLazy = FSRecordsImpl.asyncFillInvertedNameIndex(
         AppExecutorUtil.getAppExecutorService(), connection.getRecords()
@@ -114,8 +115,22 @@ public class VFSInitializationBenchmark {
 
       //wait for index to fill up:
       invertedNameIndexLazy.getValue();
+    }
+  }
 
+  @Benchmark
+  public void initVFS_OverAlreadyExistingFiles_AndWaitForNameEnumerator(Context context) throws Exception {
+    int version = FSRecordsImpl.currentImplementationVersion();
+    Path cachesDir = context.realFolder;
+    if (cachesDir != null) {
+      PersistentFSConnection connection = initVFS(cachesDir, version);
       context.connectionToClose = connection;
+
+      int maxAllocatedID = connection.getRecords().maxAllocatedID();
+      assert maxAllocatedID > 100_000 : "maxAllocatedID" + maxAllocatedID + " is too low, probably already existing files are dummy?";
+
+      //force name-to-id index loading:
+      connection.getNames().tryEnumerate("abc");
     }
   }
 
@@ -134,16 +149,21 @@ public class VFSInitializationBenchmark {
   public static void main(final String[] args) throws RunnerException {
     System.out.println("Real VFS path to bench: " + args[0]);
     final Options opt = new OptionsBuilder()
-      .jvmArgs("--add-opens=java.base/java.lang=ALL-UNNAMED",
+      .jvmArgs("-Djava.awt.headless=true",
+               "--add-opens=java.base/java.lang=ALL-UNNAMED",
                "--add-opens=java.base/java.util=ALL-UNNAMED",
+               "--add-opens=java.base/java.util.concurrent=ALL-UNNAMED",
                "--add-opens=java.desktop/java.awt=ALL-UNNAMED",
                "--add-opens=java.desktop/sun.awt=ALL-UNNAMED",
                "--add-opens=java.desktop/sun.font=ALL-UNNAMED",
                "--add-opens=java.desktop/java.awt.event=ALL-UNNAMED",
 
                "-Dreal-vfs-folder-to-benchmark-against=" + args[0],
-               
-               "-Dvfs.parallelize-initialization=true"
+
+               "-Dvfs.parallelize-initialization=true",
+               "-Dvfs.use-coroutines-dispatcher=false",
+
+               "-Dvfs.use-fast-names-enumerator=false"
       )
       .include(VFSInitializationBenchmark.class.getSimpleName() + ".*")
       .build();

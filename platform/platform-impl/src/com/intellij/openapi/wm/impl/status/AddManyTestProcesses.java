@@ -13,7 +13,7 @@ import com.intellij.util.TimeoutUtil;
 import org.jetbrains.annotations.NotNull;
 
 @SuppressWarnings("HardCodedStringLiteral")
-public class AddManyTestProcesses extends DumbAwareAction {
+public final class AddManyTestProcesses extends DumbAwareAction {
   public AddManyTestProcesses() {
     super("Add Many Test Processes");
   }

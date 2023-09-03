@@ -2,6 +2,7 @@
 package com.intellij.codeInsight.intention.impl;
 
 import com.intellij.codeInsight.CodeInsightBundle;
+import com.intellij.codeInsight.daemon.impl.IntentionsUIImpl;
 import com.intellij.codeInsight.hint.*;
 import com.intellij.codeInsight.intention.CustomizableIntentionAction;
 import com.intellij.codeInsight.intention.IntentionAction;
@@ -72,7 +73,6 @@ import java.awt.event.*;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
-import java.util.Set;
 import java.util.function.Consumer;
 
 /**
@@ -110,8 +110,7 @@ public final class IntentionHintComponent implements Disposable, ScrollAwareHint
     myPopup = new IntentionPopup(project, file, editor, cachedIntentions);
     Disposer.register(this, myPopup);
 
-    myLightBulbPanel =
-      new LightBulbPanel(project, file, editor, LightBulbUtil.getIcon(cachedIntentions), cachedIntentions.getTopLevelActions());
+    myLightBulbPanel = new LightBulbPanel(project, file, editor, LightBulbUtil.getIcon(cachedIntentions));
     myComponentHint = new MyComponentHint(myLightBulbPanel);
 
     EditorUtil.disposeWithEditor(myEditor, this);
@@ -135,7 +134,7 @@ public final class IntentionHintComponent implements Disposable, ScrollAwareHint
                                                                   @NotNull IntentionContainer cachedIntentions) {
     IntentionHintComponent component = new IntentionHintComponent(project, file, editor, cachedIntentions);
 
-    if (editor.getSettings().isShowIntentionBulb()) {
+    if (editor.getSettings().isShowIntentionBulb() && !IntentionsUIImpl.DISABLE_INTENTION_BULB.get(project, false)) {
       component.showIntentionHintImpl(!showExpanded);
     }
     if (showExpanded) {
@@ -215,7 +214,7 @@ public final class IntentionHintComponent implements Disposable, ScrollAwareHint
 
       @Override
       public int getPriority() {
-        return -10;
+        return INTENTION_BULB_PRIORITY;
       }
     };
     if (hintManager.canShowQuestionAction(action)) {
@@ -492,38 +491,20 @@ public final class IntentionHintComponent implements Disposable, ScrollAwareHint
     private final RowIcon myInactiveIcon;
     private final JLabel myIconLabel;
 
-    LightBulbPanel(@NotNull Project project,
-                   @NotNull PsiFile file,
-                   @NotNull Editor editor,
-                   @NotNull Icon smartTagIcon,
-                   @NotNull Set<AnAction> topLevelActions) {
+    LightBulbPanel(@NotNull Project project, @NotNull PsiFile file, @NotNull Editor editor, @NotNull Icon smartTagIcon) {
       setLayout(new BorderLayout());
       setOpaque(false);
 
       IconManager iconManager = IconManager.getInstance();
-      if (!topLevelActions.isEmpty()) {
-        Icon icon = topLevelActions.iterator().next().getTemplatePresentation().getIcon();
-        myHighlightedIcon = iconManager.createRowIcon(icon, smartTagIcon, AllIcons.General.ArrowDown);
-        myInactiveIcon = iconManager.createRowIcon(icon, smartTagIcon, ourInactiveArrowIcon);
-      }
-      else {
-        myHighlightedIcon = iconManager.createRowIcon(smartTagIcon, AllIcons.General.ArrowDown);
-        myInactiveIcon = iconManager.createRowIcon(smartTagIcon, ourInactiveArrowIcon);
-      }
+      myHighlightedIcon = iconManager.createRowIcon(smartTagIcon, AllIcons.General.ArrowDown);
+      myInactiveIcon = iconManager.createRowIcon(smartTagIcon, ourInactiveArrowIcon);
 
       myIconLabel = new JLabel(myInactiveIcon);
       myIconLabel.setOpaque(false);
       myIconLabel.addMouseListener(new LightBulbMouseListener(project, file));
       AccessibleContextUtil.setName(myIconLabel, UIBundle.message("light.bulb.panel.accessible.name"));
 
-      if (Registry.is("debugger.inlayRunToCursor") && !topLevelActions.isEmpty()) {
-        DefaultActionGroup actions = new DefaultActionGroup(List.copyOf(topLevelActions));
-        ActionToolbar toolbar = ActionManager.getInstance().createActionToolbar("Any", actions, true);
-        add(toolbar.getComponent(), BorderLayout.CENTER);
-      }
-      else {
-        add(myIconLabel, BorderLayout.CENTER);
-      }
+      add(myIconLabel, BorderLayout.CENTER);
       setBorder(LightBulbUtil.createInactiveBorder(editor));
       CodeFloatingToolbar floatingToolbar = CodeFloatingToolbar.getToolbar(editor);
       if (floatingToolbar != null && floatingToolbar.isShown()) {

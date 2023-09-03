@@ -24,7 +24,7 @@ import java.awt.*;
 import java.awt.event.ActionListener;
 
 
-public class RainbowDescriptionPanel extends JPanel implements OptionsPanelImpl.ColorDescriptionPanel {
+public final class RainbowDescriptionPanel extends JPanel implements OptionsPanelImpl.ColorDescriptionPanel {
   private final EventDispatcher<Listener> myDispatcher = EventDispatcher.create(Listener.class);
 
   protected JPanel myPanel;

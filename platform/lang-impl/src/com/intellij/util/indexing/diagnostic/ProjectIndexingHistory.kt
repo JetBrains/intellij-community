@@ -7,29 +7,12 @@ import com.intellij.util.indexing.diagnostic.dto.JsonFileProviderIndexStatistics
 import com.intellij.util.indexing.diagnostic.dto.JsonScanningStatistics
 import com.intellij.util.messages.Topic
 import it.unimi.dsi.fastutil.longs.LongSet
-import org.jetbrains.annotations.ApiStatus
 import java.time.Duration
 import java.time.ZonedDateTime
 
 typealias TimeMillis = Long
 typealias TimeNano = Long
 typealias BytesNumber = Long
-
-/**
- * Extend this extension point to receive project scanning & indexing statistics
- * (e.g.: indexed file count, indexation speed, etc.) after each **dumb** indexation task was performed.
- */
-@ApiStatus.ScheduledForRemoval
-@Deprecated(message = "Use ProjectIndexingActivityHistoryListener instead")
-interface ProjectIndexingHistoryListener {
-  companion object {
-    @Topic.AppLevel
-    val TOPIC: Topic<ProjectIndexingHistoryListener> = Topic(ProjectIndexingHistoryListener::class.java, Topic.BroadcastDirection.NONE)
-  }
-  fun onStartedIndexing(projectIndexingHistory: ProjectIndexingHistory) {}
-
-  fun onFinishedIndexing(projectIndexingHistory: ProjectIndexingHistory)
-}
 
 /**
  * Extend this extension point to receive project scanning & indexing statistics
@@ -49,19 +32,6 @@ interface ProjectIndexingActivityHistoryListener {
   fun onStartedDumbIndexing(history: ProjectDumbIndexingHistory) {}
 
   fun onFinishedDumbIndexing(history: ProjectDumbIndexingHistory) {}
-}
-
-@ApiStatus.Obsolete
-interface ProjectIndexingHistory {
-  val project: Project
-  val indexingReason: String?
-  val indexingSessionId: Long
-  val times: IndexingTimes
-  val scanningStatistics: List<JsonScanningStatistics>
-  val providerStatistics: List<JsonFileProviderIndexStatistics>
-  val totalStatsPerFileType: Map<String, StatsPerFileType>
-  val totalStatsPerIndexer: Map<String, StatsPerIndexer>
-  val visibleTimeToAllThreadsTimeRatio: Double
 }
 
 interface ProjectIndexingActivityHistory {
@@ -164,25 +134,6 @@ interface StatsPerIndexer {
   val totalNumberOfFilesIndexedByExtensions: Int
   val totalBytes: BytesNumber
   val totalIndexValueChangerEvaluationTimeInAllThreads: TimeNano
-  val snapshotInputMappingStats: SnapshotInputMappingStats
-}
-
-interface IndexingTimes {
-  val indexingReason: String?
-  val scanningType: ScanningType
-  val updatingStart: ZonedDateTime
-  val totalUpdatingTime: TimeNano
-  val updatingEnd: ZonedDateTime
-  val indexingDuration: Duration
-  val contentLoadingVisibleDuration: Duration
-  val pushPropertiesDuration: Duration
-  val indexExtensionsDuration: Duration
-  var creatingIteratorsDuration: Duration
-  val scanFilesDuration: Duration
-  val suspendedDuration: Duration
-  val appliedAllValuesSeparately: Boolean
-  val separateValueApplicationVisibleTime: TimeNano
-  val wasInterrupted: Boolean
 }
 
 interface ScanningTimes {
@@ -218,10 +169,4 @@ interface DumbIndexingTimes {
   val appliedAllValuesSeparately: Boolean
   val separateValueApplicationVisibleTime: TimeNano
   val wasInterrupted: Boolean
-}
-
-interface SnapshotInputMappingStats {
-  val requests: Long
-  val misses: Long
-  val hits: Long
 }

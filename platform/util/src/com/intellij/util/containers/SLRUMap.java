@@ -1,21 +1,15 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-
-/*
- * @author max
- */
 package com.intellij.util.containers;
 
-import com.intellij.openapi.util.Condition;
-import com.intellij.util.Consumer;
 import com.intellij.util.containers.hash.EqualityPolicy;
 import com.intellij.util.containers.hash.LinkedHashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.HashSet;
-import java.util.Iterator;
 import java.util.Map;
 import java.util.Set;
+import java.util.function.Consumer;
 
 public class SLRUMap<K,V> {
   private final LinkedHashMap<K,V> myProtectedQueue;
@@ -113,18 +107,14 @@ public class SLRUMap<K,V> {
     return false;
   }
 
-  public void iterateKeys(final Consumer<? super K> keyConsumer) {
+  public void iterateKeys(@NotNull Consumer<? super K> keyConsumer) {
     //RC: same key could be reported more than once to the consumer -- is it OK?
-    for (K key : myProtectedQueue.keySet()) {
-      keyConsumer.consume(key);
-    }
-    for (K key : myProbationalQueue.keySet()) {
-      keyConsumer.consume(key);
-    }
+    myProtectedQueue.keySet().forEach(keyConsumer);
+    myProbationalQueue.keySet().forEach(keyConsumer);
   }
 
   public @NotNull Set<Map.Entry<K, V>> entrySet() {
-    Set<Map.Entry<K, V>> set = new HashSet<Map.Entry<K,V>>(myProtectedQueue.entrySet());
+    Set<Map.Entry<K, V>> set = new HashSet<>(myProtectedQueue.entrySet());
     set.addAll(myProbationalQueue.entrySet());
     return set;
   }
@@ -133,22 +123,6 @@ public class SLRUMap<K,V> {
     Set<V> set = new HashSet<>(myProtectedQueue.values());
     set.addAll(myProbationalQueue.values());
     return set;
-  }
-
-  public void clearByCondition(@NotNull Condition<? super V> condition) {
-    clearByCondition(condition, myProtectedQueue);
-    clearByCondition(condition, myProbationalQueue);
-  }
-
-  private void clearByCondition(@NotNull Condition<? super V> condition, @NotNull LinkedHashMap<K, V> queue) {
-    Iterator<Map.Entry<K, V>> iterator = queue.entrySet().iterator();
-    while (iterator.hasNext()) {
-      Map.Entry<K, V> entry = iterator.next();
-      if (condition.value(entry.getValue())) {
-        onDropFromCache(entry.getKey(), entry.getValue());
-        iterator.remove();
-      }
-    }
   }
 
   public void clear() {

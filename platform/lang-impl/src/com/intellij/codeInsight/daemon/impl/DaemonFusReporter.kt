@@ -90,7 +90,7 @@ open class DaemonFusReporter(private val project: Project) : DaemonCodeAnalyzer.
     val lines = document?.lineCount?.roundToOneSignificantDigit() ?: -1
     val elapsedTime = System.currentTimeMillis() - daemonStartTime
     val fileType = document?.let { FileDocumentManager.getInstance().getFile(it)?.fileType }
-    val wasEntireFileHighlighted = document != null && DaemonCodeAnalyzerImpl.isHighlightingCompleted(fileEditor, project);
+    val wasEntireFileHighlighted = TextRange.from(0, document?.textLength ?: 0) == dirtyRange
 
     if (wasEntireFileHighlighted && !initialEntireFileHighlightingReported) {
       initialEntireFileHighlightingReported = true
@@ -127,7 +127,7 @@ private fun Int.roundToOneSignificantDigit(): Int {
 
 private object DaemonFusCollector : CounterUsagesCollector() {
   @JvmField
-  val GROUP: EventLogGroup = EventLogGroup("daemon", 6)
+  val GROUP: EventLogGroup = EventLogGroup("daemon", 7)
   @JvmField
   val ERRORS: IntEventField = EventFields.Int("errors")
   @JvmField
@@ -136,8 +136,9 @@ private object DaemonFusCollector : CounterUsagesCollector() {
   val LINES: IntEventField = EventFields.Int("lines")
   @JvmField
     /**
-     * `true` if the daemon was started with the entire file range,
-     * `false` when the daemon was started with sub-range of the file, for example, after the change inside a code block
+     * `true` if the daemon started [GeneralHighlightingPass] with the entire file range,
+     * `false` when the daemon was started with sub-range of the file, for example, after the change inside a code block,
+     *         or the [GeneralHighlightingPass] was skipped altogether
      */
   val ENTIRE_FILE_HIGHLIGHTED: BooleanEventField = EventFields.Boolean("entireFileHighlighted")
 

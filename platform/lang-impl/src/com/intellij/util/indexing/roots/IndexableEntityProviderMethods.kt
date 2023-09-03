@@ -65,7 +65,7 @@ object IndexableEntityProviderMethods {
     }
   }
 
-  fun createIterators(sdk: Sdk): Collection<IndexableFilesIterator> {
+  fun createIterators(sdk: Sdk): List<IndexableFilesIterator> {
     return listOf(SdkIndexableFilesIteratorImpl.createIterator(sdk))
   }
 

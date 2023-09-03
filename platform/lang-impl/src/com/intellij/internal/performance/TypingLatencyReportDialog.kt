@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.internal.performance
 
 import com.intellij.execution.filters.TextConsoleBuilderFactory
@@ -171,21 +171,21 @@ internal class TypingLatencyReportDialog(
 
   private fun formatReportAsText(): String {
     return buildString {
-      appendln(formatHeader(false))
-      appendln()
+      appendLine(formatHeader(false))
+      appendLine()
       for (row in latencyMap.values.sortedBy { it.key.name }) {
-        appendln(formatLatency(row.key.name, row.totalLatency, row.key.details))
-        appendln("Actions:")
+        appendLine(formatLatency(row.key.name, row.totalLatency, row.key.details))
+        appendLine("Actions:")
         for (actionLatencyRecord in row.actionLatencyRecords.entries.sortedByDescending { it.value.averageLatency }) {
-          appendln("  ${formatLatency(actionLatencyRecord.key, actionLatencyRecord.value)}")
+          appendLine("  ${formatLatency(actionLatencyRecord.key, actionLatencyRecord.value)}")
         }
       }
-      appendln()
+      appendLine()
       if (threadDumps.isNotEmpty()) {
-        appendln("Thread dumps:")
+        appendLine("Thread dumps:")
         for (threadDump in threadDumps) {
-          appendln(threadDump)
-          appendln("-".repeat(40))
+          appendLine(threadDump)
+          appendLine("-".repeat(40))
         }
       }
     }

@@ -57,6 +57,7 @@ private class EvaluationTestData(
 abstract class AbstractKotlinEvaluateExpressionTest : KotlinDescriptorTestCaseWithStepping(), FramePrinterDelegate {
     private companion object {
         private val ID_PART_REGEX = "id=[0-9]*".toRegex()
+        private val NON_WORD_REGEX = "\\W".toRegex()
         private const val IGNORE_OLD_BACKEND_DIRECTIVE = "// IGNORE_OLD_BACKEND"
     }
 
@@ -111,6 +112,11 @@ abstract class AbstractKotlinEvaluateExpressionTest : KotlinDescriptorTestCaseWi
                 super.doTest(unused)
             }
         }
+
+    fun doJvmMultiModuleTest(path: String) {
+        isMultipleBreakpointsTest = false
+        doTest(path)
+    }
 
     fun doMultipleBreakpointsTest(path: String) {
         isMultipleBreakpointsTest = true
@@ -242,16 +248,18 @@ abstract class AbstractKotlinEvaluateExpressionTest : KotlinDescriptorTestCaseWi
                     )
                 }
             } catch (e: EvaluateException) {
-                val expectedMessage = e.message?.replaceFirst(
+                val actualMessage = e.message?.replaceFirst(
                     ID_PART_REGEX,
                     "id=ID"
                 )
+
+                // Remove any non-word characters to allow trivial differences in punctuation.
                 assertEquals(
                     "Evaluate expression throws wrong exception for ${item.text}:\n" +
                             "expected = $expectedResult\n" +
-                            "actual   = $expectedMessage\n",
-                    expectedResult,
-                    expectedMessage
+                            "actual   = $actualMessage\n",
+                    expectedResult?.replace(NON_WORD_REGEX, ""),
+                    actualMessage?.replace(NON_WORD_REGEX, ""),
                 )
             }
         }

@@ -109,6 +109,7 @@ public class Maven3XProjectResolver {
                                                              @NotNull List<String> inactiveProfiles,
                                                              List<ResolutionListener> listeners) throws RemoteException {
     File file = !files.isEmpty() ? files.iterator().next() : null;
+    files.forEach(f -> MavenServerStatsCollector.fileRead(f));
     MavenExecutionRequest request = myEmbedder.createRequest(file, activeProfiles, inactiveProfiles);
 
     request.setUpdateSnapshots(myUpdateSnapshots);

@@ -111,7 +111,7 @@ public final class GitHandlerUtil {
     }
   }
 
-  static boolean isErrorLine(@NotNull String text) {
+  public static boolean isErrorLine(@NotNull String text) {
     for (String prefix : GitImplBase.ERROR_INDICATORS) {
       if (text.startsWith(prefix)) {
         return true;

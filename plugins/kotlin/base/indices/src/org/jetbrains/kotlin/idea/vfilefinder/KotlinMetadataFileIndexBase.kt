@@ -2,6 +2,7 @@
 package org.jetbrains.kotlin.idea.vfilefinder
 
 import com.intellij.util.indexing.DefaultFileTypeSpecificInputFilter
+import com.intellij.util.indexing.FileContent
 import org.jetbrains.kotlin.analysis.decompiler.psi.BuiltInDefinitionFile
 import org.jetbrains.kotlin.analysis.decompiler.psi.KotlinBuiltInFileType
 import org.jetbrains.kotlin.idea.base.indices.names.readKotlinMetadataDefinition
@@ -19,15 +20,19 @@ abstract class KotlinMetadataFileIndexBase(indexFunction: (ClassId) -> FqName) :
     override fun getVersion() = 2
 
     private val INDEXER = indexer { fileContent ->
-        val builtIns = readKotlinMetadataDefinition(fileContent) as? BuiltInDefinitionFile ?: return@indexer null
-
-        val singleClass = builtIns.proto.class_List.singleOrNull()
-        if (singleClass != null) {
-            return@indexer indexFunction(builtIns.nameResolver.getClassId(singleClass.fqName))
-        }
-
-        val facadeName = fileContent.fileName.substringBeforeLast(MetadataPackageFragment.DOT_METADATA_FILE_EXTENSION)
-        val classId = ClassId(builtIns.packageFqName, Name.identifier(facadeName))
+        val classId = fileContent.classIdFromKotlinMetadata() ?: return@indexer null
         indexFunction(classId)
     }
+}
+
+internal fun FileContent.classIdFromKotlinMetadata(): ClassId? {
+    val builtIns = readKotlinMetadataDefinition(this) as? BuiltInDefinitionFile ?: return null
+
+    val singleClass = builtIns.proto.class_List.singleOrNull()
+    if (singleClass != null) {
+        return builtIns.nameResolver.getClassId(singleClass.fqName)
+    }
+
+    val facadeName = this.fileName.substringBeforeLast(MetadataPackageFragment.DOT_METADATA_FILE_EXTENSION)
+    return ClassId(builtIns.packageFqName, Name.identifier(facadeName))
 }

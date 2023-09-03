@@ -76,13 +76,5 @@ data class JsonProjectDumbIndexingHistory(
     val totalNumberOfFilesIndexedByExtensions: Int = 0,
     val totalFilesSize: JsonFileSize = JsonFileSize(),
     val indexValueChangerEvaluationSpeed: JsonProcessingSpeed = JsonProcessingSpeed(),
-    val snapshotInputMappingStats: JsonSnapshotInputMappingStats = JsonSnapshotInputMappingStats()
-  ) {
-    @JsonIgnoreProperties(ignoreUnknown = true)
-    data class JsonSnapshotInputMappingStats(
-      val totalRequests: Long = 0,
-      val totalMisses: Long = 0,
-      val totalHits: Long = 0
-    )
-  }
+  )
 }

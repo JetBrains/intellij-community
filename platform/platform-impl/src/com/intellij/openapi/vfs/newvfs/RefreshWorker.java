@@ -40,22 +40,17 @@ import java.nio.file.*;
 import java.nio.file.attribute.BasicFileAttributes;
 import java.util.*;
 import java.util.concurrent.CancellationException;
-import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.CompletionException;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.function.Consumer;
-import java.util.function.Function;
-import java.util.function.Supplier;
 
 import static java.util.concurrent.TimeUnit.NANOSECONDS;
 
 final class RefreshWorker {
   private static final Logger LOG = Logger.getInstance(RefreshWorker.class);
 
-  private final int parallelism;
-  private final Function<Supplier<List<VFileEvent>>, CompletableFuture<List<VFileEvent>>> executor;
+  private final RefreshWorkerHelper helper;
 
   private final boolean myIsRecursive;
   private final boolean myParallel;
@@ -68,16 +63,14 @@ final class RefreshWorker {
   private final AtomicInteger myFullScans = new AtomicInteger(), myPartialScans = new AtomicInteger(), myProcessed = new AtomicInteger();
   private final AtomicLong myVfsTime = new AtomicLong(), myIoTime = new AtomicLong();
 
-  RefreshWorker(@NotNull Collection<@NotNull NewVirtualFile> refreshRoots, boolean isRecursive) {
+  RefreshWorker(@NotNull Collection<@NotNull NewVirtualFile> refreshRoots, boolean isRecursive, @NotNull RefreshWorkerHelper helper) {
+    this.helper = helper;
+
     myIsRecursive = isRecursive;
-    RefreshWorkerHelper helper = ApplicationManager.getApplication().getService(RefreshWorkerHelper.class);
     myParallel = isRecursive && helper.parallelism > 1 && !ApplicationManager.getApplication().isWriteIntentLockAcquired();
     myRoots = new HashSet<>(refreshRoots);
     myRefreshQueue = new LinkedBlockingQueue<>(refreshRoots);
     mySemaphore = new Semaphore(refreshRoots.size());
-
-    parallelism = helper.parallelism;
-    executor = helper.createRefreshWorkerExecutor();
   }
 
   void cancel() {
@@ -114,37 +107,22 @@ final class RefreshWorker {
   }
 
   private void parallelScan(List<VFileEvent> events) {
-    var futures = new ArrayList<CompletableFuture<List<VFileEvent>>>(parallelism);
-
-    for (var i = 0; i < parallelism; i++) {
-      futures.add(executor.apply(() -> {
-        var threadEvents = new ArrayList<VFileEvent>();
-        try {
-          processQueue(threadEvents);
-        }
-        catch (RefreshCancelledException ignored) {
-        }
-        catch (ProcessCanceledException | CancellationException e) {
-          myCancelled = true;
-        }
-        catch (Throwable t) {
-          LOG.error(t);
-          myCancelled = true;
-        }
-        return threadEvents;
-      }));
-    }
-
-    for (var future : futures) {
+    helper.parallelScan(events, () -> {
+      var threadEvents = new ArrayList<VFileEvent>();
       try {
-        events.addAll(future.join());
+        processQueue(threadEvents);
       }
-      catch (CancellationException ignored) {
+      catch (RefreshCancelledException ignored) {
       }
-      catch (CompletionException e) {
-        LOG.error(e);
+      catch (ProcessCanceledException | CancellationException e) {
+        myCancelled = true;
       }
-    }
+      catch (Throwable t) {
+        LOG.error(t);
+        myCancelled = true;
+      }
+      return threadEvents;
+    });
 
     if (myCancelled) {
       LOG.trace("refresh cancelled");
@@ -449,7 +427,7 @@ final class RefreshWorker {
     }
   }
 
-  private static class RefreshCancelledException extends RuntimeException {
+  private static final class RefreshCancelledException extends RuntimeException {
     @Override
     public synchronized Throwable fillInStackTrace() {
       return this;

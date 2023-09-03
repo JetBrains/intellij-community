@@ -2,6 +2,7 @@
 package com.intellij.gradle.toolingExtension.impl.projectModel.provider
 
 import com.google.gson.GsonBuilder
+import com.intellij.gradle.toolingExtension.impl.taskModel.GradleTaskCache
 import com.intellij.openapi.externalSystem.model.project.ExternalSystemSourceType
 import groovy.transform.CompileDynamic
 import groovy.transform.CompileStatic
@@ -16,7 +17,6 @@ import org.gradle.api.file.RegularFile
 import org.gradle.api.internal.project.ProjectInternal
 import org.gradle.api.tasks.AbstractCopyTask
 import org.gradle.api.tasks.SourceSet
-import org.gradle.api.tasks.SourceSetContainer
 import org.gradle.api.tasks.SourceSetOutput
 import org.gradle.api.tasks.bundling.AbstractArchiveTask
 import org.gradle.api.tasks.bundling.Jar
@@ -24,9 +24,11 @@ import org.gradle.api.tasks.compile.JavaCompile
 import org.gradle.api.tasks.testing.AbstractTestTask
 import org.gradle.api.tasks.testing.Test
 import org.gradle.api.tasks.util.PatternFilterable
+import org.gradle.internal.metaobject.AbstractDynamicObject
 import org.gradle.jvm.toolchain.internal.JavaToolchain
 import org.gradle.plugins.ide.idea.IdeaPlugin
 import org.gradle.util.GradleVersion
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.NotNull
 import org.jetbrains.annotations.Nullable
 import org.jetbrains.plugins.gradle.model.*
@@ -34,7 +36,6 @@ import org.jetbrains.plugins.gradle.tooling.AbstractModelBuilderService
 import org.jetbrains.plugins.gradle.tooling.ErrorMessageBuilder
 import org.jetbrains.plugins.gradle.tooling.ModelBuilderContext
 import org.jetbrains.plugins.gradle.tooling.builder.ProjectExtensionsDataBuilderImpl
-import com.intellij.gradle.toolingExtension.impl.taskModel.provider.TasksFactory
 import org.jetbrains.plugins.gradle.tooling.util.JavaPluginUtil
 import org.jetbrains.plugins.gradle.tooling.util.resolve.DependencyResolverImpl
 
@@ -50,6 +51,7 @@ import static org.jetbrains.plugins.gradle.tooling.util.StringUtils.toCamelCase
  * @author Vladislav.Soroka
  */
 @CompileStatic
+@ApiStatus.Internal
 class ExternalProjectBuilderImpl extends AbstractModelBuilderService {
 
   private static final GradleVersion gradleBaseVersion = GradleVersion.current().baseVersion
@@ -121,16 +123,26 @@ class ExternalProjectBuilderImpl extends AbstractModelBuilderService {
 
   static void addArtifactsData(final Project project, DefaultExternalProject externalProject) {
     final List<File> artifacts = new ArrayList<File>()
+    final List<File> additionalArtifacts = new ArrayList<File>()
     project.getTasks().withType(Jar.class, { Jar jar ->
       try {
+        def archiveFile = null
         if (is51OrBetter) {
-          def archiveFile = jar.getArchiveFile()
-          if (archiveFile.isPresent()) {
-            artifacts.add(archiveFile.get().asFile)
+          def fileProvider = jar.getArchiveFile()
+          if (fileProvider.isPresent()) {
+            archiveFile = fileProvider.get().asFile
           }
         }
         else {
-          artifacts.add(jar.getArchivePath())
+          archiveFile = jar.getArchivePath()
+        }
+
+        if (archiveFile != null) {
+          artifacts.add(archiveFile)
+          // check the artifact content...
+          if (isJarDescendant(jar) || !containsOnlySourceSetOutput(jar, project)) {
+            additionalArtifacts.add(archiveFile)
+          }
         }
       }
       catch (e) {
@@ -139,6 +151,7 @@ class ExternalProjectBuilderImpl extends AbstractModelBuilderService {
       }
     })
     externalProject.setArtifacts(artifacts)
+    externalProject.setAdditionalArtifacts(additionalArtifacts)
 
     def configurationsByName = project.getConfigurations().getAsMap()
     Map<String, Set<File>> artifactsByConfiguration = new HashMap<String, Set<File>>()
@@ -160,8 +173,8 @@ class ExternalProjectBuilderImpl extends AbstractModelBuilderService {
   static Map<String, DefaultExternalTask> getTasks(@NotNull Project project, @NotNull ModelBuilderContext context) {
     def result = [:] as Map<String, DefaultExternalTask>
 
-    def tasksFactory = TasksFactory.getInstance(context)
-    for (Task task in tasksFactory.getTasks(project)) {
+    def taskCache = GradleTaskCache.getInstance(context)
+    for (Task task in taskCache.getTasks(project)) {
       DefaultExternalTask externalTask = result.get(task.name)
       if (externalTask == null) {
         externalTask = new DefaultExternalTask()
@@ -306,10 +319,7 @@ class ExternalProjectBuilderImpl extends AbstractModelBuilderService {
       }
 
       project.tasks.withType(AbstractArchiveTask) { AbstractArchiveTask task ->
-        def isOwnJarTask = task.name == sourceSet.jarTaskName
-        if (isOwnJarTask ||
-          (isCustomJarTask(task, sourceSets) && containsAllSourceSetOutput(task, sourceSet))
-        ) {
+        if (containsAllSourceSetOutput(task, sourceSet)) {
           externalSourceSet.artifacts.add(is67OrBetter ?
                                           reflectiveGetProperty(task, "getArchiveFile", RegularFile.class).getAsFile() :
                                           task.archivePath)
@@ -720,34 +730,69 @@ class ExternalProjectBuilderImpl extends AbstractModelBuilderService {
     ).withDescription("Unable to resolve additional project configuration.")
   }
 
+  private static boolean isJarDescendant(Jar task) {
+    if (is44OrBetter) {
+      return task.getTaskIdentity().type != Jar
+    } else {
+      return (task.asDynamicObject as AbstractDynamicObject).publicType != Jar
+    }
+  }
+
+  private static boolean containsOnlySourceSetOutput(@NotNull AbstractArchiveTask archiveTask, @NotNull Project project) {
+    def sourceSetContainer = JavaPluginUtil.getJavaPluginAccessor(project).sourceSetContainer
+    if (sourceSetContainer == null || sourceSetContainer.isEmpty()) {
+      return false
+    }
+    def outputFiles = new HashSet<File>();
+    sourceSetContainer.all { SourceSet ss -> outputFiles.addAll(ss.output.files) }
+    for (Object path: getArchiveTaskSourcePaths(archiveTask)) {
+      if (isSafeToResolve(path, project)) {
+        def files = project.files(path).files
+        if (!outputFiles.containsAll(files)) {
+          return false
+        }
+      } else {
+        return false
+      }
+    }
+    return true
+  }
+
   private static boolean containsAllSourceSetOutput(@NotNull AbstractArchiveTask archiveTask, @NotNull SourceSet sourceSet) {
     def outputFiles = new HashSet<>(sourceSet.output.files)
     def project = archiveTask.project
 
     try {
-      final Method mainSpecGetter = AbstractCopyTask.class.getDeclaredMethod("getMainSpec")
-      mainSpecGetter.setAccessible(true)
-      Object mainSpec = mainSpecGetter.invoke(archiveTask)
-
-      final List<MetaMethod> sourcePathGetters =
-        DefaultGroovyMethods.respondsTo(mainSpec, "getSourcePaths", new Object[]{})
-      if (!sourcePathGetters.isEmpty()) {
-        Set<Object> sourcePaths = (Set<Object>)sourcePathGetters.get(0).doMethodInvoke(mainSpec, new Object[]{})
-        if (sourcePaths != null) {
-          for (Object path : sourcePaths) {
-            if (isSafeToResolve(path, project)) {
-              def files = project.files(path).files
-              outputFiles.removeAll(files)
-            }
-          }
+      Set<Object> sourcePaths = getArchiveTaskSourcePaths(archiveTask)
+      for (Object path : sourcePaths) {
+        if (isSafeToResolve(path, project)) {
+          def files = project.files(path).files
+          outputFiles.removeAll(files)
         }
       }
     }
     catch (Exception e) {
       throw new RuntimeException(e)
     }
-
     return outputFiles.isEmpty()
+  }
+
+  private static Set<Object> getArchiveTaskSourcePaths(AbstractArchiveTask archiveTask) {
+    Set<Object> sourcePaths = null;
+    final Method mainSpecGetter = AbstractCopyTask.class.getDeclaredMethod("getMainSpec");
+    mainSpecGetter.setAccessible(true);
+    Object mainSpec = mainSpecGetter.invoke(archiveTask);
+    final List<MetaMethod> sourcePathGetters =
+      DefaultGroovyMethods.respondsTo(mainSpec, "getSourcePaths", new Object[]{});
+    if (!sourcePathGetters.isEmpty()) {
+      sourcePaths = (Set<Object>)sourcePathGetters.get(0).doMethodInvoke(mainSpec, new Object[]{});
+    }
+    if (sourcePaths != null) {
+      return sourcePaths
+    }
+    else {
+      return Collections.emptySet()
+    }
   }
 
   /**
@@ -800,17 +845,5 @@ class ExternalProjectBuilderImpl extends AbstractModelBuilderService {
       project.getLogger().info("Unable to resolve task source path: ${targetException?.message} (${targetException?.class?.canonicalName})")
       return object
     }
-  }
-
-  private static boolean isCustomJarTask(@NotNull AbstractArchiveTask archiveTask,
-                                         @NotNull SourceSetContainer sourceSets) {
-    for (final SourceSet sourceSet in sourceSets) {
-      if (archiveTask.name == sourceSet.jarTaskName) {
-        // there is a sourceSet that 'owns' this task
-        return false
-      }
-    }
-    // name of this task is not associated with any source set
-    return true
   }
 }

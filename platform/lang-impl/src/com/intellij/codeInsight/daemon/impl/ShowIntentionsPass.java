@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.daemon.impl;
 
 import com.intellij.codeHighlighting.TextEditorHighlightingPass;
@@ -167,8 +167,6 @@ public final class ShowIntentionsPass extends TextEditorHighlightingPass {
     public final List<HighlightInfo.IntentionActionDescriptor> errorFixesToShow = ContainerUtil.createLockFreeCopyOnWriteList();
     public final List<HighlightInfo.IntentionActionDescriptor> inspectionFixesToShow = ContainerUtil.createLockFreeCopyOnWriteList();
     public final List<AnAction> guttersToShow = ContainerUtil.createLockFreeCopyOnWriteList();
-    @ApiStatus.Experimental
-    public final List<AnAction> topLevelActions = ContainerUtil.createLockFreeCopyOnWriteList();
     public final List<HighlightInfo.IntentionActionDescriptor> notificationActionsToShow = ContainerUtil.createLockFreeCopyOnWriteList();
     private int myOffset;
     private HighlightInfoType myHighlightInfoType;
@@ -225,7 +223,6 @@ public final class ShowIntentionsPass extends TextEditorHighlightingPass {
              errorFixesToShow.isEmpty() &&
              inspectionFixesToShow.isEmpty() &&
              guttersToShow.isEmpty() &&
-             topLevelActions.isEmpty() &&
              notificationActionsToShow.isEmpty();
     }
 
@@ -235,8 +232,7 @@ public final class ShowIntentionsPass extends TextEditorHighlightingPass {
         "Errors: " + errorFixesToShow + "; " +
         "Inspection fixes: " + inspectionFixesToShow + "; " +
         "Intentions: " + intentionsToShow + "; " +
-        "Gutters: " + guttersToShow + "; " +
-        "TopLevelActions: " + topLevelActions + "; " +
+        "Gutters: " + guttersToShow + "; "+
         "Notifications: " + notificationActionsToShow;
     }
   }

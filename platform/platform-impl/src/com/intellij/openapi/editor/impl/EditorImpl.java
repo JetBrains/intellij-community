@@ -999,10 +999,11 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
       myIgnoreMouseEventsConsecutiveToInitial = true;
     }
 
-    myCaretModel.updateVisualPosition();
-
-    // make sure carets won't appear at invalid positions (e.g., on Tab width change)
-    getCaretModel().doWithCaretMerging(() -> myCaretModel.getAllCarets().forEach(caret -> caret.moveToOffset(caret.getOffset())));
+    ReadAction.run(() -> {
+      myCaretModel.updateVisualPosition();
+      // make sure carets won't appear at invalid positions (e.g., on Tab width change)
+      getCaretModel().doWithCaretMerging(() -> myCaretModel.getAllCarets().forEach(caret -> caret.moveToOffset(caret.getOffset())));
+    });
 
     if (myVirtualFile != null && myProject != null) {
       EditorNotifications.getInstance(myProject).updateNotifications(myVirtualFile);
@@ -2797,7 +2798,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     myCurrentDragIsSubstantial = true;
   }
 
-  private static class RepaintCursorCommand implements Runnable {
+  private static final class RepaintCursorCommand implements Runnable {
     private long mySleepTime = 500;
     private boolean myIsBlinkCaret = true;
     private @Nullable EditorImpl myEditor;
@@ -3028,7 +3029,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     }
   }
 
-  private class ScrollingTimer {
+  private final class ScrollingTimer {
     private Timer myTimer;
     private static final int CYCLE_SIZE = 20;
     private int myXCycles;
@@ -3292,7 +3293,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     return getViewer();
   }
 
-  private class MyEditable implements CutProvider, CopyProvider, PasteProvider, DeleteProvider, DumbAware {
+  private final class MyEditable implements CutProvider, CopyProvider, PasteProvider, DeleteProvider, DumbAware {
     @Override
     public @NotNull ActionUpdateThread getActionUpdateThread() {
       return ActionUpdateThread.EDT;
@@ -3656,7 +3657,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     }
   }
 
-  private class MyInputMethodHandler implements InputMethodRequests {
+  private final class MyInputMethodHandler implements InputMethodRequests {
     /**
      * Very high inlay priority to keep IME inlays to be always the nearest to the caret.
      * Not the Integer.MAX_VALUE to prevent accidental overflow.
@@ -3938,7 +3939,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     }
   }
 
-  private class MyMouseAdapter extends MouseAdapter {
+  private final class MyMouseAdapter extends MouseAdapter {
     @Override
     public void mousePressed(@NotNull MouseEvent e) {
       if (EVENT_LOG.isDebugEnabled()) {
@@ -4517,7 +4518,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
                                 overText, foldRegion, inlay, gutterIconRenderer);
   }
 
-  private class MyMouseMotionListener implements MouseMotionListener {
+  private final class MyMouseMotionListener implements MouseMotionListener {
     @DirtyUI
     @Override
     public void mouseDragged(@NotNull MouseEvent e) {
@@ -5001,7 +5002,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     return true;
   }
 
-  private static class MyTransferHandler extends TransferHandler {
+  private static final class MyTransferHandler extends TransferHandler {
     private static final TransferHandler transferHandlerStub = new TransferHandler() {
       @Override
       protected Transferable createTransferable(JComponent c) {
@@ -5120,7 +5121,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     }
   }
 
-  private class EditorDocumentAdapter implements PrioritizedDocumentListener {
+  private final class EditorDocumentAdapter implements PrioritizedDocumentListener {
     @Override
     public void beforeDocumentChange(@NotNull DocumentEvent e) {
       beforeChangedUpdate(e);
@@ -5215,7 +5216,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     return "EditorImpl[" + FileDocumentManager.getInstance().getFile(myDocument) + "]";
   }
 
-  private class DefaultPopupHandler extends ContextMenuPopupHandler {
+  private final class DefaultPopupHandler extends ContextMenuPopupHandler {
     @Override
     public @Nullable ActionGroup getActionGroup(@NotNull EditorMouseEvent event) {
       String contextMenuGroupId = myContextMenuGroupId;
@@ -5419,7 +5420,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     public void setColorScheme(@NotNull EditorColorsScheme scheme) { }
   }
 
-  private class PanelWithFloatingToolbar extends JBLayeredPane {
+  private final class PanelWithFloatingToolbar extends JBLayeredPane {
     @Override
     public void doLayout() {
       Component[] components = getComponents();

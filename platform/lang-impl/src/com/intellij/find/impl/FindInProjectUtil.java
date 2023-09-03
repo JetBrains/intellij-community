@@ -139,11 +139,9 @@ public final class FindInProjectUtil {
       }
     }
 
-    if (directoryName == null) {
-      for (FindInProjectExtension extension : FindInProjectExtension.EP_NAME.getExtensionList()) {
-        boolean success = extension.initModelFromContext(model, dataContext);
-        if (success) break;
-      }
+    for (FindInProjectExtension extension : FindInProjectExtension.EP_NAME.getExtensionList()) {
+      boolean success = extension.initModelFromContext(model, dataContext);
+      if (success) break;
     }
 
     // set project scope if we have no other settings

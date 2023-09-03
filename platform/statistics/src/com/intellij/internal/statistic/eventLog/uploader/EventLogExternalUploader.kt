@@ -150,6 +150,7 @@ object EventLogExternalUploader {
     addArgument(args, URL_OPTION, applicationInfo.templateUrl)
     addArgument(args, PRODUCT_OPTION, applicationInfo.productCode)
     addArgument(args, PRODUCT_VERSION_OPTION, applicationInfo.productVersion)
+    addArgument(args, BASELINE_VERSION, applicationInfo.baselineVersion.toString())
     addArgument(args, USER_AGENT_OPTION, applicationInfo.connectionSettings.getUserAgent())
     addArgument(args, EXTRA_HEADERS, ExtraHTTPHeadersParser.serialize(applicationInfo.connectionSettings.getExtraHeaders()))
 

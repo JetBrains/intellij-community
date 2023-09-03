@@ -9,6 +9,7 @@ import com.intellij.openapi.progress.runWithModalProgressBlocking
 import com.intellij.openapi.project.ex.ProjectManagerEx
 import com.intellij.platform.diagnostic.startUpPerformanceReporter.StartUpPerformanceReporter
 import kotlinx.coroutines.CoroutineScope
+import java.util.concurrent.atomic.AtomicBoolean
 
 private class IdeStartUpPerformanceService(coroutineScope: CoroutineScope) : StartUpPerformanceReporter(coroutineScope) {
   @Volatile
@@ -17,11 +18,17 @@ private class IdeStartUpPerformanceService(coroutineScope: CoroutineScope) : Sta
   @Volatile
   private var projectOpenedActivitiesPassed = false
 
+  private val isReported = AtomicBoolean()
+
   init {
     if (perfFilePath != null) {
       val projectName = ProjectManagerEx.getOpenProjects().firstOrNull()?.name ?: "unknown"
       ApplicationManager.getApplication().messageBus.simpleConnect().subscribe(AppLifecycleListener.TOPIC, object : AppLifecycleListener {
         override fun appWillBeClosed(isRestart: Boolean) {
+          if (!isReported.compareAndSet(false, true)) {
+            return
+          }
+
           runWithModalProgressBlocking(ModalTaskOwner.guess(), "") {
             logStats(projectName)
           }
@@ -45,6 +52,9 @@ private class IdeStartUpPerformanceService(coroutineScope: CoroutineScope) : Sta
   }
 
   private fun completed() {
+    if (!isReported.compareAndSet(false, true)) {
+      return
+    }
 
     StartUpMeasurer.stopPluginCostMeasurement()
     // don't report statistic from here if we want to measure project import duration

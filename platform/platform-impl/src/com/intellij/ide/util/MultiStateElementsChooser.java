@@ -594,7 +594,7 @@ public class MultiStateElementsChooser<T, S> extends JPanel implements Component
   }
 
 
-  private class MyElementColumnCellRenderer extends ColoredTableCellRenderer {
+  private final class MyElementColumnCellRenderer extends ColoredTableCellRenderer {
     @Override
     protected void customizeCellRenderer(@NotNull JTable table, @Nullable Object value, boolean selected, boolean hasFocus, int row, int column) {
       @SuppressWarnings("unchecked") T item = (T)value;
@@ -633,7 +633,7 @@ public class MultiStateElementsChooser<T, S> extends JPanel implements Component
     }
   }
 
-  private class CheckMarkColumnCellRenderer implements TableCellRenderer {
+  private final class CheckMarkColumnCellRenderer implements TableCellRenderer {
     private final TableCellRenderer myDelegate;
 
     CheckMarkColumnCellRenderer(TableCellRenderer delegate) {

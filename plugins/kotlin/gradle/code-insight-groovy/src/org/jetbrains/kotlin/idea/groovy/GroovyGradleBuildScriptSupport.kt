@@ -189,6 +189,13 @@ class GroovyBuildScriptManipulator(
         return DifferentKotlinGradleVersionInspection.getKotlinPluginVersion(scriptFile)
     }
 
+    override fun hasExplicitlyDefinedKotlinVersion(): Boolean {
+        val pluginsBlock = scriptFile.getBlockByName("plugins")
+        return pluginsBlock?.let {
+            pluginsBlock.findPluginExpressions("org.jetbrains.kotlin.jvm")
+        }?.versionExpression != null
+    }
+
     override fun findAndRemoveKotlinVersionFromBuildScript(): Boolean {
         val pluginsBlock = scriptFile.getBlockByName("plugins")
         return pluginsBlock?.let {

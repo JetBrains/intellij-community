@@ -77,7 +77,7 @@
 
     <applicationService serviceInterface="org.jetbrains.uast.kotlin.BaseKotlinUastResolveProviderService"
                         serviceImplementation="org.jetbrains.uast.kotlin.internal.FirIdeaKotlinUastResolveProviderService"/>
-    <projectService serviceInterface="org.jetbrains.uast.kotlin.FirKotlinUastResolveProviderService"
+    <applicationService serviceInterface="org.jetbrains.uast.kotlin.FirKotlinUastResolveProviderService"
                     serviceImplementation="org.jetbrains.uast.kotlin.internal.FirIdeaKotlinUastResolveProviderService"/>
 
     <registryKey key="kotlin.fir.uast.force.uinjectionhost"

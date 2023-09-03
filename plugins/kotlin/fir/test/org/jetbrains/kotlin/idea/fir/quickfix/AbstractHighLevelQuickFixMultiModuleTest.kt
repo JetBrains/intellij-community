@@ -11,9 +11,9 @@ abstract class AbstractHighLevelQuickFixMultiModuleTest : AbstractQuickFixMultiM
     override fun doQuickFixTest(dirPath: String) {
         val actionFile = project.findFileWithCaret()
         val actionFilePath = actionFile.virtualFile.toNioPath()
-        IgnoreTests.runTestIfEnabledByFileDirective(
+        IgnoreTests.runTestIfNotDisabledByFileDirective(
             actionFilePath,
-            enableTestDirective = IgnoreTests.DIRECTIVES.FIR_COMPARISON,
+            disableTestDirective = IgnoreTests.DIRECTIVES.IGNORE_K2,
         ) {
             super.doQuickFixTest(dirPath)
         }

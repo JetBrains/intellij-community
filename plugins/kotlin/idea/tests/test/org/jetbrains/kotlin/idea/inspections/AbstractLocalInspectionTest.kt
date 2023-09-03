@@ -43,7 +43,7 @@ abstract class AbstractLocalInspectionTest : KotlinLightCodeInsightFixtureTestCa
 
     private val expectedProblemDirectiveName: String = "PROBLEM"
 
-    private val expectedProblemHighlightType: String = "HIGHLIGHT"
+    protected val expectedProblemHighlightType: String = "HIGHLIGHT"
 
     private val fixTextDirectiveName: String = "FIX"
 
@@ -121,7 +121,6 @@ abstract class AbstractLocalInspectionTest : KotlinLightCodeInsightFixtureTestCa
 
             doTestFor(mainFile, inspection, fileText)
 
-            checkForUnexpectedErrors()
             PsiTestUtil.checkPsiStructureWithCommit(file, PsiTestUtil::checkPsiMatchesTextIgnoringNonCode)
         }
     }
@@ -262,7 +261,7 @@ abstract class AbstractLocalInspectionTest : KotlinLightCodeInsightFixtureTestCa
     }
 
     protected open fun doTestFor(mainFile: File, inspection: LocalInspectionTool, fileText: String) {
-        IgnoreTests.runTestIfNotDisabledByFileDirective(mainFile.toPath(), IgnoreTests.DIRECTIVES.IGNORE_FE10, "after") {
+        IgnoreTests.runTestIfNotDisabledByFileDirective(mainFile.toPath(), IgnoreTests.DIRECTIVES.IGNORE_K1, "after") {
             doTestForInternal(mainFile, inspection, fileText)
         }
     }
@@ -298,6 +297,8 @@ abstract class AbstractLocalInspectionTest : KotlinLightCodeInsightFixtureTestCa
                 editor.document.text
             )
         }
+
+        checkForUnexpectedErrors()
     }
 
     private fun createAfterFileIfItDoesNotExist(path: Path) {

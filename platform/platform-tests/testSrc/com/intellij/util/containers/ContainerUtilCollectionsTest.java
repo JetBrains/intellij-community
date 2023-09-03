@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.containers;
 
 import com.intellij.concurrency.ConcurrentCollectionFactory;
@@ -139,11 +139,11 @@ public class ContainerUtilCollectionsTest extends Assert {
   }
   @Test(timeout = TIMEOUT)
   public void testConcurrentWKWVMapDoesntRetainOldValueKeyAfterPutWithTheSameKeyButDifferentValue() {
-    checkMapDoesntLeakOldValueAfterPutWithTheSameKeyButDifferentValue(ContainerUtil.createConcurrentWeakKeyWeakValueMap());
+    checkMapDoesntLeakOldValueAfterPutWithTheSameKeyButDifferentValue(CollectionFactory.createConcurrentWeakKeyWeakValueMap());
   }
   @Test(timeout = TIMEOUT)
   public void testConcurrentWKSVMapDoesntRetainOldValueKeyAfterPutWithTheSameKeyButDifferentValue() {
-    checkMapDoesntLeakOldValueAfterPutWithTheSameKeyButDifferentValue(ContainerUtil.createConcurrentWeakKeySoftValueMap());
+    checkMapDoesntLeakOldValueAfterPutWithTheSameKeyButDifferentValue(CollectionFactory.createConcurrentWeakKeySoftValueMap());
   }
   @Test(timeout = TIMEOUT)
   public void testConcurrentSKSVMapDoesntRetainOldValueKeyAfterPutWithTheSameKeyButDifferentValue() {
@@ -168,7 +168,7 @@ public class ContainerUtilCollectionsTest extends Assert {
 
   @Test(timeout = TIMEOUT)
   public void testConcurrentWeakValueMapTossed() {
-    ConcurrentMap<Object, Object> map = ContainerUtil.createConcurrentWeakValueMap();
+    ConcurrentMap<Object, Object> map = CollectionFactory.createConcurrentWeakValueMap();
     checkValueTossedEventually(map);
   }
 
@@ -358,7 +358,7 @@ public class ContainerUtilCollectionsTest extends Assert {
   }
   @Test
   public void testSoftMapMustNotAcceptNullKey() {
-    assertNullKeysMustThrow(ContainerUtil.createSoftMap());
+    assertNullKeysMustThrow(CollectionFactory.createSoftMap());
   }
   @Test
   public void testWeakKeySoftValueMapMustNotAcceptNullKey() {
@@ -370,7 +370,7 @@ public class ContainerUtilCollectionsTest extends Assert {
   }
   @Test
   public void testSoftKeySoftValueMapMustNotAcceptNullKey() {
-    assertNullKeysMustThrow(ContainerUtil.createSoftKeySoftValueMap());
+    assertNullKeysMustThrow(CollectionFactory.createSoftKeySoftValueMap());
   }
   @Test
   public void testSoftValueMapMustNotAcceptNullKey() {
@@ -451,7 +451,7 @@ public class ContainerUtilCollectionsTest extends Assert {
 
   @Test(timeout = TIMEOUT)
   public void testConcurrentWeakKeyWeakValueMapTossed() {
-    ConcurrentMap<Object, Object> map = ContainerUtil.createConcurrentWeakKeyWeakValueMap();
+    ConcurrentMap<Object, Object> map = CollectionFactory.createConcurrentWeakKeyWeakValueMap();
 
     checkKeyTossedEventually(map);
     checkValueTossedEventually(map);
@@ -459,7 +459,7 @@ public class ContainerUtilCollectionsTest extends Assert {
 
   @Test(timeout = TIMEOUT)
   public void testSoftKeySoftValueMapTossed() {
-    Map<Object, Object> map = ContainerUtil.createSoftKeySoftValueMap();
+    Map<Object, Object> map = CollectionFactory.createSoftKeySoftValueMap();
     checkKeyTossedEventually(map);
     checkValueTossedEventually(map);
   }
@@ -475,7 +475,7 @@ public class ContainerUtilCollectionsTest extends Assert {
 
   @Test
   public void testConcurrentWeakValueSize() {
-    Map<String, Object> map = ContainerUtil.createConcurrentWeakValueMap();
+    Map<String, Object> map = CollectionFactory.createConcurrentWeakValueMap();
     Ref<Object> ref1 = Ref.create(new Object());
     Ref<Object> ref2 = Ref.create(new Object());
 
@@ -491,7 +491,7 @@ public class ContainerUtilCollectionsTest extends Assert {
 
   @Test
   public void testConcurrentWeakValuePutIfAbsentMustActuallyPutNewValueIfTheOldWasGced() {
-    Map<String, Object> map = ContainerUtil.createConcurrentWeakValueMap();
+    Map<String, Object> map = CollectionFactory.createConcurrentWeakValueMap();
     checkPutIfAbsent(map);
   }
   @Test

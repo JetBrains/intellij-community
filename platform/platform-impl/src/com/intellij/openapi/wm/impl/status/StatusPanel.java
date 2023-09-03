@@ -218,7 +218,7 @@ final class StatusPanel extends JPanel {
     return accessibleContext;
   }
 
-  protected class AccessibleStatusPanel extends AccessibleJPanel {
+  protected final class AccessibleStatusPanel extends AccessibleJPanel {
     @Override
     public AccessibleRole getAccessibleRole() {
       return AccessibleRole.STATUS_BAR;

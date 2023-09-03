@@ -1,3 +1,4 @@
+// IGNORE_K2
 // WITH_MESSAGE: "Removed 1 import"
 
 import java.util.LinkedHashSet

@@ -177,7 +177,7 @@ public final class ToolWindowMoveAction extends DumbAwareAction implements FusAw
     return Collections.emptyList();
   }
 
-  public static class Group extends DefaultActionGroup implements DumbAware {
+  public static final class Group extends DefaultActionGroup implements DumbAware {
     public Group() {
       super(UIBundle.messagePointer("tool.window.move.to.action.group.name"), true);
       addAll(generateActions());

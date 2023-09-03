@@ -29,7 +29,6 @@ public class MavenGeneralPanel implements PanelWithAnchor {
   private JCheckBox checkboxProduceExceptionErrorMessages;
   private JComboBox checksumPolicyCombo;
   private JComboBox failPolicyCombo;
-  private JCheckBox checkboxUsePluginRegistry;
   private JCheckBox checkboxRecursive;
   private MavenEnvironmentForm mavenPathsForm;
   private JBLabel myMultiProjectBuildFailPolicyLabel;
@@ -96,7 +95,6 @@ public class MavenGeneralPanel implements PanelWithAnchor {
     mavenPathsForm.setData(data);
 
     data.setPrintErrorStackTraces(checkboxProduceExceptionErrorMessages.isSelected());
-    data.setUsePluginRegistry(checkboxUsePluginRegistry.isSelected());
     data.setNonRecursive(!checkboxRecursive.isSelected());
 
     data.setOutputLevel((MavenExecutionOptions.LoggingLevel)ComboBoxUtil.getSelectedValue(outputLevelComboModel));
@@ -121,7 +119,6 @@ public class MavenGeneralPanel implements PanelWithAnchor {
     mavenPathsForm.initializeFormData(data, project);
 
     checkboxProduceExceptionErrorMessages.setSelected(data.isPrintErrorStackTraces());
-    checkboxUsePluginRegistry.setSelected(data.isUsePluginRegistry());
     checkboxRecursive.setSelected(!data.isNonRecursive());
     alwaysUpdateSnapshotsCheckBox.setSelected(data.isAlwaysUpdateSnapshots());
     threadsEditor.setText(StringUtil.notNullize(data.getThreads()));

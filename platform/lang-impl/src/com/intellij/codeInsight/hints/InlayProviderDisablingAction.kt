@@ -15,6 +15,7 @@ import org.jetbrains.annotations.Nls
 import org.jetbrains.annotations.Nls.Capitalization.Title
 import java.util.function.Supplier
 
+@Suppress("ComponentNotRegistered")
 class InlayProviderDisablingAction(
   val name: String,
   val language: Language,

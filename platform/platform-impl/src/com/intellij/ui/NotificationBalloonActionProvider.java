@@ -29,7 +29,7 @@ import java.util.List;
 /**
  * @author Alexander Lobas
  */
-public class NotificationBalloonActionProvider implements BalloonImpl.ActionProvider {
+public final class NotificationBalloonActionProvider implements BalloonImpl.ActionProvider {
   private final BalloonImpl myBalloon;
   private final BalloonLayoutData myLayoutData;
   private final Component myRepaintPanel;
@@ -190,7 +190,7 @@ public class NotificationBalloonActionProvider implements BalloonImpl.ActionProv
     }
   }
 
-  private static class MyActionGroup extends DefaultActionGroup implements TooltipDescriptionProvider {
+  private static final class MyActionGroup extends DefaultActionGroup implements TooltipDescriptionProvider {
     private MyActionGroup() {
       setPopup(true);
     }

@@ -503,31 +503,10 @@ public final class CustomizationUtil {
       return null;
     }
 
-    String groupName = getGroupName(actionGroup, groupID);
-    if (groupName == null) {
-      return null;
-    }
-
     Ref<Component> popupInvoker = new Ref<>();
-    String actionID = "customize.toolbar." + groupID;
-    DefaultActionGroup customizationGroup = new DefaultActionGroup(
-      new MyDumbAction(actionID, IdeBundle.message("action.customizations.customize.action"), event -> {
-        Component src = popupInvoker.get();
-        AnAction targetAction = src instanceof ActionButton ? ((ActionButton)src).getAction() : null;
-        DialogWrapper dialogWrapper = createCustomizeGroupDialog(event.getProject(), groupID, groupName, targetAction);
-        dialogWrapper.show();
-      })
-    );
-
-    AnAction rollbackAction = ActionManager.getInstance().getAction(ToolbarSettings.ROLLBACK_ACTION_ID);
-    if (rollbackAction != null) {
-      customizationGroup.add(rollbackAction);
-    }
-
-    customizationGroup.addAll((ActionGroup)ActionManager.getInstance().getAction("ToolbarPopupActions"));
-    AnAction additionalActions = ActionManager.getInstance().getAction("ToolbarPopupActions." + groupID);
-    if (additionalActions instanceof ActionGroup) {
-      customizationGroup.add(additionalActions);
+    ActionGroup customizationGroup = createToolbarCustomizationGroup(actionGroup, groupID, popupInvoker);
+    if (customizationGroup == null) {
+      return null;
     }
 
     return new PopupHandler() {
@@ -558,6 +537,37 @@ public final class CustomizationUtil {
         menu.show(comp, x, y);
       }
     };
+  }
+
+  public static @Nullable ActionGroup createToolbarCustomizationGroup(@NotNull ActionGroup actionGroup,
+                                                                      String groupID,
+                                                                      Ref<? extends Component> popupInvoker) {
+    String groupName = getGroupName(actionGroup, groupID);
+    if (groupName == null) {
+      return null;
+    }
+
+    String actionID = "customize.toolbar." + groupID;
+    DefaultActionGroup customizationGroup = new DefaultActionGroup(
+      new MyDumbAction(actionID, IdeBundle.message("action.customizations.customize.action"), event -> {
+        Component src = popupInvoker.get();
+        AnAction targetAction = src instanceof ActionButton ? ((ActionButton)src).getAction() : null;
+        DialogWrapper dialogWrapper = createCustomizeGroupDialog(event.getProject(), groupID, groupName, targetAction);
+        dialogWrapper.show();
+      })
+    );
+
+    AnAction rollbackAction = ActionManager.getInstance().getAction(ToolbarSettings.ROLLBACK_ACTION_ID);
+    if (rollbackAction != null) {
+      customizationGroup.add(rollbackAction);
+    }
+
+    customizationGroup.addAll((ActionGroup)ActionManager.getInstance().getAction("ToolbarPopupActions"));
+    AnAction additionalActions = ActionManager.getInstance().getAction("ToolbarPopupActions." + groupID);
+    if (additionalActions instanceof ActionGroup) {
+      customizationGroup.add(additionalActions);
+    }
+    return customizationGroup;
   }
 
   public static @NotNull DialogWrapper createCustomizeGroupDialog(@Nullable Project project, @NotNull String groupID,
@@ -761,7 +771,7 @@ public final class CustomizationUtil {
     void accept(@NotNull @Nls String text, @Nullable @Nls String description, @Nullable Icon icon);
   }
 
-  private static class PopupComputableActionGroup extends ActionGroup implements ActionWithDelegate<ActionGroup> {
+  private static final class PopupComputableActionGroup extends ActionGroup implements ActionWithDelegate<ActionGroup> {
     private final Supplier<? extends @Nullable ActionGroup> myActionGroupSupplier;
 
     PopupComputableActionGroup(Supplier<? extends @Nullable ActionGroup> actionGroupSupplier) {

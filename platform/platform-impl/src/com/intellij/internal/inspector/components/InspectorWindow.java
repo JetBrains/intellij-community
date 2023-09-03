@@ -408,7 +408,7 @@ public final class InspectorWindow extends JDialog implements Disposable {
     }
   }
 
-  private class ToggleHighlightAction extends MyTextAction {
+  private final class ToggleHighlightAction extends MyTextAction {
     private ToggleHighlightAction() {
       super(IdeBundle.messagePointer("action.Anonymous.text.highlight"));
     }
@@ -430,7 +430,7 @@ public final class InspectorWindow extends JDialog implements Disposable {
     }
   }
 
-  private class RefreshAction extends MyTextAction {
+  private final class RefreshAction extends MyTextAction {
     private RefreshAction() {
       super(InternalActionsBundle.messagePointer("action.Anonymous.text.refresh"));
     }
@@ -451,7 +451,7 @@ public final class InspectorWindow extends JDialog implements Disposable {
     }
   }
 
-  private class ToggleAccessibleAction extends MyTextAction {
+  private final class ToggleAccessibleAction extends MyTextAction {
     private boolean isAccessibleEnable = false;
 
     private ToggleAccessibleAction() {
@@ -494,7 +494,7 @@ public final class InspectorWindow extends JDialog implements Disposable {
     }
   }
 
-  private class ShowDataContextAction extends MyTextAction {
+  private final class ShowDataContextAction extends MyTextAction {
     private ShowDataContextAction() {
       super(InternalActionsBundle.messagePointer("action.Anonymous.text.DataContext"));
     }
@@ -518,7 +518,7 @@ public final class InspectorWindow extends JDialog implements Disposable {
     }
   }
 
-  private static class MyNavigateAction extends BaseNavigateToSourceAction implements CustomComponentAction {
+  private static final class MyNavigateAction extends BaseNavigateToSourceAction implements CustomComponentAction {
     private MyNavigateAction() {
       super(true);
       Presentation presentation = getTemplatePresentation();

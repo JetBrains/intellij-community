@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.text;
 
 import org.jetbrains.annotations.NotNull;
@@ -10,9 +10,9 @@ import java.util.Date;
  * @author Konstantin Bulenkov
  */
 public class CustomJBDateTimeFormatter extends JBDateTimeFormatter {
-  @NotNull private final SyncDateFormat myDateFormat;
-  @NotNull private final SyncDateFormat myDateTimeFormat;
-  @NotNull private final SyncDateFormat myDateTimeSecondsFormat;
+  private final @NotNull SyncDateFormat myDateFormat;
+  private final @NotNull SyncDateFormat myDateTimeFormat;
+  private final @NotNull SyncDateFormat myDateTimeSecondsFormat;
 
   public CustomJBDateTimeFormatter(@NotNull String pattern, boolean use24hour) {
     myDateFormat = new SyncDateFormat(new SimpleDateFormat(pattern));
@@ -20,18 +20,15 @@ public class CustomJBDateTimeFormatter extends JBDateTimeFormatter {
     myDateTimeSecondsFormat = new SyncDateFormat(new SimpleDateFormat(pattern + ", " + (use24hour ? "HH:mm:ss" : "h:mm:ss a")));
   }
 
-  @NotNull
-  private SyncDateFormat getFormat() {
+  private @NotNull SyncDateFormat getFormat() {
     return myDateFormat;
   }
 
-  @NotNull
-  private SyncDateFormat getDateTimeFormat() {
+  private @NotNull SyncDateFormat getDateTimeFormat() {
     return myDateTimeFormat;
   }
 
-  @NotNull
-  private SyncDateFormat getDateTimeSecondsFormat() {
+  private @NotNull SyncDateFormat getDateTimeSecondsFormat() {
     return myDateTimeSecondsFormat;
   }
 
@@ -40,27 +37,23 @@ public class CustomJBDateTimeFormatter extends JBDateTimeFormatter {
     return false;
   }
 
-  @NotNull
   @Override
-  public String formatTime(long time) {
+  public @NotNull String formatTime(long time) {
     return getDateTimeFormat().format(new Date(time));
   }
 
-  @NotNull
   @Override
-  public String formatTimeWithSeconds(long time) {
+  public @NotNull String formatTimeWithSeconds(long time) {
     return getDateTimeSecondsFormat().format(time);
   }
 
-  @NotNull
   @Override
-  public String formatDate(long time) {
+  public @NotNull String formatDate(long time) {
     return getFormat().format(time);
   }
 
-  @NotNull
   @Override
-  public String formatPrettyDateTime(long time) {
+  public @NotNull String formatPrettyDateTime(long time) {
     if (DateTimeFormatManager.getInstance().isPrettyFormattingAllowed() && DateFormatUtil.isPrettyFormattingPossible(time)) {
       return DateFormatUtil.formatPrettyDateTime(time);
     }
@@ -68,36 +61,31 @@ public class CustomJBDateTimeFormatter extends JBDateTimeFormatter {
     return formatTime(time);
   }
 
-  @NotNull
   @Override
-  public String formatPrettyDate(long time) {
+  public @NotNull String formatPrettyDate(long time) {
     if (DateTimeFormatManager.getInstance().isPrettyFormattingAllowed() && DateFormatUtil.isPrettyFormattingPossible(time)) {
       return DateFormatUtil.formatPrettyDate(time);
     }
     return formatDate(time);
   }
 
-  @NotNull
   @Override
-  public String formatDateTime(Date date) {
+  public @NotNull String formatDateTime(Date date) {
     return formatTime(date);
   }
 
-  @NotNull
   @Override
-  public String formatDateTime(long time) {
+  public @NotNull String formatDateTime(long time) {
     return formatTime(time);
   }
 
-  @NotNull
   @Override
-  public String formatPrettyDateTime(@NotNull Date date) {
+  public @NotNull String formatPrettyDateTime(@NotNull Date date) {
     return formatPrettyDateTime(date.getTime());
   }
 
-  @NotNull
   @Override
-  public String formatPrettyDate(@NotNull Date date) {
+  public @NotNull String formatPrettyDate(@NotNull Date date) {
     return formatPrettyDate(date.getTime());
   }
 }

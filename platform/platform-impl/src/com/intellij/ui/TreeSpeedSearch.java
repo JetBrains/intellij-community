@@ -262,7 +262,7 @@ public class TreeSpeedSearch extends SpeedSearchBase<JTree> {
     return paths;
   }
 
-  private static class MySelectAllAction extends DumbAwareAction {
+  private static final class MySelectAllAction extends DumbAwareAction {
     private final @NotNull JTree myTree;
     private final @NotNull TreeSpeedSearch mySearch;
 

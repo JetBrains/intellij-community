@@ -16,7 +16,7 @@ import java.awt.*;
 import java.util.Arrays;
 import java.util.List;
 
-public class LogsGroupFragment<T extends RunConfigurationBase<?>> extends NestedGroupFragment<T> {
+public final class LogsGroupFragment<T extends RunConfigurationBase<?>> extends NestedGroupFragment<T> {
 
   public LogsGroupFragment() {
     super("log",

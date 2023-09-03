@@ -33,7 +33,7 @@ abstract class ExpandableComboAction : AnAction(), CustomComponentAction {
     return ToolbarComboButton(model)
   }
 
-  protected abstract fun createPopup(event: AnActionEvent): JBPopup?
+  abstract fun createPopup(event: AnActionEvent): JBPopup?
 
   override fun actionPerformed(e: AnActionEvent) {
     e.project?.let { createPopup(e)?.showCenteredInCurrentWindow(it) }

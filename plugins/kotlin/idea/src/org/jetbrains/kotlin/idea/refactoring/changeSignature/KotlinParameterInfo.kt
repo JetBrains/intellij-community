@@ -35,6 +35,11 @@ import org.jetbrains.kotlin.types.checker.createClassicTypeCheckerState
 import org.jetbrains.kotlin.types.isError
 import org.jetbrains.kotlin.types.model.TypeConstructorMarker
 
+interface KotlinModifiableParameterInfo : ParameterInfo {
+    var valOrVar: KotlinValVar
+    fun setType(newType: String)
+}
+
 class KotlinParameterInfo(
     val callableDescriptor: CallableDescriptor,
     val originalIndex: Int = -1,
@@ -42,9 +47,9 @@ class KotlinParameterInfo(
     val originalTypeInfo: KotlinTypeInfo = KotlinTypeInfo(false),
     var defaultValueForCall: KtExpression? = null,
     var defaultValueAsDefaultParameter: Boolean = false,
-    var valOrVar: KotlinValVar = defaultValOrVar(callableDescriptor),
+    override var valOrVar: KotlinValVar = defaultValOrVar(callableDescriptor),
     val modifierList: KtModifierList? = null,
-) : ParameterInfo {
+) : KotlinModifiableParameterInfo {
     private var _defaultValueForParameter: KtExpression? = null
     fun setDefaultValueForParameter(expression: KtExpression?) {
         _defaultValueForParameter = expression
@@ -53,6 +58,10 @@ class KotlinParameterInfo(
     val defaultValue: KtExpression? get() = defaultValueForCall?.takeIf { defaultValueAsDefaultParameter } ?: _defaultValueForParameter
 
     var currentTypeInfo: KotlinTypeInfo = originalTypeInfo
+
+    override fun setType(newType: String) {
+        currentTypeInfo = KotlinTypeInfo(false, null, newType)
+    }
 
     val defaultValueParameterReferences: Map<PsiReference, DeclarationDescriptor> by lazy {
         collectDefaultValueParameterReferences(defaultValueForCall)

@@ -9,6 +9,7 @@ import com.intellij.openapi.ui.popup.util.PopupUtil;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.*;
+import com.intellij.ui.dsl.listCellRenderer.KotlinUIDslRenderer;
 import com.intellij.ui.render.RenderingUtil;
 import com.intellij.ui.scale.JBUIScale;
 import com.intellij.util.ObjectUtils;
@@ -844,7 +845,7 @@ public class DarculaComboBoxUI extends BasicComboBoxUI implements Border, ErrorB
       return result;
     }
 
-    private class MyDelegateRenderer implements ListCellRenderer {
+    private final class MyDelegateRenderer implements ListCellRenderer {
       @Override
       public Component getListCellRendererComponent(JList list,
                                                     Object value,
@@ -853,7 +854,7 @@ public class DarculaComboBoxUI extends BasicComboBoxUI implements Border, ErrorB
                                                     boolean cellHasFocus) {
         //noinspection unchecked
         Component component = comboBox.getRenderer().getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
-        if (component instanceof JComponent) {
+        if (component instanceof JComponent && !(component instanceof KotlinUIDslRenderer)) {
           customizeListRendererComponent((JComponent)component);
         }
         return component;

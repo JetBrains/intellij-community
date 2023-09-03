@@ -175,7 +175,7 @@ public final class CreateDesktopEntryAction extends DumbAwareAction {
     }
   }
 
-  public static class CreateDesktopEntryDialog extends DialogWrapper {
+  public static final class CreateDesktopEntryDialog extends DialogWrapper {
     private static final @NlsSafe String APP_NAME_PLACEHOLDER = "$APP_NAME$";
 
     private JPanel myContentPane;

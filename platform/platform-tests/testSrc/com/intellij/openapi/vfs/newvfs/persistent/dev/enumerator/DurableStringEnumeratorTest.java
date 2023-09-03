@@ -35,6 +35,6 @@ public class DurableStringEnumeratorTest extends StringEnumeratorTestBase<Durabl
 
   @Override
   protected DurableStringEnumerator openEnumerator(@NotNull Path storagePath) throws IOException {
-    return new DurableStringEnumerator(storagePath);
+    return DurableStringEnumerator.open(storagePath);
   }
 }

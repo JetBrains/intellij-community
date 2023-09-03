@@ -1026,10 +1026,18 @@ public abstract class AbstractProjectViewPane implements DataProvider, Disposabl
     @Override
     public boolean canStartDragging(DnDAction action, @NotNull Point dragOrigin) {
       if ((action.getActionId() & DnDConstants.ACTION_COPY_OR_MOVE) == 0) return false;
-      final Object[] elements = getSelectedElements();
-      final PsiElement[] psiElements = getSelectedPSIElements();
+      var selectedObjects = getSelectedUserObjects();
+      for (Object object : selectedObjects) {
+        if (object instanceof AbstractPsiBasedNode<?> || object instanceof AbstractModuleNode) {
+          return true;
+        }
+      }
       DataContext dataContext = DataManager.getInstance().getDataContext(myTree);
-      return psiElements.length > 0 || canDragElements(elements, dataContext, action.getActionId());
+      return canDrag(dataContext, action.getActionId());
+    }
+
+    private static boolean canDrag(@NotNull DataContext dataContext, int dragAction) {
+      return dragAction == DnDConstants.ACTION_MOVE && MoveHandler.canMove(dataContext);
     }
 
     @Override
@@ -1182,15 +1190,6 @@ public abstract class AbstractProjectViewPane implements DataProvider, Disposabl
         moreLabel.paint(g);
       }
     }
-  }
-
-  private static boolean canDragElements(Object @NotNull [] elements, @NotNull DataContext dataContext, int dragAction) {
-    for (Object element : elements) {
-      if (element instanceof Module) {
-        return true;
-      }
-    }
-    return dragAction == DnDConstants.ACTION_MOVE && MoveHandler.canMove(dataContext);
   }
 
   @NotNull

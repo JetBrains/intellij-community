@@ -896,7 +896,7 @@ public abstract class PropertyTable extends JBTable {
    *
    * @see javax.swing.plaf.basic.BasicTableUI
    */
-  private class MyStartEditingAction extends AbstractAction {
+  private final class MyStartEditingAction extends AbstractAction {
     @Override
     public void actionPerformed(ActionEvent e) {
       int selectedRow = getSelectedRow();
@@ -908,7 +908,7 @@ public abstract class PropertyTable extends JBTable {
     }
   }
 
-  private class MyEnterAction extends AbstractAction {
+  private final class MyEnterAction extends AbstractAction {
     @Override
     public void actionPerformed(ActionEvent e) {
       int selectedRow = getSelectedRow();
@@ -931,7 +931,7 @@ public abstract class PropertyTable extends JBTable {
     }
   }
 
-  private class MyExpandCurrentAction extends AbstractAction {
+  private final class MyExpandCurrentAction extends AbstractAction {
     private final boolean myExpand;
     private final boolean mySelect;
 
@@ -977,14 +977,14 @@ public abstract class PropertyTable extends JBTable {
     }
   }
 
-  private class MyRestoreDefaultAction extends AbstractAction {
+  private final class MyRestoreDefaultAction extends AbstractAction {
     @Override
     public void actionPerformed(ActionEvent e) {
       restoreDefaultValue();
     }
   }
 
-  private class MouseTableListener extends MouseAdapter {
+  private final class MouseTableListener extends MouseAdapter {
     @Override
     public void mousePressed(MouseEvent e) {
       int row = rowAtPoint(e.getPoint());
@@ -1016,7 +1016,7 @@ public abstract class PropertyTable extends JBTable {
     }
   }
 
-  private class PropertyTableModel extends AbstractTableModel {
+  private final class PropertyTableModel extends AbstractTableModel {
     @Override
     public int getColumnCount() {
       return myColumnNames.length;
@@ -1068,7 +1068,7 @@ public abstract class PropertyTable extends JBTable {
     return Couple.of(beforeIcon, afterIcon);
   }
 
-  private class PropertyCellEditorListener implements PropertyEditorListener {
+  private final class PropertyCellEditorListener implements PropertyEditorListener {
     @Override
     public void valueCommitted(@NotNull PropertyEditor source, boolean continueEditing, boolean closeEditorOnError) {
       if (isEditing()) {
@@ -1108,7 +1108,7 @@ public abstract class PropertyTable extends JBTable {
     }
   }
 
-  private class PropertyCellEditor extends AbstractCellEditor implements TableCellEditor {
+  private final class PropertyCellEditor extends AbstractCellEditor implements TableCellEditor {
     private PropertyEditor myEditor;
 
     public void setEditor(PropertyEditor editor) {
@@ -1309,7 +1309,7 @@ public abstract class PropertyTable extends JBTable {
     }
   }
 
-  private static class GroupProperty extends Property {
+  private static final class GroupProperty extends Property {
     GroupProperty(@Nullable String name) {
       super(null, StringUtil.notNullize(name));
     }

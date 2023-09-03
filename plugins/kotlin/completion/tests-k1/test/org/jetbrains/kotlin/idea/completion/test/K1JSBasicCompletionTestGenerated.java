@@ -1368,6 +1368,21 @@ public abstract class K1JSBasicCompletionTestGenerated extends AbstractK1JSBasic
                 runTest("../testData/basic/common/namedArguments/AfterVararg.kt");
             }
 
+            @TestMetadata("ArgumentWithDefaultNotExpected.kt")
+            public void testArgumentWithDefaultNotExpected() throws Exception {
+                runTest("../testData/basic/common/namedArguments/ArgumentWithDefaultNotExpected.kt");
+            }
+
+            @TestMetadata("ArgumentWithDefaultNotExpected2.kt")
+            public void testArgumentWithDefaultNotExpected2() throws Exception {
+                runTest("../testData/basic/common/namedArguments/ArgumentWithDefaultNotExpected2.kt");
+            }
+
+            @TestMetadata("ArgumentWithDefaultNotExpected3.kt")
+            public void testArgumentWithDefaultNotExpected3() throws Exception {
+                runTest("../testData/basic/common/namedArguments/ArgumentWithDefaultNotExpected3.kt");
+            }
+
             @TestMetadata("BooleanArgumentExpected.kt")
             public void testBooleanArgumentExpected() throws Exception {
                 runTest("../testData/basic/common/namedArguments/BooleanArgumentExpected.kt");
@@ -1491,6 +1506,11 @@ public abstract class K1JSBasicCompletionTestGenerated extends AbstractK1JSBasic
                 runTest("../testData/basic/common/noCompletion/DoNotCompleteForErrorReceiversForce.kt");
             }
 
+            @TestMetadata("DoWhileLoop.kt")
+            public void testDoWhileLoop() throws Exception {
+                runTest("../testData/basic/common/noCompletion/DoWhileLoop.kt");
+            }
+
             @TestMetadata("InPackageBegin.kt")
             public void testInPackageBegin() throws Exception {
                 runTest("../testData/basic/common/noCompletion/InPackageBegin.kt");
@@ -1514,6 +1534,11 @@ public abstract class K1JSBasicCompletionTestGenerated extends AbstractK1JSBasic
             @TestMetadata("NoCompletionAfterLong.kt")
             public void testNoCompletionAfterLong() throws Exception {
                 runTest("../testData/basic/common/noCompletion/NoCompletionAfterLong.kt");
+            }
+
+            @TestMetadata("UnresolvedCallWithLambdaArgument.kt")
+            public void testUnresolvedCallWithLambdaArgument() throws Exception {
+                runTest("../testData/basic/common/noCompletion/UnresolvedCallWithLambdaArgument.kt");
             }
         }
 
@@ -2228,6 +2253,11 @@ public abstract class K1JSBasicCompletionTestGenerated extends AbstractK1JSBasic
                 KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
             }
 
+            @TestMetadata("EnumWithoutCompanionObject.kt")
+            public void testEnumWithoutCompanionObject() throws Exception {
+                runTest("../testData/basic/common/staticMembers/EnumWithoutCompanionObject.kt");
+            }
+
             @TestMetadata("ImportsFromEnumEntry.kt")
             public void testImportsFromEnumEntry() throws Exception {
                 runTest("../testData/basic/common/staticMembers/ImportsFromEnumEntry.kt");
@@ -2561,6 +2591,16 @@ public abstract class K1JSBasicCompletionTestGenerated extends AbstractK1JSBasic
             @TestMetadata("EnumEntriesQualifiedAbsentWhenFeatureDisabled.kt")
             public void testEnumEntriesQualifiedAbsentWhenFeatureDisabled() throws Exception {
                 runTest("../testData/basic/common/EnumEntriesQualifiedAbsentWhenFeatureDisabled.kt");
+            }
+
+            @TestMetadata("EnumEntryInitializerMethods.kt")
+            public void testEnumEntryInitializerMethods() throws Exception {
+                runTest("../testData/basic/common/EnumEntryInitializerMethods.kt");
+            }
+
+            @TestMetadata("EnumEntryInitializerMethods2.kt")
+            public void testEnumEntryInitializerMethods2() throws Exception {
+                runTest("../testData/basic/common/EnumEntryInitializerMethods2.kt");
             }
 
             @TestMetadata("EnumItemsThroughChainedTypeAlias.kt")

@@ -130,9 +130,8 @@ public class JBTerminalSystemSettingsProviderBase extends DefaultSettingsProvide
                                           getKeyStrokesByActionId("Terminal.Find", IdeActions.ACTION_FIND));
   }
 
-  @NotNull
   @Override
-  public ColorPalette getTerminalColorPalette() {
+  public @NotNull ColorPalette getTerminalColorPalette() {
     return myUiSettingsManager.getTerminalColorPalette();
   }
 

@@ -29,7 +29,7 @@ import java.lang.ref.WeakReference;
 import java.util.List;
 
 
-public class WinPathChooserDialog implements PathChooserDialog, FileChooserDialog {
+public final class WinPathChooserDialog implements PathChooserDialog, FileChooserDialog {
 
   private FileDialog myFileDialog;
   private final FileChooserDescriptor myFileChooserDescriptor;

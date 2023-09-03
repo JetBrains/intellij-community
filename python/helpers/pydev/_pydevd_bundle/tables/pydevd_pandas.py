@@ -99,7 +99,7 @@ def __get_describe(table):
     try:
         described_ = table.describe(percentiles=[.05, .25, .5, .75, .95],
                                     exclude=[np.complex64, np.complex128])
-    except TypeError:
+    except (TypeError, OverflowError):
         return
 
     if type(table) is pd.Series:

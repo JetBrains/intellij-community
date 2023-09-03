@@ -33,7 +33,7 @@ class WaitVcsLogIndexingCommand(text: String, line: Int) : PerformanceCommandCor
       if (!logManager.isLogUpToDate) logManager.waitForRefresh()
     }
 
-    val vcsIndex = logManager.dataManager.index as VcsLogModifiableIndex
+    val vcsIndex = logManager.dataManager.index
     LOG.info("Need indexing = ${vcsIndex.needIndexing()}, " +
              "is indexing scheduled = ${vcsIndex.isIndexingScheduled()}, " +
              "is indexing paused = ${vcsIndex.isIndexingPaused()}")

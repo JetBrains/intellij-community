@@ -17,11 +17,19 @@ import java.util.regex.Pattern
 class LegacyExternalProductResourceUrls : ExternalProductResourceUrls {
   override val updatesMetadataXmlUrl: Url?
     get() {
+      val customUrl = System.getProperty("idea.updates.url")
+      if (customUrl != null) {
+        return Urls.newFromEncoded(customUrl)
+      }
       val baseUrl = ApplicationInfoEx.getInstanceEx().updateUrls?.checkingUrl ?: return null
       return UpdateRequestParameters.amendUpdateRequest(Urls.newFromEncoded(baseUrl))
     }
 
   override fun computePatchUrl(from: BuildNumber, to: BuildNumber): Url? {
+    val customUrl = computeCustomPatchDownloadUrl(from, to)
+    if (customUrl != null) {
+      return customUrl
+    }
     val baseUrl = ApplicationInfoEx.getInstanceEx().updateUrls?.patchesUrl ?: return null
     return Urls.newFromEncoded(baseUrl).resolve(computePatchFileName(from, to))
   }

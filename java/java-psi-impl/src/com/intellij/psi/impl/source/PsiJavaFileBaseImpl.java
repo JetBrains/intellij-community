@@ -66,7 +66,7 @@ public abstract class PsiJavaFileBaseImpl extends PsiFileImpl implements PsiJava
   public PsiClass @NotNull [] getClasses() {
     StubElement<?> stub = getGreenStub();
     if (stub != null) {
-      return stub.getChildrenByType(JavaStubElementTypes.CLASS, PsiClass.ARRAY_FACTORY);
+      return stub.getChildrenByType(Constants.CLASS_BIT_SET, PsiClass.ARRAY_FACTORY);
     }
 
     return calcTreeElement().getChildrenAsPsiElements(Constants.CLASS_BIT_SET, PsiClass.ARRAY_FACTORY);
@@ -282,7 +282,7 @@ public abstract class PsiJavaFileBaseImpl extends PsiFileImpl implements PsiJava
     NameHint nameHint = processor.getHint(NameHint.KEY);
     String name = nameHint != null ? nameHint.getName(state) : null;
 
-    Map<String, Iterable<ResultWithContext>> explicitlyEnumerated = getExplicitlyEnumeratedDeclarations();
+    Map<String, Iterable<ResultWithContext>> explicitlyEnumerated = getEnumeratedDeclarations();
     //noinspection unchecked
     Iterable<ResultWithContext> iterable = name != null ? explicitlyEnumerated.get(name)
                                                         : ContainerUtil.concat(explicitlyEnumerated.values().toArray(new Iterable[0]));
@@ -300,7 +300,7 @@ public abstract class PsiJavaFileBaseImpl extends PsiFileImpl implements PsiJava
   }
 
   @NotNull
-  private Map<String, Iterable<ResultWithContext>> getExplicitlyEnumeratedDeclarations() {
+  private Map<String, Iterable<ResultWithContext>> getEnumeratedDeclarations() {
     return CachedValuesManager.getCachedValue(this, () -> {
       MultiMap<String, PsiClass> ownClasses = MultiMap.create();
       MultiMap<String, PsiImportStatement> typeImports = MultiMap.create();
@@ -377,7 +377,7 @@ public abstract class PsiJavaFileBaseImpl extends PsiFileImpl implements PsiJava
     boolean shouldProcessClasses = classHint == null || classHint.shouldProcess(ElementClassHint.DeclarationKind.CLASS);
     if (shouldProcessClasses && !processCurrentPackage(state, place, processor)) return false;
 
-    if (!processOnDemandStaticImports(state, new StaticImportFilteringProcessor(getExplicitlyEnumeratedDeclarations(), processor))) {
+    if (!processOnDemandStaticImports(state, new StaticImportFilteringProcessor(getEnumeratedDeclarations(), processor))) {
       return false;
     }
 

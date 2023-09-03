@@ -19,8 +19,10 @@ import org.jetbrains.kotlin.tools.projectWizard.plugins.StructurePlugin
 import org.jetbrains.kotlin.tools.projectWizard.plugins.buildSystem.BuildSystemPlugin
 import org.jetbrains.kotlin.tools.projectWizard.plugins.buildSystem.BuildSystemType
 import org.jetbrains.kotlin.tools.projectWizard.plugins.buildSystem.gradle.GradlePlugin
+import org.jetbrains.kotlin.tools.projectWizard.plugins.kotlin.KotlinPlugin
 import org.jetbrains.kotlin.tools.projectWizard.plugins.projectTemplates.applyProjectTemplate
 import org.jetbrains.kotlin.tools.projectWizard.projectTemplates.ConsoleApplicationProjectTemplate
+import org.jetbrains.kotlin.tools.projectWizard.settings.buildsystem.SourcesetType
 import org.jetbrains.kotlin.tools.projectWizard.settings.version.Version
 import org.jetbrains.kotlin.tools.projectWizard.wizard.KotlinNewProjectWizardUIBundle
 import org.jetbrains.kotlin.tools.projectWizard.wizard.NewProjectWizardModuleBuilder
@@ -47,7 +49,10 @@ class KotlinNewProjectWizard : LanguageNewProjectWizard {
             version: String? = "1.0-SNAPSHOT",
             addSampleCode: Boolean = true,
             gradleVersion: String? = null,
-            gradleHome: String? = null
+            gradleHome: String? = null,
+            useCompactProjectStructure: Boolean = false,
+            createResourceDirectories: Boolean = true,
+            filterTestSourcesets: Boolean = false
         ) {
             NewProjectWizardModuleBuilder()
                 .apply {
@@ -56,6 +61,8 @@ class KotlinNewProjectWizard : LanguageNewProjectWizard {
                     wizard.context.writeSettings {
                         StructurePlugin.name.reference.setValue(projectName)
                         StructurePlugin.projectPath.reference.setValue(projectPath.asPath())
+                        StructurePlugin.useCompactProjectStructure.reference.setValue(useCompactProjectStructure)
+                        KotlinPlugin.createResourceDirectories.reference.setValue(createResourceDirectories)
 
                         // If a local gradle installation was selected, we want to use the local gradle installation's
                         // version so that the wizard knows what kind of build scripts to generate
@@ -74,6 +81,12 @@ class KotlinNewProjectWizard : LanguageNewProjectWizard {
                         BuildSystemPlugin.type.reference.setValue(buildSystemType)
 
                         applyProjectTemplate(ConsoleApplicationProjectTemplate(addSampleCode = addSampleCode))
+
+                        if (filterTestSourcesets) {
+                            KotlinPlugin.modules.settingValue.forEach { module ->
+                                module.sourceSets = module.sourceSets.filter { it.sourcesetType != SourcesetType.test }
+                            }
+                        }
                     }
                 }.commit(project, null, null)
         }

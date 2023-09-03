@@ -10,7 +10,9 @@ import com.intellij.openapi.editor.ex.EditorEx
 import com.intellij.openapi.editor.markup.EffectType
 import com.intellij.openapi.editor.markup.TextAttributes
 import com.intellij.openapi.util.Disposer
+import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.TextRange
+import com.intellij.openapi.util.UserDataHolder
 import com.intellij.terminal.JBTerminalSystemSettingsProviderBase
 import com.intellij.terminal.TerminalUiSettingsManager
 import com.intellij.util.concurrency.annotations.RequiresEdt
@@ -26,23 +28,24 @@ class TerminalOutputController(
   private val editor: EditorEx,
   private val session: TerminalSession,
   private val settings: JBTerminalSystemSettingsProviderBase
-) : TerminalModel.TerminalListener {
-  private val outputModel: TerminalOutputModel = TerminalOutputModel(editor)
+) : TerminalModel.TerminalListener, UserDataHolder {
+  val outputModel: TerminalOutputModel = TerminalOutputModel(editor)
+  val selectionModel: TerminalSelectionModel = TerminalSelectionModel(outputModel)
   private val terminalModel: TerminalModel = session.model
-  private val blocksDecorator: TerminalBlocksDecorator = TerminalBlocksDecorator(editor)
+  private val blocksDecorator: TerminalBlocksDecorator = TerminalBlocksDecorator(outputModel, editor)
   private val textHighlighter: TerminalTextHighlighter = TerminalTextHighlighter(outputModel)
+
   private val caretModel: TerminalCaretModel = TerminalCaretModel(session, outputModel, editor)
-  private val caretPainter: TerminalCaretPainter = TerminalCaretPainter(caretModel, editor)
+  private val caretPainter: TerminalCaretPainter = TerminalCaretPainter(caretModel, outputModel, selectionModel, editor)
 
   private val palette: ColorPalette
     get() = settings.terminalColorPalette
-
-  var isFocused: Boolean = false
 
   @Volatile
   private var runningListenersDisposable: Disposable? = null
 
   init {
+    editor.putUserData(KEY, this)
     editor.highlighter = textHighlighter
     session.model.addTerminalListener(this)
     Disposer.register(session, caretModel)
@@ -58,12 +61,12 @@ class TerminalOutputController(
     val disposable = Disposer.newDisposable().also { Disposer.register(session, it) }
     runningListenersDisposable = disposable
     val eventsHandler = TerminalEventsHandler(session, settings)
-    setupKeyEventDispatcher(editor, settings, eventsHandler, disposable, this::isFocused)
+    setupKeyEventDispatcher(editor, settings, eventsHandler, outputModel, selectionModel, disposable)
     setupMouseListener(editor, settings, session.model, eventsHandler, disposable)
     setupContentListener(disposable)
   }
 
-  fun finishCommandBlock() {
+  fun finishCommandBlock(exitCode: Int) {
     runningListenersDisposable?.let { Disposer.dispose(it) }
     runningListenersDisposable = null
     invokeLater {
@@ -84,6 +87,9 @@ class TerminalOutputController(
       }
       if (document.getText(block.textRange).isBlank()) {
         outputModel.removeBlock(block)
+      }
+      else if (exitCode != 0) {
+        outputModel.addBlockState(block, ErrorBlockDecorationState())
       }
     }
   }
@@ -183,8 +189,7 @@ class TerminalOutputController(
     if (outputModel.getDecoration(block) == null
         && content.text.isNotBlank()
         && content.text.trim() != "%") {
-      val decoration = blocksDecorator.installDecoration(block, isFirstBlock = outputModel.getBlocksSize() == 1)
-      outputModel.putDecoration(block, decoration)
+      blocksDecorator.installDecoration(block, isFirstBlock = outputModel.getBlocksSize() == 1)
     }
 
     editor.caretModel.moveToOffset(block.endOffset)
@@ -235,5 +240,13 @@ class TerminalOutputController(
     else editor.document.addDocumentListener(listener)
   }
 
+  override fun <T : Any?> getUserData(key: Key<T>): T? = editor.getUserData(key)
+
+  override fun <T : Any?> putUserData(key: Key<T>, value: T?) = editor.putUserData(key, value)
+
   private data class TerminalContent(val text: String, val highlightings: List<HighlightingInfo>)
+
+  companion object {
+    val KEY: Key<TerminalOutputController> = Key.create("TerminalOutputController")
+  }
 }

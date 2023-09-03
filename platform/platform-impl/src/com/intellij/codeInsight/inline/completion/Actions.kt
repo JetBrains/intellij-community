@@ -54,7 +54,7 @@ class CallInlineCompletionAction : EditorAction(CallInlineCompletionHandler()), 
       val listener = editor.getUserData(InlineCompletionHandler.KEY) ?: return
       val file = dataContext?.getData(CommonDataKeys.PSI_FILE) ?: return
 
-      listener.invoke(editor, file, curCaret)
+      listener.invoke(editor, file, curCaret, dataContext)
     }
   }
 }

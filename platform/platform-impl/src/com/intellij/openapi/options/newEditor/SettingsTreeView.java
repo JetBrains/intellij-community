@@ -604,7 +604,7 @@ public class SettingsTreeView extends JComponent implements Accessible, Disposab
 
     // TODO: consider making MyRenderer a subclass of SimpleColoredComponent.
     // This should eliminate the need to add this accessibility stuff.
-    private class MyAccessibleContext extends JPanel.AccessibleJPanel {
+    private final class MyAccessibleContext extends JPanel.AccessibleJPanel {
       @Override
       public String getAccessibleName() {
         return myTextLabel.getCharSequence(true).toString();
@@ -953,7 +953,7 @@ public class SettingsTreeView extends JComponent implements Accessible, Disposab
     return accessibleContext;
   }
 
-  protected class AccessibleSettingsTreeView extends AccessibleJComponent {
+  protected final class AccessibleSettingsTreeView extends AccessibleJComponent {
     @Override
     public AccessibleRole getAccessibleRole() {
       return AccessibleRole.PANEL;

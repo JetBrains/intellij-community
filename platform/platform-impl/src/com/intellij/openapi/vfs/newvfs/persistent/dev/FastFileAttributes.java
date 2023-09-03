@@ -6,6 +6,7 @@ import com.intellij.openapi.vfs.newvfs.FileAttribute;
 import com.intellij.openapi.vfs.newvfs.persistent.FSRecords;
 import com.intellij.openapi.vfs.newvfs.persistent.FSRecordsImpl;
 import com.intellij.openapi.vfs.newvfs.persistent.SpecializedFileAttributes;
+import com.intellij.openapi.vfs.newvfs.persistent.mapped.MappedFileStorageHelper;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -14,7 +15,7 @@ import java.io.Closeable;
 import java.io.IOException;
 import java.util.function.IntUnaryOperator;
 
-import static com.intellij.openapi.vfs.newvfs.persistent.dev.MappedFileStorageHelper.openHelperAndVerifyVersions;
+import static com.intellij.openapi.vfs.newvfs.persistent.mapped.MappedFileStorageHelper.openHelperAndVerifyVersions;
 
 /**
  * (Temporary) Different non-standard kinds of VirtualFile attributes.
@@ -61,7 +62,7 @@ public final class FastFileAttributes {
     return new TimestampedBooleanAttributeAccessorImpl(helper);
   }
 
-  public static class Int3FileAttribute implements Closeable {
+  public static final class Int3FileAttribute implements Closeable {
     public static final int FIELDS = 3;
     public static final int ROW_SIZE = FIELDS * Integer.BYTES;
 
@@ -107,7 +108,7 @@ public final class FastFileAttributes {
     }
   }
 
-  private static class TimestampedBooleanAttributeAccessorImpl implements TimestampedBooleanAttributeAccessor, Closeable {
+  private static final class TimestampedBooleanAttributeAccessorImpl implements TimestampedBooleanAttributeAccessor, Closeable {
     public static final int ROW_SIZE = Long.BYTES;
 
     private final MappedFileStorageHelper storageHelper;

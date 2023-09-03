@@ -34,7 +34,7 @@ import java.io.File
 import javax.swing.JComponent
 
 @ApiStatus.Experimental
-abstract class MarkdownFileActionsBaseDialog(
+internal abstract class MarkdownFileActionsBaseDialog(
   protected val project: Project,
   protected val suggestedFilePath: String,
   protected val file: VirtualFile,

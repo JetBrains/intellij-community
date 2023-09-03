@@ -508,7 +508,7 @@ public final class DnDManagerImpl extends DnDManager {
     return myLastProcessedTarget.get();
   }
 
-  private static class NullTarget implements DnDTarget {
+  private static final class NullTarget implements DnDTarget {
     @Override
     public boolean update(DnDEvent aEvent) {
       aEvent.setDropPossible(false, "You cannot drop anything here");
@@ -603,7 +603,7 @@ public final class DnDManagerImpl extends DnDManager {
     };
   }
 
-  private class MyDragSourceListener implements DragSourceListener {
+  private final class MyDragSourceListener implements DragSourceListener {
     private final DnDSource mySource;
 
     MyDragSourceListener(final DnDSource source) {
@@ -646,7 +646,7 @@ public final class DnDManagerImpl extends DnDManager {
     }
   }
 
-  private class MyDropTargetListener implements DropTargetListener {
+  private final class MyDropTargetListener implements DropTargetListener {
     @Override
     public void drop(final DropTargetDropEvent dtde) {
       SmoothAutoScroller.getSharedListener().drop(dtde);

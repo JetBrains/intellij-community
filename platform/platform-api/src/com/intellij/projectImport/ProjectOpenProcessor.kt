@@ -2,13 +2,16 @@
 package com.intellij.projectImport
 
 import com.intellij.ide.IdeCoreBundle
+import com.intellij.openapi.application.EDT
 import com.intellij.openapi.extensions.ExtensionPointName
-import com.intellij.openapi.progress.runBlockingMaybeCancellable
+import com.intellij.openapi.progress.blockingContext
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.MessageConstants
 import com.intellij.openapi.ui.MessageDialogBuilder.Companion.yesNoCancel
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.util.ui.UIUtil
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.ApiStatus.Internal
 import org.jetbrains.annotations.Nls
 import javax.swing.Icon
@@ -104,9 +107,7 @@ abstract class ProjectOpenProcessor {
    */
   @Deprecated("use async method instead")
   open fun importProjectAfterwards(project: Project, file: VirtualFile) {
-    runBlockingMaybeCancellable {
-      importProjectAfterwardsAsync(project, file)
-    }
+    throw UnsupportedOperationException()
   }
 
   /**
@@ -114,6 +115,12 @@ abstract class ProjectOpenProcessor {
    *
    * @see .canImportProjectAfterwards
    */
-  open suspend fun importProjectAfterwardsAsync(project: Project, file: VirtualFile) {}
+  open suspend fun importProjectAfterwardsAsync(project: Project, file: VirtualFile) {
+    withContext(Dispatchers.EDT) {
+      blockingContext {
+        importProjectAfterwards(project, file)
+      }
+    }
+  }
 
 }

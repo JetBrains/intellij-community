@@ -190,7 +190,7 @@ class LanguageVersionSettingsProvider(private val project: Project) : Disposable
         return LanguageVersionSettingsImpl(languageVersion, apiVersion, analysisFlags, languageFeatures)
     }
 
-    private fun getLanguageApiVersionFromFacet(facetSettings: KotlinFacetSettings): Pair<LanguageVersion, ApiVersion> {
+    private fun getLanguageApiVersionFromFacet(facetSettings: IKotlinFacetSettings): Pair<LanguageVersion, ApiVersion> {
         val languageVersion = facetSettings.languageLevel
         val apiVersion = facetSettings.apiLevel?.let { ApiVersion.createByLanguageVersion(it) }
 
@@ -250,7 +250,7 @@ class LanguageVersionSettingsProvider(private val project: Project) : Disposable
         return CommonFacetSettings(analysisFlags, languageFeatures)
     }
 
-    private fun getMultiPlatformLanguageFeatures(module: Module, facetSettings: KotlinFacetSettings): LanguageFeatureMap {
+    private fun getMultiPlatformLanguageFeatures(module: Module, facetSettings: IKotlinFacetSettings): LanguageFeatureMap {
         if (facetSettings.targetPlatform.isCommon() || ModuleRootManager.getInstance(module).dependencies.any { it.platform.isCommon() }) {
             return Collections.singletonMap(LanguageFeature.MultiPlatformProjects, LanguageFeature.State.ENABLED)
         }

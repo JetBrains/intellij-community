@@ -65,7 +65,7 @@ import java.util.Map;
 
 import static com.intellij.openapi.actionSystem.impl.ActionToolbarImpl.updateAllToolbarsImmediately;
 
-public class KeymapPanel extends JPanel implements SearchableConfigurable, Configurable.NoScroll, KeymapListener, Disposable {
+public final class KeymapPanel extends JPanel implements SearchableConfigurable, Configurable.NoScroll, KeymapListener, Disposable {
   private JCheckBox nationalKeyboardsSupport;
 
   private final KeymapSelector myKeymapSelector = new KeymapSelector(this::currentKeymapChanged);
@@ -691,7 +691,7 @@ public class KeymapPanel extends JPanel implements SearchableConfigurable, Confi
       Messages.getWarningIcon());
   }
 
-  private static class ShowFNKeysSettingWrapper implements Disposable {
+  private static final class ShowFNKeysSettingWrapper implements Disposable {
     private boolean myShowFnInitial = false;
     private JCheckBox myCheckbox = null;
     private volatile boolean myDisposed;
@@ -818,7 +818,7 @@ public class KeymapPanel extends JPanel implements SearchableConfigurable, Confi
     return null;
   }
 
-  private class EditShortcutAction extends AnAction {
+  private final class EditShortcutAction extends AnAction {
     private EditShortcutAction() {
       super(KeyMapBundle.message("edit.shortcut.action.text"), KeyMapBundle.message("edit.shortcut.action.description"),
             LayeredIcon.EDIT_WITH_DROPDOWN);
@@ -843,7 +843,7 @@ public class KeymapPanel extends JPanel implements SearchableConfigurable, Confi
 
   private static final BadgeIconSupplier SHORTCUT_FILTER_ICON = new BadgeIconSupplier(AllIcons.Actions.ShortcutFilter);
 
-  private class FindByShortcutAction extends DumbAwareAction {
+  private final class FindByShortcutAction extends DumbAwareAction {
     private final JComponent mySearchToolbar;
 
     private FindByShortcutAction(JComponent searchToolbar) {
@@ -870,7 +870,7 @@ public class KeymapPanel extends JPanel implements SearchableConfigurable, Confi
     }
   }
 
-  private class ClearFilteringAction extends DumbAwareAction {
+  private final class ClearFilteringAction extends DumbAwareAction {
     private ClearFilteringAction() {
       super(KeyMapBundle.message("filter.clear.action.text"), KeyMapBundle.message("filter.clear.action.description"), AllIcons.Actions.GC);
     }
@@ -898,7 +898,7 @@ public class KeymapPanel extends JPanel implements SearchableConfigurable, Confi
     }
   }
 
-  private class AddKeyboardShortcutAction extends DumbAwareAction {
+  private final class AddKeyboardShortcutAction extends DumbAwareAction {
     private final @NotNull String myActionId;
     private final ShortcutRestrictions myRestrictions;
     private final Keymap mySelectedKeymap;
@@ -917,7 +917,7 @@ public class KeymapPanel extends JPanel implements SearchableConfigurable, Confi
     }
   }
 
-  private class AddMouseShortcutAction extends DumbAwareAction {
+  private final class AddMouseShortcutAction extends DumbAwareAction {
     private final @NotNull String myActionId;
     private final ShortcutRestrictions myRestrictions;
     private final Keymap mySelectedKeymap;
@@ -936,7 +936,7 @@ public class KeymapPanel extends JPanel implements SearchableConfigurable, Confi
     }
   }
 
-  private class AddAbbreviationAction extends DumbAwareAction {
+  private final class AddAbbreviationAction extends DumbAwareAction {
     private final @NotNull String myActionId;
 
     private AddAbbreviationAction(@NotNull String actionId) {
@@ -955,7 +955,7 @@ public class KeymapPanel extends JPanel implements SearchableConfigurable, Confi
     }
   }
 
-  private class RemoveShortcutAction extends DumbAwareAction {
+  private final class RemoveShortcutAction extends DumbAwareAction {
     private final Shortcut myShortcut;
     private final Keymap mySelectedKeymap;
     private final @NotNull String myActionId;
@@ -978,7 +978,7 @@ public class KeymapPanel extends JPanel implements SearchableConfigurable, Confi
     }
   }
 
-  private class RemoveAbbreviationAction extends DumbAwareAction {
+  private final class RemoveAbbreviationAction extends DumbAwareAction {
     private final String myAbbreviation;
     private final @NotNull String myActionId;
 
@@ -995,7 +995,7 @@ public class KeymapPanel extends JPanel implements SearchableConfigurable, Confi
     }
   }
 
-  private class ResetShortcutsAction extends DumbAwareAction {
+  private final class ResetShortcutsAction extends DumbAwareAction {
     private final Keymap mySelectedKeymap;
     private final @NotNull String myActionId;
 
@@ -1012,7 +1012,7 @@ public class KeymapPanel extends JPanel implements SearchableConfigurable, Confi
     }
   }
 
-  private class RemoveAllShortcuts extends DumbAwareAction {
+  private final class RemoveAllShortcuts extends DumbAwareAction {
     private final Keymap mySelectedKeymap;
     private final String myActionId;
 

@@ -23,7 +23,7 @@ import static java.util.Arrays.asList;
  * <p/>
  * Not thread-safe.
  */
-public class CompositeSoftWrapPainter implements SoftWrapPainter {
+public final class CompositeSoftWrapPainter implements SoftWrapPainter {
 
   /**
    * Defines a key to use for checking for code of the custom unicode symbol to use for {@code 'before soft wrap'} representation.

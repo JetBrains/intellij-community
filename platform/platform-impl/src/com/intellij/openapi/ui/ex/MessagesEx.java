@@ -129,7 +129,7 @@ public final class MessagesEx extends Messages {
     }
   }
 
-  public static class MessageInfo extends BaseDialogInfo<MessageInfo> {
+  public static final class MessageInfo extends BaseDialogInfo<MessageInfo> {
     public MessageInfo(Project project, @DialogMessage String message, @DialogTitle String title) {
       super(project, message, title, getErrorIcon());
     }
@@ -159,7 +159,7 @@ public final class MessagesEx extends Messages {
     }
   }
 
-  public static class ChoiceInfo extends BaseInputInfo<ChoiceInfo> {
+  public static final class ChoiceInfo extends BaseInputInfo<ChoiceInfo> {
     private String[] myChoises = ArrayUtilRt.EMPTY_STRING_ARRAY;
     private @NlsSafe String myDefaultChoice = null;
 

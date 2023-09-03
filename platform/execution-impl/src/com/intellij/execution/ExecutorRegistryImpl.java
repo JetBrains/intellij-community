@@ -571,9 +571,8 @@ public final class ExecutorRegistryImpl extends ExecutorRegistry {
       return !configuration.isAllowRunningInParallel() && !runningDescriptors.isEmpty();
     }
 
-    @NotNull
-    private List<RunContentDescriptor> getRunningDescriptors(@NotNull Project project,
-                                                      @NotNull RunnerAndConfigurationSettings selectedConfiguration) {
+    private @NotNull List<RunContentDescriptor> getRunningDescriptors(@NotNull Project project,
+                                                                      @NotNull RunnerAndConfigurationSettings selectedConfiguration) {
       ExecutionManagerImpl executionManager = ExecutionManagerImpl.getInstance(project);
       List<RunContentDescriptor> runningDescriptors =
         executionManager.getRunningDescriptors(s -> ExecutionManagerImplKt.isOfSameType(s, selectedConfiguration));
@@ -659,7 +658,7 @@ public final class ExecutorRegistryImpl extends ExecutorRegistry {
     }
   }
 
-  public static class RunSpecifiedConfigExecutorAction extends ExecutorAction {
+  public static final class RunSpecifiedConfigExecutorAction extends ExecutorAction {
     private final RunnerAndConfigurationSettings myRunConfig;
     private final boolean myEditConfigBeforeRun;
 
@@ -739,7 +738,7 @@ public final class ExecutorRegistryImpl extends ExecutorRegistry {
     }
   }
 
-  public static class EditRunConfigAndRunCurrentFileExecutorAction extends RunCurrentFileExecutorAction {
+  public static final class EditRunConfigAndRunCurrentFileExecutorAction extends RunCurrentFileExecutorAction {
     public EditRunConfigAndRunCurrentFileExecutorAction(@NotNull Executor executor) {
       super(executor);
     }
@@ -772,7 +771,7 @@ public final class ExecutorRegistryImpl extends ExecutorRegistry {
     }
   }
 
-  private static class RunCurrentFileInfo {
+  private static final class RunCurrentFileInfo {
     private final long myPsiModCount;
     private final @NotNull List<RunnerAndConfigurationSettings> myRunConfigs;
 
@@ -907,7 +906,7 @@ public final class ExecutorRegistryImpl extends ExecutorRegistry {
     }
   }
 
-  private static class RunCurrentFileActionStatus {
+  private static final class RunCurrentFileActionStatus {
     private final boolean myEnabled;
     private final @Nls @NotNull String myTooltip;
     private final @NotNull Icon myIcon;

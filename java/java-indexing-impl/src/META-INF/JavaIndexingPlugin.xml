@@ -17,6 +17,7 @@
   <extensionPoints>
     <extensionPoint qualifiedName="com.intellij.allOverridingMethodsSearch" interface="com.intellij.util.QueryExecutor" dynamic="true"/>
     <extensionPoint qualifiedName="com.intellij.java.shortNamesCache" area="IDEA_PROJECT" interface="com.intellij.psi.search.PsiShortNamesCache" dynamic="true"/>
+    <extensionPoint qualifiedName="com.intellij.java.staticMethodNamesCache" area="IDEA_PROJECT" interface="com.intellij.psi.search.JavaStaticMethodNameCache" dynamic="true"/>
     <extensionPoint qualifiedName="com.intellij.classesWithAnnotatedMembersSearch" interface="com.intellij.util.QueryExecutor" dynamic="true"/>
     <extensionPoint qualifiedName="com.intellij.allClassesSearch" interface="com.intellij.util.QueryExecutor" dynamic="true"/>
     <extensionPoint qualifiedName="com.intellij.overridingMethodsSearch" interface="com.intellij.util.QueryExecutor" dynamic="true"/>
@@ -48,6 +49,7 @@
     <stubIndex implementation="com.intellij.psi.impl.java.stubs.index.JavaAnonymousClassBaseRefOccurenceIndex"/>
     <stubIndex implementation="com.intellij.psi.impl.java.stubs.index.JavaAnnotationIndex"/>
     <java.shortNamesCache implementation="com.intellij.psi.impl.PsiShortNamesCacheImpl"/>
+    <java.staticMethodNamesCache implementation="com.intellij.psi.impl.JavaStaticMethodNameCacheImpl" order="first"/>
     <projectService serviceInterface="com.intellij.psi.search.PsiShortNamesCache"
                     serviceImplementation="com.intellij.psi.impl.CompositeShortNamesCache"/>
     <moduleService serviceInterface="com.intellij.openapi.roots.ModulePackageIndex"

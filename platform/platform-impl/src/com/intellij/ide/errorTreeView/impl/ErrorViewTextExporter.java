@@ -14,7 +14,7 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.util.TooManyListenersException;
 
-public class ErrorViewTextExporter implements ExporterToTextFile {
+public final class ErrorViewTextExporter implements ExporterToTextFile {
   private final JCheckBox myCbShowDetails;
   private final ErrorViewStructure myStructure;
   private ChangeListener myChangeListener;

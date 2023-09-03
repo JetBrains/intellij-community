@@ -4,7 +4,7 @@ package org.jetbrains.idea.devkit.themes.actions;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.ui.LafManager;
 import com.intellij.ide.ui.UITheme;
-import com.intellij.ide.ui.laf.TempUIThemeBasedLookAndFeelInfo;
+import com.intellij.ide.ui.laf.TempUIThemeLookAndFeelInfo;
 import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
@@ -82,7 +82,7 @@ final class ApplyThemeAction extends DumbAwareAction {
       FileDocumentManager.getInstance().saveAllDocuments();
 
       Module module = ModuleUtilCore.findModuleForFile(json, project);
-      UITheme theme = TempUIThemeBasedLookAndFeelInfo.loadTempTheme(json.getInputStream(), new IconPathPatcher() {
+      UITheme theme = TempUIThemeLookAndFeelInfo.loadTempTheme(json.getInputStream(), new IconPathPatcher() {
         @Override
         public @NotNull String patchPath(@NotNull String path,
                                          @Nullable ClassLoader classLoader) {
@@ -104,9 +104,9 @@ final class ApplyThemeAction extends DumbAwareAction {
       }
 
       LafManager lafManager = LafManager.getInstance();
-      lafManager.setCurrentLookAndFeel(new TempUIThemeBasedLookAndFeelInfo(theme,
+      lafManager.setCurrentUIThemeLookAndFeel(new TempUIThemeLookAndFeelInfo(theme,
                                                                            editorSchemeFile,
-                                                                           lafManager.getCurrentLookAndFeel()));
+                                                                           lafManager.getCurrentUIThemeLookAndFeel()));
       IconLoader.clearCache();
       lafManager.updateUI();
       return true;
@@ -155,7 +155,7 @@ final class ApplyThemeAction extends DumbAwareAction {
 
   @Override
   public void update(@NotNull AnActionEvent e) {
-    if (LafManager.getInstance().getCurrentLookAndFeel() instanceof TempUIThemeBasedLookAndFeelInfo) {
+    if (LafManager.getInstance().getCurrentUIThemeLookAndFeel() instanceof TempUIThemeLookAndFeelInfo) {
       e.getPresentation().setIcon(AllIcons.Actions.Rerun);
     }
   }

@@ -21,7 +21,7 @@ import com.intellij.history.core.tree.Entry;
 import com.intellij.history.integration.IdeaGateway;
 import com.intellij.openapi.vcs.changes.ContentRevision;
 
-public class DirectoryChangeModel {
+public final class DirectoryChangeModel {
   private final Difference myDiff;
   private final IdeaGateway myGateway;
 

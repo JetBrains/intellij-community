@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package git4idea
 
 import com.intellij.notification.impl.NotificationIdsHolder
@@ -38,7 +38,6 @@ class GitNotificationIdsHolder : NotificationIdsHolder {
       DELETE_BRANCH_ON_MERGE,
       FETCH_ERROR,
       FETCH_SUCCESS,
-      FETCH_CANCELLED,
       FETCH_DETAILS,
       FETCH_RESULT,
       FETCH_RESULT_ERROR,
@@ -84,6 +83,7 @@ class GitNotificationIdsHolder : NotificationIdsHolder {
       REVERT_ABORT_SUCCESS,
       STAGE_COMMIT_ERROR,
       STAGE_COMMIT_SUCCESS,
+      STAGE_OPERATION_FAILED,
       STASH_FAILED,
       STASH_LOCAL_CHANGES_DETECTED,
       TAG_CREATED,
@@ -146,7 +146,6 @@ class GitNotificationIdsHolder : NotificationIdsHolder {
     const val DELETE_BRANCH_ON_MERGE = "git.delete.branch.on.merge"
     const val FETCH_ERROR = "git.fetch.error"
     const val FETCH_SUCCESS = "git.fetch.success"
-    const val FETCH_CANCELLED = "git.fetch.cancelled"
     const val FETCH_DETAILS = "git.fetch.details"
     const val FETCH_RESULT = "git.fetch.result"
     const val FETCH_RESULT_ERROR = "git.fetch.result.error"
@@ -192,6 +191,7 @@ class GitNotificationIdsHolder : NotificationIdsHolder {
     const val REVERT_ABORT_SUCCESS = "git.revert.abort.success"
     const val STAGE_COMMIT_ERROR = "git.stage.commit.error"
     const val STAGE_COMMIT_SUCCESS = "git.stage.commit.successful"
+    const val STAGE_OPERATION_FAILED = "git.stage.operation.error"
     const val STASH_FAILED = "git.stash.failed"
     const val STASH_LOCAL_CHANGES_DETECTED = "git.stash.local.changes.detected"
     const val TAG_CREATED = "git.tag.created"

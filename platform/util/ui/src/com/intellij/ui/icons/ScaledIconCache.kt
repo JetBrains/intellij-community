@@ -4,6 +4,7 @@
 package com.intellij.ui.icons
 
 import com.intellij.openapi.diagnostic.logger
+import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.util.ScalableIcon
 import com.intellij.ui.JreHiDpiUtil
 import com.intellij.ui.scale.DerivedScaleType
@@ -21,6 +22,7 @@ import java.awt.Graphics
 import java.awt.GraphicsConfiguration
 import java.awt.Image
 import java.lang.ref.SoftReference
+import java.util.concurrent.CancellationException
 import javax.swing.Icon
 
 private const val SCALED_ICONS_CACHE_LIMIT = 5
@@ -65,7 +67,24 @@ internal class ScaledIconCache {
   }
 
   private fun loadIcon(host: CachedImageIcon, scaleContext: ScaleContext, cacheKey: Long): Icon? {
-    val image = host.loadImage(scaleContext = scaleContext, isDark = host.isDark) ?: return null
+    val image = try {
+      host.loadImage(scaleContext = scaleContext, isDark = host.isDark) ?: return null
+    }
+    catch (e: CancellationException) {
+      throw e
+    }
+    catch (e: ProcessCanceledException) {
+      throw e
+    }
+    catch (e: Throwable) {
+      logger<ScaledIconCache>().error(e)
+
+      // cache it - don't try to load it again and again
+      val icon = EMPTY_ICON
+      cache.putAndMoveToFirst(cacheKey, SoftReference(icon))
+      return icon
+    }
+
     val icon = ScaledResultIcon(image = image, original = host, objectScale = scaleContext.getScale(ScaleType.OBJ_SCALE).toFloat())
     cache.putAndMoveToFirst(cacheKey, SoftReference(icon))
     if (cache.size > SCALED_ICONS_CACHE_LIMIT) {

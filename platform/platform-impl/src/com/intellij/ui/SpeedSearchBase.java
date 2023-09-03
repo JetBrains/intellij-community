@@ -629,7 +629,7 @@ public abstract class SpeedSearchBase<Comp extends JComponent> extends SpeedSear
     }
   }
 
-  protected class SearchField extends ExtendableTextField {
+  protected final class SearchField extends ExtendableTextField {
     SearchField() {
       setFocusable(false);
       ExtendableTextField.Extension leftExtension = new Extension() {
@@ -945,7 +945,7 @@ public abstract class SpeedSearchBase<Comp extends JComponent> extends SpeedSear
     }
   }
 
-  private class MySearchAction extends DumbAwareAction {
+  private final class MySearchAction extends DumbAwareAction {
     @Override
     public void actionPerformed(@NotNull AnActionEvent e) {
       showPopup();
@@ -962,7 +962,7 @@ public abstract class SpeedSearchBase<Comp extends JComponent> extends SpeedSear
     }
   }
 
-  static class SpeedSearchActionPromoter implements ActionPromoter {
+  static final class SpeedSearchActionPromoter implements ActionPromoter {
     @Override
     public @Nullable List<AnAction> promote(@NotNull List<? extends AnAction> actions, @NotNull DataContext context) {
       return ContainerUtil.sorted(actions, Comparator.comparing(it -> it instanceof SpeedSearchBase<?>.MySearchAction ? 1 : 0));

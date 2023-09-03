@@ -62,6 +62,10 @@ public class UnifiedLocalChangeListDiffViewer extends UnifiedDiffViewer {
 
     myGutterCheckboxMouseMotionListener = new GutterCheckboxMouseMotionListener();
     myGutterCheckboxMouseMotionListener.install();
+
+    for (AnAction action : LocalTrackerDiffUtil.createTrackerShortcutOnlyActions(myTrackerActionProvider)) {
+      DiffUtil.registerAction(action, myPanel);
+    }
   }
 
   @Nullable
@@ -79,7 +83,7 @@ public class UnifiedLocalChangeListDiffViewer extends UnifiedDiffViewer {
   @Override
   protected List<AnAction> createEditorPopupActions() {
     List<AnAction> group = new ArrayList<>(super.createEditorPopupActions());
-    group.addAll(LocalTrackerDiffUtil.createTrackerActions(myTrackerActionProvider));
+    group.addAll(LocalTrackerDiffUtil.createTrackerEditorPopupActions(myTrackerActionProvider));
     return group;
   }
 
@@ -424,7 +428,8 @@ public class UnifiedLocalChangeListDiffViewer extends UnifiedDiffViewer {
         .select(MyUnifiedDiffChange.class)
         .map(it -> new LocalTrackerDiffUtil.LocalTrackerChange(myViewer.transferLineFromOneside(Side.RIGHT, it.getLine1()),
                                                                myViewer.transferLineFromOneside(Side.RIGHT, it.getLine2()),
-                                                               it.getChangelistId()))
+                                                               it.getChangelistId(),
+                                                               it.getExclusionState()))
         .toList();
     }
 

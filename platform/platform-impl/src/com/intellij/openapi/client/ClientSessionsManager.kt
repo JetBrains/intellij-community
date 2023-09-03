@@ -128,35 +128,36 @@ sealed class ClientSessionsManager<T : ClientSession> {
 }
 
 @Suppress("NonDefaultConstructor")
-open class ClientAppSessionsManager(app: Application) : ClientSessionsManager<ClientAppSession>() {
+open class ClientAppSessionsManager(application: Application) : ClientSessionsManager<ClientAppSession>() {
   init {
-    if (app is ApplicationImpl) {
-      @Suppress("LeakingThis")
-      registerSession(app, createLocalSession(app))
-    }
+    @Suppress("LeakingThis")
+    registerLocalSession(application)
   }
 
   /**
    * Used for [ClientId] overriding in JetBrains Client
    */
-  protected open fun createLocalSession(application: ApplicationImpl): ClientAppSessionImpl {
-    return ClientAppSessionImpl(ClientId.localId, ClientType.LOCAL, application)
+  protected open fun registerLocalSession(application: Application) {
+    if (application is ApplicationImpl) {
+      registerSession(application, LocalAppSessionImpl(application))
+    }
   }
 }
 
 open class ClientProjectSessionsManager(project: Project) : ClientSessionsManager<ClientProjectSession>() {
   init {
-    if (project is ProjectImpl) {
-      @Suppress("LeakingThis")
-      registerSession(project, createLocalSession(project))
-    } else if (project.isDefault) {
-      (project.actualComponentManager as? ClientAwareComponentManager)?.let { componentManager ->
-        registerSession(project, ClientProjectSessionImpl(ClientId.localId, ClientType.LOCAL, componentManager, project))
-      }
-    }
+    @Suppress("LeakingThis")
+    registerLocalSession(project)
   }
 
-  protected open fun createLocalSession(project: ProjectImpl): ClientProjectSessionImpl {
-    return ClientProjectSessionImpl(ClientId.localId, ClientType.LOCAL, project)
+  protected open fun registerLocalSession(project: Project) {
+    if (project is ProjectImpl) {
+      registerSession(project, LocalProjectSessionImpl(project))
+    }
+    else if (project.isDefault) {
+      (project.actualComponentManager as? ClientAwareComponentManager)?.let { componentManager ->
+        registerSession(project, LocalProjectSessionImpl(componentManager, project))
+      }
+    }
   }
 }

@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.errorTreeView;
 
 import com.intellij.icons.AllIcons;
@@ -13,7 +13,7 @@ import org.jetbrains.annotations.Nls;
 
 import javax.swing.*;
 
-public class HotfixGroupElement extends GroupingElement {
+public final class HotfixGroupElement extends GroupingElement {
 
   private final Consumer<? super HotfixGate> myHotfix;
   private final @Nls String myFixDescription;
@@ -48,7 +48,7 @@ public class HotfixGroupElement extends GroupingElement {
     myRightTreeCellRenderer = new MyRightRenderer();
   }
 
-  private class MyRightRenderer extends CustomizeColoredTreeCellRenderer {
+  private final class MyRightRenderer extends CustomizeColoredTreeCellRenderer {
     private final HotfixGroupElement.MyRunner myRunner;
 
     MyRightRenderer() {

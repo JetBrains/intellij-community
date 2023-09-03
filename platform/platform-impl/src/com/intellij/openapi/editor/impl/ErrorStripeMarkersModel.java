@@ -225,7 +225,7 @@ final class ErrorStripeMarkersModel {
       return highlighter.isValid() ? highlighter.getAffectedAreaStartOffset() : -1;
     });
 
-  private class HighlighterIterator implements MarkupIterator<RangeHighlighterEx> {
+  private final class HighlighterIterator implements MarkupIterator<RangeHighlighterEx> {
     private final MarkupIterator<ErrorStripeMarkerImpl> myDelegate;
     private final List<ErrorStripeMarkerImpl> myToRemove = new ArrayList<>();
     private RangeHighlighterEx myNext;

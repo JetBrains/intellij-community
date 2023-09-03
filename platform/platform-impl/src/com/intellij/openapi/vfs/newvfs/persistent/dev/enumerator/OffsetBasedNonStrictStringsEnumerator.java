@@ -33,7 +33,7 @@ import static java.nio.charset.StandardCharsets.UTF_8;
  * <p>
  * Not thread safe -- external synchronization needed if used in multithreaded environment
  */
-public class OffsetBasedNonStrictStringsEnumerator implements ScannableDataEnumeratorEx<String>, Forceable, Closeable {
+public final class OffsetBasedNonStrictStringsEnumerator implements ScannableDataEnumeratorEx<String>, Forceable, Closeable {
 
   //RC: I've tested implementation against PersistentStringEnumerator as a baseline, on a list of names
   //    from a project tree:
@@ -324,7 +324,7 @@ public class OffsetBasedNonStrictStringsEnumerator implements ScannableDataEnume
    * gives probabilistically kind-of-MRU (old values are likely die out, fresh values are likely
    * cached), but without usage counters/timestamps.
    */
-  private static class RandomReplacementStringToIntCache {
+  private static final class RandomReplacementStringToIntCache {
 
     public static final int SIZE = CACHE_SIZE;
     public static final int MAX_PROBES = OffsetBasedNonStrictStringsEnumerator.MAX_PROBES;
@@ -369,7 +369,7 @@ public class OffsetBasedNonStrictStringsEnumerator implements ScannableDataEnume
   /**
    * See {@link RandomReplacementStringToIntCache}
    */
-  private static class RandomReplacementIntToStringCache {
+  private static final class RandomReplacementIntToStringCache {
     public static final int SIZE = CACHE_SIZE;
     public static final int MAX_PROBE = MAX_PROBES;
 

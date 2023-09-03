@@ -5,7 +5,7 @@ import org.jetbrains.annotations.NotNull;
 
 import java.awt.*;
 
-public class DefaultCutStrategy implements TextCutStrategy {
+public final class DefaultCutStrategy implements TextCutStrategy {
 
   private static final int MIN_TEXT_LENGTH = 5;
 

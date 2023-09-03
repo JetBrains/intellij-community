@@ -6,11 +6,8 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.indexing.diagnostic.ChangedFilesDuringIndexingStatistics;
 import com.intellij.util.indexing.diagnostic.ProjectDumbIndexingHistoryImpl;
-import com.intellij.util.indexing.diagnostic.ProjectIndexingHistoryImpl;
-import com.intellij.util.indexing.diagnostic.ScanningStatistics;
 import org.jetbrains.annotations.NotNull;
 
-import java.time.Duration;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.concurrent.TimeUnit;
@@ -23,9 +20,7 @@ final class ProjectChangedFilesScanner {
     myProject = project;
   }
 
-  public Collection<VirtualFile> scan(ProjectIndexingHistoryImpl projectIndexingHistory,
-                                      @NotNull ProjectDumbIndexingHistoryImpl projectDumbIndexingHistory,
-                                      String fileSetName) {
+  public Collection<VirtualFile> scan(@NotNull ProjectDumbIndexingHistoryImpl projectDumbIndexingHistory) {
     long refreshedFilesCalcDuration = System.nanoTime();
     Collection<VirtualFile> files = Collections.emptyList();
     try {
@@ -35,14 +30,6 @@ final class ProjectChangedFilesScanner {
     }
     finally {
       refreshedFilesCalcDuration = System.nanoTime() - refreshedFilesCalcDuration;
-      ScanningStatistics scanningStatistics = new ScanningStatistics(fileSetName);
-      scanningStatistics.setNumberOfScannedFiles(files.size());
-      scanningStatistics.setNumberOfFilesForIndexing(files.size());
-      scanningStatistics.setTotalCPUTimeWithPauses(refreshedFilesCalcDuration);
-      scanningStatistics.setNoRootsForRefresh();
-      projectIndexingHistory.addScanningStatistics(scanningStatistics);
-      projectIndexingHistory.setScanFilesDuration(Duration.ofNanos(refreshedFilesCalcDuration));
-
       projectDumbIndexingHistory.setChangedFilesDuringIndexingStatistics(
         new ChangedFilesDuringIndexingStatistics(files.size(), refreshedFilesCalcDuration));
 

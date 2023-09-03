@@ -17,7 +17,7 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 
 public abstract class QuickSwitchSchemeAction extends AnAction implements DumbAware {
-  private final static Condition<? super AnAction> DEFAULT_PRESELECT_ACTION = a -> {
+  private static final Condition<? super AnAction> DEFAULT_PRESELECT_ACTION = a -> {
     return a.getTemplatePresentation().getIcon() != AllIcons.Actions.Forward;
   };
 
@@ -63,8 +63,7 @@ public abstract class QuickSwitchSchemeAction extends AnAction implements DumbAw
     showPopup(e, popup);
   }
 
-  @Nullable
-  protected Condition<? super AnAction> preselectAction() {
+  protected @Nullable Condition<? super AnAction> preselectAction() {
     return DEFAULT_PRESELECT_ACTION;
   }
 
@@ -82,8 +81,7 @@ public abstract class QuickSwitchSchemeAction extends AnAction implements DumbAw
     return JBPopupFactory.ActionSelectionAid.NUMBERING;
   }
 
-  @Nls(capitalization = Nls.Capitalization.Title)
-  protected String getPopupTitle(@NotNull AnActionEvent e) {
+  protected @Nls(capitalization = Nls.Capitalization.Title) String getPopupTitle(@NotNull AnActionEvent e) {
     return e.getPresentation().getText();
   }
 

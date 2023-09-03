@@ -108,7 +108,7 @@ class CheckSelectedCommits :
 class CheckOldCommits : IndexDiagnosticActionBase(VcsLogBundle.messagePointer("vcs.log.index.diagnostic.action.title")) {
 
   override fun update(e: AnActionEvent, logManager: VcsLogManager) {
-    val rootsForIndexing = VcsLogPersistentIndex.getRootsForIndexing(logManager.dataManager.logProviders)
+    val rootsForIndexing = logManager.dataManager.index.indexingRoots
     if (rootsForIndexing.isEmpty()) {
       e.presentation.isEnabledAndVisible = false
       return
@@ -119,7 +119,7 @@ class CheckOldCommits : IndexDiagnosticActionBase(VcsLogBundle.messagePointer("v
   }
 
   override fun getCommitsToCheck(e: AnActionEvent, logManager: VcsLogManager): List<Int> {
-    val indexedRoots = VcsLogPersistentIndex.getRootsForIndexing(logManager.dataManager.logProviders).filter {
+    val indexedRoots = logManager.dataManager.index.indexingRoots.filter {
       logManager.dataManager.index.isIndexed(it)
     }
     if (indexedRoots.isEmpty()) return emptyList()

@@ -2,8 +2,12 @@
 package com.intellij.platform.bootstrap
 
 import com.intellij.ide.plugins.*
-import com.intellij.platform.runtime.repository.ProductModules
+import com.intellij.openapi.diagnostic.logger
 import com.intellij.platform.runtime.repository.RuntimeModuleGroup
+import com.intellij.platform.runtime.repository.RuntimeModuleId
+import com.intellij.platform.runtime.repository.RuntimeModuleRepository
+import com.intellij.platform.runtime.repository.serialization.RuntimeModuleRepositorySerialization
+import com.intellij.util.lang.PathClassLoader
 import com.intellij.util.lang.ZipFilePool
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Deferred
@@ -11,7 +15,30 @@ import kotlinx.coroutines.async
 import java.nio.file.Files
 import java.nio.file.Path
 
-class ModuleBasedProductLoadingStrategy(private val productModules: ProductModules) : ProductLoadingStrategy() {
+class ModuleBasedProductLoadingStrategy(private val moduleRepository: RuntimeModuleRepository) : ProductLoadingStrategy() {
+  private val productModules by lazy {
+    val rootModuleName = System.getProperty(PLATFORM_ROOT_MODULE_PROPERTY)
+    if (rootModuleName == null) {
+      error("'$PLATFORM_ROOT_MODULE_PROPERTY' system property is not specified")
+    }
+    val rootModule = moduleRepository.getModule(RuntimeModuleId.module(rootModuleName))
+    val productModulesPath = "META-INF/$rootModuleName/product-modules.xml"
+    val moduleGroupStream = rootModule.readFile(productModulesPath)
+    if (moduleGroupStream == null) {
+      error("$productModulesPath is not found in '$rootModuleName' module")
+    }
+    RuntimeModuleRepositorySerialization.loadProductModules(moduleGroupStream, productModulesPath, moduleRepository)
+  }
+  
+  override fun addMainModuleGroupToClassPath(bootstrapClassLoader: ClassLoader) {
+    val mainGroupClassPath = productModules.mainModuleGroup.includedModules.flatMapTo(LinkedHashSet()) { 
+      it.moduleDescriptor.resourceRootPaths 
+    }
+    val classPath = (bootstrapClassLoader as PathClassLoader).classPath
+    logger<ModuleBasedProductLoadingStrategy>().info("New classpath roots:\n${(mainGroupClassPath - classPath.baseUrls.toSet()).joinToString("\n")}")
+    classPath.addFiles(mainGroupClassPath)
+  }
+
   override fun loadBundledPluginDescriptors(scope: CoroutineScope,
                                             bundledPluginDir: Path?,
                                             isUnitTestMode: Boolean,
@@ -58,3 +85,5 @@ class ModuleBasedProductLoadingStrategy(private val productModules: ProductModul
     }
   }
 }
+
+private const val PLATFORM_ROOT_MODULE_PROPERTY = "intellij.platform.root.module"

@@ -63,6 +63,8 @@ public interface MutableEntityStorageInstrumentation : MutableEntityStorage, Ent
    * @param child The WorkspaceEntity to be added as a child.
    */
   public fun addChild(connectionId: ConnectionId, parent: WorkspaceEntity?, child: WorkspaceEntity)
+
+  public fun toSnapshot(previousSnapshot: EntityStorage, changes: Map<Class<*>, List<EntityChange<*>>>): EntityStorageSnapshot
 }
 
 

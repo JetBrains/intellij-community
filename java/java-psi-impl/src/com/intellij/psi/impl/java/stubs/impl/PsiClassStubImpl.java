@@ -25,6 +25,7 @@ public class PsiClassStubImpl<T extends PsiClass> extends StubBase<T> implements
   private static final int LOCAL_CLASS_INNER = 0x200;
   private static final int HAS_DOC_COMMENT = 0x400;
   private static final int RECORD = 0x800;
+  private static final int UNNAMED = 0x1000;
 
   private final String myQualifiedName;
   private final String myName;
@@ -90,12 +91,21 @@ public class PsiClassStubImpl<T extends PsiClass> extends StubBase<T> implements
   }
 
   @Override
+  public boolean isUnnamed() {
+    return BitUtil.isSet(myFlags, UNNAMED);
+  }
+
+  @Override
   public boolean isEnumConstantInitializer() {
     return isEnumConstInitializer(myFlags);
   }
 
   public static boolean isEnumConstInitializer(final short flags) {
     return BitUtil.isSet(flags, ENUM_CONSTANT_INITIALIZER);
+  }
+
+  public static boolean isUnnamed(final short flags) {
+    return BitUtil.isSet(flags, UNNAMED);
   }
 
   @Override
@@ -157,6 +167,7 @@ public class PsiClassStubImpl<T extends PsiClass> extends StubBase<T> implements
                      anonymousInner,
                      localClassInner,
                      hasDocComment,
+                     false,
                      false);
   }
 
@@ -171,7 +182,8 @@ public class PsiClassStubImpl<T extends PsiClass> extends StubBase<T> implements
                                 boolean anonymousInner,
                                 boolean localClassInner,
                                 boolean hasDocComment,
-                                boolean isRecord) {
+                                boolean isRecord,
+                                boolean isUnnamed) {
     short flags = 0;
     if (isDeprecated) flags |= DEPRECATED;
     if (isInterface) flags |= INTERFACE;
@@ -185,6 +197,7 @@ public class PsiClassStubImpl<T extends PsiClass> extends StubBase<T> implements
     if (localClassInner) flags |= LOCAL_CLASS_INNER;
     if (hasDocComment) flags |= HAS_DOC_COMMENT;
     if (isRecord) flags |= RECORD;
+    if (isUnnamed) flags |= UNNAMED;
     return flags;
   }
 

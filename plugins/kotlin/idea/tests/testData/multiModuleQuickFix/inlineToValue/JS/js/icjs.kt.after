@@ -1,3 +1,4 @@
 // "Replace with 'value'" "true"
+// IGNORE_K2
 
 value class IC1(val i: Int)

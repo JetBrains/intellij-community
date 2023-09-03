@@ -117,7 +117,7 @@ public abstract class UndoRedoAction extends DumbAwareAction implements LightEdi
 
   protected abstract Pair<@NlsActions.ActionText String, @NlsActions.ActionDescription String> getActionNameAndDescription(FileEditor editor, UndoManager undoManager);
 
-  private static class SwingUndoManagerWrapper extends UndoManager{
+  private static final class SwingUndoManagerWrapper extends UndoManager{
     private final javax.swing.undo.UndoManager mySwingUndoManager;
 
     static @Nullable UndoManager fromContext(DataContext dataContext) {

@@ -23,8 +23,18 @@ object TerminalUi {
   // todo: create color keys
   val terminalBackground: Color
     get() = JBColor(0xFFFFFF, 0x1E1F22)
-  val blockBackground: Color
+  val blockBackgroundStart: Color
     get() = JBColor(0xF0F2F5, 0x2B2D30)
+  val blockBackgroundEnd: Color
+    get() = JBColor(0xFAFAFA, 0x212329)
+  val selectedBlockBackground: Color
+    get() = JBColor(0xEDF3FF, 0x25324D)
+  val selectedBlockStrokeColor: Color
+    get() = JBColor(0x4682FA, 0x3574F0)
+  val errorBlockBackground: Color
+    get() = JBColor(0xFFF2F3, 0x402929)
+  val errorBlockStrokeColor: Color
+    get() = JBColor(0xED99A1, 0x9C4E4E)
   val outputForeground: Color
     get() = JBColor(0x080808, 0xBDC0C9)
   val promptForeground: Color

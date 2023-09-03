@@ -5,6 +5,7 @@ import com.intellij.openapi.extensions.ExtensionPointListener;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.extensions.PluginDescriptor;
 import com.intellij.util.containers.ContainerUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
@@ -25,7 +26,7 @@ public abstract class MetaLanguage extends Language {
       public void extensionRemoved(@NotNull MetaLanguage metaLanguage, @NotNull PluginDescriptor pluginDescriptor) {
         if (MetaLanguage.this == metaLanguage) {
           for (Language matchingLanguage : metaLanguage.getMatchingLanguages()) {
-            LanguageUtil.clearMatchingMetaLanguages(matchingLanguage);
+            LanguageUtil.clearMatchingMetaLanguagesCache(matchingLanguage);
           }
           metaLanguage.unregisterLanguage(pluginDescriptor);
         }
@@ -46,6 +47,13 @@ public abstract class MetaLanguage extends Language {
    * Returns the list of all languages matching this meta-language.
    */
   public @NotNull Collection<Language> getMatchingLanguages() {
-    return ContainerUtil.filter(Language.getRegisteredLanguages(), this::matchesLanguage);
+    return ContainerUtil.filter(Language.getRegisteredLanguages(), language -> matchesLanguage(language));
+  }
+
+  @ApiStatus.Internal
+  public static void clearAllMatchingMetaLanguagesCache() {
+    for (Language language : Language.getRegisteredLanguages()) {
+      LanguageUtil.clearMatchingMetaLanguagesCache(language);
+    }
   }
 }

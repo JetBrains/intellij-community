@@ -289,6 +289,9 @@ abstract class KotlinLightCodeInsightFixtureTestCase : KotlinLightCodeInsightFix
                 InTextDirectivesUtils.isDirectiveDefined(fileText, "JS_WITH_STDLIB") ->
                     KotlinStdJSWithStdLibProjectDescriptor
 
+                InTextDirectivesUtils.isDirectiveDefined(fileText, "JS_WITH_DOM_API_COMPAT") ->
+                    KotlinStdJSWithDomApiCompatProjectDescriptor
+
                 InTextDirectivesUtils.isDirectiveDefined(fileText, "JS") ->
                     KotlinStdJSProjectDescriptor
 

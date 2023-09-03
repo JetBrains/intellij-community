@@ -108,7 +108,7 @@ internal class GHPRFileEditorComponentFactory(private val project: Project,
       if (PlatformDataKeys.UI_DISPOSABLE.`is`(it)) uiDisposable else null
     })
 
-    val header = GHPRTitleComponent.create(detailsModel).let {
+    val header = GHPRTitleComponentFactory.create(project, detailsModel).let {
       CollaborationToolsUIUtil.wrapWithLimitedSize(it, CodeReviewChatItemUIUtil.TEXT_CONTENT_WIDTH)
     }.apply {
       border = JBUI.Borders.empty(CodeReviewTimelineUIUtil.HEADER_VERT_PADDING, CodeReviewTimelineUIUtil.ITEM_HOR_PADDING)

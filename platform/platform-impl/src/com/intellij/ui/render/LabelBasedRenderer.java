@@ -13,7 +13,7 @@ import java.awt.*;
 
 public class LabelBasedRenderer extends JLabel {
 
-  public static class List<E> extends LabelBasedRenderer implements ListCellRenderer<E> {
+  public static final class List<E> extends LabelBasedRenderer implements ListCellRenderer<E> {
     private static final Border EMPTY = JBUI.Borders.empty(1); // see DefaultListCellRenderer.getNoFocusBorder
 
     @Override

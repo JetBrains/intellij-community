@@ -34,6 +34,11 @@ abstract class ProductLoadingStrategy {
       }
   }
 
+  /**
+   * Adds roots of all modules from the main module group and their dependencies to the classpath of [bootstrapClassLoader].
+   */
+  abstract fun addMainModuleGroupToClassPath(bootstrapClassLoader: ClassLoader)
+
   abstract fun loadBundledPluginDescriptors(scope: CoroutineScope,
                                             bundledPluginDir: Path?,
                                             isUnitTestMode: Boolean,
@@ -42,6 +47,9 @@ abstract class ProductLoadingStrategy {
 }
 
 private class PathBasedProductLoadingStrategy : ProductLoadingStrategy() {
+  override fun addMainModuleGroupToClassPath(bootstrapClassLoader: ClassLoader) {
+  }
+
   override fun loadBundledPluginDescriptors(scope: CoroutineScope,
                                             bundledPluginDir: Path?,
                                             isUnitTestMode: Boolean,

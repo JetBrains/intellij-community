@@ -14,7 +14,7 @@ import org.jetbrains.annotations.NotNull;
 
 // The only purpose of this action is to serve as placeholder for assigning keyboard shortcuts.
 // For actual tab switching code, see EditorComposite constructor.
-public class SelectNextEditorTabAction extends AnAction implements DumbAware, ActionRemoteBehaviorSpecification.Frontend {
+public final class SelectNextEditorTabAction extends AnAction implements DumbAware, ActionRemoteBehaviorSpecification.Frontend {
   @Override
   public void actionPerformed(final @NotNull AnActionEvent e) {
   }

@@ -61,6 +61,7 @@ import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.progress.util.ProgressIndicatorBase;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.DumbService;
+import com.intellij.openapi.project.DumbModeBlockedFunctionality;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.Balloon;
 import com.intellij.openapi.util.*;
@@ -94,6 +95,7 @@ import it.unimi.dsi.fastutil.objects.ReferenceOpenHashSet;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.VisibleForTesting;
 
 import javax.accessibility.Accessible;
 import javax.accessibility.AccessibleContext;
@@ -1090,7 +1092,7 @@ final class EditorGutterComponentImpl extends EditorGutterComponentEx implements
       }
     });
 
-    int minWidth = areIconsShown() ? scaleWidth(myStartIconAreaWidth) : 0;
+    int minWidth = areIconsShown() ? EditorUIUtil.scaleWidth(myStartIconAreaWidth, myEditor) : 0;
     myIconsAreaWidth = canShrink ? minWidth : Math.max(myIconsAreaWidth, minWidth);
 
     for (Int2ObjectMap.Entry<List<GutterMark>> entry : processGutterRenderers()) {
@@ -1156,6 +1158,22 @@ final class EditorGutterComponentImpl extends EditorGutterComponentEx implements
       buildGutterRenderersCache();
     }
     return Int2ObjectMaps.fastIterable(myLineToGutterRenderers);
+  }
+
+  @VisibleForTesting
+  public Collection<GutterIconWithLocation> getLineGutterMarks() {
+    List<GutterIconWithLocation> list = new ArrayList<>();
+    for (Int2ObjectMap.Entry<List<GutterMark>> entry : processGutterRenderers()) {
+      List<GutterMark> marks = entry.getValue();
+      int line = entry.getIntKey();
+      for (GutterMark mark : marks) {
+        if (mark instanceof GutterIconRenderer) {
+          Point markLocation = getCenterPoint((GutterIconRenderer)mark);
+          list.add(new GutterIconWithLocation(mark, line, markLocation));
+        }
+      }
+    }
+    return list;
   }
 
   private boolean isHighlighterVisible(RangeHighlighter highlighter) {
@@ -1331,23 +1349,8 @@ final class EditorGutterComponentImpl extends EditorGutterComponentEx implements
     void process(int x, int y, @NotNull GutterMark renderer);
   }
 
-  private float getEditorScaleFactor() {
-    if (Registry.is("editor.scale.gutter.icons")) {
-      float scale = myEditor.getScale();
-      if (Math.abs(1f - scale) > 0.10f) {
-        return scale;
-      }
-    }
-    return 1f;
-  }
-
   Icon scaleIcon(Icon icon) {
-    float scale = getEditorScaleFactor();
-    return scale == 1 ? icon : IconUtil.scale(icon, this, scale);
-  }
-
-  private int scaleWidth(int width) {
-    return (int)(getEditorScaleFactor() * width);
+    return EditorUIUtil.scaleIcon(icon, myEditor);
   }
 
   void processIconsRow(int line, @NotNull List<? extends GutterMark> row, @NotNull LineGutterIconRendererProcessor processor) {
@@ -1870,7 +1873,7 @@ final class EditorGutterComponentImpl extends EditorGutterComponentEx implements
   }
 
   int getGapAfterIconsArea() {
-    return isRealEditor() && areIconsShown() ? ExperimentalUI.isNewUI() ? scaleWidth(2) : getGapBetweenAreas() : 0;
+    return isRealEditor() && areIconsShown() ? ExperimentalUI.isNewUI() ? EditorUIUtil.scaleWidth(2, myEditor) : getGapBetweenAreas() : 0;
   }
 
   private boolean isMirrored() {
@@ -2273,8 +2276,9 @@ final class EditorGutterComponentImpl extends EditorGutterComponentEx implements
   private void notifyNotDumbAware() {
     Project project = myEditor.getProject();
     if (project != null) {
-      DumbService.getInstance(project).showDumbModeNotification(
-        IdeBundle.message("message.this.functionality.is.not.available.during.indexing"));
+      DumbService.getInstance(project).showDumbModeNotificationForFunctionality(
+        IdeBundle.message("message.this.functionality.is.not.available.during.indexing"),
+        DumbModeBlockedFunctionality.EditorGutterComponent);
     }
   }
 
@@ -2369,7 +2373,7 @@ final class EditorGutterComponentImpl extends EditorGutterComponentEx implements
     updateSize();
   }
 
-  private class CloseAnnotationsAction extends DumbAwareAction {
+  private final class CloseAnnotationsAction extends DumbAwareAction {
     CloseAnnotationsAction() {
       super(EditorBundle.messagePointer("close.editor.annotations.action.name"));
     }
@@ -2842,7 +2846,7 @@ final class EditorGutterComponentImpl extends EditorGutterComponentEx implements
     return null;
   }
 
-  private class LineNumbersRepainter implements CaretListener {
+  private final class LineNumbersRepainter implements CaretListener {
     @Override
     public void caretPositionChanged(@NotNull CaretEvent event) {
       if (event.getOldPosition().line != event.getNewPosition().line &&

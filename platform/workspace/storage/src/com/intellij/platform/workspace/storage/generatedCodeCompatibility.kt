@@ -10,7 +10,7 @@ public object CodeGeneratorVersions {
   /** these constants are accessed from WorkspaceImplObsoleteInspection */
   private const val API_VERSION_INTERNAL = 2
   private const val IMPL_MAJOR_VERSION_INTERNAL = 2
-  private const val IMPL_MINOR_VERSION_INTERNAL = 0
+  private const val IMPL_MINOR_VERSION_INTERNAL = 1
 
   @set:TestOnly
   public var API_VERSION: Int = API_VERSION_INTERNAL

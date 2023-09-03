@@ -246,7 +246,7 @@ public class JBTreeTable extends JComponent implements TreePathBackgroundSupplie
     return isNeedToRepaintRow;
   }
 
-  private class SelectionSupport extends MouseAdapter implements TreeSelectionListener, ListSelectionListener {
+  private final class SelectionSupport extends MouseAdapter implements TreeSelectionListener, ListSelectionListener {
 
     @Override
     public void mouseClicked(MouseEvent e) {
@@ -374,7 +374,7 @@ public class JBTreeTable extends JComponent implements TreePathBackgroundSupplie
     }
   }
 
-  private class MyTree extends Tree implements PlainSelectionTree {
+  private final class MyTree extends Tree implements PlainSelectionTree {
     @Override
     public void repaint(long tm, int x, int y, int width, int height) {
       if (!addTreeTableRowDirtyRegion(this, tm, x, y, width, height)) {

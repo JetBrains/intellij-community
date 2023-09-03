@@ -448,7 +448,7 @@ public class FontEditorPreview implements PreviewPanel{
     }
   }
 
-  private static class RangeHighlightingData {
+  private static final class RangeHighlightingData {
     private TextRange textRange;
     private final boolean isBold;
 

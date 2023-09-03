@@ -337,20 +337,7 @@ class IdeEventQueue private constructor() : EventQueue() {
       val runnable = InvocationUtil.extractRunnable(event)
       val runnableClass = runnable?.javaClass ?: Runnable::class.java
       val processEventRunnable = Runnable {
-        val app = ApplicationManager.getApplication()
-        val progressManager = if (app != null && !app.isDisposed) {
-          try {
-            ProgressManager.getInstance()
-          }
-          catch (ex: RuntimeException) {
-            Logs.LOG.warn("app services aren't yet initialized", ex)
-            null
-          }
-        }
-        else {
-          null
-        }
-
+        val progressManager = ProgressManager.getInstanceOrNull()
         try {
           runCustomProcessors(finalEvent, preProcessors)
           performActivity(finalEvent) {
@@ -579,8 +566,8 @@ class IdeEventQueue private constructor() : EventQueue() {
     }
 
     when {
-      e is MouseEvent -> dispatchMouseEvent(e)
-      e is KeyEvent -> dispatchKeyEvent(e)
+      e is MouseEvent -> rwLockHolder.runWithImplicitRead { dispatchMouseEvent(e) }
+      e is KeyEvent -> rwLockHolder.runWithImplicitRead { dispatchKeyEvent(e) }
       appIsLoaded() -> {
         val app = ApplicationManagerEx.getApplicationEx()
         if (e is ComponentEvent) {
@@ -588,9 +575,9 @@ class IdeEventQueue private constructor() : EventQueue() {
             (app.serviceIfCreated<WindowManager>() as? WindowManagerEx)?.dispatchComponentEvent(e)
           }
         }
-        app.runWithoutImplicitRead { defaultDispatchEvent(e) }
+        rwLockHolder.runWithoutImplicitRead { defaultDispatchEvent(e) }
       }
-      else -> defaultDispatchEvent(e)
+      else -> rwLockHolder.runWithoutImplicitRead { defaultDispatchEvent(e) }
     }
   }
 

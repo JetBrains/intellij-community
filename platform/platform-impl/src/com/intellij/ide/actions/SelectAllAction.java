@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.actions;
 
 import com.intellij.ide.IdeBundle;
@@ -15,12 +15,12 @@ import com.intellij.openapi.project.DumbAware;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public class SelectAllAction extends TextComponentEditorAction implements DumbAware {
+public final class SelectAllAction extends TextComponentEditorAction implements DumbAware {
   public SelectAllAction() {
     super(new Handler());
   }
 
-  private static class Handler extends EditorActionHandler {
+  private static final class Handler extends EditorActionHandler {
     @Override
     public void doExecute(@NotNull Editor editor, @Nullable Caret caret, DataContext dataContext) {
       CommandProcessor processor = CommandProcessor.getInstance();

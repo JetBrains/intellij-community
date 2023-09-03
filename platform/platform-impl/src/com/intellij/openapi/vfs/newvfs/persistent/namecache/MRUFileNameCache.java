@@ -143,7 +143,7 @@ public final class MRUFileNameCache implements FileNameCache {
     }, queriesCounter, totalMissesCounter);
   }
 
-  private static class CacheEntryNameWithId {
+  private static final class CacheEntryNameWithId {
     public final int nameId;
     public final String name;
 

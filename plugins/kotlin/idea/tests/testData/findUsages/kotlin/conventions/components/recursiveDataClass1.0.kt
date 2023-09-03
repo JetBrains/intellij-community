@@ -11,4 +11,4 @@ fun f(a: A) {
 
 
 
-// IGNORE_FIR_LOG
+// IGNORE_K2_LOG

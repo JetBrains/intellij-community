@@ -4,7 +4,6 @@ package com.intellij.util.indexing
 import com.intellij.ide.actions.cache.*
 import com.intellij.lang.LangBundle
 import com.intellij.openapi.diagnostic.logger
-import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.util.ProgressIndicatorUtils
 import com.intellij.openapi.project.FilesScanningTask
 import com.intellij.openapi.vfs.VirtualFile
@@ -72,10 +71,11 @@ class RescanIndexesAction : RecoveryAction {
         StubTreeBuilder.buildStubTree(FileContentImpl.createByFile(file))
       }.getOrNull() != null
 
-      override fun performScanningAndIndexing(indicator: ProgressIndicator): ProjectScanningHistory {
+      override fun performScanningAndIndexing(indicator: CheckCancelOnlyProgressIndicator,
+                                              progressReporter: IndexingProgressReporter): ProjectScanningHistory {
         try {
           IndexingFlag.cleanupProcessedFlag()
-          val history = super.performScanningAndIndexing(indicator)
+          val history = super.performScanningAndIndexing(indicator, progressReporter)
           historyFuture.complete(history)
           return history
         }

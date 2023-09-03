@@ -1,18 +1,18 @@
 <component name="libraryTable">
   <library name="org.codehaus.groovy:groovy-templates" type="repository">
-    <properties include-transitive-deps="false" maven-id="org.codehaus.groovy:groovy-templates:3.0.13">
+    <properties include-transitive-deps="false" maven-id="org.codehaus.groovy:groovy-templates:3.0.19">
       <verification>
-        <artifact url="file://$MAVEN_REPOSITORY$/org/codehaus/groovy/groovy-templates/3.0.13/groovy-templates-3.0.13.jar">
-          <sha256sum>abfb7190631a35fc96e023bfcd4658f3f7d4ae76c488ef1b972a54b29809ddc2</sha256sum>
+        <artifact url="file://$MAVEN_REPOSITORY$/org/codehaus/groovy/groovy-templates/3.0.19/groovy-templates-3.0.19.jar">
+          <sha256sum>5d094c043aa9beaa090b75c6ab4e9bbb07de0d7b3e39f292f12c50ddae0f8f3d</sha256sum>
         </artifact>
       </verification>
     </properties>
     <CLASSES>
-      <root url="jar://$MAVEN_REPOSITORY$/org/codehaus/groovy/groovy-templates/3.0.13/groovy-templates-3.0.13.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/codehaus/groovy/groovy-templates/3.0.19/groovy-templates-3.0.19.jar!/" />
     </CLASSES>
     <JAVADOC />
     <SOURCES>
-      <root url="jar://$MAVEN_REPOSITORY$/org/codehaus/groovy/groovy-templates/3.0.13/groovy-templates-3.0.13-sources.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/codehaus/groovy/groovy-templates/3.0.19/groovy-templates-3.0.19-sources.jar!/" />
     </SOURCES>
   </library>
 </component>

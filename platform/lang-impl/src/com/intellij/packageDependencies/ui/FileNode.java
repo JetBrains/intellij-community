@@ -11,6 +11,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
 import com.intellij.util.IconUtil;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -21,11 +22,23 @@ import java.util.Set;
 public final class FileNode extends PackageDependenciesNode implements Comparable<FileNode>{
   private final VirtualFile myVFile;
   private final boolean myMarked;
+  private Icon myIcon;
 
   public FileNode(VirtualFile file, Project project, boolean marked) {
     super(project);
     myVFile = file;
     myMarked = marked;
+  }
+
+  @Override
+  public void update() {
+    super.update();
+    myIcon = doGetIcon();
+  }
+
+  @NotNull
+  private Icon doGetIcon() {
+    return IconUtil.getIcon(myVFile, Iconable.ICON_FLAG_VISIBILITY | Iconable.ICON_FLAG_READ_STATUS, myProject);
   }
 
   @Override
@@ -53,7 +66,7 @@ public final class FileNode extends PackageDependenciesNode implements Comparabl
 
   @Override
   public Icon getIcon() {
-    return IconUtil.getIcon(myVFile, Iconable.ICON_FLAG_VISIBILITY | Iconable.ICON_FLAG_READ_STATUS, myProject);
+    return myIcon;
   }
 
   @Override

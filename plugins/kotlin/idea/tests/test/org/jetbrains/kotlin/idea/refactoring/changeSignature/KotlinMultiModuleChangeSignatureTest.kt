@@ -3,6 +3,7 @@
 package org.jetbrains.kotlin.idea.refactoring.changeSignature
 
 import com.intellij.psi.PsiDocumentManager
+import org.jetbrains.kotlin.builtins.DefaultBuiltIns
 import org.jetbrains.kotlin.idea.caches.resolve.analyze
 import org.jetbrains.kotlin.idea.core.util.toPsiFile
 import org.jetbrains.kotlin.idea.test.IDEA_TEST_DATA_DIR
@@ -17,6 +18,10 @@ import org.junit.runner.RunWith
 
 @RunWith(JUnit38ClassRunner::class)
 class KotlinMultiModuleChangeSignatureTest : KotlinMultiFileTestCase() {
+    companion object {
+        internal val BUILT_INS = DefaultBuiltIns.Instance
+    }
+    
     init {
         isMultiModule = true
     }
@@ -68,30 +73,30 @@ class KotlinMultiModuleChangeSignatureTest : KotlinMultiFileTestCase() {
     }
 
     fun testHeaderPrimaryConstructorNoParams() = doTest("Common/src/test/test.kt") {
-        addParameter("n", KotlinChangeSignatureTest.BUILT_INS.intType, "1")
+        addParameter("n", BUILT_INS.intType, "1")
     }
 
     fun testHeaderPrimaryConstructor() = doTest("Common/src/test/test.kt") {
-        addParameter("b", KotlinChangeSignatureTest.BUILT_INS.booleanType, "false")
+        addParameter("b", BUILT_INS.booleanType, "false")
     }
 
     fun testHeaderSecondaryConstructor() = doTest("Common/src/test/test.kt") {
-        addParameter("b", KotlinChangeSignatureTest.BUILT_INS.booleanType, "false")
+        addParameter("b", BUILT_INS.booleanType, "false")
     }
 
     fun testImplPrimaryConstructorNoParams() = doTest("JVM/src/test/test.kt") {
-        addParameter("n", KotlinChangeSignatureTest.BUILT_INS.intType, "1")
+        addParameter("n", BUILT_INS.intType, "1")
     }
 
     fun testImplPrimaryConstructor() = doTest("JVM/src/test/test.kt") {
-        addParameter("b", KotlinChangeSignatureTest.BUILT_INS.booleanType, "false")
+        addParameter("b", BUILT_INS.booleanType, "false")
     }
 
     fun testImplSecondaryConstructor() = doTest("JS/src/test/test.kt") {
-        addParameter("b", KotlinChangeSignatureTest.BUILT_INS.booleanType, "false")
+        addParameter("b", BUILT_INS.booleanType, "false")
     }
 
     fun testSuspendImpls() = doTest("Common/src/test/test.kt") {
-        addParameter("n", KotlinChangeSignatureTest.BUILT_INS.intType, "0")
+        addParameter("n", BUILT_INS.intType, "0")
     }
 }

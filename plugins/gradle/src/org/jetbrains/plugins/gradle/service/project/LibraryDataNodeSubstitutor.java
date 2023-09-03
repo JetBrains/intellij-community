@@ -14,16 +14,15 @@ import org.gradle.util.GradleVersion;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.plugins.gradle.model.ExternalSourceDirectorySet;
 import org.jetbrains.plugins.gradle.model.ExternalSourceSet;
 import org.jetbrains.plugins.gradle.model.data.GradleSourceSetData;
+import org.jetbrains.plugins.gradle.settings.GradleExecutionSettings;
 
 import java.io.File;
 import java.util.*;
 
-import static com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil.find;
-import static org.jetbrains.plugins.gradle.service.project.GradleProjectResolverUtil.attachGradleSdkSources;
-import static org.jetbrains.plugins.gradle.service.project.GradleProjectResolverUtil.attachSourcesAndJavadocFromGradleCacheIfNeeded;
+import static com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil.findChild;
+import static org.jetbrains.plugins.gradle.service.project.GradleProjectResolverUtil.*;
 
 /**
  * {@link LibraryDataNodeSubstitutor} provides the facility to replace library dependencies with the related module dependencies
@@ -37,7 +36,7 @@ public class LibraryDataNodeSubstitutor {
   private @Nullable final GradleVersion gradleVersion;
   private @NotNull final Map<String, Pair<DataNode<GradleSourceSetData>, ExternalSourceSet>> sourceSetMap;
   private @NotNull final Map<String, Pair<String, ExternalSystemSourceType>> moduleOutputsMap;
-  private @NotNull final Map<String, String> artifactsMap;
+  private @NotNull final ArtifactMappingService artifactsMap;
 
   public LibraryDataNodeSubstitutor(@NotNull ProjectResolverContext context,
                                     @Nullable File gradleUserHomeDir,
@@ -45,7 +44,7 @@ public class LibraryDataNodeSubstitutor {
                                     @Nullable GradleVersion gradleVersion,
                                     @NotNull Map<String, Pair<DataNode<GradleSourceSetData>, ExternalSourceSet>> sourceSetMap,
                                     @NotNull Map<String, Pair<String, ExternalSystemSourceType>> moduleOutputsMap,
-                                    @NotNull Map<String, String> artifactsMap) {
+                                    @NotNull ArtifactMappingService artifactsMap) {
     resolverContext = context;
     this.gradleUserHomeDir = gradleUserHomeDir;
     this.gradleHomeDir = gradleHomeDir;
@@ -63,6 +62,7 @@ public class LibraryDataNodeSubstitutor {
     final LibraryData libraryData = libraryDependencyData.getTarget();
     final Set<String> libraryPaths = libraryData.getPaths(LibraryPathType.BINARY);
     if (libraryPaths.isEmpty()) return;
+
     if (StringUtil.isNotEmpty(libraryData.getExternalName())) {
       if (gradleUserHomeDir != null) {
         attachSourcesAndJavadocFromGradleCacheIfNeeded(resolverContext, gradleUserHomeDir, libraryData);
@@ -70,121 +70,33 @@ public class LibraryDataNodeSubstitutor {
       return;
     }
 
-    boolean shouldKeepTransitiveDependencies = libraryPaths.size() > 0 && !libraryDependencyDataNode.getChildren().isEmpty();
+    boolean shouldKeepTransitiveDependencies = !libraryPaths.isEmpty() && !libraryDependencyDataNode.getChildren().isEmpty();
+    Collection<AbstractDependencyData<?>> dependenciesToShift = collectDependenciesOrderedAfter(libraryNodeParent, libraryDependencyData.getOrder());
 
+    int classpathOrderShift = -1;
     final ArrayDeque<String> unprocessedPaths = new ArrayDeque<>(libraryPaths);
     while (!unprocessedPaths.isEmpty()) {
       final String path = unprocessedPaths.remove();
-
-      Set<String> targetModuleOutputPaths = null;
-
-      final String moduleId;
-      final Pair<String, ExternalSystemSourceType> sourceTypePair = moduleOutputsMap.get(path);
-      if (sourceTypePair == null) {
-        moduleId = artifactsMap.get(path);
-        if (moduleId != null) {
-          targetModuleOutputPaths = Set.of(path);
-        }
-      }
-      else {
-        moduleId = sourceTypePair.first;
-      }
-      if (moduleId == null) continue;
-
-      final Pair<DataNode<GradleSourceSetData>, ExternalSourceSet> pair = sourceSetMap.get(moduleId);
-      if (pair == null) {
-        continue;
-      }
-
-      final ModuleData moduleData = pair.first.getData();
-      if (targetModuleOutputPaths == null) {
-        final Set<String> compileSet = new HashSet<>();
-        MultiMap<ExternalSystemSourceType, String> gradleOutputs = pair.first.getUserData(GradleProjectResolver.GRADLE_OUTPUTS);
-        if (gradleOutputs != null) {
-          ContainerUtil.addAllNotNull(compileSet,
-                                      gradleOutputs.get(ExternalSystemSourceType.SOURCE));
-          ContainerUtil.addAllNotNull(compileSet,
-                                      gradleOutputs.get(ExternalSystemSourceType.RESOURCE));
-        }
-        if (!compileSet.isEmpty() && ContainerUtil.intersects(libraryPaths, compileSet)) {
-          targetModuleOutputPaths = compileSet;
-        }
-        else {
-          final Set<String> testSet = new HashSet<>();
-          if (gradleOutputs != null) {
-            ContainerUtil.addAllNotNull(testSet,
-                                        gradleOutputs.get(ExternalSystemSourceType.TEST));
-            ContainerUtil.addAllNotNull(testSet,
-                                        gradleOutputs.get(ExternalSystemSourceType.TEST_RESOURCE));
-          }
-          if (!testSet.isEmpty() && ContainerUtil.intersects(libraryPaths, testSet)) {
-            targetModuleOutputPaths = testSet;
-          }
+      Collection<ModuleLookupResult> lookupResults = lookupTargetModule(path);
+      for (ModuleLookupResult result : lookupResults) {
+        if (createAndMaybeAttachNewModuleDependency(libraryDependencyDataNode, result, libraryPaths,
+                                                    shouldKeepTransitiveDependencies,
+                                                    unprocessedPaths, classpathOrderShift, path)) {
+          classpathOrderShift++;
         }
       }
 
-      final ModuleData ownerModule = libraryDependencyData.getOwnerModule();
-      final ModuleDependencyData moduleDependencyData = new ModuleDependencyData(ownerModule, moduleData);
-      moduleDependencyData.setScope(libraryDependencyData.getScope());
-      if ("test".equals(pair.second.getName())) {
-        moduleDependencyData.setProductionOnTestDependency(true);
+      ModuleMappingInfo mapping = resolverContext.getArtifactsMap().getModuleMapping(path);
+      if (!lookupResults.isEmpty() && (mapping == null || !mapping.getHasNonModulesContent())) {
+        libraryPaths.remove(path);
       }
-      final DataNode<ModuleDependencyData> found = find(
-        libraryNodeParent, ProjectKeys.MODULE_DEPENDENCY, node -> {
-          if (moduleDependencyData.getInternalName().equals(node.getData().getInternalName())) {
-            moduleDependencyData.setModuleDependencyArtifacts(node.getData().getModuleDependencyArtifacts());
-          }
-
-          final boolean result;
-          // ignore provided scope during the search since it can be resolved incorrectly for file dependencies on a source set outputs
-          if (moduleDependencyData.getScope() == DependencyScope.PROVIDED) {
-            moduleDependencyData.setScope(node.getData().getScope());
-            result = moduleDependencyData.equals(node.getData());
-            moduleDependencyData.setScope(DependencyScope.PROVIDED);
-          }
-          else {
-            result = moduleDependencyData.equals(node.getData());
-          }
-          return result;
-        });
-
-      if (targetModuleOutputPaths != null) {
-        if (found == null) {
-          DataNode<ModuleDependencyData> moduleDependencyNode =
-            libraryNodeParent.createChild(ProjectKeys.MODULE_DEPENDENCY, moduleDependencyData);
-          if (shouldKeepTransitiveDependencies) {
-            for (DataNode<?> node : libraryDependencyDataNode.getChildren()) {
-              moduleDependencyNode.addChild(node);
-            }
-          }
-        }
-        libraryPaths.removeAll(targetModuleOutputPaths);
-        unprocessedPaths.removeAll(targetModuleOutputPaths);
-        if (libraryPaths.isEmpty()) {
-          libraryDependencyDataNode.clear(true);
-          break;
-        }
-        continue;
-      }
-      else {
-        // do not add the path as library dependency if another module dependency is already contain the path as one of its output paths
-        if (found != null) {
-          libraryPaths.remove(path);
-          if (libraryPaths.isEmpty()) {
-            libraryDependencyDataNode.clear(true);
-            break;
-          }
-          continue;
-        }
-      }
-
-      final ExternalSourceDirectorySet directorySet = pair.second.getSources().get(sourceTypePair.second);
-      if (directorySet != null) {
-        for (File file : directorySet.getSrcDirs()) {
-          libraryData.addPath(LibraryPathType.SOURCE, file.getPath());
-        }
+      if (libraryPaths.isEmpty()) {
+        libraryDependencyDataNode.clear(true);
+        break;
       }
     }
+
+    applyClasspathShift(dependenciesToShift, classpathOrderShift);
 
     if (libraryDependencyDataNode.getParent() != null) {
       if (libraryPaths.size() > 1) {
@@ -211,4 +123,172 @@ public class LibraryDataNodeSubstitutor {
       }
     }
   }
+
+  private static Collection<AbstractDependencyData<?>> collectDependenciesOrderedAfter(@NotNull DataNode<?> parent, int order) {
+    return ContainerUtil.mapNotNull(parent.getChildren(), it -> {
+        if (it.getData() instanceof AbstractDependencyData<?> depData && depData.getOrder() > order) {
+          return depData;
+        }
+        return null;
+    });
+  }
+
+  private static boolean createAndMaybeAttachNewModuleDependency(@NotNull DataNode<LibraryDependencyData> libraryDependencyDataNode,
+                                                                 @NotNull ModuleLookupResult lookupResult,
+                                                                 @NotNull Set<String> libraryPaths,
+                                                                 boolean shouldKeepTransitiveDependencies,
+                                                                 @NotNull ArrayDeque<String> unprocessedPaths,
+                                                                 int classpathOrderShift, String path) {
+
+    boolean addedNewDependency = false;
+    LibraryDependencyData libraryDependencyData = libraryDependencyDataNode.getData();
+    DataNode<?> libraryNodeParent = libraryDependencyDataNode.getParent();
+    if (libraryNodeParent == null) {
+      return addedNewDependency;
+    }
+
+    DataNode<GradleSourceSetData> targetSourceSetNode = lookupResult.sourceSetDataDataNode();
+    ExternalSourceSet targetExternalSourceSet = lookupResult.externalSourceSet();
+    final ModuleData targetModuleData = targetSourceSetNode.getData();
+
+    Set<String> targetModuleOutputPaths = collectTargetModuleOutputPaths(libraryPaths,
+                                                               targetSourceSetNode.getUserData(GradleProjectResolver.GRADLE_OUTPUTS));
+
+    final ModuleData ownerModule = libraryDependencyData.getOwnerModule();
+    final ModuleDependencyData moduleDependencyData = new ModuleDependencyData(ownerModule, targetModuleData);
+    moduleDependencyData.setScope(libraryDependencyData.getScope());
+    moduleDependencyData.setOrder(libraryDependencyData.getOrder() + classpathOrderShift + 1);
+    moduleDependencyData.setModuleDependencyArtifacts(Collections.singleton(path));
+
+    if (targetExternalSourceSet != null && isTestSourceSet(targetExternalSourceSet)) {
+      moduleDependencyData.setProductionOnTestDependency(true);
+    }
+    final DataNode<ModuleDependencyData> found = findChild(
+      libraryNodeParent, ProjectKeys.MODULE_DEPENDENCY, node -> {
+        ModuleDependencyData candidateData = node.getData();
+
+        if (!moduleDependencyData.getInternalName().equals(candidateData.getInternalName())) {
+          return false;
+        }
+        // re-use module dependency artifacts even if the rest does not match
+        moduleDependencyData.setModuleDependencyArtifacts(candidateData.getModuleDependencyArtifacts());
+
+        final boolean result;
+        // ignore provided scope during the search since it can be resolved incorrectly for file dependencies on a source set outputs
+        // ignore scope if the candidate already has the largest possible scope - compile
+        if (moduleDependencyData.getScope() == DependencyScope.PROVIDED ||
+            candidateData.getScope() == DependencyScope.COMPILE) {
+          result = isEqualIgnoringScope(moduleDependencyData, candidateData);
+        }
+        else {
+          result = moduleDependencyData.equals(candidateData);
+        }
+        return result;
+      });
+
+    if (found == null) {
+      DataNode<ModuleDependencyData> moduleDependencyNode =
+        libraryNodeParent.createChild(ProjectKeys.MODULE_DEPENDENCY, moduleDependencyData);
+      addedNewDependency = true;
+      if (shouldKeepTransitiveDependencies) {
+        for (DataNode<?> node : libraryDependencyDataNode.getChildren()) {
+          moduleDependencyNode.addChild(node);
+        }
+      }
+    }
+
+    if (targetModuleOutputPaths != null) {
+      unprocessedPaths.removeAll(targetModuleOutputPaths);
+      libraryPaths.removeAll(targetModuleOutputPaths);
+    }
+    return addedNewDependency;
+  }
+
+  private static boolean isEqualIgnoringScope(@NotNull ModuleDependencyData data1, @NotNull ModuleDependencyData data2) {
+    final boolean result;
+    final DependencyScope tmp = data1.getScope();
+    data1.setScope(data2.getScope());
+    result = data1.equals(data2);
+    data1.setScope(tmp);
+    return result;
+  }
+
+  @NotNull
+  private Collection<ModuleLookupResult> lookupTargetModule(String path) {
+    List<ModuleLookupResult> results = new ArrayList<>();
+
+    GradleSourceSetData targetModule = Optional.ofNullable(resolverContext.getSettings())
+      .map(GradleExecutionSettings::getExecutionWorkspace)
+      .map(ws -> ws.findModuleDataByArtifacts(Collections.singleton(new File(path))))
+      .filter(md -> md instanceof GradleSourceSetData)
+      .map(GradleSourceSetData.class::cast)
+      .orElse(null);
+
+    if (targetModule != null) {
+      return Collections.singleton(new ModuleLookupResult(new DataNode<>(GradleSourceSetData.KEY, targetModule, null),
+                                    null));
+    }
+
+    final String moduleId;
+    final Pair<String, ExternalSystemSourceType> sourceTypePair = moduleOutputsMap.get(path);
+    if (sourceTypePair != null) {
+      moduleId = sourceTypePair.first;
+      final Pair<DataNode<GradleSourceSetData>, ExternalSourceSet> pair = sourceSetMap.get(moduleId);
+      if (pair != null) {
+        return Collections.singleton(new ModuleLookupResult(pair.first, pair.second));
+      }
+    }
+
+    ModuleMappingInfo mapping = artifactsMap.getModuleMapping(path);
+    if (mapping != null) {
+      for (String id : mapping.getModuleIds()) {
+        final Pair<DataNode<GradleSourceSetData>, ExternalSourceSet> pair = sourceSetMap.get(id);
+        if (pair != null) {
+          results.add(new ModuleLookupResult(pair.first, pair.second));
+        }
+      }
+    }
+
+    return results;
+  }
+
+
+  private static void applyClasspathShift(@NotNull Collection<AbstractDependencyData<?>> dependenciesToMove, int shift) {
+    if (shift > 0) {
+      dependenciesToMove.forEach(data -> {
+        int order = data.getOrder();
+        data.setOrder(order + shift);
+      });
+    }
+  }
+
+  private static @Nullable Set<String> collectTargetModuleOutputPaths(@NotNull Set<String> libraryPaths,
+                                                                      @Nullable MultiMap<ExternalSystemSourceType, String> gradleOutputs) {
+    if (gradleOutputs == null) {
+      return null;
+    }
+
+    final Set<String> compileSet = new HashSet<>();
+    ContainerUtil.addAllNotNull(compileSet,
+                                gradleOutputs.get(ExternalSystemSourceType.SOURCE));
+    ContainerUtil.addAllNotNull(compileSet,
+                                gradleOutputs.get(ExternalSystemSourceType.RESOURCE));
+    if (ContainerUtil.intersects(libraryPaths, compileSet)) {
+      return compileSet;
+    }
+
+    final Set<String> testSet = new HashSet<>();
+    ContainerUtil.addAllNotNull(testSet,
+                                gradleOutputs.get(ExternalSystemSourceType.TEST));
+    ContainerUtil.addAllNotNull(testSet,
+                                gradleOutputs.get(ExternalSystemSourceType.TEST_RESOURCE));
+    if (ContainerUtil.intersects(libraryPaths, testSet)) {
+      return testSet;
+    }
+    return null;
+  }
+}
+
+record ModuleLookupResult(@NotNull DataNode<GradleSourceSetData> sourceSetDataDataNode,
+                          @Nullable ExternalSourceSet externalSourceSet) {
 }

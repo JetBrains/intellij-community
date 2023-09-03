@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui;
 
 import javax.swing.*;
@@ -19,7 +19,7 @@ import static java.awt.GridBagConstraints.CENTER;
  * @param <F>
  */
 
-public class ComboBoxCompositeEditor<I, F extends JComponent> extends JPanel implements ComboBoxEditor {
+public final class ComboBoxCompositeEditor<I, F extends JComponent> extends JPanel implements ComboBoxEditor {
 
   public static <ItemType, EditableComponentType extends JComponent> ComboBoxCompositeEditor<ItemType, EditableComponentType> withComponents (final EditableComponentType editableComponent, final JComponent ... components)
   {

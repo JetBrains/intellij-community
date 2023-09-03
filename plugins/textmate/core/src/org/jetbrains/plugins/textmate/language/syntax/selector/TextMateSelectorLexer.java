@@ -66,7 +66,7 @@ public final class TextMateSelectorLexer {
     return currentSelector;
   }
 
-  public static class SignToken implements TextMateSelectorToken {
+  public static final class SignToken implements TextMateSelectorToken {
     private final char mySign;
 
     public SignToken(char c) {
@@ -79,7 +79,7 @@ public final class TextMateSelectorLexer {
     }
   }
 
-  public static class PriorityToken implements TextMateSelectorToken {
+  public static final class PriorityToken implements TextMateSelectorToken {
     private final TextMateWeigh.Priority myPriority;
 
     public PriorityToken(TextMateWeigh.Priority priority) {
@@ -96,7 +96,7 @@ public final class TextMateSelectorLexer {
     }
   }
 
-  public static class SelectorToken implements TextMateSelectorToken {
+  public static final class SelectorToken implements TextMateSelectorToken {
     private final String myText;
 
     public SelectorToken(String text) {

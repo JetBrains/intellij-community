@@ -13,6 +13,7 @@ import com.intellij.openapi.util.Pair
 import com.intellij.ui.HyperlinkLabel
 import com.intellij.ui.components.JBRadioButton
 import com.intellij.ui.dsl.builder.*
+import com.intellij.ui.dsl.listCellRenderer.textListCellRenderer
 import org.jetbrains.kotlin.idea.configuration.KotlinProjectConfigurator
 import org.jetbrains.kotlin.idea.configuration.getCanBeConfiguredModules
 import org.jetbrains.kotlin.idea.configuration.getCanBeConfiguredModulesWithKotlinFiles
@@ -126,7 +127,7 @@ class ChooseModulePanel(
                             .applySelected(ChoseModuleType.SINGLE)
                     },
                     {
-                        val comboBox = comboBox(modules as List<Module?>, listCellRenderer { text = it?.name ?: "" })
+                        val comboBox = comboBox(modules as List<Module?>, textListCellRenderer { it?.name })
                             .bindItem(selectedModule)
                             .align(AlignX.FILL)
                         comboBox.enabledIf(singleModuleButton.selected)

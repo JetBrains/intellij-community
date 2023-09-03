@@ -44,7 +44,7 @@ class Module(
     val configurator: ModuleConfigurator,
     var template: Template? = null,
     val permittedTemplateIds: Set<String>? = null,
-    val sourceSets: List<Sourceset> = createDefaultSourceSets(),
+    var sourceSets: List<Sourceset> = createDefaultSourceSets(),
     subModules: List<Module> = emptyList(),
     val dependencies: MutableList<ModuleReference> = mutableListOf(),
     var parent: Module? = null,

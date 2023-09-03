@@ -74,10 +74,10 @@ var Module.refinesFragmentIds: Collection<String>
 val Module.isTestModule: Boolean
     get() = facetSettings?.isTestModule ?: false
 
-val KotlinFacetSettings.isMultiPlatformModule: Boolean
+val IKotlinFacetSettings.isMultiPlatformModule: Boolean
     get() = mppVersion != null
 
-private val Module.facetSettings: KotlinFacetSettings?
+private val Module.facetSettings: IKotlinFacetSettings?
     get() = KotlinFacet.get(this)?.configuration?.settings
 
 @Service(Service.Level.PROJECT)

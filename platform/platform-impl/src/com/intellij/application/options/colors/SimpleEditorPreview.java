@@ -40,7 +40,7 @@ import java.awt.event.MouseMotionAdapter;
 import java.util.List;
 import java.util.*;
 
-public class SimpleEditorPreview implements PreviewPanel {
+public final class SimpleEditorPreview implements PreviewPanel {
   private final ColorSettingsPage myPage;
 
   private final EditorEx myEditor;

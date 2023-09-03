@@ -17,23 +17,59 @@ import org.junit.runner.RunWith;
 @TestRoot("code-insight/inspections-shared/tests/k2")
 @TestDataPath("$CONTENT_ROOT")
 @RunWith(JUnit3RunnerWithInners.class)
-@TestMetadata("../testData/quickfix")
 public abstract class K2SharedQuickFixTestGenerated extends AbstractK2SharedQuickFixTest {
     @RunWith(JUnit3RunnerWithInners.class)
-    @TestMetadata("../testData/quickfix/redundantSemicolon")
-    public static class RedundantSemicolon extends AbstractK2SharedQuickFixTest {
+    @TestMetadata("../testData/quickfix")
+    public abstract static class Quickfix extends AbstractK2SharedQuickFixTest {
+        @RunWith(JUnit3RunnerWithInners.class)
+        @TestMetadata("../testData/quickfix/redundantSemicolon")
+        public static class RedundantSemicolon extends AbstractK2SharedQuickFixTest {
+            private void runTest(String testDataFilePath) throws Exception {
+                KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+            }
+
+            @TestMetadata("afterImport.kt")
+            public void testAfterImport() throws Exception {
+                runTest("../testData/quickfix/redundantSemicolon/afterImport.kt");
+            }
+
+            @TestMetadata("afterStatement.kt")
+            public void testAfterStatement() throws Exception {
+                runTest("../testData/quickfix/redundantSemicolon/afterStatement.kt");
+            }
+        }
+    }
+
+    @RunWith(JUnit3RunnerWithInners.class)
+    @TestMetadata("../../../../idea/tests/testData/quickfix/optimizeImports")
+    public static class OptimizeImports extends AbstractK2SharedQuickFixTest {
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
         }
 
-        @TestMetadata("afterImport.kt")
-        public void testAfterImport() throws Exception {
-            runTest("../testData/quickfix/redundantSemicolon/afterImport.kt");
+        @TestMetadata("destructuringAtTop.kt")
+        public void testDestructuringAtTop() throws Exception {
+            runTest("../../../../idea/tests/testData/quickfix/optimizeImports/destructuringAtTop.kt");
         }
 
-        @TestMetadata("afterStatement.kt")
-        public void testAfterStatement() throws Exception {
-            runTest("../testData/quickfix/redundantSemicolon/afterStatement.kt");
+        @TestMetadata("fileRuntime.kt")
+        public void testFileRuntime() throws Exception {
+            runTest("../../../../idea/tests/testData/quickfix/optimizeImports/fileRuntime.kt");
+        }
+
+        @TestMetadata("importAlias.kt")
+        public void testImportAlias() throws Exception {
+            runTest("../../../../idea/tests/testData/quickfix/optimizeImports/importAlias.kt");
+        }
+
+        @TestMetadata("invoke.kt")
+        public void testInvoke() throws Exception {
+            runTest("../../../../idea/tests/testData/quickfix/optimizeImports/invoke.kt");
+        }
+
+        @TestMetadata("invoke2.kt")
+        public void testInvoke2() throws Exception {
+            runTest("../../../../idea/tests/testData/quickfix/optimizeImports/invoke2.kt");
         }
     }
 }

@@ -27,6 +27,8 @@ abstract class GradleExecutionTestCase : GradleExecutionBaseTestCase() {
     return isGradleAtLeast("7.6")
   }
 
+  fun isTestLauncherUsed(): Boolean = isGradleAtLeast("8.3")
+
   fun testJunit5Project(gradleVersion: GradleVersion, action: () -> Unit) {
     assumeThatJunit5IsSupported(gradleVersion)
     testJavaProject(gradleVersion, action)

@@ -15,7 +15,7 @@ import java.util.regex.Pattern;
 /**
  * @author Konstantin Bulenkov
  */
-public class ValidationTest extends DialogWrapper {
+public final class ValidationTest extends DialogWrapper {
   private final ValidTest myPanel;
   final ValidationInfo[] ERRORS;
 

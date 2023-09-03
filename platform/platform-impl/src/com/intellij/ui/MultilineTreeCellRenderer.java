@@ -502,7 +502,7 @@ public abstract class MultilineTreeCellRenderer extends JComponent implements Ac
     return accessibleContext;
   }
 
-  protected class AccessibleMultilineTreeCellRenderer extends AccessibleJComponent {
+  protected final class AccessibleMultilineTreeCellRenderer extends AccessibleJComponent {
     @Override
     public String getAccessibleName() {
       @NlsSafe String name = accessibleName;

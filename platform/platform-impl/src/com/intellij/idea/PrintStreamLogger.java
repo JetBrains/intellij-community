@@ -9,13 +9,13 @@ import java.io.PrintStream;
 import java.nio.charset.Charset;
 import java.util.concurrent.atomic.AtomicBoolean;
 
-class PrintStreamLogger extends PrintStream {
+final class PrintStreamLogger extends PrintStream {
   PrintStreamLogger(String name, PrintStream originalStream) {
     super(new OutputStreamLogger(name, originalStream), true);
   }
 }
 
-class OutputStreamLogger extends OutputStream {
+final class OutputStreamLogger extends OutputStream {
   private static final int BUFFER_SIZE = 10000;
   private final byte[] myBuffer = new byte[BUFFER_SIZE];
   private final PrintStream myOriginalStream;

@@ -1,8 +1,8 @@
 <html>
 <body>
-Reports incorrect companion objects' usage in <a href="https://plugins.jetbrains.com/docs/intellij/plugin-extensions.html">IDE extensions</a>.
+Reports incorrect companion objects' usage in <a href="https://plugins.jetbrains.com/docs/intellij/plugin-extensions.html">extensions</a>.
 <p>
-  Kotlin companion object is always created once you try to load its containing class, and IDE extensions are supposed to be cheap to create.
+  Kotlin companion object is always created once you try to load its containing class, and extension point implementations are supposed to be cheap to create.
   Excessive classloading in plugins is a huge problem for IDE startup.
 </p>
 <p>Bad pattern:</p>
@@ -27,9 +27,9 @@ Reports incorrect companion objects' usage in <a href="https://plugins.jetbrains
   In this example <code>JavaDocumentationProvider</code> will be loaded from disk once someone just calls <code>new KotlinDocumentationProvider()</code>.
 </p>
 <p>
-  Kotlin companion objects in IDE extension implementations can only contain a logger and simple constants.
+  Kotlin companion objects in extension point implementation can only contain a logger and simple constants.
   Other declarations may cause excessive classloading or early initialization of heavy resources (e.g. TokenSet, Regex, etc.)
-  when the IDE extension class is loaded.
+  when the extension class is loaded.
   Note, that even declarations marked with <code>@JvmStatic</code> still produce an extra class for the companion object, potentially causing expensive computations.
 </p>
 <p>

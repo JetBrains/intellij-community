@@ -16,6 +16,17 @@ public enum GradleModelFetchPhase {
   PROJECT_LOADED_PHASE("Project loaded phase"),
 
   /**
+   * Model provider, in this phase, fetches and caches a Gradle task model into
+   * {@link com.intellij.gradle.toolingExtension.impl.taskModel.GradleTaskCache}.
+   * This cache is available by {@link org.jetbrains.plugins.gradle.tooling.ModelBuilderContext}.
+   * <p>
+   * These model providers will be executed after "sync" tasks are run
+   *
+   * @see org.gradle.tooling.BuildActionExecuter.Builder#buildFinished(BuildAction, IntermediateResultHandler)
+   */
+  TASK_WARM_UP_PHASE("Task warm-up phase"),
+
+  /**
    * Model providers, in this phase, fetch an initial set of Gradle models for IDEA project structure.
    * These models form a minimal set to start working with a project: basic code insight of source code.
    * It is module names, source sets and content roots, project and module SDKs, language level, etc.
@@ -28,7 +39,8 @@ public enum GradleModelFetchPhase {
 
   /**
    * Model provides, in this phase, fetches rest of Gradle models, which needed for rich experience in IntelliJ IDEA.
-   * It is a code insight in Gradle scripts, data for run configuration creation and for code completion in him, data for code profiling, etc.
+   * It is a code insight in Gradle scripts, data for run configuration creation and for code completion in him,
+   * data for code profiling, etc.
    * <p>
    * These model providers will be executed after "sync" tasks are run
    *

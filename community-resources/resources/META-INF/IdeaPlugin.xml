@@ -19,5 +19,8 @@
     <applicationService serviceInterface="com.intellij.platform.ide.customization.ExternalProductResourceUrls" 
                         serviceImplementation="com.intellij.idea.customization.base.IntelliJIdeaExternalResourceUrls"
                         overrides="true"/>
+    <applicationService serviceInterface="com.intellij.openapi.updateSettings.UpdateStrategyCustomization"
+                        serviceImplementation="com.intellij.idea.customization.base.IntelliJIdeaUpdateStrategyCustomization"
+                        overrides="true"/>
   </extensions>
 </idea-plugin>

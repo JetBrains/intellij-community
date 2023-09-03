@@ -27,6 +27,7 @@ import com.intellij.util.Java11Shim
 import com.intellij.util.PlatformUtils
 import com.intellij.util.lang.UrlClassLoader
 import com.intellij.util.lang.ZipFilePool
+import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Deferred
 import kotlinx.coroutines.future.asCompletableFuture
@@ -361,17 +362,21 @@ object PluginManagerCore {
 
   @Internal
   fun scheduleDescriptorLoading(coroutineScope: CoroutineScope) {
-    scheduleDescriptorLoading(coroutineScope = coroutineScope, zipFilePoolDeferred = null, logDeferred = null)
+    scheduleDescriptorLoading(coroutineScope = coroutineScope,
+                              zipFilePoolDeferred = null,
+                              mainClassLoaderDeferred = CompletableDeferred(PluginManagerCore::class.java.classLoader), 
+                              logDeferred = null)
   }
 
   @Internal
   @Synchronized
   fun scheduleDescriptorLoading(coroutineScope: CoroutineScope,
                                 zipFilePoolDeferred: Deferred<ZipFilePool>?,
+                                mainClassLoaderDeferred: Deferred<ClassLoader>,
                                 logDeferred: Deferred<Logger>?): Deferred<PluginSet> {
     var result = initFuture
     if (result == null) {
-      result = coroutineScope.scheduleLoading(zipFilePoolDeferred, logDeferred)
+      result = coroutineScope.scheduleLoading(zipFilePoolDeferred, mainClassLoaderDeferred, logDeferred)
       initFuture = result
     }
     return result

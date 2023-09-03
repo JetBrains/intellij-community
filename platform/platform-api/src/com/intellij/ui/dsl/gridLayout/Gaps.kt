@@ -28,13 +28,13 @@ data class Gaps(val top: Int = 0, val left: Int = 0, val bottom: Int = 0, val ri
   @ApiStatus.ScheduledForRemoval
   constructor(size: Int) : this(size, size, size, size)
 
-  @Deprecated("Use UnscaledGaps instead")
   @get:ApiStatus.ScheduledForRemoval
+  @get:Deprecated("Use UnscaledGaps instead")
   val width: Int
     get() = left + right
 
-  @Deprecated("Use UnscaledGaps instead")
   @get:ApiStatus.ScheduledForRemoval
+  @get:Deprecated("Use UnscaledGaps instead")
   val height: Int
     get() = top + bottom
 }

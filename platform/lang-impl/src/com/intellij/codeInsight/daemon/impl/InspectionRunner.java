@@ -43,7 +43,7 @@ import java.util.concurrent.LinkedBlockingQueue;
 import java.util.function.BiPredicate;
 import java.util.function.Consumer;
 
-final class InspectionRunner {
+class InspectionRunner {
   private final PsiFile myPsiFile;
   private final TextRange myRestrictRange;
   private final TextRange myPriorityRange;
@@ -86,7 +86,7 @@ final class InspectionRunner {
     final @NotNull LocalInspectionToolWrapper tool;
     final @NotNull InspectionProblemHolder holder;
     final @NotNull PsiElementVisitor visitor;
-    volatile PsiElement myFavoriteElement; // the element during visiting which some diagnostics were generated in the previous run
+    volatile PsiElement myFavoriteElement; // the element during visiting which, some diagnostics were generated in the previous run
   }
 
   @NotNull List<? extends InspectionContext> inspect(@NotNull List<? extends LocalInspectionToolWrapper> toolWrappers,
@@ -137,7 +137,7 @@ final class InspectionRunner {
               afterOutsideProcessedCallback.accept(context);
       };
       visitElements(session, init, outside, false, finalPriorityRange, TOMB_STONE, afterOutside, foundInjected, injectedContexts,
-                    toolWrappers, empty(), enabledToolsPredicate);
+                    toolWrappers, empty, enabledToolsPredicate);
       reportIdsOfInspectionsReportedAnyProblemToFUS(init);
 
       boolean isWholeFileInspectionsPass = !init.isEmpty() && init.get(0).tool.runForWholeFile();
@@ -166,7 +166,7 @@ final class InspectionRunner {
     InspectionUsageFUSStorage.getInstance(myPsiFile.getProject()).reportInspectionsWhichReportedProblems(inspectionIdsReportedProblems);
   }
 
-  private static long finalPriorityRange(@NotNull TextRange priorityRange, @NotNull List<Divider.DividedElements> allDivided) {
+  private static long finalPriorityRange(@NotNull TextRange priorityRange, @NotNull List<? extends Divider.DividedElements> allDivided) {
     long finalPriorityRange = allDivided.isEmpty() ? TextRangeScalarUtil.toScalarRange(priorityRange) : allDivided.get(0).priorityRange();
     for (int i = 1; i < allDivided.size(); i++) {
       Divider.DividedElements dividedElements = allDivided.get(i);
@@ -177,7 +177,7 @@ final class InspectionRunner {
 
   private @NotNull InspectionContext createTombStone() {
     LocalInspectionToolWrapper tool = new LocalInspectionToolWrapper(new LocalInspectionEP());
-    InspectionProblemHolder holder = new InspectionProblemHolder(myPsiFile, tool, false, myInspectionProfileWrapper, empty());
+    InspectionProblemHolder holder = new InspectionProblemHolder(myPsiFile, tool, false, myInspectionProfileWrapper, empty);
     return new InspectionContext(tool, holder, new PsiElementVisitor() {});
   }
 
@@ -265,12 +265,12 @@ final class InspectionRunner {
     List<LocalInspectionToolWrapper> wrappers = Collections.singletonList(new LocalInspectionToolWrapper(localTool));
     InspectionRunner runner = new InspectionRunner(myPsiFile, myRestrictRange, myPriorityRange, myInspectInjected, true, myProgress, false,
                                                    myInspectionProfileWrapper, mySuppressedElements);
-    result.addAll(runner.inspect(wrappers, HighlightSeverity.WARNING, false, empty(), emptyCallback(), emptyCallback(), null));
+    result.addAll(runner.inspect(wrappers, HighlightSeverity.WARNING, false, empty, emptyCallback, emptyCallback, null));
   }
 
-  private static @NotNull Consumer<InspectionContext> emptyCallback() { return __ -> { }; }
+  private static final @NotNull Consumer<InspectionContext> emptyCallback = __ -> { };
 
-  private static @NotNull BiPredicate<ProblemDescriptor, LocalInspectionToolWrapper> empty() { return (_1, _2) -> true; }
+  private static final @NotNull BiPredicate<ProblemDescriptor, LocalInspectionToolWrapper> empty = (_1, _2) -> true;
 
   private void visitElements(@NotNull LocalInspectionToolSession session,
                              @NotNull List<? extends InspectionContext> init,
@@ -408,10 +408,7 @@ final class InspectionRunner {
                registerSuppressedElements(host, wrapper.getID(), wrapper.getAlternativeID());
                return false;
              }
-             if (myIsOnTheFly) {
-               return addDescriptorIncrementallyCallback.test(descriptor, wrapper);
-             }
-             return true;
+             return !myIsOnTheFly || addDescriptorIncrementallyCallback.test(descriptor, wrapper);
            };
 
            if (shouldInspect(injectedPsi)) {
@@ -420,7 +417,7 @@ final class InspectionRunner {
                                     myIgnoreSuppressed, myInspectionProfileWrapper, mySuppressedElements);
              List<? extends InspectionContext> injectedContexts = injectedRunner.inspect(
                wrappers, session.getMinimumSeverity(), true, cc,
-               emptyCallback(), emptyCallback(), enabledToolsPredicate);
+               emptyCallback, emptyCallback, enabledToolsPredicate);
              outInjectedContexts.addAll(injectedContexts);
            }
            return true;

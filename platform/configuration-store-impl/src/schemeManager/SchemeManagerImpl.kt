@@ -6,7 +6,7 @@ package com.intellij.configurationStore.schemeManager
 import com.intellij.concurrency.ConcurrentCollectionFactory
 import com.intellij.configurationStore.*
 import com.intellij.ide.ui.UITheme
-import com.intellij.ide.ui.laf.TempUIThemeBasedLookAndFeelInfo
+import com.intellij.ide.ui.laf.TempUIThemeLookAndFeelInfo
 import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.components.RoamingType
 import com.intellij.openapi.components.SettingsCategory
@@ -150,7 +150,7 @@ class SchemeManagerImpl<T : Scheme, MUTABLE_SCHEME : T>(
         if (requestor is UITheme) {
           requestor.editorSchemeName = schemeKey
         }
-        if (requestor is TempUIThemeBasedLookAndFeelInfo) {
+        if (requestor is TempUIThemeLookAndFeelInfo) {
           requestor.theme.editorSchemeName = schemeKey
         }
         return scheme
@@ -174,7 +174,7 @@ class SchemeManagerImpl<T : Scheme, MUTABLE_SCHEME : T>(
     val bytes: ByteArray?
     if (pluginDescriptor == null) {
       when (requestor) {
-        is TempUIThemeBasedLookAndFeelInfo -> {
+        is TempUIThemeLookAndFeelInfo -> {
           bytes = Files.readAllBytes(Path.of(resourceName))
         }
         is UITheme -> {

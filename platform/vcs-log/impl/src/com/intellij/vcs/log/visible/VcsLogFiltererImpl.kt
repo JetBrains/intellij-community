@@ -37,10 +37,10 @@ import java.util.function.BiConsumer
 import java.util.stream.Collectors
 
 class VcsLogFiltererImpl(private val logProviders: Map<VirtualFile, VcsLogProvider>,
-                         private val storage: VcsLogStorage,
+                         internal val storage: VcsLogStorage,
                          private val topCommitsDetailsCache: TopCommitsCache,
                          private val commitDetailsGetter: DataGetter<out VcsFullCommitDetails>,
-                         private val index: VcsLogIndex) : VcsLogFilterer {
+                         internal val index: VcsLogIndex) : VcsLogFilterer {
 
   override fun filter(dataPack: DataPack,
                       oldVisiblePack: VisiblePack,
@@ -170,13 +170,13 @@ class VcsLogFiltererImpl(private val logProviders: Map<VirtualFile, VcsLogProvid
   }
 
   @Throws(VcsException::class)
-  private fun filterByDetails(dataPack: DataPack,
-                              filters: VcsLogFilterCollection,
-                              commitCount: CommitCountStage,
-                              visibleRoots: Collection<VirtualFile>,
-                              matchingHeads: Set<Int>?,
-                              commitCandidates: IntSet?,
-                              forceFilterByVcs: Boolean): FilterByDetailsResult {
+  internal fun filterByDetails(dataPack: DataPack,
+                               filters: VcsLogFilterCollection,
+                               commitCount: CommitCountStage,
+                               visibleRoots: Collection<VirtualFile>,
+                               matchingHeads: Set<Int>?,
+                               commitCandidates: IntSet?,
+                               forceFilterByVcs: Boolean): FilterByDetailsResult {
     val detailsFilters = filters.detailsFilters
     if (!forceFilterByVcs && detailsFilters.isEmpty()) {
       return FilterByDetailsResult(commitCandidates, false, commitCount)
@@ -306,7 +306,7 @@ class VcsLogFiltererImpl(private val logProviders: Map<VirtualFile, VcsLogProvid
   }
 
   @Throws(VcsException::class)
-  private fun filterWithVcs(filterCollection: VcsLogFilterCollection, maxCount: Int): IntSet {
+  internal fun filterWithVcs(filterCollection: VcsLogFilterCollection, maxCount: Int): IntSet {
     val commits = IntOpenHashSet()
 
     val visibleRoots = VcsLogUtil.getAllVisibleRoots(logProviders.keys, filterCollection)
@@ -506,10 +506,10 @@ class VcsLogFiltererImpl(private val logProviders: Map<VirtualFile, VcsLogProvid
 
 private val LOG = Logger.getInstance(VcsLogFiltererImpl::class.java)
 
-private data class FilterByDetailsResult(val matchingCommits: IntSet?,
-                                         val canRequestMore: Boolean,
-                                         val commitCount: CommitCountStage,
-                                         val fileHistoryData: FileHistoryData? = null)
+internal data class FilterByDetailsResult(val matchingCommits: IntSet?,
+                                          val canRequestMore: Boolean,
+                                          val commitCount: CommitCountStage,
+                                          val fileHistoryData: FileHistoryData? = null)
 
 fun areFiltersAffectedByIndexing(filters: VcsLogFilterCollection, roots: List<VirtualFile>): Boolean {
   val detailsFilters = filters.detailsFilters

@@ -28,11 +28,12 @@ import java.util.List;
 import static com.intellij.codeInsight.completion.BaseCompletionService.LOOKUP_ELEMENT_RESULT_ADD_TIMESTAMP_MILLIS;
 import static com.intellij.codeInsight.completion.BaseCompletionService.LOOKUP_ELEMENT_RESULT_SET_ORDER;
 import static com.intellij.codeInsight.lookup.LookupElement.LOOKUP_ELEMENT_SHOW_TIMESTAMP_MILLIS;
+import static com.intellij.codeInsight.lookup.impl.LookupTypedHandler.CANCELLATION_CHAR;
 
 public final class LookupUsageTracker extends CounterUsagesCollector {
   public static final String FINISHED_EVENT_ID = "finished";
   public static final String GROUP_ID = "completion";
-  public static final EventLogGroup GROUP = new EventLogGroup(GROUP_ID, 17);
+  public static final EventLogGroup GROUP = new EventLogGroup(GROUP_ID, 18);
   private static final EventField<String> SCHEMA = EventFields.StringValidatedByCustomRule("schema", FileTypeSchemaValidator.class);
   private static final BooleanEventField ALPHABETICALLY = EventFields.Boolean("alphabetically");
   private static final EnumEventField<FinishType> FINISH_TYPE = EventFields.Enum("finish_type", FinishType.class);
@@ -125,10 +126,13 @@ public final class LookupUsageTracker extends CounterUsagesCollector {
     }
 
     private boolean isSelectedByTyping(@NotNull LookupElement item) {
-      if (myLookup.itemPattern(item).equals(item.getLookupString())) {
-        return true;
+      var cancellationChar = myLookup.getUserData(CANCELLATION_CHAR);
+      String lookupString = item.getLookupString();
+      String pattern = myLookup.itemPattern(item);
+      if (cancellationChar != null && lookupString.endsWith(cancellationChar.toString())) {
+        return pattern.equals(lookupString.substring(0, lookupString.length() - 1));
       }
-      return false;
+      return pattern.equals(lookupString);
     }
 
     @Override

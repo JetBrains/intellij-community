@@ -580,7 +580,7 @@ public final class InlayModelImpl implements InlayModel, PrioritizedDocumentList
     return inlay instanceof BlockInlayImpl && ((BlockInlayImpl<?>)inlay).myShowWhenFolded;
   }
 
-  private class InlineElementsTree extends HardReferencingRangeMarkerTree<InlineInlayImpl<?>> {
+  private final class InlineElementsTree extends HardReferencingRangeMarkerTree<InlineInlayImpl<?>> {
     InlineElementsTree(@NotNull Document document) {
       super(document);
     }
@@ -630,7 +630,7 @@ public final class InlayModelImpl implements InlayModel, PrioritizedDocumentList
     }
   }
 
-  private class AfterLineEndElementTree extends HardReferencingRangeMarkerTree<AfterLineEndInlayImpl<?>> {
+  private final class AfterLineEndElementTree extends HardReferencingRangeMarkerTree<AfterLineEndInlayImpl<?>> {
     AfterLineEndElementTree(@NotNull Document document) {
       super(document);
     }

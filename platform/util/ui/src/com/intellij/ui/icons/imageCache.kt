@@ -16,7 +16,6 @@ import com.intellij.ui.svg.loadSvgAndCacheIfApplicable
 import com.intellij.util.ArrayUtilRt
 import com.intellij.util.ResourceUtil
 import com.intellij.util.SVGLoader
-import com.intellij.util.containers.ContainerUtil
 import com.intellij.util.io.URLUtil
 import com.intellij.util.ui.StartupUiUtil
 import org.jetbrains.annotations.ApiStatus
@@ -27,6 +26,7 @@ import java.awt.image.ImageFilter
 import java.io.IOException
 import java.net.HttpURLConnection
 import java.net.URL
+import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.TimeUnit
 
 private val LOG: Logger
@@ -38,7 +38,7 @@ internal fun clearImageCache() {
 
 private object ImageCache {
   @JvmField
-  val ioMissCache: MutableSet<String> = ContainerUtil.newConcurrentSet()
+  val ioMissCache: MutableSet<String> = ConcurrentHashMap.newKeySet()
 
   @JvmField
   val imageCache: Cache<CacheKey, BufferedImage> = Caffeine.newBuilder()

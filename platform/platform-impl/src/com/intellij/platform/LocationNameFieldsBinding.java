@@ -28,7 +28,7 @@ import java.io.File;
  *
  * @author catherine
  */
-public class LocationNameFieldsBinding {
+public final class LocationNameFieldsBinding {
   private boolean myModifyingLocation = false;
   private boolean myModifyingProjectName = false;
   private boolean myExternalModify = false;
@@ -98,7 +98,7 @@ public class LocationNameFieldsBinding {
     return !currentName.equals(mySuggestedProjectName);
   }
 
-  private class NameFieldDocument extends PlainDocument {
+  private final class NameFieldDocument extends PlainDocument {
     NameFieldDocument(final JTextField projectNameTextField, final TextFieldWithBrowseButton locationField) {
       addDocumentListener(new DocumentAdapter() {
         @Override

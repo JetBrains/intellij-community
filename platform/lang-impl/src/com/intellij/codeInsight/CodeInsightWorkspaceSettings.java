@@ -1,6 +1,7 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight;
 
+import com.intellij.model.SideEffectGuard;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.components.*;
 import com.intellij.openapi.project.Project;
@@ -26,6 +27,7 @@ public final class CodeInsightWorkspaceSettings extends SimpleModificationTracke
 
   public void setOptimizeImportsOnTheFly(boolean value) {
     if (optimizeImportsOnTheFly != value) {
+      SideEffectGuard.checkSideEffectAllowed(SideEffectGuard.EffectType.SETTINGS);
       optimizeImportsOnTheFly = value;
       incModificationCount();
     }

@@ -79,6 +79,8 @@ public final class ImplementationViewComponent extends JPanel {
   private @NlsContexts.TabTitle String myTitle;
   private final ActionToolbar myToolbar;
   private JPanel mySingleEntryPanel;
+  @Nullable
+  private volatile Consumer<? super ImplementationViewComponent> myShowInFindWindowProcessor;
 
   public void setHint(final JBPopup hint, @NotNull @NlsContexts.TabTitle String title) {
     myHint = hint;
@@ -94,10 +96,6 @@ public final class ImplementationViewComponent extends JPanel {
 
   public ImplementationViewComponent(Collection<? extends ImplementationViewElement> elements,
                                      final int index) {
-    this(elements, index, null);
-  }
-
-  public ImplementationViewComponent(Collection<? extends ImplementationViewElement> elements, final int index, Consumer<? super ImplementationViewComponent> openUsageView) {
     super(new BorderLayout());
 
     project = elements.size() > 0 ? elements.iterator().next().getProject() : null;
@@ -116,7 +114,7 @@ public final class ImplementationViewComponent extends JPanel {
 
     add(myViewingPanel, BorderLayout.CENTER);
 
-    myToolbar = createToolbar(openUsageView);
+    myToolbar = createToolbar();
 
     setPreferredSize(JBUI.size(600, 400));
 
@@ -178,7 +176,7 @@ public final class ImplementationViewComponent extends JPanel {
     });
   }
 
-  private DefaultActionGroup createGearActionButton(Consumer<? super ImplementationViewComponent> openUsageView) {
+  private DefaultActionGroup createGearActionButton() {
     DefaultActionGroup gearActions = new DefaultActionGroup() {
       @Override
       public void update(@NotNull AnActionEvent e) {
@@ -196,18 +194,10 @@ public final class ImplementationViewComponent extends JPanel {
     EditSourceActionBase edit = new EditSourceAction();
     edit.registerCustomShortcutSet(new CompositeShortcutSet(CommonShortcuts.getEditSource(), CommonShortcuts.ENTER), this);
     gearActions.add(edit);
-    if (openUsageView != null) {
-      Icon icon = ToolWindowManager.getInstance(project).getLocationIcon(ToolWindowId.FIND, AllIcons.General.Pin_tab);
-      gearActions.add(new AnAction(() -> IdeBundle.message("show.in.find.window.button.name"), icon) {
-        @Override
-        public void actionPerformed(@NotNull AnActionEvent e) {
-          openUsageView.accept(ImplementationViewComponent.this);
-          if (myHint.isVisible()) {
-            myHint.cancel();
-          }
-        }
-      });
-    }
+
+    ShowInFindWindowAction showInWindow = new ShowInFindWindowAction();
+    gearActions.add(showInWindow);
+
     return gearActions;
   }
 
@@ -292,6 +282,10 @@ public final class ImplementationViewComponent extends JPanel {
       result[i] = o.element.getPresentableText();
     }
     return result;
+  }
+
+  public void setShowInFindWindowProcessor(@Nullable Consumer<? super ImplementationViewComponent> showInFindWindowProcessor) {
+    myShowInFindWindowProcessor = showInFindWindowProcessor;
   }
 
   public void update(@NotNull final Collection<? extends ImplementationViewElement> elements, final int index) {
@@ -530,7 +524,7 @@ public final class ImplementationViewComponent extends JPanel {
     }
   }
 
-  private ActionToolbar createToolbar(Consumer<? super ImplementationViewComponent> openUsageView) {
+  private ActionToolbar createToolbar() {
     DefaultActionGroup group = new DefaultActionGroup();
 
     BackAction back = new BackAction();
@@ -569,7 +563,7 @@ public final class ImplementationViewComponent extends JPanel {
     forward.registerCustomShortcutSet(new CustomShortcutSet(KeyStroke.getKeyStroke(KeyEvent.VK_RIGHT, 0)), this);
     group.add(forward);
 
-    group.add(createGearActionButton(openUsageView));
+    group.add(createGearActionButton());
 
     ActionToolbar toolbar = ActionManager.getInstance().createActionToolbar(IMPLEMENTATION_VIEW_PLACE, group, true);
     toolbar.setReservePlaceAutoPopupIcon(false);
@@ -682,6 +676,34 @@ public final class ImplementationViewComponent extends JPanel {
     @Override
     public void actionPerformed(@NotNull AnActionEvent e) {
       myElements[myIndex].navigate(myFocusEditor);
+    }
+  }
+
+  private class ShowInFindWindowAction extends AnAction {
+    ShowInFindWindowAction() {
+      super(() -> IdeBundle.message("show.in.find.window.button.name"),
+            ToolWindowManager.getInstance(project).getLocationIcon(ToolWindowId.FIND, AllIcons.General.Pin_tab));
+    }
+
+    @Override
+    public @NotNull ActionUpdateThread getActionUpdateThread() {
+      return ActionUpdateThread.BGT;
+    }
+
+    @Override
+    public void update(@NotNull AnActionEvent e) {
+      e.getPresentation().setEnabledAndVisible(myShowInFindWindowProcessor != null);
+    }
+
+    @Override
+    public void actionPerformed(@NotNull AnActionEvent e) {
+      Consumer<? super ImplementationViewComponent> processor = myShowInFindWindowProcessor;
+      if (processor != null) {
+        processor.accept(ImplementationViewComponent.this);
+      }
+      if (myHint.isVisible()) {
+        myHint.cancel();
+      }
     }
   }
 

@@ -112,7 +112,7 @@ object CodeReviewDetailsCommitsComponentFactory {
               CollaborationToolsBundle.message("review.details.commits.popup.all", commitsCount)
             }
             else {
-              commitPresentation(commit).title
+              commitPresentation(commit).titleHtml
             }
           },
           renderer = CommitRenderer.createCommitRenderer(commitsCount) { commit: T? ->

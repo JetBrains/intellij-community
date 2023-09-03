@@ -15,6 +15,7 @@ import com.intellij.execution.runners.ExecutionEnvironment
 import com.intellij.execution.target.getEffectiveConfiguration
 import com.intellij.execution.util.ExecutionErrorDialog
 import com.intellij.execution.util.JavaParametersUtil
+import com.intellij.execution.util.ProgramParametersUtil
 import com.intellij.openapi.application.AppUIExecutor
 import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.externalSystem.model.execution.ExternalSystemTaskExecutionSettings
@@ -48,11 +49,7 @@ import org.jetbrains.plugins.gradle.util.GradleConstants
 @ApiStatus.Experimental
 abstract class GradleBaseApplicationEnvironmentProvider<T : JavaRunConfigurationBase> : GradleExecutionEnvironmentProvider {
 
-  abstract fun generateInitScript(
-    applicationConfiguration: T, module: Module, params: JavaParameters,
-    gradleTaskPath: String, runAppTaskName: String, mainClass: PsiClass, javaExePath: String,
-    sourceSetName: String, javaModuleName: String?
-  ): String?
+  abstract fun generateInitScript(params: GradleInitScriptParameters): String?
 
   protected open fun argsString(params: JavaParameters): String {
     return createEscapedParameters(params.programParametersList.parameters, "args") +
@@ -69,6 +66,7 @@ abstract class GradleBaseApplicationEnvironmentProvider<T : JavaRunConfiguration
 
     val runClass = runProfile.runClass
     val mainClass = runProfile.configurationModule.findClass(runClass) ?: return null
+    val mainClassName = mainClass.qualifiedName ?: return null
 
     val virtualFile = mainClass.containingFile.virtualFile
     val module = runReadAction {
@@ -128,9 +126,21 @@ abstract class GradleBaseApplicationEnvironmentProvider<T : JavaRunConfiguration
                           ModuleRootManager.getInstance(module).fileIndex.isInTestSourceContent(virtualFile) -> "test"
                           else -> "main"
                         } ?: return null
+    val applicationConfiguration = runProfile as T
+    val workingDir = ProgramParametersUtil.getWorkingDir(applicationConfiguration, module.project, module)?.let {
+      FileUtil.toSystemIndependentName(it)
+    }
+    val builder = GradleInitScriptParametersBuilder(applicationConfiguration, module)
+      .withWorkingDirectory(workingDir)
+      .withParams(argsString(params))
+      .withGradleTaskPath(gradlePath)
+      .withRunAppTaskName(runAppTaskName)
+      .withMainClass(mainClassName)
+      .withJavaExePath(javaExePath)
+      .withSourceSetName(sourceSetName)
+      .withJavaModuleName(javaModuleName)
 
-    val initScript = generateInitScript(runProfile as T, module, params, gradlePath,
-                                        runAppTaskName, mainClass, javaExePath, sourceSetName, javaModuleName)
+    val initScript = generateInitScript(builder.build())
     gradleRunConfiguration.putUserData<String>(GradleTaskManager.INIT_SCRIPT_KEY, initScript)
     gradleRunConfiguration.putUserData<String>(GradleTaskManager.INIT_SCRIPT_PREFIX_KEY, runAppTaskName)
     (gradleRunConfiguration as GradleRunConfiguration).isDebugServerProcess = false
@@ -165,4 +175,81 @@ abstract class GradleBaseApplicationEnvironmentProvider<T : JavaRunConfiguration
       else null
     }
   }
+
+  private class GradleInitScriptParametersBuilder(val configuration: JavaRunConfigurationBase, val module: Module) {
+    private var workingDirectory: String? = null
+    private lateinit var params: String
+    private lateinit var gradleTaskPath: String
+    private lateinit var runAppTaskName: String
+    private lateinit var mainClass: String
+    private lateinit var javaExePath: String
+    private lateinit var sourceSetName: String
+    private var javaModuleName: String? = null
+
+    fun build(): GradleInitScriptParameters {
+      return GradleInitScriptParametersImpl(configuration,
+                                            module,
+                                            workingDirectory,
+                                            params,
+                                            gradleTaskPath,
+                                            runAppTaskName,
+                                            mainClass,
+                                            javaExePath,
+                                            sourceSetName,
+                                            javaModuleName)
+    }
+
+    fun withWorkingDirectory(workingDirectory: String?): GradleInitScriptParametersBuilder {
+      this.workingDirectory = workingDirectory
+      return this
+    }
+
+    fun withParams(params: String): GradleInitScriptParametersBuilder {
+      this.params = params
+      return this
+    }
+
+    fun withGradleTaskPath(gradleTaskPath: String): GradleInitScriptParametersBuilder {
+      this.gradleTaskPath = gradleTaskPath
+      return this
+    }
+
+    fun withRunAppTaskName(runAppTaskName: String): GradleInitScriptParametersBuilder {
+      this.runAppTaskName = runAppTaskName
+      return this
+    }
+
+    fun withMainClass(mainClass: String): GradleInitScriptParametersBuilder {
+      this.mainClass = mainClass
+      return this
+    }
+
+    fun withJavaExePath(javaExePath: String): GradleInitScriptParametersBuilder {
+      this.javaExePath = javaExePath
+      return this
+    }
+
+    fun withSourceSetName(sourceSetName: String): GradleInitScriptParametersBuilder {
+      this.sourceSetName = sourceSetName
+      return this
+    }
+
+    fun withJavaModuleName(javaModuleName: String?): GradleInitScriptParametersBuilder {
+      this.javaModuleName = javaModuleName
+      return this
+    }
+  }
+
+  private class GradleInitScriptParametersImpl(
+    override val configuration: JavaRunConfigurationBase,
+    override val module: Module,
+    override val workingDirectory: String?,
+    override val params: String,
+    override val gradleTaskPath: String,
+    override val runAppTaskName: String,
+    override val mainClass: String,
+    override val javaExePath: String,
+    override val sourceSetName: String,
+    override val javaModuleName: String?,
+  ) : GradleInitScriptParameters
 }

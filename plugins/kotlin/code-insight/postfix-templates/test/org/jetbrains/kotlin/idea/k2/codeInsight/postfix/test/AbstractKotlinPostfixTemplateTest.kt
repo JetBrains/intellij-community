@@ -24,7 +24,7 @@ abstract class AbstractKotlinPostfixTemplateTest : NewLightKotlinCodeInsightFixt
     }
 
     protected fun performTest() {
-        IgnoreTests.runTestIfNotDisabledByFileDirective(testRootPath.resolve(testMethodPath), IgnoreTests.DIRECTIVES.IGNORE_FIR, "after") {
+        IgnoreTests.runTestIfNotDisabledByFileDirective(testRootPath.resolve(testMethodPath), IgnoreTests.DIRECTIVES.IGNORE_K2, "after") {
             myFixture.configureByDefaultFile()
             myFixture.type(".$templateName\t")
             myFixture.checkContentByExpectedPath(".after")

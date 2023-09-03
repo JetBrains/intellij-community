@@ -163,13 +163,11 @@ public class SettingsEditorFragment<Settings, C extends JComponent> extends Sett
     return myId;
   }
 
-  @Nls
-  public String getName() {
+  public @Nls String getName() {
     return myName;
   }
 
-  @Nls
-  public String getGroup() {
+  public @Nls String getGroup() {
     return myGroup;
   }
 
@@ -205,8 +203,7 @@ public class SettingsEditorFragment<Settings, C extends JComponent> extends Sett
     return myPriority;
   }
 
-  @Nullable
-  public ActionGroup getCustomActionGroup() {
+  public @Nullable ActionGroup getCustomActionGroup() {
     return null;
   }
 

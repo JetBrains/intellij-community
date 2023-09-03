@@ -6,10 +6,7 @@ import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.KeyedExtensionCollector;
 import com.intellij.util.KeyedLazyInstance;
 import com.intellij.util.containers.ContainerUtil;
-import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
-import org.jetbrains.annotations.TestOnly;
+import org.jetbrains.annotations.*;
 
 import java.util.*;
 
@@ -49,27 +46,25 @@ public class LanguageExtension<T> extends KeyedExtensionCollector<T, Language> {
   }
 
   private void clearCacheForDerivedLanguages(@NotNull Language language) {
-    Set<Language> languages = LanguageUtil.getAllDerivedLanguages(language);  // includes language itself
-    for (Language derivedLanguage : languages) {
-      clearCacheForLanguage(derivedLanguage);
-
-      Collection<MetaLanguage> metaLanguages = LanguageUtil.matchingMetaLanguages(derivedLanguage);
-      for (MetaLanguage metaLanguage : metaLanguages) {
+    for (Language dialect : ContainerUtil.concat(language.getTransitiveDialects(), Collections.singletonList(language))) {
+      clearCacheForLanguage(dialect);
+      for (MetaLanguage metaLanguage : LanguageUtil.matchingMetaLanguages(dialect)) {
         clearCacheForLanguage(metaLanguage);
       }
     }
     if (language instanceof MetaLanguage) {
       Collection<Language> matchingLanguages = ((MetaLanguage)language).getMatchingLanguages();
       for (Language matchingLanguage : matchingLanguages) {
-        Set<Language> matchingDerivedLanguages = LanguageUtil.getAllDerivedLanguages(matchingLanguage);  // includes language itself
-        for (Language derivedLanguage : matchingDerivedLanguages) {
-          clearCacheForLanguage(derivedLanguage);
+        Collection<Language> dialects = matchingLanguage.getTransitiveDialects();
+        clearCacheForLanguage(matchingLanguage);
+        for (Language dialect : dialects) {
+          clearCacheForLanguage(dialect);
         }
       }
     }
   }
 
-  private void clearCacheForLanguage(Language language) {
+  private void clearCacheForLanguage(@NotNull Language language) {
     language.putUserData(myCacheKey, null);
     language.putUserData(myAllCacheKey, null);
     super.invalidateCacheForExtension(language.getID());
@@ -146,7 +141,7 @@ public class LanguageExtension<T> extends KeyedExtensionCollector<T, Language> {
       return super.buildExtensions(stringKey, key);
     }
 
-    Set<String> allKeys = new HashSet<>();
+    Set<String> allKeys = new HashSet<>(metaLanguages.size()+1);
     allKeys.add(stringKey);
     for (MetaLanguage language : metaLanguages) {
       allKeys.add(keyToString(language));

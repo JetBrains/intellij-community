@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.actions;
 
 import com.intellij.ide.BrowserUtil;
@@ -16,7 +16,7 @@ import org.jetbrains.annotations.NotNull;
 import java.nio.file.Files;
 import java.nio.file.Path;
 
-public class RefCardAction extends DumbAwareAction implements ActionRemoteBehaviorSpecification.Frontend {
+public final class RefCardAction extends DumbAwareAction implements ActionRemoteBehaviorSpecification.Frontend {
   private final NullableLazyValue<Path> myRefCardPath = NullableLazyValue.volatileLazyNullable(() -> {
     var file = Path.of(PathManager.getHomePath() + "/help/ReferenceCard" + (SystemInfo.isMac ? "ForMac" : "") + ".pdf");
     return DiskQueryRelay.compute(() -> Files.exists(file) ? file : null);

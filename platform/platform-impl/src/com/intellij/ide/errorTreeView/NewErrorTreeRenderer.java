@@ -61,7 +61,7 @@ public final class NewErrorTreeRenderer extends MultilineTreeCellRenderer {
     return super.getTreeCellRendererComponent(tree, value, selected, expanded, leaf, row, hasFocus);
   }
 
-  private static class MyNotSelectedColoredTreeCellRenderer extends SimpleColoredComponent implements ClickableTreeCellRenderer {
+  private static final class MyNotSelectedColoredTreeCellRenderer extends SimpleColoredComponent implements ClickableTreeCellRenderer {
     private CustomizeColoredTreeCellRenderer myCurrentCallback;
 
     @Override
@@ -100,7 +100,7 @@ public final class NewErrorTreeRenderer extends MultilineTreeCellRenderer {
     }
   }
 
-  private static class MyWrapperRenderer implements TreeCellRenderer {
+  private static final class MyWrapperRenderer implements TreeCellRenderer {
     private final TreeCellRenderer myLeft;
     private final TreeCellRenderer myRight;
     private final MyPanel myPanel;
@@ -162,7 +162,7 @@ public final class NewErrorTreeRenderer extends MultilineTreeCellRenderer {
      * ("Error") and the right side is a {@link JEditorPane} containing the
      * error message.
      */
-    private class MyPanel extends JPanel implements Accessible {
+    private final class MyPanel extends JPanel implements Accessible {
       private AccessibleContext myDefaultAccessibleContext;
 
       MyPanel(LayoutManager layout) {
@@ -184,7 +184,7 @@ public final class NewErrorTreeRenderer extends MultilineTreeCellRenderer {
         return myDefaultAccessibleContext;
       }
 
-      protected class AccessibleMyPanel extends AbstractAccessibleContextDelegate {
+      protected final class AccessibleMyPanel extends AbstractAccessibleContextDelegate {
         @Override
         protected @NotNull AccessibleContext getDelegate() {
           // Most of the accessibility properties come from the right component

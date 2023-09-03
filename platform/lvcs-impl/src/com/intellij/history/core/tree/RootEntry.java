@@ -22,7 +22,7 @@ import org.jetbrains.annotations.NotNull;
 import java.io.DataOutput;
 import java.io.IOException;
 
-public class RootEntry extends DirectoryEntry {
+public final class RootEntry extends DirectoryEntry {
   public RootEntry() {
     super("");
   }
@@ -32,9 +32,8 @@ public class RootEntry extends DirectoryEntry {
     throw new UnsupportedOperationException();
   }
 
-  @NotNull
   @Override
-  public RootEntry copy() {
+  public @NotNull RootEntry copy() {
     return (RootEntry)super.copy();
   }
 

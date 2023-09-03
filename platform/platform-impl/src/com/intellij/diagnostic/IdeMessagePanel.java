@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.diagnostic;
 
 import com.intellij.codeWithMe.ClientId;
@@ -246,7 +246,7 @@ public final class IdeMessagePanel implements MessagePoolListener, IconLikeCusto
     layout.add(balloon);
   }
 
-  private class IdeMessageAction extends AnAction implements DumbAware {
+  private final class IdeMessageAction extends AnAction implements DumbAware {
 
     private MessagePool.State state = MessagePool.State.NoErrors;
     private Icon icon;

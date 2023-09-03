@@ -95,7 +95,7 @@ public final class KeyboardGestureProcessor {
     myState = state;
   }
 
-  private class MyActionProcessor extends ActionProcessor {
+  private final class MyActionProcessor extends ActionProcessor {
     @Override
     public @NotNull AnActionEvent createEvent(@NotNull InputEvent inputEvent,
                                               @NotNull DataContext context,

@@ -939,7 +939,7 @@ public class DialogWrapperPeerImpl extends DialogWrapperPeer {
     }
 
     @SuppressWarnings("SSBasedInspection")
-    private class MyWindowListener extends WindowAdapter {
+    private final class MyWindowListener extends WindowAdapter {
       @Override
       public void windowClosing(WindowEvent e) {
         DialogWrapper dialogWrapper = getDialogWrapper();

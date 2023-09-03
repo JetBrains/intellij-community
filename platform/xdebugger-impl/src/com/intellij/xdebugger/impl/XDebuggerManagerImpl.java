@@ -39,6 +39,7 @@ import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileEditor.FileDocumentManagerListener;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.Balloon;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.IdeGlassPaneUtil;
 import com.intellij.openapi.wm.ToolWindowId;
@@ -46,8 +47,6 @@ import com.intellij.ui.ExperimentalUI;
 import com.intellij.ui.HintHint;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.util.DocumentUtil;
-import com.intellij.util.ObjectUtils;
-import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.xdebugger.XDebugProcess;
@@ -56,7 +55,6 @@ import com.intellij.xdebugger.XDebugSession;
 import com.intellij.xdebugger.XDebuggerManager;
 import com.intellij.xdebugger.breakpoints.XBreakpoint;
 import com.intellij.xdebugger.breakpoints.XBreakpointListener;
-import com.intellij.xdebugger.breakpoints.XBreakpointType;
 import com.intellij.xdebugger.impl.actions.XDebuggerActions;
 import com.intellij.xdebugger.impl.breakpoints.XBreakpointManagerImpl;
 import com.intellij.xdebugger.impl.evaluate.quick.common.ValueLookupManager;
@@ -86,6 +84,8 @@ public final class XDebuggerManagerImpl extends XDebuggerManager implements Pers
    */
   @Deprecated(forRemoval = true)
   public static final NotificationGroup NOTIFICATION_GROUP = getNotificationGroup();
+
+  public static final DataKey<Integer> ACTIVE_LINE_NUMBER = DataKey.create("active.line.number");
 
   private final Project myProject;
   private final XBreakpointManagerImpl myBreakpointManager;
@@ -172,12 +172,17 @@ public final class XDebuggerManagerImpl extends XDebuggerManager implements Pers
       }
     });
 
-    DebuggerEditorListener listener = new DebuggerEditorListener();
-    BreakpointPromoterEditorListener bpPromoter = new BreakpointPromoterEditorListener(coroutineScope);
+    GutterUiRunToCursorEditorListener listener = new GutterUiRunToCursorEditorListener();
+    EditorMouseMotionListener bpPromoter = new BreakpointPromoterEditorListener(coroutineScope);
     EditorEventMulticaster eventMulticaster = EditorFactory.getInstance().getEventMulticaster();
     eventMulticaster.addEditorMouseMotionListener(listener, this);
     eventMulticaster.addEditorMouseListener(listener, this);
     eventMulticaster.addEditorMouseMotionListener(bpPromoter, this);
+    if (ExperimentalUI.isNewUI()) {
+      InlayRunToCursorEditorListener newRunToCursorListener = new InlayRunToCursorEditorListener(myProject);
+      eventMulticaster.addEditorMouseMotionListener(newRunToCursorListener, this);
+      eventMulticaster.addEditorMouseListener(newRunToCursorListener, this);
+    }
   }
 
   @Override
@@ -399,7 +404,7 @@ public final class XDebuggerManagerImpl extends XDebuggerManager implements Pers
     return NotificationGroupManager.getInstance().getNotificationGroup("Debugger messages");
   }
 
-  private final class BreakpointPromoterEditorListener implements EditorMouseMotionListener, EditorMouseListener {
+  private final class BreakpointPromoterEditorListener implements EditorMouseMotionListener {
     private XSourcePositionImpl myLastPosition = null;
     private Icon myLastIcon = null;
 
@@ -473,10 +478,12 @@ public final class XDebuggerManagerImpl extends XDebuggerManager implements Pers
     }
   }
 
-  private final class DebuggerEditorListener implements EditorMouseMotionListener, EditorMouseListener {
+  private final class GutterUiRunToCursorEditorListener implements EditorMouseMotionListener, EditorMouseListener {
     RangeHighlighter myCurrentHighlighter;
 
     boolean isEnabled(@NotNull EditorMouseEvent e) {
+      if (Registry.is("debugger.inlayRunToCursor") && ExperimentalUI.isNewUI()) return false;
+
       Editor editor = e.getEditor();
       if (ExperimentalUI.isNewUI() && ShowBreakpointsOverLineNumbersAction.isSelected()) {
         //todo[kb] make it possible to do run to cursor by clicking on the gutter
@@ -533,16 +540,6 @@ public final class XDebuggerManagerImpl extends XDebuggerManager implements Pers
       }
     }
 
-    private static int getLineNumber(EditorMouseEvent event) {
-      Editor editor = event.getEditor();
-      if (event.getVisualPosition().line >= ((EditorImpl)editor).getVisibleLineCount()) {
-        return -1;
-      }
-      int lineStartOffset = EditorUtil.getNotFoldedLineStartOffset(editor, event.getOffset());
-      int documentLine = editor.getDocument().getLineNumber(lineStartOffset);
-      return documentLine < editor.getDocument().getLineCount() ? documentLine : -1;
-    }
-
     @Override
     public void mousePressed(@NotNull EditorMouseEvent e) {
       if (e.getMouseEvent().getButton() == MouseEvent.BUTTON1 && isEnabled(e)) {
@@ -561,5 +558,15 @@ public final class XDebuggerManagerImpl extends XDebuggerManager implements Pers
         }
       }
     }
+  }
+
+  static int getLineNumber(@NotNull EditorMouseEvent event) {
+    Editor editor = event.getEditor();
+    if (event.getVisualPosition().line >= ((EditorImpl)editor).getVisibleLineCount()) {
+      return -1;
+    }
+    int lineStartOffset = EditorUtil.getNotFoldedLineStartOffset(editor, event.getOffset());
+    int documentLine = editor.getDocument().getLineNumber(lineStartOffset);
+    return documentLine < editor.getDocument().getLineCount() ? documentLine : -1;
   }
 }

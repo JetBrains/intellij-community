@@ -114,7 +114,7 @@ public class JavaCoverageViewExtension extends CoverageViewExtension {
   @Override
   public PsiElement getElementToSelect(Object object) {
     PsiElement psiElement = super.getElementToSelect(object);
-    if (psiElement != null) {
+    if (psiElement != null && psiElement.isValid()) {
       final PsiFile containingFile = psiElement.getContainingFile();
       if (containingFile instanceof PsiClassOwner) {
         final PsiClass[] classes = ((PsiClassOwner)containingFile).getClasses();

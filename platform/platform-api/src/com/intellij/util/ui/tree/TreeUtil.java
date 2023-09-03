@@ -1304,21 +1304,16 @@ public final class TreeUtil {
     return getLastUserObject(AbstractTreeNode.class, path);
   }
 
+  public static <T> @Nullable T getParentNodeOfType(@Nullable AbstractTreeNode<?> node, @NotNull Class<T> aClass) {
+    for (AbstractTreeNode<?> cur = node; cur != null; cur = cur.getParent()) {
+      if (aClass.isInstance(cur)) return (T)cur;
+    }
+    return null;
+  }
+
   public static @Nullable TreePath getSelectedPathIfOne(@Nullable JTree tree) {
     TreePath[] paths = tree == null ? null : tree.getSelectionPaths();
     return paths != null && paths.length == 1 ? paths[0] : null;
-  }
-
-  /**
-   * @param tree      a tree, which selection is requested
-   * @param predicate a predicate that validates selected paths
-   * @return an array with all selected paths if all of them are valid
-   */
-  public static TreePath @Nullable [] getSelectedPathsIfAll(@Nullable JTree tree, @NotNull Predicate<? super TreePath> predicate) {
-    TreePath[] paths = tree == null ? null : tree.getSelectionPaths();
-    if (paths == null || paths.length == 0) return null;
-    for (TreePath path : paths) if (path == null || !predicate.test(path)) return null;
-    return paths;
   }
 
   /** @deprecated use TreeUtil#treePathTraverser() */
@@ -1563,15 +1558,13 @@ public final class TreeUtil {
       this.promise = promise;
     }
 
-    @Nullable
     @Override
-    public Action preVisitEDT(@NotNull TreePath path) {
+    public @Nullable Action preVisitEDT(@NotNull TreePath path) {
       return promise.isCancelled() ? TreeVisitor.Action.SKIP_SIBLINGS : null;
     }
 
-    @NotNull
     @Override
-    public Action postVisitEDT(@NotNull TreePath path, @NotNull TreeVisitor.Action action) {
+    public @NotNull Action postVisitEDT(@NotNull TreePath path, @NotNull TreeVisitor.Action action) {
       if (action == TreeVisitor.Action.CONTINUE || action == TreeVisitor.Action.INTERRUPT) {
         // do not expand children if parent path is collapsed
         if (!tree.isVisible(path)) {

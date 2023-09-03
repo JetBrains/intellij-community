@@ -25,7 +25,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
-public class UndoChangeRevertingVisitor extends ChangeVisitor {
+public final class UndoChangeRevertingVisitor extends ChangeVisitor {
   private static final Logger LOG = Logger.getInstance(UndoChangeRevertingVisitor.class);
 
   private final IdeaGateway myGateway;
@@ -200,7 +200,7 @@ public class UndoChangeRevertingVisitor extends ChangeVisitor {
     }
   }
 
-  private static abstract class DelayedApply {
+  private abstract static class DelayedApply {
     protected VirtualFile myFile;
 
     protected DelayedApply(VirtualFile f) {
@@ -225,7 +225,7 @@ public class UndoChangeRevertingVisitor extends ChangeVisitor {
     }
   }
 
-  private static class DelayedContentApply extends DelayedApply {
+  private static final class DelayedContentApply extends DelayedApply {
     private final Content myContent;
 
     DelayedContentApply(VirtualFile f, Content content) {
@@ -267,7 +267,7 @@ public class UndoChangeRevertingVisitor extends ChangeVisitor {
     }
   }
 
-  public static class RuntimeIOException extends RuntimeException {
+  public static final class RuntimeIOException extends RuntimeException {
     public RuntimeIOException(Throwable cause) {
       super(cause);
     }

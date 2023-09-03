@@ -276,6 +276,8 @@
       <add-to-group group-id="SegmentedVcsActionsBarGroup" anchor="last"/>
     </action>
 
+    <action id="Git.Log.Show.Command" class="git4idea.log.command.ShowGitLogCommandAction" text="Show Git Log for Command" internal="true"/>
+
     <!--This group is empty and unused, left for plugins compatibility.-->
     <group id="Git.LogContextMenu"/>
 
@@ -340,6 +342,9 @@
       <add-to-group group-id="VcsToolbarActions" anchor="after" relative-to-action="CheckinProject"/>
       <add-to-group group-id="VcsNavBarToolbarActions" anchor="after" relative-to-action="CheckinProject"/>
     </action>
+    <action id="Git.Stage.Enable" class="git4idea.index.actions.GitEnableStagingAreaAction">
+      <add-to-group group-id="ChangesViewToolbar" anchor="last"/>
+    </action>
     <action id="Git.Stage.Add" class="git4idea.index.actions.GitAddAction" use-shortcut-of="ChangesView.AddUnversioned"/>
     <action id="Git.Stage.Add.No.Content" class="git4idea.index.actions.GitAddWithoutContent"/>
     <action id="Git.Stage.Reset" class="git4idea.index.actions.GitResetAction" use-shortcut-of="ChangesView.Revert"/>
@@ -349,6 +354,9 @@
     <action id="Git.Stage.Merge" class="git4idea.index.actions.GitStageMergeConflictAction"/>
     <action id="Git.Stage.ThreeSideDiff" class="git4idea.index.actions.GitStageThreeSideDiffAction"/>
     <action id="Git.Stage.ToggleIgnored" class="git4idea.index.actions.GitToggleIgnoredFilesAction"/>
+    <action id="Git.Stage.ToggleCommitAll" class="git4idea.index.actions.GitToggleCommitAllAction">
+      <add-to-group group-id="CommitView.GearActions"/>
+    </action>
     <action id="Git.Stage.Add.All" class="git4idea.index.actions.GitStageAllAction"/>
     <action id="Git.Stage.Add.Tracked" class="git4idea.index.actions.GitStageTrackedAction" icon="AllIcons.General.Add"/>
     <action id="Git.Stage.Show.Staged" class="git4idea.index.actions.GitShowStagedVersionAction"/>
@@ -379,6 +387,7 @@
         <separator key="separator.show"/>
         <reference id="Git.Stage.ToggleIgnored"/>
       </group>
+      <reference id="Git.Stage.Enable"/>
     </group>
     <group id="Git.Stage.Tree.Menu">
       <reference id="Git.Stage.Merge"/>
@@ -501,8 +510,6 @@
     <advancedSetting id="git.update.incoming.outgoing.info" default="true" groupKey="advanced.settings.git"/>
     <advancedSetting id="git.use.schannel.on.windows" default="false" groupKey="advanced.settings.git" os="windows"/>
     <advancedSetting id="git.branch.cleanup.symbol" default="-" groupKey="advanced.settings.git"/>
-    <advancedSetting id="git.ai.generated.commits.summary" default="false" groupKey="advanced.settings.git"/>
-    <advancedSetting id="git.ai.generated.commits.summary.paths" default="" groupKey="advanced.settings.git"/>
     <registryKey key="git.execute.with.mediator" defaultValue="true"
                  description="Use wrapper executable on Windows to support soft Git process cancellation."/>
     <registryKey key="git.blocking.read" defaultValue="true"
@@ -576,7 +583,8 @@
     <registryKey key="git.stage.navigate.to.index.file" defaultValue="false"
                  description="Navigate to the staging area content from diff instead of the local file" />
     <registryKey key="git.stage.enable.commit.all" defaultValue="true"
-                 description="When no changes are staged, stage and commit all changes in the project"/>
+                 description="Deprecated. Use the option in the Commit tool window 'Options' menu.
+                 When no changes are staged, stage and commit all changes in the project"/>
     <registryKey key="git.branches.panel.persist.tree.state" defaultValue="true"
                  description="Persist branches panel tree state between restarts"/>
     <registryKey key="git.branches.tree.popup.expand.node.on.single.click" defaultValue="true"
@@ -727,7 +735,6 @@
                         displayNameSupplierClassName="git4idea.index.GitStageDisplayNameSupplier"
                         isInCommitToolWindow="true"/>
     <vcs.changes.changesViewNodeAction implementation="git4idea.merge.GitChangesViewNodeAction"/>
-    <projectService serviceImplementation="git4idea.index.ui.GitStageUiSettingsImpl"/>
 
     <projectService serviceImplementation="git4idea.index.GitStageTracker"/>
     <fileDocumentManagerListener implementation="git4idea.index.GitStageFileDocumentManagerListener"/>

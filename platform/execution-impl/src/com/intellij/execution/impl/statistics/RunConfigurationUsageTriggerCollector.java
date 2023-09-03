@@ -66,12 +66,11 @@ public final class RunConfigurationUsageTriggerCollector extends CounterUsagesCo
     return GROUP;
   }
 
-  @NotNull
-  public static StructuredIdeActivity trigger(@NotNull Project project,
-                                              @NotNull ConfigurationFactory factory,
-                                              @NotNull Executor executor,
-                                              @Nullable RunConfiguration runConfiguration,
-                                              boolean isRerun) {
+  public static @NotNull StructuredIdeActivity trigger(@NotNull Project project,
+                                                       @NotNull ConfigurationFactory factory,
+                                                       @NotNull Executor executor,
+                                                       @Nullable RunConfiguration runConfiguration,
+                                                       boolean isRerun) {
     return ACTIVITY_GROUP
       .startedAsync(project, () -> ReadAction.nonBlocking(() -> buildContext(project, factory, executor, runConfiguration, isRerun))
         .expireWith(project)
@@ -125,16 +124,14 @@ public final class RunConfigurationUsageTriggerCollector extends CounterUsagesCo
     }
   }
 
-  public static class RunConfigurationExecutorUtilValidator extends CustomValidationRule {
-    @NotNull
+  public static final class RunConfigurationExecutorUtilValidator extends CustomValidationRule {
     @Override
-    public String getRuleId() {
+    public @NotNull String getRuleId() {
       return "run_config_executor";
     }
 
-    @NotNull
     @Override
-    protected ValidationResultType doValidate(@NotNull String data, @NotNull EventContext context) {
+    protected @NotNull ValidationResultType doValidate(@NotNull String data, @NotNull EventContext context) {
       for (Executor executor : Executor.EXECUTOR_EXTENSION_NAME.getExtensions()) {
         if (StringUtil.equals(executor.getId(), data)) {
           final PluginInfo info = PluginInfoDetectorKt.getPluginInfo(executor.getClass());
@@ -145,18 +142,16 @@ public final class RunConfigurationUsageTriggerCollector extends CounterUsagesCo
     }
   }
 
-  public static class RunTargetValidator extends CustomValidationRule {
+  public static final class RunTargetValidator extends CustomValidationRule {
     public static final String RULE_ID = "run_target";
 
-    @NotNull
     @Override
-    public String getRuleId() {
+    public @NotNull String getRuleId() {
       return RULE_ID;
     }
 
-    @NotNull
     @Override
-    protected ValidationResultType doValidate(@NotNull String data, @NotNull EventContext context) {
+    protected @NotNull ValidationResultType doValidate(@NotNull String data, @NotNull EventContext context) {
       if (LOCAL_TYPE_ID.equals(data)) {
         return ValidationResultType.ACCEPTED;
       }

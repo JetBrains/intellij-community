@@ -119,15 +119,12 @@ public final class BegMenuItemUI extends BasicMenuItemUI {
     String keyStrokeText = getKeyStrokeText(jmenuitem);
     String s1 = layoutMenuItem(fontmetrics, jmenuitem.getText(), fontmetrics1, keyStrokeText, icon1, icon2, arrowIcon, jmenuitem.getVerticalAlignment(), jmenuitem.getHorizontalAlignment(), jmenuitem.getVerticalTextPosition(), jmenuitem.getHorizontalTextPosition(), f, l, j, c, h, d, jmenuitem.getText() != null ? defaultTextIconGap : 0, defaultTextIconGap);
     Color color2 = g.getColor();
-    if (comp.isOpaque() || StartupUiUtil.isUnderDarcula() || UIUtil.isUnderIntelliJLaF()) {
+    if (comp.isOpaque()) {
       g.setColor(jmenuitem.getBackground());
       g.fillRect(0, 0, j1, k1);
       if (isSelected(jmenuitem)) {
         g.setColor(selectionBackground);
-        if (icon2 != null && !(StartupUiUtil.isUnderDarcula() || UIUtil.isUnderIntelliJLaF())) {
-          g.fillRect(k, 0, j1 - k, k1);
-        }
-        else if (ExperimentalUI.isNewUI() || IdeaPopupMenuUI.isRoundBorder()) {
+        if (ExperimentalUI.isNewUI() || IdeaPopupMenuUI.isRoundBorder()) {
           IdeaMenuUI.paintRoundSelection(g, comp, j1, k1);
         }
         else {
@@ -569,7 +566,7 @@ public final class BegMenuItemUI extends BasicMenuItemUI {
     return new MyMenuDragMouseHandler();
   }
 
-  private class MyMenuDragMouseHandler implements MenuDragMouseListener {
+  private final class MyMenuDragMouseHandler implements MenuDragMouseListener {
     @Override
     public void menuDragMouseEntered(MenuDragMouseEvent e){}
 

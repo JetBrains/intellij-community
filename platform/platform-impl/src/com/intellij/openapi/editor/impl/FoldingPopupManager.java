@@ -20,7 +20,7 @@ import java.awt.event.MouseEvent;
 /**
  * This class implements showing a preview of text in a collapsed fold region on mouse hover.
  */
-public class FoldingPopupManager implements EditorMouseListener, EditorMouseMotionListener {
+public final class FoldingPopupManager implements EditorMouseListener, EditorMouseMotionListener {
   private static final Key<Boolean> DISABLED = Key.create("FoldingPopupManager.disabled");
   private static final TooltipGroup FOLDING_TOOLTIP_GROUP = new TooltipGroup("FOLDING_TOOLTIP_GROUP", 10);
   private static final int TOOLTIP_DELAY_MS = 300;

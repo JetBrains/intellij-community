@@ -16,10 +16,12 @@ import com.intellij.openapi.ui.popup.LightweightWindowEvent
 import com.intellij.openapi.util.CheckedDisposable
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.registry.Registry
+import com.intellij.openapi.util.text.TextWithMnemonic
 import com.intellij.openapi.wm.WindowManager
-import com.intellij.openapi.wm.impl.ToolbarComboWidget
+import com.intellij.openapi.wm.impl.ExpandableComboAction
+import com.intellij.openapi.wm.impl.ToolbarComboButton
 import com.intellij.ui.ColorUtil
-import com.intellij.ui.LottieUtils
+import com.intellij.ui.WebAnimationUtils
 import com.intellij.ui.awt.RelativePoint
 import com.intellij.ui.popup.AbstractPopup
 import com.intellij.ui.popup.WizardPopup
@@ -28,6 +30,7 @@ import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.StartupUiUtil
 import com.intellij.util.ui.UIUtil
 import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.annotations.Nls
 import java.awt.Component
 import java.awt.Dimension
 import java.awt.Point
@@ -53,6 +56,10 @@ object NewUiOnboardingUtil {
     return "https://www.jetbrains.com/help/$ideHelpName/$topic"
   }
 
+  fun @Nls String.dropMnemonic(): @Nls String {
+    return TextWithMnemonic.parse(this).dropMnemonic(true).text
+  }
+
   inline fun <reified T : Component> findUiComponent(project: Project, predicate: (T) -> Boolean): T? {
     val root = WindowManager.getInstance().getFrame(project) ?: return null
     findUiComponent(root, predicate)?.let { return it }
@@ -69,10 +76,27 @@ object NewUiOnboardingUtil {
     return component as? T
   }
 
-  fun showToolbarWidgetPopup(widget: ToolbarComboWidget, disposable: CheckedDisposable): JBPopup? {
-    return showNonClosablePopup(disposable,
-                                createPopup = { widget.createPopup(e = null) },
-                                showPopup = { popup -> popup.showUnderneathOf(widget) })
+  fun showToolbarComboButtonPopup(button: ToolbarComboButton, action: ExpandableComboAction, disposable: CheckedDisposable): JBPopup? {
+    return showNonClosablePopup(
+      disposable,
+      createPopup = {
+        val dataContext = DataManager.getInstance().getDataContext(button)
+        val event = AnActionEvent.createFromDataContext(ActionPlaces.NEW_UI_ONBOARDING, action.templatePresentation.clone(), dataContext)
+        ActionUtil.lastUpdateAndCheckDumb(action, event, false)
+        val popup = action.createPopup(event)
+        popup?.addListener(object : JBPopupListener {
+          override fun beforeShown(event: LightweightWindowEvent) {
+            button.model.setSelected(true)
+          }
+
+          override fun onClosed(event: LightweightWindowEvent) {
+            button.model.setSelected(false)
+          }
+        })
+        popup
+      },
+      showPopup = { popup -> popup.showUnderneathOf(button) }
+    )
   }
 
   fun showNonClosablePopup(disposable: CheckedDisposable,
@@ -148,7 +172,7 @@ object NewUiOnboardingUtil {
       return null
     }
     val background = JBUI.CurrentTheme.GotItTooltip.animationBackground(false)
-    val htmlPage = LottieUtils.createLottieAnimationPage(lottieJson, lottieScript, background)
+    val htmlPage = WebAnimationUtils.createLottieAnimationPage(lottieJson, lottieScript, background)
     return htmlPage to size
   }
 
@@ -180,7 +204,7 @@ object NewUiOnboardingUtil {
 
   private fun getLottieImageSize(lottieJson: String): Dimension? {
     return try {
-      LottieUtils.getLottieImageSize(lottieJson)
+      WebAnimationUtils.getLottieImageSize(lottieJson)
     }
     catch (t: Throwable) {
       LOG.error("Failed to parse lottie json", t)

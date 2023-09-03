@@ -19,6 +19,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.ToolWindowId;
 import com.intellij.packageDependencies.DependenciesBuilder;
+import com.intellij.packageDependencies.DependencyAnalysisResult;
 import com.intellij.packageDependencies.DependencyVisitorFactory;
 import com.intellij.packageDependencies.actions.AnalyzeDependenciesOnSpecifiedTargetHandler;
 import com.intellij.psi.PsiFile;
@@ -66,8 +67,8 @@ class AnalyzeModuleDependencyAction extends AnAction {
     new AnalyzeDependenciesOnSpecifiedTargetHandler(myPanel.getProject(), new AnalysisScope(myPanel.getModuleConfigurationState().getCurrentRootModel().getModule()),
                                                     GlobalSearchScope.union(scopes.toArray(GlobalSearchScope.EMPTY_ARRAY))) {
       @Override
-      protected boolean shouldShowDependenciesPanel(List<? extends DependenciesBuilder> builders) {
-        Set<GlobalSearchScope> usedScopes = findUsedScopes(builders, scopes);
+      protected boolean shouldShowDependenciesPanel(@NotNull DependencyAnalysisResult result) {
+        Set<GlobalSearchScope> usedScopes = ((MyAnalyzeResult)result).usedScopes;
         if (usedScopes.contains(mainScope)) {
           Messages.showInfoMessage(myProject,
                                    JavaUiBundle
@@ -123,6 +124,17 @@ class AnalyzeModuleDependencyAction extends AnAction {
           case 1 -> true;
           default -> false;
         };
+      }
+
+      @Override
+      protected @NotNull DependencyAnalysisResult createAnalysisResult() {
+        return new MyAnalyzeResult();
+      }
+
+      @Override
+      protected void bgtPostAnalyze(DependencyAnalysisResult result) {
+        super.bgtPostAnalyze(result);
+        ((MyAnalyzeResult)result).usedScopes = findUsedScopes(result.getBuilders(), scopes);
       }
 
       @Override
@@ -184,5 +196,9 @@ class AnalyzeModuleDependencyAction extends AnAction {
   @Override
   public @NotNull ActionUpdateThread getActionUpdateThread() {
     return ActionUpdateThread.EDT;
+  }
+
+  private static class MyAnalyzeResult extends DependencyAnalysisResult {
+    Set<GlobalSearchScope> usedScopes;
   }
 }

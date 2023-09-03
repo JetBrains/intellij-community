@@ -35,7 +35,7 @@ import java.util.List;
 
 import static com.intellij.openapi.util.text.StringUtil.*;
 
-public class CommonParameterFragments<Settings extends CommonProgramRunConfigurationParameters> {
+public final class CommonParameterFragments<Settings extends CommonProgramRunConfigurationParameters> {
 
   private final List<SettingsEditorFragment<Settings, ?>> myFragments = new ArrayList<>();
   private final SettingsEditorFragment<Settings, LabeledComponent<TextFieldWithBrowseButton>> myWorkingDirectory;
@@ -48,8 +48,7 @@ public class CommonParameterFragments<Settings extends CommonProgramRunConfigura
     myFragments.add(createEnvParameters());
   }
 
-  @NotNull
-  public SettingsEditorFragment<Settings, RawCommandLineEditor> programArguments() {
+  public @NotNull SettingsEditorFragment<Settings, RawCommandLineEditor> programArguments() {
     RawCommandLineEditor programArguments = new RawCommandLineEditor();
     CommandLinePanel.setMinimumWidth(programArguments, 400);
     String message = ExecutionBundle.message("run.configuration.program.parameters.placeholder");

@@ -15,6 +15,7 @@ import com.intellij.testFramework.PlatformTestUtil
 import com.intellij.testFramework.UsefulTestCase
 import junit.framework.TestCase
 import org.jetbrains.kotlin.idea.jsonUtils.getString
+import org.jetbrains.kotlin.idea.test.InTextDirectivesUtils
 import org.jetbrains.kotlin.idea.test.KotlinLightProjectDescriptor
 import org.jetbrains.kotlin.idea.test.KotlinWithJdkAndRuntimeLightProjectDescriptor
 import java.io.File
@@ -46,9 +47,13 @@ abstract class AbstractMultiFileLocalInspectionTest : AbstractLocalInspectionTes
         val localFixTextString = config["fix"]?.asString // null means "some single fix" or "none" if no problem expected
         val inspectionSettings = loadInspectionSettings(testFile)
 
+        val expectedHighlightString = InTextDirectivesUtils.findStringWithPrefixes(
+            mainFileText, "// $expectedProblemHighlightType: "
+        )
+
         doTest(path) test@{
             myFixture.configureFromTempProjectFile(mainFilePath)
-            runInspectionWithFixesAndCheck(inspection, problemExpectedString, null, localFixTextString, inspectionSettings)
+            runInspectionWithFixesAndCheck(inspection, problemExpectedString, expectedHighlightString, localFixTextString, inspectionSettings)
         }
     }
 

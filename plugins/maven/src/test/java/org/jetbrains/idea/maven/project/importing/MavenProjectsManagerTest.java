@@ -23,6 +23,7 @@ import com.intellij.openapi.roots.*;
 import com.intellij.openapi.roots.ui.configuration.actions.ModuleDeleteProvider;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.testFramework.TestActionEvent;
@@ -1496,6 +1497,63 @@ public class MavenProjectsManagerTest extends MavenMultiVersionImportingTestCase
     myProjectsManager.removeManagedFiles(Collections.singletonList(myProjectPom));
     waitForImportCompletion();
     assertSize(0, myProjectsManager.getRootProjects());
+  }
+
+  @Test
+  public void testShouldKeepModuleName() {
+    importProject("""
+                    <groupId>test</groupId>
+                    <artifactId>project</artifactId>
+                    <version>1</version>
+                    """);
+
+    assertEquals("project", ModuleManager.getInstance(myProject).getModules()[0].getName());
+
+    importProject("""
+                    <groupId>test</groupId>
+                    <artifactId>project1</artifactId>
+                    <version>1</version>
+                    """);
+
+    assertEquals("project", ModuleManager.getInstance(myProject).getModules()[0].getName());
+  }
+
+  @Test
+  public void testModuleNameTemplateArtifactId() {
+    importProject("""
+                    <groupId>test</groupId>
+                    <artifactId>artifactId</artifactId>
+                    <version>1</version>
+                    """);
+
+    assertEquals("artifactId", ModuleManager.getInstance(myProject).getModules()[0].getName());
+  }
+
+  @Test
+  public void testModuleNameTemplateGroupIdArtifactId() {
+    Registry.get("maven.import.module.name.template").setValue("groupId.artifactId", getTestRootDisposable());
+
+    importProject("""
+                    <groupId>myGroup</groupId>
+                    <artifactId>artifactId</artifactId>
+                    <version>1</version>
+                    """);
+
+    assertEquals("myGroup.artifactId", ModuleManager.getInstance(myProject).getModules()[0].getName());
+  }
+
+  @Test
+  public void testModuleNameTemplateFolderName() {
+    Registry.get("maven.import.module.name.template").setValue("folderName", getTestRootDisposable());
+
+    importProject("""
+                    <groupId>test</groupId>
+                    <artifactId>ignoredArtifactId</artifactId>
+                    <version>1</version>
+                    """);
+
+    assertNotSame("ignoredArtifactId", myProjectRoot.getName());
+    assertEquals(myProjectRoot.getName(), ModuleManager.getInstance(myProject).getModules()[0].getName());
   }
 
   @Override

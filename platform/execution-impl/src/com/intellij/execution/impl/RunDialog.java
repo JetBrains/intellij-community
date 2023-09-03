@@ -26,7 +26,7 @@ import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.util.List;
 
-public class RunDialog extends DialogWrapper implements RunDialogBase {
+public final class RunDialog extends DialogWrapper implements RunDialogBase {
   private final Project myProject;
   private final RunConfigurable myConfigurable;
   private JComponent myCenterPanel;
@@ -103,7 +103,7 @@ public class RunDialog extends DialogWrapper implements RunDialogBase {
   public static boolean editConfiguration(final Project project,
                                           @NotNull RunnerAndConfigurationSettings configuration,
                                           @NlsContexts.DialogTitle String title,
-                                          @Nullable final Executor executor) {
+                                          final @Nullable Executor executor) {
     SingleConfigurationConfigurable<RunConfiguration> configurable = SingleConfigurationConfigurable.editSettings(configuration, executor);
     final SingleConfigurableEditor dialog = new SingleConfigurableEditor(project, configurable, null, IdeModalityType.IDE) {
       {
@@ -151,7 +151,7 @@ public class RunDialog extends DialogWrapper implements RunDialogBase {
     return dialog;
   }
 
-  private class ApplyAction extends AbstractAction {
+  private final class ApplyAction extends AbstractAction {
     ApplyAction() {
       super(ExecutionBundle.message("apply.action.name"));
     }

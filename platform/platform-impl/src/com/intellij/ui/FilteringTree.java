@@ -219,7 +219,7 @@ public abstract class FilteringTree<T extends DefaultMutableTreeNode, U> {
     return myRoot;
   }
 
-  public static class SearchTreeModel<N extends DefaultMutableTreeNode, U> extends DefaultTreeModel {
+  public static final class SearchTreeModel<N extends DefaultMutableTreeNode, U> extends DefaultTreeModel {
     private final @NotNull Function<? super U, String> myNamer;
     private final @NotNull Function<? super U, ? extends N> myFactory;
     private final U myRootObject;

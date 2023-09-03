@@ -28,7 +28,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicInteger;
 
-class AsyncFilterRunner {
+final class AsyncFilterRunner {
   private static final Logger LOG = Logger.getInstance(AsyncFilterRunner.class);
   private static final ExecutorService ourExecutor = SequentialTaskExecutor.createSequentialApplicationPoolExecutor("Console Filters");
   private final EditorHyperlinkSupport myHyperlinks;
@@ -167,7 +167,7 @@ class AsyncFilterRunner {
    * as the lifetime of FilterResult is longer (until EDT is free to apply events), and there can be many jobs
    * holding many document snapshots all together consuming a lot of memory.
    */
-  private class FilterResult {
+  private final class FilterResult {
     private final DeltaTracker myDelta;
     private final Filter.Result myResult;
 
@@ -183,7 +183,7 @@ class AsyncFilterRunner {
     }
   }
 
-  private class HighlighterJob {
+  private final class HighlighterJob {
     private final @NotNull Project myProject;
     private final AtomicInteger startLine;
     private final int endLine;
@@ -228,7 +228,7 @@ class AsyncFilterRunner {
 
   }
 
-  private static class DeltaTracker {
+  private static final class DeltaTracker {
     private final int initialMarkerOffset;
     private final RangeMarker endMarker;
 

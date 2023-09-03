@@ -17,7 +17,7 @@ import org.jetbrains.annotations.Nullable;
 /**
  * Imports Intellij IDEA color scheme (.icls) to application configuration
  */
-public class ColorSchemeImporter implements SchemeImporter<EditorColorsScheme> {
+public final class ColorSchemeImporter implements SchemeImporter<EditorColorsScheme> {
 
   private static final String[] FILE_EXTENSIONS =
     new String[] {EditorColorsManager.COLOR_SCHEME_FILE_EXTENSION.substring(1), "jar"};

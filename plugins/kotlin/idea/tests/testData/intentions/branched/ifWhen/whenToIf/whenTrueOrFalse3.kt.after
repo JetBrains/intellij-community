@@ -6,4 +6,4 @@ fun foo(i : Int) {
     else if (0 == i) 2
 }
 
-// IGNORE_FIR
+// IGNORE_K2

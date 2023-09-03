@@ -169,7 +169,7 @@ public final class CachedValueProfilerDumpHelper {
     }
   }
 
-  static class FileEventConsumer extends ExecutorEventConsumer {
+  static final class FileEventConsumer extends ExecutorEventConsumer {
 
     final File file;
     final Future<?> future;
@@ -192,7 +192,7 @@ public final class CachedValueProfilerDumpHelper {
     }
   }
 
-  static class MyQueueExecutor extends ConcurrentLinkedQueue<Runnable> implements Executor, Runnable {
+  static final class MyQueueExecutor extends ConcurrentLinkedQueue<Runnable> implements Executor, Runnable {
 
     volatile boolean closed;
 
@@ -281,7 +281,7 @@ public final class CachedValueProfilerDumpHelper {
     }
   }
 
-  static class CompositeEventConsumer implements CachedValueProfiler.EventConsumer, Closeable {
+  static final class CompositeEventConsumer implements CachedValueProfiler.EventConsumer, Closeable {
     final CachedValueProfiler.EventConsumer first;
     final CachedValueProfiler.EventConsumer second;
 
@@ -350,7 +350,7 @@ public final class CachedValueProfilerDumpHelper {
   private static final String _TYPE = "e", _FRAME_ID = "fid", _FRAME_PID = "fpid",
     _PLACE = "p", _T1 = "t1", _T2 = "t2", _T3 = "t3";
 
-  private static class MyWriter implements CachedValueProfiler.EventConsumer, Closeable {
+  private static final class MyWriter implements CachedValueProfiler.EventConsumer, Closeable {
 
     final JsonWriter myWriter;
 

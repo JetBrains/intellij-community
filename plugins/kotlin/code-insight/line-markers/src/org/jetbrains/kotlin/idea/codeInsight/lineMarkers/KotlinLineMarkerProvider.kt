@@ -174,7 +174,7 @@ object SuperDeclarationPopupHandler : GutterIconNavigationHandler<PsiElement> {
 }
 
 object ImplementationsPopupHandler : InheritorsLineMarkerNavigator() {
-    override fun getMessageForDumbMode() = KotlinBundle.message("notification.navigation.to.overriding.classes")
+    override fun getMessageForDumbMode(): String = KotlinBundle.message("notification.navigation.to.overriding.classes")
 }
 
 private fun comparator(): Comparator<PsiElement> = Comparator.comparing { el ->

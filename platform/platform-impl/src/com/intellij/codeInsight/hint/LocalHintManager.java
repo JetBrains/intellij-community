@@ -42,7 +42,7 @@ import java.awt.event.*;
 import java.util.EventObject;
 import java.util.List;
 
-public class LocalHintManager implements ClientHintManager {
+public final class LocalHintManager implements ClientHintManager {
 
   private static final Logger LOG = Logger.getInstance(LocalHintManager.class);
 
@@ -472,7 +472,7 @@ public class LocalHintManager implements ClientHintManager {
     }
   }
 
-  private class MyAnActionListener implements AnActionListener {
+  private final class MyAnActionListener implements AnActionListener {
     @Override
     public void beforeActionPerformed(@NotNull AnAction action, @NotNull AnActionEvent event) {
       if (action instanceof HintManagerImpl.ActionToIgnore) return;

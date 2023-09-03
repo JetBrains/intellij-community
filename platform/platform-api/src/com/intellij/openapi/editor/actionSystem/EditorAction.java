@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.editor.actionSystem;
 
 import com.intellij.ide.lightEdit.LightEditCompatible;
@@ -36,7 +36,7 @@ public abstract class EditorAction extends AnAction implements DumbAware, LightE
     return ActionUpdateThread.BGT;
   }
 
-  public synchronized final EditorActionHandler setupHandler(@NotNull EditorActionHandler newHandler) {
+  public final synchronized EditorActionHandler setupHandler(@NotNull EditorActionHandler newHandler) {
     EditorActionHandler tmp = getHandler();
     doSetupHandler(newHandler);
     return tmp;
@@ -77,12 +77,11 @@ public abstract class EditorAction extends AnAction implements DumbAware, LightE
     actionPerformed(editor, dataContext);
   }
 
-  @Nullable
-  protected Editor getEditor(@NotNull DataContext dataContext) {
+  protected @Nullable Editor getEditor(@NotNull DataContext dataContext) {
     return EDITOR.getData(dataContext);
   }
 
-  public final void actionPerformed(final Editor editor, @NotNull final DataContext dataContext) {
+  public final void actionPerformed(final Editor editor, final @NotNull DataContext dataContext) {
     if (editor == null) return;
     if (editor.isDisposed()) {
       VirtualFile file = FileDocumentManager.getInstance().getFile(editor.getDocument());

@@ -110,19 +110,23 @@ class BuildMessagesImpl private constructor(private val logger: BuildMessageLogg
   }
 
   override fun block(blockName: String, task: Callable<Unit>) {
-    spanBuilder(blockName.lowercase(Locale.getDefault())).useWithScope {
-      try {
-        processMessage(LogMessage(LogMessage.Kind.BLOCK_STARTED, blockName))
-        task.call()
+    TracerProviderManager.flush()
+    try {
+      processMessage(LogMessage(LogMessage.Kind.BLOCK_STARTED, blockName))
+      spanBuilder(blockName.lowercase(Locale.getDefault())).useWithScope {
+        try {
+          task.call()
+        }
+        catch (e: Throwable) {
+          // print all pending spans
+          TracerProviderManager.flush()
+          throw e
+        }
       }
-      catch (e: Throwable) {
-        // print all pending spans
-        TracerProviderManager.flush()
-        throw e
-      }
-      finally {
-        processMessage(LogMessage(LogMessage.Kind.BLOCK_FINISHED, blockName))
-      }
+    }
+    finally {
+      TracerProviderManager.flush()
+      processMessage(LogMessage(LogMessage.Kind.BLOCK_FINISHED, blockName))
     }
   }
 

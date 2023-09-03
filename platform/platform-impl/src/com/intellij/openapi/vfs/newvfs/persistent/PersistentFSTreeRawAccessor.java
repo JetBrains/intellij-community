@@ -20,7 +20,7 @@ import java.util.List;
  * that option to bypass copy into byte[], and read from it via {@link java.io.InputStream}.
  */
 @ApiStatus.Internal
-public class PersistentFSTreeRawAccessor extends PersistentFSTreeAccessor {
+public final class PersistentFSTreeRawAccessor extends PersistentFSTreeAccessor {
   PersistentFSTreeRawAccessor(@NotNull PersistentFSAttributeAccessor attributeAccessor,
                               @NotNull PersistentFSRecordAccessor recordAccessor,
                               @NotNull PersistentFSConnection connection) {

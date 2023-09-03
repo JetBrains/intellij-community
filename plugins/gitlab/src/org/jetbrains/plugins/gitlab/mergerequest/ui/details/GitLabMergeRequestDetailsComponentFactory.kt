@@ -34,12 +34,14 @@ import org.jetbrains.plugins.gitlab.mergerequest.ui.details.model.GitLabMergeReq
 import org.jetbrains.plugins.gitlab.mergerequest.ui.details.model.GitLabMergeRequestDetailsLoadingViewModel
 import org.jetbrains.plugins.gitlab.mergerequest.ui.details.model.GitLabMergeRequestDetailsViewModel
 import org.jetbrains.plugins.gitlab.mergerequest.ui.error.GitLabMergeRequestErrorStatusPresenter
+import org.jetbrains.plugins.gitlab.mergerequest.ui.issues.IssuesUtil
 import org.jetbrains.plugins.gitlab.util.GitLabBundle
 import javax.swing.JComponent
 import javax.swing.JPanel
 
 internal object GitLabMergeRequestDetailsComponentFactory {
   fun createDetailsComponent(
+    project: Project,
     scope: CoroutineScope,
     detailsLoadingVm: GitLabMergeRequestDetailsLoadingViewModel,
     accountVm: GitLabAccountViewModel,
@@ -59,7 +61,7 @@ internal object GitLabMergeRequestDetailsComponentFactory {
           }
           is GitLabMergeRequestDetailsLoadingViewModel.LoadingState.Result -> {
             val detailsVm = loadingState.detailsVm
-            val detailsPanel = createDetailsComponent(detailsVm, avatarIconsProvider).apply {
+            val detailsPanel = createDetailsComponent(project, detailsVm, avatarIconsProvider).apply {
               val actionGroup = ActionManager.getInstance().getAction("GitLab.Merge.Request.Details.Popup") as ActionGroup
               PopupHandler.installPopupMenu(this, actionGroup, ActionPlaces.POPUP)
 
@@ -82,6 +84,7 @@ internal object GitLabMergeRequestDetailsComponentFactory {
   }
 
   private fun CoroutineScope.createDetailsComponent(
+    project: Project,
     detailsVm: GitLabMergeRequestDetailsViewModel,
     avatarIconsProvider: IconsProvider<GitLabUserDTO>
   ): JComponent {
@@ -93,7 +96,9 @@ internal object GitLabMergeRequestDetailsComponentFactory {
 
     val commitsAndBranches = JPanel(MigLayout(LC().emptyBorders().fill(), AC().gap("push"))).apply {
       isOpaque = false
-      add(CodeReviewDetailsCommitsComponentFactory.create(cs, changesVm, ::createCommitInfoPresenter))
+      add(CodeReviewDetailsCommitsComponentFactory.create(cs, changesVm) { commit ->
+        createCommitInfoPresenter(commit)
+      })
       add(CodeReviewDetailsBranchComponentFactory.create(cs, branchesVm))
     }
     val actionGroup = ActionManager.getInstance().getAction("GitLab.Merge.Request.Details.Popup") as ActionGroup
@@ -121,7 +126,11 @@ internal object GitLabMergeRequestDetailsComponentFactory {
       add(commitsAndBranches,
           CC().growX().gap(ReviewDetailsUIUtil.COMMIT_POPUP_BRANCHES_GAPS))
       add(CodeReviewDetailsCommitInfoComponentFactory.create(cs, changesVm.selectedCommit,
-                                                             commitPresentation = { commit -> createCommitInfoPresenter(commit) },
+                                                             commitPresentation = { commit ->
+                                                               createCommitInfoPresenter(commit) {
+                                                                 IssuesUtil.convertMarkdownToHtmlWithIssues(project, it)
+                                                               }
+                                                             },
                                                              htmlPaneFactory = { SimpleHtmlPane() }),
           CC().growX().gap(ReviewDetailsUIUtil.COMMIT_INFO_GAPS))
       add(GitLabMergeRequestDetailsChangesComponentFactory.create(cs, changesVm),
@@ -133,12 +142,12 @@ internal object GitLabMergeRequestDetailsComponentFactory {
     }
   }
 
-  private fun createCommitInfoPresenter(commit: GitLabCommitDTO): CommitPresentation {
+  private fun createCommitInfoPresenter(commit: GitLabCommitDTO, issueProcessor: ((String) -> String)? = null): CommitPresentation {
     val title = commit.fullTitle.orEmpty()
     val description = commit.description?.removePrefix(title).orEmpty()
     return CommitPresentation(
-      title = title,
-      description = description,
+      titleHtml = if (issueProcessor != null) issueProcessor(title) else title,
+      descriptionHtml = if (issueProcessor != null) issueProcessor(description) else description,
       author = commit.author?.name ?: commit.authorName,
       committedDate = commit.authoredDate
     )

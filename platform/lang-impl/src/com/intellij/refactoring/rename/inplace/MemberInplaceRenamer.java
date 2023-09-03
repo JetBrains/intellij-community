@@ -17,6 +17,7 @@ import com.intellij.openapi.editor.RangeMarker;
 import com.intellij.openapi.editor.impl.EditorImpl;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.project.DumbService;
+import com.intellij.openapi.project.DumbModeBlockedFunctionality;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
@@ -227,7 +228,8 @@ public class MemberInplaceRenamer extends VariableInplaceRenamer {
             try (var ignored = SlowOperations.startSection(SlowOperations.ACTION_PERFORM)) {
               if (DumbService.isDumb(myProject)) {
                 DumbService.getInstance(myProject)
-                  .showDumbModeNotification(RefactoringBundle.message("refactoring.not.available.indexing"));
+                  .showDumbModeNotificationForFunctionality(RefactoringBundle.message("refactoring.not.available.indexing"),
+                                                            DumbModeBlockedFunctionality.MemberInplaceRenamer);
                 return;
               }
 

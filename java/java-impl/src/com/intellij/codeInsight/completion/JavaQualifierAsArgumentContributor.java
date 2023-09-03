@@ -8,6 +8,7 @@ import com.intellij.codeInsight.lookup.DefaultLookupItemRenderer;
 import com.intellij.codeInsight.lookup.LookupElementPresentation;
 import com.intellij.codeInsight.lookup.impl.JavaElementLookupRenderer;
 import com.intellij.lang.jvm.JvmModifier;
+import com.intellij.openapi.options.advanced.AdvancedSettings;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
@@ -17,10 +18,9 @@ import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
-import com.intellij.psi.impl.PsiShortNamesCacheImpl;
-import com.intellij.psi.impl.java.stubs.index.JavaStaticMemberNameIndex;
 import com.intellij.psi.impl.source.resolve.graphInference.FunctionalInterfaceParameterizationUtil;
 import com.intellij.psi.search.GlobalSearchScope;
+import com.intellij.psi.search.JavaStaticMethodNameCache;
 import com.intellij.psi.search.PsiShortNamesCache;
 import com.intellij.psi.util.*;
 import com.intellij.util.Processor;
@@ -30,10 +30,7 @@ import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.HashSet;
-import java.util.List;
+import java.util.*;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 import static com.intellij.psi.util.PsiFormatUtil.formatVariable;
@@ -42,17 +39,18 @@ import static com.intellij.psi.util.PsiFormatUtilBase.MAX_PARAMS_TO_SHOW;
 @ApiStatus.Experimental
 public class JavaQualifierAsArgumentContributor extends CompletionContributor implements DumbAware {
 
-  private static final int MAX_SIZE = 100;
+  private static final int MAX_SIZE = 50;
 
   @Override
   public void fillCompletionVariants(@NotNull CompletionParameters parameters, @NotNull final CompletionResultSet result) {
     result.runRemainingContributors(parameters, true);
-    if (!Registry.is("java.completion.qualifier.as.argument")) {
+    if (!Registry.is("java.completion.qualifier.as.argument") &&
+        !AdvancedSettings.getBoolean("java.completion.qualifier.as.argument")) {
       return;
     }
 
     if ((parameters.getCompletionType() != CompletionType.BASIC && parameters.getCompletionType() != CompletionType.SMART) ||
-        parameters.getInvocationCount() < 2) {
+        parameters.getInvocationCount() < 3) {
       return;
     }
     PsiElement position = parameters.getPosition();
@@ -131,23 +129,25 @@ public class JavaQualifierAsArgumentContributor extends CompletionContributor im
       }
     }
 
-    //process java static separately
-    Collection<String> memberNames = JavaStaticMemberNameIndex.getInstance().getAllKeys(project);
-    for (String memberName : matcher.sortMatching(memberNames)) {
+    List<JavaStaticMethodNameCache> staticList = JavaStaticMethodNameCache.EP_NAME.getExtensionList(project);
+    Set<Class<? extends PsiShortNamesCache>> used = new HashSet<>();
+    for (JavaStaticMethodNameCache cache : staticList) {
       ProgressManager.checkCanceled();
-      for (PsiMember member : JavaStaticMemberNameIndex.getInstance().getStaticMembers(memberName, project, scope)) {
+      used.add(cache.replaced());
+      boolean next = cache.processMethodsWithName(name -> matcher.prefixMatches(name), method -> {
         ProgressManager.checkCanceled();
-        if (!psiStaticMethodProcessor.process(member)) {
-          return;
-        }
+        return psiStaticMethodProcessor.process(method);
+      }, scope, null);
+      if (!next) {
+        return;
       }
     }
 
     List<PsiShortNamesCache> list = PsiShortNamesCache.EP_NAME.getExtensionList(project);
     AtomicBoolean stop = new AtomicBoolean(false);
     for (PsiShortNamesCache cache : list) {
-      //skip java
-      if (cache instanceof PsiShortNamesCacheImpl) {
+      //skip processed
+      if (used.contains(cache.getClass())) {
         continue;
       }
       if (stop.get()) {

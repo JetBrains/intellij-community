@@ -45,6 +45,8 @@ import com.intellij.workspaceModel.ide.impl.legacyBridge.module.roots.ModuleLibr
 import com.intellij.workspaceModel.ide.impl.legacyBridge.module.roots.ModuleRootComponentBridge
 import com.intellij.workspaceModel.ide.legacyBridge.ModuleBridge
 import com.intellij.platform.workspace.storage.*
+import com.intellij.platform.workspace.storage.query.entities
+import com.intellij.platform.workspace.storage.query.map
 import com.intellij.platform.workspace.storage.url.VirtualFileUrl
 import com.intellij.workspaceModel.ide.*
 import io.opentelemetry.api.metrics.Meter
@@ -280,6 +282,8 @@ abstract class ModuleManagerBridgeImpl(private val project: Project,
     modules(storage).toList().toTypedArray()
   }
 
+  private val moduleNamesQuery = entities<ModuleEntity>().map { it.name }
+
   override val modules: Array<Module>
     get() = entityStore.cachedValue(modulesArrayValue)
 
@@ -322,7 +326,13 @@ abstract class ModuleManagerBridgeImpl(private val project: Project,
       .toList()
 
     if (unloadedModuleNames.isNotEmpty()) {
-      val loadedModules = modules.asSequence().map { it.name }.filter { it !in unloadedModuleNames }.toMutableList()
+      val moduleNames = if (useNewWorkspaceModelApi()) {
+        project.workspaceModel.currentSnapshot.cached(moduleNamesQuery).asSequence()
+      }
+      else {
+        modules.asSequence().map { it.name }
+      }
+      val loadedModules = moduleNames.filter { it !in unloadedModuleNames }.toMutableList()
       moduleEntitiesToLoad.mapTo(loadedModules) { it.name }
       AutomaticModuleUnloader.getInstance(project).setLoadedModules(loadedModules)
     }
@@ -478,7 +488,13 @@ abstract class ModuleManagerBridgeImpl(private val project: Project,
   private inner class LoadedModulesListUpdater : WorkspaceModelChangeListener {
     override fun changed(event: VersionedStorageChange) {
       if (event.getChanges(ModuleEntity::class.java).isNotEmpty() && unloadedModules.isNotEmpty()) {
-        AutomaticModuleUnloader.getInstance(project).setLoadedModules(modules.map { it.name })
+        val moduleNames = if (useNewWorkspaceModelApi()) {
+          event.storageAfter.cached(moduleNamesQuery).toList()
+        }
+        else {
+          modules.map { it.name }
+        }
+        AutomaticModuleUnloader.getInstance(project).setLoadedModules(moduleNames)
       }
     }
   }

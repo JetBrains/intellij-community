@@ -37,13 +37,13 @@ val currentSessionOrNull: ClientAppSession?
   get() = ClientSessionsManager.getAppSession()
 
 val currentSession: ClientAppSession
-  get() = currentSessionOrNull ?: error("Application-level session is not set")
+  get() = currentSessionOrNull ?: error("Application-level session is not set. ${ClientId.current}")
 
 val Project.currentSessionOrNull: ClientProjectSession?
   get() = ClientSessionsManager.getProjectSession(this)
 
 val Project.currentSession: ClientProjectSession
-  get() = currentSessionOrNull ?: error("Project-level session is not set")
+  get() = currentSessionOrNull ?: error("Project-level session is not set. ${ClientId.current}")
 
 // region Deprecated
 @ApiStatus.ScheduledForRemoval

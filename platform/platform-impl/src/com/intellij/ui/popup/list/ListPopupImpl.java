@@ -610,7 +610,7 @@ public class ListPopupImpl extends WizardPopup implements ListPopup, NextStepHan
     NO_EXTEND, EXTEND_ON_HOVER
   }
 
-  private class MyMouseMotionListener extends MouseMotionAdapter {
+  private final class MyMouseMotionListener extends MouseMotionAdapter {
 
     private int myLastSelectedIndex = -2;
     private ExtendMode myExtendMode = ExtendMode.NO_EXTEND;
@@ -727,7 +727,7 @@ public class ListPopupImpl extends WizardPopup implements ListPopup, NextStepHan
     return myList.getSelectedValues();
   }
 
-  private class MyMouseListener extends MouseAdapter {
+  private final class MyMouseListener extends MouseAdapter {
 
     @Override
     public void mouseReleased(MouseEvent e) {
@@ -771,7 +771,7 @@ public class ListPopupImpl extends WizardPopup implements ListPopup, NextStepHan
     @Nullable Integer getSelectedButtonIndex();
   }
 
-  private class MyList extends JBList implements DataProvider, ListWithInlineButtons {
+  private final class MyList extends JBList implements DataProvider, ListWithInlineButtons {
 
     private @Nullable Integer selectedButtonIndex;
 

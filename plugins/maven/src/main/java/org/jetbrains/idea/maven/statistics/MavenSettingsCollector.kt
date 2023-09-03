@@ -41,7 +41,6 @@ class MavenSettingsCollector : ProjectUsagesCollector() {
     usages.add(ALWAYS_UPDATE_SNAPSHOTS.metric(generalSettings.isAlwaysUpdateSnapshots))
     usages.add(NON_RECURSIVE.metric(generalSettings.isNonRecursive))
     usages.add(PRINT_ERROR_STACK_TRACES.metric(generalSettings.isPrintErrorStackTraces))
-    usages.add(USE_PLUGIN_REGISTRY.metric(generalSettings.isUsePluginRegistry))
     usages.add(WORK_OFFLINE.metric(generalSettings.isWorkOffline))
     usages.add(OUTPUT_LEVEL.metric(generalSettings.outputLevel))
     @Suppress("DEPRECATION")
@@ -68,7 +67,6 @@ class MavenSettingsCollector : ProjectUsagesCollector() {
     usages.add(IS_DIRECTORY_BASED_PROJECT.metric(project.isDirectoryBased))
     usages.add(AUTO_DETECT_COMPILER.metric(importingSettings.isAutoDetectCompiler))
     usages.add(CREATE_MODULES_FOR_AGGREGATORS.metric(importingSettings.isCreateModulesForAggregators))
-    usages.add(CREATE_MODULE_GROUPS.metric(importingSettings.isCreateModuleGroups))
     usages.add(KEEP_SOURCE_FOLDERS.metric(importingSettings.isKeepSourceFolders))
     usages.add(EXCLUDE_TARGET_FOLDER.metric(importingSettings.isExcludeTargetFolder))
     usages.add(USE_MAVEN_OUTPUT.metric(importingSettings.isUseMavenOutput))
@@ -91,7 +89,6 @@ class MavenSettingsCollector : ProjectUsagesCollector() {
     // Runner page
     val runnerSettings = MavenRunner.getInstance(project).settings
     usages.add(DELEGATE_BUILD_RUN.metric(runnerSettings.isDelegateBuildToMaven))
-    usages.add(RUN_MAVEN_IN_BACKGROUND.metric(runnerSettings.isRunMavenInBackground))
     usages.add(RUNNER_JRE_TYPE.metric(ExternalSystemUsagesCollector.getJreType(runnerSettings.jreName)))
     usages.add(RUNNER_JRE_VERSION.metric(ExternalSystemUsagesCollector.getJreVersion(project, runnerSettings.jreName)))
     usages.add(HAS_RUNNER_VM_OPTIONS.metric(runnerSettings.vmOptions.isNotBlank()))
@@ -103,12 +100,11 @@ class MavenSettingsCollector : ProjectUsagesCollector() {
   }
 
   companion object {
-    private val GROUP = EventLogGroup("build.maven.state", 8)
+    private val GROUP = EventLogGroup("build.maven.state", 11)
     private val HAS_MAVEN_PROJECT = GROUP.registerEvent("hasMavenProject", EventFields.Enabled)
     private val ALWAYS_UPDATE_SNAPSHOTS = GROUP.registerEvent("alwaysUpdateSnapshots", EventFields.Enabled)
     private val NON_RECURSIVE = GROUP.registerEvent("nonRecursive", EventFields.Enabled)
     private val PRINT_ERROR_STACK_TRACES = GROUP.registerEvent("printErrorStackTraces", EventFields.Enabled)
-    private val USE_PLUGIN_REGISTRY = GROUP.registerEvent("usePluginRegistry", EventFields.Enabled)
     private val WORK_OFFLINE = GROUP.registerEvent("workOffline", EventFields.Enabled)
     private val LOCAL_REPOSITORY = GROUP.registerEvent("localRepository", EventFields.Enabled)
     private val USER_SETTINGS_FILE = GROUP.registerEvent("userSettingsFile", EventFields.Enabled)
@@ -119,7 +115,6 @@ class MavenSettingsCollector : ProjectUsagesCollector() {
     private val IS_DIRECTORY_BASED_PROJECT = GROUP.registerEvent("useDirectoryBasedProject", EventFields.Enabled)
     private val AUTO_DETECT_COMPILER = GROUP.registerEvent("autoDetectCompiler", EventFields.Enabled)
     private val CREATE_MODULES_FOR_AGGREGATORS = GROUP.registerEvent("createModulesForAggregators", EventFields.Enabled)
-    private val CREATE_MODULE_GROUPS = GROUP.registerEvent("createModuleGroups", EventFields.Enabled)
     private val KEEP_SOURCE_FOLDERS = GROUP.registerEvent("keepSourceFolders", EventFields.Enabled)
     private val EXCLUDE_TARGET_FOLDER = GROUP.registerEvent("excludeTargetFolder", EventFields.Enabled)
     private val USE_MAVEN_OUTPUT = GROUP.registerEvent("useMavenOutput", EventFields.Enabled)
@@ -130,7 +125,6 @@ class MavenSettingsCollector : ProjectUsagesCollector() {
     private val HAS_IGNORED_FILES = GROUP.registerEvent("hasIgnoredFiles", EventFields.Enabled)
     private val HAS_IGNORED_PATTERNS = GROUP.registerEvent("hasIgnoredPatterns", EventFields.Enabled)
     private val DELEGATE_BUILD_RUN = GROUP.registerEvent("delegateBuildRun", EventFields.Enabled)
-    private val RUN_MAVEN_IN_BACKGROUND = GROUP.registerEvent("runMavenInBackground", EventFields.Enabled)
     private val HAS_RUNNER_VM_OPTIONS = GROUP.registerEvent("hasRunnerVmOptions", EventFields.Enabled)
     private val HAS_RUNNER_ENV_VARIABLES = GROUP.registerEvent("hasRunnerEnvVariables", EventFields.Enabled)
     private val PASS_PARENT_ENV = GROUP.registerEvent("passParentEnv", EventFields.Enabled)

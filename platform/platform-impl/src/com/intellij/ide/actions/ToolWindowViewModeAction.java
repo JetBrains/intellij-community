@@ -149,7 +149,7 @@ public class ToolWindowViewModeAction extends DumbAwareToggleAction implements F
     return Collections.emptyList();
   }
 
-  public static class Group extends DefaultActionGroup {
+  public static final class Group extends DefaultActionGroup {
     private boolean isInitialized = false;
 
     @Override

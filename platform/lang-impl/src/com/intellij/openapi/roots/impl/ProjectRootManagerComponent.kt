@@ -353,8 +353,7 @@ open class ProjectRootManagerComponent(project: Project,
     settings.retainCondition = Condition<WorkspaceFileIndexContributor<out WorkspaceEntity>> {
       it.storageKind == EntityStorageKind.MAIN && it !is PlatformInternalWorkspaceFileIndexContributor && it !is SkipAddingToWatchedRoots
     }
-    val builder = WorkspaceIndexingRootsBuilder.registerEntitiesFromContributors(project,
-                                                                                 WorkspaceModel.getInstance(project).currentSnapshot,
+    val builder = WorkspaceIndexingRootsBuilder.registerEntitiesFromContributors(WorkspaceModel.getInstance(project).currentSnapshot,
                                                                                  settings)
 
     fun register(rootFiles: Collection<VirtualFile>, name: String) {

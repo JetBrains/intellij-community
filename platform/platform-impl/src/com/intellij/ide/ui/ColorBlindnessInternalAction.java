@@ -26,7 +26,7 @@ import java.awt.image.ImageFilter;
 import java.awt.image.RGBImageFilter;
 import java.io.File;
 
-public class ColorBlindnessInternalAction extends DumbAwareAction {
+public final class ColorBlindnessInternalAction extends DumbAwareAction {
   @Override
   public void actionPerformed(@NotNull AnActionEvent event) {
     new ColorDialog(event).show();

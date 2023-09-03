@@ -30,7 +30,7 @@ import com.intellij.util.containers.ContainerUtil;
 import java.util.ArrayList;
 import java.util.List;
 
-public class SelectionHistoryDialogModel extends FileHistoryDialogModel {
+public final class SelectionHistoryDialogModel extends FileHistoryDialogModel {
   private SelectionCalculator myCalculatorCache;
   private final int myFrom;
   private final int myTo;

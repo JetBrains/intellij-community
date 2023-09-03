@@ -14,7 +14,7 @@ import java.util.List;
 
 import static org.jetbrains.plugins.textmate.plist.PListValue.value;
 
-public class XmlPlistReader implements PlistReader {
+public final class XmlPlistReader implements PlistReader {
   @Override
   public Plist read(@NotNull InputStream inputStream) throws IOException {
     return internalRead(XmlDomReader.readXmlAsModel(inputStream));

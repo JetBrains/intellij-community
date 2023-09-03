@@ -49,18 +49,21 @@ private class KotlinProjectArtifactDependencyResolverImpl : KotlinProjectArtifac
             .toSet()
 
         val sourceSetMap = context.projectDataNode.getUserData(GradleProjectResolver.RESOLVED_SOURCE_SETS).orEmpty()
-        val artifactsMap = context.projectDataNode.getUserData(GradleProjectResolver.CONFIGURATION_ARTIFACTS).orEmpty()
+        val artifactsMap = context.resolverCtx.artifactsMap
         val modulesOutputsMap = context.projectDataNode.getUserData(GradleProjectResolver.MODULES_OUTPUTS).orEmpty()
 
         return dependency.artifactsClasspath.flatMap { artifactFile ->
             val artifactPath = ExternalSystemApiUtil.normalizePath(artifactFile.path)
-            val id = artifactsMap[artifactPath] ?: modulesOutputsMap[artifactPath]?.first ?: return@flatMap emptySet()
-            val sourceSetDataNode = sourceSetMap[id]?.first ?: return@flatMap emptySet()
-            val sourceSet = sourceSetMap[id]?.second ?: return@flatMap emptySet()
-            val sourceSetNames = sourceSetDataNode.kotlinSourceSetData?.sourceSetInfo?.dependsOn.orEmpty()
-                .mapNotNull { dependsOnId -> sourceSetMap[dependsOnId]?.second?.name } + sourceSet.name
-
-            dependency.resolved(sourceSetNames.toSet())
+            val ids = artifactPath?.let { artifactsMap.getModuleMapping(it)?.moduleIds }
+                                     ?: modulesOutputsMap[artifactPath]?.first?.let { listOf(it) }
+                                     ?: return@flatMap emptySet()
+            ids.mapNotNull {
+                val sourceSetDataNode = sourceSetMap[it]?.first ?: return@mapNotNull null
+                val sourceSet = sourceSetMap[it]?.second ?: return@mapNotNull null
+                val sourceSetNames = sourceSetDataNode.kotlinSourceSetData?.sourceSetInfo?.dependsOn.orEmpty()
+                                             .mapNotNull { dependsOnId -> sourceSetMap[dependsOnId]?.second?.name } + sourceSet.name
+                dependency.resolved(sourceSetNames.toSet())
+            }.flatten()
         }.toSet() + resolvedByExtensions
     }
 }

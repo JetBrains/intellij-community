@@ -6,6 +6,10 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.*;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.packaging.artifacts.Artifact;
+import com.intellij.packaging.artifacts.ArtifactManager;
+import com.intellij.packaging.artifacts.ModifiableArtifact;
+import com.intellij.packaging.artifacts.ModifiableArtifactModel;
+import com.intellij.packaging.elements.PackagingElementFactory;
 
 import java.io.IOException;
 
@@ -25,6 +29,82 @@ public class UpdateArtifactsAfterRenameTest extends PackagingElementsTestCase {
     renameFile(dir, "xxx");
     assertLayout(artifact, "<root>\n" +
                            " dir:" + getProjectBasePath() + "/xxx");
+  }
+
+  public void testRenameDirectoryForTwoArtifacts() {
+    final VirtualFile dir = createFile("dir/a.txt").getParent();
+    final Artifact artifact = addArtifact(root().dirCopy(dir));
+    final Artifact artifact2 = addArtifact(root().dirCopy(dir));
+    renameFile(dir, "xxx");
+    assertLayout(artifact, "<root>\n" +
+                           " dir:" + getProjectBasePath() + "/xxx");
+    assertLayout(artifact2, "<root>\n" +
+                            " dir:" + getProjectBasePath() + "/xxx");
+  }
+
+  public void testRenameDirectoryForTwoArtifactsAndSecondRename() {
+    final VirtualFile dir = createFile("dir/a.txt").getParent();
+    final Artifact artifact = addArtifact(root().dirCopy(dir));
+    final Artifact artifact2 = addArtifact(root().dirCopy(dir));
+    renameFile(dir, "xxx");
+    assertLayout(artifact, "<root>\n" +
+                           " dir:" + getProjectBasePath() + "/xxx");
+    assertLayout(artifact2, "<root>\n" +
+                            " dir:" + getProjectBasePath() + "/xxx");
+    renameFile(dir, "yyy");
+    assertLayout(artifact, "<root>\n" +
+                           " dir:" + getProjectBasePath() + "/yyy");
+    assertLayout(artifact2, "<root>\n" +
+                            " dir:" + getProjectBasePath() + "/yyy");
+  }
+
+  public void testRenameDirectoryForTwoArtifactsAndAddingRoots() {
+    final VirtualFile dir = createFile("dir/a.txt").getParent();
+    final VirtualFile dir2 = createFile("dir2/b.txt").getParent();
+    final Artifact artifact = addArtifact(root().dirCopy(dir));
+    renameFile(dir, "xxx");
+    assertLayout(artifact, "<root>\n" +
+                           " dir:" + getProjectBasePath() + "/xxx");
+
+    final PackagingElementFactory packagingElementFactory = PackagingElementFactory.getInstance();
+    ModifiableArtifactModel model = ArtifactManager.getInstance(myProject).createModifiableModel();
+    ModifiableArtifact mutableArtifact = model.getOrCreateModifiableArtifact(artifact);
+    mutableArtifact.getRootElement().addFirstChild(packagingElementFactory.createDirectoryCopyWithParentDirectories(dir2.getPath(), "/"));
+    WriteAction.run(() -> {
+      model.commit();
+    });
+
+    assertLayout(artifact, "<root>\n" +
+                           " dir:" + getProjectBasePath() + "/dir2\n" +
+                           " dir:" + getProjectBasePath() + "/xxx"
+    );
+
+    renameFile(dir2, "yyy");
+    assertLayout(artifact, "<root>\n" +
+                           " dir:" + getProjectBasePath() + "/yyy\n" +
+                           " dir:" + getProjectBasePath() + "/xxx"
+    );
+  }
+
+  public void testRenameDirectoryForRemovedArtifactElements() {
+    final VirtualFile dir = createFile("dir/a.txt").getParent();
+    final Artifact artifact = addArtifact(root().dirCopy(dir));
+    renameFile(dir, "xxx");
+    assertLayout(artifact, "<root>\n" +
+                           " dir:" + getProjectBasePath() + "/xxx");
+
+    final PackagingElementFactory packagingElementFactory = PackagingElementFactory.getInstance();
+    ModifiableArtifactModel model = ArtifactManager.getInstance(myProject).createModifiableModel();
+    ModifiableArtifact mutableArtifact = model.getOrCreateModifiableArtifact(artifact);
+    mutableArtifact.getRootElement().removeChild(mutableArtifact.getRootElement().getChildren().get(0));
+    WriteAction.run(() -> {
+      model.commit();
+    });
+
+    assertLayout(artifact, "<root>");
+
+    renameFile(dir, "zzz");
+    assertLayout(artifact, "<root>");
   }
 
   public void testMoveFile() {

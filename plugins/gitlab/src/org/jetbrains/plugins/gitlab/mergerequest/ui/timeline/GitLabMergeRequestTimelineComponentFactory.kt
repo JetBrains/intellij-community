@@ -40,8 +40,8 @@ import org.jetbrains.annotations.Nls
 import org.jetbrains.plugins.gitlab.api.dto.*
 import org.jetbrains.plugins.gitlab.mergerequest.ui.details.GitLabMergeRequestViewModel
 import org.jetbrains.plugins.gitlab.mergerequest.ui.error.GitLabMergeRequestTimelineErrorStatusPresenter
+import org.jetbrains.plugins.gitlab.mergerequest.ui.issues.IssuesUtil
 import org.jetbrains.plugins.gitlab.mergerequest.ui.timeline.GitLabMergeRequestTimelineUIUtil.createTitleTextPane
-import org.jetbrains.plugins.gitlab.ui.GitLabUIUtil
 import org.jetbrains.plugins.gitlab.ui.comment.GitLabNoteEditorComponentFactory
 import org.jetbrains.plugins.gitlab.ui.comment.NewGitLabNoteViewModel
 import org.jetbrains.plugins.gitlab.ui.comment.submitActionIn
@@ -167,7 +167,7 @@ internal object GitLabMergeRequestTimelineComponentFactory {
     when (item) {
       is GitLabMergeRequestTimelineItemViewModel.Immutable -> {
         val immutableItem = item.item
-        val content = createContent(immutableItem)
+        val content = createContent(project, immutableItem)
 
         CodeReviewChatItemUIUtil.build(ComponentType.FULL,
                                        { avatarIconsProvider.getIcon(immutableItem.actor, it) },
@@ -180,15 +180,15 @@ internal object GitLabMergeRequestTimelineComponentFactory {
       }
     }
 
-  private fun createContent(item: GitLabMergeRequestTimelineItem.Immutable): JComponent =
+  private fun createContent(project: Project, item: GitLabMergeRequestTimelineItem.Immutable): JComponent =
     when (item) {
-      is GitLabMergeRequestTimelineItem.SystemNote -> createSystemDiscussionContent(item)
+      is GitLabMergeRequestTimelineItem.SystemNote -> createSystemDiscussionContent(project, item)
       is GitLabMergeRequestTimelineItem.LabelEvent -> createLabeledEventContent(item)
       is GitLabMergeRequestTimelineItem.MilestoneEvent -> createMilestonedEventContent(item)
       is GitLabMergeRequestTimelineItem.StateEvent -> createStateChangeContent(item)
     }
 
-  private fun createSystemDiscussionContent(item: GitLabMergeRequestTimelineItem.SystemNote): JComponent {
+  private fun createSystemDiscussionContent(project: Project, item: GitLabMergeRequestTimelineItem.SystemNote): JComponent {
     val content = item.content
     if (content.contains("Compare with previous version")) {
       try {
@@ -204,7 +204,7 @@ internal object GitLabMergeRequestTimelineComponentFactory {
         thisLogger().warn("Error occurred while parsing the note with added commits", e)
       }
     }
-    return StatusMessageComponentFactory.create(SimpleHtmlPane(GitLabUIUtil.convertToHtml(content)))
+    return StatusMessageComponentFactory.create(SimpleHtmlPane(IssuesUtil.convertMarkdownToHtmlWithIssues(project, content)))
   }
 
   private val noUlGapsStyleSheet by lazy {

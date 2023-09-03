@@ -12,7 +12,6 @@ import com.intellij.openapi.util.text.StringUtil
 import com.intellij.util.PlatformUtils
 import com.jetbrains.builtInHelp.settings.SettingsPage
 import org.jetbrains.builtInWebServer.BuiltInServerOptions
-import java.awt.Desktop
 import java.io.IOException
 import java.net.InetAddress
 import java.net.URI
@@ -27,6 +26,7 @@ import java.nio.charset.StandardCharsets
 class BuiltInHelpManager : HelpManager() {
   private val LOG = Logger.getInstance(javaClass)
   override fun invokeHelp(helpId: String?) {
+    logWillOpenHelpId(helpId)
 
     try {
       var url = "http://127.0.0.1:${BuiltInServerOptions.getInstance().effectiveBuiltInServerPort}/help/?${

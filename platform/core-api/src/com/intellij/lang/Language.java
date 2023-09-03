@@ -2,6 +2,7 @@
 package com.intellij.lang;
 
 import com.intellij.diagnostic.ImplementationConflictException;
+import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.extensions.PluginDescriptor;
 import com.intellij.openapi.fileTypes.FileType;
@@ -36,6 +37,7 @@ import java.util.concurrent.ConcurrentMap;
  * The language coming from file type can be changed by {@link com.intellij.psi.LanguageSubstitutor}.
  */
 public abstract class Language extends UserDataHolderBase {
+  public static final Language[] EMPTY_ARRAY = new Language[0];
   private static final Map<Class<? extends Language>, Language> ourRegisteredLanguages = new ConcurrentHashMap<>();
   private static final ConcurrentMap<String, List<Language>> ourRegisteredMimeTypes = new ConcurrentHashMap<>();
   private static final Map<String, Language> ourRegisteredIDs = new ConcurrentHashMap<>();
@@ -44,6 +46,7 @@ public abstract class Language extends UserDataHolderBase {
   private final String myID;
   private final String[] myMimeTypes;
   private final List<Language> myDialects = ContainerUtil.createLockFreeCopyOnWriteList();
+  private final Set<@NotNull Language> myTransitiveDialects = ContainerUtil.newConcurrentSet();
 
   public static final Language ANY = new Language("") {
     @Override
@@ -102,6 +105,10 @@ public abstract class Language extends UserDataHolderBase {
 
     if (baseLanguage != null) {
       baseLanguage.myDialects.add(this);
+      while (baseLanguage != null) {
+        baseLanguage.myTransitiveDialects.add(this);
+        baseLanguage = baseLanguage.getBaseLanguage();
+      }
     }
   }
 
@@ -128,7 +135,8 @@ public abstract class Language extends UserDataHolderBase {
   @ApiStatus.Internal
   public void unregisterLanguage(@NotNull PluginDescriptor pluginDescriptor) {
     IElementType.unregisterElementTypes(this, pluginDescriptor);
-    ReferenceProvidersRegistry referenceProvidersRegistry = ApplicationManager.getApplication().getServiceIfCreated(ReferenceProvidersRegistry.class);
+    Application application = ApplicationManager.getApplication();
+    ReferenceProvidersRegistry referenceProvidersRegistry = application == null ? null : application.getServiceIfCreated(ReferenceProvidersRegistry.class);
     if (referenceProvidersRegistry != null) {
       referenceProvidersRegistry.unloadProvidersFor(this);
     }
@@ -146,6 +154,9 @@ public abstract class Language extends UserDataHolderBase {
   @ApiStatus.Internal
   public void unregisterDialect(@NotNull Language language) {
     myDialects.remove(language);
+    for (Language baseLanguage = this; baseLanguage != null; baseLanguage = baseLanguage.getBaseLanguage()) {
+      baseLanguage.myTransitiveDialects.remove(language);
+    }
   }
 
   /**
@@ -159,8 +170,9 @@ public abstract class Language extends UserDataHolderBase {
 
   /**
    * @param mimeType of the particular language.
-   * @return collection of all languages for the given {@code mimeType}.
+   * @return unmodifiable collection of all languages for the given {@code mimeType}.
    */
+  @Unmodifiable
   public static @NotNull Collection<Language> findInstancesByMimeType(@Nullable String mimeType) {
     List<Language> result = mimeType == null ? null : ourRegisteredMimeTypes.get(mimeType);
     return result == null ? Collections.emptyList() : Collections.unmodifiableCollection(result);
@@ -254,8 +266,9 @@ public abstract class Language extends UserDataHolderBase {
     return false;
   }
 
+  @Unmodifiable
   public @NotNull List<Language> getDialects() {
-    return myDialects;
+    return Collections.unmodifiableList(myDialects);
   }
 
   public static @Nullable Language findLanguageByID(@NonNls String id) {
@@ -271,5 +284,28 @@ public abstract class Language extends UserDataHolderBase {
     myID = ID;
     myBaseLanguage = null;
     myMimeTypes = null;
+  }
+
+  /**
+   * Mark {@code dialect} as a language dialect of this language.
+   * Please don't forget to call {@link #unregisterDialect(Language)} later,
+   * because this dialect won't de-register itself automatically on dispose because it doesn't know about this language being its parent,
+   * which can cause memory leaks.
+   */
+  @ApiStatus.Internal
+  protected void registerDialect(@NotNull Language dialect) {
+    myDialects.add(dialect);
+    for (Language baseLanguage = this; baseLanguage != null; baseLanguage = baseLanguage.getBaseLanguage()) {
+      baseLanguage.myTransitiveDialects.add(dialect);
+    }
+  }
+
+  /**
+   * @return this language dialects and their dialects transitively
+   */
+  @Unmodifiable
+  @NotNull
+  public Collection<@NotNull Language> getTransitiveDialects() {
+    return Collections.unmodifiableSet(myTransitiveDialects);
   }
 }

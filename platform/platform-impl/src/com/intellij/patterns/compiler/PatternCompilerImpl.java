@@ -104,7 +104,7 @@ public final class PatternCompilerImpl<T> implements PatternCompiler<T> {
     invoke, invoke_end
   }
 
-  private static class Frame {
+  private static final class Frame {
     State state = State.init;
     Object target;
     String methodName;
@@ -511,7 +511,7 @@ public final class PatternCompilerImpl<T> implements PatternCompiler<T> {
   private record Node(@Nullable Node target, @Nullable String method, Object @Nullable [] args) {
   }
 
-  private static class FalsePattern extends InitialPatternCondition<Object> implements ElementPattern<Object> {
+  private static final class FalsePattern extends InitialPatternCondition<Object> implements ElementPattern<Object> {
     private final ElementPatternCondition<Object> myCondition = new ElementPatternCondition<>(this);
 
     protected FalsePattern() {
@@ -535,7 +535,7 @@ public final class PatternCompilerImpl<T> implements PatternCompiler<T> {
   }
 
 
-  public static class LazyPresentablePattern<T> implements ElementPattern<T> {
+  public static final class LazyPresentablePattern<T> implements ElementPattern<T> {
 
     private final Node myNode;
     private final Set<Method> myStaticMethods;

@@ -12,7 +12,7 @@ import com.intellij.psi.search.SearchScope
 import com.intellij.psi.search.searches.DeepestSuperMethodsSearch
 import com.intellij.psi.util.PsiUtilCore
 import com.intellij.serviceContainer.NonInjectable
-import com.intellij.util.containers.ContainerUtil
+import com.intellij.util.containers.CollectionFactory
 import java.util.concurrent.ConcurrentMap
 
 
@@ -83,7 +83,7 @@ private class FileUsagesCache(private val configuration: UsageCounterConfigurati
 interface UsageCounterConfiguration {
 
   fun <K: Any, V: Any> createCacheMap(): ConcurrentMap<K, V> {
-    return ContainerUtil.createConcurrentWeakKeySoftValueMap<K, V>()
+    return CollectionFactory.createConcurrentWeakKeySoftValueMap()
   }
 
   fun countUsages(file: PsiFile, members: List<PsiMember>, scope: SearchScope): Int {

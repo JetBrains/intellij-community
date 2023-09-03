@@ -620,6 +620,10 @@ public final class ExceptionUtil {
     for (PsiClassType classType : PsiTypesUtil.getClassTypeComponents(type)) {
       // Currently, generic parameter type is considered as unhandled exception; not actual exceptions declared by 'process' method
       PsiType substituted = PsiUtil.substituteTypeParameter(classType, CommonClassNames.JAVA_LANG_STRING_TEMPLATE_PROCESSOR, 1, false);
+      if (substituted instanceof PsiCapturedWildcardType) {
+        PsiCapturedWildcardType wildcardType = (PsiCapturedWildcardType)substituted;
+        substituted = wildcardType.getUpperBound();
+      }
       if (!(substituted instanceof PsiClassType)) continue;
       PsiClassType exceptionType = (PsiClassType)substituted;
       if (!isUncheckedException(exceptionType) &&

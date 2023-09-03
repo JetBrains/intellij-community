@@ -11,6 +11,8 @@ import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.fileChooser.actions.VirtualFileDeleteProvider
 import com.intellij.openapi.fileEditor.OpenFileDescriptor
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.text.HtmlBuilder
+import com.intellij.openapi.util.text.HtmlChunk
 import com.intellij.openapi.vcs.FilePath
 import com.intellij.openapi.vcs.FileStatus
 import com.intellij.openapi.vcs.VcsBundle
@@ -20,11 +22,13 @@ import com.intellij.openapi.vcs.changes.UnversionedViewDialog
 import com.intellij.openapi.vcs.changes.ui.*
 import com.intellij.openapi.vcs.changes.ui.VcsTreeModelData.allUnder
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.ui.ColorUtil
 import com.intellij.ui.SimpleTextAttributes
 import com.intellij.ui.tree.TreeVisitor
 import com.intellij.util.FontUtil
 import com.intellij.util.containers.ContainerUtil
 import com.intellij.util.containers.JBIterable
+import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.tree.TreeUtil
 import git4idea.conflicts.GitConflictsUtil.getConflictType
 import git4idea.i18n.GitBundle
@@ -106,7 +110,7 @@ abstract class GitStageTree(project: Project,
         }
       }
 
-      if (settings.ignoredFilesShown()) {
+      if (settings.ignoredFilesShown) {
         builder.insertIgnoredPaths(ignoredFilePaths)
       }
 
@@ -178,8 +182,18 @@ abstract class GitStageTree(project: Project,
     }
   }
 
+  private val StagingAreaOperation.tooltipText: String
+    get() {
+      val shortcut = shortcutText
+      if (shortcut == null) return actionText.get()
+      return HtmlBuilder()
+        .append(actionText.get()).nbsp(2)
+        .append(HtmlChunk.font(ColorUtil.toHex(JBUI.CurrentTheme.Tooltip.shortcutForeground())).addText(shortcut))
+        .wrapWith("html").toString()
+    }
+
   private inner class GitStageHoverIcon(val operation: StagingAreaOperation)
-    : HoverIcon(operation.icon!!, operation.actionText.get()) {
+    : HoverIcon(operation.icon!!, operation.tooltipText) {
     override fun invokeAction(node: ChangesBrowserNode<*>) {
       val nodes = allUnder(node).userObjects(GitFileStatusNode::class.java)
       performStageOperation(nodes, operation)

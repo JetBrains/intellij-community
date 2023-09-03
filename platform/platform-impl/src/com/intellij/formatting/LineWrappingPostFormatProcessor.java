@@ -14,7 +14,7 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.Collections;
 
-public class LineWrappingPostFormatProcessor implements PostFormatProcessor {
+public final class LineWrappingPostFormatProcessor implements PostFormatProcessor {
   @Override
   public @NotNull PsiElement processElement(@NotNull PsiElement source, @NotNull CodeStyleSettings settings) {
     processText(source.getContainingFile(), source.getTextRange(), settings);

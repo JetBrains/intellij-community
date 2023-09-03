@@ -19,6 +19,7 @@ import net.miginfocom.swing.MigLayout
 import org.jetbrains.plugins.github.api.data.GHCommit
 import org.jetbrains.plugins.github.api.data.GHUser
 import org.jetbrains.plugins.github.i18n.GithubBundle
+import org.jetbrains.plugins.github.pullrequest.comment.convertToHtml
 import org.jetbrains.plugins.github.pullrequest.data.provider.GHPRDataProvider
 import org.jetbrains.plugins.github.pullrequest.data.service.GHPRSecurityService
 import org.jetbrains.plugins.github.pullrequest.ui.details.model.impl.GHPRDetailsViewModel
@@ -69,7 +70,9 @@ internal object GHPRDetailsComponentFactory {
       add(commitsAndBranches, CC().growX().gap(ReviewDetailsUIUtil.COMMIT_POPUP_BRANCHES_GAPS))
       add(CodeReviewDetailsCommitInfoComponentFactory.create(scope, detailsVm.changesVm.selectedCommit,
                                                              commitPresentation = { commit ->
-                                                               createCommitsPopupPresenter(commit, securityService.ghostUser)
+                                                               createCommitsPopupPresenter(commit, securityService.ghostUser) {
+                                                                 it.convertToHtml(project)
+                                                               }
                                                              },
                                                              htmlPaneFactory = { SimpleHtmlPane() }),
           CC().growX().gap(ReviewDetailsUIUtil.COMMIT_INFO_GAPS))
@@ -86,9 +89,13 @@ internal object GHPRDetailsComponentFactory {
     ActionUtil.invokeAction(action, parentComponent, ActionPlaces.UNKNOWN, null, null)
   }
 
-  private fun createCommitsPopupPresenter(commit: GHCommit, ghostUser: GHUser) = CommitPresentation(
-    title = commit.messageHeadlineHTML,
-    description = commit.messageBodyHTML,
+  private fun createCommitsPopupPresenter(
+    commit: GHCommit,
+    ghostUser: GHUser,
+    issueProcessor: ((String) -> String)? = null
+  ) = CommitPresentation(
+    titleHtml = if (issueProcessor != null) issueProcessor(commit.messageHeadlineHTML) else commit.messageHeadlineHTML,
+    descriptionHtml = if (issueProcessor != null) issueProcessor(commit.messageBodyHTML) else commit.messageBodyHTML,
     author = (commit.author?.user ?: ghostUser).getPresentableName(),
     committedDate = commit.committedDate
   )

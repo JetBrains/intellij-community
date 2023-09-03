@@ -9,6 +9,7 @@ import com.intellij.ide.impl.OpenProjectTask
 import com.intellij.ide.impl.PatchProjectUtil
 import com.intellij.ide.impl.ProjectUtil
 import com.intellij.ide.impl.runUnderModalProgressIfIsEdt
+import com.intellij.ide.observation.ActivityInProgressPredicate
 import com.intellij.ide.warmup.WarmupConfigurator
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.readAction
@@ -18,6 +19,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.JdkOrderEntry
 import com.intellij.openapi.roots.OrderRootType
 import com.intellij.openapi.roots.ProjectRootManager
+import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.openapi.vfs.VirtualFileManager
 import com.intellij.util.asSafely
@@ -27,6 +29,7 @@ import com.intellij.warmup.impl.WarmupConfiguratorOfCLIConfigurator
 import com.intellij.warmup.impl.getCommandLineReporter
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.withContext
 import java.nio.file.Path
 import java.util.*
@@ -65,8 +68,10 @@ private suspend fun importOrOpenProjectImpl(args: OpenProjectArgs): Project {
 
   callProjectConversion(args)
 
-  callProjectConfigurators(args) {
-    this.prepareEnvironment(args.projectDir)
+  if (!isPredicateBasedWarmup()) {
+    callProjectConfigurators(args) {
+      this.prepareEnvironment(args.projectDir)
+    }
   }
 
   val project = runTaskAndLogTime("open project") {
@@ -81,15 +86,33 @@ private suspend fun importOrOpenProjectImpl(args: OpenProjectArgs): Project {
     }
   }
 
+  if (isPredicateBasedWarmup()) {
+    runTaskAndLogTime("awaiting completion predicates") {
+      predicateLoop@ while (true) {
+        for (processBusyPredicate in ActivityInProgressPredicate.EP_NAME.extensionList) {
+          if (processBusyPredicate.isInProgress(project)) {
+            WarmupLogger.logInfo("'${processBusyPredicate.presentableName}' is in running...")
+            delay(1000)
+            continue@predicateLoop
+          }
+        }
+        WarmupLogger.logInfo("All predicates are completed")
+        break
+      }
+    }
+  }
+
   yieldAndWaitForDumbModeEnd(project)
 
-  callProjectConfigurators(args) {
-    this.runWarmup(project)
+  if (!isPredicateBasedWarmup()) {
+    callProjectConfigurators(args) {
+      this.runWarmup(project)
 
-    FileBasedIndex.getInstance().asSafely<FileBasedIndexImpl>()?.changedFilesCollector?.ensureUpToDate()
-    //the configuration may add more dumb tasks to complete
-    //we flush the queue to avoid a deadlock between a modal progress & invokeLater
-    yieldAndWaitForDumbModeEnd(project)
+      FileBasedIndex.getInstance().asSafely<FileBasedIndexImpl>()?.changedFilesCollector?.ensureUpToDate()
+      //the configuration may add more dumb tasks to complete
+      //we flush the queue to avoid a deadlock between a modal progress & invokeLater
+      yieldAndWaitForDumbModeEnd(project)
+    }
   }
 
   runTaskAndLogTime("check project roots") {
@@ -218,3 +241,6 @@ private fun getAllConfigurators() : List<WarmupConfigurator> {
              nameSet.contains(it.name).not() }
            .map(::WarmupConfiguratorOfCLIConfigurator)
 }
+
+
+private fun isPredicateBasedWarmup() = Registry.`is`("ide.warmup.use.predicates")

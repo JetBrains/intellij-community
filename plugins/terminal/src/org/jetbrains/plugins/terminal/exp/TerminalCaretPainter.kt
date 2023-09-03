@@ -19,6 +19,7 @@ import com.intellij.ui.Gray
 import com.intellij.ui.JBColor
 import com.intellij.util.concurrency.EdtExecutorService
 import com.intellij.util.concurrency.annotations.RequiresEdt
+import org.jetbrains.plugins.terminal.exp.TerminalSelectionModel.TerminalSelectionListener
 import java.awt.Color
 import java.awt.Font
 import java.awt.Graphics2D
@@ -28,17 +29,23 @@ import java.util.concurrent.TimeUnit
 import kotlin.math.ceil
 import kotlin.math.floor
 
-class TerminalCaretPainter(private val caretModel: TerminalCaretModel,
-                           private val editor: EditorEx) : TerminalCaretModel.CaretListener, FocusChangeListener {
+class TerminalCaretPainter(
+  private val caretModel: TerminalCaretModel,
+  private val outputModel: TerminalOutputModel,
+  selectionModel: TerminalSelectionModel,
+  private val editor: EditorEx
+) : TerminalCaretModel.CaretListener, FocusChangeListener, TerminalSelectionListener {
   private var caretHighlighter: RangeHighlighter? = null
   private var caretUpdater: BlinkingCaretUpdater? = null
   private var isFocused: Boolean = false
+  private var isBlockActive: Boolean = true
 
   private val caretColor: Color
     get() = editor.colorsScheme.getColor(EditorColors.CARET_COLOR) ?: JBColor(CARET_DARK, CARET_LIGHT)
 
   init {
     caretModel.addListener(this)
+    selectionModel.addListener(this)
     editor.addFocusListener(this, caretModel)
   }
 
@@ -73,11 +80,19 @@ class TerminalCaretPainter(private val caretModel: TerminalCaretModel,
     updateCaretHighlighter(null, caretModel.isBlinking)
   }
 
+  override fun selectionChanged(oldSelection: List<CommandBlock>, newSelection: List<CommandBlock>) {
+    isBlockActive = newSelection.isEmpty() || newSelection.singleOrNull() == outputModel.getLastBlock()
+    if (isBlockActive) {
+      repaint()
+    }
+    else updateCaretHighlighter(null, caretModel.isBlinking)
+  }
+
   private fun updateCaretHighlighter(newPosition: LogicalPosition?, isBlinking: Boolean) {
     removeHighlighter()
     caretUpdater?.let { Disposer.dispose(it) }
     caretUpdater = null
-    if (newPosition != null && isFocused) {
+    if (newPosition != null && isFocused && isBlockActive) {
       installCaretHighlighter(newPosition)
       if (isBlinking) {
         caretUpdater = BlinkingCaretUpdater(newPosition)

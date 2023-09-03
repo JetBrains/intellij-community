@@ -92,8 +92,7 @@ public abstract class Reverter {
     }
   }
 
-  @NlsContexts.Command
-  public String getCommandName() {
+  public @NlsContexts.Command String getCommandName() {
     Revision to = getTargetRevision();
     String name = to.getChangeSetName();
     String date = DateFormatUtil.formatDateTime(to.getTimestamp());

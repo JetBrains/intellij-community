@@ -13,6 +13,7 @@ import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.progress.util.BackgroundTaskUtil;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.NotNullLazyValue;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.Alarm;
@@ -43,6 +44,8 @@ import org.jetbrains.annotations.CalledInAny;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.io.IOException;
+import java.nio.file.Path;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ScheduledFuture;
@@ -66,7 +69,7 @@ public final class GitBranchIncomingOutgoingManager implements GitRepositoryChan
 
   private static final String MAC_DEFAULT_LAUNCH = "com.apple.launchd"; //NON-NLS
 
-  private static final boolean HAS_EXTERNAL_SSH_AGENT = hasExternalSSHAgent();
+  private static final NotNullLazyValue<Boolean> HAS_EXTERNAL_SSH_AGENT = NotNullLazyValue.lazy(() -> hasExternalSSHAgent());
 
   private final @NotNull Object LOCK = new Object();
   private final @NotNull Set<GitRepository> myDirtyReposWithIncoming = new HashSet<>();
@@ -101,7 +104,23 @@ public final class GitBranchIncomingOutgoingManager implements GitRepositoryChan
   private static boolean hasExternalSSHAgent() {
     String ssh_auth_sock = EnvironmentUtil.getValue("SSH_AUTH_SOCK");
     if (ssh_auth_sock == null) return false;
-    return !StringUtil.contains(ssh_auth_sock, MAC_DEFAULT_LAUNCH);
+
+    if (StringUtil.contains(ssh_auth_sock, MAC_DEFAULT_LAUNCH)) {
+      try {
+        Path agentPath = Path.of(ssh_auth_sock);
+        String originPath = agentPath.toString();
+        String realPath = agentPath.toRealPath().toString();
+        if (!originPath.equals(realPath)) {
+          return true;
+        }
+      }
+      catch (Throwable ignored) {
+      }
+
+      return false;
+    }
+
+    return true;
   }
 
   public boolean hasIncomingFor(@Nullable GitRepository repository, @NotNull String localBranchName) {
@@ -319,7 +338,9 @@ public final class GitBranchIncomingOutgoingManager implements GitRepositoryChan
   }
 
   private boolean shouldAvoidUserInteraction(@NotNull GitRemote remote) {
-    return GitVcsSettings.getInstance(myProject).getIncomingCheckStrategy() == Auto && HAS_EXTERNAL_SSH_AGENT && containsSSHUrl(remote);
+    return GitVcsSettings.getInstance(myProject).getIncomingCheckStrategy() == Auto &&
+           containsSSHUrl(remote) &&
+           HAS_EXTERNAL_SSH_AGENT.get();
   }
 
   private static boolean containsSSHUrl(@NotNull GitRemote remote) {

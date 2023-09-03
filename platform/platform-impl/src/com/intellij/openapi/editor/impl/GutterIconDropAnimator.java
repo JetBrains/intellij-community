@@ -14,7 +14,7 @@ import java.awt.*;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 
-class GutterIconDropAnimator extends AbstractPainter {
+final class GutterIconDropAnimator extends AbstractPainter {
   private final Point myExplosionLocation;
   private final Image myImage;
   private final @NotNull Disposable myPainterListenersDisposable;

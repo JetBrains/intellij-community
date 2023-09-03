@@ -226,9 +226,18 @@ public abstract class MavenProjectsManager extends MavenSimpleProjectComponent
   }
 
   private void init() {
+    var forceImport = false;
+    if (!myState.workspaceImportForciblyTurnedOn) {
+      var importingSettings = getImportingSettings();
+      if (!importingSettings.isWorkspaceImportEnabled()) {
+        forceImport = true;
+        importingSettings.setWorkspaceImportEnabled(true);
+      }
+      myState.workspaceImportForciblyTurnedOn = true; // turn workspace import if it is turned off once for each existing project
+    }
     doInit(false);
     if (!MavenUtil.isLinearImportEnabled()) {
-      scheduleUpdateAll(new MavenImportSpec(false, false, false));
+      scheduleUpdateAll(new MavenImportSpec(forceImport, forceImport, false));
     }
   }
 

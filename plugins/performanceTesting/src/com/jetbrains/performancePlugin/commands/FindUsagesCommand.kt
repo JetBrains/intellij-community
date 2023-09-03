@@ -5,7 +5,6 @@ import com.intellij.find.actions.ShowUsagesAction
 import com.intellij.find.findUsages.FindUsagesOptions
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.smartReadAction
-import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.options.advanced.AdvancedSettings
@@ -13,8 +12,11 @@ import com.intellij.openapi.ui.playback.PlaybackContext
 import com.intellij.openapi.ui.popup.JBPopupFactory
 import com.intellij.psi.PsiNamedElement
 import com.intellij.usages.Usage
+import com.jetbrains.performancePlugin.PerformanceTestSpan
 import com.sampullara.cli.Args
+import io.opentelemetry.api.trace.Span
 import io.opentelemetry.context.Context
+import io.opentelemetry.context.Scope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.NonNls
@@ -29,6 +31,7 @@ class FindUsagesCommand(text: String, line: Int) : PerformanceCommandCoroutineAd
   companion object {
     const val PREFIX: @NonNls String = CMD_PREFIX + "findUsages"
     const val SPAN_NAME: @NonNls String = "findUsages"
+    const val PARENT_SPAN_NAME: @NonNls String = SPAN_NAME + "Parent"
     private val LOG = logger<FindUsagesCommand>()
   }
 
@@ -50,6 +53,9 @@ class FindUsagesCommand(text: String, line: Int) : PerformanceCommandCoroutineAd
     val currentOTContext = Context.current()
     var findUsagesFuture: Future<Collection<Usage>>
     val storedPageSize = AdvancedSettings.getInt("ide.usages.page.size")
+    val spanBuilder = PerformanceTestSpan.getTracer(isWarmupMode).spanBuilder(PARENT_SPAN_NAME).setParent(PerformanceTestSpan.getContext())
+    var spanRef: Span? = null
+    var scopeRef: Scope? = null
     withContext(Dispatchers.EDT) {
       currentOTContext.makeCurrent().use {
         val editor = FileEditorManager.getInstance(context.project).selectedTextEditor
@@ -81,11 +87,15 @@ class FindUsagesCommand(text: String, line: Int) : PerformanceCommandCoroutineAd
         //configuration for find usages
         AdvancedSettings.setInt("ide.usages.page.size", Int.MAX_VALUE) //by default, it's 100; we need to find all usages to compare
         val scope = FindUsagesOptions.findScopeByName(context.project, null, options.scope)
+        spanRef = spanBuilder.startSpan()
+        scopeRef = spanRef!!.makeCurrent()
         findUsagesFuture = ShowUsagesAction.startFindUsagesWithResult(element, popupPosition, editor, scope)
       }
 
     }
     val results = findUsagesFuture.get()
+    spanRef!!.end()
+    scopeRef!!.close()
     AdvancedSettings.setInt("ide.usages.page.size", storedPageSize)
     FindUsagesDumper.storeMetricsDumpFoundUsages(results.toMutableList(), context.project)
   }

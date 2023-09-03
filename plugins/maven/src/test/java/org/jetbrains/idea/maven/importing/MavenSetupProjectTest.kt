@@ -4,6 +4,7 @@ package org.jetbrains.idea.maven.importing
 import com.intellij.testFramework.openProjectAsync
 import com.intellij.testFramework.useProjectAsync
 import kotlinx.coroutines.runBlocking
+import org.jetbrains.idea.maven.project.MavenProjectsManager
 import org.junit.Test
 
 
@@ -177,6 +178,39 @@ class MavenSetupProjectTest : MavenSetupProjectTestCase() {
         .useProjectAsync {
           assertProjectState(it, projectInfo, linkedProjectInfo)
         }
+    }
+  }
+
+  @Test
+  fun `test workspace import forcibly enabled once per project`() {
+    runBlocking {
+      val projectInfo = generateProject("A")
+      waitForImport {
+        openProjectAsync(projectInfo.projectFile)
+      }.useProjectAsync(true) {
+        // initial state: workspace import is disabled, has not been forced yet
+        val mavenProjectsManager = MavenProjectsManager.getInstance(it)
+        mavenProjectsManager.state!!.workspaceImportForciblyTurnedOn = false
+        mavenProjectsManager.importingSettings.isWorkspaceImportEnabled = false
+      }
+
+      waitForImport {
+        openProjectAsync(projectInfo.projectFile)
+      }.useProjectAsync(true) {
+        // check that workspace import has been forced
+        val mavenProjectsManager = MavenProjectsManager.getInstance(it)
+        assertTrue(mavenProjectsManager.importingSettings.isWorkspaceImportEnabled)
+        // user still chooses legacy import
+        mavenProjectsManager.importingSettings.isWorkspaceImportEnabled = false
+      }
+
+      waitForImport {
+        openProjectAsync(projectInfo.projectFile)
+      }.useProjectAsync(true) {
+        // check that workspace import has not been forced twice
+        val mavenProjectsManager = MavenProjectsManager.getInstance(it)
+        assertFalse(mavenProjectsManager.importingSettings.isWorkspaceImportEnabled)
+      }
     }
   }
 }

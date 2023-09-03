@@ -6,9 +6,7 @@ package com.intellij.util.ui
 import com.intellij.diagnostic.LoadingState
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.util.Disposer
-import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.SystemInfoRt
-import com.intellij.openapi.util.UserDataHolder
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.ui.JreHiDpiUtil
 import com.intellij.ui.scale.JBUIScale
@@ -18,6 +16,7 @@ import com.intellij.ui.scale.isHiDPIEnabledAndApplicable
 import com.intellij.util.JBHiDPIScaledImage
 import com.intellij.util.concurrency.Semaphore
 import org.jetbrains.annotations.ApiStatus.Internal
+import org.jetbrains.annotations.ApiStatus.ScheduledForRemoval
 import org.jetbrains.annotations.TestOnly
 import java.awt.*
 import java.awt.event.AWTEventListener
@@ -38,12 +37,6 @@ import kotlin.math.pow
 import kotlin.math.roundToInt
 
 object StartupUiUtil {
-  @JvmField
-  val PLUGGABLE_LAF_KEY: Key<String> = Key.create("Pluggable.laf.name")
-
-  @JvmField
-  val LAF_WITH_THEME_KEY: Key<Boolean> = Key.create("Laf.with.ui.theme")
-
   @Internal
   @JvmField
   val patchableFontResources: Array<String> = arrayOf("Button.font", "ToggleButton.font", "RadioButton.font",
@@ -58,48 +51,44 @@ object StartupUiUtil {
                                                       "TitledBorder.font", "ToolBar.font", "ToolTip.font", "Tree.font")
   @JvmStatic
   val isUnderDarcula: Boolean
-    get() = UIManager.getLookAndFeel().name.contains("Darcula")
+    @Deprecated("Do not use it. Use UI theme properties.", ReplaceWith("StartupUiUtil[isDarkTheme]"))
+    @ScheduledForRemoval
+    get() = isDarkTheme
 
   @JvmStatic
+  val isDarkTheme: Boolean
+    get() {
+      // Do not use UIManager.getLookAndFeel().defaults because it won't work.
+      // We use UIManager.getLookAndFeelDefaults() in installTheme in com.intellij.ide.ui.laf.LafManagerImpl.doSetLaF
+      return UIManager.getLookAndFeelDefaults().getBoolean("ui.theme.is.dark")
+    }
+
+  @JvmStatic
+  @Deprecated("Starts from 2023.3 all themes use DarculaLaf", ReplaceWith("false"))
+  @ScheduledForRemoval
   fun isUnderIntelliJLaF(): Boolean {
-    return UIManager.getLookAndFeel().name.contains("IntelliJ") || isUnderDefaultMacTheme() || UIUtil.isUnderWin10LookAndFeel()
+    return !isDarkTheme
   }
 
   @JvmStatic
+  @Deprecated("Starts from NewUI default mac theme lost meaning. If you want to something based on theme please check current theme id.", ReplaceWith("false"))
+  @ScheduledForRemoval
   fun isUnderDefaultMacTheme(): Boolean {
-    if (!SystemInfoRt.isMac) {
       return false
-    }
-
-    val lookAndFeel = UIManager.getLookAndFeel()
-    if (lookAndFeel is UserDataHolder) {
-      return lookAndFeel.getUserData(LAF_WITH_THEME_KEY) != true && lookAndFeel.getUserData(PLUGGABLE_LAF_KEY) == "macOS Light"
-    }
-    else {
-      return false
-    }
   }
 
   @JvmStatic
+  @Deprecated("Starts from NewUI default win10 theme lost meaning. If you want to something based on theme please check current theme id.", ReplaceWith("false"))
+  @ScheduledForRemoval
   fun isUnderWin10LookAndFeel(): Boolean {
-    if (!SystemInfoRt.isWindows) {
       return false
-    }
-
-    val lookAndFeel = UIManager.getLookAndFeel()
-    if (lookAndFeel is UserDataHolder) {
-      return lookAndFeel.getUserData(LAF_WITH_THEME_KEY) != true && lookAndFeel.getUserData(PLUGGABLE_LAF_KEY) == "Windows 10 Light"
-    }
-    else {
-      return false
-    }
   }
 
   @JvmStatic
   fun getLcdContrastValue(): Int {
     val lcdContrastValue = if (LoadingState.APP_STARTED.isOccurred) Registry.intValue("lcd.contrast.value", 0) else 0
     return if (lcdContrastValue == 0) {
-      doGetLcdContrastValueForSplash(isUnderDarcula)
+      doGetLcdContrastValueForSplash(isDarkTheme)
     }
     else {
       normalizeLcdContrastValue(lcdContrastValue)

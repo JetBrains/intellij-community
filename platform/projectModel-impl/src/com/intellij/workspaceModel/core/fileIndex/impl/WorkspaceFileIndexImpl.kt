@@ -11,7 +11,6 @@ import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.ContentIteratorEx
-import com.intellij.openapi.roots.impl.CustomEntityProjectModelInfoProvider
 import com.intellij.openapi.roots.impl.DirectoryIndexImpl
 import com.intellij.openapi.roots.impl.RootFileSupplier
 import com.intellij.openapi.util.Computable
@@ -55,7 +54,6 @@ class WorkspaceFileIndexImpl(private val project: Project) : WorkspaceFileIndexE
     LowMemoryWatcher.register({ indexData.onLowMemory() }, project)
     val clearData = Runnable { indexData = EmptyWorkspaceFileIndexData.RESET }
     EP_NAME.addChangeListener(clearData, this)
-    CustomEntityProjectModelInfoProvider.EP.addChangeListener(clearData, this)
   }
 
   override fun isInWorkspace(file: VirtualFile): Boolean {
@@ -213,7 +211,7 @@ class WorkspaceFileIndexImpl(private val project: Project) : WorkspaceFileIndexE
 
   override fun initializeBlocking() {
     if (indexData is EmptyWorkspaceFileIndexData) {
-      indexData = WorkspaceFileIndexDataImpl(contributors, project, RootFileSupplier.INSTANCE)
+      indexData = WorkspaceFileIndexDataImpl(EP_NAME.extensionList, project, RootFileSupplier.INSTANCE)
     }
   }
 
@@ -269,15 +267,12 @@ class WorkspaceFileIndexImpl(private val project: Project) : WorkspaceFileIndexE
         }
       }
       EmptyWorkspaceFileIndexData.RESET -> {
-        data = WorkspaceFileIndexDataImpl(contributors, project, RootFileSupplier.INSTANCE)
+        data = WorkspaceFileIndexDataImpl(EP_NAME.extensionList, project, RootFileSupplier.INSTANCE)
         indexData = data
       }
     }
     return data
   }
-
-  val contributors: List<WorkspaceFileIndexContributor<*>>
-    get() = EP_NAME.extensionList + CustomEntityProjectModelInfoProvider.EP.extensionList.map { CustomEntityProjectModelInfoProviderBridge(it) }
 
   override fun reset() {
     indexData = EmptyWorkspaceFileIndexData.RESET

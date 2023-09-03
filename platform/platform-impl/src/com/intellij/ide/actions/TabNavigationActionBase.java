@@ -221,7 +221,7 @@ abstract class TabNavigationActionBase extends AnAction implements DumbAware, Ac
     }
   }
 
-  public static class GoToLastTabAction extends GoToTabAction {
+  public static final class GoToLastTabAction extends GoToTabAction {
     public GoToLastTabAction() {
       super(NavigationType.LAST);
     }

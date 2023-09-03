@@ -2,19 +2,22 @@
 package com.intellij.openapi.vfs.newvfs.persistent.dev.appendonlylog;
 
 import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.openapi.vfs.newvfs.persistent.PersistentFSRecordsLockFreeOverMMappedFile.MMappedFileStorage;
-import com.intellij.openapi.vfs.newvfs.persistent.PersistentFSRecordsLockFreeOverMMappedFile.MMappedFileStorage.Page;
+import com.intellij.openapi.vfs.newvfs.persistent.mapped.MMappedFileStorage;
+import com.intellij.openapi.vfs.newvfs.persistent.mapped.MMappedFileStorage.Page;
 import com.intellij.openapi.vfs.newvfs.persistent.dev.blobstorage.ByteBufferReader;
 import com.intellij.openapi.vfs.newvfs.persistent.dev.blobstorage.ByteBufferWriter;
+import com.intellij.util.io.IOUtil;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.VisibleForTesting;
 
 import java.io.IOException;
 import java.lang.invoke.VarHandle;
 import java.nio.ByteBuffer;
+import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.concurrent.atomic.AtomicLong;
 
+import static com.intellij.util.SystemProperties.getBooleanProperty;
 import static com.intellij.util.io.IOUtil.MiB;
 import static java.lang.invoke.MethodHandles.byteBufferViewVarHandle;
 import static java.nio.ByteOrder.nativeOrder;
@@ -23,7 +26,13 @@ import static java.nio.ByteOrder.nativeOrder;
  * There are other caveats, pitfalls, and dragons, so beware
  */
 @ApiStatus.Internal
-public class AppendOnlyLogOverMMappedFile implements AppendOnlyLog {
+public final class AppendOnlyLogOverMMappedFile implements AppendOnlyLog {
+  //@formatter:off
+  private static final boolean MORE_DIAGNOSTIC_INFORMATION = getBooleanProperty("AppendOnlyLogOverMMappedFile.MORE_DIAGNOSTIC_INFORMATION", true);
+  private static final boolean ADD_LOG_CONTENT = getBooleanProperty("AppendOnlyLogOverMMappedFile.ADD_LOG_CONTENT", true);
+  //@formatter:on
+
+
   private static final VarHandle INT32_OVER_BYTE_BUFFER = byteBufferViewVarHandle(int[].class, nativeOrder()).withInvokeExactBehavior();
   private static final VarHandle INT64_OVER_BYTE_BUFFER = byteBufferViewVarHandle(long[].class, nativeOrder()).withInvokeExactBehavior();
 
@@ -34,100 +43,167 @@ public class AppendOnlyLogOverMMappedFile implements AppendOnlyLog {
 
   public static final int DEFAULT_PAGE_SIZE = 4 * MiB;
 
+  public static final int MAX_PAYLOAD_SIZE = RecordLayout.RECORD_LENGTH_MASK;
+
   //TODO/MAYBE:
   //    1) connectionStatus: do we need it? Updates are atomic, every saved state is at least self-consistent.
   //       We could use (committed < allocated) as a marker of 'not everything was committed'
-  //    2) Align records to 32b -- required to for setVolatile(RecordLayout.LENGTH_OFFSET), without it multithreaded
-  //       use is unsafe
-  //    3) Flush cursors values to header fields more often: it is crucial for the 'recoverability' -- only the section
-  //       of the log until NEXT_RECORD_TO_BE_COMMITTED_OFFSET is recoverable after a crash.
-  //       Maybe get rid of atomic fields, and update cursors plainly in a header?
-  //    4) Cleanup-recovery after crash: if (committed < allocated) on start -- we need to set [allocated=committed],
-  //       and zeroes (committed..allocated) region (since it could contain partially-saved garbage, while we rely
-  //       on 'unwritten' buffer content to be 0). Probably we need to zero even more than that region alone --
-  //       because we don't know how many writes ahead of it were saved.
+  //    2) Make record header recognizable: i.e. reserve first byte for type+committed only -- so we can recognize
+  //       'false id' with high probability. This leaves us with 3bytes record length, which is still enough for
+  //       the most applications
 
-  private static class HeaderLayout {
+  private static final class HeaderLayout {
     private static final int IMPLEMENTATION_VERSION_OFFSET = 0;
 
     private static final int EXTERNAL_VERSION_OFFSET = IMPLEMENTATION_VERSION_OFFSET + Integer.BYTES;
 
 
+    /** Offset (in file) of the next-record-to-be-allocated */
     private static final int NEXT_RECORD_TO_BE_ALLOCATED_OFFSET = EXTERNAL_VERSION_OFFSET + Integer.BYTES;
-    /** Records until (<) that offset must be all written */
+    /** Records with offset < recordsCommittedUpToOffset are guaranteed to be already written. */
     private static final int NEXT_RECORD_TO_BE_COMMITTED_OFFSET = NEXT_RECORD_TO_BE_ALLOCATED_OFFSET + Long.BYTES;
 
     //reserve [8 x int64] just for the case
     private static final int HEADER_SIZE = NEXT_RECORD_TO_BE_COMMITTED_OFFSET + 8 * Long.BYTES;
   }
 
-  private static class RecordLayout {
 
-    /** length is >0 for real records, -length is stored for padding records */
-    private static final int LENGTH_OFFSET = 0;
-    private static final int DATA_OFFSET = LENGTH_OFFSET + Integer.BYTES;
+  private static final class RecordLayout {
+    // Record = (header) + (payload)
+    // Header = 32 bit, 32-bit-aligned (so it could be read/write as volatile, and not all CPU arch allow memory sync
+    //          ops on non-aligned offsets)
+    //          2 highest bits are reserved for record type and commitment status
+    //          30 remaining bit: total record length, header included (i.e. payloadLength=recordLength-4)
+    //          bit[31] (highest): record type, 0=regular record, 1=padding record
+    //          bit[30]: record committed status, 0=record payload is fully written, 1=record payload is not yet
+    //                   fully written
+
+    /** 0==regular record, 1==padding record */
+    private static final int RECORD_TYPE_MASK = 1 << 31;
+    private static final int RECORD_TYPE_DATA = 0;
+    private static final int RECORD_TYPE_PADDING = 1 << 31;
+
+    /** 0==commited, 1==not commited */
+    private static final int COMMITED_STATUS_MASK = 1 << 30;
+    private static final int COMMITED_STATUS_OK = 1 << 30;
+    private static final int COMMITED_STATUS_NOT_YET = 0;
+
+    private static final int RECORD_LENGTH_MASK = 0x3FFF_FFFF;
+
+
+    private static final int HEADER_OFFSET = 0;
+    private static final int DATA_OFFSET = HEADER_OFFSET + Integer.BYTES;
 
     private static final int RECORD_HEADER_SIZE = Integer.BYTES;
 
-    private static void putDataRecord(@NotNull ByteBuffer buffer,
-                                      int offsetInBuffer,
-                                      byte[] data) {
-      int totalRecordSize = data.length + RECORD_HEADER_SIZE;
+    public static void putDataRecord(@NotNull ByteBuffer buffer,
+                                     int offsetInBuffer,
+                                     byte[] data) {
+      INT32_OVER_BYTE_BUFFER.setVolatile(buffer, offsetInBuffer + HEADER_OFFSET, dataRecordHeader(data.length, /*commited: */false));
       buffer.put(offsetInBuffer + DATA_OFFSET, data);
-      //INT32_OVER_BYTE_BUFFER.setRelease(buffer, offsetInBuffer + LENGTH_OFFSET, totalRecordSize);
-      buffer.putInt(offsetInBuffer + LENGTH_OFFSET, totalRecordSize);
+      INT32_OVER_BYTE_BUFFER.setVolatile(buffer, offsetInBuffer + HEADER_OFFSET, dataRecordHeader(data.length, /*commited: */true));
     }
 
-    private static void putDataRecord(@NotNull ByteBuffer buffer,
-                                      int offsetInBuffer,
-                                      int recordSize,
-                                      ByteBufferWriter writer) throws IOException {
-      int totalRecordSize = recordSize + RECORD_HEADER_SIZE;
-      writer.write(buffer.slice(offsetInBuffer + DATA_OFFSET, recordSize));
-      //INT32_OVER_BYTE_BUFFER.setRelease(buffer, offsetInBuffer + LENGTH_OFFSET, totalRecordSize);
-      buffer.putInt(offsetInBuffer + LENGTH_OFFSET, totalRecordSize);
+    public static void putDataRecord(@NotNull ByteBuffer buffer,
+                                     int offsetInBuffer,
+                                     int payloadSize,
+                                     ByteBufferWriter writer) throws IOException {
+      INT32_OVER_BYTE_BUFFER.setVolatile(buffer, offsetInBuffer + HEADER_OFFSET, dataRecordHeader(payloadSize, /*commited: */false));
+      writer.write(buffer.slice(offsetInBuffer + DATA_OFFSET, payloadSize));
+      INT32_OVER_BYTE_BUFFER.setVolatile(buffer, offsetInBuffer + HEADER_OFFSET, dataRecordHeader(payloadSize, /*commited: */true));
+    }
+
+    public static void putPaddingRecord(@NotNull ByteBuffer buffer,
+                                        int offsetInBuffer) {
+      int remainsToPad = buffer.capacity() - offsetInBuffer;
+      putPaddingRecord(buffer, offsetInBuffer, remainsToPad);
     }
 
     private static void putPaddingRecord(@NotNull ByteBuffer buffer,
-                                         int offsetInBuffer) {
-      int remainsToPad = buffer.capacity() - offsetInBuffer;
-      if (remainsToPad <= RECORD_HEADER_SIZE) {
+                                         int offsetInBuffer,
+                                         int remainsToPad) {
+      if (remainsToPad < RECORD_HEADER_SIZE) {
         throw new IllegalArgumentException(
           "Can't create PaddingRecord for " + remainsToPad + "b leftover, must be >" + RECORD_HEADER_SIZE + " b left:" +
           "buffer.capacity(=" + buffer.capacity() + "), offsetInBuffer(=" + offsetInBuffer + ")");
       }
-      //INT32_OVER_BYTE_BUFFER.setRelease(buffer, offsetInBuffer + LENGTH_OFFSET, -remainsToPad);
-      buffer.putInt(offsetInBuffer + LENGTH_OFFSET, -remainsToPad);
+      int header = paddingRecordHeader(remainsToPad, /*commited: */true);
+      INT32_OVER_BYTE_BUFFER.setVolatile(buffer, offsetInBuffer + HEADER_OFFSET, header);
+    }
+
+
+    /** generates data record header given length of payload and commited status */
+    private static int dataRecordHeader(int payloadLength,
+                                        boolean commited) {
+      int totalRecordSize = payloadLength + RECORD_HEADER_SIZE;
+      if ((totalRecordSize & COMMITED_STATUS_MASK) != 0
+          || (totalRecordSize & RECORD_TYPE_MASK) != 0) {
+        throw new IllegalArgumentException("totalRecordSize(=" + totalRecordSize + ") must have 2 highest bits 0");
+      }
+
+      return totalRecordSize | (commited ? COMMITED_STATUS_OK : COMMITED_STATUS_NOT_YET);
+    }
+
+    /** generates padding record header given total length of padding, and commited status */
+    private static int paddingRecordHeader(int lengthToPad,
+                                           boolean commited) {
+      if (lengthToPad == 0) {
+        throw new IllegalArgumentException("lengthToPad(=" + lengthToPad + ") must be >0");
+      }
+      int totalRecordSize = lengthToPad;
+      if ((totalRecordSize & (~RECORD_LENGTH_MASK)) != 0) {
+        throw new IllegalArgumentException("lengthToPad(=" + lengthToPad + ") must have 2 highest bits 0");
+      }
+
+      return totalRecordSize | RECORD_TYPE_MASK | (commited ? 0 : COMMITED_STATUS_MASK);
     }
 
     /** @return total record length (including header) */
-    private static int recordLength(ByteBuffer buffer,
-                                    int offsetInBuffer) {
-      return Math.abs(buffer.getInt(offsetInBuffer + LENGTH_OFFSET));
-    }
-
-    private static boolean isPaddingRecord(ByteBuffer buffer,
-                                           int offsetInBuffer) {
-      return buffer.getInt(offsetInBuffer + LENGTH_OFFSET) < 0;
-    }
-
-    private static boolean isDataRecord(ByteBuffer buffer,
+    private static int readRecordLength(ByteBuffer buffer,
                                         int offsetInBuffer) {
-      return !isPaddingRecord(buffer, offsetInBuffer);
+      int header = readHeader(buffer, offsetInBuffer);
+      return extractRecordLength(header);
     }
 
-    private static ByteBuffer recordDataAsSlice(ByteBuffer buffer,
-                                                int offsetInBuffer) {
-      int totalRecordLength = buffer.getInt(offsetInBuffer + LENGTH_OFFSET);
-      if (totalRecordLength < 0) {
-        throw new IllegalStateException("record[" + offsetInBuffer + "] is " +
-                                        "PaddingRecord(length=" + totalRecordLength + ") -- has no data");
-      }
-      else if (totalRecordLength == 0) {
-        throw new IllegalStateException("record[" + offsetInBuffer + "] has no length(=" + totalRecordLength + ") " +
-                                        "either not yet written or corrupted");
-      }
-      return buffer.slice(offsetInBuffer + DATA_OFFSET, totalRecordLength - RECORD_HEADER_SIZE);
+    /** @return total record length (including header) */
+    private static int extractRecordLength(int header) {
+      return roundUpToInt32(header & RECORD_LENGTH_MASK);
+    }
+
+    /** @return record payload length (excluding header) */
+    private static int extractPayloadLength(int header) {
+      return (header & RECORD_LENGTH_MASK) - RECORD_HEADER_SIZE;
+    }
+
+    private static boolean isPaddingHeader(int header) {
+      return (header & RECORD_TYPE_MASK) == RECORD_TYPE_PADDING;
+    }
+
+    private static boolean isDataHeader(int header) {
+      return (header & RECORD_TYPE_MASK) == RECORD_TYPE_DATA;
+    }
+
+    private static boolean isRecordCommitted(int header) {
+      return (header & COMMITED_STATUS_MASK) == COMMITED_STATUS_OK;
+    }
+
+    public static int readHeader(ByteBuffer buffer,
+                                 int offsetInBuffer) {
+      return (int)INT32_OVER_BYTE_BUFFER.getVolatile(buffer, offsetInBuffer + HEADER_OFFSET);
+    }
+
+    public static int calculateRecordLength(int payloadSize) {
+      return roundUpToInt32(payloadSize + RECORD_HEADER_SIZE);
+    }
+
+    /**
+     * @return true if payload of payloadLength fits into a pageBuffer, given a record
+     * header starts at recordOffsetInFile, false otherwise
+     */
+    public static boolean isFitIntoPage(ByteBuffer pageBuffer,
+                                        int recordOffsetInPage,
+                                        int payloadLength) {
+      return recordOffsetInPage + DATA_OFFSET + payloadLength <= pageBuffer.limit();
     }
   }
 
@@ -144,18 +220,22 @@ public class AppendOnlyLogOverMMappedFile implements AppendOnlyLog {
 
 
   private final @NotNull MMappedFileStorage storage;
+  /** Cache header page since we access it on each op (read/update cursors) */
+  private transient Page headerPage;
 
-  /** Offset (in file) of the next-record-to-be-allocated */
-  private final AtomicLong nextRecordToBeAllocatedOffset = new AtomicLong();
-  /**
-   * Offset (in file) of the next-record-to-be-allocated.
-   * Records with offset < recordsCommittedUpToOffset are guaranteed to be already written.
-   */
-  private final AtomicLong nextRecordToBeCommittedOffset = new AtomicLong();
+
+  private final long startOfRecoveredRegion;
+  private final long endOfRecoveredRegion;
 
 
   public AppendOnlyLogOverMMappedFile(@NotNull MMappedFileStorage storage) throws IOException {
     this.storage = storage;
+    headerPage = storage.pageByOffset(0L);
+
+    int pageSize = storage.pageSize();
+    if (!is32bAligned(pageSize)) {
+      throw new IllegalArgumentException("storage.pageSize(=" + pageSize + ") must be 32b-aligned");
+    }
 
     int implementationVersion = getImplementationVersion();
     if (implementationVersion == UNSET_VALUE) {
@@ -166,19 +246,55 @@ public class AppendOnlyLogOverMMappedFile implements AppendOnlyLog {
                             CURRENT_IMPLEMENTATION_VERSION + " is the supported one.");
     }
 
+
     long nextRecordToBeAllocatedOffset = getLongHeaderField(HeaderLayout.NEXT_RECORD_TO_BE_ALLOCATED_OFFSET);
     if (nextRecordToBeAllocatedOffset == UNSET_VALUE) {//log is just created:
       nextRecordToBeAllocatedOffset = HeaderLayout.HEADER_SIZE;
       setLongHeaderField(HeaderLayout.NEXT_RECORD_TO_BE_ALLOCATED_OFFSET, nextRecordToBeAllocatedOffset);
     }
-    this.nextRecordToBeAllocatedOffset.set(nextRecordToBeAllocatedOffset);
 
     long nextRecordToBeCommittedOffset = getLongHeaderField(HeaderLayout.NEXT_RECORD_TO_BE_COMMITTED_OFFSET);
     if (nextRecordToBeCommittedOffset == UNSET_VALUE) {//log is just created:
       nextRecordToBeCommittedOffset = HeaderLayout.HEADER_SIZE;
       setLongHeaderField(HeaderLayout.NEXT_RECORD_TO_BE_COMMITTED_OFFSET, nextRecordToBeCommittedOffset);
     }
-    this.nextRecordToBeCommittedOffset.set(nextRecordToBeAllocatedOffset);
+
+    if (nextRecordToBeCommittedOffset < nextRecordToBeAllocatedOffset) {
+      //storage wasn't closed correctly -- probably forced restart? -> need to recover
+
+      //For recovery we need 2 things:
+      // - convert all non-commited records to padding records (we can't remove them, but can't recover either)
+      // - clear everything after nextRecordToBeAllocatedOffset (log mechanics assumes file tail after
+      //   .nextRecordToBeAllocatedOffset is always filled with 0)
+      startOfRecoveredRegion = nextRecordToBeCommittedOffset;
+      endOfRecoveredRegion = nextRecordToBeAllocatedOffset;
+      long successfullyRecoveredUntil = recoverRegion(nextRecordToBeCommittedOffset, nextRecordToBeAllocatedOffset);
+
+      long fileSize = storage.actualFileSize();
+      if (fileSize < successfullyRecoveredUntil) {
+        //Mapped storage must enlarge file so that all non-0 values in mapped buffers are within file bounds
+        // (because it is 'undefined behavior' to have something in mapped buffer beyond the actual end-of-file)
+        // -- and there are non-0 values up until successfullyRecoveredUntil, because at least record header is
+        // non-0 for valid records.
+        // So fileSize < successfullyRecoveredUntil must never happen:
+        throw new AssertionError(
+          "file(=" + storage.storagePath() + ").size(=" + fileSize + ") < recoveredUntil(=" + successfullyRecoveredUntil + ")");
+      }
+      //zero file suffix:
+      storage.zeroizeTillEOF(successfullyRecoveredUntil);
+
+
+      nextRecordToBeCommittedOffset = successfullyRecoveredUntil;
+      nextRecordToBeAllocatedOffset = successfullyRecoveredUntil;
+    }
+    else {
+      startOfRecoveredRegion = -1;
+      endOfRecoveredRegion = -1;
+    }
+
+
+    setLongHeaderField(HeaderLayout.NEXT_RECORD_TO_BE_ALLOCATED_OFFSET, nextRecordToBeAllocatedOffset);
+    setLongHeaderField(HeaderLayout.NEXT_RECORD_TO_BE_COMMITTED_OFFSET, nextRecordToBeCommittedOffset);
   }
 
   public int getImplementationVersion() throws IOException {
@@ -203,16 +319,24 @@ public class AppendOnlyLogOverMMappedFile implements AppendOnlyLog {
 
   @Override
   public long append(@NotNull ByteBufferWriter writer,
-                     int recordSize) throws IOException {
-    if (recordSize < 0) {
-      throw new IllegalArgumentException("Can't write record with length<0");
+                     int payloadSize) throws IOException {
+    if (payloadSize < 0) {
+      throw new IllegalArgumentException("Can't write record with payloadSize(=" + payloadSize + ") < 0");
     }
-    int totalRecordLength = recordSize + RecordLayout.RECORD_HEADER_SIZE;
+    int pageSize = storage.pageSize();
+    if (payloadSize > pageSize - RecordLayout.RECORD_HEADER_SIZE) {
+      throw new IllegalArgumentException("payloadSize(=" + payloadSize + ") is too big: " +
+                                         "record with header must fit pageSize(=" + pageSize + ")");
+    }
+
+    int totalRecordLength = RecordLayout.calculateRecordLength(payloadSize);
     long recordOffsetInFile = allocateSpaceForRecord(totalRecordLength);
+    assert32bAligned(recordOffsetInFile, "recordOffsetInFile");
 
     Page page = storage.pageByOffset(recordOffsetInFile);
     int offsetInPage = storage.toOffsetInPage(recordOffsetInFile);
-    RecordLayout.putDataRecord(page.rawPageBuffer(), offsetInPage, recordSize, writer);
+
+    RecordLayout.putDataRecord(page.rawPageBuffer(), offsetInPage, payloadSize, writer);
 
     tryCommitRecord(recordOffsetInFile, totalRecordLength);
 
@@ -220,7 +344,7 @@ public class AppendOnlyLogOverMMappedFile implements AppendOnlyLog {
   }
 
   //MAYBE RC: Implementation below is a bit faster than default version (no lambda, no buffer slice).
-  //          Dut does it worth it?
+  //          But does it worth it?
   //@Override
   //public long append(byte[] data) throws IOException {
   //  if (data.length == 0) {
@@ -243,20 +367,12 @@ public class AppendOnlyLogOverMMappedFile implements AppendOnlyLog {
                     @NotNull ByteBufferReader<T> reader) throws IOException {
     long recordOffsetInFile = recordIdToOffset(recordId);
 
-    //FIXME RC: if we check offset against 'committed' cursor, we prohibit reading just-written
-    //          record if there are uncommitted records behind it. This is bad from API-consistency
-    //          PoV: if append() returns an id -- that id must be valid for read(id). So I changed
-    //          check to ( offset < allocated ).
-    //          ...But that creates another consistency issue then: .forEachRecord() unable to read
-    //          records above 'committed' cursor since it relies on .recordLength in a header, and
-    //          some headers in uncommitted region are not committed yet. So some records that could
-    //          be accessed by id -- won't be reported by .forEachRecord(), which is also bad.
-    //          ...Ideally, we should reconsider record writing/committing protocol: recordLength
-    //          should be separated from 'committed/uncommitted' mark -- recordLength is written
-    //          initially, before record content, but with 'uncommitted' mark => the record content
-    //          can't be read yet, but the record could be traversed through.
+    //RC: Records between 'committed' and 'allocated' cursors are not all fully written -> we permit
+    //    reading the records that are still not fully commited. This is good from API-consistency
+    //    PoV: if .append() returns an id -- that id must be valid for .read(id), even though some
+    //    records _before_ that id are not yet finished.
 
-    long recordsAllocatedUpTo = nextRecordToBeAllocatedOffset.get();
+    long recordsAllocatedUpTo = firstUnAllocatedOffset();
     if (recordOffsetInFile >= recordsAllocatedUpTo) {
       throw new IllegalArgumentException(
         "Can't read recordId(=" + recordId + ", offset: " + recordOffsetInFile + "]: " +
@@ -267,45 +383,104 @@ public class AppendOnlyLogOverMMappedFile implements AppendOnlyLog {
     Page page = storage.pageByOffset(recordOffsetInFile);
     int recordOffsetInPage = storage.toOffsetInPage(recordOffsetInFile);
     ByteBuffer pageBuffer = page.rawPageBuffer();
-    ByteBuffer recordDataSlice = RecordLayout.recordDataAsSlice(pageBuffer, recordOffsetInPage);
+
+    int recordHeader = RecordLayout.readHeader(pageBuffer, recordOffsetInPage);
+    if (!RecordLayout.isDataHeader(recordHeader)) {
+      throw new IOException("record[" + recordId + "][@" + recordOffsetInFile + "] is " +
+                            "PaddingRecord(header=" + Integer.toHexString(recordHeader) + ") -- i.e. has no data. " +
+                            moreDiagnosticInfo(recordOffsetInFile)
+      );
+    }
+    if (!RecordLayout.isRecordCommitted(recordHeader)) {
+      throw new IOException("record[" + recordId + "][@" + recordOffsetInFile + "] is not commited: " +
+                            "(header=" + Integer.toHexString(recordHeader) + ") either not yet written or corrupted. " +
+                            moreDiagnosticInfo(recordOffsetInFile) +
+                            (ADD_LOG_CONTENT ? "\n" + dumpContentAroundId(recordId, 1024) : "")
+      );
+    }
+    int payloadLength = RecordLayout.extractPayloadLength(recordHeader);
+    if (!RecordLayout.isFitIntoPage(pageBuffer, recordOffsetInPage, payloadLength)) {
+      throw new IOException("record[" + recordId + "][@" + recordOffsetInFile + "].payloadLength(=" + payloadLength + ") " +
+                            "is incorrect: page[0.." + pageBuffer.limit() + "], " +
+                            "committedUpTo: " + firstUnCommittedOffset() + ", allocatedUpTo: " + firstUnAllocatedOffset() + ". " +
+                            moreDiagnosticInfo(recordOffsetInFile) +
+                            (ADD_LOG_CONTENT ? "\n" + dumpContentAroundId(recordId, 1024) : "")
+      );
+    }
+    ByteBuffer recordDataSlice = pageBuffer.slice(recordOffsetInPage + RecordLayout.DATA_OFFSET, payloadLength);
     return reader.read(recordDataSlice);
+  }
+
+  @Override
+  public boolean isValidId(long recordId) {
+    if (recordId <= 0) {
+      return false;
+    }
+    long recordOffset = recordIdToOffsetUnchecked(recordId);
+    if (!is32bAligned(recordOffset)) {
+      return false;
+    }
+    return recordOffset < firstUnAllocatedOffset();
   }
 
   @Override
   public boolean forEachRecord(@NotNull RecordReader reader) throws IOException {
     int pageSize = storage.pageSize();
-    for (long offset = HeaderLayout.HEADER_SIZE; offset < nextRecordToBeCommittedOffset.get(); ) {
-      Page page = storage.pageByOffset(offset);
-      int recordOffsetInPage = storage.toOffsetInPage(offset);
+    long firstUnallocatedOffset = firstUnAllocatedOffset();
+
+    for (long recordOffsetInFile = HeaderLayout.HEADER_SIZE; recordOffsetInFile < firstUnallocatedOffset; ) {
+
+      Page page = storage.pageByOffset(recordOffsetInFile);
+      int recordOffsetInPage = storage.toOffsetInPage(recordOffsetInFile);
       ByteBuffer pageBuffer = page.rawPageBuffer();
 
       if (pageSize - recordOffsetInPage <= RecordLayout.RECORD_HEADER_SIZE) {
-        offset += (pageSize - recordOffsetInPage);
-        continue;
+        throw new IOException(
+          "Storage corrupted: recordOffsetInPage(=" + recordOffsetInPage + ") less than " +
+          "RECORD_HEADER(=" + RecordLayout.RECORD_HEADER_SIZE + "b) left until " +
+          "pageEnd(" + pageSize + ") -- all records must be 32b-aligned"
+        );
       }
 
-      if (RecordLayout.isDataRecord(pageBuffer, recordOffsetInPage)) {
-        ByteBuffer recordDataSlice = RecordLayout.recordDataAsSlice(pageBuffer, recordOffsetInPage);
-        int dataLength = recordDataSlice.remaining();
-        long recordId = recordOffsetToId(offset);
-        boolean shouldContinue = reader.read(recordId, recordDataSlice);
-        if (!shouldContinue) {
-          return false;
-        }
-        offset += dataLength + RecordLayout.RECORD_HEADER_SIZE;
+      int recordHeader = RecordLayout.readHeader(pageBuffer, recordOffsetInPage);
+      if (recordHeader == 0) {
+        //the record wasn't even started to be written
+        // -> can't read the following records since we don't know there they are
+        return true;
       }
-      else if (RecordLayout.isPaddingRecord(pageBuffer, recordOffsetInPage)) {
-        int paddingRecordLength = RecordLayout.recordLength(pageBuffer, recordOffsetInPage);
-        offset += paddingRecordLength;
+
+      int recordLength = RecordLayout.extractRecordLength(recordHeader);
+
+      if (RecordLayout.isDataHeader(recordHeader)) {
+        if (RecordLayout.isRecordCommitted(recordHeader)) {
+          int payloadLength = RecordLayout.extractPayloadLength(recordHeader);
+          long recordId = recordOffsetToId(recordOffsetInFile);
+
+          if (!RecordLayout.isFitIntoPage(pageBuffer, recordOffsetInPage, payloadLength)) {
+            throw new IOException("record[" + recordId + "][@" + recordOffsetInFile + "].payloadLength(=" + payloadLength + "): " +
+                                  " is incorrect: page[0.." + pageBuffer.limit() + "]" +
+                                  moreDiagnosticInfo(recordOffsetInFile));
+          }
+          ByteBuffer recordDataSlice = pageBuffer.slice(recordOffsetInPage + RecordLayout.DATA_OFFSET, payloadLength);
+
+          boolean shouldContinue = reader.read(recordId, recordDataSlice);
+          if (!shouldContinue) {
+            return false;
+          }
+        }//else: record not yet commited, we can't _read_ it -- but maybe _next_ record(s) are committed?
+      }
+      else if (RecordLayout.isPaddingHeader(recordHeader)) {
+        //just skip it
       }
       else {
-        //before 'committed' cursor all records must be finalized -- i.e. header != 0
-        throw new AssertionError("offset(" + offset + "): nor padding, nor data record");
+        //if header != 0 => it must be either padding, or (uncommitted?) data record:
+        throw new IOException("header(=" + recordHeader + "](@offset=" + recordOffsetInFile + "): not a padding, nor a data record");
       }
+
+
+      recordOffsetInFile = nextRecordOffset(recordOffsetInFile, recordLength);
     }
 
-    //MAYBE: there could be some finalized records in [committed, allocated), but with current scheme
-    // it is impossible to know there such record(s) starts
     return true;
   }
 
@@ -314,15 +489,24 @@ public class AppendOnlyLogOverMMappedFile implements AppendOnlyLog {
   }
 
   public void flush() throws IOException {
-    flush(false);
+    //nothing to do: everything is already in the mapped buffer
   }
 
+  @Override
   public void flush(boolean fsync) throws IOException {
-    setLongHeaderField(HeaderLayout.NEXT_RECORD_TO_BE_ALLOCATED_OFFSET, nextRecordToBeAllocatedOffset.get());
-    setLongHeaderField(HeaderLayout.NEXT_RECORD_TO_BE_COMMITTED_OFFSET, nextRecordToBeCommittedOffset.get());
     if (fsync) {
       storage.fsync();
     }
+  }
+
+  @Override
+  public void close() throws IOException {
+    //MAYBE RC: is it better to state that flush(true) should be called
+    //          explicitly, if needed, otherwise leave it to OS to decide
+    //          when to sync the pages?
+    flush(true);
+    storage.close();
+    headerPage = null;//help GC unmap pages sooner
   }
 
   /**
@@ -330,7 +514,7 @@ public class AppendOnlyLogOverMMappedFile implements AppendOnlyLog {
    * <p/>
    * Implementation note: the exact moment file memory-mapping is actually released and the file could be
    * deleted -- is very OS/platform-dependent. E.g., Win is known to keep file 'in use' for some time even
-   * after unmap() call is already finished. In JVM GS is responsible for releasing mapped buffers -- which
+   * after unmap() call is already finished. In JVM, GC is responsible for releasing mapped buffers -- which
    * adds another level of uncertainty. Hence, if one needs to re-create the storage, it may be more reliable
    * to just .clear() the current storage, than to closeAndRemove -> create-fresh-new.
    */
@@ -340,16 +524,28 @@ public class AppendOnlyLogOverMMappedFile implements AppendOnlyLog {
   }
 
   @Override
-  public void close() throws IOException {
-    //MAYBE RC: is it better to always fsync here? -- or better state that flush(true) should be called
-    //          explicitly, if needed, otherwise leave it to OS to decide when to sync the pages?
-    flush();
-    storage.close();
-  }
-
-  @Override
   public String toString() {
     return "AppendOnlyLogOverMMappedFile[" + storage.storagePath() + "]";
+  }
+
+  /**
+   * @return log records in a region [aroundRecordId-regionWidth .. aroundRecordId+regionWidth],
+   * one record per line. Record content formatted as hex-string
+   */
+  private String dumpContentAroundId(long aroundRecordId,
+                                     int regionWidth) throws IOException {
+    StringBuilder sb = new StringBuilder("Log content around id: " + aroundRecordId + " +/- " + regionWidth +
+                                         " (first uncommitted offset: " + firstUnCommittedOffset() +
+                                         ", first unallocated: " + firstUnAllocatedOffset() + ")\n");
+    forEachRecord((recordId, buffer) -> {
+      if (aroundRecordId - regionWidth <= recordId && recordId <= aroundRecordId + regionWidth) {
+        String bufferAsHex = IOUtil.toHexString(buffer);
+        sb.append("[id: ").append(recordId).append("][offset: ").append(recordIdToOffset(recordId)).append("][hex: ")
+          .append(bufferAsHex).append("]\n");
+      }
+      return recordId <= aroundRecordId + regionWidth;
+    });
+    return sb.toString();
   }
 
 
@@ -357,41 +553,45 @@ public class AppendOnlyLogOverMMappedFile implements AppendOnlyLog {
 
   private long allocateSpaceForRecord(int totalRecordLength) throws IOException {
     int pageSize = storage.pageSize();
+    if (totalRecordLength > pageSize) {
+      throw new IllegalArgumentException("totalRecordLength(=" + totalRecordLength + ") must fit the page(=" + pageSize + ")");
+    }
     while (true) {//CAS loop:
-      long recordOffsetInFile = nextRecordToBeAllocatedOffset.get();
+      long recordOffsetInFile = firstUnAllocatedOffset();
       int recordOffsetInPage = storage.toOffsetInPage(recordOffsetInFile);
       int remainingOnPage = pageSize - recordOffsetInPage;
       if (totalRecordLength <= remainingOnPage) {
-        if (nextRecordToBeAllocatedOffset.compareAndSet(recordOffsetInFile, recordOffsetInFile + totalRecordLength)) {
+        if (casFirstUnAllocatedOffset(recordOffsetInFile, recordOffsetInFile + totalRecordLength)) {
           return recordOffsetInFile;
         }
         continue;
       }
       //not enough room on page for a record => fill page up with padding record
       // and try again on the next page:
-      if (remainingOnPage > RecordLayout.RECORD_HEADER_SIZE) {
-        if (nextRecordToBeAllocatedOffset.compareAndSet(recordOffsetInFile, recordOffsetInFile + remainingOnPage)) {
+      if (remainingOnPage >= RecordLayout.RECORD_HEADER_SIZE) {
+        if (casFirstUnAllocatedOffset(recordOffsetInFile, recordOffsetInFile + remainingOnPage)) {
           Page page = storage.pageByOffset(recordOffsetInFile);
           RecordLayout.putPaddingRecord(page.rawPageBuffer(), recordOffsetInPage);
         }//else: somebody else dealt with that offset -> retry anyway
         continue;
       }
 
-      //remainingOnPage <= RECORD_HEADER_SIZE: even padding record can't fit
-      // => just move the pointer to the next page:
-      //TODO RC: if we align records on 32b -- this branch becomes unreachable?
-      long nextPageStartOffset = nextPageStartingOffset(recordOffsetInFile, pageSize);
-      nextRecordToBeAllocatedOffset.compareAndSet(recordOffsetInFile, nextPageStartOffset);
-      //don't need to check return value: either we succeed, or somebody else does
+      //With record offsets AND lengths AND pageSize all 32b-aligned -- it could be either 0 or 4 bytes at the end
+      // of the page -- all those options processed above -- but never 1-2-3 bytes.
+      throw new AssertionError("Bug: remainingOnPage(=" + remainingOnPage + ") < RECORD_HEADER(=" + RecordLayout.RECORD_HEADER_SIZE + ")," +
+                               "but records must be 32b-aligned, so it must never happen. " +
+                               "recordOffsetInFile(=" + recordOffsetInFile + "), " +
+                               "recordOffsetInPage(=" + recordOffsetInPage + "), " +
+                               "totalRecordLength(=" + totalRecordLength + ")");
     }
   }
 
   private void tryCommitRecord(long currentRecordOffsetInFile,
                                int totalRecordLength) throws IOException {
-    long committedOffset = nextRecordToBeCommittedOffset.get();
+    long committedOffset = firstUnCommittedOffset();
     if (committedOffset == currentRecordOffsetInFile) {
       long nextRecordOffsetInFile = nextRecordOffset(currentRecordOffsetInFile, totalRecordLength);
-      if (nextRecordToBeCommittedOffset.compareAndSet(currentRecordOffsetInFile, nextRecordOffsetInFile)) {
+      if (casFirstUnCommittedOffset(currentRecordOffsetInFile, nextRecordOffsetInFile)) {
         //Now we're responsible for moving the 'committed' pointer as much forward as possible:
         tryCommitFinalizedRecords();
       }
@@ -415,81 +615,218 @@ public class AppendOnlyLogOverMMappedFile implements AppendOnlyLog {
   }
 
   private void tryCommitFinalizedRecords() throws IOException {
-    try {
-      while (true) {
-        long firstYetUncommittedRecord = nextRecordToBeCommittedOffset.get();
-        long allocatedUpTo = nextRecordToBeAllocatedOffset.get();
-        if (firstYetUncommittedRecord == allocatedUpTo) {
-          return; //nothing more to commit (yet)
-        }
-        Page page = storage.pageByOffset(firstYetUncommittedRecord);
-        int offsetInPage = storage.toOffsetInPage(firstYetUncommittedRecord);
-        int totalRecordLength = RecordLayout.recordLength(page.rawPageBuffer(), offsetInPage);
-        if (totalRecordLength == 0) {
-          return; //firstYetUncommittedRecord is not finalized (yet)
-        }
-        long nextUncommittedRecord = nextRecordOffset(firstYetUncommittedRecord, totalRecordLength);
-        nextRecordToBeCommittedOffset.compareAndSet(firstYetUncommittedRecord, nextUncommittedRecord);
+    while (true) {
+      long firstYetUncommittedRecord = firstUnCommittedOffset();
+      long allocatedUpTo = firstUnAllocatedOffset();
+      if (firstYetUncommittedRecord == allocatedUpTo) {
+        return; //nothing more to commit (yet)
       }
-    }
-    finally {
-      //MAYBE RC: probably an overkill -- better delay flush?
-      flush();
+      Page page = storage.pageByOffset(firstYetUncommittedRecord);
+      int offsetInPage = storage.toOffsetInPage(firstYetUncommittedRecord);
+      int totalRecordLength = RecordLayout.readRecordLength(page.rawPageBuffer(), offsetInPage);
+      if (totalRecordLength == 0) {
+        return; //firstYetUncommittedRecord is not finalized (yet)
+      }
+      long nextUncommittedRecord = nextRecordOffset(firstYetUncommittedRecord, totalRecordLength);
+      casFirstUnCommittedOffset(firstYetUncommittedRecord, nextUncommittedRecord);
     }
   }
 
+  /**
+   * @return offset of the next record, given current record starting (=header) offset, and the record length.
+   * Takes into account record alignment to word/pages boundaries, etc.
+   */
   private long nextRecordOffset(long recordOffsetInFile,
                                 int totalRecordLength) {
-    long nextRecordOffset = recordOffsetInFile + totalRecordLength;
+    assert32bAligned(recordOffsetInFile, "recordOffsetInFile");
+    long nextRecordOffset = roundUpToInt32(recordOffsetInFile + totalRecordLength);
 
     int pageSize = storage.pageSize();
     int offsetInPage = storage.toOffsetInPage(nextRecordOffset);
     int remainingOnPage = pageSize - offsetInPage;
-    if (remainingOnPage > RecordLayout.RECORD_HEADER_SIZE) {
-      return nextRecordOffset;
+    if (remainingOnPage == RecordLayout.RECORD_HEADER_SIZE) {
+      //no room on the current page even for the record header => jump to the next page:
+      return nextPageStartingOffset(recordOffsetInFile, pageSize);
     }
-    //no room on the current page even for the record header => jump to the next page:
-    return nextPageStartingOffset(nextRecordOffset, pageSize);
+    else if (remainingOnPage < RecordLayout.RECORD_HEADER_SIZE) {
+      throw new IllegalStateException(
+        "remainingOnPage(=" + remainingOnPage + ") <= recordHeader(=" + RecordLayout.RECORD_HEADER_SIZE + ")");
+    }
+    return nextRecordOffset;
   }
 
-  private static long nextPageStartingOffset(long recordOffsetInFile, int pageSize) {
+  /** @return starting offset of the next page, given recordOffsetInFile in current page, and pageSize */
+  private static long nextPageStartingOffset(long recordOffsetInFile,
+                                             int pageSize) {
     return ((recordOffsetInFile / pageSize) + 1) * pageSize;
   }
 
+  private long firstUnAllocatedOffset() {
+    return getLongHeaderField(HeaderLayout.NEXT_RECORD_TO_BE_ALLOCATED_OFFSET);
+  }
 
-  private long recordOffsetToId(long recordOffset) {
+  private boolean casFirstUnAllocatedOffset(long currentValue,
+                                            long newValue) {
+    return INT64_OVER_BYTE_BUFFER.compareAndSet(
+      headerPage.rawPageBuffer(),
+      HeaderLayout.NEXT_RECORD_TO_BE_ALLOCATED_OFFSET,
+      currentValue, newValue
+    );
+  }
+
+  private long firstUnCommittedOffset() {
+    return getLongHeaderField(HeaderLayout.NEXT_RECORD_TO_BE_COMMITTED_OFFSET);
+  }
+
+  private boolean casFirstUnCommittedOffset(long currentValue, long newValue) {
+    return INT64_OVER_BYTE_BUFFER.compareAndSet(
+      headerPage.rawPageBuffer(),
+      HeaderLayout.NEXT_RECORD_TO_BE_COMMITTED_OFFSET,
+      currentValue, newValue
+    );
+  }
+
+
+  private long recoverRegion(long nextRecordToBeCommittedOffset,
+                             long nextRecordToBeAllocatedOffset) throws IOException {
+    int pageSize = storage.pageSize();
+    for (long offsetInFile = nextRecordToBeCommittedOffset;
+         offsetInFile < nextRecordToBeAllocatedOffset; ) {
+      Page page = storage.pageByOffset(offsetInFile);
+      int recordOffsetInPage = storage.toOffsetInPage(offsetInFile);
+      ByteBuffer pageBuffer = page.rawPageBuffer();
+
+      if (pageSize - recordOffsetInPage <= RecordLayout.RECORD_HEADER_SIZE) {
+        throw new IOException(
+          "Storage corrupted: recordOffsetInPage(=" + recordOffsetInPage + ") less than " +
+          "RECORD_HEADER(=" + RecordLayout.RECORD_HEADER_SIZE + "b) left until " +
+          "pageEnd(" + pageSize + ") -- all records must be 32b-aligned"
+        );
+      }
+
+      int recordHeader = RecordLayout.readHeader(pageBuffer, recordOffsetInPage);
+      int recordLength = RecordLayout.extractRecordLength(recordHeader);
+
+      if (recordLength == 0) {
+        //Can't recover farther: actual length of record is unknown length
+        return offsetInFile;
+      }
+      if (RecordLayout.isDataHeader(recordHeader)) {
+        if (!RecordLayout.isRecordCommitted(recordHeader)) {
+          //Unfinished record: convert it to padding record
+          RecordLayout.putPaddingRecord(pageBuffer, recordOffsetInPage, recordLength);
+        }//else: record OK -> move to the next one
+      }
+      else if (RecordLayout.isPaddingHeader(recordHeader)) {
+        //padding is always committed -> move to the next one
+      }
+      else {
+        //Unrecognizable garbage: we could just stop recovering here, and erase everything from
+        //  here and up -- but for now I'd prefer to know how that could even happen (could it?)
+        throw new IOException("header(=" + recordHeader + "](@offset=" + offsetInFile + "): not a padding, nor a data record");
+      }
+
+      offsetInFile = nextRecordOffset(offsetInFile, recordLength);
+    }
+    return nextRecordToBeAllocatedOffset;
+  }
+
+  private String moreDiagnosticInfo(long recordOffsetInFile) {
+    if (!MORE_DIAGNOSTIC_INFORMATION) {
+      return "";
+    }
+
+    if (startOfRecoveredRegion < 0 && endOfRecoveredRegion < 0) {
+      return "(There was no recovery, it can't be related to it)";
+    }
+    if (recordOffsetInFile >= startOfRecoveredRegion && recordOffsetInFile < endOfRecoveredRegion) {
+      return "(Record is in the recovered region [" + startOfRecoveredRegion + ".." + endOfRecoveredRegion + ") " +
+             "so it may be due to some un-recovered records)";
+    }
+
+    return "(There was a recovery so it may be due to some un-recovered records, " +
+           "but the record is outside the region [" + startOfRecoveredRegion + ".." + endOfRecoveredRegion + ") recovered)";
+  }
+
+  //MAYBE RC: since record offsets are now 32b-aligned, we could drop 2 lowest bits from an offset while
+  //          converting it to the id -> this way we could address wider offsets range with int id
+
+  @VisibleForTesting
+  static long recordOffsetToId(long recordOffset) {
+    assert32bAligned(recordOffset, "recordOffsetInFile");
     //0 is considered invalid id (NULL_ID) everywhere in our code, so '+1' for first id to be 1
     return recordOffset - HeaderLayout.HEADER_SIZE + 1;
   }
 
-  private long recordIdToOffset(long recordId) {
+  @VisibleForTesting
+  static long recordIdToOffset(long recordId) {
+    long offset = recordIdToOffsetUnchecked(recordId);
+    if (!is32bAligned(offset)) {
+      throw new IllegalArgumentException("recordId(=" + recordId + ") is invalid: recordOffsetInFile(=" + offset + ") is not 32b-aligned");
+    }
+    return offset;
+  }
+
+  private static long recordIdToOffsetUnchecked(long recordId) {
     return recordId - 1 + HeaderLayout.HEADER_SIZE;
   }
 
 
-  private int getIntHeaderField(int headerRelativeOffsetBytes) throws IOException {
-    try (Page page = storage.pageByOffset(headerRelativeOffsetBytes)) {
-      return (int)INT32_OVER_BYTE_BUFFER.getVolatile(page.rawPageBuffer(), headerRelativeOffsetBytes);
-    }
+  private int getIntHeaderField(int headerRelativeOffsetBytes) {
+    return (int)INT32_OVER_BYTE_BUFFER.getVolatile(headerPage.rawPageBuffer(), headerRelativeOffsetBytes);
   }
 
-  private long getLongHeaderField(int headerRelativeOffsetBytes) throws IOException {
-    try (Page page = storage.pageByOffset(headerRelativeOffsetBytes)) {
-      return (long)INT64_OVER_BYTE_BUFFER.getVolatile(page.rawPageBuffer(), headerRelativeOffsetBytes);
-    }
+  private long getLongHeaderField(int headerRelativeOffsetBytes) {
+    return (long)INT64_OVER_BYTE_BUFFER.getVolatile(headerPage.rawPageBuffer(), headerRelativeOffsetBytes);
   }
 
   private void setIntHeaderField(int headerRelativeOffsetBytes,
-                                 int headerFieldValue) throws IOException {
-    try (Page page = storage.pageByOffset(headerRelativeOffsetBytes)) {
-      INT32_OVER_BYTE_BUFFER.setVolatile(page.rawPageBuffer(), headerRelativeOffsetBytes, headerFieldValue);
-    }
+                                 int headerFieldValue) {
+    INT32_OVER_BYTE_BUFFER.setVolatile(headerPage.rawPageBuffer(), headerRelativeOffsetBytes, headerFieldValue);
   }
 
   private void setLongHeaderField(int headerRelativeOffsetBytes,
-                                  long headerFieldValue) throws IOException {
-    try (Page page = storage.pageByOffset(headerRelativeOffsetBytes)) {
-      INT64_OVER_BYTE_BUFFER.setVolatile(page.rawPageBuffer(), headerRelativeOffsetBytes, headerFieldValue);
+                                  long headerFieldValue) {
+    INT64_OVER_BYTE_BUFFER.setVolatile(headerPage.rawPageBuffer(), headerRelativeOffsetBytes, headerFieldValue);
+  }
+
+  //================== alignment: ========================================================================
+  // Record headers must be 32b-aligned so they could be accessed with volatile semantics -- because not
+  // all CPU arch support unaligned access with memory sync semantics
+
+  private static int roundUpToInt32(int value) {
+    if (is32bAligned(value)) {
+      return value;
+    }
+    return ((value >> 2) + 1) << 2;
+  }
+
+  private static long roundUpToInt32(long value) {
+    if (is32bAligned(value)) {
+      return value;
+    }
+    return ((value >> 2) + 1) << 2;
+  }
+
+  private static boolean is32bAligned(int value) {
+    return (value & 0b11) == 0;
+  }
+
+  private static boolean is32bAligned(long value) {
+    return (value & 0b11L) == 0;
+  }
+
+  private static void assert32bAligned(long value,
+                                       @NotNull String name) {
+    if (!is32bAligned(value)) {
+      throw new AssertionError("Bug: " + name + "(=" + value + ") is not 32b-aligned");
+    }
+  }
+
+  private static void assert32bAligned(int value,
+                                       @NotNull String name) {
+    if (!is32bAligned(value)) {
+      throw new AssertionError("Bug: " + name + "(=" + value + ") is not 32b-aligned");
     }
   }
 }

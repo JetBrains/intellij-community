@@ -350,7 +350,7 @@ class GradleTestAssertionTest : GradleExecutionTestCase() {
             """.trimMargin())
           }
           assertNode("test assert equals for objects") {
-            if (isBuiltInTestEventsUsed()) {
+            if (isBuiltInTestEventsUsed() && !isTestLauncherUsed()) {
               assertTestConsoleContains("""
                 |
                 |assertion message
@@ -370,7 +370,7 @@ class GradleTestAssertionTest : GradleExecutionTestCase() {
             }
           }
           assertNode("test assert equals for same objects") {
-            if (isBuiltInTestEventsUsed()) {
+            if (isBuiltInTestEventsUsed() && !isTestLauncherUsed()) {
               assertTestConsoleContains("""
                 |
                 |assertion message

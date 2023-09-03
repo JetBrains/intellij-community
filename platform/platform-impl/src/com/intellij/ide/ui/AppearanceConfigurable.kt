@@ -46,6 +46,7 @@ import com.intellij.ui.components.ActionLink
 import com.intellij.ui.components.JBCheckBox
 import com.intellij.ui.dsl.builder.*
 import com.intellij.ui.dsl.builder.Cell
+import com.intellij.ui.dsl.listCellRenderer.textListCellRenderer
 import com.intellij.ui.layout.ComponentPredicate
 import com.intellij.ui.layout.and
 import com.intellij.ui.layout.not
@@ -119,6 +120,8 @@ private val cdShowMenuIcons
 private val cdDifferentiateProjects
   get() = CheckboxDescriptor(message("checkbox.use.solution.colors.in.main.toolbar"), settings::differentiateProjects,
                              message("text.use.solution.colors.in.main.toolbar"), groupName = uiOptionGroupName)
+private val cdMinimizeHeader
+  get() = CheckboxDescriptor(message("checkbox.minimize.header"), settings::minimizeHeader, groupName = uiOptionGroupName)
 
 internal fun getAppearanceOptionDescriptors(): Sequence<OptionDescription> {
   return sequenceOf(
@@ -133,10 +136,11 @@ internal fun getAppearanceOptionDescriptors(): Sequence<OptionDescription> {
     cdUseCompactTreeIndents,
     cdShowTreeIndents,
     cdDnDWithAlt,
+    cdMinimizeHeader.takeIf { NewUiValue.isEnabled() },
     cdFullPathsInTitleBar,
-    cdSeparateMainMenu,
+    cdSeparateMainMenu.takeUnless { SystemInfo.isMac },
     cdDifferentiateProjects
-  ).map(CheckboxDescriptor::asUiOptionDescriptor)
+  ).filterNotNull().map(CheckboxDescriptor::asUiOptionDescriptor)
 }
 
 internal class AppearanceConfigurable : BoundSearchableConfigurable(message("title.appearance"), "preferences.lookFeel") {
@@ -182,7 +186,7 @@ internal class AppearanceConfigurable : BoundSearchableConfigurable(message("tit
           var resetZoom: Cell<ActionLink>? = null
 
           val model = IdeScaleTransformer.Settings.createIdeScaleComboboxModel()
-          val zoomComboBox = comboBox(model, SimpleListCellRenderer.create("") { it })
+          val zoomComboBox = comboBox(model, textListCellRenderer { it })
             .bindItem({ settings.ideScale.percentStringValue }, { })
             .onChanged {
               IdeScaleTransformer.Settings.scaleFromPercentStringValue(it.item, false)?.let { scale ->
@@ -256,9 +260,9 @@ internal class AppearanceConfigurable : BoundSearchableConfigurable(message("tit
       group(message("title.accessibility")) {
         row {
           val isOverridden = GeneralSettings.isSupportScreenReadersOverridden()
-          val mask = if (SystemInfo.isMac) InputEvent.META_MASK else InputEvent.CTRL_MASK
-          val ctrlTab = KeymapUtil.getKeystrokeText(KeyStroke.getKeyStroke(KeyEvent.VK_TAB, mask))
-          val ctrlShiftTab = KeymapUtil.getKeystrokeText(KeyStroke.getKeyStroke(KeyEvent.VK_TAB, mask + InputEvent.SHIFT_MASK))
+          val ctrlTab = KeymapUtil.getKeystrokeText(KeyStroke.getKeyStroke(KeyEvent.VK_TAB, InputEvent.CTRL_DOWN_MASK))
+          val ctrlShiftTab = KeymapUtil.getKeystrokeText(
+            KeyStroke.getKeyStroke(KeyEvent.VK_TAB, InputEvent.CTRL_DOWN_MASK + InputEvent.SHIFT_DOWN_MASK))
           checkBox(message("checkbox.support.screen.readers"))
             .bindSelected(generalSettings::isSupportScreenReaders) { generalSettings.isSupportScreenReaders = it }
             .comment(message("support.screen.readers.tab", ctrlTab, ctrlShiftTab))
@@ -332,6 +336,9 @@ internal class AppearanceConfigurable : BoundSearchableConfigurable(message("tit
               checkBox(message("checkbox.ide.mac.app.icon")).comment(message("ide.restart.required.comment"))
                 .bindSelected({ MacCustomAppIcon.isCustom() }, { MacCustomAppIcon.setCustom(it, true) })
             }
+          }
+          if (NewUiValue.isEnabled()) {
+            yield { checkBox(cdMinimizeHeader) }
           }
         }
         val rightColumnControls = sequence<Row.() -> Unit> {
@@ -486,7 +493,7 @@ internal class AppearanceConfigurable : BoundSearchableConfigurable(message("tit
 
       group(message("group.presentation.mode")) {
         row(message("presentation.mode.ide.scale")) {
-          comboBox(IdeScaleTransformer.Settings.createPresentationModeScaleComboboxModel(), SimpleListCellRenderer.create("") { it })
+          comboBox(IdeScaleTransformer.Settings.createPresentationModeScaleComboboxModel(), textListCellRenderer { it })
             .bindItem( { settings.presentationModeIdeScale.percentStringValue }, { })
             .applyToComponent {
               isEditable = true
@@ -543,7 +550,7 @@ private fun Row.fontSizeComboBox(prop: MutableProperty<@Nls String?>): Cell<Comb
     .accessibleName(message("presentation.mode.fon.size"))
     .applyToComponent {
       isEditable = true
-      renderer = SimpleListCellRenderer.create("") { it.toString() }
+      renderer = textListCellRenderer { it }
       selectedItem = prop.get()
     }
     .bind(

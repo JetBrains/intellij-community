@@ -19,7 +19,6 @@ import com.intellij.vcs.log.impl.HashImpl
 import com.intellij.vcs.log.impl.VcsLogErrorHandler
 import com.intellij.vcs.log.impl.VcsLogIndexer
 import com.intellij.vcs.log.impl.VcsRefImpl
-import com.intellij.vcs.log.util.PersistentUtil
 import com.intellij.vcs.log.util.StorageId
 import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap
 import it.unimi.dsi.fastutil.ints.IntArrayList
@@ -150,16 +149,14 @@ private class ProjectLevelConnectionManager private constructor(@JvmField val st
 }
 
 internal class SqliteVcsLogStorageBackend(project: Project,
+                                          logId: String,
                                           private val logProviders: Map<VirtualFile, VcsLogProvider>,
                                           private val errorHandler: VcsLogErrorHandler,
                                           private val disposable: Disposable) : VcsLogStorageBackend, VcsLogStorage {
   @Volatile
-  private var connectionManager = ProjectLevelConnectionManager(project, PersistentUtil.calcLogId(project, logProviders)).also {
+  private var connectionManager = ProjectLevelConnectionManager(project, logId).also {
     Disposer.register(disposable, it)
   }
-
-  override val storageId: StorageId.File
-    get() = connectionManager.storageId
 
   private val userRegistry = project.service<VcsUserRegistry>()
 
@@ -168,6 +165,9 @@ internal class SqliteVcsLogStorageBackend(project: Project,
   private val rootsToPosition = Object2IntOpenHashMap<VirtualFile>().apply {
     sortedRoots.forEachIndexed { index, root -> put(root, index) }
   }
+
+  override val storageId: StorageId.File
+    get() = connectionManager.storageId
 
   override var isFresh: Boolean
     get() = connectionManager.isFresh

@@ -47,7 +47,8 @@ public final class HighlightUsagesAction extends AnAction implements DumbAware {
           HighlightUsagesHandler.invoke(project, editor, psiFile);
         }
         catch (IndexNotReadyException ex) {
-          DumbService.getInstance(project).showDumbModeNotification(ActionsBundle.message("action.HighlightUsagesInFile.not.ready"));
+          DumbService.getInstance(project).showDumbModeNotificationForAction(ActionsBundle.message("action.HighlightUsagesInFile.not.ready"),
+                                                                             ActionManager.getInstance().getId(this));
         }
       },
       commandName,

@@ -6,6 +6,7 @@ import com.intellij.ide.IdeBundle;
 import com.intellij.ide.ui.LafManager;
 import com.intellij.ide.ui.LafManagerListener;
 import com.intellij.ide.ui.ThemesListProvider;
+import com.intellij.ide.ui.laf.UIThemeLookAndFeelInfo;
 import com.intellij.ide.ui.laf.darcula.DarculaInstaller;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
@@ -29,14 +30,14 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.util.List;
 
-public class QuickChangeLookAndFeel extends QuickSwitchSchemeAction implements ActionRemoteBehaviorSpecification.Frontend {
+public final class QuickChangeLookAndFeel extends QuickSwitchSchemeAction implements ActionRemoteBehaviorSpecification.Frontend {
   private final Alarm switchAlarm = new Alarm();
 
   @Override
   protected void fillActions(Project project, @NotNull DefaultActionGroup group, @NotNull DataContext dataContext) {
-    UIManager.LookAndFeelInfo initialLaf = LafManager.getInstance().getCurrentLookAndFeel();
+    UIThemeLookAndFeelInfo initialLaf = LafManager.getInstance().getCurrentUIThemeLookAndFeel();
 
-    for (List<UIManager.LookAndFeelInfo> list : ThemesListProvider.getInstance().getShownThemes()) {
+    for (List<UIThemeLookAndFeelInfo> list : ThemesListProvider.getInstance().getShownThemes()) {
       if (group.getChildrenCount() > 0) group.addSeparator();
       for (UIManager.LookAndFeelInfo lf : list) group.add(new LafChangeAction(lf, initialLaf == lf));
     }
@@ -53,7 +54,7 @@ public class QuickChangeLookAndFeel extends QuickSwitchSchemeAction implements A
 
   @Override
   protected void showPopup(AnActionEvent e, ListPopup popup) {
-    UIManager.LookAndFeelInfo initialLaf = LafManager.getInstance().getCurrentLookAndFeel();
+    UIManager.LookAndFeelInfo initialLaf = LafManager.getInstance().getCurrentUIThemeLookAndFeel();
 
     switchAlarm.cancelAllRequests();
     if (Registry.is("ide.instant.theme.switch")) {
@@ -88,7 +89,7 @@ public class QuickChangeLookAndFeel extends QuickSwitchSchemeAction implements A
   @Override
   protected @Nullable Condition<? super AnAction> preselectAction() {
     LafManager lafMan = LafManager.getInstance();
-    return (a) -> (a instanceof LafChangeAction) && ((LafChangeAction)a).myLookAndFeelInfo == lafMan.getCurrentLookAndFeel();
+    return (a) -> (a instanceof LafChangeAction) && ((LafChangeAction)a).myLookAndFeelInfo == lafMan.getCurrentUIThemeLookAndFeel();
   }
 
   public static void switchLafAndUpdateUI(final @NotNull LafManager lafMan, @NotNull UIManager.LookAndFeelInfo lf, boolean async) {
@@ -106,7 +107,7 @@ public class QuickChangeLookAndFeel extends QuickSwitchSchemeAction implements A
   @ApiStatus.Internal
   public static void switchLafAndUpdateUI(final @NotNull LafManager lafMan, @NotNull UIManager.LookAndFeelInfo lf, boolean async,
                                           boolean force, boolean lockEditorScheme) {
-    UIManager.LookAndFeelInfo cur = lafMan.getCurrentLookAndFeel();
+    UIManager.LookAndFeelInfo cur = lafMan.getCurrentUIThemeLookAndFeel();
     if (!force && cur == lf) return;
     ChangeLAFAnimator animator = Registry.is("ide.intellij.laf.enable.animation") ? ChangeLAFAnimator.showSnapshot() : null;
 

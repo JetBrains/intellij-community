@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.plugins.newui;
 
 import com.intellij.execution.process.ProcessIOExecutorService;
@@ -44,7 +44,7 @@ import java.util.Objects;
 /**
  * @author Alexander Lobas
  */
-public class PluginImagesComponent extends JPanel {
+public final class PluginImagesComponent extends JPanel {
   private static final Color CURRENT_IMAGE_FILL_COLOR =
     JBColor.namedColor("Plugins.ScreenshotPagination.CurrentImage.fillColor", new JBColor(0x6C707E, 0xCED0D6));
 

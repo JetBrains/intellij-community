@@ -97,8 +97,8 @@ internal object GitLogIndexDataUtils {
 
   internal fun indexingFinished(logData: VcsLogData?): Boolean {
     logData ?: return false
-    val rootsForIndexing = VcsLogPersistentIndex.getRootsForIndexing(logData.logProviders)
     val index = logData.index
+    val rootsForIndexing = index.indexingRoots
 
     return rootsForIndexing.any { root -> index.isIndexed(root) }
   }

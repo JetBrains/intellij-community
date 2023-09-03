@@ -57,7 +57,7 @@ public abstract class ToolbarLabelAction extends DumbAwareAction implements Cust
 
   protected @Nullable @TooltipTitle String getHyperlinkTooltip() { return null; }
 
-  private static class MyLinkTooltip extends HelpTooltip {
+  private static final class MyLinkTooltip extends HelpTooltip {
     final void mouseEntered(@NotNull MouseEvent e) {
       myMouseListener.mouseEntered(e);
     }
@@ -71,7 +71,7 @@ public abstract class ToolbarLabelAction extends DumbAwareAction implements Cust
     }
   }
 
-  private class MyLabel extends JBLabel {
+  private final class MyLabel extends JBLabel {
     @Override
     protected @NotNull HyperlinkListener createHyperlinkListener() {
       HyperlinkListener listener = ToolbarLabelAction.this.createHyperlinkListener();

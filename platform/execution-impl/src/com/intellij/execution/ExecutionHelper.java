@@ -60,19 +60,19 @@ public final class ExecutionHelper {
   }
 
   public static void showErrors(
-    @NotNull final Project myProject,
-    @NotNull final List<? extends Exception> errors,
-    @NotNull final @NlsContexts.TabTitle String tabDisplayName,
-    @Nullable final VirtualFile file) {
+    final @NotNull Project myProject,
+    final @NotNull List<? extends Exception> errors,
+    final @NotNull @NlsContexts.TabTitle String tabDisplayName,
+    final @Nullable VirtualFile file) {
     showExceptions(myProject, errors, Collections.emptyList(), tabDisplayName, file);
   }
 
   public static void showExceptions(
-    @NotNull final Project myProject,
-    @NotNull final List<? extends Exception> errors,
-    @NotNull final List<? extends Exception> warnings,
-    @NotNull final @NlsContexts.TabTitle String tabDisplayName,
-    @Nullable final VirtualFile file) {
+    final @NotNull Project myProject,
+    final @NotNull List<? extends Exception> errors,
+    final @NotNull List<? extends Exception> warnings,
+    final @NotNull @NlsContexts.TabTitle String tabDisplayName,
+    final @Nullable VirtualFile file) {
 
     errors.forEach(it -> {
       LOG.warn(tabDisplayName + " error: " + it.getMessage());
@@ -125,10 +125,10 @@ public final class ExecutionHelper {
 
   private static void addMessages(
     final int messageCategory,
-    @NotNull final List<? extends Exception> exceptions,
+    final @NotNull List<? extends Exception> exceptions,
     @NotNull ErrorViewPanel errorTreeView,
-    @Nullable final VirtualFile file,
-    @NotNull final String defaultMessage) {
+    final @Nullable VirtualFile file,
+    final @NotNull String defaultMessage) {
     for (final Exception exception : exceptions) {
       String message = exception.getMessage();
 
@@ -140,10 +140,10 @@ public final class ExecutionHelper {
     }
   }
 
-  public static void showOutput(@NotNull final Project myProject,
-                                @NotNull final ProcessOutput output,
-                                @NotNull final @NlsContexts.TabTitle String tabDisplayName,
-                                @Nullable final VirtualFile file,
+  public static void showOutput(final @NotNull Project myProject,
+                                final @NotNull ProcessOutput output,
+                                final @NotNull @NlsContexts.TabTitle String tabDisplayName,
+                                final @Nullable VirtualFile file,
                                 final boolean activateWindow) {
     final String stdout = output.getStdout();
     final String stderr = output.getStderr();
@@ -208,9 +208,9 @@ public final class ExecutionHelper {
     });
   }
 
-  private static void openMessagesView(@NotNull final ErrorViewPanel errorTreeView,
-                                       @NotNull final Project myProject,
-                                       @NotNull final @NlsContexts.TabTitle String tabDisplayName) {
+  private static void openMessagesView(final @NotNull ErrorViewPanel errorTreeView,
+                                       final @NotNull Project myProject,
+                                       final @NotNull @NlsContexts.TabTitle String tabDisplayName) {
     CommandProcessor commandProcessor = CommandProcessor.getInstance();
     commandProcessor.executeCommand(myProject, () -> {
       final MessageView messageView = myProject.getService(MessageView.class);
@@ -223,7 +223,7 @@ public final class ExecutionHelper {
   }
 
   public static Collection<RunContentDescriptor> findRunningConsoleByTitle(final Project project,
-                                                                           @NotNull final NotNullFunction<? super String, Boolean> titleMatcher) {
+                                                                           final @NotNull NotNullFunction<? super String, Boolean> titleMatcher) {
     return findRunningConsole(project, selectedContent -> titleMatcher.fun(selectedContent.getDisplayName()));
   }
 
@@ -293,7 +293,7 @@ public final class ExecutionHelper {
     }
   }
 
-  private static void descriptorToFront(@NotNull final Project project, @NotNull final RunContentDescriptor descriptor) {
+  private static void descriptorToFront(final @NotNull Project project, final @NotNull RunContentDescriptor descriptor) {
     ApplicationManager.getApplication().invokeLater(() -> {
       RunContentManager manager = RunContentManager.getInstance(project);
       ToolWindow toolWindow = manager.getToolWindowByDescriptor(descriptor);
@@ -304,7 +304,7 @@ public final class ExecutionHelper {
     }, project.getDisposed());
   }
 
-  static class ErrorViewPanel extends NewErrorTreeViewPanel {
+  static final class ErrorViewPanel extends NewErrorTreeViewPanel {
     ErrorViewPanel(@NotNull Project project) {
       super(project, "reference.toolWindows.messages");
       Disposer.register(project, this);
@@ -317,17 +317,17 @@ public final class ExecutionHelper {
   }
 
 
-  public static void executeExternalProcess(@Nullable final Project myProject,
-                                            @NotNull final ProcessHandler processHandler,
-                                            @NotNull final ExecutionMode mode,
-                                            @NotNull final GeneralCommandLine cmdline) {
+  public static void executeExternalProcess(final @Nullable Project myProject,
+                                            final @NotNull ProcessHandler processHandler,
+                                            final @NotNull ExecutionMode mode,
+                                            final @NotNull GeneralCommandLine cmdline) {
     executeExternalProcess(myProject, processHandler, mode, cmdline.getCommandLineString());
   }
 
-  private static void executeExternalProcess(@Nullable final Project myProject,
-                                             @NotNull final ProcessHandler processHandler,
-                                             @NotNull final ExecutionMode mode,
-                                             @NotNull final String presentableCmdline) {
+  private static void executeExternalProcess(final @Nullable Project myProject,
+                                             final @NotNull ProcessHandler processHandler,
+                                             final @NotNull ExecutionMode mode,
+                                             final @NotNull String presentableCmdline) {
     if (ApplicationManager.getApplication().isUnitTestMode()) {
       LOG.debug("Running " + presentableCmdline);
       processHandler.waitFor();
@@ -354,7 +354,7 @@ public final class ExecutionHelper {
     else if (mode.inBackGround()) {
       final Task task = new Task.Backgroundable(myProject, title, mode.cancelable()) {
         @Override
-        public void run(@NotNull final ProgressIndicator indicator) {
+        public void run(final @NotNull ProgressIndicator indicator) {
           process.run();
         }
       };
@@ -438,7 +438,7 @@ public final class ExecutionHelper {
 
   private static Runnable createTimeLimitedExecutionProcess(@NotNull ProcessHandler processHandler,
                                                             @NotNull ExecutionMode mode,
-                                                            @NotNull final String presentableCmdline) {
+                                                            final @NotNull String presentableCmdline) {
     ProcessOutput outputCollected = new ProcessOutput();
     processHandler.addProcessListener(new ProcessAdapter() {
       @Override

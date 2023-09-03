@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.plugins.newui;
 
 import com.intellij.ide.IdeBundle;
@@ -12,7 +12,7 @@ import java.awt.*;
 /**
  * @author Alexander Lobas
  */
-public class TagComponent extends LinkComponent {
+public final class TagComponent extends LinkComponent {
   private static final Color BACKGROUND = JBColor.namedColor("Plugins.tagBackground", new JBColor(0xEAEAEC, 0x4D4D4D));
   private static final Color EAP_BACKGROUND = JBColor.namedColor("Plugins.eapTagBackground", new JBColor(0xF2D2CF, 0xF2D2CF));
   private static final Color PAID_BACKGROUND = JBColor.namedColor("Plugins.paidTagBackground", new JBColor(0xD8EDF8, 0x3E505C));

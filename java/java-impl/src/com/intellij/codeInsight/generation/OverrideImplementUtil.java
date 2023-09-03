@@ -19,6 +19,8 @@ import com.intellij.openapi.actionSystem.KeyboardShortcut;
 import com.intellij.openapi.actionSystem.Shortcut;
 import com.intellij.openapi.actionSystem.ex.ActionUtil;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ModalityState;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.command.WriteCommandAction;
@@ -49,7 +51,7 @@ import com.intellij.util.Consumer;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.ThrowableRunnable;
-import com.intellij.util.concurrency.ThreadingAssertions;
+import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.EDT;
 import org.jetbrains.annotations.NonNls;
@@ -447,22 +449,21 @@ public final class OverrideImplementUtil extends OverrideImplementExploreUtil {
                                                          final Editor editor,
                                                          @NotNull PsiClass aClass,
                                                          final boolean toImplement) {
-    Computable<JavaOverrideImplementMemberChooserContainer> memberChooserComputable = () -> {
-      PsiUtilCore.ensureValid(aClass);
-      ThreadingAssertions.softAssertReadAccess();
-      Collection<CandidateInfo> candidates = getMethodsToOverrideImplement(aClass, toImplement);
-      Collection<CandidateInfo> secondary =
-        toImplement || aClass.isInterface() ? new ArrayList<>() : getMethodsToOverrideImplement(aClass, true);
-      return prepareJavaOverrideImplementChooser(aClass, toImplement, candidates, secondary);
-    };
-    JavaOverrideImplementMemberChooserContainer container;
-    if (EDT.isCurrentThreadEdt()) {
-      container =
-        ActionUtil.underModalProgress(project, CodeInsightBundle.message("progress.title.resolving.reference"), memberChooserComputable);
-    }
-    else {
-      container = memberChooserComputable.get();
-    }
+    ReadAction.nonBlocking(() -> {
+        return prepareChooser(aClass, toImplement);
+      })
+      .finishOnUiThread(ModalityState.defaultModalityState(), container -> {
+        showAndPerform(project, editor, aClass, toImplement, container);
+      })
+      .expireWhen(() -> !aClass.isValid())
+      .submit(AppExecutorUtil.getAppExecutorService());
+  }
+
+  public static void showAndPerform(@NotNull Project project,
+                                @NotNull Editor editor,
+                                @NotNull PsiClass aClass,
+                                boolean toImplement,
+                                @Nullable JavaOverrideImplementMemberChooserContainer container) {
     JavaOverrideImplementMemberChooser showedChooser = showJavaOverrideImplementChooser(container, editor, aClass);
     if (showedChooser == null) return;
 
@@ -493,6 +494,20 @@ public final class OverrideImplementUtil extends OverrideImplementExploreUtil {
   }
 
   @Nullable
+  public static JavaOverrideImplementMemberChooserContainer prepareChooser(@NotNull PsiClass aClass, boolean toImplement) {
+    PsiUtilCore.ensureValid(aClass);
+    Collection<CandidateInfo> candidates = getMethodsToOverrideImplement(aClass, toImplement);
+    Collection<CandidateInfo> secondary =
+      toImplement || aClass.isInterface() ? new ArrayList<>() : getMethodsToOverrideImplement(aClass, true);
+    return prepareJavaOverrideImplementChooser(aClass, toImplement, candidates, secondary);
+  }
+
+
+  /**
+   * @deprecated use {@link OverrideImplementUtil#showJavaOverrideImplementChooser(Editor, PsiElement, boolean, Collection, Collection, java.util.function.Consumer)}
+   */
+  @Deprecated
+  @Nullable
   public static MemberChooser<PsiMethodMember> showOverrideImplementChooser(@NotNull Editor editor,
                                                                             @NotNull PsiElement aClass,
                                                                             final boolean toImplement,
@@ -502,8 +517,9 @@ public final class OverrideImplementUtil extends OverrideImplementExploreUtil {
   }
 
   /**
-   * @param candidates, secondary should allow modifications
+   * @deprecated use {@link OverrideImplementUtil#showJavaOverrideImplementChooser(Editor, PsiElement, boolean, Collection, Collection, java.util.function.Consumer)}
    */
+  @Deprecated
   @Nullable
   public static JavaOverrideImplementMemberChooser showJavaOverrideImplementChooser(@NotNull Editor editor,
                                                                                     @NotNull PsiElement aClass,
@@ -516,6 +532,26 @@ public final class OverrideImplementUtil extends OverrideImplementExploreUtil {
       return null;
     }
     return showJavaOverrideImplementChooser(container, editor, aClass);
+  }
+
+  /**
+   * @param candidates, secondary should allow modifications
+   */
+  public static void showJavaOverrideImplementChooser(@NotNull Editor editor,
+                                                      @NotNull PsiElement aClass,
+                                                      final boolean toImplement,
+                                                      @NotNull Collection<CandidateInfo> candidates,
+                                                      @NotNull Collection<CandidateInfo> secondary,
+                                                      @NotNull java.util.function.Consumer<JavaOverrideImplementMemberChooser> callback) {
+    ReadAction.nonBlocking(() -> {
+        return prepareJavaOverrideImplementChooser(aClass, toImplement, candidates, secondary);
+      })
+      .finishOnUiThread(ModalityState.defaultModalityState(), container -> {
+        JavaOverrideImplementMemberChooser chooser = showJavaOverrideImplementChooser(container, editor, aClass);
+        callback.accept(chooser);
+      })
+      .expireWhen(() -> !aClass.isValid())
+      .submit(AppExecutorUtil.getAppExecutorService());
   }
 
   @Nullable

@@ -8,12 +8,17 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.LogicalPosition;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Key;
 import com.intellij.util.concurrency.annotations.RequiresEdt;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import java.awt.*;
 
 public class IntentionsUIImpl extends IntentionsUI {
+  @ApiStatus.Internal
+  public static final Key<Boolean> DISABLE_INTENTION_BULB = Key.create("IntentionsUIImpl.DISABLE_INTENTION_BULB");
+
   private volatile IntentionHintComponent myLastIntentionHint;
 
   public IntentionsUIImpl(@NotNull Project project) {
@@ -39,6 +44,11 @@ public class IntentionsUIImpl extends IntentionsUI {
     }
 
     Project project = cachedIntentions.getProject();
+
+    if (DISABLE_INTENTION_BULB.get(project, false)) {
+      return;
+    }
+
     LogicalPosition caretPos = editor.getCaretModel().getLogicalPosition();
     Rectangle visibleArea = editor.getScrollingModel().getVisibleArea();
     Point xy = editor.logicalPositionToXY(caretPos);

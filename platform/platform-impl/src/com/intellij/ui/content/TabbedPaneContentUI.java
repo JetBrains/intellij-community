@@ -114,7 +114,7 @@ public final class TabbedPaneContentUI implements ContentUI, PropertyChangeListe
     return selectedComponent == null ? null : myManager.getContent(selectedComponent);
   }
 
-  public class MyTabbedPaneWrapper extends TabbedPaneWrapper.AsJTabbedPane {
+  public final class MyTabbedPaneWrapper extends TabbedPaneWrapper.AsJTabbedPane {
     MyTabbedPaneWrapper(int tabPlacement) {
       super(tabPlacement);
     }
@@ -133,7 +133,7 @@ public final class TabbedPaneContentUI implements ContentUI, PropertyChangeListe
       return myManager;
     }
 
-    private class MyTabbedPane extends TabbedPaneImpl {
+    private final class MyTabbedPane extends TabbedPaneImpl {
       MyTabbedPane(int tabPlacement) {
         super(tabPlacement);
         addMouseListener(new MyPopupHandler());
@@ -204,7 +204,7 @@ public final class TabbedPaneContentUI implements ContentUI, PropertyChangeListe
         return new MyModelListener();
       }
 
-      private class MyModelListener extends ModelListener {
+      private final class MyModelListener extends ModelListener {
         @Override
         public void stateChanged(ChangeEvent e) {
           Content content = getSelectedContent();
@@ -229,7 +229,7 @@ public final class TabbedPaneContentUI implements ContentUI, PropertyChangeListe
         return myManager.getContent(index);
       }
 
-      protected class MyPopupHandler extends PopupHandler {
+      protected final class MyPopupHandler extends PopupHandler {
         @Override
         public void invokePopup(Component comp, int x, int y) {
           if (myManager.isEmpty()) return;
@@ -286,7 +286,7 @@ public final class TabbedPaneContentUI implements ContentUI, PropertyChangeListe
     }
   }
 
-  private class MyContentManagerListener implements ContentManagerListener {
+  private final class MyContentManagerListener implements ContentManagerListener {
     @Override
     public void contentAdded(@NotNull ContentManagerEvent event) {
       Content content = event.getContent();

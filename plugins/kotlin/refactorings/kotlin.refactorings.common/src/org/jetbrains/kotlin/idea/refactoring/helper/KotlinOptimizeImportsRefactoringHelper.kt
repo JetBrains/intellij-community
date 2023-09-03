@@ -17,11 +17,7 @@ import com.intellij.psi.util.PsiUtilCore
 import com.intellij.refactoring.RefactoringHelper
 import com.intellij.usageView.UsageInfo
 import com.intellij.util.IncorrectOperationException
-import org.jetbrains.kotlin.analysis.api.KtAllowAnalysisFromWriteAction
-import org.jetbrains.kotlin.analysis.api.KtAllowAnalysisOnEdt
-import org.jetbrains.kotlin.analysis.api.analyze
-import org.jetbrains.kotlin.analysis.api.lifetime.allowAnalysisFromWriteAction
-import org.jetbrains.kotlin.analysis.api.lifetime.allowAnalysisOnEdt
+import org.jetbrains.kotlin.idea.base.codeInsight.KotlinOptimizeImportsFacility
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.util.application.executeWriteCommand
 import org.jetbrains.kotlin.psi.KtFile
@@ -34,28 +30,22 @@ class KotlinOptimizeImportsRefactoringHelper : RefactoringHelper<Set<KtFile>> {
         project: Project,
         private val unusedImports: MutableSet<SmartPsiElementPointer<KtImportDirective>>,
         private val operationData: Set<KtFile>
-    ) : Task.Backgroundable(project, KotlinBundle.message("optimize.imports.collect.unused.imports"), true) {
+    ) : Task.Modal(project, KotlinBundle.message("optimize.imports.collect.unused.imports"), true) {
 
-        override fun isConditionalModal(): Boolean = true
-
-        override fun shouldStartInBackground(): Boolean = System.getProperty("kotlin.optimize.imports.synchronously") != "true"
-
-        @OptIn(KtAllowAnalysisOnEdt::class)
-        override fun run(indicator: ProgressIndicator) = allowAnalysisOnEdt {
-            @OptIn(KtAllowAnalysisFromWriteAction::class)
-            allowAnalysisFromWriteAction {
+        override fun run(indicator: ProgressIndicator) {
+            run {
                 indicator.isIndeterminate = false
 
                 val myTotalCount = operationData.size
                 for ((counter, file) in operationData.withIndex()) {
-                    ReadAction.nonBlocking {
+                    ReadAction.nonBlocking<Unit> {
                         val virtualFile = file.virtualFile ?: return@nonBlocking
 
                         indicator.fraction = counter.toDouble() / myTotalCount
                         indicator.text2 = virtualFile.presentableUrl
-                        analyze(file) {
-                            analyseImports(file).unusedImports.mapTo(unusedImports) { it.createSmartPointer() }
-                        }
+
+                        val importData = KotlinOptimizeImportsFacility.getInstance().analyzeImports(file)
+                        importData?.unusedImports?.mapTo(unusedImports) { it.createSmartPointer() }
                     }
                         .inSmartMode(project)
                         .wrapProgress(indicator)

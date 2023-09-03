@@ -254,7 +254,7 @@ public abstract class EditorTextFieldCellRenderer implements TableCellRenderer, 
     }
   }
 
-  public static class AbbreviatingRendererComponent extends RendererComponent {
+  public static final class AbbreviatingRendererComponent extends RendererComponent {
     private static final char ABBREVIATION_SUFFIX = '\u2026'; // 2026 '...'
     private static final char RETURN_SYMBOL = '\u23ce';
 

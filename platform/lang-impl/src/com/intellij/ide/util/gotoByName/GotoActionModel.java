@@ -17,6 +17,7 @@ import com.intellij.internal.inspector.UiInspectorContextProvider;
 import com.intellij.internal.inspector.UiInspectorUtil;
 import com.intellij.lang.LangBundle;
 import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.actionSystem.impl.ActionPresentationDecorator;
 import com.intellij.openapi.actionSystem.impl.Utils;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ReadAction;
@@ -855,7 +856,8 @@ public final class GotoActionModel implements ChooseByNameModel, Comparator<Obje
         @NlsSafe String actionId = ActionManager.getInstance().getId(anAction);
         Shortcut[] shortcuts = KeymapUtil.getActiveKeymapShortcuts(actionId).getShortcuts();
         String shortcutText = KeymapUtil.getPreferredShortcutText(shortcuts);
-        String name = getName(presentation.getText(), groupName, toggle);
+        String text = ActionPresentationDecorator.decorateTextIfNeeded(anAction, presentation.getText());
+        String name = getName(text, groupName, toggle);
         name = cutName(name, shortcutText, list, panel);
 
         appendWithColoredMatches(nameComponent, name, pattern, fg, isSelected);

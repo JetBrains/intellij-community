@@ -13,7 +13,7 @@ import java.util.Collections;
 import java.util.List;
 
 
-class TextComponentCaretModel implements CaretModel {
+final class TextComponentCaretModel implements CaretModel {
   private final TextComponentEditor myEditor;
   private final Caret myCaret;
   private final EventDispatcher<CaretActionListener> myCaretActionListeners = EventDispatcher.create(CaretActionListener.class);

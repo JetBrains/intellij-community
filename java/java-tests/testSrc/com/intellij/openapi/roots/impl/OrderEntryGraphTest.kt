@@ -20,7 +20,7 @@ import org.junit.jupiter.params.ParameterizedTest
 import org.junit.jupiter.params.provider.EnumSource
 
 @TestApplication
-@RunInEdt
+@RunInEdt(writeIntent = true)
 class OrderEntryGraphTest {
   @JvmField
   @RegisterExtension

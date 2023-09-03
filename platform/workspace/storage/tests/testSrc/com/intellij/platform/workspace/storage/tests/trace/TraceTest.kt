@@ -4,17 +4,21 @@
 package com.intellij.platform.workspace.storage.tests.trace
 
 import com.intellij.platform.workspace.storage.EntityStorageSnapshot
+import com.intellij.platform.workspace.storage.impl.WorkspaceEntityBase
 import com.intellij.platform.workspace.storage.instrumentation.EntityStorageInstrumentationApi
 import com.intellij.platform.workspace.storage.instrumentation.instrumentation
 import com.intellij.platform.workspace.storage.testEntities.entities.MySource
 import com.intellij.platform.workspace.storage.testEntities.entities.NameId
 import com.intellij.platform.workspace.storage.testEntities.entities.NamedEntity
+import com.intellij.platform.workspace.storage.testEntities.entities.WithSoftLinkEntity
 import com.intellij.platform.workspace.storage.tests.createEmptyBuilder
+import com.intellij.platform.workspace.storage.toBuilder
 import com.intellij.platform.workspace.storage.trace.ReadTrace
 import com.intellij.platform.workspace.storage.trace.ReadTracker
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import kotlin.test.assertEquals
+import kotlin.test.assertIs
 
 class TraceTest {
   lateinit var snapshot: EntityStorageSnapshot
@@ -24,6 +28,47 @@ class TraceTest {
     val builder = createEmptyBuilder()
     builder addEntity NamedEntity("name", MySource)
     snapshot = builder.toSnapshot()
+  }
+
+  @Test
+  fun `traced storage creates traced entities`() {
+    trace(snapshot) {
+      val entity = it.entities(NamedEntity::class.java).single()
+      val createdSnapshot = (entity as WorkspaceEntityBase).snapshot
+      assertIs<ReadTracker>(createdSnapshot)
+    }
+  }
+
+  @Test
+  fun `traced storage creates traced entities for referrers`() {
+    val newSnapshot = snapshot.toBuilder().also {
+      it addEntity WithSoftLinkEntity(NameId("name"), MySource)
+    }.toSnapshot()
+    trace(newSnapshot) {
+      val entity = it.referrers(NameId("name"), WithSoftLinkEntity::class.java).single()
+      val createdSnapshot = (entity as WorkspaceEntityBase).snapshot
+      assertIs<ReadTracker>(createdSnapshot)
+    }
+  }
+
+  @Test
+  fun `traced storage creates traced entities for resolve`() {
+    trace(snapshot) {
+      val entity = it.resolve(NameId("name"))!!
+      val createdSnapshot = (entity as WorkspaceEntityBase).snapshot
+      assertIs<ReadTracker>(createdSnapshot)
+    }
+  }
+
+  @Test
+  fun `traced storage creates traced entities for resolve reference`() {
+    trace(snapshot) {
+      val entity = it.resolve(NameId("name"))!!
+      val entityRef = entity.createReference<NamedEntity>()
+      val resolvedEntity = entityRef.resolve(it)
+      val createdSnapshot = (resolvedEntity as WorkspaceEntityBase).snapshot
+      assertIs<ReadTracker>(createdSnapshot)
+    }
   }
 
   @Test

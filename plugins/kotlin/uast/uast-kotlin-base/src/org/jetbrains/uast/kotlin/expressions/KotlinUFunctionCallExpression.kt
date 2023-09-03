@@ -231,41 +231,6 @@ class KotlinUFunctionCallExpression(
          * Can return false-positive results, additional resolve is needed
          */
         internal fun methodNameCanBeOneOf(call: KtCallElement, names: Collection<String>): Boolean {
-            if (isMethodNameOneOfWithoutConsideringImportAliases(call, names)) return true
-            val ktFile = call.containingKtFile
-            val aliasedNames = collectAliasedNamesForName(ktFile, names)
-            return isMethodNameOneOfWithoutConsideringImportAliases(call, aliasedNames)
-        }
-
-        /**
-         * For the [actualNames], returns the possible import alias name it might be expanded to
-         *
-         * E.g., for the file with imports
-         * ```
-         * import a.b.c as foo
-         * ```
-         * The call `collectAliasedNamesForName(ktFile, listOf("c")` will return `["foo"]`
-         */
-        private fun collectAliasedNamesForName(
-            ktFile: KtFile,
-            actualNames: Collection<String>,
-        ): Set<String> {
-            val importList = ktFile.importList
-            if (importList?.hasImportAlias() != true) return emptySet()
-
-            return buildSet {
-                for (importDirective in importList.imports) {
-                    val aliasName = importDirective.aliasName ?: continue
-                    val importedName = importDirective.importedFqName?.pathSegments()?.lastOrNull()?.asString() ?: continue
-                    if (importedName in actualNames) {
-                        add(aliasName)
-                    }
-                }
-            }
-        }
-
-
-        private fun isMethodNameOneOfWithoutConsideringImportAliases(call: KtCallElement, names: Collection<String>): Boolean {
             if (names.isEmpty()) return false
             if (names.any { it in methodNamesForWhichResolveIsNeeded }) {
                 // we need an additional resolve to say if the method name is one of expected
@@ -273,7 +238,20 @@ class KotlinUFunctionCallExpression(
             }
 
             val referencedName = call.getCallNameExpression()?.getReferencedName() ?: return false
-            return referencedName in names
+            if (referencedName in names) return true
+
+            val ktFile = call.containingKtFile
+            if (!ktFile.hasImportAlias()) return false
+
+            for (directive in ktFile.importDirectives) {
+                val aliasName = directive.aliasName ?: continue
+                if (referencedName != aliasName) continue
+
+                val importedName = directive.importedFqName?.shortName()?.asString() ?: continue
+                if (importedName in names) return true
+            }
+
+            return false
         }
 
         private val methodNamesForWhichResolveIsNeeded = buildSet {
@@ -291,17 +269,4 @@ class KotlinUFunctionCallExpression(
             add(SpecialNames.INIT.asString())
         }
     }
-}
-
-private fun KtImportList.hasImportAlias(): Boolean {
-    var child: PsiElement? = firstChild
-    while (child != null) {
-        if (child is KtImportDirective && child.alias != null) {
-            return true
-        }
-
-        child = child.nextSibling
-    }
-
-    return false
 }

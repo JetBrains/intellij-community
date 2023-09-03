@@ -315,6 +315,7 @@
     <registryKey key="java.annotations.inference.aggressive.hardcoded.purity" defaultValue="true" restartRequired="true"
                  description="Assume any implementation of methods like Object.toString() or Iterable.iterator() to be pure during bytecode inference. This assumption might lead to false-positives in some inspections, though it's believed to uncover more bugs."/>
     <codeInsight.unresolvedReferenceQuickFixProvider implementation="com.intellij.codeInsight.daemon.impl.analysis.JavaFutureKeywordUseFixProvider"/>
+    <codeInsight.unresolvedReferenceQuickFixProvider implementation="com.intellij.codeInsight.daemon.impl.analysis.SealedClassUnresolvedReferenceFixProvider"/>
     <lang.jvm.annotationPackageSupport implementation="com.intellij.codeInsight.annoPackages.JetBrainsAnnotationSupport"/>
     <lang.jvm.annotationPackageSupport implementation="com.intellij.codeInsight.annoPackages.FindBugsAnnotationSupport"/>
     <lang.jvm.annotationPackageSupport implementation="com.intellij.codeInsight.annoPackages.AndroidAnnotationSupport"/>

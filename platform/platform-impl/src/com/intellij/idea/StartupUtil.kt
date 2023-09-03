@@ -6,6 +6,7 @@ package com.intellij.idea
 
 import com.intellij.BundleBase
 import com.intellij.accessibility.AccessibilityUtils
+import com.intellij.concurrency.ConcurrentCollectionFactory
 import com.intellij.diagnostic.*
 import com.intellij.ide.*
 import com.intellij.ide.bootstrap.*
@@ -36,6 +37,7 @@ import com.intellij.ui.mac.initMacApplication
 import com.intellij.ui.mac.screenmenu.Menu
 import com.intellij.ui.svg.SvgCacheManager
 import com.intellij.util.*
+import com.intellij.util.containers.ConcurrentLongObjectMap
 import com.intellij.util.containers.SLRUMap
 import com.intellij.util.io.*
 import com.intellij.util.lang.ZipFilePool
@@ -96,8 +98,9 @@ private val commandProcessor: AtomicReference<(List<String>) -> Deferred<CliResu
 internal var shellEnvDeferred: Deferred<Boolean?>? = null
   private set
 
-// the main thread's dispatcher is sequential - use it with care
+  // the main thread's dispatcher is sequential - use it with care
 fun CoroutineScope.startApplication(args: List<String>,
+                                    mainClassLoaderDeferred: Deferred<ClassLoader>,
                                     appStarterDeferred: Deferred<AppStarter>,
                                     mainScope: CoroutineScope,
                                     busyThread: Thread) {
@@ -111,6 +114,7 @@ fun CoroutineScope.startApplication(args: List<String>,
   }
 
   val appInfoDeferred = async(CoroutineName("app info")) {
+    mainClassLoaderDeferred.await()
     // required for DisabledPluginsState and EUA
     ApplicationInfoImpl.getShadowInstance()
   }
@@ -144,8 +148,10 @@ fun CoroutineScope.startApplication(args: List<String>,
   val initLafJob = scheduleInitUi(initAwtToolkitJob, isHeadless)
   if (!isHeadless) {
     showSplashIfNeeded(initUiDeferred = initLafJob, appInfoDeferred = appInfoDeferred, args = args)
-
     updateFrameClassAndWindowIconAndPreloadSystemFonts(initLafJob)
+    launch {
+      patchHtmlStyle(initLafJob)
+    }
   }
 
   val zipFilePoolDeferred = async(Dispatchers.IO) {
@@ -237,6 +243,7 @@ fun CoroutineScope.startApplication(args: List<String>,
 
     PluginManagerCore.scheduleDescriptorLoading(coroutineScope = asyncScope,
                                                 zipFilePoolDeferred = zipFilePoolDeferred,
+                                                mainClassLoaderDeferred = mainClassLoaderDeferred,
                                                 logDeferred = logDeferred)
   }
 
@@ -388,10 +395,10 @@ fun processWindowsLauncherCommandLine(currentDirectory: String, args: Array<Stri
 
 @get:Internal
 val isImplicitReadOnEDTDisabled: Boolean
-  get() = java.lang.Boolean.getBoolean(DISABLE_IMPLICIT_READ_ON_EDT_PROPERTY)
+  get() = "false" != System.getProperty(DISABLE_IMPLICIT_READ_ON_EDT_PROPERTY)
 
 internal val isAutomaticIWLOnDirtyUIDisabled: Boolean
-  get() = java.lang.Boolean.getBoolean(DISABLE_AUTOMATIC_WIL_ON_DIRTY_UI_PROPERTY)
+  get() = "false" !=  System.getProperty(DISABLE_AUTOMATIC_WIL_ON_DIRTY_UI_PROPERTY)
 
 @Internal
 // called by the app after startup
@@ -727,6 +734,9 @@ class Java11ShimImpl : Java11Shim {
   override fun <E> copyOf(collection: Collection<E>): Set<E> = java.util.Set.copyOf(collection)
 
   override fun <E> copyOfCollection(collection: Collection<E>): List<E> = java.util.List.copyOf(collection)
+  override fun <V : Any> createConcurrentLongObjectMap(): ConcurrentLongObjectMap<V> {
+    return ConcurrentCollectionFactory.createConcurrentLongObjectMap()
+  }
 
   override fun <E> setOf(collection: Array<E>): Set<E> = java.util.Set.of(*collection)
 }
@@ -738,5 +748,14 @@ fun getServer(): BuiltInServer? {
   instance.waitForStart()
   val candidate = instance.serverDisposable
   return if (candidate is BuiltInServer) candidate else null
+}
+
+@Deprecated("Use 'startApplication' with 'mainClassLoaderDeferred' parameter instead",
+            ReplaceWith(
+              "startApplication(args, CompletableDeferred(AppStarter::class.java.classLoader), appStarterDeferred, mainScope, busyThread)",
+              "kotlinx.coroutines.CompletableDeferred"))
+fun CoroutineScope.startApplication(args: List<String>, appStarterDeferred: Deferred<AppStarter>, mainScope: CoroutineScope,
+                                    busyThread: Thread) {
+  startApplication(args, CompletableDeferred(AppStarter::class.java.classLoader), appStarterDeferred, mainScope, busyThread)
 }
 //</editor-fold>

@@ -25,7 +25,7 @@ final class TopAnomaliesAction extends ActionGroup {
 
   private static final int LIMIT = 10;
 
-  private static class Holder {
+  private static final class Holder {
     private static final Comparator<Pair<?, Integer>> COMPARATOR = (o1, o2) -> {
       int i = o2.getSecond() - o1.getSecond();
       if (i != 0) {

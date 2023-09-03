@@ -15,8 +15,9 @@ import com.intellij.openapi.util.text.StringUtil
 import com.intellij.util.TimeoutUtil
 import java.awt.event.ActionEvent.CTRL_MASK
 import java.awt.event.ActionEvent.SHIFT_MASK
-import java.io.RandomAccessFile
+import java.io.*
 import java.util.*
+
 
 private const val TEST_LOGGER = "TEST.LOGGER"
 private const val TEST_MESSAGE = "test exception; please ignore"
@@ -62,11 +63,11 @@ internal class DropAnErrorWithAttachmentsAction : DumbAwareAction("Drop an Error
   }
 
   private fun getLargeAttachment(): Array<Attachment> {
-    val size = 1024 * 1024 * 1024
-    RandomAccessFile(FileUtil.createTempFile("large-attachment", ".bin", true), "rw")
-      .apply { setLength(size.toLong()) }
+    val size = 300 * 1024 * 1024
+    val file = FileUtil.createTempFile("large-attachment", ".bin", true)
+    RandomAccessFile(file, "rw").apply { setLength(size.toLong()) }
 
-    return arrayOf(Attachment("large.txt", FileUtil.createTempFile("large-attachment", ".bin", true),
+    return arrayOf(Attachment("large.txt", file,
                               "A large attachment of size: $size bytes").apply { isIncluded = true })
   }
 }

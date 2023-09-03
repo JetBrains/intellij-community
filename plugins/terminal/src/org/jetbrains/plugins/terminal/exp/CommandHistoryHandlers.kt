@@ -54,7 +54,7 @@ class TerminalCaretDownHandler(private val originalHandler: EditorActionHandler)
 }
 
 
-class TerminalEscapeHandler(private val originalHandler: EditorActionHandler) : EditorActionHandler() {
+class TerminalCloseHistoryHandler(private val originalHandler: EditorActionHandler) : EditorActionHandler() {
   override fun doExecute(editor: Editor, caret: Caret?, dataContext: DataContext?) {
     val promptController = editor.getUserData(TerminalPromptController.KEY)
     if (promptController != null) {

@@ -3,7 +3,6 @@
 
 package com.intellij.lang.documentation.ide
 
-import com.intellij.codeInsight.navigation.impl.TargetPresentationBuilderImpl
 import com.intellij.lang.documentation.ide.impl.DocumentationBrowser
 import com.intellij.lang.documentation.ide.ui.DocumentationComponent
 import com.intellij.lang.documentation.ide.ui.DocumentationUI
@@ -27,8 +26,7 @@ fun documentationComponent(
   parentDisposable: Disposable,
 ): DocumentationComponent {
   EDT.assertIsEdt()
-  val request = DocumentationRequest(targetPointer, targetPresentation)
-  return DocumentationComponentImpl(project, request, parentDisposable)
+  return createDocumentationComponent(project, DocumentationRequest(targetPointer, targetPresentation), parentDisposable)
 }
 
 internal fun documentationComponent(
@@ -36,28 +34,24 @@ internal fun documentationComponent(
   request: DocumentationRequest,
   parentDisposable: Disposable,
 ): JComponent {
+  return createDocumentationComponent(project, request, parentDisposable).getComponent()
+}
+
+private fun createDocumentationComponent(project: Project,
+                                         request: DocumentationRequest,
+                                         parentDisposable: Disposable): DocumentationComponent {
   val browser = DocumentationBrowser.createBrowser(project, request)
   val ui = DocumentationUI(project, browser)
   Disposer.register(parentDisposable, ui)
-  return ui.scrollPane
+  return DocumentationComponentImpl(browser, ui)
 }
 
-private val EMPTY_PRESENTATION = TargetPresentationBuilderImpl(presentableText = "")
-
-private class DocumentationComponentImpl(project: Project,
-                                         initialRequest: DocumentationRequest,
-                                         parentDisposable: Disposable) : DocumentationComponent {
-  private val browser = DocumentationBrowser.createBrowser(project, initialRequest)
-  private val ui = DocumentationUI(project, browser)
-
-  init {
-    Disposer.register(parentDisposable, ui)
-  }
-
+private class DocumentationComponentImpl(private val browser: DocumentationBrowser,
+                                         private val ui: DocumentationUI) : DocumentationComponent {
   override fun getComponent(): JComponent = ui.scrollPane
 
   override fun resetBrowser() {
-    resetBrowser(EmptyDocumentationTarget.createPointer(), EMPTY_PRESENTATION.presentation())
+    browser.resetBrowser(EmptyDocumentationTarget.request)
   }
 
   override fun resetBrowser(targetPointer: Pointer<out DocumentationTarget>,

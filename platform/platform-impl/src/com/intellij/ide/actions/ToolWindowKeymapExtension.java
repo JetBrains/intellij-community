@@ -16,7 +16,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.Collections;
 import java.util.List;
 
-public class ToolWindowKeymapExtension implements KeymapExtension {
+public final class ToolWindowKeymapExtension implements KeymapExtension {
   @Override
   public @Nullable KeymapGroup createGroup(Condition<? super AnAction> filtered, Project project) {
     String title = UIUtil.removeMnemonic(ActionsBundle.message("group.ToolWindowsGroup.text"));

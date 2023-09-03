@@ -71,7 +71,8 @@ class BlockTerminalView(
       }
     })
 
-    controller = BlockTerminalController(session, outputView.controller, promptView.controller)
+    val focusModel = TerminalFocusModel(project, outputView, promptView)
+    controller = BlockTerminalController(session, focusModel, outputView.controller, promptView.controller)
 
     component.addComponentListener(object : ComponentAdapter() {
       override fun componentResized(e: ComponentEvent?) {

@@ -1,7 +1,7 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vfs.newvfs.persistent.dev.enumerator;
 
-import com.intellij.openapi.vfs.newvfs.persistent.PersistentFSRecordsLockFreeOverMMappedFile.MMappedFileStorage;
+import com.intellij.openapi.vfs.newvfs.persistent.mapped.MMappedFileStorage;
 import com.intellij.openapi.vfs.newvfs.persistent.dev.appendonlylog.AppendOnlyLog;
 import com.intellij.openapi.vfs.newvfs.persistent.dev.appendonlylog.AppendOnlyLogOverMMappedFile;
 import com.intellij.util.Processor;
@@ -24,7 +24,7 @@ import java.util.function.Supplier;
  * <p>
  * Implementation uses append-only log to store objects, and some (pluggable) Map[object.hash -> id*].
  */
-public class DurableEnumerator<K> implements ScannableDataEnumeratorEx<K>, Flushable, Closeable {
+public final class DurableEnumerator<K> implements ScannableDataEnumeratorEx<K>, Flushable, Closeable {
 
   public static final int DATA_FORMAT_VERSION = 1;
 

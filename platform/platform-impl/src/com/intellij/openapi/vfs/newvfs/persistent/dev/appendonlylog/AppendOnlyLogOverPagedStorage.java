@@ -15,7 +15,7 @@ import java.util.concurrent.atomic.AtomicLong;
 /**
  *
  */
-public class AppendOnlyLogOverPagedStorage implements AppendOnlyLog {
+public final class AppendOnlyLogOverPagedStorage implements AppendOnlyLog {
 
   private final PagedFileStorageWithRWLockedPageContent storage;
 
@@ -50,6 +50,12 @@ public class AppendOnlyLogOverPagedStorage implements AppendOnlyLog {
       int recordSize = pageBuffer.getInt(offsetInPage);
       return reader.read(pageBuffer.slice(offsetInPage + 4, recordSize));
     }
+  }
+
+  @Override
+  public boolean isValidId(long id) {
+    //TODO please, implement me
+    throw new UnsupportedOperationException("Method is not implemented yet");
   }
 
   @Override

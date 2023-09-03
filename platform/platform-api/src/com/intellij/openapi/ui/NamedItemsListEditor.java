@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.ui;
 
 import com.intellij.icons.AllIcons;
@@ -106,8 +106,7 @@ public abstract class NamedItemsListEditor<T> extends MasterDetailsComponent {
   }
 
 
-  @Nullable
-  public String askForProfileName(@NlsContexts.DialogTitle String title) {
+  public @Nullable String askForProfileName(@NlsContexts.DialogTitle String title) {
     return Messages.showInputDialog(getNewLabelText(), title, Messages.getQuestionIcon(), "", new InputValidator() {
       @Override
       public boolean checkInput(String s) {
@@ -121,8 +120,7 @@ public abstract class NamedItemsListEditor<T> extends MasterDetailsComponent {
     });
   }
 
-  @Nullable
-  protected T findByName(@NlsSafe String name) {
+  protected @Nullable T findByName(@NlsSafe String name) {
     for (T item : myItems) {
       if (Objects.equals(name, myNamer.getName(item))) return item;
     }
@@ -131,8 +129,7 @@ public abstract class NamedItemsListEditor<T> extends MasterDetailsComponent {
   }
 
   @Override
-  @Nullable
-  protected List<AnAction> createActions(boolean fromPopup) {
+  protected @Nullable List<AnAction> createActions(boolean fromPopup) {
     ArrayList<AnAction> result = new ArrayList<>();
     result.add(new AddAction());
     //noinspection unchecked
@@ -170,8 +167,7 @@ public abstract class NamedItemsListEditor<T> extends MasterDetailsComponent {
     myShowIcons = showIcons;
   }
 
-  @Nullable
-  protected UnnamedConfigurable getItemConfigurable(final T item) {
+  protected @Nullable UnnamedConfigurable getItemConfigurable(final T item) {
     final Ref<UnnamedConfigurable> result = new Ref<>();
     TreeUtil.traverse((TreeNode)myTree.getModel().getRoot(), node -> {
       final NamedConfigurable<?> configurable = (NamedConfigurable<?>)((DefaultMutableTreeNode)node).getUserObject();
@@ -344,8 +340,7 @@ public abstract class NamedItemsListEditor<T> extends MasterDetailsComponent {
     selectNodeInTree(findByName(myNamer.getName(item)));
   }
 
-  @Nullable
-  protected T createItem() {
+  protected @Nullable T createItem() {
     String name = askForProfileName(getCreateNewDialogTitle());
     if (name == null) return null;
     final T newItem = myFactory.create();

@@ -22,7 +22,7 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.util.Collection;
 
-public class CannotUndoReportDialog extends DialogWrapper implements DataProvider {
+public final class CannotUndoReportDialog extends DialogWrapper implements DataProvider {
   private static final int FILE_TEXT_PREVIEW_CHARS_LIMIT = 40;
   private final Project myProject;
 

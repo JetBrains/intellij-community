@@ -10,7 +10,10 @@ import com.intellij.collaboration.util.resolveRelative
 import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.util.childScope
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.flow.*
+import kotlinx.coroutines.flow.MutableSharedFlow
+import kotlinx.coroutines.flow.SharedFlow
+import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.map
 import org.jetbrains.plugins.gitlab.api.GitLabServerPath
 import org.jetbrains.plugins.gitlab.api.dto.GitLabCiJobDTO
 import org.jetbrains.plugins.gitlab.api.dto.GitLabPipelineDTO
@@ -48,17 +51,20 @@ class GitLabMergeRequestStatusViewModel(
     return CodeReviewCIJob(name, status.toCiState(), jobUrl.toString())
   }
 
+  // TODO: Add more states (CodeReviewCIJobState.SKIPPED -> MANUAL, SKIPPED)
   private fun GitLabCiJobStatus.toCiState(): CodeReviewCIJobState = when (this) {
     GitLabCiJobStatus.CANCELED,
-    GitLabCiJobStatus.CREATED,
+    GitLabCiJobStatus.FAILED,
     GitLabCiJobStatus.MANUAL,
+    GitLabCiJobStatus.SKIPPED -> CodeReviewCIJobState.FAILED
+
+    GitLabCiJobStatus.CREATED,
+    GitLabCiJobStatus.PENDING,
     GitLabCiJobStatus.PREPARING,
-    GitLabCiJobStatus.SCHEDULED,
-    GitLabCiJobStatus.SKIPPED,
     GitLabCiJobStatus.RUNNING,
-    GitLabCiJobStatus.WAITING_FOR_RESOURCE,
-    GitLabCiJobStatus.FAILED -> CodeReviewCIJobState.FAILED
-    GitLabCiJobStatus.PENDING -> CodeReviewCIJobState.PENDING
+    GitLabCiJobStatus.SCHEDULED,
+    GitLabCiJobStatus.WAITING_FOR_RESOURCE -> CodeReviewCIJobState.PENDING
+
     GitLabCiJobStatus.SUCCESS -> CodeReviewCIJobState.SUCCESS
   }
 }

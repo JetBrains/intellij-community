@@ -40,7 +40,7 @@ import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 
-public class NativeFileWatcherImpl extends PluggableFileWatcher {
+public final class NativeFileWatcherImpl extends PluggableFileWatcher {
   private static final Logger LOG = Logger.getInstance(NativeFileWatcherImpl.class);
 
   private static final String PROPERTY_WATCHER_DISABLED = "idea.filewatcher.disabled";

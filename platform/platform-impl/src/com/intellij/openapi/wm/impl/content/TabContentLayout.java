@@ -317,7 +317,7 @@ class TabContentLayout extends ContentLayout implements MorePopupAware {
     }
   }
 
-  static class LayoutData {
+  static final class LayoutData {
     int toFitWidth;
     int requiredWidth;
     Dimension layoutSize;

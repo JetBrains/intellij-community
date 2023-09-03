@@ -5,7 +5,7 @@ import org.jetbrains.annotations.NotNull;
 
 import java.awt.*;
 
-class ComponentBounds extends Rectangle {
+final class ComponentBounds extends Rectangle {
 
     public int horizontalBaseline;
     public int verticalBaseline;

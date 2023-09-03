@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.internal.statistic.collectors.fus;
 
 import com.intellij.internal.performance.LatencyDistributionRecord;
@@ -26,7 +26,7 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
 
-public class TypingEventsLogger extends CounterUsagesCollector {
+public final class TypingEventsLogger extends CounterUsagesCollector {
   private static final EventLogGroup GROUP = new EventLogGroup("editor.typing", 7);
 
   private static final EnumEventField<EditorKind> EDITOR_KIND = EventFields.Enum("editor_kind", EditorKind.class);
@@ -46,7 +46,7 @@ public class TypingEventsLogger extends CounterUsagesCollector {
     return GROUP;
   }
 
-  public static class TypingEventsListener implements AnActionListener {
+  public static final class TypingEventsListener implements AnActionListener {
     @Override
     public void beforeEditorTyping(char c, @NotNull DataContext dataContext) {
       EventRateThrottleResult result = ourThrottle.tryPass(System.currentTimeMillis());
@@ -76,7 +76,7 @@ public class TypingEventsLogger extends CounterUsagesCollector {
     }
   }
 
-  public static class TypingLatencyReporter implements FileEditorManagerListener, LatencyListener {
+  public static final class TypingLatencyReporter implements FileEditorManagerListener, LatencyListener {
     public TypingLatencyReporter() {
       ApplicationManager.getApplication().getMessageBus().connect().subscribe(LatencyListener.TOPIC, this);
     }

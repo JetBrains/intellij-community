@@ -76,13 +76,6 @@ class ProjectToolbarWidgetAction : ExpandableComboAction() {
     if (project != null && customizer.isAvailable()) {
       widget.leftIcons = listOf(customizer.getProjectIcon(project))
     }
-
-    if (customizer.isActive()) {
-      val paintingType = customizer.getPaintingType()
-      if (paintingType.isDropdown() && project != null) {
-        widget.highlightBackground = customizer.getBackgroundProjectColor(project)
-      }
-    }
   }
 
   override fun update(e: AnActionEvent) {

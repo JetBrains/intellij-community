@@ -56,6 +56,7 @@ public class TrailingWhitespacesInTextBlockInspection extends AbstractBaseJavaLo
             continue;
           }
           int lineEnd = line.endsWith(suffix)? line.length() - suffix.length() : line.length();
+          if (lineEnd == 0) continue;
           char c = line.charAt(lineEnd - 1);
           if (c == ' ' || c == '\t') {
             for (int j = lineEnd - 2; j >= 0; j--) {

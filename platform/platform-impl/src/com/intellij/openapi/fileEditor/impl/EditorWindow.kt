@@ -621,7 +621,7 @@ class EditorWindow internal constructor(val owner: EditorsSplitters, private val
 
     when (val parent = splitter.parent) {
       is Splitter -> {
-        if (parent.firstComponent === splitter.parent) {
+        if (parent.firstComponent === splitter) {
           parent.firstComponent = otherComponent
         }
         else {

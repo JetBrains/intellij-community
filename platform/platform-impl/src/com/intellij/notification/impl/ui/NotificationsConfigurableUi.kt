@@ -80,8 +80,8 @@ internal class NotificationsConfigurableUi(settings: NotificationsConfigurationI
                                NotificationAnnouncingMode.MEDIUM,
                                NotificationAnnouncingMode.HIGH)
 
-          val combo = comboBox(options, listCellRenderer {
-            text = notificationModeToUserString[it]
+          val combo = comboBox(options, textListCellRenderer {
+            notificationModeToUserString[it]
           }).bindItem(settings::getNotificationAnnouncingMode) { settings.notificationAnnouncingMode = it!! }
 
           if (SystemInfo.isMac) combo.comment(IdeBundle.message("notifications.configurable.announcing.comment"))

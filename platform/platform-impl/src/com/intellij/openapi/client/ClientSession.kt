@@ -5,6 +5,7 @@ import com.intellij.codeWithMe.ClientId
 import com.intellij.openapi.application.Application
 import com.intellij.openapi.components.ComponentManager
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.NlsSafe
 import com.intellij.util.messages.MessageBus
 import org.jetbrains.annotations.ApiStatus
 
@@ -34,6 +35,7 @@ import org.jetbrains.annotations.ApiStatus
 interface ClientSession : ComponentManager {
   val clientId: ClientId
   val type: ClientType
+  val name: @NlsSafe String
 
   @Deprecated("sessions don't have their own message bus", level = DeprecationLevel.ERROR)
   override fun getMessageBus(): MessageBus {

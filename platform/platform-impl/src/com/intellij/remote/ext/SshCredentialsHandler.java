@@ -7,7 +7,7 @@ import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public class SshCredentialsHandler extends RemoteCredentialsHandlerBase<RemoteCredentialsHolder> {
+public final class SshCredentialsHandler extends RemoteCredentialsHandlerBase<RemoteCredentialsHolder> {
 
   public SshCredentialsHandler(RemoteCredentialsHolder credentials) {
     super(credentials);

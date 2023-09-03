@@ -11,8 +11,6 @@ object IconLoadMeasurer {
   val svgDecoding: Counter = Counter("svg-decode")
   private val svgLoading = Counter("svg-load")
   @JvmField
-  val svgPreBuiltLoad: Counter = Counter("svg-prebuilt")
-  @JvmField
   val svgCacheWrite: Counter = Counter("svg-cache-write")
   @JvmField
   val svgCacheRead: Counter = Counter("svg-cache-read")
@@ -40,7 +38,7 @@ object IconLoadMeasurer {
     get() {
       return listOf(findIcon, findIconLoad,
                     loadFromUrl, loadFromResources,
-                    svgLoading, svgDecoding, svgPreBuiltLoad, svgCacheRead, svgCacheWrite,
+                    svgLoading, svgDecoding, svgCacheRead, svgCacheWrite,
                     pngLoading, pngDecoding,
                     actionIcon)
     }

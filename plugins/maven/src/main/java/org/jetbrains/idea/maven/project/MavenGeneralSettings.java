@@ -37,7 +37,6 @@ public class MavenGeneralSettings implements Cloneable {
   private String mavenSettingsFile = "";
   private String overriddenLocalRepository = "";
   private boolean printErrorStackTraces = false;
-  private boolean usePluginRegistry = false;
   private boolean nonRecursive = false;
   private boolean alwaysUpdateSnapshots = false;
   private boolean showDialogWithAdvancedSettings = false;
@@ -50,8 +49,6 @@ public class MavenGeneralSettings implements Cloneable {
   private MavenExecutionOptions.FailureMode failureBehavior = MavenExecutionOptions.FailureMode.NOT_SET;
 
   private transient File myEffectiveLocalRepositoryCache;
-  private transient File myEffectiveLocalHomeCache;
-  private transient VirtualFile myEffectiveSuperPomCache;
   private transient MavenConfig mavenConfigCache;
 
   private int myBulkUpdateLevel = 0;
@@ -86,8 +83,6 @@ public class MavenGeneralSettings implements Cloneable {
     if (myBulkUpdateLevel > 0) return;
 
     myEffectiveLocalRepositoryCache = null;
-    myEffectiveLocalHomeCache = null;
-    myEffectiveSuperPomCache = null;
     mavenConfigCache = null;
     if (fireUpdate) {
       fireChanged();
@@ -294,17 +289,6 @@ public class MavenGeneralSettings implements Cloneable {
     }
   }
 
-  public boolean isUsePluginRegistry() {
-    return usePluginRegistry;
-  }
-
-  public void setUsePluginRegistry(final boolean value) {
-    if (!Comparing.equal(this.usePluginRegistry, value)) {
-      this.usePluginRegistry = value;
-      changed();
-    }
-  }
-
   public boolean isUseMavenConfig() {
     return useMavenConfig;
   }
@@ -384,7 +368,6 @@ public class MavenGeneralSettings implements Cloneable {
     if (alwaysUpdateSnapshots != that.alwaysUpdateSnapshots) return false;
     if (showDialogWithAdvancedSettings != that.showDialogWithAdvancedSettings) return false;
     if (printErrorStackTraces != that.printErrorStackTraces) return false;
-    if (usePluginRegistry != that.usePluginRegistry) return false;
     if (useMavenConfig != that.useMavenConfig) return false;
     if (workOffline != that.workOffline) return false;
     if (!checksumPolicy.equals(that.checksumPolicy)) return false;
@@ -405,7 +388,6 @@ public class MavenGeneralSettings implements Cloneable {
     result = 31 * result + mavenSettingsFile.hashCode();
     result = 31 * result + overriddenLocalRepository.hashCode();
     result = 31 * result + (printErrorStackTraces ? 1 : 0);
-    result = 31 * result + (usePluginRegistry ? 1 : 0);
     result = 31 * result + (useMavenConfig ? 1 : 0);
     result = 31 * result + (nonRecursive ? 1 : 0);
     result = 31 * result + outputLevel.hashCode();

@@ -6,6 +6,7 @@ import com.intellij.codeInspection.dataFlow.JavaMethodContractUtil
 import com.intellij.codeInspection.dataFlow.Mutability
 import com.intellij.lang.jvm.JvmModifier
 import com.intellij.lang.jvm.JvmModifiersOwner
+import com.intellij.openapi.roots.FileIndexFacade
 import com.intellij.psi.*
 import com.intellij.psi.search.searches.ReferencesSearch
 import com.intellij.psi.util.*
@@ -23,7 +24,7 @@ class TaintAnalyzer(private val myTaintValueFactory: TaintValueFactory) {
   private val myVisitedMethods: MutableMap<Pair<PsiElement, List<TaintValue>>, TaintValue> = HashMap()
   private val myNonMarkedElements: MutableList<NonMarkedElement> = ArrayList()
   private val safeLambdaClass = setOf("java.lang.Iterable", "java.util.Collection", "java.util.Map",
-                                       "kotlin.collections.CollectionsKt___CollectionsKt")
+                                      "kotlin.collections.CollectionsKt___CollectionsKt")
   private val skipClasses: Set<String> = myTaintValueFactory.getConfiguration()
     .skipClasses
     .filterNotNull()
@@ -34,6 +35,8 @@ class TaintAnalyzer(private val myTaintValueFactory: TaintValueFactory) {
   fun analyzeExpression(expression: UExpression,
                         collectOuterUsages: Boolean,
                         untilTaintValue: TaintValue = TaintValue.TAINTED): TaintValue {
+
+
     val file = expression.getContainingUFile() ?: return TaintValue.UNKNOWN
     val context = AnalyzeContext.create(
       processOuterMethodAsQualifierAndArguments = myTaintValueFactory.getConfiguration().processOuterMethodAsQualifierAndArguments,
@@ -41,10 +44,11 @@ class TaintAnalyzer(private val myTaintValueFactory: TaintValueFactory) {
       file = file,
       collectReferences = collectOuterUsages,
       processOnlyConstant = false,
-      depthOutside = 1,
+      depthOutsideFields = 1,
+      depthOutsideMethods = myTaintValueFactory.getConfiguration().depthOutsideMethods,
       parts = 20,
       depthInside = myTaintValueFactory.getConfiguration().depthInside,
-      depthNestedMethods = 1,
+      depthNestedMethods = myTaintValueFactory.getConfiguration().depthNestedMethods,
       next = true,
       untilTaintValue = untilTaintValue,
       parameterOfPrivateMethodIsUntainted = myTaintValueFactory.getConfiguration().parameterOfPrivateMethodIsUntainted,
@@ -65,8 +69,10 @@ class TaintAnalyzer(private val myTaintValueFactory: TaintValueFactory) {
     val collectMarkedByDefault: Boolean,
     //used to limit processing outer files with fields
     val processOnlyConstant: Boolean,
-    //used to limit processing outer files for methods and fields
-    val depthOutside: Int,
+    //used to limit processing outer files for fields
+    val depthOutsideFields: Int,
+    //used to limit processing outer files for methods
+    val depthOutsideMethods: Int,
     //current processed parts
     private val parts: AtomicInteger,
     //current resolving depth
@@ -83,7 +89,8 @@ class TaintAnalyzer(private val myTaintValueFactory: TaintValueFactory) {
                  file: UFile,
                  collectReferences: Boolean,
                  processOnlyConstant: Boolean,
-                 depthOutside: Int,
+                 depthOutsideFields: Int,
+                 depthOutsideMethods: Int = 0,
                  parts: Int,
                  depthInside: Int,
                  depthNestedMethods: Int,
@@ -96,7 +103,8 @@ class TaintAnalyzer(private val myTaintValueFactory: TaintValueFactory) {
                               file = file,
                               collectReferences = collectReferences,
                               processOnlyConstant = processOnlyConstant,
-                              depthOutside = depthOutside,
+                              depthOutsideFields = depthOutsideFields,
+                              depthOutsideMethods = depthOutsideMethods,
                               parts = AtomicInteger(parts),
                               inside = depthInside,
                               depthNestedMethods = depthNestedMethods,
@@ -129,6 +137,14 @@ class TaintAnalyzer(private val myTaintValueFactory: TaintValueFactory) {
         throw DeepTaintAnalyzerException()
       }
       return copy(inside = inside - 1)
+    }
+
+    fun minusOutsideFields(): AnalyzeContext {
+      return copy(depthOutsideFields = depthOutsideFields - 1)
+    }
+
+    fun minusOutsideMethods(): AnalyzeContext {
+      return copy(depthOutsideMethods = depthOutsideMethods - 1)
     }
 
     fun minusPart(size: Int): AnalyzeContext {
@@ -277,6 +293,17 @@ class TaintAnalyzer(private val myTaintValueFactory: TaintValueFactory) {
         return TaintValue.UNKNOWN
       }
     }
+
+    if (uMethod is UMethod && !equalFiles(analyzeContext, uMethod) && !isLibraryCode(uMethod)) {
+      val jvmModifiersOwner: JvmModifiersOwner = uMethod
+      if (jvmModifiersOwner.hasModifier(JvmModifier.STATIC)) {
+        if (analyzeContext.depthOutsideMethods > 0) {
+          analyzeContext = analyzeContext.minusOutsideMethods()
+          return analyzeMethod(uMethod, analyzeContext, getNotEmptyParameters(uMethod, expression, analyzeContext))
+        }
+      }
+    }
+
     if (analyzeContext.processOuterMethodAsQualifierAndArguments || analyzeContext.processInnerMethodAsQualifierAndArguments) {
       var taintValue = TaintValue.UNTAINTED
       if (!(uMethod is JvmModifiersOwner && uMethod.hasModifier(JvmModifier.STATIC))) {
@@ -481,12 +508,16 @@ class TaintAnalyzer(private val myTaintValueFactory: TaintValueFactory) {
     return taintValue
   }
 
-  private fun fromField(expression: UExpression?, target: PsiElement, analyzeContext: AnalyzeContext): TaintValue? {
+  private fun fromField(expression: UExpression?, target: PsiElement, context: AnalyzeContext): TaintValue? {
+    var currentContext = context
     //kotlin constructor parameters are considered as parameters
-    if (analyzeContext.depthOutside < 0) return null
     val uElement = target.toUElement() as? UField ?: return null
+    if (!equalFiles(currentContext, uElement)) {
+      currentContext = currentContext.minusOutsideFields()
+    }
+    if (currentContext.depthOutsideFields < 0) return TaintValue.UNTAINTED
     val jvmModifiersOwner: JvmModifiersOwner = uElement
-    val equalFiles = equalFiles(analyzeContext, uElement)
+    val equalFiles = equalFiles(currentContext, uElement)
     if (!equalFiles &&
         jvmModifiersOwner.hasModifier(JvmModifier.FINAL) &&
         expression is UQualifiedReferenceExpression &&
@@ -495,7 +526,7 @@ class TaintAnalyzer(private val myTaintValueFactory: TaintValueFactory) {
     }
 
     if (equalFiles) {
-      if (analyzeContext.privateOrFinalFieldSafe &&
+      if (currentContext.privateOrFinalFieldSafe &&
           (jvmModifiersOwner.hasModifier(JvmModifier.PRIVATE) || jvmModifiersOwner.hasModifier(JvmModifier.FINAL))) {
         return TaintValue.UNTAINTED
       }
@@ -504,11 +535,11 @@ class TaintAnalyzer(private val myTaintValueFactory: TaintValueFactory) {
                                                                                                       Mutability.UNMODIFIABLE_VIEW)))
       if (isImmutable &&
           ((jvmModifiersOwner.hasModifier(JvmModifier.FINAL) && (uElement.uastInitializer != null || fieldAssignedOnlyWithLiterals(uElement,
-                                                                                                                                   analyzeContext))) ||
-           (jvmModifiersOwner.hasModifier(JvmModifier.PRIVATE) && fieldAssignedOnlyWithLiterals(uElement, analyzeContext)))) {
+                                                                                                                                   currentContext))) ||
+           (jvmModifiersOwner.hasModifier(JvmModifier.PRIVATE) && fieldAssignedOnlyWithLiterals(uElement, currentContext)))) {
         val uastInitializer = uElement.uastInitializer
         if (uastInitializer == null) return TaintValue.UNTAINTED
-        return fromExpressionWithoutCollection(uElement.uastInitializer, analyzeContext.notCheckPropagationNext())
+        return fromExpressionWithoutCollection(uElement.uastInitializer, currentContext.notCheckPropagationNext())
       }
     }
 
@@ -517,12 +548,12 @@ class TaintAnalyzer(private val myTaintValueFactory: TaintValueFactory) {
       //simplify and not to check
       return TaintValue.UNTAINTED
     }
-    if (analyzeContext.processOnlyConstant) {
+    if (currentContext.processOnlyConstant) {
       return null
     }
-    if (analyzeContext.collectReferences) {
+    if (currentContext.collectReferences) {
       val children: MutableList<NonMarkedElement?> = ArrayList()
-      val initializer = NonMarkedElement.create(uElement.uastInitializer, analyzeContext.checkPropagationNext)
+      val initializer = NonMarkedElement.create(uElement.uastInitializer, currentContext.checkPropagationNext)
       if (initializer != null) children.add(initializer)
       children.addAll(findAssignments(target))
       myNonMarkedElements.addAll(children.filterNotNull())
@@ -530,11 +561,15 @@ class TaintAnalyzer(private val myTaintValueFactory: TaintValueFactory) {
     return TaintValue.UNKNOWN
   }
 
-  private fun fromMethod(target: PsiElement, analyzeContext: AnalyzeContext): TaintValue? {
+  private fun fromMethod(target: PsiElement, context: AnalyzeContext): TaintValue? {
+    var analyzeContext = context
     if (analyzeContext.processOnlyConstant) {
       return null
     }
     val uMethod = target.toUElement(UMethod::class.java) ?: return null
+    if (!equalFiles(analyzeContext, uMethod)) {
+      analyzeContext = analyzeContext.minusOutsideMethods()
+    }
     return analyzeMethod(uMethod, analyzeContext, getEmptyParameters(uMethod))
   }
 
@@ -548,7 +583,9 @@ class TaintAnalyzer(private val myTaintValueFactory: TaintValueFactory) {
   }
 
   private fun analyzeMethod(uMethod: UMethod, sourceContext: AnalyzeContext, arguments: List<TaintValue>): TaintValue {
-    if (!equalFiles(sourceContext, uMethod)) return TaintValue.UNKNOWN
+    if (!equalFiles(sourceContext, uMethod) &&
+        (sourceContext.depthOutsideMethods < 0 ||
+         sourceContext.depthOutsideFields < 0)) return TaintValue.UNKNOWN
     val psiElement = uMethod.sourcePsi ?: return TaintValue.UNKNOWN
     val key = Pair(psiElement, arguments)
     val value = myVisitedMethods[key]
@@ -605,7 +642,8 @@ class TaintAnalyzer(private val myTaintValueFactory: TaintValueFactory) {
 
   private fun fromExpressionInner(sourceUExpression: UExpression?, analyzeContext: AnalyzeContext): TaintValue {
     var uExpression = sourceUExpression ?: return TaintValue.UNTAINTED //may be null as receiver
-    if (analyzeContext.depthOutside < 0) return TaintValue.UNKNOWN
+    if (analyzeContext.depthOutsideFields < 0) return TaintValue.UNKNOWN
+    if (analyzeContext.depthOutsideMethods < 0) return TaintValue.UNKNOWN
     val type = uExpression.getExpressionType()
     if (type != null && skipClass(type)) return TaintValue.UNTAINTED
     uExpression = uExpression.skipParenthesizedExprDown()
@@ -760,9 +798,16 @@ class TaintAnalyzer(private val myTaintValueFactory: TaintValueFactory) {
           return@CachedValueProvider CachedValueProvider.Result.create(visitor.flow, PsiModificationTracker.MODIFICATION_COUNT)
         })
 
-    private fun equalFiles(analyzeContext: AnalyzeContext, method: UElement): Boolean {
-      val file = method.getContainingUFile()
+    private fun equalFiles(analyzeContext: AnalyzeContext, element: UElement): Boolean {
+      val file = element.getContainingUFile()
       return file != null && analyzeContext.file.sourcePsi == file.sourcePsi
+    }
+
+    private fun isLibraryCode(element: UElement): Boolean {
+      val sourcePsi = element.sourcePsi ?: return true
+      if (sourcePsi is PsiCompiledElement) return true
+      val virtualFile = PsiUtilCore.getVirtualFile(sourcePsi)
+      return virtualFile != null && FileIndexFacade.getInstance(sourcePsi.getProject()).isInLibrarySource(virtualFile)
     }
 
     private fun fieldAssignedOnlyWithLiterals(field: UField, analyzeContext: AnalyzeContext): Boolean {

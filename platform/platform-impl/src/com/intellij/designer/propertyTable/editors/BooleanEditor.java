@@ -13,7 +13,7 @@ import javax.swing.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 
-public class BooleanEditor extends PropertyEditor {
+public final class BooleanEditor extends PropertyEditor {
   protected final JCheckBox myCheckBox;
   private boolean myInsideChange;
 

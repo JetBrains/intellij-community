@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.openapi.actionSystem;
 
@@ -46,7 +46,7 @@ public final class ActionGroupUtil {
 
   @ApiStatus.Experimental
   public static @NotNull ActionGroup forceHideDisabledChildren(@NotNull ActionGroup actionGroup) {
-    class Compact extends ActionGroupWrapper implements CompactActionGroup, TransparentWrapper {
+    final class Compact extends ActionGroupWrapper implements CompactActionGroup, TransparentWrapper {
 
       Compact(@NotNull ActionGroup action) {
         super(action);
@@ -57,7 +57,7 @@ public final class ActionGroupUtil {
 
   @ApiStatus.Experimental
   public static @NotNull ActionGroup forceRecursiveUpdateInBackground(@NotNull ActionGroup actionGroup) {
-    class MyGroup extends ActionGroup implements ActionUpdateThreadAware.Recursive, TransparentWrapper {
+    final class MyGroup extends ActionGroup implements ActionUpdateThreadAware.Recursive, TransparentWrapper {
       {
         setPopup(false);
       }

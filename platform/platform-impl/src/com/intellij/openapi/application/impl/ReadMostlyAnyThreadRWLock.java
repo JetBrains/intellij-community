@@ -52,7 +52,7 @@ final class ReadMostlyAnyThreadRWLock {
   }
 
   // Each reader thread has instance of this struct in its thread local. it's also added to global "readers" list.
-  static class Reader {
+  static final class Reader {
     enum State {
       CALM, READ, READ_REQ, WRITE_INTENT, WRITE
     }

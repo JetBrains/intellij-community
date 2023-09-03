@@ -124,10 +124,6 @@ public class JBColor extends Color {
   private static @NotNull Color calculateColor(@NonNls @NotNull String name, @Nullable Color defaultColor) {
     Color color = UIManager.getColor(name);
     if (color != null) return color;
-    // *.background and others are handled by defaultColor. findPatternMatch is relevant for themes only.
-    if (!UIManager.getDefaults().containsKey("Theme.name")) {
-      return defaultColor == NAMED_COLOR_FALLBACK_MARKER || defaultColor == null ? calculateFallback(name) : defaultColor;
-    }
     Color patternMatch = findPatternMatch(name);
     if (patternMatch != null) return patternMatch;
 

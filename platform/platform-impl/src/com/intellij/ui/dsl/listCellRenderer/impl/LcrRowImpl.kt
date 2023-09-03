@@ -3,12 +3,16 @@ package com.intellij.ui.dsl.listCellRenderer.impl
 
 import com.intellij.ui.ExperimentalUI
 import com.intellij.ui.dsl.gridLayout.GridLayout
+import com.intellij.ui.dsl.gridLayout.HorizontalAlign
 import com.intellij.ui.dsl.gridLayout.UnscaledGaps
+import com.intellij.ui.dsl.gridLayout.VerticalAlign
 import com.intellij.ui.dsl.gridLayout.builders.RowsGridBuilder
+import com.intellij.ui.dsl.listCellRenderer.KotlinUIDslRenderer
 import com.intellij.ui.dsl.listCellRenderer.LcrIconInitParams
 import com.intellij.ui.dsl.listCellRenderer.LcrRow
 import com.intellij.ui.dsl.listCellRenderer.LcrTextInitParams
 import com.intellij.ui.popup.list.SelectablePanel
+import com.intellij.ui.render.RenderingUtil
 import com.intellij.util.ui.JBInsets
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.UIUtil
@@ -18,11 +22,9 @@ import java.awt.BorderLayout
 import java.awt.Color
 import java.awt.Component
 import java.util.function.Supplier
-import javax.swing.Icon
-import javax.swing.JList
-import javax.swing.JPanel
-import javax.swing.ListCellRenderer
+import javax.swing.*
 import javax.swing.plaf.basic.BasicComboPopup
+import kotlin.math.max
 
 private const val HORIZONTAL_GAP = 4
 
@@ -30,7 +32,47 @@ private const val HORIZONTAL_GAP = 4
 internal class LcrRowImpl<T>(private val renderer: LcrRow<T>.() -> Unit) : LcrRow<T>, ListCellRenderer<T> {
 
   private var listCellRendererParams: ListCellRendererParams<T>? = null
-  private val selectablePanel = SelectablePanel()
+
+  private val selectablePanel = object : SelectablePanel(), KotlinUIDslRenderer {
+
+    override fun getBaseline(width: Int, height: Int): Int {
+      val baselineComponents = cells.filter { it.baselineAlign }.map { it.lcrCell.component }
+
+      // JLabel doesn't have baseline if empty. Workaround similar like in BasicComboBoxUI.getBaseline method
+      for (component in baselineComponents) {
+        if (component is JLabel && component.text.isNullOrEmpty()) {
+          component.text = " "
+        }
+      }
+      setSize(width, height)
+      doLayout()
+      content.doLayout()
+      var result = -1
+      for (component in baselineComponents) {
+        val componentBaseline = component.getBaseline(component.width, component.height)
+        if (componentBaseline >= 0) {
+          result = max(result, content.y + component.y + componentBaseline)
+        }
+      }
+      return result
+    }
+
+    // Support disabled combobox color. Can be reworked later
+    override fun setForeground(fg: Color?) {
+      super.setForeground(fg)
+
+      @Suppress("SENSELESS_COMPARISON")
+      if (cells == null) {
+        // Called while initialization
+        return
+      }
+
+      for (cell in cells) {
+        cell.lcrCell.component.foreground = fg
+      }
+    }
+  }
+
   private val lcrCellCache = LcrCellCache()
 
   /**
@@ -88,7 +130,7 @@ internal class LcrRowImpl<T>(private val renderer: LcrRow<T>.() -> Unit) : LcrRo
     }
 
     val result = lcrCellCache.occupyText()
-    result.init(text, initParams, list, selected, hasFocus)
+    result.init(text, initParams, list, selected)
     cells.add(CellInfo(result, initParams.grow, true))
   }
 
@@ -101,12 +143,13 @@ internal class LcrRowImpl<T>(private val renderer: LcrRow<T>.() -> Unit) : LcrRo
     content.removeAll()
     lcrCellCache.release()
 
-    val bg = if (isSelected) JBUI.CurrentTheme.List.Selection.background(cellHasFocus) else list.background
+    val bg = if (isSelected) RenderingUtil.getSelectionBackground(list) else list.background
+    val isComboBox = isComboBox(list)
     if (ExperimentalUI.isNewUI()) {
       // Update height/insets every time, so IDE scaling is applied
       selectablePanel.apply {
-        if (isComboBox(list) && index == -1) {
-          // Renderer for selected item in ComboBox component
+        if (isComboBox && index == -1) {
+          // Renderer for selected item in collapsed ComboBox component
           selectablePanel.isOpaque = false
           selectionArc = 0
           selectionInsets = JBInsets.emptyInsets()
@@ -119,8 +162,15 @@ internal class LcrRowImpl<T>(private val renderer: LcrRow<T>.() -> Unit) : LcrRo
         else {
           selectablePanel.isOpaque = true
           selectionArc = 8
-          selectionInsets = JBInsets.create(0, 12)
-          border = JBUI.Borders.empty(0, 20)
+          if (isComboBox) {
+            // todo borders for comboBox mode should be updated with implementation of IDEA-316042 Fix lists that open from dropdowns and combo boxes
+            selectionInsets = JBInsets.create(0, 0)
+            border = JBUI.Borders.empty(0, 8)
+          }
+          else {
+            selectionInsets = JBInsets.create(0, 12)
+            border = JBUI.Borders.empty(0, 20)
+          }
           preferredHeight = JBUI.CurrentTheme.List.rowHeight()
 
           background = list.background
@@ -142,7 +192,13 @@ internal class LcrRowImpl<T>(private val renderer: LcrRow<T>.() -> Unit) : LcrRo
     builder.resizableRow()
 
     for (cell in cells) {
-      builder.cell(cell.lcrCell.component, gaps = if (builder.x == 0) UnscaledGaps.EMPTY else UnscaledGaps(left = HORIZONTAL_GAP),
+      // Row height is usually even. If components height is odd the component cannot be placed right in center.
+      // Because of rounding it's placed a little bit higher which looks not good, especially for text. This patch fixes that
+      val roundingTopGapPatch = cell.lcrCell.component.preferredSize.height % 2
+
+      builder.cell(cell.lcrCell.component, gaps = UnscaledGaps(top = roundingTopGapPatch, left = if (builder.x == 0) 0 else HORIZONTAL_GAP),
+                   horizontalAlign = if (cell.resizableColumn) HorizontalAlign.FILL else HorizontalAlign.LEFT,
+                   verticalAlign = VerticalAlign.CENTER,
                    resizableColumn = cell.resizableColumn, baselineAlign = cell.baselineAlign)
     }
 

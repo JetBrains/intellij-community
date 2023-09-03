@@ -307,7 +307,7 @@ public abstract class GlobalSearchScope extends SearchScope implements ProjectAw
   }
 
   @Contract(pure = true)
-  public static @NotNull GlobalSearchScope fileScope(@NotNull Project project, final VirtualFile virtualFile) {
+  public static @NotNull GlobalSearchScope fileScope(@NotNull Project project, final @Nullable VirtualFile virtualFile) {
     return fileScope(project, virtualFile, null);
   }
 

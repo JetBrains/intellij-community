@@ -36,7 +36,7 @@ import com.intellij.platform.workspace.storage.EntityChange
 import com.intellij.platform.workspace.storage.MutableEntityStorage
 import com.intellij.platform.workspace.storage.VersionedEntityStorage
 import com.intellij.platform.workspace.storage.VersionedStorageChange
-import com.intellij.platform.workspace.storage.impl.VersionedEntityStorageOnStorage
+import com.intellij.platform.workspace.storage.impl.VersionedEntityStorageOnSnapshot
 import com.intellij.platform.workspace.storage.url.VirtualFileUrl
 import io.opentelemetry.api.metrics.Meter
 import java.util.HashMap
@@ -64,8 +64,7 @@ internal class ModuleBridgeImpl(
             if (event.storageBefore.moduleMap.getDataByEntity(it.entity) != this@ModuleBridgeImpl) return@forEach
 
             val currentStore = entityStorage.current
-            val storage = if (currentStore is MutableEntityStorage) currentStore.toSnapshot() else currentStore
-            entityStorage = VersionedEntityStorageOnStorage(storage)
+            entityStorage = VersionedEntityStorageOnSnapshot(currentStore.toSnapshot())
             assert(moduleEntityId in entityStorage.current) {
               // If we ever get this assertion, replace use `event.storeBefore` instead of current
               // As it made in ArtifactBridge

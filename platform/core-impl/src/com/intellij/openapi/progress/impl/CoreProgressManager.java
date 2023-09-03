@@ -18,10 +18,10 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.wm.ex.ProgressIndicatorEx;
 import com.intellij.util.ExceptionUtil;
+import com.intellij.util.Java11Shim;
 import com.intellij.util.SystemProperties;
 import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.containers.ConcurrentLongObjectMap;
-import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.EDT;
 import org.jetbrains.annotations.*;
 
@@ -49,9 +49,11 @@ public class CoreProgressManager extends ProgressManager implements Disposable {
   // THashMap is avoided here because of tombstones overhead
   private static final Map<ProgressIndicator, Set<Thread>> threadsUnderIndicator = new HashMap<>(); // guarded by threadsUnderIndicator
   // the active indicator for the thread id
-  private static final ConcurrentLongObjectMap<ProgressIndicator> currentIndicators = ContainerUtil.createConcurrentLongObjectMap();
+  private static final ConcurrentLongObjectMap<ProgressIndicator> currentIndicators =
+    Java11Shim.Companion.getINSTANCE().createConcurrentLongObjectMap();
   // top-level indicators for the thread id
-  private static final ConcurrentLongObjectMap<ProgressIndicator> threadTopLevelIndicators = ContainerUtil.createConcurrentLongObjectMap();
+  private static final ConcurrentLongObjectMap<ProgressIndicator> threadTopLevelIndicators =
+    Java11Shim.Companion.getINSTANCE().createConcurrentLongObjectMap();
   // threads which are running under canceled indicator
   // THashSet is avoided here because of possible tombstones overhead
   static final Set<Thread> threadsUnderCanceledIndicator = new HashSet<>(); // guarded by threadsUnderIndicator
@@ -159,10 +161,14 @@ public class CoreProgressManager extends ProgressManager implements Disposable {
   @Override
   public boolean hasModalProgressIndicator() {
     synchronized (threadsUnderIndicator) {
-      return ContainerUtil.or(threadsUnderIndicator.keySet(), i -> i.isModal());
+      for (ProgressIndicator t : threadsUnderIndicator.keySet()) {
+        if (t.isModal()) {
+          return true;
+        }
+      }
+      return false;
     }
   }
-
 
   // run in current thread
   @Override
@@ -765,7 +771,7 @@ public class CoreProgressManager extends ProgressManager implements Disposable {
 
   private static final long MAX_PRIORITIZATION_NANOS = TimeUnit.SECONDS.toNanos(12); // maximum duration of process to run under low priority
   private static final long MIN_PRIORITIZATION_NANOS = TimeUnit.MILLISECONDS.toNanos(5); // minimum duration of process to consider prioritizing it down
-  private final Set<Thread> myPrioritizedThreads = ContainerUtil.newConcurrentSet();
+  private final Set<Thread> myPrioritizedThreads = ConcurrentHashMap.newKeySet();
   private final AtomicInteger myDeprioritizations = new AtomicInteger();
   private volatile long myPrioritizingStartedNanos;
 
@@ -936,8 +942,10 @@ public class CoreProgressManager extends ProgressManager implements Disposable {
     if (contextModality != null) {
       return contextModality;
     }
-    ModalityState progressModality = ProgressManager.getInstance().getCurrentProgressModality();
-    return progressModality != null ? progressModality : ModalityState.nonModal();
+
+    ProgressManager progressManager = ProgressManager.getInstanceOrNull();
+    ModalityState progressModality = progressManager == null ? null : progressManager.getCurrentProgressModality();
+    return progressModality == null ? ModalityState.nonModal() : progressModality;
   }
 
   private static void setCurrentIndicator(long threadId, ProgressIndicator indicator) {

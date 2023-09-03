@@ -162,7 +162,7 @@ public class PinActiveTabAction extends DumbAwareAction implements ActionRemoteB
     }
   }
 
-  public static class EW extends PinActiveTabAction {
+  public static final class EW extends PinActiveTabAction {
     @Override
     protected @Nullable VirtualFile getFileFromEvent(@NotNull AnActionEvent e, @NotNull EditorWindow window) {
       return window.getSelectedFile();
@@ -174,6 +174,6 @@ public class PinActiveTabAction extends DumbAwareAction implements ActionRemoteB
     }
   }
 
-  public static class Toggle extends PinActiveTabAction implements Toggleable {
+  public static final class Toggle extends PinActiveTabAction implements Toggleable {
   }
 }

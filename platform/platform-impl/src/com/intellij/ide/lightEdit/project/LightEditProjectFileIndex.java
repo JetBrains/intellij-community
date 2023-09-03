@@ -15,7 +15,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Set;
 
-class LightEditProjectFileIndex implements ProjectFileIndex {
+final class LightEditProjectFileIndex implements ProjectFileIndex {
   @Override
   public boolean isInProject(@NotNull VirtualFile file) {
     return isInContent(file);

@@ -3,6 +3,7 @@ package com.intellij.platform.feedback.dialog.uiBlocks
 
 import com.intellij.ide.feedback.RatingComponent
 import com.intellij.openapi.util.NlsContexts
+import com.intellij.platform.feedback.dialog.createBoldJBLabel
 import com.intellij.platform.feedback.impl.bundle.CommonFeedbackBundle
 import com.intellij.ui.dsl.builder.*
 import kotlinx.serialization.json.JsonObjectBuilder
@@ -17,8 +18,12 @@ class RatingBlock(@NlsContexts.Label private val myLabel: String,
     panel.apply {
       row {
         rating()
-          .label(myLabel, LabelPosition.TOP)
-          .bind({ it.myRating }, { _, _ -> }, ::myProperty.toMutableProperty())
+          .label(createBoldJBLabel(myLabel), LabelPosition.TOP)
+          .apply {
+            onApply {
+              myProperty = this.component.myRating
+            }
+          }
           .errorOnApply(CommonFeedbackBundle.message("dialog.feedback.rating.required")) {
             it.myRating == 0
           }
@@ -34,15 +39,16 @@ class RatingBlock(@NlsContexts.Label private val myLabel: String,
     }
   }
 
-  private fun Row.rating(): Cell<RatingComponent> {
-    val ratingComponent = RatingComponent()
-    return cell(ratingComponent)
-  }
-
   override fun collectBlockDataToJson(jsonObjectBuilder: JsonObjectBuilder) {
     jsonObjectBuilder.apply {
       put(myJsonElementName, myProperty)
     }
   }
 }
+
+internal fun Row.rating(): Cell<RatingComponent> {
+  val ratingComponent = RatingComponent()
+  return cell(ratingComponent)
+}
+
 

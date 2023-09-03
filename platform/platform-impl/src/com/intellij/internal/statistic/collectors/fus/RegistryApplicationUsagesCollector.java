@@ -73,7 +73,7 @@ public final class RegistryApplicationUsagesCollector extends ApplicationUsagesC
     return result;
   }
 
-  public static class RegistryUtilValidator extends CustomValidationRule {
+  public static final class RegistryUtilValidator extends CustomValidationRule {
     @Override
     public @NotNull String getRuleId() {
       return "registry_key";

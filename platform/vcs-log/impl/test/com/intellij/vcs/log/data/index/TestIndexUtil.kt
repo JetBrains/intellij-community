@@ -8,6 +8,7 @@ import com.intellij.vcs.log.VcsLogProvider
 import com.intellij.vcs.log.data.VcsLogProgress
 import com.intellij.vcs.log.data.VcsLogStorageImpl
 import com.intellij.vcs.log.impl.VcsLogErrorHandler
+import com.intellij.vcs.log.util.PersistentUtil
 
 private fun VcsLogPersistentIndex.doIndex(full: Boolean) {
   indexNow(full)
@@ -21,20 +22,23 @@ fun VcsLogPersistentIndex.index(root: VirtualFile, commits: Set<Int>) {
 }
 
 fun setUpIndex(project: Project,
-                        root: VirtualFile,
-                        logProvider: VcsLogProvider,
-                        useSqlite: Boolean,
-                        disposable: Disposable): VcsLogPersistentIndex {
+               root: VirtualFile,
+               logProvider: VcsLogProvider,
+               useSqlite: Boolean,
+               disposable: Disposable): VcsLogPersistentIndex {
   val providersMap = mapOf(root to logProvider)
   val errorConsumer = FailingErrorHandler()
 
-  val storage = if (useSqlite) {
-    SqliteVcsLogStorageBackend(project = project, logProviders = providersMap, errorHandler = errorConsumer, disposable = disposable)
-  }
-  else {
-    VcsLogStorageImpl(project, providersMap, errorConsumer, disposable)
-  }
-  return VcsLogPersistentIndex.create(project, storage, providersMap, VcsLogProgress(disposable), errorConsumer, disposable)!!
+  val logId = PersistentUtil.calcLogId(project, providersMap)
+
+  val storage = if (useSqlite) SqliteVcsLogStorageBackend(project, logId, providersMap, errorConsumer, disposable)
+  else VcsLogStorageImpl(project, logId, providersMap, errorConsumer, disposable)
+
+  val backend = if (storage is VcsLogStorageBackend) storage
+  else PhmVcsLogStorageBackend.create(project, storage, setOf(root), logId, errorConsumer, disposable)!!
+
+  val indexers = VcsLogPersistentIndex.getAvailableIndexers(providersMap)
+  return VcsLogPersistentIndex(project, providersMap, indexers, storage, backend, VcsLogProgress(disposable), errorConsumer, disposable)
 }
 
 private class FailingErrorHandler : VcsLogErrorHandler {

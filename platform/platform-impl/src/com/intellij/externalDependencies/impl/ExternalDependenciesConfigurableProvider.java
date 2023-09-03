@@ -6,7 +6,7 @@ import com.intellij.openapi.options.ConfigurableProvider;
 import com.intellij.openapi.project.Project;
 import org.jetbrains.annotations.Nullable;
 
-public class ExternalDependenciesConfigurableProvider extends ConfigurableProvider {
+public final class ExternalDependenciesConfigurableProvider extends ConfigurableProvider {
   private final Project myProject;
 
   public ExternalDependenciesConfigurableProvider(Project project) {

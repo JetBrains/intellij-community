@@ -138,7 +138,7 @@ public class ElementsChooser<T> extends MultiStateElementsChooser<T, Boolean> {
     return MARK_STATE_DESCRIPTOR;
   }
 
-  private static class BooleanMarkStateDescriptor<T> implements MarkStateDescriptor<T, Boolean> {
+  private static final class BooleanMarkStateDescriptor<T> implements MarkStateDescriptor<T, Boolean> {
     @Override
     public @NotNull Boolean getDefaultState(@NotNull T element) {
       return Boolean.FALSE;
@@ -177,7 +177,7 @@ public class ElementsChooser<T> extends MultiStateElementsChooser<T, Boolean> {
     }
   }
 
-  private static class ElementsMarkStateListenerAdapter<T> implements ElementsMarkStateListener<T, Boolean> {
+  private static final class ElementsMarkStateListenerAdapter<T> implements ElementsMarkStateListener<T, Boolean> {
     private final ElementsMarkListener<T> myListener;
 
     ElementsMarkStateListenerAdapter(ElementsMarkListener<T> listener) {

@@ -384,7 +384,7 @@ class ExecutionManagerImpl(private val project: Project) : ExecutionManager(), D
           continue
         }
 
-        val settings = task.settings
+        val settings = task.getSettings()
         if (settings != null) {
           // as side-effect here we setup runners list ( required for com.intellij.execution.impl.RunManagerImpl.canRunConfiguration() )
           var executor = if (Registry.`is`("lock.run.executor.for.before.run.tasks", false)) {

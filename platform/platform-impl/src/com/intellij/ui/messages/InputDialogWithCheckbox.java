@@ -11,7 +11,7 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.awt.*;
 
-class InputDialogWithCheckbox extends Messages.InputDialog {
+final class InputDialogWithCheckbox extends Messages.InputDialog {
   private JCheckBox myCheckBox;
 
   InputDialogWithCheckbox(@NlsContexts.DialogMessage String message,

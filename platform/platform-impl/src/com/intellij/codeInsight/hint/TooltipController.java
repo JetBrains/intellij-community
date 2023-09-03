@@ -43,11 +43,11 @@ public final class TooltipController {
    * Returns newly created hint, or already existing (for the same renderer)
    */
   public @Nullable LightweightHint showTooltipByMouseMove(@NotNull Editor editor,
-                                                @NotNull RelativePoint point,
-                                                @NotNull TooltipRenderer tooltipObject,
-                                                boolean alignToRight,
-                                                @NotNull TooltipGroup group,
-                                                @NotNull HintHint hintHint) {
+                                                          @NotNull RelativePoint point,
+                                                          @NotNull TooltipRenderer tooltipObject,
+                                                          boolean alignToRight,
+                                                          @NotNull TooltipGroup group,
+                                                          @NotNull HintHint hintHint) {
     LightweightHint currentTooltip = myCurrentTooltip;
     if (currentTooltip == null || !currentTooltip.isVisible()) {
       if (currentTooltip != null) {
@@ -67,6 +67,9 @@ public final class TooltipController {
     hideCurrentTooltip();
 
     JRootPane rootPane = editor.getComponent().getRootPane();
+    if (rootPane == null) {
+      return null;
+    }
     Point p = point.getPointOn(rootPane.getLayeredPane()).getPoint();
     if (!hintHint.isAwtTooltip()) {
       p.x += alignToRight ? -10 : 10;

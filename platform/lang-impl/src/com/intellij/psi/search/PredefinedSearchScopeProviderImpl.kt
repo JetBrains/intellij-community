@@ -1,6 +1,8 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.search
 
+import com.intellij.find.FindModel
+import com.intellij.find.impl.FindInProjectExtension
 import com.intellij.ide.IdeBundle
 import com.intellij.ide.hierarchy.HierarchyBrowserBase
 import com.intellij.ide.scratch.ScratchesSearchScope
@@ -187,6 +189,20 @@ open class PredefinedSearchScopeProviderImpl : PredefinedSearchScopeProvider() {
 
         return ScopeCollectionContext(psiFile, selectedTextEditor, scopesFromUsageView, currentFile, selectedFilesScope, result)
       }
+    }
+  }
+  
+  internal class SelectedFilesFindInProjectExtension : FindInProjectExtension {
+
+    override fun initModelFromContext(model: FindModel, dataContext: DataContext): Boolean {
+      val virtualFiles = dataContext.getData(CommonDataKeys.VIRTUAL_FILE_ARRAY)
+      if (virtualFiles != null && virtualFiles.size > 1) {
+        val scope = SelectedFilesScope(null, *virtualFiles)
+        model.isCustomScope = true
+        model.customScope = scope
+        model.customScopeName = scope.displayName
+      }
+      return false
     }
   }
 

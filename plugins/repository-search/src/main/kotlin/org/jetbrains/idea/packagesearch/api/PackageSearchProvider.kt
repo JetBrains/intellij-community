@@ -51,7 +51,7 @@ class PackageSearchProvider(
       .map { convertApiStandardPackage2RepositoryArtifactData(it) }
   }
 
-  override fun suggestPrefix(groupId: String?, artifactId: String?) = scope.future {
+  override fun suggestPrefix(groupId: String, artifactId: String) = scope.future {
     myClient.suggestPackages(groupId, artifactId)
       .packages
       .filter { it.groupId.isNotBlank() && it.artifactId.isNotBlank() }

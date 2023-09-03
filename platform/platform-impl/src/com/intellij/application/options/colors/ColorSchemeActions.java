@@ -204,7 +204,7 @@ public abstract class ColorSchemeActions extends AbstractSchemeActions<EditorCol
 
   protected abstract @NotNull ColorAndFontOptions getOptions();
 
-  private static class ImportSchemeChooserDialog extends DialogWrapper {
+  private static final class ImportSchemeChooserDialog extends DialogWrapper {
 
     private final Component myComponentAbove;
     private final List<ColorSchemeItem> mySchemeItems;

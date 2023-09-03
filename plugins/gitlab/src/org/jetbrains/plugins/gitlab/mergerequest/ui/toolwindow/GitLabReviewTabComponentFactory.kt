@@ -83,7 +83,7 @@ internal class GitLabReviewTabComponentFactory(
   ): JComponent {
     val avatarIconsProvider = projectVm.avatarIconProvider
     return GitLabMergeRequestDetailsComponentFactory.createDetailsComponent(
-      cs, reviewDetailsVm, projectVm.accountVm, avatarIconsProvider
+      project, cs, reviewDetailsVm, projectVm.accountVm, avatarIconsProvider
     ).also {
       DataManager.registerDataProvider(it) { dataId ->
         when {

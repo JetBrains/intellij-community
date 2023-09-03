@@ -19,7 +19,6 @@ import kotlin.io.path.name
 import kotlin.random.Random
 import kotlin.reflect.KClass
 import kotlin.reflect.full.createInstance
-import kotlin.reflect.full.memberFunctions
 import kotlin.time.ExperimentalTime
 import kotlin.time.measureTime
 
@@ -68,15 +67,19 @@ object StressTestUtil {
         require(it.java.interfaces.contains(App::class.java)) { "${it.qualifiedName} class does not implement App (see Domain.kt)" }
       } as KClass<out App>
 
-      val appRun = appClass.memberFunctions.find { it.name == "run" }
-                   ?: throw IllegalStateException("no run method in ${appClass.qualifiedName}")
       val appAgent = object : AppAgent {
         override val input: InputStream
           get() = System.`in`
         override val output: OutputStream
           get() = System.out
       }
-      appRun.call(appClass.createInstance(), appAgent)
+      try {
+        appClass.createInstance().run(appAgent)
+      }
+      catch (e: Throwable) {
+        System.err.println("Error while running App: ${e.message} -> app exiting")
+        e.printStackTrace()
+      }
     }
 
     private val currentProcessInfo by lazy {
@@ -85,6 +88,8 @@ object StressTestUtil {
 
     fun buildRunnerCommand(appClass: KClass<*>): List<String> {
       var adjustedArgs = currentProcessInfo.arguments().get().toList()
+        .filterNot{ it.startsWith("-agentlib:jdwp=") }//remove debugger conf -- can't start 2 debugs with same conf
+        .filterNot{ it.startsWith("-javaagent:") && it.endsWith("capture.props") }    //remove debugger support agent: not working without debug
       val testUtilArg = adjustedArgs.indexOf(StressTestUtil::class.java.name)
       check(testUtilArg >= 0) { currentProcessInfo }
       adjustedArgs = listOf(currentProcessInfo.command().get()) +
@@ -149,17 +154,15 @@ object StressTestUtil {
                                 userClass: KClass<out User>,
                                 appClass: KClass<out App>,
                                 iterations: Int): Thread {
-    val userRunSession = userClass.memberFunctions.find { it.name == "run" }
-                         ?: throw IllegalStateException("no run method in ${userClass.qualifiedName}")
     val tempDir = FileUtil.createTempDirectory("stress-test", id.toString()).toPath()
-    tempDir.forEachDirectoryEntry {
-      it.delete(true)
-    }
     return thread {
       try {
         val userAgent = UserAgentImpl(id, stressTestReport, appClass, tempDir)
         repeat(iterations) {
-          userRunSession.call(userClass.createInstance(), userAgent)
+          tempDir.forEachDirectoryEntry { it.delete(true) }
+
+          userClass.createInstance().run(userAgent)
+
           iterationsPassed.incrementAndGet()
         }
       }

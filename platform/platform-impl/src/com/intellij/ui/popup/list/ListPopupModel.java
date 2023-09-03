@@ -18,7 +18,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-public class ListPopupModel<T> extends AbstractListModel<T> {
+public final class ListPopupModel<T> extends AbstractListModel<T> {
 
   private final List<T> myOriginalList;
   private final List<T> myFilteredList = new ArrayList<>();

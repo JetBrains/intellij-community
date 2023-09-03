@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui.jcef;
 
 import com.intellij.notification.NotificationGroup;
@@ -50,11 +50,11 @@ public final class JBCefApp {
   private static final int MIN_SUPPORTED_JCEF_API_MAJOR_VERSION = 1;
   private static final int MIN_SUPPORTED_JCEF_API_MINOR_VERSION = 12;
 
-  @NotNull private final CefApp myCefApp;
+  private final @NotNull CefApp myCefApp;
 
-  @NotNull private final CefSettings myCefSettings;
+  private final @NotNull CefSettings myCefSettings;
 
-  @NotNull private final Disposable myDisposable = new Disposable() {
+  private final @NotNull Disposable myDisposable = new Disposable() {
     @Override
     public void dispose() {
       myCefApp.dispose();
@@ -105,8 +105,7 @@ public final class JBCefApp {
    *
    * @throws IllegalStateException when JCEF initialization is not possible in current env
    */
-  @NotNull
-  public static JBCefApp getInstance() {
+  public static @NotNull JBCefApp getInstance() {
     if (Holder.INSTANCE == null) {
       synchronized (Holder.class) {
         if (Holder.INSTANCE == null) {
@@ -125,10 +124,9 @@ public final class JBCefApp {
   }
 
   private static final class Holder {
-    @Nullable static volatile JBCefApp INSTANCE = init();
+    static volatile @Nullable JBCefApp INSTANCE = init();
 
-    @Nullable
-    static JBCefApp init() {
+    static @Nullable JBCefApp init() {
       ourInitialized.set(true);
       JCefAppConfig config = null;
       if (isSupported()) {
@@ -246,8 +244,7 @@ public final class JBCefApp {
     return myCefSettings.cache_path;
   }
 
-  @NotNull
-  public JBCefClient createClient() {
+  public @NotNull JBCefClient createClient() {
     return createClient(false);
   }
 

@@ -29,7 +29,7 @@ class NewProjectWizardCollector : CounterUsagesCollector() {
 
   companion object {
 
-    val GROUP: EventLogGroup = EventLogGroup("new.project.wizard.interactions", 23)
+    val GROUP: EventLogGroup = EventLogGroup("new.project.wizard.interactions", 24)
 
     private val LANGUAGES = listOf(
       NewProjectWizardConstants.Language.JAVA, NewProjectWizardConstants.Language.KOTLIN,
@@ -67,6 +67,7 @@ class NewProjectWizardCollector : CounterUsagesCollector() {
     private val buildSystemParentField = EventFields.Boolean("build_system_parent")
     private val groovyVersionField = EventFields.Version
     private val groovySourceTypeField = EventFields.String("groovy_sdk_type", GROOVY_SDKS)
+    private val useCompactProjectStructureField = EventFields.Boolean("use_compact_project_structure")
     private val pluginField = EventFields.String("plugin_selected", LANGUAGES)
 
     private val baseFields = arrayOf(sessionIdField, screenNumField)
@@ -113,6 +114,8 @@ class NewProjectWizardCollector : CounterUsagesCollector() {
 
     private val groovyLibraryChanged = GROUP.registerVarargEvent("groovy.lib.changed", *buildSystemFields, groovySourceTypeField, groovyVersionField)
     private val groovyLibraryFinished = GROUP.registerVarargEvent("groovy.lib.finished", *buildSystemFields, groovySourceTypeField, groovyVersionField)
+
+    private val useCompactProjectStructureChangedEvent = GROUP.registerVarargEvent("build.system.use.compact.project.structure.changed", *buildSystemFields, useCompactProjectStructureField)
     // @formatter:on
 
     @JvmStatic
@@ -288,6 +291,12 @@ class NewProjectWizardCollector : CounterUsagesCollector() {
         groovySourceTypeField with groovyLibrarySource,
         groovyVersionField with groovyLibraryVersion
       )
+  }
+
+  object Kotlin {
+
+    fun NewProjectWizardStep.logUseCompactProjectStructureChanged(isSelected: Boolean): Unit =
+      useCompactProjectStructureChangedEvent.logBuildSystemEvent(this, useCompactProjectStructureField with isSelected)
   }
 
   private class GeneratorEventField(override val name: String) : PrimitiveEventField<ModuleBuilder?>() {

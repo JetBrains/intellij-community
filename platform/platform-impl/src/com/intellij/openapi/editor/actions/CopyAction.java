@@ -25,7 +25,7 @@ import java.util.List;
 import static com.intellij.codeInsight.highlighting.HighlightManager.HIDE_BY_ANY_KEY;
 import static com.intellij.codeInsight.highlighting.HighlightManager.HIDE_BY_ESCAPE;
 
-public class CopyAction extends TextComponentEditorAction implements HintManagerImpl.ActionToIgnore {
+public final class CopyAction extends TextComponentEditorAction implements HintManagerImpl.ActionToIgnore {
 
   private static final String SKIP_COPY_AND_CUT_FOR_EMPTY_SELECTION_KEY = "editor.skip.copy.and.cut.for.empty.selection";
   public static final String SKIP_SELECTING_LINE_AFTER_COPY_EMPTY_SELECTION_KEY = "editor.skip.selecting.line.after.copy.empty.selection";
@@ -34,7 +34,7 @@ public class CopyAction extends TextComponentEditorAction implements HintManager
     super(new Handler(), false);
   }
 
-  public static class Handler extends EditorActionHandler {
+  public static final class Handler extends EditorActionHandler {
     @Override
     public void doExecute(final @NotNull Editor editor, @Nullable Caret caret, DataContext dataContext) {
       copyToClipboard(editor, dataContext, EditorCopyPasteHelper.getInstance()::getSelectionTransferable);

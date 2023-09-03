@@ -203,6 +203,7 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
   private boolean myReadEditorMarkupModel;
   private VirtualFilePointerTracker myVirtualFilePointerTracker;
   private LibraryTableTracker  myLibraryTableTracker;
+  private SelectionAndCaretMarkupApplyPolicy mySelectionAndCaretMarkupApplyPolicy = SelectionAndCaretMarkupApplyPolicy.UPDATE_FILE_AND_KEEP_DOCUMENT_CLEAN;
 
   public CodeInsightTestFixtureImpl(@NotNull IdeaProjectTestFixture projectFixture, @NotNull TempDirTestFixture tempDirTestFixture) {
     myProjectFixture = projectFixture;
@@ -1609,16 +1610,29 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
 
     ApplicationManager.getApplication().invokeAndWait(() -> {
       if (!copy.getFileType().isBinary()) {
-        try {
-          ApplicationManager.getApplication().runWriteAction((ThrowableComputable<Void, IOException>)() -> {
-            copy.setBinaryContent(loader.newFileText.getBytes(copy.getCharset()));
-            return null;
-          });
-        }
-        catch (IOException e) {
-          throw new RuntimeException(e);
+        switch (mySelectionAndCaretMarkupApplyPolicy) {
+          case UPDATE_FILE_AND_KEEP_DOCUMENT_CLEAN -> {
+            try {
+              ApplicationManager.getApplication().runWriteAction((ThrowableComputable<Void, IOException>)() -> {
+                copy.setBinaryContent(loader.newFileText.getBytes(copy.getCharset()));
+                return null;
+              });
+            }
+            catch (IOException e) {
+              throw new RuntimeException(e);
+            }
+          }
+          case UPDATE_DOCUMENT_AND_LEAVE_IT_DIRTY -> {
+            Document document = FileDocumentManager.getInstance().getDocument(copy);
+            if (document == null) {
+              throw new IllegalStateException("Document not found: " + copy);
+            }
+            WriteAction.runAndWait(() -> document.setText(loader.newFileText));
+          }
+          default -> throw new IllegalArgumentException(String.valueOf(mySelectionAndCaretMarkupApplyPolicy));
         }
       }
+
       setFileAndEditor(copy, createEditor(copy));
       if (editor == null) {
         fail("editor couldn't be created for: " + copy.getPath() + ", use copyFileToProject() instead of configureByFile()");
@@ -2295,5 +2309,14 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
   @NotNull
   public Disposable getProjectDisposable() {
     return myProjectFixture.getTestRootDisposable();
+  }
+
+  public enum SelectionAndCaretMarkupApplyPolicy {
+    UPDATE_DOCUMENT_AND_LEAVE_IT_DIRTY,
+    UPDATE_FILE_AND_KEEP_DOCUMENT_CLEAN
+  }
+
+  public void setSelectionAndCaretMarkupApplyPolicy(SelectionAndCaretMarkupApplyPolicy policy) {
+    mySelectionAndCaretMarkupApplyPolicy = policy;
   }
 }

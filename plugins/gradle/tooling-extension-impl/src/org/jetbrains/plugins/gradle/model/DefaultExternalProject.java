@@ -52,13 +52,16 @@ public final class DefaultExternalProject implements ExternalProject, ExternalPr
   private List<File> artifacts;
   @NotNull
   private Map<String, Set<File>> artifactsByConfiguration;
+  @NotNull
+  private List<File> additionalArtifacts;
 
   public DefaultExternalProject() {
     childProjects = new TreeMap<>();
     tasks = new HashMap<>(0);
-    sourceSets = new HashMap<>(0);
+    sourceSets = new LinkedHashMap<>(0);
     artifacts = new ArrayList<>(0);
     artifactsByConfiguration = new HashMap<>(0);
+    additionalArtifacts = new ArrayList<>(0);
   }
 
   public DefaultExternalProject(@NotNull ExternalProject externalProject) {
@@ -90,13 +93,14 @@ public final class DefaultExternalProject implements ExternalProject, ExternalPr
     }
 
     Map<String, ? extends ExternalSourceSet> externalProjectSourceSets = externalProject.getSourceSets();
-    sourceSets = new HashMap<>(externalProjectSourceSets.size());
+    sourceSets = new LinkedHashMap<>(externalProjectSourceSets.size());
     for (Map.Entry<String, ? extends ExternalSourceSet> entry : externalProjectSourceSets.entrySet()) {
       sourceSets.put(entry.getKey(), new DefaultExternalSourceSet(entry.getValue()));
     }
 
     artifacts = new ArrayList<>(externalProject.getArtifacts());
     artifactsByConfiguration = new HashMap<>(externalProject.getArtifactsByConfiguration());
+    additionalArtifacts = new ArrayList<>(externalProject.getAdditionalArtifacts());
   }
 
   @NotNull
@@ -292,6 +296,16 @@ public final class DefaultExternalProject implements ExternalProject, ExternalPr
   @Override
   public Map<String, Set<File>> getArtifactsByConfiguration() {
     return artifactsByConfiguration;
+  }
+
+  public void setAdditionalArtifacts(@NotNull List<File> additionalArtifacts) {
+    this.additionalArtifacts = additionalArtifacts;
+  }
+
+  @NotNull
+  @Override
+  public List<File> getAdditionalArtifacts() {
+    return additionalArtifacts;
   }
 
   @Override

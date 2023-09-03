@@ -41,23 +41,32 @@
   </extensions>
 
   <extensions defaultExtensionNs="DevKit.lang">
-    <cancellationCheckProvider language="kotlin"
+    <cancellationCheckProvider
+      language="kotlin"
       implementationClass="org.jetbrains.idea.devkit.kotlin.inspections.KtCancellationCheckProvider"/>
-    <cancellationCheckInLoopsFixProvider language="kotlin"
+    <cancellationCheckInLoopsFixProvider
+      language="kotlin"
       implementationClass="org.jetbrains.idea.devkit.kotlin.inspections.KtCancellationCheckInLoopsFixProvider"/>
-    <visitorProviderForRBCInspection language="kotlin"
+    <visitorProviderForRBCInspection
+      language="kotlin"
       implementationClass="org.jetbrains.idea.devkit.kotlin.inspections.KtCallingFunctionShouldBeRequiresBlockingContextVisitorProvider"/>
-    <extensionClassShouldNotBePublicProvider language="kotlin"
+    <extensionClassShouldNotBePublicProvider
+      language="kotlin"
       implementationClass="org.jetbrains.idea.devkit.kotlin.inspections.ExtensionClassShouldNotBePublicProviderForKotlin"/>
-    <extensionClassShouldBeFinalErrorMessageProvider language="kotlin"
+    <extensionClassShouldBeFinalErrorMessageProvider
+      language="kotlin"
       implementationClass="org.jetbrains.idea.devkit.kotlin.inspections.ExtensionClassShouldNotBeOpenErrorMessageProvider"/>
-    <serviceLevelExtractor language="kotlin"
+    <serviceLevelExtractor
+      language="kotlin"
       implementationClass="org.jetbrains.idea.devkit.kotlin.inspections.ServiceLevelExtractorForKotlin"/>
-    <lightServiceMustBeFinalErrorMessageProvider language="kotlin"
-     implementationClass="org.jetbrains.idea.devkit.kotlin.inspections.LightServiceMustNotBeOpenErrorMessageProvider"/>
-    <appServiceAsStaticFinalFieldOrPropertyVisitorProvider language="kotlin"
+    <lightServiceMustBeFinalErrorMessageProvider
+      language="kotlin"
+      implementationClass="org.jetbrains.idea.devkit.kotlin.inspections.LightServiceMustNotBeOpenErrorMessageProvider"/>
+    <appServiceAsStaticFinalFieldOrPropertyVisitorProvider
+      language="kotlin"
       implementationClass="org.jetbrains.idea.devkit.kotlin.inspections.KtAppServiceAsStaticFinalFieldOrPropertyVisitorProvider"/>
-    <uElementAsPsiCheckProvider language="kotlin"
+    <uElementAsPsiCheckProvider
+      language="kotlin"
       implementationClass="org.jetbrains.idea.devkit.kotlin.inspections.KtUElementAsPsiCheckProvider"/>
     <staticInitializationInExtensionsVisitorProvider language="kotlin"
       implementationClass="org.jetbrains.idea.devkit.kotlin.inspections.KtStaticInitializationInExtensionsVisitorProvider"/>

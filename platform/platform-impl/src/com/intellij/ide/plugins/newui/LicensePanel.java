@@ -31,7 +31,7 @@ import java.util.function.Supplier;
 /**
  * @author Alexander Lobas
  */
-public class LicensePanel extends NonOpaquePanel {
+public final class LicensePanel extends NonOpaquePanel {
   private final JLabel mySubMessage = new JLabel();
   private final JPanel myPanel = new NonOpaquePanel(new HorizontalLayout(JBUI.scale(5)));
   private final JLabel myMessage = new JLabel();

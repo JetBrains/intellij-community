@@ -1,11 +1,11 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.actions;
 
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.ui.LafManager;
 import com.intellij.ide.ui.UITheme;
 import com.intellij.ide.ui.laf.LafManagerImpl;
-import com.intellij.ide.ui.laf.UIThemeBasedLookAndFeelInfo;
+import com.intellij.ide.ui.laf.UIThemeLookAndFeelInfo;
 import com.intellij.ide.ui.laf.darcula.DarculaInstaller;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.DataContext;
@@ -26,7 +26,7 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 
-public class QuickChangeColorSchemeAction extends QuickSwitchSchemeAction {
+public final class QuickChangeColorSchemeAction extends QuickSwitchSchemeAction {
   @Override
   protected void fillActions(Project project, @NotNull DefaultActionGroup group, @NotNull DataContext dataContext) {
     EditorColorsScheme current = EditorColorsManager.getInstance().getGlobalScheme();
@@ -72,16 +72,16 @@ public class QuickChangeColorSchemeAction extends QuickSwitchSchemeAction {
     UIManager.LookAndFeelInfo suitableLaf = null;
     String schemeName = Scheme.getBaseName(newScheme.getName());
     for (UIManager.LookAndFeelInfo laf : lafManager.getInstalledLookAndFeels()) {
-      if (laf instanceof UIThemeBasedLookAndFeelInfo &&
-               schemeName.equals(((UIThemeBasedLookAndFeelInfo)laf).getTheme().getEditorSchemeName())) {
+      if (laf instanceof UIThemeLookAndFeelInfo &&
+               schemeName.equals(((UIThemeLookAndFeelInfo)laf).getTheme().getEditorSchemeName())) {
         suitableLaf = laf;
         break;
       }
     }
 
-    UIManager.LookAndFeelInfo currentLafInfo = lafManager.getCurrentLookAndFeel();
-    UITheme theme = currentLafInfo instanceof UIThemeBasedLookAndFeelInfo ?
-                      ((UIThemeBasedLookAndFeelInfo)currentLafInfo).getTheme() : null;
+    UIManager.LookAndFeelInfo currentLafInfo = lafManager.getCurrentUIThemeLookAndFeel();
+    UITheme theme = currentLafInfo instanceof UIThemeLookAndFeelInfo ?
+                      ((UIThemeLookAndFeelInfo)currentLafInfo).getTheme() : null;
 
     if (isDarkEditorTheme &&
         (UIUtil.isUnderIntelliJLaF() || theme != null && !theme.isDark())) {

@@ -72,10 +72,7 @@ internal class ReplaceGetOrSetInspection :
         val receiverExpression = element.receiverExpression
         if (receiverExpression is KtSuperExpression || receiverExpression.getKtType()?.isUnit != false) return null
 
-        if (functionSymbol.name == OperatorNameConventions.SET &&
-            element.getPossiblyQualifiedCallExpression()?.getKtType()?.isUnit != true &&
-            element.isUsedAsExpression()
-        ) return null
+        if (functionSymbol.name == OperatorNameConventions.SET && element.isUsedAsExpression()) return null
 
         val problemHighlightType = if (functionSymbol.isExplicitOperator()) GENERIC_ERROR_OR_WARNING else INFORMATION
 

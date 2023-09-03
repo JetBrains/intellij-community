@@ -244,4 +244,14 @@ public interface ApplicationEx extends Application {
   default void runWithoutImplicitRead(@NotNull Runnable runnable) {
     runnable.run();
   }
+
+  /**
+   * Runs specified action with enabeld implicit read lock, if this feature is disabled with system property.
+   * @see com.intellij.idea.StartupUtil#isImplicitReadOnEDTDisabled() StartupUtil.isImplicitReadOnEDTDisabled()
+   * @param runnable action to run with enabled implicit read lock.
+   */
+  @ApiStatus.Internal
+  default void runWithImplicitRead(@NotNull Runnable runnable) {
+    runnable.run();
+  }
 }

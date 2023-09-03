@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.fileChooser.ex;
 
 import com.intellij.openapi.application.ReadAction;
@@ -250,7 +250,7 @@ public final class FileTextFieldUtil {
     void setTextToFile(@NotNull FileLookup.LookupFile file);
   }
 
-  public static class TextFieldDocumentOwner implements DocumentOwner {
+  public static final class TextFieldDocumentOwner implements DocumentOwner {
     private final JTextField myField;
     private final Document myDocument;
     private final @NotNull Consumer<? super FileLookup.LookupFile> mySetText;

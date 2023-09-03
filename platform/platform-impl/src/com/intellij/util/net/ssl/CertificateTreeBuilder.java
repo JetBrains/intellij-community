@@ -32,7 +32,7 @@ import static com.intellij.util.net.ssl.CertificateWrapper.CommonField.ORGANIZAT
  * @author Mikhail Golubev
  */
 @ApiStatus.Internal
-public class CertificateTreeBuilder implements Disposable {
+public final class CertificateTreeBuilder implements Disposable {
   private static final SimpleTextAttributes STRIKEOUT_ATTRIBUTES = new SimpleTextAttributes(SimpleTextAttributes.STYLE_STRIKEOUT, null);
   private static final RootDescriptor ROOT_DESCRIPTOR = new RootDescriptor();
 
@@ -148,7 +148,7 @@ public class CertificateTreeBuilder implements Disposable {
     return ContainerUtil.map(wrappers, wrapper -> wrapper.getCertificate());
   }
 
-  class MyTreeStructure extends AbstractTreeStructure {
+  final class MyTreeStructure extends AbstractTreeStructure {
     @Override
     public @NotNull Object getRootElement() {
       return RootDescriptor.ROOT;

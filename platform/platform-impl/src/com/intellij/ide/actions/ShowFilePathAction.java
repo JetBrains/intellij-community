@@ -43,7 +43,7 @@ import java.util.function.Consumer;
  *
  * @see RevealFileAction
  */
-public class ShowFilePathAction extends DumbAwareAction implements ActionRemoteBehaviorSpecification.Disabled {
+public final class ShowFilePathAction extends DumbAwareAction implements ActionRemoteBehaviorSpecification.Disabled {
   @Override
   public void update(@NotNull AnActionEvent e) {
     var visible = RevealFileAction.isSupported();

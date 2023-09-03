@@ -21,7 +21,7 @@ import javax.swing.*;
 import java.awt.*;
 import java.util.List;
 
-class QuickListPanel {
+final class QuickListPanel {
   private final CollectionListModel<String> myActionsModel;
   private JPanel myPanel;
   private final JBList<String> myActionsList;
@@ -135,7 +135,7 @@ class QuickListPanel {
     return myPanel;
   }
 
-  private static class MyCollectionListModel extends CollectionListModel<String> {
+  private static final class MyCollectionListModel extends CollectionListModel<String> {
     @Override
     public void exchangeRows(int oldIndex, int newIndex) {
       String element = getElementAt(oldIndex);
@@ -144,7 +144,7 @@ class QuickListPanel {
     }
   }
 
-  private static class MyListCellRenderer extends DefaultListCellRenderer {
+  private static final class MyListCellRenderer extends DefaultListCellRenderer {
     @Override
     public @NotNull Component getListCellRendererComponent(@NotNull JList list, Object value, int index, boolean selected, boolean focused) {
       super.getListCellRendererComponent(list, value, index, selected, focused);

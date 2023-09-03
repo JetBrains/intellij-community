@@ -14,7 +14,7 @@ abstract class AbstractK2AddImportActionTest : AbstractAddImportActionTestBase()
     }
 
     override fun doTest(unused: String) {
-        IgnoreTests.runTestIfEnabledByFileDirective(dataFilePath(), IgnoreTests.DIRECTIVES.FIR_COMPARISON) {
+        IgnoreTests.runTestIfNotDisabledByFileDirective(dataFilePath(), IgnoreTests.DIRECTIVES.IGNORE_K2) {
             super.doTest(unused)
         }
     }

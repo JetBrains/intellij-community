@@ -237,6 +237,12 @@ class UISettings @NonInjectable constructor(private val notRoamableOptions: NotR
       toolbarSettingsState.showNewMainToolbar = !value && toolbarSettingsState.showNewMainToolbar
     }
 
+  var minimizeHeader: Boolean
+    get() = state.minimizeHeader
+    set(value) {
+      state.minimizeHeader = value
+    }
+
   var showIconsInMenus: Boolean
     get() = state.showIconsInMenus
     set(value) {
@@ -688,6 +694,10 @@ class UISettings @NonInjectable constructor(private val notRoamableOptions: NotR
 
   override fun getState(): UISettingsState = state
 
+  override fun noStateLoaded() {
+    migrateFontParameters()
+  }
+
   override fun loadState(state: UISettingsState) {
     this.state = state
     updateDeprecatedProperties()
@@ -696,6 +706,7 @@ class UISettings @NonInjectable constructor(private val notRoamableOptions: NotR
     if (migrateOldFontSettings()) {
       notRoamableOptions.fixFontSettings()
     }
+    migrateFontParameters()
 
     // Check tab placement in editor
     val editorTabPlacement = state.editorTabPlacement
@@ -757,6 +768,10 @@ class UISettings @NonInjectable constructor(private val notRoamableOptions: NotR
       migrated = true
     }
     return migrated
+  }
+
+  private fun migrateFontParameters() {
+    notRoamableOptions.migratePresentationModeIdeScale(state.presentationModeFontSize)
   }
 
   //<editor-fold desc="Deprecated stuff.">

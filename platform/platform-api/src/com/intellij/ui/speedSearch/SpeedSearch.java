@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui.speedSearch;
 
 import com.intellij.openapi.keymap.KeymapUtil;
@@ -144,14 +144,12 @@ public class SpeedSearch extends SpeedSearchSupply implements KeyListener {
     fireStateChanged(prevString);
   }
 
-  @Nullable
-  public Matcher getMatcher() {
+  public @Nullable Matcher getMatcher() {
     return myMatcher;
   }
 
-  @Nullable
   @Override
-  public Iterable<TextRange> matchingFragments(@NotNull String text) {
+  public @Nullable Iterable<TextRange> matchingFragments(@NotNull String text) {
     if (myMatcher instanceof MinusculeMatcher) {
       return ((MinusculeMatcher)myMatcher).matchingFragments(text);
     }
@@ -167,9 +165,8 @@ public class SpeedSearch extends SpeedSearchSupply implements KeyListener {
     return isHoldingFilter();
   }
 
-  @Nullable
   @Override
-  public String getEnteredPrefix() {
+  public @Nullable String getEnteredPrefix() {
     return myString;
   }
 

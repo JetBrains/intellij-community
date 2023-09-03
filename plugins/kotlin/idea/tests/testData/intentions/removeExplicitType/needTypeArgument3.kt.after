@@ -1,4 +1,4 @@
-// IGNORE_FIR
+// IGNORE_K2
 // WITH_STDLIB
 // AFTER-WARNING: Variable 'x' is never used
 fun <T> foo() {

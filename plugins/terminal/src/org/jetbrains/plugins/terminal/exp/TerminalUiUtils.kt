@@ -16,6 +16,7 @@ import com.intellij.openapi.editor.impl.EditorImpl
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
 import com.intellij.terminal.JBTerminalSystemSettingsProviderBase
+import com.intellij.ui.scale.JBUIScale
 import com.intellij.util.Alarm
 import com.intellij.util.TimeoutUtil
 import com.intellij.util.concurrency.annotations.RequiresEdt
@@ -117,6 +118,8 @@ object TerminalUiUtils {
 
     return result
   }
+
+  fun toFloatAndScale(value: Int): Float = JBUIScale.scale(value.toFloat())
 
   private val LOG = logger<TerminalUiUtils>()
   private const val TIMEOUT = 2000

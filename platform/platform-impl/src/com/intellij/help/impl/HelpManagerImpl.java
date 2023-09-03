@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.help.impl;
 
 import com.intellij.ide.BrowserUtil;
@@ -18,6 +18,7 @@ public class HelpManagerImpl extends HelpManager {
 
   @Override
   public void invokeHelp(@Nullable String id) {
+    logWillOpenHelpId(id);
     String helpUrl = getHelpUrl(id);
     if (helpUrl != null) {
       BrowserUtil.browse(helpUrl);

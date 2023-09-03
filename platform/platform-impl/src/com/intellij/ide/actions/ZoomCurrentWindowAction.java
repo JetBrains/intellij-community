@@ -11,7 +11,7 @@ import java.awt.*;
 /**
  * @author ignatov
  */
-public class ZoomCurrentWindowAction extends MacWindowActionBase {
+public final class ZoomCurrentWindowAction extends MacWindowActionBase {
   @Override
   public void actionPerformed(final @NotNull AnActionEvent e) {
     final Component focusOwner = IdeFocusManager.getGlobalInstance().getFocusOwner();

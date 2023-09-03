@@ -10,6 +10,7 @@ import com.intellij.collaboration.util.ChangesSelection
 import com.intellij.collaboration.util.REVISION_COMPARISON_CHANGE_HASHING_STRATEGY
 import com.intellij.openapi.actionSystem.DataKey
 import com.intellij.openapi.diagnostic.logger
+import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.vcs.changes.Change
 import com.intellij.util.childScope
@@ -54,6 +55,7 @@ internal interface GitLabMergeRequestDiffViewModel {
 private val LOG = logger<GitLabMergeRequestDiffViewModel>()
 
 internal class GitLabMergeRequestDiffViewModelImpl(
+  private val project: Project,
   parentCs: CoroutineScope,
   private val currentUser: GitLabUserDTO,
   private val mergeRequest: GitLabMergeRequest,
@@ -77,7 +79,9 @@ internal class GitLabMergeRequestDiffViewModelImpl(
       .map { it.patchesByChange.asIterable() }
       .associateBy(
         { (change, _) -> change },
-        { (_, diffData) -> GitLabMergeRequestDiffChangeViewModelImpl(this, currentUser, mergeRequest, diffData, discussionsViewOption) },
+        { (_, diffData) ->
+          GitLabMergeRequestDiffChangeViewModelImpl(project, this, currentUser, mergeRequest, diffData, discussionsViewOption)
+        },
         { destroy() },
         customHashingStrategy = REVISION_COMPARISON_CHANGE_HASHING_STRATEGY
       )

@@ -67,6 +67,18 @@ def setup_dataframe_many_columns():
     return pd.read_csv('test_data/pandas/dataframe_many_columns_before.csv')
 
 
+@pytest.fixture
+def setup_df_with_big_int_values():
+    """
+    Here we create a fixture for one test.
+    With that df we check that we catch OverflowError exception in describe functions.
+    """
+    big_int = 555555555555555555555555555555555555555555555555555555555555555555555555555555555555555555555555555555555555555555555555555555555555555555555555555555555555555555555555555555555555555555555555555555555555555555555555555555555555555555555555555555555555555555555555555555555555555555555555555555555555555555555
+    df = pd.DataFrame({"BitIntValues": [1, 2]})
+    df["BitIntValues"] = big_int
+
+    return df
+
 def test_info_command(setup_dataframe):
     """
     Here we check the correctness of info command that is invoked via Kotlin.
@@ -297,6 +309,11 @@ def test_describe_series(setup_dataframe):
         actual=resulted,
         expected_file='test_data/pandas/series_describe_' + exp_file_python_ver + '.txt'
     )
+
+@pytest.mark.skipif(sys.version_info < (3, 0), reason="The exception will be raised during df creation in Python2")
+def test_overflow_error_is_caught(setup_df_with_big_int_values):
+    df = setup_df_with_big_int_values
+    assert pandas_tables_helpers.__get_describe(df) is None
 
 
 def read_expected_from_file_and_compare_with_actual(actual, expected_file):

@@ -10,3 +10,5 @@ expect object <!LINE_MARKER("descr='Has actuals in js, jvm modules'")!>Platform<
 }
 
 fun hello(): String = "Hello from ${Platform.name}"
+
+expect fun <!LINE_MARKER("descr='Has actuals in js, jvm modules'")!>foo<!>()

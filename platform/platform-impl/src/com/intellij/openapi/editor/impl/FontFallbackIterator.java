@@ -185,7 +185,7 @@ public final class FontFallbackIterator {
     return myFontInfo.getFont();
   }
 
-  private static class BreakAtEveryCharacterIterator extends BreakIterator {
+  private static final class BreakAtEveryCharacterIterator extends BreakIterator {
     private int myStart;
     private int myEnd;
     private int myCurrent;

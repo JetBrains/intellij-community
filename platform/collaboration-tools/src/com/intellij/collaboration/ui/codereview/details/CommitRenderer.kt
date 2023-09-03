@@ -13,6 +13,7 @@ import com.intellij.ui.scale.JBUIScale
 import com.intellij.util.text.DateFormatUtil
 import com.intellij.util.ui.*
 import com.intellij.util.ui.components.BorderLayoutPanel
+import org.intellij.lang.annotations.Language
 import java.awt.Component
 import java.util.*
 import javax.swing.JLabel
@@ -68,7 +69,7 @@ class CommitRenderer<T> private constructor(
       commitPanel.addToCenter(allCommitsMessage)
     }
     else {
-      commitMessageText.text = commit.title
+      commitMessageText.text = commit.titleHtml
       authorAndDate.text = "${commit.author}, ${DateFormatUtil.formatPrettyDateTime(commit.committedDate)}"
 
       commitMessagePanel.add(commitMessageIcon)
@@ -113,8 +114,8 @@ class CommitRenderer<T> private constructor(
 }
 
 data class CommitPresentation(
-  val title: @NlsSafe String,
-  val description: @NlsSafe String,
+  @Language("HTML") val titleHtml: @NlsSafe String,
+  @Language("HTML") val descriptionHtml: @NlsSafe String,
   val author: @NlsSafe String,
   val committedDate: Date
 )

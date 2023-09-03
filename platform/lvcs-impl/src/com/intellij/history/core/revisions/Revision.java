@@ -26,9 +26,7 @@ import java.util.Collections;
 import java.util.List;
 
 public abstract class Revision {
-  @NlsContexts.Label
-  @Nullable
-  public String getLabel() {
+  public @NlsContexts.Label @Nullable String getLabel() {
     return null;
   }
 
@@ -38,14 +36,11 @@ public abstract class Revision {
 
   public abstract long getTimestamp();
 
-  @Nullable
-  public Long getChangeSetId() {
+  public @Nullable Long getChangeSetId() {
     return null;
   }
 
-  @NlsContexts.Label
-  @Nullable
-  public String getChangeSetName() {
+  public @NlsContexts.Label @Nullable String getChangeSetName() {
     return null;
   }
 

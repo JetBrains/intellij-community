@@ -2,7 +2,7 @@
 package org.jetbrains.kotlin.gradle.idea.importing.multiplatformTests
 
 import com.intellij.lang.annotation.HighlightSeverity
-import org.jetbrains.kotlin.config.KotlinFacetSettings
+import org.jetbrains.kotlin.config.IKotlinFacetSettings
 import org.jetbrains.kotlin.gradle.multiplatformTests.AbstractKotlinMppGradleImportingTest
 import org.jetbrains.kotlin.gradle.multiplatformTests.TestConfigurationDslScope
 import org.jetbrains.kotlin.gradle.multiplatformTests.testFeatures.checkers.contentRoots.ContentRootsChecker
@@ -21,7 +21,7 @@ class KotlinMppMiscCasesImportingTests : AbstractKotlinMppGradleImportingTest() 
         hideKotlinTest = true
         hideKotlinNativeDistribution = true
 
-        onlyFacetFields(KotlinFacetSettings::targetPlatform)
+        onlyFacetFields(IKotlinFacetSettings::targetPlatform)
 
         hideResourceRoots = true
     }
@@ -183,7 +183,7 @@ class KotlinMppMiscCasesImportingTests : AbstractKotlinMppGradleImportingTest() 
     fun testAssociateCompilationIntegrationTest() {
         doTest {
             onlyCheckers(HighlightingChecker, KotlinFacetSettingsChecker)
-            onlyFacetFields(KotlinFacetSettings::additionalVisibleModuleNames)
+            onlyFacetFields(IKotlinFacetSettings::additionalVisibleModuleNames)
             hideLineMarkers = true
         }
     }

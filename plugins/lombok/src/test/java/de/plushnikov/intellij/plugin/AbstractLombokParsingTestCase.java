@@ -32,7 +32,7 @@ public abstract class AbstractLombokParsingTestCase extends AbstractLombokLightC
   }
 
   protected Collection<String> annotationsToIgnoreList() {
-    return Set.of("java.lang.SuppressWarnings", "java.lang.Override","com.fasterxml.jackson.databind.annotation.JsonDeserialize");
+    return Set.of("java.lang.SuppressWarnings", "java.lang.Override", "com.fasterxml.jackson.databind.annotation.JsonDeserialize");
   }
 
   protected boolean shouldCompareCodeBlocks() {
@@ -101,7 +101,9 @@ public abstract class AbstractLombokParsingTestCase extends AbstractLombokLightC
     PsiModifierList afterFieldModifierList = afterClass.getModifierList();
 
     compareContainingClasses(beforeClass, afterClass);
-    compareModifiers(beforeFieldModifierList, afterFieldModifierList);
+    if (beforeFieldModifierList != null && afterFieldModifierList != null) {
+      compareModifiers(beforeFieldModifierList, afterFieldModifierList);
+    }
     compareFields(beforeClass, afterClass);
     compareMethods(beforeClass, afterClass);
     compareConstructors(beforeClass, afterClass);
@@ -127,7 +129,9 @@ public abstract class AbstractLombokParsingTestCase extends AbstractLombokLightC
         if (Objects.equal(afterField.getName(), beforeField.getName())) {
           final PsiModifierList beforeFieldModifierList = beforeField.getModifierList();
 
-          compareModifiers(beforeFieldModifierList, afterFieldModifierList);
+          if (beforeFieldModifierList != null && afterFieldModifierList != null) {
+            compareModifiers(beforeFieldModifierList, afterFieldModifierList);
+          }
           compareType(beforeField.getType(), afterField.getType(), afterField);
           compareInitializers(beforeField.getInitializer(), afterField.getInitializer());
           compared = true;
@@ -155,10 +159,7 @@ public abstract class AbstractLombokParsingTestCase extends AbstractLombokLightC
     return StringUtil.trimStart(canonicalText, "java.lang.");
   }
 
-  private void compareModifiers(PsiModifierList beforeModifierList, PsiModifierList afterModifierList) {
-    assertNotNull(beforeModifierList);
-    assertNotNull(afterModifierList);
-
+  private void compareModifiers(@NotNull PsiModifierList beforeModifierList, @NotNull PsiModifierList afterModifierList) {
     for (String modifier : PsiModifier.MODIFIERS) {
       boolean haveSameModifiers = afterModifierList.hasModifierProperty(modifier) == beforeModifierList.hasModifierProperty(modifier);
       if (!haveSameModifiers) {
@@ -207,9 +208,9 @@ public abstract class AbstractLombokParsingTestCase extends AbstractLombokLightC
         PsiAnnotation afterAnnotation = afterModifierList.findAnnotation(qualifiedName);
         if (null != afterAnnotation) {
           Map<String, String> beforeParameter = Stream.of(beforeAnnotation.getParameterList().getAttributes())
-            .collect(Collectors.toMap(PsiNameValuePair::getAttributeName, p->p.getValue().getText()));
+            .collect(Collectors.toMap(PsiNameValuePair::getAttributeName, p -> p.getValue().getText()));
           Map<String, String> afterParameter = Stream.of(afterAnnotation.getParameterList().getAttributes())
-            .collect(Collectors.toMap(PsiNameValuePair::getAttributeName, p->p.getValue().getText()));
+            .collect(Collectors.toMap(PsiNameValuePair::getAttributeName, p -> p.getValue().getText()));
           assertEquals("Annotation parameter are not same for " + qualifiedName, afterParameter, beforeParameter);
         }
       }

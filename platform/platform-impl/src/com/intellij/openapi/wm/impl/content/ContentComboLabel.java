@@ -99,16 +99,17 @@ final class ContentComboLabel extends ContentLabel {
   @Override
   public Dimension getPreferredSize() {
     Dimension size = super.getPreferredSize();
+    int iconsGap = JBUI.scale(ICONS_GAP);
     if (!isPreferredSizeSet() && isToDrawCombo()) {
-      if (hasActiveIcons()) size.width -= ICONS_GAP;
+      if (hasActiveIcons()) size.width -= iconsGap;
       myComboIconPoint.x = size.width;
       size.width += myComboIcon.getIconWidth();
     }
 
     if (ExperimentalUI.isNewUI()) {
       setBorder(myLayout.shouldShowId()
-                ? JBUI.Borders.empty(0, JBUI.CurrentTheme.ToolWindow.headerTabLeftRightInsets().left, 0, ICONS_GAP)
-                : JBUI.Borders.empty(0, JBUI.CurrentTheme.ToolWindow.headerLabelLeftRightInsets().left, 0, ICONS_GAP));
+                ? JBUI.Borders.empty(0, JBUI.CurrentTheme.ToolWindow.headerTabLeftRightInsets().left, 0, iconsGap)
+                : JBUI.Borders.empty(0, JBUI.CurrentTheme.ToolWindow.headerLabelLeftRightInsets().left, 0, iconsGap));
     }
 
     return size;

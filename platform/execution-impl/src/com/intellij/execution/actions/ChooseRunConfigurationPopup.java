@@ -704,7 +704,7 @@ public final class ChooseRunConfigurationPopup implements ExecutorProvider {
     }
   }
 
-  private static class MyAbstractAction extends AbstractAction implements DumbAware {
+  private static final class MyAbstractAction extends AbstractAction implements DumbAware {
     private final ListPopupImpl myListPopup;
     private final int myNumber;
     private final Executor myExecutor;
@@ -728,7 +728,7 @@ public final class ChooseRunConfigurationPopup implements ExecutorProvider {
     }
   }
 
-  private class RunListPopup extends ListPopupImpl {
+  private final class RunListPopup extends ListPopupImpl {
 
     RunListPopup(Project project, WizardPopup aParent, ListPopupStep aStep, Object parentValue) {
       super(project, aParent, aStep, parentValue);

@@ -8,15 +8,23 @@ import com.jediterm.core.util.TermSize
 
 class BlockTerminalController(
   private val session: TerminalSession,
+  focusModel: TerminalFocusModel,
   private val outputController: TerminalOutputController,
   private val promptController: TerminalPromptController
 ) : ShellCommandListener {
+  private val selectionController: TerminalSelectionController = TerminalSelectionController(focusModel,
+                                                                                             outputController.selectionModel,
+                                                                                             outputController.outputModel)
+
   init {
     session.addCommandListener(this)
+
+    outputController.putUserData(TerminalSelectionController.KEY, selectionController)
+    promptController.putUserData(TerminalSelectionController.KEY, selectionController)
+
     // Show initial terminal output (prior to the first prompt) in a separate block.
     // `initialized` event will finish the block.
     outputController.startCommandBlock(null)
-    outputController.isFocused = true
     promptController.promptIsVisible = false
     session.model.isCommandRunning = true
   }
@@ -49,15 +57,15 @@ class BlockTerminalController(
   }
 
   override fun initialized() {
-    finishCommandBlock()
+    finishCommandBlock(exitCode = 0)
   }
 
   override fun commandFinished(command: String, exitCode: Int, duration: Long) {
-    finishCommandBlock()
+    finishCommandBlock(exitCode)
   }
 
-  private fun finishCommandBlock() {
-    outputController.finishCommandBlock()
+  private fun finishCommandBlock(exitCode: Int) {
+    outputController.finishCommandBlock(exitCode)
 
     val model = session.model
     model.isCommandRunning = false

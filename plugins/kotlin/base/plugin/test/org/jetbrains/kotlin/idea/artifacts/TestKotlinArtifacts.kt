@@ -64,6 +64,13 @@ object TestKotlinArtifacts {
             ".klib"
         )
     }
+    @JvmStatic val kotlinDomApiCompat: File by lazy {
+        downloadOrReportUnavailability(
+            "kotlin-dom-api-compat",
+            KotlinMavenUtils.findLibraryVersion(kotlincStdlibFileName),
+            ".klib"
+        )
+    }
     @JvmStatic val kotlinStdlibWasmJs: File by lazy {
         downloadOrReportUnavailability(
             "kotlin-stdlib-wasm-js",

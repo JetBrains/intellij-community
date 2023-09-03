@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package git4idea;
 
 import com.intellij.dvcs.DvcsUtil;
@@ -26,7 +26,7 @@ public class GitRevisionNumber implements ShortVcsRevisionNumber {
    */
   public static final String NOT_COMMITTED_HASH = BlobIndexUtil.NOT_COMMITTED_HASH;
 
-  public static final GitRevisionNumber HEAD = new GitRevisionNumber("HEAD");
+  public static final GitRevisionNumber HEAD = new GitRevisionNumber(GitUtil.HEAD);
 
   /**
    * the revision number (40 character hashcode, tag, or reference). In some cases incomplete hashcode could be used.

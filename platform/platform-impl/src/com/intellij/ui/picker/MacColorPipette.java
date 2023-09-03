@@ -25,7 +25,7 @@ import java.awt.image.ColorConvertOp;
 import java.io.ByteArrayInputStream;
 import java.nio.ByteBuffer;
 
-public class MacColorPipette extends ColorPipetteBase {
+public final class MacColorPipette extends ColorPipetteBase {
   private static final Logger LOG = Logger.getInstance(MacColorPipette.class);
   private static final int PIXELS = 17;
   private static final int ZOOM = 10;

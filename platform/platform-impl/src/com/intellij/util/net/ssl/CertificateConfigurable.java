@@ -35,7 +35,7 @@ import static com.intellij.util.net.ssl.ConfirmingTrustManager.MutableTrustManag
  * @author Mikhail Golubev
  */
 @ApiStatus.Internal
-public class CertificateConfigurable implements SearchableConfigurable, Configurable.NoScroll, CertificateListener {
+public final class CertificateConfigurable implements SearchableConfigurable, Configurable.NoScroll, CertificateListener {
   private static final FileTypeDescriptor CERTIFICATE_DESCRIPTOR =
     new FileTypeDescriptor(IdeBundle.message("settings.certificate.choose.certificate"),
                            ".crt", ".CRT",

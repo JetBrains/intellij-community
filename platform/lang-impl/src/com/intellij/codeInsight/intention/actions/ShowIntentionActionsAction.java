@@ -5,8 +5,10 @@ package com.intellij.codeInsight.intention.actions;
 import com.intellij.codeInsight.actions.BaseCodeInsightAction;
 import com.intellij.codeInsight.hint.HintManagerImpl;
 import com.intellij.codeInsight.intention.impl.ShowIntentionActionsHandler;
+import com.intellij.icons.AllIcons;
 import com.intellij.ide.lightEdit.LightEdit;
 import com.intellij.ide.lightEdit.LightEditCompatible;
+import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.ActionPlaces;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.Presentation;
@@ -38,6 +40,9 @@ public final class ShowIntentionActionsAction extends BaseCodeInsightAction impl
       return;
     }
     super.update(event);
+    if (ActionPlaces.EDITOR_HINT.equals(event.getPlace())) {
+      presentation.setIcon(AllIcons.Actions.IntentionBulb);
+    }
   }
 
   @Override
@@ -46,8 +51,9 @@ public final class ShowIntentionActionsAction extends BaseCodeInsightAction impl
     if (project == null) return;
 
     if (!LightEdit.owns(project) && DumbService.isDumb(project)) {
-      DumbService.getInstance(project).showDumbModeNotification(
-        ApplicationBundle.message("intentions.are.not.available.message"));
+      DumbService.getInstance(project).showDumbModeNotificationForAction(
+        ApplicationBundle.message("intentions.are.not.available.message"),
+        ActionManager.getInstance().getId(this));
       return;
     }
 

@@ -78,9 +78,9 @@ class ChooseCustomProjectColorAction: AnAction(IdeBundle.message("action.ChooseC
     }
 
     ColorChooserService.instance.showPopup(project = project,
-                                           currentColor = ProjectWindowCustomizerService.getInstance().getToolbarBackground(project),
+                                           currentColor = ProjectWindowCustomizerService.getInstance().getProjectColorToCustomize(project),
                                            listener = { color, _ ->
-                                             ProjectWindowCustomizerService.getInstance().setProjectCustomColor(project, color)
+                                             ProjectWindowCustomizerService.getInstance().setCustomProjectColor(project, color)
                                              e.project?.repaintFrame()
                                            },
                                            location = relativePoint)

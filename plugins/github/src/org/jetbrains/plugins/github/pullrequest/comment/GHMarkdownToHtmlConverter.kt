@@ -1,6 +1,7 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.github.pullrequest.comment
 
+import com.intellij.collaboration.ui.codereview.issues.processIssueIdsMarkdown
 import com.intellij.markdown.utils.CodeFenceSyntaxHighlighterGeneratingProvider
 import com.intellij.markdown.utils.MarkdownToHtmlConverter
 import com.intellij.markdown.utils.lang.CodeBlockHtmlSyntaxHighlighter
@@ -45,5 +46,6 @@ class GHMarkdownToHtmlConverter(private val project: Project?) {
 }
 
 internal fun String.convertToHtml(project: Project): @NlsSafe String {
-  return GHMarkdownToHtmlConverter(project).convertMarkdown(this)
+  val processedText = processIssueIdsMarkdown(project, this)
+  return GHMarkdownToHtmlConverter(project).convertMarkdown(processedText)
 }

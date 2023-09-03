@@ -175,7 +175,7 @@ public final class LogsFragment<T extends RunConfigurationBase<?>> extends Setti
     }
   }
 
-  private class TabNameColumnInfo extends ColumnInfo<LogFileOptions, String> {
+  private final class TabNameColumnInfo extends ColumnInfo<LogFileOptions, String> {
     TabNameColumnInfo() {
       super(DiagnosticBundle.message("log.monitor.tab.name.column"));
     }
@@ -201,7 +201,7 @@ public final class LogsFragment<T extends RunConfigurationBase<?>> extends Setti
     }
   }
 
-  private class FileColumnInfo extends ColumnInfo<LogFileOptions, String> {
+  private final class FileColumnInfo extends ColumnInfo<LogFileOptions, String> {
     FileColumnInfo() {
       super(DiagnosticBundle.message("log.monitor.file.column"));
     }
@@ -227,7 +227,7 @@ public final class LogsFragment<T extends RunConfigurationBase<?>> extends Setti
     }
   }
 
-  private class MyIsActiveColumnInfo extends ColumnInfo<LogFileOptions, Boolean> {
+  private final class MyIsActiveColumnInfo extends ColumnInfo<LogFileOptions, Boolean> {
     protected MyIsActiveColumnInfo() {
       super(DiagnosticBundle.message("log.monitor.is.active.column"));
     }
@@ -257,7 +257,7 @@ public final class LogsFragment<T extends RunConfigurationBase<?>> extends Setti
     }
   }
 
-  private class MyIsSkipColumnInfo extends ColumnInfo<LogFileOptions, Boolean> {
+  private final class MyIsSkipColumnInfo extends ColumnInfo<LogFileOptions, Boolean> {
     protected MyIsSkipColumnInfo() {
       super(DiagnosticBundle.message("log.monitor.is.skipped.column"));
     }

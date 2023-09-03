@@ -27,6 +27,7 @@ import com.intellij.openapi.editor.ex.EditorEx
 import com.intellij.openapi.editor.ex.MarkupModelEx
 import com.intellij.openapi.editor.impl.DocumentMarkupModel
 import com.intellij.openapi.editor.markup.*
+import com.intellij.openapi.keymap.KeymapUtil
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.project.Project
@@ -231,7 +232,11 @@ object LocalTrackerDiffUtil {
     val checkboxHighlighter = editor.markupModel.addRangeHighlighter(null, offset, offset,
                                                                      HighlighterLayer.ADDITIONAL_SYNTAX,
                                                                      HighlighterTargetArea.LINES_IN_RANGE)
-    val message = DiffBundle.message("action.presentation.diff.include.into.commit.text")
+    var message = DiffBundle.message("action.presentation.diff.include.into.commit.text")
+    val shortcut = ActionManager.getInstance().getKeyboardShortcut("Vcs.Diff.IncludeWholeChangedLinesIntoCommit")
+    if (shortcut != null) {
+      message += " (${KeymapUtil.getShortcutText(shortcut)})"
+    }
     checkboxHighlighter.gutterIconRenderer = CheckboxDiffGutterRenderer(icon, message, onClick)
     return checkboxHighlighter
   }
@@ -355,10 +360,15 @@ object LocalTrackerDiffUtil {
   }
 
   @JvmStatic
-  fun createTrackerActions(provider: LocalTrackerActionProvider): List<AnAction> {
+  fun createTrackerEditorPopupActions(provider: LocalTrackerActionProvider): List<AnAction> {
     return listOf(MoveSelectedChangesToAnotherChangelistAction(provider),
                   PartiallyExcludeSelectedLinesFromCommitAction(provider, false),
                   PartiallyExcludeSelectedLinesFromCommitAction(provider, true))
+  }
+
+  @JvmStatic
+  fun createTrackerShortcutOnlyActions(provider: LocalTrackerActionProvider): List<AnAction> {
+    return listOf(ExcludeSelectedChangesFromCommitAction(provider))
   }
 
   private class MoveSelectedChangesToAnotherChangelistAction(provider: LocalTrackerActionProvider)
@@ -390,6 +400,31 @@ object LocalTrackerDiffUtil {
       else {
         MoveChangesLineStatusAction.moveToAnotherChangelist(tracker, selectedLines)
       }
+
+      provider.viewer.rediff()
+    }
+  }
+
+  private class ExcludeSelectedChangesFromCommitAction(provider: LocalTrackerActionProvider)
+    : MySelectedChangesActionBase(true, provider) {
+
+    init {
+      ActionUtil.copyFrom(this, "Vcs.Diff.IncludeWholeChangedLinesIntoCommit")
+    }
+
+    override fun getText(changes: List<LocalTrackerChange>): String {
+      val hasExcluded = changes.any { it.exclusionState.hasExcluded }
+      return if (changes.isNotEmpty() && !hasExcluded) VcsBundle.message("changes.exclude.lines.from.commit")
+      else VcsBundle.message("changes.include.lines.into.commit")
+    }
+
+    override fun doPerform(e: AnActionEvent,
+                           tracker: PartialLocalLineStatusTracker,
+                           changes: List<LocalTrackerChange>) {
+      val selectedLines = getLocalSelectedLines(changes)
+
+      val hasExcluded = changes.any { it.exclusionState.hasExcluded }
+      tracker.setExcludedFromCommit(selectedLines, !hasExcluded)
 
       provider.viewer.rediff()
     }
@@ -727,7 +762,7 @@ object LocalTrackerDiffUtil {
     val localLines: BitSet?
   )
 
-  class LocalTrackerChange(val startLine: Int, val endLine: Int, val changelistId: String)
+  class LocalTrackerChange(val startLine: Int, val endLine: Int, val changelistId: String, val exclusionState: RangeExclusionState)
 
   private val LocalChangeListDiffRequest.partialTracker get() = lineStatusTracker as? PartialLocalLineStatusTracker
 }

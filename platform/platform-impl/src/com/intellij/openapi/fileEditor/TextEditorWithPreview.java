@@ -323,7 +323,7 @@ public class TextEditorWithPreview extends UserDataHolderBase implements TextEdi
     return myLayout;
   }
 
-  public static class MyFileEditorState implements FileEditorState {
+  public static final class MyFileEditorState implements FileEditorState {
     private final Layout mySplitLayout;
     private final FileEditorState myFirstState;
     private final FileEditorState mySecondState;
@@ -378,7 +378,7 @@ public class TextEditorWithPreview extends UserDataHolderBase implements TextEdi
     }
   }
 
-  private class MyListenersMultimap {
+  private final class MyListenersMultimap {
     private final Map<PropertyChangeListener, Pair<Integer, DoublingEventListenerDelegate>> myMap = new HashMap<>();
 
     public @NotNull DoublingEventListenerDelegate addListenerAndGetDelegate(@NotNull PropertyChangeListener listener) {
@@ -510,7 +510,7 @@ public class TextEditorWithPreview extends UserDataHolderBase implements TextEdi
     }
   }
 
-  private class ChangeViewModeAction extends ToggleAction implements DumbAware {
+  private final class ChangeViewModeAction extends ToggleAction implements DumbAware {
     private final Layout myActionLayout;
 
     ChangeViewModeAction(Layout layout) {
@@ -547,7 +547,7 @@ public class TextEditorWithPreview extends UserDataHolderBase implements TextEdi
     }
   }
 
-  private static class ConditionalActionGroup extends ActionGroup {
+  private static final class ConditionalActionGroup extends ActionGroup {
     private final AnAction[] myActions;
     private final Supplier<Boolean> myCondition;
 
@@ -604,7 +604,7 @@ public class TextEditorWithPreview extends UserDataHolderBase implements TextEdi
     return FileEditorManager.getInstance(project).openFile(file, true);
   }
 
-  private static class MyEditorLayeredComponentWrapper extends JBLayeredPane {
+  private static final class MyEditorLayeredComponentWrapper extends JBLayeredPane {
     private final JComponent editorComponent;
 
     static final int toolbarTopPadding = 25;
@@ -641,7 +641,7 @@ public class TextEditorWithPreview extends UserDataHolderBase implements TextEdi
     }
   }
 
-  private class MyMouseListener implements AWTEventListener {
+  private final class MyMouseListener implements AWTEventListener {
     private final LayoutActionsFloatingToolbar toolbar;
     private final Alarm alarm;
 

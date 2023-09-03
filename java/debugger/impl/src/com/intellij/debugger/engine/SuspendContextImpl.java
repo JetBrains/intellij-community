@@ -121,9 +121,7 @@ public abstract class SuspendContextImpl extends XSuspendContext implements Susp
         myKeptReferences.clear();
       }
 
-      for (SuspendContextCommandImpl cmd = pollPostponedCommand(); cmd != null; cmd = pollPostponedCommand()) {
-        cmd.notifyCancelled();
-      }
+      cancelAllPostponed();
       if (callResume) {
         resumeImpl();
       }
@@ -187,6 +185,7 @@ public abstract class SuspendContextImpl extends XSuspendContext implements Susp
     return mySuspendPolicy;
   }
 
+  @SuppressWarnings("unused")
   public void doNotResumeHack() {
     assertNotResumed();
     myVotesToVote = 1000000000;
@@ -251,6 +250,12 @@ public abstract class SuspendContextImpl extends XSuspendContext implements Susp
     }
     else {
       command.notifyCancelled();
+    }
+  }
+
+  public final void cancelAllPostponed() {
+    for (SuspendContextCommandImpl postponed = pollPostponedCommand(); postponed != null; postponed = pollPostponedCommand()) {
+      postponed.notifyCancelled();
     }
   }
 

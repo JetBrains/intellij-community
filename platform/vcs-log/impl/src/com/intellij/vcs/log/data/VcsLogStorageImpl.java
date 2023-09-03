@@ -15,7 +15,6 @@ import com.intellij.vcs.log.*;
 import com.intellij.vcs.log.impl.HashImpl;
 import com.intellij.vcs.log.impl.VcsLogErrorHandler;
 import com.intellij.vcs.log.impl.VcsRefImpl;
-import com.intellij.vcs.log.util.PersistentUtil;
 import com.intellij.vcs.log.util.StorageId;
 import it.unimi.dsi.fastutil.objects.Object2IntMap;
 import it.unimi.dsi.fastutil.objects.Object2IntOpenHashMap;
@@ -54,12 +53,11 @@ public final class VcsLogStorageImpl implements Disposable, VcsLogStorage {
   private volatile boolean myDisposed = false;
 
   public VcsLogStorageImpl(@NotNull Project project,
+                           @NotNull String logId,
                            @NotNull Map<VirtualFile, VcsLogProvider> logProviders,
                            @NotNull VcsLogErrorHandler errorHandler,
                            @NotNull Disposable parent) throws IOException {
     myErrorHandler = errorHandler;
-
-    String logId = PersistentUtil.calcLogId(project, logProviders);
 
     List<VirtualFile> roots = logProviders.keySet().stream().sorted(Comparator.comparing(VirtualFile::getPath)).toList();
     MyCommitIdKeyDescriptor commitIdKeyDescriptor = new MyCommitIdKeyDescriptor(roots);

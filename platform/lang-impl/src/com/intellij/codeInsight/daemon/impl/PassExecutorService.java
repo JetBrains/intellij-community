@@ -43,6 +43,7 @@ import com.intellij.util.containers.CollectionFactory;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.HashingStrategy;
 import com.intellij.util.ui.UIUtil;
+import io.opentelemetry.context.Context;
 import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
 import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
 import kotlin.coroutines.CoroutineContext;
@@ -250,7 +251,7 @@ final class PassExecutorService implements Disposable {
     int passId = pass.getId();
     ScheduledPass scheduledPass = toBeSubmitted.get(passId);
     if (scheduledPass != null) return scheduledPass;
-    scheduledPass = new ScheduledPass(fileEditor, pass, updateProgress, threadsToStartCountdown);
+    scheduledPass = new ScheduledPass(fileEditor, pass, updateProgress, threadsToStartCountdown, Context.current());
     threadsToStartCountdown.incrementAndGet();
     toBeSubmitted.put(passId, scheduledPass);
     for (int predecessorId : pass.getCompletionPredecessorIds()) {
@@ -336,16 +337,26 @@ final class PassExecutorService implements Disposable {
     private final List<ScheduledPass> mySuccessorsOnCompletion = new ArrayList<>();
     private final List<ScheduledPass> mySuccessorsOnSubmit = new ArrayList<>();
     private final @NotNull DaemonProgressIndicator myUpdateProgress;
+    private final @NotNull Context myOpenTelemetryContext;
     private final @NotNull CoroutineContext myContext;
 
     private ScheduledPass(@NotNull FileEditor fileEditor,
                           @NotNull HighlightingPass pass,
                           @NotNull DaemonProgressIndicator progressIndicator,
                           @NotNull AtomicInteger threadsToStartCountdown) {
+      this(fileEditor, pass, progressIndicator, threadsToStartCountdown,  Context.current());
+    }
+
+    private ScheduledPass(@NotNull FileEditor fileEditor,
+                          @NotNull HighlightingPass pass,
+                          @NotNull DaemonProgressIndicator progressIndicator,
+                          @NotNull AtomicInteger threadsToStartCountdown,
+                          @NotNull Context openTelemetryContext) {
       myFileEditor = fileEditor;
       myPass = pass;
       myThreadsToStartCountdown = threadsToStartCountdown;
       myUpdateProgress = progressIndicator;
+      myOpenTelemetryContext = openTelemetryContext;
       myContext = ThreadContext.currentThreadContext().minusKey(kotlinx.coroutines.Job.Key);
     }
 
@@ -387,7 +398,7 @@ final class PassExecutorService implements Disposable {
             if (!myUpdateProgress.isCanceled() && !myProject.isDisposed()) {
               String fileName = myFileEditor.getFile().getName();
               String passClassName = StringUtil.getShortName(myPass.getClass());
-              TraceUtil.runWithSpanThrows(HighlightingPassTracer.HIGHLIGHTING_PASS_TRACER, passClassName, span -> {
+              TraceUtil.runWithSpanThrows(HighlightingPassTracer.HIGHLIGHTING_PASS_TRACER, myOpenTelemetryContext, passClassName, span -> {
                 Activity startupActivity = StartUpMeasurer.startActivity("running " + passClassName);
                 boolean cancelled = false;
                 try (AccessToken ignored = ClientId.withClientId(ClientFileEditorManager.getClientId(myFileEditor))) {

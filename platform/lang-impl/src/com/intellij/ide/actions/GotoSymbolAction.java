@@ -23,7 +23,7 @@ public final class GotoSymbolAction extends SearchEverywhereBaseAction implement
       showInSearchEverywherePopup(tabID, e, true, true);
     }
     else {
-      GotoClassAction.invokeGoToFile(project, e);
+      GotoClassAction.invokeGoToFile(project, e, this);
     }
   }
 

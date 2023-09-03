@@ -97,6 +97,9 @@ interface ExternalProductResourceUrls {
    * Returns URL of the page containing information about new features in the product.  
    * It's opened in the browser or in the editor when a user invokes the "What's New" action.
    * If the property returns `null`, the action won't be shown.
+   * 
+   * This page will be also shown in IDE automatically if [UpdateStrategyCustomization.showWhatIsNewPageAfterUpdate][com.intellij.openapi.updateSettings.UpdateStrategyCustomization.showWhatIsNewPageAfterUpdate]
+   * returns `true`.
    */
   val whatIsNewPageUrl: Url?
     get() = null

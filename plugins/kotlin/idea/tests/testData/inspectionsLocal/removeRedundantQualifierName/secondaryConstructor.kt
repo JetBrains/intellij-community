@@ -14,4 +14,4 @@ class Outer {
     }
 }
 
-// IGNORE_FIR
+// IGNORE_K2

@@ -121,8 +121,11 @@ class KotlinK2QuickFixRegistrar : KotlinQuickFixRegistrar() {
     }
 
     private val imports = KtQuickFixesListBuilder.registerPsiQuickFix {
-        registerApplicator(ImportQuickFix.FACTORY)
+        registerApplicator(ImportQuickFix.invisibleReferenceFactory)
+        registerApplicator(ImportQuickFix.unresolvedReferenceFactory)
         registerPsiQuickFixes(KtFirDiagnostic.ConflictingImport::class, RemovePsiElementSimpleFix.RemoveImportFactory)
+        registerPsiQuickFixes(KtFirDiagnostic.UnresolvedReference::class, AddDependencyQuickFix.Factory)
+        registerPsiQuickFixes(KtFirDiagnostic.UnresolvedImport::class, AddDependencyQuickFix.Factory)
     }
 
     private val mutability = KtQuickFixesListBuilder.registerPsiQuickFix {
@@ -270,6 +273,9 @@ class KotlinK2QuickFixRegistrar : KotlinQuickFixRegistrar() {
         registerApplicators(OptInFixFactories.optInFixFactories)
     }
 
+    private val multiplatform = KtQuickFixesListBuilder.registerPsiQuickFix {
+        registerApplicator(ActualAnnotationsNotMatchExpectFixFactory.factory)
+    }
 
     override val list: KotlinQuickFixesList = KotlinQuickFixesList.createCombined(
         keywords,
@@ -287,6 +293,7 @@ class KotlinK2QuickFixRegistrar : KotlinQuickFixRegistrar() {
         vararg,
         visibility,
         other,
-        optIn
+        optIn,
+        multiplatform,
     )
 }

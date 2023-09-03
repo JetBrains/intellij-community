@@ -28,7 +28,7 @@ import java.util.*;
 
 import static com.intellij.util.ui.SwingTextTrimmer.THREE_DOTS_AT_LEFT;
 
-public class BreadcrumbsComponent<T extends BreadcrumbsItem> extends JComponent implements Disposable, Weighted {
+public final class BreadcrumbsComponent<T extends BreadcrumbsItem> extends JComponent implements Disposable, Weighted {
 
   private static final Logger LOG = Logger.getInstance(BreadcrumbsComponent.class);
   private static final Painter DEFAULT_PAINTER = new DefaultPainter(new ButtonSettings());
@@ -349,7 +349,7 @@ public class BreadcrumbsComponent<T extends BreadcrumbsItem> extends JComponent 
     return Double.MAX_VALUE;
   }
 
-  private static class PagedImage {
+  private static final class PagedImage {
     private final int myPageWidth;
     private int myPage;
     private final int myTotalWidth;
@@ -407,7 +407,7 @@ public class BreadcrumbsComponent<T extends BreadcrumbsItem> extends JComponent 
     }
   }
 
-  private static class CrumbLineMouseListener extends MouseAdapter implements MouseMotionListener {
+  private static final class CrumbLineMouseListener extends MouseAdapter implements MouseMotionListener {
     private final BreadcrumbsComponent myBreadcrumbs;
     private Crumb myHoveredCrumb;
 
@@ -537,7 +537,7 @@ public class BreadcrumbsComponent<T extends BreadcrumbsItem> extends JComponent 
     }
   }
 
-  private static class NavigationCrumb extends Crumb {
+  private static final class NavigationCrumb extends Crumb {
     private static final @NonNls String FORWARD = ">>";
     private static final @NonNls String BACKWARD = "<<";
     private final boolean myForward;
@@ -563,7 +563,7 @@ public class BreadcrumbsComponent<T extends BreadcrumbsItem> extends JComponent 
     }
   }
 
-  private static class DummyCrumb extends Crumb {
+  private static final class DummyCrumb extends Crumb {
     DummyCrumb(final int width) {
       super(null, width);
     }
@@ -621,7 +621,7 @@ public class BreadcrumbsComponent<T extends BreadcrumbsItem> extends JComponent 
     }
   }
 
-  public static class ButtonSettings extends PainterSettings {
+  public static final class ButtonSettings extends PainterSettings {
     public static Color getBackgroundColor(boolean selected, boolean hovered, boolean light, boolean navigationCrumb) {
       return EditorColorsManager.getInstance().getGlobalScheme().getAttributes(
         hovered
@@ -670,7 +670,7 @@ public class BreadcrumbsComponent<T extends BreadcrumbsItem> extends JComponent 
 
   }
 
-  private static class DefaultPainter extends Painter {
+  private static final class DefaultPainter extends Painter {
     DefaultPainter(final @NotNull PainterSettings s) {
       super(s);
     }

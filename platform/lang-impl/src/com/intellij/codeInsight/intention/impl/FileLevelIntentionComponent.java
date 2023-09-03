@@ -10,6 +10,8 @@ import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInsight.intention.IntentionManager;
 import com.intellij.icons.AllIcons;
 import com.intellij.lang.annotation.HighlightSeverity;
+import com.intellij.openapi.application.ModalityState;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
@@ -26,8 +28,10 @@ import com.intellij.ui.ClickListener;
 import com.intellij.ui.EditorNotificationPanel;
 import com.intellij.ui.LightColors;
 import com.intellij.ui.awt.RelativePoint;
+import com.intellij.util.concurrency.AppExecutorUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.concurrency.CancellablePromise;
 
 import java.awt.*;
 import java.awt.event.MouseEvent;
@@ -47,16 +51,23 @@ public final class FileLevelIntentionComponent extends EditorNotificationPanel {
     if (intentions != null) {
       for (Pair<HighlightInfo.IntentionActionDescriptor, TextRange> intention : intentions) {
         HighlightInfo.IntentionActionDescriptor descriptor = intention.getFirst();
-        info.intentionsToShow.add(descriptor);
         IntentionAction action = descriptor.getAction();
-        if (action instanceof EmptyIntentionAction) {
-          continue;
-        }
-        String text = action.getText();
-        createActionLabel(text, () -> {
-          PsiDocumentManager.getInstance(project).commitAllDocuments();
-          ShowIntentionActionsHandler.chooseActionAndInvoke(psiFile, editor, action, text);
-        });
+        ReadAction.nonBlocking(() -> action.isAvailable(project, editor, psiFile))
+          .expireWith(project)
+          .inSmartMode(project)
+          .finishOnUiThread(ModalityState.nonModal(), isAvailable -> {
+            if (!isAvailable) return;
+            info.intentionsToShow.add(descriptor);
+            if (action instanceof EmptyIntentionAction) {
+              return;
+            }
+            String text = action.getText();
+            createActionLabel(text, () -> {
+              PsiDocumentManager.getInstance(project).commitAllDocuments();
+              ShowIntentionActionsHandler.chooseActionAndInvoke(psiFile, editor, action, text);
+            });
+          })
+          .submit(AppExecutorUtil.getAppExecutorService());
       }
     }
 

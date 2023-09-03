@@ -1213,4 +1213,9 @@ public final class QuickFixFactoryImpl extends QuickFixFactory {
   public @NotNull IntentionAction createDeleteFix(@NotNull PsiElement @NotNull [] elements, @NotNull @Nls String text) {
     return new DeleteElementFix.DeleteMultiFix(elements, text).asIntention();
   }
+
+  @Override
+  public @NotNull IntentionAction createAddMainMethodFix(@NotNull PsiUnnamedClass unnamedClass) {
+    return new AddMainMethodFix(unnamedClass).asIntention();
+  }
 }

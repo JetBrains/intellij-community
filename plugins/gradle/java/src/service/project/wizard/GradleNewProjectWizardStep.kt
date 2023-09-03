@@ -38,6 +38,7 @@ import com.intellij.openapi.ui.validation.CHECK_NON_EMPTY
 import com.intellij.openapi.ui.validation.WHEN_GRAPH_PROPAGATION_FINISHED
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.ui.dsl.builder.*
+import com.intellij.ui.dsl.listCellRenderer.textListCellRenderer
 import com.intellij.ui.layout.ValidationInfoBuilder
 import com.intellij.ui.util.minimumWidth
 import com.intellij.util.lang.JavaVersion
@@ -138,7 +139,7 @@ abstract class GradleNewProjectWizardStep<ParentStep>(parent: ParentStep) :
       row {
         label(GradleBundle.message("gradle.project.settings.distribution.npw"))
           .applyToComponent { minimumWidth = MINIMUM_LABEL_WIDTH }
-        comboBox(distributionTypes, listCellRenderer { text = it.text })
+        comboBox(distributionTypes, textListCellRenderer { it?.text })
           .columns(COLUMNS_SHORT)
           .bindItem(distributionTypeProperty)
           .whenItemSelectedFromUi { logGradleDistributionChanged(distributionType.value) }

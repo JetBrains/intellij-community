@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.packageDependencies.actions;
 
 import com.intellij.analysis.AnalysisScope;
@@ -10,11 +10,13 @@ import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.DumbService;
+import com.intellij.openapi.project.DumbModeBlockedFunctionality;
 import com.intellij.openapi.project.IndexNotReadyException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.packageDependencies.DependenciesBuilder;
 import com.intellij.packageDependencies.DependenciesToolWindow;
+import com.intellij.packageDependencies.DependencyAnalysisResult;
 import com.intellij.packageDependencies.ui.DependenciesPanel;
 import com.intellij.psi.PsiFile;
 import com.intellij.ui.content.Content;
@@ -22,7 +24,6 @@ import com.intellij.ui.content.ContentFactory;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
 
@@ -39,7 +40,7 @@ public abstract class DependenciesHandlerBase {
   }
 
   public void analyze() {
-    final List<DependenciesBuilder> builders = new ArrayList<>();
+    final DependencyAnalysisResult result = createAnalysisResult();
 
     final Task task;
     if (canStartInBackground()) {
@@ -47,12 +48,12 @@ public abstract class DependenciesHandlerBase {
         @Override
         public void run(@NotNull final ProgressIndicator indicator) {
           indicator.setIndeterminate(false);
-          perform(builders, indicator);
+          perform(result, indicator);
         }
 
         @Override
         public void onSuccess() {
-          DependenciesHandlerBase.this.onSuccess(builders);
+          DependenciesHandlerBase.this.onSuccess(result);
         }
       };
     } else {
@@ -60,23 +61,28 @@ public abstract class DependenciesHandlerBase {
         @Override
         public void run(@NotNull ProgressIndicator indicator) {
           indicator.setIndeterminate(false);
-          perform(builders, indicator);
+          perform(result, indicator);
         }
 
         @Override
         public void onSuccess() {
-          DependenciesHandlerBase.this.onSuccess(builders);
+          DependenciesHandlerBase.this.onSuccess(result);
         }
       };
     }
     ProgressManager.getInstance().run(task);
   }
 
+  @NotNull
+  protected DependencyAnalysisResult createAnalysisResult() {
+    return new DependencyAnalysisResult();
+  }
+
   protected boolean canStartInBackground() {
     return true;
   }
 
-  protected boolean shouldShowDependenciesPanel(List<? extends DependenciesBuilder> builders) {
+  protected boolean shouldShowDependenciesPanel(@NotNull DependencyAnalysisResult result) {
     return true;
   }
 
@@ -86,30 +92,35 @@ public abstract class DependenciesHandlerBase {
 
   protected abstract DependenciesBuilder createDependenciesBuilder(AnalysisScope scope);
 
-  private void perform(List<DependenciesBuilder> builders, @NotNull ProgressIndicator indicator) {
+  private void perform(DependencyAnalysisResult result, @NotNull ProgressIndicator indicator) {
     try {
       PerformanceWatcher.Snapshot snapshot = PerformanceWatcher.takeSnapshot();
       for (AnalysisScope scope : myScopes) {
-        builders.add(createDependenciesBuilder(scope));
+        result.addBuilder(createDependenciesBuilder(scope));
       }
-      for (DependenciesBuilder builder : builders) {
+      for (DependenciesBuilder builder : result.getBuilders()) {
         builder.analyze();
       }
+      bgtPostAnalyze(result);
       snapshot.logResponsivenessSinceCreation("Dependency analysis");
     }
     catch (IndexNotReadyException e) {
-      DumbService.getInstance(myProject).showDumbModeNotification(
-        CodeInsightBundle.message("analyze.dependencies.not.available.notification.indexing"));
+      DumbService.getInstance(myProject).showDumbModeNotificationForFunctionality(
+        CodeInsightBundle.message("analyze.dependencies.not.available.notification.indexing"), DumbModeBlockedFunctionality.PackageDependencies);
       throw new ProcessCanceledException();
     }
   }
 
-  private void onSuccess(final List<DependenciesBuilder> builders) {
+  protected void bgtPostAnalyze(DependencyAnalysisResult result) {
+    result.panelDisplayName = getPanelDisplayName(result.getBuilders().get(0).getScope());
+  }
+
+  private void onSuccess(final DependencyAnalysisResult result) {
     //noinspection SSBasedInspection
     SwingUtilities.invokeLater(() -> {
-      if (shouldShowDependenciesPanel(builders)) {
-        final String displayName = getPanelDisplayName(builders);
-        DependenciesPanel panel = new DependenciesPanel(myProject, builders, myExcluded);
+      if (shouldShowDependenciesPanel(result)) {
+        final String displayName = result.getPanelDisplayName();
+        DependenciesPanel panel = new DependenciesPanel(myProject, result.getBuilders(), myExcluded);
         Content content = ContentFactory.getInstance().createContent(panel, displayName, false);
         content.setDisposer(panel);
         panel.setContent(content);
@@ -118,7 +129,4 @@ public abstract class DependenciesHandlerBase {
     });
   }
 
-  protected @NlsContexts.TabTitle String getPanelDisplayName(List<? extends DependenciesBuilder> builders) {
-    return getPanelDisplayName(builders.get(0).getScope());
-  }
 }

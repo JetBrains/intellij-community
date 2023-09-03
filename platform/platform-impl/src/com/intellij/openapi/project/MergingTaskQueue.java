@@ -24,7 +24,7 @@ import java.util.*;
 import java.util.concurrent.atomic.AtomicLong;
 
 public class MergingTaskQueue<T extends MergeableQueueTask<T>> {
-  public static class SubmissionReceipt {
+  public static final class SubmissionReceipt {
     private final long submittedTaskCount;
 
     private SubmissionReceipt(long submittedTaskCount) {

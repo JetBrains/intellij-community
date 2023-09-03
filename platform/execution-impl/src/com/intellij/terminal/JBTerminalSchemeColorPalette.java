@@ -10,7 +10,7 @@ import com.jediterm.terminal.emulator.ColorPalette;
 import com.jediterm.terminal.ui.AwtTransformers;
 import org.jetbrains.annotations.NotNull;
 
-public class JBTerminalSchemeColorPalette extends ColorPalette {
+public final class JBTerminalSchemeColorPalette extends ColorPalette {
 
   private static final Logger LOG = Logger.getInstance(JBTerminalSchemeColorPalette.class);
 

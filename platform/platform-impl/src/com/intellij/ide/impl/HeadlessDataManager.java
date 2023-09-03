@@ -20,7 +20,7 @@ import java.awt.*;
 import java.util.Map;
 import java.util.function.Supplier;
 
-public class HeadlessDataManager extends DataManagerImpl {
+public final class HeadlessDataManager extends DataManagerImpl {
 
   private static final class HeadlessContext extends CustomizedDataContext implements UserDataHolder {
     private final DataProvider myProvider;

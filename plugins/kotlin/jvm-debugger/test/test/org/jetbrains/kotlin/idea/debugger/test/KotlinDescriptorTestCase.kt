@@ -7,7 +7,6 @@ import com.intellij.debugger.DefaultDebugEnvironment
 import com.intellij.debugger.engine.DebugProcessImpl
 import com.intellij.debugger.impl.*
 import com.intellij.debugger.settings.DebuggerSettings
-import com.intellij.execution.ExecutionException
 import com.intellij.execution.ExecutionTestCase
 import com.intellij.execution.configurations.JavaCommandLineState
 import com.intellij.execution.configurations.JavaParameters
@@ -35,11 +34,9 @@ import com.intellij.testFramework.runInEdtAndGet
 import com.intellij.util.ThrowableRunnable
 import com.intellij.util.containers.addIfNotNull
 import com.intellij.xdebugger.XDebugSession
-import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.config.*
 import org.jetbrains.kotlin.fileClasses.JvmFileClassUtil
 import org.jetbrains.kotlin.idea.base.codeInsight.KotlinMainFunctionDetector
-import org.jetbrains.kotlin.idea.base.codeInsight.PsiOnlyKotlinMainFunctionDetector
 import org.jetbrains.kotlin.idea.base.plugin.artifacts.TestKotlinArtifacts
 import org.jetbrains.kotlin.idea.base.psi.classIdIfNonLocal
 import org.jetbrains.kotlin.idea.compiler.configuration.KotlinCommonCompilerArgumentsHolder
@@ -68,9 +65,9 @@ internal const val KOTLIN_LIBRARY_NAME = "KotlinJavaRuntime"
 internal const val TEST_LIBRARY_NAME = "TestLibrary"
 internal const val COMMON_SOURCES_DIR = "commonSrc"
 internal const val SCRIPT_SOURCES_DIR = "scripts"
-internal const val JVM_MODULE_NAME = "jvm"
+internal const val JVM_MODULE_NAME_START = "jvm"
 
-abstract class KotlinDescriptorTestCase : DescriptorTestCase() {
+abstract class KotlinDescriptorTestCase : DescriptorTestCase(), IgnorableTestCase {
     private lateinit var testAppDirectory: File
     private lateinit var jvmSourcesOutputDirectory: File
     private lateinit var commonSourcesOutputDirectory: File
@@ -80,6 +77,8 @@ abstract class KotlinDescriptorTestCase : DescriptorTestCase() {
     private lateinit var libraryOutputDirectory: File
 
     protected lateinit var sourcesKtFiles: TestSourcesKtFiles
+
+    override var ignoreIsPassedCallback: (() -> Nothing)? = null
 
     override fun getTestAppPath(): String = testAppDirectory.absolutePath
     override fun getTestProjectJdk() = PluginTestCaseBase.fullJdk()
@@ -486,6 +485,20 @@ abstract class KotlinDescriptorTestCase : DescriptorTestCase() {
         }
     }
 
+    override fun runTestRunnable(testRunnable: ThrowableRunnable<Throwable>) {
+        try {
+            super.runTestRunnable(testRunnable)
+        } catch (e: Throwable) {
+            if (ignoreIsPassedCallback == null) {
+                throw e
+            }
+            else {
+                return
+            }
+        }
+        ignoreIsPassedCallback?.invoke()
+    }
+
     override fun checkTestOutput() {
         try {
             super.checkTestOutput()
@@ -534,8 +547,8 @@ internal fun createTestFiles(wholeFile: File, wholeFileContents: String): TestFi
                 dependencies: MutableList<String>,
                 friends: MutableList<String>
             ) =
-                when (name) {
-                    JVM_MODULE_NAME -> DebuggerTestModule.Jvm(dependencies)
+                when {
+                    name.startsWith(JVM_MODULE_NAME_START) -> DebuggerTestModule.Jvm(name, dependencies)
                     else -> DebuggerTestModule.Common(name, dependencies)
                 }
         }
@@ -549,9 +562,9 @@ class TestFiles(val originalFile: File, val wholeFile: TestFile, files: List<Tes
 
 sealed class DebuggerTestModule(name: String, dependencies: List<String>) : KotlinBaseTest.TestModule(name, dependencies, emptyList())  {
     class Common(name: String, dependencies: List<String>) : DebuggerTestModule(name, dependencies)
-    class Jvm(dependencies: List<String>) : DebuggerTestModule(JVM_MODULE_NAME, dependencies) {
+    class Jvm(name: String, dependencies: List<String>) : DebuggerTestModule(name, dependencies) {
         companion object {
-            val Default = Jvm(dependencies = emptyList())
+            val Default = Jvm(JVM_MODULE_NAME_START, dependencies = emptyList())
         }
     }
 }

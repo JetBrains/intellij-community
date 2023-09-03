@@ -29,7 +29,6 @@ import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.progress.util.ProgressIndicatorBase
 import com.intellij.openapi.project.DumbService
-import com.intellij.openapi.project.DumbServiceImpl
 import com.intellij.openapi.roots.ContentIterator
 import com.intellij.openapi.roots.impl.FilePropertyPusher
 import com.intellij.openapi.roots.impl.JavaLanguageLevelPusher
@@ -65,10 +64,7 @@ import com.intellij.psi.util.CachedValue
 import com.intellij.psi.util.CachedValueProvider
 import com.intellij.psi.util.CachedValuesManager
 import com.intellij.psi.util.PsiModificationTracker
-import com.intellij.testFramework.IdeaTestUtil
-import com.intellij.testFramework.PlatformTestUtil
-import com.intellij.testFramework.PsiTestUtil
-import com.intellij.testFramework.SkipSlowTestLocally
+import com.intellij.testFramework.*
 import com.intellij.testFramework.builders.JavaModuleFixtureBuilder
 import com.intellij.testFramework.fixtures.JavaCodeInsightFixtureTestCase
 import com.intellij.util.*
@@ -1276,13 +1272,12 @@ class IndexTest extends JavaCodeInsightFixtureTestCase {
     def nameIdentifier = file.getClasses()[0].getNameIdentifier()
 
     def project = getProject()
-    def dumbService = (DumbServiceImpl)DumbService.getInstance(project)
     def virtualFile = file.getVirtualFile()
 
     assertTrue(findWordInDumbMode("Foo", virtualFile, false))
     assertFalse(findWordInDumbMode("Bar", virtualFile, false))
 
-    dumbService.runInDumbModeSynchronously {
+    DumbModeTestUtils.runInDumbModeSynchronously(project) {
       assertTrue(findWordInDumbMode("Foo", virtualFile, true))
       assertFalse(findWordInDumbMode("Bar", virtualFile, true))
 
@@ -1385,8 +1380,7 @@ class IndexTest extends JavaCodeInsightFixtureTestCase {
     def clazz = myFixture.addClass('class Foo {}')
     assert clazz == myFixture.findClass('Foo')
 
-    DumbServiceImpl.getInstance(project).runInDumbModeSynchronously {
-
+    DumbModeTestUtils.runInDumbModeSynchronously(project) {
       def indexQueries = 0
       def plainQueries = 0
 
@@ -1447,8 +1441,7 @@ class IndexTest extends JavaCodeInsightFixtureTestCase {
     def clazz = myFixture.addClass('class Foo {}')
     assert clazz == myFixture.findClass('Foo')
 
-    DumbServiceImpl.getInstance(project).runInDumbModeSynchronously {
-
+    DumbModeTestUtils.runInDumbModeSynchronously(project) {
       def stubQuery = CachedValuesManager.getManager(project).createCachedValue {
         CachedValueProvider.Result.create(myFixture.javaFacade.findClass('Foo', GlobalSearchScope.allScope(project)),
                                           PsiModificationTracker.MODIFICATION_COUNT)

@@ -18,7 +18,7 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.ResourceBundle;
 
-public class QuickList extends ExternalizableSchemeAdapter implements SerializableScheme {
+public final class QuickList extends ExternalizableSchemeAdapter implements SerializableScheme {
   public static final String QUICK_LIST_PREFIX = "QuickList.";
   public static final @NonNls String SEPARATOR_ID = QUICK_LIST_PREFIX + "$Separator$";
 

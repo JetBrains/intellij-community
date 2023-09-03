@@ -32,7 +32,6 @@ import com.intellij.openapi.editor.EditorModificationUtil;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.highlighter.EditorHighlighter;
 import com.intellij.openapi.editor.highlighter.HighlighterIterator;
-import com.intellij.openapi.project.DumbServiceImpl;
 import com.intellij.openapi.util.RecursionManager;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.registry.Registry;
@@ -44,6 +43,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.impl.include.FileIncludeManager;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.xml.*;
+import com.intellij.testFramework.DumbModeTestUtils;
 import com.intellij.testFramework.InspectionsKt;
 import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.util.Processor;
@@ -2004,7 +2004,7 @@ public class XmlHighlightingTest extends DaemonAnalyzerTestCase {
   }
 
   public void testDropAnyAttributeCacheOnExitFromDumbMode() throws Exception {
-    DumbServiceImpl.getInstance(myProject).runInDumbModeSynchronously(() -> {
+    DumbModeTestUtils.runInDumbModeSynchronously(myProject, () -> {
       configureByFiles(null, findVirtualFile(BASE_PATH + "AnyAttributeNavigation/test.xml"),
                        findVirtualFile(BASE_PATH + "AnyAttributeNavigation/test.xsd"),
                        findVirtualFile(BASE_PATH + "AnyAttributeNavigation/library.xsd"));

@@ -18,11 +18,11 @@ import com.intellij.openapi.util.BuildNumber;
 import com.intellij.openapi.util.ClearableLazyValue;
 import com.intellij.platform.diagnostic.telemetry.IJTracer;
 import com.intellij.util.ExceptionUtil;
-import com.intellij.util.containers.ContainerUtil;
 import io.opentelemetry.api.trace.Span;
 import io.opentelemetry.api.trace.SpanBuilder;
 import io.opentelemetry.context.Context;
 import kotlin.text.StringsKt;
+import org.apache.commons.lang3.ClassUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -380,7 +380,7 @@ public class Invoker implements InvokerMBean {
       if (argType == null) continue;
 
       Class<?> parameterType = parameterTypes[i];
-      if (!parameterType.isAssignableFrom(argType)) return false;
+      if (!ClassUtils.isAssignable(argType, parameterType)) return false;
     }
     return true;
   }

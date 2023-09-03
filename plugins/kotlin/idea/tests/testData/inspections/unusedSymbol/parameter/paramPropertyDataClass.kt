@@ -2,5 +2,6 @@
 data class MyClass(val param1: String, var param2: String)
 
 fun main(args: Array<String>) {
+    println(args)
     MyClass()
 }

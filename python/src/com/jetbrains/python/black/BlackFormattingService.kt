@@ -62,7 +62,6 @@ class BlackFormattingService : AsyncDocumentFormattingService() {
     val formattingContext = formattingRequest.context
     val file = formattingContext.containingFile
     val vFile = formattingContext.virtualFile ?: return null
-    val formattingRange = formattingRequest.formattingRanges[0]
     val project = formattingContext.project
     val blackConfig = BlackFormatterConfiguration.getBlackConfiguration(project)
     val sdk = blackConfig.getSdk(project)
@@ -83,6 +82,12 @@ class BlackFormattingService : AsyncDocumentFormattingService() {
     }
 
     val text = document.text
+
+    val formattingRange = if (formattingRequest.formattingRanges.size > 1)
+      TextRange(0, document.textLength)
+    else
+      formattingRequest.formattingRanges.first()
+
     val fragment = runCatching { document.getText(formattingRange) }.getOrNull()
     if (fragment.isNullOrBlank()) return null
 

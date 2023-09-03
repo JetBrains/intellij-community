@@ -270,24 +270,29 @@ public class ProgressRunnerTest extends LightPlatformTestCase {
 
   @Test
   public void testToPooledThreadWithProgressWindowWithCanceledInvokeAndWait() throws Throwable {
-    if (!myOnEdt) return; // non-EDT implementation doesn't go through startBlocking()
-
-    var result = new ProgressRunner<>(() -> {
-      var progressWindow = (TestProgressWindow)ProgressIndicatorProvider.getGlobalProgressIndicator();
-      var cancelled = new Semaphore(1);
-      EventQueue.invokeLater(() -> {
-        var modalComponent = progressWindow.getDialog$intellij_platform_tests().getPanel();
-        var escapeEvent = new KeyEvent(modalComponent, KeyEvent.KEY_PRESSED, System.nanoTime(), 0, KeyEvent.VK_ESCAPE, '');
-        IdeEventQueue.getInstance().postEvent(escapeEvent);
-        EventQueue.invokeLater(() -> cancelled.up());
+    var result = computeAssertingExceptionConditionally(
+      !myOnEdt || myReleaseIWLockOnRun,
+      () -> {
+        return new ProgressRunner<>(() -> {
+          var progressWindow = (TestProgressWindow)ProgressIndicatorProvider.getGlobalProgressIndicator();
+          var cancelled = new Semaphore(1);
+          EventQueue.invokeLater(() -> {
+            var modalComponent = progressWindow.getDialog$intellij_platform_tests().getPanel();
+            var escapeEvent = new KeyEvent(modalComponent, KeyEvent.KEY_PRESSED, System.nanoTime(), 0, KeyEvent.VK_ESCAPE, '');
+            IdeEventQueue.getInstance().postEvent(escapeEvent);
+            EventQueue.invokeLater(() -> cancelled.up());
+          });
+          Assert.assertTrue(cancelled.waitFor(1000));
+        })
+          .onThread(ProgressRunner.ThreadToUse.POOLED)
+          .withProgress(new TestProgressWindow(getProject()))
+          .modal()
+          .sync()
+          .submitAndGet();
       });
-      Assert.assertTrue(cancelled.waitFor(1000));
-    })
-      .onThread(ProgressRunner.ThreadToUse.POOLED)
-      .withProgress(new TestProgressWindow(getProject()))
-      .modal()
-      .sync()
-      .submitAndGet();
+    if (result == null) {
+      return;
+    }
     var throwable = result.getThrowable();
     if (throwable != null) {
       throw throwable;
@@ -342,15 +347,22 @@ public class ProgressRunnerTest extends LightPlatformTestCase {
     DefaultLogger.disableStderrDumping(getTestRootDisposable());
 
     final String failureMessage = "Expected Failure";
-    ProgressResult<?> result = new ProgressRunner<>(() ->
-                                                      UIUtil.invokeAndWaitIfNeeded(() -> {
-                                                        throw new RuntimeException(failureMessage);
-                                                      }))
-      .onThread(ProgressRunner.ThreadToUse.POOLED)
-      .withProgress(createProgressWindow())
-      .modal()
-      .sync()
-      .submitAndGet();
+    ProgressResult<?> result = computeAssertingExceptionConditionally(
+        myOnEdt && myReleaseIWLockOnRun,
+        () -> {
+          return new ProgressRunner<>(() ->
+                                        UIUtil.invokeAndWaitIfNeeded(() -> {
+                                          throw new RuntimeException(failureMessage);
+                                        }))
+            .onThread(ProgressRunner.ThreadToUse.POOLED)
+            .withProgress(createProgressWindow())
+            .modal()
+            .sync()
+            .submitAndGet();
+        });
+    if (result == null) {
+      return;
+    }
     assertFalse(result.isCanceled());
     Throwable throwable = result.getThrowable();
 
@@ -360,8 +372,6 @@ public class ProgressRunnerTest extends LightPlatformTestCase {
 
   @Test
   public void testStartBlockingExceptionPropagation() {
-    if (!myOnEdt) return; // non-EDT implementation doesn't go through startBlocking()
-
     var t = new RuntimeException();
     class ThrowingIndicator extends EmptyProgressIndicator implements BlockingProgressIndicator {
       @Override
@@ -379,11 +389,18 @@ public class ProgressRunnerTest extends LightPlatformTestCase {
       }
     }
 
-    ProgressResult<?> result = new ProgressRunner<>(EmptyRunnable.getInstance())
-      .onThread(ProgressRunner.ThreadToUse.POOLED)
-      .withProgress(new ThrowingIndicator())
-      .modal()
-      .submitAndGet();
+    ProgressResult<?> result = computeAssertingExceptionConditionally(
+      !myOnEdt || myReleaseIWLockOnRun,
+      () -> {
+        return new ProgressRunner<>(EmptyRunnable.getInstance())
+          .onThread(ProgressRunner.ThreadToUse.POOLED)
+          .withProgress(new ThrowingIndicator())
+          .modal()
+          .submitAndGet();
+      });
+    if (result == null) {
+      return;
+    }
     assertFalse(result.isCanceled());
     assertSame(t, result.getThrowable());
   }

@@ -168,6 +168,11 @@ public class FirRenameTestGenerated extends AbstractFirRenameTest {
         runTest("../../idea/tests/testData/refactoring/rename/classUsagesInTextFiles/classUsagesInTextFiles.test");
     }
 
+    @TestMetadata("companionFullRef/companionFullRef.test")
+    public void testCompanionFullRef_CompanionFullRef() throws Exception {
+        runTest("../../idea/tests/testData/refactoring/rename/companionFullRef/companionFullRef.test");
+    }
+
     @TestMetadata("companionObjectWithDefaultName/companionObject.test")
     public void testCompanionObjectWithDefaultName_CompanionObject() throws Exception {
         runTest("../../idea/tests/testData/refactoring/rename/companionObjectWithDefaultName/companionObject.test");

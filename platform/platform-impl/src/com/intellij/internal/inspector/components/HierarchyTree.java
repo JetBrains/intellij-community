@@ -260,7 +260,7 @@ public abstract class HierarchyTree extends JTree implements TreeSelectionListen
     }
   }
 
-  private static class ComponentTreeCellRenderer extends ColoredTreeCellRenderer {
+  private static final class ComponentTreeCellRenderer extends ColoredTreeCellRenderer {
     private final Component myInitialSelection;
 
     ComponentTreeCellRenderer(Component initialSelection) {

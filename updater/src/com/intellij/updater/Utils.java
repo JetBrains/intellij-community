@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.updater;
 
 import java.io.*;
@@ -26,10 +26,6 @@ public final class Utils {
   private static final boolean WIN_UNPRIVILEGED = IS_WINDOWS && Boolean.getBoolean("idea.unprivileged.process");
 
   private static File myTempDir;
-
-  public static boolean isZipFile(String fileName) {
-    return fileName.endsWith(".zip") || fileName.endsWith(".jar");
-  }
 
   public synchronized static File getTempFile(String name) throws IOException {
     if (myTempDir == null) {
@@ -298,60 +294,8 @@ public final class Utils {
     return result;
   }
 
-  public static InputStream newFileInputStream(File file, boolean normalize) throws IOException {
-    return normalize && isZipFile(file.getName()) ? new NormalizedZipInputStream(file) : new FileInputStream(file);
-  }
-
-  private static final class NormalizedZipInputStream extends InputStream {
-    private final ZipFile myZip;
-    private final List<? extends ZipEntry> myEntries;
-    private InputStream myStream = null;
-    private int myNextEntry = 0;
-    private final byte[] myByte = new byte[1];
-
-    private NormalizedZipInputStream(File file) throws IOException {
-      myZip = new ZipFile(file);
-      myEntries = Collections.list(myZip.entries());
-      myEntries.sort(Comparator.comparing(ZipEntry::getName));
-      loadNextEntry();
-    }
-
-    private void loadNextEntry() throws IOException {
-      if (myStream != null) {
-        myStream.close();
-        myStream = null;
-      }
-      while (myNextEntry < myEntries.size() && myStream == null) {
-        myStream = findEntryInputStreamForEntry(myZip, myEntries.get(myNextEntry++));
-      }
-    }
-
-    @Override
-    public int read(byte[] bytes, int off, int len) throws IOException {
-      if (myStream == null) {
-        return -1;
-      }
-      int b = myStream.read(bytes, off, len);
-      if (b == -1) {
-        loadNextEntry();
-        return read(bytes, off, len);
-      }
-      return b;
-    }
-
-    @Override
-    public int read() throws IOException {
-      int b = read(myByte, 0, 1);
-      return b == -1 ? -1 : myByte[0];
-    }
-
-    @Override
-    public void close() throws IOException {
-      if (myStream != null) {
-        myStream.close();
-      }
-      myZip.close();
-    }
+  public static InputStream newFileInputStream(File file) throws IOException {
+    return new FileInputStream(file);
   }
 
   public static class OpenByteArrayOutputStream extends ByteArrayOutputStream {

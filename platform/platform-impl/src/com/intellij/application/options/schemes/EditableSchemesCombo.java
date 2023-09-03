@@ -22,7 +22,7 @@ import java.util.function.Consumer;
 
 import static com.intellij.openapi.util.text.StringUtil.isEmptyOrSpaces;
 
-public class EditableSchemesCombo<T extends Scheme> {
+public final class EditableSchemesCombo<T extends Scheme> {
 
   public static final int COMBO_WIDTH = 200;
   // endregion

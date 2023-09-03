@@ -3,6 +3,7 @@ package org.jetbrains.idea.maven.wizards
 
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.EDT
+import com.intellij.openapi.components.serviceAsync
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.externalSystem.model.ExternalSystemDataKeys
 import com.intellij.openapi.externalSystem.service.project.IdeModifiableModelsProvider
@@ -25,12 +26,8 @@ import org.jetbrains.idea.maven.model.MavenExplicitProfiles
 import org.jetbrains.idea.maven.navigator.MavenProjectsNavigator
 import org.jetbrains.idea.maven.project.*
 import org.jetbrains.idea.maven.project.actions.LookForNestedToggleAction
-import org.jetbrains.idea.maven.server.MavenServerManager
 import org.jetbrains.idea.maven.server.MavenWrapperSupport.Companion.getWrapperDistributionUrl
-import org.jetbrains.idea.maven.utils.FileFinder
-import org.jetbrains.idea.maven.utils.MavenAsyncUtil
-import org.jetbrains.idea.maven.utils.MavenLog
-import org.jetbrains.idea.maven.utils.MavenUtil
+import org.jetbrains.idea.maven.utils.*
 
 internal class MavenProjectAsyncBuilder {
   fun commitSync(project: Project, projectFile: VirtualFile, modelsProvider: IdeModifiableModelsProvider?): List<Module> {
@@ -46,7 +43,7 @@ internal class MavenProjectAsyncBuilder {
     }
   }
 
-  suspend fun commit(project: Project, projectFile: VirtualFile, modelsProvider: IdeModifiableModelsProvider?): List<Module> {
+  suspend fun commit(project: Project, projectFile: VirtualFile, modelsProvider: IdeModifiableModelsProvider?): List<Module> = project.serviceAsync<MavenInProgressService>().trackConfigurationActivity {
     val importProjectFile = if (!projectFile.isDirectory) projectFile else null
     val rootDirectory = if (projectFile.isDirectory) projectFile.toNioPath() else projectFile.parent.toNioPath()
 
@@ -103,7 +100,7 @@ internal class MavenProjectAsyncBuilder {
 
     if (projects.isEmpty()) {
       LOG.warn(String.format("Cannot import project for %s", project.toString()))
-      return emptyList()
+      return@trackConfigurationActivity emptyList()
     }
 
     val settings = MavenWorkspaceSettingsComponent.getInstance(project).settings
@@ -132,10 +129,10 @@ internal class MavenProjectAsyncBuilder {
       // do not update all modules because it can take a lot of time (freeze at project opening)
       val previewModule = createPreviewModule(project, projects)
       blockingContext { manager.addManagedFilesWithProfiles(MavenUtil.collectFiles(projects), selectedProfiles, previewModule) }
-      return if (null == previewModule) emptyList() else listOf(previewModule)
+      return@trackConfigurationActivity if (null == previewModule) emptyList() else listOf(previewModule)
     }
 
-    return manager.addManagedFilesWithProfilesAndUpdate(MavenUtil.collectFiles(projects), selectedProfiles, modelsProvider)
+    return@trackConfigurationActivity manager.addManagedFilesWithProfilesAndUpdate(MavenUtil.collectFiles(projects), selectedProfiles, modelsProvider)
   }
 
   private suspend fun createPreviewModule(project: Project, selectedProjects: List<MavenProject>): Module? {

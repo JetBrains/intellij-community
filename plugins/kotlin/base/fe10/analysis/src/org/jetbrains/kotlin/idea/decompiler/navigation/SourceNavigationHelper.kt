@@ -135,7 +135,7 @@ object SourceNavigationHelper {
     private fun Collection<GlobalSearchScope>.union(): List<GlobalSearchScope> =
         if (this.isNotEmpty()) listOf(GlobalSearchScope.union(this)) else emptyList()
 
-    private fun haveRenamesInImports(files: Collection<KtFile>) = files.any { file -> file.importDirectives.any { it.aliasName != null } }
+    private fun haveRenamesInImports(files: Collection<KtFile>) = files.any(KtFile::hasImportAlias)
 
     private fun findSpecialProperty(memberName: Name, containingClass: KtClass): KtNamedDeclaration? {
         // property constructor parameters

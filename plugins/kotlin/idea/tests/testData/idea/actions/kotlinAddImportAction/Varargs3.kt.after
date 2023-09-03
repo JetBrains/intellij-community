@@ -1,3 +1,4 @@
+// IGNORE_K2
 // WITH_STDLIB
 // EXPECT_VARIANT_IN_ORDER "public fun min(vararg l: kotlin.Int): kotlin.Unit defined in foo in file Varargs3.dependency.kt"
 // EXPECT_VARIANT_IN_ORDER "public inline fun min(a: kotlin.Double, b: kotlin.Double): kotlin.Double defined in kotlin.math"

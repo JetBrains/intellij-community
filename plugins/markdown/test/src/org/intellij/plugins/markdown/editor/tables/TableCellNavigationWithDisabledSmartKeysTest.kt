@@ -12,7 +12,10 @@ import org.junit.runners.JUnit4
 @Suppress("MarkdownIncorrectTableFormatting", "MarkdownNoTableBorders")
 class TableCellNavigationWithDisabledSmartKeysTest: LightPlatformCodeInsightTestCase() {
   @get:Rule
-  val rule = MarkdownCodeInsightSettingsRule { it.copy(reformatTablesOnType = false, useTableCellNavigation = false) }
+  val rule = MarkdownCodeInsightSettingsRule {
+    it.reformatTablesOnType = false
+    it.useTableCellNavigation = false
+  }
 
   private val tabSize
     get() = CodeStyle.getSettings(file).getIndentSize(file.fileType)
