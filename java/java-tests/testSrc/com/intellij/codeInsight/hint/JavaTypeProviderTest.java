@@ -212,17 +212,16 @@ public class JavaTypeProviderTest extends LightJavaCodeInsightTestCase {
   public void testLambdaParameter() {
     doTest("""
              void test() {
-                         class Test{
+                        interface Consumer<T>{
+                          public void consume(T t);
+                        }
+                        class Test2{
                                      public void test(Consumer<String> a) {
                      
                                      }
                                  }
-                                 new Test().test(<selection>a</selection>-> System.out.println(a));
-             }""", "int",
-           "<table>" +
-           "<tr><td align=\"left\" style=\"color:#909090\" valign=\"top\">Type:</td><td>int</td></tr>" +
-           "<tr><td align=\"left\" style=\"color:#909090\" valign=\"top\">Value:</td><td>1</td></tr>" +
-           "</table>");
+                                 new Test2().test(<selection>a</selection>-> System.out.println(a));
+             }""", "String", "No advanced info found");
   }
 
   public void testEscaping() {
@@ -250,15 +249,15 @@ public class JavaTypeProviderTest extends LightJavaCodeInsightTestCase {
       PsiTreeUtil.findElementOfClassAtRange(file, selection.getStartOffset(), selection.getEndOffset(), PsiExpression.class);
     if (element == null) {
       element =
+        PsiTreeUtil.findElementOfClassAtRange(file, selection.getStartOffset(), selection.getEndOffset(), PsiParameter.class);
+    }
+    if (element == null) {
+      element =
         PsiTreeUtil.findElementOfClassAtRange(file, selection.getStartOffset(), selection.getEndOffset(), PsiIdentifier.class);
     }
     if (element == null) {
       element =
         PsiTreeUtil.findElementOfClassAtRange(file, selection.getStartOffset(), selection.getEndOffset(), PsiKeyword.class);
-    }
-    if (element == null) {
-      element =
-        PsiTreeUtil.findElementOfClassAtRange(file, selection.getStartOffset(), selection.getEndOffset(), PsiIdentifier.class);
     }
     assertNotNull("Expression not found", element);
     JavaTypeProvider provider = new JavaTypeProvider();
