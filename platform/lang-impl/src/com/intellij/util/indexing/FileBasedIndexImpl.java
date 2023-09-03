@@ -64,6 +64,7 @@ import com.intellij.util.containers.SmartHashSet;
 import com.intellij.util.gist.GistManager;
 import com.intellij.util.indexing.FileIndexesValuesApplier.ApplicationMode;
 import com.intellij.util.indexing.contentQueue.CachedFileContent;
+import com.intellij.util.indexing.contentQueue.IndexUpdateRunner;
 import com.intellij.util.indexing.diagnostic.BrokenIndexingDiagnostics;
 import com.intellij.util.indexing.diagnostic.IndexStatisticGroup;
 import com.intellij.util.indexing.diagnostic.StorageDiagnosticData;
@@ -1305,7 +1306,7 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
     final VirtualFile file = fileContent.getVirtualFile();
     if (getChangedFilesCollector().isScheduledForUpdate(file)) {
       try {
-        indexFileContent(project, fileContent, null).apply(file);
+        indexFileContent(project, fileContent, null).apply(file, null, true);
       }
       finally {
         IndexingStamp.flushCache(getFileId(file));
@@ -2053,17 +2054,21 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
 
   @NotNull
   static ApplicationMode getContentIndependentIndexesApplicationMode() {
-    return (ourWritingIndexValuesSeparatedFromCounting == ApplicationMode.SameThreadOutsideReadLock &&
+    return (ourWritingIndexValuesSeparatedFromCounting != ApplicationMode.SameThreadUnderReadLock &&
             ourWritingIndexValuesSeparatedFromCountingForContentIndependentIndexes == ApplicationMode.SameThreadOutsideReadLock) ?
            ApplicationMode.SameThreadOutsideReadLock :
            ApplicationMode.SameThreadUnderReadLock;
   }
 
   static void setupWritingIndexValuesSeparatedFromCounting() {
-    ourWritingIndexValuesSeparatedFromCounting =
-      (SystemProperties.getBooleanProperty("indexing.separate.applying.values.from.counting", true))
-      ? ApplicationMode.SameThreadOutsideReadLock
-      : ApplicationMode.SameThreadUnderReadLock;
+    if (IndexUpdateRunner.WRITE_INDEXES_ON_SEPARATE_THREAD) {
+      ourWritingIndexValuesSeparatedFromCounting = ApplicationMode.AnotherThread;
+    } else {
+      ourWritingIndexValuesSeparatedFromCounting =
+        (SystemProperties.getBooleanProperty("indexing.separate.applying.values.from.counting", true))
+        ? ApplicationMode.SameThreadOutsideReadLock
+        : ApplicationMode.SameThreadUnderReadLock;
+    }
   }
 
   static void setupWritingIndexValuesSeparatedFromCountingForContentIndependentIndexes() {
