@@ -2,7 +2,6 @@
 package com.intellij.updater;
 
 import com.intellij.openapi.util.io.IoTestUtil;
-import org.jetbrains.annotations.NotNull;
 import org.junit.Test;
 
 import java.io.File;
@@ -24,7 +23,7 @@ public class DigesterTest extends UpdaterTestCase {
     assertEquals(Digester.DIRECTORY, Digester.digestRegularFile(libDir));
 
     assertEquals(CHECKSUMS.README_TXT, Digester.digestRegularFile(new File(dataDir, "Readme.txt")));
-    assertEquals(CHECKSUMS.BOOTSTRAP_JAR, Digester.digestRegularFile(new File(libDir, "bootstrap.jar")));
+    assertEquals(CHECKSUMS.IDEA_BAT, Digester.digestRegularFile(new File(binDir, "idea.bat")));
     assertEquals(CHECKSUMS.ANNOTATIONS_JAR, Digester.digestRegularFile(new File(libDir, "annotations.jar")));
     assertEquals(CHECKSUMS.ANNOTATIONS_CHANGED_JAR, Digester.digestRegularFile(new File(libDir, "annotations_changed.jar")));
     assertEquals(CHECKSUMS.BOOT_JAR, Digester.digestRegularFile(new File(libDir, "boot.jar")));
@@ -51,16 +50,16 @@ public class DigesterTest extends UpdaterTestCase {
     IoTestUtil.assumeSymLinkCreationIsSupported();
 
     File simpleLink = getTempFile("Readme.simple.link");
-    @NotNull Path link2 = simpleLink.toPath();
-    @NotNull Path target2 = Paths.get("Readme.txt");
+    Path link2 = simpleLink.toPath();
+    Path target2 = Paths.get("Readme.txt");
     Files.createSymbolicLink(link2, target2);
     File relativeLink = getTempFile("Readme.relative.link");
-    @NotNull Path link1 = relativeLink.toPath();
-    @NotNull Path target1 = Paths.get("./Readme.txt");
+    Path link1 = relativeLink.toPath();
+    Path target1 = Paths.get("./Readme.txt");
     Files.createSymbolicLink(link1, target1);
     File absoluteLink = getTempFile("Readme.absolute.link");
-    @NotNull Path link = absoluteLink.toPath();
-    @NotNull Path target = Paths.get(dataDir.getPath() + "/Readme.txt");
+    Path link = absoluteLink.toPath();
+    Path target = Paths.get(dataDir.getPath() + "/Readme.txt");
     Files.createSymbolicLink(link, target);
 
     assertEquals(CHECKSUMS.LINK_TO_README_TXT, Digester.digestRegularFile(simpleLink));
