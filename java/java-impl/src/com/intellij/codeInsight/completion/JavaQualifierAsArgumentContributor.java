@@ -77,6 +77,10 @@ public class JavaQualifierAsArgumentContributor extends CompletionContributor im
                               @NotNull CompletionResultSet result) {
 
     PsiElement position = parameters.getPosition();
+    PsiFile file = position.getContainingFile();
+    if (file == null) {
+      return;
+    }
     GlobalSearchScope scope = position.getResolveScope();
     Project project = position.getProject();
     if (project.isDefault()) {
@@ -94,6 +98,10 @@ public class JavaQualifierAsArgumentContributor extends CompletionContributor im
           return true;
         }
         if (!(member instanceof PsiMethod method && method.hasModifier(JvmModifier.STATIC))) {
+          return true;
+        }
+        PsiFile currentFile = method.getContainingFile();
+        if (method.hasModifier(JvmModifier.PRIVATE) && !file.isEquivalentTo(currentFile)) {
           return true;
         }
         PsiClass containingClass = method.getContainingClass();
