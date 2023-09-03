@@ -588,6 +588,11 @@
       implementationClass="org.jetbrains.idea.devkit.inspections.quickfix.JavaAppServiceAsStaticFinalFieldOrPropertyFixProvider"/>
   </extensions>
 
+  <extensions defaultExtensionNs="JavaScript.JsonSchema">
+    <ProviderFactory implementation="org.jetbrains.idea.devkit.inspections.metaInformation.MetaInformationJsonSchemaProviderFactory"/>
+  </extensions>
+
+
   <extensionPoints>
     <extensionPoint qualifiedName="DevKit.lang.goodCodeRedVisitor"
                     beanClass="com.intellij.lang.LanguageExtensionPoint"

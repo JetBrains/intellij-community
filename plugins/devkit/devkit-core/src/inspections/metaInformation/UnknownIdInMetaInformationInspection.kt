@@ -7,17 +7,13 @@ import com.intellij.codeInspection.ProblemsHolder
 import com.intellij.json.psi.JsonElementVisitor
 import com.intellij.json.psi.JsonObject
 import com.intellij.json.psi.JsonStringLiteral
-import com.intellij.openapi.module.ModuleUtilCore
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.psi.PsiElementVisitor
-import com.intellij.psi.PsiFile
 import com.intellij.util.xml.DomElement
 import com.intellij.util.xml.DomManager
 import org.jetbrains.idea.devkit.DevKitBundle
 import org.jetbrains.idea.devkit.dom.Extension
 import org.jetbrains.idea.devkit.dom.index.ExtensionPointIndex
-import org.jetbrains.idea.devkit.inspections.DescriptionCheckerUtil
-import org.jetbrains.idea.devkit.inspections.DescriptionType
 import org.jetbrains.idea.devkit.inspections.DevKitInspectionUtil
 import org.jetbrains.idea.devkit.util.DevKitDomUtil
 import org.jetbrains.idea.devkit.util.PluginRelatedLocatorsUtils
@@ -46,17 +42,7 @@ class UnknownIdInMetaInformationInspection : LocalInspectionTool() {
   }
 
   fun isAllowed(holder: ProblemsHolder): Boolean {
-    return DevKitInspectionUtil.isAllowed(holder.file) && isMetaInformation(holder.file)
-  }
-
-  private fun isMetaInformation(file: PsiFile): Boolean {
-    if (file.name != "metaInformation.json") return false
-    val descriptionDirectory = file.parent ?: return false
-    val module = ModuleUtilCore.findModuleForPsiElement(file)
-    val descriptionDirs = DescriptionCheckerUtil.allDescriptionDirs(module, DescriptionType.INSPECTION)
-    return descriptionDirs.any {
-      it.equals(descriptionDirectory)
-    }
+    return DevKitInspectionUtil.isAllowed(holder.file) && isMetaInformationFile(holder.file)
   }
 
   private fun collectKnownIds(holder: ProblemsHolder): List<String> {

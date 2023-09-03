@@ -1,0 +1,41 @@
+{
+  "$schema": "http://json-schema.org/draft-06/schema#",
+  "$ref": "#/definitions/Root",
+  "definitions": {
+    "Root": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "inspections": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/InspectionInfo"
+          }
+        }
+      },
+      "required": [
+        "inspections"
+      ],
+      "title": "Root"
+    },
+    "InspectionInfo": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "id": {
+          "type": "string"
+        },
+        "cweIds": {
+          "type": "array",
+          "items": {
+            "type": "integer"
+          }
+        }
+      },
+      "required": [
+        "id"
+      ],
+      "title": "InspectionInfo"
+    }
+  }
+}
