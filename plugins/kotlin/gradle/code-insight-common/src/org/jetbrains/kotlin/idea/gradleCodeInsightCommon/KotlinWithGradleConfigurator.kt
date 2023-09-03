@@ -33,6 +33,7 @@ import org.jetbrains.kotlin.idea.facet.getRuntimeLibraryVersionOrDefault
 import org.jetbrains.kotlin.idea.framework.ui.ConfigureDialogWithModulesAndVersion
 import org.jetbrains.kotlin.idea.gradle.KotlinIdeaGradleBundle
 import org.jetbrains.kotlin.idea.projectConfiguration.LibraryJarDescriptor
+import org.jetbrains.kotlin.idea.projectConfiguration.getDefaultJvmTargetForBuildScripts
 import org.jetbrains.kotlin.idea.projectConfiguration.getJvmStdlibArtifactId
 import org.jetbrains.kotlin.idea.quickfix.AbstractChangeFeatureSupportLevelFix
 import org.jetbrains.kotlin.idea.util.application.executeCommand
@@ -160,7 +161,7 @@ abstract class KotlinWithGradleConfigurator : KotlinProjectConfigurator {
 
     private fun configureModuleBuildScript(file: PsiFile, version: IdeKotlinVersion): Boolean {
         val sdk = ModuleUtil.findModuleForPsiElement(file)?.let { ModuleRootManager.getInstance(it).sdk }
-        val jvmTarget = getJvmTarget(sdk, version)
+        val jvmTarget = getDefaultJvmTargetForBuildScripts(sdk, version)?.description
         return GradleBuildScriptSupport.getManipulator(file).configureModuleBuildScript(
             kotlinPluginName,
             getKotlinPluginExpression(file.isKtDsl()),

@@ -12,7 +12,7 @@ object Versions {
     val KOTLIN = version("1.5.0") // used as fallback version
     val KOTLIN_FOR_COMPOSE = version("1.7.20")
     val COMPOSE_COMPILER_EXTENSION = version("1.4.3")
-    val GRADLE = version("8.1.1")
+    val GRADLE = version("7.6.1")
     val KTOR = version("2.3.2")
     val JUNIT = version("4.13.2")
     val JUNIT5 = version("5.10.0")
