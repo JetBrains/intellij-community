@@ -900,7 +900,7 @@ class LafManagerImpl(private val coroutineScope: CoroutineScope) : LafManager(),
     }
 
     override fun actionPerformed(e: AnActionEvent) {
-      val popup = JBPopupFactory.getInstance().createActionGroupPopup(IdeBundle.message("preferred.theme.text"), lafGroups, e.dataContext,
+      val popup = JBPopupFactory.getInstance().createActionGroupPopup(IdeBundle.message("preferred.theme.text"), getLafGroups(), e.dataContext,
                                                                       true, null, Int.MAX_VALUE)
       val component = e.inputEvent!!.component
       HelpTooltip.setMasterPopup(component, popup)
@@ -912,24 +912,23 @@ class LafManagerImpl(private val coroutineScope: CoroutineScope) : LafManager(),
       }
     }
 
-    private val lafGroups: ActionGroup
-      get() {
-        val lightLaFs = ArrayList<UIThemeLookAndFeelInfo>()
-        val darkLaFs = ArrayList<UIThemeLookAndFeelInfo>()
-        for (lafInfo in ThemeListProvider.getInstance().getShownThemes().asSequence().flatten()) {
-          if (lafInfo.theme.isDark) {
-            darkLaFs.add(lafInfo)
-          }
-          else {
-            lightLaFs.add(lafInfo)
-          }
+    private fun getLafGroups(): ActionGroup {
+      val lightLaFs = ArrayList<UIThemeLookAndFeelInfo>()
+      val darkLaFs = ArrayList<UIThemeLookAndFeelInfo>()
+      for (lafInfo in ThemeListProvider.getInstance().getShownThemes().asSequence().flatten()) {
+        if (lafInfo.theme.isDark) {
+          darkLaFs.add(lafInfo)
         }
-
-        val group = DefaultActionGroup()
-        group.addAll(createThemeActions(IdeBundle.message("preferred.theme.light.header"), lightLaFs, isDark = false))
-        group.addAll(createThemeActions(IdeBundle.message("preferred.theme.dark.header"), darkLaFs, isDark = true))
-        return group
+        else {
+          lightLaFs.add(lafInfo)
+        }
       }
+
+      val group = DefaultActionGroup()
+      group.addAll(createThemeActions(IdeBundle.message("preferred.theme.light.header"), lightLaFs, isDark = false))
+      group.addAll(createThemeActions(IdeBundle.message("preferred.theme.dark.header"), darkLaFs, isDark = true))
+      return group
+    }
 
     private fun createThemeActions(separatorText: @NlsContexts.Separator String,
                                    lafs: List<UIThemeLookAndFeelInfo>,
