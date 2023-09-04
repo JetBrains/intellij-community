@@ -28,6 +28,8 @@ import org.jetbrains.plugins.gitlab.authentication.GitLabLoginUtil
 import org.jetbrains.plugins.gitlab.authentication.accounts.GitLabAccountManager
 import org.jetbrains.plugins.gitlab.snippets.PathHandlingMode.Companion.getFileNameExtractor
 import org.jetbrains.plugins.gitlab.util.GitLabBundle.message
+import org.jetbrains.plugins.gitlab.util.GitLabStatistics.SnippetAction.*
+import org.jetbrains.plugins.gitlab.util.GitLabStatistics.logSnippetActionExecuted
 import java.awt.datatransfer.StringSelection
 
 /**
@@ -76,7 +78,12 @@ class GitLabSnippetService(private val project: Project, private val serviceScop
           createSnippet(accountManager, apiManager, result, files)
         }
       }
+      catch (e: CancellationException) {
+        throw e
+      }
       catch (e: Exception) {
+        logSnippetActionExecuted(project, CREATE_ERRORED)
+
         VcsNotifier.getInstance(project)
           .notifyError(GL_NOTIFICATION_CREATE_SNIPPET_ERROR,
                        message("snippet.create.action.error.title"),
@@ -189,6 +196,8 @@ class GitLabSnippetService(private val project: Project, private val serviceScop
       BrowserUtil.browse(url)
     }
 
+    logSnippetActionExecuted(project, CREATE_CREATED)
+
     VcsNotifier.getInstance(project)
       .notifyMinorInfo(GL_NOTIFICATION_CREATE_SNIPPET_SUCCESS,
                        message("snippet.create.action.success.title"),
@@ -254,10 +263,12 @@ class GitLabSnippetService(private val project: Project, private val serviceScop
           .create(this, project, vm)
 
         dialog.showAndGet()
-      }
+      }.await()
+
+      logSnippetActionExecuted(project, if (dialogIsOk) CREATE_OK else CREATE_CANCEL)
 
       // Await result of dialog
-      if (!dialogIsOk.await()) {
+      if (!dialogIsOk) {
         return@coroutineScope null
       }
 

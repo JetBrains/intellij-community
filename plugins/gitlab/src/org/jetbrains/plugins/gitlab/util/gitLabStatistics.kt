@@ -38,7 +38,7 @@ internal object GitLabStatistics {
   //endregion
 
   //region Counters
-  private val COUNTERS_GROUP = EventLogGroup("vcs.gitlab.counters", version = 9)
+  private val COUNTERS_GROUP = EventLogGroup("vcs.gitlab.counters", version = 10)
 
   /**
    * Server metadata was fetched
@@ -179,6 +179,19 @@ internal object GitLabStatistics {
   private val MR_ACTION_EVENT = COUNTERS_GROUP.registerEvent("mergerequests.action.performed", MR_ACTION_FIELD)
 
   fun logMrActionExecuted(project: Project, action: MergeRequestAction): Unit = MR_ACTION_EVENT.log(project, action)
+
+  private val SNIPPET_ACTION_EVENT = COUNTERS_GROUP.registerEvent("snippets.action.performed",
+                                                                  EventFields.Enum<SnippetAction>("action"))
+
+  fun logSnippetActionExecuted(project: Project, action: SnippetAction): Unit = SNIPPET_ACTION_EVENT.log(project, action)
+
+  enum class SnippetAction {
+    CREATE_OPEN_DIALOG,
+    CREATE_OK,
+    CREATE_CANCEL,
+    CREATE_CREATED,
+    CREATE_ERRORED
+  }
   //endregion
 }
 
