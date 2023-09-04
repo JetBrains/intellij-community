@@ -1,4 +1,4 @@
 // IGNORE_K1
 interface Bar {
-    fun baz(<caret>i: Int)
+    fun baz()
 }

@@ -18,7 +18,7 @@ import org.junit.runner.RunWith;
 @TestDataPath("$CONTENT_ROOT")
 @RunWith(JUnit3RunnerWithInners.class)
 @TestMetadata("../../../idea/tests/testData/inspectionsLocal/unusedSymbol")
-public class K2LocalInspectionAndGeneralHighlightingTestGenerated extends AbstractK2LocalInspectionAndGeneralHighlightingTest {
+public class K2UnusedSymbolHighlightingTestGenerated extends AbstractK2LocalInspectionAndGeneralHighlightingTest {
     private void runTest(String testDataFilePath) throws Exception {
         KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
     }
@@ -203,6 +203,11 @@ public class K2LocalInspectionAndGeneralHighlightingTestGenerated extends Abstra
         runTest("../../../idea/tests/testData/inspectionsLocal/unusedSymbol/privateOperator.kt");
     }
 
+    @TestMetadata("privateOperatorUsed.kt")
+    public void testPrivateOperatorUsed() throws Exception {
+        runTest("../../../idea/tests/testData/inspectionsLocal/unusedSymbol/privateOperatorUsed.kt");
+    }
+
     @TestMetadata("privateProperty.kt")
     public void testPrivateProperty() throws Exception {
         runTest("../../../idea/tests/testData/inspectionsLocal/unusedSymbol/privateProperty.kt");
@@ -316,6 +321,11 @@ public class K2LocalInspectionAndGeneralHighlightingTestGenerated extends Abstra
     @TestMetadata("unusedFunctionExplicitApi.kt")
     public void testUnusedFunctionExplicitApi() throws Exception {
         runTest("../../../idea/tests/testData/inspectionsLocal/unusedSymbol/unusedFunctionExplicitApi.kt");
+    }
+
+    @TestMetadata("unusedPublicMembers.kt")
+    public void testUnusedPublicMembers() throws Exception {
+        runTest("../../../idea/tests/testData/inspectionsLocal/unusedSymbol/unusedPublicMembers.kt");
     }
 
     @TestMetadata("usedEnumFunction.kt")

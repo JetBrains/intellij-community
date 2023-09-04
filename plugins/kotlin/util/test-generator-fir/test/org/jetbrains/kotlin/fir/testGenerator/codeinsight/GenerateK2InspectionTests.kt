@@ -49,7 +49,9 @@ internal fun MutableTWorkspace.generateK2InspectionTests() {
          * `unusedSymbol` tests require [com.intellij.codeInsight.daemon.impl.GeneralHighlightingPass] to run,
          * so they extend the other base class [AbstractK2LocalInspectionAndGeneralHighlightingTest]
          */
-        testClass<AbstractK2LocalInspectionAndGeneralHighlightingTest> {
+        val packageName = AbstractK2LocalInspectionAndGeneralHighlightingTest::class.java.`package`.name
+        val generatedClassName = "$packageName.K2UnusedSymbolHighlightingTestGenerated"
+        testClass<AbstractK2LocalInspectionAndGeneralHighlightingTest>(generatedClassName) {
             model("${idea}/inspectionsLocal/unusedSymbol")
         }
 

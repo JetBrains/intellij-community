@@ -17101,6 +17101,11 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
             runTest("testData/inspectionsLocal/unusedSymbol/privateOperator.kt");
         }
 
+        @TestMetadata("privateOperatorUsed.kt")
+        public void testPrivateOperatorUsed() throws Exception {
+            runTest("testData/inspectionsLocal/unusedSymbol/privateOperatorUsed.kt");
+        }
+
         @TestMetadata("privateProperty.kt")
         public void testPrivateProperty() throws Exception {
             runTest("testData/inspectionsLocal/unusedSymbol/privateProperty.kt");
@@ -17214,6 +17219,11 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
         @TestMetadata("unusedFunctionExplicitApi.kt")
         public void testUnusedFunctionExplicitApi() throws Exception {
             runTest("testData/inspectionsLocal/unusedSymbol/unusedFunctionExplicitApi.kt");
+        }
+
+        @TestMetadata("unusedPublicMembers.kt")
+        public void testUnusedPublicMembers() throws Exception {
+            runTest("testData/inspectionsLocal/unusedSymbol/unusedPublicMembers.kt");
         }
 
         @TestMetadata("usedEnumFunction.kt")

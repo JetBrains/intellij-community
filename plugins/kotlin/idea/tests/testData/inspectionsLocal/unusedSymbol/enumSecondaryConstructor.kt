@@ -8,5 +8,5 @@ enum class MyEnum(val i: Int) {
 }
 
 fun test() {
-    MyEnum.HELLO
+    ""+MyEnum.HELLO + MyEnum.WORLD
 }

@@ -3,9 +3,8 @@ package org.jetbrains.kotlin.idea.highlighting
 
 import com.intellij.codeInsight.daemon.HighlightDisplayKey
 import com.intellij.codeInsight.daemon.impl.Divider
-import com.intellij.codeInsight.daemon.impl.GeneralHighlightingPass
-import com.intellij.codeInsight.daemon.impl.HighlightInfo
 import com.intellij.codeInsight.daemon.impl.HighlightInfoType
+import com.intellij.codeInsight.daemon.impl.UnusedSymbolUtil
 import com.intellij.codeInsight.daemon.impl.analysis.HighlightInfoHolder
 import com.intellij.codeInsight.daemon.impl.analysis.HighlightingLevelManager
 import com.intellij.codeInspection.LocalInspectionTool
@@ -22,12 +21,12 @@ import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
 import com.intellij.refactoring.safeDelete.SafeDeleteHandler
 import org.jetbrains.annotations.Nls
+import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
+import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.idea.base.highlighting.KotlinBaseHighlightingBundle
-import org.jetbrains.kotlin.idea.base.psi.mustHaveNonEmptyPrimaryConstructor
 import org.jetbrains.kotlin.idea.inspections.describe
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.psi.*
-import org.jetbrains.kotlin.psi.psiUtil.containingClass
 
 class KotlinUnusedHighlightingVisitor(private val ktFile: KtFile, private val refHolder: KotlinRefsHolder) {
     internal fun collectHighlights(holder: HighlightInfoHolder) {
@@ -47,93 +46,58 @@ class KotlinUnusedHighlightingVisitor(private val ktFile: KtFile, private val re
         if (!HighlightingLevelManager.getInstance(ktFile.project).shouldInspect(ktFile)) return
 
         Divider.divideInsideAndOutsideAllRoots(ktFile, ktFile.textRange, holder.annotationSession.priorityRange, Predicates.alwaysTrue()) { dividedElements ->
-            // highlight visible symbols first
-            for (declaration in dividedElements.inside()) {
-                if (declaration is KtNamedDeclaration) {
-                    handleDeclaration(declaration, deadCodeInspection, deadCodeInfoType, deadCodeKey, holder)
+            analyze(ktFile) {
+                val declarationVisitor = object : KtVisitorVoid() {
+                    override fun visitNamedDeclaration(declaration: KtNamedDeclaration) {
+                        handleDeclaration(declaration, deadCodeInspection, deadCodeInfoType, deadCodeKey, holder)
+                    }
                 }
-            }
-            for (declaration in dividedElements.outside()) {
-                if (declaration is KtNamedDeclaration) {
-                    handleDeclaration(declaration, deadCodeInspection, deadCodeInfoType, deadCodeKey, holder)
+                // highlight visible symbols first
+                for (declaration in dividedElements.inside()) {
+                    declaration.accept(declarationVisitor)
+                }
+                for (declaration in dividedElements.outside()) {
+                    declaration.accept(declarationVisitor)
                 }
             }
             true
         }
     }
 
+    context(KtAnalysisSession)
     private fun handleDeclaration(declaration: KtNamedDeclaration,
                                   deadCodeInspection: LocalInspectionTool,
                                   deadCodeInfoType: HighlightInfoType.HighlightInfoTypeImpl,
                                   deadCodeKey: HighlightDisplayKey,
                                   holder: HighlightInfoHolder) {
-        if (!declarationAllowedToBeUnused(declaration)) return
-
+        if (!KotlinUnusedSymbolUtil.isApplicableByPsi(declaration)) return
+        if (refHolder.isUsedLocally(declaration)) return // even for non-private declarations our refHolder might have usage info
         val mustBeLocallyReferenced = declaration is KtParameter ||
                                       declaration.hasModifier(KtTokens.PRIVATE_KEYWORD) ||
                                       ((declaration.parent as? KtClassBody)?.parent as? KtClassOrObject)?.isLocal == true
 
         val nameIdentifier = declaration.nameIdentifier
         if (mustBeLocallyReferenced &&
-            !refHolder.isUsedLocally(declaration) &&
             !SuppressionUtil.inspectionResultSuppressed(declaration, deadCodeInspection) &&
             declaration.annotationEntries.isEmpty() //instead of slow implicit usages checks
         ) {
             val description = declaration.describe() ?: return
-            val info = HighlightInfo.newHighlightInfo(deadCodeInfoType)
-              .range(nameIdentifier ?: (declaration as? KtConstructor<*>)?.getConstructorKeyword() ?: declaration)
-              .descriptionAndTooltip(KotlinBaseHighlightingBundle.message("inspection.message.never.used", description))
-              .group(GeneralHighlightingPass.POST_UPDATE_ALL)
+            val problemPsiElement = nameIdentifier ?: (declaration as? KtConstructor<*>)?.getConstructorKeyword() ?: declaration
+            val info = UnusedSymbolUtil.createUnusedSymbolInfoBuilder(problemPsiElement, KotlinBaseHighlightingBundle.message("inspection.message.never.used", description), deadCodeInfoType, null)
               .registerFix(SafeDeleteFix(declaration), null, null, null, deadCodeKey)
               .create()
             holder.add(info)
         }
-    }
+        else {
+            val problemPsi = KotlinUnusedSymbolUtil.getPsiToReportProblem(declaration) { false } ?: return
+            val message = declaration.describe()?.let { KotlinBaseHighlightingBundle.message("inspection.message.never.used", it) }
+                          ?: return
+            val fixes = KotlinUnusedSymbolUtil.createQuickFixes(declaration).toTypedArray()
+            val builder = UnusedSymbolUtil.createUnusedSymbolInfoBuilder(problemPsi, message, deadCodeInfoType, null)
 
-    private fun declarationAllowedToBeUnused(declaration: KtNamedDeclaration): Boolean {
-        if (declaration is KtClassOrObject && declaration.isTopLevel()) {
-            //top level private classes are visible from java as package locals
-            return false
+            fixes.forEach { builder.registerFix(it, null, null, null, deadCodeKey) }
+            holder.add(builder.create())
         }
-
-        if (declaration is KtObjectDeclaration && declaration.isCompanion()) {
-            //can be used implicitly by referencing members
-            return false
-        }
-
-        if (declaration.hasModifier(KtTokens.OVERRIDE_KEYWORD)) {
-            return false
-        }
-
-        if (declaration.hasModifier(KtTokens.OPERATOR_KEYWORD)) {
-            //TODO we don't highlight operators now, can be improved later
-            return false
-        }
-
-        if (declaration is KtParameter) {
-            val function = declaration.ownerFunction ?: return true
-            if (function is KtPrimaryConstructor) {
-                val containingClass = function.containingClass() ?: return true
-                if (containingClass.mustHaveNonEmptyPrimaryConstructor()) {
-                    //parameters are uses implicitly in equals/hashCode/etc
-                    return false
-                }
-                if (declaration.hasValOrVar() && !declaration.hasModifier(KtTokens.PRIVATE_KEYWORD)) {
-                    //can be used outside
-                    return false
-                }
-            } else if (function.hasModifier(KtTokens.OVERRIDE_KEYWORD) ||
-                function.hasModifier(KtTokens.OPEN_KEYWORD) ||
-                function.hasModifier(KtTokens.ABSTRACT_KEYWORD) ||
-                function.containingClass()?.isInterface() == true
-            ) {
-                //function can be in the hierarchy
-                return false
-            } else if (function is KtFunctionLiteral) {
-                return false
-            }
-        }
-        return true
     }
 }
 
