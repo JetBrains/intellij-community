@@ -153,6 +153,16 @@ public class FirQuickDocTestGenerated extends AbstractFirQuickDocTest {
         runTest("testData/quickDoc/MethodFromStdLib.kt");
     }
 
+    @TestMetadata("OnActualDeclaration.kt")
+    public void testOnActualDeclaration() throws Exception {
+        runTest("testData/quickDoc/OnActualDeclaration.kt");
+    }
+
+    @TestMetadata("OnActualDeclarationWithInheritedDoc.kt")
+    public void testOnActualDeclarationWithInheritedDoc() throws Exception {
+        runTest("testData/quickDoc/OnActualDeclarationWithInheritedDoc.kt");
+    }
+
     @TestMetadata("OnClassDeclarationWithComplexKDoc.kt")
     public void testOnClassDeclarationWithComplexKDoc() throws Exception {
         runTest("testData/quickDoc/OnClassDeclarationWithComplexKDoc.kt");

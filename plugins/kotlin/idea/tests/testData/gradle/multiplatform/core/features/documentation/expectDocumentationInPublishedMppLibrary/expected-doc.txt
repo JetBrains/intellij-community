@@ -4,14 +4,32 @@ Common documentation for DumbLib
 app/src/commonMain/kotlin/Common.kt:3:14
 Common doc for foo
 
+app/src/commonMain/kotlin/Common.kt:4:5
+Common doc for object Bar
+
+app/src/commonMain/kotlin/Common.kt:5:5
+Common doc fun bar
+
 app/src/jvmMain/kotlin/Jvm.kt:3:8
-JVM doc for DumbLib
+null
 
 app/src/jvmMain/kotlin/Jvm.kt:3:14
 JVM doc for foo
 
+app/src/jvmMain/kotlin/Jvm.kt:4:5
+Common doc for object Bar
+
+app/src/jvmMain/kotlin/Jvm.kt:5:5
+JVM doc fun bar
+
 app/src/linuxX64Main/kotlin/Linux.kt:3:8
-Common documentation for DumbLib
+NATIVE doc for DumbLib
 
 app/src/linuxX64Main/kotlin/Linux.kt:3:14
-Common doc for foo
+null
+
+app/src/linuxX64Main/kotlin/Linux.kt:4:5
+Linux doc for object Bar
+
+app/src/linuxX64Main/kotlin/Linux.kt:5:5
+Common doc fun bar
