@@ -31,6 +31,7 @@ import java.awt.event.KeyEvent
 import java.net.URL
 import javax.swing.Icon
 import javax.swing.JComponent
+import javax.swing.SwingUtilities
 import javax.swing.event.AncestorEvent
 
 @Service(Service.Level.APP)
@@ -310,11 +311,13 @@ class GotItTooltip internal constructor(@NonNls val id: String,
         }
 
         override fun ancestorRemoved(ancestorEvent: AncestorEvent) {
-          balloon?.let {
-            it.hide(true)
-            GotItUsageCollector.instance.logClose(id, GotItUsageCollectorGroup.CloseType.AncestorRemoved)
+          SwingUtilities.invokeLater {
+            balloon?.let {
+              it.hide(true)
+              GotItUsageCollector.instance.logClose(id, GotItUsageCollectorGroup.CloseType.AncestorRemoved)
+            }
+            balloon = null
           }
-          balloon = null
         }
       }.also { Disposer.register(this, Disposable { component.removeAncestorListener(it) }) })
     }
@@ -349,8 +352,10 @@ class GotItTooltip internal constructor(@NonNls val id: String,
         if (getComponent().isShowing)
           RelativePoint(component, pointProvider(component, balloon))
         else {
-          balloon.hide(true)
-          GotItUsageCollector.instance.logClose(id, GotItUsageCollectorGroup.CloseType.AncestorRemoved)
+          SwingUtilities.invokeLater {
+            balloon.hide(true)
+            GotItUsageCollector.instance.logClose(id, GotItUsageCollectorGroup.CloseType.AncestorRemoved)
+          }
           null
         }
     }
