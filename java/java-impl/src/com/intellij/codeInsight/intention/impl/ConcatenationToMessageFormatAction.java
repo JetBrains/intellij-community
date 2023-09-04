@@ -43,14 +43,15 @@ public class ConcatenationToMessageFormatAction extends PsiUpdateModCommandActio
     PsiPolyadicExpression concatenation = getEnclosingLiteralConcatenation(element);
     if (concatenation == null) return;
     List<PsiExpression> args = new ArrayList<>();
-    final String formatString = PsiConcatenationUtil.buildUnescapedFormatString(concatenation, false, args);
+    final String formatString =
+      StringUtil.escapeStringCharacters(PsiConcatenationUtil.buildUnescapedFormatString(concatenation, false, args));
 
     Project project = context.project();
     final PsiElementFactory factory = JavaPsiFacade.getElementFactory(project);
     PsiMethodCallExpression call = (PsiMethodCallExpression)
       factory.createExpressionFromText("java.text.MessageFormat.format()", concatenation);
     PsiExpressionList argumentList = call.getArgumentList();
-    boolean textBlocks = ContainerUtil.exists(concatenation.getOperands(), 
+    boolean textBlocks = ContainerUtil.exists(concatenation.getOperands(),
                                               operand -> operand instanceof PsiLiteralExpression literal && literal.isTextBlock());
     final String expressionText;
     if (textBlocks) {
@@ -59,7 +60,7 @@ public class ConcatenationToMessageFormatAction extends PsiUpdateModCommandActio
         .collect(Collectors.joining("\n", "\"\"\"\n", "\"\"\""));
     }
     else {
-      expressionText = "\"" + StringUtil.escapeStringCharacters(formatString) + "\"";
+      expressionText = "\"" + formatString + "\"";
     }
     PsiExpression formatArgument = factory.createExpressionFromText(expressionText, null);
     argumentList.add(formatArgument);
