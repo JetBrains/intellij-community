@@ -284,7 +284,7 @@ public final class MavenImportUtil {
       modifiableModel.addContentEntry(contentRoot);
       modifiableModel.commit();
 
-      ExternalSystemUtil.markModuleAsMaven(module, true);
+      ExternalSystemUtil.markModuleAsMaven(module, null, true);
 
       return module;
     });

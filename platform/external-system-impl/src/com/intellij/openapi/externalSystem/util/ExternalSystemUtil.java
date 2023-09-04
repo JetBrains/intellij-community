@@ -690,15 +690,15 @@ public final class ExternalSystemUtil {
     project.putUserData(ExternalSystemDataKeys.NEWLY_CREATED_PROJECT, isCreatingNewProject ? Boolean.TRUE : null);
     project.putUserData(ExternalSystemDataKeys.NEWLY_IMPORTED_PROJECT, isCreatingNewProject ? Boolean.TRUE : null);
 
-    markModuleAsMaven(module, isMavenModule);
+    markModuleAsMaven(module, null, isMavenModule);
   }
 
   // To be used only in internal New Project Wizard/Project Opening machinery
   @ApiStatus.Internal
-  public static void markModuleAsMaven(@NotNull Module module, boolean isMavenModule) {
+  public static void markModuleAsMaven(@NotNull Module module, @Nullable String moduleVersion, boolean isMavenModule) {
     // This module will be replaced after import
     // Make sure the .iml file is not created under the project dir, if 'Store generated project files externally' setting is on.
-    ExternalSystemModulePropertyManager.getInstance(module).setMavenized(isMavenModule);
+    ExternalSystemModulePropertyManager.getInstance(module).setMavenized(isMavenModule, moduleVersion);
   }
 
   @ApiStatus.Internal

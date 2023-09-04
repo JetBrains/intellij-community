@@ -27,6 +27,8 @@ import org.jdom.JDOMException;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.idea.maven.importing.MavenProjectImporter;
+import org.jetbrains.idea.maven.importing.workspaceModel.WorkspaceModuleImporter;
 import org.jetbrains.idea.maven.model.MavenArchetype;
 import org.jetbrains.idea.maven.model.MavenId;
 import org.jetbrains.idea.maven.project.MavenEnvironmentForm;
@@ -84,7 +86,9 @@ public abstract class AbstractMavenModuleBuilder extends ModuleBuilder implement
   @Override
   protected void setupModule(Module module) throws ConfigurationException {
     super.setupModule(module);
-    ExternalSystemUtil.markModuleAsMaven(module, true);
+    boolean isWorkspaceImportEnabled = MavenProjectImporter.isImportToWorkspaceModelEnabled(module.getProject());
+    var moduleVersion = isWorkspaceImportEnabled ? WorkspaceModuleImporter.ExternalSystemData.VERSION : null;
+    ExternalSystemUtil.markModuleAsMaven(module, moduleVersion, true);
   }
 
   @Override

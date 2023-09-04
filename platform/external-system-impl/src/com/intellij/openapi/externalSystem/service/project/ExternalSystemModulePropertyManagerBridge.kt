@@ -8,14 +8,14 @@ import com.intellij.openapi.externalSystem.model.project.ModuleData
 import com.intellij.openapi.externalSystem.model.project.ProjectData
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.project.isExternalStorageEnabled
+import com.intellij.platform.backend.workspace.WorkspaceModel
 import com.intellij.platform.workspace.jps.JpsFileEntitySource
 import com.intellij.platform.workspace.jps.JpsImportedEntitySource
-import com.intellij.platform.backend.workspace.WorkspaceModel
+import com.intellij.platform.workspace.jps.entities.ExternalSystemModuleOptionsEntity
+import com.intellij.platform.workspace.storage.MutableEntityStorage
 import com.intellij.workspaceModel.ide.impl.legacyBridge.module.ModuleManagerBridgeImpl
 import com.intellij.workspaceModel.ide.impl.legacyBridge.module.findModuleEntity
 import com.intellij.workspaceModel.ide.legacyBridge.ModuleBridge
-import com.intellij.platform.workspace.storage.MutableEntityStorage
-import com.intellij.platform.workspace.jps.entities.ExternalSystemModuleOptionsEntity
 import org.jetbrains.jps.model.serialization.SerializationConstants
 
 class ExternalSystemModulePropertyManagerBridge(private val module: Module) : ExternalSystemModulePropertyManager() {
@@ -100,15 +100,22 @@ class ExternalSystemModulePropertyManagerBridge(private val module: Module) : Ex
   override fun isMavenized(): Boolean = getExternalSystemId() == SerializationConstants.MAVEN_EXTERNAL_SOURCE_ID
 
   override fun setMavenized(mavenized: Boolean) {
-    setMavenized(mavenized, getModuleDiff())
+    setMavenized(mavenized, null)
   }
 
-  fun setMavenized(mavenized: Boolean, storageBuilder: MutableEntityStorage?) {
+  override fun setMavenized(mavenized: Boolean, moduleVersion: String?) {
+    setMavenized(mavenized, moduleVersion, getModuleDiff())
+  }
+
+  fun setMavenized(mavenized: Boolean, moduleVersion: String?, storageBuilder: MutableEntityStorage?) {
     if (mavenized) {
       unlinkExternalOptions(storageBuilder)
     }
     editEntity(storageBuilder) {
       externalSystem = if (mavenized) SerializationConstants.MAVEN_EXTERNAL_SOURCE_ID else null
+      if (null != moduleVersion) {
+        externalSystemModuleVersion = moduleVersion
+      }
     }
     updateSource(storageBuilder)
   }
