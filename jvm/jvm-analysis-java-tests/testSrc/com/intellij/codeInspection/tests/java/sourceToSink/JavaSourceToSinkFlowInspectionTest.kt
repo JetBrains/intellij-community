@@ -100,6 +100,10 @@ class JavaSourceToSinkFlowInspectionTest : SourceToSinkFlowInspectionTestBase() 
     prepareCheckFramework()
     myFixture.testHighlighting("ForEachLoop.java")
   }
+  fun `test if statements`() {
+    prepareCheckFramework()
+    myFixture.testHighlighting("IfStatement.java")
+  }
 
   fun `test lambdaWithForEachLoop`() {
     prepareCheckFramework()

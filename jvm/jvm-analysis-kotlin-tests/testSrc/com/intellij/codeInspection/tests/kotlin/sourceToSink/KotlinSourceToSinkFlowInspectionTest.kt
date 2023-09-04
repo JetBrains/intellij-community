@@ -143,6 +143,10 @@ class KotlinSourceToSinkFlowInspectionTest : SourceToSinkFlowInspectionTestBase(
     prepareCheckFramework()
     myFixture.testHighlighting("LambdaWithForEachLoop.kt")
   }
+  fun `test if`() {
+    prepareCheckFramework()
+    myFixture.testHighlighting("ifStatement.kt")
+  }
 
   fun `test custom through tables`() {
     inspection.untaintedParameterIndex.apply {
