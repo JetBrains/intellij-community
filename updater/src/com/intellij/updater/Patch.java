@@ -337,7 +337,7 @@ public class Patch {
         if (action instanceof CreateAction && !new File(toDir, action.getPath()).getParentFile().exists()) {
           LOG.info("Create action: " + action.getPath() + " skipped. The parent directory is absent.");
         }
-        else if (action instanceof UpdateAction && !new File(toDir, action.getPath()).getParentFile().exists()) {
+        else if (action instanceof UpdateAction && !new File(toDir, action.getPath()).getParentFile().exists() && !action.isCritical()) {
           LOG.info("Update action: " + action.getPath() + " skipped. The parent directory is absent.");
         }
         else {

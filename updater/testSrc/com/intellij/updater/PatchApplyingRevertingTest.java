@@ -3,8 +3,10 @@ package com.intellij.updater;
 
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.io.IoTestUtil;
+import com.intellij.openapi.util.io.NioFiles;
 import com.intellij.util.containers.ContainerUtil;
 import org.junit.Before;
+import org.junit.Ignore;
 import org.junit.Test;
 
 import java.io.ByteArrayInputStream;
@@ -27,7 +29,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.Assert.*;
 import static org.junit.Assume.assumeFalse;
 
-@SuppressWarnings("JUnit3StyleTestMethodInJUnit4Class")
+@SuppressWarnings({"JUnit3StyleTestMethodInJUnit4Class", "DuplicateExpressions"})
 public abstract class PatchApplyingRevertingTest extends PatchTestCase {
   @SuppressWarnings("JUnitTestCaseWithNoTests")
   public static final class StandardModeTest extends PatchApplyingRevertingTest { }
@@ -703,6 +705,30 @@ public abstract class PatchApplyingRevertingTest extends PatchTestCase {
     assertAppliedAndReverted();
   }
 
+  @Test
+  @Ignore  // temporarily disabled (fails because restore doesn't remove empty directories originally missing from the installation)
+  public void creatingParentDirectoriesForMissingCriticalFiles() throws Exception {
+    randomFile(myOlderDir.toPath().resolve("plugins/some/lib/plugin.jar"));
+    randomFile(myOlderDir.toPath().resolve("plugins/other/lib/plugin.jar"));
+    resetNewerDir();
+    randomFile(myNewerDir.toPath().resolve("plugins/some/lib/plugin.jar"));
+
+    myPatchSpec.setCriticalFiles(List.of("plugins/some/lib/plugin.jar"));
+    createPatch();
+
+    NioFiles.deleteRecursively(myOlderDir.toPath().resolve("plugins/some"));
+
+    PatchFileCreator.PreparationResult preparationResult = PatchFileCreator.prepareAndValidate(myFile, myOlderDir, TEST_UI);
+    assertThat(preparationResult.validationResults).containsExactly(
+      new ValidationResult(ValidationResult.Kind.CONFLICT,
+                           "plugins/some/lib/plugin.jar",
+                           ValidationResult.Action.UPDATE,
+                           "Absent",
+                           ValidationResult.Option.REPLACE, ValidationResult.Option.IGNORE)
+    );
+    assertAppliedAndReverted(preparationResult);
+  }
+
   @Override
   protected Patch createPatch() throws IOException {
     assertFalse(myFile.exists());
@@ -737,7 +763,7 @@ public abstract class PatchApplyingRevertingTest extends PatchTestCase {
 
     if (myDoBackup) {
       PatchFileCreator.revert(preparationResult, applicationResult.appliedActions, backupDir, TEST_UI);
-      assertEquals(original, digest(patch, myOlderDir));
+      assertThat(digest(patch, myOlderDir)).containsExactlyEntriesOf(original);
     }
   }
 
@@ -768,7 +794,7 @@ public abstract class PatchApplyingRevertingTest extends PatchTestCase {
         options.put(each.path, each.options.get(0));
       }
       else {
-        assertNotSame(each.toString(), ValidationResult.Kind.ERROR, each.kind);
+        assertThat(each.kind).describedAs(each.toString()).isNotSameAs(ValidationResult.Kind.ERROR);
       }
     }
 
@@ -776,12 +802,12 @@ public abstract class PatchApplyingRevertingTest extends PatchTestCase {
     if (applicationResult.error != null) {
       throw new AssertionError("patch failed", applicationResult.error);
     }
-    assertTrue(applicationResult.applied);
-    assertEquals(target, digest(patch, myOlderDir));
+    assertThat(applicationResult.applied).isTrue();
+    assertThat(digest(patch, myOlderDir)).containsExactlyEntriesOf(target);
 
     if (myDoBackup) {
       PatchFileCreator.revert(preparationResult, applicationResult.appliedActions, backupDir, TEST_UI);
-      assertEquals(original, digest(patch, myOlderDir));
+      assertThat(digest(patch, myOlderDir)).containsExactlyEntriesOf(original);
     }
   }
 
