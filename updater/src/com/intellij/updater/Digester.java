@@ -26,23 +26,26 @@ public final class Digester {
   }
 
   public static long digestRegularFile(File file) throws IOException {
-    Path path = file.toPath();
-    BasicFileAttributes attrs = Files.readAttributes(path, BasicFileAttributes.class, LinkOption.NOFOLLOW_LINKS);
+    return digest(file.toPath());
+  }
+
+  public static long digest(Path file) throws IOException {
+    BasicFileAttributes attrs = Files.readAttributes(file, BasicFileAttributes.class, LinkOption.NOFOLLOW_LINKS);
 
     if (attrs.isSymbolicLink()) {
-      Path target = Files.readSymbolicLink(path);
+      Path target = Files.readSymbolicLink(file);
       if (target.isAbsolute()) throw new IOException("An absolute link: " + file + " -> " + target);
       return digestStream(new ByteArrayInputStream(target.toString().getBytes(StandardCharsets.UTF_8))) | SYM_LINK;
     }
 
     if (attrs.isDirectory()) return DIRECTORY;
 
-    long executable = !Utils.IS_WINDOWS && file.canExecute() ? EXECUTABLE : 0;
-    try (InputStream in = new BufferedInputStream(Utils.newFileInputStream(file))) {
+    long executable = !Utils.IS_WINDOWS && Files.isExecutable(file) ? EXECUTABLE : 0;
+    try (InputStream in = Files.newInputStream(file)) {
       return digestStream(in) | executable;
     }
     catch (IOException e) {
-      throw new IOException(path.toString(), e);
+      throw new IOException(file.toString(), e);
     }
   }
 
