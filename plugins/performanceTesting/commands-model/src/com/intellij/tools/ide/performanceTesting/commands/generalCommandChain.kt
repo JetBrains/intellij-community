@@ -961,3 +961,13 @@ fun <T : CommandChain> T.freezeUI(durationOfFreezeInMs: Int): T {
   addCommand("${CMD_PREFIX}freezeUI $durationOfFreezeInMs")
   return this
 }
+
+fun <T: CommandChain> T.moveCaret(text: String): T {
+  addCommand("${CMD_PREFIX}moveCaret $text")
+  return this
+}
+
+fun <T : CommandChain> T.startNewLine(): T {
+  executeEditorAction("EditorStartNewLine")
+  return this
+}
