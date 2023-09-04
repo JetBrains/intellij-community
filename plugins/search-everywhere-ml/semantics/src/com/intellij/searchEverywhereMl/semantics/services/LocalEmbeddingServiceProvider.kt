@@ -1,9 +1,10 @@
 package com.intellij.searchEverywhereMl.semantics.services
 
-import ai.grazie.emb.local.LocalEmbeddingService
-import ai.grazie.emb.local.LocalEmbeddingServiceLoader
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
+import com.intellij.openapi.progress.runBlockingCancellable
+import com.intellij.searchEverywhereMl.semantics.models.LocalEmbeddingService
+import com.intellij.searchEverywhereMl.semantics.models.LocalEmbeddingServiceLoader
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import java.lang.ref.SoftReference
@@ -18,7 +19,7 @@ class LocalEmbeddingServiceProvider {
   private var localServiceRef: SoftReference<LocalEmbeddingService>? = null
   private val mutex = Mutex()
 
-  suspend fun getService(): LocalEmbeddingService? {
+  private suspend fun getService(): LocalEmbeddingService? {
     return mutex.withLock {
       var service = localServiceRef?.get()
       if (service == null) {
@@ -30,6 +31,8 @@ class LocalEmbeddingServiceProvider {
       service
     }
   }
+
+  fun getServiceBlocking(): LocalEmbeddingService? = runBlockingCancellable { getService() }
 
   companion object {
     fun getInstance() = service<LocalEmbeddingServiceProvider>()

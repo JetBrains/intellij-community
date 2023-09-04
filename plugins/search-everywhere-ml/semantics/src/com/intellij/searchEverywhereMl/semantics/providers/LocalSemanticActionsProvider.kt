@@ -14,6 +14,6 @@ class LocalSemanticActionsProvider(private val model: GotoActionModel) : Semanti
 
   companion object {
     private const val ITEMS_LIMIT = 10
-    private const val SIMILARITY_THRESHOLD = 0.5
+    private const val SIMILARITY_THRESHOLD = 0.3
   }
 }

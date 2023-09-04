@@ -39,7 +39,7 @@ class ActionEmbeddingsStorage {
 
   fun prepareForSearch() {
     ApplicationManager.getApplication().executeOnPooledThread {
-      // LocalArtifactsManager.getInstance().downloadArtifactsIfNecessary()
+      LocalArtifactsManager.getInstance().downloadArtifactsIfNecessary()
       index.loadFromDisk()
       generateEmbeddingsIfNecessary()
     }
@@ -55,7 +55,7 @@ class ActionEmbeddingsStorage {
 
   fun searchNeighbours(text: String, topK: Int, similarityThreshold: Double? = null): List<ScoredText> {
     if (!checkSearchEnabled()) return emptyList()
-    val localEmbeddingService = runBlockingCancellable { LocalEmbeddingServiceProvider.getInstance().getService() } ?: return emptyList()
+    val localEmbeddingService = LocalEmbeddingServiceProvider.getInstance().getServiceBlocking() ?: return emptyList()
     val computeTask = { runBlockingCancellable { localEmbeddingService.embed(listOf(text)) }.single().normalized() }
     val embedding = ProgressManager.getInstance().runProcess(computeTask, EmptyProgressIndicator())
     return index.findClosest(embedding, topK, similarityThreshold)

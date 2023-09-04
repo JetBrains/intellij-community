@@ -21,7 +21,7 @@ class ActionEmbeddingStorageSetup(
     val indexableActionIds = ActionEmbeddingsStorage.getIndexableActionIds()
     if (checkEmbeddingsReady(indexableActionIds)) return
 
-    val embeddingService = runBlockingCancellable { LocalEmbeddingServiceProvider.getInstance().getService() } ?: return
+    val embeddingService = LocalEmbeddingServiceProvider.getInstance().getServiceBlocking() ?: return
     // Cancel the previous embeddings calculation task if it's not finished
     setupTaskIndicator.getAndSet(indicator)?.cancel()
 

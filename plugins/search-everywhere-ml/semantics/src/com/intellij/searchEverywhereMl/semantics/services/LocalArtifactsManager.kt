@@ -2,38 +2,60 @@ package com.intellij.searchEverywhereMl.semantics.services
 
 import com.intellij.notification.NotificationGroupManager
 import com.intellij.notification.NotificationType
+import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
-import com.intellij.openapi.progress.ProgressIndicator
-import com.intellij.openapi.progress.ProgressManager
-import com.intellij.openapi.progress.Task
+import com.intellij.openapi.progress.*
+import com.intellij.openapi.progress.impl.BackgroundableProcessIndicator
+import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.searchEverywhereMl.semantics.SemanticSearchBundle
+import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import com.intellij.util.download.DownloadableFileService
 import com.intellij.util.io.Decompressor
+import com.intellij.util.io.delete
 import java.io.File
 import java.io.IOException
 import java.nio.file.Files
+import java.util.concurrent.locks.ReentrantLock
+import kotlin.concurrent.withLock
 import kotlin.io.path.listDirectoryEntries
+import kotlin.io.path.name
 
 /* Service that manages the artifacts for local semantic models */
 @Service
 class LocalArtifactsManager {
-  private val root = File(PathManager.getSystemPath()).resolve(SEMANTIC_SEARCH_RESOURCES_DIR)
+  private val root = File(PathManager.getSystemPath())
+    .resolve(SEMANTIC_SEARCH_RESOURCES_DIR)
+    .resolve(MODEL_VERSION)
+    .also { Files.createDirectories(it.toPath()) }
   private val modelArtifactsRoot = root.resolve(MODEL_ARTIFACTS_DIR)
+  private val mutex = ReentrantLock()
+
+  init {
+    root.parentFile.toPath().listDirectoryEntries().filter { it.name != MODEL_VERSION }.forEach { it.delete(recursively = true) }
+  }
 
   fun getCustomRootDataLoader() = CustomRootDataLoader(modelArtifactsRoot.toPath())
 
-  fun downloadArtifactsIfNecessary() {
+  @RequiresBackgroundThread
+  fun downloadArtifactsIfNecessary() = mutex.withLock {
     if (!checkArtifactsPresent()) {
-      ProgressManager.getInstance().run(object : Task.Backgroundable(null, ARTIFACTS_DOWNLOAD_TASK_NAME) {
-        override fun run(indicator: ProgressIndicator) {
+      val indicator = BackgroundableProcessIndicator(null, ARTIFACTS_DOWNLOAD_TASK_NAME, null, "", false)
+      ProgressManager.getInstance().executeProcessUnderProgress(
+        {
+          indicator.start()
           downloadArtifacts()
-        }
-      })
+          indicator.processFinish()
+        },
+        indicator
+      )
+      ApplicationManager.getApplication().invokeLater { Disposer.dispose(indicator) }
     }
   }
+
+  fun getModelVersion(): String = MODEL_VERSION
 
   fun checkArtifactsPresent(): Boolean {
     return Files.isDirectory(modelArtifactsRoot.toPath()) && modelArtifactsRoot.toPath().listDirectoryEntries().isNotEmpty()
