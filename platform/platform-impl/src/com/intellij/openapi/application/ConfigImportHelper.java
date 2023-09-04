@@ -13,6 +13,7 @@ import com.intellij.ide.plugins.marketplace.MarketplacePluginDownloadService;
 import com.intellij.ide.startup.StartupActionScriptManager;
 import com.intellij.ide.startup.StartupActionScriptManager.ActionCommand;
 import com.intellij.idea.StartupErrorReporter;
+import com.intellij.openapi.application.impl.ExternalSettingsImportSupport;
 import com.intellij.openapi.application.migrations.BigDataTools232;
 import com.intellij.openapi.application.migrations.PackageSearch232;
 import com.intellij.openapi.components.StoragePathMacros;
@@ -151,32 +152,40 @@ public final class ConfigImportHelper {
         importScenarioStatistics = SHOW_DIALOG_REQUESTED_BY_PROPERTY;
       }
       else if (guessedOldConfigDirs.isEmpty()) {
-        boolean importedFromCloud = false;
-        CloudConfigProvider configProvider = CloudConfigProvider.getProvider();
-        if (configProvider != null) {
-          importedFromCloud = configProvider.importSettingsSilently(newConfigDir);
+        if (shouldRunExternalImporter()) {
+          importScenarioStatistics = ExternalSettingsImportSupport.importSettings();
+        } else {
+          boolean importedFromCloud = false;
+          CloudConfigProvider configProvider = CloudConfigProvider.getProvider();
+          if (configProvider != null) {
+            importedFromCloud = configProvider.importSettingsSilently(newConfigDir);
 
-          if (importedFromCloud) {
-            importScenarioStatistics = IMPORTED_FROM_CLOUD;
+            if (importedFromCloud) {
+              importScenarioStatistics = IMPORTED_FROM_CLOUD;
+            }
           }
-        }
-        if (!importedFromCloud && !veryFirstStartOnThisComputer) {
-          oldConfigDirAndOldIdePath = showDialogAndGetOldConfigPath(guessedOldConfigDirs.getPaths());
-          importScenarioStatistics = SHOW_DIALOG_NO_CONFIGS_FOUND;
+          if (!importedFromCloud && !veryFirstStartOnThisComputer) {
+            oldConfigDirAndOldIdePath = showDialogAndGetOldConfigPath(guessedOldConfigDirs.getPaths());
+            importScenarioStatistics = SHOW_DIALOG_NO_CONFIGS_FOUND;
+          }
         }
       }
       else {
-        Pair<Path, FileTime> bestConfigGuess = guessedOldConfigDirs.getFirstItem();
-        if (isConfigOld(bestConfigGuess.second)) {
-          log.info("The best config guess [" + bestConfigGuess.first + "] is too old, it won't be used for importing.");
-          oldConfigDirAndOldIdePath = showDialogAndGetOldConfigPath(guessedOldConfigDirs.getPaths());
-          importScenarioStatistics = SHOW_DIALOG_CONFIGS_ARE_TOO_OLD;
-        }
-        else {
-          oldConfigDirAndOldIdePath = findConfigDirectoryByPath(bestConfigGuess.first);
-          if (oldConfigDirAndOldIdePath == null) {
-            log.info("Previous config directory was detected but not accepted: " + bestConfigGuess.first);
-            importScenarioStatistics = CONFIG_DIRECTORY_NOT_FOUND;
+        if (shouldRunExternalImporter()) {
+          importScenarioStatistics = ExternalSettingsImportSupport.importSettings();
+        } else {
+          Pair<Path, FileTime> bestConfigGuess = guessedOldConfigDirs.getFirstItem();
+          if (isConfigOld(bestConfigGuess.second)) {
+            log.info("The best config guess [" + bestConfigGuess.first + "] is too old, it won't be used for importing.");
+            oldConfigDirAndOldIdePath = showDialogAndGetOldConfigPath(guessedOldConfigDirs.getPaths());
+            importScenarioStatistics = SHOW_DIALOG_CONFIGS_ARE_TOO_OLD;
+          }
+          else {
+            oldConfigDirAndOldIdePath = findConfigDirectoryByPath(bestConfigGuess.first);
+            if (oldConfigDirAndOldIdePath == null) {
+              log.info("Previous config directory was detected but not accepted: " + bestConfigGuess.first);
+              importScenarioStatistics = CONFIG_DIRECTORY_NOT_FOUND;
+            }
           }
         }
       }
@@ -347,9 +356,17 @@ public final class ConfigImportHelper {
     if ("default-production".equals(showImportDialog) || "never".equals(showImportDialog)) {
       return false;
     }
+    if (shouldRunExternalImporter()) {
+      return false;
+    }
     return PluginManagerCore.isRunningFromSources() ||
            System.getProperty(PathManager.PROPERTY_CONFIG_PATH) != null ||
            "true".equals(showImportDialog);
+  }
+
+  private static boolean shouldRunExternalImporter() {
+    String customImporterProperty = System.getProperty(ExternalSettingsImportSupport.CUSTOM_IMPORT_CLASS);
+    return customImporterProperty != null && !customImporterProperty.equals("");
   }
 
   private static @Nullable Pair<Path, Path> showDialogAndGetOldConfigPath(List<Path> guessedOldConfigDirs) {
