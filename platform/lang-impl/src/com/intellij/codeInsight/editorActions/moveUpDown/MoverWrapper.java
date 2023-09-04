@@ -38,7 +38,7 @@ final class MoverWrapper {
     return myInfo;
   }
 
-  public final void move(@NotNull Editor editor, @Nullable PsiFile file) {
+  public void move(@NotNull Editor editor, @Nullable PsiFile file) {
     assert myInfo.toMove2 != null;
     myMover.beforeMove(editor, myInfo, myIsDown);
     final Document document = editor.getDocument();

@@ -165,7 +165,7 @@ public final class ApplicationImpl extends ClientAwareComponentManager implement
   }
 
   @TestOnly
-  final ReadMostlyRWLock getRwLock() {
+  ReadMostlyRWLock getRwLock() {
     return myLock;
   }
 
@@ -231,7 +231,7 @@ public final class ApplicationImpl extends ClientAwareComponentManager implement
   }
 
   @Override
-  public final boolean isLightEditMode() {
+  public boolean isLightEditMode() {
     return AppMode.isLightEdit();
   }
 
@@ -513,12 +513,12 @@ public final class ApplicationImpl extends ClientAwareComponentManager implement
   }
 
   @Override
-  public final void restart(boolean exitConfirmed) {
+  public void restart(boolean exitConfirmed) {
     restart(exitConfirmed, false);
   }
 
   @Override
-  public final void restart(boolean exitConfirmed, boolean elevate) {
+  public void restart(boolean exitConfirmed, boolean elevate) {
     int flags = SAVE;
     if (exitConfirmed) {
       flags |= EXIT_CONFIRMED;
@@ -539,7 +539,7 @@ public final class ApplicationImpl extends ClientAwareComponentManager implement
    * quit message is shown. In that case, showing multiple messages sounds contra-intuitive as well
    */
   @Override
-  public final void exit(boolean force, boolean exitConfirmed, boolean restart, int exitCode) {
+  public void exit(boolean force, boolean exitConfirmed, boolean restart, int exitCode) {
     int flags = SAVE;
     if (force) {
       flags |= FORCE_EXIT;
@@ -551,7 +551,7 @@ public final class ApplicationImpl extends ClientAwareComponentManager implement
   }
 
   @Override
-  public final void exit(boolean force, boolean exitConfirmed, boolean restart) {
+  public void exit(boolean force, boolean exitConfirmed, boolean restart) {
     exit(force, exitConfirmed, restart, 0);
   }
 
@@ -560,12 +560,12 @@ public final class ApplicationImpl extends ClientAwareComponentManager implement
   }
 
   @Override
-  public final void exit(int flags, int exitCode) {
+  public void exit(int flags, int exitCode) {
     exit(flags, false, ArrayUtil.EMPTY_STRING_ARRAY, exitCode);
   }
 
   @Override
-  public final void exit(int flags) {
+  public void exit(int flags) {
     exit(flags, false, ArrayUtil.EMPTY_STRING_ARRAY, 0);
   }
 
@@ -585,7 +585,7 @@ public final class ApplicationImpl extends ClientAwareComponentManager implement
   }
 
   @Override
-  public final boolean isExitInProgress() {
+  public boolean isExitInProgress() {
     return myExitInProgress;
   }
 

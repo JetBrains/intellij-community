@@ -458,7 +458,7 @@ public abstract class FilteringTree<T extends DefaultMutableTreeNode, U> {
     }
 
     @SuppressWarnings("unchecked")
-    public final @Nullable U getUserObject(@Nullable N node) {
+    public @Nullable U getUserObject(@Nullable N node) {
       return node == null ? null : (U)node.getUserObject();
     }
   }

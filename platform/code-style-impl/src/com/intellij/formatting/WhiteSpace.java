@@ -705,7 +705,7 @@ public final class WhiteSpace {
    *
    * @return line feed symbols number
    */
-  public final int getLineFeeds() {
+  public int getLineFeeds() {
     return myFlags >>> LF_COUNT_SHIFT;
   }
 

@@ -396,7 +396,7 @@ public final class PagedFileStorage implements Forceable/*, PagedStorage*/ {
     }
   }
 
-  public final long length() {
+  public long length() {
     long size = mySize;
     if (size == -1) {
       if (Files.exists(myFile)) {

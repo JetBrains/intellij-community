@@ -48,16 +48,16 @@ public final class FileTreeStructure extends AbstractTreeStructure {
     return true;
   }
 
-  public final boolean areHiddenShown() {
+  public boolean areHiddenShown() {
     return myShowHidden;
   }
 
-  public final void showHidden(final boolean showHidden) {
+  public void showHidden(final boolean showHidden) {
     myShowHidden = showHidden;
   }
 
   @Override
-  public final @NotNull Object getRootElement() {
+  public @NotNull Object getRootElement() {
     return myRootElement;
   }
 
@@ -149,10 +149,10 @@ public final class FileTreeStructure extends AbstractTreeStructure {
   }
 
   @Override
-  public final void commit() { }
+  public void commit() { }
 
   @Override
-  public final boolean hasSomethingToCommit() {
+  public boolean hasSomethingToCommit() {
     return false;
   }
 

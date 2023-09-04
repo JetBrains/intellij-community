@@ -16,7 +16,7 @@ import org.jetbrains.annotations.NotNull;
 
 public final class ImplementMethodsHandler implements CodeInsightActionHandler{
   @Override
-  public final void invoke(@NotNull final Project project, @NotNull final Editor editor, @NotNull PsiFile file) {
+  public void invoke(@NotNull final Project project, @NotNull final Editor editor, @NotNull PsiFile file) {
     if (!EditorModificationUtil.checkModificationAllowed(editor)) return;
     if (!FileDocumentManager.getInstance().requestWriting(editor.getDocument(), project)){
       return;

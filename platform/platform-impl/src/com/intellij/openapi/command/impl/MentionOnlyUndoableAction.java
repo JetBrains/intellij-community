@@ -17,11 +17,11 @@ final class MentionOnlyUndoableAction implements UndoableAction {
   }
 
   @Override
-  public final void undo() {
+  public void undo() {
   }
 
   @Override
-  public final void redo() {
+  public void redo() {
   }
 
   @Override

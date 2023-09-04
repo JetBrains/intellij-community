@@ -705,7 +705,7 @@ public abstract class FinderRecursivePanel<T> extends OnePixelSplitter implement
     }
 
     @Override
-    protected final void customizeCellRenderer(@NotNull JList list, Object value, int index, boolean selected, boolean hasFocus) {
+    protected void customizeCellRenderer(@NotNull JList list, Object value, int index, boolean selected, boolean hasFocus) {
     }
   }
 

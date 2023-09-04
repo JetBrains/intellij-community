@@ -57,11 +57,11 @@ public final class FileNodeDescriptor extends NodeDescriptor<FileElement> {
   }
 
   @Override
-  public final @NotNull FileElement getElement() {
+  public @NotNull FileElement getElement() {
     return myFileElement;
   }
 
-  protected final void setElement(FileElement descriptor) {
+  protected void setElement(FileElement descriptor) {
     myFileElement = descriptor;
   }
 

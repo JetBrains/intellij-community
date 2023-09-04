@@ -93,7 +93,7 @@ public final class LeafBlockWrapper extends AbstractBlockWrapper {
     myFlags = flagsValue;
   }
 
-  public final boolean containsLineFeeds() {
+  public boolean containsLineFeeds() {
     return (myFlags & CONTAIN_LINE_FEEDS) != 0;
   }
 
@@ -187,7 +187,7 @@ public final class LeafBlockWrapper extends AbstractBlockWrapper {
     mySpaceProperty = currentSpaceProperty;
   }
 
-  public final boolean isLeaf() {
+  public boolean isLeaf() {
     return (myFlags & LEAF) != 0;
   }
 

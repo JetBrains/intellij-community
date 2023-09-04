@@ -21,7 +21,7 @@ final class NonUndoableAction implements UndoableAction {
   }
 
   @Override
-  public final void undo() {
+  public void undo() {
     LOG.error("Cannot undo");
   }
 

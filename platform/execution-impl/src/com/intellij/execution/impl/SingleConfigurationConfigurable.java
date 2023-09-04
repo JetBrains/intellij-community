@@ -516,7 +516,7 @@ public final class SingleConfigurationConfigurable<Config extends RunConfigurati
       myIsAllowRunningInParallelCheckBox.setVisible(hasParallelCheckBox());
     }
 
-    public final JComponent getWholePanel() {
+    public JComponent getWholePanel() {
       return myWholePanel;
     }
 

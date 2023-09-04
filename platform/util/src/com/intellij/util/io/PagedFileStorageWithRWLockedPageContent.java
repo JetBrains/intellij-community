@@ -317,7 +317,7 @@ public final class PagedFileStorageWithRWLockedPageContent implements PagedStora
   }
 
   @Override
-  public final long length() {
+  public long length() {
     return actualSize.get();
   }
 

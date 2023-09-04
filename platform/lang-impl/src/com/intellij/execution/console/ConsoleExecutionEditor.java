@@ -75,7 +75,7 @@ public final class ConsoleExecutionEditor implements Disposable {
   }
 
   @NotNull
-  public final VirtualFile getVirtualFile() {
+  public VirtualFile getVirtualFile() {
     return myHelper.virtualFile;
   }
 
@@ -116,7 +116,7 @@ public final class ConsoleExecutionEditor implements Disposable {
     return myHelper.project;
   }
 
-  public final boolean isConsoleEditorEnabled() {
+  public boolean isConsoleEditorEnabled() {
     return myConsoleEditor.getComponent().isVisible();
   }
 
