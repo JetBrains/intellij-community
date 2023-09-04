@@ -69,7 +69,7 @@ final class FilePageCache {
   //@GuardedBy("storageById")
   private final Map<Path, Exception> stackTracesOfStorageRegistration = KEEP_STACK_TRACE_AT_STORAGE_REGISTRATION ? new HashMap<>() : null;
   //@GuardedBy("storageById")
-  private final Map<Path, PagedFileStorage> storageByPath = new HashMap<>();
+  private final Map<Path, PagedFileStorage> storageByAbsolutePath = new HashMap<>();
 
   /**
    * In cases there both pagesAllocationLock and pagesAccessLock need to be acquired, pagesAllocationLock
@@ -350,9 +350,10 @@ final class FilePageCache {
       PagedFileStorage removedStorage = storageById.remove((int)(storageId >> 32));
       if (removedStorage != null) {
         Path storageFile = removedStorage.getFile();
-        storageByPath.remove(storageFile);
+        Path storageAbsolutePath = storageFile.toAbsolutePath();
+        storageByAbsolutePath.remove(storageAbsolutePath);
         if (KEEP_STACK_TRACE_AT_STORAGE_REGISTRATION) {
-          stackTracesOfStorageRegistration.remove(storageFile);
+          stackTracesOfStorageRegistration.remove(storageAbsolutePath);
         }
       }
     }
@@ -394,13 +395,14 @@ final class FilePageCache {
   long registerPagedFileStorage(@NotNull PagedFileStorage storage) {
     synchronized (storageById) {
       Path storageFile = storage.getFile();
-      PagedFileStorage alreadyRegisteredStorage = storageByPath.get(storageFile);
+      Path storageAbsolutePath = storageFile.toAbsolutePath();
+      PagedFileStorage alreadyRegisteredStorage = storageByAbsolutePath.get(storageAbsolutePath);
       if (alreadyRegisteredStorage != null) {
         IllegalStateException ex = new IllegalStateException(
-          "Storage for [" + storageFile.toAbsolutePath() + "] is already registered"
+          "Storage for [" + storageAbsolutePath + "] is already registered"
         );
         if (KEEP_STACK_TRACE_AT_STORAGE_REGISTRATION) {
-          Exception stackTraceHolder = stackTracesOfStorageRegistration.get(storageFile);
+          Exception stackTraceHolder = stackTracesOfStorageRegistration.get(storageAbsolutePath);
           if (stackTraceHolder != null) {
             ex.addSuppressed(stackTraceHolder);
           }
@@ -416,9 +418,9 @@ final class FilePageCache {
         storageIndex++;
       }
       storageById.put(storageIndex, storage);
-      storageByPath.put(storageFile, storage);
+      storageByAbsolutePath.put(storageAbsolutePath, storage);
       if (KEEP_STACK_TRACE_AT_STORAGE_REGISTRATION) {
-        stackTracesOfStorageRegistration.put(storageFile, new Exception("Storage[" + storageFile + "] registration stack trace"));
+        stackTracesOfStorageRegistration.put(storageAbsolutePath, new Exception("Storage[" + storageAbsolutePath + "] registration stack trace"));
       }
       myMaxRegisteredFiles = Math.max(myMaxRegisteredFiles, storageById.size());
       return (long)storageIndex << 32;
