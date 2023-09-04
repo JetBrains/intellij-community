@@ -69,7 +69,8 @@ public class JavaTypeProvider extends ExpressionTypeProvider<PsiElement> {
 
   @Nullable
   private static PsiLocalVariable getPossibleLocaleVariable(@NotNull PsiElement elementAt) {
-    if (elementAt instanceof PsiIdentifier && elementAt.getParent() instanceof PsiLocalVariable psiVariable) {
+    if (elementAt instanceof PsiIdentifier && elementAt.getParent() instanceof PsiLocalVariable psiVariable &&
+        psiVariable.getTypeElement().isInferredType()) {
       return psiVariable;
     }
     if (elementAt instanceof PsiKeyword keyword && keyword.getTokenType() == JavaTokenType.VAR_KEYWORD &&
@@ -83,8 +84,11 @@ public class JavaTypeProvider extends ExpressionTypeProvider<PsiElement> {
   private static PsiParameter getPossibleParameter(@NotNull PsiElement elementAt) {
     if (elementAt instanceof PsiIdentifier identifier &&
         identifier.getParent() instanceof PsiParameter parameter &&
-        parameter.getParent() instanceof PsiParameterList psiParameterList &&
-        psiParameterList.getParent() instanceof PsiLambdaExpression) {
+        (parameter.getTypeElement() == null || parameter.getTypeElement().isInferredType())) {
+      return parameter;
+    }
+    if (elementAt instanceof PsiKeyword keyword && keyword.getTokenType() == JavaTokenType.VAR_KEYWORD &&
+        keyword.getParent() != null && keyword.getParent().getParent() instanceof PsiParameter parameter) {
       return parameter;
     }
     return null;
@@ -93,7 +97,7 @@ public class JavaTypeProvider extends ExpressionTypeProvider<PsiElement> {
   @NotNull
   @Override
   public List<PsiElement> getExpressionsAt(@NotNull PsiElement elementAt) {
-    PsiLocalVariable psiVariable = getPossibleLocaleVariable(elementAt);
+    PsiVariable psiVariable = getPossibleLocaleVariable(elementAt);
     if (psiVariable != null) {
       PsiTypeElement element = psiVariable.getTypeElement();
       if (element.isInferredType() && psiVariable.getInitializer() != null && psiVariable.getNameIdentifier() != null) {
@@ -131,7 +135,7 @@ public class JavaTypeProvider extends ExpressionTypeProvider<PsiElement> {
   @Override
   public @Nls String getAdvancedInformationHint(@NotNull PsiElement element) {
     PsiExpression expression = null;
-    PsiLocalVariable psiVariable = getPossibleLocaleVariable(element);
+    PsiVariable psiVariable = getPossibleLocaleVariable(element);
     if (psiVariable != null) {
       expression = psiVariable.getInitializer();
     }
@@ -139,7 +143,7 @@ public class JavaTypeProvider extends ExpressionTypeProvider<PsiElement> {
       expression = psiExpression;
     }
     expression = PsiUtil.skipParenthesizedExprDown(expression);
-    if (expression == null) return JavaBundle.message("error.hint.no.advanced.info.found");
+    if (expression == null) return getInformationHint(element);
     CommonDataflow.DataflowResult result = CommonDataflow.getDataflowResult(expression);
     List<Pair<@Nls String, @Nls String>> infoLines = new ArrayList<>();
     String basicType = getTypePresentation(expression);

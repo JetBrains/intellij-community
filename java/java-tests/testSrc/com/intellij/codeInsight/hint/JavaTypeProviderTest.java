@@ -221,7 +221,39 @@ public class JavaTypeProviderTest extends LightJavaCodeInsightTestCase {
                                      }
                                  }
                                  new Test2().test(<selection>a</selection>-> System.out.println(a));
-             }""", "String", "No advanced info found");
+             }""", "String", "String");
+  }
+
+  public void testLambdaParameter2() {
+    doTest("""
+             void test() {
+                        interface Consumer<T>{
+                          public void consume(T t);
+                        }
+                        class Test2{
+                                     public void test(Consumer<String> a) {
+                     
+                                     }
+                                 }
+                                 new Test2().test((<selection>var a</selection>)-> System.out.println(a));
+             }""", "String", "String");
+  }
+  public void testDeconstructionVariable() {
+    doTest("""
+             void test(Object x) {
+                switch (x) {
+                    record Record(String a) {
+                
+                    }
+                
+                    case Record(<selection>var a</selection>) -> {
+                        System.out.println(a);
+                    }
+                    default -> {
+                        System.out.println(x);
+                    }
+                }
+             }""", "String", "String");
   }
 
   public void testEscaping() {
