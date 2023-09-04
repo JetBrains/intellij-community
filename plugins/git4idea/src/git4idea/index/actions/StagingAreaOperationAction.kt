@@ -90,5 +90,5 @@ fun <T> runProcess(project: Project, @NlsContexts.ProgressTitle title: String, c
 
 private fun showErrorMessage(project: Project, @NotificationTitle messageTitle: String, exceptions: Collection<Exception>) {
   val message = HtmlBuilder().appendWithSeparators(HtmlChunk.br(), exceptions.map { HtmlChunk.text(it.localizedMessage) })
-  VcsNotifier.getInstance(project).notifyError(GitNotificationIdsHolder.STAGE_OPERATION_FAILED, messageTitle, message.toString())
+  VcsNotifier.getInstance(project).notifyError(GitNotificationIdsHolder.STAGE_OPERATION_ERROR, messageTitle, message.toString())
 }
