@@ -1,6 +1,8 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.terminal.exp
 
+import com.intellij.BundleBase
+import com.intellij.find.FindBundle
 import com.intellij.find.FindModel
 import com.intellij.find.SearchReplaceComponent
 import com.intellij.find.SearchSession
@@ -9,15 +11,21 @@ import com.intellij.find.impl.livePreview.LivePreviewController
 import com.intellij.find.impl.livePreview.SearchResults
 import com.intellij.openapi.actionSystem.DataProvider
 import com.intellij.openapi.application.ApplicationBundle
+import com.intellij.openapi.application.invokeLater
 import com.intellij.openapi.editor.EditorFactory
 import com.intellij.openapi.editor.event.EditorFactoryEvent
 import com.intellij.openapi.editor.event.EditorFactoryListener
 import com.intellij.openapi.editor.ex.EditorEx
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
+import com.intellij.openapi.util.text.StringUtil
 import com.intellij.ui.util.maximumWidth
+import com.intellij.ui.util.preferredWidth
+import com.intellij.util.SmartList
 import com.intellij.util.ui.ComponentWithEmptyText
 import com.intellij.util.ui.JBUI
+import org.jetbrains.annotations.Nls
+import javax.swing.JTextArea
 
 class BlockTerminalSearchSession(
   private val project: Project,
@@ -36,6 +44,11 @@ class BlockTerminalSearchSession(
 
     component.addListener(this)
     searchResults.addListener(this)
+    model.addObserver {
+      updateUiWithFindModel()
+      searchResults.clear()
+      updateResults()
+    }
     EditorFactory.getInstance().addEditorFactoryListener(object : EditorFactoryListener {
       override fun editorReleased(event: EditorFactoryEvent) {
         if (event.editor === editor) {
@@ -45,8 +58,12 @@ class BlockTerminalSearchSession(
       }
     }, disposable)
 
+    component.statusText = ApplicationBundle.message("editorsearch.current.cursor.position", 0, 0)
     updateUiWithFindModel()
     updateMultiLineStateIfNeeded()
+    invokeLater {  // update status text action
+      component.updateActions()
+    }
   }
 
   private fun createSearchComponent(): SearchReplaceComponent {
@@ -58,7 +75,9 @@ class BlockTerminalSearchSession(
       .withDataProvider(this)
       .withCloseAction(this::close)
       .build().also {
-        it.maximumWidth = JBUI.scale(480)
+        (it.searchTextComponent as? JTextArea)?.columns = 14  // default is 12
+        it.preferredWidth = JBUI.scale(TerminalUi.searchComponentWidth)
+        it.maximumWidth = JBUI.scale(TerminalUi.searchComponentWidth)
         it.border = JBUI.Borders.customLine(JBUI.CurrentTheme.Editor.BORDER_COLOR, 0, 1, 1,0)
       }
   }
@@ -77,12 +96,9 @@ class BlockTerminalSearchSession(
     val matchesCount = sr.matchesCount
     val cursorIndex = sr.getCursorVisualIndex()
     val status = when {
-      matchesCount == 0 && !sr.findModel.isGlobal && !editor.selectionModel.hasSelection() -> {
-        ApplicationBundle.message("editorsearch.noselection")
-      }
       matchesCount > searchResults.matchesLimit -> ApplicationBundle.message("editorsearch.toomuch", searchResults.matchesLimit)
       cursorIndex != -1 -> ApplicationBundle.message("editorsearch.current.cursor.position", cursorIndex, matchesCount)
-      else -> ApplicationBundle.message("editorsearch.matches", matchesCount)
+      else -> ApplicationBundle.message("editorsearch.current.cursor.position", 0, matchesCount)
     }
     component.statusText = status
     component.updateActions()
@@ -116,8 +132,21 @@ class BlockTerminalSearchSession(
   private fun updateEmptyText() {
     val searchComponent = component.searchTextComponent
     if (searchComponent is ComponentWithEmptyText) {
-      searchComponent.emptyText.text = ApplicationBundle.message("editorsearch.search.hint")
+      searchComponent.emptyText.text = getEmptyText()
     }
+  }
+
+  private fun getEmptyText(): @Nls String {
+    fun getOptionText(key: String) = StringUtil.toLowerCase(FindBundle.message(key).replace(BundleBase.MNEMONIC_STRING, ""))
+    val options: MutableList<String> = SmartList()
+    if (model.isCaseSensitive) options.add(getOptionText("find.case.sensitive"))
+    if (model.isRegularExpressions) options.add(getOptionText("find.regex"))
+    val text = when (options.size) {
+      0 -> ApplicationBundle.message("editorsearch.search.hint")
+      1 -> FindBundle.message("emptyText.used.option", options[0])
+      else -> FindBundle.message("emptyText.used.options", options[0], options[1])
+    }
+    return StringUtil.capitalize(text)
   }
 
   override fun getFindModel(): FindModel = model

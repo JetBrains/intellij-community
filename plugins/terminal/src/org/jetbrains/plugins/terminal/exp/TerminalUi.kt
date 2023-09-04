@@ -20,6 +20,8 @@ object TerminalUi {
 
   const val alternateBufferLeftInset = 4
 
+  const val searchComponentWidth = 480
+
   // todo: create color keys
   val terminalBackground: Color
     get() = JBColor(0xFFFFFF, 0x1E1F22)
