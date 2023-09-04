@@ -103,6 +103,11 @@ public class K1AutoImportTestGenerated extends AbstractK1AutoImportTest {
         runTest("testData/editor/autoImport/property/");
     }
 
+    @TestMetadata("singleImportForMultipleReferences")
+    public void testSingleImportForMultipleReferences() throws Exception {
+        runTest("testData/editor/autoImport/singleImportForMultipleReferences/");
+    }
+
     @TestMetadata("starImport")
     public void testStarImport() throws Exception {
         runTest("testData/editor/autoImport/starImport/");

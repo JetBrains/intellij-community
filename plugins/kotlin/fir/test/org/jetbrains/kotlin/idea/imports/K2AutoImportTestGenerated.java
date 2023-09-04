@@ -103,6 +103,11 @@ public class K2AutoImportTestGenerated extends AbstractK2AutoImportTest {
         runTest("../idea/tests/testData/editor/autoImport/property/");
     }
 
+    @TestMetadata("singleImportForMultipleReferences")
+    public void testSingleImportForMultipleReferences() throws Exception {
+        runTest("../idea/tests/testData/editor/autoImport/singleImportForMultipleReferences/");
+    }
+
     @TestMetadata("starImport")
     public void testStarImport() throws Exception {
         runTest("../idea/tests/testData/editor/autoImport/starImport/");
