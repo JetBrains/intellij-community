@@ -1,6 +1,8 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui.mac;
 
+import com.intellij.concurrency.ThreadContext;
+import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.impl.LaterInvocator;
 import com.intellij.openapi.command.CommandProcessor;
@@ -111,7 +113,9 @@ public final class MacPathChooserDialog implements PathChooserDialog, FileChoose
     Component parent = myParent.get();
     Component previousFocusOwner = KeyboardFocusManager.getCurrentKeyboardFocusManager().getFocusOwner();
     try {
-      myFileDialog.setVisible(true);
+      try (AccessToken ignored = ThreadContext.resetThreadContext()) {
+        myFileDialog.setVisible(true);
+      }
     }
     finally {
       if (appStarted) {
