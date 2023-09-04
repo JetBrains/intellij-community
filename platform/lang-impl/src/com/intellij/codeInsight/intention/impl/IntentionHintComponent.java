@@ -21,6 +21,7 @@ import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.impl.ActionButton;
+import com.intellij.openapi.actionSystem.impl.PopupUtils;
 import com.intellij.openapi.actionSystem.impl.SimpleDataContext;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
@@ -270,7 +271,7 @@ public final class IntentionHintComponent implements Disposable, ScrollAwareHint
       myPopup.myHint = this;
       IntentionPopup.recreateMyPopup(myPopup, new IntentionListStep(myPopup, myPopup.myEditor, myPopup.myFile, myPopup.myProject, myPopup.myCachedIntentions));
     }
-    ActionButton.adjustVerticalOverlapping(myPopup.myListPopup, position.getOriginalComponent());
+    PopupUtils.attachToWindowComponent(myPopup.myListPopup, position.getOriginalComponent(), new Point(1, 1));
   }
 
   private void showPopup(@Nullable RelativePoint positionHint) {
