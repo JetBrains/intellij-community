@@ -34,9 +34,12 @@ class OperationLogStorageImpl(
     BufferOverflow.SUSPEND
   )
 
-  private val telemetry = object {
+  private val telemetry = object : AutoCloseable {
     val jobsOffloadedToWorkers: AtomicLong = AtomicLong(0)
     val jobsPerformedOnMainThread: AtomicLong = AtomicLong(0)
+
+    @Volatile
+    private var batchCallback: AutoCloseable? = null
 
     fun setupTelemetry() {
       val meter = getMeter(VFS)
@@ -44,13 +47,17 @@ class OperationLogStorageImpl(
       val jobsOffloadedToWorkersGauge = meter.counterBuilder("VfsLog.OperationsLogStorage.jobsOffloadedToWorkers").buildObserver()
       val jobsPerformedOnMainThreadGauge = meter.counterBuilder("VfsLog.OperationsLogStorage.jobsPerformedOnMainThread").buildObserver()
 
-      meter.batchCallback(
+      batchCallback = meter.batchCallback(
         {
           jobsOffloadedToWorkersGauge.record(jobsOffloadedToWorkers.get())
           jobsPerformedOnMainThreadGauge.record(jobsPerformedOnMainThread.get())
         },
         jobsOffloadedToWorkersGauge, jobsPerformedOnMainThreadGauge
       )
+    }
+
+    override fun close() {
+      batchCallback?.close()
     }
   }
 
@@ -292,6 +299,8 @@ class OperationLogStorageImpl(
 
   override fun dispose() {
     flush()
+    // FIXME: safe close()
+    telemetry.close()
     appendLogStorage.close()
   }
 
