@@ -8,6 +8,7 @@ import com.intellij.ide.JavaUiBundle;
 import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.impl.scopes.LibraryScope;
@@ -134,7 +135,7 @@ class AnalyzeModuleDependencyAction extends AnAction {
       @Override
       protected void bgtPostAnalyze(DependencyAnalysisResult result) {
         super.bgtPostAnalyze(result);
-        ((MyAnalyzeResult)result).usedScopes = findUsedScopes(result.getBuilders(), scopes);
+        ((MyAnalyzeResult)result).usedScopes = ReadAction.compute(() -> findUsedScopes(result.getBuilders(), scopes));
       }
 
       @Override
