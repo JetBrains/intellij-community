@@ -46,7 +46,8 @@ public class ReplaceConcatenationWithFormatStringIntention extends MCIntention {
       parent = expression.getParent();
     }
     final List<PsiExpression> formatParameters = new ArrayList<>();
-    final String formatString = PsiConcatenationUtil.buildUnescapedFormatString(expression, true, formatParameters);
+    final String formatString = 
+      StringUtil.escapeStringCharacters(PsiConcatenationUtil.buildUnescapedFormatString(expression, true, formatParameters));
     if (replaceWithPrintfExpression(expression, formatString, formatParameters)) {
       return;
     }
@@ -129,7 +130,7 @@ public class ReplaceConcatenationWithFormatStringIntention extends MCIntention {
                                          String formatString,
                                          boolean insertNewline,
                                          StringBuilder newExpression) {
-    final boolean textBlocks = ContainerUtil.exists(expression.getOperands(), 
+    final boolean textBlocks = ContainerUtil.exists(expression.getOperands(),
                                                     operand -> operand instanceof PsiLiteralExpression literal && literal.isTextBlock());
     if (textBlocks) {
       newExpression.append("\"\"\"\n");
@@ -142,8 +143,7 @@ public class ReplaceConcatenationWithFormatStringIntention extends MCIntention {
       }
       newExpression.append("\"\"\"");
     } else {
-      newExpression.append('\"');
-      newExpression.append(StringUtil.escapeStringCharacters(formatString));
+      newExpression.append('\"').append(formatString);
       if (insertNewline) {
         newExpression.append("%n");
       }
