@@ -7,7 +7,6 @@ import com.intellij.codeInsight.template.TemplateManager
 import com.intellij.ide.ui.customization.CustomActionsSchema
 import com.intellij.openapi.actionSystem.ActionGroup
 import com.intellij.openapi.actionSystem.DefaultActionGroup
-import com.intellij.openapi.actionSystem.Separator
 import com.intellij.openapi.actionSystem.impl.FloatingToolbar
 import com.intellij.openapi.actionSystem.impl.MoreActionGroup
 import com.intellij.openapi.editor.Editor
@@ -132,7 +131,7 @@ class CodeFloatingToolbar(
     val showIntentionsAction = CustomActionsSchema.getInstance().getCorrectedAction("ShowIntentionActions")
                                ?: error("Can't find ShowIntentionActions action")
     val configurationGroup = createConfigureGroup(contextAwareActionGroupId)
-    return DefaultActionGroup(showIntentionsAction, Separator.create(), mainActionGroup, Separator.create(), configurationGroup)
+    return DefaultActionGroup(showIntentionsAction, mainActionGroup, configurationGroup)
   }
 
   private fun getContextAwareGroupId(editor: Editor): String? {
