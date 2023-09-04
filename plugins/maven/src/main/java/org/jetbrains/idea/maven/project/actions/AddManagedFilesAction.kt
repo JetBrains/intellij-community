@@ -71,7 +71,9 @@ class AddManagedFilesAction : MavenAction() {
     withContext(Dispatchers.EDT) {
       if (selectedFiles.any { MavenActionUtil.isMavenProjectFile(it) }) {
         val openProjectProvider = MavenOpenProjectProvider()
-        openProjectProvider.linkToExistingProjectAsync(projectFile, project)
+        withContext(Dispatchers.Default) {
+          openProjectProvider.linkToExistingProjectAsync(projectFile, project)
+        }
       }
       else {
         val projectPath = getPresentablePath(projectFile.path)
