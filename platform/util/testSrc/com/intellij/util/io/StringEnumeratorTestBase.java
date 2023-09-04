@@ -1,11 +1,9 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.openapi.vfs.newvfs.persistent.dev;
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package com.intellij.util.io;
 
 import com.intellij.util.TimeoutUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.indexing.impl.IndexDebugProperties;
-import com.intellij.util.io.DataEnumerator;
-import com.intellij.util.io.ScannableDataEnumeratorEx;
 import org.jetbrains.annotations.NotNull;
 import org.junit.*;
 import org.junit.rules.TemporaryFolder;
@@ -27,7 +25,7 @@ public abstract class StringEnumeratorTestBase<T extends ScannableDataEnumerator
     IndexDebugProperties.DEBUG = true;
   }
 
-  private static final int ENOUGH_VALUES = 500_000;
+  private final int valuesCountToTest;
 
   @Rule
   public final TemporaryFolder temporaryFolder = new TemporaryFolder();
@@ -36,11 +34,19 @@ public abstract class StringEnumeratorTestBase<T extends ScannableDataEnumerator
   protected Path storageFile;
   protected String[] manyValues;
 
+  protected StringEnumeratorTestBase() {
+    this(500_000);
+  }
+
+  protected StringEnumeratorTestBase(int valuesToTest) {
+    valuesCountToTest = valuesToTest;
+  }
+
   @Before
   public void setUp() throws Exception {
     storageFile = temporaryFolder.newFile().toPath();
     enumerator = openEnumerator(storageFile);
-    manyValues = generateValues(ENOUGH_VALUES, 1, 50);
+    manyValues = generateValues(valuesCountToTest, 1, 50);
   }
 
   @After
