@@ -11,6 +11,7 @@ import org.jetbrains.plugins.gitlab.api.request.checkIsGitLabServer
 import org.jetbrains.plugins.gitlab.api.request.getServerMetadata
 import org.jetbrains.plugins.gitlab.api.request.getServerVersion
 import org.jetbrains.plugins.gitlab.api.request.guessServerEdition
+import org.jetbrains.plugins.gitlab.util.GitLabStatistics.logServerMetadataFetched
 import java.util.concurrent.ConcurrentHashMap
 
 interface GitLabServersManager {
@@ -110,5 +111,7 @@ private suspend fun getServerMetadata(api: GitLabApi): GitLabServerMetadata {
     }
   }
 
-  return GitLabServerMetadata(version, dto.revision, edition)
+  val metadata = GitLabServerMetadata(version, dto.revision, edition)
+  logServerMetadataFetched(metadata)
+  return metadata
 }

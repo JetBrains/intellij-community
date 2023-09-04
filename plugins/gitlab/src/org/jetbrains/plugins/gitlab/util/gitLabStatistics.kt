@@ -10,7 +10,9 @@ import com.intellij.internal.statistic.service.fus.collectors.ApplicationUsagesC
 import com.intellij.internal.statistic.service.fus.collectors.CounterUsagesCollector
 import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
+import org.jetbrains.plugins.gitlab.api.GitLabEdition
 import org.jetbrains.plugins.gitlab.api.GitLabGQLQuery
+import org.jetbrains.plugins.gitlab.api.GitLabServerMetadata
 import org.jetbrains.plugins.gitlab.api.GitLabVersion
 import org.jetbrains.plugins.gitlab.authentication.accounts.GitLabAccountManager
 import org.jetbrains.plugins.gitlab.mergerequest.ui.filters.GitLabMergeRequestsFiltersValue
@@ -36,7 +38,20 @@ internal object GitLabStatistics {
   //endregion
 
   //region Counters
-  private val COUNTERS_GROUP = EventLogGroup("vcs.gitlab.counters", version = 8)
+  private val COUNTERS_GROUP = EventLogGroup("vcs.gitlab.counters", version = 9)
+
+  /**
+   * Server metadata was fetched
+   */
+  private val SERVER_METADATA_FETCHED_EVENT = COUNTERS_GROUP.registerEvent("api.server.version-fetched",
+                                                                           EventFields.Enum("edition", GitLabEdition::class.java),
+                                                                           EventFields.Version)
+
+  /**
+   * Logs a metadata fetched event.
+   */
+  fun logServerMetadataFetched(metadata: GitLabServerMetadata): Unit =
+    SERVER_METADATA_FETCHED_EVENT.log(metadata.edition, metadata.version.toString())
 
   /**
    * Server returned 5** error

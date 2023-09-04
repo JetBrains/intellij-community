@@ -6,7 +6,8 @@ import org.jetbrains.annotations.NonNls
 data class GitLabVersion(
   val major: Int,
   val minor: Int? = null,
-  val patch: Int? = null
+  val patch: Int? = null,
+  val original: String? = null
 ) : Comparable<GitLabVersion> {
   // Compare versions per major version, then minor, then patch.
   override fun compareTo(other: GitLabVersion): Int =
@@ -15,13 +16,13 @@ data class GitLabVersion(
     ?: (patch ?: 0).compareTo(other.patch ?: 0)
 
   override fun toString(): String =
-    "$major" + when (minor) {
+    original ?: ("$major" + when (minor) {
       null -> ""
       else -> ".$minor" + when (patch) {
         null -> ""
         else -> ".$patch"
       }
-    }
+    })
 
   companion object {
     /**
@@ -40,7 +41,7 @@ data class GitLabVersion(
         intPart
       }
 
-      return GitLabVersion(intParts[0], intParts.getOrNull(1) ?: 0, intParts.getOrNull(2) ?: 0)
+      return GitLabVersion(intParts[0], intParts.getOrNull(1) ?: 0, intParts.getOrNull(2) ?: 0, version)
     }
   }
 }
