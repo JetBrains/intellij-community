@@ -12,7 +12,6 @@ import com.intellij.codeInspection.UpdateInspectionOptionFix;
 import com.intellij.codeInspection.options.OptPane;
 import com.intellij.modcommand.ModPsiUpdater;
 import com.intellij.modcommand.PsiUpdateModCommandQuickFix;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.command.undo.BasicUndoableAction;
 import com.intellij.openapi.command.undo.UndoManager;
@@ -68,7 +67,7 @@ public class TypeMayBeWeakenedInspection extends BaseInspection {
   @SuppressWarnings("PublicField")
   public boolean onlyWeakentoInterface = true;
 
-  @SuppressWarnings("PublicField")
+  @SuppressWarnings({"PublicField", "unused"})
   public boolean doNotWeakenReturnType = true;
 
   @SuppressWarnings({"PublicField", "WeakerAccess"})
@@ -275,7 +274,6 @@ public class TypeMayBeWeakenedInspection extends BaseInspection {
       checkbox("doNotWeakenToJavaLangObject",
                InspectionGadgetsBundle.message("inspection.type.may.be.weakened.do.not.weaken.to.object.option")),
       checkbox("onlyWeakentoInterface", InspectionGadgetsBundle.message("inspection.type.may.be.weakened.only.weaken.to.an.interface")),
-      checkbox("doNotWeakenReturnType", InspectionGadgetsBundle.message("inspection.type.may.be.weakened.do.not.weaken.return.type")),
       checkbox("doNotWeakenInferredVariableType",
                InspectionGadgetsBundle.message("inspection.type.may.be.weakened.do.not.weaken.inferred.variable.type")),
       stringList("myStopClassSet", InspectionGadgetsBundle.message("inspection.type.may.be.weakened.add.stop.class.selection.table.label"),
@@ -464,35 +462,6 @@ public class TypeMayBeWeakenedInspection extends BaseInspection {
         return;
       }
       registerVariableError(variable, variable, weakestClasses, originClass, isOnTheFly());
-    }
-
-    @Override
-    public void visitMethod(@NotNull PsiMethod method) {
-      super.visitMethod(method);
-      if (doNotWeakenReturnType || method instanceof PsiAnnotationMethod) return;
-      if (isOnTheFly() && !method.hasModifierProperty(PsiModifier.PRIVATE) && !ApplicationManager.getApplication().isUnitTestMode()) {
-        // checking methods with greater visibility is too expensive.
-        // for error checking in the editor
-        return;
-      }
-      if (MethodUtils.hasSuper(method)) {
-        // do not try to weaken methods with super methods
-        return;
-      }
-      final Query<PsiMethod> overridingSearch = OverridingMethodsSearch.search(method);
-      if (overridingSearch.findFirst() != null) {
-        // do not try to weaken methods with overriding methods.
-        return;
-      }
-      PsiClassType classType = ObjectUtils.tryCast(method.getReturnType(), PsiClassType.class);
-      if (classType == null) return;
-      PsiClass originClass = classType.resolve();
-      if (originClass == null) return;
-      if (myStopClassSet.contains(getClassName(originClass))) return;
-      Collection<PsiClass> weakestClasses = computeWeakestClasses(method, originClass);
-
-      if (weakestClasses.isEmpty()) return;
-      registerMethodError(method, method, weakestClasses, originClass, isOnTheFly());
     }
 
     @NotNull

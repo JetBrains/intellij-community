@@ -210,7 +210,7 @@ class MethodReference2 {
     Object o = myTransform();
   }
 
-  private static String <warning descr="Return type of method 'myTransform()' may be weakened to 'java.lang.Object'">myTransform</warning>() {
+  private static String myTransform() {
     return "Integer.toString(in)";
   }
 }
