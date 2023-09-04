@@ -69,9 +69,15 @@ interface AtomicDurableRecord<R : Any> : AutoCloseable {
                            serialize: T.(ByteBuffer) -> Unit,
                            deserialize: (ByteBuffer) -> T): ReadWriteProperty<R, T>
 
+      /**
+       * size = 4 bytes
+       */
       fun int(default: Int = 0): ReadWriteProperty<R, Int> =
         custom(Int.SIZE_BYTES, default, serialize = { it.putInt(this) }, deserialize = { it.getInt() })
 
+      /**
+       * size = 8 bytes
+       */
       fun long(default: Long = 0L): ReadWriteProperty<R, Long> =
         custom(Long.SIZE_BYTES, default, serialize = { it.putLong(this) }, deserialize = { it.getLong() })
 
@@ -80,6 +86,16 @@ interface AtomicDurableRecord<R : Any> : AutoCloseable {
           val result = ByteArray(size)
           it.get(result)
           result
+        })
+
+      /**
+       * size = 1 byte
+       */
+      fun boolean(default: Boolean): ReadWriteProperty<R, Boolean> =
+        custom(1, default, serialize = { it.put(if (this) 1.toByte() else 0.toByte()) }, deserialize = {
+          val b = it.get()
+          assert(b == 0.toByte() || b == 1.toByte())
+          b != 0.toByte()
         })
     }
 
