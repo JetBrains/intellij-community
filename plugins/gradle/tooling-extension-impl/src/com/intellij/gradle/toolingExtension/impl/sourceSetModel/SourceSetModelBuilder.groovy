@@ -2,6 +2,7 @@
 package com.intellij.gradle.toolingExtension.impl.sourceSetModel
 
 import com.google.gson.GsonBuilder
+import com.intellij.gradle.toolingExtension.impl.util.GradleArchiveTaskUtil
 import com.intellij.gradle.toolingExtension.impl.util.GradleObjectUtil
 import com.intellij.openapi.externalSystem.model.project.ExternalSystemSourceType
 import groovy.transform.CompileDynamic
@@ -11,7 +12,6 @@ import org.gradle.api.Project
 import org.gradle.api.artifacts.Configuration
 import org.gradle.api.file.ContentFilterable
 import org.gradle.api.file.FileCopyDetails
-import org.gradle.api.file.RegularFile
 import org.gradle.api.tasks.AbstractCopyTask
 import org.gradle.api.tasks.SourceSet
 import org.gradle.api.tasks.SourceSetOutput
@@ -36,7 +36,6 @@ import java.lang.reflect.Method
 import java.nio.file.Path
 
 import static org.jetbrains.plugins.gradle.tooling.util.ReflectionUtil.dynamicCheckInstanceOf
-import static org.jetbrains.plugins.gradle.tooling.util.ReflectionUtil.reflectiveGetProperty
 import static org.jetbrains.plugins.gradle.tooling.util.StringUtils.toCamelCase
 
 class SourceSetModelBuilder {
@@ -44,7 +43,6 @@ class SourceSetModelBuilder {
   private static final GradleVersion gradleBaseVersion = GradleVersion.current().baseVersion
   private static final boolean is4OrBetter = gradleBaseVersion >= GradleVersion.version("4.0")
   private static final boolean is44OrBetter = gradleBaseVersion >= GradleVersion.version("4.4")
-  private static final boolean is51OrBetter = gradleBaseVersion >= GradleVersion.version("5.1")
   private static final boolean is67OrBetter = gradleBaseVersion >= GradleVersion.version("6.7")
   private static final boolean is74OrBetter = gradleBaseVersion >= GradleVersion.version("7.4")
   private static final boolean is80OrBetter = gradleBaseVersion >= GradleVersion.version("8.0")
@@ -54,17 +52,7 @@ class SourceSetModelBuilder {
     final List<File> additionalArtifacts = new ArrayList<File>()
     project.getTasks().withType(Jar.class, { Jar jar ->
       try {
-        def archiveFile = null
-        if (is51OrBetter) {
-          def fileProvider = jar.getArchiveFile()
-          if (fileProvider.isPresent()) {
-            archiveFile = fileProvider.get().asFile
-          }
-        }
-        else {
-          archiveFile = jar.getArchivePath()
-        }
-
+        def archiveFile = GradleArchiveTaskUtil.getArchiveFile(jar)
         if (archiveFile != null) {
           artifacts.add(archiveFile)
           // check the artifact content...
@@ -217,9 +205,7 @@ class SourceSetModelBuilder {
 
       project.tasks.withType(AbstractArchiveTask) { AbstractArchiveTask task ->
         if (containsAllSourceSetOutput(task, sourceSet)) {
-          externalSourceSet.artifacts.add(is67OrBetter ?
-                                          reflectiveGetProperty(task, "getArchiveFile", RegularFile.class).getAsFile() :
-                                          task.archivePath)
+          externalSourceSet.artifacts.add(GradleArchiveTaskUtil.getArchiveFile(task))
         }
       }
 

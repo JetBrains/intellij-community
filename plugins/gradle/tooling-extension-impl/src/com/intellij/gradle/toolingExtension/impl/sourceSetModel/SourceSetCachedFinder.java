@@ -1,9 +1,9 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.gradle.toolingExtension.impl.sourceSetModel;
 
+import com.intellij.gradle.toolingExtension.impl.util.GradleArchiveTaskUtil;
 import org.gradle.api.Project;
 import org.gradle.api.Task;
-import org.gradle.api.file.RegularFile;
 import org.gradle.api.initialization.IncludedBuild;
 import org.gradle.api.internal.GradleInternal;
 import org.gradle.api.invocation.Gradle;
@@ -86,9 +86,7 @@ public class SourceSetCachedFinder {
         Task task = project.getTasks().findByName(sourceSet.getJarTaskName());
         if (task instanceof AbstractArchiveTask) {
           AbstractArchiveTask jarTask = (AbstractArchiveTask)task;
-          File archivePath = is51OrBetter ?
-                             ReflectionUtil.reflectiveGetProperty(jarTask, "getArchiveFile", RegularFile.class).getAsFile() :
-                             ReflectionUtil.reflectiveCall(jarTask, "getArchivePath", File.class);
+          File archivePath = GradleArchiveTaskUtil.getArchiveFile(jarTask);
           if (archivePath != null) {
             artifactsMap.put(archivePath.getPath(), sourceSet);
             if (isIsNewDependencyResolutionApplicable()) {
