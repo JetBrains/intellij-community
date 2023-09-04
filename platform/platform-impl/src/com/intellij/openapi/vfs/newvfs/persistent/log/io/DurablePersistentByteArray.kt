@@ -11,7 +11,6 @@ import com.intellij.openapi.vfs.newvfs.persistent.log.io.DurablePersistentByteAr
 import com.intellij.openapi.vfs.newvfs.persistent.log.io.DurablePersistentByteArrayImpl.Companion.LayoutHandler
 import com.intellij.util.io.ResilientFileChannel
 import com.intellij.util.io.createParentDirectories
-import java.io.FileNotFoundException
 import java.io.Flushable
 import java.io.IOException
 import java.nio.ByteBuffer
@@ -59,12 +58,13 @@ interface DurablePersistentByteArray : AutoCloseable {
      * @param path where to store the data
      * @param size size of the ByteArray to be stored and read. It is perhaps better to use multiples of 8 for better aligning.
      * @param makeDefaultValue will be used to generate the initial value, if file at [path] does not exist
+     * @param mode if equals [OpenMode.Read] and [path] does not exist,
+     * won't create the file and will instead return an instance filled with contents of [makeDefaultValue]
      *
      * @throws IncompatibleLayoutException if there is a version mismatch or size does not match the one that was used to create the file
-     * @throws FileNotFoundException if [mode] is [OpenMode.Read] and file at [path] does not exist
      * @throws IOException
      */
-    @Throws(IncompatibleLayoutException::class, FileNotFoundException::class, IOException::class)
+    @Throws(IncompatibleLayoutException::class, IOException::class)
     fun open(path: Path, mode: OpenMode, size: Int, makeDefaultValue: () -> ByteArray): DurablePersistentByteArray {
       val layoutBuilder = CompactLayoutBuilder
       require(size in 1..layoutBuilder.maxStateSize) {
@@ -89,7 +89,7 @@ interface DurablePersistentByteArray : AutoCloseable {
       }
       else {
         when (mode) {
-          OpenMode.Read -> throw FileNotFoundException("$path does not exist")
+          OpenMode.Read -> return ImmutableVirtualByteArray(path, makeDefaultValue().copyOf())
           OpenMode.ReadWrite -> {
             val defaultValue = makeDefaultValue().copyOf() // make sure we have a unique ref
             require(defaultValue.size == size)
@@ -375,5 +375,23 @@ private class DurablePersistentByteArrayImpl(
         }
       }
     }
+  }
+}
+
+private class ImmutableVirtualByteArray(val path: Path, val data: ByteArray) : DurablePersistentByteArray {
+  override fun getLastSnapshot(): ByteArray {
+    return data
+  }
+
+  override fun commitChange(modify: (ByteArray) -> Unit): ByteArray {
+    throw IllegalAccessError("$this is opened in read-only mode")
+  }
+
+  override fun close() {
+    // no op
+  }
+
+  override fun toString(): String {
+    return "ImmutableVirtualByteArray(path=$path, mode=${OpenMode.Read}, size=${data.size})"
   }
 }
