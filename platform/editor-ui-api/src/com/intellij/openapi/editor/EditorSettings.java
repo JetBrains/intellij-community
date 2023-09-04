@@ -123,6 +123,9 @@ public interface EditorSettings {
   boolean isBlockCursor();
   void setBlockCursor(boolean blockCursor);
 
+  boolean isFullLineHeightCursor();
+  void setFullLineHeightCursor(boolean fullLineHeightCursor);
+
   boolean isCaretRowShown();
   void setCaretRowShown(boolean caretRowShown);
 

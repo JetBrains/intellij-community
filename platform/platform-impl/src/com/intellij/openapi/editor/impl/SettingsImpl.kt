@@ -69,6 +69,7 @@ class SettingsImpl internal constructor(private val editor: EditorImpl?, kind: E
   private var myIsFoldingOutlineShown: Boolean? = null
   private var myIsSmartHome: Boolean? = null
   private var myIsBlockCursor: Boolean? = null
+  private var myIsFullLineHeightCursor: Boolean? = null
   private var myCaretRowShown: Boolean? = null
   private var myIsWhitespacesShown: Boolean? = null
   private var myIsLeadingWhitespacesShown: Boolean? = null
@@ -545,6 +546,20 @@ class SettingsImpl internal constructor(private val editor: EditorImpl?, kind: E
 
     myIsBlockCursor = `val`
     myDispatcher.multicaster.isBlockCursorChanged(`val`)
+    if (editor != null) {
+      editor.updateCaretCursor()
+      editor.contentComponent.repaint()
+    }
+  }
+
+  override fun isFullLineHeightCursor(): Boolean {
+    return myIsFullLineHeightCursor ?: EditorSettingsExternalizable.getInstance().isFullLineHeightCursor
+  }
+
+  override fun setFullLineHeightCursor(`val`: Boolean) {
+    if (`val` == myIsFullLineHeightCursor) return
+
+    myIsFullLineHeightCursor = `val`
     if (editor != null) {
       editor.updateCaretCursor()
       editor.contentComponent.repaint()

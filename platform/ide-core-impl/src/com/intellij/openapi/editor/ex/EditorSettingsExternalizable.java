@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.editor.ex;
 
 import com.intellij.ide.GeneralSettings;
@@ -79,6 +79,7 @@ public class EditorSettingsExternalizable implements PersistentStateComponent<Ed
     public boolean SMART_HOME = true;
 
     public boolean IS_BLOCK_CURSOR = false;
+    public boolean IS_FULL_LINE_HEIGHT_CURSOR = false;
     public boolean IS_WHITESPACES_SHOWN = false;
     public boolean IS_LEADING_WHITESPACES_SHOWN = true;
     public boolean IS_INNER_WHITESPACES_SHOWN = true;
@@ -397,6 +398,14 @@ public class EditorSettingsExternalizable implements PersistentStateComponent<Ed
 
   public void setBlockCursor(boolean val) {
     myOptions.IS_BLOCK_CURSOR = val;
+  }
+
+  public boolean isFullLineHeightCursor() {
+    return myOptions.IS_FULL_LINE_HEIGHT_CURSOR;
+  }
+
+  public void setFullLineHeightCursor(boolean val) {
+    myOptions.IS_FULL_LINE_HEIGHT_CURSOR = val;
   }
 
   public boolean isCaretRowShown() {

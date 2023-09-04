@@ -75,15 +75,15 @@ public final class EditorPainter implements TextDrawingCallback {
     EditorImpl editor = myView.getEditor();
     EditorImpl.CaretRectangle[] locations = editor.getCaretLocations(false);
     if (locations == null) return;
-    int nominalLineHeight = myView.getNominalLineHeight();
-    int topOverhang = myView.getTopOverhang();
+    int caretHeight = myView.getCaretHeight();
+    int topOverhang = editor.getSettings().isFullLineHeightCursor() ? 0 : myView.getTopOverhang();
     for (EditorImpl.CaretRectangle location : locations) {
       float x = (float)location.myPoint.getX();
       int y = (int)location.myPoint.getY() - topOverhang;
       float width = location.myWidth + CARET_DIRECTION_MARK_SIZE;
       int xStart = (int)Math.floor(x - width);
       int xEnd = (int)Math.ceil(x + width);
-      editor.getContentComponent().repaint(xStart, y, xEnd - xStart, nominalLineHeight);
+      editor.getContentComponent().repaint(xStart, y, xEnd - xStart, caretHeight);
     }
   }
 
@@ -1294,9 +1294,9 @@ public final class EditorPainter implements TextDrawingCallback {
       if (locations == null) return;
 
       Graphics2D g = IdeBackgroundUtil.getOriginalGraphics(myGraphics);
-      int nominalLineHeight = myView.getNominalLineHeight();
-      int topOverhang = myView.getTopOverhang();
+      int caretHeight = myView.getCaretHeight();
       EditorSettings settings = myEditor.getSettings();
+      int topOverhang = settings.isFullLineHeightCursor() ? 0 : myView.getTopOverhang();
       Color caretColor = myEditor.getColorsScheme().getColor(EditorColors.CARET_COLOR);
       if (caretColor == null) caretColor = new JBColor(CARET_DARK, CARET_LIGHT);
       int minX = myInsets.left;
@@ -1318,15 +1318,15 @@ public final class EditorPainter implements TextDrawingCallback {
               // fully cover extra character's pixel which can appear due to antialiasing
               // see IDEA-148843 for more details
               if (x > minX && lineWidth > 1) x -= 1 / JBUIScale.sysScale(g);
-              paintCaretBar(g, caret, x, y, lineWidth, nominalLineHeight, isRtl);
+              paintCaretBar(g, caret, x, y, lineWidth, caretHeight, isRtl);
             }
             else {
-              paintCaretBlock(g, startX, y, width, nominalLineHeight);
+              paintCaretBlock(g, startX, y, width, caretHeight);
               paintCaretText(g, caret, caretColor, startX, y, topOverhang, isRtl);
             }
           }
           case BLOCK -> {
-            paintCaretBlock(g, startX, y, width, nominalLineHeight);
+            paintCaretBlock(g, startX, y, width, caretHeight);
             paintCaretText(g, caret, caretColor, startX, y, topOverhang, isRtl);
           }
           case BAR -> {
@@ -1335,24 +1335,24 @@ public final class EditorPainter implements TextDrawingCallback {
             if (attr.getThickness() > 0) {
               int barWidth = Math.max((int)(width * attr.getThickness()), JBUIScale.scale(settings.getLineCursorWidth()));
               if (!isRtl && x > minX && barWidth > 1 && barWidth < (width / 2)) x -= 1 / JBUIScale.sysScale(g);
-              paintCaretBar(g, caret, isRtl ? x - barWidth : x, y, barWidth, nominalLineHeight, isRtl);
+              paintCaretBar(g, caret, isRtl ? x - barWidth : x, y, barWidth, caretHeight, isRtl);
               Shape savedClip = g.getClip();
-              g.setClip(new Rectangle2D.Float(isRtl ? x - barWidth : x, y, barWidth, nominalLineHeight));
+              g.setClip(new Rectangle2D.Float(isRtl ? x - barWidth : x, y, barWidth, caretHeight));
               paintCaretText(g, caret, caretColor, startX, y, topOverhang, isRtl);
               g.setClip(savedClip);
             }
           }
           case UNDERSCORE -> {
             if (attr.getThickness() > 0) {
-              int underscoreHeight = Math.max((int)(nominalLineHeight * attr.getThickness()), 1);
-              paintCaretUnderscore(g, startX, y + nominalLineHeight - underscoreHeight, width, underscoreHeight);
+              int underscoreHeight = Math.max((int)(caretHeight * attr.getThickness()), 1);
+              paintCaretUnderscore(g, startX, y + caretHeight - underscoreHeight, width, underscoreHeight);
               Shape oldClip = g.getClip();
-              g.setClip(new Rectangle2D.Float(startX, y + nominalLineHeight - underscoreHeight, width, underscoreHeight));
+              g.setClip(new Rectangle2D.Float(startX, y + caretHeight - underscoreHeight, width, underscoreHeight));
               paintCaretText(g, caret, caretColor, startX, y, topOverhang, isRtl);
               g.setClip(oldClip);
             }
           }
-          case BOX -> paintCaretBox(g, startX, y, width, nominalLineHeight);
+          case BOX -> paintCaretBox(g, startX, y, width, caretHeight);
         }
       }
     }
