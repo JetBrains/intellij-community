@@ -116,7 +116,7 @@ class TaintAnalyzer(private val myTaintValueFactory: TaintValueFactory) {
       }
     }
 
-    fun minusMethod(): AnalyzeContext {
+    fun withDecrementedMethods(): AnalyzeContext {
       val depth = depthNestedMethods - 1
       if (depth < 0) {
         throw DeepTaintAnalyzerException()
@@ -124,7 +124,7 @@ class TaintAnalyzer(private val myTaintValueFactory: TaintValueFactory) {
       return copy(depthNestedMethods = depth)
     }
 
-    fun minusPart(): AnalyzeContext {
+    fun withDecrementedParts(): AnalyzeContext {
       val depth = parts.decrementAndGet()
       if (depth < 0) {
         throw DeepTaintAnalyzerException()
@@ -132,22 +132,22 @@ class TaintAnalyzer(private val myTaintValueFactory: TaintValueFactory) {
       return this
     }
 
-    fun minusInside(): AnalyzeContext {
+    fun withDecrementedSteps(): AnalyzeContext {
       if (inside < 0) {
         throw DeepTaintAnalyzerException()
       }
       return copy(inside = inside - 1)
     }
 
-    fun minusOutsideFields(): AnalyzeContext {
+    fun withDecrementedExternalFields(): AnalyzeContext {
       return copy(depthOutsideFields = depthOutsideFields - 1)
     }
 
-    fun minusOutsideMethods(): AnalyzeContext {
+    fun withDecrementedExternalMethods(): AnalyzeContext {
       return copy(depthOutsideMethods = depthOutsideMethods - 1)
     }
 
-    fun minusPart(size: Int): AnalyzeContext {
+    fun withDecrementedParts(size: Int): AnalyzeContext {
       val previous = parts.get()
       val next = previous - size
       parts.set(next)
@@ -298,7 +298,7 @@ class TaintAnalyzer(private val myTaintValueFactory: TaintValueFactory) {
       val jvmModifiersOwner: JvmModifiersOwner = uMethod
       if (jvmModifiersOwner.hasModifier(JvmModifier.STATIC)) {
         if (analyzeContext.depthOutsideMethods > 0) {
-          analyzeContext = analyzeContext.minusOutsideMethods()
+          analyzeContext = analyzeContext.withDecrementedExternalMethods()
           return analyzeMethod(uMethod, analyzeContext, getNotEmptyParameters(uMethod, expression, analyzeContext))
         }
       }
@@ -513,7 +513,7 @@ class TaintAnalyzer(private val myTaintValueFactory: TaintValueFactory) {
     //kotlin constructor parameters are considered as parameters
     val uElement = target.toUElement() as? UField ?: return null
     if (!equalFiles(currentContext, uElement)) {
-      currentContext = currentContext.minusOutsideFields()
+      currentContext = currentContext.withDecrementedExternalFields()
     }
     if (currentContext.depthOutsideFields < 0) return TaintValue.UNTAINTED
     val jvmModifiersOwner: JvmModifiersOwner = uElement
@@ -568,7 +568,7 @@ class TaintAnalyzer(private val myTaintValueFactory: TaintValueFactory) {
     }
     val uMethod = target.toUElement(UMethod::class.java) ?: return null
     if (!equalFiles(analyzeContext, uMethod)) {
-      analyzeContext = analyzeContext.minusOutsideMethods()
+      analyzeContext = analyzeContext.withDecrementedExternalMethods()
     }
     return analyzeMethod(uMethod, analyzeContext, getEmptyParameters(uMethod))
   }
@@ -599,11 +599,11 @@ class TaintAnalyzer(private val myTaintValueFactory: TaintValueFactory) {
     val sourcePsi = uMethod.sourcePsi ?: return TaintValue.UNKNOWN
     if (methodBody == null) {
       // maybe it is a generated kotlin property getter or setter
-      val taintValue = fromField(null, sourcePsi, analyzeContext.minusInside())
+      val taintValue = fromField(null, sourcePsi, analyzeContext.withDecrementedSteps())
       return taintValue ?: TaintValue.UNKNOWN
     }
 
-    analyzeContext = analyzeContext.minusMethod()
+    analyzeContext = analyzeContext.withDecrementedMethods()
 
     val allReturns = getAllReturns(sourcePsi)
 
@@ -624,7 +624,7 @@ class TaintAnalyzer(private val myTaintValueFactory: TaintValueFactory) {
     //prevent recursion always
     myVisited[psiElement] = TaintValue.UNKNOWN
 
-    val returnValue = allReturns.join(analyzeContext.minusPart(allReturns.size))
+    val returnValue = allReturns.join(analyzeContext.withDecrementedParts(allReturns.size))
 
     myCurrentParameters.clear()
     myCurrentParameters.putAll(previousTemporary)
@@ -651,7 +651,7 @@ class TaintAnalyzer(private val myTaintValueFactory: TaintValueFactory) {
     if (uConcatenation != null) {
       val operands = uConcatenation.operands
       val size = operands.filter { it !is ULiteralExpression && it !is UPolyadicExpression }.size
-      return withCache(uExpression) { operands.join(analyzeContext.minusPart(size)) }
+      return withCache(uExpression) { operands.join(analyzeContext.withDecrementedParts(size)) }
     }
     when (uExpression) {
       is UUnknownExpression -> {
@@ -670,31 +670,31 @@ class TaintAnalyzer(private val myTaintValueFactory: TaintValueFactory) {
         return TaintValue.UNTAINTED
       }
       is UBinaryExpressionWithType -> {
-        return withCache(uExpression) { fromExpressionWithoutCollection(uExpression.operand, analyzeContext.minusPart()) }
+        return withCache(uExpression) { fromExpressionWithoutCollection(uExpression.operand, analyzeContext.withDecrementedParts()) }
       }
       is UResolvable -> {
         if (uExpression is UPostfixExpression && uExpression.operator.text == "!!") {
-          return withCache(uExpression) { fromExpressionWithoutCollection(uExpression.operand, analyzeContext.minusPart()) }
+          return withCache(uExpression) { fromExpressionWithoutCollection(uExpression.operand, analyzeContext.withDecrementedParts()) }
         }
-        return withCache(uExpression) { analyzeInner(uExpression, analyzeContext.minusInside()) }
+        return withCache(uExpression) { analyzeInner(uExpression, analyzeContext.withDecrementedSteps()) }
       }
       is UUnaryExpression -> {
-        return withCache(uExpression) { fromExpressionWithoutCollection(uExpression.operand, analyzeContext.minusPart()) }
+        return withCache(uExpression) { fromExpressionWithoutCollection(uExpression.operand, analyzeContext.withDecrementedParts()) }
       }
       is UBinaryExpression -> {
         return withCache(uExpression) {
-          setOf(uExpression.leftOperand, uExpression.rightOperand).join(analyzeContext.minusPart(2))
+          setOf(uExpression.leftOperand, uExpression.rightOperand).join(analyzeContext.withDecrementedParts(2))
         }
       }
       is ULabeledExpression -> {
-        return withCache(uExpression) { fromExpressionWithoutCollection(uExpression.expression, analyzeContext.minusPart()) }
+        return withCache(uExpression) { fromExpressionWithoutCollection(uExpression.expression, analyzeContext.withDecrementedParts()) }
       }
       is UIfExpression, is USwitchExpression, is UBlockExpression -> {
         return withCache(uExpression) {
           val nonStructuralChildren = nonStructuralChildren(uExpression).toList()
           nonStructuralChildren
             .filterNotNull()
-            .join(analyzeContext.minusPart(nonStructuralChildren.size))
+            .join(analyzeContext.withDecrementedParts(nonStructuralChildren.size))
         }
       }
       else -> {
@@ -860,7 +860,7 @@ class TaintAnalyzer(private val myTaintValueFactory: TaintValueFactory) {
           return@CachedValueProvider CachedValueProvider.Result.create(uMethods, PsiModificationTracker.MODIFICATION_COUNT)
         })
 
-      analyzeContext.minusPart(methods.size)
+      analyzeContext.withDecrementedParts(methods.size)
       return methods.none {
         //kotlin setters, lombok
         (it.sourcePsi == target && it.javaPsi.parameters.isNotEmpty())
