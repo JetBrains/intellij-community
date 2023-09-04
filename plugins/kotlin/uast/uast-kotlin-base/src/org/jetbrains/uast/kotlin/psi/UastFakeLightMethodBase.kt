@@ -37,6 +37,7 @@ abstract class UastFakeLightMethodBase(
             ?: error("${BaseKotlinUastResolveProviderService::class.java.name} is not available for ${this::class.simpleName}")
     }
 
+    protected abstract fun isSuspendFunction(): Boolean
     protected abstract fun isUnitFunction(): Boolean
     protected abstract fun computeNullability(): KtTypeNullability?
     protected abstract fun computeAnnotations(annotations: SmartList<PsiAnnotation>)
@@ -44,8 +45,8 @@ abstract class UastFakeLightMethodBase(
     private val _annotations: Array<PsiAnnotation> by lz {
         val annotations = SmartList<PsiAnnotation>()
 
-        // Do not annotate Unit function
-        if (!isUnitFunction()) {
+        // Do not annotate Unit function (except for suspend function)
+        if (!isUnitFunction() || isSuspendFunction()) {
             val nullability = computeNullability()
             if (nullability != null && nullability != KtTypeNullability.UNKNOWN) {
                 annotations.add(

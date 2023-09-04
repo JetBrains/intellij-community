@@ -426,6 +426,22 @@ interface KotlinUastResolveProviderService : BaseKotlinUastResolveProviderServic
         )
     }
 
+    override fun getSuspendContinuationType(
+        suspendFunction: KtFunction,
+        containingLightDeclaration: PsiModifierListOwner?,
+    ): PsiType? {
+        val descriptor = suspendFunction.analyze()[BindingContext.FUNCTION, suspendFunction] ?: return null
+        if (!descriptor.isSuspend) return null
+        val returnType = descriptor.returnType ?: return null
+        val moduleDescriptor = DescriptorUtils.getContainingModule(descriptor)
+        val continuationType = moduleDescriptor.getContinuationOfTypeOrAny(returnType)
+        return continuationType.toPsiType(
+            containingLightDeclaration,
+            suspendFunction,
+            PsiTypeConversionConfiguration.create(suspendFunction)
+        )
+    }
+
     override fun getFunctionType(ktFunction: KtFunction, source: UElement?): PsiType? {
         if (ktFunction is KtConstructor<*>) return null
         val descriptor = ktFunction.analyze()[BindingContext.FUNCTION, ktFunction] ?: return null

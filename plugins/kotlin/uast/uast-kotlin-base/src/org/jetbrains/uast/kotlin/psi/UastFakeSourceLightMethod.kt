@@ -93,6 +93,12 @@ open class UastFakeSourceLightMethod(
                         )
                     )
                 }
+
+                if (isSuspendFunction()) {
+                    this.addParameter(
+                        UastKotlinPsiSuspendContinuationParameter.create(this@UastFakeSourceLightMethod, original)
+                    )
+                }
             }
         }
     }
@@ -128,22 +134,36 @@ abstract class UastFakeSourceLightMethodBase<T: KtDeclaration>(
     }
 
     override fun hasModifierProperty(name: String): Boolean {
-        if (name == PsiModifier.PUBLIC || name == PsiModifier.PROTECTED || name == PsiModifier.PRIVATE) {
-            if (original.hasModifier(KtTokens.PRIVATE_KEYWORD)) {
-                return name == PsiModifier.PRIVATE
-            }
-            if (original.hasModifier(KtTokens.PROTECTED_KEYWORD)) {
-                return name == PsiModifier.PROTECTED
-            }
+        return when (name) {
+            PsiModifier.PUBLIC, PsiModifier.PROTECTED, PsiModifier.PRIVATE -> {
+                if (original.hasModifier(KtTokens.PRIVATE_KEYWORD)) {
+                    return name == PsiModifier.PRIVATE
+                }
+                if (original.hasModifier(KtTokens.PROTECTED_KEYWORD)) {
+                    return name == PsiModifier.PROTECTED
+                }
 
-            // TODO: inherited via override
+                // TODO: inherited via override
 
-            return name == PsiModifier.PUBLIC
+                name == PsiModifier.PUBLIC
+            }
+            PsiModifier.ABSTRACT -> {
+                original.hasModifier(KtTokens.ABSTRACT_KEYWORD) || containingClass?.isInterface == true
+            }
+            PsiModifier.OPEN -> {
+                original.hasModifier(KtTokens.OPEN_KEYWORD)
+            }
+            PsiModifier.FINAL -> {
+                // TODO: top-level / unspecified declaration / inside final containingClass?
+                original.hasModifier(KtTokens.FINAL_KEYWORD)
+            }
+            // TODO: special keywords, such as strictfp, synchronized, external, native, etc.
+            else -> super.hasModifierProperty(name)
         }
+    }
 
-        // TODO: modality, special keywords, such as strictfp, synchronized, external, etc.
-
-        return super.hasModifierProperty(name)
+    override fun isSuspendFunction(): Boolean {
+        return original.hasModifier(KtTokens.SUSPEND_KEYWORD)
     }
 
     override fun isUnitFunction(): Boolean {
@@ -151,6 +171,10 @@ abstract class UastFakeSourceLightMethodBase<T: KtDeclaration>(
     }
 
     override fun computeNullability(): KtTypeNullability? {
+        if (isSuspendFunction()) {
+            // suspend fun returns Any?, which is mapped to @Nullable java.lang.Object
+            return KtTypeNullability.NULLABLE
+        }
         return baseResolveProviderService.nullability(original)
     }
 
@@ -170,6 +194,10 @@ abstract class UastFakeSourceLightMethodBase<T: KtDeclaration>(
     }
 
     private val _returnType: PsiType? by lz {
+        if (isSuspendFunction()) {
+            // suspend fun returns Any?, which is mapped to @Nullable java.lang.Object
+            return@lz PsiType.getJavaLangObject(original.manager, original.resolveScope)
+        }
         baseResolveProviderService.getType(original, this, isForFake = true)
     }
 
