@@ -267,7 +267,7 @@ object VfsRecoveryUtils {
       )
 
       copyVfsLog(oldStorageDir, newStorageDir, point.copy())
-      val newVfsLog = VfsLogImpl(PersistentFSPaths(newStorageDir).vfsLogStorage, false)
+      val newVfsLog = VfsLogImpl.open(PersistentFSPaths(newStorageDir).vfsLogStorage, false)
 
       RecoveryContext(this, point.constCopier(), queryContext, newFsRecords, newVfsLog, progressReporter,
                       vtm, { fillerHolder.filler = it }, compactedVfs)

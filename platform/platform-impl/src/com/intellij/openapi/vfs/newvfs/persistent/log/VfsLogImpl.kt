@@ -8,7 +8,10 @@ import com.intellij.openapi.vfs.newvfs.persistent.log.OperationLogStorage.Operat
 import com.intellij.openapi.vfs.newvfs.persistent.log.PayloadRef.PayloadSource.Companion.isInline
 import com.intellij.openapi.vfs.newvfs.persistent.log.PayloadStorageIO.Companion.fillData
 import com.intellij.openapi.vfs.newvfs.persistent.log.compaction.VfsLogCompactionController
-import com.intellij.openapi.vfs.newvfs.persistent.log.io.PersistentVar
+import com.intellij.openapi.vfs.newvfs.persistent.log.compaction.VfsLogCompactionController.Companion.OperationMode
+import com.intellij.openapi.vfs.newvfs.persistent.log.io.AtomicDurableRecord
+import com.intellij.openapi.vfs.newvfs.persistent.log.io.AtomicDurableRecord.Companion.RecordBuilder
+import com.intellij.openapi.vfs.newvfs.persistent.log.io.DurablePersistentByteArray.Companion.OpenMode.*
 import com.intellij.openapi.vfs.newvfs.persistent.log.timemachine.ExtendedVfsSnapshot
 import com.intellij.openapi.vfs.newvfs.persistent.log.timemachine.State
 import com.intellij.util.SystemProperties
@@ -49,23 +52,26 @@ import kotlin.time.Duration.Companion.milliseconds
  *        operation1. This shouldn't bother you, unless you're changing how VfsLog compaction works.
  */
 @ApiStatus.Experimental
-class VfsLogImpl(
+class VfsLogImpl private constructor(
   private val storagePath: Path,
   private val readOnly: Boolean = false,
   // TODO telemetry and logging toggle
 ) : VfsLogEx {
-  private val versionHandler = PersistentVar.integer(storagePath / "version")
-  var version by versionHandler
-    private set
-  private val properlyClosedMarkerHandler = PersistentVar.integer(storagePath / "closeMarker")
-  private var properlyClosedMarker by properlyClosedMarkerHandler
+  private val atomicState: AtomicDurableRecord<VfsLogState> = AtomicDurableRecord.open(storagePath / "state",
+                                                                                       if (readOnly) Read else ReadWrite,
+                                                                                       stateBuilder)
   val wasProperlyClosedLastSession: Boolean
 
   init {
-    updateVersionIfNeeded()
-    wasProperlyClosedLastSession = (properlyClosedMarker ?: CLOSED_PROPERLY) == CLOSED_PROPERLY
+    val state = atomicState.get()
+    if (state.version != VERSION) {
+      LOG.warn("VfsLog storage version differs from the implementation version: log ${state.version} vs implementation $VERSION")
+    }
+    wasProperlyClosedLastSession = state.closedProperly
     if (!readOnly) {
-      properlyClosedMarker = NOT_CLOSED_PROPERLY
+      atomicState.update {
+        closedProperly = false
+      }
     }
   }
 
@@ -138,10 +144,11 @@ class VfsLogImpl(
       operationLogStorage.dispose()
       payloadStorage.dispose()
       if (!readOnly) {
-        properlyClosedMarker = CLOSED_PROPERLY
+        atomicState.update {
+          closedProperly = true
+        }
       }
-      versionHandler.close()
-      properlyClosedMarkerHandler.close()
+      atomicState.close()
       LOG.info("VfsLog dispose completed in ${System.currentTimeMillis() - startTime} ms")
     }
 
@@ -376,34 +383,10 @@ class VfsLogImpl(
     }
   }
 
-  private fun updateVersionIfNeeded() {
-    version.let {
-      if (it != VERSION) {
-        if (it != null) {
-          LOG.info("VfsLog storage version differs from the implementation version: log $it vs implementation $VERSION")
-        }
-        if (!readOnly) {
-          if (it != null) {
-            LOG.info("Upgrading storage")
-            versionHandler.close()
-            try {
-              if (clearStorage(storagePath)) LOG.info("VfsLog storage was cleared")
-            }
-            catch (e: IOException) {
-              LOG.error("failed to clear VfsLog storage", e)
-            }
-            versionHandler.reopen()
-          }
-          version = VERSION
-        }
-      }
-    }
-  }
-
   companion object {
     private val LOG = Logger.getInstance(VfsLogImpl::class.java)
 
-    const val VERSION = 4
+    const val VERSION = 5
 
     private val WORKER_THREADS_COUNT = SystemProperties.getIntProperty(
       "idea.vfs.log-vfs-operations.workers",
@@ -438,8 +421,45 @@ class VfsLogImpl(
 
     private const val MAX_READERS = 16
 
-    private const val NOT_CLOSED_PROPERLY: Int = 0xBADC105
-    private const val CLOSED_PROPERLY: Int = 0xC105ED
+    private interface VfsLogState {
+      var version: Int
+      var closedProperly: Boolean
+    }
+
+    private val stateBuilder: RecordBuilder<VfsLogState>.() -> VfsLogState = {
+      object : VfsLogState { // 64 bytes
+        override var version by int(VERSION)
+        private val reserved_ by bytearray(59)
+        override var closedProperly by boolean(true)
+      }
+    }
+
+    @JvmStatic
+    fun open(
+      storagePath: Path,
+      readOnly: Boolean = false,
+      // TODO telemetry and logging toggle
+    ): VfsLogImpl {
+      if (!readOnly) {
+        deleteEverythingOnVersionMismatch(storagePath)
+      }
+      return VfsLogImpl(storagePath, readOnly)
+    }
+
+    private fun deleteEverythingOnVersionMismatch(storagePath: Path) {
+      val state = AtomicDurableRecord.open(storagePath / "state", ReadWrite, stateBuilder)
+      val version = state.get().version
+      state.close()
+      if (version != VERSION) {
+        LOG.info("Upgrading storage")
+        try {
+          if (clearStorage(storagePath)) LOG.info("VfsLog storage was cleared")
+        }
+        catch (e: IOException) {
+          LOG.error("failed to clear VfsLog storage", e)
+        }
+      }
+    }
 
     @JvmStatic
     @Throws(IOException::class)

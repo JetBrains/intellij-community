@@ -139,7 +139,7 @@ public final class PersistentFSLoader {
 
   public void initializeStorages() throws IOException {
     if (enableVfsLog) {
-      vfsLog = new VfsLogImpl(vfsLogDir, false);
+      vfsLog = VfsLogImpl.open(vfsLogDir, false);
     }
     else {
       vfsLog = null;
@@ -211,7 +211,7 @@ public final class PersistentFSLoader {
   }
 
   public boolean recoverCachesFromVfsLogIfAppWasNotClosedProperly() throws IOException {
-    VfsLogImpl vfsLog = new VfsLogImpl(vfsLogDir, true);
+    VfsLogImpl vfsLog = VfsLogImpl.open(vfsLogDir, true);
     try {
       if (!vfsLog.getWasProperlyClosedLastSession()) {
         LOG.warn("VFS was not properly closed last session. Recovering from VfsLog...");

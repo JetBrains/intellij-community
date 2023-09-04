@@ -341,7 +341,7 @@ fun main(args: Array<String>) {
   assert(args.size == 1) { "Usage: <LogStats> <path to vfslog folder>" }
 
   val logPath = Path.of(args[0])
-  val log = VfsLogImpl(logPath, true)
+  val log = VfsLogImpl.open(logPath, true)
 
   //val names = PersistentStringEnumerator(logPath.parent / "names.dat", true)::valueOf
   val attributeEnumerator = SimpleStringPersistentEnumerator(logPath.parent / "attributes_enums.dat")
