@@ -89,7 +89,7 @@ fun TabStripHorizontalScrollbar(
     style: ScrollbarStyle = IntelliJTheme.scrollbarStyle,
 ) {
     val shape by remember { mutableStateOf(RoundedCornerShape(style.metrics.thumbCornerSize)) }
-    val hoverDurationMillis by remember { mutableStateOf(style.hoverDuration.toInt(DurationUnit.MILLISECONDS)) }
+    val hoverDurationMillis by remember { mutableStateOf(style.hoverDuration.inWholeMilliseconds.toInt()) }
 
     CompositionLocalProvider(
         LocalScrollbarStyle provides ComposeScrollbarStyle(

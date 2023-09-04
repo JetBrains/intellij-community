@@ -1,16 +1,18 @@
 package org.jetbrains.jewel.foundation.tree
 
 import org.jetbrains.jewel.foundation.lazy.SelectableColumnOnKeyEvent
+import org.jetbrains.jewel.foundation.lazy.SelectableLazyListKey
+import org.jetbrains.jewel.foundation.lazy.SelectableLazyListState
 
 interface TreeViewOnKeyEvent : SelectableColumnOnKeyEvent {
 
     /**
      * Select Parent Node
      */
-    suspend fun onSelectParent(flattenedIndex: Int)
+    fun onSelectParent(keys: List<SelectableLazyListKey>, state: SelectableLazyListState)
 
     /**
      * Select Child Node inherited from Right
      */
-    suspend fun onSelectChild(flattenedIndex: Int)
+    fun onSelectChild(keys: List<SelectableLazyListKey>, state: SelectableLazyListState)
 }

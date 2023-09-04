@@ -5,93 +5,84 @@ import androidx.compose.foundation.gestures.FlingBehavior
 import androidx.compose.foundation.gestures.ScrollableDefaults
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.LazyListScope
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.DisposableEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.input.key.KeyEvent
+import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.input.key.onPreviewKeyEvent
+import androidx.compose.ui.input.pointer.PointerEventType
+import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.unit.dp
+import kotlinx.coroutines.launch
+import org.jetbrains.jewel.foundation.lazy.SelectableLazyListScopeContainer.Entry
+import org.jetbrains.jewel.foundation.tree.DefaultSelectableLazyColumnEventAction
 import org.jetbrains.jewel.foundation.tree.DefaultSelectableLazyColumnKeyActions
-import org.jetbrains.jewel.foundation.tree.DefaultSelectableLazyColumnPointerEventAction
-import org.jetbrains.jewel.foundation.tree.KeyBindingScopedActions
-import org.jetbrains.jewel.foundation.tree.PointerEventScopedActions
-import java.util.UUID
+import org.jetbrains.jewel.foundation.tree.KeyBindingActions
+import org.jetbrains.jewel.foundation.tree.PointerEventActions
 
 /**
  * A composable that displays a scrollable and selectable list of items in a column arrangement.
  *
- * @param modifier The modifier to apply to this layout.
- * @param state The state object that holds the state information for the selectable lazy column.
- * @param contentPadding The padding to be applied to the content of the column.
- * @param reverseLayout Whether the items should be laid out in reverse order.
- * @param verticalArrangement The vertical arrangement strategy for laying out the items.
- * @param horizontalAlignment The horizontal alignment strategy for laying out the items.
- * @param flingBehavior The fling behavior for scrolling.
- * @param interactionSource The interaction source for handling user input events.
- * @param keyActions The key binding actions for handling keyboard events.
- * @param pointerHandlingScopedActions The pointer event actions for handling pointer events.
- * @param content The content of the selectable lazy column, specified as a lambda function
- *     with a [SelectableLazyListScope] receiver.
  */
 @Composable
 fun SelectableLazyColumn(
     modifier: Modifier = Modifier,
-    state: SelectableLazyListState = rememberSelectableLazyListState(selectionMode = SelectionMode.Multiple),
-    contentPadding: PaddingValues = PaddingValues(0.dp),
-    reverseLayout: Boolean = false,
-    verticalArrangement: Arrangement.Vertical = if (!reverseLayout) Arrangement.Top else Arrangement.Bottom,
-    horizontalAlignment: Alignment.Horizontal = Alignment.Start,
-    flingBehavior: FlingBehavior = ScrollableDefaults.flingBehavior(),
-    interactionSource: MutableInteractionSource = remember { MutableInteractionSource() },
-    keyActions: KeyBindingScopedActions = DefaultSelectableLazyColumnKeyActions(state),
-    pointerHandlingScopedActions: PointerEventScopedActions = DefaultSelectableLazyColumnPointerEventAction(state),
-    content: SelectableLazyListScope.() -> Unit,
-) {
-    DisposableEffect(keyActions) {
-        state.attachKeybindings(keyActions)
-        onDispose { }
-    }
-    BaseSelectableLazyColumn(
-        modifier = modifier,
-        state = state,
-        contentPadding = contentPadding,
-        reverseLayout = reverseLayout,
-        verticalArrangement = verticalArrangement,
-        horizontalAlignment = horizontalAlignment,
-        flingBehavior = flingBehavior,
-        interactionSource = interactionSource,
-        keyActions = keyActions.handleOnKeyEvent(rememberCoroutineScope()),
-        pointerHandlingScopedActions = pointerHandlingScopedActions,
-        content = content,
-    )
-}
-
-@Composable
-internal fun BaseSelectableLazyColumn(
-    modifier: Modifier = Modifier,
+    selectionMode: SelectionMode = SelectionMode.Multiple,
     state: SelectableLazyListState = rememberSelectableLazyListState(),
     contentPadding: PaddingValues = PaddingValues(0.dp),
     reverseLayout: Boolean = false,
+    onSelectedIndexesChanged: (List<Int>) -> Unit = {},
     verticalArrangement: Arrangement.Vertical = if (!reverseLayout) Arrangement.Top else Arrangement.Bottom,
     horizontalAlignment: Alignment.Horizontal = Alignment.Start,
     flingBehavior: FlingBehavior = ScrollableDefaults.flingBehavior(),
+    keyActions: KeyBindingActions = DefaultSelectableLazyColumnKeyActions(),
+    pointerEventActions: PointerEventActions = DefaultSelectableLazyColumnEventAction(),
     interactionSource: MutableInteractionSource = remember { MutableInteractionSource() },
-    keyActions: KeyEvent.(Int) -> Boolean = { false },
-    pointerHandlingScopedActions: PointerEventScopedActions,
     content: SelectableLazyListScope.() -> Unit,
 ) {
-    val uuid = remember { UUID.randomUUID().toString() }
-    state.checkUUID(uuid)
+    val scope = rememberCoroutineScope()
+
+    val container = remember(content) {
+        SelectableLazyListScopeContainer().apply(content)
+    }
+
+    val keys = remember(container) {
+        container.getKeys()
+    }
+
+    var isActive by remember { mutableStateOf(false) }
+
+    remember(state.selectedKeys) {
+        onSelectedIndexesChanged(state.selectedKeys.map { selected -> keys.indexOfFirst { it.key == selected } })
+    }
+
     LazyColumn(
         modifier = modifier
-            .onPreviewKeyEvent { event -> state.lastFocusedIndex?.let { keyActions.invoke(event, it) } ?: false }
-            .focusable(interactionSource = interactionSource),
+            .focusable(interactionSource = interactionSource)
+            .onFocusChanged {
+                isActive = it.hasFocus
+            }
+            .onPreviewKeyEvent { event ->
+                state.lastActiveItemIndex?.let { _ ->
+                    keyActions.handleOnKeyEvent(event, keys, state, selectionMode).invoke(event)
+                    scope.launch { state.lastActiveItemIndex?.let { state.scrollToItem(it) } }
+                } ?: run {
+                    val index = keys.indexOfFirst { it is SelectableLazyListKey.Selectable }
+                    if (index >= 0) {
+                        state.lastActiveItemIndex = index
+                        state.selectedKeys = state.selectedKeys.toMutableList().also { it.add(keys[index].key) }
+                    }
+                }
+                true
+            },
         state = state.lazyListState,
         contentPadding = contentPadding,
         reverseLayout = reverseLayout,
@@ -99,18 +90,102 @@ internal fun BaseSelectableLazyColumn(
         horizontalAlignment = horizontalAlignment,
         flingBehavior = flingBehavior,
     ) {
-        state.clearKeys()
-        SelectableLazyListScopeContainer(state, pointerHandlingScopedActions).apply(content)
+        container.getEntries().forEach { entry ->
+            when (entry) {
+                is Entry.Item -> item(entry.key, entry.contentType) {
+                    val itemScope = SelectableLazyItemScope(
+                        isSelected = entry.key in state.selectedKeys,
+                        isActive = isActive,
+                    )
+                    if (keys.any { it.key == entry.key && it is SelectableLazyListKey.Selectable }) {
+                        Box(
+                            modifier = Modifier.selectable(
+                                keybindings = keyActions.keybindings,
+                                actionHandler = pointerEventActions,
+                                selectionMode = selectionMode,
+                                selectableState = state,
+                                allKeys = keys,
+                                itemKey = entry.key,
+                            ),
+                        ) {
+                            entry.content.invoke(itemScope)
+                        }
+                    } else {
+                        entry.content.invoke(itemScope)
+                    }
+                }
+
+                is Entry.Items -> items(
+                    entry.count,
+                    { entry.key(it) },
+                    { entry.contentType(it) },
+                ) { index ->
+                    val itemScope = SelectableLazyItemScope(entry.key(index) in state.selectedKeys, isActive)
+                    if (keys.any { it.key == entry.key(index) && it is SelectableLazyListKey.Selectable }) {
+                        Box(
+                            modifier = Modifier.selectable(
+                                keybindings = keyActions.keybindings,
+                                actionHandler = pointerEventActions,
+                                selectionMode = selectionMode,
+                                selectableState = state,
+                                allKeys = keys,
+                                itemKey = entry.key(index),
+                            ),
+                        ) {
+                            entry.itemContent.invoke(itemScope, index)
+                        }
+                    } else {
+                        entry.itemContent.invoke(itemScope, index)
+                    }
+                }
+
+                is Entry.StickyHeader -> stickyHeader(entry.key, entry.contentType) {
+                    val itemScope = SelectableLazyItemScope(entry.key in state.selectedKeys, isActive)
+                    if (keys.any { it.key == entry.key && it is SelectableLazyListKey.Selectable }) {
+                        Box(
+                            modifier = Modifier.selectable(
+                                keybindings = keyActions.keybindings,
+                                actionHandler = pointerEventActions,
+                                selectionMode = selectionMode,
+                                selectableState = state,
+                                allKeys = keys,
+                                itemKey = entry.key,
+                            ),
+                        ) {
+                            entry.content.invoke(itemScope)
+                        }
+                    } else {
+                        SelectableLazyItemScope(entry.key in state.selectedKeys, isActive).apply {
+                            entry.content.invoke(itemScope)
+                        }
+                    }
+                }
+            }
+        }
     }
 }
 
-/**
- * Creates a container for a selectable lazy list scope within a lazy list scope.
- *
- * @param state The state object for the selectable lazy list.
- * @param pointerHandlingScopedActions The pointer event scoped actions for handling pointer events.
- *
- * @return A [SelectableLazyListScopeContainer] object that encapsulates the selectable lazy list scope.
- */
-internal fun LazyListScope.SelectableLazyListScopeContainer(state: SelectableLazyListState, pointerHandlingScopedActions: PointerEventScopedActions) =
-    SelectableLazyListScopeContainer(this, state, pointerHandlingScopedActions)
+private fun Modifier.selectable(
+    keybindings: SelectableColumnKeybindings,
+    actionHandler: PointerEventActions,
+    selectionMode: SelectionMode,
+    selectableState: SelectableLazyListState,
+    allKeys: List<SelectableLazyListKey>,
+    itemKey: Any,
+) = this.pointerInput(Unit) {
+    awaitPointerEventScope {
+        while (true) {
+            val event = awaitPointerEvent()
+            when (event.type) {
+                PointerEventType.Press -> actionHandler.handlePointerEventPress(
+                    event,
+                    keybindings,
+                    selectableState,
+                    selectionMode,
+                    allKeys,
+                    itemKey,
+                )
+            }
+        }
+    }
+}

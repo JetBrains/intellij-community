@@ -1,5 +1,6 @@
 package org.jetbrains.jewel.foundation.lazy
 
+import org.jetbrains.jewel.foundation.lazy.SelectableLazyListKey.Selectable
 import kotlin.math.max
 import kotlin.math.min
 
@@ -10,226 +11,205 @@ interface SelectableColumnOnKeyEvent {
     /**
      * Select First Node
      */
-    suspend fun onSelectFirstItem()
+    fun onSelectFirstItem(allKeys: List<SelectableLazyListKey>, state: SelectableLazyListState) {
+        val firstSelectable = allKeys.withIndex().firstOrNull { it.value is Selectable }
+        if (firstSelectable != null) {
+            state.selectedKeys = listOf(firstSelectable.value.key)
+            state.lastActiveItemIndex = firstSelectable.index
+        }
+    }
 
     /**
      * Extend Selection to First Node inherited from Move Caret to Text Start with Selection
      */
-    suspend fun onExtendSelectionToFirst(currentIndex: Int)
+    fun onExtendSelectionToFirst(keys: List<SelectableLazyListKey>, state: SelectableLazyListState) {
+        state.lastActiveItemIndex
+            ?.let {
+                val iterator = keys.listIterator(it)
+                val list = buildList {
+                    while (iterator.hasPrevious()) {
+                        val previous = iterator.previous()
+                        if (previous is Selectable) {
+                            add(previous.key)
+                            state.lastActiveItemIndex = (iterator.previousIndex() + 1).coerceAtMost(keys.size)
+                        }
+                    }
+                }
+                if (list.isNotEmpty()) {
+                    state.selectedKeys =
+                        state.selectedKeys
+                            .toMutableList()
+                            .also { selectionList -> selectionList.addAll(list) }
+                }
+            }
+    }
 
     /**
      * Select Last Node inherited from Move Caret to Text End
      */
-    suspend fun onSelectLastItem()
+    fun onSelectLastItem(keys: List<SelectableLazyListKey>, state: SelectableLazyListState) {
+        keys.withIndex()
+            .lastOrNull { it.value is Selectable }
+            ?.let {
+                state.selectedKeys = listOf(it)
+                state.lastActiveItemIndex = it.index
+            }
+    }
 
     /**
      * Extend Selection to Last Node inherited from Move Caret to Text End with Selection
      */
-    suspend fun onExtendSelectionToLastItem(currentIndex: Int)
+    fun onExtendSelectionToLastItem(keys: List<SelectableLazyListKey>, state: SelectableLazyListState) {
+        state.lastActiveItemIndex?.let {
+            val list = mutableListOf<Any>(state.selectedKeys)
+            keys.subList(it, keys.lastIndex).forEachIndexed { index, selectableLazyListKey ->
+                if (selectableLazyListKey is Selectable) {
+                    list.add(selectableLazyListKey.key)
+                }
+                state.lastActiveItemIndex = index
+            }
+            state.selectedKeys = list
+        }
+    }
 
     /**
      * Select Previous Node inherited from Up
      */
-    suspend fun onSelectPreviousItem(currentIndex: Int)
+    fun onSelectPreviousItem(keys: List<SelectableLazyListKey>, state: SelectableLazyListState) {
+        state.lastActiveItemIndex?.let { lastActiveIndex ->
+            if (lastActiveIndex == 0) return@let
+            keys
+                .withIndex()
+                .toList()
+                .dropLastWhile { it.index >= lastActiveIndex }
+                .reversed()
+                .firstOrNull { it.value is Selectable }
+                ?.let { (index, selectableKey) ->
+                    state.selectedKeys = listOf(selectableKey.key)
+                    state.lastActiveItemIndex = index
+                }
+        }
+    }
 
     /**
      * Extend Selection with Previous Node inherited from Up with Selection
      */
-    suspend fun onExtendSelectionWithPreviousItem(currentIndex: Int)
+    fun onExtendSelectionWithPreviousItem(keys: List<SelectableLazyListKey>, state: SelectableLazyListState) {
+        state.lastActiveItemIndex?.let { lastActiveIndex ->
+            if (lastActiveIndex == 0) return@let
+            keys
+                .withIndex()
+                .toList()
+                .dropLastWhile { it.index >= lastActiveIndex }
+                .reversed()
+                .firstOrNull { it.value is Selectable }
+                ?.let { (index, selectableKey) ->
+                    state.selectedKeys = state.selectedKeys + selectableKey.key
+                    state.lastActiveItemIndex = index
+                }
+        }
+    }
 
     /**
      * Select Next Node inherited from Down
      */
-    suspend fun onSelectNextItem(currentIndex: Int)
+    fun onSelectNextItem(keys: List<SelectableLazyListKey>, state: SelectableLazyListState) {
+        state.lastActiveItemIndex?.let { lastActiveIndex ->
+            if (lastActiveIndex == keys.lastIndex) return@let
+            keys
+                .withIndex()
+                .dropWhile { it.index <= lastActiveIndex }
+                .firstOrNull { it.value is Selectable }
+                ?.let { (index, selectableKey) ->
+                    state.selectedKeys = listOf(selectableKey.key)
+                    state.lastActiveItemIndex = index
+                }
+        }
+    }
 
     /**
      * Extend Selection with Next Node inherited from Down with Selection
      */
-    suspend fun onExtendSelectionWithNextItem(currentIndex: Int)
+    fun onExtendSelectionWithNextItem(keys: List<SelectableLazyListKey>, state: SelectableLazyListState) {
+        // todo we need deselect if we are changing direction
+        state.lastActiveItemIndex?.let { lastActiveIndex ->
+            if (lastActiveIndex == keys.lastIndex) return@let
+            keys
+                .withIndex()
+                .dropWhile { it.index <= lastActiveIndex }
+                .firstOrNull { it.value is Selectable }
+                ?.let { (index, selectableKey) ->
+                    state.selectedKeys = state.selectedKeys + selectableKey.key
+                    state.lastActiveItemIndex = index
+                }
+        }
+    }
 
     /**
      * Scroll Page Up and Select Node inherited from Page Up
      */
-    suspend fun onScrollPageUpAndSelectItem(currentIndex: Int)
+    fun onScrollPageUpAndSelectItem(keys: List<SelectableLazyListKey>, state: SelectableLazyListState) {
+        val visibleSize = state.layoutInfo.visibleItemsInfo.size
+        val targetIndex = max((state.lastActiveItemIndex ?: 0) - visibleSize, 0)
+        state.selectedKeys = listOf(keys[targetIndex].key)
+        state.lastActiveItemIndex = targetIndex
+    }
 
     /**
      * Scroll Page Up and Extend Selection inherited from Page Up with Selection
      */
-    suspend fun onScrollPageUpAndExtendSelection(currentIndex: Int)
+    fun onScrollPageUpAndExtendSelection(keys: List<SelectableLazyListKey>, state: SelectableLazyListState) {
+        val visibleSize = state.layoutInfo.visibleItemsInfo.size
+        val targetIndex = max((state.lastActiveItemIndex ?: 0) - visibleSize, 0)
+        val newSelectionList =
+            keys.subList(targetIndex, (state.lastActiveItemIndex ?: 0))
+                .withIndex()
+                .filter { it.value is Selectable }
+                .let {
+                    state.selectedKeys + it.map { selectableKey -> selectableKey.value.key }
+                }
+        state.selectedKeys = newSelectionList
+        state.lastActiveItemIndex = targetIndex
+    }
 
     /**
      * Scroll Page Down and Select Node inherited from Page Down
      */
-    suspend fun onScrollPageDownAndSelectItem(currentIndex: Int)
+    fun onScrollPageDownAndSelectItem(keys: List<SelectableLazyListKey>, state: SelectableLazyListState) {
+        val visibleSize = state.layoutInfo.visibleItemsInfo.size
+        val targetIndex = min((state.lastActiveItemIndex ?: 0) + visibleSize, keys.lastIndex)
+        state.selectedKeys = listOf(keys[targetIndex].key)
+        state.lastActiveItemIndex = targetIndex
+    }
 
     /**
      * Scroll Page Down and Extend Selection inherited from Page Down with Selection
      */
-    suspend fun onScrollPageDownAndExtendSelection(currentIndex: Int)
+    fun onScrollPageDownAndExtendSelection(keys: List<SelectableLazyListKey>, state: SelectableLazyListState) {
+        val visibleSize = state.layoutInfo.visibleItemsInfo.size
+        val targetIndex = min((state.lastActiveItemIndex ?: 0) + visibleSize, keys.lastIndex)
+        val newSelectionList =
+            keys.subList(state.lastActiveItemIndex ?: 0, targetIndex)
+                .filter { it is Selectable }
+                .let {
+                    state.selectedKeys + it.map { selectableKey -> selectableKey.key }
+                }
+        state.selectedKeys = newSelectionList
+        state.lastActiveItemIndex = targetIndex
+    }
 
     /**
      * Edit In Item
      */
-    suspend fun onEdit(currentIndex: Int)
+    fun onEdit() {
+        // ij with this shortcut just focus the first element with issue
+        // unavailable here
+    }
 }
 
 open class DefaultSelectableOnKeyEvent(
     override val keybindings: SelectableColumnKeybindings,
-    private val selectableState: SelectableLazyListState,
 ) : SelectableColumnOnKeyEvent {
 
-    override suspend fun onSelectFirstItem() {
-        val firstSelectable = selectableState.keys.indexOfFirst { it.selectable }
-        if (firstSelectable >= 0) selectableState.selectSingleItem(firstSelectable)
-    }
-
-    override suspend fun onExtendSelectionToFirst(currentIndex: Int) {
-        if (selectableState.keys.isNotEmpty()) {
-            buildList {
-                for (i in currentIndex downTo 0) {
-                    if (selectableState.keys[i].selectable) add(i)
-                }
-            }.let {
-                selectableState.addElementsToSelection(it, it.last())
-            }
-        }
-    }
-
-    override suspend fun onSelectLastItem() {
-        val lastSelectable = selectableState.keys.indexOfLast { it.selectable }
-        if (lastSelectable >= 0) selectableState.selectSingleItem(lastSelectable)
-    }
-
-    override suspend fun onExtendSelectionToLastItem(currentIndex: Int) {
-        if (selectableState.keys.isNotEmpty()) {
-            val lastKey = selectableState.keys.lastIndex
-            val keys = buildList {
-                for (i in currentIndex..lastKey) {
-                    if (selectableState.keys[i].selectable) {
-                        add(element = i)
-                    }
-                }
-            }
-            selectableState.addElementsToSelection(keys)
-        }
-    }
-
-    override suspend fun onSelectPreviousItem(currentIndex: Int) {
-        if (currentIndex - 1 >= 0) {
-            for (i in currentIndex - 1 downTo 0) {
-                if (selectableState.keys[i].selectable) {
-                    selectableState.selectSingleItem(i)
-                    break
-                }
-            }
-        }
-    }
-
-    override suspend fun onExtendSelectionWithPreviousItem(currentIndex: Int) {
-        if (currentIndex - 1 >= 0) {
-            val prevIndex = selectableState.indexOfPreviousSelectable(currentIndex) ?: return
-            if (selectableState.lastKeyEventUsedMouse) {
-                selectableState.selectedIdsMap.contains(selectableState.keys[currentIndex])
-                if (selectableState.selectedIdsMap.contains(selectableState.keys[prevIndex])) {
-                    selectableState.selectedIdsMap.remove(selectableState.keys[currentIndex])
-                    selectableState.focusItem(prevIndex, animateScroll = false, 0)
-                } else {
-                    selectableState.addElementToSelection(prevIndex)
-                }
-            } else {
-                selectableState.deselectAll()
-                selectableState.addElementsToSelection(
-                    listOf(
-                        currentIndex,
-                        prevIndex,
-                    ),
-                )
-                selectableState.lastKeyEventUsedMouse = true
-            }
-        }
-    }
-
-    override suspend fun onSelectNextItem(currentIndex: Int) {
-        selectableState.indexOfNextSelectable(currentIndex)?.let {
-            selectableState.selectSingleItem(it)
-        }
-    }
-
-    override suspend fun onExtendSelectionWithNextItem(currentIndex: Int) {
-        val nextSelectableIndex = selectableState.indexOfNextSelectable(currentIndex)
-        if (nextSelectableIndex != null) {
-            if (selectableState.lastKeyEventUsedMouse) {
-                if (selectableState.selectedIdsMap.contains(selectableState.keys[nextSelectableIndex])) {
-                    selectableState.selectedIdsMap.remove(selectableState.keys[currentIndex])
-                    selectableState.focusItem(nextSelectableIndex, false, 0)
-                } else {
-                    selectableState.addElementToSelection(nextSelectableIndex)
-                }
-            } else {
-                selectableState.deselectAll()
-                selectableState.addElementsToSelection(
-                    listOf(
-                        currentIndex,
-                        nextSelectableIndex,
-                    ),
-                )
-                selectableState.lastKeyEventUsedMouse = true
-            }
-        }
-    }
-
-    override suspend fun onScrollPageUpAndSelectItem(currentIndex: Int) {
-        val visibleSize = selectableState.layoutInfo.visibleItemsInfo.size
-        val targetIndex = max(currentIndex - visibleSize, 0)
-        if (!selectableState.keys[targetIndex].selectable) {
-            selectableState.indexOfPreviousSelectable(currentIndex) ?: selectableState.indexOfNextSelectable(currentIndex)?.let {
-                selectableState.selectSingleItem(it)
-            }
-        } else {
-            selectableState.selectSingleItem(targetIndex)
-        }
-    }
-
-    override suspend fun onScrollPageUpAndExtendSelection(currentIndex: Int) {
-        val visibleSize = selectableState.layoutInfo.visibleItemsInfo.size
-        val targetIndex = max(currentIndex - visibleSize, 0)
-        val indexList =
-            selectableState.keys.subList(targetIndex, currentIndex)
-                .withIndex()
-                .filter { it.value.selectable }
-                .map { currentIndex - it.index }
-                .filter { it >= 0 }
-        selectableState.addElementsToSelection(indexList, targetIndex)
-    }
-
-    override suspend fun onScrollPageDownAndSelectItem(currentIndex: Int) {
-        val firstVisible = selectableState.firstVisibleItemIndex
-        val visibleSize = selectableState.layoutInfo.visibleItemsInfo.size
-        val targetIndex = min(firstVisible + visibleSize, selectableState.keys.lastIndex)
-        if (!selectableState.keys[targetIndex].selectable) {
-            selectableState.indexOfNextSelectable(currentIndex) ?: selectableState.indexOfPreviousSelectable(currentIndex)?.let {
-                selectableState.selectSingleItem(it)
-            }
-        } else {
-            selectableState.selectSingleItem(targetIndex)
-        }
-    }
-
-    override suspend fun onScrollPageDownAndExtendSelection(currentIndex: Int) {
-        val visibleSize = selectableState.layoutInfo.visibleItemsInfo.size
-        val targetIndex = min(currentIndex + visibleSize, selectableState.keys.lastIndex)
-        val indexList =
-            selectableState.keys.subList(currentIndex, targetIndex)
-                .withIndex()
-                .filter { it.value.selectable }
-                .map { currentIndex + it.index }
-                .filter { it <= selectableState.keys.lastIndex }
-                .toList()
-        selectableState.addElementsToSelection(indexList)
-    }
-
-    override suspend fun onEdit(currentIndex: Int) {
-        // ij with this shortcut just focus the first element with issue
-        // unavailable here
-    }
+    companion object : DefaultSelectableOnKeyEvent(DefaultSelectableColumnKeybindings)
 }

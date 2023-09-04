@@ -1,17 +1,16 @@
 package org.jetbrains.jewel
 
-import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.takeOrElse
 import androidx.compose.ui.res.ResourceLoader
 import org.jetbrains.jewel.foundation.lazy.SelectableLazyItemScope
 import org.jetbrains.jewel.foundation.tree.BasicLazyTree
 import org.jetbrains.jewel.foundation.tree.DefaultTreeViewKeyActions
-import org.jetbrains.jewel.foundation.tree.KeyBindingScopedActions
+import org.jetbrains.jewel.foundation.tree.InitialNodeStatus
+import org.jetbrains.jewel.foundation.tree.KeyBindingActions
 import org.jetbrains.jewel.foundation.tree.Tree
 import org.jetbrains.jewel.foundation.tree.TreeElementState
 import org.jetbrains.jewel.foundation.tree.TreeState
@@ -22,20 +21,22 @@ import org.jetbrains.jewel.styling.LazyTreeStyle
 @Composable
 fun <T> LazyTree(
     tree: Tree<T>,
+    initialNodeStatus: InitialNodeStatus = InitialNodeStatus.Close(),
     resourceLoader: ResourceLoader,
     modifier: Modifier = Modifier,
     onElementClick: (Tree.Element<T>) -> Unit,
     treeState: TreeState = rememberTreeState(),
-    interactionSource: MutableInteractionSource = remember { MutableInteractionSource() },
-    onElementDoubleClick: (Tree.Element<T>) -> Unit = { },
-    keyActions: KeyBindingScopedActions = DefaultTreeViewKeyActions(treeState),
+    onElementDoubleClick: (Tree.Element<T>) -> Unit = {},
+    onSelectionChange: (List<Tree.Element<T>>) -> Unit = {},
+    keyActions: KeyBindingActions = DefaultTreeViewKeyActions(treeState),
     style: LazyTreeStyle = IntelliJTheme.treeStyle,
-    nodeContent: @Composable SelectableLazyItemScope.(Tree.Element<T>) -> Unit,
+    nodeContent: @Composable (SelectableLazyItemScope.(Tree.Element<T>) -> Unit),
 ) {
     val colors = style.colors
     val metrics = style.metrics
     BasicLazyTree(
         tree = tree,
+        initialNodeStatus = initialNodeStatus,
         onElementClick = onElementClick,
         elementBackgroundFocused = colors.elementBackgroundFocused,
         elementBackgroundSelectedFocused = colors.elementBackgroundSelectedFocused,
@@ -49,26 +50,25 @@ fun <T> LazyTree(
         treeState = treeState,
         modifier = modifier,
         onElementDoubleClick = onElementDoubleClick,
-        interactionSource = interactionSource,
+        onSelectionChange = onSelectionChange,
         keyActions = keyActions,
         chevronContent = { elementState ->
             val painterProvider = style.icons.nodeChevron(elementState.isExpanded)
             val painter by painterProvider.getPainter(elementState, resourceLoader)
             Icon(painter = painter, contentDescription = null)
         },
-        nodeContent = {
-            CompositionLocalProvider(
-                LocalContentColor provides (
-                    style.colors.contentFor(
-                        TreeElementState.of(
-                            isFocused,
-                            isSelected,
-                            false,
-                        ),
-                    ).value
-                        .takeOrElse { LocalContentColor.current }
+    ) {
+        CompositionLocalProvider(
+            LocalContentColor provides (
+                style.colors.contentFor(
+                    TreeElementState.of(
+                        focused = isActive,
+                        selected = isSelected,
+                        expanded = false,
                     ),
-            ) { nodeContent(it) }
-        },
-    )
+                ).value
+                    .takeOrElse { LocalContentColor.current }
+                ),
+        ) { nodeContent(it) }
+    }
 }
