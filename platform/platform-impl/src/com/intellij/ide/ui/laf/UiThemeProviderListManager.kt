@@ -18,7 +18,7 @@ private const val DEFAULT_LIGHT_THEME_ID = "JetBrainsLightTheme"
 
 // separate service to avoid using LafManager in the EditorColorsManagerImpl initialization
 @Service(Service.Level.APP)
-internal class UiThemeProviderListManager {
+class UiThemeProviderListManager {
   companion object {
     fun getInstance(): UiThemeProviderListManager = service()
 
@@ -112,7 +112,7 @@ internal class UiThemeProviderListManager {
   }
 }
 
-internal data class LafEntry(
+data class LafEntry(
   @JvmField val theme: Supplier<UIThemeLookAndFeelInfo?>,
   @JvmField val targetUiType: TargetUIType,
   @JvmField val id: String,
