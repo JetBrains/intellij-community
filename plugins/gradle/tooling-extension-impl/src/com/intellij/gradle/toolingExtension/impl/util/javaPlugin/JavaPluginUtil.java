@@ -7,16 +7,16 @@ import org.jetbrains.annotations.NotNull;
 
 public final class JavaPluginUtil {
 
+  private static final GradleVersion gradleBaseVersion = GradleVersion.current().getBaseVersion();
+  private static final boolean is82OrBetter = gradleBaseVersion.compareTo(GradleVersion.version("8.2")) >= 0;
+
   @NotNull
   public static JavaPluginAccessor getJavaPluginAccessor(@NotNull Project p) {
-    if (canAccessConventions(p)) {
-      return new ConventionJavaPluginAccessor(p);
-    } else {
+    if (is82OrBetter) {
       return new ExtensionJavaPluginAccessor(p);
     }
-  }
-
-  private static boolean canAccessConventions(@NotNull Project p) {
-    return GradleVersion.version(p.getGradle().getGradleVersion()).getBaseVersion().compareTo(GradleVersion.version("8.2")) < 0;
+    else {
+      return new ConventionJavaPluginAccessor(p);
+    }
   }
 }
