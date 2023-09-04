@@ -4,6 +4,7 @@ package com.intellij.vcs.log.data.index
 import com.intellij.concurrency.ConcurrentCollectionFactory
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.diagnostic.Attachment
+import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.progress.util.BackgroundTaskUtil.BackgroundTask
 import com.intellij.openapi.progress.util.BackgroundTaskUtil.submitTask
@@ -71,6 +72,8 @@ internal class IndexDiagnosticRunner(private val index: VcsLogModifiableIndex,
 
     try {
       val commitDetails = commitDetailsGetter.getCommitDetails(commits)
+      thisLogger().debug { "Running index diagnostic for commits [${commitDetails.joinToString(separator = " ") { it.id.asString() }}]" }
+
       val diffReport = dataGetter.getDiffFor(commits, commitDetails, checkAllCommits = false)
       if (diffReport.isNotBlank()) {
         val exception = RuntimeException("Index is corrupted")
