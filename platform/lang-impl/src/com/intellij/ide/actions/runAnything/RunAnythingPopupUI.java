@@ -353,7 +353,7 @@ public final class RunAnythingPopupUI extends BigPopupUI {
       return;
     }
 
-    ReadAction.nonBlocking(new RunAnythingCalcThread(myProject, getDataContext(), getSearchPattern())::compute)
+    ReadAction.nonBlocking(() -> new RunAnythingCalcThread(myProject, getDataContext(), getSearchPattern()).compute())
       .coalesceBy(this)
       .finishOnUiThread(ModalityState.defaultModalityState(), model ->
         myListRenderingAlarm.addRequest(() -> {
@@ -494,7 +494,7 @@ public final class RunAnythingPopupUI extends BigPopupUI {
           message = IdeBundle.message("run.anything.run.anything.title");
         }
         myTextFieldTitle.setText(message);
-        updateMatchedRunConfigurationStuff(e.isAltDown());
+        updateMatchedRunConfigurationStuff();
       }
     });
 
@@ -519,34 +519,35 @@ public final class RunAnythingPopupUI extends BigPopupUI {
     mySearchField.getDocument().addDocumentListener(new DocumentAdapter() {
       @Override
       protected void textChanged(@NotNull DocumentEvent e) {
-        updateMatchedRunConfigurationStuff(ALT_IS_PRESSED.get());
+        updateMatchedRunConfigurationStuff();
       }
     });
   }
 
-  private void updateMatchedRunConfigurationStuff(boolean isAltPressed) {
+  private void updateMatchedRunConfigurationStuff() {
     JBTextField textField = mySearchField;
     String pattern = textField.getText();
 
-    DataContext dataContext = getDataContext();
-    RunAnythingProvider provider = RunAnythingProvider.findMatchedProvider(dataContext, pattern);
+    ReadAction.nonBlocking(() -> {
+      DataContext dataContext = getDataContext();
+      RunAnythingProvider provider = RunAnythingProvider.findMatchedProvider(dataContext, pattern);
+      if (provider == null) {
+        return null;
+      }
 
-    if (provider == null) {
-      return;
-    }
+      Object value = provider.findMatchingValue(dataContext, pattern);
+      if (value == null) {
+        return null;
+      }
+      //noinspection unchecked
+      return provider.getIcon(value);
+    }).finishOnUiThread(ModalityState.defaultModalityState(), icon -> {
+      if (icon == null) {
+        return;
+      }
 
-    Object value = provider.findMatchingValue(dataContext, pattern);
-
-    if (value == null) {
-      return;
-    }
-    //noinspection unchecked
-    Icon icon = provider.getIcon(value);
-    if (icon == null) {
-      return;
-    }
-
-    textField.putClientProperty(MATCHED_PROVIDER_PROPERTY, icon);
+      textField.putClientProperty(MATCHED_PROVIDER_PROPERTY, icon);
+    }).submit(AppExecutorUtil.getAppExecutorService());
   }
 
   private void updateAdText(@NotNull DataContext dataContext) {
