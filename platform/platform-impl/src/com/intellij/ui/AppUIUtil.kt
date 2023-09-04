@@ -3,6 +3,7 @@
 
 package com.intellij.ui
 
+import com.intellij.diagnostic.StartUpMeasurer
 import com.intellij.ide.IdeBundle
 import com.intellij.ide.gdpr.Consent
 import com.intellij.ide.gdpr.ConsentOptions
@@ -12,7 +13,6 @@ import com.intellij.internal.statistic.persistence.UsageStatisticsPersistenceCom
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.ApplicationNamesInfo
 import com.intellij.openapi.application.PathManager
-import com.intellij.openapi.application.ex.ApplicationInfoEx
 import com.intellij.openapi.application.impl.ApplicationInfoImpl
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.diagnostic.logger
@@ -24,7 +24,8 @@ import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.util.SystemInfoRt
 import com.intellij.openapi.wm.IdeFrame
 import com.intellij.ui.AppIcon.MacAppIcon
-import com.intellij.ui.icons.findSvgData
+import com.intellij.ui.icons.IconLoadMeasurer
+import com.intellij.ui.icons.createImageDescriptorList
 import com.intellij.ui.scale.DerivedScaleType
 import com.intellij.ui.scale.JBUIScale.scale
 import com.intellij.ui.scale.JBUIScale.sysScale
@@ -33,6 +34,7 @@ import com.intellij.ui.scale.ScaleType
 import com.intellij.ui.svg.loadWithSizes
 import com.intellij.util.JBHiDPIScaledImage
 import com.intellij.util.PlatformUtils
+import com.intellij.util.ResourceUtil
 import com.intellij.util.io.URLUtil
 import com.intellij.util.ui.ImageUtil
 import com.intellij.util.ui.JBImageIcon
@@ -58,7 +60,7 @@ private val LOG: Logger
   get() = logger<AppUIUtil>()
 
 fun updateAppWindowIcon(window: Window) {
-  if (AppUIUtil.isWindowIconAlreadyExternallySet) {
+  if (isWindowIconAlreadyExternallySet()) {
     return
   }
 
@@ -109,13 +111,35 @@ private fun loadAppIconImage(svgPath: String, scaleContext: ScaleContext, size: 
   val sysScale = scaleContext.getScale(ScaleType.SYS_SCALE).toFloat()
   val userScale = scaleContext.getScale(ScaleType.USR_SCALE).toFloat()
   val userSize = (size * userScale).roundToInt()
-  val svgData = findSvgData(path = svgPath, classLoader = AppUIUtil::class.java.classLoader, pixScale = pixScale)
+  val svgData = findAppIconSvgData(path = svgPath, pixScale = pixScale)
   if (svgData == null) {
     LOG.warn("Cannot load SVG application icon from $svgPath")
     return null
   }
   return loadWithSizes(sizes = listOf(userSize), data = svgData, scale = sysScale).first()
 }
+
+private fun findAppIconSvgData(path: String, pixScale: Float): ByteArray? {
+  val loadingStart = StartUpMeasurer.getCurrentTimeIfEnabled()
+  // app icon doesn't support `dark` concept, and moreover, it cannot depend on a current LaF
+  val descriptors = createImageDescriptorList(path = path, isDark = false, pixScale = pixScale)
+  val rawPathWithoutExt = path.substring(if (path.startsWith('/')) 1 else 0, path.lastIndexOf('.'))
+  for (descriptor in descriptors) {
+    val transformedPath = descriptor.pathTransform(rawPathWithoutExt, "svg")
+    val resourceLoadStart = StartUpMeasurer.getCurrentTimeIfEnabled()
+    val data = ResourceUtil.getResourceAsBytes(transformedPath, AppUIUtil::class.java.classLoader, true) ?: continue
+    if (resourceLoadStart != -1L) {
+      IconLoadMeasurer.loadFromResources.end(resourceLoadStart)
+    }
+    if (loadingStart != -1L) {
+      IconLoadMeasurer.addLoading(isSvg = descriptor.isSvg, start = loadingStart)
+    }
+
+    return data
+  }
+  return null
+}
+
 
 fun loadSmallApplicationIcon(scaleContext: ScaleContext,
                              size: Int = 16,
@@ -124,8 +148,11 @@ fun loadSmallApplicationIcon(scaleContext: ScaleContext,
   val smallIconUrl = if (isReleaseIcon && appInfo.isEAP && appInfo is ApplicationInfoImpl) {
     // This is the way to load the release icon in EAP. Needed for some actions.
     appInfo.getSmallApplicationSvgIconUrl(false)
-  } else appInfo.smallApplicationSvgIconUrl
-  val image = loadAppIconImage(smallIconUrl, scaleContext, size) ?: error("Can't load '${smallIconUrl}'")
+  }
+  else {
+    appInfo.smallApplicationSvgIconUrl
+  }
+  val image = loadAppIconImage(svgPath = smallIconUrl, scaleContext = scaleContext, size = size) ?: error("Can't load '${smallIconUrl}'")
   return JBImageIcon(image)
 }
 
@@ -139,22 +166,21 @@ fun findAppIcon(): String? {
       }
     }
   }
-  val url = ApplicationInfoEx::class.java.getResource(ApplicationInfoImpl.getShadowInstance().applicationSvgIconUrl)
+  val url = ApplicationInfoImpl::class.java.getResource(ApplicationInfoImpl.getShadowInstance().applicationSvgIconUrl)
   return if (url != null && URLUtil.FILE_PROTOCOL == url.protocol) URLUtil.urlToFile(url).absolutePath else null
 }
 
-object AppUIUtil {
-  @Suppress("MemberVisibilityCanBePrivate")
-  val isWindowIconAlreadyExternallySet: Boolean
-    get() {
-      if (SystemInfoRt.isMac) {
-        return isMacDocIconSet || !PlatformUtils.isJetBrainsClient() && !PluginManagerCore.isRunningFromSources()
-      }
-      else {
-        return SystemInfoRt.isWindows && java.lang.Boolean.getBoolean("ide.native.launcher") && SystemInfo.isJetBrainsJvm
-      }
-    }
+@Suppress("MemberVisibilityCanBePrivate")
+fun isWindowIconAlreadyExternallySet(): Boolean {
+  if (SystemInfoRt.isMac) {
+    return isMacDocIconSet || (!PlatformUtils.isJetBrainsClient() && !PluginManagerCore.isRunningFromSources())
+  }
+  else {
+    return SystemInfoRt.isWindows && java.lang.Boolean.getBoolean("ide.native.launcher") && SystemInfo.isJetBrainsJvm
+  }
+}
 
+object AppUIUtil {
   // todo[tav] JBR supports loading icon resource (id=2000) from the exe launcher, remove when OpenJDK supports it as well
   @JvmOverloads
   @JvmStatic

@@ -21,13 +21,10 @@ import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.util.SystemInfoRt
 import com.intellij.openapi.wm.WeakFocusStackManager
 import com.intellij.platform.diagnostic.telemetry.impl.span
-import com.intellij.ui.AppUIUtil
-import com.intellij.ui.IconManager
-import com.intellij.ui.JreHiDpiUtil
+import com.intellij.ui.*
 import com.intellij.ui.icons.CoreIconManager
 import com.intellij.ui.scale.JBUIScale
 import com.intellij.ui.scale.ScaleContext
-import com.intellij.ui.updateAppWindowIcon
 import com.intellij.util.concurrency.SynchronizedClearableLazy
 import com.intellij.util.ui.StartupUiUtil
 import com.intellij.util.ui.accessibility.ScreenReader
@@ -253,7 +250,7 @@ internal fun CoroutineScope.updateFrameClassAndWindowIconAndPreloadSystemFonts(i
 
     launch(CoroutineName("update window icon")) {
       // `updateWindowIcon` should be called after `initUiJob`, because it uses computed system font data for scale context
-      if (!AppUIUtil.isWindowIconAlreadyExternallySet && !PluginManagerCore.isRunningFromSources()) {
+      if (!isWindowIconAlreadyExternallySet() && !PluginManagerCore.isRunningFromSources()) {
         // most of the time is consumed by loading SVG and can be done in parallel
         updateAppWindowIcon(JOptionPane.getRootFrame())
       }

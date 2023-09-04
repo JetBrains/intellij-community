@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui.icons
 
 import com.intellij.ui.scale.DerivedScaleType
@@ -41,7 +41,8 @@ class ImageDescriptor(
   override fun toString(): String = "scale: $scale, isSvg: $isSvg"
 }
 
-internal fun createImageDescriptorList(path: String, isDark: Boolean, pixScale: Float): List<ImageDescriptor> {
+@Internal
+fun createImageDescriptorList(path: String, isDark: Boolean, pixScale: Float): List<ImageDescriptor> {
   // prefer retina images for HiDPI scale, because downscaling retina images provide a better result than up-scaling non-retina images
   if (!path.startsWith("file:") && path.contains("://")) {
     val qI = path.lastIndexOf('?')
@@ -52,7 +53,7 @@ internal fun createImageDescriptorList(path: String, isDark: Boolean, pixScale: 
   val isSvg = path.endsWith(".svg")
   val isRetina = pixScale != 1f
 
-  val list = ArrayList<ImageDescriptor>()
+  val list = ArrayList<ImageDescriptor>(5)
   if (!isSvg) {
     list.add(if (isRetina) ImageDescriptor.STROKE_RETINA else ImageDescriptor.STROKE_NON_RETINA)
     addFileNameVariant(isRetina = isRetina, isDark = isDark, isSvg = false, scale = pixScale, list = list)
