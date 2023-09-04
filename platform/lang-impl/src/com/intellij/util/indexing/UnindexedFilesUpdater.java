@@ -3,7 +3,6 @@ package com.intellij.util.indexing;
 
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.project.DumbServiceImpl;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.util.SystemProperties;
@@ -119,8 +118,8 @@ public final class UnindexedFilesUpdater {
   }
 
   private static int getMaxBackgroundThreadCount() {
-    int coresToLeaveForOtherActivity = DumbServiceImpl.ALWAYS_SMART
-                                       ? getMaxNumberOfIndexingThreads() : ApplicationManager.getApplication().isCommandLine() ? 0 : 1;
+    // note that getMaxBackgroundThreadCount is used to calculate threads count is FilesScanExecutor, which is also used for "FindInFiles"
+    int coresToLeaveForOtherActivity = ApplicationManager.getApplication().isCommandLine() ? 0 : 1;
     return Runtime.getRuntime().availableProcessors() - coresToLeaveForOtherActivity;
   }
 
