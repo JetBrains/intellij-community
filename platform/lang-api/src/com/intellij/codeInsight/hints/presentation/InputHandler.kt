@@ -36,4 +36,9 @@ interface InputHandler {
    * Called when mouse leaves presentation.
    */
   fun mouseExited() {}
+
+  /**
+   *  Allow change inlay point if point in inlay model and real presentation differs
+   */
+  fun translatePoint(inlayPoint: Point): Point = inlayPoint
 }

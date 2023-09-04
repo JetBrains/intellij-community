@@ -124,6 +124,10 @@ abstract class CodeVisionInlayRendererBase(theme: CodeVisionTheme = CodeVisionTh
     return point?.let { painter.hoveredEntry(inlay.editor, state, codeVisionListData, it.x, it.y) }
   }
 
+  override fun translatePoint(inlayPoint: Point): Point {
+    return getPoint(inlay, inlayPoint)
+  }
+
   private fun updateCursor(hasHoveredEntry: Boolean) {
     val cursor =
       if (hasHoveredEntry) Cursor.getPredefinedCursor(Cursor.HAND_CURSOR)
