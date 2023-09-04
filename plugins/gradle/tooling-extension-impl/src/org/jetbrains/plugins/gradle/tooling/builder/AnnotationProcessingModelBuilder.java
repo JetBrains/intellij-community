@@ -20,7 +20,7 @@ import org.jetbrains.plugins.gradle.tooling.ErrorMessageBuilder;
 import org.jetbrains.plugins.gradle.tooling.ModelBuilderContext;
 import org.jetbrains.plugins.gradle.tooling.internal.AnnotationProcessingConfigImpl;
 import org.jetbrains.plugins.gradle.tooling.internal.AnnotationProcessingModelImpl;
-import org.jetbrains.plugins.gradle.tooling.util.JavaPluginUtil;
+import com.intellij.gradle.toolingExtension.impl.util.javaPlugin.JavaPluginUtil;
 
 import java.io.File;
 import java.util.*;

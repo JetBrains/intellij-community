@@ -15,7 +15,7 @@ import org.gradle.util.GradleVersion;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.gradle.tooling.ModelBuilderContext;
-import org.jetbrains.plugins.gradle.tooling.util.JavaPluginUtil;
+import com.intellij.gradle.toolingExtension.impl.util.javaPlugin.JavaPluginUtil;
 import org.jetbrains.plugins.gradle.tooling.util.ReflectionUtil;
 
 import java.io.File;

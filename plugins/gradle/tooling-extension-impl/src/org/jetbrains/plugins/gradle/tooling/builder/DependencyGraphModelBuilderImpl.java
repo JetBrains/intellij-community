@@ -13,7 +13,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.gradle.tooling.ErrorMessageBuilder;
 import org.jetbrains.plugins.gradle.tooling.ModelBuilderService;
 import org.jetbrains.plugins.gradle.tooling.tasks.DependenciesReport;
-import org.jetbrains.plugins.gradle.tooling.util.JavaPluginUtil;
+import com.intellij.gradle.toolingExtension.impl.util.javaPlugin.JavaPluginUtil;
 
 import static org.jetbrains.plugins.gradle.tooling.util.resolve.DependencyResolverImpl.isIsNewDependencyResolutionApplicable;
 
