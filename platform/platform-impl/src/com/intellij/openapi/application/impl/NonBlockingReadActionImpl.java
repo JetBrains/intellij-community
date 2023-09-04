@@ -225,8 +225,14 @@ public final class NonBlockingReadActionImpl<T> implements NonBlockingReadAction
     return new Submission<>(this, SYNC_DUMMY_EXECUTOR, outerIndicator).executeSynchronously();
   }
 
+  @SuppressWarnings("unused")
+  private void schedule(@Async.Schedule Callable<? extends T> computation) {
+    // dummy method to capture the original computation object, see org.jetbrains.annotations.Async.Schedule
+  }
+
   @Override
   public @NotNull CancellablePromise<T> submit(@NotNull Executor backgroundThreadExecutor) {
+    schedule(myOriginalComputation);
     Submission<T> submission = new Submission<>(this, backgroundThreadExecutor, myProgressIndicator);
     if (myCoalesceEquality == null) {
       submission.transferToBgThread();
@@ -830,7 +836,7 @@ public final class NonBlockingReadActionImpl<T> implements NonBlockingReadAction
     }
 
     @Contract(pure = true)
-    private <V> V callWrapped(@NotNull Callable<V> computation) throws Exception {
+    private <V> V callWrapped(@Async.Execute @NotNull Callable<V> computation) throws Exception {
       long startedAtNs = System.nanoTime();
       try {
         V result = computation.call();
