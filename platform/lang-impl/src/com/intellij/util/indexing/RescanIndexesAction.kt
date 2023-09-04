@@ -8,10 +8,8 @@ import com.intellij.openapi.progress.util.ProgressIndicatorUtils
 import com.intellij.openapi.project.FilesScanningTask
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.VirtualFileWithId
-import com.intellij.openapi.vfs.newvfs.impl.VirtualFileSystemEntry
 import com.intellij.psi.stubs.StubTreeBuilder
 import com.intellij.psi.stubs.StubUpdatingIndex
-import com.intellij.util.BooleanFunction
 import com.intellij.util.indexing.diagnostic.ProjectScanningHistory
 import com.intellij.util.indexing.diagnostic.ScanningType
 import com.intellij.util.indexing.roots.IndexableFilesIterator
@@ -20,6 +18,7 @@ import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
 import java.util.*
 import java.util.concurrent.CompletableFuture
+import java.util.function.Predicate
 
 @ApiStatus.Internal
 class RescanIndexesAction : RecoveryAction {
@@ -52,15 +51,15 @@ class RescanIndexesAction : RecoveryAction {
           get() = "`$path` should have already indexed stub but it's not present"
       }
 
-      override fun getForceReindexingTrigger(): BooleanFunction<IndexedFile>? {
+      override fun getForceReindexingTrigger(): Predicate<IndexedFile>? {
         if (stubIndex != null) {
-          return BooleanFunction<IndexedFile> {
+          return Predicate<IndexedFile> {
             val fileId = (it.file as VirtualFileWithId).id
             if (stubIndex.getIndexingStateForFile(fileId, it) == FileIndexingState.UP_TO_DATE &&
                 stubIndex.getIndexedFileData(fileId).isEmpty() &&
                 isAbleToBuildStub(it.file)) {
               stubAndIndexingStampInconsistencies.add(StubAndIndexStampInconsistency(it.file.path))
-              return@BooleanFunction true
+              return@Predicate true
             }
             false
           }

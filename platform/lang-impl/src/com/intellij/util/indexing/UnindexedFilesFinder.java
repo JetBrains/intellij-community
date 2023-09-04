@@ -15,7 +15,6 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileWithId;
 import com.intellij.openapi.vfs.newvfs.impl.CachedFileType;
 import com.intellij.psi.search.FileTypeIndex;
-import com.intellij.util.BooleanFunction;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.indexing.projectFilter.ProjectIndexableFilesFilterHolder;
@@ -25,6 +24,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
 import java.util.*;
+import java.util.function.Predicate;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
@@ -35,7 +35,7 @@ final class UnindexedFilesFinder {
   private final FileBasedIndexImpl myFileBasedIndex;
   private final UpdatableIndex<FileType, Void, FileContent, ?> myFileTypeIndex;
   private final Collection<FileBasedIndexInfrastructureExtension.FileIndexingStatusProcessor> myStateProcessors;
-  private final @Nullable BooleanFunction<? super IndexedFile> myForceReindexingTrigger;
+  private final @Nullable Predicate<? super IndexedFile> myForceReindexingTrigger;
   private final @NotNull ProjectIndexableFilesFilterHolder myIndexableFilesFilterHolder;
   private final boolean myShouldProcessUpToDateFiles;
   private final IndexingReasonExplanationLogger explanationLogger;
@@ -144,7 +144,7 @@ final class UnindexedFilesFinder {
   UnindexedFilesFinder(@NotNull Project project,
                        IndexingReasonExplanationLogger explanationLogger,
                        @NotNull FileBasedIndexImpl fileBasedIndex,
-                       @Nullable BooleanFunction<? super IndexedFile> forceReindexingTrigger) {
+                       @Nullable Predicate<? super IndexedFile> forceReindexingTrigger) {
     this.explanationLogger = explanationLogger;
     myProject = project;
     myFileBasedIndex = fileBasedIndex;
@@ -380,7 +380,7 @@ final class UnindexedFilesFinder {
   private void finishGettingStatus(IndexedFileImpl indexedFile,
                                    int inputId,
                                    UnindexedFileStatusBuilder fileStatusBuilder) {
-    if (myForceReindexingTrigger != null && myForceReindexingTrigger.fun(indexedFile)) {
+    if (myForceReindexingTrigger != null && myForceReindexingTrigger.test(indexedFile)) {
       myFileBasedIndex.dropNontrivialIndexedStates(inputId);
       fileStatusBuilder.shouldIndex = true;
     }
