@@ -31,7 +31,7 @@ public class DependencyGraphModelBuilderImpl implements ModelBuilderService {
     boolean resolveSourceSetDependencies = Boolean.parseBoolean(System.getProperty("idea.resolveSourceSetDependencies", "false"));
     if (!resolveSourceSetDependencies || !isIsNewDependencyResolutionApplicable()) return null;
 
-    SourceSetContainer sourceSetContainer = JavaPluginUtil.getJavaPluginAccessor(project).getSourceSetContainer();
+    SourceSetContainer sourceSetContainer = JavaPluginUtil.getSourceSetContainer(project);
     if (sourceSetContainer == null) return null;
 
     ProjectDependenciesImpl dependencies = new ProjectDependenciesImpl();

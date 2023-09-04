@@ -4,6 +4,7 @@ package com.intellij.gradle.toolingExtension.impl.sourceSetModel
 import com.google.gson.GsonBuilder
 import com.intellij.gradle.toolingExtension.impl.util.GradleArchiveTaskUtil
 import com.intellij.gradle.toolingExtension.impl.util.GradleObjectUtil
+import com.intellij.gradle.toolingExtension.impl.util.javaPlugin.JavaPluginUtil
 import com.intellij.openapi.externalSystem.model.project.ExternalSystemSourceType
 import groovy.transform.CompileDynamic
 import org.codehaus.groovy.runtime.DefaultGroovyMethods
@@ -24,11 +25,9 @@ import org.gradle.jvm.toolchain.internal.JavaToolchain
 import org.gradle.plugins.ide.idea.IdeaPlugin
 import org.gradle.util.GradleVersion
 import org.jetbrains.annotations.NotNull
-import org.jetbrains.annotations.Nullable
 import org.jetbrains.plugins.gradle.model.*
 import org.jetbrains.plugins.gradle.tooling.ErrorMessageBuilder
 import org.jetbrains.plugins.gradle.tooling.ModelBuilderContext
-import com.intellij.gradle.toolingExtension.impl.util.javaPlugin.JavaPluginUtil
 import org.jetbrains.plugins.gradle.tooling.util.resolve.DependencyResolverImpl
 
 import java.lang.reflect.InvocationTargetException
@@ -146,17 +145,17 @@ class SourceSetModelBuilder {
       }
     }
 
-    def projectSourceCompatibility = getSourceCompatibility(project)
-    def projectTargetCompatibility = getTargetCompatibility(project)
+    def projectSourceCompatibility = JavaPluginUtil.getSourceCompatibility(project)
+    def projectTargetCompatibility = JavaPluginUtil.getTargetCompatibility(project)
 
     def result = new LinkedHashMap<String, DefaultExternalSourceSet>()
-    def sourceSets = JavaPluginUtil.getJavaPluginAccessor(project).sourceSetContainer
+    def sourceSets = JavaPluginUtil.getSourceSetContainer(project)
     if (sourceSets == null) {
       return result
     }
 
     // ignore inherited source sets from parent project
-    def parentProjectSourceSets = project.parent == null ? null : JavaPluginUtil.getJavaPluginAccessor(project.parent).sourceSetContainer
+    def parentProjectSourceSets = project.parent == null ? null : JavaPluginUtil.getSourceSetContainer(project.parent)
     if (parentProjectSourceSets && sourceSets.is(parentProjectSourceSets)) {
       return result
     }
@@ -464,16 +463,6 @@ class SourceSetModelBuilder {
     result
   }
 
-  @Nullable
-  static String getSourceCompatibility(Project project) {
-    return JavaPluginUtil.getJavaPluginAccessor(project).sourceCompatibility
-  }
-
-  @Nullable
-  static String getTargetCompatibility(Project project) {
-    return JavaPluginUtil.getJavaPluginAccessor(project).targetCompatibility
-  }
-
   private static void cleanupSharedSourceFolders(Map<String, ExternalSourceSet> map) {
     def mainSourceSet = map[SourceSet.MAIN_SOURCE_SET_NAME]
     cleanupSharedSourceFolders(map, mainSourceSet, null)
@@ -610,7 +599,7 @@ class SourceSetModelBuilder {
   }
 
   private static boolean containsOnlySourceSetOutput(@NotNull AbstractArchiveTask archiveTask, @NotNull Project project) {
-    def sourceSetContainer = JavaPluginUtil.getJavaPluginAccessor(project).sourceSetContainer
+    def sourceSetContainer = JavaPluginUtil.getSourceSetContainer(project)
     if (sourceSetContainer == null || sourceSetContainer.isEmpty()) {
       return false
     }

@@ -7,6 +7,7 @@ import com.intellij.gradle.toolingExtension.impl.util.GradleIdeaPluginUtil;
 import com.intellij.gradle.toolingExtension.impl.util.GradleObjectUtil;
 import com.intellij.gradle.toolingExtension.impl.util.GradleProjectUtil;
 import com.intellij.gradle.toolingExtension.impl.util.GradleTaskUtil;
+import com.intellij.gradle.toolingExtension.impl.util.javaPlugin.JavaPluginUtil;
 import org.gradle.api.Project;
 import org.gradle.api.Task;
 import org.gradle.api.tasks.testing.AbstractTestTask;
@@ -80,8 +81,8 @@ public class ExternalProjectBuilderImpl extends AbstractModelBuilderService {
     externalProject.setProjectDir(project.getProjectDir());
     externalProject.setSourceSets(SourceSetModelBuilder.getSourceSets(project, context));
     externalProject.setTasks(getTasks(project, context));
-    externalProject.setSourceCompatibility(SourceSetModelBuilder.getSourceCompatibility(project));
-    externalProject.setTargetCompatibility(SourceSetModelBuilder.getTargetCompatibility(project));
+    externalProject.setSourceCompatibility(JavaPluginUtil.getSourceCompatibility(project));
+    externalProject.setTargetCompatibility(JavaPluginUtil.getTargetCompatibility(project));
 
     SourceSetModelBuilder.addArtifactsData(project, externalProject);
 

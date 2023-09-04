@@ -328,7 +328,7 @@ public class DeprecatedDependencyResolver implements DependencyResolver {
       return null;
     }
 
-    SourceSetContainer sourceSets = JavaPluginUtil.getJavaPluginAccessor(project).getSourceSetContainer();
+    SourceSetContainer sourceSets = JavaPluginUtil.getSourceSetContainer(project);
     return sourceSets == null ? null : sourceSets.findByName(name);
   }
 
