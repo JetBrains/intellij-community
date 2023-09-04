@@ -59,7 +59,7 @@ public class TypeMayBeWeakenedInspection extends BaseInspection {
   @SuppressWarnings({"PublicField", "WeakerAccess"})
   public boolean useRighthandTypeAsWeakestTypeInAssignments = true;
 
-  @SuppressWarnings({"PublicField", "WeakerAccess"})
+  @SuppressWarnings({"PublicField", "WeakerAccess", "unused"})
   public boolean useParameterizedTypeForCollectionMethods = true;
 
   @SuppressWarnings({"PublicField", "WeakerAccess"})
@@ -272,8 +272,6 @@ public class TypeMayBeWeakenedInspection extends BaseInspection {
     return pane(
       checkbox("useRighthandTypeAsWeakestTypeInAssignments",
                InspectionGadgetsBundle.message("inspection.type.may.be.weakened.ignore.option")),
-      checkbox("useParameterizedTypeForCollectionMethods",
-               InspectionGadgetsBundle.message("inspection.type.may.be.weakened.collection.method.option")),
       checkbox("doNotWeakenToJavaLangObject",
                InspectionGadgetsBundle.message("inspection.type.may.be.weakened.do.not.weaken.to.object.option")),
       checkbox("onlyWeakentoInterface", InspectionGadgetsBundle.message("inspection.type.may.be.weakened.only.weaken.to.an.interface")),
@@ -500,9 +498,7 @@ public class TypeMayBeWeakenedInspection extends BaseInspection {
     @NotNull
     private Collection<PsiClass> computeWeakestClasses(@NotNull PsiElement element, @NotNull PsiClass originClass) {
       Collection<PsiClass> weakestClasses =
-        WeakestTypeFinder.calculateWeakestClassesNecessary(element,
-                                                           useRighthandTypeAsWeakestTypeInAssignments,
-                                                           useParameterizedTypeForCollectionMethods);
+        WeakestTypeFinder.calculateWeakestClassesNecessary(element, useRighthandTypeAsWeakestTypeInAssignments);
       if (doNotWeakenToJavaLangObject) {
         weakestClasses.remove(ClassUtils.findObjectClass(element));
       }

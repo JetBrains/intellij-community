@@ -140,9 +140,8 @@ public class DeclareCollectionAsInterfaceInspection extends BaseInspection {
       }
       if (variable instanceof PsiParameter parameter) {
         final PsiElement scope = parameter.getDeclarationScope();
-        if (scope instanceof PsiMethod) {
+        if (scope instanceof PsiMethod method) {
           if (ignorePrivateMethodsAndFields) {
-            final PsiMethod method = (PsiMethod)scope;
             if (method.hasModifierProperty(PsiModifier.PRIVATE)) {
               return;
             }
@@ -191,7 +190,7 @@ public class DeclareCollectionAsInterfaceInspection extends BaseInspection {
       if (nameElement == null) {
         return;
       }
-      final Collection<PsiClass> weaklings = WeakestTypeFinder.calculateWeakestClassesNecessary(variable, false, true);
+      final Collection<PsiClass> weaklings = WeakestTypeFinder.calculateWeakestClassesNecessary(variable, false);
       if (weaklings.isEmpty()) {
         return;
       }
