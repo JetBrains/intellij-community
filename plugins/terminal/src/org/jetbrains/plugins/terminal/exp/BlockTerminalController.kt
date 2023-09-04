@@ -97,6 +97,7 @@ class BlockTerminalController(
   fun startSearchSession() {
     val findModel = FindModel()
     findModel.copyFrom(FindManager.getInstance(project).findInFileModel)
+    findModel.isWholeWordsOnly = false
     val editor = outputController.outputModel.editor
     FindUtil.configureFindModel(false, editor, findModel, false)
     val session = BlockTerminalSearchSession(project, editor, findModel, closeCallback = this::onSearchClosed)

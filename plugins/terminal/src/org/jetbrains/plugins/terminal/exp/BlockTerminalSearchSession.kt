@@ -2,10 +2,7 @@
 package org.jetbrains.plugins.terminal.exp
 
 import com.intellij.BundleBase
-import com.intellij.find.FindBundle
-import com.intellij.find.FindModel
-import com.intellij.find.SearchReplaceComponent
-import com.intellij.find.SearchSession
+import com.intellij.find.*
 import com.intellij.find.editorHeaderActions.*
 import com.intellij.find.impl.livePreview.LivePreviewController
 import com.intellij.find.impl.livePreview.SearchResults
@@ -48,6 +45,11 @@ class BlockTerminalSearchSession(
       updateUiWithFindModel()
       searchResults.clear()
       updateResults()
+      FindManager.getInstance(project).findInFileModel.apply {
+        stringToFind = model.stringToFind
+        isCaseSensitive = model.isCaseSensitive
+        isRegularExpressions = model.isRegularExpressions
+      }
     }
     EditorFactory.getInstance().addEditorFactoryListener(object : EditorFactoryListener {
       override fun editorReleased(event: EditorFactoryEvent) {
