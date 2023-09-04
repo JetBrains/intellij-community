@@ -2,10 +2,9 @@
 
 package com.intellij.stats.completion.tracker
 
-import com.intellij.codeInsight.lookup.LookupElement
 import com.intellij.codeInsight.lookup.LookupEvent
 import com.intellij.codeInsight.lookup.impl.LookupImpl
-import com.intellij.codeInsight.lookup.impl.LookupTypedHandler
+import com.intellij.codeInsight.lookup.impl.LookupUsageTracker
 import com.intellij.completion.ml.experiment.ExperimentInfo
 import com.intellij.completion.ml.storage.LookupStorage
 import com.intellij.completion.ml.util.prefix
@@ -36,7 +35,7 @@ class CompletionActionsTracker(private val lookup: LookupImpl,
     val currentItem = lookup.currentItem
     val performance = lookupStorage.performanceTracker.measurements()
 
-    if (isSelectedByTyping(currentItem) || selectedByDotTyping) {
+    if ((currentItem != null && LookupUsageTracker.isSelectedByTyping(lookup, currentItem)) || selectedByDotTyping) {
       logger.itemSelectedByTyping(lookup, performance, timestamp)
     }
     else {
@@ -62,8 +61,9 @@ class CompletionActionsTracker(private val lookup: LookupImpl,
 
     val timestamp = System.currentTimeMillis()
     deferredLog.log()
+    val currentItem = lookup.currentItem
     val performance = lookupStorage.performanceTracker.measurements()
-    if (isSelectedByTyping(lookup.currentItem)) {
+    if (currentItem != null && LookupUsageTracker.isSelectedByTyping(lookup, currentItem)) {
       logger.itemSelectedByTyping(lookup, performance, timestamp)
     }
     else {
@@ -144,18 +144,5 @@ class CompletionActionsTracker(private val lookup: LookupImpl,
     deferredLog.defer {
       logger.afterCharTyped(c, lookup, prefixLength, timestamp)
     }
-  }
-
-  private fun isSelectedByTyping(item: LookupElement?): Boolean {
-    if (item != null) {
-      val pattern = lookup.itemPattern(item)
-      val lookupString = item.lookupString
-      val cancellationChar = lookup.getUserData(LookupTypedHandler.CANCELLATION_CHAR)
-      if (cancellationChar != null && lookupString.endsWith(cancellationChar)) {
-        return lookupString.dropLast(1) == pattern
-      }
-      return lookupString == pattern
-    }
-    return false
   }
 }
