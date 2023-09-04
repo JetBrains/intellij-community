@@ -649,13 +649,15 @@ public final class JsonSchemaCompletionContributor extends CompletionContributor
                 AutoPopupController.getInstance(context.getProject()).autoPopupMemberLookup(context.getEditor(), null);
               }
               case _array -> {
-                EditorModificationUtil.insertStringAtCaret(editor, insertColon ? ": " : " ",
-                                                           false, true,
-                                                           insertColon ? 2 : 1);
+                EditorModificationUtilEx.insertStringAtCaret(editor, insertColon ? ":" : " ",
+                                                             false, true,
+                                                             1);
                 hadEnter = false;
                 if (insertColon && myWalker.hasWhitespaceDelimitedCodeBlocks()) {
                   invokeEnterHandler(editor);
                   hadEnter = true;
+                } else {
+                  EditorModificationUtilEx.insertStringAtCaret(editor, " ", false, true, 1);
                 }
                 if (insertColon) {
                   stringToInsert = myWalker.getDefaultArrayValue() + comma;
@@ -669,7 +671,7 @@ public final class JsonSchemaCompletionContributor extends CompletionContributor
 
                 PsiDocumentManager.getInstance(project).commitDocument(editor.getDocument());
 
-                if (stringToInsert != null) {
+                if (stringToInsert != null && myWalker.requiresReformatAfterArrayInsertion()) {
                   formatInsertedString(context, stringToInsert.length());
                 }
               }

@@ -56,6 +56,13 @@ public interface JsonLikePsiWalker {
   @Nullable
   Collection<PsiElement> getRoots(@NotNull PsiFile file);
 
+  /** @deprecated This is currently a hack. If you think you need this too, add another method, because this one WILL be removed. */
+  @Deprecated(forRemoval = true)
+  @ApiStatus.Experimental
+  default boolean requiresReformatAfterArrayInsertion() {
+    return true;
+  }
+
   @Nullable
   static JsonLikePsiWalker getWalker(@NotNull final PsiElement element, JsonSchemaObject schemaObject) {
     if (JsonOriginalPsiWalker.INSTANCE.handles(element)) return JsonOriginalPsiWalker.INSTANCE;

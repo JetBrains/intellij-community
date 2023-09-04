@@ -391,6 +391,12 @@ public final class YamlJsonPsiWalker implements JsonLikePsiWalker {
     return roots;
   }
 
+  @Override
+  @Deprecated(forRemoval = true)
+  public boolean requiresReformatAfterArrayInsertion() {
+    return false;
+  }
+
   @Nullable
   @Override
   public PsiElement getPropertyNameElement(PsiElement property) {
