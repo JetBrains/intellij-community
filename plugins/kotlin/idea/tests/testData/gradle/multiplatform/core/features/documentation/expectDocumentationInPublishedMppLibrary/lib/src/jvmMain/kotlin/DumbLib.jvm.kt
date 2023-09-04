@@ -1,8 +1,5 @@
 package com.example.dumblib
 
-/**
- * JVM doc for DumbLib
- */
 actual object DumbLib {
 
     /**

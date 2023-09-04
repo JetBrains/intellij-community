@@ -11,16 +11,17 @@ import org.jetbrains.kotlin.gradle.multiplatformTests.TestConfigurationDslScope
 import org.jetbrains.kotlin.gradle.multiplatformTests.TestFeature
 import org.jetbrains.kotlin.gradle.multiplatformTests.writeAccess
 import org.jetbrains.kotlin.idea.KotlinFileType
+import org.jetbrains.kotlin.idea.codeInsight.DescriptorToSourceUtilsIde
 import org.jetbrains.kotlin.idea.kdoc.findKDoc
 import org.jetbrains.kotlin.idea.references.mainReference
 import org.jetbrains.kotlin.psi.KtDeclaration
 import org.jetbrains.kotlin.psi.KtElement
 import org.jetbrains.kotlin.psi.KtNameReferenceExpression
+import org.jetbrains.kotlin.resolve.DescriptorToSourceUtils
 import org.jetbrains.plugins.gradle.settings.GradleSettings
 import java.io.File
 import java.nio.file.Path
 import kotlin.io.path.relativeTo
-import kotlin.test.assertEquals
 
 class DocumentationCheckerConfig {
     var downloadSources: Boolean = false
@@ -87,7 +88,7 @@ object DocumentationChecker : TestFeature<DocumentationCheckerConfig> {
                 val element = referenceExpression.mainReference.resolve() as KtElement
                 val navigationElement = element.navigationElement as? KtDeclaration
                     ?: error("documentation can be only on KtDeclaration")
-                val docText = navigationElement.findKDoc()?.contentTag?.getContent()
+                val docText = navigationElement.findKDoc { DescriptorToSourceUtilsIde.getAnyDeclaration(testProject, it) }?.contentTag?.getContent()
                 return@map """
                     |$relativePath:$line:$offset
                     |$docText

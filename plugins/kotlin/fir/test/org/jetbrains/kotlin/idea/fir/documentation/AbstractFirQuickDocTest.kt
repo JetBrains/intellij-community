@@ -5,6 +5,10 @@ import com.intellij.lang.documentation.ide.IdeDocumentationTargetProvider
 import com.intellij.platform.backend.documentation.impl.computeDocumentationBlocking
 import org.jetbrains.annotations.Nls
 import org.jetbrains.kotlin.idea.editor.quickDoc.AbstractQuickDocProviderTest
+import org.jetbrains.kotlin.idea.test.KotlinLightProjectDescriptor
+import org.jetbrains.kotlin.idea.test.KotlinWithJdkAndRuntimeLightProjectDescriptor
+import org.jetbrains.kotlin.test.utils.IgnoreTests
+import kotlin.io.path.Path
 
 abstract class AbstractFirQuickDocTest : AbstractQuickDocProviderTest() {
     override fun getDoc(): @Nls String? {
@@ -16,5 +20,11 @@ abstract class AbstractFirQuickDocTest : AbstractQuickDocProviderTest() {
 
     override fun isFirPlugin(): Boolean {
         return true
+    }
+
+    override fun doTest(path: String) {
+        IgnoreTests.runTestIfNotDisabledByFileDirective(Path(path), IgnoreTests.DIRECTIVES.IGNORE_K2) {
+            super.doTest(path)
+        }
     }
 }

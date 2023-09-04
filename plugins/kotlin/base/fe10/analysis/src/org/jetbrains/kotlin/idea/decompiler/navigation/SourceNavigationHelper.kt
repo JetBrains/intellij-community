@@ -2,7 +2,6 @@
 
 package org.jetbrains.kotlin.idea.decompiler.navigation
 
-import com.intellij.ide.highlighter.JavaClassFileType
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.project.DumbService
@@ -224,6 +223,7 @@ object SourceNavigationHelper {
             if (receiversMatch(declaration, candidateDescriptor)
                 && valueParametersTypesMatch(declaration, candidateDescriptor)
                 && typeParametersMatch(declaration as KtTypeParameterListOwner, candidateDescriptor.typeParameters)
+                && declaration.isExpectDeclaration() == candidate.isExpectDeclaration()
             ) {
                 return candidate
             }
@@ -238,13 +238,11 @@ object SourceNavigationHelper {
         index: StringStubIndexExtension<T>
     ): T? {
         val classFqName = entity.fqName ?: return null
-        val isForJvm = entity.containingKtFile.viewProvider.fileType is JavaClassFileType
         return targetScopes(entity, navigationKind).firstNotNullOfOrNull { scope ->
             ProgressManager.checkCanceled()
             val declarations = index.get(classFqName.asString(), entity.project, scope)
             declarations.firstOrNull { declaration ->
-                val isExpect = declaration.isExpectDeclaration()
-                if (isForJvm) !isExpect else isExpect
+                entity.isExpectDeclaration() == declaration.isExpectDeclaration()
             } ?: declarations.firstOrNull()
         }
     }
@@ -266,7 +264,7 @@ object SourceNavigationHelper {
 
         return scopes.flatMap { scope ->
             ProgressManager.checkCanceled()
-            index.get(declaration.fqName!!.asString(), declaration.project, scope).sortedBy { it.isExpectDeclaration() }
+            index.get(declaration.fqName!!.asString(), declaration.project, scope)
         }
     }
 

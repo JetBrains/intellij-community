@@ -7,7 +7,10 @@ import com.intellij.psi.util.PsiTreeUtil
 import org.jetbrains.kotlin.descriptors.CallableDescriptor
 import org.jetbrains.kotlin.descriptors.DeclarationDescriptor
 import org.jetbrains.kotlin.descriptors.DeclarationDescriptorWithSource
+import org.jetbrains.kotlin.descriptors.MemberDescriptor
 import org.jetbrains.kotlin.idea.caches.resolve.resolveToDescriptorIfAny
+import org.jetbrains.kotlin.idea.codeInsight.DescriptorToSourceUtilsIde
+import org.jetbrains.kotlin.idea.util.expectedDescriptor
 import org.jetbrains.kotlin.kdoc.parser.KDocKnownTag
 import org.jetbrains.kotlin.kdoc.psi.api.KDoc
 import org.jetbrains.kotlin.kdoc.psi.impl.KDocSection
@@ -115,15 +118,26 @@ private fun KtElement.lookupKDocInContainer(): KDocContent? {
 }
 
 private fun KtElement.lookupInheritedKDoc(descriptorToPsi: DescriptorToPsi): KDocContent? {
-    if (this is KtCallableDeclaration) {
-        val descriptor = this.resolveToDescriptorIfAny() as? CallableDescriptor ?: return null
+    if (this is KtDeclaration) {
+        val descriptor = resolveToDescriptorIfAny()
 
-        for (baseDescriptor in descriptor.overriddenDescriptors) {
-            val baseKDoc = baseDescriptor.original.findKDoc(descriptorToPsi)
-            if (baseKDoc != null) {
-                return baseKDoc
+        if (descriptor is CallableDescriptor) {
+            for (baseDescriptor in descriptor.overriddenDescriptors) {
+                val baseKDoc = baseDescriptor.original.findKDoc(descriptorToPsi)
+                if (baseKDoc != null) {
+                    return baseKDoc
+                }
+            }
+        }
+
+        if (descriptor is MemberDescriptor && descriptor.isActual) {
+            val expectedKDoc = descriptor.expectedDescriptor()?.findKDoc(descriptorToPsi)
+
+            if (expectedKDoc != null) {
+                return expectedKDoc
             }
         }
     }
+
     return null
 }
