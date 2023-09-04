@@ -34,7 +34,7 @@ public final class GlassPanel extends JComponent {
     paintSpotlights(g);
   }
 
-  protected void paintSpotlights(Graphics g) {
+  private void paintSpotlights(Graphics g) {
     paintSpotlight(g, this);
   }
 
@@ -114,11 +114,11 @@ public final class GlassPanel extends JComponent {
                                                 Math.min(height, 30), Math.min(height, 30)));
   }
 
-  protected int getComponentHInset(boolean isWithBorder, boolean isLabelFromTabbedPane) {
+  private int getComponentHInset(boolean isWithBorder, boolean isLabelFromTabbedPane) {
     return isWithBorder ? 7 : isLabelFromTabbedPane ? 20 : 7;
   }
 
-  protected int getComponentVInset(boolean isWithBorder, boolean isLabelFromTabbedPane) {
+  private int getComponentVInset(boolean isWithBorder, boolean isLabelFromTabbedPane) {
     return isWithBorder ? 1 : isLabelFromTabbedPane ? 10 : 5;
   }
 

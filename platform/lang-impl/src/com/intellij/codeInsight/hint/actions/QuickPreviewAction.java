@@ -33,7 +33,7 @@ public final class QuickPreviewAction extends ShowImplementationsAction {
     }
   }
 
-  protected boolean isQuickPreviewAvailableFor(AnActionEvent e) {
+  private boolean isQuickPreviewAvailableFor(AnActionEvent e) {
     Component component = e.getData(PlatformCoreDataKeys.CONTEXT_COMPONENT);
     if (!(component instanceof JTree) && !(component instanceof JList)) {
       return false;

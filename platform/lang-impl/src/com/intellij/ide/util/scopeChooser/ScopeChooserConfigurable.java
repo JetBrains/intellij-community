@@ -406,7 +406,7 @@ public final class ScopeChooserConfigurable extends MasterDetailsComponent imple
   private final class MyMoveAction extends DumbAwareAction {
     private final int myDirection;
 
-    protected MyMoveAction(@NlsActions.ActionText String text, Icon icon, int direction) {
+    private MyMoveAction(@NlsActions.ActionText String text, Icon icon, int direction) {
       super(() -> text, icon);
       ShortcutSet shortcutSet = direction < 0 ? CommonActionsPanel.getCommonShortcut(CommonActionsPanel.Buttons.UP)
                                               : CommonActionsPanel.getCommonShortcut(CommonActionsPanel.Buttons.DOWN);

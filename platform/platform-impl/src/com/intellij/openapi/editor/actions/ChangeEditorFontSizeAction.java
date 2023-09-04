@@ -67,25 +67,25 @@ public abstract class ChangeEditorFontSizeAction extends AnAction implements Dum
   }
 
   public static final class IncreaseEditorFontSize extends ChangeEditorFontSizeAction {
-    protected IncreaseEditorFontSize() {
+    private IncreaseEditorFontSize() {
       super(EditorBundle.messagePointer("increase.editor.font"), 1, false);
     }
   }
 
   public static final class DecreaseEditorFontSize extends ChangeEditorFontSizeAction {
-    protected DecreaseEditorFontSize() {
+    private DecreaseEditorFontSize() {
       super(EditorBundle.messagePointer("decrease.editor.font"), -1, false);
     }
   }
 
   public static final class IncreaseEditorFontSizeGlobal extends ChangeEditorFontSizeAction {
-    protected IncreaseEditorFontSizeGlobal() {
+    private IncreaseEditorFontSizeGlobal() {
       super(EditorBundle.messagePointer("increase.all.editors.font"), 1, true);
     }
   }
 
   public static final class DecreaseEditorFontSizeGlobal extends ChangeEditorFontSizeAction {
-    protected DecreaseEditorFontSizeGlobal() {
+    private DecreaseEditorFontSizeGlobal() {
       super(EditorBundle.messagePointer("decrease.all.editors.font"), -1, true);
     }
   }

@@ -43,7 +43,7 @@ public final class SaveProjectAsTemplateDialog extends DialogWrapper {
   private JLabel myModuleLabel;
   private JBCheckBox myReplaceParameters;
 
-  protected SaveProjectAsTemplateDialog(@NotNull Project project, @Nullable VirtualFile descriptionFile) {
+  SaveProjectAsTemplateDialog(@NotNull Project project, @Nullable VirtualFile descriptionFile) {
     super(project);
     myProject = project;
 

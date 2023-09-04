@@ -95,9 +95,9 @@ final class AutoCompletionProvider {
 
   private static final class CommandRenderer extends SimpleColoredComponent implements ListCellRenderer<AutoCompletionCommand> {
 
-    protected boolean mySelected;
-    protected Color myForeground;
-    protected Color mySelectionForeground;
+    private boolean mySelected;
+    private Color myForeground;
+    private Color mySelectionForeground;
 
     @Override
     public Component getListCellRendererComponent(JList<? extends AutoCompletionCommand> list,

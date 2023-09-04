@@ -137,11 +137,12 @@ public final class JBListWithOpenInRightSplit<T> extends JBList<T> {
     }
   }
 
-  protected boolean canOpenInSplitter(@NotNull T item) {
+  private boolean canOpenInSplitter(@NotNull T item) {
     return myCheckRightSplitter == null || myCheckRightSplitter.value(item);
   }
 
-  protected @NotNull Rectangle getIconRectangle(int index) {
+  @NotNull
+  private Rectangle getIconRectangle(int index) {
     Rectangle bounds = getCellBounds(index, index);
     Rectangle visibleRect = getVisibleRect();
     visibleRect.setSize(visibleRect.width - getInsets().right, visibleRect.height);
@@ -157,7 +158,7 @@ public final class JBListWithOpenInRightSplit<T> extends JBList<T> {
     return IconUtil.toSize(icon, (int)defaultSize.getWidth(), (int)defaultSize.getHeight());
   }
 
-  protected void invokeAction() {
+  private void invokeAction() {
     HelpTooltip.dispose(this);
 
     AnAction action = ActionManager.getInstance().getAction(getActionId());
@@ -171,11 +172,13 @@ public final class JBListWithOpenInRightSplit<T> extends JBList<T> {
     return size;
   }
 
-  protected @NotNull @NonNls String getActionId() {
+  @NotNull @NonNls
+  private String getActionId() {
     return IdeActions.ACTION_OPEN_IN_RIGHT_SPLIT;
   }
 
-  protected @NotNull Icon getIcon() {
+  @NotNull
+  private Icon getIcon() {
     return AllIcons.Actions.SplitVertically;
   }
 }

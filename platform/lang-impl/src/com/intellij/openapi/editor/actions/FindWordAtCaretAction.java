@@ -21,7 +21,7 @@ public class FindWordAtCaretAction extends EditorAction implements ActionRemoteB
   protected static final class Handler extends EditorActionHandler {
     private final SearchResults.Direction myDirection;
 
-    protected Handler(@NotNull  SearchResults.Direction direction) {
+    Handler(@NotNull SearchResults.Direction direction) {
       super();
       myDirection = direction;
     }

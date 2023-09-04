@@ -14,7 +14,7 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 
 public final class BooleanEditor extends PropertyEditor {
-  protected final JCheckBox myCheckBox;
+  private final JCheckBox myCheckBox;
   private boolean myInsideChange;
 
   public BooleanEditor() {

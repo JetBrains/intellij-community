@@ -97,8 +97,8 @@ public final class ExportToFileUtil {
   private static final class ExportDialogBase extends DialogWrapper {
     private final Project myProject;
     private final ExporterToTextFile myExporter;
-    protected Editor myTextArea;
-    protected TextFieldWithBrowseButton myTfFile;
+    private Editor myTextArea;
+    private TextFieldWithBrowseButton myTfFile;
     private ChangeListener myListener;
 
     ExportDialogBase(Project project, ExporterToTextFile exporter) {
@@ -183,7 +183,7 @@ public final class ExportToFileUtil {
       return northPanel;
     }
 
-    protected JPanel createFilePanel() {
+    private JPanel createFilePanel() {
       JPanel panel = new JPanel();
       panel.setLayout(new GridBagLayout());
       GridBagConstraints gbConstraints = new GridBagConstraints();

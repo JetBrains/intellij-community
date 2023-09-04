@@ -293,7 +293,8 @@ public abstract class FilteringTree<T extends DefaultMutableTreeNode, U> {
       return myNodeCache.get(object);
     }
 
-    protected @NotNull N createNode(@NotNull U object) {
+    @NotNull
+    private N createNode(@NotNull U object) {
       assert !(object instanceof DefaultMutableTreeNode);
       return myFactory.fun(object);
     }
@@ -447,7 +448,7 @@ public abstract class FilteringTree<T extends DefaultMutableTreeNode, U> {
       }
     }
 
-    protected boolean accept(@Nullable String name) {
+    private boolean accept(@Nullable String name) {
       if (name == null) return true;
       return mySpeedSearch.matchingFragments(name) != null;
     }

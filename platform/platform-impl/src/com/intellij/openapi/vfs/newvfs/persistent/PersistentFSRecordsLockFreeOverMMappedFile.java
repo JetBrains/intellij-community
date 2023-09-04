@@ -644,7 +644,7 @@ public final class PersistentFSRecordsLockFreeOverMMappedFile implements Persist
 
   /** Without recordId bounds checking */
   @VisibleForTesting
-  protected long recordOffsetInFileUnchecked(final int recordId) {
+  private long recordOffsetInFileUnchecked(final int recordId) {
     //recordId is 1-based, convert to 0-based recordNo:
     final int recordNo = recordId - 1;
 

@@ -676,7 +676,7 @@ public final class UndoManagerImpl extends UndoManager {
     return d.getUserData(ORIGINAL_DOCUMENT) != null;
   }
 
-  protected void compact(@NotNull ClientState state) {
+  void compact(@NotNull ClientState state) {
     if (state.myCurrentOperationState == OperationState.NONE && state.myCommandTimestamp % COMMAND_TO_RUN_COMPACT == 0) {
       doCompact(state);
     }

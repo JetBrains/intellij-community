@@ -13,7 +13,7 @@ public final class PluginInfoDialog extends DialogWrapper {
   private final PluginExportData myExportData;
   private PluginInfoForm myForm;
 
-  protected PluginInfoDialog(@NotNull Component parent, @NotNull PluginExportData exportData) {
+  PluginInfoDialog(@NotNull Component parent, @NotNull PluginExportData exportData) {
     super(parent, false);
     myExportData = exportData;
     setTitle(LangBundle.message("dialog.title.create.color.scheme.plug.in"));

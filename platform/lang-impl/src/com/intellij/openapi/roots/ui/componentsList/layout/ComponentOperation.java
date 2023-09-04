@@ -19,7 +19,7 @@ public abstract class ComponentOperation {
       myDimensionSum = new OrientedDimensionSum(orientation);
     }
 
-    protected SizeCalculator(SizeProperty sizeProperty) {
+    SizeCalculator(SizeProperty sizeProperty) {
       this(0, sizeProperty, Orientation.VERTICAL);
     }
 

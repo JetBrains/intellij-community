@@ -27,7 +27,7 @@ import java.awt.event.ActionListener;
 public final class RainbowDescriptionPanel extends JPanel implements OptionsPanelImpl.ColorDescriptionPanel {
   private final EventDispatcher<Listener> myDispatcher = EventDispatcher.create(Listener.class);
 
-  protected JPanel myPanel;
+  JPanel myPanel;
 
   private JBLabel myLStop1;
   private JBLabel myLStop2;
@@ -36,11 +36,11 @@ public final class RainbowDescriptionPanel extends JPanel implements OptionsPane
   private JBLabel myLStop5;
   private final JBLabel[] myLStops = new JBLabel[]{myLStop1, myLStop2, myLStop3, myLStop4, myLStop5};
 
-  protected ColorPanel myStop1;
-  protected ColorPanel myStop2;
-  protected ColorPanel myStop3;
-  protected ColorPanel myStop4;
-  protected ColorPanel myStop5;
+  ColorPanel myStop1;
+  ColorPanel myStop2;
+  ColorPanel myStop3;
+  ColorPanel myStop4;
+  ColorPanel myStop5;
   private final ColorPanel[] myStops = new ColorPanel[]{myStop1, myStop2, myStop3, myStop4, myStop5};
 
   private JBCheckBox myRainbow;

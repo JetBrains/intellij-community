@@ -418,7 +418,7 @@ public class CustomizableActionsPanel {
     private final boolean isNodeInsideMenu;
     private BrowseIconsComboBox myComboBox;
 
-    protected EditIconDialog(TreePath path) {
+    private EditIconDialog(TreePath path) {
       super(false);
       setTitle(IdeBundle.message("title.choose.action.icon"));
       isNodeInsideMenu = isInsideMenu(path);

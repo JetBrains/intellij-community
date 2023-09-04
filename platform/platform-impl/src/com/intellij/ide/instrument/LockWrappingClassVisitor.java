@@ -74,7 +74,7 @@ public final class LockWrappingClassVisitor extends ClassVisitor {
      * @param name          the method's name.
      * @param descriptor    the method's descriptor (see {@link Type Type}).
      */
-    protected MyAdviceAdapter(MethodVisitor methodVisitor, int access, String name, String descriptor) {
+    private MyAdviceAdapter(MethodVisitor methodVisitor, int access, String name, String descriptor) {
       super(LockWrappingClassVisitor.this.api, methodVisitor, access, name, descriptor);
     }
 

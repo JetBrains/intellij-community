@@ -25,7 +25,7 @@ import java.util.List;
  * @author Svetlana.Zemlyanskaya
  */
 public final class ArrangementRuleAliasesPanel extends JPanel implements DataProvider {
-  @NotNull protected final ArrangementRuleAliasControl myControl;
+  @NotNull private final ArrangementRuleAliasControl myControl;
 
   public ArrangementRuleAliasesPanel(@NotNull ArrangementStandardSettingsManager settingsManager,
                                      @NotNull ArrangementColorsProvider colorsProvider) {

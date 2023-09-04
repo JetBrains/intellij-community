@@ -23,7 +23,7 @@ public final class LightEditConfirmationDialog extends DialogWrapper {
 
   private boolean myDontAskFlag;
 
-  protected LightEditConfirmationDialog(@Nullable Project project) {
+  LightEditConfirmationDialog(@Nullable Project project) {
     super(project, false);
     setTitle(ApplicationBundle.message("light.edit.confirmation.dialog.title"));
     init();

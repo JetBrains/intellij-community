@@ -353,7 +353,7 @@ public final class AttributesStorageOverBlobStorage implements AbstractAttribute
       }
     }
 
-    protected int fileId() {
+    int fileId() {
       return backRefFileId;
     }
 
@@ -386,7 +386,7 @@ public final class AttributesStorageOverBlobStorage implements AbstractAttribute
     /**
      * Valid for dedicated attribute record, -1 otherwise
      */
-    protected int dedicatedRecordAttributeId() {
+    private int dedicatedRecordAttributeId() {
       return dedicatedAttributeId;
     }
 
@@ -747,11 +747,11 @@ public final class AttributesStorageOverBlobStorage implements AbstractAttribute
 
   @VisibleForTesting
   //@GuardedBy("lock")
-  protected int updateAttribute(final int attributesRecordId,
-                                final int fileId,
-                                final int attributeId,
-                                final byte[] newValueBytes,
-                                final int newValueSize) throws IOException {
+  int updateAttribute(final int attributesRecordId,
+                      final int fileId,
+                      final int attributeId,
+                      final byte[] newValueBytes,
+                      final int newValueSize) throws IOException {
     checkAttributeId(attributeId);
     final int updatedAttributesRecordId;
     if (newValueSize < INLINE_ATTRIBUTE_SMALLER_THAN) {
@@ -926,9 +926,9 @@ public final class AttributesStorageOverBlobStorage implements AbstractAttribute
 
   @VisibleForTesting
   //@GuardedBy("lock")
-  protected byte[] readAttributeValue(final int attributesRecordId,
-                                      final int fileId,
-                                      final int attributeId) throws IOException {
+  byte[] readAttributeValue(final int attributesRecordId,
+                            final int fileId,
+                            final int attributeId) throws IOException {
     return storage.readRecord(attributesRecordId, buffer -> {
       final AttributesRecord attributesRecord = new AttributesRecord(buffer);
       assert attributesRecord.backRefFileId == fileId : "record(" + attributesRecordId + ").fileId(" + fileId + ")" +
@@ -956,10 +956,10 @@ public final class AttributesStorageOverBlobStorage implements AbstractAttribute
 
   @VisibleForTesting
   //@GuardedBy("lock")
-  protected <R> R readAttributeValue(final int attributesRecordId,
-                                     final int fileId,
-                                     final int attributeId,
-                                     final ByteBufferReader<R> reader) throws IOException {
+  <R> R readAttributeValue(final int attributesRecordId,
+                           final int fileId,
+                           final int attributeId,
+                           final ByteBufferReader<R> reader) throws IOException {
     return storage.readRecord(attributesRecordId, buffer -> {
       final AttributesRecord attributesRecord = new AttributesRecord(buffer);
       assert attributesRecord.backRefFileId == fileId : "record(" + attributesRecordId + ").fileId(" + fileId + ")" +
@@ -990,9 +990,9 @@ public final class AttributesStorageOverBlobStorage implements AbstractAttribute
 
   @VisibleForTesting
   //@GuardedBy("lock")
-  protected boolean hasAttribute(final int attributesRecordId,
-                                 final int fileId,
-                                 final int attributeId) throws IOException {
+  boolean hasAttribute(final int attributesRecordId,
+                       final int fileId,
+                       final int attributeId) throws IOException {
     if (!storage.hasRecord(attributesRecordId)) {
       return false;
     }
@@ -1021,8 +1021,8 @@ public final class AttributesStorageOverBlobStorage implements AbstractAttribute
 
   @VisibleForTesting
   //@GuardedBy("lock")
-  protected boolean deleteAttributes(final int attributesRecordId,
-                                     final int fileId) throws IOException {
+  boolean deleteAttributes(final int attributesRecordId,
+                           final int fileId) throws IOException {
     if (attributesRecordId == NON_EXISTENT_ATTR_RECORD_ID) {
       return false;
     }
@@ -1165,10 +1165,10 @@ public final class AttributesStorageOverBlobStorage implements AbstractAttribute
    * into buffer[...offset..(offset+newGapSize)...] keeping data before & after the gap intact.
    */
   @VisibleForTesting
-  protected static ByteBuffer resizeGap(final ByteBuffer buffer,
-                                        final int offset,
-                                        final int oldGapSize,
-                                        final int newGapSize) {
+  static ByteBuffer resizeGap(final ByteBuffer buffer,
+                              final int offset,
+                              final int oldGapSize,
+                              final int newGapSize) {
     final int oldGapEndOffset = offset + oldGapSize;
     final int newGapEndOffset = offset + newGapSize;
     final int limitBefore = buffer.limit();

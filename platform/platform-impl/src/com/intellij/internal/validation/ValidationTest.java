@@ -19,7 +19,7 @@ public final class ValidationTest extends DialogWrapper {
   private final ValidTest myPanel;
   final ValidationInfo[] ERRORS;
 
-  protected ValidationTest(Project project) {
+  ValidationTest(Project project) {
     super(project);
     myPanel = new ValidTest();
     ERRORS = new ValidationInfo[]{

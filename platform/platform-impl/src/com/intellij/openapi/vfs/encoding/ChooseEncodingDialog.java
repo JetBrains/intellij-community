@@ -18,7 +18,7 @@ public final class ChooseEncodingDialog extends DialogWrapper {
   private JList myList;
   private JPanel myPanel;
 
-  protected ChooseEncodingDialog(final Charset[] charsets, final Charset defaultCharset, final VirtualFile virtualFile) {
+  private ChooseEncodingDialog(final Charset[] charsets, final Charset defaultCharset, final VirtualFile virtualFile) {
     super(false);
     myCharsets = charsets;
     myDefaultCharset = defaultCharset;
@@ -59,7 +59,7 @@ public final class ChooseEncodingDialog extends DialogWrapper {
     return myPanel;
   }
 
-  protected Charset getChosen() {
+  private Charset getChosen() {
     return (Charset)myList.getSelectedValue();
   }
 

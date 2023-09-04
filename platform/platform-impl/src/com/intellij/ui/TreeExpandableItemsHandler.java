@@ -22,7 +22,7 @@ import java.beans.PropertyChangeListener;
 import static com.intellij.openapi.util.registry.Registry.is;
 
 public final class TreeExpandableItemsHandler extends AbstractExpandableItemsHandler<Integer, JTree> {
-  protected TreeExpandableItemsHandler(final JTree tree) {
+  TreeExpandableItemsHandler(final JTree tree) {
     super(tree);
     final TreeSelectionListener selectionListener = new TreeSelectionListener() {
       @Override

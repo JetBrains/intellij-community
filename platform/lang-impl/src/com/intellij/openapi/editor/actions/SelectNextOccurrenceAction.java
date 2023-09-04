@@ -19,7 +19,7 @@ import org.jetbrains.annotations.Nullable;
 import static com.intellij.openapi.editor.actions.IncrementalFindAction.SEARCH_DISABLED;
 
 public final class SelectNextOccurrenceAction extends EditorAction implements ActionRemoteBehaviorSpecification.Frontend {
-  protected SelectNextOccurrenceAction() {
+  private SelectNextOccurrenceAction() {
     super(new Handler());
   }
 

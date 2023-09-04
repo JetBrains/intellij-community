@@ -58,8 +58,8 @@ public final class MultipleBuildsView implements BuildProgressListener, Disposab
   private static final Logger LOG = Logger.getInstance(MultipleBuildsView.class);
   @NonNls private static final String SPLITTER_PROPERTY = "MultipleBuildsView.Splitter.Proportion";
 
-  protected final Project myProject;
-  protected final BuildContentManager myBuildContentManager;
+  private final Project myProject;
+  private final BuildContentManager myBuildContentManager;
   private final AtomicBoolean isInitializeStarted;
   private final AtomicBoolean isFirstErrorShown = new AtomicBoolean();
   private final List<Runnable> myPostponedRunnables;

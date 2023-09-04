@@ -11,7 +11,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public final class UnselectPreviousOccurrenceAction extends EditorAction implements ActionRemoteBehaviorSpecification.Frontend {
-  protected UnselectPreviousOccurrenceAction() {
+  private UnselectPreviousOccurrenceAction() {
     super(new Handler());
   }
 

@@ -343,7 +343,7 @@ public final class FindPopupPanel extends JBPanel<FindPopupPanel> implements Fin
     }
   }
 
-  protected boolean canBeClosed() {
+  private boolean canBeClosed() {
     if (myProject.isDisposed()) return true;
     if (!myCanClose.get()) return false;
     if (myIsPinned.get()) return false;

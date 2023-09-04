@@ -74,7 +74,7 @@ public final class DefaultConsoleHistoryModel extends SimpleModificationTracker 
     super.incModificationCount();
   }
 
-  protected void resetIndex() {
+  private void resetIndex() {
     synchronized (myLock) {
       myIndex = myEntries.size();
     }

@@ -41,9 +41,9 @@ import java.util.List;
 import java.util.*;
 
 public final class ExtractedSettingsDialog extends DialogWrapper {
-  protected CodeStyleSettingsNameProvider myNameProvider;
-  protected List<Value> myValues;
-  protected DefaultMutableTreeNode myRoot;
+  private CodeStyleSettingsNameProvider myNameProvider;
+  private List<Value> myValues;
+  private DefaultMutableTreeNode myRoot;
 
   public ExtractedSettingsDialog(@Nullable Project project,
                                  @NotNull CodeStyleSettingsNameProvider nameProvider,
@@ -66,7 +66,7 @@ public final class ExtractedSettingsDialog extends DialogWrapper {
     return valueIsSelectedInTree(myRoot, value);
   }
 
-  protected boolean valueIsSelectedInTree(@NotNull TreeNode startNode, @NotNull Value value) {
+  private boolean valueIsSelectedInTree(@NotNull TreeNode startNode, @NotNull Value value) {
     for (Enumeration children = startNode.children(); children.hasMoreElements();) {
       Object child = children.nextElement();
       if (child instanceof SettingsTreeNode settingsChild) {
@@ -82,12 +82,12 @@ public final class ExtractedSettingsDialog extends DialogWrapper {
   }
 
   public static final class SettingsTreeNode extends DefaultMutableTreeNode {
-    protected CodeStyleSettingPresentation myRepresentation;
-    protected boolean accepted = true;
-    protected final @Nls String valueString;
-    protected final boolean isGroupNode;
-    protected final @Nls String customTitle;
-    protected Value myValue;
+    private CodeStyleSettingPresentation myRepresentation;
+    private boolean accepted = true;
+    private final @Nls String valueString;
+    private final boolean isGroupNode;
+    private final @Nls String customTitle;
+    private Value myValue;
 
     public SettingsTreeNode(@Nls String valueString, CodeStyleSettingPresentation representation, boolean isGroupNode, Value value) {
       this(valueString, representation, isGroupNode, null, value);
@@ -120,7 +120,7 @@ public final class ExtractedSettingsDialog extends DialogWrapper {
     }
   }
 
-  protected static ColumnInfo getTitleColumnInfo() {
+  private static ColumnInfo getTitleColumnInfo() {
     return new ColumnInfo("TITLE") {
       @Override
       public @Nullable Object valueOf(Object o) {
@@ -199,7 +199,7 @@ public final class ExtractedSettingsDialog extends DialogWrapper {
       }
     };
 
-    protected void updateAncestorsUi(boolean accepted, SettingsTreeNode node) {
+    private void updateAncestorsUi(boolean accepted, SettingsTreeNode node) {
       TreeNode parent = node.getParent();
       if (parent instanceof SettingsTreeNode settingsParent) {
         settingsParent.accepted = false;
@@ -217,7 +217,7 @@ public final class ExtractedSettingsDialog extends DialogWrapper {
       }
     }
 
-    protected void updateChildrenUi(SettingsTreeNode node) {
+    private void updateChildrenUi(SettingsTreeNode node) {
       for (Enumeration children = node.children(); children.hasMoreElements(); ) {
         Object child = children.nextElement();
         if (child instanceof SettingsTreeNode settingsChild) {
@@ -252,7 +252,7 @@ public final class ExtractedSettingsDialog extends DialogWrapper {
   private static final ValueRenderer myValueRenderer = new ValueRenderer();
   private static final ValueEditor myValueEditor = new ValueEditor();
 
-  protected static ColumnInfo getValueColumnInfo() {
+  private static ColumnInfo getValueColumnInfo() {
     return new ColumnInfo("VALUE") {
       @Override
       public @Nullable Object valueOf(Object o) {
@@ -280,7 +280,7 @@ public final class ExtractedSettingsDialog extends DialogWrapper {
     };
   }
 
-  protected JComponent buildExtractedSettingsTree() {
+  private JComponent buildExtractedSettingsTree() {
 
     Collection<Value> unusedValues = new HashSet<>(myValues);
     myRoot = new DefaultMutableTreeNode();

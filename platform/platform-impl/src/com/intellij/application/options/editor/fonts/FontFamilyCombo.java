@@ -29,7 +29,7 @@ final class FontFamilyCombo extends AbstractFontCombo<FontFamilyCombo.MyFontItem
 
   private final boolean myIsPrimary;
 
-  protected FontFamilyCombo(boolean isPrimary) {
+  FontFamilyCombo(boolean isPrimary) {
     super(new MyModel(!isPrimary));
     setSwingPopup(false);
     myIsPrimary = isPrimary;

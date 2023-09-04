@@ -63,7 +63,7 @@ public final class FileRefresher implements Disposable {
    * @param recursive {@code true} if a file should be considered as root
    * @return an object that allows to stop watching the specified file
    */
-  protected Object watch(VirtualFile file, boolean recursive) {
+  private Object watch(VirtualFile file, boolean recursive) {
     VirtualFileSystem fs = file.getFileSystem();
     if (fs instanceof LocalFileSystem) {
       return LocalFileSystem.getInstance().addRootToWatch(file.getPath(), recursive);
@@ -76,7 +76,7 @@ public final class FileRefresher implements Disposable {
    *
    * @param watcher an object that allows to stop watching a file
    */
-  protected void unwatch(Object watcher) {
+  private void unwatch(Object watcher) {
     if (watcher instanceof LocalFileSystem.WatchRequest) {
       LocalFileSystem.getInstance().removeWatchedRoot((LocalFileSystem.WatchRequest)watcher);
     }

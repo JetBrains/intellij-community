@@ -238,7 +238,7 @@ public final class OptimizeImportsAction extends AnAction {
   }
 
   @TestOnly
-  protected static void setProcessVcsChangedFilesInTests(boolean value) {
+  static void setProcessVcsChangedFilesInTests(boolean value) {
     myProcessVcsChangedFilesInTests = value;
   }
 

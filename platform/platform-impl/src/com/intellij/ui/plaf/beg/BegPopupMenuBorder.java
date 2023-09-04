@@ -9,11 +9,11 @@ import javax.swing.plaf.UIResource;
 import java.awt.*;
 
 public final class BegPopupMenuBorder extends AbstractBorder implements UIResource {
-  protected static Insets borderInsets = new Insets(3, 2, 2, 2);
-  protected static Color color1 = new Color(214, 211, 206);
-  protected static Color color2 = Color.white;
-  protected static Color color3 = new Color(132, 130, 132);
-  protected static Color color4 = new Color(66, 65, 66);
+  private static Insets borderInsets = new Insets(3, 2, 2, 2);
+  private static Color color1 = new Color(214, 211, 206);
+  private static Color color2 = Color.white;
+  private static Color color3 = new Color(132, 130, 132);
+  private static Color color4 = new Color(66, 65, 66);
 
   @Override
   public void paintBorder(Component c, Graphics g, int x, int y, int w, int h) {

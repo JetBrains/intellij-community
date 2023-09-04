@@ -212,7 +212,7 @@ public final class EditorComponentImpl extends JTextComponent implements Scrolla
     }
   }
 
-  protected void fireResized() {
+  void fireResized() {
     processComponentEvent(new ComponentEvent(this, ComponentEvent.COMPONENT_RESIZED));
   }
 

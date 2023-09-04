@@ -61,7 +61,7 @@ public final class FileNodeDescriptor extends NodeDescriptor<FileElement> {
     return myFileElement;
   }
 
-  protected void setElement(FileElement descriptor) {
+  private void setElement(FileElement descriptor) {
     myFileElement = descriptor;
   }
 

@@ -14,7 +14,7 @@ import java.awt.*;
  * @author Konstantin Bulenkov
  */
 public final class TableHeaderExpandableItemsHandler extends AbstractExpandableItemsHandler<TableColumn, JTableHeader> {
-  protected TableHeaderExpandableItemsHandler(@NotNull JTableHeader component) {
+  TableHeaderExpandableItemsHandler(@NotNull JTableHeader component) {
     super(component);
   }
 

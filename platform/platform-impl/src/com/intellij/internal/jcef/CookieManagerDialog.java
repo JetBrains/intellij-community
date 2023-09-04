@@ -25,7 +25,7 @@ final class CookieManagerDialog extends JDialog {
   private final JBCefCookieManager myJBCefCookieManager;
   private final CookieTableModel myTableModel = new CookieTableModel();
 
-  protected CookieManagerDialog(Frame owner, JBCefBrowser jbCefBrowser) {
+  CookieManagerDialog(Frame owner, JBCefBrowser jbCefBrowser) {
     super(owner, myTitle, false);
     setLayout(new BorderLayout());
     setSize(JBDimension.size(new Dimension(800, 600)));

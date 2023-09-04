@@ -639,7 +639,7 @@ public class ActionButton extends JComponent implements ActionButtonComponent, A
   }
 
   protected final class AccessibleActionButton extends JComponent.AccessibleJComponent implements AccessibleAction {
-    protected AccessibleActionButton() {
+    private AccessibleActionButton() {
     }
 
     @Override
@@ -691,7 +691,7 @@ public class ActionButton extends JComponent implements ActionButtonComponent, A
       return var1;
     }
 
-    protected void setCustomAccessibleStateSet(@NotNull AccessibleStateSet accessibleStateSet) {
+    private void setCustomAccessibleStateSet(@NotNull AccessibleStateSet accessibleStateSet) {
       int state = getPopState();
 
       // TODO: Not sure what the "POPPED" state represents

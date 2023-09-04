@@ -5,7 +5,7 @@ import java.util.List;
 
 public final class ToolBeforeRunTask extends AbstractToolBeforeRunTask<ToolBeforeRunTask, Tool> {
 
-  protected ToolBeforeRunTask() {
+  ToolBeforeRunTask() {
     super(ToolBeforeRunTaskProvider.ID);
   }
 

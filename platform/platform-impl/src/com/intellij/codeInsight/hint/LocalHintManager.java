@@ -451,7 +451,7 @@ public final class LocalHintManager implements ClientHintManager {
     }
   }
 
-  protected void updateLastEditor(final Editor editor) {
+  private void updateLastEditor(final Editor editor) {
     if (myLastEditor != editor) {
       if (myLastEditor != null) {
         myLastEditor.removeEditorMouseListener(myEditorMouseListener);

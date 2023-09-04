@@ -20,7 +20,7 @@ import java.util.Map;
 public final class RecentsManager implements PersistentStateComponent<Element> {
   private static final @NonNls String KEY_ELEMENT_NAME = "key";
   private static final @NonNls String RECENT_ELEMENT_NAME = "recent";
-  protected static final @NonNls String NAME_ATTR = "name";
+  private static final @NonNls String NAME_ATTR = "name";
 
   private final Map<String, LinkedList<String>> myMap = new HashMap<>();
   private int myRecentsNumberToKeep = 5;
