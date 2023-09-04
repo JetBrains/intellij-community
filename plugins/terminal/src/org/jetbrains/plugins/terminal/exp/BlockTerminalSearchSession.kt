@@ -54,6 +54,7 @@ class BlockTerminalSearchSession(
       .buildFor(project, editor.contentComponent)
       .addPrimarySearchActions(StatusTextAction(), PrevOccurrenceAction(), NextOccurrenceAction())
       .addExtraSearchActions(ToggleMatchCase(), ToggleRegex())
+      .withNewLineButton(false)
       .withDataProvider(this)
       .withCloseAction(this::close)
       .build().also {
