@@ -113,10 +113,12 @@ fun CoroutineScope.startApplication(args: List<String>,
     }
   }
 
-  val appInfoDeferred = async(CoroutineName("app info")) {
+  val appInfoDeferred = async {
     mainClassLoaderDeferred.await()
-    // required for DisabledPluginsState and EUA
-    ApplicationInfoImpl.getShadowInstance()
+    span("app info") {
+      // required for DisabledPluginsState and EUA
+      ApplicationInfoImpl.getShadowInstance()
+    }
   }
 
   val isHeadless = AppMode.isHeadless()
