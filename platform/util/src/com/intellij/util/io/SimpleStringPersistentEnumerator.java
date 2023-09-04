@@ -1,6 +1,7 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.io;
 
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.ArrayUtil;
@@ -17,20 +18,24 @@ import java.nio.charset.Charset;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.*;
-import java.util.stream.Collectors;
+
+import static java.nio.charset.StandardCharsets.UTF_8;
 
 /**
  * Simple string enumerator, for small sets of values (10s-100s):
  * <p><ul>
- * <li>Strings are stored directly in UTF-8 encoding FIXME RC: this is not true, actual implementation uses defaultCharset()!
- * <li>Always has synchronized state between disk and memory state
- * <li>Could have >1 id for same value (for backward compatibility)</li>
+ * <li>Strings are stored directly in UTF-8 encoding </li>
+ * <li>Always has synchronized state between disk and memory state</li>
+ * <li>Could have >1 id for same value
+ * (i.e. it violates general {@link DataEnumerator} contract -- this is to keep backward-compatible behavior)</li>
  * <li>Uses CopyOnWrite for updating state, so {@link #valueOf(int)}/@{@link #enumerate(String)} are wait-free
  * for already existing value/id</li>
  * </ul>
  */
 @ApiStatus.Internal
 public final class SimpleStringPersistentEnumerator implements ScannableDataEnumeratorEx<String> {
+  private static final Logger LOG = Logger.getInstance(SimpleStringPersistentEnumerator.class);
+
   private final @NotNull Path file;
   private final Charset charset;
 
@@ -49,9 +54,7 @@ public final class SimpleStringPersistentEnumerator implements ScannableDataEnum
   private volatile String @NotNull [] idToValue;
 
   public SimpleStringPersistentEnumerator(@NotNull Path file) {
-    //FIXME RC: javadoc states that charset should be UTF-8, but implementation actually used defaultCharset()
-    //          Need to make doc & impl consistent
-    this(file, Charset.defaultCharset());
+    this(file, UTF_8);
   }
 
   public SimpleStringPersistentEnumerator(@NotNull Path file,
@@ -59,7 +62,7 @@ public final class SimpleStringPersistentEnumerator implements ScannableDataEnum
     this.file = file;
     this.charset = charset;
 
-    Pair<Object2IntMap<String>, String[]> pair = readStorageFromDisk(file, charset);
+    Pair<Object2IntMap<String>, String[]> pair = readStorageFromDisk(file, charset, /*fallbackTo: */ Charset.defaultCharset());
     synchronized (this) {
       valueToId = pair.getFirst();
       idToValue = pair.getSecond();
@@ -174,9 +177,33 @@ public final class SimpleStringPersistentEnumerator implements ScannableDataEnum
   }
 
   private static @NotNull Pair<Object2IntMap<String>, String[]> readStorageFromDisk(@NotNull Path file,
-                                                                                    @NotNull Charset charset) {
+                                                                                    @NotNull Charset charset,
+                                                                                    @NotNull Charset charsetToFallback) {
+    if (Files.notExists(file)) {
+      writeStorageToDisk(ArrayUtil.EMPTY_STRING_ARRAY, file, charset);
+      return Pair.create(new Object2IntOpenHashMap<>(), ArrayUtil.EMPTY_STRING_ARRAY);
+    }
+
+    //RC: Why we need charsetToFallback: backward-compatibility reasons. For a long time, SimpleStringPersistentEnumerator
+    //    actually used defaultCharset() to read-write data, even though it _promised_ to use UTF-8 -- so now we have
+    //    to deal with files in a defaultCharset().
+    //MAYBE RC: I think, after 1-2 releases it will be OK to remove 'charsetToFallback' branch, and use only UTF-8
     try {
-      List<String> lines = Files.readAllLines(file, charset);
+      List<String> lines;
+      try {
+        lines = Files.readAllLines(file, charset);
+      }
+      catch (IOException exMainCharset) {
+        //maybe it is CharacterCodingException? Try reading with fallback charset
+        try {
+          lines = Files.readAllLines(file, charsetToFallback);
+        }
+        catch (IOException exFallbackCharset) {
+          exFallbackCharset.addSuppressed(exMainCharset);
+          throw exFallbackCharset;
+        }
+      }
+
       Object2IntMap<String> nameToIdRegistry = new Object2IntOpenHashMap<>(lines.size());
       String[] idToNameRegistry = new String[lines.size()];
       for (int i = 0; i < lines.size(); i++) {
@@ -188,6 +215,7 @@ public final class SimpleStringPersistentEnumerator implements ScannableDataEnum
       return Pair.create(nameToIdRegistry, idToNameRegistry);
     }
     catch (IOException e) {
+      LOG.warnWithDebug("Can't read [" + file.toAbsolutePath() + "] content", e);
       writeStorageToDisk(ArrayUtil.EMPTY_STRING_ARRAY, file, charset);
       return Pair.create(new Object2IntOpenHashMap<>(), ArrayUtil.EMPTY_STRING_ARRAY);
     }
