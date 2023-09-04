@@ -209,7 +209,7 @@ object UpdateChecker {
     productDataLock.withLock {
       val cached = productDataCache?.get()
       if (cached != null) return@withLock cached.getOrThrow()
-      val url = ExternalProductResourceUrls.getInstance().updatesMetadataXmlUrl ?: return@withLock null
+      val url = ExternalProductResourceUrls.getInstance().updateMetadataUrl ?: return@withLock null
 
       val result = runCatching {
         LOG.debug { "loading ${url}" }

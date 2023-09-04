@@ -15,7 +15,7 @@ import com.intellij.util.io.URLUtil
 import java.util.regex.Pattern
 
 class LegacyExternalProductResourceUrls : ExternalProductResourceUrls {
-  override val updatesMetadataXmlUrl: Url?
+  override val updateMetadataUrl: Url?
     get() {
       val customUrl = System.getProperty("idea.updates.url")
       if (customUrl != null) {

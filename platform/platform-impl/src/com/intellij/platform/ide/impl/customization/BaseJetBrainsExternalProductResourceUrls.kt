@@ -56,7 +56,7 @@ abstract class BaseJetBrainsExternalProductResourceUrls : ExternalProductResourc
   open val zenDeskFeedbackFormData: ZenDeskFeedbackFormData?
     get() = null
 
-  override val updatesMetadataXmlUrl: Url
+  override val updateMetadataUrl: Url
     get() {
       val customUrl = System.getProperty("idea.updates.url")
       if (customUrl != null) {
