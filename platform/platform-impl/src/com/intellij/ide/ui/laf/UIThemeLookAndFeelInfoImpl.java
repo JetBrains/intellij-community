@@ -39,6 +39,7 @@ public class UIThemeLookAndFeelInfoImpl extends UIThemeLookAndFeelInfo {
   public void installTheme(UIDefaults defaults, boolean lockEditorScheme) {
     UITheme theme = getTheme();
     defaults.put("ui.theme.is.dark", theme.isDark());
+    defaults.put("ClassLoader", theme.getProviderClassLoader());
     theme.applyProperties(defaults);
     IconPathPatcher patcher = theme.getPatcher();
     if (patcher != null) {

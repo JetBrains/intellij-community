@@ -2,6 +2,7 @@
 package com.intellij.ui
 
 import com.intellij.ide.IdeBundle
+import com.intellij.ide.ui.LafManager
 import com.intellij.ide.ui.UITheme
 import com.intellij.ide.util.PropertiesComponent
 import com.intellij.openapi.actionSystem.ActionToolbarPosition
@@ -77,7 +78,8 @@ internal class ShowUIDefaultsContent(@JvmField val table: JBTable) {
           val trimmedKey = name.trim { it <= ' ' }
           val trimmedValue = value.trim { it <= ' ' }
           if (!trimmedKey.isEmpty() && !trimmedValue.isEmpty()) {
-            UIManager.put(trimmedKey, UITheme.parseValue(trimmedKey, trimmedValue))
+            UIManager.put(trimmedKey, UITheme.parseValue(trimmedKey, trimmedValue,
+                                                         LafManager.getInstance().currentUIThemeLookAndFeel.theme.providerClassLoader))
             table.setModel(ShowUIDefaultsAction.createFilteringModel())
             updateFilter()
           }

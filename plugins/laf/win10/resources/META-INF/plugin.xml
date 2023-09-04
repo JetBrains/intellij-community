@@ -7,6 +7,6 @@
   <description><![CDATA[Provides Windows 10 Look And Feel that mimics Windows 10 system UI]]></description>
 
   <extensions defaultExtensionNs="com.intellij">
-    <themeProvider id="win10Light" path="/win10intellijlaf.theme.json"  targetUi="classic"/>
+    <themeProvider id="win10Light" path="/win10intellijlaf.theme.json"  targetUi="classic" parentTheme="IntelliJ"/>
   </extensions>
 </idea-plugin>

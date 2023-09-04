@@ -153,7 +153,6 @@ open class DarculaLaf : BasicLookAndFeel(), UserDataHolder {
   }
 
   protected open fun loadDefaults(defaults: UIDefaults) {
-    defaults.put("ClassLoader", javaClass.getClassLoader())
     loadDefaultsFromJson(defaults)
   }
 

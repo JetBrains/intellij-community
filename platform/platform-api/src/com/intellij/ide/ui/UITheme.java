@@ -440,7 +440,7 @@ public final class UITheme {
         }
       }
     }
-    value = color == null ? parseValue(key, valueStr) : color;
+    value = color == null ? parseValue(key, valueStr, theme.getProviderClassLoader()) : color;
     if (key.startsWith("*.")) {
       String tail = key.substring(1);
       addPattern(key, value, defaults);
@@ -554,10 +554,6 @@ public final class UITheme {
     }
 
     return value;
-  }
-
-  public static Object parseValue(String key, @NotNull String value) {
-    return parseValue(key, value, UIManager.getLookAndFeel().getClass().getClassLoader());
   }
 
   private static Insets parseInsets(@NotNull String value) {
