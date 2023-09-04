@@ -176,8 +176,6 @@ public abstract class SpeedSearchBase<Comp extends JComponent> extends SpeedSear
       }
     }.registerCustomShortcutSet(CustomShortcutSet.fromString(SystemInfo.isMac ? "meta BACK_SPACE" : "control BACK_SPACE"), myComponent);
 
-    new MySearchAction().registerCustomShortcutSet(CommonShortcuts.getFind(), myComponent);
-
     installSupplyTo(myComponent);
   }
 
@@ -443,6 +441,11 @@ public abstract class SpeedSearchBase<Comp extends JComponent> extends SpeedSear
 
   protected boolean isSpeedSearchEnabled() {
     return true;
+  }
+
+  @ApiStatus.Internal
+  public boolean isAvailable() {
+    return isSpeedSearchEnabled();
   }
 
   @Override
@@ -942,30 +945,6 @@ public abstract class SpeedSearchBase<Comp extends JComponent> extends SpeedSear
     @Override
     public void add(Object o) {
       throw new UnsupportedOperationException("Not implemented in: " + getClass().getCanonicalName());
-    }
-  }
-
-  private final class MySearchAction extends DumbAwareAction {
-    @Override
-    public void actionPerformed(@NotNull AnActionEvent e) {
-      showPopup();
-    }
-
-    @Override
-    public void update(@NotNull AnActionEvent e) {
-      e.getPresentation().setEnabled(isSpeedSearchEnabled() && !isPopupActive());
-    }
-
-    @Override
-    public @NotNull ActionUpdateThread getActionUpdateThread() {
-      return ActionUpdateThread.EDT;
-    }
-  }
-
-  static final class SpeedSearchActionPromoter implements ActionPromoter {
-    @Override
-    public @Nullable List<AnAction> promote(@NotNull List<? extends AnAction> actions, @NotNull DataContext context) {
-      return ContainerUtil.sorted(actions, Comparator.comparing(it -> it instanceof SpeedSearchBase<?>.MySearchAction ? 1 : 0));
     }
   }
 }
