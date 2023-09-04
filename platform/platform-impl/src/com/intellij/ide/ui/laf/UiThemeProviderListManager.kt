@@ -39,6 +39,12 @@ internal class UiThemeProviderListManager {
 
   fun getLaFsWithUITypes(): List<LafEntry> = themeDescriptors
 
+  fun getThemeListForTargetUI(targetUI: TargetUIType): Sequence<UIThemeLookAndFeelInfo> {
+    return themeDescriptors.asSequence()
+      .filter { it.targetUiType == targetUI }
+      .mapNotNull { it.theme.get() }
+  }
+
   fun findJetBrainsLightTheme(): UIThemeLookAndFeelInfo? = findLaFById(DEFAULT_LIGHT_THEME_ID)?.theme?.get()
 
   fun themeProviderAdded(provider: UIThemeProvider): UIThemeLookAndFeelInfo? {

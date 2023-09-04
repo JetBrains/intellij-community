@@ -424,12 +424,6 @@ class LafManagerImpl(private val coroutineScope: CoroutineScope) : LafManager(),
 
   override fun getLafComboBoxModel(): CollectionComboBoxModel<LafReference> = lafComboBoxModel.value
 
-  fun getThemeListForTargetUI(targetUI: TargetUIType): Sequence<UIThemeLookAndFeelInfo> {
-    return UiThemeProviderListManager.getInstance().getLaFsWithUITypes().asSequence()
-      .filter { it.targetUiType == targetUI }
-      .mapNotNull { it.theme.get() }
-  }
-
   private val allReferences: List<LafReference>
     get() {
       val result = ArrayList<LafReference>()

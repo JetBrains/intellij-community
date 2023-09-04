@@ -38,8 +38,12 @@ public final class QuickChangeLookAndFeel extends QuickSwitchSchemeAction implem
     UIThemeLookAndFeelInfo initialLaf = LafManager.getInstance().getCurrentUIThemeLookAndFeel();
 
     for (List<UIThemeLookAndFeelInfo> list : ThemeListProvider.Companion.getInstance().getShownThemes()) {
-      if (group.getChildrenCount() > 0) group.addSeparator();
-      for (UIManager.LookAndFeelInfo lf : list) group.add(new LafChangeAction(lf, initialLaf == lf));
+      if (group.getChildrenCount() > 0) {
+        group.addSeparator();
+      }
+      for (UIManager.LookAndFeelInfo lf : list) {
+        group.add(new LafChangeAction(lf, initialLaf == lf));
+      }
     }
 
     group.addSeparator();
@@ -87,7 +91,7 @@ public final class QuickChangeLookAndFeel extends QuickSwitchSchemeAction implem
   }
 
   @Override
-  protected @Nullable Condition<? super AnAction> preselectAction() {
+  protected @NotNull Condition<? super AnAction> preselectAction() {
     LafManager lafMan = LafManager.getInstance();
     return (a) -> (a instanceof LafChangeAction) && ((LafChangeAction)a).myLookAndFeelInfo == lafMan.getCurrentUIThemeLookAndFeel();
   }
@@ -100,13 +104,19 @@ public final class QuickChangeLookAndFeel extends QuickSwitchSchemeAction implem
    * @deprecated use {@link #switchLafAndUpdateUI(LafManager, UIManager.LookAndFeelInfo, boolean)} instead
    */
   @Deprecated
-  public static void switchLafAndUpdateUI(final @NotNull LafManager lafMan, @NotNull UIManager.LookAndFeelInfo lf, boolean async, boolean force) {
+  public static void switchLafAndUpdateUI(final @NotNull LafManager lafMan,
+                                          @NotNull UIManager.LookAndFeelInfo lf,
+                                          boolean async,
+                                          boolean force) {
     switchLafAndUpdateUI(lafMan, lf, async, force, false);
   }
 
   @ApiStatus.Internal
-  public static void switchLafAndUpdateUI(final @NotNull LafManager lafMan, @NotNull UIManager.LookAndFeelInfo lf, boolean async,
-                                          boolean force, boolean lockEditorScheme) {
+  public static void switchLafAndUpdateUI(final @NotNull LafManager lafMan,
+                                          @NotNull UIManager.LookAndFeelInfo lf,
+                                          boolean async,
+                                          boolean force,
+                                          boolean lockEditorScheme) {
     UIManager.LookAndFeelInfo cur = lafMan.getCurrentUIThemeLookAndFeel();
     if (!force && cur == lf) return;
     ChangeLAFAnimator animator = Registry.is("ide.intellij.laf.enable.animation") ? ChangeLAFAnimator.showSnapshot() : null;
@@ -115,11 +125,12 @@ public final class QuickChangeLookAndFeel extends QuickSwitchSchemeAction implem
     lafMan.setCurrentLookAndFeel(lf, lockEditorScheme);
 
     Runnable updater = () -> {
-      // a twist not to updateUI twice: here and in DarculaInstaller
+      // a twist not to updateUI twice: here, and in DarculaInstaller
       // double updateUI shall be avoided and causes NPE in some components (HelpView)
       Ref<Boolean> updated = Ref.create(false);
       Disposable disposable = Disposer.newDisposable();
-      ApplicationManager.getApplication().getMessageBus().connect(disposable).subscribe(LafManagerListener.TOPIC, source -> updated.set(true));
+      ApplicationManager.getApplication().getMessageBus().connect(disposable)
+        .subscribe(LafManagerListener.TOPIC, source -> updated.set(true));
       try {
         if (StartupUiUtil.isUnderDarcula()) {
           DarculaInstaller.install();
@@ -139,7 +150,6 @@ public final class QuickChangeLookAndFeel extends QuickSwitchSchemeAction implem
       }
     };
     if (async) {
-      //noinspection SSBasedInspection
       SwingUtilities.invokeLater(updater);
     }
     else {
@@ -157,7 +167,6 @@ public final class QuickChangeLookAndFeel extends QuickSwitchSchemeAction implem
     private final UIManager.LookAndFeelInfo myLookAndFeelInfo;
 
     private LafChangeAction(UIManager.LookAndFeelInfo lf, boolean currentLaf) {
-      //noinspection HardCodedStringLiteral
       super(lf.getName(), null, getIcon(currentLaf));
       myLookAndFeelInfo = lf;
     }

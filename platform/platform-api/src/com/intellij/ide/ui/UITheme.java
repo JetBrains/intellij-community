@@ -69,11 +69,25 @@ public final class UITheme {
     return bean.author;
   }
 
+  private static @Nullable UITheme oldFindThemeByName(@NotNull String parentTheme) {
+    for (UIManager.LookAndFeelInfo laf : LafManager.getInstance().getInstalledLookAndFeels()) {
+      if (laf instanceof UIThemeLookAndFeelInfo) {
+        UITheme uiTheme = ((UIThemeLookAndFeelInfo)laf).getTheme();
+        if (uiTheme.getName().equals(parentTheme)) {
+          return uiTheme;
+        }
+      }
+    }
+    return null;
+  }
+
   @ApiStatus.Internal
-  public static @NotNull UITheme loadFromJson(@NotNull InputStream stream, @NotNull @NonNls String themeId) throws IOException {
+  public static @NotNull UITheme loadFromJson(@NotNull InputStream stream,
+                                              @NotNull @NonNls String themeId,
+                                              @NotNull Function<String, @Nullable UITheme> nameToParent) throws IOException {
     UIThemeBean theme = UIThemeBean.Companion.readTheme(new JsonFactory().createParser(stream));
     theme.id = themeId;
-    return postProcessTheme(theme, findParentTheme(theme), null, Function.identity());
+    return postProcessTheme(theme, findParentTheme(theme, nameToParent), null, Function.identity());
   }
 
   public static @NotNull UITheme loadFromJson(byte[] data,
@@ -82,7 +96,7 @@ public final class UITheme {
                                               @NotNull Function<? super String, String> iconsMapper) throws IOException {
     UIThemeBean theme = UIThemeBean.Companion.readTheme(new JsonFactory().createParser(data));
     theme.id = themeId;
-    return postProcessTheme(theme, findParentTheme(theme), provider, iconsMapper);
+    return postProcessTheme(theme, findParentTheme(theme, UITheme::oldFindThemeByName), provider, iconsMapper);
   }
 
   public static @NotNull UITheme loadFromJson(@Nullable UITheme parentTheme,
@@ -117,19 +131,9 @@ public final class UITheme {
     return new UITheme(loadFromJson(theme, provider, iconsMapper));
   }
 
-  private static @Nullable UITheme findParentTheme(@NotNull UIThemeBean theme) {
+  private static @Nullable UITheme findParentTheme(@NotNull UIThemeBean theme, @NotNull Function<String, @Nullable UITheme> nameToParent) {
     String parentTheme = theme.parentTheme;
-    if (parentTheme != null) {
-      for (UIManager.LookAndFeelInfo laf : LafManager.getInstance().getInstalledLookAndFeels()) {
-        if (laf instanceof UIThemeLookAndFeelInfo) {
-          UITheme uiTheme = ((UIThemeLookAndFeelInfo)laf).getTheme();
-          if (uiTheme.getName().equals(parentTheme)) {
-            return uiTheme;
-          }
-        }
-      }
-    }
-    return null;
+    return parentTheme == null ? null : nameToParent.apply(parentTheme);
   }
 
   private static @NotNull UIThemeBean loadFromJson(@NotNull UIThemeBean theme,

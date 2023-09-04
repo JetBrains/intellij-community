@@ -4,8 +4,8 @@ package com.intellij.ide.actions;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.ui.LafManager;
 import com.intellij.ide.ui.UITheme;
-import com.intellij.ide.ui.laf.LafManagerImpl;
 import com.intellij.ide.ui.laf.UIThemeLookAndFeelInfo;
+import com.intellij.ide.ui.laf.UiThemeProviderListManager;
 import com.intellij.ide.ui.laf.darcula.DarculaInstaller;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.DataContext;
@@ -19,12 +19,12 @@ import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.ui.ColorUtil;
-import com.intellij.util.ui.StartupUiUtil;
-import com.intellij.util.ui.UIUtil;
+import kotlin.sequences.SequencesKt;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import java.util.Objects;
 
 public final class QuickChangeColorSchemeAction extends QuickSwitchSchemeAction {
   @Override
@@ -57,8 +57,8 @@ public final class QuickChangeColorSchemeAction extends QuickSwitchSchemeAction 
   }
 
   public static void changeLafIfNecessary(@NotNull EditorColorsScheme oldScheme, EditorColorsScheme newScheme, @Nullable Runnable onDone) {
-    final String productName = ApplicationNamesInfo.getInstance().getFullProductName();
-    final LafManager lafManager = LafManager.getInstance();
+    String productName = ApplicationNamesInfo.getInstance().getFullProductName();
+    LafManager lafManager = LafManager.getInstance();
     boolean isDarkEditorTheme = ColorUtil.isDark(newScheme.getDefaultBackground());
 
     // 1. Before we start messing around with LaF changes, we better remember the OLD scheme for the current LaF,
@@ -71,9 +71,8 @@ public final class QuickChangeColorSchemeAction extends QuickSwitchSchemeAction 
 
     UIManager.LookAndFeelInfo suitableLaf = null;
     String schemeName = Scheme.getBaseName(newScheme.getName());
-    for (UIManager.LookAndFeelInfo laf : lafManager.getInstalledLookAndFeels()) {
-      if (laf instanceof UIThemeLookAndFeelInfo &&
-               schemeName.equals(((UIThemeLookAndFeelInfo)laf).getTheme().getEditorSchemeName())) {
+    for (UIThemeLookAndFeelInfo laf : SequencesKt.asIterable(UiThemeProviderListManager.Companion.getInstance().getLaFs())) {
+      if (schemeName.equals(laf.getTheme().getEditorSchemeName())) {
         suitableLaf = laf;
         break;
       }
@@ -82,30 +81,27 @@ public final class QuickChangeColorSchemeAction extends QuickSwitchSchemeAction 
     UIThemeLookAndFeelInfo currentLafInfo = lafManager.getCurrentUIThemeLookAndFeel();
     UITheme theme = currentLafInfo != null ? currentLafInfo.getTheme() : null;
 
-    if (isDarkEditorTheme &&
-        (UIUtil.isUnderIntelliJLaF() || theme != null && !theme.isDark())) {
+    if (isDarkEditorTheme && (theme != null && !theme.isDark())) {
       if (/*applyAlways ||*/ Messages.showYesNoDialog(
         ApplicationBundle.message("color.scheme.theme.change.confirmation", "dark", productName),
         ApplicationBundle.message("color.scheme.theme.change.confirmation.title", productName),
         Messages.getYesButton(), Messages.getNoButton(),
         Messages.getQuestionIcon()/*, doNotAskOption*/) == Messages.YES) {
 
-        lafManager.setCurrentLookAndFeel(suitableLaf != null ? suitableLaf : ((LafManagerImpl)lafManager).getDefaultDarkLaf(), true);
+        lafManager.setCurrentLookAndFeel(suitableLaf == null ? Objects.requireNonNull(lafManager.getDefaultDarkLaf()) : suitableLaf, true);
         lafChanged = true;
         lafManager.updateUI();
         SwingUtilities.invokeLater(DarculaInstaller::install);
       }
-    } else if (!isDarkEditorTheme &&
-               (StartupUiUtil.isUnderDarcula() || theme != null && theme.isDark())) {
-      if (lafManager instanceof LafManagerImpl
-          &&
-          (/*applyAlways ||*/ Messages.showYesNoDialog(
+    }
+    else if (!isDarkEditorTheme && (theme != null && theme.isDark())) {
+      if (/*applyAlways ||*/Messages.showYesNoDialog(
             ApplicationBundle.message("color.scheme.theme.change.confirmation", "bright", productName),
             ApplicationBundle.message("color.scheme.theme.change.confirmation.title", productName),
             Messages.getYesButton(), Messages.getNoButton(),
-            Messages.getQuestionIcon()/*, doNotAskOption*/) == Messages.YES)) {
+            Messages.getQuestionIcon()/*, doNotAskOption*/) == Messages.YES) {
 
-        lafManager.setCurrentLookAndFeel(suitableLaf != null ? suitableLaf : ((LafManagerImpl)lafManager).getDefaultLightLaf(), true);
+        lafManager.setCurrentLookAndFeel(suitableLaf == null ? Objects.requireNonNull(lafManager.getDefaultLightLaf()) : suitableLaf, true);
         lafChanged = true;
         lafManager.updateUI();
         SwingUtilities.invokeLater(DarculaInstaller::uninstall);
@@ -113,7 +109,8 @@ public final class QuickChangeColorSchemeAction extends QuickSwitchSchemeAction 
     }
 
     lafManager.setRememberSchemeForLaf(true);
-    if (!lafChanged) { // The user decided to keep the new scheme for the old theme, so remember it.
+    if (!lafChanged) {
+      // the user decided to keep the new scheme for the old theme, so remember it.
       lafManager.rememberSchemeForLaf(newScheme);
     }
 

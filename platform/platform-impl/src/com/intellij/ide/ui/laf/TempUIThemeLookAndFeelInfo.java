@@ -25,7 +25,6 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.function.Function;
 
 /**
  * @author Konstantin Bulenkov
@@ -108,7 +107,10 @@ public final class TempUIThemeLookAndFeelInfo extends UIThemeLookAndFeelInfoImpl
   }
 
   public static @NotNull UITheme loadTempTheme(@NotNull InputStream stream, @NotNull IconPathPatcher patcher) throws IOException {
-    UITheme theme = UITheme.loadFromJson(stream, ID);
+    UITheme theme = UITheme.loadFromJson(stream, ID, it -> {
+      UIThemeLookAndFeelInfo t = UiThemeProviderListManager.Companion.getInstance().findThemeByName(it);
+      return t == null ? null : t.getTheme();
+    });
 
     IconPathPatcher oldPatcher = theme.getPatcher();
     if (oldPatcher != null) {
