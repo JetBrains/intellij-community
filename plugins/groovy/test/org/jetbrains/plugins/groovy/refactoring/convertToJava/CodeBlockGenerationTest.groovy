@@ -8,6 +8,9 @@ import org.jetbrains.plugins.groovy.LightGroovyTestCase
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFile
 import org.jetbrains.plugins.groovy.lang.psi.api.toplevel.GrTopStatement
 import org.jetbrains.plugins.groovy.util.TestUtils
+
+import java.nio.file.Path
+
 /**
  * @author Maxim.Medvedev
  */
@@ -30,8 +33,7 @@ class CodeBlockGenerationTest extends LightGroovyTestCase {
     final PsiFile result = createLightFile(testName + '.java', JavaLanguage.INSTANCE, builder.toString())
     PostprocessReformattingAspect.getInstance(project).doPostponedFormatting()
     final String text = result.text
-    final String expected = psiManager.findFile(myFixture.copyFileToProject(testName + '.java')).text
-    assertEquals expected.trim(), text.trim()
+    assertSameLinesWithFile(Path.of(getTestDataPath(), testName + '.java').toString(), text)
   }
 
   private addFile(String text) {
@@ -185,6 +187,8 @@ public final class Matcher {
   void testComparisonToNull() { doTest() }
 
   void testStringConverting() { doTest() }
+
+  void testMultilineString() { doTest() }
 
   void testInWitchClassCheck() { doTest() }
 

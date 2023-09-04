@@ -9,6 +9,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.impl.light.LightElement;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.InheritanceUtil;
+import com.intellij.psi.util.PsiLiteralUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.ArrayUtilRt;
@@ -868,7 +869,18 @@ public class ExpressionGenerator extends Generator {
     final String text = literal.getText();
     final String value = GrStringUtil.unescapeString(GrStringUtil.removeQuotes(text));
     if (text.startsWith("'''") || text.startsWith("\"\"\"")) {
-      builder.append('"').append(StringUtil.escapeStringCharacters(value)).append('"');
+      builder
+        .append("\"\"\"\n")
+        .append(PsiLiteralUtil.escapeTextBlockCharacters(
+          value
+            .replace("\\", "\\\\")
+            .replace("\n", "\\n")
+            .replace("\t", "\\t")
+            .replace("\r", "\\r")
+            .replace("\b", "\\b")
+            .replace("\f", "\\f")
+        ))
+        .append("\"\"\"");
     }
     else if (text.startsWith("'")) {
       if (isChar) {
