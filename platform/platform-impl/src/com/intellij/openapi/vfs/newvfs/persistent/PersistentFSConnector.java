@@ -17,10 +17,6 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.locks.Condition;
-import java.util.concurrent.locks.Lock;
-import java.util.concurrent.locks.ReentrantLock;
 
 import static com.intellij.openapi.vfs.newvfs.persistent.VFSInitException.ErrorCategory.*;
 import static com.intellij.util.ExceptionUtil.findCauseAndSuppressed;
@@ -40,43 +36,15 @@ final class PersistentFSConnector {
     new ContentStoragesRecoverer()
   );
 
-  //@formatter:off
-  private static Lock noLock() {
-    return new Lock() {
-      @Override public void lock() { }
-      @Override public void lockInterruptibly() throws InterruptedException { }
-      @Override public boolean tryLock() { return true; }
-      @Override public boolean tryLock(long time, @NotNull TimeUnit unit) throws InterruptedException { return true; }
-      @Override public void unlock() { }
-      @Override public @NotNull Condition newCondition() { throw new UnsupportedOperationException(); }
-    };
-  }
-  //@formatter:on
-
-  private static final Lock connectDisconnectLock = !VfsLog.isVfsTrackingEnabled() ? new ReentrantLock() : noLock();
-
-
   public static @NotNull VFSInitializationResult connect(@NotNull Path cachesDir,
                                                          int version,
                                                          boolean enableVfsLog,
                                                          List<ConnectionInterceptor> interceptors) {
-    connectDisconnectLock.lock();
-    try {
-      return init(cachesDir, version, enableVfsLog, interceptors);
-    }
-    finally {
-      connectDisconnectLock.unlock();
-    }
+    return init(cachesDir, version, enableVfsLog, interceptors);
   }
 
   public static void disconnect(@NotNull PersistentFSConnection connection) throws IOException {
-    connectDisconnectLock.lock();
-    try {
-      connection.close();
-    }
-    finally {
-      connectDisconnectLock.unlock();
-    }
+    connection.close();
   }
 
   //=== internals:

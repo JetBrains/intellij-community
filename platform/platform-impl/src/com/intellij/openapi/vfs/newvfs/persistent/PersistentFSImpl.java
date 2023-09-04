@@ -134,7 +134,7 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
   }
 
   @ApiStatus.Internal
-  public void connect() {
+  synchronized public void connect() {
     myIdToDirCache.clear();
     myVfsData = new VfsData(app);
     LOG.assertTrue(!myConnected.get() && vfsPeer == null);
@@ -143,7 +143,7 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
   }
 
   @ApiStatus.Internal
-  public void disconnect() {
+  synchronized public void disconnect() {
     if (myConnected.compareAndSet(true, false)) {
       for (PersistentFsConnectionListener listener : PersistentFsConnectionListener.EP_NAME.getExtensionList()) {
         listener.beforeConnectionClosed();
