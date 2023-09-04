@@ -50,12 +50,14 @@ class TerminalOutputView(
   fun installSearchComponent(searchComponent: SearchReplaceComponent) {
     component.add(searchComponent, JLayeredPane.POPUP_LAYER as Any)  // cast to Any needed to call right method overload
     component.revalidate()
+    component.repaint()
   }
 
   @RequiresEdt
   fun removeSearchComponent(searchComponent: SearchReplaceComponent) {
     component.remove(searchComponent)
     component.revalidate()
+    component.repaint()
   }
 
   private fun createEditor(settings: JBTerminalSystemSettingsProviderBase): EditorImpl {

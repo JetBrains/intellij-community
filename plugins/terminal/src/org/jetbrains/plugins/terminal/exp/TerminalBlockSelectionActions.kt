@@ -55,7 +55,7 @@ class TerminalSelectBlockAboveAction : TerminalOutputSelectionAction() {
 class TerminalSelectPromptHandler(private val originalHandler: EditorActionHandler) : EditorActionHandler() {
   override fun doExecute(editor: Editor, caret: Caret?, dataContext: DataContext) {
     val selectionController = dataContext.selectionController
-    if (selectionController != null) {
+    if (selectionController != null && (selectionController.primarySelection != null || editor.selectionModel.hasSelection())) {
       // clear selection to move the focus to the prompt
       selectionController.clearSelection()
     }

@@ -63,16 +63,15 @@ class TerminalCloseHistoryHandler(private val originalHandler: EditorActionHandl
       val lookup = LookupManager.getActiveLookup(editor) as? UserDataHolder
       if (lookup?.getUserData(CommandHistoryPresenter.IS_COMMAND_HISTORY_LOOKUP_KEY) == true) {
         promptController.onCommandHistoryClosed()
+        return
       }
     }
     originalHandler.execute(editor, caret, dataContext)
   }
 
   override fun isEnabledForCaret(editor: Editor, caret: Caret, dataContext: DataContext?): Boolean {
-    return if (editor.isPromptEditor) {
-      val lookup = LookupManager.getActiveLookup(editor) as? UserDataHolder
-      lookup?.getUserData(CommandHistoryPresenter.IS_COMMAND_HISTORY_LOOKUP_KEY) == true
-    }
-    else originalHandler.isEnabled(editor, caret, dataContext)
+    val lookup = LookupManager.getActiveLookup(editor) as? UserDataHolder
+    return editor.isPromptEditor && lookup?.getUserData(CommandHistoryPresenter.IS_COMMAND_HISTORY_LOOKUP_KEY) == true
+           || originalHandler.isEnabled(editor, caret, dataContext)
   }
 }

@@ -40,7 +40,9 @@
     <editorActionHandler action="EditorEscape" implementationClass="org.jetbrains.plugins.terminal.exp.TerminalCloseHistoryHandler"
                          id="terminalCloseHistory" order="first"/>
     <editorActionHandler action="EditorEscape" implementationClass="org.jetbrains.plugins.terminal.exp.TerminalSelectPromptHandler"
-                         id="terminalSelectPrompt" order="first"/>
+                         id="terminalSelectPrompt" order="first, after terminalCloseHistory"/>
+    <editorActionHandler action="EditorEscape" implementationClass="org.jetbrains.plugins.terminal.exp.TerminalCloseSearchHandler"
+                         id="terminalCloseSearch" order="first, after terminalSelectPrompt"/>
     <editorActionHandler action="Find" implementationClass="org.jetbrains.plugins.terminal.exp.TerminalFindHandler"
                          id="terminalFind" order="first"/>
     <typedHandler implementation="org.jetbrains.plugins.terminal.exp.TerminalCompletionAutoPopupHandler"
