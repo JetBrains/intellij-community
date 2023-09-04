@@ -3,20 +3,23 @@ package com.intellij.util.io;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.util.SmartList;
-import com.intellij.util.SystemProperties;
-import com.intellij.util.containers.hash.LinkedHashMap;
 import com.intellij.util.containers.hash.LongLinkedHashMap;
 import com.intellij.util.io.stats.FilePageCacheStatistics;
 import com.intellij.util.lang.CompoundRuntimeException;
 import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
 import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
+import it.unimi.dsi.fastutil.longs.Long2ObjectLinkedOpenHashMap;
+import it.unimi.dsi.fastutil.objects.ObjectIterator;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
 import java.nio.file.Path;
-import java.util.*;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.TreeMap;
 import java.util.concurrent.locks.ReentrantLock;
 
 import static com.intellij.util.SystemProperties.getBooleanProperty;
@@ -89,7 +92,7 @@ final class FilePageCache {
   private final LongLinkedHashMap<DirectBufferWrapper> pagesByPageId;
 
   //@GuardedBy("pagesAllocationLock")
-  private final LinkedHashMap<Long, DirectBufferWrapper> pagesToRemoveByPageId = new LinkedHashMap<>();
+  private final Long2ObjectLinkedOpenHashMap<DirectBufferWrapper> pagesToRemoveByPageId = new Long2ObjectLinkedOpenHashMap<>();
 
   private final long cachedSizeLimit;
   /** Total size of all pages currently cached (i.e. in .pagesByPageId, not in .pagesToRemoveByPageId), bytes */
@@ -470,14 +473,15 @@ final class FilePageCache {
   private void disposeRemovedSegments(@Nullable PagedFileStorage verificationStorage) {
     assertUnderSegmentAllocationLock();
 
-    if (pagesToRemoveByPageId.isEmpty()) return;
-    Iterator<Map.Entry<Long, DirectBufferWrapper>> iterator = pagesToRemoveByPageId.entrySet().iterator();
+    if (pagesToRemoveByPageId.isEmpty()) {
+      return;
+    }
+
+    ObjectIterator<DirectBufferWrapper> iterator = pagesToRemoveByPageId.values().iterator();
     while (iterator.hasNext()) {
       try {
-        Map.Entry<Long, DirectBufferWrapper> entry = iterator.next();
-        DirectBufferWrapper wrapper = entry.getValue();
+        DirectBufferWrapper wrapper = iterator.next();
         boolean released = wrapper.tryRelease(wrapper.getFile() == verificationStorage);
-
         if (released) {
           iterator.remove();
         }
