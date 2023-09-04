@@ -17,9 +17,11 @@ internal class CopyAnnotationFromExpectToActualFix(
     @SafeFieldForPreview private val expectAnnotationEntry: KtAnnotationEntry,
     @SafeFieldForPreview private val annotationClassId: ClassId,
 ) : KotlinQuickFixAction<KtNamedDeclaration>(actualDeclaration) {
+
+    private val expectAnnotationShortName: String = expectAnnotationEntry.shortName?.toString() ?: "<unknown>"
+
     override fun getText(): String {
-        val name = expectAnnotationEntry.shortName ?: "<unknown>"
-        return KotlinBundle.message("fix.copy.mismatched.annotation.to.actual.declaration.may.change.semantics", name)
+        return KotlinBundle.message("fix.copy.mismatched.annotation.to.actual.declaration.may.change.semantics", expectAnnotationShortName)
     }
 
     override fun getFamilyName(): String = text
