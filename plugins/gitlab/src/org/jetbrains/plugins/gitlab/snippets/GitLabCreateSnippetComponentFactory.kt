@@ -10,7 +10,6 @@ import com.intellij.openapi.ui.ValidationInfo
 import com.intellij.ui.components.JBLabel
 import com.intellij.ui.components.JBTextArea
 import com.intellij.ui.dsl.builder.*
-import com.intellij.ui.util.maximumWidth
 import com.intellij.util.childScope
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.cancel
@@ -20,7 +19,6 @@ import kotlinx.coroutines.launch
 import org.jetbrains.plugins.gitlab.api.GitLabProjectCoordinates
 import org.jetbrains.plugins.gitlab.authentication.accounts.GitLabAccount
 import org.jetbrains.plugins.gitlab.util.GitLabBundle.message
-import java.awt.Dimension
 import javax.swing.JComponent
 import javax.swing.JLabel
 import javax.swing.JTextField
@@ -41,6 +39,12 @@ internal object GitLabCreateSnippetComponentFactory {
         title = message("snippet.create.dialog.title")
 
         init()
+
+        cs.launch {
+          createSnippetVm.glAccounts.collectLatest {
+            isOKActionEnabled = it.isNotEmpty()
+          }
+        }
       }
 
       override fun createCenterPanel(): JComponent =
@@ -142,6 +146,7 @@ internal object GitLabCreateSnippetComponentFactory {
               .bindSelected({ data.value.isOpenInBrowser }, { v -> data.update { data.value.copy(isOpenInBrowser = v) } })
           }
 
+          // Account selection if >1 accounts available
           row(message("snippet.create.account.label")) {
             val selectAccount = comboBox(listOf<GitLabAccount>(), ListCellRenderer<GitLabAccount?> { _, accountOrNull, _, _, _ ->
               // The list shouldn't contain nulls, but if they do, don't render anything

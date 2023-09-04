@@ -2,18 +2,28 @@
 package org.jetbrains.plugins.gitlab.snippets
 
 import com.intellij.collaboration.async.modelFlow
+import com.intellij.openapi.application.ModalityState
+import com.intellij.openapi.application.asContextElement
+import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.vfs.VirtualFile
+import git4idea.remote.hosting.knownRepositories
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.*
+import kotlinx.coroutines.launch
 import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.plugins.gitlab.GitLabProjectsManager
 import org.jetbrains.plugins.gitlab.api.GitLabApiManager
 import org.jetbrains.plugins.gitlab.api.GitLabProjectCoordinates
+import org.jetbrains.plugins.gitlab.api.GitLabServerPath
+import org.jetbrains.plugins.gitlab.authentication.GitLabLoginUtil
 import org.jetbrains.plugins.gitlab.authentication.accounts.GitLabAccount
 import org.jetbrains.plugins.gitlab.authentication.accounts.GitLabAccountManager
+import javax.swing.JComponent
 
 private val LOG = logger<GitLabCreateSnippetViewModel>()
 
@@ -35,7 +45,7 @@ class GitLabSnippetFileContents(
 internal class GitLabCreateSnippetViewModel(
   private val cs: CoroutineScope,
   val project: Project,
-  glAccountManager: GitLabAccountManager,
+  private val glAccountManager: GitLabAccountManager,
   glApiManager: GitLabApiManager,
   val availablePathModes: Set<PathHandlingMode>,
   data: GitLabCreateSnippetViewModelData,
@@ -85,6 +95,22 @@ internal class GitLabCreateSnippetViewModel(
    * Mutable flow of the current static view model data.
    */
   val data: MutableStateFlow<GitLabCreateSnippetViewModelData> = MutableStateFlow(data)
+
+  /**
+   * Launches a dialog to login to a new account. Called when no account is currently present in the
+   * account state and the user clicks some link to add an account. After this function is complete
+   * and a new account is added, an update should be pushed to the account state from [GitLabAccountManager].
+   */
+  fun performNewLogin(parentComponent: JComponent) {
+    cs.launch(Dispatchers.Main + ModalityState.stateForComponent(parentComponent).asContextElement()) {
+      val defaultServer = project.service<GitLabProjectsManager>().knownRepositories.firstOrNull()?.repository?.serverPath
+                          ?: GitLabServerPath.DEFAULT_SERVER
+      val (account, token) = GitLabLoginUtil.logInViaToken(project, parentComponent, defaultServer) { server, username ->
+        GitLabLoginUtil.isAccountUnique(glAccountManager.accountsState.value, server, username)
+      } ?: return@launch
+      glAccountManager.updateAccount(account, token)
+    }
+  }
 
   /**
    * Converts the values in this view model to a final immutable result.

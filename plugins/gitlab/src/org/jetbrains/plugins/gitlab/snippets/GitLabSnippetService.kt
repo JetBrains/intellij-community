@@ -57,6 +57,12 @@ class GitLabSnippetService(private val project: Project, private val serviceScop
 
         val accountManager = service<GitLabAccountManager>()
         val apiManager = service<GitLabApiManager>()
+
+        // Ensure at least some account is available
+        if (accountManager.accountsState.value.isEmpty()) {
+          if (!attemptLogin(accountManager)) return@launch
+        }
+
         val result = showDialog(initialTitle, apiManager, files) ?: return@launch
 
         withBackgroundProgress(project, message("snippet.create.action.progress"), true) {
@@ -69,6 +75,22 @@ class GitLabSnippetService(private val project: Project, private val serviceScop
                        message("snippet.create.action.error.title"),
                        e.localizedMessage)
       }
+    }
+  }
+
+  /**
+   * Attempts an initial login and stores the login details in the account manager.
+   */
+  private suspend fun attemptLogin(accountManager: GitLabAccountManager): Boolean {
+    return coroutineScope {
+      async(Dispatchers.Main) {
+        val (account, token) = GitLabLoginUtil.logInViaToken(project, null) { server, name ->
+          GitLabLoginUtil.isAccountUnique(accountManager.accountsState.value, server, name)
+        } ?: return@async false
+
+        accountManager.updateAccount(account, token)
+        true
+      }.await()
     }
   }
 
@@ -152,7 +174,7 @@ class GitLabSnippetService(private val project: Project, private val serviceScop
    * Checks whether the user should be able to see and click the 'Create Snippet' button.
    */
   fun canCreateSnippet(editor: Editor?, selectedFile: VirtualFile?, selectedFiles: List<VirtualFile>?): Boolean {
-    if (project.isDefault || service<GitLabAccountManager>().accountsState.value.isEmpty()) {
+    if (project.isDefault) {
       return false
     }
 
