@@ -6,12 +6,15 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.CommonProcessors;
 import com.intellij.util.Function;
 import com.intellij.util.io.*;
 import com.intellij.util.io.storage.AbstractStorage;
 import com.intellij.vcs.log.*;
+import com.intellij.vcs.log.data.index.PhmVcsLogStorageBackend;
+import com.intellij.vcs.log.data.index.VcsLogStorageBackend;
 import com.intellij.vcs.log.impl.HashImpl;
 import com.intellij.vcs.log.impl.VcsLogErrorHandler;
 import com.intellij.vcs.log.impl.VcsRefImpl;
@@ -25,10 +28,7 @@ import org.jetbrains.annotations.Nullable;
 import java.io.DataInput;
 import java.io.DataOutput;
 import java.io.IOException;
-import java.util.Comparator;
-import java.util.List;
-import java.util.Map;
-import java.util.Objects;
+import java.util.*;
 import java.util.function.Predicate;
 
 /**
@@ -309,19 +309,30 @@ public final class VcsLogStorageImpl implements Disposable, VcsLogStorage {
     }
   }
 
-  public static @NotNull VcsLogStorage create(@NotNull Project project,
-                                              @NotNull String logId,
-                                              @NotNull Map<VirtualFile, VcsLogProvider> logProviders,
-                                              @NotNull VcsLogErrorHandler errorHandler,
-                                              @NotNull Disposable parent)
+  public static @NotNull Pair<VcsLogStorage, @Nullable VcsLogStorageBackend> createStorageAndIndexBackend(@NotNull Project project,
+                                                                                                          @NotNull String logId,
+                                                                                                          @NotNull Map<VirtualFile, VcsLogProvider> logProviders,
+                                                                                                          @NotNull Set<VirtualFile> indexingRoots,
+                                                                                                          @NotNull VcsLogErrorHandler errorHandler,
+                                                                                                          @NotNull Disposable parent)
     throws IOException {
     StorageId.Directory hashesStorageId = new StorageId.Directory(project.getName(), HASHES_STORAGE, logId, VERSION);
     StorageId.Directory refsStorageId = new StorageId.Directory(project.getName(), REFS_STORAGE, logId, VERSION + REFS_VERSION);
+    StorageId.Directory indexStorageId = PhmVcsLogStorageBackend.getIndexStorageId(project, logId);
 
-    List<StorageId.Directory> storageIds = List.of(hashesStorageId, refsStorageId);
+    List<StorageId.Directory> storageIds = List.of(hashesStorageId, refsStorageId, indexStorageId);
 
     return IOUtil.openCleanOrResetBroken(() -> {
-      return new VcsLogStorageImpl(logProviders, hashesStorageId, refsStorageId, errorHandler, parent);
+      VcsLogStorageImpl storage = new VcsLogStorageImpl(logProviders, hashesStorageId, refsStorageId, errorHandler, parent);
+      if (indexingRoots.isEmpty()) return new Pair<>(storage, null);
+
+      try {
+        VcsLogStorageBackend indexBackend = PhmVcsLogStorageBackend.create(project, storage, indexStorageId, indexingRoots, errorHandler, parent);
+        return new Pair<>(storage, indexBackend);
+      } catch (IOException e) {
+        LOG.error("Could not create index storage backend", e);
+        return new Pair<>(storage, null);
+      }
     }, () -> {
       for (StorageId.Directory storageId : storageIds) {
         if (!storageId.cleanupAllStorageFiles()) {

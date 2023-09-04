@@ -12,6 +12,7 @@ import com.intellij.openapi.progress.impl.CoreProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.CheckedDisposable;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.registry.RegistryValue;
 import com.intellij.openapi.vcs.VcsException;
@@ -89,23 +90,9 @@ public final class VcsLogData implements Disposable, VcsLogDataProvider {
 
     VcsLogProgress progress = new VcsLogProgress(this);
 
-    if (VcsLogCachesInvalidator.getInstance().isValid()) {
-      String logId = PersistentUtil.calcLogId(myProject, myLogProviders);
-      myStorage = createStorage(logId);
-      myIndex = createIndex(logId, progress);
-    }
-    else {
-      // this is not recoverable
-      // restart won't help here
-      // and can not shut down ide because of this
-      // so use memory storage (probably leading to out of memory at some point) + no index
-
-      LOG.error("Could not delete caches at " + PersistentUtil.LOG_CACHE);
-      myErrorHandler.displayMessage(VcsLogBundle.message("vcs.log.fatal.error.message", PersistentUtil.LOG_CACHE,
-                                                         ApplicationNamesInfo.getInstance().getFullProductName()));
-      myStorage = new InMemoryStorage();
-      myIndex = new EmptyIndex();
-    }
+    Pair<VcsLogStorage, VcsLogModifiableIndex> storageAndIndex = createStorageAndIndex(progress);
+    myStorage = storageAndIndex.first;
+    myIndex = storageAndIndex.second;
 
     myTopCommitsDetailsCache = new TopCommitsCache(myStorage);
     myMiniDetailsGetter = new MiniDetailsGetter(myProject, myStorage, logProviders, myTopCommitsDetailsCache, myIndex, this);
@@ -132,56 +119,59 @@ public final class VcsLogData implements Disposable, VcsLogDataProvider {
     Disposer.register(this, myDisposableFlag);
   }
 
-  private @NotNull VcsLogStorage createStorage(@NotNull String logId) {
+  private @NotNull Pair<VcsLogStorage, VcsLogModifiableIndex> createStorageAndIndex(@NotNull VcsLogProgress progress) {
+    if (!VcsLogCachesInvalidator.getInstance().isValid()) {
+      // this is not recoverable
+      // restart won't help here
+      // and can not shut down ide because of this
+      // so use memory storage (probably leading to out of memory at some point) + no index
+
+      LOG.error("Could not delete caches at " + PersistentUtil.LOG_CACHE);
+      myErrorHandler.displayMessage(VcsLogBundle.message("vcs.log.fatal.error.message", PersistentUtil.LOG_CACHE,
+                                                         ApplicationNamesInfo.getInstance().getFullProductName()));
+      return new Pair<>(new InMemoryStorage(), new EmptyIndex());
+    }
+
+    String logId = PersistentUtil.calcLogId(myProject, myLogProviders);
+    Map<VirtualFile, VcsLogIndexer> indexers = VcsLogPersistentIndex.getAvailableIndexers(myLogProviders);
+    boolean isIndexSwitchedOnInRegistry = isIndexSwitchedOnInRegistry();
+    boolean isIndexSwitchedOnInProject = VcsLogSharedSettings.isIndexSwitchedOn(myProject);
+    boolean isIndexSwitchedOn = isIndexSwitchedOnInProject && isIndexSwitchedOnInRegistry;
+
+    VcsLogStorage storage;
+    VcsLogStorageBackend indexBackend;
     try {
       if (Registry.is("vcs.log.index.sqlite.storage", false)) {
-        return new SqliteVcsLogStorageBackend(myProject, logId, myLogProviders, myErrorHandler, this);
+        SqliteVcsLogStorageBackend sqliteBackend = new SqliteVcsLogStorageBackend(myProject, logId, myLogProviders, myErrorHandler, this);
+        storage = sqliteBackend;
+        indexBackend = sqliteBackend;
       }
-      return VcsLogStorageImpl.create(myProject, logId, myLogProviders, myErrorHandler, this);
+      else {
+        Set<VirtualFile> indexingRoots = isIndexSwitchedOn ? new LinkedHashSet<>(indexers.keySet()) : Collections.emptySet();
+        Pair<VcsLogStorage, VcsLogStorageBackend> storageAndIndexBackend = VcsLogStorageImpl.createStorageAndIndexBackend(myProject, logId,
+                                                                                                                          myLogProviders,
+                                                                                                                          indexingRoots,
+                                                                                                                          myErrorHandler,
+                                                                                                                          this);
+        storage = storageAndIndexBackend.first;
+        indexBackend = storageAndIndexBackend.second;
+      }
     }
     catch (IOException e) {
       LOG.error("Falling back to in-memory hashes", e);
-      return new InMemoryStorage();
-    }
-  }
-
-  @NotNull
-  private VcsLogModifiableIndex createIndex(@NotNull String logId, @NotNull VcsLogProgress progress) {
-    if (!VcsLogSharedSettings.isIndexSwitchedOn(myProject)) {
-      LOG.info("Vcs log index is turned off for project " + myProject.getName());
-      return new EmptyIndex();
+      return new Pair<>(new InMemoryStorage(), new EmptyIndex());
     }
 
-    if (!isIndexSwitchedOnInRegistry()) {
-      LOG.info("Vcs log index is turned off in the registry");
-      return new EmptyIndex();
+    if (indexBackend == null || !isIndexSwitchedOn || indexers.isEmpty()) {
+      if (!isIndexSwitchedOnInRegistry) LOG.info("Vcs log index is turned off in the registry");
+      if (!isIndexSwitchedOnInProject) LOG.info("Vcs log index is turned off for project " + myProject.getName());
+      if (indexers.isEmpty()) LOG.info("No indexers found for project " + myProject.getName());
+      return new Pair<>(storage, new EmptyIndex());
     }
 
-    if (myStorage instanceof InMemoryStorage) {
-      LOG.info("Can not create index for the in-memory storage");
-      return new EmptyIndex();
-    }
-
-    Map<VirtualFile, VcsLogIndexer> indexers = VcsLogPersistentIndex.getAvailableIndexers(myLogProviders);
-    if (indexers.isEmpty()) {
-      LOG.info("No indexers found for project " + myProject.getName());
-      return new EmptyIndex();
-    }
-
-    VcsLogStorageBackend backend;
-    if (myStorage instanceof VcsLogStorageBackend) {
-      backend = (VcsLogStorageBackend)myStorage;
-    }
-    else {
-      backend = PhmVcsLogStorageBackend.create(myProject, myStorage, new LinkedHashSet<>(indexers.keySet()), logId, myErrorHandler, this);
-    }
-
-    if (backend == null) {
-      LOG.error("Cannot create vcs log index for project " + myProject.getName());
-      return new EmptyIndex();
-    }
-
-    return new VcsLogPersistentIndex(myProject, myLogProviders, indexers, myStorage, backend, progress, myErrorHandler, this);
+    VcsLogPersistentIndex index = new VcsLogPersistentIndex(myProject, myLogProviders, indexers, storage, indexBackend, progress,
+                                                            myErrorHandler, this);
+    return new Pair<>(storage, index);
   }
 
   public void initialize() {

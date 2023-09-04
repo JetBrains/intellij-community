@@ -333,21 +333,21 @@ internal class PhmVcsLogStorageBackend(
     private const val INDEX = "index"
     private const val VERSION = 1
 
+    @Throws(IOException::class)
     @JvmStatic
-    fun create(project: Project, storage: VcsLogStorage, roots: Set<VirtualFile>, logId: String,
-               errorHandler: VcsLogErrorHandler, parent: Disposable): PhmVcsLogStorageBackend? {
-      val storageId = StorageId.Directory(project.name, INDEX, logId, VcsLogStorageImpl.VERSION + VcsLogPersistentIndex.VERSION + VERSION)
+    fun create(project: Project, storage: VcsLogStorage, indexStorageId: StorageId.Directory, roots: Set<VirtualFile>,
+               errorHandler: VcsLogErrorHandler, parent: Disposable): PhmVcsLogStorageBackend {
       val userRegistry = project.getService(VcsUserRegistry::class.java)
-      try {
-        return IOUtil.openCleanOrResetBroken({ PhmVcsLogStorageBackend(storageId, storage, roots, userRegistry, errorHandler, parent) }) {
-          if (!storageId.cleanupAllStorageFiles()) {
-            LOG.error("Could not clean up storage files in " + storageId.storagePath)
-          }
+      return IOUtil.openCleanOrResetBroken({ PhmVcsLogStorageBackend(indexStorageId, storage, roots, userRegistry, errorHandler, parent) }) {
+        if (!indexStorageId.cleanupAllStorageFiles()) {
+          LOG.error("Could not clean up storage files in " + indexStorageId.storagePath)
         }
       }
-      catch (_: IOException) {
-      }
-      return null
+    }
+
+    @JvmStatic
+    fun getIndexStorageId(project: Project, logId: String): StorageId.Directory {
+      return StorageId.Directory(project.name, INDEX, logId, VcsLogStorageImpl.VERSION + VcsLogPersistentIndex.VERSION + VERSION)
     }
   }
 }
