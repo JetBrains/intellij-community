@@ -2,6 +2,7 @@
 package com.intellij.gradle.toolingExtension.impl.sourceSetModel
 
 import com.google.gson.GsonBuilder
+import com.intellij.gradle.toolingExtension.impl.util.GradleObjectUtil
 import com.intellij.openapi.externalSystem.model.project.ExternalSystemSourceType
 import groovy.transform.CompileDynamic
 import org.codehaus.groovy.runtime.DefaultGroovyMethods
@@ -241,8 +242,11 @@ class SourceSetModelBuilder {
         }
       }
       else {
-        resourcesDirectorySet.addGradleOutputDir(chooseNotNull(
-          sourceSet.output.resourcesDir, sourceSet.output.classesDir, project.buildDir))
+        resourcesDirectorySet.addGradleOutputDir(GradleObjectUtil.notNull(
+          sourceSet.output.resourcesDir,
+          sourceSet.output.classesDir as File,
+          project.buildDir
+        ))
       }
 
       def ideaOutDir = new File(project.projectDir, "out/" + (SourceSet.MAIN_SOURCE_SET_NAME == sourceSet.name ||
@@ -263,7 +267,10 @@ class SourceSetModelBuilder {
         }
       }
       else {
-        javaDirectorySet.addGradleOutputDir(chooseNotNull(sourceSet.output.classesDir, project.buildDir))
+        javaDirectorySet.addGradleOutputDir(GradleObjectUtil.notNull(
+          sourceSet.output.classesDir as File,
+          project.buildDir
+        ))
       }
 
       javaDirectorySet.outputDir = new File(ideaOutDir, "classes")
@@ -505,12 +512,6 @@ class SourceSetModelBuilder {
         }
       }
     }
-  }
-
-  @CompileDynamic
-  static <T> T chooseNotNull(T... params) {
-    //noinspection GrUnresolvedAccess
-    params.findResult("", { it })
   }
 
   @CompileDynamic
