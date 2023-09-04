@@ -23,6 +23,7 @@ import org.jetbrains.plugins.gitlab.api.data.GitLabSnippetBlobActionEnum
 import org.jetbrains.plugins.gitlab.api.data.GitLabVisibilityLevel
 import org.jetbrains.plugins.gitlab.api.dto.GitLabSnippetBlobAction
 import org.jetbrains.plugins.gitlab.api.getResultOrThrow
+import org.jetbrains.plugins.gitlab.api.request.getCurrentUser
 import org.jetbrains.plugins.gitlab.authentication.GitLabLoginUtil
 import org.jetbrains.plugins.gitlab.authentication.accounts.GitLabAccountManager
 import org.jetbrains.plugins.gitlab.snippets.PathHandlingMode.Companion.getFileNameExtractor
@@ -122,6 +123,31 @@ class GitLabSnippetService(private val project: Project, private val serviceScop
   }
 
   /**
+   * Gets and verifies an API Client that can be used to create a snippet with.
+   * If no token is registered, the user is prompted to attempt a login. If the token is present,
+   * but it turns out to be invalid, the user is also prompted to attempt a login.
+   *
+   * The result is either an API Client that can be used to call API endpoints, or `null` if the
+   * user gives up.
+   */
+  private suspend fun getAndVerifyApi(accountManager: GitLabAccountManager,
+                                      apiManager: GitLabApiManager,
+                                      result: GitLabCreateSnippetResult): GitLabApi? {
+    // Fetch token, if no token is present, re-login
+    val server = result.account.server
+    val api = accountManager.findCredentials(result.account)?.let { apiManager.getClient(server, it) }
+              ?: reattemptLogin(apiManager, accountManager, result)
+              ?: return null
+
+    // If token is present, we check that it is valid with a test request. Reattempt login if token is invalid.
+    if (api.graphQL.getCurrentUser() == null) {
+      return reattemptLogin(apiManager, accountManager, result)
+    }
+
+    return api
+  }
+
+  /**
    * Creates the snippet on the GitLab server through the GQL API of GitLab.
    *
    * @param result Provides the inputs the user gave for submitting a new snippet.
@@ -133,9 +159,7 @@ class GitLabSnippetService(private val project: Project, private val serviceScop
                                     files: List<VirtualFile>) {
     // Process result by creating the snippet, copying url, etc.
     val data = result.data
-    val api = accountManager.findCredentials(result.account)?.let { apiManager.getClient(result.account.server, it) }
-              ?: reattemptLogin(apiManager, accountManager, result)
-              ?: return
+    val api = getAndVerifyApi(accountManager, apiManager, result) ?: return
 
     val fileNameExtractor = getFileNameExtractor(project, files, data.pathHandlingMode)
 
