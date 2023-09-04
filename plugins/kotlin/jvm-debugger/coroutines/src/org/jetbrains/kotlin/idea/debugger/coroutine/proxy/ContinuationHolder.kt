@@ -5,6 +5,7 @@ package org.jetbrains.kotlin.idea.debugger.coroutine.proxy
 import com.intellij.debugger.engine.JavaValue
 import com.sun.jdi.ObjectReference
 import com.sun.jdi.VMDisconnectedException
+import org.jetbrains.kotlin.idea.debugger.base.util.dropInlineSuffix
 import org.jetbrains.kotlin.idea.debugger.coroutine.data.*
 import org.jetbrains.kotlin.idea.debugger.coroutine.proxy.mirror.*
 import org.jetbrains.kotlin.idea.debugger.coroutine.util.isAbstractCoroutine
@@ -121,7 +122,7 @@ fun FieldVariable.toJavaValue(continuation: ObjectReference, context: DefaultExe
         context,
         continuation,
         fieldName,
-        variableName
+        dropInlineSuffix(variableName)
     )
     return JavaValue.create(
         null,

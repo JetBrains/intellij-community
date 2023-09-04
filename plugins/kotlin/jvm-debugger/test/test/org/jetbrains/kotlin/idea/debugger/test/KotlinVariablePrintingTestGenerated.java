@@ -62,4 +62,9 @@ public class KotlinVariablePrintingTestGenerated extends AbstractKotlinVariableP
     public void testReentrantInlineFunctions() throws Exception {
         runTest("testData/variables/reentrantInlineFunctions.kt");
     }
+
+    @TestMetadata("spilledCapturedVariables.kt")
+    public void testSpilledCapturedVariables() throws Exception {
+        runTest("testData/variables/spilledCapturedVariables.kt");
+    }
 }
