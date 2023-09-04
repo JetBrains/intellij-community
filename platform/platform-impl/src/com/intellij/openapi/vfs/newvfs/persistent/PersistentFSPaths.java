@@ -25,6 +25,8 @@ public final class PersistentFSPaths {
     return storagesDir.resolve("replace-storages.marker");
   }
 
+  public @NotNull Path getRecoveryInProgressMarkerFile() { return storagesDir.resolve("recovery-in-progress.marker"); }
+
   public @NotNull Path getVfsLogStorage() { return storagesDir.resolve("vfslog"); }
 
   public @NotNull Path getRootsBaseFile() {

@@ -2,7 +2,6 @@
 package com.intellij.openapi.vfs.newvfs.persistent;
 
 import com.intellij.ide.actions.cache.RecoverVfsFromLogService;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.NotNullLazyValue;
 import com.intellij.openapi.util.io.FileUtil;
@@ -36,7 +35,6 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.*;
 import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.atomic.AtomicBoolean;
 
 import static com.intellij.openapi.vfs.newvfs.persistent.PersistentFSRecordAccessor.hasDeletedFlag;
 import static com.intellij.openapi.vfs.newvfs.persistent.VFSInitException.ErrorCategory.*;
@@ -75,6 +73,7 @@ public final class PersistentFSLoader {
 
   public final @NotNull Path corruptionMarkerFile;
   public final @NotNull Path storagesReplacementMarkerFile;
+  public final @NotNull Path recoveryInProgressMarkerFile;
 
   private @Nullable VfsLogEx vfsLog = null;
   private PersistentFSRecordsStorage recordsStorage = null;
@@ -117,6 +116,7 @@ public final class PersistentFSLoader {
 
     corruptionMarkerFile = persistentFSPaths.getCorruptionMarkerFile();
     storagesReplacementMarkerFile = persistentFSPaths.getStoragesReplacementMarkerFile();
+    recoveryInProgressMarkerFile = persistentFSPaths.getRecoveryInProgressMarkerFile();
 
     vfsPaths = persistentFSPaths;
     this.executorService = pool;
@@ -215,7 +215,12 @@ public final class PersistentFSLoader {
     try {
       if (!vfsLog.getWasProperlyClosedLastSession()) {
         LOG.warn("VFS was not properly closed last session. Recovering from VfsLog...");
-        return recoverCachesFromVfsLog(vfsLog);
+        if (recoverCachesFromVfsLog(vfsLog)) {
+          LOG.info("Recovered caches from VfsLog");
+          return true;
+        } else {
+          LOG.info("Failed to recover caches from VfsLog");
+        }
       }
     }
     finally {
@@ -225,22 +230,21 @@ public final class PersistentFSLoader {
   }
 
   private boolean recoverCachesFromVfsLog(@NotNull VfsLogImpl vfsLog) throws IOException {
-    AtomicBoolean recoveredCaches = new AtomicBoolean(false);
+    if (!recoveryInProgressMarkerFile.toFile().createNewFile()) {
+      LOG.warn("Found \"recovery in progress\" marker. Not performing another recovery attempt"); // probably previous recovery has failed
+      return false;
+    }
+    boolean cachesWereRecovered = false;
     try (var queryContext = vfsLog.query()) {
-      ApplicationManager.getApplication().invokeAndWait(() -> {
-        recoveredCaches.set(
-          RecoverVfsFromLogService.Companion.recoverSynchronouslyFromLastRecoveryPoint(queryContext, true)
-        );
-      });
+      cachesWereRecovered = RecoverVfsFromLogService.Companion.recoverSynchronouslyFromLastRecoveryPoint(queryContext);
     }
     catch (Throwable e) {
       LOG.error("VFS Caches recovery attempt has failed", e);
     }
-    if (!recoveredCaches.get()) return false;
-    if (!replaceStoragesIfMarkerPresent()) {
-      throw new AssertionError("storages replacement didn't happen right after recovery");
+    if (!recoveryInProgressMarkerFile.toFile().delete()) {
+      LOG.error("failed to remove \"recovery in progress\" marker");
     }
-    return true;
+    return cachesWereRecovered;
   }
 
   public void ensureStoragesVersionsAreConsistent(int currentImplVersion) throws IOException {
@@ -300,6 +304,16 @@ public final class PersistentFSLoader {
     boolean deleted = FileUtil.delete(corruptionMarkerFile.toFile());
     if (!deleted) {
       LOG.info("Can't delete " + corruptionMarkerFile);
+    }
+
+    deleted = FileUtil.delete(storagesReplacementMarkerFile.toFile());
+    if (!deleted) {
+      LOG.info("Can't delete " + storagesReplacementMarkerFile);
+    }
+
+    deleted = FileUtil.delete(recoveryInProgressMarkerFile.toFile());
+    if (!deleted) {
+      LOG.info("Can't delete " + recoveryInProgressMarkerFile);
     }
 
     deleted = IOUtil.deleteAllFilesStartingWith(namesFile);
