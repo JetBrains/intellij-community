@@ -312,7 +312,7 @@ abstract class KotlinWithGradleConfigurator : KotlinProjectConfigurator {
             GradleBuildScriptSupport.getManipulator(it)
                 .findKotlinPluginManagementVersion()
         }
-        var addVersionToModuleBuildScript = definedVersionInPluginSettings != kotlinVersion
+        var addVersionToModuleBuildScript = definedVersionInPluginSettings?.parsedVersion != kotlinVersion
 
         if (rootModule != null) {
             val allKotlinModules = kotlinVersionsAndModules.values.flatMap { it.values }

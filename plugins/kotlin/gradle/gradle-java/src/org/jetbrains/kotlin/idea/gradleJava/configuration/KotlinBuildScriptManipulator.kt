@@ -446,13 +446,15 @@ class KotlinBuildScriptManipulator(
         return false
     }
 
-    override fun findKotlinPluginManagementVersion(): IdeKotlinVersion? {
+    override fun findKotlinPluginManagementVersion(): DefinedKotlinPluginManagementVersion? {
         val versionExpression = scriptFile.getPluginManagementBlock()
             ?.findBlock("plugins")
             ?.findPluginExpressions {
                 it.isKotlinPluginIdentifier()
             }?.versionExpression ?: return null
-        return IdeKotlinVersion.opt(versionExpression.text.extractStringValue())
+        return DefinedKotlinPluginManagementVersion(
+            parsedVersion = IdeKotlinVersion.opt(versionExpression.text.extractStringValue())
+        )
     }
 
     private fun KtFile.findScriptInitializer(startsWith: String): KtScriptInitializer? =

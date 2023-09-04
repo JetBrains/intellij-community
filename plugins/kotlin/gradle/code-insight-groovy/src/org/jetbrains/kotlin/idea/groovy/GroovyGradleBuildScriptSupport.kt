@@ -242,10 +242,12 @@ class GroovyBuildScriptManipulator(
         return originalText != scriptFile.text
     }
 
-    override fun findKotlinPluginManagementVersion(): IdeKotlinVersion? {
+    override fun findKotlinPluginManagementVersion(): DefinedKotlinPluginManagementVersion? {
         val block = scriptFile.getBlockByName("pluginManagement")?.getBlockByName("plugins") ?: return null
         val kotlinVersionExpression = block.findPluginExpressions("org.jetbrains.kotlin.jvm")?.versionExpression ?: return null
-        return IdeKotlinVersion.opt(kotlinVersionExpression.text.extractTextFromQuotes())
+        return DefinedKotlinPluginManagementVersion(
+            parsedVersion = IdeKotlinVersion.opt(kotlinVersionExpression.text.extractTextFromQuotes())
+        )
     }
 
     override fun changeLanguageFeatureConfiguration(
