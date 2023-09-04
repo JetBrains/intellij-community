@@ -471,7 +471,11 @@ private class StackedCompositeBindingContextTrace(
         }
 
         override fun <K : Any?, V : Any?> getSliceContents(slice: ReadOnlySlice<K, V>): ImmutableMap<K, V> {
-            return ImmutableMap.copyOf(parentContext.getSliceContents(slice) + map.getSliceContents(slice))
+            val parentSliceContents = parentContext.getSliceContents(slice).filter {
+                (it.key as? PsiElement)?.parentsWithSelf?.none { e -> e == element } != false
+            }
+            val mapSliceContents = map.getSliceContents(slice)
+            return ImmutableMap.copyOf(parentSliceContents + mapSliceContents)
         }
 
         override fun addOwnDataTo(trace: BindingTrace, commitDiagnostics: Boolean) = throw UnsupportedOperationException()
