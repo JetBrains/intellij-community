@@ -276,8 +276,12 @@ public final class UITheme {
         Object key = entry.getKey();
         Object value = entry.getValue();
 
-        if (!key.toString().startsWith("#")) key = map.get(key);
-        if (!value.toString().startsWith("#")) value = map.get(value);
+        if (!key.toString().startsWith("#")) {
+          key = map.get(key);
+        }
+        if (!value.toString().startsWith("#")) {
+          value = map.get(value);
+        }
 
         if (key.toString().startsWith("#") & value.toString().startsWith("#")) {
           theme.iconColorsOnSelection.put(key.toString(), value);

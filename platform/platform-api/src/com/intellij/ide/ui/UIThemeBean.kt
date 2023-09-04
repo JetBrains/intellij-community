@@ -46,17 +46,16 @@ internal class UIThemeBean {
       while (true) {
         when (parser.nextToken()) {
           JsonToken.START_OBJECT -> {
-            val fieldName = parser.currentName()
-            // ordered map is required (not clear why)
-            val map = LinkedHashMap<String, Any?>()
-            readFlatMapFromJson(parser, map)
-            when (fieldName) {
-              "icons" -> bean.icons = map
-              "background" -> bean.background = map
-              "emptyFrameBackground" -> bean.emptyFrameBackground = map
-              "colors" -> bean.colors = map
-              "iconColorsOnSelection" -> bean.iconColorsOnSelection = map
+            when (val fieldName = parser.currentName()) {
+              "icons" -> bean.icons = readMapFromJson(parser)
+              "background" -> bean.background = readMapFromJson(parser)
+              "emptyFrameBackground" -> bean.emptyFrameBackground = readMapFromJson(parser)
+              "colors" -> bean.colors = readMapFromJson(parser)
+              "iconColorsOnSelection" -> bean.iconColorsOnSelection = readMapFromJson(parser)
               "ui" -> {
+                // ordered map is required (not clear why)
+                val map = LinkedHashMap<String, Any?>()
+                readFlatMapFromJson(parser, map)
                 putDefaultsIfAbsent(map)
                 bean.ui = map
               }
@@ -242,7 +241,7 @@ private fun readFlatMapFromJson(parser: JsonParser, result: MutableMap<String, A
             JsonToken.END_ARRAY -> break
             JsonToken.VALUE_STRING -> {
               if (!prefix.isEmpty()) {
-                prefix.joinTo(buffer = path, separator = "/")
+                prefix.joinTo(buffer = path, separator = ".")
                 path.append('.')
               }
               path.append(fieldName)
@@ -287,6 +286,60 @@ private fun readFlatMapFromJson(parser: JsonParser, result: MutableMap<String, A
   result.replaceAll(BiFunction { _, u -> if (u is OsDefaultValue) u.v else u })
 }
 
+private fun readMapFromJson(parser: JsonParser): MutableMap<String, Any?> {
+  val m = LinkedHashMap<String, Any?>()
+  readMapFromJson(parser, m)
+  return m
+}
+
+private fun readMapFromJson(parser: JsonParser, result: MutableMap<String, Any?>) {
+  check(parser.currentToken() == JsonToken.START_OBJECT)
+
+  var level = 1
+  while (true) {
+    when (parser.nextToken()) {
+      JsonToken.START_OBJECT -> {
+        level++
+        val m = LinkedHashMap<String, Any?>()
+        result.put(parser.currentName(), m)
+        readMapFromJson(parser, m)
+      }
+      JsonToken.END_OBJECT -> {
+        level--
+
+        if (level == 0) {
+          break
+        }
+      }
+      JsonToken.VALUE_STRING -> {
+        result.put(parser.currentName(), parser.text)
+      }
+      JsonToken.VALUE_NUMBER_INT -> {
+        result.put(parser.currentName(), parser.intValue)
+      }
+      JsonToken.VALUE_NUMBER_FLOAT -> {
+        result.put(parser.currentName(), parser.doubleValue)
+      }
+      JsonToken.VALUE_FALSE -> {
+        result.put(parser.currentName(), false)
+      }
+      JsonToken.VALUE_TRUE -> {
+        result.put(parser.currentName(), true)
+      }
+      JsonToken.VALUE_NULL -> {
+      }
+      JsonToken.FIELD_NAME -> {
+      }
+      null -> {
+        break
+      }
+      else -> {
+        logError(parser)
+      }
+    }
+  }
+}
+
 private const val OS_MACOS_KEY = "os.mac"
 private const val OS_WINDOWS_KEY = "os.windows"
 private const val OS_LINUX_KEY = "os.linux"
@@ -304,7 +357,16 @@ private fun putEntry(prefix: Deque<String>,
                      path: StringBuilder,
                      getter: () -> Any?) {
   if (!prefix.isEmpty()) {
-    prefix.joinTo(buffer = path, separator = ".")
+    var isFirst = true
+    for (element in prefix) {
+      if (isFirst) {
+        isFirst = false
+      }
+      else if (element != "UI") {
+        path.append('.')
+      }
+      path.append(element)
+    }
   }
 
   val key = parser.currentName()
