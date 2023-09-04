@@ -10,6 +10,8 @@ import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.ui.popup.util.PopupUtil;
+import com.intellij.openapi.util.DimensionService;
+import com.intellij.ui.popup.AbstractPopup;
 import com.intellij.util.ObjectUtils;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
@@ -84,5 +86,21 @@ public final class PopupImplUtil {
       return keyEvent.getComponent();
     }
     return null;
+  }
+
+  public static Dimension getPopupSize(final JBPopup popup) {
+    Dimension size = null;
+    if (popup instanceof AbstractPopup) {
+      final String dimensionKey = ((AbstractPopup)popup).getDimensionServiceKey();
+      if (dimensionKey != null) {
+        size = DimensionService.getInstance().getSize(dimensionKey);
+      }
+    }
+
+    if (size == null) {
+      size = popup.getContent().getPreferredSize();
+    }
+
+    return size;
   }
 }
