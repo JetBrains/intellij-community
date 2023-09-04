@@ -11,11 +11,14 @@ import com.intellij.openapi.vfs.newvfs.persistent.log.OperationLogStorage.Operat
 import com.intellij.openapi.vfs.newvfs.persistent.log.PayloadRef.PayloadSource
 import com.intellij.openapi.vfs.newvfs.persistent.log.compaction.CompactedVfsModel.CompactedVfsState
 import com.intellij.openapi.vfs.newvfs.persistent.log.compaction.CompactedVfsModel.CompactionPosition
-import com.intellij.openapi.vfs.newvfs.persistent.log.io.PersistentVar
+import com.intellij.openapi.vfs.newvfs.persistent.log.io.AtomicDurableRecord
+import com.intellij.openapi.vfs.newvfs.persistent.log.io.AtomicDurableRecord.Companion.RecordBuilder
+import com.intellij.openapi.vfs.newvfs.persistent.log.io.DurablePersistentByteArray.Companion.OpenMode
 import com.intellij.openapi.vfs.newvfs.persistent.log.timemachine.State
 import com.intellij.util.SystemProperties
 import com.intellij.util.concurrency.AppExecutorUtil
 import com.intellij.util.io.SimpleStringPersistentEnumerator
+import com.intellij.util.io.createParentDirectories
 import org.jetbrains.annotations.TestOnly
 import java.nio.file.Path
 import java.util.concurrent.ScheduledFuture
@@ -32,13 +35,19 @@ class VfsLogCompactionController(
   private val getCompactionContext: () -> VfsLogCompactionContext?,
   private val compactionDelayMs: Long,
   private val compactionIntervalMs: Long,
-  private val defaultOperationMode: OperationMode,
+  defaultOperationMode: OperationMode,
   modeOverride: Boolean,
 ) : AutoCloseable {
+  init {
+    if (!storagePath.exists()) {
+      storagePath.createParentDirectories()
+    }
+  }
+
   private val compactionModelDir get() = storagePath / "model"
-  private val persistedOperationModeHandler = PersistentVar.integer(storagePath / "operationMode")
-  private var persistedOperationMode by persistedOperationModeHandler
-  val operationMode: OperationMode get() = OperationMode.VALUES[persistedOperationMode ?: defaultOperationMode.ordinal]
+  private val atomicState: AtomicDurableRecord<ControllerState> = AtomicDurableRecord.open(storagePath / "state",
+                                                                                           if (readOnly) OpenMode.Read else OpenMode.ReadWrite,
+                                                                                           stateBuilder(defaultOperationMode))
 
   @Volatile
   private var scheduledCompaction: ScheduledFuture<*>? = null
@@ -66,12 +75,12 @@ class VfsLogCompactionController(
 
   private fun openModelIfCompactionEnabled() {
     check(compactionModel == null && scheduledCompaction == null)
-    if (operationMode == OperationMode.CompactData) {
+    if (atomicState.get().operationMode == OperationMode.CompactData) {
       compactionModel = CompactedVfsModel(compactionModelDir)
       LOG.info("excess data will be compacted")
     }
     else {
-      LOG.info("current mode is $operationMode, excess data will be lost")
+      LOG.info("current mode is ${atomicState.get().operationMode}, excess data will be lost")
     }
     if (!readOnly) {
       scheduledCompaction = scheduleCompactionJob()
@@ -82,11 +91,13 @@ class VfsLogCompactionController(
     LOG.info("changing operation mode to $newMode")
     closeModel()
     clearModel()
-    persistedOperationMode = newMode.ordinal
+    atomicState.update {
+      operationMode = newMode
+    }
   }
 
   init {
-    if (!readOnly && (persistedOperationMode == null || (modeOverride && operationMode != defaultOperationMode))) {
+    if (!readOnly && modeOverride && atomicState.get().operationMode != defaultOperationMode) {
       changeOperationMode(defaultOperationMode)
     }
     openModelIfCompactionEnabled()
@@ -147,7 +158,7 @@ class VfsLogCompactionController(
                  "current operation log offset=$initialPosition, new offsets=$positionToCompactTo")
         if (cancellationWasRequested()) throw ProcessCanceledException(RuntimeException("compaction was cancelled by request"))
 
-        when (operationMode) {
+        when (atomicState.get().operationMode) {
           OperationMode.DropData, OperationMode.Corrupted -> {
             // no op
           }
@@ -316,22 +327,7 @@ class VfsLogCompactionController(
 
   override fun close() {
     closeModel()
-    persistedOperationModeHandler.close()
-  }
-
-  enum class OperationMode {
-    /** just drop excess data */
-    DropData,
-
-    /** try to preserve data in a separate storage with obsolete value clean up */
-    CompactData,
-
-    /** was CompactData but an error happened, operationally equal to DropData */
-    Corrupted;
-
-    companion object {
-      internal val VALUES = OperationMode.values()
-    }
+    atomicState.close()
   }
 
   companion object {
@@ -341,5 +337,33 @@ class VfsLogCompactionController(
       64L * 1024 * 1024
     )
     private val MIN_LOG_SIZE: Long = COMPACTION_CHUNK_SIZE / 4 // 16 MiB default
+
+    enum class OperationMode {
+      /** just drop excess data */
+      DropData,
+
+      /** try to preserve data in a separate storage with obsolete value clean up */
+      CompactData,
+
+      /** was CompactData, but an error happened, operationally equal to DropData */
+      Corrupted;
+
+      internal companion object {
+        val VALUES = OperationMode.values()
+      }
+    }
+
+    private interface ControllerState {
+      var operationMode: OperationMode
+    }
+
+    private fun stateBuilder(defaultOperationMode: OperationMode): RecordBuilder<ControllerState>.() -> ControllerState = {
+      object : ControllerState { // 32 bytes
+        override var operationMode: OperationMode by custom(4, defaultOperationMode,
+                                                            serialize = { it.putInt(this.ordinal) },
+                                                            deserialize = { OperationMode.VALUES[it.getInt()] })
+        private val reserved_ by bytearray(28)
+      }
+    }
   }
 }

@@ -85,7 +85,7 @@ class VfsLogImpl(
       { tryAcquireCompactionContext() },
       COMPACTION_DELAY_MS,
       COMPACTION_INTERVAL_MS,
-      if (COMPACTION_MODE == -1) DEFAULT_COMPACTION_MODE else VfsLogCompactionController.OperationMode.values()[COMPACTION_MODE],
+      if (COMPACTION_MODE == -1) DEFAULT_COMPACTION_MODE else OperationMode.values()[COMPACTION_MODE],
       COMPACTION_MODE != -1
     )
 
@@ -422,7 +422,7 @@ class VfsLogImpl(
       "idea.vfs.log-vfs-operations.compaction-mode",
       -1
     )
-    private val DEFAULT_COMPACTION_MODE = VfsLogCompactionController.OperationMode.CompactData
+    private val DEFAULT_COMPACTION_MODE = OperationMode.CompactData
     private val LOG_MAX_SIZE: Long = SystemProperties.getLongProperty(
       "idea.vfs.log-vfs-operations.max-log-size",
       750L * 1024 * 1024 // 750 MiB, includes payload storage size
