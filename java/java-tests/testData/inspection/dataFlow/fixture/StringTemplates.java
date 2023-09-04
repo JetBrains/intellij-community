@@ -39,5 +39,9 @@ class Main {
     String s4 = STR."x = \{x}";
     if (<warning descr="Condition 's4.length() >= 5 && s4.length() <= 15' is always 'true'"><warning descr="Condition 's4.length() >= 5' is always 'true'">s4.length() >= 5</warning> && <warning descr="Condition 's4.length() <= 15' is always 'true' when reached">s4.length() <= 15</warning></warning>) {}
   }
-
+  
+  void testIncomplete() {
+    int x = 1;
+    return <error descr="Processor missing from string template expression">"\{x}"</error>;
+  }
 }

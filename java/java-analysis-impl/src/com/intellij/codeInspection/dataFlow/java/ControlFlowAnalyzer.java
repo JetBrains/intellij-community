@@ -1248,6 +1248,8 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
     }
     if (processor != null) {
       processor.accept(this);
+    } else {
+      pushUnknown(); // incomplete code
     }
     PsiTemplate template = expression.getTemplate();
     if (template != null) {
