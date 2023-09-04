@@ -26,7 +26,8 @@ internal suspend fun loadEuaDocument(appInfoDeferred: Deferred<ApplicationInfoEx
   }
 }
 
-internal suspend fun prepareShowEuaIfNeededTask(document: EndUserAgreement.Document?, asyncScope: CoroutineScope): (suspend () -> Boolean)? {
+internal suspend fun prepareShowEuaIfNeededTask(document: EndUserAgreement.Document?,
+                                                asyncScope: CoroutineScope): (suspend () -> Boolean)? {
   val updateCached = asyncScope.launch(CoroutineName("eua cache updating") + Dispatchers.IO) {
     EndUserAgreement.updateCachedContentToLatestBundledVersion()
   }
