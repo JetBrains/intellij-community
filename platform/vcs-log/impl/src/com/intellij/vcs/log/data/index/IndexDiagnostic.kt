@@ -10,6 +10,7 @@ import com.intellij.vcs.log.VcsFullCommitDetails
 import com.intellij.vcs.log.VcsLogBundle
 import com.intellij.vcs.log.data.DataPack
 import com.intellij.vcs.log.data.VcsLogStorage
+import com.intellij.vcs.log.graph.api.EdgeFilter
 import com.intellij.vcs.log.graph.api.LiteLinearGraph
 import com.intellij.vcs.log.graph.api.permanent.PermanentGraphInfo
 import com.intellij.vcs.log.graph.utils.BfsWalk
@@ -129,6 +130,7 @@ internal object IndexDiagnostic {
     @Suppress("UNCHECKED_CAST") val permanentGraphInfo = permanentGraph as? PermanentGraphInfo<Int> ?: return emptySet()
     for (i in 0 until COMMITS_TO_CHECK) {
       val node = i * (permanentGraphInfo.linearGraph.nodesCount() / COMMITS_TO_CHECK)
+      if (permanentGraphInfo.linearGraph.getAdjacentEdges(node, EdgeFilter.NORMAL_DOWN).size != 1) continue
       val commit = permanentGraphInfo.permanentCommitsInfo.getCommitId(node)
       if (!dataGetter.indexStorageBackend.containsCommit(commit)) continue
       val root = dataGetter.logStorage.getCommitId(commit)?.root ?: continue
@@ -140,9 +142,12 @@ internal object IndexDiagnostic {
 
     // iterate over a limited number of indexed commits to select more commits to check
     dataGetter.iterateIndexedCommits(INDEXED_COMMITS_ITERATIONS_LIMIT) { commit ->
-      val root = dataGetter.logStorage.getCommitId(commit)?.root
-      if (root != null && roots.contains(root)) {
-        result.add(commit)
+      val node = permanentGraphInfo.permanentCommitsInfo.getNodeId(commit)
+      if (node >= 0 && permanentGraphInfo.linearGraph.getAdjacentEdges(node, EdgeFilter.NORMAL_DOWN).size == 1) {
+        val root = dataGetter.logStorage.getCommitId(commit)?.root
+        if (root != null && roots.contains(root)) {
+          result.add(commit)
+        }
       }
       result.size < COMMITS_TO_CHECK
     }
