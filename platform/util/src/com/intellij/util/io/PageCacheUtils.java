@@ -46,7 +46,7 @@ public final class PageCacheUtils {
    * So far both new and {@link FilePageCache legacy} file caches co-exist: storages are incrementally migrated
    * to new cache
    */
-  public static final boolean LOCK_FREE_PAGE_CACHE_ENABLED = getBooleanProperty("vfs.lock-free-impl.enable", false);
+  public static final boolean LOCK_FREE_PAGE_CACHE_ENABLED = getBooleanProperty("vfs.lock-free-impl.enable", true);
 
   /**
    * How much direct memory the new (code name 'lock-free') FilePageCache impl allowed to utilize: as a fraction

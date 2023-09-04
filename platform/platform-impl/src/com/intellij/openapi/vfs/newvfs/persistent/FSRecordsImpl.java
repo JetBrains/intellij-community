@@ -22,13 +22,13 @@ import com.intellij.openapi.vfs.newvfs.NewVirtualFileSystem;
 import com.intellij.openapi.vfs.newvfs.events.ChildInfo;
 import com.intellij.openapi.vfs.newvfs.persistent.dev.blobstorage.ByteBufferReader;
 import com.intellij.openapi.vfs.newvfs.persistent.dev.blobstorage.ByteBufferWriter;
+import com.intellij.openapi.vfs.newvfs.persistent.intercept.ConnectionInterceptor;
+import com.intellij.openapi.vfs.newvfs.persistent.log.VfsLog;
+import com.intellij.openapi.vfs.newvfs.persistent.log.VfsLogEx;
 import com.intellij.openapi.vfs.newvfs.persistent.namecache.FileNameCache;
 import com.intellij.openapi.vfs.newvfs.persistent.namecache.MRUFileNameCache;
 import com.intellij.openapi.vfs.newvfs.persistent.namecache.SLRUFileNameCache;
-import com.intellij.openapi.vfs.newvfs.persistent.intercept.ConnectionInterceptor;
-import com.intellij.openapi.vfs.newvfs.persistent.log.VfsLog;
 import com.intellij.openapi.vfs.newvfs.persistent.recovery.VFSInitializationResult;
-import com.intellij.openapi.vfs.newvfs.persistent.log.VfsLogEx;
 import com.intellij.serviceContainer.AlreadyDisposedException;
 import com.intellij.util.ExceptionUtil;
 import com.intellij.util.Processor;
@@ -43,7 +43,10 @@ import org.jetbrains.annotations.*;
 
 import java.io.*;
 import java.nio.file.Path;
-import java.util.*;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.List;
+import java.util.Set;
 import java.util.concurrent.CopyOnWriteArraySet;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Future;
@@ -82,7 +85,7 @@ public final class FSRecordsImpl {
   public static final boolean USE_STREAMLINED_ATTRIBUTES_IMPLEMENTATION = getBooleanProperty("vfs.use-streamlined-attributes-storage", true);
   public static final boolean USE_RAW_ACCESS_TO_READ_CHILDREN = getBooleanProperty("vfs.use-raw-access-to-read-children", true);
   //TODO RC: temporary false, must be LOCK_FREE_PAGE_CACHE_ENABLED by default (and eventually just true)
-  public static final boolean USE_ATTRIBUTES_OVER_NEW_FILE_PAGE_CACHE = getBooleanProperty("vfs.attributes-storage.use-lock-free-page-cache", false);
+  public static final boolean USE_ATTRIBUTES_OVER_NEW_FILE_PAGE_CACHE = getBooleanProperty("vfs.attributes-storage.use-lock-free-page-cache", true);
 
   public static final boolean USE_FAST_NAMES_IMPLEMENTATION = getBooleanProperty("vfs.use-fast-names-enumerator", true);
   private static final boolean USE_FILE_NAME_CACHE = getBooleanProperty("vfs.name-cache.enable", true);
