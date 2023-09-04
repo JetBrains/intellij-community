@@ -76,6 +76,11 @@ public class LombokLightFieldBuilder extends LightFieldBuilder implements Synthe
     return this;
   }
 
+  public LombokLightFieldBuilder withAnnotation(@NotNull String annotation) {
+    myModifierList.addAnnotation(annotation);
+    return this;
+  }
+
   public LombokLightFieldBuilder withNavigationElement(PsiElement navigationElement) {
     setNavigationElement(navigationElement);
     return this;

@@ -1,3 +1,4 @@
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.browsers;
 
 import com.intellij.openapi.util.NlsSafe;
@@ -9,26 +10,19 @@ import java.util.List;
 import java.util.UUID;
 
 public abstract class WebBrowser {
-  @NotNull
-  public abstract @NlsSafe String getName();
+  public abstract @NotNull @NlsSafe String getName();
 
-  @NotNull
-  public abstract UUID getId();
+  public abstract @NotNull UUID getId();
 
-  @NotNull
-  public abstract BrowserFamily getFamily();
+  public abstract @NotNull BrowserFamily getFamily();
 
-  @NotNull
-  public abstract Icon getIcon();
+  public abstract @NotNull Icon getIcon();
 
-  @Nullable
-  public abstract @NlsSafe String getPath();
+  public abstract @Nullable @NlsSafe String getPath();
 
-  @NotNull
-  public abstract String getBrowserNotFoundMessage();
+  public abstract @NotNull String getBrowserNotFoundMessage();
 
-  @Nullable
-  public abstract BrowserSpecificSettings getSpecificSettings();
+  public abstract @Nullable BrowserSpecificSettings getSpecificSettings();
 
   public void addOpenUrlParameter(@NotNull List<? super String> command, @NotNull String url) {
     command.add(url);

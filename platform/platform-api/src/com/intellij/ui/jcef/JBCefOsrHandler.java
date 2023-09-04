@@ -257,7 +257,7 @@ class JBCefOsrHandler implements CefRenderHandler {
     return myLocationOnScreenRef.get().getLocation();
   }
 
-  static private @NotNull Dimension getRealImageSize(JBHiDPIScaledImage image) {
+  private static @NotNull Dimension getRealImageSize(JBHiDPIScaledImage image) {
     if (image == null) return new Dimension(0, 0);
     BufferedImage bi = (BufferedImage)image.getDelegate();
     assert bi != null;

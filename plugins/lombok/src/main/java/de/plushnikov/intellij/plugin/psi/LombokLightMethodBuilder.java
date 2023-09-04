@@ -9,7 +9,6 @@ import com.intellij.psi.impl.CheckUtil;
 import com.intellij.psi.impl.light.LightMethodBuilder;
 import com.intellij.psi.impl.light.LightModifierList;
 import com.intellij.psi.impl.light.LightTypeParameterListBuilder;
-import com.intellij.util.Function;
 import com.intellij.util.IncorrectOperationException;
 import de.plushnikov.intellij.plugin.extension.LombokInferredAnnotationProvider;
 import icons.LombokIcons;
@@ -18,6 +17,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Objects;
+import java.util.function.Function;
 
 /**
  * @author Plushnikov Michail
@@ -162,7 +162,7 @@ public class LombokLightMethodBuilder extends LightMethodBuilder implements Synt
     Function<LombokLightMethodBuilder, String> builderBodyFunction = myBuilderBodyFunction;
     if (null == myBodyCodeBlock && (bodyAsText != null || builderBodyFunction != null)) {
       if (bodyAsText == null) {
-        bodyAsText = builderBodyFunction.fun(this);
+        bodyAsText = builderBodyFunction.apply(this);
       }
       final PsiElementFactory elementFactory = JavaPsiFacade.getElementFactory(getProject());
       myBodyCodeBlock = elementFactory.createCodeBlockFromText("{" + bodyAsText + "}", this);

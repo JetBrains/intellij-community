@@ -233,9 +233,11 @@ private suspend fun preInitApp(app: ApplicationImpl,
 
     euaTaskDeferred?.await()?.invoke()
 
-    val installIconPatcherJob = if (loadIconMapping == null) null else launch {
-      loadIconMapping.join()
-      ExperimentalUI.getInstance().installIconPatcher()
+    if (loadIconMapping != null) {
+      launch {
+        loadIconMapping.join()
+        ExperimentalUI.getInstance().installIconPatcher()
+      }
     }
 
     coroutineScope {

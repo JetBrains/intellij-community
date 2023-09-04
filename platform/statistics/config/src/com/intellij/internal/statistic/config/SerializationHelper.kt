@@ -18,7 +18,6 @@ import java.io.Writer
 object SerializationHelper {
   private val SERIALIZATION_TO_WRITER_MAPPER: JsonMapper by lazy {
     val printer: DefaultPrettyPrinter = CustomPrettyPrinter()
-    printer.indentArraysWith(DefaultIndenter())
 
     JsonMapper
       .builder()
@@ -31,7 +30,6 @@ object SerializationHelper {
 
   private val SERIALIZATION_MAPPER: JsonMapper by lazy {
     val printer: DefaultPrettyPrinter = CustomPrettyPrinter()
-    printer.indentArraysWith(DefaultIndenter())
 
     JsonMapper
       .builder()
@@ -125,6 +123,11 @@ object SerializationHelper {
 }
 
 class CustomPrettyPrinter : DefaultPrettyPrinter {
+  init {
+    _objectIndenter = DefaultIndenter("  ", "\n")
+    _arrayIndenter = DefaultIndenter("  ", "\n")
+  }
+
   constructor() : super()
   constructor(base: DefaultPrettyPrinter?) : super(base)
 

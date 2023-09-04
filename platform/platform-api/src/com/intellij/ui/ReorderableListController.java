@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui;
 
 import com.intellij.icons.AllIcons;
@@ -49,12 +49,12 @@ public abstract class ReorderableListController <T> {
   public void addMoveUpAction() {
     addAction(new AnAction(UIBundle.messagePointer("move.up.action.name"), Presentation.NULL_STRING, IconUtil.getMoveUpIcon()) {
       @Override
-      public void actionPerformed(@NotNull final AnActionEvent e) {
+      public void actionPerformed(final @NotNull AnActionEvent e) {
         ListUtil.moveSelectedItemsUp(myList);
       }
 
       @Override
-      public void update(@NotNull final AnActionEvent e) {
+      public void update(final @NotNull AnActionEvent e) {
         e.getPresentation().setEnabled(ListUtil.canMoveSelectedItemsUp(myList));
       }
 
@@ -68,12 +68,12 @@ public abstract class ReorderableListController <T> {
   public void addMoveDownAction() {
     addAction(new AnAction(UIBundle.messagePointer("move.down.action.name"), Presentation.NULL_STRING, AllIcons.Actions.MoveDown) {
       @Override
-      public void actionPerformed(@NotNull final AnActionEvent e) {
+      public void actionPerformed(final @NotNull AnActionEvent e) {
         ListUtil.moveSelectedItemsDown(myList);
       }
 
       @Override
-      public void update(@NotNull final AnActionEvent e) {
+      public void update(final @NotNull AnActionEvent e) {
         e.getPresentation().setEnabled(ListUtil.canMoveSelectedItemsDown(myList));
       }
 
@@ -109,7 +109,7 @@ public abstract class ReorderableListController <T> {
     };
   }
 
-  protected static abstract class ActionDescription {
+  protected abstract static class ActionDescription {
     public abstract AnAction createAction(JComponent component);
   }
 
@@ -117,7 +117,7 @@ public abstract class ReorderableListController <T> {
     void afterActionPerformed(T change);
   }
 
-  public static abstract class CustomActionDescription <V> extends ActionDescription {
+  public abstract static class CustomActionDescription <V> extends ActionDescription {
     private final ArrayList<ActionNotification<V>> myPostHandlers = new ArrayList<>(1);
     private boolean myShowText = false;
 
@@ -160,14 +160,14 @@ public abstract class ReorderableListController <T> {
       }
 
       @Override
-      public void actionPerformed(@NotNull final AnActionEvent e) {
+      public void actionPerformed(final @NotNull AnActionEvent e) {
         final V change = myBehaviour.performAction(e);
         if (change == null) return;
         myCustomActionDescription.runPostHandlers(change);
       }
 
       @Override
-      public void update(@NotNull final AnActionEvent e) {
+      public void update(final @NotNull AnActionEvent e) {
         myBehaviour.updateAction(e);
       }
 
@@ -210,7 +210,7 @@ public abstract class ReorderableListController <T> {
     public BaseAction createAction(final JComponent component) {
       final ActionBehaviour<List<T>> behaviour = new ActionBehaviour<>() {
         @Override
-        public List<T> performAction(@NotNull final AnActionEvent e) {
+        public List<T> performAction(final @NotNull AnActionEvent e) {
           if (myConfirmation != null && !myConfirmation.value((List<T>)Arrays.asList(myList.getSelectedValues()))) {
             return Collections.emptyList();
           }
@@ -218,7 +218,7 @@ public abstract class ReorderableListController <T> {
         }
 
         @Override
-        public void updateAction(@NotNull final AnActionEvent e) {
+        public void updateAction(final @NotNull AnActionEvent e) {
           e.getPresentation().setEnabled(ListUtil.canRemoveSelectedItems(myList, myEnableCondition));
         }
       };
@@ -266,12 +266,12 @@ public abstract class ReorderableListController <T> {
     public BaseAction createAction(final JComponent component) {
       final ActionBehaviour<V> behaviour = new ActionBehaviour<>() {
         @Override
-        public V performAction(@NotNull final AnActionEvent e) {
+        public V performAction(final @NotNull AnActionEvent e) {
           return addInternal(myAddHandler.create());
         }
 
         @Override
-        public void updateAction(@NotNull final AnActionEvent e) {}
+        public void updateAction(final @NotNull AnActionEvent e) {}
       };
       final BaseAction action = createAction(behaviour);
       if (myCreateShortcut) {
@@ -280,8 +280,7 @@ public abstract class ReorderableListController <T> {
       return action;
     }
 
-    @Nullable
-    protected abstract V addInternal(final V v);
+    protected abstract @Nullable V addInternal(final V v);
 
     @Override
     public Icon getActionIcon() {

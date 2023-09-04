@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide;
 
 import com.intellij.BundleBase;
@@ -32,9 +32,7 @@ public final class TypeNameEP implements PluginAware {
   /**
    * Use {@link #resourceKey} for i18n.
    */
-  @Attribute("name")
-  @Nls(capitalization = Nls.Capitalization.Title)
-  public String name;
+  @Attribute("name") public @Nls(capitalization = Nls.Capitalization.Title) String name;
 
   /**
    * If unspecified, plugin's {@code <resource-bundle>} will be used.
@@ -42,9 +40,7 @@ public final class TypeNameEP implements PluginAware {
   @Attribute("resourceBundle")
   public String resourceBundle;
 
-  @Attribute("resourceKey")
-  @Nls(capitalization = Nls.Capitalization.Title)
-  public String resourceKey;
+  @Attribute("resourceKey") public @Nls(capitalization = Nls.Capitalization.Title) String resourceKey;
 
   private final NullableLazyValue<String> myName = new NullableLazyValue<>() {
     @Override

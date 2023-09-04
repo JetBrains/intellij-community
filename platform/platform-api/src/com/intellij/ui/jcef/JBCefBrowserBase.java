@@ -361,8 +361,7 @@ public abstract class JBCefBrowserBase implements JBCefDisposable {
     loadHTML(html, BLANK_URI);
   }
 
-  @NotNull
-  public final CefBrowser getCefBrowser() {
+  public final @NotNull CefBrowser getCefBrowser() {
     return myCefBrowser;
   }
 
@@ -391,8 +390,7 @@ public abstract class JBCefBrowserBase implements JBCefDisposable {
     return Math.pow(ZOOM_COMMON_RATIO, myCefBrowser.getZoomLevel());
   }
 
-  @NotNull
-  public final JBCefClient getJBCefClient() {
+  public final @NotNull JBCefClient getJBCefClient() {
     return myCefClient;
   }
 
@@ -400,8 +398,7 @@ public abstract class JBCefBrowserBase implements JBCefDisposable {
     return new JBCefCookieManager(CefCookieManager.getGlobalManager());
   }
 
-  @NotNull
-  public final JBCefCookieManager getJBCefCookieManager() {
+  public final @NotNull JBCefCookieManager getJBCefCookieManager() {
     myCookieManagerLock.lock();
     try {
       if (myJBCefCookieManager == null) {
@@ -536,8 +533,7 @@ public abstract class JBCefBrowserBase implements JBCefDisposable {
   /**
    * Returns {@code JBCefBrowser} instance associated with this {@code CefBrowser}.
    */
-  @Nullable
-  public static JBCefBrowser getJBCefBrowser(@NotNull CefBrowser browser) {
+  public static @Nullable JBCefBrowser getJBCefBrowser(@NotNull CefBrowser browser) {
     Component uiComp = browser.getUIComponent();
     if (uiComp != null) {
       Component parentComp = uiComp.getParent();
@@ -674,8 +670,7 @@ public abstract class JBCefBrowserBase implements JBCefDisposable {
   /**
    * @see #setProperty(String, Object)
    */
-  @Nullable
-  public Object getProperty(@NotNull String name) {
+  public @Nullable Object getProperty(@NotNull String name) {
     return myPropertiesHelper.getProperty(name);
   }
 
@@ -774,8 +769,8 @@ public abstract class JBCefBrowserBase implements JBCefDisposable {
   }
 
   private final class LoadDeferrer {
-    @Nullable private final String myHtml;
-    @NotNull private final String myUrl;
+    private final @Nullable String myHtml;
+    private final @NotNull String myUrl;
 
     private LoadDeferrer(@Nullable String html, @NotNull String url) {
       myHtml = html;

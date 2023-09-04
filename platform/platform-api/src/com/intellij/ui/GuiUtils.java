@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui;
 
 import com.intellij.openapi.application.Application;
@@ -253,8 +253,7 @@ public final class GuiUtils {
    * @param comp      component
    * @return dimension with width enough to insert provided number of chars into component
    */
-  @NotNull
-  public static Dimension getSizeByChars(int charCount, @NotNull JComponent comp) {
+  public static @NotNull Dimension getSizeByChars(int charCount, @NotNull JComponent comp) {
     Dimension size = comp.getPreferredSize();
     FontMetrics fontMetrics = comp.getFontMetrics(comp.getFont());
     size.width = fontMetrics.charWidth('a') * charCount;

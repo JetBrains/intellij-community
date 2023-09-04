@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.ui;
 
 import com.intellij.ide.ui.laf.UIThemeLookAndFeelInfo;
@@ -133,9 +133,7 @@ public abstract class LafManager {
 
   }
 
-  @Nullable
-  public abstract UIThemeLookAndFeelInfo getDefaultLightLaf();
+  public abstract @Nullable UIThemeLookAndFeelInfo getDefaultLightLaf();
 
-  @Nullable
-  public abstract UIThemeLookAndFeelInfo getDefaultDarkLaf();
+  public abstract @Nullable UIThemeLookAndFeelInfo getDefaultDarkLaf();
 }

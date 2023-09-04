@@ -19,18 +19,15 @@ public final class Separator extends DecorativeElement implements DumbAware, Lig
   private static final Separator ourInstance = new Separator();
   private final Supplier<@NlsContexts.Separator String> myDynamicText;
 
-  @NotNull
-  public static Separator getInstance() {
+  public static @NotNull Separator getInstance() {
     return ourInstance;
   }
 
-  @NotNull
-  public static Separator create() {
+  public static @NotNull Separator create() {
     return create(null);
   }
 
-  @NotNull
-  public static Separator create(@Nullable @NlsContexts.Separator String text) {
+  public static @NotNull Separator create(@Nullable @NlsContexts.Separator String text) {
     return StringUtil.isEmptyOrSpaces(text)? ourInstance : new Separator(text);
   }
 

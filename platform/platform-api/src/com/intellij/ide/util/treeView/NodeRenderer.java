@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.util.treeView;
 
 import com.intellij.ide.projectView.PresentationData;
@@ -111,20 +111,17 @@ public class NodeRenderer extends ColoredTreeCellRenderer {
     }
   }
 
-  @Nullable
-  protected ItemPresentation getPresentation(Object node) {
+  protected @Nullable ItemPresentation getPresentation(Object node) {
     return node instanceof PresentableNodeDescriptor ? ((PresentableNodeDescriptor<?>)node).getPresentation() :
            node instanceof NavigationItem ? ((NavigationItem)node).getPresentation() :
            null;
   }
 
-  @NotNull
-  private static EditorColorsScheme getScheme() {
+  private static @NotNull EditorColorsScheme getScheme() {
     return EditorColorsManager.getInstance().getSchemeForCurrentUITheme();
   }
 
-  @NotNull
-  protected SimpleTextAttributes getSimpleTextAttributes(@NotNull PresentationData presentation, Color color, @NotNull Object node) {
+  protected @NotNull SimpleTextAttributes getSimpleTextAttributes(@NotNull PresentationData presentation, Color color, @NotNull Object node) {
     SimpleTextAttributes simpleTextAttributes = getSimpleTextAttributes(presentation, getScheme());
 
     return addColorToSimpleTextAttributes(simpleTextAttributes, color);
@@ -139,11 +136,11 @@ public class NodeRenderer extends ColoredTreeCellRenderer {
     return simpleTextAttributes;
   }
 
-  public static SimpleTextAttributes getSimpleTextAttributes(@Nullable final ItemPresentation presentation) {
+  public static SimpleTextAttributes getSimpleTextAttributes(final @Nullable ItemPresentation presentation) {
     return getSimpleTextAttributes(presentation, getScheme());
   }
 
-  private static SimpleTextAttributes getSimpleTextAttributes(@Nullable final ItemPresentation presentation,
+  private static SimpleTextAttributes getSimpleTextAttributes(final @Nullable ItemPresentation presentation,
                                                               @NotNull EditorColorsScheme colorsScheme)
   {
     if (presentation instanceof ColoredItemPresentation) {

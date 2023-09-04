@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.actionSystem;
 
 import com.intellij.openapi.util.NlsActions.ActionDescription;
@@ -18,7 +18,7 @@ public abstract class ToggleAction extends AnAction implements Toggleable {
   public ToggleAction() {
   }
 
-  public ToggleAction(@Nullable @ActionText final String text) {
+  public ToggleAction(final @Nullable @ActionText String text) {
     super(() -> text);
   }
 
@@ -26,24 +26,24 @@ public abstract class ToggleAction extends AnAction implements Toggleable {
     super(text);
   }
 
-  public ToggleAction(@Nullable @ActionText final String text,
-                      @Nullable @ActionDescription final String description,
-                      @Nullable final Icon icon) {
+  public ToggleAction(final @Nullable @ActionText String text,
+                      final @Nullable @ActionDescription String description,
+                      final @Nullable Icon icon) {
     super(text, description, icon);
   }
 
   public ToggleAction(@NotNull Supplier<@ActionText String> text,
                       @NotNull Supplier<@ActionDescription String> description,
-                      @Nullable final Icon icon) {
+                      final @Nullable Icon icon) {
     super(text, description, icon);
   }
 
-  public ToggleAction(@NotNull Supplier<@ActionText String> text, @Nullable final Icon icon) {
+  public ToggleAction(@NotNull Supplier<@ActionText String> text, final @Nullable Icon icon) {
     super(text, Presentation.NULL_STRING, icon);
   }
 
   @Override
-  public void actionPerformed(@NotNull final AnActionEvent e) {
+  public void actionPerformed(final @NotNull AnActionEvent e) {
     final boolean state = !isSelected(e);
     setSelected(e, state);
     final Presentation presentation = e.getPresentation();
@@ -67,7 +67,7 @@ public abstract class ToggleAction extends AnAction implements Toggleable {
   public abstract void setSelected(@NotNull AnActionEvent e, boolean state);
 
   @Override
-  public void update(@NotNull final AnActionEvent e) {
+  public void update(final @NotNull AnActionEvent e) {
     boolean selected = isSelected(e);
     final Presentation presentation = e.getPresentation();
     Toggleable.setSelected(presentation, selected);

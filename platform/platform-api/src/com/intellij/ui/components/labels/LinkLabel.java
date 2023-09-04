@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui.components.labels;
 
 import com.intellij.diagnostic.LoadingState;
@@ -83,8 +83,7 @@ public class LinkLabel<T> extends JLabel {
    * @deprecated use {@link com.intellij.ui.components.ActionLink} instead
    */
   @Deprecated
-  @NotNull
-  public static LinkLabel<?> create(@Nullable @NlsContexts.LinkLabel String text, @Nullable Runnable action) {
+  public static @NotNull LinkLabel<?> create(@Nullable @NlsContexts.LinkLabel String text, @Nullable Runnable action) {
     return new LinkLabel<>(text, null, action == null ? null : (__, ___) -> action.run(), null, null);
   }
 
@@ -211,8 +210,7 @@ public class LinkLabel<T> extends JLabel {
     }
   }
 
-  @NotNull
-  protected Rectangle getTextBounds() {
+  protected @NotNull Rectangle getTextBounds() {
     if (textR.isEmpty()) {
       updateLayoutRectangles();
     }

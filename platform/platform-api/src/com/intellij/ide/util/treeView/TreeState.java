@@ -64,7 +64,7 @@ public final class TreeState implements JDOMExternalizable {
     String id;
     String type;
     transient Object userObject;
-    transient final int index;
+    final transient int index;
 
     @SuppressWarnings("unused")
     PathElement() {
@@ -156,31 +156,26 @@ public final class TreeState implements JDOMExternalizable {
     }
   }
 
-  @NotNull
-  public static TreeState createOn(@NotNull JTree tree, @NotNull DefaultMutableTreeNode treeNode) {
+  public static @NotNull TreeState createOn(@NotNull JTree tree, @NotNull DefaultMutableTreeNode treeNode) {
     return createOn(tree, new TreePath(treeNode.getPath()));
   }
 
-  @NotNull
-  public static TreeState createOn(@NotNull JTree tree, @NotNull TreePath rootPath) {
+  public static @NotNull TreeState createOn(@NotNull JTree tree, @NotNull TreePath rootPath) {
     return new TreeState(createPaths(tree, TreeUtil.collectExpandedPaths(tree, rootPath)),
                          createPaths(tree, TreeUtil.collectSelectedPaths(tree, rootPath)));
   }
 
-  @NotNull
-  public static TreeState createOn(@NotNull JTree tree) {
+  public static @NotNull TreeState createOn(@NotNull JTree tree) {
     return createOn(tree, true, false);
   }
 
-  @NotNull
-  public static TreeState createOn(@NotNull JTree tree, boolean persistExpand, boolean persistSelect) {
+  public static @NotNull TreeState createOn(@NotNull JTree tree, boolean persistExpand, boolean persistSelect) {
     List<TreePath> expanded = persistExpand ? TreeUtil.collectExpandedPaths(tree) : Collections.emptyList();
     List<TreePath> selected = persistSelect ? TreeUtil.collectSelectedPaths(tree) : Collections.emptyList();
     return createOn(tree, expanded, selected);
   }
 
-  @NotNull
-  public static TreeState createOn(@NotNull JTree tree, @NotNull List<TreePath> expandedPaths, @NotNull List<TreePath> selectedPaths) {
+  public static @NotNull TreeState createOn(@NotNull JTree tree, @NotNull List<TreePath> expandedPaths, @NotNull List<TreePath> selectedPaths) {
     List<PathElement[]> expandedPathElements = !expandedPaths.isEmpty()
       ? createPaths(tree, expandedPaths)
       : new ArrayList<>();
@@ -190,8 +185,7 @@ public final class TreeState implements JDOMExternalizable {
     return new TreeState(expandedPathElements, selectedPathElements);
   }
 
-  @NotNull
-  public static TreeState createFrom(@Nullable Element element) {
+  public static @NotNull TreeState createFrom(@Nullable Element element) {
     TreeState state = new TreeState(new ArrayList<>(), new ArrayList<>());
     try {
       if (element != null) {
@@ -244,8 +238,7 @@ public final class TreeState implements JDOMExternalizable {
     return result;
   }
 
-  @NotNull
-  private static String calcId(@Nullable Object userObject) {
+  private static @NotNull String calcId(@Nullable Object userObject) {
     if (userObject == null) return "";
     // The easiest case: the node provides an ID explicitly.
     if (userObject instanceof PathElementIdProvider userObjectWithPathId) {
@@ -258,8 +251,7 @@ public final class TreeState implements JDOMExternalizable {
     return StringUtil.notNullize(userObject.toString());
   }
 
-  @NotNull
-  private static String calcType(@Nullable Object userObject) {
+  private static @NotNull String calcType(@Nullable Object userObject) {
     if (userObject == null) return "";
     String name = userObject.getClass().getName();
     return Integer.toHexString(StringHash.murmur(name, 31)) + ":" + StringUtil.getShortName(name);
@@ -321,8 +313,7 @@ public final class TreeState implements JDOMExternalizable {
   }
 
 
-  @Nullable
-  private static TreePath findMatchedChild(@NotNull TreeModel model, @NotNull TreePath treePath, @NotNull PathElement pathElement) {
+  private static @Nullable TreePath findMatchedChild(@NotNull TreeModel model, @NotNull TreePath treePath, @NotNull PathElement pathElement) {
     Object parent = treePath.getLastPathComponent();
     int childCount = model.getChildCount(parent);
     if (childCount <= 0) return null;
@@ -524,9 +515,8 @@ public final class TreeState implements JDOMExternalizable {
       return VisitThread.BGT;
     }
 
-    @NotNull
     @Override
-    public Action visit(@NotNull TreePath path) {
+    public @NotNull Action visit(@NotNull TreePath path) {
       int count = path.getPathCount();
       if (count > elements.length) return Action.SKIP_CHILDREN;
       boolean matches = elements[count - 1].isMatchTo(path.getLastPathComponent());

@@ -76,7 +76,7 @@ class HttpProxySettingsUi implements ConfigurableUi<HttpConfigurable> {
            !Comparing.strEqual(settings.PROXY_HOST, myProxyHostTextField.getText());
   }
 
-  HttpProxySettingsUi(@NotNull final HttpConfigurable settings) {
+  HttpProxySettingsUi(final @NotNull HttpConfigurable settings) {
     ButtonGroup group = new ButtonGroup();
     group.add(myUseHTTPProxyRb);
     group.add(myAutoDetectProxyRb);
@@ -217,13 +217,11 @@ class HttpProxySettingsUi implements ConfigurableUi<HttpConfigurable> {
     }, strings -> StringUtil.join(strings, ", "));
   }
 
-  @NotNull
-  private static @NlsContexts.DialogMessage String errorText(@NotNull String s) {
+  private static @NotNull @NlsContexts.DialogMessage String errorText(@NotNull String s) {
     return IdeBundle.message("dialog.message.problem.with.connection", s);
   }
 
-  @Nullable
-  private @NlsContexts.DialogMessage String isValid() {
+  private @Nullable @NlsContexts.DialogMessage String isValid() {
     if (myUseHTTPProxyRb.isSelected()) {
       String host = getText(myProxyHostTextField);
       if (host == null) {
@@ -287,8 +285,7 @@ class HttpProxySettingsUi implements ConfigurableUi<HttpConfigurable> {
     }
   }
 
-  @Nullable
-  private static String getText(@NotNull JTextField field) {
+  private static @Nullable String getText(@NotNull JTextField field) {
     return StringUtil.nullize(field.getText(), true);
   }
 
@@ -321,8 +318,7 @@ class HttpProxySettingsUi implements ConfigurableUi<HttpConfigurable> {
   }
 
   @Override
-  @NotNull
-  public JComponent getComponent() {
+  public @NotNull JComponent getComponent() {
     return myMainPanel;
   }
 }

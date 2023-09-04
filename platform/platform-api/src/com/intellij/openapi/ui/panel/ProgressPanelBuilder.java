@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.ui.panel;
 
 import com.intellij.CommonBundle;
@@ -142,8 +142,7 @@ public class ProgressPanelBuilder implements GridBagPanelBuilder, PanelBuilder {
     return this;
   }
 
-  @NotNull
-  public ProgressPanelBuilder withText2() {
+  public @NotNull ProgressPanelBuilder withText2() {
     text2Enabled = true;
     return this;
   }
@@ -159,8 +158,7 @@ public class ProgressPanelBuilder implements GridBagPanelBuilder, PanelBuilder {
   }
 
   @Override
-  @NotNull
-  public JPanel createPanel() {
+  public @NotNull JPanel createPanel() {
     JPanel panel = new JPanel(new GridBagLayout());
     GridBagConstraints gc = new GridBagConstraints(0, 0, 1, 1, 0, 0, GridBagConstraints.LINE_START, GridBagConstraints.HORIZONTAL,
                                                    null, 0, 0);
@@ -326,15 +324,13 @@ public class ProgressPanelBuilder implements GridBagPanelBuilder, PanelBuilder {
       return myCancelButtonAsButton;
     }
 
-    @Nullable
     @Override
-    public InplaceButton getCancelButton() {
+    public @Nullable InplaceButton getCancelButton() {
       return myCancelButton;
     }
 
-    @Nullable
     @Override
-    public InplaceButton getSuspendButton() {
+    public @Nullable InplaceButton getSuspendButton() {
       return mySuspendButton;
     }
 
@@ -351,9 +347,8 @@ public class ProgressPanelBuilder implements GridBagPanelBuilder, PanelBuilder {
       }
     }
 
-    @NotNull
     @Override
-    public State getState() {
+    public @NotNull State getState() {
       return state;
     }
 

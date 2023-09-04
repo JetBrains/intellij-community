@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui;
 
 import com.intellij.util.containers.ObjectIntHashMap;
@@ -55,8 +55,7 @@ public final class ListFocusTraversalPolicy extends LayoutFocusTraversalPolicy {
     return getPreviousComponent((i==-1 ?0:i) - 1);
   }
 
-  @Nullable
-  private Component getNextComponent(int startIndex) {
+  private @Nullable Component getNextComponent(int startIndex) {
     for (int index = startIndex; index < myComponents.length; index++) {
       Component result = myComponents[index];
       if (accept(result)) {
@@ -72,8 +71,7 @@ public final class ListFocusTraversalPolicy extends LayoutFocusTraversalPolicy {
     return null;
   }
 
-  @Nullable
-  private Component getPreviousComponent(int startIndex) {
+  private @Nullable Component getPreviousComponent(int startIndex) {
     for (int index = startIndex; index >= 0; index--) {
       Component result = myComponents[index];
       if (accept(result)) {

@@ -1,6 +1,7 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.intellij.plugins.markdown.lang.parser.blocks
 
+import com.intellij.util.text.CharSequenceSubSequence
 import org.intellij.markdown.MarkdownElementTypes
 import org.intellij.markdown.MarkdownTokenTypes
 import org.intellij.markdown.parser.LookaheadText
@@ -24,7 +25,8 @@ class CommentAwareLinkReferenceDefinitionProvider: MarkerBlockProvider<MarkerPro
     if (!MarkerBlockProvider.isStartOfLineWithConstraints(position, stateInfo.currentConstraints)) {
       return emptyList()
     }
-    val matchResult = LinkReferenceDefinitionProvider.matchLinkDefinition(position.textFromPosition, 0) ?: return emptyList()
+    val textFromPosition = CharSequenceSubSequence(position.originalText, position.offset, position.originalText.length)
+    val matchResult = LinkReferenceDefinitionProvider.matchLinkDefinition(textFromPosition, 0) ?: return emptyList()
     for ((index, range) in matchResult.withIndex()) {
       val type = when (index) {
         0 -> MarkdownElementTypes.LINK_LABEL

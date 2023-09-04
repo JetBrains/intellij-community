@@ -1,7 +1,5 @@
 package de.plushnikov.intellij.plugin.lombokconfig;
 
-import java.util.Locale;
-
 public enum ConfigKey {
 
   CONFIG_STOP_BUBBLING("config.stopBubbling", "false"),
@@ -53,7 +51,10 @@ public enum ConfigKey {
 
   BUILDER_CLASS_NAME("lombok.builder.className", "*Builder"),
 
+  ADD_NULL_ANNOTATIONS("lombok.addNullAnnotations", "");
+  
   ADD_LOMBOK_GENERATED_ANNOTATION("lombok.addLombokGeneratedAnnotation", "false");
+
   /*
     ACCESSORS_FLAG_USAGE("lombok.accessors.flagUsage", ""),
     ALLARGSCONSTRUCTOR_FLAG_USAGE("lombok.allArgsConstructor.flagUsage", ""),
@@ -101,7 +102,7 @@ public enum ConfigKey {
   }
 
   ConfigKey(String configKey, String configDefaultValue, boolean configScalarValue) {
-    this.configKey = configKey.toLowerCase(Locale.ENGLISH);
+    this.configKey = configKey;
     this.configDefaultValue = configDefaultValue;
     this.configScalarValue = configScalarValue;
   }

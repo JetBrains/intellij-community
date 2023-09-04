@@ -224,7 +224,7 @@ abstract class MnemonicWrapper<T extends JComponent> implements Runnable, Proper
     }
   }
 
-  private static abstract class AbstractButtonWrapper extends MnemonicWrapper<AbstractButton> {
+  private abstract static class AbstractButtonWrapper extends MnemonicWrapper<AbstractButton> {
     private AbstractButtonWrapper(AbstractButton component) {
       super(component, "text", "mnemonic", "displayedMnemonicIndex");
     }

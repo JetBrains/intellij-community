@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.ui;
 
 import com.intellij.ide.IdeBundle;
@@ -28,14 +28,14 @@ public abstract class NamedConfigurable<T> implements Configurable {
   private ErrorLabel myErrorLabel;
   private JComponent myOptionsComponent;
   private final boolean myNameEditable;
-  @Nullable private final Runnable myUpdateTree;
+  private final @Nullable Runnable myUpdateTree;
   private boolean myUpdatingNameFieldFromDisplayName;
 
   protected NamedConfigurable() {
     this(false, null);
   }
 
-  protected NamedConfigurable(boolean isNameEditable, @Nullable final Runnable updateTree) {
+  protected NamedConfigurable(boolean isNameEditable, final @Nullable Runnable updateTree) {
     myNameEditable = isNameEditable;
     myUpdateTree = updateTree;
   }
@@ -128,8 +128,7 @@ public abstract class NamedConfigurable<T> implements Configurable {
     }
   }
 
-  @Nullable
-  protected JComponent createTopRightComponent() {
+  protected @Nullable JComponent createTopRightComponent() {
     return null;
   }
 
@@ -156,8 +155,7 @@ public abstract class NamedConfigurable<T> implements Configurable {
 
   public abstract JComponent createOptionsPanel();
 
-  @Nullable
-  public Icon getIcon(boolean expanded) {
+  public @Nullable Icon getIcon(boolean expanded) {
     return null;
   }
 

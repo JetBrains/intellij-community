@@ -8,6 +8,7 @@ import com.intellij.psi.impl.source.PsiClassReferenceType;
 import com.intellij.util.containers.ContainerUtil;
 import de.plushnikov.intellij.plugin.LombokClassNames;
 import de.plushnikov.intellij.plugin.lombokconfig.ConfigDiscovery;
+import de.plushnikov.intellij.plugin.lombokconfig.LombokNullAnnotationLibrary;
 import de.plushnikov.intellij.plugin.problem.ProblemProcessingSink;
 import de.plushnikov.intellij.plugin.problem.ProblemSink;
 import de.plushnikov.intellij.plugin.processor.JacksonizedProcessor;
@@ -34,6 +35,7 @@ import java.util.stream.Stream;
 import static com.intellij.openapi.util.text.StringUtil.capitalize;
 import static com.intellij.openapi.util.text.StringUtil.replace;
 import static de.plushnikov.intellij.plugin.lombokconfig.ConfigKey.BUILDER_CLASS_NAME;
+import static de.plushnikov.intellij.plugin.thirdparty.LombokAddNullAnnotations.createRelevantNonNullAnnotation;
 
 /**
  * Handler methods for Builder-processing
@@ -45,7 +47,7 @@ public class BuilderHandler {
   private final static String ANNOTATION_BUILDER_CLASS_NAME = "builderClassName";
   private static final String ANNOTATION_BUILD_METHOD_NAME = "buildMethodName";
   private static final String ANNOTATION_BUILDER_METHOD_NAME = "builderMethodName";
-  private static final String ANNOTATION_SETTER_PREFIX = "setterPrefix";
+  public static final String ANNOTATION_SETTER_PREFIX = "setterPrefix";
 
   private final static String BUILD_METHOD_NAME = "build";
   private final static String BUILDER_METHOD_NAME = "builder";
@@ -410,6 +412,9 @@ public class BuilderHandler {
       if (null == psiMethod || psiMethod.isConstructor() || psiMethod.hasModifierProperty(PsiModifier.STATIC)) {
         methodBuilder.withModifier(PsiModifier.STATIC);
       }
+
+      createRelevantNonNullAnnotation(containingClass, methodBuilder);
+
       return Optional.of(methodBuilder);
     }
     return Optional.empty();
@@ -457,10 +462,11 @@ public class BuilderHandler {
 
     final String canonicalText = psiTypeWithGenerics.getCanonicalText(false);
     final String blockText;
-    if(toBuilderAppendStatements.isEmpty()) {
+    if (toBuilderAppendStatements.isEmpty()) {
       blockText = toBuilderPrependStatements +
                   String.format("\nreturn new %s()%s;", canonicalText, toBuilderMethodCalls);
-    }else{
+    }
+    else {
       blockText = toBuilderPrependStatements +
                   String.format("\nfinal %s %s = new %s()%s;\n", canonicalText, BUILDER_TEMP_VAR, canonicalText, toBuilderMethodCalls) +
                   toBuilderAppendStatements +
@@ -468,6 +474,8 @@ public class BuilderHandler {
     }
 
     methodBuilder.withBodyText(blockText);
+
+    createRelevantNonNullAnnotation(containingClass, methodBuilder);
 
     return Optional.of(methodBuilder);
   }
@@ -503,12 +511,14 @@ public class BuilderHandler {
     final PsiSubstitutor builderSubstitutor = getBuilderSubstitutor(psiClass, builderClass);
     final String accessVisibility = getBuilderInnerAccessVisibility(psiAnnotation);
     final String setterPrefix = getSetterPrefix(psiAnnotation);
+    final LombokNullAnnotationLibrary nullAnnotationLibrary = ConfigDiscovery.getInstance().getAddNullAnnotationLombokConfigProperty(psiClass);
 
     return createBuilderInfos(psiClass, psiClassMethod)
       .map(info -> info.withSubstitutor(builderSubstitutor))
       .map(info -> info.withBuilderClass(builderClass))
       .map(info -> info.withVisibilityModifier(accessVisibility))
       .map(info -> info.withSetterPrefix(setterPrefix))
+      .map(info -> info.withNullAnnotationLibrary(nullAnnotationLibrary))
       .collect(Collectors.toList());
   }
 
@@ -715,6 +725,10 @@ public class BuilderHandler {
     final String codeBlockText =
       createBuildMethodCodeBlockText(psiMethod, builderClass, returnType, buildMethodPrepare, buildMethodParameters);
     methodBuilder.withBodyText(codeBlockText);
+
+    if (!PsiTypes.voidType().equals(returnType)) {
+      createRelevantNonNullAnnotation(builderClass, methodBuilder);
+    }
 
     Optional<PsiMethod> definedConstructor = Optional.ofNullable(psiMethod);
     if (definedConstructor.isEmpty()) {

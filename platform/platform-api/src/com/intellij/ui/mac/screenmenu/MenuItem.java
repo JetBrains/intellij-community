@@ -143,8 +143,7 @@ public class MenuItem implements Disposable, PropertyChangeListener {
   }
 
   @Override
-  synchronized
-  public void dispose() {
+  public synchronized void dispose() {
     if (presentation != null) presentation.removePropertyChangeListener(this);
     presentation = null;
 

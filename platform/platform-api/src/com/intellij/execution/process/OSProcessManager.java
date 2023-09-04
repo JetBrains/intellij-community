@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.process;
 
 import com.intellij.openapi.application.ApplicationManager;
@@ -19,6 +19,5 @@ public abstract class OSProcessManager {
    * @deprecated Use {@link OSProcessUtil#getProcessList()} and then {@link ProcessInfo#getCommandLine()} on items
    */
   @Deprecated(forRemoval = true)
-  @NotNull
-  public abstract List<String> getCommandLinesOfRunningProcesses();
+  public abstract @NotNull List<String> getCommandLinesOfRunningProcesses();
 }

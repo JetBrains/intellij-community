@@ -6,6 +6,7 @@ import de.plushnikov.intellij.plugin.psi.LombokLightFieldBuilder;
 import de.plushnikov.intellij.plugin.psi.LombokLightMethodBuilder;
 import de.plushnikov.intellij.plugin.thirdparty.CapitalizationStrategy;
 import de.plushnikov.intellij.plugin.thirdparty.LombokCopyableAnnotations;
+import de.plushnikov.intellij.plugin.thirdparty.LombokUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -14,6 +15,8 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
+
+import static de.plushnikov.intellij.plugin.thirdparty.LombokAddNullAnnotations.createRelevantNonNullAnnotation;
 
 class NonSingularHandler implements BuilderElementHandler {
   NonSingularHandler() {
@@ -50,13 +53,16 @@ class NonSingularHandler implements BuilderElementHandler {
     if(info.getVariable() instanceof PsiField psiField) {
       LombokCopyableAnnotations.copyCopyableAnnotations(psiField, methodBuilder.getModifierList(), LombokCopyableAnnotations.COPY_TO_SETTER);
     }
+
+    createRelevantNonNullAnnotation(info.getNullAnnotationLibrary(), methodBuilder);
+
     return Collections.singleton(methodBuilder);
   }
 
   @Override
-  public List<String> getBuilderMethodNames(@NotNull String newName, @Nullable PsiAnnotation singularAnnotation,
+  public List<String> getBuilderMethodNames(@NotNull String fieldName, @NotNull String prefix, @Nullable PsiAnnotation singularAnnotation,
                                             CapitalizationStrategy capitalizationStrategy) {
-    return Collections.singletonList(newName);
+    return Collections.singletonList(LombokUtils.buildAccessorName(prefix, fieldName, capitalizationStrategy));
   }
 
   @Override

@@ -13,7 +13,7 @@ import java.util.Arrays;
 
 @SuppressWarnings("NonPrivateFieldAccessedInSynchronizedContext")
 public final class MenuBar extends Menu {
-  static private long[] ourLastMenubarPeers = null;
+  private static long[] ourLastMenubarPeers = null;
   private Window myFrame;
   private final WindowListener myListener;
 

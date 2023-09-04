@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui;
 
 import com.intellij.openapi.util.Key;
@@ -33,7 +33,7 @@ public class CheckboxTreeHelper {
     myEventDispatcher = dispatcher;
   }
 
-  public void initTree(@NotNull final Tree tree, JComponent mainComponent, CheckboxTreeBase.CheckboxTreeCellRendererBase cellRenderer) {
+  public void initTree(final @NotNull Tree tree, JComponent mainComponent, CheckboxTreeBase.CheckboxTreeCellRendererBase cellRenderer) {
     removeTreeListeners(mainComponent);
     tree.setCellRenderer(cellRenderer);
     tree.setRootVisible(false);
@@ -195,7 +195,7 @@ public class CheckboxTreeHelper {
     if (remover != null) remover.run();
   }
 
-  public static <T> T[] getCheckedNodes(final Class<T> nodeType, @Nullable final Tree.NodeFilter<? super T> filter, final TreeModel model) {
+  public static <T> T[] getCheckedNodes(final Class<T> nodeType, final @Nullable Tree.NodeFilter<? super T> filter, final TreeModel model) {
     final ArrayList<T> nodes = new ArrayList<>();
     final Object root = model.getRoot();
     if (!(root instanceof CheckedTreeNode)) {

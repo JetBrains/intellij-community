@@ -141,13 +141,11 @@ public abstract class ScrollBarPainter implements RegionPainter<Float> {
     };
   }
 
-  @NotNull
-  private static ColorKey key(int light, int dark, @NotNull String name) {
+  private static @NotNull ColorKey key(int light, int dark, @NotNull String name) {
     return EditorColorsUtil.createColorKey(name, new JBColor(new Color(light, true), new Color(dark, true)));
   }
 
-  @NotNull
-  private static Color getColor(@Nullable Component component, @NotNull ColorKey key) {
+  private static @NotNull Color getColor(@Nullable Component component, @NotNull ColorKey key) {
     Color color = EditorColorsUtil.getColor(component, key);
     assert color != null : "default color is not specified for " + key;
 

@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui.navigation;
 
 import com.intellij.openapi.Disposable;
@@ -152,8 +152,7 @@ public final class History {
     return checkPlace != null && checkPlace.getPath(pathElement) != null;
   }
 
-  @Nullable
-  private Place getCheckPlace(String pathElement) {
+  private @Nullable Place getCheckPlace(String pathElement) {
     Place checkPlace = getCurrent();
     if (checkPlace == null || checkPlace.getPath(pathElement) == null) {
       checkPlace = query();

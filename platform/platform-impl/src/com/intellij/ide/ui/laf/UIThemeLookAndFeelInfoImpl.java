@@ -30,22 +30,23 @@ import java.util.Map;
  * @author Konstantin Bulenkov
  */
 public class UIThemeLookAndFeelInfoImpl extends UIThemeLookAndFeelInfo {
-  private boolean myInitialised;
+  private boolean isInitialised;
 
   public UIThemeLookAndFeelInfoImpl(@NotNull UITheme theme) {
     super(theme);
   }
 
   public void installTheme(UIDefaults defaults, boolean lockEditorScheme) {
-    defaults.put("ui.theme.is.dark", getTheme().isDark());
-    getTheme().applyProperties(defaults);
-    IconPathPatcher patcher = getTheme().getPatcher();
+    UITheme theme = getTheme();
+    defaults.put("ui.theme.is.dark", theme.isDark());
+    theme.applyProperties(defaults);
+    IconPathPatcher patcher = theme.getPatcher();
     if (patcher != null) {
       IconLoader.installPathPatcher(patcher);
     }
-    SVGLoader.setSelectionColorPatcherProvider(getTheme().getSelectionColorPatcher());
+    SVGLoader.setSelectionColorPatcherProvider(theme.getSelectionColorPatcher());
 
-    SVGLoader.SvgElementColorPatcherProvider colorPatcher = getTheme().getColorPatcher();
+    SVGLoader.SvgElementColorPatcherProvider colorPatcher = theme.getColorPatcher();
     if (colorPatcher != null) {
       SVGLoader.setColorPatcherProvider(colorPatcher);
     }
@@ -54,12 +55,12 @@ public class UIThemeLookAndFeelInfoImpl extends UIThemeLookAndFeelInfo {
     if (!lockEditorScheme) {
       installEditorScheme();
     }
-    AppUIUtil.updateForDarcula(getTheme().isDark());
-    myInitialised = true;
+    AppUIUtil.updateForDarcula(theme.isDark());
+    isInitialised = true;
   }
 
   public final boolean isInitialised() {
-    return myInitialised;
+    return isInitialised;
   }
 
   protected @Nullable InputStream getResourceAsStream(@NotNull String path) {
@@ -151,7 +152,7 @@ public class UIThemeLookAndFeelInfoImpl extends UIThemeLookAndFeelInfo {
     unsetBackgroundProperties(IdeBackgroundUtil.EDITOR_PROP);
     unsetBackgroundProperties(IdeBackgroundUtil.FRAME_PROP);
 
-    myInitialised = false;
+    isInitialised = false;
   }
 
   private void unsetBackgroundProperties(String backgroundPropertyKey) {

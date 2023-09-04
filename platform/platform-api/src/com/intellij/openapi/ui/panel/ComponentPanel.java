@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.ui.panel;
 
 import com.intellij.openapi.util.NlsContexts;
@@ -25,8 +25,7 @@ public abstract class ComponentPanel {
    * @return instance of <code>ComponentPanel</code> or <code>null</code> there is no
    * <code>ComponentPanel</code> associated with the owner.
    */
-  @Nullable
-  public static ComponentPanel getComponentPanel(@NotNull JComponent component) {
+  public static @Nullable ComponentPanel getComponentPanel(@NotNull JComponent component) {
     return (ComponentPanel)component.getClientProperty(DECORATED_PANEL_PROPERTY);
   }
 

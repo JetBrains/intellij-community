@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.openapi.ui;
 
@@ -160,8 +160,8 @@ public class DetailsComponent {
     myPaintBorder = paintBorder;
   }
 
-  public DetailsComponent setEmptyContentText(@Nullable final String emptyContentText) {
-    @NonNls final String s = XmlStringUtil.wrapInHtml("<center>" + (emptyContentText != null ? emptyContentText : "") + "</center>");
+  public DetailsComponent setEmptyContentText(final @Nullable String emptyContentText) {
+    final @NonNls String s = XmlStringUtil.wrapInHtml("<center>" + (emptyContentText != null ? emptyContentText : "") + "</center>");
     myEmptyContentLabel.setText(s);
     return this;
   }
