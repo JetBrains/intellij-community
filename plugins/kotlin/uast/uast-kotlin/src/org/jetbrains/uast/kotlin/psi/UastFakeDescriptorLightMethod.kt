@@ -99,6 +99,12 @@ internal class UastFakeDescriptorLightMethod(
                         )
                     )
                 }
+
+                if (isSuspendFunction()) {
+                    this.addParameter(
+                        UastDescriptorLightSuspendContinuationParameter.create(this@UastFakeDescriptorLightMethod, original, context)
+                    )
+                }
             }
         }
     }
@@ -125,11 +131,19 @@ internal abstract class UastFakeDescriptorLightMethodBase<T: CallableMemberDescr
         }
     }
 
+    override fun isSuspendFunction(): Boolean {
+        return (original as? FunctionDescriptor)?.isSuspend == true
+    }
+
     override fun isUnitFunction(): Boolean {
         return original is FunctionDescriptor && _returnType == PsiTypes.voidType()
     }
 
     override fun computeNullability(): KtTypeNullability? {
+        if (isSuspendFunction()) {
+            // suspend fun returns Any?, which is mapped to @Nullable java.lang.Object
+            return KtTypeNullability.NULLABLE
+        }
         return when (original.returnType?.nullability()) {
             null -> null
             TypeNullability.NOT_NULL -> KtTypeNullability.NON_NULLABLE
@@ -149,6 +163,10 @@ internal abstract class UastFakeDescriptorLightMethodBase<T: CallableMemberDescr
     }
 
     private val _returnType: PsiType? by lz {
+        if (isSuspendFunction()) {
+            // suspend fun returns Any?, which is mapped to @Nullable java.lang.Object
+            return@lz PsiType.getJavaLangObject(context.manager, context.resolveScope)
+        }
         original.returnType?.toPsiType(
             this,
             context,
