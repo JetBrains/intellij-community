@@ -15,7 +15,6 @@ import com.intellij.openapi.progress.*
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.DialogWrapper.CANCEL_EXIT_CODE
 import com.intellij.openapi.ui.DialogWrapper.OK_EXIT_CODE
-import com.intellij.openapi.ui.MessageDialogBuilder
 import com.intellij.openapi.util.io.toNioPath
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.vfs.newvfs.persistent.FSRecords
@@ -177,22 +176,15 @@ class RecoverVfsFromLogService(val coroutineScope: CoroutineScope) {
     private val cachesDir = FSRecords.getCachesDir().toNioPath()
     private val recoveredCachesDir = cachesDir.parent / "recovered-caches"
 
-    fun recoverSynchronouslyFromLastRecoveryPoint(queryContext: VfsLogQueryContext, needsConfirmation: Boolean = true): Boolean {
-      val runRecovery: Boolean =
-        if (needsConfirmation) {
-          MessageDialogBuilder.okCancel(
-            IdeBundle.message("recover.caches.from.log.recovery.action.name"),
-            IdeBundle.message("recover.caches.from.log.not.closed.properly.message")
-          ).guessWindowAndAsk()
-        }
-        else true
-      if (!runRecovery) return false;
+    fun recoverSynchronouslyFromLastRecoveryPoint(queryContext: VfsLogQueryContext): Boolean {
       // FIXME this modal should be at the call site, but it's java code that is not friendly to coroutines
-      return runWithModalProgressBlocking(ModalTaskOwner.guess(), IdeBundle.message("progress.cache.recover.from.logs.title"),
-                                          TaskCancellation.nonCancellable()) {
-        val recoveryPoint = getRecoveryPoints(queryContext)?.firstOrNull() ?: return@runWithModalProgressBlocking false
-        prepareRecoveredCaches(queryContext, recoveryPoint.point, rawProgressReporter)
-        true
+      return invokeAndWaitIfNeeded {
+        runWithModalProgressBlocking(ModalTaskOwner.guess(), IdeBundle.message("progress.cache.recover.from.logs.title"),
+                                     TaskCancellation.nonCancellable()) {
+          val recoveryPoint = getRecoveryPoints(queryContext)?.firstOrNull() ?: return@runWithModalProgressBlocking false
+          prepareRecoveredCaches(queryContext, recoveryPoint.point, rawProgressReporter)
+          true
+        }
       }
     }
 
