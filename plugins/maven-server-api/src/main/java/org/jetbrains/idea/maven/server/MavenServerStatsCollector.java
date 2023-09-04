@@ -30,9 +30,7 @@ public final class MavenServerStatsCollector {
   }
 
   private static void fill(Map<String, Integer> dest, Map<String, AtomicInteger> src) {
-    src.entrySet().forEach(e -> {
-      dest.put(e.getKey(), e.getValue().get());
-    });
+    src.forEach((key, value) -> dest.put(key, value.get()));
   }
 
   static void pluginResolve(String mavenid) {

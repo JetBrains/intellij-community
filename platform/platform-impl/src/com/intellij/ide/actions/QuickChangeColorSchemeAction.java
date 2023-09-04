@@ -79,9 +79,8 @@ public final class QuickChangeColorSchemeAction extends QuickSwitchSchemeAction 
       }
     }
 
-    UIManager.LookAndFeelInfo currentLafInfo = lafManager.getCurrentUIThemeLookAndFeel();
-    UITheme theme = currentLafInfo instanceof UIThemeLookAndFeelInfo ?
-                      ((UIThemeLookAndFeelInfo)currentLafInfo).getTheme() : null;
+    UIThemeLookAndFeelInfo currentLafInfo = lafManager.getCurrentUIThemeLookAndFeel();
+    UITheme theme = currentLafInfo != null ? currentLafInfo.getTheme() : null;
 
     if (isDarkEditorTheme &&
         (UIUtil.isUnderIntelliJLaF() || theme != null && !theme.isDark())) {

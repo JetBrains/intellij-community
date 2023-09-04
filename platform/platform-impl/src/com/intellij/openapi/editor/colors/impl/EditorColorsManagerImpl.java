@@ -669,7 +669,7 @@ public final class EditorColorsManagerImpl extends EditorColorsManager implement
 
   @Override
   public @NotNull EditorColorsScheme getSchemeForCurrentUITheme() {
-    LookAndFeelInfo lookAndFeelInfo = LafManager.getInstance().getCurrentUIThemeLookAndFeel();
+    UIThemeLookAndFeelInfo lookAndFeelInfo = LafManager.getInstance().getCurrentUIThemeLookAndFeel();
     EditorColorsScheme scheme = null;
     if (lookAndFeelInfo instanceof TempUIThemeLookAndFeelInfo) {
       EditorColorsScheme globalScheme = EditorColorsManager.getInstance().getGlobalScheme();
@@ -677,8 +677,8 @@ public final class EditorColorsManagerImpl extends EditorColorsManager implement
         return globalScheme;
       }
     }
-    if (lookAndFeelInfo instanceof UIThemeLookAndFeelInfo) {
-      UITheme theme = ((UIThemeLookAndFeelInfo)lookAndFeelInfo).getTheme();
+    if (lookAndFeelInfo != null) {
+      UITheme theme = lookAndFeelInfo.getTheme();
       String schemeName = theme.getEditorSchemeName();
       if (schemeName != null) {
         scheme = getScheme(schemeName);

@@ -1656,6 +1656,7 @@ public abstract class DiffRequestProcessor implements CheckedDisposable {
   /**
    * @deprecated use {@link OpenInEditorAction}
    */
+  @SuppressWarnings("InnerClassMayBeStatic") // left non-static for plugin compatibility
   @Deprecated
   protected class MyOpenInEditorAction extends OpenInEditorAction {
     public MyOpenInEditorAction() {

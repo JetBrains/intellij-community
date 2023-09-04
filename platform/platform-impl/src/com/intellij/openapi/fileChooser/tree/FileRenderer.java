@@ -7,6 +7,7 @@ import com.intellij.ui.ColoredTableCellRenderer;
 import com.intellij.ui.ColoredTreeCellRenderer;
 import com.intellij.ui.SimpleColoredComponent;
 import com.intellij.ui.SimpleTextAttributes;
+import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -27,7 +28,7 @@ public final class FileRenderer {
     return new ColoredListCellRenderer<>() {
       @Override
       protected void customizeCellRenderer(@NotNull JList<? extends T> list, T value, int index, boolean selected, boolean focused) {
-        customize(this, value, selected, focused);
+        customize(this, value);
       }
     };
   }
@@ -36,22 +37,23 @@ public final class FileRenderer {
     return new ColoredTableCellRenderer() {
       @Override
       protected void customizeCellRenderer(@NotNull JTable table, @Nullable Object value, boolean selected, boolean focused, int row, int column) {
-        customize(this, value, selected, focused);
+        customize(this, value);
       }
     };
   }
 
-  public ColoredTreeCellRenderer forTree() {
+  @Contract(" -> new")
+  public @NotNull ColoredTreeCellRenderer forTree() {
     return new ColoredTreeCellRenderer() {
       @Override
       public void customizeCellRenderer(@NotNull JTree tree, Object value,
                                         boolean selected, boolean expanded, boolean leaf, int row, boolean focused) {
-        customize(this, value, selected, focused);
+        customize(this, value);
       }
     };
   }
 
-  protected void customize(SimpleColoredComponent renderer, Object value, boolean selected, boolean focused) {
+  private static void customize(SimpleColoredComponent renderer, Object value) {
     int style = SimpleTextAttributes.STYLE_PLAIN;
     Color color = null;
     Icon icon = null;
