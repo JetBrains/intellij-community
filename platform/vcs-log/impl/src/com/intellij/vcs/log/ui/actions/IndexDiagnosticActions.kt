@@ -55,7 +55,7 @@ abstract class IndexDiagnosticActionBase(dynamicText: Supplier<@NlsActions.Actio
     val report = ProgressManager.getInstance().runProcessWithProgressSynchronously(ThrowableComputable {
       val detailsList = logManager.dataManager.commitDetailsGetter.getCommitDetails(commitIds)
       return@ThrowableComputable dataGetter.getDiffFor(commitIds, detailsList)
-    }, VcsLogBundle.message("vcs.log.index.diagnostic.progress.title"), false, project)
+    }, VcsLogBundle.message("vcs.log.index.diagnostic.progress.title"), true, project)
     if (report.isBlank()) {
       VcsNotifier.getInstance(project).notifyInfo(null, "", VcsLogBundle.message("vcs.log.index.diagnostic.success.message",
                                                                                  commitIds.size))
