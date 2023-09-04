@@ -1,24 +1,24 @@
 import java.util.List;
 
-record RecordInterface(I x, I y) {
-}
-
-interface Super {
-}
-
-record RecordSuper(int x) implements Super {
-}
-
-sealed interface I permits C, D {
-}
-
-final class C implements I {
-}
-
-final class D implements I {
-}
-
 class Dominance {
+
+  record RecordInterface(I x, I y) {
+  }
+
+  interface Super {
+  }
+
+  record RecordSuper(int x) implements Super {
+  }
+
+  sealed interface I permits C, D {
+  }
+
+  final class C implements I {
+  }
+
+  final class D implements I {
+  }
 
   Integer integer;
   Object object;
