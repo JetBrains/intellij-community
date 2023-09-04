@@ -14,12 +14,10 @@ import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileWithId;
 import com.intellij.openapi.vfs.newvfs.impl.CachedFileType;
-import com.intellij.openapi.vfs.newvfs.impl.VirtualFileSystemEntry;
 import com.intellij.psi.search.FileTypeIndex;
 import com.intellij.util.BooleanFunction;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.indexing.projectFilter.FileAddStatus;
 import com.intellij.util.indexing.projectFilter.ProjectIndexableFilesFilterHolder;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
@@ -52,7 +50,6 @@ final class UnindexedFilesFinder {
     @NotNull private List<SingleIndexValueRemover> removers = Collections.emptyList();
     final boolean applyIndexValuesSeparately;
     boolean indexInfrastructureExtensionInvalidated = false;
-    boolean mayMarkFileIndexed = true;
     @Nullable ArrayList<Pair<FileIndexingState, ID<?, ?>>> unindexedStates;
 
     UnindexedFileStatusBuilder(boolean applyIndexValuesSeparately) {
@@ -184,33 +181,7 @@ final class UnindexedFilesFinder {
 
       IndexedFileImpl indexedFile = new IndexedFileImpl(file, fileType, myProject);
       int inputId = FileBasedIndex.getFileId(file);
-      boolean fileWereJustAdded = myIndexableFilesFilterHolder.addFileId(inputId, myProject) == FileAddStatus.ADDED;
-
-      if (file instanceof VirtualFileSystemEntry && ((VirtualFileSystemEntry)file).isFileIndexed()) {
-        boolean wasInvalidated = false;
-        if (fileWereJustAdded) {
-          List<ID<?, ?>> ids = IndexingStamp.getNontrivialFileIndexedStates(inputId);
-          for (FileBasedIndexInfrastructureExtension.FileIndexingStatusProcessor processor : myStateProcessors) {
-            for (ID<?, ?> id : ids) {
-              if (myFileBasedIndex.needsFileContentLoading(id)) {
-                long nowTime = System.nanoTime();
-                try {
-                  if (!processor.processUpToDateFile(indexedFile, inputId, id)) {
-                    wasInvalidated = true;
-                  }
-                }
-                finally {
-                  fileStatusBuilder.timeProcessingUpToDateFiles += (System.nanoTime() - nowTime);
-                }
-              }
-            }
-          }
-        }
-        if (!wasInvalidated) {
-          IndexingStamp.flushCache(inputId);
-          return fileStatusBuilder.build();
-        }
-      }
+      myIndexableFilesFilterHolder.addFileId(inputId, myProject);
 
       FileTypeManagerEx ex = FileTypeManagerEx.getInstanceEx();
       if (!(ex instanceof FileTypeManagerImpl)) {
@@ -259,7 +230,7 @@ final class UnindexedFilesFinder {
         }
 
         if (!fileStatusBuilder.hasAppliersOrRemovers()) {
-          finishGettingStatus(file, indexedFile, inputId, fileStatusBuilder);
+          finishGettingStatus(indexedFile, inputId, fileStatusBuilder);
           finalization.set(EmptyRunnable.getInstance());
         }
         else {
@@ -272,7 +243,7 @@ final class UnindexedFilesFinder {
             finally {
               fileStatusBuilder.timeUpdatingContentLessIndexes += (System.nanoTime() - applyingStart);
             }
-            finishGettingStatus(file, indexedFile, inputId, fileStatusBuilder);
+            finishGettingStatus(indexedFile, inputId, fileStatusBuilder);
           });
         }
       });
@@ -290,7 +261,6 @@ final class UnindexedFilesFinder {
                                             int inputId) {
     if (FileBasedIndexScanUtil.isManuallyManaged(indexId)) return;
     if (!RebuildStatus.isOk(indexId)) {
-      fileStatusBuilder.mayMarkFileIndexed = false;
       return;
     }
 
@@ -414,8 +384,7 @@ final class UnindexedFilesFinder {
     }
   }
 
-  private void finishGettingStatus(@NotNull VirtualFile file,
-                                   IndexedFileImpl indexedFile,
+  private void finishGettingStatus(IndexedFileImpl indexedFile,
                                    int inputId,
                                    UnindexedFileStatusBuilder fileStatusBuilder) {
     if (myForceReindexingTrigger != null && myForceReindexingTrigger.fun(indexedFile)) {
@@ -424,9 +393,6 @@ final class UnindexedFilesFinder {
     }
 
     IndexingStamp.flushCache(inputId);
-    if (!fileStatusBuilder.shouldIndex && fileStatusBuilder.mayMarkFileIndexed) {
-      IndexingFlag.setFileIndexed(file);
-    }
   }
 
   private boolean tryIndexWithoutContentViaInfrastructureExtension(IndexedFile fileContent, int inputId, ID<?, ?> indexId) {

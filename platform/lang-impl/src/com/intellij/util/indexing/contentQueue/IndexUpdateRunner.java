@@ -386,7 +386,6 @@ public final class IndexUpdateRunner {
   private static void releaseFile(VirtualFile file, long length) {
     signalThatFileIsUnloaded(length);
     IndexingStamp.flushCache(FileBasedIndex.getFileId(file));
-    IndexingFlag.unlockFile(file);
   }
 
   private @NotNull ContentLoadingResult loadContent(@NotNull ProgressIndicator indicator,

@@ -1,9 +1,9 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.test
 
-import com.intellij.java.library.JavaLibraryModificationTracker
 import com.intellij.facet.FacetManager
+import com.intellij.java.library.JavaLibraryModificationTracker
 import com.intellij.lang.annotation.HighlightSeverity
 import com.intellij.openapi.application.invokeAndWaitIfNeeded
 import com.intellij.openapi.application.runWriteAction
@@ -12,10 +12,10 @@ import com.intellij.openapi.editor.Document
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.project.DumbService
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.vfs.newvfs.impl.VirtualFileSystemEntry
 import com.intellij.psi.PsiDocumentManager
 import com.intellij.testFramework.LightPlatformTestCase
 import com.intellij.testFramework.fixtures.JavaCodeInsightTestFixture
-import com.intellij.util.indexing.IndexingFlag
 import com.intellij.util.indexing.UnindexedFilesUpdater
 import com.intellij.util.ui.UIUtil
 import org.jetbrains.kotlin.cli.common.arguments.K2JVMCompilerArguments
@@ -24,11 +24,11 @@ import org.jetbrains.kotlin.diagnostics.Severity
 import org.jetbrains.kotlin.diagnostics.rendering.DefaultErrorMessages
 import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginKind
 import org.jetbrains.kotlin.idea.base.plugin.checkKotlinPluginKind
-import org.jetbrains.kotlin.idea.caches.resolve.analyzeWithContent
-import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.idea.base.test.KotlinRoot
+import org.jetbrains.kotlin.idea.caches.resolve.analyzeWithContent
 import org.jetbrains.kotlin.idea.facet.KotlinFacetConfiguration
 import org.jetbrains.kotlin.idea.facet.KotlinFacetType
+import org.jetbrains.kotlin.psi.KtFile
 import java.io.File
 
 @JvmField
@@ -74,7 +74,6 @@ fun Project.waitIndexingComplete(indexingReason: String? = null) {
     UIUtil.dispatchAllInvocationEvents()
     invokeAndWaitIfNeeded {
         // TODO: [VD] a dirty hack to reindex created android project
-        IndexingFlag.cleanupProcessedFlag()
         with(DumbService.getInstance(project)) {
             UnindexedFilesUpdater(project, indexingReason).queue()
             completeJustSubmittedTasks()

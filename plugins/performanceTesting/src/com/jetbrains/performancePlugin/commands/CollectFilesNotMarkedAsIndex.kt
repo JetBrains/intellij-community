@@ -9,7 +9,6 @@ import com.intellij.openapi.ui.playback.PlaybackContext
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.VirtualFileFilter
 import com.intellij.openapi.vfs.newvfs.ManagingFS
-import com.intellij.openapi.vfs.newvfs.impl.VfsData
 import com.intellij.openapi.vfs.newvfs.impl.VirtualFileSystemEntry
 import com.intellij.psi.impl.cache.impl.id.IdIndex
 import com.intellij.psi.search.GlobalSearchScope
@@ -17,7 +16,6 @@ import com.intellij.psi.stubs.StubUpdatingIndex
 import com.intellij.util.ExceptionUtil
 import com.intellij.util.indexing.FileBasedIndex
 import com.intellij.util.indexing.FileBasedIndexImpl
-import com.intellij.util.indexing.IndexingFlag
 import com.intellij.util.indexing.IndexingStamp
 import com.intellij.util.indexing.roots.IndexableFilesIterator
 import com.intellij.util.indexing.roots.kind.SdkOrigin
@@ -83,17 +81,10 @@ class CollectFilesNotMarkedAsIndex(text: String, line: Int) : PerformanceCommand
             return true
           }
 
-          if (VfsData.isIsIndexedFlagDisabled()) {
-            checkIndexed(fileOrDir, false, "has no indexing timestamp") {
-              IndexingStamp.hasIndexingTimeStamp(it.id) ||
-              // com.intellij.util.indexing.FileBasedIndexImpl.getAffectedIndexCandidates returns empty list for such files
-              ProjectCoreUtil.isProjectOrWorkspaceFile(it, it.fileType)
-            }
-          }
-          else {
-            checkIndexed(fileOrDir, true, "not marked as indexed") {
-              it.isFileIndexed
-            }
+          checkIndexed(fileOrDir, false, "has no indexing timestamp") {
+            IndexingStamp.hasIndexingTimeStamp(it.id) ||
+            // com.intellij.util.indexing.FileBasedIndexImpl.getAffectedIndexCandidates returns empty list for such files
+            ProjectCoreUtil.isProjectOrWorkspaceFile(it, it.fileType)
           }
           return true
         }
@@ -147,12 +138,6 @@ class CollectFilesNotMarkedAsIndex(text: String, line: Int) : PerformanceCommand
       val textConsumer = Consumer<String> { text ->
         sb.append(text)
         writer.write(text)
-      }
-
-      val lockedFiles = IndexingFlag.dumpLockedFiles()
-      if (!lockedFiles.isEmpty()) {
-        textConsumer.accept("Locked files' ids in IndexingFlag: ${lockedFiles.contentToString()}\n")
-        dumpIdsWithPaths(lockedFiles, textConsumer)
       }
 
       try {

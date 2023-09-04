@@ -40,11 +40,6 @@ import java.util.List;
 public abstract class VirtualFileSystemEntry extends NewVirtualFile {
   public static final VirtualFileSystemEntry[] EMPTY_ARRAY = new VirtualFileSystemEntry[0];
 
-  @ApiStatus.Internal
-  public static void markAllFilesAsUnindexed() {
-    VfsData.markAllFilesAsUnindexed();
-  }
-
   static PersistentFS getPersistence() {
     return PersistentFS.getInstance();
   }
@@ -214,20 +209,6 @@ public abstract class VirtualFileSystemEntry extends NewVirtualFile {
 
   void setFlagInt(@Flags int mask, boolean value) {
     getSegment().setFlag(myId, mask, value);
-  }
-
-  public boolean isFileIndexed() {
-    if (VfsData.isIsIndexedFlagDisabled()) {
-      return false;
-    }
-    return getSegment().isIndexed(myId);
-  }
-
-  public void setFileIndexed(boolean indexed) {
-    if (VfsData.isIsIndexedFlagDisabled()) {
-      return;
-    }
-    getSegment().setIndexed(myId, indexed);
   }
 
   @Override
