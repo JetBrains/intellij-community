@@ -13,4 +13,9 @@
     <codeinsight.quickfix.registrar implementation="org.jetbrains.kotlin.idea.quickfix.KotlinK2QuickFixRegistrar"/>
   </extensions>
 
+  <extensions defaultExtensionNs="com.intellij">
+    <codeInsight.unresolvedReferenceQuickFixProvider
+            implementation="org.jetbrains.kotlin.idea.codeInsight.KotlinFirUnresolvedReferenceQuickFixProvider"/>
+  </extensions>
+
 </idea-plugin>

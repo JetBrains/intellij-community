@@ -8,6 +8,7 @@ import com.intellij.codeInsight.daemon.impl.analysis.HighlightInfoHolder
 import com.intellij.codeInsight.daemon.impl.analysis.HighlightingLevelManager
 import com.intellij.codeInsight.intention.IntentionAction
 import com.intellij.codeInsight.intention.IntentionActionWithOptions
+import com.intellij.codeInsight.quickfix.UnresolvedReferenceQuickFixUpdater
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.diagnostic.ControlFlowException
 import com.intellij.openapi.util.NlsSafe
@@ -87,6 +88,11 @@ class KotlinDiagnosticHighlightVisitor : HighlightVisitor {
                     options += problemGroup.getSuppressActions(diagnostic.psi)
                 }
                 infoBuilder.registerFix(quickFixInfo, options, null, null, null)
+            }
+            if (diagnostic is KtFirDiagnostic.UnresolvedImport || diagnostic is KtFirDiagnostic.UnresolvedReference) {
+                diagnostic.psi.reference?.let {
+                    UnresolvedReferenceQuickFixUpdater.getInstance(holder.project).registerQuickFixesLater(it, infoBuilder)
+                }
             }
             holder.add(infoBuilder.create())
         }
