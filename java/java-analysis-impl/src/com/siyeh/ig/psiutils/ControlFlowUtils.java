@@ -24,6 +24,7 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.ObjectUtils;
+import com.intellij.util.Processor;
 import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NonNls;
@@ -1466,5 +1467,52 @@ public final class ControlFlowUtils {
     private boolean continueToAncestorFound() {
       return found;
     }
+  }
+
+  /**
+   * Processes elements in the current scope (not in lambda, nested classes on so on) using a given processor.
+   *
+   * @param context the context element to start the processing from
+   * @param processor the processor to be used for element processing
+   */
+  public static void processElementsInCurrentScope(@NotNull PsiElement context,
+                                                   @NotNull Processor<? super @NotNull PsiElement> processor) {
+    class Visitor extends JavaRecursiveElementWalkingVisitor {
+      boolean stop = false;
+
+      @Override
+      public void visitElement(@NotNull PsiElement psiElement) {
+        if (psiElement != context) {
+          PsiElement parent = psiElement.getParent();
+          // do not process any anonymous class children except its getArgumentList()
+          //if the visitor was not called from inside anonymous class
+          if (parent instanceof PsiAnonymousClass && !(psiElement instanceof PsiExpressionList)) {
+            return;
+          }
+        }
+        stop = !processor.process(psiElement);
+        if (stop) {
+          return;
+        }
+        super.visitElement(psiElement);
+      }
+
+      @Override
+      public void visitAnonymousClass(@NotNull PsiAnonymousClass aClass) {
+        // process anonymous getArgumentList()
+        visitElement(aClass);
+      }
+
+      @Override
+      public void visitClass(@NotNull PsiClass aClass) {
+      }
+
+      @Override
+      public void visitLambdaExpression(@NotNull PsiLambdaExpression expression) {
+      }
+    }
+
+    Visitor visitor = new Visitor();
+    context.accept(visitor);
   }
 }
