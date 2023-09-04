@@ -14,6 +14,8 @@ import com.intellij.openapi.editor.colors.impl.EditorColorsManagerImpl
 import com.intellij.util.concurrency.SynchronizedClearableLazy
 import java.util.function.Supplier
 
+private const val DEFAULT_LIGHT_THEME_ID = "JetBrainsLightTheme"
+
 // separate service to avoid using LafManager in the EditorColorsManagerImpl initialization
 @Service(Service.Level.APP)
 internal class UiThemeProviderListManager {
@@ -93,7 +95,7 @@ internal class UiThemeProviderListManager {
           theme = SynchronizedClearableLazy {
             val theme = when (provider.id) {
               DEFAULT_DARK_PARENT_THEME -> darcula.value
-              DEFAULT_LIGHT_THEME_ID -> intelliJ.value
+              DEFAULT_LIGHT_PARENT_THEME -> intelliJ.value
               else -> {
                 val parentTheme = findParentTheme(themes = themeDescriptors, parentId = provider.parentTheme)
                 provider.createTheme(parentTheme = parentTheme, defaultDarkParent = darcula, defaultLightParent = intelliJ)
@@ -119,8 +121,6 @@ internal data class LafEntry(
 private fun findParentTheme(themes: Collection<LafEntry>, parentId: String?): UITheme? {
   return if (parentId == null) null else themes.firstOrNull { it.id == parentId }?.theme?.get()?.theme
 }
-
-private const val DEFAULT_LIGHT_THEME_ID = "JetBrainsLightTheme"
 
 private val editorColorManager: EditorColorsManagerImpl
   get() = EditorColorsManager.getInstance() as EditorColorsManagerImpl

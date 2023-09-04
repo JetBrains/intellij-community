@@ -93,7 +93,9 @@ internal class UIThemeBean {
           }
           JsonToken.VALUE_STRING -> {
             when (parser.currentName()) {
-              "id" -> bean.id = parser.valueAsString
+              "id" -> {
+                logger<UIThemeBean>().warn("Do not set theme id in JSON (value=${parser.valueAsString})")
+              }
               "name" -> bean.name = parser.valueAsString
               "nameKey" -> bean.nameKey = parser.valueAsString
               "parentTheme" -> bean.parentTheme = parser.valueAsString
@@ -130,6 +132,7 @@ internal class UIThemeBean {
   @JvmField
   var providerClassLoader: ClassLoader? = null
 
+  @Transient
   @JvmField
   var id: String? = null
 
