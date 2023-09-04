@@ -331,10 +331,13 @@ public class CommitMessage extends JPanel implements Disposable, DataProvider, C
       }
       editor.putUserData(IntentionManager.SHOW_INTENTION_OPTIONS_KEY, false);
 
-      // must create TrafficRenderer outside EDT
-      ReadAction.nonBlocking(() -> new ConditionalTrafficLightRenderer(myProject, editor.getDocument()))
+      ReadAction.nonBlocking(() -> {
+          // assertIsNonDispatchThread here
+          return new ConditionalTrafficLightRenderer(myProject, editor.getDocument());
+        })
         .expireWith(((EditorImpl)editor).getDisposable())
-        .finishOnUiThread(ModalityState.defaultModalityState(), renderer -> {
+        .finishOnUiThread(ModalityState.any(), renderer -> {
+          // assertIsDispatchThread here
           ((EditorMarkupModel)editor.getMarkupModel()).setErrorStripeRenderer(renderer);
         })
         .submit(AppExecutorUtil.getAppExecutorService());
