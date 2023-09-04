@@ -71,7 +71,7 @@ class NonIncrementalCellLines private constructor(private val document: Document
       modificationStamp = modificationStamp,
     )
 
-    catchExceptionsAndLogThem {
+    catchThrowableAndLog {
       intervalListeners.multicaster.documentChanged(event)
     }
   }
@@ -82,7 +82,7 @@ class NonIncrementalCellLines private constructor(private val document: Document
     override fun beforeDocumentChange(event: DocumentEvent) {
       oldAffectedCells = getAffectedCells(intervals, document, TextRange(event.offset, event.offset + event.oldLength))
 
-      catchExceptionsAndLogThem {
+      catchThrowableAndLog {
         intervalListeners.multicaster.beforeDocumentChange(
           NotebookCellLinesEventBeforeChange(
             documentEvent = event,
@@ -103,12 +103,12 @@ class NonIncrementalCellLines private constructor(private val document: Document
     }
   }
 
-  private inline fun catchExceptionsAndLogThem(func: () -> Unit) {
+  private inline fun catchThrowableAndLog(func: () -> Unit) {
     try {
       func()
     }
-    catch (e: Exception) {
-      thisLogger().error("NotebookCellLines.IntervalListener shouldn't throw exceptions", e)
+    catch (t: Throwable) {
+      thisLogger().error("NotebookCellLines.IntervalListener shouldn't throw exceptions", t)
       // consume exception, otherwise this will prevent document updating. See DS-4305
     }
   }
