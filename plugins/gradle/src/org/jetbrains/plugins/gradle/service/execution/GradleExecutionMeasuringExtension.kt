@@ -30,7 +30,9 @@ class GradleExecutionMeasuringExtension : GradleOperationHelperExtension {
       ProgressListener {
         router.route(it)
       },
-      OperationType.TASK, OperationType.GENERIC
+      // Workaround to IDEA-323893 due to import performance regression b/298372819 caused by
+      // subscribing to many Gradle events that need to be deserialized in the IDE
+      OperationType.TASK, //OperationType.GENERIC
     )
   }
 
