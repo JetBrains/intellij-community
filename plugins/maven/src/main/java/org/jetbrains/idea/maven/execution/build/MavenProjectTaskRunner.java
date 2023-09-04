@@ -10,6 +10,8 @@ import com.intellij.execution.process.ProcessAdapter;
 import com.intellij.execution.process.ProcessEvent;
 import com.intellij.execution.process.ProcessHandler;
 import com.intellij.execution.runners.ExecutionEnvironment;
+import com.intellij.execution.scratch.JavaScratchConfiguration;
+import com.intellij.execution.scratch.JavaScratchModuleBuildTask;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.module.Module;
@@ -64,6 +66,9 @@ public class MavenProjectTaskRunner extends ProjectTaskRunner {
     }
 
     if (projectTask instanceof ModuleBuildTask) {
+      if (projectTask instanceof JavaScratchModuleBuildTask) {
+        return false;
+      }
       Module module = ((ModuleBuildTask)projectTask).getModule();
       return isMavenModule(module);
     }
@@ -99,6 +104,9 @@ public class MavenProjectTaskRunner extends ProjectTaskRunner {
 
     if (projectTask instanceof ExecuteRunConfigurationTask task) {
       RunProfile runProfile = task.getRunProfile();
+      if (runProfile instanceof JavaScratchConfiguration) {
+        return false;
+      }
       if (runProfile instanceof ModuleBasedConfiguration) {
         RunConfigurationModule module = ((ModuleBasedConfiguration<?, ?>)runProfile).getConfigurationModule();
         if (!isMavenModule(module.getModule())) {

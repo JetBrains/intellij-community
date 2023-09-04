@@ -6,6 +6,8 @@ import com.intellij.execution.configurations.*;
 import com.intellij.execution.impl.ExecutionManagerImpl;
 import com.intellij.execution.remote.RemoteConfiguration;
 import com.intellij.execution.runners.ExecutionEnvironment;
+import com.intellij.execution.scratch.JavaScratchConfiguration;
+import com.intellij.execution.scratch.JavaScratchModuleBuildTask;
 import com.intellij.execution.util.JavaParametersUtil;
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.actionSystem.DataContext;
@@ -27,13 +29,17 @@ import com.intellij.task.ProjectTask;
 import com.intellij.task.ProjectTaskContext;
 import com.intellij.task.ProjectTaskManager;
 import com.intellij.task.impl.EmptyCompileScopeBuildTaskImpl;
+import com.intellij.task.impl.ModuleBuildTaskImpl;
+import com.intellij.task.impl.ProjectTaskList;
 import com.intellij.task.impl.ProjectTaskManagerImpl;
 import com.intellij.util.concurrency.Semaphore;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import java.util.List;
 
 public class CompileStepBeforeRun extends BeforeRunTaskProvider<CompileStepBeforeRun.MakeBeforeRunTask> implements DumbAware {
   private static final Logger LOG = Logger.getInstance(CompileStepBeforeRun.class);
@@ -158,7 +164,7 @@ public class CompileStepBeforeRun extends BeforeRunTaskProvider<CompileStepBefor
                     }
                   }
 
-                  projectTask = projectTaskManager.createModulesBuildTask(modules, true, true, true, includeTests.get());
+                  projectTask = createModulesBuildTask(runConfiguration, projectTaskManager, modules, includeTests.get());
                 }
                 else if (runConfiguration.isBuildProjectOnEmptyModuleList()){
                   projectTask = projectTaskManager.createAllModulesBuildTask(true, myProject);
@@ -213,5 +219,27 @@ public class CompileStepBeforeRun extends BeforeRunTaskProvider<CompileStepBefor
       super(ID);
       setEnabled(true);
     }
+  }
+
+  private static @NotNull ProjectTask createModulesBuildTask(@NotNull RunProfileWithCompileBeforeLaunchOption runConfiguration,
+                                                             @NotNull ProjectTaskManager projectTaskManager,
+                                                             Module[] modules,
+                                                             boolean includeTests) {
+    ProjectTask delegate = projectTaskManager.createModulesBuildTask(modules, true, true, true, includeTests);
+    if (runConfiguration instanceof JavaScratchConfiguration) {
+      if (delegate instanceof ModuleBuildTaskImpl) {
+        return new JavaScratchModuleBuildTask((ModuleBuildTaskImpl)delegate);
+      }
+      if (delegate instanceof ProjectTaskList) {
+        List<ProjectTask> tasks = ContainerUtil.map(((ProjectTaskList)delegate), task -> {
+          if (task instanceof ModuleBuildTaskImpl) {
+            return new JavaScratchModuleBuildTask((ModuleBuildTaskImpl)task);
+          }
+          return task;
+        });
+        return new ProjectTaskList(tasks);
+      }
+    }
+    return delegate;
   }
 }
