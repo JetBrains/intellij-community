@@ -746,6 +746,7 @@ object CommunityRepositoryModules {
       spec.withModules(listOf(
         "intellij.groovy.psi",
         "intellij.groovy.structuralSearch",
+        "intellij.groovy.git",
       ))
       spec.withModule("intellij.groovy.jps", "groovy-jps.jar")
       spec.withModule("intellij.groovy.rt", "groovy-rt.jar")

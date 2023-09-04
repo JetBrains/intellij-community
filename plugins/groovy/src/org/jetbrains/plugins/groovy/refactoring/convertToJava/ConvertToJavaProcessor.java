@@ -20,6 +20,7 @@ import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
 import org.jetbrains.plugins.groovy.refactoring.GroovyRefactoringBundle;
+import org.jetbrains.plugins.groovy.refactoring.convertToJava.git.RenameTrackingKt;
 
 import java.util.HashSet;
 import java.util.Set;
@@ -83,6 +84,9 @@ public class ConvertToJavaProcessor extends BaseRefactoringProcessor {
       String fileName = getNewFileName(file);
       PsiElement newFile;
       try {
+        String filePathBeforeConvert = file.getVirtualFile().getPath();
+        RenameTrackingKt.setPathBeforeGroovyToJavaConversion(file.getVirtualFile(), filePathBeforeConvert);
+
         newFile = file.setName(fileName);
       }
       catch (final IncorrectOperationException e) {

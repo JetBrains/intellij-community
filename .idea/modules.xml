@@ -662,6 +662,7 @@
       <module fileurl="file://$PROJECT_DIR$/plugins/groovy/intellij.groovy.iml" filepath="$PROJECT_DIR$/plugins/groovy/intellij.groovy.iml" />
       <module fileurl="file://$PROJECT_DIR$/plugins/groovy/rt-constants/intellij.groovy.constants.rt.iml" filepath="$PROJECT_DIR$/plugins/groovy/rt-constants/intellij.groovy.constants.rt.iml" />
       <module fileurl="file://$PROJECT_DIR$/plugins/devkit/intellij.groovy.devkit/intellij.groovy.devkit.iml" filepath="$PROJECT_DIR$/plugins/devkit/intellij.groovy.devkit/intellij.groovy.devkit.iml" />
+      <module fileurl="file://$PROJECT_DIR$/plugins/groovy/git/intellij.groovy.git.iml" filepath="$PROJECT_DIR$/plugins/groovy/git/intellij.groovy.git.iml" />
       <module fileurl="file://$PROJECT_DIR$/plugins/groovy/jps-plugin/intellij.groovy.jps.iml" filepath="$PROJECT_DIR$/plugins/groovy/jps-plugin/intellij.groovy.jps.iml" />
       <module fileurl="file://$PROJECT_DIR$/plugins/groovy/jps-plugin/intellij.groovy.jps.tests.iml" filepath="$PROJECT_DIR$/plugins/groovy/jps-plugin/intellij.groovy.jps.tests.iml" />
       <module fileurl="file://$PROJECT_DIR$/plugins/groovy/groovy-psi/intellij.groovy.psi.iml" filepath="$PROJECT_DIR$/plugins/groovy/groovy-psi/intellij.groovy.psi.iml" />
