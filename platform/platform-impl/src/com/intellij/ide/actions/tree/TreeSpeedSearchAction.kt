@@ -8,6 +8,10 @@ import com.intellij.openapi.project.DumbAwareAction
 
 class TreeSpeedSearchAction : DumbAwareAction() {
 
+  companion object {
+    const val ID = "Tree-speedSearch"
+  }
+
   override fun getActionUpdateThread() = ActionUpdateThread.EDT
 
   override fun update(e: AnActionEvent) {
