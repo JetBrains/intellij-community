@@ -55,6 +55,12 @@ class GitLabSnippetService(private val project: Project, private val serviceScop
                            ?: selectedFiles?.firstOrNull()?.name
                            ?: files.first().name
 
+        val contents = async(Dispatchers.IO) {
+          readAction {
+            collectContents(editor, files) ?: listOf()
+          }
+        }
+
         val accountManager = service<GitLabAccountManager>()
         val apiManager = service<GitLabApiManager>()
 
@@ -63,10 +69,10 @@ class GitLabSnippetService(private val project: Project, private val serviceScop
           if (!attemptLogin(accountManager)) return@launch
         }
 
-        val result = showDialog(initialTitle, apiManager, files) ?: return@launch
+        val result = showDialog(initialTitle, contents, apiManager, files) ?: return@launch
 
         withBackgroundProgress(project, message("snippet.create.action.progress"), true) {
-          createSnippet(accountManager, apiManager, result, editor, files)
+          createSnippet(accountManager, apiManager, result, files)
         }
       }
       catch (e: Exception) {
@@ -124,7 +130,6 @@ class GitLabSnippetService(private val project: Project, private val serviceScop
   private suspend fun createSnippet(accountManager: GitLabAccountManager,
                                     apiManager: GitLabApiManager,
                                     result: GitLabCreateSnippetResult,
-                                    editor: Editor?,
                                     files: List<VirtualFile>) {
     // Process result by creating the snippet, copying url, etc.
     val data = result.data
@@ -133,11 +138,8 @@ class GitLabSnippetService(private val project: Project, private val serviceScop
               ?: return
 
     val fileNameExtractor = getFileNameExtractor(project, files, data.pathHandlingMode)
-    val contents = readAction {
-      collectContents(editor, files) ?: listOf()
-    }
 
-    val snippetBlobActions = contents.map { glContents ->
+    val snippetBlobActions = result.nonEmptyContents.map { glContents ->
       GitLabSnippetBlobAction(
         GitLabSnippetBlobActionEnum.create,
         glContents.capturedContents,
@@ -192,6 +194,7 @@ class GitLabSnippetService(private val project: Project, private val serviceScop
    * Shows the 'Create Snippet' dialog and returns a view-model representing the final state of the user inputs.
    */
   private suspend fun showDialog(initialTitle: String,
+                                 contents: Deferred<List<GitLabSnippetFileContents>>,
                                  apiManager: GitLabApiManager,
                                  files: List<VirtualFile>): GitLabCreateSnippetResult? =
     coroutineScope {
@@ -208,6 +211,7 @@ class GitLabSnippetService(private val project: Project, private val serviceScop
         service<GitLabAccountManager>(),
         apiManager,
         availablePathHandlingModes.toSet(),
+        contents,
         GitLabCreateSnippetViewModelData(
           initialTitle,
           "",

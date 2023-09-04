@@ -10,11 +10,8 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.vfs.VirtualFile
 import git4idea.remote.hosting.knownRepositories
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.*
-import kotlinx.coroutines.launch
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.plugins.gitlab.GitLabProjectsManager
 import org.jetbrains.plugins.gitlab.api.GitLabApiManager
@@ -48,6 +45,7 @@ internal class GitLabCreateSnippetViewModel(
   private val glAccountManager: GitLabAccountManager,
   glApiManager: GitLabApiManager,
   val availablePathModes: Set<PathHandlingMode>,
+  contents: Deferred<List<GitLabSnippetFileContents>>,
   data: GitLabCreateSnippetViewModelData,
 ) {
   /** Flow of GitLab accounts taken from [GitLabAccountManager]. */
@@ -92,6 +90,18 @@ internal class GitLabCreateSnippetViewModel(
   }.modelFlow(cs, LOG)
 
   /**
+   * Lists the collected contents for the snippet that are completely empty.
+   */
+  val emptyContents: Deferred<List<GitLabSnippetFileContents>> =
+    cs.async { contents.await().filter { it.capturedContents.isEmpty() } }
+
+  /**
+   * Collects contents to check whether any of the contents are usable for a snippet.
+   */
+  val nonEmptyContents: Deferred<List<GitLabSnippetFileContents>> =
+    cs.async { contents.await().filter { it.capturedContents.isNotEmpty() } }
+
+  /**
    * Mutable flow of the current static view model data.
    */
   val data: MutableStateFlow<GitLabCreateSnippetViewModelData> = MutableStateFlow(data)
@@ -119,6 +129,7 @@ internal class GitLabCreateSnippetViewModel(
     val (account, _) = glAccountAndCredentials.firstOrNull() ?: return null
     return GitLabCreateSnippetResult(
       account,
+      nonEmptyContents.await(),
       data.value
     )
   }
@@ -129,6 +140,7 @@ internal class GitLabCreateSnippetViewModel(
  */
 internal data class GitLabCreateSnippetResult(
   val account: GitLabAccount,
+  val nonEmptyContents: List<GitLabSnippetFileContents>,
   val data: GitLabCreateSnippetViewModelData
 )
 
