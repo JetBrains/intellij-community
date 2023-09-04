@@ -163,6 +163,11 @@ public class K2UnusedSymbolHighlightingTestGenerated extends AbstractK2LocalInsp
         runTest("../../../idea/tests/testData/inspectionsLocal/unusedSymbol/lastPropertyInPrimaryConstructorWithComments.kt");
     }
 
+    @TestMetadata("namelessFunctionalParameter.kt")
+    public void testNamelessFunctionalParameter() throws Exception {
+        runTest("../../../idea/tests/testData/inspectionsLocal/unusedSymbol/namelessFunctionalParameter.kt");
+    }
+
     @TestMetadata("nestedPrivateObject.kt")
     public void testNestedPrivateObject() throws Exception {
         runTest("../../../idea/tests/testData/inspectionsLocal/unusedSymbol/nestedPrivateObject.kt");

@@ -65,6 +65,8 @@ object KotlinUnusedSymbolUtil {
     if (declaration is KtObjectDeclaration && declaration.isCompanion()) return false
 
     if (declaration is KtParameter) {
+      // nameless parameters like `(Type) -> Unit` make no sense to highlight
+      if (declaration.name == null) return false
       val ownerFunction = declaration.getOwnerFunction()
       if (ownerFunction is KtConstructor<*>) {
         // constructor parameters of data class are considered used because they are implicitly used in equals() (???)
