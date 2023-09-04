@@ -14,7 +14,6 @@ CoroutinePreflightFrame invokeSuspend (optimisedVariablesInSuspendInline.kt:14)
 optimisedVariablesInSuspendInline.kt:17
 CoroutinePreflightFrame invokeSuspend (optimisedVariablesInSuspendInline.kt:17)
     JavaValue[local] a: java.lang.String = a (optimisedVariablesInSuspendInline.kt:9)
-    JavaValue[continuation] a$iv = a
     DummyMessageValueNode = 'b' was optimised out
 optimisedVariablesInSuspendInline.kt:19
 CoroutinePreflightFrame invokeSuspend (optimisedVariablesInSuspendInline.kt:19)
