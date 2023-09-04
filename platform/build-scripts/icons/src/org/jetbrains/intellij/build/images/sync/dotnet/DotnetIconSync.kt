@@ -48,6 +48,18 @@ object DotnetIconSync {
     val prop = "icons.sync.dotnet.merge.robot.build.conf"
     System.getProperty(prop) ?: error("Specify property $prop")
   }
+  private val skipTriggerMerge by lazy {
+    val prop = "icons.sync.skip.trigger.merge"
+    System.getProperty(prop)?.toBoolean() ?: false
+  }
+  private val customToolPath: String? by lazy {
+    val prop = "icons.sync.custom.tool.path"
+    System.getProperty(prop)?.takeIf { it.isNotEmpty() }
+  }
+  private val customToolArgs: String? by lazy {
+    val prop = "icons.sync.custom.tool.args"
+    System.getProperty(prop)
+  }
 
   private fun step(msg: String) = println("\n** $msg")
 
@@ -77,6 +89,7 @@ object DotnetIconSync {
     try {
       transformIconsToIdeaFormat()
       syncPaths.forEach(this::sync)
+      callCustomTool()
       generateClasses()
       RiderIconsJsonGenerator.generate(context.devRepoRoot.resolve(RIDER_ICONS_RELATIVE_PATH))
       checkCaseConflicts()
@@ -87,7 +100,9 @@ object DotnetIconSync {
         createBranchForMerge()
         commitChanges()
         pushBranchForMerge()
-        triggerMerge()
+        if (!skipTriggerMerge) {
+          triggerMerge()
+        }
       }
       println("Done.")
     }
@@ -119,6 +134,18 @@ object DotnetIconSync {
         val target = context.devRepoDir.resolve(context.iconRepoDir.relativize(it.toPath()))
         it.copyTo(target.toFile(), overwrite = true)
       }
+    }
+  }
+
+  private fun callCustomTool() {
+    customToolPath?.let {
+      step("Call custom tool: $it")
+      val output = execute(
+        context.devRepoDir, it,
+        *customToolArgs?.splitWithSpace()?.toTypedArray() ?: error("Custom tool args should be specified")
+      )
+      println("Custom Tool Output:")
+      println(output)
     }
   }
 
