@@ -40,7 +40,7 @@ public final class ShowIntentionActionsAction extends BaseCodeInsightAction impl
       return;
     }
     super.update(event);
-    if (ActionPlaces.EDITOR_HINT.equals(event.getPlace())) {
+    if (ActionPlaces.EDITOR_HINT.equals(event.getPlace()) || ActionPlaces.EDITOR_FLOATING_TOOLBAR.equals(event.getPlace())) {
       presentation.setIcon(AllIcons.Actions.IntentionBulb);
     }
   }
