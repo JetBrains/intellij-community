@@ -19,7 +19,7 @@ import com.intellij.openapi.vfs.newvfs.persistent.log.OperationLogStorage.Traver
 import com.intellij.openapi.vfs.newvfs.persistent.log.VfsLogOperationTrackingContext.Companion.trackPlainOperation
 import com.intellij.openapi.vfs.newvfs.persistent.log.VfsOperation.AttributesOperation.Companion.fileId
 import com.intellij.openapi.vfs.newvfs.persistent.log.VfsOperation.RecordsOperation.Companion.fileId
-import com.intellij.openapi.vfs.newvfs.persistent.log.io.PersistentVar
+import com.intellij.openapi.vfs.newvfs.persistent.log.io.AppendLogStorage
 import com.intellij.openapi.vfs.newvfs.persistent.log.timemachine.*
 import com.intellij.openapi.vfs.newvfs.persistent.log.timemachine.SnapshotFillerPresets.buildFiller
 import com.intellij.openapi.vfs.newvfs.persistent.log.timemachine.SnapshotFillerPresets.constrain
@@ -651,15 +651,13 @@ object VfsRecoveryUtils {
     val newPaths = PersistentFSPaths(newStorageDir)
     require(!newPaths.vfsLogStorage.exists()) { "vfsLog exists in new caches directory" }
     oldPaths.vfsLogStorage.copyRecursively(newPaths.vfsLogStorage)
-    val operationsSizePath = newPaths.vfsLogStorage / "operations" / "size"
-    if (!operationsSizePath.exists()) {
-      throw VfsRecoveryException("vfslog operations size file not found")
+    val operationsPath = newPaths.vfsLogStorage / "operations"
+    if (!operationsPath.exists() || !operationsPath.isDirectory()) {
+      throw VfsRecoveryException("vfslog operations directory not found")
     }
     else {
       try {
-        PersistentVar.long(operationsSizePath).use {
-          it.setValue(point.getPosition())
-        }
+        AppendLogStorage.resetSize(operationsPath, point.getPosition())
       }
       catch (e: Throwable) {
         throw VfsRecoveryException("failed to truncate new vfslog", e)
