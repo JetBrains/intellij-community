@@ -1210,35 +1210,24 @@ public final class ApplicationImpl extends ClientAwareComponentManager implement
       }
     }
 
-    private void markThreadNameInStackTrace() {
+    private static void markThreadNameInStackTrace() {
       String id = id();
 
-      if (id != null) {
-        Thread thread = Thread.currentThread();
-        thread.setName(thread.getName() + id);
-      }
+      Thread thread = Thread.currentThread();
+      thread.setName(thread.getName() + id);
     }
 
-    private void unmarkThreadNameInStackTrace() {
+    private static void unmarkThreadNameInStackTrace() {
       String id = id();
 
-      if (id != null) {
-        Thread thread = Thread.currentThread();
-        String name = thread.getName();
-        name = StringUtil.replace(name, id, "");
-        thread.setName(name);
-      }
+      Thread thread = Thread.currentThread();
+      String name = thread.getName();
+      name = StringUtil.replace(name, id, "");
+      thread.setName(name);
     }
 
-    private @Nullable String id() {
-      Class<?> aClass = getClass();
-      String name = aClass.getName();
-      name = name.substring(name.lastIndexOf('.') + 1);
-      name = name.substring(name.lastIndexOf('$') + 1);
-      if (!name.equals("AccessToken")) {
-        return " [" + name + "]";
-      }
-      return null;
+    private static @NotNull String id() {
+      return " [WriteAccessToken]";
     }
   }
 
