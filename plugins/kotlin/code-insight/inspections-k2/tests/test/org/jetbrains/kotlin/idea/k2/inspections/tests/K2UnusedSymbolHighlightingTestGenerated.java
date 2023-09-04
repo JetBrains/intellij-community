@@ -23,6 +23,11 @@ public class K2UnusedSymbolHighlightingTestGenerated extends AbstractK2LocalInsp
         KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
     }
 
+    @TestMetadata("abstractFunctionParameter.kt")
+    public void testAbstractFunctionParameter() throws Exception {
+        runTest("../../../idea/tests/testData/inspectionsLocal/unusedSymbol/abstractFunctionParameter.kt");
+    }
+
     @TestMetadata("asDefaultConstructorParameter.kt")
     public void testAsDefaultConstructorParameter() throws Exception {
         runTest("../../../idea/tests/testData/inspectionsLocal/unusedSymbol/asDefaultConstructorParameter.kt");

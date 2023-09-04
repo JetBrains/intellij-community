@@ -16921,6 +16921,11 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
         }
 
+        @TestMetadata("abstractFunctionParameter.kt")
+        public void testAbstractFunctionParameter() throws Exception {
+            runTest("testData/inspectionsLocal/unusedSymbol/abstractFunctionParameter.kt");
+        }
+
         @TestMetadata("asDefaultConstructorParameter.kt")
         public void testAsDefaultConstructorParameter() throws Exception {
             runTest("testData/inspectionsLocal/unusedSymbol/asDefaultConstructorParameter.kt");
