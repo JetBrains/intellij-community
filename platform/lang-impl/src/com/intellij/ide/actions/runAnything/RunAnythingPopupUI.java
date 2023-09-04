@@ -52,6 +52,7 @@ import com.intellij.ui.popup.list.SelectablePanel;
 import com.intellij.util.Alarm;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.Consumer;
+import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.concurrency.SequentialTaskExecutor;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.*;
@@ -412,16 +413,19 @@ public final class RunAnythingPopupUI extends BigPopupUI {
   }
 
   private void updateContextCombobox() {
-    DataContext dataContext = getDataContext();
-    Object value = myResultsList.getSelectedValue();
-    String text = value instanceof RunAnythingItem ? ((RunAnythingItem)value).getCommand() : getSearchPattern();
-    RunAnythingProvider provider = RunAnythingProvider.findMatchedProvider(dataContext, text);
-    if (provider != null) {
-      myChooseContextAction.setAvailableContexts(provider.getExecutionContexts(dataContext));
-    }
+    ReadAction.nonBlocking(() -> {
+      DataContext dataContext = getDataContext();
+      Object value = myResultsList.getSelectedValue();
+      String text = value instanceof RunAnythingItem ? ((RunAnythingItem)value).getCommand() : getSearchPattern();
+      RunAnythingProvider<?> provider = RunAnythingProvider.findMatchedProvider(dataContext, text);
+      if (provider != null) {
+        myChooseContextAction.setAvailableContexts(provider.getExecutionContexts(dataContext));
+      }
 
-    AnActionEvent event = AnActionEvent.createFromDataContext(ActionPlaces.UNKNOWN, null, dataContext);
-    ActionUtil.performDumbAwareUpdate(myChooseContextAction, event, false);
+      return AnActionEvent.createFromDataContext(ActionPlaces.UNKNOWN, null, dataContext);
+    }).finishOnUiThread(ModalityState.defaultModalityState(), event -> {
+      ActionUtil.performDumbAwareUpdate(myChooseContextAction, event, false);
+    }).submit(AppExecutorUtil.getAppExecutorService());
   }
 
   private void createTextFieldTitle() {
