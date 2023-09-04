@@ -62,7 +62,8 @@ final class PersistentFSConnector {
           expectedVersion,
           enableVfsLog,
           interceptors,
-          RECOVERERS
+          RECOVERERS,
+          attempt == 0
         );
         //heuristics: just created VFS contains only 1 record (=super-root):
         boolean justCreated = connection.getRecords().recordsCount() == 1
@@ -95,6 +96,16 @@ final class PersistentFSConnector {
                                                  boolean enableVfsLog,
                                                  @NotNull List<ConnectionInterceptor> interceptors,
                                                  @NotNull List<VFSRecoverer> recoverers) throws IOException {
+    return tryInit(cachesDir, currentImplVersion, enableVfsLog, interceptors, recoverers, false);
+  }
+
+  @VisibleForTesting
+  static @NotNull PersistentFSConnection tryInit(@NotNull Path cachesDir,
+                                                 int currentImplVersion,
+                                                 boolean enableVfsLog,
+                                                 @NotNull List<ConnectionInterceptor> interceptors,
+                                                 @NotNull List<VFSRecoverer> recoverers,
+                                                 boolean allowRecoveryFromVfsLog) throws IOException {
     //RC: Mental model behind VFS initialization:
     //   VFS consists of few different storages: records, attributes, content... Each storage has its own on-disk
     //   data format. Each storage also has a writeable header field .version, which is (must be) 0 by default.
@@ -143,20 +154,12 @@ final class PersistentFSConnector {
 
     PersistentFSPaths persistentFSPaths = new PersistentFSPaths(cachesDir);
     PersistentFSLoader vfsLoader = new PersistentFSLoader(persistentFSPaths, enableVfsLog, pool);
+    boolean cachesWereRecoveredFromLog = false;
     try {
       if (VfsLog.isVfsTrackingEnabled() && enableVfsLog) {
         vfsLoader.replaceStoragesIfMarkerPresent();
       }
       vfsLoader.failIfCorruptionMarkerPresent();
-
-      if (VfsLog.isVfsTrackingEnabled() && enableVfsLog) {
-        if (vfsLoader.recoverCachesFromVfsLogIfAppWasNotClosedProperly()) {
-          LOG.info("Recovered caches from VfsLog");
-        }
-        else {
-          LOG.info("Failed to recover caches from VfsLog");
-        }
-      }
 
       vfsLoader.initializeStorages();
 
@@ -179,12 +182,17 @@ final class PersistentFSConnector {
           for (VFSRecoverer recoverer : recoverers) {
             recoverer.tryRecover(vfsLoader);
           }
-          // TODO perhaps add recovery attempt from vfsLog here, but it's complicated, because another self check is probably needed.
-          //  On the other hand, probably every relevant problem should be already covered by wasProperlyClosedLastSession check above
 
           //Were all problems recovered? -> fail if not
           List<VFSInitException> problemsNotRecovered = vfsLoader.problemsDuringLoad();
           if (!problemsNotRecovered.isEmpty()) {
+            if (allowRecoveryFromVfsLog && VfsLog.isVfsTrackingEnabled() && enableVfsLog) {
+              // if vfslog is enabled, try to recover caches from the operations log first.
+              // exception will be rethrown, but we won't delete the files and will just retry
+              // initialization on the next attempt with substituted storages
+              cachesWereRecoveredFromLog = vfsLoader.recoverCachesFromVfsLogIfAppWasNotClosedProperly();
+            }
+
             VFSInitException mainEx = problemsNotRecovered.get(0);
             for (int i = 1; i < problemsNotRecovered.size(); i++) {
               mainEx.addSuppressed(problemsNotRecovered.get(i));
@@ -193,7 +201,7 @@ final class PersistentFSConnector {
           }
         }
       }
-
+      // TODO maybe delete recovery-in-progress marker here. it can possibly survive to this point and break something in the future.
 
       PersistentFSConnection connection = vfsLoader.createConnection(interceptors);
 
@@ -207,7 +215,12 @@ final class PersistentFSConnector {
       LOG.warn("Filesystem storage is corrupted or does not exist. [Re]Building. Reason: " + e.getMessage());
       try {
         vfsLoader.closeEverything();
-        vfsLoader.deleteEverything();
+        if (cachesWereRecoveredFromLog) {
+          // don't delete the caches, they will be substituted on the next attempt
+          // FIXME this may potentially mess up VFS rebuild event statistics
+        } else {
+          vfsLoader.deleteEverything();
+        }
       }
       catch (IOException cleanEx) {
         e.addSuppressed(cleanEx);
