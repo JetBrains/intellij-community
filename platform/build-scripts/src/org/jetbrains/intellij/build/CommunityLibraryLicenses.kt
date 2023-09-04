@@ -358,8 +358,7 @@ object CommunityLibraryLicenses {
                                                    "ai.grazie.model.nlp.encoder",
                                                    "ai.grazie.utils.ki",
                                                    "ai.grazie.nlp.encoder",
-                                                   "ai.grazie.nlp.encoder.bert.uncased",
-                                                   "ai.grazie.emb.local")).apache(),
+                                                   "ai.grazie.nlp.encoder.bert.uncased")).apache(),
     LibraryLicense(name = "Groovy", libraryName = "org.codehaus.groovy:groovy", url = "https://groovy-lang.org/")
       .apache("https://github.com/apache/groovy/blob/master/LICENSE"),
     LibraryLicense(name = "Groovy Ant", libraryName = "org.codehaus.groovy:groovy-ant", url = "https://groovy-lang.org/")
