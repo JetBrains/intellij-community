@@ -52,6 +52,7 @@ interface KotlinSettingsEntity : ModuleSettingsBase {
     val kind: KotlinModuleKind
 
     //non-trivial parameters
+    //TODO: remove?
     val mergedCompilerArguments: String
     val compilerArguments: String
 

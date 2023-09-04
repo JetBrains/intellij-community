@@ -80,9 +80,9 @@ class KotlinModuleSettingsSerializer : CustomFacetRelatedEntitySerializer<Kotlin
         kotlinSettingsEntity.pureKotlinSourceFolders = kotlinFacetSettings.pureKotlinSourceFolders.toMutableList()
         kotlinSettingsEntity.kind = kotlinFacetSettings.kind
 
-        if (kotlinFacetSettings.mergedCompilerArguments != null) {
-            kotlinSettingsEntity.mergedCompilerArguments = serializeToString(kotlinFacetSettings.mergedCompilerArguments!!)
-        }
+        //if (kotlinFacetSettings.mergedCompilerArguments != null) {
+        //    kotlinSettingsEntity.mergedCompilerArguments = serializeToString(kotlinFacetSettings.mergedCompilerArguments!!)
+        //}
 
         if (kotlinFacetSettings.compilerArguments != null) {
             kotlinSettingsEntity.compilerArguments = serializeToString(kotlinFacetSettings.compilerArguments!!)
