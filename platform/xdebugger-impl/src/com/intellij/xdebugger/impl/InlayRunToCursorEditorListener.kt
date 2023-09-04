@@ -11,6 +11,8 @@ import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.actionSystem.impl.ActionToolbarImpl
 import com.intellij.openapi.actionSystem.impl.ToolbarUtils.createImmediatelyUpdatedToolbar
 import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.application.EDT
+import com.intellij.openapi.application.readAction
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.EditorKind
 import com.intellij.openapi.editor.LogicalPosition
@@ -29,6 +31,10 @@ import com.intellij.util.ui.JBUI
 import com.intellij.xdebugger.XDebuggerManager
 import com.intellij.xdebugger.impl.actions.XDebuggerActions
 import com.intellij.xdebugger.impl.breakpoints.XBreakpointUtil
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import java.awt.Point
 import java.lang.ref.WeakReference
 import javax.swing.JComponent
@@ -40,7 +46,7 @@ private const val MINIMAL_TEXT_OFFSET = 16
 private const val ACTION_BUTTON_SIZE = 22
 private const val ACTION_BUTTON_GAP = 2
 
-internal class InlayRunToCursorEditorListener(private val project: Project) : EditorMouseMotionListener, EditorMouseListener {
+internal class InlayRunToCursorEditorListener(private val project: Project, private val coroutineScope: CoroutineScope) : EditorMouseMotionListener, EditorMouseListener {
   private var currentHint = WeakReference<RunToCursorHint?>(null)
   private var currentEditor = WeakReference<Editor?>(null)
   private var currentLineNumber = -1
@@ -112,17 +118,16 @@ internal class InlayRunToCursorEditorListener(private val project: Project) : Ed
     }
     else {
       val hoverPosition = XSourcePositionImpl.create(FileDocumentManager.getInstance().getFile(editor.getDocument()), lineNumber)
-      ApplicationManager.getApplication().executeOnPooledThread {
-        ApplicationManager.getApplication().runReadAction {
+      coroutineScope.launch(Dispatchers.EDT) {
+        val hasGeneralBreakpoint = readAction {
           val types = XBreakpointUtil.getAvailableLineBreakpointTypes(project, hoverPosition, editor)
-          val hasGeneralBreakpoint = types.any { it.enabledIcon === AllIcons.Debugger.Db_set_breakpoint }
-          ApplicationManager.getApplication().invokeLater {
-            if (hasGeneralBreakpoint) {
-              group.add(ActionManager.getInstance().getAction(IdeActions.ACTION_RUN_TO_CURSOR))
-            }
-            showHint(editor, lineNumber, firstNonSpacePos, group, position)
-          }
+          types.any { it.enabledIcon === AllIcons.Debugger.Db_set_breakpoint }
         }
+
+        if (hasGeneralBreakpoint) {
+          group.add(ActionManager.getInstance().getAction(IdeActions.ACTION_RUN_TO_CURSOR))
+        }
+        showHint(editor, lineNumber, firstNonSpacePos, group, position)
       }
     }
     return true
