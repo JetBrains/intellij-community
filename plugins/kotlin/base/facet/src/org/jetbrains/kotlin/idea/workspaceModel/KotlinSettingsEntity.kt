@@ -56,7 +56,7 @@ interface KotlinSettingsEntity : ModuleSettingsBase {
     val compilerArguments: String
 
     // Check weather it can be nullable (along with productionOutputPath and testOutputPath)
-    val compilerSettings: CompilerSettings
+    val compilerSettings: CompilerSettingsData
 
     val targetPlatform: String
     //externalSystemRunTasks
@@ -88,7 +88,7 @@ interface KotlinSettingsEntity : ModuleSettingsBase {
         override var kind: KotlinModuleKind
         override var mergedCompilerArguments: String
         override var compilerArguments: String
-        override var compilerSettings: CompilerSettings
+        override var compilerSettings: CompilerSettingsData
         override var targetPlatform: String
     }
 
@@ -115,7 +115,7 @@ interface KotlinSettingsEntity : ModuleSettingsBase {
             kind: KotlinModuleKind,
             mergedCompilerArguments: String,
             compilerArguments: String,
-            compilerSettings: CompilerSettings,
+            compilerSettings: CompilerSettingsData,
             targetPlatform: String,
             entitySource: EntitySource,
             init: (Builder.() -> Unit)? = null
@@ -161,7 +161,7 @@ var ModuleEntity.Builder.kotlinSettings: @Child List<KotlinSettingsEntity>
 //endregion
 
 
-data class CompilerSettings(
+data class CompilerSettingsData(
     val additionalArguments: String,
     val scriptTemplates: String,
     val scriptTemplatesClasspath: String,

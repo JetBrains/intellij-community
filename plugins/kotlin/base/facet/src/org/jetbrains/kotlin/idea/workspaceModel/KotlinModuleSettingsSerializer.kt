@@ -22,6 +22,7 @@ class KotlinModuleSettingsSerializer : CustomFacetRelatedEntitySerializer<Kotlin
             throw ExtensionNotApplicableException.create()
         }
     }
+
     override val rootEntityType: Class<KotlinSettingsEntity>
         get() = KotlinSettingsEntity::class.java
     override val supportedFacetType: String
@@ -33,26 +34,28 @@ class KotlinModuleSettingsSerializer : CustomFacetRelatedEntitySerializer<Kotlin
         evaluateEntitySource: (FacetState) -> EntitySource
     ) {
         val entitySource = evaluateEntitySource(facetState)
-        val kotlinSettingsEntity = KotlinSettingsEntity(facetState.name, moduleEntity.symbolicId,
-                                                     emptyList(),
-                                                     emptyList(),
-                                                     true,
-                                                     emptyList(),
-                                                     emptyList(),
-                                                     emptySet(),
-                                                     "",
-                                                     "",
-                                                     emptyList(),
-                                                     false,
-                                                     "",
-                                                     false,
-                                                     emptyList(),
-                                                     KotlinModuleKind.DEFAULT,
-                                                     "",
-                                                     "",
-                                                     CompilerSettings("", "", "", true, "lib"),
-                                                        "",
-                                                     entitySource) {
+        val kotlinSettingsEntity = KotlinSettingsEntity(
+            facetState.name, moduleEntity.symbolicId,
+            emptyList(),
+            emptyList(),
+            true,
+            emptyList(),
+            emptyList(),
+            emptySet(),
+            "",
+            "",
+            emptyList(),
+            false,
+            "",
+            false,
+            emptyList(),
+            KotlinModuleKind.DEFAULT,
+            "",
+            "",
+            CompilerSettingsData("", "", "", true, "lib"),
+            "",
+            entitySource
+        ) {
             module = moduleEntity
         } as KotlinSettingsEntity.Builder
 
@@ -87,7 +90,7 @@ class KotlinModuleSettingsSerializer : CustomFacetRelatedEntitySerializer<Kotlin
 
         val compilerSettings = kotlinFacetSettings.compilerSettings
         if (compilerSettings != null) {
-            kotlinSettingsEntity.compilerSettings = CompilerSettings(
+            kotlinSettingsEntity.compilerSettings = CompilerSettingsData(
                 compilerSettings.additionalArguments,
                 compilerSettings.scriptTemplates,
                 compilerSettings.scriptTemplatesClasspath,

@@ -6,6 +6,8 @@ import org.jetbrains.kotlin.cli.common.arguments.CommonCompilerArguments
 import org.jetbrains.kotlin.config.*
 import org.jetbrains.kotlin.idea.workspaceModel.KotlinModuleSettingsSerializer
 import org.jetbrains.kotlin.idea.workspaceModel.KotlinSettingsEntity
+import org.jetbrains.kotlin.idea.workspaceModel.toCompilerSettingsData
+import org.jetbrains.kotlin.idea.workspaceModel.toCompilerSettings
 import org.jetbrains.kotlin.platform.IdePlatformKind
 import org.jetbrains.kotlin.platform.TargetPlatform
 import org.jetbrains.kotlin.platform.isCommon
@@ -56,10 +58,13 @@ class KotlinFacetSettingsWorkspaceModel(val entity: KotlinSettingsEntity.Builder
             }
         }
 
+    private var _compilerSettings: CompilerSettings? = entity.compilerSettings.toCompilerSettings()
     override var compilerSettings: CompilerSettings?
-        get() = TODO("Not yet implemented")
-        set(value) {}
-
+        get() = _compilerSettings
+        set(value) {
+            entity.compilerSettings = value.toCompilerSettingsData()
+            _compilerSettings = value
+        }
 
     private var _dependsOnModuleNames: List<String> = entity.dependsOnModuleNames
     override var dependsOnModuleNames: List<String>

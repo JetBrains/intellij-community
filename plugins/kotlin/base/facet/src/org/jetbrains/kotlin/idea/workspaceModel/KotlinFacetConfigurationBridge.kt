@@ -47,7 +47,7 @@ class KotlinFacetConfigurationBridge : KotlinFacetConfiguration, FacetConfigurat
                                      KotlinModuleKind.DEFAULT,
                                      "",
                                      "",
-                                     CompilerSettings("", "", "", true, "lib"),
+                                     CompilerSettingsData("", "", "", true, "lib"),
                                      "",
                                      object : EntitySource {}) as KotlinSettingsEntity.Builder
             )
