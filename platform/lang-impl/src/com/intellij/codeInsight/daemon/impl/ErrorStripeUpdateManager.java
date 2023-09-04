@@ -4,7 +4,6 @@ package com.intellij.codeInsight.daemon.impl;
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzerSettings;
 import com.intellij.codeInsight.daemon.impl.analysis.HighlightingSettingsPerFile;
-import com.intellij.ide.impl.ProjectUtilKt;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
@@ -18,7 +17,6 @@ import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileEditor.TextEditor;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.registry.RegistryManager;
 import com.intellij.openapi.util.registry.RegistryValue;
 import com.intellij.openapi.util.registry.RegistryValueListener;
@@ -82,21 +80,15 @@ public final class ErrorStripeUpdateManager implements Disposable {
         return;
       }
     }
-    ModalityState modality = ModalityState.defaultModalityState();
-    ProjectUtilKt.executeOnPooledThread(myProject, () -> {
-      Editor editor = editorMarkupModel.getEditor();
-      if (ReadAction.compute(() -> editor.isDisposed() || !file.isValid() || !DaemonCodeAnalyzer.getInstance(myProject).isHighlightingAvailable(file))) {
-        return;
-      }
 
-      TrafficLightRenderer tlRenderer = createRenderer(editor, file);
-      ApplicationManager.getApplication().invokeLater(() -> {
-        if (myProject.isDisposed() || editor.isDisposed()) {
-          Disposer.dispose(tlRenderer); // would be registered in setErrorStripeRenderer() below
-          return;
-        }
-        editorMarkupModel.setErrorStripeRenderer(tlRenderer);
-      }, modality);
+    ModalityState modality = ModalityState.defaultModalityState();
+    TrafficLightRenderer.setTrafficLightOnEditor(myProject, editorMarkupModel, modality, () -> {
+      Editor editor = editorMarkupModel.getEditor();
+      if (ReadAction.compute(() -> editor.isDisposed() || !file.isValid() ||
+                                   !DaemonCodeAnalyzer.getInstance(myProject).isHighlightingAvailable(file))) {
+        return null;
+      }
+      return createRenderer(editor, file);
     });
   }
 

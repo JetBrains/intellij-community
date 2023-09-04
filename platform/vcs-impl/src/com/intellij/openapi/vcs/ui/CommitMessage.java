@@ -14,7 +14,6 @@ import com.intellij.openapi.actionSystem.ActionToolbar;
 import com.intellij.openapi.actionSystem.DataProvider;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
-import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.SpellCheckingEditorCustomizationProvider;
@@ -22,7 +21,6 @@ import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.ex.EditorMarkupModel;
-import com.intellij.openapi.editor.impl.EditorImpl;
 import com.intellij.openapi.editor.impl.EditorMarkupModelImpl;
 import com.intellij.openapi.fileTypes.FileTypes;
 import com.intellij.openapi.project.Project;
@@ -38,7 +36,6 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.ui.*;
 import com.intellij.ui.components.JBLoadingPanel;
-import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.concurrency.annotations.RequiresEdt;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.components.BorderLayoutPanel;
@@ -331,16 +328,11 @@ public class CommitMessage extends JPanel implements Disposable, DataProvider, C
       }
       editor.putUserData(IntentionManager.SHOW_INTENTION_OPTIONS_KEY, false);
 
-      ReadAction.nonBlocking(() -> {
-          // assertIsNonDispatchThread here
-          return new ConditionalTrafficLightRenderer(myProject, editor.getDocument());
-        })
-        .expireWith(((EditorImpl)editor).getDisposable())
-        .finishOnUiThread(ModalityState.any(), renderer -> {
-          // assertIsDispatchThread here
-          ((EditorMarkupModel)editor.getMarkupModel()).setErrorStripeRenderer(renderer);
-        })
-        .submit(AppExecutorUtil.getAppExecutorService());
+      EditorMarkupModel markupModel = (EditorMarkupModel)editor.getMarkupModel();
+      ModalityState modality = ModalityState.defaultModalityState();
+      TrafficLightRenderer.setTrafficLightOnEditor(myProject, markupModel, modality, () -> {
+        return new ConditionalTrafficLightRenderer(myProject, editor.getDocument());
+      });
     }
   }
 
