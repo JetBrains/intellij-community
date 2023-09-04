@@ -402,10 +402,10 @@
     </orderEntry>
     <orderEntry type="module-library">
       <library name="kinference.primitives.annotations.jvm" type="repository">
-        <properties include-transitive-deps="false" maven-id="io.kinference.primitives:primitives-annotations-jvm:0.1.20">
+        <properties include-transitive-deps="false" maven-id="io.kinference.primitives:primitives-annotations-jvm:0.1.24">
           <verification>
-            <artifact url="file://$MAVEN_REPOSITORY$/io/kinference/primitives/primitives-annotations-jvm/0.1.20/primitives-annotations-jvm-0.1.20.jar">
-              <sha256sum>3ba51c9102dfdc1be7cbaac2144e6a167cb0039a8c3334f1fc5d0d7caffb1877</sha256sum>
+            <artifact url="file://$MAVEN_REPOSITORY$/io/kinference/primitives/primitives-annotations-jvm/0.1.24/primitives-annotations-jvm-0.1.24.jar">
+              <sha256sum>2c5d67bd29a9082f07522643d728d887f2f93012467e05c45a2079d4e3eea8bf</sha256sum>
             </artifact>
           </verification>
           <exclude>
@@ -416,11 +416,11 @@
           </exclude>
         </properties>
         <CLASSES>
-          <root url="jar://$MAVEN_REPOSITORY$/io/kinference/primitives/primitives-annotations-jvm/0.1.20/primitives-annotations-jvm-0.1.20.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/io/kinference/primitives/primitives-annotations-jvm/0.1.24/primitives-annotations-jvm-0.1.24.jar!/" />
         </CLASSES>
         <JAVADOC />
         <SOURCES>
-          <root url="jar://$MAVEN_REPOSITORY$/io/kinference/primitives/primitives-annotations-jvm/0.1.20/primitives-annotations-jvm-0.1.20-sources.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/io/kinference/primitives/primitives-annotations-jvm/0.1.24/primitives-annotations-jvm-0.1.24-sources.jar!/" />
         </SOURCES>
       </library>
     </orderEntry>
