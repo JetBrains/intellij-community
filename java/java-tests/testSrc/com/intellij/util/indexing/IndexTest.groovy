@@ -43,7 +43,6 @@ import com.intellij.openapi.vfs.newvfs.events.VFileCreateEvent
 import com.intellij.openapi.vfs.newvfs.events.VFileDeleteEvent
 import com.intellij.openapi.vfs.newvfs.events.VFileEvent
 import com.intellij.openapi.vfs.newvfs.events.VFilePropertyChangeEvent
-import com.intellij.openapi.vfs.newvfs.impl.VfsData
 import com.intellij.openapi.vfs.newvfs.impl.VirtualFileSystemEntry
 import com.intellij.pom.java.LanguageLevel
 import com.intellij.psi.*
@@ -557,6 +556,7 @@ class IndexTest extends JavaCodeInsightFixtureTestCase {
   }
 
   void "test no index stamp update when no change 2"() throws IOException {
+    //noinspection InfiniteRecursion
     @org.intellij.lang.annotations.Language("JAVA")
     def text0 = """            
             class Main111 {
@@ -572,6 +572,7 @@ class IndexTest extends JavaCodeInsightFixtureTestCase {
     assertTrue(files.size() == 1)
     assertEquals(files[0], vFile)
 
+    //noinspection InfiniteRecursion
     @org.intellij.lang.annotations.Language("JAVA")
     def text = """
             class Main {

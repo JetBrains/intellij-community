@@ -107,7 +107,7 @@ public abstract class FileBasedIndex {
                                                                     @NotNull GlobalSearchScope filter);
 
   /**
-   * @return lazily reified iterator of VirtualFile's.
+   * @return lazily reified iterator of VirtualFiles.
    */
   @ApiStatus.Experimental
   @NotNull
@@ -153,10 +153,10 @@ public abstract class FileBasedIndex {
 
   /**
    * Query all the keys in the project. Note that the result may contain keys from other projects, orphan keys and the like,
-   * but it is guaranteed that it contains at least all the keys from specified project.
+   * but it is guaranteed that it contains at least all the keys from the specified project.
    *
    * @param project is used to make sure that all the keys belonging to the project are found.
-   *                In addition to keys from specified project the method may return a number of keys irrelevant
+   *                In addition to keys from the specified project, the method may return a number of keys irrelevant
    *                to the project or orphan keys that are not relevant to any project.
    *                <p>
    *                {@code project} will be used to filter out irrelevant keys only if corresponding indexing extension returns
@@ -164,7 +164,7 @@ public abstract class FileBasedIndex {
    *
    * @return collection that contains at least all the keys that can be found in the specified project.
    * <p>
-   * It is often true that the result contains some strings that are not valid keys in given project, unless
+   * It is often true that the result contains some strings that are not valid keys in the given project, unless
    * {@linkplain FileBasedIndexExtension#traceKeyHashToVirtualFileMapping()} returns true.
    *
    * @see FileBasedIndexExtension#traceKeyHashToVirtualFileMapping()
@@ -174,14 +174,15 @@ public abstract class FileBasedIndex {
 
   /**
    * DO NOT CALL DIRECTLY IN CLIENT CODE
-   * The method is internal to indexing engine end is called internally. The method is public due to implementation details
+   * The method is internal to the indexing engine and is called internally.
+   * The method is public due to implementation details
    */
   @ApiStatus.Internal
   public abstract <K> void ensureUpToDate(@NotNull ID<K, ?> indexId, @Nullable Project project, @Nullable GlobalSearchScope filter);
 
   /**
    * Marks index as requiring rebuild and requests asynchronously full indexing.
-   * In unit tests one needs for full effect to dispatch events from event queue
+   * In unit tests one needs to dispatch events from event queue for the full effect
    * with {@code PlatformTestUtil.dispatchAllEventsInIdeEventQueue()}
    */
   public abstract void requestRebuild(@NotNull ID<?, ?> indexId, @NotNull Throwable throwable);
@@ -196,16 +197,16 @@ public abstract class FileBasedIndex {
                                                  @NotNull GlobalSearchScope filter);
 
   /**
-   * Executes command and allow its to have an index access in dumb mode.
+   * Executes command and allows it to have index access in dumb mode.
    * Inside the command it's safe to call index related stuff and
-   * {@link com.intellij.openapi.project.IndexNotReadyException} are not expected to be happen here.
+   * {@link com.intellij.openapi.project.IndexNotReadyException} are not expected to happen here.
    *
    * <p> Please use {@link DumbModeAccessType#ignoreDumbMode(Runnable)} or {@link DumbModeAccessType#ignoreDumbMode(ThrowableComputable)}
    * since they produce less boilerplate code.
    *
    * <p> In smart mode, the behavior is similar to direct command execution
-   * @param dumbModeAccessType - defines in which manner command should be executed. Does a client expect only reliable data
-   * @param command - a command to execute
+   * @param dumbModeAccessType defines in which manner the command should be executed. If a client expects only reliable data
+   * @param command a command to execute
    */
   @ApiStatus.Experimental
   public void ignoreDumbMode(@NotNull DumbModeAccessType dumbModeAccessType, @NotNull Runnable command) {
@@ -338,7 +339,7 @@ public abstract class FileBasedIndex {
    * An input filter which accepts {@link IndexedFile} as parameter.
    * One could use this interface for filters which require {@link Project} instance to filter out files.
    * <p>
-   * Note that in most the cases no one needs this filter.
+   * Note that in most cases, no one needs this filter.
    * And the only use case is to optimize indexed file count when the corresponding indexer is relatively slow.
    */
   @ApiStatus.Experimental

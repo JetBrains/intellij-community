@@ -25,8 +25,6 @@ import java.nio.file.Files
 import java.nio.file.Path
 import java.util.function.Consumer
 import java.util.function.Predicate
-import java.util.function.Supplier
-import java.util.stream.Collectors
 import kotlin.io.path.Path
 import kotlin.io.path.writeText
 
@@ -81,34 +79,28 @@ class CollectFilesNotMarkedAsIndex(text: String, line: Int) : PerformanceCommand
             return true
           }
 
-          checkIndexed(fileOrDir, false, "has no indexing timestamp") {
+          checkIndexed(fileOrDir) {
             IndexingStamp.hasIndexingTimeStamp(it.id) ||
-            // com.intellij.util.indexing.FileBasedIndexImpl.getAffectedIndexCandidates returns empty list for such files
+            // com.intellij.util.indexing.FileBasedIndexImpl.getAffectedIndexCandidates returns an empty list for such files
             ProjectCoreUtil.isProjectOrWorkspaceFile(it, it.fileType)
           }
           return true
         }
 
         private fun checkIndexed(fileOrDir: VirtualFileSystemEntry,
-                                 checkDirectories: Boolean,
-                                 errorMessagePart: String,
                                  isIndexed: Predicate<VirtualFileSystemEntry>) {
-          if (!checkDirectories && fileOrDir.isDirectory) return
+          if (fileOrDir.isDirectory) return
           if (!isIndexed.test(fileOrDir)) {
-            if (fileOrDir.isDirectory) {
-              logIndexingIssue("Directory $fileOrDir $errorMessagePart\n")
-              return
-            }
             if (fbi.isTooLarge(fileOrDir)) {
               return
             }
             try {
               fileOrDir.contentsToByteArray()
               if (fbi.changedFilesCollector.containsFileId(fileOrDir.id)) {
-                logIndexingIssue("$fileOrDir $errorMessagePart because is changed\n")
+                logIndexingIssue("$fileOrDir has no indexing timestamp because is changed\n")
               }
               else {
-                logIndexingIssue("$fileOrDir $errorMessagePart\n")
+                logIndexingIssue("$fileOrDir has no indexing timestamp\n")
               }
             }
             catch (e: IOException) {
@@ -120,16 +112,14 @@ class CollectFilesNotMarkedAsIndex(text: String, line: Int) : PerformanceCommand
 
       val originalOrderedProviders: List<IndexableFilesIterator> = fbi.getIndexableFilesProviders(project)
 
-      val orderedProviders: List<IndexableFilesIterator> = ArrayList()
-      originalOrderedProviders.stream()
+      val orderedProviders: MutableList<IndexableFilesIterator> = ArrayList()
+      originalOrderedProviders
         .filter { p: IndexableFilesIterator -> p.origin !is SdkOrigin }
-        .collect(Collectors.toCollection(
-          Supplier { orderedProviders }))
+        .toCollection(orderedProviders)
 
-      originalOrderedProviders.stream()
+      originalOrderedProviders
         .filter { p: IndexableFilesIterator -> p.origin is SdkOrigin }
-        .collect(Collectors.toCollection(
-          Supplier { orderedProviders }))
+        .toCollection(orderedProviders)
 
       for (provider in orderedProviders) {
         provider.iterateFiles(project, iterator, VirtualFileFilter.ALL)

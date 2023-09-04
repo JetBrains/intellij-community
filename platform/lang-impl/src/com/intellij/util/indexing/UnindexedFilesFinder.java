@@ -68,7 +68,7 @@ final class UnindexedFilesFinder {
       }
     }
 
-    boolean addOrRunApplier(@Nullable SingleIndexValueApplier applier) {
+    boolean addOrRunApplier(@Nullable SingleIndexValueApplier<?> applier) {
       if (applier == null) return true;
 
       if (applyIndexValuesSeparately) {
@@ -144,8 +144,7 @@ final class UnindexedFilesFinder {
   UnindexedFilesFinder(@NotNull Project project,
                        IndexingReasonExplanationLogger explanationLogger,
                        @NotNull FileBasedIndexImpl fileBasedIndex,
-                       @Nullable BooleanFunction<? super IndexedFile> forceReindexingTrigger,
-                       @Nullable VirtualFile root) {
+                       @Nullable BooleanFunction<? super IndexedFile> forceReindexingTrigger) {
     this.explanationLogger = explanationLogger;
     myProject = project;
     myFileBasedIndex = fileBasedIndex;
@@ -156,9 +155,7 @@ final class UnindexedFilesFinder {
       .filter(Objects::nonNull)
       .collect(Collectors.toList());
     myForceReindexingTrigger = forceReindexingTrigger;
-
     myShouldProcessUpToDateFiles = ContainerUtil.find(myStateProcessors, p -> p.shouldProcessUpToDateFiles()) != null;
-
     myIndexableFilesFilterHolder = fileBasedIndex.getIndexableFilesFilterHolder();
   }
 
@@ -324,7 +321,7 @@ final class UnindexedFilesFinder {
     }
   }
 
-  private boolean removeIndexedValue(IndexedFileImpl indexedFile,
+  private void removeIndexedValue(IndexedFileImpl indexedFile,
                                      int inputId,
                                      ID<?, ?> indexId,
                                      UnindexedFileStatusBuilder fileStatusBuilder) {
@@ -338,10 +335,6 @@ final class UnindexedFilesFinder {
         LOG.error("Failed to remove value from index " + indexId + " for file " + indexedFile.getFile() + ", " +
                   "applyIndexValuesSeparately=" + fileStatusBuilder.applyIndexValuesSeparately);
       }
-      return removed;
-    }
-    else {
-      return true;
     }
   }
 

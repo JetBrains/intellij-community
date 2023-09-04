@@ -36,13 +36,10 @@ import com.intellij.openapi.vfs.VirtualFileWithId;
 import com.intellij.openapi.vfs.newvfs.AsyncEventSupport;
 import com.intellij.openapi.vfs.newvfs.ManagingFS;
 import com.intellij.openapi.vfs.newvfs.NewVirtualFile;
-import com.intellij.openapi.vfs.newvfs.impl.VirtualFileSystemEntry;
 import com.intellij.openapi.vfs.newvfs.persistent.PersistentFS;
 import com.intellij.platform.diagnostic.telemetry.TelemetryManager;
-import com.intellij.psi.PsiBinaryFile;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
-import com.intellij.psi.PsiManager;
 import com.intellij.psi.impl.PsiDocumentTransactionListener;
 import com.intellij.psi.impl.cache.impl.id.PlatformIdTableBuilding;
 import com.intellij.psi.impl.source.PsiFileImpl;
@@ -53,13 +50,10 @@ import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.impl.VirtualFileEnumeration;
 import com.intellij.psi.stubs.SerializedStubTree;
 import com.intellij.psi.stubs.StubUpdatingIndex;
-import com.intellij.psi.util.CachedValueProvider;
-import com.intellij.psi.util.CachedValuesManager;
 import com.intellij.reference.SoftReference;
 import com.intellij.util.*;
 import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.containers.FactoryMap;
 import com.intellij.util.containers.SmartHashSet;
 import com.intellij.util.gist.GistManager;
 import com.intellij.util.indexing.contentQueue.CachedFileContent;
@@ -305,8 +299,8 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
   }
 
   boolean processChangedFiles(@NotNull Project project, @NotNull Processor<? super VirtualFile> processor) {
-    // can be performance critical, better to use cycle instead of streams
-    // avoid missing files when events are processed concurrently
+    // Can be performance critical, better to use cycle instead of streams.
+    // Avoid missing files when events are processed concurrently
     Iterator<VirtualFile> iterator = Iterators.concat(
       getChangedFilesCollector().getEventMerger().getChangedFiles(),
       getChangedFilesCollector().getFilesToUpdate()
@@ -667,7 +661,7 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
   public void removeFileDataFromIndices(@NotNull Collection<? extends ID<?, ?>> indexIds, int fileId, @Nullable VirtualFile file) {
     assert ProgressManager.getInstance().isInNonCancelableSection();
     try {
-      // document diff can depend on previous value that will be removed
+      // document diff can depend on the previous value that will be removed
       removeTransientFileDataFromIndices(indexIds, fileId, file);
 
       Throwable unexpectedError = null;
@@ -731,7 +725,7 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
     NoAccessDuringPsiEvents.checkCallContext(indexId);
 
     if (!needsFileContentLoading(indexId)) {
-      return true; //indexed eagerly in foreground while building unindexed file list
+      return true; //indexed eagerly in the foreground while building the unindexed file list
     }
     if (filter == GlobalSearchScope.EMPTY_SCOPE ||
         filter instanceof DelegatingGlobalSearchScope && ((DelegatingGlobalSearchScope)filter).unwrap() == GlobalSearchScope.EMPTY_SCOPE) {
@@ -954,8 +948,8 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
 
   private static final Key<WeakReference<Pair<FileContentImpl, Long>>> ourFileContentKey = Key.create("unsaved.document.index.content");
 
-  // returns false if doc was not indexed because it is already up to date
-  // return true if document was indexed
+  // returns false if doc was not indexed because it is already up-to-date
+  // return true if the document was indexed
   // caller is responsible to ensure no concurrent same document processing
   void indexUnsavedDocument(@NotNull final Document document,
                             @NotNull final ID<?, ?> requestedIndexId,
@@ -1029,7 +1023,8 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
                                                                @NotNull VirtualFile vFile,
                                                                long currentDocStamp,
                                                                @NotNull CharSequence contentText) {
-    // Reasonably attempt to use same file content when calculating indices as we can evaluate them several at once and store in file content
+    // Reasonably attempt to use the same file content when calculating indices
+    // as we can evaluate them several at once and store in file content
     WeakReference<Pair<FileContentImpl, Long>> previousContentAndStampRef = document.getUserData(ourFileContentKey);
     Pair<FileContentImpl, Long> previousContentAndStamp = SoftReference.dereference(previousContentAndStampRef);
 
@@ -1072,7 +1067,7 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
                                                 @NotNull GlobalSearchScope scope,
                                                 @Nullable IdFilter idFilter,
                                                 @NotNull ValueProcessor<? super V> processor) {
-    //There are (optional) alternative implementation for few indexes:
+    //There are (optional) alternative implementations for few indexes:
     Boolean scanResult =
       FileBasedIndexScanUtil.processValuesInScope(indexId, dataKey, ensureValueProcessedOnce, scope, idFilter, processor);
     if (scanResult != null) return scanResult;
@@ -1123,31 +1118,6 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
     return LOG;
   }
 
-  @SuppressWarnings({"unchecked", "rawtypes"})
-  @NotNull
-  private <K, V> Map<K, V> getInMemoryData(@NotNull ID<K, V> id, @NotNull VirtualFile virtualFile, @NotNull Project project) {
-    PsiFile psiFile = PsiManager.getInstance(project).findFile(virtualFile);
-    if (psiFile != null) {
-      Map<ID, Map> indexValues = CachedValuesManager.getCachedValue(psiFile, () -> {
-        try {
-          FileContentImpl fc = psiFile instanceof PsiBinaryFile ? (FileContentImpl)FileContentImpl.createByFile(virtualFile, project)
-                                                                : (FileContentImpl)FileContentImpl.createByText(virtualFile,
-                                                                                                                psiFile.getViewProvider()
-                                                                                                                  .getContents(), project);
-          initFileContent(fc, psiFile);
-          Map<ID, Map> result = FactoryMap.create(key -> getIndex(key).getExtension().getIndexer().map(fc));
-          return CachedValueProvider.Result.createSingleDependency(result, psiFile);
-        }
-        catch (IOException e) {
-          throw new RuntimeException(e);
-        }
-      });
-      return indexValues.get(id);
-    }
-    return Collections.emptyMap();
-  }
-
-
   private final StorageBufferingHandler myStorageBufferingHandler = new StorageBufferingHandler() {
     @NotNull
     @Override
@@ -1176,8 +1146,8 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
     }
     IndexConfiguration state = myRegisteredIndexes.getState();
     if (state == null) {
-      // avoid waiting for end of indices initialization (IDEA-173382)
-      // in memory content will appear on indexing (in read action) and here is event dispatch (write context)
+      // Avoid waiting for end of indices initialization (IDEA-173382).
+      // In-memory content will appear on indexing (in read action), and currently it is event dispatch (write context)
       return;
     }
     for (ID<?, ?> indexId : state.getIndexIDs()) {
@@ -1220,8 +1190,8 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
       String message = "Rebuild requested for index " + indexId;
       Application app = ApplicationManager.getApplication();
       if (myIsUnitTestMode && app.isReadAccessAllowed() && !app.isDispatchThread()) {
-        // shouldn't happen in tests in general; so fail early with the exception that caused index to be rebuilt.
-        // otherwise reindexing will fail anyway later, but with a much more cryptic assertion
+        // Shouldn't happen in tests in general, so fail early with the exception that caused the index to be rebuilt.
+        // Otherwise, reindexing will fail anyway later, but with a much more cryptic assertion
         LOG.error(message, throwable);
       }
       else {
@@ -1233,7 +1203,7 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
 
       Runnable rebuildRunnable = () -> scheduleIndexRescanningForAllProjects(message);
 
-      // we do invoke later since we can have read lock acquired
+      // we do invoke later since we can have a read lock acquired
       AppUIExecutor.onWriteThread().later().expireWith(app).submit(rebuildRunnable);
     }
   }
@@ -1287,7 +1257,7 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
 
   // caller is responsible to ensure no concurrent same document processing
   private void processRefreshedFile(@Nullable Project project, @NotNull final CachedFileContent fileContent) {
-    // ProcessCanceledException will cause re-adding the file to processing list
+    // ProcessCanceledException will cause re-adding the file to the processing list
     final VirtualFile file = fileContent.getVirtualFile();
     if (getChangedFilesCollector().isScheduledForUpdate(file)) {
       try {
@@ -1320,8 +1290,8 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
 
     boolean writeIndexValuesSeparately = isWritingIndexValuesSeparatedFromCounting();
     boolean isValid = file.isValid();
-    // if file was scheduled for update due to vfs events then it is present in myFilesToUpdate
-    // in this case we consider that current indexing (out of roots backed CacheUpdater) will cover its content
+    // If a file was scheduled for update due to vfs events, then it is present in myFilesToUpdate.
+    // In this case, we consider that current indexing (out of roots backed CacheUpdater) will cover its content.
     if (file.isValid() && content.getTimeStamp() != file.getTimeStamp()) {
       content = new CachedFileContent(file);
     }
@@ -1442,7 +1412,7 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
   @NotNull
   List<ID<?, ?>> getRequiredIndexes(@NotNull IndexedFile indexedFile) {
     if (!myRegisteredIndexes.isInitialized()) {
-      // 1. early vfs event that needs invalidation
+      // 1. early VFS event that needs invalidation
       // 2. pushers that do synchronous indexing for contentless indices
       waitUntilIndicesAreInitialized();
     }
@@ -1753,11 +1723,11 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
   public void doInvalidateIndicesForFile(int fileId, @NotNull VirtualFile file) {
     List<ID<?, ?>> nontrivialFileIndexedStates = IndexingStamp.getNontrivialFileIndexedStates(fileId);
 
-    // transient index value can depend on disk value because former is diff to latter
-    // it doesn't matter content hanged or not: indices might depend on file name too
+    // Transient index value can depend on disk value because the former is a diff to the latter.
+    // It doesn't matter if content froze or not: indices might depend on a file name too
     removeTransientFileDataFromIndices(nontrivialFileIndexedStates, fileId, file);
 
-    // file was removed
+    // The file was removed
     for (ID<?, ?> indexId : nontrivialFileIndexedStates) {
       if (!myRegisteredIndexes.isContentDependentIndex(indexId)) {
         removeSingleIndexValue(indexId, fileId);
@@ -1780,19 +1750,19 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
 
     List<ID<?, ?>> nontrivialFileIndexedStates = IndexingStamp.getNontrivialFileIndexedStates(fileId);
 
-    // transient index value can depend on disk value because former is diff to latter
-    // it doesn't matter content hanged or not: indices might depend on file name too
+    // Transient index value can depend on disk value because the former is a diff to the latter.
+    // It doesn't matter content froze or not: indices might depend on a file name too
     removeTransientFileDataFromIndices(nontrivialFileIndexedStates, fileId, file);
 
     boolean isRegularFile = !file.isDirectory();
     IndexedFileImpl indexedFile = new IndexedFileImpl(file, findProjectForFileId(fileId));
 
-    // Apply index contentless indexes in-place
+    // Apply contentless indexes in-place
     // For 'normal indices' schedule the file for update and reset stamps for all affected indices (there
-    // can be client that used indices between before and after events, in such case indices are up to date due to force update
+    // can be a client that used indices between before and after events, in such case indices are up-to-date due to force update
     // with old content)
     if (!file.isValid() || (isRegularFile && isTooLarge(file))) {
-      // large file might be scheduled for update in before event when its size was not large
+      // A large file might be scheduled for update in before event when its size was not large
       getChangedFilesCollector().scheduleForUpdate(new DeletedVirtualFileStub((VirtualFileWithId)file));
     }
     else {
@@ -1835,11 +1805,6 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
   @NotNull
   private FileAddStatus ensureFileBelongsToIndexableFilter(int fileId, @NotNull VirtualFile file) {
     return myIndexableFilesFilterHolder.addFileId(fileId, () -> getContainingProjects(file));
-  }
-
-  @NotNull
-  Collection<ID<?, ?>> getContentLessIndexes(boolean isDirectory) {
-    return isDirectory ? myRegisteredIndexes.getIndicesForDirectories() : myRegisteredIndexes.getNotRequiringContentIndices();
   }
 
   @NotNull
@@ -1898,6 +1863,7 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
     IndexingStamp.flushCaches();
   }
 
+  @SuppressWarnings("removal")
   @Override
   public VirtualFile findFileById(Project project, int id) {
     return ManagingFS.getInstance().findFileById(id);
@@ -2018,11 +1984,13 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
 
   // ==== Flushers implementations: =====
 
-  //We're trying to guess when and how to flush indexes so that this flush is the least intrusive for others, who
-  //  also want an access index, or VFS. Current indexes are protected by a global lock, and VFS mostly protected
+  //  We're trying to guess when and how to flush indexes so that this flush is the least intrusive for others, who
+  //  also want an access index, or VFS.
+  //  Current indexes are protected by a global lock, and VFS is mostly protected
   //  by StorageLockContext's global lock also, so indexes flush could create freeze whole app very easily,
-  //  especially if there are a lot of data to flush. Here we try to reduce the probability of a long freezes by
-  //  looking on the signs of intensive indexes/VFS use, and postponing index flush if such a signs present.
+  //  especially if there is a lot of data to flush.
+  //  Here we try to reduce the probability of long freezes by
+  //  looking for the signs of intensive indexes/VFS use and postponing an index flush if such sign is present.
 
 
   /**
@@ -2074,9 +2042,9 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
             //    trying to be just 'nice to others' here.
             //    I.e. do .yield() after each flush, so somebody who waits for index access -- has its
             //    chance. We also use .tryLock() as a way to feel interference (readLock.tryLock fails
-            //    -> somebody else acquired write lock), and back off a bit, giving 'other job' a chance
+            //    -> somebody else acquired write lock), and back off a bit, giving 'another job' a chance
             //    to finish.
-            //    (See e.g. IDEA-244174 for what could go wrong otherwise)
+            //    (See e.g., IDEA-244174 for what could go wrong otherwise)
 
             for (int attempt = 0; attempt < maxAttemptsPerIndex; attempt++) {
               final ReadWriteLock rwLock = index.getLock();
@@ -2114,12 +2082,12 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
     }
 
     private boolean betterToInterruptFlushingEarly(final int modCount) {
-      //RC: Basically, we're trying to flush 'if idle': i.e. we don't want to
+      //RC: Basically, we're trying to flush 'if idle': i.e., we don't want to
       //    issue a flush if somebody actively writes to indexes because flush
       //    will slow them down, if not stall them -- and (regular) flush is
-      //    less important than e.g. a current UI task. So we issue a flush only
-      //    if there _were no updates_ in indexes since the last invocation of
-      //    this method:
+      //    less important than e.g., a current UI task.
+      //    So we issue a flush only if there _were no updates_
+      //    in indexes since the last invocation of this method:
       return HeavyProcessLatch.INSTANCE.isRunning() || modCount != myLocalModCount.get();
     }
 
@@ -2134,8 +2102,8 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
    * and fail of .tryLock(). Introduce a limit on how many such signs are OK during a single attempt to flush
    * indexes -- 'contention quota'. Attempt to flush indexes continues until there are less total signs of
    * contention than the quota allows. After quota is fully spent -> flush is interrupted, and the next flush
-   * attempt is re-scheduled in a short period, and with contention quota doubled. If quota is more than enough
-   * to flush everything -- i.e. there is unspent quota -- then the next attempt is scheduled in a regular
+   * attempt is re-scheduled in a short period, and with contention quota doubled. If the quota is more than enough
+   * to flush everything -- i.e., there is unspent quota -- then the next attempt is scheduled in a regular
    * interval, and the contention quota is slightly decreased for the next attempt.
    * More details in a {@link GentleFlusherBase} javadocs
    */
@@ -2204,12 +2172,12 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
 
     @Override
     protected boolean betterPostponeFlushNow() {
-      //RC: Basically, we're trying to flush 'if idle': i.e. we don't want to
+      //RC: Basically, we're trying to flush 'if idle': i.e., we don't want to
       //    issue a flush if somebody actively writes to indexes because flush
       //    will slow them down, if not stall them -- and (regular) flush is
-      //    less important than e.g. a current UI task. So we issue a flush only
-      //    if there _were no updates_ in indexes since the last invocation of
-      //    this method:
+      //    less important than e.g., a current UI task.
+      //    So we issue a flush only if there _were no updates_
+      //    in indexes since the last invocation of this method:
       final int currentModCount = myLocalModCount.get();
       if (lastModCount != currentModCount) {
         lastModCount = currentModCount;
@@ -2222,9 +2190,9 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
       if (!(lock instanceof ReentrantReadWriteLock)) {
         throw new IllegalStateException("index.lock (" + lock + ") is not ReentrantReadWriteLock -- can't sample queue length");
       }
-      //RC: worth to add StorageLockContext.defaultContextLock().getQueueLength() into
+      //RC: worth adding StorageLockContext.defaultContextLock().getQueueLength() into
       //    the equation: if storages are intensively used outside of indexes, it is better to
-      //    keep hands off the indexes flush also -- since index flush will also compete for the
+      //    keep hands off the indexes flush also -- since the index flush will also compete for the
       //    storage lock
       final int storageLockQueueLength = StorageLockContext.defaultContextLock().getQueueLength();
       return ((ReentrantReadWriteLock)lock).getQueueLength() + storageLockQueueLength;
