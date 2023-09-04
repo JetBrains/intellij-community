@@ -27,6 +27,7 @@ import com.intellij.util.containers.ContainerUtil;
 import com.jetbrains.jsonSchema.JsonPointerUtil;
 import com.jetbrains.jsonSchema.JsonSchemaCatalogEntry;
 import com.jetbrains.jsonSchema.extension.JsonLikePsiWalker;
+import com.jetbrains.jsonSchema.extension.JsonSchemaMapper;
 import com.jetbrains.jsonSchema.extension.adapters.JsonObjectValueAdapter;
 import com.jetbrains.jsonSchema.extension.adapters.JsonPropertyAdapter;
 import com.jetbrains.jsonSchema.extension.adapters.JsonValueAdapter;
@@ -261,9 +262,12 @@ public final class JsonCachedValues {
 
       PsiFile psiFile = schema.first;
       JsonSchemaObject object = schema.second == null ? JsonSchemaObject.NULL_OBJ : schema.second;
-      return psiFile == null
-             ? CachedValueProvider.Result.create(object, originalFile, service)
-             : CachedValueProvider.Result.create(object, originalFile, psiFile, service);
+      CachedValueProvider.Result<JsonSchemaObject> unmappedResult =
+        psiFile == null
+        ? CachedValueProvider.Result.create(object, originalFile, service)
+        : CachedValueProvider.Result.create(object, originalFile, psiFile, service);
+
+      return JsonSchemaMapper.mapAll(originalFile, unmappedResult);
     });
     return value == JsonSchemaObject.NULL_OBJ ? null : value;
   }
