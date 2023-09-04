@@ -4,7 +4,6 @@ import com.intellij.lang.Language
 import com.intellij.lexer.Lexer
 import com.intellij.openapi.editor.Document
 import com.intellij.openapi.fileTypes.PlainTextLanguage
-import com.intellij.psi.tree.IElementType
 import com.intellij.util.keyFMap.KeyFMap
 import org.jetbrains.plugins.notebooks.visualization.NotebookCellLines.CellType
 import org.jetbrains.plugins.notebooks.visualization.NotebookCellLines.MarkersAtLines
@@ -24,17 +23,16 @@ interface NotebookCellLinesLexer {
   }
 
   companion object {
-    fun defaultMarkerSequence(underlyingLexerFactory: () -> Lexer,
-                              getCellTypeAndData: (IElementType, lexer: Lexer) -> Pair<CellType, KeyFMap>?,
-                              chars: CharSequence,
-                              ordinalIncrement: Int,
-                              offsetIncrement: Int): Sequence<Marker> = sequence {
+    fun <Lex : Lexer> defaultMarkerSequence(underlyingLexerFactory: () -> Lex,
+                                            getCellTypeAndData: (lexer: Lex) -> Pair<CellType, KeyFMap>?,
+                                            chars: CharSequence,
+                                            ordinalIncrement: Int,
+                                            offsetIncrement: Int): Sequence<Marker> = sequence {
       val lexer = underlyingLexerFactory()
       lexer.start(chars, 0, chars.length)
       var ordinal = 0
-      while (true) {
-        val tokenType = lexer.tokenType ?: break
-        getCellTypeAndData(tokenType, lexer)?.let { (type, data) ->
+      while (lexer.tokenType != null) {
+        getCellTypeAndData(lexer)?.let { (type, data) ->
           yield(Marker(
             ordinal = ordinal++ + ordinalIncrement,
             type = type,
