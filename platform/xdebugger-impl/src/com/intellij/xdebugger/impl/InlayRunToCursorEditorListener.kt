@@ -52,22 +52,11 @@ internal class InlayRunToCursorEditorListener(private val project: Project) : Ed
     }
     val shouldHideCurrentHint = scheduleInlayRunToCursor(e)
     if (shouldHideCurrentHint) {
-      hideHint()
+      val hint = currentHint.get()
+      hint?.hide()
+      currentEditor = WeakReference(null)
+      currentLineNumber = -1
     }
-  }
-
-  private fun reset(hint: RunToCursorHint) {
-    if (hint != currentHint.get()) {
-      return
-    }
-    currentHint.clear()
-    currentEditor = WeakReference(null)
-    currentLineNumber = -1
-  }
-
-  private fun hideHint() {
-    val hint = currentHint.get()
-    hint?.hide()
   }
 
   private fun scheduleInlayRunToCursor(e: EditorMouseEvent): Boolean {
@@ -183,7 +172,7 @@ internal class InlayRunToCursorEditorListener(private val project: Project) : Ed
     }
 
     override fun hide(ok: Boolean) {
-      listener.reset(this)
+      listener.currentHint.clear()
       super.hide(ok)
     }
   }
