@@ -55,7 +55,7 @@ import java.util.*;
 import static com.intellij.codeInspection.options.OptPane.*;
 
 public class TypeMayBeWeakenedInspection extends BaseInspection {
-  @SuppressWarnings({"PublicField", "WeakerAccess"})
+  @SuppressWarnings({"PublicField", "WeakerAccess", "unused"})
   public boolean useRighthandTypeAsWeakestTypeInAssignments = true;
 
   @SuppressWarnings({"PublicField", "WeakerAccess", "unused"})
@@ -184,7 +184,7 @@ public class TypeMayBeWeakenedInspection extends BaseInspection {
       String hint = InspectionGadgetsBundle.message("inspection.type.may.be.weakened.add.stop.class.selection.popup");
       ListPopup popup = JBPopupFactory.getInstance().createListPopup(new BaseListPopupStep<>(hint, myCandidates) {
         @Override
-        public PopupStep onChosen(String selectedValue, boolean finalChoice) {
+        public PopupStep<?> onChosen(String selectedValue, boolean finalChoice) {
           CommandProcessor.getInstance().executeCommand(project, () -> addClass(selectedValue, descriptor.getPsiElement()),
                                                         InspectionGadgetsBundle.message("inspection.type.may.be.weakened.add.stopper"),
                                                         null);
@@ -269,8 +269,6 @@ public class TypeMayBeWeakenedInspection extends BaseInspection {
   @Override
   public @NotNull OptPane getOptionsPane() {
     return pane(
-      checkbox("useRighthandTypeAsWeakestTypeInAssignments",
-               InspectionGadgetsBundle.message("inspection.type.may.be.weakened.ignore.option")),
       checkbox("doNotWeakenToJavaLangObject",
                InspectionGadgetsBundle.message("inspection.type.may.be.weakened.do.not.weaken.to.object.option")),
       checkbox("onlyWeakentoInterface", InspectionGadgetsBundle.message("inspection.type.may.be.weakened.only.weaken.to.an.interface")),
@@ -428,21 +426,19 @@ public class TypeMayBeWeakenedInspection extends BaseInspection {
           return;
         }
       }
-      if (useRighthandTypeAsWeakestTypeInAssignments) {
-        if (variable instanceof PsiParameter) {
-          final PsiElement parent = variable.getParent();
-          if (parent instanceof PsiForeachStatement foreachStatement) {
-            final PsiExpression iteratedValue = foreachStatement.getIteratedValue();
-            if (!(iteratedValue instanceof PsiNewExpression) && !(iteratedValue instanceof PsiTypeCastExpression)) {
-              return;
-            }
-          }
-        }
-        else {
-          final PsiExpression initializer = variable.getInitializer();
-          if (!(initializer instanceof PsiNewExpression) && !(initializer instanceof PsiTypeCastExpression)) {
+      if (variable instanceof PsiParameter) {
+        final PsiElement parent = variable.getParent();
+        if (parent instanceof PsiForeachStatement foreachStatement) {
+          final PsiExpression iteratedValue = foreachStatement.getIteratedValue();
+          if (!(iteratedValue instanceof PsiNewExpression) && !(iteratedValue instanceof PsiTypeCastExpression)) {
             return;
           }
+        }
+      }
+      else {
+        final PsiExpression initializer = variable.getInitializer();
+        if (!(initializer instanceof PsiNewExpression) && !(initializer instanceof PsiTypeCastExpression)) {
+          return;
         }
       }
       if (variable instanceof PsiParameter) {
@@ -467,7 +463,7 @@ public class TypeMayBeWeakenedInspection extends BaseInspection {
     @NotNull
     private Collection<PsiClass> computeWeakestClasses(@NotNull PsiElement element, @NotNull PsiClass originClass) {
       Collection<PsiClass> weakestClasses =
-        WeakestTypeFinder.calculateWeakestClassesNecessary(element, useRighthandTypeAsWeakestTypeInAssignments);
+        WeakestTypeFinder.calculateWeakestClassesNecessary(element, true);
       if (doNotWeakenToJavaLangObject) {
         weakestClasses.remove(ClassUtils.findObjectClass(element));
       }
