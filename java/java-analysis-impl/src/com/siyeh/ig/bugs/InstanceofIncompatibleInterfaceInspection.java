@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2013 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2023 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -28,7 +28,8 @@ public class InstanceofIncompatibleInterfaceInspection extends BaseInspection {
   @Override
   @NotNull
   public String buildErrorString(Object... infos) {
-    return InspectionGadgetsBundle.message("instanceof.with.incompatible.interface.problem.descriptor");
+    final Boolean isInterface = (Boolean)infos[0];
+    return InspectionGadgetsBundle.message("instanceof.with.incompatible.interface.problem.descriptor", isInterface ? 1 : 2);
   }
 
   @Override
@@ -41,12 +42,12 @@ public class InstanceofIncompatibleInterfaceInspection extends BaseInspection {
     @Override
     public void visitInstanceOfExpression(@NotNull PsiInstanceOfExpression expression) {
       super.visitInstanceOfExpression(expression);
-      final PsiTypeElement castTypeElement = expression.getCheckType();
-      if (castTypeElement == null) {
+      final PsiTypeElement checkTypeElement = expression.getCheckType();
+      if (checkTypeElement == null) {
         return;
       }
-      final PsiType castType = castTypeElement.getType();
-      if (!(castType instanceof PsiClassType castClassType)) {
+      final PsiType checkType = checkTypeElement.getType();
+      if (!(checkType instanceof PsiClassType checkClassType)) {
         return;
       }
       final PsiExpression operand = expression.getOperand();
@@ -54,20 +55,20 @@ public class InstanceofIncompatibleInterfaceInspection extends BaseInspection {
       if (!(operandType instanceof PsiClassType operandClassType)) {
         return;
       }
-      final PsiClass castClass = castClassType.resolve();
-      if (castClass == null || !castClass.isInterface()) {
+      final PsiClass checkClass = checkClassType.resolve();
+      if (checkClass == null) {
         return;
       }
       final PsiClass operandClass = operandClassType.resolve();
-      if (operandClass == null || operandClass.isInterface()) {
+      if (operandClass == null) {
         return;
       }
-      ThreeState hasMutualSubclass = InheritanceUtil.existsMutualSubclass(operandClass, castClass, isOnTheFly());
+      ThreeState hasMutualSubclass = InheritanceUtil.existsMutualSubclass(operandClass, checkClass, isOnTheFly());
       if (hasMutualSubclass == ThreeState.NO) {
-        registerError(castTypeElement);
+        registerError(checkTypeElement, checkClass.isInterface());
       }
       else if (hasMutualSubclass == ThreeState.UNSURE) {
-        registerPossibleProblem(castTypeElement);
+        registerPossibleProblem(checkTypeElement);
       }
     }
   }
