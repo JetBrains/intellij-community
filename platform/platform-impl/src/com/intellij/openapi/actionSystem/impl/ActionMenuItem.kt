@@ -130,6 +130,7 @@ class ActionMenuItem internal constructor(action: AnAction,
       screenMenuItemPeer.setLabel(text, accelerator)
       screenMenuItemPeer.setEnabled(isEnabled)
     }
+    firstShortcutTextFromPresentation = presentation.getClientProperty(Presentation.PROP_KEYBOARD_SHORTCUT_TEXT)
   }
 
   @Throws(IllegalArgumentException::class)
@@ -172,8 +173,10 @@ class ActionMenuItem internal constructor(action: AnAction,
     showDescriptionInStatusBar(isIncluded = isIncluded, component = this, description = description)
   }
 
+  private var firstShortcutTextFromPresentation: @NlsSafe String? = null
+
   val firstShortcutText: @NlsSafe String
-    get() = KeymapUtil.getFirstKeyboardShortcutText(actionRef.getAction())
+    get() = firstShortcutTextFromPresentation ?: KeymapUtil.getFirstKeyboardShortcutText(actionRef.getAction())
 
   private fun updateIcon(presentation: Presentation) {
     isToggled = isToggleable && Toggleable.isSelected(presentation)

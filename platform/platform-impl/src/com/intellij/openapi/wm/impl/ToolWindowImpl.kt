@@ -9,6 +9,7 @@ import com.intellij.ide.actions.ToggleToolbarAction
 import com.intellij.ide.actions.ToolWindowMoveAction
 import com.intellij.ide.actions.ToolwindowFusEventFields
 import com.intellij.ide.actions.tree.SpeedSearchActionHandler
+import com.intellij.ide.actions.tree.TreeSpeedSearchAction
 import com.intellij.ide.actions.tree.getSpeedSearchActionHandler
 import com.intellij.ide.impl.ContentManagerWatcher
 import com.intellij.idea.ActionsBundle
@@ -24,6 +25,7 @@ import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.logger
+import com.intellij.openapi.keymap.KeymapUtil
 import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.project.DumbService
@@ -783,6 +785,13 @@ internal class ToolWindowImpl(val toolWindowManager: ToolWindowManagerImpl,
       val actionHandler = getActionHandler()
       e.presentation.isVisible = actionHandler != null
       e.presentation.isEnabled = actionHandler?.isSpeedSearchActive() == false
+      e.presentation.putClientProperty(
+        Presentation.PROP_KEYBOARD_SHORTCUT_TEXT,
+        ActionsBundle.message(
+          "action.Tree-speedSearch.shortcutText",
+          KeymapUtil.getFirstKeyboardShortcutText(ActionManager.getInstance().getAction(TreeSpeedSearchAction.ID))
+        )
+      )
     }
 
     override fun actionPerformed(e: AnActionEvent) {

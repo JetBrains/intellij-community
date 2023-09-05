@@ -5,10 +5,7 @@ import com.intellij.DynamicBundle;
 import com.intellij.ide.ui.UISettings;
 import com.intellij.openapi.actionSystem.ex.CustomComponentAction;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.util.Comparing;
-import com.intellij.openapi.util.Key;
-import com.intellij.openapi.util.NotNullLazyValue;
-import com.intellij.openapi.util.SystemInfoRt;
+import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.text.TextWithMnemonic;
 import com.intellij.util.BitUtil;
 import com.intellij.util.SmartFMap;
@@ -86,6 +83,7 @@ public final class Presentation implements Cloneable {
   public static final @NonNls String PROP_ENABLED = "enabled";
 
   public static final @NonNls Key<@Nls String> PROP_VALUE = Key.create("value");
+  public static final @NonNls Key<@NlsSafe String> PROP_KEYBOARD_SHORTCUT_TEXT = Key.create("keyboardShortcutText");
 
   public static final double DEFAULT_WEIGHT = 0;
   public static final double HIGHER_WEIGHT = 42;
