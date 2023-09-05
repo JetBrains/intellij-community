@@ -266,8 +266,10 @@ class BuildContextImpl(
     jvmArgs.add("-Djna.nosys=true")
     jvmArgs.add("-Djna.noclasspath=true")
 
-    if (useModularLoader) {
+    if (useModularLoader || options.generateRuntimeModuleRepository) {
       jvmArgs.add("-Dintellij.platform.runtime.repository.path=$macroName/${RuntimeModuleRepositoryBuildConstants.JAR_REPOSITORY_FILE_NAME}")
+    }
+    if (useModularLoader) {
       jvmArgs.add("-Dintellij.platform.root.module=${productProperties.applicationInfoModule}")
     }
 
