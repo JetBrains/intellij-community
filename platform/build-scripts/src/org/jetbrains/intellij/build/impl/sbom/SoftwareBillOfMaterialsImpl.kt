@@ -14,9 +14,9 @@ import kotlinx.coroutines.flow.toList
 import org.apache.commons.codec.digest.DigestUtils
 import org.apache.maven.model.Model
 import org.apache.maven.model.io.xpp3.MavenXpp3Reader
-import org.jetbrains.annotations.ApiStatus.Internal
 import org.jetbrains.intellij.build.*
-import org.jetbrains.intellij.build.LibraryUpstream
+import org.jetbrains.intellij.build.SoftwareBillOfMaterials.Companion.Suppliers
+import org.jetbrains.intellij.build.SoftwareBillOfMaterials.Options
 import org.jetbrains.intellij.build.impl.*
 import org.jetbrains.intellij.build.impl.projectStructureMapping.*
 import org.jetbrains.intellij.build.io.readZipFile
@@ -56,48 +56,11 @@ import kotlin.io.path.name
 import kotlin.io.path.nameWithoutExtension
 import kotlin.io.path.readText
 
-/**
- * Generates Software Bill Of Materials (SBOM) for each distribution file in [SPDX format](https://spdx.github.io/spdx-spec)
- */
-class SoftwareBillOfMaterialsImpl internal constructor(
+internal class SoftwareBillOfMaterialsImpl(
   private val context: BuildContext,
   private val distributions: List<DistributionForOsTaskResult>,
   private val distributionFiles: List<DistributionFileEntry>
-) {
-  companion object {
-    const val STEP_ID: String = "sbom"
-
-    @Internal
-    object Suppliers {
-      const val JETBRAINS: String = "JetBrains s.r.o."
-      const val GOOGLE: String = "Google LLC"
-      const val APACHE: String = "The Apache Software Foundation"
-    }
-  }
-
-  class Options {
-    /**
-     * [Specification](https://spdx.github.io/spdx-spec/v2.3/document-creation-information/#68-creator-field)
-     */
-    var creator: String? = null
-
-    /**
-     * [Specification](https://spdx.github.io/spdx-spec/v2.3/package-information/#717-copyright-text-field)
-     */
-    var copyrightText: String? = null
-
-    /**
-     * [Specification](https://spdx.github.io/spdx-spec/v2.3/package-information/#715-declared-license-field)
-     */
-    var license: DistributionLicense? = null
-
-    class DistributionLicense(val name: String, val text: String, val url: String?) {
-      internal companion object {
-        val JETBRAINS = DistributionLicense(LibraryLicense.JETBRAINS_OWN, LibraryLicense.JETBRAINS_OWN, null)
-      }
-    }
-  }
-
+): SoftwareBillOfMaterials {
   private val specVersion: String = Version.TWO_POINT_THREE_VERSION
 
   private val creator: String
@@ -192,7 +155,7 @@ class SoftwareBillOfMaterialsImpl internal constructor(
     }
   }
 
-  internal suspend fun generate() {
+  override suspend fun generate() {
     if (!context.shouldBuildDistributions()) {
       Span.current().addEvent("No distribution was built, skipping")
       return
