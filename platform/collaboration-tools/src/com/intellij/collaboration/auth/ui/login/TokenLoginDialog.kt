@@ -51,6 +51,7 @@ class TokenLoginDialog(
 
     uiScope.launch {
       model.login()
+      initValidation()
     }
   }
 
