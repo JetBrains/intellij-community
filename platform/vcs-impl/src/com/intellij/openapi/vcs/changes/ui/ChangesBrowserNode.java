@@ -4,6 +4,7 @@ package com.intellij.openapi.vcs.changes.ui;
 import com.intellij.diagnostic.PluginException;
 import com.intellij.ide.util.treeView.FileNameComparator;
 import com.intellij.openapi.application.AccessToken;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.UserDataHolderBase;
@@ -290,6 +291,14 @@ public abstract class ChangesBrowserNode<T> extends DefaultMutableTreeNode imple
 
   public String toString() {
     return getTextPresentation();
+  }
+
+  @Override
+  public void setUserObject(Object userObject) {
+    if (userObject != getUserObject()) {
+      Logger.getInstance(ChangesBrowserNode.class).error("Should not replace UserObject for ChangesBrowserNode");
+    }
+    super.setUserObject(userObject);
   }
 
   /**

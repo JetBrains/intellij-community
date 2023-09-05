@@ -720,28 +720,7 @@ public class ShelvedChangesViewManager implements Disposable {
       myTree = new ShelfTree(myProject);
       myTree.setEditable(true);
       myTree.setDragEnabled(!ApplicationManager.getApplication().isHeadlessEnvironment());
-      DefaultTreeCellEditor treeCellEditor = new DefaultTreeCellEditor(myTree, null) {
-        @Override
-        public boolean isCellEditable(EventObject event) {
-          return !(event instanceof MouseEvent) && super.isCellEditable(event);
-        }
-      };
-      myTree.setCellEditor(treeCellEditor);
-      treeCellEditor.addCellEditorListener(new CellEditorListener() {
-        @Override
-        public void editingStopped(ChangeEvent e) {
-          DefaultMutableTreeNode node = (DefaultMutableTreeNode)myTree.getLastSelectedPathComponent();
-          if (node instanceof ShelvedListNode && e.getSource() instanceof TreeCellEditor) {
-            String editorValue = ((TreeCellEditor)e.getSource()).getCellEditorValue().toString();
-            ShelvedChangeList shelvedChangeList = ((ShelvedListNode)node).getList();
-            myShelveChangesManager.renameChangeList(shelvedChangeList, editorValue);
-          }
-        }
-
-        @Override
-        public void editingCanceled(ChangeEvent e) {
-        }
-      });
+      myTree.setCellEditor(new ShelveRenameTreeCellEditor());
 
       final AnAction showDiffAction = ActionManager.getInstance().getAction(IdeActions.ACTION_SHOW_DIFF_COMMON);
       showDiffAction.registerCustomShortcutSet(showDiffAction.getShortcutSet(), myTree);
@@ -959,6 +938,33 @@ public class ShelvedChangesViewManager implements Disposable {
       @Override
       public boolean isSelected(@NotNull AnActionEvent e) {
         return myVcsConfiguration.SHELVE_DETAILS_PREVIEW_SHOWN;
+      }
+    }
+
+    private class ShelveRenameTreeCellEditor extends DefaultTreeCellEditor implements CellEditorListener {
+      ShelveRenameTreeCellEditor() {
+        super(myTree, null);
+        addCellEditorListener(this);
+      }
+
+      @Override
+      public boolean isCellEditable(EventObject event) {
+        return !(event instanceof MouseEvent) && super.isCellEditable(event);
+      }
+
+      @Override
+      public void editingStopped(ChangeEvent e) {
+        TreeNode node = (TreeNode)myTree.getLastSelectedPathComponent();
+        if (node instanceof ShelvedListNode changeListNode &&
+            e.getSource() instanceof TreeCellEditor treeCellEditor) {
+          String editorValue = treeCellEditor.getCellEditorValue().toString();
+          ShelvedChangeList shelvedChangeList = changeListNode.getList();
+          myShelveChangesManager.renameChangeList(shelvedChangeList, editorValue);
+        }
+      }
+
+      @Override
+      public void editingCanceled(ChangeEvent e) {
       }
     }
   }
