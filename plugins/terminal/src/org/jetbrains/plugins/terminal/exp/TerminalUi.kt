@@ -20,7 +20,7 @@ object TerminalUi {
 
   const val alternateBufferLeftInset = 4
 
-  const val searchComponentWidth = 480
+  const val searchComponentWidth = 500
 
   // todo: create color keys
   val terminalBackground: Color

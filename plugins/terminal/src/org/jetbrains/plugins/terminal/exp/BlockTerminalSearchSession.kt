@@ -3,18 +3,23 @@ package org.jetbrains.plugins.terminal.exp
 
 import com.intellij.BundleBase
 import com.intellij.find.*
+import com.intellij.find.FindModel.FindModelObserver
 import com.intellij.find.editorHeaderActions.*
 import com.intellij.find.impl.livePreview.LivePreviewController
 import com.intellij.find.impl.livePreview.SearchResults
 import com.intellij.openapi.actionSystem.DataProvider
+import com.intellij.openapi.actionSystem.ex.TooltipDescriptionProvider
 import com.intellij.openapi.application.ApplicationBundle
 import com.intellij.openapi.application.invokeLater
+import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.EditorFactory
 import com.intellij.openapi.editor.event.EditorFactoryEvent
 import com.intellij.openapi.editor.event.EditorFactoryListener
 import com.intellij.openapi.editor.ex.EditorEx
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
+import com.intellij.openapi.util.Key
+import com.intellij.openapi.util.Pair
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.ui.util.maximumWidth
 import com.intellij.ui.util.preferredWidth
@@ -22,18 +27,24 @@ import com.intellij.util.SmartList
 import com.intellij.util.ui.ComponentWithEmptyText
 import com.intellij.util.ui.JBUI
 import org.jetbrains.annotations.Nls
+import org.jetbrains.plugins.terminal.TerminalBundle
+import org.jetbrains.plugins.terminal.TerminalIcons
+import org.jetbrains.plugins.terminal.exp.TerminalSelectionModel.TerminalSelectionListener
 import javax.swing.JTextArea
 
 class BlockTerminalSearchSession(
   private val project: Project,
   private val editor: EditorEx,
   private val model: FindModel,
+  private val outputModel: TerminalOutputModel,
+  private val selectionModel: TerminalSelectionModel,
   private val closeCallback: () -> Unit = {}
 ) : SearchSession, SearchResults.SearchResultsListener, SearchReplaceComponent.Listener, DataProvider {
   private val disposable = Disposer.newDisposable(BlockTerminalSearchSession::class.java.name)
   private val component: SearchReplaceComponent = createSearchComponent()
-  private val searchResults: SearchResults = SearchResults(editor, project)
+  private val searchResults: SearchResults = TerminalSearchResults()
   private val livePreviewController: LivePreviewController = LivePreviewController(searchResults, this, disposable)
+  private var isSearchInBlock = model.isSearchInBlock
 
   init {
     searchResults.matchesLimit = LivePreviewController.MATCHES_LIMIT
@@ -41,16 +52,33 @@ class BlockTerminalSearchSession(
 
     component.addListener(this)
     searchResults.addListener(this)
-    model.addObserver {
-      updateUiWithFindModel()
-      searchResults.clear()
-      updateResults()
-      FindManager.getInstance(project).findInFileModel.apply {
-        stringToFind = model.stringToFind
-        isCaseSensitive = model.isCaseSensitive
-        isRegularExpressions = model.isRegularExpressions
+    model.addObserver(object : FindModelObserver {
+      private var preventRecursion = false
+
+      override fun findModelChanged(findModel: FindModel?) {
+        if (!preventRecursion) {
+          try {
+            preventRecursion = true
+            findModelChanged()
+          }
+          finally {
+            preventRecursion = false
+          }
+        }
       }
-    }
+    })
+    selectionModel.addListener(object : TerminalSelectionListener {
+      override fun selectionChanged(oldSelection: List<CommandBlock>, newSelection: List<CommandBlock>) {
+        if (newSelection.isEmpty()) {
+          model.isSearchInBlock = false
+        }
+        if (model.isSearchInBlock) {
+          searchResults.clear()
+          updateResults()
+        }
+      }
+    }, disposable)
+
     EditorFactory.getInstance().addEditorFactoryListener(object : EditorFactoryListener {
       override fun editorReleased(event: EditorFactoryEvent) {
         if (event.editor === editor) {
@@ -72,7 +100,7 @@ class BlockTerminalSearchSession(
     return SearchReplaceComponent
       .buildFor(project, editor.contentComponent)
       .addPrimarySearchActions(StatusTextAction(), PrevOccurrenceAction(), NextOccurrenceAction())
-      .addExtraSearchActions(ToggleMatchCase(), ToggleRegex())
+      .addExtraSearchActions(SearchInBlockAction(), ToggleMatchCase(), ToggleRegex())
       .withNewLineButton(false)
       .withDataProvider(this)
       .withCloseAction(this::close)
@@ -82,6 +110,26 @@ class BlockTerminalSearchSession(
         it.maximumWidth = JBUI.scale(TerminalUi.searchComponentWidth)
         it.border = JBUI.Borders.customLine(JBUI.CurrentTheme.Editor.BORDER_COLOR, 0, 1, 1,0)
       }
+  }
+
+  private fun findModelChanged() {
+    if (model.isSearchInBlock != isSearchInBlock) {
+      isSearchInBlock = model.isSearchInBlock
+      if (isSearchInBlock && selectionModel.primarySelection == null) {
+        val offset = searchResults.cursor?.startOffset ?: editor.caretModel.offset
+        outputModel.getByOffset(offset)?.let { block ->
+          selectionModel.selectedBlocks = listOf(block)
+        }
+      }
+    }
+    updateUiWithFindModel()
+    searchResults.clear()
+    updateResults()
+    FindManager.getInstance(project).findInFileModel.apply {
+      stringToFind = model.stringToFind
+      isCaseSensitive = model.isCaseSensitive
+      isRegularExpressions = model.isRegularExpressions
+    }
   }
 
   override fun searchFieldDocumentChanged() {
@@ -128,7 +176,6 @@ class BlockTerminalSearchSession(
   private fun updateUiWithFindModel() {
     component.update(model.stringToFind, model.stringToReplace, model.isReplaceState, model.isMultiline)
     updateEmptyText()
-    livePreviewController.setTrackingSelection(!model.isGlobal)
   }
 
   private fun updateEmptyText() {
@@ -139,6 +186,9 @@ class BlockTerminalSearchSession(
   }
 
   private fun getEmptyText(): @Nls String {
+    if (model.isSearchInBlock) {
+      return TerminalBundle.message("search.in.block").replace(BundleBase.MNEMONIC_STRING, "")
+    }
     fun getOptionText(key: String) = StringUtil.toLowerCase(FindBundle.message(key).replace(BundleBase.MNEMONIC_STRING, ""))
     val options: MutableList<String> = SmartList()
     if (model.isCaseSensitive) options.add(getOptionText("find.case.sensitive"))
@@ -173,5 +223,45 @@ class BlockTerminalSearchSession(
 
   override fun getData(dataId: String): Any? {
     return if (SearchSession.KEY.`is`(dataId)) this else null
+  }
+
+  private inner class TerminalSearchResults : SearchResults(editor, project) {
+    override fun getLocalSearchArea(editor: Editor, findModel: FindModel): Pair<IntArray, IntArray> {
+      return if (findModel.isSearchInBlock) {
+        val blocks = selectionModel.selectedBlocks.sortedBy { it.startOffset }
+        val starts = IntArray(blocks.size)
+        val ends = IntArray(blocks.size)
+        for (index in blocks.indices) {
+          starts[index] = blocks[index].startOffset
+          ends[index] = blocks[index].endOffset
+        }
+        Pair.create(starts, ends)
+      }
+      else Pair.create(intArrayOf(0), intArrayOf(Int.MAX_VALUE))
+    }
+  }
+
+  private class SearchInBlockAction : Embeddable, TooltipDescriptionProvider,
+                                      EditorHeaderToggleAction(TerminalBundle.message("search.in.block"),
+                                                               TerminalIcons.SearchInBlock,
+                                                               TerminalIcons.SearchInBlock,
+                                                               TerminalIcons.SearchInBlock) {
+    override fun isSelected(session: SearchSession): Boolean {
+      return session.findModel.isSearchInBlock
+    }
+
+    override fun setSelected(session: SearchSession, selected: Boolean) {
+      session.findModel.isSearchInBlock = selected
+    }
+  }
+
+  companion object {
+    private val SEARCH_IN_BLOCK_KEY: Key<Boolean> = Key.create("SearchInBlock")
+
+    var FindModel.isSearchInBlock: Boolean
+      get() = getUserData(SEARCH_IN_BLOCK_KEY) == true
+      set(value) {
+        putUserData(SEARCH_IN_BLOCK_KEY, value)
+      }
   }
 }

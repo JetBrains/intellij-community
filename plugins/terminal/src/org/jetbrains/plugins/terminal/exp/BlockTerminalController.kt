@@ -14,6 +14,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.jediterm.core.util.TermSize
+import org.jetbrains.plugins.terminal.exp.BlockTerminalSearchSession.Companion.isSearchInBlock
 import java.util.concurrent.CopyOnWriteArrayList
 
 class BlockTerminalController(
@@ -98,9 +99,12 @@ class BlockTerminalController(
     val findModel = FindModel()
     findModel.copyFrom(FindManager.getInstance(project).findInFileModel)
     findModel.isWholeWordsOnly = false
+    findModel.isSearchInBlock = selectionController.primarySelection != null
     val editor = outputController.outputModel.editor
     FindUtil.configureFindModel(false, editor, findModel, false)
-    val session = BlockTerminalSearchSession(project, editor, findModel, closeCallback = this::onSearchClosed)
+    findModel.isGlobal = false
+    val session = BlockTerminalSearchSession(project, editor, findModel, outputController.outputModel, outputController.selectionModel,
+                                             closeCallback = this::onSearchClosed)
     searchSession = session
     listeners.forEach { it.searchSessionStarted(session) }
     session.component.requestFocusInTheSearchFieldAndSelectContent(project)
@@ -112,6 +116,8 @@ class BlockTerminalController(
     val editor = outputController.outputModel.editor
     session.component.requestFocusInTheSearchFieldAndSelectContent(project)
     FindUtil.configureFindModel(false, editor, session.findModel, false)
+    session.findModel.isSearchInBlock = selectionController.primarySelection != null
+    session.findModel.isGlobal = false
   }
 
   @RequiresEdt
