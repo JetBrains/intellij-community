@@ -32,12 +32,6 @@ public class TableFilterHeader extends AdditionalTableHeader {
   private final int filterRowHeightDelta = FilterSettings.filterRowHeightDelta;
 
   /**
-   * The columnsController is a glue component, controlling the filters
-   * associated to each column.
-   */
-  ColumnsControllerPanel columnsController;
-
-  /**
    * The privately owned instance of FiltersHandler that conforms the filter
    * defined by the TableFilterHeader.
    */
@@ -81,9 +75,9 @@ public class TableFilterHeader extends AdditionalTableHeader {
 
   /** Returns the filter editor for the given column in the table model. */
   public IFilterEditor getFilterEditor(int modelColumn) {
-    return (columnsController == null)
+    return (getColumnsController() == null)
            ? null
-           : ((FilterColumnsControllerPanel)columnsController).getFilterEditor(getTable().convertColumnIndexToView(modelColumn));
+           : ((FilterColumnsControllerPanel)getColumnsController()).getFilterEditor(getTable().convertColumnIndexToView(modelColumn));
   }
 
   /** Returns the table currently attached. */
@@ -112,7 +106,7 @@ public class TableFilterHeader extends AdditionalTableHeader {
 
   @Override
   public void detachController() {
-    columnsController.detach();
+    getColumnsController().detach();
   }
 
   @NotNull

@@ -23,7 +23,7 @@ import javax.swing.table.TableColumnModel
 import javax.swing.table.TableModel
 
 
-abstract class AdditionalTableHeader : JPanel(BorderLayout()), PropertyChangeListener {
+abstract class AdditionalTableHeader : JPanel(BorderLayout()) {
   enum class Position {
     TOP,
     INLINE,
@@ -43,6 +43,13 @@ abstract class AdditionalTableHeader : JPanel(BorderLayout()), PropertyChangeLis
     setupNewTable(table)
   }
 
+  private val updateChangeListener = PropertyChangeListener { evt: PropertyChangeEvent ->
+    if ("model" == evt.propertyName || "componentOrientation" == evt.propertyName) {
+      removeController()
+      recreateController()
+    }
+  }
+
   private fun setupNewTable(newTable: JTable?) {
     removeController()
     if (newTable == null) {
@@ -51,8 +58,8 @@ abstract class AdditionalTableHeader : JPanel(BorderLayout()), PropertyChangeLis
     else {
       recreateController()
       newTable.addComponentListener(resizer)
-      newTable.addPropertyChangeListener("model", this)
-      newTable.addPropertyChangeListener("componentOrientation", this)
+      newTable.addPropertyChangeListener("model", updateChangeListener)
+      newTable.addPropertyChangeListener("componentOrientation", updateChangeListener)
     }
   }
 
@@ -60,8 +67,8 @@ abstract class AdditionalTableHeader : JPanel(BorderLayout()), PropertyChangeLis
     changeTableAtPositionHelper(oldTable, newTable)
     if (oldTable != null) {
       oldTable.removeComponentListener(resizer)
-      oldTable.removePropertyChangeListener("model", this)
-      oldTable.removePropertyChangeListener("componentOrientation", this)
+      oldTable.removePropertyChangeListener("model", updateChangeListener)
+      oldTable.removePropertyChangeListener("componentOrientation", updateChangeListener)
     }
   }
 
@@ -99,13 +106,6 @@ abstract class AdditionalTableHeader : JPanel(BorderLayout()), PropertyChangeLis
     columnsController = newController
     add(newController, BorderLayout.WEST)
     revalidate()
-  }
-
-  override fun propertyChange(evt: PropertyChangeEvent) {
-    if ("model" == evt.propertyName || "componentOrientation" == evt.propertyName) {
-      removeController()
-      recreateController()
-    }
   }
 
   protected val resizer: ComponentAdapter = object : ComponentAdapter() {
