@@ -22,12 +22,10 @@ import org.jetbrains.intellij.build.impl.PluginLayout.Companion.plugin
 import java.nio.file.Path
 import java.util.function.BiPredicate
 
-// Based on the IdeaCommunityProperties definition
-// TODO: Need Windows installer and Mac DMG images
-// TODO: Need uninstaller feedback URL
-// Consider switching from AI to AS code
-// Restore a lot of the custom logic from studio_properties
-// TODO: Use separate bundle identifier for EAP and non-EAP
+/**
+ * Configures the Android Studio distribution by specifying bundled plugins, JVM args, extra files, and more.
+ * See also: BaseIdeaProperties, IdeaCommunityProperties, CLionProperties.
+ */
 class AndroidStudioProperties(home: Path) : BaseIdeaProperties() {
 
   companion object {
