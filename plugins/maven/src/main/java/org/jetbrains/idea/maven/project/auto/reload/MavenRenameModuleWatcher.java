@@ -16,6 +16,7 @@ import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.maven.dom.MavenDomUtil;
+import org.jetbrains.idea.maven.dom.model.MavenDomDependencies;
 import org.jetbrains.idea.maven.dom.model.MavenDomProjectModel;
 import org.jetbrains.idea.maven.project.MavenProjectsManager;
 
@@ -76,6 +77,15 @@ public class MavenRenameModuleWatcher implements ModuleListener {
       }
     }
 
+    private void replaceArtifactIdReferences(@NotNull MavenDomDependencies dependencies) {
+      for (var dependency : dependencies.getDependencies()) {
+        replaceArtifactId(dependency.getXmlTag());
+        for (var exclusion : dependency.getExclusions().getExclusions()) {
+          replaceArtifactId(exclusion.getXmlTag());
+        }
+      }
+    }
+
     private void replaceArtifactIdReferences(MavenDomProjectModel mavenModel) {
       if (null != mavenModel.getXmlTag()) {
         // parent artifactId
@@ -83,13 +93,10 @@ public class MavenRenameModuleWatcher implements ModuleListener {
       }
 
       // dependencies and exclusions
-      var dependencies = mavenModel.getDependencies();
-      for (var dependency : dependencies.getDependencies()) {
-        replaceArtifactId(dependency.getXmlTag());
-        for (var exclusion : dependency.getExclusions().getExclusions()) {
-          replaceArtifactId(exclusion.getXmlTag());
-        }
-      }
+      replaceArtifactIdReferences(mavenModel.getDependencies());
+
+      // dependency management
+      replaceArtifactIdReferences(mavenModel.getDependencyManagement().getDependencies());
     }
 
     private void processModule(Module module, Consumer<MavenDomProjectModel> artifactIdReplacer) {
