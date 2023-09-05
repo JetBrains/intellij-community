@@ -31,6 +31,7 @@ import com.intellij.util.PathUtil;
 import com.intellij.util.io.URLUtil;
 import com.intellij.util.ui.EdtInvocationManager;
 import org.jdom.Element;
+import org.jdom.IllegalDataException;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -122,42 +123,17 @@ public final class TraverseUIStarter implements ApplicationStarter {
       System.out.println("Found " + options.size() + " configurables");
 
       for (SearchableConfigurable configurable : options.keySet()) {
-        Element configurableElement = createConfigurableElement(configurable);
-        writeOptions(configurableElement, options.get(configurable));
-
-        if (configurable instanceof ConfigurableWrapper) {
-          UnnamedConfigurable wrapped = ((ConfigurableWrapper)configurable).getConfigurable();
-          if (wrapped instanceof SearchableConfigurable) {
-            configurable = (SearchableConfigurable)wrapped;
-          }
+        try {
+          addOptions(configurable, options, roots, splitByResourcePath);
         }
-        if (configurable instanceof KeymapPanel) {
-          for (Map.Entry<String, Set<OptionDescription>> entry : processKeymap(splitByResourcePath).entrySet()) {
-            Element entryElement = createConfigurableElement(configurable);
-            writeOptions(entryElement, entry.getValue());
-            addElement(roots, entryElement, entry.getKey());
-          }
+        catch (IllegalDataException jdomValidationException) {
+          var exception = new IllegalStateException(
+            "Unable to process configurable '" + configurable.getId() +
+            "', please check strings used in class: " + configurable.getOriginalClass().getCanonicalName()
+          );
+          exception.addSuppressed(jdomValidationException);
+          throw exception;
         }
-        else if (configurable instanceof OptionsContainingConfigurable) {
-          processOptionsContainingConfigurable((OptionsContainingConfigurable)configurable, configurableElement);
-        }
-        else if (configurable instanceof PluginManagerConfigurable) {
-          TreeSet<OptionDescription> optionDescriptions = new TreeSet<>();
-          wordsToOptionDescriptors(Collections.singleton(IdeBundle.message("plugin.manager.repositories")), null, optionDescriptions);
-          for (OptionDescription description : optionDescriptions) {
-            configurableElement.addContent(createOptionElement(null, IdeBundle.message("plugin.manager.repositories"), description.getOption()));
-          }
-        }
-        else if (configurable instanceof AllFileTemplatesConfigurable) {
-          for (Map.Entry<String, Set<OptionDescription>> entry : processFileTemplates(splitByResourcePath).entrySet()) {
-            Element entryElement = createConfigurableElement(configurable);
-            writeOptions(entryElement, entry.getValue());
-            addElement(roots, entryElement, entry.getKey());
-          }
-        }
-
-        String module = splitByResourcePath ? getModuleByClass(configurable.getOriginalClass()) : "";
-        addElement(roots, configurableElement, module);
       }
     }
     finally {
@@ -169,6 +145,49 @@ public final class TraverseUIStarter implements ApplicationStarter {
     }
 
     saveResults(outputPath, roots);
+  }
+
+  private static void addOptions(SearchableConfigurable configurable,
+                                 Map<SearchableConfigurable, Set<OptionDescription>> options,
+                                 Map<String, Element> roots,
+                                 boolean splitByResourcePath) {
+    Element configurableElement = createConfigurableElement(configurable);
+    writeOptions(configurableElement, options.get(configurable));
+
+    if (configurable instanceof ConfigurableWrapper) {
+      UnnamedConfigurable wrapped = ((ConfigurableWrapper)configurable).getConfigurable();
+      if (wrapped instanceof SearchableConfigurable) {
+        configurable = (SearchableConfigurable)wrapped;
+      }
+    }
+    if (configurable instanceof KeymapPanel) {
+      for (Map.Entry<String, Set<OptionDescription>> entry : processKeymap(splitByResourcePath).entrySet()) {
+        Element entryElement = createConfigurableElement(configurable);
+        writeOptions(entryElement, entry.getValue());
+        addElement(roots, entryElement, entry.getKey());
+      }
+    }
+    else if (configurable instanceof OptionsContainingConfigurable) {
+      processOptionsContainingConfigurable((OptionsContainingConfigurable)configurable, configurableElement);
+    }
+    else if (configurable instanceof PluginManagerConfigurable) {
+      TreeSet<OptionDescription> optionDescriptions = new TreeSet<>();
+      wordsToOptionDescriptors(Collections.singleton(IdeBundle.message("plugin.manager.repositories")), null, optionDescriptions);
+      for (OptionDescription description : optionDescriptions) {
+        configurableElement.addContent(
+          createOptionElement(null, IdeBundle.message("plugin.manager.repositories"), description.getOption()));
+      }
+    }
+    else if (configurable instanceof AllFileTemplatesConfigurable) {
+      for (Map.Entry<String, Set<OptionDescription>> entry : processFileTemplates(splitByResourcePath).entrySet()) {
+        Element entryElement = createConfigurableElement(configurable);
+        writeOptions(entryElement, entry.getValue());
+        addElement(roots, entryElement, entry.getKey());
+      }
+    }
+
+    String module = splitByResourcePath ? getModuleByClass(configurable.getOriginalClass()) : "";
+    addElement(roots, configurableElement, module);
   }
 
   private static void saveResults(@NotNull Path outputPath, Map<String, Element> roots) throws IOException {
