@@ -1058,7 +1058,7 @@
               icon="AllIcons.ToolbarDecorator.Import"/>
       <action id="WelcomeScreen.Configure.Export" class="com.intellij.configurationStore.ExportSettingsAction"
               icon="AllIcons.ToolbarDecorator.Export"/>
-      <action id="WelcomeScreen.Configure.RestoreDefault" class="com.intellij.configurationStore.RestoreDefaultSettingsAction"/>
+      <reference ref="RestoreDefaultSettings"/>
 
       <reference ref="CollectZippedLogs"/>
 
