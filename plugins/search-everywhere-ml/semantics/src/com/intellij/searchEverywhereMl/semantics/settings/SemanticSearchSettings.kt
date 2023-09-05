@@ -1,8 +1,12 @@
 package com.intellij.searchEverywhereMl.semantics.settings
 
 import com.intellij.openapi.components.*
+import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.searchEverywhereMl.semantics.services.ActionEmbeddingsStorage
+import com.intellij.searchEverywhereMl.semantics.services.ClassEmbeddingsStorage
+import com.intellij.searchEverywhereMl.semantics.services.FileEmbeddingsStorage
+import com.intellij.searchEverywhereMl.semantics.services.SymbolEmbeddingStorage
 import com.intellij.util.xmlb.annotations.OptionTag
 
 
@@ -18,7 +22,36 @@ class SemanticSearchSettings : PersistentStateComponent<SemanticSearchSettingsSt
     get() = state.enabledInActionsTab
     set(newValue) {
       state.enabledInActionsTab = newValue
-      ActionEmbeddingsStorage.getInstance().run { if (newValue) prepareForSearch() else tryStopGeneratingEmbeddings() }
+      ProjectManager.getInstance().openProjects.first().let {
+        ActionEmbeddingsStorage.getInstance().run { if (newValue) prepareForSearch(it) else tryStopGeneratingEmbeddings() }
+      }
+    }
+
+  var enabledInFilesTab: Boolean
+    get() = state.enabledInFilesTab
+    set(newValue) {
+      state.enabledInFilesTab = newValue
+      ProjectManager.getInstance().openProjects.forEach {
+        FileEmbeddingsStorage.getInstance(it).run { if (newValue) prepareForSearch() else tryStopGeneratingEmbeddings()}
+      }
+    }
+
+  var enabledInSymbolsTab: Boolean
+    get() = state.enabledInSymbolsTab
+    set(newValue) {
+      state.enabledInSymbolsTab = newValue
+      ProjectManager.getInstance().openProjects.forEach {
+        SymbolEmbeddingStorage.getInstance(it).run { if (newValue) prepareForSearch() else tryStopGeneratingEmbeddings() }
+      }
+    }
+
+  var enabledInClassesTab: Boolean
+    get() = state.enabledInClassesTab
+    set(newValue) {
+      state.enabledInClassesTab = newValue
+      ProjectManager.getInstance().openProjects.forEach {
+        ClassEmbeddingsStorage.getInstance(it).run { if (newValue) prepareForSearch() else tryStopGeneratingEmbeddings() }
+      }
     }
 
   override fun getState(): SemanticSearchSettingsState = state
@@ -26,6 +59,8 @@ class SemanticSearchSettings : PersistentStateComponent<SemanticSearchSettingsSt
   override fun loadState(newState: SemanticSearchSettingsState) {
     state = newState
   }
+
+  fun isEnabled() = enabledInActionsTab || enabledInFilesTab || enabledInSymbolsTab || enabledInClassesTab
 
   fun getUseRemoteActionsServer() = Registry.`is`("search.everywhere.ml.semantic.actions.server.use")
 
@@ -39,4 +74,13 @@ class SemanticSearchSettings : PersistentStateComponent<SemanticSearchSettingsSt
 class SemanticSearchSettingsState : BaseState() {
   @get:OptionTag("enabled_in_actions_tab")
   var enabledInActionsTab by property(false)
+
+  @get:OptionTag("enabled_in_files_tab")
+  var enabledInFilesTab by property(false)
+
+  @get:OptionTag("enabled_in_symbols_tab")
+  var enabledInSymbolsTab by property(false)
+
+  @get:OptionTag("enabled_in_classes_tab")
+  var enabledInClassesTab by property(false)
 }

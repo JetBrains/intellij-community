@@ -7,16 +7,15 @@ import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.progress.Task
 import com.intellij.openapi.progress.runBlockingCancellable
-import com.intellij.openapi.project.Project
 import com.intellij.searchEverywhereMl.semantics.SemanticSearchBundle
 import com.intellij.searchEverywhereMl.semantics.indices.EmbeddingSearchIndex
+import com.intellij.searchEverywhereMl.semantics.utils.normalized
 import java.util.concurrent.atomic.AtomicReference
 
-class ActionEmbeddingStorageSetup(
-  project: Project,
+class ActionEmbeddingsStorageSetup(
   private val index: EmbeddingSearchIndex,
   private val setupTaskIndicator: AtomicReference<ProgressIndicator>
-) : Task.Backgroundable(project, SETUP_TITLE) {
+) : Task.Backgroundable(null, SETUP_TITLE) {
   override fun run(indicator: ProgressIndicator) {
     val indexableActionIds = ActionEmbeddingsStorage.getIndexableActionIds()
     if (checkEmbeddingsReady(indexableActionIds)) return
@@ -28,6 +27,7 @@ class ActionEmbeddingStorageSetup(
     indicator.text = SETUP_TITLE
     var indexedActionsCount = index.size
     val totalIndexableActionsCount = indexableActionIds.size
+    indicator.isIndeterminate = false
 
     val actionManager = ActionManager.getInstance() as ActionManagerImpl
     indexableActionIds
@@ -54,7 +54,7 @@ class ActionEmbeddingStorageSetup(
   }
 
   private fun checkEmbeddingsReady(indexableActionIds: Set<String>): Boolean {
-    index.filterIdsTo(indexableActionIds)
+    index.filterIdsTo(indexableActionIds.associateWith { 1 })
     return index.checkAllIdsPresent(indexableActionIds)
   }
 
