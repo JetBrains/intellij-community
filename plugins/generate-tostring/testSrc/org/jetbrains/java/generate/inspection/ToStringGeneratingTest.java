@@ -1,253 +1,264 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-package org.jetbrains.java.generate.inspection
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+package org.jetbrains.java.generate.inspection;
 
+import com.intellij.codeInsight.generation.PsiElementClassMember;
+import com.intellij.openapi.command.WriteCommandAction;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiJavaFile;
+import com.intellij.psi.PsiMember;
+import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase;
+import com.intellij.util.containers.ContainerUtil;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.java.generate.GenerateToStringActionHandlerImpl;
+import org.jetbrains.java.generate.GenerateToStringContext;
+import org.jetbrains.java.generate.GenerateToStringWorker;
+import org.jetbrains.java.generate.config.Config;
+import org.jetbrains.java.generate.config.ConflictResolutionPolicy;
+import org.jetbrains.java.generate.config.ReplacePolicy;
+import org.jetbrains.java.generate.template.TemplateResource;
+import org.jetbrains.java.generate.template.toString.ToStringTemplatesManager;
 
-import com.intellij.openapi.command.WriteCommandAction
-import com.intellij.psi.PsiClass
-import com.intellij.psi.PsiFile
-import com.intellij.psi.PsiJavaFile
-import com.intellij.psi.PsiMember
-import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase
-import org.jetbrains.annotations.NotNull
-import org.jetbrains.java.generate.GenerateToStringActionHandlerImpl
-import org.jetbrains.java.generate.GenerateToStringContext
-import org.jetbrains.java.generate.GenerateToStringWorker
-import org.jetbrains.java.generate.config.ConflictResolutionPolicy
-import org.jetbrains.java.generate.config.ReplacePolicy
-import org.jetbrains.java.generate.template.TemplateResource
-import org.jetbrains.java.generate.template.toString.ToStringTemplatesManager
-/**
- * Created by Max Medvedev on 07/03/14
- */
-class ToStringGeneratingTest extends LightJavaCodeInsightFixtureTestCase {
-  void testDuplicateToStringAnInnerClass() throws Exception {
-    doTest('''\
-public class Foobar  {
-    private int foo;
-    private int bar;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.stream.Collectors;
 
-    @Override <caret>
-    public String toString() {
-        return "Foobar{" +
-                "foo=" + foo +
-                ", bar=" + bar +
-                '}';
-    }
+public class ToStringGeneratingTest extends LightJavaCodeInsightFixtureTestCase {
+  public void testDuplicateToStringAnInnerClass() {
+    doTest("""
+             public class Foobar  {
+                 private int foo;
+                 private int bar;
 
-    public static class Nested {
-    }
-}
-''', '''\
-public class Foobar  {
-    private int foo;
-    private int bar;
+                 @Override <caret>
+                 public String toString() {
+                     return "Foobar{" +
+                             "foo=" + foo +
+                             ", bar=" + bar +
+                             '}';
+                 }
 
-    @Override
-    public String <caret>toString() {
-        return "Foobar{" +
-                "foo=" + foo +
-                ", bar=" + bar +
-                '}';
-    }
+                 public static class Nested {
+                 }
+             }
+             """, """
+             public class Foobar  {
+                 private int foo;
+                 private int bar;
 
-    public static class Nested {
-    }
-}
-''', ReplacePolicy.instance)
+                 @Override
+                 public String <caret>toString() {
+                     return "Foobar{" +
+                             "foo=" + foo +
+                             ", bar=" + bar +
+                             '}';
+                 }
+
+                 public static class Nested {
+                 }
+             }
+             """, ReplacePolicy.getInstance());
   }
 
- void testProtectedFieldInSuper() throws Exception {
-    doTest('''\
-class Foobar extends Foo {
-    private int bar;
-    <caret> 
-}
-class Foo  {
-    protected int foo;
-}
-''', '''\
-class Foobar extends Foo {
-    private int bar;
+  public void testProtectedFieldInSuper() {
+    doTest("""
+             class Foobar extends Foo {
+                 private int bar;
+                 <caret>\s
+             }
+             class Foo  {
+                 protected int foo;
+             }
+             """, """
+             class Foobar extends Foo {
+                 private int bar;
 
-    @Override
-    public String toString() {
-        return "Foobar{" +
-                "foo=" + foo +
-                ", bar=" + bar +
-                '}';
-    }
-}
-class Foo  {
-    protected int foo;
-}
-''', ReplacePolicy.instance)
+                 @Override
+                 public String toString() {
+                     return "Foobar{" +
+                             "foo=" + foo +
+                             ", bar=" + bar +
+                             '}';
+                 }
+             }
+             class Foo  {
+                 protected int foo;
+             }
+             """, ReplacePolicy.getInstance());
   }
 
- void testPrivateFieldWithGetterInSuper() throws Exception {
-   def config = GenerateToStringContext.getConfig()
-   config.enableMethods = true
-   try {
-     doTest('''\
-class Foobar extends Foo {
-    private int bar;
-    <caret> 
-}
-class Foo  {
-    private int foo;
-    public int getFoo() {
-       return foo;
-    }
-}
-''', '''\
-class Foobar extends Foo {
-    private int bar;
+  public void testPrivateFieldWithGetterInSuper() {
+    Config config = GenerateToStringContext.getConfig();
+    config.setEnableMethods(true);
+    try {
+      doTest("""
+               class Foobar extends Foo {
+                   private int bar;
+                   <caret>\s
+               }
+               class Foo  {
+                   private int foo;
+                   public int getFoo() {
+                      return foo;
+                   }
+               }
+               """, """
+               class Foobar extends Foo {
+                   private int bar;
 
-    @Override
-    public String toString() {
-        return "Foobar{" +
-                "foo=" + getFoo() +
-                ", bar=" + bar +
-                '}';
+                   @Override
+                   public String toString() {
+                       return "Foobar{" +
+                               "foo=" + getFoo() +
+                               ", bar=" + bar +
+                               '}';
+                   }
+               }
+               class Foo  {
+                   private int foo;
+                   public int getFoo() {
+                      return foo;
+                   }
+               }
+               """, ReplacePolicy.getInstance());
     }
-}
-class Foo  {
-    private int foo;
-    public int getFoo() {
-       return foo;
+    finally {
+      config.setEnableMethods(false);
     }
-}
-''', ReplacePolicy.instance)
-   }
-   finally {
-     config.enableMethods = false
-   }
   }
 
-  void testPrivateFieldWithGetterInSuperSortSuperFirst() throws Exception {
-   def config = GenerateToStringContext.getConfig()
-   config.enableMethods = true
-   config.sortElements = 3
-   try {
-     doTest('''\
-class Foobar extends Foo {
-    private int bar;
-    <caret> 
-}
-class Foo  {
-    private int foo;
-    public int getFoo() {
-       return foo;
-    }
-}
-''', '''\
-class Foobar extends Foo {
-    private int bar;
+  public void testPrivateFieldWithGetterInSuperSortSuperFirst() {
+    Config config = GenerateToStringContext.getConfig();
+    config.setEnableMethods(true);
+    config.setSortElements(3);
+    try {
+      doTest("""
+               class Foobar extends Foo {
+                   private int bar;
+                   <caret>\s
+               }
+               class Foo  {
+                   private int foo;
+                   public int getFoo() {
+                      return foo;
+                   }
+               }
+               """, """
+               class Foobar extends Foo {
+                   private int bar;
 
-    @Override
-    public String toString() {
-        return "Foobar{" +
-                "foo=" + getFoo() +
-                ", bar=" + bar +
-                '}';
+                   @Override
+                   public String toString() {
+                       return "Foobar{" +
+                               "foo=" + getFoo() +
+                               ", bar=" + bar +
+                               '}';
+                   }
+               }
+               class Foo  {
+                   private int foo;
+                   public int getFoo() {
+                      return foo;
+                   }
+               }
+               """, ReplacePolicy.getInstance());
     }
-}
-class Foo  {
-    private int foo;
-    public int getFoo() {
-       return foo;
+    finally {
+      config.setEnableMethods(false);
+      config.setSortElements(0);
     }
-}
-''', ReplacePolicy.instance)
-   }
-   finally {
-     config.enableMethods = false
-     config.sortElements = 0
-   }
   }
 
   public void testAbstractSuperToString() {
-    doTest('''
-class FooImpl extends Foo {
-<caret>
-}
+    doTest("""
 
-abstract class Foo {
-  public abstract toString();
-}
-''', '''
-class FooImpl extends Foo {
-    @Override
-    public String toString() {
-        return "FooImpl{}";
-    }
-}
+             class FooImpl extends Foo {
+             <caret>
+             }
 
-abstract class Foo {
-  public abstract toString();
-}
-''', ReplacePolicy.instance, findTemplate("String concat (+) and super.toString()"))
+             abstract class Foo {
+               public abstract toString();
+             }
+             """, """
+
+             class FooImpl extends Foo {
+                 @Override
+                 public String toString() {
+                     return "FooImpl{}";
+                 }
+             }
+
+             abstract class Foo {
+               public abstract toString();
+             }
+             """, ReplacePolicy.getInstance(), findTemplate("String concat (+) and super.toString()"));
   }
 
   private void doTest(@NotNull String before,
                       @NotNull String after,
                       @NotNull ConflictResolutionPolicy policy,
-                      @NotNull TemplateResource template = findDefaultTemplate()) {
-    myFixture.configureByText('a.java', before)
+                      @NotNull TemplateResource template) {
+    myFixture.configureByText("a.java", before);
 
-    PsiClass clazz = findClass()
-    Collection<PsiMember> members = collectMembers(clazz)
-    GenerateToStringWorker worker = buildWorker(clazz, policy)
+    PsiClass clazz = findClass();
+    Collection<PsiMember> members = collectMembers(clazz);
+    GenerateToStringWorker worker = buildWorker(clazz, policy);
 
-    WriteCommandAction.runWriteCommandAction(myFixture.project, "","", {
-        worker.execute(members, template, policy)
-      }, myFixture.file)
+    WriteCommandAction.runWriteCommandAction(myFixture.getProject(), "", "", () -> {
+      worker.execute(members, template, policy);
+    }, myFixture.getFile());
 
-    myFixture.checkResult(after)
+    myFixture.checkResult(after);
+  }
+
+  private void doTest(@NotNull String before, @NotNull String after, @NotNull ConflictResolutionPolicy policy) {
+    doTest(before, after, policy, ToStringGeneratingTest.findDefaultTemplate());
   }
 
   @NotNull
-  private GenerateToStringWorker buildWorker(@NotNull PsiClass clazz, @NotNull ConflictResolutionPolicy policy) {
-    new GenerateToStringWorker(clazz, myFixture.editor, true) {
+  private GenerateToStringWorker buildWorker(@NotNull final PsiClass clazz, @NotNull final ConflictResolutionPolicy policy) {
+    return new GenerateToStringWorker(clazz, myFixture.getEditor(), true) {
       @Override
       protected ConflictResolutionPolicy exitsMethodDialog(TemplateResource template) {
-        policy
+        return policy;
       }
-    }
+    };
   }
 
   @NotNull
   private static TemplateResource findDefaultTemplate() {
-    findTemplate("String concat (+)")
+    return findTemplate("String concat (+)");
   }
 
   @NotNull
-  private static TemplateResource findTemplate(String templateName) {
-    Collection<TemplateResource> templates = ToStringTemplatesManager.getInstance().getAllTemplates()
-    def template = templates.find { it.fileName == templateName }
-    assert template != null
-    template
+  private static TemplateResource findTemplate(final String templateName) {
+    Collection<TemplateResource> templates = ToStringTemplatesManager.getInstance().getAllTemplates();
+    TemplateResource template = ContainerUtil.find(templates, x -> x.getFileName().equals(templateName));
+    assertNotNull(template);
+    return template;
   }
 
   @NotNull
   private static Collection<PsiMember> collectMembers(@NotNull PsiClass clazz) {
-    def memberElements = GenerateToStringActionHandlerImpl.buildMembersToShow(clazz)
-    memberElements.collect {mem -> (PsiMember) mem.element}. sort { o1, o2 -> compareMembers(o1, o2) }
+    PsiElementClassMember<?>[] memberElements = GenerateToStringActionHandlerImpl.buildMembersToShow(clazz);
+    return Arrays.stream(memberElements)
+      .map(x -> x.getElement())
+      .sorted((o1, o2) -> compareMembers(o1, o2))
+      .collect(Collectors.toList());
   }
 
   private static int compareMembers(PsiMember o1, PsiMember o2) {
-    def c1 = o1.getContainingClass()
-    def c2 = o2.getContainingClass()
-    c1 == c2 ? o2.getName() <=> o1.getName() //descending
-             : c1.isInheritor(c2, true) ? 1 : -1
+    PsiClass c1 = o1.getContainingClass();
+    PsiClass c2 = o2.getContainingClass();
+    return c1.equals(c2) ? o2.getName().compareTo(o1.getName()) : c1.isInheritor(c2, true) ? 1 : -1;
   }
 
   @NotNull
   private PsiClass findClass() {
-    PsiFile file = myFixture.file
-    assert file instanceof PsiJavaFile
-    PsiClass[] classes = file.classes
-
-    assert classes.length > 0
-    classes[0]
+    PsiFile file = myFixture.getFile();
+    assertInstanceOf(file, PsiJavaFile.class);
+    PsiClass[] classes = ((PsiJavaFile)file).getClasses();
+    assertTrue(classes.length > 0);
+    return classes[0];
   }
 }
