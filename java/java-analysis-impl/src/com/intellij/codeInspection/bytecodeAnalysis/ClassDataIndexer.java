@@ -6,8 +6,12 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Key;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.search.GlobalSearchScope;
+import com.intellij.psi.util.CachedValue;
+import com.intellij.psi.util.CachedValueProvider;
+import com.intellij.util.CachedValueImpl;
 import com.intellij.util.Consumer;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.gist.GistManager;
@@ -218,10 +222,21 @@ public class ClassDataIndexer implements VirtualFileGist.GistCalculator<Map<HMem
     }
   }
 
+  private static final Key<CachedValue<Map<HMember, Equations>>> EQUATIONS =
+    Key.create("com.intellij.codeInspection.bytecodeAnalysis.ClassDataIndexer.Equations");
+
   @NotNull
   static List<Equations> getEquations(GlobalSearchScope scope, HMember key) {
-    return ContainerUtil.mapNotNull(FileBasedIndex.getInstance().getContainingFiles(BytecodeAnalysisIndex.NAME, key, scope),
-                                    file -> ourGist.getFileData(null, file).get(key));
+    return ContainerUtil.mapNotNull(
+      FileBasedIndex.getInstance().getContainingFiles(BytecodeAnalysisIndex.NAME, key, scope),
+      file -> {
+        CachedValue<Map<HMember, Equations>> equations = file.getUserData(EQUATIONS);
+        if (equations == null) {
+          equations = new CachedValueImpl<>(() -> CachedValueProvider.Result.create(ourGist.getFileData(null, file), file));
+          file.putUserDataIfAbsent(EQUATIONS, equations);
+        }
+        return equations.getValue().get(key);
+      });
   }
 
   private static class ClassDataIndexerStatistics implements Consumer<Map<HMember, Equations>> {
