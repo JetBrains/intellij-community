@@ -250,6 +250,9 @@ data class LibraryLicense(
 
   internal var forkedFrom: LibraryUpstream? = null
 
+  /**
+   * See [org.jetbrains.intellij.build.LibraryUpstream]
+   */
   @Internal
   fun forkedFrom(groupId: String, artifactId: String,
                  version: String? = null, revision: String? = null,
