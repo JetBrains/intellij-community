@@ -36,6 +36,10 @@ class FileEmbeddingsStorage(project: Project) : DiskSynchronizedEmbeddingsStorag
 
   override val setupTitle = SemanticSearchBundle.getMessage("search.everywhere.ml.semantic.files.generation.label")
 
+  init {
+    project.messageBus.connect().subscribe(VirtualFileManager.VFS_CHANGES, FilesSemanticSearchFileChangeListener(project))
+  }
+
   override fun checkSearchEnabled() = SemanticSearchSettings.getInstance().enabledInFilesTab
 
   @RequiresBackgroundThread

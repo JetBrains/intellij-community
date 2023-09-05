@@ -5,6 +5,7 @@ import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.getProjectCachePath
 import com.intellij.openapi.startup.ProjectActivity
+import com.intellij.openapi.vfs.VirtualFileManager
 import com.intellij.psi.*
 import com.intellij.searchEverywhereMl.semantics.SemanticSearchBundle
 import com.intellij.searchEverywhereMl.semantics.indices.DiskSynchronizedEmbeddingSearchIndex
@@ -35,10 +36,14 @@ class SymbolEmbeddingStorage(project: Project) : FileContentBasedEmbeddingsStora
 
   override val setupTitle: String = SemanticSearchBundle.getMessage("search.everywhere.ml.semantic.symbols.generation.label")
 
+  init {
+    project.messageBus.connect().subscribe(VirtualFileManager.VFS_CHANGES, SymbolsSemanticSearchFileChangeListener.getInstance(project))
+  }
+
   override fun checkSearchEnabled() = SemanticSearchSettings.getInstance().enabledInSymbolsTab
 
   @RequiresBackgroundThread
-  override fun getIndexableEntities() = collectEntities()
+  override fun getIndexableEntities() = collectEntities(SymbolsSemanticSearchFileChangeListener.getInstance(project))
 
   override fun traversePsiFile(file: PsiFile) = FileIndexableEntitiesProvider.extractSymbols(file)
 

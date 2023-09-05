@@ -14,7 +14,7 @@ import com.intellij.searchEverywhereMl.semantics.indices.IndexableEntity
 abstract class FileContentBasedEmbeddingsStorage<T : IndexableEntity>(project: Project) : DiskSynchronizedEmbeddingsStorage<T>(project) {
   abstract fun traversePsiFile(file: PsiFile): List<T>
 
-  protected fun collectEntities(): List<T> {
+  protected fun collectEntities(fileChangeListener: SemanticSearchFileContentChangeListener<T>): List<T> {
     val projectRootManager = ProjectRootManager.getInstance(project)
     val psiManager = PsiManager.getInstance(project)
     return runBlockingCancellable {
@@ -28,6 +28,7 @@ abstract class FileContentBasedEmbeddingsStorage<T : IndexableEntity>(project: P
               if (virtualFile.canonicalFile != null && virtualFile.isFile) {
                 psiManager.findFile(virtualFile)?.also { file ->
                   val classes = traversePsiFile(file)
+                  fileChangeListener.addEntityCountsForFile(virtualFile, classes)
                   addAll(classes)
                 }
               }

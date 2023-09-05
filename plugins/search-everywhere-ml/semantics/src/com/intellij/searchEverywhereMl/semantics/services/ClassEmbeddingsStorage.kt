@@ -38,7 +38,7 @@ class ClassEmbeddingsStorage(project: Project) : FileContentBasedEmbeddingsStora
   override fun checkSearchEnabled() = SemanticSearchSettings.getInstance().enabledInClassesTab
 
   @RequiresBackgroundThread
-  override fun getIndexableEntities() = collectEntities()
+  override fun getIndexableEntities() = collectEntities(ClassesSemanticSearchFileChangeListener.getInstance(project))
 
   override fun traversePsiFile(file: PsiFile) = FileIndexableEntitiesProvider.extractClasses(file)
 
