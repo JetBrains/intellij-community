@@ -189,8 +189,8 @@ public class SearchResults implements DocumentListener, CaretListener {
   }
 
   public int getCursorVisualIndex() {
-    FindResult occurrenceAtCaret = getOccurrenceAtCaret();
-    return occurrenceAtCaret != null ? myOccurrences.indexOf(occurrenceAtCaret) + 1 : -1;
+    FindResult curOccurrence = myFindModel.isGlobal() ? getOccurrenceAtCaret() : myCursor;
+    return curOccurrence != null ? myOccurrences.indexOf(curOccurrence) + 1 : -1;
   }
 
   @NotNull
