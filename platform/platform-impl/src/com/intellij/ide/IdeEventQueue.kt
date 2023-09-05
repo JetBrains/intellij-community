@@ -53,6 +53,7 @@ import org.jetbrains.annotations.ApiStatus.Internal
 import org.jetbrains.annotations.TestOnly
 import org.jetbrains.annotations.VisibleForTesting
 import sun.awt.AppContext
+import sun.awt.PeerEvent
 import java.awt.*
 import java.awt.event.*
 import java.lang.invoke.MethodHandle
@@ -813,7 +814,13 @@ class IdeEventQueue private constructor() : EventQueue() {
         return false
       }
     }
-    if (event is InvocationEvent && !isCurrentlyUnderLocalId) {
+    // We don't 'attach' current client id to PeerEvent instances for two reasons.
+    // First, they are often posted to EventQueue indirectly (first to sun.awt.PostEventQueue, and then to the EventQueue by
+    // SunToolkit.flushPendingEvents), so current client id might be unrelated to the code that created those events.
+    // Second, just wrapping PeerEvent into a new InvocationEvent loses the information about priority kept in the former,
+    // and changes the overall events' processing order.
+    val passClientId = event is InvocationEvent && event !is PeerEvent
+    if (passClientId && !isCurrentlyUnderLocalId) {
       // only do wrapping trickery with non-local events to preserve correct behavior -
       // local events will get dispatched under local ID anyway
       val clientId = current
