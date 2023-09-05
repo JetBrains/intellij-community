@@ -64,7 +64,7 @@ internal class KotlinVariableNameFinder(val debugProcess: DebugProcessImpl) {
             var stopTraversal = false
 
             override fun visitBlockExpression(expression: KtBlockExpression) {
-                if (isInlined(expression) || expression in blocksToVisit) {
+                if (expression in blocksToVisit) {
                     expression.acceptChildren(this)
                 }
             }
