@@ -1,177 +1,200 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package org.jetbrains.plugins.gradle.tooling.tasks
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package org.jetbrains.plugins.gradle.tooling.tasks;
 
-import com.google.gson.GsonBuilder
-import com.intellij.openapi.externalSystem.model.project.dependencies.*
-import groovy.transform.CompileDynamic
-import groovy.transform.CompileStatic
-import org.gradle.api.DefaultTask
-import org.gradle.api.Describable
-import org.gradle.api.Project
-import org.gradle.api.artifacts.Configuration
-import org.gradle.api.artifacts.Dependency
-import org.gradle.api.artifacts.FileCollectionDependency
-import org.gradle.api.artifacts.component.ComponentIdentifier
-import org.gradle.api.artifacts.component.ModuleComponentIdentifier
-import org.gradle.api.artifacts.component.ProjectComponentIdentifier
-import org.gradle.api.artifacts.result.*
-import org.gradle.api.file.FileCollection
-import org.gradle.api.tasks.Input
-import org.gradle.api.tasks.OutputFile
-import org.gradle.api.tasks.TaskAction
-import org.gradle.util.GradleVersion
+import com.google.gson.GsonBuilder;
+import com.intellij.openapi.externalSystem.model.project.dependencies.*;
+import org.codehaus.groovy.runtime.DefaultGroovyMethods;
+import org.gradle.api.DefaultTask;
+import org.gradle.api.Describable;
+import org.gradle.api.Project;
+import org.gradle.api.artifacts.Configuration;
+import org.gradle.api.artifacts.Dependency;
+import org.gradle.api.artifacts.FileCollectionDependency;
+import org.gradle.api.artifacts.component.ComponentIdentifier;
+import org.gradle.api.artifacts.component.ModuleComponentIdentifier;
+import org.gradle.api.artifacts.component.ProjectComponentIdentifier;
+import org.gradle.api.artifacts.result.*;
+import org.gradle.api.file.FileCollection;
+import org.gradle.api.tasks.Input;
+import org.gradle.api.tasks.OutputFile;
+import org.gradle.api.tasks.TaskAction;
+import org.gradle.util.GradleVersion;
 
-import java.util.concurrent.atomic.AtomicLong
+import java.io.File;
+import java.io.IOException;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.util.*;
+import java.util.concurrent.atomic.AtomicLong;
 
-import static com.intellij.openapi.externalSystem.model.project.dependencies.ResolutionState.RESOLVED
-import static com.intellij.openapi.externalSystem.model.project.dependencies.ResolutionState.UNRESOLVED
-
-@CompileStatic
-class DependenciesReport extends DefaultTask {
-
-  @Input
-  List<String> configurations = []
-  @OutputFile
-  File outputFile
-
+public class DependenciesReport extends DefaultTask {
   @TaskAction
-  void generate() {
-    def generator = new ReportGenerator()
-    Collection<Configuration> configurationList
+  public void generate() throws IOException {
+    ReportGenerator generator = new ReportGenerator();
+    Collection<Configuration> configurationList;
     if (configurations.isEmpty()) {
-      configurationList = project.configurations
+      configurationList = getProject().getConfigurations();
     }
     else {
-      configurationList = new ArrayList<>()
-      for (configurationName in configurations) {
-        def configuration = project.configurations.findByName(configurationName)
+      configurationList = new ArrayList<>();
+      for (String configurationName : configurations) {
+        Configuration configuration = getProject().getConfigurations().findByName(configurationName);
         if (configuration != null) {
-          configurationList.add(configuration)
+          configurationList.add(configuration);
         }
       }
     }
 
-    def projectNameFunction = new ProjectNameFunction()
-    List<DependencyScopeNode> graph = []
-    for (Configuration configuration in configurationList) {
-      if (!configuration.isCanBeResolved()) continue
-      graph.add(generator.doBuildDependenciesGraph(configuration, project, projectNameFunction))
+    ProjectNameFunction projectNameFunction = new ProjectNameFunction();
+    List<DependencyScopeNode> graph = new ArrayList<>();
+    for (Configuration configuration : configurationList) {
+      if (!configuration.isCanBeResolved()) continue;
+      graph.add(generator.doBuildDependenciesGraph(configuration, getProject(), projectNameFunction));
     }
-    outputFile.parentFile.mkdirs()
-    outputFile.text = new GsonBuilder().create().toJson(graph)
+
+    Path outputFilePath = outputFile.toPath();
+    Files.createDirectories(outputFilePath.getParent());
+    Files.write(outputFilePath, new GsonBuilder().create().toJson(graph).getBytes(StandardCharsets.UTF_8));
   }
 
-  static class ReportGenerator {
-    private static final boolean IS_51_OR_NEWER = GradleVersion.current() >= GradleVersion.version("5.1")
+  public List<String> getConfigurations() {
+    return configurations;
+  }
 
-    private AtomicLong nextId = new AtomicLong()
+  public void setConfigurations(List<String> configurations) {
+    this.configurations = configurations;
+  }
 
-    DependencyScopeNode buildDependenciesGraph(Configuration configuration, Project project) {
-      return doBuildDependenciesGraph(configuration, project, new ProjectNameFunction())
+  public File getOutputFile() {
+    return outputFile;
+  }
+
+  public void setOutputFile(File outputFile) {
+    this.outputFile = outputFile;
+  }
+
+  @Input private List<String> configurations = new ArrayList<>();
+  @OutputFile private File outputFile;
+
+  public static class ReportGenerator {
+    public DependencyScopeNode buildDependenciesGraph(Configuration configuration, Project project) {
+      return doBuildDependenciesGraph(configuration, project, new ProjectNameFunction());
     }
 
     private DependencyScopeNode doBuildDependenciesGraph(Configuration configuration,
                                                          Project project,
                                                          ProjectNameFunction projectNameFunction) {
-      if (!project.configurations.contains(configuration)) {
-        throw new IllegalArgumentException("configurations of the project should be used")
+      if (!project.getConfigurations().contains(configuration)) {
+        throw new IllegalArgumentException("configurations of the project should be used");
       }
-      IdGenerator idGenerator = new IdGenerator(nextId)
-      ResolutionResult resolutionResult = configuration.incoming.resolutionResult
-      ResolvedComponentResult root = resolutionResult.root
-      String configurationName = configuration.name
-      long id = idGenerator.getId(getId(root))
-      String scopeDisplayName = "project " + project.path + " (" + configurationName + ")"
-      DependencyScopeNode node = new DependencyScopeNode(id, configurationName, scopeDisplayName, configuration.description)
-      node.setResolutionState(RESOLVED)
-      for (Dependency dependency : configuration.allDependencies) {
-        if (dependency instanceof FileCollectionDependency) {
-          FileCollection fileCollection = dependency.files
-          if (fileCollection instanceof Configuration) continue
-          def files = fileCollection.files
-          if (files.empty) continue
 
-          String displayName = null
+      IdGenerator idGenerator = new IdGenerator(nextId);
+      ResolutionResult resolutionResult = configuration.getIncoming().getResolutionResult();
+      ResolvedComponentResult root = resolutionResult.getRoot();
+      String configurationName = configuration.getName();
+      long id = idGenerator.getId(getId(root));
+      String scopeDisplayName = "project " + project.getPath() + " (" + configurationName + ")";
+      DependencyScopeNode node = new DependencyScopeNode(id, configurationName, scopeDisplayName, configuration.getDescription());
+      node.setResolutionState(ResolutionState.RESOLVED);
+      for (Dependency dependency : configuration.getAllDependencies()) {
+        if (dependency instanceof FileCollectionDependency) {
+          FileCollection fileCollection = ((FileCollectionDependency)dependency).getFiles();
+          if (fileCollection instanceof Configuration) continue;
+          Set<File> files = fileCollection.getFiles();
+          if (files.isEmpty()) continue;
+
+          String displayName = null;
           if (fileCollection instanceof Describable) {
-            displayName = fileCollection.getDisplayName()
+            displayName = ((Describable)fileCollection).getDisplayName();
           }
           else {
-            def string = fileCollection.toString()
-            if ("file collection" != string) {
-              displayName = string
+            String string = fileCollection.toString();
+            if (!"file collection".equals(string)) {
+              displayName = string;
             }
           }
 
           if (displayName != null) {
-            long fileDepId = idGenerator.getId(displayName)
-            node.dependencies.add(new FileCollectionDependencyNodeImpl(fileDepId, displayName, fileCollection.asPath))
+            long fileDepId = idGenerator.getId(displayName);
+            node.getDependencies().add(new FileCollectionDependencyNodeImpl(fileDepId, displayName, fileCollection.getAsPath()));
           }
           else {
             for (File file : files) {
-              long fileDepId = idGenerator.getId(file.path)
-              node.dependencies.add(new FileCollectionDependencyNodeImpl(fileDepId, file.name, file.path))
+              long fileDepId = idGenerator.getId(file.getPath());
+              node.getDependencies().add(new FileCollectionDependencyNodeImpl(fileDepId, file.getName(), file.getPath()));
             }
           }
         }
       }
 
-      Map<Object, DependencyNode> added = [:]
 
-      def iterator = root.dependencies.iterator()
-      while (iterator.hasNext()) {
-        DependencyResult child = iterator.next()
-        node.dependencies.add(toNode(child, added, idGenerator, projectNameFunction))
+      Map<Object, DependencyNode> added = new LinkedHashMap<>();
+
+      for (DependencyResult child : root.getDependencies()) {
+        node.getDependencies().add(toNode(child, added, idGenerator, projectNameFunction));
       }
-      return node
+
+      return node;
     }
 
-    static private DependencyNode toNode(DependencyResult dependency,
+    private static DependencyNode toNode(DependencyResult dependency,
                                          Map<Object, DependencyNode> added,
                                          IdGenerator idGenerator,
                                          ProjectNameFunction projectNameFunction) {
 
-      def selectedOrAttempted = dependency instanceof ResolvedDependencyResult
-        ? getId(dependency.selected)
-        : (dependency as UnresolvedDependencyResult).attempted
-      long id = idGenerator.getId(selectedOrAttempted)
-      DependencyNode alreadySeenNode = added.get(id)
+      Object selectedOrAttempted = dependency instanceof ResolvedDependencyResult
+                                   ? getId(((ResolvedDependencyResult)dependency).getSelected())
+                                   : (DefaultGroovyMethods.asType(dependency, UnresolvedDependencyResult.class)).getAttempted();
+      long id = idGenerator.getId(selectedOrAttempted);
+      DependencyNode alreadySeenNode = added.get(id);
       if (alreadySeenNode != null) {
-        return new ReferenceNode(id)
+        return new ReferenceNode(id);
       }
 
-      AbstractDependencyNode node
+      AbstractDependencyNode node;
       if (dependency instanceof ResolvedDependencyResult) {
-        def componentId = getId(dependency.selected)
+        ComponentIdentifier componentId = getId(((ResolvedDependencyResult)dependency).getSelected());
         if (componentId instanceof ProjectComponentIdentifier) {
-          node = new ProjectDependencyNodeImpl(id, projectNameFunction.fun(componentId), componentId.getProjectPath())
+          node = new ProjectDependencyNodeImpl(id, projectNameFunction.fun((ProjectComponentIdentifier)componentId),
+                                               ((ProjectComponentIdentifier)componentId).getProjectPath());
         }
         else if (componentId instanceof ModuleComponentIdentifier) {
-          node = new ArtifactDependencyNodeImpl(id, componentId.getGroup(), componentId.getModule(), componentId.getVersion())
+          node = new ArtifactDependencyNodeImpl(id, ((ModuleComponentIdentifier)componentId).getGroup(),
+                                                ((ModuleComponentIdentifier)componentId).getModule(),
+                                                ((ModuleComponentIdentifier)componentId).getVersion());
         }
         else {
-          node = new UnknownDependencyNode(id, componentId.displayName)
+          node = new UnknownDependencyNode(id, componentId.getDisplayName());
         }
-        node.resolutionState = RESOLVED
-        if (dependency.selected.selectionReason.hasProperty("descriptions")) {
-          if (!dependency.selected.selectionReason.descriptions.isEmpty()) {
-            node.selectionReason = dependency.selected.selectionReason.descriptions.last().description
+
+        node.setResolutionState(ResolutionState.RESOLVED);
+        if (DefaultGroovyMethods.asBoolean(
+          DefaultGroovyMethods.hasProperty(((ResolvedDependencyResult)dependency).getSelected().getSelectionReason(), "descriptions"))) {
+          if (!((ResolvedDependencyResult)dependency).getSelected().getSelectionReason().getDescriptions().isEmpty()) {
+            node.setSelectionReason(
+              DefaultGroovyMethods.last(((ResolvedDependencyResult)dependency).getSelected().getSelectionReason().getDescriptions())
+                .getDescription());
           }
         }
-        added.put(id, node)
-        def iterator = dependency.selected.dependencies.iterator()
+
+        added.put(id, node);
+        Iterator<? extends DependencyResult> iterator = ((ResolvedDependencyResult)dependency).getSelected().getDependencies().iterator();
         while (iterator.hasNext()) {
-          DependencyResult child = iterator.next()
-          node.dependencies.add(toNode(child, added, idGenerator, projectNameFunction))
+          DependencyResult child = iterator.next();
+          node.getDependencies().add(toNode(child, added, idGenerator, projectNameFunction));
         }
-      } else if (dependency instanceof UnresolvedDependencyResult) {
-        node = new UnknownDependencyNode(id, dependency.attempted.displayName)
-        node.resolutionState = UNRESOLVED
-        added.put(id, node)
-      } else {
-        throw new IllegalStateException("Unsupported dependency result type: $dependency")
+      }
+      else if (dependency instanceof UnresolvedDependencyResult) {
+        node = new UnknownDependencyNode(id, ((UnresolvedDependencyResult)dependency).getAttempted().getDisplayName());
+        node.setResolutionState(ResolutionState.UNRESOLVED);
+        added.put(id, node);
+      }
+      else {
+        throw new IllegalStateException("Unsupported dependency result type: " + dependency);
       }
 
-      return node
+      return node;
     }
 
     /**
@@ -180,42 +203,53 @@ class DependenciesReport extends DefaultTask {
      */
     private static ComponentIdentifier getId(ResolvedComponentResult result) {
       if (IS_51_OR_NEWER) {
-        result.id
-      } else {
-        getIdDynamically(result)
+        return result.getId();
+      }
+      else {
+        return getIdDynamically(result);
       }
     }
 
-    @CompileDynamic
     private static ComponentIdentifier getIdDynamically(ResolvedComponentResult result) {
-      result.getId()
+      return result.getId();
     }
+
+    private static final boolean IS_51_OR_NEWER = GradleVersion.current().compareTo(GradleVersion.version("5.1")) >= 0;
+    private final AtomicLong nextId = new AtomicLong();
 
     private static class IdGenerator {
-      private HashMap<Object, Long> idMap = new HashMap<>()
-      private AtomicLong nextId
-
-      IdGenerator(AtomicLong nextId) {
-        this.nextId = nextId
+      private IdGenerator(AtomicLong nextId) {
+        this.nextId = nextId;
       }
 
-      long getId(Object key) {
-        def newId = nextId.incrementAndGet()
-        def existingId = idMap.putIfAbsent(key, newId)
+      public long getId(Object key) {
+        long newId = nextId.incrementAndGet();
+        Long existingId = idMap.putIfAbsent(key, newId);
         if (existingId != null) {
-          return existingId
+          return existingId;
         }
-        return newId
+
+        return newId;
       }
+
+      private final HashMap<Object, Long> idMap = new HashMap<>();
+      private final AtomicLong nextId;
     }
   }
 
-  static class ProjectNameFunction {
-    def is45OrNewer = GradleVersion.current() >= GradleVersion.version("4.5")
-
-    String fun(ProjectComponentIdentifier identifier) {
-      return is45OrNewer ? identifier.projectName : identifier.projectPath
+  public static class ProjectNameFunction {
+    public String fun(ProjectComponentIdentifier identifier) {
+      return DefaultGroovyMethods.asBoolean(is45OrNewer) ? identifier.getProjectName() : identifier.getProjectPath();
     }
-  }
 
+    public Boolean getIs45OrNewer() {
+      return is45OrNewer;
+    }
+
+    public void setIs45OrNewer(Boolean is45OrNewer) {
+      this.is45OrNewer = is45OrNewer;
+    }
+
+    private Boolean is45OrNewer = GradleVersion.current().compareTo(GradleVersion.version("4.5")) >= 0;
+  }
 }
