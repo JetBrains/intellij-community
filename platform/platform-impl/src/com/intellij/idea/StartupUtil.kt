@@ -279,6 +279,7 @@ fun CoroutineScope.startApplication(args: List<String>,
       runPreAppClass(args = args, classBeforeAppProperty = classBeforeAppProperty)
     }
 
+    appInfoDeferred.join() //used in ApplicationImpl::registerFakeServices
     val app = span("app instantiation") {
       // we don't want to inherit mainScope Dispatcher and CoroutineTimeMeasurer, we only want the job
       ApplicationImpl(CoroutineScope(mainScope.coroutineContext.job).namedChildScope("Application"), isInternal)
