@@ -98,6 +98,8 @@ public final class DiffDividerDrawUtil {
   public static List<DividerSeparator> createVisibleSeparators(@NotNull Editor editor1,
                                                                @NotNull Editor editor2,
                                                                @NotNull DividerSeparatorPaintable paintable) {
+    if (editor1.isDisposed() || editor2.isDisposed()) return Collections.emptyList();
+
     final List<DividerSeparator> separators = new ArrayList<>();
 
     final LineRange leftInterval = getVisibleInterval(editor1);
