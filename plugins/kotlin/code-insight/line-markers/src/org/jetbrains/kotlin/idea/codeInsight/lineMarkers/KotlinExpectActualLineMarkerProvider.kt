@@ -261,6 +261,7 @@ fun actualTooltip(navigatableDeclarations: Collection<SmartPsiElementPointer<KtD
 @RequiresBackgroundThread(generateAssertion = false)
 internal fun KtDeclaration.findAllExpectForActual(searchScope: SearchScope = runReadAction { useScope }): Sequence<SmartPsiElementPointer<KtDeclaration>> {
     val declaration = this
+    val name = declaration.name ?: return emptySequence()
     val scope = searchScope as? GlobalSearchScope ?: return emptySequence()
     val containingClassOrObjectOrSelf = containingClassOrObjectOrSelf()
     // covers cases like classes, class functions and class properties
@@ -293,7 +294,7 @@ internal fun KtDeclaration.findAllExpectForActual(searchScope: SearchScope = run
     }
     // top level functions
     val packageFqName = declaration.containingKtFile.packageFqName
-    val topLevelFqName = packageFqName.child(Name.identifier(declaration.name!!)).asString()
+    val topLevelFqName = packageFqName.child(Name.identifier(name)).asString()
     return when (declaration) {
         is KtNamedFunction -> {
             KotlinTopLevelFunctionFqnNameIndex.getAllElements(topLevelFqName, project, scope) {
