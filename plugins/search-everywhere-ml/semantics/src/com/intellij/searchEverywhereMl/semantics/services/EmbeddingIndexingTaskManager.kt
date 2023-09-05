@@ -7,6 +7,7 @@ import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.progress.Task
 import com.intellij.searchEverywhereMl.semantics.SemanticSearchBundle
 import com.intellij.searchEverywhereMl.semantics.indices.DiskSynchronizedEmbeddingSearchIndex
+import com.intellij.searchEverywhereMl.semantics.utils.LowMemoryNotificationManager
 import com.intellij.searchEverywhereMl.semantics.utils.generateEmbedding
 import com.intellij.searchEverywhereMl.semantics.utils.generateEmbeddings
 import java.util.LinkedList
@@ -57,6 +58,7 @@ class EmbeddingIndexingTaskManager(private val index: DiskSynchronizedEmbeddingS
       if ((task is EmbeddingIndexingTask.Add || task is EmbeddingIndexingTask.AddDiskSynchronized)
           && !index.checkCanAddEntry()) {
         cancelIndexTasks()
+        LowMemoryNotificationManager.getInstance().showNotification()
       }
       else {
         try {

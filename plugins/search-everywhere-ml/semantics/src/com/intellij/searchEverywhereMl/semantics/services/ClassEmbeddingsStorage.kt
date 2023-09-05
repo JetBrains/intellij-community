@@ -5,6 +5,8 @@ import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.getProjectCachePath
 import com.intellij.openapi.startup.ProjectActivity
+import com.intellij.openapi.util.registry.Registry
+import com.intellij.openapi.vfs.VirtualFileManager
 import com.intellij.psi.*
 import com.intellij.searchEverywhereMl.semantics.SemanticSearchBundle
 import com.intellij.searchEverywhereMl.semantics.indices.DiskSynchronizedEmbeddingSearchIndex
@@ -34,6 +36,13 @@ class ClassEmbeddingsStorage(project: Project) : FileContentBasedEmbeddingsStora
   override val indexingTaskManager = EmbeddingIndexingTaskManager(index)
 
   override val setupTitle: String = SemanticSearchBundle.getMessage("search.everywhere.ml.semantic.classes.generation.label")
+
+  override val indexMemoryWeight: Int = 1
+  override val indexStrongLimit = Registry.intValue("search.everywhere.ml.semantic.indexing.indexable.classes.limit")
+
+  init {
+    project.messageBus.connect().subscribe(VirtualFileManager.VFS_CHANGES, ClassesSemanticSearchFileChangeListener.getInstance(project))
+  }
 
   override fun checkSearchEnabled() = SemanticSearchSettings.getInstance().enabledInClassesTab
 

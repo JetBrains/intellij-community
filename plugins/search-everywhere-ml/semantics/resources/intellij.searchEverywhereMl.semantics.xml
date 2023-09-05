@@ -69,6 +69,23 @@
                  description="Show embedding indexing progress indicator"
                  key="search.everywhere.ml.semantic.indexing.show.progress"/>
 
+    <registryKey defaultValue="50000"
+                 description="Semantic search indexable files limit"
+                 key="search.everywhere.ml.semantic.indexing.indexable.files.limit"/>
+
+    <registryKey defaultValue="100000"
+                 description="Semantic search indexable symbols limit"
+                 key="search.everywhere.ml.semantic.indexing.indexable.symbols.limit"/>
+
+    <registryKey defaultValue="50000"
+                 description="Semantic search indexable classes limit"
+                 key="search.everywhere.ml.semantic.indexing.indexable.classes.limit"/>
+
+    <registryKey defaultValue="true"
+                 description="Restrict memory usage of semantic search indexing"
+                 key="search.everywhere.ml.semantic.indexing.restrict.memory.usage"/>
+
+
     <notificationGroup id="Semantic search" displayType="STICKY_BALLOON"
                        bundle="messages.searchEverywhereMlSemanticsBundle"
                        key="search.everywhere.ml.semantic.notification.group.name"/>

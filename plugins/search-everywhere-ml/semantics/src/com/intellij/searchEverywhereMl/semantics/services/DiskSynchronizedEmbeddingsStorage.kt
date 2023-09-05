@@ -23,6 +23,9 @@ abstract class DiskSynchronizedEmbeddingsStorage<T : IndexableEntity>(val projec
 
   abstract val setupTitle: String
 
+  abstract val indexMemoryWeight: Int
+  open val indexStrongLimit: Int? = null
+
   abstract fun checkSearchEnabled(): Boolean
 
   abstract fun getIndexableEntities(): List<T>
@@ -32,6 +35,7 @@ abstract class DiskSynchronizedEmbeddingsStorage<T : IndexableEntity>(val projec
     DumbService.getInstance(project).runWhenSmart {
       ApplicationManager.getApplication().executeOnPooledThread {
         LocalArtifactsManager.getInstance().downloadArtifactsIfNecessary()
+        EmbeddingIndexMemoryManager.getInstance().registerIndex(index, indexMemoryWeight, indexStrongLimit)
         index.loadFromDisk()
         generateEmbeddingsIfNecessary()
       }
