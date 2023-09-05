@@ -327,9 +327,9 @@ public final class SpecializedFileAttributes {
   }
 
   private static final class FileAttributeAccessorHelper implements FileAttributeExAccessor, Closeable {
-    protected final @NotNull MappedFileStorageHelper storageHelper;
+    private final @NotNull MappedFileStorageHelper storageHelper;
 
-    protected FileAttributeAccessorHelper(@NotNull MappedFileStorageHelper helper) { storageHelper = helper; }
+    private FileAttributeAccessorHelper(@NotNull MappedFileStorageHelper helper) { storageHelper = helper; }
 
     @Override
     public void clear() throws IOException {

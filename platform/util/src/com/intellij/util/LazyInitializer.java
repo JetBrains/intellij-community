@@ -51,7 +51,7 @@ public final class LazyInitializer {
       return value;
     }
 
-    protected void set(T value) {
+    void set(T value) {
       //noinspection SynchronizeOnThis
       synchronized(this) {
         this.value = value;

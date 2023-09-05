@@ -75,7 +75,7 @@ public final class LiveTemplateCompletionContributor extends CompletionContribut
           TemplateActionContext.expanding(file, editor));
         final Map<TemplateImpl, String> templates = filterTemplatesByPrefix(availableTemplates, editor, offset, false, false);
         boolean isAutopopup = parameters.getInvocationCount() == 0;
-        if (showAllTemplates()) {
+        if (shouldShowAllTemplates()) {
           final AtomicBoolean templatesShown = new AtomicBoolean(false);
           final CompletionResultSet finalResult = result;
           boolean showLiveTemplatesOnTop = Registry.is("ide.completion.show.live.templates.on.top");
@@ -136,11 +136,6 @@ public final class LiveTemplateCompletionContributor extends CompletionContribut
     return false;
   }
 
-  //for Kotlin
-  protected boolean showAllTemplates() {
-    return shouldShowAllTemplates();
-  }
-
   private static void ensureTemplatesShown(AtomicBoolean templatesShown,
                                            Map<TemplateImpl, String> templates,
                                            List<? extends TemplateImpl> availableTemplates,
@@ -152,7 +147,9 @@ public final class LiveTemplateCompletionContributor extends CompletionContribut
       result.restartCompletionOnPrefixChange(StandardPatterns.string().with(new PatternCondition<>("type after non-identifier") {
         @Override
         public boolean accepts(@NotNull String s, ProcessingContext context) {
-          return s.length() > 1 && !Character.isJavaIdentifierPart(s.charAt(s.length() - 2)) && templateKeys.stream().anyMatch(template -> s.endsWith(template));
+          return s.length() > 1 &&
+                 !Character.isJavaIdentifierPart(s.charAt(s.length() - 2)) &&
+                 ContainerUtil.exists(templateKeys, template -> s.endsWith(template));
         }
       }));
       for (final Map.Entry<TemplateImpl, String> entry : templates.entrySet()) {

@@ -72,8 +72,8 @@ public final class FileTreeModelBuilder {
   private int myMarkedFileCount = 0;
 
   private JTree myTree;
-  protected final VirtualFile myBaseDir;
-  protected VirtualFile[] myContentRoots;
+  private final VirtualFile myBaseDir;
+  private VirtualFile[] myContentRoots;
 
   public FileTreeModelBuilder(@NotNull Project project, Marker marker, DependenciesPanel.DependencyPanelSettings settings) {
     myProject = project;

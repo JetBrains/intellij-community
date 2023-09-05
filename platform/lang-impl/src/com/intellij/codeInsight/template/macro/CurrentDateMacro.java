@@ -13,7 +13,7 @@ import java.util.Date;
 
 final class CurrentDateMacro extends SimpleMacro {
   private static final Logger LOG = Logger.getInstance(CurrentDateMacro.class);
-  protected CurrentDateMacro() {
+  private CurrentDateMacro() {
     super("date");
   }
 

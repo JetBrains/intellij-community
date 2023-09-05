@@ -5,7 +5,7 @@ package com.intellij.codeInspection.ui;
 import com.intellij.codeInspection.InspectionsBundle;
 
 public final class InspectionRootNode extends InspectionTreeNode {
-  protected InspectionRootNode(InspectionTreeModel model) {
+  InspectionRootNode(InspectionTreeModel model) {
     super(null);
   }
 

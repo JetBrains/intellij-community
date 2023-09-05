@@ -474,7 +474,7 @@ public final class RangeSearch implements RangeSearchTask.Callback {
     }
   }
 
-  protected void onSearchIsFinished(RangeSearchTask caller, long lastScannedPageNumber) {
+  private void onSearchIsFinished(RangeSearchTask caller, long lastScannedPageNumber) {
     SearchTaskOptions options = caller.getOptions();
     if (!caller.isShouldStop()) {
       if (options.searchForwardDirection) {
@@ -509,7 +509,7 @@ public final class RangeSearch implements RangeSearchTask.Callback {
     }
   }
 
-  protected void onFrameSearchResultsFound(RangeSearchTask caller, long curPageNumber, List<? extends SearchResult> allMatchesAtFrame) {
+  private void onFrameSearchResultsFound(RangeSearchTask caller, long curPageNumber, List<? extends SearchResult> allMatchesAtFrame) {
     if (caller != lastExecutedRangeSearchTask  // means new search task has been already launched
         || caller.isShouldStop()) {
       return;
@@ -549,7 +549,7 @@ public final class RangeSearch implements RangeSearchTask.Callback {
     }
   }
 
-  protected void fireSearchStopped() {
+  private void fireSearchStopped() {
     for (EdtRangeSearchEventsListener listener : myEdtRangeSearchEventsListeners) {
       listener.onSearchStopped();
     }
@@ -567,7 +567,7 @@ public final class RangeSearch implements RangeSearchTask.Callback {
     }
   }
 
-  protected void onSearchCatchedException(RangeSearchTask caller, IOException e) {
+  private void onSearchCatchedException(RangeSearchTask caller, IOException e) {
     if (!caller.isShouldStop()) {
       setAdditionalStatusText(EditorBundle.message("large.file.editor.message.search.stopped.because.something.went.wrong"));
       logger.warn(e);

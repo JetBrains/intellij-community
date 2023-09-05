@@ -315,11 +315,13 @@ public final class PersistentMapImpl<Key, Value> implements PersistentMapBase<Ke
     };
   }
 
-  protected @NotNull Lock getWriteLock() {
+  @NotNull
+  private Lock getWriteLock() {
     return myLock.writeLock();
   }
 
-  protected @NotNull Lock getReadLock() {
+  @NotNull
+  private Lock getReadLock() {
     return PersistentEnumeratorBase.USE_RW_LOCK ? myLock.readLock() : myLock.writeLock();
   }
 
@@ -426,7 +428,7 @@ public final class PersistentMapImpl<Key, Value> implements PersistentMapBase<Ke
     }
   }
 
-  protected void doPut(Key key, Value value) throws IOException {
+  private void doPut(Key key, Value value) throws IOException {
     long newValueOffset = -1;
 
     if (!myIntMapping) {
@@ -628,7 +630,8 @@ public final class PersistentMapImpl<Key, Value> implements PersistentMapBase<Ke
     }
   }
 
-  protected @Nullable Value doGet(Key key) throws IOException {
+  @Nullable
+  private Value doGet(Key key) throws IOException {
     flushAppendCache(key);
 
     myEnumerator.lockStorageRead();
@@ -749,7 +752,7 @@ public final class PersistentMapImpl<Key, Value> implements PersistentMapBase<Ke
     }
   }
 
-  protected void doRemove(Key key) throws IOException {
+  private void doRemove(Key key) throws IOException {
     myEnumerator.lockStorageWrite();
     try {
       flushAppendCache(key);
@@ -798,7 +801,7 @@ public final class PersistentMapImpl<Key, Value> implements PersistentMapBase<Ke
     }
   }
 
-  protected void doForce() {
+  private void doForce() {
     myEnumerator.lockStorageWrite();
     try {
       try {

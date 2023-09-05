@@ -51,7 +51,7 @@ public final class RenameFileAction extends AnAction implements ActionPromoter {
            ? Collections.singletonList(this) : null;
   }
 
-  protected boolean enabledInProjectView(@NotNull PsiFile file) {
+  private boolean enabledInProjectView(@NotNull PsiFile file) {
     return ContainerUtil.exists(RenameFileActionProvider.EP_NAME.getExtensionList(), provider -> provider.enabledInProjectView(file));
   }
 }

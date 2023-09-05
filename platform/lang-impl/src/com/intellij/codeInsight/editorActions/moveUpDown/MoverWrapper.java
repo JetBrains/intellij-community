@@ -23,11 +23,11 @@ import org.jetbrains.annotations.Nullable;
 final class MoverWrapper {
   private static final Logger LOGGER = Logger.getInstance(MoverWrapper.class);
 
-  protected final boolean myIsDown;
+  private final boolean myIsDown;
   private final StatementUpDownMover myMover;
   private final StatementUpDownMover.MoveInfo myInfo;
 
-  protected MoverWrapper(@NotNull final StatementUpDownMover mover, @NotNull final StatementUpDownMover.MoveInfo info, final boolean isDown) {
+  MoverWrapper(@NotNull final StatementUpDownMover mover, @NotNull final StatementUpDownMover.MoveInfo info, final boolean isDown) {
     myMover = mover;
     myIsDown = isDown;
 

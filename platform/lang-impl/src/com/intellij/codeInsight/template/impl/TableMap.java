@@ -21,7 +21,7 @@ import javax.swing.table.TableModel;
 
 public final class TableMap extends AbstractTableModel
                       implements TableModelListener {
-    protected TableModel model;
+    TableModel model;
 
     public TableModel getModel() {
         return model;

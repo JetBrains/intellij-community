@@ -332,7 +332,7 @@ public abstract class GotoTargetHandler implements CodeInsightActionHandler {
 
     private boolean hasDifferentNames;
     public BackgroundUpdaterTaskBase<ItemWithPresentation> listUpdaterTask;
-    protected final Set<String> myNames;
+    private final Set<String> myNames;
     private List<ItemWithPresentation> myItems;
 
     public GotoData(@NotNull PsiElement source, PsiElement @NotNull [] targets, @NotNull List<AdditionalAction> additionalActions) {

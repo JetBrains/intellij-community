@@ -63,7 +63,7 @@ public final class ShowModuleDependenciesAction extends AnAction {
     private final JRadioButton myProjectScope;
     private final JRadioButton myModuleScope;
 
-    protected MyModuleOrProjectScope(String moduleName) {
+    private MyModuleOrProjectScope(String moduleName) {
       super(false);
       setTitle(CodeInsightBundle.message("module.dependencies.scope.dialog.title"));
       ButtonGroup group = new ButtonGroup();

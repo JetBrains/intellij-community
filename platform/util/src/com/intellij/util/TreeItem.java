@@ -29,7 +29,7 @@ public final class TreeItem <Data> {
     return myChildren;
   }
 
-  protected void setParent(TreeItem<Data> parent) {
+  private void setParent(TreeItem<Data> parent) {
     myParent = parent;
   }
 

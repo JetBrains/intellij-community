@@ -56,7 +56,7 @@ final class PostfixTemplatesCompletionProvider extends CompletionProvider<Comple
   }
 
   private static final class MyPrefixMatcher extends PrefixMatcher {
-    protected MyPrefixMatcher(String prefix) {
+    private MyPrefixMatcher(String prefix) {
       super(prefix);
     }
 

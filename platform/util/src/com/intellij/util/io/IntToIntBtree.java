@@ -599,7 +599,7 @@ public final class IntToIntBtree extends AbstractIntToIntBtree {
       return isIndexLeaf;
     }
 
-    protected void doInitFlags(int flags) {
+    private void doInitFlags(int flags) {
       myChildrenCount = (short)((flags >>> LENGTH_SHIFT) & LENGTH_MASK);
       flags = (flags >> FLAGS_SHIFT) & 0xFF;
       isHashedLeaf = BitUtil.isSet(flags, HASHED_LEAF_MASK);

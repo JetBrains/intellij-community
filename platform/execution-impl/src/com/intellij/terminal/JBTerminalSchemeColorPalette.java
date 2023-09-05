@@ -16,7 +16,7 @@ public final class JBTerminalSchemeColorPalette extends ColorPalette {
 
   private final EditorColorsScheme myColorsScheme;
 
-  protected JBTerminalSchemeColorPalette(@NotNull EditorColorsScheme scheme) {
+  JBTerminalSchemeColorPalette(@NotNull EditorColorsScheme scheme) {
     myColorsScheme = scheme;
   }
 

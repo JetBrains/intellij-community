@@ -538,7 +538,7 @@ public final class PagedFileStorageWithRWLockedPageContent implements PagedStora
     }
   }
 
-  protected PagesTable pages() {
+  PagesTable pages() {
     return pages;
   }
 

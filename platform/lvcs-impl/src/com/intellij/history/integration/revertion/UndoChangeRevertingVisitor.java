@@ -42,7 +42,7 @@ public final class UndoChangeRevertingVisitor extends ChangeVisitor {
     myToChangeId = toChangeId == null ? -1 : toChangeId;
   }
 
-  protected boolean shouldRevert(Change c) {
+  private boolean shouldRevert(Change c) {
     if (c.getId() == myFromChangeId) {
       isReverting = true;
     }
@@ -53,7 +53,7 @@ public final class UndoChangeRevertingVisitor extends ChangeVisitor {
     return shouldRevert;
   }
 
-  protected void checkShouldStop(Change c) throws StopVisitingException {
+  private void checkShouldStop(Change c) throws StopVisitingException {
     if (c.getId() == myToChangeId) stop();
   }
 

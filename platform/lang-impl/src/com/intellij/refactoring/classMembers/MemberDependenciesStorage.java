@@ -13,7 +13,7 @@ import java.util.Set;
 
 
 public final class MemberDependenciesStorage<T extends NavigatablePsiElement, C extends PsiElement> {
-  protected final C myClass;
+  private final C myClass;
   private C mySuperClass;
   private final Map<T, Set<T>> myDependencyGraph;
 
@@ -27,8 +27,7 @@ public final class MemberDependenciesStorage<T extends NavigatablePsiElement, C 
     mySuperClass = superClass;
   }
 
-  @Nullable
-  protected Set<T> getMemberDependencies(T member) {
+  @Nullable Set<T> getMemberDependencies(T member) {
     Set<T> result = myDependencyGraph.get(member);
     if (result == null) {
       DependentMembersCollectorBase<T, C> collector = getCollector(member);
