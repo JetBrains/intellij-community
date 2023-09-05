@@ -6,7 +6,6 @@ import com.intellij.openapi.util.io.IoTestUtil;
 import com.intellij.openapi.util.io.NioFiles;
 import com.intellij.util.containers.ContainerUtil;
 import org.junit.Before;
-import org.junit.Ignore;
 import org.junit.Test;
 
 import java.io.ByteArrayInputStream;
@@ -26,8 +25,10 @@ import java.util.zip.ZipFile;
 import java.util.zip.ZipOutputStream;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertTrue;
 import static org.junit.Assume.assumeFalse;
+import static org.junit.Assume.assumeTrue;
 
 @SuppressWarnings({"JUnit3StyleTestMethodInJUnit4Class", "DuplicateExpressions"})
 public abstract class PatchApplyingRevertingTest extends PatchTestCase {
@@ -706,8 +707,9 @@ public abstract class PatchApplyingRevertingTest extends PatchTestCase {
   }
 
   @Test
-  @Ignore  // temporarily disabled (fails because restore doesn't remove empty directories originally missing from the installation)
   public void creatingParentDirectoriesForMissingCriticalFiles() throws Exception {
+    assumeTrue(this instanceof NoBackupTest);
+
     randomFile(myOlderDir.toPath().resolve("plugins/some/lib/plugin.jar"));
     randomFile(myOlderDir.toPath().resolve("plugins/other/lib/plugin.jar"));
     resetNewerDir();
