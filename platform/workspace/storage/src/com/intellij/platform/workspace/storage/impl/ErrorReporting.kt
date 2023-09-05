@@ -89,7 +89,7 @@ private fun MutableEntityStorageImpl.serializeDiff(serializer: EntityStorageSeri
 
 internal fun EntityStorage.anonymize(sourceFilter: ((EntitySource) -> Boolean)?): EntityStorage {
   if (!isWrapped()) return this
-  val builder = MutableEntityStorage.from(this)
+  val builder = MutableEntityStorage.from(this.toSnapshot())
   builder.entitiesBySource { true }.flatMap { entry -> entry.value.flatMap { it.value } }.forEach { entity ->
     builder.modifyEntity(WorkspaceEntity.Builder::class.java, entity) {
       this.entitySource = entity.entitySource.anonymize(sourceFilter)

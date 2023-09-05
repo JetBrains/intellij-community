@@ -235,7 +235,7 @@ public interface MutableEntityStorage : EntityStorage {
      * Creates a mutable copy of the given [storage].
      */
     @JvmStatic
-    public fun from(storage: EntityStorage): MutableEntityStorage = MutableEntityStorageImpl.from(storage)
+    public fun from(storage: EntityStorageSnapshot): MutableEntityStorage = MutableEntityStorageImpl.from(storage)
   }
 }
 

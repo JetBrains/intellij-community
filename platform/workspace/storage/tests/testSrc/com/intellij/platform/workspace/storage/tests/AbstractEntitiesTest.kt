@@ -72,7 +72,7 @@ class AbstractEntitiesTest {
     val middleEntity = builder.addMiddleEntity()
     val leftEntity = builder.addLeftEntity(sequenceOf(middleEntity))
 
-    val anotherBuilder = MutableEntityStorage.from(builder)
+    val anotherBuilder = MutableEntityStorage.from(builder.toSnapshot())
     val anotherMiddleEntity = anotherBuilder.addMiddleEntity("Another")
     anotherBuilder.modifyEntity(leftEntity.from(anotherBuilder)) {
       this.children = listOf(middleEntity, anotherMiddleEntity)

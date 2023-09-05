@@ -25,7 +25,7 @@ internal fun createEmptyBuilder(): MutableEntityStorageImpl {
 }
 
 internal fun createBuilderFrom(storage: EntityStorage): MutableEntityStorageImpl {
-  return MutableEntityStorageImpl.from(storage)
+  return MutableEntityStorageImpl.from(storage.toSnapshot())
 }
 
 internal inline fun makeBuilder(from: EntityStorage? = null, action: MutableEntityStorage.() -> Unit): MutableEntityStorageImpl {

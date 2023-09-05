@@ -71,7 +71,7 @@ class FacetManagerBridge(module: Module) : FacetManagerBase() {
   override fun getModel(): FacetModel = model
   override fun getModule(): Module = module
   override fun createModifiableModel(): ModifiableFacetModel {
-    return createModifiableModel(module.entityStorage.current.toBuilder())
+    return createModifiableModel(module.entityStorage.current.toSnapshot().toBuilder())
   }
 
   fun createModifiableModel(diff: MutableEntityStorage): ModifiableFacetModel {

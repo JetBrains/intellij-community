@@ -66,7 +66,7 @@ class GlobalWorkspaceModel : Disposable {
         val activity = StartUpMeasurer.startActivity("global cache loading")
         val previousStorage: MutableEntityStorage?
         val loadingCacheTime = measureTimeMillis {
-          previousStorage = cache.loadCache()?.toBuilder()
+          previousStorage = cache.loadCache()
         }
         val storage = if (previousStorage == null) {
           MutableEntityStorage.create()

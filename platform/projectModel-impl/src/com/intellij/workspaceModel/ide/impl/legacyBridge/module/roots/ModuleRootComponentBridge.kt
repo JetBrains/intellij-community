@@ -98,7 +98,7 @@ class ModuleRootComponentBridge(
 
   override fun getModifiableModel(): ModifiableRootModel = getModifiableModel(RootConfigurationAccessor.DEFAULT_INSTANCE)
   override fun getModifiableModel(accessor: RootConfigurationAccessor): ModifiableRootModel = ModifiableRootModelBridgeImpl(
-    MutableEntityStorage.from(moduleBridge.entityStorage.current),
+    MutableEntityStorage.from(moduleBridge.entityStorage.current.toSnapshot()),
     moduleBridge,
     accessor)
 
@@ -112,14 +112,14 @@ class ModuleRootComponentBridge(
   @ApiStatus.Internal
   fun getModifiableModelForMultiCommit(accessor: RootConfigurationAccessor, cacheStorageResult: Boolean): ModifiableRootModel = ModifiableRootModelBridgeImpl(
     (moduleBridge.diff as? MutableEntityStorage) ?: (accessor as? RootConfigurationAccessorForWorkspaceModel)?.actualDiffBuilder
-    ?: MutableEntityStorage.from(moduleBridge.entityStorage.current),
+    ?: MutableEntityStorage.from(moduleBridge.entityStorage.current.toSnapshot()),
     moduleBridge,
     accessor,
     cacheStorageResult)
 
   @ApiStatus.Internal
   fun getModifiableModelWithoutCaching(): ModifiableRootModel {
-    return getModifiableModel(MutableEntityStorage.from(moduleBridge.entityStorage.current), RootConfigurationAccessor.DEFAULT_INSTANCE)
+    return getModifiableModel(MutableEntityStorage.from(moduleBridge.entityStorage.current.toSnapshot()), RootConfigurationAccessor.DEFAULT_INSTANCE)
   }
 
   fun getModifiableModel(diff: MutableEntityStorage, accessor: RootConfigurationAccessor): ModifiableRootModel {

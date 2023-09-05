@@ -84,7 +84,7 @@ public interface EntityStorageSnapshot : EntityStorage {
 /**
  * Creates a mutable copy of `this` storage.
  */
-public fun EntityStorage.toBuilder(): MutableEntityStorage {
+public fun EntityStorageSnapshot.toBuilder(): MutableEntityStorage {
   return MutableEntityStorage.from(this)
 }
 

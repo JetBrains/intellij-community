@@ -79,7 +79,7 @@ open class WorkspaceModelImpl(private val project: Project, private val cs: Coro
         val previousStorage: MutableEntityStorage?
         val previousStorageForUnloaded: EntityStorageSnapshot
         val loadingCacheTime = measureTimeMillis {
-          previousStorage = cache.loadCache()?.toBuilder()
+          previousStorage = cache.loadCache()
           previousStorageForUnloaded = cache.loadUnloadedEntitiesCache()?.toSnapshot() ?: EntityStorageSnapshot.empty()
         }
         val storage = if (previousStorage == null) {

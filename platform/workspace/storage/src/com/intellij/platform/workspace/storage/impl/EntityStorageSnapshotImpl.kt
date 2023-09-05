@@ -934,22 +934,12 @@ internal class MutableEntityStorageImpl(
       return from(EntityStorageSnapshotImpl.EMPTY)
     }
 
-    fun from(storage: EntityStorage): MutableEntityStorageImpl {
-      storage as AbstractEntityStorage
-      val newBuilder = when (storage) {
-        is EntityStorageSnapshotImpl -> {
-          val copiedBarrel = MutableEntitiesBarrel.from(storage.entitiesByType)
-          val copiedRefs = MutableRefsTable.from(storage.refs)
-          val copiedIndex = storage.indexes.toMutable()
-          MutableEntityStorageImpl(copiedBarrel, copiedRefs, copiedIndex)
-        }
-        is MutableEntityStorageImpl -> {
-          val copiedBarrel = MutableEntitiesBarrel.from(storage.entitiesByType.toImmutable())
-          val copiedRefs = MutableRefsTable.from(storage.refs.toImmutable())
-          val copiedIndexes = storage.indexes.toMutable()
-          MutableEntityStorageImpl(copiedBarrel, copiedRefs, copiedIndexes, storage.trackStackTrace)
-        }
-      }
+    fun from(storage: EntityStorageSnapshot): MutableEntityStorageImpl {
+      storage as EntityStorageSnapshotImpl
+      val copiedBarrel = MutableEntitiesBarrel.from(storage.entitiesByType)
+      val copiedRefs = MutableRefsTable.from(storage.refs)
+      val copiedIndex = storage.indexes.toMutable()
+      val newBuilder = MutableEntityStorageImpl(copiedBarrel, copiedRefs, copiedIndex)
       LOG.trace { "Create new builder $newBuilder from $storage.\n${currentStackTrace(10)}" }
       return newBuilder
     }

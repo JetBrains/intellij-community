@@ -17,7 +17,7 @@ class StorageMutabilityTest {
   @Test
   fun `check refs copying on empty storage`() {
     val emptyBuilder = createEmptyBuilder()
-    compareRefsInstances(emptyBuilder, MutableEntityStorage.from(emptyBuilder))
+    compareRefsInstances(emptyBuilder, MutableEntityStorage.from(emptyBuilder.toSnapshot()))
 
     var snapshot = emptyBuilder.toSnapshot()
     var builder = MutableEntityStorage.from(snapshot)
@@ -33,7 +33,7 @@ class StorageMutabilityTest {
   @Test
   fun `check complex refs modifications`() {
     val emptyBuilder = createEmptyBuilder()
-    val emptyBuilderCopy = MutableEntityStorage.from(emptyBuilder)
+    val emptyBuilderCopy = MutableEntityStorage.from(emptyBuilder.toSnapshot())
 
     val entity = MainEntityList("123", MySource) {
       this.child = listOf(AttachedEntityList("xyz", MySource))

@@ -107,7 +107,7 @@ class LibraryBridgeImpl(
   }
 
   override fun getModifiableModel(): LibraryEx.ModifiableModelEx {
-    return getModifiableModel(MutableEntityStorage.from(librarySnapshot.storage))
+    return getModifiableModel(MutableEntityStorage.from(librarySnapshot.storage.toSnapshot()))
   }
 
   override fun getModifiableModel(builder: MutableEntityStorage): LibraryEx.ModifiableModelEx {

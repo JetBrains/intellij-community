@@ -210,7 +210,8 @@ abstract class ModuleManagerBridgeImpl(private val project: Project,
   }
 
   override fun getModifiableModel(): ModifiableModuleModel {
-    return ModifiableModuleModelBridgeImpl(project = project, moduleManager = this, diff = MutableEntityStorage.from(entityStore.current))
+    return ModifiableModuleModelBridgeImpl(project = project, moduleManager = this,
+                                           diff = MutableEntityStorage.from(entityStore.current.toSnapshot()))
   }
 
   fun getModifiableModel(diff: MutableEntityStorage): ModifiableModuleModel {
