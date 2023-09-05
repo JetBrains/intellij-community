@@ -910,27 +910,41 @@ internal class JKCodeBuilder(context: NewJ2kConverterContext) {
             ktValueWhenLabel.expression.accept(this)
         }
 
+        override fun visitErrorExpression(errorExpression: JKErrorExpression) {
+            visitErrorElement(errorExpression)
+        }
+
         override fun visitErrorStatement(errorStatement: JKErrorStatement) {
             visitErrorElement(errorStatement)
         }
 
         private fun visitErrorElement(errorElement: JKErrorElement) {
             val message = buildString {
-                append("Cannot convert element: ${errorElement.reason}")
-                errorElement.psi?.let { append("\nWith text:\n${it.text}") }
-            }
-            printer.print("TODO(")
-            printer.indented {
-                printer.print("\"\"\"")
-                printer.println()
-                message.split('\n').forEach { line ->
-                    printer.print("|")
-                    printer.print(line.replace("$", "\\$"))
-                    printer.println()
+                append("Cannot convert element")
+                errorElement.reason?.let { append(": $it") }
+
+                val elementText = errorElement.psi?.text
+                if (!elementText.isNullOrBlank()) {
+                    append("\nWith text:\n$elementText")
                 }
-                printer.print("\"\"\"")
+            }.replace("$", "\\$")
+
+            if (message.contains("\n")) {
+                printer.print("TODO(")
+                printer.indented {
+                    printer.print("\"\"\"")
+                    printer.println()
+                    message.split('\n').forEach { line ->
+                        printer.print("|")
+                        printer.print(line)
+                        printer.println()
+                    }
+                    printer.print("\"\"\".trimMargin()")
+                }
+                printer.print(")")
+            } else {
+                printer.print("TODO(\"$message\")")
             }
-            printer.print(").trimMargin()")
         }
     }
 }

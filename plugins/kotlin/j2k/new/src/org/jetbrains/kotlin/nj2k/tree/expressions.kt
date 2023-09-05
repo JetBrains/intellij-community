@@ -415,5 +415,5 @@ class JKErrorExpression(
 ) : JKExpression(), JKErrorElement {
     override fun calculateType(typeFactory: JKTypeFactory): JKType = expressionType ?: typeFactory.types.nothing
 
-    override fun accept(visitor: JKVisitor) = visitor.visitExpression(this)
+    override fun accept(visitor: JKVisitor) = visitor.visitErrorExpression(this)
 }

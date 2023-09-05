@@ -3201,6 +3201,11 @@ public abstract class NewJavaToKotlinConverterSingleFileTestGenerated extends Ab
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
         }
 
+        @TestMetadata("absentArgument.java")
+        public void testAbsentArgument() throws Exception {
+            runTest("testData/newJ2k/invalidCode/absentArgument.java");
+        }
+
         @TestMetadata("annotationApplicationWithoutName.java")
         public void testAnnotationApplicationWithoutName() throws Exception {
             runTest("testData/newJ2k/invalidCode/annotationApplicationWithoutName.java");
