@@ -5,8 +5,6 @@ import com.intellij.ide.IdeDeprecatedMessagesBundle
 import com.intellij.psi.PsiElement
 import com.intellij.refactoring.BaseRefactoringProcessor
 import com.intellij.refactoring.move.MoveMultipleElementsViewDescriptor
-import com.intellij.refactoring.move.moveClassesOrPackages.CommonMoveUtil
-import com.intellij.refactoring.rename.RenameUtil
 import com.intellij.usageView.UsageInfo
 import com.intellij.usageView.UsageViewDescriptor
 import org.jetbrains.kotlin.analysis.api.KtAllowAnalysisOnEdt
@@ -40,9 +38,9 @@ class K2MoveMembersRefactoringProcessor(
         val oldToNewMap = descriptor.source.elements.associateWith {
             declaration -> targetFile.add(declaration)
         }.toMutableMap<PsiElement, PsiElement>()
-        val nonCodeUsages = CommonMoveUtil.retargetUsages(usages, oldToNewMap)
-        RenameUtil.renameNonCodeUsages(myProject, nonCodeUsages)
         descriptor.source.elements.forEach(PsiElement::deleteSingle)
+
+        retargetUsagesAfterMove(usages.toList(), oldToNewMap)
 
         for (sourceFile in sourceFiles) {
             if (sourceFile.declarations.isEmpty()) sourceFile.delete()

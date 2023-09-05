@@ -268,6 +268,11 @@ public class MoveTestGenerated extends AbstractMoveTest {
         runTest("testData/refactoring/move/kotlin/moveFile/longName/longName.test");
     }
 
+    @TestMetadata("kotlin/moveFile/moveClassWithExtensionFunction/moveClassWithExtensionFunction.test")
+    public void testKotlin_moveFile_moveClassWithExtensionFunction_MoveClassWithExtensionFunction() throws Exception {
+        runTest("testData/refactoring/move/kotlin/moveFile/moveClassWithExtensionFunction/moveClassWithExtensionFunction.test");
+    }
+
     @TestMetadata("kotlin/moveFile/moveFileAndDirWithJavaFileReferringToPackageFragementWithUnmatchedDir/moveFileAndDirWithJavaFileReferringToPackageFragementWithUnmatchedDir.test")
     public void testKotlin_moveFile_moveFileAndDirWithJavaFileReferringToPackageFragementWithUnmatchedDir_MoveFileAndDirWithJavaFileReferringToPackageFragementWithUnmatchedDir() throws Exception {
         runTest("testData/refactoring/move/kotlin/moveFile/moveFileAndDirWithJavaFileReferringToPackageFragementWithUnmatchedDir/moveFileAndDirWithJavaFileReferringToPackageFragementWithUnmatchedDir.test");

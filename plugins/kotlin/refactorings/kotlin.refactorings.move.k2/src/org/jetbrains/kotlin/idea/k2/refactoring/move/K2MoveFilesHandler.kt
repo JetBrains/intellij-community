@@ -5,9 +5,7 @@ import com.intellij.psi.JavaDirectoryService
 import com.intellij.psi.PsiDirectory
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
-import com.intellij.refactoring.move.moveClassesOrPackages.CommonMoveUtil
 import com.intellij.refactoring.move.moveFilesOrDirectories.MoveFileHandler
-import com.intellij.refactoring.rename.RenameUtil
 import com.intellij.usageView.UsageInfo
 import org.jetbrains.kotlin.analysis.api.KtAllowAnalysisOnEdt
 import org.jetbrains.kotlin.analysis.api.lifetime.allowAnalysisOnEdt
@@ -34,7 +32,7 @@ class K2MoveFilesHandler : MoveFileHandler() {
     override fun prepareMovedFile(file: PsiFile, moveDestination: PsiDirectory, oldToNewMap: MutableMap<PsiElement, PsiElement>) {
         require(file is KtFile) { "Can only prepare Kotlin files" }
         file.updatePackageDirective(moveDestination)
-        val declarations = file.allDeclarations
+        val declarations = file.declarationsForUsageSearch
         declarations.forEach { oldToNewMap[it] = it }
     }
 
@@ -52,8 +50,6 @@ class K2MoveFilesHandler : MoveFileHandler() {
 
     @OptIn(KtAllowAnalysisOnEdt::class)
     override fun retargetUsages(usageInfos: List<UsageInfo>, oldToNewMap: MutableMap<PsiElement, PsiElement>): Unit = allowAnalysisOnEdt {
-        val nonCodeUsages = CommonMoveUtil.retargetUsages(usageInfos.toTypedArray(), oldToNewMap)
-        val project = oldToNewMap.values.firstOrNull()?.project ?: return@allowAnalysisOnEdt
-        RenameUtil.renameNonCodeUsages(project, nonCodeUsages)
+       retargetUsagesAfterMove(usageInfos, oldToNewMap)
     }
 }

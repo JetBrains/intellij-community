@@ -3,10 +3,7 @@ package org.jetbrains.kotlin.idea.k2.refactoring.move
 
 import com.intellij.openapi.actionSystem.ex.ActionUtil
 import com.intellij.platform.backend.presentation.TargetPresentation
-import com.intellij.psi.search.searches.ReferencesSearch
 import com.intellij.refactoring.RefactoringBundle
-import com.intellij.refactoring.util.MoveRenameUsageInfo
-import com.intellij.refactoring.util.TextOccurrencesUtil
 import com.intellij.ui.CollectionListModel
 import com.intellij.ui.components.JBList
 import com.intellij.ui.dsl.builder.Align
@@ -19,7 +16,6 @@ import org.jetbrains.kotlin.idea.refactoring.memberInfo.KotlinMemberInfo
 import org.jetbrains.kotlin.idea.refactoring.memberInfo.KotlinMemberSelectionPanel
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.psi.*
-import org.jetbrains.kotlin.psi.psiUtil.getNonStrictParentOfType
 import javax.swing.Icon
 import javax.swing.JComponent
 
@@ -42,11 +38,13 @@ sealed interface K2MoveSource<T : KtElement> {
             private set
 
         override fun findReferenceUsages(): List<UsageInfo> {
-            return elements.flatMap { allElementSource(it).findReferenceUsages() }
+            return elements.flatMap { file -> file.declarationsForUsageSearch.flatMap(K2MoveRenameUsageInfo::find) }
         }
 
         override fun findNonCodeUsages(searchInCommentsAndStrings: Boolean, searchForText: Boolean, pkgName: FqName): List<UsageInfo> {
-            return elements.flatMap { file -> allElementSource(file).findNonCodeUsages(searchInCommentsAndStrings, searchForText, pkgName) }
+            return elements.flatMap { file ->
+                file.declarationsForUsageSearch.findNonCodeUsages(searchInCommentsAndStrings, searchForText, pkgName)
+            }
         }
 
         context(Panel)
@@ -83,29 +81,11 @@ sealed interface K2MoveSource<T : KtElement> {
             private set
 
         override fun findReferenceUsages(): List<UsageInfo> {
-            return elements.flatMap { namedDeclaration ->
-                val references = ReferencesSearch.search(namedDeclaration).findAll().filter { reference ->
-                    reference.element.getNonStrictParentOfType<KtImportDirective>() == null
-                }
-                references.map { reference -> MoveRenameUsageInfo(reference, namedDeclaration) }
-            }
+            return elements.flatMap(K2MoveRenameUsageInfo::find)
         }
 
         override fun findNonCodeUsages(searchInCommentsAndStrings: Boolean, searchForText: Boolean, pkgName: FqName): List<UsageInfo> {
-            val usages = mutableListOf<UsageInfo>()
-            elements.forEach { element ->
-                val newName = FqName("${pkgName.asString()}.${element.name}")
-                TextOccurrencesUtil.findNonCodeUsages(
-                    element,
-                    element.resolveScope,
-                    element.fqName?.asString(),
-                    searchInCommentsAndStrings,
-                    searchForText,
-                    newName.asString(),
-                    usages
-                )
-            }
-            return usages
+            return elements.findNonCodeUsages(searchInCommentsAndStrings, searchForText, pkgName)
         }
 
         context(Panel)
@@ -114,7 +94,7 @@ sealed interface K2MoveSource<T : KtElement> {
                 .map(KtPureElement::getContainingKtFile)
                 .distinct()
 
-            fun getAllDeclarations(sourceFiles: Collection<KtFile>): List<KtNamedDeclaration> = sourceFiles
+            fun getAllDeclarations(files: Collection<KtFile>): List<KtNamedDeclaration> = files
                 .flatMap<KtFile, KtDeclaration> { file -> if (file.isScript()) file.script!!.declarations else file.declarations }
                 .filterIsInstance<KtNamedDeclaration>()
 
@@ -147,9 +127,5 @@ sealed interface K2MoveSource<T : KtElement> {
 
     companion object {
         fun FileSource(file: KtFile): FileSource = FileSource(setOf(file))
-
-        fun allElementSource(file: KtFile): ElementSource {
-            return ElementSource(file.allDeclarations.filterIsInstance<KtNamedDeclaration>().toSet())
-        }
     }
 }
