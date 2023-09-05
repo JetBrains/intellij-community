@@ -17,7 +17,7 @@ import org.jetbrains.kotlin.psi.KtVisitorVoid
 /**
  * Will work during batch run only. For on-the-fly code, see [org.jetbrains.kotlin.idea.highlighting.KotlinUnusedHighlightingVisitor]
  */
-internal class UnusedSymbolInspection : LocalInspectionTool(), UnfairLocalInspectionTool {
+class UnusedSymbolInspection : LocalInspectionTool(), UnfairLocalInspectionTool {
     // TODO: Having parity between Java and Kotlin might be a good idea once we replace the global Kotlin inspection with a UAST-based one.
     private val javaInspection = UnusedDeclarationInspection()
 

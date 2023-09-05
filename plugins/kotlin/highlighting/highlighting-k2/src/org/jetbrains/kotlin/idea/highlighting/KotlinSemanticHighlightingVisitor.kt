@@ -11,36 +11,33 @@ import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.idea.highlighting.highlighters.*
 import org.jetbrains.kotlin.psi.KtElement
 import org.jetbrains.kotlin.psi.KtFile
+import org.jetbrains.kotlin.psi.KtVisitorVoid
 
 /**
- * A highlight visitor which generates a semantic INFORMATION-level highlightings (e.g., for smartcasts) and adds them to the [holder]
+ * A highlight visitor which generates a semantic INFORMATION-level highlightings (e.g., for smart-casts) and adds them to the [HighlightInfoHolder]
  */
 class KotlinSemanticHighlightingVisitor : HighlightVisitor {
-    private lateinit var holder: HighlightInfoHolder
-    private lateinit var analyzers: Array<KotlinSemanticAnalyzer>
-    private lateinit var kotlinRefsHolder: KotlinRefsHolder
+    private lateinit var analyzers: Array<KtVisitorVoid>
 
     override fun suitableForFile(file: PsiFile): Boolean {
         return file is KtFile && !file.isCompiled
     }
 
     override fun analyze(ktFile: PsiFile, updateWholeFile: Boolean, holder: HighlightInfoHolder, action: Runnable): Boolean {
-        this.holder = holder
-        kotlinRefsHolder = KotlinRefsHolder()
         analyze(ktFile as KtElement) {
-            analyzers = createSemanticAnalyzers(kotlinRefsHolder, holder)
+            analyzers = createSemanticAnalyzers(holder)
             action.run()
-            KotlinUnusedHighlightingVisitor(ktFile as KtFile, kotlinRefsHolder).collectHighlights(holder)
+            KotlinUnusedHighlightingVisitor(ktFile as KtFile, holder).collectHighlights(holder)
         }
         return true
     }
 
     context(KtAnalysisSession)
-    private fun createSemanticAnalyzers(refsHolder: KotlinRefsHolder, holder: HighlightInfoHolder): Array<KotlinSemanticAnalyzer> = arrayOf(
-      TypeHighlighter(refsHolder, holder),
-      FunctionCallHighlighter(refsHolder, holder),
+    private fun createSemanticAnalyzers(holder: HighlightInfoHolder): Array<KtVisitorVoid> = arrayOf(
+      TypeHighlighter(holder),
+      FunctionCallHighlighter(holder),
       ExpressionsSmartcastHighlighter(holder),
-      VariableReferenceHighlighter(refsHolder, holder),
+      VariableReferenceHighlighter(holder),
       DslHighlighter(holder),
     )
 

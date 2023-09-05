@@ -10,7 +10,6 @@ import org.jetbrains.kotlin.analysis.api.symbols.markers.KtSymbolKind
 import org.jetbrains.kotlin.idea.base.highlighting.HighlightingFactory
 import org.jetbrains.kotlin.idea.base.highlighting.KotlinBaseHighlightingBundle
 import org.jetbrains.kotlin.idea.highlighter.KotlinHighlightInfoTypeSemanticNames
-import org.jetbrains.kotlin.idea.highlighting.KotlinRefsHolder
 import org.jetbrains.kotlin.idea.references.mainReference
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.psi.KtInstanceExpressionWithLabel
@@ -19,7 +18,7 @@ import org.jetbrains.kotlin.psi.KtSimpleNameExpression
 import org.jetbrains.kotlin.psi.KtValueArgumentName
 
 context(KtAnalysisSession)
-internal class VariableReferenceHighlighter(private val kotlinRefsHolder: KotlinRefsHolder, holder: HighlightInfoHolder) : KotlinSemanticAnalyzer(holder) {
+internal class VariableReferenceHighlighter(holder: HighlightInfoHolder) : KotlinSemanticAnalyzer(holder) {
     override fun visitSimpleNameExpression(expression: KtSimpleNameExpression) {
         highlightSimpleNameExpression(expression).forEach { holder.add(it.create()) }
     }
@@ -33,7 +32,6 @@ internal class VariableReferenceHighlighter(private val kotlinRefsHolder: Kotlin
             is KtBackingFieldSymbol -> highlightBackingField(symbol, expression)
             is KtKotlinPropertySymbol -> highlightProperty(symbol, expression)
             is KtLocalVariableSymbol -> {
-                kotlinRefsHolder.registerLocalRef(symbol.psi, expression)
                 val result = mutableListOf<HighlightInfo.Builder>()
                 result.addIfNotNull(symbol.getHighlightingForMutableVar(expression))
                 HighlightingFactory.highlightName(expression, KotlinHighlightInfoTypeSemanticNames.LOCAL_VARIABLE)?.let { result.add(it) }
@@ -66,7 +64,6 @@ internal class VariableReferenceHighlighter(private val kotlinRefsHolder: Kotlin
     }
 
     private fun highlightValueParameter(symbol: KtValueParameterSymbol, expression: KtSimpleNameExpression): HighlightInfo.Builder? {
-        kotlinRefsHolder.registerLocalRef(symbol.psi, expression)
         return when {
             symbol.isImplicitLambdaParameter -> {
                 HighlightingFactory.highlightName(
@@ -85,7 +82,6 @@ internal class VariableReferenceHighlighter(private val kotlinRefsHolder: Kotlin
         expression: KtSimpleNameExpression
     ): List<HighlightInfo.Builder> {
         val result = mutableListOf<HighlightInfo.Builder>()
-        kotlinRefsHolder.registerLocalRef(symbol.psi, expression)
         if (!symbol.isVal) {
             HighlightingFactory.highlightName(expression, KotlinHighlightInfoTypeSemanticNames.MUTABLE_VARIABLE)?.let { result.add(it) }
         }
