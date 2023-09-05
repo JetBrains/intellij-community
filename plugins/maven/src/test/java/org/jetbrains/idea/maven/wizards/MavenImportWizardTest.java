@@ -36,15 +36,10 @@ public class MavenImportWizardTest extends MavenProjectWizardTestCase {
   public void testImportModule() throws Exception {
     Path pom = createPom();
     Module module = importModuleFrom(new MavenProjectImportProvider(), pom.toString());
-    if (MavenUtil.isLinearImportEnabled()) {
-      afterImportFinished(myProject, c -> {
-        List<Module> created = c.getContext().getModulesCreated();
-        assertThat(created).singleElement().matches(m -> m.getName().equals("project"));
-      });
-    }
-    else {
-      assertEquals("project", module.getName());
-    }
+    afterImportFinished(myProject, c -> {
+      List<Module> created = c.getContext().getModulesCreated();
+      assertThat(created).singleElement().matches(m -> m.getName().equals("project"));
+    });
   }
 
   public void testImportProject() throws Exception {

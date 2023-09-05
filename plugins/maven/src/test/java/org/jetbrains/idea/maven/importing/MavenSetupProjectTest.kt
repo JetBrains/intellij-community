@@ -194,6 +194,7 @@ class MavenSetupProjectTest : MavenSetupProjectTestCase() {
         mavenProjectsManager.importingSettings.isWorkspaceImportEnabled = false
       }
 
+      MavenProjectLegacyImporter.setAnswerToDeleteObsoleteModulesQuestion(true)
       waitForImport {
         openProjectAsync(projectInfo.projectFile)
       }.useProjectAsync(true) {

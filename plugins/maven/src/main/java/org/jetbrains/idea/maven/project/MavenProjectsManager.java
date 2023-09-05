@@ -215,7 +215,7 @@ public abstract class MavenProjectsManager extends MavenSimpleProjectComponent
 
   @TestOnly
   public void initForTests() {
-    init();
+    doInit(false);
   }
 
   private void tryInit() {
@@ -226,27 +226,12 @@ public abstract class MavenProjectsManager extends MavenSimpleProjectComponent
     if (!wasMavenized) {
       return;
     }
-    init();
-  }
-
-  private void init() {
-    var forceImport = false;
-    if (!myState.workspaceImportForciblyTurnedOn) {
-      var importingSettings = getImportingSettings();
-      if (!importingSettings.isWorkspaceImportEnabled()) {
-        forceImport = true;
-        importingSettings.setWorkspaceImportEnabled(true);
-      }
-      myState.workspaceImportForciblyTurnedOn = true; // turn workspace import if it is turned off once for each existing project
-      myProject.putUserData(WorkspaceProjectImporterKt.getNOTIFY_USER_ABOUT_WORKSPACE_IMPORT_KEY(), true);
-    }
     doInit(false);
-    if (!MavenUtil.isLinearImportEnabled()) {
-      scheduleUpdateAll(new MavenImportSpec(forceImport, forceImport, false));
-    }
   }
 
   private void doInit(final boolean isNew) {
+    forceWorkspaceImportIfNeeded();
+
     initLock.lock();
     try {
       if (isInitialized.getAndSet(true)) {
@@ -270,11 +255,27 @@ public abstract class MavenProjectsManager extends MavenSimpleProjectComponent
     }
   }
 
+  private void forceWorkspaceImportIfNeeded() {
+    if (!myState.workspaceImportForciblyTurnedOn) {
+      var importingSettings = getImportingSettings();
+      if (!importingSettings.isWorkspaceImportEnabled()) {
+        importingSettings.setWorkspaceImportEnabled(true);
+      }
+      myState.workspaceImportForciblyTurnedOn = true; // turn workspace import if it is turned off once for each existing project
+      myProject.putUserData(WorkspaceProjectImporterKt.getNOTIFY_USER_ABOUT_WORKSPACE_IMPORT_KEY(), true);
+    }
+  }
+
   private void doActivate() {
     fireActivated();
     if (!ApplicationManager.getApplication().isUnitTestMode()) {
       listenForExternalChanges();
       MavenIndicesManager.getInstance(myProject).scheduleUpdateIndicesList(null);
+    }
+
+    if (!MavenUtil.isLinearImportEnabled()) {
+      var forceImport = Boolean.TRUE.equals(myProject.getUserData(WorkspaceProjectImporterKt.getNOTIFY_USER_ABOUT_WORKSPACE_IMPORT_KEY()));
+      scheduleUpdateAll(new MavenImportSpec(forceImport, forceImport, false));
     }
   }
 
