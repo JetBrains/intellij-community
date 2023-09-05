@@ -28,7 +28,7 @@ class OperationLogStorageImpl(
   writerJobsCount: Int,
   trackJobStatistics: Boolean = true
 ) : OperationLogStorage {
-  private val appendLogStorage: AppendLogStorage = AppendLogStorage(storagePath, Mode.ReadWrite, CHUNK_SIZE)
+  private val appendLogStorage: AppendLogStorage = AppendLogStorage(storagePath, Mode.ReadWrite, PAGE_SIZE)
   private val writeQueue = Channel<() -> Unit>(
     capacity = SystemProperties.getIntProperty("idea.vfs.log-vfs-operations.buffer-capacity", 5_000),
     BufferOverflow.SUSPEND
@@ -380,7 +380,7 @@ class OperationLogStorageImpl(
 
   companion object {
     private const val MiB = 1024 * 1024
-    private const val CHUNK_SIZE = 64 * MiB
+    private const val PAGE_SIZE = 64 * MiB
 
     private val LOG = Logger.getInstance(OperationLogStorageImpl::class.java)
   }

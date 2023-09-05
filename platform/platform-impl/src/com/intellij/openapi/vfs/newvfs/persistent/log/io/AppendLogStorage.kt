@@ -22,32 +22,32 @@ import java.util.*
 import kotlin.io.path.*
 
 /**
- * @param chunkSize if changed between instantiations, storage must be cleared beforehand (everything in [storagePath])
+ * @param pageSize if changed between instantiations, storage must be cleared beforehand (everything in [storagePath])
  */
 class AppendLogStorage(
   private val storagePath: Path,
   private val openMode: Mode,
-  private val chunkSize: Int
+  private val pageSize: Int
 ) : RandomAccessReadBuffer, Flushable, Closeable {
-  private val chunksDir = storagePath / "chunks"
+  private val pagesDir = storagePath / "chunks"
   private val atomicState: AtomicDurableRecord<State>
-  private val storageIO: ChunkedMemoryMappedIO
+  private val storageIO: PagedMemoryMappedIO
   private val positionTracker: CloseableAdvancingPositionTracker
 
   init {
-    require(chunkSize > 0 && (chunkSize and (chunkSize - 1)) == 0) { "chunkSize must be a power of 2" }
+    require(pageSize > 0 && (pageSize and (pageSize - 1)) == 0) { "pageSize must be a power of 2" }
 
     FileUtil.ensureExists(storagePath.toFile())
-    FileUtil.ensureExists(chunksDir.toFile())
+    FileUtil.ensureExists(pagesDir.toFile())
 
     atomicState = AtomicDurableRecord.open(storagePath / "state", ReadWrite, stateBuilder)
 
     val stateSnapshot = atomicState.get()
-    val firstChunkId = stateSnapshot.startOffset / chunkSize
-    storageIO = ChunkedMemoryMappedIO(chunkSize, firstChunkId.toInt()) {
-      require(it >= 0) { "negative chunk id: $it" }
-      ResilientFileChannel(chunksDir / chunkName(it), openMode.openOptions).use { fileChannel ->
-        fileChannel.map(openMode.mapMode, 0L, chunkSize.toLong())
+    val firstPageId = stateSnapshot.startOffset / pageSize
+    storageIO = PagedMemoryMappedIO(pageSize, firstPageId.toInt()) {
+      require(it >= 0) { "negative page id: $it" }
+      ResilientFileChannel(pagesDir / pageName(it), openMode.openOptions).use { fileChannel ->
+        fileChannel.map(openMode.mapMode, 0L, pageSize.toLong())
       }
     }
     positionTracker = LockFreeAdvancingPositionTracker(stateSnapshot.size)
@@ -112,22 +112,22 @@ class AppendLogStorage(
     }
     val lastByteToFree = position - 1
     if (lastByteToFree < 0) return
-    storageIO.disposeChunksContainedIn(0..lastByteToFree)
-    val lastChunkToClear = storageIO.getChunkIdForByte(lastByteToFree) - 1 // lastByteToFree might be in the middle of the chunk
-    chunksDir.forEachDirectoryEntry("*.dat") { chunkFile ->
+    storageIO.disposePagesContainedIn(0..lastByteToFree)
+    val lastPageToClear = storageIO.getPageIdForByte(lastByteToFree) - 1 // lastByteToFree might be in the middle of the page
+    pagesDir.forEachDirectoryEntry("*.dat") { pageFile ->
       val id = try {
-        chunkFile.name.removeSuffix(".dat").toInt(CHUNK_ENCODING_RADIX)
+        pageFile.name.removeSuffix(".dat").toInt(PAGE_ENCODING_RADIX)
       }
       catch (e: Throwable) {
-        LOG.warn("alien file in chunks directory: ${chunkFile.toAbsolutePath()}", e)
+        LOG.warn("alien file in pages directory: ${pageFile.toAbsolutePath()}", e)
         null
       }
-      if (id != null && id <= lastChunkToClear) {
+      if (id != null && id <= lastPageToClear) {
         try {
-          chunkFile.deleteExisting()
+          pageFile.deleteExisting()
         }
         catch (e: IOException) {
-          LOG.warn("failed to clear chunk ${chunkFile.toAbsolutePath()}", e)
+          LOG.warn("failed to clear page ${pageFile.toAbsolutePath()}", e)
         }
       }
     }
@@ -158,11 +158,11 @@ class AppendLogStorage(
     atomicState.close()
   }
 
-  private fun chunkName(id: Int): String = id.toString(CHUNK_ENCODING_RADIX) + ".dat"
+  private fun pageName(id: Int): String = id.toString(PAGE_ENCODING_RADIX) + ".dat"
 
   companion object {
     private val LOG = Logger.getInstance(AppendLogStorage::class.java)
-    private const val CHUNK_ENCODING_RADIX = 16
+    private const val PAGE_ENCODING_RADIX = 16
 
     enum class Mode(val openOptions: Set<StandardOpenOption>, val mapMode: MapMode) {
       Read(EnumSet.of(READ), MapMode.READ_ONLY),
