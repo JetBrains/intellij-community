@@ -1,153 +1,193 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-package org.jetbrains.plugins.groovy.dsl
+package org.jetbrains.plugins.groovy.dsl;
 
-import com.intellij.openapi.application.ApplicationInfo
-import com.intellij.openapi.util.Pair
-import com.intellij.openapi.util.text.StringUtil
-import com.intellij.patterns.ElementPattern
-import com.intellij.patterns.PsiJavaPatterns
-import com.intellij.util.containers.MultiMap
-import groovy.transform.CompileStatic
-import org.jetbrains.plugins.groovy.dsl.toplevel.CompositeContextFilter
-import org.jetbrains.plugins.groovy.dsl.toplevel.Context
-import org.jetbrains.plugins.groovy.dsl.toplevel.ContextFilter
-import org.jetbrains.plugins.groovy.dsl.toplevel.scopes.*
+import com.intellij.openapi.application.ApplicationInfo;
+import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.patterns.ElementPattern;
+import com.intellij.patterns.PsiClassPattern;
+import com.intellij.patterns.PsiJavaPatterns;
+import com.intellij.patterns.PsiModifierListOwnerPattern;
+import com.intellij.psi.PsiModifierListOwner;
+import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.containers.MultiMap;
+import groovy.lang.Closure;
+import groovy.lang.Script;
+import org.jetbrains.plugins.groovy.dsl.toplevel.CompositeContextFilter;
+import org.jetbrains.plugins.groovy.dsl.toplevel.Context;
+import org.jetbrains.plugins.groovy.dsl.toplevel.ContextFilter;
+import org.jetbrains.plugins.groovy.dsl.toplevel.scopes.*;
 
-@CompileStatic
-@SuppressWarnings(["GrMethodMayBeStatic", "GroovyUnusedDeclaration"])
-abstract class GdslScriptBase extends Script {
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
 
-  static final String ideaVersion
+@SuppressWarnings({"unchecked", "rawtypes", "unused", "UnusedReturnValue"})
+public abstract class GdslScriptBase extends Script {
+
+  private static final String ideaVersion;
   static {
-    def major = ApplicationInfo.instance.majorVersion
-    def minor = ApplicationInfo.instance.minorVersion
-    def full = major + (minor ? ".$minor" : "")
-    ideaVersion = full
+    String major = ApplicationInfo.getInstance().getMajorVersion();
+    String minor = ApplicationInfo.getInstance().getMinorVersion();
+    ideaVersion = major + (minor != null ? ("." + minor) : "");
+  }
+  public static String getIdeaVersion() {
+    return ideaVersion;
   }
 
-  final List<Pair<ContextFilter, Closure>> enhancers = []
-  final MultiMap staticInfo = []
-  private boolean locked = false
+  private final List<Pair<ContextFilter, Closure>> enhancers = new ArrayList<>();
+  public final List<Pair<ContextFilter, Closure>> getEnhancers() {
+    return enhancers;
+  }
 
-  abstract void scriptBody()
+  private final MultiMap staticInfo = new MultiMap();
+  public final MultiMap getStaticInfo() {
+    return staticInfo;
+  }
 
-  def run() {
+  private boolean locked = false;
+
+  public abstract void scriptBody();
+
+  @Override
+  public Boolean run() {
     try {
-      scriptBody()
+      scriptBody();
     }
     catch (InvalidVersionException ignore) {
-      enhancers.clear()
+      enhancers.clear();
     }
-    locked = true
+
+    return locked = true;
   }
 
-  def methodMissing(String name, Object args) { DslPointcut.UNKNOWN }
+  @SuppressWarnings("unused")
+  public DslPointcut methodMissing(String name, Object args) { return DslPointcut.UNKNOWN; }
 
-  void contribute(Object cts, Closure toDo) {
-    cts = handleImplicitBind(cts)
+  public void contribute(Object cts, Closure toDo) {
+    cts = handleImplicitBind(cts);
 
     if (cts instanceof DslPointcut) {
-      assert cts.operatesOn(GroovyClassDescriptor): "A non top-level pointcut passed to contributor"
-      addClassEnhancer([new PointcutContextFilter(cts)], toDo)
-      return
+      if (((DslPointcut)cts).operatesOn(GroovyClassDescriptor.class)) {
+        PointcutContextFilter filter = new PointcutContextFilter((DslPointcut<? super GroovyClassDescriptor, ?>)cts);
+        addClassEnhancer(List.of(filter), toDo);
+      }
+      else {
+        Logger.getInstance(getClass()).error("A non top-level pointcut passed to contributor");
+      }
+
+      return;
     }
 
     if (cts instanceof Map) {
-      cts = new Context(cts)
+      cts = new Context((Map)cts);
     }
+
     if (!(cts instanceof List)) {
-      assert cts instanceof Context: "The contributor() argument must be a context"
-      cts = [cts]
+      assert cts instanceof Context : "The contributor() argument must be a context";
+      cts = List.of(cts);
     }
-    def contexts = cts.findAll { it != null } as List<Context>
-    if (contexts) {
-      def filters = contexts.collect { return it.filter }
-      addClassEnhancer(filters, toDo)
+
+    List<Context> contexts = (List<Context>)ContainerUtil.filter(((List<?>)cts), x -> x != null);
+    if (!contexts.isEmpty()) {
+      List<ContextFilter> filters = ContainerUtil.map(contexts, x -> x.getFilter());
+      addClassEnhancer(filters, toDo);
     }
   }
 
-  void contributor(cts, Closure toDo) { contribute(cts, toDo) }
+  public void contributor(Object cts, Closure toDo) { contribute(cts, toDo); }
 
-  void assertVersion(ver) { if (!supportsVersion(ver)) throw new InvalidVersionException() }
+  public void assertVersion(Object ver) { if (!supportsVersion(ver)) throw new InvalidVersionException(); }
 
-  void scriptSuperClass(Map args) { staticInfo.putValue('scriptSuperClass', args) }
+  public void scriptSuperClass(Map args) { staticInfo.putValue("scriptSuperClass", args); }
 
-  boolean supportsVersion(ver) {
+  public boolean supportsVersion(Object ver) {
     if (ver instanceof String) {
-      return StringUtil.compareVersionNumbers(ideaVersion, ver) >= 0
+      return StringUtil.compareVersionNumbers(ideaVersion, (String)ver) >= 0;
     }
     else if (ver instanceof Map) {
-      if (ver.dsl) {
-        return StringUtil.compareVersionNumbers('1.0', ver.dsl as String) >= 0
+      String dsl = (String)((Map<?, ?>)ver).get("dsl");
+      if (dsl != null && !dsl.isEmpty()) {
+        return StringUtil.compareVersionNumbers("1.0", dsl) >= 0;
       }
-      if (ver.intellij) {
-        return StringUtil.compareVersionNumbers(ideaVersion, ver.intellij as String) >= 0
+
+      String intellij = (String)((Map<?, ?>)ver).get("intellij");
+      if (intellij != null && !intellij.isEmpty()) {
+        return StringUtil.compareVersionNumbers(ideaVersion, intellij) >= 0;
       }
     }
-    return false
+
+    return false;
   }
 
-  void addClassEnhancer(List<? extends ContextFilter> cts, Closure toDo) {
-    assert !locked: 'Contributing to GDSL is only allowed at the top-level of the *.gdsl script'
-    enhancers << Pair.create(CompositeContextFilter.compose(cts, false), toDo)
+  public void addClassEnhancer(List<? extends ContextFilter> cts, Closure toDo) {
+    assert !locked : "Contributing to GDSL is only allowed at the top-level of the *.gdsl script";
+    enhancers.add(Pair.create(CompositeContextFilter.compose(cts, false), toDo));
   }
 
-  private static class InvalidVersionException extends Exception {}
+  private static class InvalidVersionException extends RuntimeException {
+  }
 
   /**
    * Auxiliary methods for context definition
    */
-  Scope closureScope(Map args) { return new ClosureScope(args) }
+  public Scope closureScope(Map args) { return new ClosureScope(args); }
 
-  Scope scriptScope(Map args) { return new ScriptScope(args) }
+  public Scope scriptScope(Map args) { return new ScriptScope(args); }
 
-  Scope classScope(Map args) { return new ClassScope(args) }
+  public Scope classScope(Map args) { return new ClassScope(args); }
 
-  Scope annotatedScope(Map args) { return new AnnotatedScope(args) }
+  public Scope annotatedScope(Map args) { return new AnnotatedScope(args); }
 
   /**
    * Context definition
    */
-  def context(Map args) { return new Context(args) }
+  public Context context(Map args) { return new Context(args); }
 
-  def hasAnnotation(String annoQName) { PsiJavaPatterns.psiModifierListOwner().withAnnotation(annoQName) }
-
-  def hasField(ElementPattern fieldCondition) { PsiJavaPatterns.psiClass().withField(true, PsiJavaPatterns.psiField().and(fieldCondition)) }
-
-  def hasMethod(ElementPattern methodCondition) {
-    PsiJavaPatterns.psiClass().withMethod(true, PsiJavaPatterns.psiMethod().and(methodCondition))
+  public PsiModifierListOwnerPattern.Capture<PsiModifierListOwner> hasAnnotation(String annoQName) {
+    return PsiJavaPatterns.psiModifierListOwner().withAnnotation(annoQName);
   }
 
-  def bind(final Object arg) {
-    DslPointcut.bind(arg)
+  public PsiClassPattern hasField(ElementPattern fieldCondition) {
+    return PsiJavaPatterns.psiClass().withField(true, PsiJavaPatterns.psiField().and(fieldCondition));
   }
 
-  def handleImplicitBind(arg) {
-    if (arg instanceof Map && arg.size() == 1 &&
-        arg.keySet().iterator().next() instanceof String &&
-        arg.values().iterator().next() instanceof DslPointcut) {
-      return DslPointcut.bind(arg)
+  public PsiClassPattern hasMethod(ElementPattern methodCondition) {
+    return PsiJavaPatterns.psiClass().withMethod(true, PsiJavaPatterns.psiMethod().and(methodCondition));
+  }
+
+  public DslPointcut bind(final Object arg) {
+    return DslPointcut.bind(arg);
+  }
+
+  public Object handleImplicitBind(Object arg) {
+    if (arg instanceof Map &&
+        ((Map)arg).size() == 1 &&
+        ((Map)arg).keySet().iterator().next() instanceof String &&
+        ((Map)arg).values().iterator().next() instanceof DslPointcut) {
+      return DslPointcut.bind(arg);
     }
-    return arg
+
+    return arg;
   }
 
-  DslPointcut<GdslType, GdslType> subType(final Object arg) {
-    DslPointcut.subType(handleImplicitBind(arg))
+  public DslPointcut<GdslType, GdslType> subType(final Object arg) {
+    return DslPointcut.subType(handleImplicitBind(arg));
   }
 
-  DslPointcut<GroovyClassDescriptor, GdslType> currentType(final Object arg) {
-    DslPointcut.currentType(handleImplicitBind(arg))
+  public DslPointcut<GroovyClassDescriptor, GdslType> currentType(final Object arg) {
+    return DslPointcut.currentType(handleImplicitBind(arg));
   }
 
-  DslPointcut<GroovyClassDescriptor, GdslType> enclosingType(final Object arg) {
-    DslPointcut.enclosingType(handleImplicitBind(arg))
+  public DslPointcut<GroovyClassDescriptor, GdslType> enclosingType(final Object arg) {
+    return DslPointcut.enclosingType(handleImplicitBind(arg));
   }
 
-  DslPointcut<Object, String> name(final Object arg) {
-    DslPointcut.name(handleImplicitBind(arg))
+  public DslPointcut<Object, String> name(final Object arg) {
+    return DslPointcut.name(handleImplicitBind(arg));
   }
 
-  DslPointcut<GroovyClassDescriptor, GdslMethod> enclosingMethod(final Object arg) {
-    DslPointcut.enclosingMethod(handleImplicitBind(arg))
+  public DslPointcut<GroovyClassDescriptor, GdslMethod> enclosingMethod(final Object arg) {
+    return DslPointcut.enclosingMethod(handleImplicitBind(arg));
   }
 }

@@ -1,70 +1,97 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-package org.jetbrains.plugins.groovy.dsl
+package org.jetbrains.plugins.groovy.dsl;
 
-import com.intellij.openapi.progress.ProgressManager
-import com.intellij.openapi.util.Pair
-import com.intellij.openapi.util.text.StringUtil
-import com.intellij.util.ProcessingContext
-import com.intellij.util.containers.MultiMap
-import groovy.transform.CompileStatic
-import groovy.transform.TypeCheckingMode
-import org.codehaus.groovy.control.CompilerConfiguration
-import org.jetbrains.plugins.groovy.dsl.holders.CustomMembersHolder
-import org.jetbrains.plugins.groovy.dsl.psi.PsiEnhancerCategory
-import org.jetbrains.plugins.groovy.dsl.toplevel.ContextFilter
+import com.intellij.openapi.progress.ProgressManager;
+import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.util.ProcessingContext;
+import com.intellij.util.containers.MultiMap;
+import groovy.lang.Closure;
+import groovy.lang.GroovyShell;
+import org.codehaus.groovy.control.CompilerConfiguration;
+import org.codehaus.groovy.runtime.DefaultGroovyMethods;
+import org.jetbrains.plugins.groovy.dsl.holders.CustomMembersHolder;
+import org.jetbrains.plugins.groovy.dsl.psi.PsiEnhancerCategory;
+import org.jetbrains.plugins.groovy.dsl.toplevel.ContextFilter;
 
-@CompileStatic
-@SuppressWarnings(["GrMethodMayBeStatic", "GroovyUnusedDeclaration"])
-class GroovyDslExecutor {
+import java.util.ArrayList;
+import java.util.List;
 
-  static final def cats = PsiEnhancerCategory.EP_NAME.extensions.collect { it.class }
-
-  private final GdslScriptBase myScript
-  private final String myFileName
-
-  GroovyDslExecutor(GdslScriptBase script, String fileName) {
-    myScript = script
-    myFileName = fileName
+@SuppressWarnings("rawtypes")
+public class GroovyDslExecutor {
+  public GroovyDslExecutor(GdslScriptBase script, String fileName) {
+    myScript = script;
+    myFileName = fileName;
   }
 
-  List<Pair<ContextFilter, Closure>> getEnhancers() {
-    myScript.enhancers
+  public List<Pair<ContextFilter, Closure>> getEnhancers() {
+    return myScript.getEnhancers();
   }
 
-  MultiMap getStaticInfo() {
-    myScript.staticInfo
+  public MultiMap getStaticInfo() {
+    return myScript.getStaticInfo();
   }
 
-  CustomMembersHolder processVariants(GroovyClassDescriptor descriptor, ProcessingContext ctx) {
-    if (!enhancers) return CustomMembersHolder.EMPTY
+  public CustomMembersHolder processVariants(GroovyClassDescriptor descriptor, ProcessingContext ctx) {
+    if (!DefaultGroovyMethods.asBoolean(getEnhancers())) return CustomMembersHolder.EMPTY;
 
-    List<CustomMembersHolder> holders = new ArrayList<>()
-    for (pair in enhancers) {
-      ProgressManager.checkCanceled()
-      ctx.put(DslPointcut.BOUND, null)
-      if (pair.first.isApplicable(descriptor, ctx)) {
-        def generator = new CustomMembersGenerator(descriptor, ctx.get(DslPointcut.BOUND))
-        doRun(generator, pair.second)
-        holders.addAll(generator.membersHolder)
+    List<CustomMembersHolder> holders = new ArrayList<>();
+    for (Pair<ContextFilter, Closure> pair : getEnhancers()) {
+      ProgressManager.checkCanceled();
+      ctx.put(DslPointcut.BOUND, null);
+      if (pair.getFirst().isApplicable(descriptor, ctx)) {
+        CustomMembersGenerator generator = new CustomMembersGenerator(descriptor, ctx.get(DslPointcut.BOUND));
+        doRun(generator, pair.getSecond());
+        List<CustomMembersHolder> membersHolder = generator.getMembersHolder();
+        if (membersHolder != null) {
+          holders.addAll(membersHolder);
+        }
       }
     }
-    return CustomMembersHolder.create(holders)
+
+    return CustomMembersHolder.create(holders);
   }
 
-  @CompileStatic(TypeCheckingMode.SKIP)
-  private void doRun(CustomMembersGenerator generator, Closure closure) {
-    use(cats) { generator.with closure }
+  private void doRun(final CustomMembersGenerator generator, final Closure closure) {
+    DefaultGroovyMethods.use(this, cats, new Closure<Object>(this, this) {
+      public Object doCall(Object ignoredIt) {
+        //noinspection unchecked
+        return DefaultGroovyMethods.with(generator, closure);
+      }
+      @SuppressWarnings("unused")
+      public Object doCall() {
+        return doCall(null);
+      }
+    });
   }
 
   @Override
-  String toString() { myFileName }
+  public String toString() { return myFileName; }
 
-  static GroovyDslExecutor createAndRunExecutor(String text, String fileName) {
-    def configuration = new CompilerConfiguration()
-    configuration.scriptBaseClass = GdslScriptBase.name
-    def shell = new GroovyShell(GroovyDslExecutor.classLoader, configuration)
-    def script = shell.parse(text, StringUtil.sanitizeJavaIdentifier(fileName)) as GdslScriptBase
-    script.run()
-    return new GroovyDslExecutor(script, fileName)
+  public static GroovyDslExecutor createAndRunExecutor(String text, String fileName) {
+    CompilerConfiguration configuration = new CompilerConfiguration();
+    configuration.setScriptBaseClass(GdslScriptBase.class.getName());
+    GroovyShell shell = new GroovyShell(GroovyDslExecutor.class.getClassLoader(), configuration);
+    GdslScriptBase script =
+      DefaultGroovyMethods.asType(shell.parse(text, StringUtil.sanitizeJavaIdentifier(fileName)), GdslScriptBase.class);
+    script.run();
+    return new GroovyDslExecutor(script, fileName);
   }
+
+  @SuppressWarnings("unused")
+  public static List<Class> getCats() {
+    return cats;
+  }
+
+  private static final List<Class> cats =
+    DefaultGroovyMethods.collect(PsiEnhancerCategory.EP_NAME.getExtensions(),
+                                 new Closure<Class>(null, null) {
+                                   @SuppressWarnings("unused")
+                                   public Class doCall(PsiEnhancerCategory it) { return it.getClass(); }
+                                   @SuppressWarnings("unused")
+                                   public Class doCall() {
+                                     throw new UnsupportedOperationException();
+                                   }
+                                 });
+  private final GdslScriptBase myScript;
+  private final String myFileName;
 }
