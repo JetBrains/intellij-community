@@ -1,6 +1,7 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.warmup.util
 
+import com.intellij.configurationStore.saveProjectsAndApp
 import com.intellij.conversion.ConversionListener
 import com.intellij.conversion.ConversionService
 import com.intellij.ide.CommandLineInspectionProjectConfigurator
@@ -88,19 +89,10 @@ private suspend fun importOrOpenProjectImpl(args: OpenProjectArgs): Project {
 
   if (isPredicateBasedWarmup()) {
     runTaskAndLogTime("awaiting completion predicates") {
-      predicateLoop@ while (true) {
-        for (processBusyPredicate in ActivityInProgressPredicate.EP_NAME.extensionList) {
-          if (processBusyPredicate.isInProgress(project)) {
-            WarmupLogger.logInfo("'${processBusyPredicate.presentableName}' is in running...")
-            delay(1000)
-            continue@predicateLoop
-          }
-        }
-        WarmupLogger.logInfo("All predicates are completed")
-        break
-      }
+      awaitConfigurationPredicates(project)
     }
   }
+
 
   yieldAndWaitForDumbModeEnd(project)
 
@@ -166,6 +158,40 @@ private val listener = object : ConversionListener {
     WarmupLogger.logInfo("PROGRESS: Project conversion failed for:\n" + readonlyFiles.joinToString("\n"))
   }
 }
+
+private suspend fun awaitConfigurationPredicates(project: Project) {
+  while (true) {
+    val wasModified = doAwaitConfigurationPredicates(project)
+    if (!wasModified) {
+      WarmupLogger.logInfo("The project is configured completely.")
+      break
+    } else {
+      WarmupLogger.logInfo("Modified files are saved. Checking if it triggered configuration process...")
+    }
+  }
+}
+
+private suspend fun doAwaitConfigurationPredicates(project: Project) : Boolean {
+  var isModificationOccurred = false
+  predicateLoop@ while (true) {
+    for (processBusyPredicate in ActivityInProgressPredicate.EP_NAME.extensionList) {
+      if (processBusyPredicate.isInProgress(project)) {
+        isModificationOccurred = true
+        WarmupLogger.logInfo("'${processBusyPredicate.presentableName}' is in running...")
+        delay(1000)
+        continue@predicateLoop
+      }
+    }
+    break
+  }
+
+  WarmupLogger.logInfo("All predicates are completed. Saving files...")
+
+  saveProjectsAndApp(true)
+
+  return isModificationOccurred
+}
+
 
 private suspend fun callProjectConversion(projectArgs: OpenProjectArgs) {
   if (!projectArgs.convertProject) {
