@@ -17,7 +17,6 @@ import com.intellij.internal.statistic.utils.StatisticsRecorderUtil
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.ModalityState
-import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.fileTypes.FileTypeManager
 import com.intellij.openapi.progress.ProgressIndicator
@@ -40,11 +39,10 @@ internal class CollectFUStatisticsAction : GotoActionBase(), DumbAware {
   override fun gotoActionPerformed(e: AnActionEvent) {
     val project = e.project ?: return
 
-    val projectCollectors = ExtensionPointName.create<Any>("com.intellij.statistics.projectUsagesCollector").extensionList
-    val applicationCollectors = ExtensionPointName.create<Any>("com.intellij.statistics.applicationUsagesCollector").extensionList
+    val projectCollectors = UsageCollectors.PROJECT_EP_NAME.extensionList
+    val applicationCollectors = UsageCollectors.APPLICATION_EP_NAME.extensionList
 
-    val collectors = (projectCollectors + applicationCollectors)
-      .filterIsInstance<UsageCollectorBean>().map(UsageCollectorBean::getCollector)
+    val collectors = (projectCollectors + applicationCollectors).map(UsageCollectorBean::getCollector)
 
     val ids = collectors.mapTo(HashMultiset.create()) { it.groupId }
     val items = collectors
