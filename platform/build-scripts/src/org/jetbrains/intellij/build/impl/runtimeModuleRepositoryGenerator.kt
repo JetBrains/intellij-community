@@ -158,6 +158,9 @@ private fun computeMainPathsForResourcesCopiedToMultiplePlaces(entries: List<Dis
  */
 private fun addMappingsForDuplicatingLibraries(resourcePathMapping: MultiMap<String, String>,
                                                compiledModulesDescriptors: Map<String, RawRuntimeModuleDescriptor>) {
+  val transitiveDependencies = LinkedHashSet<String>()
+  collectTransitiveDependencies(resourcePathMapping.keySet(), compiledModulesDescriptors, transitiveDependencies)
+
   val descriptorsByResource = HashMap<String, MutableList<RawRuntimeModuleDescriptor>>()
   compiledModulesDescriptors.values.forEach { descriptor ->
     descriptor.resourcePaths.groupByTo(descriptorsByResource, { it }) { descriptor }
@@ -168,6 +171,7 @@ private fun addMappingsForDuplicatingLibraries(resourcePathMapping: MultiMap<Str
     includedDescriptor?.resourcePaths?.forEach { resourcePath ->
       descriptorsByResource[resourcePath]?.forEach { anotherDescriptor ->
         if (anotherDescriptor.id != includedDescriptor.id
+            && anotherDescriptor.id in transitiveDependencies
             && includedDescriptor.resourcePaths.containsAll(anotherDescriptor.resourcePaths)
             && (includedDescriptor.resourcePaths == anotherDescriptor.resourcePaths || resourcePathsInDist.size == 1)
             && includedInMapping.add(anotherDescriptor.id)) {
