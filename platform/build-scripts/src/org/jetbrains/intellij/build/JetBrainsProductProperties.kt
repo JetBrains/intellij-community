@@ -6,6 +6,7 @@ import com.jetbrains.plugin.structure.base.plugin.PluginCreationSuccess
 import com.jetbrains.plugin.structure.base.plugin.PluginProblem
 import com.jetbrains.plugin.structure.base.problems.InvalidDescriptorProblem
 import com.jetbrains.plugin.structure.intellij.plugin.IdePlugin
+import org.jetbrains.intellij.build.SoftwareBillOfMaterials.Companion.Suppliers
 import org.jetbrains.jps.util.JpsPathUtil
 import java.nio.file.Path
 import java.util.function.BiPredicate
@@ -22,6 +23,9 @@ abstract class JetBrainsProductProperties : ProductProperties() {
       }
     }
     embeddedJetBrainsClientMainModule = "intellij.cwm.guest"
+    sbomOptions.creator = "Organization: ${Suppliers.JETBRAINS}"
+    sbomOptions.copyrightText = "Copyright 2000-2023 ${Suppliers.JETBRAINS} and contributors"
+    sbomOptions.license = SoftwareBillOfMaterials.Options.DistributionLicense.JETBRAINS
   }
 
   override suspend fun copyAdditionalFiles(context: BuildContext, targetDirectory: String) {

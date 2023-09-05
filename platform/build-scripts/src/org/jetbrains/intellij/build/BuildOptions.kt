@@ -8,7 +8,6 @@ import kotlinx.collections.immutable.persistentListOf
 import kotlinx.collections.immutable.toPersistentMap
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.TestOnly
-import org.jetbrains.intellij.build.SoftwareBillOfMaterials
 import org.jetbrains.jps.api.GlobalOptions
 import java.nio.file.Path
 import java.util.*
@@ -429,11 +428,6 @@ class BuildOptions(
   @set:TestOnly
   @ApiStatus.Internal
   var useReleaseCycleRelatedBundlingRestrictionsForContentReport: Boolean = true
-
-  /**
-   * See [SoftwareBillOfMaterials]
-   */
-  val sbomOptions = SoftwareBillOfMaterials.Options()
 
   init {
     val targetOsId = System.getProperty(TARGET_OS_PROPERTY, OS_ALL).lowercase()

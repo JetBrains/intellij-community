@@ -174,6 +174,11 @@ abstract class ProductProperties {
   var baseDownloadUrl: String? = null
 
   /**
+   * See [SoftwareBillOfMaterials]
+   */
+  val sbomOptions = SoftwareBillOfMaterials.Options()
+
+  /**
    * If `true`, a cross-platform ZIP archive containing binaries for all OSes will be built.
    * The archive will be generated in [BuildPaths.artifactDir] directory and have ".portable" suffix by default
    * (override [getCrossPlatformZipFileName] to change the file name).

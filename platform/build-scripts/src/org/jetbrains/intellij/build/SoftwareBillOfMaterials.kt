@@ -77,11 +77,17 @@ class SoftwareBillOfMaterials internal constructor(
     /**
      * [Specification](https://spdx.github.io/spdx-spec/v2.3/document-creation-information/#68-creator-field)
      */
-    var creator: String = "Organization: ${Suppliers.JETBRAINS}"
+    var creator: String? = null
 
-    var copyrightText: String? = "Copyright 2000-2023 JetBrains s.r.o. and contributors"
+    /**
+     * [Specification](https://spdx.github.io/spdx-spec/v2.3/package-information/#717-copyright-text-field)
+     */
+    var copyrightText: String? = null
 
-    var license: DistributionLicense? = DistributionLicense.JETBRAINS
+    /**
+     * [Specification](https://spdx.github.io/spdx-spec/v2.3/package-information/#715-declared-license-field)
+     */
+    var license: DistributionLicense? = null
 
     class DistributionLicense(val name: String, val text: String, val url: String?) {
       internal companion object {
@@ -93,7 +99,7 @@ class SoftwareBillOfMaterials internal constructor(
   private val specVersion: String = Version.TWO_POINT_THREE_VERSION
 
   private val creator: String
-    get() = context.options.sbomOptions.creator
+    get() = context.productProperties.sbomOptions.creator ?: error("Creator isn't specified")
 
   private val version: String
     get() = "${context.applicationInfo.productCode}-${context.buildNumber}"
@@ -102,7 +108,7 @@ class SoftwareBillOfMaterials internal constructor(
     get() = context.productProperties.baseDownloadUrl?.removeSuffix("/")
 
   private val license: Options.DistributionLicense by lazy {
-    when (val license = context.options.sbomOptions.license) {
+    when (val license = context.productProperties.sbomOptions.license) {
       null -> throw IllegalArgumentException("Distribution license isn't specified")
       Options.DistributionLicense.JETBRAINS -> jetBrainsOwnLicense
       else -> license
@@ -725,7 +731,7 @@ class SoftwareBillOfMaterials internal constructor(
   }
 
   private fun SpdxPackage.claimContainedFiles(files: Collection<SpdxFile> = this.files, document: SpdxDocument) {
-    copyrightText = requireNotNull(context.options.sbomOptions.copyrightText) {
+    copyrightText = requireNotNull(context.productProperties.sbomOptions.copyrightText) {
       "Copyright text isn't specified"
     }
     licenseDeclared = document.extractedLicenseInfo(
