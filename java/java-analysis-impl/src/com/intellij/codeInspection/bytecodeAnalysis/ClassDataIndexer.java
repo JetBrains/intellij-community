@@ -170,8 +170,9 @@ public class ClassDataIndexer implements VirtualFileGist.GistCalculator<Map<HMem
     final ExpandableArray<PResults.PResult> sharedResults = new ExpandableArray<>();
     final Map<EKey, Equations> equations = new HashMap<>();
 
-    registerVolatileFields(equations, classReader);
-    Set<Member> staticFinalFields = getStaticFinalFields(classReader);
+    FieldData data = FieldData.read(classReader);
+    data.registerVolatileFields(equations);
+    Set<Member> staticFinalFields = data.staticFinalFields();
 
     if ((classReader.getAccess() & Opcodes.ACC_ENUM) != 0) {
       // ordinal() method is final in java.lang.Enum, but for some reason referred on call sites using specific enum class
@@ -187,34 +188,34 @@ public class ClassDataIndexer implements VirtualFileGist.GistCalculator<Map<HMem
 
     return equations;
   }
-
-  private static void registerVolatileFields(Map<EKey, Equations> equations, ClassReader classReader) {
-    classReader.accept(new ClassVisitor(Opcodes.API_VERSION) {
-      @Override
-      public FieldVisitor visitField(int access, String name, String desc, String signature, Object value) {
-        if ((access & Opcodes.ACC_VOLATILE) != 0) {
-          EKey fieldKey = new EKey(new Member(classReader.getClassName(), name, desc), Out, true);
-          equations.put(fieldKey, new Equations(Collections.singletonList(new DirectionResultPair(Volatile.asInt(), VOLATILE_EFFECTS)), true));
+  
+  private record FieldData(Set<Member> staticFinalFields, Set<Member> volatileFields) {
+    static @NotNull FieldData read(@NotNull ClassReader classReader) {
+      Set<Member> staticFields = new HashSet<>();
+      Set<Member> volatileFields = new HashSet<>();
+      classReader.accept(new ClassVisitor(Opcodes.API_VERSION) {
+        @Override
+        public FieldVisitor visitField(int access, String name, String desc, String signature, Object value) {
+          int modifiers = Opcodes.ACC_STATIC | Opcodes.ACC_FINAL;
+          if ((access & modifiers) == modifiers && (access & (Opcodes.ACC_ENUM | Opcodes.ACC_SYNTHETIC)) == 0 &&
+              (desc.startsWith("L") || desc.startsWith("["))) {
+            staticFields.add(new Member(classReader.getClassName(), name, desc));
+          }
+          if ((access & Opcodes.ACC_VOLATILE) != 0) {
+            volatileFields.add(new Member(classReader.getClassName(), name, desc));
+          }
+          return null;
         }
-        return null;
+      }, ClassReader.SKIP_FRAMES | ClassReader.SKIP_DEBUG | ClassReader.SKIP_CODE);
+      return new FieldData(staticFields, volatileFields);
+    }
+    
+    void registerVolatileFields(Map<EKey, Equations> equations) {
+      for (Member field : volatileFields) {
+        EKey fieldKey = new EKey(field, Out, true);
+        equations.put(fieldKey, new Equations(Collections.singletonList(new DirectionResultPair(Volatile.asInt(), VOLATILE_EFFECTS)), true));
       }
-    }, ClassReader.SKIP_FRAMES | ClassReader.SKIP_DEBUG | ClassReader.SKIP_CODE);
-  }
-
-  private static Set<Member> getStaticFinalFields(ClassReader classReader) {
-    Set<Member> staticFields = new HashSet<>();
-    classReader.accept(new ClassVisitor(Opcodes.API_VERSION) {
-      @Override
-      public FieldVisitor visitField(int access, String name, String desc, String signature, Object value) {
-        int modifiers = Opcodes.ACC_STATIC | Opcodes.ACC_FINAL;
-        if ((access & modifiers) == modifiers && (access & (Opcodes.ACC_ENUM | Opcodes.ACC_SYNTHETIC)) == 0 &&
-            (desc.startsWith("L") || desc.startsWith("["))) {
-          staticFields.add(new Member(classReader.getClassName(), name, desc));
-        }
-        return null;
-      }
-    }, ClassReader.SKIP_FRAMES | ClassReader.SKIP_DEBUG | ClassReader.SKIP_CODE);
-    return staticFields;
+    }
   }
 
   @NotNull
