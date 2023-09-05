@@ -1399,6 +1399,7 @@ public class PydevConsoleRunnerImpl implements PydevConsoleRunner {
       if (myConsoleSettings.myInterpreterOptions.contains(ASYNCIO_REPL_COMMAND)) {
         myConsoleSettings.myInterpreterOptions = "";
       }
+      PythonEnvUtil.setPythonDontWriteBytecode(myEnvironmentVariables);
     }
 
     @Override
