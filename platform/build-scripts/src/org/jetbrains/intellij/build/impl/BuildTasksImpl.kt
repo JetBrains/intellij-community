@@ -30,6 +30,7 @@ import org.jetbrains.intellij.build.impl.productInfo.generateProductInfoJson
 import org.jetbrains.intellij.build.impl.projectStructureMapping.DistributionFileEntry
 import org.jetbrains.intellij.build.impl.projectStructureMapping.includedModules
 import org.jetbrains.intellij.build.impl.projectStructureMapping.writeProjectStructureReport
+import org.jetbrains.intellij.build.impl.sbom.SoftwareBillOfMaterialsImpl
 import org.jetbrains.intellij.build.io.copyDir
 import org.jetbrains.intellij.build.io.logFreeDiskSpace
 import org.jetbrains.intellij.build.io.writeNewFile
@@ -661,7 +662,7 @@ suspend fun buildDistributions(context: BuildContext): Unit = spanBuilder("build
     val distDirs = buildOsSpecificDistributions(context)
     launch(Dispatchers.IO) {
       context.executeStep(spanBuilder("generate software bill of materials"), SoftwareBillOfMaterials.STEP_ID) {
-        SoftwareBillOfMaterials(context, distDirs, distEntries).generate()
+        SoftwareBillOfMaterialsImpl(context, distDirs, distEntries).generate()
       }
     }
     @Suppress("SpellCheckingInspection")

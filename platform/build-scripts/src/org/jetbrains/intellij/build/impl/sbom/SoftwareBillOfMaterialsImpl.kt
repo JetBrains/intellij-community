@@ -1,5 +1,5 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package org.jetbrains.intellij.build
+package org.jetbrains.intellij.build.impl.sbom
 
 import com.jetbrains.plugin.structure.base.utils.exists
 import com.jetbrains.plugin.structure.base.utils.outputStream
@@ -15,6 +15,8 @@ import org.apache.commons.codec.digest.DigestUtils
 import org.apache.maven.model.Model
 import org.apache.maven.model.io.xpp3.MavenXpp3Reader
 import org.jetbrains.annotations.ApiStatus.Internal
+import org.jetbrains.intellij.build.*
+import org.jetbrains.intellij.build.LibraryUpstream
 import org.jetbrains.intellij.build.impl.*
 import org.jetbrains.intellij.build.impl.projectStructureMapping.*
 import org.jetbrains.intellij.build.io.readZipFile
@@ -57,7 +59,7 @@ import kotlin.io.path.readText
 /**
  * Generates Software Bill Of Materials (SBOM) for each distribution file in [SPDX format](https://spdx.github.io/spdx-spec)
  */
-class SoftwareBillOfMaterials internal constructor(
+class SoftwareBillOfMaterialsImpl internal constructor(
   private val context: BuildContext,
   private val distributions: List<DistributionForOsTaskResult>,
   private val distributionFiles: List<DistributionFileEntry>
@@ -259,7 +261,7 @@ class SoftwareBillOfMaterials internal constructor(
    * then should be replaced with [addRuntimeDocumentRef]
    */
   private suspend fun SpdxDocument.runtimePackage(os: OsFamily, arch: JvmArchitecture): SpdxPackage {
-    val checksums = context.bundledRuntime.findArchive(os = os, arch = arch).let(::Checksums)
+    val checksums = context.bundledRuntime.findArchive(os = os, arch = arch).let(SoftwareBillOfMaterialsImpl::Checksums)
     val runtimePackage = spdxPackage(name = context.bundledRuntime.archiveName(os = os, arch = arch),
                                      sha256sum = checksums.sha256sum, sha1sum = checksums.sha1sum,
                                      licenseDeclared = jetBrainsOwnLicense) {
@@ -595,9 +597,9 @@ class SoftwareBillOfMaterials internal constructor(
 
   private val SpdxDocument.jetBrainsOwnLicense: AnyLicenseInfo
     get() = extractedLicenseInfo(
-      name = this@SoftwareBillOfMaterials.jetBrainsOwnLicense.name,
-      text = this@SoftwareBillOfMaterials.jetBrainsOwnLicense.text,
-      url = this@SoftwareBillOfMaterials.jetBrainsOwnLicense.url
+      name = this@SoftwareBillOfMaterialsImpl.jetBrainsOwnLicense.name,
+      text = this@SoftwareBillOfMaterialsImpl.jetBrainsOwnLicense.text,
+      url = this@SoftwareBillOfMaterialsImpl.jetBrainsOwnLicense.url
     )
 
   /**
