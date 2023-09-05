@@ -320,10 +320,10 @@ open class EditorComposite internal constructor(
       container.remove(component.parent)
       val multicaster = dispatcher.multicaster
       if (top) {
-        multicaster.topComponentRemoved(editor, component)
+        multicaster.topComponentRemoved(editor, component, container)
       }
       else {
-        multicaster.bottomComponentRemoved(editor, component)
+        multicaster.bottomComponentRemoved(editor, component, container)
       }
     }
     else {
@@ -338,10 +338,10 @@ open class EditorComposite internal constructor(
       container.add(wrapper, index)
       val multicaster = dispatcher.multicaster
       if (top) {
-        multicaster.topComponentAdded(editor, index, component)
+        multicaster.topComponentAdded(editor, index, component, container)
       }
       else {
-        multicaster.bottomComponentAdded(editor, index, component)
+        multicaster.bottomComponentAdded(editor, index, component, container)
       }
     }
     container.revalidate()
