@@ -1,7 +1,10 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.observation
 
+import com.intellij.concurrency.currentThreadContext
+import com.intellij.concurrency.installThreadContext
 import com.intellij.util.concurrency.BlockingJob
+import com.intellij.util.concurrency.annotations.RequiresBlockingContext
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
@@ -19,6 +22,24 @@ abstract class AbstractInProgressService(private val scope: CoroutineScope) {
   private var inProgress: Int = 0
 
   suspend fun <T> trackConfigurationActivity(action: suspend () -> T) : T {
+    return withBlockingJob { blockingJob ->
+      withContext(blockingJob) {
+        action()
+      }
+    }
+  }
+
+  @RequiresBlockingContext
+  fun <T> trackConfigurationActivityBlocking(action: () -> T) : T {
+    return withBlockingJob { blockingJob ->
+      val currentContext = currentThreadContext()
+      installThreadContext(currentContext + blockingJob, true).use {
+        action()
+      }
+    }
+  }
+
+  private inline fun <T> withBlockingJob(consumer: (BlockingJob) -> T) : T {
     inProgress += 1
     val tracker = Job()
     val blockingJob = BlockingJob(tracker)
@@ -26,9 +47,7 @@ abstract class AbstractInProgressService(private val scope: CoroutineScope) {
       inProgress -= 1
     }
     try {
-      return withContext(blockingJob) {
-        action()
-      }
+      return consumer(blockingJob)
     } finally {
       scope.launch {
         tracker.children.forEach { it.join() }
