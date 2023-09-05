@@ -1358,20 +1358,24 @@ public final class ApplicationImpl extends ClientAwareComponentManager implement
 
   @Override
   public String toString() {
-    boolean writeActionPending = isWriteActionPending();
-    boolean writeActionInProgress = isWriteActionInProgress();
-    boolean writeAccessAllowed = isWriteAccessAllowed();
+    boolean hasLock = myLock != null;
+    boolean writeActionPending = hasLock && isWriteActionPending();
+    boolean writeActionInProgress = hasLock && isWriteActionInProgress();
+    boolean writeAccessAllowed = hasLock && isWriteAccessAllowed();
     return "Application"
-           +(getContainerState().get() == ContainerState.COMPONENT_CREATED ? "" : " (containerState " + getContainerStateName() + ") ")
+           + (getContainerState().get() == ContainerState.COMPONENT_CREATED ? "" : " (containerState " + getContainerStateName() + ") ")
            + (isUnitTestMode() ? " (unit test)" : "")
            + (isInternal() ? " (internal)" : "")
            + (isHeadlessEnvironment() ? " (headless)" : "")
            + (isCommandLine() ? " (command line)" : "")
-           + (writeActionPending || writeActionInProgress || writeAccessAllowed ? " (WA" +
-                                                                                  (writeActionPending ? " pending" : "") +
-                                                                                  (writeActionInProgress ? " inProgress" : "") +
-                                                                                  (writeAccessAllowed ? " allowed" : "") +
-                                                                                  ")" : "")
+           + (hasLock ?
+               (writeActionPending || writeActionInProgress || writeAccessAllowed ? " (WA" +
+                                                                                    (writeActionPending ? " pending" : "") +
+                                                                                    (writeActionInProgress ? " inProgress" : "") +
+                                                                                    (writeAccessAllowed ? " allowed" : "") +
+                                                                                    ")" : "")
+               : " (lock is not ready)"
+           )
            + (isReadAccessAllowed() ? " (RA allowed)" : "")
            + (StartupUtil.isImplicitReadOnEDTDisabled() ? " (IR on EDT disabled)" : "")
            + (isInImpatientReader() ? " (impatient reader)" : "")
