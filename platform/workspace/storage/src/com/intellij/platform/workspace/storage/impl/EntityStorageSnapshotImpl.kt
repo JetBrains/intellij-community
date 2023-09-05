@@ -617,7 +617,9 @@ internal class MutableEntityStorageImpl(
     val newEntities = entitiesByType.toImmutable()
     val newRefs = refs.toImmutable()
     val newIndexes = indexes.toImmutable()
-    val snapshot = EntityStorageSnapshotImpl(newEntities, newRefs, newIndexes)
+    val cache = TracedSnapshotCacheImpl()
+    val snapshot = EntityStorageSnapshotImpl(newEntities, newRefs, newIndexes, cache)
+    cache.pullCache(this.originalSnapshot.snapshotCache, this.collectChanges())
     toSnapshotTimeMs.addElapsedTimeMs(start)
     return snapshot
   }
@@ -748,16 +750,6 @@ internal class MutableEntityStorageImpl(
     }
 
     updateCalculationCache()
-  }
-
-  override fun toSnapshot(previousSnapshot: EntityStorage, changes: Map<Class<*>, List<EntityChange<*>>>): EntityStorageSnapshot {
-    val newEntities = entitiesByType.toImmutable()
-    val newRefs = refs.toImmutable()
-    val newIndexes = indexes.toImmutable()
-    val cache = TracedSnapshotCacheImpl()
-    val newCreatedSnapshot = EntityStorageSnapshotImpl(newEntities, newRefs, newIndexes, cache)
-    cache.pullCache((previousSnapshot as EntityStorageSnapshotImpl).snapshotCache, changes)
-    return newCreatedSnapshot
   }
 
   override fun hasChanges(): Boolean = changeLog.changeLog.isNotEmpty()
