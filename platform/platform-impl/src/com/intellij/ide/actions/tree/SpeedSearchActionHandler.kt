@@ -4,6 +4,7 @@ package com.intellij.ide.actions.tree
 import com.intellij.idea.ActionsBundle
 import com.intellij.openapi.actionSystem.ActionManager
 import com.intellij.openapi.keymap.KeymapUtil
+import com.intellij.openapi.ui.popup.Balloon
 import com.intellij.ui.GotItTooltip
 import com.intellij.ui.SpeedSearchBase
 import com.intellij.ui.speedSearch.SpeedSearchSupply
@@ -27,6 +28,7 @@ internal class SpeedSearchActionHandler(private val speedSearch: SpeedSearchBase
         ActionsBundle.message("action.Tree-speedSearch.GotItTooltip.text", shortcut)
       }
       GotItTooltip("speed.search.shown", gotItMessage)
+        .withPosition(Balloon.Position.atRight)
         .show(component) { c, _ -> Point(c.width, c.height / 2) }
     }
   }
