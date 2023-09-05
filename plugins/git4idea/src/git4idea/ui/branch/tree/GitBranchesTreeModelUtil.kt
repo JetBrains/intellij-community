@@ -23,7 +23,9 @@ private typealias MatchResult = Pair<Collection<GitBranch>, GitBranch?>
 
 internal val GitRepository.localBranchesOrCurrent get() = branches.localBranches.ifEmpty { currentBranch?.let(::setOf) ?: emptySet() }
 internal val GitRepository.recentCheckoutBranches
-  get() = branches.recentCheckoutBranches.take(Registry.intValue("git.show.recent.checkout.branches"))
+  get() =
+    if (!GitVcsSettings.getInstance(project).showRecentBranches()) emptyList()
+    else branches.recentCheckoutBranches.take(Registry.intValue("git.show.recent.checkout.branches"))
 
 internal val emptyBranchComparator = Comparator<GitBranch> { _, _ -> 0 }
 
