@@ -15,7 +15,7 @@ import kotlinx.coroutines.async
 import java.nio.file.Files
 import java.nio.file.Path
 
-class ModuleBasedProductLoadingStrategy(private val moduleRepository: RuntimeModuleRepository) : ProductLoadingStrategy() {
+class ModuleBasedProductLoadingStrategy(internal val moduleRepository: RuntimeModuleRepository) : ProductLoadingStrategy() {
   private val productModules by lazy {
     val rootModuleName = System.getProperty(PLATFORM_ROOT_MODULE_PROPERTY)
     if (rootModuleName == null) {
