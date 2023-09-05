@@ -638,7 +638,6 @@ private fun isLibraryMergeable(libName: String): Boolean {
   return !excludedFromMergeLibs.contains(libName) &&
          !(libName.startsWith("kotlin-") && !libName.startsWith("kotlin-test-")) &&
          !libName.startsWith("kotlinc.") &&
-         !libName.startsWith("projector-") &&
          !libName.contains("-agent-") &&
          !libName.startsWith("rd-") &&
          !libName.contains("annotations", ignoreCase = true) &&
