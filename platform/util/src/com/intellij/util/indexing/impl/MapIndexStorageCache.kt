@@ -1,6 +1,7 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.indexing.impl
 
+import com.intellij.util.SystemProperties
 import com.intellij.util.containers.SLRUCache
 import com.intellij.util.containers.hash.EqualityPolicy
 import com.intellij.util.io.IOCancellationCallbackHolder
@@ -42,12 +43,32 @@ interface MapIndexStorageCacheProvider {
 
 @Internal
 object MapIndexStorageCacheSlruProvider: MapIndexStorageCacheProvider {
+  private val USE_SLRU = SystemProperties.getBooleanProperty("idea.use.slru.for.file.based.index", true);
+
   override fun <Key, Value> createCache(keyReader: Function<Key, ChangeTrackingValueContainer<Value>>,
                                         evictionListener: BiConsumer<Key, ChangeTrackingValueContainer<Value>>,
                                         hashingStrategy: EqualityPolicy<Key>,
                                         cacheSize: Int): MapIndexStorageCache<Key, Value> {
-    return MapIndexStorageSlruCache(keyReader, evictionListener, hashingStrategy, cacheSize)
+    return if (USE_SLRU) {
+      MapIndexStorageSlruCache(keyReader, evictionListener, hashingStrategy, cacheSize)
+    }
+    else {
+      MapIndexStoragePassThroughCache(keyReader, evictionListener, hashingStrategy, cacheSize)
+    }
   }
+}
+
+private class MapIndexStoragePassThroughCache<Key, Value>(val valueReader: Function<Key, ChangeTrackingValueContainer<Value>>,
+                                                          val evictionListener: BiConsumer<Key, ChangeTrackingValueContainer<Value>>,
+                                                          hashingStrategy: EqualityPolicy<Key>,
+                                                          cacheSize: Int) : MapIndexStorageCache<Key, Value> {
+  override fun read(key: Key): ChangeTrackingValueContainer<Value> = valueReader.apply(key)
+
+  override fun readIfCached(key: Key): ChangeTrackingValueContainer<Value>? = null
+
+  override fun getCachedValues(): Collection<ChangeTrackingValueContainer<Value>> = emptyList()
+
+  override fun invalidateAll() = Unit
 }
 
 private class MapIndexStorageSlruCache<Key, Value>(val valueReader: Function<Key, ChangeTrackingValueContainer<Value>>,
@@ -84,5 +105,4 @@ private class MapIndexStorageSlruCache<Key, Value>(val valueReader: Function<Key
       cacheAccessLock.unlock()
     }
   }
-
 }
