@@ -8,14 +8,11 @@ import com.intellij.ide.util.gotoByName.ChooseByNameItem
 import com.intellij.ide.util.gotoByName.ChooseByNamePopup
 import com.intellij.ide.util.gotoByName.ChooseByNamePopupComponent
 import com.intellij.ide.util.gotoByName.ListChooseByNameModel
+import com.intellij.internal.statistic.config.SerializationHelper
 import com.intellij.internal.statistic.devkit.StatisticsDevKitUtil
 import com.intellij.internal.statistic.eventLog.LogEventSerializer
-import com.intellij.internal.statistic.config.SerializationHelper
 import com.intellij.internal.statistic.eventLog.newLogEvent
-import com.intellij.internal.statistic.service.fus.collectors.ApplicationUsagesCollector
-import com.intellij.internal.statistic.service.fus.collectors.FUStateUsagesLogger
-import com.intellij.internal.statistic.service.fus.collectors.FeatureUsagesCollector
-import com.intellij.internal.statistic.service.fus.collectors.ProjectUsagesCollector
+import com.intellij.internal.statistic.service.fus.collectors.*
 import com.intellij.internal.statistic.utils.StatisticsRecorderUtil
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.application.ApplicationManager
@@ -46,7 +43,8 @@ internal class CollectFUStatisticsAction : GotoActionBase(), DumbAware {
     val projectCollectors = ExtensionPointName.create<Any>("com.intellij.statistics.projectUsagesCollector").extensionList
     val applicationCollectors = ExtensionPointName.create<Any>("com.intellij.statistics.applicationUsagesCollector").extensionList
 
-    val collectors = (projectCollectors + applicationCollectors).filterIsInstance(FeatureUsagesCollector::class.java)
+    val collectors = (projectCollectors + applicationCollectors)
+      .filterIsInstance<UsageCollectorBean>().map(UsageCollectorBean::getCollector)
 
     val ids = collectors.mapTo(HashMultiset.create()) { it.groupId }
     val items = collectors
