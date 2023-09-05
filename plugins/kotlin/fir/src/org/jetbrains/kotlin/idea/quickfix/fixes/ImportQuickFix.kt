@@ -54,6 +54,7 @@ import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.containingClassOrObject
+import org.jetbrains.kotlin.psi.psiUtil.findDescendantOfType
 import org.jetbrains.kotlin.psi.psiUtil.getReceiverExpression
 import org.jetbrains.kotlin.psi.psiUtil.isExtensionDeclaration
 import org.jetbrains.kotlin.resolve.ImportPath
@@ -198,8 +199,9 @@ class ImportQuickFix(
         val invisibleReferenceFactory = diagnosticFixFactory(KtFirDiagnostic.InvisibleReference::class) { getFixes(it.psi) }
 
         context(KtAnalysisSession)
-        fun getFixes(position: PsiElement): List<ImportQuickFix> {
-            if (position !is KtSimpleNameExpression) return emptyList()
+        fun getFixes(diagnosticPsi: PsiElement): List<ImportQuickFix> {
+            val position = diagnosticPsi.findDescendantOfType<KtSimpleNameExpression> { it.textRange == diagnosticPsi.textRange }
+                ?: return emptyList()
 
             val indexProvider = KtSymbolFromIndexProvider.createForElement(position)
 
