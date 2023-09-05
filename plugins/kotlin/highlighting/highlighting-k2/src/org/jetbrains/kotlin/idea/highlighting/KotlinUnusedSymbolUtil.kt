@@ -67,6 +67,8 @@ object KotlinUnusedSymbolUtil {
     if (declaration is KtParameter) {
       // nameless parameters like `(Type) -> Unit` make no sense to highlight
       if (declaration.name == null) return false
+      // functional type params like `fun foo(u: (usedParam: Type) -> Unit)` shouldn't be highlighted because they could be implicitly used by lambda arguments
+      if (declaration.isFunctionTypeParameter) return false
       val ownerFunction = declaration.getOwnerFunction()
       if (ownerFunction is KtConstructor<*>) {
         // constructor parameters of data class are considered used because they are implicitly used in equals() (???)

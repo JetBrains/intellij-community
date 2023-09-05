@@ -17066,6 +17066,11 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
             runTest("testData/inspectionsLocal/unusedSymbol/lastPropertyInPrimaryConstructorWithComments.kt");
         }
 
+        @TestMetadata("namedFunctionalParameter.kt")
+        public void testNamedFunctionalParameter() throws Exception {
+            runTest("testData/inspectionsLocal/unusedSymbol/namedFunctionalParameter.kt");
+        }
+
         @TestMetadata("namelessFunctionalParameter.kt")
         public void testNamelessFunctionalParameter() throws Exception {
             runTest("testData/inspectionsLocal/unusedSymbol/namelessFunctionalParameter.kt");
