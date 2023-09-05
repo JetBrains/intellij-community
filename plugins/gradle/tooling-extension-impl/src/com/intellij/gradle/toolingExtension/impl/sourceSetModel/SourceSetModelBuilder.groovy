@@ -15,12 +15,12 @@ import org.gradle.api.file.ContentFilterable
 import org.gradle.api.file.FileCopyDetails
 import org.gradle.api.tasks.AbstractCopyTask
 import org.gradle.api.tasks.SourceSet
+import org.gradle.api.tasks.SourceSetContainer
 import org.gradle.api.tasks.SourceSetOutput
 import org.gradle.api.tasks.bundling.AbstractArchiveTask
 import org.gradle.api.tasks.bundling.Jar
 import org.gradle.api.tasks.compile.JavaCompile
 import org.gradle.api.tasks.util.PatternFilterable
-import org.gradle.internal.metaobject.AbstractDynamicObject
 import org.gradle.jvm.toolchain.internal.JavaToolchain
 import org.gradle.plugins.ide.idea.IdeaPlugin
 import org.gradle.util.GradleVersion
@@ -48,16 +48,11 @@ class SourceSetModelBuilder {
 
   static void addArtifactsData(final Project project, DefaultExternalProject externalProject) {
     final List<File> artifacts = new ArrayList<File>()
-    final List<File> additionalArtifacts = new ArrayList<File>()
     project.getTasks().withType(Jar.class, { Jar jar ->
       try {
         def archiveFile = GradleArchiveTaskUtil.getArchiveFile(jar)
         if (archiveFile != null) {
           artifacts.add(archiveFile)
-          // check the artifact content...
-          if (isJarDescendant(jar) || !containsOnlySourceSetOutput(jar, project)) {
-            additionalArtifacts.add(archiveFile)
-          }
         }
       }
       catch (e) {
@@ -66,7 +61,6 @@ class SourceSetModelBuilder {
       }
     })
     externalProject.setArtifacts(artifacts)
-    externalProject.setAdditionalArtifacts(additionalArtifacts)
 
     def configurationsByName = project.getConfigurations().getAsMap()
     Map<String, Set<File>> artifactsByConfiguration = new HashMap<String, Set<File>>()
@@ -203,7 +197,10 @@ class SourceSetModelBuilder {
       }
 
       project.tasks.withType(AbstractArchiveTask) { AbstractArchiveTask task ->
-        if (containsAllSourceSetOutput(task, sourceSet)) {
+        def isOwnJarTask = task.name == sourceSet.jarTaskName
+        if (isOwnJarTask ||
+          (isCustomJarTask(task, sourceSets) && containsAllSourceSetOutput(task, sourceSet))
+        ) {
           externalSourceSet.artifacts.add(GradleArchiveTaskUtil.getArchiveFile(task))
         }
       }
@@ -590,32 +587,15 @@ class SourceSetModelBuilder {
     return null
   }
 
-  private static boolean isJarDescendant(Jar task) {
-    if (is44OrBetter) {
-      return task.getTaskIdentity().type != Jar
-    } else {
-      return (task.asDynamicObject as AbstractDynamicObject).publicType != Jar
-    }
+  private static String wrap(Object o) {
+    return o instanceof CharSequence ? o.toString() : ""
   }
 
-  private static boolean containsOnlySourceSetOutput(@NotNull AbstractArchiveTask archiveTask, @NotNull Project project) {
-    def sourceSetContainer = JavaPluginUtil.getSourceSetContainer(project)
-    if (sourceSetContainer == null || sourceSetContainer.isEmpty()) {
-      return false
-    }
-    def outputFiles = new HashSet<File>()
-    sourceSetContainer.all { SourceSet ss -> outputFiles.addAll(ss.output.files) }
-    for (Object path: getArchiveTaskSourcePaths(archiveTask)) {
-      if (isSafeToResolve(path, project)) {
-        def files = project.files(path).files
-        if (!outputFiles.containsAll(files)) {
-          return false
-        }
-      } else {
-        return false
-      }
-    }
-    return true
+  @NotNull
+  static ErrorMessageBuilder getErrorMessageBuilder(@NotNull Project project, @NotNull Exception e) {
+    return ErrorMessageBuilder.create(
+      project, e, "Project resolve errors"
+    ).withDescription("Unable to resolve additional project configuration.")
   }
 
   private static boolean containsAllSourceSetOutput(@NotNull AbstractArchiveTask archiveTask, @NotNull SourceSet sourceSet) {
@@ -705,5 +685,17 @@ class SourceSetModelBuilder {
       project.getLogger().info("Unable to resolve task source path: ${targetException?.message} (${targetException?.class?.canonicalName})")
       return object
     }
+  }
+
+  private static boolean isCustomJarTask(@NotNull AbstractArchiveTask archiveTask,
+                                         @NotNull SourceSetContainer sourceSets) {
+    for (final SourceSet sourceSet in sourceSets) {
+      if (archiveTask.name == sourceSet.jarTaskName) {
+        // there is a sourceSet that 'owns' this task
+        return false
+      }
+    }
+    // name of this task is not associated with any source set
+    return true
   }
 }

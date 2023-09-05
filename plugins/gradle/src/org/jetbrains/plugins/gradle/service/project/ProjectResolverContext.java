@@ -74,10 +74,4 @@ public interface ProjectResolverContext extends UserDataHolderEx {
 
   @ApiStatus.Experimental
   void report(@NotNull MessageEvent.Kind kind, @NotNull BuildIssue buildIssue);
-
-  /**
-   * @return Maps of artifact paths to moduleIds
-   */
-  @NotNull
-  ArtifactMappingService getArtifactsMap();
 }

@@ -87,6 +87,8 @@ public class GradleProjectResolver implements ExternalSystemProjectResolver<Grad
   public static final Key<Map<String/* output path */, Pair<String /* module id*/, ExternalSystemSourceType>>> MODULES_OUTPUTS =
     Key.create("moduleOutputsMap");
   public static final Key<MultiMap<ExternalSystemSourceType, String /* output path*/>> GRADLE_OUTPUTS = Key.create("gradleOutputs");
+  public static final Key<Map<String/* artifact path */, String /* module id*/>> CONFIGURATION_ARTIFACTS =
+    Key.create("gradleArtifactsMap");
 
   private static final Key<File> GRADLE_HOME_DIR = Key.create("gradleHomeDir");
 
@@ -395,8 +397,8 @@ public class GradleProjectResolver implements ExternalSystemProjectResolver<Grad
     final Map<String/* output path */, Pair<String /* module id*/, ExternalSystemSourceType>> moduleOutputsMap =
       CollectionFactory.createFilePathMap();
     projectDataNode.putUserData(MODULES_OUTPUTS, moduleOutputsMap);
-
-    final ArtifactMappingService artifactsMap = resolverCtx.getArtifactsMap();
+    final Map<String/* artifact path */, String /* module id*/> artifactsMap = CollectionFactory.createFilePathMap();
+    projectDataNode.putUserData(CONFIGURATION_ARTIFACTS, artifactsMap);
 
     // import modules data
     for (IdeaModule gradleModule : ContainerUtil.concat(gradleModules, includedModules)) {
@@ -470,15 +472,10 @@ public class GradleProjectResolver implements ExternalSystemProjectResolver<Grad
 
         if (moduleData instanceof GradleSourceSetData) {
           for (File artifactFile : moduleData.getArtifacts()) {
-            artifactsMap.storeModuleId(toCanonicalPath(artifactFile.getPath()), moduleData.getId());
+            artifactsMap.put(toCanonicalPath(artifactFile.getPath()), moduleData.getId());
           }
         }
       }
-
-      ExternalProject externalProject = resolverCtx.getExtraProject(ideaModule, ExternalProject.class);
-      externalProject.getAdditionalArtifacts().forEach((artifactFile) -> {
-        artifactsMap.markArtifactPath(toCanonicalPath(artifactFile.getPath()), true);
-      });
     }
     // reuse same gradle home (for auto-discovered buildSrc projects) also for partial imports which doesn't request BuildScriptClasspathModel
     if (gradleHomeDir == null && executionSettings.getGradleHome() != null) {
@@ -505,6 +502,7 @@ public class GradleProjectResolver implements ExternalSystemProjectResolver<Grad
 
     projectDataNode.putUserData(RESOLVED_SOURCE_SETS, null);
     projectDataNode.putUserData(MODULES_OUTPUTS, null);
+    projectDataNode.putUserData(CONFIGURATION_ARTIFACTS, null);
 
     // ensure unique library names
     Collection<DataNode<LibraryData>> libraries = getChildren(projectDataNode, ProjectKeys.LIBRARY);
@@ -644,7 +642,7 @@ public class GradleProjectResolver implements ExternalSystemProjectResolver<Grad
       projectDataNode.getUserData(MODULES_OUTPUTS);
     assert moduleOutputsMap != null;
 
-    final ArtifactMappingService artifactsMap = context.getArtifactsMap();
+    final Map<String, String> artifactsMap = projectDataNode.getUserData(CONFIGURATION_ARTIFACTS);
     assert artifactsMap != null;
 
     final Collection<DataNode<LibraryDependencyData>> libraryDependencies =

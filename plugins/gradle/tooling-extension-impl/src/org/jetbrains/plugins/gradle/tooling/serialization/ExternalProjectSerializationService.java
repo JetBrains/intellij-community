@@ -81,7 +81,6 @@ public final class ExternalProjectSerializationService implements SerializationS
           writeFiles(writer, "artifacts", project.getArtifacts());
           writeArtifactsByConfiguration(writer, project.getArtifactsByConfiguration());
           writeChildProjects(writer, context, project.getChildProjects());
-          writeFiles(writer, "additionalArtifacts", project.getAdditionalArtifacts());
         }
         writer.stepOut();
       }
@@ -403,7 +402,6 @@ public final class ExternalProjectSerializationService implements SerializationS
           externalProject.setArtifacts(readFiles(reader));
           externalProject.setArtifactsByConfiguration(readStringToFileSetMap(reader));
           externalProject.setChildProjects(readProjects(reader, context));
-          externalProject.setAdditionalArtifacts(readFiles(reader));
         }
       });
     reader.stepOut();

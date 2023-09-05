@@ -10,15 +10,14 @@ import org.jetbrains.plugins.gradle.model.DefaultExternalProjectDependency
 import org.jetbrains.plugins.gradle.model.ExternalDependency
 import org.jetbrains.plugins.gradle.model.ExternalProjectDependency
 import org.jetbrains.plugins.gradle.model.FileCollectionDependency
-import org.jetbrains.plugins.gradle.service.project.ProjectResolverContext
+import org.jetbrains.plugins.gradle.service.project.GradleProjectResolver
 import java.io.File
 
 internal fun Collection<ExternalDependency>.modifyDependenciesOnMppModules(
     ideProject: DataNode<ProjectData>,
-    resolverCtx: ProjectResolverContext,
 ) {
     // Add mpp-artifacts into map used for dependency substitution
-    val affiliatedArtifacts = getOrCreateAffiliatedArtifactsMap(ideProject, resolverCtx)
+    val affiliatedArtifacts = getOrCreateAffiliatedArtifactsMap(ideProject)
     if (affiliatedArtifacts != null) {
         this.forEach { dependency ->
             val existingArtifactDependencies = dependency.getDependencyArtifacts().map { ExternalSystemApiUtil.normalizePath(it.absolutePath) }
@@ -38,9 +37,9 @@ private fun ExternalDependency.getDependencyArtifacts(): Collection<File> =
         else -> emptyList()
     }
 
-private fun getOrCreateAffiliatedArtifactsMap(ideProject: DataNode<ProjectData>, resolverCtx: ProjectResolverContext): Map<String, List<String>>? {
+private fun getOrCreateAffiliatedArtifactsMap(ideProject: DataNode<ProjectData>): Map<String, List<String>>? {
     val mppArtifacts = ideProject.getUserData(KotlinMppGradleProjectResolver.MPP_CONFIGURATION_ARTIFACTS) ?: return null
-    val configArtifacts = resolverCtx.artifactsMap
+    val configArtifacts = ideProject.getUserData(GradleProjectResolver.CONFIGURATION_ARTIFACTS) ?: return null
     // All MPP modules are already known, we can fill configurations map
     return HashMap<String, MutableList<String>>().also { newMap ->
         mppArtifacts.forEach { (filePath, moduleIds) ->
@@ -48,10 +47,10 @@ private fun getOrCreateAffiliatedArtifactsMap(ideProject: DataNode<ProjectData>,
             newMap[filePath] = list2add
             for ((index, module) in moduleIds.withIndex()) {
                 if (index == 0) {
-                    configArtifacts.storeModuleId(filePath, module)
+                    configArtifacts[filePath] = module
                 } else {
                     val affiliatedFileName = "$filePath-MPP-$index"
-                    configArtifacts.storeModuleId(affiliatedFileName, module)
+                    configArtifacts[affiliatedFileName] = module
                     list2add.add(affiliatedFileName)
                 }
             }

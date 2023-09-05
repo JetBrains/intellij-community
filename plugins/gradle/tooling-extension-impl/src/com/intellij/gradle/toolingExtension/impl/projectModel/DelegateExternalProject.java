@@ -116,9 +116,4 @@ public abstract class DelegateExternalProject implements ExternalProject {
   public @NotNull Map<String, Set<File>> getArtifactsByConfiguration() {
     return externalProject.getArtifactsByConfiguration();
   }
-
-  @Override
-  public @NotNull List<File> getAdditionalArtifacts() {
-    return externalProject.getAdditionalArtifacts();
-  }
 }
