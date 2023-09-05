@@ -1,6 +1,7 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.refactoring.convertToJava;
 
+import com.intellij.codeInsight.daemon.impl.analysis.HighlightingFeature;
 import com.intellij.lang.ASTNode;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Pair;
@@ -869,18 +870,15 @@ public class ExpressionGenerator extends Generator {
     final String text = literal.getText();
     final String value = GrStringUtil.unescapeString(GrStringUtil.removeQuotes(text));
     if (text.startsWith("'''") || text.startsWith("\"\"\"")) {
-      builder
-        .append("\"\"\"\n")
-        .append(PsiLiteralUtil.escapeTextBlockCharacters(
-          value
-            .replace("\\", "\\\\")
-            .replace("\n", "\\n")
-            .replace("\t", "\\t")
-            .replace("\r", "\\r")
-            .replace("\b", "\\b")
-            .replace("\f", "\\f")
-        ))
-        .append("\"\"\"");
+      if (HighlightingFeature.TEXT_BLOCKS.isAvailable(literal)) {
+        builder
+          .append("\"\"\"\n")
+          .append(PsiLiteralUtil.escapeTextBlockCharacters(StringUtil.escapeStringCharacters(value)))
+          .append("\"\"\"");
+      }
+      else {
+        builder.append('"').append(StringUtil.escapeStringCharacters(value)).append('"');
+      }
     }
     else if (text.startsWith("'")) {
       if (isChar) {
