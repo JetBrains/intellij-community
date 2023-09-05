@@ -68,6 +68,8 @@ public final class ContentStoragesRecoverer implements VFSRecoverer {
 
 
         cleanAllContentIds(records);
+        // FIXME MAYBE VfsLog recovery related: we don't place a special event in VfsLog about content storage being cleared.
+        //  Clearing all references to old contents from records should suffice.
 
         //inform others (LocalHistory) that old contentIds are no longer valid:
         loader.contentIdsInvalidated(true);
