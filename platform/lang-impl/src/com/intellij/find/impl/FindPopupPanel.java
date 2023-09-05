@@ -676,7 +676,7 @@ public final class FindPopupPanel extends JBPanel<FindPopupPanel> implements Fin
             FindInProjectUtil.setupViewPresentation(myUsageViewPresentation, myHelper.getModel().clone());
             myUsagePreviewPanel.updateLayout(selectedUsages);
             myUsagePreviewTitle.clear();
-            if (isOneAndOnlyOnePsiFileInUsages == null && selectedFile != null) {
+            if (isOneAndOnlyOnePsiFileInUsages && selectedFile != null) {
               myUsagePreviewTitle.append(PathUtil.getFileName(selectedFile), SimpleTextAttributes.REGULAR_ATTRIBUTES);
               VirtualFile virtualFile = VfsUtil.findFileByIoFile(new File(selectedFile), true);
               String locationPath = virtualFile == null ? null : getPresentablePath(myProject, virtualFile.getParent(), 120);
