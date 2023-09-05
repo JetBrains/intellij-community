@@ -1,29 +1,41 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.stubs;
 
+import com.github.benmanes.caffeine.cache.Caffeine;
+import com.github.benmanes.caffeine.cache.LoadingCache;
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.Service;
-import com.intellij.util.containers.RecentStringInterner;
+import com.intellij.openapi.util.LowMemoryWatcher;
+import kotlinx.coroutines.Dispatchers;
+import kotlinx.coroutines.ExecutorsKt;
 import org.jetbrains.annotations.Contract;
-import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 @Service
-final class StubStringInterner {
-  private final @NotNull RecentStringInterner myStringInterner;
+final class StubStringInterner implements Disposable {
+  private final LoadingCache<String, String> internCache = Caffeine.newBuilder()
+    .maximumSize(8192)
+    .executor(command -> {
+      ExecutorsKt.asExecutor(Dispatchers.getDefault()).execute(command);
+    })
+    .build(key -> key);
 
   static StubStringInterner getInstance() {
     return ApplicationManager.getApplication().getService(StubStringInterner.class);
   }
 
   StubStringInterner() {
-    myStringInterner = new RecentStringInterner(ApplicationManager.getApplication());
+    LowMemoryWatcher.register(internCache::invalidateAll, this);
+  }
+
+  @Override
+  public void dispose() {
   }
 
   @Nullable
   @Contract("null -> null")
-  String intern(@Nullable String str) {
-    if (str == null) return null;
-    return myStringInterner.get(str);
+  String intern(@Nullable String s) {
+    return s == null ? null : internCache.get(s);
   }
 }
