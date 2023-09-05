@@ -16,9 +16,7 @@ import org.jetbrains.annotations.Nullable;
 final class StubStringInterner implements Disposable {
   private final LoadingCache<String, String> internCache = Caffeine.newBuilder()
     .maximumSize(8192)
-    .executor(command -> {
-      ExecutorsKt.asExecutor(Dispatchers.getDefault()).execute(command);
-    })
+    .executor(ExecutorsKt.asExecutor(Dispatchers.getDefault()))
     .build(key -> key);
 
   static StubStringInterner getInstance() {
