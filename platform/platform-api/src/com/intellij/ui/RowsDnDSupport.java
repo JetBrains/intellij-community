@@ -38,6 +38,8 @@ public final class RowsDnDSupport {
 
   private static void installImpl(final @NotNull JComponent component, final @NotNull EditableModel model) {
     component.setTransferHandler(new TransferHandler(null));
+    SmoothAutoScroller.installDropTargetAsNecessary(component);
+
     DnDSupport.createBuilder(component)
       .setBeanProvider(info -> {
         final Point p = info.getPoint();
