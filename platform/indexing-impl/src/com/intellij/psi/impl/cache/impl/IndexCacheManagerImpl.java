@@ -25,7 +25,7 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 
-public class IndexCacheManagerImpl implements CacheManager {
+public final class IndexCacheManagerImpl implements CacheManager {
   private final @NotNull Project myProject;
 
   public IndexCacheManagerImpl(@NotNull Project project) {

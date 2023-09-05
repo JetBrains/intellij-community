@@ -9,7 +9,7 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.Map;
 
-public class IdDataConsumer {
+public final class IdDataConsumer {
   private final @NotNull Object2IntMap<IdIndexEntry> myResult = new Object2IntOpenHashMap<>();
 
   public @NotNull Map<IdIndexEntry, Integer> getResult() {

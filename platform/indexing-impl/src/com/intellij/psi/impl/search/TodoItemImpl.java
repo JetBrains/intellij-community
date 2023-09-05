@@ -10,7 +10,7 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
 
-public class TodoItemImpl implements TodoItem {
+public final class TodoItemImpl implements TodoItem {
   private final PsiFile myFile;
   private final int myStartOffset;
   private final int myEndOffset;

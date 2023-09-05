@@ -11,7 +11,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.Map;
 
-public class PlainTextIdIndexer implements IdIndexer {
+public final class PlainTextIdIndexer implements IdIndexer {
   private static final Key<Map<IdIndexEntry, Integer>> ID_INDEX_DATA_KEY = Key.create("plain.text.id.index");
 
   @Override

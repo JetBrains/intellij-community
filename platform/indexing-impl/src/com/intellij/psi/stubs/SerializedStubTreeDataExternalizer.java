@@ -9,7 +9,7 @@ import java.io.DataInput;
 import java.io.DataOutput;
 import java.io.IOException;
 
-public class SerializedStubTreeDataExternalizer implements DataExternalizer<SerializedStubTree> {
+public final class SerializedStubTreeDataExternalizer implements DataExternalizer<SerializedStubTree> {
   private final @NotNull StubTreeSerializer mySerializationManager;
   private final StubForwardIndexExternalizer<?> myStubIndexesExternalizer;
 

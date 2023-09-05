@@ -134,7 +134,7 @@ public final class VfsEventsMerger {
   @MagicConstant(flags = {FILE_ADDED, FILE_REMOVED, FILE_CONTENT_CHANGED, FILE_TRANSIENT_STATE_CHANGED})
   @interface EventMask { }
 
-  static class ChangeInfo {
+  static final class ChangeInfo {
     private final VirtualFile file;
 
     @EventMask
@@ -212,7 +212,7 @@ public final class VfsEventsMerger {
     }
   }
 
-  private static class MyLoggerFactory implements Logger.Factory {
+  private static final class MyLoggerFactory implements Logger.Factory {
     private static final @Nullable MyLoggerFactory ourFactory;
 
     static {

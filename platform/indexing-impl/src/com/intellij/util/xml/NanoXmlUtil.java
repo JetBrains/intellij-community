@@ -214,7 +214,7 @@ public final class NanoXmlUtil {
     }
   }
 
-  private static class EmptyEntityResolver implements IXMLEntityResolver {
+  private static final class EmptyEntityResolver implements IXMLEntityResolver {
     @Override
     public void addInternalEntity(String name, String value) {
     }

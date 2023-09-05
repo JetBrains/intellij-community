@@ -205,7 +205,7 @@ public final class IndexLookupTimingsReporting {
    * </ol>
    * Specific lookups also have their own fields, see apt. _EVENT fields
    */
-  public static class IndexOperationFusCollector extends CounterUsagesCollector {
+  public static final class IndexOperationFusCollector extends CounterUsagesCollector {
 
     private static final VarargEventId EVENT_INDEX_ALL_KEYS_LOOKUP = INDEX_USAGE_GROUP.registerVarargEvent(
       "lookup.all_keys",
@@ -488,7 +488,7 @@ public final class IndexLookupTimingsReporting {
      * Holds a trace (timestamps, pieces of data) for a 'lookup entries' index query. To be used as thread-local
      * object.
      */
-    public static class LookupAllKeysTrace extends LookupTraceBase<LookupAllKeysTrace> {
+    public static final class LookupAllKeysTrace extends LookupTraceBase<LookupAllKeysTrace> {
       private long indexValidationFinishedAtMs;
 
       protected LookupAllKeysTrace(final ThreadLocal<LookupAllKeysTrace> current) {
@@ -575,7 +575,7 @@ public final class IndexLookupTimingsReporting {
      * Holds a trace (timestamps, pieces of data) for a 'lookup entries' index query. To be used as thread-local
      * object.
      */
-    public static class LookupEntriesByKeysTrace extends LookupTraceBase<LookupEntriesByKeysTrace> {
+    public static final class LookupEntriesByKeysTrace extends LookupTraceBase<LookupEntriesByKeysTrace> {
       private long indexValidationFinishedAtMs;
 
       /**
@@ -690,7 +690,7 @@ public final class IndexLookupTimingsReporting {
      * Holds a trace (timestamps, pieces of data) for a 'lookup entries' stub-index query. To be used as thread-local
      * object.
      */
-    public static class LookupStubEntriesByKeyTrace extends LookupTraceBase<LookupStubEntriesByKeyTrace> {
+    public static final class LookupStubEntriesByKeyTrace extends LookupTraceBase<LookupStubEntriesByKeyTrace> {
       //total lookup time = (upToDateCheck time) + (pure index lookup time) + (Stub Trees deserializing time)
       private long indexValidationFinishedAtMs;
       private long stubTreesDeserializingStarted;
@@ -787,7 +787,7 @@ public final class IndexLookupTimingsReporting {
   }
 
   /** Collects and reports aggregated performance data (averages, %-iles) about index lookup timings to FUS */
-  public static class IndexOperationAggregatesCollector extends ApplicationUsagesCollector {
+  public static final class IndexOperationAggregatesCollector extends ApplicationUsagesCollector {
 
     public static final int MAX_TRACKABLE_DURATION_MS = getIntProperty("IndexLookupTimingsReporting.MAX_TRACKABLE_DURATION_MS", 5000);
 
@@ -1004,7 +1004,7 @@ public final class IndexLookupTimingsReporting {
   }
 
   /** Collects and reports aggregated performance data (averages, %-iles) about index lookup timings to OpenTelemetry */
-  private static class IndexOperationToOTelMetricsReporter implements AutoCloseable {
+  private static final class IndexOperationToOTelMetricsReporter implements AutoCloseable {
 
     // 2 digits =~ 1% accuracy
     private static final Recorder allKeysLookupDurationMsHisto = new Recorder(MAX_TRACKABLE_DURATION_MS, /* significant digits = */ 2);
