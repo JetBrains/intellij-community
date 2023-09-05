@@ -108,13 +108,14 @@ internal open class EntityStorageSnapshotImpl(
 @OptIn(EntityStorageInstrumentationApi::class)
 internal class MutableEntityStorageImpl(
   private val originalSnapshot: EntityStorageSnapshotImpl,
-  @Volatile
-  private var trackStackTrace: Boolean = false,
 ) : MutableEntityStorageInstrumentation, AbstractEntityStorage() {
 
   override val entitiesByType: MutableEntitiesBarrel = MutableEntitiesBarrel.from(originalSnapshot.entitiesByType)
   override val refs: MutableRefsTable = MutableRefsTable.from(originalSnapshot.refs)
   override val indexes: MutableStorageIndexes = originalSnapshot.indexes.toMutable()
+
+  @Volatile
+  private var trackStackTrace: Boolean = false
 
   private var calculationCache = EntityStorageCacheImpl()
 
