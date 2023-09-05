@@ -25,7 +25,6 @@ import org.jetbrains.org.objectweb.asm.*;
 
 import java.lang.reflect.Array;
 import java.text.CharacterIterator;
-import java.text.StringCharacterIterator;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
@@ -33,6 +32,7 @@ import java.util.Map;
 
 import static com.intellij.util.BitUtil.isSet;
 
+@SuppressWarnings("ResultOfObjectAllocationIgnored")
 public class StubBuildingVisitor<T> extends ClassVisitor {
   private static final Logger LOG = Logger.getInstance(StubBuildingVisitor.class);
 
@@ -168,7 +168,7 @@ public class StubBuildingVisitor<T> extends ClassVisitor {
 
   private ClassInfo parseClassSignature(String signature) throws ClsFormatException {
     ClassInfo result = new ClassInfo();
-    CharacterIterator iterator = new StringCharacterIterator(signature);
+    SignatureParsing.CharIterator iterator = new SignatureParsing.CharIterator(signature);
     result.typeParameters = SignatureParsing.parseTypeParametersDeclaration(iterator, myFirstPassData);
     String superName = SignatureParsing.parseTopLevelClassRefSignature(iterator, myFirstPassData);
     result.superType = superName == null ? null : new TypeInfo(superName);
@@ -359,7 +359,7 @@ public class StubBuildingVisitor<T> extends ClassVisitor {
     String type = null;
     if (signature != null) {
       try {
-        type = SignatureParsing.parseTypeString(new StringCharacterIterator(signature), myFirstPassData);
+        type = SignatureParsing.parseTypeString(new SignatureParsing.CharIterator(signature), myFirstPassData);
       }
       catch (ClsFormatException e) {
         if (LOG.isDebugEnabled()) LOG.debug("source=" + mySource + " signature=" + signature, e);
@@ -426,7 +426,7 @@ public class StubBuildingVisitor<T> extends ClassVisitor {
       if (isEnumConstructor && args.size() >= 2 && CommonClassNames.JAVA_LANG_STRING.equals(args.get(0)) && "int".equals(args.get(1))) {
         args = args.subList(2, args.size());  // omit synthetic enum constructor parameters
       }
-      else if (isInnerClassConstructor && args.size() >= 1) {
+      else if (isInnerClassConstructor && !args.isEmpty()) {
         args = args.subList(1, args.size());  // omit synthetic inner class constructor parameter
       }
     }
@@ -470,7 +470,7 @@ public class StubBuildingVisitor<T> extends ClassVisitor {
 
   private MethodInfo parseMethodSignature(String signature, String[] exceptions) throws ClsFormatException {
     MethodInfo result = new MethodInfo();
-    CharacterIterator iterator = new StringCharacterIterator(signature);
+    SignatureParsing.CharIterator iterator = new SignatureParsing.CharIterator(signature);
 
     result.typeParameters = SignatureParsing.parseTypeParametersDeclaration(iterator, myFirstPassData);
 

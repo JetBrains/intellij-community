@@ -169,7 +169,7 @@ internal fun KotlinType.toPsiType(
         }
     KotlinUastTypeMapper.mapType(approximatedType, signatureWriter, typeMappingMode)
 
-    val signature = StringCharacterIterator(signatureWriter.toString())
+    val signature = SignatureParsing.CharIterator(signatureWriter.toString())
 
     val javaType = SignatureParsing.parseTypeString(signature, StubBuildingVisitor.GUESSING_MAPPER)
     val typeInfo = TypeInfo.fromString(javaType, false)

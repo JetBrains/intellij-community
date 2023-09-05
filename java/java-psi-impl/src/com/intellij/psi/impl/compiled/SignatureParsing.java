@@ -25,6 +25,44 @@ import java.util.List;
 public final class SignatureParsing {
   private SignatureParsing() { }
   
+  public static final class CharIterator {
+    static final int DONE = '\uFFFF';
+    private final String myData;
+    private final int myEnd;
+    private int myPos = 0;
+
+    public CharIterator(String data) {
+      myData = data;
+      myEnd = data.length();
+    }
+
+    char current() {
+      if (myPos == myEnd) return DONE;
+      return myData.charAt(myPos);
+    }
+    
+    void next() {
+      if (myPos < myEnd - 1) {
+        ++myPos;
+      } else {
+        myPos = myEnd;
+      }
+    }
+    
+    int pos() {
+      return myPos;
+    }
+    
+    String substring(int fromIndex) {
+      return myData.substring(fromIndex, myPos);
+    }
+
+    @Override
+    public String toString() {
+      return myData;
+    }
+  }
+  
   static class TypeParametersDeclaration {
     static final TypeParametersDeclaration EMPTY = new TypeParametersDeclaration(Collections.emptyList());
     
@@ -55,9 +93,11 @@ public final class SignatureParsing {
     }
 
     void fillInTypeParameterList(StubElement<?> parent) {
+      List<TypeParameterDeclaration> declarations = this.myDeclarations;
+      if (declarations.isEmpty()) return;
       PsiTypeParameterListStub listStub = parent.findChildStubByType(JavaStubElementTypes.TYPE_PARAMETER_LIST);
       if (listStub == null) return;
-      for (TypeParameterDeclaration parameter : this.myDeclarations) {
+      for (TypeParameterDeclaration parameter : declarations) {
         parameter.createTypeParameter(listStub);
       }
     }
@@ -84,7 +124,7 @@ public final class SignatureParsing {
   }
 
   @NotNull
-  static TypeParametersDeclaration parseTypeParametersDeclaration(CharacterIterator signature, Function<? super String, String> mapping) throws ClsFormatException {
+  static TypeParametersDeclaration parseTypeParametersDeclaration(CharIterator signature, Function<? super String, String> mapping) throws ClsFormatException {
     if (signature.current() != '<') {
       return TypeParametersDeclaration.EMPTY;
     }
@@ -98,16 +138,16 @@ public final class SignatureParsing {
     return new TypeParametersDeclaration(typeParameters);
   }
 
-  private static TypeParameterDeclaration parseTypeParameter(CharacterIterator signature, Function<? super String, String> mapping) throws ClsFormatException {
-    StringBuilder name = new StringBuilder();
-    while (signature.current() != ':' && signature.current() != CharacterIterator.DONE) {
-      name.append(signature.current());
+  private static TypeParameterDeclaration parseTypeParameter(CharIterator signature, Function<? super String, String> mapping) throws ClsFormatException {
+    int from = signature.pos();
+    while (signature.current() != ':' && signature.current() != CharIterator.DONE) {
       signature.next();
     }
-    if (signature.current() == CharacterIterator.DONE) {
+    String name = signature.substring(from);
+    if (signature.current() == CharIterator.DONE) {
       throw new ClsFormatException();
     }
-    String parameterName = mapping.fun(name.toString());
+    String parameterName = mapping.fun(name);
 
     List<TypeInfo> bounds = new SmartList<>();
     while (signature.current() == ':') {
@@ -121,7 +161,7 @@ public final class SignatureParsing {
   }
 
   @Nullable
-  public static String parseTopLevelClassRefSignature(CharacterIterator signature, Function<? super String, String> mapping) throws ClsFormatException {
+  static String parseTopLevelClassRefSignature(CharIterator signature, Function<? super String, String> mapping) throws ClsFormatException {
     switch (signature.current()) {
       case 'L':
         return parseParameterizedClassRefSignature(signature, mapping);
@@ -132,61 +172,82 @@ public final class SignatureParsing {
     }
   }
 
-  private static String parseTypeVariableRefSignature(CharacterIterator signature) throws ClsFormatException {
-    StringBuilder id = new StringBuilder();
-
+  private static String parseTypeVariableRefSignature(CharIterator signature) throws ClsFormatException {
     signature.next();
-    while (signature.current() != ';' && signature.current() != '>' && signature.current() != CharacterIterator.DONE) {
-      id.append(signature.current());
+    int from = signature.pos();
+    while (signature.current() != ';' && signature.current() != '>' && signature.current() != CharIterator.DONE) {
       signature.next();
     }
+    String id = signature.substring(from);
 
-    if (signature.current() == CharacterIterator.DONE) {
+    if (signature.current() == CharIterator.DONE) {
       throw new ClsFormatException();
     }
     if (signature.current() == ';') {
       signature.next();
     }
 
-    return id.toString();
+    return id;
   }
 
-  private static String parseParameterizedClassRefSignature(CharacterIterator signature, Function<? super String, String> mapping) throws ClsFormatException {
-    StringBuilder canonicalText = new StringBuilder();
-    boolean mapped = false, firstArg;
+  private static String parseParameterizedClassRefSignature(CharIterator signature, Function<? super String, String> mapping) throws ClsFormatException {
+    StringBuilder canonicalText = null;
 
     signature.next();
-    while (signature.current() != ';' && signature.current() != CharacterIterator.DONE) {
+    int start = signature.pos();
+    boolean hasSpace = false;
+    while (true) {
       char c = signature.current();
-      if (c == '<') {
-        canonicalText = new StringBuilder(mapping.fun(canonicalText.toString()));
-        mapped = true;
-        firstArg = true;
-        signature.next();
-        do {
-          canonicalText.append(firstArg ? '<' : ',').append(parseClassOrTypeVariableElement(signature, mapping));
-          firstArg = false;
+      switch (c) {
+        case ';': {
+          String javaName;
+          if (canonicalText == null) {
+            String jvmName = signature.substring(start);
+            if (hasSpace) {
+              jvmName = jvmName.replace(" ", "");
+            }
+            javaName = mapping.fun(jvmName);
+          }
+          else {
+            javaName = canonicalText.toString();
+          }
+          signature.next();
+          return javaName;
         }
-        while (signature.current() != '>');
-        canonicalText.append('>');
-      }
-      else if (c != ' ') {
-        canonicalText.append(c);
+        case CharIterator.DONE:
+          throw new ClsFormatException();
+        case '<': {
+          if (canonicalText == null) {
+            String jvmName = signature.substring(start);
+            if (hasSpace) {
+              jvmName = jvmName.replace(" ", "");
+            }
+            String javaName = mapping.fun(jvmName);
+            canonicalText = new StringBuilder(javaName);
+          }
+          boolean firstArg = true;
+          signature.next();
+          do {
+            canonicalText.append(firstArg ? '<' : ',').append(parseClassOrTypeVariableElement(signature, mapping));
+            firstArg = false;
+          }
+          while (signature.current() != '>');
+          canonicalText.append('>');
+          break;
+        }
+        case ' ':
+          hasSpace = true;
+          break;
+        default:
+          if (canonicalText != null) {
+            canonicalText.append(c);
+          }
       }
       signature.next();
     }
-
-    if (signature.current() == CharacterIterator.DONE) {
-      throw new ClsFormatException();
-    }
-    signature.next();
-
-    String text = canonicalText.toString();
-    if (!mapped) text = mapping.fun(text);
-    return text;
   }
 
-  private static String parseClassOrTypeVariableElement(CharacterIterator signature, Function<? super String, String> mapping) throws ClsFormatException {
+  private static String parseClassOrTypeVariableElement(CharIterator signature, Function<? super String, String> mapping) throws ClsFormatException {
     char variance = parseVariance(signature);
     if (variance == '*') {
       return decorateTypeText(null, variance);
@@ -227,7 +288,7 @@ public final class SignatureParsing {
     }
   }
 
-  private static char parseVariance(CharacterIterator signature) {
+  private static char parseVariance(CharIterator signature) {
     char variance;
     switch (signature.current()) {
       case '+':
@@ -246,7 +307,7 @@ public final class SignatureParsing {
     return variance;
   }
 
-  private static int parseDimensions(CharacterIterator signature) {
+  private static int parseDimensions(CharIterator signature) {
     int dimensions = 0;
     while (signature.current() == '[') {
       dimensions++;
@@ -255,8 +316,31 @@ public final class SignatureParsing {
     return dimensions;
   }
 
+  /**
+   * @deprecated use {@link #parseTypeString(CharIterator, Function)}, it's more optimal
+   */
+  @SuppressWarnings("DeprecatedIsStillUsed")
+  @Deprecated
   @NotNull
   public static String parseTypeString(CharacterIterator signature, Function<? super String, String> mapping) throws ClsFormatException {
+    StringBuilder sb = new StringBuilder();
+    int pos = signature.getIndex();
+    while(true) {
+      char ch = signature.current();
+      if (ch == CharacterIterator.DONE) {
+        break;
+      }
+      sb.append(ch);
+      signature.next();
+    }
+    CharIterator iterator = new CharIterator(sb.toString());
+    String result = parseTypeString(iterator, mapping);
+    signature.setIndex(iterator.pos() + pos);
+    return result;
+  }
+
+  @NotNull
+  public static String parseTypeString(CharIterator signature, Function<? super String, String> mapping) throws ClsFormatException {
     int dimensions = parseDimensions(signature);
 
     String text = parseTypeWithoutVariance(signature, mapping);
@@ -270,7 +354,7 @@ public final class SignatureParsing {
   }
 
   @Nullable
-  private static String parseTypeWithoutVariance(CharacterIterator signature, Function<? super String, String> mapping) throws ClsFormatException {
+  private static String parseTypeWithoutVariance(CharIterator signature, Function<? super String, String> mapping) throws ClsFormatException {
     String text = null;
 
     switch (signature.current()) {

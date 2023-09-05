@@ -36,6 +36,9 @@ public class SignatureParsingTest {
   }
 
   private static String parseTypeString(String signature) throws ClsFormatException {
-    return SignatureParsing.parseTypeString(new StringCharacterIterator(signature), StubBuildingVisitor.GUESSING_MAPPER);
+    String oldStyle = SignatureParsing.parseTypeString(new StringCharacterIterator(signature), StubBuildingVisitor.GUESSING_MAPPER);
+    String newStyle = SignatureParsing.parseTypeString(new SignatureParsing.CharIterator(signature), StubBuildingVisitor.GUESSING_MAPPER);
+    assertEquals(oldStyle, newStyle);
+    return newStyle;
   }
 }

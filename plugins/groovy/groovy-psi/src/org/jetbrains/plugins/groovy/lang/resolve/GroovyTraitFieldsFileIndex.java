@@ -157,7 +157,7 @@ public class GroovyTraitFieldsFileIndex
       private String fieldType(String desc, String signature) {
         if (signature != null) {
           try {
-            return SignatureParsing.parseTypeString(new StringCharacterIterator(signature), StubBuildingVisitor.GUESSING_MAPPER);
+            return SignatureParsing.parseTypeString(new SignatureParsing.CharIterator(signature), StubBuildingVisitor.GUESSING_MAPPER);
           }
           catch (ClsFormatException ignored) { }
         }
