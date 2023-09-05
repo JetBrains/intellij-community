@@ -107,12 +107,14 @@ internal open class EntityStorageSnapshotImpl(
 
 @OptIn(EntityStorageInstrumentationApi::class)
 internal class MutableEntityStorageImpl(
-  override val entitiesByType: MutableEntitiesBarrel,
-  override val refs: MutableRefsTable,
-  override val indexes: MutableStorageIndexes,
+  private val originalSnapshot: EntityStorageSnapshotImpl,
   @Volatile
-  private var trackStackTrace: Boolean = false
+  private var trackStackTrace: Boolean = false,
 ) : MutableEntityStorageInstrumentation, AbstractEntityStorage() {
+
+  override val entitiesByType: MutableEntitiesBarrel = MutableEntitiesBarrel.from(originalSnapshot.entitiesByType)
+  override val refs: MutableRefsTable = MutableRefsTable.from(originalSnapshot.refs)
+  override val indexes: MutableStorageIndexes = originalSnapshot.indexes.toMutable()
 
   private var calculationCache = EntityStorageCacheImpl()
 
@@ -442,13 +444,13 @@ internal class MutableEntityStorageImpl(
    *   regarding the entities that are affected by this change. For example, if we remove the child, we don't add the information that
    *   the parent was modified.
    */
-  override fun collectChanges(original: EntityStorage): Map<Class<*>, List<EntityChange<*>>> {
+  override fun collectChanges(): Map<Class<*>, List<EntityChange<*>>> {
     val start = System.currentTimeMillis()
     val res = HashMap<Class<*>, MutableList<EntityChange<*>>>()
 
     try {
       lockWrite()
-      val originalImpl = original as AbstractEntityStorage
+      val originalImpl = this.originalSnapshot
       val changedEntityIds = HashSet<Long>()
 
       // Here we collect the ID of entities that were changed and entities that were affected by this change.
@@ -525,11 +527,11 @@ internal class MutableEntityStorageImpl(
     return res
   }
 
-  override fun hasSameEntities(original: EntityStorage): Boolean {
+  override fun hasSameEntities(): Boolean {
     val start = System.currentTimeMillis()
     if (changeLog.changeLog.isEmpty()) return true
 
-    original as AbstractEntityStorage
+    val original = originalSnapshot
     val adds = ArrayList<WorkspaceEntityData<*>>()
     val removes = CollectionFactory.createSmallMemoryFootprintMap<WorkspaceEntityData<out WorkspaceEntity>, MutableList<WorkspaceEntityData<out WorkspaceEntity>>>()
     changeLog.changeLog.forEach { (_, value) ->
@@ -936,10 +938,7 @@ internal class MutableEntityStorageImpl(
 
     fun from(storage: EntityStorageSnapshot): MutableEntityStorageImpl {
       storage as EntityStorageSnapshotImpl
-      val copiedBarrel = MutableEntitiesBarrel.from(storage.entitiesByType)
-      val copiedRefs = MutableRefsTable.from(storage.refs)
-      val copiedIndex = storage.indexes.toMutable()
-      val newBuilder = MutableEntityStorageImpl(copiedBarrel, copiedRefs, copiedIndex)
+      val newBuilder = MutableEntityStorageImpl(originalSnapshot = storage)
       LOG.trace { "Create new builder $newBuilder from $storage.\n${currentStackTrace(10)}" }
       return newBuilder
     }

@@ -13,7 +13,7 @@ import com.intellij.platform.workspace.jps.entities.ModuleId
 class ModulePreUpdateHandler : WorkspaceModelPreUpdateHandler {
   override fun update(before: EntityStorage, builder: MutableEntityStorage): Boolean {
     // TODO: 21.12.2020 We need an api to find removed modules faster
-    val changes = builder.collectChanges(before)
+    val changes = builder.collectChanges()
 
     val removedModuleSymbolicIds = LinkedHashSet<ModuleId>()
     changes[ModuleEntity::class.java]?.asSequence()?.forEach { change ->

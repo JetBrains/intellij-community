@@ -185,7 +185,7 @@ public interface MutableEntityStorage : EntityStorage {
    * To understand how the changes are collected see the KDoc for [com.intellij.platform.backend.workspace.WorkspaceModelChangeListener]
    */
   @ApiStatus.Internal
-  public fun collectChanges(original: EntityStorage): Map<Class<*>, List<EntityChange<*>>>
+  public fun collectChanges(): Map<Class<*>, List<EntityChange<*>>>
 
   /**
    * Merges changes from [diff] to this storage. 
@@ -200,7 +200,7 @@ public interface MutableEntityStorage : EntityStorage {
    * The difference from [hasChanges] is that this method will return `true` in cases when an entity was removed, and then a new entity
    * with the same properties was added.
    */
-  public fun hasSameEntities(original: EntityStorage): Boolean
+  public fun hasSameEntities(): Boolean
 
   /**
    * Returns an existing or create a new mapping with the given [identifier].

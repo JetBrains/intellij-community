@@ -102,7 +102,7 @@ class ReplaceBySourceTest {
     val builder2 = createEmptyBuilder()
 
     builder.replaceBySource({ true }, builder2)
-    assertTrue(builder.collectChanges(createEmptyBuilder()).isEmpty())
+    assertTrue(builder.collectChanges().isEmpty())
     builder.assertConsistency()
   }
 
@@ -114,7 +114,7 @@ class ReplaceBySourceTest {
     val originalStorage = builder.toSnapshot()
 
     builder.replaceBySource({ true }, createEmptyBuilder())
-    val collectChanges = builder.collectChanges(originalStorage)
+    val collectChanges = builder.collectChanges()
     assertEquals(1, collectChanges.size)
     assertEquals(2, collectChanges.values.single().size)
     assertTrue(collectChanges.values.single().all { it is EntityChange.Removed<*> })
@@ -135,7 +135,7 @@ class ReplaceBySourceTest {
     replacement add NamedEntity("hello1", SampleEntitySource("1"))
     builder.replaceBySource({ false }, replacement)
     assertEquals(setOf("hello2"), builder.entities(NamedEntity::class.java).mapTo(HashSet()) { it.myName })
-    assertTrue(builder.collectChanges(createEmptyBuilder()).isEmpty())
+    assertTrue(builder.collectChanges().isEmpty())
     builder.assertConsistency()
   }
 

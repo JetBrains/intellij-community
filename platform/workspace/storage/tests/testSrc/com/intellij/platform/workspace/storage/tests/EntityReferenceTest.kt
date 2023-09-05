@@ -64,7 +64,7 @@ class EntityReferenceTest {
     newBuilder.removeEntity(entity)
     newBuilder addEntity SampleEntity(false, "foo", ArrayList(), HashMap(), virtualFileUrlManager.fromUrl("file:///tmp"),
                                       SampleEntitySource("test"))
-    val changes = newBuilder.collectChanges(snapshot)
+    val changes = newBuilder.collectChanges()
     //if there is an event about the change, the code which stores EntityReference is supposed to update it
     if (changes.isEmpty()) {
       val updated = newBuilder.toSnapshot()

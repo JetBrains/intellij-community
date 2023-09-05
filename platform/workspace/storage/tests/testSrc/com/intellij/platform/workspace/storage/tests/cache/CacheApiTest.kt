@@ -268,7 +268,7 @@ class CacheApiTest {
 
   @OptIn(EntityStorageInstrumentationApi::class)
   private fun MutableEntityStorage.toMySnapshot(previous: EntityStorageSnapshot): EntityStorageSnapshot {
-    val changes = this.collectChanges(previous)
+    val changes = this.collectChanges()
     return this.instrumentation.toSnapshot(previous, changes)
   }
 

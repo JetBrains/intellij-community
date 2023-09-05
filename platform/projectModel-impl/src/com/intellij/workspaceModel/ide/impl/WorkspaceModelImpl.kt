@@ -144,7 +144,7 @@ open class WorkspaceModelImpl(private val project: Project, private val cs: Coro
 
       val changes: Map<Class<*>, List<EntityChange<*>>>
       collectChangesTimeMillis = measureTimeMillis {
-        changes = builder.collectChanges(before)
+        changes = builder.collectChanges()
       }
       initializingTimeMillis = measureTimeMillis {
         this.initializeBridges(changes, builder)
@@ -219,7 +219,7 @@ open class WorkspaceModelImpl(private val project: Project, private val cs: Coro
 
       // We don't send changes to the WorkspaceModelChangeListener during the silent update.
       // But the concept of silent update is getting deprecated, and the list of changes will be sent to the new async listeners
-      val changes = builder.collectChanges(before)
+      val changes = builder.collectChanges()
 
       toSnapshotTimeMillis = measureTimeMillis {
         newStorage = builder.toSnapshot()
@@ -274,7 +274,7 @@ open class WorkspaceModelImpl(private val project: Project, private val cs: Coro
       val builder = MutableEntityStorage.from(before)
       updater(builder)
       startPreUpdateHandlers(before, builder)
-      val changes = builder.collectChanges(before)
+      val changes = builder.collectChanges()
       val newStorage = builder.toSnapshot()
       unloadedEntitiesStorage.replace(newStorage, changes, {}, ::onUnloadedEntitiesChanged)
     }.apply { updateUnloadedEntitiesTimeMs.addAndGet(this) }

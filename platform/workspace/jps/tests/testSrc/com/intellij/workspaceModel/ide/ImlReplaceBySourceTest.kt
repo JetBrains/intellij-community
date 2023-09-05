@@ -4,7 +4,6 @@ package com.intellij.workspaceModel.ide
 import com.intellij.openapi.application.ex.PathManagerEx
 import com.intellij.platform.workspace.jps.JpsProjectConfigLocation
 import com.intellij.platform.workspace.jps.JpsProjectFileEntitySource
-import com.intellij.platform.workspace.jps.UnloadedModulesNameHolder
 import com.intellij.platform.workspace.jps.serialization.impl.JpsProjectEntitiesLoader
 import com.intellij.platform.workspace.storage.tests.checkConsistency
 import com.intellij.testFramework.ApplicationRule
@@ -98,7 +97,7 @@ class ImlReplaceBySourceTest {
     builder = before.toBuilder()
     builder.replaceBySource({ true }, replaceWith.toSnapshot())
 
-    val changes = builder.collectChanges(before).values.flatten()
+    val changes = builder.collectChanges().values.flatten()
     Assert.assertEquals(6, changes.size)
 
     @Suppress("UNCHECKED_CAST")
@@ -135,7 +134,7 @@ class ImlReplaceBySourceTest {
     storageBuilder1.replaceBySource(sourceFilter = { true }, replaceWith = storageBuilder2.toSnapshot())
     storageBuilder1.checkConsistency()
 
-    val changes = storageBuilder1.collectChanges(before)
+    val changes = storageBuilder1.collectChanges()
     Assert.assertTrue(changes.toString(), changes.isEmpty())
   }
 

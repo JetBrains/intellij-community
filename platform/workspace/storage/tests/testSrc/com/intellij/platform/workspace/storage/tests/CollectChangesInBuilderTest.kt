@@ -331,13 +331,13 @@ class CollectChangesInBuilderTest {
   private fun assertChangelogSize(size: Int,
                                   myBuilder: MutableEntityStorage = builder,
                                   original: EntityStorageSnapshot = initialStorage): Map<Class<*>, List<EntityChange<*>>> {
-    val changes = myBuilder.collectChanges(original)
+    val changes = myBuilder.collectChanges()
     assertEquals(size, changes.values.flatten().size)
     return changes
   }
 
   private fun collectSampleEntityChanges(): List<EntityChange<SampleEntity>> {
-    val changes = builder.collectChanges(initialStorage)
+    val changes = builder.collectChanges()
     if (changes.isEmpty()) return emptyList()
     return changes.entries.single().value as List<EntityChange<SampleEntity>>
   }

@@ -84,7 +84,7 @@ class GlobalWorkspaceModel : Disposable {
     entityStorage = VersionedEntityStorageImpl(EntityStorageSnapshot.empty())
 
     val callback = JpsGlobalModelSynchronizer.getInstance().loadInitialState(mutableEntityStorage, entityStorage, loadedFromCache)
-    val changes = mutableEntityStorage.collectChanges(EntityStorageSnapshot.empty())
+    val changes = mutableEntityStorage.collectChanges()
     entityStorage.replace(mutableEntityStorage.toSnapshot(), changes, {}, {})
     callback.invoke()
   }
@@ -108,7 +108,7 @@ class GlobalWorkspaceModel : Disposable {
       }
       val changes: Map<Class<*>, List<EntityChange<*>>>
       collectChangesTimeMillis = measureTimeMillis {
-        changes = builder.collectChanges(before)
+        changes = builder.collectChanges()
       }
       initializingTimeMillis = measureTimeMillis {
         this.initializeBridges(changes, builder)
