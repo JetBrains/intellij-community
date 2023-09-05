@@ -8,6 +8,8 @@ import com.intellij.ide.actions.ContextHelpAction
 import com.intellij.ide.actions.ToggleToolbarAction
 import com.intellij.ide.actions.ToolWindowMoveAction
 import com.intellij.ide.actions.ToolwindowFusEventFields
+import com.intellij.ide.actions.tree.SpeedSearchActionHandler
+import com.intellij.ide.actions.tree.getSpeedSearchActionHandler
 import com.intellij.ide.impl.ContentManagerWatcher
 import com.intellij.idea.ActionsBundle
 import com.intellij.internal.statistic.eventLog.events.EventPair
@@ -23,6 +25,7 @@ import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.project.DumbAware
+import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.project.DumbService
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.Divider
@@ -658,6 +661,8 @@ internal class ToolWindowImpl(val toolWindowManager: ToolWindowManagerImpl,
         }
         group.addSeparator()
       }
+      group.add(SpeedSearchAction())
+      group.addSeparator()
       getContentManagerIfCreated()?.let {
         group.add(TabbedContentAction.CloseAllAction(it))
       }
@@ -765,6 +770,31 @@ internal class ToolWindowImpl(val toolWindowManager: ToolWindowManagerImpl,
 
     override fun getAdditionalUsageData(event: AnActionEvent): List<EventPair<*>> {
       return listOf(ToolwindowFusEventFields.TOOLWINDOW with id)
+    }
+  }
+
+  private inner class SpeedSearchAction : DumbAwareAction(
+    ActionsBundle.messagePointer("action.Tree-speedSearch.text"),
+    AllIcons.Actions.Find,
+  ) {
+    override fun getActionUpdateThread() = ActionUpdateThread.EDT
+
+    override fun update(e: AnActionEvent) {
+      val actionHandler = getActionHandler()
+      e.presentation.isVisible = actionHandler != null
+      e.presentation.isEnabled = actionHandler?.isSpeedSearchActive() == false
+    }
+
+    override fun actionPerformed(e: AnActionEvent) {
+      getActionHandler()?.activateSpeedSearch()
+    }
+
+    private fun getActionHandler(): SpeedSearchActionHandler? {
+      val trees = UIUtil.uiTraverser(component)
+        .filter { it is JTree && it.isVisible }
+        .toMutableList()
+      trees.sortBy { SwingUtilities.convertPoint(it.parent, it.location, component).x }
+      return trees.firstNotNullOfOrNull { it.getSpeedSearchActionHandler() }
     }
   }
 
