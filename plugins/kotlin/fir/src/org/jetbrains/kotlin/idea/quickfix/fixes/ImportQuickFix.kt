@@ -195,10 +195,9 @@ class ImportQuickFix(
 
     companion object {
         val invisibleReferenceFactory = diagnosticFixFactory(KtFirDiagnostic.InvisibleReference::class) { getFixes(it.psi) }
-        val unresolvedReferenceFactory = diagnosticFixFactory(KtFirDiagnostic.UnresolvedReference::class) { getFixes(it.psi) }
 
         context(KtAnalysisSession)
-        private fun getFixes(position: PsiElement): List<ImportQuickFix> {
+        fun getFixes(position: PsiElement): List<ImportQuickFix> {
             if (position !is KtElement) return emptyList()
 
             val indexProvider = KtSymbolFromIndexProvider.createForElement(position)
