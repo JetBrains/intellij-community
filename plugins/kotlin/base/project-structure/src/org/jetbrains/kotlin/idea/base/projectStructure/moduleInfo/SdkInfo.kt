@@ -13,7 +13,6 @@ import com.intellij.openapi.roots.ModuleRootManager
 import com.intellij.openapi.roots.OrderRootType
 import com.intellij.psi.search.GlobalSearchScope
 import org.jetbrains.kotlin.analyzer.*
-import org.jetbrains.kotlin.descriptors.ModuleCapability
 import org.jetbrains.kotlin.idea.base.projectStructure.KotlinBaseProjectStructureBundle
 import org.jetbrains.kotlin.idea.base.projectStructure.scope.PoweredLibraryScopeBase
 import org.jetbrains.kotlin.idea.framework.KotlinSdkType
@@ -49,12 +48,6 @@ data class SdkInfo(override val project: Project, val sdk: Sdk) : IdeaModuleInfo
 
     override val analyzerServices: PlatformDependentAnalyzerServices
         get() = JvmPlatformAnalyzerServices
-
-    override val capabilities: Map<ModuleCapability<*>, Any?>
-        get() = when (this.sdk.sdkType) {
-            is JavaSdk -> super<IdeaModuleInfo>.capabilities + mapOf(JDK_CAPABILITY to true)
-            else -> super<IdeaModuleInfo>.capabilities
-        }
 }
 
 fun Project.allSdks(modules: Array<out Module>? = null): Set<Sdk> = runReadAction {
