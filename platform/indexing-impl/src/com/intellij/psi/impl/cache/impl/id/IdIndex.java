@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.psi.impl.cache.impl.id;
 
@@ -33,7 +33,7 @@ import static com.intellij.util.indexing.hints.FileTypeSubstitutionStrategy.BEFO
  */
 @ApiStatus.Internal
 public class IdIndex extends FileBasedIndexExtension<IdIndexEntry, Integer> {
-  @NonNls public static final ID<IdIndexEntry, Integer> NAME = ID.create("IdIndex");
+  public static final @NonNls ID<IdIndexEntry, Integer> NAME = ID.create("IdIndex");
 
   private final KeyDescriptor<IdIndexEntry> myKeyDescriptor = new InlineKeyDescriptor<>() {
     @Override
@@ -57,42 +57,36 @@ public class IdIndex extends FileBasedIndexExtension<IdIndexEntry, Integer> {
     return true;
   }
 
-  @NotNull
   @Override
-  public ID<IdIndexEntry,Integer> getName() {
+  public @NotNull ID<IdIndexEntry,Integer> getName() {
     return NAME;
   }
 
-  @NotNull
   @Override
-  public DataIndexer<IdIndexEntry, Integer, FileContent> getIndexer() {
+  public @NotNull DataIndexer<IdIndexEntry, Integer, FileContent> getIndexer() {
     return new CompositeDataIndexer<IdIndexEntry, Integer, FileTypeSpecificSubIndexer<IdIndexer>, String>() {
-      @Nullable
       @Override
-      public FileTypeSpecificSubIndexer<IdIndexer> calculateSubIndexer(@NotNull IndexedFile file) {
+      public @Nullable FileTypeSpecificSubIndexer<IdIndexer> calculateSubIndexer(@NotNull IndexedFile file) {
         FileType type = file.getFileType();
         IdIndexer indexer = IdTableBuilding.getFileTypeIndexer(type);
         return indexer == null ? null : new FileTypeSpecificSubIndexer<>(indexer, file.getFileType());
       }
 
-      @NotNull
       @Override
-      public String getSubIndexerVersion(@NotNull FileTypeSpecificSubIndexer<IdIndexer> indexer) {
+      public @NotNull String getSubIndexerVersion(@NotNull FileTypeSpecificSubIndexer<IdIndexer> indexer) {
         return indexer.getSubIndexerType().getClass().getName() + ":" +
                indexer.getSubIndexerType().getVersion() + ":" +
                indexer.getFileType().getName();
       }
 
-      @NotNull
       @Override
-      public KeyDescriptor<String> getSubIndexerVersionDescriptor() {
+      public @NotNull KeyDescriptor<String> getSubIndexerVersionDescriptor() {
         return EnumeratorStringDescriptor.INSTANCE;
       }
 
-      @NotNull
       @Override
-      public Map<IdIndexEntry, Integer> map(@NotNull FileContent inputData,
-                                            @NotNull FileTypeSpecificSubIndexer<IdIndexer> indexer) throws MapReduceIndexMappingException {
+      public @NotNull Map<IdIndexEntry, Integer> map(@NotNull FileContent inputData,
+                                                     @NotNull FileTypeSpecificSubIndexer<IdIndexer> indexer) throws MapReduceIndexMappingException {
         IdIndexer subIndexerType = indexer.getSubIndexerType();
         try {
           return subIndexerType.map(inputData);
@@ -105,31 +99,28 @@ public class IdIndex extends FileBasedIndexExtension<IdIndexEntry, Integer> {
     };
   }
 
-  @NotNull
   @Override
-  public DataExternalizer<Integer> getValueExternalizer() {
+  public @NotNull DataExternalizer<Integer> getValueExternalizer() {
     return new DataExternalizer<>() {
       @Override
-      public void save(@NotNull final DataOutput out, final Integer value) throws IOException {
+      public void save(final @NotNull DataOutput out, final Integer value) throws IOException {
         out.write(value.intValue() & UsageSearchContext.ANY);
       }
 
       @Override
-      public Integer read(@NotNull final DataInput in) throws IOException {
+      public Integer read(final @NotNull DataInput in) throws IOException {
         return Integer.valueOf(in.readByte() & UsageSearchContext.ANY);
       }
     };
   }
 
-  @NotNull
   @Override
-  public KeyDescriptor<IdIndexEntry> getKeyDescriptor() {
+  public @NotNull KeyDescriptor<IdIndexEntry> getKeyDescriptor() {
     return myKeyDescriptor;
   }
 
-  @NotNull
   @Override
-  public FileBasedIndex.InputFilter getInputFilter() {
+  public @NotNull FileBasedIndex.InputFilter getInputFilter() {
     return new FileTypeInputFilterPredicate(BEFORE_SUBSTITUTION, fileType -> isIndexable(fileType));
   }
 

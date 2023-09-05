@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.psi.impl.cache.impl.id;
 
@@ -30,8 +30,7 @@ public final class IdTableBuilding {
     void run(CharSequence chars, char @Nullable [] charsArray, int start, int end);
   }
 
-  @Nullable
-  public static IdIndexer getFileTypeIndexer(FileType fileType) {
+  public static @Nullable IdIndexer getFileTypeIndexer(FileType fileType) {
     final IdIndexer extIndexer = getIndexer(fileType);
     if (extIndexer != null) {
       return extIndexer;
@@ -69,8 +68,7 @@ public final class IdTableBuilding {
   }
 
   @Contract(value = "_ -> new", pure = true)
-  @NotNull
-  public static IdIndexer createDefaultIndexer(@NotNull WordsScanner scanner) {
+  public static @NotNull IdIndexer createDefaultIndexer(@NotNull WordsScanner scanner) {
     return new ScanningIdIndexer() {
       @Override
       protected WordsScanner createScanner() {
@@ -80,8 +78,7 @@ public final class IdTableBuilding {
   }
 
   @Contract("_ -> new")
-  @NotNull
-  public static WordsScanner createCustomFileTypeScanner(@NotNull final SyntaxTable syntaxTable) {
+  public static @NotNull WordsScanner createCustomFileTypeScanner(final @NotNull SyntaxTable syntaxTable) {
     return new DefaultWordsScanner(new CustomFileTypeLexer(syntaxTable, true),
                                    TokenSet.create(CustomHighlighterTokenType.IDENTIFIER),
                                    TokenSet.create(CustomHighlighterTokenType.LINE_COMMENT,

@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.find.ngrams;
 
 import com.intellij.openapi.fileTypes.FileType;
@@ -41,33 +41,28 @@ public final class TrigramIndex extends ScalarIndexExtension<Integer> implements
            (!FileBasedIndex.IGNORE_PLAIN_TEXT_FILES || fileType != PlainTextFileType.INSTANCE);
   }
 
-  @NotNull
   @Override
-  public ID<Integer, Void> getName() {
+  public @NotNull ID<Integer, Void> getName() {
     return INDEX_ID;
   }
 
-  @NotNull
   @Override
-  public DataIndexer<Integer, Void, FileContent> getIndexer() {
+  public @NotNull DataIndexer<Integer, Void, FileContent> getIndexer() {
     return new DataIndexer<>() {
       @Override
-      @NotNull
-      public Map<Integer, Void> map(@NotNull FileContent inputData) {
+      public @NotNull Map<Integer, Void> map(@NotNull FileContent inputData) {
         return TrigramBuilder.getTrigramsAsMap(inputData.getContentAsText());
       }
     };
   }
 
-  @NotNull
   @Override
-  public KeyDescriptor<Integer> getKeyDescriptor() {
+  public @NotNull KeyDescriptor<Integer> getKeyDescriptor() {
     return EnumeratorIntegerDescriptor.INSTANCE;
   }
 
-  @NotNull
   @Override
-  public FileBasedIndex.InputFilter getInputFilter() {
+  public @NotNull FileBasedIndex.InputFilter getInputFilter() {
     return new FileTypeInputFilterPredicate(BEFORE_SUBSTITUTION, fileType -> isIndexable(fileType));
   }
 
@@ -88,9 +83,8 @@ public final class TrigramIndex extends ScalarIndexExtension<Integer> implements
 
   private static final ThreadLocalCachedIntArray SPARE_BUFFER_LOCAL = new ThreadLocalCachedIntArray();
 
-  @NotNull
   @Override
-  public DataExternalizer<Collection<Integer>> createExternalizer() {
+  public @NotNull DataExternalizer<Collection<Integer>> createExternalizer() {
     return new DataExternalizer<>() {
       @Override
       public void save(@NotNull DataOutput out, @NotNull Collection<Integer> value) throws IOException {
@@ -111,9 +105,8 @@ public final class TrigramIndex extends ScalarIndexExtension<Integer> implements
         }
       }
 
-      @NotNull
       @Override
-      public Collection<Integer> read(@NotNull DataInput in) throws IOException {
+      public @NotNull Collection<Integer> read(@NotNull DataInput in) throws IOException {
         int size = DataInputOutputUtil.readINT(in);
         List<Integer> result = new ArrayList<>(size);
         int prev = 0;

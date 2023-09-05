@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.indexing;
 
 import com.intellij.openapi.project.Project;
@@ -16,8 +16,7 @@ import java.util.Set;
 import java.util.function.Supplier;
 
 public final class AdditionalIndexableFileSet implements IndexableFileSet {
-  @Nullable
-  private final Project myProject;
+  private final @Nullable Project myProject;
   private final Supplier<IndexableSetContributor[]> myExtensions;
 
   private final CachedValue<AdditionalIndexableRoots> myAdditionalIndexableRoots;
@@ -37,8 +36,7 @@ public final class AdditionalIndexableFileSet implements IndexableFileSet {
                                                                                               IndexableSetContributorModificationTracker.getInstance()));
   }
 
-  @NotNull
-  private AdditionalIndexableFileSet.AdditionalIndexableRoots collectFilesAndDirectories() {
+  private @NotNull AdditionalIndexableFileSet.AdditionalIndexableRoots collectFilesAndDirectories() {
     Set<VirtualFile> files = new HashSet<>();
     Set<VirtualFile> directories = new HashSet<>();
     for (IndexableSetContributor contributor : myExtensions.get()) {

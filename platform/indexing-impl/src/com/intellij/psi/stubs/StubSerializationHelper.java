@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.stubs;
 
 import com.intellij.openapi.util.io.StreamUtil;
@@ -10,22 +10,19 @@ import java.io.DataOutputStream;
 import java.io.IOException;
 
 final class StubSerializationHelper extends StubTreeSerializerBase<IntEnumerator> {
-  @NotNull
-  private final StubSerializerEnumerator myEnumerator;
+  private final @NotNull StubSerializerEnumerator myEnumerator;
 
   StubSerializationHelper(@NotNull StubSerializerEnumerator enumerator) {
     myEnumerator = enumerator;
   }
 
-  @NotNull
   @Override
-  protected IntEnumerator readSerializationState(@NotNull StubInputStream stream) throws IOException {
+  protected @NotNull IntEnumerator readSerializationState(@NotNull StubInputStream stream) throws IOException {
     return IntEnumerator.read(stream);
   }
 
-  @NotNull
   @Override
-  protected IntEnumerator createSerializationState() {
+  protected @NotNull IntEnumerator createSerializationState() {
     return new IntEnumerator();
   }
 

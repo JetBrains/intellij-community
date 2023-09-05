@@ -22,8 +22,7 @@ import java.nio.file.Path;
 
 public class VfsAwareMapIndexStorage<Key, Value> extends MapIndexStorage<Key, Value> implements VfsAwareIndexStorage<Key, Value> {
   private final boolean myBuildKeyHashToVirtualFileMapping;
-  @Nullable
-  private KeyHashLog<Key> myKeyHashToVirtualFileMapping;
+  private @Nullable KeyHashLog<Key> myKeyHashToVirtualFileMapping;
 
   @TestOnly
   public VfsAwareMapIndexStorage(Path storageFile,

@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.todo;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -54,9 +54,7 @@ public final class TodoFilter implements Cloneable {
   /**
    * @return filter's name. That is not {@code null} string.
    */
-  @NotNull
-  @NlsSafe
-  public String getName() {
+  public @NotNull @NlsSafe String getName() {
     return myName;
   }
 

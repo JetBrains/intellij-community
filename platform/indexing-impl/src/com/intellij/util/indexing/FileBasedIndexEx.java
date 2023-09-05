@@ -87,21 +87,17 @@ public abstract class FileBasedIndexEx extends FileBasedIndex {
   }
 
   @ApiStatus.Internal
-  @NotNull
-  public abstract IntPredicate getAccessibleFileIdFilter(@Nullable Project project);
+  public abstract @NotNull IntPredicate getAccessibleFileIdFilter(@Nullable Project project);
 
-  @Nullable
   @ApiStatus.Internal
-  public abstract IdFilter extractIdFilter(@Nullable GlobalSearchScope scope,
-                                           @Nullable Project project);
+  public abstract @Nullable IdFilter extractIdFilter(@Nullable GlobalSearchScope scope,
+                                                     @Nullable Project project);
 
-  @Nullable
   @ApiStatus.Internal
-  public abstract IdFilter projectIndexableFiles(@Nullable Project project);
+  public abstract @Nullable IdFilter projectIndexableFiles(@Nullable Project project);
 
-  @NotNull
   @ApiStatus.Internal
-  public abstract <K, V> UpdatableIndex<K, V, FileContent, ?> getIndex(ID<K, V> indexId);
+  public abstract @NotNull <K, V> UpdatableIndex<K, V, FileContent, ?> getIndex(ID<K, V> indexId);
 
   public void resetHints() { }
 
@@ -113,14 +109,13 @@ public abstract class FileBasedIndexEx extends FileBasedIndex {
    * false if no need to process it because, for example, scope is empty or index is going to rebuild.
    */
   @ApiStatus.Internal
-  public abstract <K> boolean ensureUpToDate(@NotNull final ID<K, ?> indexId,
+  public abstract <K> boolean ensureUpToDate(final @NotNull ID<K, ?> indexId,
                                              @Nullable Project project,
                                              @Nullable GlobalSearchScope filter,
                                              @Nullable VirtualFile restrictedFile);
 
   @Override
-  @NotNull
-  public <K, V> List<V> getValues(@NotNull final ID<K, V> indexId, @NotNull K dataKey, @NotNull final GlobalSearchScope filter) {
+  public @NotNull <K, V> List<V> getValues(final @NotNull ID<K, V> indexId, @NotNull K dataKey, final @NotNull GlobalSearchScope filter) {
     @Nullable Iterator<VirtualFile> restrictToFileIt = extractSingleFileOrEmpty(filter);
 
     final List<V> values = new SmartList<>();
@@ -140,8 +135,7 @@ public abstract class FileBasedIndexEx extends FileBasedIndex {
   }
 
   @Override
-  @NotNull
-  public <K> Collection<K> getAllKeys(@NotNull final ID<K, ?> indexId, @NotNull Project project) {
+  public @NotNull <K> Collection<K> getAllKeys(final @NotNull ID<K, ?> indexId, @NotNull Project project) {
     Set<K> allKeys = new HashSet<>();
     processAllKeys(indexId, Processors.cancelableCollectProcessor(allKeys), project);
     return allKeys;
@@ -197,9 +191,8 @@ public abstract class FileBasedIndexEx extends FileBasedIndex {
     return false;
   }
 
-  @NotNull
   @Override
-  public <K, V> Map<K, V> getFileData(@NotNull ID<K, V> id, @NotNull VirtualFile virtualFile, @NotNull Project project) {
+  public @NotNull <K, V> Map<K, V> getFileData(@NotNull ID<K, V> id, @NotNull VirtualFile virtualFile, @NotNull Project project) {
     if (!(virtualFile instanceof VirtualFileWithId)) return Collections.emptyMap();
     int fileId = getFileId(virtualFile);
 
@@ -232,10 +225,9 @@ public abstract class FileBasedIndexEx extends FileBasedIndex {
   }
 
   @Override
-  @NotNull
-  public <K, V> Collection<VirtualFile> getContainingFiles(@NotNull ID<K, V> indexId,
-                                                           @NotNull K dataKey,
-                                                           @NotNull GlobalSearchScope filter) {
+  public @NotNull <K, V> Collection<VirtualFile> getContainingFiles(@NotNull ID<K, V> indexId,
+                                                                    @NotNull K dataKey,
+                                                                    @NotNull GlobalSearchScope filter) {
     return ContainerUtil.newHashSet(getContainingFilesIterator(indexId, dataKey, filter));
   }
 
@@ -278,8 +270,8 @@ public abstract class FileBasedIndexEx extends FileBasedIndex {
   }
 
   @Override
-  public <K, V> boolean processValues(@NotNull final ID<K, V> indexId, @NotNull final K dataKey, @Nullable final VirtualFile inFile,
-                                      @NotNull ValueProcessor<? super V> processor, @NotNull final GlobalSearchScope filter) {
+  public <K, V> boolean processValues(final @NotNull ID<K, V> indexId, final @NotNull K dataKey, final @Nullable VirtualFile inFile,
+                                      @NotNull ValueProcessor<? super V> processor, final @NotNull GlobalSearchScope filter) {
     return processValues(indexId, dataKey, inFile, processor, filter, null);
   }
 
@@ -303,11 +295,10 @@ public abstract class FileBasedIndexEx extends FileBasedIndex {
     return index.getModificationStamp();
   }
 
-  @Nullable
-  private <K, V, R> R processExceptions(@NotNull final ID<K, V> indexId,
-                                        @Nullable final VirtualFile restrictToFile,
-                                        @NotNull final GlobalSearchScope filter,
-                                        @NotNull ThrowableConvertor<? super UpdatableIndex<K, V, FileContent, ?>, ? extends R, StorageException> computable) {
+  private @Nullable <K, V, R> R processExceptions(final @NotNull ID<K, V> indexId,
+                                                  final @Nullable VirtualFile restrictToFile,
+                                                  final @NotNull GlobalSearchScope filter,
+                                                  @NotNull ThrowableConvertor<? super UpdatableIndex<K, V, FileContent, ?>, ? extends R, StorageException> computable) {
     try {
       waitUntilIndicesAreInitialized();
       UpdatableIndex<K, V, FileContent, ?> index = getIndex(indexId);
@@ -484,8 +475,8 @@ public abstract class FileBasedIndexEx extends FileBasedIndex {
   }
 
   @Override
-  public <K, V> boolean getFilesWithKey(@NotNull final ID<K, V> indexId,
-                                        @NotNull final Set<? extends K> dataKeys,
+  public <K, V> boolean getFilesWithKey(final @NotNull ID<K, V> indexId,
+                                        final @NotNull Set<? extends K> dataKeys,
                                         @NotNull Processor<? super VirtualFile> processor,
                                         @NotNull GlobalSearchScope filter) {
     return processFilesContainingAllKeys(indexId, dataKeys, filter, null, processor);
@@ -493,7 +484,7 @@ public abstract class FileBasedIndexEx extends FileBasedIndex {
 
 
   @Override
-  public <K> void scheduleRebuild(@NotNull final ID<K, ?> indexId, @NotNull final Throwable e) {
+  public <K> void scheduleRebuild(final @NotNull ID<K, ?> indexId, final @NotNull Throwable e) {
     requestRebuild(indexId, e);
   }
 
@@ -502,7 +493,7 @@ public abstract class FileBasedIndexEx extends FileBasedIndex {
    * The method is internal to indexing engine end is called internally. The method is public due to implementation details
    */
   @Override
-  public <K> void ensureUpToDate(@NotNull final ID<K, ?> indexId, @Nullable Project project, @Nullable GlobalSearchScope filter) {
+  public <K> void ensureUpToDate(final @NotNull ID<K, ?> indexId, @Nullable Project project, @Nullable GlobalSearchScope filter) {
     waitUntilIndicesAreInitialized();
     ensureUpToDate(indexId, project, filter, null);
   }
@@ -524,8 +515,7 @@ public abstract class FileBasedIndexEx extends FileBasedIndex {
   /**
    * Returns providers of files to be indexed.
    */
-  @NotNull
-  public List<IndexableFilesIterator> getIndexableFilesProviders(@NotNull Project project) {
+  public @NotNull List<IndexableFilesIterator> getIndexableFilesProviders(@NotNull Project project) {
     List<String> allowedIteratorPatterns = StringUtil.split(System.getProperty("idea.test.files.allowed.iterators", ""), ";");
     if (project instanceof LightEditCompatible) {
       return Collections.emptyList();
@@ -548,13 +538,12 @@ public abstract class FileBasedIndexEx extends FileBasedIndex {
     return providers;
   }
 
-  @Nullable
-  private <K, V> IntSet collectFileIdsContainingAllKeys(@NotNull ID<K, V> indexId,
-                                                        @NotNull Collection<? extends K> dataKeys,
-                                                        @NotNull GlobalSearchScope scope,
-                                                        @Nullable Condition<? super V> valueChecker,
-                                                        @Nullable IdFilter projectFilesFilter,
-                                                        @Nullable IntSet restrictedIds) {
+  private @Nullable <K, V> IntSet collectFileIdsContainingAllKeys(@NotNull ID<K, V> indexId,
+                                                                  @NotNull Collection<? extends K> dataKeys,
+                                                                  @NotNull GlobalSearchScope scope,
+                                                                  @Nullable Condition<? super V> valueChecker,
+                                                                  @Nullable IdFilter projectFilesFilter,
+                                                                  @Nullable IntSet restrictedIds) {
     try (var trace = lookupEntriesStarted(indexId)) {
       trace.keysWithAND(dataKeys.size())
         .withProject(scope.getProject());
@@ -581,12 +570,11 @@ public abstract class FileBasedIndexEx extends FileBasedIndex {
     }
   }
 
-  @Nullable
-  private <K, V> IntSet collectFileIdsContainingAnyKey(@NotNull ID<K, V> indexId,
-                                                       @NotNull Collection<? extends K> dataKeys,
-                                                       @NotNull GlobalSearchScope filter,
-                                                       @Nullable Condition<? super V> valueChecker,
-                                                       @Nullable IdFilter projectFilesFilter) {
+  private @Nullable <K, V> IntSet collectFileIdsContainingAnyKey(@NotNull ID<K, V> indexId,
+                                                                 @NotNull Collection<? extends K> dataKeys,
+                                                                 @NotNull GlobalSearchScope filter,
+                                                                 @Nullable Condition<? super V> valueChecker,
+                                                                 @Nullable IdFilter projectFilesFilter) {
     try (var trace = lookupEntriesStarted(indexId)) {
       trace.keysWithOR(dataKeys.size());
       IntPredicate accessibleFileFilter = getAccessibleFileIdFilter(filter.getProject());
@@ -694,16 +682,13 @@ public abstract class FileBasedIndexEx extends FileBasedIndex {
     }
   }
 
-  @Nullable
   @ApiStatus.Internal
-  public abstract VirtualFile findFileById(int id);
+  public abstract @Nullable VirtualFile findFileById(int id);
 
-  @NotNull
   @ApiStatus.Internal
-  public abstract Logger getLogger();
+  public abstract @NotNull Logger getLogger();
 
-  @Nullable
-  public static Throwable getCauseToRebuildIndex(@NotNull RuntimeException e) {
+  public static @Nullable Throwable getCauseToRebuildIndex(@NotNull RuntimeException e) {
     if (ApplicationManager.getApplication().isUnitTestMode()) {
       // avoid rebuilding index in tests since we do it synchronously in requestRebuild, and we can have readAction at hand
       return null;
@@ -748,9 +733,8 @@ public abstract class FileBasedIndexEx extends FileBasedIndex {
     return filter.acceptInput(indexedFile.getFile());
   }
 
-  @NotNull
-  public static InputFilter composeInputFilter(@NotNull InputFilter filter,
-                                               @NotNull BiPredicate<? super VirtualFile, ? super Project> condition) {
+  public static @NotNull InputFilter composeInputFilter(@NotNull InputFilter filter,
+                                                        @NotNull BiPredicate<? super VirtualFile, ? super Project> condition) {
     return new ProjectSpecificInputFilter() {
       @Override
       public boolean acceptInput(@NotNull IndexedFile file) {
@@ -782,8 +766,7 @@ public abstract class FileBasedIndexEx extends FileBasedIndex {
   }
 
   @ApiStatus.Internal
-  @NotNull
-  public static Iterator<VirtualFile> createLazyFileIterator(@Nullable IntSet result, @NotNull GlobalSearchScope scope) {
+  public static @NotNull Iterator<VirtualFile> createLazyFileIterator(@Nullable IntSet result, @NotNull GlobalSearchScope scope) {
     Set<VirtualFile> fileSet = new CompactVirtualFileSet(result == null ? IntSets.emptySet() : result).freezed();
     return fileSet.stream().filter(scope::contains).iterator();
   }

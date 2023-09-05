@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.indexing.events;
 
 import com.intellij.concurrency.ConcurrentCollectionFactory;
@@ -213,8 +213,7 @@ public final class VfsEventsMerger {
   }
 
   private static class MyLoggerFactory implements Logger.Factory {
-    @Nullable
-    private static final MyLoggerFactory ourFactory;
+    private static final @Nullable MyLoggerFactory ourFactory;
 
     static {
       MyLoggerFactory factory = null;
@@ -229,8 +228,7 @@ public final class VfsEventsMerger {
       ourFactory = factory;
     }
 
-    @NotNull
-    private final RollingFileHandler myAppender;
+    private final @NotNull RollingFileHandler myAppender;
 
     MyLoggerFactory() throws IOException {
       Path indexingDiagnosticDir = Paths.get(PathManager.getLogPath()).resolve("indexing-diagnostic");

@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.impl.search;
 
 import com.intellij.lang.ASTNode;
@@ -122,9 +122,9 @@ public final class LowLevelSearchUtil {
     return scopeNode.findLeafElementAt(offsetR);
   }
 
-  public static boolean processElementsContainingWordInElement(@NotNull final TextOccurenceProcessor processor,
-                                                               @NotNull final PsiElement scope,
-                                                               @NotNull final StringSearcher searcher,
+  public static boolean processElementsContainingWordInElement(final @NotNull TextOccurenceProcessor processor,
+                                                               final @NotNull PsiElement scope,
+                                                               final @NotNull StringSearcher searcher,
                                                                boolean processInjectedPsi,
                                                                @NotNull ProgressIndicator progress) {
     int[] occurrences = getTextOccurrencesInScope(scope, searcher);
