@@ -203,9 +203,12 @@ public abstract class MavenProjectsManager extends MavenSimpleProjectComponent
 
   @Override
   public void initializeComponent() {
-    //noinspection deprecation
-    ProjectUtilKt.executeOnPooledThread(myProject, () -> {
-      tryInit();
+    myProject.getService(MavenInProgressService.class).trackConfigurationActivityBlocking(() -> {
+      //noinspection deprecation
+      ProjectUtilKt.executeOnPooledThread(myProject, () -> {
+        tryInit();
+      });
+      return null;
     });
   }
 

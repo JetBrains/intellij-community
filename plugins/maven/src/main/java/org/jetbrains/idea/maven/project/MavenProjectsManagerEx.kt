@@ -4,6 +4,7 @@ package org.jetbrains.idea.maven.project
 import com.intellij.build.SyncViewManager
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.EDT
+import com.intellij.openapi.components.serviceAsync
 import com.intellij.openapi.diagnostic.ControlFlowException
 import com.intellij.openapi.externalSystem.issue.BuildIssueException
 import com.intellij.openapi.externalSystem.service.project.IdeModifiableModelsProvider
@@ -551,7 +552,7 @@ open class MavenProjectsManagerEx(project: Project) : MavenProjectsManager(proje
 }
 
 class MavenProjectsManagerProjectActivity : ProjectActivity {
-  override suspend fun execute(project: Project) {
+  override suspend fun execute(project: Project) = project.serviceAsync<MavenInProgressService>().trackConfigurationActivity {
     blockingContext {
       MavenProjectsManager.getInstance(project).onProjectStartup()
     }
