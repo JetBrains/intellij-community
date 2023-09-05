@@ -48,6 +48,7 @@ import org.jetbrains.idea.maven.externalSystemIntegration.output.quickfixes.Cach
 import org.jetbrains.idea.maven.importing.MavenImportUtil;
 import org.jetbrains.idea.maven.importing.MavenPomPathModuleService;
 import org.jetbrains.idea.maven.importing.MavenProjectImporter;
+import org.jetbrains.idea.maven.importing.workspaceModel.WorkspaceProjectImporterKt;
 import org.jetbrains.idea.maven.indices.MavenIndicesManager;
 import org.jetbrains.idea.maven.model.*;
 import org.jetbrains.idea.maven.navigator.MavenProjectsNavigator;
@@ -237,6 +238,7 @@ public abstract class MavenProjectsManager extends MavenSimpleProjectComponent
         importingSettings.setWorkspaceImportEnabled(true);
       }
       myState.workspaceImportForciblyTurnedOn = true; // turn workspace import if it is turned off once for each existing project
+      myProject.putUserData(WorkspaceProjectImporterKt.getNOTIFY_USER_ABOUT_WORKSPACE_IMPORT_KEY(), true);
     }
     doInit(false);
     if (!MavenUtil.isLinearImportEnabled()) {
