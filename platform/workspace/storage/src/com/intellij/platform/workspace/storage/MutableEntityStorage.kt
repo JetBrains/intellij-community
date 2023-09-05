@@ -220,14 +220,6 @@ public interface MutableEntityStorage : EntityStorage {
    */
   public val modificationCount: Long
 
-  /**
-   * This function is under development, please don't use it.
-   *
-   * Calculates a value of [query] and caches it until the builder is modified
-   */
-  @ApiStatus.Experimental
-  public fun <T> calculate(query: StorageQuery<T>): T
-
   public companion object {
     private val LOG = logger<MutableEntityStorage>()
     /**

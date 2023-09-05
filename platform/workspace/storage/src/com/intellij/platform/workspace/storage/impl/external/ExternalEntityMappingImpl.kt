@@ -157,11 +157,6 @@ internal class MutableExternalEntityMappingImpl<T> private constructor(
     data class Remove(val id: EntityId) : IndexLogRecord()
   }
 
-  internal sealed interface IndexLogOperation {
-    data class Changes(val changes: LinkedHashMap<EntityId, IndexLogRecord>) : IndexLogOperation
-    object Clear : IndexLogOperation
-  }
-
   internal class IndexLog(
     // Pair may have one of three allowed states:
     //  [Added, null], [Removed, null], [Removed, Added]

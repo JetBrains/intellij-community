@@ -16,6 +16,28 @@ internal class WorkspaceBuilderChangeLog {
     changeLog.clear()
   }
 
+  internal fun join(other: WorkspaceBuilderChangeLog) {
+    other.changeLog.forEach { (id, entry) ->
+      when (entry) {
+        is ChangeEntry.AddEntity -> {
+          this.addAddEventImpl(id, entry.entityData, true)
+        }
+        is ChangeEntry.RemoveEntity -> {
+          this.addRemoveEvent(id, entry.oldData as WorkspaceEntityData<WorkspaceEntity>)
+        }
+        is ChangeEntry.ReplaceEntity -> {
+          if (entry.data != null) {
+            this.addReplaceDataEvent(id, entry.data.newData, entry.data.oldData, false)
+          }
+          if (entry.references != null) {
+            this.addReplaceReferencesEvent(id, entry.references.newChildren, entry.references.removedChildren,
+                                           entry.references.newParents, entry.references.removedParents, false)
+          }
+        }
+      }
+    }
+  }
+
   /**
    * This function adds replace event that represents changes in references between entities (without change of data)
    * Use [addReplaceDataEvent] to record changes in data inside the entity
@@ -360,13 +382,40 @@ internal class WorkspaceBuilderChangeLog {
     }
   }
 
-  internal fun <T : WorkspaceEntity> addAddEvent(pid: EntityId, pEntityData: WorkspaceEntityData<T>) {
+  internal fun <T : WorkspaceEntity> addAddEvent(pid: EntityId,
+                                                 pEntityData: WorkspaceEntityData<T>) {
+    addAddEventImpl(pid, pEntityData, false)
+  }
+
+  /**
+   * Add "add" event to the changelog.
+   *
+   * During one change we don't add entities to the same entity id. This means, if we remove an entity and add a new one,
+   *   the new entity will never get an id of removed entity.
+   * Thus, if we add "add" entity and it turns out that this id already has a "remove" event, this is an indication of error.
+   *
+   * However, the id can be reused in different operations. In this case, the same id can get a remove and then add event and this is normal.
+   *   If this is the case when multiple changelogs are combined, [allowAddingOnRemoveEvent] can be set to true to avoid error on
+   *   adding an add event on top of remove event. Such a combination will turn into "replace" event. However, this replaces event won't
+   *   have an information about changes in references, so this should be used only for specific cases where this information is not needed.
+   */
+  private fun <T : WorkspaceEntity> addAddEventImpl(pid: EntityId,
+                                                 pEntityData: WorkspaceEntityData<T>,
+                                                 allowAddingOnRemoveEvent: Boolean) {
     modificationCount++
 
     // XXX: This check should exist, but some tests fails with it.
     //if (targetEntityId in it) LOG.error("Trying to add entity again. ")
 
-    changeLog[pid] = ChangeEntry.AddEntity(pEntityData, pid.clazz)
+    val existingEvent = changeLog[pid]
+    when (existingEvent) {
+      is ChangeEntry.RemoveEntity -> {
+        if (!allowAddingOnRemoveEvent) error("Trying to add entity that was removed")
+        changeLog.remove(pid)
+        addReplaceDataEvent(pid, pEntityData, existingEvent.oldData, false)
+      }
+      else -> changeLog[pid] = ChangeEntry.AddEntity(pEntityData, pid.clazz)
+    }
   }
 
   internal fun addRemoveEvent(removedEntityId: EntityId,

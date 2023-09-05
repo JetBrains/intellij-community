@@ -7,10 +7,8 @@ import com.intellij.openapi.diagnostic.trace
 import com.intellij.platform.diagnostic.telemetry.JPS
 import com.intellij.platform.diagnostic.telemetry.TelemetryManager
 import com.intellij.platform.diagnostic.telemetry.WorkspaceModel
-import com.intellij.platform.diagnostic.telemetry.helpers.addElapsedTimeMillis
 import com.intellij.platform.diagnostic.telemetry.helpers.addMeasuredTimeMillis
 import com.intellij.platform.workspace.storage.*
-import com.intellij.platform.workspace.storage.impl.cache.EntityStorageCacheImpl
 import com.intellij.platform.workspace.storage.impl.cache.TracedSnapshotCache
 import com.intellij.platform.workspace.storage.impl.cache.TracedSnapshotCacheImpl
 import com.intellij.platform.workspace.storage.impl.exceptions.SymbolicIdAlreadyExistsException
@@ -69,7 +67,6 @@ internal open class EntityStorageSnapshotImpl(
 ) : EntityStorageSnapshotInstrumentation, AbstractEntityStorage() {
 
   init {
-    this.snapshotCache.initSnapshot(this)
     entityStorageSnapshotImplInstancesCounter.incrementAndGet()
   }
 
@@ -83,7 +80,7 @@ internal open class EntityStorageSnapshotImpl(
   private val entityCache: Long2ObjectMap<WorkspaceEntity> = Long2ObjectOpenHashMap() // guarded by entityCache
 
   override fun <T> cached(query: StorageQuery<T>): T {
-    return snapshotCache.cached(query)
+    return snapshotCache.cached(query, this)
   }
 
   @Suppress("UNCHECKED_CAST")
@@ -141,10 +138,7 @@ internal class MutableEntityStorageImpl(
   @Volatile
   private var trackStackTrace: Boolean = false
 
-  private var calculationCache = EntityStorageCacheImpl()
-
   init {
-    calculationCache.init(this)
     instancesCounter.incrementAndGet()
   }
 
@@ -166,10 +160,6 @@ internal class MutableEntityStorageImpl(
 
   override val modificationCount: Long
     get() = this.changeLog.modificationCount
-
-  override fun <T> calculate(query: StorageQuery<T>): T {
-    return calculationCache.cached(query)
-  }
 
   private val writingFlag = AtomicBoolean()
 
@@ -280,8 +270,6 @@ internal class MutableEntityStorageImpl(
 
       // Update indexes
       indexes.entityAdded(newEntityData)
-
-      updateCalculationCache()
     }
     finally {
       unlockWrite()
@@ -375,8 +363,6 @@ internal class MutableEntityStorageImpl(
 
       this.indexes.updateSymbolicIdIndexes(this, updatedEntity, beforeSymbolicId, copiedData, modifiableEntity)
 
-      updateCalculationCache()
-
       updatedEntity
     }
     finally {
@@ -417,8 +403,6 @@ internal class MutableEntityStorageImpl(
       }
       upgradeEngine?.let { it(rbsEngine) }
       rbsEngine.replace(this, replaceWith, sourceFilter)
-
-      updateCalculationCache()
     }
     finally {
       unlockWrite()
@@ -545,9 +529,10 @@ internal class MutableEntityStorageImpl(
     val newRefs = refs.toImmutable()
     val newIndexes = indexes.toImmutable()
     val cache = TracedSnapshotCacheImpl()
-    return@addMeasuredTimeMillis EntityStorageSnapshotImpl(newEntities, newRefs, newIndexes, cache)
-    // Temporally disable cache due to IDEA-332686
-    //cache.pullCache(this.originalSnapshot.snapshotCache, this.collectChanges())
+    val snapshot = EntityStorageSnapshotImpl(newEntities, newRefs, newIndexes, cache)
+    val externalMappingChangelog = this.indexes.externalMappings.mapValues { it.value.indexLogBunches.changes.keys }
+    cache.pullCache(snapshot, this.originalSnapshot.snapshotCache, this.changeLog, externalMappingChangelog)
+    return@addMeasuredTimeMillis snapshot
   }
 
   override fun replaceChildren(connectionId: ConnectionId, parent: WorkspaceEntity, newChildren: List<WorkspaceEntity>) {
@@ -610,8 +595,6 @@ internal class MutableEntityStorageImpl(
         }
       }
     }
-
-    updateCalculationCache()
   }
 
   override fun addChild(connectionId: ConnectionId, parent: WorkspaceEntity?, child: WorkspaceEntity) {
@@ -686,8 +669,6 @@ internal class MutableEntityStorageImpl(
         }
       }
     }
-
-    updateCalculationCache()
   }
 
   override fun hasChanges(): Boolean = changeLog.changeLog.isNotEmpty()
@@ -700,8 +681,6 @@ internal class MutableEntityStorageImpl(
       val addDiffOperation = AddDiffOperation(this, diff)
       upgradeAddDiffEngine?.invoke(addDiffOperation)
       addDiffOperation.addDiff()
-
-      updateCalculationCache()
     }
     finally {
       unlockWrite()
@@ -799,8 +778,6 @@ internal class MutableEntityStorageImpl(
     this.changeLog.addRemoveEvent(id, originalEntityData)
 
     entitiesByType.remove(id.arrayId, id.clazz)
-
-    updateCalculationCache()
   }
 
   private fun lockWrite() {
@@ -849,13 +826,6 @@ internal class MutableEntityStorageImpl(
         accumulateEntitiesToRemove(childId.id, accumulator, entityFilter)
         accumulator.add(childId.id)
       }
-    }
-  }
-
-  private fun updateCalculationCache() {
-    if (!calculationCache.isEmpty()) {
-      this.calculationCache = EntityStorageCacheImpl()
-      this.calculationCache.init(this)
     }
   }
 

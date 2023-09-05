@@ -8,18 +8,28 @@ import com.intellij.platform.workspace.storage.instrumentation.EntityStorageInst
 import com.intellij.platform.workspace.storage.instrumentation.EntityStorageInstrumentationApi
 import com.intellij.platform.workspace.storage.instrumentation.instrumentation
 import com.intellij.platform.workspace.storage.metadata.model.EntityMetadata
+import com.intellij.platform.workspace.storage.trace.ReadTrace
 import com.intellij.platform.workspace.storage.url.VirtualFileUrl
 import com.intellij.util.ReflectionUtil
 
 public abstract class WorkspaceEntityBase(private var currentEntityData: WorkspaceEntityData<out WorkspaceEntity>? = null) : WorkspaceEntity {
-  //override lateinit var entitySource: EntitySource
-  //  internal set
-
   public var id: EntityId = invalidEntityId
 
   public lateinit var snapshot: EntityStorage
+  internal var onRead: ((ReadTrace) -> Unit)? = null
 
   public abstract fun connectionIdList(): List<ConnectionId>
+
+  /**
+   * Record information that some field was read. This function is used only for fields with primitive values.
+   *   Reading of references to other entities doesn't use this function.
+   *
+   * [name] is passed for future use
+   */
+  @Suppress("UNUSED_PARAMETER")
+  protected fun readField(name: String) {
+    onRead?.invoke(ReadTrace.SomeFieldAccess(id))
+  }
 
   public open fun <R : WorkspaceEntity> referrers(entityClass: Class<R>): Sequence<R> {
     val mySnapshot = snapshot as AbstractEntityStorage

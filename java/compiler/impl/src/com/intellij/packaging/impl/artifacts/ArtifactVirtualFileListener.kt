@@ -102,7 +102,7 @@ internal class ArtifactVirtualFileListener(private val project: Project) : BulkF
     private val LOG = Logger.getInstance(ArtifactVirtualFileListener::class.java)
 
     private val query = entities<ArtifactEntity>()
-      .flatMap { artifactEntity ->
+      .flatMap { artifactEntity, _ ->
         buildList {
           processFileOrDirectoryCopyElements(artifactEntity) { entity ->
             var path = VfsUtilCore.urlToPath(entity.filePath.url)

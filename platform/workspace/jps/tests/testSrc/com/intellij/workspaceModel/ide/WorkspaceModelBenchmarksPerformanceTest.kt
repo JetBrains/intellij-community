@@ -18,8 +18,13 @@ import com.intellij.platform.workspace.jps.serialization.impl.JpsProjectEntities
 import com.intellij.platform.workspace.jps.serialization.impl.JpsProjectSerializers
 import com.intellij.platform.workspace.storage.MutableEntityStorage
 import com.intellij.platform.workspace.storage.WorkspaceEntity
+import com.intellij.platform.workspace.storage.impl.cache.CacheResetTracker
 import com.intellij.platform.workspace.storage.impl.serialization.EntityStorageSerializerImpl
 import com.intellij.platform.workspace.storage.impl.url.toVirtualFileUrl
+import com.intellij.platform.workspace.storage.query.entities
+import com.intellij.platform.workspace.storage.query.flatMap
+import com.intellij.platform.workspace.storage.query.groupBy
+import com.intellij.platform.workspace.storage.query.map
 import com.intellij.platform.workspace.storage.testEntities.entities.*
 import com.intellij.platform.workspace.storage.toBuilder
 import com.intellij.platform.workspace.storage.url.VirtualFileUrl
@@ -589,6 +594,164 @@ class WorkspaceModelBenchmarksPerformanceTest {
     }
       .warmupIterations(0)
       .attempts(1).assertTiming()
+  }
+
+  @Test
+  fun `request of cache`(testInfo: TestInfo) {
+    CacheResetTracker.enable()
+    println("Create snapshot")
+    val snapshots = List(500) {
+      val builder = MutableEntityStorage.create()
+
+      // Set initial state
+      repeat(1000) {
+        builder addEntity NamedEntity("MyName$it", MySource)
+      }
+      repeat(1000) {
+        val parent = builder addEntity ParentEntity("data$it", MySource)
+
+        val data = if (it % 2 == 0) "ExternalInfo" else "InternalInfo"
+        builder.getMutableExternalMapping<String>("Test").addMapping(parent, data)
+      }
+      repeat(1000) {
+        builder addEntity ParentMultipleEntity("data$it", MySource) {
+          this.children = List(10) {
+            ChildMultipleEntity("data$it", MySource)
+          }
+        }
+      }
+      builder.toSnapshot()
+    }
+
+    val namesOfNamedEntities = entities<NamedEntity>().map { it.myName }
+    val sourcesByName = entities<NamedEntity>().groupBy({ it.myName }, { it.entitySource })
+    val childData = entities<ParentMultipleEntity>().flatMap { parentEntity, _ -> parentEntity.children }.map { it.childData }
+
+    // Do first request
+    PlatformTestUtil.startPerformanceTest("${testInfo.displayName} - First Access", 100500) {
+      snapshots.forEach { snapshot ->
+        snapshot.cached(namesOfNamedEntities)
+        snapshot.cached(sourcesByName)
+        snapshot.cached(childData)
+      }
+    }
+      .warmupIterations(0)
+      .attempts(1).assertTimingAsSubtest()
+
+    // Do second request without any modifications
+    PlatformTestUtil.startPerformanceTest("${testInfo.displayName} - Second Access - No Changes", 100500) {
+      snapshots.forEach { snapshot ->
+        snapshot.cached(namesOfNamedEntities)
+        snapshot.cached(sourcesByName)
+        snapshot.cached(childData)
+      }
+    }
+      .warmupIterations(0)
+      .attempts(1).assertTimingAsSubtest()
+
+    // Modify snapshots
+    val newSnapshots = snapshots.map { snapshot ->
+      val builder = snapshot.toBuilder()
+      repeat(100) {
+        builder addEntity NamedEntity("MyNameXYZ$it", MySource)
+      }
+      repeat(500) { // Half of all entities
+        val namedEntity = builder.resolve(NameId("MyName$it"))!!
+        builder.modifyEntity(namedEntity) {
+          this.myName = "newName$it"
+        }
+      }
+      val mutableMapping = builder.getMutableExternalMapping<String>("Test")
+      mutableMapping.getEntities("ExternalInfo").take(250).forEach {
+        mutableMapping.addMapping(it, "AnotherMapping")
+      }
+
+      builder.entities(ChildMultipleEntity::class.java).filter { it.childData.removePrefix("data").toInt() % 2 == 0 }.forEach {
+        builder.removeEntity(it)
+      }
+      builder.toSnapshot()
+    }
+
+    Assertions.assertFalse(CacheResetTracker.cacheReset)
+
+    // Do request after modifications
+    PlatformTestUtil.startPerformanceTest("${testInfo.displayName} - Third Access - After Modification", 100500) {
+      newSnapshots.forEach { snapshot ->
+        snapshot.cached(namesOfNamedEntities)
+        snapshot.cached(sourcesByName)
+        snapshot.cached(childData)
+      }
+    }
+      .warmupIterations(0)
+      .attempts(1).assertTimingAsSubtest()
+
+    println("Modify snapshots second time")
+    val snapshotsWithLotOfUpdates = newSnapshots.map { snapshot ->
+      var currentSnapshot = snapshot
+      repeat(10) { outerLoop ->
+        val builder = currentSnapshot.toBuilder()
+
+        repeat(10) {
+          builder addEntity NamedEntity("MyName--$outerLoop-$it", MySource)
+        }
+        // Remove some random entities
+        builder.entities(NamedEntity::class.java).withIndex().filter { it.index % (outerLoop + 1) == 0 }.forEach { (_, value) ->
+          builder.removeEntity(value)
+        }
+
+        val mutableMapping = builder.getMutableExternalMapping<String>("Test")
+        mutableMapping.getEntities("ExternalInfo").take(outerLoop).forEach {
+          mutableMapping.addMapping(it, "AnotherMapping")
+        }
+
+        builder.entities(ChildMultipleEntity::class.java).filter { it.childData.removePrefix("data").toInt() % (outerLoop + 1) == 0 }.forEach {
+          builder.removeEntity(it)
+        }
+
+        currentSnapshot = builder.toSnapshot()
+      }
+      currentSnapshot
+    }
+
+    Assertions.assertFalse(CacheResetTracker.cacheReset)
+
+    PlatformTestUtil.startPerformanceTest("${testInfo.displayName} - Fourth Access - After Second Modification", 100500) {
+      snapshotsWithLotOfUpdates.forEach { snapshot ->
+        snapshot.cached(namesOfNamedEntities)
+        snapshot.cached(sourcesByName)
+        snapshot.cached(childData)
+      }
+    }
+      .warmupIterations(0)
+      .attempts(1).assertTimingAsSubtest()
+
+    println("Modify snapshots third time")
+    val snapshotsWithTonsOfUpdates = snapshotsWithLotOfUpdates.map { snapshot ->
+      var currentSnapshot = snapshot
+      repeat(11) { outerLoop ->
+        val builder = currentSnapshot.toBuilder()
+
+        repeat(1000) {
+          builder addEntity NamedEntity("MyName-X$outerLoop-$it", MySource)
+        }
+
+        currentSnapshot = builder.toSnapshot()
+      }
+      currentSnapshot
+    }
+
+    Assertions.assertTrue(CacheResetTracker.cacheReset)
+
+    println("Read fourth time")
+    PlatformTestUtil.startPerformanceTest("${testInfo.displayName} - Fifth Access - After a Lot of Modifications", 100500) {
+      snapshotsWithTonsOfUpdates.forEach { snapshot ->
+        snapshot.cached(namesOfNamedEntities)
+        snapshot.cached(sourcesByName)
+        snapshot.cached(childData)
+      }
+    }
+      .warmupIterations(0)
+      .attempts(1).assertTimingAsSubtest()
   }
 
   @Test

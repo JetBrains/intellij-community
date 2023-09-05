@@ -26,7 +26,6 @@ import com.intellij.packaging.impl.artifacts.workspacemodel.packaging.elements
 import com.intellij.platform.backend.workspace.workspaceModel
 import com.intellij.platform.diagnostic.telemetry.Compiler
 import com.intellij.platform.diagnostic.telemetry.TelemetryManager
-import com.intellij.platform.diagnostic.telemetry.helpers.addElapsedTimeMillis
 import com.intellij.platform.diagnostic.telemetry.helpers.addMeasuredTimeMillis
 import com.intellij.platform.workspace.storage.*
 import com.intellij.util.concurrency.annotations.RequiresReadLock
