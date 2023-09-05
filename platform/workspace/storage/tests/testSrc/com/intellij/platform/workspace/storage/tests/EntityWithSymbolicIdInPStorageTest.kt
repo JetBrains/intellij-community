@@ -78,7 +78,7 @@ class EntityWithSymbolicIdInPStorageTest {
 
   @Test
   fun `add entity with existing persistent id`() {
-    builder = MutableEntityStorageImpl.create()
+    builder = createEmptyBuilder()
     val exception = assertThrows<Throwable> {
       builder.addNamedEntity("MyName")
       builder.addNamedEntity("MyName")
@@ -89,7 +89,7 @@ class EntityWithSymbolicIdInPStorageTest {
   @Test
   @Disabled("Incorrect test")
   fun `add entity with existing persistent id - restoring after exception`() {
-    builder = MutableEntityStorageImpl.create()
+    builder = createEmptyBuilder()
     try {
       builder.addNamedEntity("MyName")
       builder.addNamedEntity("MyName")
@@ -102,7 +102,7 @@ class EntityWithSymbolicIdInPStorageTest {
 
   @Test
   fun `modify entity to repeat persistent id`() {
-    builder = MutableEntityStorageImpl.create()
+    builder = createEmptyBuilder()
     val exception = assertThrows<Throwable> {
       builder.addNamedEntity("MyName")
       val namedEntity = builder.addNamedEntity("AnotherId")
@@ -115,7 +115,7 @@ class EntityWithSymbolicIdInPStorageTest {
 
   @Test
   fun `modify entity to repeat persistent id - restoring after exception`() {
-    builder = MutableEntityStorageImpl.create()
+    builder = createEmptyBuilder()
     try {
       builder.addNamedEntity("MyName")
       val namedEntity = builder.addNamedEntity("AnotherId")

@@ -1,6 +1,7 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.workspace.storage.tests
 
+import com.intellij.platform.workspace.storage.MutableEntityStorage
 import com.intellij.platform.workspace.storage.impl.MutableEntityStorageImpl
 import com.intellij.platform.workspace.storage.impl.url.VirtualFileUrlManagerImpl
 import com.intellij.platform.workspace.storage.testEntities.entities.SampleEntity
@@ -75,13 +76,13 @@ class EntityReferenceTest {
   @Test
   @Disabled("Wrong entity reference behaviour")
   fun `wrong entity ref resolve in different storage`() {
-    val mutableStorage = MutableEntityStorageImpl.create()
+    val mutableStorage = MutableEntityStorage.create()
     val sampleEntity = mutableStorage addEntity SampleEntity(false, "hello", ArrayList(), HashMap(),
                                                              virtualFileUrlManager.fromUrl("file:///tmp"),
                                                              SampleEntitySource("test"))
     val reference = sampleEntity.createReference<SampleEntity>()
 
-    val mutableStorage1 = MutableEntityStorageImpl.create()
+    val mutableStorage1 = MutableEntityStorage.create()
     mutableStorage1 addEntity SampleEntity(false, "buy", ArrayList(), HashMap(), virtualFileUrlManager.fromUrl("file:///tmp"),
                                            SampleEntitySource("test"))
     assertNull(reference.resolve(mutableStorage1))
@@ -90,7 +91,7 @@ class EntityReferenceTest {
   @Test
   @Disabled("Wrong entity reference behaviour")
   fun `wrong entity ref resolve in same storage`() {
-    val mutableStorage = MutableEntityStorageImpl.create()
+    val mutableStorage = MutableEntityStorage.create()
     val sampleEntity = mutableStorage addEntity SampleEntity(false, "hello", ArrayList(), HashMap(),
                                                              virtualFileUrlManager.fromUrl("file:///tmp"),
                                                              SampleEntitySource("test"))

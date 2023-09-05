@@ -1,7 +1,11 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.workspace.storage
 
+import com.intellij.openapi.diagnostic.logger
+import com.intellij.openapi.diagnostic.trace
+import com.intellij.platform.workspace.storage.impl.EntityStorageSnapshotImpl
 import com.intellij.platform.workspace.storage.impl.MutableEntityStorageImpl
+import com.intellij.platform.workspace.storage.impl.currentStackTrace
 import com.intellij.platform.workspace.storage.query.StorageQuery
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.NonNls
@@ -225,17 +229,23 @@ public interface MutableEntityStorage : EntityStorage {
   public fun <T> calculate(query: StorageQuery<T>): T
 
   public companion object {
+    private val LOG = logger<MutableEntityStorage>()
     /**
      * Creates an empty mutable storage. It may be populated with new entities and passed to [addDiff] or [replaceBySource].  
      */
     @JvmStatic
-    public fun create(): MutableEntityStorage = MutableEntityStorageImpl.create()
+    public fun create(): MutableEntityStorage = from(EntityStorageSnapshot.empty())
 
     /**
-     * Creates a mutable copy of the given [storage].
+     * Creates a mutable copy of the given [storage] snapshot.
      */
     @JvmStatic
-    public fun from(storage: EntityStorageSnapshot): MutableEntityStorage = MutableEntityStorageImpl.from(storage)
+    public fun from(storage: EntityStorageSnapshot): MutableEntityStorage {
+      storage as EntityStorageSnapshotImpl
+      val newBuilder = MutableEntityStorageImpl(originalSnapshot = storage)
+      LOG.trace { "Create new builder $newBuilder from $storage.\n${currentStackTrace(10)}" }
+      return newBuilder
+    }
   }
 }
 

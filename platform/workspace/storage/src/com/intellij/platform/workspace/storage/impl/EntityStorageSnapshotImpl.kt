@@ -932,17 +932,6 @@ internal class MutableEntityStorageImpl(
 
     private val LOG = logger<MutableEntityStorageImpl>()
 
-    fun create(): MutableEntityStorageImpl {
-      return from(EntityStorageSnapshotImpl.EMPTY)
-    }
-
-    fun from(storage: EntityStorageSnapshot): MutableEntityStorageImpl {
-      storage as EntityStorageSnapshotImpl
-      val newBuilder = MutableEntityStorageImpl(originalSnapshot = storage)
-      LOG.trace { "Create new builder $newBuilder from $storage.\n${currentStackTrace(10)}" }
-      return newBuilder
-    }
-
     internal fun addReplaceEvent(
       builder: MutableEntityStorageImpl,
       entityId: EntityId,

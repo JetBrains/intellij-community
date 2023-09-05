@@ -548,7 +548,7 @@ public class EntityStorageSerializerImpl(
         val storageIndexes = StorageIndexes(softLinks, virtualFileIndex, entitySourceIndex, symbolicIdIndex)
 
         val storage = EntityStorageSnapshotImpl(entitiesBarrel, refsTable, storageIndexes)
-        val builder = MutableEntityStorageImpl.from(storage)
+        val builder = MutableEntityStorageImpl(storage)
 
         builder.entitiesByType.entityFamilies.forEach { family ->
           family?.entities?.asSequence()?.filterNotNull()?.forEach { entityData -> builder.createAddEvent(entityData) }
