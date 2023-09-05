@@ -42,7 +42,6 @@ CoroutinePreflightFrame foo (optimisedVariablesWithWhen.kt:32)
     JavaValue[local] f: java.lang.String = f (optimisedVariablesWithWhen.kt:28)
     JavaValue[local] g: java.lang.String = g (optimisedVariablesWithWhen.kt:30)
     DummyMessageValueNode = 'c' was optimised out
-    DummyMessageValueNode = 'e' was optimised out
 optimisedVariablesWithWhen.kt:36
 KotlinStackFrame (optimisedVariablesWithWhen.kt:36)
     JavaValue[local] h: java.lang.String = h (optimisedVariablesWithWhen.kt:34)
@@ -54,7 +53,6 @@ CoroutinePreflightFrame foo (optimisedVariablesWithWhen.kt:42)
     JavaValue[local] a: java.lang.String = a (optimisedVariablesWithWhen.kt:9)
     JavaValue[local] i: java.lang.String = i (optimisedVariablesWithWhen.kt:40)
     DummyMessageValueNode = 'c' was optimised out
-    DummyMessageValueNode = 'e' was optimised out
     DummyMessageValueNode = 'g' was optimised out
 optimisedVariablesWithWhen.kt:47
 CoroutinePreflightFrame foo (optimisedVariablesWithWhen.kt:47)
@@ -62,10 +60,8 @@ CoroutinePreflightFrame foo (optimisedVariablesWithWhen.kt:47)
     JavaValue[local] b: java.lang.String = b (optimisedVariablesWithWhen.kt:11)
     JavaValue[local] a: java.lang.String = a (optimisedVariablesWithWhen.kt:9)
     DummyMessageValueNode = 'c' was optimised out
-    DummyMessageValueNode = 'e' was optimised out
     DummyMessageValueNode = 'f' was optimised out
     DummyMessageValueNode = 'g' was optimised out
-    DummyMessageValueNode = 'i' was optimised out
 optimisedVariablesWithWhen.kt:55
 CoroutinePreflightFrame foo$foo (optimisedVariablesWithWhen.kt:55)
     JavaValue[local] result = null
@@ -86,7 +82,6 @@ CoroutinePreflightFrame foo (optimisedVariablesWithWhen.kt:66)
     JavaValue[local] a: java.lang.String = a (optimisedVariablesWithWhen.kt:9)
     DummyMessageValueNode = 'b' was optimised out
     DummyMessageValueNode = 'c' was optimised out
-    DummyMessageValueNode = 'e' was optimised out
 optimisedVariablesWithWhen.kt:72
 CoroutinePreflightFrame foo (optimisedVariablesWithWhen.kt:72)
     JavaValue[local] result = null

@@ -12,12 +12,9 @@ spilledCapturedVariables.kt:19
 CoroutinePreflightFrame invokeSuspend (spilledCapturedVariables.kt:19)
     JavaValue[local] y: int = 1 (spilledCapturedVariables.kt:12)
     JavaValue[local] x: int = 1 (spilledCapturedVariables.kt:10)
-    DummyMessageValueNode = 'z' was optimised out
 spilledCapturedVariables.kt:22
 CoroutinePreflightFrame invokeSuspend (spilledCapturedVariables.kt:22)
     JavaValue[local] x: int = 1 (spilledCapturedVariables.kt:10)
-    DummyMessageValueNode = 'y' was optimised out
-    DummyMessageValueNode = 'z' was optimised out
 Disconnected from the target VM
 
 Process finished with exit code 0
