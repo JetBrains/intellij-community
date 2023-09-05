@@ -30,8 +30,8 @@ class KotlinSemanticHighlightingVisitor : HighlightVisitor {
         analyze(ktFile as KtElement) {
             analyzers = createSemanticAnalyzers(kotlinRefsHolder, holder)
             action.run()
+            KotlinUnusedHighlightingVisitor(ktFile as KtFile, kotlinRefsHolder).collectHighlights(holder)
         }
-        KotlinUnusedHighlightingVisitor(ktFile as KtFile, kotlinRefsHolder).collectHighlights(holder)
         return true
     }
 

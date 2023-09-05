@@ -22,13 +22,13 @@ import com.intellij.psi.PsiFile
 import com.intellij.refactoring.safeDelete.SafeDeleteHandler
 import org.jetbrains.annotations.Nls
 import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
-import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.idea.base.highlighting.KotlinBaseHighlightingBundle
 import org.jetbrains.kotlin.idea.inspections.describe
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.psi.*
 
 class KotlinUnusedHighlightingVisitor(private val ktFile: KtFile, private val refHolder: KotlinRefsHolder) {
+    context(KtAnalysisSession)
     internal fun collectHighlights(holder: HighlightInfoHolder) {
         val profile = InspectionProjectProfileManager.getInstance(ktFile.project).getCurrentProfile().let { p ->
             InspectionProfileWrapper.getCustomInspectionProfileWrapper(ktFile)?.apply(p)?.inspectionProfile ?: p
@@ -46,19 +46,17 @@ class KotlinUnusedHighlightingVisitor(private val ktFile: KtFile, private val re
         if (!HighlightingLevelManager.getInstance(ktFile.project).shouldInspect(ktFile)) return
 
         Divider.divideInsideAndOutsideAllRoots(ktFile, ktFile.textRange, holder.annotationSession.priorityRange, Predicates.alwaysTrue()) { dividedElements ->
-            analyze(ktFile) {
-                val declarationVisitor = object : KtVisitorVoid() {
-                    override fun visitNamedDeclaration(declaration: KtNamedDeclaration) {
-                        handleDeclaration(declaration, deadCodeInspection, deadCodeInfoType, deadCodeKey, holder)
-                    }
+            val declarationVisitor = object : KtVisitorVoid() {
+                override fun visitNamedDeclaration(declaration: KtNamedDeclaration) {
+                    handleDeclaration(declaration, deadCodeInspection, deadCodeInfoType, deadCodeKey, holder)
                 }
-                // highlight visible symbols first
-                for (declaration in dividedElements.inside()) {
-                    declaration.accept(declarationVisitor)
-                }
-                for (declaration in dividedElements.outside()) {
-                    declaration.accept(declarationVisitor)
-                }
+            }
+            // highlight visible symbols first
+            for (declaration in dividedElements.inside()) {
+                declaration.accept(declarationVisitor)
+            }
+            for (declaration in dividedElements.outside()) {
+                declaration.accept(declarationVisitor)
             }
             true
         }
@@ -102,7 +100,7 @@ class KotlinUnusedHighlightingVisitor(private val ktFile: KtFile, private val re
 }
 
 class KotlinRefsHolder {
-    val localRefs = mutableMapOf<KtDeclaration, KtElement>()
+    private val localRefs = mutableMapOf<KtDeclaration, KtElement>()
 
     fun registerLocalRef(declaration: PsiElement?, reference: KtElement) {
         if (declaration is KtDeclaration) {
