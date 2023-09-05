@@ -40,7 +40,9 @@ class CoroutineDispatcherBackedExecutor(coroutineScope: CoroutineScope, private 
   override fun execute(it: Runnable) {
     childScope.launch(context) {
       // blockingContext not used by intention - low-level tasks are expected in a such executors
-      it.run()
+      blockingContext {
+        it.run()
+      }
     }
   }
 
