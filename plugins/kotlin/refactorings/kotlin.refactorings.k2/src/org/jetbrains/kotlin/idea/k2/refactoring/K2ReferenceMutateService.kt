@@ -79,7 +79,7 @@ internal class K2ReferenceMutateService : KtReferenceMutateServiceBase() {
         if (importDirective != null) return importDirective.replaceWith(fqName) ?: expression
         return expression.containingKtFile.withOptimizedImports {
             val anchorElement = expression.parentOfType<KtUserType>(withSelf = false)
-                                ?: expression.parentOfType<KtDotQualifiedExpression>(withSelf = false)
+                                ?: expression.qualifiedReferenceExpression()
                                 ?: expression.parent as? KtCallExpression?
                                 ?: expression
             when (anchorElement) {
@@ -90,6 +90,13 @@ internal class K2ReferenceMutateService : KtReferenceMutateServiceBase() {
                 else -> null
             }
         } ?: expression
+    }
+
+    private fun KtSimpleNameExpression.qualifiedReferenceExpression(): KtExpression? {
+        val qualifiedExpr = parentOfType<KtDotQualifiedExpression>(withSelf = false) ?: return null
+        return if (qualifiedExpr.receiverExpression is KtCallExpression && qualifiedExpr.selectorExpression is KtCallExpression) {
+            qualifiedExpr.receiverExpression // <caret>X().y() here we want to bind X only
+        } else qualifiedExpr
     }
 
     private fun KtImportDirective.replaceWith(fqName: FqName): KtExpression? {
