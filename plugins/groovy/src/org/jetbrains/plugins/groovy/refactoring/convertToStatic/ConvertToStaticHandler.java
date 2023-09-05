@@ -12,6 +12,8 @@ import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
+import com.intellij.psi.search.FileTypeIndex;
+import com.intellij.psi.search.GlobalSearchScopes;
 import com.intellij.refactoring.RefactoringActionHandler;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.GroovyFileType;
@@ -45,7 +47,9 @@ public class ConvertToStaticHandler implements RefactoringActionHandler {
       if (containingFile instanceof GroovyFile) {
         files.add((GroovyFile)containingFile);
       }
-      if (element instanceof PsiDirectory directory) {
+      if (element instanceof PsiDirectory directory &&
+          FileTypeIndex.containsFileOfType(GroovyFileType.GROOVY_FILE_TYPE,
+                                           GlobalSearchScopes.directoryScope(directory, true))) {
         Module module = ModuleUtilCore.findModuleForFile((directory).getVirtualFile(), element.getProject());
         if (module != null) {
           ModuleFileIndex index = ModuleRootManager.getInstance(module).getFileIndex();
