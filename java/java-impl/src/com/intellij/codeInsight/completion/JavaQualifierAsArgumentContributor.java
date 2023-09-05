@@ -44,6 +44,10 @@ public class JavaQualifierAsArgumentContributor extends CompletionContributor im
   @Override
   public void fillCompletionVariants(@NotNull CompletionParameters parameters, @NotNull final CompletionResultSet result) {
     result.runRemainingContributors(parameters, true);
+    fillQualifierAsArgumentContributor(parameters, result);
+  }
+
+  static void fillQualifierAsArgumentContributor(@NotNull CompletionParameters parameters, @NotNull CompletionResultSet result) {
     if (!Registry.is("java.completion.qualifier.as.argument") &&
         !AdvancedSettings.getBoolean("java.completion.qualifier.as.argument")) {
       return;

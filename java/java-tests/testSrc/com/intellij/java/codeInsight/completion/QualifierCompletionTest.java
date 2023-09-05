@@ -49,6 +49,38 @@ public class QualifierCompletionTest extends NormalCompletionTestCase {
   }
 
   @NeedsIndex.Full
+  public void testSimpleDoubleInvocation() {
+    Registry.get("java.completion.qualifier.as.argument").setValue(true, getTestRootDisposable());
+    myFixture.configureByText("Test.java", """
+      package org.test;
+                                        
+      public abstract class Test {
+            
+          void run() {
+              "test".test3<caret>
+          }
+          
+          public static  <T extends String> void test3(T t, T t2) { }
+          public static  <T extends String> void test3(T t) { }
+      }
+      """);
+    myFixture.complete(CompletionType.BASIC, 2);
+    myFixture.checkResult("""
+                            package org.test;
+                                                        
+                            public abstract class Test {
+                                                        
+                                void run() {
+                                    test3("test"<caret>);
+                                }
+                                                        
+                                public static  <T extends String> void test3(T t, T t2) { }
+                                public static  <T extends String> void test3(T t) { }
+                            }
+                            """);
+  }
+
+  @NeedsIndex.Full
   public void testSeveralArguments() {
     Registry.get("java.completion.qualifier.as.argument").setValue(true, getTestRootDisposable());
     myFixture.configureByText("Test.java", """
