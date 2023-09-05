@@ -18,6 +18,7 @@ import com.intellij.psi.*
 import com.intellij.psi.statistics.StatisticsInfo
 import com.intellij.psi.statistics.StatisticsManager
 import com.intellij.psi.util.PsiModificationTracker
+import com.intellij.psi.util.parentOfType
 import com.intellij.psi.util.parentsOfType
 import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
 import org.jetbrains.kotlin.analysis.api.fir.diagnostics.KtFirDiagnostic
@@ -55,7 +56,6 @@ import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.containingClassOrObject
 import org.jetbrains.kotlin.psi.psiUtil.getReceiverExpression
 import org.jetbrains.kotlin.psi.psiUtil.isExtensionDeclaration
-import org.jetbrains.kotlin.psi.psiUtil.unwrapNullability
 import org.jetbrains.kotlin.resolve.ImportPath
 import javax.swing.Icon
 
@@ -199,14 +199,14 @@ class ImportQuickFix(
 
         context(KtAnalysisSession)
         fun getFixes(position: PsiElement): List<ImportQuickFix> {
-            if (position !is KtElement) return emptyList()
+            if (position !is KtSimpleNameExpression) return emptyList()
 
             val indexProvider = KtSymbolFromIndexProvider.createForElement(position)
 
-            val quickFix = when (position) {
-                is KtTypeReference -> createImportTypeFix(indexProvider, position)
-                is KtSimpleNameExpression -> createImportNameFix(indexProvider, position, position.getReferencedNameAsName())
-                else -> null
+            val quickFix = if (position.parentOfType<KtTypeReference>() != null) {
+                createImportTypeFix(indexProvider, position)
+            } else {
+                createImportNameFix(indexProvider, position, position.getReferencedNameAsName())
             }
 
             return listOfNotNull(quickFix)
@@ -346,9 +346,7 @@ class ImportQuickFix(
 
             val candidateSymbols = buildList {
                 addAll(collectCallableCandidates(indexProvider, position, unresolvedName, isVisible))
-                if (position.getReceiverExpression() == null) {
-                    addAll(collectTypesCandidates(indexProvider, position, unresolvedName, isVisible))
-                }
+                addAll(collectTypesCandidates(indexProvider, position, unresolvedName, isVisible))
             }
 
             return createImportFix(position, candidateSymbols)
@@ -357,10 +355,10 @@ class ImportQuickFix(
         context(KtAnalysisSession)
         private fun createImportTypeFix(
             indexProvider: KtSymbolFromIndexProvider,
-            position: KtTypeReference,
+            position: KtSimpleNameExpression,
         ): ImportQuickFix? {
             val firFile = position.containingKtFile.getFileSymbol()
-            val unresolvedName = position.typeName ?: return null
+            val unresolvedName = position.getReferencedNameAsName()
 
             val isVisible: (KtClassLikeSymbol) -> Boolean =
                 { it is KtSymbolWithVisibility && isVisible(it, firFile, receiverExpression = null, position) }
@@ -402,10 +400,12 @@ class ImportQuickFix(
         context(KtAnalysisSession)
         private fun collectTypesCandidates(
             indexProvider: KtSymbolFromIndexProvider,
-            position: KtElement,
+            position: KtSimpleNameExpression,
             unresolvedName: Name,
             isVisible: (KtClassLikeSymbol) -> Boolean
         ): List<KtClassLikeSymbol> {
+            if (position.getReceiverExpression() != null) return emptyList()
+
             val isAnnotationClassExpected = position.isNameReferenceInAnnotationEntry()
 
             val classesCandidates = sequence {
@@ -448,9 +448,3 @@ private fun KtDeclaration.canBeImported(): Boolean {
         else -> false
     }
 }
-
-private val KtTypeReference.typeName: Name?
-    get() {
-        val userType = typeElement?.unwrapNullability() as? KtUserType
-        return userType?.referencedName?.let(Name::identifier)
-    }
