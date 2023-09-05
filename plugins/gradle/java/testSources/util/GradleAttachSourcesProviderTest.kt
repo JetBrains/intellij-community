@@ -11,7 +11,6 @@ import com.intellij.openapi.roots.LibraryOrderEntry
 import com.intellij.openapi.roots.OrderRootType
 import com.intellij.psi.JavaPsiFacade
 import com.intellij.psi.search.GlobalSearchScope
-import com.intellij.util.io.delete
 import org.assertj.core.api.Assertions.assertThat
 import org.jetbrains.plugins.gradle.importing.GradleImportingTestCase
 import org.jetbrains.plugins.gradle.importing.TestGradleBuildScriptBuilder
@@ -22,7 +21,7 @@ import org.junit.Test
 import java.nio.file.Path
 import java.util.*
 import java.util.function.Consumer
-import kotlin.io.path.exists
+import kotlin.io.path.deleteIfExists
 
 class GradleAttachSourcesProviderTest : GradleImportingTestCase() {
 
@@ -161,6 +160,6 @@ class GradleAttachSourcesProviderTest : GradleImportingTestCase() {
   }
 
   private fun removeCachedLibrary(cachePath: String = DEPENDENCY_SOURCES_JAR_CACHE_PATH) = gradleUserHome.resolve(cachePath).run {
-    if (exists()) delete(false)
+    deleteIfExists()
   }
 }

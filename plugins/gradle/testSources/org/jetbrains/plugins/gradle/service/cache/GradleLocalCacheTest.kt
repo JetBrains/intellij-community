@@ -3,13 +3,12 @@ package org.jetbrains.plugins.gradle.service.cache
 
 import com.intellij.buildsystem.model.unified.UnifiedCoordinates
 import com.intellij.openapi.externalSystem.model.project.LibraryPathType
-import com.intellij.util.io.delete
 import org.assertj.core.api.Assertions.assertThat
 import org.jetbrains.plugins.gradle.importing.GradleImportingTestCase
 import org.jetbrains.plugins.gradle.settings.GradleSettings
 import org.jetbrains.plugins.gradle.testFramework.util.importProject
 import org.junit.Test
-import kotlin.io.path.exists
+import kotlin.io.path.deleteIfExists
 
 class GradleLocalCacheTest : GradleImportingTestCase() {
 
@@ -63,7 +62,5 @@ class GradleLocalCacheTest : GradleImportingTestCase() {
     assertThat(components[LibraryPathType.SOURCE]).hasSize(1).first().isEqualTo(gradleUserHome.resolve(DEPENDENCY_SOURCES_JAR_CACHE_PATH))
   }
 
-  private fun removeGradleCacheEntry(cachePath: String) = gradleUserHome.resolve(cachePath).run {
-    if (exists()) delete(false)
-  }
+  private fun removeGradleCacheEntry(cachePath: String) = gradleUserHome.resolve(cachePath).run { deleteIfExists() }
 }

@@ -147,8 +147,7 @@ final class GradleAttachSourcesProvider implements AttachSourcesProvider {
       if (!FileUtil.isAncestor(gradleUserHome, rootFiles[0].getPath(), false)) {
         return null;
       }
-      String plainArtifactNotation = sourceArtifactNotation.replace("@aar", "");
-      UnifiedCoordinates coordinates = getLibraryUnifiedCoordinates(plainArtifactNotation);
+      UnifiedCoordinates coordinates = getLibraryUnifiedCoordinates(sourceArtifactNotation);
       if (coordinates == null) {
         return null;
       }
