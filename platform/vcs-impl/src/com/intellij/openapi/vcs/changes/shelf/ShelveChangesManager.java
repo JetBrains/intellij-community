@@ -368,7 +368,7 @@ public final class ShelveChangesManager implements PersistentStateComponent<Elem
                                              FileUtil.toSystemIndependentName(newShelvedFile.toString())));
           }
           catch (IOException e) {
-            LOG.error("Can't copy binary file: " + list.path);
+            LOG.warn("Can't copy binary file: " + list.path, e);
           }
         }
       }
