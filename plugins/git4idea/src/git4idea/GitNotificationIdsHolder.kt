@@ -84,6 +84,7 @@ class GitNotificationIdsHolder : NotificationIdsHolder {
       STAGE_COMMIT_ERROR,
       STAGE_COMMIT_SUCCESS,
       STAGE_OPERATION_ERROR,
+      STASH_SUCCESSFUL,
       STASH_FAILED,
       STASH_LOCAL_CHANGES_DETECTED,
       TAG_CREATED,
@@ -192,6 +193,7 @@ class GitNotificationIdsHolder : NotificationIdsHolder {
     const val STAGE_COMMIT_ERROR = "git.stage.commit.error"
     const val STAGE_COMMIT_SUCCESS = "git.stage.commit.successful"
     const val STAGE_OPERATION_ERROR = "git.stage.operation.error"
+    const val STASH_SUCCESSFUL = "git.stash.successful"
     const val STASH_FAILED = "git.stash.failed"
     const val STASH_LOCAL_CHANGES_DETECTED = "git.stash.local.changes.detected"
     const val TAG_CREATED = "git.tag.created"

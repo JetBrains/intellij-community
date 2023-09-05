@@ -25,6 +25,7 @@ import com.intellij.openapi.wm.ex.ToolWindowManagerListener
 import com.intellij.ui.SimpleTextAttributes
 import com.intellij.ui.content.Content
 import git4idea.i18n.GitBundle
+import git4idea.index.showToolWindowTab
 import git4idea.stash.GitStashTracker
 import org.jetbrains.annotations.Nls
 import org.jetbrains.annotations.NonNls
@@ -136,4 +137,8 @@ internal fun stashToolWindowRegistryOption(): RegistryValue = Registry.get("git.
 
 internal fun isStashToolWindowEnabled(project: Project): Boolean {
   return ShelvedChangesViewManager.hideDefaultShelfTab(project)
+}
+
+internal fun showStashes(project: Project) {
+  showToolWindowTab(project, GitStashContentProvider.TAB_NAME) { }
 }

@@ -3,7 +3,9 @@ package git4idea.index.actions
 
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.vcs.VcsException
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.util.containers.MultiMap
 import git4idea.GitStashUsageCollector
 import git4idea.commands.Git
 import git4idea.config.GitExecutableManager
@@ -11,6 +13,7 @@ import git4idea.config.GitVersionSpecialty
 import git4idea.i18n.GitBundle
 import git4idea.index.ui.GitFileStatusNode
 import git4idea.index.ui.NodeKind
+import git4idea.stash.GitStashOperations
 import git4idea.stash.createStashPushHandler
 import git4idea.stash.refreshStash
 import java.util.function.Supplier
@@ -38,6 +41,13 @@ object GitStashOperation : StagingAreaOperation {
 
     StagingAreaOperation.refreshVirtualFiles(nodes, true)
     refreshStash(project, root)
+  }
+
+  override fun reportResult(project: Project, successfulRoots: Collection<VirtualFile>, exceptionsByRoot: MultiMap<VirtualFile, VcsException>) {
+    super.reportResult(project, successfulRoots, exceptionsByRoot)
+    if (successfulRoots.isNotEmpty()) {
+      GitStashOperations.showSuccessNotification(project, successfulRoots, !exceptionsByRoot.isEmpty)
+    }
   }
 }
 

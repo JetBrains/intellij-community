@@ -4,6 +4,7 @@
 package git4idea.stash
 
 import com.intellij.dvcs.DvcsUtil
+import com.intellij.notification.NotificationAction
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.progress.ProgressIndicator
@@ -12,6 +13,7 @@ import com.intellij.openapi.progress.Task
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.MessageDialogBuilder
 import com.intellij.openapi.ui.Messages
+import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.util.ThrowableComputable
 import com.intellij.openapi.util.text.HtmlBuilder
 import com.intellij.openapi.util.text.HtmlChunk
@@ -57,6 +59,8 @@ import git4idea.history.GitLogUtil
 import git4idea.i18n.GitBundle
 import git4idea.merge.GitConflictResolver
 import git4idea.repo.GitRepositoryManager
+import git4idea.stash.ui.isStashToolWindowEnabled
+import git4idea.stash.ui.showStashes
 import git4idea.ui.StashInfo
 import git4idea.util.GitUIUtil
 import git4idea.util.GitUntrackedFilesHelper
@@ -249,7 +253,7 @@ object GitStashOperations {
     object : Task.Backgroundable(project, GitBundle.message("stashing.progress.title"), false) {
       override fun run(indicator: ProgressIndicator) {
         DvcsUtil.workingTreeChangeStarted(project, GitBundle.message("stash.action.name")).use { _ ->
-          val successfulRoots = mutableListOf<VirtualFile>()
+          val successfulRoots = linkedSetOf<VirtualFile>()
           val failedRoots = linkedMapOf<VirtualFile, String>()
           for (root in roots) {
             val activity = GitStashUsageCollector.logStashPush(project)
@@ -266,10 +270,10 @@ object GitStashOperations {
 
           if (!successfulRoots.isEmpty()) {
             GitUtil.refreshVfsInRoots(successfulRoots)
+            showSuccessNotification(project, successfulRoots, failedRoots.isNotEmpty())
           }
           if (!failedRoots.isEmpty()) {
-            val rootList = failedRoots.keys.joinToString(", ") { "'${VcsImplUtil.getShortVcsRootName(project, it)}'" }
-            val errorTitle = GitBundle.message("stash.error", StringUtil.shortenTextWithEllipsis(rootList, 100, 0))
+            val errorTitle = GitBundle.message("stash.error", getRootsText(project, failedRoots.keys))
             val errorMessage = HtmlBuilder()
               .appendWithSeparators(HtmlChunk.br(), failedRoots.values.map { HtmlChunk.raw(it) })
               .toString()
@@ -278,6 +282,30 @@ object GitStashOperations {
         }
       }
     }.queue()
+  }
+
+  fun showSuccessNotification(project: Project, successfulRoots: Collection<VirtualFile>, hasErrors: Boolean) {
+    val actions = buildList {
+      if (isStashToolWindowEnabled(project)) {
+        add(NotificationAction.createSimple(GitBundle.message("stash.view.stashes.link")) { showStashes(project) })
+      }
+    }
+    val message = getSuccessMessage(project, successfulRoots, hasErrors)
+    VcsNotifier.getInstance(project).notifyMinorInfo(GitNotificationIdsHolder.STASH_SUCCESSFUL, "", message, *actions.toTypedArray())
+  }
+
+  private fun getSuccessMessage(project: Project,
+                                successfulRoots: Collection<VirtualFile>,
+                                hasErrors: Boolean): @NlsContexts.NotificationContent String {
+    if (!hasErrors) return GitBundle.message("stash.files.success")
+
+    val rootsText = getRootsText(project, successfulRoots)
+    return GitBundle.message("stash.files.in.roots.success", rootsText)
+  }
+
+  private fun getRootsText(project: Project, roots: Collection<VirtualFile>): String {
+    val rootsText = roots.joinToString(", ") { "'${VcsImplUtil.getShortVcsRootName(project, it)}'" }
+    return StringUtil.shortenTextWithEllipsis(rootsText, 100, 0)
   }
 }
 

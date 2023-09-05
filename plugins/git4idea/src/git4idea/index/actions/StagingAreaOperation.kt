@@ -6,10 +6,15 @@ import com.intellij.openapi.keymap.KeymapUtil
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.NlsActions
 import com.intellij.openapi.util.NlsContexts
+import com.intellij.openapi.util.text.HtmlBuilder
+import com.intellij.openapi.util.text.HtmlChunk
 import com.intellij.openapi.vcs.VcsException
+import com.intellij.openapi.vcs.VcsNotifier
 import com.intellij.openapi.vcs.update.FilePathChange
 import com.intellij.openapi.vcs.update.RefreshVFsSynchronously
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.util.containers.MultiMap
+import git4idea.GitNotificationIdsHolder
 import git4idea.i18n.GitBundle
 import git4idea.index.ContentVersion
 import git4idea.index.path
@@ -31,6 +36,12 @@ interface StagingAreaOperation {
   @Throws(VcsException::class)
   fun processPaths(project: Project, root: VirtualFile, nodes: List<GitFileStatusNode>)
 
+  fun reportResult(project: Project, successfulRoots: Collection<VirtualFile>, exceptionsByRoot: MultiMap<VirtualFile, VcsException>) {
+    if (!exceptionsByRoot.isEmpty) {
+      showErrorMessage(project, errorMessage, exceptionsByRoot.values())
+    }
+  }
+
   companion object {
     fun refreshVirtualFiles(nodes: List<GitFileStatusNode>, isRollback: Boolean) {
       RefreshVFsSynchronously.refresh(nodes.map { createChange(it) }, isRollback)
@@ -38,6 +49,11 @@ interface StagingAreaOperation {
 
     private fun createChange(node: GitFileStatusNode): FilePathChange {
       return FilePathChange.Simple(node.status.path(ContentVersion.STAGED), node.status.path(ContentVersion.LOCAL))
+    }
+
+    private fun showErrorMessage(project: Project, @NlsContexts.NotificationTitle messageTitle: String, exceptions: Collection<Exception>) {
+      val message = HtmlBuilder().appendWithSeparators(HtmlChunk.br(), exceptions.map { HtmlChunk.text(it.localizedMessage) })
+      VcsNotifier.getInstance(project).notifyError(GitNotificationIdsHolder.STAGE_OPERATION_ERROR, messageTitle, message.toString())
     }
   }
 }
