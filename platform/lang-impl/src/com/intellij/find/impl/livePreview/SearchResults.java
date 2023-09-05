@@ -23,6 +23,7 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.concurrency.annotations.RequiresEdt;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.Stack;
 import com.intellij.util.ui.UIUtil;
@@ -35,10 +36,9 @@ import java.lang.reflect.InvocationTargetException;
 import java.util.List;
 import java.util.*;
 import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.ExecutionException;
 import java.util.regex.PatternSyntaxException;
 
-public final class SearchResults implements DocumentListener, CaretListener {
+public class SearchResults implements DocumentListener, CaretListener {
 
   public int getStamp() {
     return ++myStamp;
@@ -99,6 +99,7 @@ public final class SearchResults implements DocumentListener, CaretListener {
   private final Stack<Pair<FindModel, FindResult>> myCursorPositions = new Stack<>();
 
   private final SelectionManager mySelectionManager;
+  private final Pair<int[], int[]> globalSearchArea = Pair.create(new int[]{0}, new int[]{Integer.MAX_VALUE});
 
   public SearchResults(@NotNull Editor editor, @NotNull Project project) {
     myEditor = editor;
@@ -219,30 +220,17 @@ public final class SearchResults implements DocumentListener, CaretListener {
     Editor editor = getEditor();
 
     updatePreviousFindModel(findModel);
-    CompletableFuture<int[]> startsRef = new CompletableFuture<>();
-    CompletableFuture<int[]> endsRef = new CompletableFuture<>();
-    getSelection(editor, startsRef, endsRef);
+    Pair<int[], int[]> searchArea = getSearchArea(editor, findModel);
 
     List<FindResult> results = new ArrayList<>();
     ApplicationManager.getApplication().runReadAction(() -> {
       Project project = getProject();
       if (myDisposed || project.isDisposed()) return;
-      int[] starts = new int[0];
-      int[] ends = new int[0];
-      try {
-        starts = startsRef.get();
-        ends = endsRef.get();
-      }
-      catch (InterruptedException | ExecutionException ignore) {
-      }
 
-      if (starts.length == 0 || findModel.isGlobal()) {
-        findInRange(new TextRange(0, Integer.MAX_VALUE), editor, findModel, results);
-      }
-      else {
-        for (int i = 0; i < starts.length; ++i) {
-          findInRange(new TextRange(starts[i], ends[i]), editor, findModel, results);
-        }
+      int[] starts = searchArea.first;
+      int[] ends = searchArea.second;
+      for (int i = 0; i < starts.length; ++i) {
+        findInRange(new TextRange(starts[i], ends[i]), editor, findModel, results);
       }
 
       long documentTimeStamp = editor.getDocument().getModificationStamp();
@@ -271,23 +259,39 @@ public final class SearchResults implements DocumentListener, CaretListener {
     }
   }
 
-  private static void getSelection(@NotNull Editor editor, @NotNull CompletableFuture<int[]> starts, @NotNull CompletableFuture<int[]> ends) {
+  private @NotNull Pair<int[], int[]> getSearchArea(@NotNull Editor editor, @NotNull FindModel findModel) {
+    if (findModel.isGlobal()) {
+      return globalSearchArea;
+    }
+    Pair<int[], int[]> searchArea;
     if (ApplicationManager.getApplication().isDispatchThread()) {
-      SelectionModel selection = editor.getSelectionModel();
-      starts.complete(selection.getBlockSelectionStarts());
-      ends.complete(selection.getBlockSelectionEnds());
+      searchArea = getLocalSearchArea(editor, findModel);
     }
     else {
+      CompletableFuture<Pair<int[], int[]>> future = new CompletableFuture<>();
       try {
         SwingUtilities.invokeAndWait(() -> {
-          SelectionModel selection = editor.getSelectionModel();
-          starts.complete(selection.getBlockSelectionStarts());
-          ends.complete(selection.getBlockSelectionEnds());
+          var result = getLocalSearchArea(editor, findModel);
+          future.complete(result);
         });
       }
       catch (InterruptedException | InvocationTargetException ignore) {
       }
+      searchArea = future.getNow(null);
     }
+    if (searchArea != null && searchArea.first.length > 0) {
+      return searchArea;
+    }
+    else {
+      return globalSearchArea;
+    }
+  }
+
+  /** This method is called only when {@link FindModel#isGlobal()} is false */
+  @RequiresEdt
+  protected @NotNull Pair<int[], int[]> getLocalSearchArea(@NotNull Editor editor, @NotNull FindModel findModel) {
+    SelectionModel selection = editor.getSelectionModel();
+    return Pair.create(selection.getBlockSelectionStarts(), selection.getBlockSelectionEnds());
   }
 
   private void findInRange(@NotNull TextRange range, @NotNull Editor editor, @NotNull FindModel findModel, @NotNull List<? super FindResult> results) {
