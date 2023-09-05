@@ -63,7 +63,7 @@ suspend fun GitLabApi.Rest.guessServerEdition(): GitLabEdition? {
 
 // Authenticated
 // should not have statistics to avoid recursion
-@SinceGitLab("12.0")
+@SinceGitLab("15.6")
 suspend fun GitLabApi.GraphQL.getServerMetadata(): HttpResponse<out GitLabServerMetadataDTO?> {
   val request = gitLabQuery(GitLabGQLQuery.GET_METADATA)
   return loadResponse(request, "metadata")
