@@ -20,8 +20,11 @@ import com.jetbrains.jsonSchema.JsonDependencyModificationTracker;
 import com.jetbrains.jsonSchema.extension.adapters.JsonValueAdapter;
 import com.jetbrains.jsonSchema.ide.JsonSchemaService;
 import com.jetbrains.jsonSchema.impl.nestedCompletions.NestedCompletionsNode;
+import com.jetbrains.jsonSchema.impl.nestedCompletions.NestedCompletionsNodeBuilder;
 import com.jetbrains.jsonSchema.impl.nestedCompletions.NestedCompletionsNodeKt;
 import com.jetbrains.jsonSchema.remote.JsonFileResolver;
+import kotlin.Unit;
+import kotlin.jvm.functions.Function1;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -132,7 +135,7 @@ public final class JsonSchemaObject {
 
   private boolean myForceCaseInsensitive = false;
 
-  /** @see NestedCompletionsNode or test usages */
+  /** @see JsonSchemaObject#applyBuilderOnNestedCompletionsRoot(Function1) */
   private NestedCompletionsNode myNestedCompletionRoot = null;
 
   private final UserDataHolderBase myUserDataHolder = new UserDataHolderBase();
@@ -228,8 +231,12 @@ public final class JsonSchemaObject {
     return myLanguageInjectionPostfix;
   }
 
-  public void setNestedCompletionRoot(NestedCompletionsNode nestedCompletionRoot) {
-    myNestedCompletionRoot = nestedCompletionRoot;
+  /**
+   * Builds the nested completions root tree.
+   * @see NestedCompletionsNodeKt#buildNestedCompletionsRootTree(JsonSchemaObject, Function1) to see how the DSL is ideally used in Kotlin
+   */
+  public void applyBuilderOnNestedCompletionsRoot(Function1<? super NestedCompletionsNodeBuilder, Unit> builder) {
+    myNestedCompletionRoot = NestedCompletionsNodeKt.buildNestedCompletionsTree(builder);
   }
 
   public NestedCompletionsNode getNestedCompletionRoot() {

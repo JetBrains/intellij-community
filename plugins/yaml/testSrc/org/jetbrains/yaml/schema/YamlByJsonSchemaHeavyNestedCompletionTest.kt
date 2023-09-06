@@ -11,7 +11,7 @@ import com.jetbrains.jsonSchema.extension.JsonSchemaMapper.SchemaAndAdditionalCa
 import com.jetbrains.jsonSchema.extension.schemaWithoutAdditionalCachingDependencies
 import com.jetbrains.jsonSchema.impl.JsonBySchemaHeavyCompletionTestBase
 import com.jetbrains.jsonSchema.impl.JsonSchemaObject
-import com.jetbrains.jsonSchema.impl.nestedCompletions.buildNestedCompletionsTree
+import com.jetbrains.jsonSchema.impl.nestedCompletions.buildNestedCompletionsRootTree
 import org.intellij.lang.annotations.Language
 import java.io.File
 
@@ -87,7 +87,7 @@ class YamlByJsonSchemaHeavyNestedCompletionTest: JsonBySchemaHeavyCompletionTest
       }
     """.trimIndent())
       .withConfiguration {
-        nestedCompletionRoot = buildNestedCompletionsTree {
+        buildNestedCompletionsRootTree {
           open("foo")
         }
       }
@@ -123,7 +123,7 @@ class YamlByJsonSchemaHeavyNestedCompletionTest: JsonBySchemaHeavyCompletionTest
       }
     """.trimIndent())
       .withConfiguration {
-        nestedCompletionRoot = buildNestedCompletionsTree {
+        buildNestedCompletionsRootTree {
           open("foo") {
             open("bar")
           }
@@ -162,7 +162,7 @@ class YamlByJsonSchemaHeavyNestedCompletionTest: JsonBySchemaHeavyCompletionTest
       }
     """.trimIndent())
       .withConfiguration {
-        nestedCompletionRoot = buildNestedCompletionsTree {
+        buildNestedCompletionsRootTree {
           open("nested") {
             open("foo")
           }
@@ -264,7 +264,7 @@ internal val open1ThenOpen2Then3Schema get() = assertThatSchema("""
      }
    """.trimIndent())
   .withConfiguration {
-    nestedCompletionRoot = buildNestedCompletionsTree {
+    buildNestedCompletionsRootTree {
       open("one") {
         open("two")
       }

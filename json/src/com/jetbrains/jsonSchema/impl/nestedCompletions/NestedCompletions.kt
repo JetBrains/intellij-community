@@ -36,7 +36,7 @@ internal fun JsonSchemaObject.collectNestedCompletions(
 
   node
     ?.children
-    ?.filterNot { it.value.isolated }
+    ?.filterIsInstance<ChildNode.OpenNode>()
     ?.forEach { (name, childNode) ->
       for (subSchema in findSubSchemasByName(project, name)) {
         subSchema.collectNestedCompletions(project, childNode, completionPath / name, collector)

@@ -3,7 +3,7 @@ package org.jetbrains.yaml.schema
 
 import com.jetbrains.jsonSchema.impl.JsonBySchemaCompletionBaseTest
 import com.jetbrains.jsonSchema.impl.JsonSchemaObject
-import com.jetbrains.jsonSchema.impl.nestedCompletions.buildNestedCompletionsTree
+import com.jetbrains.jsonSchema.impl.nestedCompletions.buildNestedCompletionsRootTree
 import org.intellij.lang.annotations.Language
 
 class YamlByJsonSchemaNestedCompletionTest : JsonBySchemaCompletionBaseTest() {
@@ -69,7 +69,7 @@ class YamlByJsonSchemaNestedCompletionTest : JsonBySchemaCompletionBaseTest() {
       }
     """.trimIndent())
       .withConfiguration {
-        nestedCompletionRoot = buildNestedCompletionsTree {
+        buildNestedCompletionsRootTree {
           isolated("one") {}
         }
       }
@@ -78,6 +78,65 @@ class YamlByJsonSchemaNestedCompletionTest : JsonBySchemaCompletionBaseTest() {
       """.trimIndent())
       .hasCompletionVariantsAtCaret(
         "one",
+      )
+  }
+
+  fun `test completions can start in isolated regex nodes`() {
+    val twoThreePropertyJsonText = """{
+            "properties": {
+              "two": {
+                "properties": {
+                  "three": {
+                    "type": "boolean"
+                  }
+                }
+              }
+            }
+          }"""
+    val isolatedOneAtFooBarThenOpenTwoSchema = assertThatSchema("""
+      {
+        "properties": {
+          "one@foo": $twoThreePropertyJsonText,
+          "one@bar": $twoThreePropertyJsonText,
+          "one@baz": $twoThreePropertyJsonText
+        }
+      }
+    """.trimIndent())
+      .withConfiguration {
+        buildNestedCompletionsRootTree {
+          isolated("one@(foo|bar)".toRegex()) {
+            open("two")
+          }
+        }
+      }
+
+    isolatedOneAtFooBarThenOpenTwoSchema
+      .appliedToYamlFile("""
+        one@foo:
+          <caret>
+      """.trimIndent())
+      .hasCompletionVariantsAtCaret(
+        "three",
+        "two",
+      )
+
+    isolatedOneAtFooBarThenOpenTwoSchema
+      .appliedToYamlFile("""
+        one@bar:
+          <caret>
+      """.trimIndent())
+      .hasCompletionVariantsAtCaret(
+        "three",
+        "two",
+      )
+
+    isolatedOneAtFooBarThenOpenTwoSchema
+      .appliedToYamlFile("""
+        one@baz:
+          <caret>
+      """.trimIndent())
+      .hasCompletionVariantsAtCaret(
+        "two",
       )
   }
 
@@ -104,7 +163,7 @@ class YamlByJsonSchemaNestedCompletionTest : JsonBySchemaCompletionBaseTest() {
       }
     """.trimIndent())
       .withConfiguration {
-        nestedCompletionRoot = buildNestedCompletionsTree {
+        buildNestedCompletionsRootTree {
           open("one") {
             isolated("two") {
               open("three")
