@@ -61,7 +61,7 @@ public final class JpsPathUtil {
     return url;
   }
 
-  //todo[nik] copied from VfsUtil
+  //todo reuse code from VfsUtil instead
   @NotNull
   public static String fixURLforIDEA(@NotNull String url) {
     int idx = url.indexOf(":/");

@@ -151,7 +151,7 @@ public final class BuildRunner {
             break;
 
           case CLEAN:
-            //todo[nik]
+            //todo
     //        new ProjectBuilder(new GantBinding(), project).clean();
             break;
           case UP_TO_DATE_CHECK:
@@ -252,7 +252,7 @@ public final class BuildRunner {
 
   private static void includeDependenciesToScope(Set<? extends BuildTargetType<?>> targetTypes, Set<BuildTarget<?>> targets,
                                                  Set<? super BuildTargetType<?>> targetTypesToForceBuild, ProjectDescriptor descriptor) {
-    //todo[nik] get rid of CompileContext parameter for BuildTargetIndex.getDependencies() and use it here
+    //todo get rid of CompileContext parameter for BuildTargetIndex.getDependencies() and use it here
     TargetOutputIndex dummyIndex = new TargetOutputIndex() {
       @Override
       public Collection<BuildTarget<?>> getTargetsByOutputFile(@NotNull File file) {

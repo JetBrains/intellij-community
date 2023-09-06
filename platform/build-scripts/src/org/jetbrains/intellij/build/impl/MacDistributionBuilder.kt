@@ -244,7 +244,7 @@ class MacDistributionBuilder(override val context: BuildContext,
 
     val fullName = context.applicationInfo.productName
 
-    //todo[nik] improve
+    //todo improve
     val minor = context.applicationInfo.minorVersion
     val isNotRelease = context.applicationInfo.isEAP && !minor.contains("RC") && !minor.contains("Beta")
     val version = if (isNotRelease) "EAP ${context.fullBuildNumber}" else "${context.applicationInfo.majorVersion}.${minor}"

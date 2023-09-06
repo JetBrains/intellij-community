@@ -61,7 +61,7 @@ public abstract class BaseCompilerTestCase extends JavaModuleTestCase {
     myProject.getMessageBus().connect(getTestRootDisposable()).subscribe(ProjectTopics.PROJECT_ROOTS, new ModuleRootListener() {
       @Override
       public void rootsChanged(@NotNull ModuleRootEvent event) {
-        //todo[nik] projectOpened isn't called in tests so we need to add this listener manually
+        //todo projectOpened isn't called in tests so we need to add this listener manually
         forceFSRescan();
       }
     });
@@ -322,7 +322,7 @@ public abstract class BaseCompilerTestCase extends JavaModuleTestCase {
   @NotNull
   @Override
   protected Module doCreateRealModule(@NotNull String moduleName) {
-    //todo[nik] reuse code from PlatformTestCase
+    //todo reuse code from PlatformTestCase
     VirtualFile baseDir = getOrCreateProjectBaseDir();
     Path moduleFile = baseDir.toNioPath().resolve(moduleName + ModuleFileType.DOT_DEFAULT_EXTENSION);
     return WriteAction.computeAndWait(() -> {

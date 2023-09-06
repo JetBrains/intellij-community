@@ -54,7 +54,7 @@ public class XValueNodeImpl extends XValueContainerNode<XValue> implements XValu
   private boolean myChanged;
   private XValuePresentation myValuePresentation;
 
-  //todo[nik] annotate 'name' with @NotNull
+  //todo annotate 'name' with @NotNull
   public XValueNodeImpl(XDebuggerTree tree, @Nullable XDebuggerTreeNode parent, String name, @NotNull XValue value) {
     super(tree, parent, true, value);
     myName = name;

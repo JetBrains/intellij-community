@@ -47,7 +47,7 @@ public class ExceptionInfoCache {
       ClassResolveInfo cached = myCache.get(id);
       if (cached != null) return cached;
       // try find the file with the required name
-      //todo[nik] it would be better to use FilenameIndex here to honor the scope by it isn't accessible in Open API
+      //todo it would be better to use FilenameIndex here to honor the scope by it isn't accessible in Open API
       PsiFile[] files = PsiShortNamesCache.getInstance(myProject).getFilesByName(fileName);
       info = ExceptionInfoCache.ClassResolveInfo.create(myProject, files);
       myCache.put(id, info);

@@ -315,7 +315,7 @@ fun getRelatedItemsPopup(items: List<GotoRelatedItem>, title: @NlsContexts.Popup
  */
 fun getRelatedItemsPopup(items: List<GotoRelatedItem>, title: @NlsContexts.PopupTitle String?, showContainingModules: Boolean): JBPopup {
   val elements = ArrayList<Any?>(items.size)
-  //todo[nik] move presentation logic to GotoRelatedItem class
+  //todo move presentation logic to GotoRelatedItem class
   val itemMap = HashMap<PsiElement, GotoRelatedItem>()
   for (item in items) {
     val element = item.element

@@ -334,7 +334,7 @@ public final class PathManagerEx {
     String moduleName = root.getName();
     String chunkPrefix = "ModuleChunk(";
     if (moduleName.startsWith(chunkPrefix)) {
-      //todo[nik] this is temporary workaround to fix tests on TeamCity which compiles the whole modules cycle to a single output directory
+      //todo this is temporary workaround to fix tests on TeamCity which compiles the whole modules cycle to a single output directory
       moduleName = StringUtil.trimStart(moduleName, chunkPrefix);
       moduleName = moduleName.substring(0, moduleName.indexOf(','));
     }

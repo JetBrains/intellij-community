@@ -87,7 +87,7 @@ public abstract class FacetBasedFrameworkDetector<F extends Facet, C extends Fac
   @Override
   public @NotNull FrameworkType getFrameworkType() {
     FacetType<F, C> type = getFacetType();
-    //noinspection ConstantConditions todo[nik] remove later: this is added to find implementations which incorrectly return 'null' from 'getFacetType'
+    //noinspection ConstantConditions todo remove later: this is added to find implementations which incorrectly return 'null' from 'getFacetType'
     LOG.assertTrue(type != null, "'getFacetType' returns 'null' in " + getClass());
     return createFrameworkType(type);
   }

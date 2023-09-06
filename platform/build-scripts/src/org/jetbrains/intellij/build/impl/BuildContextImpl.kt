@@ -240,7 +240,7 @@ class BuildContextImpl(
     get() = productProperties.productLayout.bundledPluginModules.contains("intellij.java.plugin")
 
   override fun patchInspectScript(path: Path) {
-    //todo[nik] use placeholder in inspect.sh/inspect.bat file instead
+    //todo use placeholder in inspect.sh/inspect.bat file instead
     Files.writeString(path, Files.readString(path).replace(" inspect ", " ${productProperties.inspectCommandName} "))
   }
 

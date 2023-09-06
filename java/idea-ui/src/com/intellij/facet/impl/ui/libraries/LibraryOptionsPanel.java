@@ -175,7 +175,7 @@ public class LibraryOptionsPanel implements Disposable {
                                  NotNullComputable<String> pathProvider,
                                  FrameworkLibraryVersionFilter versionFilter,
                                  boolean showDoNotCreateOption, final List<? extends FrameworkLibraryVersion> versions) {
-    //todo[nik] create mySettings only in apply() method
+    //todo create mySettings only in apply() method
     mySettings = new LibraryCompositionSettings(libraryDescription, pathProvider, versionFilter, versions);
     Disposer.register(this, mySettings);
     List<Library> libraries = calculateSuitableLibraries();

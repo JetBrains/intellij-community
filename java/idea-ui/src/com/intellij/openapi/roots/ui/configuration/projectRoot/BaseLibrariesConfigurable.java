@@ -116,7 +116,6 @@ public abstract class BaseLibrariesConfigurable extends BaseStructureConfigurabl
   }
 
   private List<LibraryConfigurable> getLibraryConfigurables() {
-    //todo[nik] improve
     List<LibraryConfigurable> libraryConfigurables = new ArrayList<>();
     for (int i = 0; i < myRoot.getChildCount(); i++) {
       final TreeNode node = myRoot.getChildAt(i);

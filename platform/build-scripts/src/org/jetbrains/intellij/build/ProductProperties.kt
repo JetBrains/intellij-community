@@ -74,7 +74,7 @@ abstract class ProductProperties {
   /**
    * Paths to directories containing images specified by 'logo/@url' and 'icon/@ico' attributes in ApplicationInfo.xml file.
    * <br>
-   * todo(nik) get rid of this and make sure that these resources are located in [applicationInfoModule] instead
+   * todo get rid of this and make sure that these resources are located in [applicationInfoModule] instead
    */
   var brandingResourcePaths: List<Path> = emptyList()
 
@@ -294,13 +294,13 @@ abstract class ProductProperties {
 
   /**
    * Specified additional modules (not included into the product layout) which need to be compiled when product is built.
-   * todo(nik) get rid of this
+   * todo get rid of this
    */
   var additionalModulesToCompile: PersistentList<String> = persistentListOf()
 
   /**
    * Specified modules which tests need to be compiled when product is built.
-   * todo(nik) get rid of this
+   * todo get rid of this
    */
   var modulesToCompileTests: PersistentList<String> = persistentListOf()
 

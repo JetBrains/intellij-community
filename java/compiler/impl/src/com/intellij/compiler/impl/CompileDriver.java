@@ -163,7 +163,7 @@ public final class CompileDriver {
   }
 
   public static void setCompilationStartedAutomatically(CompileScope scope) {
-    //todo[nik] pass this option as a parameter to compile/make methods instead
+    //todo pass this option as a parameter to compile/make methods instead
     scope.putUserData(COMPILATION_STARTED_AUTOMATICALLY, true);
   }
 

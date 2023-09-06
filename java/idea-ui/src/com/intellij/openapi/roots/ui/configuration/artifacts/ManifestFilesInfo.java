@@ -69,7 +69,7 @@ public class ManifestFilesInfo {
         FileUtil.createIfDoesntExist(ioFile);
         file = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(ioFile);
         if (file == null) {
-          //todo[nik] improve
+          //todo improve error reporting
           LOG.error("cannot create file: " + ioFile);
         }
       }

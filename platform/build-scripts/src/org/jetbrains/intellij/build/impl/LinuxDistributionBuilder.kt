@@ -56,7 +56,7 @@ class LinuxDistributionBuilder(override val context: BuildContext,
         generateBuildTxt(context, targetPath)
         copyDistFiles(context = context, newDir = targetPath, os = OsFamily.LINUX, arch = arch)
         Files.copy(ideaProperties!!, distBinDir.resolve(ideaProperties.fileName), StandardCopyOption.REPLACE_EXISTING)
-        //todo[nik] converting line separators to unix-style make sense only when building Linux distributions under Windows on a local machine;
+        //todo converting line separators to unix-style make sense only when building Linux distributions under Windows on a local machine;
         // for real installers we need to checkout all text files with 'lf' separators anyway
         convertLineSeparators(targetPath.resolve("bin/idea.properties"), "\n")
         if (iconPngPath != null) {

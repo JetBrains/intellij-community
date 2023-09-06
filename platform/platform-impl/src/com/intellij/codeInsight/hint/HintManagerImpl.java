@@ -601,7 +601,7 @@ public class HintManagerImpl extends HintManager {
     return createHintHint(editor, p, hint, constraint, false);
   }
 
-  //todo[nik,kirillk] perhaps 'createInEditorComponent' parameter should always be 'true'
+  //todo perhaps 'createInEditorComponent' parameter should always be 'true'
   //old 'createHintHint' method uses LayeredPane as original component for HintHint so IdeTooltipManager.eventDispatched()
   //wasn't able to correctly hide tooltip after mouse move.
   public static HintHint createHintHint(Editor editor, Point p, LightweightHint hint, @PositionFlags short constraint, boolean createInEditorComponent) {

@@ -195,7 +195,7 @@ private fun patchIdeaPropertiesFile(buildContext: BuildContext): Path {
     builder.append('\n').append(Files.readString(it))
   }
 
-  //todo[nik] introduce special systemSelectorWithoutVersion instead?
+  //todo introduce special systemSelectorWithoutVersion instead?
   val settingsDir = buildContext.systemSelector.replaceFirst("\\d+(\\.\\d+)?".toRegex(), "")
   val temp = builder.toString()
   builder.setLength(0)
