@@ -5,6 +5,10 @@ import com.intellij.openapi.diagnostic.ErrorReportSubmitter;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import org.jetbrains.annotations.ApiStatus;
 
+/**
+ * @deprecated don't add new constants to this class and use the replacement for the existing one.
+ */
+@Deprecated
 public interface ExtensionPoints {
   /**
    * @deprecated the constant was moved to IdeErrorsDialog 
