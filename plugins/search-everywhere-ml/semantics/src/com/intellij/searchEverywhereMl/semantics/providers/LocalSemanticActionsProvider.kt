@@ -4,16 +4,22 @@ import com.intellij.ide.actions.searcheverywhere.FoundItemDescriptor
 import com.intellij.ide.util.gotoByName.GotoActionModel
 import com.intellij.searchEverywhereMl.semantics.services.ActionEmbeddingsStorage
 
-class LocalSemanticActionsProvider(private val model: GotoActionModel) : SemanticActionsProvider() {
-  override fun search(pattern: String): List<FoundItemDescriptor<GotoActionModel.MatchedValue>> {
+class LocalSemanticActionsProvider(model: GotoActionModel) : SemanticActionsProvider(model) {
+  override fun search(pattern: String, similarityThreshold: Double?): List<FoundItemDescriptor<GotoActionModel.MatchedValue>> {
     if (pattern.isBlank()) return emptyList()
-    return ActionEmbeddingsStorage.getInstance().searchNeighbours(pattern, ITEMS_LIMIT, SIMILARITY_THRESHOLD).mapNotNull {
-      createItemDescriptor(it.text, it.similarity, pattern, model)
-    }
+    return ActionEmbeddingsStorage.getInstance()
+      .searchNeighbours(pattern, ITEMS_LIMIT, similarityThreshold)
+      .mapNotNull { createItemDescriptor(it.text, it.similarity, pattern) }
+  }
+
+  override fun streamSearch(pattern: String, similarityThreshold: Double?): Sequence<FoundItemDescriptor<GotoActionModel.MatchedValue>> {
+    if (pattern.isBlank()) return emptySequence()
+    return ActionEmbeddingsStorage.getInstance()
+      .streamSearchNeighbours(pattern, similarityThreshold)
+      .mapNotNull { createItemDescriptor(it.text, it.similarity, pattern) }
   }
 
   companion object {
     private const val ITEMS_LIMIT = 10
-    private const val SIMILARITY_THRESHOLD = 0.3
   }
 }
