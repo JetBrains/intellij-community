@@ -120,6 +120,8 @@
       implementation="com.intellij.searchEverywhereMl.ranking.features.SearchEverywhereTypoFeaturesProvider"/>
     <searchEverywhereElementFeaturesProvider
       implementation="com.intellij.searchEverywhereMl.ranking.features.SearchEverywhereFileGroupFeatureProvider"/>
+    <searchEverywhereElementFeaturesProvider
+      implementation="com.intellij.searchEverywhereMl.ranking.features.SearchEverywhereTextFeaturesProvider"/>
 
     <elementKeyForIdProvider implementation="com.intellij.searchEverywhereMl.ranking.id.ActionKeyProvider"/>
     <elementKeyForIdProvider implementation="com.intellij.searchEverywhereMl.ranking.id.PsiElementKeyProvider"/>
