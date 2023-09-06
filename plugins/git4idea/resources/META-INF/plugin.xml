@@ -828,5 +828,8 @@
     <listener class="git4idea.ui.branch.GitBranchWidget$MyExperimentalToolbarStateListener"
               topic="com.intellij.ide.navigationToolbar.experimental.ExperimentalToolbarStateListener"
               activeInHeadlessMode="false" activeInTestMode="false"/>
+    <listener class="git4idea.ui.branch.GitBranchWidget$SettingsListener"
+              activeInHeadlessMode="false" activeInTestMode="false"
+              topic="com.intellij.ide.ui.UISettingsListener"/>
   </projectListeners>
 </idea-plugin>
