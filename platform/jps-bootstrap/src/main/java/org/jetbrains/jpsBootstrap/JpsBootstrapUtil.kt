@@ -65,7 +65,10 @@ object JpsBootstrapUtil {
 
     propertiesToCopy.forEach { name ->
       if (System.getProperty(name) == null) {
-        System.setProperty(name, merged.getProperty(name))
+        val p = merged.getProperty(name)
+        if (p != null) {
+          System.setProperty(name, p)
+        }
       }
     }
   }
