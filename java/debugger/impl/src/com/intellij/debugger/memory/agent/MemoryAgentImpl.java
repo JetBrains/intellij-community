@@ -113,14 +113,27 @@ class MemoryAgentImpl implements MemoryAgent {
 
   @NotNull
   @Override
-  public MemoryAgentActionResult<long[]> estimateObjectsSizes(@NotNull EvaluationContextImpl evaluationContext,
-                                                              @NotNull List<ObjectReference> references,
-                                                              long timeoutInMillis) throws EvaluateException {
+  public MemoryAgentActionResult<Pair<long[], long[]>> getShallowAndRetainedSizesByObjects(@NotNull EvaluationContextImpl evaluationContext,
+                                                                                           @NotNull List<ObjectReference> references,
+                                                                                           long timeoutInMillis) throws EvaluateException {
     if (!myCapabilities.canEstimateObjectsSizes()) {
       throw new UnsupportedOperationException("Memory agent can't estimate objects sizes");
     }
 
-    return executeOperation(() -> myProxy.estimateObjectsSizes(evaluationContext, references, timeoutInMillis));
+    return executeOperation(() -> myProxy.getShallowAndRetainedSizesByObjects(evaluationContext, references, timeoutInMillis));
+  }
+
+  @Override
+  @NotNull
+  public MemoryAgentActionResult<ObjectsAndSizes> getSortedShallowAndRetainedSizesByClass(@NotNull EvaluationContextImpl evaluationContext,
+                                                                                          @NotNull ReferenceType classType,
+                                                                                          long objectsLimit,
+                                                                                          long timeoutInMillis) throws EvaluateException {
+    if (!myCapabilities.canEstimateObjectsSizes()) {
+      throw new UnsupportedOperationException("Memory agent can't estimate objects sizes");
+    }
+
+    return executeOperation(() -> myProxy.getShallowAndRetainedSizeByClass(evaluationContext, classType, objectsLimit, timeoutInMillis));
   }
 
   @NotNull
