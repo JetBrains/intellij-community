@@ -51,9 +51,7 @@ public class PsiSwitchLabeledRuleStatementImpl extends PsiSwitchLabelStatementBa
 
     if (!shouldProcess()) return true;
 
-    final PsiCaseLabelElementList patternsInCaseLabel = getCaseLabelElementList();
-    if (patternsInCaseLabel == null) return true;
-    return patternsInCaseLabel.processDeclarations(processor, state, null, place);
+    return processPatternVariables(processor, state, place);
   }
 
   private boolean shouldProcess() {
