@@ -28,6 +28,10 @@ class SdkModificatorBridgeImpl(private val originalEntity: SdkMainEntity.Builder
 
   init {
     modifiedSdkEntity.applyChangesFrom(originalEntity)
+    if (modifiedSdkEntity.additionalData.isNotEmpty()) {
+      val additionalDataElement = JDOMUtil.load(modifiedSdkEntity.additionalData)
+      additionalData = originalSdkBridge.getSdkType().loadAdditionalData(originalSdkBridge, additionalDataElement)
+    }
   }
 
   override fun getName(): String = modifiedSdkEntity.name

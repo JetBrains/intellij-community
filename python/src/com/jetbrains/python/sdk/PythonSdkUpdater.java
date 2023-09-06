@@ -471,8 +471,6 @@ public final class PythonSdkUpdater implements StartupActivity, DumbAware {
     pathsToTransfer.removeAll(nonTransferredModuleRoots);
 
     /*
-    Don't run actions related to transferred roots on editable sdks since they can share data with original ones.
-
     PyTransferredSdkRootsKt#transferRoots and PyTransferredSdkRootsKt#removeTransferredRoots skip sdks
     that are not equal to module one (editable as well).
 
@@ -481,8 +479,7 @@ public final class PythonSdkUpdater implements StartupActivity, DumbAware {
     When current method was executed for original sdk,
     roots changes were not applied since there were no changes in paths to transfer (they were shared with editable copy).
      */
-    if (ArrayUtil.contains(sdk, ProjectJdkTable.getInstance().getAllJdks()) &&
-        !pathsToTransfer.equals(PyTransferredSdkRootsKt.getPathsToTransfer(sdk))) {
+    if (!pathsToTransfer.equals(PyTransferredSdkRootsKt.getPathsToTransfer(sdk))) {
       if (project != null) {
         PyTransferredSdkRootsKt.removeTransferredRootsFromModulesWithSdk(project, sdk);
       }

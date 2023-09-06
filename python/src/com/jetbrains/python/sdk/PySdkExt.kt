@@ -385,11 +385,12 @@ fun Sdk.getOrCreateAdditionalData(): PythonSdkAdditionalData {
   val newData = PythonSdkAdditionalData(flavor?.let { if (it.supportsEmptyData()) it else null })
   val modificator = sdkModificator
   modificator.sdkAdditionalData = newData
-  ApplicationManager.getApplication().let {
-    it.invokeLater {
-      it.runWriteAction {
-        modificator.commitChanges()
-      }
+  val application = ApplicationManager.getApplication()
+  if (application.isDispatchThread) {
+    application.runWriteAction { modificator.commitChanges() }
+  } else {
+    application.invokeLater {
+      application.runWriteAction { modificator.commitChanges() }
     }
   }
   return newData

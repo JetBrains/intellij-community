@@ -1,14 +1,12 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.sdk
 
-import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.WriteAction
 import com.intellij.openapi.application.runWriteActionAndWait
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.projectRoots.ProjectJdkTable
 import com.intellij.openapi.projectRoots.Sdk
-import com.intellij.openapi.projectRoots.impl.ProjectJdkImpl
 import com.intellij.openapi.roots.OrderRootType
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.io.FileUtil
@@ -53,7 +51,14 @@ class PySdkPathsTest {
 
     sdk.putUserData(PythonSdkType.MOCK_SYS_PATH_KEY, listOf(sdk.homePath, excluded.path, included.path))
     mockPythonPluginDisposable()
-    runWriteActionAndWait { sdk.getOrCreateAdditionalData() }.apply { setExcludedPathsFromVirtualFiles(setOf(excluded)) }
+    runWriteActionAndWait {
+      sdk.getOrCreateAdditionalData()
+
+      sdk.sdkModificator.apply {
+        (sdkAdditionalData as PythonSdkAdditionalData).setExcludedPathsFromVirtualFiles(setOf(excluded))
+        commitChanges()
+      }
+    }
 
     updateSdkPaths(sdk)
 
@@ -106,12 +111,21 @@ class PySdkPathsTest {
 
     val userAddedPath = createSubdir(moduleRoot)
 
-    val sdk = PythonMockSdk.create(sdkPath).also {
-      registerSdk(it)
-      module.pythonSdk = it
-    }
+    val pythonVersion = LanguageLevel.getLatest().toPythonVersion()
+    val sdk = PythonMockSdk.create(sdkPath)
+    registerSdk(sdk)
+    sdk.putUserData(PythonSdkType.MOCK_PY_VERSION_KEY, pythonVersion)
+    module.pythonSdk = sdk
+
     mockPythonPluginDisposable()
-    runWriteActionAndWait { sdk.getOrCreateAdditionalData() }.apply { setAddedPathsFromVirtualFiles(setOf(userAddedPath)) }
+    runWriteActionAndWait {
+      sdk.getOrCreateAdditionalData()
+
+      sdk.sdkModificator.apply {
+        (sdkAdditionalData as PythonSdkAdditionalData).setAddedPathsFromVirtualFiles(setOf(userAddedPath))
+        commitChanges()
+      }
+    }
 
     updateSdkPaths(sdk)
 
@@ -140,42 +154,48 @@ class PySdkPathsTest {
     mockPythonPluginDisposable()
 
     val pythonVersion = LanguageLevel.getDefault().toPythonVersion()
-    val sdk = ProjectJdkImpl(
-      "Mock ${PyNames.PYTHON_SDK_ID_NAME} $pythonVersion",
-      PythonSdkType.getInstance(),
-      "$sdkPath/bin/python",
-      pythonVersion
-    )
-      .also {
-        runWriteActionAndWait { it.getOrCreateAdditionalData() }
-        registerSdk(it)
-        module.pythonSdk = it
+    val sdk = ProjectJdkTable.getInstance().createSdk("Mock ${PyNames.PYTHON_SDK_ID_NAME} $pythonVersion", PythonSdkType.getInstance())
+    sdk.sdkModificator.apply {
+      homePath = "$sdkPath/bin/python"
+      versionString = pythonVersion
+      runWriteActionAndWait {
+        commitChanges()
+        sdk.getOrCreateAdditionalData()
       }
+    }
+    registerSdk(sdk)
+    module.pythonSdk = sdk
     sdk.putUserData(PythonSdkType.MOCK_PY_VERSION_KEY, pythonVersion)
 
-    val editableSdk = PyConfigurableInterpreterList.getInstance(projectModel.project).model.findSdk(sdk.name)
+    val projectSdksModel = PyConfigurableInterpreterList.getInstance(projectModel.project).model
+    val editableSdk = projectSdksModel.findSdk(sdk.name)
     editableSdk!!.putUserData(PythonSdkType.MOCK_PY_VERSION_KEY, pythonVersion)
-    Disposer.register(projectModel.project, editableSdk as Disposable)
 
     // --- ADD path ---
-    val sdkModificator = editableSdk.sdkModificator
-    (sdkModificator.sdkAdditionalData as PythonSdkAdditionalData).setAddedPathsFromVirtualFiles(setOf(userAddedPath))
-    runWriteActionAndWait { sdkModificator.commitChanges() }
+    editableSdk.sdkModificator.apply {
+      (sdkAdditionalData as PythonSdkAdditionalData).setAddedPathsFromVirtualFiles(setOf(userAddedPath))
+      runWriteActionAndWait {
+        commitChanges()
+        projectSdksModel.apply()
+      }
+    }
 
     updateSdkPaths(editableSdk)
-
-    updateSdkPaths(sdk) // since editableSdk was created after additional data had been created for sdk, they share the same data
+    updateSdkPaths(sdk)
 
     checkRoots(sdk, module, listOf(moduleRoot, userAddedPath), emptyList())
 
     // --- REMOVE path ---
-    val sdkModificator2 = editableSdk.sdkModificator
-    (sdkModificator2.sdkAdditionalData as PythonSdkAdditionalData).setAddedPathsFromVirtualFiles(emptySet())
-    runWriteActionAndWait { sdkModificator2.commitChanges() }
+    editableSdk.sdkModificator.apply {
+      (sdkAdditionalData as PythonSdkAdditionalData).setAddedPathsFromVirtualFiles(emptySet())
+      runWriteActionAndWait {
+        commitChanges()
+        projectSdksModel.apply()
+      }
+    }
 
     updateSdkPaths(editableSdk)
-
-    updateSdkPaths(sdk) // since editableSdk was created after additional data had been created for sdk, they share the same data
+    updateSdkPaths(sdk)
 
     checkRoots(sdk, module, listOf(moduleRoot), emptyList())
 
@@ -193,43 +213,48 @@ class PySdkPathsTest {
     val userAddedPath = createSubdir(moduleRoot)
 
     val pythonVersion = LanguageLevel.getDefault().toPythonVersion()
-    val sdk = ProjectJdkImpl(
-      "Mock ${PyNames.PYTHON_SDK_ID_NAME} $pythonVersion",
-      PythonSdkType.getInstance(),
-      "$sdkPath/bin/python",
-      pythonVersion
-    )
-      .also {
-        registerSdk(it)
-        module.pythonSdk = it
-      }
+
+    val sdk = ProjectJdkTable.getInstance().createSdk("Mock ${PyNames.PYTHON_SDK_ID_NAME} $pythonVersion", PythonSdkType.getInstance())
+    sdk.sdkModificator.apply {
+      versionString = pythonVersion
+      homePath = "$sdkPath/bin/python"
+      runWriteActionAndWait { commitChanges() }
+    }
+
+    registerSdk(sdk)
+    module.pythonSdk = sdk
     sdk.putUserData(PythonSdkType.MOCK_PY_VERSION_KEY, pythonVersion)
 
-    val editableSdk = PyConfigurableInterpreterList.getInstance(projectModel.project).model.findSdk(sdk.name)
+    val projectSdksModel = PyConfigurableInterpreterList.getInstance(projectModel.project).model
+    val editableSdk = projectSdksModel.findSdk(sdk.name)
     editableSdk!!.putUserData(PythonSdkType.MOCK_PY_VERSION_KEY, pythonVersion)
-    Disposer.register(projectModel.project, editableSdk as Disposable)
 
     // --- ADD path ---
-    val sdkModificator = editableSdk.sdkModificator
-    assertThat(sdkModificator.sdkAdditionalData).isNull()
-    mockPythonPluginDisposable()
-    sdkModificator.sdkAdditionalData = PythonSdkAdditionalData().apply {
-      setAddedPathsFromVirtualFiles(setOf(userAddedPath))
+    editableSdk.sdkModificator.apply {
+      assertThat(sdkAdditionalData).isNull()
+      mockPythonPluginDisposable()
+      sdkAdditionalData = PythonSdkAdditionalData().apply {
+        setAddedPathsFromVirtualFiles(setOf(userAddedPath))
+      }
+      runWriteActionAndWait {
+        commitChanges()
+        ProjectJdkTable.getInstance().updateJdk(sdk, editableSdk)
+      }
     }
-    runWriteActionAndWait { sdkModificator.commitChanges() }
 
     updateSdkPaths(editableSdk)
-
-    runWriteActionAndWait { ProjectJdkTable.getInstance().updateJdk(sdk, editableSdk) }
-
     updateSdkPaths(sdk)
 
     checkRoots(sdk, module, listOf(moduleRoot, userAddedPath), emptyList())
 
     // --- REMOVE path ---
-    val sdkModificator2 = editableSdk.sdkModificator
-    (sdkModificator2.sdkAdditionalData as PythonSdkAdditionalData).setAddedPathsFromVirtualFiles(emptySet())
-    runWriteActionAndWait { sdkModificator2.commitChanges() }
+    editableSdk.sdkModificator.apply {
+      (sdkAdditionalData as PythonSdkAdditionalData).setAddedPathsFromVirtualFiles(emptySet())
+      runWriteActionAndWait {
+        commitChanges()
+        projectSdksModel.apply()
+      }
+    }
 
     updateSdkPaths(editableSdk)
 
@@ -280,12 +305,22 @@ class PySdkPathsTest {
 
     val userAddedPath = createSubdir(sdkDir)
 
+    val pythonVersion = LanguageLevel.getLatest().toPythonVersion()
     val sdk = PythonMockSdk.create(sdkDir.path).also {
       registerSdk(it)
       module.pythonSdk = it
     }
+    sdk.putUserData(PythonSdkType.MOCK_PY_VERSION_KEY, pythonVersion)
     mockPythonPluginDisposable()
-    runWriteActionAndWait { sdk.getOrCreateAdditionalData() }.apply { setAddedPathsFromVirtualFiles(setOf(userAddedPath)) }
+
+    runWriteActionAndWait {
+      sdk.getOrCreateAdditionalData()
+
+      sdk.sdkModificator.apply {
+        (sdkAdditionalData as PythonSdkAdditionalData).setAddedPathsFromVirtualFiles(setOf(userAddedPath))
+        commitChanges()
+      }
+    }
 
     updateSdkPaths(sdk)
 
