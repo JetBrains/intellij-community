@@ -27,7 +27,9 @@ import com.intellij.openapi.vfs.SafeWriteRequestor
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.newvfs.NewVirtualFile
 import com.intellij.util.*
-import com.intellij.util.io.*
+import com.intellij.util.io.directoryStreamIfExists
+import com.intellij.util.io.systemIndependentPath
+import com.intellij.util.io.write
 import com.intellij.util.text.UniqueNameGenerator
 import org.jdom.Document
 import org.jdom.Element
@@ -295,7 +297,7 @@ class SchemeManagerImpl<T : Scheme, MUTABLE_SCHEME : T>(
 
   override fun reload() {
     processor.beforeReloaded(this)
-    // we must not remove non-persistent (e.g. predefined) schemes, because we cannot load it (obviously)
+    // we must not remove non-persistent (e.g., predefined) schemes, because we cannot load it (obviously)
     // do not schedule scheme file removing because we just need to update our runtime state, not state on disk
     removeExternalizableSchemesFromRuntimeState()
     processor.reloaded(this, loadSchemes())

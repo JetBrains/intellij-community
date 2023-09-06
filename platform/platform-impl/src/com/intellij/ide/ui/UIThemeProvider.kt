@@ -12,7 +12,6 @@ import com.intellij.util.ResourceUtil
 import com.intellij.util.xmlb.annotations.Attribute
 import org.jetbrains.annotations.ApiStatus.Internal
 import java.io.IOException
-import java.util.function.Function
 import java.util.function.Supplier
 
 /**
@@ -85,13 +84,12 @@ class UIThemeProvider : PluginAware {
         return null
       }
 
-      return UITheme.loadFromJson(parentTheme,
-                                  data,
-                                  id!!,
-                                  classLoader,
-                                  Function.identity(),
-                                  defaultDarkParent,
-                                  defaultLightParent)
+      return UITheme.loadFromJson(parentTheme = parentTheme,
+                                  data = data,
+                                  themeId = id!!,
+                                  provider = classLoader,
+                                  defaultDarkParent = defaultDarkParent,
+                                  defaultLightParent = defaultLightParent)
     }
     catch (e: Throwable) {
       thisLogger().warn(PluginException("Cannot load UI theme (path=$path, pluginDescriptor=$pluginDescriptor)",

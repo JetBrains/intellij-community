@@ -27,7 +27,6 @@ import java.lang.invoke.MethodHandles
 import java.lang.invoke.MethodType
 import java.util.*
 import java.util.concurrent.atomic.AtomicReference
-import java.util.function.Function
 import javax.swing.*
 import javax.swing.UIDefaults.ActiveValue
 import javax.swing.UIDefaults.LazyInputMap
@@ -171,8 +170,7 @@ open class DarculaLaf : BasicLookAndFeel(), UserDataHolder {
       // macOS light theme uses theme file from core plugin
       val data = ResourceUtil.getResourceAsBytes(filename, classLoader,  /* checkParents */true)
                  ?: throw RuntimeException("Can't load $filename")
-      val theme = UITheme.loadFromJson(data, "Darcula", classLoader, Function.identity())
-      theme.applyProperties(defaults)
+      UITheme.loadFromJson(data = data, themeId = "Darcula", provider = classLoader).applyProperties(defaults)
     }
     catch (e: IOException) {
       LOG.error(e)
