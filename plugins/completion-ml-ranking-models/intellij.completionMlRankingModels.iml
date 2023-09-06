@@ -103,19 +103,19 @@
     <orderEntry type="module" module-name="intellij.platform.ide.impl" />
     <orderEntry type="module-library">
       <library name="completion-ranking-python-exp" type="repository">
-        <properties maven-id="org.jetbrains.intellij.deps.completion:completion-ranking-python:0.3.2">
+        <properties maven-id="org.jetbrains.intellij.deps.completion:completion-ranking-python:0.2.4">
           <verification>
-            <artifact url="file://$MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/completion/completion-ranking-python/0.3.2/completion-ranking-python-0.3.2.jar">
-              <sha256sum>f8f253b40454960df2f9b744b98ba5a08b490db4227fb2e97cfa1d18d103321a</sha256sum>
+            <artifact url="file://$MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/completion/completion-ranking-python/0.2.4/completion-ranking-python-0.2.4.jar">
+              <sha256sum>6e6dda035d972c2ff061c5d90decea9fcaf693b0946fc8c35ef27ef452de7008</sha256sum>
             </artifact>
           </verification>
         </properties>
         <CLASSES>
-          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/completion/completion-ranking-python/0.3.2/completion-ranking-python-0.3.2.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/completion/completion-ranking-python/0.2.4/completion-ranking-python-0.2.4.jar!/" />
         </CLASSES>
         <JAVADOC />
         <SOURCES>
-          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/completion/completion-ranking-python/0.3.2/completion-ranking-python-0.3.2-sources.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/completion/completion-ranking-python/0.2.4/completion-ranking-python-0.2.4-sources.jar!/" />
         </SOURCES>
       </library>
     </orderEntry>
