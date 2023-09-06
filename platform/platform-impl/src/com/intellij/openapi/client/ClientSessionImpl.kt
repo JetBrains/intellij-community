@@ -12,6 +12,7 @@ import com.intellij.openapi.application.impl.ApplicationImpl
 import com.intellij.openapi.components.ComponentConfig
 import com.intellij.openapi.components.ServiceDescriptor
 import com.intellij.openapi.components.impl.stores.IComponentStore
+import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectManager
@@ -164,7 +165,11 @@ abstract class ClientAppSessionImpl(
   }
 
   override val projectSessions: List<ClientProjectSession>
-    get() = ProjectManager.getInstance().openProjects.mapNotNull { ClientSessionsManager.getProjectSession(it, this) }
+    get() {
+      return ProjectManager.getInstance().openProjects.mapNotNull {
+        it.service<ClientSessionsManager<*>>().getSession(clientId) as? ClientProjectSession
+      }
+    }
 
   init {
     @Suppress("LeakingThis")
