@@ -138,6 +138,11 @@ class JpsBootstrapMain(args: Array<String>?) {
 
   @Throws(Throwable::class)
   private fun main() {
+    JpsBootstrapUtil.loadJpsBuildsystemProperties(
+      additionalSystemPropertiesFromPropertiesFile,
+      additionalSystemProperties,
+    )
+
     val jdkHome = downloadJdk()
     if (onlyDownloadJdk) {
       return
@@ -146,18 +151,6 @@ class JpsBootstrapMain(args: Array<String>?) {
       writeJavaArgfile(null, jarFileTarget)
       return
     }
-
-    /*
-     * Enable dependencies resolution retries while building buildscript.
-     * Don't override settings properties if they're already present in System.properties(), in additionalSystemProperties or
-     * in additionalSystemPropertiesFromPropertiesFile.
-     */
-    val resolverRetrySettingsProperties = JpsBootstrapUtil.getJpsArtifactsResolutionRetryProperties(
-      additionalSystemPropertiesFromPropertiesFile,
-      additionalSystemProperties,
-      System.getProperties()
-    )
-    resolverRetrySettingsProperties.forEach { k, v -> System.setProperty(k as String, v as String) }
 
     val kotlincHome = KotlinCompiler.downloadAndExtractKotlinCompiler(communityHome)
     val model = JpsProjectUtils.loadJpsProject(projectHome, jdkHome, kotlincHome)
@@ -243,15 +236,6 @@ class JpsBootstrapMain(args: Array<String>?) {
     systemProperties.putIfAbsent("file.encoding", "UTF-8") // just in case
     systemProperties.putIfAbsent("java.awt.headless", "true")
 
-    /*
- * Add dependencies resolution retries properties to argfile.
- * Don't override them if they're already present in additionalSystemProperties or in additionalSystemPropertiesFromPropertiesFile.
- */
-    val resolverRetrySettingsProperties = JpsBootstrapUtil.getJpsArtifactsResolutionRetryProperties(
-      additionalSystemPropertiesFromPropertiesFile,
-      additionalSystemProperties
-    )
-    systemProperties.putAll(resolverRetrySettingsProperties)
     val args: MutableList<String> = ArrayList()
     args.add("-ea")
     args.add("-Xmx$buildTargetXmx")
