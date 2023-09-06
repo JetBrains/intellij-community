@@ -1521,6 +1521,63 @@
         <constraint name="x" within="" contains="" />
         <constraint name="y" within="" contains="" />
       </replaceConfiguration>
+      <replaceConfiguration name="Redundant problem highlighting type argument" uuid="e2e1d7cc-54f2-3e52-bbfa-26850aa022b0" description="&lt;html&gt;&#10;&lt;body&gt;&#10;Passing the &lt;code&gt;ProblemHighlightType#GENERIC_ERROR_OR_WARNING&lt;/code&gt; argument is unnecessary since it is the default option.&#10;Omit this argument where possible.&#10;&lt;/body&gt;&#10;&lt;/html&gt;" suppressId="RedundantProblemHighlightingType" problemDescriptor="Redundant GENERIC_ERROR_OR_WARNING argument" cleanup="true" text="$Instance$.$registerProblem$($psiParam$, $message$ , $highlightingType$, $fixes$)" recursive="false" caseInsensitive="true" type="Kotlin" pattern_context="default" reformatAccordingToStyle="false" shortenFQN="false" replacement="$Instance$.$registerProblem$($psiParam$, $message$, $fixes$)">
+        <constraint name="__context__" within="" contains="" />
+        <constraint name="Instance" nameOfExprType="com\.goide\.inspections\.core\.GoProblemsHolder" exprTypeWithinHierarchy="true" within="" contains="" />
+        <constraint name="registerProblem" regexp="registerProblem" within="" contains="" />
+        <constraint name="highlightingType" regexp=".*GENERIC_ERROR_OR_WARNING" nameOfExprType="com\.intellij\.codeInspection\.ProblemHighlightType" within="" contains="" />
+        <constraint name="psiParam" nameOfExprType="com\.intellij\.psi\.PsiElement" exprTypeWithinHierarchy="true" within="" contains="" />
+        <constraint name="message" nameOfExprType="com\.goide\.inspections\.core\.GoInspectionMessage" exprTypeWithinHierarchy="true" within="" contains="" />
+        <constraint name="fixes" nameOfExprType="com\.intellij\.codeInspection\.LocalQuickFix|com\.intellij\.codeInspection\.LocalQuickFix\[\]" exprTypeWithinHierarchy="true" minCount="0" maxCount="2147483647" within="" contains="" />
+      </replaceConfiguration>
+      <replaceConfiguration name="Redundant problem highlighting type argument" uuid="e2e1d7cc-54f2-3e52-bbfa-26850aa022b0" cleanup="true" text="$Instance$.$registerProblem$($psiParam$, $message$ , $highlightingType$, $fixes$)" recursive="false" caseInsensitive="true" type="JAVA" pattern_context="default" reformatAccordingToStyle="false" shortenFQN="false" replacement="$Instance$.$registerProblem$($psiParam$, $message$, $fixes$)">
+        <constraint name="__context__" within="" contains="" />
+        <constraint name="Instance" nameOfExprType="com\.goide\.inspections\.core\.GoProblemsHolder" exprTypeWithinHierarchy="true" within="" contains="" />
+        <constraint name="registerProblem" regexp="registerProblem" within="" contains="" />
+        <constraint name="highlightingType" regexp=".*GENERIC_ERROR_OR_WARNING" nameOfExprType="com\.intellij\.codeInspection\.ProblemHighlightType" within="" contains="" />
+        <constraint name="psiParam" nameOfExprType="com\.intellij\.psi\.PsiElement" exprTypeWithinHierarchy="true" within="" contains="" />
+        <constraint name="message" nameOfExprType="com\.goide\.inspections\.core\.GoInspectionMessage" exprTypeWithinHierarchy="true" within="" contains="" />
+        <constraint name="fixes" nameOfExprType="com\.intellij\.codeInspection\.LocalQuickFix|com\.intellij\.codeInspection\.LocalQuickFix\[\]" exprTypeWithinHierarchy="true" minCount="0" maxCount="2147483647" within="" contains="" />
+      </replaceConfiguration>
+      <replaceConfiguration name="Redundant problem highlighting type argument" uuid="e2e1d7cc-54f2-3e52-bbfa-26850aa022b0" cleanup="true" text="$Instance$.$registerProblem$($psiParam$, $message$ , $highlightingType$, $range$, $fixes$)" recursive="false" caseInsensitive="true" type="JAVA" pattern_context="default" reformatAccordingToStyle="false" shortenFQN="false" replacement="$Instance$.$registerProblem$($psiParam$, $range$, $message$, $fixes$)">
+        <constraint name="__context__" within="" contains="" />
+        <constraint name="Instance" nameOfExprType="com\.goide\.inspections\.core\.GoProblemsHolder" exprTypeWithinHierarchy="true" within="" contains="" />
+        <constraint name="registerProblem" regexp="registerProblem" within="" contains="" />
+        <constraint name="highlightingType" regexp=".*GENERIC_ERROR_OR_WARNING" nameOfExprType="com\.intellij\.codeInspection\.ProblemHighlightType" within="" contains="" />
+        <constraint name="psiParam" nameOfExprType="com\.intellij\.psi\.PsiElement" exprTypeWithinHierarchy="true" within="" contains="" />
+        <constraint name="message" nameOfExprType="com\.goide\.inspections\.core\.GoInspectionMessage" exprTypeWithinHierarchy="true" within="" contains="" />
+        <constraint name="fixes" nameOfExprType="com\.intellij\.codeInspection\.LocalQuickFix|com\.intellij\.codeInspection\.LocalQuickFix\[\]" exprTypeWithinHierarchy="true" minCount="0" maxCount="2147483647" within="" contains="" />
+        <constraint name="range" nameOfExprType="com\.intellij\.openapi\.util\.TextRange" exprTypeWithinHierarchy="true" within="" contains="" />
+      </replaceConfiguration>
+      <replaceConfiguration name="Redundant problem highlighting type argument" uuid="e2e1d7cc-54f2-3e52-bbfa-26850aa022b0" cleanup="true" text="$Instance$.$registerProblem$($psiParam$, $message$ , $highlightingType$, $range$, $fixes$)" recursive="false" caseInsensitive="true" type="Kotlin" pattern_context="default" reformatAccordingToStyle="false" shortenFQN="false" replacement="$Instance$.$registerProblem$($psiParam$, $range$, $message$, $fixes$)">
+        <constraint name="__context__" within="" contains="" />
+        <constraint name="Instance" nameOfExprType="com\.goide\.inspections\.core\.GoProblemsHolder" exprTypeWithinHierarchy="true" within="" contains="" />
+        <constraint name="registerProblem" regexp="registerProblem" within="" contains="" />
+        <constraint name="highlightingType" regexp=".*GENERIC_ERROR_OR_WARNING" nameOfExprType="com\.intellij\.codeInspection\.ProblemHighlightType" within="" contains="" />
+        <constraint name="psiParam" nameOfExprType="com\.intellij\.psi\.PsiElement" exprTypeWithinHierarchy="true" within="" contains="" />
+        <constraint name="message" nameOfExprType="com\.goide\.inspections\.core\.GoInspectionMessage" exprTypeWithinHierarchy="true" within="" contains="" />
+        <constraint name="fixes" nameOfExprType="com\.intellij\.codeInspection\.LocalQuickFix|com\.intellij\.codeInspection\.LocalQuickFix\[\]" exprTypeWithinHierarchy="true" minCount="0" maxCount="2147483647" within="" contains="" />
+        <constraint name="range" nameOfExprType="com\.intellij\.openapi\.util\.TextRange" exprTypeWithinHierarchy="true" within="" contains="" />
+      </replaceConfiguration>
+      <replaceConfiguration name="Redundant problem highlighting type argument" uuid="e2e1d7cc-54f2-3e52-bbfa-26850aa022b0" cleanup="true" text="$Instance$.$registerProblem$($psiParam$, $message$ , $highlightingType$, *$fixes$)" recursive="false" caseInsensitive="true" type="Kotlin" pattern_context="default" reformatAccordingToStyle="false" shortenFQN="false" replacement="$Instance$.$registerProblem$($psiParam$, $message$, *$fixes$)">
+        <constraint name="__context__" within="" contains="" />
+        <constraint name="Instance" nameOfExprType="com\.goide\.inspections\.core\.GoProblemsHolder" exprTypeWithinHierarchy="true" within="" contains="" />
+        <constraint name="registerProblem" regexp="registerProblem" within="" contains="" />
+        <constraint name="highlightingType" regexp=".*GENERIC_ERROR_OR_WARNING" nameOfExprType="com\.intellij\.codeInspection\.ProblemHighlightType" within="" contains="" />
+        <constraint name="psiParam" nameOfExprType="com\.intellij\.psi\.PsiElement" exprTypeWithinHierarchy="true" within="" contains="" />
+        <constraint name="message" nameOfExprType="com\.goide\.inspections\.core\.GoInspectionMessage" exprTypeWithinHierarchy="true" within="" contains="" />
+        <constraint name="fixes" within="" contains="" />
+      </replaceConfiguration>
+      <replaceConfiguration name="Redundant problem highlighting type argument" uuid="e2e1d7cc-54f2-3e52-bbfa-26850aa022b0" cleanup="true" text="$Instance$.$registerProblem$($psiParam$, $message$ , $highlightingType$, $range$, *$fixes$)" recursive="false" caseInsensitive="true" type="Kotlin" pattern_context="default" reformatAccordingToStyle="false" shortenFQN="false" replacement="$Instance$.$registerProblem$($psiParam$, $range$, $message$, *$fixes$)">
+        <constraint name="__context__" within="" contains="" />
+        <constraint name="Instance" nameOfExprType="com\.goide\.inspections\.core\.GoProblemsHolder" exprTypeWithinHierarchy="true" within="" contains="" />
+        <constraint name="registerProblem" regexp="registerProblem" within="" contains="" />
+        <constraint name="highlightingType" regexp=".*GENERIC_ERROR_OR_WARNING" nameOfExprType="com\.intellij\.codeInspection\.ProblemHighlightType" within="" contains="" />
+        <constraint name="psiParam" nameOfExprType="com\.intellij\.psi\.PsiElement" exprTypeWithinHierarchy="true" within="" contains="" />
+        <constraint name="message" nameOfExprType="com\.goide\.inspections\.core\.GoInspectionMessage" exprTypeWithinHierarchy="true" within="" contains="" />
+        <constraint name="fixes" within="" contains="" />
+        <constraint name="range" nameOfExprType="com\.intellij\.openapi\.util\.TextRange" exprTypeWithinHierarchy="true" within="" contains="" />
+      </replaceConfiguration>
       <searchConfiguration name="remove test-only branch and use UIUtil.dispatchAllInvocationEvents() in tests" uuid="07f04ba3-90ed-3e4d-9f88-e45dfaa05771" text="if ($APP$.isUnitTestMode()) {&#10;  $DO$;&#10;} else {&#10;  $APP2$.$INV$($ARGS$);&#10;}" recursive="true" caseInsensitive="true" type="JAVA" pattern_context="default">
         <constraint name="__context__" within="" contains="" />
         <constraint name="APP" within="" contains="" />
