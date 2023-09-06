@@ -4,7 +4,6 @@ package com.intellij.ide.ui.laf;
 import com.intellij.ide.ui.UITheme;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.editor.colors.EditorColorsListener;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.colors.impl.AbstractColorsScheme;
@@ -92,15 +91,12 @@ public final class TempUIThemeLookAndFeelInfo extends UIThemeLookAndFeelInfoImpl
         EditorColorsManagerImpl.setTempScheme(scheme, mySchemeFile);
         cm.setGlobalScheme(scheme);
         MessageBusConnection connect = ApplicationManager.getApplication().getMessageBus().connect();
-        connect.subscribe(EditorColorsManager.TOPIC, new EditorColorsListener() {
-          @Override
-          public void globalSchemeChange(@Nullable EditorColorsScheme editorColorsScheme) {
-            if (editorColorsScheme == scheme || editorColorsScheme == null) {
-              return;
-            }
-            cm.getSchemeManager().removeScheme(scheme);
-            connect.disconnect();
+        connect.subscribe(EditorColorsManager.TOPIC, editorColorsScheme -> {
+          if (editorColorsScheme == scheme || editorColorsScheme == null) {
+            return;
           }
+          cm.getSchemeManager().removeScheme(scheme);
+          connect.disconnect();
         });
       }
     }

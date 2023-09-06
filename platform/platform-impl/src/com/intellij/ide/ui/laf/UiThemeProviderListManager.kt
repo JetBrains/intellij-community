@@ -39,6 +39,10 @@ class UiThemeProviderListManager {
     return themeDescriptors.firstOrNull { it.id == id }?.theme?.get()
   }
 
+  fun findThemeSupplierById(id: String): Supplier<UIThemeLookAndFeelInfo?>? {
+    return themeDescriptors.firstOrNull { it.id == id }?.theme
+  }
+
   fun getLaFsWithUITypes(): List<LafEntry> = themeDescriptors
 
   fun getThemeListForTargetUI(targetUI: TargetUIType): Sequence<UIThemeLookAndFeelInfo> {
