@@ -1,4 +1,6 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+@file:Suppress("BlockingMethodInNonBlockingContext")
+
 package org.jetbrains.intellij.build.impl
 
 import com.intellij.openapi.util.SystemInfoRt
@@ -1044,13 +1046,11 @@ private fun buildCrossPlatformZip(distResults: List<DistributionForOsTaskResult>
 
 private suspend fun checkClassFiles(root: Path, context: BuildContext, isDistAll: Boolean) {
   // version checking patterns are only for dist all (all non-os and non-arch specific files)
-  val versionCheckerConfig = if (context.isStepSkipped(BuildOptions.VERIFY_CLASS_FILE_VERSIONS) || !isDistAll) {
-    emptyMap()
-  }
-  else {
-    context.productProperties.versionCheckerConfig
+  if (context.isStepSkipped(BuildOptions.VERIFY_CLASS_FILE_VERSIONS) || !isDistAll) {
+    return
   }
 
+  val versionCheckerConfig = context.productProperties.versionCheckerConfig
   val forbiddenSubPaths = context.productProperties.forbiddenClassFileSubPaths
   val forbiddenSubPathExceptions = context.productProperties.forbiddenClassFileSubPathExceptions
   if (forbiddenSubPaths.isNotEmpty()) {
