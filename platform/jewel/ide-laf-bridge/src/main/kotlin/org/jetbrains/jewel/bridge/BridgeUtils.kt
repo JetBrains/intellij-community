@@ -159,8 +159,12 @@ internal fun <T : InteractiveComponentState> retrieveIcon(
     baseIconPath: String,
     iconData: IntelliJThemeIconData,
     svgLoader: SvgLoader,
+    prefixTokensProvider: (state: T) -> String = { "" },
+    suffixTokensProvider: (state: T) -> String = { "" },
 ): PainterProvider<T> =
     IntelliJResourcePainterProvider.stateful(
         basePath = iconData.iconOverrides[baseIconPath] ?: baseIconPath,
         svgLoader,
+        prefixTokensProvider,
+        suffixTokensProvider,
     )

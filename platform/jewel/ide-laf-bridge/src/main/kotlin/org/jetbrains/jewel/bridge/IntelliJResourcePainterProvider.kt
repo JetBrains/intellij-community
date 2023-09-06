@@ -32,7 +32,12 @@ class IntelliJResourcePainterProvider<T> @InternalJewelApi constructor(
         fun <T : InteractiveComponentState> stateful(
             basePath: String,
             svgLoader: SvgLoader,
-            pathPatcher: ResourcePathPatcher<T> = StatefulResourcePathPatcher(),
+            prefixTokensProvider: (state: T) -> String = { "" },
+            suffixTokensProvider: (state: T) -> String = { "" },
+            pathPatcher: ResourcePathPatcher<T> = StatefulResourcePathPatcher(
+                prefixTokensProvider,
+                suffixTokensProvider,
+            ),
         ) =
             IntelliJResourcePainterProvider(basePath, svgLoader, pathPatcher, IntelliJIconMapper)
     }
