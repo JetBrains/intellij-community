@@ -57,6 +57,7 @@ import com.intellij.util.ui.EmptyIcon
 import com.intellij.util.ui.JBRectangle
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.collectLatest
 import org.jdom.Element
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.ApiStatus.Internal
@@ -192,6 +193,12 @@ open class EditorsSplitters internal constructor(
 
     coroutineScope.launch(CoroutineName("EditorSplitters file icon update")) {
       iconUpdateChannel.start()
+    }
+
+    coroutineScope.launch(CoroutineName("EditorSplitters frame title update")) {
+      currentCompositeFlow.collectLatest { composite ->
+        updateFrameTitle()
+      }
     }
   }
 
@@ -474,6 +481,10 @@ open class EditorsSplitters internal constructor(
       }
     }
 
+    updateFrameTitle()
+  }
+
+  private suspend fun updateFrameTitle() {
     val project = manager.project
     val frame = getFrame() ?: return
     val file = currentFile

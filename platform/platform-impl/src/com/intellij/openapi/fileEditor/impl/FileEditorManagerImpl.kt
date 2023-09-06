@@ -214,7 +214,6 @@ open class FileEditorManagerImpl(
           return@flatMapLatest flowOf(null)
         }
 
-        fileTitleUpdateChannel.queue(composite.file)
         composite.selectedEditorWithProvider.mapLatest { fileEditorWithProvider ->
           if (fileEditorWithProvider == null) null else SelectionState(composite = composite, fileEditorProvider = fileEditorWithProvider)
         }
