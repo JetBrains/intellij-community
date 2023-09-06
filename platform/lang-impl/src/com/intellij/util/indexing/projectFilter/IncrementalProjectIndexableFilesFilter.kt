@@ -5,8 +5,7 @@ import com.intellij.util.containers.ConcurrentBitSet
 import com.intellij.util.indexing.IdFilter
 
 internal class IncrementalProjectIndexableFilesFilter : IdFilter() {
-  @Volatile
-  private var fileIds: ConcurrentBitSet = ConcurrentBitSet.create()
+  private val fileIds: ConcurrentBitSet = ConcurrentBitSet.create()
 
   override fun getFilteringScopeType(): FilterScopeType = FilterScopeType.PROJECT_AND_LIBRARIES
 
@@ -31,9 +30,5 @@ internal class IncrementalProjectIndexableFilesFilter : IdFilter() {
   fun removeFileId(fileId: Int) {
     assert(fileId > 0)
     fileIds.clear(fileId)
-  }
-
-  fun resetFileIds() {
-    fileIds = ConcurrentBitSet.create()
   }
 }
