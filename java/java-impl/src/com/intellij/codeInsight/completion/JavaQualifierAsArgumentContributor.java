@@ -14,7 +14,6 @@ import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.NotNullLazyValue;
 import com.intellij.openapi.util.TextRange;
-import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
@@ -48,8 +47,7 @@ public class JavaQualifierAsArgumentContributor extends CompletionContributor im
   }
 
   static void fillQualifierAsArgumentContributor(@NotNull CompletionParameters parameters, @NotNull CompletionResultSet result) {
-    if (!Registry.is("java.completion.qualifier.as.argument") &&
-        !AdvancedSettings.getBoolean("java.completion.qualifier.as.argument")) {
+    if (!AdvancedSettings.getBoolean("java.completion.qualifier.as.argument")) {
       return;
     }
 
