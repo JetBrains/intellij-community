@@ -45,8 +45,8 @@ public class IdeaNativeAgentProxyMirror {
   private static final String CAN_GET_RETAINED_SIZE_BY_CLASSES = "canGetRetainedSizeByClasses";
   private static final String CAN_FIND_PATHS_TO_CLOSEST_GC_ROOTS = "canFindPathsToClosestGcRoots";
   private static final String ESTIMATE_OBJECT_SIZE = "size";
-
-  private static final String ESTIMATE_OBJECTS_SIZES = "estimateRetainedSize";
+  private static final String ESTIMATE_OBJECTS_SIZES = "getShallowAndRetainedSizesByObjects";
+  private static final String ESTIMATE_OBJECTS_SIZES_BY_CLASS = "getSortedShallowAndRetainedSizesByClass";
   private static final String FIND_PATHS_TO_CLOSEST_GC_ROOTS = "findPathsToClosestGcRoots";
   private static final String GET_SHALLOW_SIZE_BY_CLASSES = "getShallowSizeByClasses";
   private static final String GET_RETAINED_SIZE_BY_CLASSES = "getRetainedSizeByClasses";
@@ -97,9 +97,34 @@ public class IdeaNativeAgentProxyMirror {
   }
 
   @NotNull
-  public MemoryAgentActionResult<long[]> estimateObjectsSizes(@NotNull EvaluationContextImpl evaluationContext,
-                                                              @NotNull List<ObjectReference> references,
-                                                              long timeoutInMillis) throws EvaluateException {
+  public MemoryAgentActionResult<MemoryAgent.ObjectsAndSizes> getShallowAndRetainedSizeByClass(@NotNull EvaluationContextImpl evaluationContext,
+                                                                                               @NotNull ReferenceType classType,
+                                                                                               long objectsLimit,
+                                                                                               long timeoutInMillis) throws EvaluateException {
+    LongValue objectsLimitValue = evaluationContext.getDebugProcess().getVirtualMachineProxy().mirrorOf(objectsLimit);
+    Value result = callMethod(
+      evaluationContext,
+      ESTIMATE_OBJECTS_SIZES_BY_CLASS,
+      timeoutInMillis,
+      classType.classObject(),
+      objectsLimitValue
+    );
+    Pair<MemoryAgentActionResult.ErrorCode, Value> errCodeAndResult = ErrorCodeParser.INSTANCE.parse(result);
+    MemoryAgentActionResult.ErrorCode errCode = errCodeAndResult.getFirst();
+    MemoryAgent.ObjectsAndSizes objectsAndSizes;
+    if (errCode != MemoryAgentActionResult.ErrorCode.OK) {
+      objectsAndSizes = new MemoryAgent.ObjectsAndSizes(new ObjectReference[0], new long[0], new long[0]);
+    } else {
+      objectsAndSizes = SizesAndObjectsOfClassParser.INSTANCE.parse(errCodeAndResult.getSecond());
+    }
+
+    return new MemoryAgentActionResult<>(objectsAndSizes, errCode);
+  }
+
+  @NotNull
+  public MemoryAgentActionResult<Pair<long[], long[]>> getShallowAndRetainedSizesByObjects(@NotNull EvaluationContextImpl evaluationContext,
+                                                                                           @NotNull List<ObjectReference> references,
+                                                                                           long timeoutInMillis) throws EvaluateException {
     ArrayReference array = wrapWithArray(evaluationContext, references);
     Value result = callMethod(
       evaluationContext,
@@ -107,8 +132,12 @@ public class IdeaNativeAgentProxyMirror {
       timeoutInMillis, array
     );
     Pair<MemoryAgentActionResult.ErrorCode, Value> errCodeAndResult = ErrorCodeParser.INSTANCE.parse(result);
+    Pair<List<Long>, List<Long>> shallowAndRetainedSizes = ShallowAndRetainedSizeParser.INSTANCE.parse(errCodeAndResult.getSecond());
     return new MemoryAgentActionResult<>(
-      LongArrayParser.INSTANCE.parse(errCodeAndResult.getSecond()).stream().mapToLong(Long::longValue).toArray(),
+      new Pair<>(
+        shallowAndRetainedSizes.getFirst().stream().mapToLong(Long::longValue).toArray(),
+        shallowAndRetainedSizes.getSecond().stream().mapToLong(Long::longValue).toArray()
+      ),
       errCodeAndResult.getFirst()
     );
   }
