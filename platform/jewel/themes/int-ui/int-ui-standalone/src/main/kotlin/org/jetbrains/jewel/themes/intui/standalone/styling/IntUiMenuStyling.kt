@@ -17,8 +17,8 @@ import org.jetbrains.jewel.styling.MenuItemColors
 import org.jetbrains.jewel.styling.MenuItemMetrics
 import org.jetbrains.jewel.styling.MenuMetrics
 import org.jetbrains.jewel.styling.MenuStyle
+import org.jetbrains.jewel.styling.PainterProvider
 import org.jetbrains.jewel.styling.ResourcePainterProvider
-import org.jetbrains.jewel.styling.StatefulPainterProvider
 import org.jetbrains.jewel.styling.SubmenuMetrics
 import org.jetbrains.jewel.themes.intui.core.theme.IntUiDarkTheme
 import org.jetbrains.jewel.themes.intui.core.theme.IntUiLightTheme
@@ -204,7 +204,7 @@ data class IntUiSubmenuMetrics(
 
 @Immutable
 data class IntUiMenuIcons(
-    override val submenuChevron: StatefulPainterProvider<MenuItemState>,
+    override val submenuChevron: PainterProvider<MenuItemState>,
 ) : MenuIcons {
 
     companion object {
@@ -213,14 +213,14 @@ data class IntUiMenuIcons(
         fun submenuChevron(
             svgLoader: SvgLoader,
             basePath: String = "icons/intui/chevronRight.svg",
-        ): StatefulPainterProvider<MenuItemState> =
-            ResourcePainterProvider(basePath, svgLoader)
+        ): PainterProvider<MenuItemState> =
+            ResourcePainterProvider.stateful(basePath, svgLoader)
     }
 }
 
 @Composable
 fun intUiMenuIcons(
     svgLoader: SvgLoader,
-    submenuChevron: StatefulPainterProvider<MenuItemState> = IntUiMenuIcons.submenuChevron(svgLoader),
+    submenuChevron: PainterProvider<MenuItemState> = IntUiMenuIcons.submenuChevron(svgLoader),
 ) =
     IntUiMenuIcons(submenuChevron)

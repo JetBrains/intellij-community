@@ -141,7 +141,7 @@ internal fun TabImpl(
                         }
                     }
                 }
-                val closePainter by tabStyle.icons.close.getPainter(closeButtonState, LocalResourceLoader.current)
+                val closePainter by tabStyle.icons.close.getPainter(LocalResourceLoader.current, closeButtonState)
                 Image(
                     modifier = Modifier.clickable(
                         interactionSource = closeActionInteractionSource,

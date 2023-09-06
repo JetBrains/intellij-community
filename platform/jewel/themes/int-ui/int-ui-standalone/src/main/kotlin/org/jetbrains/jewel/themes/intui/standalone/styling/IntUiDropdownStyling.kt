@@ -17,8 +17,8 @@ import org.jetbrains.jewel.styling.DropdownIcons
 import org.jetbrains.jewel.styling.DropdownMetrics
 import org.jetbrains.jewel.styling.DropdownStyle
 import org.jetbrains.jewel.styling.MenuStyle
+import org.jetbrains.jewel.styling.PainterProvider
 import org.jetbrains.jewel.styling.ResourcePainterProvider
-import org.jetbrains.jewel.styling.StatefulPainterProvider
 import org.jetbrains.jewel.themes.intui.core.theme.IntUiDarkTheme
 import org.jetbrains.jewel.themes.intui.core.theme.IntUiLightTheme
 import org.jetbrains.jewel.themes.intui.standalone.IntUiTheme
@@ -185,7 +185,7 @@ data class IntUiDropdownMetrics(
 
 @Immutable
 data class IntUiDropdownIcons(
-    override val chevronDown: StatefulPainterProvider<DropdownState>,
+    override val chevronDown: PainterProvider<DropdownState>,
 ) : DropdownIcons {
 
     companion object {
@@ -194,14 +194,14 @@ data class IntUiDropdownIcons(
         fun chevronDown(
             svgLoader: SvgLoader,
             basePath: String = "icons/intui/chevronDown.svg",
-        ): StatefulPainterProvider<DropdownState> =
-            ResourcePainterProvider(basePath, svgLoader)
+        ): PainterProvider<DropdownState> =
+            ResourcePainterProvider.stateful(basePath, svgLoader)
     }
 }
 
 @Composable
 fun intUiDropdownIcons(
     svgLoader: SvgLoader,
-    chevronDown: StatefulPainterProvider<DropdownState> = IntUiDropdownIcons.chevronDown(svgLoader),
+    chevronDown: PainterProvider<DropdownState> = IntUiDropdownIcons.chevronDown(svgLoader),
 ) =
     IntUiDropdownIcons(chevronDown)

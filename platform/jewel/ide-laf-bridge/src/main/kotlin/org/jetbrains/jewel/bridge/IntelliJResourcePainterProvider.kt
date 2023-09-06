@@ -2,58 +2,38 @@ package org.jetbrains.jewel.bridge
 
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.res.ResourceLoader
-import com.intellij.ide.ui.IconMapLoader
-import com.intellij.openapi.components.service
-import com.intellij.openapi.diagnostic.thisLogger
 import org.jetbrains.jewel.InteractiveComponentState
-import org.jetbrains.jewel.JewelResourceLoader
+import org.jetbrains.jewel.InternalJewelApi
 import org.jetbrains.jewel.SvgLoader
 import org.jetbrains.jewel.styling.ResourcePainterProvider
+import org.jetbrains.jewel.styling.ResourcePathPatcher
+import org.jetbrains.jewel.styling.SimpleResourcePathPatcher
+import org.jetbrains.jewel.styling.StatefulResourcePathPatcher
 
-class IntelliJResourcePainterProvider<T : InteractiveComponentState>(
+@OptIn(InternalJewelApi::class)
+class IntelliJResourcePainterProvider<T> @InternalJewelApi constructor(
     basePath: String,
     svgLoader: SvgLoader,
-    prefixTokensProvider: (state: T) -> String = { "" },
-    suffixTokensProvider: (state: T) -> String = { "" },
-) : ResourcePainterProvider<T>(basePath, svgLoader, prefixTokensProvider, suffixTokensProvider) {
-
-    private val logger = thisLogger()
-
-    private val mappingsByClassLoader
-        get() = service<IconMapLoader>().loadIconMapping()
+    pathPatcher: ResourcePathPatcher<T>,
+    private val iconMapper: IconMapper,
+) : ResourcePainterProvider<T>(basePath, svgLoader, pathPatcher) {
 
     @Composable
-    override fun patchPath(state: T, basePath: String, resourceLoader: ResourceLoader): String {
-        val patchedPath = super.patchPath(state, basePath, resourceLoader)
-        return mapPath(patchedPath, resourceLoader)
+    override fun patchPath(basePath: String, resourceLoader: ResourceLoader, extraData: T?): String {
+        val patchedPath = super.patchPath(basePath, resourceLoader, extraData)
+        return iconMapper.mapPath(patchedPath, resourceLoader)
     }
 
-    private fun mapPath(originalPath: String, resourceLoader: ResourceLoader): String {
-        logger.debug("Loading SVG from '$originalPath'")
-        val searchClasses = (resourceLoader as? JewelResourceLoader)?.searchClasses
-        if (searchClasses == null) {
-            logger.warn(
-                "Tried loading a resource but the provided ResourceLoader is now a JewelResourceLoader; " +
-                    "this is probably a bug. Make sure you always use JewelResourceLoaders.",
-            )
-            return originalPath
-        }
+    companion object {
 
-        val allMappings = mappingsByClassLoader
-        if (allMappings.isEmpty()) {
-            logger.info("No mapping info available yet, can't check for '$originalPath' mapping.")
-            return originalPath
-        }
+        fun stateless(basePath: String, svgLoader: SvgLoader) =
+            IntelliJResourcePainterProvider<Unit>(basePath, svgLoader, SimpleResourcePathPatcher(), IntelliJIconMapper)
 
-        val applicableMappings = searchClasses.mapNotNull { allMappings[it.classLoader] }
-        val mappedPath = applicableMappings.firstNotNullOfOrNull { it[originalPath.removePrefix("/")] }
-
-        if (mappedPath == null) {
-            logger.debug("Icon '$originalPath' has no mapping defined.")
-            return originalPath
-        }
-
-        logger.debug("Icon '$originalPath' is mapped to '$mappedPath'.")
-        return mappedPath
+        fun <T : InteractiveComponentState> stateful(
+            basePath: String,
+            svgLoader: SvgLoader,
+            pathPatcher: ResourcePathPatcher<T> = StatefulResourcePathPatcher(),
+        ) =
+            IntelliJResourcePainterProvider(basePath, svgLoader, pathPatcher, IntelliJIconMapper)
     }
 }

@@ -14,8 +14,9 @@ import org.jetbrains.jewel.styling.CheckboxColors
 import org.jetbrains.jewel.styling.CheckboxIcons
 import org.jetbrains.jewel.styling.CheckboxMetrics
 import org.jetbrains.jewel.styling.CheckboxStyle
+import org.jetbrains.jewel.styling.PainterProvider
 import org.jetbrains.jewel.styling.ResourcePainterProvider
-import org.jetbrains.jewel.styling.StatefulPainterProvider
+import org.jetbrains.jewel.styling.StatefulResourcePathPatcher
 import org.jetbrains.jewel.themes.intui.core.theme.IntUiDarkTheme
 import org.jetbrains.jewel.themes.intui.core.theme.IntUiLightTheme
 
@@ -104,7 +105,7 @@ data class IntUiCheckboxMetrics(
 
 @Immutable
 data class IntUiCheckboxIcons(
-    override val checkbox: StatefulPainterProvider<CheckboxState>,
+    override val checkbox: PainterProvider<CheckboxState>,
 ) : CheckboxIcons {
 
     companion object {
@@ -112,18 +113,20 @@ data class IntUiCheckboxIcons(
         fun checkbox(
             svgLoader: SvgLoader,
             basePath: String = "icons/intui/checkBox.svg",
-        ): StatefulPainterProvider<CheckboxState> =
-            ResourcePainterProvider(
+        ): PainterProvider<CheckboxState> =
+            ResourcePainterProvider.stateful(
                 basePath,
                 svgLoader,
-                prefixTokensProvider = { state: CheckboxState ->
-                    if (state.toggleableState == ToggleableState.Indeterminate) "Indeterminate" else ""
-                },
+                pathPatcher = StatefulResourcePathPatcher(
+                    prefixTokensProvider = { state: CheckboxState ->
+                        if (state.toggleableState == ToggleableState.Indeterminate) "Indeterminate" else ""
+                    },
+                ),
             )
     }
 }
 
 fun intUiCheckboxIcons(
     svgLoader: SvgLoader,
-    checkbox: StatefulPainterProvider<CheckboxState> = IntUiCheckboxIcons.checkbox(svgLoader),
+    checkbox: PainterProvider<CheckboxState> = IntUiCheckboxIcons.checkbox(svgLoader),
 ) = IntUiCheckboxIcons(checkbox)

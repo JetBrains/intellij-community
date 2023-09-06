@@ -8,12 +8,12 @@ import androidx.compose.ui.unit.DpSize
 import androidx.compose.ui.unit.dp
 import org.jetbrains.jewel.RadioButtonState
 import org.jetbrains.jewel.SvgLoader
+import org.jetbrains.jewel.styling.PainterProvider
 import org.jetbrains.jewel.styling.RadioButtonColors
 import org.jetbrains.jewel.styling.RadioButtonIcons
 import org.jetbrains.jewel.styling.RadioButtonMetrics
 import org.jetbrains.jewel.styling.RadioButtonStyle
 import org.jetbrains.jewel.styling.ResourcePainterProvider
-import org.jetbrains.jewel.styling.StatefulPainterProvider
 import org.jetbrains.jewel.themes.intui.core.theme.IntUiDarkTheme
 import org.jetbrains.jewel.themes.intui.core.theme.IntUiLightTheme
 import org.jetbrains.jewel.themes.intui.standalone.IntUiTheme
@@ -101,7 +101,7 @@ data class IntUiRadioButtonMetrics(
 
 @Immutable
 data class IntUiRadioButtonIcons(
-    override val radioButton: StatefulPainterProvider<RadioButtonState>,
+    override val radioButton: PainterProvider<RadioButtonState>,
 ) : RadioButtonIcons {
 
     companion object {
@@ -110,13 +110,13 @@ data class IntUiRadioButtonIcons(
         fun radioButton(
             svgLoader: SvgLoader,
             basePath: String = "icons/intui/radio.svg",
-        ): StatefulPainterProvider<RadioButtonState> =
-            ResourcePainterProvider(basePath, svgLoader)
+        ): PainterProvider<RadioButtonState> =
+            ResourcePainterProvider.stateful(basePath, svgLoader)
     }
 }
 
 @Composable
 fun intUiRadioButtonIcons(
     svgLoader: SvgLoader,
-    radioButton: StatefulPainterProvider<RadioButtonState> = IntUiRadioButtonIcons.radioButton(svgLoader),
+    radioButton: PainterProvider<RadioButtonState> = IntUiRadioButtonIcons.radioButton(svgLoader),
 ) = IntUiRadioButtonIcons(radioButton)

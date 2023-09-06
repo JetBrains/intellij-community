@@ -14,8 +14,8 @@ import org.jetbrains.jewel.styling.LazyTreeColors
 import org.jetbrains.jewel.styling.LazyTreeIcons
 import org.jetbrains.jewel.styling.LazyTreeMetrics
 import org.jetbrains.jewel.styling.LazyTreeStyle
+import org.jetbrains.jewel.styling.PainterProvider
 import org.jetbrains.jewel.styling.ResourcePainterProvider
-import org.jetbrains.jewel.styling.StatefulPainterProvider
 import org.jetbrains.jewel.themes.intui.core.theme.IntUiDarkTheme
 import org.jetbrains.jewel.themes.intui.core.theme.IntUiLightTheme
 
@@ -111,8 +111,8 @@ data class IntUiLazyTreeMetrics(
 
 @Immutable
 data class IntUiLazyTreeIcons(
-    override val nodeChevronCollapsed: StatefulPainterProvider<TreeElementState>,
-    override val nodeChevronExpanded: StatefulPainterProvider<TreeElementState>,
+    override val nodeChevronCollapsed: PainterProvider<TreeElementState>,
+    override val nodeChevronExpanded: PainterProvider<TreeElementState>,
 ) : LazyTreeIcons {
 
     companion object {
@@ -121,23 +121,23 @@ data class IntUiLazyTreeIcons(
         fun nodeChevronCollapsed(
             svgLoader: SvgLoader,
             basePath: String = "icons/intui/chevronRight.svg",
-        ): StatefulPainterProvider<TreeElementState> =
-            ResourcePainterProvider(basePath, svgLoader)
+        ): PainterProvider<TreeElementState> =
+            ResourcePainterProvider.stateful(basePath, svgLoader)
 
         @Composable
         fun nodeChevronExpanded(
             svgLoader: SvgLoader,
             basePath: String = "icons/intui/chevronDown.svg",
-        ): StatefulPainterProvider<TreeElementState> =
-            ResourcePainterProvider(basePath, svgLoader)
+        ): PainterProvider<TreeElementState> =
+            ResourcePainterProvider.stateful(basePath, svgLoader)
     }
 }
 
 @Composable
 fun intUiLazyTreeIcons(
     svgLoader: SvgLoader,
-    nodeChevronCollapsed: StatefulPainterProvider<TreeElementState> =
+    nodeChevronCollapsed: PainterProvider<TreeElementState> =
         IntUiLazyTreeIcons.nodeChevronCollapsed(svgLoader),
-    nodeChevronExpanded: StatefulPainterProvider<TreeElementState> =
+    nodeChevronExpanded: PainterProvider<TreeElementState> =
         IntUiLazyTreeIcons.nodeChevronExpanded(svgLoader),
 ) = IntUiLazyTreeIcons(nodeChevronCollapsed, nodeChevronExpanded)

@@ -131,7 +131,7 @@ fun Dropdown(
                         .align(Alignment.CenterEnd),
                     contentAlignment = Alignment.Center,
                 ) {
-                    val chevronIcon by style.icons.chevronDown.getPainter(dropdownState, resourceLoader)
+                    val chevronIcon by style.icons.chevronDown.getPainter(resourceLoader, dropdownState)
                     Icon(
                         painter = chevronIcon,
                         contentDescription = null,

@@ -8,8 +8,8 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import org.jetbrains.jewel.ButtonState
 import org.jetbrains.jewel.SvgLoader
+import org.jetbrains.jewel.styling.PainterProvider
 import org.jetbrains.jewel.styling.ResourcePainterProvider
-import org.jetbrains.jewel.styling.StatefulPainterProvider
 import org.jetbrains.jewel.styling.TabColors
 import org.jetbrains.jewel.styling.TabContentAlpha
 import org.jetbrains.jewel.styling.TabIcons
@@ -67,35 +67,6 @@ data class IntUiTabStyle(
         ) = IntUiTabStyle(colors, metrics, icons, contentAlpha)
     }
 }
-
-data class IntUiTabIcons(
-    override val close: StatefulPainterProvider<ButtonState>,
-) : TabIcons {
-
-    companion object {
-
-        @Composable
-        fun close(
-            svgLoader: SvgLoader,
-            basePath: String = "icons/intui/closeSmall.svg",
-        ): StatefulPainterProvider<ButtonState> =
-            ResourcePainterProvider(basePath, svgLoader)
-    }
-}
-
-@Composable
-fun intUiTabIcons(
-    svgLoader: SvgLoader,
-    close: StatefulPainterProvider<ButtonState> = IntUiTabIcons.close(svgLoader),
-) = IntUiTabIcons(close)
-
-@Immutable
-data class IntUiTabMetrics(
-    override val underlineThickness: Dp = 3.dp,
-    override val tabPadding: PaddingValues = PaddingValues(horizontal = 8.dp),
-    override val closeContentGap: Dp = 8.dp,
-    override val tabHeight: Dp = 40.dp,
-) : TabMetrics
 
 @Immutable
 data class IntUiTabColors(
@@ -289,6 +260,14 @@ data class IntUiTabColors(
 }
 
 @Immutable
+data class IntUiTabMetrics(
+    override val underlineThickness: Dp = 3.dp,
+    override val tabPadding: PaddingValues = PaddingValues(horizontal = 8.dp),
+    override val closeContentGap: Dp = 8.dp,
+    override val tabHeight: Dp = 40.dp,
+) : TabMetrics
+
+@Immutable
 data class IntUiTabContentAlpha(
     override val iconNormal: Float,
     override val iconDisabled: Float,
@@ -364,3 +343,24 @@ data class IntUiTabContentAlpha(
             )
     }
 }
+
+data class IntUiTabIcons(
+    override val close: PainterProvider<ButtonState>,
+) : TabIcons {
+
+    companion object {
+
+        @Composable
+        fun close(
+            svgLoader: SvgLoader,
+            basePath: String = "icons/intui/closeSmall.svg",
+        ): PainterProvider<ButtonState> =
+            ResourcePainterProvider.stateful(basePath, svgLoader)
+    }
+}
+
+@Composable
+fun intUiTabIcons(
+    svgLoader: SvgLoader,
+    close: PainterProvider<ButtonState> = IntUiTabIcons.close(svgLoader),
+) = IntUiTabIcons(close)

@@ -16,8 +16,8 @@ import org.jetbrains.jewel.styling.LinkIcons
 import org.jetbrains.jewel.styling.LinkMetrics
 import org.jetbrains.jewel.styling.LinkStyle
 import org.jetbrains.jewel.styling.LinkTextStyles
+import org.jetbrains.jewel.styling.PainterProvider
 import org.jetbrains.jewel.styling.ResourcePainterProvider
-import org.jetbrains.jewel.styling.StatefulPainterProvider
 import org.jetbrains.jewel.themes.intui.core.theme.IntUiDarkTheme
 import org.jetbrains.jewel.themes.intui.core.theme.IntUiLightTheme
 import org.jetbrains.jewel.themes.intui.standalone.IntUiTheme
@@ -109,8 +109,8 @@ data class IntUiLinkMetrics(
 
 @Immutable
 data class IntUiLinkIcons(
-    override val dropdownChevron: StatefulPainterProvider<LinkState>,
-    override val externalLink: StatefulPainterProvider<LinkState>,
+    override val dropdownChevron: PainterProvider<LinkState>,
+    override val externalLink: PainterProvider<LinkState>,
 ) : LinkIcons {
 
     companion object {
@@ -119,23 +119,23 @@ data class IntUiLinkIcons(
         fun dropdownChevron(
             svgLoader: SvgLoader,
             basePath: String = "icons/intui/chevronDown.svg",
-        ): StatefulPainterProvider<LinkState> =
-            ResourcePainterProvider(basePath, svgLoader)
+        ): PainterProvider<LinkState> =
+            ResourcePainterProvider.stateful(basePath, svgLoader)
 
         @Composable
         fun externalLink(
             svgLoader: SvgLoader,
             basePath: String = "icons/intui/externalLink.svg",
-        ): StatefulPainterProvider<LinkState> =
-            ResourcePainterProvider(basePath, svgLoader)
+        ): PainterProvider<LinkState> =
+            ResourcePainterProvider.stateful(basePath, svgLoader)
     }
 }
 
 @Composable
 fun intUiLinkIcons(
     svgLoader: SvgLoader,
-    dropdownChevron: StatefulPainterProvider<LinkState> = IntUiLinkIcons.dropdownChevron(svgLoader),
-    externalLink: StatefulPainterProvider<LinkState> = IntUiLinkIcons.externalLink(svgLoader),
+    dropdownChevron: PainterProvider<LinkState> = IntUiLinkIcons.dropdownChevron(svgLoader),
+    externalLink: PainterProvider<LinkState> = IntUiLinkIcons.externalLink(svgLoader),
 ) = IntUiLinkIcons(dropdownChevron, externalLink)
 
 @Immutable

@@ -47,7 +47,7 @@ import org.jetbrains.jewel.styling.LinkStyle
 import org.jetbrains.jewel.styling.LocalLinkStyle
 import org.jetbrains.jewel.styling.LocalMenuStyle
 import org.jetbrains.jewel.styling.MenuStyle
-import org.jetbrains.jewel.styling.StatefulPainterProvider
+import org.jetbrains.jewel.styling.PainterProvider
 import org.jetbrains.jewel.util.appendIf
 
 @Composable
@@ -221,7 +221,7 @@ private fun LinkImpl(
     lineHeight: TextUnit,
     interactionSource: MutableInteractionSource,
     indication: Indication?,
-    icon: StatefulPainterProvider<LinkState>?,
+    icon: PainterProvider<LinkState>?,
 ) {
     var linkState by remember(interactionSource) {
         mutableStateOf(LinkState.of(enabled = enabled))
@@ -301,7 +301,7 @@ private fun LinkImpl(
         )
 
         if (icon != null) {
-            val iconPainter by icon.getPainter(linkState, resourceLoader)
+            val iconPainter by icon.getPainter(resourceLoader, linkState)
             Icon(
                 iconPainter,
                 contentDescription = null,

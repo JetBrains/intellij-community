@@ -112,7 +112,7 @@ interface DropdownMetrics {
 @Immutable
 interface DropdownIcons {
 
-    val chevronDown: StatefulPainterProvider<DropdownState>
+    val chevronDown: PainterProvider<DropdownState>
 }
 
 val LocalDropdownStyle = staticCompositionLocalOf<DropdownStyle> {

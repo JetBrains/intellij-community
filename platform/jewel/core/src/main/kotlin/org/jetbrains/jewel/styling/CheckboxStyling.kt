@@ -62,7 +62,7 @@ interface CheckboxMetrics {
 @Immutable
 interface CheckboxIcons {
 
-    val checkbox: StatefulPainterProvider<CheckboxState>
+    val checkbox: PainterProvider<CheckboxState>
 }
 
 val LocalCheckboxStyle = staticCompositionLocalOf<CheckboxStyle> {

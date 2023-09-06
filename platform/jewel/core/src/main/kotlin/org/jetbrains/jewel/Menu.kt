@@ -406,7 +406,7 @@ fun MenuSubmenuItem(
                     content()
                 }
 
-                val chevronPainter by style.icons.submenuChevron.getPainter(itemState, resourceLoader)
+                val chevronPainter by style.icons.submenuChevron.getPainter(resourceLoader, itemState)
                 Icon(
                     painter = chevronPainter,
                     tint = itemColors.iconTintFor(itemState).value,
@@ -455,8 +455,10 @@ private fun Modifier.drawItemBackground(itemMetrics: MenuItemMetrics, background
 private fun Size.subtract(paddingValues: PaddingValues, density: Density, layoutDirection: LayoutDirection): Size =
     with(density) {
         Size(
-            width - paddingValues.calculateLeftPadding(layoutDirection).toPx() - paddingValues.calculateRightPadding(layoutDirection).toPx(),
-            height - paddingValues.calculateTopPadding().toPx() - paddingValues.calculateBottomPadding().toPx(),
+            width - paddingValues.calculateLeftPadding(layoutDirection).toPx() -
+                paddingValues.calculateRightPadding(layoutDirection).toPx(),
+            height - paddingValues.calculateTopPadding().toPx() -
+                paddingValues.calculateBottomPadding().toPx(),
         )
     }
 

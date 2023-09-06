@@ -166,7 +166,7 @@ private fun RadioButtonImpl(
     val metrics = style.metrics
     val radioButtonModifier = Modifier.size(metrics.radioButtonSize)
         .outline(radioButtonState, outline, outlineShape = CircleShape)
-    val radioButtonPainter by style.icons.radioButton.getPainter(radioButtonState, resourceLoader)
+    val radioButtonPainter by style.icons.radioButton.getPainter(resourceLoader, radioButtonState)
 
     if (content == null) {
         RadioButtonImage(wrapperModifier, radioButtonPainter, radioButtonModifier)

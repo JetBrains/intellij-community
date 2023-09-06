@@ -121,7 +121,7 @@ interface MenuItemColors {
 @Immutable
 interface MenuIcons {
 
-    val submenuChevron: StatefulPainterProvider<MenuItemState>
+    val submenuChevron: PainterProvider<MenuItemState>
 }
 
 val LocalMenuStyle = staticCompositionLocalOf<MenuStyle> {

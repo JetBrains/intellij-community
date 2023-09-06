@@ -292,7 +292,7 @@ private fun CheckboxImpl(
             outlineWidth = metrics.outlineWidth,
         )
 
-    val checkboxPainter by icons.checkbox.getPainter(checkboxState, resourceLoader)
+    val checkboxPainter by icons.checkbox.getPainter(resourceLoader, checkboxState)
 
     if (content == null) {
         CheckBoxImage(wrapperModifier, checkboxPainter, checkBoxImageModifier)

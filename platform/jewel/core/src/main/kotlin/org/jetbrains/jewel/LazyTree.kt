@@ -54,7 +54,7 @@ fun <T> LazyTree(
         keyActions = keyActions,
         chevronContent = { elementState ->
             val painterProvider = style.icons.nodeChevron(elementState.isExpanded)
-            val painter by painterProvider.getPainter(elementState, resourceLoader)
+            val painter by painterProvider.getPainter(resourceLoader, elementState)
             Icon(painter = painter, contentDescription = null)
         },
     ) {

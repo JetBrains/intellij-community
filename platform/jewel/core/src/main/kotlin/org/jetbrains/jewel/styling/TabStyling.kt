@@ -23,7 +23,7 @@ interface TabStyle {
 @Immutable
 interface TabIcons {
 
-    val close: StatefulPainterProvider<ButtonState>
+    val close: PainterProvider<ButtonState>
 }
 
 @Stable

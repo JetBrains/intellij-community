@@ -20,7 +20,7 @@ import com.intellij.util.ui.JBValue
 import org.jetbrains.jewel.IntelliJThemeIconData
 import org.jetbrains.jewel.InteractiveComponentState
 import org.jetbrains.jewel.SvgLoader
-import org.jetbrains.jewel.styling.StatefulPainterProvider
+import org.jetbrains.jewel.styling.PainterProvider
 import org.jetbrains.skiko.DependsOnJBR
 import org.jetbrains.skiko.awt.font.AwtFontManager
 import org.jetbrains.skiko.toSkikoTypefaceOrNull
@@ -159,11 +159,8 @@ internal fun <T : InteractiveComponentState> retrieveIcon(
     baseIconPath: String,
     iconData: IntelliJThemeIconData,
     svgLoader: SvgLoader,
-    prefixTokensProvider: (state: T) -> String = { "" },
-    suffixTokensProvider: (state: T) -> String = { "" },
-): StatefulPainterProvider<T> = IntelliJResourcePainterProvider(
-    basePath = iconData.iconOverrides[baseIconPath] ?: baseIconPath,
-    svgLoader,
-    prefixTokensProvider,
-    suffixTokensProvider,
-)
+): PainterProvider<T> =
+    IntelliJResourcePainterProvider.stateful(
+        basePath = iconData.iconOverrides[baseIconPath] ?: baseIconPath,
+        svgLoader,
+    )

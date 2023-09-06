@@ -50,7 +50,7 @@ interface RadioButtonMetrics {
 @Immutable
 interface RadioButtonIcons {
 
-    val radioButton: StatefulPainterProvider<RadioButtonState>
+    val radioButton: PainterProvider<RadioButtonState>
 }
 
 val LocalRadioButtonStyle = staticCompositionLocalOf<RadioButtonStyle> {
