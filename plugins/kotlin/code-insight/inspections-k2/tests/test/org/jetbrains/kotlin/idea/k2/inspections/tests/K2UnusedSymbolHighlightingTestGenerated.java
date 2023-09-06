@@ -73,6 +73,11 @@ public class K2UnusedSymbolHighlightingTestGenerated extends AbstractK2LocalInsp
         runTest("../../../idea/tests/testData/inspectionsLocal/unusedSymbol/dataInlineClassDeclarationk2.kt");
     }
 
+    @TestMetadata("entryPoint.kt")
+    public void testEntryPoint() throws Exception {
+        runTest("../../../idea/tests/testData/inspectionsLocal/unusedSymbol/entryPoint.kt");
+    }
+
     @TestMetadata("enumSecondaryConstructor.kt")
     public void testEnumSecondaryConstructor() throws Exception {
         runTest("../../../idea/tests/testData/inspectionsLocal/unusedSymbol/enumSecondaryConstructor.kt");
