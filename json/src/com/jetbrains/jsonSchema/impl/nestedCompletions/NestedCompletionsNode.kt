@@ -23,6 +23,7 @@ interface NestedCompletionsNodeBuilder {
 }
 
 /** DSL to build a completion tree */
+@ApiStatus.Experimental
 fun JsonSchemaObject.buildNestedCompletionsRootTree(block: NestedCompletionsNodeBuilder.() -> Unit) {
   applyBuilderOnNestedCompletionsRoot(block)
 }

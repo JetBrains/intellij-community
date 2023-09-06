@@ -25,6 +25,7 @@ import com.jetbrains.jsonSchema.impl.nestedCompletions.NestedCompletionsNodeKt;
 import com.jetbrains.jsonSchema.remote.JsonFileResolver;
 import kotlin.Unit;
 import kotlin.jvm.functions.Function1;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -235,6 +236,7 @@ public final class JsonSchemaObject {
    * Builds the nested completions root tree.
    * @see NestedCompletionsNodeKt#buildNestedCompletionsRootTree(JsonSchemaObject, Function1) to see how the DSL is ideally used in Kotlin
    */
+  @ApiStatus.Experimental
   public void applyBuilderOnNestedCompletionsRoot(Function1<? super NestedCompletionsNodeBuilder, Unit> builder) {
     myNestedCompletionRoot = NestedCompletionsNodeKt.buildNestedCompletionsTree(builder);
   }
