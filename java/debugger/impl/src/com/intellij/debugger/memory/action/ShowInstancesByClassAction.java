@@ -48,7 +48,7 @@ public class ShowInstancesByClassAction extends DebuggerTreeAction {
         new InstancesWindow(debugSession, l -> {
           final List<ObjectReference> instances = referenceType.instances(l);
           return instances == null ? Collections.emptyList() : ContainerUtil.map(instances, JavaReferenceInfo::new);
-        }, referenceType.name()).show();
+        }, referenceType).show();
       }
     }
   }

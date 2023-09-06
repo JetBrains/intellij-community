@@ -22,10 +22,6 @@ public class SizedReferenceInfo extends JavaReferenceInfo {
     return new SizedValueDescriptor(project, getObjectReference(), myShallowSize, myRetainedSize);
   }
 
-  public long getRetainedSize() {
-    return myRetainedSize;
-  }
-
   public static class SizedValueDescriptor extends InstanceValueDescriptor {
     private final long myRetainedSize;
     private final long myShallowSize;
