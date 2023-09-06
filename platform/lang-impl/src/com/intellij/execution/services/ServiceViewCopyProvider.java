@@ -29,7 +29,7 @@ final class ServiceViewCopyProvider implements CopyProvider {
 
   @Override
   public void performCopy(@NotNull DataContext dataContext) {
-    List<ServiceViewItem> items = myServiceView.getSelectedItems();
+    List<ServiceViewItem> items = ServiceViewActionProvider.getSelectedItems(dataContext);
     if (!items.isEmpty()) {
       CopyPasteManager.getInstance().setContents(new StringSelection(
         StringUtil.join(items, item -> ServiceViewDragHelper.getDisplayName(item.getViewDescriptor().getPresentation()), "\n")));
@@ -38,7 +38,7 @@ final class ServiceViewCopyProvider implements CopyProvider {
 
   @Override
   public boolean isCopyEnabled(@NotNull DataContext dataContext) {
-    if (myServiceView.getSelectedItems().isEmpty()) {
+    if (ServiceViewActionProvider.getSelectedItems(dataContext).isEmpty()) {
       return false;
     }
     JComponent detailsComponent = myServiceView.getUi().getDetailsComponent();

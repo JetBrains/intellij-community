@@ -49,6 +49,6 @@ class OpenInToolWindowAction : DumbAwareAction() {
   }
 
   private fun getContributor(e: AnActionEvent): ServiceViewContributor<*>? {
-    return ServiceViewActionProvider.getSelectedView(e)?.selectedItems?.singleOrNull()?.rootContributor
+    return ServiceViewActionProvider.getSelectedItems(e).singleOrNull()?.rootContributor
   }
 }

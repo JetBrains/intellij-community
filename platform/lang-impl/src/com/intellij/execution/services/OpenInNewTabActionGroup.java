@@ -17,6 +17,7 @@ import org.jetbrains.annotations.NotNull;
 import javax.swing.*;
 import java.awt.*;
 
+import static com.intellij.execution.services.ServiceViewActionProvider.getSelectedItems;
 import static com.intellij.execution.services.ServiceViewActionProvider.getSelectedView;
 
 final class OpenInNewTabActionGroup extends DefaultActionGroup implements DumbAware {
@@ -31,7 +32,7 @@ final class OpenInNewTabActionGroup extends DefaultActionGroup implements DumbAw
     ServiceView selectedView = getSelectedView(e);
     e.getPresentation().setEnabled(selectedView != null);
     e.getPresentation().putClientProperty(ActionButton.HIDE_DROPDOWN_ICON, selectedView != null &&
-                                                                           selectedView.getSelectedItems().size() == 1);
+                                                                           getSelectedItems(e).size() == 1);
     e.getPresentation().setPerformGroup(true);
   }
 
@@ -40,7 +41,7 @@ final class OpenInNewTabActionGroup extends DefaultActionGroup implements DumbAw
     ServiceView selectedView = getSelectedView(e);
     if (selectedView == null) return;
 
-    if (selectedView.getSelectedItems().size() == 1) {
+    if (getSelectedItems(e).size() == 1) {
       AnAction[] children = getChildren(e);
       for (AnAction child : children) {
         if (child instanceof OpenInNewTabAction) {
