@@ -109,10 +109,12 @@ internal class ConfigureServicesDialog(private val project: Project) : DialogWra
     treesPanel.add(JBLabel(ExecutionBundle.message("service.view.configure.excluded.label.text")),
                    gridBag.next().next().anchor(GridBagConstraints.WEST))
 
-    treesPanel.add(JBScrollPane(includedServicesTree.tree), gridBag.nextLine().next().weighty(1.0).fillCell())
+    val includedPane = JBScrollPane(includedServicesTree.tree)
+    treesPanel.add(includedPane, gridBag.nextLine().next().weighty(1.0).fillCell())
     treesPanel.add(buttonsPanel, gridBag.next().anchor(GridBagConstraints.NORTH))
-    excludedServicesTree.tree.preferredSize = includedServicesTree.tree.preferredSize
-    treesPanel.add(JBScrollPane(excludedServicesTree.tree), gridBag.next().weighty(1.0).fillCell())
+    val excludedPane = JBScrollPane(excludedServicesTree.tree)
+    excludedPane.preferredSize = includedPane.preferredSize
+    treesPanel.add(excludedPane, gridBag.next().weighty(1.0).fillCell())
     mainPanel.add(treesPanel, BorderLayout.CENTER)
     statusLabel.text = XmlStringUtil.wrapInHtml(ExecutionBundle.message("service.view.configure.dialog.description"))
     statusLabel.border = JBUI.Borders.emptyTop(5)
