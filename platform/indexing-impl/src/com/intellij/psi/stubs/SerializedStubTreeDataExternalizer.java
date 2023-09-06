@@ -19,7 +19,7 @@ public final class SerializedStubTreeDataExternalizer implements DataExternalize
   }
 
   @Override
-  public final void save(final @NotNull DataOutput out, final @NotNull SerializedStubTree tree) throws IOException {
+  public void save(final @NotNull DataOutput out, final @NotNull SerializedStubTree tree) throws IOException {
     DataInputOutputUtil.writeINT(out, tree.myTreeByteLength);
     out.write(tree.myTreeBytes, 0, tree.myTreeByteLength);
     DataInputOutputUtil.writeINT(out, tree.myIndexedStubByteLength);
@@ -27,7 +27,7 @@ public final class SerializedStubTreeDataExternalizer implements DataExternalize
   }
 
   @Override
-  public final @NotNull SerializedStubTree read(final @NotNull DataInput in) throws IOException {
+  public @NotNull SerializedStubTree read(final @NotNull DataInput in) throws IOException {
     int serializedStubsLength = DataInputOutputUtil.readINT(in);
     byte[] bytes = new byte[serializedStubsLength];
     in.readFully(bytes);

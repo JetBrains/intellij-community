@@ -491,7 +491,7 @@ public final class IndexLookupTimingsReporting {
     public static final class LookupAllKeysTrace extends LookupTraceBase<LookupAllKeysTrace> {
       private long indexValidationFinishedAtMs;
 
-      protected LookupAllKeysTrace(final ThreadLocal<LookupAllKeysTrace> current) {
+      private LookupAllKeysTrace(final ThreadLocal<LookupAllKeysTrace> current) {
         super(current);
       }
 
@@ -584,7 +584,7 @@ public final class IndexLookupTimingsReporting {
       private int lookupKeysCount = -1;
       private LookupOperation lookupOperation = LookupOperation.UNKNOWN;
 
-      protected LookupEntriesByKeysTrace(final ThreadLocal<LookupEntriesByKeysTrace> current) {
+      private LookupEntriesByKeysTrace(final ThreadLocal<LookupEntriesByKeysTrace> current) {
         super(current);
       }
 
@@ -695,7 +695,7 @@ public final class IndexLookupTimingsReporting {
       private long indexValidationFinishedAtMs;
       private long stubTreesDeserializingStarted;
 
-      protected LookupStubEntriesByKeyTrace(final ThreadLocal<LookupStubEntriesByKeyTrace> current) {
+      private LookupStubEntriesByKeyTrace(final ThreadLocal<LookupStubEntriesByKeyTrace> current) {
         super(current);
       }
 
