@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.refactoring.convertToJava;
 
 import com.intellij.codeInsight.daemon.impl.analysis.HighlightingFeature;
@@ -877,7 +877,8 @@ public class ExpressionGenerator extends Generator {
           .append("\"\"\"");
       }
       else {
-        builder.append('"').append(StringUtil.escapeStringCharacters(value)).append('"');
+        String content = StringUtil.escapeStringCharacters(value).replaceAll("\\\\n([^\"])", "\\\\n\" +\n \"$1");
+        builder.append('"').append(content).append('"');
       }
     }
     else if (text.startsWith("'")) {

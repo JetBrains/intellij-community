@@ -1,1 +1,3 @@
-java.lang.String s = "\n\t\r\b\f\\\nmore text\n";
+java.lang.String s = "\n" +
+ "\t\r\b\f\\\n" +
+ "more text\n";
