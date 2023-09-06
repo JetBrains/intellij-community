@@ -1881,6 +1881,17 @@ public abstract class IrKotlinEvaluateExpressionTestGenerated extends AbstractIr
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/evaluation/jvmMultiModule")
     public abstract static class JvmMultiModule extends AbstractIrKotlinEvaluateExpressionTest {
+        @RunWith(JUnit3RunnerWithInners.class)
+        @TestMetadata("testData/evaluation/jvmMultiModule/delegates")
+        public static class Delegates extends AbstractIrKotlinEvaluateExpressionTest {
+            private void runTest(String testDataFilePath) throws Exception {
+                KotlinTestUtils.runTest(this::doJvmMultiModuleTest, this, TargetBackend.JVM_IR_WITH_OLD_EVALUATOR, testDataFilePath);
+            }
 
+            @TestMetadata("multiModuleDelegateInlineAccessor.kt")
+            public void testMultiModuleDelegateInlineAccessor() throws Exception {
+                runTest("testData/evaluation/jvmMultiModule/delegates/multiModuleDelegateInlineAccessor.kt");
+            }
+        }
     }
 }

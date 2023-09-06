@@ -1,12 +1,14 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.kotlin.idea.debugger.evaluate
 
+import org.jetbrains.kotlin.analysis.api.analyze
+import org.jetbrains.kotlin.analysis.api.descriptors.utils.collectReachableInlineDelegatedPropertyAccessors
+import org.jetbrains.kotlin.analysis.api.descriptors.utils.getInlineFunctionAnalyzer
 import org.jetbrains.kotlin.descriptors.ClassConstructorDescriptor
 import org.jetbrains.kotlin.descriptors.DescriptorVisibilities
 import org.jetbrains.kotlin.descriptors.MemberDescriptor
 import org.jetbrains.kotlin.descriptors.ReceiverParameterDescriptor
 import org.jetbrains.kotlin.idea.codeInsight.DescriptorToSourceUtilsIde
-import org.jetbrains.kotlin.idea.core.util.analyzeInlinedFunctions
 import org.jetbrains.kotlin.idea.util.expectedDeclarationIfAny
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.resolve.BindingContext
@@ -22,16 +24,15 @@ import org.jetbrains.kotlin.resolve.scopes.receivers.*
  *   - local classes constructed by the fragment.
  */
 fun gatherProjectFilesDependedOnByFragment(fragment: KtCodeFragment, bindingContext: BindingContext): Set<KtFile> {
-    val resolutionFacade = getResolutionFacadeForCodeFragment(fragment)
     val result = mutableSetOf<KtFile>()
-
-    analyzeInlinedFunctions(resolutionFacade, fragment, false).let { files ->
-        for (file in files) {
-            result.add(file)
+    analyze(fragment) {
+        result += with(getInlineFunctionAnalyzer(false)) {
+            analyze(fragment)
+            allFiles()
         }
+        analyzeCalls(fragment, bindingContext, result)
+        result.collectReachableInlineDelegatedPropertyAccessors()
     }
-
-    analyzeCalls(fragment, bindingContext, result)
     return result
 }
 
