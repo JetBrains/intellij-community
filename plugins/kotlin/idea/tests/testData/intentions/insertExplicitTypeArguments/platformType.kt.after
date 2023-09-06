@@ -1,4 +1,4 @@
-// IGNORE_FE10
+// IGNORE_K1
 // WITH_STDLIB
 // AFTER-WARNING: Variable 'v' is never used
 import java.util.ArrayList
