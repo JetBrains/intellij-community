@@ -16,6 +16,7 @@
 package com.siyeh.ig.bugs;
 
 import com.intellij.psi.*;
+import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.util.ThreeState;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
@@ -54,6 +55,9 @@ public class InstanceofIncompatibleInterfaceInspection extends BaseInspection {
       final PsiType operandType = operand.getType();
       if (!(operandType instanceof PsiClassType operandClassType)) {
         return;
+      }
+      if (!TypeConversionUtil.areTypesConvertible(operandClassType, checkType)) {
+        return; // don't warn on uncompilable code
       }
       final PsiClass checkClass = checkClassType.resolve();
       if (checkClass == null) {

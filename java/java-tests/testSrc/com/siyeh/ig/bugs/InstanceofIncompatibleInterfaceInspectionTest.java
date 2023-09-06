@@ -37,6 +37,23 @@ public class InstanceofIncompatibleInterfaceInspectionTest extends LightJavaInsp
              }""");
   }
 
+  public void testNoWarningOnUncompilableCode() {
+    doTest("""
+             final class Foo { }
+             interface Bar { }
+             final class Main213 {
+             
+                 static void x(Foo f, Bar b) {
+                     if (/*!Inconvertible types; cannot cast 'Foo' to 'Bar'*/f instanceof Bar/*!*/) {
+                         System.out.println("fail");
+                     }
+                     if (/*!Inconvertible types; cannot cast 'Bar' to 'Foo'*/b instanceof Foo/*!*/) {
+                         System.out.println("fail");
+                     }
+                 }
+             }""");
+  }
+
   @Override
   protected LocalInspectionTool getInspection() {
     return new InstanceofIncompatibleInterfaceInspection();
