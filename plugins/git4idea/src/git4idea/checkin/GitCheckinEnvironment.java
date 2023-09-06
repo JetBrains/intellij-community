@@ -199,7 +199,7 @@ public final class GitCheckinEnvironment implements CheckinEnvironment, AmendCom
     List<GitRepository> repositories = collectRepositories(sortedChanges.keySet(), commitWithoutChangesRoots);
     for (GitRepository repository : repositories) {
       Collection<Change> rootChanges = sortedChanges.getOrDefault(repository, emptyList());
-      Collection<CommitChange> toCommit = map(rootChanges, CommitChange::new);
+      Collection<CommitChange> toCommit = collectChangesToCommit(rootChanges);
 
       if (isCommitRenamesSeparately(commitContext)) {
         Pair<Collection<CommitChange>, List<VcsException>> pair = commitExplicitRenames(repository, toCommit, commitMessage);
@@ -674,11 +674,11 @@ public final class GitCheckinEnvironment implements CheckinEnvironment, AmendCom
 
     // Commit leftovers as added/deleted files (ex: if git detected files movements in a conflicting way)
     affectedBeforePaths.forEach((bPath, change) -> nextCommitChanges.add(new CommitChange(change.beforePath, null,
-                                                                                        change.beforeRevision, null,
-                                                                                        change.changelistId, change.virtualFile)));
+                                                                                          change.beforeRevision, null,
+                                                                                          change.changelistId, change.virtualFile)));
     affectedAfterPaths.forEach((aPath, change) -> nextCommitChanges.add(new CommitChange(null, change.afterPath,
-                                                                                       null, change.afterRevision,
-                                                                                       change.changelistId, change.virtualFile)));
+                                                                                         null, change.afterRevision,
+                                                                                         change.changelistId, change.virtualFile)));
 
     if (movedChanges.isEmpty()) return null;
     return Pair.create(movedChanges, nextCommitChanges);
@@ -698,9 +698,30 @@ public final class GitCheckinEnvironment implements CheckinEnvironment, AmendCom
       addIfNotNull(beforePathsMultiSet, change.beforePath);
       addIfNotNull(afterPathsMultiSet, change.afterPath);
     }
-    return filter(explicitMoves, move -> movedPathsMultiSet.count(move.getBefore()) == 1 && movedPathsMultiSet.count(move.getAfter()) == 1 &&
-           beforePathsMultiSet.count(move.getBefore()) == 1 && afterPathsMultiSet.count(move.getAfter()) == 1 &&
-           beforePathsMultiSet.count(move.getAfter()) == 0 && afterPathsMultiSet.count(move.getBefore()) == 0);
+    return filter(explicitMoves,
+                  move -> movedPathsMultiSet.count(move.getBefore()) == 1 && movedPathsMultiSet.count(move.getAfter()) == 1 &&
+                          beforePathsMultiSet.count(move.getBefore()) == 1 && afterPathsMultiSet.count(move.getAfter()) == 1 &&
+                          beforePathsMultiSet.count(move.getAfter()) == 0 && afterPathsMultiSet.count(move.getBefore()) == 0);
+  }
+
+  @NotNull
+  private static List<CommitChange> collectChangesToCommit(@NotNull Collection<Change> changes) {
+    return map(changes, GitCheckinEnvironment::createCommitChange);
+  }
+
+  private static @NotNull CommitChange createCommitChange(@NotNull Change change) {
+    FilePath beforePath = getBeforePath(change);
+    FilePath afterPath = getAfterPath(change);
+
+    ContentRevision bRev = change.getBeforeRevision();
+    ContentRevision aRev = change.getAfterRevision();
+    VcsRevisionNumber beforeRevision = bRev != null ? bRev.getRevisionNumber() : null;
+    VcsRevisionNumber afterRevision = aRev != null ? aRev.getRevisionNumber() : null;
+
+    String changelistId = change instanceof ChangeListChange changeListChange ? changeListChange.getChangeListId() : null;
+    VirtualFile virtualFile = aRev instanceof CurrentContentRevision currentRevision ? currentRevision.getVirtualFile() : null;
+
+    return new CommitChange(beforePath, afterPath, beforeRevision, afterRevision, changelistId, virtualFile);
   }
 
 
@@ -978,7 +999,7 @@ public final class GitCheckinEnvironment implements CheckinEnvironment, AmendCom
     List<GitCheckinExplicitMovementProvider> enabledProviders = filter(allProviders, it -> it.isEnabled(project));
     if (enabledProviders.isEmpty()) return Collections.emptyList();
 
-    List<CommitChange> changes = map(ChangeListManager.getInstance(project).getAllChanges(), CommitChange::new);
+    List<CommitChange> changes = collectChangesToCommit(ChangeListManager.getInstance(project).getAllChanges());
     List<FilePath> beforePaths = mapNotNull(changes, it -> it.beforePath);
     List<FilePath> afterPaths = mapNotNull(changes, it -> it.afterPath);
 
@@ -1017,29 +1038,6 @@ public final class GitCheckinEnvironment implements CheckinEnvironment, AmendCom
 
     public final @Nullable String changelistId;
     public final @Nullable VirtualFile virtualFile;
-
-    CommitChange(@NotNull Change change) {
-      super(getBeforePath(change), getAfterPath(change));
-
-      ContentRevision bRev = change.getBeforeRevision();
-      ContentRevision aRev = change.getAfterRevision();
-      this.beforeRevision = bRev != null ? bRev.getRevisionNumber() : null;
-      this.afterRevision = aRev != null ? aRev.getRevisionNumber() : null;
-
-      if (change instanceof ChangeListChange) {
-        this.changelistId = ((ChangeListChange)change).getChangeListId();
-      }
-      else {
-        this.changelistId = null;
-      }
-
-      if (aRev instanceof CurrentContentRevision) {
-        this.virtualFile = ((CurrentContentRevision)aRev).getVirtualFile();
-      }
-      else {
-        this.virtualFile = null;
-      }
-    }
 
     CommitChange(@Nullable FilePath beforePath,
                  @Nullable FilePath afterPath,
