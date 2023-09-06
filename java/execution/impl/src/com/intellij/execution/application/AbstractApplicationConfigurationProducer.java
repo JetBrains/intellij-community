@@ -10,10 +10,8 @@ import com.intellij.execution.junit.JavaRunConfigurationProducerBase;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Ref;
-import com.intellij.psi.PsiClass;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiFile;
-import com.intellij.psi.PsiMethod;
+import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.psi.*;
 import com.intellij.psi.util.PsiMethodUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import org.jetbrains.annotations.NotNull;
@@ -62,7 +60,10 @@ public abstract class AbstractApplicationConfigurationProducer<T extends Applica
   }
 
   private void setupConfiguration(T configuration, final PsiClass aClass, final ConfigurationContext context) {
-    configuration.setMainClassName(JavaExecutionUtil.getRuntimeQualifiedName(aClass));
+    configuration.setMainClassName(
+      aClass instanceof PsiUnnamedClass ? StringUtil.trimEnd(aClass.getContainingFile().getName(), ".java")
+                                        : JavaExecutionUtil.getRuntimeQualifiedName(aClass)
+    );
     configuration.setGeneratedName();
     setupConfigurationModule(context, configuration);
   }
