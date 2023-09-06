@@ -19,6 +19,19 @@ class YamlByJsonSchemaNestedCompletionTest : JsonBySchemaCompletionBaseTest() {
       )
   }
 
+  fun `test does not complete existing key`() {
+    open1ThenOpen2Then3Schema
+      .appliedToYamlFile("""
+        <caret>
+        one:
+          two:
+            bla: false
+      """.trimIndent())
+      .hasCompletionVariantsAtCaret(
+        "three",
+      )
+  }
+
   fun `test that nodes that already exist aren't completed`() {
     open1ThenOpen2Then3Schema
       .appliedToYamlFile("""

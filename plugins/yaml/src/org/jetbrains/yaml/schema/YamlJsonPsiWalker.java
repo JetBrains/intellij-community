@@ -136,8 +136,8 @@ public final class YamlJsonPsiWalker implements JsonLikePsiWalker {
 
   @Override
   public Set<String> getPropertyNamesOfParentObject(@NotNull PsiElement originalPosition, PsiElement computedPosition) {
-    YAMLMapping object = PsiTreeUtil.getParentOfType(originalPosition, YAMLMapping.class);
-    YAMLMapping otherObject = PsiTreeUtil.getParentOfType(computedPosition, YAMLMapping.class);
+    YAMLMapping object = PsiTreeUtil.getParentOfType(originalPosition, YAMLMapping.class, false);
+    YAMLMapping otherObject = PsiTreeUtil.getParentOfType(computedPosition, YAMLMapping.class, false);
     // the original position can be either a sound element or a whitespace; whitespaces can belong to the parent
     if (object == null || otherObject != null
                           && PsiTreeUtil.isAncestor(CompletionUtil.getOriginalOrSelf(object),
