@@ -1,7 +1,6 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.xdebugger.impl.breakpoints;
 
-import com.intellij.AppTopics;
 import com.intellij.execution.impl.ConsoleViewUtil;
 import com.intellij.ide.DataManager;
 import com.intellij.ide.ui.UISettings;
@@ -94,7 +93,7 @@ public final class XLineBreakpointManager {
 
     // Update breakpoints colors if global color schema was changed
     busConnection.subscribe(EditorColorsManager.TOPIC, new MyEditorColorsListener());
-    busConnection.subscribe(AppTopics.FILE_DOCUMENT_SYNC, new FileDocumentManagerListener() {
+    busConnection.subscribe(FileDocumentManagerListener.TOPIC, new FileDocumentManagerListener() {
       @Override
       public void fileContentLoaded(@NotNull VirtualFile file, @NotNull Document document) {
         myBreakpoints.get(file.getUrl()).stream().filter(b -> b.getHighlighter() == null)

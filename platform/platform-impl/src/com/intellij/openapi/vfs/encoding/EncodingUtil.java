@@ -1,7 +1,6 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vfs.encoding;
 
-import com.intellij.AppTopics;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.highlighter.ModuleFileType;
 import com.intellij.ide.highlighter.ProjectFileType;
@@ -176,7 +175,7 @@ public final class EncodingUtil {
 
     final Disposable disposable = Disposer.newDisposable();
     MessageBusConnection connection = ApplicationManager.getApplication().getMessageBus().connect(disposable);
-    connection.subscribe(AppTopics.FILE_DOCUMENT_SYNC, new FileDocumentManagerListener() {
+    connection.subscribe(FileDocumentManagerListener.TOPIC, new FileDocumentManagerListener() {
       @Override
       public void beforeFileContentReload(@NotNull VirtualFile file, @NotNull Document document) {
         if (!file.equals(virtualFile)) return;

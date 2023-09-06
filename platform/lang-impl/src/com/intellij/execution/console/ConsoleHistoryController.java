@@ -1,7 +1,6 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.console;
 
-import com.intellij.AppTopics;
 import com.intellij.CommonBundle;
 import com.intellij.codeInsight.lookup.LookupManager;
 import com.intellij.configurationStore.SettingsSavingComponentJavaAdapter;
@@ -163,7 +162,7 @@ public class ConsoleHistoryController implements Disposable {
   }
 
   public void install() {
-    myConsole.getProject().getMessageBus().connect(myConsole).subscribe(AppTopics.FILE_DOCUMENT_SYNC, new FileDocumentManagerListener() {
+    myConsole.getProject().getMessageBus().connect(myConsole).subscribe(FileDocumentManagerListener.TOPIC, new FileDocumentManagerListener() {
       @Override
       public void beforeDocumentSaving(@NotNull Document document) {
         if (document == myConsole.getEditorDocument()) {

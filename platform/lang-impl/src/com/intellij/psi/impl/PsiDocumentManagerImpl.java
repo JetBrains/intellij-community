@@ -1,7 +1,6 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.impl;
 
-import com.intellij.AppTopics;
 import com.intellij.ide.IdeEventQueue;
 import com.intellij.injected.editor.DocumentWindow;
 import com.intellij.lang.ASTNode;
@@ -50,7 +49,7 @@ public final class PsiDocumentManagerImpl extends PsiDocumentManagerBase {
     EditorFactory.getInstance().getEventMulticaster().addDocumentListener(this, this);
     ((EditorEventMulticasterImpl)EditorFactory.getInstance().getEventMulticaster()).addPrioritizedDocumentListener(new PriorityEventCollector(), this);
     MessageBusConnection connection = project.getMessageBus().connect(this);
-    connection.subscribe(AppTopics.FILE_DOCUMENT_SYNC, new FileDocumentManagerListener() {
+    connection.subscribe(FileDocumentManagerListener.TOPIC, new FileDocumentManagerListener() {
       @Override
       public void fileContentLoaded(final @NotNull VirtualFile virtualFile, @NotNull Document document) {
         PsiFile psiFile = ReadAction.compute(() -> myProject.isDisposed() || !virtualFile.isValid() ? null : getCachedPsiFile(virtualFile));

@@ -2,7 +2,6 @@
 package com.intellij.util.indexing;
 
 import com.google.common.collect.Iterators;
-import com.intellij.AppTopics;
 import com.intellij.concurrency.ConcurrentCollectionFactory;
 import com.intellij.ide.AppLifecycleListener;
 import com.intellij.ide.startup.ServiceNotReadyException;
@@ -185,7 +184,7 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
 
     connection.subscribe(FileTypeManager.TOPIC, new FileBasedIndexFileTypeListener());
 
-    connection.subscribe(AppTopics.FILE_DOCUMENT_SYNC, new FileDocumentManagerListener() {
+    connection.subscribe(FileDocumentManagerListener.TOPIC, new FileDocumentManagerListener() {
       @Override
       public void fileContentReloaded(@NotNull VirtualFile file, @NotNull Document document) {
         cleanupMemoryStorage(true);

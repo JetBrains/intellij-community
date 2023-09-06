@@ -1,7 +1,6 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.fileEditor.impl;
 
-import com.intellij.AppTopics;
 import com.intellij.CommonBundle;
 import com.intellij.application.options.CodeStyle;
 import com.intellij.codeWithMe.ClientId;
@@ -171,7 +170,7 @@ public class FileDocumentManagerImpl extends FileDocumentManagerBase implements 
   @SuppressWarnings("OverlyBroadCatchBlock")
   private void multiCast(@NotNull Method method, Object[] args) {
     try {
-      method.invoke(ApplicationManager.getApplication().getMessageBus().syncPublisher(AppTopics.FILE_DOCUMENT_SYNC), args);
+      method.invoke(ApplicationManager.getApplication().getMessageBus().syncPublisher(FileDocumentManagerListener.TOPIC), args);
     }
     catch (ClassCastException e) {
       LOG.error("Arguments: "+ Arrays.toString(args), e);

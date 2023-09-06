@@ -1,7 +1,6 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.xdebugger.impl;
 
-import com.intellij.AppTopics;
 import com.intellij.codeInsight.hint.LineTooltipRenderer;
 import com.intellij.codeInsight.hint.TooltipController;
 import com.intellij.codeInsight.hint.TooltipGroup;
@@ -107,7 +106,7 @@ public final class XDebuggerManagerImpl extends XDebuggerManager implements Pers
     myPinToTopManager = new XDebuggerPinToTopManager();
     myExecutionPointManager = new XDebuggerExecutionPointManager(project, coroutineScope);
 
-    messageBusConnection.subscribe(AppTopics.FILE_DOCUMENT_SYNC, new FileDocumentManagerListener() {
+    messageBusConnection.subscribe(FileDocumentManagerListener.TOPIC, new FileDocumentManagerListener() {
       @Override
       public void fileContentLoaded(@NotNull VirtualFile file, @NotNull Document document) {
         myExecutionPointManager.updateExecutionPosition(file, true);
