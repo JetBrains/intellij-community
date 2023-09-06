@@ -7,22 +7,33 @@ import com.intellij.refactoring.util.NonCodeUsageInfo
 import com.intellij.refactoring.util.TextOccurrencesUtil
 import com.intellij.usageView.UsageInfo
 import org.jetbrains.kotlin.name.FqName
-import org.jetbrains.kotlin.psi.KtDeclarationContainer
-import org.jetbrains.kotlin.psi.KtNamedDeclaration
+import org.jetbrains.kotlin.psi.*
 
 internal val KtDeclarationContainer.declarationsForUsageSearch: List<KtNamedDeclaration> get() {
     val declarationsToSearch = mutableListOf<KtNamedDeclaration>()
-    if (this is KtNamedDeclaration) declarationsToSearch.add(this)
+    if (this is KtNamedDeclaration && needsReferenceUpdate) declarationsToSearch.add(this)
     declarations.forEach { decl ->
         if (decl is KtDeclarationContainer) {
             declarationsToSearch.addAll(decl.declarationsForUsageSearch)
         }
-        else if (decl is KtNamedDeclaration) {
+        else if (decl is KtNamedDeclaration && decl.needsReferenceUpdate) {
             declarationsToSearch.add(decl)
         }
     }
     return declarationsToSearch
 }
+
+internal val KtNamedDeclaration.needsReferenceUpdate: Boolean
+    get() {
+        return when (this) {
+            is KtFunction -> !isLocal && !isInstanceAccessible
+            is KtProperty -> !isLocal && !isInstanceAccessible
+            is KtClassOrObject -> true
+            else -> false
+        }
+    }
+
+private val KtNamedDeclaration.isInstanceAccessible get() = parent.parent is KtClass
 
 internal fun Collection<KtNamedDeclaration>.findNonCodeUsages(
     searchInCommentsAndStrings: Boolean,
@@ -47,7 +58,7 @@ internal fun Collection<KtNamedDeclaration>.findNonCodeUsages(
 
 internal fun retargetUsagesAfterMove(usages: List<UsageInfo>, oldToNewMap: MutableMap<PsiElement, PsiElement>) {
     for (usageInfo in usages.filterIsInstance<K2MoveRenameUsageInfo>()) {
-        usageInfo.retarget(usageInfo.referencedElement)
+        usageInfo.referencedElement?.let { usageInfo.retarget(it) }
     }
     val project = oldToNewMap.values.firstOrNull()?.project ?: return
     RenameUtil.renameNonCodeUsages(project, usages.filterIsInstance<NonCodeUsageInfo>().toTypedArray())
