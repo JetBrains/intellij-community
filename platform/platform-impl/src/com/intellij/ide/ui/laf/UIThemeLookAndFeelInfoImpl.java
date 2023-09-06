@@ -10,7 +10,7 @@ import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.IconPathPatcher;
 import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.util.text.Strings;
 import com.intellij.openapi.wm.impl.IdeBackgroundUtil;
 import com.intellij.ui.AppUIUtil;
 import com.intellij.util.SVGLoader;
@@ -30,7 +30,7 @@ import java.util.Map;
  * @author Konstantin Bulenkov
  */
 public class UIThemeLookAndFeelInfoImpl extends UIThemeLookAndFeelInfo {
-  private boolean isInitialised;
+  private boolean isInitialized;
 
   public UIThemeLookAndFeelInfoImpl(@NotNull UITheme theme) {
     super(theme);
@@ -57,11 +57,11 @@ public class UIThemeLookAndFeelInfoImpl extends UIThemeLookAndFeelInfo {
       installEditorScheme();
     }
     AppUIUtil.updateForDarcula(theme.isDark());
-    isInitialised = true;
+    isInitialized = true;
   }
 
-  public final boolean isInitialised() {
-    return isInitialised;
+  public final boolean isInitialized() {
+    return isInitialized;
   }
 
   protected @Nullable InputStream getResourceAsStream(@NotNull String path) {
@@ -132,14 +132,15 @@ public class UIThemeLookAndFeelInfoImpl extends UIThemeLookAndFeelInfo {
 
   private static <T extends Enum<T>> String parseEnumValue(Object value, T defaultValue) {
     if (value instanceof String) {
-      String name = StringUtil.toUpperCase((String)value);
+      String name = Strings.toUpperCase((String)value);
+      //noinspection unchecked
       for (T t : ((Class<T>)defaultValue.getClass()).getEnumConstants()) {
         if (t.name().equals(name)) {
-          return StringUtil.toLowerCase(value.toString());
+          return Strings.toLowerCase(value.toString());
         }
       }
     }
-    return StringUtil.toLowerCase(defaultValue.name());
+    return Strings.toLowerCase(defaultValue.name());
   }
 
   public void dispose() {
@@ -152,7 +153,7 @@ public class UIThemeLookAndFeelInfoImpl extends UIThemeLookAndFeelInfo {
     unsetBackgroundProperties(IdeBackgroundUtil.EDITOR_PROP);
     unsetBackgroundProperties(IdeBackgroundUtil.FRAME_PROP);
 
-    isInitialised = false;
+    isInitialized = false;
   }
 
   private void unsetBackgroundProperties(String backgroundPropertyKey) {

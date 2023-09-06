@@ -261,7 +261,7 @@ class LafManagerImpl(private val coroutineScope: CoroutineScope) : LafManager(),
 
     val theme = currentTheme!!
     if (theme is UIThemeLookAndFeelInfoImpl) {
-      if (!theme.isInitialised) {
+      if (!theme.isInitialized) {
         doSetLaF(lookAndFeelInfo = theme, installEditorScheme = false)
       }
     }

@@ -32,7 +32,6 @@ import org.jetbrains.annotations.TestOnly
 import java.awt.Color
 import java.awt.Dimension
 import java.awt.Insets
-import java.io.IOException
 import java.io.InputStream
 import java.util.function.Function
 import java.util.function.Supplier
@@ -46,7 +45,7 @@ private val LOG: Logger
 /**
  * @author Konstantin Bulenkov
  */
-class UITheme private constructor(private val bean: UIThemeBean) {
+class UITheme private constructor(val id: @NonNls String, private val bean: UIThemeBean) {
   val name: String?
     get() = bean.name
 
@@ -64,9 +63,6 @@ class UITheme private constructor(private val bean: UIThemeBean) {
 
   val author: String?
     get() = bean.author
-
-  val id: @NonNls String?
-    get() = bean.id
 
   val editorScheme: String?
     get() = bean.editorScheme
@@ -177,41 +173,25 @@ class UITheme private constructor(private val bean: UIThemeBean) {
 
   companion object {
     const val FILE_EXT_ENDING: String = ".theme.json"
-    private fun oldFindThemeByName(parentTheme: String): UITheme? {
-      for (laf in LafManager.getInstance().getInstalledLookAndFeels()) {
-        if (laf is UIThemeLookAndFeelInfo) {
-          val uiTheme = laf.theme
-          if (uiTheme.name == parentTheme) {
-            return uiTheme
-          }
-        }
-      }
-      return null
-    }
 
     @ApiStatus.Internal
-    @Throws(IOException::class)
-    @JvmStatic
     fun loadFromJson(stream: InputStream,
                      themeId: @NonNls String,
                      nameToParent: Function<String, UITheme?>): UITheme {
       val theme = readTheme(JsonFactory().createParser(stream))
-      theme.id = themeId
-      return postProcessTheme(theme = theme, parentTheme = findParentTheme(theme = theme, nameToParent = nameToParent)?.bean)
+      return UITheme(themeId,
+                     postProcessTheme(theme = theme, parentTheme = findParentTheme(theme = theme, nameToParent = nameToParent)?.bean))
     }
 
-    @Throws(IOException::class)
-    @JvmStatic
     fun loadFromJson(data: ByteArray?,
                      themeId: @NonNls String,
                      provider: ClassLoader? = null,
                      iconMapper: ((String) -> String?)? = null): UITheme {
       val theme = readTheme(JsonFactory().createParser(data))
-      theme.id = themeId
-      return postProcessTheme(theme = theme,
-                              parentTheme = findParentTheme(theme) { oldFindThemeByName(it) }?.bean,
-                              provider = provider,
-                              iconMapper = iconMapper)
+      return UITheme(themeId, postProcessTheme(theme = theme,
+                                               parentTheme = findParentTheme(theme, ::oldFindThemeByName)?.bean,
+                                               provider = provider,
+                                               iconMapper = iconMapper))
     }
 
     fun loadFromJson(parentTheme: UITheme?,
@@ -222,8 +202,7 @@ class UITheme private constructor(private val bean: UIThemeBean) {
                      defaultDarkParent: Supplier<UITheme?>?,
                      defaultLightParent: Supplier<UITheme?>?): UITheme {
       val theme = readTheme(JsonFactory().createParser(data))
-      theme.id = themeId
-      return if (parentTheme == null) {
+      return UITheme(id = themeId, if (parentTheme == null) {
         if (theme.dark) {
           postProcessTheme(theme = theme, parentTheme = defaultDarkParent?.get()?.bean, provider = provider, iconMapper = iconMapper)
         }
@@ -233,17 +212,17 @@ class UITheme private constructor(private val bean: UIThemeBean) {
       }
       else {
         postProcessTheme(theme = theme, parentTheme = parentTheme.bean, provider = provider, iconMapper = iconMapper)
-      }
+      })
     }
 
     private fun postProcessTheme(theme: UIThemeBean,
                                  parentTheme: UIThemeBean?,
                                  provider: ClassLoader? = null,
-                                 iconMapper: ((String) -> String?)? = null): UITheme {
+                                 iconMapper: ((String) -> String?)? = null): UIThemeBean {
       if (parentTheme != null) {
         importFromParentTheme(theme, parentTheme)
       }
-      return UITheme(loadFromJson(theme = theme, provider = provider, iconMapper = iconMapper))
+      return loadFromJson(theme = theme, provider = provider, iconMapper = iconMapper)
     }
 
     @TestOnly
@@ -284,71 +263,84 @@ private fun loadFromJson(theme: UIThemeBean, provider: ClassLoader?, iconMapper:
     }
   }
 
-  if (theme.icons != null && !theme.icons!!.isEmpty()) {
+  val icons = theme.icons
+  if (!icons.isNullOrEmpty()) {
+    configureIcons(theme = theme, iconMapper = iconMapper, paletteScopeManager = paletteScopeManager, iconMap = icons)
+  }
+  return theme
+}
+
+private fun configureIcons(theme: UIThemeBean,
+                           iconMapper: ((String) -> String?)?,
+                           paletteScopeManager: UITheme.PaletteScopeManager,
+                           iconMap: Map<String, Any?>) {
+  if (iconMapper != null) {
     theme.patcher = object : IconPathPatcher() {
       override fun patchPath(path: String, classLoader: ClassLoader?): String? {
         if (classLoader is PluginAwareClassLoader) {
-          val pluginId = (classLoader as PluginAwareClassLoader).getPluginId().idString
-          val icons = theme.icons!!.get(pluginId)
+          val icons = iconMap.get(classLoader.getPluginId().idString)
           if (icons is Map<*, *>) {
             val pluginIconPath = icons.get(path)
-            if (pluginIconPath is String && iconMapper != null) {
+            if (pluginIconPath is String) {
               return iconMapper(pluginIconPath)
             }
           }
         }
-        var value = theme.icons!![path]
+
+        var value = iconMap.get(path)
         if (value == null && path[0] != '/') {
-          value = theme.icons!!["/$path"]
+          value = iconMap.get("/$path")
         }
-        return if (value is String && iconMapper != null) iconMapper(value) else null
+        return if (value is String) iconMapper(value) else null
       }
 
       override fun getContextClassLoader(path: String, originalClassLoader: ClassLoader?): ClassLoader? = theme.providerClassLoader
     }
+  }
 
-    val palette = theme.icons!!.get("ColorPalette")
-    if (palette is Map<*, *>) {
-      for (o in palette.keys) {
-        val colorKey = o.toString()
-        val scope = paletteScopeManager.getScope(colorKey) ?: continue
-        val key = toColorString(key = colorKey, darkTheme = theme.dark)
-        var v: Any? = palette.get(colorKey)
-        if (v is String) {
-          val namedColor = if (theme.colors == null) null else theme.colors!!.get(v)
-          if (namedColor is String) {
-            v = namedColor
-          }
-          var alpha: String? = null
-          if (v.length == 9) {
-            alpha = v.substring(7)
-            v = v.substring(0, 7)
-          }
-          if (ColorHexUtil.fromHex(key, null) != null && ColorHexUtil.fromHex(v, null) != null) {
-            scope.newPalette[key] = v
-            var fillTransparency = -1
-            if (alpha != null) {
-              try {
-                fillTransparency = alpha.toInt(16)
-              }
-              catch (ignore: Exception) {
-              }
-            }
-            if (fillTransparency != -1) {
-              scope.alphas[v] = fillTransparency
-            }
-          }
+  val palette = iconMap.get("ColorPalette")
+  if (palette is Map<*, *>) {
+    for (o in palette.keys) {
+      val colorKey = o.toString()
+      val scope = paletteScopeManager.getScope(colorKey) ?: continue
+      val key = toColorString(key = colorKey, darkTheme = theme.dark)
+      var v: Any? = palette.get(colorKey)
+      if (v is String) {
+        val namedColor = theme.colors?.get(v)
+        if (namedColor is String) {
+          v = namedColor
         }
-      }
-      theme.colorPatcher = object : SvgElementColorPatcherProvider {
-        override fun attributeForPath(path: String?): SvgAttributePatcher? {
-          val scope = paletteScopeManager.getScopeByPath(path)
-          return if (scope == null) null else newSvgPatcher(scope.digest(), scope.newPalette) { scope.alphas.get(it) }
+
+        var alpha: String? = null
+        if (v.length == 9) {
+          alpha = v.substring(7)
+          v = v.substring(0, 7)
+        }
+
+        if (ColorHexUtil.fromHex(key, null) != null && ColorHexUtil.fromHex(v, null) != null) {
+          scope.newPalette.put(key, v)
+          var fillTransparency = -1
+          if (alpha != null) {
+            try {
+              fillTransparency = alpha.toInt(16)
+            }
+            catch (ignore: Exception) {
+            }
+          }
+          if (fillTransparency != -1) {
+            scope.alphas.put(v, fillTransparency)
+          }
         }
       }
     }
+
+    theme.colorPatcher = object : SvgElementColorPatcherProvider {
+      override fun attributeForPath(path: String?): SvgAttributePatcher? {
+        val scope = paletteScopeManager.getScopeByPath(path) ?: return null
+        return newSvgPatcher(digest = scope.digest(), newPalette = scope.newPalette) { scope.alphas.get(it) }
+      }
+    }
   }
-  return theme
 }
 
 private fun initializeNamedColors(theme: UIThemeBean) {
@@ -469,12 +461,12 @@ private fun applyTheme(theme: UIThemeBean, key: String, value: Any?, defaults: U
     addPattern(key, value, defaults)
     for (k in defaults.keys.toTypedArray()) {
       if (k is String && k.endsWith(tail)) {
-        defaults[k] = value
+        defaults.put(k, value)
       }
     }
   }
   else {
-    defaults[key] = value
+    defaults.put(key, value)
   }
 }
 
@@ -574,12 +566,7 @@ private fun parseGrayFilter(value: String): UIUtil.GrayFilter {
   return UIUtil.GrayFilter(numbers.next().toInt(), numbers.next().toInt(), numbers.next().toInt()).asUIResource()
 }
 
-private fun parseColor(value: String?): Color? {
-  @Suppress("NAME_SHADOWING")
-  var value = value ?: return null
-  if (value.startsWith('#')) {
-    value = value.substring(1)
-  }
+private fun parseColor(value: String): Color? {
   if (value.length == 8) {
     val color = ColorHexUtil.fromHex(value.substring(0, 6))
     try {
@@ -635,4 +622,16 @@ private fun loadColorPalette(defaults: UIDefaults, colors: Map<String, Any?>) {
     val color = parseColor(value as? String ?: continue) ?: continue
     defaults.put("ColorPalette.$key", color)
   }
+}
+
+private fun oldFindThemeByName(parentTheme: String): UITheme? {
+  for (laf in LafManager.getInstance().getInstalledLookAndFeels()) {
+    if (laf is UIThemeLookAndFeelInfo) {
+      val uiTheme = laf.theme
+      if (uiTheme.name == parentTheme) {
+        return uiTheme
+      }
+    }
+  }
+  return null
 }

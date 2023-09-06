@@ -103,7 +103,7 @@ public final class TempUIThemeLookAndFeelInfo extends UIThemeLookAndFeelInfoImpl
   }
 
   public static @NotNull UITheme loadTempTheme(@NotNull InputStream stream, @NotNull IconPathPatcher patcher) throws IOException {
-    UITheme theme = UITheme.loadFromJson(stream, ID, it -> {
+    UITheme theme = UITheme.Companion.loadFromJson(stream, ID, it -> {
       UIThemeLookAndFeelInfo t = UiThemeProviderListManager.Companion.getInstance().findThemeByName(it);
       return t == null ? null : t.getTheme();
     });

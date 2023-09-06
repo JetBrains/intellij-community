@@ -83,7 +83,7 @@ internal class UIThemeBean {
 
             when (fieldName) {
               "additionalEditorSchemes" -> {
-                bean.additionalEditorSchemes = list
+                bean.additionalEditorSchemes = java.util.List.copyOf(list)
               }
               else -> {
                 logger<UIThemeBean>().warn("Unknown field: ${parser.currentName()}")
@@ -130,10 +130,6 @@ internal class UIThemeBean {
   @Transient
   @JvmField
   var providerClassLoader: ClassLoader? = null
-
-  @Transient
-  @JvmField
-  var id: String? = null
 
   @JvmField
   var name: String? = null
