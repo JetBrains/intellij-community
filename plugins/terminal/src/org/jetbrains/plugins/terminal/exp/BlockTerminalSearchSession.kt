@@ -5,7 +5,9 @@ import com.intellij.BundleBase
 import com.intellij.find.*
 import com.intellij.find.FindModel.FindModelObserver
 import com.intellij.find.editorHeaderActions.*
+import com.intellij.find.impl.livePreview.LivePreview
 import com.intellij.find.impl.livePreview.LivePreviewController
+import com.intellij.find.impl.livePreview.LivePreviewPresentation
 import com.intellij.find.impl.livePreview.SearchResults
 import com.intellij.openapi.actionSystem.DataProvider
 import com.intellij.openapi.actionSystem.ex.TooltipDescriptionProvider
@@ -16,6 +18,8 @@ import com.intellij.openapi.editor.EditorFactory
 import com.intellij.openapi.editor.event.EditorFactoryEvent
 import com.intellij.openapi.editor.event.EditorFactoryListener
 import com.intellij.openapi.editor.ex.EditorEx
+import com.intellij.openapi.editor.markup.HighlighterLayer
+import com.intellij.openapi.editor.markup.TextAttributes
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.Key
@@ -30,6 +34,7 @@ import org.jetbrains.annotations.Nls
 import org.jetbrains.plugins.terminal.TerminalBundle
 import org.jetbrains.plugins.terminal.TerminalIcons
 import org.jetbrains.plugins.terminal.exp.TerminalSelectionModel.TerminalSelectionListener
+import java.awt.Font
 import javax.swing.JTextArea
 
 class BlockTerminalSearchSession(
@@ -49,6 +54,7 @@ class BlockTerminalSearchSession(
   init {
     searchResults.matchesLimit = LivePreviewController.MATCHES_LIMIT
     livePreviewController.on()
+    livePreviewController.setLivePreview(LivePreview(searchResults, TerminalSearchPresentation()))
 
     component.addListener(this)
     searchResults.addListener(this)
@@ -223,6 +229,17 @@ class BlockTerminalSearchSession(
 
   override fun getData(dataId: String): Any? {
     return if (SearchSession.KEY.`is`(dataId)) this else null
+  }
+
+  private class TerminalSearchPresentation : LivePreviewPresentation {
+    override val defaultAttributes: TextAttributes
+      get() = TextAttributes(TerminalUi.searchEntryForeground, TerminalUi.searchEntryBackground, null, null, Font.PLAIN)
+    override val cursorAttributes: TextAttributes
+      get() = TextAttributes(TerminalUi.currentSearchEntryForeground, TerminalUi.currentSearchEntryBackground,
+                             null, null, Font.PLAIN)
+
+    override val defaultLayer: Int = HighlighterLayer.SELECTION + 1
+    override val cursorLayer: Int = HighlighterLayer.SELECTION + 2
   }
 
   private inner class TerminalSearchResults : SearchResults(editor, project) {
