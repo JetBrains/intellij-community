@@ -114,7 +114,8 @@ public class SearchResults implements DocumentListener, CaretListener {
     FindModel findModel = new FindModel();
     findModel.copyFrom(myFindModel);
     findModel.setForward(isForward);
-    FindUtil.processNotFound(myEditor, findModel.getStringToFind(), findModel, getProject());
+    int caretOffset = !findModel.isGlobal() && myCursor != null ? myCursor.getEndOffset() : myEditor.getCaretModel().getOffset();
+    FindUtil.processNotFound(myEditor, caretOffset, findModel.getStringToFind(), findModel, getProject());
   }
 
   public int getMatchesCount() {
