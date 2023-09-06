@@ -219,13 +219,13 @@ private fun AbstractMultiModuleTest.doSetupProject(rootInfos: List<RootInfo>) {
                     pureKotlinSourceFolders = pureKotlinSourceFolders,
                     additionalVisibleModuleNames = additionalVisibleModuleNames
                 )
-                module.enableMultiPlatform()
 
                 modulesById[commonModuleId]?.let { commonModule ->
                     module.addDependency(commonModule)
                 }
             }
         }
+        module.enableMultiPlatform()
     }
 }
 

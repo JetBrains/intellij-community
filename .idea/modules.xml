@@ -1152,6 +1152,7 @@
       <module fileurl="file://$PROJECT_DIR$/plugins/kotlin/base/compiler-configuration-ui/kotlin.base.compiler-configuration-ui.iml" filepath="$PROJECT_DIR$/plugins/kotlin/base/compiler-configuration-ui/kotlin.base.compiler-configuration-ui.iml" />
       <module fileurl="file://$PROJECT_DIR$/plugins/kotlin/base/external-build-system/kotlin.base.external-build-system.iml" filepath="$PROJECT_DIR$/plugins/kotlin/base/external-build-system/kotlin.base.external-build-system.iml" />
       <module fileurl="file://$PROJECT_DIR$/plugins/kotlin/base/facet/kotlin.base.facet.iml" filepath="$PROJECT_DIR$/plugins/kotlin/base/facet/kotlin.base.facet.iml" />
+      <module fileurl="file://$PROJECT_DIR$/plugins/kotlin/base/facet/tests/kotlin.base.facet.tests.iml" filepath="$PROJECT_DIR$/plugins/kotlin/base/facet/tests/kotlin.base.facet.tests.iml" />
       <module fileurl="file://$PROJECT_DIR$/plugins/kotlin/base/fe10/analysis/kotlin.base.fe10.analysis.iml" filepath="$PROJECT_DIR$/plugins/kotlin/base/fe10/analysis/kotlin.base.fe10.analysis.iml" />
       <module fileurl="file://$PROJECT_DIR$/plugins/kotlin/base/fe10/analysis-api-providers/kotlin.base.fe10.analysis-api-providers.iml" filepath="$PROJECT_DIR$/plugins/kotlin/base/fe10/analysis-api-providers/kotlin.base.fe10.analysis-api-providers.iml" />
       <module fileurl="file://$PROJECT_DIR$/plugins/kotlin/base/fe10/code-insight/kotlin.base.fe10.code-insight.iml" filepath="$PROJECT_DIR$/plugins/kotlin/base/fe10/code-insight/kotlin.base.fe10.code-insight.iml" />

@@ -66,6 +66,11 @@ public abstract class DirectKotlinInheritorsSearcherTestGenerated extends Abstra
             runTest("../testData/inheritorsSearch/kotlinFunction/hierarchyWithMissedLevel.kt");
         }
 
+        @TestMetadata("inEnum.kt")
+        public void testInEnum() throws Exception {
+            runTest("../testData/inheritorsSearch/kotlinFunction/inEnum.kt");
+        }
+
         @TestMetadata("objectLiteralInheritor.kt")
         public void testObjectLiteralInheritor() throws Exception {
             runTest("../testData/inheritorsSearch/kotlinFunction/objectLiteralInheritor.kt");

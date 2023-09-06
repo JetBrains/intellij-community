@@ -98,6 +98,9 @@ open class KotlinSettingsEntityImpl(val dataSource: KotlinSettingsEntityData) : 
   override val compilerSettings: CompilerSettings
     get() = dataSource.compilerSettings
 
+  override val targetPlatform: String
+    get() = dataSource.targetPlatform
+
   override val entitySource: EntitySource
     get() = dataSource.entitySource
 
@@ -196,6 +199,9 @@ open class KotlinSettingsEntityImpl(val dataSource: KotlinSettingsEntityData) : 
       if (!getEntityData().isCompilerSettingsInitialized()) {
         error("Field KotlinSettingsEntity#compilerSettings should be initialized")
       }
+      if (!getEntityData().isTargetPlatformInitialized()) {
+        error("Field KotlinSettingsEntity#targetPlatform should be initialized")
+      }
     }
 
     override fun connectionIdList(): List<ConnectionId> {
@@ -256,6 +262,7 @@ open class KotlinSettingsEntityImpl(val dataSource: KotlinSettingsEntityData) : 
       if (this.mergedCompilerArguments != dataSource.mergedCompilerArguments) this.mergedCompilerArguments = dataSource.mergedCompilerArguments
       if (this.compilerArguments != dataSource.compilerArguments) this.compilerArguments = dataSource.compilerArguments
       if (this.compilerSettings != dataSource.compilerSettings) this.compilerSettings = dataSource.compilerSettings
+      if (this.targetPlatform != dataSource.targetPlatform) this.targetPlatform = dataSource.targetPlatform
       updateChildToParentReferences(parents)
     }
 
@@ -561,6 +568,14 @@ open class KotlinSettingsEntityImpl(val dataSource: KotlinSettingsEntityData) : 
 
       }
 
+    override var targetPlatform: String
+      get() = getEntityData().targetPlatform
+      set(value) {
+        checkModificationAllowed()
+        getEntityData(true).targetPlatform = value
+        changedProperty.add("targetPlatform")
+      }
+
     override fun getEntityClass(): Class<KotlinSettingsEntity> = KotlinSettingsEntity::class.java
   }
 }
@@ -585,6 +600,7 @@ class KotlinSettingsEntityData : WorkspaceEntityData.WithCalculableSymbolicId<Ko
   lateinit var mergedCompilerArguments: String
   lateinit var compilerArguments: String
   lateinit var compilerSettings: CompilerSettings
+  lateinit var targetPlatform: String
 
   fun isNameInitialized(): Boolean = ::name.isInitialized
   fun isModuleIdInitialized(): Boolean = ::moduleId.isInitialized
@@ -605,6 +621,7 @@ class KotlinSettingsEntityData : WorkspaceEntityData.WithCalculableSymbolicId<Ko
   fun isMergedCompilerArgumentsInitialized(): Boolean = ::mergedCompilerArguments.isInitialized
   fun isCompilerArgumentsInitialized(): Boolean = ::compilerArguments.isInitialized
   fun isCompilerSettingsInitialized(): Boolean = ::compilerSettings.isInitialized
+  fun isTargetPlatformInitialized(): Boolean = ::targetPlatform.isInitialized
 
   override fun wrapAsModifiable(diff: MutableEntityStorage): WorkspaceEntity.Builder<KotlinSettingsEntity> {
     val modifiable = KotlinSettingsEntityImpl.Builder(null)
@@ -654,7 +671,7 @@ class KotlinSettingsEntityData : WorkspaceEntityData.WithCalculableSymbolicId<Ko
     return KotlinSettingsEntity(name, moduleId, sourceRoots, configFileItems, useProjectSettings, implementedModuleNames,
                                 dependsOnModuleNames, additionalVisibleModuleNames, productionOutputPath, testOutputPath, sourceSetNames,
                                 isTestModule, externalProjectId, isHmppEnabled, pureKotlinSourceFolders, kind, mergedCompilerArguments,
-                                compilerArguments, compilerSettings, entitySource) {
+                                compilerArguments, compilerSettings, targetPlatform, entitySource) {
       parents.filterIsInstance<ModuleEntity>().singleOrNull()?.let { this.module = it }
     }
   }
@@ -691,6 +708,7 @@ class KotlinSettingsEntityData : WorkspaceEntityData.WithCalculableSymbolicId<Ko
     if (this.mergedCompilerArguments != other.mergedCompilerArguments) return false
     if (this.compilerArguments != other.compilerArguments) return false
     if (this.compilerSettings != other.compilerSettings) return false
+    if (this.targetPlatform != other.targetPlatform) return false
     return true
   }
 
@@ -719,6 +737,7 @@ class KotlinSettingsEntityData : WorkspaceEntityData.WithCalculableSymbolicId<Ko
     if (this.mergedCompilerArguments != other.mergedCompilerArguments) return false
     if (this.compilerArguments != other.compilerArguments) return false
     if (this.compilerSettings != other.compilerSettings) return false
+    if (this.targetPlatform != other.targetPlatform) return false
     return true
   }
 
@@ -743,6 +762,7 @@ class KotlinSettingsEntityData : WorkspaceEntityData.WithCalculableSymbolicId<Ko
     result = 31 * result + mergedCompilerArguments.hashCode()
     result = 31 * result + compilerArguments.hashCode()
     result = 31 * result + compilerSettings.hashCode()
+    result = 31 * result + targetPlatform.hashCode()
     return result
   }
 
@@ -767,6 +787,7 @@ class KotlinSettingsEntityData : WorkspaceEntityData.WithCalculableSymbolicId<Ko
     result = 31 * result + mergedCompilerArguments.hashCode()
     result = 31 * result + compilerArguments.hashCode()
     result = 31 * result + compilerSettings.hashCode()
+    result = 31 * result + targetPlatform.hashCode()
     return result
   }
 

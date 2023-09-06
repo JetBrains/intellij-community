@@ -205,13 +205,13 @@ internal class KtLibrarySourceModuleByModuleInfo(
         get() = moduleInfo.library.name ?: "Unnamed library"
 
     override val directRegularDependencies: List<KtModule>
-        get() = binaryLibrary.directRegularDependencies.mapNotNull { (it as? KtLibraryModule)?.librarySources }
+        get() = binaryLibrary.directRegularDependencies.mapNotNull { it as? KtLibraryModule }
 
     override val directFriendDependencies: List<KtModule>
-        get() = binaryLibrary.directFriendDependencies.mapNotNull { (it as? KtLibraryModule)?.librarySources }
+        get() = binaryLibrary.directFriendDependencies.mapNotNull { it as? KtLibraryModule }
 
     override val directDependsOnDependencies: List<KtModule>
-        get() = binaryLibrary.directDependsOnDependencies.mapNotNull { (it as? KtLibraryModule)?.librarySources }
+        get() = binaryLibrary.directDependsOnDependencies.mapNotNull { it as? KtLibraryModule }
 
     override val contentScope: GlobalSearchScope
         get() = LibrarySourcesScope(moduleInfo.project, moduleInfo.library)
