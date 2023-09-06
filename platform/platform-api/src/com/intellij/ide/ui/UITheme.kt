@@ -10,6 +10,7 @@ import com.intellij.ide.plugins.cl.PluginAwareClassLoader
 import com.intellij.ide.ui.UIThemeBean.Companion.importFromParentTheme
 import com.intellij.ide.ui.UIThemeBean.Companion.readTheme
 import com.intellij.ide.ui.laf.UIThemeLookAndFeelInfo
+import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.util.IconPathPatcher
 import com.intellij.ui.ColorHexUtil
@@ -39,7 +40,8 @@ import javax.swing.UIDefaults
 import javax.swing.plaf.BorderUIResource.EmptyBorderUIResource
 import javax.swing.plaf.ColorUIResource
 
-private val LOG = logger<UITheme>()
+private val LOG: Logger
+  get() = logger<UITheme>()
 
 /**
  * @author Konstantin Bulenkov
@@ -140,30 +142,36 @@ class UITheme private constructor(private val bean: UIThemeBean) {
     val radioButtons: PaletteScope = PaletteScope()
     val trees: PaletteScope = PaletteScope()
     fun getScope(colorKey: String): PaletteScope? {
-      if (colorKey.startsWith("Checkbox.")) return checkBoxes
-      if (colorKey.startsWith("Radio.")) return radioButtons
-      if (colorKey.startsWith("Tree.iconColor")) return trees
-      if (colorKey.startsWith("Objects.")) return ui
-      if (colorKey.startsWith("Actions.")) return ui
-      if (colorKey.startsWith("#")) return ui
-      LOG.warn("No color scope defined for key: $colorKey")
-      return null
+      return when {
+        colorKey.startsWith("Checkbox.") -> checkBoxes
+        colorKey.startsWith("Radio.") -> radioButtons
+        colorKey.startsWith("Tree.iconColor") -> trees
+        colorKey.startsWith("Objects.") -> ui
+        colorKey.startsWith("Actions.") -> ui
+        colorKey.startsWith("#") -> ui
+        else -> {
+          LOG.warn("No color scope defined for key: $colorKey")
+          null
+        }
+      }
     }
 
     fun getScopeByPath(path: String?): PaletteScope? {
       if (path != null && (path.contains("com/intellij/ide/ui/laf/icons/") || path.contains("/com/intellij/ide/ui/laf/icons/"))) {
         val file = path.substring(path.lastIndexOf('/') + 1)
-        if (file == "treeCollapsed.svg" || file == "treeExpanded.svg") return trees
-        if (file.startsWith("check")) return checkBoxes
-        if (file.startsWith("radio")) return checkBoxes //same set of colors as for checkboxes
-        return null
+        return when {
+          file == "treeCollapsed.svg" || file == "treeExpanded.svg" -> trees
+          file.startsWith("check") -> checkBoxes
+          file.startsWith("radio") -> checkBoxes //same set of colors as for checkboxes
+          else -> null
+        }
       }
       return ui
     }
   }
 
   @Deprecated("Do not use.")
-  fun setColors(colors: MutableMap<String, Any?>?) {
+  fun setColors(colors: Map<String, Any?>?) {
     bean.colors = colors
   }
 
@@ -296,9 +304,7 @@ private fun loadFromJson(theme: UIThemeBean, provider: ClassLoader?, iconMapper:
         return if (value is String && iconMapper != null) iconMapper(value) else null
       }
 
-      override fun getContextClassLoader(path: String, originalClassLoader: ClassLoader?): ClassLoader? {
-        return theme.providerClassLoader
-      }
+      override fun getContextClassLoader(path: String, originalClassLoader: ClassLoader?): ClassLoader? = theme.providerClassLoader
     }
 
     val palette = theme.icons!!.get("ColorPalette")
@@ -309,7 +315,7 @@ private fun loadFromJson(theme: UIThemeBean, provider: ClassLoader?, iconMapper:
         val key = toColorString(key = colorKey, darkTheme = theme.dark)
         var v: Any? = palette.get(colorKey)
         if (v is String) {
-          val namedColor = if (theme.colors == null) null else theme.colors!![v]
+          val namedColor = if (theme.colors == null) null else theme.colors!!.get(v)
           if (namedColor is String) {
             v = namedColor
           }
@@ -346,7 +352,7 @@ private fun loadFromJson(theme: UIThemeBean, provider: ClassLoader?, iconMapper:
 }
 
 private fun initializeNamedColors(theme: UIThemeBean) {
-  val map = theme.colors ?: return
+  val map = LinkedHashMap(theme.colors ?: return)
   val namedColors = map.keys
   for (key in namedColors) {
     val value = map.get(key)
@@ -361,9 +367,12 @@ private fun initializeNamedColors(theme: UIThemeBean) {
       }
     }
   }
-  if (theme.iconColorsOnSelection != null) {
-    val entries = HashSet(theme.iconColorsOnSelection!!.entries)
-    theme.iconColorsOnSelection!!.clear()
+
+  var iconColorsOnSelection = theme.iconColorsOnSelection
+  if (iconColorsOnSelection != null) {
+    val entries = HashSet(iconColorsOnSelection.entries)
+    iconColorsOnSelection = LinkedHashMap()
+    theme.iconColorsOnSelection = iconColorsOnSelection
     for (entry in entries) {
       var key: Any? = entry.key
       var value: Any? = entry.value
@@ -374,7 +383,7 @@ private fun initializeNamedColors(theme: UIThemeBean) {
         value = map.get(value)
       }
       if (key.toString().startsWith('#') and value.toString().startsWith('#')) {
-        theme.iconColorsOnSelection!!.put(key.toString(), value)
+        iconColorsOnSelection.put(key.toString(), value)
       }
     }
   }

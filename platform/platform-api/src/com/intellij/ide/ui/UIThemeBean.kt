@@ -24,8 +24,8 @@ internal class UIThemeBean {
       theme.iconColorsOnSelection = importMapFromParentTheme(theme.iconColorsOnSelection, parentTheme.iconColorsOnSelection)
     }
 
-    private fun importMapFromParentTheme(themeMap: MutableMap<String, Any?>?,
-                                         parentThemeMap: Map<String, Any?>?): MutableMap<String, Any?>? {
+    private fun importMapFromParentTheme(themeMap: Map<String, Any?>?,
+                                         parentThemeMap: Map<String, Any?>?): Map<String, Any?>? {
       if (parentThemeMap == null) {
         return themeMap
       }
@@ -163,22 +163,22 @@ internal class UIThemeBean {
   var additionalEditorSchemes: List<String>? = null
 
   @JvmField
-  var ui: MutableMap<String, Any?>? = null
+  var ui: Map<String, Any?>? = null
 
   @JvmField
-  var icons: MutableMap<String, Any?>? = null
+  var icons: Map<String, Any?>? = null
 
   @JvmField
-  var background: MutableMap<String, Any?>? = null
+  var background: Map<String, Any?>? = null
 
   @JvmField
-  var emptyFrameBackground: MutableMap<String, Any?>? = null
+  var emptyFrameBackground: Map<String, Any?>? = null
 
   @JvmField
-  var colors: MutableMap<String, Any?>? = null
+  var colors: Map<String, Any?>? = null
 
   @JvmField
-  var iconColorsOnSelection: MutableMap<String, Any?>? = null
+  var iconColorsOnSelection: Map<String, Any?>? = null
 
   @JvmField
   @Transient
