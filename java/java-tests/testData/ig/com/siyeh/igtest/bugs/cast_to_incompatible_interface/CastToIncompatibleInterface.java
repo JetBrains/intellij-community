@@ -52,3 +52,12 @@ class CastToIncompatibleInterface {
   
   native C getC(int x);
 }
+class Foo { }
+interface Bar { }
+final class Main213 {
+
+  static void x(Foo f, Bar b) {
+    Bar b1 = (<warning descr="Cast to incompatible interface 'Bar'">Bar</warning> )f;
+    Foo f1 = (<warning descr="Cast to incompatible class 'Foo'">Foo</warning>) b;
+  }
+}

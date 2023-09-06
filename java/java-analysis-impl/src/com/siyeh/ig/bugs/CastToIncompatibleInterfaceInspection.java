@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2019 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2023 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -31,7 +31,8 @@ public class CastToIncompatibleInterfaceInspection extends BaseInspection {
   @Override
   @NotNull
   public String buildErrorString(Object... infos) {
-    return InspectionGadgetsBundle.message("casting.to.incompatible.interface.problem.descriptor");
+    final Boolean isInterface = (Boolean)infos[0];
+    return InspectionGadgetsBundle.message("casting.to.incompatible.interface.problem.descriptor", isInterface ? 1 : 2);
   }
 
   @Override
@@ -67,11 +68,11 @@ public class CastToIncompatibleInterfaceInspection extends BaseInspection {
       }
 
       final PsiClass castClass = castClassType.resolve();
-      if (castClass == null || !castClass.isInterface()) {
+      if (castClass == null) {
         return;
       }
       final PsiClass operandClass = operandClassType.resolve();
-      if (operandClass == null || operandClass.isInterface()) {
+      if (operandClass == null) {
         return;
       }
       ThreeState hasMutualSubclass = InheritanceUtil.existsMutualSubclass(operandClass, castClass, isOnTheFly());
@@ -82,7 +83,7 @@ public class CastToIncompatibleInterfaceInspection extends BaseInspection {
       if (hasMutualSubclass == ThreeState.UNSURE) {
         registerPossibleProblem(castTypeElement);
       } else {
-        registerError(castTypeElement);
+        registerError(castTypeElement, castClass.isInterface());
       }
     }
   }
