@@ -239,7 +239,7 @@ public final class JsonSchemaObject {
     myNestedCompletionRoot = NestedCompletionsNodeKt.buildNestedCompletionsTree(builder);
   }
 
-  public NestedCompletionsNode getNestedCompletionRoot() {
+  NestedCompletionsNode getNestedCompletionRoot() {
     return myNestedCompletionRoot;
   }
 
