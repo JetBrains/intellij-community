@@ -1512,8 +1512,10 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
     if (fs instanceof LocalFileSystem && !(parentPath = PathUtil.getParentPath(rootPath)).isEmpty()) {
       FileAttributes parentAttributes = loadAttributes(fs, parentPath);
       if (parentAttributes != null) {
-        throw new IllegalArgumentException("Must pass FS root path, but got: '" + path + "', which has a parent '" + parentPath + "'." +
-                                           " Use NewVirtualFileSystem.extractRootPath() for obtaining root path");
+        throw new IllegalArgumentException(
+          "Must pass FS root path, but got: '" + path + "' (url: " + rootUrl + "), " +
+          "which has a parent '" + parentPath + "'. " +
+          "Use NewVirtualFileSystem.extractRootPath() for obtaining root path");
       }
     }
 
@@ -1594,43 +1596,57 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
    * misses
    */
   private void cacheMissedRootFromPersistence(int rootId) {
-    List<String> missedRootUrl = new ArrayList<>(1);
+    Ref<String> missedRootUrl = new Ref<>();
     vfsPeer.forEachRoot((rootUrl, rootFileId) -> {
       if (rootId == rootFileId) {
-        missedRootUrl.add(rootUrl);
+        missedRootUrl.set(rootUrl);
       }
     });
 
-    cacheRootsByUrls(missedRootUrl);
+    if (!missedRootUrl.isNull()) {
+      //for roots 'name' == rootPath:
+      String rootPath = vfsPeer.getName(rootId);
+      cacheRootByUrl(rootId, rootPath, missedRootUrl.get());
+    }
   }
 
-  private void cacheRootsByUrls(@NotNull Iterable<String> missedRootUrls) {
+  private void cacheRootByUrl(int missedRootId,
+                              @NotNull String missedRootPath,
+                              @NotNull String missedRootUrl) {
     VirtualFileManager fileManager = VirtualFileManager.getInstance();
-    for (String missedRootUrl : missedRootUrls) {
-      //we truncated all trailing / in the .findRoot(), before putting rootUrl into FSRecords.findOrCreateRoot()
-      // -- so now we need to append it/them back, otherwise some matching in .findRoot() won't happen:
-      if (missedRootUrl.endsWith(":")) {      // 'file:' -> 'file:///'
-        missedRootUrl += "///";
+
+    //we truncated all trailing '/' in the .findRoot(), before putting rootUrl into FSRecords.findOrCreateRoot()
+    // -- so now we need to append it/them back, otherwise .extractProtocol() won't recognize the protocol
+    if (missedRootUrl.endsWith(":")) {      // 'file:' -> 'file:///'
+      missedRootUrl += "///";
+    }
+    //else if (missedRootUrl.endsWith("!")) { // '.../file.jar!' -> '.../file.jar!/'
+    //  missedRootUrl += '/';
+    //}
+    String protocol = VirtualFileManager.extractProtocol(missedRootUrl);
+    VirtualFileSystem fs = fileManager.getFileSystem(protocol);
+    //String rootPath = VirtualFileManager.extractPath(missedRootUrl);
+    if (fs instanceof NewVirtualFileSystem) {
+      try {
+        NewVirtualFile cachedRoot = findRoot(missedRootPath, (NewVirtualFileSystem)fs);
+        LOG.trace("\tforce caching " + missedRootUrl + " (protocol: " + protocol + ", path: " + missedRootPath + ") -> " + cachedRoot);
       }
-      else if (missedRootUrl.endsWith("!")) { // '.../file.jar!' -> '.../file.jar!/'
-        missedRootUrl += '/';
+      catch (Throwable t) {
+        StringBuilder sb = new StringBuilder();
+        vfsPeer.forEachRoot((rootUrl, rootFileId) -> {
+          sb.append("[#").append(rootFileId).append("]: '").append(rootUrl).append("'\n");
+        });
+        LOG.warn("Can't cache root[url: " + missedRootUrl + "][path: " + missedRootPath + "]. \nAll roots: " + sb, t);
       }
-      String protocol = VirtualFileManager.extractProtocol(missedRootUrl);
-      VirtualFileSystem fs = fileManager.getFileSystem(protocol);
-      String rootPath = VirtualFileManager.extractPath(missedRootUrl);
-      if (fs instanceof NewVirtualFileSystem) {
-        NewVirtualFile cachedRoot = findRoot(rootPath, (NewVirtualFileSystem)fs);
-        LOG.trace("\tforce caching " + missedRootUrl + " (protocol: " + protocol + ", path: " + rootPath + ") -> " + cachedRoot);
+    }
+    else {
+      if (fs == null) {
+        LOG.warn("\tcan't force caching " + missedRootUrl + " (protocol: " + protocol + ", path: " + missedRootPath + ") " +
+                 "-> protocol:'" + protocol + "' is not registered (yet?)");
       }
       else {
-        if (fs == null) {
-          LOG.warn("\tcan't force caching " + missedRootUrl + " (protocol: " + protocol + ", path: " + rootPath + ") " +
-                   "-> protocol:'" + protocol + "' is not registered (yet?)");
-        }
-        else {
-          LOG.warn("\tcan't force caching " + missedRootUrl + " (protocol: " + protocol + ", path: " + rootPath + ") " +
-                   "-> " + fs + " is not NewVirtualFileSystem");
-        }
+        LOG.warn("\tcan't force caching " + missedRootUrl + " (protocol: " + protocol + ", path: " + missedRootPath + ") " +
+                 "-> " + fs + " is not NewVirtualFileSystem");
       }
     }
   }
@@ -2209,7 +2225,7 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
   }
 
   @ApiStatus.Internal
-  public FSRecordsImpl peer(){
+  public FSRecordsImpl peer() {
     return vfsPeer;
   }
 
