@@ -415,13 +415,13 @@ public class InferenceSession {
           additionalConstraints.add(compatibilityConstraint);
         }
         additionalConstraints.add(new CheckedExceptionCompatibilityConstraint(arg, parameterType));
-        if (arg instanceof PsiCall) {
+        if (arg instanceof PsiCallExpression) {
           //If the expression is a poly class instance creation expression (15.9) or a poly method invocation expression (15.12), 
           //the set contains all constraint formulas that would appear in the set C when determining the poly expression's invocation type.
-          final JavaResolveResult resolveResult = PsiDiamondType.getDiamondsAwareResolveResult((PsiCall)arg);
+          final JavaResolveResult resolveResult = PsiDiamondType.getDiamondsAwareResolveResult((PsiCallExpression)arg);
           final PsiMethod calledMethod = resolveResult instanceof MethodCandidateInfo ? (PsiMethod)resolveResult.getElement() : null;
           if (calledMethod != null && PsiPolyExpressionUtil.isMethodCallPolyExpression(arg, calledMethod)) {
-            collectAdditionalConstraints(additionalConstraints, ignoredConstraints, (PsiCall)arg, initialSubstitutor);
+            collectAdditionalConstraints(additionalConstraints, ignoredConstraints, (PsiCallExpression)arg, initialSubstitutor);
           }
         }
         else if (arg instanceof PsiLambdaExpression &&
