@@ -134,7 +134,7 @@ public final class ProjectIconsAccessor {
            icon.getIconWidth() <= JBUIScale.scale(ICON_MAX_WEIGHT);
   }
 
-  private static boolean isIdeaProject(@Nullable Project project) {
+  public static boolean isIdeaProject(@Nullable Project project) {
     if (project == null) return false;
     VirtualFile baseDir = project.getBaseDir();
     //has copy in devkit plugin: org.jetbrains.idea.devkit.util.PsiUtil.isIntelliJBasedDir

@@ -2447,6 +2447,9 @@
     <pluginSuggestionProvider implementation="com.intellij.java.frameworks.FrameworkSuggestionProvider"/>
 
     <spellchecker.dictionary.checker implementation="com.intellij.java.frameworks.MavenDictionaryCheckerProvider"/>
+
+    <statistics.counterUsagesCollector implementationClass="com.intellij.ide.compilation.InvalidCompilationStatistics"/>
+    <notificationGroup id="Invalid Compilation Errors" displayType="STICKY_BALLOON" hideFromSettings="true" />
   </extensions>
 
   <extensions defaultExtensionNs="org.jetbrains">
@@ -2485,5 +2488,8 @@
               topic="com.intellij.codeInsight.hints.InlayHintsSettings$SettingsListener"/>
     <listener class="com.intellij.codeInsight.daemon.problems.pass.ProjectProblemFileRefactoringEventListener"
               topic="com.intellij.refactoring.listeners.RefactoringEventListener"/>
+    <listener class="com.intellij.ide.compilation.InvalidCompilationListener"
+              topic="com.intellij.openapi.compiler.CompilationStatusListener"
+              activeInHeadlessMode="false"/>
   </projectListeners>
 </idea-plugin>
