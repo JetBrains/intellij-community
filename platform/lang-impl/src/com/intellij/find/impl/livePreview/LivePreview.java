@@ -328,6 +328,7 @@ public final class LivePreview implements SearchResults.SearchResultsListener, S
       if (inSelectionHighlighter != null) {
         if (!needsAdditionalHighlighting) {
           removeHighlighter(inSelectionHighlighter);
+          highlighter.putUserData(IN_SELECTION_KEY, null);
         }
       } else if (needsAdditionalHighlighting) {
         RangeHighlighter additionalHighlighter = addHighlighter(highlighter.getStartOffset(), highlighter.getEndOffset(),
