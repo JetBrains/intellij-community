@@ -1,6 +1,7 @@
 plugins {
     alias(libs.plugins.composeDesktop)
     jewel
+    `jewel-publish`
 }
 
 dependencies {
