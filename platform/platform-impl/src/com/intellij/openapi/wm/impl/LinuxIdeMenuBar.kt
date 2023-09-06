@@ -1,7 +1,7 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.wm.impl
 
-import com.intellij.openapi.actionSystem.impl.ActionMenu
+import com.intellij.openapi.actionSystem.ActionGroup
 import com.intellij.openapi.util.Disposer
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.job
@@ -10,7 +10,8 @@ import java.awt.event.WindowAdapter
 import java.awt.event.WindowEvent
 import javax.swing.JFrame
 
-internal class LinuxIdeMenuBar(coroutineScope: CoroutineScope, frame: JFrame) : IdeMenuBar(coroutineScope, frame) {
+internal class LinuxIdeMenuBar(coroutineScope: CoroutineScope, frame: JFrame, customMenuGroup: ActionGroup?)
+  : IdeMenuBar(coroutineScope, frame, customMenuGroup) {
   companion object {
     fun doBindAppMenuOfParent(frame: JFrame, parentFrame: JFrame) {
       val globalMenu = (parentFrame.jMenuBar as? LinuxIdeMenuBar)?.globalMenu ?: return

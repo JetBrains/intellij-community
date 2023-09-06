@@ -28,7 +28,7 @@ import javax.swing.event.ChangeListener
 private const val ALPHA = (255 * 0.6).toInt()
 
 internal class ExpandableMenu(private val headerContent: JComponent, coroutineScope: CoroutineScope, frame: JFrame) {
-  val ideMenu: IdeMenuBar = createMenuBar(coroutineScope, frame)
+  val ideMenu: IdeMenuBar = createMenuBar(coroutineScope = coroutineScope, frame = frame, customMenuGroup = null)
   private val ideMenuHelper = IdeMenuHelper(menu = ideMenu, coroutineScope = null)
   private var expandedMenuBar: JPanel? = null
   private var headerColorfulPanel: HeaderColorfulPanel? = null

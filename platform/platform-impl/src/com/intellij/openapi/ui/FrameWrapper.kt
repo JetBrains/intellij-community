@@ -335,7 +335,9 @@ private class MyJFrame(private var owner: FrameWrapper, private val parent: IdeF
     glassPane = IdeGlassPaneImpl(rootPane = getRootPane(), installPainters = true)
     if (SystemInfoRt.isMac && !Menu.isJbScreenMenuEnabled()) {
       @Suppress("DEPRECATION")
-      jMenuBar = createMenuBar(coroutineScope = ApplicationManager.getApplication().coroutineScope.childScope(), this)
+      jMenuBar = createMenuBar(coroutineScope = ApplicationManager.getApplication().coroutineScope.childScope(),
+                               frame = this,
+                               customMenuGroup = null)
     }
     MouseGestureManager.getInstance().add(this)
     focusTraversalPolicy = IdeFocusTraversalPolicy()
