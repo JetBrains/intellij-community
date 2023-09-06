@@ -8,7 +8,6 @@ import com.intellij.openapi.vfs.newvfs.persistent.log.io.DurablePersistentByteAr
 import com.intellij.openapi.vfs.newvfs.persistent.log.util.AdvancingPositionTracker.AdvanceToken
 import com.intellij.openapi.vfs.newvfs.persistent.log.util.CloseableAdvancingPositionTracker
 import com.intellij.openapi.vfs.newvfs.persistent.log.util.LockFreeAdvancingPositionTracker
-import com.intellij.util.io.ResilientFileChannel
 import java.io.Closeable
 import java.io.Flushable
 import java.io.IOException
@@ -44,11 +43,8 @@ class AppendLogStorage(
 
     val stateSnapshot = atomicState.get()
     val firstPageId = stateSnapshot.startOffset / pageSize
-    storageIO = PagedMemoryMappedIO(pageSize, firstPageId.toInt()) {
-      require(it >= 0) { "negative page id: $it" }
-      ResilientFileChannel(pagesDir / pageName(it), openMode.openOptions).use { fileChannel ->
-        fileChannel.map(openMode.mapMode, 0L, pageSize.toLong())
-      }
+    storageIO = PagedMemoryMappedIO.openFilePerPage(pageSize, openMode.mapMode, firstPageId = firstPageId.toInt()) {
+      pagesDir / pageName(it)
     }
     positionTracker = LockFreeAdvancingPositionTracker(stateSnapshot.size)
   }
