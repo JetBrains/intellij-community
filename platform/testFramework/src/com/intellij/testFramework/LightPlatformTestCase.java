@@ -1,7 +1,6 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.testFramework;
 
-import com.intellij.ProjectTopics;
 import com.intellij.application.options.CodeStyle;
 import com.intellij.codeInspection.InspectionProfileEntry;
 import com.intellij.codeInspection.LocalInspectionTool;
@@ -292,7 +291,7 @@ public abstract class LightPlatformTestCase extends UsefulTestCase implements Da
       }
 
       MessageBusConnection connection = project.getMessageBus().connect(parentDisposable);
-      connection.subscribe(ProjectTopics.MODULES, new ModuleListener() {
+      connection.subscribe(ModuleListener.TOPIC, new ModuleListener() {
         @Override
         public void moduleAdded(@NotNull Project project, @NotNull Module module) {
           fail("Adding modules is not permitted in light tests.");

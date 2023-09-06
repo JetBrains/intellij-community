@@ -1,13 +1,13 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.workspaceModel.ide.impl.legacyBridge.module
 
-import com.intellij.ProjectTopics
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.diagnostic.trace
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.module.impl.ModuleEx
+import com.intellij.openapi.project.ModuleListener
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.SimpleModificationTracker
@@ -94,7 +94,7 @@ internal class LegacyProjectModelListenersBridge(
   private fun postProcessModules(oldModuleNames: MutableMap<Module, String>) {
     if (oldModuleNames.isNotEmpty()) {
       project.messageBus
-        .syncPublisher(ProjectTopics.MODULES)
+        .syncPublisher(ModuleListener.TOPIC)
         .modulesRenamed(project, oldModuleNames.keys.toList()) { module -> oldModuleNames[module] }
     }
   }
@@ -206,12 +206,12 @@ internal class LegacyProjectModelListenersBridge(
   }
 
   private fun fireEventAndDisposeModule(module: ModuleBridge) {
-    project.messageBus.syncPublisher(ProjectTopics.MODULES).moduleRemoved(project, module)
+    project.messageBus.syncPublisher(ModuleListener.TOPIC).moduleRemoved(project, module)
     Disposer.dispose(module)
   }
 
   private fun fireBeforeModuleRemoved(module: ModuleBridge) {
-    project.messageBus.syncPublisher(ProjectTopics.MODULES).beforeModuleRemoved(project, module)
+    project.messageBus.syncPublisher(ModuleListener.TOPIC).beforeModuleRemoved(project, module)
   }
 
   companion object {

@@ -2,7 +2,6 @@
 package com.intellij.compiler;
 
 import com.intellij.CommonBundle;
-import com.intellij.ProjectTopics;
 import com.intellij.compiler.impl.javaCompiler.BackendCompiler;
 import com.intellij.compiler.impl.javaCompiler.eclipse.EclipseCompiler;
 import com.intellij.compiler.impl.javaCompiler.javac.JavacCompiler;
@@ -107,7 +106,7 @@ public final class CompilerConfigurationImpl extends CompilerConfiguration imple
     myExcludesConfiguration = createExcludedEntriesConfiguration(project);
     JAVAC_EXTERNAL_BACKEND = new JavacCompiler(myProject);
     MessageBusConnection connection = project.getMessageBus().connect();
-    connection.subscribe(ProjectTopics.MODULES, new ModuleListener() {
+    connection.subscribe(ModuleListener.TOPIC, new ModuleListener() {
       @Override
       public void beforeModuleRemoved(@NotNull Project project, @NotNull Module module) {
         getAnnotationProcessingConfiguration(module).removeModuleName(module.getName());

@@ -1,7 +1,6 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.facet.impl
 
-import com.intellij.ProjectTopics
 import com.intellij.facet.*
 import com.intellij.facet.impl.ProjectFacetManagerImpl.ProjectFacetManagerState
 import com.intellij.openapi.components.PersistentStateComponent
@@ -36,7 +35,7 @@ class ProjectFacetManagerImpl(private val myProject: Project) : ProjectFacetMana
         myIndex.set(null)
       }
     }, myProject)
-    myProject.getMessageBus().connect().subscribe(ProjectTopics.MODULES, object : ModuleListener {
+    myProject.getMessageBus().connect().subscribe(ModuleListener.TOPIC, object : ModuleListener {
       override fun modulesAdded(project: Project, modules: List<Module>) {
         myIndex.set(null)
       }

@@ -1,12 +1,12 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.maven.project;
 
-import com.intellij.ProjectTopics;
 import com.intellij.maven.testFramework.MavenDomTestCase;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.module.ModuleWithNameAlreadyExists;
+import com.intellij.openapi.project.ModuleListener;
 import org.jetbrains.annotations.NotNull;
 import org.junit.Test;
 
@@ -31,7 +31,7 @@ public class MavenRenameModulesWatcherTest extends MavenDomTestCase {
     }
     CommandProcessor.getInstance().executeCommand(myProject, () -> ApplicationManager.getApplication().runWriteAction(() -> {
       modifiableModel.commit();
-      myProject.getMessageBus().syncPublisher(ProjectTopics.MODULES).modulesRenamed(myProject, List.of(module), m -> oldName);
+      myProject.getMessageBus().syncPublisher(ModuleListener.TOPIC).modulesRenamed(myProject, List.of(module), m -> oldName);
     }), "renaming model", null);
   }
 

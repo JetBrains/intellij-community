@@ -1,7 +1,6 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.facet.impl
 
-import com.intellij.ProjectTopics
 import com.intellij.facet.*
 import com.intellij.openapi.components.service
 import com.intellij.openapi.extensions.ExtensionPointName
@@ -19,7 +18,7 @@ internal class FacetEventsPublisher(private val project: Project) {
 
   init {
     val connection = project.messageBus.simpleConnect()
-    connection.subscribe(ProjectTopics.MODULES, object : ModuleListener {
+    connection.subscribe(ModuleListener.TOPIC, object : ModuleListener {
       override fun modulesAdded(project: Project, modules: List<Module>) {
         for (module in modules) {
           onModuleAdded(module)

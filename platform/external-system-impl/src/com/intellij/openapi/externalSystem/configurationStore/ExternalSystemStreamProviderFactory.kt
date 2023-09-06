@@ -1,7 +1,6 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.externalSystem.configurationStore
 
-import com.intellij.ProjectTopics
 import com.intellij.configurationStore.FileStorageAnnotation
 import com.intellij.configurationStore.StateStorageManager
 import com.intellij.configurationStore.StreamProviderFactory
@@ -33,7 +32,7 @@ internal class ExternalSystemStreamProviderFactory(private val project: Project)
   private val storages = HashMap<String, Storage>()
 
   init {
-    project.messageBus.connect().subscribe(ProjectTopics.MODULES, object : ModuleListener {
+    project.messageBus.connect().subscribe(ModuleListener.TOPIC, object : ModuleListener {
       override fun moduleRemoved(project: Project, module: Module) {
         moduleStorage.remove(module.name)
       }
