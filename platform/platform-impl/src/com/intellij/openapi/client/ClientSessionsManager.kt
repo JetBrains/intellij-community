@@ -3,48 +3,18 @@ package com.intellij.openapi.client
 
 import com.intellij.codeWithMe.ClientId
 import com.intellij.openapi.Disposable
-import com.intellij.openapi.application.Application
-import com.intellij.openapi.application.impl.ApplicationImpl
+import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.project.ProjectManager
-import com.intellij.openapi.project.impl.ProjectImpl
 import com.intellij.openapi.util.Disposer
 import org.jetbrains.annotations.ApiStatus
 import java.util.concurrent.ConcurrentHashMap
 
 @ApiStatus.Experimental
 @ApiStatus.Internal
-sealed class ClientSessionsManager<T : ClientSession> {
+open class ClientSessionsManager<T : ClientSession> {
   companion object {
-
-    /**
-     * @return a project session for specified app-level session
-     */
-    @JvmStatic
-    fun getProjectSession(project: Project, session: ClientAppSession): ClientProjectSession? {
-      return getInstance(project).getSession(session.clientId)
-    }
-
-    /**
-     * Clients may not have access to certain projects
-     * @return a list of project-level sessions available to a certain [ClientAppSession]
-     */
-    fun getAllProjectSession(session: ClientAppSession): List<ClientProjectSession> {
-      return ProjectManager.getInstance().openProjects.mapNotNull { getProjectSession(it, session) }
-    }
-
-    /**
-     * Returns a project-level session for a particular client.
-     * @see ClientProjectSession
-     */
-    @JvmStatic
-    @JvmOverloads
-    fun getProjectSession(project: Project, clientId: ClientId = ClientId.current): ClientProjectSession? {
-      return getInstance(project).getSession(clientId)
-    }
-
     /**
      * Returns an application-level session for a particular client.
      * @see ClientSession
@@ -52,24 +22,7 @@ sealed class ClientSessionsManager<T : ClientSession> {
     @JvmStatic
     @JvmOverloads
     fun getAppSession(clientId: ClientId = ClientId.current): ClientAppSession? {
-      return getInstance().getSession(clientId)
-    }
-
-    /**
-     * Returns all project-level sessions.
-     * @param kind specifies what sessions should be included
-     * @see ClientSession
-     */
-    @JvmStatic
-    fun getProjectSessions(project: Project, kind: ClientKind): List<ClientProjectSession> {
-      return getInstance(project).getSessions(kind)
-    }
-
-    @ApiStatus.ScheduledForRemoval
-    @JvmStatic
-    @Deprecated("Use overload accepting ClientKind")
-    fun getProjectSessions(project: Project, includeLocal: Boolean): List<ClientProjectSession> {
-      return getProjectSessions(project, if (includeLocal) ClientKind.ALL else ClientKind.REMOTE)
+      return ApplicationManager.getApplication().service<ClientSessionsManager<*>>().getSession(clientId) as? ClientAppSession
     }
 
     /**
@@ -79,32 +32,93 @@ sealed class ClientSessionsManager<T : ClientSession> {
      */
     @JvmStatic
     fun getAppSessions(kind: ClientKind): List<ClientAppSession> {
-      return getInstance().getSessions(kind)
+      @Suppress("UNCHECKED_CAST")
+      return ApplicationManager.getApplication().service<ClientSessionsManager<*>>().getSessions(kind) as List<ClientAppSession>
     }
 
-    @Deprecated("Use overload accepting ClientKind")
+    /**
+     * Returns a project-level session for a particular client.
+     * @see ClientProjectSession
+     */
+    @JvmStatic
+    @JvmOverloads
+    fun getProjectSession(project: Project, clientId: ClientId = ClientId.current): ClientProjectSession? {
+      return project.service<ClientSessionsManager<*>>().getSession(clientId) as? ClientProjectSession
+    }
+
+    /**
+     * Returns all project-level sessions.
+     * @param kind specifies what sessions should be included
+     * @see ClientSession
+     */
+    @JvmStatic
+    fun getProjectSessions(project: Project, kind: ClientKind): List<ClientProjectSession> {
+      @Suppress("UNCHECKED_CAST") return project.service<ClientSessionsManager<*>>().getSessions(kind) as List<ClientProjectSession>
+    }
+
+    /**
+     * @return a project session for specified app-level session
+     */
+    @JvmStatic
+    @Deprecated("Use projectSessions list from app session",
+                ReplaceWith("session.projectSessions.find { it.project == project }"),
+                DeprecationLevel.ERROR)
+    fun getProjectSession(project: Project, session: ClientAppSession): ClientProjectSession? {
+      return session.projectSessions.find { it.project == project }
+    }
+
+    /**
+     * Clients may not have access to certain projects
+     * @return a list of project-level sessions available to a certain [ClientAppSession]
+     */
+    @JvmStatic
+    @Deprecated("Use projectSessions list from app session",
+                ReplaceWith("session.projectSessions"),
+                DeprecationLevel.ERROR)
+    fun getAllProjectSession(session: ClientAppSession): List<ClientProjectSession> {
+      return session.projectSessions
+    }
+
+    @ApiStatus.ScheduledForRemoval
+    @JvmStatic
+    @Deprecated("Use overload accepting ClientKind",
+                ReplaceWith("getProjectSessions(project, if (includeLocal) ClientKind.ALL else ClientKind.REMOTE)",
+                            "com.intellij.openapi.client.ClientSessionsManager.Companion.getProjectSessions"),
+                DeprecationLevel.ERROR)
+    fun getProjectSessions(project: Project, includeLocal: Boolean): List<ClientProjectSession> {
+      return getProjectSessions(project, if (includeLocal) ClientKind.ALL else ClientKind.REMOTE)
+    }
+
+    @Deprecated("Use overload accepting ClientKind",
+                ReplaceWith("getAppSessions(if (includeLocal) ClientKind.ALL else ClientKind.REMOTE)",
+                            "com.intellij.openapi.client.ClientSessionsManager.Companion.getAppSessions"),
+                DeprecationLevel.ERROR)
     @JvmStatic
     fun getAppSessions(includeLocal: Boolean): List<ClientAppSession> {
       return getAppSessions(if (includeLocal) ClientKind.ALL else ClientKind.REMOTE)
     }
 
+    @Deprecated("Use application.currentSession, application.forEachSession")
     @ApiStatus.Internal
     fun getInstance(): ClientAppSessionsManager = service<ClientSessionsManager<*>>() as ClientAppSessionsManager
 
+    @Deprecated("Use project.currentSession, project.forEachSession")
     @ApiStatus.Internal
     fun getInstance(project: Project): ClientProjectSessionsManager = project.service<ClientSessionsManager<*>>() as ClientProjectSessionsManager
   }
 
   private val sessions = ConcurrentHashMap<ClientId, T>()
 
-  @Deprecated("Use overload accepting ClientKind")
+  @Deprecated("Use overload accepting ClientKind",
+              ReplaceWith("getSessions(if (includeLocal) ClientKind.ALL else ClientKind.REMOTE)"),
+              DeprecationLevel.ERROR)
   fun getSessions(includeLocal: Boolean): List<T> {
     return getSessions(if (includeLocal) ClientKind.ALL else ClientKind.REMOTE)
   }
 
   fun getSessions(kind: ClientKind): List<T> {
     if (kind == ClientKind.ALL) {
-      return java.util.List.copyOf(sessions.values)
+      return java.util.ArrayList(sessions.values)
     }
     else {
       return sessions.values.filter { it.type.matches(kind) }
@@ -123,41 +137,6 @@ sealed class ClientSessionsManager<T : ClientSession> {
     Disposer.register(disposable, session)
     Disposer.register(disposable) {
       sessions.remove(clientId)
-    }
-  }
-}
-
-@Suppress("NonDefaultConstructor")
-open class ClientAppSessionsManager(application: Application) : ClientSessionsManager<ClientAppSession>() {
-  init {
-    @Suppress("LeakingThis")
-    registerLocalSession(application)
-  }
-
-  /**
-   * Used for [ClientId] overriding in JetBrains Client
-   */
-  protected open fun registerLocalSession(application: Application) {
-    if (application is ApplicationImpl) {
-      registerSession(application, LocalAppSessionImpl(application))
-    }
-  }
-}
-
-open class ClientProjectSessionsManager(project: Project) : ClientSessionsManager<ClientProjectSession>() {
-  init {
-    @Suppress("LeakingThis")
-    registerLocalSession(project)
-  }
-
-  protected open fun registerLocalSession(project: Project) {
-    if (project is ProjectImpl) {
-      registerSession(project, LocalProjectSessionImpl(project))
-    }
-    else if (project.isDefault) {
-      (project.actualComponentManager as? ClientAwareComponentManager)?.let { componentManager ->
-        registerSession(project, LocalProjectSessionImpl(componentManager, project))
-      }
     }
   }
 }
