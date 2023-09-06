@@ -18,7 +18,6 @@ package org.jetbrains.idea.maven.project.actions
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.CommonDataKeys
 import com.intellij.openapi.application.EDT
-import com.intellij.openapi.application.readAction
 import com.intellij.openapi.fileChooser.FileChooser
 import com.intellij.openapi.fileChooser.FileChooserDescriptor
 import com.intellij.openapi.project.Project
@@ -67,22 +66,20 @@ class AddManagedFilesAction : MavenAction() {
   private suspend fun addManagedFiles(projectFile: VirtualFile,
                                       files: Array<VirtualFile>,
                                       project: Project) {
-    val selectedFiles = readAction { if (projectFile.isDirectory) projectFile.children else files }
-    withContext(Dispatchers.EDT) {
-      if (selectedFiles.any { MavenActionUtil.isMavenProjectFile(it) }) {
-        val openProjectProvider = MavenOpenProjectProvider()
-        withContext(Dispatchers.Default) {
-          openProjectProvider.linkToExistingProjectAsync(projectFile, project)
-        }
-      }
-      else {
-        val projectPath = getPresentablePath(projectFile.path)
+    val selectedFiles = if (projectFile.isDirectory) projectFile.children else files
+    if (selectedFiles.any { MavenActionUtil.isMavenProjectFile(it) }) {
+      val openProjectProvider = MavenOpenProjectProvider()
+      openProjectProvider.linkToExistingProjectAsync(projectFile, project)
+    }
+    else {
+      val projectPath = getPresentablePath(projectFile.path)
 
-        val message = if (projectFile.isDirectory)
-          MavenProjectBundle.message("maven.AddManagedFiles.warning.message.directory", projectPath)
-        else MavenProjectBundle.message("maven.AddManagedFiles.warning.message.file", projectPath)
+      val message = if (projectFile.isDirectory)
+        MavenProjectBundle.message("maven.AddManagedFiles.warning.message.directory", projectPath)
+      else MavenProjectBundle.message("maven.AddManagedFiles.warning.message.file", projectPath)
 
-        val title = MavenProjectBundle.message("maven.AddManagedFiles.warning.title")
+      val title = MavenProjectBundle.message("maven.AddManagedFiles.warning.title")
+      withContext(Dispatchers.EDT) {
         Messages.showWarningDialog(project, message, title)
       }
     }
