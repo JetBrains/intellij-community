@@ -3,7 +3,6 @@ package org.jetbrains.plugins.notebooks.visualization
 import com.intellij.lang.Language
 import com.intellij.lexer.Lexer
 import com.intellij.openapi.editor.Document
-import com.intellij.openapi.fileTypes.PlainTextLanguage
 import com.intellij.util.keyFMap.KeyFMap
 import org.jetbrains.plugins.notebooks.visualization.NotebookCellLines.CellType
 import org.jetbrains.plugins.notebooks.visualization.NotebookCellLines.MarkersAtLines
@@ -45,9 +44,8 @@ interface NotebookCellLinesLexer {
       }
     }
 
-    fun defaultIntervals(document: Document, markers: List<Marker>): List<NotebookCellLines.Interval> {
-      val data = KeyFMap.EMPTY_MAP.plus(NotebookCellLines.INTERVAL_LANGUAGE_KEY, PlainTextLanguage.INSTANCE)
-      val intervals = toIntervalsInfo(document, markers, firstMarkerData = data, lastMarkerData = data)
+    fun defaultIntervals(document: Document, markers: List<Marker>, firstMarkerData: KeyFMap, lastMarkerData: KeyFMap): List<NotebookCellLines.Interval> {
+      val intervals = toIntervalsInfo(document, markers, firstMarkerData, lastMarkerData)
 
       val result = mutableListOf<NotebookCellLines.Interval>()
       for (i in 0 until (intervals.size - 1)) {
