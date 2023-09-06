@@ -15,7 +15,6 @@
  */
 package org.jetbrains.idea.maven.project.importing;
 
-import com.intellij.ProjectTopics;
 import com.intellij.maven.testFramework.MavenMultiVersionImportingTestCase;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.externalSystem.service.project.ProjectDataManager;
@@ -226,7 +225,7 @@ public class MavenFoldersUpdatingTest extends MavenMultiVersionImportingTestCase
                     """);
 
     final int[] count = new int[]{0};
-    myProject.getMessageBus().connect().subscribe(ProjectTopics.PROJECT_ROOTS, new ModuleRootListener() {
+    myProject.getMessageBus().connect().subscribe(ModuleRootListener.TOPIC, new ModuleRootListener() {
       @Override
       public void rootsChanged(@NotNull ModuleRootEvent event) {
         count[0]++;

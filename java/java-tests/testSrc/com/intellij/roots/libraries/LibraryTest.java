@@ -1,7 +1,6 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.roots.libraries;
 
-import com.intellij.ProjectTopics;
 import com.intellij.codeInsight.daemon.impl.quickfix.OrderEntryTest;
 import com.intellij.configurationStore.StoreUtil;
 import com.intellij.openapi.application.ApplicationManager;
@@ -208,7 +207,7 @@ public class LibraryTest extends ModuleRootManagerTestCase {
     assertNull(aClass);
 
     AtomicBoolean rootsChanged = new AtomicBoolean(false);
-    myProject.getMessageBus().connect(myProject).subscribe(ProjectTopics.PROJECT_ROOTS, new ModuleRootListener() {
+    myProject.getMessageBus().connect(myProject).subscribe(ModuleRootListener.TOPIC, new ModuleRootListener() {
       @Override
       public void rootsChanged(@NotNull final ModuleRootEvent event) {
         rootsChanged.set(true);

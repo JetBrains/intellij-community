@@ -2,7 +2,6 @@
 
 package org.jetbrains.kotlin.idea.base.projectStructure
 
-import com.intellij.ProjectTopics
 import com.intellij.openapi.components.service
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.project.Project
@@ -59,7 +58,7 @@ internal class SdkInfoCacheImpl(project: Project) :
         val connection = project.messageBus.connect(this)
         connection.subscribe(LibraryInfoListener.TOPIC, this)
         connection.subscribe(ProjectJdkTable.JDK_TABLE_TOPIC, this)
-        connection.subscribe(ProjectTopics.PROJECT_ROOTS, this)
+        connection.subscribe(ModuleRootListener.TOPIC, this)
         connection.subscribe(WorkspaceModelTopics.CHANGED, this)
     }
 

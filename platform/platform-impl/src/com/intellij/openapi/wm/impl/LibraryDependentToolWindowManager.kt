@@ -1,7 +1,6 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.wm.impl
 
-import com.intellij.ProjectTopics
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.smartReadAction
@@ -41,7 +40,7 @@ private class LibraryDependentToolWindowManager : ProjectActivity {
       checkRequests.emit(null)
 
       val connection = project.messageBus.connect(this)
-      connection.subscribe(ProjectTopics.PROJECT_ROOTS, object : ModuleRootListener {
+      connection.subscribe(ModuleRootListener.TOPIC, object : ModuleRootListener {
         override fun rootsChanged(event: ModuleRootEvent) {
           check(checkRequests.tryEmit(null))
         }

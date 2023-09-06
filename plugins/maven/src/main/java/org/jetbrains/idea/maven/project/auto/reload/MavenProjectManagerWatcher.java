@@ -7,6 +7,7 @@ import com.intellij.openapi.externalSystem.autoimport.AutoImportProjectTracker;
 import com.intellij.openapi.externalSystem.autoimport.ExternalSystemProjectId;
 import com.intellij.openapi.externalSystem.autoimport.ExternalSystemProjectTracker;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.roots.ModuleRootListener;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.util.concurrency.AppExecutorUtil;
 import org.jetbrains.annotations.ApiStatus;
@@ -48,7 +49,7 @@ public final class MavenProjectManagerWatcher {
   public synchronized void start() {
     var busConnection = myProject.getMessageBus().connect(myDisposable);
     busConnection.subscribe(ProjectTopics.MODULES, myRenameModuleWatcher);
-    busConnection.subscribe(ProjectTopics.PROJECT_ROOTS, myProjectRootWatcher);
+    busConnection.subscribe(ModuleRootListener.TOPIC, myProjectRootWatcher);
     myGeneralSettingsWatcher.subscribeOnSettingsChanges(myDisposable);
     myGeneralSettingsWatcher.subscribeOnSettingsFileChanges(myDisposable);
     var projectsManager = MavenProjectsManager.getInstance(myProject);

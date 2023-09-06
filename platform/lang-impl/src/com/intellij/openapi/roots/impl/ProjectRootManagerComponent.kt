@@ -1,7 +1,6 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.roots.impl
 
-import com.intellij.ProjectTopics
 import com.intellij.configurationStore.BatchUpdateListener
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationListener
@@ -235,7 +234,7 @@ open class ProjectRootManagerComponent(project: Project,
     try {
       (DirectoryIndex.getInstance(project) as? DirectoryIndexImpl)?.reset()
       (WorkspaceFileIndex.getInstance(project) as WorkspaceFileIndexEx).indexData.resetCustomContributors()
-      project.messageBus.syncPublisher(ProjectTopics.PROJECT_ROOTS).beforeRootsChange(ModuleRootEventImpl(project, fileTypes))
+      project.messageBus.syncPublisher(ModuleRootListener.TOPIC).beforeRootsChange(ModuleRootEventImpl(project, fileTypes))
     }
     finally {
       isFiringEvent = false
@@ -249,7 +248,7 @@ open class ProjectRootManagerComponent(project: Project,
       (WorkspaceFileIndex.getInstance(project) as WorkspaceFileIndexEx).indexData.resetCustomContributors()
 
       val isFromWorkspaceOnly = EntityIndexingService.getInstance().isFromWorkspaceOnly(indexingInfos)
-      project.messageBus.syncPublisher(ProjectTopics.PROJECT_ROOTS)
+      project.messageBus.syncPublisher(ModuleRootListener.TOPIC)
         .rootsChanged(ModuleRootEventImpl(project, fileTypes, indexingInfos, isFromWorkspaceOnly))
     }
     finally {

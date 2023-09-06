@@ -2,7 +2,6 @@
 package com.intellij.debugger.engine;
 
 import com.intellij.Patches;
-import com.intellij.ProjectTopics;
 import com.intellij.ReviseWhenPortedToJDK;
 import com.intellij.debugger.*;
 import com.intellij.debugger.actions.DebuggerAction;
@@ -329,7 +328,7 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
     }
     DebuggerManagerThreadImpl.assertIsManagerThread();
     myPositionManager = new CompoundPositionManager(new PositionManagerImpl(this));
-    myProject.getMessageBus().connect(myDisposable).subscribe(ProjectTopics.PROJECT_ROOTS, new ModuleRootListener() {
+    myProject.getMessageBus().connect(myDisposable).subscribe(ModuleRootListener.TOPIC, new ModuleRootListener() {
       @Override
       public void rootsChanged(@NotNull final ModuleRootEvent event) {
         DumbService.getInstance(myProject).runWhenSmart(

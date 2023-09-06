@@ -1,7 +1,6 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.roots.impl;
 
-import com.intellij.ProjectTopics;
 import com.intellij.ide.plugins.DynamicPluginListener;
 import com.intellij.ide.plugins.IdeaPluginDescriptor;
 import com.intellij.openapi.application.*;
@@ -71,7 +70,7 @@ public final class PushedFilePropertiesUpdaterImpl extends PushedFilePropertiesU
     myProject = project;
 
     SimpleMessageBusConnection connection = project.getMessageBus().simpleConnect();
-    connection.subscribe(ProjectTopics.PROJECT_ROOTS, new ModuleRootListener() {
+    connection.subscribe(ModuleRootListener.TOPIC, new ModuleRootListener() {
       @Override
       public void rootsChanged(@NotNull ModuleRootEvent event) {
         if (LOG.isTraceEnabled()) {
@@ -226,7 +225,7 @@ public final class PushedFilePropertiesUpdaterImpl extends PushedFilePropertiesU
   private void queueTasks(@NotNull List<? extends Runnable> actions, @NotNull @NonNls String reason) {
     actions.forEach(myTasks::offer);
     DumbModeTask task = new MyDumbModeTask(reason, this);
-    myProject.getMessageBus().connect(task).subscribe(ProjectTopics.PROJECT_ROOTS, new ModuleRootListener() {
+    myProject.getMessageBus().connect(task).subscribe(ModuleRootListener.TOPIC, new ModuleRootListener() {
       @Override
       public void rootsChanged(@NotNull ModuleRootEvent event) {
         for (RootsChangeRescanningInfo info : ((ModuleRootEventImpl)event).getInfos()) {

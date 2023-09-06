@@ -1,7 +1,6 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.projectRoots.impl.jdkDownloader
 
-import com.intellij.ProjectTopics
 import com.intellij.execution.wsl.WslDistributionManager
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
@@ -102,7 +101,7 @@ internal class JdkUpdatesCollector(private val project: Project) : Disposable {
     project.messageBus
       .connect(this)
       .subscribe(
-        ProjectTopics.PROJECT_ROOTS, object : ModuleRootListener {
+        ModuleRootListener.TOPIC, object : ModuleRootListener {
         override fun rootsChanged(event: ModuleRootEvent) {
           if (event.isCausedByFileTypesChange) return
 

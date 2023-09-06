@@ -2,7 +2,6 @@
 package com.intellij.ide;
 
 import com.intellij.AppTopics;
-import com.intellij.ProjectTopics;
 import com.intellij.ide.impl.ProjectUtilCore;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ReadAction;
@@ -128,7 +127,7 @@ public final class GeneratedSourceFileChangeTrackerImpl extends GeneratedSourceF
         myEditedGeneratedFiles.remove(file);
       }
     });
-    connection.subscribe(ProjectTopics.PROJECT_ROOTS, new ModuleRootListener() {
+    connection.subscribe(ModuleRootListener.TOPIC, new ModuleRootListener() {
       @Override
       public void rootsChanged(@NotNull ModuleRootEvent event) {
         resetOnRootsChanged();

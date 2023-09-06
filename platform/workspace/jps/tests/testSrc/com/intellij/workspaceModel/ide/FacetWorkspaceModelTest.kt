@@ -1,7 +1,6 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.workspaceModel.ide
 
-import com.intellij.ProjectTopics
 import com.intellij.facet.mock.AnotherMockFacetType
 import com.intellij.facet.mock.MockFacetType
 import com.intellij.openapi.application.runWriteActionAndWait
@@ -50,7 +49,7 @@ class FacetWorkspaceModelTest {
       .getMessageBus()
       .connect(disposableRule.disposable)
       .subscribe<ModuleRootListener>(
-        ProjectTopics.PROJECT_ROOTS,
+        ModuleRootListener.TOPIC,
         object : ModuleRootListener {
           override fun rootsChanged(event: ModuleRootEvent) {
             rootsChangedCounter += 1
@@ -67,7 +66,7 @@ class FacetWorkspaceModelTest {
     }
 
     assertEquals(0, rootsChangedCounter, "rootsChanged must not be called on change of facets")
-    assertFalse(projectModel.project.messageBus.hasUndeliveredEvents(ProjectTopics.PROJECT_ROOTS))
+    assertFalse(projectModel.project.messageBus.hasUndeliveredEvents(ModuleRootListener.TOPIC))
   }
 
   @Test
@@ -78,7 +77,7 @@ class FacetWorkspaceModelTest {
       .getMessageBus()
       .connect(disposableRule.disposable)
       .subscribe<ModuleRootListener>(
-        ProjectTopics.PROJECT_ROOTS,
+        ModuleRootListener.TOPIC,
         object : ModuleRootListener {
           override fun rootsChanged(event: ModuleRootEvent) {
             rootsChangedCounter += 1
@@ -96,6 +95,6 @@ class FacetWorkspaceModelTest {
     }
 
     assertEquals(0, rootsChangedCounter, "rootsChanged must not be called on change of facets")
-    assertFalse(projectModel.project.messageBus.hasUndeliveredEvents(ProjectTopics.PROJECT_ROOTS))
+    assertFalse(projectModel.project.messageBus.hasUndeliveredEvents(ModuleRootListener.TOPIC))
   }
 }

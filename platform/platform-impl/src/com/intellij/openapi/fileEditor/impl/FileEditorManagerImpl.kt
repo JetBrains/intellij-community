@@ -4,7 +4,6 @@
 
 package com.intellij.openapi.fileEditor.impl
 
-import com.intellij.ProjectTopics
 import com.intellij.codeInsight.intention.preview.IntentionPreviewUtils
 import com.intellij.codeWithMe.ClientId
 import com.intellij.codeWithMe.ClientId.Companion.isLocal
@@ -294,7 +293,7 @@ open class FileEditorManagerImpl(
     connection.subscribe(FileStatusListener.TOPIC, MyFileStatusListener())
     connection.subscribe(FileTypeManager.TOPIC, MyFileTypeListener())
     if (!LightEdit.owns(project)) {
-      connection.subscribe(ProjectTopics.PROJECT_ROOTS, MyRootListener())
+      connection.subscribe(ModuleRootListener.TOPIC, MyRootListener())
       connection.subscribe(AdditionalLibraryRootsListener.TOPIC, MyRootListener())
     }
 

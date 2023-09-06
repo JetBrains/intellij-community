@@ -2,7 +2,6 @@
 package com.intellij.codeInsight;
 
 import com.intellij.CommonBundle;
-import com.intellij.ProjectTopics;
 import com.intellij.application.options.CodeStyle;
 import com.intellij.codeInsight.highlighting.HighlightManager;
 import com.intellij.diagnostic.CoreAttachmentFactory;
@@ -116,7 +115,7 @@ public final class ExternalAnnotationsManagerImpl extends ReadableExternalAnnota
     MessageBusConnection connection = myBus.connect(this);
 
     connection.subscribe(WorkspaceModelTopics.CHANGED, new ExternalAnnotationsRootListener());
-    connection.subscribe(ProjectTopics.PROJECT_ROOTS, new ModuleRootListener() {
+    connection.subscribe(ModuleRootListener.TOPIC, new ModuleRootListener() {
       @Override
       public void rootsChanged(@NotNull ModuleRootEvent event) {
         if (event.isCausedByWorkspaceModelChangesOnly()) return;

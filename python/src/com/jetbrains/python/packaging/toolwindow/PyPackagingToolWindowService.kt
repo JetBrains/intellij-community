@@ -1,7 +1,6 @@
 // Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python.packaging.toolwindow
 
-import com.intellij.ProjectTopics
 import com.intellij.execution.process.CapturingProcessHandler
 import com.intellij.execution.target.TargetProgressIndicator
 import com.intellij.notification.NotificationGroupManager
@@ -154,7 +153,7 @@ class PyPackagingToolWindowService(val project: Project, val serviceScope: Corou
         }
       }
     })
-    connection.subscribe(ProjectTopics.PROJECT_ROOTS, object : ModuleRootListener {
+    connection.subscribe(ModuleRootListener.TOPIC, object : ModuleRootListener {
       override fun rootsChanged(event: ModuleRootEvent) {
         serviceScope.launch(Dispatchers.IO) {
           initForSdk(project.modules.firstOrNull()?.pythonSdk)
