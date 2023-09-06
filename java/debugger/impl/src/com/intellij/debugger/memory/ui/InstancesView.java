@@ -11,6 +11,7 @@ import com.intellij.debugger.engine.SuspendContextImpl;
 import com.intellij.debugger.engine.evaluation.EvaluationContext;
 import com.intellij.debugger.engine.evaluation.EvaluationContextImpl;
 import com.intellij.debugger.engine.events.DebuggerContextCommandImpl;
+import com.intellij.debugger.memory.agent.MemoryAgent;
 import com.intellij.debugger.memory.agent.MemoryAgentUtil;
 import com.intellij.debugger.memory.filtering.FilteringResult;
 import com.intellij.debugger.memory.filtering.FilteringTask;
@@ -34,6 +35,7 @@ import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.ui.DoubleClickListener;
 import com.intellij.ui.components.JBLabel;
 import com.intellij.ui.components.JBPanel;
+import com.intellij.ui.components.JBTreeTable;
 import com.intellij.ui.scale.JBUIScale;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.JBUI;
@@ -45,9 +47,11 @@ import com.intellij.xdebugger.XDebuggerBundle;
 import com.intellij.xdebugger.evaluation.XDebuggerEditorsProvider;
 import com.intellij.xdebugger.frame.XValueChildrenList;
 import com.intellij.xdebugger.impl.ui.XDebuggerExpressionEditor;
+import com.intellij.xdebugger.impl.ui.tree.XDebuggerTreeRenderer;
 import com.intellij.xdebugger.memory.ui.InstancesTree;
 import com.intellij.xdebugger.memory.ui.InstancesViewBase;
 import com.intellij.xdebugger.memory.utils.InstancesProvider;
+import com.sun.jdi.ReferenceType;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -81,25 +85,35 @@ class InstancesView extends InstancesViewBase {
 
   private final Object myFilteringTaskLock = new Object();
 
-  private boolean myIsAndroidVM;
   private final DebugProcessImpl myDebugProcess;
   private final String myClassName;
 
+  private final InstancesViewRepresentation myRepresentation;
 
   private volatile FilteringTask myFilteringTask;
   private volatile Future<?> myFilteringTaskFuture;
 
-  InstancesView(@NotNull XDebugSession session, InstancesProvider instancesProvider, String className, Consumer<? super String> warningMessageConsumer) {
+  private final ReferenceType myClassType;
+
+  InstancesView(@NotNull XDebugSession session, InstancesProvider instancesProvider, @NotNull ReferenceType classType,  Consumer<? super String> warningMessageConsumer) {
     super(new BorderLayout(0, JBUIScale.scale(BORDER_LAYOUT_DEFAULT_GAP)), session, instancesProvider);
-    myClassName = className;
+    myClassType = classType;
+    myClassName = classType.name();
     myDebugProcess = (DebugProcessImpl)(DebuggerManager.getInstance(session.getProject()).getDebugProcess(session.getDebugProcess().getProcessHandler()));
     myNodeManager = new MyNodeManager(session.getProject());
     myWarningMessageConsumer = warningMessageConsumer;
 
+    if (MemoryAgent.isAgentEnabled(myDebugProcess) && Registry.is("debugger.memory.agent.use.in.memory.view")) {
+      myRepresentation = new TreeTableRepresentation();
+    } else {
+      myRepresentation = new TreeRepresentation();
+    }
+
     final XDebuggerEditorsProvider editorsProvider = session.getDebugProcess().getEditorsProvider();
 
-    myFilterConditionEditor = new ExpressionEditorWithHistory(session.getProject(), className,
-                                                              editorsProvider, this);
+    myFilterConditionEditor = new ExpressionEditorWithHistory(
+      session.getProject(), myClassName, editorsProvider, this
+    );
 
     final Dimension filteringButtonSize = myFilterConditionEditor.getEditorComponent().getPreferredSize();
     filteringButtonSize.width = JBUIScale.scale(FILTERING_BUTTON_ADDITIONAL_WIDTH) +
@@ -131,23 +145,8 @@ class InstancesView extends InstancesViewBase {
       myInstancesTree.rebuildTree(InstancesTree.RebuildPolicy.RELOAD_INSTANCES);
     });
 
-
-    final StackFrameList list = new StackFrameList(myDebugProcess);
-
-    list.addListSelectionListener(e -> list.navigateToSelectedValue(false));
-    new DoubleClickListener() {
-      @Override
-      protected boolean onDoubleClick(@NotNull MouseEvent event) {
-        list.navigateToSelectedValue(true);
-        return true;
-      }
-    }.installOn(list);
-
-    final InstancesWithStackFrameView instancesWithStackFrame = new InstancesWithStackFrameView(session,
-      myInstancesTree, list, className);
-
     add(filteringPane, BorderLayout.NORTH);
-    add(instancesWithStackFrame.getComponent(), BorderLayout.CENTER);
+    myRepresentation.customizeView(this, session, myClassName);
 
     final JComponent focusedComponent = myFilterConditionEditor.getEditorComponent();
     UiNotifyConnector.doWhenFirstShown(focusedComponent, () ->
@@ -188,29 +187,13 @@ class InstancesView extends InstancesViewBase {
 
       @Override
       public void threadAction(@NotNull SuspendContextImpl suspendContext) {
-        myIsAndroidVM = DebuggerUtils.isAndroidVM(myDebugProcess.getVirtualMachineProxy().getVirtualMachine());
-        final int limit = myIsAndroidVM
-                          ? AndroidUtil.ANDROID_INSTANCES_LIMIT
-                          : DEFAULT_INSTANCES_LIMIT;
-        List<JavaReferenceInfo> instances = ContainerUtil
-          .map(getInstancesProvider().getInstances(limit + 1), referenceInfo -> ((JavaReferenceInfo)referenceInfo));
-
         final EvaluationContextImpl evaluationContext = new EvaluationContextImpl(suspendContext, suspendContext.getFrameProxy());
-
-        if (instances.size() > limit) {
-          myWarningMessageConsumer.accept(XDebuggerBundle.message("memory.view.instances.warning.not.all.loaded", limit));
-          instances = instances.subList(0, limit);
-        }
-
-        if (Registry.is("debugger.memory.agent.use.in.memory.view")) {
-          instances = MemoryAgentUtil.tryCalculateSizes(evaluationContext, instances);
-        }
+        List<JavaReferenceInfo> instances = myRepresentation.fetchInstances(evaluationContext);
 
         synchronized (myFilteringTaskLock) {
-          List<JavaReferenceInfo> finalInstances = instances;
           ApplicationManager.getApplication().runReadAction(() -> {
             myFilteringTask =
-              new FilteringTask(myClassName, myDebugProcess, myFilterConditionEditor.getExpression(), new MyValuesList(finalInstances),
+              new FilteringTask(myClassName, myDebugProcess, myFilterConditionEditor.getExpression(), new MyValuesList(instances),
                                 new MyFilteringCallback(evaluationContext));
 
             myFilteringTaskFuture = ApplicationManager.getApplication().executeOnPooledThread(myFilteringTask);
@@ -430,6 +413,69 @@ class InstancesView extends InstancesViewBase {
     @Override
     public JavaReferenceInfo get(int index) {
       return myRefs.get(index);
+    }
+  }
+
+  private interface InstancesViewRepresentation {
+    void customizeView(@NotNull InstancesView view, @NotNull XDebugSession session, String className);
+
+    List<JavaReferenceInfo> fetchInstances(@NotNull EvaluationContextImpl evaluationContext);
+  }
+
+  private final class TreeRepresentation implements InstancesViewRepresentation {
+    @Override
+    public void customizeView(@NotNull InstancesView view, @NotNull XDebugSession session, String className) {
+      final StackFrameList list = new StackFrameList(myDebugProcess);
+      list.addListSelectionListener(e -> list.navigateToSelectedValue(false));
+      new DoubleClickListener() {
+        @Override
+        protected boolean onDoubleClick(@NotNull MouseEvent event) {
+          list.navigateToSelectedValue(true);
+          return true;
+        }
+      }.installOn(list);
+
+      final InstancesWithStackFrameView instancesWithStackFrame = new InstancesWithStackFrameView(
+        session, myInstancesTree, list, className
+      );
+      view.add(instancesWithStackFrame.getComponent(), BorderLayout.CENTER);
+    }
+
+    @Override
+    public List<JavaReferenceInfo> fetchInstances(@NotNull EvaluationContextImpl evaluationContext) {
+      final int limit = DebuggerUtils.isAndroidVM(myDebugProcess.getVirtualMachineProxy().getVirtualMachine())
+                        ? AndroidUtil.ANDROID_INSTANCES_LIMIT
+                        : DEFAULT_INSTANCES_LIMIT;
+      List<JavaReferenceInfo> instances = ContainerUtil.map(
+        getInstancesProvider().getInstances(limit + 1),
+        referenceInfo -> ((JavaReferenceInfo)referenceInfo)
+      );
+
+      if (instances.size() > limit) {
+        myWarningMessageConsumer.accept(XDebuggerBundle.message("memory.view.instances.warning.not.all.loaded", limit));
+        instances = instances.subList(0, limit);
+      }
+
+      return instances;
+    }
+  }
+
+
+  private final class TreeTableRepresentation implements InstancesViewRepresentation {
+    @Override
+    public void customizeView(@NotNull InstancesView view, @NotNull XDebugSession session, String className) {
+      InstancesViewTreeTableModel treeTableModel = new InstancesViewTreeTableModel(myInstancesTree);
+      JBTreeTable treeTable = new JBTreeTable(treeTableModel);
+      treeTable.setDefaultRenderer(Long.class, treeTableModel.createTableCellRenderer());
+      treeTable.getTree().setCellRenderer(new XDebuggerTreeRenderer(myInstancesTree.getProject()));
+      view.add(treeTable, BorderLayout.CENTER);
+    }
+
+    @Override
+    public List<JavaReferenceInfo> fetchInstances(@NotNull EvaluationContextImpl evaluationContext) {
+      return MemoryAgentUtil.calculateSizes(
+        evaluationContext, myClassType, MAX_TREE_NODE_COUNT, getProgress().getProgressIndicator()
+      );
     }
   }
 }
