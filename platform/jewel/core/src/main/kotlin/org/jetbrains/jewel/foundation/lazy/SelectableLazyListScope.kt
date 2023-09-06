@@ -117,7 +117,7 @@ internal class SelectableLazyListScopeContainer : SelectableLazyListScope {
         }
         keys.addAll(selectableKeys)
         entries.add(Entry.Items(count, key, contentType, itemContent, entriesCount))
-        entriesCount = entriesCount + count
+        entriesCount += count
     }
 
     @ExperimentalFoundationApi
@@ -132,6 +132,21 @@ internal class SelectableLazyListScopeContainer : SelectableLazyListScope {
         entriesCount++
     }
 }
+
+fun <T : Any> SelectableLazyListScope.items(
+    items: List<T>,
+    key: (item: T) -> Any = { it },
+    contentType: (item: T) -> Any? = { it },
+    selectable: (item: T) -> Boolean = { true },
+    itemContent: @Composable SelectableLazyItemScope.(item: T) -> Unit,
+) = items(
+    count = items.size,
+    key = { key(items[it]) },
+    contentType = { contentType(items[it]) },
+    selectable = { selectable(items[it]) },
+    itemContent = { itemContent(items[it]) }
+)
+
 
 @Composable
 fun LazyItemScope.SelectableLazyItemScope(

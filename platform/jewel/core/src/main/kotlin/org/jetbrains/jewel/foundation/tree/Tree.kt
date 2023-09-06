@@ -1,6 +1,13 @@
 package org.jetbrains.jewel.foundation.tree
 
+@Suppress("UNCHECKED_CAST")
+fun <T> emptyTree() = Tree.EMPTY as Tree<T>
+
 class Tree<T> internal constructor(internal val roots: List<Element<T>>) {
+
+    companion object {
+        internal val EMPTY = Tree(roots = emptyList<Element<Any?>>())
+    }
 
     sealed interface Element<T> {
 

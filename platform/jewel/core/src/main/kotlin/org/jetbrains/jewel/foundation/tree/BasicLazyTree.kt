@@ -10,6 +10,7 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.defaultMinSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.shape.CornerSize
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.runtime.Composable
@@ -40,6 +41,7 @@ import org.jetbrains.jewel.foundation.lazy.SelectionMode
 import org.jetbrains.jewel.foundation.utils.Log
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.milliseconds
+import org.jetbrains.jewel.foundation.lazy.SelectableLazyListState
 
 /**
  * Renders a lazy tree view based on the provided tree data structure.
@@ -114,7 +116,7 @@ fun <T> BasicLazyTree(
     }
 
     remember(tree) {
-        if (initialNodeStatus is InitialNodeStatus.Open) {
+        if (initialNodeStatus == InitialNodeStatus.Open) {
             treeState.openNodes.clear()
             treeState.openNodes.addAll(treeState.allNodes.map { it.first })
         }
@@ -337,10 +339,6 @@ private infix fun MutableList<Any>.getAllSubNodes(node: Tree.Element.Node<*>) {
         }
 }
 
-sealed class InitialNodeStatus {
-    @Stable
-    object Open : InitialNodeStatus()
-
-    @Stable
-    class Close : InitialNodeStatus()
+enum class InitialNodeStatus {
+    Open, Close
 }

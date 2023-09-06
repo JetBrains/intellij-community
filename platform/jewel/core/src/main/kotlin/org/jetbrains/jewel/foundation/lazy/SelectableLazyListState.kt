@@ -18,6 +18,10 @@ val LazyListState.visibleItemsRange
 val SelectableLazyListState.visibleItemsRange
     get() = firstVisibleItemIndex..firstVisibleItemIndex + layoutInfo.visibleItemsInfo.size
 
+interface SelectableScope {
+    var selectedKeys: List<Any>
+}
+
 /**
  * State object for a selectable lazy list, which extends [ScrollableState].
  *
@@ -25,11 +29,11 @@ val SelectableLazyListState.visibleItemsRange
  */
 class SelectableLazyListState(
     val lazyListState: LazyListState,
-) : ScrollableState by lazyListState {
+) : ScrollableState by lazyListState, SelectableScope {
 
     internal var lastKeyEventUsedMouse: Boolean = false
 
-    var selectedKeys by mutableStateOf(emptyList<Any>())
+    override var selectedKeys by mutableStateOf(emptyList<Any>())
     internal var lastActiveItemIndex: Int? = null
 
     /**
