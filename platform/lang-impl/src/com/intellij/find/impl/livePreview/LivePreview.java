@@ -10,7 +10,6 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.SelectionModel;
-import com.intellij.openapi.editor.colors.EditorColors;
 import com.intellij.openapi.editor.colors.EditorColorsListener;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
@@ -21,14 +20,12 @@ import com.intellij.openapi.editor.event.VisibleAreaListener;
 import com.intellij.openapi.editor.ex.MarkupModelEx;
 import com.intellij.openapi.editor.ex.RangeHighlighterEx;
 import com.intellij.openapi.editor.ex.util.EditorUtil;
-import com.intellij.openapi.editor.markup.EffectType;
 import com.intellij.openapi.editor.markup.RangeHighlighter;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.Balloon;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.registry.Registry;
-import com.intellij.ui.JBColor;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.usages.impl.UsagePreviewPanel;
 import com.intellij.util.containers.ContainerUtil;
@@ -59,6 +56,7 @@ public final class LivePreview implements SearchResults.SearchResultsListener, S
   private VisibleAreaListener myVisibleAreaListener;
   private Delegate myDelegate;
   private final SearchResults mySearchResults;
+  private final LivePreviewPresentation myPresentation;
   private Balloon myReplacementBalloon;
 
   @Override
@@ -198,16 +196,14 @@ public final class LivePreview implements SearchResults.SearchResultsListener, S
     final FindResult cursor = mySearchResults.getCursor();
     Editor editor = mySearchResults.getEditor();
     if (cursor != null && cursor.getEndOffset() <= editor.getDocument().getTextLength()) {
-      Color color = editor.getColorsScheme().getColor(EditorColors.CARET_COLOR);
-      myCursorHighlighter = addHighlighter(cursor.getStartOffset(), cursor.getEndOffset(),
-                                           new TextAttributes(null, null, color, EffectType.ROUNDED_BOX, Font.PLAIN));
-
+      myCursorHighlighter = addHighlighter(cursor.getStartOffset(), cursor.getEndOffset(), myPresentation.getCursorAttributes());
       editor.getScrollingModel().runActionOnScrollingFinished(() -> showReplacementPreview());
     }
   }
 
-  public LivePreview(@NotNull SearchResults searchResults) {
+  public LivePreview(@NotNull SearchResults searchResults, @NotNull LivePreviewPresentation presentation) {
     mySearchResults = searchResults;
+    myPresentation = presentation;
     searchResultsUpdated(searchResults);
     searchResults.addListener(this);
     EditorUtil.addBulkSelectionListener(mySearchResults.getEditor(), this, myDisposable);
@@ -276,17 +272,15 @@ public final class LivePreview implements SearchResults.SearchResultsListener, S
   }
 
   private TextAttributes createAttributes(FindResult range) {
-    EditorColorsScheme colorsScheme = mySearchResults.getEditor().getColorsScheme();
     if (mySearchResults.isExcluded(range)) {
-      return new TextAttributes(null, null, colorsScheme.getDefaultForeground(), EffectType.STRIKEOUT, Font.PLAIN);
+      return myPresentation.getExcludedAttributes();
     }
-    TextAttributes attributes = colorsScheme.getAttributes(EditorColors.TEXT_SEARCH_RESULT_ATTRIBUTES);
-    if (range.getLength() == 0) {
-      attributes = attributes.clone();
-      attributes.setEffectType(EffectType.BOXED);
-      attributes.setEffectColor(attributes.getBackgroundColor());
+    else if (range.isEmpty()) {
+      return myPresentation.getEmptyRangeAttributes();
     }
-    return attributes;
+    else {
+      return myPresentation.getDefaultAttributes();
+    }
   }
 
   private RangeHighlighter findExistingHighlighter(int startOffset, int endOffset, TextAttributes attributes) {
@@ -332,8 +326,7 @@ public final class LivePreview implements SearchResults.SearchResultsListener, S
         }
       } else if (needsAdditionalHighlighting) {
         RangeHighlighter additionalHighlighter = addHighlighter(highlighter.getStartOffset(), highlighter.getEndOffset(),
-                                                                new TextAttributes(null, null,
-                                                                                   JBColor.WHITE, EffectType.ROUNDED_BOX, Font.PLAIN));
+                                                                myPresentation.getSelectionAttributes());
         highlighter.putUserData(IN_SELECTION_KEY, additionalHighlighter);
       }
     }

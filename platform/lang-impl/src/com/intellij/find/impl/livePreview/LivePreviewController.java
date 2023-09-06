@@ -269,7 +269,8 @@ public final class LivePreviewController implements LivePreview.Delegate, FindUt
       myChanged = false;
     }
 
-    setLivePreview(new LivePreview(mySearchResults));
+    var presentation = new EditorLivePreviewPresentation(getEditor().getColorsScheme());
+    setLivePreview(new LivePreview(mySearchResults, presentation));
   }
 
   public void off() {
