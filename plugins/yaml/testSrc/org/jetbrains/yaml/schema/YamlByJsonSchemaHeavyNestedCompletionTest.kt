@@ -183,6 +183,73 @@ class YamlByJsonSchemaHeavyNestedCompletionTest: JsonBySchemaHeavyCompletionTest
       """.trimIndent())
   }
 
+  fun `test that completing while being below the destination, inserts the completion at the bottom`() {
+    open1ThenOpen2Then3Schema
+      .appliedToYamlFile("""
+        one:
+          two:
+            foo: false
+        thr<caret>
+      """.trimIndent())
+      .completesTo("""
+        one:
+          two:
+            foo: false
+            three: <selection>false</selection>
+      """.trimIndent())
+
+    open1ThenOpen2Then3Schema
+      .appliedToYamlFile("""
+        one:
+          two:
+            foo: false
+          twosBrother: 4
+        onesBrother: 2
+        thr<caret>
+      """.trimIndent())
+      .completesTo("""
+        one:
+          two:
+            foo: false
+            three: <selection>false</selection>
+          twosBrother: 4
+        onesBrother: 2
+      """.trimIndent())
+
+    open1ThenOpen2Then3Schema
+      .appliedToYamlFile("""
+        one:
+          two:
+            foo: false
+          twosBrother: 4
+          thr<caret>
+        onesBrother: 2
+      """.trimIndent())
+      .completesTo("""
+        one:
+          two:
+            foo: false
+            three: <selection>false</selection>
+          twosBrother: 4
+        onesBrother: 2
+      """.trimIndent())
+
+    open1ThenOpen2Then3Schema
+      .appliedToYamlFile("""
+        one:
+          twosBrother: 4
+        onesBrother: 2
+        thr<caret>
+      """.trimIndent())
+      .completesTo("""
+        one:
+          twosBrother: 4
+          two:
+            three: <selection>false</selection>
+        onesBrother: 2
+      """.trimIndent())
+  }
+
   private fun JsonSchemaYamlSetup.completesTo(@Language("YAML") expectedResult: String) {
     workingFolder.resolve("Schema.json").createTemporarilyWithContent(schemaSetup.schemaJson) {
       workingFolder.resolve("test.yml").createTemporarilyWithContent(yaml) {

@@ -117,13 +117,19 @@ private fun NestedCompletionMoveData.performMove(completedRange: CompletedRange,
     documentChangeAt(startOfLine) {
       replaceString(startOfLine - takePrecedingNewline.toInt(), endOfLine + takeSucceedingNewline.toInt(), "")
     },
-    documentChangeAt((destination?.startOffset ?: completedRange.startOffset).movedToStartOfLine(text)) { insertionOffset ->
+    documentChangeAt(offsetOfInsertionLine(destination, completedElement.startOffset).movedToStartOfLine(text)) { insertionOffset ->
       insertString(insertionOffset - takePrecedingNewline.toInt(), fullText)
       oldCaretState
         ?.restored(editor, newRelativeOffset = insertionOffset + (additionalCaretOffset ?: 0))
         ?.sideEffect { restoredCaret -> caret.caretsAndSelections = listOf(restoredCaret) }
     }
   )
+}
+
+private fun offsetOfInsertionLine(destination: PsiElement?, originOffset: Int): Int = when {
+  destination == null -> originOffset // If there is no destination, we insert at the origin
+  destination.startOffset > originOffset -> destination.startOffset // Caret is above destination, let's insert at top
+  else -> destination.endOffset // Caret is below destination, let's insert at bottom
 }
 
 private val Document.lastIndex get() = textLength - 1
