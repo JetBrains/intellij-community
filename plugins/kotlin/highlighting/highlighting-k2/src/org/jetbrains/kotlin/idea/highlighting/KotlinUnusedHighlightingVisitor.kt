@@ -10,6 +10,7 @@ import com.intellij.codeInsight.daemon.impl.analysis.HighlightingLevelManager
 import com.intellij.codeInspection.LocalInspectionTool
 import com.intellij.codeInspection.LocalQuickFixAndIntentionActionOnPsiElement
 import com.intellij.codeInspection.SuppressionUtil
+import com.intellij.codeInspection.deadCode.UnusedDeclarationInspectionBase
 import com.intellij.codeInspection.ex.InspectionProfileWrapper
 import com.intellij.codeInspection.util.IntentionName
 import com.intellij.openapi.command.WriteCommandAction
@@ -39,7 +40,8 @@ class KotlinUnusedHighlightingVisitor(private val ktFile: KtFile,
     private val deadCodeKey: HighlightDisplayKey?
     private val deadCodeInspection: LocalInspectionTool?
     private val deadCodeInfoType: HighlightInfoType.HighlightInfoTypeImpl?
-    val refHolder:KotlinRefsHolder = KotlinRefsHolder()
+    private val refHolder:KotlinRefsHolder = KotlinRefsHolder()
+    private val javaInspection: UnusedDeclarationInspectionBase = UnusedDeclarationInspectionBase()
 
     init {
         val profile = InspectionProjectProfileManager.getInstance(ktFile.project).getCurrentProfile().let { p ->
@@ -159,7 +161,7 @@ class KotlinUnusedHighlightingVisitor(private val ktFile: KtFile,
             holder.add(info)
         }
         else {
-            val problemPsi = KotlinUnusedSymbolUtil.getPsiToReportProblem(declaration) { false } ?: return
+            val problemPsi = KotlinUnusedSymbolUtil.getPsiToReportProblem(declaration) { javaInspection.isEntryPoint(it) } ?: return
             val message = declaration.describe()?.let { KotlinBaseHighlightingBundle.message("inspection.message.never.used", it) }
                           ?: return
             val fixes = KotlinUnusedSymbolUtil.createQuickFixes(declaration).toTypedArray()
