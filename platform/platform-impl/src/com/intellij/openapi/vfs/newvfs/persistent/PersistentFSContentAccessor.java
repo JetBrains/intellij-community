@@ -98,7 +98,7 @@ public final class PersistentFSContentAccessor {
     }
   }
 
-  boolean writeContent(int fileId, @NotNull ByteArraySequence bytes, boolean fixedSize) throws IOException {
+  boolean writeContent(int fileId, @NotNull ByteArraySequence bytes, @SuppressWarnings("ParameterCanBeLocal") boolean fixedSize) throws IOException {
     PersistentFSConnection.ensureIdIsValid(fileId);
     lock.writeLock().lock();
     try {
