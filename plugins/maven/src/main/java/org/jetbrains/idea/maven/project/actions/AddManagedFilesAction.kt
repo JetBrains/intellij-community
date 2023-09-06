@@ -20,7 +20,6 @@ import com.intellij.openapi.actionSystem.CommonDataKeys
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.fileChooser.FileChooser
 import com.intellij.openapi.fileChooser.FileChooserDescriptor
-import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.Messages
 import com.intellij.openapi.ui.getPresentablePath
 import com.intellij.openapi.vfs.VirtualFile
@@ -57,15 +56,9 @@ class AddManagedFilesAction : MavenAction() {
     val fileToSelect = e.getData(CommonDataKeys.VIRTUAL_FILE)
     val files = withContext(Dispatchers.EDT) { FileChooser.chooseFiles(singlePomSelection, project, fileToSelect) }
 
-    if (files.size == 1) {
-      val projectFile = files[0]
-      addManagedFiles(projectFile, files, project)
-    }
-  }
+    if (files.size != 1) return
 
-  private suspend fun addManagedFiles(projectFile: VirtualFile,
-                                      files: Array<VirtualFile>,
-                                      project: Project) {
+    val projectFile = files[0]
     val selectedFiles = if (projectFile.isDirectory) projectFile.children else files
     if (selectedFiles.any { MavenActionUtil.isMavenProjectFile(it) }) {
       val openProjectProvider = MavenOpenProjectProvider()
