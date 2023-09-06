@@ -12,13 +12,9 @@ SetCompressor lzma
 !include "version.nsi"
 !include WinVer.nsh
 !include x64.nsh
-;admin users
-;!define Environment '"SYSTEM\CurrentControlSet\Control\Session Manager\Environment"'
-;users
 !define Environment 'Environment'
 
 ; Product with version (IntelliJ IDEA #xxxx).
-
 ; Used in registry to put each build info into the separate subkey
 ; Add&Remove programs doesn't understand subkeys in the Uninstall key,
 ; thus ${PRODUCT_WITH_VER} is used for uninstall registry information
@@ -313,8 +309,7 @@ FunctionEnd
 
 
 Function OnDirectoryPageLeave
-  ;check
-  ; - if there are no files into $INSTDIR (recursively)
+  ;check if there are no files into $INSTDIR (recursively)
   StrCpy $9 "$INSTDIR"
   Call instDirEmpty
   StrCmp $9 "not empty" abort skip_abort
