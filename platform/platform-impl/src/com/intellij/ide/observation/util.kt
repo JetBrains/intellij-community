@@ -8,8 +8,10 @@ import com.intellij.openapi.progress.rawProgressReporter
 import com.intellij.openapi.progress.withRawProgressReporter
 import com.intellij.openapi.project.Project
 import kotlinx.coroutines.delay
+import org.jetbrains.annotations.ApiStatus.Experimental
 import kotlin.coroutines.coroutineContext
 
+@Experimental
 object Observation {
   
   /**
