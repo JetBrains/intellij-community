@@ -9,6 +9,7 @@ import org.jetbrains.intellij.build.*
 import org.jetbrains.intellij.build.TraceManager.spanBuilder
 import org.jetbrains.intellij.build.dependencies.BuildDependenciesDownloader
 import org.jetbrains.intellij.build.dependencies.BuildDependenciesExtractOptions
+import org.jetbrains.intellij.build.dependencies.DependenciesProperties
 import java.nio.file.FileVisitResult
 import java.nio.file.Files
 import java.nio.file.Path
@@ -19,22 +20,54 @@ import java.nio.file.attribute.PosixFilePermission.*
 import java.util.*
 import java.util.zip.GZIPInputStream
 
-class BundledRuntimeImpl(private val context: CompilationContext) : BundledRuntime {
+class BundledRuntimeImpl : BundledRuntime {
+  private val options: BuildOptions
+  private val paths: BuildPaths
+  private val dependenciesProperties: DependenciesProperties
+  private val productProperties: ProductProperties?
+  private val error: (String) -> Unit
+  private val info: (String) -> Unit
+
+  // Used in Rider codebase
+  constructor(
+    options: BuildOptions,
+    paths: BuildPaths,
+    dependenciesProperties: DependenciesProperties,
+    productProperties: ProductProperties? = null,
+    error: (String) -> Unit,
+    info: (String) -> Unit
+  ) {
+    this.options = options
+    this.paths = paths
+    this.dependenciesProperties = dependenciesProperties
+    this.productProperties = productProperties
+    this.error = error
+    this.info = info
+  }
+
+  constructor(context: CompilationContext) : this(
+    context.options,
+    context.paths,
+    context.dependenciesProperties,
+    (context as? BuildContext)?.productProperties,
+    context.messages::error,
+    context.messages::info,
+  )
+
   override val prefix: String
     get() {
-      val bundledRuntimePrefix = context.options.bundledRuntimePrefix
+      val bundledRuntimePrefix = options.bundledRuntimePrefix
       return when {
         // required as a runtime for debugger tests
         System.getProperty("intellij.build.jbr.setupSdk", "false").toBoolean() -> "jbrsdk-"
         bundledRuntimePrefix != null -> bundledRuntimePrefix
-        context is BuildContext -> context.productProperties.runtimeDistribution.artifactPrefix
+        productProperties != null -> productProperties.runtimeDistribution.artifactPrefix
         else -> JetBrainsRuntimeDistribution.JCEF.artifactPrefix
       }
     }
 
-  override val build: String by lazy {
-    context.dependenciesProperties.property("runtimeBuild")
-  }
+  override val build: String
+    get() = dependenciesProperties.property("runtimeBuild")
 
   override suspend fun getHomeForCurrentOsAndArch(): Path {
     val os = OsFamily.currentOs
@@ -49,13 +82,13 @@ class BundledRuntimeImpl(private val context: CompilationContext) : BundledRunti
   }
 
   override suspend fun extract(prefix: String, os: OsFamily, arch: JvmArchitecture): Path {
-    val targetDir = context.paths.communityHomeDir.resolve("build/download/${prefix}${build}-${os.jbrArchiveSuffix}-$arch")
+    val targetDir = paths.communityHomeDir.resolve("build/download/${prefix}${build}-${os.jbrArchiveSuffix}-$arch")
     val jbrDir = targetDir.resolve("jbr")
 
     val archive = findArchive(prefix, os, arch)
     BuildDependenciesDownloader.extractFile(
       archive, jbrDir,
-      context.paths.communityHomeDirRoot,
+      paths.communityHomeDirRoot,
       BuildDependenciesExtractOptions.STRIP_ROOT,
     )
     fixPermissions(jbrDir, os == OsFamily.WINDOWS)
@@ -79,7 +112,7 @@ class BundledRuntimeImpl(private val context: CompilationContext) : BundledRunti
   }
 
   override suspend fun findArchive(prefix: String, os: OsFamily, arch: JvmArchitecture): Path {
-    return downloadFileToCacheLocation(url = downloadUrlFor(prefix, os, arch), communityRoot = context.paths.communityHomeDirRoot)
+    return downloadFileToCacheLocation(url = downloadUrlFor(prefix, os, arch), communityRoot = paths.communityHomeDirRoot)
   }
 
   /**
@@ -100,13 +133,13 @@ class BundledRuntimeImpl(private val context: CompilationContext) : BundledRunti
   }
 
   private fun runtimeBuildPrefix(): String {
-    if (!context.options.runtimeDebug) {
+    if (!options.runtimeDebug) {
       return ""
     }
-    if (!context.options.isTestBuild && !context.options.isInDevelopmentMode) {
+    if (!options.isTestBuild && !options.isInDevelopmentMode) {
       error("Either test or development mode is required to use fastdebug runtime build")
     }
-    context.messages.info("Fastdebug runtime build is requested")
+    info("Fastdebug runtime build is requested")
     return "fastdebug-"
   }
 
