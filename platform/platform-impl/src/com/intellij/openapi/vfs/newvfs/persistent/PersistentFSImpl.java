@@ -66,15 +66,6 @@ import static com.intellij.util.SystemProperties.getBooleanProperty;
 public final class PersistentFSImpl extends PersistentFS implements Disposable {
   private static final Logger LOG = Logger.getInstance(PersistentFSImpl.class);
 
-  /**
-   * If true, all roots are load from {@link FSRecords} and cached on the first attempt to load the fileId
-   * under yet-uncached root. This may take time and lead to a freeze, hence the flag to disable it.
-   */
-  private static final boolean CACHE_MISSED_ROOTS_ALL_AT_ONCE =
-    getBooleanProperty("PersistentFSImpl.CACHE_MISSED_ROOTS_ALL_AT_ONCE", false);
-  //TODO better use single property & enum as a value?
-  /** If true, on the attempt to load fileId under yet-uncached root only this specific root is loaded (if exists) */
-  private static final boolean CACHE_MISSED_ROOTS_ONE_BY_ONE = getBooleanProperty("PersistentFSImpl.CACHE_MISSED_ROOTS_ONE_BY_ONE", true);
 
   /**
    * Eager VFS saving causes a lot of issues with dispose ordering. So far disable it by default -- until we'll
@@ -82,8 +73,6 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
    */
   private static final boolean SAVE_VFS_EAGERLY_ON_UNEXPECTED_SHUTDOWN =
     getBooleanProperty("PersistentFSImpl.SAVE_VFS_EAGERLY_ON_UNEXPECTED_SHUTDOWN", false);
-
-  private final AtomicBoolean missedRootsLoaded = new AtomicBoolean(false);
 
   private final Map<String, VirtualFileSystemEntry> myRoots;
 
@@ -1602,27 +1591,9 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
   /**
    * Usually we cache the roots during {@link #findRoot(String, NewVirtualFileSystem)} call, so at a given
    * moment some roots _could_ be not (yet) cached. So we need to force idToDirCache to cache the root it
-   * misses: (it happens to be easier to force it to cache _all_ the roots it misses, at once)
-   */
-  private void cacheAllMissedRootsFromPersistence() {
-    //better to collect roots first, to not spend too much time holding root lock inside .forEachRoot()
-    List<String> missedRootUrls = new ArrayList<>();
-    vfsPeer.forEachRoot((rootUrl, rootFileId) -> {
-      if (myIdToDirCache.getCachedRoot(rootFileId) == null) {
-        missedRootUrls.add(rootUrl);
-      }
-    });
-
-    cacheRootsByUrls(missedRootUrls);
-  }
-
-  /**
-   * Usually we cache the roots during {@link #findRoot(String, NewVirtualFileSystem)} call, so at a given
-   * moment some roots _could_ be not (yet) cached. So we need to force idToDirCache to cache the root it
    * misses
    */
-  private void cacheSingleMissedRootFromPersistence(int rootId) {
-    //better to collect roots first, to not spend too much time holding root lock inside .forEachRoot()
+  private void cacheMissedRootFromPersistence(int rootId) {
     List<String> missedRootUrl = new ArrayList<>(1);
     vfsPeer.forEachRoot((rootUrl, rootFileId) -> {
       if (rootId == rootFileId) {
@@ -1698,34 +1669,22 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
         }
         else {
           //RC: currentId is root, but not cached -- it is OK, root _could_ be not (yet) cached, since
-          //    idToDirCache caches a root only during PersistentFSImpl.findRoot() call -- could be not
-          //    all the roots known to FSRecords were requested at a given moment.
+          //    idToDirCache caches a root only during PersistentFSImpl.findRoot() call -- it could be
+          //    that not all the roots known to FSRecords were requested at a given moment.
           //    => we need to force idToDirCache to cache the root it misses:
-          boolean shouldCacheAllRoots = CACHE_MISSED_ROOTS_ALL_AT_ONCE && missedRootsLoaded.compareAndSet(false, true);
-          if (shouldCacheAllRoots || CACHE_MISSED_ROOTS_ONE_BY_ONE) {
-            if (shouldCacheAllRoots) {
-              //Call it only once, because it could be some roots are repeatedly not resolved
-              // because apt FileSystem wasn't registered (yet -- or at all), and this could make
-              // everything slow.
-              // MAYBE: reset missedRootsLoaded if new FileSystem registered?
-              cacheAllMissedRootsFromPersistence();
-            }
-            else {// if CACHE_MISSED_ROOTS_ONE_BY_ONE
-              cacheSingleMissedRootFromPersistence(currentId);
-            }
+          cacheMissedRootFromPersistence(currentId);
 
-            foundParent = myIdToDirCache.getCachedDir(currentId);
-            if (foundParent != null) {
-              //currentId is in the list, but shouldn't be, if it is == foundParent
-              // => remove it
-              if (parentIds != null && !parentIds.isEmpty()) {
-                parentIds.removeInt(parentIds.size() - 1);
-              }
-              else {
-                parentIds = null;
-              }
-              return;
+          foundParent = myIdToDirCache.getCachedDir(currentId);
+          if (foundParent != null) {
+            //currentId is in the list, but shouldn't be, if it is == foundParent
+            // => remove it
+            if (parentIds != null && !parentIds.isEmpty()) {
+              parentIds.removeInt(parentIds.size() - 1);
             }
+            else {
+              parentIds = null;
+            }
+            return;
           }
 
 
