@@ -1,11 +1,18 @@
 <component name="libraryTable">
-  <library name="kotlinc.kotlin-scripting-common">
+  <library name="kotlinc.kotlin-scripting-common" type="repository">
+    <properties include-transitive-deps="false" maven-id="org.jetbrains.kotlin:kotlin-scripting-common:1.9.30-dev-2548">
+      <verification>
+        <artifact url="file://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-scripting-common/1.9.30-dev-2548/kotlin-scripting-common-1.9.30-dev-2548.jar">
+          <sha256sum>c21d1f64572a8a47409dd4c96eb9931d0df1e64d7997fe7d75d93133425b667a</sha256sum>
+        </artifact>
+      </verification>
+    </properties>
     <CLASSES>
-      <root url="jar://$PROJECT_DIR$/../build/repo/org/jetbrains/kotlin/kotlin-scripting-common/1.9.255/kotlin-scripting-common-1.9.255.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-scripting-common/1.9.30-dev-2548/kotlin-scripting-common-1.9.30-dev-2548.jar!/" />
     </CLASSES>
     <JAVADOC />
     <SOURCES>
-      <root url="jar://$PROJECT_DIR$/../build/repo/org/jetbrains/kotlin/kotlin-scripting-common/1.9.255/kotlin-scripting-common-1.9.255-sources.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-scripting-common/1.9.30-dev-2548/kotlin-scripting-common-1.9.30-dev-2548-sources.jar!/" />
     </SOURCES>
   </library>
 </component>
