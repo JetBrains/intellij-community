@@ -12,6 +12,7 @@ import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.TestOnly;
 
 import javax.swing.*;
 import javax.swing.event.CellEditorListener;
@@ -178,6 +179,11 @@ public class ComboBoxTableRenderer<T> extends JLabel implements TableCellRendere
   private void stopCellEditing(T value) {
     myValue = value;
     stopCellEditing();
+  }
+
+  @TestOnly
+  public void chooseItem(int idx) {
+    stopCellEditing(myValues[idx]);
   }
 
   @Override
