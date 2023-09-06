@@ -4,7 +4,7 @@ package org.jetbrains.kotlin.idea.codeinsights.impl.base.intentions
 import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
 import org.jetbrains.kotlin.analysis.api.calls.singleFunctionCallOrNull
 import org.jetbrains.kotlin.idea.base.analysis.api.utils.CallParameterInfoProvider
-import org.jetbrains.kotlin.idea.parameterInfo.isArrayOfCall
+import org.jetbrains.kotlin.idea.base.analysis.api.utils.isArrayOfCall
 import org.jetbrains.kotlin.psi.KtCallElement
 import org.jetbrains.kotlin.psi.KtValueArgument
 

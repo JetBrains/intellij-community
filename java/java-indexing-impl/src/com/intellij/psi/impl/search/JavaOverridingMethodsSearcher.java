@@ -2,6 +2,7 @@
 package com.intellij.psi.impl.search;
 
 import com.intellij.ide.highlighter.JavaFileType;
+import com.intellij.lang.Language;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.fileTypes.FileTypeRegistry;
@@ -145,6 +146,15 @@ public class JavaOverridingMethodsSearcher implements QueryExecutor<PsiMethod, O
 
     public OverridingMethodsSearch.SearchParameters getOriginalParameters() {
       return myOriginalParameters;
+    }
+
+    @Override
+    public boolean shouldSearchInLanguage(@NotNull Language language) {
+      PsiClass aClass = getClassToProcess();
+      if (ReadAction.compute(() -> aClass.isEnum())) {
+        return language == aClass.getLanguage();
+      }
+      return super.shouldSearchInLanguage(language);
     }
   }
   

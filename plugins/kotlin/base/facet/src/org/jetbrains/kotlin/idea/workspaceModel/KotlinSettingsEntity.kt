@@ -57,6 +57,8 @@ interface KotlinSettingsEntity : ModuleSettingsBase {
 
     // Check weather it can be nullable (along with productionOutputPath and testOutputPath)
     val compilerSettings: CompilerSettings
+
+    val targetPlatform: String
     //externalSystemRunTasks
 
     override val symbolicId: KotlinSettingsId
@@ -64,7 +66,8 @@ interface KotlinSettingsEntity : ModuleSettingsBase {
 
     //region generated code
     @GeneratedCodeApiVersion(2)
-    interface Builder : KotlinSettingsEntity, ModuleSettingsBase.Builder<KotlinSettingsEntity>, WorkspaceEntity.Builder<KotlinSettingsEntity> {
+    interface Builder : KotlinSettingsEntity, ModuleSettingsBase.Builder<KotlinSettingsEntity>,
+                        WorkspaceEntity.Builder<KotlinSettingsEntity> {
         override var entitySource: EntitySource
         override var name: String
         override var moduleId: ModuleId
@@ -86,33 +89,37 @@ interface KotlinSettingsEntity : ModuleSettingsBase {
         override var mergedCompilerArguments: String
         override var compilerArguments: String
         override var compilerSettings: CompilerSettings
+        override var targetPlatform: String
     }
 
     companion object : EntityType<KotlinSettingsEntity, Builder>(ModuleSettingsBase) {
         @JvmOverloads
         @JvmStatic
         @JvmName("create")
-        operator fun invoke(name: String,
-                            moduleId: ModuleId,
-                            sourceRoots: List<String>,
-                            configFileItems: List<ConfigFileItem>,
-                            useProjectSettings: Boolean,
-                            implementedModuleNames: List<String>,
-                            dependsOnModuleNames: List<String>,
-                            additionalVisibleModuleNames: Set<String>,
-                            productionOutputPath: String,
-                            testOutputPath: String,
-                            sourceSetNames: List<String>,
-                            isTestModule: Boolean,
-                            externalProjectId: String,
-                            isHmppEnabled: Boolean,
-                            pureKotlinSourceFolders: List<String>,
-                            kind: KotlinModuleKind,
-                            mergedCompilerArguments: String,
-                            compilerArguments: String,
-                            compilerSettings: CompilerSettings,
-                            entitySource: EntitySource,
-                            init: (Builder.() -> Unit)? = null): KotlinSettingsEntity {
+        operator fun invoke(
+            name: String,
+            moduleId: ModuleId,
+            sourceRoots: List<String>,
+            configFileItems: List<ConfigFileItem>,
+            useProjectSettings: Boolean,
+            implementedModuleNames: List<String>,
+            dependsOnModuleNames: List<String>,
+            additionalVisibleModuleNames: Set<String>,
+            productionOutputPath: String,
+            testOutputPath: String,
+            sourceSetNames: List<String>,
+            isTestModule: Boolean,
+            externalProjectId: String,
+            isHmppEnabled: Boolean,
+            pureKotlinSourceFolders: List<String>,
+            kind: KotlinModuleKind,
+            mergedCompilerArguments: String,
+            compilerArguments: String,
+            compilerSettings: CompilerSettings,
+            targetPlatform: String,
+            entitySource: EntitySource,
+            init: (Builder.() -> Unit)? = null
+        ): KotlinSettingsEntity {
             val builder = builder()
             builder.name = name
             builder.moduleId = moduleId
@@ -133,6 +140,7 @@ interface KotlinSettingsEntity : ModuleSettingsBase {
             builder.mergedCompilerArguments = mergedCompilerArguments
             builder.compilerArguments = compilerArguments
             builder.compilerSettings = compilerSettings
+            builder.targetPlatform = targetPlatform
             builder.entitySource = entitySource
             init?.invoke(builder)
             return builder
@@ -143,11 +151,11 @@ interface KotlinSettingsEntity : ModuleSettingsBase {
 }
 
 //region generated code
-fun MutableEntityStorage.modifyEntity(entity: KotlinSettingsEntity, modification: KotlinSettingsEntity.Builder.() -> Unit) = modifyEntity(
-  KotlinSettingsEntity.Builder::class.java, entity, modification)
+fun MutableEntityStorage.modifyEntity(entity: KotlinSettingsEntity, modification: KotlinSettingsEntity.Builder.() -> Unit) =
+    modifyEntity(KotlinSettingsEntity.Builder::class.java, entity, modification)
 
 var ModuleEntity.Builder.kotlinSettings: @Child List<KotlinSettingsEntity>
-  by WorkspaceEntity.extension()
+        by WorkspaceEntity.extension()
 //endregion
 
 
