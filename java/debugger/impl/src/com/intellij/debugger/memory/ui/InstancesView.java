@@ -24,9 +24,12 @@ import com.intellij.debugger.ui.impl.watch.NodeManagerImpl;
 import com.intellij.debugger.ui.tree.NodeDescriptor;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.registry.Registry;
+import com.intellij.openapi.util.text.HtmlBuilder;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.ui.DoubleClickListener;
 import com.intellij.ui.components.JBLabel;
@@ -46,6 +49,7 @@ import com.intellij.xdebugger.memory.ui.InstancesTree;
 import com.intellij.xdebugger.memory.ui.InstancesViewBase;
 import com.intellij.xdebugger.memory.utils.InstancesProvider;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
@@ -265,28 +269,42 @@ class InstancesView extends InstancesViewBase {
   private class MyFilteringCallback implements FilteringTaskCallback {
     private final ErrorsValueGroup myErrorsGroup = new ErrorsValueGroup();
     private final EvaluationContextImpl myEvaluationContext;
+    private final ProgressIndicator myProgressIndicator;
+
+    private boolean myIsInProcess = false;
 
     private long myFilteringStartedTime;
 
     private int myProceedCount;
     private int myMatchedCount;
     private int myErrorsCount;
+    private int myTotalInstancesCount;
 
     private long myLastTreeUpdatingTime;
     private long myLastProgressUpdatingTime;
 
+    @Nullable
+    private FilteringResult myCompletionReason = null;
+
     MyFilteringCallback(@NotNull EvaluationContextImpl evaluationContext) {
       myEvaluationContext = evaluationContext;
+      myProgressIndicator = getProgress().getProgressIndicator();
     }
 
     private XValueChildrenList myChildren = new XValueChildrenList();
 
     @Override
     public void started(int total) {
+      myTotalInstancesCount = total;
       myFilteringStartedTime = System.nanoTime();
       myLastTreeUpdatingTime = myFilteringStartedTime;
       myLastProgressUpdatingTime = System.nanoTime();
-      ApplicationManager.getApplication().invokeLater(() -> getProgress().start(total));
+      myIsInProcess = false;
+      myErrorsCount = 0;
+      myProceedCount = 0;
+      myMatchedCount = 0;
+      myCompletionReason = null;
+      ApplicationManager.getApplication().invokeLater(() -> myProgressIndicator.start());
     }
 
     @NotNull
@@ -335,27 +353,28 @@ class InstancesView extends InstancesViewBase {
                              TimeUnit.NANOSECONDS.toMillis(duration),
                              myProceedCount));
 
-      final int proceed = myProceedCount;
-      final int matched = myMatchedCount;
-      final int errors = myErrorsCount;
       final XValueChildrenList childrenList = myChildren;
       ApplicationManager.getApplication().invokeLater(() -> {
-        getProgress().updateProgress(proceed, matched, errors);
+        updateIndicator();
         myInstancesTree.addChildren(childrenList, true);
         getFilterButton().setEnabled(true);
-        getProgress().complete(reason);
+        myIsInProcess = false;
+        myCompletionReason = reason;
+        myProgressIndicator.stop();
       });
     }
 
     private void updateProgress() {
       final long now = System.nanoTime();
       if (now - myLastProgressUpdatingTime > TimeUnit.MILLISECONDS.toNanos(FILTERING_PROGRESS_UPDATING_MIN_DELAY_MILLIS)) {
-        final int proceed = myProceedCount;
-        final int matched = myMatchedCount;
-        final int errors = myErrorsCount;
-        ApplicationManager.getApplication().invokeLater(() -> getProgress().updateProgress(proceed, matched, errors));
+        ApplicationManager.getApplication().invokeLater(() -> updateIndicator());
         myLastProgressUpdatingTime = now;
       }
+    }
+
+    private void updateIndicator() {
+      myProgressIndicator.setFraction((double)myProceedCount / myTotalInstancesCount);
+      myProgressIndicator.setText(getDescription());
     }
 
     private void updateTree() {
@@ -368,6 +387,31 @@ class InstancesView extends InstancesViewBase {
         myChildren = new XValueChildrenList();
         myLastTreeUpdatingTime = System.nanoTime();
       }
+    }
+
+    private @NlsContexts.ProgressText String getDescription() {
+      String itemsInfo = JavaDebuggerBundle.message("progress.text.shown.x.of.y", myMatchedCount, myTotalInstancesCount);
+      if (myIsInProcess || myCompletionReason == null) {
+        return itemsInfo;
+      }
+
+      switch (myCompletionReason) {
+        case ALL_CHECKED:
+          break;
+        case INTERRUPTED:
+          itemsInfo += " " + JavaDebuggerBundle.message("progress.suffix.filtering.has.been.interrupted");
+          break;
+        case LIMIT_REACHED:
+          itemsInfo += " " + JavaDebuggerBundle.message("progress.suffix.limit.has.been.reached");
+          break;
+      }
+
+      if (myErrorsCount != 0) {
+        String errors = JavaDebuggerBundle.message("progress.text.errors.count", myErrorsCount);
+        return new HtmlBuilder().append(itemsInfo).br().append(errors).wrapWith("html").toString();
+      }
+
+      return itemsInfo;
     }
   }
 
