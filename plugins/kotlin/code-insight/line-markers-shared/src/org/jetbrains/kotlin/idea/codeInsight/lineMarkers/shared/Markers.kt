@@ -1,7 +1,7 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.codeInsight.lineMarkers.shared
 
-import com.intellij.ide.util.DefaultPsiElementCellRenderer
+import com.intellij.codeInsight.navigation.impl.PsiTargetPresentationRenderer
 import com.intellij.openapi.editor.Document
 import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.PsiElement
@@ -105,8 +105,8 @@ fun KtNamedDeclaration.areMarkersForbidden(
     return false
 }
 
-class ActualExpectedPsiElementCellRenderer : DefaultPsiElementCellRenderer() {
-    override fun getContainerText(element: PsiElement?, name: String?): String = ""
+class ActualExpectedPsiElementCellRenderer : PsiTargetPresentationRenderer<PsiElement>() {
+    override fun getContainerText(element: PsiElement): String = ""
 }
 
 @ApiStatus.Internal

@@ -2,21 +2,33 @@
 
 package org.jetbrains.kotlin.idea.codeInsight;
 
-import com.intellij.ide.util.DefaultPsiElementCellRenderer;
+import com.intellij.codeInsight.navigation.impl.PsiTargetPresentationRenderer;
+import com.intellij.platform.backend.presentation.TargetPresentation;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.presentation.java.SymbolPresentationUtil;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.kotlin.descriptors.DeclarationDescriptor;
 import org.jetbrains.kotlin.idea.caches.resolve.ResolutionUtils;
 import org.jetbrains.kotlin.psi.KtNamedFunction;
 import org.jetbrains.kotlin.renderer.DescriptorRenderer;
 import org.jetbrains.kotlin.resolve.lazy.BodyResolveMode;
 
-public class KtFunctionPsiElementCellRenderer extends DefaultPsiElementCellRenderer {
+public class KtFunctionPsiElementCellRenderer extends PsiTargetPresentationRenderer<PsiElement> {
     @Override
-    public String getElementText(PsiElement element) {
+    public @NotNull String getElementText(@NotNull PsiElement element) {
         if (element instanceof KtNamedFunction function) {
           DeclarationDescriptor descriptor = ResolutionUtils.unsafeResolveToDescriptor(function, BodyResolveMode.PARTIAL);
-            return DescriptorRenderer.SHORT_NAMES_IN_TYPES.render(descriptor);
+            return DescriptorRenderer.SHORT_NAMES_IN_TYPES.render(descriptor); //NON-NLS
         }
         return super.getElementText(element);
+    }
+
+    @NotNull
+    @Override
+    public TargetPresentation getPresentation(@NotNull PsiElement element) {
+        return TargetPresentation.builder(getElementText(element))
+                .containerText(SymbolPresentationUtil.getSymbolContainerText(element))
+                .icon(getIcon(element))
+                .presentation();
     }
 }
