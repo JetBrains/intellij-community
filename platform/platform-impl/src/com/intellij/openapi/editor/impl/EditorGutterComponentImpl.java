@@ -805,7 +805,7 @@ final class EditorGutterComponentImpl extends EditorGutterComponentEx implements
               int iconX = offset - icon.getIconWidth();
               int iconY = y + (visLinesIterator.getLineHeight() - icon.getIconHeight()) / 2;
               float alpha = JBUI.getFloat("Breakpoint.iconHoverAlpha", 0.5f);
-              alpha = alpha > 1f ? 1f : Math.max(alpha, 0f);
+              alpha = Math.max(0, Math.min(alpha, 1));
               GraphicsUtil.paintWithAlpha(g, alpha, () -> icon.paintIcon(this, g, iconX, iconY));
             }
           }
