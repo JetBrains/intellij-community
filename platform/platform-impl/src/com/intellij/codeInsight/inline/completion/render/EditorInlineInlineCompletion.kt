@@ -72,7 +72,8 @@ class EditorInlineInlineCompletion(private val editor: Editor) : InlineCompletio
     editor.inlayModel.execute(true) {
       // wrapping into a batch to notify inlay listeners after the hint is added
       val element = editor.inlayModel.addInlineElement(offset, true, InlineSuffixRenderer(editor, line)) ?: return@execute
-      element.addActionAvailabilityHint(EditorActionAvailabilityHint("InsertInlineCompletionAction", EditorActionAvailabilityHint.AvailabilityCondition.CaretOnStart))Disposer.tryRegister(this, element)
+      element.addActionAvailabilityHint(EditorActionAvailabilityHint("InsertInlineCompletionAction", EditorActionAvailabilityHint.AvailabilityCondition.CaretOnStart))
+      Disposer.tryRegister(this, element)
       suffixInlay = element
     }
   }
