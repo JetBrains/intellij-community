@@ -1,7 +1,6 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.warmup.util
 
-import com.intellij.configurationStore.saveProjectsAndApp
 import com.intellij.conversion.ConversionListener
 import com.intellij.conversion.ConversionService
 import com.intellij.ide.CommandLineInspectionProjectConfigurator
@@ -10,7 +9,7 @@ import com.intellij.ide.impl.OpenProjectTask
 import com.intellij.ide.impl.PatchProjectUtil
 import com.intellij.ide.impl.ProjectUtil
 import com.intellij.ide.impl.runUnderModalProgressIfIsEdt
-import com.intellij.ide.observation.ActivityInProgressPredicate
+import com.intellij.ide.observation.Observation
 import com.intellij.ide.warmup.WarmupConfigurator
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.readAction
@@ -30,7 +29,6 @@ import com.intellij.warmup.impl.WarmupConfiguratorOfCLIConfigurator
 import com.intellij.warmup.impl.getCommandLineReporter
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.delay
 import kotlinx.coroutines.withContext
 import java.nio.file.Path
 import java.util.*
@@ -89,7 +87,9 @@ private suspend fun importOrOpenProjectImpl(args: OpenProjectArgs): Project {
 
   if (isPredicateBasedWarmup()) {
     runTaskAndLogTime("awaiting completion predicates") {
-      awaitConfigurationPredicates(project)
+      withLoggingProgressReporter {
+        Observation.awaitConfigurationPredicates(project)
+      }
     }
   }
 
@@ -157,39 +157,6 @@ private val listener = object : ConversionListener {
   override fun cannotWriteToFiles(readonlyFiles: List<Path>) {
     WarmupLogger.logInfo("PROGRESS: Project conversion failed for:\n" + readonlyFiles.joinToString("\n"))
   }
-}
-
-private suspend fun awaitConfigurationPredicates(project: Project) {
-  while (true) {
-    val wasModified = doAwaitConfigurationPredicates(project)
-    if (!wasModified) {
-      WarmupLogger.logInfo("The project is configured completely.")
-      break
-    } else {
-      WarmupLogger.logInfo("Modified files are saved. Checking if it triggered configuration process...")
-    }
-  }
-}
-
-private suspend fun doAwaitConfigurationPredicates(project: Project) : Boolean {
-  var isModificationOccurred = false
-  predicateLoop@ while (true) {
-    for (processBusyPredicate in ActivityInProgressPredicate.EP_NAME.extensionList) {
-      if (processBusyPredicate.isInProgress(project)) {
-        isModificationOccurred = true
-        WarmupLogger.logInfo("'${processBusyPredicate.presentableName}' is in running...")
-        delay(1000)
-        continue@predicateLoop
-      }
-    }
-    break
-  }
-
-  WarmupLogger.logInfo("All predicates are completed. Saving files...")
-
-  saveProjectsAndApp(true)
-
-  return isModificationOccurred
 }
 
 

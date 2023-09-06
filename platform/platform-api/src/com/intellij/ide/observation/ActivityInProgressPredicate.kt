@@ -17,6 +17,9 @@ import org.jetbrains.annotations.ApiStatus.Experimental
  * - A build system plugin often needs to communicate with an external tool.
  *   The implementation for a build system plugin therefore should indicate if the communication is in progress
  *   or if the configuration is not completed yet.
+ *
+ * If your subsystem does not already have a way to detect configuration process,
+ * you may consider using [com.intellij.ide.observation.AbstractInProgressService]
  */
 @Experimental
 interface ActivityInProgressPredicate {
