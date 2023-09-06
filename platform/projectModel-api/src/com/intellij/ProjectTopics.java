@@ -14,10 +14,11 @@ public final class ProjectTopics {
   public static final Topic<ModuleRootListener> PROJECT_ROOTS = ModuleRootListener.TOPIC;
 
   /**
-   * Modules added, removed, or renamed in project.
+   * @deprecated use {@link ModuleListener#TOPIC} instead
    */
+  @Deprecated 
   @Topic.ProjectLevel
-  public static final Topic<ModuleListener> MODULES = new Topic<>(ModuleListener.class, Topic.BroadcastDirection.NONE);
+  public static final Topic<ModuleListener> MODULES = ModuleListener.TOPIC;
 
   private ProjectTopics() {
   }
