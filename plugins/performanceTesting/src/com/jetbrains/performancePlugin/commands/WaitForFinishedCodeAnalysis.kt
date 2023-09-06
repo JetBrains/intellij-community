@@ -3,7 +3,6 @@ package com.jetbrains.performancePlugin.commands
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer.DaemonListener
 import com.intellij.codeInsight.daemon.impl.DaemonCodeAnalyzerImpl
-import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.application.invokeLater
 import com.intellij.openapi.diagnostic.logger
@@ -38,8 +37,19 @@ class WaitForFinishedCodeAnalysis(text: String, line: Int) : AbstractCommand(tex
     connection.subscribe(DaemonCodeAnalyzer.DAEMON_EVENT_TOPIC, object : DaemonListener {
       @Volatile
       private var canceled: Boolean = false
+      @Volatile
+      private var daemonStartTrace: Exception? = null
 
       override fun daemonStarting(fileEditors: Collection<FileEditor>) {
+        if (daemonStartTrace != null) {
+          val errMsg = "Overlapping highlighting sessions"
+          val err = AssertionError(errMsg)
+          err.addSuppressed(Exception("Current daemon start trace"))
+          err.addSuppressed(daemonStartTrace)
+          LOG.error(err)
+          actionCallback.reject(errMsg)
+        }
+        daemonStartTrace = Exception("Previous daemon start trace")
         canceled = false
       }
 
@@ -48,12 +58,11 @@ class WaitForFinishedCodeAnalysis(text: String, line: Int) : AbstractCommand(tex
       }
 
       override fun daemonFinished(fileEditors: Collection<FileEditor>) {
-        val editor = fileEditors.filterIsInstance<TextEditor>().firstOrNull() ?: return
-        val entireFileHighlighted = DaemonCodeAnalyzerImpl.isHighlightingCompleted(editor, project)
+        daemonStartTrace = null
+        val fileEditor = fileEditors.filterIsInstance<TextEditor>().firstOrNull()!!
+        val entireFileHighlighted = DaemonCodeAnalyzerImpl.isHighlightingCompleted(fileEditor, project)
 
         if (!canceled && entireFileHighlighted && !DumbService.isDumb(project)) {
-          // ensure other listeners have been executed
-          ApplicationManager.getApplication().assertIsDispatchThread()
           invokeLater {
             wasEntireFileHighlighted.set(entireFileHighlighted)
 

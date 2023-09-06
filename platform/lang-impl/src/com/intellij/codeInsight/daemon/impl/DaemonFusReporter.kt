@@ -33,7 +33,7 @@ open class DaemonFusReporter(private val project: Project) : DaemonCodeAnalyzer.
   private var dirtyRange: TextRange? = null
   private var initialEntireFileHighlightingActivity: Activity? = null
   private var initialEntireFileHighlightingReported: Boolean = false
-  private var docPreviousAnalyzedModificationStamp: Long = 0
+  private var docPreviousAnalyzedModificationStamp: Long = -1L
   private var documentStartedHash: Int = 0 // Document the `daemonStarting` event was received for. Store the hash instead of Document instance to avoid leaks
 
   @Volatile
@@ -75,7 +75,7 @@ open class DaemonFusReporter(private val project: Project) : DaemonCodeAnalyzer.
       return
     }
 
-    if (document != null && docPreviousAnalyzedModificationStamp == document.modificationStamp && initialEntireFileHighlightingReported) {
+    if (document != null && docPreviousAnalyzedModificationStamp == document.modificationStamp) {
       // Don't report 'finished' event in case of no changes in the document
       return
     }
@@ -114,7 +114,9 @@ open class DaemonFusReporter(private val project: Project) : DaemonCodeAnalyzer.
       DaemonFusCollector.CANCELED with canceled,
       DaemonFusCollector.DUMB_MODE with isDumbMode,
     )
-    docPreviousAnalyzedModificationStamp = document?.modificationStamp ?: 0
+    if (!canceled) {
+      docPreviousAnalyzedModificationStamp = document?.modificationStamp ?: 0
+    }
   }
 }
 

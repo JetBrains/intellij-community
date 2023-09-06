@@ -742,17 +742,12 @@ public final class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx implement
   // return true if the progress really was canceled
   synchronized void cancelAllUpdateProgresses(boolean toRestartAlarm, @NotNull @NonNls String reason) {
     if (myDisposed || myProject.isDisposed() || myProject.getMessageBus().isDisposed()) return;
-    boolean canceled = false;
     for (DaemonProgressIndicator updateProgress : myUpdateProgress.values()) {
       if (!updateProgress.isCanceled()) {
         PassExecutorService.log(updateProgress, null, "Cancel", reason, toRestartAlarm);
-        updateProgress.cancel();
+        updateProgress.cancel(reason);
         myPassExecutorService.cancelAll(false);
-        canceled = true;
       }
-    }
-    if (canceled) {
-      myDaemonListenerPublisher.daemonCancelEventOccurred(reason);
     }
     daemonCancelEventCount.incrementAndGet();
   }
@@ -1197,16 +1192,23 @@ public final class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx implement
     }
 
     @Override
-    boolean stopIfRunning() {
-      boolean wasStopped = super.stopIfRunning();
-      if (wasStopped) {
-        DaemonCodeAnalyzerImpl daemon = (DaemonCodeAnalyzerImpl)DaemonCodeAnalyzer.getInstance(myProject);
-        daemon.myDaemonListenerPublisher.daemonFinished(List.of(myFileEditor));
-        myFileEditor = null;
-        HighlightingSessionImpl.clearProgressIndicator(this);
-        daemon.completeEssentialHighlightingRequested = false;
-      }
-      return wasStopped;
+    public void onCancelled(@NotNull String reason) {
+      DaemonCodeAnalyzerImpl daemon = (DaemonCodeAnalyzerImpl)DaemonCodeAnalyzer.getInstance(myProject);
+      daemon.myDaemonListenerPublisher.daemonCancelEventOccurred(reason);
+      markAsFinished(daemon);
+    }
+
+    @Override
+    public void onStop() {
+      DaemonCodeAnalyzerImpl daemon = (DaemonCodeAnalyzerImpl)DaemonCodeAnalyzer.getInstance(myProject);
+      markAsFinished(daemon);
+      HighlightingSessionImpl.clearProgressIndicator(this);
+      daemon.completeEssentialHighlightingRequested = false;
+    }
+
+    private void markAsFinished(@NotNull DaemonCodeAnalyzerImpl daemon) {
+      daemon.myDaemonListenerPublisher.daemonFinished(List.of(myFileEditor));
+      myFileEditor = null;
     }
   }
 
