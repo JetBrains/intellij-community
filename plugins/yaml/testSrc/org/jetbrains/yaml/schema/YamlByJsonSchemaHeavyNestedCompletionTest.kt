@@ -72,7 +72,7 @@ class YamlByJsonSchemaHeavyNestedCompletionTest: JsonBySchemaHeavyCompletionTest
       """.trimIndent())
   }
 
-  fun `tested array item completion into existing property`() {
+  fun `test array item completion into existing property`() {
     assertThatSchema("""
       {
         "properties": {
@@ -104,7 +104,7 @@ class YamlByJsonSchemaHeavyNestedCompletionTest: JsonBySchemaHeavyCompletionTest
       """.trimIndent())
   }
 
-  fun `tested nested array item completion into existing property`() {
+  fun `test nested array item completion into existing property`() {
     assertThatSchema("""
       {
         "properties": {
@@ -143,7 +143,7 @@ class YamlByJsonSchemaHeavyNestedCompletionTest: JsonBySchemaHeavyCompletionTest
       """.trimIndent())
   }
 
-  fun `tested array item completion into existing property while inside a property`() {
+  fun `test array item completion into existing property while inside a property`() {
     assertThatSchema("""
       {
         "properties": {

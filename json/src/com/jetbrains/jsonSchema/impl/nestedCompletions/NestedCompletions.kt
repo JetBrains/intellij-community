@@ -11,6 +11,7 @@ import com.intellij.openapi.editor.LogicalPosition
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
+import com.intellij.refactoring.suggested.endOffset
 import com.intellij.refactoring.suggested.startOffset
 import com.intellij.util.applyIf
 import com.jetbrains.jsonSchema.extension.JsonLikePsiWalker
@@ -91,10 +92,10 @@ private fun NestedCompletionMoveData.performMove(completedRange: CompletedRange,
                                                  completedElement: PsiElement,
                                                  editor: Editor,
                                                  file: PsiFile) {
-  val caret = editor.caretModel
+  val caretModel = editor.caretModel
   val text = editor.document.charsSequence
 
-  val oldCaretState = caret.caretsAndSelections.singleOrNull()?.capturedCaretState(editor, relativeOffset = completedRange.startOffset)
+  val oldCaretState = caretModel.caretsAndSelections.singleOrNull()?.capturedCaretState(editor, relativeOffset = completedRange.startOffset)
 
   val (additionalCaretOffset, fullTextWithoutCorrectingNewline) = createTextWrapper(treeWalker, wrappingPath)
     .wrapText(
@@ -121,7 +122,7 @@ private fun NestedCompletionMoveData.performMove(completedRange: CompletedRange,
       insertString(insertionOffset - takePrecedingNewline.toInt(), fullText)
       oldCaretState
         ?.restored(editor, newRelativeOffset = insertionOffset + (additionalCaretOffset ?: 0))
-        ?.sideEffect { restoredCaret -> caret.caretsAndSelections = listOf(restoredCaret) }
+        ?.sideEffect { restoredCaret -> caretModel.caretsAndSelections = listOf(restoredCaret) }
     }
   )
 }
@@ -267,6 +268,11 @@ private data class TextWithAdditionalCaretOffset(val offset: Int?, val text: Str
 private fun TextWithAdditionalCaretOffset.withTextPrefixedBy(prefix: String) =
   TextWithAdditionalCaretOffset(offset?.plus(prefix.length), prefix + text)
 
+/**
+ * Represents how the completion should be split.
+ * [destination] is the existing object where the completion will be inserted
+ * [wrappingPath] is the keys in which the completion needs to be wrapped.
+ */
 private class NestedCompletionMoveData(val destination: PsiElement?, val wrappingPath: List<String>)
 
 private fun createMoveData(treeWalker: JsonLikePsiWalker, completedElement: PsiElement, accessor: List<String>): NestedCompletionMoveData {
