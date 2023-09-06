@@ -168,6 +168,11 @@ public class KeywordCompletionTestGenerated extends AbstractKeywordCompletionTes
         runTest("../testData/keywords/FixingLayoutAndReturn.kt");
     }
 
+    @TestMetadata("FunInterface.kt")
+    public void testFunInterface() throws Exception {
+        runTest("../testData/keywords/FunInterface.kt");
+    }
+
     @TestMetadata("GlobalPropertyAccessors.kt")
     public void testGlobalPropertyAccessors() throws Exception {
         runTest("../testData/keywords/GlobalPropertyAccessors.kt");

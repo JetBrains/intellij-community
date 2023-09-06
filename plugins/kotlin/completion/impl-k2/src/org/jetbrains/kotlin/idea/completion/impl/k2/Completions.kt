@@ -38,9 +38,13 @@ internal object Completions {
             }
 
             is FirTypeNameReferencePositionContext -> {
-                complete(factory.classifierContributor(0), positionContext, weighingContext, sessionParameters)
+                if (sessionParameters.allowClassifiersAndPackagesForPossibleExtensionCallables) {
+                    complete(factory.classifierContributor(0), positionContext, weighingContext, sessionParameters)
+                }
                 complete(factory.keywordContributor(1), positionContext, weighingContext, sessionParameters)
-                complete(factory.packageCompletionContributor(2), positionContext, weighingContext, sessionParameters)
+                if (sessionParameters.allowClassifiersAndPackagesForPossibleExtensionCallables) {
+                    complete(factory.packageCompletionContributor(2), positionContext, weighingContext, sessionParameters)
+                }
                 // For `val` and `fun` completion. For example, with `val i<caret>`, the fake file contains `val iX.f`. Hence a
                 // FirTypeNameReferencePositionContext is created because `iX` is parsed as a type reference.
                 complete(factory.declarationFromUnresolvedNameContributor(1), positionContext, weighingContext, sessionParameters)

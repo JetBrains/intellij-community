@@ -170,6 +170,11 @@ public abstract class FirKeywordCompletionTestGenerated extends AbstractFirKeywo
             runTest("../completion/testData/keywords/FixingLayoutAndReturn.kt");
         }
 
+        @TestMetadata("FunInterface.kt")
+        public void testFunInterface() throws Exception {
+            runTest("../completion/testData/keywords/FunInterface.kt");
+        }
+
         @TestMetadata("GlobalPropertyAccessors.kt")
         public void testGlobalPropertyAccessors() throws Exception {
             runTest("../completion/testData/keywords/GlobalPropertyAccessors.kt");

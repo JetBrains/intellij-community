@@ -601,9 +601,39 @@ public abstract class K1JSBasicCompletionTestGenerated extends AbstractK1JSBasic
                 runTest("../testData/basic/common/extensionDeclarations/ExtensionFunReceiverForce.kt");
             }
 
+            @TestMetadata("ExtensionFunReceiverInvocationCall0.kt")
+            public void testExtensionFunReceiverInvocationCall0() throws Exception {
+                runTest("../testData/basic/common/extensionDeclarations/ExtensionFunReceiverInvocationCall0.kt");
+            }
+
+            @TestMetadata("ExtensionFunReceiverLowerCase.kt")
+            public void testExtensionFunReceiverLowerCase() throws Exception {
+                runTest("../testData/basic/common/extensionDeclarations/ExtensionFunReceiverLowerCase.kt");
+            }
+
+            @TestMetadata("ExtensionFunReceiverLowerCaseWithInvocationCall.kt")
+            public void testExtensionFunReceiverLowerCaseWithInvocationCall() throws Exception {
+                runTest("../testData/basic/common/extensionDeclarations/ExtensionFunReceiverLowerCaseWithInvocationCall.kt");
+            }
+
             @TestMetadata("ExtensionInsideFunction.kt")
             public void testExtensionInsideFunction() throws Exception {
                 runTest("../testData/basic/common/extensionDeclarations/ExtensionInsideFunction.kt");
+            }
+
+            @TestMetadata("ExtensionPropReceiver.kt")
+            public void testExtensionPropReceiver() throws Exception {
+                runTest("../testData/basic/common/extensionDeclarations/ExtensionPropReceiver.kt");
+            }
+
+            @TestMetadata("ExtensionPropReceiverLowerCase.kt")
+            public void testExtensionPropReceiverLowerCase() throws Exception {
+                runTest("../testData/basic/common/extensionDeclarations/ExtensionPropReceiverLowerCase.kt");
+            }
+
+            @TestMetadata("ExtensionPropReceiverLowerCaseWithInvocationCall.kt")
+            public void testExtensionPropReceiverLowerCaseWithInvocationCall() throws Exception {
+                runTest("../testData/basic/common/extensionDeclarations/ExtensionPropReceiverLowerCaseWithInvocationCall.kt");
             }
 
             @TestMetadata("FunctionTypeParameterAsReceiver1.kt")

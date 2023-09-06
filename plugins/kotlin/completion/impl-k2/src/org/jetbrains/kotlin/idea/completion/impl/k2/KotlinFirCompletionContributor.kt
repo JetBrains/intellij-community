@@ -22,6 +22,8 @@ import org.jetbrains.kotlin.kdoc.lexer.KDocTokens
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.platform.isMultiPlatform
 import org.jetbrains.kotlin.psi.KtFile
+import org.jetbrains.kotlin.psi.KtNamedFunction
+import org.jetbrains.kotlin.psi.KtProperty
 
 class KotlinFirCompletionContributor : CompletionContributor() {
     init {
@@ -119,7 +121,7 @@ private object KotlinFirCompletionProvider : CompletionProvider<CompletionParame
         positionContext: FirRawPositionCompletionContext,
         result: CompletionResultSet
     ): CompletionSorter = CompletionSorter.defaultSorter(parameters, result.prefixMatcher)
-            .let { Weighers.addWeighersToCompletionSorter(it, positionContext) }
+        .let { Weighers.addWeighersToCompletionSorter(it, positionContext) }
 
     private val AFTER_NUMBER_LITERAL = PsiJavaPatterns.psiElement().afterLeafSkipping(
         PsiJavaPatterns.psiElement().withText(""),
@@ -156,4 +158,10 @@ internal data class FirCompletionSessionParameters(
 
     val allowJavaGettersAndSetters: Boolean = !allowSyntheticJavaProperties || basicContext.parameters.invocationCount > 1
     val allowExpectedDeclarations: Boolean = basicContext.originalKtFile.moduleInfo.platform.isMultiPlatform()
+
+    val allowClassifiersAndPackagesForPossibleExtensionCallables: Boolean =
+        !(basicContext.parameters.invocationCount == 0
+                && positionContext is FirTypeNameReferencePositionContext
+                && (positionContext.typeReference?.parent is KtNamedFunction || positionContext.typeReference?.parent is KtProperty)
+                && basicContext.prefixMatcher.prefix.takeIf { it.isNotEmpty() }?.let { it[0].isLowerCase() } ?: false)
 }
