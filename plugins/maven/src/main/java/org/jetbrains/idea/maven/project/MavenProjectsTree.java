@@ -528,6 +528,8 @@ public final class MavenProjectsTree {
     private final ProgressIndicator process;
     private final ConcurrentHashMap<VirtualFile, Boolean> updated = new ConcurrentHashMap<>();
     private final boolean updateModules;
+    private final long userSettingsTimestamp;
+    private final long globalSettingsTimestamp;
 
     MavenProjectsTreeUpdater(MavenProjectsTree tree,
                              MavenExplicitProfiles profiles,
@@ -543,6 +545,8 @@ public final class MavenProjectsTree {
       generalSettings = settings;
       this.process = process;
       this.updateModules = updateModules;
+      userSettingsTimestamp = getFileTimestamp(generalSettings.getEffectiveUserSettingsFile());
+      globalSettingsTimestamp = getFileTimestamp(generalSettings.getEffectiveGlobalSettingsFile());
     }
 
     private boolean startUpdate(VirtualFile mavenProjectFile, boolean forceRead) {
@@ -612,9 +616,6 @@ public final class MavenProjectsTree {
         long jvmConfigTimestamp = getFileTimestamp(jvmConfigFile);
         VirtualFile mavenConfigFile = MavenUtil.getConfigFile(mavenProject, MavenConstants.MAVEN_CONFIG_RELATIVE_PATH);
         long mavenConfigTimestamp = getFileTimestamp(mavenConfigFile);
-
-        long userSettingsTimestamp = getFileTimestamp(generalSettings.getEffectiveUserSettingsFile());
-        long globalSettingsTimestamp = getFileTimestamp(generalSettings.getEffectiveGlobalSettingsFile());
 
         int profilesHashCode = explicitProfiles.hashCode();
 
