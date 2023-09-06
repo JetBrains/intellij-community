@@ -16976,6 +16976,11 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
             runTest("testData/inspectionsLocal/unusedSymbol/enumSecondaryConstructor.kt");
         }
 
+        @TestMetadata("expectFunctionParameter.kt")
+        public void testExpectFunctionParameter() throws Exception {
+            runTest("testData/inspectionsLocal/unusedSymbol/expectFunctionParameter.kt");
+        }
+
         @TestMetadata("functionLiteralParameters.kt")
         public void testFunctionLiteralParameters() throws Exception {
             runTest("testData/inspectionsLocal/unusedSymbol/functionLiteralParameters.kt");

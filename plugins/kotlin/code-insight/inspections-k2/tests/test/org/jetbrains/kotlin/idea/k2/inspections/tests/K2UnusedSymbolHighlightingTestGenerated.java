@@ -78,6 +78,11 @@ public class K2UnusedSymbolHighlightingTestGenerated extends AbstractK2LocalInsp
         runTest("../../../idea/tests/testData/inspectionsLocal/unusedSymbol/enumSecondaryConstructor.kt");
     }
 
+    @TestMetadata("expectFunctionParameter.kt")
+    public void testExpectFunctionParameter() throws Exception {
+        runTest("../../../idea/tests/testData/inspectionsLocal/unusedSymbol/expectFunctionParameter.kt");
+    }
+
     @TestMetadata("functionLiteralParameters.kt")
     public void testFunctionLiteralParameters() throws Exception {
         runTest("../../../idea/tests/testData/inspectionsLocal/unusedSymbol/functionLiteralParameters.kt");
