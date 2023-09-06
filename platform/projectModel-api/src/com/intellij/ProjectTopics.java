@@ -6,12 +6,12 @@ import com.intellij.openapi.roots.ModuleRootListener;
 import com.intellij.util.messages.Topic;
 
 public final class ProjectTopics {
-
   /**
-   * Project root changes.
+   * @deprecated use {@link ModuleRootListener#TOPIC} instead
    */
+  @Deprecated
   @Topic.ProjectLevel
-  public static final Topic<ModuleRootListener> PROJECT_ROOTS = new Topic<>(ModuleRootListener.class);
+  public static final Topic<ModuleRootListener> PROJECT_ROOTS = ModuleRootListener.TOPIC;
 
   /**
    * Modules added, removed, or renamed in project.
