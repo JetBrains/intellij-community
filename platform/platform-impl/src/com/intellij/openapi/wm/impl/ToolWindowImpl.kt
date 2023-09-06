@@ -62,6 +62,7 @@ import org.jetbrains.annotations.ApiStatus
 import java.awt.AWTEvent
 import java.awt.Color
 import java.awt.Component
+import java.awt.Point
 import java.awt.Rectangle
 import java.awt.event.ComponentAdapter
 import java.awt.event.ComponentEvent
@@ -69,6 +70,7 @@ import java.awt.event.InputEvent
 import javax.swing.*
 import javax.swing.text.JTextComponent
 import kotlin.math.abs
+import kotlin.math.sqrt
 
 internal class ToolWindowImpl(val toolWindowManager: ToolWindowManagerImpl,
                               private val id: String,
@@ -800,9 +802,13 @@ internal class ToolWindowImpl(val toolWindowManager: ToolWindowManagerImpl,
 
     private fun getActionHandler(): SpeedSearchActionHandler? {
       val trees = UIUtil.uiTraverser(component)
-        .filter { it is JTree && it.isVisible }
+        .filter { it is JTree && it.isShowing }
         .toMutableList()
-      trees.sortBy { SwingUtilities.convertPoint(it.parent, it.location, component).x }
+      trees.sortBy {
+        val pointOnToolWindow = SwingUtilities.convertPoint(it.parent, it.location, component)
+        // sort by distance from the top-left corner
+        pointOnToolWindow.x * pointOnToolWindow.x + pointOnToolWindow.y * pointOnToolWindow.y
+      }
       return trees.firstNotNullOfOrNull { it.getSpeedSearchActionHandler() }
     }
   }
