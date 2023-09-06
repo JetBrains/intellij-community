@@ -1196,7 +1196,7 @@ private fun patchHiDPI(defaults: UIDefaults) {
   val prevScale = if (prevScaleVal == null) 1f else prevScaleVal as Float
 
   // fix predefined row height if default system font size is not expected
-  val prevRowHeightScale = if (prevScaleVal != null || SystemInfoRt.isMac || SystemInfoRt.isWindows) prevScale else getFontScale(12f)
+  val prevRowHeightScale = prevScale
   patchRowHeight(defaults, "List.rowHeight", prevRowHeightScale)
   patchRowHeight(defaults, "Table.rowHeight", prevRowHeightScale)
   patchRowHeight(defaults, JBUI.CurrentTheme.Tree.rowHeightKey(), prevRowHeightScale)
@@ -1235,12 +1235,8 @@ private fun patchHiDPI(defaults: UIDefaults) {
 
 private fun patchRowHeight(defaults: UIDefaults, key: String, prevScale: Float) {
   val value = defaults.get(key)
-  var rowHeight = if (value is Int) value else 0
-  if (!SystemInfoRt.isMac && !SystemInfoRt.isWindows &&
-      (!LoadingState.APP_STARTED.isOccurred || Registry.`is`("linux.row.height.disabled", true))) {
-    rowHeight = 0
-  }
-  else if (rowHeight <= 0) {
+  val rowHeight = if (value is Int) value else 0
+  if (rowHeight <= 0) {
     LOG.warn("$key = $value in ${UIManager.getLookAndFeel().name}; it may lead to performance degradation")
   }
   @Suppress("UnresolvedPluginConfigReference")
