@@ -570,7 +570,7 @@ public final class MavenProjectsTree {
     }
 
     private boolean readPomIfNeeded(MavenProject mavenProject, boolean forceRead) {
-      var timestamp = tree.calculateTimestamp(mavenProject, explicitProfiles, generalSettings);
+      var timestamp = calculateTimestamp(mavenProject);
       boolean timeStampChanged = !timestamp.equals(tree.myTimestamps.get(mavenProject.getFile()));
       boolean readPom = forceRead || timeStampChanged;
 
@@ -589,7 +589,7 @@ public final class MavenProjectsTree {
         }
         else {
           // ensure timestamp reflects actual parent's timestamp
-          var newTimestamp = tree.calculateTimestamp(mavenProject, explicitProfiles, generalSettings);
+          var newTimestamp = calculateTimestamp(mavenProject);
           tree.myTimestamps.put(mavenProject.getFile(), newTimestamp);
         }
 
@@ -599,6 +599,39 @@ public final class MavenProjectsTree {
       }
 
       return readPom;
+    }
+
+    private MavenProjectTimestamp calculateTimestamp(MavenProject mavenProject) {
+      return ReadAction.compute(() -> {
+        long pomTimestamp = getFileTimestamp(mavenProject.getFile());
+        MavenProject parent = tree.findParent(mavenProject);
+        long parentLastReadStamp = parent == null ? -1 : parent.getLastReadStamp();
+        VirtualFile profilesXmlFile = mavenProject.getProfilesXmlFile();
+        long profilesTimestamp = getFileTimestamp(profilesXmlFile);
+        VirtualFile jvmConfigFile = MavenUtil.getConfigFile(mavenProject, MavenConstants.JVM_CONFIG_RELATIVE_PATH);
+        long jvmConfigTimestamp = getFileTimestamp(jvmConfigFile);
+        VirtualFile mavenConfigFile = MavenUtil.getConfigFile(mavenProject, MavenConstants.MAVEN_CONFIG_RELATIVE_PATH);
+        long mavenConfigTimestamp = getFileTimestamp(mavenConfigFile);
+
+        long userSettingsTimestamp = getFileTimestamp(generalSettings.getEffectiveUserSettingsFile());
+        long globalSettingsTimestamp = getFileTimestamp(generalSettings.getEffectiveGlobalSettingsFile());
+
+        int profilesHashCode = explicitProfiles.hashCode();
+
+        return new MavenProjectTimestamp(pomTimestamp,
+                                         parentLastReadStamp,
+                                         profilesTimestamp,
+                                         userSettingsTimestamp,
+                                         globalSettingsTimestamp,
+                                         profilesHashCode,
+                                         jvmConfigTimestamp,
+                                         mavenConfigTimestamp);
+      });
+    }
+
+    private static long getFileTimestamp(VirtualFile file) {
+      if (file == null || !file.isValid()) return -1;
+      return file.getTimeStamp();
     }
 
     private void handleRemovedModules(MavenProject mavenProject, List<MavenProject> prevModules, List<VirtualFile> existingModuleFiles) {
@@ -716,47 +749,12 @@ public final class MavenProjectsTree {
     }
   }
 
-  private MavenProjectTimestamp calculateTimestamp(MavenProject mavenProject,
-                                                   MavenExplicitProfiles explicitProfiles,
-                                                   MavenGeneralSettings generalSettings) {
-    return ReadAction.compute(() -> {
-      long pomTimestamp = getFileTimestamp(mavenProject.getFile());
-      MavenProject parent = findParent(mavenProject);
-      long parentLastReadStamp = parent == null ? -1 : parent.getLastReadStamp();
-      VirtualFile profilesXmlFile = mavenProject.getProfilesXmlFile();
-      long profilesTimestamp = getFileTimestamp(profilesXmlFile);
-      VirtualFile jvmConfigFile = MavenUtil.getConfigFile(mavenProject, MavenConstants.JVM_CONFIG_RELATIVE_PATH);
-      long jvmConfigTimestamp = getFileTimestamp(jvmConfigFile);
-      VirtualFile mavenConfigFile = MavenUtil.getConfigFile(mavenProject, MavenConstants.MAVEN_CONFIG_RELATIVE_PATH);
-      long mavenConfigTimestamp = getFileTimestamp(mavenConfigFile);
-
-      long userSettingsTimestamp = getFileTimestamp(generalSettings.getEffectiveUserSettingsFile());
-      long globalSettingsTimestamp = getFileTimestamp(generalSettings.getEffectiveGlobalSettingsFile());
-
-      int profilesHashCode = explicitProfiles.hashCode();
-
-      return new MavenProjectTimestamp(pomTimestamp,
-                                       parentLastReadStamp,
-                                       profilesTimestamp,
-                                       userSettingsTimestamp,
-                                       globalSettingsTimestamp,
-                                       profilesHashCode,
-                                       jvmConfigTimestamp,
-                                       mavenConfigTimestamp);
-    });
-  }
-
   @Override
   public String toString() {
     return "MavenProjectsTree{" +
            "myRootProjects=" + myRootProjects +
            ", myProject=" + myProject +
            '}';
-  }
-
-  private static long getFileTimestamp(VirtualFile file) {
-    if (file == null || !file.isValid()) return -1;
-    return file.getTimeStamp();
   }
 
   public boolean isManagedFile(VirtualFile moduleFile) {
