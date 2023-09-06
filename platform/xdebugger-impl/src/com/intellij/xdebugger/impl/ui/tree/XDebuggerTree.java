@@ -142,8 +142,8 @@ public class XDebuggerTree extends DnDAwareTree implements DataProvider, Disposa
     mySourcePosition = sourcePosition;
     myTreeModel = (DefaultTreeModel)getModel();
     myPinToTopManager = XDebuggerPinToTopManager.Companion.getInstance(project);
-    setCellRenderer(new XDebuggerTreeRenderer());
-    new TreeLinkMouseListener(new XDebuggerTreeRenderer()) {
+    setCellRenderer(new XDebuggerTreeRenderer(myProject));
+    new TreeLinkMouseListener(new XDebuggerTreeRenderer(myProject)) {
       @Override
       protected boolean doCacheLastNode() {
         return false;
