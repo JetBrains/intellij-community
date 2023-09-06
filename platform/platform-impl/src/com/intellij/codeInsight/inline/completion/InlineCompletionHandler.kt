@@ -40,15 +40,50 @@ class InlineCompletionHandler(private val scope: CoroutineScope) : CodeInsightAc
     showInlineSuggestion(editor, inlineState, editor.caretModel.offset)
   }
 
-  fun invoke(event: DocumentEvent, editor: Editor) = invoke(InlineCompletionEvent.DocumentChange(event, editor))
-  fun invoke(event: EditorMouseEvent) = invoke(InlineCompletionEvent.CaretMove(event))
-  fun invoke(event: LookupEvent) = invoke(InlineCompletionEvent.LookupChange(event))
-  fun invoke(editor: Editor, file: PsiFile, caret: Caret, context: DataContext?) =
-    invoke(InlineCompletionEvent.DirectCall(editor, file, caret, context))
+  fun invoke(event: InlineCompletionEvent.DocumentChange) = invokeEvent(event)
+  fun invoke(event: InlineCompletionEvent.CaretMove) = invokeEvent(event)
+  fun invoke(event: InlineCompletionEvent.LookupChange) = invokeEvent(event)
+  fun invoke(event: InlineCompletionEvent.DirectCall) = invokeEvent(event)
+
+  @Deprecated(
+    "replaced with direct event call type",
+    ReplaceWith("invoke(InlineCompletionEvent.DocumentChange(event, editor))"),
+    DeprecationLevel.ERROR
+  )
+  fun invoke(event: DocumentEvent, editor: Editor) {
+    return invoke(InlineCompletionEvent.DocumentChange(event, editor))
+  }
+
+  @Deprecated(
+    "replaced with direct event call type",
+    ReplaceWith("invoke(InlineCompletionEvent.CaretMove(event))"),
+    DeprecationLevel.ERROR
+  )
+  fun invoke(event: EditorMouseEvent) {
+    return invoke(InlineCompletionEvent.CaretMove(event))
+  }
+
+  @Deprecated(
+    "replaced with direct event call type",
+    ReplaceWith("invoke(InlineCompletionEvent.LookupChange(event))"),
+    DeprecationLevel.ERROR
+  )
+  fun invoke(event: LookupEvent) {
+    return invoke(InlineCompletionEvent.LookupChange(event))
+  }
+
+  @Deprecated(
+    "replaced with direct event call type",
+    ReplaceWith("invoke(InlineCompletionEvent.DirectCall(editor, file, caret, context))"),
+    DeprecationLevel.ERROR
+  )
+  fun invoke(editor: Editor, file: PsiFile, caret: Caret, context: DataContext?) {
+    return invoke(InlineCompletionEvent.DirectCall(editor, file, caret, context))
+  }
 
   private fun shouldShowPlaceholder(): Boolean = Registry.`is`("inline.completion.show.placeholder")
 
-  private fun invoke(event: InlineCompletionEvent) {
+  private fun invokeEvent(event: InlineCompletionEvent) {
     if (isMuted.get()) {
       return
     }
