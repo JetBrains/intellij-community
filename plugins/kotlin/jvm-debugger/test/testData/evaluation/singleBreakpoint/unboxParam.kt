@@ -15,5 +15,3 @@ fun main(args: Array<String>) {
 fun fooNullableInt(): Int? = 1
 
 fun fooInt(param: Int) = param
-
-// IGNORE_K2
