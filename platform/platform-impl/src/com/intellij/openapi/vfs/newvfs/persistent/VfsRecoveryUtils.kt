@@ -64,7 +64,6 @@ object VfsRecoveryUtils {
    * @param cachesBackupSiblingPath path to place caches backup to
    */
   @JvmOverloads
-  @OptIn(ExperimentalPathApi::class)
   fun applyStoragesReplacementIfMarkerExists(
     storagesReplacementMarkerFile: Path,
     cachesBackupSiblingPath: Path? = Path.of("caches-backup")
@@ -93,19 +92,23 @@ object VfsRecoveryUtils {
       return false
     }
 
+    // FIXME memory mapped buffers that some storages use can still be open after recovery was done, preventing the file move on Windows
+    //  calling gc should help, but is not guaranteed to work
+    repeat(3) { System.gc() }
+
     if (backupPath != null) {
       if (backupPath.exists()) {
         LOG.info("deleting an old backup")
-        backupPath.deleteRecursively()
+        FileUtil.deleteRecursively(backupPath)
       }
-      cachesDir.moveTo(backupPath)
+      FileUtil.moveDirWithContent(cachesDir.toFile(), backupPath.toFile())
       LOG.info("created a backup successfully")
     }
     if (cachesDir.exists()) {
       LOG.info("deleting current caches")
-      cachesDir.deleteRecursively()
+      FileUtil.deleteRecursively(cachesDir)
     }
-    newCachesDir.moveTo(cachesDir, true)
+    FileUtil.moveDirWithContent(newCachesDir.toFile(), cachesDir.toFile())
     LOG.info("successfully replaced storages")
     return true
   }
