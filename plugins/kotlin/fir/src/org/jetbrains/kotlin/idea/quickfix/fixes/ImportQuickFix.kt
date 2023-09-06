@@ -7,6 +7,7 @@ import com.intellij.codeInsight.daemon.QuickFixBundle
 import com.intellij.codeInsight.daemon.impl.ShowAutoImportPass
 import com.intellij.codeInsight.hint.HintManager
 import com.intellij.codeInsight.hint.QuestionAction
+import com.intellij.codeInsight.intention.HighPriorityAction
 import com.intellij.codeInspection.HintAction
 import com.intellij.codeInspection.util.IntentionName
 import com.intellij.lang.jvm.JvmModifier
@@ -62,7 +63,7 @@ class ImportQuickFix(
     element: KtElement,
     @IntentionName private val text: String,
     private val importVariants: List<AutoImportVariant>
-) : QuickFixActionBase<KtElement>(element), HintAction {
+) : QuickFixActionBase<KtElement>(element), HintAction, HighPriorityAction {
     private data class SymbolBasedAutoImportVariant(
         override val fqName: FqName,
         override val declarationToImport: PsiElement?,
