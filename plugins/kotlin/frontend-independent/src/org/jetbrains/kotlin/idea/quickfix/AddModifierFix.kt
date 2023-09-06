@@ -18,6 +18,7 @@ import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.containingClass
 import org.jetbrains.kotlin.psi.psiUtil.containingClassOrObject
+import org.jetbrains.kotlin.psi.psiUtil.visibilityModifierType
 
 open class AddModifierFix(
     element: KtModifierListOwner,
@@ -37,16 +38,22 @@ open class AddModifierFix(
     protected fun invokeOnElement(element: KtModifierListOwner?) {
         element?.addModifier(modifier)
 
-        if (modifier == KtTokens.ABSTRACT_KEYWORD && (element is KtProperty || element is KtNamedFunction)) {
-            element.containingClass()?.run {
-                if (!hasModifier(KtTokens.ABSTRACT_KEYWORD) && !hasModifier(KtTokens.SEALED_KEYWORD)) {
-                    addModifier(KtTokens.ABSTRACT_KEYWORD)
+        when (modifier) {
+            KtTokens.ABSTRACT_KEYWORD -> {
+                if (element is KtProperty || element is KtNamedFunction) {
+                    element.containingClass()?.run {
+                        if (!hasModifier(KtTokens.ABSTRACT_KEYWORD) && !hasModifier(KtTokens.SEALED_KEYWORD)) {
+                            addModifier(KtTokens.ABSTRACT_KEYWORD)
+                        }
+                    }
                 }
             }
-        }
 
-        if (modifier == KtTokens.NOINLINE_KEYWORD) {
-            element?.removeModifier(KtTokens.CROSSINLINE_KEYWORD)
+            KtTokens.OVERRIDE_KEYWORD ->
+                element?.visibilityModifierType()?.takeUnless { it == KtTokens.PUBLIC_KEYWORD }?.let { element.removeModifier(it) }
+
+            KtTokens.NOINLINE_KEYWORD ->
+                element?.removeModifier(KtTokens.CROSSINLINE_KEYWORD)
         }
     }
 
