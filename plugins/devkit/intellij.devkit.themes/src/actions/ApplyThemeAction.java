@@ -116,8 +116,8 @@ final class ApplyThemeAction extends DumbAwareAction {
   }
 
   private static void patchBackgroundImagePath(@NotNull ModuleRootManager moduleRootManager,
-                                               @Nullable Map<String, Object> background) {
-    if (background != null) {
+                                               @NotNull Map<String, Object> background) {
+    if (!background.isEmpty()) {
       VirtualFile pathToBg = findThemeFile(moduleRootManager, background.get("image").toString());
       if (pathToBg != null) {
         background.put("image", pathToBg.getPath());

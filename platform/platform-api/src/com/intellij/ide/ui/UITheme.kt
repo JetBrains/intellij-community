@@ -68,12 +68,12 @@ class UITheme private constructor(private val bean: UIThemeBean) {
 
   val editorScheme: String?
     get() = bean.editorScheme
-  val additionalEditorSchemes: List<String>?
-    get() = bean.additionalEditorSchemes
-  val background: Map<String, Any?>?
-    get() = bean.background
-  val emptyFrameBackground: Map<String, Any?>?
-    get() = bean.emptyFrameBackground
+  val additionalEditorSchemes: List<String>
+    get() = bean.additionalEditorSchemes ?: emptyList()
+  val background: Map<String, Any?>
+    get() = bean.background ?: emptyMap()
+  val emptyFrameBackground: Map<String, Any?>
+    get() = bean.emptyFrameBackground ?: emptyMap()
 
   fun applyProperties(defaults: UIDefaults) {
     if (bean.ui == null) {
@@ -84,7 +84,7 @@ class UITheme private constructor(private val bean: UIThemeBean) {
       loadColorPalette(defaults, it)
     }
     for ((key, value) in bean.ui!!) {
-      apply(theme = bean, key = key, value = value, defaults = defaults)
+      applyTheme(theme = bean, key = key, value = value, defaults = defaults)
     }
   }
 
@@ -439,7 +439,7 @@ private val colorPalette: @NonNls MutableMap<String, String?> = java.util.Map.of
   java.util.Map.entry("Tree.iconColor.Dark", "#AFB1B3")
 )
 
-private fun apply(theme: UIThemeBean, key: String, value: Any?, defaults: UIDefaults) {
+private fun applyTheme(theme: UIThemeBean, key: String, value: Any?, defaults: UIDefaults) {
   @Suppress("NAME_SHADOWING")
   var value: Any? = value
   val valueStr = value.toString()

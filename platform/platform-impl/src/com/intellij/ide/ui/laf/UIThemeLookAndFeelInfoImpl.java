@@ -91,11 +91,10 @@ public class UIThemeLookAndFeelInfoImpl extends UIThemeLookAndFeelInfo {
     }
   }
 
-  private boolean installBackgroundImage(@Nullable Map<String, Object> backgroundProps,
+  private boolean installBackgroundImage(@NotNull Map<String, Object> backgroundProps,
                                          @NotNull @NonNls String bgImageProperty) {
-    Object path = backgroundProps == null ? null : backgroundProps.get("image");
-    return path instanceof String &&
-           installBackgroundImage(backgroundProps, bgImageProperty, (String)path);
+    Object path = backgroundProps.get("image");
+    return path instanceof String && installBackgroundImage(backgroundProps, bgImageProperty, (String)path);
   }
 
   private boolean installBackgroundImage(@NotNull Map<String, Object> backgroundProps,
@@ -160,13 +159,11 @@ public class UIThemeLookAndFeelInfoImpl extends UIThemeLookAndFeelInfo {
     PropertiesComponent propertyManager = PropertiesComponent.getInstance();
     String value = propertyManager.getValue("old." + backgroundPropertyKey);
     propertyManager.unsetValue("old." + backgroundPropertyKey);
-    if (value == null) {
-      if (getTheme().getBackground() != null) {
-        propertyManager.unsetValue(backgroundPropertyKey);
-      }
-    }
-    else {
+    if (value != null) {
       propertyManager.setValue(backgroundPropertyKey, value);
+    }
+    else if (!getTheme().getBackground().isEmpty()) {
+      propertyManager.unsetValue(backgroundPropertyKey);
     }
   }
 }

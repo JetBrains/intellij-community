@@ -317,13 +317,11 @@ public final class EditorColorsManagerImpl extends EditorColorsManager implement
 
     for (UIThemeLookAndFeelInfo laf : SequencesKt.asIterable(UiThemeProviderListManager.Companion.getInstance().getLaFs())) {
       UITheme theme = laf.getTheme();
-      List<String> schemes = theme.getAdditionalEditorSchemes();
       PluginDescriptor pluginDescriptor = getPluginDescriptor(theme);
-      if (schemes != null) {
-        for (String scheme : schemes) {
-          loadBundledScheme(scheme, theme, pluginDescriptor);
-        }
+      for (String scheme : theme.getAdditionalEditorSchemes()) {
+        loadBundledScheme(scheme, theme, pluginDescriptor);
       }
+
       String path = theme.getEditorScheme();
       if (path != null) {
         loadBundledScheme(path, theme, pluginDescriptor);
