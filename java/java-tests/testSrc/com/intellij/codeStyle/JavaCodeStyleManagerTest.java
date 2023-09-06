@@ -5,6 +5,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiExpression;
 import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiTypes;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.codeStyle.SuggestedNameInfo;
 import com.intellij.psi.codeStyle.VariableKind;
@@ -15,6 +16,8 @@ import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase;
 import org.intellij.lang.annotations.Language;
 import org.jetbrains.annotations.NotNull;
 import org.junit.Assert;
+
+import java.util.List;
 
 public class JavaCodeStyleManagerTest extends LightJavaCodeInsightFixtureTestCase {
 
@@ -110,6 +113,12 @@ public class JavaCodeStyleManagerTest extends LightJavaCodeInsightFixtureTestCas
     checkSuggestedNames("class A {{String bar = \"<caret>\";}}",
                         VariableKind.PARAMETER,
                         "bar", "s", "string");
+  }
+  
+  public void testInvalidName() {
+    SuggestedNameInfo info = JavaCodeStyleManager.getInstance(getProject())
+      .suggestVariableName(VariableKind.LOCAL_VARIABLE, "hello?world", null, PsiTypes.intType(), true);
+    assertEquals(List.of("i"), List.of(info.names));
   }
 
   private void checkSuggestedNames(@NotNull String code, @NotNull VariableKind kind, String @NotNull ... expected) {
