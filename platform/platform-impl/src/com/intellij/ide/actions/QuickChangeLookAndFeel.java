@@ -7,6 +7,7 @@ import com.intellij.ide.ui.LafManager;
 import com.intellij.ide.ui.LafManagerListener;
 import com.intellij.ide.ui.ThemeListProvider;
 import com.intellij.ide.ui.laf.UIThemeLookAndFeelInfo;
+import com.intellij.ide.ui.laf.UiThemeProviderListManager;
 import com.intellij.ide.ui.laf.darcula.DarculaInstaller;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
@@ -159,8 +160,7 @@ public final class QuickChangeLookAndFeel extends QuickSwitchSchemeAction implem
 
   @Override
   protected boolean isEnabled() {
-    LafManager lafManager = LafManager.getInstance();
-    return lafManager.getInstalledLookAndFeels().length > 1 && !lafManager.getAutodetect();
+    return UiThemeProviderListManager.Companion.getInstance().getLaFListSize() > 1 && !LafManager.getInstance().getAutodetect();
   }
 
   private static final class LafChangeAction extends DumbAwareAction {

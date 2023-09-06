@@ -440,7 +440,7 @@ class LafManagerImpl(private val coroutineScope: CoroutineScope) : LafManager(),
     get() {
       val result = ArrayList<LafReference>()
       for (group in ThemeListProvider.getInstance().getShownThemes()) {
-        if (!result.isEmpty()) {
+        if (result.isNotEmpty()) {
           result.add(SEPARATOR)
         }
         for (info in group) {

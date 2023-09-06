@@ -31,6 +31,8 @@ class UiThemeProviderListManager {
 
   fun getLaFs(): Sequence<UIThemeLookAndFeelInfo> = themeDescriptors.asSequence().mapNotNull { it.theme.get() }
 
+  fun getLaFListSize(): Int = themeDescriptors.size
+
   fun findThemeByName(name: String): UIThemeLookAndFeelInfo? {
     return getLaFs().firstOrNull { it.theme.name == name }
   }
