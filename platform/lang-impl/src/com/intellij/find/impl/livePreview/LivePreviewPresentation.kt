@@ -12,4 +12,8 @@ interface LivePreviewPresentation {
     get() = defaultAttributes
   val selectionAttributes: TextAttributes
     get() = defaultAttributes
+
+  /** [com.intellij.openapi.editor.markup.HighlighterLayer] */
+  val defaultLayer: Int
+  val cursorLayer: Int
 }

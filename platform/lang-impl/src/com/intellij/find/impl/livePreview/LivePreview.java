@@ -1,7 +1,6 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.find.impl.livePreview;
 
-import com.intellij.codeInsight.highlighting.HighlightManager;
 import com.intellij.find.FindManager;
 import com.intellij.find.FindModel;
 import com.intellij.find.FindResult;
@@ -20,6 +19,7 @@ import com.intellij.openapi.editor.event.VisibleAreaListener;
 import com.intellij.openapi.editor.ex.MarkupModelEx;
 import com.intellij.openapi.editor.ex.RangeHighlighterEx;
 import com.intellij.openapi.editor.ex.util.EditorUtil;
+import com.intellij.openapi.editor.markup.HighlighterTargetArea;
 import com.intellij.openapi.editor.markup.RangeHighlighter;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.project.Project;
@@ -196,7 +196,8 @@ public final class LivePreview implements SearchResults.SearchResultsListener, S
     final FindResult cursor = mySearchResults.getCursor();
     Editor editor = mySearchResults.getEditor();
     if (cursor != null && cursor.getEndOffset() <= editor.getDocument().getTextLength()) {
-      myCursorHighlighter = addHighlighter(cursor.getStartOffset(), cursor.getEndOffset(), myPresentation.getCursorAttributes());
+      myCursorHighlighter = addHighlighter(cursor.getStartOffset(), cursor.getEndOffset(), myPresentation.getCursorAttributes(),
+                                           myPresentation.getCursorLayer());
       editor.getScrollingModel().runActionOnScrollingFinished(() -> showReplacementPreview());
     }
   }
@@ -258,7 +259,8 @@ public final class LivePreview implements SearchResults.SearchResultsListener, S
       TextAttributes attributes = createAttributes(range);
       RangeHighlighter existingHighlighter = findExistingHighlighter(range.getStartOffset(), range.getEndOffset(), attributes);
       if (existingHighlighter == null) {
-        RangeHighlighter highlighter = addHighlighter(range.getStartOffset(), range.getEndOffset(), attributes);
+        RangeHighlighter highlighter = addHighlighter(range.getStartOffset(), range.getEndOffset(),
+                                                      attributes, myPresentation.getDefaultLayer());
         if (highlighter != null) {
           highlighter.putUserData(SEARCH_MARKER, Boolean.TRUE);
           newHighlighters.add(highlighter);
@@ -326,7 +328,8 @@ public final class LivePreview implements SearchResults.SearchResultsListener, S
         }
       } else if (needsAdditionalHighlighting) {
         RangeHighlighter additionalHighlighter = addHighlighter(highlighter.getStartOffset(), highlighter.getEndOffset(),
-                                                                myPresentation.getSelectionAttributes());
+                                                                myPresentation.getSelectionAttributes(),
+                                                                myPresentation.getDefaultLayer());
         highlighter.putUserData(IN_SELECTION_KEY, additionalHighlighter);
       }
     }
@@ -388,20 +391,19 @@ public final class LivePreview implements SearchResults.SearchResultsListener, S
     }
   }
 
-  private RangeHighlighter addHighlighter(int startOffset, int endOffset, @NotNull TextAttributes attributes) {
+  private RangeHighlighter addHighlighter(int startOffset, int endOffset, @NotNull TextAttributes attributes, int layer) {
     Project project = mySearchResults.getProject();
     if (project.isDisposed()) return null;
-    List<RangeHighlighter> sink = new ArrayList<>();
-    HighlightManager.getInstance(project).addRangeHighlight(mySearchResults.getEditor(), startOffset, endOffset, attributes, false, sink);
-    RangeHighlighter result = ContainerUtil.getFirstItem(sink);
-    if (result instanceof RangeHighlighterEx) ((RangeHighlighterEx)result).setVisibleIfFolded(true);
-    return result;
+    var markupModel = mySearchResults.getEditor().getMarkupModel();
+    var highlighter = markupModel.addRangeHighlighter(startOffset, endOffset, layer, attributes, HighlighterTargetArea.EXACT_RANGE);
+    if (highlighter instanceof RangeHighlighterEx ex) ex.setVisibleIfFolded(true);
+    return highlighter;
   }
 
   private void removeHighlighter(@NotNull RangeHighlighter highlighter) {
     Project project = mySearchResults.getProject();
     if (project.isDisposed()) return;
-    HighlightManager.getInstance(project).removeSegmentHighlighter(mySearchResults.getEditor(), highlighter);
+    mySearchResults.getEditor().getMarkupModel().removeHighlighter(highlighter);
   }
 
   private final class ReplacementBalloonPositionTracker extends PositionTracker<Balloon> {

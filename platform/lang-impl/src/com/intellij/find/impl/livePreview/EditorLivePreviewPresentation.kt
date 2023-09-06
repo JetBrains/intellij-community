@@ -1,6 +1,7 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.find.impl.livePreview
 
+import com.intellij.codeInsight.highlighting.HighlightManagerImpl
 import com.intellij.openapi.editor.colors.EditorColors
 import com.intellij.openapi.editor.colors.EditorColorsScheme
 import com.intellij.openapi.editor.markup.EffectType
@@ -27,4 +28,7 @@ class EditorLivePreviewPresentation(private val colorsScheme: EditorColorsScheme
 
   override val selectionAttributes: TextAttributes
     get() = TextAttributes(null, null, JBColor.WHITE, EffectType.ROUNDED_BOX, Font.PLAIN)
+
+  override val defaultLayer: Int = HighlightManagerImpl.OCCURRENCE_LAYER
+  override val cursorLayer: Int = HighlightManagerImpl.OCCURRENCE_LAYER
 }
