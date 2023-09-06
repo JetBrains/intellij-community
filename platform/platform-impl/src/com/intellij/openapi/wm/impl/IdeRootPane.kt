@@ -167,7 +167,7 @@ open class IdeRootPane internal constructor(private val frame: IdeFrameImpl,
   }
 
   init {
-    if (SystemInfoRt.isWindows && (StartupUiUtil.isUnderDarcula || StartupUiUtil.isUnderIntelliJLaF())) {
+    if (SystemInfoRt.isWindows) {
       runCatching {
         windowDecorationStyle = FRAME
       }.getOrLogException(logger<IdeRootPane>())
