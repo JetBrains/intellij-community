@@ -109,7 +109,7 @@ open class IdeRootPane internal constructor(private val frame: IdeFrameImpl,
   }
 
   internal fun isCompactHeaderFastCheck(): Boolean {
-    return DistractionFreeModeController.shouldMinimizeCustomHeader() || isLightEdit || UISettings.getInstance().minimizeHeader
+    return DistractionFreeModeController.shouldMinimizeCustomHeader() || isLightEdit || !UISettings.getInstance().showNewMainToolbar
   }
 
   protected open val isLightEdit: Boolean
