@@ -1,124 +1,134 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-package org.jetbrains.plugins.groovy.builder
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package org.jetbrains.plugins.groovy.builder;
 
-import com.intellij.psi.PsiMethod
-import com.intellij.testFramework.LightProjectDescriptor
-import groovy.transform.CompileStatic
-import org.jetbrains.plugins.groovy.GroovyProjectDescriptors
-import org.jetbrains.plugins.groovy.LightGroovyTestCase
-import org.jetbrains.plugins.groovy.codeInspection.assignment.GroovyAssignabilityCheckInspection
-import org.jetbrains.plugins.groovy.codeInspection.untypedUnresolvedAccess.GrUnresolvedAccessInspection
-import org.jetbrains.plugins.groovy.lang.psi.GroovyFile
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrCallExpression
-import org.junit.Test
+import com.intellij.psi.PsiMethod;
+import com.intellij.testFramework.LightProjectDescriptor;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.plugins.groovy.GroovyProjectDescriptors;
+import org.jetbrains.plugins.groovy.LightGroovyTestCase;
+import org.jetbrains.plugins.groovy.codeInspection.assignment.GroovyAssignabilityCheckInspection;
+import org.jetbrains.plugins.groovy.codeInspection.untypedUnresolvedAccess.GrUnresolvedAccessInspection;
+import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrCallExpression;
+import org.jetbrains.plugins.groovy.lang.psi.api.toplevel.GrTopStatement;
 
-// TODO rewrite into Spock test
-@CompileStatic
-class JsonBuilderTest extends LightGroovyTestCase {
+import java.util.List;
+import java.util.Map;
 
-  final LightProjectDescriptor projectDescriptor = GroovyProjectDescriptors.GROOVY_LATEST
+public class JsonBuilderTest extends LightGroovyTestCase {
 
-  void 'test highlighting'() {
-    fixture.configureByText 'a.groovy', '''\
-def builder = new groovy.json.JsonBuilder()
-builder.people {
-    person {
-        string "fdsasdf"
-        mapCall(
-                city: 'A',
-                country: 'B',
-                zip: 12345,
-        )
-        boolCall true
-        varArgs '1111', 22222
-        empty()
-        <warning>someProperty</warning>
-    }
-    <warning>someProperty</warning>
-}
-
-builder.<warning>root</warning>
-builder.root<warning>(new Object())</warning>
-builder.root<warning>(new Object[0])</warning>
-builder.root<warning>([new Object(), new Object()])</warning>
-builder.root<warning>([], new Object(), {})</warning>
-'''
-    fixture.enableInspections GroovyAssignabilityCheckInspection, GrUnresolvedAccessInspection
-    fixture.checkHighlighting true, false, true
+  @Override
+  protected @NotNull LightProjectDescriptor getProjectDescriptor() {
+    return GroovyProjectDescriptors.GROOVY_LATEST;
   }
 
-  void 'test builder calls resolve & return type'() {
-    [
-      'builder.root()'                                   : 'java.util.Map',
-      'builder.root {}'                                  : 'java.util.Map',
-      'builder.root(a:1)'                                : 'java.util.Map',
-      'builder.root([a:1])'                              : 'java.util.Map',
-      'builder.root([a:1]) {}'                           : 'java.util.Map',
-      'builder.root(a:1) {}'                             : 'java.util.Map',
-      'builder.root(a:1, {})'                            : 'java.util.Map',
-      'builder.root({}, a:1)'                            : 'java.util.Map',
-      'builder.root([1,"",new Object()], {})'            : 'java.util.Map',
-      'builder.root([1,"",new Object()] as Object[], {})': 'java.util.Map',
-    ].each { text, returnType ->
-      def file = fixture.configureByText('a.groovy', "def builder = new groovy.json.JsonBuilder(); $text") as GroovyFile
-      def call = file.topStatements.last() as GrCallExpression
-      assert call.resolveMethod()
-      assert call.type.canonicalText == returnType
+  public void testHighlighting() {
+    getFixture().configureByText("a.groovy", """
+      def builder = new groovy.json.JsonBuilder()
+      builder.people {
+          person {
+              string "fdsasdf"
+              mapCall(
+                      city: 'A',
+                      country: 'B',
+                      zip: 12345,
+              )
+              boolCall true
+              varArgs '1111', 22222
+              empty()
+              <warning>someProperty</warning>
+          }
+          <warning>someProperty</warning>
+      }
+            
+      builder.<warning>root</warning>
+      builder.root<warning>(new Object())</warning>
+      builder.root<warning>(new Object[0])</warning>
+      builder.root<warning>([new Object(), new Object()])</warning>
+      builder.root<warning>([], new Object(), {})</warning>
+      """);
+    getFixture().enableInspections(GroovyAssignabilityCheckInspection.class, GrUnresolvedAccessInspection.class);
+    getFixture().checkHighlighting(true, false, true);
+  }
+
+  public void testBuilderCallsResolveAndReturnType() {
+    for (Map.Entry<String, String> entry : Map.of(
+      "builder.root()", "java.util.Map",
+      "builder.root {}", "java.util.Map",
+      "builder.root(a:1)", "java.util.Map",
+      "builder.root([a:1])", "java.util.Map",
+      "builder.root([a:1]) {}", "java.util.Map",
+      "builder.root(a:1) {}", "java.util.Map",
+      "builder.root(a:1, {})", "java.util.Map",
+      "builder.root({}, a:1)", "java.util.Map",
+      "builder.root([1,\"\",new Object()], {})", "java.util.Map",
+      "builder.root([1,\"\",new Object()] as Object[], {})", "java.util.Map"
+    ).entrySet()) {
+      String text = entry.getKey();
+      String returnType = entry.getValue();
+      var file = (GroovyFile)getFixture().configureByText("a.groovy", "def builder = new groovy.json.JsonBuilder(); " + text);
+      GrTopStatement[] statements = file.getTopStatements();
+      var call = (GrCallExpression)statements[statements.length - 1];
+      assert call.resolveMethod() != null;
+      assert call.getType().getCanonicalText().equals(returnType);
     }
   }
 
-  void 'test builder inner calls resolve & return type'() {
-    [
-      'noArg()'                       : 'java.util.List',
-      'singleArg(1)'                  : 'java.lang.Integer',
-      'singleArg("")'                 : 'java.lang.String',
-      'singleArg(new Object())'       : 'java.lang.Object',
-      'doubleArgs([1,2,3], {})'       : 'java.util.List<java.lang.Integer>',
-      'doubleArgs([] as Number[], {})': 'java.util.List<java.lang.Number>',
-      'varArgs(1,2,3)'                : 'java.util.List<java.lang.Integer>',
-      'varArgs(1,2l,3d)'              : 'java.util.List<java.lang.Number>',
-      'varArgs(1,2l,3d, new Object())': 'java.util.List<java.lang.Object>',
-    ].each { callText, returnType ->
-      [
-        "builder.root {<caret>$callText}",
-        "builder.root([a:1]) {<caret>$callText}",
-        "builder.root({<caret>$callText}, a:1)",
-      ].each { text ->
-        fixture.configureByText 'a.groovy', "def builder = new groovy.json.JsonBuilder(); $text"
-        def reference = fixture.getReferenceAtCaretPosition() as GrReferenceExpression
-        assert reference.resolve() instanceof PsiMethod
-        assert reference.type.canonicalText == returnType
+  public void testBuilderInnerCallsResolveAndReturnType() {
+    for (Map.Entry<String, String> entry : Map.of(
+      "noArg()", "java.util.List",
+      "singleArg(1)", "java.lang.Integer",
+      "singleArg(\"\")", "java.lang.String",
+      "singleArg(new Object())", "java.lang.Object",
+      "doubleArgs([1,2,3], {})", "java.util.List<java.lang.Integer>",
+      "doubleArgs([] as Number[], {})", "java.util.List<java.lang.Number>",
+      "varArgs(1,2,3)", "java.util.List<java.lang.Integer>",
+      "varArgs(1,2l,3d)", "java.util.List<java.lang.Number>",
+      "varArgs(1,2l,3d, new Object())", "java.util.List<java.lang.Object>"
+    ).entrySet()) {
+      String callText = entry.getKey();
+      String returnType = entry.getValue();
+      for (String text : List.of(
+        "builder.root {<caret>" + callText + "}",
+        "builder.root([a:1]) {<caret>" + callText + "}",
+        "builder.root({<caret>" + callText + "}, a:1)"
+      )) {
+        getFixture().configureByText("a.groovy", "def builder = new groovy.json.JsonBuilder(); " + text);
+        var reference = (GrReferenceExpression)getFixture().getReferenceAtCaretPosition();
+        assert reference.resolve() instanceof PsiMethod;
+        assert reference.getType().getCanonicalText().equals(returnType);
       }
     }
   }
 
-  @Test
-  void 'test builder delegate inner calls resolve & return type'() {
-    [
-      'noArg()'                       : 'java.util.List',
-      'singleArg(1)'                  : 'java.lang.Integer',
-      'singleArg("")'                 : 'java.lang.String',
-      'singleArg(new Object())'       : 'java.lang.Object',
-      'doubleArgs([1,2,3], {})'       : 'java.util.List<java.lang.Integer>',
-      'doubleArgs([] as Number[], {})': 'java.util.List<java.lang.Number>',
-      'varArgs(1,2,3)'                : 'java.util.List<java.lang.Integer>',
-      'varArgs(1,2l,3d)'              : 'java.util.List<java.lang.Number>',
-      'varArgs(1,2l,3d, new Object())': 'java.util.List<java.lang.Object>',
-    ].each { innerCallText, returnType ->
-      [
-        "doubleArgs([1,2,3], {<caret>$innerCallText})",
-        "doubleArgs([] as Number[], {<caret>$innerCallText})"
-      ].each { callText ->
-        [
-          "builder.root {$callText}",
-          "builder.root([a:1]) {$callText}",
-          "builder.root({$callText}, a:1)",
-        ].each { text ->
-          fixture.configureByText 'a.groovy', "def builder = new groovy.json.JsonBuilder(); $text"
-          def reference = fixture.getReferenceAtCaretPosition() as GrReferenceExpression
-          assert reference.resolve() instanceof PsiMethod
-          assert reference.type.canonicalText == returnType
+  public void testBuilderDelegateInnerCallsResolveAndReturnType() {
+    for (Map.Entry<String, String> entry : Map.of(
+      "noArg()", "java.util.List",
+      "singleArg(1)", "java.lang.Integer",
+      "singleArg(\"\")", "java.lang.String",
+      "singleArg(new Object())", "java.lang.Object",
+      "doubleArgs([1,2,3], {})", "java.util.List<java.lang.Integer>",
+      "doubleArgs([] as Number[], {})", "java.util.List<java.lang.Number>",
+      "varArgs(1,2,3)", "java.util.List<java.lang.Integer>",
+      "varArgs(1,2l,3d)", "java.util.List<java.lang.Number>",
+      "varArgs(1,2l,3d, new Object())", "java.util.List<java.lang.Object>"
+    ).entrySet()) {
+      String innerCallText = entry.getKey();
+      String returnType = entry.getValue();
+      for (String callText : List.of(
+        "doubleArgs([1,2,3], {<caret>" + innerCallText + "})",
+        "doubleArgs([] as Number[], {<caret>" + innerCallText + "})")) {
+        for (String text : List.of(
+          "builder.root {" + callText + "}",
+          "builder.root([a:1]) {" + callText + "}",
+          "builder.root({" + callText + "}, a:1)")) {
+          getFixture().configureByText("a.groovy",
+                                       "def builder = new groovy.json.JsonBuilder(); " + text);
+          var reference =
+            (GrReferenceExpression)getFixture().getReferenceAtCaretPosition();
+          assert reference.resolve() instanceof PsiMethod;
+          assert reference.getType().getCanonicalText().equals(returnType);
         }
       }
     }
