@@ -21,7 +21,6 @@ import org.jetbrains.java.generate.template.toString.ToStringTemplatesManager;
 
 import java.util.Arrays;
 import java.util.Collection;
-import java.util.stream.Collectors;
 
 public class ToStringGeneratingTest extends LightJavaCodeInsightFixtureTestCase {
   public void testDuplicateToStringAnInnerClass() {
@@ -242,9 +241,9 @@ public class ToStringGeneratingTest extends LightJavaCodeInsightFixtureTestCase 
   private static Collection<PsiMember> collectMembers(@NotNull PsiClass clazz) {
     PsiElementClassMember<?>[] memberElements = GenerateToStringActionHandlerImpl.buildMembersToShow(clazz);
     return Arrays.stream(memberElements)
-      .map(x -> x.getElement())
+      .<PsiMember>map(x -> x.getElement())
       .sorted((o1, o2) -> compareMembers(o1, o2))
-      .collect(Collectors.toList());
+      .toList();
   }
 
   private static int compareMembers(PsiMember o1, PsiMember o2) {
