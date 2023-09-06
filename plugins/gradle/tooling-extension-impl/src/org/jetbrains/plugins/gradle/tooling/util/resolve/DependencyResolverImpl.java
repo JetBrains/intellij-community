@@ -1,7 +1,7 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gradle.tooling.util.resolve;
 
-import com.intellij.gradle.toolingExtension.impl.sourceSetModel.SourceSetCachedFinder;
+import com.intellij.gradle.toolingExtension.impl.sourceSetModel.GradleSourceSetCachedFinder;
 import org.gradle.api.Action;
 import org.gradle.api.GradleException;
 import org.gradle.api.Project;
@@ -231,7 +231,7 @@ public final class DependencyResolverImpl implements DependencyResolver {
     Collection<ExternalDependency> artifactDependencies = new LinkedHashSet<>();
     Set<String> resolvedFiles = new HashSet<>();
     Map<String, DefaultExternalProjectDependency> resolvedProjectDependencies = new HashMap<>();
-    SourceSetCachedFinder sourceSetFinder = SourceSetCachedFinder.getInstance(myContext);
+    GradleSourceSetCachedFinder sourceSetFinder = GradleSourceSetCachedFinder.getInstance(myContext);
     for (Map.Entry<ResolvedDependency, Set<ResolvedArtifact>> resolvedDependencySetEntry : resolvedArtifacts.entrySet()) {
       ResolvedDependency resolvedDependency = resolvedDependencySetEntry.getKey();
       Set<ResolvedArtifact> artifacts = resolvedDependencySetEntry.getValue();
@@ -383,7 +383,7 @@ public final class DependencyResolverImpl implements DependencyResolver {
 
     Set<File> projectArtifacts = configuration1.getArtifacts().getFiles().getFiles();
     projectDependency.setProjectDependencyArtifacts(projectArtifacts);
-    SourceSetCachedFinder sourceSetFinder = SourceSetCachedFinder.getInstance(myContext);
+    GradleSourceSetCachedFinder sourceSetFinder = GradleSourceSetCachedFinder.getInstance(myContext);
     projectDependency.setProjectDependencyArtifactsSources(sourceSetFinder.findArtifactSources(projectArtifacts));
     return projectDependency;
   }

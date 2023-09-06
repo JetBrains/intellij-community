@@ -1,7 +1,7 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gradle.tooling.util.resolve.deprecated;
 
-import com.intellij.gradle.toolingExtension.impl.sourceSetModel.SourceSetCachedFinder;
+import com.intellij.gradle.toolingExtension.impl.sourceSetModel.GradleSourceSetCachedFinder;
 import groovy.lang.MetaMethod;
 import groovy.lang.MetaProperty;
 import org.codehaus.groovy.runtime.DefaultGroovyMethods;
@@ -271,7 +271,7 @@ public class DependencyResultsTransformer {
             files.add(resolvedArtifact.getFile());
           }
           dDep.setProjectDependencyArtifacts(files);
-          SourceSetCachedFinder sourceSetFinder = SourceSetCachedFinder.getInstance(myContext);
+          GradleSourceSetCachedFinder sourceSetFinder = GradleSourceSetCachedFinder.getInstance(myContext);
           dDep.setProjectDependencyArtifactsSources(sourceSetFinder.findArtifactSources(files));
           resolvedDepsFiles.addAll(dDep.getProjectDependencyArtifacts());
         }
@@ -416,7 +416,7 @@ public class DependencyResultsTransformer {
     dependency.setConfigurationName(it.getName());
     Set<File> artifactsFiles = new LinkedHashSet<>(it.getAllArtifacts().getFiles().getFiles());
     dependency.setProjectDependencyArtifacts(artifactsFiles);
-    SourceSetCachedFinder sourceSetFinder = SourceSetCachedFinder.getInstance(myContext);
+    GradleSourceSetCachedFinder sourceSetFinder = GradleSourceSetCachedFinder.getInstance(myContext);
     dependency.setProjectDependencyArtifactsSources(sourceSetFinder.findArtifactSources(artifactsFiles));
 
     if (it.getArtifacts().size() == 1) {

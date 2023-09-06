@@ -1,7 +1,7 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.gradle.toolingExtension.impl.projectModel;
 
-import com.intellij.gradle.toolingExtension.impl.sourceSetModel.SourceSetModelBuilder;
+import com.intellij.gradle.toolingExtension.impl.sourceSetModel.GradleSourceSetModelBuilder;
 import com.intellij.gradle.toolingExtension.impl.taskModel.GradleTaskCache;
 import com.intellij.gradle.toolingExtension.impl.util.GradleIdeaPluginUtil;
 import com.intellij.gradle.toolingExtension.impl.util.GradleObjectUtil;
@@ -79,12 +79,12 @@ public class ExternalProjectBuilderImpl extends AbstractModelBuilderService {
     externalProject.setBuildFile(project.getBuildFile());
     externalProject.setGroup(wrap(project.getGroup()));
     externalProject.setProjectDir(project.getProjectDir());
-    externalProject.setSourceSets(SourceSetModelBuilder.getSourceSets(project, context));
+    externalProject.setSourceSets(GradleSourceSetModelBuilder.getSourceSets(project, context));
     externalProject.setTasks(getTasks(project, context));
     externalProject.setSourceCompatibility(JavaPluginUtil.getSourceCompatibility(project));
     externalProject.setTargetCompatibility(JavaPluginUtil.getTargetCompatibility(project));
 
-    SourceSetModelBuilder.addArtifactsData(project, externalProject);
+    GradleSourceSetModelBuilder.addArtifactsData(project, externalProject);
 
     return externalProject;
   }

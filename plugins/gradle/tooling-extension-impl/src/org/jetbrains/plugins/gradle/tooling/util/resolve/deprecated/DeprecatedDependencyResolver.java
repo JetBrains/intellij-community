@@ -3,7 +3,7 @@
 
 package org.jetbrains.plugins.gradle.tooling.util.resolve.deprecated;
 
-import com.intellij.gradle.toolingExtension.impl.sourceSetModel.SourceSetCachedFinder;
+import com.intellij.gradle.toolingExtension.impl.sourceSetModel.GradleSourceSetCachedFinder;
 import org.gradle.api.Project;
 import org.gradle.api.Task;
 import org.gradle.api.artifacts.*;
@@ -307,7 +307,7 @@ public class DeprecatedDependencyResolver implements DependencyResolver {
 
     result.add(fileCollectionDependency);
 
-    SourceSetCachedFinder sourceSetFinder = SourceSetCachedFinder.getInstance(myContext);
+    GradleSourceSetCachedFinder sourceSetFinder = GradleSourceSetCachedFinder.getInstance(myContext);
     for (File file : files) {
       SourceSet outputDirSourceSet = sourceSetFinder.findByArtifact(file.getPath());
       if (outputDirSourceSet != null) {
@@ -729,7 +729,7 @@ public class DeprecatedDependencyResolver implements DependencyResolver {
       artifactMap.put(toMyModuleIdentifier(artifact.getModuleVersion().getId()), artifact);
     }
 
-    SourceSetCachedFinder sourceSetFinder = SourceSetCachedFinder.getInstance(myContext);
+    GradleSourceSetCachedFinder sourceSetFinder = GradleSourceSetCachedFinder.getInstance(myContext);
     for (Dependency it : dependencies) {
       try {
         if (it instanceof ProjectDependency) {

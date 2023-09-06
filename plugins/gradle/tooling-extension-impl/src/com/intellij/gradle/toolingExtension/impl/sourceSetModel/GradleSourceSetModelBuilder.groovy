@@ -37,7 +37,7 @@ import java.nio.file.Path
 import static org.jetbrains.plugins.gradle.tooling.util.ReflectionUtil.dynamicCheckInstanceOf
 import static org.jetbrains.plugins.gradle.tooling.util.StringUtils.toCamelCase
 
-class SourceSetModelBuilder {
+class GradleSourceSetModelBuilder {
 
   private static final GradleVersion gradleBaseVersion = GradleVersion.current().baseVersion
   private static final boolean is4OrBetter = gradleBaseVersion >= GradleVersion.version("4.0")
@@ -640,7 +640,7 @@ class SourceSetModelBuilder {
    *
    * @param object
    * @return true if object is safe to resolve using {@link Project#files(java.lang.Object...)}
-   * @see SourceSetModelBuilder#tryUnpackPresentProvider
+   * @see GradleSourceSetModelBuilder#tryUnpackPresentProvider
    */
   private static boolean isSafeToResolve(Object param, Project project) {
     Object object = tryUnpackPresentProvider(param, project)

@@ -26,7 +26,7 @@ import java.util.concurrent.ConcurrentMap;
 import static org.jetbrains.plugins.gradle.tooling.ModelBuilderContext.DataProvider;
 import static org.jetbrains.plugins.gradle.tooling.util.resolve.DependencyResolverImpl.isIsNewDependencyResolutionApplicable;
 
-public class SourceSetCachedFinder {
+public class GradleSourceSetCachedFinder {
 
   private static final @NotNull GradleVersion gradleBaseVersion = GradleVersion.current().getBaseVersion();
   private static final boolean is51OrBetter = gradleBaseVersion.compareTo(GradleVersion.version("5.1")) >= 0;
@@ -35,7 +35,7 @@ public class SourceSetCachedFinder {
   private final @NotNull ArtifactsMap myArtifactsMap;
   private final @NotNull ConcurrentMap<String, Set<File>> mySourceMap;
 
-  private SourceSetCachedFinder(@NotNull ModelBuilderContext context) {
+  private GradleSourceSetCachedFinder(@NotNull ModelBuilderContext context) {
     mySourceMap = new ConcurrentHashMap<>();
     myArtifactsMap = createArtifactsMap(context);
   }
@@ -148,9 +148,9 @@ public class SourceSetCachedFinder {
     }
   }
 
-  private static final @NotNull DataProvider<SourceSetCachedFinder> INSTANCE_PROVIDER = SourceSetCachedFinder::new;
+  private static final @NotNull DataProvider<GradleSourceSetCachedFinder> INSTANCE_PROVIDER = GradleSourceSetCachedFinder::new;
 
-  public static @NotNull SourceSetCachedFinder getInstance(@NotNull ModelBuilderContext context) {
+  public static @NotNull GradleSourceSetCachedFinder getInstance(@NotNull ModelBuilderContext context) {
     return context.getData(INSTANCE_PROVIDER);
   }
 }
