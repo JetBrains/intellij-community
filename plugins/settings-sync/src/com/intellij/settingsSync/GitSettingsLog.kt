@@ -10,7 +10,6 @@ import com.intellij.settingsSync.plugins.SettingsSyncPluginsState
 import com.intellij.settingsSync.plugins.SettingsSyncPluginsStateMerger.mergePluginStates
 import com.intellij.ui.JBAccountInfoService
 import com.intellij.util.io.createParentDirectories
-import com.intellij.util.io.readText
 import com.intellij.util.io.write
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
@@ -34,6 +33,7 @@ import java.util.regex.Pattern
 import kotlin.io.path.createFile
 import kotlin.io.path.div
 import kotlin.io.path.exists
+import kotlin.io.path.readText
 
 
 internal class GitSettingsLog(private val settingsSyncStorage: Path,

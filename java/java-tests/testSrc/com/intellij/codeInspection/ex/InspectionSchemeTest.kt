@@ -7,13 +7,13 @@ import com.intellij.testFramework.DisposableRule
 import com.intellij.testFramework.ProjectRule
 import com.intellij.testFramework.rules.InMemoryFsRule
 import com.intellij.testFramework.runInInitMode
-import com.intellij.util.io.readText
 import com.intellij.util.io.write
 import kotlinx.coroutines.runBlocking
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.ClassRule
 import org.junit.Rule
 import org.junit.Test
+import kotlin.io.path.readText
 
 class InspectionSchemeTest {
   companion object {

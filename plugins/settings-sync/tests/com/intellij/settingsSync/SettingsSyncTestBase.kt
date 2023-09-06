@@ -9,7 +9,6 @@ import com.intellij.testFramework.DisposableRule
 import com.intellij.testFramework.TemporaryDirectory
 import com.intellij.testFramework.TestLoggerFactory
 import com.intellij.util.io.createDirectories
-import com.intellij.util.io.readText
 import com.intellij.util.io.write
 import org.junit.After
 import org.junit.Assert.*
@@ -20,6 +19,7 @@ import java.nio.file.Path
 import java.util.concurrent.CountDownLatch
 import java.util.concurrent.TimeUnit
 import kotlin.io.path.exists
+import kotlin.io.path.readText
 
 internal val TIMEOUT_UNIT = TimeUnit.SECONDS
 

@@ -32,7 +32,6 @@ import com.intellij.testFramework.OpenProjectTaskBuilder
 import com.intellij.testFramework.PlatformTestUtil
 import com.intellij.testFramework.rules.ProjectModelRule
 import com.intellij.testFramework.rules.TempDirectory
-import com.intellij.util.io.readText
 import com.intellij.workspaceModel.ide.getInstance
 import com.intellij.workspaceModel.ide.getJpsProjectConfigLocation
 import com.intellij.workspaceModel.ide.impl.JpsProjectUrlRelativizer
@@ -48,6 +47,7 @@ import org.junit.Assert.*
 import java.io.File
 import java.nio.file.Files
 import java.util.stream.Collectors
+import kotlin.io.path.readText
 
 class DelayedProjectSynchronizerTest {
   @Rule

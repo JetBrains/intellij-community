@@ -24,6 +24,7 @@ import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withContext
 import org.jetbrains.idea.eclipse.conversion.EclipseClasspathReader
 import java.nio.file.Path
+import kotlin.io.path.readText
 
 internal val eclipseTestDataRoot: Path
   get() = PluginPathManager.getPluginHome("eclipse").toPath().resolve("testData")

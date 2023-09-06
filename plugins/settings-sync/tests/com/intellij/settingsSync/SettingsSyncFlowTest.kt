@@ -6,7 +6,6 @@ import com.intellij.testFramework.LoggedErrorProcessor
 import com.intellij.util.ConcurrencyUtil
 import com.intellij.util.concurrency.AppExecutorUtil.createBoundedScheduledExecutorService
 import com.intellij.util.io.createParentDirectories
-import com.intellij.util.io.readText
 import com.intellij.util.io.write
 import org.eclipse.jgit.api.Git
 import org.eclipse.jgit.lib.Repository
@@ -23,10 +22,7 @@ import java.nio.file.Path
 import java.time.Instant
 import java.util.concurrent.Callable
 import java.util.concurrent.CountDownLatch
-import kotlin.io.path.createFile
-import kotlin.io.path.div
-import kotlin.io.path.exists
-import kotlin.io.path.writeText
+import kotlin.io.path.*
 
 @RunWith(JUnit4::class)
 internal class SettingsSyncFlowTest : SettingsSyncTestBase() {

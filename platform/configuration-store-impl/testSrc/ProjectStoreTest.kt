@@ -14,7 +14,6 @@ import com.intellij.project.stateStore
 import com.intellij.testFramework.*
 import com.intellij.testFramework.assertions.Assertions.assertThat
 import com.intellij.util.PathUtil
-import com.intellij.util.io.readText
 import com.intellij.util.io.write
 import kotlinx.coroutines.runBlocking
 import org.intellij.lang.annotations.Language
@@ -24,6 +23,7 @@ import org.junit.Test
 import java.io.ByteArrayOutputStream
 import java.io.File
 import java.nio.file.Paths
+import kotlin.io.path.readText
 import kotlin.properties.Delegates
 
 internal class ProjectStoreTest {

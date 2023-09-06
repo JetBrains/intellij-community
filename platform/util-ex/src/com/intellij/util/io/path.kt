@@ -16,6 +16,8 @@ import kotlin.io.path.createFile
 import kotlin.io.path.exists
 import kotlin.io.path.inputStream
 import kotlin.io.path.isDirectory
+import kotlin.io.path.readBytes
+import kotlin.io.path.readText
 
 /** See [NioFiles.createDirectories]. */
 fun Path.createDirectories(): Path = NioFiles.createDirectories(this)
@@ -78,12 +80,6 @@ fun Path.deleteWithParentsIfEmpty(root: Path, isFile: Boolean = true): Boolean {
 
 val Path.systemIndependentPath: String
   get() = invariantSeparatorsPathString
-
-@Throws(IOException::class)
-fun Path.readBytes(): ByteArray = Files.readAllBytes(this)
-
-@Throws(IOException::class)
-fun Path.readText(): String = Files.readString(this)
 
 fun Path.readChars(): CharSequence {
   // a channel is used to avoid Files.size() call
@@ -182,6 +178,16 @@ fun generateRandomPath(parentDirectory: Path): Path {
 }
 
 //<editor-fold desc="Deprecated stuff.">
+@Deprecated(message = "Use kotlin.io.path.readText"/*, level = DeprecationLevel.ERROR*/)
+@Suppress("DeprecatedCallableAddReplaceWith")
+@Throws(IOException::class)
+fun Path.readBytes(): ByteArray = readBytes()
+
+@Deprecated(message = "Use kotlin.io.path.readText",/* level = DeprecationLevel.ERROR*/)
+@Suppress("DeprecatedCallableAddReplaceWith")
+@Throws(IOException::class)
+fun Path.readText(): String = readText()
+
 @Deprecated(message = "Use kotlin.io.path.exists", level = DeprecationLevel.ERROR)
 @Suppress("DeprecatedCallableAddReplaceWith", "NOTHING_TO_INLINE")
 inline fun Path.exists(): Boolean = exists()

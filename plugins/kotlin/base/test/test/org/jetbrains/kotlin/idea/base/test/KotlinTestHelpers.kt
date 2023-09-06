@@ -3,12 +3,12 @@ package org.jetbrains.kotlin.idea.base.test
 
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.rt.execution.junit.FileComparisonFailure
-import com.intellij.util.io.readText
 import junit.framework.TestCase
 import org.jetbrains.kotlin.test.util.trimTrailingWhitespacesAndAddNewlineAtEOF
 import java.nio.file.Path
 import kotlin.io.path.absolutePathString
 import kotlin.io.path.exists
+import kotlin.io.path.readText
 import kotlin.io.path.writeText
 
 object KotlinTestHelpers {

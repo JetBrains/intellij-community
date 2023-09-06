@@ -2,7 +2,6 @@ package org.intellij.plugins.markdown.model
 
 import com.intellij.refactoring.suggested.startOffset
 import com.intellij.testFramework.fixtures.BasePlatformTestCase
-import com.intellij.util.io.readText
 import org.assertj.core.api.Assertions.assertThat
 import org.assertj.core.api.JUnitSoftAssertions
 import org.intellij.plugins.markdown.MarkdownTestingUtil
@@ -14,6 +13,7 @@ import org.junit.runner.RunWith
 import org.junit.runners.JUnit4
 import kotlin.io.path.Path
 import kotlin.io.path.exists
+import kotlin.io.path.readText
 
 @RunWith(JUnit4::class)
 class ProjectLevelHeaderFindUsagesTest: BasePlatformTestCase() {

@@ -15,7 +15,6 @@ import com.intellij.openapi.vfs.writeText
 import com.intellij.testFramework.ExtensionTestUtil
 import com.intellij.testFramework.LightPlatformTestCase
 import com.intellij.testFramework.replaceService
-import com.intellij.util.io.readText
 import com.intellij.util.io.write
 import junit.framework.TestCase
 import kotlinx.coroutines.CoroutineScope
@@ -23,6 +22,7 @@ import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.runBlocking
 import java.nio.file.Path
 import kotlin.io.path.deleteIfExists
+import kotlin.io.path.readText
 
 class HeadlessEnvironmentServiceTest : LightPlatformTestCase() {
   private val configurationFilePath: Path

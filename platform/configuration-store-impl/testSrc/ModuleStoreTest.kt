@@ -23,7 +23,6 @@ import com.intellij.project.stateStore
 import com.intellij.testFramework.*
 import com.intellij.testFramework.assertions.Assertions.assertThat
 import com.intellij.util.io.Ksuid
-import com.intellij.util.io.readText
 import com.intellij.util.io.systemIndependentPath
 import it.unimi.dsi.fastutil.objects.Object2IntOpenHashMap
 import kotlinx.coroutines.Dispatchers
@@ -35,6 +34,7 @@ import org.junit.ClassRule
 import org.junit.Rule
 import org.junit.Test
 import java.nio.file.Path
+import kotlin.io.path.readText
 
 const val ESCAPED_MODULE_DIR = "\$MODULE_DIR$"
 

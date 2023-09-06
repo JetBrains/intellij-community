@@ -32,7 +32,6 @@ import com.intellij.util.io.BaseOutputReader
 import com.intellij.util.io.DigestUtil
 import com.intellij.util.io.HttpRequests
 import com.intellij.util.io.HttpRequests.HttpStatusException
-import com.intellij.util.io.readText
 import com.intellij.util.system.CpuArch
 import com.intellij.util.text.VersionComparatorUtil
 import com.intellij.util.withFragment

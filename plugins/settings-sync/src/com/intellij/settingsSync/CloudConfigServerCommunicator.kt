@@ -6,10 +6,8 @@ import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.util.JDOMUtil
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.settingsSync.auth.SettingsSyncAuthService
-import com.intellij.settingsSync.notification.NotificationService
 import com.intellij.util.io.HttpRequests
 import com.intellij.util.io.delete
-import com.intellij.util.io.inputStream
 import com.intellij.util.resettableLazy
 import com.jetbrains.cloudconfig.*
 import com.jetbrains.cloudconfig.auth.JbaTokenAuthProvider

@@ -21,7 +21,6 @@ import com.intellij.testFramework.*
 import com.intellij.testFramework.assertions.Assertions.assertThat
 import com.intellij.util.Function
 import com.intellij.util.io.Ksuid
-import com.intellij.util.io.readText
 import com.intellij.util.io.systemIndependentPath
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.runBlocking
@@ -31,6 +30,7 @@ import org.junit.Rule
 import org.junit.Test
 import org.junit.rules.ExternalResource
 import java.nio.file.Path
+import kotlin.io.path.readText
 import kotlin.properties.Delegates
 
 private val Module.storage: FileBasedStorage

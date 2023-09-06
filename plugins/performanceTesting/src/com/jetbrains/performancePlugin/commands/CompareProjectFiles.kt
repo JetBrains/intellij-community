@@ -13,7 +13,6 @@ import com.intellij.util.indexing.FileBasedIndexImpl
 import com.intellij.util.indexing.diagnostic.dump.IndexContentDiagnosticDumper
 import com.intellij.util.indexing.diagnostic.dump.paths.IndexedFilePath
 import com.intellij.util.indexing.diagnostic.dump.paths.hasPresentablePathMatching
-import com.intellij.util.io.readText
 import com.jetbrains.performancePlugin.PerformanceTestingBundle
 import com.jetbrains.performancePlugin.utils.ActionCallbackProfilerStopper
 import com.jetbrains.performancePlugin.utils.errors.ErrorCollector
@@ -22,6 +21,7 @@ import org.jetbrains.concurrency.Promise
 import org.jetbrains.concurrency.toPromise
 import java.nio.file.Path
 import java.nio.file.Paths
+import kotlin.io.path.readText
 
 
 class CompareProjectFiles(text: String, line: Int) : AbstractCommand(text, line) {

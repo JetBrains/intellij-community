@@ -8,12 +8,12 @@ import com.intellij.openapi.components.RoamingType
 import com.intellij.openapi.components.stateStore
 import com.intellij.util.containers.forEachGuaranteed
 import com.intellij.util.io.directoryStreamIfExists
-import com.intellij.util.io.readBytes
 import com.intellij.util.io.systemIndependentPath
 import java.nio.file.Files
 import java.nio.file.NoSuchFileException
 import java.nio.file.Path
 import kotlin.io.path.isRegularFile
+import kotlin.io.path.readBytes
 
 fun copyLocalConfig(storageManager: StateStorageManagerImpl = ApplicationManager.getApplication()!!.stateStore.storageManager as StateStorageManagerImpl) {
   val streamProvider = storageManager.compoundStreamProvider.providers.first { it is IcsManager.IcsStreamProvider } as IcsManager.IcsStreamProvider

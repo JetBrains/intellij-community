@@ -15,7 +15,6 @@ import com.intellij.settingsSync.SettingsSnapshot.MetaInfo
 import com.intellij.settingsSync.notification.NotificationService
 import com.intellij.settingsSync.notification.NotificationServiceImpl
 import com.intellij.testFramework.replaceService
-import com.intellij.util.io.readText
 import com.intellij.util.toByteArray
 import com.intellij.util.xmlb.annotations.Attribute
 import kotlinx.coroutines.runBlocking
@@ -32,6 +31,7 @@ import java.time.Instant
 import java.util.*
 import kotlin.io.path.div
 import kotlin.io.path.exists
+import kotlin.io.path.readText
 
 @RunWith(JUnit4::class)
 internal class SettingsSyncRealIdeTest : SettingsSyncRealIdeTestBase() {

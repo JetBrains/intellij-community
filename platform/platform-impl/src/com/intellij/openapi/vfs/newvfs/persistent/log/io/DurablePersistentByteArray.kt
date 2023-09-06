@@ -5,7 +5,7 @@ import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.vfs.newvfs.persistent.log.io.DurablePersistentByteArray.Companion.OpenMode
 import com.intellij.util.io.ResilientFileChannel
-import com.intellij.util.io.createFile
+import com.intellij.util.io.createParentDirectories
 import java.io.IOException
 import java.nio.ByteBuffer
 import java.nio.file.Files
@@ -16,6 +16,7 @@ import java.nio.file.StandardOpenOption.WRITE
 import java.util.*
 import java.util.zip.CRC32
 import java.util.zip.Checksum
+import kotlin.io.path.createFile
 import kotlin.io.path.exists
 import kotlin.io.path.moveTo
 
@@ -104,7 +105,7 @@ class DurablePersistentByteArray(
   private fun createInitialState(defaultValue: ByteArray) {
     val initPath = path.resolveSibling(path.fileName.toString() + ".init")
     if (!initPath.exists()) {
-      initPath.createFile()
+      initPath.createParentDirectories().createFile()
     }
     ResilientFileChannel(initPath, OpenMode.ReadWrite.openOptions).use {
       it.truncate(layout.getFullSize(size).toLong())

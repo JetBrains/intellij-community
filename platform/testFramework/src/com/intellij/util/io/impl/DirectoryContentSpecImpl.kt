@@ -5,7 +5,6 @@ import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.vfs.CharsetToolkit
 import com.intellij.rt.execution.junit.FileComparisonFailure
 import com.intellij.util.io.*
-import com.intellij.util.io.readBytes
 import org.junit.Assert.assertEquals
 import org.junit.ComparisonFailure
 import java.io.File
@@ -19,6 +18,7 @@ import java.util.zip.Deflater
 import kotlin.io.path.*
 import kotlin.io.path.exists
 import kotlin.io.path.isDirectory
+import kotlin.io.path.readBytes
 
 sealed class DirectoryContentSpecImpl : DirectoryContentSpec {
   /**
@@ -235,7 +235,8 @@ private fun assertDirectoryContentMatches(file: Path,
               val specFilePath = spec.originalFile?.toFile()?.absolutePath
               val (expected, actual) = if (expectedDataIsInSpec) specString to fileString else fileString to specString
               val (expectedPath, actualPath) = if (expectedDataIsInSpec) specFilePath to null else null to specFilePath
-              errorReporter.reportError(relativePath, FileComparisonFailure("File content mismatch$place:", expected, actual, expectedPath, actualPath))
+              errorReporter.reportError(relativePath,
+                                        FileComparisonFailure("File content mismatch$place:", expected, actual, expectedPath, actualPath))
             }
           }
           else {

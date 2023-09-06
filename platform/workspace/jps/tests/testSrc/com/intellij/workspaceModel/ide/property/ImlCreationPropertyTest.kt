@@ -15,7 +15,6 @@ import com.intellij.testFramework.junit5.TestApplication
 import com.intellij.testFramework.junit5.TestDisposable
 import com.intellij.testFramework.rules.ProjectModelExtension
 import com.intellij.util.io.createDirectories
-import com.intellij.util.io.readText
 import com.intellij.platform.workspace.jps.serialization.impl.JpsProjectSerializersImpl
 import com.intellij.workspaceModel.ide.impl.jps.serialization.createProjectSerializers
 import com.intellij.workspaceModel.ide.impl.jps.serialization.saveAllEntities
@@ -37,6 +36,7 @@ import org.junit.jupiter.api.extension.RegisterExtension
 import org.junit.jupiter.api.io.TempDir
 import java.nio.file.Path
 import java.util.*
+import kotlin.io.path.readText
 import kotlin.test.assertContains
 import kotlin.test.fail
 

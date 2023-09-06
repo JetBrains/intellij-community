@@ -1,6 +1,5 @@
 package com.intellij.settingsSync
 
-import com.intellij.util.io.readBytes
 import com.intellij.util.io.systemIndependentPath
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.SystemIndependent
@@ -8,6 +7,7 @@ import java.nio.charset.Charset
 import java.nio.charset.StandardCharsets
 import java.nio.file.Path
 import kotlin.io.path.isRegularFile
+import kotlin.io.path.readBytes
 import kotlin.io.path.relativeTo
 
 @ApiStatus.Internal
@@ -44,7 +44,8 @@ internal fun getFileStateFromFileWithDeletedMarker(file: Path, storageBasePath: 
   val fileSpec = file.relativeTo(storageBasePath).systemIndependentPath
   return if (text == DELETED_FILE_MARKER) {
     FileState.Deleted(fileSpec)
-  } else {
+  }
+  else {
     FileState.Modified(fileSpec, bytes)
   }
 }
