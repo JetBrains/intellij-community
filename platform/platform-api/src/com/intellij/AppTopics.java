@@ -6,8 +6,9 @@ import com.intellij.util.messages.Topic;
 
 public final class AppTopics {
   /**
-   * Document load, save and reload events.
+   * @deprecated use {@link FileDocumentManagerListener#TOPIC} instead
    */
+  @Deprecated
   @Topic.AppLevel
-  public static final Topic<FileDocumentManagerListener> FILE_DOCUMENT_SYNC = new Topic<>(FileDocumentManagerListener.class, Topic.BroadcastDirection.TO_DIRECT_CHILDREN, true);
+  public static final Topic<FileDocumentManagerListener> FILE_DOCUMENT_SYNC = FileDocumentManagerListener.TOPIC;
 }
