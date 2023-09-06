@@ -69,7 +69,11 @@ public class StringConcatInstruction extends EvalInstruction {
   
   @Nullable
   private static String getString(@NotNull DfaMemoryState state, DfaValue value) {
-    Object constant = state.getDfType(value).getConstantOfType(Object.class);
+    DfType dfType = state.getDfType(value);
+    if (dfType.equals(NULL)) {
+      return "null";
+    }
+    Object constant = dfType.getConstantOfType(Object.class);
     // Do not process float/double constants, as their string representation may depend on JDK version
     return constant instanceof String || constant instanceof Integer || constant instanceof Long || 
            constant instanceof Boolean ? constant.toString() : null;
