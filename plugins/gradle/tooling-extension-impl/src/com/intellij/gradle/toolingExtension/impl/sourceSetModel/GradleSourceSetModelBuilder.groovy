@@ -41,7 +41,6 @@ class GradleSourceSetModelBuilder {
 
   private static final GradleVersion gradleBaseVersion = GradleVersion.current().baseVersion
   private static final boolean is4OrBetter = gradleBaseVersion >= GradleVersion.version("4.0")
-  private static final boolean is44OrBetter = gradleBaseVersion >= GradleVersion.version("4.4")
   private static final boolean is67OrBetter = gradleBaseVersion >= GradleVersion.version("6.7")
   private static final boolean is74OrBetter = gradleBaseVersion >= GradleVersion.version("7.4")
   private static final boolean is80OrBetter = gradleBaseVersion >= GradleVersion.version("8.0")
@@ -585,17 +584,6 @@ class GradleSourceSetModelBuilder {
       }
     }
     return null
-  }
-
-  private static String wrap(Object o) {
-    return o instanceof CharSequence ? o.toString() : ""
-  }
-
-  @NotNull
-  static ErrorMessageBuilder getErrorMessageBuilder(@NotNull Project project, @NotNull Exception e) {
-    return ErrorMessageBuilder.create(
-      project, e, "Project resolve errors"
-    ).withDescription("Unable to resolve additional project configuration.")
   }
 
   private static boolean containsAllSourceSetOutput(@NotNull AbstractArchiveTask archiveTask, @NotNull SourceSet sourceSet) {
