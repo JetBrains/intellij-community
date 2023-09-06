@@ -104,6 +104,9 @@ public interface IdeActions {
   String ACTION_LOOKUP_UP = "EditorLookupUp";
   String ACTION_LOOKUP_DOWN = "EditorLookupDown";
 
+  String ACTION_INSERT_INLINE_COMPLETION = "InsertInlineCompletionAction";
+  String ACTION_CALL_INLINE_COMPLETION = "CallInlineCompletionAction";
+
   String GROUP_EXTERNAL_TOOLS = "ExternalToolsGroup";
 
   String GROUP_MAIN_MENU = "MainMenu";
