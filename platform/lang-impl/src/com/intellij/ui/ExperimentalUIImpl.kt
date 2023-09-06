@@ -19,6 +19,7 @@ import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.editor.colors.EditorColorsManager
 import com.intellij.openapi.ui.MessageDialogBuilder
 import com.intellij.openapi.ui.Messages
+import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.IconLoader
 import com.intellij.openapi.util.IconPathPatcher
 import com.intellij.openapi.util.SystemInfo
@@ -27,6 +28,7 @@ import com.intellij.openapi.util.registry.RegistryValue
 import com.intellij.openapi.util.registry.RegistryValueListener
 import com.intellij.platform.feedback.newUi.NewUIInfoService
 import com.intellij.util.PlatformUtils
+import com.intellij.util.application
 import java.util.concurrent.atomic.AtomicBoolean
 import javax.swing.UIDefaults
 import javax.swing.UIManager
@@ -191,18 +193,30 @@ private class ExperimentalUIImpl : ExperimentalUI() {
   }
 
   private fun changeUiWithDelegate(isEnabled: Boolean) {
-    val shouldRestart = MessageDialogBuilder.yesNo(
+    val restartNow = MessageDialogBuilder.yesNo(
       title = IdeBundle.message("dialog.newui.title.user.interface"),
       message = IdeBundle.message("dialog.newui.message.need.restart.client.and.backend.to.apply.settings"),
       icon = AllIcons.General.QuestionDialog,
-    ).yesText(IdeBundle.message("dialog.newui.message.new.ui.restart"))
-      .noText(IdeBundle.message("dialog.newui.message.new.ui.revert"))
+    ).yesText(IdeBundle.message("dialog.newui.message.new.ui.restart.now"))
+      .noText(IdeBundle.message("dialog.newui.message.new.ui.restart.later"))
       .guessWindowAndAsk()
-    if (shouldRestart) {
+    fun changeUI() {
       val delegate = ExperimentalUIJetBrainsClientDelegate.getInstance()
       delegate.changeUi(isEnabled, updateLocally = {
         onValueChanged(isEnabled)
         saveNewValue(isEnabled)
+      })
+    }
+    if (restartNow) {
+      changeUI()
+    }
+    else {
+      val disposable = Disposer.newDisposable("NewUI change")
+      application.messageBus.connect(disposable).subscribe(AppLifecycleListener.TOPIC, object : AppLifecycleListener {
+        override fun appClosing() {
+          Disposer.dispose(disposable)
+          changeUI()
+        }
       })
     }
   }
