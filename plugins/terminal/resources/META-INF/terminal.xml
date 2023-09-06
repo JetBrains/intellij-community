@@ -45,6 +45,10 @@
                          id="terminalCloseSearch" order="first, after terminalSelectPrompt"/>
     <editorActionHandler action="Find" implementationClass="org.jetbrains.plugins.terminal.exp.TerminalFindHandler"
                          id="terminalFind" order="first"/>
+    <editorActionHandler action="FindNext" implementationClass="org.jetbrains.plugins.terminal.exp.TerminalFindNextHandler"
+                         id="terminalFindNext" order="first"/>
+    <editorActionHandler action="FindPrevious" implementationClass="org.jetbrains.plugins.terminal.exp.TerminalFindPreviousHandler"
+                         id="terminalFindPrevious" order="first"/>
     <typedHandler implementation="org.jetbrains.plugins.terminal.exp.TerminalCompletionAutoPopupHandler"
                   id="terminalCompletionAutoPopup" order="first"/>
     <lookup.charFilter implementation="org.jetbrains.plugins.terminal.exp.TerminalCharFilter"
