@@ -5,6 +5,7 @@ import com.intellij.idea.ActionsBundle
 import com.intellij.openapi.actionSystem.ActionManager
 import com.intellij.openapi.keymap.KeymapUtil
 import com.intellij.openapi.ui.popup.Balloon
+import com.intellij.openapi.wm.IdeFocusManager
 import com.intellij.ui.GotItTooltip
 import com.intellij.ui.SpeedSearchBase
 import com.intellij.ui.speedSearch.SpeedSearchSupply
@@ -12,25 +13,32 @@ import java.awt.Component
 import java.awt.Point
 import javax.swing.JComponent
 
-internal class SpeedSearchActionHandler(private val speedSearch: SpeedSearchBase<*>) {
+internal class SpeedSearchActionHandler(val targetComponent: JComponent, private val speedSearch: SpeedSearchBase<*>) {
 
   fun isSpeedSearchActive(): Boolean = speedSearch.isPopupActive
 
-  fun activateSpeedSearch() {
+  fun activateSpeedSearch(requestFocus: Boolean) {
     if (speedSearch.isAvailable && !isSpeedSearchActive()) {
-      speedSearch.showPopup()
-      val component = speedSearch.searchField ?: return
-      val shortcut = getActionShortcut()
-      val gotItMessage = if (shortcut == null) {
-        ActionsBundle.message("action.Tree-speedSearch.GotItTooltip.textWithoutShortcuts")
+      if (requestFocus) {
+        targetComponent.requestFocusInWindow()
       }
-      else {
-        ActionsBundle.message("action.Tree-speedSearch.GotItTooltip.text", shortcut)
-      }
-      GotItTooltip("speed.search.shown", gotItMessage)
-        .withPosition(Balloon.Position.atRight)
-        .show(component) { c, _ -> Point(c.width, c.height / 2) }
+      doActivateSpeedSearch()
     }
+  }
+
+  private fun doActivateSpeedSearch() {
+    speedSearch.showPopup()
+    val component = speedSearch.searchField ?: return
+    val shortcut = getActionShortcut()
+    val gotItMessage = if (shortcut == null) {
+      ActionsBundle.message("action.Tree-speedSearch.GotItTooltip.textWithoutShortcuts")
+    }
+    else {
+      ActionsBundle.message("action.Tree-speedSearch.GotItTooltip.text", shortcut)
+    }
+    GotItTooltip("speed.search.shown", gotItMessage)
+      .withPosition(Balloon.Position.atRight)
+      .show(component) { c, _ -> Point(c.width, c.height / 2) }
   }
 
   private fun getActionShortcut(): String? =
@@ -46,5 +54,5 @@ internal fun Component.getSpeedSearchActionHandler(): SpeedSearchActionHandler? 
   val contextComponent = (this as? JComponent?) ?: return null
   val speedSearch = (SpeedSearchSupply.getSupply(contextComponent, true) as? SpeedSearchBase<*>?) ?: return null
   if (!speedSearch.isAvailable) return null
-  return SpeedSearchActionHandler(speedSearch)
+  return SpeedSearchActionHandler(contextComponent, speedSearch)
 }

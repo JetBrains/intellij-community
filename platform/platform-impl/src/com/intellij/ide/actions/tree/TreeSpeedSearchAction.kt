@@ -22,7 +22,7 @@ class TreeSpeedSearchAction : DumbAwareAction() {
   override fun actionPerformed(e: AnActionEvent) {
     val contextComponent = e.dataContext.getData(PlatformDataKeys.CONTEXT_COMPONENT) ?: return
     val handler = contextComponent.getSpeedSearchActionHandler() ?: return
-    handler.activateSpeedSearch()
+    handler.activateSpeedSearch(requestFocus = false) // only activated by shortcut when the tree is already focused
   }
 
 }

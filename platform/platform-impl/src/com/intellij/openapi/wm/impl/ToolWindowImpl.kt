@@ -62,7 +62,6 @@ import org.jetbrains.annotations.ApiStatus
 import java.awt.AWTEvent
 import java.awt.Color
 import java.awt.Component
-import java.awt.Point
 import java.awt.Rectangle
 import java.awt.event.ComponentAdapter
 import java.awt.event.ComponentEvent
@@ -70,7 +69,6 @@ import java.awt.event.InputEvent
 import javax.swing.*
 import javax.swing.text.JTextComponent
 import kotlin.math.abs
-import kotlin.math.sqrt
 
 internal class ToolWindowImpl(val toolWindowManager: ToolWindowManagerImpl,
                               private val id: String,
@@ -797,7 +795,7 @@ internal class ToolWindowImpl(val toolWindowManager: ToolWindowManagerImpl,
     }
 
     override fun actionPerformed(e: AnActionEvent) {
-      getActionHandler()?.activateSpeedSearch()
+      getActionHandler()?.activateSpeedSearch(requestFocus = true)
     }
 
     private fun getActionHandler(): SpeedSearchActionHandler? {
