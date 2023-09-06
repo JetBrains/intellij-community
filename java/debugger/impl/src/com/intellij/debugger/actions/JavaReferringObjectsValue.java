@@ -9,10 +9,11 @@ import com.intellij.debugger.engine.SuspendContextImpl;
 import com.intellij.debugger.engine.evaluation.EvaluateException;
 import com.intellij.debugger.engine.evaluation.EvaluationContextImpl;
 import com.intellij.debugger.engine.events.SuspendContextCommandImpl;
-import com.intellij.debugger.memory.agent.MemoryAgent;
-import com.intellij.debugger.memory.agent.MemoryAgentPathsToClosestGCRootsProvider;
+import com.intellij.debugger.memory.agent.ui.PathsToClosestGcRootsDialog;
 import com.intellij.debugger.ui.impl.watch.NodeManagerImpl;
 import com.intellij.debugger.ui.impl.watch.ValueDescriptorImpl;
+import com.intellij.openapi.ui.DialogWrapper;
+import com.intellij.xdebugger.XDebugSession;
 import com.intellij.xdebugger.frame.*;
 import com.intellij.xdebugger.impl.ui.tree.XDebuggerTree;
 import com.intellij.xdebugger.impl.ui.tree.actions.ShowReferringObjectsAction;
@@ -22,7 +23,6 @@ import com.sun.jdi.Value;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.tree.TreeNode;
 import java.util.List;
 import java.util.function.Function;
 
@@ -62,11 +62,13 @@ public class JavaReferringObjectsValue extends JavaValue implements ShowReferrin
   }
 
   @Override
-  public void customizeTree(@NotNull XDebuggerTree referrersTree) {
-    if (myReferringObjectsProvider instanceof MemoryAgentPathsToClosestGCRootsProvider &&
-        MemoryAgent.isAgentLoaded(getEvaluationContext().getDebugProcess())) {
-      referrersTree.expandNodesOnLoad(treeNode -> isInTopSubTree(treeNode));
-    }
+  public DialogWrapper getDialog(XDebuggerTree tree, String nodeName, XDebugSession session) {
+    return new PathsToClosestGcRootsDialog(tree.getProject(),
+                                           tree.getEditorsProvider(),
+                                           tree.getSourcePosition(),
+                                           nodeName,
+                                           this,
+                                           tree.getValueMarkers(), session, false);
   }
 
   @Override
@@ -126,16 +128,5 @@ public class JavaReferringObjectsValue extends JavaValue implements ShowReferrin
   @Override
   public XValueModifier getModifier() {
     return null;
-  }
-
-  private static boolean isInTopSubTree(@NotNull TreeNode node) {
-    while (node.getParent() != null) {
-      if (node != node.getParent().getChildAt(0)) {
-        return false;
-      }
-      node = node.getParent();
-    }
-
-    return true;
   }
 }
