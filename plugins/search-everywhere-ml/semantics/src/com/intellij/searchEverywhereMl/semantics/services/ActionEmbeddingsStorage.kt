@@ -33,7 +33,7 @@ import java.util.concurrent.atomic.AtomicReference
  * Generates the embeddings for actions not present in the loaded state at the IDE startup event if semantic action search is enabled
  */
 @Service(Service.Level.APP)
-class ActionEmbeddingsStorage {
+class ActionEmbeddingsStorage : AbstractEmbeddingsStorage() {
   val index = InMemoryEmbeddingSearchIndex(
     File(PathManager.getSystemPath())
       .resolve(SEMANTIC_SEARCH_RESOURCES_DIR)
@@ -70,7 +70,7 @@ class ActionEmbeddingsStorage {
   }
 
   @RequiresBackgroundThread
-  fun searchNeighbours(text: String, topK: Int, similarityThreshold: Double? = null): List<ScoredText> {
+  override fun searchNeighbours(text: String, topK: Int, similarityThreshold: Double?): List<ScoredText> {
     if (!checkSearchEnabled()) return emptyList()
     val embedding = generateEmbedding(text) ?: return emptyList()
     return index.findClosest(embedding, topK, similarityThreshold)

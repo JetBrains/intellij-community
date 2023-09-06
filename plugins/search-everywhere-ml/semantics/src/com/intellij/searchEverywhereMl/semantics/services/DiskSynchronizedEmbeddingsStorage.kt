@@ -21,7 +21,7 @@ import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import java.util.concurrent.atomic.AtomicReference
 import kotlin.concurrent.withLock
 
-abstract class DiskSynchronizedEmbeddingsStorage<T : IndexableEntity>(val project: Project) {
+abstract class DiskSynchronizedEmbeddingsStorage<T : IndexableEntity>(val project: Project) : AbstractEmbeddingsStorage() {
   abstract val index: DiskSynchronizedEmbeddingSearchIndex
   abstract val indexingTaskManager: EmbeddingIndexingTaskManager
 
@@ -55,7 +55,7 @@ abstract class DiskSynchronizedEmbeddingsStorage<T : IndexableEntity>(val projec
   fun tryStopGeneratingEmbeddings() = setupTaskIndicator.getAndSet(null)?.cancel()
 
   @RequiresBackgroundThread
-  fun searchNeighbours(text: String, topK: Int, similarityThreshold: Double? = null): List<ScoredText> {
+ override fun searchNeighbours(text: String, topK: Int, similarityThreshold: Double?): List<ScoredText> {
     if (!checkSearchEnabled()) return emptyList()
     val embedding = generateEmbedding(text) ?: return emptyList()
     return index.findClosest(embedding, topK, similarityThreshold)
