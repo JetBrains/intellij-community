@@ -1,5 +1,7 @@
 package com.intellij.searchEverywhereMl.ranking.features
 
+import com.intellij.find.FindManager
+import com.intellij.find.impl.TextSearchContributor
 import com.intellij.ide.actions.searcheverywhere.FileSearchEverywhereContributor
 import com.intellij.ide.actions.searcheverywhere.SearchEverywhereManagerImpl
 import com.intellij.ide.util.scopeChooser.ScopeDescriptor
@@ -7,6 +9,8 @@ import com.intellij.ide.util.scopeChooser.ScopeIdMapper
 import com.intellij.internal.statistic.eventLog.events.EventField
 import com.intellij.internal.statistic.eventLog.events.EventFields
 import com.intellij.internal.statistic.eventLog.events.EventPair
+import com.intellij.openapi.project.DumbService
+import com.intellij.openapi.project.Project
 import com.intellij.usages.impl.ScopeRuleValidator
 
 
@@ -24,6 +28,10 @@ class SearchEverywhereStateFeaturesProvider {
     private val SEARCH_SCOPE_DATA_KEY = EventFields.StringValidatedByCustomRule("searchScope", ScopeRuleValidator::class.java)
     private val IS_SEARCH_EVERYWHERE_DATA_KEY = EventFields.Boolean("isSearchEverywhere")
 
+    private val IS_CASE_SENSITIVE = EventFields.Boolean("isCaseSensitive")
+    private val IS_WHOLE_WORDS_ONLY = EventFields.Boolean("isWholeWordsOnly")
+    private val IS_REGULAR_EXPRESSIONS = EventFields.Boolean("isRegularExpressions")
+
     fun getFeaturesDefinition(): List<EventField<*>> {
       return arrayListOf(
         QUERY_LENGTH_DATA_KEY, IS_EMPTY_QUERY_DATA_KEY,
@@ -31,11 +39,12 @@ class SearchEverywhereStateFeaturesProvider {
         QUERY_CONTAINS_SPACES_DATA_KEY, QUERY_IS_CAMEL_CASE_DATA_KEY,
         QUERY_CONTAINS_ABBREVIATIONS_DATA_KEY, QUERY_IS_ALL_UPPERCASE_DATA_KEY,
         IS_DUMB_MODE, SEARCH_SCOPE_DATA_KEY, IS_SEARCH_EVERYWHERE_DATA_KEY,
+        IS_CASE_SENSITIVE, IS_WHOLE_WORDS_ONLY, IS_REGULAR_EXPRESSIONS,
       )
     }
   }
 
-  fun getSearchStateFeatures(tabId: String, query: String, isDumb: Boolean?,
+  fun getSearchStateFeatures(tabId: String, query: String, project: Project?,
                              searchScope: ScopeDescriptor?, isSearchEverywhere: Boolean): List<EventPair<*>> {
     val features = arrayListOf<EventPair<*>>(
       QUERY_LENGTH_DATA_KEY.with(query.length),
@@ -47,8 +56,9 @@ class SearchEverywhereStateFeaturesProvider {
       IS_SEARCH_EVERYWHERE_DATA_KEY.with(isSearchEverywhere)
     )
 
-    isDumb?.let {
-      features.add(IS_DUMB_MODE.with(it))
+    project?.let {
+      val isDumb = DumbService.isDumb(project)
+      features.add(IS_DUMB_MODE.with(isDumb))
     }
 
     if (hasSuitableContributor(tabId, FileSearchEverywhereContributor::class.java.simpleName)) features.addAll(getFileQueryFeatures(query))
@@ -57,6 +67,10 @@ class SearchEverywhereStateFeaturesProvider {
     searchScope?.displayName?.let { searchScopeDisplayName ->
       val scopeId = ScopeIdMapper.instance.getScopeSerializationId(searchScopeDisplayName)
       features.add(SEARCH_SCOPE_DATA_KEY.with(scopeId))
+    }
+
+    if (project != null && tabId == TextSearchContributor::class.java.simpleName) {
+      features.addAll(getTextContributorFeatures(project))
     }
 
     return features
@@ -69,6 +83,14 @@ class SearchEverywhereStateFeaturesProvider {
   private fun getAllTabQueryFeatures(query: String) = listOf(
     QUERY_CONTAINS_COMMAND_CHAR_DATA_KEY.with(query.indexOfLast { it == '/' } == 0)
   )
+
+  private fun getTextContributorFeatures(project: Project) = FindManager.getInstance(project).findInProjectModel.let { findModel ->
+    listOf(
+      IS_CASE_SENSITIVE.with(findModel.isCaseSensitive),
+      IS_WHOLE_WORDS_ONLY.with(findModel.isWholeWordsOnly),
+      IS_REGULAR_EXPRESSIONS.with(findModel.isRegularExpressions),
+    )
+  }
 
   private fun hasSuitableContributor(currentTabId: String, featuresTab: String): Boolean {
     return currentTabId == featuresTab || currentTabId == SearchEverywhereManagerImpl.ALL_CONTRIBUTORS_GROUP_ID

@@ -5,8 +5,8 @@ import com.intellij.ide.actions.searcheverywhere.*
 import com.intellij.ide.actions.searcheverywhere.SearchEverywhereManagerImpl.ALL_CONTRIBUTORS_GROUP_ID
 import com.intellij.ide.util.scopeChooser.ScopeDescriptor
 import com.intellij.internal.statistic.eventLog.events.EventPair
+import com.intellij.openapi.project.Project
 import com.intellij.searchEverywhereMl.ranking.features.*
-import com.intellij.searchEverywhereMl.ranking.features.SearchEverywhereContributorFeaturesProvider
 import com.intellij.searchEverywhereMl.ranking.features.SearchEverywhereElementFeaturesProvider.Companion.ML_SCORE_KEY
 import com.intellij.searchEverywhereMl.ranking.model.SearchEverywhereModelProvider
 import com.intellij.searchEverywhereMl.ranking.model.SearchEverywhereRankingModel
@@ -18,11 +18,11 @@ internal class SearchEverywhereMlSearchState(
   val keysTyped: Int, val backspacesTyped: Int, val searchQuery: String,
   private val modelProvider: SearchEverywhereModelProvider,
   private val providersCache: FeaturesProviderCache?,
-  projectIsDumb: Boolean?,
+  project: Project?,
   searchScope: ScopeDescriptor?,
   isSearchEverywhere: Boolean,
 ) {
-  val searchStateFeatures = SearchEverywhereStateFeaturesProvider().getSearchStateFeatures(tabId, searchQuery, projectIsDumb,
+  val searchStateFeatures = SearchEverywhereStateFeaturesProvider().getSearchStateFeatures(tabId, searchQuery, project,
                                                                                            searchScope, isSearchEverywhere)
   private val contributorFeaturesProvider = SearchEverywhereContributorFeaturesProvider()
 
