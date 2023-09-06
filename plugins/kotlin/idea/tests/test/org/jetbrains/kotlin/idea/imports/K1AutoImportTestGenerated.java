@@ -113,6 +113,11 @@ public class K1AutoImportTestGenerated extends AbstractK1AutoImportTest {
         runTest("testData/editor/autoImport/starImport/");
     }
 
+    @TestMetadata("superConstructorCall")
+    public void testSuperConstructorCall() throws Exception {
+        runTest("testData/editor/autoImport/superConstructorCall/");
+    }
+
     @TestMetadata("typeReference")
     public void testTypeReference() throws Exception {
         runTest("testData/editor/autoImport/typeReference/");

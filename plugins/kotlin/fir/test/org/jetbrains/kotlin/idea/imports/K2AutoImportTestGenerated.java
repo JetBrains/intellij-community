@@ -113,6 +113,11 @@ public class K2AutoImportTestGenerated extends AbstractK2AutoImportTest {
         runTest("../idea/tests/testData/editor/autoImport/starImport/");
     }
 
+    @TestMetadata("superConstructorCall")
+    public void testSuperConstructorCall() throws Exception {
+        runTest("../idea/tests/testData/editor/autoImport/superConstructorCall/");
+    }
+
     @TestMetadata("typeReference")
     public void testTypeReference() throws Exception {
         runTest("../idea/tests/testData/editor/autoImport/typeReference/");
