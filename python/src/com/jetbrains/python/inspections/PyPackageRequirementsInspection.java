@@ -46,6 +46,7 @@ import com.jetbrains.python.packaging.ui.PyChooseRequirementsDialog;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.impl.PyPsiUtils;
 import com.jetbrains.python.psi.types.TypeEvalContext;
+import com.jetbrains.python.requirements.RequirementsFile;
 import com.jetbrains.python.sdk.PySdkExtKt;
 import com.jetbrains.python.sdk.PySdkProvider;
 import com.jetbrains.python.sdk.PythonSdkUtil;
@@ -75,7 +76,7 @@ public class PyPackageRequirementsInspection extends PyInspection {
   public PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder,
                                         boolean isOnTheFly,
                                         @NotNull LocalInspectionToolSession session) {
-    if (!(holder.getFile() instanceof PyFile) && !(holder.getFile() instanceof PsiPlainTextFile)
+    if (!(holder.getFile() instanceof PyFile) && !(holder.getFile() instanceof RequirementsFile)
         && !isPythonInTemplateLanguages(holder.getFile())) {
       return PsiElementVisitor.EMPTY_VISITOR;
     }
@@ -111,15 +112,17 @@ public class PyPackageRequirementsInspection extends PyInspection {
     }
 
     @Override
-    public void visitPlainTextFile(@NotNull PsiPlainTextFile file) {
-      final Module module = ModuleUtilCore.findModuleForPsiElement(file);
-      if (module != null && file.getVirtualFile().equals(PyPackageUtil.findRequirementsTxt(module))) {
-        if (file.getText().trim().isEmpty()) {
-          registerProblem(file, PyPsiBundle.message("INSP.package.requirements.requirements.file.empty"),
-                          ProblemHighlightType.GENERIC_ERROR_OR_WARNING, null, new PyGenerateRequirementsFileQuickFix(module));
-        }
-        else {
-          checkPackagesHaveBeenInstalled(file, module);
+    public void visitFile(@NotNull PsiFile file) {
+      if (file instanceof RequirementsFile) {
+        final Module module = ModuleUtilCore.findModuleForPsiElement(file);
+        if (module != null && file.getVirtualFile().equals(PyPackageUtil.findRequirementsTxt(module))) {
+          if (file.getText().trim().isEmpty()) {
+            registerProblem(file, PyPsiBundle.message("INSP.package.requirements.requirements.file.empty"),
+                            ProblemHighlightType.GENERIC_ERROR_OR_WARNING, null, new PyGenerateRequirementsFileQuickFix(module));
+          }
+          else {
+            checkPackagesHaveBeenInstalled(file, module);
+          }
         }
       }
     }

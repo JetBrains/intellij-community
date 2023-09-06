@@ -13,6 +13,9 @@
   <!-- Enable command-line language -->
   <xi:include href="/META-INF/command-line.xml" xpointer="xpointer(/idea-plugin/*)"/>
 
+  <!-- Requirements.txt support -->
+  <xi:include href="/META-INF/python-requirements-plugin.xml" xpointer="xpointer(/idea-plugin/*)"/>
+
   <!-- Poetry -->
   <depends optional="true" config-file="poetry-toml.xml">org.toml.lang</depends>
 
