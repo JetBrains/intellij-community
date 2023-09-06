@@ -381,16 +381,33 @@ public final class XBreakpointManagerImpl implements XBreakpointManager {
   }
 
   @Override
+  public @NotNull <B extends XLineBreakpoint<P>, P extends XBreakpointProperties> Collection<B> findBreakpointsAtLine(@NotNull XLineBreakpointType<P> type,
+                                                                                                         @NotNull VirtualFile file,
+                                                                                                         int line) {
+    //noinspection unchecked
+    return (Collection<B>)findBreakpointsAtLineStream(type, file, line)
+      .collect(Collectors.toList());
+  }
+
+  @Override
   @Nullable
   public <P extends XBreakpointProperties> XLineBreakpoint<P> findBreakpointAtLine(@NotNull final XLineBreakpointType<P> type,
                                                                                    @NotNull final VirtualFile file,
                                                                                    final int line) {
+    return findBreakpointsAtLineStream(type, file, line)
+      .findFirst()
+      .orElse(null);
+  }
+
+  @NotNull
+  private <B extends XLineBreakpoint<P>, P extends XBreakpointProperties> StreamEx<B> findBreakpointsAtLineStream(@NotNull XLineBreakpointType<P> type,
+                                                                                                                  @NotNull VirtualFile file,
+                                                                                                                  int line) {
     ApplicationManager.getApplication().assertReadAccessAllowed();
     //noinspection unchecked
-    return StreamEx.of(myBreakpoints.get(type))
+    return (StreamEx<B>)(StreamEx<?>)StreamEx.of(myBreakpoints.get(type))
       .select(XLineBreakpoint.class)
-      .findFirst(b -> b.getFileUrl().equals(file.getUrl()) && b.getLine() == line)
-      .orElse(null);
+      .filter(b -> b.getFileUrl().equals(file.getUrl()) && b.getLine() == line);
   }
 
   @Override

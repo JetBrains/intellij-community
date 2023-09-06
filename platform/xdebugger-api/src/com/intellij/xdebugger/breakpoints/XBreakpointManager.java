@@ -41,6 +41,15 @@ public interface XBreakpointManager {
   @NotNull
   <B extends XBreakpoint<?>> Collection<? extends B> getBreakpoints(@NotNull Class<? extends XBreakpointType<B, ?>> typeClass);
 
+  @NotNull
+  <B extends XLineBreakpoint<P>, P extends XBreakpointProperties> Collection<B> findBreakpointsAtLine(@NotNull XLineBreakpointType<P> type,
+                                                                                                      @NotNull VirtualFile file,
+                                                                                                      int line);
+
+  /**
+   * @deprecated Use {@link #findBreakpointsAtLine}.
+   */
+  @Deprecated(forRemoval = true)
   @Nullable
   <P extends XBreakpointProperties> XLineBreakpoint<P> findBreakpointAtLine(@NotNull XLineBreakpointType<P> type,
                                                                             @NotNull VirtualFile file,

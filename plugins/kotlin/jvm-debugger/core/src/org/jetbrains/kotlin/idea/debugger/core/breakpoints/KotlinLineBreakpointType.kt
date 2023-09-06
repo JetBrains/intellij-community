@@ -25,6 +25,7 @@ import com.intellij.xdebugger.breakpoints.XBreakpoint
 import com.intellij.xdebugger.breakpoints.XLineBreakpoint
 import com.intellij.xdebugger.impl.XSourcePositionImpl
 import com.intellij.xdebugger.impl.breakpoints.XLineBreakpointImpl
+import com.intellij.xdebugger.impl.breakpoints.XLineBreakpointManager
 import org.jetbrains.java.debugger.breakpoints.properties.JavaBreakpointProperties
 import org.jetbrains.java.debugger.breakpoints.properties.JavaLineBreakpointProperties
 import org.jetbrains.kotlin.idea.base.psi.getTopmostElementAtOffset
@@ -134,7 +135,7 @@ class KotlinLineBreakpointType :
             }
         }
 
-        if (mainMethodAdded && result.size > 1) {
+        if (mainMethodAdded && result.size > 1 && !XLineBreakpointManager.shouldShowBreakpointsInline()) {
             result.add(KotlinBreakpointVariant(position, lambdas.size))
         }
 

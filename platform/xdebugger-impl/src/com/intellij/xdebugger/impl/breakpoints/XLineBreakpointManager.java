@@ -24,6 +24,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.startup.StartupManager;
 import com.intellij.openapi.util.EmptyRunnable;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileEvent;
 import com.intellij.openapi.vfs.VirtualFileManager;
@@ -88,6 +89,17 @@ public final class XLineBreakpointManager {
           removeBreakpoints(myBreakpoints.get(event.getFile().getUrl()));
         }
       }));
+
+      EditorFactory.getInstance().addEditorFactoryListener(new EditorFactoryListener() {
+        @Override
+        public void editorCreated(@NotNull EditorFactoryEvent event) {
+          if (!shouldShowBreakpointsInline()) return;
+
+          var file = event.getEditor().getVirtualFile();
+          if (file == null) return;
+          myBreakpoints.get(file.getUrl()).forEach(XLineBreakpointManager.this::queueBreakpointUpdate);
+        }
+      });
     }
     myBreakpointsUpdateQueue = new MergingUpdateQueue("XLine breakpoints", 300, true, null, project, null, Alarm.ThreadToUse.POOLED_THREAD);
 
@@ -100,6 +112,10 @@ public final class XLineBreakpointManager {
           .forEach(XLineBreakpointManager.this::queueBreakpointUpdate);
       }
     });
+  }
+
+  public static boolean shouldShowBreakpointsInline() {
+    return Registry.is("debugger.show.breakpoints.inline");
   }
 
   void updateBreakpointsUI() {
@@ -138,11 +154,11 @@ public final class XLineBreakpointManager {
       return;
     }
 
-    IntSet lines = new IntOpenHashSet();
+    IntSet positions = new IntOpenHashSet();
     List<XLineBreakpoint> toRemove = new SmartList<>();
     for (XLineBreakpointImpl breakpoint : breakpoints) {
       breakpoint.updatePosition();
-      if (!breakpoint.isValid() || !lines.add(breakpoint.getLine())) {
+      if (!breakpoint.isValid() || !positions.add(shouldShowBreakpointsInline() ? breakpoint.getOffset() : breakpoint.getLine())) {
         toRemove.add(breakpoint);
       }
     }

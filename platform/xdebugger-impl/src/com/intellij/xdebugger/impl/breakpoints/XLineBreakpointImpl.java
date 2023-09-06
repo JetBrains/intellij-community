@@ -1,27 +1,39 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.xdebugger.impl.breakpoints;
 
+import com.intellij.codeInsight.hints.presentation.InputHandler;
+import com.intellij.icons.AllIcons;
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.editor.Document;
-import com.intellij.openapi.editor.LazyRangeMarkerFactory;
-import com.intellij.openapi.editor.RangeMarker;
+import com.intellij.openapi.editor.*;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
+import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.ex.MarkupModelEx;
+import com.intellij.openapi.editor.ex.util.EditorUtil;
 import com.intellij.openapi.editor.impl.DocumentMarkupModel;
+import com.intellij.openapi.editor.impl.EditorImpl;
+import com.intellij.openapi.editor.impl.FontInfo;
 import com.intellij.openapi.editor.markup.*;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
+import com.intellij.ui.JBColor;
 import com.intellij.util.DocumentUtil;
+import com.intellij.util.IconUtil;
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread;
+import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.ui.GraphicsUtil;
+import com.intellij.util.ui.JBUI;
 import com.intellij.xdebugger.XDebuggerManager;
 import com.intellij.xdebugger.XDebuggerUtil;
 import com.intellij.xdebugger.XSourcePosition;
@@ -31,6 +43,8 @@ import com.intellij.xdebugger.breakpoints.XLineBreakpointType;
 import com.intellij.xdebugger.impl.XDebugSessionImpl;
 import com.intellij.xdebugger.impl.XDebuggerManagerImpl;
 import com.intellij.xdebugger.impl.XDebuggerUtilImpl;
+import com.intellij.xdebugger.impl.XSourcePositionImpl;
+import com.intellij.xdebugger.impl.ui.DebuggerUIUtil;
 import com.intellij.xdebugger.ui.DebuggerColors;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
@@ -40,8 +54,11 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.dnd.DnDConstants;
 import java.awt.dnd.DragSource;
+import java.awt.event.MouseEvent;
 import java.io.File;
-import java.util.Objects;
+import java.util.*;
+import java.util.List;
+import java.util.stream.Collectors;
 
 public final class XLineBreakpointImpl<P extends XBreakpointProperties> extends XBreakpointBase<XLineBreakpoint<P>, P, LineBreakpointState<P>>
   implements XLineBreakpoint<P> {
@@ -181,6 +198,9 @@ public final class XLineBreakpointImpl<P extends XBreakpointProperties> extends 
           }
         }
 
+        // FIXME[inline-bp]: fix this, it's quadratic redraw of all inlays
+        redrawInlineBreakpoints(getBreakpointManager().getLineBreakpointManager(), getProject(), file, finalDocument);
+
         callOnUpdate.run();
       });
     }).executeSynchronously();
@@ -248,6 +268,20 @@ public final class XLineBreakpointImpl<P extends XBreakpointProperties> extends 
   @Override
   protected void doDispose() {
     removeHighlighter();
+
+    // FIXME[inline-bp]: this part seems very dirty, we should modify only one inlay here or remove all of them in a line
+    if (XLineBreakpointManager.shouldShowBreakpointsInline()) {
+      var file = getFile();
+      if (file != null) {
+        var document = FileDocumentManager.getInstance().getDocument(file);
+        if (document != null) {
+          if (myType instanceof XBreakpointTypeWithDocumentDelegation) {
+            document = ((XBreakpointTypeWithDocumentDelegation)myType).getDocumentForHighlighting(document);
+          }
+          redrawInlineBreakpoints(getBreakpointManager().getLineBreakpointManager(), getProject(), file, document);
+        }
+      }
+    }
   }
 
   private void removeHighlighter() {
@@ -314,9 +348,13 @@ public final class XLineBreakpointImpl<P extends XBreakpointProperties> extends 
     return false;
   }
 
+  int getOffset() {
+    return myHighlighter != null && myHighlighter.isValid() ? myHighlighter.getStartOffset() : -1;
+  }
+
   public void updatePosition() {
     if (myHighlighter != null && myHighlighter.isValid()) {
-      setLine(myHighlighter.getDocument().getLineNumber(myHighlighter.getStartOffset()), false);
+      setLine(myHighlighter.getDocument().getLineNumber(getOffset()), false);
       mySourcePosition = null; // need to clear this no matter what as the offset may be cached inside
     }
   }
@@ -371,5 +409,209 @@ public final class XLineBreakpointImpl<P extends XBreakpointProperties> extends 
   @Override
   public String toString() {
     return "XLineBreakpointImpl(" + myType.getId() + " at " + getShortFilePath() + ":" + getLine() + ")";
+  }
+
+  // FIXME[inline-bp]: it's super inefficient
+  static void redrawInlineBreakpoints(XLineBreakpointManager lineBreakpointManager, @NotNull Project project, @NotNull VirtualFile file, @NotNull Document document) {
+    if (!XLineBreakpointManager.shouldShowBreakpointsInline()) return;
+
+    Collection<XLineBreakpointImpl> allBreakpoints = lineBreakpointManager.getDocumentBreakpoints(document);
+    Map<Integer, List<XLineBreakpointImpl>> breakpointsByLine = allBreakpoints.stream().collect(Collectors.groupingBy(b -> b.getLine()));
+
+    // FIXME[inline-bp]: it's super inefficient
+    // remove all previous inlays
+    for (var editor : EditorFactory.getInstance().getEditors(document, project)) {
+      var inlayModel = editor.getInlayModel();
+      var inlays = inlayModel.getInlineElementsInRange(Integer.MIN_VALUE, Integer.MAX_VALUE, InlineBreakpointInlayRenderer.class);
+      inlays.forEach(Disposable::dispose);
+    }
+
+    for (Map.Entry<Integer, List<XLineBreakpointImpl>> entry : breakpointsByLine.entrySet()) {
+      var line = entry.getKey();
+      var breakpoints = entry.getValue();
+
+      if (line < 0) continue;
+      var lineStartOffset = document.getLineStartOffset(line);
+      var linePosition = XSourcePositionImpl.create(file, line);
+
+      var breakpointTypes = XBreakpointUtil.getAvailableLineBreakpointTypes(project, linePosition, null);
+      XDebuggerUtilImpl.getLineBreakpointVariants(project, breakpointTypes, linePosition).onSuccess(variants -> {
+
+        if (ContainerUtil.and(variants, v -> v.getHighlightRange() == null)) {
+          // No need to show inline variants when there is only full-line variant.
+          // FIXME[inline-bp]: check what happens if there are two variants with null range -- they should be somehow drawn.
+          return;
+        }
+
+        for (var editor : EditorFactory.getInstance().getEditors(document, project)) {
+          var inlayModel = editor.getInlayModel();
+          for (var variant : variants) {
+            // FIXME[inline-bp]: what about multiple variants at start? in the middle? we should review all of them to move them to distinct places
+            var varRange = variant.getHighlightRange();
+            var breakpointHere = ContainerUtil.find(breakpoints, b -> {
+              var range = b.myType.getHighlightRange(b);
+              return (range == null && varRange == null) ||
+                     (range != null && varRange != null && range.getStartOffset() == varRange.getStartOffset());
+            });
+
+            var varStartOffset = varRange != null ? varRange.getStartOffset() : lineStartOffset;
+
+            if (varStartOffset == lineStartOffset) {
+              varStartOffset = lineStartOffset + DocumentUtil.getIndentLength(document, lineStartOffset);
+            }
+
+            var renderer = new InlineBreakpointInlayRenderer(breakpointHere);
+            var inlay = inlayModel.addInlineElement(varStartOffset, renderer);
+            renderer.setInlay(inlay);
+          }
+        }
+      });
+    }
+  }
+
+  // FIXME[inline-bp]: extract me somewhere
+  static class InlineBreakpointInlayRenderer implements EditorCustomElementRenderer, InputHandler {
+    private final @Nullable XLineBreakpointImpl<?> breakpoint;
+
+    // EditorCustomElementRenderer's methods have inlay as parameter,
+    // but InputHandler's methods do not have it.
+    private Inlay<InlineBreakpointInlayRenderer> inlay;
+
+    boolean hovered;
+
+    InlineBreakpointInlayRenderer(@Nullable XLineBreakpointImpl<?> breakpoint) {
+      this.breakpoint = breakpoint;
+    }
+
+    private void setInlay(Inlay<InlineBreakpointInlayRenderer> inlay) {
+      this.inlay = inlay;
+    }
+
+    private float scale() {
+      return 0.75f // FIXME[inline-bp]: introduce option to make inline icons slightly smaller than gutter ones
+             * editorScale();
+    }
+
+    private float editorScale() {
+      var editor = inlay.getEditor();
+      return (inlay.getEditor() instanceof EditorImpl) ? ((EditorImpl)editor).getScale() : 1;
+    }
+
+    @Override
+    public int calcWidthInPixels(@NotNull Inlay inlay) {
+      // FIXME[inline-bp]: we have to use inlay.getEditor()'s font, not global one, because you can change font size per editor
+      var twoChars = "nn"; // Use two average width characters (might be important for non-monospaced fonts).
+      var fontMetrics = FontInfo.getFontMetrics(EditorUtil.getEditorFont(),
+                                                FontInfo.getFontRenderContext(inlay.getEditor().getContentComponent()));
+      return fontMetrics.stringWidth(twoChars);
+    }
+
+    @Override
+    public void paint(@NotNull Inlay inlay,
+                      @NotNull Graphics g,
+                      @NotNull Rectangle targetRegion,
+                      @NotNull TextAttributes textAttributes) {
+      JComponent component = inlay.getEditor().getComponent();
+
+      Icon baseIcon;
+      float alpha;
+      if (breakpoint != null) {
+        baseIcon = breakpoint.getIcon();
+        alpha = 1;
+      }
+      else {
+        baseIcon = AllIcons.Debugger.Db_set_breakpoint;
+        // FIXME[inline-bp]: do we need to rename the property?
+        alpha = JBUI.getFloat("Breakpoint.iconHoverAlpha", 0.5f);
+        alpha = Math.max(0, Math.min(alpha, 1));
+        if (hovered) {
+          // Slightly increase visibility (e.g. 0.5 -> 0.625).
+          // FIXME[inline-bp]: ask Yulia Zozulya if we really need it?
+          alpha = (3 * alpha + 1) / 4;
+        }
+      }
+
+      // FIXME[inline-bp]: limit icon size to region size with some padding
+      Icon scaledIcon = IconUtil.scale(baseIcon, component, scale());
+
+      // FIXME[inline-bp]: remove this temporary green border
+      if (false) {
+        g.setColor(JBColor.GREEN);
+        g.drawRect(targetRegion.x, targetRegion.y, targetRegion.width, targetRegion.height);
+      }
+
+      // Draw icon in the center of the region.
+      var x = targetRegion.x + targetRegion.width / 2 - scaledIcon.getIconWidth() / 2;
+      var y = targetRegion.y + targetRegion.height / 2 - scaledIcon.getIconHeight() / 2;
+      GraphicsUtil.paintWithAlpha(g, alpha, () -> scaledIcon.paintIcon(component, g, x, y));
+    }
+
+    @Override
+    public void mouseClicked(@NotNull MouseEvent event, @NotNull Point translated) {
+      event.consume();
+      var editor = inlay.getEditor();
+      var project = editor.getProject();
+      assert project != null; // FIXME[inline-bp]: replace by if?
+      var file = editor.getVirtualFile();
+      assert file != null; // FIXME[inline-bp]: replace by if?
+      var offset = inlay.getOffset();
+      var position = XSourcePositionImpl.createByOffset(file, offset);
+      var canRemove = breakpoint != null; // FIXME[inline-bp]: reconsider, I'm not sure
+      if (Registry.is("debugger.click.disable.breakpoints")) {
+        // FIXME[inline-bp]: what about me?
+      }
+      var togglingPromise = XBreakpointUtil.toggleLineBreakpoint(project, position, editor, false, false, canRemove);
+      // FIXME[inline-bp]: do we really need to get all this information above here or can we just capture outer breakpoint object?
+
+      // FIXME[inline-bp]: it's a dirty hack to render inlay as "hovered" just after we clicked on set breakpoint
+      //       The problem is that after breakpoint removal we currently recreate all inlays and new ones would not be "hovered".
+      //       So we manually propogate this property to future inlay at the same position.
+      //       Otherwise there will be flickering:
+      //       transparent -> (move mouse) -> hovered -> (click) -> set -> (click) -> transparent -> (move mouse 1px) -> hovered
+      //                                                                              ^^^^^^^^^^^ this is bad
+      //       One day we would keep old inlays and this hack would gone.
+      if (breakpoint != null) {
+        togglingPromise.onSuccess(b -> {
+          if (b == null) { // some breakpoint was really deleted
+            for (var newInlay : editor.getInlayModel().getInlineElementsInRange(offset, offset, InlineBreakpointInlayRenderer.class)) {
+              newInlay.getRenderer().hovered = true;
+            }
+          }
+        });
+      }
+    }
+
+    @Override
+    public void mouseMoved(@NotNull MouseEvent event, @NotNull Point translated) {
+      event.consume();
+      setHovered(true);
+    }
+
+    @Override
+    public void mouseExited() {
+      setHovered(false);
+    }
+
+    private void setHovered(boolean hovered) {
+      var wasHovered = this.hovered;
+      this.hovered = hovered;
+      var cursor = hovered ? Cursor.getPredefinedCursor(Cursor.HAND_CURSOR) : null;
+      ((EditorEx)inlay.getEditor()).setCustomCursor(InlineBreakpointInlayRenderer.class, cursor);
+      if (wasHovered != hovered) {
+        inlay.repaint();
+      }
+    }
+
+    @Override
+    public void mousePressed(@NotNull MouseEvent event, @NotNull Point translated) {
+      if (event.isPopupTrigger() && breakpoint != null) {
+        var bounds = inlay.getBounds();
+        if (bounds == null) return;
+        Point center = new Point((int)bounds.getCenterX(), (int)bounds.getCenterY());
+        DebuggerUIUtil.showXBreakpointEditorBalloon(breakpoint.getProject(), center, inlay.getEditor().getContentComponent(), false,
+                                                    breakpoint);
+        event.consume();
+      }
+    }
   }
 }
