@@ -194,6 +194,7 @@
 
     <vcs.changes.changesViewModifier implementation="com.intellij.vcs.commit.EditedCommitChangesViewModifier"/>
 
+    <checkinHandlerFactory implementation="com.intellij.openapi.vcs.checkin.MultipleChangeListsCheckFactory"/>
     <checkinHandlerFactory implementation="com.intellij.openapi.vcs.checkin.UnresolvedMergeCheckFactory"/>
     <checkinHandlerFactory implementation="com.intellij.openapi.vcs.checkin.ReformatCheckinHandlerFactory"/>
     <checkinHandlerFactory implementation="com.intellij.openapi.vcs.checkin.RearrangeCheckinHandlerFactory"/>
