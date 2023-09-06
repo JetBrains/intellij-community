@@ -2,7 +2,6 @@
 package com.intellij.diagnostic
 
 import com.intellij.CommonBundle
-import com.intellij.ExtensionPoints
 import com.intellij.diagnostic.ITNProxy.fetchDevelopers
 import com.intellij.diagnostic.MessagePool.TooManyErrorsException
 import com.intellij.icons.AllIcons
@@ -24,6 +23,8 @@ import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.diagnostic.SubmittedReportInfo
 import com.intellij.openapi.editor.colors.EditorColorsManager
 import com.intellij.openapi.editor.colors.EditorFontType
+import com.intellij.openapi.extensions.ExtensionPointName
+import com.intellij.openapi.extensions.ExtensionPointName.Companion.create
 import com.intellij.openapi.extensions.PluginId
 import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.project.Project
@@ -882,6 +883,9 @@ open class IdeErrorsDialog @JvmOverloads internal constructor(
     private const val ACCEPTED_NOTICES_SEPARATOR = ":"
     private const val DISABLE_PLUGIN_URL = "#disable"
     private const val LAST_OK_ACTION = "IdeErrorsDialog.LAST_OK_ACTION"
+    @JvmField
+    val ERROR_HANDLER_EP: ExtensionPointName<ErrorReportSubmitter> = create("com.intellij.errorHandler")
+
 
     @JvmField
     val CURRENT_TRACE_KEY: DataKey<String> = DataKey.create("current_stack_trace_key")
@@ -993,7 +997,7 @@ open class IdeErrorsDialog @JvmOverloads internal constructor(
         return null
       }
       val reporters: List<ErrorReportSubmitter> = try {
-        ExtensionPoints.ERROR_HANDLER_EP.extensionList
+        ERROR_HANDLER_EP.extensionList
       }
       catch (ignored: Throwable) {
         return null

@@ -13,8 +13,12 @@ import org.jetbrains.annotations.Nullable;
 import java.awt.*;
 
 /**
- * This class should be extended by plugin vendor and provided by means of {@link com.intellij.ExtensionPoints#ERROR_HANDLER_EP}
- * if reporting errors that happened in plugin code to vendor is desirable.
+ * Override this class and register the implementation in the plugin.xml file to provide custom reporting for errors related to the plugin:  
+ * <pre>{@code
+ *   <extensions xmlns="com.intellij">
+ *     <errorHandler implementation="my.plugin.package.MyErrorHandler"/>
+ *   </extensions>
+ * }</pre>
  */
 public abstract class ErrorReportSubmitter implements PluginAware {
   private PluginDescriptor myPlugin;
