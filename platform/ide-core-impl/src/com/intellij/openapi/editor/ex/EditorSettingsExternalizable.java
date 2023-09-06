@@ -30,10 +30,22 @@ import java.util.Set;
 
 @State(name = "EditorSettings", storages = @Storage("editor.xml"), category = SettingsCategory.CODE)
 public class EditorSettingsExternalizable implements PersistentStateComponent<EditorSettingsExternalizable.OptionSet> {
-  public static final @NonNls String PROP_VIRTUAL_SPACE = "VirtualSpace";
-  public static final @NonNls String PROP_BREADCRUMBS_PER_LANGUAGE = "BreadcrumbsPerLanguage";
+  /**
+   * @deprecated Use {@link PropNames#PROP_IS_VIRTUAL_SPACE} instead
+   */
+  @Deprecated
+  public static final @NonNls String PROP_VIRTUAL_SPACE = PropNames.PROP_IS_VIRTUAL_SPACE;
+  /**
+   * @deprecated Use {@link PropNames#PROP_BREADCRUMBS_PER_LANGUAGE} instead
+   */
+  @Deprecated
+  public static final @NonNls String PROP_BREADCRUMBS_PER_LANGUAGE = PropNames.PROP_BREADCRUMBS_PER_LANGUAGE;
 
-  public static final @NonNls String PROP_DOC_COMMENT_RENDERING = "DocCommentRendering";
+  /**
+   * @deprecated Use {@link PropNames#PROP_ENABLE_RENDERED_DOC} instead
+   */
+  @Deprecated
+  public static final @NonNls String PROP_DOC_COMMENT_RENDERING = PropNames.PROP_ENABLE_RENDERED_DOC;
 
   public static final UINumericRange BLINKING_RANGE = new UINumericRange(500, 10, 1500);
   public static final UINumericRange TOOLTIPS_DELAY_RANGE = new UINumericRange(500, 1, 5000);
@@ -43,6 +55,7 @@ public class EditorSettingsExternalizable implements PersistentStateComponent<Ed
 
   //Q: make it interface?
   public static final class OptionSet {
+    // todo: unused? schedule for removal?
     public String LINE_SEPARATOR;
     public String USE_SOFT_WRAPS;
     public String SOFT_WRAP_FILE_MASKS;
@@ -109,6 +122,7 @@ public class EditorSettingsExternalizable implements PersistentStateComponent<Ed
 
     public BidiTextDirection BIDI_TEXT_DIRECTION = BidiTextDirection.CONTENT_BASED;
 
+    // todo: useful? schedule for removal?
     public boolean SHOW_PARAMETER_NAME_HINTS = true;
 
     public boolean KEEP_TRAILING_SPACE_ON_CARET_LINE = true;
@@ -240,7 +254,12 @@ public class EditorSettingsExternalizable implements PersistentStateComponent<Ed
     if (!buffer.isEmpty()) {
       buffer.setLength(buffer.length() - 1);
     }
-    myOptions.USE_SOFT_WRAPS = buffer.toString();
+    String newValue = buffer.toString();
+
+    String old = myOptions.USE_SOFT_WRAPS;
+    if (old.equals(newValue)) return;
+    myOptions.USE_SOFT_WRAPS = newValue;
+    myPropertyChangeSupport.firePropertyChange(PropNames.PROP_USE_SOFT_WRAPS, old, newValue);
   }
 
   public OptionSet getOptions() {
@@ -252,7 +271,10 @@ public class EditorSettingsExternalizable implements PersistentStateComponent<Ed
   }
 
   public void setRightMarginShown(boolean val) {
+    boolean old = myOptions.IS_RIGHT_MARGIN_SHOWN;
+    if (old == val) return;
     myOptions.IS_RIGHT_MARGIN_SHOWN = val;
+    myPropertyChangeSupport.firePropertyChange(PropNames.PROP_IS_RIGHT_MARGIN_SHOWN, old, val);
   }
 
   public boolean isLineNumbersShown() {
@@ -260,7 +282,10 @@ public class EditorSettingsExternalizable implements PersistentStateComponent<Ed
   }
 
   public void setLineNumbersShown(boolean val) {
+    boolean old = myOptions.ARE_LINE_NUMBERS_SHOWN;
+    if (old == val) return;
     myOptions.ARE_LINE_NUMBERS_SHOWN = val;
+    myPropertyChangeSupport.firePropertyChange(PropNames.PROP_ARE_LINE_NUMBERS_SHOWN, old, val);
   }
 
   public EditorSettings.LineNumerationType getLineNumeration() {
@@ -268,7 +293,11 @@ public class EditorSettingsExternalizable implements PersistentStateComponent<Ed
   }
 
   public void setLineNumeration(EditorSettings.LineNumerationType val) {
+    EditorSettings.LineNumerationType old = myOptions.LINE_NUMERATION;
+    if (old == val) return;
     myOptions.LINE_NUMERATION = val;
+    myPropertyChangeSupport.firePropertyChange(PropNames.PROP_LINE_NUMERATION, old, val);
+
   }
 
   public boolean areGutterIconsShown() {
@@ -276,7 +305,10 @@ public class EditorSettingsExternalizable implements PersistentStateComponent<Ed
   }
 
   public void setGutterIconsShown(boolean val) {
+    boolean old = myOptions.ARE_GUTTER_ICONS_SHOWN;
+    if (old == val) return;
     myOptions.ARE_GUTTER_ICONS_SHOWN = val;
+    myPropertyChangeSupport.firePropertyChange(PropNames.PROP_ARE_GUTTER_ICONS_SHOWN, old, val);
   }
 
   public boolean isFoldingOutlineShown() {
@@ -284,7 +316,10 @@ public class EditorSettingsExternalizable implements PersistentStateComponent<Ed
   }
 
   public void setFoldingOutlineShown(boolean val) {
+    boolean old = myOptions.IS_FOLDING_OUTLINE_SHOWN;
+    if (old == val) return;
     myOptions.IS_FOLDING_OUTLINE_SHOWN = val;
+    myPropertyChangeSupport.firePropertyChange(PropNames.PROP_IS_FOLDING_OUTLINE_SHOWN, old, val);
   }
 
   public boolean isFoldingOutlineShownOnlyOnHover() {
@@ -292,7 +327,10 @@ public class EditorSettingsExternalizable implements PersistentStateComponent<Ed
   }
 
   public void setFoldingOutlineShownOnlyOnHover(boolean val) {
+    boolean old = myOptions.IS_FOLDING_OUTLINE_SHOWN_ONLY_ON_HOVER;
+    if (old == val) return;
     myOptions.IS_FOLDING_OUTLINE_SHOWN_ONLY_ON_HOVER = val;
+    myPropertyChangeSupport.firePropertyChange(PropNames.PROP_IS_FOLDING_OUTLINE_SHOWN_ONLY_ON_HOVER, old, val);
   }
 
   public boolean isFoldingEndingsShown() {
@@ -300,7 +338,10 @@ public class EditorSettingsExternalizable implements PersistentStateComponent<Ed
   }
 
   public void setFoldingEndingsShown(boolean val) {
+    boolean old = myOptions.IS_FOLDING_ENDINGS_SHOWN;
+    if (old == val) return;
     myOptions.IS_FOLDING_ENDINGS_SHOWN = val;
+    myPropertyChangeSupport.firePropertyChange(PropNames.PROP_IS_FOLDING_ENDINGS_SHOWN, old, val);
   }
 
   /**
@@ -315,8 +356,10 @@ public class EditorSettingsExternalizable implements PersistentStateComponent<Ed
    * @return {@code true} if an option was modified, {@code false} otherwise
    */
   public boolean setBreadcrumbsAbove(boolean value) {
-    if (myOptions.SHOW_BREADCRUMBS_ABOVE == value) return false;
+    boolean old = myOptions.SHOW_BREADCRUMBS_ABOVE;
+    if (old == value) return false;
     myOptions.SHOW_BREADCRUMBS_ABOVE = value;
+    myPropertyChangeSupport.firePropertyChange(PropNames.PROP_SHOW_BREADCRUMBS_ABOVE, old, value);
     return true;
   }
 
@@ -332,8 +375,10 @@ public class EditorSettingsExternalizable implements PersistentStateComponent<Ed
    * @return {@code true} if an option was modified, {@code false} otherwise
    */
   public boolean setBreadcrumbsShown(boolean value) {
-    if (myOptions.SHOW_BREADCRUMBS == value) return false;
+    boolean old = myOptions.SHOW_BREADCRUMBS;
+    if (old == value) return false;
     myOptions.SHOW_BREADCRUMBS = value;
+    myPropertyChangeSupport.firePropertyChange(PropNames.PROP_SHOW_BREADCRUMBS, old, value);
     return true;
   }
 
@@ -397,7 +442,10 @@ public class EditorSettingsExternalizable implements PersistentStateComponent<Ed
   }
 
   public void setBlockCursor(boolean val) {
+    boolean old = myOptions.IS_BLOCK_CURSOR;
+    if (old == val) return;
     myOptions.IS_BLOCK_CURSOR = val;
+    myPropertyChangeSupport.firePropertyChange(PropNames.PROP_IS_BLOCK_CURSOR, old, val);
   }
 
   public boolean isFullLineHeightCursor() {
@@ -405,7 +453,10 @@ public class EditorSettingsExternalizable implements PersistentStateComponent<Ed
   }
 
   public void setFullLineHeightCursor(boolean val) {
+    boolean old = myOptions.IS_FULL_LINE_HEIGHT_CURSOR;
+    if (old == val) return;
     myOptions.IS_FULL_LINE_HEIGHT_CURSOR = val;
+    myPropertyChangeSupport.firePropertyChange(PropNames.PROP_IS_FULL_LINE_HEIGHT_CURSOR, old, val);
   }
 
   public boolean isCaretRowShown() {
@@ -425,7 +476,10 @@ public class EditorSettingsExternalizable implements PersistentStateComponent<Ed
   }
 
   public void setSmartHome(boolean val) {
+    boolean old = myOptions.SMART_HOME;
+    if (old == val) return;
     myOptions.SMART_HOME = val;
+    myPropertyChangeSupport.firePropertyChange(PropNames.PROP_SMART_HOME, old, val);
   }
 
   public boolean isUseSoftWraps() {
@@ -463,7 +517,10 @@ public class EditorSettingsExternalizable implements PersistentStateComponent<Ed
   }
 
   public void setUseCustomSoftWrapIndent(boolean use) {
+    boolean old = myOptions.USE_CUSTOM_SOFT_WRAP_INDENT;
+    if (old == use) return;
     myOptions.USE_CUSTOM_SOFT_WRAP_INDENT = use;
+    myPropertyChangeSupport.firePropertyChange(PropNames.PROP_USE_CUSTOM_SOFT_WRAP_INDENT, old, use);
   }
 
   public int getCustomSoftWrapIndent() {
@@ -471,7 +528,10 @@ public class EditorSettingsExternalizable implements PersistentStateComponent<Ed
   }
 
   public void setCustomSoftWrapIndent(int indent) {
+    int old = myOptions.CUSTOM_SOFT_WRAP_INDENT;
+    if (old == indent) return;
     myOptions.CUSTOM_SOFT_WRAP_INDENT = indent;
+    myPropertyChangeSupport.firePropertyChange(PropNames.PROP_CUSTOM_SOFT_WRAP_INDENT, old, indent);
   }
 
   public int getVerticalScrollOffset() {
@@ -479,7 +539,10 @@ public class EditorSettingsExternalizable implements PersistentStateComponent<Ed
   }
 
   public void setVerticalScrollOffset(int offset) {
+    int old = myOptions.VERTICAL_SCROLL_OFFSET;
+    if (old == offset) return;
     myOptions.VERTICAL_SCROLL_OFFSET = offset;
+    myPropertyChangeSupport.firePropertyChange(PropNames.PROP_VERTICAL_SCROLL_OFFSET, old, offset);
   }
 
   public int getHorizontalScrollOffset() {
@@ -487,7 +550,10 @@ public class EditorSettingsExternalizable implements PersistentStateComponent<Ed
   }
 
   public void setHorizontalScrollOffset(int offset) {
+    int old = myOptions.HORIZONTAL_SCROLL_OFFSET;
+    if (old == offset) return;
     myOptions.HORIZONTAL_SCROLL_OFFSET = offset;
+    myPropertyChangeSupport.firePropertyChange(PropNames.PROP_HORIZONTAL_SCROLL_OFFSET, old, offset);
   }
 
   public int getVerticalScrollJump() {
@@ -495,7 +561,10 @@ public class EditorSettingsExternalizable implements PersistentStateComponent<Ed
   }
 
   public void setVerticalScrollJump(int jump) {
+    int old = myOptions.VERTICAL_SCROLL_JUMP;
+    if (old == jump) return;
     myOptions.VERTICAL_SCROLL_JUMP = jump;
+    myPropertyChangeSupport.firePropertyChange(PropNames.PROP_VERTICAL_SCROLL_JUMP, old, jump);
   }
 
   public int getHorizontalScrollJump() {
@@ -503,7 +572,10 @@ public class EditorSettingsExternalizable implements PersistentStateComponent<Ed
   }
 
   public void setHorizontalScrollJump(int jump) {
+    int old = myOptions.HORIZONTAL_SCROLL_JUMP;
+    if (old == jump) return;
     myOptions.HORIZONTAL_SCROLL_JUMP = jump;
+    myPropertyChangeSupport.firePropertyChange(PropNames.PROP_HORIZONTAL_SCROLL_JUMP, old, jump);
   }
 
   public boolean isVirtualSpace() {
@@ -512,8 +584,10 @@ public class EditorSettingsExternalizable implements PersistentStateComponent<Ed
 
   public void setVirtualSpace(boolean val) {
     boolean oldValue = myOptions.IS_VIRTUAL_SPACE;
+    if (oldValue == val) return;
+
     myOptions.IS_VIRTUAL_SPACE = val;
-    myPropertyChangeSupport.firePropertyChange(PROP_VIRTUAL_SPACE, oldValue, val);
+    myPropertyChangeSupport.firePropertyChange(PropNames.PROP_IS_VIRTUAL_SPACE, oldValue, val);
   }
 
   public boolean isCaretInsideTabs() {
@@ -521,7 +595,10 @@ public class EditorSettingsExternalizable implements PersistentStateComponent<Ed
   }
 
   public void setCaretInsideTabs(boolean val) {
+    boolean old = myOptions.IS_CARET_INSIDE_TABS;
+    if (old == val) return;
     myOptions.IS_CARET_INSIDE_TABS = val;
+    myPropertyChangeSupport.firePropertyChange(PropNames.PROP_IS_CARET_INSIDE_TABS, old, val);
   }
 
   public boolean isBlinkCaret() {
@@ -529,7 +606,10 @@ public class EditorSettingsExternalizable implements PersistentStateComponent<Ed
   }
 
   public void setBlinkCaret(boolean blinkCaret) {
+    boolean old = myOptions.IS_CARET_BLINKING;
+    if (old == blinkCaret) return;
     myOptions.IS_CARET_BLINKING = blinkCaret;
+    myPropertyChangeSupport.firePropertyChange(PropNames.PROP_IS_CARET_BLINKING, old, blinkCaret);
   }
 
   public int getBlinkPeriod() {
@@ -537,7 +617,11 @@ public class EditorSettingsExternalizable implements PersistentStateComponent<Ed
   }
 
   public void setBlinkPeriod(int blinkInterval) {
-    myOptions.CARET_BLINKING_PERIOD = BLINKING_RANGE.fit(blinkInterval);
+    int newValue = BLINKING_RANGE.fit(blinkInterval);
+    int old = myOptions.CARET_BLINKING_PERIOD;
+    if (old == newValue) return;
+    myOptions.CARET_BLINKING_PERIOD = newValue;
+    myPropertyChangeSupport.firePropertyChange(PropNames.PROP_CARET_BLINKING_PERIOD, old, newValue);
   }
 
 
@@ -546,7 +630,10 @@ public class EditorSettingsExternalizable implements PersistentStateComponent<Ed
   }
 
   public void setEnsureNewLineAtEOF(boolean ensure) {
+    boolean old = myOptions.IS_ENSURE_NEWLINE_AT_EOF;
+    if (old == ensure) return;
     myOptions.IS_ENSURE_NEWLINE_AT_EOF = ensure;
+    myPropertyChangeSupport.firePropertyChange(PropNames.PROP_IS_ENSURE_NEWLINE_AT_EOF, old, ensure);
   }
 
   public boolean isRemoveTrailingBlankLines() {
@@ -554,7 +641,10 @@ public class EditorSettingsExternalizable implements PersistentStateComponent<Ed
   }
 
   public void setRemoveTrailingBlankLines(boolean remove) {
+    boolean old = myOptions.REMOVE_TRAILING_BLANK_LINES;
+    if (old == remove) return;
     myOptions.REMOVE_TRAILING_BLANK_LINES = remove;
+    myPropertyChangeSupport.firePropertyChange(PropNames.PROP_REMOVE_TRAILING_BLANK_LINES, old, remove);
   }
 
   @StripTrailingSpaces
@@ -563,7 +653,10 @@ public class EditorSettingsExternalizable implements PersistentStateComponent<Ed
   } // TODO: move to CodeEditorManager or something else
 
   public void setStripTrailingSpaces(@StripTrailingSpaces String stripTrailingSpaces) {
+    String old = myOptions.STRIP_TRAILING_SPACES;
+    if (old.equals(stripTrailingSpaces)) return;
     myOptions.STRIP_TRAILING_SPACES = stripTrailingSpaces;
+    myPropertyChangeSupport.firePropertyChange(PropNames.PROP_STRIP_TRAILING_SPACES, old, stripTrailingSpaces);
   }
 
   public boolean isShowQuickDocOnMouseOverElement() {
@@ -571,7 +664,10 @@ public class EditorSettingsExternalizable implements PersistentStateComponent<Ed
   }
 
   public void setShowQuickDocOnMouseOverElement(boolean show) {
+    boolean old = myOptions.SHOW_QUICK_DOC_ON_MOUSE_OVER_ELEMENT;
+    if (old == show) return;
     myOptions.SHOW_QUICK_DOC_ON_MOUSE_OVER_ELEMENT = show;
+    myPropertyChangeSupport.firePropertyChange(PropNames.PROP_SHOW_QUICK_DOC_ON_MOUSE_OVER_ELEMENT, old, show);
   }
 
 
@@ -580,7 +676,10 @@ public class EditorSettingsExternalizable implements PersistentStateComponent<Ed
   }
 
   public void setShowInspectionWidget(boolean show) {
+    boolean old = myOptions.SHOW_INSPECTION_WIDGET;
+    if (old == show) return;
     myOptions.SHOW_INSPECTION_WIDGET = show;
+    myPropertyChangeSupport.firePropertyChange(PropNames.PROP_SHOW_INSPECTION_WIDGET, old, show);
   }
 
   /**
@@ -596,7 +695,11 @@ public class EditorSettingsExternalizable implements PersistentStateComponent<Ed
   }
 
   public void setTooltipsDelay(int delay) {
-    myOptions.TOOLTIPS_DELAY_MS = TOOLTIPS_DELAY_RANGE.fit(delay);
+    int newValue = TOOLTIPS_DELAY_RANGE.fit(delay);
+    int old = myOptions.TOOLTIPS_DELAY_MS;
+    if (old == newValue) return;
+    myOptions.TOOLTIPS_DELAY_MS = newValue;
+    myPropertyChangeSupport.firePropertyChange(PropNames.PROP_TOOLTIPS_DELAY_MS, old, newValue);
   }
 
   public boolean isShowIntentionBulb() {
@@ -604,7 +707,10 @@ public class EditorSettingsExternalizable implements PersistentStateComponent<Ed
   }
 
   public void setShowIntentionBulb(boolean show) {
+    boolean old = myOptions.SHOW_INTENTION_BULB;
+    if (old == show) return;
     myOptions.SHOW_INTENTION_BULB = show;
+    myPropertyChangeSupport.firePropertyChange(PropNames.PROP_SHOW_INTENTION_BULB, old, show);
   }
 
   public boolean isRefrainFromScrolling() {
@@ -612,7 +718,10 @@ public class EditorSettingsExternalizable implements PersistentStateComponent<Ed
   }
 
   public void setRefrainFromScrolling(boolean b) {
+    boolean old = myOptions.REFRAIN_FROM_SCROLLING;
+    if (old == b) return;
     myOptions.REFRAIN_FROM_SCROLLING = b;
+    myPropertyChangeSupport.firePropertyChange(PropNames.PROP_REFRAIN_FROM_SCROLLING, old, b);
   }
 
   public boolean isShowNotificationAfterReformat() {
@@ -628,7 +737,10 @@ public class EditorSettingsExternalizable implements PersistentStateComponent<Ed
   }
 
   public void setWhitespacesShown(boolean val) {
+    boolean old = myOptions.IS_WHITESPACES_SHOWN;
+    if (old == val) return;
     myOptions.IS_WHITESPACES_SHOWN = val;
+    myPropertyChangeSupport.firePropertyChange(PropNames.PROP_IS_WHITESPACES_SHOWN, old, val);
   }
 
   public boolean isLeadingWhitespacesShown() {
@@ -636,7 +748,10 @@ public class EditorSettingsExternalizable implements PersistentStateComponent<Ed
   }
 
   public void setLeadingWhitespacesShown(boolean val) {
+    boolean old = myOptions.IS_LEADING_WHITESPACES_SHOWN;
+    if (old == val) return;
     myOptions.IS_LEADING_WHITESPACES_SHOWN = val;
+    myPropertyChangeSupport.firePropertyChange(PropNames.PROP_IS_LEADING_WHITESPACES_SHOWN, old, val);
   }
 
   public boolean isInnerWhitespacesShown() {
@@ -644,7 +759,10 @@ public class EditorSettingsExternalizable implements PersistentStateComponent<Ed
   }
 
   public void setInnerWhitespacesShown(boolean val) {
+    boolean old = myOptions.IS_INNER_WHITESPACES_SHOWN;
+    if (old == val) return;
     myOptions.IS_INNER_WHITESPACES_SHOWN = val;
+    myPropertyChangeSupport.firePropertyChange(PropNames.PROP_IS_INNER_WHITESPACES_SHOWN, old, val);
   }
 
   public boolean isTrailingWhitespacesShown() {
@@ -652,7 +770,10 @@ public class EditorSettingsExternalizable implements PersistentStateComponent<Ed
   }
 
   public void setTrailingWhitespacesShown(boolean val) {
+    boolean old = myOptions.IS_TRAILING_WHITESPACES_SHOWN;
+    if (old == val) return;
     myOptions.IS_TRAILING_WHITESPACES_SHOWN = val;
+    myPropertyChangeSupport.firePropertyChange(PropNames.PROP_IS_TRAILING_WHITESPACES_SHOWN, old, val);
   }
 
   public boolean isSelectionWhitespacesShown() {
@@ -660,7 +781,10 @@ public class EditorSettingsExternalizable implements PersistentStateComponent<Ed
   }
 
   public void setSelectionWhitespacesShown(boolean val) {
+    boolean old = myOptions.IS_SELECTION_WHITESPACES_SHOWN;
+    if (old == val) return;
     myOptions.IS_SELECTION_WHITESPACES_SHOWN = val;
+    myPropertyChangeSupport.firePropertyChange(PropNames.PROP_IS_SELECTION_WHITESPACES_SHOWN, old, val);
   }
 
   public boolean isAllSoftWrapsShown() {
@@ -668,7 +792,10 @@ public class EditorSettingsExternalizable implements PersistentStateComponent<Ed
   }
 
   public void setAllSoftwrapsShown(boolean val) {
+    boolean old = myOptions.IS_ALL_SOFTWRAPS_SHOWN;
+    if (old == val) return;
     myOptions.IS_ALL_SOFTWRAPS_SHOWN = val;
+    myPropertyChangeSupport.firePropertyChange(PropNames.PROP_IS_ALL_SOFTWRAPS_SHOWN, old, val);
   }
 
   public boolean isIndentGuidesShown() {
@@ -676,7 +803,10 @@ public class EditorSettingsExternalizable implements PersistentStateComponent<Ed
   }
 
   public void setIndentGuidesShown(boolean val) {
+    boolean old = myOptions.IS_INDENT_GUIDES_SHOWN;
+    if (old == val) return;
     myOptions.IS_INDENT_GUIDES_SHOWN = val;
+    myPropertyChangeSupport.firePropertyChange(PropNames.PROP_IS_INDENT_GUIDES_SHOWN, old, val);
   }
 
   public boolean isFocusMode() {
@@ -684,15 +814,21 @@ public class EditorSettingsExternalizable implements PersistentStateComponent<Ed
   }
 
   public void setFocusMode(boolean val) {
+    boolean old = myOptions.IS_FOCUS_MODE;
+    if (old == val) return;
     myOptions.IS_FOCUS_MODE = val;
+    myPropertyChangeSupport.firePropertyChange(PropNames.PROP_IS_FOCUS_MODE, old, val);
   }
 
   public boolean isSmoothScrolling() {
     return myOptions.IS_ANIMATED_SCROLLING;
   }
 
-  public void setSmoothScrolling(boolean val){
+  public void setSmoothScrolling(boolean val) {
+    boolean old = myOptions.IS_ANIMATED_SCROLLING;
+    if (old == val) return;
     myOptions.IS_ANIMATED_SCROLLING = val;
+    myPropertyChangeSupport.firePropertyChange(PropNames.PROP_IS_ANIMATED_SCROLLING, old, val);
   }
 
   public boolean isCamelWords() {
@@ -700,7 +836,10 @@ public class EditorSettingsExternalizable implements PersistentStateComponent<Ed
   }
 
   public void setCamelWords(boolean val) {
+    boolean old = myOptions.IS_CAMEL_WORDS;
+    if (old == val) return;
     myOptions.IS_CAMEL_WORDS = val;
+    myPropertyChangeSupport.firePropertyChange(PropNames.PROP_IS_CAMEL_WORDS, old, val);
   }
 
   public boolean isAdditionalPageAtBottom() {
@@ -708,7 +847,10 @@ public class EditorSettingsExternalizable implements PersistentStateComponent<Ed
   }
 
   public void setAdditionalPageAtBottom(boolean val) {
+    boolean old = myOptions.ADDITIONAL_PAGE_AT_BOTTOM;
+    if (old == val) return;
     myOptions.ADDITIONAL_PAGE_AT_BOTTOM = val;
+    myPropertyChangeSupport.firePropertyChange(PropNames.PROP_ADDITIONAL_PAGE_AT_BOTTOM, old, val);
   }
 
   public boolean isDndEnabled() {
@@ -716,7 +858,10 @@ public class EditorSettingsExternalizable implements PersistentStateComponent<Ed
   }
 
   public void setDndEnabled(boolean val) {
+    boolean old = myOptions.IS_DND_ENABLED;
+    if (old == val) return;
     myOptions.IS_DND_ENABLED = val;
+    myPropertyChangeSupport.firePropertyChange(PropNames.PROP_IS_DND_ENABLED, old, val);
   }
 
   public boolean isWheelFontChangeEnabled() {
@@ -724,7 +869,10 @@ public class EditorSettingsExternalizable implements PersistentStateComponent<Ed
   }
 
   public void setWheelFontChangeEnabled(boolean val) {
+    boolean old = myOptions.IS_WHEEL_FONTCHANGE_ENABLED;
+    if (old == val) return;
     myOptions.IS_WHEEL_FONTCHANGE_ENABLED = val;
+    myPropertyChangeSupport.firePropertyChange(PropNames.PROP_IS_WHEEL_FONTCHANGE_ENABLED, old, val);
   }
 
   public boolean isWheelFontChangePersistent() {
@@ -732,7 +880,10 @@ public class EditorSettingsExternalizable implements PersistentStateComponent<Ed
   }
 
   public void setWheelFontChangePersistent(boolean val) {
+    boolean old = myOptions.IS_WHEEL_FONTCHANGE_PERSISTENT;
+    if (old == val) return;
     myOptions.IS_WHEEL_FONTCHANGE_PERSISTENT = val;
+    myPropertyChangeSupport.firePropertyChange(PropNames.PROP_IS_WHEEL_FONTCHANGE_PERSISTENT, old, val);
   }
 
   public boolean isMouseClickSelectionHonorsCamelWords() {
@@ -740,7 +891,10 @@ public class EditorSettingsExternalizable implements PersistentStateComponent<Ed
   }
 
   public void setMouseClickSelectionHonorsCamelWords(boolean val) {
+    boolean old = myOptions.IS_MOUSE_CLICK_SELECTION_HONORS_CAMEL_WORDS;
+    if (old == val) return;
     myOptions.IS_MOUSE_CLICK_SELECTION_HONORS_CAMEL_WORDS = val;
+    myPropertyChangeSupport.firePropertyChange(PropNames.PROP_IS_MOUSE_CLICK_SELECTION_HONORS_CAMEL_WORDS, old, val);
   }
 
   public boolean isVariableInplaceRenameEnabled() {
@@ -748,7 +902,10 @@ public class EditorSettingsExternalizable implements PersistentStateComponent<Ed
   }
 
   public void setVariableInplaceRenameEnabled(final boolean val) {
+    boolean old = myOptions.RENAME_VARIABLES_INPLACE;
+    if (old == val) return;
     myOptions.RENAME_VARIABLES_INPLACE = val;
+    myPropertyChangeSupport.firePropertyChange(PropNames.PROP_RENAME_VARIABLES_INPLACE, old, val);
   }
 
   public boolean isPreselectRename() {
@@ -756,7 +913,10 @@ public class EditorSettingsExternalizable implements PersistentStateComponent<Ed
   }
 
   public void setPreselectRename(final boolean val) {
+    boolean old = myOptions.PRESELECT_RENAME;
+    if (old == val) return;
     myOptions.PRESELECT_RENAME = val;
+    myPropertyChangeSupport.firePropertyChange(PropNames.PROP_PRESELECT_RENAME, old, val);
   }
 
   public boolean isShowInlineLocalDialog() {
@@ -764,7 +924,10 @@ public class EditorSettingsExternalizable implements PersistentStateComponent<Ed
   }
 
   public void setShowInlineLocalDialog(final boolean val) {
+    boolean old = myOptions.SHOW_INLINE_DIALOG;
+    if (old == val) return;
     myOptions.SHOW_INLINE_DIALOG = val;
+    myPropertyChangeSupport.firePropertyChange(PropNames.PROP_SHOW_INLINE_DIALOG, old, val);
   }
 
   public boolean addCaretsOnDoubleCtrl() {
@@ -772,7 +935,10 @@ public class EditorSettingsExternalizable implements PersistentStateComponent<Ed
   }
 
   public void setAddCaretsOnDoubleCtrl(boolean val) {
+    boolean old = myOptions.ADD_CARETS_ON_DOUBLE_CTRL;
+    if (old == val) return;
     myOptions.ADD_CARETS_ON_DOUBLE_CTRL = val;
+    myPropertyChangeSupport.firePropertyChange(PropNames.PROP_ADD_CARETS_ON_DOUBLE_CTRL, old, val);
   }
 
   public BidiTextDirection getBidiTextDirection() {
@@ -780,7 +946,10 @@ public class EditorSettingsExternalizable implements PersistentStateComponent<Ed
   }
 
   public void setBidiTextDirection(BidiTextDirection direction) {
+    BidiTextDirection old = myOptions.BIDI_TEXT_DIRECTION;
+    if (old == direction) return;
     myOptions.BIDI_TEXT_DIRECTION = direction;
+    myPropertyChangeSupport.firePropertyChange(PropNames.PROP_BIDI_TEXT_DIRECTION, old, direction);
   }
 
   public boolean isShowIntentionPreview() {
@@ -788,7 +957,10 @@ public class EditorSettingsExternalizable implements PersistentStateComponent<Ed
   }
 
   public void setShowIntentionPreview(boolean show) {
+    boolean old = myOptions.SHOW_INTENTION_PREVIEW;
+    if (old == show) return;
     myOptions.SHOW_INTENTION_PREVIEW = show;
+    myPropertyChangeSupport.firePropertyChange(PropNames.PROP_SHOW_INTENTION_PREVIEW, old, show);
   }
 
   public boolean isKeepTrailingSpacesOnCaretLine() {
@@ -796,7 +968,10 @@ public class EditorSettingsExternalizable implements PersistentStateComponent<Ed
   }
 
   public void setKeepTrailingSpacesOnCaretLine(boolean keep) {
+    boolean old = myOptions.KEEP_TRAILING_SPACE_ON_CARET_LINE;
+    if (old == keep) return;
     myOptions.KEEP_TRAILING_SPACE_ON_CARET_LINE = keep;
+    myPropertyChangeSupport.firePropertyChange(PropNames.PROP_KEEP_TRAILING_SPACE_ON_CARET_LINE, old, keep);
   }
 
   public @NotNull String getSoftWrapFileMasks() {
@@ -808,7 +983,10 @@ public class EditorSettingsExternalizable implements PersistentStateComponent<Ed
   }
 
   public void setSoftWrapFileMasks(@NotNull String value) {
+    String old = myOptions.SOFT_WRAP_FILE_MASKS;
+    if (old.equals(value)) return;
     myOptions.SOFT_WRAP_FILE_MASKS = value;
+    myPropertyChangeSupport.firePropertyChange(PropNames.PROP_SOFT_WRAP_FILE_MASKS, old, value);
   }
 
   public @NotNull CaretStopOptions getCaretStopOptions() {
@@ -824,7 +1002,10 @@ public class EditorSettingsExternalizable implements PersistentStateComponent<Ed
   }
 
   public void setUseEditorFontInInlays(boolean value) {
+    boolean old = myOptions.USE_EDITOR_FONT_IN_INLAYS;
+    if (old == value) return;
     myOptions.USE_EDITOR_FONT_IN_INLAYS = value;
+    myPropertyChangeSupport.firePropertyChange(PropNames.PROP_USE_EDITOR_FONT_IN_INLAYS, old, value);
   }
 
   public boolean isInsertParenthesesAutomatically() {
@@ -832,7 +1013,73 @@ public class EditorSettingsExternalizable implements PersistentStateComponent<Ed
   }
 
   public void setInsertParenthesesAutomatically(boolean value) {
+    boolean old = myOptions.INSERT_PARENTHESES_AUTOMATICALLY;
+    if (old == value) return;
     myOptions.INSERT_PARENTHESES_AUTOMATICALLY = value;
+    myPropertyChangeSupport.firePropertyChange(PropNames.PROP_INSERT_PARENTHESES_AUTOMATICALLY, old, value);
   }
 
+  public static final class PropNames {
+    public static final @NonNls String PROP_USE_SOFT_WRAPS = "useSoftWraps";
+    public static final @NonNls String PROP_SOFT_WRAP_FILE_MASKS = "softWrapFileMasks";
+    public static final @NonNls String PROP_USE_CUSTOM_SOFT_WRAP_INDENT = "useCustomSoftWrapIndent";
+    public static final @NonNls String PROP_CUSTOM_SOFT_WRAP_INDENT = "customSoftWrapIndent";
+    // inconsistent name for backward compatibility because such constants are inlined at compilation stage
+    public static final @NonNls String PROP_IS_VIRTUAL_SPACE = "VirtualSpace";
+    public static final @NonNls String PROP_VERTICAL_SCROLL_OFFSET = "verticalScrollOffset";
+    public static final @NonNls String PROP_VERTICAL_SCROLL_JUMP = "verticalScrollJump";
+    public static final @NonNls String PROP_HORIZONTAL_SCROLL_OFFSET = "horizontalScrollOffset";
+    public static final @NonNls String PROP_HORIZONTAL_SCROLL_JUMP = "horizontalScrollJump";
+    public static final @NonNls String PROP_IS_CARET_INSIDE_TABS = "isCaretInsideTabs";
+    public static final @NonNls String PROP_STRIP_TRAILING_SPACES = "stripTrailingSpaces";
+    public static final @NonNls String PROP_IS_ENSURE_NEWLINE_AT_EOF = "isEnsureNewlineAtEof";
+    public static final @NonNls String PROP_REMOVE_TRAILING_BLANK_LINES = "removeTrailingBlankLines";
+    public static final @NonNls String PROP_SHOW_QUICK_DOC_ON_MOUSE_OVER_ELEMENT = "showQuickDocOnMouseOverElement";
+    public static final @NonNls String PROP_SHOW_INSPECTION_WIDGET = "showInspectionWidget";
+    public static final @NonNls String PROP_TOOLTIPS_DELAY_MS = "tooltipsDelayMs";
+    public static final @NonNls String PROP_SHOW_INTENTION_BULB = "showIntentionBulb";
+    public static final @NonNls String PROP_IS_CARET_BLINKING = "isCaretBlinking";
+    public static final @NonNls String PROP_CARET_BLINKING_PERIOD = "caretBlinkingPeriod";
+    public static final @NonNls String PROP_IS_RIGHT_MARGIN_SHOWN = "isRightMarginShown";
+    public static final @NonNls String PROP_ARE_LINE_NUMBERS_SHOWN = "areLineNumbersShown";
+    public static final @NonNls String PROP_LINE_NUMERATION = "lineNumeration";
+    public static final @NonNls String PROP_ARE_GUTTER_ICONS_SHOWN = "areGutterIconsShown";
+    public static final @NonNls String PROP_IS_FOLDING_OUTLINE_SHOWN = "isFoldingOutlineShown";
+    public static final @NonNls String PROP_IS_FOLDING_OUTLINE_SHOWN_ONLY_ON_HOVER = "isFoldingOutlineShownOnlyOnHover";
+    public static final @NonNls String PROP_IS_FOLDING_ENDINGS_SHOWN = "isFoldingEndingsShown";
+    public static final @NonNls String PROP_SHOW_BREADCRUMBS_ABOVE = "showBreadcrumbsAbove";
+    public static final @NonNls String PROP_SHOW_BREADCRUMBS = "showBreadcrumbs";
+    // inconsistent name for backward compatibility because such constants are inlined at compilation stage
+    public static final @NonNls String PROP_ENABLE_RENDERED_DOC = "DocCommentRendering";
+    public static final @NonNls String PROP_SHOW_INTENTION_PREVIEW = "showIntentionPreview";
+    public static final @NonNls String PROP_USE_EDITOR_FONT_IN_INLAYS = "useEditorFontInInlays";
+    public static final @NonNls String PROP_SMART_HOME = "smartHome";
+    public static final @NonNls String PROP_IS_BLOCK_CURSOR = "isBlockCursor";
+    public static final @NonNls String PROP_IS_FULL_LINE_HEIGHT_CURSOR = "isFullLineHeightCursor";
+    public static final @NonNls String PROP_IS_WHITESPACES_SHOWN = "isWhitespacesShown";
+    public static final @NonNls String PROP_IS_LEADING_WHITESPACES_SHOWN = "isLeadingWhitespacesShown";
+    public static final @NonNls String PROP_IS_INNER_WHITESPACES_SHOWN = "isInnerWhitespacesShown";
+    public static final @NonNls String PROP_IS_TRAILING_WHITESPACES_SHOWN = "isTrailingWhitespacesShown";
+    public static final @NonNls String PROP_IS_SELECTION_WHITESPACES_SHOWN = "isSelectionWhitespacesShown";
+    public static final @NonNls String PROP_IS_ALL_SOFTWRAPS_SHOWN = "isAllSoftwrapsShown";
+    public static final @NonNls String PROP_IS_INDENT_GUIDES_SHOWN = "isIndentGuidesShown";
+    public static final @NonNls String PROP_IS_FOCUS_MODE = "isFocusMode";
+    public static final @NonNls String PROP_IS_ANIMATED_SCROLLING = "isAnimatedScrolling";
+    public static final @NonNls String PROP_IS_CAMEL_WORDS = "isCamelWords";
+    public static final @NonNls String PROP_ADDITIONAL_PAGE_AT_BOTTOM = "additionalPageAtBottom";
+    public static final @NonNls String PROP_IS_DND_ENABLED = "isDndEnabled";
+    public static final @NonNls String PROP_IS_WHEEL_FONTCHANGE_ENABLED = "isWheelFontchangeEnabled";
+    public static final @NonNls String PROP_IS_WHEEL_FONTCHANGE_PERSISTENT = "isWheelFontchangePersistent";
+    public static final @NonNls String PROP_IS_MOUSE_CLICK_SELECTION_HONORS_CAMEL_WORDS = "isMouseClickSelectionHonorsCamelWords";
+    public static final @NonNls String PROP_RENAME_VARIABLES_INPLACE = "renameVariablesInplace";
+    public static final @NonNls String PROP_PRESELECT_RENAME = "preselectRename";
+    public static final @NonNls String PROP_SHOW_INLINE_DIALOG = "showInlineDialog";
+    public static final @NonNls String PROP_REFRAIN_FROM_SCROLLING = "refrainFromScrolling";
+    public static final @NonNls String PROP_ADD_CARETS_ON_DOUBLE_CTRL = "addCaretsOnDoubleCtrl";
+    public static final @NonNls String PROP_BIDI_TEXT_DIRECTION = "bidiTextDirection";
+    public static final @NonNls String PROP_KEEP_TRAILING_SPACE_ON_CARET_LINE = "keepTrailingSpaceOnCaretLine";
+    public static final @NonNls String PROP_INSERT_PARENTHESES_AUTOMATICALLY = "insertParenthesesAutomatically";
+    // inconsistent name for backward compatibility because such constants are inlined at compilation stage
+    public static final @NonNls String PROP_BREADCRUMBS_PER_LANGUAGE = "BreadcrumbsPerLanguage";
+  }
 }

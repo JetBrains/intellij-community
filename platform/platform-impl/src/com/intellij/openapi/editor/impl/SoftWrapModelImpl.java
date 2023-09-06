@@ -136,7 +136,16 @@ public final class SoftWrapModelImpl extends InlayModel.SimpleAdapter
   }
 
   private void forceSoftWraps() {
-    ((SettingsImpl)myEditor.getSettings()).setUseSoftWrapsQuiet();
+    EditorSettings editorSettings = myEditor.getSettings();
+
+    if (editorSettings instanceof SettingsImpl) {
+      ((SettingsImpl)editorSettings).setUseSoftWrapsQuiet();
+    }
+    else {
+      LOG.error(new IllegalStateException("Unexpected implementation class of editor settings: " +
+                                          "class=" + editorSettings.getClass() + "editor=" + myEditor));
+    }
+
     myEditor.putUserData(EditorImpl.FORCED_SOFT_WRAPS, Boolean.TRUE);
     myUseSoftWraps = areSoftWrapsEnabledInEditor();
     Project project = myEditor.getProject();

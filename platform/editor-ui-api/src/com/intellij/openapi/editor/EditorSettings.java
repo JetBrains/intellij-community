@@ -2,9 +2,7 @@
 package com.intellij.openapi.editor;
 
 import com.intellij.lang.Language;
-import com.intellij.openapi.Disposable;
 import com.intellij.openapi.project.Project;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -223,9 +221,6 @@ public interface EditorSettings {
   default void setShowVisualFormattingLayer(@Nullable Boolean showVisualFormattingLayer) {}
 
   boolean isInsertParenthesesAutomatically();
-
-  @ApiStatus.Experimental
-  void addEditorSettingsListener(@NotNull EditorSettingsListener listener, @NotNull Disposable parentDisposable);
 
   enum LineNumerationType {
     ABSOLUTE,

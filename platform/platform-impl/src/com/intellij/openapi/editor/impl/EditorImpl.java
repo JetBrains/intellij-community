@@ -41,6 +41,7 @@ import com.intellij.openapi.editor.highlighter.HighlighterClient;
 import com.intellij.openapi.editor.impl.event.MarkupModelListener;
 import com.intellij.openapi.editor.impl.view.EditorView;
 import com.intellij.openapi.editor.markup.*;
+import com.intellij.openapi.editor.state.ObservableStateListener;
 import com.intellij.openapi.editor.toolbar.floating.EditorFloatingToolbar;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileEditor.ex.IdeDocumentHistory;
@@ -150,7 +151,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
   private final @NotNull DocumentEx myDocument;
 
   private final JPanel myPanel;
-  private final @NotNull JScrollPane myScrollPane;
+  private final @NotNull MyScrollPane myScrollPane;
   private final @NotNull EditorComponentImpl myEditorComponent;
   private final @NotNull EditorGutterComponentImpl myGutterComponent;
   private final TraceableDisposable myTraceableDisposable = new TraceableDisposable(true);
@@ -185,12 +186,11 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
   private final List<EditorMouseListener> myMouseListeners = ContainerUtil.createLockFreeCopyOnWriteList();
   private final @NotNull List<EditorMouseMotionListener> myMouseMotionListeners = ContainerUtil.createLockFreeCopyOnWriteList();
 
-  private boolean myIsInsertMode = true;
-
   private final @NotNull CaretCursor myCaretCursor;
   private final ScrollingTimer myScrollingTimer = new ScrollingTimer();
 
   private final @NotNull SettingsImpl mySettings;
+  private final @NotNull EditorState myState;
 
   private boolean isReleased;
 
@@ -214,7 +214,6 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
   private MyEditable myEditable;
 
   private @NotNull EditorColorsScheme myScheme;
-  private boolean myIsViewer;
   private final @NotNull SelectionModelImpl mySelectionModel;
   private final @NotNull EditorMarkupModelImpl myMarkupModel;
   private final @NotNull EditorFilteringMarkupModelEx myDocumentMarkupModel;
@@ -233,8 +232,6 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
   private int myMouseSelectionState;
   private @Nullable FoldRegion myMouseSelectedRegion;
 
-  private int myHorizontalTextAlignment = TEXT_ALIGNMENT_LEFT;
-
   @MagicConstant(intValues = {MOUSE_SELECTION_STATE_NONE, MOUSE_SELECTION_STATE_LINE_SELECTED, MOUSE_SELECTION_STATE_WORD_SELECTED})
   private @interface MouseSelectionState {
   }
@@ -247,8 +244,6 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
   private Disposable myHighlighterDisposable = Disposer.newDisposable();
   private final TextDrawingCallback myTextDrawingCallback = new MyTextDrawingCallback();
 
-  @MagicConstant(intValues = {VERTICAL_SCROLLBAR_LEFT, VERTICAL_SCROLLBAR_RIGHT})
-  private int myScrollBarOrientation;
   private boolean myKeepSelectionOnMousePress;
 
   private boolean myUpdateCursor;
@@ -264,21 +259,17 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
 
   private MyInputMethodHandler myInputMethodRequestsHandler;
   private InputMethodRequests myInputMethodRequestsSwingWrapper;
-  private boolean myIsOneLineMode;
   private final MouseDragSelectionEventHandler mouseDragHandler = new MouseDragSelectionEventHandler(e -> {
     processMouseDragged(e);
     return Unit.INSTANCE;
   });
-  private boolean myIsRendererMode;
   private VirtualFile myVirtualFile;
-  private boolean myIsColumnMode;
   private @Nullable Color myForcedBackground;
   private @Nullable Dimension myPreferredSize;
 
   private final Alarm myMouseSelectionStateAlarm = new Alarm();
   private Runnable myMouseSelectionStateResetRunnable;
 
-  private boolean myEmbeddedIntoDialogWrapper;
   private int myDragOnGutterSelectionStartLine = -1;
   private RangeMarker myDraggedRange;
   private boolean myDragStarted;
@@ -298,12 +289,8 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
   private @Nullable TextAttributes myPlaceholderAttributes;
   private boolean myShowPlaceholderWhenFocused;
 
-  private boolean myStickySelection;
   private int myStickySelectionStart;
-  private boolean myScrollToCaret = true;
-
   private boolean myPurePaintingMode;
-  private boolean myPaintSelection;
 
   private final EditorSizeAdjustmentStrategy mySizeAdjustmentStrategy = new EditorSizeAdjustmentStrategy();
   private final Disposable myDisposable = Disposer.newDisposable();
@@ -340,10 +327,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
   boolean myDocumentChangeInProgress;
   private boolean myErrorStripeNeedsRepaint;
 
-  private String myContextMenuGroupId = IdeActions.GROUP_BASIC_EDITOR_POPUP;
   private final List<EditorPopupHandler> myPopupHandlers = new ArrayList<>();
-
-  private boolean myUseEditorAntialiasing = true;
 
   private final ImmediatePainter myImmediatePainter;
 
@@ -366,11 +350,13 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     myProject = project;
     myDocument = (DocumentEx)document;
     myVirtualFile = file;
+    myState = new EditorState();
+    myState.refreshAll();
     myScheme = createBoundColorSchemeDelegate(null);
     myScrollPane = new MyScrollPane(); // create UI after scheme initialization
-    myIsViewer = viewer;
+    myState.setViewer(viewer);
     myKind = kind;
-    mySettings = new SettingsImpl(this, kind);
+    mySettings = new SettingsImpl(this, kind, project);
 
     MarkupModelEx documentMarkup = (MarkupModelEx)DocumentMarkupModel.forDocument(myDocument, myProject, true);
 
@@ -438,7 +424,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     myCaretModel.addCaretListener(new CaretListener() {
       @Override
       public void caretPositionChanged(@NotNull CaretEvent e) {
-        if (myStickySelection) {
+        if (myState.isStickySelection()) {
           int selectionStart = Math.min(myStickySelectionStart, getDocument().getTextLength());
           mySelectionModel.setSelection(selectionStart, myCaretModel.getVisualPosition(), myCaretModel.getOffset());
         }
@@ -465,8 +451,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
 
     myCaretCursor = new CaretCursor();
 
-    myScrollBarOrientation = VERTICAL_SCROLLBAR_RIGHT;
-
+    myState.setVerticalScrollBarOrientation(VERTICAL_SCROLLBAR_RIGHT);
     mySoftWrapModel.addSoftWrapChangeListener(new SoftWrapChangeListener() {
       @Override
       public void recalculationEnds() {
@@ -551,10 +536,21 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     Disposer.register(myDisposable, myFocusModeModel);
     myPopupHandlers.add(new DefaultPopupHandler());
     PopupMenuPreloader.install(myEditorComponent, ActionPlaces.EDITOR_POPUP, null,
-                               () -> ContextMenuPopupHandler.getGroupForId(myContextMenuGroupId));
+                               () -> ContextMenuPopupHandler.getGroupForId(myState.getContextMenuGroupId()));
 
     myScrollingPositionKeeper = new EditorScrollingPositionKeeper(this);
     Disposer.register(myDisposable, myScrollingPositionKeeper);
+
+    myState.addPropertyChangeListener((event) -> {
+      switch (event.getPropertyName()) {
+        case EditorState.isInsertModePropertyName -> isInsertModeChanged(event);
+        case EditorState.isColumnModePropertyName -> isColumnModeChanged(event);
+        case EditorState.isOneLineModePropertyName -> isOneLineModeChanged(event);
+        case EditorState.isEmbeddedIntoDialogWrapperPropertyName -> isEmbeddedIntoDialogWrapperChanged(event);
+        case EditorState.verticalScrollBarOrientationPropertyName -> verticalScrollBarOrientationChanged(event);
+        case EditorState.isStickySelectionPropertyName -> isStickySelectionChanged(event);
+      }
+    }, myDisposable);
   }
 
   public void applyFocusMode() {
@@ -820,12 +816,12 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
 
   @Override
   public void setContextMenuGroupId(@Nullable String groupId) {
-    myContextMenuGroupId = groupId;
+    myState.setContextMenuGroupId(groupId);
   }
 
   @Override
   public @Nullable String getContextMenuGroupId() {
-    return myContextMenuGroupId;
+    return myState.getContextMenuGroupId();
   }
 
   @Override
@@ -860,22 +856,22 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
 
   @Override
   public void setViewer(boolean isViewer) {
-    myIsViewer = isViewer;
+    myState.setViewer(isViewer);
   }
 
   @Override
   public boolean isViewer() {
-    return myIsViewer || myIsRendererMode;
+    return myState.isViewer() || myState.isRendererMode();
   }
 
   @Override
   public boolean isRendererMode() {
-    return myIsRendererMode;
+    return myState.isRendererMode();
   }
 
   @Override
   public void setRendererMode(boolean isRendererMode) {
-    myIsRendererMode = isRendererMode;
+    myState.setRendererMode(isRendererMode);
   }
 
   @Override
@@ -1396,28 +1392,39 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
   @Override
   public void setInsertMode(boolean mode) {
     assertIsDispatchThread();
-    boolean oldValue = myIsInsertMode;
-    myIsInsertMode = mode;
-    myPropertyChangeSupport.firePropertyChange(PROP_INSERT_MODE, oldValue, mode);
+    myState.setInsertMode(mode);
+  }
+
+  private void isInsertModeChanged(ObservableStateListener.PropertyChangeEvent  event) {
+    assertIsDispatchThread();
+
+    Object oldValue = extractOldValueOrLog(event, false);
+    myPropertyChangeSupport.firePropertyChange(PROP_INSERT_MODE, oldValue, event.getNewValue());
+
     myCaretCursor.repaint();
   }
 
   @Override
   public boolean isInsertMode() {
-    return myIsInsertMode;
+    return myState.isInsertMode();
   }
 
   @Override
   public void setColumnMode(boolean mode) {
     assertIsDispatchThread();
-    boolean oldValue = myIsColumnMode;
-    myIsColumnMode = mode;
-    myPropertyChangeSupport.firePropertyChange(PROP_COLUMN_MODE, oldValue, mode);
+    myState.setColumnMode(mode);
+  }
+
+  private void isColumnModeChanged(ObservableStateListener.PropertyChangeEvent  event) {
+    assertIsDispatchThread();
+
+    Object oldValue = extractOldValueOrLog(event, false);
+    myPropertyChangeSupport.firePropertyChange(PROP_COLUMN_MODE, oldValue, event.getNewValue());
   }
 
   @Override
   public boolean isColumnMode() {
-    return myIsColumnMode;
+    return myState.isColumnMode();
   }
 
   @Override
@@ -1760,7 +1767,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
   }
 
   public void hideCursor() {
-    if (!myIsViewer && EMPTY_CURSOR != null && Registry.is("ide.hide.cursor.when.typing")) {
+    if (!myState.isViewer() && EMPTY_CURSOR != null && Registry.is("ide.hide.cursor.when.typing")) {
       myDefaultCursor = EMPTY_CURSOR;
       updateEditorCursor();
     }
@@ -1771,11 +1778,11 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
   }
 
   public boolean isScrollToCaret() {
-    return myScrollToCaret;
+    return myState.isScrollToCaret();
   }
 
   public void setScrollToCaret(boolean scrollToCaret) {
-    myScrollToCaret = scrollToCaret;
+    myState.setScrollToCaret(scrollToCaret);
   }
 
   public @NotNull Disposable getDisposable() {
@@ -1865,13 +1872,22 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
 
   @Override
   public boolean isStickySelection() {
-    return myStickySelection;
+    return myState.isStickySelection();
   }
 
   @Override
   public void setStickySelection(boolean enable) {
-    myStickySelection = enable;
-    if (enable) {
+    myState.setStickySelection(enable);
+  }
+
+  private void isStickySelectionChanged(ObservableStateListener.PropertyChangeEvent  event) {
+    Object newValue = event.getNewValue();
+    if (!(newValue instanceof Boolean)) {
+      LOG.error("newValue is not Boolean. property name = " + event.getPropertyName() + ", newValue = " + newValue);
+      return;
+    }
+
+    if ((boolean)newValue) {
       myStickySelectionStart = getCaretModel().getOffset();
     }
     else {
@@ -1880,11 +1896,11 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
   }
 
   public void setHorizontalTextAlignment(@MagicConstant(intValues = {TEXT_ALIGNMENT_LEFT, TEXT_ALIGNMENT_RIGHT}) int alignment) {
-    myHorizontalTextAlignment = alignment;
+    myState.setHorizontalTextAlignment(alignment);
   }
 
   public boolean isRightAligned() {
-    return myHorizontalTextAlignment == TEXT_ALIGNMENT_RIGHT;
+    return myState.getHorizontalTextAlignment() == TEXT_ALIGNMENT_RIGHT;
   }
 
   @Override
@@ -2124,11 +2140,11 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
   }
 
   public boolean isPaintSelection() {
-    return myPaintSelection || !isOneLineMode() || IJSwingUtilities.hasFocus(getContentComponent());
+    return myState.isPaintSelection() || !isOneLineMode() || IJSwingUtilities.hasFocus(getContentComponent());
   }
 
   public void setPaintSelection(boolean paintSelection) {
-    myPaintSelection = paintSelection;
+    myState.setPaintSelection(paintSelection);
   }
 
   @Override
@@ -2333,7 +2349,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
       y = visualLineToY(Math.max(0, visualLineCount - 1));
     }
     VisualPosition visualPosition = xyToVisualPosition(new Point(x, y));
-    if (myIsInsertMode == mySettings.isBlockCursor() && !visualPosition.leansRight && visualPosition.column > 0) {
+    if (myState.isInsertMode() == mySettings.isBlockCursor() && !visualPosition.leansRight && visualPosition.column > 0) {
       // adjustment for block caret
       visualPosition = new VisualPosition(visualPosition.line, visualPosition.column - 1, true);
     }
@@ -2913,35 +2929,56 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
 
   @Override
   public boolean isOneLineMode() {
-    return myIsOneLineMode;
+    return myState.isOneLineMode();
   }
 
   @Override
   public boolean isEmbeddedIntoDialogWrapper() {
-    return myEmbeddedIntoDialogWrapper;
+    return myState.isEmbeddedIntoDialogWrapper();
   }
 
   @Override
   public void setEmbeddedIntoDialogWrapper(boolean b) {
     assertIsDispatchThread();
+    myState.setEmbeddedIntoDialogWrapper(b);
+  }
 
-    myEmbeddedIntoDialogWrapper = b;
-    myScrollPane.setFocusable(!b);
-    myEditorComponent.setFocusCycleRoot(!b);
-    myEditorComponent.setFocusable(b);
+  private void isEmbeddedIntoDialogWrapperChanged(ObservableStateListener.PropertyChangeEvent  event) {
+    assertIsDispatchThread();
+
+    Object newValue = event.getNewValue();
+    if (!(newValue instanceof Boolean)) {
+      LOG.error("newValue is not Boolean. property name = " + event.getPropertyName() + ", newValue = " + newValue);
+      return;
+    }
+    boolean newValueBoolean = (boolean)newValue;
+
+    myScrollPane.setFocusable(!newValueBoolean);
+    myEditorComponent.setFocusCycleRoot(!newValueBoolean);
+    myEditorComponent.setFocusable(newValueBoolean);
   }
 
   @Override
   public void setOneLineMode(boolean isOneLineMode) {
-    if (isOneLineMode == myIsOneLineMode) return;
-    myIsOneLineMode = isOneLineMode;
-    mouseDragHandler.setNativeSelectionEnabled(isOneLineMode);
+    myState.setOneLineMode(isOneLineMode);
+  }
+
+  private void isOneLineModeChanged(ObservableStateListener.PropertyChangeEvent  event) {
+    Object newValue = event.getNewValue();
+    if (!(newValue instanceof Boolean)) {
+      LOG.error("newValue is not Boolean. property name = " + event.getPropertyName() + ", newValue = " + newValue);
+      return;
+    }
+
+    mouseDragHandler.setNativeSelectionEnabled((boolean)newValue);
     getScrollPane().setInputMap(JComponent.WHEN_ANCESTOR_OF_FOCUSED_COMPONENT, null);
     JBScrollPane pane = ObjectUtils.tryCast(getScrollPane(), JBScrollPane.class);
     JComponent component = pane == null ? null : pane.getStatusComponent();
     if (component != null) component.setVisible(!isOneLineMode());
     reinitSettings();
-    myPropertyChangeSupport.firePropertyChange(PROP_ONE_LINE_MODE, !isOneLineMode, isOneLineMode);
+
+    Object oldValue = extractOldValueOrLog(event, false);
+    myPropertyChangeSupport.firePropertyChange(PROP_ONE_LINE_MODE, oldValue, event.getNewValue());
   }
 
   public static final class CaretRectangle {
@@ -3418,11 +3455,21 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
   @Override
   public void setVerticalScrollbarOrientation(int type) {
     assertIsDispatchThread();
-    if (myScrollBarOrientation == type) return;
+    myState.setVerticalScrollBarOrientation(type);
+  }
+
+  private void verticalScrollBarOrientationChanged(ObservableStateListener.PropertyChangeEvent  event) {
+    assertIsDispatchThread();
+
+    Object newValue = event.getNewValue();
+    if (!(newValue instanceof Integer)) {
+      LOG.error("newValue is not Integer. property name = " + event.getPropertyName() + ", newValue = " + newValue);
+      return;
+    }
+
     int currentHorOffset = myScrollingModel.getHorizontalScrollOffset();
-    myScrollBarOrientation = type;
     myScrollPane.putClientProperty(JBScrollPane.Flip.class,
-                                   type == VERTICAL_SCROLLBAR_LEFT
+                                   (int)newValue == VERTICAL_SCROLLBAR_LEFT
                                    ? JBScrollPane.Flip.HORIZONTAL
                                    : null);
     myScrollingModel.scrollHorizontally(currentHorOffset);
@@ -3442,11 +3489,11 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
 
   @Override
   public int getVerticalScrollbarOrientation() {
-    return myScrollBarOrientation;
+    return myState.getVerticalScrollBarOrientation();
   }
 
   public boolean isMirrored() {
-    return myScrollBarOrientation != EditorEx.VERTICAL_SCROLLBAR_RIGHT;
+    return myState.getVerticalScrollBarOrientation() != EditorEx.VERTICAL_SCROLLBAR_RIGHT;
   }
 
   @NotNull
@@ -4486,11 +4533,11 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
   }
 
   boolean useEditorAntialiasing() {
-    return myUseEditorAntialiasing;
+    return myState.isUseAntialiasing();
   }
 
   public void setUseEditorAntialiasing(boolean value) {
-    myUseEditorAntialiasing = value;
+    myState.setUseAntialiasing(value);
   }
 
   private @NotNull EditorMouseEvent createEditorMouseEvent(@NotNull MouseEvent e) {
@@ -5162,6 +5209,22 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     return UISettings.getInstance().getPresentationMode() && EditorUtil.isRealFileEditor(this);
   }
 
+  @ApiStatus.Experimental
+  @ApiStatus.Internal
+  public @NotNull EditorState getState() {
+    return myState;
+  }
+
+  private static @Nullable Object extractOldValueOrLog(@NotNull ObservableStateListener.PropertyChangeEvent  event,
+                                                       @SuppressWarnings("SameParameterValue") @Nullable Object fallbackValue) {
+    Ref<@Nullable Object> oldValueRef = event.getOldValueRef();
+    if (oldValueRef == null) {
+      LOG.error("oldValueRef is expected not-null for the property: property name = " + event.getPropertyName());
+      return fallbackValue;
+    }
+    return oldValueRef.get();
+  }
+
   @Override
   public void putInfo(@NotNull Map<? super String, ? super String> info) {
     VisualPosition visual = getCaretModel().getVisualPosition();
@@ -5219,7 +5282,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
   private final class DefaultPopupHandler extends ContextMenuPopupHandler {
     @Override
     public @Nullable ActionGroup getActionGroup(@NotNull EditorMouseEvent event) {
-      String contextMenuGroupId = myContextMenuGroupId;
+      String contextMenuGroupId = myState.getContextMenuGroupId();
       Inlay<?> inlay = event.getInlay();
       if (inlay != null) {
         ActionGroup group = inlay.getRenderer().getContextMenuGroup(inlay);
