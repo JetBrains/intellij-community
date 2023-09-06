@@ -9,6 +9,10 @@ abstract class JKDeclaration : JKTreeElement(), PsiOwner by PsiOwnerImpl() {
     abstract val name: JKNameIdentifier
 }
 
+/**
+ * @param hasTrailingComma - Makes sense only in an enum class,
+ * which can have a trailing comma after the last enum entry both in Java and in Kotlin
+ */
 class JKClass(
     name: JKNameIdentifier,
     inheritance: JKInheritanceInfo,
@@ -19,7 +23,8 @@ class JKClass(
     otherModifierElements: List<JKOtherModifierElement>,
     visibilityElement: JKVisibilityModifierElement,
     modalityElement: JKModalityModifierElement,
-    recordComponents: List<JKJavaRecordComponent> = emptyList()
+    recordComponents: List<JKJavaRecordComponent> = emptyList(),
+    val hasTrailingComma: Boolean = false
 ) : JKDeclaration(), JKVisibilityOwner, JKOtherModifiersOwner, JKModalityOwner, JKTypeParameterListOwner, JKAnnotationListOwner {
     override fun accept(visitor: JKVisitor) = visitor.visitClass(this)
 

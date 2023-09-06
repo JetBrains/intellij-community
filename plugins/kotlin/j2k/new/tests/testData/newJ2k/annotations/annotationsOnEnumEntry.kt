@@ -24,7 +24,7 @@ internal class Outer {
         NValue1,
 
         @Value("NV2")
-        NValue2
+        NValue2,
     }
 }
 
@@ -33,5 +33,5 @@ internal enum class TopLevelEnum {
     TValue1,
 
     @Value("TV2")
-    TValue2
+    TValue2,
 }

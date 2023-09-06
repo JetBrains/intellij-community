@@ -360,9 +360,13 @@ class JKJavaNewEmptyArray(
     override fun accept(visitor: JKVisitor) = visitor.visitJavaNewEmptyArray(this)
 }
 
+/**
+ * @param hasTrailingComma - Java array initializer has a trailing comma
+ */
 class JKJavaNewArray(
     initializer: List<JKExpression>,
     type: JKTypeElement,
+    val hasTrailingComma: Boolean,
     override val expressionType: JKType? = null
 ) : JKExpression() {
     val type by child(type)

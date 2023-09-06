@@ -2638,6 +2638,11 @@ public abstract class NewJavaToKotlinConverterSingleFileTestGenerated extends Ab
         public void testStaticMembersWithComments() throws Exception {
             runTest("testData/newJ2k/formatting/staticMembersWithComments.java");
         }
+
+        @TestMetadata("trailingComma.java")
+        public void testTrailingComma() throws Exception {
+            runTest("testData/newJ2k/formatting/trailingComma.java");
+        }
     }
 
     @RunWith(JUnit3RunnerWithInners.class)

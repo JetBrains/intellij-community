@@ -21,12 +21,15 @@ class ArrayInitializerConversion(context: NewJ2kConverterContext) : RecursiveApp
                     ArrayFqNames.PRIMITIVE_TYPE_TO_ARRAY[PrimitiveType.valueOf(primitiveArrayType.jvmPrimitiveType.name)]!!.asString()
                 else
                     ArrayFqNames.ARRAY_OF_FUNCTION.asString()
+            val arguments = element.initializer.also { element.initializer = emptyList() }.toArgumentList()
+            arguments.hasTrailingComma = element.hasTrailingComma
             val typeArguments =
                 if (primitiveArrayType == null) JKTypeArgumentList(element::type.detached())
                 else JKTypeArgumentList()
+
             newElement = JKCallExpressionImpl(
                 symbolProvider.provideMethodSymbol("kotlin.$arrayConstructorName"),
-                element.initializer.also { element.initializer = emptyList() }.toArgumentList(),
+                arguments,
                 typeArguments
             )
         } else if (element is JKJavaNewEmptyArray) {

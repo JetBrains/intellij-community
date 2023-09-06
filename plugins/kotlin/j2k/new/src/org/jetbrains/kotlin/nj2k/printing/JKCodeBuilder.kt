@@ -481,7 +481,9 @@ internal class JKCodeBuilder(context: NewJ2kConverterContext) {
                     visitArgumentRaw(argument)
                 }
 
-                if (i < argumentList.arguments.lastIndex) printer.print(", ")
+                if (i < argumentList.arguments.lastIndex || argumentList.hasTrailingComma) {
+                    printer.print(", ")
+                }
                 printRightNonCodeElements(argument)
             }
         }
@@ -604,8 +606,9 @@ internal class JKCodeBuilder(context: NewJ2kConverterContext) {
 
             if (declarations.isNotEmpty()) {
                 ensureLineBreak()
-                if ((classBody.parent as? JKClass)?.classKind == ENUM) {
-                    renderEnumDeclarations(declarations)
+                val containingClass = classBody.parent as? JKClass
+                if (containingClass?.classKind == ENUM) {
+                    renderEnumDeclarations(declarations, containingClass.hasTrailingComma)
                 } else {
                     renderDeclarations(declarations)
                 }
@@ -622,7 +625,7 @@ internal class JKCodeBuilder(context: NewJ2kConverterContext) {
             }
         }
 
-        private fun renderEnumDeclarations(declarations: List<JKDeclaration>) {
+        private fun renderEnumDeclarations(declarations: List<JKDeclaration>, hasTrailingComma: Boolean) {
             printer.indented {
                 val enumConstants = declarations.filterIsInstance<JKEnumConstant>()
                 val otherDeclarations = declarations.filterNot { it is JKEnumConstant }
@@ -631,11 +634,12 @@ internal class JKCodeBuilder(context: NewJ2kConverterContext) {
                     printLeftNonCodeElements(enumConstant)
                     visitEnumConstantRaw(enumConstant)
 
-                    if (i < enumConstants.lastIndex) {
-                        // all enum entries except last
+                    if (i < enumConstants.lastIndex || hasTrailingComma) {
                         printer.print(", ")
-                    } else if (otherDeclarations.isNotEmpty()) {
-                        // last enum entry
+                    }
+
+                    if (i == enumConstants.lastIndex && otherDeclarations.isNotEmpty()) {
+                        if (hasTrailingComma) ensureLineBreak()
                         printer.print(";")
                     }
 

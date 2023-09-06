@@ -21,6 +21,7 @@ import com.intellij.psi.javadoc.PsiDocComment
 import com.intellij.psi.tree.IElementType
 import com.intellij.psi.util.JavaPsiRecordUtil.getFieldForComponent
 import com.intellij.psi.util.TypeConversionUtil.calcTypeForBinaryExpression
+import com.intellij.psi.util.childrenOfType
 import org.jetbrains.kotlin.analysis.decompiled.light.classes.KtLightClassForDecompiledDeclaration
 import org.jetbrains.kotlin.asJava.classes.KtLightClass
 import org.jetbrains.kotlin.asJava.classes.KtLightClassForFacade
@@ -481,7 +482,8 @@ class JavaToJKTreeBuilder(
         private fun PsiArrayInitializerExpression.toJK(): JKExpression {
             val initializer = initializers.map { it.toJK().withLineBreaksFrom(it) }
             val type = JKTypeElement(type?.toJK().safeAs<JKJavaArrayType>()?.type ?: JKContextType)
-            return JKJavaNewArray(initializer, type)
+            val hasTrailingComma = initializers.lastOrNull()?.trailingComma() != null
+            return JKJavaNewArray(initializer, type, hasTrailingComma)
         }
 
         private fun PsiNewExpression.toJK(): JKExpression {
@@ -593,6 +595,9 @@ class JavaToJKTreeBuilder(
         }
     }
 
+    private fun PsiElement.trailingComma(): PsiElement? =
+        getNextSiblingIgnoringWhitespaceAndComments()?.takeIf { it is PsiJavaToken && it.text == "," }
+
     private inner class DeclarationMapper(val expressionTreeMapper: ExpressionTreeMapper, var withBody: Boolean) {
         fun <R> withBodyGeneration(
             elementToCheck: PsiElement,
@@ -635,7 +640,8 @@ class JavaToJKTreeBuilder(
                 otherModifiers(),
                 visibility(),
                 modality(),
-                recordComponents()
+                recordComponents(),
+                hasTrailingCommaAfterEnumEntries()
             ).also { klass ->
                 klass.psi = this
                 symbolProvider.provideUniverseSymbol(this, klass)
@@ -658,6 +664,9 @@ class JavaToJKTreeBuilder(
                     it.psi = component
                 }
             }
+
+        private fun PsiClass.hasTrailingCommaAfterEnumEntries(): Boolean =
+            isEnum && childrenOfType<PsiEnumConstant>().lastOrNull()?.trailingComma() != null
 
         fun PsiClass.inheritanceInfo(): JKInheritanceInfo {
             val implementsTypes = implementsList?.referencedTypes?.map { type ->

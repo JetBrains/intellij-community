@@ -140,7 +140,11 @@ class JKArgumentImpl(value: JKExpression) : JKArgument() {
     }
 }
 
-class JKArgumentList(arguments: List<JKArgument> = emptyList()) : JKTreeElement() {
+/**
+ * @param hasTrailingComma - a trailing comma in Java can come from an array initializer,
+ * which is converted to a regular method call in Kotlin, so it belongs to JKArgumentList
+ */
+class JKArgumentList(arguments: List<JKArgument> = emptyList(), var hasTrailingComma: Boolean = false) : JKTreeElement() {
     constructor(vararg arguments: JKArgument) : this(arguments.toList())
     constructor(vararg values: JKExpression) : this(values.map { JKArgumentImpl(it) })
 
