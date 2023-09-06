@@ -177,6 +177,8 @@
     <orderEntry type="module" module-name="intellij.searchEverywhereMl" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.searchEverywhereMl.ranking" scope="TEST" />
     <orderEntry type="module" module-name="intellij.searchEverywhereMl.typos" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.searchEverywhereMl.semantics.java" scope="RUNTIME"/>
+    <orderEntry type="module" module-name="intellij.searchEverywhereMl.semantics.kotlin" scope="RUNTIME"/>
     <orderEntry type="module" module-name="intellij.toml" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.platform.tracing.ide" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.notebooks.visualization" scope="RUNTIME" />

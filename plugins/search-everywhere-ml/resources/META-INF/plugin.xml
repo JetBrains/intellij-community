@@ -18,6 +18,8 @@
     <module name="intellij.searchEverywhereMl.ranking.yaml"/>
     <module name="intellij.searchEverywhereMl.ranking.vcs"/>
     <module name="intellij.searchEverywhereMl.semantics"/>
+    <module name="intellij.searchEverywhereMl.semantics.java"/>
+    <module name="intellij.searchEverywhereMl.semantics.kotlin"/>
   </content>
 
   <extensions defaultExtensionNs="com.intellij">

@@ -269,7 +269,10 @@ object CommunityRepositoryModules {
       "intellij.searchEverywhereMl.ranking.vcs",
       "intellij.searchEverywhereMl.typos",
       "intellij.searchEverywhereMl.semantics"
-    )),
+    )) { spec ->
+      spec.withModule("intellij.searchEverywhereMl.semantics.java")
+      spec.withModule("intellij.searchEverywhereMl.semantics.kotlin")
+    },
     plugin("intellij.platform.testFramework.ui") { spec ->
       spec.withModuleLibrary("intellij.remoterobot.remote.fixtures", spec.mainModule, "")
       spec.withModuleLibrary("intellij.remoterobot.robot.server.core", spec.mainModule, "")
