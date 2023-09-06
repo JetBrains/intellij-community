@@ -302,10 +302,6 @@ public abstract class DataFlowInspectionBase extends AbstractBaseJavaLocalInspec
       PsiSwitchBlock switchBlock = labelStatement.getEnclosingSwitchBlock();
       if (switchBlock == null) continue;
       if (!canRemoveTheOnlyReachableLabel(label, switchBlock)) continue;
-      if (SwitchUtils.findRemovableUnreachableBranches(label, switchBlock).isEmpty()) {
-        holder.registerProblem(label, JavaAnalysisBundle.message("dataflow.message.only.switch.label"));
-        continue;
-      }
       if (!StreamEx.iterate(labelStatement, Objects::nonNull, l -> PsiTreeUtil.getPrevSiblingOfType(l, PsiSwitchLabelStatementBase.class))
         .skip(1).map(PsiSwitchLabelStatementBase::getCaseLabelElementList)
         .nonNull().flatArray(PsiCaseLabelElementList::getElements)
@@ -323,7 +319,8 @@ public abstract class DataFlowInspectionBase extends AbstractBaseJavaLocalInspec
       }
       coveredSwitches.add(switchBlock);
       LocalQuickFix unwrapFix;
-      if (switchBlock instanceof PsiSwitchExpression && !CodeBlockSurrounder.canSurround(((PsiSwitchExpression)switchBlock))) {
+      if ((switchBlock instanceof PsiSwitchExpression && !CodeBlockSurrounder.canSurround(((PsiSwitchExpression)switchBlock))) ||
+          SwitchUtils.findRemovableUnreachableBranches(label, switchBlock).isEmpty()) {
         unwrapFix = null;
       }
       else {
