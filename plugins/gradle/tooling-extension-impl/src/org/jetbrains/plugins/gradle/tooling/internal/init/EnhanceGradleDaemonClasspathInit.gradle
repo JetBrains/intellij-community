@@ -79,12 +79,13 @@ class GradleDaemonClasspathEnhancer implements Action<Test> {
     def foundClassNames = new HashSet<String>()
     def reducedClasspath = new ArrayList<URL>()
     for (def url : classpath) {
-      def classLoader = new URLClassLoader([url] as URL[])
-      for (def className : classNames) {
-        if (hasClass(classLoader, className)) {
-          foundClassNames.add(className)
-          reducedClasspath.add(url)
-          break
+      new URLClassLoader([url] as URL[]).withCloseable { classLoader ->
+        for (def className : classNames) {
+          if (hasClass(classLoader, className)) {
+            foundClassNames.add(className)
+            reducedClasspath.add(url)
+            break
+          }
         }
       }
     }
