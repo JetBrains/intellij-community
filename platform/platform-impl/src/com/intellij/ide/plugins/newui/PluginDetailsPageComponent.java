@@ -538,7 +538,6 @@ public final class PluginDetailsPageComponent extends MultiPanel {
     JBTabbedPane pane = new JBTabbedPane() {
       @Override
       public void setUI(TabbedPaneUI ui) {
-        putClientProperty("TabbedPane.tabBackgroundOnlyForHover", Boolean.TRUE);
         putClientProperty("TabbedPane.hoverColor", ListPluginComponent.HOVER_COLOR);
 
         boolean contentOpaque = UIManager.getBoolean("TabbedPane.contentOpaque");
@@ -560,6 +559,7 @@ public final class PluginDetailsPageComponent extends MultiPanel {
     };
     pane.setOpaque(false);
     pane.setBorder(JBUI.Borders.emptyTop(6));
+    pane.setBackground(PluginManagerConfigurable.MAIN_BG_COLOR);
     parent.add(pane);
     myTabbedPane = pane;
 
