@@ -62,6 +62,7 @@ class InlineCompletionHandler(private val scope: CoroutineScope) : CodeInsightAc
       val resultFlow = withContext(Dispatchers.IO) {
         provider.getProposals(request)
       }
+      val placeholder = provider.getPlaceholder(request)
 
       val editor = request.editor
       val offset = request.endOffset
@@ -69,7 +70,7 @@ class InlineCompletionHandler(private val scope: CoroutineScope) : CodeInsightAc
       val inlineState = editor.initOrGetInlineCompletionState()
 
       withContext(Dispatchers.EDT) {
-        showPlaceholder(editor, offset)
+        showPlaceholder(editor, offset, placeholder)
 
         resultFlow
           .onCompletion { if (it != null) disposePlaceholder(editor) }
@@ -98,11 +99,11 @@ class InlineCompletionHandler(private val scope: CoroutineScope) : CodeInsightAc
     }
   }
 
-  private fun showPlaceholder(editor: Editor, startOffset: Int, placeholder: String = "...") {
+  private fun showPlaceholder(editor: Editor, startOffset: Int, placeholder: InlineCompletionPlaceholder) {
     if (!shouldShowPlaceholder()) return
 
     val ctx = editor.initOrGetInlineCompletionContextWithPlaceholder()
-    ctx.update(listOf(InlineCompletionElement(placeholder)), 0, startOffset)
+    ctx.update(listOf(placeholder.element), 0, startOffset)
   }
 
   private fun disposePlaceholder(editor: Editor) {

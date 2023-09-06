@@ -19,14 +19,21 @@ import org.jetbrains.annotations.ApiStatus
  *   otherwise, proposals will be generated/canceled on each typing.
  *   - Any inline completion request will be cancelled if inline is in rendering mode
  *   - In case a newer inline completion proposals are generated, previous call will be cancelled and hidden
+ *   - While elements are computing, the inline completion shows a placeholder ([getPlaceholder]). If no placeholder is required,
+ *   please use [InlineCompletionPlaceholder.Empty].
  *
  * @see InlineCompletionElement
  * @see InlineCompletionRequest
  * @see InlineCompletionEvent
+ * @see InlineCompletionPlaceholder
  */
 @ApiStatus.Experimental
 interface InlineCompletionProvider {
   suspend fun getProposals(request: InlineCompletionRequest): Flow<InlineCompletionElement>
+
+  fun getPlaceholder(request: InlineCompletionRequest): InlineCompletionPlaceholder {
+    return InlineCompletionPlaceholder.Empty
+  }
 
   fun isEnabled(event: InlineCompletionEvent): Boolean
 
