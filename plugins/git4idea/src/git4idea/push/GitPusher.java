@@ -67,6 +67,11 @@ class GitPusher extends Pusher<GitRepository, GitPushSource, GitPushTarget> {
   public static void pushAndNotify(@NotNull Project project, @NotNull GitPushOperation pushOperation) {
     GitPushResult pushResult = pushOperation.execute();
 
+    GitPushListener pushListener = project.getMessageBus().syncPublisher(GitPushListener.getTOPIC());
+    for (Map.Entry<GitRepository, GitPushRepoResult> entry : pushResult.getResults().entrySet()) {
+      pushListener.onCompleted(entry.getKey(), entry.getValue());
+    }
+
     Map<GitRepository, HashRange> updatedRanges = pushResult.getUpdatedRanges();
     GitUpdateInfoAsLog.NotificationData notificationData = !updatedRanges.isEmpty() ?
                                                            new GitUpdateInfoAsLog(project, updatedRanges).calculateDataAndCreateLogTab() :

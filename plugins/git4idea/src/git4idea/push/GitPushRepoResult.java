@@ -107,7 +107,7 @@ public final class GitPushRepoResult {
    * Returns the branch we were pushing from, in the full-name format, e.g. {@code refs/heads/master} or a revision hash.
    */
   @NotNull
-  String getSourceBranch() {
+  public String getSourceBranch() {
     return mySourceBranch;
   }
 
