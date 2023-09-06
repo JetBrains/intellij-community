@@ -409,6 +409,7 @@
       "paintLines": false,
       "rowHeight": 20,
       "selectionBorderColor": "#1a7dc4",
+      "selectionInactiveBackground": "#d4d4d4",
       "textBackground": "#ffffff",
       "UI": "com.intellij.ui.tree.ui.DefaultTreeUI"
     },
