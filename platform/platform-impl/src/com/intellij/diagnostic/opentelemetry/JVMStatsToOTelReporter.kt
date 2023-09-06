@@ -15,8 +15,9 @@ import java.lang.management.ManagementFactory
 import java.util.concurrent.TimeUnit.NANOSECONDS
 
 /**
- * Reports basic JVM stats into OTel.Metrics.
- * Currently reported: heap & direct memory usage. Feel free to add more.
+ * Reports JVM-wide metrics into OTel.Metrics.
+ * Currently reported: heap & direct memory usage, threads count, GC times, JVM/OS CPU consumption.
+ * Feel free to add more.
  */
 private class JVMStatsToOTelReporter : ProjectActivity {
   override suspend fun execute(project: Project) {
@@ -108,10 +109,11 @@ private class JVMStatsToOTelReporter : ProjectActivity {
   /***
    * JMX bean provides per-thread allocations -- but threads come and go, and with thread termination all the
    * memory allocated by it also disappears from data reported by [ThreadMXBean]. To keep the total allocated
-   * memory metric continuous, we need to compensate for that disappearing 'dead threads memory'.
+   * memory metric continuous, we need to compensate for that disappearing 'memory allocated by threads now dead'.
    * The class keeps track of the threads alive/respective memory allocated by a thread, and if thread X disappears
-   * from the current turn's [ThreadMXBean.getAllThreadIds] -- it's allocated memory stored in
-   * .totalBytesAllocatedByTerminatedThreads.
+   * from the current turn's [ThreadMXBean.getAllThreadIds] -- it's allocated memory is kept in
+   * [totalBytesAllocatedByTerminatedThreads], and still contributes to the [totalBytesAllocatedSinceStartup]
+   * reported by the class
    * There are still few sources of errors: e.g. we don't count the memory allocated by died thread since last
    * turn till the termination -- but it must be precise enough for monitoring purposes.
    */
@@ -121,8 +123,10 @@ private class JVMStatsToOTelReporter : ProjectActivity {
     private var previouslyAliveThreadsIds: LongArray = LongArray(0)
     private var allocatedByPreviouslyAliveThreads: Long2LongOpenHashMap = Long2LongOpenHashMap()
 
-    /** Total memory allocated by already terminated threads -- so this memory is not listed in current calls
-     * to [ThreadMXBean.getThreadAllocatedBytes] */
+    /**
+     * Total memory allocated by already terminated threads -- so this memory is not listed in current calls
+     * to [ThreadMXBean.getThreadAllocatedBytes]
+     */
     private var totalBytesAllocatedByTerminatedThreads: Long = 0L
 
     fun isAvailable() = threadMXBean.isThreadAllocatedMemorySupported && threadMXBean.isThreadAllocatedMemoryEnabled
