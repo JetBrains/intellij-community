@@ -25,6 +25,7 @@ import org.jetbrains.kotlin.analysis.api.renderer.declarations.impl.KtDeclaratio
 import org.jetbrains.kotlin.analysis.api.renderer.declarations.modifiers.renderers.KtRendererVisibilityModifierProvider
 import org.jetbrains.kotlin.analysis.api.symbols.*
 import org.jetbrains.kotlin.analysis.api.symbols.markers.KtNamedSymbol
+import org.jetbrains.kotlin.analysis.api.types.KtErrorType
 import org.jetbrains.kotlin.analysis.utils.printer.prettyPrint
 import org.jetbrains.kotlin.idea.actions.KotlinAddImportActionInfo.executeListener
 import org.jetbrains.kotlin.idea.base.analysis.api.utils.KtSymbolFromIndexProvider
@@ -281,12 +282,14 @@ class ImportQuickFix(
         ): ImportQuickFix? {
             if (importCandidateSymbols.isEmpty()) return null
 
-            val analyzerServices = position.containingKtFile.platform.findAnalyzerServices(position.project)
+            val containingKtFile = position.containingKtFile
+
+            val analyzerServices = containingKtFile.platform.findAnalyzerServices(position.project)
             val defaultImports = analyzerServices.getDefaultImports(position.languageVersionSettings, includeLowPriorityImports = true)
             val excludedImports = analyzerServices.excludedImports
 
             val isImported = { fqName: FqName -> ImportPath(fqName, isAllUnder = false).isImported(defaultImports, excludedImports) }
-            val importPrioritizer = ImportPrioritizer(position.containingKtFile, isImported)
+            val importPrioritizer = ImportPrioritizer(containingKtFile, isImported)
             val expressionImportWeigher = ExpressionImportWeigher.createWeigher(position)
 
             val sortedImportCandidateSymbolsWithPriorities = importCandidateSymbols
@@ -304,6 +307,10 @@ class ImportQuickFix(
                 suggestions = sortedImportCandidateSymbolsWithPriorities.map { (symbol, _) -> symbol.getFqName() }.distinct()
             )
 
+            val implicitReceiverTypes = containingKtFile.getScopeContextForPosition(position).implicitReceivers.map { it.type }
+            // don't import callable on the fly as it might be unresolved because of an erroneous implicit receiver
+            val doNotImportCallablesOnFly = implicitReceiverTypes.any { it is KtErrorType }
+
             val sortedImportVariants = sortedImportCandidateSymbolsWithPriorities
                 .map { (symbol, priority) ->
                     SymbolBasedAutoImportVariant(
@@ -312,12 +319,19 @@ class ImportQuickFix(
                         getIconFor(symbol),
                         renderSymbol(symbol),
                         priority.statisticsInfo,
-                        // don't import nested class on the fly because this will probably add qualification and confuse the user
-                        doNotImportOnFly = (symbol as? KtNamedClassOrObjectSymbol)?.isNested() == true,
+                        symbol.doNotImportOnTheFly(doNotImportCallablesOnFly),
                     )
                 }
 
             return ImportQuickFix(position, text, sortedImportVariants)
+        }
+
+        context(KtAnalysisSession)
+        private fun KtDeclarationSymbol.doNotImportOnTheFly(doNotImportCallablesOnFly: Boolean): Boolean = when (this) {
+            // don't import nested class on the fly because it will probably add qualification and confuse the user
+            is KtNamedClassOrObjectSymbol -> isNested()
+            is KtCallableSymbol -> doNotImportCallablesOnFly
+            else -> false
         }
 
         context(KtAnalysisSession)

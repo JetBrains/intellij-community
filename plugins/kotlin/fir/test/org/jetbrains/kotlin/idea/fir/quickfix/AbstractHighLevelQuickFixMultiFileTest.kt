@@ -7,11 +7,7 @@ import org.jetbrains.kotlin.idea.quickfix.AbstractQuickFixMultiFileTest
 import org.jetbrains.kotlin.idea.test.KotlinLightProjectDescriptor
 import org.jetbrains.kotlin.idea.test.KotlinWithJdkAndRuntimeLightProjectDescriptor
 import org.jetbrains.kotlin.psi.KtFile
-import org.jetbrains.kotlin.test.utils.IgnoreTests
 import java.io.File
-import java.nio.file.Files
-import java.nio.file.Path
-import java.nio.file.Paths
 
 abstract class AbstractHighLevelQuickFixMultiFileTest : AbstractQuickFixMultiFileTest() {
     override fun isFirPlugin(): Boolean = true
@@ -24,10 +20,4 @@ abstract class AbstractHighLevelQuickFixMultiFileTest : AbstractQuickFixMultiFil
     override fun checkForUnexpectedErrors(file: KtFile) {}
 
     override fun checkAvailableActionsAreExpected(file: File, actions: Collection<IntentionAction>) {}
-
-    private fun Path.getAfterFileIfExists(): Path? {
-        val afterFileName = fileName.toString().removeSuffix(".before.Main.kt") + ".after.kt"
-
-        return resolveSibling(afterFileName).takeIf(Files::exists)
-    }
 }

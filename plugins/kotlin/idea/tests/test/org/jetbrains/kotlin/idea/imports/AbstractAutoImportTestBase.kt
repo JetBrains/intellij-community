@@ -63,14 +63,17 @@ abstract class AbstractAutoImportTestBase : KotlinLightCodeInsightFixtureTestCas
                     setupAutoImportEnvironment(settings, withAutoImport)
 
                     val nameCountToUseStarImport = InTextDirectivesUtils.getPrefixedInt(originalText, "// NAME_COUNT_TO_USE_STAR_IMPORT:")
+                    val runCount = InTextDirectivesUtils.getPrefixedInt(originalText, "// RUN_COUNT:") ?: 1
 
                     nameCountToUseStarImport?.let { file.kotlinCustomSettings.NAME_COUNT_TO_USE_STAR_IMPORT = it }
-                    // same as myFixture.doHighlighting() but allow to change PSI during highlighting (due to addUnambiguousImportsOnTheFly)
-                    CodeInsightTestFixtureImpl.instantiateAndRun(
-                        getFile(),
-                        editor, intArrayOf(),
-                        /* canChange */ true
-                    )
+                    repeat(runCount) {
+                        // same as myFixture.doHighlighting() but allow to change PSI during highlighting (due to addUnambiguousImportsOnTheFly)
+                        CodeInsightTestFixtureImpl.instantiateAndRun(
+                            getFile(),
+                            editor, intArrayOf(),
+                            /* canChange */ true
+                        )
+                    }
                     AppExecutorUtil.getAppExecutorService().submit {
                         DaemonCodeAnalyzerImpl.waitForUnresolvedReferencesQuickFixesUnderCaret(myFixture.file, myFixture.editor)
                     }.get()

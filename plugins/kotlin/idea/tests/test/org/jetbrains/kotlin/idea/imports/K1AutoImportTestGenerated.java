@@ -103,6 +103,11 @@ public class K1AutoImportTestGenerated extends AbstractK1AutoImportTest {
         runTest("testData/editor/autoImport/property/");
     }
 
+    @TestMetadata("recevierAndFunction")
+    public void testRecevierAndFunction() throws Exception {
+        runTest("testData/editor/autoImport/recevierAndFunction/");
+    }
+
     @TestMetadata("singleImportForMultipleReferences")
     public void testSingleImportForMultipleReferences() throws Exception {
         runTest("testData/editor/autoImport/singleImportForMultipleReferences/");
@@ -126,6 +131,16 @@ public class K1AutoImportTestGenerated extends AbstractK1AutoImportTest {
     @TestMetadata("typealias")
     public void testTypealias() throws Exception {
         runTest("testData/editor/autoImport/typealias/");
+    }
+
+    @TestMetadata("unresolvedExplicitReceiver")
+    public void testUnresolvedExplicitReceiver() throws Exception {
+        runTest("testData/editor/autoImport/unresolvedExplicitReceiver/");
+    }
+
+    @TestMetadata("unresolvedImplicitReceiver")
+    public void testUnresolvedImplicitReceiver() throws Exception {
+        runTest("testData/editor/autoImport/unresolvedImplicitReceiver/");
     }
 
     @TestMetadata("unresolvedImport")

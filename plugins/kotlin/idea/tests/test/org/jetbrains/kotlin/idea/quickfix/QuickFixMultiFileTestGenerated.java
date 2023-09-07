@@ -948,6 +948,11 @@ public abstract class QuickFixMultiFileTestGenerated extends AbstractQuickFixMul
                 runTest("testData/quickfix/autoImports/unaryPlusOperator.before.Main.kt");
             }
 
+            @TestMetadata("unresolvedImplicitReceiver.test")
+            public void testUnresolvedImplicitReceiver() throws Exception {
+                runTest("testData/quickfix/autoImports/unresolvedImplicitReceiver.test");
+            }
+
             @TestMetadata("withSmartCastQualifier.before.Main.kt")
             public void testWithSmartCastQualifier() throws Exception {
                 runTest("testData/quickfix/autoImports/withSmartCastQualifier.before.Main.kt");

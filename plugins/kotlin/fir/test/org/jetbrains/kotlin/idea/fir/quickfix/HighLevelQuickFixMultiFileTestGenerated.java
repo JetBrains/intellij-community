@@ -858,6 +858,11 @@ public abstract class HighLevelQuickFixMultiFileTestGenerated extends AbstractHi
             runTest("../idea/tests/testData/quickfix/autoImports/unaryPlusOperator.before.Main.kt");
         }
 
+        @TestMetadata("unresolvedImplicitReceiver.test")
+        public void testUnresolvedImplicitReceiver() throws Exception {
+            runTest("../idea/tests/testData/quickfix/autoImports/unresolvedImplicitReceiver.test");
+        }
+
         @TestMetadata("withSmartCastQualifier.before.Main.kt")
         public void testWithSmartCastQualifier() throws Exception {
             runTest("../idea/tests/testData/quickfix/autoImports/withSmartCastQualifier.before.Main.kt");
