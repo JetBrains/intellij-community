@@ -135,9 +135,9 @@ class UITheme private constructor(val id: @NonNls String, private val bean: UITh
                      iconMapper: ((String) -> String?)? = null): UITheme {
       val theme = readTheme(JsonFactory().createParser(data))
       return UITheme(themeId, postProcessTheme(theme = theme,
-                                               parentTheme = findParentTheme(theme, ::oldFindThemeByName)?.bean,
-                                               provider = provider,
-                                               iconMapper = iconMapper))
+                                                                   parentTheme = findParentTheme(theme, ::oldFindThemeByName)?.bean,
+                                                                   provider = provider,
+                                                                   iconMapper = iconMapper))
     }
 
     fun loadFromJson(parentTheme: UITheme?,
@@ -161,16 +161,6 @@ class UITheme private constructor(val id: @NonNls String, private val bean: UITh
       })
     }
 
-    private fun postProcessTheme(theme: UIThemeBean,
-                                 parentTheme: UIThemeBean?,
-                                 provider: ClassLoader? = null,
-                                 iconMapper: ((String) -> String?)? = null): UIThemeBean {
-      if (parentTheme != null) {
-        importFromParentTheme(theme, parentTheme)
-      }
-      return loadFromJson(theme = theme, provider = provider, iconMapper = iconMapper)
-    }
-
     @TestOnly
     @JvmStatic
     fun getColorPalette(): Map<String, String?> = colorPalette
@@ -181,14 +171,18 @@ private fun findParentTheme(theme: UIThemeBean, nameToParent: Function<String, U
   return nameToParent.apply(theme.parentTheme ?: return null)
 }
 
-private fun loadFromJson(theme: UIThemeBean, provider: ClassLoader?, iconMapper: ((String) -> String?)?): UIThemeBean {
+private fun postProcessTheme(theme: UIThemeBean,
+                             parentTheme: UIThemeBean?,
+                             provider: ClassLoader? = null,
+                             iconMapper: ((String) -> String?)? = null): UIThemeBean {
+  if (parentTheme != null) {
+    importFromParentTheme(theme, parentTheme)
+  }
   if (provider != null) {
     theme.providerClassLoader = provider
   }
-
-  initializeNamedColors(theme)
+  initializeNamedColors(theme = theme)
   val paletteScopeManager = UiThemePaletteScopeManager()
-
   val colorsOnSelection = theme.iconColorsOnSelection
   if (!colorsOnSelection.isNullOrEmpty()) {
     val colors = HashMap<String, String>(colorsOnSelection.size)
@@ -213,6 +207,7 @@ private fun loadFromJson(theme: UIThemeBean, provider: ClassLoader?, iconMapper:
   if (!icons.isNullOrEmpty()) {
     configureIcons(theme = theme, iconMapper = iconMapper, paletteScopeManager = paletteScopeManager, iconMap = icons)
   }
+
   return theme
 }
 
