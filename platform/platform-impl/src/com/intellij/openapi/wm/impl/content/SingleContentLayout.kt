@@ -81,9 +81,7 @@ internal class SingleContentLayout(
     tryUpdateContentView()
   }
 
-  private fun Content.getSupplier(): SingleContentSupplier? {
-    return (component as? DataProvider)?.let(SingleContentSupplier.KEY::getData)
-  }
+  private fun Content.getSupplier(): SingleContentSupplier? = SingleContentSupplier.getSupplierFrom(this)
 
   fun getSupplier(): SingleContentSupplier? = getSingleContentOrNull()?.getSupplier()
 
