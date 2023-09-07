@@ -5,6 +5,7 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 public final class CommandTestHelper {
   public static final String ARG = "-arg";
@@ -29,11 +30,6 @@ public final class CommandTestHelper {
           writer.write(format(entry));
           writer.write('\n');
         }
-        writer.write("=== debug ===\n");
-        for (var entry : System.getenv().entrySet()) {
-          writer.write(entry.getKey() + "=" + entry.getValue());
-          writer.write('\n');
-        }
       }
       else {
         for (int i = 3; i < args.length; i++) {
@@ -45,6 +41,6 @@ public final class CommandTestHelper {
   }
 
   public static String format(Map.Entry<String, String> entry) {
-    return entry.getKey() + "=" + entry.getValue().hashCode();
+    return entry.getKey() + "=" + entry.getValue().chars().mapToObj(Integer::toHexString).collect(Collectors.joining("_"));
   }
 }
