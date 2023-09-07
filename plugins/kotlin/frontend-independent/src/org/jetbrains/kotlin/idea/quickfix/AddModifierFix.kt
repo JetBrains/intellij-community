@@ -36,24 +36,28 @@ open class AddModifierFix(
     override fun getFamilyName() = KotlinBundle.message("fix.add.modifier.family")
 
     protected fun invokeOnElement(element: KtModifierListOwner?) {
-        element?.addModifier(modifier)
+        if (element == null) return
+
+        element.addModifier(modifier)
 
         when (modifier) {
             KtTokens.ABSTRACT_KEYWORD -> {
                 if (element is KtProperty || element is KtNamedFunction) {
-                    element.containingClass()?.run {
-                        if (!hasModifier(KtTokens.ABSTRACT_KEYWORD) && !hasModifier(KtTokens.SEALED_KEYWORD)) {
-                            addModifier(KtTokens.ABSTRACT_KEYWORD)
+                    element.containingClass()?.let { klass ->
+                        if (!klass.hasModifier(KtTokens.ABSTRACT_KEYWORD) && !klass.hasModifier(KtTokens.SEALED_KEYWORD)) {
+                            klass.addModifier(KtTokens.ABSTRACT_KEYWORD)
                         }
                     }
                 }
             }
 
-            KtTokens.OVERRIDE_KEYWORD ->
-                element?.visibilityModifierType()?.takeUnless { it == KtTokens.PUBLIC_KEYWORD }?.let { element.removeModifier(it) }
+            KtTokens.OVERRIDE_KEYWORD -> {
+                val visibility = element.visibilityModifierType()?.takeIf { it != KtTokens.PUBLIC_KEYWORD }
+                visibility?.let { element.removeModifier(it) }
+            }
 
             KtTokens.NOINLINE_KEYWORD ->
-                element?.removeModifier(KtTokens.CROSSINLINE_KEYWORD)
+                element.removeModifier(KtTokens.CROSSINLINE_KEYWORD)
         }
     }
 
