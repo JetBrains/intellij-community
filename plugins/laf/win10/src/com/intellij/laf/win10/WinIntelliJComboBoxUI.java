@@ -1,6 +1,7 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.laf.win10;
 
+import com.intellij.ide.ui.LafManager;
 import com.intellij.ide.ui.laf.darcula.DarculaUIUtil;
 import com.intellij.ide.ui.laf.darcula.ui.DarculaComboBoxUI;
 import com.intellij.ide.ui.laf.darcula.ui.DarculaJBPopupComboPopup;
@@ -220,7 +221,7 @@ public final class WinIntelliJComboBoxUI extends DarculaComboBoxUI {
 
       @Override
       public void paint(Graphics g) {
-        if (!UIUtil.isUnderWin10LookAndFeel()) return; // Paint events may still arrive after UI switch until entire UI is updated.
+        if (!LafManager.getInstance().getCurrentUIThemeLookAndFeel().getTheme().getName().equals("Windows 10 Light")) return; // Paint events may still arrive after UI switch until entire UI is updated.
 
         Graphics2D g2 = (Graphics2D)g.create();
         try {

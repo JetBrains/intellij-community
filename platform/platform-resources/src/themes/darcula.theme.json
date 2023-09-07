@@ -891,6 +891,7 @@
       "background": "#45474a",
       "Details.background": "#313335",
       "Projects.actions.selectionBackground": "#326FC1",
+      "Projects.actions.selectionBorderColor": "#3574F0",
       "Projects.actions.background": "#3C5C86",
       "SidePanel.background": "#3C3F41"
     },

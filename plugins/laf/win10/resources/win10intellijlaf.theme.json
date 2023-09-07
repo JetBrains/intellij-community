@@ -436,6 +436,20 @@
       }
     },
 
+    "Plugins.background": "#ffffff",
+
+    "SidePanel.background": "#E6EBF0",
+
+    "WelcomeScreen": {
+      "background": "#F7F7F7",
+      "Details.background": "#ffffff",
+      "SidePanel.background": "#F2F2F2",
+      "Projects.actions.selectionBackground": "#3587E5",
+      "Projects.actions.selectionBorderColor": "#3574F0",
+      "Projects.actions.background": "#DCEDFE",
+      "separatorColor": "border"
+    },
+
     "control": "#f2f2f2",
     "darcula.selectionBackground": "#4A6EB7",
     "darcula.selectionForeground": "#ffffff",

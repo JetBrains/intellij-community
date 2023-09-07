@@ -1039,10 +1039,11 @@
     "Window.undecorated.border" : "1,1,1,1,#5A5D6B",
 
     "WelcomeScreen": {
-      "background": "#f7f7f7",
-      "Details.background": "white",
-      "SidePanel.background": "panel",
+      "background": "#F7F7F7",
+      "Details.background": "#ffffff",
+      "SidePanel.background": "#F2F2F2",
       "Projects.actions.selectionBackground": "#3587E5",
+      "Projects.actions.selectionBorderColor": "#3574F0",
       "Projects.actions.background": "#DCEDFE",
       "separatorColor": "border"
     },
