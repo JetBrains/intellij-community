@@ -218,6 +218,8 @@ public class JavaMethodCallElement extends LookupItem<PsiMethod> implements Type
 
   /**
    * Checks if the argument live template can be started.
+   * see registry key java.completion.argument.live.template.description.
+   * This option allows to prevent running templates if this key is enabled
    *
    * @return true if the argument live template can be started, otherwise false.
    */
