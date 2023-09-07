@@ -2,7 +2,6 @@
 package com.intellij.gradle.toolingExtension.impl.sourceSetModel
 
 import com.intellij.gradle.toolingExtension.impl.resourceFilterModel.GradleResourceFilterModelBuilder
-import com.intellij.gradle.toolingExtension.impl.util.GradleArchiveTaskUtil
 import com.intellij.gradle.toolingExtension.impl.util.GradleObjectUtil
 import com.intellij.gradle.toolingExtension.impl.util.javaPlugin.JavaPluginUtil
 import com.intellij.openapi.externalSystem.model.project.ExternalSystemSourceType
@@ -29,6 +28,7 @@ import java.lang.reflect.InvocationTargetException
 import java.lang.reflect.Method
 import java.nio.file.Path
 
+import static com.intellij.gradle.toolingExtension.impl.util.GradleNegotiationUtil.getTaskArchiveFile
 import static org.jetbrains.plugins.gradle.tooling.util.ReflectionUtil.dynamicCheckInstanceOf
 import static org.jetbrains.plugins.gradle.tooling.util.StringUtils.toCamelCase
 
@@ -44,7 +44,7 @@ class GradleSourceSetModelBuilder {
     final List<File> artifacts = new ArrayList<File>()
     project.getTasks().withType(Jar.class, { Jar jar ->
       try {
-        def archiveFile = GradleArchiveTaskUtil.getArchiveFile(jar)
+        def archiveFile = getTaskArchiveFile(jar)
         if (archiveFile != null) {
           artifacts.add(archiveFile)
         }
@@ -195,7 +195,7 @@ class GradleSourceSetModelBuilder {
         if (isOwnJarTask ||
           (isCustomJarTask(task, sourceSets) && containsAllSourceSetOutput(task, sourceSet))
         ) {
-          externalSourceSet.artifacts.add(GradleArchiveTaskUtil.getArchiveFile(task))
+          externalSourceSet.artifacts.add(getTaskArchiveFile(task))
         }
       }
 

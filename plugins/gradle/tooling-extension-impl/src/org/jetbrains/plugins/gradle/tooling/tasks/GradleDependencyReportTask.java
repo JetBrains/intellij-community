@@ -2,8 +2,7 @@
 package org.jetbrains.plugins.gradle.tooling.tasks;
 
 import com.google.gson.GsonBuilder;
-import com.intellij.gradle.toolingExtension.impl.util.GradleConfigurationUtil;
-import com.intellij.openapi.externalSystem.model.project.dependencies.*;
+import com.intellij.openapi.externalSystem.model.project.dependencies.DependencyScopeNode;
 import org.gradle.api.DefaultTask;
 import org.gradle.api.artifacts.Configuration;
 import org.gradle.api.tasks.Input;
@@ -16,7 +15,11 @@ import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.List;
+
+import static com.intellij.gradle.toolingExtension.impl.util.GradleNegotiationUtil.isConfigurationCanBeResolved;
 
 public class GradleDependencyReportTask extends DefaultTask {
 
@@ -47,7 +50,7 @@ public class GradleDependencyReportTask extends DefaultTask {
     GradleDependencyReportGenerator generator = new GradleDependencyReportGenerator();
     List<DependencyScopeNode> graph = new ArrayList<>();
     for (Configuration configuration : configurations) {
-      if (GradleConfigurationUtil.isConfigurationCanBeResolved(configuration, true)) {
+      if (isConfigurationCanBeResolved(configuration, true)) {
         graph.add(generator.buildDependencyGraph(configuration, getProject()));
       }
     }

@@ -3,10 +3,7 @@ package com.intellij.gradle.toolingExtension.impl.projectModel;
 
 import com.intellij.gradle.toolingExtension.impl.sourceSetModel.GradleSourceSetModelBuilder;
 import com.intellij.gradle.toolingExtension.impl.taskModel.GradleTaskCache;
-import com.intellij.gradle.toolingExtension.impl.util.GradleIdeaPluginUtil;
-import com.intellij.gradle.toolingExtension.impl.util.GradleObjectUtil;
-import com.intellij.gradle.toolingExtension.impl.util.GradleProjectUtil;
-import com.intellij.gradle.toolingExtension.impl.util.GradleTaskUtil;
+import com.intellij.gradle.toolingExtension.impl.util.*;
 import com.intellij.gradle.toolingExtension.impl.util.javaPlugin.JavaPluginUtil;
 import org.gradle.api.Project;
 import org.gradle.api.Task;
@@ -28,6 +25,9 @@ import org.jetbrains.plugins.gradle.tooling.builder.ProjectExtensionsDataBuilder
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
+
+import static com.intellij.gradle.toolingExtension.impl.util.GradleIdeaPluginUtil.getIdeaModuleName;
+import static com.intellij.gradle.toolingExtension.impl.util.GradleNegotiationUtil.getProjectIdentityPath;
 
 /**
  * @author Vladislav.Soroka
@@ -63,8 +63,8 @@ public class ExternalProjectBuilderImpl extends AbstractModelBuilderService {
   ) {
     String projectPath = project.getPath();
     String projectName = project.getName();
-    String projectIdentityPath = GradleObjectUtil.notNull(GradleProjectUtil.getIdentityPath(project), projectPath);
-    String ideaModuleName = GradleObjectUtil.notNull(GradleIdeaPluginUtil.getIdeaModuleName(project), projectName);
+    String projectIdentityPath = GradleObjectUtil.notNull(getProjectIdentityPath(project), projectPath);
+    String ideaModuleName = GradleObjectUtil.notNull(getIdeaModuleName(project), projectName);
 
     DefaultExternalProject externalProject = new DefaultExternalProject();
     externalProject.setExternalSystemId("GRADLE");

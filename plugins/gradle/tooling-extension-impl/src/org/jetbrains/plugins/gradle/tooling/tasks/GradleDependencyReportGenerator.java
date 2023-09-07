@@ -1,7 +1,6 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gradle.tooling.tasks;
 
-import com.intellij.gradle.toolingExtension.impl.util.GradleComponentUtil;
 import com.intellij.openapi.externalSystem.model.project.dependencies.*;
 import org.codehaus.groovy.runtime.DefaultGroovyMethods;
 import org.gradle.api.Describable;
@@ -15,12 +14,13 @@ import org.gradle.api.artifacts.component.ModuleComponentIdentifier;
 import org.gradle.api.artifacts.component.ProjectComponentIdentifier;
 import org.gradle.api.artifacts.result.*;
 import org.gradle.api.file.FileCollection;
-import org.gradle.util.GradleVersion;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicLong;
+
+import static com.intellij.gradle.toolingExtension.impl.util.GradleNegotiationUtil.getProjectName;
 
 public class GradleDependencyReportGenerator {
 
@@ -38,7 +38,7 @@ public class GradleDependencyReportGenerator {
     ResolutionResult resolutionResult = configuration.getIncoming().getResolutionResult();
     ResolvedComponentResult root = resolutionResult.getRoot();
     String configurationName = configuration.getName();
-    long id = idGenerator.getId(getId(root));
+    long id = idGenerator.getId(root.getId());
     String scopeDisplayName = "project " + project.getPath() + " (" + configurationName + ")";
     DependencyScopeNode node = new DependencyScopeNode(id, configurationName, scopeDisplayName, configuration.getDescription());
     node.setResolutionState(ResolutionState.RESOLVED);
@@ -105,7 +105,7 @@ public class GradleDependencyReportGenerator {
     @NotNull IdGenerator idGenerator
   ) {
     ResolvedComponentResult resolvedComponent = dependency.getSelected();
-    ComponentIdentifier componentId = getId(resolvedComponent);
+    ComponentIdentifier componentId = resolvedComponent.getId();
 
     long id = idGenerator.getId(componentId);
     if (added.containsKey(id)) {
@@ -115,7 +115,7 @@ public class GradleDependencyReportGenerator {
     AbstractDependencyNode node;
     if (componentId instanceof ProjectComponentIdentifier) {
       ProjectComponentIdentifier projectId = (ProjectComponentIdentifier)componentId;
-      String projectName = GradleComponentUtil.getProjectName(projectId);
+      String projectName = getProjectName(projectId);
       String projectPath = projectId.getProjectPath();
       node = new ProjectDependencyNodeImpl(id, projectName, projectPath);
     }
@@ -164,25 +164,6 @@ public class GradleDependencyReportGenerator {
 
     return node;
   }
-
-  /**
-   * The new version of Gradle we compile against has the getId method on a super-interface that didn't exist before Gradle 5.1
-   * Use dynamic access to work around this.
-   */
-  private static ComponentIdentifier getId(ResolvedComponentResult result) {
-    if (IS_51_OR_NEWER) {
-      return result.getId();
-    }
-    else {
-      return getIdDynamically(result);
-    }
-  }
-
-  private static ComponentIdentifier getIdDynamically(ResolvedComponentResult result) {
-    return result.getId();
-  }
-
-  private static final boolean IS_51_OR_NEWER = GradleVersion.current().compareTo(GradleVersion.version("5.1")) >= 0;
 
   private static class IdGenerator {
 

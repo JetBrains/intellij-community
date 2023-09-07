@@ -1,7 +1,7 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.gradle.tooling.builder
 
-import com.intellij.gradle.toolingExtension.impl.util.GradleArchiveTaskUtil
+
 import groovy.transform.CompileDynamic
 import groovy.transform.CompileStatic
 import org.gradle.api.Project
@@ -24,6 +24,8 @@ import org.jetbrains.plugins.gradle.tooling.internal.ear.EarResourceImpl
 import org.jetbrains.plugins.gradle.tooling.util.DependencyResolver
 import org.jetbrains.plugins.gradle.tooling.util.resolve.DependencyResolverImpl
 
+import static com.intellij.gradle.toolingExtension.impl.util.GradleNegotiationUtil.getTaskArchiveFile
+import static com.intellij.gradle.toolingExtension.impl.util.GradleNegotiationUtil.getTaskArchiveFileName
 import static org.jetbrains.plugins.gradle.tooling.internal.ExtraModelBuilder.reportModelBuilderFailure
 import static org.jetbrains.plugins.gradle.tooling.util.ReflectionUtil.reflectiveCall
 import static org.jetbrains.plugins.gradle.tooling.util.ReflectionUtil.reflectiveGetProperty
@@ -74,7 +76,7 @@ class EarModelBuilderImpl extends AbstractModelBuilderService {
                        "src/main/application" : String.valueOf(project.property(APP_DIR_PROPERTY))
         }
 
-        final EarModelImpl earModel = new EarModelImpl(GradleArchiveTaskUtil.getArchiveFileName(task), appDirName, task.getLibDirName())
+        final EarModelImpl earModel = new EarModelImpl(getTaskArchiveFileName(task), appDirName, task.getLibDirName())
 
         final List<EarConfiguration.EarResource> earResources = []
         final Ear earTask = task as Ear
@@ -114,7 +116,7 @@ class EarModelBuilderImpl extends AbstractModelBuilderService {
           earModel.deploymentDescriptor = writer.toString()
         }
 
-        earModel.archivePath = GradleArchiveTaskUtil.getArchiveFile(earTask)
+        earModel.archivePath = getTaskArchiveFile(earTask)
 
         Manifest manifest = earTask.manifest
         if (manifest != null) {

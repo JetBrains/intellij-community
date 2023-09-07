@@ -1,7 +1,7 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.gradle.toolingExtension.impl.sourceSetModel;
 
-import com.intellij.gradle.toolingExtension.impl.util.GradleArchiveTaskUtil;
+import com.intellij.gradle.toolingExtension.impl.util.javaPlugin.JavaPluginUtil;
 import org.gradle.api.Project;
 import org.gradle.api.Task;
 import org.gradle.api.initialization.IncludedBuild;
@@ -15,7 +15,6 @@ import org.gradle.util.GradleVersion;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.gradle.tooling.ModelBuilderContext;
-import com.intellij.gradle.toolingExtension.impl.util.javaPlugin.JavaPluginUtil;
 import org.jetbrains.plugins.gradle.tooling.util.ReflectionUtil;
 
 import java.io.File;
@@ -23,6 +22,7 @@ import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 
+import static com.intellij.gradle.toolingExtension.impl.util.GradleNegotiationUtil.getTaskArchiveFile;
 import static org.jetbrains.plugins.gradle.tooling.ModelBuilderContext.DataProvider;
 import static org.jetbrains.plugins.gradle.tooling.util.resolve.DependencyResolverImpl.isIsNewDependencyResolutionApplicable;
 
@@ -86,7 +86,7 @@ public class GradleSourceSetCachedFinder {
         Task task = project.getTasks().findByName(sourceSet.getJarTaskName());
         if (task instanceof AbstractArchiveTask) {
           AbstractArchiveTask jarTask = (AbstractArchiveTask)task;
-          File archivePath = GradleArchiveTaskUtil.getArchiveFile(jarTask);
+          File archivePath = getTaskArchiveFile(jarTask);
           if (archivePath != null) {
             artifactsMap.put(archivePath.getPath(), sourceSet);
             if (isIsNewDependencyResolutionApplicable()) {

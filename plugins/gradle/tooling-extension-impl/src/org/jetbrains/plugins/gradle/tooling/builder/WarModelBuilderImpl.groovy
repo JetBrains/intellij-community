@@ -1,7 +1,7 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.gradle.tooling.builder
 
-import com.intellij.gradle.toolingExtension.impl.util.GradleArchiveTaskUtil
+
 import org.gradle.api.Project
 import org.gradle.api.Task
 import org.gradle.api.file.FileVisitDetails
@@ -20,6 +20,8 @@ import org.jetbrains.plugins.gradle.tooling.internal.web.WarModelImpl
 import org.jetbrains.plugins.gradle.tooling.internal.web.WebConfigurationImpl
 import org.jetbrains.plugins.gradle.tooling.internal.web.WebResourceImpl
 
+import static com.intellij.gradle.toolingExtension.impl.util.GradleNegotiationUtil.getTaskArchiveFile
+import static com.intellij.gradle.toolingExtension.impl.util.GradleNegotiationUtil.getTaskArchiveFileName
 import static org.jetbrains.plugins.gradle.tooling.internal.ExtraModelBuilder.reportModelBuilderFailure
 /**
  * @author Vladislav.Soroka
@@ -61,7 +63,7 @@ class WarModelBuilderImpl extends AbstractModelBuilderService {
                                  (File)project.property(WEB_APP_DIR_PROPERTY)
         }
 
-        final WarModelImpl warModel = new WarModelImpl(GradleArchiveTaskUtil.getArchiveFileName(task), webAppDirName, webAppDir)
+        final WarModelImpl warModel = new WarModelImpl(getTaskArchiveFileName(task), webAppDirName, webAppDir)
 
         final List<WebConfiguration.WebResource> webResources = []
         final War warTask = task as War
@@ -94,7 +96,7 @@ class WarModelBuilderImpl extends AbstractModelBuilderService {
         }
 
         warModel.webResources = webResources
-        warModel.archivePath = GradleArchiveTaskUtil.getArchiveFile(warTask)
+        warModel.archivePath = getTaskArchiveFile(warTask)
 
         Manifest manifest = warTask.manifest
         if (manifest != null) {
