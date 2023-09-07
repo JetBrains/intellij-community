@@ -95,8 +95,12 @@ class SavedPatchesTree(project: Project,
     }
   }
 
-  class TagWithCounterChangesBrowserNode(text: @Nls String, expandByDefault: Boolean = true, private val sortWeight: Int? = null) :
-    TagChangesBrowserNode(TagImpl(text), SimpleTextAttributes.REGULAR_ATTRIBUTES, expandByDefault) {
+  class TagWithCounterChangesBrowserNode(tag: Tag, expandByDefault: Boolean = true, private val sortWeight: Int? = null) :
+    TagChangesBrowserNode(tag, SimpleTextAttributes.REGULAR_ATTRIBUTES, expandByDefault) {
+
+    constructor(text: @Nls String, expandByDefault: Boolean = true, sortWeight: Int? = null) :
+      this(TagImpl(text), expandByDefault, sortWeight)
+
     private val stashCount = ClearableLazyValue.create {
       allUnder(this).userObjects(SavedPatchesProvider.PatchObject::class.java).size
     }

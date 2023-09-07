@@ -140,5 +140,9 @@ internal fun isStashToolWindowEnabled(project: Project): Boolean {
 }
 
 internal fun showStashes(project: Project) {
-  showToolWindowTab(project, GitStashContentProvider.TAB_NAME) { }
+  showToolWindowTab(project, GitStashContentProvider.TAB_NAME) { component ->
+    val savedPatchesUi = component as? SavedPatchesUi ?: return@showToolWindowTab
+    val provider = savedPatchesUi.providers.filterIsInstance<GitStashProvider>().firstOrNull() ?: return@showToolWindowTab
+    savedPatchesUi.expandPatchesByProvider(provider)
+  }
 }

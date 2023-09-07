@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vcs.changes.savedPatches
 
 import com.intellij.icons.AllIcons
@@ -8,13 +8,16 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.vcs.VcsBundle
 import com.intellij.openapi.vcs.changes.EditorTabDiffPreviewManager
+import com.intellij.openapi.vcs.changes.ui.VcsTreeModelData
 import com.intellij.ui.*
 import com.intellij.util.containers.orNull
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.ProportionKey
 import com.intellij.util.ui.TwoKeySplitter
 import com.intellij.util.ui.components.BorderLayoutPanel
+import com.intellij.util.ui.tree.TreeUtil
 import com.intellij.vcs.commit.CommitActionsPanel
+import org.jetbrains.annotations.ApiStatus
 import java.awt.BorderLayout
 import java.awt.Component
 import java.awt.FlowLayout
@@ -25,7 +28,7 @@ import javax.swing.JTree
 import javax.swing.border.CompoundBorder
 
 open class SavedPatchesUi(project: Project,
-                          private val providers: List<SavedPatchesProvider<*>>,
+                          @ApiStatus.Internal val providers: List<SavedPatchesProvider<*>>,
                           private val isVertical: () -> Boolean,
                           private val isEditorDiffPreview: () -> Boolean,
                           focusMainUi: (Component?) -> Unit,
@@ -158,6 +161,11 @@ open class SavedPatchesUi(project: Project,
   private fun selectedProvider(): SavedPatchesProvider<*> {
     val selectedPatch = selectedPatchObjectOrNull() ?: return providers.first()
     return providers.find { it.dataClass.isInstance(selectedPatch.data) } ?: return providers.first()
+  }
+
+  fun expandPatchesByProvider(provider: SavedPatchesProvider<*>) {
+    val tagNode = VcsTreeModelData.findTagNode(tree, provider.tag) ?: return
+    tree.expandPath(TreeUtil.getPathFromRoot(tagNode))
   }
 
   companion object {
