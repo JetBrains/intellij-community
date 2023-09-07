@@ -13,7 +13,6 @@ import com.intellij.ide.bootstrap.*
 import com.intellij.ide.gdpr.EndUserAgreement
 import com.intellij.ide.instrument.WriteIntentLockInstrumenter
 import com.intellij.ide.plugins.PluginManagerCore
-import com.intellij.ide.ui.laf.IntelliJLaf
 import com.intellij.idea.DirectoryLock.CannotActivateException
 import com.intellij.jna.JnaLoader
 import com.intellij.openapi.application.*
@@ -436,7 +435,8 @@ private suspend fun importConfig(args: List<String>,
     val newConfigDir = customTargetDirectoryToImportConfig ?: PathManager.getConfigDir()
 
     withContext(RawSwingDispatcher) {
-      UIManager.setLookAndFeel(IntelliJLaf())
+      @Suppress("DEPRECATION", "removal")
+      UIManager.setLookAndFeel(com.intellij.ide.ui.laf.IntelliJLaf())
     }
 
     val veryFirstStartOnThisComputer = euaDocumentDeferred.await() != null
@@ -537,13 +537,8 @@ private fun checkDirectory(directory: Path, kind: String, property: String, chec
     return false
   }
   finally {
-    if (tempFile != null) {
-      try {
-        Files.deleteIfExists(tempFile)
-      }
-      catch (ignored: Exception) {
-      }
-    }
+    try { tempFile?.deleteIfExists() }
+    catch (_: Exception) { }
   }
 }
 
