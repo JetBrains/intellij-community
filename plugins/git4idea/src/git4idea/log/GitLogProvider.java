@@ -525,8 +525,7 @@ public final class GitLogProvider implements VcsLogProvider, VcsIndexableLogProv
     }
 
     List<TimedVcsCommit> commits = new ArrayList<>();
-    GitLogUtil.readTimedCommits(myProject, root, configParameters, filterParameters, user -> {},
-                                ref -> {}, new CollectConsumer<>(commits));
+    GitLogUtil.readTimedCommits(myProject, root, configParameters, filterParameters, null, null, new CollectConsumer<>(commits));
     return commits;
   }
 
