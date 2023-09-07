@@ -272,6 +272,14 @@ public class GradleProjectTaskRunner extends ProjectTaskRunner {
   }
 
   @Override
+  public boolean canRun(@NotNull Project project, @NotNull ProjectTask projectTask, @Nullable ProjectTaskContext context) {
+    if (context != null && context.getRunConfiguration() instanceof JavaScratchConfiguration) {
+      return false;
+    }
+    return canRun(projectTask);
+  }
+
+  @Override
   public boolean canRun(@NotNull ProjectTask projectTask) {
     if (projectTask instanceof ModuleBuildTask) {
       Module module = ((ModuleBuildTask)projectTask).getModule();

@@ -54,12 +54,40 @@ public abstract class ProjectTaskRunner {
   }
 
   /**
-   * @return true if the task should be executed by this runner, false otherwise
+   * Check if the task can be executed by the task runner.
+   * This method is not used within the Platform and considered as obsolete.
+   * Please use {@link ProjectTaskRunner#canRun(Project, ProjectTask, ProjectTaskContext)}.
+   *
+   * @param projectTask to check.
+   * @return true if the task should be executed by this runner, false otherwise.
    */
+  @ApiStatus.Obsolete(since = "2023.3")
   public abstract boolean canRun(@NotNull ProjectTask projectTask);
 
+  /**
+   * Check if the task can be executed by the task runner.
+   * This method is not used within the Platform and considered as obsolete.
+   * Please use {@link ProjectTaskRunner#canRun(Project, ProjectTask, ProjectTaskContext)}.
+   *
+   * @param project     to witch the task corresponds.
+   * @param projectTask to check.
+   * @return true if the task should be executed by this runner, false otherwise.
+   */
+  @ApiStatus.Obsolete(since = "2023.3")
   public boolean canRun(@SuppressWarnings("unused") @NotNull Project project, @NotNull ProjectTask projectTask) {
     return canRun(projectTask);
+  }
+
+  /**
+   * Check if the task can be executed by the task runner.
+   *
+   * @param project     to witch the task corresponds.
+   * @param projectTask to check.
+   * @param context     of the task.
+   * @return true if the task should be executed by this runner, false otherwise.
+   */
+  public boolean canRun(@NotNull Project project, @NotNull ProjectTask projectTask, @Nullable ProjectTaskContext context) {
+    return canRun(project, projectTask);
   }
 
   /**

@@ -59,6 +59,14 @@ public class MavenProjectTaskRunner extends ProjectTaskRunner {
   }
 
   @Override
+  public boolean canRun(@NotNull Project project, @NotNull ProjectTask projectTask, @Nullable ProjectTaskContext context) {
+    if (context != null && context.getRunConfiguration() instanceof JavaScratchConfiguration) {
+      return false;
+    }
+    return canRun(project, projectTask);
+  }
+
+  @Override
   public boolean canRun(@NotNull Project project, @NotNull ProjectTask projectTask) {
     if (!MavenRunner.getInstance(project).getSettings().isDelegateBuildToMaven()) {
       return false;
