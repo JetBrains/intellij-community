@@ -2,10 +2,7 @@
 package com.intellij.ide.actions.searcheverywhere;
 
 import com.intellij.codeInsight.navigation.NavigationUtil;
-import com.intellij.ide.actions.GotoActionBase;
-import com.intellij.ide.actions.QualifiedNameProviderUtil;
-import com.intellij.ide.actions.SearchEverywhereClassifier;
-import com.intellij.ide.actions.SearchEverywherePsiRenderer;
+import com.intellij.ide.actions.*;
 import com.intellij.ide.plugins.DynamicPluginListener;
 import com.intellij.ide.plugins.IdeaPluginDescriptor;
 import com.intellij.ide.util.EditSourceUtil;
@@ -30,7 +27,6 @@ import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Pair;
-import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.Navigatable;
@@ -49,6 +45,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import java.awt.event.InputEvent;
 import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -342,26 +339,29 @@ public abstract class AbstractGotoSEContributor implements WeightedSearchEverywh
       ReadAction.nonBlocking(() -> {
           PsiElement psiElement = preparePsi((PsiElement)selected, modifiers, searchText);
           Navigatable extNavigatable = createExtendedNavigatable(psiElement, searchText, modifiers);
-          return new Pair<>(psiElement, extNavigatable);
+          VirtualFile file = PsiUtilCore.getVirtualFile(psiElement);
+          Runnable command = (modifiers & InputEvent.SHIFT_MASK) != 0 && file != null
+                             ? () -> OpenInRightSplitAction.Companion.openInRightSplit(myProject, file, extNavigatable, true)
+                             : () -> doNavigate(psiElement, extNavigatable);
+          return command;
         })
-        .finishOnUiThread(ModalityState.nonModal(),
-                          pair -> {
-                            Navigatable extNavigatable = pair.second;
-                            PsiElement psiElement = pair.first;
-                            if (extNavigatable != null && extNavigatable.canNavigate()) {
-                              extNavigatable.navigate(true);
-                            }
-                            else {
-                              NavigationUtil.activateFileWithPsiElement(psiElement, true);
-                            }
-                          }
-        ).submit(AppExecutorUtil.getAppExecutorService());
+        .finishOnUiThread(ModalityState.nonModal(), Runnable::run)
+        .submit(AppExecutorUtil.getAppExecutorService());
     }
     else {
       EditSourceUtil.navigate(((NavigationItem)selected), true, false);
     }
 
     return true;
+  }
+
+  private static void doNavigate(PsiElement psiElement, Navigatable extNavigatable) {
+    if (extNavigatable != null && extNavigatable.canNavigate()) {
+      extNavigatable.navigate(true);
+    }
+    else {
+      NavigationUtil.activateFileWithPsiElement(psiElement, true);
+    }
   }
 
   @Override
