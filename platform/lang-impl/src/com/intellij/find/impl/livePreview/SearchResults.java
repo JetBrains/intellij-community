@@ -455,7 +455,7 @@ public class SearchResults implements DocumentListener, CaretListener {
   }
 
   @Nullable
-  private FindResult firstOccurrenceAtOrAfterCaret() {
+  protected FindResult firstOccurrenceAtOrAfterCaret() {
     FindResult occurrence = getOccurrenceAtCaret();
     if (occurrence != null) return occurrence;
     occurrence = getFirstOccurrenceInSelection();

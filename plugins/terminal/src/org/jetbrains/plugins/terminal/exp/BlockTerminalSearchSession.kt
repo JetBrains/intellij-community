@@ -35,6 +35,7 @@ import org.jetbrains.plugins.terminal.TerminalBundle
 import org.jetbrains.plugins.terminal.TerminalIcons
 import org.jetbrains.plugins.terminal.exp.TerminalSelectionModel.TerminalSelectionListener
 import java.awt.Font
+import java.awt.Point
 import javax.swing.JTextArea
 
 class BlockTerminalSearchSession(
@@ -255,6 +256,22 @@ class BlockTerminalSearchSession(
         Pair.create(starts, ends)
       }
       else Pair.create(intArrayOf(0), intArrayOf(Int.MAX_VALUE))
+    }
+
+    /**
+     * Select the first occurence in the visible area.
+     * If there are no occurrences visible, the first occurrence below is selected.
+     * If there are no occurrences below, the first occurence above is selected.
+     */
+    override fun firstOccurrenceAtOrAfterCaret(): FindResult? {
+      val topY = editor.scrollingModel.visibleArea.y + 3 * editor.lineHeight
+      val topLogicalPosition = editor.xyToLogicalPosition(Point(0, topY))
+      val topOffset = editor.logicalPositionToOffset(topLogicalPosition)
+      val index = occurrences.indexOfFirst { it.startOffset >= topOffset }
+      return if (index > 0) {
+        occurrences[index]
+      }
+      else occurrences.lastOrNull()
     }
   }
 
