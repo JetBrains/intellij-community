@@ -7,6 +7,8 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.modules
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.util.xmlb.XmlSerializerUtil
+import com.jetbrains.python.sdk.PythonSdkType
+import com.jetbrains.python.sdk.PythonSdkUtil
 import com.jetbrains.python.sdk.pythonSdk
 
 const val BLACK_ID: String = "Black"
@@ -33,13 +35,7 @@ data class BlackFormatterConfiguration(var enabledOnReformat: Boolean,
     PACKAGE,
   }
 
-  fun getSdk(project: Project): Sdk? {
-    if (sdkName == null) return null
-
-    return project.modules
-      .mapNotNull { it.pythonSdk }
-      .firstOrNull { sdk -> sdk.name == sdkName }
-  }
+  fun getSdk(): Sdk? = sdkName?.let { PythonSdkUtil.findSdkByKey(it) }
 
   companion object {
 
@@ -66,7 +62,11 @@ data class BlackFormatterConfiguration(var enabledOnReformat: Boolean,
 
       // Try to use first interpreter as a fallback and default value.
       if (config.sdkName == null) {
-        config.sdkName = project.modules.firstNotNullOfOrNull { it.pythonSdk }?.name
+        val sdk = project.modules.firstNotNullOfOrNull { it.pythonSdk }
+
+        if (sdk != null) {
+          config.sdkName = PythonSdkType.getSdkKey(sdk)
+        }
       }
 
       return config

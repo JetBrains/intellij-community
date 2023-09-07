@@ -178,10 +178,7 @@ class BlackFormatterConfigurable(val project: Project) : BoundConfigurable(PyBun
   }
 
   init {
-    selectedSdk = storedState.getSdk(project)
-                  ?: if (project.modules.size == 1) project.pythonSdk
-                  else null
-
+    selectedSdk = storedState.getSdk()
     updateSdkInfo()
 
     detectedBlackExecutable = BlackFormatterUtil.detectBlackExecutable()
@@ -407,7 +404,7 @@ class BlackFormatterConfigurable(val project: Project) : BoundConfigurable(PyBun
       val configuration = BlackFormatterConfiguration.getBlackConfiguration(project)
       return when (configuration.executionMode) {
         BlackFormatterConfiguration.ExecutionMode.PACKAGE ->
-          BlackFormatterUtil.isBlackFormatterInstalledOnProjectSdk(configuration.getSdk(project))
+          BlackFormatterUtil.isBlackFormatterInstalledOnProjectSdk(configuration.getSdk())
         BlackFormatterConfiguration.ExecutionMode.BINARY ->
           BlackFormatterUtil.isBlackExecutableDetected()
       }
