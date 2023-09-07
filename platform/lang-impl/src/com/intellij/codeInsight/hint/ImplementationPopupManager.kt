@@ -43,7 +43,7 @@ class ImplementationPopupManager {
                                couldPinPopup: Boolean,
                                invokedFromEditor: Boolean,
                                invokedByShortcut: Boolean,
-                               updatePopup: (lookupItemObject: Any) -> Unit) {
+                               updatePopup: (lookupItemObject: Any?) -> Unit) {
     val usageView = Ref<UsageView?>()
     val showInFindWindowProcessor = if (couldPinPopup) {
       Consumer<ImplementationViewComponent> { component ->
@@ -85,10 +85,10 @@ class ImplementationPopupManager {
   private fun createPopup(session: ImplementationViewSession,
                           component: ImplementationViewComponent,
                           invokedFromEditor: Boolean,
-                          updatePopup: (lookupItemObject: Any) -> Unit
+                          updatePopup: (lookupItemObject: Any?) -> Unit,
   ): JBPopup {
     val updateProcessor: PopupUpdateProcessor = object : PopupUpdateProcessor(session.project) {
-      override fun updatePopup(lookupItemObject: Any) {
+      override fun updatePopup(lookupItemObject: Any?) {
         updatePopup(lookupItemObject)
       }
 
