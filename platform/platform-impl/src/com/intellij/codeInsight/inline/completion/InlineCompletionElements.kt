@@ -41,7 +41,8 @@ sealed interface InlineCompletionEvent {
    * A class representing a direct call in the code editor by [InsertInlineCompletionAction].
    */
   @ApiStatus.Experimental
-  class DirectCall(val editor: Editor,
+  data class DirectCall(
+    val editor: Editor,
                    val file: PsiFile,
                    val caret: EditorCaret,
                    val context: DataContext? = null,
@@ -55,7 +56,7 @@ sealed interface InlineCompletionEvent {
    * Represents a non-dummy not empty document event call in the editor.
    */
   @ApiStatus.Experimental
-  class DocumentChange(val event: DocumentEvent, val editor: Editor) : InlineCompletionEvent {
+  data class DocumentChange(val event: DocumentEvent, val editor: Editor) : InlineCompletionEvent {
     override fun toRequest(): InlineCompletionRequest? {
       val virtualFile = editor.virtualFile ?: return null
       val project = editor.project ?: return null
@@ -80,7 +81,7 @@ sealed interface InlineCompletionEvent {
    */
   @ApiStatus.Experimental
   @Deprecated("platform caret listener is disabled")
-  class CaretMove(val event: EditorMouseEvent) : InlineCompletionEvent {
+  data class CaretMove(val event: EditorMouseEvent) : InlineCompletionEvent {
     override fun toRequest(): InlineCompletionRequest? {
       val editor = event.editor
       val virtualFile = editor.virtualFile ?: return null
@@ -105,7 +106,7 @@ sealed interface InlineCompletionEvent {
    * @param event The lookup event.
    */
   @ApiStatus.Experimental
-  class LookupChange(val event: LookupEvent) : InlineCompletionEvent {
+  data class LookupChange(val event: LookupEvent) : InlineCompletionEvent {
     override fun toRequest(): InlineCompletionRequest? {
       val item = event.item ?: return null
       val editor = event.lookup?.editor ?: return null

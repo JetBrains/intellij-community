@@ -8,6 +8,7 @@ import com.intellij.codeInsight.inline.completion.InlineCompletionEvent
 import com.intellij.codeInsight.inline.completion.InlineCompletionHandler
 import com.intellij.codeWithMe.ClientId
 import com.intellij.codeWithMe.isCurrent
+import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.editor.ClientEditorManager
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.event.*
@@ -24,11 +25,16 @@ class InlineCompletionDocumentListener(private val editor: EditorImpl) : Documen
     }
 
     if (event.document.isInBulkUpdate) return
+    LOG.debug("Valuable document event $event")
     editor.getUserData(InlineCompletionHandler.KEY)?.invoke(InlineCompletionEvent.DocumentChange(event, editor))
   }
 
   fun isEnabled(event: DocumentEvent): Boolean {
     return event.newFragment != CompletionUtil.DUMMY_IDENTIFIER && event.newLength >= 1
+  }
+
+  companion object {
+    private val LOG = thisLogger()
   }
 }
 
@@ -46,11 +52,16 @@ open class InlineCompletionKeyListener(private val editor: Editor) : KeyAdapter(
     if (event.keyCode in usedKeys) {
       return
     }
+    LOG.debug("Valuable key released event $event")
     hideInlineCompletion()
   }
 
   protected open fun hideInlineCompletion() {
     editor.resetInlineCompletionContext()
+  }
+
+  companion object {
+    private val LOG = thisLogger()
   }
 }
 
@@ -59,11 +70,16 @@ class InlineCaretListener(private val editor: Editor) : CaretListener {
   override fun caretPositionChanged(event: CaretEvent) {
     if (isSimple(event)) return
 
+    LOG.debug("Valuable caret position event $event")
     editor.resetInlineCompletionContextWithPlaceholder()
   }
 
   private fun isSimple(event: CaretEvent): Boolean {
     return event.oldPosition.line == event.newPosition.line && event.oldPosition.column + 1 == event.newPosition.column
+  }
+
+  companion object {
+    private val LOG = thisLogger()
   }
 }
 
@@ -71,6 +87,11 @@ class InlineCaretListener(private val editor: Editor) : CaretListener {
 @ApiStatus.Experimental
 class InlineEditorMouseListener : EditorMouseListener {
   override fun mousePressed(event: EditorMouseEvent) {
+    LOG.debug("Valuable mouse pressed event $event")
     event.editor.resetInlineCompletionContext()
+  }
+
+  companion object {
+    private val LOG = thisLogger()
   }
 }

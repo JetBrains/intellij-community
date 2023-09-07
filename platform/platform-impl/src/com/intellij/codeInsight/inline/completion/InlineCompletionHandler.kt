@@ -11,6 +11,7 @@ import com.intellij.codeInsight.inline.completion.InlineState.Companion.initOrGe
 import com.intellij.codeInsight.lookup.LookupEvent
 import com.intellij.openapi.actionSystem.DataContext
 import com.intellij.openapi.application.EDT
+import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.editor.Caret
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.event.DocumentEvent
@@ -31,7 +32,9 @@ class InlineCompletionHandler(private val scope: CoroutineScope) : CodeInsightAc
   private var runningJob: Job? = null
 
   private fun getProvider(event: InlineCompletionEvent): InlineCompletionProvider? {
-    return InlineCompletionProvider.extensions().firstOrNull { it.isEnabled(event) }
+    return InlineCompletionProvider.extensions().firstOrNull { it.isEnabled(event) }?.also {
+      LOG.debug("Selected inline provider: $it")
+    }
   }
 
   override fun invoke(project: Project, editor: Editor, file: PsiFile) {
@@ -84,13 +87,16 @@ class InlineCompletionHandler(private val scope: CoroutineScope) : CodeInsightAc
   private fun shouldShowPlaceholder(): Boolean = Registry.`is`("inline.completion.show.placeholder")
 
   private fun invokeEvent(event: InlineCompletionEvent) {
+    LOG.debug("Start processing inline event $event")
     if (isMuted.get()) {
+      LOG.debug("Muted")
       return
     }
     // TODO: move to launch
     val request = event.toRequest() ?: return
     val provider = getProvider(event) ?: return
 
+    LOG.debug("Schedule new job")
     runningJob?.cancel()
     runningJob = scope.launch {
       val modificationStamp = request.document.modificationStamp
@@ -135,6 +141,7 @@ class InlineCompletionHandler(private val scope: CoroutineScope) : CodeInsightAc
   }
 
   private fun showPlaceholder(editor: Editor, startOffset: Int, placeholder: InlineCompletionPlaceholder) {
+    LOG.debug("Trying to show placeholder")
     if (!shouldShowPlaceholder()) return
 
     val ctx = editor.initOrGetInlineCompletionContextWithPlaceholder()
@@ -142,6 +149,7 @@ class InlineCompletionHandler(private val scope: CoroutineScope) : CodeInsightAc
   }
 
   private fun disposePlaceholder(editor: Editor) {
+    LOG.debug("Trying to dispose placeholder")
     if (!shouldShowPlaceholder()) return
 
     editor.resetInlineCompletionContextWithPlaceholder()
@@ -149,6 +157,7 @@ class InlineCompletionHandler(private val scope: CoroutineScope) : CodeInsightAc
 
   private fun showInlineSuggestion(editor: Editor, inlineContext: InlineState, startOffset: Int) {
     val suggestions = inlineContext.suggestions
+    LOG.debug("Trying to show inline suggestions $suggestions")
     if (suggestions.isEmpty()) {
       return
     }
@@ -169,6 +178,7 @@ class InlineCompletionHandler(private val scope: CoroutineScope) : CodeInsightAc
   }
 
   companion object {
+    private val LOG = thisLogger()
     val KEY = Key.create<InlineCompletionHandler>("inline.completion.handler")
 
     val isMuted: AtomicBoolean = AtomicBoolean(false)
