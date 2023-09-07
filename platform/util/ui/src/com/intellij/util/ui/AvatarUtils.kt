@@ -3,6 +3,7 @@ package com.intellij.util.ui
 
 import com.intellij.ui.NewUiValue
 import com.intellij.ui.paint.withTxAndClipAligned
+import com.intellij.ui.scale.JBUIScale
 import com.intellij.util.ui.AvatarUtils.generateColoredAvatar
 import com.intellij.util.ui.ImageUtil.applyQualityRenderingHints
 import java.awt.*
@@ -19,13 +20,13 @@ class AvatarIcon(private val targetSize: Int,
                  private val avatarName: String,
                  private val palette: ColorPalette = AvatarPalette) : JBCachingScalableIcon<AvatarIcon>() {
   private var cachedImage: BufferedImage? = null
-  private var cachedImageScale: Double? = null
+  private var cachedImageScale: Float? = null
   private var cachedImageColor: Color? = null
 
   override fun paintIcon(c: Component?, g: Graphics, x: Int, y: Int) {
     g as Graphics2D
     val iconSize = getIconSize()
-    val scale = g.transform.scaleX
+    val scale = JBUIScale.scale(1f)
     val imageColor = palette.gradient(gradientSeed).first
     if (scale != cachedImageScale || imageColor != cachedImageColor) {
       cachedImage = null
