@@ -3730,6 +3730,7 @@ public final class HighlightUtil {
     return feature.level;
   }
 
+  @Nullable
   static HighlightInfo.Builder checkFeature(@NotNull PsiElement element,
                                            @NotNull HighlightingFeature feature,
                                            @NotNull LanguageLevel level,
@@ -3737,6 +3738,7 @@ public final class HighlightUtil {
     return checkFeature(element, feature, level, file, null, HighlightInfoType.ERROR);
   }
 
+  @Nullable
   static HighlightInfo.Builder checkFeature(@NotNull PsiElement element,
                                     @NotNull HighlightingFeature feature,
                                     @NotNull LanguageLevel level,

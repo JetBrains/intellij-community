@@ -6,6 +6,7 @@ import com.intellij.codeInsight.AnnotationUtil;
 import com.intellij.codeInsight.daemon.JavaErrorBundle;
 import com.intellij.codeInsight.daemon.impl.*;
 import com.intellij.codeInsight.daemon.impl.quickfix.AdjustFunctionContextFix;
+import com.intellij.codeInsight.daemon.impl.quickfix.MoveMembersIntoClassFix;
 import com.intellij.codeInsight.daemon.impl.quickfix.QuickFixAction;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInsight.intention.QuickFixFactory;
@@ -2219,12 +2220,25 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
   }
 
   private HighlightInfo.Builder checkUnnamedClassMember(@NotNull PsiMember member) {
-    if (!(member.getContainingClass() instanceof PsiUnnamedClass)) {
+    if (!(member.getContainingClass() instanceof PsiUnnamedClass unnamedClass)) {
       return null;
     }
-    return checkFeature(member, HighlightingFeature.UNNAMED_CLASSES);
+
+    HighlightInfo.Builder builder = checkFeature(member, HighlightingFeature.UNNAMED_CLASSES);
+    if (builder == null) return null;
+
+    if (!(member instanceof PsiClass) && !HighlightingFeature.UNNAMED_CLASSES.isAvailable(member)) {
+      boolean hasClassToRelocate = PsiTreeUtil.findChildOfType(unnamedClass, PsiClass.class) != null;
+      if (hasClassToRelocate) {
+        MoveMembersIntoClassFix fix = new MoveMembersIntoClassFix(unnamedClass);
+        builder.registerFix(fix, null, null, null, null);
+      }
+    }
+
+    return builder;
   }
 
+  @Nullable
   private HighlightInfo.Builder checkFeature(@NotNull PsiElement element, @NotNull HighlightingFeature feature) {
     return HighlightUtil.checkFeature(element, feature, myLanguageLevel, myFile);
   }
