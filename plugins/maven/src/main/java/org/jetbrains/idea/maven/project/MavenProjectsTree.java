@@ -528,8 +528,8 @@ public final class MavenProjectsTree {
     private final ProgressIndicator process;
     private final ConcurrentHashMap<VirtualFile, Boolean> updated = new ConcurrentHashMap<>();
     private final boolean updateModules;
-    private final long userSettingsTimestamp;
-    private final long globalSettingsTimestamp;
+    private final @Nullable File userSettingsFile;
+    private final @Nullable File globalSettingsFile;
 
     MavenProjectsTreeUpdater(MavenProjectsTree tree,
                              MavenExplicitProfiles profiles,
@@ -545,8 +545,8 @@ public final class MavenProjectsTree {
       generalSettings = settings;
       this.process = process;
       this.updateModules = updateModules;
-      userSettingsTimestamp = getFileTimestamp(generalSettings.getEffectiveUserSettingsFile());
-      globalSettingsTimestamp = getFileTimestamp(generalSettings.getEffectiveGlobalSettingsFile());
+      userSettingsFile = generalSettings.getEffectiveUserSettingsIoFile();
+      globalSettingsFile = generalSettings.getEffectiveGlobalSettingsIoFile();
     }
 
     private boolean startUpdate(VirtualFile mavenProjectFile, boolean forceRead) {
@@ -616,6 +616,8 @@ public final class MavenProjectsTree {
         long jvmConfigTimestamp = getFileTimestamp(jvmConfigFile);
         VirtualFile mavenConfigFile = MavenUtil.getConfigFile(mavenProject, MavenConstants.MAVEN_CONFIG_RELATIVE_PATH);
         long mavenConfigTimestamp = getFileTimestamp(mavenConfigFile);
+        long userSettingsTimestamp = getFileTimestamp(userSettingsFile);
+        long globalSettingsTimestamp = getFileTimestamp(globalSettingsFile);
 
         int profilesHashCode = explicitProfiles.hashCode();
 
@@ -630,9 +632,13 @@ public final class MavenProjectsTree {
       });
     }
 
-    private static long getFileTimestamp(VirtualFile file) {
+    private static long getFileTimestamp(@Nullable VirtualFile file) {
       if (file == null || !file.isValid()) return -1;
       return file.getTimeStamp();
+    }
+
+    private static long getFileTimestamp(@Nullable File file) {
+      return getFileTimestamp(file == null ? null : LocalFileSystem.getInstance().findFileByIoFile(file));
     }
 
     private void handleRemovedModules(MavenProject mavenProject, List<MavenProject> prevModules, List<VirtualFile> existingModuleFiles) {
