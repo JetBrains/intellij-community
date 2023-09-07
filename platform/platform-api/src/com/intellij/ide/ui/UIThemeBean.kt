@@ -8,10 +8,12 @@ import com.fasterxml.jackson.core.JsonToken
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.util.IconPathPatcher
 import com.intellij.openapi.util.SystemInfoRt
+import com.intellij.ui.ColorHexUtil
 import com.intellij.ui.ExperimentalUI
 import com.intellij.util.SVGLoader.SvgElementColorPatcherProvider
 import java.util.*
 import java.util.function.BiFunction
+import javax.swing.plaf.ColorUIResource
 
 internal class UIThemeBean {
   companion object {
@@ -292,6 +294,7 @@ private fun readMapFromJson(parser: JsonParser, result: MutableMap<String, Any?>
   check(parser.currentToken() == JsonToken.START_OBJECT)
 
   var level = 1
+  l@
   while (true) {
     when (parser.nextToken()) {
       JsonToken.START_OBJECT -> {
@@ -308,7 +311,17 @@ private fun readMapFromJson(parser: JsonParser, result: MutableMap<String, Any?>
         }
       }
       JsonToken.VALUE_STRING -> {
-        result.put(parser.currentName(), parser.text)
+        val text = parser.text
+        val key = parser.currentName()
+        if (text.startsWith('#')) {
+          val color = ColorHexUtil.fromHexOrNull(text)
+          if (color != null) {
+            result.put(key, ColorUIResource(color))
+            continue@l
+          }
+          logger<UITheme>().warn("$key=$text has # prefix but cannot be parsed as color")
+        }
+        result.put(key, text)
       }
       JsonToken.VALUE_NUMBER_INT -> {
         result.put(parser.currentName(), parser.intValue)
@@ -429,7 +442,7 @@ private fun putDefaultsIfAbsent(ui: MutableMap<String, Any?>) {
     return
   }
 
-  ui.putIfAbsent("EditorTabs.underlineArc", "4")
+  ui.putIfAbsent("EditorTabs.underlineArc", 4)
 
   // require theme to specify ToolWindow stripe button colors explicitly, without "*"
   ui.putIfAbsent("ToolWindow.Button.selectedBackground", "#3573F0")

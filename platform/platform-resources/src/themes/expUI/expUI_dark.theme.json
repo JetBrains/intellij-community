@@ -265,8 +265,8 @@
     },
 
     "EditorTabs": {
-      "underlineArc": "4",
-      "unselectedBlend": "0.7",
+      "underlineArc": 4,
+      "unselectedBlend": 0.7,
       "background": "Grey1",
       "hoverBackground": "#1E1F2200",
       "inactiveHoverBackground": "#1E1F2200",
@@ -506,7 +506,7 @@
       "Breadcrumbs": {
         "foreground": "Grey9",
         "hoverForeground": "Grey12",
-        "chevronInset": "0"
+        "chevronInset": 0
       }
     },
 

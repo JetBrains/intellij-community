@@ -16,12 +16,13 @@ import javax.swing.UIDefaults
 import javax.swing.plaf.BorderUIResource
 import javax.swing.plaf.ColorUIResource
 
-fun parseUiThemeValue(key: String, value: String, classLoader: ClassLoader): Any? {
+fun parseUiThemeValue(key: String, value: Any?, classLoader: ClassLoader): Any? {
+  if (value !is String) {
+    return value
+  }
+
   try {
     return when {
-      value == "null" -> null
-      value == "true" -> true
-      value == "false" -> false
       value.endsWith(".png") || value.endsWith(".svg") -> parseImageFile(value, classLoader)
       key.endsWith("Insets") || key.endsWith(".insets") || key.endsWith("padding") -> parseInsets(value)
       key.endsWith("Border") || key.endsWith("border") -> parseBorder(value, classLoader)
@@ -29,13 +30,44 @@ fun parseUiThemeValue(key: String, value: String, classLoader: ClassLoader): Any
       key.endsWith("Width") || key.endsWith("Height") -> getIntegerOrFloat(value, key)
       key.endsWith("grayFilter") -> parseGrayFilter(value)
       value.startsWith("AllIcons.") -> UIDefaults.LazyValue { getReflectiveIcon(value, classLoader) }
-      !value.startsWith('#') && getIntegerOrFloat(value, null) != null -> getIntegerOrFloat(value, key)
-      else -> parseElseConditions(value)
+      value.startsWith('#') -> {
+        parseColorOrNull(value, key)?.let {
+          return ColorUIResource(it)
+        } ?: value
+      }
+      else -> {
+        // key as null to log as warning
+        getIntegerOrFloat(value, null)?.let {
+          logger<UITheme>().warn("$key has numeric value but specified as string")
+          return it
+        }
+
+        if (value.length <= 9) {
+          parseColorOrNull(value, null)?.let {
+            logger<UITheme>().warn("$key has color value but doesn't have # prefix")
+            return it
+          }
+        }
+
+        value
+      }
     }
   }
   catch (e: Exception) {
     logger<UITheme>().warn("Can't parse '$value' for key '$key'")
     return value
+  }
+}
+
+internal fun parseColorOrNull(value: String, key: String?): Color? {
+  try {
+    return ColorHexUtil.fromHexOrNull(value)
+  }
+  catch (e: Exception) {
+    if (key != null) {
+      logger<UITheme>().warn("$key=$value has # prefix but cannot be parsed as color")
+    }
+    return null
   }
 }
 
@@ -60,21 +92,8 @@ private fun parseBorder(value: String, classLoader: ClassLoader): Any? {
   }
 }
 
-private fun parseElseConditions(value: String): Any? {
-  val color = parseColor(value)
-  if (color != null) {
-    return ColorUIResource(color)
-  }
-
-  val intVal = getInteger(value, null)
-  if (intVal != null) {
-    return intVal
-  }
-  return null
-}
-
 private fun parseBorderColorOrBorderClass(value: String, classLoader: ClassLoader): Any? {
-  val color = ColorHexUtil.fromHexOrNull(value)
+  val color = parseColorOrNull(value, null)
   if (color == null) {
     val aClass = classLoader.loadClass(value)
     val constructor = aClass.getDeclaredConstructor()
@@ -86,28 +105,11 @@ private fun parseBorderColorOrBorderClass(value: String, classLoader: ClassLoade
   }
 }
 
-internal fun parseColor(value: String): Color? {
-  if (value.length == 8) {
-    val color = ColorHexUtil.fromHex(value.substring(0, 6))
-    try {
-      val alpha = value.substring(6, 8).toInt(16)
-      @Suppress("UseJBColor")
-      return ColorUIResource(Color(color.red, color.green, color.blue, alpha))
-    }
-    catch (ignore: Exception) {
-    }
-    return null
-  }
-
-  val color = ColorHexUtil.fromHex(value, null)
-  return if (color == null) null else ColorUIResource(color)
-}
-
 private fun parseMultiValue(value: String) = value.splitToSequence(',').map { it.trim() }.filter { it.isNotEmpty() }
 
-private fun getInteger(value: String, key: String?): Int? {
+private fun getIntegerOrFloat(value: String, key: String?): Number? {
   try {
-    return value.removeSuffix(".0").toInt()
+    return if (value.contains('.')) value.toFloat() else value.toInt()
   }
   catch (e: NumberFormatException) {
     if (key != null) {
@@ -115,21 +117,6 @@ private fun getInteger(value: String, key: String?): Int? {
     }
     return null
   }
-}
-
-private fun getIntegerOrFloat(value: String, key: String?): Number? {
-  if (value.contains('.')) {
-    try {
-      return value.toFloat()
-    }
-    catch (e: NumberFormatException) {
-      if (key != null) {
-        logger<UITheme>().warn("Can't parse: $key = $value")
-      }
-      return null
-    }
-  }
-  return getInteger(value, key)
 }
 
 private fun parseSize(value: String): Dimension {

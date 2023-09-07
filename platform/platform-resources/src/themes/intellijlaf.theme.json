@@ -246,7 +246,7 @@
       "changedValueForeground": "#0000ff",
       "collectingDataForeground": "grey04",
       "errorMessageForeground":  "#ff0000",
-      "evaluatingExpressionForeground": "#grey04",
+      "evaluatingExpressionForeground": "grey04",
       "exceptionForeground":  "#ff0000",
       "modifyingValueForeground": "#0000ff",
       "valueForeground":  "#800000"
@@ -646,7 +646,7 @@
     "RadioButton": {
       "border": "com.intellij.ide.ui.laf.darcula.ui.DarculaRadioButtonBorder",
       "borderInsets": "2,2,2,0",
-      "darcula.selectionDisabledColor": "#grey03",
+      "darcula.selectionDisabledColor": "grey03",
       "darcula.selectionDisabledShadowColor": "#00000020",
       "darcula.selectionEnabledColor": "white",
       "darcula.selectionEnabledShadowColor": "#00000040",

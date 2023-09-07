@@ -65,14 +65,15 @@ class UITheme private constructor(val id: @NonNls String, private val bean: UITh
     get() = bean.emptyFrameBackground ?: emptyMap()
 
   fun applyProperties(defaults: UIDefaults) {
-    val ui = bean.ui ?: return
-
     bean.colors?.let {
-      loadColorPalette(defaults, it)
+      for ((key, value) in it) {
+        if (value is Color) {
+          defaults.put("ColorPalette.$key", value)
+        }
+      }
     }
-    for ((key, value) in ui) {
-      applyTheme(theme = bean, key = key, value = value, defaults = defaults)
-    }
+
+    applyTheme(theme = bean, defaults = defaults)
   }
 
   @get:ApiStatus.Internal
@@ -125,9 +126,9 @@ class UITheme private constructor(val id: @NonNls String, private val bean: UITh
                      iconMapper: ((String) -> String?)? = null): UITheme {
       val theme = readTheme(JsonFactory().createParser(data))
       return UITheme(themeId, postProcessTheme(theme = theme,
-                                                                   parentTheme = findParentTheme(theme, ::oldFindThemeByName)?.bean,
-                                                                   provider = provider,
-                                                                   iconMapper = iconMapper))
+                                               parentTheme = findParentTheme(theme, ::oldFindThemeByName)?.bean,
+                                               provider = provider,
+                                               iconMapper = iconMapper))
     }
 
     fun loadFromJson(parentTheme: UITheme?,
@@ -171,7 +172,9 @@ private fun postProcessTheme(theme: UIThemeBean,
   if (provider != null) {
     theme.providerClassLoader = provider
   }
+
   initializeNamedColors(theme = theme)
+
   val paletteScopeManager = UiThemePaletteScopeManager()
   val colorsOnSelection = theme.iconColorsOnSelection
   if (!colorsOnSelection.isNullOrEmpty()) {
@@ -271,39 +274,51 @@ private fun configureIcons(theme: UIThemeBean,
 }
 
 private fun initializeNamedColors(theme: UIThemeBean) {
-  val map = LinkedHashMap(theme.colors ?: return)
-  val namedColors = map.keys
-  for (key in namedColors) {
-    val value = map.get(key)
-    if (value is String && !value.startsWith('#')) {
-      val delegateColor = map.get(value)
+  val originalColors = theme.colors ?: return
+  var colors = originalColors
+  var mutableMap: MutableMap<String, Any?>? = null
+  for ((key, value) in originalColors) {
+    if (value is String) {
+      if (mutableMap == null) {
+        mutableMap = LinkedHashMap(originalColors)
+        colors = mutableMap
+        theme.colors = colors
+      }
+
+      val delegateColor = originalColors.get(value)
       if (delegateColor != null) {
-        map.put(key, delegateColor)
+        mutableMap.put(key, delegateColor)
       }
       else {
         LOG.warn("Can't parse '$value' for key '$key'")
-        map.put(key, Gray.TRANSPARENT)
+        mutableMap.put(key, Gray.TRANSPARENT)
       }
     }
   }
 
-  var iconColorsOnSelection = theme.iconColorsOnSelection
-  if (iconColorsOnSelection != null) {
-    val entries = HashSet(iconColorsOnSelection.entries)
-    iconColorsOnSelection = LinkedHashMap()
-    theme.iconColorsOnSelection = iconColorsOnSelection
-    for (entry in entries) {
-      var key: Any? = entry.key
-      var value: Any? = entry.value
-      if (!key.toString().startsWith('#')) {
-        key = map.get(key)
-      }
-      if (!value.toString().startsWith('#')) {
-        value = map.get(value)
-      }
-      if (key.toString().startsWith('#') and value.toString().startsWith('#')) {
-        iconColorsOnSelection.put(key.toString(), value)
-      }
+  val originalColorsOnSelection = theme.iconColorsOnSelection ?: return
+  mutableMap = null
+  for (entry in originalColorsOnSelection) {
+    var key: Any? = entry.key
+    var value: Any? = entry.value
+
+    if (value is Color) {
+      continue
+    }
+
+    if (mutableMap == null) {
+      mutableMap = LinkedHashMap(originalColors)
+      theme.iconColorsOnSelection = mutableMap
+    }
+
+    if (!key.toString().startsWith('#')) {
+      key = colors.get(key)
+    }
+    if (!value.toString().startsWith('#')) {
+      value = colors.get(value)
+    }
+    if (key.toString().startsWith('#') and value.toString().startsWith('#')) {
+      mutableMap.put(key.toString(), value)
     }
   }
 }
@@ -367,33 +382,30 @@ private val colorPalette: @NonNls Map<String, String> = java.util.Map.ofEntries(
   java.util.Map.entry("Tree.iconColor.Dark", "#AFB1B3")
 )
 
-private fun applyTheme(theme: UIThemeBean, key: String, value: Any?, defaults: UIDefaults) {
-  @Suppress("NAME_SHADOWING")
-  var value: Any? = value
-  val valueStr = value.toString()
-  var color: Color? = null
-  if (theme.colors != null) {
-    val obj = theme.colors!!.get(valueStr)
-    if (obj != null) {
-      color = parseColor(obj.toString())
-      if (color != null && !key.startsWith('*')) {
-        defaults.put(key, color)
-        return
+private fun applyTheme(theme: UIThemeBean, defaults: UIDefaults) {
+  val colors = theme.colors
+  for ((key, value) in (theme.ui ?: return)) {
+    var color: Color? = null
+    if (colors != null && value is String) {
+      colors.get(value)?.let {
+        color = if (it is Color) it else parseColorOrNull(it.toString(), key)
       }
     }
-  }
-  value = color ?: parseUiThemeValue(key = key, value = valueStr, classLoader = theme.providerClassLoader!!)
-  if (key.startsWith("*.")) {
-    val tail = key.substring(1)
-    addPattern(key, value, defaults)
-    for (k in defaults.keys.toTypedArray()) {
-      if (k is String && k.endsWith(tail)) {
-        defaults.put(k, value)
+
+    @Suppress("NAME_SHADOWING")
+    val value = color ?: parseUiThemeValue(key = key, value = value, classLoader = theme.providerClassLoader!!)
+    if (key.startsWith("*.")) {
+      val tail = key.substring(1)
+      addPattern(key, value, defaults)
+      for (k in defaults.keys.toTypedArray()) {
+        if (k is String && k.endsWith(tail)) {
+          defaults.put(k, value)
+        }
       }
     }
-  }
-  else {
-    defaults.put(key, value)
+    else {
+      defaults.put(key, value)
+    }
   }
 }
 
@@ -407,13 +419,6 @@ private fun addPattern(key: String?, value: Any?, defaults: UIDefaults) {
   val map = o as MutableMap<String, Any?>
   if (key != null && key.startsWith("*.")) {
     map.put(key.substring(2), value)
-  }
-}
-
-private fun loadColorPalette(defaults: UIDefaults, colors: Map<String, Any?>) {
-  for ((key, value) in colors) {
-    val color = parseColor(value as? String ?: continue) ?: continue
-    defaults.put("ColorPalette.$key", color)
   }
 }
 
