@@ -159,6 +159,11 @@ public abstract class IrKotlinEvaluateExpressionTestGenerated extends AbstractIr
                 public void testCeSeveralLambdas() throws Exception {
                     runTest("testData/evaluation/singleBreakpoint/compilingEvaluator/ceSeveralLambdas.kt");
                 }
+
+                @TestMetadata("samConstruction.kt")
+                public void testSamConstruction() throws Exception {
+                    runTest("testData/evaluation/singleBreakpoint/compilingEvaluator/samConstruction.kt");
+                }
             }
         }
 
