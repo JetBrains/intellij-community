@@ -2,6 +2,7 @@
 package org.jetbrains.plugins.gradle.tooling.tasks;
 
 import com.google.gson.GsonBuilder;
+import com.intellij.gradle.toolingExtension.impl.util.GradleConfigurationUtil;
 import com.intellij.openapi.externalSystem.model.project.dependencies.*;
 import org.gradle.api.DefaultTask;
 import org.gradle.api.artifacts.Configuration;
@@ -46,7 +47,7 @@ public class GradleDependencyReportTask extends DefaultTask {
     GradleDependencyReportGenerator generator = new GradleDependencyReportGenerator();
     List<DependencyScopeNode> graph = new ArrayList<>();
     for (Configuration configuration : configurations) {
-      if (configuration.isCanBeResolved()) {
+      if (GradleConfigurationUtil.isConfigurationCanBeResolved(configuration, true)) {
         graph.add(generator.buildDependencyGraph(configuration, getProject()));
       }
     }
