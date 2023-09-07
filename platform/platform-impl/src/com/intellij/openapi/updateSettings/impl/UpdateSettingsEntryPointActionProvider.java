@@ -137,8 +137,13 @@ final class UpdateSettingsEntryPointActionProvider implements ActionProvider {
   public static void newPlatformUpdate(@NotNull PlatformUpdates.Loaded platformUpdateInfo,
                                        @NotNull List<PluginDownloader> updatedPlugins,
                                        @NotNull Collection<? extends IdeaPluginDescriptor> incompatiblePlugins) {
-    setPlatformUpdateInfo(platformUpdateInfo);
-    newPlatformUpdate(updatedPlugins, incompatiblePlugins, null);
+    UpdateSettings settings = UpdateSettings.getInstance();
+    if (settings.isCheckNeeded()) {
+      setPlatformUpdateInfo(platformUpdateInfo);
+    }
+    if (settings.isPluginsCheckNeeded()) {
+      newPlatformUpdate(updatedPlugins, incompatiblePlugins, null);
+    }
     updateState();
   }
 
