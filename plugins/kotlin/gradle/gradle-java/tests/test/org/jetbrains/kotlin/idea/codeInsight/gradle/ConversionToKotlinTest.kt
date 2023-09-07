@@ -14,6 +14,27 @@ import org.junit.Test
 
 class ConversionToKotlinTest : KotlinGradleImportingTestCase() {
 
+    private fun runSimpleTestcase(kotlinVersion: String) {
+        val files = importProjectFromTestData()
+
+        runInEdtAndWait {
+            runWriteAction {
+                val rootModule = ModuleManager.getInstance(myProject).findModuleByName("project")!!
+                val configurator = findGradleModuleConfigurator()
+                val collector = NotificationMessageCollector.create(myProject)
+                val (kotlinVersionsAndModules, _) = getKotlinVersionsAndModules(myProject, configurator)
+                configurator.configureWithVersion(
+                    myProject,
+                    listOf(rootModule),
+                    IdeKotlinVersion.get(kotlinVersion),
+                    collector,
+                    kotlinVersionsAndModules,
+                )
+                checkFiles(files)
+            }
+        }
+    }
+
     @Test
     @TargetVersions("7.6+")
     fun testRootModuleContainsAnotherKotlinVersion() {
@@ -573,6 +594,43 @@ class ConversionToKotlinTest : KotlinGradleImportingTestCase() {
                 checkFilesInMultimoduleProject(files, subModules)
             }
         }
+    }
+
+    @Test
+    @TargetVersions("7.6+")
+    fun testApplyFalseGroovy() {
+        runSimpleTestcase("1.8.0")
+    }
+
+    @Test
+    @TargetVersions("7.6+")
+    fun testApplyFalseKts() {
+        runSimpleTestcase("1.8.0")
+    }
+
+    @Test
+    @TargetVersions("7.6+")
+    fun testApplyFalseAndVersionGroovy() {
+        runSimpleTestcase("1.8.0")
+    }
+
+    @Test
+    @TargetVersions("7.6+")
+    fun testApplyFalseAndVersionKts() {
+        runSimpleTestcase("1.8.0")
+    }
+
+    @Test
+    @TargetVersions("7.6+")
+    fun testApplyFalseAndVersion2Groovy() {
+        runSimpleTestcase("1.8.0")
+    }
+
+
+    @Test
+    @TargetVersions("7.6+")
+    fun testApplyFalseAndVersion2Kts() {
+        runSimpleTestcase("1.8.0")
     }
 
     /**
