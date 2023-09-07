@@ -176,6 +176,7 @@ object VfsRecoveryUtils {
     private val vfsTimeMachine: SinglePassVfsTimeMachine,
     private val setFiller: (SnapshotFillerPresets.Filler) -> Unit,
     private val compactedVfs: ExtendedVfsSnapshot?,
+    private val namesEnumerator: PersistentStringEnumerator,
     val payloadReader: PayloadReader = queryContext.payloadReader,
     val fileStates: FileStateController = FileStateController(),
   ) : AutoCloseable {
@@ -224,9 +225,11 @@ object VfsRecoveryUtils {
     }
 
     override fun close() {
+      // TODO safe close
       newVfsLog.awaitPendingWrites()
       newVfsLog.dispose()
       newFsRecords.dispose()
+      namesEnumerator.close()
     }
   }
 
@@ -293,7 +296,7 @@ object VfsRecoveryUtils {
       val newVfsLog = VfsLogImpl.open(PersistentFSPaths(newStorageDir).vfsLogStorage, false)
 
       RecoveryContext(this, point.constCopier(), queryContext, newFsRecords, newVfsLog, progressReporter,
-                      vtm, { fillerHolder.filler = it }, compactedVfs)
+                      vtm, { fillerHolder.filler = it }, compactedVfs, namesEnum)
     }) as RecoveryContext
 
     ctx.use {
@@ -720,7 +723,7 @@ object VfsRecoveryUtils {
   }
 
   @OptIn(ExperimentalTime::class)
-  private inline fun wrapRecovery(body: RecoveryResult.() -> Unit): RecoveryResult =
+  private fun wrapRecovery(body: RecoveryResult.() -> Unit): RecoveryResult =
     try {
       val recoveryResult = RecoveryResult()
       recoveryResult.recoveryTime = measureTime { recoveryResult.body() }
