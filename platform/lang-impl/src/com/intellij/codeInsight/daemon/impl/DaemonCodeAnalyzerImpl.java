@@ -1194,21 +1194,17 @@ public final class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx implement
     @Override
     public void onCancelled(@NotNull String reason) {
       DaemonCodeAnalyzerImpl daemon = (DaemonCodeAnalyzerImpl)DaemonCodeAnalyzer.getInstance(myProject);
-      daemon.myDaemonListenerPublisher.daemonCancelEventOccurred(reason);
-      markAsFinished(daemon);
+      daemon.myDaemonListenerPublisher.daemonCanceled(reason, List.of(myFileEditor));
+      myFileEditor = null;
     }
 
     @Override
     public void onStop() {
       DaemonCodeAnalyzerImpl daemon = (DaemonCodeAnalyzerImpl)DaemonCodeAnalyzer.getInstance(myProject);
-      markAsFinished(daemon);
-      HighlightingSessionImpl.clearProgressIndicator(this);
-      daemon.completeEssentialHighlightingRequested = false;
-    }
-
-    private void markAsFinished(@NotNull DaemonCodeAnalyzerImpl daemon) {
       daemon.myDaemonListenerPublisher.daemonFinished(List.of(myFileEditor));
       myFileEditor = null;
+      HighlightingSessionImpl.clearProgressIndicator(this);
+      daemon.completeEssentialHighlightingRequested = false;
     }
   }
 
