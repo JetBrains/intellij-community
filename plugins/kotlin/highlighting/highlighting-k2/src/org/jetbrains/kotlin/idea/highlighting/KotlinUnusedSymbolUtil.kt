@@ -83,8 +83,7 @@ object KotlinUnusedSymbolUtil {
         // do not highlight unused in .forEach { (a,b) -> {} }
         return false
       }
-      else if (ownerFunction is KtFunction &&
-          (ownerFunction.hasModifier(KtTokens.ABSTRACT_KEYWORD) || ownerFunction.hasModifier(KtTokens.EXPECT_KEYWORD))) {
+      else if (ownerFunction is KtFunction && isEffectivelyAbstract(ownerFunction)) {
         // do not highlight parameter of the abstract function
         return false
       }
@@ -94,7 +93,14 @@ object KotlinUnusedSymbolUtil {
     return true
   }
 
-  fun isLocalDeclaration(declaration: KtNamedDeclaration): Boolean {
+    private fun isEffectivelyAbstract(ownerFunction: KtFunction): Boolean {
+        if (ownerFunction.hasModifier(KtTokens.ABSTRACT_KEYWORD) || ownerFunction.hasModifier(KtTokens.EXPECT_KEYWORD)) {
+            return true
+        }
+        return ownerFunction.containingClass()?.isAbstract() == true
+    }
+
+    fun isLocalDeclaration(declaration: KtNamedDeclaration): Boolean {
     if (declaration is KtProperty && declaration.isLocal) return true
     return declaration is KtParameter && !(declaration.parent.parent is KtPrimaryConstructor && declaration.hasValOrVar())
   }

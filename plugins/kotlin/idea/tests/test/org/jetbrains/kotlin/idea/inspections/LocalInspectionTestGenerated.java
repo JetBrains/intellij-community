@@ -17101,9 +17101,9 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
             runTest("testData/inspectionsLocal/unusedSymbol/overrideProperty.kt");
         }
 
-        @TestMetadata("parameterOfInterface.kt")
-        public void testParameterOfInterface() throws Exception {
-            runTest("testData/inspectionsLocal/unusedSymbol/parameterOfInterface.kt");
+        @TestMetadata("parameterOfFunctionInInterface.kt")
+        public void testParameterOfFunctionInInterface() throws Exception {
+            runTest("testData/inspectionsLocal/unusedSymbol/parameterOfFunctionInInterface.kt");
         }
 
         @TestMetadata("primaryConstructorParameter.kt")

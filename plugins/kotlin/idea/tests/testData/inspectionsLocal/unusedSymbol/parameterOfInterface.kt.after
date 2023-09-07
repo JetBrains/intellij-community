@@ -1,4 +1,0 @@
-// IGNORE_K1
-interface Bar {
-    fun baz()
-}
