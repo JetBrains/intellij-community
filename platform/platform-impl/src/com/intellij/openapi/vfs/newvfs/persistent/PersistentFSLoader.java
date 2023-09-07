@@ -366,13 +366,11 @@ public final class PersistentFSLoader {
       LOG.info("Can't delete " + enumeratedAttributesFile);
     }
 
-    if (vfsLog != null) {
-      try {
-        VfsLogImpl.clearStorage(vfsLogDir);
-      }
-      catch (IOException e) {
-        LOG.info("Can't clear " + vfsLogDir, e);
-      }
+    try {
+      VfsLogImpl.clearStorage(vfsLogDir);
+    }
+    catch (IOException e) {
+      LOG.info("Can't clear " + vfsLogDir, e);
     }
   }
 
