@@ -10,6 +10,7 @@ import com.intellij.openapi.util.registry.RegistryValueListener
 import com.intellij.openapi.wm.WindowManager
 import com.intellij.openapi.wm.impl.ProjectFrameHelper
 import com.intellij.openapi.wm.impl.headertoolbar.computeMainActionGroups
+import com.intellij.ui.ExperimentalUI
 import com.intellij.ui.JBColor
 import com.intellij.ui.mac.foundation.Foundation
 import com.intellij.ui.mac.foundation.MacUtil
@@ -20,7 +21,7 @@ import javax.swing.JFrame
  * @author Alexander Lobas
  */
 internal object MacFullScreenControlsManager {
-  fun enabled(): Boolean = Registry.`is`("apple.awt.newFullScreeControls", true)
+  fun enabled(): Boolean = ExperimentalUI.isNewUI() && Registry.`is`("apple.awt.newFullScreeControls", true)
 
   fun configureEnable(coroutineScope: CoroutineScope, block: () -> Unit) {
     val rKey = Registry.get("apple.awt.newFullScreeControls")
