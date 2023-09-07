@@ -76,6 +76,20 @@ class GradleHighlightingTest : GradleCodeInsightTestCase() {
 
   @ParameterizedTest
   @BaseGradleVersionSource
+  fun testNamedApplication(gradleVersion: GradleVersion) {
+    testJavaProject(gradleVersion) {
+      fixture.enableInspections(GrUnresolvedAccessInspection::class.java)
+      fixture.enableInspections(GroovyAssignabilityCheckInspection::class.java)
+      testHighlighting("""
+        tasks.named("compileJava", JavaCompile) {
+        }
+      """.trimIndent())
+    }
+  }
+
+
+  @ParameterizedTest
+  @BaseGradleVersionSource
   fun testGeneratedSetter2(gradleVersion: GradleVersion) {
     testJavaProject(gradleVersion) {
       fixture.enableInspections(GroovyAssignabilityCheckInspection::class.java)
