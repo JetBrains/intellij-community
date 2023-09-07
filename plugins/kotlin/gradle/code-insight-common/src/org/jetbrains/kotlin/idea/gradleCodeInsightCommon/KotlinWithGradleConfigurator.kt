@@ -22,6 +22,7 @@ import com.intellij.openapi.progress.withModalProgress
 import com.intellij.openapi.progress.withRawProgressReporter
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.guessProjectDir
+import com.intellij.openapi.project.modules
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.roots.DependencyScope
 import com.intellij.openapi.roots.ExternalLibraryDescriptor
@@ -157,6 +158,9 @@ abstract class KotlinWithGradleConfigurator : KotlinProjectConfigurator {
         val project = module.project
         val baseModule = module.toModuleGroup().baseModule
 
+        // The buildSrc folder is used to define convention plugins, which can be incredibly complex.
+        // So do not allow auto-configuration of any such projects.
+        if (module.project.modules.any { it.name.contains("buildSrc") }) return null
         if (!isAutoConfigurationEnabled() || !isApplicable(baseModule)) return null
         if (project.isGradleSyncPending() || project.isGradleSyncInProgress()) return null
 

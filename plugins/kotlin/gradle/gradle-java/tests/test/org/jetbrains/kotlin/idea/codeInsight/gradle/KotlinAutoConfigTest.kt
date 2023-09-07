@@ -138,4 +138,11 @@ class KotlinAutoConfigTest : KotlinGradleImportingTestCase() {
         importProjectFromTestData()
         testConfigure("project.submoduleB", IdeKotlinVersion.get("1.8.21"))
     }
+
+    @Test
+    @TargetVersions("7.6")
+    fun testPreventBuildSrc() {
+        importProjectFromTestData()
+        testConfigure("project", null)
+    }
 }
