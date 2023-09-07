@@ -6,6 +6,7 @@ import org.jetbrains.kotlin.gradle.multiplatformTests.TestConfigurationDslScope
 import org.jetbrains.kotlin.gradle.multiplatformTests.testFeatures.checkers.highlighting.HighlightingChecker
 import org.jetbrains.kotlin.gradle.multiplatformTests.testFeatures.checkers.orderEntries.OrderEntriesChecker
 import org.jetbrains.kotlin.test.TestMetadata
+import org.jetbrains.plugins.gradle.tooling.annotation.PluginTargetVersions
 import org.junit.Test
 
 @TestMetadata("multiplatform/core/regress")
@@ -50,6 +51,7 @@ class KotlinMppRegressionTests : AbstractKotlinMppGradleImportingTest() {
     }
 
     @Test
+    @PluginTargetVersions(pluginVersion = "1.9.30-dev-1098+")
     fun testKtij22345SyntheticJavaProperties() {
         doTest {
             onlyCheckers(HighlightingChecker)
