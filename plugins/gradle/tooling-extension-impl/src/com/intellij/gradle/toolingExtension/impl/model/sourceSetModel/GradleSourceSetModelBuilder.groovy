@@ -1,9 +1,9 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.gradle.toolingExtension.impl.sourceSetModel
+package com.intellij.gradle.toolingExtension.impl.model.sourceSetModel
 
-import com.intellij.gradle.toolingExtension.impl.resourceFilterModel.GradleResourceFilterModelBuilder
+import com.intellij.gradle.toolingExtension.impl.model.resourceFilterModel.GradleResourceFilterModelBuilder
 import com.intellij.gradle.toolingExtension.impl.util.GradleObjectUtil
-import com.intellij.gradle.toolingExtension.impl.util.javaPlugin.JavaPluginUtil
+import com.intellij.gradle.toolingExtension.impl.util.javaPluginUtil.JavaPluginUtil
 import com.intellij.openapi.externalSystem.model.project.ExternalSystemSourceType
 import groovy.transform.CompileDynamic
 import org.codehaus.groovy.runtime.DefaultGroovyMethods

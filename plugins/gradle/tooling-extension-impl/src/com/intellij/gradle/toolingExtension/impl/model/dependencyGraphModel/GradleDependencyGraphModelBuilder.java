@@ -1,5 +1,5 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package org.jetbrains.plugins.gradle.tooling.tasks;
+package com.intellij.gradle.toolingExtension.impl.model.dependencyGraphModel;
 
 import com.intellij.openapi.externalSystem.model.project.dependencies.ComponentDependenciesImpl;
 import com.intellij.openapi.externalSystem.model.project.dependencies.DependencyScopeNode;
@@ -12,7 +12,7 @@ import org.gradle.api.tasks.SourceSetContainer;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.gradle.tooling.ErrorMessageBuilder;
 import org.jetbrains.plugins.gradle.tooling.ModelBuilderService;
-import com.intellij.gradle.toolingExtension.impl.util.javaPlugin.JavaPluginUtil;
+import com.intellij.gradle.toolingExtension.impl.util.javaPluginUtil.JavaPluginUtil;
 
 import static org.jetbrains.plugins.gradle.tooling.util.resolve.DependencyResolverImpl.isIsNewDependencyResolutionApplicable;
 

@@ -13,7 +13,7 @@ import org.jetbrains.plugins.gradle.model.tests.ExternalTestSourceMapping
 import org.jetbrains.plugins.gradle.model.tests.ExternalTestsModel
 import org.jetbrains.plugins.gradle.tooling.ErrorMessageBuilder
 import org.jetbrains.plugins.gradle.tooling.ModelBuilderService
-import com.intellij.gradle.toolingExtension.impl.util.javaPlugin.JavaPluginUtil
+import com.intellij.gradle.toolingExtension.impl.util.javaPluginUtil.JavaPluginUtil
 
 @CompileStatic
 class ExternalTestsModelBuilderImpl implements ModelBuilderService {
