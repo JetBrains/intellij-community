@@ -27,12 +27,13 @@ import java.nio.file.Path;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicLong;
 
-public class DependenciesReport extends DefaultTask {
+public class GradleDependencyReportTask extends DefaultTask {
+
   private static final boolean is45OrNewer = GradleVersion.current().compareTo(GradleVersion.version("4.5")) >= 0;
 
   @TaskAction
   public void generate() throws IOException {
-    ReportGenerator generator = new ReportGenerator();
+    GradleDependencyReportGenerator generator = new GradleDependencyReportGenerator();
     Collection<Configuration> configurationList;
     if (configurations.isEmpty()) {
       configurationList = getProject().getConfigurations();
@@ -77,7 +78,7 @@ public class DependenciesReport extends DefaultTask {
   @Input private List<String> configurations = new ArrayList<>();
   @OutputFile private File outputFile;
 
-  public static class ReportGenerator {
+  public static class GradleDependencyReportGenerator {
     public DependencyScopeNode buildDependenciesGraph(Configuration configuration, Project project) {
       return doBuildDependenciesGraph(configuration, project);
     }

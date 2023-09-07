@@ -6,7 +6,7 @@ import com.intellij.openapi.externalSystem.model.project.dependencies.*;
 
 import java.lang.reflect.Type;
 
-public class DependencyNodeDeserializer implements JsonDeserializer<DependencyNode> {
+public class GradleDependencyNodeDeserializer implements JsonDeserializer<DependencyNode> {
 
   @Override
   public DependencyNode deserialize(JsonElement json, Type typeOfT, JsonDeserializationContext context) throws JsonParseException {

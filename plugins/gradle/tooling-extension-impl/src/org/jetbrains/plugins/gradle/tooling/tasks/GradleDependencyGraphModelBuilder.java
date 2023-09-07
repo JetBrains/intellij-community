@@ -1,5 +1,5 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-package org.jetbrains.plugins.gradle.tooling.builder;
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package org.jetbrains.plugins.gradle.tooling.tasks;
 
 import com.intellij.openapi.externalSystem.model.project.dependencies.ComponentDependenciesImpl;
 import com.intellij.openapi.externalSystem.model.project.dependencies.DependencyScopeNode;
@@ -12,14 +12,14 @@ import org.gradle.api.tasks.SourceSetContainer;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.gradle.tooling.ErrorMessageBuilder;
 import org.jetbrains.plugins.gradle.tooling.ModelBuilderService;
-import org.jetbrains.plugins.gradle.tooling.tasks.DependenciesReport;
 import com.intellij.gradle.toolingExtension.impl.util.javaPlugin.JavaPluginUtil;
+import org.jetbrains.plugins.gradle.tooling.tasks.GradleDependencyReportTask.GradleDependencyReportGenerator;
 
 import static org.jetbrains.plugins.gradle.tooling.util.resolve.DependencyResolverImpl.isIsNewDependencyResolutionApplicable;
 
-public class DependencyGraphModelBuilderImpl implements ModelBuilderService {
+public class GradleDependencyGraphModelBuilder implements ModelBuilderService {
 
-  private final DependenciesReport.ReportGenerator reportGenerator = new DependenciesReport.ReportGenerator();
+  private final GradleDependencyReportGenerator reportGenerator = new GradleDependencyReportGenerator();
 
   @Override
   public boolean canBuild(String modelName) {
