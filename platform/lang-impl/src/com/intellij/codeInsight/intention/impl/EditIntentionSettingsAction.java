@@ -4,6 +4,7 @@ package com.intellij.codeInsight.intention.impl;
 import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.codeInsight.intention.HighPriorityAction;
 import com.intellij.codeInsight.intention.IntentionAction;
+import com.intellij.codeInsight.intention.impl.config.IntentionActionWrapper;
 import com.intellij.codeInsight.intention.impl.config.IntentionsConfigurable;
 import com.intellij.codeInsight.intention.impl.config.IntentionsConfigurableProvider;
 import com.intellij.openapi.editor.Editor;
@@ -17,8 +18,12 @@ import org.jetbrains.annotations.NotNull;
 import javax.swing.*;
 
 public final class EditIntentionSettingsAction extends AbstractEditIntentionSettingsAction implements HighPriorityAction {
+
+  private final @NotNull String myIdentifier;
+
   public EditIntentionSettingsAction(@NotNull IntentionAction action) {
     super(action);
+    myIdentifier = action instanceof IntentionActionWrapper wrapper ? wrapper.getFullFamilyName() : action.getFamilyName();
   }
 
   @Override
@@ -32,7 +37,7 @@ public final class EditIntentionSettingsAction extends AbstractEditIntentionSett
       .createApplicationConfigurableForProvider(IntentionsConfigurableProvider.class);
     if (configurable != null) {
       ShowSettingsUtil.getInstance().editConfigurable(project, configurable, () -> {
-        SwingUtilities.invokeLater(() -> configurable.selectIntention(myFamilyName));
+        SwingUtilities.invokeLater(() -> configurable.selectIntention(myIdentifier));
       });
     }
   }
