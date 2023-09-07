@@ -2,6 +2,7 @@
 package com.intellij.openapi.vcs.changes.savedPatches
 
 import com.intellij.ide.DataManager
+import com.intellij.ide.util.treeView.TreeState
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.ActionManager
 import com.intellij.openapi.actionSystem.AnActionEvent
@@ -41,7 +42,7 @@ class SavedPatchesTree(project: Project,
     val nodeRenderer = ChangesBrowserNodeRenderer(myProject, { isShowFlatten }, false)
     setCellRenderer(MyTreeRenderer(nodeRenderer))
 
-    isKeepTreeState = true
+    treeStateStrategy = SavedPatchesTreeStateStrategy
     isScrollToSelection = false
     setEmptyText(VcsBundle.message("saved.patch.empty.text"))
     speedSearch = MySpeedSearch.installOn(this)
@@ -63,20 +64,11 @@ class SavedPatchesTree(project: Project,
   }
 
   override fun rebuildTree() {
-    val wasEmpty = VcsTreeModelData.all(this).iterateUserObjects().isEmpty
-
     val modelBuilder = TreeModelBuilder(project, groupingSupport.grouping)
     if (savedPatchesProviders.any { !it.isEmpty() }) {
       savedPatchesProviders.forEach { provider -> provider.buildPatchesTree(modelBuilder) }
     }
     updateTreeModel(modelBuilder.build())
-
-    if (!VcsTreeModelData.all(this).iterateUserObjects().isEmpty && wasEmpty) {
-      expandDefaults()
-    }
-    if (selectionCount == 0) {
-      TreeUtil.selectFirstNode(this)
-    }
   }
 
   override fun installGroupingSupport(): ChangesGroupingSupport {
@@ -189,6 +181,28 @@ class SavedPatchesTree(project: Project,
       return changes.any {
         matchingFragments(it.filePath.name) != null
       }
+    }
+  }
+
+  private data class SavedPatchesTreeState(val treeState: TreeState, val wasEmpty: Boolean)
+
+  private object SavedPatchesTreeStateStrategy : TreeStateStrategy<SavedPatchesTreeState> {
+    override fun saveState(tree: ChangesTree): SavedPatchesTreeState {
+      val treeState = TreeState.createOn(tree, true, true)
+      val wasEmpty = VcsTreeModelData.all(tree).iterateUserObjects().isEmpty
+      return SavedPatchesTreeState(treeState, wasEmpty)
+    }
+
+    override fun restoreState(tree: ChangesTree, state: SavedPatchesTreeState?, scrollToSelection: Boolean) {
+      if (state == null) return
+
+      state.treeState.setScrollToSelection(scrollToSelection)
+      state.treeState.applyTo(tree)
+
+      if (!VcsTreeModelData.all(tree).iterateUserObjects().isEmpty && state.wasEmpty) {
+        tree.expandDefaults()
+      }
+      if (tree.selectionCount == 0) TreeUtil.selectFirstNode(tree)
     }
   }
 }
