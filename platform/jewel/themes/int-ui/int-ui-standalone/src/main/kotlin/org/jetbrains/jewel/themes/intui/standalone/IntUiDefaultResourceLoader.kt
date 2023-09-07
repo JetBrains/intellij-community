@@ -9,8 +9,12 @@ object IntUiDefaultResourceLoader : ResourceLoader, JewelResourceLoader {
     override val searchClasses = listOf(IntUiTheme::class.java, IntUiDefaultResourceLoader::class.java)
 
     override fun load(resourcePath: String): InputStream {
-        val normalizedPath = if (!resourcePath.startsWith("/")) "/$resourcePath" else resourcePath
-        val resource = searchClasses.firstNotNullOfOrNull { it.getResourceAsStream(normalizedPath) }
+        val resource = loadOrNull(resourcePath)
         return requireNotNull(resource) { "Resource $resourcePath not found" }
+    }
+
+    fun loadOrNull(resourcePath: String): InputStream? {
+        val normalizedPath = if (!resourcePath.startsWith("/")) "/$resourcePath" else resourcePath
+        return searchClasses.firstNotNullOfOrNull { it.getResourceAsStream(normalizedPath) }
     }
 }
