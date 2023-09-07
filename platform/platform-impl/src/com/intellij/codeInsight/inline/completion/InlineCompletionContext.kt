@@ -30,7 +30,7 @@ class InlineCompletionContext private constructor(val editor: Editor, private va
     get() = inlay.offset
 
   fun update(proposals: List<InlineCompletionElement>, selectedIndex: Int, offset: Int) {
-    LOG.debug("Update inline completion context")
+    LOG.trace("Update inline completion context")
     this.completions = proposals
     this.selectedIndex = selectedIndex
     val proposal = proposals[selectedIndex]
@@ -83,14 +83,14 @@ class InlineCompletionContext private constructor(val editor: Editor, private va
 
     fun Editor.initOrGetInlineCompletionContext(): InlineCompletionContext {
       return getUserData(INLINE_COMPLETION_CONTEXT) ?: InlineCompletionContext(this).also {
-        LOG.debug("Create new inline completion context")
+        LOG.trace("Create new inline completion context")
         putUserData(INLINE_COMPLETION_CONTEXT, it)
       }
     }
 
     fun Editor.initOrGetInlineCompletionContextWithPlaceholder(): InlineCompletionContext {
       return getUserData(INLINE_COMPLETION_CONTEXT) ?: InlineCompletionContext(this, true).also {
-        LOG.debug("Create new inline completion context with placeholder")
+        LOG.trace("Create new inline completion context with placeholder")
         putUserData(INLINE_COMPLETION_CONTEXT, it)
       }
     }
@@ -102,8 +102,9 @@ class InlineCompletionContext private constructor(val editor: Editor, private va
 
     fun Editor.getInlineCompletionContextOrNull(): InlineCompletionContext? = getUserData(INLINE_COMPLETION_CONTEXT)
     fun Editor.removeInlineCompletionContext(): Unit = putUserData(INLINE_COMPLETION_CONTEXT, null).also {
-      LOG.debug("Remove inline completion context")
+      LOG.trace("Remove inline completion context")
     }
+
     fun Editor.resetInlineCompletionContext(): Unit? = getInlineCompletionContextOrNull()?.let {
       if (it.isCurrentlyDisplayingInlays) {
         removeInlineCompletionContext()

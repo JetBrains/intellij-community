@@ -33,7 +33,7 @@ class InlineCompletionHandler(private val scope: CoroutineScope) : CodeInsightAc
 
   private fun getProvider(event: InlineCompletionEvent): InlineCompletionProvider? {
     return InlineCompletionProvider.extensions().firstOrNull { it.isEnabled(event) }?.also {
-      LOG.debug("Selected inline provider: $it")
+      LOG.trace("Selected inline provider: $it")
     }
   }
 
@@ -87,16 +87,16 @@ class InlineCompletionHandler(private val scope: CoroutineScope) : CodeInsightAc
   private fun shouldShowPlaceholder(): Boolean = Registry.`is`("inline.completion.show.placeholder")
 
   private fun invokeEvent(event: InlineCompletionEvent) {
-    LOG.debug("Start processing inline event $event")
+    LOG.trace("Start processing inline event $event")
     if (isMuted.get()) {
-      LOG.debug("Muted")
+      LOG.trace("Muted")
       return
     }
     // TODO: move to launch
     val request = event.toRequest() ?: return
     val provider = getProvider(event) ?: return
 
-    LOG.debug("Schedule new job")
+    LOG.trace("Schedule new job")
     runningJob?.cancel()
     runningJob = scope.launch {
       val modificationStamp = request.document.modificationStamp
@@ -141,7 +141,7 @@ class InlineCompletionHandler(private val scope: CoroutineScope) : CodeInsightAc
   }
 
   private fun showPlaceholder(editor: Editor, startOffset: Int, placeholder: InlineCompletionPlaceholder) {
-    LOG.debug("Trying to show placeholder")
+    LOG.trace("Trying to show placeholder")
     if (!shouldShowPlaceholder()) return
 
     val ctx = editor.initOrGetInlineCompletionContextWithPlaceholder()
@@ -149,7 +149,7 @@ class InlineCompletionHandler(private val scope: CoroutineScope) : CodeInsightAc
   }
 
   private fun disposePlaceholder(editor: Editor) {
-    LOG.debug("Trying to dispose placeholder")
+    LOG.trace("Trying to dispose placeholder")
     if (!shouldShowPlaceholder()) return
 
     editor.resetInlineCompletionContextWithPlaceholder()
@@ -157,7 +157,7 @@ class InlineCompletionHandler(private val scope: CoroutineScope) : CodeInsightAc
 
   private fun showInlineSuggestion(editor: Editor, inlineContext: InlineState, startOffset: Int) {
     val suggestions = inlineContext.suggestions
-    LOG.debug("Trying to show inline suggestions $suggestions")
+    LOG.trace("Trying to show inline suggestions $suggestions")
     if (suggestions.isEmpty()) {
       return
     }

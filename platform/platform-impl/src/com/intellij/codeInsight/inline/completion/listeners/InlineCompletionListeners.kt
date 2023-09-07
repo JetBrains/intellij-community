@@ -26,7 +26,7 @@ class InlineCompletionDocumentListener(private val editor: EditorImpl) : Documen
     }
 
     if (event.document.isInBulkUpdate) return
-    LOG.debug("Valuable document event $event")
+    LOG.trace("Valuable document event $event")
     editor.getUserData(InlineCompletionHandler.KEY)?.invoke(InlineCompletionEvent.DocumentChange(event, editor))
   }
 
@@ -46,7 +46,7 @@ open class InlineCompletionKeyListener(private val editor: Editor) : KeyAdapter(
     if (!isValuableKeyReleased(event)) {
       return
     }
-    LOG.debug("Valuable key released event $event")
+    LOG.trace("Valuable key released event $event")
     hideInlineCompletion()
   }
 
@@ -85,7 +85,7 @@ class InlineCaretListener(private val editor: Editor) : CaretListener {
   override fun caretPositionChanged(event: CaretEvent) {
     if (isSimple(event)) return
 
-    LOG.debug("Valuable caret position event $event")
+    LOG.trace("Valuable caret position event $event")
     editor.resetInlineCompletionContextWithPlaceholder()
   }
 
@@ -102,7 +102,7 @@ class InlineCaretListener(private val editor: Editor) : CaretListener {
 @ApiStatus.Experimental
 class InlineEditorMouseListener : EditorMouseListener {
   override fun mousePressed(event: EditorMouseEvent) {
-    LOG.debug("Valuable mouse pressed event $event")
+    LOG.trace("Valuable mouse pressed event $event")
     event.editor.resetInlineCompletionContext()
   }
 
