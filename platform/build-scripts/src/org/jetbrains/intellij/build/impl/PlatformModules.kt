@@ -298,6 +298,14 @@ internal suspend fun createPlatformLayout(addPlatformCoverage: Boolean,
                                    reason = "<- ${module.name}"))
       .dependentModules.computeIfAbsent("core") { mutableListOf() }.add(module.name)
   }
+
+  val platformMainModule = "intellij.platform.main"
+  if (context.isEmbeddedJetBrainsClientEnabled && layout.includedModules.none { it.moduleName == platformMainModule }) {
+    /* this module is used by JetBrains Client, but it isn't packed in commercial IDEs, so let's put it in a separate JAR which won't be
+       loaded when the IDE is started in the regular mode */
+    layout.withModule(platformMainModule, "ext/platform-main.jar")
+  }
+  
   return layout
 }
 
