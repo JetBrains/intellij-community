@@ -743,7 +743,7 @@ public class VcsLogClassicFilterUi implements VcsLogFilterUiEx {
     }
   }
 
-  private static class DateFilterModel extends FilterModel.SingleFilterModel<VcsLogDateFilter> {
+  public static class DateFilterModel extends FilterModel.SingleFilterModel<VcsLogDateFilter> {
     DateFilterModel(@NotNull MainVcsLogUiProperties uiProperties, @Nullable VcsLogFilterCollection filters) {
       super(DATE_FILTER, uiProperties, filters);
     }
@@ -768,6 +768,11 @@ public class VcsLogClassicFilterUi implements VcsLogFilterUiEx {
 
     @Override
     protected @NotNull List<String> getFilterValues(@NotNull VcsLogDateFilter filter) {
+      return getDateValues(filter);
+    }
+
+    @NotNull
+    public static List<String> getDateValues(@NotNull VcsLogDateFilter filter) {
       Date after = filter.getAfter();
       Date before = filter.getBefore();
       return Arrays.asList(after == null ? "" : Long.toString(after.getTime()),

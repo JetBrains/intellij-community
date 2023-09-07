@@ -36,7 +36,7 @@ class VcsLogFileHistoryProviderImpl(project: Project) : VcsLogFileHistoryProvide
   }
 }
 
-private class VcsLogDirectoryHistoryProvider(private val project: Project) : VcsLogFileHistoryProvider {
+class VcsLogDirectoryHistoryProvider(private val project: Project) : VcsLogFileHistoryProvider {
   override fun canShowFileHistory(paths: Collection<FilePath>, revisionNumber: String?): Boolean {
     if (!Registry.`is`("vcs.history.show.directory.history.in.log")) return false
     val dataManager = VcsProjectLog.getInstance(project).dataManager ?: return false
@@ -66,7 +66,7 @@ private class VcsLogDirectoryHistoryProvider(private val project: Project) : Vcs
   }
 
   companion object {
-    private fun createPathsFilter(project: Project, dataManager: VcsLogData, paths: Collection<FilePath>): VcsLogFilter? {
+    fun createPathsFilter(project: Project, dataManager: VcsLogData, paths: Collection<FilePath>): VcsLogFilter? {
       val forRootFilter = mutableSetOf<VirtualFile>()
       val forPathsFilter = mutableListOf<FilePath>()
       for (path in paths) {
