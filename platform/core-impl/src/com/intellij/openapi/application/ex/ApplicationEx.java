@@ -3,6 +3,7 @@ package com.intellij.openapi.application.ex;
 
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.progress.ProgressIndicator;
+import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.NlsContexts;
@@ -120,7 +121,7 @@ public interface ApplicationEx extends Application {
   /**
    * Runs a modal process.
    * For internal use only, see {@link Task}.
-   * Consider also {@code ProgressManager.getInstance().runProcessWithProgressSynchronously}
+   * Consider also {@link ProgressManager#runProcessWithProgressSynchronously}
    */
   @ApiStatus.Internal
   default boolean runProcessWithProgressSynchronously(@NotNull Runnable process,
@@ -133,7 +134,7 @@ public interface ApplicationEx extends Application {
   /**
    * Runs a modal or non-modal process.
    * For internal use only, see {@link Task}.
-   * Consider also {@code ProgressManager.getInstance().runProcessWithProgressSynchronously}
+   * Consider also {@link ProgressManager#runProcessWithProgressSynchronously}
    */
   @ApiStatus.Internal
   boolean runProcessWithProgressSynchronously(@NotNull Runnable process,
