@@ -140,9 +140,9 @@ object Launcher {
     }
     else {
       logFolder.mkdirs()
-      // TODO: test logs overwrite launcher logs
-      this.redirectOutput(logFolder.resolve("out.log"))
-      this.redirectError(logFolder.resolve("err.log"))
+      val ts = System.currentTimeMillis()
+      this.redirectOutput(logFolder.resolve("out-$ts.log"))
+      this.redirectError(logFolder.resolve("err-$ts.log"))
     }
   }
 
