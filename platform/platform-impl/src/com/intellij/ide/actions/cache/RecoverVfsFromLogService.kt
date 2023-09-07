@@ -10,6 +10,7 @@ import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.ex.ApplicationManagerEx
 import com.intellij.openapi.application.invokeAndWaitIfNeeded
 import com.intellij.openapi.components.Service
+import com.intellij.openapi.components.serviceIfCreated
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.progress.*
 import com.intellij.openapi.project.Project
@@ -191,7 +192,7 @@ class RecoverVfsFromLogService(val coroutineScope: CoroutineScope) {
                                        progressReporter: RawProgressReporter?) {
       try {
         // TODO FileBasedIndexTumbler disable indexing while recovery is in progress
-        val vfsLogEx = PersistentFS.getInstance().vfsLog as? VfsLogEx
+        val vfsLogEx = serviceIfCreated<PersistentFS>()?.vfsLog as? VfsLogEx
         vfsLogEx?.awaitPendingWrites()
         vfsLogEx?.flush()
       } catch (ignored: Throwable) {}
