@@ -3,6 +3,7 @@ package com.intellij.openapi.vfs.newvfs.persistent.log
 
 import com.intellij.openapi.application.writeAction
 import com.intellij.openapi.diagnostic.Logger
+import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.vfs.newvfs.persistent.VfsRecoveryUtils
 import com.intellij.openapi.vfs.newvfs.persistent.intercept.ConnectionInterceptor
 import com.intellij.openapi.vfs.newvfs.persistent.log.ApplicationVFileEventsTracker.VFileEventTracker
@@ -503,6 +504,14 @@ class VfsLogImpl private constructor(
       }
       return false
     }
+
+    @JvmStatic
+    fun filterOutRecoveryPoints(storagePath: Path, validRange: LongRange) {
+      val recoveryPointsPath = storagePath / "recovery-points"
+      if (recoveryPointsPath.exists()) {
+        RecoveryPointsCollector.filterOutRecoveryPoints(recoveryPointsPath, validRange)
+      }
+    }
   }
 }
 
@@ -510,9 +519,18 @@ private class RecoveryPointsCollector private constructor(
   private val stateHolder: AtomicDurableRecord<RecoveryPoints>,
   private val vfsLogEx: VfsLogEx
 ) : AutoCloseable {
-  private val currentPoints = Array(MAX_RECOVERY_POINTS) { NULL_POINT }
+  private val currentPoints: Array<RecoveryPointData>
   private var modificationCounter: Int = 0
   private var persistentModificationCounter: Int = 0
+
+  init {
+    synchronized(this) {
+      currentPoints = Array(MAX_RECOVERY_POINTS) { NULL_POINT }
+      stateHolder.get().points.forEachIndexed { index, recoveryPointData ->
+        currentPoints[index] = recoveryPointData
+      }
+    }
+  }
 
   suspend fun poller() {
     while (true) {
@@ -536,14 +554,6 @@ private class RecoveryPointsCollector private constructor(
     }
   }
 
-  init {
-    synchronized(this) {
-      stateHolder.get().points.forEachIndexed { index, recoveryPointData ->
-        currentPoints[index] = recoveryPointData
-      }
-    }
-  }
-
   fun updatePersistentState() {
     val newState = synchronized(this) {
       val data =
@@ -554,7 +564,7 @@ private class RecoveryPointsCollector private constructor(
     }
     if (newState != null) {
       stateHolder.update {
-        newState.copyInto(this.points)
+        points = newState
       }
     }
   }
@@ -579,28 +589,41 @@ private class RecoveryPointsCollector private constructor(
   }
 
   companion object {
-
     fun open(path: Path, mode: OpenMode, vfsLogEx: VfsLogEx): RecoveryPointsCollector {
       try {
         val stateHolder = AtomicDurableRecord.open(path, mode, stateBuilder)
         return RecoveryPointsCollector(stateHolder, vfsLogEx)
       }
       catch (e: IncompatibleLayoutException) {
-        if (path.exists()) path.deleteExisting()
+        if (path.exists() && mode == ReadWrite) {
+          logger<RecoveryPointsCollector>().info("deleting old recovery points")
+          path.deleteExisting()
+        }
         val newStateHolder = AtomicDurableRecord.open(path, mode, stateBuilder)
         return RecoveryPointsCollector(newStateHolder, vfsLogEx)
       }
     }
 
+    fun filterOutRecoveryPoints(path: Path, validRange: LongRange) {
+      AtomicDurableRecord.open(path, ReadWrite, stateBuilder).use { stateHolder ->
+        stateHolder.update {
+          val newState = points.copyOf()
+          for (i in 0 until MAX_RECOVERY_POINTS) {
+            if (newState[i].logPosition !in validRange) newState[i] = NULL_POINT
+          }
+          points = newState
+        }
+      }
+    }
+
     private val RECOVERY_POINTS_POLL_INTERVAL: Long = SystemProperties.getLongProperty(
       "idea.vfs.log-vfs-operations.recovery-points-poll-interval",
-      150_000L // 2.5 minutes
+      30_000L
     )
 
-    private const val MAX_RECOVERY_POINTS = 60
+    private const val MAX_RECOVERY_POINTS = 120
 
     internal data class RecoveryPointData(val timestamp: Long, val logPosition: Long) {
-
       companion object {
         const val SIZE_BYTES = 2 * Long.SIZE_BYTES
       }
@@ -609,7 +632,8 @@ private class RecoveryPointsCollector private constructor(
     private val NULL_POINT = RecoveryPointData(-1, -1)
 
     private interface RecoveryPoints {
-      val points: Array<RecoveryPointData>
+      // array is immutable
+      var points: Array<RecoveryPointData>
     }
 
     private val stateBuilder: RecordBuilder<RecoveryPoints>.() -> RecoveryPoints = {
