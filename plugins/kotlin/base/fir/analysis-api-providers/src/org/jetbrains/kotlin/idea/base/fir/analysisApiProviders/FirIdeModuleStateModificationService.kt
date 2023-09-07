@@ -6,6 +6,7 @@ import com.intellij.ide.plugins.DynamicPluginListener
 import com.intellij.ide.plugins.IdeaPluginDescriptor
 import com.intellij.java.workspace.entities.JavaSourceRootPropertiesEntity
 import com.intellij.openapi.Disposable
+import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.fileEditor.FileDocumentManagerListener
 import com.intellij.openapi.module.Module
@@ -151,11 +152,15 @@ class FirIdeModuleStateModificationService(val project: Project) : Disposable {
 
     internal class MyDynamicPluginListener(private val project: Project) : DynamicPluginListener {
         override fun beforePluginUnload(pluginDescriptor: IdeaPluginDescriptor, isUpdate: Boolean) {
-            KotlinGlobalModificationService.getInstance(project).publishGlobalModuleStateModification()
+            runWriteAction {
+                KotlinGlobalModificationService.getInstance(project).publishGlobalModuleStateModification()
+            }
         }
 
         override fun pluginLoaded(pluginDescriptor: IdeaPluginDescriptor) {
-            KotlinGlobalModificationService.getInstance(project).publishGlobalModuleStateModification()
+            runWriteAction {
+                KotlinGlobalModificationService.getInstance(project).publishGlobalModuleStateModification()
+            }
         }
     }
 
