@@ -113,41 +113,45 @@ class LafManagerImpl(private val coroutineScope: CoroutineScope) : LafManager(),
 
   private val defaultDarkTheme = SynchronizedClearableLazy {
     val name = ApplicationInfoEx.getInstanceEx().defaultDarkLaf
+    val themeListManager = UiThemeProviderListManager.getInstance()
     if (name == null) {
-      findLafByName("Dark") ?: error("Default dark theme 'Dark' not found")
+      themeListManager.findThemeById("ExperimentalDark") ?: error("Default dark theme 'Dark' not found")
     }
     else {
-      findLafByName(name) ?: error("Default dark theme '$name' not found")
+      themeListManager.findThemeById(name) ?: themeListManager.findThemeByName(name) ?: error("Default dark theme '$name' not found")
     }
   }
 
   private val defaultClassicDarkTheme = SynchronizedClearableLazy {
     val name = ApplicationInfoEx.getInstanceEx().defaultClassicDarkLaf
+    val themeListManager = UiThemeProviderListManager.getInstance()
     if (name == null) {
-      findLafByName("Darcula")?: error("Default classic dark theme 'Darcula' not found")
+      themeListManager.findThemeById("Darcula") ?: error("Default classic dark theme 'Darcula' not found")
     }
     else {
-      findLafByName(name) ?: error("Default classic dark theme '$name' not found")
+      themeListManager.findThemeById(name) ?: themeListManager.findThemeByName(name) ?: error("Default classic dark theme '$name' not found")
     }
   }
 
   private val defaultLightTheme = SynchronizedClearableLazy {
     val name = ApplicationInfoEx.getInstanceEx().defaultLightLaf
+    val themeListManager = UiThemeProviderListManager.getInstance()
     if (name == null) {
-      findLafByName("Light") ?: error("Default light LookAndFeel 'Light' not found")
+      themeListManager.findThemeById("ExperimentalLight") ?: error("Default light LookAndFeel 'Light' not found")
     }
     else {
-      findLafByName(name) ?: error("Default light LookAndFeel '$name' not found")
+      themeListManager.findThemeById(name) ?: themeListManager.findThemeByName(name) ?: error("Default light LookAndFeel '$name' not found")
     }
   }
 
   private val defaultClassicLightTheme = SynchronizedClearableLazy {
     val name = ApplicationInfoEx.getInstanceEx().defaultClassicLightLaf
+    val themeListManager = UiThemeProviderListManager.getInstance()
     if (name == null) {
-      UiThemeProviderListManager.getInstance().findJetBrainsLightTheme() ?: error("JetBrains light theme not found")
+      themeListManager.findJetBrainsLightTheme() ?: error("JetBrains light theme not found")
     }
     else {
-      findLafByName(name) ?: error("Default light LookAndFeel '$name' not found")
+      themeListManager.findThemeById(name) ?: themeListManager.findThemeByName(name) ?: error("Default light LookAndFeel '$name' not found")
     }
   }
 
@@ -489,7 +493,7 @@ class LafManagerImpl(private val coroutineScope: CoroutineScope) : LafManager(),
     return Supplier { defaultDarkLaf }
   }
 
-  private fun getDefaultThemeId(): String? {
+  private fun getDefaultThemeId(): String {
     // use HighContrast theme for IDE in Windows if HighContrast desktop mode is set
     if (SystemInfoRt.isWindows && Toolkit.getDefaultToolkit().getDesktopProperty("win.highContrast.on") == true) {
       UiThemeProviderListManager.getInstance().findThemeSupplierById(HIGH_CONTRAST_THEME_ID)?.let {
@@ -497,10 +501,6 @@ class LafManagerImpl(private val coroutineScope: CoroutineScope) : LafManager(),
       }
     }
     return defaultDarkLaf.theme.id
-  }
-
-  private fun findLafByName(name: String): UIThemeLookAndFeelInfo? {
-    return UiThemeProviderListManager.getInstance().findThemeByName(name)
   }
 
   /**
