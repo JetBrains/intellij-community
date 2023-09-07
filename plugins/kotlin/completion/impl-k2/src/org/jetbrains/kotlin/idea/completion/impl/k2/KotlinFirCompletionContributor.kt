@@ -159,9 +159,12 @@ internal data class FirCompletionSessionParameters(
     val allowJavaGettersAndSetters: Boolean = !allowSyntheticJavaProperties || basicContext.parameters.invocationCount > 1
     val allowExpectedDeclarations: Boolean = basicContext.originalKtFile.moduleInfo.platform.isMultiPlatform()
 
-    val allowClassifiersAndPackagesForPossibleExtensionCallables: Boolean =
-        !(basicContext.parameters.invocationCount == 0
-                && positionContext is FirTypeNameReferencePositionContext
-                && (positionContext.typeReference?.parent is KtNamedFunction || positionContext.typeReference?.parent is KtProperty)
-                && basicContext.prefixMatcher.prefix.takeIf { it.isNotEmpty() }?.let { it[0].isLowerCase() } ?: false)
+    val allowClassifiersAndPackagesForPossibleExtensionCallables: Boolean
+        get() {
+            val declaration = (positionContext as? FirTypeNameReferencePositionContext)?.typeReference?.parent ?: return true
+            return !(basicContext.parameters.invocationCount == 0
+                    && (declaration is KtNamedFunction || declaration is KtProperty)
+                    && positionContext.explicitReceiver == null
+                    && basicContext.prefixMatcher.prefix.firstOrNull()?.isLowerCase() == true)
+        }
 }

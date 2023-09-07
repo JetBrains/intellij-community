@@ -665,6 +665,11 @@ public abstract class K1JvmBasicCompletionTestGenerated extends AbstractK1JvmBas
             public void testNestedClassName2() throws Exception {
                 runTest("../testData/basic/common/extensionDeclarations/NestedClassName2.kt");
             }
+
+            @TestMetadata("NestedClassNameLowerCase.kt")
+            public void testNestedClassNameLowerCase() throws Exception {
+                runTest("../testData/basic/common/extensionDeclarations/NestedClassNameLowerCase.kt");
+            }
         }
 
         @RunWith(JUnit3RunnerWithInners.class)
