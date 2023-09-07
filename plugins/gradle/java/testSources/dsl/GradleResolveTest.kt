@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gradle.dsl
 
 import com.intellij.psi.CommonClassNames.JAVA_UTIL_DATE
@@ -7,6 +7,7 @@ import com.intellij.testFramework.assertInstanceOf
 import org.gradle.util.GradleVersion
 import org.jetbrains.plugins.gradle.testFramework.GradleCodeInsightTestCase
 import org.jetbrains.plugins.gradle.testFramework.annotations.BaseGradleVersionSource
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrMethodCall
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrNewExpression
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertTrue
@@ -40,6 +41,23 @@ class GradleResolveTest: GradleCodeInsightTestCase() {
         val method = assertInstanceOf<PsiMethod>(results[0].element)
         assertTrue(method.isConstructor)
         assertEquals(JAVA_UTIL_DATE, method.containingClass!!.qualifiedName)
+      }
+    }
+  }
+
+  @ParameterizedTest
+  @BaseGradleVersionSource
+  fun testClosureParameterIsTheSameAsDelegate(gradleVersion: GradleVersion) {
+    testJavaProject(gradleVersion) {
+      testBuildscript("""
+        tasks.register('jc', Jar) {
+            it.man<caret>ifest {}
+        }
+      """.trimIndent()) {
+        val expression = elementUnderCaret(GrMethodCall::class.java)
+        val results = expression.multiResolve(false)
+        assertEquals(1, results.size)
+        assertInstanceOf<PsiMethod>(results[0].element)
       }
     }
   }
