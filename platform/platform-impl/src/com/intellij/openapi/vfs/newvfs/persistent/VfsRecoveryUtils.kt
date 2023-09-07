@@ -14,8 +14,6 @@ import com.intellij.openapi.vfs.newvfs.persistent.PersistentFS.Flags.MUST_RELOAD
 import com.intellij.openapi.vfs.newvfs.persistent.PersistentFS.Flags.MUST_RELOAD_LENGTH
 import com.intellij.openapi.vfs.newvfs.persistent.log.*
 import com.intellij.openapi.vfs.newvfs.persistent.log.IteratorUtils.constCopier
-import com.intellij.openapi.vfs.newvfs.persistent.log.OperationLogStorage.OperationReadResult.*
-import com.intellij.openapi.vfs.newvfs.persistent.log.OperationLogStorage.TraverseDirection
 import com.intellij.openapi.vfs.newvfs.persistent.log.VfsLogOperationTrackingContext.Companion.trackPlainOperation
 import com.intellij.openapi.vfs.newvfs.persistent.log.VfsOperation.AttributesOperation.Companion.fileId
 import com.intellij.openapi.vfs.newvfs.persistent.log.VfsOperation.RecordsOperation.Companion.fileId
@@ -721,48 +719,6 @@ object VfsRecoveryUtils {
   }
 
   data class RecoveryPoint(val timestamp: Long, val point: OperationLogStorage.Iterator)
-
-  /**
-   * @return iterator <= [point], such that there are at least [completeOperationsAtLeast] preceding operations without
-   * exceptions and incomplete descriptors
-   */
-  fun findClosestPrecedingPointWithNoIncompleteOperationsBeforeIt(
-    point: () -> OperationLogStorage.Iterator,
-    completeOperationsAtLeast: Int = 50_000
-  ): OperationLogStorage.Iterator? {
-    var candidate = point()
-    out@ while (candidate.hasPrevious()) {
-      val checkIter = candidate.copy()
-      for (i in 1..completeOperationsAtLeast) {
-        if (!checkIter.hasPrevious()) return null
-        when (val result = checkIter.previous()) {
-          is Complete -> {
-            if (!result.operation.result.hasValue) { // exceptional operation
-              candidate = checkIter.copy()
-              continue@out
-            }
-          }
-          is Incomplete -> {
-            candidate = checkIter.copy()
-            continue@out
-          }
-          is Invalid -> throw result.cause
-        }
-      }
-      return candidate
-    }
-    return null
-  }
-
-  fun generateRecoveryPointsPriorTo(point: () -> OperationLogStorage.Iterator): Sequence<RecoveryPoint> = sequence {
-    val iter = point()
-    // position iter after a vfile event end operation
-    VfsChronicle.traverseOperationsLog(iter, TraverseDirection.REWIND, VfsOperationTagsMask.ALL) {
-      if (it is VfsOperation.VFileEventOperation.EventStart) {
-        yield(RecoveryPoint(it.eventTimestamp, iter.copy()))
-      }
-    }
-  }
 
   fun Sequence<RecoveryPoint>.thinOut(
     skipPeriodMsInit: Long = 30_000,

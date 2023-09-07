@@ -1,7 +1,9 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vfs.newvfs.persistent.log
 
+import com.intellij.openapi.application.writeAction
 import com.intellij.openapi.diagnostic.Logger
+import com.intellij.openapi.vfs.newvfs.persistent.VfsRecoveryUtils
 import com.intellij.openapi.vfs.newvfs.persistent.intercept.ConnectionInterceptor
 import com.intellij.openapi.vfs.newvfs.persistent.log.ApplicationVFileEventsTracker.VFileEventTracker
 import com.intellij.openapi.vfs.newvfs.persistent.log.OperationLogStorage.OperationTracker
@@ -11,6 +13,8 @@ import com.intellij.openapi.vfs.newvfs.persistent.log.compaction.VfsLogCompactio
 import com.intellij.openapi.vfs.newvfs.persistent.log.compaction.VfsLogCompactionController.Companion.OperationMode
 import com.intellij.openapi.vfs.newvfs.persistent.log.io.AtomicDurableRecord
 import com.intellij.openapi.vfs.newvfs.persistent.log.io.AtomicDurableRecord.Companion.RecordBuilder
+import com.intellij.openapi.vfs.newvfs.persistent.log.io.DurablePersistentByteArray.Companion.IncompatibleLayoutException
+import com.intellij.openapi.vfs.newvfs.persistent.log.io.DurablePersistentByteArray.Companion.OpenMode
 import com.intellij.openapi.vfs.newvfs.persistent.log.io.DurablePersistentByteArray.Companion.OpenMode.*
 import com.intellij.openapi.vfs.newvfs.persistent.log.timemachine.ExtendedVfsSnapshot
 import com.intellij.openapi.vfs.newvfs.persistent.log.timemachine.State
@@ -110,11 +114,20 @@ class VfsLogImpl private constructor(
 
     val compactionCancellationRequests: AtomicInteger = AtomicInteger(0)
 
+    private val recoveryPointsCollector = RecoveryPointsCollector.open(
+      storagePath / "recovery-points",
+      if (!readOnly) ReadWrite else Read,
+      this@VfsLogImpl
+    )
+
+    fun getRecoveryPoints(): List<VfsRecoveryUtils.RecoveryPoint> = recoveryPointsCollector.getRecoveryPoints()
+
     val isDisposing: AtomicBoolean = AtomicBoolean(false)
 
     fun flush() {
       payloadStorage.flush()
       operationLogStorage.flush()
+      recoveryPointsCollector.updatePersistentState()
     }
 
     fun dispose() {
@@ -183,6 +196,10 @@ class VfsLogImpl private constructor(
         flush()
       }
     }
+
+    suspend fun recoveryPointsPoller() {
+      recoveryPointsCollector.poller()
+    }
   }
 
   private val context = ContextImpl()
@@ -192,8 +209,11 @@ class VfsLogImpl private constructor(
 
   init {
     if (!readOnly) {
-      context.coroutineScope.launch {
+      context.coroutineScope.launch(CoroutineName("VfsLog flush")) {
         context.flusher()
+      }
+      context.coroutineScope.launch(CoroutineName("VFS recovery points polling")) {
+        context.recoveryPointsPoller()
       }
     }
   }
@@ -240,7 +260,7 @@ class VfsLogImpl private constructor(
       }
     }
 
-  override fun query(): VfsLogQueryContext {
+  override fun query(): VfsLogQueryContextEx {
     if (context.tryAcquireQuery()) {
       return makeQueryContext(false)
     }
@@ -249,12 +269,12 @@ class VfsLogImpl private constructor(
     return makeQueryContext(true)
   }
 
-  override fun tryQuery(): VfsLogQueryContext? {
+  override fun tryQuery(): VfsLogQueryContextEx? {
     if (!context.tryAcquireQuery()) return null
     return makeQueryContext(false)
   }
 
-  private fun makeQueryContext(cancellationWasRequested: Boolean): VfsLogQueryContext = object : VfsLogQueryContext {
+  private fun makeQueryContext(cancellationWasRequested: Boolean): VfsLogQueryContextEx = object : VfsLogQueryContextEx {
     init {
       ensureLogAndCompactionAreSynced()
     }
@@ -274,6 +294,16 @@ class VfsLogImpl private constructor(
     override val stringEnumerator: DataEnumerator<String> = context.stringEnumerator
 
     private val stableRangeIterators = context.operationLogStorage.currentlyAvailableRangeIterators()
+
+    override fun operationLogEmergingSize(): Long = context.operationLogStorage.emergingSize()
+
+    override fun operationLogIterator(position: Long): OperationLogStorage.Iterator {
+      return context.operationLogStorage.iterator(position) // TODO maybe make it constrained
+    }
+
+    override fun getRecoveryPoints(): List<VfsRecoveryUtils.RecoveryPoint> {
+      return context.getRecoveryPoints()
+    }
 
     override fun begin(): OperationLogStorage.Iterator = stableRangeIterators.first.copy()
 
@@ -374,6 +404,9 @@ class VfsLogImpl private constructor(
     }
   }
 
+  override fun getRecoveryPoints(): List<VfsRecoveryUtils.RecoveryPoint> {
+    return context.getRecoveryPoints()
+  }
 
   fun awaitPendingWrites(timeout: Duration = Duration.INFINITE) {
     val startTime = System.currentTimeMillis()
@@ -469,6 +502,138 @@ class VfsLogImpl private constructor(
         return true
       }
       return false
+    }
+  }
+}
+
+private class RecoveryPointsCollector private constructor(
+  private val stateHolder: AtomicDurableRecord<RecoveryPoints>,
+  private val vfsLogEx: VfsLogEx
+) : AutoCloseable {
+  private val currentPoints = Array(MAX_RECOVERY_POINTS) { NULL_POINT }
+  private var modificationCounter: Int = 0
+  private var persistentModificationCounter: Int = 0
+
+  suspend fun poller() {
+    while (true) {
+      delay(RECOVERY_POINTS_POLL_INTERVAL)
+      val recoveryPointPosition = writeAction {
+        vfsLogEx.tryQuery()?.use { query ->
+          query.operationLogEmergingSize()
+        }
+      }
+      if (recoveryPointPosition != null) {
+        val timestamp = System.currentTimeMillis()
+        synchronized(this) {
+          if (currentPoints[0].logPosition == recoveryPointPosition) return@synchronized // nothing changed since last recovery point
+          // shift points to the right, last point will be dropped
+          for (i in (MAX_RECOVERY_POINTS - 1) downTo 1) currentPoints[i] = currentPoints[i - 1]
+          // add new point
+          currentPoints[0] = RecoveryPointData(timestamp, recoveryPointPosition)
+          modificationCounter++
+        }
+      }
+    }
+  }
+
+  init {
+    synchronized(this) {
+      stateHolder.get().points.forEachIndexed { index, recoveryPointData ->
+        currentPoints[index] = recoveryPointData
+      }
+    }
+  }
+
+  fun updatePersistentState() {
+    val newState = synchronized(this) {
+      val data =
+        if (persistentModificationCounter != modificationCounter) currentPoints.copyOf()
+        else null
+      persistentModificationCounter = modificationCounter
+      data
+    }
+    if (newState != null) {
+      stateHolder.update {
+        newState.copyInto(this.points)
+      }
+    }
+  }
+
+  fun getRecoveryPoints(): List<VfsRecoveryUtils.RecoveryPoint> {
+    val result = ArrayList<VfsRecoveryUtils.RecoveryPoint>(MAX_RECOVERY_POINTS)
+    vfsLogEx.query().use { query ->
+      synchronized(this) {
+        for (point in currentPoints) {
+          if (point == NULL_POINT) continue
+          if (query.begin().getPosition() <= point.logPosition && point.logPosition < query.end().getPosition()) {
+            result.add(VfsRecoveryUtils.RecoveryPoint(point.timestamp, query.operationLogIterator(point.logPosition)))
+          }
+        }
+      }
+    }
+    return result
+  }
+
+  override fun close() {
+    stateHolder.close()
+  }
+
+  companion object {
+
+    fun open(path: Path, mode: OpenMode, vfsLogEx: VfsLogEx): RecoveryPointsCollector {
+      try {
+        val stateHolder = AtomicDurableRecord.open(path, mode, stateBuilder)
+        return RecoveryPointsCollector(stateHolder, vfsLogEx)
+      }
+      catch (e: IncompatibleLayoutException) {
+        if (path.exists()) path.deleteExisting()
+        val newStateHolder = AtomicDurableRecord.open(path, mode, stateBuilder)
+        return RecoveryPointsCollector(newStateHolder, vfsLogEx)
+      }
+    }
+
+    private val RECOVERY_POINTS_POLL_INTERVAL: Long = SystemProperties.getLongProperty(
+      "idea.vfs.log-vfs-operations.recovery-points-poll-interval",
+      150_000L // 2.5 minutes
+    )
+
+    private const val MAX_RECOVERY_POINTS = 60
+
+    internal data class RecoveryPointData(val timestamp: Long, val logPosition: Long) {
+
+      companion object {
+        const val SIZE_BYTES = 2 * Long.SIZE_BYTES
+      }
+    }
+
+    private val NULL_POINT = RecoveryPointData(-1, -1)
+
+    private interface RecoveryPoints {
+      val points: Array<RecoveryPointData>
+    }
+
+    private val stateBuilder: RecordBuilder<RecoveryPoints>.() -> RecoveryPoints = {
+      object : RecoveryPoints {
+        override var points: Array<RecoveryPointData> by custom(
+          MAX_RECOVERY_POINTS * RecoveryPointData.SIZE_BYTES,
+          Array(MAX_RECOVERY_POINTS) { NULL_POINT },
+          serialize = {
+            for (point in this) {
+              it.putLong(point.timestamp)
+              it.putLong(point.logPosition)
+            }
+          },
+          deserialize = {
+            val points = Array(MAX_RECOVERY_POINTS) { NULL_POINT }
+            for (i in 0 until MAX_RECOVERY_POINTS) {
+              val timestamp = it.getLong()
+              val logPosition = it.getLong()
+              points[i] = RecoveryPointData(timestamp, logPosition)
+            }
+            points
+          }
+        )
+      }
     }
   }
 }

@@ -6,6 +6,7 @@ import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.vfs.newvfs.persistent.PersistentFS
 import com.intellij.openapi.vfs.newvfs.persistent.log.VfsLog
+import com.intellij.openapi.vfs.newvfs.persistent.log.VfsLogEx
 import org.jetbrains.annotations.Nls
 
 
@@ -21,7 +22,7 @@ class RecoverVfsFromLogAction : RecoveryAction {
   override fun canBeApplied(recoveryScope: RecoveryScope): Boolean = VfsLog.isVfsTrackingEnabled
 
   override fun performSync(recoveryScope: RecoveryScope): List<CacheInconsistencyProblem> {
-    val log = PersistentFS.getInstance().vfsLog ?: throw IllegalStateException("action called with VfsLog disabled")
+    val log = (PersistentFS.getInstance().vfsLog ?: throw IllegalStateException("action called with VfsLog disabled")) as VfsLogEx
 
     try {
       log.query().use { queryContext ->
