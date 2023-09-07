@@ -36,6 +36,7 @@ import org.jetbrains.plugins.terminal.TerminalIcons
 import org.jetbrains.plugins.terminal.exp.TerminalSelectionModel.TerminalSelectionListener
 import java.awt.Font
 import java.awt.Point
+import java.util.regex.PatternSyntaxException
 import javax.swing.JTextArea
 
 class BlockTerminalSearchSession(
@@ -168,6 +169,13 @@ class BlockTerminalSearchSession(
   private fun updateResults() {
     val text = model.stringToFind
     if (text.isNotEmpty()) {
+      if (model.isRegularExpressions) {
+        checkRegex(text)?.let { warning ->
+          searchResults.clear()
+          component.statusText = warning
+          return
+        }
+      }
       livePreviewController.updateInBackground(model, true)
     }
     else {
@@ -206,6 +214,23 @@ class BlockTerminalSearchSession(
       else -> FindBundle.message("emptyText.used.options", options[0], options[1])
     }
     return StringUtil.capitalize(text)
+  }
+
+  /**
+   * Returns warning string if regex is incorrect, null otherwise.
+   * Partially copied from [EditorSearchSession.updateResults].
+   */
+  private fun checkRegex(text: String): @Nls String? {
+    try {
+      Regex(text)
+    }
+    catch (e: PatternSyntaxException) {
+      return FindBundle.message(SearchSession.INCORRECT_REGEXP_MESSAGE_KEY)
+    }
+    return if (text.matches(Regex("\\|+"))) {
+      ApplicationBundle.message("editorsearch.empty.string.matches")
+    }
+    else null
   }
 
   override fun getFindModel(): FindModel = model
