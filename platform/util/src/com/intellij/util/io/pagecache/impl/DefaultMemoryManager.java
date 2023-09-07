@@ -1,6 +1,7 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.io.pagecache.impl;
 
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.util.io.DirectByteBufferAllocator;
 import com.intellij.util.io.pagecache.FilePageCacheStatistics;
 import org.jetbrains.annotations.NotNull;
@@ -15,6 +16,8 @@ import java.util.concurrent.atomic.AtomicLong;
  * Heap buffers are not cached: just allocated and released to GC.
  */
 public final class DefaultMemoryManager implements IMemoryManager {
+  private static final Logger LOG = Logger.getInstance(DefaultMemoryManager.class);
+
   private final long nativeCapacityBytes;
   private final long heapCapacityBytes;
 
@@ -62,9 +65,16 @@ public final class DefaultMemoryManager implements IMemoryManager {
         return null;
       }
       if (heapBytesUsed.compareAndSet(used, used + bufferSize)) {
-        ByteBuffer heapByteBuffer = ByteBuffer.allocate(bufferSize);
-        statistics.pageAllocatedHeap(bufferSize);
-        return heapByteBuffer;
+        try {
+          ByteBuffer heapByteBuffer = ByteBuffer.allocate(bufferSize);
+          statistics.pageAllocatedHeap(bufferSize);
+          return heapByteBuffer;
+        }
+        catch (OutOfMemoryError e) {
+          LOG.warnWithDebug("OutOfMemory: can't allocate heap buffer[size: " + bufferSize + "b] -> skip, will try to deal without it", e);
+          heapBytesUsed.addAndGet(-bufferSize);
+          return null;
+        }
       }
     }
   }
