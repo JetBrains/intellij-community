@@ -45,7 +45,7 @@ public class PsiClassReferenceListStubImpl extends StubBase<PsiReferenceList> im
   
   private boolean shouldSkipSoleObject() {
     final boolean compiled = ((JavaClassReferenceListElementType)getStubType()).isCompiled(this);
-    return compiled && myInfos.length == 1 && myInfos[0].text().equals(CommonClassNames.JAVA_LANG_OBJECT) &&
+    return compiled && myInfos.length == 1 && myInfos[0].isClassType(CommonClassNames.JAVA_LANG_OBJECT) &&
            myInfos[0].getTypeAnnotations().isEmpty();
   }
 

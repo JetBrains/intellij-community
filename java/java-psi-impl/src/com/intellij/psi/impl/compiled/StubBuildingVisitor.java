@@ -127,7 +127,7 @@ public class StubBuildingVisitor<T> extends ClassVisitor {
 
     if (myResult.isInterface()) {
       if (myClassInfo.interfaces != null && myResult.isAnnotationType()) {
-        myClassInfo.interfaces.removeIf(info -> info.text().equals(CommonClassNames.JAVA_LANG_ANNOTATION_ANNOTATION));
+        myClassInfo.interfaces.removeIf(info -> info.isClassType(CommonClassNames.JAVA_LANG_ANNOTATION_ANNOTATION));
       }
       newReferenceList(JavaStubElementTypes.EXTENDS_LIST, myResult, myClassInfo.interfaces);
       newReferenceList(JavaStubElementTypes.IMPLEMENTS_LIST, myResult, Collections.emptyList());
@@ -349,7 +349,7 @@ public class StubBuildingVisitor<T> extends ClassVisitor {
 
     byte flags = PsiFieldStubImpl.packFlags(isSet(access, Opcodes.ACC_ENUM), isSet(access, Opcodes.ACC_DEPRECATED), false, false);
     TypeInfo type = fieldType(desc, signature);
-    String initializer = constToString(value, type.text(), false, myFirstPassData);
+    String initializer = constToString(value, type, false, myFirstPassData);
     PsiFieldStub stub = new PsiFieldStubImpl(myResult, name, type, initializer, flags);
     PsiModifierListStub modList = new PsiModifierListStubImpl(stub, packFieldFlags(access));
     return new FieldAnnotationCollectingVisitor(stub, modList, myFirstPassData);
@@ -719,7 +719,7 @@ public class StubBuildingVisitor<T> extends ClassVisitor {
   }
 
   @Nullable
-  static String constToString(@Nullable Object value, @Nullable String type, boolean anno, Function<? super String, String> mapping) {
+  static String constToString(@Nullable Object value, TypeInfo type, boolean anno, Function<? super String, String> mapping) {
     if (value == null) return null;
 
     if (value instanceof String) {
@@ -739,11 +739,11 @@ public class StubBuildingVisitor<T> extends ClassVisitor {
     }
 
     if (value instanceof Integer) {
-      if ("boolean".equals(type)) {
+      if (type.isPrimitive("boolean")) {
         if (value.equals(0)) return "false";
         if (value.equals(1)) return "true";
       }
-      if ("char".equals(type)) {
+      if (type.isPrimitive("char")) {
         char ch = (char)((Integer)value).intValue();
         return "'" + StringUtil.escapeCharCharacters(String.valueOf(ch)) + "'";
       }

@@ -56,7 +56,7 @@ public final class TypeInfo {
     ourTypeLengthMask = typeLengthMask;
   }
 
-  private static final TypeInfo NULL = new TypeInfo(null, (byte)0, TypeKind.NULL_TYPE);
+  public static final TypeInfo NULL = new TypeInfo(null, (byte)0, TypeKind.NULL_TYPE);
   
   public enum TypeKind {
     NORMAL('='), EXTENDS_TYPE('+'), SUPER_TYPE('-'), VAR_ARG('.'), NULL_TYPE('n');
@@ -85,6 +85,14 @@ public final class TypeInfo {
     return this.text;
   }
   
+  public boolean isClassType(@NotNull String fqn) {
+    return arrayCount == 0 && kind == TypeKind.NORMAL && fqn.equals(this.text);
+  }
+
+  public boolean isPrimitive(@NotNull String typeToCompare) {
+    return arrayCount == 0 && kind == TypeKind.NORMAL && typeToCompare.equals(this.text);
+  }
+
   public int arrayCount() {
     return arrayCount;
   }

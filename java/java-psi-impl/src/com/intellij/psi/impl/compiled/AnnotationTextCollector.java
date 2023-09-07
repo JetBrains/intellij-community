@@ -1,6 +1,7 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.psi.impl.compiled;
 
+import com.intellij.psi.impl.cache.TypeInfo;
 import com.intellij.util.Consumer;
 import com.intellij.util.Function;
 import org.jetbrains.annotations.Nullable;
@@ -29,7 +30,7 @@ final class AnnotationTextCollector extends AnnotationVisitor {
   @Override
   public void visit(String name, Object value) {
     valuePairPrefix(name);
-    myBuilder.append(StubBuildingVisitor.constToString(value, null, true, myMapping));
+    myBuilder.append(StubBuildingVisitor.constToString(value, TypeInfo.NULL, true, myMapping));
   }
 
   @Override
