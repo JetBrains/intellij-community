@@ -30,7 +30,7 @@ import org.jetbrains.jewel.OutlinedButton
 import org.jetbrains.jewel.Text
 import org.jetbrains.jewel.TextField
 import org.jetbrains.jewel.bridge.SwingBridgeTheme
-import org.jetbrains.jewel.bridge.addComposePanel
+import org.jetbrains.jewel.bridge.addComposeTab
 import org.jetbrains.jewel.bridge.toComposeColor
 import org.jetbrains.jewel.themes.intui.standalone.IntUiTheme
 
@@ -39,7 +39,7 @@ internal class JewelDemoToolWindow : ToolWindowFactory, DumbAware {
 
     @OptIn(ExperimentalJewelApi::class)
     override fun createToolWindowContent(project: Project, toolWindow: ToolWindow) {
-        toolWindow.addComposePanel("Jewel") {
+        toolWindow.addComposeTab("Jewel") {
             SwingBridgeTheme {
                 val resourceLoader = LocalResourceLoader.current
                 val bgColor by remember(IntUiTheme.isDark) { mutableStateOf(JBColor.PanelBackground.toComposeColor()) }
