@@ -171,12 +171,12 @@ public class StubBuildingVisitor<T> extends ClassVisitor {
     SignatureParsing.CharIterator iterator = new SignatureParsing.CharIterator(signature);
     result.typeParameters = SignatureParsing.parseTypeParametersDeclaration(iterator, myFirstPassData);
     String superName = SignatureParsing.parseTopLevelClassRefSignature(iterator, myFirstPassData);
-    result.superType = superName == null ? null : new TypeInfo(superName);
+    result.superType = superName == null ? null : TypeInfo.fromStringNoArray(superName);
     while (iterator.current() != CharacterIterator.DONE) {
       String name = SignatureParsing.parseTopLevelClassRefSignature(iterator, myFirstPassData);
       if (name == null) throw new ClsFormatException();
       if (result.interfaces == null) result.interfaces = new SmartList<>();
-      result.interfaces.add(new TypeInfo(name));
+      result.interfaces.add(TypeInfo.fromStringNoArray(name));
     }
     return result;
   }
@@ -184,7 +184,7 @@ public class StubBuildingVisitor<T> extends ClassVisitor {
   private ClassInfo parseClassDescription(String superClass, String[] superInterfaces) {
     ClassInfo result = new ClassInfo();
     result.typeParameters = TypeParametersDeclaration.EMPTY;
-    result.superType = superClass != null ? new TypeInfo(myFirstPassData.mapJvmClassNameToJava(superClass, false)) : null;
+    result.superType = superClass != null ? TypeInfo.fromStringNoArray(myFirstPassData.mapJvmClassNameToJava(superClass, false)) : null;
     result.interfaces = myFirstPassData.createTypes(superInterfaces);
     return result;
   }
@@ -334,7 +334,7 @@ public class StubBuildingVisitor<T> extends ClassVisitor {
     byte flags = PsiRecordComponentStubImpl.packFlags(isEllipsis, false);
     TypeInfo type = fieldType(descriptor, signature);
     if (isEllipsis) {
-      type = new TypeInfo(type.text, type.arrayCount, true);
+      type = type.withEllipsis();
     }
     PsiRecordComponentStubImpl stub = new PsiRecordComponentStubImpl(myHeaderStub, name, type, flags);
     PsiModifierListStub modList = new PsiModifierListStubImpl(stub, 0);
@@ -494,7 +494,7 @@ public class StubBuildingVisitor<T> extends ClassVisitor {
     while (iterator.current() == '^') {
       iterator.next();
       if (result.throwTypes == null) result.throwTypes = new SmartList<>();
-      result.throwTypes.add(new TypeInfo(SignatureParsing.parseTypeString(iterator, myFirstPassData)));
+      result.throwTypes.add(TypeInfo.fromStringNoArray(SignatureParsing.parseTypeString(iterator, myFirstPassData)));
     }
     if (exceptions != null && (result.throwTypes == null || exceptions.length > result.throwTypes.size())) {
       // a signature may be inconsistent with exception list - in this case, the more complete list takes precedence

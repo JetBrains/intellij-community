@@ -56,7 +56,7 @@ public final class TypeInfo {
     ourTypeLengthMask = typeLengthMask;
   }
 
-  private static final TypeInfo NULL = new TypeInfo(null);
+  private static final TypeInfo NULL = new TypeInfo(null, (byte)0, false);
 
   public final String text;
   public final byte arrayCount;
@@ -64,23 +64,21 @@ public final class TypeInfo {
   private TypeAnnotationContainer myTypeAnnotations;
 
   /**
-   * Creates a non-array type info
-   *
-   * @param text type text (not array)
-   */
-  public TypeInfo(String text) {
-    this(text, (byte)0, false);
-  }
-
-  /**
    * @param text type text (not array)
    * @param arrayCount number of array components (including vararg component, if any)
    * @param ellipsis if true, the last array component should be interpreted as vararg
    */
-  public TypeInfo(String text, byte arrayCount, boolean ellipsis) {
+  private TypeInfo(String text, byte arrayCount, boolean ellipsis) {
     this.text = text == null ? null : internFrequentType(text);
     this.arrayCount = arrayCount;
     isEllipsis = ellipsis;
+  }
+
+  /**
+   * @return the same TypeInfo but with ellipsis bit set
+   */
+  public TypeInfo withEllipsis() {
+    return new TypeInfo(text, arrayCount, true);
   }
 
   /**
@@ -206,6 +204,10 @@ public final class TypeInfo {
       collector.install();
     }
     return info;
+  }
+
+  public static TypeInfo fromStringNoArray(String text) {
+    return new TypeInfo(text, (byte)0, false);
   }
 
   @NotNull

@@ -108,7 +108,7 @@ public final class SignatureParsing {
     private final TypeInfo[] myBounds;
 
     private TypeParameterDeclaration(String parameter, TypeInfo[] bounds) {
-      myTypeParameter = new TypeInfo(parameter);
+      myTypeParameter = TypeInfo.fromStringNoArray(parameter);
       myBounds = bounds;
     }
 
@@ -154,7 +154,7 @@ public final class SignatureParsing {
       signature.next();
       String bound = parseTopLevelClassRefSignature(signature, mapping);
       if (!bounds.isEmpty() && bound == null) continue;
-      bounds.add(new TypeInfo(bound));
+      bounds.add(TypeInfo.fromStringNoArray(bound));
     }
 
     return new TypeParameterDeclaration(parameterName, bounds.toArray(TypeInfo.EMPTY_ARRAY));

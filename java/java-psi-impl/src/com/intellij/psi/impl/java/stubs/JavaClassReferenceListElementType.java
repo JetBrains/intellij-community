@@ -83,7 +83,7 @@ public abstract class JavaClassReferenceListElementType extends JavaStubElementT
     len = Math.abs(len);
     TypeInfo[] infos = new TypeInfo[len];
     for (int i = 0; i < infos.length; i++) {
-      infos[i] = new TypeInfo(dataStream.readNameString());
+      infos[i] = TypeInfo.fromStringNoArray(dataStream.readNameString());
     }
     if (hasAnnotations) {
       for (int i = 0; i < len; i++) {

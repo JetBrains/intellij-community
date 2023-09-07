@@ -112,7 +112,7 @@ class FirstPassData implements Function<@NotNull String, @NotNull String> {
   @Contract("null -> null; !null -> !null")
   List<TypeInfo> createTypes(String @Nullable [] jvmNames) {
     return jvmNames == null ? null :
-           ContainerUtil.map(jvmNames, jvmName -> new TypeInfo(mapJvmClassNameToJava(jvmName, false)));
+           ContainerUtil.map(jvmNames, jvmName -> TypeInfo.fromStringNoArray(mapJvmClassNameToJava(jvmName, false)));
   }
 
   /**
