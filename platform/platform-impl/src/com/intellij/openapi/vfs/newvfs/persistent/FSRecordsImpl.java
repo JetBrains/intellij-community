@@ -103,7 +103,12 @@ public final class FSRecordsImpl {
    * the error passed in
    */
   public static final ErrorHandler ON_ERROR_MARK_CORRUPTED_AND_SCHEDULE_REBUILD = (records, error) -> {
-    records.connection.markAsCorruptedAndScheduleRebuild(error);
+    if (!records.isDisposed()) {
+      records.connection.markAsCorruptedAndScheduleRebuild(error);
+    }
+    else {
+      error.addSuppressed(records.alreadyDisposedException());
+    }
     if (error instanceof IOException) {
       throw new UncheckedIOException((IOException)error);
     }
@@ -112,8 +117,13 @@ public final class FSRecordsImpl {
 
   public static final ErrorHandler ON_ERROR_MARK_CORRUPTED_AND_SCHEDULE_REBUILD_AND_SUGGEST_CACHE_RECOVERY_IF_ALLOWED =
     (records, error) -> {
-      records.connection.markAsCorruptedAndScheduleRebuild(error);
-      ApplicationManager.getApplication().getService(RecoverVfsFromLogService.class).suggestAutomaticRecoveryIfAllowed();
+      if (!records.isDisposed()) {
+        records.connection.markAsCorruptedAndScheduleRebuild(error);
+        ApplicationManager.getApplication().getService(RecoverVfsFromLogService.class).suggestAutomaticRecoveryIfAllowed();
+      }
+      else {
+        error.addSuppressed(records.alreadyDisposedException());
+      }
       if (error instanceof IOException) {
         throw new UncheckedIOException((IOException)error);
       }
@@ -360,7 +370,7 @@ public final class FSRecordsImpl {
           stackTraceEx.addSuppressed(e);
         }
       }
-      
+
       try {
         PersistentFSConnector.disconnect(connection);
       }
@@ -380,12 +390,16 @@ public final class FSRecordsImpl {
   @Contract("->fail")
   void checkNotDisposed() {
     if (disposed) {
-      AlreadyDisposedException alreadyDisposed = new AlreadyDisposedException("VFS is already disposed");
-      if (disposedStackTrace != null) {
-        alreadyDisposed.addSuppressed(disposedStackTrace);
-      }
-      throw alreadyDisposed;
+      throw alreadyDisposedException();
     }
+  }
+
+  private @NotNull AlreadyDisposedException alreadyDisposedException() {
+    AlreadyDisposedException alreadyDisposed = new AlreadyDisposedException("VFS is already disposed");
+    if (disposedStackTrace != null) {
+      alreadyDisposed.addSuppressed(disposedStackTrace);
+    }
+    return alreadyDisposed;
   }
 
 
