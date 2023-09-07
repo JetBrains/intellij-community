@@ -94,4 +94,10 @@
                     interface="com.intellij.searchEverywhereMl.semantics.indices.FileIndexableEntitiesProvider"
                     dynamic="true"/>
   </extensionPoints>
+
+  <projectListeners>
+    <listener
+      class="com.intellij.searchEverywhereMl.semantics.services.IndexingLifecycleListener"
+      topic="com.intellij.searchEverywhereMl.semantics.listeners.SemanticIndexingFinishListener"/>
+  </projectListeners>
 </idea-plugin>

@@ -7,6 +7,7 @@ import com.intellij.searchEverywhereMl.semantics.services.ActionEmbeddingsStorag
 import com.intellij.searchEverywhereMl.semantics.services.ClassEmbeddingsStorage
 import com.intellij.searchEverywhereMl.semantics.services.FileEmbeddingsStorage
 import com.intellij.searchEverywhereMl.semantics.services.SymbolEmbeddingStorage
+import com.intellij.searchEverywhereMl.semantics.utils.checkIntegrationTestMode
 import com.intellij.util.xmlb.annotations.OptionTag
 
 
@@ -19,7 +20,7 @@ class SemanticSearchSettingsImpl : SemanticSearchSettings, PersistentStateCompon
   private var state = SemanticSearchSettingsState()
 
   override var enabledInActionsTab: Boolean
-    get() = state.enabledInActionsTab
+    get() = checkIntegrationTestMode() || state.enabledInActionsTab
     set(newValue) {
       state.enabledInActionsTab = newValue
       ProjectManager.getInstance().openProjects.first().let {
@@ -28,7 +29,7 @@ class SemanticSearchSettingsImpl : SemanticSearchSettings, PersistentStateCompon
     }
 
   override var enabledInFilesTab: Boolean
-    get() = state.enabledInFilesTab
+    get() = checkIntegrationTestMode() || state.enabledInFilesTab
     set(newValue) {
       state.enabledInFilesTab = newValue
       ProjectManager.getInstance().openProjects.forEach {
@@ -37,7 +38,7 @@ class SemanticSearchSettingsImpl : SemanticSearchSettings, PersistentStateCompon
     }
 
   override var enabledInSymbolsTab: Boolean
-    get() = state.enabledInSymbolsTab
+    get() = checkIntegrationTestMode() || state.enabledInSymbolsTab
     set(newValue) {
       state.enabledInSymbolsTab = newValue
       ProjectManager.getInstance().openProjects.forEach {
@@ -46,7 +47,7 @@ class SemanticSearchSettingsImpl : SemanticSearchSettings, PersistentStateCompon
     }
 
   override var enabledInClassesTab: Boolean
-    get() = state.enabledInClassesTab
+    get() = checkIntegrationTestMode() || state.enabledInClassesTab
     set(newValue) {
       state.enabledInClassesTab = newValue
       ProjectManager.getInstance().openProjects.forEach {

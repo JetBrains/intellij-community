@@ -9,8 +9,12 @@ import com.intellij.openapi.project.DumbService
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.registry.Registry
+import com.intellij.platform.diagnostic.telemetry.helpers.computeWithSpan
+import com.intellij.platform.diagnostic.telemetry.helpers.runWithSpan
 import com.intellij.searchEverywhereMl.semantics.indices.DiskSynchronizedEmbeddingSearchIndex
 import com.intellij.searchEverywhereMl.semantics.indices.IndexableEntity
+import com.intellij.searchEverywhereMl.semantics.listeners.SemanticIndexingFinishListener
+import com.intellij.searchEverywhereMl.semantics.utils.SEMANTIC_SEARCH_TRACER
 import com.intellij.searchEverywhereMl.semantics.utils.ScoredText
 import com.intellij.searchEverywhereMl.semantics.utils.generateEmbedding
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
@@ -25,6 +29,7 @@ abstract class DiskSynchronizedEmbeddingsStorage<T : IndexableEntity>(val projec
 
   abstract val scanningTitle: String
   abstract val setupTitle: String
+  abstract val spanIndexName: String
 
   abstract val indexMemoryWeight: Int
   open val indexStrongLimit: Int? = null
@@ -42,6 +47,7 @@ abstract class DiskSynchronizedEmbeddingsStorage<T : IndexableEntity>(val projec
         index.loadFromDisk()
         logger.debug { "Loaded embedding index from disk, size: ${index.size}, root: ${index.root}" }
         generateEmbeddingsIfNecessary()
+        project.messageBus.syncPublisher(SemanticIndexingFinishListener.FINISHED).finished()
       }
     }
   }
@@ -76,38 +82,41 @@ abstract class DiskSynchronizedEmbeddingsStorage<T : IndexableEntity>(val projec
     )
   }
 
-  /* Thread-safe job for updating embeddings. Consequent call stops the previous execution */
   @RequiresBackgroundThread
   fun generateEmbeddingsIfNecessary() = GLOBAL_INDEXING_LOCK.withLock {
     logger.debug { "Started indexing for ${this.javaClass.simpleName}" }
     val scanningIndicator = BackgroundableProcessIndicator(project, scanningTitle, null, "", true)
-    val indexableEntities = try {
-      ProgressManager.getInstance().runProcess(this::getIndexableEntities, scanningIndicator)
-    }
-    catch (_: ProcessCanceledException) {
-      return
+    val indexableEntities = computeWithSpan(SEMANTIC_SEARCH_TRACER, spanIndexName + "Scanning") {
+      try {
+        ProgressManager.getInstance().runProcess(this::getIndexableEntities, scanningIndicator)
+      }
+      catch (_: ProcessCanceledException) {
+        return
+      }
     }
     ApplicationManager.getApplication().invokeLater { Disposer.dispose(scanningIndicator) }
     logger.debug { "Found ${indexableEntities.size} indexable entities for ${this.javaClass.simpleName}" }
 
     val storageSetupTask = DiskSynchronizedEmbeddingsStorageSetup(
       index, indexingTaskManager, indexableEntities, setupTaskIndicator, setupTitle)
-    try {
-      if (Registry.`is`("search.everywhere.ml.semantic.indexing.show.progress")) {
-        val indicator = BackgroundableProcessIndicator(project, setupTitle, null, "", true)
-        ProgressManager.getInstance().runProcess({ storageSetupTask.run(indicator) }, indicator)
-        ApplicationManager.getApplication().invokeLater { Disposer.dispose(indicator) }
+    runWithSpan(SEMANTIC_SEARCH_TRACER, spanIndexName + "Indexing") {
+      try {
+        if (Registry.`is`("search.everywhere.ml.semantic.indexing.show.progress")) {
+          val indicator = BackgroundableProcessIndicator(project, setupTitle, null, "", true)
+          ProgressManager.getInstance().runProcess({ storageSetupTask.run(indicator) }, indicator)
+          ApplicationManager.getApplication().invokeLater { Disposer.dispose(indicator) }
+        }
+        else {
+          val indicator = EmptyProgressIndicator()
+          ProgressManager.getInstance().runProcess({ storageSetupTask.run(indicator) }, indicator)
+        }
       }
-      else {
-        val indicator = EmptyProgressIndicator()
-        ProgressManager.getInstance().runProcess({ storageSetupTask.run(indicator) }, indicator)
+      catch (_: ProcessCanceledException) {
+        // do nothing, finish with what we indexed
       }
+      storageSetupTask.onFinish()
+      logger.debug { "Finished indexing for ${this.javaClass.simpleName}" }
     }
-    catch (_: ProcessCanceledException) {
-      // do nothing, finish with what we indexed
-    }
-    storageSetupTask.onFinish()
-    logger.debug { "Finished indexing for ${this.javaClass.simpleName}" }
   }
 
   companion object {

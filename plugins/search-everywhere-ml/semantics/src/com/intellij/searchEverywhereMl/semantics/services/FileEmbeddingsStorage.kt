@@ -37,6 +37,7 @@ class FileEmbeddingsStorage(project: Project) : DiskSynchronizedEmbeddingsStorag
 
   override val scanningTitle = SemanticSearchBundle.getMessage("search.everywhere.ml.semantic.files.scanning.label")
   override val setupTitle = SemanticSearchBundle.getMessage("search.everywhere.ml.semantic.files.generation.label")
+  override val spanIndexName = "semanticFiles"
 
   override val indexMemoryWeight: Int = 1
   override val indexStrongLimit = Registry.intValue("search.everywhere.ml.semantic.indexing.indexable.files.limit")
