@@ -115,6 +115,7 @@ object VfsRecoveryUtils {
     var fileStateCounts: Map<RecoveryState, Int> = emptyMap(),
     var recoveredAttributesCount: Long = 0,
     var botchedAttributesCount: Long = 0,
+    var droppedObsoleteAttributesCount: Long = 0,
     var recoveredContentsCount: Int = 0,
     var lostContentsCount: Int = 0,
     var duplicateChildrenDeduplicated: Int = 0,
@@ -182,12 +183,32 @@ object VfsRecoveryUtils {
 
     fun getSnapshot(filler: SnapshotFillerPresets.Filler): ExtendedVfsSnapshot {
       setFiller(filler)
-      val snapshot = vfsTimeMachine.getSnapshot(point()).precededByCompactedInstance()
-      return snapshot
+      return vfsTimeMachine.getSnapshot(point()).precededByCompactedInstance()
     }
 
     private fun ExtendedVfsSnapshot.precededByCompactedInstance(): ExtendedVfsSnapshot =
       compactedVfs?.let { this.precededBy(it) } ?: this
+
+    fun calculateAttributesAlteredAfterRecoveryPointFilter(fileIdRange: IntRange): (fileId: Int, attr: EnumeratedFileAttribute) -> Boolean {
+      val dropAttrsSet = mutableSetOf<Pair<Int, EnumeratedFileAttribute>>()
+      val erasedFileIds = mutableSetOf<Int>()
+      val iter = point()
+      VfsChronicle.traverseOperationsLog(iter, OperationLogStorage.TraverseDirection.PLAY,
+                                         VfsModificationContract.attributeData.relevantOperations,
+                                         onIncomplete = { /* skip FIXME ? */ },
+                                         onCompleteExceptional = { /* skip FIXME ? */ }) { op ->
+        VfsModificationContract.attributeData.modifier(op) { overwriteData ->
+          val fileId = op.getFileId()!!
+          if (fileId in fileIdRange) {
+            if (overwriteData.enumeratedAttributeFilter == null) erasedFileIds.add(fileId)
+            else dropAttrsSet.add(fileId to overwriteData.enumeratedAttributeFilter)
+          }
+        }
+      }
+      return { fileId, attr ->
+        fileId in erasedFileIds || (fileId to attr) in dropAttrsSet
+      }
+    }
 
     var lastAllocatedRecord = superRootId
       private set
@@ -395,6 +416,7 @@ object VfsRecoveryUtils {
             fileId == null || fileId in chunkRange
           }
       )
+      val alteredAttributesFilter = calculateAttributesAlteredAfterRecoveryPointFilter(chunkRange)
 
       for (file in chunkRange.map { snapshot.getFileById(it) }) {
         ensureAllocated(file.fileId)
@@ -440,6 +462,10 @@ object VfsRecoveryUtils {
           // recover available attrs except children
           for ((enumeratedAttrId, dataRef) in file.attributeDataMap.get()) {
             if (enumeratedAttrId == childrenAttributeEnumerated) continue
+            if (alteredAttributesFilter(file.fileId, enumeratedAttrId)) {
+              recoveryResult.droppedObsoleteAttributesCount++
+              continue
+            }
             val attr = queryContext.deenumerateAttribute(enumeratedAttrId) ?: throw IllegalStateException(
               "cannot deenumerate attribute using vfslog enumerator (enumeratedAttribute=$enumeratedAttrId)")
             try {
