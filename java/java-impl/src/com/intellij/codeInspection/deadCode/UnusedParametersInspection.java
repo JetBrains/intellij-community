@@ -98,8 +98,7 @@ class UnusedParametersInspection extends GlobalJavaBatchInspectionTool {
     AnalysisScope scope = manager.getScope();
     manager.iterate(new RefJavaVisitor() {
       @Override
-      public void visitElement(@NotNull RefEntity refEntity) {
-        if (!(refEntity instanceof RefMethod refMethod)) return;
+      public void visitMethod(@NotNull RefMethod refMethod) {
         if (refMethod.isStatic() || refMethod.isConstructor() ||
             PsiModifier.PRIVATE.equals(refMethod.getAccessModifier())) {
           return;

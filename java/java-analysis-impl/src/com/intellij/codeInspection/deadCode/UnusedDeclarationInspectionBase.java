@@ -58,7 +58,7 @@ public class UnusedDeclarationInspectionBase extends GlobalInspectionTool {
   private final boolean myEnabledInEditor;
 
   /**
-   * We can't have a direct link on the entry points as it blocks dynamic unloading of the plugins e.g. TestNG
+   * We can't have a direct link on the entry points as it blocks dynamic unloading of the plugins e.g., TestNG
    */
   private final Map<String, Element> entryPointElements = new ConcurrentHashMap<>();
 
@@ -279,10 +279,8 @@ public class UnusedDeclarationInspectionBase extends GlobalInspectionTool {
 
           if (file == null) return;
           boolean isSuppressed = refElement.isSuppressed(getShortName(), ALTERNATIVE_ID);
-          if (isSuppressed || !((GlobalInspectionContextBase)globalContext).isToCheckFile(file, UnusedDeclarationInspectionBase.this)) {
-            if (isSuppressed || !scope.contains(file)) {
-              getEntryPointsManager(globalContext).addEntryPoint(refElement, false);
-            }
+          if (isSuppressed || !((GlobalInspectionContextBase)globalContext).isToCheckFile(file, UnusedDeclarationInspectionBase.this) && !scope.contains(file)) {
+            getEntryPointsManager(globalContext).addEntryPoint(refElement, false);
           }
         }
       }
@@ -319,7 +317,8 @@ public class UnusedDeclarationInspectionBase extends GlobalInspectionTool {
       }
 
       if (owner instanceof RefClass &&
-          (isAddAppletEnabled() && ((RefClass)owner).isApplet() || isAddServletEnabled() && ((RefClass)owner).isServlet())) {
+          (isAddAppletEnabled() && ((RefClass)owner).isApplet()
+           || isAddServletEnabled() && ((RefClass)owner).isServlet())) {
         return true;
       }
     }
@@ -411,94 +410,98 @@ public class UnusedDeclarationInspectionBase extends GlobalInspectionTool {
     boolean[] requestAdded = {false};
     globalContext.getRefManager().iterate(new RefJavaVisitor() {
       @Override
-      public void visitElement(@NotNull RefEntity refEntity) {
-        if (!(refEntity instanceof RefJavaElement refElement)) return;
-        if (refEntity instanceof RefClass refClass && refClass.isAnonymous()) return;
-        if (filter.accepts(refElement) && !processedSuspicious.contains(refElement)) {
-          refEntity.accept(new RefJavaVisitor() {
-            @Override
-            public void visitField(@NotNull RefField refField) {
-              processedSuspicious.add(refField);
-              UField uField = refField.getUastElement();
-              if (uField != null && isSerializationImplicitlyUsedField(uField)) {
-                getEntryPointsManager(globalContext).addEntryPoint(refField, false);
-              }
-              else {
-                globalContext.getExtension(GlobalJavaInspectionContext.CONTEXT).enqueueFieldUsagesProcessor(refField, psiReference -> {
-                  getEntryPointsManager(globalContext).addEntryPoint(refField, false);
-                  return false;
-                });
-                requestAdded[0] = true;
-              }
-            }
+      public void visitField(@NotNull RefField refField) {
+        if (!filter.accepts(refField) || processedSuspicious.contains(refField)) {
+          return;
+        }
+        processedSuspicious.add(refField);
+        UField uField = refField.getUastElement();
+        if (uField != null && isSerializationImplicitlyUsedField(uField)) {
+          getEntryPointsManager(globalContext).addEntryPoint(refField, false);
+        }
+        else {
+          globalContext.getExtension(GlobalJavaInspectionContext.CONTEXT).enqueueFieldUsagesProcessor(refField, psiReference -> {
+            getEntryPointsManager(globalContext).addEntryPoint(refField, false);
+            return false;
+          });
+          requestAdded[0] = true;
+        }
+      }
 
-            @Override
-            public void visitMethod(@NotNull RefMethod refMethod) {
-              processedSuspicious.add(refMethod);
-              if (refMethod instanceof RefImplicitConstructor ctor) {
-                RefClass ownerClass = ctor.getOwnerClass();
-                visitClass(ownerClass);
-                return;
-              }
-              if (refMethod.isConstructor()) {
-                RefClass ownerClass = refMethod.getOwnerClass();
-                if (ownerClass != null) {
-                  queryQualifiedNameUsages(ownerClass);
-                }
-              }
-              UMethod uMethod = refMethod.getUastElement();
-              if (uMethod != null && (isSerializablePatternMethod(uMethod, refMethod.getOwnerClass()) ||
-                                      // todo this method potentially leads to INRE. Perhaps, it should be reconsidered/deleted (IJ-CR-5556)
-                                      belongsToRepeatableAnnotationContainer(uMethod, refMethod.getOwnerClass()))) {
-                getEntryPointsManager(globalContext).addEntryPoint(refMethod, false);
-              }
-              else if (!refMethod.isExternalOverride() && !PsiModifier.PRIVATE.equals(refMethod.getAccessModifier())) {
-                processedSuspicious.addAll(refMethod.getDerivedMethods());
-                enqueueMethodUsages(globalContext, refMethod);
-                requestAdded[0] = true;
-              }
-            }
+      @Override
+      public void visitMethod(@NotNull RefMethod refMethod) {
+        if (!filter.accepts(refMethod) || processedSuspicious.contains(refMethod)) {
+          return;
+        }
+        processedSuspicious.add(refMethod);
+        if (refMethod instanceof RefImplicitConstructor ctor) {
+          RefClass ownerClass = ctor.getOwnerClass();
+          doVisitClass(ownerClass);
+          return;
+        }
+        if (refMethod.isConstructor()) {
+          RefClass ownerClass = refMethod.getOwnerClass();
+          if (ownerClass != null) {
+            queryQualifiedNameUsages(ownerClass);
+          }
+        }
+        UMethod uMethod = refMethod.getUastElement();
+        if (uMethod != null && (isSerializablePatternMethod(uMethod, refMethod.getOwnerClass()) ||
+                                // todo this method potentially leads to INRE. Perhaps, it should be reconsidered/deleted (IJ-CR-5556)
+                                belongsToRepeatableAnnotationContainer(uMethod, refMethod.getOwnerClass()))) {
+          getEntryPointsManager(globalContext).addEntryPoint(refMethod, false);
+        }
+        else if (!refMethod.isExternalOverride() && !PsiModifier.PRIVATE.equals(refMethod.getAccessModifier())) {
+          processedSuspicious.addAll(refMethod.getDerivedMethods());
+          enqueueMethodUsages(globalContext, refMethod);
+          requestAdded[0] = true;
+        }
+      }
 
-            @Override
-            public void visitClass(@NotNull RefClass refClass) {
-              processedSuspicious.add(refClass);
-              if (!refClass.isAnonymous()) {
-                globalContext.getExtension(GlobalJavaInspectionContext.CONTEXT).enqueueDerivedClassesProcessor(refClass, inheritor -> {
-                  getEntryPointsManager(globalContext).addEntryPoint(refClass, false);
-                  return false;
-                });
+      @Override
+      public void visitClass(@NotNull RefClass refClass) {
+        if (!filter.accepts(refClass) || processedSuspicious.contains(refClass)) {
+          return;
+        }
+        doVisitClass(refClass);
+      }
 
-                globalContext.getExtension(GlobalJavaInspectionContext.CONTEXT).enqueueClassUsagesProcessor(refClass, psiReference -> {
-                  getEntryPointsManager(globalContext).addEntryPoint(refClass, false);
-                  return false;
-                });
+      private void doVisitClass(@NotNull RefClass refClass) {
+        if (!refClass.isAnonymous()) {
+          processedSuspicious.add(refClass);
+          globalContext.getExtension(GlobalJavaInspectionContext.CONTEXT).enqueueDerivedClassesProcessor(refClass, inheritor -> {
+            getEntryPointsManager(globalContext).addEntryPoint(refClass, false);
+            return false;
+          });
 
-                queryQualifiedNameUsages(refClass);
-                requestAdded[0] = true;
-              }
-            }
+          globalContext.getExtension(GlobalJavaInspectionContext.CONTEXT).enqueueClassUsagesProcessor(refClass, psiReference -> {
+            getEntryPointsManager(globalContext).addEntryPoint(refClass, false);
+            return false;
+          });
 
-            void queryQualifiedNameUsages(@NotNull RefClass refClass) {
-              if (firstPhase && isAddNonJavaUsedEnabled()) {
-                globalContext.getExtension(GlobalJavaInspectionContext.CONTEXT).enqueueQualifiedNameOccurrencesProcessor(refClass, () -> {
-                  EntryPointsManager entryPointsManager = getEntryPointsManager(globalContext);
-                  entryPointsManager.addEntryPoint(refClass, false);
-                  for (RefMethod constructor : refClass.getConstructors()) {
-                    entryPointsManager.addEntryPoint(constructor, false);
-                  }
-                });
+          queryQualifiedNameUsages(refClass);
+          requestAdded[0] = true;
+        }
+      }
 
-                //references from java-like are already in graph or
-                //they would be checked during GlobalJavaInspectionContextImpl.performPostRunActivities
-                for (RefElement element : refClass.getInReferences()) {
-                  if (!(element instanceof RefJavaElement)) {
-                    getEntryPointsManager(globalContext).addEntryPoint(refElement, false);
-                  }
-                }
-                requestAdded[0] = true;
-              }
+      void queryQualifiedNameUsages(@NotNull RefClass refClass) {
+        if (firstPhase && isAddNonJavaUsedEnabled()) {
+          globalContext.getExtension(GlobalJavaInspectionContext.CONTEXT).enqueueQualifiedNameOccurrencesProcessor(refClass, () -> {
+            EntryPointsManager entryPointsManager = getEntryPointsManager(globalContext);
+            entryPointsManager.addEntryPoint(refClass, false);
+            for (RefMethod constructor : refClass.getConstructors()) {
+              entryPointsManager.addEntryPoint(constructor, false);
             }
           });
+
+          //references from java-like are already in graph, or
+          //they would be checked during GlobalJavaInspectionContextImpl.performPostRunActivities
+          for (RefElement element : refClass.getInReferences()) {
+            if (!(element instanceof RefJavaElement)) {
+              getEntryPointsManager(globalContext).addEntryPoint(refClass, false);
+            }
+          }
+          requestAdded[0] = true;
         }
       }
     });

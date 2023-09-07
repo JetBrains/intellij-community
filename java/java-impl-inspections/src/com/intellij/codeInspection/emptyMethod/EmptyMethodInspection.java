@@ -210,24 +210,20 @@ public class EmptyMethodInspection extends GlobalJavaBatchInspectionTool {
                                                 final @NotNull GlobalJavaInspectionContext context,
                                                 final @NotNull ProblemDescriptionsProcessor descriptionsProcessor) {
      manager.iterate(new RefJavaVisitor() {
-      @Override public void visitElement(@NotNull RefEntity refEntity) {
-        if (refEntity instanceof RefElement && descriptionsProcessor.getDescriptions(refEntity) != null) {
-          refEntity.accept(new RefJavaVisitor() {
-            @Override public void visitMethod(final @NotNull RefMethod refMethod) {
-              if (PsiModifier.PRIVATE.equals(refMethod.getAccessModifier())) return;
-              context.enqueueDerivedMethodsProcessor(refMethod, derivedMethod -> {
-                UMethod uDerivedMethod = UastContextKt.toUElement(derivedMethod, UMethod.class);
-                if (uDerivedMethod == null) return true;
-                UExpression body = uDerivedMethod.getUastBody();
-                if (RefMethodImpl.isEmptyExpression(body)) return true;
-                if (RefJavaUtil.getInstance().isMethodOnlyCallsSuper(uDerivedMethod)) return true;
-                descriptionsProcessor.ignoreElement(refMethod);
-                return false;
-              });
-            }
-          });
-        }
-      }
+       @Override
+       public void visitMethod(final @NotNull RefMethod refMethod) {
+         if (descriptionsProcessor.getDescriptions(refMethod) == null) return;
+         if (PsiModifier.PRIVATE.equals(refMethod.getAccessModifier())) return;
+         context.enqueueDerivedMethodsProcessor(refMethod, derivedMethod -> {
+           UMethod uDerivedMethod = UastContextKt.toUElement(derivedMethod, UMethod.class);
+           if (uDerivedMethod == null) return true;
+           UExpression body = uDerivedMethod.getUastBody();
+           if (RefMethodImpl.isEmptyExpression(body)) return true;
+           if (RefJavaUtil.getInstance().isMethodOnlyCallsSuper(uDerivedMethod)) return true;
+           descriptionsProcessor.ignoreElement(refMethod);
+           return false;
+         });
+       }
     });
 
     return false;

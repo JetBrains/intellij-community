@@ -57,24 +57,24 @@ public final class UnusedDeclarationInspection extends UnusedDeclarationInspecti
                             @NotNull GlobalInspectionContext globalContext,
                             @NotNull ProblemDescriptionsProcessor problemDescriptionsProcessor) {
     if (myLocalInspectionBase.PARAMETER) {
-      globalContext.getRefManager().iterate(new RefVisitor() {
-        @Override public void visitElement(@NotNull RefEntity refEntity) {
+      globalContext.getRefManager().iterate(new RefJavaVisitor() {
+        @Override
+        public void visitMethod(@NotNull RefMethod refMethod) {
           try {
-            if (!(refEntity instanceof RefMethod refMethod) ||
-                !globalContext.shouldCheck(refEntity, UnusedDeclarationInspection.this) ||
+            if (!globalContext.shouldCheck(refMethod, UnusedDeclarationInspection.this) ||
                 !UnusedDeclarationPresentation.compareVisibilities(refMethod, myLocalInspectionBase.getParameterVisibility())) {
               return;
             }
-            CommonProblemDescriptor[] descriptors = myUnusedParameters.checkElement(refEntity, scope, manager, globalContext, problemDescriptionsProcessor);
+            CommonProblemDescriptor[] descriptors = myUnusedParameters.checkElement(refMethod, scope, manager, globalContext, problemDescriptionsProcessor);
             if (descriptors != null) {
-              problemDescriptionsProcessor.addProblemElement(refEntity, descriptors);
+              problemDescriptionsProcessor.addProblemElement(refMethod, descriptors);
             }
           }
           catch (ProcessCanceledException | IndexNotReadyException e) {
             throw e;
           }
           catch (Throwable e) {
-            LOG.error("Exception on '" + refEntity.getExternalName() + "'", e);
+            LOG.error("Exception on '" + refMethod.getExternalName() + "'", e);
           }
         }
       });
