@@ -9,7 +9,6 @@ import com.intellij.debugger.engine.evaluation.EvaluateException
 import com.intellij.debugger.engine.evaluation.EvaluateExceptionUtil
 import com.intellij.debugger.engine.evaluation.EvaluationContextImpl
 import com.intellij.debugger.engine.evaluation.expression.*
-import com.intellij.debugger.engine.jdi.StackFrameProxy
 import com.intellij.debugger.impl.DebuggerUtilsEx
 import com.intellij.openapi.application.ReadAction
 import com.intellij.openapi.application.runReadAction
@@ -189,6 +188,7 @@ class KotlinEvaluator(val codeFragment: KtCodeFragment, private val sourcePositi
     }
 
     private fun compileCodeFragment(context: ExecutionContext): CompiledCodeFragmentData {
+        patchCodeFragment(context, codeFragment)
         return if (isK2Plugin()) compiledCodeFragmentDataK2(context) else compiledCodeFragmentDataK1(context)
     }
 
@@ -296,20 +296,7 @@ class KotlinEvaluator(val codeFragment: KtCodeFragment, private val sourcePositi
         }
 
         compilerStrategy.beforeAnalyzingCodeFragment()
-        var analysisResult = analyze(codeFragment, debugProcess)
-        val codeFragmentWasEdited = KotlinCodeFragmentEditor(codeFragment)
-            .withToStringWrapper(analysisResult.bindingContext)
-            .withSuspendFunctionWrapper(
-                analysisResult.bindingContext,
-                context,
-                isCoroutineScopeAvailable(context.frameProxy)
-            )
-            .editCodeFragment()
-
-        if (codeFragmentWasEdited) {
-            // Repeat analysis for edited code fragment
-            analysisResult = analyze(codeFragment, debugProcess)
-        }
+        val analysisResult = analyze(codeFragment, debugProcess)
 
         analysisResult.illegalSuspendFunCallDiagnostic?.let {
             evaluationException(DefaultErrorMessages.render(it))
@@ -324,12 +311,6 @@ class KotlinEvaluator(val codeFragment: KtCodeFragment, private val sourcePositi
 
         return createCompiledDataDescriptor(result)
     }
-
-    private fun isCoroutineScopeAvailable(frameProxy: StackFrameProxy) =
-        if (frameProxy is CoroutineStackFrameProxyImpl)
-            frameProxy.isCoroutineScopeAvailable()
-        else
-            false
 
     private data class ErrorCheckingResult(
         val bindingContext: BindingContext,
