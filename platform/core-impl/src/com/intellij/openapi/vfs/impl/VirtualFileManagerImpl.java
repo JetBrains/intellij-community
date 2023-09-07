@@ -42,7 +42,8 @@ public class VirtualFileManagerImpl extends VirtualFileManagerEx implements Disp
 
   // do not use extension point name to avoid map lookup on each event publishing
   private static final ExtensionPointImpl<@NotNull VirtualFileManagerListener> MANAGER_LISTENER_EP =
-    ((ExtensionsAreaImpl)ApplicationManager.getApplication().getExtensionArea()).getExtensionPoint("com.intellij.virtualFileManagerListener");
+    ((ExtensionsAreaImpl)ApplicationManager.getApplication().getExtensionArea()).getExtensionPoint(
+      "com.intellij.virtualFileManagerListener");
 
   private final List<? extends VirtualFileSystem> myPreCreatedFileSystems;
 
@@ -110,7 +111,7 @@ public class VirtualFileManagerImpl extends VirtualFileManagerEx implements Disp
       return null;
     }
     if (size > 1) {
-      LOG.error(protocol + ": " + candidates);
+      LOG.error(">1 file system registered for protocol [" + protocol + "]: " + candidates);
     }
     return candidates.get(0);
   }
@@ -197,12 +198,16 @@ public class VirtualFileManagerImpl extends VirtualFileManagerEx implements Disp
   }
 
   @Override
-  public void notifyPropertyChanged(@NotNull VirtualFile virtualFile, @VirtualFile.PropName @NotNull String property, Object oldValue, Object newValue) {
+  public void notifyPropertyChanged(@NotNull VirtualFile virtualFile,
+                                    @VirtualFile.PropName @NotNull String property,
+                                    Object oldValue,
+                                    Object newValue) {
     Application app = ApplicationManager.getApplication();
     ApplicationManager.getApplication().invokeLater(() -> {
       if (virtualFile.isValid()) {
         ApplicationManager.getApplication().runWriteAction(() -> {
-          List<VFileEvent> events = Collections.singletonList(new VFilePropertyChangeEvent(this, virtualFile, property, oldValue, newValue, false));
+          List<VFileEvent> events =
+            Collections.singletonList(new VFilePropertyChangeEvent(this, virtualFile, property, oldValue, newValue, false));
           BulkFileListener listener = app.getMessageBus().syncPublisher(VirtualFileManager.VFS_CHANGES);
           listener.before(events);
           listener.after(events);
