@@ -88,7 +88,12 @@ class RecoverVfsFromLogService(val coroutineScope: CoroutineScope) {
         dialog.show()
         when (dialog.exitCode) {
           CANCEL_EXIT_CODE -> {}
-          OK_EXIT_CODE -> queryContext.transferLock().launchRecovery(null, recoveryPoints.first(), restart)
+          OK_EXIT_CODE -> {
+            val rpList = recoveryPoints.take(2).toList()
+            // choose second recovery point because it should be safer
+            val recoveryPoint = if (rpList.size > 1) rpList[1] else rpList.first()
+            queryContext.transferLock().launchRecovery(null, recoveryPoint, restart)
+          }
           SuggestAutomaticVfsRecoveryDialog.CHOOSE_RECOVERY_POINT_CODE -> {
             val recoveryPoint = askToChooseRecoveryPoint(queryContext, null, true)
             if (recoveryPoint != null) queryContext.transferLock().launchRecovery(null, recoveryPoint, restart)
