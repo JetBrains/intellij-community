@@ -13,7 +13,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.gradle.tooling.ErrorMessageBuilder;
 import org.jetbrains.plugins.gradle.tooling.ModelBuilderService;
 import com.intellij.gradle.toolingExtension.impl.util.javaPlugin.JavaPluginUtil;
-import org.jetbrains.plugins.gradle.tooling.tasks.GradleDependencyReportTask.GradleDependencyReportGenerator;
 
 import static org.jetbrains.plugins.gradle.tooling.util.resolve.DependencyResolverImpl.isIsNewDependencyResolutionApplicable;
 
@@ -44,8 +43,8 @@ public class GradleDependencyGraphModelBuilder implements ModelBuilderService {
       Configuration runtimeConfiguration = project.getConfigurations().findByName(runtimeConfigurationName);
       if (runtimeConfiguration == null) continue;
 
-      DependencyScopeNode compileScopeNode = reportGenerator.buildDependenciesGraph(compileConfiguration, project);
-      DependencyScopeNode runtimeScopeNode = reportGenerator.buildDependenciesGraph(runtimeConfiguration, project);
+      DependencyScopeNode compileScopeNode = reportGenerator.buildDependencyGraph(compileConfiguration, project);
+      DependencyScopeNode runtimeScopeNode = reportGenerator.buildDependencyGraph(runtimeConfiguration, project);
 
       if (!compileScopeNode.getDependencies().isEmpty() || !runtimeScopeNode.getDependencies().isEmpty()) {
         dependencies.add(new ComponentDependenciesImpl(sourceSet.getName(), compileScopeNode, runtimeScopeNode));
