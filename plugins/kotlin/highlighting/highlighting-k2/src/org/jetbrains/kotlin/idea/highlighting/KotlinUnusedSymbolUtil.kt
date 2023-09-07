@@ -83,14 +83,12 @@ object KotlinUnusedSymbolUtil {
         // do not highlight unused in .forEach { (a,b) -> {} }
         return false
       }
-      else if (ownerFunction is KtFunction && isEffectivelyAbstract(ownerFunction)) {
-        // do not highlight parameter of the abstract function
+      else if (ownerFunction is KtFunction && (isEffectivelyAbstract(ownerFunction) || ownerFunction.hasModifier(KtTokens.OVERRIDE_KEYWORD))) {
         return false
       }
     }
 
-    if (declaration.hasModifier(KtTokens.OVERRIDE_KEYWORD)) return false
-    return true
+      return !declaration.hasModifier(KtTokens.OVERRIDE_KEYWORD)
   }
 
     private fun isEffectivelyAbstract(ownerFunction: KtFunction): Boolean {
