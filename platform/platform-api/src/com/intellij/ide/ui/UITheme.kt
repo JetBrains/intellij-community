@@ -74,14 +74,12 @@ class UITheme private constructor(val id: @NonNls String, private val bean: UITh
     get() = bean.emptyFrameBackground ?: emptyMap()
 
   fun applyProperties(defaults: UIDefaults) {
-    if (bean.ui == null) {
-      return
-    }
+    val ui = bean.ui ?: return
 
     bean.colors?.let {
       loadColorPalette(defaults, it)
     }
-    for ((key, value) in bean.ui!!) {
+    for ((key, value) in ui) {
       applyTheme(theme = bean, key = key, value = value, defaults = defaults)
     }
   }
@@ -112,59 +110,6 @@ class UITheme private constructor(val id: @NonNls String, private val bean: UITh
     set(editorSchemeName) {
       bean.editorSchemeName = editorSchemeName
     }
-
-  internal class PaletteScope {
-    val newPalette: MutableMap<String, String> = HashMap()
-    val alphas: MutableMap<String, Int> = HashMap()
-    private var hash: LongArray? = null
-
-    fun digest(): LongArray {
-      hash?.let {
-        return it
-      }
-
-      // order is significant - use TreeMap
-      hash = InsecureHashBuilder()
-        .stringMap(newPalette)
-        .stringIntMap(alphas)
-        .build()
-      return hash!!
-    }
-  }
-
-  internal class PaletteScopeManager {
-    val ui: PaletteScope = PaletteScope()
-    val checkBoxes: PaletteScope = PaletteScope()
-    val radioButtons: PaletteScope = PaletteScope()
-    val trees: PaletteScope = PaletteScope()
-    fun getScope(colorKey: String): PaletteScope? {
-      return when {
-        colorKey.startsWith("Checkbox.") -> checkBoxes
-        colorKey.startsWith("Radio.") -> radioButtons
-        colorKey.startsWith("Tree.iconColor") -> trees
-        colorKey.startsWith("Objects.") -> ui
-        colorKey.startsWith("Actions.") -> ui
-        colorKey.startsWith("#") -> ui
-        else -> {
-          LOG.warn("No color scope defined for key: $colorKey")
-          null
-        }
-      }
-    }
-
-    fun getScopeByPath(path: String?): PaletteScope? {
-      if (path != null && (path.contains("com/intellij/ide/ui/laf/icons/") || path.contains("/com/intellij/ide/ui/laf/icons/"))) {
-        val file = path.substring(path.lastIndexOf('/') + 1)
-        return when {
-          file == "treeCollapsed.svg" || file == "treeExpanded.svg" -> trees
-          file.startsWith("check") -> checkBoxes
-          file.startsWith("radio") -> checkBoxes //same set of colors as for checkboxes
-          else -> null
-        }
-      }
-      return ui
-    }
-  }
 
   @Deprecated("Do not use.")
   fun setColors(colors: Map<String, Any?>?) {
@@ -241,7 +186,7 @@ private fun loadFromJson(theme: UIThemeBean, provider: ClassLoader?, iconMapper:
   }
 
   initializeNamedColors(theme)
-  val paletteScopeManager = UITheme.PaletteScopeManager()
+  val paletteScopeManager = UiThemePaletteScopeManager()
 
   val colorsOnSelection = theme.iconColorsOnSelection
   if (!colorsOnSelection.isNullOrEmpty()) {
@@ -272,7 +217,7 @@ private fun loadFromJson(theme: UIThemeBean, provider: ClassLoader?, iconMapper:
 
 private fun configureIcons(theme: UIThemeBean,
                            iconMapper: ((String) -> String?)?,
-                           paletteScopeManager: UITheme.PaletteScopeManager,
+                           paletteScopeManager: UiThemePaletteScopeManager,
                            iconMap: Map<String, Any?>) {
   if (iconMapper != null) {
     theme.patcher = object : IconPathPatcher() {
@@ -298,47 +243,43 @@ private fun configureIcons(theme: UIThemeBean,
     }
   }
 
-  val palette = iconMap.get("ColorPalette")
-  if (palette is Map<*, *>) {
-    for (o in palette.keys) {
-      val colorKey = o.toString()
-      val scope = paletteScopeManager.getScope(colorKey) ?: continue
-      val key = toColorString(key = colorKey, darkTheme = theme.dark)
-      var v: Any? = palette.get(colorKey)
-      if (v is String) {
-        val namedColor = theme.colors?.get(v)
-        if (namedColor is String) {
-          v = namedColor
-        }
-
-        var alpha: String? = null
-        if (v.length == 9) {
-          alpha = v.substring(7)
-          v = v.substring(0, 7)
-        }
-
-        if (ColorHexUtil.fromHex(key, null) != null && ColorHexUtil.fromHex(v, null) != null) {
-          scope.newPalette.put(key, v)
-          var fillTransparency = -1
-          if (alpha != null) {
-            try {
-              fillTransparency = alpha.toInt(16)
-            }
-            catch (ignore: Exception) {
-            }
-          }
-          if (fillTransparency != -1) {
-            scope.alphas.put(v, fillTransparency)
-          }
-        }
-      }
+  val palette = iconMap.get("ColorPalette") as? Map<*, *> ?: return
+  for (o in palette.keys) {
+    val colorKey = o.toString()
+    val scope = paletteScopeManager.getScope(colorKey) ?: continue
+    val key = toColorString(key = colorKey, darkTheme = theme.dark)
+    var v = palette.get(colorKey) as? String ?: continue
+    val namedColor = theme.colors?.get(v)
+    if (namedColor is String) {
+      v = namedColor
     }
 
-    theme.colorPatcher = object : SvgElementColorPatcherProvider {
-      override fun attributeForPath(path: String?): SvgAttributePatcher? {
-        val scope = paletteScopeManager.getScopeByPath(path) ?: return null
-        return newSvgPatcher(digest = scope.digest(), newPalette = scope.newPalette) { scope.alphas.get(it) }
+    var alpha: String? = null
+    if (v.length == 9) {
+      alpha = v.substring(7)
+      v = v.substring(0, 7)
+    }
+
+    if (ColorHexUtil.fromHex(key, null) != null && ColorHexUtil.fromHex(v, null) != null) {
+      scope.newPalette.put(key, v)
+      var fillTransparency = -1
+      if (alpha != null) {
+        try {
+          fillTransparency = alpha.toInt(16)
+        }
+        catch (ignore: Exception) {
+        }
       }
+      if (fillTransparency != -1) {
+        scope.alphas.put(v, fillTransparency)
+      }
+    }
+  }
+
+  theme.colorPatcher = object : SvgElementColorPatcherProvider {
+    override fun attributeForPath(path: String?): SvgAttributePatcher? {
+      val scope = paletteScopeManager.getScopeByPath(path) ?: return null
+      return newSvgPatcher(digest = scope.digest(), newPalette = scope.newPalette) { scope.alphas.get(it) }
     }
   }
 }
@@ -382,15 +323,15 @@ private fun initializeNamedColors(theme: UIThemeBean) {
 }
 
 private fun toColorString(key: String, darkTheme: Boolean): String {
-  @Suppress("NAME_SHADOWING")
-  var key = key
-  if (darkTheme && colorPalette.get("$key.Dark") != null) {
-    key += ".Dark"
+  if (darkTheme) {
+    colorPalette.get("$key.Dark")?.let {
+      return it.lowercase()
+    }
   }
-  return colorPalette.get(key)?.lowercase() ?: key.lowercase()
+  return (colorPalette.get(key) ?: key).lowercase()
 }
 
-private val colorPalette: @NonNls MutableMap<String, String?> = java.util.Map.ofEntries(
+private val colorPalette: @NonNls Map<String, String> = java.util.Map.ofEntries(
   java.util.Map.entry("Actions.Red", "#DB5860"),
   java.util.Map.entry("Actions.Red.Dark", "#C75450"),
   java.util.Map.entry("Actions.Yellow", "#EDA200"),
@@ -635,3 +576,4 @@ private fun oldFindThemeByName(parentTheme: String): UITheme? {
   }
   return null
 }
+
