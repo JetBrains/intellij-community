@@ -28,8 +28,6 @@ import com.intellij.openapi.ui.SimpleToolWindowPanel;
 import com.intellij.openapi.ui.Splitter;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.registry.Registry;
-import com.intellij.openapi.vcs.FileStatusListener;
-import com.intellij.openapi.vcs.FileStatusManager;
 import com.intellij.openapi.vfs.ReadonlyStatusHandler;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -71,8 +69,6 @@ import javax.swing.*;
 import javax.swing.event.TreeExpansionEvent;
 import javax.swing.event.TreeExpansionListener;
 import javax.swing.event.TreeModelEvent;
-import javax.swing.plaf.TreeUI;
-import javax.swing.plaf.basic.BasicTreeUI;
 import javax.swing.tree.*;
 import java.awt.*;
 import java.awt.event.ActionEvent;
@@ -1031,7 +1027,7 @@ public class UsageViewImpl implements UsageViewEx {
    * @param actions to sort
    */
   protected void sortGroupingActions(@NotNull List<? extends AnAction> actions) {
-    ActionUtil.sortAlphabetically(actions);
+    actions.sort((o1, o2) -> Comparing.compare(o1.getTemplateText(), o2.getTemplateText()));
   }
 
   private boolean shouldTreeReactNowToRuleChanges() {
@@ -1071,7 +1067,6 @@ public class UsageViewImpl implements UsageViewEx {
         ((MergeableUsage)usage).reset();
       }
     }
-    //noinspection SSBasedInspection
     appendUsagesInBulk(allUsages).thenRun(() -> SwingUtilities.invokeLater(() -> {
       if (isDisposed()) return;
       if (myTree != null) {
@@ -1129,11 +1124,6 @@ public class UsageViewImpl implements UsageViewEx {
     doExpandingCollapsing(() -> TreeUtil.expand(myTree, levels));
   }
 
-  /**
-   * Allows to skip a lot of {@link #clearRendererCache}, received via {@link TreeExpansionListener}.
-   *
-   * @param task that expands or collapses a tree
-   */
   private void doExpandingCollapsing(@NotNull Runnable task) {
     if (isDisposed()) return;
     ApplicationManager.getApplication().assertIsDispatchThread();
@@ -1259,7 +1249,6 @@ public class UsageViewImpl implements UsageViewEx {
     }
 
     if (!myPresentation.isDetachedMode()) {
-      //noinspection SSBasedInspection
       SwingUtilities.invokeLater(() -> expandTree(2));
     }
   }

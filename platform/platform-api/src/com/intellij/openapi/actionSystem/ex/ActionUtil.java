@@ -23,7 +23,10 @@ import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.ui.popup.ListPopup;
-import com.intellij.openapi.util.*;
+import com.intellij.openapi.util.Computable;
+import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.NlsContexts;
+import com.intellij.openapi.util.ThrowableComputable;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiDocumentManager;
@@ -408,10 +411,6 @@ public final class ActionUtil {
 
   public static @NotNull AnActionEvent createEmptyEvent() {
     return AnActionEvent.createFromDataContext(ActionPlaces.UNKNOWN, null, dataId -> null);
-  }
-
-  public static void sortAlphabetically(@NotNull List<? extends AnAction> list) {
-    list.sort((o1, o2) -> Comparing.compare(o1.getTemplateText(), o2.getTemplateText()));
   }
 
   /**
