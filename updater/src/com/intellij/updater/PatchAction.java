@@ -117,14 +117,6 @@ public abstract class PatchAction {
     return types[value];
   }
 
-  public boolean calculate(File olderDir, File newerDir) throws IOException {
-    return doCalculate(getFile(olderDir), getFile(newerDir));
-  }
-
-  protected boolean doCalculate(File olderFile, File newerFile) throws IOException {
-    return true;
-  }
-
   public void buildPatchFile(File olderDir, File newerDir, ZipOutputStream patchOutput) throws IOException {
     doBuildPatchFile(getFile(olderDir), getFile(newerDir), patchOutput);
   }

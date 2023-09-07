@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.updater;
 
 import java.util.HashMap;
@@ -8,7 +8,7 @@ import java.util.Map;
 @SuppressWarnings("UseOfSystemOutOrSystemErr")
 public class ToolboxUpdaterUI extends ConsoleUpdaterUI {
   @Override
-  public Map<String, ValidationResult.Option> askUser(List<? extends ValidationResult> validationResults) throws OperationCancelledException {
+  public Map<String, ValidationResult.Option> askUser(List<ValidationResult> validationResults) throws OperationCancelledException {
     System.out.println("Validation info:");
     for (ValidationResult item : validationResults) {
       System.out.printf("  %s  %s: %s%n", item.kind, item.path, item.message);

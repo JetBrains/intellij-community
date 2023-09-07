@@ -71,39 +71,36 @@ public class Patch {
     LOG.info("Preparing actions...");
     ui.startProcess("Preparing actions...");
 
-    List<PatchAction> tempActions = new ArrayList<>();
+    List<PatchAction> actions = new ArrayList<>();
 
     // 'delete' actions before 'create' actions to prevent newly created files to be deleted if the names differ only in case.
     for (Map.Entry<String, Long> each : diff.filesToDelete.entrySet()) {
       // Add them in reverse order so directory structures start deleting the files before the directory itself.
-      tempActions.add(0, new DeleteAction(this, each.getKey(), each.getValue()));
+      actions.add(0, new DeleteAction(this, each.getKey(), each.getValue()));
     }
 
     for (String each : diff.filesToCreate.keySet()) {
-      tempActions.add(new CreateAction(this, each));
+      actions.add(new CreateAction(this, each));
     }
 
     for (Map.Entry<String, DiffCalculator.Update> each : diff.filesToUpdate.entrySet()) {
       DiffCalculator.Update update = each.getValue();
-      tempActions.add(new UpdateAction(this, each.getKey(), update.source, update.checksum, update.move));
+      actions.add(new UpdateAction(this, each.getKey(), update.source, update.checksum, update.move));
     }
 
     if (spec.isStrict()) {
       for (Map.Entry<String, Long> each : diff.commonFiles.entrySet()) {
-        tempActions.add(new ValidateAction(this, each.getKey(), each.getValue()));
+        actions.add(new ValidateAction(this, each.getKey(), each.getValue()));
       }
     }
 
-    List<PatchAction> actions = new ArrayList<>();
-    for (PatchAction action : tempActions) {
+    for (PatchAction action : actions) {
       LOG.info(action.getPath());
-      if (action.calculate(olderDir, newerDir)) {
-        actions.add(action);
-        action.setCritical(critical.contains(action.getPath()));
-        action.setOptional(optional.contains(action.getPath()));
-        action.setStrict(strict.contains(action.getPath()));
-      }
+      action.setCritical(critical.contains(action.getPath()));
+      action.setOptional(optional.contains(action.getPath()));
+      action.setStrict(strict.contains(action.getPath()));
     }
+
     return actions;
   }
 
@@ -144,7 +141,7 @@ public class Patch {
     }
   }
 
-  private static void writeActions(DataOutputStream dataOut, List<? extends PatchAction> actions) throws IOException {
+  private static void writeActions(DataOutputStream dataOut, List<PatchAction> actions) throws IOException {
     dataOut.writeInt(actions.size());
     for (PatchAction each : actions) {
       int key;
@@ -366,7 +363,7 @@ public class Patch {
     return new PatchFileCreator.ApplicationResult(true, appliedActions);
   }
 
-  public void revert(List<? extends PatchAction> actions, File backupDir, File rootDir, UpdaterUI ui) throws IOException {
+  public void revert(List<PatchAction> actions, File backupDir, File rootDir, UpdaterUI ui) throws IOException {
     LOG.info("Reverting... [" + actions.size() + " actions]");
     ui.startProcess("Reverting...");
 
@@ -380,10 +377,7 @@ public class Patch {
     }
   }
 
-  private static void forEach(List<? extends PatchAction> actions,
-                              String title,
-                              UpdaterUI ui,
-                              ActionsProcessor processor) throws OperationCancelledException, IOException {
+  private static void forEach(List<PatchAction> actions, String title, UpdaterUI ui, ActionProcessor processor) throws OperationCancelledException, IOException {
     LOG.info(title + " [" + actions.size() + " actions]");
     ui.startProcess(title);
     ui.checkCancelled();
@@ -444,7 +438,7 @@ public class Patch {
   }
 
   @FunctionalInterface
-  private interface ActionsProcessor {
+  private interface ActionProcessor {
     void forEach(PatchAction action) throws IOException;
   }
 }
