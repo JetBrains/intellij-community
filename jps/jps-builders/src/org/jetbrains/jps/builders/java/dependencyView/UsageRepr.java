@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.jps.builders.java.dependencyView;
 
 import com.intellij.util.io.DataExternalizer;
@@ -605,6 +605,7 @@ final class UsageRepr {
     final IntSet myUsedArguments;
     final Set<ElemType> myUsedTargets;
 
+    // this method is only relevant when the AnnotationUsage object is used as a query (annotation usage selector)
     public boolean satisfies(final AnnotationUsage annotationUsage) {
       if (!myType.equals(annotationUsage.myType)) {
         return false;
@@ -614,7 +615,7 @@ final class UsageRepr {
 
       if (myUsedArguments != null) {
         IntSet arguments = new IntOpenHashSet(myUsedArguments);
-        arguments.removeAll(annotationUsage.myUsedArguments);
+        arguments.removeAll(annotationUsage.myUsedArguments);  // need to find annotation usages that do not mention arguments this annotation uses
         argumentsSatisfy = !arguments.isEmpty();
       }
 
@@ -622,9 +623,7 @@ final class UsageRepr {
 
       if (myUsedTargets != null) {
         final Collection<ElemType> targets = EnumSet.copyOf(myUsedTargets);
-
         targets.retainAll(annotationUsage.myUsedTargets);
-
         targetsSatisfy = !targets.isEmpty();
       }
 
