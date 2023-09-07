@@ -408,7 +408,7 @@ class VfsLogImpl private constructor(
     return context.getRecoveryPoints()
   }
 
-  fun awaitPendingWrites(timeout: Duration = Duration.INFINITE) {
+  override fun awaitPendingWrites(timeout: Duration) {
     val startTime = System.currentTimeMillis()
     while (context.operationLogStorage.size() < context.operationLogStorage.emergingSize() &&
            (System.currentTimeMillis() - startTime).milliseconds < timeout) {

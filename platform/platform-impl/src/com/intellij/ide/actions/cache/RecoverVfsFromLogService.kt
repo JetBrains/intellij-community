@@ -79,8 +79,6 @@ class RecoverVfsFromLogService(val coroutineScope: CoroutineScope) {
     return coroutineScope.launch {
       val recoveryPoints = getRecoveryPoints(queryContext)
       if (recoveryPoints.none()) return@launch
-      // TODO flush must be moved into recovery
-      vfsLog.flush() // write pending data to disk, because vfslog storage will be copied inside recovery util
       withContext(Dispatchers.EDT) {
         val dialog = SuggestAutomaticVfsRecoveryDialog(ApplicationManagerEx.getApplicationEx().isRestartCapable) { enableSuggestion ->
           Registry.get("idea.vfs.log-vfs-operations.suggest-automatic-recovery").setValue(enableSuggestion)
@@ -191,6 +189,13 @@ class RecoverVfsFromLogService(val coroutineScope: CoroutineScope) {
     private fun prepareRecoveredCaches(queryContext: VfsLogQueryContext,
                                        point: OperationLogStorage.Iterator,
                                        progressReporter: RawProgressReporter?) {
+      try {
+        // TODO FileBasedIndexTumbler disable indexing while recovery is in progress
+        val vfsLogEx = PersistentFS.getInstance().vfsLog as? VfsLogEx
+        vfsLogEx?.awaitPendingWrites()
+        vfsLogEx?.flush()
+      } catch (ignored: Throwable) {}
+
       if (recoveredCachesDir.exists()) {
         LOG.info("old recovered caches directory exists and will be deleted")
         recoveredCachesDir.delete(true)
