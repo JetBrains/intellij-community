@@ -44,12 +44,12 @@ class WaitForFinishedCodeAnalysis(text: String, line: Int) : AbstractCommand(tex
         if (daemonStartTrace != null) {
           val errMsg = "Overlapping highlighting sessions"
           val err = AssertionError(errMsg)
-          err.addSuppressed(Exception("Current daemon start trace"))
+          err.addSuppressed(Exception("Current daemon start trace (editors = $fileEditors)"))
           err.addSuppressed(daemonStartTrace)
           LOG.error(err)
           actionCallback.reject(errMsg)
         }
-        daemonStartTrace = Exception("Previous daemon start trace")
+        daemonStartTrace = Exception("Previous daemon start trace (editors = $fileEditors)")
         canceled = false
       }
 
