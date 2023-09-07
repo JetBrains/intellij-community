@@ -596,7 +596,7 @@ private class RecoveryPointsCollector private constructor(
       }
       catch (e: IncompatibleLayoutException) {
         if (path.exists() && mode == ReadWrite) {
-          logger<RecoveryPointsCollector>().info("deleting old recovery points")
+          logger<RecoveryPointsCollector>().warn("deleting old recovery points", e)
           path.deleteExisting()
         }
         val newStateHolder = AtomicDurableRecord.open(path, mode, stateBuilder)
