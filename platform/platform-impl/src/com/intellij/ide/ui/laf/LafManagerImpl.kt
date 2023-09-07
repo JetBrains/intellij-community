@@ -111,50 +111,6 @@ private const val INTER_SIZE = 13
 class LafManagerImpl(private val coroutineScope: CoroutineScope) : LafManager(), PersistentStateComponent<Element> {
   private val eventDispatcher = EventDispatcher.create(LafManagerListener::class.java)
 
-  private val defaultDarkTheme = SynchronizedClearableLazy {
-    val name = ApplicationInfoEx.getInstanceEx().defaultDarkLaf
-    val themeListManager = UiThemeProviderListManager.getInstance()
-    if (name == null) {
-      themeListManager.findThemeById("ExperimentalDark") ?: error("Default dark theme 'Dark' not found")
-    }
-    else {
-      themeListManager.findThemeById(name) ?: themeListManager.findThemeByName(name) ?: error("Default dark theme '$name' not found")
-    }
-  }
-
-  private val defaultClassicDarkTheme = SynchronizedClearableLazy {
-    val name = ApplicationInfoEx.getInstanceEx().defaultClassicDarkLaf
-    val themeListManager = UiThemeProviderListManager.getInstance()
-    if (name == null) {
-      themeListManager.findThemeById("Darcula") ?: error("Default classic dark theme 'Darcula' not found")
-    }
-    else {
-      themeListManager.findThemeById(name) ?: themeListManager.findThemeByName(name) ?: error("Default classic dark theme '$name' not found")
-    }
-  }
-
-  private val defaultLightTheme = SynchronizedClearableLazy {
-    val name = ApplicationInfoEx.getInstanceEx().defaultLightLaf
-    val themeListManager = UiThemeProviderListManager.getInstance()
-    if (name == null) {
-      themeListManager.findThemeById("ExperimentalLight") ?: error("Default light LookAndFeel 'Light' not found")
-    }
-    else {
-      themeListManager.findThemeById(name) ?: themeListManager.findThemeByName(name) ?: error("Default light LookAndFeel '$name' not found")
-    }
-  }
-
-  private val defaultClassicLightTheme = SynchronizedClearableLazy {
-    val name = ApplicationInfoEx.getInstanceEx().defaultClassicLightLaf
-    val themeListManager = UiThemeProviderListManager.getInstance()
-    if (name == null) {
-      themeListManager.findJetBrainsLightTheme() ?: error("JetBrains light theme not found")
-    }
-    else {
-      themeListManager.findThemeById(name) ?: themeListManager.findThemeByName(name) ?: error("Default light LookAndFeel '$name' not found")
-    }
-  }
-
   private val ourDefaults: Map<Any, Any> = UIManager.getDefaults().clone() as UIDefaults
 
   private var currentTheme: UIThemeLookAndFeelInfo? = null
@@ -189,11 +145,11 @@ class LafManagerImpl(private val coroutineScope: CoroutineScope) : LafManager(),
   private var usedValuesOfUiOptions: List<Any?> = emptyList()
 
   override fun getDefaultLightLaf(): UIThemeLookAndFeelInfo {
-    return if (ExperimentalUI.isNewUI()) defaultLightTheme.value else defaultClassicLightTheme.value
+    return if (ExperimentalUI.isNewUI()) getDefaultLightTheme() else getDefaultClassicLightTheme()
   }
 
   override fun getDefaultDarkLaf(): UIThemeLookAndFeelInfo {
-    return if (ExperimentalUI.isNewUI()) defaultDarkTheme.value else defaultClassicDarkTheme.value
+    return if (ExperimentalUI.isNewUI()) getDefaultDarkTheme() else getDefaultClassicDarkTheme()
   }
 
   val defaultFont: Font
@@ -218,12 +174,8 @@ class LafManagerImpl(private val coroutineScope: CoroutineScope) : LafManager(),
         }
 
         val value = defaults.get(key)
-        if (value is FontUIResource) {
-          if (value.family == "Lucida Grande" || value.family == "Serif") {
-            if (!key.toString().contains("Menu")) {
-              defaults.put(key, getFont(face, value.size, value.style))
-            }
-          }
+        if (value is FontUIResource && (value.family == "Lucida Grande" || value.family == "Serif") && !key.toString().contains("Menu")) {
+          defaults.put(key, getFont(face, value.size, value.style))
         }
       }
       defaults.put("TableHeader.font", getFont(face, 11, Font.PLAIN))
@@ -866,7 +818,7 @@ class LafManagerImpl(private val coroutineScope: CoroutineScope) : LafManager(),
       val oldTheme = oldLaF.theme
       oldTheme.setProviderClassLoader(null)
       val isDark = oldTheme.isDark
-      val defaultLaF = if (oldLaF === currentUIThemeLookAndFeel) {
+      val defaultLaF = if (oldLaF === currentTheme) {
         if (isDark) defaultDarkLaf else defaultLightLaf
       }
       else {
@@ -875,12 +827,7 @@ class LafManagerImpl(private val coroutineScope: CoroutineScope) : LafManager(),
       updateLafComboboxModel()
       if (defaultLaF != null) {
         setLookAndFeelImpl(lookAndFeelInfo = defaultLaF, installEditorScheme = true, processChangeSynchronously = true)
-        if (ExperimentalUI.isNewUI()) {
-          JBColor.setDark(defaultDarkTheme.isInitialized() && isDark)
-        }
-        else {
-          JBColor.setDark(defaultClassicDarkTheme.isInitialized() && isDark)
-        }
+        JBColor.setDark(isDark)
         updateUI()
       }
     }
@@ -1432,3 +1379,50 @@ private fun cmInsets(top: Int, left: Int, bottom: Int, right: Int): Insets = Ins
 private fun JBInsets.withTopAndBottom(topAndBottom: Int) = JBInsets(topAndBottom, unscaled.left, topAndBottom, unscaled.right)
 
 private fun defaultNonLaFSchemeName(dark: Boolean) = if (dark) DarculaLaf.NAME else EditorColorsScheme.DEFAULT_SCHEME_NAME
+
+private fun getDefaultLightTheme(): UIThemeLookAndFeelInfo {
+  val name = ApplicationInfoEx.getInstanceEx().defaultLightLaf
+  val themeListManager = UiThemeProviderListManager.getInstance()
+  if (name == null) {
+    return themeListManager.findThemeById("ExperimentalLight") ?: error("Default light LookAndFeel 'Light' not found")
+  }
+  else {
+    return themeListManager.findThemeById(name) ?: themeListManager.findThemeByName(name)
+           ?: error("Default light LookAndFeel '$name' not found")
+  }
+}
+
+private fun getDefaultDarkTheme(): UIThemeLookAndFeelInfo {
+  val name = ApplicationInfoEx.getInstanceEx().defaultDarkLaf
+  val themeListManager = UiThemeProviderListManager.getInstance()
+  if (name == null) {
+    return themeListManager.findThemeById("ExperimentalDark") ?: error("Default dark theme 'Dark' not found")
+  }
+  else {
+    return themeListManager.findThemeById(name) ?: themeListManager.findThemeByName(name) ?: error("Default dark theme '$name' not found")
+  }
+}
+
+private fun getDefaultClassicLightTheme(): UIThemeLookAndFeelInfo {
+  val name = ApplicationInfoEx.getInstanceEx().defaultClassicLightLaf
+  val themeListManager = UiThemeProviderListManager.getInstance()
+  if (name == null) {
+    return themeListManager.findJetBrainsLightTheme() ?: error("JetBrains light theme not found")
+  }
+  else {
+    return themeListManager.findThemeById(name) ?: themeListManager.findThemeByName(name)
+           ?: error("Default light LookAndFeel '$name' not found")
+  }
+}
+
+private fun getDefaultClassicDarkTheme(): UIThemeLookAndFeelInfo {
+  val name = ApplicationInfoEx.getInstanceEx().defaultClassicDarkLaf
+  val themeListManager = UiThemeProviderListManager.getInstance()
+  if (name == null) {
+    return themeListManager.findThemeById("Darcula") ?: error("Default classic dark theme 'Darcula' not found")
+  }
+  else {
+    return themeListManager.findThemeById(name) ?: themeListManager.findThemeByName(name)
+           ?: error("Default classic dark theme '$name' not found")
+  }
+}
