@@ -5,9 +5,11 @@ import com.intellij.codeInsight.CodeInsightActionHandler
 import com.intellij.codeInsight.inline.completion.InlineCompletionContext.Companion.getInlineCompletionContextOrNull
 import com.intellij.codeInsight.inline.completion.InlineCompletionContext.Companion.initOrGetInlineCompletionContext
 import com.intellij.codeInsight.inline.completion.InlineCompletionContext.Companion.initOrGetInlineCompletionContextWithPlaceholder
+import com.intellij.codeInsight.inline.completion.InlineCompletionContext.Companion.register
 import com.intellij.codeInsight.inline.completion.InlineCompletionContext.Companion.resetInlineCompletionContextWithPlaceholder
 import com.intellij.codeInsight.inline.completion.InlineState.Companion.getInlineCompletionState
 import com.intellij.codeInsight.inline.completion.InlineState.Companion.initOrGetInlineCompletionState
+import com.intellij.codeInsight.inline.completion.listeners.InlineCompletionUsageTracker
 import com.intellij.codeInsight.lookup.LookupEvent
 import com.intellij.openapi.actionSystem.DataContext
 import com.intellij.openapi.application.EDT
@@ -30,6 +32,7 @@ import java.util.concurrent.atomic.AtomicBoolean
 @ApiStatus.Experimental
 class InlineCompletionHandler(private val scope: CoroutineScope) : CodeInsightActionHandler {
   private var runningJob: Job? = null
+  private val tracker = InlineCompletionUsageTracker()
 
   private fun getProvider(event: InlineCompletionEvent): InlineCompletionProvider? {
     return InlineCompletionProvider.extensions().firstOrNull { it.isEnabled(event) }?.also {
@@ -92,51 +95,54 @@ class InlineCompletionHandler(private val scope: CoroutineScope) : CodeInsightAc
       LOG.trace("Muted")
       return
     }
-    // TODO: move to launch
+
     val request = event.toRequest() ?: return
-    val provider = getProvider(event) ?: return
 
     LOG.trace("Schedule new job")
     runningJob?.cancel()
-    runningJob = scope.launch {
-      val modificationStamp = request.document.modificationStamp
-      val resultFlow = withContext(Dispatchers.IO) {
-        provider.getProposals(request)
-      }
-      val placeholder = provider.getPlaceholder(request)
+    runningJob = scope.launch { invokeDebounced(event, request) }
+  }
 
-      val editor = request.editor
-      val offset = request.endOffset
+  private suspend fun invokeDebounced(event: InlineCompletionEvent, request: InlineCompletionRequest) {
+    request.editor.register(tracker.track(scope, request))
 
-      val inlineState = editor.initOrGetInlineCompletionState()
+    val provider = getProvider(event) ?: return
 
-      withContext(Dispatchers.EDT) {
-        showPlaceholder(editor, offset, placeholder)
+    val modificationStamp = request.document.modificationStamp
+    val resultFlow = withContext(Dispatchers.IO) { provider.getProposals(request) }
+    val placeholder = provider.getPlaceholder(request)
 
-        resultFlow
-          .onCompletion { if (it != null) disposePlaceholder(editor) }
-          .onEmpty { disposePlaceholder(editor) }
-          .collectIndexed { index, value ->
-            if (index == 0) disposePlaceholder(editor)
-            if (index == 0 && modificationStamp != request.document.modificationStamp) {
-              cancel()
-              return@collectIndexed
-            }
+    val editor = request.editor
+    val offset = request.endOffset
 
-            if (index == 0) {
-              inlineState.suggestions = listOf(InlineCompletionElement(value.text))
-              showInlineSuggestion(editor, inlineState, offset)
-            }
-            else {
-              if (editor.getInlineCompletionContextOrNull() == null) {
-                cancel()
-              }
-              ensureActive()
-              inlineState.suggestions = inlineState.suggestions.map { it.withText(it.text + value.text) }
-              showInlineSuggestion(editor, inlineState, offset)
-            }
+    val inlineState = editor.initOrGetInlineCompletionState()
+
+    withContext(Dispatchers.EDT) {
+      showPlaceholder(editor, offset, placeholder)
+
+      resultFlow
+        .onCompletion { if (it != null) disposePlaceholder(editor) }
+        .onEmpty { disposePlaceholder(editor) }
+        .collectIndexed { index, value ->
+          if (index == 0) disposePlaceholder(editor)
+          if (index == 0 && modificationStamp != request.document.modificationStamp) {
+            cancel()
+            return@collectIndexed
           }
-      }
+
+          if (index == 0) {
+            inlineState.suggestions = listOf(InlineCompletionElement(value.text))
+            showInlineSuggestion(editor, inlineState, offset)
+          }
+          else {
+            if (editor.getInlineCompletionContextOrNull() == null) {
+              cancel()
+            }
+            ensureActive()
+            inlineState.suggestions = inlineState.suggestions.map { it.withText(it.text + value.text) }
+            showInlineSuggestion(editor, inlineState, offset)
+          }
+        }
     }
   }
 

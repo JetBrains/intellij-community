@@ -2,7 +2,9 @@
 package com.intellij.codeInsight.inline.completion
 
 import com.intellij.codeInsight.inline.completion.InlineState.Companion.resetInlineCompletionState
+import com.intellij.codeInsight.inline.completion.listeners.InlineCompletionElementEvent
 import com.intellij.codeInsight.inline.completion.listeners.InlineCompletionKeyListener
+import com.intellij.codeInsight.inline.completion.listeners.InlineCompletionListener
 import com.intellij.codeInsight.inline.completion.render.InlineCompletion
 import com.intellij.codeInsight.lookup.LookupManager
 import com.intellij.openapi.Disposable
@@ -45,6 +47,7 @@ class InlineCompletionContext private constructor(val editor: Editor, private va
         Disposer.register(this, inlay)
         editor.contentComponent.addKeyListener(keyListener)
       }
+      editor.showInlineCompletions(proposal)
     }
   }
 
@@ -79,7 +82,8 @@ class InlineCompletionContext private constructor(val editor: Editor, private va
 
   companion object {
     private val LOG = thisLogger()
-    private val INLINE_COMPLETION_CONTEXT = Key.create<InlineCompletionContext>("inline.completion.completion.context")
+    private val INLINE_COMPLETION_CONTEXT = Key.create<InlineCompletionContext>("inline.completion.context")
+    private val INLINE_COMPLETION_LISTENER = Key.create<InlineCompletionListener>("inline.completion.listener")
 
     fun Editor.initOrGetInlineCompletionContext(): InlineCompletionContext {
       return getUserData(INLINE_COMPLETION_CONTEXT) ?: InlineCompletionContext(this).also {
@@ -105,8 +109,30 @@ class InlineCompletionContext private constructor(val editor: Editor, private va
       LOG.trace("Remove inline completion context")
     }
 
+
+    fun Editor.acceptInlineCompletions() {
+      getInlineCompletionContextOrNull()?.insert()
+      getInlineCompletionListenerOrNull()?.on(InlineCompletionElementEvent.Accepted)
+    }
+
+    fun Editor.showInlineCompletions(element: InlineCompletionElement) {
+      getInlineCompletionListenerOrNull()?.on(InlineCompletionElementEvent.Shown(element))
+    }
+
+    fun Editor.rejectInlineCompletions(explicit: Boolean = false) {
+      getInlineCompletionListenerOrNull()?.on(InlineCompletionElementEvent.Rejected(explicit))
+    }
+
+    private fun Editor.getInlineCompletionListenerOrNull(): InlineCompletionListener? = getUserData(INLINE_COMPLETION_LISTENER)
+
+    fun Editor.register(listener: InlineCompletionListener): Unit = putUserData(INLINE_COMPLETION_LISTENER, listener)
+
+    private fun Editor.removeInlineCompletionListener(): Unit = putUserData(INLINE_COMPLETION_LISTENER, null)
+
     fun Editor.resetInlineCompletionContext(): Unit? = getInlineCompletionContextOrNull()?.let {
       if (it.isCurrentlyDisplayingInlays) {
+        rejectInlineCompletions()
+        removeInlineCompletionListener()
         removeInlineCompletionContext()
         Disposer.dispose(it)
       }
