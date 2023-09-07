@@ -78,19 +78,19 @@
     </orderEntry>
     <orderEntry type="module-library">
       <library name="find-file-model-experimental" type="repository">
-        <properties maven-id="org.jetbrains.intellij.deps.searchEverywhere.model:find-file-model:232.0.1">
+        <properties maven-id="org.jetbrains.intellij.deps.searchEverywhere.model:find-file-model:233.0.1">
           <verification>
-            <artifact url="file://$MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/searchEverywhere/model/find-file-model/232.0.1/find-file-model-232.0.1.jar">
-              <sha256sum>fc794f0ec27897a11c43075ec94e2fc2df4e5c5b6d50f1e22312efd1d343597b</sha256sum>
+            <artifact url="file://$MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/searchEverywhere/model/find-file-model/233.0.1/find-file-model-233.0.1.jar">
+              <sha256sum>2420a0f23cb99d1e540750223e3512e027d5acbc629a1312f9b40df6466c6ecb</sha256sum>
             </artifact>
           </verification>
         </properties>
         <CLASSES>
-          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/searchEverywhere/model/find-file-model/232.0.1/find-file-model-232.0.1.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/searchEverywhere/model/find-file-model/233.0.1/find-file-model-233.0.1.jar!/" />
         </CLASSES>
         <JAVADOC />
         <SOURCES>
-          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/searchEverywhere/model/find-file-model/232.0.1/find-file-model-232.0.1-sources.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/searchEverywhere/model/find-file-model/233.0.1/find-file-model-233.0.1-sources.jar!/" />
         </SOURCES>
       </library>
     </orderEntry>
