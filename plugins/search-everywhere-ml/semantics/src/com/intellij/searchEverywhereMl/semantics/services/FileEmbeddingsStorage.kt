@@ -35,6 +35,7 @@ class FileEmbeddingsStorage(project: Project) : DiskSynchronizedEmbeddingsStorag
   )
   override val indexingTaskManager = EmbeddingIndexingTaskManager(index)
 
+  override val scanningTitle = SemanticSearchBundle.getMessage("search.everywhere.ml.semantic.files.scanning.label")
   override val setupTitle = SemanticSearchBundle.getMessage("search.everywhere.ml.semantic.files.generation.label")
 
   override val indexMemoryWeight: Int = 1

@@ -14,7 +14,7 @@ import kotlin.concurrent.write
  * Incremental operations do not rewrite the whole storage file with embeddings.
  * Instead, they change only the corresponding sections in the file.
  */
-class DiskSynchronizedEmbeddingSearchIndex(root: Path, limit: Int? = null) : EmbeddingSearchIndex {
+class DiskSynchronizedEmbeddingSearchIndex(val root: Path, limit: Int? = null) : EmbeddingSearchIndex {
   private var indexToId: MutableMap<Int, String> = CollectionFactory.createSmallMemoryFootprintMap()
   private var idToEntry: MutableMap<String, IndexEntry> = CollectionFactory.createSmallMemoryFootprintMap()
 

@@ -16,9 +16,14 @@ class ActionEmbeddingsStorageSetup(
   private val index: EmbeddingSearchIndex,
   private val setupTaskIndicator: AtomicReference<ProgressIndicator>
 ) : Task.Backgroundable(null, SETUP_TITLE) {
+  private var shouldSaveToDisk = true
+
   override fun run(indicator: ProgressIndicator) {
     val indexableActionIds = ActionEmbeddingsStorage.getIndexableActionIds()
-    if (checkEmbeddingsReady(indexableActionIds)) return
+    if (checkEmbeddingsReady(indexableActionIds)) {
+      shouldSaveToDisk = false
+      return
+    }
 
     val embeddingService = LocalEmbeddingServiceProvider.getInstance().getServiceBlocking() ?: return
     // Cancel the previous embeddings calculation task if it's not finished
@@ -50,7 +55,9 @@ class ActionEmbeddingsStorageSetup(
   }
 
   override fun onCancel() {
-    ApplicationManager.getApplication().executeOnPooledThread { index.saveToDisk() }
+    if (shouldSaveToDisk) {
+      ApplicationManager.getApplication().executeOnPooledThread { index.saveToDisk() }
+    }
   }
 
   private fun checkEmbeddingsReady(indexableActionIds: Set<String>): Boolean {

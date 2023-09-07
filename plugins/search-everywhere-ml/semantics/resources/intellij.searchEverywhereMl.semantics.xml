@@ -64,7 +64,7 @@
                  description="Semantic text search model version"
                  key="search.everywhere.ml.semantic.model.version"/>
 
-    <registryKey defaultValue="false"
+    <registryKey defaultValue="true"
                  description="Show embedding indexing progress indicator"
                  key="search.everywhere.ml.semantic.indexing.show.progress"/>
 

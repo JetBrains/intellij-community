@@ -1,5 +1,6 @@
 package com.intellij.searchEverywhereMl.semantics.services
 
+import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.searchEverywhereMl.semantics.indices.DiskSynchronizedEmbeddingSearchIndex
@@ -14,8 +15,13 @@ class DiskSynchronizedEmbeddingsStorageSetup<T : IndexableEntity>(
   private val setupTaskIndicator: AtomicReference<ProgressIndicator>,
   @Nls private val setupTitle: String
 ) {
+  private var shouldSaveToDisk = true
+
   fun run(indicator: ProgressIndicator) {
-    if (checkEmbeddingsReady(indexableEntities)) return
+    if (checkEmbeddingsReady(indexableEntities)) {
+      shouldSaveToDisk = false
+      return
+    }
     // Cancel the previous embeddings calculation task if it's not finished
     setupTaskIndicator.getAndSet(indicator)?.cancel()
 
@@ -45,7 +51,7 @@ class DiskSynchronizedEmbeddingsStorageSetup<T : IndexableEntity>(
 
   fun onFinish() {
     indexingTaskManager.cancelIndexTasks()
-    index.saveToDisk()
+    if (shouldSaveToDisk) ApplicationManager.getApplication().executeOnPooledThread { index.saveToDisk() }
   }
 
   private fun checkEmbeddingsReady(indexableEntities: List<IndexableEntity>): Boolean {

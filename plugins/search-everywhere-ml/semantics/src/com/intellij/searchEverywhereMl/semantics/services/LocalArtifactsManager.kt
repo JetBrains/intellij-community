@@ -6,6 +6,8 @@ import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
+import com.intellij.openapi.diagnostic.debug
+import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.progress.*
 import com.intellij.openapi.progress.impl.BackgroundableProcessIndicator
 import com.intellij.openapi.util.Disposer
@@ -32,6 +34,7 @@ class LocalArtifactsManager {
     .also { Files.createDirectories(it.toPath()) }
   private val modelArtifactsRoot = root.resolve(MODEL_ARTIFACTS_DIR)
   private val mutex = ReentrantLock()
+  private var failNotificationShown = false
 
   init {
     root.parentFile.toPath().listDirectoryEntries().filter { it.name != MODEL_VERSION }.forEach { it.delete(recursively = true) }
@@ -42,15 +45,9 @@ class LocalArtifactsManager {
   @RequiresBackgroundThread
   fun downloadArtifactsIfNecessary() = mutex.withLock {
     if (!checkArtifactsPresent()) {
+      logger.debug { "Semantic search artifacts are not present, starting the download..." }
       val indicator = BackgroundableProcessIndicator(null, ARTIFACTS_DOWNLOAD_TASK_NAME, null, "", false)
-      ProgressManager.getInstance().executeProcessUnderProgress(
-        {
-          indicator.start()
-          downloadArtifacts()
-          indicator.processFinish()
-        },
-        indicator
-      )
+      ProgressManager.getInstance().runProcess(this::downloadArtifacts, indicator)
       ApplicationManager.getApplication().invokeLater { Disposer.dispose(indicator) }
     }
   }
@@ -67,12 +64,18 @@ class LocalArtifactsManager {
       DownloadableFileService.getInstance().run {
         createDownloader(listOf(createFileDescription(MAVEN_ROOT, ARCHIVE_NAME)), ARTIFACTS_DOWNLOAD_TASK_NAME)
       }.download(root)
+      logger.debug { "Downloaded archive with search artifacts into ${root.absoluteFile}" }
 
       modelArtifactsRoot.deleteRecursively()
       unpackArtifactsArchive(root.resolve(ARCHIVE_NAME), root)
+      logger.debug { "Extracted model artifacts into the ${root.absoluteFile}" }
     }
     catch (e: IOException) {
-      showDownloadErrorNotification()
+      logger.warn("Failed to download semantic search artifacts")
+      if (!failNotificationShown) {
+        showDownloadErrorNotification()
+        failNotificationShown = true
+      }
     }
   }
 
@@ -93,6 +96,8 @@ class LocalArtifactsManager {
     private const val MODEL_ARTIFACTS_DIR = "models"
     private const val ARCHIVE_NAME = "semantic-text-search.jar"
     private const val NOTIFICATION_GROUP_ID = "Semantic search"
+
+    private val logger by lazy { logger<LocalArtifactsManager>() }
 
     fun getInstance() = service<LocalArtifactsManager>()
 

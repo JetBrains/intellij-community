@@ -1,6 +1,8 @@
 package com.intellij.searchEverywhereMl.semantics.services
 
 import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.diagnostic.Logger
+import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.progress.*
 import com.intellij.openapi.progress.impl.BackgroundableProcessIndicator
 import com.intellij.openapi.project.DumbService
@@ -21,6 +23,7 @@ abstract class DiskSynchronizedEmbeddingsStorage<T : IndexableEntity>(val projec
 
   private val setupTaskIndicator = AtomicReference<ProgressIndicator>(null)
 
+  abstract val scanningTitle: String
   abstract val setupTitle: String
 
   abstract val indexMemoryWeight: Int
@@ -37,6 +40,7 @@ abstract class DiskSynchronizedEmbeddingsStorage<T : IndexableEntity>(val projec
         LocalArtifactsManager.getInstance().downloadArtifactsIfNecessary()
         EmbeddingIndexMemoryManager.getInstance().registerIndex(index, indexMemoryWeight, indexStrongLimit)
         index.loadFromDisk()
+        logger.debug { "Loaded embedding index from disk, size: ${index.size}, root: ${index.root}" }
         generateEmbeddingsIfNecessary()
       }
     }
@@ -75,12 +79,22 @@ abstract class DiskSynchronizedEmbeddingsStorage<T : IndexableEntity>(val projec
   /* Thread-safe job for updating embeddings. Consequent call stops the previous execution */
   @RequiresBackgroundThread
   fun generateEmbeddingsIfNecessary() = GLOBAL_INDEXING_LOCK.withLock {
-    val indexableEntities = ProgressManager.getInstance().runProcess(this::getIndexableEntities, EmptyProgressIndicator())
+    logger.debug { "Started indexing for ${this.javaClass.simpleName}" }
+    val scanningIndicator = BackgroundableProcessIndicator(project, scanningTitle, null, "", true)
+    val indexableEntities = try {
+      ProgressManager.getInstance().runProcess(this::getIndexableEntities, scanningIndicator)
+    }
+    catch (_: ProcessCanceledException) {
+      return
+    }
+    ApplicationManager.getApplication().invokeLater { Disposer.dispose(scanningIndicator) }
+    logger.debug { "Found ${indexableEntities.size} indexable entities for ${this.javaClass.simpleName}" }
+
     val storageSetupTask = DiskSynchronizedEmbeddingsStorageSetup(
       index, indexingTaskManager, indexableEntities, setupTaskIndicator, setupTitle)
     try {
       if (Registry.`is`("search.everywhere.ml.semantic.indexing.show.progress")) {
-        val indicator = BackgroundableProcessIndicator(null, setupTitle, null, "", true)
+        val indicator = BackgroundableProcessIndicator(project, setupTitle, null, "", true)
         ProgressManager.getInstance().runProcess({ storageSetupTask.run(indicator) }, indicator)
         ApplicationManager.getApplication().invokeLater { Disposer.dispose(indicator) }
       }
@@ -88,9 +102,15 @@ abstract class DiskSynchronizedEmbeddingsStorage<T : IndexableEntity>(val projec
         val indicator = EmptyProgressIndicator()
         ProgressManager.getInstance().runProcess({ storageSetupTask.run(indicator) }, indicator)
       }
-    } catch (e: ProcessCanceledException) {
-      // do nothing
+    }
+    catch (_: ProcessCanceledException) {
+      // do nothing, finish with what we indexed
     }
     storageSetupTask.onFinish()
+    logger.debug { "Finished indexing for ${this.javaClass.simpleName}" }
+  }
+
+  companion object {
+    private val logger by lazy { Logger.getInstance(DiskSynchronizedEmbeddingsStorage::class.java) }
   }
 }

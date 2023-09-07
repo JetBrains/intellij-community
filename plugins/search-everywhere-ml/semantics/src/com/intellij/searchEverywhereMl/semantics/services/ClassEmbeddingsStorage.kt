@@ -35,7 +35,8 @@ class ClassEmbeddingsStorage(project: Project) : FileContentBasedEmbeddingsStora
   )
   override val indexingTaskManager = EmbeddingIndexingTaskManager(index)
 
-  override val setupTitle: String = SemanticSearchBundle.getMessage("search.everywhere.ml.semantic.classes.generation.label")
+  override val scanningTitle = SemanticSearchBundle.getMessage("search.everywhere.ml.semantic.classes.scanning.label")
+  override val setupTitle = SemanticSearchBundle.getMessage("search.everywhere.ml.semantic.classes.generation.label")
 
   override val indexMemoryWeight: Int = 1
   override val indexStrongLimit = Registry.intValue("search.everywhere.ml.semantic.indexing.indexable.classes.limit")
