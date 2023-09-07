@@ -140,7 +140,7 @@ object SVGLoader {
       return null
     }
 
-    fun attributeForPath(path: String?): SvgAttributePatcher? {
+    fun attributeForPath(path: String): SvgAttributePatcher? {
       return null
     }
 

@@ -188,8 +188,8 @@ private inline fun loadAndCacheIfApplicable(path: String?,
                                   precomputedCacheKey = precomputedCacheKey,
                                   scale = scale,
                                   compoundCacheKey = compoundCacheKey,
-                                  colorPatcher = colorPatcherProvider?.attributeForPath(path),
-                                  deprecatedColorPatcher = colorPatcherProvider?.forPath(path),
+                                  colorPatcher = path?.let { colorPatcherProvider?.attributeForPath(it) },
+                                  deprecatedColorPatcher = path?.let { colorPatcherProvider?.forPath(path) },
                                   dataProvider = dataProvider)
 }
 

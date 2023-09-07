@@ -198,7 +198,7 @@ private fun loadFromJson(theme: UIThemeBean, provider: ClassLoader?, iconMapper:
       alphaColors.add(value)
     }
     theme.selectionColorPatcher = object : SvgElementColorPatcherProvider {
-      override fun attributeForPath(path: String?): SvgAttributePatcher? {
+      override fun attributeForPath(path: String): SvgAttributePatcher? {
         val scope = paletteScopeManager.getScopeByPath(path)
         val hash = InsecureHashBuilder()
           .stringMap(colors)
@@ -277,7 +277,7 @@ private fun configureIcons(theme: UIThemeBean,
   }
 
   theme.colorPatcher = object : SvgElementColorPatcherProvider {
-    override fun attributeForPath(path: String?): SvgAttributePatcher? {
+    override fun attributeForPath(path: String): SvgAttributePatcher? {
       val scope = paletteScopeManager.getScopeByPath(path) ?: return null
       return newSvgPatcher(digest = scope.digest(), newPalette = scope.newPalette) { scope.alphas.get(it) }
     }
