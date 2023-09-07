@@ -41,10 +41,7 @@ import it.unimi.dsi.fastutil.ints.IntList;
 import it.unimi.dsi.fastutil.ints.IntOpenHashSet;
 import it.unimi.dsi.fastutil.ints.IntSet;
 import it.unimi.dsi.fastutil.objects.ReferenceOpenHashSet;
-import org.jetbrains.annotations.ApiStatus;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
-import org.jetbrains.annotations.TestOnly;
+import org.jetbrains.annotations.*;
 
 import java.io.*;
 import java.nio.charset.StandardCharsets;
@@ -1596,59 +1593,82 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
    * misses
    */
   private void cacheMissedRootFromPersistence(int rootId) {
-    Ref<String> missedRootUrl = new Ref<>();
+    Ref<String> missedRootUrlRef = new Ref<>();
     vfsPeer.forEachRoot((rootUrl, rootFileId) -> {
       if (rootId == rootFileId) {
-        missedRootUrl.set(rootUrl);
+        missedRootUrlRef.set(rootUrl);
       }
     });
 
-    if (!missedRootUrl.isNull()) {
-      //for roots 'name' == rootPath:
-      String rootPath = vfsPeer.getName(rootId);
-      cacheRootByUrl(rootId, rootPath, missedRootUrl.get());
+    if (missedRootUrlRef.isNull()) {
+      LOG.warn("Can't find root[#" + rootId + "]");
+      return;
+    }
+    //for roots 'name' == rootPath:
+    String rootPath = vfsPeer.getName(rootId);
+    ensureRootCached(rootPath, missedRootUrlRef.get());
+  }
+
+  @VisibleForTesting
+  NewVirtualFile ensureRootCached(@NotNull String missedRootPath,
+                                  @NotNull String missedRootUrl) {
+    NewVirtualFileSystem fs = detectFileSystem(missedRootUrl, missedRootPath);
+    if (fs == null) {
+      return null;
+    }
+
+    try {
+      NewVirtualFile cachedRoot = findRoot(missedRootPath, fs);
+      LOG.trace(
+        "\tforce caching " + missedRootUrl + " (protocol: " + fs.getProtocol() + ", path: " + missedRootPath + ") -> " + cachedRoot);
+      return cachedRoot;
+    }
+    catch (Throwable t) {
+      StringBuilder sb = new StringBuilder();
+      vfsPeer.forEachRoot((rootUrl, rootFileId) -> {
+        sb.append("[#").append(rootFileId).append("]: '").append(rootUrl).append("'\n");
+      });
+      LOG.warn("Can't cache root[url: " + missedRootUrl + "][path: " + missedRootPath + "]. \nAll roots: " + sb, t);
+      return null;
     }
   }
 
-  private void cacheRootByUrl(int missedRootId,
-                              @NotNull String missedRootPath,
-                              @NotNull String missedRootUrl) {
-    VirtualFileManager fileManager = VirtualFileManager.getInstance();
+  @VisibleForTesting
+  static @Nullable NewVirtualFileSystem detectFileSystem(@NotNull String rootUrl,
+                                                         @NotNull String rootPath) {
 
-    //we truncated all trailing '/' in the .findRoot(), before putting rootUrl into FSRecords.findOrCreateRoot()
-    // -- so now we need to append it/them back, otherwise .extractProtocol() won't recognize the protocol
-    if (missedRootUrl.endsWith(":")) {      // 'file:' -> 'file:///'
-      missedRootUrl += "///";
+    if (rootUrl.endsWith(":")) {
+      if (OSAgnosticPathUtil.startsWithWindowsDrive(rootUrl) && rootUrl.length() == 2) {
+        //Workaround for IDEA-331415: it shouldn't happen: rootUrl must be an url (even though sometimes not
+        // fully correct URL), not a win-path -- but it sometimes happens, even though shouldn't:
+        LOG.warn("detectFileSystem[root url='" + rootUrl + "', path='" + rootPath + "']: root URL is not an URL, but Win drive path");
+        return LocalFileSystem.getInstance();
+        //TODO RC: I hope this was just a fluck -- i.e. some VFS instances somehow got 'infected' by these wrong
+        // root urls, but they wash off with time -- and the need for this branch disappears. Lets replace the
+        // workaround with an AssertionError in v24.1, and see.
+      }
+
+      //We truncated all trailing '/' in the .findRoot(), before putting rootUrl into FSRecords.findOrCreateRoot()
+      // -- now we need to append them back, otherwise .extractProtocol() won't recognize the protocol
+      // E.g. 'file:' -> 'file:///'
+      rootUrl += "///";
     }
-    //else if (missedRootUrl.endsWith("!")) { // '.../file.jar!' -> '.../file.jar!/'
-    //  missedRootUrl += '/';
-    //}
-    String protocol = VirtualFileManager.extractProtocol(missedRootUrl);
-    VirtualFileSystem fs = fileManager.getFileSystem(protocol);
-    //String rootPath = VirtualFileManager.extractPath(missedRootUrl);
+
+    String protocol = VirtualFileManager.extractProtocol(rootUrl);
+    VirtualFileSystem fs = VirtualFileManager.getInstance().getFileSystem(protocol);
     if (fs instanceof NewVirtualFileSystem) {
-      try {
-        NewVirtualFile cachedRoot = findRoot(missedRootPath, (NewVirtualFileSystem)fs);
-        LOG.trace("\tforce caching " + missedRootUrl + " (protocol: " + protocol + ", path: " + missedRootPath + ") -> " + cachedRoot);
-      }
-      catch (Throwable t) {
-        StringBuilder sb = new StringBuilder();
-        vfsPeer.forEachRoot((rootUrl, rootFileId) -> {
-          sb.append("[#").append(rootFileId).append("]: '").append(rootUrl).append("'\n");
-        });
-        LOG.warn("Can't cache root[url: " + missedRootUrl + "][path: " + missedRootPath + "]. \nAll roots: " + sb, t);
-      }
+      return (NewVirtualFileSystem)fs;
+    }
+
+    if (fs == null) {
+      LOG.warn("\tcan't force caching " + rootUrl + " (protocol: " + protocol + ", path: " + rootPath + ") " +
+               "-> protocol:'" + protocol + "' is not registered (yet?)");
     }
     else {
-      if (fs == null) {
-        LOG.warn("\tcan't force caching " + missedRootUrl + " (protocol: " + protocol + ", path: " + missedRootPath + ") " +
-                 "-> protocol:'" + protocol + "' is not registered (yet?)");
-      }
-      else {
-        LOG.warn("\tcan't force caching " + missedRootUrl + " (protocol: " + protocol + ", path: " + missedRootPath + ") " +
-                 "-> " + fs + " is not NewVirtualFileSystem");
-      }
+      LOG.warn("\tcan't force caching " + rootUrl + " (protocol: " + protocol + ", path: " + rootPath + ") " +
+               "-> " + fs + " is not NewVirtualFileSystem");
     }
+    return null;
   }
 
 
