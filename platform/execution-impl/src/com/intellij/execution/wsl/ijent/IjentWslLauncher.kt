@@ -3,6 +3,7 @@
  * Later, this file will be moved close to `WSLDistribution`.
  */
 @file:JvmName("IjentWslLauncher")
+
 package com.intellij.execution.wsl.ijent
 
 import com.intellij.execution.configurations.GeneralCommandLine
@@ -15,6 +16,7 @@ import com.intellij.platform.ijent.IjentApi
 import com.intellij.platform.ijent.IjentExecFileProvider
 import com.intellij.platform.ijent.IjentSessionProvider
 import kotlinx.coroutines.CoroutineScope
+import org.jetbrains.annotations.VisibleForTesting
 import kotlin.io.path.absolutePathString
 
 suspend fun deployAndLaunchIjent(
@@ -22,10 +24,19 @@ suspend fun deployAndLaunchIjent(
   project: Project?,
   wslDistribution: WSLDistribution,
   wslCommandLineOptions: WSLCommandLineOptions = WSLCommandLineOptions(),
-): IjentApi {
+): IjentApi =
+  deployAndLaunchIjentGettingPath(ijentCoroutineScope, project, wslDistribution, wslCommandLineOptions).second
+
+@VisibleForTesting
+suspend fun deployAndLaunchIjentGettingPath(
+  ijentCoroutineScope: CoroutineScope,
+  project: Project?,
+  wslDistribution: WSLDistribution,
+  wslCommandLineOptions: WSLCommandLineOptions = WSLCommandLineOptions(),
+): Pair<String, IjentApi> {
   val ijentBinary = IjentExecFileProvider.instance().getIjentBinary(IjentExecFileProvider.SupportedPlatform.X86_64__LINUX)
 
-  val wslIjentBinary = wslDistribution.getWslPath(ijentBinary.absolutePathString())
+  val wslIjentBinary = wslDistribution.getWslPath(ijentBinary.absolutePathString())!!
 
   val (debuggingLogLevel, backtrace) = when {
     LOG.isTraceEnabled -> "trace" to true
@@ -53,7 +64,7 @@ suspend fun deployAndLaunchIjent(
 
   val process = commandLine.createProcess()
   try {
-    return IjentSessionProvider.connect(ijentCoroutineScope, process)
+    return wslIjentBinary to IjentSessionProvider.connect(ijentCoroutineScope, process)
   }
   catch (err: Throwable) {
     try {

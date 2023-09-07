@@ -128,9 +128,46 @@ interface IjentApi {
 
   suspend fun fetchLoginShellEnvVariables(): Map<String, String>
 
+  /**
+   * Creates a remote UNIX socket forwarding, i.e. IJent listens waits for a connection on the remote machine, and when the connection
+   * is accepted, the IDE communicates to the remote client via a pair of Kotlin channels.
+   *
+   * The call accepts only one connection. If multiple connections should be accepted, the function is supposed to be called in a loop:
+   * ```kotlin
+   * val ijent: IjentApi = ijentApiFactory()
+   *
+   * val (socketPath, tx, rx) = listenOnUnixSocket(CreateFilePath.MkTemp(prefix = "ijent-", suffix = ".sock"))
+   * println(socketPath) // /tmp/ijent-12345678.sock
+   * launch {
+   *   handleConnection(tx, rx)
+   * }
+   * while (true) {
+   *   val (_, tx, rx) = listenOnUnixSocket(CreateFilePath.Fixed(socketPath))
+   *   launch {
+   *     handleConnection(tx, rx)
+   *   }
+   * }
+   * ```
+   */
+  suspend fun listenOnUnixSocket(path: CreateFilePath = CreateFilePath.MkTemp()): ListenOnUnixSocketResult
+
+  data class ListenOnUnixSocketResult(
+    val unixSocketPath: String,
+    // TODO Avoid excessive byte arrays copying.
+    val tx: SendChannel<ByteArray>,
+    val rx: ReceiveChannel<ByteArray>,
+  )
+
   sealed interface ExecuteProcessResult {
     class Success(val process: IjentChildProcess) : ExecuteProcessResult
     data class Failure(val errno: Int, val message: String) : ExecuteProcessResult
+  }
+
+  sealed interface CreateFilePath {
+    data class Fixed(val path: String) : CreateFilePath
+
+    /** When [directory] is empty, the usual tmpdir is used. */
+    data class MkTemp(val directory: String = "", val prefix: String = "", val suffix: String = "") : CreateFilePath
   }
 }
 
