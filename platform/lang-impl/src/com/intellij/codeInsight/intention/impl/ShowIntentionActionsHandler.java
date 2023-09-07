@@ -203,8 +203,20 @@ public class ShowIntentionActionsHandler implements CodeInsightActionHandler {
           return false;
         }
       }
-      else if (!action.isAvailable(project, editor, psiFile)) {
-        return false;
+      else {
+        if (ApplicationManager.getApplication().isDispatchThread()) {
+          ModCommandAction modCommand = action.asModCommandAction();
+          if (modCommand != null) {
+            ActionContext actionContext = ActionContext.from(editor, psiFile);
+            ThrowableComputable<Boolean, RuntimeException> computable =
+              () -> ReadAction.nonBlocking(() -> modCommand.getPresentation(actionContext) != null)
+                .expireWhen(() -> project.isDisposed())
+                .executeSynchronously();
+            return ProgressManager.getInstance().runProcessWithProgressSynchronously(
+              computable, LangBundle.message("command.check.availability.for", modCommand.getFamilyName()), true, project);
+          }
+        }
+        return action.isAvailable(project, editor, psiFile);
       }
     }
     catch (IndexNotReadyException e) {
