@@ -21,6 +21,7 @@ import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.psi.JavaPsiFacade
 import com.intellij.psi.PsiClass
+import com.intellij.psi.PsiElement
 import com.intellij.psi.search.GlobalSearchScopes
 import com.intellij.ui.JBColor
 import com.intellij.util.PsiNavigateUtil
@@ -120,7 +121,10 @@ internal class PluginVerifierFilter(private val project: Project) : Filter {
     }
     val hasParen = codeSignature.contains('(')
 
-    val lastDotIdx = codeSignature.lastIndexOf('.')
+    val lastDotIdx = when {
+      hasParen -> codeSignature.substring(0, StringUtil.indexOf(codeSignature, '(')).lastIndexOf('.')
+      else -> codeSignature.lastIndexOf('.')
+    }
     val classname = when {
       hasColon || hasParen -> codeSignature.substring(0, lastDotIdx)
       else -> codeSignature
@@ -131,15 +135,28 @@ internal class PluginVerifierFilter(private val project: Project) : Filter {
       else -> null
     }
 
-    return Filter.Result(initialOffset + idx, initialOffset + idx + codeSignature.length, HyperlinkInfo {
+    return Filter.Result(initialOffset + idx, initialOffset + idx + codeSignature.length, CodeLocationHyperlinkInfo(classname, methodName))
+  }
 
+  inner class CodeLocationHyperlinkInfo(private val classname: String, private val methodName: String?) : HyperlinkInfo {
+    override fun navigate(it: Project) {
       if (DumbService.isDumb(project)) {
         DumbService.getInstance(project).showDumbModeNotificationForFunctionality(
           CodeInsightBundle.message("message.navigation.is.not.available.here.during.index.update"),
           DumbModeBlockedFunctionality.GotoDeclarationOnly)
-        return@HyperlinkInfo
+        return
       }
 
+      val navigationTarget = getNavigationTarget()
+      if (navigationTarget == null) {
+        showErrorHint(CodeInsightBundle.message("declaration.navigation.nowhere.to.go"))
+        return
+      }
+
+      PsiNavigateUtil.navigate(navigationTarget)
+    }
+
+    fun getNavigationTarget(): PsiElement? {
       fun findClassInProjectScope(fqn: String): PsiClass? {
         return JavaPsiFacade.getInstance(project).findClass(fqn, GlobalSearchScopes.projectProductionScope(project))
       }
@@ -150,23 +167,17 @@ internal class PluginVerifierFilter(private val project: Project) : Filter {
         // fallback for FQN.methodName$1$3$2.method(Param) // FQN.lambda$methodName$1(Param)
         psiClass = findClassInProjectScope(outerClassName.substringBeforeLast('.'))
       }
-
-      if (psiClass == null) {
-        showErrorHint(CodeInsightBundle.message("declaration.navigation.nowhere.to.go"))
-        return@HyperlinkInfo
-      }
+      if (psiClass == null) return null
 
       if (methodName != null) {
         val psiMethod = psiClass.findMethodsByName(methodName, false).firstOrNull()
         if (psiMethod != null) {
-          PsiNavigateUtil.navigate(psiMethod)
-          return@HyperlinkInfo
+          return psiMethod
         }
       }
 
-      PsiNavigateUtil.navigate(psiClass)
+      return psiClass
     }
-    )
   }
 
   private fun showErrorHint(@NlsContexts.HintText text: String) {
