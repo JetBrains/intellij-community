@@ -35,9 +35,9 @@ internal fun generateRuntimeModuleRepository(entries: List<DistributionFileEntry
   if (!repositoryForCompiledModulesPath.exists()) {
     context.messages.error("Runtime module repository wasn't generated during compilation: $repositoryForCompiledModulesPath doesn't exist")
   }
-  val compiledModulesDescriptors: Map<String, RawRuntimeModuleDescriptor>
+  val compiledModulesDescriptors: Map<RuntimeModuleId, RawRuntimeModuleDescriptor>
   try {
-    compiledModulesDescriptors = RuntimeModuleRepositorySerialization.loadFromJar(repositoryForCompiledModulesPath)
+    compiledModulesDescriptors = RuntimeModuleRepositorySerialization.loadFromJar(repositoryForCompiledModulesPath).mapKeys { RuntimeModuleId.raw(it.key) }
   }
   catch (e: MalformedRepositoryException) {
     context.messages.error("Failed to load runtime module repository: ${e.message}", e)
@@ -45,7 +45,7 @@ internal fun generateRuntimeModuleRepository(entries: List<DistributionFileEntry
   }
   
   val distDescriptors = ArrayList<RawRuntimeModuleDescriptor>()
-  val resourcePathMapping = MultiMap.createOrderedSet<String, String>()
+  val resourcePathMapping = MultiMap.createOrderedSet<RuntimeModuleId, String>()
 
   val mainPathsForResources = computeMainPathsForResourcesCopiedToMultiplePlaces(entries, context)
 
@@ -57,13 +57,13 @@ internal fun generateRuntimeModuleRepository(entries: List<DistributionFileEntry
         continue
       }
       val pathInDist = context.paths.distAllDir.relativize(entry.path).pathString
-      resourcePathMapping.putValue(moduleId.stringId, pathInDist)
+      resourcePathMapping.putValue(moduleId, pathInDist)
     }
   }
 
   addMappingsForDuplicatingLibraries(resourcePathMapping, compiledModulesDescriptors)
 
-  val transitiveDependencies = LinkedHashSet<String>()
+  val transitiveDependencies = LinkedHashSet<RuntimeModuleId>()
   collectTransitiveDependencies(resourcePathMapping.keySet(), compiledModulesDescriptors, transitiveDependencies)
 
   for ((moduleId, resourcePaths) in resourcePathMapping.entrySet()) {
@@ -83,7 +83,7 @@ internal fun generateRuntimeModuleRepository(entries: List<DistributionFileEntry
         else -> dependency
       }
     }
-    distDescriptors.add(RawRuntimeModuleDescriptor(moduleId, resourcePaths.toList(), actualDependencies))
+    distDescriptors.add(RawRuntimeModuleDescriptor(moduleId.stringId, resourcePaths.toList(), actualDependencies))
   }
 
   /* include descriptors of aggregating modules which don't have own resources (and therefore don't have DistributionFileEntry),
@@ -156,9 +156,9 @@ private fun computeMainPathsForResourcesCopiedToMultiplePlaces(entries: List<Dis
 /**
  * Adds mappings for libraries which aren't explicitly included in the distribution, but their JARs are included as part of other libraries.  
  */
-private fun addMappingsForDuplicatingLibraries(resourcePathMapping: MultiMap<String, String>,
-                                               compiledModulesDescriptors: Map<String, RawRuntimeModuleDescriptor>) {
-  val transitiveDependencies = LinkedHashSet<String>()
+private fun addMappingsForDuplicatingLibraries(resourcePathMapping: MultiMap<RuntimeModuleId, String>,
+                                               compiledModulesDescriptors: Map<RuntimeModuleId, RawRuntimeModuleDescriptor>) {
+  val transitiveDependencies = LinkedHashSet<RuntimeModuleId>()
   collectTransitiveDependencies(resourcePathMapping.keySet(), compiledModulesDescriptors, transitiveDependencies)
 
   val descriptorsByResource = HashMap<String, MutableList<RawRuntimeModuleDescriptor>>()
@@ -170,25 +170,26 @@ private fun addMappingsForDuplicatingLibraries(resourcePathMapping: MultiMap<Str
     val includedDescriptor = compiledModulesDescriptors[moduleId]
     includedDescriptor?.resourcePaths?.forEach { resourcePath ->
       descriptorsByResource[resourcePath]?.forEach { anotherDescriptor ->
-        if (anotherDescriptor.id != includedDescriptor.id
-            && anotherDescriptor.id in transitiveDependencies
+        val anotherId = RuntimeModuleId.raw(anotherDescriptor.id)
+        if (anotherId.stringId != includedDescriptor.id
+            && anotherId in transitiveDependencies
             && includedDescriptor.resourcePaths.containsAll(anotherDescriptor.resourcePaths)
             && (includedDescriptor.resourcePaths == anotherDescriptor.resourcePaths || resourcePathsInDist.size == 1)
-            && includedInMapping.add(anotherDescriptor.id)) {
-          resourcePathMapping.putValues(anotherDescriptor.id, resourcePathsInDist)
+            && includedInMapping.add(anotherId)) {
+          resourcePathMapping.putValues(anotherId, resourcePathsInDist)
         }
       }
     }
   }
 }
 
-private fun collectTransitiveDependencies(moduleIds: Collection<String>, descriptorMap: Map<String, RawRuntimeModuleDescriptor>, 
-                                          result: MutableSet<String>) {
+private fun collectTransitiveDependencies(moduleIds: Collection<RuntimeModuleId>, descriptorMap: Map<RuntimeModuleId, RawRuntimeModuleDescriptor>,
+                                          result: MutableSet<RuntimeModuleId>) {
   for (moduleId in moduleIds) {
     if (result.add(moduleId)) {
       val descriptor = descriptorMap[moduleId]
       if (descriptor != null) {
-        collectTransitiveDependencies(descriptor.dependencies, descriptorMap, result)
+        collectTransitiveDependencies(descriptor.dependencies.map { RuntimeModuleId.raw(it) }, descriptorMap, result)
       }
     }
   }
