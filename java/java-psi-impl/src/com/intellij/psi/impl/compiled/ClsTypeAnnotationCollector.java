@@ -43,8 +43,8 @@ class ClsTypeAnnotationCollector extends TypeAnnotationContainer.Collector {
    * @return translated path in the form of byte array
    */
   private byte[] translatePath(@Nullable TypePath path) {
-    String typeText = myTypeInfo.text;
-    int arrayLevel = myTypeInfo.arrayCount + (myTypeInfo.isEllipsis ? 1 : 0);
+    String typeText = myTypeInfo.text();
+    int arrayLevel = myTypeInfo.arrayCount() + (myTypeInfo.isEllipsis() ? 1 : 0);
     String qualifiedName = PsiNameHelper.getQualifiedClassName(typeText, false);
     int depth = myFirstPassData.getInnerDepth(qualifiedName);
     boolean atWildcard = false;
@@ -85,8 +85,8 @@ class ClsTypeAnnotationCollector extends TypeAnnotationContainer.Collector {
           String[] arguments = PsiNameHelper.getClassParametersText(typeText);
           if (argumentIndex >= arguments.length) return null;
           TypeInfo argument = TypeInfo.fromString(arguments[argumentIndex], false);
-          arrayLevel = argument.arrayCount;
-          typeText = argument.text;
+          arrayLevel = argument.arrayCount();
+          typeText = argument.text();
           if (typeText.startsWith("? extends ")) {
             typeText = typeText.substring("? extends ".length());
             atWildcard = true;

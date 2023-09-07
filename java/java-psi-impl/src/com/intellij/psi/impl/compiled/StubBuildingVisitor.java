@@ -127,7 +127,7 @@ public class StubBuildingVisitor<T> extends ClassVisitor {
 
     if (myResult.isInterface()) {
       if (myClassInfo.interfaces != null && myResult.isAnnotationType()) {
-        myClassInfo.interfaces.removeIf(info -> info.text.equals(CommonClassNames.JAVA_LANG_ANNOTATION_ANNOTATION));
+        myClassInfo.interfaces.removeIf(info -> info.text().equals(CommonClassNames.JAVA_LANG_ANNOTATION_ANNOTATION));
       }
       newReferenceList(JavaStubElementTypes.EXTENDS_LIST, myResult, myClassInfo.interfaces);
       newReferenceList(JavaStubElementTypes.IMPLEMENTS_LIST, myResult, Collections.emptyList());
@@ -349,7 +349,7 @@ public class StubBuildingVisitor<T> extends ClassVisitor {
 
     byte flags = PsiFieldStubImpl.packFlags(isSet(access, Opcodes.ACC_ENUM), isSet(access, Opcodes.ACC_DEPRECATED), false, false);
     TypeInfo type = fieldType(desc, signature);
-    String initializer = constToString(value, type.text, false, myFirstPassData);
+    String initializer = constToString(value, type.text(), false, myFirstPassData);
     PsiFieldStub stub = new PsiFieldStubImpl(myResult, name, type, initializer, flags);
     PsiModifierListStub modList = new PsiModifierListStubImpl(stub, packFieldFlags(access));
     return new FieldAnnotationCollectingVisitor(stub, modList, myFirstPassData);

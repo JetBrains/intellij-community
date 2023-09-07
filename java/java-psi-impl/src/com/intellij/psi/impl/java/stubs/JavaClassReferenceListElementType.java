@@ -63,7 +63,7 @@ public abstract class JavaClassReferenceListElementType extends JavaStubElementT
     boolean hasAnnotations = ContainerUtil.exists(types, info -> !info.getTypeAnnotations().isEmpty());
     dataStream.writeVarInt(hasAnnotations ? -types.length : types.length);
     for (TypeInfo info : types) {
-      dataStream.writeName(info.text);
+      dataStream.writeName(info.text());
     }
     if (hasAnnotations) {
       for (TypeInfo info : types) {

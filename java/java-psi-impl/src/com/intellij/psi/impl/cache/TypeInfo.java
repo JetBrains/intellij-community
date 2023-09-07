@@ -56,29 +56,48 @@ public final class TypeInfo {
     ourTypeLengthMask = typeLengthMask;
   }
 
-  private static final TypeInfo NULL = new TypeInfo(null, (byte)0, false);
+  private static final TypeInfo NULL = new TypeInfo(null, (byte)0, TypeKind.NULL_TYPE);
+  
+  public enum TypeKind {
+    NORMAL('='), EXTENDS_TYPE('+'), SUPER_TYPE('-'), VAR_ARG('.'), NULL_TYPE('n');
+    final char c;
 
-  public final String text;
-  public final byte arrayCount;
-  public final boolean isEllipsis;
+    TypeKind(char c) { this.c = c; }
+  }
+
+  private final String text;
+  private final byte arrayCount;
+  private final TypeKind kind;
   private TypeAnnotationContainer myTypeAnnotations;
 
   /**
    * @param text type text (not array)
    * @param arrayCount number of array components (including vararg component, if any)
-   * @param ellipsis if true, the last array component should be interpreted as vararg
+   * @param kind kind of the type
    */
-  private TypeInfo(String text, byte arrayCount, boolean ellipsis) {
+  private TypeInfo(String text, byte arrayCount, TypeKind kind) {
     this.text = text == null ? null : internFrequentType(text);
     this.arrayCount = arrayCount;
-    isEllipsis = ellipsis;
+    this.kind = kind;
+  }
+  
+  public String text() {
+    return this.text;
+  }
+  
+  public int arrayCount() {
+    return arrayCount;
+  }
+
+  public boolean isEllipsis() {
+    return kind == TypeKind.VAR_ARG;
   }
 
   /**
    * @return the same TypeInfo but with ellipsis bit set
    */
   public TypeInfo withEllipsis() {
-    return new TypeInfo(text, arrayCount, true);
+    return new TypeInfo(text, arrayCount, TypeKind.VAR_ARG);
   }
 
   /**
@@ -180,7 +199,7 @@ public final class TypeInfo {
       }
     }
 
-    TypeInfo info = new TypeInfo(text, arrayCount, isEllipsis);
+    TypeInfo info = new TypeInfo(text, arrayCount, isEllipsis ? TypeKind.VAR_ARG : TypeKind.NORMAL);
     if (hasAnnotation) {
       // TODO: support bounds, generics and enclosing types
       TypeAnnotationContainer.Collector collector = new TypeAnnotationContainer.Collector(info);
@@ -206,8 +225,9 @@ public final class TypeInfo {
     return info;
   }
 
-  public static TypeInfo fromStringNoArray(String text) {
-    return new TypeInfo(text, (byte)0, false);
+  public static TypeInfo fromStringNoArray(@Nullable String text) {
+    if (text == null) return NULL;
+    return new TypeInfo(text, (byte)0, TypeKind.NORMAL);
   }
 
   @NotNull
@@ -220,7 +240,7 @@ public final class TypeInfo {
       typeText = typeText.substring(0, typeText.length() - 2);
     }
 
-    return new TypeInfo(typeText, arrayCount, isEllipsis);
+    return new TypeInfo(typeText, arrayCount, isEllipsis ? TypeKind.VAR_ARG : TypeKind.NORMAL);
   }
 
   @NotNull
@@ -248,7 +268,7 @@ public final class TypeInfo {
     int frequentIndex = FREQUENT_INDEX_MASK & flags;
     String text = frequentIndex == 0 ? record.readNameString() : ourIndexFrequentType[frequentIndex];
 
-    TypeInfo info = new TypeInfo(text, arrayCount, hasEllipsis);
+    TypeInfo info = new TypeInfo(text, arrayCount, hasEllipsis ? TypeKind.VAR_ARG : TypeKind.NORMAL);
     info.setTypeAnnotations(hasTypeAnnotations ? TypeAnnotationContainer.readTypeAnnotations(record) : TypeAnnotationContainer.EMPTY);
     return info;
   }
@@ -263,7 +283,7 @@ public final class TypeInfo {
     byte arrayCount = typeInfo.arrayCount;
     int frequentIndex = getFrequentIndex(text);
     boolean hasTypeAnnotations = typeInfo.myTypeAnnotations != null && !typeInfo.myTypeAnnotations.isEmpty();
-    int flags = (typeInfo.isEllipsis ? HAS_ELLIPSIS : 0) | (arrayCount != 0 ? HAS_ARRAY_COUNT : 0) |
+    int flags = (typeInfo.isEllipsis() ? HAS_ELLIPSIS : 0) | (arrayCount != 0 ? HAS_ARRAY_COUNT : 0) |
                 (hasTypeAnnotations ? HAS_TYPE_ANNOTATIONS : 0) | frequentIndex;
     dataStream.writeByte(flags);
 
@@ -295,11 +315,11 @@ public final class TypeInfo {
 
     buf.append(typeInfo.text);
 
-    int arrayCount = typeInfo.isEllipsis ? typeInfo.arrayCount - 1 : typeInfo.arrayCount;
+    int arrayCount = typeInfo.isEllipsis() ? typeInfo.arrayCount - 1 : typeInfo.arrayCount;
     for (int i = 0; i < arrayCount; i++) {
       buf.append("[]");
     }
-    if (typeInfo.isEllipsis) {
+    if (typeInfo.isEllipsis()) {
       buf.append("...");
     }
 

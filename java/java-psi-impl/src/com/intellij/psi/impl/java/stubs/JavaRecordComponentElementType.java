@@ -73,6 +73,6 @@ public class JavaRecordComponentElementType extends JavaStubElementType<PsiRecor
 
     LighterASTNode modifierList = LightTreeUtil.firstChildOfType(tree, node, JavaElementType.MODIFIER_LIST);
     boolean hasDeprecatedAnnotation = modifierList != null && RecordUtil.isDeprecatedByAnnotation(tree, modifierList);
-    return new PsiRecordComponentStubImpl(parentStub, name, typeInfo, typeInfo.isEllipsis, hasDeprecatedAnnotation);
+    return new PsiRecordComponentStubImpl(parentStub, name, typeInfo, typeInfo.isEllipsis(), hasDeprecatedAnnotation);
   }
 }

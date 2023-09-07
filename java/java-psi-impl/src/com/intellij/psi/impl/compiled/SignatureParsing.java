@@ -113,10 +113,10 @@ public final class SignatureParsing {
     }
 
     private void createTypeParameter(PsiTypeParameterListStub listStub) {
-      PsiTypeParameterStub stub = new PsiTypeParameterStubImpl(listStub, this.myTypeParameter.text);
+      PsiTypeParameterStub stub = new PsiTypeParameterStubImpl(listStub, this.myTypeParameter.text());
       myTypeParameter.getTypeAnnotations().createAnnotationStubs(stub);
       TypeInfo[] info = this.myBounds;
-      if (info.length > 0 && info[0].text == null) {
+      if (info.length > 0 && info[0].text() == null) {
         info = Arrays.copyOfRange(info, 1, info.length);
       }
       new PsiClassReferenceListStubImpl(JavaStubElementTypes.EXTENDS_BOUND_LIST, stub, info);

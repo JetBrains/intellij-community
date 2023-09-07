@@ -48,7 +48,7 @@ public class JavaParameterElementType extends JavaStubElementType<PsiParameterSt
     TypeInfo typeInfo = TypeInfo.create(tree, node, parentStub);
     LighterASTNode id = LightTreeUtil.requiredChildOfType(tree, node, JavaTokenType.IDENTIFIER);
     String name = RecordUtil.intern(tree.getCharTable(), id);
-    return new PsiParameterStubImpl(parentStub, name, typeInfo, typeInfo.isEllipsis, false);
+    return new PsiParameterStubImpl(parentStub, name, typeInfo, typeInfo.isEllipsis(), false);
   }
 
   @Override
