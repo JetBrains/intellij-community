@@ -6,11 +6,16 @@ package git4idea.stash
 import com.intellij.dvcs.DvcsUtil
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.diagnostic.logger
+import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.ProgressManager
+import com.intellij.openapi.progress.Task
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.MessageDialogBuilder
 import com.intellij.openapi.ui.Messages
 import com.intellij.openapi.util.ThrowableComputable
+import com.intellij.openapi.util.text.HtmlBuilder
+import com.intellij.openapi.util.text.HtmlChunk
+import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.vcs.VcsBundle
 import com.intellij.openapi.vcs.VcsException
 import com.intellij.openapi.vcs.VcsNotifier
@@ -173,7 +178,8 @@ object GitStashOperations {
         val indexConflictDetector = GitSimpleEventDetector(GitSimpleEventDetector.Event.INDEX_CONFLICT_ON_UNSTASH)
         val conflictDetector = GitSimpleEventDetector(GitSimpleEventDetector.Event.MERGE_CONFLICT_ON_UNSTASH)
         val untrackedFilesDetector = GitUntrackedFilesOverwrittenByOperationDetector(root)
-        val localChangesDetector = GitLocalChangesWouldBeOverwrittenDetector(root, GitLocalChangesWouldBeOverwrittenDetector.Operation.MERGE)
+        val localChangesDetector = GitLocalChangesWouldBeOverwrittenDetector(root,
+                                                                             GitLocalChangesWouldBeOverwrittenDetector.Operation.MERGE)
         handler.addLineListener(indexConflictDetector)
         handler.addLineListener(conflictDetector)
         handler.addLineListener(untrackedFilesDetector)
@@ -231,6 +237,42 @@ object GitStashOperations {
       LOG.warn("Couldn't load changes in root [$root] in stash resolved to [$hash]", e)
     }
   }
+
+  @JvmStatic
+  fun runStashInBackground(project: Project, roots: Collection<VirtualFile>, createHandler: (VirtualFile) -> GitLineHandler) {
+    object : Task.Backgroundable(project, GitBundle.message("stashing.progress.title"), false) {
+      override fun run(indicator: ProgressIndicator) {
+        DvcsUtil.workingTreeChangeStarted(project, GitBundle.message("stash.action.name")).use { _ ->
+          val successfulRoots = mutableListOf<VirtualFile>()
+          val failedRoots = linkedMapOf<VirtualFile, String>()
+          for (root in roots) {
+            val activity = GitStashUsageCollector.logStashPush(project)
+            val result = Git.getInstance().runCommand(createHandler(root))
+            activity.finished()
+
+            if (result.success()) {
+              successfulRoots.add(root)
+            }
+            else {
+              failedRoots[root] = result.errorOutputAsHtmlString
+            }
+          }
+
+          if (!successfulRoots.isEmpty()) {
+            GitUtil.refreshVfsInRoots(successfulRoots)
+          }
+          if (!failedRoots.isEmpty()) {
+            val rootList = failedRoots.keys.joinToString(", ") { it.presentableName }
+            val errorTitle = GitBundle.message("stash.error", StringUtil.shortenTextWithEllipsis(rootList, 100, 0))
+            val errorMessage = HtmlBuilder()
+              .appendWithSeparators(HtmlChunk.br(), failedRoots.values.map { HtmlChunk.raw(it) })
+              .toString()
+            VcsNotifier.getInstance(project).notifyError(GitNotificationIdsHolder.STASH_FAILED, errorTitle, errorMessage, true)
+          }
+        }
+      }
+    }.queue()
+  }
 }
 
 private class UnstashConflictResolver(project: Project, private val stashInfo: StashInfo) :
@@ -238,8 +280,10 @@ private class UnstashConflictResolver(project: Project, private val stashInfo: S
 
   override fun notifyUnresolvedRemain() {
     VcsNotifier.getInstance(myProject).notifyImportantWarning(GitNotificationIdsHolder.UNSTASH_UNRESOLVED_CONFLICTS,
-                                                              GitBundle.message("unstash.dialog.unresolved.conflict.warning.notification.title"),
-                                                              GitBundle.message("unstash.dialog.unresolved.conflict.warning.notification.message")
+                                                              GitBundle.message(
+                                                                "unstash.dialog.unresolved.conflict.warning.notification.title"),
+                                                              GitBundle.message(
+                                                                "unstash.dialog.unresolved.conflict.warning.notification.message")
     ) { _, event ->
       if (event.eventType == HyperlinkEvent.EventType.ACTIVATED) {
         if (event.description == "resolve") {
