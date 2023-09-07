@@ -14,6 +14,7 @@ import org.jetbrains.plugins.gradle.testFramework.util.withBuildFile
 import org.jetbrains.plugins.gradle.testFramework.util.withSettingsFile
 import org.jetbrains.plugins.groovy.codeInspection.GroovyUnusedDeclarationInspection
 import org.jetbrains.plugins.groovy.codeInspection.assignment.GroovyAssignabilityCheckInspection
+import org.jetbrains.plugins.groovy.codeInspection.untypedUnresolvedAccess.GrUnresolvedAccessInspection
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.params.ParameterizedTest
 
@@ -55,6 +56,19 @@ class GradleHighlightingTest : GradleCodeInsightTestCase() {
       testHighlighting("""
         jar {
           archiveClassifier = "a"
+        }
+      """.trimIndent())
+    }
+  }
+
+  @ParameterizedTest
+  @BaseGradleVersionSource
+  fun testActionDelegate(gradleVersion: GradleVersion) {
+    testJavaProject(gradleVersion) {
+      fixture.enableInspections(GrUnresolvedAccessInspection::class.java)
+      testHighlighting("""
+        tasks.register('jc', Jar) {
+            archiveBaseName
         }
       """.trimIndent())
     }
