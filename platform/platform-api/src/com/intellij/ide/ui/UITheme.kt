@@ -15,6 +15,7 @@ import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.util.IconPathPatcher
 import com.intellij.ui.ColorHexUtil
 import com.intellij.ui.Gray
+import com.intellij.ui.IdeUICustomization
 import com.intellij.ui.icons.ImageDataByPathLoader.Companion.findIconByPath
 import com.intellij.ui.icons.getReflectiveIcon
 import com.intellij.ui.svg.SvgAttributePatcher
@@ -106,7 +107,7 @@ class UITheme private constructor(val id: @NonNls String, private val bean: UITh
   }
 
   var editorSchemeName: String?
-    get() = bean.editorSchemeName
+    get() = IdeUICustomization.getInstance().getUiThemeEditorSchemeName(id, bean.editorSchemeName)
     set(editorSchemeName) {
       bean.editorSchemeName = editorSchemeName
     }
