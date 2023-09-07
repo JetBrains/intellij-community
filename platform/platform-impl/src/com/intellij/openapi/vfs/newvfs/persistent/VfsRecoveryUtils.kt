@@ -189,24 +189,25 @@ object VfsRecoveryUtils {
     private fun ExtendedVfsSnapshot.precededByCompactedInstance(): ExtendedVfsSnapshot =
       compactedVfs?.let { this.precededBy(it) } ?: this
 
-    fun calculateAttributesAlteredAfterRecoveryPointFilter(fileIdRange: IntRange): (fileId: Int, attr: EnumeratedFileAttribute) -> Boolean {
-      val dropAttrsSet = mutableSetOf<Pair<Int, EnumeratedFileAttribute>>()
+    fun calculateAttributesAlteredAfterRecoveryPointFilter(fileIdRange: IntRange): (fileId: Int) -> Boolean {
+      //val dropAttrsSet = mutableSetOf<Pair<Int, EnumeratedFileAttribute>>()
       val erasedFileIds = mutableSetOf<Int>()
-      val iter = point()
-      VfsChronicle.traverseOperationsLog(iter, OperationLogStorage.TraverseDirection.PLAY,
+      VfsChronicle.traverseOperationsLog(point(), OperationLogStorage.TraverseDirection.PLAY,
                                          VfsModificationContract.attributeData.relevantOperations,
                                          onIncomplete = { /* skip FIXME ? */ },
                                          onCompleteExceptional = { /* skip FIXME ? */ }) { op ->
         VfsModificationContract.attributeData.modifier(op) { overwriteData ->
           val fileId = op.getFileId()!!
           if (fileId in fileIdRange) {
-            if (overwriteData.enumeratedAttributeFilter == null) erasedFileIds.add(fileId)
-            else dropAttrsSet.add(fileId to overwriteData.enumeratedAttributeFilter)
+            erasedFileIds.add(fileId)
+            // TODO maybe do it per attribute
+            //if (overwriteData.enumeratedAttributeFilter == null) erasedFileIds.add(fileId)
+            //else dropAttrsSet.add(fileId to overwriteData.enumeratedAttributeFilter)
           }
         }
       }
-      return { fileId, attr ->
-        fileId in erasedFileIds || (fileId to attr) in dropAttrsSet
+      return { fileId ->
+        fileId in erasedFileIds // TODO maybe || (fileId to attr) in dropAttrsSet
       }
     }
 
@@ -459,29 +460,35 @@ object VfsRecoveryUtils {
               }) { true }
             }
           }
-          // recover available attrs except children
-          for ((enumeratedAttrId, dataRef) in file.attributeDataMap.get()) {
-            if (enumeratedAttrId == childrenAttributeEnumerated) continue
-            if (alteredAttributesFilter(file.fileId, enumeratedAttrId)) {
-              recoveryResult.droppedObsoleteAttributesCount++
-              continue
-            }
-            val attr = queryContext.deenumerateAttribute(enumeratedAttrId) ?: throw IllegalStateException(
-              "cannot deenumerate attribute using vfslog enumerator (enumeratedAttribute=$enumeratedAttrId)")
-            try {
-              val attrData = payloadReader(dataRef)
-              if (attrData !is Ready) continue // skip if NotAvailable
-              val attrContent = attrData.value
-                                  .cutOutAttributeVersionPrefix(attr) ?: continue // TODO this doesn't look like it should be here
-              newFsRecords.writeAttribute(file.fileId, attr).use {
-                it.write(attrContent)
+          if (alteredAttributesFilter(file.fileId)) {
+            val keys = file.attributeDataMap.get().keys
+            recoveryResult.droppedObsoleteAttributesCount += keys.size - if (childrenAttributeEnumerated in keys) 1 else 0
+            // TODO maybe do it per attribute with a special event of some sort
+            newVfsLogOperationWriteContext.trackPlainOperation(VfsOperationTag.ATTR_DELETE_ATTRS, {
+              VfsOperation.AttributesOperation.DeleteAttributes(file.fileId, it)
+            }) { Unit }
+          }
+          else {
+            // recover available attrs except children
+            for ((enumeratedAttrId, dataRef) in file.attributeDataMap.get()) {
+              if (enumeratedAttrId == childrenAttributeEnumerated) continue
+              val attr = queryContext.deenumerateAttribute(enumeratedAttrId) ?: throw IllegalStateException(
+                "cannot deenumerate attribute using vfslog enumerator (enumeratedAttribute=$enumeratedAttrId)")
+              try {
+                val attrData = payloadReader(dataRef)
+                if (attrData !is Ready) continue // skip if NotAvailable
+                val attrContent = attrData.value
+                                    .cutOutAttributeVersionPrefix(attr) ?: continue // TODO this doesn't look like it should be here
+                newFsRecords.writeAttribute(file.fileId, attr).use {
+                  it.write(attrContent)
+                }
+                recoveryResult.recoveredAttributesCount++
               }
-              recoveryResult.recoveredAttributesCount++
-            }
-            catch (e: Throwable) {
-              recoveryResult.botchedAttributesCount++
-              if (e is IOException) {
-                throw e
+              catch (e: Throwable) {
+                recoveryResult.botchedAttributesCount++
+                if (e is IOException) {
+                  throw e
+                }
               }
             }
           }
@@ -689,6 +696,12 @@ object VfsRecoveryUtils {
       catch (e: Throwable) {
         throw VfsRecoveryException("failed to truncate new vfslog", e)
       }
+    }
+    try {
+      VfsLogImpl.filterOutRecoveryPoints(newPaths.vfsLogStorage, 0L until point.getPosition())
+    }
+    catch (e: Throwable) {
+      throw VfsRecoveryException("failed to filter out recovery points", e)
     }
   }
 
