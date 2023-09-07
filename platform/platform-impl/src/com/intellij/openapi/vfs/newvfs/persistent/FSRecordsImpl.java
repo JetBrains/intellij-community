@@ -1102,7 +1102,7 @@ public final class FSRecordsImpl {
     try {
       return readAttribute(fileId, attribute);
     }
-    catch (Throwable e) {
+    catch (IOException e) {
       throw handleError(e);
     }
   }
@@ -1133,7 +1133,7 @@ public final class FSRecordsImpl {
     try {
       return attributeAccessor.readAttributeRaw(fileId, attribute, reader);
     }
-    catch (Throwable e) {
+    catch (IOException e) {
       throw handleError(e);
     }
   }
