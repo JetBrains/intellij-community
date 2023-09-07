@@ -6,6 +6,7 @@ import com.intellij.codeInsight.inline.completion.InlineCompletionContext.Compan
 import com.intellij.codeInsight.inline.completion.InlineCompletionContext.Companion.resetInlineCompletionContextWithPlaceholder
 import com.intellij.codeInsight.inline.completion.InlineCompletionEvent
 import com.intellij.codeInsight.inline.completion.InlineCompletionHandler
+import com.intellij.codeInsight.lookup.LookupManager
 import com.intellij.codeWithMe.ClientId
 import com.intellij.codeWithMe.isCurrent
 import com.intellij.openapi.diagnostic.thisLogger
@@ -40,20 +41,23 @@ class InlineCompletionDocumentListener(private val editor: EditorImpl) : Documen
 
 @ApiStatus.Experimental
 open class InlineCompletionKeyListener(private val editor: Editor) : KeyAdapter() {
-  private val usedKeys = listOf(
-    KeyEvent.VK_ALT,
-    KeyEvent.VK_OPEN_BRACKET,
-    KeyEvent.VK_CLOSE_BRACKET,
-    KeyEvent.VK_TAB,
-    KeyEvent.VK_SHIFT,
-  )
 
   override fun keyReleased(event: KeyEvent) {
-    if (event.keyCode in usedKeys) {
+    if (!isValuableKeyReleased(event)) {
       return
     }
     LOG.debug("Valuable key released event $event")
     hideInlineCompletion()
+  }
+
+  private fun isValuableKeyReleased(event: KeyEvent): Boolean {
+    if (event.keyCode in MINOR_KEYS) {
+      return false
+    }
+    if (LookupManager.getActiveLookup(editor) != null && event.keyCode in MINOR_WHEN_LOOKUP_KEYS) {
+      return false
+    }
+    return true
   }
 
   protected open fun hideInlineCompletion() {
@@ -62,6 +66,17 @@ open class InlineCompletionKeyListener(private val editor: Editor) : KeyAdapter(
 
   companion object {
     private val LOG = thisLogger()
+    private val MINOR_KEYS = listOf(
+      KeyEvent.VK_ALT,
+      KeyEvent.VK_OPEN_BRACKET,
+      KeyEvent.VK_CLOSE_BRACKET,
+      KeyEvent.VK_TAB,
+      KeyEvent.VK_SHIFT,
+    )
+    private val MINOR_WHEN_LOOKUP_KEYS = listOf(
+      KeyEvent.VK_UP,
+      KeyEvent.VK_DOWN,
+    )
   }
 }
 
