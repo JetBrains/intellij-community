@@ -1,132 +1,146 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
-package org.jetbrains.plugins.gradle.tooling.builder
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package org.jetbrains.plugins.gradle.tooling.builder;
 
-import org.gradle.api.Project
-import org.gradle.api.Task
-import org.gradle.api.plugins.scala.ScalaPlugin
-import org.gradle.api.tasks.scala.ScalaCompile
-import org.gradle.api.tasks.scala.ScalaCompileOptions
-import org.gradle.api.tasks.scala.ScalaForkOptions
-import org.jetbrains.annotations.Contract
-import org.jetbrains.annotations.NotNull
-import org.jetbrains.annotations.Nullable
-import org.jetbrains.plugins.gradle.model.scala.ScalaModel
-import org.jetbrains.plugins.gradle.tooling.ErrorMessageBuilder
-import org.jetbrains.plugins.gradle.tooling.ModelBuilderService
-import org.jetbrains.plugins.gradle.tooling.internal.scala.ScalaCompileOptionsImpl
-import org.jetbrains.plugins.gradle.tooling.internal.scala.ScalaForkOptionsImpl
-import org.jetbrains.plugins.gradle.tooling.internal.scala.ScalaModelImpl
+import groovy.lang.MetaProperty;
+import org.codehaus.groovy.runtime.DefaultGroovyMethods;
+import org.gradle.api.Project;
+import org.gradle.api.Task;
+import org.gradle.api.plugins.scala.ScalaPlugin;
+import org.gradle.api.tasks.scala.ScalaCompile;
+import org.gradle.api.tasks.scala.ScalaCompileOptions;
+import org.gradle.api.tasks.scala.ScalaForkOptions;
+import org.jetbrains.annotations.Contract;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+import org.jetbrains.plugins.gradle.model.scala.ScalaModel;
+import org.jetbrains.plugins.gradle.tooling.ErrorMessageBuilder;
+import org.jetbrains.plugins.gradle.tooling.ModelBuilderService;
+import org.jetbrains.plugins.gradle.tooling.internal.scala.ScalaCompileOptionsImpl;
+import org.jetbrains.plugins.gradle.tooling.internal.scala.ScalaForkOptionsImpl;
+import org.jetbrains.plugins.gradle.tooling.internal.scala.ScalaModelImpl;
 
-/**
- * @author Vladislav.Soroka
- */
-class ScalaModelBuilderImpl implements ModelBuilderService {
+import java.util.Iterator;
+import java.util.LinkedHashSet;
+import java.util.List;
+import java.util.stream.Collectors;
 
-  private static final String COMPILE_SCALA_TASK = "compileScala"
+public class ScalaModelBuilderImpl implements ModelBuilderService {
+
+  private static final String COMPILE_SCALA_TASK = "compileScala";
 
   @Override
-  boolean canBuild(String modelName) {
-    return ScalaModel.name.equals(modelName)
+  public boolean canBuild(String modelName) {
+    return ScalaModel.class.getName().equals(modelName);
   }
 
   @Override
-  Object buildAll(String modelName, Project project) {
-    final ScalaPlugin scalaPlugin = project.plugins.findPlugin(ScalaPlugin)
+  public Object buildAll(String modelName, Project project) {
+    final ScalaPlugin scalaPlugin = project.getPlugins().findPlugin(ScalaPlugin.class);
 
-    ScalaModel scalaModel = null
+    ScalaModel scalaModel = null;
     if (scalaPlugin != null) {
-      Task scalaTask = project.tasks.getByName(COMPILE_SCALA_TASK)
-      scalaModel = createModel(scalaTask)
+      Task scalaTask = project.getTasks().getByName(COMPILE_SCALA_TASK);
+      scalaModel = createModel(scalaTask);
     }
     else {
-      Iterator<ScalaCompile> it = project.tasks.withType(ScalaCompile).iterator()
+      Iterator<ScalaCompile> it = project.getTasks().withType(ScalaCompile.class).iterator();
       if (it.hasNext()) {
-        scalaModel = createModel(it.next())
+        scalaModel = createModel(it.next());
       }
     }
 
-    return scalaModel
+    return scalaModel;
   }
 
   @Nullable
   private static ScalaModel createModel(@Nullable Task task) {
-    if (!(task instanceof ScalaCompile)) return null
+    if (!(task instanceof ScalaCompile)) return null;
 
-    ScalaCompile scalaCompile = (ScalaCompile)task
-    ScalaModelImpl scalaModel = new ScalaModelImpl()
-    scalaModel.scalaClasspath = new LinkedHashSet<>(scalaCompile.scalaClasspath.files)
-    scalaModel.zincClasspath = new LinkedHashSet<>(scalaCompile.zincClasspath.files)
-    scalaModel.scalaCompileOptions = create(scalaCompile.scalaCompileOptions)
-    scalaModel.targetCompatibility = scalaCompile.targetCompatibility
-    scalaModel.sourceCompatibility = scalaCompile.sourceCompatibility
-    return scalaModel
+    ScalaCompile scalaCompile = (ScalaCompile)task;
+    ScalaModelImpl scalaModel = new ScalaModelImpl();
+    scalaModel.setScalaClasspath(new LinkedHashSet<>(scalaCompile.getScalaClasspath().getFiles()));
+    scalaModel.setZincClasspath(new LinkedHashSet<>(scalaCompile.getZincClasspath().getFiles()));
+    scalaModel.setScalaCompileOptions(create(scalaCompile.getScalaCompileOptions()));
+    scalaModel.setTargetCompatibility(scalaCompile.getTargetCompatibility());
+    scalaModel.setSourceCompatibility(scalaCompile.getSourceCompatibility());
+
+    return scalaModel;
   }
 
   @NotNull
   @Override
-  ErrorMessageBuilder getErrorMessageBuilder(@NotNull Project project, @NotNull Exception e) {
-    return ErrorMessageBuilder.create(
-      project, e, "Scala import errors"
-    ).withDescription("Unable to build Scala project configuration")
+  public ErrorMessageBuilder getErrorMessageBuilder(@NotNull Project project, @NotNull Exception e) {
+    return ErrorMessageBuilder.create(project, e, "Scala import errors")
+      .withDescription("Unable to build Scala project configuration");
   }
 
   @Nullable
   @Contract("null -> null")
   private static ScalaCompileOptionsImpl create(@Nullable ScalaCompileOptions options) {
-    if (options == null) return null
+    if (options == null) return null;
 
-    ScalaCompileOptionsImpl result = new ScalaCompileOptionsImpl()
-    result.additionalParameters = wrapStringList(options.additionalParameters)
-    result.daemonServer = options.hasProperty('daemonServer') ? options.daemonServer : null
-    result.debugLevel = options.debugLevel
-    result.deprecation = options.deprecation
-    result.encoding = options.encoding
-    result.failOnError = options.failOnError
-    result.force = String.valueOf(options.force)
-    result.fork = options.hasProperty('fork') ? options.fork : false
-    result.forkOptions = create(options.forkOptions)
-    result.listFiles = options.listFiles
-    result.loggingLevel = options.loggingLevel
-    result.debugLevel = options.debugLevel
-    result.loggingPhases = wrapStringList(options.loggingPhases)
-    result.optimize = options.optimize
-    result.unchecked = options.unchecked
-    result.useAnt = options.hasProperty('useAnt') ? options.useAnt : false
-    result.useCompileDaemon = options.hasProperty('useCompileDaemon') ? options.useCompileDaemon : false
+    ScalaCompileOptionsImpl result = new ScalaCompileOptionsImpl();
+    result.setAdditionalParameters(wrapStringList(options.getAdditionalParameters()));
 
-    return result
+    MetaProperty daemonServerProperty = DefaultGroovyMethods.hasProperty(options, "daemonServer");
+    Object daemonServer = daemonServerProperty != null ? daemonServerProperty.getProperty(options) : null;
+    if (daemonServer instanceof String) {
+      result.setDaemonServer((String)daemonServer);
+    }
+
+    result.setDebugLevel(options.getDebugLevel());
+    result.setDeprecation(options.isDeprecation());
+    result.setEncoding(options.getEncoding());
+    result.setFailOnError(options.isFailOnError());
+    result.setForce(String.valueOf(options.isForce()));
+
+    MetaProperty forkProperty = DefaultGroovyMethods.hasProperty(options, "fork");
+    Object fork = forkProperty != null ? forkProperty.getProperty(options) : null;
+    if (fork instanceof Boolean) {
+      result.setFork((Boolean)fork);
+    }
+
+    result.setForkOptions(create(options.getForkOptions()));
+    result.setListFiles(options.isListFiles());
+    result.setLoggingLevel(options.getLoggingLevel());
+    result.setDebugLevel(options.getDebugLevel());
+    result.setLoggingPhases(wrapStringList(options.getLoggingPhases()));
+    result.setOptimize(options.isOptimize());
+    result.setUnchecked(options.isUnchecked());
+
+    MetaProperty useAntProperty = DefaultGroovyMethods.hasProperty(options, "useAnt");
+    Object useAnt = useAntProperty != null ? useAntProperty.getProperty(options) : null;
+    if (useAnt instanceof Boolean) {
+      result.setUseAnt((Boolean)useAnt);
+    }
+
+    MetaProperty useCompileDaemonProperty = DefaultGroovyMethods.hasProperty(options, "useCompileDaemon");
+    Object useCompileDaemon = useCompileDaemonProperty != null ? useCompileDaemonProperty.getProperty(options) : null;
+    if (useCompileDaemon instanceof Boolean) {
+      result.setUseCompileDaemon((Boolean)useCompileDaemon);
+    }
+
+    return result;
   }
 
   @Nullable
-  private static List<String> wrapStringList(@Nullable List<String> list) {
-    if (list == null) return null
+  private static List<String> wrapStringList(@Nullable List<?> list) {
+    if (list == null) return null;
     // fix serialization issue if 's' is an instance of groovy.lang.GString [IDEA-125174]
-    return list.collect { it.toString() }
+    //noinspection SSBasedInspection
+    return list.stream().map(x -> x.toString()).collect(Collectors.toList());
   }
 
   @Nullable
   @Contract("null -> null")
   private static ScalaForkOptionsImpl create(@Nullable ScalaForkOptions forkOptions) {
-    if (forkOptions == null) return null
+    if (forkOptions == null) return null;
 
-    ScalaForkOptionsImpl result = new ScalaForkOptionsImpl()
-    result.jvmArgs = wrapStringList(forkOptions.jvmArgs)
-    result.memoryInitialSize = forkOptions.memoryInitialSize
-    result.memoryMaximumSize = forkOptions.memoryMaximumSize
-    return result
+    ScalaForkOptionsImpl result = new ScalaForkOptionsImpl();
+    result.setJvmArgs(wrapStringList(forkOptions.getJvmArgs()));
+    result.setMemoryInitialSize(forkOptions.getMemoryInitialSize());
+    result.setMemoryMaximumSize(forkOptions.getMemoryMaximumSize());
+
+    return result;
   }
 }
