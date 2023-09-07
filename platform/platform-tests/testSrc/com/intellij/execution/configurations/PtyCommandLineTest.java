@@ -4,13 +4,17 @@ package com.intellij.execution.configurations;
 import com.intellij.execution.GeneralCommandLineTest;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.testFramework.ApplicationRule;
 import org.jetbrains.annotations.NotNull;
+import org.junit.ClassRule;
 import org.junit.Ignore;
 import org.junit.Test;
 
 import java.util.Arrays;
 
 public class PtyCommandLineTest extends GeneralCommandLineTest {
+  public static final @ClassRule ApplicationRule appRule = new ApplicationRule();
+
   @Override
   protected @NotNull String filterExpectedOutput(@NotNull String output) {
     if (SystemInfo.isWindows) {
