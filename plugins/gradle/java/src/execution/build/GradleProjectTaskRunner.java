@@ -11,7 +11,6 @@ import com.intellij.execution.configurations.RunProfile;
 import com.intellij.execution.executors.DefaultRunExecutor;
 import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.execution.scratch.JavaScratchConfiguration;
-import com.intellij.execution.scratch.JavaScratchModuleBuildTask;
 import com.intellij.openapi.compiler.CompilerPaths;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.externalSystem.model.execution.ExternalSystemTaskExecutionSettings;
@@ -275,9 +274,6 @@ public class GradleProjectTaskRunner extends ProjectTaskRunner {
   @Override
   public boolean canRun(@NotNull ProjectTask projectTask) {
     if (projectTask instanceof ModuleBuildTask) {
-      if (projectTask instanceof JavaScratchModuleBuildTask) {
-        return false;
-      }
       Module module = ((ModuleBuildTask)projectTask).getModule();
       if (!GradleProjectSettings.isDelegatedBuildEnabled(module)) return false;
       return isExternalSystemAwareModule(GradleConstants.SYSTEM_ID, module);
