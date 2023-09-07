@@ -37,7 +37,7 @@ class BlackFormatterActionOnSave : ActionOnSave() {
     val blackConfig = BlackFormatterConfiguration.getBlackConfiguration(project)
     if (!blackConfig.enabledOnSave) return
 
-    val sdk = blackConfig.getSdk(project)
+    val sdk = blackConfig.getSdk()
     if (sdk == null) {
       LOG.warn(PyBundle.message("black.sdk.not.configured.error", project.name))
       return

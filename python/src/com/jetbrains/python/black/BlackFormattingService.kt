@@ -64,7 +64,7 @@ class BlackFormattingService : AsyncDocumentFormattingService() {
     val vFile = formattingContext.virtualFile ?: return null
     val project = formattingContext.project
     val blackConfig = BlackFormatterConfiguration.getBlackConfiguration(project)
-    val sdk = blackConfig.getSdk(project)
+    val sdk = blackConfig.getSdk()
 
     if (sdk == null) {
       val message = PyBundle.message("black.sdk.not.configured.error", project.name)
