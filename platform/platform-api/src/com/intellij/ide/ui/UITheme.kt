@@ -16,29 +16,19 @@ import com.intellij.openapi.util.IconPathPatcher
 import com.intellij.ui.ColorHexUtil
 import com.intellij.ui.Gray
 import com.intellij.ui.IdeUICustomization
-import com.intellij.ui.icons.ImageDataByPathLoader.Companion.findIconByPath
-import com.intellij.ui.icons.getReflectiveIcon
 import com.intellij.ui.svg.SvgAttributePatcher
 import com.intellij.ui.svg.newSvgPatcher
 import com.intellij.util.ArrayUtilRt
 import com.intellij.util.InsecureHashBuilder
 import com.intellij.util.SVGLoader.SvgElementColorPatcherProvider
-import com.intellij.util.ui.JBDimension
-import com.intellij.util.ui.JBInsets
-import com.intellij.util.ui.JBUI
-import com.intellij.util.ui.UIUtil
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.NonNls
 import org.jetbrains.annotations.TestOnly
 import java.awt.Color
-import java.awt.Dimension
-import java.awt.Insets
 import java.io.InputStream
 import java.util.function.Function
 import java.util.function.Supplier
 import javax.swing.UIDefaults
-import javax.swing.plaf.BorderUIResource.EmptyBorderUIResource
-import javax.swing.plaf.ColorUIResource
 
 private val LOG: Logger
   get() = logger<UITheme>()
@@ -418,140 +408,6 @@ private fun addPattern(key: String?, value: Any?, defaults: UIDefaults) {
   if (key != null && key.startsWith("*.")) {
     map.put(key.substring(2), value)
   }
-}
-
-fun parseUiThemeValue(key: String, value: String, classLoader: ClassLoader): Any? {
-  try {
-    when (value) {
-      "null" -> return null
-      "true" -> return true
-      "false" -> return false
-    }
-
-    when {
-      value.endsWith(".png") || value.endsWith(".svg") -> {
-        return UIDefaults.LazyValue { findIconByPath(path = value, classLoader = classLoader, cache = null, toolTip = null) }
-      }
-      key.endsWith("Insets") || key.endsWith(".insets") || key.endsWith("padding") -> {
-        return parseInsets(value)
-      }
-      key.endsWith("Border") || key.endsWith("border") -> {
-        try {
-          val ints = parseMultiValue(value).toList()
-          if (ints.size == 4) {
-            return EmptyBorderUIResource(parseInsets(value))
-          }
-          else if (ints.size == 5) {
-            return JBUI.asUIResource(JBUI.Borders.customLine(
-              ColorHexUtil.fromHex(ints[4]), ints[0].toInt(), ints[1].toInt(), ints[2].toInt(), ints[3].toInt()))
-          }
-          val color = ColorHexUtil.fromHexOrNull(value)
-          if (color == null) {
-            val aClass = classLoader.loadClass(value)
-            val constructor = aClass.getDeclaredConstructor()
-            constructor.setAccessible(true)
-            return constructor.newInstance()
-          }
-          else {
-            return JBUI.asUIResource(JBUI.Borders.customLine(color, 1))
-          }
-        }
-        catch (e: Exception) {
-          LOG.warn(e)
-        }
-      }
-      key.endsWith("Size") -> {
-        return parseSize(value)
-      }
-      key.endsWith("Width") || key.endsWith("Height") -> {
-        return getIntegerOrFloat(value, key)
-      }
-      key.endsWith("grayFilter") -> {
-        return parseGrayFilter(value)
-      }
-      value.startsWith("AllIcons.") -> {
-        return UIDefaults.LazyValue { getReflectiveIcon(value, classLoader) }
-      }
-      !value.startsWith('#') && getIntegerOrFloat(value, null) != null -> {
-        return getIntegerOrFloat(value, key)
-      }
-      else -> {
-        val color = parseColor(value)
-        if (color != null) {
-          return ColorUIResource(color)
-        }
-        val intVal = getInteger(value, null)
-        if (intVal != null) {
-          return intVal
-        }
-      }
-    }
-  }
-  catch (e: Exception) {
-    LOG.warn("Can't parse '$value' for key '$key'")
-  }
-  return value
-}
-
-private fun parseInsets(value: String): Insets {
-  val numbers = parseMultiValue(value).iterator()
-  return JBInsets(numbers.next().toInt(), numbers.next().toInt(), numbers.next().toInt(), numbers.next().toInt()).asUIResource()
-}
-
-private fun parseGrayFilter(value: String): UIUtil.GrayFilter {
-  val numbers = parseMultiValue(value).iterator()
-  return UIUtil.GrayFilter(numbers.next().toInt(), numbers.next().toInt(), numbers.next().toInt()).asUIResource()
-}
-
-private fun parseColor(value: String): Color? {
-  if (value.length == 8) {
-    val color = ColorHexUtil.fromHex(value.substring(0, 6))
-    try {
-      val alpha = value.substring(6, 8).toInt(16)
-      @Suppress("UseJBColor")
-      return ColorUIResource(Color(color.red, color.green, color.blue, alpha))
-    }
-    catch (ignore: Exception) {
-    }
-    return null
-  }
-
-  val color = ColorHexUtil.fromHex(value, null)
-  return if (color == null) null else ColorUIResource(color)
-}
-
-private fun parseMultiValue(value: String) = value.splitToSequence(',').map { it.trim() }.filter { it.isNotEmpty() }
-
-private fun getInteger(value: String, key: String?): Int? {
-  try {
-    return value.removeSuffix(".0").toInt()
-  }
-  catch (e: NumberFormatException) {
-    if (key != null) {
-      LOG.warn("Can't parse: $key = $value")
-    }
-    return null
-  }
-}
-
-private fun getIntegerOrFloat(value: String, key: String?): Number? {
-  if (value.contains('.')) {
-    try {
-      return value.toFloat()
-    }
-    catch (e: NumberFormatException) {
-      if (key != null) {
-        LOG.warn("Can't parse: $key = $value")
-      }
-      return null
-    }
-  }
-  return getInteger(value, key)
-}
-
-private fun parseSize(value: String): Dimension {
-  val numbers = parseMultiValue(value).iterator()
-  return JBDimension(numbers.next().toInt(), numbers.next().toInt()).asUIResource()
 }
 
 private fun loadColorPalette(defaults: UIDefaults, colors: Map<String, Any?>) {
