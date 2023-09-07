@@ -29,6 +29,7 @@ import com.intellij.openapi.ui.Messages
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.util.SystemInfoRt
+import com.intellij.openapi.util.io.NioFiles
 import com.intellij.platform.ide.CoreUiCoroutineScopeHolder
 import com.intellij.platform.ide.customization.ExternalProductResourceUrls
 import com.intellij.util.SystemProperties
@@ -45,6 +46,7 @@ import java.nio.file.FileStore
 import java.nio.file.Files
 import java.nio.file.InvalidPathException
 import java.nio.file.Path
+import java.util.concurrent.TimeUnit
 import kotlin.system.exitProcess
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.seconds
@@ -61,6 +63,7 @@ internal suspend fun startSystemHealthMonitor() {
   checkEnvironment()
   withContext(Dispatchers.IO) {
     checkSignalBlocking()
+    checkTempDirSanity()
     checkTempDirEnvVars()
     checkAncientOs()
   }
@@ -280,6 +283,21 @@ private fun checkSignalBlocking() {
   }
 }
 
+private fun checkTempDirSanity() {
+  if (SystemInfoRt.isUnix && !SystemInfoRt.isMac) {
+    try {
+      val probe = Files.createTempFile(Path.of(PathManager.getTempPath()), "ij-exec-check-", ".sh")
+      NioFiles.setExecutable(probe)
+      val process = ProcessBuilder(probe.toString()).start()
+      if (!process.waitFor(1, TimeUnit.MINUTES)) throw IOException("${probe} timed out")
+      if (process.exitValue() != 0) throw IOException("${probe} returned ${process.exitValue()}")
+    }
+    catch (e: Exception) {
+      showNotification("temp.dir.exec.failed", suppressable = false, action = null, shorten(PathManager.getTempPath()))
+    }
+  }
+}
+
 private fun checkTempDirEnvVars() {
   val envVars = if (SystemInfoRt.isWindows) sequenceOf("TMP", "TEMP") else sequenceOf("TMPDIR")
   for (name in envVars) {
@@ -297,7 +315,7 @@ private fun checkTempDirEnvVars() {
 }
 
 private fun checkAncientOs() {
-  if (SystemInfo.isWindows) {
+  if (SystemInfoRt.isWindows) {
     val buildNumber = SystemInfo.getWinBuildNumber()
     if (buildNumber != null && buildNumber < 10000) {  // 10 1507 = 10240, Server 2016 = 14393
       showNotification("unsupported.windows", suppressable = true, null)
