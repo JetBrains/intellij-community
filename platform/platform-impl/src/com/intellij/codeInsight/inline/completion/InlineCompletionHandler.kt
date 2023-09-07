@@ -22,6 +22,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.psi.PsiFile
+import com.intellij.util.application
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.collectIndexed
 import kotlinx.coroutines.flow.onCompletion
@@ -117,7 +118,8 @@ class InlineCompletionHandler(private val scope: CoroutineScope) : CodeInsightAc
 
     val inlineState = editor.initOrGetInlineCompletionState()
 
-    withContext(Dispatchers.EDT) {
+    val edtDispatcher = if (application.isUnitTestMode) currentCoroutineContext() else Dispatchers.EDT
+    withContext(edtDispatcher) {
       showPlaceholder(editor, offset, placeholder)
 
       resultFlow
