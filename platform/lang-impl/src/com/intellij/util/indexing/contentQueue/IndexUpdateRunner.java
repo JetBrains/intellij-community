@@ -255,7 +255,14 @@ public final class IndexUpdateRunner {
       }
       TimeoutUtil.sleep(10);
       if (System.currentTimeMillis() - startTime > WRITERS_SHUTDOWN_WAITING_TIME_MS) {
-        LOG.error("Failed to shutdown index writers, queue size: " + INDEX_WRITES_QUEUED.get() + "; executors active: " + futures.size());
+        var queueSize = INDEX_WRITES_QUEUED.get();
+        var errorMessage = "Failed to shutdown index writers, queue size: " + queueSize + "; executors active: " + futures;
+        if (queueSize == 0) {
+          LOG.warn(errorMessage);
+        }
+        else {
+          LOG.error(errorMessage);
+        }
         return;
       }
     }
