@@ -1,5 +1,5 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-@file:JvmName("missingNotRequiredPropertiesSearch")
+@file:JvmName("missingOptionalPropertiesSearch")
 
 package com.jetbrains.jsonSchema.impl.fixes
 
@@ -27,7 +27,7 @@ fun collectMissingPropertiesFromSchema(objectNodePointer: SmartPsiElementPointer
   val errorsForNode = checker.errors[objectNode] ?: return null
 
   val missingRequiredProperties = extractPropertiesOfKind(errorsForNode, FixableIssueKind.MissingProperty)
-  val missingKnownProperties = extractPropertiesOfKind(errorsForNode, FixableIssueKind.MissingNotRequiredProperty)
+  val missingKnownProperties = extractPropertiesOfKind(errorsForNode, FixableIssueKind.MissingOptionalProperty)
   return JsonSchemaPropertiesInfo(missingRequiredProperties, missingKnownProperties)
 }
 

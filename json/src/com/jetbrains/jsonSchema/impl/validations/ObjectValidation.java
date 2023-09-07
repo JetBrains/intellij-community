@@ -69,7 +69,7 @@ public class ObjectValidation implements JsonSchemaValidation {
       }
       set.add(name);
     }
-    reportNotRequiredMissingProperties(value, schema, consumer, options);
+    reportMissingOptionalProperties(value, schema, consumer, options);
 
     if (object.shouldCheckIntegralRequirements() || options.isForceStrict()) {
       final Set<String> required = schema.getRequired();
@@ -202,12 +202,12 @@ public class ObjectValidation implements JsonSchemaValidation {
     return null;
   }
 
-  private static void reportNotRequiredMissingProperties(JsonValueAdapter inspectedValue,
-                                                         JsonSchemaObject schema,
-                                                         JsonValidationHost validationHost,
-                                                         JsonComplianceCheckerOptions options) {
+  private static void reportMissingOptionalProperties(JsonValueAdapter inspectedValue,
+                                                      JsonSchemaObject schema,
+                                                      JsonValidationHost validationHost,
+                                                      JsonComplianceCheckerOptions options) {
     var objectValueAdapter = inspectedValue.getAsObject();
-    if (!options.isReportMissingNotRequiredProperties() || objectValueAdapter == null) {
+    if (!options.isReportMissingOptionalProperties() || objectValueAdapter == null) {
       return;
     }
 
@@ -218,7 +218,7 @@ public class ObjectValidation implements JsonSchemaValidation {
     validationHost.error(
       JsonBundle.message("schema.validation.missing.not.required.property.or.properties", missingPropertiesData.getMessage(false)),
       inspectedValue.getDelegate(),
-      JsonValidationError.FixableIssueKind.MissingNotRequiredProperty,
+      JsonValidationError.FixableIssueKind.MissingOptionalProperty,
       missingPropertiesData,
       JsonErrorPriority.MISSING_PROPS);
   }
