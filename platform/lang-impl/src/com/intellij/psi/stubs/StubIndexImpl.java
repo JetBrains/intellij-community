@@ -215,7 +215,7 @@ public final class StubIndexImpl extends StubIndexEx {
 
   @Override
   public void forceRebuild(@NotNull Throwable e) {
-    FileBasedIndex.getInstance().scheduleRebuild(StubUpdatingIndex.INDEX_ID, e);
+    FileBasedIndex.getInstance().requestRebuild(StubUpdatingIndex.INDEX_ID, e);
   }
 
   @Override

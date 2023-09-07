@@ -187,6 +187,10 @@ public abstract class FileBasedIndex {
    */
   public abstract void requestRebuild(@NotNull ID<?, ?> indexId, @NotNull Throwable throwable);
 
+  /**
+   * @deprecated use {@link #requestRebuild(ID)} or {@link #requestRebuild(ID, Throwable)}
+   */
+  @Deprecated
   public abstract <K> void scheduleRebuild(@NotNull ID<K, ?> indexId, @NotNull Throwable e);
 
   public abstract void requestReindex(@NotNull VirtualFile file);

@@ -767,7 +767,7 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
         catch (RuntimeException e) {
           final Throwable cause = e.getCause();
           if (cause instanceof StorageException || cause instanceof IOException) {
-            scheduleRebuild(indexId, e);
+            requestRebuild(indexId, e);
           }
           else {
             throw e;

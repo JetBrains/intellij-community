@@ -2,6 +2,7 @@
 package com.intellij.util.indexing.diagnostic
 
 import com.intellij.internal.statistic.eventLog.EventLogGroup
+import com.intellij.internal.statistic.eventLog.events.EventFields
 import com.intellij.openapi.project.Project
 
 object IndexStatisticGroup {
@@ -12,4 +13,12 @@ object IndexStatisticGroup {
   internal fun reportStubIndexInconsistencyRegistered(project: Project) {
     stubIndexInconsistencyRegistered.log(project)
   }
+
+  private val indexIdField =
+    EventFields.StringListValidatedByCustomRule("index_id", IndexIdRuleValidator::class.java)
+
+  private val indexRebuildEvent = GROUP.registerVarargEvent (
+    "index_rebuild",
+    indexIdField,
+  )
 }

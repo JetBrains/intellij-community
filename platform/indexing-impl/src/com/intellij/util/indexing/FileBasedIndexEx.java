@@ -169,13 +169,13 @@ public abstract class FileBasedIndexEx extends FileBasedIndex {
     }
     catch (StorageException e) {
       trace.lookupFailed();
-      scheduleRebuild(indexId, e);
+      requestRebuild(indexId, e);
     }
     catch (RuntimeException e) {
       trace.lookupFailed();
       final Throwable cause = e.getCause();
       if (cause instanceof StorageException || cause instanceof IOException) {
-        scheduleRebuild(indexId, cause);
+        requestRebuild(indexId, cause);
       }
       else {
         throw e;
@@ -314,12 +314,12 @@ public abstract class FileBasedIndexEx extends FileBasedIndex {
     }
     catch (StorageException e) {
       TRACE_OF_ENTRIES_LOOKUP.get().lookupFailed();
-      scheduleRebuild(indexId, e);
+      requestRebuild(indexId, e);
     }
     catch (RuntimeException e) {
       final Throwable cause = getCauseToRebuildIndex(e);
       if (cause != null) {
-        scheduleRebuild(indexId, cause);
+        requestRebuild(indexId, cause);
       }
       else {
         throw e;
