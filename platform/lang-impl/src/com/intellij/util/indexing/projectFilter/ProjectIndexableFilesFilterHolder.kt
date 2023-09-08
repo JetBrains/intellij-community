@@ -61,7 +61,7 @@ internal class IncrementalProjectIndexableFilesFilterHolder : ProjectIndexableFi
   override fun entireProjectUpdateStarted(project: Project) {
     assert(UnindexedFilesUpdater.isIndexUpdateInProgress(project))
 
-    resetFilter(project)
+    getFilter(project)?.resetFileIds()
   }
 
   override fun entireProjectUpdateFinished(project: Project) {
@@ -70,14 +70,6 @@ internal class IncrementalProjectIndexableFilesFilterHolder : ProjectIndexableFi
 
   private fun getFilter(project: Project) = myProjectFilters.computeIfAbsent(project) {
     if (it.isDisposed) null else IncrementalProjectIndexableFilesFilter()
-  }
-
-  private fun resetFilter(project: Project) {
-    if (project.isDisposed){
-      myProjectFilters[project] = null
-    } else {
-      myProjectFilters[project] = IncrementalProjectIndexableFilesFilter()
-    }
   }
 
   override fun addFileId(fileId: Int, projects: () -> Set<Project>): FileAddStatus {
