@@ -9,6 +9,7 @@ import com.intellij.codeInsight.daemon.impl.analysis.HighlightingLevelManager
 import com.intellij.codeInsight.intention.IntentionAction
 import com.intellij.codeInsight.intention.IntentionActionWithOptions
 import com.intellij.codeInsight.quickfix.UnresolvedReferenceQuickFixUpdater
+import com.intellij.modcommand.ActionContext
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.diagnostic.ControlFlowException
 import com.intellij.openapi.util.NlsSafe
@@ -54,7 +55,7 @@ class KotlinDiagnosticHighlightVisitor : HighlightVisitor {
         analyze(file) {
             val diagnostics = file.collectDiagnosticsForFile(KtDiagnosticCheckerFilter.ONLY_COMMON_CHECKERS)
             for (diagnostic in diagnostics) {
-                addDiagnostic(diagnostic, holder)
+                addDiagnostic(file, diagnostic, holder)
             }
             KotlinCompilationErrorFrequencyStatsCollector.recordCompilationErrorsHappened(
                 diagnostics.asSequence().filter { it.severity == Severity.ERROR }.mapNotNull(KtDiagnosticWithPsi<*>::factoryName),
@@ -64,8 +65,9 @@ class KotlinDiagnosticHighlightVisitor : HighlightVisitor {
     }
 
     context(KtAnalysisSession)
-    private fun addDiagnostic(diagnostic: KtDiagnosticWithPsi<*>, holder: HighlightInfoHolder) {
+    private fun addDiagnostic(file: KtFile, diagnostic: KtDiagnosticWithPsi<*>, holder: HighlightInfoHolder) {
         val isWarning = diagnostic.severity == Severity.WARNING
+        val psiElement = diagnostic.psi
         val factoryName = diagnostic.factoryName
         val fixes = KotlinQuickFixService.getInstance().getQuickFixesFor(diagnostic).takeIf { it.isNotEmpty() }
             ?: if (isWarning && factoryName != null) listOf(CompilerWarningIntentionAction(factoryName)) else emptyList()
@@ -80,17 +82,20 @@ class KotlinDiagnosticHighlightVisitor : HighlightVisitor {
                 infoBuilder.problemGroup(problemGroup)
             }
             for (quickFixInfo in fixes) {
+                // to trigger modCommand.getPresentation() to get `Fix all` and other options
+                if (quickFixInfo.asModCommandAction() != null && !quickFixInfo.isAvailable(file.project, null, file)) continue
+
                 val options = mutableListOf<IntentionAction>()
                 if (quickFixInfo is IntentionActionWithOptions) {
                     options += quickFixInfo.options
                 }
                 if (problemGroup != null) {
-                    options += problemGroup.getSuppressActions(diagnostic.psi)
+                    options += problemGroup.getSuppressActions(psiElement)
                 }
                 infoBuilder.registerFix(quickFixInfo, options, null, null, null)
             }
             if (diagnostic is KtFirDiagnostic.UnresolvedImport || diagnostic is KtFirDiagnostic.UnresolvedReference) {
-                diagnostic.psi.reference?.let {
+                psiElement.reference?.let {
                     UnresolvedReferenceQuickFixUpdater.getInstance(holder.project).registerQuickFixesLater(it, infoBuilder)
                 }
             }

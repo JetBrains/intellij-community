@@ -38,7 +38,7 @@ class RedundantVisibilityModifierInspection : AbstractKotlinInspection(), Cleanu
             holder.registerProblem(
                 visibilityModifier,
                 KotlinBundle.message("redundant.visibility.modifier"),
-                IntentionWrapper(RemoveModifierFixBase(declaration, redundantVisibility, isRedundant = true))
+                IntentionWrapper(RemoveModifierFixBase(declaration, redundantVisibility, isRedundant = true).asIntention())
             )
         })
 

@@ -27,7 +27,7 @@ class RedundantModalityModifierInspection : AbstractKotlinInspection(), CleanupL
             holder.registerProblem(
                 modalityModifier,
                 KotlinBundle.message("redundant.modality.modifier"),
-                IntentionWrapper(RemoveModifierFix(declaration, implicitModality, isRedundant = true))
+                IntentionWrapper(RemoveModifierFix(declaration, implicitModality, isRedundant = true).asIntention())
             )
         }
     }

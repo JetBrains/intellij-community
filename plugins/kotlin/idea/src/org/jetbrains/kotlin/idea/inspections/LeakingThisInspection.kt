@@ -101,7 +101,7 @@ class LeakingThisInspection : AbstractKotlinInspection() {
         val useScope = declaration.useScope
         if (DefinitionsScopedSearch.search(declaration, useScope).findFirst() != null) return null
         if ((declaration.containingClassOrObject as? KtClass)?.isInterface() == true) return null
-        return IntentionWrapper(AddModifierFixFE10(declaration, KtTokens.FINAL_KEYWORD))
+        return IntentionWrapper(AddModifierFixFE10(declaration, KtTokens.FINAL_KEYWORD).asIntention())
     }
 }
 

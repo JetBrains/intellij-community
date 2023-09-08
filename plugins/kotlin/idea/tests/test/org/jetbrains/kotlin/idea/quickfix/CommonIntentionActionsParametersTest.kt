@@ -2,6 +2,7 @@
 
 package org.jetbrains.kotlin.idea.quickfix
 
+import com.intellij.codeInsight.intention.IntentionAction
 import com.intellij.lang.jvm.actions.*
 import com.intellij.lang.jvm.types.JvmType
 import com.intellij.psi.PsiType
@@ -9,6 +10,7 @@ import com.intellij.psi.PsiTypes
 import com.intellij.testFramework.fixtures.LightPlatformCodeInsightFixtureTestCase
 import org.jetbrains.kotlin.idea.test.KotlinWithJdkAndRuntimeLightProjectDescriptor
 import org.jetbrains.uast.UMethod
+import org.junit.Assert
 import org.junit.internal.runners.JUnit38ClassRunner
 import org.junit.runner.RunWith
 
@@ -219,6 +221,10 @@ class CommonIntentionActionsParametersTest : LightPlatformCodeInsightFixtureTest
         )
     }
 
+    @Suppress("CAST_NEVER_SUCCEEDS")
+    private fun List<IntentionAction>.findWithText(text: String): IntentionAction =
+        this.filter { it.isAvailable(myFixture.project, myFixture.editor, myFixture.file) }.firstOrNull { it.text == text }
+            ?: Assert.fail("intention with text '$text' was not found, only ${this.joinToString { "\"${it.text}\"" }} available") as Nothing
 }
 
 private class SimpleChangeParametersRequest(private val list: List<ExpectedParameter>) : ChangeParametersRequest {

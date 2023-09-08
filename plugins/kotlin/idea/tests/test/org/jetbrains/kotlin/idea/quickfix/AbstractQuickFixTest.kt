@@ -11,6 +11,7 @@ import com.intellij.codeInsight.intention.impl.ShowIntentionActionsHandler
 import com.intellij.codeInspection.SuppressableProblemGroup
 import com.intellij.codeInspection.ex.QuickFixWrapper
 import com.intellij.internal.statistic.eventLog.StatisticsEventLoggerProvider
+import com.intellij.modcommand.ModCommandAction
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.command.CommandProcessor
 import com.intellij.openapi.extensions.LoadingOrder
@@ -277,7 +278,9 @@ abstract class AbstractQuickFixTest : KotlinLightCodeInsightFixtureTestCase(), Q
 
             val unwrappedIntention = unwrapIntention(intention)
             if (shouldCheckIntentionActionType) {
-                assertInstanceOf(unwrappedIntention, QuickFixActionBase::class.java)
+                if (intention.asModCommandAction() == null) {
+                    assertInstanceOf(unwrappedIntention, QuickFixActionBase::class.java)
+                }
             }
             val priorityName = InTextDirectivesUtils.findStringWithPrefixes(contents, "// $PRIORITY_DIRECTIVE: ")
             if (priorityName != null) {
@@ -362,7 +365,9 @@ abstract class AbstractQuickFixTest : KotlinLightCodeInsightFixtureTestCase(), Q
         if (actionHint.expectedText.startsWith(prefix)) {
             val className = actionHint.expectedText.substring(prefix.length)
             val aClass = Class.forName(className)
-            assert(IntentionAction::class.java.isAssignableFrom(aClass)) { "$className should be inheritor of IntentionAction" }
+            assert(IntentionAction::class.java.isAssignableFrom(aClass) || ModCommandAction::class.java.isAssignableFrom(aClass)) {
+                "$className should be inheritor of IntentionAction or ModCommandAction"
+            }
 
             val validActions = HashSet(InTextDirectivesUtils.findLinesWithPrefixesRemoved(text, DirectiveBasedActionUtils.ACTION_DIRECTIVE))
 

@@ -218,7 +218,7 @@ class KotlinElementActionsFactory : JvmElementActionsFactory() {
         val action = if (shouldBePresent) {
             AddModifierFixFE10.createIfApplicable(modifierListOwners, token)
         } else {
-            RemoveModifierFixBase(modifierListOwners, token, false)
+            RemoveModifierFixBase(modifierListOwners, token, false).asIntention()
         }
         return listOfNotNull(action)
     }
