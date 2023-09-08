@@ -187,7 +187,7 @@ public final class ApplicationImpl extends ClientAwareComponentManager implement
 
   @Override
   public boolean isInImpatientReader() {
-    return myLock.isInImpatientReader();
+    return myLock != null && myLock.isInImpatientReader();
   }
 
   @TestOnly
