@@ -132,7 +132,7 @@ class FirIdeModuleStateModificationService(val project: Project) : Disposable {
     internal class FileDocumentListener(private val project: Project) : FileDocumentManagerListener {
         override fun fileWithNoDocumentChanged(file: VirtualFile) {
             // `FileDocumentManagerListener` may receive events from other projects via `FileDocumentManagerImpl`'s `AsyncFileListener`.
-            if (!ProjectFileIndex.getInstance(project).isInContent(file)) {
+            if (!project.isInitialized || !ProjectFileIndex.getInstance(project).isInContent(file)) {
                 return
             }
 
