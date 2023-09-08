@@ -36,6 +36,7 @@ public class UIThemeLookAndFeelInfoImpl extends UIThemeLookAndFeelInfo {
     super(theme);
   }
 
+  @Override
   public void installTheme(UIDefaults defaults, boolean lockEditorScheme) {
     UITheme theme = getTheme();
     defaults.put("ui.theme.is.dark", theme.isDark());
@@ -60,6 +61,7 @@ public class UIThemeLookAndFeelInfoImpl extends UIThemeLookAndFeelInfo {
     isInitialized = true;
   }
 
+  @Override
   public final boolean isInitialized() {
     return isInitialized;
   }
@@ -143,6 +145,7 @@ public class UIThemeLookAndFeelInfoImpl extends UIThemeLookAndFeelInfo {
     return Strings.toLowerCase(defaultValue.name());
   }
 
+  @Override
   public void dispose() {
     IconPathPatcher patcher = getTheme().getPatcher();
     if (patcher != null) {

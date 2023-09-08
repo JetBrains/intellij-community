@@ -44,7 +44,7 @@ open class DarculaLaf : BasicLookAndFeel(), UserDataHolder {
   private var base: LookAndFeel? = null
   private var disposable: Disposable? = null
   private val userData = UserDataHolderBase()
-  protected val baseDefaults: UIDefaults = UIDefaults()
+  private val baseDefaults = UIDefaults()
 
   override fun <T> getUserData(key: Key<T>) = userData.getUserData(key)
 
@@ -176,8 +176,6 @@ open class DarculaLaf : BasicLookAndFeel(), UserDataHolder {
       LOG.error(e)
     }
   }
-
-  fun getBaseColor(key: String?): Color = baseDefaults.getColor(key)
 
   override fun getName() = NAME
 

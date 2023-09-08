@@ -49,14 +49,14 @@ public abstract class LafManager {
    */
   @Deprecated(forRemoval = true)
   public void setCurrentLookAndFeel(@NotNull UIManager.LookAndFeelInfo lookAndFeelInfo) {
-    setCurrentLookAndFeel(lookAndFeelInfo, false);
+    setCurrentLookAndFeel((UIThemeLookAndFeelInfo)lookAndFeelInfo, false);
   }
 
   public void setCurrentUIThemeLookAndFeel(@NotNull UIThemeLookAndFeelInfo lookAndFeelInfo) {
     setCurrentLookAndFeel(lookAndFeelInfo, false);
   }
 
-  public abstract void setCurrentLookAndFeel(@NotNull UIManager.LookAndFeelInfo lookAndFeelInfo, boolean lockEditorScheme);
+  public abstract void setCurrentLookAndFeel(@NotNull UIThemeLookAndFeelInfo lookAndFeelInfo, boolean lockEditorScheme);
 
   public abstract void updateUI();
 

@@ -216,10 +216,8 @@ class LafManagerImpl(private val coroutineScope: CoroutineScope) : LafManager(),
     EDT.assertIsEdt()
 
     val theme = currentTheme!!
-    if (theme is UIThemeLookAndFeelInfoImpl) {
-      if (!theme.isInitialized) {
-        doSetLaF(lookAndFeelInfo = theme, installEditorScheme = false)
-      }
+    if (!theme.isInitialized) {
+      doSetLaF(lookAndFeelInfo = theme, installEditorScheme = false)
     }
     selectComboboxModel()
 
@@ -458,8 +456,8 @@ class LafManagerImpl(private val coroutineScope: CoroutineScope) : LafManager(),
   /**
    * Sets current LAF. The method doesn't update component hierarchy.
    */
-  override fun setCurrentLookAndFeel(lookAndFeelInfo: UIManager.LookAndFeelInfo, lockEditorScheme: Boolean) {
-    setLookAndFeelImpl(lookAndFeelInfo = lookAndFeelInfo as UIThemeLookAndFeelInfo,
+  override fun setCurrentLookAndFeel(lookAndFeelInfo: UIThemeLookAndFeelInfo, lockEditorScheme: Boolean) {
+    setLookAndFeelImpl(lookAndFeelInfo = lookAndFeelInfo,
                        installEditorScheme = !lockEditorScheme,
                        processChangeSynchronously = true)
   }
@@ -467,7 +465,9 @@ class LafManagerImpl(private val coroutineScope: CoroutineScope) : LafManager(),
   /**
    * Sets current LAF. The method doesn't update component hierarchy.
    */
-  private fun setLookAndFeelImpl(lookAndFeelInfo: UIThemeLookAndFeelInfo, installEditorScheme: Boolean, processChangeSynchronously: Boolean) {
+  private fun setLookAndFeelImpl(lookAndFeelInfo: UIThemeLookAndFeelInfo,
+                                 installEditorScheme: Boolean,
+                                 processChangeSynchronously: Boolean) {
     val oldLaf = currentTheme
 
     rememberSchemeForLaf(EditorColorsManager.getInstance().globalScheme)
@@ -500,7 +500,9 @@ class LafManagerImpl(private val coroutineScope: CoroutineScope) : LafManager(),
 
   @Suppress("unused")
   @Internal
-  fun updateLafNoSave(lookAndFeelInfo: UIThemeLookAndFeelInfo) = doSetLaF(lookAndFeelInfo = lookAndFeelInfo, installEditorScheme = false)
+  fun updateLafNoSave(lookAndFeelInfo: UIThemeLookAndFeelInfo): Boolean {
+    return doSetLaF(lookAndFeelInfo = lookAndFeelInfo as UIThemeLookAndFeelInfoImpl, installEditorScheme = false)
+  }
 
   private fun doSetLaF(lookAndFeelInfo: UIThemeLookAndFeelInfo, installEditorScheme: Boolean): Boolean {
     val defaults = UIManager.getDefaults()
@@ -513,19 +515,17 @@ class LafManagerImpl(private val coroutineScope: CoroutineScope) : LafManager(),
     }
     UIManager.setLookAndFeel(DarculaLaf())
     // set L&F
-    if (lookAndFeelInfo is UIThemeLookAndFeelInfoImpl) {
-      try {
-        lookAndFeelInfo.installTheme(UIManager.getLookAndFeelDefaults(), !installEditorScheme)
-      }
-      catch (e: Exception) {
-        LOG.error(e)
-        Messages.showMessageDialog(
-          IdeBundle.message("error.cannot.set.look.and.feel", lookAndFeelInfo.getName(), e.message),
-          CommonBundle.getErrorTitle(),
-          Messages.getErrorIcon()
-        )
-        return true
-      }
+    try {
+      lookAndFeelInfo.installTheme(UIManager.getLookAndFeelDefaults(), !installEditorScheme)
+    }
+    catch (e: Exception) {
+      LOG.error(e)
+      Messages.showMessageDialog(
+        IdeBundle.message("error.cannot.set.look.and.feel", lookAndFeelInfo.name, e.message),
+        CommonBundle.getErrorTitle(),
+        Messages.getErrorIcon()
+      )
+      return true
     }
     if (SystemInfoRt.isMac) {
       installMacOSXFonts(UIManager.getLookAndFeelDefaults())

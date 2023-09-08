@@ -3,14 +3,23 @@ package com.intellij.ide.ui.laf
 
 import com.intellij.ide.ui.UITheme
 import org.jetbrains.annotations.ApiStatus
+import javax.swing.UIDefaults
 import javax.swing.UIManager.LookAndFeelInfo
 
 @ApiStatus.Internal
 @ApiStatus.Experimental
+@ApiStatus.NonExtendable
 abstract class UIThemeLookAndFeelInfo protected constructor(val theme: UITheme)
   : LookAndFeelInfo
     (
       theme.name,
       // todo one one should be used in the future
       if (theme.isDark) "com.intellij.ide.ui.laf.darcula.DarculaLaf" else "com.intellij.ide.ui.laf.IntelliJLaf",
-    )
+    ) {
+
+  abstract val isInitialized: Boolean
+
+  abstract fun installTheme(defaults: UIDefaults, lockEditorScheme: Boolean)
+
+  abstract fun dispose()
+}

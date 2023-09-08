@@ -42,7 +42,7 @@ public final class QuickChangeLookAndFeel extends QuickSwitchSchemeAction implem
       if (group.getChildrenCount() > 0) {
         group.addSeparator();
       }
-      for (UIManager.LookAndFeelInfo lf : list) {
+      for (UIThemeLookAndFeelInfo lf : list) {
         group.add(new LafChangeAction(lf, initialLaf == lf));
       }
     }
@@ -59,7 +59,7 @@ public final class QuickChangeLookAndFeel extends QuickSwitchSchemeAction implem
 
   @Override
   protected void showPopup(AnActionEvent e, ListPopup popup) {
-    UIManager.LookAndFeelInfo initialLaf = LafManager.getInstance().getCurrentUIThemeLookAndFeel();
+    UIThemeLookAndFeelInfo initialLaf = LafManager.getInstance().getCurrentUIThemeLookAndFeel();
 
     switchAlarm.cancelAllRequests();
     if (Registry.is("ide.instant.theme.switch")) {
@@ -97,8 +97,8 @@ public final class QuickChangeLookAndFeel extends QuickSwitchSchemeAction implem
     return (a) -> (a instanceof LafChangeAction) && ((LafChangeAction)a).myLookAndFeelInfo == lafMan.getCurrentUIThemeLookAndFeel();
   }
 
-  public static void switchLafAndUpdateUI(final @NotNull LafManager lafMan, @NotNull UIManager.LookAndFeelInfo lf, boolean async) {
-    switchLafAndUpdateUI(lafMan, lf, async, false, false);
+  public static void switchLafAndUpdateUI(@NotNull LafManager lafManager, @NotNull UIManager.LookAndFeelInfo laf, boolean async) {
+    switchLafAndUpdateUI(lafManager, (UIThemeLookAndFeelInfo)laf, async, false, false);
   }
 
   /**
@@ -109,12 +109,12 @@ public final class QuickChangeLookAndFeel extends QuickSwitchSchemeAction implem
                                           @NotNull UIManager.LookAndFeelInfo lf,
                                           boolean async,
                                           boolean force) {
-    switchLafAndUpdateUI(lafMan, lf, async, force, false);
+    switchLafAndUpdateUI(lafMan, (UIThemeLookAndFeelInfo)lf, async, force, false);
   }
 
   @ApiStatus.Internal
   public static void switchLafAndUpdateUI(final @NotNull LafManager lafMan,
-                                          @NotNull UIManager.LookAndFeelInfo lf,
+                                          @NotNull UIThemeLookAndFeelInfo lf,
                                           boolean async,
                                           boolean force,
                                           boolean lockEditorScheme) {
@@ -164,9 +164,9 @@ public final class QuickChangeLookAndFeel extends QuickSwitchSchemeAction implem
   }
 
   private static final class LafChangeAction extends DumbAwareAction {
-    private final UIManager.LookAndFeelInfo myLookAndFeelInfo;
+    private final UIThemeLookAndFeelInfo myLookAndFeelInfo;
 
-    private LafChangeAction(UIManager.LookAndFeelInfo lf, boolean currentLaf) {
+    private LafChangeAction(UIThemeLookAndFeelInfo lf, boolean currentLaf) {
       super(lf.getName(), null, getIcon(currentLaf));
       myLookAndFeelInfo = lf;
     }

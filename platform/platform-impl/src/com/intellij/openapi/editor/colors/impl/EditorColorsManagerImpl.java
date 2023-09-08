@@ -70,8 +70,6 @@ import kotlin.sequences.SequencesKt;
 import org.jdom.Element;
 import org.jetbrains.annotations.*;
 
-import javax.swing.*;
-import javax.swing.UIManager.LookAndFeelInfo;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.*;
@@ -254,18 +252,13 @@ public final class EditorColorsManagerImpl extends EditorColorsManager implement
   }
 
   // initScheme has to execute only after the LaF has been set in LafManagerImpl.initializeComponent
-  private void initScheme(@NotNull UIManager.LookAndFeelInfo currentLaf) {
+  private void initScheme(@NotNull UIThemeLookAndFeelInfo currentLaf) {
     EditorColorsScheme scheme = null;
 
     if (!themeIsCustomized) {
-      if (currentLaf instanceof UIThemeLookAndFeelInfo) {
-        String schemeName = ((UIThemeLookAndFeelInfo)currentLaf).getTheme().getEditorSchemeName();
-        if (schemeName != null) {
-          scheme = getScheme(schemeName);
-        }
-      }
-      else if (currentLaf.getName().contains("Darcula")) {
-        scheme = getScheme("Darcula");
+      String schemeName = currentLaf.getTheme().getEditorSchemeName();
+      if (schemeName != null) {
+        scheme = getScheme(schemeName);
       }
     }
 
@@ -652,7 +645,7 @@ public final class EditorColorsManagerImpl extends EditorColorsManager implement
   public void initializeComponent() {
     Activity activity = StartUpMeasurer.startActivity("editor color scheme initialization");
     // LafManager is initialized in EDT, so, that's ok to call it here
-    LookAndFeelInfo laf = ApplicationManager.getApplication().isUnitTestMode() ? null : LafManager.getInstance().getCurrentUIThemeLookAndFeel();
+    UIThemeLookAndFeelInfo laf = ApplicationManager.getApplication().isUnitTestMode() ? null : LafManager.getInstance().getCurrentUIThemeLookAndFeel();
     // null in a headless mode
     if (laf != null) {
       initScheme(laf);
