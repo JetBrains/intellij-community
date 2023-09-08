@@ -139,13 +139,9 @@ public class VcsDirtyScopeVfsListener implements AsyncFileListener, Disposable {
         // if a directory was renamed, all its children are recursively dirty, the parent dir is also dirty but not recursively.
         FilePath oldPath = VcsUtil.getFilePath(((VFilePropertyChangeEvent)event).getOldPath(), isDirectory);
         FilePath newPath = VcsUtil.getFilePath(((VFilePropertyChangeEvent)event).getNewPath(), isDirectory);
-        // the file is dirty recursively
-        add(myVcsManager, dirtyFilesAndDirs, oldPath);
+        // the file is dirty recursively, its old directory is dirty alone
+        addWithParentDirectory(myVcsManager, dirtyFilesAndDirs, oldPath);
         add(myVcsManager, dirtyFilesAndDirs, newPath);
-        FilePath parentPath = oldPath.getParentPath();
-        if (parentPath != null) {
-          addAsFiles(myVcsManager, dirtyFilesAndDirs, parentPath); // directory is dirty alone
-        }
       }
       else {
         add(myVcsManager, dirtyFilesAndDirs, VcsUtil.getFilePath(event.getPath(), isDirectory));
@@ -186,15 +182,22 @@ public class VcsDirtyScopeVfsListener implements AsyncFileListener, Disposable {
   private static void add(@NotNull ProjectLevelVcsManager vcsManager,
                           @NotNull FilesAndDirs filesAndDirs,
                           @NotNull FilePath filePath,
-                          boolean forceAddAsFiles) {
+                          boolean withParentDirectory) {
     AbstractVcs vcs = vcsManager.getVcsFor(filePath);
     if (vcs == null) return;
 
-    if (forceAddAsFiles || !filePath.isDirectory()) {
-      filesAndDirs.files.add(vcs, filePath);
+    if (filePath.isDirectory()) {
+      filesAndDirs.dirs.add(vcs, filePath);
     }
     else {
-      filesAndDirs.dirs.add(vcs, filePath);
+      filesAndDirs.files.add(vcs, filePath);
+    }
+
+    if (withParentDirectory && vcs.areDirectoriesVersionedItems()) {
+      FilePath parentPath = filePath.getParentPath();
+      if (parentPath != null && vcsManager.getVcsFor(parentPath) == vcs) {
+        filesAndDirs.files.add(vcs, parentPath);
+      }
     }
   }
 
@@ -204,9 +207,9 @@ public class VcsDirtyScopeVfsListener implements AsyncFileListener, Disposable {
     add(vcsManager, filesAndDirs, filePath, false);
   }
 
-  private static void addAsFiles(@NotNull ProjectLevelVcsManager vcsManager,
-                                 @NotNull FilesAndDirs filesAndDirs,
-                                 @NotNull FilePath filePath) {
+  private static void addWithParentDirectory(@NotNull ProjectLevelVcsManager vcsManager,
+                                             @NotNull FilesAndDirs filesAndDirs,
+                                             @NotNull FilePath filePath) {
     add(vcsManager, filesAndDirs, filePath, true);
   }
 }
