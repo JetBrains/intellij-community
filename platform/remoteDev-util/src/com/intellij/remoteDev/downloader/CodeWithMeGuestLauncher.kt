@@ -55,52 +55,61 @@ object CodeWithMeGuestLauncher {
       return
     }
 
-    ProgressManager.getInstance().run(object : Backgroundable(project, RemoteDevUtilBundle.message("launcher.title"), true) {
+    ProgressManager.getInstance().run(DownloadAndLaunchClientTask(project, uri, lifetime, url, product, onDone))
+  }
 
-      private var clientLifetime : Lifetime = Lifetime.Terminated
+  private class DownloadAndLaunchClientTask(
+    private val project: Project?,
+    private val uri: URI,
+    private val lifetime: Lifetime?,
+    private val url: String,
+    private val product: @NlsContexts.DialogTitle String,
+    private val onDone: (Lifetime) -> Unit
+  ) : Backgroundable(project, RemoteDevUtilBundle.message("launcher.title"), true) {
 
-      override fun run(progressIndicator: ProgressIndicator) {
-        try {
-          val sessionInfo = when (uri.scheme) {
-            "tcp", "gwws" -> {
-              val clientBuild = uri.fragmentParameters["cb"] ?: error("there is no client build in url")
-              val jreBuild = uri.fragmentParameters["jb"] ?: error("there is no jre build in url")
-              val unattendedMode = isUnattendedModeUri(uri)
+    private var clientLifetime : Lifetime = Lifetime.Terminated
 
-              CodeWithMeClientDownloader.createSessionInfo(clientBuild, jreBuild, unattendedMode)
-            }
-            "http", "https" -> {
-              progressIndicator.text = RemoteDevUtilBundle.message("launcher.get.client.info")
-              ThinClientSessionInfoFetcher.getSessionUrl(uri)
-            }
-            else -> {
-              error("scheme '${uri.scheme} is not supported'")
-            }
+    override fun run(progressIndicator: ProgressIndicator) {
+      try {
+        val sessionInfo = when (uri.scheme) {
+          "tcp", "gwws" -> {
+            val clientBuild = uri.fragmentParameters["cb"] ?: error("there is no client build in url")
+            val jreBuild = uri.fragmentParameters["jb"] ?: error("there is no jre build in url")
+            val unattendedMode = isUnattendedModeUri(uri)
+
+            CodeWithMeClientDownloader.createSessionInfo(clientBuild, jreBuild, unattendedMode)
           }
+          "http", "https" -> {
+            progressIndicator.text = RemoteDevUtilBundle.message("launcher.get.client.info")
+            ThinClientSessionInfoFetcher.getSessionUrl(uri)
+          }
+          else -> {
+            error("scheme '${uri.scheme} is not supported'")
+          }
+        }
 
-          val extractedJetBrainsClientData = CodeWithMeClientDownloader.downloadClientAndJdk(sessionInfo, progressIndicator)
-          if (extractedJetBrainsClientData == null) return
+        val extractedJetBrainsClientData = CodeWithMeClientDownloader.downloadClientAndJdk(sessionInfo, progressIndicator)
+        if (extractedJetBrainsClientData == null) return
 
-          clientLifetime = runDownloadedClient(
-            lifetime = lifetime ?: project?.createLifetime() ?: Lifetime.Eternal,
-            extractedJetBrainsClientData = extractedJetBrainsClientData,
-            urlForThinClient = url,
-            product = product,
-            progressIndicator = progressIndicator
-          )
-        }
-        catch (t: Throwable) {
-          LOG.warn(t)
-          CodeWithMeDownloaderExceptionHandler.handle(product, t)
-        }
-        finally {
-          alreadyDownloading.remove(url)
-        }
+        clientLifetime = runDownloadedClient(
+          lifetime = lifetime ?: project?.createLifetime() ?: Lifetime.Eternal,
+          extractedJetBrainsClientData = extractedJetBrainsClientData,
+          urlForThinClient = url,
+          product = product,
+          progressIndicator = progressIndicator
+        )
       }
+      catch (t: Throwable) {
+        LOG.warn(t)
+        CodeWithMeDownloaderExceptionHandler.handle(product, t)
+      }
+      finally {
+        alreadyDownloading.remove(url)
+      }
+    }
 
-      override fun onSuccess() = onDone.invoke(clientLifetime)
-      override fun onCancel() = Unit
-    })
+    override fun onSuccess() = onDone.invoke(clientLifetime)
+    override fun onCancel() = Unit
   }
 
   private fun runAlreadyDownloadedClient(
