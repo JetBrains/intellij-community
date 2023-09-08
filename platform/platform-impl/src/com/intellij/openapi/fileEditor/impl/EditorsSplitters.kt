@@ -1037,13 +1037,8 @@ private fun enableEditorActivationOnEscape() {
 }
 
 private fun getSplitCount(component: JComponent): Int {
-  if (component.componentCount <= 0) {
-    return 0
-  }
-
-  val firstChild = component.getComponent(0)
-  if (firstChild is Splitter) {
-    return getSplitCount(firstChild.firstComponent) + getSplitCount(firstChild.secondComponent)
+  if (component is Splitter) {
+    return getSplitCount(component.firstComponent) + getSplitCount(component.secondComponent)
   }
   return 1
 }
