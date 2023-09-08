@@ -2,9 +2,7 @@
 package com.intellij.codeInsight.inline.completion
 
 import com.intellij.codeInsight.hint.HintManagerImpl
-import com.intellij.codeInsight.inline.completion.InlineCompletionContext.Companion.acceptInlineCompletions
 import com.intellij.codeInsight.inline.completion.InlineCompletionContext.Companion.getInlineCompletionContextOrNull
-import com.intellij.codeInsight.inline.completion.InlineCompletionContext.Companion.rejectInlineCompletions
 import com.intellij.codeInsight.inline.completion.InlineCompletionContext.Companion.resetInlineCompletionContext
 import com.intellij.openapi.actionSystem.CommonDataKeys
 import com.intellij.openapi.actionSystem.DataContext
@@ -19,7 +17,7 @@ import org.jetbrains.annotations.ApiStatus
 class InsertInlineCompletionAction : EditorAction(InsertInlineCompletionHandler()), HintManagerImpl.ActionToIgnore {
   class InsertInlineCompletionHandler : EditorWriteActionHandler() {
     override fun executeWriteAction(editor: Editor, caret: Caret?, dataContext: DataContext) {
-      editor.acceptInlineCompletions()
+      editor.getInlineCompletionContextOrNull()?.insert()
       editor.resetInlineCompletionContext()
     }
 
@@ -32,7 +30,6 @@ class InsertInlineCompletionAction : EditorAction(InsertInlineCompletionHandler(
 @ApiStatus.Experimental
 class EscapeInlineCompletionHandler(val originalHandler: EditorActionHandler) : EditorActionHandler() {
   public override fun doExecute(editor: Editor, caret: Caret?, dataContext: DataContext) {
-    editor.rejectInlineCompletions(true)
     editor.resetInlineCompletionContext()
 
     if (originalHandler.isEnabled(editor, caret, dataContext)) {

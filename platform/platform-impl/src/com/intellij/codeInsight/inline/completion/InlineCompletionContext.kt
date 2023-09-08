@@ -2,9 +2,8 @@
 package com.intellij.codeInsight.inline.completion
 
 import com.intellij.codeInsight.inline.completion.InlineState.Companion.resetInlineCompletionState
-import com.intellij.codeInsight.inline.completion.listeners.InlineCompletionElementEvent
 import com.intellij.codeInsight.inline.completion.listeners.InlineCompletionKeyListener
-import com.intellij.codeInsight.inline.completion.listeners.InlineCompletionListener
+import com.intellij.codeInsight.inline.completion.logs.InlineCompletionUsageTracker
 import com.intellij.codeInsight.inline.completion.render.InlineCompletion
 import com.intellij.codeInsight.lookup.LookupManager
 import com.intellij.openapi.Disposable
@@ -17,10 +16,15 @@ import org.jetbrains.annotations.ApiStatus
 import java.util.concurrent.atomic.AtomicBoolean
 
 @ApiStatus.Experimental
-class InlineCompletionContext private constructor(val editor: Editor, private var hasPlaceholder: Boolean = false) : Disposable {
+class InlineCompletionContext private constructor(
+  val editor: Editor,
+  private val invocationTime: Long,
+  private var hasPlaceholder: Boolean = false
+) : Disposable {
   private val keyListener = InlineCompletionKeyListener(editor)
   private val isSelecting = AtomicBoolean(false)
   private val inlay = InlineCompletion.forEditor(editor)
+  private val showTracker = InlineCompletionUsageTracker.ShowTracker()
 
   private var completions = emptyList<InlineCompletionElement>()
   private var selectedIndex = -1
@@ -43,11 +47,11 @@ class InlineCompletionContext private constructor(val editor: Editor, private va
     }
     if (text.isNotBlank() && editor is EditorImpl) {
       inlay.render(proposal, offset)
+      showTracker.shown(invocationTime, editor, proposal)
       if (!inlay.isEmpty) {
         Disposer.register(this, inlay)
         editor.contentComponent.addKeyListener(keyListener)
       }
-      editor.showInlineCompletions(proposal)
     }
   }
 
@@ -72,6 +76,7 @@ class InlineCompletionContext private constructor(val editor: Editor, private va
     val currentCompletion = completions[selectedIndex]
     editor.document.insertString(offset, currentCompletion.text)
     editor.caretModel.moveToOffset(offset + currentCompletion.text.length)
+    showTracker.accepted()
 
     isSelecting.set(false)
     InlineCompletionHandler.unmute()
@@ -83,17 +88,16 @@ class InlineCompletionContext private constructor(val editor: Editor, private va
   companion object {
     private val LOG = thisLogger()
     private val INLINE_COMPLETION_CONTEXT = Key.create<InlineCompletionContext>("inline.completion.context")
-    private val INLINE_COMPLETION_LISTENER = Key.create<InlineCompletionListener>("inline.completion.listener")
 
-    fun Editor.initOrGetInlineCompletionContext(): InlineCompletionContext {
-      return getUserData(INLINE_COMPLETION_CONTEXT) ?: InlineCompletionContext(this).also {
+    fun Editor.initOrGetInlineCompletionContext(invocationTime: Long): InlineCompletionContext {
+      return getUserData(INLINE_COMPLETION_CONTEXT) ?: InlineCompletionContext(this, invocationTime).also {
         LOG.trace("Create new inline completion context")
         putUserData(INLINE_COMPLETION_CONTEXT, it)
       }
     }
 
-    fun Editor.initOrGetInlineCompletionContextWithPlaceholder(): InlineCompletionContext {
-      return getUserData(INLINE_COMPLETION_CONTEXT) ?: InlineCompletionContext(this, true).also {
+    fun Editor.initOrGetInlineCompletionContextWithPlaceholder(invocationTime: Long): InlineCompletionContext {
+      return getUserData(INLINE_COMPLETION_CONTEXT) ?: InlineCompletionContext(this, invocationTime, hasPlaceholder = true).also {
         LOG.trace("Create new inline completion context with placeholder")
         putUserData(INLINE_COMPLETION_CONTEXT, it)
       }
@@ -109,30 +113,9 @@ class InlineCompletionContext private constructor(val editor: Editor, private va
       LOG.trace("Remove inline completion context")
     }
 
-
-    fun Editor.acceptInlineCompletions() {
-      getInlineCompletionContextOrNull()?.insert()
-      getInlineCompletionListenerOrNull()?.on(InlineCompletionElementEvent.Accepted)
-    }
-
-    fun Editor.showInlineCompletions(element: InlineCompletionElement) {
-      getInlineCompletionListenerOrNull()?.on(InlineCompletionElementEvent.Shown(element))
-    }
-
-    fun Editor.rejectInlineCompletions(explicit: Boolean = false) {
-      getInlineCompletionListenerOrNull()?.on(InlineCompletionElementEvent.Rejected(explicit))
-    }
-
-    private fun Editor.getInlineCompletionListenerOrNull(): InlineCompletionListener? = getUserData(INLINE_COMPLETION_LISTENER)
-
-    fun Editor.register(listener: InlineCompletionListener): Unit = putUserData(INLINE_COMPLETION_LISTENER, listener)
-
-    private fun Editor.removeInlineCompletionListener(): Unit = putUserData(INLINE_COMPLETION_LISTENER, null)
-
     fun Editor.resetInlineCompletionContext(): Unit? = getInlineCompletionContextOrNull()?.let {
       if (it.isCurrentlyDisplayingInlays) {
-        rejectInlineCompletions()
-        removeInlineCompletionListener()
+        it.showTracker.rejected()
         removeInlineCompletionContext()
         Disposer.dispose(it)
       }

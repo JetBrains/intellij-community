@@ -5,7 +5,6 @@ import com.intellij.codeInsight.completion.CompletionUtil
 import com.intellij.codeInsight.inline.completion.InlineCompletionContext.Companion.resetInlineCompletionContext
 import com.intellij.codeInsight.inline.completion.InlineCompletionContext.Companion.resetInlineCompletionContextWithPlaceholder
 import com.intellij.codeInsight.inline.completion.InlineCompletionEvent
-import com.intellij.codeInsight.inline.completion.InlineCompletionElement
 import com.intellij.codeInsight.inline.completion.InlineCompletionHandler
 import com.intellij.codeInsight.lookup.LookupManager
 import com.intellij.codeWithMe.ClientId
@@ -18,7 +17,6 @@ import com.intellij.openapi.editor.impl.EditorImpl
 import org.jetbrains.annotations.ApiStatus
 import java.awt.event.KeyAdapter
 import java.awt.event.KeyEvent
-import java.util.*
 
 @ApiStatus.Experimental
 class InlineCompletionDocumentListener(private val editor: EditorImpl) : DocumentListener {
@@ -111,16 +109,4 @@ class InlineEditorMouseListener : EditorMouseListener {
   companion object {
     private val LOG = thisLogger()
   }
-}
-
-@ApiStatus.Experimental
-sealed class InlineCompletionElementEvent {
-  class Shown(val element: InlineCompletionElement) : InlineCompletionElementEvent()
-  object Accepted : InlineCompletionElementEvent()
-  class Rejected(val explicit: Boolean = false) : InlineCompletionElementEvent()
-}
-
-@ApiStatus.Experimental
-interface InlineCompletionListener : EventListener {
-  fun on(update: InlineCompletionElementEvent)
 }

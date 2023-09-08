@@ -5,11 +5,9 @@ import com.intellij.codeInsight.CodeInsightActionHandler
 import com.intellij.codeInsight.inline.completion.InlineCompletionContext.Companion.getInlineCompletionContextOrNull
 import com.intellij.codeInsight.inline.completion.InlineCompletionContext.Companion.initOrGetInlineCompletionContext
 import com.intellij.codeInsight.inline.completion.InlineCompletionContext.Companion.initOrGetInlineCompletionContextWithPlaceholder
-import com.intellij.codeInsight.inline.completion.InlineCompletionContext.Companion.register
 import com.intellij.codeInsight.inline.completion.InlineCompletionContext.Companion.resetInlineCompletionContextWithPlaceholder
 import com.intellij.codeInsight.inline.completion.InlineState.Companion.getInlineCompletionState
 import com.intellij.codeInsight.inline.completion.InlineState.Companion.initOrGetInlineCompletionState
-import com.intellij.codeInsight.inline.completion.listeners.InlineCompletionUsageTracker
 import com.intellij.codeInsight.lookup.LookupEvent
 import com.intellij.openapi.actionSystem.DataContext
 import com.intellij.openapi.application.EDT
@@ -32,6 +30,7 @@ import java.util.concurrent.atomic.AtomicBoolean
 @ApiStatus.Experimental
 class InlineCompletionHandler(private val scope: CoroutineScope) : CodeInsightActionHandler {
   private var runningJob: Job? = null
+  private var lastInvocationTime = 0L
 
   private fun getProvider(event: InlineCompletionEvent): InlineCompletionProvider? {
     return InlineCompletionProvider.extensions().firstOrNull { it.isEnabled(event) }?.also {
@@ -103,8 +102,7 @@ class InlineCompletionHandler(private val scope: CoroutineScope) : CodeInsightAc
   }
 
   private suspend fun invokeDebounced(event: InlineCompletionEvent, request: InlineCompletionRequest) {
-    request.editor.register(InlineCompletionUsageTracker.track(scope, request))
-
+    lastInvocationTime = System.currentTimeMillis()
     val provider = getProvider(event) ?: return
 
     val modificationStamp = request.document.modificationStamp
@@ -150,7 +148,7 @@ class InlineCompletionHandler(private val scope: CoroutineScope) : CodeInsightAc
     LOG.trace("Trying to show placeholder")
     if (!shouldShowPlaceholder()) return
 
-    val ctx = editor.initOrGetInlineCompletionContextWithPlaceholder()
+    val ctx = editor.initOrGetInlineCompletionContextWithPlaceholder(lastInvocationTime)
     ctx.update(listOf(placeholder.element), 0, startOffset)
   }
 
@@ -176,7 +174,7 @@ class InlineCompletionHandler(private val scope: CoroutineScope) : CodeInsightAc
       return
     }
 
-    editor.initOrGetInlineCompletionContext().update(suggestions, suggestionIndex, startOffset)
+    editor.initOrGetInlineCompletionContext(lastInvocationTime).update(suggestions, suggestionIndex, startOffset)
 
     inlineContext.suggestionIndex = suggestionIndex
     inlineContext.lastStartOffset = startOffset
