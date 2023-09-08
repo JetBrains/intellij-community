@@ -6,20 +6,22 @@ import com.intellij.openapi.application.ReadAction
 import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.progress.util.ProgressIndicatorUtils
-import com.intellij.openapi.project.DumbService
-import com.intellij.openapi.project.Project
-import com.intellij.openapi.project.ProjectCloseListener
+import com.intellij.openapi.project.*
 import com.intellij.openapi.roots.ContentIterator
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.VirtualFileWithId
-import com.intellij.util.indexing.*
+import com.intellij.util.indexing.FileBasedIndex
+import com.intellij.util.indexing.FileBasedIndexImpl
+import com.intellij.util.indexing.IdFilter
+import com.intellij.util.indexing.UnindexedFilesScanner
+import com.intellij.util.indexing.UnindexedFilesUpdater
 import java.util.concurrent.Callable
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.ConcurrentMap
 
 internal enum class FileAddStatus {
-  PRESENT, SKIPPED
+  ADDED, PRESENT, SKIPPED
 }
 
 internal sealed class ProjectIndexableFilesFilterHolder {
@@ -61,11 +63,13 @@ internal class IncrementalProjectIndexableFilesFilterHolder : ProjectIndexableFi
   override fun entireProjectUpdateStarted(project: Project) {
     assert(UnindexedFilesUpdater.isIndexUpdateInProgress(project))
 
-    getFilter(project)?.resetFileIds()
+    getFilter(project)?.memoizeAndResetFileIds()
   }
 
   override fun entireProjectUpdateFinished(project: Project) {
     assert(UnindexedFilesUpdater.isIndexUpdateInProgress(project))
+
+    getFilter(project)?.resetPreviousFileIds()
   }
 
   private fun getFilter(project: Project) = myProjectFilters.computeIfAbsent(project) {
@@ -81,6 +85,7 @@ internal class IncrementalProjectIndexableFilesFilterHolder : ProjectIndexableFi
     }
 
     if (statuses.all { it == FileAddStatus.SKIPPED }) return FileAddStatus.SKIPPED
+    if (statuses.any { it == FileAddStatus.ADDED }) return FileAddStatus.ADDED
     return FileAddStatus.PRESENT
   }
 
