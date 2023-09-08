@@ -1,6 +1,7 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.customize.transferSettings
 
+import com.intellij.ide.customize.transferSettings.fus.TransferSettingsCollector
 import com.intellij.ide.customize.transferSettings.models.BaseIdeVersion
 import com.intellij.ide.customize.transferSettings.models.FailedIdeVersion
 import com.intellij.ide.customize.transferSettings.models.IdeVersion
@@ -8,6 +9,7 @@ import com.intellij.ide.customize.transferSettings.providers.TransferSettingsPro
 import com.intellij.openapi.diagnostic.logger
 import java.util.*
 import java.util.stream.Collectors
+import kotlin.time.Duration.Companion.nanoseconds
 
 class TransferSettingsDataProvider(private val providers: List<TransferSettingsProvider>) {
   private val baseIdeVersions = mutableListOf<BaseIdeVersion>()
@@ -32,8 +34,10 @@ class TransferSettingsDataProvider(private val providers: List<TransferSettingsP
 
     ideVersions.addAll(newBase.filterIsInstance<IdeVersion>())
     ideVersions.sortByDescending { it.lastUsed }
+    TransferSettingsCollector.logIdeVersionsFound(ideVersions)
 
     failedIdeVersions.addAll(newBase.filterIsInstance<FailedIdeVersion>())
+    TransferSettingsCollector.logIdeVersionsFailed(failedIdeVersions)
 
     return this
   }
@@ -54,7 +58,16 @@ private class TransferSettingsDataProviderSession(private val providers: List<Tr
       }
 
       try {
-        provider.getIdeVersions(skipIds ?: emptyList()).stream()
+        val startTime = System.nanoTime().nanoseconds
+        val result = provider.getIdeVersions(skipIds ?: emptyList()).stream()
+        val endTime = System.nanoTime().nanoseconds
+        TransferSettingsCollector.logPerformanceEvent(
+          TransferSettingsCollector.PerfEvent.Total,
+          provider.transferableIdeId,
+          null,
+          endTime - startTime
+        )
+        result
       }
       catch (t: Throwable) {
         logger.warn("Failed to get base ide versions", t)

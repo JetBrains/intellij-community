@@ -1,11 +1,12 @@
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.customize.transferSettings.providers.vscode
 
 import com.intellij.icons.AllIcons
 import com.intellij.ide.IdeBundle
 import com.intellij.ide.customize.transferSettings.TransferSettingsConfiguration
 import com.intellij.ide.customize.transferSettings.TransferSettingsDialog
+import com.intellij.ide.customize.transferSettings.TransferableIdeId
 import com.intellij.ide.customize.transferSettings.models.IdeVersion
-import com.intellij.ide.customize.transferSettings.providers.DefaultImportPerformer
 import com.intellij.ide.customize.transferSettings.providers.TransferSettingsProvider
 import com.intellij.ide.customize.transferSettings.providers.vscode.VSCodeSettingsProcessor.Companion.vsCodeHome
 import com.intellij.ide.customize.transferSettings.showTransferSettingsDialog
@@ -20,6 +21,9 @@ import java.nio.file.Paths
 import javax.swing.JComponent
 
 class VSCodeTransferSettingsProvider : TransferSettingsProvider {
+
+  override val transferableIdeId = TransferableIdeId.VSCode
+
   private val processor = VSCodeSettingsProcessor()
   override val name: String
     get() = "Visual Studio Code"
@@ -32,8 +36,15 @@ class VSCodeTransferSettingsProvider : TransferSettingsProvider {
   }
 
   private val cachedIdeVersion by lazy {
-    IdeVersion("VSCode", AllIcons.TransferSettings.Vscode, "Visual Studio Code", settingsInit = { processor.getProcessedSettings() },
-               provider = this)
+    IdeVersion(
+      TransferableIdeId.VSCode,
+      null,
+      "VSCode",
+      AllIcons.TransferSettings.Vscode,
+      "Visual Studio Code",
+      settingsInit = { processor.getProcessedSettings() },
+      provider = this
+    )
   }
 
   private fun getIdeVersion(): IdeVersion {
