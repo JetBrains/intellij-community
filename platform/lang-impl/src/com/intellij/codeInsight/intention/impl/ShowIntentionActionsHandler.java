@@ -248,13 +248,13 @@ public class ShowIntentionActionsHandler implements CodeInsightActionHandler {
       Editor injectedEditor = null;
       if (injectedFile != null && !(hostEditor instanceof IntentionPreviewEditor)) {
         injectedEditor = InjectedLanguageUtil.getInjectedEditorForInjectedFile(hostEditor, injectedFile);
-        if (predicate.process(injectedFile, injectedEditor)) {
+        if (hostEditor != injectedEditor && predicate.process(injectedFile, injectedEditor)) {
           editorToApply = injectedEditor;
           fileToApply = injectedFile;
         }
       }
 
-      if (editorToApply == null && hostEditor != injectedEditor && predicate.process(hostFile, hostEditor)) {
+      if (editorToApply == null && predicate.process(hostFile, hostEditor)) {
         editorToApply = hostEditor;
         fileToApply = hostFile;
       }
@@ -277,10 +277,10 @@ public class ShowIntentionActionsHandler implements CodeInsightActionHandler {
   }
 
   public static boolean chooseActionAndInvoke(@NotNull PsiFile hostFile,
-                                       @Nullable Editor hostEditor,
-                                       @NotNull IntentionAction action,
-                                       @NotNull @NlsContexts.Command String commandName,
-                                       int problemOffset) {
+                                              @Nullable Editor hostEditor,
+                                              @NotNull IntentionAction action,
+                                              @NotNull @NlsContexts.Command String commandName,
+                                              int problemOffset) {
     Project project = hostFile.getProject();
     ((FeatureUsageTrackerImpl)FeatureUsageTracker.getInstance()).getFixesStats().registerInvocation();
 
