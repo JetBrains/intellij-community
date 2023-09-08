@@ -10,6 +10,7 @@ import com.intellij.util.io.ResizeableMappedFile;
 import com.intellij.util.io.ScannableDataEnumeratorEx;
 import io.opentelemetry.api.metrics.BatchCallback;
 import io.opentelemetry.api.metrics.Meter;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -33,6 +34,7 @@ import static java.nio.charset.StandardCharsets.UTF_8;
  * <p>
  * Not thread safe -- external synchronization needed if used in multithreaded environment
  */
+@ApiStatus.Obsolete
 public final class OffsetBasedNonStrictStringsEnumerator implements ScannableDataEnumeratorEx<String>, Forceable, Closeable {
 
   //RC: I've tested implementation against PersistentStringEnumerator as a baseline, on a list of names
