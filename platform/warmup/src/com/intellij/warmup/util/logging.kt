@@ -140,7 +140,7 @@ suspend fun <T> withLoggingProgressReporter(action: suspend CoroutineScope.() ->
     val messageFlow = ApplicationManager.getApplication().service<WarmupLoggingService>().messages
     val job = launch {
       reporter.progressState.collect { progressState ->
-        progressStateText(progressState)?.let { messageFlow.emit(it) }
+        progressStateText(progressState)?.let { WarmupLogger.logStructured(it) }
       }
     }
     try {
@@ -207,7 +207,7 @@ internal data class StructuredMessage(
 @OptIn(FlowPreview::class)
 @Service(Service.Level.APP)
 private class WarmupLoggingService(scope: CoroutineScope) {
-  val messages = MutableSharedFlow<StructuredMessage>(replay = 0, extraBufferCapacity = 128, onBufferOverflow = BufferOverflow.DROP_OLDEST)
+  val messages = MutableSharedFlow<StructuredMessage>(replay = 0, extraBufferCapacity = 1024, onBufferOverflow = BufferOverflow.DROP_OLDEST)
 
 
   init {

@@ -13,7 +13,7 @@ import kotlin.coroutines.coroutineContext
 
 @Experimental
 object Observation {
-  
+
   /**
    * Suspends until configuration processes in the IDE are completed.
    */
@@ -24,23 +24,26 @@ object Observation {
         while (true) {
           val wasModified = doAwaitConfigurationPredicates(project)
           if (!wasModified) {
-            rawProgressReporter?.text("The project is configured completely.") // NON-NLS
+            coroutineContext.rawProgressReporter?.text("The project is configured completely.") // NON-NLS
             break
-          } else {
-            rawProgressReporter?.text("Modified files are saved. Checking if it triggered configuration process...") // NON-NLS
+          }
+          else {
+            coroutineContext.rawProgressReporter?.text("Modified files are saved. Checking if it triggered configuration process...") // NON-NLS
           }
         }
       }
     }
   }
 
-  private suspend fun doAwaitConfigurationPredicates(project: Project) : Boolean {
+  private suspend fun doAwaitConfigurationPredicates(project: Project): Boolean {
     var isModificationOccurred = false
+    var counter = 1
     predicateLoop@ while (true) {
       for (processBusyPredicate in ActivityInProgressPredicate.EP_NAME.extensionList) {
         if (processBusyPredicate.isInProgress(project)) {
           isModificationOccurred = true
-          coroutineContext.rawProgressReporter?.text("'${processBusyPredicate.presentableName}' is in running...") // NON-NLS
+          coroutineContext.rawProgressReporter?.text("'${processBusyPredicate.presentableName}' is in progress...${if (counter % 2 == 0) "" else "."}") // NON-NLS
+          counter += 1
           delay(1000)
           continue@predicateLoop
         }
