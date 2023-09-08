@@ -97,7 +97,7 @@ internal class RecentProjectIconHelper {
       val palette = if (colorIndex != null) ChangeProjectIconPalette(colorIndex) else ProjectIconPalette
 
       var generatedProjectIcon: Icon = AvatarIcon(targetSize = size,
-                                                  arcRatio = 0.3,
+                                                  arcRatio = 0.4,
                                                   gradientSeed = path,
                                                   avatarName = name,
                                                   palette = palette).withIconPreScaled(false)

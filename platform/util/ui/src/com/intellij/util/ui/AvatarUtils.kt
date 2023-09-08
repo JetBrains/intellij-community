@@ -103,7 +103,7 @@ object AvatarUtils {
 
   private fun getFont(size: Int): Font {
     return if (NewUiValue.isEnabled()) {
-      val fontSize = 13 * size / 20
+      val fontSize = 12 * size / 20
       getNewUiFont(fontSize)
     }
     else {
