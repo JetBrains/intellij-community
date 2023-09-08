@@ -78,6 +78,8 @@ public abstract class MavenProjectsManager extends MavenSimpleProjectComponent
 
   private final ReentrantLock initLock = new ReentrantLock();
   private final AtomicBoolean isInitialized = new AtomicBoolean();
+  private final AtomicBoolean isActivated = new AtomicBoolean();
+  private final AtomicBoolean runImportOnStartup = new AtomicBoolean();
 
   private MavenProjectsManagerState myState = new MavenProjectsManagerState();
 
@@ -246,6 +248,9 @@ public abstract class MavenProjectsManager extends MavenSimpleProjectComponent
       listenForProjectsTreeChanges();
       registerSyncConsoleListener();
       updateTabTitles();
+      if (!isNew) {
+        runImportOnStartup.set(true);
+      }
       if (isNew) {
         doActivate();
       }
@@ -260,28 +265,32 @@ public abstract class MavenProjectsManager extends MavenSimpleProjectComponent
       var importingSettings = getImportingSettings();
       if (!importingSettings.isWorkspaceImportEnabled()) {
         importingSettings.setWorkspaceImportEnabled(true);
+        myProject.putUserData(WorkspaceProjectImporterKt.getNOTIFY_USER_ABOUT_WORKSPACE_IMPORT_KEY(), true);
       }
       myState.workspaceImportForciblyTurnedOn = true; // turn workspace import if it is turned off once for each existing project
-      myProject.putUserData(WorkspaceProjectImporterKt.getNOTIFY_USER_ABOUT_WORKSPACE_IMPORT_KEY(), true);
     }
   }
 
   private void doActivate() {
+    if (isActivated.getAndSet(true)) {
+      return;
+    }
     fireActivated();
     if (!ApplicationManager.getApplication().isUnitTestMode()) {
       listenForExternalChanges();
       MavenIndicesManager.getInstance(myProject).scheduleUpdateIndicesList(null);
-    }
-
-    if (!MavenUtil.isLinearImportEnabled()) {
-      var forceImport = Boolean.TRUE.equals(myProject.getUserData(WorkspaceProjectImporterKt.getNOTIFY_USER_ABOUT_WORKSPACE_IMPORT_KEY()));
-      scheduleUpdateAll(new MavenImportSpec(forceImport, forceImport, false));
     }
   }
 
   protected void onProjectStartup() {
     if (isInitialized()) {
       doActivate();
+      if (runImportOnStartup.get()) {
+        if (!MavenUtil.isLinearImportEnabled()) {
+          var forceImport = Boolean.TRUE.equals(myProject.getUserData(WorkspaceProjectImporterKt.getNOTIFY_USER_ABOUT_WORKSPACE_IMPORT_KEY()));
+          scheduleUpdateAll(new MavenImportSpec(forceImport, forceImport, false));
+        }
+      }
     }
   }
 
@@ -512,15 +521,9 @@ public abstract class MavenProjectsManager extends MavenSimpleProjectComponent
   protected void doAddManagedFilesWithProfiles(List<VirtualFile> files, MavenExplicitProfiles profiles, Module previewModuleToDelete) {
     myPreviewModule = previewModuleToDelete;
     if (!isInitialized()) {
-      myState.originalFiles = MavenUtil.collectPaths(files);
-      MavenWorkspaceSettings workspaceSettings = getWorkspaceSettings();
-      workspaceSettings.setEnabledProfiles(profiles.getEnabledProfiles());
-      workspaceSettings.setDisabledProfiles(profiles.getDisabledProfiles());
       doInit(true);
     }
-    else {
-      myProjectsTree.addManagedFilesWithProfiles(files, profiles);
-    }
+    myProjectsTree.addManagedFilesWithProfiles(files, profiles);
   }
 
   public void addManagedFiles(@NotNull List<VirtualFile> files) {
