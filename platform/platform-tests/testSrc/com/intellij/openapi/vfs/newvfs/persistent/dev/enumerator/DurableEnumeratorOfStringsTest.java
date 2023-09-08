@@ -1,6 +1,7 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vfs.newvfs.persistent.dev.enumerator;
 
+import com.intellij.openapi.vfs.newvfs.persistent.dev.intmultimaps.NonParallelNonPersistentIntToMultiIntMap;
 import com.intellij.util.io.StringEnumeratorTestBase;
 import com.intellij.openapi.vfs.newvfs.persistent.dev.appendonlylog.AppendOnlyLog;
 import com.intellij.util.io.IOUtil;
@@ -41,7 +42,7 @@ public class DurableEnumeratorOfStringsTest extends StringEnumeratorTestBase<Dur
   protected DurableEnumerator<String> openEnumerator(@NotNull Path storagePath) throws IOException {
     return DurableEnumerator.open(
       storagePath,
-      new KeyDescriptorEx<String>() {
+      new KeyDescriptorEx<>() {
         @Override
         public int hashCodeOf(String value) {
           return value.hashCode();

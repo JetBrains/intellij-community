@@ -1,6 +1,7 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.openapi.vfs.newvfs.persistent.dev.enumerator;
+package com.intellij.openapi.vfs.newvfs.persistent.dev.intmultimaps;
 
+import com.intellij.openapi.vfs.newvfs.persistent.dev.enumerator.DurableEnumerator;
 import com.intellij.util.io.DataEnumeratorEx;
 import org.jetbrains.annotations.NotNull;
 
@@ -21,16 +22,19 @@ import java.io.IOException;
  * _require_ to be durable -- empty flush/close methods are OK.
  */
 public interface IntToMultiIntMap extends Flushable, Closeable {
-  int NULL_ID = DataEnumeratorEx.NULL_ID;
+  int NO_VALUE = DataEnumeratorEx.NULL_ID;
 
   void put(int key,
            int value) throws IOException;
 
+  boolean has(int key,
+              int value) throws IOException;
+
   /**
    * Method lookups values for a key, and gets them tested by valuesAcceptor -- and return the first value
-   * accepted by valuesAcceptor. If no values were found, or none were accepted -- returns {@link #NULL_ID}.
+   * accepted by valuesAcceptor. If no values were found, or none were accepted -- returns {@link #NO_VALUE}.
    *
-   * @return first value for a key which was accepted by valuesProcessor -- or {@link #NULL_ID} if no
+   * @return first value for a key which was accepted by valuesProcessor -- or {@link #NO_VALUE} if no
    * values were found, or none of values found were accepted by valuesAcceptor
    */
   int lookup(int key,
@@ -39,11 +43,11 @@ public interface IntToMultiIntMap extends Flushable, Closeable {
   /**
    * Method behaves the same way as {@link #lookup(int, ValueAcceptor)}, but if no values were found/none were
    * accepted -- method calls {@link ValueCreator#newValueForKey(int)}, inserts returned value into the map,
-   * and returns it. Method never return {@link #NULL_ID}.
+   * and returns it. Method never return {@link #NO_VALUE}.
    *
    * @return value for a key which was accepted by valuesProcessor. If no values were found,
    * {@link ValueCreator#newValueForKey(int)} is called, and newly generated value inserted into the map,
-   * and returned. Method should never return {@link #NULL_ID}
+   * and returned. Method should never return {@link #NO_VALUE}
    */
   int lookupOrInsert(int key,
                      @NotNull ValueAcceptor valuesAcceptor,
@@ -58,7 +62,7 @@ public interface IntToMultiIntMap extends Flushable, Closeable {
 
   @FunctionalInterface
   interface ValueCreator {
-    /** Method should never return {@link #NULL_ID} */
+    /** Method should never return {@link #NO_VALUE} */
     int newValueForKey(int key) throws IOException;
   }
 }

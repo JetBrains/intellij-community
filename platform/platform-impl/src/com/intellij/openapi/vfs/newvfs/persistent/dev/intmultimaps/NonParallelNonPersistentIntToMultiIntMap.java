@@ -1,5 +1,5 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.openapi.vfs.newvfs.persistent.dev.enumerator;
+package com.intellij.openapi.vfs.newvfs.persistent.dev.intmultimaps;
 
 import com.intellij.openapi.util.IntRef;
 import com.intellij.openapi.vfs.newvfs.persistent.dev.InvertedFilenameHashBasedIndex.Int2IntMultimap;
@@ -22,9 +22,14 @@ public final class NonParallelNonPersistentIntToMultiIntMap implements IntToMult
   }
 
   @Override
+  public boolean has(int key, int value) throws IOException {
+    return multimap.has(key, value);
+  }
+
+  @Override
   public synchronized int lookup(int key,
                                  @NotNull ValueAcceptor valuesAcceptor) throws IOException {
-    IntRef returnValue = new IntRef(NULL_ID);
+    IntRef returnValue = new IntRef(NO_VALUE);
     multimap.lookup(adjustKey(key), value -> {
       try {
         if (valuesAcceptor.accept(value)) {
@@ -44,7 +49,7 @@ public final class NonParallelNonPersistentIntToMultiIntMap implements IntToMult
   public synchronized int lookupOrInsert(int key,
                                          @NotNull ValueAcceptor valuesAcceptor,
                                          @NotNull ValueCreator valueCreator) throws IOException {
-    IntRef returnValue = new IntRef(NULL_ID);
+    IntRef returnValue = new IntRef(NO_VALUE);
     int adjustedKey = adjustKey(key);
     multimap.lookup(adjustedKey, value -> {
       try {
@@ -58,7 +63,7 @@ public final class NonParallelNonPersistentIntToMultiIntMap implements IntToMult
         throw new UncheckedIOException(e);
       }
     });
-    if (returnValue.get() != NULL_ID) {
+    if (returnValue.get() != NO_VALUE) {
       return returnValue.get();
     }
 

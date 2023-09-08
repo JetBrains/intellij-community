@@ -2,6 +2,8 @@
 package com.intellij.openapi.vfs.newvfs.persistent;
 
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.vfs.newvfs.persistent.dev.intmultimaps.extendiblehashmap.ExtendibleHashmap;
+import com.intellij.openapi.vfs.newvfs.persistent.mapped.MMappedFileStorage;
 import com.intellij.util.io.AbstractIntToIntBtree;
 import com.intellij.util.io.IntToIntBtree;
 import com.intellij.util.io.IntToIntBtreeLockFree;
@@ -31,7 +33,7 @@ import static java.util.concurrent.TimeUnit.SECONDS;
 @Measurement(iterations = 5, time = 5, timeUnit = SECONDS)
 @Fork(1)
 @Threads(1)
-public class IntToIntBTreeBenchmark {
+public class IntToIntMapsBenchmark {
 
   private static final int TREE_PAGE_SIZE = 32_768;
 
@@ -41,7 +43,7 @@ public class IntToIntBTreeBenchmark {
 
 
   @State(Scope.Benchmark)
-  public static class Context {
+  public static class BTreeContext {
     @Param({"legacy", "lock-free"})
     public String btreeImplementation;
 
@@ -110,10 +112,57 @@ public class IntToIntBTreeBenchmark {
     }
   }
 
+  @State(Scope.Benchmark)
+  public static class ExtendibleHashMapContext {
+
+    public File file;
+
+    public ExtendibleHashmap map;
+
+    public Int2IntOpenHashMap generatedKeyValues;
+    public int[] generatedKeys;
+
+    @Setup
+    public void setup() throws Exception {
+      file = FileUtil.createTempFile("IntToIntBtree", "tst", /*deleteOnExit: */ true);
+      map = new ExtendibleHashmap(
+        new MMappedFileStorage(file.toPath(), 1 << 22, 1 << 30)
+      );
+
+
+      generatedKeyValues = generateKeyValues(TOTAL_KEYS);
+      for (Map.Entry<Integer, Integer> e : generatedKeyValues.int2IntEntrySet()) {
+        map.put(e.getKey(), e.getValue());
+      }
+      generatedKeys = generatedKeyValues.keySet().toIntArray();
+    }
+
+    @TearDown
+    public void tearDown() throws Exception {
+      if (map != null) {
+        map.close();
+      }
+      if (file != null) {
+        file.delete();
+      }
+    }
+
+    private static Int2IntOpenHashMap generateKeyValues(int keysCount) {
+      final Int2IntOpenHashMap keyValues = new Int2IntOpenHashMap(keysCount);
+      final ThreadLocalRandom rnd = ThreadLocalRandom.current();
+      for (int i = 0; i < keysCount; i++) {
+        final int key = rnd.nextInt();
+        final int value = rnd.nextInt();
+        keyValues.put(key, value);
+      }
+      return keyValues;
+    }
+  }
+
 
   @Benchmark
   @OperationsPerInvocation(SAMPLES)
-  public void lookupRandomExistentKey(Context context) throws IOException {
+  public void lookupRandomExistentKey_BTree(BTreeContext context) throws IOException {
     int[] keys = context.generatedKeys;
     int[] result = context.result;
     AbstractIntToIntBtree bTree = context.bTree;
@@ -128,7 +177,7 @@ public class IntToIntBTreeBenchmark {
 
   @Benchmark
   @OperationsPerInvocation(SAMPLES)
-  public void updateRandomExistingKey(Context context) throws IOException {
+  public void updateRandomExistingKey_BTree(BTreeContext context) throws IOException {
     int[] keys = context.generatedKeys;
     AbstractIntToIntBtree bTree = context.bTree;
     ThreadLocalRandom rnd = ThreadLocalRandom.current();
@@ -140,10 +189,41 @@ public class IntToIntBTreeBenchmark {
     }
   }
 
+
+  @Benchmark
+  @OperationsPerInvocation(SAMPLES)
+  public void lookupRandomExistentKey_EMap(ExtendibleHashMapContext context) throws IOException {
+    int[] keys = context.generatedKeys;
+    ExtendibleHashmap map = context.map;
+    ThreadLocalRandom rnd = ThreadLocalRandom.current();
+
+    for (int i = 0; i < SAMPLES; i++) {
+      int index = rnd.nextInt(keys.length);
+      int key = keys[index];
+      map.lookup(key, value -> true);
+    }
+  }
+
+  @Benchmark
+  @OperationsPerInvocation(SAMPLES)
+  public void updateRandomExistingKey_EMap(ExtendibleHashMapContext context) throws IOException {
+    int[] keys = context.generatedKeys;
+    ExtendibleHashmap map = context.map;
+    ThreadLocalRandom rnd = ThreadLocalRandom.current();
+
+    for (int i = 0; i < SAMPLES; i++) {
+      int index = rnd.nextInt(keys.length);
+      int key = keys[index];
+      map.put(key, key);
+    }
+  }
+
+
+
   public static void main(String[] args) throws RunnerException {
     final Options opt = new OptionsBuilder()
       .mode(Mode.SampleTime)
-      .include(IntToIntBTreeBenchmark.class.getSimpleName() + ".*")
+      .include(IntToIntMapsBenchmark.class.getSimpleName() + ".*")
       .threads(1)
       .build();
 
