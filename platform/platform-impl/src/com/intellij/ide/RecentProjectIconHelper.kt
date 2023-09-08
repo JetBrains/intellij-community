@@ -8,6 +8,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.ui.IconDeferrer
 import com.intellij.ui.JBColor
+import com.intellij.ui.LayeredIcon
 import com.intellij.ui.icons.loadPng
 import com.intellij.ui.icons.toRetinaAwareIcon
 import com.intellij.ui.paint.withTxAndClipAligned
@@ -61,9 +62,9 @@ internal class RecentProjectIconHelper {
       }
     }
 
-    internal fun createIcon(file: Path): Icon = ProjectFileIcon(loadIconFile(file), unscaledProjectIconSize())
+    internal fun createIcon(file: Path): Icon = ProjectFileIcon(loadIconFile(file))
 
-    internal fun createIcon(file: Path, size: Int): Icon = ProjectFileIcon(loadIconFile(file, size), size)
+    internal fun createIcon(file: Path, size: Int): Icon = ProjectFileIcon(loadIconFile(file, size))
 
     fun refreshProjectIcon(path: @SystemIndependent String) {
       projectIconCache.keys
@@ -144,10 +145,15 @@ private fun getCustomIcon(path: @SystemIndependent String, isProjectValid: Boole
     return iconWrapper.icon
   }
 
-  var icon = RecentProjectIconHelper.createIcon(file, iconSize)
+  val borderWidth = 2
+  var fileIcon = RecentProjectIconHelper.createIcon(file, iconSize - borderWidth * 2)
   if (!isProjectValid) {
-    icon = IconUtil.desaturate(icon)
+    fileIcon = IconUtil.desaturate(fileIcon)
   }
+
+  val icon = LayeredIcon(2).withIconPreScaled(false)
+  icon.setIcon(EmptyIcon.create(iconSize), 0)
+  icon.setIcon(fileIcon, 1, borderWidth, borderWidth)
 
   iconWrapper = ProjectIcon(icon = icon,
                             isProjectValid = isProjectValid,
@@ -179,7 +185,6 @@ private data class ProjectIcon(
 
 private class ProjectFileIcon(
   private val iconData: IconData,
-  private val unscaledSize: Int,
 ) : JBCachingScalableIcon<ProjectFileIcon>() {
 
   private var cachedIcon: Icon? = null
@@ -215,11 +220,11 @@ private class ProjectFileIcon(
     }
   }
 
-  override fun getIconWidth(): Int = JBUIScale.scale(unscaledSize)
+  override fun getIconWidth(): Int = JBUIScale.scale(iconData.iconSize)
 
-  override fun getIconHeight(): Int = JBUIScale.scale(unscaledSize)
+  override fun getIconHeight(): Int = JBUIScale.scale(iconData.iconSize)
 
-  override fun copy(): ProjectFileIcon = ProjectFileIcon(iconData, unscaledSize)
+  override fun copy(): ProjectFileIcon = ProjectFileIcon(iconData)
 }
 
 private fun loadIconFile(file: Path, size: Int = unscaledProjectIconSize()): IconData {
