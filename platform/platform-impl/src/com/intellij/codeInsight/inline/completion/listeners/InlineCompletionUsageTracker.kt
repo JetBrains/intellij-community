@@ -79,7 +79,7 @@ class InlineCompletionUsageTracker : CounterUsagesCollector() {
   }
 
   companion object {
-    private val GROUP: EventLogGroup = EventLogGroup("inline.completion", 1)
+    private val GROUP: EventLogGroup = EventLogGroup("inline.completion", 2)
     private const val SHOWN_EVENT_ID = "inline.shown"
 
     // Suggestions
