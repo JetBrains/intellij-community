@@ -21,6 +21,7 @@ import com.jetbrains.rd.util.lifetime.Lifetime
 import org.jetbrains.annotations.ApiStatus
 import java.net.URI
 import java.util.concurrent.ConcurrentHashMap
+import kotlin.io.path.pathString
 
 @ApiStatus.Experimental
 object CodeWithMeGuestLauncher {
@@ -89,7 +90,6 @@ object CodeWithMeGuestLauncher {
         }
 
         val extractedJetBrainsClientData = CodeWithMeClientDownloader.downloadClientAndJdk(sessionInfo, progressIndicator)
-        if (extractedJetBrainsClientData == null) return
 
         clientLifetime = runDownloadedClient(
           lifetime = lifetime ?: project?.createLifetime() ?: Lifetime.Eternal,
@@ -149,7 +149,7 @@ object CodeWithMeGuestLauncher {
     // todo: offer to connect as-is?
     try {
       progressIndicator?.text = RemoteDevUtilBundle.message("launcher.launch.client")
-      progressIndicator?.text2 = extractedJetBrainsClientData.clientDir.toString()
+      progressIndicator?.text2 = extractedJetBrainsClientData.clientDir.pathString
       val thinClientLifetime = CodeWithMeClientDownloader.runCwmGuestProcessFromDownload(lifetime, urlForThinClient, extractedJetBrainsClientData)
 
       // Wait a bit until process will be launched and only after that finish task
