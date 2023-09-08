@@ -83,7 +83,7 @@ public final class Presentation implements Cloneable {
   public static final @NonNls String PROP_ENABLED = "enabled";
 
   public static final @NonNls Key<@Nls String> PROP_VALUE = Key.create("value");
-  public static final @NonNls Key<@NlsSafe String> PROP_KEYBOARD_SHORTCUT_TEXT = Key.create("keyboardShortcutText");
+  public static final @NonNls Key<@NlsSafe String> PROP_KEYBOARD_SHORTCUT_SUFFIX = Key.create("keyboardShortcutTextSuffix");
 
   public static final double DEFAULT_WEIGHT = 0;
   public static final double HIGHER_WEIGHT = 42;

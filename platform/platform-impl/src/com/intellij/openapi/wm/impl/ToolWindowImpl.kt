@@ -786,11 +786,8 @@ internal class ToolWindowImpl(val toolWindowManager: ToolWindowManagerImpl,
       e.presentation.isVisible = actionHandler != null
       e.presentation.isEnabled = actionHandler?.isSpeedSearchActive() == false
       e.presentation.putClientProperty(
-        Presentation.PROP_KEYBOARD_SHORTCUT_TEXT,
-        ActionsBundle.message(
-          "action.Tree-speedSearch.shortcutText",
-          KeymapUtil.getFirstKeyboardShortcutText(ActionManager.getInstance().getAction(TreeSpeedSearchAction.ID))
-        )
+        Presentation.PROP_KEYBOARD_SHORTCUT_SUFFIX,
+        ActionsBundle.message("action.Tree-speedSearch.shortcutTextSuffix")
       )
     }
 
