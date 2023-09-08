@@ -122,7 +122,7 @@ public final class RecentLocationsAction extends DumbAwareAction implements Ligh
     JPanel topPanel = createHeaderPanel(title, checkBox);
     JPanel mainPanel = createMainPanel(listWithFilter, topPanel);
 
-    Color borderColor = SystemInfo.isMac && LafManager.getInstance().getCurrentUIThemeLookAndFeel().getTheme().isDark()
+    Color borderColor = SystemInfo.isMac && LafManager.getInstance().getCurrentUIThemeLookAndFeel().isDark()
                         ? topPanel.getBackground()
                         : null;
 

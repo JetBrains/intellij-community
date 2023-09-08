@@ -15,6 +15,11 @@ interface UIThemeLookAndFeelInfo  {
   @get:NlsSafe
   val name: String
     get() = theme.name!!
+  val isDark: Boolean
+    get() = theme.isDark
+
+  val editorSchemeName: String?
+    get() = theme.editorSchemeName
 
   val theme: UITheme
 

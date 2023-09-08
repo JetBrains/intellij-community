@@ -47,7 +47,6 @@ public class UIThemeLookAndFeelInfoImpl extends UIManager.LookAndFeelInfo implem
 
   @Override
   public void installTheme(UIDefaults defaults, boolean lockEditorScheme) {
-    UITheme theme = getTheme();
     defaults.put("ui.theme.is.dark", theme.isDark());
     defaults.put("ClassLoader", theme.getProviderClassLoader());
     theme.applyProperties(defaults);
@@ -83,7 +82,7 @@ public class UIThemeLookAndFeelInfoImpl extends UIManager.LookAndFeelInfo implem
     EditorColorsScheme scheme = LafManager.getInstance().getPreviousSchemeForLaf(this);
     EditorColorsManager editorColorManager = EditorColorsManager.getInstance();
     if (scheme == null) {
-      String name = getTheme().getEditorSchemeName();
+      String name = getEditorSchemeName();
       if (name != null) {
         scheme = editorColorManager.getScheme(name);
       }
@@ -95,8 +94,8 @@ public class UIThemeLookAndFeelInfoImpl extends UIManager.LookAndFeelInfo implem
   }
 
   private void installBackgroundImage() {
-    boolean installed = installBackgroundImage(getTheme().getBackground(), IdeBackgroundUtil.EDITOR_PROP);
-    installed = installBackgroundImage(getTheme().getEmptyFrameBackground(), IdeBackgroundUtil.FRAME_PROP) || installed;
+    boolean installed = installBackgroundImage(theme.getBackground(), IdeBackgroundUtil.EDITOR_PROP);
+    installed = installBackgroundImage(theme.getEmptyFrameBackground(), IdeBackgroundUtil.FRAME_PROP) || installed;
     if (installed) {
       IdeBackgroundUtil.repaintAllWindows();
     }
@@ -156,7 +155,7 @@ public class UIThemeLookAndFeelInfoImpl extends UIManager.LookAndFeelInfo implem
 
   @Override
   public void dispose() {
-    IconPathPatcher patcher = getTheme().getPatcher();
+    IconPathPatcher patcher = theme.getPatcher();
     if (patcher != null) {
       IconLoader.removePathPatcher(patcher);
     }
@@ -175,7 +174,7 @@ public class UIThemeLookAndFeelInfoImpl extends UIManager.LookAndFeelInfo implem
     if (value != null) {
       propertyManager.setValue(backgroundPropertyKey, value);
     }
-    else if (!getTheme().getBackground().isEmpty()) {
+    else if (!theme.getBackground().isEmpty()) {
       propertyManager.unsetValue(backgroundPropertyKey);
     }
   }

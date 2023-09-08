@@ -239,7 +239,7 @@ class LafManagerImpl(private val coroutineScope: CoroutineScope) : LafManager(),
       override fun beforePluginUnload(pluginDescriptor: IdeaPluginDescriptor, isUpdate: Boolean) {
         isUpdatingPlugin = isUpdate
         themeIdBeforePluginUpdate = if (currentTheme is UIThemeLookAndFeelInfo) {
-          (currentTheme as UIThemeLookAndFeelInfo).theme.id
+          (currentTheme as UIThemeLookAndFeelInfo).id
         }
         else {
           null
@@ -277,7 +277,7 @@ class LafManagerImpl(private val coroutineScope: CoroutineScope) : LafManager(),
     }
 
     val currentTheme = currentTheme
-    val currentIsDark = currentTheme == null || currentTheme.theme.isDark
+    val currentIsDark = currentTheme == null || currentTheme.isDark
     val expectedTheme = if (systemIsDark) {
       preferredDarkThemeId?.let { UiThemeProviderListManager.getInstance().findThemeById(it) } ?: defaultDarkLaf
     }
@@ -350,20 +350,20 @@ class LafManagerImpl(private val coroutineScope: CoroutineScope) : LafManager(),
       element.setAttribute(ATTRIBUTE_AUTODETECT, java.lang.Boolean.toString(autodetect))
     }
     val currentTheme = currentTheme
-    if (currentTheme?.theme?.id != getDefaultThemeId()) {
+    if (currentTheme?.id != getDefaultThemeId()) {
       val laf = (if (currentTheme is TempUIThemeLookAndFeelInfo) currentTheme.previousLaf else currentTheme)
       if (laf != null) {
         val child = Element(ELEMENT_LAF)
-        child.setAttribute(ATTRIBUTE_THEME_NAME, laf.theme.id)
+        child.setAttribute(ATTRIBUTE_THEME_NAME, laf.id)
         element.addContent(child)
       }
     }
-    if (preferredLightThemeId != null && preferredLightThemeId !== defaultLightLaf.theme.id) {
+    if (preferredLightThemeId != null && preferredLightThemeId !== defaultLightLaf.id) {
       val child = Element(ELEMENT_PREFERRED_LIGHT_LAF)
       child.setAttribute(ATTRIBUTE_THEME_NAME, preferredLightThemeId)
       element.addContent(child)
     }
-    if (preferredDarkThemeId != null && preferredDarkThemeId !== defaultDarkLaf.theme.id) {
+    if (preferredDarkThemeId != null && preferredDarkThemeId !== defaultDarkLaf.id) {
       val child = Element(ELEMENT_PREFERRED_DARK_LAF)
       child.setAttribute(ATTRIBUTE_THEME_NAME, preferredDarkThemeId)
       element.addContent(child)
@@ -450,7 +450,7 @@ class LafManagerImpl(private val coroutineScope: CoroutineScope) : LafManager(),
         return HIGH_CONTRAST_THEME_ID
       }
     }
-    return defaultDarkLaf.theme.id
+    return defaultDarkLaf.id
   }
 
   /**
@@ -555,7 +555,7 @@ class LafManagerImpl(private val coroutineScope: CoroutineScope) : LafManager(),
     if (oldLaf is TempUIThemeLookAndFeelInfo || currentTheme is TempUIThemeLookAndFeelInfo) {
       return
     }
-    if (currentTheme is UIThemeLookAndFeelInfo && (currentTheme as UIThemeLookAndFeelInfo).theme.editorSchemeName != null) {
+    if (currentTheme is UIThemeLookAndFeelInfo && (currentTheme as UIThemeLookAndFeelInfo).editorSchemeName != null) {
       return
     }
 
@@ -763,11 +763,11 @@ class LafManagerImpl(private val coroutineScope: CoroutineScope) : LafManager(),
   }
 
   override fun setPreferredDarkLaf(value: UIThemeLookAndFeelInfo) {
-    preferredDarkThemeId = value.theme.id
+    preferredDarkThemeId = value.id
   }
 
   override fun setPreferredLightLaf(value: UIThemeLookAndFeelInfo) {
-    preferredLightThemeId = value.theme.id
+    preferredLightThemeId = value.id
   }
 
   override fun getPreviousSchemeForLaf(lookAndFeelInfo: UIThemeLookAndFeelInfo): EditorColorsScheme? {
@@ -900,22 +900,22 @@ class LafManagerImpl(private val coroutineScope: CoroutineScope) : LafManager(),
                                       private val isDark: Boolean) : ToggleAction(name) {
     override fun isSelected(e: AnActionEvent): Boolean {
       return if (isDark) {
-        (preferredDarkThemeId ?: defaultDarkLaf.theme.id) == lafInfo.theme.id
+        (preferredDarkThemeId ?: defaultDarkLaf.id) == lafInfo.id
       }
       else {
-        (preferredLightThemeId ?: defaultLightLaf.theme.id) == lafInfo.theme.id
+        (preferredLightThemeId ?: defaultLightLaf.id) == lafInfo.id
       }
     }
 
     override fun setSelected(e: AnActionEvent, state: Boolean) {
       if (isDark) {
-        if (preferredDarkThemeId != lafInfo.theme.id) {
-          preferredDarkThemeId = if (lafInfo.theme.id == defaultDarkLaf.theme.id) null else lafInfo.theme.id
+        if (preferredDarkThemeId != lafInfo.id) {
+          preferredDarkThemeId = if (lafInfo.id == defaultDarkLaf.id) null else lafInfo.id
           detectAndSyncLaf()
         }
       }
       else if (preferredLightThemeId != lafInfo.theme.id) {
-        preferredLightThemeId = if (lafInfo.theme.id == defaultLightLaf.theme.id) null else lafInfo.theme.id
+        preferredLightThemeId = if (lafInfo.id == defaultLightLaf.id) null else lafInfo.id
         detectAndSyncLaf()
       }
     }

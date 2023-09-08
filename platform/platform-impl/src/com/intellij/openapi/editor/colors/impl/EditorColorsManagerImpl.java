@@ -256,7 +256,7 @@ public final class EditorColorsManagerImpl extends EditorColorsManager implement
     EditorColorsScheme scheme = null;
 
     if (!themeIsCustomized) {
-      String schemeName = currentLaf.getTheme().getEditorSchemeName();
+      String schemeName = currentLaf.getEditorSchemeName();
       if (schemeName != null) {
         scheme = getScheme(schemeName);
       }
@@ -785,7 +785,7 @@ public final class EditorColorsManagerImpl extends EditorColorsManager implement
                   public void lookAndFeelChanged(@NotNull LafManager source) {
                     UIThemeLookAndFeelInfo themeInfo = source.getCurrentUIThemeLookAndFeel();
                     if (themeInfo.getName().contains("Solarized")) {
-                      if (isDark && themeInfo.getTheme().isDark() || !isDark && !themeInfo.getTheme().isDark()) {
+                      if (isDark && themeInfo.isDark() || !isDark && !themeInfo.isDark()) {
                         matchingTheme = themeInfo;
                       }
                       else {

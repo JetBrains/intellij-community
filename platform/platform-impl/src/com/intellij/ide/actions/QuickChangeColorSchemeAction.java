@@ -3,7 +3,6 @@ package com.intellij.ide.actions;
 
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.ui.LafManager;
-import com.intellij.ide.ui.UITheme;
 import com.intellij.ide.ui.laf.UIThemeLookAndFeelInfo;
 import com.intellij.ide.ui.laf.UiThemeProviderListManager;
 import com.intellij.ide.ui.laf.darcula.DarculaInstaller;
@@ -72,16 +71,16 @@ public final class QuickChangeColorSchemeAction extends QuickSwitchSchemeAction 
     UIThemeLookAndFeelInfo suitableLaf = null;
     String schemeName = Scheme.getBaseName(newScheme.getName());
     for (UIThemeLookAndFeelInfo laf : SequencesKt.asIterable(UiThemeProviderListManager.Companion.getInstance().getLaFs())) {
-      if (schemeName.equals(laf.getTheme().getEditorSchemeName())) {
+      if (schemeName.equals(laf.getEditorSchemeName())) {
         suitableLaf = laf;
         break;
       }
     }
 
     UIThemeLookAndFeelInfo currentLafInfo = lafManager.getCurrentUIThemeLookAndFeel();
-    UITheme theme = currentLafInfo != null ? currentLafInfo.getTheme() : null;
+    Boolean isDark = currentLafInfo == null ? null : currentLafInfo.isDark();
 
-    if (isDarkEditorTheme && (theme != null && !theme.isDark())) {
+    if (isDarkEditorTheme && (isDark != null && !isDark)) {
       if (/*applyAlways ||*/ Messages.showYesNoDialog(
         ApplicationBundle.message("color.scheme.theme.change.confirmation", "dark", productName),
         ApplicationBundle.message("color.scheme.theme.change.confirmation.title", productName),
@@ -94,7 +93,7 @@ public final class QuickChangeColorSchemeAction extends QuickSwitchSchemeAction 
         SwingUtilities.invokeLater(DarculaInstaller::install);
       }
     }
-    else if (!isDarkEditorTheme && (theme != null && theme.isDark())) {
+    else if (!isDarkEditorTheme && (isDark != null && isDark)) {
       if (/*applyAlways ||*/Messages.showYesNoDialog(
             ApplicationBundle.message("color.scheme.theme.change.confirmation", "bright", productName),
             ApplicationBundle.message("color.scheme.theme.change.confirmation.title", productName),
