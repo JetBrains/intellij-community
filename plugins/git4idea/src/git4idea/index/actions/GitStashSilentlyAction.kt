@@ -4,6 +4,7 @@ package git4idea.index.actions
 import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.components.serviceIfCreated
+import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vcs.changes.ChangeListManager
@@ -35,6 +36,9 @@ class GitStashSilentlyAction : DumbAwareAction() {
   override fun actionPerformed(e: AnActionEvent) {
     val project = e.project ?: return
     val repositories = GitRepositoryManager.getInstance(project).repositories
+
+    FileDocumentManager.getInstance().saveAllDocuments()
+
     GitStashOperations.runStashInBackground(project, changedRoots(project, repositories)) {
       createStashHandler(project, it)
     }
