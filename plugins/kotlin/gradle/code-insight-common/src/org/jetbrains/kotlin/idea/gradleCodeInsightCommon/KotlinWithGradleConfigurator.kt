@@ -92,8 +92,11 @@ abstract class KotlinWithGradleConfigurator : KotlinProjectConfigurator {
             .any { it.isFileConfigured(this) }
     }
 
-    override fun isApplicable(module: Module): Boolean =
-        module.buildSystemType == BuildSystemType.Gradle
+    override fun isApplicable(module: Module): Boolean {
+        // We should not configure buildSrc modules as they belong to a different subproject and define convention plugins.
+        return module.buildSystemType == BuildSystemType.Gradle &&
+                !module.name.contains("buildSrc")
+    }
 
     protected open fun getMinimumSupportedVersion() = "1.0.0"
 
