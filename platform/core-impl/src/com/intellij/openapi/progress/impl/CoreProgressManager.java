@@ -1002,7 +1002,8 @@ public class CoreProgressManager extends ProgressManager implements Disposable {
     synchronized (threadsUnderIndicator) {
       Set<Thread> threads = threadsUnderIndicator.get(indicator);
       if (threads == null || !threads.contains(Thread.currentThread())) {
-        LOG.error("Must be executed under progress indicator: " + indicator + ". Please see e.g. ProgressManager.runProcess()");
+        ProgressIndicator current = threadTopLevelIndicators.get(Thread.currentThread().getId());
+        LOG.error("Must be executed under progress indicator: " + indicator + " but the process is running under "+current+" indicator instead. Please see e.g. ProgressManager.runProcess()");
       }
     }
   }
