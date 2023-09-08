@@ -70,7 +70,6 @@ import org.jetbrains.uast.kotlin.internal.KotlinUastTypeMapper
 import org.jetbrains.uast.kotlin.psi.UastFakeDescriptorLightMethod
 import org.jetbrains.uast.kotlin.psi.UastFakeSourceLightMethod
 import org.jetbrains.uast.kotlin.psi.UastFakeSourceLightPrimaryConstructor
-import java.text.StringCharacterIterator
 
 val kotlinUastPlugin: UastLanguagePlugin by lz {
     UastLanguagePlugin.getInstances().find { it.language == KotlinLanguage.INSTANCE }
@@ -172,7 +171,7 @@ internal fun KotlinType.toPsiType(
     val signature = SignatureParsing.CharIterator(signatureWriter.toString())
 
     val javaType = SignatureParsing.parseTypeString(signature, StubBuildingVisitor.GUESSING_MAPPER)
-    val typeInfo = TypeInfo.fromString(javaType, false)
+    val typeInfo = TypeInfo.fromString(javaType)
     val typeText = TypeInfo.createTypeText(typeInfo) ?: return UastErrorType
 
     val psiTypeParent: PsiElement = containingLightDeclaration ?: context

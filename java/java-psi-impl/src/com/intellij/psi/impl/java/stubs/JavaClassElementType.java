@@ -8,6 +8,7 @@ import com.intellij.psi.JavaTokenType;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiNameHelper;
 import com.intellij.psi.impl.cache.RecordUtil;
+import com.intellij.psi.impl.cache.TypeInfo;
 import com.intellij.psi.impl.java.stubs.impl.PsiClassStubImpl;
 import com.intellij.psi.impl.java.stubs.index.JavaStubIndexKeys;
 import com.intellij.psi.impl.source.PsiAnonymousClassImpl;
@@ -155,8 +156,10 @@ public abstract class JavaClassElementType extends JavaStubElementType<PsiClassS
   public void serialize(@NotNull PsiClassStub stub, @NotNull StubOutputStream dataStream) throws IOException {
     dataStream.writeShort(((PsiClassStubImpl<?>)stub).getFlags());
     if (!stub.isAnonymous()) {
-      dataStream.writeName(stub.getName());
-      dataStream.writeName(stub.getQualifiedName());
+      String name = stub.getName();
+      TypeInfo info = ((PsiClassStubImpl<?>)stub).getQualifiedNameTypeInfo();
+      dataStream.writeName(info.getShortTypeText().equals(name) ? null : name);
+      TypeInfo.writeTYPE(dataStream, info);
       dataStream.writeName(stub.getSourceFileName());
     }
     else {
@@ -175,15 +178,18 @@ public abstract class JavaClassElementType extends JavaStubElementType<PsiClassS
 
     if (!isAnonymous) {
       String name = dataStream.readNameString();
-      String qname = dataStream.readNameString();
+      TypeInfo typeInfo = TypeInfo.readTYPE(dataStream);
+      if (name == null) {
+        name = typeInfo.getShortTypeText();
+      }
       String sourceFileName = dataStream.readNameString();
-      PsiClassStubImpl classStub = new PsiClassStubImpl(type, parentStub, qname, name, null, flags);
+      PsiClassStubImpl classStub = new PsiClassStubImpl(type, parentStub, typeInfo, name, null, flags);
       classStub.setSourceFileName(sourceFileName);
       return classStub;
     }
     else {
       String baseRef = dataStream.readNameString();
-      return new PsiClassStubImpl(type, parentStub, null, null, baseRef, flags);
+      return new PsiClassStubImpl(type, parentStub, TypeInfo.SimpleTypeInfo.NULL, null, baseRef, flags);
     }
   }
 

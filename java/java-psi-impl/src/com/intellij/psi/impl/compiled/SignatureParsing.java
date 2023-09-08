@@ -3,6 +3,7 @@ package com.intellij.psi.impl.compiled;
 
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.impl.cache.TypeInfo;
+import com.intellij.psi.impl.cache.TypeInfo.TypeKind;
 import com.intellij.psi.impl.java.stubs.JavaStubElementTypes;
 import com.intellij.psi.impl.java.stubs.PsiTypeParameterListStub;
 import com.intellij.psi.impl.java.stubs.PsiTypeParameterStub;
@@ -106,7 +107,7 @@ public final class SignatureParsing {
     private final TypeInfo[] myBounds;
 
     private TypeParameterDeclaration(String parameter, TypeInfo[] bounds) {
-      myTypeParameter = TypeInfo.fromStringNoArray(parameter);
+      myTypeParameter = new TypeInfo.RefTypeInfo(parameter);
       myBounds = bounds;
     }
 
@@ -114,7 +115,7 @@ public final class SignatureParsing {
       PsiTypeParameterStub stub = new PsiTypeParameterStubImpl(listStub, this.myTypeParameter.text());
       myTypeParameter.getTypeAnnotations().createAnnotationStubs(stub);
       TypeInfo[] info = this.myBounds;
-      if (info.length > 0 && info[0].text() == null) {
+      if (info.length > 0 && info[0] == null) {
         info = Arrays.copyOfRange(info, 1, info.length);
       }
       new PsiClassReferenceListStubImpl(JavaStubElementTypes.EXTENDS_BOUND_LIST, stub, info);
@@ -122,7 +123,7 @@ public final class SignatureParsing {
   }
 
   @NotNull
-  static TypeParametersDeclaration parseTypeParametersDeclaration(CharIterator signature, Function<? super String, String> mapping) throws ClsFormatException {
+  static TypeParametersDeclaration parseTypeParametersDeclaration(CharIterator signature, FirstPassData mapping) throws ClsFormatException {
     if (signature.current() != '<') {
       return TypeParametersDeclaration.EMPTY;
     }
@@ -136,7 +137,7 @@ public final class SignatureParsing {
     return new TypeParametersDeclaration(typeParameters);
   }
 
-  private static TypeParameterDeclaration parseTypeParameter(CharIterator signature, Function<? super String, String> mapping) throws ClsFormatException {
+  private static TypeParameterDeclaration parseTypeParameter(CharIterator signature, FirstPassData mapping) throws ClsFormatException {
     int from = signature.pos();
     while (signature.current() != ':' && signature.current() != CharIterator.DONE) {
       signature.next();
@@ -150,21 +151,21 @@ public final class SignatureParsing {
     List<TypeInfo> bounds = new SmartList<>();
     while (signature.current() == ':') {
       signature.next();
-      String bound = parseTopLevelClassRefSignature(signature, mapping);
+      TypeInfo bound = parseTopLevelClassRefSignatureToTypeInfo(signature, mapping);
       if (!bounds.isEmpty() && bound == null) continue;
-      bounds.add(TypeInfo.fromStringNoArray(bound));
+      bounds.add(bound);
     }
 
     return new TypeParameterDeclaration(parameterName, bounds.toArray(TypeInfo.EMPTY_ARRAY));
   }
 
   @Nullable
-  static String parseTopLevelClassRefSignature(CharIterator signature, Function<? super String, String> mapping) throws ClsFormatException {
+  static TypeInfo parseTopLevelClassRefSignatureToTypeInfo(CharIterator signature, FirstPassData mapping) throws ClsFormatException {
     switch (signature.current()) {
       case 'L':
-        return parseParameterizedClassRefSignature(signature, mapping);
+        return parseParameterizedClassRefSignatureToTypeInfo(signature, mapping);
       case 'T':
-        return parseTypeVariableRefSignature(signature);
+        return new TypeInfo.RefTypeInfo(parseTypeVariableRefSignature(signature));
       default:
         return null;
     }
@@ -186,6 +187,61 @@ public final class SignatureParsing {
     }
 
     return id;
+  }
+
+  private static @NotNull TypeInfo parseParameterizedClassRefSignatureToTypeInfo(CharIterator signature, FirstPassData mapping)
+    throws ClsFormatException {
+    signature.next();
+    int start = signature.pos();
+    boolean hasSpace = false;
+    while (true) {
+      switch (signature.current()) {
+        case ';': {
+          String jvmName = signature.substring(start);
+          if (hasSpace) {
+            jvmName = jvmName.replace(" ", "");
+          }
+          TypeInfo type = mapping.toTypeInfo(jvmName);
+          signature.next();
+          return type;
+        }
+        case CharIterator.DONE:
+          throw new ClsFormatException("Malformed signature: " + signature);
+        case '<': {
+          String jvmName = signature.substring(start);
+          if (hasSpace) {
+            jvmName = jvmName.replace(" ", "");
+          }
+          TypeInfo.RefTypeInfo type = mapping.toTypeInfo(jvmName);
+          signature.next();
+          List<TypeInfo> components = new ArrayList<>();
+          do {
+            components.add(parseClassOrTypeVariableElementToTypeInfo(signature, mapping));
+          }
+          while (signature.current() != '>');
+          type = type.withComponents(components);
+          signature.next();
+          switch (signature.current()) {
+            case ';':
+              signature.next();
+              return type;
+            case '.':
+              TypeInfo inner = parseParameterizedClassRefSignatureToTypeInfo(signature, mapping);
+              if (!(inner instanceof TypeInfo.RefTypeInfo)) {
+                throw new ClsFormatException("Malformed signature: " + signature);
+              }
+              return ((TypeInfo.RefTypeInfo)inner).withOuter(type);
+            default:
+              throw new ClsFormatException("Malformed signature: " + signature);
+          }
+        }
+        case ' ':
+          hasSpace = true;
+          break;
+        default:
+      }
+      signature.next();
+    }
   }
 
   private static String parseParameterizedClassRefSignature(CharIterator signature, Function<? super String, String> mapping) throws ClsFormatException {
@@ -261,6 +317,37 @@ public final class SignatureParsing {
     }
 
     return decorateTypeText(text, variance);
+  }
+
+  private static @NotNull TypeInfo parseClassOrTypeVariableElementToTypeInfo(@NotNull CharIterator signature, FirstPassData mapping)
+    throws ClsFormatException {
+    char variance = parseVariance(signature);
+    if (variance == '*') {
+      return new TypeInfo.SimpleTypeInfo(TypeKind.WILDCARD);
+    }
+
+    int dimensions = parseDimensions(signature);
+
+    TypeInfo info = parseTypeWithoutVarianceToTypeInfo(signature, mapping);
+    if (info == null) {
+      throw new ClsFormatException("Unable to parse signature: " + signature);
+    }
+
+    while (dimensions > 0) {
+      dimensions--;
+      info = info.arrayOf();
+    }
+
+    switch (variance) {
+      case VARIANCE_NONE:
+        return info;
+      case VARIANCE_EXTENDS:
+        return new TypeInfo.DerivedTypeInfo(TypeKind.EXTENDS, info);
+      case VARIANCE_SUPER:
+        return new TypeInfo.DerivedTypeInfo(TypeKind.SUPER, info);
+      default:
+        throw new ClsFormatException("Unable to parse signature: " + signature);
+    }
   }
 
   private static final char VARIANCE_NONE = '\0';
@@ -351,6 +438,19 @@ public final class SignatureParsing {
     return text;
   }
 
+  static @NotNull TypeInfo parseTypeStringToTypeInfo(@NotNull CharIterator signature, @NotNull FirstPassData mapping) throws ClsFormatException {
+    int dimensions = parseDimensions(signature);
+
+    TypeInfo type = parseTypeWithoutVarianceToTypeInfo(signature, mapping);
+    if (type == null) throw new ClsFormatException();
+
+    while (dimensions > 0) {
+      dimensions--;
+      type = type.arrayOf();
+    }
+    return type;
+  }
+
   @Nullable
   private static String parseTypeWithoutVariance(CharIterator signature, Function<? super String, String> mapping) throws ClsFormatException {
     String text = null;
@@ -411,5 +511,43 @@ public final class SignatureParsing {
     }
 
     return text;
+  }
+
+  @Nullable
+  private static TypeInfo parseTypeWithoutVarianceToTypeInfo(CharIterator signature, FirstPassData mapping) throws ClsFormatException {
+    switch (signature.current()) {
+      case 'L':
+        return parseParameterizedClassRefSignatureToTypeInfo(signature, mapping);
+      case 'T':
+        return new TypeInfo.RefTypeInfo(parseTypeVariableRefSignature(signature));
+      case 'B':
+        signature.next();
+        return new TypeInfo.SimpleTypeInfo(TypeKind.BYTE);
+      case 'C':
+        signature.next();
+        return new TypeInfo.SimpleTypeInfo(TypeKind.CHAR);
+      case 'D':
+        signature.next();
+        return new TypeInfo.SimpleTypeInfo(TypeKind.DOUBLE);
+      case 'F':
+        signature.next();
+        return new TypeInfo.SimpleTypeInfo(TypeKind.FLOAT);
+      case 'I':
+        signature.next();
+        return new TypeInfo.SimpleTypeInfo(TypeKind.INT);
+      case 'J':
+        signature.next();
+        return new TypeInfo.SimpleTypeInfo(TypeKind.LONG);
+      case 'S':
+        signature.next();
+        return new TypeInfo.SimpleTypeInfo(TypeKind.SHORT);
+      case 'Z':
+        signature.next();
+        return new TypeInfo.SimpleTypeInfo(TypeKind.BOOLEAN);
+      case 'V':
+        signature.next();
+        return new TypeInfo.SimpleTypeInfo(TypeKind.VOID);
+    }
+    return null;
   }
 }

@@ -30,7 +30,7 @@ final class AnnotationTextCollector extends AnnotationVisitor {
   @Override
   public void visit(String name, Object value) {
     valuePairPrefix(name);
-    myBuilder.append(StubBuildingVisitor.constToString(value, TypeInfo.NULL, true, myMapping));
+    myBuilder.append(StubBuildingVisitor.constToString(value, TypeInfo.SimpleTypeInfo.NULL, true, myMapping));
   }
 
   @Override

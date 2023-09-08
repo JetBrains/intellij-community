@@ -21,7 +21,7 @@ public class PsiClassReferenceListStubImpl extends StubBase<PsiReferenceList> im
   private volatile PsiClassType [] myTypes;
 
   public PsiClassReferenceListStubImpl(@NotNull JavaClassReferenceListElementType type, StubElement parent, String @NotNull [] names) {
-    this(type, parent, ContainerUtil.map2Array(names, TypeInfo.class, TypeInfo::fromStringNoArray));
+    this(type, parent, ContainerUtil.map2Array(names, TypeInfo.class, text -> TypeInfo.fromString(text)));
   }
 
   public PsiClassReferenceListStubImpl(@NotNull JavaClassReferenceListElementType type, StubElement parent, 
@@ -45,7 +45,7 @@ public class PsiClassReferenceListStubImpl extends StubBase<PsiReferenceList> im
   
   private boolean shouldSkipSoleObject() {
     final boolean compiled = ((JavaClassReferenceListElementType)getStubType()).isCompiled(this);
-    return compiled && myInfos.length == 1 && myInfos[0].isClassType(CommonClassNames.JAVA_LANG_OBJECT) &&
+    return compiled && myInfos.length == 1 && myInfos[0].getKind() == TypeInfo.TypeKind.JAVA_LANG_OBJECT &&
            myInfos[0].getTypeAnnotations().isEmpty();
   }
 

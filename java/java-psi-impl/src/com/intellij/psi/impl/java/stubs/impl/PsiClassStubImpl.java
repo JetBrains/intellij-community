@@ -4,6 +4,7 @@ package com.intellij.psi.impl.java.stubs.impl;
 import com.intellij.extapi.psi.StubBasedPsiElementBase;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.impl.DebugUtil;
+import com.intellij.psi.impl.cache.TypeInfo;
 import com.intellij.psi.impl.java.stubs.JavaClassElementType;
 import com.intellij.psi.impl.java.stubs.PsiClassStub;
 import com.intellij.psi.stubs.StubBase;
@@ -27,6 +28,7 @@ public class PsiClassStubImpl<T extends PsiClass> extends StubBase<T> implements
   private static final int RECORD = 0x800;
   private static final int UNNAMED = 0x1000;
 
+  private final @NotNull TypeInfo myTypeInfo;
   private final String myQualifiedName;
   private final String myName;
   private final String myBaseRefText;
@@ -39,8 +41,18 @@ public class PsiClassStubImpl<T extends PsiClass> extends StubBase<T> implements
                           @Nullable final String name,
                           @Nullable final String baseRefText,
                           final short flags) {
+    this(type, parent, TypeInfo.fromString(qualifiedName), name, baseRefText, flags);
+  }
+
+  public PsiClassStubImpl(@NotNull JavaClassElementType type,
+                          final StubElement parent,
+                          @NotNull final TypeInfo typeInfo,
+                          @Nullable final String name,
+                          @Nullable final String baseRefText,
+                          final short flags) {
     super(parent, type);
-    myQualifiedName = qualifiedName;
+    myTypeInfo = typeInfo;
+    myQualifiedName = typeInfo.text();
     myName = name;
     myBaseRefText = baseRefText;
     myFlags = flags;
@@ -54,7 +66,11 @@ public class PsiClassStubImpl<T extends PsiClass> extends StubBase<T> implements
   public String getName() {
     return myName;
   }
-
+  
+  public @NotNull TypeInfo getQualifiedNameTypeInfo() {
+    return myTypeInfo;
+  }
+  
   @Override
   public String getQualifiedName() {
     return myQualifiedName;
