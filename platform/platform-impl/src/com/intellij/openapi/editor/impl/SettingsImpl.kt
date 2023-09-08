@@ -86,6 +86,7 @@ class SettingsImpl internal constructor(private val editor: EditorImpl?,
 
     @Suppress("DEPRECATION")
     myState = EditorSettingsState(editor, project, softWrapAppliancePlace)
+    myState.refreshAll()
 
     myState.addPropertyChangeListener(object : ObservableStateListener {
       override fun propertyChanged(event: ObservableStateListener.PropertyChangeEvent) {
