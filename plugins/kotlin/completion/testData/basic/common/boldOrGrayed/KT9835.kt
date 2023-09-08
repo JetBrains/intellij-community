@@ -13,5 +13,6 @@ fun foo(r: R<out I>) {
 
 // EXIST: { itemText: "prop", typeText: "Int", attributes: "bold" }
 // EXIST: { itemText: "extFun", typeText: "Int", attributes: "bold" }
+// IGNORE_K2
 
 

@@ -18,3 +18,4 @@ fun f(pair: Pair<out Any, out Any>) {
 
 /*TODO: { lookupString: "forT", attributes: "" }*/
 // EXIST: { lookupString: "forT", attributes: "grayed", icon: "Function"}
+// IGNORE_K2

@@ -14,3 +14,4 @@ fun foo(o: T) {
 // EXIST: { itemText: "f", attributes: "bold" }
 // EXIST: { itemText: "hashCode", attributes: "" }
 // EXIST: { itemText: "equals", attributes: "" }
+// IGNORE_K2

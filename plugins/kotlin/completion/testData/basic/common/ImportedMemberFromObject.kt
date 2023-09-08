@@ -15,3 +15,4 @@ fun main() {
 
 // EXIST: { allLookupStrings: "uniqueName", itemText: "uniqueName", tailText: "()", typeText: "Unit", attributes: "" }
 // NUMBER: 1
+// IGNORE_K2

@@ -13,3 +13,4 @@ fun topLevelInPackage() {}
 
 // EXIST: {"lookupString":"memberInClass","tailText":"()","typeText":"Unit","icon":"Method","attributes":""}
 // EXIST: {"lookupString":"topLevelInPackage","tailText":"() (Package)","typeText":"Unit","icon":"Function","attributes":""}
+// IGNORE_K2

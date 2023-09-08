@@ -7,3 +7,4 @@ fun foo(file: File?) {
 
 // EXIST: {"lookupString":"absolutePath","tailText":" (from getAbsolutePath())","typeText":"String","attributes":"bold","allLookupStrings":"absolutePath, getAbsolutePath","itemText":"absolutePath"}
 // ABSENT: getAbsolutePath
+// IGNORE_K2

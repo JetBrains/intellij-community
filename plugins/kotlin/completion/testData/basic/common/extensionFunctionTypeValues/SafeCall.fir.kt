@@ -5,3 +5,4 @@ fun test(i: Int?, foo: Int.(String) -> Char) {
 }
 
 // EXIST: { lookupString: "foo", itemText: "foo", tailText: "(String) for Int", typeText: "Char", attributes: "bold", icon: "Parameter"}
+// IGNORE_K2

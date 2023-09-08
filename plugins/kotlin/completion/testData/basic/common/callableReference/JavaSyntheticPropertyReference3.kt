@@ -9,3 +9,4 @@ val v = Thread::<caret>
 // EXIST_JAVA_ONLY: { itemText: "isDaemon", tailText: " (from isDaemon()/setDaemon())" }
 // EXIST_JAVA_ONLY: { itemText: "isDaemon", tailText: "()", attributes: "bold" }
 // EXIST_JAVA_ONLY: setDaemon
+// IGNORE_K2

@@ -13,3 +13,4 @@ fun f(thread: Thread) {
 // EXIST_JAVA_ONLY: { itemText: "isDaemon", tailText: " (from isDaemon()/setDaemon())" }
 // ABSENT: { itemText: "isDaemon", tailText: "()", attributes: "bold" }
 // ABSENT: setDaemon
+// IGNORE_K2

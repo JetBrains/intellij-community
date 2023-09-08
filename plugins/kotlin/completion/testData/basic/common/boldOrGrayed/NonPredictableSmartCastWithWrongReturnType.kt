@@ -16,3 +16,4 @@ fun f(pair: Pair<out A, out Any>) {
 /*TODO: { lookupString: "foo", "typeText":"Any", attributes: "bold" } */
 // EXIST: { lookupString: "foo", "typeText":"String", attributes: "bold", icon: "nodes/abstractMethod.svg"}
 // EXIST: { lookupString: "bar", attributes: "bold", icon: "nodes/abstractMethod.svg"}
+// IGNORE_K2

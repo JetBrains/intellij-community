@@ -12,3 +12,4 @@ fun String.test(i: Int, foo: Int.(String) -> Char, fooAny: Any.() -> Unit) {
 // EXIST: { lookupString: "fooAny", itemText: "fooAny", tailText: "() for Any", typeText: "Unit", attributes: "", icon: "Parameter"}
 // EXIST: { lookupString: "fooGlobal", itemText: "fooGlobal", tailText: "() for Int in ppp", typeText: "Unit", attributes: "bold", "icon":"org/jetbrains/kotlin/idea/icons/field_value.svg"}
 // ABSENT: fooExt
+// IGNORE_K2

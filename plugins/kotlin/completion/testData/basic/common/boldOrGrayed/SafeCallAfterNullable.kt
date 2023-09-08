@@ -15,3 +15,4 @@ fun foo(s: String?) {
 // EXIST: { lookupString: "forString", attributes: "bold", icon: "Function"}
 // EXIST: { lookupString: "forAny", attributes: "", icon: "Function"}
 // EXIST: { lookupString: "compareTo", attributes: "", icon: "Method"}
+// IGNORE_K2

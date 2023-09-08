@@ -67,13 +67,9 @@ object ExpectedCompletionUtils {
 
         operator fun get(key: String): String? = map[key]
 
-        fun matches(expectedProposal: CompletionProposal, ignoreProperties: Collection<String>): Boolean {
-            return expectedProposal.map.entries.none { expected ->
-                val actualValues = when (expected.key) {
-                    in ignoreProperties -> return@none false
-                    else -> listOf(map[expected.key])
-                }
-                expected.value !in actualValues
+        fun matches(expectedProposal: CompletionProposal): Boolean {
+            return expectedProposal.map.entries.all { expected ->
+                expected.value == map[expected.key]
             }
         }
 
@@ -230,7 +226,6 @@ object ExpectedCompletionUtils {
         items: Array<LookupElement>,
         checkOrder: Boolean,
         nothingElse: Boolean,
-        ignoreProperties: Collection<String>,
     ) {
         val itemsInformation = getItemsInformation(items)
         val allItemsString = listToString(itemsInformation)
@@ -245,7 +240,7 @@ object ExpectedCompletionUtils {
             for (index in itemsInformation.indices) {
                 val proposal = itemsInformation[index]
 
-                if (proposal.matches(expectedProposal, ignoreProperties)) {
+                if (proposal.matches(expectedProposal)) {
                     isFound = true
 
                     Assert.assertTrue(
@@ -269,7 +264,7 @@ object ExpectedCompletionUtils {
                         val proposal = itemsInformation[index]
 
                         val candidate = CompletionProposal(expectedProposal) { k, _ -> k != CompletionProposal.PRESENTATION_ICON }
-                        if (proposal.matches(candidate, ignoreProperties)) {
+                        if (proposal.matches(candidate)) {
                             closeMatchWithoutIcon = proposal
                             break
                         }
@@ -302,7 +297,7 @@ object ExpectedCompletionUtils {
         return InTextDirectivesUtils.getPrefixedInt(fileText, NUMBER_LINE_PREFIX)
     }
 
-    fun assertNotContainsRenderedItems(unexpected: Array<CompletionProposal>, items: Array<LookupElement>, ignoreProperties: Collection<String>) {
+    fun assertNotContainsRenderedItems(unexpected: Array<CompletionProposal>, items: Array<LookupElement>) {
         val itemsInformation = getItemsInformation(items)
         val allItemsString = listToString(itemsInformation)
 
@@ -310,7 +305,7 @@ object ExpectedCompletionUtils {
             for (proposal in itemsInformation) {
                 Assert.assertFalse(
                     "Unexpected '$unexpectedProposal' presented in\n$allItemsString",
-                    proposal.matches(unexpectedProposal, ignoreProperties)
+                    proposal.matches(unexpectedProposal)
                 )
             }
         }

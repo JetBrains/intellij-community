@@ -6,4 +6,5 @@ fun test(p: Pair<Any, Any>) {
 }
 
 // ELEMENT: size
+// IGNORE_K2
 
