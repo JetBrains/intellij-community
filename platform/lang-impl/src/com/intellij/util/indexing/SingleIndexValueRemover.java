@@ -36,7 +36,7 @@ class SingleIndexValueRemover {
   }
 
   /**
-   * @return false in case the index update is not needed or the update has failed
+   * @return false in case index update is not necessary or the update has failed
    */
   boolean remove() {
     if (!RebuildStatus.isOk(indexId) && !myIndexImpl.myIsUnitTestMode) {

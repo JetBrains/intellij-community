@@ -15,6 +15,7 @@ import com.intellij.openapi.project.UnindexedFilesScannerExecutor
 import com.intellij.openapi.roots.AdditionalLibraryRootsProvider
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.registry.Registry
+import com.intellij.openapi.vfs.newvfs.impl.VirtualFileSystemEntry
 import com.intellij.psi.stubs.StubIndexExtension
 import com.intellij.util.concurrency.Semaphore
 import org.jetbrains.annotations.NonNls

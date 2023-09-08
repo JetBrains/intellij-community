@@ -444,7 +444,8 @@ public class UnindexedFilesScanner extends FilesScanningTaskBase {
 
           scanningStatistics.startFileChecking();
           for (Pair<VirtualFile, List<VirtualFile>> rootAndFiles : rootsAndFiles) {
-            UnindexedFilesFinder finder = new UnindexedFilesFinder(project, sharedExplanationLogger, myIndex, getForceReindexingTrigger());
+            UnindexedFilesFinder finder = new UnindexedFilesFinder(project, sharedExplanationLogger, myIndex, getForceReindexingTrigger(),
+                                                                   rootAndFiles.getFirst());
             var rootIterator = new SingleProviderIterator(project, indicator, provider, finder,
                                                           scanningStatistics, perProviderSink);
             rootAndFiles.getSecond().forEach(it -> rootIterator.processFile(it));

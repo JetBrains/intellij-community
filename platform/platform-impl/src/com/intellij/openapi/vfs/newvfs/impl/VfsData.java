@@ -4,12 +4,16 @@ package com.intellij.openapi.vfs.newvfs.impl;
 import com.intellij.concurrency.ConcurrentCollectionFactory;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationListener;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vfs.InvalidVirtualFileAccessException;
 import com.intellij.openapi.vfs.newvfs.NewVirtualFileSystem;
 import com.intellij.openapi.vfs.newvfs.persistent.FSRecords;
 import com.intellij.openapi.vfs.newvfs.persistent.PersistentFS;
 import com.intellij.openapi.vfs.newvfs.persistent.PersistentFSImpl;
+import com.intellij.testFramework.TestModeFlags;
 import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.BitUtil;
 import com.intellij.util.Functions;
@@ -20,39 +24,37 @@ import com.intellij.util.keyFMap.KeyFMap;
 import it.unimi.dsi.fastutil.ints.IntIterator;
 import it.unimi.dsi.fastutil.ints.IntOpenHashSet;
 import it.unimi.dsi.fastutil.ints.IntSet;
-import org.jetbrains.annotations.Contract;
-import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.*;
 
 import java.util.*;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicIntegerArray;
 import java.util.concurrent.atomic.AtomicReferenceArray;
 
 /**
  * The place where all the data is stored for VFS parts loaded into a memory: name-ids, flags, user data, children.
- * <p>
+ *
  * The purpose is to avoid holding this data in separate immortal file/directory objects because that involves space overhead, significant
  * when there are hundreds of thousands of files.
- * <p>
+ *
  * The data is stored per-id in blocks of {@link #SEGMENT_SIZE}. File ids in one project tend to cluster together,
  * so the overhead for non-loaded id should not be large in most cases.
- * <p>
+ *
  * File objects are still created if needed. There might be several objects for the same file, so equals() should be used instead of ==.
- * <p>
+ *
  * The lifecycle of a file object is as follows:
- * <p>
+ *
  * 1. The file has not been instantiated yet, so {@link #getFileById} returns null.
- * <p>
+ *
  * 2. A file is explicitly requested by calling getChildren or findChild on its parent. The parent initializes all the necessary data (in a thread-safe context)
  * and creates the file instance. See {@link #initFile}
- * <p>
+ *
  * 3. After that the file is live, an object representing it can be retrieved any time from its parent. File system roots are
  * kept on hard references in {@link PersistentFS}
- * <p>
- * 4. If a file is deleted (invalidated), then its data is not needed anymore and should be removed. But this can only happen after
- * all the listeners have been notified about the file deletion and have had their chance to look at the data the last time. See {@link #killInvalidatedFiles()}
- * <p>
+ *
+ * 4. If a file is deleted (invalidated), then its data is not needed anymore, and should be removed. But this can only happen after
+ * all the listener have been notified about the file deletion and have had their chance to look at the data the last time. See {@link #killInvalidatedFiles()}
+ *
  * 5. The file with removed data is marked as "dead" (see {@link #myDeadMarker}), any access to it will throw {@link InvalidVirtualFileAccessException}
  * Dead ids won't be reused in the same session of the IDE.
  */
@@ -78,9 +80,8 @@ public final class VfsData {
     app.addApplicationListener(new ApplicationListener() {
       @Override
       public void writeActionFinished(@NotNull Object action) {
-        // After a top-level write action is finished, all the deletion listeners should have processed the deleted files
-        // and their data is considered safe to remove.
-        // From this point on, accessing a removed file will result in an exception.
+        // after top-level write action is finished, all the deletion listeners should have processed the deleted files
+        // and their data is considered safe to remove. From this point on accessing a removed file will result in an exception.
         if (!app.isWriteAccessAllowed()) {
           killInvalidatedFiles();
         }
@@ -224,7 +225,7 @@ public final class VfsData {
 
     final @NotNull VfsData vfsData;
 
-    // the reference is synchronized by read-write lock; clients outside read-action deserve to get an outdated result
+    // the reference is synchronized by read-write lock; clients outside read-action deserve to get outdated result
     @Nullable Segment replacement;
 
     Segment(@NotNull VfsData vfsData) {
@@ -361,9 +362,9 @@ public final class VfsData {
     }
 
     /**
-     * Must call removeAdoptedName() before adding new child with the same name
+     * must call removeAdoptedName() before adding new child with the same name
      * or otherwise {@link VirtualDirectoryImpl#doFindChild(String, boolean, NewVirtualFileSystem, boolean)} would risk finding already non-existing child
-     * <p>
+     *
      * Must be called in synchronized(VfsData)
      */
     void removeAdoptedName(@NotNull CharSequence name) {

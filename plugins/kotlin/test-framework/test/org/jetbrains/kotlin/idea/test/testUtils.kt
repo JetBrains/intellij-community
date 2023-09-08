@@ -12,6 +12,7 @@ import com.intellij.openapi.editor.Document
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.project.DumbService
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.vfs.newvfs.impl.VirtualFileSystemEntry
 import com.intellij.psi.PsiDocumentManager
 import com.intellij.testFramework.LightPlatformTestCase
 import com.intellij.testFramework.fixtures.JavaCodeInsightTestFixture
@@ -147,7 +148,7 @@ fun Module.setupKotlinFacet(configure: KotlinFacetConfiguration.() -> Unit) = ap
         val facet = FacetManager.getInstance(this).addFacet(KotlinFacetType.INSTANCE, KotlinFacetType.NAME, null)
         val configuration = facet.configuration
 
-        // this is actually needed to have the facet settings object is in a valid state
+        // this is actually needed so facet settings object is in a valid state
         configuration.settings.compilerArguments = K2JVMCompilerArguments()
         // make sure module-specific settings are used
         configuration.settings.useProjectSettings = false
