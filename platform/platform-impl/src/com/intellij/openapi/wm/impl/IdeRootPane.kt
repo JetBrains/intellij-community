@@ -822,7 +822,7 @@ private fun disposeIfNeeded(component: JComponent) {
 }
 
 private fun createMacAwareMenuBar(frame: JFrame,
-                                  component: JComponent,
+                                  component: IdeRootPane,
                                   mainMenuActionGroup: ActionGroup? = null,
                                   coroutineScope: CoroutineScope): ActionAwareIdeMenuBar {
   if (SystemInfoRt.isMac) {
@@ -836,6 +836,7 @@ private fun createMacAwareMenuBar(frame: JFrame,
       val menuBar = IdeMenuBar(coroutineScope = coroutineScope, frame = frame, customMenuGroup = mainMenuActionGroup)
       // if -DjbScreenMenuBar.enabled=false
       frame.jMenuBar = menuBar
+      if (!ExperimentalUI.isNewUI()) component.jMenuBar = menuBar
       menuBar
     }
     return ideMenu
