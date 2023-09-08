@@ -5,6 +5,7 @@ import com.intellij.java.library.JavaLibraryUtil
 import com.intellij.util.Processor
 import com.intellij.util.ThreeState
 import com.intellij.util.ThreeState.*
+import org.jetbrains.kotlin.idea.base.psi.kotlinFqName
 import org.jetbrains.kotlin.idea.base.util.module
 import org.jetbrains.kotlin.idea.stubindex.KotlinFullClassNameIndex
 import org.jetbrains.kotlin.idea.stubindex.KotlinTopLevelTypeAliasFqNameIndex
@@ -62,6 +63,8 @@ abstract class AbstractKotlinPsiBasedTestFramework : KotlinPsiBasedTestFramework
             declaration.isLocal -> false
             declaration.hasModifier(KtTokens.PRIVATE_KEYWORD) -> false
             declaration.hasModifier(KtTokens.ABSTRACT_KEYWORD) -> false
+            declaration.hasModifier(KtTokens.SUSPEND_KEYWORD) -> false // suspend functions pass implicit argument
+            declaration.typeReference != null && declaration.typeReference?.kotlinFqName?.asString() != "kotlin.Unit" -> false
             declaration.isExtensionDeclaration() -> false
             else -> {
                 val ktClassOrObject =
@@ -131,5 +134,9 @@ abstract class AbstractKotlinPsiBasedTestFramework : KotlinPsiBasedTestFramework
             }
         }
         return null
+    }
+
+    companion object {
+        val KOTLIN_UNIT: String? = "kotlin.Unit"
     }
 }
