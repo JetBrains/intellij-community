@@ -34,8 +34,10 @@ public final class PsiMethodUtil {
   private static PsiMethod findMainMethod(final PsiMethod[] mainMethods, PsiClass aClass) {
     for (final PsiMethod mainMethod : mainMethods) {
       PsiClass containingClass = mainMethod.getContainingClass();
-      if (containingClass != null && containingClass != aClass && containingClass.isInterface()) {
-        continue;
+      if (containingClass != null && containingClass != aClass) {
+        if (containingClass.isInterface() && PsiUtil.getLanguageLevel(containingClass).isLessThan(LanguageLevel.JDK_21_PREVIEW)) {
+          continue;
+        }
       }
       if (isMainMethod(mainMethod)) return mainMethod;
     }
@@ -91,6 +93,8 @@ public final class PsiMethodUtil {
   @Nullable
   public static PsiMethod findMainInClass(final PsiClass aClass) {
     if (!MAIN_CLASS.value(aClass)) return null;
-    return findMainMethod(aClass);
+    PsiMethod method = findMainMethod(aClass);
+    if (method != null && !method.hasModifierProperty(PsiModifier.STATIC) && aClass.isInterface()) return null;
+    return method;
   }
 }

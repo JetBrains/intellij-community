@@ -60,6 +60,7 @@ public class ApplicationRunLineMarkerProvider extends RunLineMarkerContributor {
       PsiClass containingClass = method.getContainingClass();
       if (!(containingClass instanceof PsiUnnamedClass) && PsiTreeUtil.getParentOfType(containingClass, PsiUnnamedClass.class) != null) return null;
       if (containingClass == null || PsiUtil.isLocalOrAnonymousClass(containingClass)) return null;
+      if (containingClass.isInterface() && !method.hasModifierProperty(PsiModifier.STATIC)) return null;
       if (containingClass instanceof PsiUnnamedClass) {
         Optional<PsiMethod> mainMethod =
           Arrays.stream(containingClass.getMethods())

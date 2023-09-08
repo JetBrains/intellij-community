@@ -109,4 +109,40 @@ public class RunLineMarkerJava21Test extends LightJavaCodeInsightFixtureTestCase
       assertEmpty(myFixture.findGuttersAtCaret());
     });
   }
+
+  public void testInstanceMainMethodInSuperClass() {
+    myFixture.addClass("public class B { void main() {} }");
+    IdeaTestUtil.withLevel(getModule(), LanguageLevel.JDK_21_PREVIEW, () -> {
+      myFixture.configureByText("MainTest.java", """
+      class A extends B {}
+      """);
+      List<GutterMark> marks = myFixture.findAllGutters();
+      assertEquals(1, marks.size());
+    });
+  }
+
+  public void testInstanceMainMethodInSuperInterface() {
+    myFixture.addClass("public interface B { void main() {} }");
+    IdeaTestUtil.withLevel(getModule(), LanguageLevel.JDK_21_PREVIEW, () -> {
+      myFixture.configureByText("MainTest.java", """
+      class A implements B {}
+      """);
+      List<GutterMark> marks = myFixture.findAllGutters();
+      assertEquals(1, marks.size());
+    });
+  }
+
+  public void testInstanceMainMethodInInterface() {
+    IdeaTestUtil.withLevel(getModule(), LanguageLevel.JDK_21_PREVIEW, () -> {
+      myFixture.configureByText("Run.java", """
+        interface Run {
+            public default void main(String[] args) {
+                System.out.println("Hello from default!");
+            }
+        }
+        """);
+      List<GutterMark> marks = myFixture.findAllGutters();
+      assertEmpty(marks);
+    });
+  }
 }
