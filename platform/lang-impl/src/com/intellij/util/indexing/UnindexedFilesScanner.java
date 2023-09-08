@@ -24,6 +24,7 @@ import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.testFramework.TestModeFlags;
+import com.intellij.util.BooleanFunction;
 import com.intellij.util.SystemProperties;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.gist.GistManager;
@@ -47,7 +48,6 @@ import java.util.*;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.locks.LockSupport;
 import java.util.function.Function;
-import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
 import static com.intellij.openapi.project.UnindexedFilesScannerExecutor.shouldScanInSmartMode;
@@ -379,7 +379,7 @@ public class UnindexedFilesScanner extends FilesScanningTaskBase {
     return new Pair<>(orderedProviders, mark);
   }
 
-  protected @Nullable Predicate<IndexedFile> getForceReindexingTrigger() {
+  protected @Nullable BooleanFunction<IndexedFile> getForceReindexingTrigger() {
     return null;
   }
 
