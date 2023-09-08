@@ -1,3 +1,4 @@
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.customize.transferSettings.providers.vsmac.parsers
 
 import com.intellij.ide.customize.transferSettings.models.KeyBinding
@@ -44,7 +45,7 @@ class KeyBindingsParser(private val settings: Settings) {
 
     val km = settings.keymap
     if (customShortcuts.isNotEmpty() && km != null) {
-      settings.keymap = PatchedKeymap(km, customShortcuts, emptyList())
+      settings.keymap = PatchedKeymap(km.transferableId, km, customShortcuts, emptyList())
     }
   }
 

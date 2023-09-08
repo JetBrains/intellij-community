@@ -1,61 +1,62 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.customize.transferSettings.db
 
+import com.intellij.ide.customize.transferSettings.TransferableIdeFeatureId
 import com.intellij.ide.customize.transferSettings.models.BuiltInFeature
 import com.intellij.ide.customize.transferSettings.models.PluginFeature
 
 object KnownPlugins {
-  val ReSharper: BuiltInFeature = BuiltInFeature("ReSharper", isHidden = true)
+  val ReSharper: BuiltInFeature = BuiltInFeature(TransferableIdeFeatureId.ReSharper, "ReSharper", isHidden = true)
 
-  val Git: BuiltInFeature = BuiltInFeature("Git")
-  val editorconfig: BuiltInFeature = BuiltInFeature("editorconfig")
+  val Git: BuiltInFeature = BuiltInFeature(TransferableIdeFeatureId.Git, "Git")
+  val editorconfig: BuiltInFeature = BuiltInFeature(TransferableIdeFeatureId.EditorConfig, "editorconfig")
   @Suppress("HardCodedStringLiteral")
-  val WebSupport: BuiltInFeature = BuiltInFeature("Web support", "HTML, CSS, JS")
-  val Docker: BuiltInFeature = BuiltInFeature("Docker")
+  val WebSupport: BuiltInFeature = BuiltInFeature(TransferableIdeFeatureId.WebSupport, "Web support", "HTML, CSS, JS")
+  val Docker: BuiltInFeature = BuiltInFeature(TransferableIdeFeatureId.Docker, "Docker")
 
-  val Java: BuiltInFeature = BuiltInFeature("Java")
-  val Kotlin: BuiltInFeature = BuiltInFeature("Kotlin")
-  val CSharp: BuiltInFeature = BuiltInFeature("C#")
-  val NuGet: BuiltInFeature = BuiltInFeature("NuGet")
-  val TestExplorer: BuiltInFeature = BuiltInFeature("TestExplorer")
-  val RunConfigurations: BuiltInFeature = BuiltInFeature("Run Configurations")
-  val Unity: BuiltInFeature = BuiltInFeature("Unity")
-  val LiveTemplates: BuiltInFeature = BuiltInFeature("Live Templates")
-  val SpellChecker: BuiltInFeature = BuiltInFeature("Spell Checker")
-  val LanguageSupport: BuiltInFeature = BuiltInFeature("Language Support")
-  val DotNetDecompiler: BuiltInFeature = BuiltInFeature(".NET Decompiler")
-  val DatabaseSupport: BuiltInFeature = BuiltInFeature("Database Support")
-  val TSLint: BuiltInFeature = BuiltInFeature("TSLint")
-  val Maven: BuiltInFeature = BuiltInFeature("Maven")
-  val Gradle: BuiltInFeature = BuiltInFeature("Gradle")
-  val Debugger: BuiltInFeature = BuiltInFeature("Debugger")
-  val WindowsSubsystemLinux: BuiltInFeature = BuiltInFeature("WSL")
-  val Toml: BuiltInFeature = BuiltInFeature("TOML")
-  val Vue: BuiltInFeature = BuiltInFeature("Vue.js")
-  val AiAssistant: BuiltInFeature = BuiltInFeature("AI Assistant")
+  val Java: BuiltInFeature = BuiltInFeature(TransferableIdeFeatureId.Java, "Java")
+  val Kotlin: BuiltInFeature = BuiltInFeature(TransferableIdeFeatureId.Kotlin, "Kotlin")
+  val CSharp: BuiltInFeature = BuiltInFeature(TransferableIdeFeatureId.CSharp, "C#")
+  val NuGet: BuiltInFeature = BuiltInFeature(TransferableIdeFeatureId.NuGet, "NuGet")
+  val TestExplorer: BuiltInFeature = BuiltInFeature(TransferableIdeFeatureId.TestExplorer, "TestExplorer")
+  val RunConfigurations: BuiltInFeature = BuiltInFeature(TransferableIdeFeatureId.RunConfigurations, "Run Configurations")
+  val Unity: BuiltInFeature = BuiltInFeature(TransferableIdeFeatureId.Unity, "Unity")
+  val LiveTemplates: BuiltInFeature = BuiltInFeature(TransferableIdeFeatureId.LiveTemplates, "Live Templates")
+  val SpellChecker: BuiltInFeature = BuiltInFeature(TransferableIdeFeatureId.SpellChecker, "Spell Checker")
+  val LanguageSupport: BuiltInFeature = BuiltInFeature(TransferableIdeFeatureId.LanguageSupport, "Language Support")
+  val DotNetDecompiler: BuiltInFeature = BuiltInFeature(TransferableIdeFeatureId.DotNetDecompiler, ".NET Decompiler")
+  val DatabaseSupport: BuiltInFeature = BuiltInFeature(TransferableIdeFeatureId.DatabaseSupport, "Database Support")
+  val TSLint: BuiltInFeature = BuiltInFeature(TransferableIdeFeatureId.TsLint, "TSLint")
+  val Maven: BuiltInFeature = BuiltInFeature(TransferableIdeFeatureId.Maven, "Maven")
+  val Gradle: BuiltInFeature = BuiltInFeature(TransferableIdeFeatureId.Gradle, "Gradle")
+  val Debugger: BuiltInFeature = BuiltInFeature(TransferableIdeFeatureId.Debugger, "Debugger")
+  val WindowsSubsystemLinux: BuiltInFeature = BuiltInFeature(TransferableIdeFeatureId.Wsl, "WSL")
+  val Toml: BuiltInFeature = BuiltInFeature(TransferableIdeFeatureId.Toml, "TOML")
+  val Vue: BuiltInFeature = BuiltInFeature(TransferableIdeFeatureId.Vue, "Vue.js")
+  val AiAssistant: BuiltInFeature = BuiltInFeature(TransferableIdeFeatureId.AiAssistant, "AI Assistant")
 
   // Language packs
 
-  val ChineseLanguage: PluginFeature = PluginFeature("com.intellij.zh", "Chinese (Simplified) Language Pack / 中文语言包")
-  val KoreanLanguage: PluginFeature = PluginFeature("com.intellij.ko", "Korean Language Pack / 한국어 언어 팩")
-  val JapaneseLanguage: PluginFeature = PluginFeature("com.intellij.ja", "Japanese Language Pack / 日本語言語パック")
+  val ChineseLanguage: PluginFeature = PluginFeature(TransferableIdeFeatureId.ChineseLanguage, "com.intellij.zh", "Chinese (Simplified) Language Pack / 中文语言包")
+  val KoreanLanguage: PluginFeature = PluginFeature(TransferableIdeFeatureId.KoreanLanguage, "com.intellij.ko", "Korean Language Pack / 한국어 언어 팩")
+  val JapaneseLanguage: PluginFeature = PluginFeature(TransferableIdeFeatureId.JapaneseLanguage, "com.intellij.ja", "Japanese Language Pack / 日本語言語パック")
 
   // Plugins
 
-  val XAMLStyler: PluginFeature = PluginFeature("xamlstyler.rider", "XAML Styler")
-  val Ideolog: PluginFeature = PluginFeature("com.intellij.ideolog", "Ideolog (logging)")
-  val IdeaVim: PluginFeature = PluginFeature("IdeaVIM", "IdeaVIM")
-  val TeamCity: PluginFeature = PluginFeature("Jetbrains TeamCity Plugin", "TeamCity")
-  val Scala: PluginFeature = PluginFeature("org.intellij.scala", "Scala")
-  val Dart: PluginFeature = PluginFeature("Dart", "Dart")
-  val Flutter: PluginFeature = PluginFeature("io.flutter", "Flutter")
-  val Lombok: PluginFeature = PluginFeature("Lombook Plugin", "Lombok")
-  val Prettier: PluginFeature = PluginFeature("intellij.prettierJS", "Prettier")
-  val Kubernetes: PluginFeature = PluginFeature("com.intellij.kubernetes", "Kubernetes")
+  val XAMLStyler: PluginFeature = PluginFeature(TransferableIdeFeatureId.XamlStyler, "xamlstyler.rider", "XAML Styler")
+  val Ideolog: PluginFeature = PluginFeature(TransferableIdeFeatureId.Ideolog, "com.intellij.ideolog", "Ideolog (logging)")
+  val IdeaVim: PluginFeature = PluginFeature(TransferableIdeFeatureId.IdeaVim, "IdeaVIM", "IdeaVIM")
+  val TeamCity: PluginFeature = PluginFeature(TransferableIdeFeatureId.TeamCity, "Jetbrains TeamCity Plugin", "TeamCity")
+  val Scala: PluginFeature = PluginFeature(TransferableIdeFeatureId.Scala, "org.intellij.scala", "Scala")
+  val Dart: PluginFeature = PluginFeature(TransferableIdeFeatureId.Dart, "Dart", "Dart")
+  val Flutter: PluginFeature = PluginFeature(TransferableIdeFeatureId.Flutter, "io.flutter", "Flutter")
+  val Lombok: PluginFeature = PluginFeature(TransferableIdeFeatureId.Lombok, "Lombook Plugin", "Lombok")
+  val Prettier: PluginFeature = PluginFeature(TransferableIdeFeatureId.Prettier, "intellij.prettierJS", "Prettier")
+  val Kubernetes: PluginFeature = PluginFeature(TransferableIdeFeatureId.Kubernetes, "com.intellij.kubernetes", "Kubernetes")
 
-  val Monokai: PluginFeature = PluginFeature("monokai-pro", "Monokai")
-  val Solarized: PluginFeature = PluginFeature("com.tylerthrailkill.intellij.solarized", "Solarized")
+  val Monokai: PluginFeature = PluginFeature(TransferableIdeFeatureId.Monokai, "monokai-pro", "Monokai")
+  val Solarized: PluginFeature = PluginFeature(TransferableIdeFeatureId.Solarized, "com.tylerthrailkill.intellij.solarized", "Solarized")
 
-  val DummyBuiltInFeature: BuiltInFeature = BuiltInFeature("")
-  val DummyPlugin: PluginFeature = PluginFeature("", "")
+  val DummyBuiltInFeature: BuiltInFeature = BuiltInFeature(TransferableIdeFeatureId.DummyBuiltInFeature, "")
+  val DummyPlugin: PluginFeature = PluginFeature(TransferableIdeFeatureId.DummyPlugin, "", "")
 }

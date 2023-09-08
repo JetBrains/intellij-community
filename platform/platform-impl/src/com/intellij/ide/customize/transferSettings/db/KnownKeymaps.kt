@@ -1,7 +1,8 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.customize.transferSettings.db
 
 import com.intellij.ide.IdeBundle
+import com.intellij.ide.customize.transferSettings.TransferableKeymapId
 import com.intellij.ide.customize.transferSettings.models.BundledKeymap
 import com.intellij.ide.customize.transferSettings.models.PluginKeymap
 import com.intellij.ide.customize.transferSettings.models.SimpleActionDescriptor
@@ -38,12 +39,36 @@ object KnownKeymaps {
     SimpleActionDescriptor("BuildSolutionAction", IdeBundle.message("transfersettings.label.build.solution"), KeyboardShortcut.fromString("control shift B"))
   )
 
-  val VSCode: PluginKeymap = PluginKeymap(IdeBundle.message("transfersettings.product.vscode"), "com.intellij.plugins.vscodekeymap",
-                                          "VSCode", BundledKeymap.fromManager("\$default"), VSCodeDemo)
-  val VSCodeMac: PluginKeymap = PluginKeymap(IdeBundle.message("transfersettings.product.vscode"), "com.intellij.plugins.vscodekeymap",
-                                             "VSCode OSX", BundledKeymap.fromManager("\$default"), VSCodeMacDemo)
-  val VSMac: PluginKeymap = PluginKeymap(IdeBundle.message("transfersettings.product.visual.studio.for.mac"), "com.intellij.plugins.visualstudioformackeymap",
-                                         "Visual Studio for Mac", BundledKeymap.fromManager("\$default"), VSMacDemo)
-  val VisualStudio2022: PluginKeymap = PluginKeymap(IdeBundle.message("transfersettings.product.visual.studio"), "com.intellij.plugins.visualstudio2022keymap",
-                                                    "Visual Studio 2022", BundledKeymap.fromManager("\$default"), VisualStudio2022Demo)
+  val VSCode: PluginKeymap = PluginKeymap(
+    TransferableKeymapId.VsCode,
+    IdeBundle.message("transfersettings.product.vscode"),
+    "com.intellij.plugins.vscodekeymap",
+    "VSCode",
+    BundledKeymap.fromManager(TransferableKeymapId.Default, "\$default"),
+    VSCodeDemo
+  )
+  val VSCodeMac: PluginKeymap = PluginKeymap(
+    TransferableKeymapId.VsCodeMac,
+    IdeBundle.message("transfersettings.product.vscode"),
+    "com.intellij.plugins.vscodekeymap",
+    "VSCode OSX",
+    BundledKeymap.fromManager(TransferableKeymapId.Default, "\$default"),
+    VSCodeMacDemo
+  )
+  val VSMac: PluginKeymap = PluginKeymap(
+    TransferableKeymapId.VsForMac,
+    IdeBundle.message("transfersettings.product.visual.studio.for.mac"),
+    "com.intellij.plugins.visualstudioformackeymap",
+    "Visual Studio for Mac",
+    BundledKeymap.fromManager(TransferableKeymapId.Default, "\$default"),
+    VSMacDemo
+  )
+  val VisualStudio2022: PluginKeymap = PluginKeymap(
+    TransferableKeymapId.VisualStudio2022,
+    IdeBundle.message("transfersettings.product.visual.studio"),
+    "com.intellij.plugins.visualstudio2022keymap",
+    "Visual Studio 2022",
+    BundledKeymap.fromManager(TransferableKeymapId.Default, "\$default"),
+    VisualStudio2022Demo
+  )
 }

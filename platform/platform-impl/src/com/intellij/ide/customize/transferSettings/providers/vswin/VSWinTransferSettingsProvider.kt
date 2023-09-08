@@ -1,38 +1,36 @@
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.customize.transferSettings.providers.vswin
 
 import com.intellij.icons.AllIcons
 import com.intellij.ide.IdeBundle
 import com.intellij.ide.customize.transferSettings.TransferSettingsConfiguration
+import com.intellij.ide.customize.transferSettings.TransferableIdeId
 import com.intellij.ide.customize.transferSettings.db.KnownPlugins
+import com.intellij.ide.customize.transferSettings.fus.TransferSettingsCollector
 import com.intellij.ide.customize.transferSettings.models.BaseIdeVersion
 import com.intellij.ide.customize.transferSettings.models.FailedIdeVersion
 import com.intellij.ide.customize.transferSettings.models.IdeVersion
-import com.intellij.ide.customize.transferSettings.providers.DefaultImportPerformer
-import com.intellij.ide.customize.transferSettings.providers.ImportPerformer
 import com.intellij.ide.customize.transferSettings.providers.TransferSettingsProvider
-import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.ui.Messages
-import com.intellij.openapi.util.SystemInfo
-import com.intellij.openapi.util.io.FileUtil
-import com.intellij.ui.JBColor
-import com.intellij.util.ui.JBUI
-import com.intellij.util.ui.UIUtil
 import com.intellij.ide.customize.transferSettings.providers.vswin.parsers.VSParser
 import com.intellij.ide.customize.transferSettings.providers.vswin.utilities.VSHiveDetourFileNotFoundException
 import com.intellij.ide.customize.transferSettings.providers.vswin.utilities.VSPossibleVersionsEnumerator
 import com.intellij.ide.customize.transferSettings.providers.vswin.utilities.VSProfileDetectorUtils
 import com.intellij.ide.customize.transferSettings.ui.representation.TransferSettingsRightPanelChooser
 import com.intellij.openapi.diagnostic.logger
+import com.intellij.openapi.ui.Messages
 import com.intellij.openapi.util.SystemInfoRt
-import com.intellij.ui.SeparatorComponent
 import com.intellij.ui.dsl.builder.panel
 import com.intellij.ui.dsl.gridLayout.UnscaledGaps
-import net.miginfocom.swing.MigLayout
 import org.jetbrains.annotations.Nls
-import javax.swing.*
+import javax.swing.JComponent
+import javax.swing.SwingUtilities
+import kotlin.time.Duration
+import kotlin.time.Duration.Companion.nanoseconds
 
 private val logger = logger<VSWinTransferSettingsProvider>()
 class VSWinTransferSettingsProvider : TransferSettingsProvider {
+
+  override val transferableIdeId = TransferableIdeId.VisualStudio
   override val name: String = "Visual Studio"
 
   private val defaultAdvice: @Nls String = IdeBundle.message("transfersettings.vs.quit.advise")
@@ -70,6 +68,7 @@ class VSWinTransferSettingsProvider : TransferSettingsProvider {
       }
 
       val failedIde = FailedIdeVersion(
+        transferableIdeId,
         id = instanceIdForIdeVersion,
         name = name,
         subName = hive.hiveString,
@@ -92,6 +91,12 @@ class VSWinTransferSettingsProvider : TransferSettingsProvider {
 
       val res2 = convertTimeFn(timeFn() - registryTime)
       speedResult += "registryTime $res2\n" // NON-NLS
+      TransferSettingsCollector.logPerformanceEvent(
+        TransferSettingsCollector.PerfEvent.Registry,
+        TransferableIdeId.VisualStudio,
+        hive.transferableVersion(),
+        res2
+      )
 
       if (registry == null) {
         logger.warn("Critical. Failed to init registry")
@@ -121,6 +126,12 @@ class VSWinTransferSettingsProvider : TransferSettingsProvider {
 
       val res1 = convertTimeFn(timeFn() - subNameTime)
       speedResult += "subname $res1\n" // NON-NLS
+      TransferSettingsCollector.logPerformanceEvent(
+        TransferSettingsCollector.PerfEvent.SubName,
+        TransferableIdeId.VisualStudio,
+        hive.transferableVersion(),
+        res1
+      )
 
       val readSettingsTime = timeFn()
       try {
@@ -138,10 +149,17 @@ class VSWinTransferSettingsProvider : TransferSettingsProvider {
 
       val res3 = convertTimeFn(timeFn() - readSettingsTime)
       speedResult += "readSettingsFile $res3\n" // NON-NLS
-
+      TransferSettingsCollector.logPerformanceEvent(
+        TransferSettingsCollector.PerfEvent.ReadSettingsFile,
+        TransferableIdeId.VisualStudio,
+        hive.transferableVersion(),
+        res3
+      )
 
       // Finally, IdeVersion
       val l = IdeVersion(
+        transferableIdeId,
+        hive.transferableVersion(),
         id = instanceIdForIdeVersion,
         name = name,
         subName = subName,
@@ -170,7 +188,7 @@ class VSWinTransferSettingsProvider : TransferSettingsProvider {
   override fun isAvailable(): Boolean = SystemInfoRt.isWindows
 
   private fun timeFn() = System.nanoTime()
-  private fun convertTimeFn(time: Long): Long = time / 1_000_000
+  private fun convertTimeFn(time: Long): Duration = time.nanoseconds
 
   override fun getRightPanel(ideV: IdeVersion, config: TransferSettingsConfiguration): TransferSettingsRightPanelChooser? {
     return VSWinTransferSettingsRightPanelChooser(ideV, config)

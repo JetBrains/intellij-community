@@ -1,9 +1,13 @@
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.customize.transferSettings.providers.vswin.parsers
 
 import com.intellij.ide.customize.transferSettings.db.KnownKeymaps
 import com.intellij.ide.customize.transferSettings.models.PatchedKeymap
 import com.intellij.ide.customize.transferSettings.models.Settings
-import com.intellij.ide.customize.transferSettings.providers.vswin.parsers.data.*
+import com.intellij.ide.customize.transferSettings.providers.vswin.parsers.data.FontsAndColorsParsedData
+import com.intellij.ide.customize.transferSettings.providers.vswin.parsers.data.KeyBindingsParsedData
+import com.intellij.ide.customize.transferSettings.providers.vswin.parsers.data.VSParsedData
+import com.intellij.ide.customize.transferSettings.providers.vswin.parsers.data.VSParsedDataCreator
 import com.intellij.ide.customize.transferSettings.providers.vswin.utilities.VSHive
 import com.intellij.ide.customize.transferSettings.providers.vswin.utilities.Version2
 import com.intellij.openapi.diagnostic.logger
@@ -70,7 +74,14 @@ class VSXmlParser(settingsFile: File, private val hive: VSHive? = null) {
 
         when (disp) {
           is FontsAndColorsParsedData -> allSettings.laf = disp.theme.toRiderTheme()
-          is KeyBindingsParsedData -> allSettings.keymap = if (disp.convertToSettingsFormat().isNotEmpty() && allSettings.keymap != null) PatchedKeymap(allSettings.keymap!!, disp.convertToSettingsFormat(), emptyList()) else allSettings.keymap
+          is KeyBindingsParsedData -> {
+            val format = disp.convertToSettingsFormat()
+            val oldKeymap = allSettings.keymap
+            if (format.isNotEmpty() && oldKeymap != null) {
+              allSettings.keymap =
+                PatchedKeymap(oldKeymap.transferableId, oldKeymap, disp.convertToSettingsFormat(), emptyList())
+            }
+          }
         }
       }
     }

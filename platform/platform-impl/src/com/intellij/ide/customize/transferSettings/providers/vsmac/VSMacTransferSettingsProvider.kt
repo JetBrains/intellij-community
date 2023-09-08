@@ -1,8 +1,9 @@
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.customize.transferSettings.providers.vsmac
 
 import com.intellij.icons.AllIcons
+import com.intellij.ide.customize.transferSettings.TransferableIdeId
 import com.intellij.ide.customize.transferSettings.models.IdeVersion
-import com.intellij.ide.customize.transferSettings.providers.DefaultImportPerformer
 import com.intellij.ide.customize.transferSettings.providers.TransferSettingsProvider
 import com.intellij.ide.customize.transferSettings.providers.vsmac.VSMacSettingsProcessor.Companion.getGeneralSettingsFile
 import com.intellij.ide.customize.transferSettings.providers.vsmac.VSMacSettingsProcessor.Companion.vsPreferences
@@ -16,6 +17,8 @@ import java.nio.file.Paths
 private val logger = logger<VSMacTransferSettingsProvider>()
 
 class VSMacTransferSettingsProvider : TransferSettingsProvider {
+
+  override val transferableIdeId = TransferableIdeId.VisualStudioForMac
   override val name: String = "Visual Studio for Mac"
 
   override fun isAvailable(): Boolean = SystemInfoRt.isMac
@@ -26,6 +29,8 @@ class VSMacTransferSettingsProvider : TransferSettingsProvider {
   }
 
   private fun getIdeVersion(version: String) = IdeVersion(
+    transferableId = transferableIdeId,
+    transferableVersion = null,
     name = "Visual Studio for Mac",
     id = "VSMAC",
     icon = AllIcons.TransferSettings.Vsmac,

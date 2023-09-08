@@ -1,16 +1,17 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.customize.transferSettings.ui
 
 import com.intellij.ide.customize.transferSettings.TransferSettingsConfiguration
 import com.intellij.ide.customize.transferSettings.controllers.TransferSettingsListener
+import com.intellij.ide.customize.transferSettings.fus.TransferSettingsCollector
 import com.intellij.ide.customize.transferSettings.models.*
 import com.intellij.ide.customize.transferSettings.ui.representation.TransferSettingsRepresentationPanel
 import com.intellij.ide.customize.transferSettings.ui.representation.TransferSettingsRightPanelChooser
 import com.intellij.ui.JBColor
-import com.intellij.ui.dsl.builder.panel
 import com.intellij.util.ui.JBUI
 import net.miginfocom.swing.MigLayout
-import javax.swing.JComponent
+import java.awt.event.ComponentAdapter
+import java.awt.event.ComponentEvent
 import javax.swing.JLabel
 import javax.swing.JPanel
 
@@ -40,6 +41,11 @@ class TransferSettingsView(private val config: TransferSettingsConfiguration, pr
 
   private fun initPanel() = JPanel().apply {
     layout = MigLayout("ins 0, novisualpadding, fill")
+    addComponentListener(object : ComponentAdapter() {
+      override fun componentShown(e: ComponentEvent?) {
+        TransferSettingsCollector.logTransferSettingsShown()
+      }
+    })
 
     if (model.shouldShowLeftPanel) {
       add(leftPanel, "west, width 250px, wmax 250px, wmin 250px, growy, pushy, spany")
