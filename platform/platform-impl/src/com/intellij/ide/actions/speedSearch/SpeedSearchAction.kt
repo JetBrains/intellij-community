@@ -22,8 +22,7 @@ class SpeedSearchAction : DumbAwareAction(
   override fun getActionUpdateThread() = ActionUpdateThread.EDT
 
   override fun update(e: AnActionEvent) {
-    val contextComponent = e.dataContext.getData(PlatformDataKeys.CONTEXT_COMPONENT) ?: return
-    val handler = findHandler(contextComponent)
+    val handler = findHandler(e)
     e.presentation.isVisible = handler != null
     e.presentation.isEnabled = handler != null && handler.isSpeedSearchAvailable() && !handler.isSpeedSearchActive()
     e.presentation.putClientProperty(
@@ -32,8 +31,15 @@ class SpeedSearchAction : DumbAwareAction(
     )
   }
 
-  private fun findHandler(contextComponent: Component): SpeedSearchActionHandler? =
-    contextComponent.getSpeedSearchActionHandler() ?: findInToolWindow(contextComponent)
+  private fun findHandler(e: AnActionEvent): SpeedSearchActionHandler? {
+    val contextComponent = e.dataContext.getData(PlatformDataKeys.CONTEXT_COMPONENT) ?: return null
+    return if (e.place == ActionPlaces.KEYBOARD_SHORTCUT) {
+      contextComponent.getSpeedSearchActionHandler()
+    }
+    else {
+      findInToolWindow(contextComponent)
+    }
+  }
 
   private fun findInToolWindow(contextComponent: Component): SpeedSearchActionHandler? {
     val toolWindowDecorator = UIUtil.getParentOfType(InternalDecoratorImpl::class.java, contextComponent)
@@ -50,8 +56,7 @@ class SpeedSearchAction : DumbAwareAction(
   }
 
   override fun actionPerformed(e: AnActionEvent) {
-    val contextComponent = e.dataContext.getData(PlatformDataKeys.CONTEXT_COMPONENT) ?: return
-    val handler = findHandler(contextComponent) ?: return
+    val handler = findHandler(e) ?: return
     if (e.place == ActionPlaces.KEYBOARD_SHORTCUT) {
       handler.requestFocus = false
       handler.showGotItTooltip = true
