@@ -69,6 +69,9 @@ interface MavenAsyncProjectsManager {
   suspend fun addManagedFilesWithProfilesAndUpdate(files: List<VirtualFile>,
                                                    profiles: MavenExplicitProfiles,
                                                    modelsProvider: IdeModifiableModelsProvider?): List<Module>
+
+  @ApiStatus.Internal
+  suspend fun addManagedFilesWithProfilesAndUpdateOnStartup(files: List<VirtualFile>, previewModule: Module?)
 }
 
 open class MavenProjectsManagerEx(project: Project) : MavenProjectsManager(project) {
@@ -77,6 +80,11 @@ open class MavenProjectsManagerEx(project: Project) : MavenProjectsManager(proje
                                                             modelsProvider: IdeModifiableModelsProvider?): List<Module> {
     blockingContext { doAddManagedFilesWithProfiles(files, profiles, null) }
     return updateAllMavenProjects(MavenImportSpec(false, true, false), modelsProvider)
+  }
+
+  override suspend fun addManagedFilesWithProfilesAndUpdateOnStartup(files: List<VirtualFile>, previewModule: Module?) {
+    blockingContext { doAddManagedFilesWithProfiles(files, MavenExplicitProfiles.NONE, previewModule) }
+    startupImportSpec.set(MavenImportSpec(false, true, false))
   }
 
   override suspend fun importMavenProjects(projectsToImport: Map<MavenProject, MavenProjectChanges>): List<Module> {
