@@ -50,19 +50,19 @@ final class UnindexedFilesFinder {
     long timeIndexingWithoutContentViaInfrastructureExtension = 0;
     @NotNull private List<SingleIndexValueApplier<?>> appliers = Collections.emptyList();
     @NotNull private List<SingleIndexValueRemover> removers = Collections.emptyList();
-    final boolean applyIndexValuesSeparately;
+    @NotNull final FileIndexesValuesApplier.ApplicationMode applicationMode;
     boolean indexInfrastructureExtensionInvalidated = false;
     boolean mayMarkFileIndexed = true;
     @Nullable ArrayList<Pair<FileIndexingState, ID<?, ?>>> unindexedStates;
 
-    UnindexedFileStatusBuilder(boolean applyIndexValuesSeparately) {
-      this.applyIndexValuesSeparately = applyIndexValuesSeparately;
+    UnindexedFileStatusBuilder(@NotNull FileIndexesValuesApplier.ApplicationMode applicationMode) {
+      this.applicationMode = applicationMode;
     }
 
     boolean addOrRunRemover(@Nullable SingleIndexValueRemover remover) {
       if (remover == null) return true;
 
-      if (applyIndexValuesSeparately) {
+      if (applicationMode != FileIndexesValuesApplier.ApplicationMode.SameThreadUnderReadLock) {
         if (removers.isEmpty()) removers = new SmartList<>();
         return removers.add(remover);
       }
@@ -74,7 +74,7 @@ final class UnindexedFilesFinder {
     boolean addOrRunApplier(@Nullable SingleIndexValueApplier applier) {
       if (applier == null) return true;
 
-      if (applyIndexValuesSeparately) {
+      if (applicationMode != FileIndexesValuesApplier.ApplicationMode.SameThreadUnderReadLock) {
         if (appliers.isEmpty()) appliers = new SmartList<>();
         return appliers.add(applier);
       }
@@ -173,14 +173,14 @@ final class UnindexedFilesFinder {
     }
     Supplier<@NotNull Boolean> checker = CachedFileType.getFileTypeChangeChecker();
     FileType cachedFileType = file.getFileType();
-    boolean applyIndexValuesSeparately = FileBasedIndexImpl.isWritingIndexValuesSeparatedFromCountingForContentIndependentIndexes();
+    FileIndexesValuesApplier.ApplicationMode applicationMode = FileBasedIndexImpl.getContentIndependentIndexesApplicationMode();
     return ReadAction.compute(() -> {
       if (myProject.isDisposed() || !file.isValid()) {
         return null;
       }
       FileType fileType = checker.get() ? cachedFileType : null;
 
-      UnindexedFileStatusBuilder fileStatusBuilder = new UnindexedFileStatusBuilder(applyIndexValuesSeparately);
+      UnindexedFileStatusBuilder fileStatusBuilder = new UnindexedFileStatusBuilder(applicationMode);
 
       IndexedFileImpl indexedFile = new IndexedFileImpl(file, fileType, myProject);
       int inputId = FileBasedIndex.getFileId(file);
@@ -361,12 +361,12 @@ final class UnindexedFilesFinder {
 
     SingleIndexValueRemover remover =
       myFileBasedIndex.createSingleIndexRemover(indexId, indexedFile.getFile(), new IndexedFileWrapper(indexedFile), inputId,
-                                                fileStatusBuilder.applyIndexValuesSeparately);
+                                                fileStatusBuilder.applicationMode);
     if (remover != null) {
       boolean removed = fileStatusBuilder.addOrRunRemover(remover);
       if (!removed) {
         LOG.error("Failed to remove value from index " + indexId + " for file " + indexedFile.getFile() + ", " +
-                  "applyIndexValuesSeparately=" + fileStatusBuilder.applyIndexValuesSeparately);
+                  "applicationMode=" + fileStatusBuilder.applicationMode);
       }
       return removed;
     }
@@ -399,12 +399,12 @@ final class UnindexedFilesFinder {
     else {
       SingleIndexValueApplier<?> applier =
         myFileBasedIndex.createSingleIndexValueApplier(indexId, indexedFile.getFile(), inputId, new IndexedFileWrapper(indexedFile),
-                                                       fileStatusBuilder.applyIndexValuesSeparately);
+                                                       fileStatusBuilder.applicationMode);
       if (applier != null) {
         boolean updated = fileStatusBuilder.addOrRunApplier(applier);
         if (!updated) {
           LOG.error("Failed to apply contentless indexer " + indexId + " to file " + indexedFile.getFile() + ", " +
-                    "applyIndexValuesSeparately=" + fileStatusBuilder.applyIndexValuesSeparately);
+                    "applicationMode =" + fileStatusBuilder.applicationMode);
         }
         return updated;
       }

@@ -12,6 +12,13 @@ import java.util.*;
 
 @ApiStatus.Internal
 public final class FileIndexesValuesApplier {
+  /**
+   * Initially, index values were applied synchronously under the same read lock they were counted.
+   * Later there was introduced an optimization to apply (or erase if needed) them later outside read lock.
+   */
+  public enum ApplicationMode {
+    SameThreadUnderReadLock, SameThreadOutsideReadLock
+  }
   private final FileBasedIndexImpl myIndex;
   private final int fileId;
   private final @NotNull List<? extends SingleIndexValueApplier<?>> appliers;
@@ -21,7 +28,7 @@ public final class FileIndexesValuesApplier {
   private final long fileStatusLockObject;
   @NotNull
   public final FileIndexingStatistics stats;
-  public final boolean isWriteValuesSeparately;
+  public final ApplicationMode applicationMode;
   private long separateApplicationTimeNanos = -1;
 
   FileIndexesValuesApplier(FileBasedIndexImpl index, int fileId,
@@ -30,7 +37,7 @@ public final class FileIndexesValuesApplier {
                            @NotNull List<? extends SingleIndexValueRemover> removers,
                            boolean removeDataFromIndicesForFile,
                            boolean shouldMarkFileAsIndexed,
-                           boolean writeValuesSeparately,
+                           @NotNull ApplicationMode applicationMode,
                            @NotNull FileType fileType,
                            boolean logEmptyProvidedIndexes) {
     myIndex = index;
@@ -39,8 +46,10 @@ public final class FileIndexesValuesApplier {
     this.removers = removers;
     this.removeDataFromIndicesForFile = removeDataFromIndicesForFile;
     this.shouldMarkFileAsIndexed = shouldMarkFileAsIndexed;
-    fileStatusLockObject = writeValuesSeparately && shouldMarkFileAsIndexed ? IndexingFlag.getOrCreateHash(file) : IndexingFlag.getNonExistentHash();
-    isWriteValuesSeparately = writeValuesSeparately;
+    fileStatusLockObject = applicationMode == ApplicationMode.SameThreadOutsideReadLock && shouldMarkFileAsIndexed
+                           ? IndexingFlag.getOrCreateHash(file)
+                           : IndexingFlag.getNonExistentHash();
+    this.applicationMode = applicationMode;
     stats = createStats(file, appliers, removers, fileType, logEmptyProvidedIndexes);
   }
 
@@ -80,7 +89,7 @@ public final class FileIndexesValuesApplier {
   }
 
   void applyImmediately(@NotNull VirtualFile file, boolean isValid) {
-    if (isWriteValuesSeparately) {
+    if (applicationMode != ApplicationMode.SameThreadUnderReadLock) {
       return;
     }
     if (removeDataFromIndicesForFile) {
@@ -98,7 +107,7 @@ public final class FileIndexesValuesApplier {
   }
 
   public void apply(@NotNull VirtualFile file) {
-    if (!isWriteValuesSeparately) {
+    if (applicationMode == ApplicationMode.SameThreadUnderReadLock) {
       return;
     }
     long applicationStart = System.nanoTime();
@@ -138,7 +147,7 @@ public final class FileIndexesValuesApplier {
   }
 
   public long getSeparateApplicationTimeNanos() {
-    if (!isWriteValuesSeparately) return 0;
+    if (applicationMode == ApplicationMode.SameThreadUnderReadLock) return 0;
     if (separateApplicationTimeNanos == -1) throw new IllegalStateException("Index values were not applied");
     return separateApplicationTimeNanos;
   }

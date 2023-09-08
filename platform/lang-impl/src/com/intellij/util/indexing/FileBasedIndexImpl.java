@@ -62,6 +62,7 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.FactoryMap;
 import com.intellij.util.containers.SmartHashSet;
 import com.intellij.util.gist.GistManager;
+import com.intellij.util.indexing.FileIndexesValuesApplier.ApplicationMode;
 import com.intellij.util.indexing.contentQueue.CachedFileContent;
 import com.intellij.util.indexing.diagnostic.BrokenIndexingDiagnostics;
 import com.intellij.util.indexing.diagnostic.IndexStatisticGroup;
@@ -1332,7 +1333,7 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
     VirtualFile file = content.getVirtualFile();
     final int fileId = getFileId(file);
 
-    boolean writeIndexValuesSeparately = isWritingIndexValuesSeparatedFromCounting();
+    ApplicationMode applicationMode = getIndexApplicationMode();
     boolean isValid = file.isValid();
     // if file was scheduled for update due to vfs events then it is present in myFilesToUpdate
     // in this case we consider that current indexing (out of roots backed CacheUpdater) will cover its content
@@ -1353,11 +1354,11 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
     if (!isValid || isTooLarge(file)) {
       ProgressManager.checkCanceled();
       applier = new FileIndexesValuesApplier(this, fileId, file, Collections.emptyList(), Collections.emptyList(),
-                                             true, true, writeIndexValuesSeparately,
+                                             true, true, applicationMode,
                                              cachedFileType == null ? file.getFileType() : cachedFileType, false);
     }
     else {
-      applier = doIndexFileContent(project, content, cachedFileType, writeIndexValuesSeparately);
+      applier = doIndexFileContent(project, content, cachedFileType, applicationMode);
     }
 
     applier.applyImmediately(file, isValid);
@@ -1368,7 +1369,7 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
   private FileIndexesValuesApplier doIndexFileContent(@Nullable Project project,
                                                       @NotNull CachedFileContent content,
                                                       @Nullable FileType cachedFileType,
-                                                      boolean writeIndexSeparately) {
+                                                      @NotNull ApplicationMode applicationMode) {
     ProgressManager.checkCanceled();
     final VirtualFile file = content.getVirtualFile();
     Ref<Boolean> setIndexedStatus = Ref.create(Boolean.TRUE);
@@ -1432,7 +1433,7 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
           if (update) {
             ProgressManager.checkCanceled();
             SingleIndexValueApplier<?> singleIndexValueApplier =
-              createSingleIndexValueApplier(indexId, file, inputId, fc, writeIndexSeparately);
+              createSingleIndexValueApplier(indexId, file, inputId, fc, applicationMode);
             if (singleIndexValueApplier == null) {
               setIndexedStatus.set(Boolean.FALSE);
             }
@@ -1444,7 +1445,7 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
 
         for (ID<?, ?> indexId : currentIndexedStates) {
           ProgressManager.checkCanceled();
-          SingleIndexValueRemover remover = createSingleIndexRemover(indexId, file, fc, inputId, writeIndexSeparately);
+          SingleIndexValueRemover remover = createSingleIndexRemover(indexId, file, fc, inputId, applicationMode);
           if (remover == null) {
             setIndexedStatus.set(Boolean.FALSE);
           }
@@ -1459,7 +1460,7 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
 
     file.putUserData(IndexingDataKeys.REBUILD_REQUESTED, null);
     return new FileIndexesValuesApplier(this,
-                                        inputId, file, appliers, removers, false, setIndexedStatus.get(), writeIndexSeparately,
+                                        inputId, file, appliers, removers, false, setIndexedStatus.get(), applicationMode,
                                         fileTypeRef.get(), doTraceSharedIndexUpdates()
     );
   }
@@ -1516,7 +1517,7 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
                          int inputId,
                          @NotNull FileContent currentFC) {
     SingleIndexValueApplier<?> applier =
-      createSingleIndexValueApplier(indexId, file, inputId, currentFC, isWritingIndexValuesSeparatedFromCounting());
+      createSingleIndexValueApplier(indexId, file, inputId, currentFC, getIndexApplicationMode());
     if (applier != null) {
       applier.apply();
     }
@@ -1528,7 +1529,7 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
     @NotNull VirtualFile file,
     int inputId,
     @NotNull FileContent currentFC,
-    boolean writeValuesSeparately) {
+    @NotNull ApplicationMode applicationMode) {
     if (doTraceStubUpdates(indexId)) {
       LOG.info("index " + indexId + " update requested for " + getFileInfoLogString(inputId, file, currentFC));
     }
@@ -1589,7 +1590,7 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
         evaluatingIndexValueApplierTime
       );
 
-      if (!writeValuesSeparately && !applier.applyImmediately()) {
+      if (applicationMode == ApplicationMode.SameThreadUnderReadLock && !applier.applyImmediately()) {
         return null;
       }
       return applier;
@@ -1608,9 +1609,9 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
   }
 
   private void removeSingleIndexValue(@NotNull ID<?, ?> indexId, int inputId) {
-    boolean isWritingValuesSeparately = isWritingIndexValuesSeparatedFromCounting();
-    SingleIndexValueRemover remover = createSingleIndexRemover(indexId, null, null, inputId, isWritingValuesSeparately);
-    if (remover != null && isWritingValuesSeparately) {
+    ApplicationMode applicationMode = getIndexApplicationMode();
+    SingleIndexValueRemover remover = createSingleIndexRemover(indexId, null, null, inputId, applicationMode);
+    if (remover != null && applicationMode != ApplicationMode.SameThreadUnderReadLock) {
       remover.remove();
     }
   }
@@ -1618,10 +1619,10 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
   @ApiStatus.Internal
   @Nullable("null in case index value removal is not necessary or immediate removal failed")
   SingleIndexValueRemover createSingleIndexRemover(@NotNull ID<?, ?> indexId,
-                                                           @Nullable VirtualFile file,
-                                                           @Nullable FileContent fileContent,
-                                                           int inputId,
-                                                           boolean isWritingValuesSeparately) {
+                                                   @Nullable VirtualFile file,
+                                                   @Nullable FileContent fileContent,
+                                                   int inputId,
+                                                   @NotNull ApplicationMode applicationMode) {
     if (doTraceStubUpdates(indexId)) {
       LOG.info("index " + indexId + " deletion requested for " + getFileInfoLogString(inputId, file, fileContent));
     }
@@ -1629,8 +1630,8 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
     if (!RebuildStatus.isOk(indexId) && !myIsUnitTestMode) {
       return null; // the index is scheduled for rebuild, no need to update
     }
-    SingleIndexValueRemover remover = new SingleIndexValueRemover(this, indexId, file, fileContent, inputId, isWritingValuesSeparately);
-    if (!isWritingValuesSeparately && !remover.remove()) {
+    SingleIndexValueRemover remover = new SingleIndexValueRemover(this, indexId, file, fileContent, inputId, applicationMode);
+    if (applicationMode == ApplicationMode.SameThreadUnderReadLock && !remover.remove()) {
       return null;
     }
     return remover;
@@ -2045,26 +2046,35 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
     return projectIndexableFiles(project);
   }
 
-  private static boolean isWritingIndexValuesSeparatedFromCounting() {
+  @NotNull
+  private static ApplicationMode getIndexApplicationMode() {
     return ourWritingIndexValuesSeparatedFromCounting;
   }
 
-  static boolean isWritingIndexValuesSeparatedFromCountingForContentIndependentIndexes() {
-    return ourWritingIndexValuesSeparatedFromCounting && ourWritingIndexValuesSeparatedFromCountingForContentIndependentIndexes;
+  @NotNull
+  static ApplicationMode getContentIndependentIndexesApplicationMode() {
+    return (ourWritingIndexValuesSeparatedFromCounting == ApplicationMode.SameThreadOutsideReadLock &&
+            ourWritingIndexValuesSeparatedFromCountingForContentIndependentIndexes == ApplicationMode.SameThreadOutsideReadLock) ?
+           ApplicationMode.SameThreadOutsideReadLock :
+           ApplicationMode.SameThreadUnderReadLock;
   }
 
   static void setupWritingIndexValuesSeparatedFromCounting() {
     ourWritingIndexValuesSeparatedFromCounting =
-      SystemProperties.getBooleanProperty("indexing.separate.applying.values.from.counting", true);
+      (SystemProperties.getBooleanProperty("indexing.separate.applying.values.from.counting", true))
+      ? ApplicationMode.SameThreadOutsideReadLock
+      : ApplicationMode.SameThreadUnderReadLock;
   }
 
   static void setupWritingIndexValuesSeparatedFromCountingForContentIndependentIndexes() {
     ourWritingIndexValuesSeparatedFromCountingForContentIndependentIndexes =
-      SystemProperties.getBooleanProperty("indexing.separate.applying.values.from.counting.for.content.independent.indexes", true);
+      SystemProperties.getBooleanProperty("indexing.separate.applying.values.from.counting.for.content.independent.indexes", true)
+      ? ApplicationMode.SameThreadOutsideReadLock
+      : ApplicationMode.SameThreadUnderReadLock;
   }
 
-  private static volatile boolean ourWritingIndexValuesSeparatedFromCounting;
-  private static volatile boolean ourWritingIndexValuesSeparatedFromCountingForContentIndependentIndexes;
+  private static volatile ApplicationMode ourWritingIndexValuesSeparatedFromCounting;
+  private static volatile ApplicationMode ourWritingIndexValuesSeparatedFromCountingForContentIndependentIndexes;
 
   // ==== Flushers implementations: =====
 

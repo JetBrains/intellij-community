@@ -372,7 +372,7 @@ public final class IndexUpdateRunner {
                                      processingTime,
                                      contentLoadingTime,
                                      length,
-                                     applier.isWriteValuesSeparately,
+                                     applier.applicationMode != FileIndexesValuesApplier.ApplicationMode.SameThreadUnderReadLock,
                                      applier.getSeparateApplicationTimeNanos()
         );
       }
