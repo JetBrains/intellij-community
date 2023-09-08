@@ -37,6 +37,8 @@ import javax.swing.plaf.metal.MetalLookAndFeel
 private val LOG: Logger
   get() = logger<DarculaLaf>()
 
+private const val DESCRIPTION: @NlsSafe String = "IntelliJ Dark Look and Feel"
+
 /**
  * @author Konstantin Bulenkov
  */
@@ -45,6 +47,20 @@ open class DarculaLaf : BasicLookAndFeel(), UserDataHolder {
   private var disposable: Disposable? = null
   private val userData = UserDataHolderBase()
   private val baseDefaults = UIDefaults()
+
+  companion object {
+    const val NAME: @NlsSafe String = "Darcula"
+
+    private val preInitializedBaseLaf = AtomicReference<LookAndFeel?>()
+
+    fun setPreInitializedBaseLaf(value: LookAndFeel): Boolean {
+      return preInitializedBaseLaf.compareAndSet(null, value)
+    }
+
+    @JvmStatic
+    var isAltPressed: Boolean = false
+      private set
+  }
 
   override fun <T> getUserData(key: Key<T>) = userData.getUserData(key)
 
@@ -265,60 +281,6 @@ open class DarculaLaf : BasicLookAndFeel(), UserDataHolder {
   override fun getDisabledIcon(component: JComponent?, icon: Icon?): Icon? = icon?.let { IconLoader.getDisabledIcon(it) }
 
   override fun getSupportsWindowDecorations() = true
-
-  companion object {
-    const val NAME: @NlsSafe String = "Darcula"
-
-    private const val DESCRIPTION: @NlsSafe String = "IntelliJ Dark Look and Feel"
-    private val preInitializedBaseLaf = AtomicReference<LookAndFeel?>()
-
-    fun setPreInitializedBaseLaf(value: LookAndFeel): Boolean {
-      return preInitializedBaseLaf.compareAndSet(null, value)
-    }
-
-    @JvmStatic
-    var isAltPressed: Boolean = false
-      private set
-
-    // used by Rider
-    @ApiStatus.Internal
-    fun createBaseLaF(): LookAndFeel {
-      if (SystemInfoRt.isMac) {
-        val aClass = DarculaLaf::class.java.getClassLoader().loadClass(UIManager.getSystemLookAndFeelClassName())
-        return MethodHandles.lookup().findConstructor(aClass, MethodType.methodType(Void.TYPE)).invoke() as BasicLookAndFeel
-      }
-      else if (!SystemInfoRt.isLinux || GraphicsEnvironment.isHeadless()) {
-        return IdeaLaf(customFontDefaults = null)
-      }
-
-      val fontDefaults = HashMap<Any, Any?>()
-      // Normally, GTK LaF is considered "system" when (1) a GNOME session is active, and (2) GTK library is available.
-      // Here, we weaken the requirements to only (2) and force GTK LaF installation to let it detect the system fonts
-      // and scale them based on Xft.dpi value.
-      try {
-        @Suppress("SpellCheckingInspection")
-        val aClass = DarculaLaf::class.java.getClassLoader().loadClass("com.sun.java.swing.plaf.gtk.GTKLookAndFeel")
-        val gtk = MethodHandles.privateLookupIn(aClass, MethodHandles.lookup())
-          .findConstructor(aClass, MethodType.methodType(Void.TYPE)).invoke() as LookAndFeel
-        // GTK is available
-        if (gtk.isSupportedLookAndFeel) {
-          // on JBR 11, overrides `SunGraphicsEnvironment#uiScaleEnabled` (sets `#uiScaleEnabled_overridden` to `false`)
-          gtk.initialize()
-          val gtkDefaults = gtk.defaults
-          for (key in gtkDefaults.keys) {
-            if (key.toString().endsWith(".font")) {
-              // `UIDefaults#get` unwraps lazy values
-              fontDefaults.put(key, gtkDefaults.get(key))
-            }
-          }
-        }
-      }
-      catch (e: Exception) {
-        LOG.warn(e)
-      }
-      return IdeaLaf(customFontDefaults = if (fontDefaults.isEmpty()) null else fontDefaults)
-    }
-  }
 }
 
 private fun toFont(defaults: UIDefaults, key: Any): Font {
@@ -357,4 +319,43 @@ private fun repaintMnemonics(focusOwner: Component, pressed: Boolean) {
       }
     }
   }
+}
+
+// used by Rider
+@ApiStatus.Internal
+fun createBaseLaF(): LookAndFeel {
+  if (SystemInfoRt.isMac) {
+    val aClass = DarculaLaf::class.java.getClassLoader().loadClass(UIManager.getSystemLookAndFeelClassName())
+    return MethodHandles.lookup().findConstructor(aClass, MethodType.methodType(Void.TYPE)).invoke() as BasicLookAndFeel
+  }
+  else if (!SystemInfoRt.isLinux || GraphicsEnvironment.isHeadless()) {
+    return IdeaLaf(customFontDefaults = null)
+  }
+
+  val fontDefaults = HashMap<Any, Any?>()
+  // Normally, GTK LaF is considered "system" when (1) a GNOME session is active, and (2) GTK library is available.
+  // Here, we weaken the requirements to only (2) and force GTK LaF installation to let it detect the system fonts
+  // and scale them based on Xft.dpi value.
+  try {
+    @Suppress("SpellCheckingInspection")
+    val aClass = DarculaLaf::class.java.getClassLoader().loadClass("com.sun.java.swing.plaf.gtk.GTKLookAndFeel")
+    val gtk = MethodHandles.privateLookupIn(aClass, MethodHandles.lookup())
+      .findConstructor(aClass, MethodType.methodType(Void.TYPE)).invoke() as LookAndFeel
+    // GTK is available
+    if (gtk.isSupportedLookAndFeel) {
+      // on JBR 11, overrides `SunGraphicsEnvironment#uiScaleEnabled` (sets `#uiScaleEnabled_overridden` to `false`)
+      gtk.initialize()
+      val gtkDefaults = gtk.defaults
+      for (key in gtkDefaults.keys) {
+        if (key.toString().endsWith(".font")) {
+          // `UIDefaults#get` unwraps lazy values
+          fontDefaults.put(key, gtkDefaults.get(key))
+        }
+      }
+    }
+  }
+  catch (e: Exception) {
+    LOG.warn(e)
+  }
+  return IdeaLaf(customFontDefaults = if (fontDefaults.isEmpty()) null else fontDefaults)
 }

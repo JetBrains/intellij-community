@@ -12,6 +12,7 @@ import com.intellij.ide.plugins.PluginManagerCore
 import com.intellij.ide.ui.html.GlobalStyleSheetHolder
 import com.intellij.ide.ui.laf.IdeaLaf
 import com.intellij.ide.ui.laf.darcula.DarculaLaf
+import com.intellij.ide.ui.laf.darcula.createBaseLaF
 import com.intellij.idea.AppExitCodes
 import com.intellij.idea.AppStarter
 import com.intellij.idea.StartupErrorReporter
@@ -98,7 +99,7 @@ private suspend fun initLafAndScale(isHeadless: Boolean) {
 
   // we don't need Idea LaF to show splash, but we do need some base LaF to compute system font data (see below for what)
 
-  val baseLaF = span("base LaF creation") { DarculaLaf.createBaseLaF() }
+  val baseLaF = span("base LaF creation") { createBaseLaF() }
   span("base LaF initialization") {
     // LaF is useless until initialized (`getDefaults` "should only be invoked ... after `initialize` has been invoked.")
     baseLaF.initialize()
