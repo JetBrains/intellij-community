@@ -120,7 +120,7 @@ public final class IndexUpdateRunner {
   /**
    * Time in milliseconds we are waiting writers to finish their job and shutdown.
    */
-  private static final long WRITERS_SHUTDOWN_WAITING_TIME_MS = 10000;
+  private static final long WRITERS_SHUTDOWN_WAITING_TIME_MS = 1000;
 
   /**
    * Number of asynchronous updates scheduled by {@link #scheduleIndexWriting(int, Runnable)}
