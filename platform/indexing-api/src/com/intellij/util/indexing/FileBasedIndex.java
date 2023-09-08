@@ -95,7 +95,7 @@ public abstract class FileBasedIndex {
   public abstract VirtualFile findFileById(Project project, int id);
 
   public void requestRebuild(@NotNull ID<?, ?> indexId) {
-    requestRebuild(indexId, new Throwable());
+    requestRebuild(indexId, new RebuildRequestedByUserAction());
   }
 
   @NotNull
@@ -386,5 +386,8 @@ public abstract class FileBasedIndex {
 
   @ApiStatus.Internal
   public void loadIndexes() {
+  }
+
+  private static class RebuildRequestedByUserAction extends Throwable {
   }
 }

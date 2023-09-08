@@ -146,7 +146,7 @@ public abstract class StubProcessingHelperBase {
                                      @NotNull PsiFileWithStubSupport psiFile,
                                      @NotNull String extraMessage) {
     try {
-      IndexStatisticGroup.INSTANCE.reportStubIndexInconsistencyRegistered$intellij_platform_indexing_impl(psiFile.getProject());
+      IndexStatisticGroup.reportStubIndexInconsistencyRegistered(psiFile.getProject());
       StubTextInconsistencyException.checkStubTextConsistency(psiFile);
       LOG.error(extraMessage + "\n" + StubTreeLoader.getInstance().stubTreeAndIndexDoNotMatch(stubTree, psiFile, null));
     }
