@@ -201,12 +201,12 @@ open class MavenProjectsManagerEx(project: Project) : MavenProjectsManager(proje
   override fun updateMavenProjectsSync(spec: MavenImportSpec,
                                        filesToUpdate: MutableList<VirtualFile>,
                                        filesToDelete: MutableList<VirtualFile>): List<Module> {
-    MavenLog.LOG.info("updateMavenProjectsSync started, edt=" + ApplicationManager.getApplication().isDispatchThread)
+    MavenLog.LOG.warn("updateMavenProjectsSync started, edt=" + ApplicationManager.getApplication().isDispatchThread)
     try {
       return doUpdateMavenProjectsSync(spec, filesToUpdate, filesToDelete)
     }
     finally {
-      MavenLog.LOG.info("updateMavenProjectsSync finished, edt=" + ApplicationManager.getApplication().isDispatchThread)
+      MavenLog.LOG.warn("updateMavenProjectsSync finished, edt=" + ApplicationManager.getApplication().isDispatchThread)
     }
   }
 
@@ -229,9 +229,9 @@ open class MavenProjectsManagerEx(project: Project) : MavenProjectsManager(proje
   override suspend fun updateMavenProjects(spec: MavenImportSpec,
                                            filesToUpdate: MutableList<VirtualFile>,
                                            filesToDelete: MutableList<VirtualFile>): List<Module> {
-    MavenLog.LOG.info("updateMavenProjects started: ${spec.isForceReading}  ${spec.isForceResolve}  ${spec.isExplicitImport} ${filesToUpdate.size} ${filesToDelete.size}")
+    MavenLog.LOG.warn("updateMavenProjects started: ${spec.isForceReading}  ${spec.isForceResolve}  ${spec.isExplicitImport} ${filesToUpdate.size} ${filesToDelete.size}")
     return importMutex.withLock { doUpdateMavenProjects(spec, filesToUpdate, filesToDelete) }
-    MavenLog.LOG.info("updateMavenProjects finished: ${spec.isForceReading}  ${spec.isForceResolve}  ${spec.isExplicitImport} ${filesToUpdate.size} ${filesToDelete.size}")
+    MavenLog.LOG.warn("updateMavenProjects finished: ${spec.isForceReading}  ${spec.isForceResolve}  ${spec.isExplicitImport} ${filesToUpdate.size} ${filesToDelete.size}")
   }
 
   private suspend fun doUpdateMavenProjects(spec: MavenImportSpec,
@@ -250,12 +250,12 @@ open class MavenProjectsManagerEx(project: Project) : MavenProjectsManager(proje
   }
 
   override fun updateAllMavenProjectsSync(spec: MavenImportSpec): List<Module> {
-    MavenLog.LOG.info("updateAllMavenProjectsSync started, edt=" + ApplicationManager.getApplication().isDispatchThread)
+    MavenLog.LOG.warn("updateAllMavenProjectsSync started, edt=" + ApplicationManager.getApplication().isDispatchThread)
     try {
       return doUpdateAllMavenProjectsSync(spec)
     }
     finally {
-      MavenLog.LOG.info("updateAllMavenProjectsSync finished, edt=" + ApplicationManager.getApplication().isDispatchThread)
+      MavenLog.LOG.warn("updateAllMavenProjectsSync finished, edt=" + ApplicationManager.getApplication().isDispatchThread)
     }
   }
 
@@ -290,9 +290,9 @@ open class MavenProjectsManagerEx(project: Project) : MavenProjectsManager(proje
 
   private suspend fun updateAllMavenProjects(spec: MavenImportSpec,
                                              modelsProvider: IdeModifiableModelsProvider?): List<Module> {
-    MavenLog.LOG.info("updateAllMavenProjects started: ${spec.isForceReading}  ${spec.isForceResolve}  ${spec.isExplicitImport}")
+    MavenLog.LOG.warn("updateAllMavenProjects started: ${spec.isForceReading}  ${spec.isForceResolve}  ${spec.isExplicitImport}")
     return importMutex.withLock { doUpdateAllMavenProjects(spec, modelsProvider) }
-    MavenLog.LOG.info("updateAllMavenProjects started: ${spec.isForceReading}  ${spec.isForceResolve}  ${spec.isExplicitImport}")
+    MavenLog.LOG.warn("updateAllMavenProjects started: ${spec.isForceReading}  ${spec.isForceResolve}  ${spec.isExplicitImport}")
   }
 
   private suspend fun doUpdateAllMavenProjects(spec: MavenImportSpec,
