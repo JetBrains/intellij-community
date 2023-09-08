@@ -39,8 +39,6 @@ import static java.util.concurrent.TimeUnit.NANOSECONDS;
 public final class RefreshQueueImpl extends RefreshQueue implements Disposable {
   private static final Logger LOG = Logger.getInstance(RefreshQueueImpl.class);
 
-  private final RefreshWorkerHelper helper = ApplicationManager.getApplication().getService(RefreshWorkerHelper.class);
-
   private final Executor myQueue;
   private final Executor myEventProcessingQueue;
 
@@ -166,7 +164,7 @@ public final class RefreshQueueImpl extends RefreshQueue implements Disposable {
   private void runRefreshSession(RefreshSessionImpl session, long timeInQueue) {
     try {
       mySessions.put(session.getId(), session);
-      session.scan(timeInQueue, helper);
+      session.scan(timeInQueue);
     }
     finally {
       mySessions.remove(session.getId());

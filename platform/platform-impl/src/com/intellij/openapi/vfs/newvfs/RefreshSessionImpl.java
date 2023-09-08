@@ -118,7 +118,7 @@ final class RefreshSessionImpl extends RefreshSession {
     ((RefreshQueueImpl)RefreshQueue.getInstance()).execute(this);
   }
 
-  void scan(long timeInQueue, RefreshWorkerHelper helper) {
+  void scan(long timeInQueue) {
     if (myWorkQueue.isEmpty()) return;
     var workQueue = myWorkQueue;
     myWorkQueue = new ArrayList<>();
@@ -162,7 +162,7 @@ final class RefreshSessionImpl extends RefreshSession {
     do {
       if (LOG.isTraceEnabled()) LOG.trace("try=" + count);
 
-      var worker = new RefreshWorker(refreshRoots, myIsRecursive, helper);
+      var worker = new RefreshWorker(refreshRoots, myIsRecursive);
       myWorker = worker;
       myEvents.addAll(worker.scan());
       myWorker = null;
