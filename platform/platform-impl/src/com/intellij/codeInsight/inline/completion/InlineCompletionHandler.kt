@@ -43,7 +43,7 @@ class InlineCompletionHandler(private val scope: CoroutineScope) : CodeInsightAc
   override fun invoke(project: Project, editor: Editor, file: PsiFile) {
     val inlineState = editor.getInlineCompletionState() ?: return
 
-    // TODO
+    // TODO another implementation? Currently there is no inline triggering
     //showInlineSuggestion(editor, inlineState, editor.caretModel.offset, triggerTracker)
   }
 
