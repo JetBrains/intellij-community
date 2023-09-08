@@ -10,7 +10,7 @@ import org.jetbrains.idea.maven.project.importing.MavenImportingManager.Companio
 import org.jetbrains.idea.maven.server.MavenServerManager
 import java.nio.file.Path
 
-open class MavenProjectWizardTestCase : ProjectWizardTestCase<AbstractProjectWizard>() {
+abstract class MavenProjectWizardTestCase : ProjectWizardTestCase<AbstractProjectWizard>() {
   override fun tearDown() {
     try {
       if (getInstance(myProject).isImportingInProgress()) {

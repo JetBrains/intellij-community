@@ -15,7 +15,7 @@ import java.lang.reflect.Constructor
 import java.nio.file.Path
 import java.util.concurrent.CountDownLatch
 
-internal open class SettingsSyncRealIdeTestBase: SettingsSyncTestBase() {
+internal abstract class SettingsSyncRealIdeTestBase : SettingsSyncTestBase() {
   protected lateinit var componentStore: TestComponentStore
 
   @Before

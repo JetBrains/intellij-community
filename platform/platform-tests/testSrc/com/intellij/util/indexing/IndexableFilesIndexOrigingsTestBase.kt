@@ -1,7 +1,6 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.indexing
 
-
 import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.extensions.impl.ExtensionPointImpl
 import com.intellij.openapi.project.Project
@@ -33,7 +32,7 @@ import java.util.*
 import kotlin.test.assertNotNull
 
 @RunsInEdt
-open class IndexableFilesIndexOriginsTestBase {
+abstract class IndexableFilesIndexOriginsTestBase {
   companion object {
     @JvmField
     @ClassRule

@@ -10,7 +10,7 @@ import com.jetbrains.python.PythonLanguage
 import com.jetbrains.python.fixtures.PyTestCase
 import org.junit.Assert
 
-open class PyMlCompletionTestCase: PyTestCase() {
+abstract class PyMlCompletionTestCase : PyTestCase() {
   fun doContextFeaturesTest(vararg expected: Pair<String, MLFeatureValue>) = doContextFeaturesTest(listOf(*expected), emptyList())
 
   fun doContextFeaturesTest(expectedDefined: List<Pair<String, MLFeatureValue>>, expectedUndefined: List<String>) {

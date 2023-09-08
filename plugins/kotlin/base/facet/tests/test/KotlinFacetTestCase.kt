@@ -5,12 +5,9 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.testFramework.UsefulTestCase
 import com.intellij.testFramework.fixtures.*
-import org.jetbrains.kotlin.idea.workspaceModel.KotlinFacetBridgeFactory
-import org.junit.Assume
 import java.io.File
 
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-open class KotlinFacetTestCase: UsefulTestCase() {
+abstract class KotlinFacetTestCase : UsefulTestCase() {
     protected lateinit var myTestFixture: JavaCodeInsightTestFixture
     lateinit var myProject: Project
     lateinit var myKotlinFixtureBuilder: KotlinModuleFixtureBuilder
@@ -41,6 +38,7 @@ open class KotlinFacetTestCase: UsefulTestCase() {
 
         myProject = myTestFixture.project
     }
+
     protected open fun configureProjectBuilder(projectBuilder: TestFixtureBuilder<IdeaProjectTestFixture?>) {
         val tempDirPath: String = myTestFixture.tempDirPath
         IdeaTestFixtureFactory.getFixtureFactory().registerFixtureBuilder(
@@ -52,6 +50,7 @@ open class KotlinFacetTestCase: UsefulTestCase() {
         //configure(myKotlinFixtureBuilder)
         //TODO: add root here
     }
+
     override fun tearDown() {
         val fixture: JavaCodeInsightTestFixture = myTestFixture
         //myTestFixture = null
