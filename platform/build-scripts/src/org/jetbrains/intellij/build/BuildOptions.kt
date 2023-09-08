@@ -364,7 +364,7 @@ class BuildOptions(
    * the distribution (IJPL-109), and launchers will use it to start the IDE (IJPL-128).
    */
   @ApiStatus.Experimental
-  var useModularLoader = SystemProperties.getBooleanProperty("intellij.build.use.modular.loader", false)
+  var useModularLoader = SystemProperties.getBooleanProperty("intellij.build.use.modular.loader", true)
   
   /**
    * If this option is set to `true` and [enableEmbeddedJetBrainsClient] is enabled, a [runtime module repository][com.intellij.platform.runtime.repository.RuntimeModuleRepository] 
