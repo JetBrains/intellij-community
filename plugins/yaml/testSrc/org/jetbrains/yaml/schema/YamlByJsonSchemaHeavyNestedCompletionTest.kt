@@ -11,7 +11,9 @@ import com.jetbrains.jsonSchema.extension.JsonSchemaMapper.SchemaAndAdditionalCa
 import com.jetbrains.jsonSchema.extension.schemaWithoutAdditionalCachingDependencies
 import com.jetbrains.jsonSchema.impl.JsonBySchemaHeavyCompletionTestBase
 import com.jetbrains.jsonSchema.impl.JsonSchemaObject
+import com.jetbrains.jsonSchema.impl.assertThatSchema
 import com.jetbrains.jsonSchema.impl.nestedCompletions.buildNestedCompletionsRootTree
+import com.jetbrains.jsonSchema.impl.withConfiguration
 import org.intellij.lang.annotations.Language
 import java.io.File
 

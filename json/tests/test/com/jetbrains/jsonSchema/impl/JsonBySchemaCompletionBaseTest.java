@@ -36,7 +36,7 @@ public abstract class JsonBySchemaCompletionBaseTest extends BasePlatformTestCas
   }
 
   protected void testBySchema(@Language("JSON") @NotNull String schema,
-                              @Language("YAML") @NotNull String text,
+                              @NotNull String text,
                               @NotNull String extension,
                               @NotNull Function<JsonSchemaObject, JsonSchemaObject> schemaMapper,
                               String @NotNull ... variants) throws Exception {
