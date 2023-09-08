@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vcs.changes.savedPatches
 
 import com.intellij.ide.DataManager
@@ -31,12 +31,14 @@ import java.awt.Graphics
 import java.awt.Graphics2D
 import java.util.stream.Stream
 import javax.swing.JTree
+import javax.swing.tree.DefaultTreeModel
 import javax.swing.tree.TreePath
 
 class SavedPatchesTree(project: Project,
                        private val savedPatchesProviders: List<SavedPatchesProvider<*>>,
-                       parentDisposable: Disposable) : ChangesTree(project, false, false, false) {
+                       parentDisposable: Disposable) : AsyncChangesTree(project, false, false, false) {
   internal val speedSearch: SpeedSearchSupply
+  override val changesTreeModel: AsyncChangesTreeModel = SavedPatchesTreeModel()
 
   init {
     val nodeRenderer = ChangesBrowserNodeRenderer(myProject, { isShowFlatten }, false)
@@ -63,14 +65,6 @@ class SavedPatchesTree(project: Project,
     savedPatchesProviders.forEach { provider -> provider.subscribeToPatchesListChanges(parentDisposable, ::rebuildTree) }
   }
 
-  override fun rebuildTree() {
-    val modelBuilder = TreeModelBuilder(project, groupingSupport.grouping)
-    if (savedPatchesProviders.any { !it.isEmpty() }) {
-      savedPatchesProviders.forEach { provider -> provider.buildPatchesTree(modelBuilder) }
-    }
-    updateTreeModel(modelBuilder.build())
-  }
-
   override fun installGroupingSupport(): ChangesGroupingSupport {
     return ChangesGroupingSupport.Disabled(myProject, this)
   }
@@ -90,6 +84,16 @@ class SavedPatchesTree(project: Project,
   }
 
   override fun getToggleClickCount(): Int = 2
+
+  private inner class SavedPatchesTreeModel : SimpleAsyncChangesTreeModel() {
+    override fun buildTreeModelSync(grouping: ChangesGroupingPolicyFactory): DefaultTreeModel {
+      val modelBuilder = TreeModelBuilder(project, grouping)
+      if (savedPatchesProviders.any { !it.isEmpty() }) {
+        savedPatchesProviders.forEach { provider -> provider.buildPatchesTree(modelBuilder) }
+      }
+      return modelBuilder.build()
+    }
+  }
 
   class TagWithCounterChangesBrowserNode(text: @Nls String, expandByDefault: Boolean = true, private val sortWeight: Int? = null) :
     TagChangesBrowserNode(TagImpl(text), SimpleTextAttributes.REGULAR_ATTRIBUTES, expandByDefault) {
