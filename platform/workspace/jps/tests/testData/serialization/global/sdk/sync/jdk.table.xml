@@ -6,9 +6,15 @@
       <version value="1.8" />
       <homePath value="/Library/Java/JavaVirtualMachines/oracle-1.8/Contents/Home" />
       <roots>
+        <annotationsPath>
+          <root type="composite" />
+        </annotationsPath>
         <classPath>
           <root type="composite" />
         </classPath>
+        <javadocPath>
+          <root type="composite" />
+        </javadocPath>
         <sourcePath>
           <root type="composite">
             <root url="/Library/Java/JavaVirtualMachines/oracle-1.8/Contents/Home!/java.base" type="simple" />
