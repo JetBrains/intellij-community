@@ -190,7 +190,7 @@ final class PersistentFSConnector {
               // if vfslog is enabled, try to recover caches from the operations log first.
               // exception will be rethrown, but we won't delete the files and will just retry
               // initialization on the next attempt with substituted storages
-              cachesWereRecoveredFromLog = vfsLoader.recoverCachesFromVfsLogIfAppWasNotClosedProperly();
+              cachesWereRecoveredFromLog = vfsLoader.recoverCachesFromVfsLog();
             }
 
             VFSInitException mainEx = problemsNotRecovered.get(0);

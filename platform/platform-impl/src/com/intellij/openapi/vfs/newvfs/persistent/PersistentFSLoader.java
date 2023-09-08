@@ -210,17 +210,14 @@ public final class PersistentFSLoader {
     );
   }
 
-  public boolean recoverCachesFromVfsLogIfAppWasNotClosedProperly() throws IOException {
+  public boolean recoverCachesFromVfsLog() throws IOException {
     VfsLogImpl vfsLog = VfsLogImpl.open(vfsLogDir, true);
     try {
-      if (!vfsLog.getWasProperlyClosedLastSession()) {
-        LOG.warn("VFS was not properly closed last session. Recovering from VfsLog...");
-        if (recoverCachesFromVfsLog(vfsLog)) {
-          LOG.info("Recovered caches from VfsLog");
-          return true;
-        } else {
-          LOG.info("Failed to recover caches from VfsLog");
-        }
+      if (recoverCachesFromVfsLog(vfsLog)) {
+        LOG.info("Recovered caches from VfsLog");
+        return true;
+      } else {
+        LOG.info("Failed to recover caches from VfsLog");
       }
     }
     finally {
