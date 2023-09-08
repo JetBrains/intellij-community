@@ -1495,7 +1495,7 @@
                              key="settings.name" bundle="messages.MinimapBundle"/>
     <applicationService serviceImplementation="com.intellij.ide.minimap.MinimapService"/>
     <registryKey key="popup.advertiser.speed.search" defaultValue="false" description="Shows speed search advertiser in popups"/>
-    <actionPromoter implementation="com.intellij.ide.actions.tree.TreeSpeedSearchActionPromoter"/>
+    <actionPromoter implementation="com.intellij.ide.actions.speedSearch.SpeedSearchActionPromoter"/>
 
     <interactiveCourseFactory implementation="com.intellij.openapi.wm.impl.welcomeScreen.learnIde.jbAcademy.JBAcademyInteractiveCourse"/>
 

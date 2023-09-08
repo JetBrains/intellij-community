@@ -116,7 +116,6 @@
       <action id="Tree-startEditing" icon="AllIcons.Actions.Edit" class="com.intellij.ide.actions.tree.StartEditingAction">
         <keyboard-shortcut keymap="$default" first-keystroke="F2"/>
       </action>
-      <action id="Tree-speedSearch" class="com.intellij.ide.actions.tree.TreeSpeedSearchAction" use-shortcut-of="Find" />
       <add-to-group group-id="Other.KeymapGroup"/>
     </group>
 
@@ -200,6 +199,8 @@
     <action id="SearchEverywhere" class="com.intellij.ide.actions.SearchEverywhereAction" icon="AllIcons.Actions.Find"/>
     <action id="TestSearchContributors" class="com.intellij.ide.actions.searcheverywhere.setesting.TestSearchEverywhereAction" internal="true"/>
     <action id="SettingsEntryPoint" class="com.intellij.ide.actions.SettingsEntryPointAction" icon="AllIcons.General.GearPlain"/>
+
+    <action id="SpeedSearch" class="com.intellij.ide.actions.speedSearch.SpeedSearchAction" use-shortcut-of="Find" />
 
     <action id="RunAnything" icon="AllIcons.Actions.Run_anything" class="com.intellij.ide.actions.runAnything.RunAnythingAction"/>
     <action id="EnableNewUi" class="com.intellij.ide.actions.EnableNewUiAction" icon="AllIcons.Actions.EnableNewUi"/>

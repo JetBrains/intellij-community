@@ -1,11 +1,10 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.ide.actions.tree
+package com.intellij.ide.actions.speedSearch
 
 import com.intellij.idea.ActionsBundle
 import com.intellij.openapi.actionSystem.ActionManager
 import com.intellij.openapi.keymap.KeymapUtil
 import com.intellij.openapi.ui.popup.Balloon
-import com.intellij.openapi.wm.IdeFocusManager
 import com.intellij.ui.GotItTooltip
 import com.intellij.ui.SpeedSearchBase
 import com.intellij.ui.speedSearch.SpeedSearchSupply
@@ -37,10 +36,10 @@ internal class SpeedSearchActionHandler(val targetComponent: JComponent, private
     val component = speedSearch.searchField ?: return
     val shortcut = getActionShortcut()
     val gotItMessage = if (shortcut == null) {
-      ActionsBundle.message("action.Tree-speedSearch.GotItTooltip.textWithoutShortcuts")
+      ActionsBundle.message("action.SpeedSearch.GotItTooltip.textWithoutShortcuts")
     }
     else {
-      ActionsBundle.message("action.Tree-speedSearch.GotItTooltip.text", shortcut)
+      ActionsBundle.message("action.SpeedSearch.GotItTooltip.text", shortcut)
     }
     if (showGotItTooltip) {
       GotItTooltip("speed.search.shown", gotItMessage)
@@ -50,7 +49,7 @@ internal class SpeedSearchActionHandler(val targetComponent: JComponent, private
   }
 
   private fun getActionShortcut(): String? =
-    ActionManager.getInstance().getAction(TreeSpeedSearchAction.ID)
+    ActionManager.getInstance().getAction(SpeedSearchAction.ID)
       ?.shortcutSet
       ?.shortcuts
       ?.firstOrNull()

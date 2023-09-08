@@ -8,9 +8,7 @@ import com.intellij.ide.actions.ContextHelpAction
 import com.intellij.ide.actions.ToggleToolbarAction
 import com.intellij.ide.actions.ToolWindowMoveAction
 import com.intellij.ide.actions.ToolwindowFusEventFields
-import com.intellij.ide.actions.tree.SpeedSearchActionHandler
-import com.intellij.ide.actions.tree.TreeSpeedSearchAction
-import com.intellij.ide.actions.tree.getSpeedSearchActionHandler
+import com.intellij.ide.actions.speedSearch.SpeedSearchAction
 import com.intellij.ide.impl.ContentManagerWatcher
 import com.intellij.idea.ActionsBundle
 import com.intellij.internal.statistic.eventLog.events.EventPair
@@ -25,9 +23,7 @@ import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.logger
-import com.intellij.openapi.keymap.KeymapUtil
 import com.intellij.openapi.project.DumbAware
-import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.project.DumbService
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.Divider
@@ -663,7 +659,7 @@ internal class ToolWindowImpl(val toolWindowManager: ToolWindowManagerImpl,
         }
         group.addSeparator()
       }
-      group.add(ActionManager.getInstance().getAction(TreeSpeedSearchAction.ID))
+      group.add(ActionManager.getInstance().getAction(SpeedSearchAction.ID))
       group.addSeparator()
       getContentManagerIfCreated()?.let {
         group.add(TabbedContentAction.CloseAllAction(it))
