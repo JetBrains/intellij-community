@@ -56,19 +56,19 @@ class InlineCompletionUsageTracker : CounterUsagesCollector() {
     override fun on(update: InlineCompletionElementEvent) {
       if (shownLogSent) return
 
-      var shownOutcome: SuggestionOutcome? = null
+      var decision: Decision? = null
       when (update) {
-        is InlineCompletionElementEvent.Accepted -> { shownOutcome = SuggestionOutcome.ACCEPT }
-        is InlineCompletionElementEvent.Rejected -> if (shown) { shownOutcome = SuggestionOutcome.REJECT }
+        is InlineCompletionElementEvent.Accepted -> { decision = Decision.ACCEPT }
+        is InlineCompletionElementEvent.Rejected -> if (shown) { decision = Decision.REJECT }
         is InlineCompletionElementEvent.Shown ->  {
           shown = true
           add(SUGGESTION_LENGTH.with(update.element.text.length))
-          add(SUGGESTION_TIME_TO_SHOW.with(sinceTriggered))
+          add(TIME_TO_SHOW.with(sinceTriggered))
         }
       }
 
-      shownOutcome?.let {
-        add(SUGGESTION_OUTCOME.with(it))
+      decision?.let {
+        add(DECISION.with(it))
         SHOWN.log(project, data)
         shownLogSent = true
       }
@@ -83,18 +83,18 @@ class InlineCompletionUsageTracker : CounterUsagesCollector() {
     private const val SHOWN_EVENT_ID = "inline.shown"
 
     // Suggestions
-    private enum class SuggestionOutcome { ACCEPT, REJECT }
+    private enum class Decision { ACCEPT, REJECT }
     private val SUGGESTION_LENGTH = Int("suggestion_length")
-    private val SUGGESTION_TIME_TO_SHOW = Long("suggestion_time_to_show")
-    private val SUGGESTION_OUTCOME = Enum<SuggestionOutcome>("suggestion_outcome")
+    private val TIME_TO_SHOW = Long("time_to_show")
+    private val DECISION = Enum<Decision>("decision")
 
     private val SHOWN: VarargEventId = GROUP.registerVarargEvent(
       SHOWN_EVENT_ID,
       EventFields.Language,
       EventFields.CurrentFile,
       SUGGESTION_LENGTH,
-      SUGGESTION_TIME_TO_SHOW,
-      SUGGESTION_OUTCOME,
+      TIME_TO_SHOW,
+      DECISION,
     )
   }
 }
