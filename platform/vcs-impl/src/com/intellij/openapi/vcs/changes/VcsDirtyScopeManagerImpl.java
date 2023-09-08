@@ -163,8 +163,8 @@ public final class VcsDirtyScopeManagerImpl extends VcsDirtyScopeManager impleme
     return groupByVcs(() -> ContainerUtil.mapIterator(from.iterator(), file -> VcsUtil.getFilePath(file)));
   }
 
-  private void fileVcsPathsDirty(@NotNull Map<VcsRoot, Set<FilePath>> filesConverted,
-                                 @NotNull Map<VcsRoot, Set<FilePath>> dirsConverted) {
+  void fileVcsPathsDirty(@NotNull Map<VcsRoot, Set<FilePath>> filesConverted,
+                         @NotNull Map<VcsRoot, Set<FilePath>> dirsConverted) {
     if (filesConverted.isEmpty() && dirsConverted.isEmpty()) return;
 
     if (LOG.isDebugEnabled()) {
