@@ -15,7 +15,7 @@ public final class VisualisationIcons {
   }
 
   public static final class Actions {
-    /** 16x16 */ public static final @NotNull Icon RunAndSelect = load("icons/actions/runAndSelect.svg", -201676548, 2);
+    /** 16x16 */ public static final @NotNull Icon RunAndSelect = load("icons/actions/runAndSelect.svg", -994379967, 2);
   }
 
   public static final class Chart {
