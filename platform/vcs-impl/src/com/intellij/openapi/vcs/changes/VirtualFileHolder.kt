@@ -42,7 +42,7 @@ class VirtualFileHolder(private val myProject: Project) : FileHolder {
 
   companion object {
 
-    fun cleanScope(files: MutableCollection<VirtualFile>, scope: VcsDirtyScope) {
+    fun cleanScope(files: MutableSet<VirtualFile>, scope: VcsDirtyScope) {
       ProgressManager.checkCanceled()
       if (files.isEmpty()) return
 

@@ -41,7 +41,7 @@ class FilePathHolderImpl(private val project: Project) : FilePathHolder {
   override fun hashCode(): Int = files.hashCode()
 
   companion object {
-    internal fun cleanScope(files: MutableCollection<FilePath>, scope: VcsDirtyScope) {
+    internal fun cleanScope(files: MutableSet<FilePath>, scope: VcsDirtyScope) {
       ProgressManager.checkCanceled()
       if (files.isEmpty()) return
 
