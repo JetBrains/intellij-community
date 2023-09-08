@@ -62,9 +62,11 @@ class TreeSpeedSearchAction : DumbAwareAction(
     val handler = findHandler(contextComponent) ?: return
     if (e.place == ActionPlaces.KEYBOARD_SHORTCUT) {
       handler.requestFocus = false
+      handler.showGotItTooltip = true
     }
     else { // invoked from the tool window menu
       handler.requestFocus = true
+      handler.showGotItTooltip = false
     }
     handler.activateSpeedSearch()
   }

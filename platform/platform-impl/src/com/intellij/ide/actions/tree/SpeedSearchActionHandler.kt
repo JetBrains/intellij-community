@@ -17,6 +17,8 @@ internal class SpeedSearchActionHandler(val targetComponent: JComponent, private
 
   var requestFocus = false
 
+  var showGotItTooltip = false
+
   fun isSpeedSearchAvailable(): Boolean = speedSearch.isAvailable
 
   fun isSpeedSearchActive(): Boolean = speedSearch.isPopupActive
@@ -40,9 +42,11 @@ internal class SpeedSearchActionHandler(val targetComponent: JComponent, private
     else {
       ActionsBundle.message("action.Tree-speedSearch.GotItTooltip.text", shortcut)
     }
-    GotItTooltip("speed.search.shown", gotItMessage)
-      .withPosition(Balloon.Position.atRight)
-      .show(component) { c, _ -> Point(c.width, c.height / 2) }
+    if (showGotItTooltip) {
+      GotItTooltip("speed.search.shown", gotItMessage)
+        .withPosition(Balloon.Position.atRight)
+        .show(component) { c, _ -> Point(c.width, c.height / 2) }
+    }
   }
 
   private fun getActionShortcut(): String? =
