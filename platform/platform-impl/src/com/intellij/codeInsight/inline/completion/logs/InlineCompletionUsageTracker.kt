@@ -112,10 +112,12 @@ class InlineCompletionUsageTracker : CounterUsagesCollector() {
     private var project: Project? = null
     private var shown: Boolean = false
     private var shownLogSent: Boolean = false
+    private var showStartTime = 0L
 
     @RequiresEdt
     fun shown(editor: Editor, element: InlineCompletionElement) {
       assert(!shownLogSent)
+      showStartTime = System.currentTimeMillis()
       shown = true
       project = editor.project?.also {
         PsiDocumentManager.getInstance(it).getPsiFile(editor.document)?.let { psiFile ->
@@ -138,6 +140,7 @@ class InlineCompletionUsageTracker : CounterUsagesCollector() {
 
     private fun finish(decision: Decision) {
       data.add(DECISION.with(decision))
+      data.add(SHOWING_TIME.with(System.currentTimeMillis() - showStartTime))
       SHOWN.log(project, data)
       shownLogSent = true
     }
@@ -149,6 +152,7 @@ class InlineCompletionUsageTracker : CounterUsagesCollector() {
 
       val SUGGESTION_LENGTH = Int("suggestion_length")
       val TIME_TO_SHOW = Long("time_to_show")
+      val SHOWING_TIME = Long("showing_time")
       val DECISION = Enum<Decision>("decision")
 
       val SHOWN: VarargEventId = GROUP.registerVarargEvent(
@@ -157,6 +161,7 @@ class InlineCompletionUsageTracker : CounterUsagesCollector() {
         EventFields.CurrentFile,
         SUGGESTION_LENGTH,
         TIME_TO_SHOW,
+        SHOWING_TIME,
         DECISION,
       )
     }
