@@ -29,6 +29,7 @@ import com.intellij.ui.RelativeFont;
 import com.intellij.ui.components.labels.LinkListener;
 import com.intellij.ui.components.panels.NonOpaquePanel;
 import com.intellij.ui.scale.JBUIScale;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.*;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
@@ -1124,6 +1125,15 @@ public final class ListPluginComponent extends JPanel {
     }
     panel.add(tiny ? PluginManagerConfigurable.setTinyFont(label) : label, constraints);
     return label;
+  }
+
+  public @NotNull List<JComponent> getFocusableComponents() {
+    List<JComponent> components = new ArrayList<>();
+    if (UIUtil.isFocusable(myLayout.myCheckBoxComponent)) {
+      components.add(myLayout.myCheckBoxComponent);
+    }
+    components.addAll(ContainerUtil.filter(myLayout.myButtonComponents, UIUtil::isFocusable));
+    return components;
   }
 
   public static final class ButtonAnAction extends DumbAwareAction {

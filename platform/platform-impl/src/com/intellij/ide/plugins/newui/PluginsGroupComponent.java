@@ -10,6 +10,8 @@ import com.intellij.ui.components.panels.OpaquePanel;
 import com.intellij.ui.scale.JBUIScale;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.JBUI;
+import com.intellij.util.ui.UIUtil;
+import com.intellij.util.ui.table.ComponentsListFocusTraversalPolicy;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -17,8 +19,7 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.event.AdjustmentEvent;
 import java.awt.event.AdjustmentListener;
-import java.util.ArrayList;
-import java.util.Collections;
+import java.util.*;
 import java.util.List;
 import java.util.function.Consumer;
 
@@ -38,6 +39,36 @@ public abstract class PluginsGroupComponent extends JBPanelWithEmptyText {
 
     setOpaque(true);
     setBackground(PluginManagerConfigurable.MAIN_BG_COLOR);
+
+    setFocusTraversalPolicyProvider(true);
+    // Focus traversal policy that makes focus order similar to lists and trees, where Tab doesn't move focus between list items,
+    // but instead moves focus to the next component. It also keeps group header buttons and buttons inside list items focusable.
+    setFocusTraversalPolicy(new ComponentsListFocusTraversalPolicy(true) {
+      @Override
+      protected @NotNull List<Component> getOrderedComponents() {
+        List<Component> orderedComponents = new ArrayList<>();
+        List<ListPluginComponent> selectedComponents = getSelection();
+        Set<PluginsGroup> addedGroups = new HashSet<>();
+
+        for (ListPluginComponent component : selectedComponents) {
+          PluginsGroup group = component.getGroup();
+          if (!addedGroups.contains(group)) {
+            addedGroups.add(group);
+            if (UIUtil.isFocusable(group.rightAction)) {
+              orderedComponents.add(group.rightAction);
+            }
+            else if (!ContainerUtil.isEmpty(group.rightActions)) {
+              orderedComponents.addAll(ContainerUtil.filter(group.rightActions, UIUtil::isFocusable));
+            }
+          }
+
+          orderedComponents.add(component);
+          orderedComponents.addAll(component.getFocusableComponents());
+        }
+
+        return orderedComponents;
+      }
+    });
   }
 
   protected abstract @NotNull ListPluginComponent createListComponent(@NotNull IdeaPluginDescriptor descriptor, @NotNull PluginsGroup group);
