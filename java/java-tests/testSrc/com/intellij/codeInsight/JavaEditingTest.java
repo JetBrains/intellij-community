@@ -7,6 +7,7 @@ import com.intellij.openapi.actionSystem.IdeActions;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.EditorSettings;
 import com.intellij.psi.codeStyle.CodeStyleManager;
+import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
 
 public class JavaEditingTest extends AbstractBasicJavaEditingTest {
@@ -148,6 +149,9 @@ public class JavaEditingTest extends AbstractBasicJavaEditingTest {
     try {
       indentOptions.USE_TAB_CHARACTER = true;
       indentOptions.SMART_TABS = true;
+
+      CodeStyleSettingsManager.getInstance(getProject()).notifyCodeStyleSettingsChanged();
+
       unindent();
       checkResultByText(
         """

@@ -289,6 +289,7 @@ class SettingsImpl internal constructor(private val editor: EditorImpl?,
     for (setting in myComputableSettings) {
       setting.resetCache()
     }
+    myState.refreshAll()
     reinitDocumentIndentOptions()
   }
 

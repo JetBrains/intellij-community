@@ -179,7 +179,8 @@ class EditorSettingsState(private val editor: EditorImpl?,
   init {
     if (editor != null) {
       CodeStyleSettingsManager.getInstance(project).subscribe(CodeStyleSettingsListener {
-        if (it.project != project) return@CodeStyleSettingsListener
+        if (it.project != project ||
+            it.virtualFile != null && it.virtualFile != editor.virtualFile) return@CodeStyleSettingsListener
         refresh(::myUseTabCharacter)
         refresh(::myWrapWhenTypingReachesRightMargin)
         refresh(::softMargins)
