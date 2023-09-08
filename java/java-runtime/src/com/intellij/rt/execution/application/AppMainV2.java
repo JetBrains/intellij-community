@@ -109,27 +109,22 @@ public final class AppMainV2 {
     try {
       declaredConstructor = appClass.getDeclaredConstructor();
     } catch (NoSuchMethodException e) {
-      System.err.println("Class must have constructor with no parameters");
+      System.err.println("Non-static main() method was invoked: class must have constructor with no parameters");
       return;
     }
 
     try {
       m.setAccessible(true);
       int parameterCount = m.getParameterTypes().length;
-      if (Modifier.isStatic(m.getModifiers())) {
-        if (parameterCount == 0) {
-          m.invoke(null);
-        } else {
-          m.invoke(null, new Object[]{params});
-        }
-      } else {
+      Object objInstance = null;
+      if (!Modifier.isStatic(m.getModifiers())) {
         declaredConstructor.setAccessible(true);
-        Object objInstance = declaredConstructor.newInstance();
-        if (parameterCount == 0) {
-          m.invoke(objInstance);
-        } else {
-          m.invoke(objInstance, new Object[]{params});
-        }
+        objInstance = declaredConstructor.newInstance();
+      }
+      if (parameterCount == 0) {
+        m.invoke(objInstance);
+      } else {
+        m.invoke(objInstance, new Object[]{params});
       }
     }
     catch (InvocationTargetException ite) {
