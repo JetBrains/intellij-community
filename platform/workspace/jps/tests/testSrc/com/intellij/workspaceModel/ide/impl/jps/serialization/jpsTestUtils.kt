@@ -23,6 +23,7 @@ import com.intellij.platform.workspace.jps.JpsFileEntitySource
 import com.intellij.platform.workspace.jps.JpsGlobalFileEntitySource
 import com.intellij.platform.workspace.jps.JpsProjectConfigLocation
 import com.intellij.platform.workspace.jps.JpsProjectFileEntitySource
+import com.intellij.platform.workspace.jps.entities.LibraryEntity
 import com.intellij.platform.workspace.jps.serialization.impl.*
 import com.intellij.testFramework.UsefulTestCase
 import com.intellij.testFramework.replaceService
@@ -411,7 +412,7 @@ internal fun copyAndLoadGlobalEntities(originalFile: String? = null,
                                        expectedFile: String? = null,
                                        testDir: File,
                                        parentDisposable: Disposable,
-                                       action: (JpsGlobalFileEntitySource) -> Unit) {
+                                       action: (JpsGlobalFileEntitySource, JpsGlobalFileEntitySource) -> Unit) {
   val optionsFolder = testDir.resolve("options")
   PathManager.setExplicitConfigPath(testDir.absolutePath)
   ApplicationManager.getApplication().stateStore.setPath(testDir.toPath())
@@ -435,17 +436,25 @@ internal fun copyAndLoadGlobalEntities(originalFile: String? = null,
     // Entity source for global entities
     val virtualFileManager = VirtualFileUrlManager.getGlobalInstance()
     val globalLibrariesFile = virtualFileManager.fromUrl("$testDir/options/applicationLibraries.xml")
-    val entitySource = JpsGlobalFileEntitySource(globalLibrariesFile)
+    val libraryEntitySource = JpsGlobalFileEntitySource(globalLibrariesFile)
 
-    action(entitySource)
+    val globalSdkFile = virtualFileManager.fromUrl("$testDir/options/jdk.table.xml")
+    val sdkEntitySource = JpsGlobalFileEntitySource(globalSdkFile)
+    action(libraryEntitySource, sdkEntitySource)
 
     // Save current state and check it's expected
     if (expectedFile != null) {
       application.invokeAndWait { saveDocumentsAndProjectsAndApp(true) }
       val globalEntitiesFolder = File(PathManagerEx.getCommunityHomePath(),
                                       "platform/workspace/jps/tests/testData/serialization/global/$expectedFile")
-      optionsFolder.assertMatches(directoryContentOf(globalEntitiesFolder.toPath()),
-                                  filePathFilter = { it.contains("applicationLibraries.xml") })
+      val entityStorage = GlobalWorkspaceModel.getInstance().entityStorage.current
+      if (entityStorage.entities(LibraryEntity::class.java).toList().isEmpty()) {
+        optionsFolder.assertMatches(directoryContentOf(globalEntitiesFolder.toPath()),
+                                    filePathFilter = { it.contains("jdk.table.xml")})
+      } else {
+        optionsFolder.assertMatches(directoryContentOf(globalEntitiesFolder.toPath()),
+                                    filePathFilter = { it.contains("applicationLibraries.xml") })
+      }
     }
   }
 

@@ -20,20 +20,14 @@ class GlobalWorkspaceModelSynchronizerListener(private val project: Project) : W
     // Avoid handling events if change was made by global workspace model
     if (globalWorkspaceModel.isFromGlobalWorkspaceModel) return
 
-    if (isContainingGlobalEntities(event, LibraryEntity::class)
-        || isContainingGlobalEntities(event, LibraryPropertiesEntity::class)
-        || isContainingGlobalEntities(event, ExcludeUrlEntity::class)) {
+    if (isContainingGlobalEntities(event)) {
       globalWorkspaceModel.syncEntitiesWithProject(project)
     }
   }
 
-  private fun isContainingGlobalEntities(event: VersionedStorageChange, entityKClass: KClass<out WorkspaceEntity>): Boolean {
-    return event.getChanges(entityKClass.java).any { change ->
-      val entity = when (change) {
-        is EntityChange.Added -> change.newEntity
-        is EntityChange.Replaced -> change.newEntity
-        is EntityChange.Removed -> change.oldEntity
-      }
+  private fun isContainingGlobalEntities(event: VersionedStorageChange): Boolean {
+    return event.getAllChanges().any {
+      val entity = it.newEntity ?: it.oldEntity!!
       entity.entitySource is JpsGlobalFileEntitySource
     }
   }

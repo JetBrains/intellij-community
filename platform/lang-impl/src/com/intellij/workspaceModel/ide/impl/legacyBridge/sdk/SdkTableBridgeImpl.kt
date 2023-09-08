@@ -33,6 +33,7 @@ import org.jetbrains.annotations.TestOnly
 // [] Additional data loading/saving
 // [] The same problem as with FacetConfiguration we have 7 types of additional data for SDK so 7 entities
 // [] Listener if we create entity manually, bridge has to be created
+// [] Send events if entity created manually
 
 internal val rootTypes = ConcurrentFactoryMap.createMap<String, SdkRootTypeId> { SdkRootTypeId(it) }
 class SdkTableBridgeImpl: SdkTableImplementationDelegate {

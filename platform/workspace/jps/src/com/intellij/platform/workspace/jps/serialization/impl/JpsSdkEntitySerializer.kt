@@ -153,7 +153,6 @@ class JpsSdkEntitySerializer(val entitySource: JpsGlobalFileEntitySource, privat
       sdkRootElement.addContent(version)
     }
 
-
     val home = Element(ELEMENT_HOMEPATH)
     home.setAttribute(ATTRIBUTE_VALUE, sdkEntity.homePath.url)
     sdkRootElement.addContent(home)

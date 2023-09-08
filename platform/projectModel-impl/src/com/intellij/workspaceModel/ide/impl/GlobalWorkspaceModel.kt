@@ -27,6 +27,8 @@ import com.intellij.platform.workspace.storage.impl.VersionedEntityStorageImpl
 import com.intellij.platform.workspace.storage.impl.assertConsistency
 import com.intellij.platform.workspace.storage.url.VirtualFileUrl
 import com.intellij.platform.workspace.storage.url.VirtualFileUrlManager
+import com.intellij.util.concurrency.ThreadingAssertions
+import com.intellij.workspaceModel.ide.legacyBridge.sdk.GlobalSdkTableBridge
 import io.opentelemetry.api.metrics.Meter
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.NonNls
@@ -87,7 +89,7 @@ class GlobalWorkspaceModel : Disposable {
   }
 
   fun updateModel(description: @NonNls String, updater: (MutableEntityStorage) -> Unit) {
-    ApplicationManager.getApplication().assertWriteAccessAllowed()
+    ThreadingAssertions.assertWriteAccess()
     if (modelVersionUpdate.get() == entityStorage.pointer.version) {
       LOG.error("Trying to update global model twice from the same version. Maybe recursive call of 'updateModel'?")
     }
@@ -140,21 +142,24 @@ class GlobalWorkspaceModel : Disposable {
 
   @RequiresWriteLock
   private fun initializeBridges(change: Map<Class<*>, List<EntityChange<*>>>, builder: MutableEntityStorage) {
-    ApplicationManager.getApplication().assertWriteAccessAllowed()
+    ThreadingAssertions.assertWriteAccess()
     logErrorOnEventHandling {
       GlobalLibraryTableBridge.getInstance().initializeLibraryBridges(change, builder)
+    }
+    logErrorOnEventHandling {
+      GlobalSdkTableBridge.getInstance().initializeSdkBridges(change, builder)
     }
   }
 
   private fun onBeforeChanged(change: VersionedStorageChange) {
-    ApplicationManager.getApplication().assertWriteAccessAllowed()
+    ThreadingAssertions.assertWriteAccess()
 
     GlobalLibraryTableBridge.getInstance().handleBeforeChangeEvents(change)
   }
 
   @RequiresWriteLock
   private fun onChanged(change: VersionedStorageChange) {
-    ApplicationManager.getApplication().assertWriteAccessAllowed()
+    ThreadingAssertions.assertWriteAccess()
 
     GlobalLibraryTableBridge.getInstance().handleChangedEvents(change)
     globalWorkspaceModelCache?.scheduleCacheSave()
@@ -167,10 +172,9 @@ class GlobalWorkspaceModel : Disposable {
 
   @RequiresWriteLock
   fun applyStateToProject(targetProject: Project) {
+    ThreadingAssertions.assertWriteAccess()
+
     val start = System.currentTimeMillis()
-
-    ApplicationManager.getApplication().assertWriteAccessAllowed()
-
     if (targetProject === filteredProject) {
       return
     }
@@ -195,9 +199,9 @@ class GlobalWorkspaceModel : Disposable {
 
   @RequiresWriteLock
   fun syncEntitiesWithProject(sourceProject: Project) {
-    val start = System.currentTimeMillis()
+    ThreadingAssertions.assertWriteAccess()
 
-    ApplicationManager.getApplication().assertWriteAccessAllowed()
+    val start = System.currentTimeMillis()
     filteredProject = sourceProject
     val entitiesCopyAtBuilder = copyEntitiesToEmptyStorage(WorkspaceModel.getInstance(sourceProject).currentSnapshot,
                                                            VirtualFileUrlManager.getGlobalInstance())

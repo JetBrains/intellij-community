@@ -4,6 +4,7 @@ package com.intellij.workspaceModel.ide.legacyBridge.sdk
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.service
 import com.intellij.openapi.util.registry.Registry
+import com.intellij.platform.workspace.storage.EntityChange
 import com.intellij.platform.workspace.storage.MutableEntityStorage
 import com.intellij.platform.workspace.storage.VersionedEntityStorage
 
@@ -11,6 +12,7 @@ interface GlobalSdkTableBridge {
 
   fun initializeSdkBridgesAfterLoading(mutableStorage: MutableEntityStorage,
                                                 initialEntityStorage: VersionedEntityStorage): () -> Unit
+  fun initializeSdkBridges(changes: Map<Class<*>, List<EntityChange<*>>>, builder: MutableEntityStorage)
 
   companion object {
     fun getInstance(): GlobalSdkTableBridge = ApplicationManager.getApplication().service()

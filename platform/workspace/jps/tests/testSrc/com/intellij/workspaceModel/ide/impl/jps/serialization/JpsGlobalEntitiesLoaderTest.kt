@@ -37,7 +37,7 @@ class JpsGlobalEntitiesLoaderTest {
   @Test
   fun `test global libraries loading`() {
     copyAndLoadGlobalEntities(originalFile = "libraries/loading", testDir = temporaryFolder.newFolder(),
-                              parentDisposable = disposableRule.disposable) { entitySource ->
+                              parentDisposable = disposableRule.disposable) { _, _ ->
       val librariesNames = listOf("aws.s3", "org.maven.common", "com.google.plugin", "org.microsoft")
       val libraryTable = LibraryTablesRegistrar.getInstance().libraryTable
       libraryTable as GlobalLibraryTableBridgeImpl
@@ -63,7 +63,7 @@ class JpsGlobalEntitiesLoaderTest {
   @Test
   fun `test sdks loading`() {
     copyAndLoadGlobalEntities(originalFile = "sdk/loading", testDir = temporaryFolder.newFolder(),
-                              parentDisposable = disposableRule.disposable) { entitySource ->
+                              parentDisposable = disposableRule.disposable) { _, _ ->
       data class SdkTestInfo(val name: String, val version: String, val type: String)
       val sdkInfos = listOf(SdkTestInfo("corretto-20", "Amazon Corretto version 20.0.2", "JavaSDK"),
                             SdkTestInfo("jbr-17", "java version \"17.0.7\"", "JavaSDK"))
