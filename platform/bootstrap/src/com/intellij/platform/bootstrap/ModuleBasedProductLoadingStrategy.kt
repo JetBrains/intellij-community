@@ -54,8 +54,9 @@ class ModuleBasedProductLoadingStrategy(internal val moduleRepository: RuntimeMo
   private fun loadPluginDescriptorFromRuntimeModule(pluginModuleGroup: RuntimeModuleGroup,
                                                     context: DescriptorListLoadingContext,
                                                     zipFilePool: ZipFilePool?): IdeaPluginDescriptorImpl? {
-    val resourceRoot = pluginModuleGroup.includedModules.singleOrNull()?.moduleDescriptor?.resourceRootPaths?.singleOrNull()
-                       ?: error("Only single-module plugins are supported for now, so '${pluginModuleGroup}' cannot be loaded")
+    val resourceRoots = pluginModuleGroup.includedModules.flatMapTo(LinkedHashSet()) { it.moduleDescriptor.resourceRootPaths }
+    val resourceRoot = resourceRoots.singleOrNull()  
+                       ?: error("Plugins with multiple resource roots aren't supported for now, so '${pluginModuleGroup}' ($resourceRoots) cannot be loaded")
     return if (Files.isDirectory(resourceRoot)) {
       loadDescriptorFromDir(
         file = resourceRoot,
