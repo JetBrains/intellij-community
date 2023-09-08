@@ -10,8 +10,7 @@ import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
 import java.net.Socket;
-import java.util.Arrays;
-import java.util.Locale;
+import java.util.*;
 
 /**
  * @noinspection UseOfSystemOutOrSystemErr, CharsetObjectCanBeUsed
@@ -88,16 +87,14 @@ public final class AppMainV2 {
     String[] params = Arrays.copyOfRange(args, 1, args.length);
 
     Class<?> appClass = Class.forName(mainClass);
-    Method m;
-    try {
-      m = appClass.getMethod("main", String[].class);
-    }
-    catch (NoSuchMethodException e) {
+    Method m = findMethodToRun(appClass);
+    if (m == null) {
       try {
-        m = appClass.getMethod("main");
-      } catch (NoSuchMethodException inner) {
+        // left for compatibility reasons - before Java 21 it was possible to call the static main method placed in the superclass
+        m = appClass.getMethod("main", String[].class);
+      } catch (NoSuchMethodException e) {
         if (!startJavaFXApplication(params, appClass)) {
-          throw inner;
+          throw new IllegalArgumentException("Main method is not found");
         }
         return;
       }
@@ -138,6 +135,59 @@ public final class AppMainV2 {
     catch (InvocationTargetException ite) {
       throw ite.getTargetException();
     }
+  }
+
+  /**
+   * @param staticMode searches for static only if true and for instance only if false
+   */
+  private static boolean isMainMethod(Method method, boolean staticMode) {
+    if ("main".equals(method.getName()) ) {
+      if (!Modifier.isPrivate(method.getModifiers())) {
+        if (staticMode == Modifier.isStatic(method.getModifiers())) {
+          Class<?>[] parameterTypes = method.getParameterTypes();
+          if (parameterTypes.length == 1 && parameterTypes[0] == String[].class) {
+            return true;
+          }
+          if (parameterTypes.length == 0) {
+            return true;
+          }
+        }
+      }
+    }
+    return false;
+  }
+
+  private static Method findMethodToRun(Class<?> aClass) {
+    // static main methods may be only in this class
+    for (Method declaredMethod : aClass.getDeclaredMethods()) {
+      if (isMainMethod(declaredMethod, true)) {
+        return declaredMethod;
+      }
+    }
+
+    List<Class<?>> classesToVisit = new ArrayList<>();
+    classesToVisit.add(aClass);
+    Set<Class<?>> visited = new HashSet<>();
+    while (!classesToVisit.isEmpty()) {
+      Class<?> last = classesToVisit.remove(classesToVisit.size() - 1);
+      Method[] declaredMethods = last.getDeclaredMethods();
+      for (Method method : declaredMethods) {
+        if (isMainMethod(method, false)) {
+          return method;
+        }
+      }
+      visited.add(aClass);
+      Class<?> superclass = last.getSuperclass();
+      if (superclass != null) {
+        classesToVisit.add(superclass);
+      }
+      for (Class<?> anInterface : last.getInterfaces()) {
+        if (!visited.contains(anInterface)) {
+          classesToVisit.add(anInterface);
+        }
+      }
+    }
+    return null;
   }
 
   private static boolean startJavaFXApplication(String[] params, Class<?> appClass) {
