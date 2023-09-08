@@ -41,6 +41,7 @@ private class TestCaseWithoutTestsVisitor(
     if (clazz.isEnum || clazz.isAnnotationType || clazz.isInterface || PsiUtil.isLocalOrAnonymousClass(clazz)) return true
     if (clazz.hasModifier(JvmModifier.ABSTRACT)) return true
     if (clazz.hasAnnotation(JUnitCommonClassNames.ORG_JUNIT_IGNORE)) return true
+    if (clazz.hasAnnotation(JUnitCommonClassNames.ORG_JUNIT_RUNNER_RUN_WITH)) return true
 
     val applicableFrameworks = TestFrameworks.detectApplicableFrameworks(clazz)
     if (applicableFrameworks.isEmpty()) return true
