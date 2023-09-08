@@ -2,43 +2,106 @@
 package com.intellij.platform.buildScripts.testFramework
 
 import com.intellij.devkit.runtimeModuleRepository.jps.build.RuntimeModuleRepositoryBuildConstants
-import com.intellij.platform.runtime.repository.RuntimeModuleDescriptor
-import com.intellij.platform.runtime.repository.RuntimeModuleId
-import com.intellij.platform.runtime.repository.RuntimeModuleRepository
+import com.intellij.platform.runtime.repository.*
 import com.intellij.platform.runtime.repository.serialization.RuntimeModuleRepositorySerialization
 import org.assertj.core.api.SoftAssertions
 import org.jetbrains.intellij.build.BuildContext
-import kotlin.io.path.div
-import kotlin.io.path.exists
-import kotlin.io.path.pathString
+import org.jetbrains.intellij.build.impl.SUPPORTED_DISTRIBUTIONS
+import org.jetbrains.intellij.build.impl.getOsAndArchSpecificDistDirectory
+import java.nio.file.Path
+import kotlin.io.path.*
 
 /**
  * Checks that runtime module descriptors in the product distribution are valid.
  */
-class RuntimeModuleRepositoryChecker(private val context: BuildContext) {
-  private val descriptorsJarFile = context.paths.distAllDir.resolve(RuntimeModuleRepositoryBuildConstants.JAR_REPOSITORY_FILE_NAME)
+@OptIn(ExperimentalPathApi::class)
+class RuntimeModuleRepositoryChecker private constructor(
+  private val commonDistPath: Path,
+  private val osSpecificDistPath: Path?,
+  private val context: BuildContext, 
+): AutoCloseable {
+  private val descriptorsJarFile: Path
+  private val repository: RuntimeModuleRepository
+  private val osSpecificFilePaths: List<Path>
+  init {
+    if (osSpecificDistPath != null) {
+      /* Module repository stores relative paths to JARs, but here JARs are distributed between commonDistPath and osSpecificDistPath. 
+         Copying them to a single directory like in production may take considerable time, so for now OS-specific files are moved to
+         the common directory before starting the check and moved back when the check finishes. */
+      osSpecificFilePaths = osSpecificDistPath.walk().map { osSpecificDistPath.relativize(it) }.toList()
+      osSpecificFilePaths.forEach {
+        val target = commonDistPath.resolve(it)
+        target.parent.createDirectories()
+        osSpecificDistPath.resolve(it).moveTo(target)
+      }
+    }
+    else {
+      osSpecificFilePaths = emptyList()
+    }
+    descriptorsJarFile = commonDistPath.resolve(RuntimeModuleRepositoryBuildConstants.JAR_REPOSITORY_FILE_NAME)
+    repository = RuntimeModuleRepository.create(descriptorsJarFile)
+  }
+  
+  companion object {
+    fun checkProductModules(productModulesModule: String, context: BuildContext, softly: SoftAssertions) {
+      createCheckers(context).forEach { 
+        it().use { checker ->
+          checker.checkProductModules(productModulesModule, softly)
+        }
+      }
+    }
+
+    /**
+     * Verifies that subset of the current product described by product-modules.xml file from [productModulesModule] can be loaded as a
+     * separate product: JARs referenced from its modules must not include resources from modules not included to the product, or they are
+     * split by packages in a way that the class-loader may load relevant classes only.
+     */
+    fun checkIntegrityOfEmbeddedProduct(productModulesModule: String, context: BuildContext, softly: SoftAssertions) {
+      createCheckers(context).forEach {
+        it().use { checker ->
+          checker.checkIntegrityOfEmbeddedProduct(productModulesModule, softly)
+        }
+      }
+    }
+
+    private fun createCheckers(context: BuildContext): List<() -> RuntimeModuleRepositoryChecker> {
+      val commonDistPath = context.paths.distAllDir 
+      if (commonDistPath.resolve(RuntimeModuleRepositoryBuildConstants.JAR_REPOSITORY_FILE_NAME).exists()) {
+        return listOf { RuntimeModuleRepositoryChecker(commonDistPath, null, context) }
+      }
+      return SUPPORTED_DISTRIBUTIONS
+        .mapNotNull { distribution ->
+          val osSpecificDistPath = getOsAndArchSpecificDistDirectory(distribution.os, distribution.arch, context)
+          if (osSpecificDistPath.resolve(RuntimeModuleRepositoryBuildConstants.JAR_REPOSITORY_FILE_NAME).exists()) {
+            { RuntimeModuleRepositoryChecker(commonDistPath, osSpecificDistPath, context) }
+          }
+          else null
+        }
+    }
+  }
   private val descriptors by lazy { RuntimeModuleRepositorySerialization.loadFromJar(descriptorsJarFile) }
 
-  fun check(softly: SoftAssertions) {
-    descriptors.values.forEach { descriptor -> 
-      descriptor.dependencies.forEach { dependency ->
-        softly.assertThat(dependency in descriptors)
-          .describedAs("Unknown dependency '$dependency' in module '${descriptor.id}'")
-          .isTrue
+  private fun checkProductModules(productModulesModule: String, softly: SoftAssertions) {
+    try {
+      val productModules = loadProductModules(productModulesModule)
+      val allDependencies = HashSet<RuntimeModuleId>()
+      productModules.mainModuleGroup.includedModules.forEach { 
+        repository.collectDependencies(it.moduleDescriptor, allDependencies)
       }
+      productModules.bundledPluginModuleGroups.forEach { group ->
+        group.includedModules.forEach { 
+          repository.collectDependencies(it.moduleDescriptor, allDependencies)
+        }
+      }
+    }
+    catch (e: MalformedRepositoryException) { 
+      softly.collectAssertionError(AssertionError("Failed to load product-modules.xml for $descriptorsJarFile: $e", e))
     }
   }
 
-  /**
-   * Verifies that subset of the current product described by product-modules.xml file from [productModulesModule] can be loaded as a
-   * separate product: JARs referenced from its modules must not include resources from modules not included to the product, or they are
-   * split by packages in a way that the class-loader may load relevant classes only.
-   */
-  fun checkIntegrityOfEmbeddedProduct(productModulesModule: String, softly: SoftAssertions) {
-    val moduleOutputDir = context.getModuleOutputDir(context.findRequiredModule(productModulesModule))
-    val repository = RuntimeModuleRepository.create(descriptorsJarFile)
-    val productModules = RuntimeModuleRepositorySerialization.loadProductModules(moduleOutputDir.resolve("META-INF/$productModulesModule/product-modules.xml"), repository)
-    
+  private fun checkIntegrityOfEmbeddedProduct(productModulesModule: String, softly: SoftAssertions) {
+    val productModules = loadProductModules(productModulesModule)
+
     val allProductModules = LinkedHashSet<RuntimeModuleId>()
     allProductModules.add(RuntimeModuleId.module("intellij.platform.bootstrap"))
     productModules.mainModuleGroup.includedModules.flatMapTo(allProductModules) {
@@ -84,7 +147,12 @@ class RuntimeModuleRepositoryChecker(private val context: BuildContext) {
       }
     }
   }
-  
+
+  private fun loadProductModules(productModulesModule: String): ProductModules {
+    val moduleOutputDir = context.getModuleOutputDir(context.findRequiredModule(productModulesModule))
+    return RuntimeModuleRepositorySerialization.loadProductModules(moduleOutputDir.resolve("META-INF/$productModulesModule/product-modules.xml"), repository)
+  }
+
   private fun RuntimeModuleRepository.collectDependencies(moduleDescriptor: RuntimeModuleDescriptor, result: MutableSet<RuntimeModuleId> = HashSet()): Set<RuntimeModuleId> {
     if (result.add(moduleDescriptor.moduleId)) {
       for (dependency in moduleDescriptor.dependencies) {
@@ -92,5 +160,13 @@ class RuntimeModuleRepositoryChecker(private val context: BuildContext) {
       }
     }
     return result
+  }
+
+  override fun close() {
+    if (osSpecificDistPath != null) {
+      osSpecificFilePaths.forEach {
+        commonDistPath.resolve(it).moveTo(osSpecificDistPath.resolve(it))
+      }
+    }
   }
 }
