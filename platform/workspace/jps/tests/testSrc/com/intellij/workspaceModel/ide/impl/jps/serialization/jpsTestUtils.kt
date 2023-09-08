@@ -420,7 +420,7 @@ internal fun copyAndLoadGlobalEntities(originalFile: String? = null,
     // Copy original file before loading
     if (originalFile != null) {
       val globalEntitiesFolder = File(PathManagerEx.getCommunityHomePath(),
-                                      "platform/workspace/jps/tests/testData/serialization/globalLibraries/$originalFile")
+                                      "platform/workspace/jps/tests/testData/serialization/global/$originalFile")
       FileUtil.copyDir(globalEntitiesFolder, optionsFolder)
     }
 
@@ -443,7 +443,7 @@ internal fun copyAndLoadGlobalEntities(originalFile: String? = null,
     if (expectedFile != null) {
       application.invokeAndWait { saveDocumentsAndProjectsAndApp(true) }
       val globalEntitiesFolder = File(PathManagerEx.getCommunityHomePath(),
-                                      "platform/workspace/jps/tests/testData/serialization/globalLibraries/$expectedFile")
+                                      "platform/workspace/jps/tests/testData/serialization/global/$expectedFile")
       optionsFolder.assertMatches(directoryContentOf(globalEntitiesFolder.toPath()),
                                   filePathFilter = { it.contains("applicationLibraries.xml") })
     }

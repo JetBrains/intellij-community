@@ -37,7 +37,7 @@ class JpsGlobalEntitiesSavingTest {
   fun `test global libraries saving`() {
     // TODO:: Investigate failing on TC
     Assume.assumeFalse("Temporary failed in check of expected file content", UsefulTestCase.IS_UNDER_TEAMCITY)
-    copyAndLoadGlobalEntities(expectedFile = "saving", testDir = temporaryFolder.newFolder(),
+    copyAndLoadGlobalEntities(expectedFile = "libraries/saving", testDir = temporaryFolder.newFolder(),
                               parentDisposable = disposableRule.disposable) { entitySource ->
       val librariesNames = listOf("com.gradle", "org.maven")
       val libraryTable = LibraryTablesRegistrar.getInstance().libraryTable

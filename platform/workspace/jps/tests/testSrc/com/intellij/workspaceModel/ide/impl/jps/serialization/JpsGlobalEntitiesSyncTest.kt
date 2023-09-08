@@ -50,7 +50,7 @@ class JpsGlobalEntitiesSyncTest {
 
   @Test
   fun `test project and global storage sync`() {
-    copyAndLoadGlobalEntities(originalFile = "loading", expectedFile = "sync", testDir = temporaryFolder.newFolder(),
+    copyAndLoadGlobalEntities(originalFile = "libraries/loading", expectedFile = "libraries/sync", testDir = temporaryFolder.newFolder(),
                               parentDisposable = disposableRule.disposable) { entitySource ->
       val projectLibrariesNames = mutableListOf("spring", "junit", "kotlin")
       val globalLibrariesNames = mutableListOf("aws.s3", "org.maven.common", "com.google.plugin", "org.microsoft")
