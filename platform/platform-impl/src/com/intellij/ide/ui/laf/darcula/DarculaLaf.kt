@@ -42,10 +42,9 @@ private const val DESCRIPTION: @NlsSafe String = "IntelliJ Dark Look and Feel"
 /**
  * @author Konstantin Bulenkov
  */
-open class DarculaLaf : BasicLookAndFeel(), UserDataHolder {
+open class DarculaLaf : BasicLookAndFeel() {
   private var base: LookAndFeel? = null
   private var disposable: Disposable? = null
-  private val userData = UserDataHolderBase()
   private val baseDefaults = UIDefaults()
 
   companion object {
@@ -60,12 +59,6 @@ open class DarculaLaf : BasicLookAndFeel(), UserDataHolder {
     @JvmStatic
     var isAltPressed: Boolean = false
       private set
-  }
-
-  override fun <T> getUserData(key: Key<T>) = userData.getUserData(key)
-
-  override fun <T> putUserData(key: Key<T>, value: T?) {
-    userData.putUserData(key, value)
   }
 
   override fun getDefaults(): UIDefaults {
