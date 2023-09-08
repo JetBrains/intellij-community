@@ -217,7 +217,7 @@ class LafManagerImpl(private val coroutineScope: CoroutineScope) : LafManager(),
 
     val theme = currentTheme!!
     if (!theme.isInitialized) {
-      doSetLaF(lookAndFeelInfo = theme, installEditorScheme = false)
+      doSetLaF(theme = theme, installEditorScheme = false)
     }
     selectComboboxModel()
 
@@ -410,7 +410,7 @@ class LafManagerImpl(private val coroutineScope: CoroutineScope) : LafManager(),
 
   private fun selectComboboxModel() {
     if (lafComboBoxModel.isInitialized()) {
-      lafComboBoxModel.value.selectedItem = createLafReference(currentTheme)
+      lafComboBoxModel.value.selectedItem = createLafReference(currentTheme!!)
     }
   }
 
@@ -427,7 +427,7 @@ class LafManagerImpl(private val coroutineScope: CoroutineScope) : LafManager(),
 
   override fun getCurrentUIThemeLookAndFeel(): UIThemeLookAndFeelInfo? = currentTheme
 
-  override fun getLookAndFeelReference(): LafReference = createLafReference(currentUIThemeLookAndFeel)
+  override fun getLookAndFeelReference(): LafReference = createLafReference(currentTheme!!)
 
   override fun getLookAndFeelCellRenderer(): ListCellRenderer<LafReference> = LafCellRenderer()
 
@@ -501,10 +501,10 @@ class LafManagerImpl(private val coroutineScope: CoroutineScope) : LafManager(),
   @Suppress("unused")
   @Internal
   fun updateLafNoSave(lookAndFeelInfo: UIThemeLookAndFeelInfo): Boolean {
-    return doSetLaF(lookAndFeelInfo = lookAndFeelInfo as UIThemeLookAndFeelInfoImpl, installEditorScheme = false)
+    return doSetLaF(theme = lookAndFeelInfo as UIThemeLookAndFeelInfoImpl, installEditorScheme = false)
   }
 
-  private fun doSetLaF(lookAndFeelInfo: UIThemeLookAndFeelInfo, installEditorScheme: Boolean): Boolean {
+  private fun doSetLaF(theme: UIThemeLookAndFeelInfo, installEditorScheme: Boolean): Boolean {
     val defaults = UIManager.getDefaults()
     defaults.clear()
     fillFallbackDefaults(defaults)
@@ -513,15 +513,16 @@ class LafManagerImpl(private val coroutineScope: CoroutineScope) : LafManager(),
       colorPatcherProvider = null
       setSelectionColorPatcherProvider(null)
     }
-    UIManager.setLookAndFeel(DarculaLaf())
+    val lafAdapter = DarculaLaf(isThemeAdapter = true)
+    UIManager.setLookAndFeel(lafAdapter)
     // set L&F
     try {
-      lookAndFeelInfo.installTheme(UIManager.getLookAndFeelDefaults(), !installEditorScheme)
+      theme.installTheme(UIManager.getLookAndFeelDefaults(), !installEditorScheme)
     }
     catch (e: Exception) {
       LOG.error(e)
       Messages.showMessageDialog(
-        IdeBundle.message("error.cannot.set.look.and.feel", lookAndFeelInfo.id, e.message),
+        IdeBundle.message("error.cannot.set.look.and.feel", theme.id, e.message),
         CommonBundle.getErrorTitle(),
         Messages.getErrorIcon()
       )
@@ -1082,9 +1083,8 @@ private class OurPopupFactory(private val delegate: PopupFactory) : PopupFactory
   }
 }
 
-private fun createLafReference(laf: UIThemeLookAndFeelInfo?): LafManager.LafReference {
-  val themeId = if (laf is UIThemeLookAndFeelInfo) laf.theme.id else null
-  return LafManager.LafReference(laf!!.name, themeId)
+private fun createLafReference(laf: UIThemeLookAndFeelInfo): LafManager.LafReference {
+  return LafManager.LafReference(laf.name, laf.id)
 }
 
 private fun updateColors(defaults: UIDefaults) {
@@ -1425,4 +1425,16 @@ private fun getDefaultClassicDarkTheme(): UIThemeLookAndFeelInfo {
     return themeListManager.findThemeById(name) ?: themeListManager.findThemeByName(name)
            ?: error("Default classic dark theme '$name' not found")
   }
+}
+
+private fun fillFallbackDefaults(defaults: UIDefaults) {
+  // These icons are only needed to prevent Swing from trying to fetch defaults with AWT ImageFetcher threads (IDEA-322089),
+  // but might as well just put something sensibly-looking there, just in case they show up due to some bug:
+  val folderIcon = UIDefaults.LazyValue { AllIcons.Nodes.Folder }
+  defaults["Tree.openIcon"] = folderIcon
+  defaults["Tree.closedIcon"] = folderIcon
+  defaults["Tree.leafIcon"] = UIDefaults.LazyValue { AllIcons.FileTypes.Any_type }
+  // Our themes actually set these two, so we don't want to override them here:
+  //defaults.put("Tree.expandedIcon", AllIcons.Toolbar.Expand);
+  //defaults.put("Tree.collapsedIcon", AllIcons.Actions.ArrowExpand);
 }

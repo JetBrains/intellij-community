@@ -6,6 +6,7 @@ package com.intellij.ui.svg
 import com.intellij.diagnostic.StartUpMeasurer
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.progress.ProcessCanceledException
+import com.intellij.ui.ColorHexUtil
 import com.intellij.ui.ColorUtil
 import com.intellij.ui.hasher
 import com.intellij.ui.icons.IconLoadMeasurer
@@ -130,12 +131,14 @@ fun newSvgPatcher(digest: LongArray?, newPalette: Map<String, String>, alphaProv
 }
 
 private fun toCanonicalColor(color: String): String {
-  var s = color.lowercase()
+  val s = color.lowercase()
   //todo[kb]: add support for red, white, black, and other named colors
   if (s.startsWith('#') && s.length < 7) {
-    s = "#" + ColorUtil.toHex(ColorUtil.fromHex(s))
+    return "#" + ColorUtil.toHex(ColorHexUtil.fromHex(s))
   }
-  return s
+  else {
+    return s
+  }
 }
 
 @Internal

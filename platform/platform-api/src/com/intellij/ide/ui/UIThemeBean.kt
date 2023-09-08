@@ -11,6 +11,8 @@ import com.intellij.openapi.util.SystemInfoRt
 import com.intellij.ui.ColorHexUtil
 import com.intellij.ui.ExperimentalUI
 import com.intellij.util.SVGLoader.SvgElementColorPatcherProvider
+import it.unimi.dsi.fastutil.Hash
+import it.unimi.dsi.fastutil.objects.Object2ObjectLinkedOpenHashMap
 import java.util.*
 import java.util.function.BiFunction
 import javax.swing.plaf.ColorUIResource
@@ -24,22 +26,6 @@ internal class UIThemeBean {
       theme.emptyFrameBackground = importMapFromParentTheme(theme.emptyFrameBackground, parentTheme.emptyFrameBackground)
       theme.colors = importMapFromParentTheme(theme.colors, parentTheme.colors)
       theme.iconColorsOnSelection = importMapFromParentTheme(theme.iconColorsOnSelection, parentTheme.iconColorsOnSelection)
-    }
-
-    private fun importMapFromParentTheme(themeMap: Map<String, Any?>?,
-                                         parentThemeMap: Map<String, Any?>?): Map<String, Any?>? {
-      if (parentThemeMap == null) {
-        return themeMap
-      }
-
-      val result = LinkedHashMap(parentThemeMap)
-      if (themeMap != null) {
-        for ((key, value) in themeMap) {
-          result.remove(key)
-          result.put(key, value)
-        }
-      }
-      return result
     }
 
     fun readTheme(parser: JsonParser): UIThemeBean {
@@ -121,12 +107,6 @@ internal class UIThemeBean {
       putDefaultsIfAbsent(bean)
       return bean
     }
-
-    private fun readTopLevelBoolean(parser: JsonParser, bean: UIThemeBean, value: Boolean) {
-      when (parser.currentName()) {
-        "dark" -> bean.dark = value
-      }
-    }
   }
 
   @Transient
@@ -189,6 +169,10 @@ internal class UIThemeBean {
   @JvmField
   @Transient
   var selectionColorPatcher: SvgElementColorPatcherProvider? = null
+
+  override fun toString(): String {
+    return "UIThemeBean(name=$name, parentTheme=$parentTheme, dark=$dark)"
+  }
 }
 
 /**
@@ -447,4 +431,29 @@ private fun putDefaultsIfAbsent(ui: MutableMap<String, Any?>) {
   // require theme to specify ToolWindow stripe button colors explicitly, without "*"
   ui.putIfAbsent("ToolWindow.Button.selectedBackground", "#3573F0")
   ui.putIfAbsent("ToolWindow.Button.selectedForeground", "#FFFFFF")
+}
+
+private fun readTopLevelBoolean(parser: JsonParser, bean: UIThemeBean, value: Boolean) {
+  when (parser.currentName()) {
+    "dark" -> bean.dark = value
+  }
+}
+
+@Suppress("SSBasedInspection")
+private fun importMapFromParentTheme(map: Map<String, Any?>?, parentMap: Map<String, Any?>?): Map<String, Any?>? {
+  if (parentMap == null) {
+    return map
+  }
+  if (map == null) {
+    return LinkedHashMap(parentMap)
+  }
+
+  val result = Object2ObjectLinkedOpenHashMap<String, Any?>(parentMap.size + map.size, Hash.FAST_LOAD_FACTOR)
+  result.putAll(parentMap)
+  for ((key, value) in map) {
+    result.putAndMoveToLast(key, value)
+  }
+
+  result.trim()
+  return result
 }

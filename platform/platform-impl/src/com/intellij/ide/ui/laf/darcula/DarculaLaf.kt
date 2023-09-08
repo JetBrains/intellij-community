@@ -5,9 +5,8 @@ package com.intellij.ide.ui.laf.darcula
 
 import com.intellij.diagnostic.LoadingState
 import com.intellij.ide.IdeEventQueue
-import com.intellij.ide.IdeEventQueue.Companion.getInstance
+import com.intellij.ide.bootstrap.createBaseLaF
 import com.intellij.ide.ui.UITheme
-import com.intellij.ide.ui.laf.IdeaLaf
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.diagnostic.Logger
@@ -19,12 +18,9 @@ import com.intellij.util.Alarm
 import com.intellij.util.ResourceUtil
 import com.intellij.util.ui.JBDimension
 import com.intellij.util.ui.StartupUiUtil.initInputMapDefaults
-import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.annotations.TestOnly
 import java.awt.*
 import java.awt.event.KeyEvent
-import java.io.IOException
-import java.lang.invoke.MethodHandles
-import java.lang.invoke.MethodType
 import java.util.*
 import java.util.concurrent.atomic.AtomicReference
 import javax.swing.*
@@ -42,10 +38,13 @@ private const val DESCRIPTION: @NlsSafe String = "IntelliJ Dark Look and Feel"
 /**
  * @author Konstantin Bulenkov
  */
-open class DarculaLaf : BasicLookAndFeel() {
+open class DarculaLaf(private val isThemeAdapter: Boolean) : BasicLookAndFeel() {
   private var base: LookAndFeel? = null
   private var disposable: Disposable? = null
   private val baseDefaults = UIDefaults()
+
+  @TestOnly
+  constructor() : this(isThemeAdapter = false)
 
   companion object {
     const val NAME: @NlsSafe String = "Darcula"
@@ -63,7 +62,6 @@ open class DarculaLaf : BasicLookAndFeel() {
 
   override fun getDefaults(): UIDefaults {
     try {
-      val metalDefaults = MetalLookAndFeel().getDefaults()
       val defaults = base!!.defaults
       baseDefaults.putAll(defaults)
       if (SystemInfoRt.isLinux && listOf("CN", "JP", "KR", "TW").contains(Locale.getDefault().country)) {
@@ -76,7 +74,9 @@ open class DarculaLaf : BasicLookAndFeel() {
       }
       initInputMapDefaults(defaults)
       initDarculaDefaults(defaults)
-      patchComboBox(metalDefaults, defaults)
+
+      patchComboBox(defaults)
+
       defaults.remove("Spinner.arrowButtonBorder")
       defaults.put("Spinner.arrowButtonSize", JBDimension(16, 5).asUIResource())
       if (SystemInfoRt.isMac) {
@@ -104,7 +104,15 @@ open class DarculaLaf : BasicLookAndFeel() {
     get() = null
 
   private fun initDarculaDefaults(defaults: UIDefaults) {
-    loadDefaults(defaults)
+    if (!isThemeAdapter) {
+      // it is important to use class loader of a current instance class (LaF in plugin)
+      val classLoader = javaClass.getClassLoader()
+      deprecatedLoadDefaultsFromJson(defaults = defaults, prefix = prefix, classLoader = classLoader)
+      systemPrefix?.let {
+        deprecatedLoadDefaultsFromJson(defaults = defaults, prefix = it, classLoader = classLoader)
+      }
+    }
+
     defaults.put("Table.ancestorInputMap", LazyInputMap(arrayOf<Any>(
       "ctrl C", "copy",
       "meta C", "copy",
@@ -160,32 +168,6 @@ open class DarculaLaf : BasicLookAndFeel() {
     )))
   }
 
-  protected open fun loadDefaults(defaults: UIDefaults) {
-    loadDefaultsFromJson(defaults)
-  }
-
-  private fun loadDefaultsFromJson(defaults: UIDefaults) {
-    loadDefaultsFromJson(defaults, prefix)
-    systemPrefix?.let {
-      loadDefaultsFromJson(defaults, it)
-    }
-  }
-
-  private fun loadDefaultsFromJson(defaults: UIDefaults, prefix: String) {
-    val filename = "$prefix.theme.json"
-    try {
-      // it is important to use class loader of a current instance class (LaF in plugin)
-      val classLoader = javaClass.getClassLoader()
-      // macOS light theme uses theme file from core plugin
-      val data = ResourceUtil.getResourceAsBytes(filename, classLoader,  /* checkParents */true)
-                 ?: throw RuntimeException("Can't load $filename")
-      UITheme.loadFromJson(data = data, themeId = "Darcula", provider = classLoader).applyProperties(defaults)
-    }
-    catch (e: IOException) {
-      LOG.error(e)
-    }
-  }
-
   override fun getName() = NAME
 
   override fun getID() = NAME
@@ -209,7 +191,7 @@ open class DarculaLaf : BasicLookAndFeel() {
     catch (e: Throwable) {
       LOG.error(e)
     }
-    ideEventQueueInitialized(getInstance())
+    ideEventQueueInitialized(IdeEventQueue.getInstance())
   }
 
   private fun ideEventQueueInitialized(eventQueue: IdeEventQueue) {
@@ -290,7 +272,8 @@ private fun toFont(defaults: UIDefaults, key: Any): Font {
   throw UnsupportedOperationException("Unable to extract Font from \"$key\"")
 }
 
-private fun patchComboBox(metalDefaults: UIDefaults, defaults: UIDefaults) {
+private fun patchComboBox(defaults: UIDefaults) {
+  val metalDefaults = MetalLookAndFeel().getDefaults()
   defaults.remove("ComboBox.ancestorInputMap")
   defaults.remove("ComboBox.actionMap")
   defaults.put("ComboBox.ancestorInputMap", metalDefaults.get("ComboBox.ancestorInputMap"))
@@ -314,41 +297,9 @@ private fun repaintMnemonics(focusOwner: Component, pressed: Boolean) {
   }
 }
 
-// used by Rider
-@ApiStatus.Internal
-fun createBaseLaF(): LookAndFeel {
-  if (SystemInfoRt.isMac) {
-    val aClass = DarculaLaf::class.java.getClassLoader().loadClass(UIManager.getSystemLookAndFeelClassName())
-    return MethodHandles.lookup().findConstructor(aClass, MethodType.methodType(Void.TYPE)).invoke() as BasicLookAndFeel
-  }
-  else if (!SystemInfoRt.isLinux || GraphicsEnvironment.isHeadless()) {
-    return IdeaLaf(customFontDefaults = null)
-  }
-
-  val fontDefaults = HashMap<Any, Any?>()
-  // Normally, GTK LaF is considered "system" when (1) a GNOME session is active, and (2) GTK library is available.
-  // Here, we weaken the requirements to only (2) and force GTK LaF installation to let it detect the system fonts
-  // and scale them based on Xft.dpi value.
-  try {
-    @Suppress("SpellCheckingInspection")
-    val aClass = DarculaLaf::class.java.getClassLoader().loadClass("com.sun.java.swing.plaf.gtk.GTKLookAndFeel")
-    val gtk = MethodHandles.privateLookupIn(aClass, MethodHandles.lookup())
-      .findConstructor(aClass, MethodType.methodType(Void.TYPE)).invoke() as LookAndFeel
-    // GTK is available
-    if (gtk.isSupportedLookAndFeel) {
-      // on JBR 11, overrides `SunGraphicsEnvironment#uiScaleEnabled` (sets `#uiScaleEnabled_overridden` to `false`)
-      gtk.initialize()
-      val gtkDefaults = gtk.defaults
-      for (key in gtkDefaults.keys) {
-        if (key.toString().endsWith(".font")) {
-          // `UIDefaults#get` unwraps lazy values
-          fontDefaults.put(key, gtkDefaults.get(key))
-        }
-      }
-    }
-  }
-  catch (e: Exception) {
-    LOG.warn(e)
-  }
-  return IdeaLaf(customFontDefaults = if (fontDefaults.isEmpty()) null else fontDefaults)
+private fun deprecatedLoadDefaultsFromJson(defaults: UIDefaults, prefix: String, classLoader: ClassLoader) {
+  val filename = "$prefix.theme.json"
+  val data = ResourceUtil.getResourceAsBytes(filename, classLoader,  /* checkParents */true)
+             ?: throw RuntimeException("Can't load $filename")
+  UITheme.loadFromJson(data = data, themeId = "Darcula", provider = classLoader).applyProperties(defaults)
 }

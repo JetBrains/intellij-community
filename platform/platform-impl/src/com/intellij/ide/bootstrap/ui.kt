@@ -1,5 +1,5 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-@file:Suppress("JAVA_MODULE_DOES_NOT_EXPORT_PACKAGE", "ReplacePutWithAssignment")
+@file:Suppress("JAVA_MODULE_DOES_NOT_EXPORT_PACKAGE", "ReplacePutWithAssignment", "ReplaceGetOrSet")
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.bootstrap
 
@@ -12,7 +12,6 @@ import com.intellij.ide.plugins.PluginManagerCore
 import com.intellij.ide.ui.html.GlobalStyleSheetHolder
 import com.intellij.ide.ui.laf.IdeaLaf
 import com.intellij.ide.ui.laf.darcula.DarculaLaf
-import com.intellij.ide.ui.laf.darcula.createBaseLaF
 import com.intellij.idea.AppExitCodes
 import com.intellij.idea.AppStarter
 import com.intellij.idea.StartupErrorReporter
@@ -30,6 +29,7 @@ import com.intellij.util.concurrency.SynchronizedClearableLazy
 import com.intellij.util.ui.StartupUiUtil
 import com.intellij.util.ui.accessibility.ScreenReader
 import kotlinx.coroutines.*
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.VisibleForTesting
 import sun.awt.AWTAutoShutdown
 import java.awt.Font
@@ -37,9 +37,12 @@ import java.awt.GraphicsEnvironment
 import java.awt.Toolkit
 import java.awt.dnd.DragSource
 import java.lang.invoke.MethodHandles
+import java.lang.invoke.MethodType
 import javax.swing.JOptionPane
+import javax.swing.LookAndFeel
 import javax.swing.RepaintManager
 import javax.swing.UIManager
+import javax.swing.plaf.basic.BasicLookAndFeel
 import kotlin.system.exitProcess
 
 internal fun CoroutineScope.scheduleInitUi(initAwtToolkitJob: Job, isHeadless: Boolean): Job {
@@ -208,7 +211,7 @@ private fun blockATKWrapper() {
   if (ScreenReader.isEnabled(ScreenReader.ATK_WRAPPER)) {
     // Replacing `AtkWrapper` with a fake `Object`. It'll be instantiated & garbage collected right away, a NOP.
     System.setProperty("javax.accessibility.assistive_technologies", "java.lang.Object")
-    logger<StartupUiUtil>().info("${ScreenReader.ATK_WRAPPER} is blocked, see IDEA-149219")
+    logger<AppStarter>().info("${ScreenReader.ATK_WRAPPER} is blocked, see IDEA-149219")
   }
   activity.end()
 }
@@ -266,4 +269,43 @@ internal fun CoroutineScope.updateFrameClassAndWindowIconAndPreloadSystemFonts(i
       WeakFocusStackManager.getInstance()
     }
   }
+}
+
+// used by Rider
+@ApiStatus.Internal
+fun createBaseLaF(): LookAndFeel {
+  if (SystemInfoRt.isMac) {
+    val aClass = AppStarter::class.java.getClassLoader().loadClass(UIManager.getSystemLookAndFeelClassName())
+    return MethodHandles.lookup().findConstructor(aClass, MethodType.methodType(Void.TYPE)).invoke() as BasicLookAndFeel
+  }
+  else if (!SystemInfoRt.isLinux || GraphicsEnvironment.isHeadless()) {
+    return IdeaLaf(customFontDefaults = null)
+  }
+
+  val fontDefaults = HashMap<Any, Any?>()
+  // Normally, GTK LaF is considered "system" when (1) a GNOME session is active, and (2) GTK library is available.
+  // Here, we weaken the requirements to only (2) and force GTK LaF installation to let it detect the system fonts
+  // and scale them based on Xft.dpi value.
+  try {
+    @Suppress("SpellCheckingInspection")
+    val aClass = DarculaLaf::class.java.getClassLoader().loadClass("com.sun.java.swing.plaf.gtk.GTKLookAndFeel")
+    val gtk = MethodHandles.privateLookupIn(aClass, MethodHandles.lookup())
+      .findConstructor(aClass, MethodType.methodType(Void.TYPE)).invoke() as LookAndFeel
+    // GTK is available
+    if (gtk.isSupportedLookAndFeel) {
+      // on JBR 11, overrides `SunGraphicsEnvironment#uiScaleEnabled` (sets `#uiScaleEnabled_overridden` to `false`)
+      gtk.initialize()
+      val gtkDefaults = gtk.defaults
+      for (key in gtkDefaults.keys) {
+        if (key.toString().endsWith(".font")) {
+          // `UIDefaults#get` unwraps lazy values
+          fontDefaults.put(key, gtkDefaults.get(key))
+        }
+      }
+    }
+  }
+  catch (e: Exception) {
+    logger<AppStarter>().warn(e)
+  }
+  return IdeaLaf(customFontDefaults = if (fontDefaults.isEmpty()) null else fontDefaults)
 }

@@ -6,6 +6,7 @@ import com.intellij.util.InsecureHashBuilder
 
 internal class UiThemePaletteScope {
   val newPalette: MutableMap<String, String> = HashMap()
+  // 0-255
   val alphas: MutableMap<String, Int> = HashMap()
   private var hash: LongArray? = null
 
