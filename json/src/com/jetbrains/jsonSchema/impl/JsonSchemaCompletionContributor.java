@@ -47,6 +47,7 @@ import com.jetbrains.jsonSchema.impl.nestedCompletions.NestedCompletionsKt;
 import com.jetbrains.jsonSchema.impl.nestedCompletions.NestedCompletionsNodeKt;
 import com.jetbrains.jsonSchema.impl.nestedCompletions.SchemaPath;
 import kotlin.Unit;
+import kotlin.collections.SetsKt;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
@@ -54,6 +55,9 @@ import org.jetbrains.annotations.TestOnly;
 import javax.swing.*;
 import java.util.*;
 import java.util.stream.Collectors;
+
+import static com.jetbrains.jsonSchema.impl.NotRequiredPropertiesKt.effectiveBranchOrNull;
+import static com.jetbrains.jsonSchema.impl.NotRequiredPropertiesKt.findPropertiesThatMustNotBePresent;
 
 public final class JsonSchemaCompletionContributor extends CompletionContributor {
   private static final String BUILTIN_USAGE_KEY = "builtin";
@@ -180,7 +184,7 @@ public final class JsonSchemaCompletionContributor extends CompletionContributor
 
     /**
      * @param completionPath Linked node representation of the names of all the parent
-     *                   schema objects that we have navigated for nested completions
+     *                       schema objects that we have navigated for nested completions
      */
     private void processSchema(JsonSchemaObject schema,
                                ThreeState isName,
@@ -193,12 +197,16 @@ public final class JsonSchemaCompletionContributor extends CompletionContributor
         final boolean insertComma = myWalker.hasMissingCommaAfter(myPosition);
         final boolean hasValue = myWalker.isPropertyWithValue(checkable);
 
-        final Collection<String> properties = myWalker.getPropertyNamesOfParentObject(completionOriginalPosition, completionPosition);
+        final Set<String> properties = myWalker.getPropertyNamesOfParentObject(completionOriginalPosition, completionPosition);
         final JsonPropertyAdapter adapter = myWalker.getParentPropertyAdapter(completionOriginalPosition);
 
         final Map<String, JsonSchemaObject> schemaProperties = schema.getProperties();
-        addAllPropertyVariants(insertComma, hasValue, properties, adapter, schemaProperties, knownNames, completionPath);
-        addIfThenElsePropertyNameVariants(schema, insertComma, hasValue, properties, adapter, knownNames, completionPath);
+        final Set<String> forbiddenNames = SetsKt.plus(
+          findPropertiesThatMustNotBePresent(schema, myPosition, myProject, properties),
+          properties
+        );
+        addAllPropertyVariants(insertComma, hasValue, forbiddenNames, adapter, schemaProperties, knownNames, completionPath);
+        addIfThenElsePropertyNameVariants(schema, insertComma, hasValue, forbiddenNames, adapter, knownNames, completionPath);
         addPropertyNameSchemaVariants(schema);
       }
 
@@ -222,7 +230,7 @@ public final class JsonSchemaCompletionContributor extends CompletionContributor
     private void addIfThenElsePropertyNameVariants(@NotNull JsonSchemaObject schema,
                                                    boolean insertComma,
                                                    boolean hasValue,
-                                                   @NotNull Collection<String> properties,
+                                                   @NotNull Set<String> forbiddenNames,
                                                    @Nullable JsonPropertyAdapter adapter,
                                                    Set<String> knownNames,
                                                    @Nullable SchemaPath completionPath) {
@@ -237,32 +245,22 @@ public final class JsonSchemaCompletionContributor extends CompletionContributor
       if (object == null) return;
 
       for (IfThenElse ifThenElse : ifThenElseList) {
-        JsonSchemaAnnotatorChecker checker = new JsonSchemaAnnotatorChecker(myProject, JsonComplianceCheckerOptions.RELAX_ENUM_CHECK);
-        checker.checkByScheme(object, ifThenElse.getIf());
-        if (checker.isCorrect()) {
-          JsonSchemaObject then = ifThenElse.getThen();
-          if (then != null) {
-            addAllPropertyVariants(insertComma, hasValue, properties, adapter, then.getProperties(), knownNames, completionPath);
-          }
-        }
-        else {
-          JsonSchemaObject schemaElse = ifThenElse.getElse();
-          if (schemaElse != null) {
-            addAllPropertyVariants(insertComma, hasValue, properties, adapter, schemaElse.getProperties(), knownNames, completionPath);
-          }
-        }
+        JsonSchemaObject effectiveBranch = effectiveBranchOrNull(ifThenElse, myProject, object);
+        if (effectiveBranch == null) continue;
+
+        addAllPropertyVariants(insertComma, hasValue, forbiddenNames, adapter, effectiveBranch.getProperties(), knownNames, completionPath);
       }
     }
 
     private void addAllPropertyVariants(boolean insertComma,
                                         boolean hasValue,
-                                        Collection<String> properties,
+                                        Set<String> forbiddenNames,
                                         JsonPropertyAdapter adapter,
                                         Map<String, JsonSchemaObject> schemaProperties,
                                         Set<String> knownNames,
                                         @Nullable SchemaPath completionPath) {
       schemaProperties.keySet().stream()
-        .filter(name -> !properties.contains(name) && !knownNames.contains(name) || adapter != null && name.equals(adapter.getName()))
+        .filter(name -> !forbiddenNames.contains(name) && !knownNames.contains(name) || adapter != null && name.equals(adapter.getName()))
         .forEach(name -> {
           knownNames.add(name);
           addPropertyVariant(name, schemaProperties.get(name), hasValue, insertComma, completionPath);
