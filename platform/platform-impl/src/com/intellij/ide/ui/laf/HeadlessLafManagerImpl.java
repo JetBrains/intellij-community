@@ -31,7 +31,7 @@ final class HeadlessLafManagerImpl extends LafManager {
   }
 
   @Override
-  public UIThemeLookAndFeelInfo getCurrentLookAndFeel() {
+  public UIManager.LookAndFeelInfo getCurrentLookAndFeel() {
     return null;
   }
 

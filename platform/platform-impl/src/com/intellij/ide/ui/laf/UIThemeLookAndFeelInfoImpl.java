@@ -29,11 +29,20 @@ import java.util.Map;
 /**
  * @author Konstantin Bulenkov
  */
-public class UIThemeLookAndFeelInfoImpl extends UIThemeLookAndFeelInfo {
+public class UIThemeLookAndFeelInfoImpl extends UIManager.LookAndFeelInfo implements UIThemeLookAndFeelInfo {
+  private final UITheme theme;
   private boolean isInitialized;
 
   public UIThemeLookAndFeelInfoImpl(@NotNull UITheme theme) {
-    super(theme);
+    super(theme.getName(),
+          // todo one one should be used in the future
+          theme.isDark() ? "com.intellij.ide.ui.laf.darcula.DarculaLaf" : "com.intellij.ide.ui.laf.IntelliJLaf");
+    this.theme = theme;
+  }
+
+  @Override
+  public @NotNull UITheme getTheme() {
+    return theme;
   }
 
   @Override

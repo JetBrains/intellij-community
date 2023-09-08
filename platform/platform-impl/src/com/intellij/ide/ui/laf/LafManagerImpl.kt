@@ -384,8 +384,8 @@ class LafManagerImpl(private val coroutineScope: CoroutineScope) : LafManager(),
     return element
   }
 
-  override fun getInstalledLookAndFeels(): Array<UIThemeLookAndFeelInfo> {
-    return UiThemeProviderListManager.getInstance().getLaFs().toList().toTypedArray()
+  override fun getInstalledLookAndFeels(): Array<UIManager.LookAndFeelInfo> {
+    return UiThemeProviderListManager.getInstance().getLaFs().map { it as UIThemeLookAndFeelInfoImpl }.toList().toTypedArray()
   }
 
   override fun getLafComboBoxModel(): CollectionComboBoxModel<LafReference> = lafComboBoxModel.value
@@ -423,7 +423,7 @@ class LafManagerImpl(private val coroutineScope: CoroutineScope) : LafManager(),
   }
 
   @Suppress("removal")
-  override fun getCurrentLookAndFeel(): UIManager.LookAndFeelInfo? = currentTheme
+  override fun getCurrentLookAndFeel(): UIManager.LookAndFeelInfo? = currentTheme as UIThemeLookAndFeelInfoImpl?
 
   override fun getCurrentUIThemeLookAndFeel(): UIThemeLookAndFeelInfo? = currentTheme
 
@@ -521,7 +521,7 @@ class LafManagerImpl(private val coroutineScope: CoroutineScope) : LafManager(),
     catch (e: Exception) {
       LOG.error(e)
       Messages.showMessageDialog(
-        IdeBundle.message("error.cannot.set.look.and.feel", lookAndFeelInfo.name, e.message),
+        IdeBundle.message("error.cannot.set.look.and.feel", lookAndFeelInfo.id, e.message),
         CommonBundle.getErrorTitle(),
         Messages.getErrorIcon()
       )

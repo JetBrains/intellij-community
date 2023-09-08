@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.devkit.themes.actions;
 
 import com.intellij.ide.ui.LafManager;
@@ -13,8 +13,6 @@ import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.ui.AppUIUtil;
 import com.intellij.util.ui.StartupUiUtil;
 import org.jetbrains.annotations.NotNull;
-
-import javax.swing.*;
 
 /**
  * @author Konstantin Bulenkov
@@ -49,7 +47,7 @@ final class RollbackThemeAction extends DumbAwareAction {
 
   @Override
   public void update(@NotNull AnActionEvent e) {
-    UIManager.LookAndFeelInfo feel = LafManager.getInstance().getCurrentUIThemeLookAndFeel();
+    UIThemeLookAndFeelInfo feel = LafManager.getInstance().getCurrentUIThemeLookAndFeel();
     EditorColorsScheme scheme = EditorColorsManager.getInstance().getGlobalScheme();
 
     e.getPresentation().setEnabled(feel instanceof TempUIThemeLookAndFeelInfo

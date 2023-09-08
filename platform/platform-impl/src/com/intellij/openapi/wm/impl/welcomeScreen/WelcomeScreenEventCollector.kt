@@ -1,6 +1,7 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.wm.impl.welcomeScreen
 
+import com.intellij.ide.ui.laf.UIThemeLookAndFeelInfo
 import com.intellij.internal.statistic.eventLog.EventLogGroup
 import com.intellij.internal.statistic.eventLog.events.EventFields
 import com.intellij.internal.statistic.eventLog.events.EventId
@@ -8,7 +9,6 @@ import com.intellij.internal.statistic.service.fus.collectors.CounterUsagesColle
 import com.intellij.openapi.application.ConfigImportHelper
 import com.intellij.openapi.keymap.Keymap
 import com.intellij.openapi.wm.WelcomeScreenTab
-import javax.swing.UIManager
 
 object WelcomeScreenEventCollector : CounterUsagesCollector() {
   internal enum class TabType { TabNavProject, TabNavCustomize, TabNavPlugins, TabNavTutorials, TabNavOther }
@@ -55,7 +55,7 @@ object WelcomeScreenEventCollector : CounterUsagesCollector() {
   @JvmStatic
   fun logProjectSearchUsed(): Unit = projectSearchUsed.log()
 
-  fun logLafChanged(laf: UIManager.LookAndFeelInfo, osSync: Boolean): Unit = lafChanged.log(laf.name, osSync)
+    fun logLafChanged(laf: UIThemeLookAndFeelInfo, osSync: Boolean): Unit = lafChanged.log(laf.name, osSync)
 
   fun logIdeFontChanged(oldSize: Float, newSize: Float): Unit = ideFontChanged.log(
     OLD_FONT_SIZE.with((oldSize + 0.5).toInt()), NEW_FONT_SIZE.with((newSize + 0.5).toInt()),
