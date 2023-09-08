@@ -663,7 +663,7 @@ internal class ToolWindowImpl(val toolWindowManager: ToolWindowManagerImpl,
         }
         group.addSeparator()
       }
-      group.add(SpeedSearchAction())
+      group.add(ActionManager.getInstance().getAction(TreeSpeedSearchAction.ID))
       group.addSeparator()
       getContentManagerIfCreated()?.let {
         group.add(TabbedContentAction.CloseAllAction(it))
@@ -772,39 +772,6 @@ internal class ToolWindowImpl(val toolWindowManager: ToolWindowManagerImpl,
 
     override fun getAdditionalUsageData(event: AnActionEvent): List<EventPair<*>> {
       return listOf(ToolwindowFusEventFields.TOOLWINDOW with id)
-    }
-  }
-
-  private inner class SpeedSearchAction : DumbAwareAction(
-    ActionsBundle.messagePointer("action.Tree-speedSearch.text"),
-    AllIcons.Actions.Find,
-  ) {
-    override fun getActionUpdateThread() = ActionUpdateThread.EDT
-
-    override fun update(e: AnActionEvent) {
-      val actionHandler = getActionHandler()
-      e.presentation.isVisible = actionHandler != null
-      e.presentation.isEnabled = actionHandler?.isSpeedSearchActive() == false
-      e.presentation.putClientProperty(
-        Presentation.PROP_KEYBOARD_SHORTCUT_SUFFIX,
-        ActionsBundle.message("action.Tree-speedSearch.shortcutTextSuffix")
-      )
-    }
-
-    override fun actionPerformed(e: AnActionEvent) {
-      getActionHandler()?.activateSpeedSearch(requestFocus = true)
-    }
-
-    private fun getActionHandler(): SpeedSearchActionHandler? {
-      val trees = UIUtil.uiTraverser(component)
-        .filter { it is JTree && it.isShowing }
-        .toMutableList()
-      trees.sortBy {
-        val pointOnToolWindow = SwingUtilities.convertPoint(it.parent, it.location, component)
-        // sort by distance from the top-left corner
-        pointOnToolWindow.x * pointOnToolWindow.x + pointOnToolWindow.y * pointOnToolWindow.y
-      }
-      return trees.firstNotNullOfOrNull { it.getSpeedSearchActionHandler() }
     }
   }
 

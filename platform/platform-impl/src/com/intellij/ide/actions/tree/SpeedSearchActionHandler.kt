@@ -15,10 +15,14 @@ import javax.swing.JComponent
 
 internal class SpeedSearchActionHandler(val targetComponent: JComponent, private val speedSearch: SpeedSearchBase<*>) {
 
+  var requestFocus = false
+
+  fun isSpeedSearchAvailable(): Boolean = speedSearch.isAvailable
+
   fun isSpeedSearchActive(): Boolean = speedSearch.isPopupActive
 
-  fun activateSpeedSearch(requestFocus: Boolean) {
-    if (speedSearch.isAvailable && !isSpeedSearchActive()) {
+  fun activateSpeedSearch() {
+    if (isSpeedSearchAvailable() && !isSpeedSearchActive()) {
       if (requestFocus) {
         targetComponent.requestFocusInWindow()
       }
@@ -53,6 +57,5 @@ internal class SpeedSearchActionHandler(val targetComponent: JComponent, private
 internal fun Component.getSpeedSearchActionHandler(): SpeedSearchActionHandler? {
   val contextComponent = (this as? JComponent?) ?: return null
   val speedSearch = (SpeedSearchSupply.getSupply(contextComponent, true) as? SpeedSearchBase<*>?) ?: return null
-  if (!speedSearch.isAvailable) return null
   return SpeedSearchActionHandler(contextComponent, speedSearch)
 }
