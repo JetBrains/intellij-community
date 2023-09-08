@@ -4,6 +4,6 @@ interface B : F
 @Suppress("INTERFACE_WITH_SUPERCLASS")
 interface C : F
 
-open class D : C, A()
+open class D : A(), C
 
-interface E : D
+open class E : D()
