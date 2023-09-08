@@ -2,11 +2,14 @@
 package com.intellij.codeInsight.inline.completion.logs
 
 import com.intellij.codeInsight.inline.completion.InlineCompletionElement
+import com.intellij.codeInsight.inline.completion.InlineCompletionEvent
+import com.intellij.codeInsight.inline.completion.InlineCompletionProvider
 import com.intellij.internal.statistic.eventLog.EventLogGroup
 import com.intellij.internal.statistic.eventLog.events.EventFields
 import com.intellij.internal.statistic.eventLog.events.EventFields.Enum
 import com.intellij.internal.statistic.eventLog.events.EventFields.Int
 import com.intellij.internal.statistic.eventLog.events.EventFields.Long
+import com.intellij.internal.statistic.eventLog.events.EventFields.NullableEnum
 import com.intellij.internal.statistic.eventLog.events.EventPair
 import com.intellij.internal.statistic.eventLog.events.VarargEventId
 import com.intellij.internal.statistic.service.fus.collectors.CounterUsagesCollector
@@ -20,20 +23,98 @@ import org.jetbrains.annotations.ApiStatus
 
 @ApiStatus.Experimental
 class InlineCompletionUsageTracker : CounterUsagesCollector() {
-
   override fun getGroup() = GROUP
+
+  /**
+   * This tracker lives from the moment the inline completion triggered until it appears on the screen or showing will be cancelled.
+   */
+  class TriggerTracker(
+    val invocationTime: Long,
+    private val event: InlineCompletionEvent,
+    private val provider: InlineCompletionProvider
+  ) {
+    private var hasSuggestions: Boolean? = null
+    private var cancelled: Boolean = false
+    private var exception: Boolean = false
+    private var finished: Boolean = false
+
+    fun noSuggestions() {
+      assert(!finished)
+      hasSuggestions = false
+    }
+
+    fun hasSuggestion() {
+      assert(!finished)
+      hasSuggestions = true
+    }
+
+    fun cancelled() {
+      assert(!finished)
+      cancelled = true
+    }
+
+    fun exception() {
+      assert(!finished)
+      exception = true
+    }
+
+    fun finished(project: Project?) {
+      assert(!finished)
+      finished = true
+      TRIGGERED.log(project, listOf(
+        EVENT.with(event::class.java),
+        PROVIDER.with(provider::class.java),
+        OUTCOME.with(
+          when {
+            exception -> Outcome.EXCEPTION
+            cancelled -> Outcome.CANCELLED
+            hasSuggestions == true -> Outcome.SHOW
+            hasSuggestions == false -> Outcome.NO_SUGGESTIONS
+            else -> null
+          }
+        ),
+        TIME_TO_COMPUTE.with(System.currentTimeMillis() - invocationTime)
+      ))
+    }
+
+    private companion object {
+      const val TRIGGERED_EVENT_ID = "inline.triggered"
+
+      enum class Outcome {
+        EXCEPTION,
+        CANCELLED,
+        SHOW,
+        NO_SUGGESTIONS
+      }
+
+      val EVENT = EventFields.Class("event")
+      val PROVIDER = EventFields.Class("event")
+      val OUTCOME = NullableEnum<Outcome>("outcome")
+      val TIME_TO_COMPUTE = Long("time_to_compute")
+
+      val TRIGGERED: VarargEventId = GROUP.registerVarargEvent(
+        TRIGGERED_EVENT_ID,
+        EventFields.Language,
+        EventFields.CurrentFile,
+        EVENT,
+        PROVIDER,
+        OUTCOME,
+        TIME_TO_COMPUTE,
+      )
+    }
+  }
 
   /**
    * This tracker lives from the moment the inline completion appears on the screen until its end.
    */
-  internal class ShowTracker {
+  class ShowTracker(private val invocationTime: Long) {
     private var data: MutableList<EventPair<*>> = mutableListOf()
     private var project: Project? = null
     private var shown: Boolean = false
     private var shownLogSent: Boolean = false
 
     @RequiresEdt
-    fun shown(invocationTime: Long, editor: Editor, element: InlineCompletionElement) {
+    fun shown(editor: Editor, element: InlineCompletionElement) {
       assert(!shownLogSent)
       shown = true
       project = editor.project?.also {
@@ -60,26 +141,28 @@ class InlineCompletionUsageTracker : CounterUsagesCollector() {
       SHOWN.log(project, data)
       shownLogSent = true
     }
+
+    private companion object {
+      const val SHOWN_EVENT_ID = "inline.shown"
+
+      enum class Decision { ACCEPT, REJECT }
+
+      val SUGGESTION_LENGTH = Int("suggestion_length")
+      val TIME_TO_SHOW = Long("time_to_show")
+      val DECISION = Enum<Decision>("decision")
+
+      val SHOWN: VarargEventId = GROUP.registerVarargEvent(
+        SHOWN_EVENT_ID,
+        EventFields.Language,
+        EventFields.CurrentFile,
+        SUGGESTION_LENGTH,
+        TIME_TO_SHOW,
+        DECISION,
+      )
+    }
   }
 
-  companion object {
+  private companion object {
     private val GROUP: EventLogGroup = EventLogGroup("inline.completion", 2)
-    private const val SHOWN_EVENT_ID = "inline.shown"
-
-    // Suggestions
-    private enum class Decision { ACCEPT, REJECT }
-
-    private val SUGGESTION_LENGTH = Int("suggestion_length")
-    private val TIME_TO_SHOW = Long("time_to_show")
-    private val DECISION = Enum<Decision>("decision")
-
-    private val SHOWN: VarargEventId = GROUP.registerVarargEvent(
-      SHOWN_EVENT_ID,
-      EventFields.Language,
-      EventFields.CurrentFile,
-      SUGGESTION_LENGTH,
-      TIME_TO_SHOW,
-      DECISION,
-    )
   }
 }

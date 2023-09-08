@@ -8,6 +8,7 @@ import com.intellij.codeInsight.inline.completion.InlineCompletionContext.Compan
 import com.intellij.codeInsight.inline.completion.InlineCompletionContext.Companion.resetInlineCompletionContextWithPlaceholder
 import com.intellij.codeInsight.inline.completion.InlineState.Companion.getInlineCompletionState
 import com.intellij.codeInsight.inline.completion.InlineState.Companion.initOrGetInlineCompletionState
+import com.intellij.codeInsight.inline.completion.logs.InlineCompletionUsageTracker
 import com.intellij.codeInsight.lookup.LookupEvent
 import com.intellij.openapi.actionSystem.DataContext
 import com.intellij.openapi.application.EDT
@@ -16,6 +17,7 @@ import com.intellij.openapi.editor.Caret
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.event.DocumentEvent
 import com.intellij.openapi.editor.event.EditorMouseEvent
+import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.registry.Registry
@@ -41,7 +43,8 @@ class InlineCompletionHandler(private val scope: CoroutineScope) : CodeInsightAc
   override fun invoke(project: Project, editor: Editor, file: PsiFile) {
     val inlineState = editor.getInlineCompletionState() ?: return
 
-    showInlineSuggestion(editor, inlineState, editor.caretModel.offset)
+    // TODO
+    //showInlineSuggestion(editor, inlineState, editor.caretModel.offset, triggerTracker)
   }
 
   fun invoke(event: InlineCompletionEvent.DocumentChange) = invokeEvent(event)
@@ -104,7 +107,7 @@ class InlineCompletionHandler(private val scope: CoroutineScope) : CodeInsightAc
   private suspend fun invokeDebounced(event: InlineCompletionEvent, request: InlineCompletionRequest) {
     lastInvocationTime = System.currentTimeMillis()
     val provider = getProvider(event) ?: return
-
+    val triggerTracker = InlineCompletionUsageTracker.TriggerTracker(lastInvocationTime, event, provider)
     val modificationStamp = request.document.modificationStamp
     val resultFlow = withContext(Dispatchers.IO) { provider.getProposals(request) }
     val placeholder = provider.getPlaceholder(request)
@@ -116,13 +119,30 @@ class InlineCompletionHandler(private val scope: CoroutineScope) : CodeInsightAc
 
     // If you write a test and observe an infinite hang here, set [UsefulTestCase.runInDispatchThread] to false.
     withContext(Dispatchers.EDT) {
-      showPlaceholder(editor, offset, placeholder)
+      showPlaceholder(editor, offset, placeholder, triggerTracker)
 
       resultFlow
-        .onCompletion { if (it != null) disposePlaceholder(editor) }
-        .onEmpty { disposePlaceholder(editor) }
+        .onEmpty {
+          disposePlaceholder(editor)
+          triggerTracker.noSuggestions()
+        }
+        .onCompletion {
+          if (it != null) {
+            disposePlaceholder(editor)
+            if (it is CancellationException || it is ProcessCanceledException) {
+              triggerTracker.cancelled()
+            }
+            else {
+              triggerTracker.exception()
+            }
+          }
+          triggerTracker.finished(editor.project)
+        }
         .collectIndexed { index, value ->
-          if (index == 0) disposePlaceholder(editor)
+          if (index == 0) {
+            disposePlaceholder(editor)
+            triggerTracker.hasSuggestion()
+          }
           if (index == 0 && modificationStamp != request.document.modificationStamp) {
             cancel()
             return@collectIndexed
@@ -130,7 +150,7 @@ class InlineCompletionHandler(private val scope: CoroutineScope) : CodeInsightAc
 
           if (index == 0) {
             inlineState.suggestions = listOf(InlineCompletionElement(value.text))
-            showInlineSuggestion(editor, inlineState, offset)
+            showInlineSuggestion(editor, inlineState, offset, triggerTracker)
           }
           else {
             if (editor.getInlineCompletionContextOrNull() == null) {
@@ -138,17 +158,21 @@ class InlineCompletionHandler(private val scope: CoroutineScope) : CodeInsightAc
             }
             ensureActive()
             inlineState.suggestions = inlineState.suggestions.map { it.withText(it.text + value.text) }
-            showInlineSuggestion(editor, inlineState, offset)
+            showInlineSuggestion(editor, inlineState, offset, triggerTracker)
           }
         }
     }
   }
 
-  private fun showPlaceholder(editor: Editor, startOffset: Int, placeholder: InlineCompletionPlaceholder) {
+  private fun showPlaceholder(
+    editor: Editor,
+    startOffset: Int,
+    placeholder: InlineCompletionPlaceholder,
+    triggerTracker: InlineCompletionUsageTracker.TriggerTracker) {
     LOG.trace("Trying to show placeholder")
     if (!shouldShowPlaceholder()) return
 
-    val ctx = editor.initOrGetInlineCompletionContextWithPlaceholder(lastInvocationTime)
+    val ctx = editor.initOrGetInlineCompletionContextWithPlaceholder(triggerTracker)
     ctx.update(listOf(placeholder.element), 0, startOffset)
   }
 
@@ -159,7 +183,10 @@ class InlineCompletionHandler(private val scope: CoroutineScope) : CodeInsightAc
     editor.resetInlineCompletionContextWithPlaceholder()
   }
 
-  private fun showInlineSuggestion(editor: Editor, inlineContext: InlineState, startOffset: Int) {
+  private fun showInlineSuggestion(editor: Editor,
+                                   inlineContext: InlineState,
+                                   startOffset: Int,
+                                   triggerTracker: InlineCompletionUsageTracker.TriggerTracker) {
     val suggestions = inlineContext.suggestions
     LOG.trace("Trying to show inline suggestions $suggestions")
     if (suggestions.isEmpty()) {
@@ -174,7 +201,7 @@ class InlineCompletionHandler(private val scope: CoroutineScope) : CodeInsightAc
       return
     }
 
-    editor.initOrGetInlineCompletionContext(lastInvocationTime).update(suggestions, suggestionIndex, startOffset)
+    editor.initOrGetInlineCompletionContext(triggerTracker).update(suggestions, suggestionIndex, startOffset)
 
     inlineContext.suggestionIndex = suggestionIndex
     inlineContext.lastStartOffset = startOffset

@@ -43,9 +43,9 @@ sealed interface InlineCompletionEvent {
   @ApiStatus.Experimental
   data class DirectCall(
     val editor: Editor,
-                   val file: PsiFile,
-                   val caret: EditorCaret,
-                   val context: DataContext? = null,
+    val file: PsiFile,
+    val caret: EditorCaret,
+    val context: DataContext? = null,
   ) : InlineCompletionEvent {
     override fun toRequest(): InlineCompletionRequest {
       return InlineCompletionRequest(this, file, editor, editor.document, caret.offset, caret.offset)

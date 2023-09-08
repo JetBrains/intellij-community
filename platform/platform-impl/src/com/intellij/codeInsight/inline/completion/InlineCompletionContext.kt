@@ -18,13 +18,12 @@ import java.util.concurrent.atomic.AtomicBoolean
 @ApiStatus.Experimental
 class InlineCompletionContext private constructor(
   val editor: Editor,
-  private val invocationTime: Long,
+  private val showTracker: InlineCompletionUsageTracker.ShowTracker,
   private var hasPlaceholder: Boolean = false
 ) : Disposable {
   private val keyListener = InlineCompletionKeyListener(editor)
   private val isSelecting = AtomicBoolean(false)
   private val inlay = InlineCompletion.forEditor(editor)
-  private val showTracker = InlineCompletionUsageTracker.ShowTracker()
 
   private var completions = emptyList<InlineCompletionElement>()
   private var selectedIndex = -1
@@ -47,7 +46,7 @@ class InlineCompletionContext private constructor(
     }
     if (text.isNotBlank() && editor is EditorImpl) {
       inlay.render(proposal, offset)
-      showTracker.shown(invocationTime, editor, proposal)
+      showTracker.shown(editor, proposal)
       if (!inlay.isEmpty) {
         Disposer.register(this, inlay)
         editor.contentComponent.addKeyListener(keyListener)
@@ -89,19 +88,26 @@ class InlineCompletionContext private constructor(
     private val LOG = thisLogger()
     private val INLINE_COMPLETION_CONTEXT = Key.create<InlineCompletionContext>("inline.completion.context")
 
-    fun Editor.initOrGetInlineCompletionContext(invocationTime: Long): InlineCompletionContext {
-      return getUserData(INLINE_COMPLETION_CONTEXT) ?: InlineCompletionContext(this, invocationTime).also {
+    fun Editor.initOrGetInlineCompletionContext(triggerTracker: InlineCompletionUsageTracker.TriggerTracker): InlineCompletionContext {
+      return getUserData(INLINE_COMPLETION_CONTEXT) ?: InlineCompletionContext(this, createShowTracker(triggerTracker)).also {
         LOG.trace("Create new inline completion context")
         putUserData(INLINE_COMPLETION_CONTEXT, it)
       }
     }
 
-    fun Editor.initOrGetInlineCompletionContextWithPlaceholder(invocationTime: Long): InlineCompletionContext {
-      return getUserData(INLINE_COMPLETION_CONTEXT) ?: InlineCompletionContext(this, invocationTime, hasPlaceholder = true).also {
+    fun Editor.initOrGetInlineCompletionContextWithPlaceholder(triggerTracker: InlineCompletionUsageTracker.TriggerTracker): InlineCompletionContext {
+      return getUserData(INLINE_COMPLETION_CONTEXT) ?: InlineCompletionContext(
+        this, createShowTracker(triggerTracker),
+        hasPlaceholder = true
+      ).also {
         LOG.trace("Create new inline completion context with placeholder")
         putUserData(INLINE_COMPLETION_CONTEXT, it)
       }
     }
+
+    private fun createShowTracker(triggerTracker: InlineCompletionUsageTracker.TriggerTracker) = InlineCompletionUsageTracker.ShowTracker(
+      invocationTime = triggerTracker.invocationTime
+    )
 
     fun Editor.resetInlineCompletionContextWithPlaceholder(): Unit? = getInlineCompletionContextOrNull()?.let {
       removeInlineCompletionContext()
