@@ -162,6 +162,7 @@ public final class ChangedFilesCollector extends IndexedFilesListener {
       if (!extensions.isEmpty()) {
         myFileBasedIndex.removeDataFromIndicesForFile(fileId, file, "non_indexable_file");
       }
+      IndexingFlag.cleanProcessingFlag(file);
     }
     else if (ApplicationManager.getApplication().isInternal() && !ApplicationManager.getApplication().isUnitTestMode()) {
       checkNotIndexedByContentBasedIndexes(file, fileId);

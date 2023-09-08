@@ -8,7 +8,6 @@ import com.intellij.openapi.progress.util.ProgressIndicatorUtils
 import com.intellij.openapi.project.FilesScanningTask
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.VirtualFileWithId
-import com.intellij.openapi.vfs.newvfs.impl.VirtualFileSystemEntry
 import com.intellij.psi.stubs.StubTreeBuilder
 import com.intellij.psi.stubs.StubUpdatingIndex
 import com.intellij.util.BooleanFunction
@@ -75,6 +74,7 @@ class RescanIndexesAction : RecoveryAction {
       override fun performScanningAndIndexing(indicator: CheckCancelOnlyProgressIndicator,
                                               progressReporter: IndexingProgressReporter): ProjectScanningHistory {
         try {
+          IndexingFlag.cleanupProcessedFlag()
           val history = super.performScanningAndIndexing(indicator, progressReporter)
           historyFuture.complete(history)
           return history

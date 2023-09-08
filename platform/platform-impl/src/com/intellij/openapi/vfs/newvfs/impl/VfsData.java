@@ -59,11 +59,42 @@ import java.util.concurrent.atomic.AtomicReferenceArray;
  * Dead ids won't be reused in the same session of the IDE.
  */
 public final class VfsData {
+  @TestOnly
+  public static final Key<Boolean> ENABLE_IS_INDEXED_FLAG_KEY = new Key<>("is_indexed_flag_enabled");
   private static final Logger LOG = Logger.getInstance(VfsData.class);
+  private static volatile Boolean isIsIndexedFlagDisabled = null;
   private static final int SEGMENT_BITS = 9;
   private static final int SEGMENT_SIZE = 1 << SEGMENT_BITS;
   private static final int OFFSET_MASK = SEGMENT_SIZE - 1;
+
+  private static final short NULL_INDEXING_STAMP = 0;
+  private static final AtomicInteger ourIndexingStamp = new AtomicInteger(1);
   private final Application app;
+
+  public static boolean isIsIndexedFlagDisabled() {
+    return isIsIndexedFlagDisabled(ApplicationManager.getApplication());
+  }
+
+  public static boolean isIsIndexedFlagDisabled(@NotNull Application app) {
+    if (isIsIndexedFlagDisabled == null) {
+      Boolean enable;
+      if (app.isUnitTestMode() && ((enable = TestModeFlags.get(ENABLE_IS_INDEXED_FLAG_KEY)) != null)) {
+        isIsIndexedFlagDisabled = !enable;
+      }
+      else {
+        isIsIndexedFlagDisabled = Registry.is("indexing.disable.virtual.file.system.entry.is.file.indexed", true);
+      }
+    }
+    return isIsIndexedFlagDisabled;
+  }
+
+  @ApiStatus.Internal
+  static void markAllFilesAsUnindexed() {
+    ourIndexingStamp.updateAndGet(cur -> {
+      int next = cur + 1;
+      return (short)next == NULL_INDEXING_STAMP ? (NULL_INDEXING_STAMP + 1) : next;
+    });
+  }
 
   private final Object myDeadMarker = ObjectUtils.sentinel("dead file");
 
@@ -238,6 +269,22 @@ public final class VfsData {
       myObjectArray = objectArray;
       myIntArray = intArray;
       this.vfsData = vfsData;
+    }
+
+    boolean isIndexed(int fileId) {
+      if (isIsIndexedFlagDisabled(vfsData.app)) {
+        return false;
+      }
+      return myIntArray.get(getOffset(fileId) * 3 + 2) == ourIndexingStamp.intValue();
+    }
+
+    void setIndexed(int fileId, boolean indexed) {
+      if (isIsIndexedFlagDisabled(vfsData.app)) {
+        return;
+      }
+      if (fileId <= 0) throw new IllegalArgumentException("invalid arguments id: " + fileId);
+      int stamp = indexed ? ourIndexingStamp.intValue() : NULL_INDEXING_STAMP;
+      myIntArray.set(getOffset(fileId) * 3 + 2, stamp);
     }
 
     int getNameId(int fileId) {

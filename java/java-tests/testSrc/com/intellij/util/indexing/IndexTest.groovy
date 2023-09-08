@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.indexing
 
 import com.intellij.find.ngrams.TrigramIndex
@@ -531,9 +531,12 @@ class IndexTest extends JavaCodeInsightFixtureTestCase {
   void "test no index stamp update when no change"() throws IOException {
     final VirtualFile vFile = myFixture.addClass("class Foo {}").getContainingFile().getVirtualFile()
     def stamp = FileBasedIndex.instance.getIndexModificationStamp(IdIndex.NAME, project)
+    assertIsIndexed(vFile)
 
     WriteAction.run { VfsUtil.saveText(vFile, "Foo class") }
+    assertTrue(!((VirtualFileSystemEntry)vFile).isFileIndexed())
     assertTrue(stamp == FileBasedIndex.instance.getIndexModificationStamp(IdIndex.NAME, project))
+    assertIsIndexed(vFile)
 
     WriteAction.run { VfsUtil.saveText(vFile, "class Foo2 {}") }
     assertTrue(stamp != FileBasedIndex.instance.getIndexModificationStamp(IdIndex.NAME, project))
@@ -554,6 +557,10 @@ class IndexTest extends JavaCodeInsightFixtureTestCase {
     WriteCommandAction.runWriteCommandAction(project) { document.text = "class Foo { Runnable x = () -> { }; }" }
     PsiDocumentManager.getInstance(project).commitAllDocuments()
     assert stamp == FileBasedIndex.instance.getIndexModificationStamp(JavaFunctionalExpressionIndex.INDEX_ID, project)
+  }
+
+  private static assertIsIndexed(VirtualFile vFile) {
+    assertTrue(((VirtualFileSystemEntry)vFile).isFileIndexed() || VfsData.isIsIndexedFlagDisabled())
   }
 
   void "test no index stamp update when no change 2"() throws IOException {
@@ -1146,9 +1153,11 @@ class IndexTest extends JavaCodeInsightFixtureTestCase {
 
     def files = FilenameIndex.getFilesByName(getProject(), "intellij.exe", scope)
     def file = assertOneElement(files).virtualFile
+    assertIsIndexed(file)
 
     WriteCommandAction.runWriteCommandAction(getProject(), { file.rename(this, 'intellij2.exe') })
     FileBasedIndex.instance.ensureUpToDate(FileTypeIndex.NAME, project, scope)
+    assertIsIndexed(file)
   }
 
   void "test IDEA-188028" () {
@@ -1179,7 +1188,13 @@ class IndexTest extends JavaCodeInsightFixtureTestCase {
     // content-less indexes has been passed
     // now all directories are indexed
 
+    assertFalse(((VirtualFileSystemEntry)foo).isFileIndexed())
+    assertIsIndexed(main)
+    assertIsIndexed(src)
+
     assert findClass("Foo") // ensure content dependent indexes are passed
+
+    assertIsIndexed(foo)
   }
 
   void "test stub updating index stamp"() {
@@ -1490,6 +1505,7 @@ class IndexTest extends JavaCodeInsightFixtureTestCase {
 
     fileBasedIndex.ensureUpToDate(trigramId, project, GlobalSearchScope.everythingScope(project))
     assertEmpty(fileBasedIndex.getIndex(trigramId).getIndexedFileData(fileId).values())
+    assertFalse(((VirtualFileSystemEntry)file).isFileIndexed())
   }
 
   void 'test stub index updated after language level change'() {

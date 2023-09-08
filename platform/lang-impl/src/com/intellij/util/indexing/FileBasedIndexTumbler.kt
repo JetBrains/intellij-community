@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util.indexing
 
 import com.intellij.ide.impl.ProjectUtil
@@ -15,9 +15,9 @@ import com.intellij.openapi.project.UnindexedFilesScannerExecutor
 import com.intellij.openapi.roots.AdditionalLibraryRootsProvider
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.registry.Registry
-import com.intellij.openapi.vfs.newvfs.impl.VirtualFileSystemEntry
 import com.intellij.psi.stubs.StubIndexExtension
 import com.intellij.util.concurrency.Semaphore
+import com.intellij.util.indexing.IndexingFlag.cleanupProcessedFlag
 import org.jetbrains.annotations.NonNls
 import java.util.*
 
@@ -102,6 +102,7 @@ class FileBasedIndexTumbler(private val reason: @NonNls String) {
                             FbiSnapshot.Impl.isRescanningRequired(snapshot as FbiSnapshot.Impl, FbiSnapshot.Impl.capture()))
         if (runRescanning) {
           beforeIndexTasksStarted?.run()
+          cleanupProcessedFlag()
           for (project in ProjectUtil.getOpenProjects()) {
             UnindexedFilesUpdater(project, reason).queue()
           }

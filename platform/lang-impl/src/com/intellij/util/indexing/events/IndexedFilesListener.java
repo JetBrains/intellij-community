@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util.indexing.events;
 
 import com.intellij.openapi.progress.ProgressManager;
@@ -8,6 +8,7 @@ import com.intellij.openapi.vfs.newvfs.ManagingFS;
 import com.intellij.openapi.vfs.newvfs.NewVirtualFile;
 import com.intellij.openapi.vfs.newvfs.events.*;
 import com.intellij.util.indexing.FileBasedIndexImpl;
+import com.intellij.util.indexing.IndexingFlag;
 import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
 import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
 import org.jetbrains.annotations.NotNull;
@@ -24,6 +25,7 @@ public abstract class IndexedFilesListener implements AsyncFileListener {
   }
 
   public void scheduleForIndexingRecursively(@NotNull VirtualFile file, boolean onlyContentDependent) {
+    IndexingFlag.cleanProcessedFlagRecursively(file);
     if (file.isDirectory()) {
       final ContentIterator iterator = fileOrDir -> {
         myEventMerger.recordFileEvent(fileOrDir, onlyContentDependent);

@@ -17,6 +17,8 @@ public final class FileIndexesValuesApplier {
   private final @NotNull List<? extends SingleIndexValueApplier<?>> appliers;
   private final @NotNull List<? extends SingleIndexValueRemover> removers;
   private final boolean removeDataFromIndicesForFile;
+  private boolean shouldMarkFileAsIndexed;
+  private final long fileStatusLockObject;
   @NotNull
   public final FileIndexingStatistics stats;
   public final boolean isWriteValuesSeparately;
@@ -27,6 +29,7 @@ public final class FileIndexesValuesApplier {
                            @NotNull List<? extends SingleIndexValueApplier<?>> appliers,
                            @NotNull List<? extends SingleIndexValueRemover> removers,
                            boolean removeDataFromIndicesForFile,
+                           boolean shouldMarkFileAsIndexed,
                            boolean writeValuesSeparately,
                            @NotNull FileType fileType,
                            boolean logEmptyProvidedIndexes) {
@@ -35,6 +38,8 @@ public final class FileIndexesValuesApplier {
     this.appliers = appliers;
     this.removers = removers;
     this.removeDataFromIndicesForFile = removeDataFromIndicesForFile;
+    this.shouldMarkFileAsIndexed = shouldMarkFileAsIndexed;
+    fileStatusLockObject = writeValuesSeparately && shouldMarkFileAsIndexed ? IndexingFlag.getOrCreateHash(file) : IndexingFlag.getNonExistentHash();
     isWriteValuesSeparately = writeValuesSeparately;
     stats = createStats(file, appliers, removers, fileType, logEmptyProvidedIndexes);
   }
@@ -81,6 +86,9 @@ public final class FileIndexesValuesApplier {
     if (removeDataFromIndicesForFile) {
       myIndex.removeDataFromIndicesForFile(fileId, file, "invalid_or_large_file");
     }
+    if (shouldMarkFileAsIndexed) {
+      IndexingFlag.setFileIndexed(file);
+    }
 
     VfsEventsMerger.tryLog("INDEX_UPDATED", file,
                            () -> " updated_indexes=" + stats.getPerIndexerEvaluateIndexValueTimes().keySet() +
@@ -100,12 +108,24 @@ public final class FileIndexesValuesApplier {
       }
       if (!appliers.isEmpty() || !removers.isEmpty()) {
         for (SingleIndexValueApplier<?> applier : appliers) {
-          applier.apply();
+          boolean applied = applier.apply();
+          if (!applied) {
+            shouldMarkFileAsIndexed = false;
+          }
         }
 
         for (SingleIndexValueRemover remover : removers) {
-          remover.remove();
+          boolean removed = remover.remove();
+          if (!removed) {
+            shouldMarkFileAsIndexed = false;
+          }
         }
+      }
+      if (shouldMarkFileAsIndexed) {
+        IndexingFlag.setIndexedIfFileWithSameLock(file, fileStatusLockObject);
+      }
+      else if (fileStatusLockObject != IndexingFlag.getNonExistentHash()) {
+        IndexingFlag.unlockFile(file);
       }
       VfsEventsMerger.tryLog("INDEX_UPDATED", file,
                              () -> " updated_indexes=" + stats.getPerIndexerEvaluateIndexValueTimes().keySet() +
