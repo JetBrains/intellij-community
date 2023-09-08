@@ -82,7 +82,12 @@
       "UI": "com.intellij.ide.ui.laf.darcula.ui.ComboBoxButtonUI"
     },
 
-    "CompletionPopup.nonFocusedState": true,
+    "CompletionPopup": {
+      "matchForeground": "#016CC1",
+      "selectionBackground": "#C5DFFC",
+      "selectionInactiveBackground": "#E0E0E0",
+      "nonFocusedState": true
+    },
 
     "Component": {
       "errorFocusColor": "#e53e4d",
@@ -110,6 +115,13 @@
     "DialogWrapper": {
       "southPanelBackground": "#f0f0f0",
       "southPanelDivider": "#f0f0f0"
+    },
+
+    "Editor": {
+      "background": "#B6B6B6",
+      "foreground": "#505050",
+      "shortcutForeground": "#52639B",
+      "SearchField.background": "#ffffff"
     },
 
     "EditorPane": {

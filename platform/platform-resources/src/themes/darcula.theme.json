@@ -137,6 +137,9 @@
         "background": "#45494a",
         "foreground": "#808080"
       },
+      "matchForeground": "#589DF6",
+      "selectionBackground": "#113A5C",
+      "selectionInactiveBackground": "#515457",
       "foreground": "#bbbbbb",
       "nonFocusedState": true
     },
