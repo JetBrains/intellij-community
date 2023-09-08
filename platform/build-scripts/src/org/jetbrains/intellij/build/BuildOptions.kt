@@ -367,8 +367,9 @@ class BuildOptions(
   var useModularLoader = SystemProperties.getBooleanProperty("intellij.build.use.modular.loader", false)
   
   /**
-   * If `true`, a [runtime module repository][com.intellij.platform.runtime.repository.RuntimeModuleRepository] will be generated in the distribution.
-   * This option doesn't make sense if [useModularLoader] is set to `true`, in this case the generation is enabled automatically. 
+   * If this option is set to `true` and [enableEmbeddedJetBrainsClient] is enabled, a [runtime module repository][com.intellij.platform.runtime.repository.RuntimeModuleRepository] 
+   * will be generated in the distribution.
+   * This option doesn't make sense if [modular loader][BuildContext.useModularLoader] is used, in this case the generation is enabled automatically. 
    */
   @ApiStatus.Experimental
   var generateRuntimeModuleRepository = SystemProperties.getBooleanProperty("intellij.build.generate.runtime.module.repository", false)

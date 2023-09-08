@@ -75,6 +75,11 @@ interface BuildContext : CompilationContext {
   val useModularLoader: Boolean
   
   /**
+   * Specifies whether the runtime module repository should be added to the distributions, see [BuildOptions.generateRuntimeModuleRepository].
+   */
+  val generateRuntimeModuleRepository: Boolean
+  
+  /**
    * see BuildTasksImpl.buildProvidedModuleList
    */
   var builtinModule: BuiltinModulesFileData?

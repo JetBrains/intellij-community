@@ -56,6 +56,9 @@ class BuildContextImpl(
   override val useModularLoader: Boolean
     get() = productProperties.supportModularLoading && options.useModularLoader
 
+  override val generateRuntimeModuleRepository: Boolean
+    get() = useModularLoader || isEmbeddedJetBrainsClientEnabled && options.generateRuntimeModuleRepository
+  
   override val applicationInfo = ApplicationInfoPropertiesImpl(this)
   private var builtinModulesData: BuiltinModulesFileData? = null
 
@@ -266,7 +269,7 @@ class BuildContextImpl(
     jvmArgs.add("-Djna.nosys=true")
     jvmArgs.add("-Djna.noclasspath=true")
 
-    if (useModularLoader || options.generateRuntimeModuleRepository) {
+    if (useModularLoader || generateRuntimeModuleRepository) {
       jvmArgs.add("-Dintellij.platform.runtime.repository.path=$macroName/${RuntimeModuleRepositoryBuildConstants.JAR_REPOSITORY_FILE_NAME}")
     }
     if (useModularLoader) {
