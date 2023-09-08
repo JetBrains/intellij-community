@@ -145,7 +145,8 @@ private fun generateRepositoryForDistribution(
  * In order to decide which location should be specified in the runtime descriptor, this method determines the main location used the
  * following heuristics:
  *   * the entry from IDE_HOME/lib is preferred;
- *   * otherwise, the entry which is put to a separate JAR file is preferred.
+ *   * otherwise, the entry which is put to a separate JAR file is preferred;
+ *   * otherwise, a JAR included in JetBrains Client is preferred.
  */
 private fun computeMainPathsForResourcesCopiedToMultiplePlaces(entries: List<RuntimeModuleRepositoryEntry>,
                                                                context: BuildContext): Map<RuntimeModuleId, String> {
@@ -153,17 +154,23 @@ private fun computeMainPathsForResourcesCopiedToMultiplePlaces(entries: List<Run
     .filter { it.getFiles(JpsOrderRootType.COMPILED).size == 1 }
     .mapTo(HashSet()) { it.name }
   
+  fun ProjectLibraryEntry.isPackedIntoSingleJar() = data.libraryName in singleFileProjectLibraries 
+                                                    || data.packMode == LibraryPackMode.MERGED 
+                                                    || data.packMode == LibraryPackMode.STANDALONE_MERGED
+  
   val pathToEntries = entries.groupBy { it.relativePath }
 
   val moduleIdsToPaths = entries.asSequence()
-    .filter { entry -> 
-      entry.origin is ProjectLibraryEntry && entry.origin.data.libraryName in singleFileProjectLibraries || entry.origin is ModuleOutputEntry 
-    }
+    .filter { entry -> entry.origin is ProjectLibraryEntry && entry.origin.isPackedIntoSingleJar() || entry.origin is ModuleOutputEntry }
     .groupBy({ it.origin.runtimeModuleId }, { it.relativePath })
 
+  fun DistributionFileEntry.isIncludedInJetBrainsClient() = 
+    this is ModuleOutputEntry && context.jetBrainsClientModuleFilter.isModuleIncluded(moduleName) 
+  
   fun chooseMainLocation(moduleId: RuntimeModuleId, paths: List<String>): String {
     val mainLocation = paths.singleOrNull { it.substringBeforeLast("/") == "lib" } ?:
-                       paths.singleOrNull { pathToEntries[it]?.size == 1 }
+                       paths.singleOrNull { pathToEntries[it]?.size == 1 } ?:
+                       paths.singleOrNull { pathToEntries[it]?.any { entry -> entry.origin.isIncludedInJetBrainsClient() } == true }
     if (mainLocation != null) {
       return mainLocation
     }
