@@ -163,6 +163,6 @@ class InlineCompletionUsageTracker : CounterUsagesCollector() {
   }
 
   private companion object {
-    private val GROUP: EventLogGroup = EventLogGroup("inline.completion", 2)
+    private val GROUP: EventLogGroup = EventLogGroup("inline.completion", 3)
   }
 }
