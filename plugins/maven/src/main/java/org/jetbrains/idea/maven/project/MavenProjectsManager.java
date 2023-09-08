@@ -217,7 +217,7 @@ public abstract class MavenProjectsManager extends MavenSimpleProjectComponent
 
   @TestOnly
   public void initForTests() {
-    doInit(false);
+    loadExistingTreeAndInit();
   }
 
   private void tryInit() {
@@ -228,10 +228,21 @@ public abstract class MavenProjectsManager extends MavenSimpleProjectComponent
     if (!wasMavenized) {
       return;
     }
-    doInit(false);
+    loadExistingTreeAndInit();
   }
 
-  private void doInit(final boolean isNew) {
+  private void loadExistingTreeAndInit() {
+    tryToLoadExistingTree();
+    doInit();
+    runImportOnStartup.set(true);
+  }
+
+  private void initAndActivate() {
+    doInit();
+    doActivate();
+  }
+
+  private void doInit() {
     forceWorkspaceImportIfNeeded();
 
     initLock.lock();
@@ -242,18 +253,12 @@ public abstract class MavenProjectsManager extends MavenSimpleProjectComponent
       initManagerListenerToBusBridge();
       initBusToManagerListenerBridge();
       initPreloadMavenServices();
-      initProjectsTree(!isNew);
+      initProjectsTree();
       initWorkers();
       listenForSettingsChanges();
       listenForProjectsTreeChanges();
       registerSyncConsoleListener();
       updateTabTitles();
-      if (!isNew) {
-        runImportOnStartup.set(true);
-      }
-      if (isNew) {
-        doActivate();
-      }
     }
     finally {
       initLock.unlock();
@@ -359,20 +364,20 @@ public abstract class MavenProjectsManager extends MavenSimpleProjectComponent
     return mySyncConsole.get();
   }
 
-  @NotNull
-  private MavenProjectsTree initProjectsTree(boolean tryToLoadExisting) {
-    if (tryToLoadExisting) {
-      Path file = getProjectsTreeFile();
-      try {
-        if (Files.exists(file)) {
-          myProjectsTree = MavenProjectsTree.read(myProject, file);
-        }
-      }
-      catch (IOException e) {
-        MavenLog.LOG.info(e);
+  private void tryToLoadExistingTree() {
+    Path file = getProjectsTreeFile();
+    try {
+      if (Files.exists(file)) {
+        myProjectsTree = MavenProjectsTree.read(myProject, file);
       }
     }
+    catch (IOException e) {
+      MavenLog.LOG.info(e);
+    }
+  }
 
+  @NotNull
+  private MavenProjectsTree initProjectsTree() {
     if (myProjectsTree == null) myProjectsTree = new MavenProjectsTree(myProject);
     applyStateToTree(myProjectsTree, this);
     myProjectsTree.addListener(myProjectsTreeDispatcher.getMulticaster(), this);
@@ -521,7 +526,7 @@ public abstract class MavenProjectsManager extends MavenSimpleProjectComponent
   protected void doAddManagedFilesWithProfiles(List<VirtualFile> files, MavenExplicitProfiles profiles, Module previewModuleToDelete) {
     myPreviewModule = previewModuleToDelete;
     if (!isInitialized()) {
-      doInit(true);
+      initAndActivate();
     }
     myProjectsTree.addManagedFilesWithProfiles(files, profiles);
   }
@@ -773,7 +778,7 @@ public abstract class MavenProjectsManager extends MavenSimpleProjectComponent
   @ApiStatus.Internal
   public void setProjectsTree(@NotNull MavenProjectsTree newTree) {
     if (!isInitialized()) {
-      doInit(true);
+      initAndActivate();
       if (!MavenUtil.isLinearImportEnabled()) {
         scheduleUpdateAll(new MavenImportSpec(false, true, false));
       }
@@ -792,7 +797,8 @@ public abstract class MavenProjectsManager extends MavenSimpleProjectComponent
   @NotNull
   public MavenProjectsTree getProjectsTree() {
     if (myProjectsTree == null) {
-      return initProjectsTree(true);
+      tryToLoadExistingTree();
+      return initProjectsTree();
     }
     return myProjectsTree;
   }
