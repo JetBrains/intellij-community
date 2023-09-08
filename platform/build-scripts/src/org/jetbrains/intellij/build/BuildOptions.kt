@@ -372,7 +372,7 @@ class BuildOptions(
    * This option doesn't make sense if [modular loader][BuildContext.useModularLoader] is used, in this case the generation is enabled automatically. 
    */
   @ApiStatus.Experimental
-  var generateRuntimeModuleRepository = SystemProperties.getBooleanProperty("intellij.build.generate.runtime.module.repository", false)
+  var generateRuntimeModuleRepository = SystemProperties.getBooleanProperty("intellij.build.generate.runtime.module.repository", true)
   
   /**
    * If `true` and [ProductProperties.embeddedJetBrainsClientMainModule] is not null, the JAR files in the distribution will be adjusted
