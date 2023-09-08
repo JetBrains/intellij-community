@@ -25,7 +25,7 @@ public final class PluginXmlReader {
       addedModules.add(mainModule.getModuleId().getStringId());
       try (InputStream inputStream = mainModule.readFile(PLUGIN_XML_PATH)) {
         if (inputStream == null) {
-          throw new MalformedRepositoryException(PLUGIN_XML_PATH + " is not found in " + mainModule.getModuleId().getStringId());
+          throw new MalformedRepositoryException(PLUGIN_XML_PATH + " is not found in '" + mainModule.getModuleId().getStringId() + "' module in " + repository);
         }
         XMLStreamReader reader = XMLInputFactory.newDefaultFactory().createXMLStreamReader(inputStream);
         int level = 0;
