@@ -1407,7 +1407,7 @@ private fun getDefaultClassicLightTheme(): UIThemeLookAndFeelInfo {
   val name = ApplicationInfoEx.getInstanceEx().defaultClassicLightLaf
   val themeListManager = UiThemeProviderListManager.getInstance()
   if (name == null) {
-    return themeListManager.findJetBrainsLightTheme() ?: error("JetBrains light theme not found")
+    return themeListManager.findThemeById("JetBrainsLightTheme") ?: error("JetBrains light theme not found")
   }
   else {
     return themeListManager.findThemeById(name) ?: themeListManager.findThemeByName(name)

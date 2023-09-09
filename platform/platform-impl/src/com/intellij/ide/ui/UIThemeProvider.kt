@@ -12,7 +12,6 @@ import com.intellij.util.ResourceUtil
 import com.intellij.util.xmlb.annotations.Attribute
 import org.jetbrains.annotations.ApiStatus.Internal
 import java.io.IOException
-import java.util.function.Supplier
 
 /**
  * Extension point for adding UI themes.
@@ -57,17 +56,15 @@ class UIThemeProvider : PluginAware {
     return ResourceUtil.getResourceAsBytes((path ?: return null).removePrefix("/"), pluginDescriptor!!.getClassLoader())
   }
 
-  internal fun createTheme(parentTheme: UITheme?,
-                           defaultDarkParent: Supplier<UITheme?>?,
-                           defaultLightParent: Supplier<UITheme?>?): UITheme? {
+  internal fun createTheme(parentTheme: UITheme?, defaultDarkParent: (() -> UITheme?)?, defaultLightParent: (() ->UITheme?)?): UITheme? {
     if (defaultDarkParent != null && id == UiThemeProviderListManager.DEFAULT_DARK_PARENT_THEME) {
-      val result = defaultDarkParent.get()
+      val result = defaultDarkParent()
       if (result?.id == UiThemeProviderListManager.DEFAULT_DARK_PARENT_THEME) {
         return result
       }
     }
     if (defaultLightParent != null && id == UiThemeProviderListManager.DEFAULT_LIGHT_PARENT_THEME) {
-      val result = defaultLightParent.get()
+      val result = defaultLightParent()
       if (result?.id == UiThemeProviderListManager.DEFAULT_LIGHT_PARENT_THEME) {
         return result
       }
