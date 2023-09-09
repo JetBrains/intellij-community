@@ -37,7 +37,7 @@ public class IntToIntMapsBenchmark {
 
   private static final int TREE_PAGE_SIZE = 32_768;
 
-  private static final int TOTAL_KEYS = 1 << 16;
+  private static final int TOTAL_KEYS = 1 << 23;
 
   private static final int SAMPLES = 16;
 
@@ -223,7 +223,7 @@ public class IntToIntMapsBenchmark {
   public static void main(String[] args) throws RunnerException {
     final Options opt = new OptionsBuilder()
       .mode(Mode.SampleTime)
-      .include(IntToIntMapsBenchmark.class.getSimpleName() + ".*")
+      .include(IntToIntMapsBenchmark.class.getSimpleName() + ".*EMap.*")
       .threads(1)
       .build();
 

@@ -335,6 +335,13 @@ public class ExtendibleHashMap implements IntToMultiIntMap {
   private void doubleSegmentsTable() throws IOException {
     int hashSuffixDepth = header.globalHashSuffixDepth();
     int oldTableSize = header.segmentTableSize();
+    if (oldTableSize * 2 > header.maxSegmentTableSize()) {
+      throw new IllegalStateException(
+        "Can't expand table: currentSize=" + header.segmentTableSize() +
+        " x2 > maxSize=" + header.maxSegmentTableSize() +
+        " -> try increase segmentSize(=" + header.segmentSize() + ") if you need to store more keys"
+      );
+    }
     header.globalHashSuffixDepth(hashSuffixDepth + 1);
     for (int i = 0; i < oldTableSize; i++) {
       int segmentIndex = header.segmentIndex(i);
@@ -380,6 +387,13 @@ public class ExtendibleHashMap implements IntToMultiIntMap {
 
     private static final int SEGMENTS_TABLE_OFFSET = STATIC_HEADER_SIZE; //int16[N]
     //@formatter:on
+
+    //TODO RC: segmentSize is 2^N, and segmentsTable also must have 2^M entries -- but since we use few bytes
+    // for static header, this means M <= N-1 -- i.e. we waste _almost half_ of header segment space because
+    // segmentsTable must have power-of-2 size. We could solve that by using some compression -- we need to
+    // win just 80 bytes out of 32-64k, it seems quite doable, and we could cache uncompressed segmentsTable
+    // in memory -- 32-64k heap usage is OK given it makes hashtable almost 2x larger for same segmentSize,
+    // and likely also speeds up segmentTable lookup a bit.
 
     private final int headerSize;
     private final ByteBuffer headerBuffer;
@@ -435,7 +449,7 @@ public class ExtendibleHashMap implements IntToMultiIntMap {
     /** @return segmentIndex in [1..actualSegmentsCount], for slotIndex in [0..segmentTableSize) */
     public int segmentIndex(int slotIndex) throws IOException {
       Objects.checkIndex(slotIndex, segmentTableSize());
-      return headerBuffer.getShort(SEGMENTS_TABLE_OFFSET + slotIndex * Short.BYTES);
+      return Short.toUnsignedInt(headerBuffer.getShort(SEGMENTS_TABLE_OFFSET + slotIndex * Short.BYTES));
     }
 
     public int segmentIndexByHash(int hash) throws IOException {
@@ -444,17 +458,21 @@ public class ExtendibleHashMap implements IntToMultiIntMap {
       return segmentIndex(segmentSlotIndex);
     }
 
+    public void updateSegmentIndex(int slotIndex,
+                                   int segmentIndex) {
+      Objects.checkIndex(slotIndex, segmentTableSize());
+      if (segmentIndex < 1 || segmentIndex > 0xFFFF) {
+        throw new IllegalArgumentException("segmentIndex(=" + segmentIndex + ") must be in [1..0xFFFF]");
+      }
+      headerBuffer.putShort(SEGMENTS_TABLE_OFFSET + slotIndex * Short.BYTES, (short)segmentIndex);
+    }
+
     public int segmentTableSize() {
       return 1 << globalHashSuffixDepth();
     }
 
-    public void updateSegmentIndex(int segmentSlotIndex,
-                                   int segmentIndex) {
-      Objects.checkIndex(segmentSlotIndex, segmentTableSize());
-      if (segmentIndex < 1 || segmentIndex >= Short.MAX_VALUE) {
-        throw new IllegalArgumentException("segmentIndex(=" + segmentIndex + ") must be in [1..MAX_SHORT)");
-      }
-      headerBuffer.putShort(SEGMENTS_TABLE_OFFSET + segmentSlotIndex * Short.BYTES, (short)segmentIndex);
+    public int maxSegmentTableSize() {
+      return (headerSize - STATIC_HEADER_SIZE) / Short.BYTES;
     }
 
     @Override
@@ -639,11 +657,25 @@ public class ExtendibleHashMap implements IntToMultiIntMap {
 
     private final float loadFactor;
 
+    //MAYBE RC: in-memory open-addressing hashtables usually employ loadFactor=0.5 -- to prevent excessive
+    // clustering and probe sequence length increasing. But for on-disk hash table it may worth to actually
+    // increase loadFactor up to 0.6-0.7 -- because less IO due to more compact representation may easily
+    // outweigh more probing.
+    // Tuning probing sequence could be also a thing: currently we use linear probing, since it is the
+    // fastest, and also has spatial locality -- consequent probes are one-after-another, which is beneficial
+    // given probing is done over IO-backed storage. But linear probing is also more susceptible to clustering,
+    // and usually requires lower load-factors to prevent it.
+    // We could try quadratic (i+i^2)/2, or exponential (https://dl.acm.org/doi/pdf/10.1145/264216.264221) probing,
+    // there few first probes are still quite close to each other, i.e. most likely on the same (OS memory manager)
+    // page, but following become more and more distant. Quadratic probing is known to alleviate clustering, and
+    // allows higher load-factors => more dense representation, less IO.
+    // ...But to start experimenting with that first we need a way to monitor entries/tombstones/alive, way to
+    // sample avg/99%/max probing sequence length, etc.
+
     //Table entries convention:
     //  (key, value)                         = (table[2*i], table[2*i+1])
     //  (key: NO_VALUE, value: NO_VALUE)     = empty slot (not yet allocated)
     //  (key: NO_VALUE, value != NO_VALUE)   = 'tombstone', i.e. deleted slot (key-value pair was inserted and removed)
-    //
 
 
     public HashMapAlgo(float loadFactor) {
