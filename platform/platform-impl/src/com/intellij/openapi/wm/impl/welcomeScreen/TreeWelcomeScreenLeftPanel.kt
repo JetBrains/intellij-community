@@ -8,7 +8,7 @@ import com.intellij.openapi.wm.WelcomeScreenLeftPanel
 import com.intellij.openapi.wm.WelcomeScreenTab
 import com.intellij.openapi.wm.ex.IdeFocusTraversalPolicy
 import com.intellij.openapi.wm.impl.welcomeScreen.TabbedWelcomeScreen.DefaultWelcomeScreenTab
-import com.intellij.openapi.wm.impl.welcomeScreen.WelcomeScreenEventCollector.Companion.logWelcomeScreenShown
+import com.intellij.openapi.wm.impl.welcomeScreen.WelcomeScreenEventCollector.logWelcomeScreenShown
 import com.intellij.ui.UIBundle
 import com.intellij.ui.render.RenderingUtil
 import com.intellij.ui.tree.ui.Control

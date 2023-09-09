@@ -71,11 +71,11 @@ public class PyNamespacePackagesService implements PersistentStateComponent<PyNa
 
     if (canBeMarked(directory)) {
       myNamespacePackageFolders.add(directory);
-      PyNamespacePackagesStatisticsCollector.Companion.logToggleMarkingAsNamespacePackage(true);
+      PyNamespacePackagesStatisticsCollector.logToggleMarkingAsNamespacePackage(true);
     }
     else if (isMarked(directory)) {
       myNamespacePackageFolders.remove(directory);
-      PyNamespacePackagesStatisticsCollector.Companion.logToggleMarkingAsNamespacePackage(false);
+      PyNamespacePackagesStatisticsCollector.logToggleMarkingAsNamespacePackage(false);
     }
     else {
       throw new IllegalStateException("Can't toggle namespace package state for: " + directory.getName());

@@ -1,24 +1,26 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.inline.completion.listeners
 
-import com.intellij.codeInsight.inline.completion.*
+import com.intellij.codeInsight.inline.completion.InlineCompletionRequest
 import com.intellij.internal.statistic.eventLog.EventLogGroup
-import com.intellij.internal.statistic.eventLog.events.*
+import com.intellij.internal.statistic.eventLog.events.EventFields
 import com.intellij.internal.statistic.eventLog.events.EventFields.Enum
 import com.intellij.internal.statistic.eventLog.events.EventFields.Int
 import com.intellij.internal.statistic.eventLog.events.EventFields.Long
+import com.intellij.internal.statistic.eventLog.events.EventPair
+import com.intellij.internal.statistic.eventLog.events.VarargEventId
 import com.intellij.internal.statistic.service.fus.collectors.CounterUsagesCollector
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.util.PsiUtilCore
-import kotlinx.coroutines.*
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
 import org.jetbrains.annotations.ApiStatus
 
-
 @ApiStatus.Experimental
-class InlineCompletionUsageTracker : CounterUsagesCollector() {
-
+object InlineCompletionUsageTracker : CounterUsagesCollector() {
   override fun getGroup() = GROUP
 
   fun track(scope: CoroutineScope, request: InlineCompletionRequest): InlineCompletionListener = Tracker(scope, request)
@@ -78,23 +80,21 @@ class InlineCompletionUsageTracker : CounterUsagesCollector() {
 
   }
 
-  companion object {
-    private val GROUP: EventLogGroup = EventLogGroup("inline.completion", 2)
-    private const val SHOWN_EVENT_ID = "inline.shown"
+  private val GROUP: EventLogGroup = EventLogGroup("inline.completion", 2)
+  private const val SHOWN_EVENT_ID = "inline.shown"
 
-    // Suggestions
-    private enum class Decision { ACCEPT, REJECT }
-    private val SUGGESTION_LENGTH = Int("suggestion_length")
-    private val TIME_TO_SHOW = Long("time_to_show")
-    private val DECISION = Enum<Decision>("decision")
+  // Suggestions
+  private enum class Decision { ACCEPT, REJECT }
+  private val SUGGESTION_LENGTH = Int("suggestion_length")
+  private val TIME_TO_SHOW = Long("time_to_show")
+  private val DECISION = Enum<Decision>("decision")
 
-    private val SHOWN: VarargEventId = GROUP.registerVarargEvent(
-      SHOWN_EVENT_ID,
-      EventFields.Language,
-      EventFields.CurrentFile,
-      SUGGESTION_LENGTH,
-      TIME_TO_SHOW,
-      DECISION,
-    )
-  }
+  private val SHOWN: VarargEventId = GROUP.registerVarargEvent(
+    SHOWN_EVENT_ID,
+    EventFields.Language,
+    EventFields.CurrentFile,
+    SUGGESTION_LENGTH,
+    TIME_TO_SHOW,
+    DECISION,
+  )
 }

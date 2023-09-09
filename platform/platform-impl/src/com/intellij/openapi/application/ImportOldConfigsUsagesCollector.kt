@@ -10,15 +10,13 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
 import javax.swing.JRadioButton
 
-internal class ImportOldConfigsUsagesCollector : CounterUsagesCollector() {
-  companion object {
-    private val EVENT_GROUP = EventLogGroup("import.old.config", 4)
-    private val IMPORT_DIALOG_SHOWN_EVENT = EVENT_GROUP.registerEvent("import.dialog.shown",
-                                                                      Enum("selected", ImportOldConfigType::class.java),
-                                                                      Boolean("config_folder_exists"))
-    private val INITIAL_IMPORT_SCENARIO = EVENT_GROUP.registerEvent("import.initially",
-                                                                    Enum("initial_import_scenario", ImportOldConfigsState.InitialImportScenario::class.java))
-  }
+internal object ImportOldConfigsUsagesCollector : CounterUsagesCollector() {
+  private val EVENT_GROUP = EventLogGroup("import.old.config", 4)
+  private val IMPORT_DIALOG_SHOWN_EVENT = EVENT_GROUP.registerEvent("import.dialog.shown",
+                                                                    Enum("selected", ImportOldConfigType::class.java),
+                                                                    Boolean("config_folder_exists"))
+  private val INITIAL_IMPORT_SCENARIO = EVENT_GROUP.registerEvent("import.initially",
+                                                                  Enum("initial_import_scenario", ImportOldConfigsState.InitialImportScenario::class.java))
 
   override fun getGroup(): EventLogGroup = EVENT_GROUP
 

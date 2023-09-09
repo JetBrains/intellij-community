@@ -6,26 +6,22 @@ import com.intellij.internal.statistic.service.fus.collectors.CounterUsagesColle
 import com.intellij.openapi.projectRoots.Sdk
 import com.jetbrains.python.statistics.*
 
-class PythonNewInterpreterAddedCollector : CounterUsagesCollector() {
+object PythonNewInterpreterAddedCollector : CounterUsagesCollector() {
 
-  override fun getGroup(): EventLogGroup {
-    return GROUP
-  }
+  override fun getGroup(): EventLogGroup = GROUP
 
-  companion object {
-    private val GROUP = EventLogGroup("python.new.interpreter.added", 1)
-    private val PROJECT_GENERATED_EVENT = GROUP.registerVarargEvent("interpreted.added",
-                                                                    INTERPRETER_TYPE,
-                                                                    EXECUTION_TYPE,
-                                                                    PYTHON_VERSION)
+  private val GROUP = EventLogGroup("python.new.interpreter.added", 1)
+  private val PROJECT_GENERATED_EVENT = GROUP.registerVarargEvent("interpreted.added",
+                                                                  INTERPRETER_TYPE,
+                                                                  EXECUTION_TYPE,
+                                                                  PYTHON_VERSION)
 
-    fun logPythonNewInterpreterAdded(sdk: Sdk) {
-      PROJECT_GENERATED_EVENT.log(
-        INTERPRETER_TYPE.with(sdk.interpreterType.value),
-        EXECUTION_TYPE.with(sdk.executionType.value),
-        PYTHON_VERSION.with(sdk.version.toPythonVersion())
-      )
-    }
+  fun logPythonNewInterpreterAdded(sdk: Sdk) {
+    PROJECT_GENERATED_EVENT.log(
+      INTERPRETER_TYPE.with(sdk.interpreterType.value),
+      EXECUTION_TYPE.with(sdk.executionType.value),
+      PYTHON_VERSION.with(sdk.version.toPythonVersion())
+    )
   }
 }
 

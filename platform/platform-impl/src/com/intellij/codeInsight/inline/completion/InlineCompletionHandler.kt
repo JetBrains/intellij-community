@@ -32,7 +32,6 @@ import java.util.concurrent.atomic.AtomicBoolean
 @ApiStatus.Experimental
 class InlineCompletionHandler(private val scope: CoroutineScope) : CodeInsightActionHandler {
   private var runningJob: Job? = null
-  private val tracker = InlineCompletionUsageTracker()
 
   private fun getProvider(event: InlineCompletionEvent): InlineCompletionProvider? {
     return InlineCompletionProvider.extensions().firstOrNull { it.isEnabled(event) }?.also {
@@ -104,7 +103,7 @@ class InlineCompletionHandler(private val scope: CoroutineScope) : CodeInsightAc
   }
 
   private suspend fun invokeDebounced(event: InlineCompletionEvent, request: InlineCompletionRequest) {
-    request.editor.register(tracker.track(scope, request))
+    request.editor.register(InlineCompletionUsageTracker.track(scope, request))
 
     val provider = getProvider(event) ?: return
 

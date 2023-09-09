@@ -10,7 +10,7 @@ import com.intellij.concurrency.resetThreadContext
 import com.intellij.diagnostic.EventWatcher
 import com.intellij.diagnostic.LoadingState
 import com.intellij.diagnostic.PerformanceWatcher
-import com.intellij.ide.MnemonicUsageCollector.Companion.logMnemonicUsed
+import com.intellij.ide.MnemonicUsageCollector.logMnemonicUsed
 import com.intellij.ide.actions.MaximizeActiveDialogAction
 import com.intellij.ide.dnd.DnDManager
 import com.intellij.ide.dnd.DnDManagerImpl

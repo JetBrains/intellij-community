@@ -13,7 +13,7 @@ import org.editorconfig.configmanagement.extended.EditorConfigIntellijNameUtil
 import org.editorconfig.configmanagement.extended.EditorConfigPropertyKind
 import org.editorconfig.configmanagement.extended.IntellijPropertyKindMap
 
-class EditorConfigUsagesCollector private constructor() : CounterUsagesCollector() {
+object EditorConfigUsagesCollector : CounterUsagesCollector() {
   private enum class OptionType {
     Standard, IntelliJ, Other
   }
@@ -22,31 +22,29 @@ class EditorConfigUsagesCollector private constructor() : CounterUsagesCollector
     return GROUP
   }
 
-  companion object {
-    private val GROUP = EventLogGroup("editorconfig", 2)
-    private val EDITOR_CONFIG_USED: EventId3<FileType, OptionType, Int> =
-      GROUP.registerEvent("editorconfig.applied", EventFields.FileType,
-                          Enum("property", OptionType::class.java),
-                          EventFields.Count)
+  private val GROUP = EventLogGroup("editorconfig", 2)
+  private val EDITOR_CONFIG_USED: EventId3<FileType, OptionType, Int> =
+    GROUP.registerEvent("editorconfig.applied", EventFields.FileType,
+                        Enum("property", OptionType::class.java),
+                        EventFields.Count)
 
-    fun logEditorConfigUsed(file: PsiFile, properties: ResourceProperties) {
-      properties.properties.keys
-        .groupingBy { getOptionType(it) }
-        .eachCount()
-        .forEach { (optionType, count) -> EDITOR_CONFIG_USED.log(file.project, file.fileType, optionType, count) }
+  fun logEditorConfigUsed(file: PsiFile, properties: ResourceProperties) {
+    properties.properties.keys
+      .groupingBy { getOptionType(it) }
+      .eachCount()
+      .forEach { (optionType, count) -> EDITOR_CONFIG_USED.log(file.project, file.fileType, optionType, count) }
+  }
+
+  private fun getOptionType(optionKey: String): OptionType {
+    val propertyKind = IntellijPropertyKindMap.getPropertyKind(optionKey)
+    return if (propertyKind == EditorConfigPropertyKind.EDITOR_CONFIG_STANDARD) {
+      OptionType.Standard
     }
-
-    private fun getOptionType(optionKey: String): OptionType {
-      val propertyKind = IntellijPropertyKindMap.getPropertyKind(optionKey)
-      return if (propertyKind == EditorConfigPropertyKind.EDITOR_CONFIG_STANDARD) {
-        OptionType.Standard
-      }
-      else if (optionKey.startsWith(EditorConfigIntellijNameUtil.IDE_PREFIX)) {
-        OptionType.IntelliJ
-      }
-      else {
-        OptionType.Other
-      }
+    else if (optionKey.startsWith(EditorConfigIntellijNameUtil.IDE_PREFIX)) {
+      OptionType.IntelliJ
+    }
+    else {
+      OptionType.Other
     }
   }
 }

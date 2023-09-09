@@ -5,7 +5,7 @@ import com.intellij.internal.statistic.beans.MetricEvent
 import com.intellij.internal.statistic.beans.addBoolIfDiffers
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vcs.VcsApplicationSettings
-import com.intellij.openapi.vcs.changes.actions.VcsStatisticsCollector.Companion.NON_MODAL_COMMIT_STATE_CHANGED
+import com.intellij.openapi.vcs.changes.actions.VcsStatisticsCollector.NON_MODAL_COMMIT_STATE_CHANGED
 import com.intellij.openapi.vcs.statistics.VcsApplicationOptionsUsagesCollector
 
 private val appSettings get() = VcsApplicationSettings.getInstance()
