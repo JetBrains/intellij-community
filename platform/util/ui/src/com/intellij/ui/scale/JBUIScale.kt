@@ -100,24 +100,26 @@ object JBUIScale {
       // see AquaFonts.getControlTextFont() - lucida13Pt is a hardcoded
       // text family should be used for relatively small sizes (<20pt), don't change to Display
       // see more about SF https://medium.com/@mach/the-secret-of-san-francisco-fonts-4b5295d9a745#.2ndr50z2v
-      font = Font(".SF NS Text", Font.PLAIN, 13)
-      DEF_SYSTEM_FONT_SIZE = font.size.toFloat()
+      val fontSize = 13
+      DEF_SYSTEM_FONT_SIZE = fontSize.toFloat()
+      return Pair(".SF NS Text", fontSize)
     }
     else {
       font = if (uiDefaults == null) UIManager.getFont("Label.font") else uiDefaults.get()!!.getFont("Label.font")
     }
 
-    val log = thisLogger()
-    val isScaleVerbose = SCALE_VERBOSE
-    if (isScaleVerbose) {
+    val log = if (SCALE_VERBOSE) {
+      val log = thisLogger()
       log.info("Label font: ${font.fontName}, ${font.size}")
+      log
+    }
+    else {
+      null
     }
 
     if (SystemInfoRt.isLinux) {
       val value = Toolkit.getDefaultToolkit().getDesktopProperty("gnome.Xft/DPI")
-      if (isScaleVerbose) {
-        log.info("gnome.Xft/DPI: $value")
-      }
+      log?.info("gnome.Xft/DPI: $value")
       if (value is Int) { // defined by JB JDK when the resource is available in the system
         // If the property is defined, then:
         // 1) it provides correct system scale
@@ -127,32 +129,26 @@ object JBUIScale {
         val scale = if (JreHiDpiUtil.isJreHiDPIEnabled()) 1f else discreteScale(dpi / 96f) // no scaling in JRE-HiDPI mode
         // derive the actual system base font size
         DEF_SYSTEM_FONT_SIZE = font.size / scale
-        if (isScaleVerbose) {
-          log.info(String.format("DEF_SYSTEM_FONT_SIZE: %.2f", DEF_SYSTEM_FONT_SIZE))
-        }
+        log?.info(String.format("DEF_SYSTEM_FONT_SIZE: %.2f", DEF_SYSTEM_FONT_SIZE))
       }
       else if (!SystemInfo.isJetBrainsJvm) {
         // With Oracle JDK: derive a scale from X server DPI, do not change DEF_SYSTEM_FONT_SIZE
         val size = DEF_SYSTEM_FONT_SIZE * screenScale
         font = font.deriveFont(size)
-        if (isScaleVerbose) {
-          log.info(String.format("(Not-JB JRE) reset font size: %.2f", size))
-        }
+        log?.info(String.format("(Not-JB JRE) reset font size: %.2f", size))
       }
     }
     else if (SystemInfoRt.isWindows) {
       val winFont = Toolkit.getDefaultToolkit().getDesktopProperty("win.messagebox.font") as Font?
       if (winFont != null) {
-        font = winFont // comes scaled
-        if (isScaleVerbose) {
-          log.info("Windows sys font: ${winFont.fontName}, ${winFont.size}")
-        }
+        // comes scaled
+        font = winFont
+        log?.info("Windows sys font: ${winFont.fontName}, ${winFont.size}")
       }
     }
+
     val result = Pair(font.name, font.size)
-    if (isScaleVerbose) {
-      log.info("systemFontData: ${result.first}, ${result.second}")
-    }
+    log?.info("systemFontData: ${result.first}, ${result.second}")
     return result
   }
 
