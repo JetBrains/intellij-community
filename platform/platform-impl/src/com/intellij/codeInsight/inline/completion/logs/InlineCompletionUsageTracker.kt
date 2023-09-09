@@ -19,6 +19,7 @@ import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.util.PsiUtilCore
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import org.jetbrains.annotations.ApiStatus
+import kotlin.random.Random
 
 
 @ApiStatus.Experimental
@@ -37,6 +38,7 @@ class InlineCompletionUsageTracker : CounterUsagesCollector() {
     private var cancelled: Boolean = false
     private var exception: Boolean = false
     private var finished: Boolean = false
+    val requestId = Random.nextLong()
 
     fun noSuggestions() {
       assert(!finished)
@@ -62,6 +64,7 @@ class InlineCompletionUsageTracker : CounterUsagesCollector() {
       assert(!finished)
       finished = true
       TRIGGERED.log(project, listOf(
+        REQUEST_ID.with(requestId),
         EVENT.with(event::class.java),
         PROVIDER.with(provider::class.java),
         OUTCOME.with(
@@ -88,6 +91,7 @@ class InlineCompletionUsageTracker : CounterUsagesCollector() {
         NO_SUGGESTIONS
       }
 
+      val REQUEST_ID = Long("request_id")
       val EVENT = EventFields.Class("event")
       val PROVIDER = EventFields.Class("event")
       val OUTCOME = NullableEnum<Outcome>("outcome")
@@ -95,6 +99,7 @@ class InlineCompletionUsageTracker : CounterUsagesCollector() {
 
       val TRIGGERED: VarargEventId = GROUP.registerVarargEvent(
         TRIGGERED_EVENT_ID,
+        REQUEST_ID,
         EventFields.Language,
         EventFields.CurrentFile,
         EVENT,
@@ -108,7 +113,7 @@ class InlineCompletionUsageTracker : CounterUsagesCollector() {
   /**
    * This tracker lives from the moment the inline completion appears on the screen until its end.
    */
-  class ShowTracker(private val invocationTime: Long) {
+  class ShowTracker(private val invocationTime: Long, private val requestId: Long) {
     private var data: MutableList<EventPair<*>> = mutableListOf()
     private var project: Project? = null
     private var shown: Boolean = false
@@ -120,6 +125,7 @@ class InlineCompletionUsageTracker : CounterUsagesCollector() {
       assert(!shownLogSent)
       showStartTime = System.currentTimeMillis()
       shown = true
+      data.add(REQUEST_ID.with(requestId))
       project = editor.project?.also {
         PsiDocumentManager.getInstance(it).getPsiFile(editor.document)?.let { psiFile ->
           val language = PsiUtilCore.getLanguageAtOffset(psiFile, editor.caretModel.offset)
@@ -151,6 +157,8 @@ class InlineCompletionUsageTracker : CounterUsagesCollector() {
 
       enum class Decision { ACCEPT, REJECT }
 
+      val REQUEST_ID = Long("request_id")
+
       val SUGGESTION_LENGTH = Int("suggestion_length")
       val TIME_TO_SHOW = Long("time_to_show")
       val SHOWING_TIME = Long("showing_time")
@@ -158,6 +166,7 @@ class InlineCompletionUsageTracker : CounterUsagesCollector() {
 
       val SHOWN: VarargEventId = GROUP.registerVarargEvent(
         SHOWN_EVENT_ID,
+        REQUEST_ID,
         EventFields.Language,
         EventFields.CurrentFile,
         SUGGESTION_LENGTH,

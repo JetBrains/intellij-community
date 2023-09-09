@@ -107,7 +107,8 @@ class InlineCompletionContext private constructor(
     }
 
     private fun createShowTracker(triggerTracker: InlineCompletionUsageTracker.TriggerTracker) = InlineCompletionUsageTracker.ShowTracker(
-      invocationTime = triggerTracker.invocationTime
+      invocationTime = triggerTracker.invocationTime,
+      requestId = triggerTracker.requestId,
     )
 
     fun Editor.resetInlineCompletionContextWithPlaceholder(): Unit? = getInlineCompletionContextOrNull()?.let {
