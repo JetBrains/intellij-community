@@ -57,10 +57,12 @@ import git4idea.history.GitLogParser
 import git4idea.history.GitLogParser.GitLogOption
 import git4idea.history.GitLogUtil
 import git4idea.i18n.GitBundle
+import git4idea.index.isStagingAreaAvailable
 import git4idea.merge.GitConflictResolver
 import git4idea.repo.GitRepositoryManager
 import git4idea.stash.ui.isStashToolWindowEnabled
 import git4idea.stash.ui.showStashes
+import git4idea.stash.ui.stashToolWindowRegistryOption
 import git4idea.ui.StashInfo
 import git4idea.util.GitUIUtil
 import git4idea.util.GitUntrackedFilesHelper
@@ -288,6 +290,12 @@ object GitStashOperations {
     val actions = buildList {
       if (isStashToolWindowEnabled(project)) {
         add(NotificationAction.createSimple(GitBundle.message("stash.view.stashes.link")) { showStashes(project) })
+      }
+      else if (isStagingAreaAvailable(project)) {
+        add(NotificationAction.createSimpleExpiring(GitBundle.message("stash.enable.stashes.link", GitBundle.message("stash.tab.name"))) {
+          stashToolWindowRegistryOption().setValue(true)
+          showStashes(project)
+        })
       }
     }
     val message = getSuccessMessage(project, successfulRoots, hasErrors)
