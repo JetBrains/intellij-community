@@ -36,7 +36,8 @@ class MavenSetupProjectTest : MavenSetupProjectTestCase() {
       waitForImport {
         openProjectAsync(projectInfo.projectFile)
       }.useProjectAsync {
-        assertProjectStateWithinSeconds(60, it, projectInfo)
+        assertProjectState(it, projectInfo)
+
       }
     }
   }
@@ -48,7 +49,8 @@ class MavenSetupProjectTest : MavenSetupProjectTestCase() {
       waitForImport {
         importProjectAsync(projectInfo.projectFile)
       }.useProjectAsync {
-        assertProjectStateWithinSeconds(60, it, projectInfo)
+        assertProjectState(it, projectInfo)
+
       }
     }
   }
@@ -150,7 +152,7 @@ class MavenSetupProjectTest : MavenSetupProjectTestCase() {
       waitForImport {
         openProjectAsync(projectInfo.projectFile)
       }.useProjectAsync(save = true) {
-        assertProjectStateWithinSeconds(60, it, projectInfo)
+        assertProjectState(it, projectInfo)
       }
       openProjectAsync(projectInfo.projectFile)
         .useProjectAsync {

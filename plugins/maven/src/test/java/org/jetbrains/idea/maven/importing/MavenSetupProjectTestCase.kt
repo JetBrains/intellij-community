@@ -4,6 +4,7 @@ package org.jetbrains.idea.maven.importing
 import com.intellij.ide.actions.ImportProjectAction
 import com.intellij.ide.impl.OpenProjectTask
 import com.intellij.maven.testFramework.MavenMultiVersionImportingTestCase
+import com.intellij.maven.testFramework.assertWithinTimeout
 import com.intellij.maven.testFramework.xml.MavenBuildFileBuilder
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.ModalityState
@@ -17,7 +18,6 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.testFramework.closeOpenedProjectsIfFailAsync
 import com.intellij.testFramework.utils.module.assertModules
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.delay
 import kotlinx.coroutines.withContext
 import org.jetbrains.concurrency.asDeferred
 import org.jetbrains.idea.maven.project.MavenGeneralSettings
@@ -120,20 +120,7 @@ abstract class MavenSetupProjectTestCase : MavenMultiVersionImportingTestCase() 
       .settings.getGeneralSettings()
   }
 
-  suspend fun assertProjectStateWithinSeconds(seconds: Int, project: Project, vararg projectsInfo: ProjectInfo) {
-    for (i in 0..seconds) {
-      try {
-        assertProjectState(project, *projectsInfo)
-        break
-      }
-      catch (e: Throwable) {
-        delay(1000)
-      }
-    }
-    assertProjectState(project, *projectsInfo)
-  }
-
-  fun assertProjectState(project: Project, vararg projectsInfo: ProjectInfo) {
+  suspend fun assertProjectState(project: Project, vararg projectsInfo: ProjectInfo) = assertWithinTimeout {
     assertProjectStructure(project, *projectsInfo)
   }
 

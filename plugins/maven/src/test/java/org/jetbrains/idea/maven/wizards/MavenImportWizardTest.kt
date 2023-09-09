@@ -2,6 +2,7 @@
 package org.jetbrains.idea.maven.wizards
 
 import com.intellij.maven.testFramework.MavenTestCase
+import com.intellij.maven.testFramework.assertWithinTimeout
 import com.intellij.maven.testFramework.utils.importMavenProjects
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.externalSystem.service.project.manage.ExternalProjectsManagerImpl
@@ -14,7 +15,6 @@ import com.intellij.testFramework.PlatformTestUtil
 import com.intellij.testFramework.UsefulTestCase
 import com.intellij.util.io.write
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.delay
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withContext
 import org.assertj.core.api.Assertions
@@ -64,7 +64,7 @@ class MavenImportWizardTest : MavenProjectWizardTestCase() {
     afterImportFinished(module.getProject()) {
       Assertions.assertThat(ModuleManager.getInstance(it!!.project).modules).hasOnlyOneElementSatisfying { m: Module -> Assertions.assertThat(m.getName()).isEqualTo("project") }
     }
-    assertWithinSeconds(60) {
+    assertWithinTimeout {
       val mavenHome = MavenWorkspaceSettingsComponent.getInstance(module.getProject()).settings.generalSettings.getMavenHomeType()
       assertSame(MavenWrapper, mavenHome)
     }
@@ -100,7 +100,7 @@ class MavenImportWizardTest : MavenProjectWizardTestCase() {
     }
     else {
       val project = module.getProject()
-      assertWithinSeconds(60) {
+      assertWithinTimeout {
         val modules = ModuleManager.getInstance(project).modules
         val moduleNames = HashSet<String>()
         for (existingModule in modules) {
@@ -170,19 +170,6 @@ class MavenImportWizardTest : MavenProjectWizardTestCase() {
     private fun createMavenWrapper(pomPath: Path, context: String) {
       val fileName = pomPath.parent.resolve(".mvn").resolve("wrapper").resolve("maven-wrapper.properties")
       fileName.write(context)
-    }
-
-    private suspend fun assertWithinSeconds(seconds: Int, assert: suspend () -> Unit) {
-      for (i in 0..seconds) {
-        try {
-          assert()
-          break
-        }
-        catch (e: Throwable) {
-          delay(1000)
-        }
-      }
-      assert()
     }
   }
 }
