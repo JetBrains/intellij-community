@@ -60,10 +60,12 @@ public abstract class AbstractApplicationConfigurationProducer<T extends Applica
   }
 
   private void setupConfiguration(T configuration, final PsiClass aClass, final ConfigurationContext context) {
-    configuration.setMainClassName(
-      aClass instanceof PsiUnnamedClass ? StringUtil.trimEnd(aClass.getContainingFile().getName(), ".java")
-                                        : JavaExecutionUtil.getRuntimeQualifiedName(aClass)
-    );
+    if (aClass instanceof PsiUnnamedClass) {
+      configuration.setMainClassName(StringUtil.trimEnd(aClass.getContainingFile().getName(), ".java"));
+      configuration.setUnnamedClassConfiguration(true);
+    } else {
+      configuration.setMainClassName(JavaExecutionUtil.getRuntimeQualifiedName(aClass));
+    }
     configuration.setGeneratedName();
     setupConfigurationModule(context, configuration);
   }

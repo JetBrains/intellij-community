@@ -31,10 +31,16 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiJavaFile;
+import com.intellij.psi.PsiManager;
+import com.intellij.psi.impl.java.JavaUnnamedClassIndexKt;
+import com.intellij.psi.search.GlobalSearchScope;
+import com.intellij.psi.util.JavaUnnamedClassUtil;
 import com.intellij.psi.util.PsiMethodUtil;
 import com.intellij.refactoring.listeners.RefactoringElementListener;
 import com.intellij.util.PathUtil;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.indexing.FileBasedIndex;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -184,12 +190,37 @@ public class ApplicationConfiguration extends JavaRunConfigurationBase
   @NotNull
   public JavaRunConfigurationModule checkClass() throws RuntimeConfigurationException {
     final JavaRunConfigurationModule configurationModule = getConfigurationModule();
-    final PsiClass psiClass =
-      configurationModule.checkModuleAndClassName(getMainClassName(), ExecutionBundle.message("no.main.class.specified.error.text"));
-    if (!PsiMethodUtil.hasMainMethod(psiClass)) {
+    String mainClassName = getMainClassName();
+    PsiClass psiClass = getOptions().isUnnamedClassConfiguration()
+                        ? checkUnnammedClassConfiguration(configurationModule, mainClassName)
+                        : configurationModule.checkModuleAndClassName(getMainClassName(), ExecutionBundle.message("no.main.class.specified.error.text"));
+    if (psiClass == null || !PsiMethodUtil.hasMainMethod(psiClass)) {
       throw new RuntimeConfigurationWarning(ExecutionBundle.message("main.method.not.found.in.class.error.message", getMainClassName()));
     }
     return configurationModule;
+  }
+
+  @Nullable
+  private PsiClass checkUnnammedClassConfiguration(JavaRunConfigurationModule configurationModule, String mainClassName) throws RuntimeConfigurationException {
+    configurationModule.checkForWarning();
+
+    if (mainClassName != null) {
+      var virtualFileIterator = FileBasedIndex.getInstance().getContainingFiles(
+        JavaUnnamedClassIndexKt.getId(),
+        mainClassName + ".java",
+        GlobalSearchScope.allScope(getProject())
+      ).iterator();
+
+      if (virtualFileIterator.hasNext()) {
+        var virtualFile = virtualFileIterator.next();
+        var psiFile = PsiManager.getInstance(getProject()).findFile(virtualFile);
+        if (psiFile instanceof PsiJavaFile javaFile) {
+          return JavaUnnamedClassUtil.getUnnamedClassFor(javaFile);
+        }
+      }
+    }
+
+    return null;
   }
 
   @Override
@@ -347,6 +378,10 @@ public class ApplicationConfiguration extends JavaRunConfigurationBase
   public void setIncludeProvidedScope(boolean value) {
     getOptions().setIncludeProvidedScope(value);
   }
+
+  public boolean isUnnamedClassConfiguration() { return getOptions().isUnnamedClassConfiguration(); }
+
+  public void setUnnamedClassConfiguration(boolean value) { getOptions().setUnnamedClassConfiguration(value); }
 
   @Override
   public Collection<Module> getValidModules() {
