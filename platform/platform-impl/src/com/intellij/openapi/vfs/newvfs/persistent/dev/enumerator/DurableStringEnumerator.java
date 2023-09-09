@@ -1,21 +1,19 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vfs.newvfs.persistent.dev.enumerator;
 
-import com.intellij.openapi.Forceable;
 import com.intellij.openapi.util.IntRef;
 import com.intellij.openapi.vfs.newvfs.persistent.VFSAsyncTaskExecutor;
+import com.intellij.util.io.DurableDataEnumerator;
 import com.intellij.openapi.vfs.newvfs.persistent.mapped.MMappedFileStorage;
 import com.intellij.openapi.vfs.newvfs.persistent.dev.InvertedFilenameHashBasedIndex.Int2IntMultimap;
 import com.intellij.openapi.vfs.newvfs.persistent.dev.appendonlylog.AppendOnlyLog;
 import com.intellij.openapi.vfs.newvfs.persistent.dev.appendonlylog.AppendOnlyLogOverMMappedFile;
 import com.intellij.util.Processor;
 import com.intellij.util.io.IOUtil;
-import com.intellij.util.io.ScannableDataEnumeratorEx;
 import com.intellij.util.io.VersionUpdatedException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.io.Closeable;
 import java.io.IOException;
 import java.io.UncheckedIOException;
 import java.nio.ByteBuffer;
@@ -29,7 +27,7 @@ import static java.nio.charset.StandardCharsets.UTF_8;
  * Persistent enumerator for strings.
  * Uses append-only log to store strings, and in-memory Map[string.hash->id*].
  */
-public final class DurableStringEnumerator implements ScannableDataEnumeratorEx<String>, Forceable, Closeable {
+public final class DurableStringEnumerator implements DurableDataEnumerator<String> {
 
   public static final int DATA_FORMAT_VERSION = 1;
 
@@ -98,6 +96,13 @@ public final class DurableStringEnumerator implements ScannableDataEnumeratorEx<
 
   @Override
   public boolean isDirty() {
+    //TODO RC: with mapped files we actually don't know are there any unsaved changes,
+    //         since OS is responsible for that. We could force OS to flush the changes,
+    //         but we couldn't ask are there changes.
+    //         I think return false is +/- safe option, since the data is almost always
+    //         'safe' (as long as OS doesn't crash), but it is a bit logically inconsistent:
+    //         .isDirty() is supposed to return false if .force() has nothing to do, but
+    //         .force() still _can_ something, i.e. forcing OS to flush.
     return false;
   }
 

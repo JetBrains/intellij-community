@@ -2,6 +2,7 @@
 package com.intellij.openapi.vfs.newvfs.persistent.dev.enumerator;
 
 import com.intellij.openapi.util.ThrowableComputable;
+import com.intellij.util.io.DurableDataEnumerator;
 import com.intellij.openapi.vfs.newvfs.persistent.dev.intmultimaps.IntToMultiIntMap;
 import com.intellij.openapi.vfs.newvfs.persistent.dev.intmultimaps.NonParallelNonPersistentIntToMultiIntMap;
 import com.intellij.openapi.vfs.newvfs.persistent.dev.intmultimaps.extendiblehashmap.ExtendibleHashMap;
@@ -10,13 +11,10 @@ import com.intellij.openapi.vfs.newvfs.persistent.dev.appendonlylog.AppendOnlyLo
 import com.intellij.openapi.vfs.newvfs.persistent.dev.appendonlylog.AppendOnlyLogOverMMappedFile;
 import com.intellij.util.ExceptionUtil;
 import com.intellij.util.Processor;
-import com.intellij.util.io.ScannableDataEnumeratorEx;
 import com.intellij.util.io.VersionUpdatedException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.io.Closeable;
-import java.io.Flushable;
 import java.io.IOException;
 import java.nio.file.Path;
 
@@ -28,7 +26,7 @@ import java.nio.file.Path;
  * <p>
  * Implementation uses append-only log to store objects, and some (pluggable) Map[object.hash -> id*].
  */
-public final class DurableEnumerator<V> implements ScannableDataEnumeratorEx<V>, Flushable, Closeable {
+public final class DurableEnumerator<V> implements DurableDataEnumerator<V> {
 
   public static final int DATA_FORMAT_VERSION = 1;
 
@@ -109,7 +107,19 @@ public final class DurableEnumerator<V> implements ScannableDataEnumeratorEx<V>,
   }
 
   @Override
-  public void flush() throws IOException {
+  public boolean isDirty() {
+    //TODO RC: with mapped files we actually don't know are there any unsaved changes,
+    //         since OS is responsible for that. We could force OS to flush the changes,
+    //         but we couldn't ask are there changes.
+    //         I think return false is +/- safe option, since the data is almost always
+    //         'safe' (as long as OS doesn't crash), but it is a bit logically inconsistent:
+    //         .isDirty() is supposed to return false if .force() has nothing to do, but
+    //         .force() still _can_ something, i.e. forcing OS to flush.
+    return false;
+  }
+
+  @Override
+  public void force() throws IOException {
     valuesLog.flush(true);
     valueHashToId.flush();
   }

@@ -14,7 +14,7 @@ import java.nio.file.Path;
 import java.util.Collection;
 import java.util.concurrent.locks.Lock;
 
-public class PersistentEnumerator<Data> implements ScannableDataEnumeratorEx<Data>, Closeable, Forceable {
+public class PersistentEnumerator<Data> implements DurableDataEnumerator<Data>, Closeable, Forceable {
   protected final @NotNull PersistentEnumeratorBase<Data> myEnumerator;
 
   public PersistentEnumerator(@NotNull Path file, @NotNull KeyDescriptor<Data> dataDescriptor, final int initialSize) throws IOException {
