@@ -69,6 +69,7 @@ class InlineCompletionUsageTracker : CounterUsagesCollector() {
         REQUEST_ID.with(requestId),
         EVENT.with(event::class.java),
         PROVIDER.with(provider::class.java),
+        TIME_TO_COMPUTE.with(System.currentTimeMillis() - invocationTime),
         OUTCOME.with(
           when {
             // fixed order
@@ -78,26 +79,24 @@ class InlineCompletionUsageTracker : CounterUsagesCollector() {
             hasSuggestions == false -> Outcome.NO_SUGGESTIONS
             else -> null
           }
-        ),
-        TIME_TO_COMPUTE.with(System.currentTimeMillis() - invocationTime)
+        )
       ))
     }
 
     private companion object {
       const val TRIGGERED_EVENT_ID = "inline.triggered"
 
+      val REQUEST_ID = Long("request_id")
+      val EVENT = EventFields.Class("event")
+      val PROVIDER = EventFields.Class("event")
+      val TIME_TO_COMPUTE = Long("time_to_compute")
+      val OUTCOME = NullableEnum<Outcome>("outcome")
       enum class Outcome {
         EXCEPTION,
         CANCELLED,
         SHOW,
         NO_SUGGESTIONS
       }
-
-      val REQUEST_ID = Long("request_id")
-      val EVENT = EventFields.Class("event")
-      val PROVIDER = EventFields.Class("event")
-      val OUTCOME = NullableEnum<Outcome>("outcome")
-      val TIME_TO_COMPUTE = Long("time_to_compute")
 
       val TRIGGERED: VarargEventId = GROUP.registerVarargEvent(
         TRIGGERED_EVENT_ID,
@@ -106,8 +105,8 @@ class InlineCompletionUsageTracker : CounterUsagesCollector() {
         EventFields.CurrentFile,
         EVENT,
         PROVIDER,
-        OUTCOME,
         TIME_TO_COMPUTE,
+        OUTCOME,
       )
     }
   }
@@ -142,33 +141,34 @@ class InlineCompletionUsageTracker : CounterUsagesCollector() {
     }
 
     fun accepted() {
-      finish(Decision.ACCEPT)
+      finish(Outcome.ACCEPT)
     }
 
     fun rejected() {
-      finish(Decision.REJECT)
+      finish(Outcome.REJECT)
     }
 
-    private fun finish(decision: Decision) {
+    private fun finish(outcome: Outcome) {
       if (!shownLogSent.compareAndSet(false, true)) {
         error("Already sent")
       }
-      data.add(DECISION.with(decision))
       data.add(SHOWING_TIME.with(System.currentTimeMillis() - showStartTime))
+      data.add(OUTCOME.with(outcome))
       SHOWN.log(project, data)
     }
 
     private companion object {
       const val SHOWN_EVENT_ID = "inline.shown"
 
-      enum class Decision { ACCEPT, REJECT }
-
       val REQUEST_ID = Long("request_id")
 
       val SUGGESTION_LENGTH = Int("suggestion_length")
+
       val TIME_TO_SHOW = Long("time_to_show")
       val SHOWING_TIME = Long("showing_time")
-      val DECISION = Enum<Decision>("decision")
+      val OUTCOME = Enum<Outcome>("decision")
+
+      enum class Outcome { ACCEPT, REJECT }
 
       val SHOWN: VarargEventId = GROUP.registerVarargEvent(
         SHOWN_EVENT_ID,
@@ -178,7 +178,7 @@ class InlineCompletionUsageTracker : CounterUsagesCollector() {
         SUGGESTION_LENGTH,
         TIME_TO_SHOW,
         SHOWING_TIME,
-        DECISION,
+        OUTCOME,
       )
     }
   }
