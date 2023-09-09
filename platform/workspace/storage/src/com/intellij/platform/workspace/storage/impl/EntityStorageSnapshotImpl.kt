@@ -265,6 +265,9 @@ internal class MutableEntityStorageImpl(
       }
 
       entityToAdd.applyToBuilder(this)
+      if (entity.javaClass.name.contains("SdkMain")) {
+        println("Adding SDK entity $entity")
+      }
       entityToAdd.changedProperty.clear()
     }
     finally {

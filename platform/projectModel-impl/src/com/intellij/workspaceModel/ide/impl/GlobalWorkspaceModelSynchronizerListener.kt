@@ -4,18 +4,13 @@ package com.intellij.workspaceModel.ide.impl
 import com.intellij.openapi.project.Project
 import com.intellij.platform.backend.workspace.WorkspaceModelChangeListener
 import com.intellij.platform.workspace.jps.JpsGlobalFileEntitySource
-import com.intellij.platform.workspace.jps.entities.ExcludeUrlEntity
-import com.intellij.platform.workspace.jps.entities.LibraryEntity
-import com.intellij.platform.workspace.jps.entities.LibraryPropertiesEntity
-import com.intellij.platform.workspace.storage.EntityChange
 import com.intellij.platform.workspace.storage.VersionedStorageChange
-import com.intellij.platform.workspace.storage.WorkspaceEntity
 import com.intellij.workspaceModel.ide.legacyBridge.GlobalLibraryTableBridge
-import kotlin.reflect.KClass
+import com.intellij.workspaceModel.ide.legacyBridge.sdk.GlobalSdkTableBridge
 
 class GlobalWorkspaceModelSynchronizerListener(private val project: Project) : WorkspaceModelChangeListener {
   override fun changed(event: VersionedStorageChange) {
-    if (!GlobalLibraryTableBridge.isEnabled()) return
+    if (!GlobalLibraryTableBridge.isEnabled() && !GlobalSdkTableBridge.isEnabled()) return
     val globalWorkspaceModel = GlobalWorkspaceModel.getInstance()
     // Avoid handling events if change was made by global workspace model
     if (globalWorkspaceModel.isFromGlobalWorkspaceModel) return

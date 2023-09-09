@@ -83,6 +83,7 @@ class SdkTableBridgeImpl: SdkTableImplementationDelegate {
     val sdkEntity = SdkMainEntity(sdk.name, sdk.sdkType.name, homePathVfu, roots, additionalDataAsString, sdkEntitySource) {
       this.version = sdk.versionString
     }
+    println("Adding new SDK ${sdk.name}")
     globalWorkspaceModel.updateModel("Adding SDK: ${sdk.name} ${sdk.sdkType}") {
       it.addEntity(sdkEntity)
       it.mutableSdkMap.addIfAbsent(sdkEntity, sdk)
@@ -98,6 +99,7 @@ class SdkTableBridgeImpl: SdkTableImplementationDelegate {
     globalWorkspaceModel.updateModel("Removing SDK: ${sdk.name} ${sdk.sdkType}") {
       it.removeEntity(sdkEntity)
     }
+    println("Remove SDK ${sdk.name} All SDKs ${getAllSdks().size}" )
   }
 
   override fun updateSdk(originalSdk: Sdk, modifiedSdk: Sdk) {

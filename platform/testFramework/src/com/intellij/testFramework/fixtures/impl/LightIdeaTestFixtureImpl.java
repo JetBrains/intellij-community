@@ -84,7 +84,10 @@ public final class LightIdeaTestFixtureImpl extends BaseFixture implements Light
         }
       },
       () -> LightPlatformTestCase.checkEditorsReleased(),
-      () -> Disposer.dispose(mySdkParentDisposable),
+      () -> {
+        System.out.println("Disposer.dispose mySdkParentDisposable");
+        Disposer.dispose(mySdkParentDisposable);
+      },
       () -> {
         SdkLeakTracker oldSdks = myOldSdks;
         if (oldSdks != null) {
