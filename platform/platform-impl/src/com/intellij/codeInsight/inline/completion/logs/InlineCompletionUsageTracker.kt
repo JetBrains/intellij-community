@@ -133,7 +133,7 @@ class InlineCompletionUsageTracker : CounterUsagesCollector() {
         PsiDocumentManager.getInstance(it).getPsiFile(editor.document)?.let { psiFile ->
           val language = PsiUtilCore.getLanguageAtOffset(psiFile, editor.caretModel.offset)
           data.add(EventFields.Language.with(language))
-          data.add(EventFields.CurrentFile.with(language))
+          data.add(EventFields.CurrentFile.with(psiFile.language))
         }
       }
       data.add(SUGGESTION_LENGTH.with(element.text.length))
