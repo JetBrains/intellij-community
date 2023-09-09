@@ -36,7 +36,7 @@ class MavenSetupProjectTest : MavenSetupProjectTestCase() {
       waitForImport {
         openProjectAsync(projectInfo.projectFile)
       }.useProjectAsync {
-        assertProjectState(it, projectInfo)
+        assertProjectStateWithinSeconds(60, it, projectInfo)
       }
     }
   }
@@ -48,7 +48,7 @@ class MavenSetupProjectTest : MavenSetupProjectTestCase() {
       waitForImport {
         importProjectAsync(projectInfo.projectFile)
       }.useProjectAsync {
-        assertProjectState(it, projectInfo)
+        assertProjectStateWithinSeconds(60, it, projectInfo)
       }
     }
   }
@@ -150,7 +150,7 @@ class MavenSetupProjectTest : MavenSetupProjectTestCase() {
       waitForImport {
         openProjectAsync(projectInfo.projectFile)
       }.useProjectAsync(save = true) {
-        assertProjectState(it, projectInfo)
+        assertProjectStateWithinSeconds(60, it, projectInfo)
       }
       openProjectAsync(projectInfo.projectFile)
         .useProjectAsync {
@@ -185,6 +185,8 @@ class MavenSetupProjectTest : MavenSetupProjectTestCase() {
   fun `test workspace import forcibly enabled once per project`() {
     runBlocking {
       val projectInfo = generateProject("A")
+
+      MavenProjectLegacyImporter.setAnswerToDeleteObsoleteModulesQuestion(true)
       waitForImport {
         openProjectAsync(projectInfo.projectFile)
       }.useProjectAsync(true) {
@@ -194,7 +196,6 @@ class MavenSetupProjectTest : MavenSetupProjectTestCase() {
         mavenProjectsManager.importingSettings.isWorkspaceImportEnabled = false
       }
 
-      MavenProjectLegacyImporter.setAnswerToDeleteObsoleteModulesQuestion(true)
       waitForImport {
         openProjectAsync(projectInfo.projectFile)
       }.useProjectAsync(true) {

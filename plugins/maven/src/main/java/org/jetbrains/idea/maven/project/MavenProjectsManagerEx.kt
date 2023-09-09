@@ -68,14 +68,16 @@ interface MavenAsyncProjectsManager {
   @ApiStatus.Internal
   suspend fun addManagedFilesWithProfilesAndUpdate(files: List<VirtualFile>,
                                                    profiles: MavenExplicitProfiles,
-                                                   modelsProvider: IdeModifiableModelsProvider?): List<Module>
+                                                   modelsProvider: IdeModifiableModelsProvider?,
+                                                   previewModule: Module?): List<Module>
 }
 
 open class MavenProjectsManagerEx(project: Project) : MavenProjectsManager(project) {
   override suspend fun addManagedFilesWithProfilesAndUpdate(files: List<VirtualFile>,
                                                             profiles: MavenExplicitProfiles,
-                                                            modelsProvider: IdeModifiableModelsProvider?): List<Module> {
-    blockingContext { doAddManagedFilesWithProfiles(files, profiles, null) }
+                                                            modelsProvider: IdeModifiableModelsProvider?,
+                                                            previewModule: Module?): List<Module> {
+    blockingContext { doAddManagedFilesWithProfiles(files, profiles, previewModule) }
     return updateAllMavenProjects(MavenImportSpec(false, true, false), modelsProvider)
   }
 

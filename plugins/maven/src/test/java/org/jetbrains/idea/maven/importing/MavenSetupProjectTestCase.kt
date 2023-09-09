@@ -17,6 +17,7 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.testFramework.closeOpenedProjectsIfFailAsync
 import com.intellij.testFramework.utils.module.assertModules
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.withContext
 import org.jetbrains.concurrency.asDeferred
 import org.jetbrains.idea.maven.project.MavenGeneralSettings
@@ -117,6 +118,19 @@ abstract class MavenSetupProjectTestCase : MavenMultiVersionImportingTestCase() 
   fun getGeneralSettings(project: Project): MavenGeneralSettings {
     return MavenWorkspaceSettingsComponent.getInstance(project)
       .settings.getGeneralSettings()
+  }
+
+  suspend fun assertProjectStateWithinSeconds(seconds: Int, project: Project, vararg projectsInfo: ProjectInfo) {
+    for (i in 0..seconds) {
+      try {
+        assertProjectState(project, *projectsInfo)
+        break
+      }
+      catch (e: Throwable) {
+        delay(1000)
+      }
+    }
+    assertProjectState(project, *projectsInfo)
   }
 
   fun assertProjectState(project: Project, vararg projectsInfo: ProjectInfo) {

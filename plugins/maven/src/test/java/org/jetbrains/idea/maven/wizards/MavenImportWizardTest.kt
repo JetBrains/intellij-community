@@ -3,6 +3,7 @@ package org.jetbrains.idea.maven.wizards
 
 import com.intellij.maven.testFramework.MavenTestCase
 import com.intellij.maven.testFramework.utils.importMavenProjects
+import com.intellij.openapi.application.EDT
 import com.intellij.openapi.externalSystem.service.project.manage.ExternalProjectsManagerImpl
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.module.ModuleManager
@@ -12,6 +13,10 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.testFramework.PlatformTestUtil
 import com.intellij.testFramework.UsefulTestCase
 import com.intellij.util.io.write
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.withContext
 import org.assertj.core.api.Assertions
 import org.jetbrains.idea.maven.navigator.MavenProjectsNavigator
 import org.jetbrains.idea.maven.project.BundledMaven3
@@ -28,20 +33,20 @@ import java.util.concurrent.TimeoutException
 import java.util.function.Consumer
 
 class MavenImportWizardTest : MavenProjectWizardTestCase() {
-  @Throws(Exception::class)
-  fun testImportModule() {
+  override fun runInDispatchThread() = false
+
+  fun testImportModule() = runBlocking {
     val pom = createPom()
-    val module = importModuleFrom(MavenProjectImportProvider(), pom.toString())
+    val module = withContext(Dispatchers.EDT) { importModuleFrom(MavenProjectImportProvider(), pom.toString()) }
     afterImportFinished(myProject) {
       val created = it!!.context!!.modulesCreated
       Assertions.assertThat(created).singleElement().matches { m: Module -> m.getName() == "project" }
     }
   }
 
-  @Throws(Exception::class)
-  fun testImportProject() {
+  fun testImportProject() = runBlocking {
     val pom = createPom()
-    val module = importProjectFrom(pom.toString(), null, MavenProjectImportProvider())
+    val module = withContext(Dispatchers.EDT) { importProjectFrom(pom.toString(), null, MavenProjectImportProvider()) }
     afterImportFinished(module.getProject()) {
       Assertions.assertThat(ModuleManager.getInstance(it!!.project).modules).hasOnlyOneElementSatisfying { m: Module -> Assertions.assertThat(m.getName()).isEqualTo("project") }
     }
@@ -52,23 +57,23 @@ class MavenImportWizardTest : MavenProjectWizardTestCase() {
     assertTrue(settings.isUseMavenConfig)
   }
 
-  @Throws(Exception::class)
-  fun testImportProjectWithWrapper() {
+  fun testImportProjectWithWrapper() = runBlocking {
     val pom = createPom()
     createMavenWrapper(pom, "distributionUrl=https://cache-redirector.jetbrains.com/repo.maven.apache.org/maven2/org/apache/maven/apache-maven/3.8.1/apache-maven-3.8.1-bin.zip")
-    val module = importProjectFrom(pom.toString(), null, MavenProjectImportProvider())
+    val module = withContext(Dispatchers.EDT) { importProjectFrom(pom.toString(), null, MavenProjectImportProvider()) }
     afterImportFinished(module.getProject()) {
       Assertions.assertThat(ModuleManager.getInstance(it!!.project).modules).hasOnlyOneElementSatisfying { m: Module -> Assertions.assertThat(m.getName()).isEqualTo("project") }
     }
-    val mavenHome = MavenWorkspaceSettingsComponent.getInstance(module.getProject()).settings.generalSettings.getMavenHomeType()
-    assertSame(MavenWrapper, mavenHome)
+    assertWithinSeconds(60) {
+      val mavenHome = MavenWorkspaceSettingsComponent.getInstance(module.getProject()).settings.generalSettings.getMavenHomeType()
+      assertSame(MavenWrapper, mavenHome)
+    }
   }
 
-  @Throws(Exception::class)
-  fun testImportProjectWithWrapperWithoutUrl() {
+  fun testImportProjectWithWrapperWithoutUrl() = runBlocking {
     val pom = createPom()
     createMavenWrapper(pom, "property1=value1")
-    val module = importProjectFrom(pom.toString(), null, MavenProjectImportProvider())
+    val module = withContext(Dispatchers.EDT) { importProjectFrom(pom.toString(), null, MavenProjectImportProvider()) }
     val mavenHome = MavenWorkspaceSettingsComponent.getInstance(module.getProject()).settings.generalSettings.getMavenHomeType()
     assertSame(BundledMaven3, mavenHome)
     afterImportFinished(module.getProject()) {
@@ -76,8 +81,7 @@ class MavenImportWizardTest : MavenProjectWizardTestCase() {
     }
   }
 
-  @Throws(Exception::class)
-  fun testImportProjectWithManyPoms() {
+  fun testImportProjectWithManyPoms() = runBlocking {
     val pom1 = createPom("pom1.xml")
     val pom2 = pom1.parent.resolve("pom2.xml")
     pom2.write(MavenTestCase.createPomXml(
@@ -86,7 +90,7 @@ class MavenImportWizardTest : MavenProjectWizardTestCase() {
       <artifactId>project2</artifactId>
       <version>1</version>
       """.trimIndent()))
-    val module = importProjectFrom(pom1.toString(), null, MavenProjectImportProvider())
+    val module = withContext(Dispatchers.EDT) { importProjectFrom(pom1.toString(), null, MavenProjectImportProvider()) }
     if (MavenUtil.isLinearImportEnabled()) {
       afterImportFinished(createdProject) { c: MavenImportFinishedContext? ->
         val paths = MavenProjectsManager.getInstance(c!!.project).projectsTreeForTests.getExistingManagedFiles().map { it.toNioPath() }
@@ -96,12 +100,14 @@ class MavenImportWizardTest : MavenProjectWizardTestCase() {
     }
     else {
       val project = module.getProject()
-      val modules = ModuleManager.getInstance(project).modules
-      val moduleNames = HashSet<String>()
-      for (existingModule in modules) {
-        moduleNames.add(existingModule.getName())
+      assertWithinSeconds(60) {
+        val modules = ModuleManager.getInstance(project).modules
+        val moduleNames = HashSet<String>()
+        for (existingModule in modules) {
+          moduleNames.add(existingModule.getName())
+        }
+        assertEquals(setOf("project", "project2"), moduleNames)
       }
-      assertEquals(setOf("project", "project2"), moduleNames)
       val projectsManager = MavenProjectsManager.getInstance(project)
       val mavenProjectNames = HashSet<String?>()
       for (p in projectsManager.getProjects()) {
@@ -111,7 +117,7 @@ class MavenImportWizardTest : MavenProjectWizardTestCase() {
     }
   }
 
-  fun testShouldStoreImlFileInSameDirAsPomXml() {
+  fun testShouldStoreImlFileInSameDirAsPomXml() = runBlocking {
     val dir = tempDir.newPath("", true)
     val projectName = dir.toFile().getName()
     val pom = dir.resolve("pom.xml")
@@ -123,7 +129,7 @@ class MavenImportWizardTest : MavenProjectWizardTestCase() {
       <version>1</version>
       """.trimIndent()))
     val provider = MavenProjectImportProvider()
-    val module = importProjectFrom(pom.toString(), null, provider)
+    val module = withContext(Dispatchers.EDT) { importProjectFrom(pom.toString(), null, provider) }
     val project = module.getProject()
     waitForMavenImporting(project, LocalFileSystem.getInstance().findFileByNioFile(pom)!!)
     ExternalProjectsManagerImpl.getInstance(project).setStoreExternally(false)
@@ -164,6 +170,19 @@ class MavenImportWizardTest : MavenProjectWizardTestCase() {
     private fun createMavenWrapper(pomPath: Path, context: String) {
       val fileName = pomPath.parent.resolve(".mvn").resolve("wrapper").resolve("maven-wrapper.properties")
       fileName.write(context)
+    }
+
+    private suspend fun assertWithinSeconds(seconds: Int, assert: suspend () -> Unit) {
+      for (i in 0..seconds) {
+        try {
+          assert()
+          break
+        }
+        catch (e: Throwable) {
+          delay(1000)
+        }
+      }
+      assert()
     }
   }
 }
