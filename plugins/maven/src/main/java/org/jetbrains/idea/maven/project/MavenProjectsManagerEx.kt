@@ -232,8 +232,9 @@ open class MavenProjectsManagerEx(project: Project) : MavenProjectsManager(proje
                                            filesToUpdate: MutableList<VirtualFile>,
                                            filesToDelete: MutableList<VirtualFile>): List<Module> {
     MavenLog.LOG.warn("updateMavenProjects started: ${spec.isForceReading}  ${spec.isForceResolve}  ${spec.isExplicitImport} ${filesToUpdate.size} ${filesToDelete.size}")
-    return importMutex.withLock { doUpdateMavenProjects(spec, filesToUpdate, filesToDelete) }
+    val result = importMutex.withLock { doUpdateMavenProjects(spec, filesToUpdate, filesToDelete) }
     MavenLog.LOG.warn("updateMavenProjects finished: ${spec.isForceReading}  ${spec.isForceResolve}  ${spec.isExplicitImport} ${filesToUpdate.size} ${filesToDelete.size}")
+    return result
   }
 
   private suspend fun doUpdateMavenProjects(spec: MavenImportSpec,
@@ -293,8 +294,9 @@ open class MavenProjectsManagerEx(project: Project) : MavenProjectsManager(proje
   private suspend fun updateAllMavenProjects(spec: MavenImportSpec,
                                              modelsProvider: IdeModifiableModelsProvider?): List<Module> {
     MavenLog.LOG.warn("updateAllMavenProjects started: ${spec.isForceReading}  ${spec.isForceResolve}  ${spec.isExplicitImport}")
-    return importMutex.withLock { doUpdateAllMavenProjects(spec, modelsProvider) }
-    MavenLog.LOG.warn("updateAllMavenProjects started: ${spec.isForceReading}  ${spec.isForceResolve}  ${spec.isExplicitImport}")
+    val result = importMutex.withLock { doUpdateAllMavenProjects(spec, modelsProvider) }
+    MavenLog.LOG.warn("updateAllMavenProjects finished: ${spec.isForceReading}  ${spec.isForceResolve}  ${spec.isExplicitImport}")
+    return result
   }
 
   private suspend fun doUpdateAllMavenProjects(spec: MavenImportSpec,
