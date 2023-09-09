@@ -42,6 +42,7 @@ class InlineCompletionContext private constructor(
     val text = proposal.text
 
     if (!inlay.isEmpty) {
+      showTracker.rejected()
       inlay.reset()
     }
     if (text.isNotBlank() && editor is EditorImpl) {

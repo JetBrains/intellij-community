@@ -66,6 +66,7 @@ class InlineCompletionUsageTracker : CounterUsagesCollector() {
         PROVIDER.with(provider::class.java),
         OUTCOME.with(
           when {
+            // fixed order
             exception -> Outcome.EXCEPTION
             cancelled -> Outcome.CANCELLED
             hasSuggestions == true -> Outcome.SHOW
