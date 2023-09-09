@@ -35,11 +35,21 @@ class InlineCompletionUsageTracker : CounterUsagesCollector() {
     private val event: InlineCompletionEvent,
     private val provider: InlineCompletionProvider
   ) {
+    val requestId = Random.nextLong()
     private val finished = AtomicBoolean(false)
+    private val data = mutableListOf<EventPair<*>>()
     private var hasSuggestions: Boolean? = null
     private var cancelled: Boolean = false
     private var exception: Boolean = false
-    val requestId = Random.nextLong()
+
+    @RequiresEdt
+    fun captureContext(editor: Editor, offset: Int) {
+      val psiFile = PsiDocumentManager.getInstance(editor.project ?: return).getPsiFile(editor.document) ?: return
+      val language = PsiUtilCore.getLanguageAtOffset(psiFile, offset)
+      data.add(EventFields.Language.with(language))
+      data.add(EventFields.CurrentFile.with(psiFile.language))
+      assert(!finished.get())
+    }
 
     fun noSuggestions() {
       hasSuggestions = false
@@ -67,6 +77,7 @@ class InlineCompletionUsageTracker : CounterUsagesCollector() {
       }
       TRIGGERED.log(project, listOf(
         REQUEST_ID.with(requestId),
+        *data.toTypedArray(),
         EVENT.with(event::class.java),
         PROVIDER.with(provider::class.java),
         TIME_TO_COMPUTE.with(System.currentTimeMillis() - invocationTime),
@@ -91,6 +102,7 @@ class InlineCompletionUsageTracker : CounterUsagesCollector() {
       val PROVIDER = EventFields.Class("provider")
       val TIME_TO_COMPUTE = Long("time_to_compute")
       val OUTCOME = NullableEnum<Outcome>("outcome")
+
       enum class Outcome {
         EXCEPTION,
         CANCELLED,
@@ -115,26 +127,19 @@ class InlineCompletionUsageTracker : CounterUsagesCollector() {
    * This tracker lives from the moment the inline completion appears on the screen until its end.
    */
   class ShowTracker(private val invocationTime: Long, private val requestId: Long) {
-    private var data: MutableList<EventPair<*>> = mutableListOf()
+    private val data = mutableListOf<EventPair<*>>()
     private val shown = AtomicBoolean(false)
     private val shownLogSent = AtomicBoolean(false)
     private var project: Project? = null
     private var showStartTime = 0L
 
-    @RequiresEdt
     fun shown(editor: Editor, element: InlineCompletionElement) {
       if (!shown.compareAndSet(false, true)) {
         error("Already shown")
       }
       showStartTime = System.currentTimeMillis()
       data.add(REQUEST_ID.with(requestId))
-      project = editor.project?.also {
-        PsiDocumentManager.getInstance(it).getPsiFile(editor.document)?.let { psiFile ->
-          val language = PsiUtilCore.getLanguageAtOffset(psiFile, editor.caretModel.offset)
-          data.add(EventFields.Language.with(language))
-          data.add(EventFields.CurrentFile.with(psiFile.language))
-        }
-      }
+      project = editor.project
       data.add(SUGGESTION_LENGTH.with(element.text.length))
       data.add(TIME_TO_SHOW.with(System.currentTimeMillis() - invocationTime))
       assert(!shownLogSent.get())
@@ -173,8 +178,6 @@ class InlineCompletionUsageTracker : CounterUsagesCollector() {
       val SHOWN: VarargEventId = GROUP.registerVarargEvent(
         SHOWN_EVENT_ID,
         REQUEST_ID,
-        EventFields.Language,
-        EventFields.CurrentFile,
         SUGGESTION_LENGTH,
         TIME_TO_SHOW,
         SHOWING_TIME,

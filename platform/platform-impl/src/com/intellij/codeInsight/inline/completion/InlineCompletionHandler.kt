@@ -119,6 +119,7 @@ class InlineCompletionHandler(private val scope: CoroutineScope) : CodeInsightAc
 
     // If you write a test and observe an infinite hang here, set [UsefulTestCase.runInDispatchThread] to false.
     withContext(Dispatchers.EDT) {
+      triggerTracker.captureContext(editor, offset)
       showPlaceholder(editor, offset, placeholder, triggerTracker)
 
       resultFlow
