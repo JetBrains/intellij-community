@@ -129,12 +129,12 @@ class InlineCompletionHandler(private val scope: CoroutineScope) : CodeInsightAc
         .onCompletion {
           if (it != null) {
             disposePlaceholder(editor)
-            if (it is CancellationException || it is ProcessCanceledException) {
-              triggerTracker.cancelled()
-            }
-            else {
-              triggerTracker.exception()
-            }
+          }
+          if (!isActive || it is CancellationException || it is ProcessCanceledException) {
+            triggerTracker.cancelled()
+          }
+          else if (it != null) {
+            triggerTracker.exception()
           }
           triggerTracker.finished(editor.project)
         }
