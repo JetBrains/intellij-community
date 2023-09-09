@@ -19,6 +19,7 @@ import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.util.PsiUtilCore
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import org.jetbrains.annotations.ApiStatus
+import java.util.concurrent.atomic.AtomicBoolean
 import kotlin.random.Random
 
 
@@ -34,35 +35,36 @@ class InlineCompletionUsageTracker : CounterUsagesCollector() {
     private val event: InlineCompletionEvent,
     private val provider: InlineCompletionProvider
   ) {
+    private val finished = AtomicBoolean(false)
     private var hasSuggestions: Boolean? = null
     private var cancelled: Boolean = false
     private var exception: Boolean = false
-    private var finished: Boolean = false
     val requestId = Random.nextLong()
 
     fun noSuggestions() {
-      assert(!finished)
       hasSuggestions = false
+      assert(!finished.get())
     }
 
     fun hasSuggestion() {
-      assert(!finished)
       hasSuggestions = true
+      assert(!finished.get())
     }
 
     fun cancelled() {
-      assert(!finished)
       cancelled = true
+      assert(!finished.get())
     }
 
     fun exception() {
-      assert(!finished)
       exception = true
+      assert(!finished.get())
     }
 
     fun finished(project: Project?) {
-      assert(!finished)
-      finished = true
+      if (!finished.compareAndSet(false, true)) {
+        error("Already finished")
+      }
       TRIGGERED.log(project, listOf(
         REQUEST_ID.with(requestId),
         EVENT.with(event::class.java),
@@ -115,16 +117,17 @@ class InlineCompletionUsageTracker : CounterUsagesCollector() {
    */
   class ShowTracker(private val invocationTime: Long, private val requestId: Long) {
     private var data: MutableList<EventPair<*>> = mutableListOf()
+    private val shown = AtomicBoolean(false)
+    private val shownLogSent = AtomicBoolean(false)
     private var project: Project? = null
-    private var shown: Boolean = false
-    private var shownLogSent: Boolean = false
     private var showStartTime = 0L
 
     @RequiresEdt
     fun shown(editor: Editor, element: InlineCompletionElement) {
-      assert(!shownLogSent)
+      if (!shown.compareAndSet(false, true)) {
+        error("Already shown")
+      }
       showStartTime = System.currentTimeMillis()
-      shown = true
       data.add(REQUEST_ID.with(requestId))
       project = editor.project?.also {
         PsiDocumentManager.getInstance(it).getPsiFile(editor.document)?.let { psiFile ->
@@ -135,6 +138,7 @@ class InlineCompletionUsageTracker : CounterUsagesCollector() {
       }
       data.add(SUGGESTION_LENGTH.with(element.text.length))
       data.add(TIME_TO_SHOW.with(System.currentTimeMillis() - invocationTime))
+      assert(!shownLogSent.get())
     }
 
     fun accepted() {
@@ -146,10 +150,12 @@ class InlineCompletionUsageTracker : CounterUsagesCollector() {
     }
 
     private fun finish(decision: Decision) {
+      if (!shownLogSent.compareAndSet(false, true)) {
+        error("Already sent")
+      }
       data.add(DECISION.with(decision))
       data.add(SHOWING_TIME.with(System.currentTimeMillis() - showStartTime))
       SHOWN.log(project, data)
-      shownLogSent = true
     }
 
     private companion object {
