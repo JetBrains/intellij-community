@@ -11,7 +11,6 @@ import com.intellij.openapi.ui.playback.PlaybackContext
 import com.intellij.openapi.ui.playback.commands.AbstractCommand
 import com.intellij.openapi.util.ActionCallback
 import com.intellij.platform.backend.workspace.WorkspaceModel
-import com.intellij.platform.workspace.jps.entities.SourceRootEntity
 import com.intellij.util.DisposeAwareRunnable
 import com.intellij.workspaceModel.ide.JpsProjectLoadingManager
 import com.jetbrains.performancePlugin.utils.ActionCallbackProfilerStopper
@@ -87,9 +86,9 @@ class ImportMavenProjectCommand(text: String, line: Int) : AbstractCommand(text,
             DumbService.getInstance(project).runWhenSmart(DisposeAwareRunnable.create(runnable, project))
             val storageVersion = WorkspaceModel.getInstance(project).entityStorage.version
             val storage = WorkspaceModel.getInstance(project).currentSnapshot
-            val sourceRoots = storage.entities(SourceRootEntity::class.java).map { it.url.url }.toList()
+            //val sourceRoots = storage.entities(SourceRootEntity::class.java).map { it.url.url }.toList()
             context.message("Entity storage version: $storageVersion, snapshot: $storage", line)
-            context.message("source roots: $sourceRoots", line)
+            //context.message("source roots: $sourceRoots", line)
           }
         }
       }
