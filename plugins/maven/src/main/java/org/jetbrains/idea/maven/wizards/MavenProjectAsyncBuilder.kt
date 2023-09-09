@@ -125,15 +125,14 @@ internal class MavenProjectAsyncBuilder {
     manager.setIgnoredState(projects, false)
     MavenLog.LOG.warn("performImport async: Linear Import is disabled")
 
-    val pomFiles = MavenUtil.collectFiles(projects)
     if (isVeryNewProject && Registry.`is`("maven.create.dummy.module.on.first.import")) {
       // do not update all modules because it can take a lot of time (freeze at project opening)
       val previewModule = createPreviewModule(project, projects)
-      manager.addManagedFilesWithProfilesAndUpdateOnStartup(pomFiles, previewModule)
+      blockingContext { manager.addManagedFilesWithProfiles(MavenUtil.collectFiles(projects), selectedProfiles, previewModule) }
       return@trackConfigurationActivity if (null == previewModule) emptyList() else listOf(previewModule)
     }
 
-    return@trackConfigurationActivity manager.addManagedFilesWithProfilesAndUpdate(pomFiles, selectedProfiles, modelsProvider)
+    return@trackConfigurationActivity manager.addManagedFilesWithProfilesAndUpdate(MavenUtil.collectFiles(projects), selectedProfiles, modelsProvider)
   }
 
   private suspend fun createPreviewModule(project: Project, selectedProjects: List<MavenProject>): Module? {

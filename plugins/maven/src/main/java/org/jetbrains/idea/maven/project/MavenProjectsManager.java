@@ -79,7 +79,7 @@ public abstract class MavenProjectsManager extends MavenSimpleProjectComponent
   private final ReentrantLock initLock = new ReentrantLock();
   private final AtomicBoolean isInitialized = new AtomicBoolean();
   private final AtomicBoolean isActivated = new AtomicBoolean();
-  protected final AtomicReference<MavenImportSpec> startupImportSpec = new AtomicReference<>();
+  private final AtomicBoolean runImportOnStartup = new AtomicBoolean();
 
   private MavenProjectsManagerState myState = new MavenProjectsManagerState();
 
@@ -234,7 +234,7 @@ public abstract class MavenProjectsManager extends MavenSimpleProjectComponent
   private void loadExistingTreeAndInit() {
     tryToLoadExistingTree();
     doInit();
-    startupImportSpec.set(new MavenImportSpec(false, false, false));
+    runImportOnStartup.set(true);
   }
 
   private void initAndActivate() {
@@ -271,7 +271,6 @@ public abstract class MavenProjectsManager extends MavenSimpleProjectComponent
       if (!importingSettings.isWorkspaceImportEnabled()) {
         importingSettings.setWorkspaceImportEnabled(true);
         myProject.putUserData(WorkspaceProjectImporterKt.getNOTIFY_USER_ABOUT_WORKSPACE_IMPORT_KEY(), true);
-        startupImportSpec.set(new MavenImportSpec(true, true, false));
       }
       myState.workspaceImportForciblyTurnedOn = true; // turn workspace import if it is turned off once for each existing project
     }
@@ -291,10 +290,10 @@ public abstract class MavenProjectsManager extends MavenSimpleProjectComponent
   protected void onProjectStartup() {
     if (isInitialized()) {
       doActivate();
-      var spec = startupImportSpec.get();
-      if (spec != null) {
+      if (runImportOnStartup.get()) {
         if (!MavenUtil.isLinearImportEnabled()) {
-          scheduleUpdateAll(spec);
+          var forceImport = Boolean.TRUE.equals(myProject.getUserData(WorkspaceProjectImporterKt.getNOTIFY_USER_ABOUT_WORKSPACE_IMPORT_KEY()));
+          scheduleUpdateAll(new MavenImportSpec(forceImport, forceImport, false));
         }
       }
     }
