@@ -5,6 +5,7 @@ import com.intellij.openapi.externalSystem.importing.AbstractOpenProjectProvider
 import com.intellij.openapi.externalSystem.model.ProjectSystemId
 import com.intellij.openapi.externalSystem.service.project.trusted.ExternalSystemTrustedProjectDialog
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.projectImport.ProjectImportBuilder
 import kotlinx.coroutines.Dispatchers
@@ -34,6 +35,8 @@ class MavenOpenProjectProvider : AbstractOpenProjectProvider() {
 
   override suspend fun linkToExistingProjectAsync(projectFile: VirtualFile, project: Project) {
     LOG.debug("Link Maven project '$projectFile' to existing project ${project.name}")
+
+    if (Registry.`is`("external.system.auto.import.disabled")) return
 
     val projectRoot = if (projectFile.isDirectory) projectFile else projectFile.parent
 
