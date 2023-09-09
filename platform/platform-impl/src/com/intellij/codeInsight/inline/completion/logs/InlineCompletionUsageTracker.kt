@@ -88,7 +88,7 @@ class InlineCompletionUsageTracker : CounterUsagesCollector() {
 
       val REQUEST_ID = Long("request_id")
       val EVENT = EventFields.Class("event")
-      val PROVIDER = EventFields.Class("event")
+      val PROVIDER = EventFields.Class("provider")
       val TIME_TO_COMPUTE = Long("time_to_compute")
       val OUTCOME = NullableEnum<Outcome>("outcome")
       enum class Outcome {
