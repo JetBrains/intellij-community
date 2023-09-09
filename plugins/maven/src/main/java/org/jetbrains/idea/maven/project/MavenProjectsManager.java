@@ -17,6 +17,7 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.project.DumbAwareRunnable;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.project.ProjectUtil;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.roots.ProjectRootManager;
@@ -70,6 +71,8 @@ import java.util.*;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.concurrent.locks.ReentrantLock;
+
+import static org.jetbrains.idea.maven.server.MavenWrapperSupport.getWrapperDistributionUrl;
 
 @State(name = "MavenProjectsManager")
 public abstract class MavenProjectsManager extends MavenSimpleProjectComponent
@@ -527,6 +530,10 @@ public abstract class MavenProjectsManager extends MavenSimpleProjectComponent
     myPreviewModule = previewModuleToDelete;
     if (!isInitialized()) {
       initAndActivate();
+      var distributionUrl = getWrapperDistributionUrl(ProjectUtil.guessProjectDir(myProject));
+      if (distributionUrl != null) {
+        getGeneralSettings().setMavenHomeType(MavenWrapper.INSTANCE);
+      }
     }
     myProjectsTree.addManagedFilesWithProfiles(files, profiles);
   }
