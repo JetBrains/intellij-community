@@ -171,7 +171,7 @@ class InlineCompletionUsageTracker : CounterUsagesCollector() {
 
       val TIME_TO_SHOW = Long("time_to_show")
       val SHOWING_TIME = Long("showing_time")
-      val OUTCOME = Enum<Outcome>("decision")
+      val OUTCOME = Enum<Outcome>("outcome")
 
       enum class Outcome { ACCEPT, REJECT }
 
