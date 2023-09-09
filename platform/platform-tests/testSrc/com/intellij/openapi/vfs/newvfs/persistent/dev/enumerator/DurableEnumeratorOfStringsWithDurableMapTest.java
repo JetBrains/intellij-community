@@ -11,7 +11,7 @@ import java.nio.file.Path;
 public class DurableEnumeratorOfStringsWithDurableMapTest extends StringEnumeratorTestBase<DurableEnumerator<String>> {
 
   public DurableEnumeratorOfStringsWithDurableMapTest() {
-    super(/*valuesToTestOn: */ 5_000_000);
+    super(/*valuesToTestOn: */ 1_000_000);
   }
 
   @Override

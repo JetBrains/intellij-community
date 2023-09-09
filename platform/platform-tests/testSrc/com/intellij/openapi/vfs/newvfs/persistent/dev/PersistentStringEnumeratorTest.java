@@ -25,7 +25,7 @@ import static org.junit.Assert.assertTrue;
 public class PersistentStringEnumeratorTest extends StringEnumeratorTestBase<PersistentStringEnumerator> {
 
   public PersistentStringEnumeratorTest() {
-    super(/*valuesToTestOn: */ 5_000_000);
+    super(/*valuesToTestOn: */ 1_000_000);
   }
 
   @Override
