@@ -245,13 +245,10 @@ public class ActionButton extends JComponent implements ActionButtonComponent, A
     popup.setShowSubmenuOnHover(true);
     popup.setAlignByParentBounds(false);
     popup.setActiveRoot(getPopupContainer(this) == null);
-    InputEvent inputEvent = event.getInputEvent();
-    LOG.assertTrue(inputEvent != null);
-    Component component = inputEvent.getComponent();
     if (ActionPlaces.EDITOR_FLOATING_TOOLBAR.equals(event.getPlace())) {
-      PopupUtils.attachToWindowComponent(popup, component, new Point(1, 1));
+      PopupUtils.attachToWindowComponent(popup, this, new Point(1, 1));
     }
-    popup.showUnderneathOf(component);
+    popup.showUnderneathOf(this);
     return popup;
   }
 

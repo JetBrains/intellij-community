@@ -7,7 +7,6 @@ import com.intellij.codeInsight.hint.*;
 import com.intellij.codeInsight.intention.CustomizableIntentionAction;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInsight.intention.IntentionActionDelegate;
-import com.intellij.codeInsight.intention.actions.ShowIntentionActionsAction;
 import com.intellij.codeInsight.intention.impl.config.IntentionManagerSettings;
 import com.intellij.codeInsight.intention.impl.preview.IntentionPreviewPopupUpdateProcessor;
 import com.intellij.codeInsight.unwrap.ScopeHighlighter;
@@ -20,7 +19,6 @@ import com.intellij.internal.statistic.IntentionFUSCollector;
 import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
-import com.intellij.openapi.actionSystem.impl.ActionButton;
 import com.intellij.openapi.actionSystem.impl.PopupUtils;
 import com.intellij.openapi.actionSystem.impl.SimpleDataContext;
 import com.intellij.openapi.application.ApplicationManager;
@@ -46,6 +44,7 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
 import com.intellij.refactoring.BaseRefactoringIntentionAction;
 import com.intellij.ui.*;
+import com.intellij.ui.awt.AnchoredPoint;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.codeFloatingToolbar.CodeFloatingToolbar;
 import com.intellij.ui.icons.RowIcon;
@@ -254,9 +253,12 @@ public final class IntentionHintComponent implements Disposable, ScrollAwareHint
   }
 
   private void showPopupFromVisibleToolbar(@NotNull CodeFloatingToolbar toolbar) {
-    RelativePoint position = findPositionForToolbarButton(toolbar);
-    adjustVerticalOverlapping(position);
-    showPopup(position);
+    Component component = toolbar.getHintComponent();
+    if (component == null) return;
+    RelativePoint defaultPosition = new AnchoredPoint(AnchoredPoint.Anchor.BOTTOM, component);
+    ListPopup popup = getOrCreateListPopup();
+    PopupUtils.attachToWindowComponent(popup, component, new Point(1, 1));
+    showPopup(defaultPosition);
   }
 
   private @Nullable CodeFloatingToolbar getFloatingToolbar() {
@@ -265,13 +267,12 @@ public final class IntentionHintComponent implements Disposable, ScrollAwareHint
     return CodeFloatingToolbar.getToolbar(myEditor);
   }
 
-  private void adjustVerticalOverlapping(@Nullable RelativePoint position) {
-    if (position == null) return;
+  private ListPopup getOrCreateListPopup() {
     if (myPopup.myListPopup == null) {
       myPopup.myHint = this;
       IntentionPopup.recreateMyPopup(myPopup, new IntentionListStep(myPopup, myPopup.myEditor, myPopup.myFile, myPopup.myProject, myPopup.myCachedIntentions));
     }
-    PopupUtils.attachToWindowComponent(myPopup.myListPopup, position.getOriginalComponent(), new Point(1, 1));
+    return myPopup.myListPopup;
   }
 
   private void showPopup(@Nullable RelativePoint positionHint) {
@@ -304,19 +305,6 @@ public final class IntentionHintComponent implements Disposable, ScrollAwareHint
     popup.y += adjust;
 
     return new RelativePoint(swCorner.getComponent(), popup);
-  }
-
-  private static @Nullable RelativePoint findPositionForToolbarButton(@NotNull CodeFloatingToolbar toolbar){
-    JComponent component = toolbar.getHintComponent();
-    if (component == null) return null;
-    List<ActionButton> buttons = UIUtil.findComponentsOfType(component, ActionButton.class);
-    ActionButton intentionButton = ContainerUtil.find(buttons, (button) -> button.getAction() instanceof ShowIntentionActionsAction);
-    if (intentionButton == null) return null;
-    RelativePoint buttonPoint = RelativePoint.getSouthWestOf(intentionButton);
-    RelativePoint toolbarPoint = RelativePoint.getSouthWestOf(component);
-    int horizontalOffset = toolbarPoint.getScreenPoint().x - buttonPoint.getScreenPoint().x;
-    buttonPoint.getPoint().translate(horizontalOffset, 0);
-    return buttonPoint;
   }
 
   private static final class MyComponentHint extends LightweightHint {
