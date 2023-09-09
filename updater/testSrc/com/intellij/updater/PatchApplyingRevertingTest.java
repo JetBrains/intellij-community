@@ -288,6 +288,19 @@ public abstract class PatchApplyingRevertingTest extends PatchTestCase {
   }
 
   @Test
+  //Android Studio: b/299293997
+  public void testApplyingWithReadOnlyCriticalFile() throws Exception {
+    myPatchSpec.setStrict(true);
+    myPatchSpec.setCriticalFiles(Collections.singletonList("lib/annotations.jar"));
+    createPatch();
+
+    File file = new File(myOlderDir, "lib/annotations.jar");
+    assertThat(file.setWritable(false)).isTrue();
+
+    assertAppliedAndReverted();
+  }
+
+  @Test
   public void testApplyingWithModifiedCriticalFilesAndDifferentRoot() throws Exception {
     myPatchSpec.setStrict(true);
     myPatchSpec.setRoot("lib/");

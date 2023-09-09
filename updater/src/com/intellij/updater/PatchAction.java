@@ -145,6 +145,15 @@ public abstract class PatchAction {
     ValidationResult result = validateProcessLock(toFile, action);
     if (result != null) return result;
     if (checkWriteable) {
+
+      // Android Studio: b/298504266
+      // attempt to make critical files writable
+      // TODO(2024.06.01) make it trigger ValidationResult.Option.REPLACE instead of silently overriding attribute
+      if (!Files.isWritable(toFile.toPath()) && isCritical()) {
+        if (!toFile.setWritable(true)) {
+          LOG.log(Level.WARNING, "Failed to set writable attribute on critical file " + toFile);
+        }
+      }
       String problem = isWritable(toFile.toPath());
       if (problem != null) {
         ValidationResult.Option[] options = {myPatch.isStrict() ? ValidationResult.Option.NONE : ValidationResult.Option.IGNORE};

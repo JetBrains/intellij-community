@@ -24,6 +24,17 @@ public final class Runner {
 
   static final Logger LOG = createLogger();
 
+  // Android Studio: b/299293997
+  private static final List<String> DEFAULT_CRITICAL_FILES = List.of(
+    "plugins/android/resources/perfa.jar",
+    "Contents/plugins/android/resources/perfa.jar",
+    "plugins/android/resources/perfa_okhttp.dex",
+    "Contents/plugins/android/resources/perfa_okhttp.dex",
+    "plugins/android/resources/app-inspection/layoutinspector-view-inspection.jar",
+    "Contents/plugins/android/resources/app-inspection/layoutinspector-view-inspection.jar"
+    // "compose-ui-inspection.jar" seems to be external to Studio
+  );
+
   public static boolean isCaseSensitiveFs() {
     return ourCaseSensitiveFs;
   }
@@ -146,6 +157,7 @@ public final class Runner {
       List<String> ignoredFiles = extractArguments(args, "ignored");
       List<String> strictFiles = extractArguments(args, "strictfiles");
       List<String> criticalFiles = extractArguments(args, "critical");
+      criticalFiles.addAll(DEFAULT_CRITICAL_FILES);
       List<String> optionalFiles = extractArguments(args, "optional");
       List<String> deleteFiles = extractArguments(args, "delete");
       Map<String, String> warnings = buildWarningMap(extractArguments(args, "warning"));
