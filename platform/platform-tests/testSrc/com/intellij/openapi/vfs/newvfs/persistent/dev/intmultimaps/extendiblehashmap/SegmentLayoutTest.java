@@ -7,16 +7,17 @@ import org.junit.jupiter.api.Test;
 import java.io.IOException;
 import java.nio.ByteBuffer;
 
+import static org.junit.jupiter.api.Assertions.assertArrayEquals;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
 public class SegmentLayoutTest {
 
-  private ExtendibleHashmap.HashMapSegmentLayout segmentLayout;
+  private ExtendibleHashMap.HashMapSegmentLayout segmentLayout;
 
   @BeforeEach
   void setUp() throws IOException {
     ByteBuffer buffer = ByteBuffer.allocate(1 << 16);
-    segmentLayout = new ExtendibleHashmap.HashMapSegmentLayout(
+    segmentLayout = new ExtendibleHashMap.HashMapSegmentLayout(
       (offsetInFile, length) -> buffer,
       1,
       buffer.capacity()
@@ -84,6 +85,30 @@ public class SegmentLayoutTest {
       -1,
       segmentLayout.hashSuffixMask(),
       "hashSuffixMask(32) must be " + Integer.toBinaryString(-1)
+    );
+  }
+
+  @Test
+  void slotIndexesForSegment_produceExpectedResultsOnATestSet() {
+    assertArrayEquals(
+      ExtendibleHashMap.slotIndexesForSegment(0b0, (byte)0, (byte)0),
+      new int[]{0b0}
+    );
+    assertArrayEquals(
+      ExtendibleHashMap.slotIndexesForSegment(0b1, (byte)1, (byte)1),
+      new int[]{0b1}
+    );
+    assertArrayEquals(
+      ExtendibleHashMap.slotIndexesForSegment(0b1, (byte)1, (byte)2),
+      new int[]{0b01, 0b11}
+    );
+    assertArrayEquals(
+      ExtendibleHashMap.slotIndexesForSegment(0b11, (byte)2, (byte)3),
+      new int[]{0b011, 0b111}
+    );
+    assertArrayEquals(
+      ExtendibleHashMap.slotIndexesForSegment(0b11, (byte)2, (byte)4),
+      new int[]{0b0011, 0b0111, 0b1011, 0b1111}
     );
   }
 }

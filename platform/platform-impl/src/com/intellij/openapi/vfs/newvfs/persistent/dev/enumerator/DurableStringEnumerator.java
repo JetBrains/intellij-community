@@ -65,19 +65,19 @@ public final class DurableStringEnumerator implements ScannableDataEnumeratorEx<
   //         2. Keep the set of enumerated ids, but only under feature-flag, enabled in debug versions -- and disable
   //            it in prod, there (supposingly) all mistakes are already fixed
 
-  public DurableStringEnumerator(@NotNull AppendOnlyLogOverMMappedFile valuesLog,
+  public DurableStringEnumerator(@NotNull AppendOnlyLog valuesLog,
                                  @NotNull Int2IntMultimap valueHashToId) {
     this(valuesLog, CompletableFuture.completedFuture(valueHashToId));
   }
 
-  public DurableStringEnumerator(@NotNull AppendOnlyLogOverMMappedFile valuesLog,
+  public DurableStringEnumerator(@NotNull AppendOnlyLog valuesLog,
                                  @NotNull CompletableFuture<Int2IntMultimap> valueHashToIdFuture) {
     this.valuesLog = valuesLog;
     this.valueHashToIdFuture = valueHashToIdFuture;
   }
 
   public static @NotNull DurableStringEnumerator open(@NotNull Path storagePath) throws IOException {
-    AppendOnlyLogOverMMappedFile valuesLog = openValuesLog(storagePath);
+    AppendOnlyLog valuesLog = openValuesLog(storagePath);
 
     return new DurableStringEnumerator(
       valuesLog,
@@ -248,7 +248,7 @@ public final class DurableStringEnumerator implements ScannableDataEnumeratorEx<
   }
 
 
-  private static @NotNull Int2IntMultimap buildValueToIdIndex(@NotNull AppendOnlyLogOverMMappedFile valuesLog) throws IOException {
+  private static @NotNull Int2IntMultimap buildValueToIdIndex(@NotNull AppendOnlyLog valuesLog) throws IOException {
     Int2IntMultimap valueHashToId = new Int2IntMultimap();
     valuesLog.forEachRecord((logId, buffer) -> {
       String value = readString(buffer);

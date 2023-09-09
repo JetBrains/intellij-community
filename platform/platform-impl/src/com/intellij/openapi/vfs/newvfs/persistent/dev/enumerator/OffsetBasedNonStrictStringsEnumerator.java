@@ -153,6 +153,9 @@ public final class OffsetBasedNonStrictStringsEnumerator implements ScannableDat
 
   @Override
   public int enumerate(final @Nullable String value) throws IOException {
+    if (value == null) {
+      return NULL_ID;
+    }
     enumerateQueries++;
     return namesToIds.lookup(value, () -> {
       enumerateQueriesCacheMisses++;
@@ -162,6 +165,9 @@ public final class OffsetBasedNonStrictStringsEnumerator implements ScannableDat
 
   @Override
   public @Nullable String valueOf(final int id) throws IOException {
+    if (id == NULL_ID) {
+      return null;
+    }
     valueOfQueries++;
     return idsToNames.lookup(id, () -> {
       valueOfQueriesCacheMisses++;
@@ -172,6 +178,9 @@ public final class OffsetBasedNonStrictStringsEnumerator implements ScannableDat
 
   @Override
   public int tryEnumerate(final String name) throws IOException {
+    if (name == null) {
+      return NULL_ID;
+    }
     //return NULL_ID if value is not in cache (even if value was enumerated before, but already dropped from cache)
     enumerateQueries++;
     return namesToIds.lookup(name, () -> NULL_ID);
@@ -282,7 +291,7 @@ public final class OffsetBasedNonStrictStringsEnumerator implements ScannableDat
    *                      auxRecordData[1] contains redirectToId of record just read. If null -> just ignored.
    */
   private @NotNull String readValueByOffset(final int offset,
-                                   final /*out*/ int[] auxRecordData) throws IOException {
+                                            final /*out*/ int[] auxRecordData) throws IOException {
     if (offset + RECORD_HEADER_SIZE > file.getLogicalSize()) {
       throw new IOException("record[" + offset + "]: range[" + offset + ", +" + RECORD_HEADER_SIZE + "b) " +
                             "is outside of file[0," + file.getLogicalSize() + ") " +

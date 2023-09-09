@@ -7,14 +7,18 @@ import org.jetbrains.annotations.NotNull;
 import java.io.IOException;
 import java.nio.file.Path;
 
-public class DurableStringEnumeratorTest extends StringEnumeratorTestBase<DurableStringEnumerator> {
 
-  public DurableStringEnumeratorTest() {
+public class DurableEnumeratorOfStringsWithInMemoryMapTest extends StringEnumeratorTestBase<DurableEnumerator<String>> {
+
+  public DurableEnumeratorOfStringsWithInMemoryMapTest() {
     super(/*valuesToTestOn: */ 500_000);
   }
 
   @Override
-  protected DurableStringEnumerator openEnumerator(@NotNull Path storagePath) throws IOException {
-    return DurableStringEnumerator.open(storagePath);
+  protected DurableEnumerator<String> openEnumerator(@NotNull Path storagePath) throws IOException {
+    return DurableEnumerator.openWithInMemoryMap(
+      storagePath,
+      StringAsUTF8.INSTANCE
+    );
   }
 }

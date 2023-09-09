@@ -9,6 +9,7 @@ import org.jetbrains.annotations.VisibleForTesting;
 
 import java.io.IOException;
 import java.nio.ByteBuffer;
+import java.nio.file.Path;
 import java.util.Objects;
 
 /**
@@ -23,9 +24,9 @@ import java.util.Objects;
  * For more details, refer to the wiki article above.
  * <p>
  * Threading: so far implementation is guarded by a single lock, so it is thread-safe but
- * not concurrent
+ * not concurrent. It is possible to replace that with some kind of 'segmented RW lock'.
  */
-public class ExtendibleHashmap implements IntToMultiIntMap {
+public class ExtendibleHashMap implements IntToMultiIntMap {
   private static final int VERSION = 1;
 
   public static final int DEFAULT_SEGMENT_SIZE = 1 << 15; //32k
@@ -37,19 +38,28 @@ public class ExtendibleHashmap implements IntToMultiIntMap {
   //                                       segmentsTableSize: int32
   //                                       segmentsCount:     int32
   //                                       globalDepth:       int8
-  //                  segments table: int16[segmentsTableSize], contains apt data segment index
+  //                                       ...
+  //                  segments table: int16[N], contains data segment directory
   //  Data segment:  (fixed segment header) (hashtable data)
   //                 fixed segment header: 16 bytes
-  //                                       segment depth: int8
   //                                       segment live entries count: int32
-  //                 hashtable data: int32[N]
-  //For now I plan making header and data segments same size -- this simplifies overall layout,
-  // since we need to align everything to a page size, and it is much easier to align a fixed
-  // size segments -- just need (pageSize % segmentSize = 0).
-  //32K seems like a good segment size: that leaves us with (32k-80)/2 ~= 16k segments, each
-  // segment contains (32k-16)/4/2 ~= 4k of (key:int32,value:int32) entries. Open addressing
-  // hashmaps usually sized with loadFactory ~= 0.5, so 4k entries mean ~2k useful payload.
-  // In total, ~16k segments of ~2k key-value pairs each gives us 32M entries max
+  //                                       segment hash suffix:        int32
+  //                                       segment hash suffix depth:  int8
+  //                                       ...
+  //                 hashtable slots: int32[N]
+  //
+  //Header and data segments are of same size -- this simplifies overall layout, since we need to align everything
+  // to a page size, and it is much easier to align fixed size segments -- just (pageSize % segmentSize = 0).
+  //
+  //Segment size: 32K seems like a good segment size: header segment could address (32k-80)/2 ~= 16k segments,
+  // each segment contains (32k-16)/4/2 ~= 4k of (key:int32,value:int32) entries.
+  // Open addressing hashmaps usually sized with loadFactor ~= 0.5, so 4k entries mean ~2k useful payload.
+  // In total, ~16k segments of ~2k key-value pairs each gives us 32M entries max -- suitable for most purposes.
+  // 64k segments make it 4x, which should be enough for everyone.
+
+
+  //TODO RC: 'safelyClosed' marker in a header, to detect crashes/incorrect usages
+  //TODO RC: pruning of tombstones (see comment in a .split() method for details)
 
   private final MMappedFileStorage storage;
   private transient BufferSource bufferSource;
@@ -58,19 +68,28 @@ public class ExtendibleHashmap implements IntToMultiIntMap {
 
   private final transient HashMapAlgo hashMapAlgo = new HashMapAlgo(0.5f);
 
-  public ExtendibleHashmap(@NotNull MMappedFileStorage storage) throws IOException {
+  public static ExtendibleHashMap defaultInstance(@NotNull Path storagePath) throws IOException {
+    int pageSize = 1 << 20;
+    int maxFileSize = DEFAULT_SEGMENT_SIZE / 2 * DEFAULT_SEGMENT_SIZE;
+    MMappedFileStorage storage = new MMappedFileStorage(storagePath, pageSize, maxFileSize);
+
+    return new ExtendibleHashMap(storage, DEFAULT_SEGMENT_SIZE);
+  }
+
+  public ExtendibleHashMap(@NotNull MMappedFileStorage storage) throws IOException {
     this(storage, DEFAULT_SEGMENT_SIZE);
   }
 
-  public ExtendibleHashmap(@NotNull MMappedFileStorage storage,
+  public ExtendibleHashMap(@NotNull MMappedFileStorage storage,
                            int segmentSize) throws IOException {
     if (Integer.bitCount(segmentSize) != 1) {
       throw new IllegalArgumentException("segmentSize(=" + segmentSize + ") must be power of 2");
     }
-    this.storage = storage;
-    boolean fileIsEmpty = (storage.actualFileSize() == 0);
 
     synchronized (this) {
+      this.storage = storage;
+      boolean fileIsEmpty = (storage.actualFileSize() == 0);
+
       bufferSource = (offsetInFile, length) -> {
         ByteBuffer buffer = storage.pageByOffset(offsetInFile).rawPageBuffer();
         int offsetInPage = storage.toOffsetInPage(offsetInFile);
@@ -79,8 +98,12 @@ public class ExtendibleHashmap implements IntToMultiIntMap {
 
       header = new HeaderLayout(bufferSource, segmentSize);
       if (!fileIsEmpty) {
+        if (header.version() != VERSION) {
+          throw new IOException("On-disk version(=" + header.version() + ") != current impl version(=" + VERSION + ")");
+        }
         if (header.segmentSize() != segmentSize) {
-          throw new IOException("segmentSize(=" + segmentSize + ") != storage segmentSize(=" + header.segmentSize() + ")");
+          throw new IOException(
+            "On-disk segmentSize(=" + segmentSize + ") != segmentSize(=" + header.segmentSize() + ") storage was initialized with");
         }
       }
       else {
@@ -95,15 +118,13 @@ public class ExtendibleHashmap implements IntToMultiIntMap {
   }
 
   @Override
-  public synchronized int lookup(int key,
-                                 @NotNull ValueAcceptor valuesAcceptor) throws IOException {
+  public synchronized void put(int key,
+                               int value) throws IOException {
     int hash = hash(key);
-    int hashSuffixDepth = header.globalHashSuffixDepth();
-    int segmentSlotIndex = segmentSlotIndex(hash, hashSuffixDepth);
-    int segmentIndex = header.segmentIndex(segmentSlotIndex);
+    int segmentIndex = header.segmentIndexByHash(hash);
     HashMapSegmentLayout segment = new HashMapSegmentLayout(bufferSource, segmentIndex, header.segmentSize());
 
-    return hashMapAlgo.lookup(segment, key, valuesAcceptor);
+    putAndSplitSegmentIfNeeded(segment, key, value);
   }
 
   @Override
@@ -119,6 +140,18 @@ public class ExtendibleHashmap implements IntToMultiIntMap {
   }
 
   @Override
+  public synchronized int lookup(int key,
+                                 @NotNull ValueAcceptor valuesAcceptor) throws IOException {
+    int hash = hash(key);
+    int hashSuffixDepth = header.globalHashSuffixDepth();
+    int segmentSlotIndex = segmentSlotIndex(hash, hashSuffixDepth);
+    int segmentIndex = header.segmentIndex(segmentSlotIndex);
+    HashMapSegmentLayout segment = new HashMapSegmentLayout(bufferSource, segmentIndex, header.segmentSize());
+
+    return hashMapAlgo.lookup(segment, key, valuesAcceptor);
+  }
+
+  @Override
   public synchronized int lookupOrInsert(int key,
                                          @NotNull ValueAcceptor valuesAcceptor,
                                          @NotNull ValueCreator valueCreator) throws IOException {
@@ -129,25 +162,12 @@ public class ExtendibleHashmap implements IntToMultiIntMap {
     HashMapSegmentLayout segment = new HashMapSegmentLayout(bufferSource, segmentIndex, header.segmentSize());
 
     int valueFound = hashMapAlgo.lookup(segment, key, valuesAcceptor);
-    if (valueFound == NO_VALUE) {
-      int newValue = valueCreator.newValueForKey(key);
-      hashMapAlgo.put(segment, key, newValue);
+    if (valueFound != NO_VALUE) {
+      return valueFound;
     }
-    return valueFound;
-  }
-
-  @Override
-  public synchronized void put(int key,
-                               int value) throws IOException {
-    int hash = hash(key);
-    int segmentIndex = header.segmentIndexByHash(hash);
-    HashMapSegmentLayout segment = new HashMapSegmentLayout(bufferSource, segmentIndex, header.segmentSize());
-
-    hashMapAlgo.put(segment, key, value);
-
-    if (hashMapAlgo.needsSplit(segment)) {
-      splitAndRearrangeEntries(segment);
-    }
+    int newValue = valueCreator.newValueForKey(key);
+    putAndSplitSegmentIfNeeded(segment, key, newValue);
+    return newValue;
   }
 
 
@@ -164,6 +184,8 @@ public class ExtendibleHashmap implements IntToMultiIntMap {
     bufferSource = null;
   }
 
+  //=============== implementation ============================================================
+
   private void splitAndRearrangeEntries(HashMapSegmentLayout segment) throws IOException {
     int hashSuffixDepth = header.globalHashSuffixDepth();
     int segmentHashDepth = segment.hashSuffixDepth();
@@ -178,13 +200,13 @@ public class ExtendibleHashmap implements IntToMultiIntMap {
     HashMapSegmentLayout oldSegment = splitSegments.first;
     HashMapSegmentLayout newSegment = splitSegments.second;
 
-    //There are 2^(globalDepth-segmentDepth) references to a segment with segmentDepth, and all them
-    // have segmentSlotIndex with [segment.hashSuffix] -- this is how keys with segment.hashSuffix end
-    // up in an apt segment. So we could generate all the segmentSlotIndexes this segment must be referred
-    // from by simply iterating through 2^(globalDepth-segmentDepth) indexes with bit-suffix=segment.hashSuffix
-    int segmentReferenceCount = 1 << (header.globalHashSuffixDepth() - newSegment.hashSuffixDepth());
-    for (int i = 0; i < segmentReferenceCount; i++) {
-      int segmentSlotIndex = (i << newSegment.hashSuffixDepth()) | newSegment.hashSuffix();
+    //redirect each 2nd oldSegment reference to the newSegment:
+    int[] newSegmentSlotIndexes = slotIndexesForSegment(
+      newSegment.hashSuffix(),
+      newSegment.hashSuffixDepth(),
+      header.globalHashSuffixDepth()
+    );
+    for (int segmentSlotIndex : newSegmentSlotIndexes) {
       int segmentIndex = header.segmentIndex(segmentSlotIndex);
       assert segmentIndex == oldSegment.segmentIndex()
         : "segment[" + segmentSlotIndex + "].segmentIndex(=" + segmentIndex + ") but it must be " + oldSegment.segmentIndex();
@@ -193,6 +215,50 @@ public class ExtendibleHashmap implements IntToMultiIntMap {
     }
   }
 
+  /**
+   * @return indexes under which segment with segmentHashSuffix must be referenced in a segments directory
+   * in a header
+   */
+  @VisibleForTesting
+  static int[] slotIndexesForSegment(int segmentHashSuffix,
+                                     byte segmentHashSuffixDepth,
+                                     byte globalHashSuffixDepth) {
+    assert (segmentHashSuffix & ~suffixMask(segmentHashSuffixDepth)) == 0;
+    assert globalHashSuffixDepth >= segmentHashSuffixDepth
+      : "globalDepth(=" + globalHashSuffixDepth + ") must be >= segmentDepth(=" + segmentHashSuffixDepth + ")";
+
+    //If a segment has segmentHashSuffix, when all segmentSlotIndexes with such bit-suffix should point to
+    // it (btw, this is how keys with segment.hashSuffix end up in that segment).
+    // So we need to generate all indexes in [0..2^globalHashSuffixDepth) with [segment.hashSuffix]: we iterate
+    // through all possible (globalDepth-segmentDepth) 'free' prefix bits, while keeping [segmentHashSuffixDepth]
+    // tail bits =[segmentHashSuffix]
+    int indexesCount = 1 << (globalHashSuffixDepth - segmentHashSuffixDepth);
+    int[] slotIndexes = new int[indexesCount];
+    for (int i = 0; i < indexesCount; i++) {
+      int prefix = i << segmentHashSuffixDepth;
+      slotIndexes[i] = prefix | segmentHashSuffix;
+    }
+    return slotIndexes;
+  }
+
+  private void putAndSplitSegmentIfNeeded(HashMapSegmentLayout segment,
+                                          int key,
+                                          int value) throws IOException {
+    hashMapAlgo.put(segment, key, value);
+
+    if (hashMapAlgo.needsSplit(segment)) {
+      splitAndRearrangeEntries(segment);
+    }
+  }
+
+  /**
+   * Creates new segment with (hashSuffix, hashSuffixDepth), increase header.actualSegmentCount, but DO NOT ADD
+   * new segment into a header directory (segmentsTable) -- this is left up to calling code.
+   * MAYBE: probably we could also encapsulate that last bit inside the method: knowing (hashSuffix, hashSuffixDepth)
+   * and header.globalHashSuffixDepth is enough to know which slots in a segments directory should point towards
+   * new segment. Such semantics for allocateSegment() is quite convenient: new segment is always properly 'attached'
+   * into a overall structure, there is no way calling code could attach it incorrectly.
+   */
   private HashMapSegmentLayout allocateSegment(int hashSuffix,
                                                byte hashSuffixDepth) throws IOException {
     int segmentsCount = header.actualSegmentsCount();
@@ -219,8 +285,8 @@ public class ExtendibleHashmap implements IntToMultiIntMap {
 
     byte newHashSuffixDepth = (byte)(oldHashSuffixDepth + 1);
     int highestSuffixBit = 1 << (newHashSuffixDepth - 1);
-    int hashSuffix0 = oldHashSuffix;
-    int hashSuffix1 = oldHashSuffix | highestSuffixBit;
+    int hashSuffix0 = oldHashSuffix;                     // ...000[oldHashSuffix]
+    int hashSuffix1 = oldHashSuffix | highestSuffixBit;  // ...001[oldHashSuffix]
     assert hashSuffix0 != hashSuffix1
       : "hashSuffixes must be different for splitting segments, but " + hashSuffix0 + " == " + hashSuffix1;
 
@@ -243,6 +309,20 @@ public class ExtendibleHashmap implements IntToMultiIntMap {
           hashMapAlgo.put(newSegment, key, value);
         }
       }
+      //MAYBE RC: possible performance issue here: each time we split segments, a lot of tombstones are
+      // accumulated in the old segment -- for every entry moved to a new segment we leave tombstone behind.
+      // So after the split old segment contain ~25% of total entries as tombstones (50% fill is a split
+      // trigger, 1/2 entries moved to new segment on split). Next split adds another 25% tombstones, and
+      // so on. This is not strictly additive process -- it is not that 100% entries will be tombstones
+      // after 4 splits -- tombstones get reused, but still accumulation is possible, and abundance of
+      // tombstones could significantly increase probing length even for low-load-factor tables.
+      // In a regular (in-memory) hashtables this is not an issue, since we get rid of all tombstones on
+      // each resize, while copying only alive values into a new table. Here this mechanism is not exists,
+      // because instead of _recreate_ the table on each resize we just add new segment, leaving old segment
+      // as-is.
+      // Solution is a regular pruning: keep track of segment tombstone count, and re-hash segment if there
+      // are too many tombstones. Since segment size is fixed and not too big, we could copy alive entries
+      // in memory buffer, clean the segment entries table, and insert values back into it -- simple and fast.
     }
 
     return Pair.pair(segmentToSplit, newSegment);
@@ -288,8 +368,7 @@ public class ExtendibleHashmap implements IntToMultiIntMap {
   }
 
 
-  //=============== implementation ============================================================
-
+  @VisibleForTesting
   static final class HeaderLayout {
     //@formatter:off
     private static final int VERSION_OFFSET                  = 0;   //int32
@@ -314,16 +393,17 @@ public class ExtendibleHashmap implements IntToMultiIntMap {
       headerBuffer = bufferSource.slice(0, headerSize);
     }
 
-    public int version() throws IOException {
+    public int version() {
       return headerBuffer.getInt(VERSION_OFFSET);
     }
 
-    public void version(int version) throws IOException {
+    public void version(int version) {
       headerBuffer.putInt(VERSION_OFFSET, version);
     }
 
+    public int headerSize() { return headerSize; }
 
-    public int segmentSize() throws IOException {
+    public int segmentSize() {
       return headerBuffer.getInt(SEGMENT_SIZE_OFFSET);
     }
 
@@ -332,20 +412,20 @@ public class ExtendibleHashmap implements IntToMultiIntMap {
     }
 
 
-    public int actualSegmentsCount() throws IOException {
+    public int actualSegmentsCount() {
       return headerBuffer.getInt(ACTUAL_SEGMENTS_COUNT_OFFSET);
     }
 
-    public void actualSegmentsCount(int count) throws IOException {
+    public void actualSegmentsCount(int count) {
       headerBuffer.putInt(ACTUAL_SEGMENTS_COUNT_OFFSET, count);
     }
 
     /** How many trailing bits of key.hash to use to determine segment to store the key */
-    public byte globalHashSuffixDepth() throws IOException {
+    public byte globalHashSuffixDepth() {
       return headerBuffer.get(GLOBAL_HASH_SUFFIX_DEPTH_OFFSET);
     }
 
-    public void globalHashSuffixDepth(int depth) throws IOException {
+    public void globalHashSuffixDepth(int depth) {
       if (depth < 0 || depth >= Integer.SIZE) {
         throw new IllegalArgumentException("depth(=" + depth + ") must be in [0..32)");
       }
@@ -364,20 +444,18 @@ public class ExtendibleHashmap implements IntToMultiIntMap {
       return segmentIndex(segmentSlotIndex);
     }
 
-    public int segmentTableSize() throws IOException {
+    public int segmentTableSize() {
       return 1 << globalHashSuffixDepth();
     }
 
     public void updateSegmentIndex(int segmentSlotIndex,
-                                   int segmentIndex) throws IOException {
+                                   int segmentIndex) {
       Objects.checkIndex(segmentSlotIndex, segmentTableSize());
       if (segmentIndex < 1 || segmentIndex >= Short.MAX_VALUE) {
         throw new IllegalArgumentException("segmentIndex(=" + segmentIndex + ") must be in [1..MAX_SHORT)");
       }
       headerBuffer.putShort(SEGMENTS_TABLE_OFFSET + segmentSlotIndex * Short.BYTES, (short)segmentIndex);
     }
-
-    public int headerSize() { return headerSize; }
 
     @Override
     public String toString() {
@@ -534,13 +612,13 @@ public class ExtendibleHashmap implements IntToMultiIntMap {
   }
 
   @FunctionalInterface
-  interface BufferSource {
+  public interface BufferSource {
     @NotNull ByteBuffer slice(long offsetInFile,
                               int length) throws IOException;
   }
 
   /** Abstracts data storage for open-addressing hash-table implementation */
-  interface HashTableData {
+  public interface HashTableData {
     int entriesCount();
 
     int aliveEntriesCount();
@@ -573,7 +651,7 @@ public class ExtendibleHashmap implements IntToMultiIntMap {
     }
 
     /**
-     * @return true if iterated through all values, false if iteration was stopped early by valuesProcessor returning false
+     * @return value for which valuesAcceptor returns true, else NO_VALUE
      */
     public int lookup(@NotNull HashTableData table,
                       int key,
@@ -644,22 +722,33 @@ public class ExtendibleHashmap implements IntToMultiIntMap {
 
         if (!isSlotOccupied(slotKey)) {
           if (slotValue != NO_VALUE) {
-            //slot removed ('tombstone')-> remember index, but continue lookup
+            //slot removed ('tombstone') -> remember the index (for later insertion), but continue lookup
             if (firstTombstoneIndex == -1) {
               firstTombstoneIndex = slotIndex;
             }
           }
           else {
-            //(NO_VALUE, NO_VALUE) -> free slot -> end of probing sequence, no (key, value) found -> insert it:
+            //(NO_VALUE, NO_VALUE) == free slot
+            // => end of probing sequence, no (key, value) found
+            // => insert it:
             int insertionIndex = firstTombstoneIndex >= 0 ? firstTombstoneIndex : slotIndex;
             table.updateEntry(insertionIndex, key, value);
             incrementAliveValues(table);
-            break;
+            return true;
           }
         }
       }
 
-      return true;
+      //Table must be resized well before such a condition occurs!
+      throw new AssertionError(
+        "Table is full: all " + capacity + " items were traversed, but no free slot found" +
+        "table.aliveEntries: " + table.aliveEntriesCount() + ", table: " + table
+      );
+      //MAYBE RC: actually, it could be there are not-so-many alive entries, but a lot of tombstones, and no free
+      // slots remain. This is because in the current design we never clear tombstones: during segment split we copy
+      // half of alive entries to a new segment, leaving tombstones in old one -- but we never clean the tombstones
+      // in the old segment. Tombstones are somewhat 'cleaned' by reusing their slots for new records, but this is
+      // stochastic, and could be not very effective
     }
 
     public void remove(@NotNull HashTableData table,

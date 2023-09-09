@@ -2,7 +2,7 @@
 package com.intellij.openapi.vfs.newvfs.persistent;
 
 import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.openapi.vfs.newvfs.persistent.dev.intmultimaps.extendiblehashmap.ExtendibleHashmap;
+import com.intellij.openapi.vfs.newvfs.persistent.dev.intmultimaps.extendiblehashmap.ExtendibleHashMap;
 import com.intellij.openapi.vfs.newvfs.persistent.mapped.MMappedFileStorage;
 import com.intellij.util.io.AbstractIntToIntBtree;
 import com.intellij.util.io.IntToIntBtree;
@@ -117,7 +117,7 @@ public class IntToIntMapsBenchmark {
 
     public File file;
 
-    public ExtendibleHashmap map;
+    public ExtendibleHashMap map;
 
     public Int2IntOpenHashMap generatedKeyValues;
     public int[] generatedKeys;
@@ -125,7 +125,7 @@ public class IntToIntMapsBenchmark {
     @Setup
     public void setup() throws Exception {
       file = FileUtil.createTempFile("IntToIntBtree", "tst", /*deleteOnExit: */ true);
-      map = new ExtendibleHashmap(
+      map = new ExtendibleHashMap(
         new MMappedFileStorage(file.toPath(), 1 << 22, 1 << 30)
       );
 
@@ -194,7 +194,7 @@ public class IntToIntMapsBenchmark {
   @OperationsPerInvocation(SAMPLES)
   public void lookupRandomExistentKey_EMap(ExtendibleHashMapContext context) throws IOException {
     int[] keys = context.generatedKeys;
-    ExtendibleHashmap map = context.map;
+    ExtendibleHashMap map = context.map;
     ThreadLocalRandom rnd = ThreadLocalRandom.current();
 
     for (int i = 0; i < SAMPLES; i++) {
@@ -208,7 +208,7 @@ public class IntToIntMapsBenchmark {
   @OperationsPerInvocation(SAMPLES)
   public void updateRandomExistingKey_EMap(ExtendibleHashMapContext context) throws IOException {
     int[] keys = context.generatedKeys;
-    ExtendibleHashmap map = context.map;
+    ExtendibleHashMap map = context.map;
     ThreadLocalRandom rnd = ThreadLocalRandom.current();
 
     for (int i = 0; i < SAMPLES; i++) {

@@ -1,10 +1,14 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vfs.newvfs.persistent.dev.enumerator;
 
+import com.intellij.openapi.util.ThrowableComputable;
 import com.intellij.openapi.vfs.newvfs.persistent.dev.intmultimaps.IntToMultiIntMap;
+import com.intellij.openapi.vfs.newvfs.persistent.dev.intmultimaps.NonParallelNonPersistentIntToMultiIntMap;
+import com.intellij.openapi.vfs.newvfs.persistent.dev.intmultimaps.extendiblehashmap.ExtendibleHashMap;
 import com.intellij.openapi.vfs.newvfs.persistent.mapped.MMappedFileStorage;
 import com.intellij.openapi.vfs.newvfs.persistent.dev.appendonlylog.AppendOnlyLog;
 import com.intellij.openapi.vfs.newvfs.persistent.dev.appendonlylog.AppendOnlyLogOverMMappedFile;
+import com.intellij.util.ExceptionUtil;
 import com.intellij.util.Processor;
 import com.intellij.util.io.ScannableDataEnumeratorEx;
 import com.intellij.util.io.VersionUpdatedException;
@@ -15,7 +19,6 @@ import java.io.Closeable;
 import java.io.Flushable;
 import java.io.IOException;
 import java.nio.file.Path;
-import java.util.function.Supplier;
 
 
 /**
@@ -25,15 +28,15 @@ import java.util.function.Supplier;
  * <p>
  * Implementation uses append-only log to store objects, and some (pluggable) Map[object.hash -> id*].
  */
-public final class DurableEnumerator<K> implements ScannableDataEnumeratorEx<K>, Flushable, Closeable {
+public final class DurableEnumerator<V> implements ScannableDataEnumeratorEx<V>, Flushable, Closeable {
 
   public static final int DATA_FORMAT_VERSION = 1;
 
   public static final int PAGE_SIZE = 8 << 20;
 
-  private final AppendOnlyLog keysLog;
+  private final @NotNull AppendOnlyLog valuesLog;
 
-  private final @NotNull KeyDescriptorEx<K> keyDescriptor;
+  private final @NotNull KeyDescriptorEx<V> valueDescriptor;
 
   //MAYBE RC: we actually don't need _durable_ map here. We could go with
   //          1) in-memory map, transient & re-populated from log on each start
@@ -41,125 +44,165 @@ public final class DurableEnumerator<K> implements ScannableDataEnumeratorEx<K>,
   //             map is re-populated from log on each start
   //          3) on-disk map, durable between restarts re-populated from log only on
   //             corruption
-  private final @NotNull IntToMultiIntMap keyHashToId;
+  private final @NotNull IntToMultiIntMap valueHashToId;
 
-  public static <K> DurableEnumerator<K> open(@NotNull Path storagePath,
-                                              @NotNull KeyDescriptorEx<K> keyDescriptor,
-                                              @NotNull Supplier<IntToMultiIntMap> mapFactory) throws IOException {
+  public static <K> DurableEnumerator<K> openWithInMemoryMap(@NotNull Path storagePath,
+                                                             @NotNull KeyDescriptorEx<K> valueDescriptor) throws IOException {
     AppendOnlyLog appendOnlyLog = openLog(storagePath);
+
     return new DurableEnumerator<>(
-      keyDescriptor,
+      valueDescriptor,
       appendOnlyLog,
-      mapFactory
+      () -> fillValueHashToIdMap(appendOnlyLog, valueDescriptor, new NonParallelNonPersistentIntToMultiIntMap())
     );
   }
 
-  public DurableEnumerator(@NotNull KeyDescriptorEx<K> keyDescriptor,
-                           @NotNull AppendOnlyLog appendOnlyLog,
-                           @NotNull Supplier<IntToMultiIntMap> mapFactory) throws IOException {
-    this.keyDescriptor = keyDescriptor;
-    this.keysLog = appendOnlyLog;
-    this.keyHashToId = mapFactory.get();
+  public static <K> DurableEnumerator<K> openWithDurableMap(@NotNull Path storagePath,
+                                                            @NotNull KeyDescriptorEx<K> valueDescriptor) throws IOException {
+    AppendOnlyLog appendOnlyLog = openLog(storagePath);
+    ExtendibleHashMap valueHashToId = ExtendibleHashMap.defaultInstance(
+      storagePath.resolveSibling(storagePath.getFileName() + ".hashToId")
+    );
+    return new DurableEnumerator<>(
+      valueDescriptor,
+      appendOnlyLog,
+      () -> valueHashToId
+    );
+  }
 
-    //MAYBE RC: Could be filled async -- to not delay initialization
-    //MAYBE RC: Extract this loading from ctor? I.e. define that map should already be populated, same as keysLog is.
-    //          This way sync/async loading would be a property of factory(-ies), not ctor.
-    this.keysLog.forEachRecord((logId, buffer) -> {
-      K key = this.keyDescriptor.read(buffer);
-      int keyHash = this.keyDescriptor.hashCodeOf(key);
-      int id = logIdToEnumeratorId(logId);
-      keyHashToId.put(keyHash, id);
-      return true;
-    });
+  //MAYBE RC: valueHashToId could be loaded async -- to not delay initialization (see DurableStringEnumerator)
+
+  public DurableEnumerator(@NotNull KeyDescriptorEx<V> valueDescriptor,
+                           @NotNull AppendOnlyLog appendOnlyLog,
+                           @NotNull ThrowableComputable<IntToMultiIntMap, IOException> mapFactory) throws IOException {
+    this.valueDescriptor = valueDescriptor;
+    this.valuesLog = appendOnlyLog;
+    this.valueHashToId = mapFactory.compute();
   }
 
   private static @NotNull AppendOnlyLog openLog(@NotNull Path storagePath) throws IOException {
-    AppendOnlyLogOverMMappedFile keysLog = new AppendOnlyLogOverMMappedFile(
+    AppendOnlyLogOverMMappedFile valuesLog = new AppendOnlyLogOverMMappedFile(
       new MMappedFileStorage(storagePath, PAGE_SIZE)
     );
-    int dataFormatVersion = keysLog.getDataVersion();
+    int dataFormatVersion = valuesLog.getDataVersion();
     if (dataFormatVersion == 0) {//FIXME RC: check log is empty for this branch
-      keysLog.setDataVersion(DATA_FORMAT_VERSION);
+      valuesLog.setDataVersion(DATA_FORMAT_VERSION);
     }
     else if (dataFormatVersion != DATA_FORMAT_VERSION) {
-      keysLog.close();
+      valuesLog.close();
       throw new VersionUpdatedException(storagePath, DATA_FORMAT_VERSION, dataFormatVersion);
     }
-    return keysLog;
+    return valuesLog;
+  }
+
+  private static <K> @NotNull IntToMultiIntMap fillValueHashToIdMap(@NotNull AppendOnlyLog valuesLog,
+                                                                    @NotNull KeyDescriptorEx<K> valueDescriptor,
+                                                                    @NotNull IntToMultiIntMap valueHashToId) throws IOException {
+    valuesLog.forEachRecord((logId, buffer) -> {
+      K value = valueDescriptor.read(buffer);
+      int valueHash = adjustHash(valueDescriptor.hashCodeOf(value));
+      int id = convertLogIdToEnumeratorId(logId);
+      valueHashToId.put(valueHash, id);
+      return true;
+    });
+    return valueHashToId;
   }
 
   @Override
   public void flush() throws IOException {
-    keysLog.flush(true);
-    keyHashToId.flush();
+    valuesLog.flush(true);
+    valueHashToId.flush();
   }
 
   @Override
   public void close() throws IOException {
-    keysLog.close();
-    keyHashToId.close();
+    ExceptionUtil.runAllAndRethrowAllExceptions(
+      new IOException("Can't close " + valuesLog + "/" + valueHashToId),
+      valuesLog::close,
+      valueHashToId::close
+    );
   }
 
   @Override
-  public int enumerate(@Nullable K key) throws IOException {
-    if (key == null) {
+  public int enumerate(@Nullable V value) throws IOException {
+    if (value == null) {
       return NULL_ID;
     }
-    return lookupOrCreateIdForKey(key);
+    return lookupOrCreateIdForValue(value);
   }
 
   @Override
-  public int tryEnumerate(@Nullable K key) throws IOException {
-    if (key == null) {
+  public int tryEnumerate(@Nullable V value) throws IOException {
+    if (value == null) {
       return NULL_ID;
     }
 
-    return lookupIdForKey(key);
+    return lookupIdForValue(value);
   }
 
   @Override
-  public @Nullable K valueOf(int keyId) throws IOException {
-    if (keyId == NULL_ID) {
+  public @Nullable V valueOf(int valueId) throws IOException {
+    if (valueId == NULL_ID) {
       return null;
     }
-    return keysLog.read(keyId, keyDescriptor::read);
+    return valuesLog.read(valueId, valueDescriptor::read);
   }
 
   @Override
-  public boolean processAllDataObjects(@NotNull Processor<? super K> processor) throws IOException {
-    return keysLog.forEachRecord((recordId, buffer) -> {
-      K key = keyDescriptor.read(buffer);
-      return processor.process(key);
+  public boolean processAllDataObjects(@NotNull Processor<? super V> processor) throws IOException {
+    return valuesLog.forEachRecord((recordId, buffer) -> {
+      V value = valueDescriptor.read(buffer);
+      return processor.process(value);
     });
+  }
+
+  @Override
+  public String toString() {
+    return "DurableEnumerator[" +
+           "log: " + valuesLog +
+           ", hashToId: " + valueHashToId +
+           ", descriptor=" + valueDescriptor +
+           ']';
   }
 
   /**
    * append-log identifies records by _long_ id, while enumerator API uses _int_ ids -- the method does the
    * conversion
    */
-  private static int logIdToEnumeratorId(long logRecordId) {
+  private static int convertLogIdToEnumeratorId(long logRecordId) {
     return Math.toIntExact(logRecordId);
   }
 
-  private int lookupIdForKey(@NotNull K key) throws IOException {
-    int keyHash = keyDescriptor.hashCodeOf(key);
-    return keyHashToId.lookup(keyHash, candidateId -> {
-      K candidateKey = keysLog.read(candidateId, keyDescriptor::read);
-      return keyDescriptor.areEqual(candidateKey, key);
+  private int lookupIdForValue(@NotNull V value) throws IOException {
+    int valueHash = adjustHash(valueDescriptor.hashCodeOf(value));
+    return valueHashToId.lookup(valueHash, candidateId -> {
+      V candidateKey = valuesLog.read(candidateId, valueDescriptor::read);
+      return valueDescriptor.areEqual(candidateKey, value);
     });
   }
 
-  private int lookupOrCreateIdForKey(@NotNull K key) throws IOException {
-    int keyHash = keyDescriptor.hashCodeOf(key);
-    return keyHashToId.lookupOrInsert(
-      keyHash,
+  private int lookupOrCreateIdForValue(@NotNull V value) throws IOException {
+    int valueHash = adjustHash(valueDescriptor.hashCodeOf(value));
+    return valueHashToId.lookupOrInsert(
+      valueHash,
       candidateId -> {
-        K candidateKey = keysLog.read(candidateId, keyDescriptor::read);
-        return keyDescriptor.areEqual(candidateKey, key);
+        V candidateValue = valuesLog.read(candidateId, valueDescriptor::read);
+        return valueDescriptor.areEqual(candidateValue, value);
       },
-      _keyHash_ -> {
-        long logRecordId = keyDescriptor.saveToLog(key, keysLog);
-        return logIdToEnumeratorId(logRecordId);
+      _valueHash_ -> {
+        long logRecordId = valueDescriptor.saveToLog(value, valuesLog);
+        return convertLogIdToEnumeratorId(logRecordId);
       });
+  }
+
+  private static int adjustHash(int hash) {
+    if (hash == IntToMultiIntMap.NO_VALUE) {
+      //IntToMultiIntMap doesn't allow 0 keys/values, hence replace 0 key with just anything !=0.
+      // Key (=hash) doesn't identify value uniquely anyway, hence this replacement just adds another
+      // collision -- basically, we replaced original Key.hash with our own hash, which avoids 0 at
+      // the cost of slightly higher collision chances
+      return -1;// anything !=0 will do
+    }
+    return hash;
   }
 }

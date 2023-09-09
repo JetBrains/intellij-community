@@ -11,13 +11,12 @@ import org.junit.rules.TemporaryFolder;
 import java.io.IOException;
 import java.nio.file.Path;
 import java.util.HashSet;
+import java.util.Random;
 import java.util.Set;
-import java.util.concurrent.ThreadLocalRandom;
 import java.util.stream.Stream;
 
 import static com.intellij.util.io.DataEnumeratorEx.NULL_ID;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotEquals;
+import static org.junit.Assert.*;
 
 public abstract class StringEnumeratorTestBase<T extends ScannableDataEnumeratorEx<String>> {
 
@@ -33,10 +32,6 @@ public abstract class StringEnumeratorTestBase<T extends ScannableDataEnumerator
   protected T enumerator;
   protected Path storageFile;
   protected String[] manyValues;
-
-  protected StringEnumeratorTestBase() {
-    this(500_000);
-  }
 
   protected StringEnumeratorTestBase(int valuesToTest) {
     valuesCountToTest = valuesToTest;
@@ -69,6 +64,26 @@ public abstract class StringEnumeratorTestBase<T extends ScannableDataEnumerator
     );
   }
 
+  @Test
+  public void nullValue_EnumeratedTo_NULL_ID() throws IOException {
+    int id = enumerator.enumerate(null);
+    assertEquals(
+      "null value enumerated to NULL_ID",
+      NULL_ID,
+      id
+    );
+  }
+
+
+  @Test
+  public void valueOf_NULL_ID_IsNull() throws IOException {
+    String value = enumerator.valueOf(NULL_ID);
+    assertNull(
+      "valueOf(NULL_ID(=0)) must be null",
+      value
+    );
+  }
+
 
   @Test
   public void singleValue_Enumerated_CouldBeGetBackById() throws IOException {
@@ -95,7 +110,7 @@ public abstract class StringEnumeratorTestBase<T extends ScannableDataEnumerator
 
   @Test
   public void forSingleValueEnumerated_TryEnumerate_ReturnsSameID() throws IOException {
-    //Check ID is 'stable' at least without interference of other values: not guarantee id
+    //Check ID is 'stable' at least without an interference of other values: not guarantee id
     // stability if other values enumerated in between -- this is NonStrict part is about.
     String value = "A";
     int id1 = enumerator.enumerate(value);
@@ -176,6 +191,20 @@ public abstract class StringEnumeratorTestBase<T extends ScannableDataEnumerator
     for (int i = 0; i < ids.length; i++) {
       int id = ids[i];
       String value = values[i];
+      assertEquals(
+        "[" + i + "]: tryEnumerate(" + value + ") = " + id,
+        id,
+        enumerator.tryEnumerate(value)
+      );
+    }
+  }
+
+  @Test
+  public void forManyValuesEnumerated_ImmediateTryEnumerate_ReturnsSameId() throws IOException {
+    String[] values = manyValues;
+    for (int i = 0; i < values.length; i++) {
+      String value = values[i];
+      int id = enumerator.enumerate(value);
       assertEquals(
         "[" + i + "]: tryEnumerate(" + value + ") = " + id,
         id,
@@ -348,7 +377,8 @@ public abstract class StringEnumeratorTestBase<T extends ScannableDataEnumerator
   protected abstract T openEnumerator(@NotNull Path storagePath) throws IOException;
 
   protected static String @NotNull [] generateValues(int poolSize, int minStringSize, int maxStringSize) {
-    ThreadLocalRandom rnd = ThreadLocalRandom.current();
+    //ThreadLocalRandom rnd = ThreadLocalRandom.current();
+    Random rnd = new Random(1);
     return Stream.generate(() -> {
         int length = rnd.nextInt(minStringSize, maxStringSize);
         char[] chars = new char[length];

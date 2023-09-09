@@ -13,10 +13,12 @@ import java.nio.file.Path;
 
 import static org.junit.Assert.assertEquals;
 
-/**
- *
- */
 public class OffsetBasedNonStrictStringsEnumeratorTest extends StringEnumeratorTestBase<OffsetBasedNonStrictStringsEnumerator> {
+
+  public OffsetBasedNonStrictStringsEnumeratorTest() {
+    super(500_000);
+  }
+
   @Override
   @Ignore("For non-strict enumerator it is not applicable")
   public void forManyValuesEnumerated_SecondTimeEnumerate_ReturnsSameId() throws IOException {
