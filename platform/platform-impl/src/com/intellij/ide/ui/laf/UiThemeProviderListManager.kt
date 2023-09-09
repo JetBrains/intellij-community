@@ -41,11 +41,11 @@ class UiThemeProviderListManager {
     return themeDescriptors.firstOrNull { it.id == id }?.theme?.get()
   }
 
-  fun findThemeSupplierById(id: String): Supplier<UIThemeLookAndFeelInfo?>? {
+  fun findThemeSupplierById(id: String): Supplier<out UIThemeLookAndFeelInfo?>? {
     return themeDescriptors.firstOrNull { it.id == id }?.theme
   }
 
-  fun getLaFsWithUITypes(): List<LafEntry> = themeDescriptors
+  internal fun getLaFsWithUITypes(): List<LafEntry> = themeDescriptors
 
   fun getThemeListForTargetUI(targetUI: TargetUIType): Sequence<UIThemeLookAndFeelInfo> {
     return themeDescriptors.asSequence()
@@ -107,7 +107,7 @@ class UiThemeProviderListManager {
                 provider.createTheme(parentTheme = parentTheme, defaultDarkParent = darcula, defaultLightParent = intelliJ)
               }
             }
-            theme?.let { UIThemeLookAndFeelInfoImpl(it) }
+            theme?.let { UIThemeLookAndFeelInfoImpl(/* theme = */ it) }
           },
           targetUiType = provider.targetUI,
           id = provider.id!!,
@@ -118,8 +118,8 @@ class UiThemeProviderListManager {
   }
 }
 
-data class LafEntry(
-  @JvmField val theme: Supplier<UIThemeLookAndFeelInfo?>,
+internal data class LafEntry(
+  @JvmField val theme: Supplier<UIThemeLookAndFeelInfoImpl?>,
   @JvmField val targetUiType: TargetUIType,
   @JvmField val id: String,
 )

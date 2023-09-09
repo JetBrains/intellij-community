@@ -299,7 +299,7 @@ private fun repaintMnemonics(focusOwner: Component, pressed: Boolean) {
 
 private fun deprecatedLoadDefaultsFromJson(defaults: UIDefaults, prefix: String, classLoader: ClassLoader) {
   val filename = "$prefix.theme.json"
-  val data = ResourceUtil.getResourceAsBytes(filename, classLoader,  /* checkParents */true)
+  val data = ResourceUtil.getResourceAsBytes(filename, classLoader, /* checkParents */true)
              ?: throw RuntimeException("Can't load $filename")
   UITheme.loadFromJson(data = data, themeId = "Darcula", provider = classLoader).applyProperties(defaults)
 }

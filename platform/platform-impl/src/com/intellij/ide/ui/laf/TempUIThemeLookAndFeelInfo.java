@@ -69,42 +69,44 @@ public final class TempUIThemeLookAndFeelInfo extends UIThemeLookAndFeelInfoImpl
 
   @Override
   protected void installEditorScheme() {
-    String name = getTheme().getEditorScheme();
-    if (name != null && mySchemeFile != null) {
-      EditorColorsManagerImpl cm = (EditorColorsManagerImpl)EditorColorsManager.getInstance();
-      AbstractColorsScheme tmpScheme = new DefaultColorsScheme();
-      boolean loaded = false;
-      try {
-        Element xml = JDOMUtil.load(mySchemeFile.getInputStream());
-        String parentSchemeName = xml.getAttributeValue("parent_scheme", EditorColorsManager.DEFAULT_SCHEME_NAME);
-        EditorColorsScheme parentScheme = EditorColorsManager.getInstance().getScheme(parentSchemeName);
-        tmpScheme = new EditorColorsSchemeImpl(parentScheme);
-        tmpScheme.readExternal(xml);
-        loaded = true;
-      }
-      catch (Exception e) {
-        LOG.warn(e);
-      }
+    String schemePath = getTheme().getEditorSchemePath();
+    if (schemePath == null || mySchemeFile == null) {
+      return;
+    }
 
-      if (loaded) {
-        AbstractColorsScheme scheme = tmpScheme;
-        EditorColorsManagerImpl.setTempScheme(scheme, mySchemeFile);
-        cm.setGlobalScheme(scheme);
-        MessageBusConnection connect = ApplicationManager.getApplication().getMessageBus().connect();
-        connect.subscribe(EditorColorsManager.TOPIC, editorColorsScheme -> {
-          if (editorColorsScheme == scheme || editorColorsScheme == null) {
-            return;
-          }
-          cm.getSchemeManager().removeScheme(scheme);
-          connect.disconnect();
-        });
-      }
+    EditorColorsManagerImpl cm = (EditorColorsManagerImpl)EditorColorsManager.getInstance();
+    AbstractColorsScheme tmpScheme = new DefaultColorsScheme();
+    boolean loaded = false;
+    try {
+      Element xml = JDOMUtil.load(mySchemeFile.getInputStream());
+      String parentSchemeName = xml.getAttributeValue("parent_scheme", EditorColorsManager.DEFAULT_SCHEME_NAME);
+      EditorColorsScheme parentScheme = EditorColorsManager.getInstance().getScheme(parentSchemeName);
+      tmpScheme = new EditorColorsSchemeImpl(parentScheme);
+      tmpScheme.readExternal(xml);
+      loaded = true;
+    }
+    catch (Exception e) {
+      LOG.warn(e);
+    }
+
+    if (loaded) {
+      AbstractColorsScheme scheme = tmpScheme;
+      EditorColorsManagerImpl.setTempScheme(scheme, mySchemeFile);
+      cm.setGlobalScheme(scheme);
+      MessageBusConnection connect = ApplicationManager.getApplication().getMessageBus().connect();
+      connect.subscribe(EditorColorsManager.TOPIC, editorColorsScheme -> {
+        if (editorColorsScheme == scheme || editorColorsScheme == null) {
+          return;
+        }
+        cm.getSchemeManager().removeScheme(scheme);
+        connect.disconnect();
+      });
     }
   }
 
   public static @NotNull UITheme loadTempTheme(@NotNull InputStream stream, @NotNull IconPathPatcher patcher) throws IOException {
     UITheme theme = UITheme.Companion.loadFromJson(stream, ID, it -> {
-      UIThemeLookAndFeelInfo t = UiThemeProviderListManager.Companion.getInstance().findThemeByName(it);
+      UIThemeLookAndFeelInfoImpl t = (UIThemeLookAndFeelInfoImpl)UiThemeProviderListManager.Companion.getInstance().findThemeByName(it);
       return t == null ? null : t.getTheme();
     });
 

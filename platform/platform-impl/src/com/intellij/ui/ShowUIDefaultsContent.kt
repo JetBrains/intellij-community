@@ -19,7 +19,6 @@ import java.awt.Color
 import javax.swing.UIManager
 
 internal class ShowUIDefaultsContent(@JvmField val table: JBTable) {
-
   companion object {
     const val LAST_SELECTED_KEY = "LaFDialog.lastSelectedElement"
     private const val COLORS_ONLY_KEY = "LaFDialog.ColorsOnly"
@@ -78,8 +77,9 @@ internal class ShowUIDefaultsContent(@JvmField val table: JBTable) {
           val trimmedKey = name.trim()
           val trimmedValue = value.trim()
           if (!trimmedKey.isEmpty() && !trimmedValue.isEmpty()) {
-            UIManager.put(trimmedKey, parseUiThemeValue(trimmedKey, trimmedValue,
-                                                         LafManager.getInstance().currentUIThemeLookAndFeel.theme.providerClassLoader!!))
+            UIManager.put(trimmedKey, parseUiThemeValue(key = trimmedKey,
+                                                        value = trimmedValue,
+                                                        classLoader = LafManager.getInstance().currentUIThemeLookAndFeel.providerClassLoader))
             table.setModel(ShowUIDefaultsAction.createFilteringModel())
             updateFilter()
           }

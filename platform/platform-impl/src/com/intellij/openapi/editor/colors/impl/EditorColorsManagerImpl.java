@@ -19,6 +19,7 @@ import com.intellij.ide.ui.LafManagerListener;
 import com.intellij.ide.ui.UITheme;
 import com.intellij.ide.ui.laf.TempUIThemeLookAndFeelInfo;
 import com.intellij.ide.ui.laf.UIThemeLookAndFeelInfo;
+import com.intellij.ide.ui.laf.UIThemeLookAndFeelInfoImpl;
 import com.intellij.ide.ui.laf.UiThemeProviderListManager;
 import com.intellij.ide.util.RunOnceUtil;
 import com.intellij.notification.Notification;
@@ -278,13 +279,14 @@ public final class EditorColorsManagerImpl extends EditorColorsManager implement
   @TestOnly
   public @Nullable EditorColorsScheme loadBundledScheme(@NotNull String themeName) {
     assert ApplicationManager.getApplication().isUnitTestMode() : "Test-only method";
-    UIThemeLookAndFeelInfo theme = UiThemeProviderListManager.Companion.getInstance().findThemeByName(themeName);
-    String scheme = theme == null ? null : theme.getTheme().getEditorScheme();
-    if (scheme == null) {
+    UIThemeLookAndFeelInfoImpl theme =
+      (UIThemeLookAndFeelInfoImpl)UiThemeProviderListManager.Companion.getInstance().findThemeByName(themeName);
+    String schemePath = theme == null ? null : theme.getTheme().getEditorSchemePath();
+    if (schemePath == null) {
       return null;
     }
 
-    EditorColorsScheme bundledScheme = loadBundledScheme(scheme, theme, null);
+    EditorColorsScheme bundledScheme = loadBundledScheme(schemePath, theme, null);
     initEditableBundledSchemesCopies();
     return bundledScheme;
   }
@@ -309,13 +311,13 @@ public final class EditorColorsManagerImpl extends EditorColorsManager implement
     }
 
     for (UIThemeLookAndFeelInfo laf : SequencesKt.asIterable(UiThemeProviderListManager.Companion.getInstance().getLaFs())) {
-      UITheme theme = laf.getTheme();
-      PluginDescriptor pluginDescriptor = getPluginDescriptor(theme);
+      UITheme theme = ((UIThemeLookAndFeelInfoImpl)laf).getTheme();
+      PluginDescriptor pluginDescriptor = getPluginDescriptor(laf);
       for (String scheme : theme.getAdditionalEditorSchemes()) {
         loadBundledScheme(scheme, theme, pluginDescriptor);
       }
 
-      String path = theme.getEditorScheme();
+      String path = theme.getEditorSchemePath();
       if (path != null) {
         loadBundledScheme(path, theme, pluginDescriptor);
       }
@@ -332,9 +334,12 @@ public final class EditorColorsManagerImpl extends EditorColorsManager implement
     return scheme;
   }
   
-  private static PluginDescriptor getPluginDescriptor(@NotNull UITheme theme) {
-    ClassLoader classLoader = theme.getProviderClassLoader();
-    return classLoader instanceof PluginClassLoader ? ((PluginClassLoader)classLoader).getPluginDescriptor() : null;
+  public void handleThemeAdded(@NotNull UITheme theme) {
+    String editorScheme = theme.getEditorSchemePath();
+    if (editorScheme != null) {
+      loadBundledScheme(editorScheme, theme, null);
+      initEditableBundledSchemesCopies();
+    }
   }
 
   private void initEditableBundledSchemesCopies() {
@@ -399,12 +404,33 @@ public final class EditorColorsManagerImpl extends EditorColorsManager implement
     myTreeDispatcher.getMulticaster().globalSchemeChange(newScheme);
   }
 
-  public void handleThemeAdded(@NotNull UITheme theme) {
-    String editorScheme = theme.getEditorScheme();
-    if (editorScheme != null) {
-      loadBundledScheme(editorScheme, theme, null);
-      initEditableBundledSchemesCopies();
+  @Override
+  public @NotNull EditorColorsScheme getSchemeForCurrentUITheme() {
+    UIThemeLookAndFeelInfo lookAndFeelInfo = LafManager.getInstance().getCurrentUIThemeLookAndFeel();
+    EditorColorsScheme scheme = null;
+    if (lookAndFeelInfo instanceof TempUIThemeLookAndFeelInfo) {
+      EditorColorsScheme globalScheme = EditorColorsManager.getInstance().getGlobalScheme();
+      if (isTempScheme(globalScheme)) {
+        return globalScheme;
+      }
     }
+    if (lookAndFeelInfo != null) {
+      String schemeName = lookAndFeelInfo.getEditorSchemeName();
+      if (schemeName != null) {
+        scheme = getScheme(schemeName);
+        assert scheme != null : "Theme " + lookAndFeelInfo.getName() + " refers to unknown color scheme " + schemeName;
+      }
+    }
+    if (scheme == null) {
+      String schemeName = StartupUiUtil.isUnderDarcula() ? "Darcula" : DEFAULT_SCHEME_NAME;
+      DefaultColorSchemesManager colorSchemeManager = DefaultColorSchemesManager.getInstance();
+      scheme = colorSchemeManager.getScheme(schemeName);
+      assert scheme != null :
+        "The default scheme '" + schemeName + "' not found, " +
+        "available schemes: " + colorSchemeManager.listNames();
+    }
+    EditorColorsScheme editableCopy = getEditableCopy(scheme);
+    return editableCopy != null ? editableCopy : scheme;
   }
 
   public void handleThemeRemoved(@NotNull UITheme theme) {
@@ -658,34 +684,9 @@ public final class EditorColorsManagerImpl extends EditorColorsManager implement
     return scheme instanceof DefaultColorsScheme;
   }
 
-  @Override
-  public @NotNull EditorColorsScheme getSchemeForCurrentUITheme() {
-    UIThemeLookAndFeelInfo lookAndFeelInfo = LafManager.getInstance().getCurrentUIThemeLookAndFeel();
-    EditorColorsScheme scheme = null;
-    if (lookAndFeelInfo instanceof TempUIThemeLookAndFeelInfo) {
-      EditorColorsScheme globalScheme = EditorColorsManager.getInstance().getGlobalScheme();
-      if (isTempScheme(globalScheme)) {
-        return globalScheme;
-      }
-    }
-    if (lookAndFeelInfo != null) {
-      UITheme theme = lookAndFeelInfo.getTheme();
-      String schemeName = theme.getEditorSchemeName();
-      if (schemeName != null) {
-        scheme = getScheme(schemeName);
-        assert scheme != null : "Theme " + theme.getName() + " refers to unknown color scheme " + schemeName;
-      }
-    }
-    if (scheme == null) {
-      String schemeName = StartupUiUtil.isUnderDarcula() ? "Darcula" : DEFAULT_SCHEME_NAME;
-      DefaultColorSchemesManager colorSchemeManager = DefaultColorSchemesManager.getInstance();
-      scheme = colorSchemeManager.getScheme(schemeName);
-      assert scheme != null :
-        "The default scheme '" + schemeName + "' not found, " +
-        "available schemes: " + colorSchemeManager.listNames();
-    }
-    EditorColorsScheme editableCopy = getEditableCopy(scheme);
-    return editableCopy != null ? editableCopy : scheme;
+  private static PluginDescriptor getPluginDescriptor(@NotNull UIThemeLookAndFeelInfo theme) {
+    ClassLoader classLoader = theme.getProviderClassLoader();
+    return classLoader instanceof PluginClassLoader ? ((PluginClassLoader)classLoader).getPluginDescriptor() : null;
   }
 
   public @NotNull SchemeManager<EditorColorsScheme> getSchemeManager() {

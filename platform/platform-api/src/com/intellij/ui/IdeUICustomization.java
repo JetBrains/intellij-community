@@ -56,8 +56,8 @@ public class IdeUICustomization {
     return null;
   }
 
-  public @Nullable String getUiThemeEditorSchemeName(@SuppressWarnings("unused") @NotNull String themeId, @Nullable String editorSchemeName) {
-    return editorSchemeName;
+  public @Nullable String getUiThemeEditorSchemePath(@SuppressWarnings("unused") @NotNull String themeId, @Nullable String editorSchemePath) {
+    return editorSchemePath;
   }
 
   /**

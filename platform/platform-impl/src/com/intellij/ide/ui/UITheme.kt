@@ -9,7 +9,8 @@ import com.intellij.DynamicBundle
 import com.intellij.ide.plugins.cl.PluginAwareClassLoader
 import com.intellij.ide.ui.UIThemeBean.Companion.importFromParentTheme
 import com.intellij.ide.ui.UIThemeBean.Companion.readTheme
-import com.intellij.ide.ui.laf.UIThemeLookAndFeelInfo
+import com.intellij.ide.ui.laf.UIThemeLookAndFeelInfoImpl
+import com.intellij.ide.ui.laf.UiThemeProviderListManager
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.util.IconPathPatcher
@@ -55,8 +56,6 @@ class UITheme private constructor(val id: @NonNls String, private val bean: UITh
   val author: String?
     get() = bean.author
 
-  val editorScheme: String?
-    get() = bean.editorScheme
   val additionalEditorSchemes: List<String>
     get() = bean.additionalEditorSchemes ?: emptyList()
   val background: Map<String, Any?>
@@ -97,11 +96,10 @@ class UITheme private constructor(val id: @NonNls String, private val bean: UITh
     bean.providerClassLoader = value
   }
 
-  var editorSchemeName: String?
-    get() = IdeUICustomization.getInstance().getUiThemeEditorSchemeName(id, bean.editorSchemeName)
-    set(editorSchemeName) {
-      bean.editorSchemeName = editorSchemeName
-    }
+  val editorSchemePath: String?
+    get() = IdeUICustomization.getInstance().getUiThemeEditorSchemePath(id, bean.editorScheme)
+
+  var editorSchemeName: String? = null
 
   @Deprecated("Do not use.")
   fun setColors(colors: Map<String, Any?>?) {
@@ -116,8 +114,9 @@ class UITheme private constructor(val id: @NonNls String, private val bean: UITh
                      themeId: @NonNls String,
                      nameToParent: Function<String, UITheme?>): UITheme {
       val theme = readTheme(JsonFactory().createParser(stream))
-      return UITheme(themeId,
-                     postProcessTheme(theme = theme, parentTheme = findParentTheme(theme = theme, nameToParent = nameToParent)?.bean))
+      return UITheme(id = themeId,
+                     bean = postProcessTheme(theme = theme,
+                                             parentTheme = findParentTheme(theme = theme, nameToParent = nameToParent)?.bean))
     }
 
     fun loadFromJson(data: ByteArray?,
@@ -125,10 +124,11 @@ class UITheme private constructor(val id: @NonNls String, private val bean: UITh
                      provider: ClassLoader? = null,
                      iconMapper: ((String) -> String?)? = null): UITheme {
       val theme = readTheme(JsonFactory().createParser(data))
-      return UITheme(themeId, postProcessTheme(theme = theme,
-                                               parentTheme = findParentTheme(theme, ::oldFindThemeByName)?.bean,
-                                               provider = provider,
-                                               iconMapper = iconMapper))
+      val parentTheme = findParentTheme(theme) {
+        (UiThemeProviderListManager.getInstance().findThemeByName(it) as? UIThemeLookAndFeelInfoImpl)?.theme
+      }?.bean
+      return UITheme(id = themeId,
+                     bean = postProcessTheme(theme = theme, parentTheme = parentTheme, provider = provider, iconMapper = iconMapper))
     }
 
     fun loadFromJson(parentTheme: UITheme?,
@@ -400,16 +400,3 @@ private fun addPattern(key: String?, value: Any?, defaults: UIDefaults) {
     map.put(key.substring(2), value)
   }
 }
-
-private fun oldFindThemeByName(parentTheme: String): UITheme? {
-  for (laf in LafManager.getInstance().getInstalledLookAndFeels()) {
-    if (laf is UIThemeLookAndFeelInfo) {
-      val uiTheme = laf.theme
-      if (uiTheme.name == parentTheme) {
-        return uiTheme
-      }
-    }
-  }
-  return null
-}
-

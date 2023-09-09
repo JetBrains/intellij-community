@@ -317,7 +317,7 @@ class LafManagerImpl(private val coroutineScope: CoroutineScope) : LafManager(),
     }
   }
 
-  private fun loadThemeState(element: Element): Supplier<UIThemeLookAndFeelInfo?> {
+  private fun loadThemeState(element: Element): Supplier<out UIThemeLookAndFeelInfo?> {
     val themeProviderManager = UiThemeProviderListManager.getInstance()
 
     element.getChild(ELEMENT_LAF)?.getAttributeValue(ATTRIBUTE_THEME_NAME)?.let {
@@ -433,7 +433,7 @@ class LafManagerImpl(private val coroutineScope: CoroutineScope) : LafManager(),
 
   override fun getSettingsToolbar(): JComponent = settingsToolbar.value.component
 
-  private fun loadDefaultTheme(): Supplier<UIThemeLookAndFeelInfo?> {
+  private fun loadDefaultTheme(): Supplier<out UIThemeLookAndFeelInfo?> {
     // use HighContrast theme for IDE in Windows if HighContrast desktop mode is set
     if (SystemInfoRt.isWindows && Toolkit.getDefaultToolkit().getDesktopProperty("win.highContrast.on") == true) {
       UiThemeProviderListManager.getInstance().findThemeSupplierById(HIGH_CONTRAST_THEME_ID)?.let {
@@ -793,13 +793,13 @@ class LafManagerImpl(private val coroutineScope: CoroutineScope) : LafManager(),
   }
 
   private fun isSchemeDefault(lookAndFeelInfo: UIThemeLookAndFeelInfo, scheme: EditorColorsScheme): Boolean {
-    return lookAndFeelInfo.theme.editorSchemeName == scheme.displayName
+    return lookAndFeelInfo.editorSchemeName == scheme.displayName
   }
 
   private inner class UiThemeEpListener : ExtensionPointListener<UIThemeProvider> {
     override fun extensionAdded(extension: UIThemeProvider, pluginDescriptor: PluginDescriptor) {
       val uiThemeProviderListManager = UiThemeProviderListManager.getInstance()
-      val newLaF = uiThemeProviderListManager.themeProviderAdded(extension) ?: return
+      val newLaF = uiThemeProviderListManager.themeProviderAdded(extension) as UIThemeLookAndFeelInfoImpl? ?: return
       updateLafComboboxModel()
 
       // when updating a theme plugin that doesn't provide the current theme, don't select any of its themes as current
@@ -815,7 +815,7 @@ class LafManagerImpl(private val coroutineScope: CoroutineScope) : LafManager(),
     }
 
     override fun extensionRemoved(extension: UIThemeProvider, pluginDescriptor: PluginDescriptor) {
-      val oldLaF = UiThemeProviderListManager.getInstance().themeProviderRemoved(extension) ?: return
+      val oldLaF = UiThemeProviderListManager.getInstance().themeProviderRemoved(extension) as UIThemeLookAndFeelInfoImpl? ?: return
       val oldTheme = oldLaF.theme
       oldTheme.setProviderClassLoader(null)
       val isDark = oldTheme.isDark
@@ -868,7 +868,7 @@ class LafManagerImpl(private val coroutineScope: CoroutineScope) : LafManager(),
       val lightLaFs = ArrayList<UIThemeLookAndFeelInfo>()
       val darkLaFs = ArrayList<UIThemeLookAndFeelInfo>()
       for (lafInfo in ThemeListProvider.getInstance().getShownThemes().asSequence().flatten()) {
-        if (lafInfo.theme.isDark) {
+        if (lafInfo.isDark) {
           darkLaFs.add(lafInfo)
         }
         else {
@@ -915,7 +915,7 @@ class LafManagerImpl(private val coroutineScope: CoroutineScope) : LafManager(),
           detectAndSyncLaf()
         }
       }
-      else if (preferredLightThemeId != lafInfo.theme.id) {
+      else if (preferredLightThemeId != lafInfo.id) {
         preferredLightThemeId = if (lafInfo.id == defaultLightLaf.id) null else lafInfo.id
         detectAndSyncLaf()
       }

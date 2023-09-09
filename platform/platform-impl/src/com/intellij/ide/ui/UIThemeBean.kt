@@ -90,7 +90,6 @@ internal class UIThemeBean {
               "author" -> bean.author = parser.valueAsString
 
               "editorScheme" -> bean.editorScheme = parser.valueAsString
-              "editorSchemeName" -> bean.editorSchemeName = parser.valueAsString
             }
           }
           JsonToken.VALUE_TRUE -> readTopLevelBoolean(parser, bean, value = true)
@@ -128,11 +127,11 @@ internal class UIThemeBean {
   @JvmField
   var author: String? = null
 
+  /**
+   * The path to editor scheme file.
+   */
   @JvmField
   var editorScheme: String? = null
-
-  @JvmField
-  var editorSchemeName: String? = null
 
   @JvmField
   var dark: Boolean = false
