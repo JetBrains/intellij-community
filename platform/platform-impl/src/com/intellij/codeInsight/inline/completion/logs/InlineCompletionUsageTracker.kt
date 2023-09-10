@@ -25,6 +25,8 @@ import kotlin.random.Random
 
 @ApiStatus.Experimental
 object InlineCompletionUsageTracker : CounterUsagesCollector() {
+  private val GROUP: EventLogGroup = EventLogGroup("inline.completion", 3)
+
   override fun getGroup() = GROUP
 
   /**
@@ -75,53 +77,53 @@ object InlineCompletionUsageTracker : CounterUsagesCollector() {
       if (!finished.compareAndSet(false, true)) {
         error("Already finished")
       }
-      TRIGGERED.log(project, listOf(
-        REQUEST_ID.with(requestId),
+      TriggeredEvent.log(project, listOf(
+        TriggeredEvents.REQUEST_ID.with(requestId),
         *data.toTypedArray(),
-        EVENT.with(event::class.java),
-        PROVIDER.with(provider::class.java),
-        TIME_TO_COMPUTE.with(System.currentTimeMillis() - invocationTime),
-        OUTCOME.with(
+        TriggeredEvents.EVENT.with(event::class.java),
+        TriggeredEvents.PROVIDER.with(provider::class.java),
+        TriggeredEvents.TIME_TO_COMPUTE.with(System.currentTimeMillis() - invocationTime),
+        TriggeredEvents.OUTCOME.with(
           when {
             // fixed order
-            exception -> Outcome.EXCEPTION
-            cancelled -> Outcome.CANCELLED
-            hasSuggestions == true -> Outcome.SHOW
-            hasSuggestions == false -> Outcome.NO_SUGGESTIONS
+            exception -> TriggeredEvents.Outcome.EXCEPTION
+            cancelled -> TriggeredEvents.Outcome.CANCELLED
+            hasSuggestions == true -> TriggeredEvents.Outcome.SHOW
+            hasSuggestions == false -> TriggeredEvents.Outcome.NO_SUGGESTIONS
             else -> null
           }
         )
       ))
     }
+  }
 
-    private companion object {
-      const val TRIGGERED_EVENT_ID = "inline.triggered"
+  private object TriggeredEvents {
+    const val TRIGGERED_EVENT_ID = "inline.triggered"
 
-      val REQUEST_ID = Long("request_id")
-      val EVENT = EventFields.Class("event")
-      val PROVIDER = EventFields.Class("provider")
-      val TIME_TO_COMPUTE = Long("time_to_compute")
-      val OUTCOME = NullableEnum<Outcome>("outcome")
+    val REQUEST_ID = Long("request_id")
+    val EVENT = EventFields.Class("event")
+    val PROVIDER = EventFields.Class("provider")
+    val TIME_TO_COMPUTE = Long("time_to_compute")
+    val OUTCOME = NullableEnum<Outcome>("outcome")
 
-      enum class Outcome {
-        EXCEPTION,
-        CANCELLED,
-        SHOW,
-        NO_SUGGESTIONS
-      }
-
-      val TRIGGERED: VarargEventId = GROUP.registerVarargEvent(
-        TRIGGERED_EVENT_ID,
-        REQUEST_ID,
-        EventFields.Language,
-        EventFields.CurrentFile,
-        EVENT,
-        PROVIDER,
-        TIME_TO_COMPUTE,
-        OUTCOME,
-      )
+    enum class Outcome {
+      EXCEPTION,
+      CANCELLED,
+      SHOW,
+      NO_SUGGESTIONS
     }
   }
+
+  private val TriggeredEvent: VarargEventId = GROUP.registerVarargEvent(
+    TriggeredEvents.TRIGGERED_EVENT_ID,
+    TriggeredEvents.REQUEST_ID,
+    EventFields.Language,
+    EventFields.CurrentFile,
+    TriggeredEvents.EVENT,
+    TriggeredEvents.PROVIDER,
+    TriggeredEvents.TIME_TO_COMPUTE,
+    TriggeredEvents.OUTCOME,
+  )
 
   /**
    * This tracker lives from the moment the inline completion appears on the screen until its end.
@@ -138,53 +140,51 @@ object InlineCompletionUsageTracker : CounterUsagesCollector() {
         error("Already shown")
       }
       showStartTime = System.currentTimeMillis()
-      data.add(REQUEST_ID.with(requestId))
+      data.add(ShownEvents.REQUEST_ID.with(requestId))
       project = editor.project
-      data.add(SUGGESTION_LENGTH.with(element.text.length))
-      data.add(TIME_TO_SHOW.with(System.currentTimeMillis() - invocationTime))
+      data.add(ShownEvents.SUGGESTION_LENGTH.with(element.text.length))
+      data.add(ShownEvents.TIME_TO_SHOW.with(System.currentTimeMillis() - invocationTime))
       assert(!shownLogSent.get())
     }
 
     fun accepted() {
-      finish(Outcome.ACCEPT)
+      finish(ShownEvents.Outcome.ACCEPT)
     }
 
     fun rejected() {
-      finish(Outcome.REJECT)
+      finish(ShownEvents.Outcome.REJECT)
     }
 
-    private fun finish(outcome: Outcome) {
+    private fun finish(outcome: ShownEvents.Outcome) {
       if (!shownLogSent.compareAndSet(false, true)) {
         error("Already sent")
       }
-      data.add(SHOWING_TIME.with(System.currentTimeMillis() - showStartTime))
-      data.add(OUTCOME.with(outcome))
-      SHOWN.log(project, data)
-    }
-
-    private companion object {
-      const val SHOWN_EVENT_ID = "inline.shown"
-
-      val REQUEST_ID = Long("request_id")
-
-      val SUGGESTION_LENGTH = Int("suggestion_length")
-
-      val TIME_TO_SHOW = Long("time_to_show")
-      val SHOWING_TIME = Long("showing_time")
-      val OUTCOME = Enum<Outcome>("outcome")
-
-      enum class Outcome { ACCEPT, REJECT }
-
-      val SHOWN: VarargEventId = GROUP.registerVarargEvent(
-        SHOWN_EVENT_ID,
-        REQUEST_ID,
-        SUGGESTION_LENGTH,
-        TIME_TO_SHOW,
-        SHOWING_TIME,
-        OUTCOME,
-      )
+      data.add(ShownEvents.SHOWING_TIME.with(System.currentTimeMillis() - showStartTime))
+      data.add(ShownEvents.OUTCOME.with(outcome))
+      ShownEvent.log(project, data)
     }
   }
 
-  private val GROUP: EventLogGroup = EventLogGroup("inline.completion", 3)
+  private object ShownEvents {
+    const val SHOWN_EVENT_ID = "inline.shown"
+
+    val REQUEST_ID = Long("request_id")
+
+    val SUGGESTION_LENGTH = Int("suggestion_length")
+
+    val TIME_TO_SHOW = Long("time_to_show")
+    val SHOWING_TIME = Long("showing_time")
+    val OUTCOME = Enum<Outcome>("outcome")
+
+    enum class Outcome { ACCEPT, REJECT }
+  }
+
+  private val ShownEvent: VarargEventId = GROUP.registerVarargEvent(
+    ShownEvents.SHOWN_EVENT_ID,
+    ShownEvents.REQUEST_ID,
+    ShownEvents.SUGGESTION_LENGTH,
+    ShownEvents.TIME_TO_SHOW,
+    ShownEvents.SHOWING_TIME,
+    ShownEvents.OUTCOME,
+  )
 }
