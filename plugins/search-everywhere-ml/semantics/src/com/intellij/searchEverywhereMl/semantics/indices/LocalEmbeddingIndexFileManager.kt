@@ -86,7 +86,7 @@ class LocalEmbeddingIndexFileManager(root: Path, private val dimensions: Int = D
 
   fun loadIndex(): Pair<List<String>, List<FloatTextEmbedding>>? = lock.read {
     if (!idsPath.exists() || !embeddingsPath.exists()) return null
-    val ids: MutableList<String> = mapper.readValue(idsPath.toFile())
+    val ids = mapper.readValue<List<String>>(idsPath.toFile()).map { it.intern() }.toMutableList()
     val buffer = ByteArray(EMBEDDING_ELEMENT_SIZE)
     return embeddingsPath.inputStream().use { input ->
       ids to ids.map {

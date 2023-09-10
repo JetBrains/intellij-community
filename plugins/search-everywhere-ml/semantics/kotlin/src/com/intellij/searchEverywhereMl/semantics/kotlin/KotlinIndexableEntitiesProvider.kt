@@ -14,7 +14,7 @@ class KotlinIndexableEntitiesProvider : FileIndexableEntitiesProvider {
     return when (file) {
       is KtFile -> PsiTreeUtil.findChildrenOfAnyType(file, false, KtFunction::class.java)
         .filter { it.name != ANONYMOUS_ID }
-        .map { IndexableSymbol(it.name ?: "") }
+        .map { IndexableSymbol(it.name?.intern() ?: "") }
       else -> emptyList()
     }
   }
@@ -23,7 +23,7 @@ class KotlinIndexableEntitiesProvider : FileIndexableEntitiesProvider {
     return when (file) {
       is KtFile -> PsiTreeUtil.getStubChildrenOfTypeAsList(file, KtClass::class.java)
         .filter { it.name != ANONYMOUS_ID }
-        .map { IndexableClass(it.name ?: "") }
+        .map { IndexableClass(it.name?.intern() ?: "") }
       else -> emptyList()
     }
   }

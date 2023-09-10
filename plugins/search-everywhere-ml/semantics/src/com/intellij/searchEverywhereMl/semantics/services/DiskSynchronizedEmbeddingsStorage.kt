@@ -65,14 +65,14 @@ abstract class DiskSynchronizedEmbeddingsStorage<T : IndexableEntity>(val projec
   fun addEntity(entity: T) {
     if (!checkSearchEnabled()) return
     indexingTaskManager.scheduleTask(
-      EmbeddingIndexingTask.AddDiskSynchronized(listOf(entity.id), listOf(entity.indexableRepresentation))
+      EmbeddingIndexingTask.AddDiskSynchronized(listOf(entity.id.intern()), listOf(entity.indexableRepresentation.intern()))
     )
   }
 
   fun deleteEntity(entity: T) {
     if (!checkSearchEnabled()) return
     indexingTaskManager.scheduleTask(
-      EmbeddingIndexingTask.DeleteDiskSynchronized(listOf(entity.id))
+      EmbeddingIndexingTask.DeleteDiskSynchronized(listOf(entity.id.intern()))
     )
   }
 

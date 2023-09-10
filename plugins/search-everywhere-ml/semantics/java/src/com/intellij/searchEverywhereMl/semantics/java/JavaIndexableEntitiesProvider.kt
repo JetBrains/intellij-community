@@ -12,7 +12,7 @@ class JavaIndexableEntitiesProvider : FileIndexableEntitiesProvider {
       is PsiJavaFile -> file.classes.filterNotNull()
         .flatMap { it.methods.toList() }
         .filter { it.name != ANONYMOUS_ID }
-        .map { IndexableSymbol(it.name) }
+        .map { IndexableSymbol(it.name.intern()) }
       else -> emptyList()
     }
   }
@@ -21,7 +21,7 @@ class JavaIndexableEntitiesProvider : FileIndexableEntitiesProvider {
     return when (file) {
       is PsiJavaFile -> file.classes.filterNotNull()
         .filter { it.name != ANONYMOUS_ID }
-        .map { IndexableClass(it.name ?: "") }
+        .map { IndexableClass(it.name?.intern() ?: "") }
       else -> emptyList()
     }
   }

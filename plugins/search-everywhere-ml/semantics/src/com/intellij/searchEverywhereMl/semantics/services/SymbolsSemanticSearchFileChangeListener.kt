@@ -12,7 +12,7 @@ class SymbolsSemanticSearchFileChangeListener(project: Project)
   : BulkFileListener, SemanticSearchFileContentChangeListener<IndexableSymbol>(project) {
   override fun getStorage() = SymbolEmbeddingStorage.getInstance(project)
 
-  override fun getEntity(id: String) = IndexableSymbol(id)
+  override fun getEntity(id: String) = IndexableSymbol(id.intern())
 
   override fun after(events: List<VFileEvent>) {
     if (!SemanticSearchSettings.getInstance().enabledInSymbolsTab) return

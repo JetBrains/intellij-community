@@ -66,7 +66,7 @@ class FileEmbeddingsStorage(project: Project) : DiskSynchronizedEmbeddingsStorag
   fun renameFile(oldFileName: String, newFile: IndexableFile) {
     if (!checkSearchEnabled()) return
     indexingTaskManager.scheduleTask(
-      EmbeddingIndexingTask.RenameDiskSynchronized(oldFileName, newFile.id, newFile.indexableRepresentation)
+      EmbeddingIndexingTask.RenameDiskSynchronized(oldFileName.intern(), newFile.id.intern(), newFile.indexableRepresentation.intern())
     )
   }
 
@@ -89,6 +89,6 @@ class FileSemanticSearchServiceInitializer : ProjectActivity {
 }
 
 class IndexableFile(file: VirtualFile) : IndexableEntity {
-  override val id = file.name
-  override val indexableRepresentation = splitIdentifierIntoTokens(file.nameWithoutExtension).joinToString(separator = " ")
+  override val id = file.name.intern()
+  override val indexableRepresentation by lazy { splitIdentifierIntoTokens(file.nameWithoutExtension).joinToString(separator = " ") }
 }

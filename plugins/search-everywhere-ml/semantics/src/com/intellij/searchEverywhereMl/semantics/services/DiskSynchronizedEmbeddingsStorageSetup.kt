@@ -35,7 +35,7 @@ class DiskSynchronizedEmbeddingsStorageSetup<T : IndexableEntity>(
       .chunked(BATCH_SIZE)
       .forEach { batch ->
         ProgressManager.checkCanceled()
-        val ids = batch.map { it.id }
+        val ids = batch.map { it.id.intern() }
         val texts = batch.map { it.indexableRepresentation }
         indexingTaskManager.scheduleTask(EmbeddingIndexingTask.Add(ids, texts) {
           indicator.checkCanceled()
@@ -55,7 +55,7 @@ class DiskSynchronizedEmbeddingsStorageSetup<T : IndexableEntity>(
   }
 
   private fun checkEmbeddingsReady(indexableEntities: List<IndexableEntity>): Boolean {
-    val idToCount = indexableEntities.map { it.id }.groupingBy { it }.eachCount()
+    val idToCount = indexableEntities.groupingBy { it.id.intern() }.eachCount()
     index.filterIdsTo(idToCount)
     return index.checkAllIdsPresent(idToCount.keys)
   }

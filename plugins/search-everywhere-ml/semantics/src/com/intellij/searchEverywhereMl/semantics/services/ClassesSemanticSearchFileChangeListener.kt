@@ -12,7 +12,7 @@ class ClassesSemanticSearchFileChangeListener(project: Project)
   : BulkFileListener, SemanticSearchFileContentChangeListener<IndexableClass>(project) {
   override fun getStorage() = ClassEmbeddingsStorage.getInstance(project)
 
-  override fun getEntity(id: String) = IndexableClass(id)
+  override fun getEntity(id: String) = IndexableClass(id.intern())
 
   override fun after(events: List<VFileEvent>) {
     if (!SemanticSearchSettings.getInstance().enabledInClassesTab) return

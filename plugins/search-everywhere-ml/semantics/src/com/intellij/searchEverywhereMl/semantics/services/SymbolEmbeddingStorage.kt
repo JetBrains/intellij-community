@@ -69,6 +69,5 @@ class SymbolSemanticSearchServiceInitializer : ProjectActivity {
 }
 
 open class IndexableSymbol(override val id: String) : IndexableEntity {
-  override val indexableRepresentation: String
-    get() = splitIdentifierIntoTokens(id).joinToString(separator = " ")
+  override val indexableRepresentation: String by lazy { splitIdentifierIntoTokens(id).joinToString(separator = " ") }
 }
