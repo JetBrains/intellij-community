@@ -32,6 +32,7 @@ import com.intellij.util.ui.UIUtil
 import kotlinx.coroutines.CoroutineScope
 import java.awt.Dimension
 import java.awt.Point
+import java.awt.event.MouseEvent
 import javax.swing.JComponent
 
 /**
@@ -145,6 +146,18 @@ class CodeFloatingToolbar(
     return DefaultActionGroup(showIntentionsAction, mainActionGroup, configurationGroup)
   }
 
+  override suspend fun createHint(): LightweightHint {
+    val hint = super.createHint()
+    val buttons = UIUtil.findComponentsOfType(hint.component, ActionButton::class.java)
+    buttons.filter { button -> button.presentation.isPopupGroup }.forEach { button ->
+      button.presentation.putClientProperty(ActionButton.HIDE_DROPDOWN_ICON, true)
+      button.addMouseEnteredListener {
+        button.click()
+      }
+    }
+    return hint
+  }
+
   private fun getContextAwareGroupId(editor: Editor): String? {
     val project = editor.project ?: return null
     val psiFile = PsiDocumentManager.getInstance(project).getPsiFile(editor.document)
@@ -200,5 +213,17 @@ class CodeFloatingToolbar(
     }
     point.translate(1, 1)
     popup.setLocation(point)
+  }
+
+  private fun JComponent.addMouseEnteredListener(listener: (e: MouseEvent?) -> Unit) {
+    addMouseListener(object : java.awt.event.MouseListener{
+      override fun mouseEntered(e: MouseEvent?) {
+        listener.invoke(e)
+      }
+      override fun mouseClicked(e: MouseEvent?) { }
+      override fun mousePressed(e: MouseEvent?) { }
+      override fun mouseReleased(e: MouseEvent?) { }
+      override fun mouseExited(e: MouseEvent?) { }
+    })
   }
 }
