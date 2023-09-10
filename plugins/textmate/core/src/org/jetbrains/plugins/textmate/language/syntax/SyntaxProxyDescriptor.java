@@ -63,7 +63,7 @@ abstract class SyntaxProxyDescriptor implements SyntaxNodeDescriptor {
     return getTargetNode().findInRepository(ruleId);
   }
 
-  @NotNull
+  @Nullable
   @Override
   public CharSequence getScopeName() {
     return getTargetNode().getScopeName();
