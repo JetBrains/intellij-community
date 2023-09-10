@@ -11,12 +11,14 @@ import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.components.serviceAsync
+import com.intellij.openapi.components.serviceIfCreated
 import com.intellij.openapi.extensions.ExtensionNotApplicableException
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ex.ProjectManagerEx
 import com.intellij.openapi.startup.ProjectActivity
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.wm.impl.ProjectFrameHelper
+import com.intellij.ui.ColorHexUtil
 import com.intellij.ui.ColorUtil
 import com.intellij.ui.JBColor
 import com.intellij.util.PlatformUtils
@@ -30,7 +32,6 @@ import java.nio.file.Path
 import java.util.*
 import javax.swing.Icon
 import javax.swing.JComponent
-
 
 @Service(Service.Level.PROJECT)
 private class ProjectWindowCustomizerIconCache(private val project: Project) {
@@ -123,8 +124,7 @@ class ProjectWindowCustomizerService : Disposable {
 
   @Internal
   fun getProjectColorToCustomize(project: Project): Color {
-    return getDeprecatedCustomToolbarColor(project)
-           ?: getProjectColor(storageFor(project)).iconColorStart
+    return getDeprecatedCustomToolbarColor(project) ?: getProjectColor(storageFor(project)).iconColorStart
   }
 
   fun getRecentProjectIconColor(projectPath: String): Pair<Color, Color> {
@@ -133,8 +133,8 @@ class ProjectWindowCustomizerService : Disposable {
   }
 
   private fun getDeprecatedCustomToolbarColor(project: Project): Color? {
-    val colorStr = PropertiesComponent.getInstance(project).getValue(TOOLBAR_BACKGROUND_KEY)
-    return ColorUtil.fromHex(colorStr, null)
+    val colorStr = project.serviceIfCreated<PropertiesComponent>()?.getValue(TOOLBAR_BACKGROUND_KEY)
+    return ColorHexUtil.fromHex(colorStr, null)
   }
 
   @Internal
@@ -143,11 +143,11 @@ class ProjectWindowCustomizerService : Disposable {
   private fun getProjectColor(colorStorage: ProjectColorStorage): ProjectColors {
     val projectPath = colorStorage.projectPath ?: return defaultColors
 
-    // Get calculated earlier color or calculate next color
+    // Get calculated earlier color or calculate the next color
     return colorCache.computeIfAbsent(projectPath) {
       // Get custom project color and transform it for toolbar
       val customColors = colorStorage.customColor?.takeIf { it.isNotEmpty() }?.let {
-        val color = ColorUtil.fromHex(it)
+        val color = ColorHexUtil.fromHex(it)
         val toolbarColor = ColorUtil.toAlpha(color, 90)
         ProjectColors(toolbarColor, color, color)
       }

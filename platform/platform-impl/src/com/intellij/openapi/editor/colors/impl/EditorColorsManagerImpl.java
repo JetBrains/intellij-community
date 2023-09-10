@@ -153,20 +153,6 @@ public final class EditorColorsManagerImpl extends EditorColorsManager implement
   }
 
   // initScheme has to execute only after the LaF has been set in LafManagerImpl.initializeComponent
-  private void initScheme(@NotNull UIThemeLookAndFeelInfo currentLaf) {
-    EditorColorsScheme scheme = null;
-
-    if (!themeIsCustomized) {
-      String schemeName = currentLaf.getEditorSchemeName();
-      if (schemeName != null) {
-        scheme = getScheme(schemeName);
-      }
-    }
-
-    if (scheme != null) {
-      schemeManager.setCurrent(scheme, false);
-    }
-  }
 
   private void initEditableDefaultSchemesCopies() {
     for (DefaultColorsScheme defaultScheme : DefaultColorSchemesManager.getInstance().getAllSchemes()) {
@@ -468,11 +454,6 @@ public final class EditorColorsManagerImpl extends EditorColorsManager implement
     setGlobalScheme(scheme, false);
   }
 
-  private void setGlobalSchemeLoadedFromConfiguration(@Nullable EditorColorsScheme scheme) {
-    schemeManager.setCurrent(scheme == null ? getDefaultScheme() : scheme, isInitialConfigurationLoaded);
-    isInitialConfigurationLoaded = true;
-  }
-
   @Override
   public @NotNull EditorColorsScheme getGlobalScheme() {
     EditorColorsScheme scheme = schemeManager.getActiveScheme();
@@ -506,7 +487,10 @@ public final class EditorColorsManagerImpl extends EditorColorsManager implement
   }
 
   private @Nullable EditorColorsScheme getEditableCopy(EditorColorsScheme scheme) {
-    if (isTempScheme(scheme)) return scheme;
+    if (isTempScheme(scheme)) {
+      return scheme;
+    }
+
     String editableCopyName = getEditableCopyName(scheme);
     if (editableCopyName != null) {
       EditorColorsScheme editableCopy = getScheme(editableCopyName);
@@ -550,52 +534,76 @@ public final class EditorColorsManagerImpl extends EditorColorsManager implement
   @Override
   public void loadState(@NotNull State state) {
     this.state = state;
-    EditorColorsScheme colorScheme = state.colorScheme == null ? null : schemeManager.findSchemeByName(state.colorScheme);
+    EditorColorsScheme colorScheme = state.colorScheme == null ? null : getScheme(state.colorScheme);
     if (colorScheme == null) {
       if (state.colorScheme != null) {
         LOG.warn(state.colorScheme + " color scheme is missing");
       }
+
       noStateLoaded();
+      return;
     }
-    else {
-      themeIsCustomized = true;
-      Ref<EditorColorsScheme> schemeRef = new Ref<>(colorScheme);
-      String schemeName = colorScheme.getName();
-      //todo[kb] remove after 23.1 EAPs
-      // New Dark RC is renamed to Dark, switch the scheme accordingly
-      if (ExperimentalUI.isNewUI() && (schemeName.equals("_@user_New Dark RC") || schemeName.equals("New Dark RC"))) {
-        RunOnceUtil.runOnceForApp("force.switch.from.new.dark.editor.scheme", ()-> {
-          EditorColorsScheme newDark = schemeManager.findSchemeByName("Dark");
-          if (newDark != null) {
-            schemeRef.set(newDark);
-          }
-        });
+
+    themeIsCustomized = true;
+    Ref<EditorColorsScheme> schemeRef = new Ref<>(colorScheme);
+    String schemeName = colorScheme.getName();
+    //todo[kb] remove after 23.1 EAPs
+    // New Dark RC is renamed to Dark, switch the scheme accordingly
+    if (ExperimentalUI.isNewUI() && (schemeName.equals("_@user_New Dark RC") || schemeName.equals("New Dark RC"))) {
+      RunOnceUtil.runOnceForApp("force.switch.from.new.dark.editor.scheme", () -> {
+        EditorColorsScheme newDark = schemeManager.findSchemeByName("Dark");
+        if (newDark != null) {
+          schemeRef.set(newDark);
+        }
+      });
+    }
+
+    EditorColorsScheme scheme = schemeRef.get();
+    schemeManager.setCurrent(scheme, isInitialConfigurationLoaded);
+    isInitialConfigurationLoaded = true;
+
+    notifyAboutSolarizedColorSchemeDeprecationIfSet(colorScheme);
+
+    Activity activity = StartUpMeasurer.startActivity("editor color scheme initialization");
+    UIThemeLookAndFeelInfo laf = ApplicationManager.getApplication().isUnitTestMode() ? null : LafManager.getInstance().getCurrentUIThemeLookAndFeel();
+    // null in a headless mode
+    if (laf != null) {
+      if (!themeIsCustomized) {
+        EditorColorsScheme scheme1 = null;
+        String schemeName1 = laf.getEditorSchemeName();
+        if (schemeName1 != null) {
+          scheme1 = getScheme(schemeName1);
+        }
+        if (scheme1 != null) {
+          schemeManager.setCurrent(scheme1, false);
+        }
       }
-      setGlobalSchemeLoadedFromConfiguration(schemeRef.get());
-      notifyAboutSolarizedColorSchemeDeprecationIfSet(colorScheme);
     }
+    activity.end();
   }
 
   @Override
   public void noStateLoaded() {
     themeIsCustomized = false;
-    setGlobalSchemeLoadedFromConfiguration(StartupUiUtil.isUnderDarcula() ? getScheme("Darcula") : getDefaultScheme());
+
+    Activity activity = StartUpMeasurer.startActivity("editor color scheme initialization");
+    UIThemeLookAndFeelInfo laf = ApplicationManager.getApplication().isUnitTestMode() ? null : LafManager.getInstance().getCurrentUIThemeLookAndFeel();
+
+    EditorColorsScheme scheme = null;
+    String schemeName = laf == null ? null : laf.getEditorSchemeName();
+    if (schemeName != null) {
+      scheme = getScheme(schemeName);
+    }
+    if (scheme == null) {
+      scheme = getDefaultScheme();
+    }
+    schemeManager.setCurrent(scheme, isInitialConfigurationLoaded);
+    isInitialConfigurationLoaded = true;
+    activity.end();
   }
 
   public @NotNull SchemeManager<EditorColorsScheme> getSchemeManager() {
     return schemeManager;
-  }
-
-  @Override
-  public void initializeComponent() {
-    Activity activity = StartUpMeasurer.startActivity("editor color scheme initialization");
-    // LafManager is initialized in EDT, so, that's ok to call it here
-    UIThemeLookAndFeelInfo laf = ApplicationManager.getApplication().isUnitTestMode() ? null : LafManager.getInstance().getCurrentUIThemeLookAndFeel();
-    // null in a headless mode
-    if (laf != null) {
-      initScheme(laf);
-    }
-    activity.end();
   }
 
   @Override
@@ -730,14 +738,15 @@ public final class EditorColorsManagerImpl extends EditorColorsManager implement
   }
 
   private static void notifyAboutSolarizedColorSchemeDeprecationIfSet(@Nullable EditorColorsScheme scheme) {
+    if (scheme == null) {
+      return;
+    }
+
     Set<String> solarizedColorSchemeNames = Set.of("Solarized (dark)",
                                                    "Solarized (light)",
                                                    "Solarized Dark",
                                                    "Solarized Light",
                                                    "Solarized Dark (Darcula)");
-    if (scheme == null) {
-      return;
-    }
 
     @NotNull String name = Strings.trimStart(scheme.getName(), Scheme.EDITABLE_COPY_PREFIX);
     if (!solarizedColorSchemeNames.contains(name)) {
