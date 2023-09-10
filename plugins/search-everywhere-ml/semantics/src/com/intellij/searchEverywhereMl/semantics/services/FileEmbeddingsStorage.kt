@@ -1,6 +1,6 @@
 package com.intellij.searchEverywhereMl.semantics.services
 
-import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.application.ReadAction
 import com.intellij.openapi.components.*
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.getProjectCachePath
@@ -49,17 +49,18 @@ class FileEmbeddingsStorage(project: Project) : DiskSynchronizedEmbeddingsStorag
 
   @RequiresBackgroundThread
   override fun getIndexableEntities(): List<IndexableFile> {
-    val projectRootManager = ProjectRootManager.getInstance(project)
-    return ApplicationManager.getApplication().runReadAction<List<IndexableFile>> {
+    // It's important that we do not block write actions here:
+    // If the write action is invoked, the read action is restarted
+    return ReadAction.nonBlocking<List<IndexableFile>> {
       buildList {
-        projectRootManager.contentSourceRoots.forEach { root ->
+        ProjectRootManager.getInstance(project).contentSourceRoots.forEach { root ->
           VfsUtilCore.iterateChildrenRecursively(root, null) { virtualFile ->
             virtualFile.canonicalFile?.also { if (it.isFile) add(IndexableFile(it)) }
             return@iterateChildrenRecursively true
           }
         }
       }
-    }
+    }.executeSynchronously()
   }
 
   fun renameFile(oldFileName: String, newFile: IndexableFile) {
