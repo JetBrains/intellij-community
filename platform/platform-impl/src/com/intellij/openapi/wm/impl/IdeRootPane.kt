@@ -584,7 +584,7 @@ open class IdeRootPane internal constructor(private val frame: IdeFrameImpl,
     val visible = SystemInfo.isMacSystemMenu
                   || fullScreen
                   || (!IdeFrameDecorator.isCustomDecorationActive()
-                      && !(SystemInfoRt.isLinux && GlobalMenuLinux.isPresented())
+                      && !((SystemInfoRt.isLinux || SystemInfoRt.isFreeBSD) && GlobalMenuLinux.isPresented())
                       && UISettings.shadowInstance.showMainMenu
                       && (!isMenuButtonInToolbar || isCompactHeader {
       computeMainActionGroups(CustomActionsSchema.getInstance())
@@ -846,7 +846,7 @@ private fun createMacAwareMenuBar(frame: JFrame,
 }
 
 internal fun createMenuBar(coroutineScope: CoroutineScope, frame: JFrame, customMenuGroup: ActionGroup?): IdeMenuBar {
-  if (SystemInfoRt.isLinux) {
+  if (SystemInfoRt.isLinux || SystemInfoRt.isFreeBSD) {
     return LinuxIdeMenuBar(coroutineScope = coroutineScope, frame = frame, customMenuGroup = customMenuGroup)
   }
   else {

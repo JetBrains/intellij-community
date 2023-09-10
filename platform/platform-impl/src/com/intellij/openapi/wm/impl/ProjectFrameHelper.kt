@@ -171,7 +171,7 @@ open class ProjectFrameHelper internal constructor(
       frame.iconImage = null
     }
     else {
-      if (SystemInfoRt.isLinux) {
+      if (SystemInfoRt.isLinux || SystemInfoRt.isFreeBSD) {
         installAppMenuIfNeeded(frame)
       }
 

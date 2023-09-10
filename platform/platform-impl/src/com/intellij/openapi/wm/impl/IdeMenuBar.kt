@@ -245,7 +245,7 @@ internal fun doUpdateAppMenu() {
 }
 
 internal fun installAppMenuIfNeeded(frame: JFrame) {
-  if (!SystemInfoRt.isLinux) {
+  if (!SystemInfoRt.isLinux && !SystemInfoRt.isFreeBSD) {
     return
   }
 

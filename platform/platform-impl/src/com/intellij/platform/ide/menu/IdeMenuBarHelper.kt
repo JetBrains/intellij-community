@@ -1,6 +1,5 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.ide.menu
-
 import com.intellij.diagnostic.StartUpMeasurer
 import com.intellij.ide.DataManager
 import com.intellij.ide.ui.UISettingsListener
@@ -18,8 +17,10 @@ import com.intellij.openapi.application.asContextElement
 import com.intellij.openapi.components.serviceAsync
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.progress.ProcessCanceledException
+import com.intellij.openapi.util.SystemInfoRt
 import com.intellij.openapi.wm.WindowManager
 import com.intellij.openapi.wm.impl.IdeMenuBarState
+import com.intellij.openapi.wm.impl.GlobalMenuLinux
 import com.intellij.platform.diagnostic.telemetry.impl.rootTask
 import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.BufferOverflow
@@ -117,9 +118,10 @@ internal sealed class IdeMenuBarHelper(@JvmField val flavor: IdeMenuFlavor,
           if (!withContext(Dispatchers.EDT) { filterUpdate() }) {
             return@collect
           }
-
           presentationFactory.reset()
-          updateMenuActions(mainActionGroup = menuBar.getMainMenuActionGroup(), forceRebuild = forceRebuild, isFirstUpdate = false)
+          if(!((SystemInfoRt.isLinux || SystemInfoRt.isFreeBSD) && GlobalMenuLinux.isPresented())) {
+            updateMenuActions(mainActionGroup = menuBar.getMainMenuActionGroup(), forceRebuild = forceRebuild, isFirstUpdate = false)
+          }
           lastUpdate.set(System.currentTimeMillis())
         }
     }

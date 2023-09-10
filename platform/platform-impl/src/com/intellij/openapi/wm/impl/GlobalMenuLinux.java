@@ -230,7 +230,7 @@ public final class GlobalMenuLinux implements LinuxGlobalMenuEventHandler, Dispo
   static final class MyActionTuner implements ActionConfigurationCustomizer {
     @Override
     public void customize(@NotNull ActionManager actionManager) {
-      if (!SystemInfoRt.isLinux || ApplicationManager.getApplication().isUnitTestMode() || !isPresented()) {
+      if ((!SystemInfoRt.isLinux && !SystemInfoRt.isFreeBSD) || ApplicationManager.getApplication().isUnitTestMode() || !isPresented()) {
         return;
       }
 
@@ -811,7 +811,7 @@ public final class GlobalMenuLinux implements LinuxGlobalMenuEventHandler, Dispo
 
   private static GlobalMenuLib _loadLibrary() {
     Application app;
-    if (!SystemInfoRt.isLinux ||
+    if ((!SystemInfoRt.isLinux && !SystemInfoRt.isFreeBSD) ||
         !(CpuArch.isIntel64() || CpuArch.isArm64()) ||
         (app = ApplicationManager.getApplication()) == null || app.isUnitTestMode() || app.isHeadlessEnvironment() ||
         Boolean.getBoolean("linux.native.menu.force.disable") ||
