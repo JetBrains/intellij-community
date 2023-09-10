@@ -61,9 +61,6 @@ import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.io.BufferedInputStream;
 import java.io.InputStream;
-import java.lang.invoke.MethodHandle;
-import java.lang.invoke.MethodHandles;
-import java.lang.invoke.MethodType;
 import java.lang.ref.WeakReference;
 import java.lang.reflect.Method;
 import java.net.URL;
@@ -2244,7 +2241,7 @@ public final class UIUtil {
     return null;
   }
 
-  public static @NotNull <T extends JComponent> List<T> findComponentsOfType(JComponent parent, @NotNull Class<? extends T> cls) {
+  public static @NotNull <T extends JComponent> List<T> findComponentsOfType(@Nullable JComponent parent, @NotNull Class<? extends T> cls) {
     return ComponentUtil.findComponentsOfType(parent, cls);
   }
 
