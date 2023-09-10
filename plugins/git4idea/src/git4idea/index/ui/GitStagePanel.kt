@@ -496,7 +496,7 @@ internal class GitStagePanel(private val tracker: GitStageTracker,
     @NonNls
     private const val GROUPING_PROPERTY_NAME = "GitStage.ChangesTree.GroupingKeys"
     private const val GIT_STAGE_PANEL_PLACE = "GitStagePanelPlace"
-    private const val HELP_ID = "reference.VersionControl.Git.StagingArea"
+    internal const val HELP_ID = "reference.VersionControl.Git.StagingArea"
   }
 }
 

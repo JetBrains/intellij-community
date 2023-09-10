@@ -4,13 +4,19 @@ package git4idea.index.actions
 import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.RightAlignedToolbarAction
+import com.intellij.openapi.actionSystem.ex.TooltipDescriptionProvider
+import com.intellij.openapi.actionSystem.ex.TooltipLinkProvider
+import com.intellij.openapi.help.HelpManager
 import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.vcs.ProjectLevelVcsManager
 import com.intellij.openapi.vcs.changes.ChangeListManager
 import git4idea.GitVcs
 import git4idea.config.GitVcsApplicationSettings
+import git4idea.i18n.GitBundle
 import git4idea.index.canEnableStagingArea
 import git4idea.index.enableStagingArea
+import git4idea.index.ui.GitStagePanel
+import javax.swing.JComponent
 
 abstract class GitToggleStagingAreaAction(private val enable: Boolean) : DumbAwareAction(), RightAlignedToolbarAction {
 
@@ -32,12 +38,18 @@ abstract class GitToggleStagingAreaAction(private val enable: Boolean) : DumbAwa
   override fun getActionUpdateThread() = ActionUpdateThread.EDT
 }
 
-class GitEnableStagingAreaAction : GitToggleStagingAreaAction(true) {
+class GitEnableStagingAreaAction : GitToggleStagingAreaAction(true), TooltipDescriptionProvider, TooltipLinkProvider {
   override fun update(e: AnActionEvent) {
     super.update(e)
     val project = e.project
     if (e.presentation.isEnabled && project != null && ChangeListManager.getInstance(project).changeListsNumber > 1) {
       e.presentation.isEnabledAndVisible = false
+    }
+  }
+
+  override fun getTooltipLink(owner: JComponent?): TooltipLinkProvider.TooltipLink {
+    return TooltipLinkProvider.TooltipLink(GitBundle.message("stage.default.status.help")) {
+      HelpManager.getInstance().invokeHelp(GitStagePanel.HELP_ID)
     }
   }
 }
