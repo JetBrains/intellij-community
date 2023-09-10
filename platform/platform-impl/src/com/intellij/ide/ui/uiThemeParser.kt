@@ -30,7 +30,7 @@ fun parseUiThemeValue(key: String, value: Any?, classLoader: ClassLoader): Any? 
       key.endsWith("Width") || key.endsWith("Height") -> getIntegerOrFloat(value, key)
       key.endsWith("grayFilter") -> parseGrayFilter(value)
       value.startsWith("AllIcons.") -> UIDefaults.LazyValue { getReflectiveIcon(value, classLoader) }
-      value.startsWith('#') -> {
+      isColorLike(value) -> {
         parseColorOrNull(value, key)?.let {
           return ColorUIResource(it)
         } ?: value
@@ -41,8 +41,7 @@ fun parseUiThemeValue(key: String, value: Any?, classLoader: ClassLoader): Any? 
           logger<UITheme>().warn("$key has numeric value but specified as string")
           return it
         }
-
-        if (value.length <= 9) {
+        if (value.length <= 8) {
           parseColorOrNull(value, null)?.let {
             logger<UITheme>().warn("$key has color value but doesn't have # prefix")
             return it
@@ -133,3 +132,5 @@ private fun parseGrayFilter(value: String): UIUtil.GrayFilter {
   val numbers = parseMultiValue(value).iterator()
   return UIUtil.GrayFilter(numbers.next().toInt(), numbers.next().toInt(), numbers.next().toInt()).asUIResource()
 }
+
+internal fun isColorLike(text: String) = text.length <= 9 && text.startsWith('#')

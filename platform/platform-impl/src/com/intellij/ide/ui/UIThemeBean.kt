@@ -216,7 +216,23 @@ private fun readFlatMapFromJson(parser: JsonParser, result: MutableMap<String, A
         }
       }
       JsonToken.VALUE_STRING -> {
-        putEntry(prefix, result, parser, path) { parser.text }
+        putEntry(prefix, result, parser, path) {
+          val text = parser.text
+          if (isColorLike(text)) {
+            val color = parseColorOrNull(text, null)
+            if (color == null) {
+              logger<UITheme>().warn("${(if (prefix.isEmpty()) "" else (prefix.joinToString(".") + ".")) + path}=" +
+                                     "$text has # prefix but cannot be parsed as color")
+              text
+            }
+            else {
+              ColorUIResource(color)
+            }
+          }
+          else {
+            text
+          }
+        }
       }
       JsonToken.VALUE_NUMBER_INT -> {
         putEntry(prefix, result, parser, path) { parser.intValue }
@@ -278,7 +294,7 @@ private fun readMapFromJson(parser: JsonParser, result: MutableMap<String, Any?>
       JsonToken.VALUE_STRING -> {
         val text = parser.text
         val key = parser.currentName()
-        if (text.startsWith('#')) {
+        if (isColorLike(text)) {
           val color = parseColorOrNull(text, key)
           if (color != null) {
             result.put(key, ColorUIResource(color))

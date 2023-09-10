@@ -981,7 +981,7 @@
       "background": "contentBackground",
       "foreground": "black",
       "errorForeground": "#ff0000",
-      "hash": "#grey13",
+      "hash": "grey13",
       "hoverBackground": "#edf5fc",
       "hoverInactiveBackground": "grey16",
       "modifiedItemForeground": "#005ad9",
