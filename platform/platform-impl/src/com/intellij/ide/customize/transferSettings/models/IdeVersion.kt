@@ -9,7 +9,7 @@ class IdeVersion(id: String,
                  icon: Icon,
                  name: String,
                  subName: String? = null,
-                 val settingsInit: () -> Settings,
+                 settingsInit: () -> Settings,
                  val lastUsed: Date? = null,
                  val provider: TransferSettingsProvider) : BaseIdeVersion(id, icon, name, subName) {
   val settingsCache by lazy { settingsInit() }

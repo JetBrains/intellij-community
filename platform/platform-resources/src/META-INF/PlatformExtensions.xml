@@ -1513,6 +1513,10 @@
     <registryKey key="transferSettings.enabled"
                  defaultValue="false"
                  description="Enable Transfer Setting from VSCode sticky ballon"/>
+    <registryKey key="transferSettings.vscode.showRunningInfo"
+                 defaultValue="false"
+                 description="Show info about possible running vscode instance"
+                 />
   </extensions>
 
   <extensions defaultExtensionNs="org.jetbrains">
