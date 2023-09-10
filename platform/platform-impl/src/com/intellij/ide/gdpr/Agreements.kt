@@ -117,13 +117,13 @@ private fun prepareConsentsHtml(consent: Consent, bundle: ResourceBundle): HtmlC
     val hint = bundle.getString("dataSharing.applyToAll.hint").replace("{0}", ApplicationInfoImpl.getShadowInstance().shortCompanyName)
     HtmlChunk.text(hint).wrapWith("hint").wrapWith("p")
   }
-  val preferencesHint = bundle.getString("dataSharing.revoke.hint").replace("{0}", ShowSettingsUtil.getSettingsMenuName())
-  val preferencesChunk = HtmlChunk.text(preferencesHint).wrapWith("hint").wrapWith("p")
+  val preferenceHint = bundle.getString("dataSharing.revoke.hint").replace("{0}", ShowSettingsUtil.getSettingsMenuName())
+  val preferenceChunk = HtmlChunk.text(preferenceHint).wrapWith("hint").wrapWith("p")
   val title = HtmlChunk.text(bundle.getString("dataSharing.consents.title")).wrapWith("h1")
   return HtmlBuilder()
     .append(title)
     .append(HtmlChunk.p().addRaw(consent.text))
     .append(allProductChunk)
-    .append(preferencesChunk)
+    .append(preferenceChunk)
     .wrapWithHtmlBody()
 }

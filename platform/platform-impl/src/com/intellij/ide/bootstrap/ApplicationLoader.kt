@@ -231,8 +231,6 @@ private suspend fun preInitApp(app: ApplicationImpl,
       initLafJob.join()
     }
 
-    euaTaskDeferred?.await()?.invoke()
-
     if (loadIconMapping != null) {
       launch {
         loadIconMapping.join()
@@ -250,18 +248,19 @@ private suspend fun preInitApp(app: ApplicationImpl,
       }
     }
 
-    val lafJob = launch(CoroutineName("laf initialization") + RawSwingDispatcher) {
+    span("laf initialization", RawSwingDispatcher) {
       app.serviceAsync<LafManager>()
     }
+  }
 
-    if (!app.isHeadlessEnvironment) {
-      asyncScope.launch {
-        // preload only when LafManager is ready
-        lafJob.join()
+  euaTaskDeferred?.await()?.invoke()
 
-        launch(CoroutineName("EditorColorsManager preloading")) {
-          app.serviceAsync<EditorColorsManager>()
-        }
+  if (!app.isHeadlessEnvironment) {
+    asyncScope.launch {
+      // preload only when LafManager is ready - that's why out of coroutineScope
+
+      launch(CoroutineName("EditorColorsManager preloading")) {
+        app.serviceAsync<EditorColorsManager>()
       }
     }
   }
