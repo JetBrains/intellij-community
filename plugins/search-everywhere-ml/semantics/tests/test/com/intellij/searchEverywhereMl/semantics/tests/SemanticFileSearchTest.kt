@@ -1,10 +1,17 @@
 package com.intellij.searchEverywhereMl.semantics.tests
 
+import com.intellij.ide.actions.searcheverywhere.PsiItemWithSimilarity
+import com.intellij.ide.actions.searcheverywhere.SearchEverywhereUI
 import com.intellij.openapi.command.WriteCommandAction
 import com.intellij.openapi.util.io.toNioPath
+import com.intellij.psi.PsiElement
+import com.intellij.psi.PsiFile
+import com.intellij.searchEverywhereMl.semantics.contributors.SemanticFileSearchEverywhereContributor
 import com.intellij.searchEverywhereMl.semantics.services.FileEmbeddingsStorage
+import com.intellij.searchEverywhereMl.semantics.services.IndexableClass
 import com.intellij.searchEverywhereMl.semantics.services.LocalArtifactsManager
 import com.intellij.searchEverywhereMl.semantics.settings.SemanticSearchSettings
+import com.intellij.testFramework.PlatformTestUtil
 import com.intellij.testFramework.utils.vfs.deleteRecursively
 import com.intellij.util.TimeoutUtil
 import java.io.BufferedReader
@@ -34,6 +41,22 @@ class SemanticFileSearchTest : SemanticSearchBaseTestCase() {
     setupTest()
 
     assertEquals(1, storage.index.size)
+  }
+
+  fun `test search everywhere contributor`() {
+    setupTest("java/IndexProjectAction.java", "kotlin/ProjectIndexingTask.kt", "java/ScoresFileManager.java")
+    val searchEverywhereUI = SearchEverywhereUI(project, listOf(SemanticFileSearchEverywhereContributor(createEvent())),
+                                                { _ -> null }, null)
+    val elements = PlatformTestUtil.waitForFuture(searchEverywhereUI.findElementsForPattern("index project job"))
+    assertEquals(2, elements.size)
+
+    val items: List<PsiElement> = elements.filterIsInstance<PsiItemWithSimilarity<*>>().mapNotNull { extractPsiElement(it) }
+    assertEquals(2, items.size)
+
+    val methods = items.filterIsInstance<PsiFile>().map { IndexableClass(it.name) }
+
+    assertEquals(2, methods.size)
+    assertEquals(setOf("IndexProjectAction.java", "ProjectIndexingTask.kt"), methods.map { it.id }.toSet())
   }
 
   fun `test file renaming changes the index`() {

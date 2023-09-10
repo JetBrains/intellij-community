@@ -9,7 +9,6 @@ import com.intellij.searchEverywhereMl.semantics.contributors.SearchEverywhereCo
 import com.intellij.searchEverywhereMl.semantics.utils.attachPsiPresentation
 import org.jetbrains.annotations.ApiStatus
 import com.intellij.searchEverywhereMl.semantics.contributors.SearchEverywhereConcurrentElementsFetcher.DescriptorPriority
-import com.intellij.searchEverywhereMl.semantics.providers.SemanticPsiItemsProvider
 import java.util.concurrent.locks.ReentrantLock
 import kotlin.concurrent.withLock
 

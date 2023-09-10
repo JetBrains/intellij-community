@@ -1,12 +1,20 @@
 package com.intellij.searchEverywhereMl.semantics.tests
 
+import com.intellij.ide.actions.searcheverywhere.PsiItemWithSimilarity
+import com.intellij.ide.actions.searcheverywhere.SearchEverywhereUI
 import com.intellij.openapi.command.WriteCommandAction
+import com.intellij.psi.PsiClass
+import com.intellij.psi.PsiElement
+import com.intellij.searchEverywhereMl.semantics.contributors.SemanticClassSearchEverywhereContributor
 import com.intellij.searchEverywhereMl.semantics.services.ClassEmbeddingsStorage
+import com.intellij.searchEverywhereMl.semantics.services.IndexableClass
 import com.intellij.searchEverywhereMl.semantics.services.LocalArtifactsManager
 import com.intellij.searchEverywhereMl.semantics.settings.SemanticSearchSettings
+import com.intellij.testFramework.PlatformTestUtil
 import com.intellij.testFramework.utils.editor.saveToDisk
 import com.intellij.testFramework.utils.vfs.deleteRecursively
 import com.intellij.util.TimeoutUtil
+import org.jetbrains.kotlin.psi.KtClass
 
 class SemanticClassSearchTest : SemanticSearchBaseTestCase() {
   private val storage
@@ -29,6 +37,22 @@ class SemanticClassSearchTest : SemanticSearchBaseTestCase() {
   fun `test index ids are not duplicated`() {
     setupTest("java/IndexProjectAction.java", "kotlin/IndexProjectAction.kt")
     assertEquals(1, storage.index.size)
+  }
+
+  fun `test search everywhere contributor`() {
+    setupTest("java/IndexProjectAction.java", "kotlin/ProjectIndexingTask.kt", "java/ScoresFileManager.java")
+    val searchEverywhereUI = SearchEverywhereUI(project, listOf(SemanticClassSearchEverywhereContributor(createEvent())),
+                                                { _ -> null }, null)
+    val elements = PlatformTestUtil.waitForFuture(searchEverywhereUI.findElementsForPattern("index project job"))
+    assertEquals(2, elements.size)
+
+    val items: List<PsiElement> = elements.filterIsInstance<PsiItemWithSimilarity<*>>().mapNotNull { extractPsiElement(it) }
+    assertEquals(2, items.size)
+
+    val classes = items.filterIsInstance<PsiClass>().map { IndexableClass(it.name ?: "") } +
+                  items.filterIsInstance<KtClass>().map { IndexableClass(it.name ?: "") }
+    assertEquals(2, classes.size)
+    assertEquals(setOf("IndexProjectAction", "ProjectIndexingTask"), classes.map { it.id }.toSet())
   }
 
   fun `test class renaming changes the index`() {
