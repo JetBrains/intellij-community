@@ -21,7 +21,7 @@ class KotlinIndexableEntitiesProvider : FileIndexableEntitiesProvider {
 
   override fun extractIndexableClasses(file: PsiFile): List<IndexableClass> {
     return when (file) {
-      is KtFile -> PsiTreeUtil.findChildrenOfAnyType(file, false, KtClass::class.java)
+      is KtFile -> PsiTreeUtil.getStubChildrenOfTypeAsList(file, KtClass::class.java)
         .filter { it.name != ANONYMOUS_ID }
         .map { IndexableClass(it.name ?: "") }
       else -> emptyList()
