@@ -1,11 +1,12 @@
 package com.intellij.searchEverywhereMl.semantics.providers
 
 import com.intellij.ide.actions.searcheverywhere.FoundItemDescriptor
+import com.intellij.ide.actions.searcheverywhere.PsiItemWithSimilarity
 import com.intellij.ide.util.gotoByName.FilteringGotoByModel
 import com.intellij.searchEverywhereMl.semantics.services.DiskSynchronizedEmbeddingsStorage
 
 interface SemanticPsiItemsProvider : StreamSemanticItemsProvider<PsiItemWithSimilarity<*>> {
-  val model: FilteringGotoByModel<*>
+  var model: FilteringGotoByModel<*>
 
   val itemLimit: Int
     get() = ITEM_LIMIT

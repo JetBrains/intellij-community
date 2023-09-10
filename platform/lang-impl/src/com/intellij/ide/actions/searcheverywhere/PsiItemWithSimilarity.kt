@@ -1,6 +1,4 @@
-package com.intellij.searchEverywhereMl.semantics.providers
-
-import com.intellij.ide.actions.searcheverywhere.MergeableElement
+package com.intellij.ide.actions.searcheverywhere
 
 class PsiItemWithSimilarity<T : Any>(val value: T, var similarityScore: Double? = null) : MergeableElement {
   val isPureSemantic: Boolean = similarityScore != null

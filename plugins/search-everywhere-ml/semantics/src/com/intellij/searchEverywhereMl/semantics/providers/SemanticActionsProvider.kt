@@ -9,6 +9,8 @@ import com.intellij.openapi.actionSystem.ActionManager
 abstract class SemanticActionsProvider(private val actionModel: GotoActionModel): StreamSemanticItemsProvider<GotoActionModel.MatchedValue> {
   private val actionManager = ActionManager.getInstance()
 
+  internal var includeDisabledActions: Boolean = false
+
   protected fun createItemDescriptor(actionId: String,
                                      similarityScore: Double,
                                      pattern: String): FoundItemDescriptor<GotoActionModel.MatchedValue>? {
@@ -17,8 +19,7 @@ abstract class SemanticActionsProvider(private val actionModel: GotoActionModel)
     } ?: return null
 
     // Remove disabled actions from results:
-    if (!actionWrapper.isAvailable) return null
-    // actionWrapper.presentation.isEnabledAndVisible = true
+    if (!includeDisabledActions && !actionWrapper.isAvailable) return null
 
     return FoundItemDescriptor(
       GotoActionModel.MatchedValue(actionWrapper, pattern, GotoActionModel.MatchedValueType.SEMANTIC, similarityScore),

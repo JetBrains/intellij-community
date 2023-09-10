@@ -1,6 +1,5 @@
 package com.intellij.searchEverywhereMl.semantics.contributors
 
-import com.intellij.concurrency.SensitiveProgressWrapper
 import com.intellij.ide.actions.searcheverywhere.ActionSearchEverywhereContributor
 import com.intellij.ide.actions.searcheverywhere.FoundItemDescriptor
 import com.intellij.ide.actions.searcheverywhere.PossibleSlowContributor
@@ -8,37 +7,42 @@ import com.intellij.ide.util.gotoByName.GotoActionModel
 import com.intellij.ide.util.gotoByName.GotoActionModel.MatchedValue
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.progress.ProgressIndicator
-import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.searchEverywhereMl.SemanticSearchEverywhereContributor
+import com.intellij.searchEverywhereMl.semantics.contributors.SearchEverywhereConcurrentElementsFetcher.Companion.ORDERED_PRIORITIES
+import com.intellij.searchEverywhereMl.semantics.contributors.SearchEverywhereConcurrentElementsFetcher.DescriptorPriority
 import com.intellij.searchEverywhereMl.semantics.providers.LocalSemanticActionsProvider
 import com.intellij.searchEverywhereMl.semantics.providers.SemanticActionsProvider
 import com.intellij.searchEverywhereMl.semantics.providers.ServerSemanticActionsProvider
 import com.intellij.searchEverywhereMl.semantics.settings.SemanticSearchSettings
 import com.intellij.ui.JBColor
 import com.intellij.util.Processor
+import org.jetbrains.annotations.ApiStatus
+import java.util.concurrent.locks.ReentrantLock
 import javax.swing.ListCellRenderer
+import kotlin.concurrent.withLock
 
 
 /**
- * Contributor that adds semantic search functionality when searching for actions in Search Everywhere
+ * Contributor that adds semantic search functionality when searching for actions in Search Everywhere.
+ * For search logic refer to [SemanticActionsProvider].
+ * For indexing logic refer to [com.intellij.searchEverywhereMl.semantics.services.ActionEmbeddingsStorage].
  * Delegates rendering and data retrieval functionality to [ActionSearchEverywhereContributor].
  * Can work with two types of action providers: server-based and local
  */
+@ApiStatus.Experimental
 class SemanticActionSearchEverywhereContributor(defaultContributor: ActionSearchEverywhereContributor)
-  : ActionSearchEverywhereContributor(defaultContributor), SemanticSearchEverywhereContributor, PossibleSlowContributor {
-
-  private val semanticActionsProvider: SemanticActionsProvider
-
-  init {
-    val settings = SemanticSearchSettings.getInstance()
-    semanticActionsProvider = if (settings.getUseRemoteActionsServer()) {
-      ServerSemanticActionsProvider(model)
-    }
-    else {
-      LocalSemanticActionsProvider(model)
-    }
+  : ActionSearchEverywhereContributor(defaultContributor), SemanticSearchEverywhereContributor,
+    SearchEverywhereConcurrentElementsFetcher<MatchedValue, MatchedValue>, PossibleSlowContributor {
+  override val itemsProvider = SemanticSearchSettings.getInstance().run {
+    if (getUseRemoteActionsServer()) ServerSemanticActionsProvider(model) else LocalSemanticActionsProvider(model)
   }
+
+  override fun getDesiredResultsCount() = DESIRED_RESULTS_COUNT
+
+  override fun getPriorityThresholds() = PRIORITY_THRESHOLDS
+
+  override fun useReadAction() = false
 
   override fun isElementSemantic(element: Any): Boolean {
     return (element is MatchedValue && element.type == GotoActionModel.MatchedValueType.SEMANTIC)
@@ -58,51 +62,60 @@ class SemanticActionSearchEverywhereContributor(defaultContributor: ActionSearch
   override fun fetchWeightedElements(pattern: String,
                                      progressIndicator: ProgressIndicator,
                                      consumer: Processor<in FoundItemDescriptor<MatchedValue>>) {
-    val knownItems = mutableSetOf<FoundItemDescriptor<MatchedValue>>()
+    fetchElementsConcurrently(pattern, progressIndicator, consumer)
+  }
 
-    val semanticSearchIndicatorWrapper = SensitiveProgressWrapper(progressIndicator)
-    ProgressManager.getInstance().executeProcessUnderProgress(
-      {
-        for (descriptor in semanticActionsProvider.search(pattern)) {
-          if (semanticSearchIndicatorWrapper.isCanceled) break
-          val descriptorToProcess: FoundItemDescriptor<MatchedValue>
-
-          val equal = knownItems.firstOrNull { checkActionsEqual(it.item, descriptor.item) }
-          if (equal != null) {
-            val mergedElement = equal.item.mergeWith(descriptor.item) as MatchedValue
-            descriptorToProcess = FoundItemDescriptor(mergedElement, equal.weight + 1)
-          }
-          else {
-            knownItems.add(descriptor)
-            descriptorToProcess = descriptor
-          }
-          consumer.process(descriptorToProcess)
-        }
-      },
-      semanticSearchIndicatorWrapper
-    )
-
-    super.fetchWeightedElements(pattern, progressIndicator) { descriptor ->
-      val descriptorToProcess: FoundItemDescriptor<MatchedValue>
-      val equal = knownItems.firstOrNull { checkActionsEqual(it.item, descriptor.item) }
-      if (equal != null) {
-        if (equal.item.shouldBeMergedIntoAnother()) {
-          val mergedElement = descriptor.item.mergeWith(equal.item) as MatchedValue
-          descriptorToProcess = FoundItemDescriptor(mergedElement, descriptor.weight + 1)
-        }
-        else {
-          descriptorToProcess = descriptor
-        }
-      }
-      else {
-        knownItems.add(descriptor)
-        descriptorToProcess = descriptor
-      }
-      consumer.process(descriptorToProcess)
+  override fun prepareSemanticDescriptor(descriptor: FoundItemDescriptor<MatchedValue>,
+                                         knownItems: MutableList<FoundItemDescriptor<MatchedValue>>,
+                                         mutex: ReentrantLock): FoundItemDescriptor<MatchedValue> = mutex.withLock {
+    val equal = knownItems.firstOrNull { checkActionsEqual(it.item, descriptor.item) }
+    if (equal != null) {
+      val mergedElement = equal.item.mergeWith(descriptor.item) as MatchedValue
+      FoundItemDescriptor(mergedElement, equal.weight + 1)
+    }
+    else {
+      knownItems.add(descriptor)
+      descriptor
     }
   }
 
+  override fun prepareStandardDescriptor(descriptor: FoundItemDescriptor<MatchedValue>,
+                                         knownItems: MutableList<FoundItemDescriptor<MatchedValue>>,
+                                         mutex: ReentrantLock): FoundItemDescriptor<MatchedValue> = mutex.withLock {
+    val equal = knownItems.firstOrNull { checkActionsEqual(it.item, descriptor.item) }
+    return if (equal != null) {
+      if (equal.item.shouldBeMergedIntoAnother()) {
+        val mergedElement = descriptor.item.mergeWith(equal.item) as MatchedValue
+        FoundItemDescriptor(mergedElement, descriptor.weight + 1)
+      }
+      else {
+        descriptor
+      }
+    }
+    else {
+      knownItems.add(descriptor)
+      descriptor
+    }
+  }
+
+  override fun defaultFetchElements(pattern: String,
+                                    progressIndicator: ProgressIndicator,
+                                    consumer: Processor<in FoundItemDescriptor<MatchedValue>>) {
+    super.fetchWeightedElements(pattern, progressIndicator, consumer)
+  }
+
+  override fun FoundItemDescriptor<MatchedValue>.findPriority(): DescriptorPriority {
+    return ORDERED_PRIORITIES.first { item.similarityScore!! > getPriorityThresholds()[it]!! }
+  }
+
+  override fun syncSearchSettings() {
+    itemsProvider.includeDisabledActions = myDisabledActions
+  }
+
   companion object {
+    val PRIORITY_THRESHOLDS = (ORDERED_PRIORITIES zip listOf(0.35, 0.25, 0.2)).toMap()
+    private const val DESIRED_RESULTS_COUNT = 10
+
     private fun extractAction(item: Any): AnAction? {
       if (item is AnAction) return item
       return ((if (item is MatchedValue) item.value else item) as? GotoActionModel.ActionWrapper)?.action
