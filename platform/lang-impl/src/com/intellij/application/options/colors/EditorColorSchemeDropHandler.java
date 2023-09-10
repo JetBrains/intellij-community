@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.application.options.colors;
 
 import com.intellij.application.options.schemes.SchemeNameGenerator;
@@ -76,7 +76,7 @@ public final class EditorColorSchemeDropHandler extends CustomFileDropHandler {
                           return newScheme;
                         });
         if (imported != null) {
-          colorsManager.addColorsScheme(imported);
+          colorsManager.addColorScheme(imported);
           String message = importer.getAdditionalImportInfo(imported);
           if (message == null) {
             message = ApplicationBundle.message("settings.editor.scheme.import.success", file.getPresentableUrl(), imported.getName());

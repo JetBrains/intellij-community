@@ -17,6 +17,7 @@ import com.intellij.ide.ui.*
 import com.intellij.ide.ui.UISettings.Companion.getPreferredFractionalMetricsValue
 import com.intellij.ide.ui.laf.SystemDarkThemeDetector.Companion.createDetector
 import com.intellij.ide.ui.laf.darcula.DarculaLaf
+import com.intellij.ide.ui.laf.darcula.initInputMapDefaults
 import com.intellij.ide.ui.laf.intellij.IdeaPopupMenuUI
 import com.intellij.ide.util.PropertiesComponent
 import com.intellij.openapi.actionSystem.*
@@ -617,7 +618,7 @@ class LafManagerImpl(private val coroutineScope: CoroutineScope) : LafManager(),
     uiDefaults.put("LinkButtonUI", DefaultLinkButtonUI::class.java.name)
     fixPopupWeight()
     fixMenuIssues(uiDefaults)
-    StartupUiUtil.initInputMapDefaults(uiDefaults)
+    initInputMapDefaults(uiDefaults)
     uiDefaults.put("Button.defaultButtonFollowsFocus", false)
     uiDefaults.put("Balloon.error.textInsets", JBInsets(3, 8, 3, 8).asUIResource())
     patchFileChooserStrings(uiDefaults)

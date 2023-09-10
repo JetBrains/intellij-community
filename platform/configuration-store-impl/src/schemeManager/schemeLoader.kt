@@ -226,10 +226,10 @@ internal class SchemeLoader<T : Scheme, MUTABLE_SCHEME : T>(private val schemeMa
 }
 
 internal inline fun <T> lazyPreloadScheme(bytes: ByteArray,
-                                      isOldSchemeNaming: Boolean,
-                                      consumer: (name: String?, parser: XMLStreamReader) -> T?): T? {
+                                          isOldSchemeNaming: Boolean,
+                                          consumer: (name: String?, parser: XMLStreamReader) -> T?): T? {
   val reader = createXmlStreamReader(bytes)
-  return consumer(preload(isOldSchemeNaming, reader), reader)
+  return consumer(preload(isOldSchemeNaming = isOldSchemeNaming, parser = reader), reader)
 }
 
 private fun preload(isOldSchemeNaming: Boolean, parser: XMLStreamReader): String? {

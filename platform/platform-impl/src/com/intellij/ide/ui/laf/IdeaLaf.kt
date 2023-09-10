@@ -4,12 +4,12 @@
 package com.intellij.ide.ui.laf
 
 import com.intellij.icons.AllIcons
+import com.intellij.ide.ui.laf.darcula.initInputMapDefaults
 import com.intellij.ui.ColoredSideBorder
 import com.intellij.ui.TableActions
 import com.intellij.ui.plaf.beg.*
 import com.intellij.ui.scale.JBUIScale.getSystemFontData
 import com.intellij.util.ui.StartupUiUtil.getFontWithFallback
-import com.intellij.util.ui.StartupUiUtil.initInputMapDefaults
 import java.awt.Color
 import java.awt.Font
 import java.awt.Insets

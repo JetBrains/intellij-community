@@ -22,7 +22,7 @@ final class RollbackThemeAction extends DumbAwareAction {
   public void actionPerformed(@NotNull AnActionEvent e) {
     EditorColorsManagerImpl colorsManager = (EditorColorsManagerImpl)EditorColorsManager.getInstance();
     EditorColorsScheme scheme = colorsManager.getGlobalScheme();
-    if (EditorColorsManagerImpl.isTempScheme(scheme)) {
+    if (EditorColorsManagerImpl.Companion.isTempScheme(scheme)) {
       colorsManager.getSchemeManager().removeScheme(scheme);
       colorsManager.loadState(colorsManager.getState());
     }
@@ -50,7 +50,6 @@ final class RollbackThemeAction extends DumbAwareAction {
     UIThemeLookAndFeelInfo feel = LafManager.getInstance().getCurrentUIThemeLookAndFeel();
     EditorColorsScheme scheme = EditorColorsManager.getInstance().getGlobalScheme();
 
-    e.getPresentation().setEnabled(feel instanceof TempUIThemeLookAndFeelInfo
-                                   || EditorColorsManagerImpl.isTempScheme(scheme));
+    e.getPresentation().setEnabled(feel instanceof TempUIThemeLookAndFeelInfo || EditorColorsManagerImpl.Companion.isTempScheme(scheme));
   }
 }

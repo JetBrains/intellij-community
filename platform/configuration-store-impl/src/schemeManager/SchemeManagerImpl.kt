@@ -118,15 +118,11 @@ class SchemeManagerImpl<T : Scheme, MUTABLE_SCHEME : T>(
 
   override fun loadBundledScheme(resourceName: String, requestor: Any?, pluginDescriptor: PluginDescriptor?): T? {
     try {
-      val bytes = loadBytes(pluginDescriptor, requestor, resourceName)
-      if (bytes == null) {
-        return null
-      }
-
-      lazyPreloadScheme(bytes, isOldSchemeNaming) { name, parser ->
+      val bytes = loadBytes(pluginDescriptor = pluginDescriptor, requestor = requestor, resourceName = resourceName) ?: return null
+      lazyPreloadScheme(bytes = bytes, isOldSchemeNaming = isOldSchemeNaming) { name, parser ->
         val attributeProvider: (String) -> String? = { parser.getAttributeValue(null, it) }
         val fileName = PathUtilRt.getFileName(resourceName)
-        val extension = getFileExtension(fileName, true)
+        val extension = getFileExtension(fileName = fileName, isAllowAny = true)
         val externalInfo = ExternalInfo(fileNameWithoutExtension = fileName.substring(0, fileName.length - extension.length),
                                         fileExtension = extension)
 

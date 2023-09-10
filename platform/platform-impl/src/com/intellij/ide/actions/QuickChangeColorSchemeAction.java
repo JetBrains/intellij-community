@@ -42,7 +42,7 @@ public final class QuickChangeColorSchemeAction extends QuickSwitchSchemeAction 
       @Override
       public void actionPerformed(@NotNull AnActionEvent e) {
         if (addScheme) {
-          EditorColorsManager.getInstance().addColorsScheme(scheme);
+          EditorColorsManager.getInstance().addColorScheme(scheme);
         }
         EditorColorsScheme oldScheme = EditorColorsManager.getInstance().getGlobalScheme();
         EditorColorsManager.getInstance().setGlobalScheme(scheme);

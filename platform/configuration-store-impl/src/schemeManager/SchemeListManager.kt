@@ -66,7 +66,7 @@ internal class SchemeListManager<T : Scheme>(private val schemeManager: SchemeMa
 
       toReplace = index
       if (existing === scheme) {
-        // do not just return, below scheme will be removed from filesToDelete list
+        // do not just return, below a scheme will be removed from `filesToDelete` list
         break
       }
 

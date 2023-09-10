@@ -21,7 +21,6 @@ import com.intellij.ui.ComponentUtil
 import com.intellij.ui.TableActions
 import com.intellij.util.ResourceUtil
 import com.intellij.util.ui.JBDimension
-import com.intellij.util.ui.StartupUiUtil.initInputMapDefaults
 import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.BufferOverflow
 import kotlinx.coroutines.flow.MutableSharedFlow
@@ -29,6 +28,7 @@ import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.debounce
 import org.jetbrains.annotations.TestOnly
 import java.awt.*
+import java.awt.event.InputEvent
 import java.awt.event.KeyEvent
 import java.util.*
 import java.util.concurrent.atomic.AtomicReference
@@ -38,6 +38,7 @@ import javax.swing.UIDefaults.LazyInputMap
 import javax.swing.plaf.FontUIResource
 import javax.swing.plaf.basic.BasicLookAndFeel
 import javax.swing.plaf.metal.MetalLookAndFeel
+import javax.swing.text.DefaultEditorKit
 import kotlin.time.Duration.Companion.milliseconds
 
 private val LOG: Logger
@@ -330,4 +331,48 @@ private fun deprecatedLoadDefaultsFromJson(defaults: UIDefaults, prefix: String,
   val data = ResourceUtil.getResourceAsBytes(filename, classLoader, /* checkParents */true)
              ?: throw RuntimeException("Can't load $filename")
   UITheme.loadFromJson(data = data, themeId = "Darcula", provider = classLoader).applyProperties(defaults)
+}
+
+internal fun initInputMapDefaults(defaults: UIDefaults) {
+  // Make ENTER work in JTrees
+  val treeInputMap = defaults.get("Tree.focusInputMap") as InputMap?
+  treeInputMap?.put(KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, 0), "toggle")
+  // Cut/Copy/Paste in JTextAreas
+  val textAreaInputMap = defaults.get("TextArea.focusInputMap") as InputMap?
+  if (textAreaInputMap != null) {
+    // It really can be null, for example, when LAF isn't properly initialized (an Alloy license problem)
+    installCutCopyPasteShortcuts(textAreaInputMap, false)
+  }
+  // Cut/Copy/Paste in JTextFields
+  val textFieldInputMap = defaults.get("TextField.focusInputMap") as InputMap?
+  if (textFieldInputMap != null) {
+    // It really can be null, for example, when LAF isn't properly initialized (an Alloy license problem)
+    installCutCopyPasteShortcuts(textFieldInputMap, false)
+  }
+  // Cut/Copy/Paste in JPasswordField
+  val passwordFieldInputMap = defaults.get("PasswordField.focusInputMap") as InputMap?
+  if (passwordFieldInputMap != null) {
+    // It really can be null, for example, when LAF isn't properly initialized (an Alloy license problem)
+    installCutCopyPasteShortcuts(passwordFieldInputMap, false)
+  }
+  // Cut/Copy/Paste in JTables
+  val tableInputMap = defaults.get("Table.ancestorInputMap") as InputMap?
+  if (tableInputMap != null) {
+    // It really can be null, for example, when LAF isn't properly initialized (an Alloy license problem)
+    installCutCopyPasteShortcuts(tableInputMap, true)
+  }
+}
+
+private fun installCutCopyPasteShortcuts(inputMap: InputMap, useSimpleActionKeys: Boolean) {
+  val copyActionKey = if (useSimpleActionKeys) "copy" else DefaultEditorKit.copyAction
+  val pasteActionKey = if (useSimpleActionKeys) "paste" else DefaultEditorKit.pasteAction
+  val cutActionKey = if (useSimpleActionKeys) "cut" else DefaultEditorKit.cutAction
+  // Ctrl+Ins, Shift+Ins, Shift+Del
+  inputMap.put(KeyStroke.getKeyStroke(KeyEvent.VK_INSERT, InputEvent.CTRL_DOWN_MASK), copyActionKey)
+  inputMap.put(KeyStroke.getKeyStroke(KeyEvent.VK_INSERT, InputEvent.SHIFT_DOWN_MASK), pasteActionKey)
+  inputMap.put(KeyStroke.getKeyStroke(KeyEvent.VK_DELETE, InputEvent.SHIFT_DOWN_MASK), cutActionKey)
+  // Ctrl+C, Ctrl+V, Ctrl+X
+  inputMap.put(KeyStroke.getKeyStroke(KeyEvent.VK_C, InputEvent.CTRL_DOWN_MASK), copyActionKey)
+  inputMap.put(KeyStroke.getKeyStroke(KeyEvent.VK_V, InputEvent.CTRL_DOWN_MASK), pasteActionKey)
+  inputMap.put(KeyStroke.getKeyStroke(KeyEvent.VK_X, InputEvent.CTRL_DOWN_MASK), DefaultEditorKit.cutAction)
 }
