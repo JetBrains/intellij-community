@@ -142,13 +142,13 @@ public final class ComponentUtil {
     return parent instanceof JViewport ? (JViewport)parent : null;
   }
 
-  public static @NotNull <T extends JComponent> java.util.List<T> findComponentsOfType(JComponent parent, @NotNull Class<? extends T> cls) {
+  public static @NotNull <T extends JComponent> java.util.List<T> findComponentsOfType(@Nullable JComponent parent, @NotNull Class<? extends T> cls) {
     java.util.List<T> result = new ArrayList<>();
     findComponentsOfType(parent, cls, result);
     return result;
   }
 
-  private static <T extends JComponent> void findComponentsOfType(JComponent parent,
+  private static <T extends JComponent> void findComponentsOfType(@Nullable JComponent parent,
                                                                   @NotNull Class<T> cls,
                                                                   @NotNull List<? super T> result) {
     if (parent == null) return;
