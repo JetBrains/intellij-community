@@ -57,14 +57,16 @@ class DiskSynchronizedEmbeddingSearchIndex(val root: Path, limit: Int? = null) :
 
   override fun saveToDisk() = lock.read { save() }
 
-  override fun loadFromDisk() = lock.write {
+  override fun loadFromDisk() {
     val (ids, embeddings) = fileManager.loadIndex() ?: return
-    indexToId = CollectionFactory.createSmallMemoryFootprintMap(ids.withIndex().associate { it.index to it.value })
     val idToIndex = ids.withIndex().associate { it.value to it.index }
     val idToEmbedding = (ids zip embeddings).toMap()
-    idToEntry = CollectionFactory.createSmallMemoryFootprintMap(
-      ids.associateWith { IndexEntry(idToIndex[it]!!, 0, idToEmbedding[it]!!) }
-    )
+    lock.write {
+      indexToId = CollectionFactory.createSmallMemoryFootprintMap(ids.withIndex().associate { it.index to it.value })
+      idToEntry = CollectionFactory.createSmallMemoryFootprintMap(
+        ids.associateWith { IndexEntry(idToIndex[it]!!, 0, idToEmbedding[it]!!) }
+      )
+    }
   }
 
   override fun findClosest(searchEmbedding: FloatTextEmbedding, topK: Int, similarityThreshold: Double?): List<ScoredText> = lock.read {
