@@ -84,6 +84,10 @@ open class DarculaLaf(private val isThemeAdapter: Boolean) : BasicLookAndFeel() 
       initInputMapDefaults(defaults)
       initDarculaDefaults(defaults)
 
+      if (!isThemeAdapter) {
+        defaults.put("ui.theme.is.dark", true)
+      }
+
       patchComboBox(defaults)
 
       defaults.remove("Spinner.arrowButtonBorder")
