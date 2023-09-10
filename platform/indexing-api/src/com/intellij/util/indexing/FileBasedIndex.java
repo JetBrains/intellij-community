@@ -279,18 +279,6 @@ public abstract class FileBasedIndex {
     throw new IncorrectOperationException();
   }
 
-  /**
-   * @return true if input file:
-   * <ul>
-   * <li> was scanned before indexing of some project in current IDE session </li>
-   * <li> contains up-to-date indexed state </li>
-   * </ul>
-   */
-  @ApiStatus.Experimental
-  public boolean isFileIndexedInCurrentSession(@NotNull VirtualFile file, @NotNull ID<?, ?> indexId) {
-    throw new UnsupportedOperationException();
-  }
-
   @ApiStatus.Experimental
   public static class AllKeysQuery<K, V> {
     @NotNull

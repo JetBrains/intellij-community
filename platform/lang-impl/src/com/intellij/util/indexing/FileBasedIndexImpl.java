@@ -1963,21 +1963,6 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
   }
 
   @Override
-  public boolean isFileIndexedInCurrentSession(@NotNull VirtualFile file, @NotNull ID<?, ?> indexId) {
-    if (VfsData.isIsIndexedFlagDisabled()) {
-      return false;
-    }
-    if (!file.isValid() ||
-        !(file instanceof VirtualFileSystemEntry) ||
-        !(((VirtualFileSystemEntry)file).isFileIndexed())) {
-      return false;
-    }
-
-    int fileId = getFileId(file);
-    return IndexingStamp.getNontrivialFileIndexedStates(fileId).contains(indexId);
-  }
-
-  @Override
   @ApiStatus.Internal
   @NotNull
   public IntPredicate getAccessibleFileIdFilter(@Nullable Project project) {
