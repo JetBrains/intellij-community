@@ -55,8 +55,11 @@ public final class PagedFileStorageWithRWLockedPageContent implements PagedStora
   private final PageContentLockingStrategy pageContentLockingStrategy;
 
   private final @NotNull FilePageCacheLockFree pageCache;
+  /** Cached value of {@link FilePageCacheLockFree#getStatistics()} */
+  private final transient FilePageCacheStatistics pageCacheStatistics;
 
   private final PagesTable pages;
+
   /**
    * Assigned in {@link #closeAsync()}, tracks the closing process happening in housekeeper thread
    * in the {@link #pageCache}.
@@ -167,6 +170,7 @@ public final class PagedFileStorageWithRWLockedPageContent implements PagedStora
     }
     catch (IOException ignored) {
     }
+    pageCacheStatistics = pageCache.getStatistics();
   }
 
 
@@ -352,8 +356,7 @@ public final class PagedFileStorageWithRWLockedPageContent implements PagedStora
       throw new AssertionError("Page " + pageIndex + " must be >=0");
     }
 
-    final FilePageCacheStatistics statistics = pageCache.getStatistics();
-    final long startedAtNs = statistics.startTimestampNs();
+    final long startedAtNs = pageCacheStatistics.startTimestampNs();
 
     for (int attempt = 0; ; attempt++) {
       if (isClosed()) {
@@ -381,7 +384,7 @@ public final class PagedFileStorageWithRWLockedPageContent implements PagedStora
           }
           Thread.yield();//MAYBE RC: Thread.onSpinWait(); (java9+)
         }
-        statistics.pageRequested(page.pageSize(), startedAtNs);
+        pageCacheStatistics.pageRequested(page.pageSize(), startedAtNs);
         return page;
       }
       catch (IOException e) {
@@ -411,7 +414,7 @@ public final class PagedFileStorageWithRWLockedPageContent implements PagedStora
           }
           else {
             //instead of blind yield -- better to wait for housekeeper to make a turn
-            pageCache.waitForHousekeepingTurn( 1 /*ms*/ );
+            pageCache.waitForHousekeepingTurn(1 /*ms*/);
           }
         }
       }
@@ -564,8 +567,7 @@ public final class PagedFileStorageWithRWLockedPageContent implements PagedStora
     if (!pageToLoad.isLoading()) {
       throw new AssertionError("Bug: page must be in LOADING, but " + pageToLoad);
     }
-    final FilePageCacheStatistics statistics = pageCache.getStatistics();
-    final long startedAtNs = statistics.startTimestampNs();
+    final long startedAtNs = pageCacheStatistics.startTimestampNs();
     final ByteBuffer pageBuffer = pageCache.allocatePageBuffer(pageSize);
     pageBuffer.order(nativeBytesOrder ? ByteOrder.nativeOrder() : BIG_ENDIAN);
     try {
@@ -575,7 +577,7 @@ public final class PagedFileStorageWithRWLockedPageContent implements PagedStora
         if (readBytes < pageSize) {
           fillWithZeroes(pageBuffer, bytesActuallyRead, pageSize);
         }
-        statistics.pageRead(bytesActuallyRead, startedAtNs);
+        pageCacheStatistics.pageRead(bytesActuallyRead, startedAtNs);
         return pageBuffer;
       }, isReadOnly());
     }
@@ -588,15 +590,14 @@ public final class PagedFileStorageWithRWLockedPageContent implements PagedStora
 
   private void flushPage(final @NotNull ByteBuffer bufferToSave,
                          final long offsetInFile) throws IOException {
-    final FilePageCacheStatistics statistics = pageCache.getStatistics();
-    final long startedAtNs = statistics.startTimestampNs();
+    final long startedAtNs = pageCacheStatistics.startTimestampNs();
     final int bytesToStore = bufferToSave.remaining();
     executeIdempotentOp(ch -> {
       ch.write(bufferToSave, offsetInFile);
       return null;
     }, isReadOnly());
 
-    statistics.pageWritten(bytesToStore, startedAtNs);
+    pageCacheStatistics.pageWritten(bytesToStore, startedAtNs);
   }
 
   private static final int MAX_FILLER_SIZE = 8192;
