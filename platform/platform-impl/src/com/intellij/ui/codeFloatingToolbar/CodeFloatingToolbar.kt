@@ -7,8 +7,11 @@ import com.intellij.codeInsight.template.TemplateManager
 import com.intellij.ide.ui.customization.CustomActionsSchema
 import com.intellij.openapi.actionSystem.ActionGroup
 import com.intellij.openapi.actionSystem.DefaultActionGroup
+import com.intellij.openapi.actionSystem.Toggleable
+import com.intellij.openapi.actionSystem.impl.ActionButton
 import com.intellij.openapi.actionSystem.impl.FloatingToolbar
 import com.intellij.openapi.actionSystem.impl.MoreActionGroup
+import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.VisualPosition
 import com.intellij.openapi.options.advanced.AdvancedSettings
@@ -159,26 +162,43 @@ class CodeFloatingToolbar(
     }
   }
 
-  fun attachPopup(popup: JBPopup) {
-    val component = hintComponent
+  fun attachPopupToButton(button: ActionButton, popup: JBPopup) {
     popup.addListener(object : JBPopupListener {
+
       override fun beforeShown(event: LightweightWindowEvent) {
-        val rootPane = UIUtil.getRootPane(component) ?: return
-        popup.setMinimumSize(Dimension(rootPane.width, 0))
-        val verticalGap = 2
-        val point = AnchoredPoint(AnchoredPoint.Anchor.BOTTOM_LEFT, rootPane, Point(0, verticalGap)).screenPoint
-        val screenRectangle = ScreenUtil.getScreenRectangle(point)
-        val popupSize = PopupImplUtil.getPopupSize(popup)
-        if (point.x + popupSize.width > screenRectangle.x + screenRectangle.width) { //horizontal overflow
-          point.x += rootPane.size.width - popupSize.width
-        }
-        if (point.y + popupSize.height > screenRectangle.y + screenRectangle.height) { //vertical overflow
-          val pointTopLeft = AnchoredPoint(AnchoredPoint.Anchor.TOP_LEFT, rootPane, Point(0, -verticalGap)).screenPoint
-          point.y = pointTopLeft.y - popupSize.height
-        }
-        point.translate(1, 1)
-        popup.setLocation(point)
+        alignButtonPopup(popup)
+        toggleButton(button, true)
+      }
+
+      override fun onClosed(event: LightweightWindowEvent) {
+        toggleButton(button, false)
       }
     })
+  }
+
+  private fun toggleButton(button: ActionButton, toggled: Boolean) {
+    Toggleable.setSelected(button.presentation, toggled) //needed for ActionButton
+    ApplicationManager.getApplication().invokeLater { //need for ShowIntentionActionsAction
+      Toggleable.setSelected(button.presentation, toggled)
+    }
+  }
+
+  private fun alignButtonPopup(popup: JBPopup) {
+    val component = hintComponent ?: return
+    val rootPane = UIUtil.getRootPane(component) ?: return
+    popup.setMinimumSize(Dimension(rootPane.width, 0))
+    val verticalGap = 2
+    val point = AnchoredPoint(AnchoredPoint.Anchor.BOTTOM_LEFT, rootPane, Point(0, verticalGap)).screenPoint
+    val screenRectangle = ScreenUtil.getScreenRectangle(point)
+    val popupSize = PopupImplUtil.getPopupSize(popup)
+    if (point.x + popupSize.width > screenRectangle.x + screenRectangle.width) { //horizontal overflow
+      point.x += rootPane.size.width - popupSize.width
+    }
+    if (point.y + popupSize.height > screenRectangle.y + screenRectangle.height) { //vertical overflow
+      val pointTopLeft = AnchoredPoint(AnchoredPoint.Anchor.TOP_LEFT, rootPane, Point(0, -verticalGap)).screenPoint
+      point.y = pointTopLeft.y - popupSize.height
+    }
+    point.translate(1, 1)
+    popup.setLocation(point)
   }
 }

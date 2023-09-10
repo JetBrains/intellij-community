@@ -7,6 +7,7 @@ import com.intellij.codeInsight.hint.*;
 import com.intellij.codeInsight.intention.CustomizableIntentionAction;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInsight.intention.IntentionActionDelegate;
+import com.intellij.codeInsight.intention.actions.ShowIntentionActionsAction;
 import com.intellij.codeInsight.intention.impl.config.IntentionManagerSettings;
 import com.intellij.codeInsight.intention.impl.preview.IntentionPreviewPopupUpdateProcessor;
 import com.intellij.codeInsight.unwrap.ScopeHighlighter;
@@ -19,6 +20,7 @@ import com.intellij.internal.statistic.IntentionFUSCollector;
 import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.actionSystem.impl.ActionButton;
 import com.intellij.openapi.actionSystem.impl.SimpleDataContext;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
@@ -256,7 +258,10 @@ public final class IntentionHintComponent implements Disposable, ScrollAwareHint
     if (component == null) return;
     RelativePoint defaultPosition = new AnchoredPoint(AnchoredPoint.Anchor.BOTTOM, component);
     ListPopup popup = getOrCreateListPopup();
-    toolbar.attachPopup(popup);
+    List<ActionButton> buttons = UIUtil.findComponentsOfType(toolbar.getHintComponent(), ActionButton.class);
+    ActionButton intentionsButton = ContainerUtil.find(buttons, b -> b.getAction() instanceof ShowIntentionActionsAction);
+    if (intentionsButton == null) return;
+    toolbar.attachPopupToButton(intentionsButton, popup);
     showPopup(defaultPosition);
   }
 

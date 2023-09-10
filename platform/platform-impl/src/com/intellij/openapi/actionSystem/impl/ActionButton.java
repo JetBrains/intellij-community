@@ -176,7 +176,7 @@ public class ActionButton extends JComponent implements ActionButtonComponent, A
   }
 
   public final boolean isSelected() {
-    return myAction instanceof Toggleable && Toggleable.isSelected(myPresentation);
+    return Toggleable.isSelected(myPresentation);
   }
 
   @Override
@@ -251,7 +251,7 @@ public class ActionButton extends JComponent implements ActionButtonComponent, A
       Editor editor = event.getData(CommonDataKeys.EDITOR);
       CodeFloatingToolbar floatingToolbar = CodeFloatingToolbar.getToolbar(editor);
       if (floatingToolbar != null) {
-        floatingToolbar.attachPopup(popup);
+        floatingToolbar.attachPopupToButton(this, popup);
       }
     }
     popup.showUnderneathOf(this);
