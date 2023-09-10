@@ -9,7 +9,6 @@ import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.actionSystem.ex.ActionUtil
 import com.intellij.openapi.actionSystem.ex.ActionUtil.performActionDumbAwareWithCallbacks
-import com.intellij.openapi.components.service
 import com.intellij.openapi.help.HelpManager
 import com.intellij.openapi.progress.util.ProgressWindow
 import com.intellij.openapi.project.Project
@@ -259,10 +258,12 @@ internal class GitStagePanel(private val tracker: GitStageTracker,
 
   private fun ChangesTree.setDefaultEmptyText() {
     emptyText.setText(message("stage.default.status"))
-      .appendLine("")
-      .appendLine(AllIcons.General.ContextHelp, message("stage.default.status.help"), SimpleTextAttributes.LINK_PLAIN_ATTRIBUTES) {
-        HelpManager.getInstance().invokeHelp(HELP_ID)
-      }
+    if (!wasStagingAreaActionInvoked()) {
+      emptyText.appendLine("")
+        .appendLine(AllIcons.General.ContextHelp, message("stage.default.status.help"), SimpleTextAttributes.LINK_PLAIN_ATTRIBUTES) {
+          HelpManager.getInstance().invokeHelp(HELP_ID)
+        }
+    }
   }
 
   private inner class MyChangesTree(project: Project) : GitStageTree(project, GitStageUiSettingsImpl(project),
@@ -501,3 +502,7 @@ internal class GitStagePanel(private val tracker: GitStageTracker,
 }
 
 internal fun createMergeHandler(project: Project) = GitMergeHandler(project, GitDefaultMergeDialogCustomizer(project))
+
+private const val GIT_STAGE_ACTION_INVOKED_PROPERTY = "git.stage.action.invoked"
+internal fun stagingAreaActionInvoked() = PropertiesComponent.getInstance().setValue(GIT_STAGE_ACTION_INVOKED_PROPERTY, true)
+internal fun wasStagingAreaActionInvoked() = PropertiesComponent.getInstance().getBoolean(GIT_STAGE_ACTION_INVOKED_PROPERTY, false)

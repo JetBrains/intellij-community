@@ -16,6 +16,7 @@ import com.intellij.vcsUtil.VcsFileUtil
 import git4idea.GitContentRevision
 import git4idea.GitNotificationIdsHolder
 import git4idea.index.ui.GitFileStatusNode
+import git4idea.index.ui.stagingAreaActionInvoked
 import git4idea.repo.GitRepository
 import git4idea.repo.GitRepositoryManager
 
@@ -80,6 +81,8 @@ fun performStageOperation(project: Project, nodes: List<GitFileStatusNode>, oper
     if (exceptions.isNotEmpty()) {
       showErrorMessage(project, operation.errorMessage, exceptions)
     }
+
+    stagingAreaActionInvoked()
   }
 }
 
