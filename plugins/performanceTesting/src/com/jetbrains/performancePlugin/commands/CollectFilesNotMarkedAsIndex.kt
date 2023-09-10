@@ -92,7 +92,7 @@ class CollectFilesNotMarkedAsIndex(text: String, line: Int) : PerformanceCommand
           }
           else {
             checkIndexed(fileOrDir, true, "not marked as indexed") {
-              it.isFileIndexed
+              IndexingFlag.isFileIndexed(it)
             }
           }
           return true

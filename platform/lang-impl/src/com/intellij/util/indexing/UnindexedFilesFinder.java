@@ -14,7 +14,6 @@ import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileWithId;
 import com.intellij.openapi.vfs.newvfs.impl.CachedFileType;
-import com.intellij.openapi.vfs.newvfs.impl.VirtualFileSystemEntry;
 import com.intellij.psi.search.FileTypeIndex;
 import com.intellij.util.BooleanFunction;
 import com.intellij.util.SmartList;
@@ -186,7 +185,7 @@ final class UnindexedFilesFinder {
       int inputId = FileBasedIndex.getFileId(file);
       boolean fileWereJustAdded = myIndexableFilesFilterHolder.addFileId(inputId, myProject) == FileAddStatus.ADDED;
 
-      if (file instanceof VirtualFileSystemEntry && ((VirtualFileSystemEntry)file).isFileIndexed()) {
+      if (IndexingFlag.isFileIndexed(file)) {
         boolean wasInvalidated = false;
         if (fileWereJustAdded) {
           List<ID<?, ?>> ids = IndexingStamp.getNontrivialFileIndexedStates(inputId);

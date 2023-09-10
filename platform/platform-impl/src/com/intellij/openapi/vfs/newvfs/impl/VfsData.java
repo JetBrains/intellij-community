@@ -27,7 +27,6 @@ import it.unimi.dsi.fastutil.ints.IntSet;
 import org.jetbrains.annotations.*;
 
 import java.util.*;
-import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicIntegerArray;
 import java.util.concurrent.atomic.AtomicReferenceArray;
 
@@ -67,8 +66,6 @@ public final class VfsData {
   private static final int SEGMENT_SIZE = 1 << SEGMENT_BITS;
   private static final int OFFSET_MASK = SEGMENT_SIZE - 1;
 
-  private static final short NULL_INDEXING_STAMP = 0;
-  private static final AtomicInteger ourIndexingStamp = new AtomicInteger(1);
   private final Application app;
 
   public static boolean isIsIndexedFlagDisabled() {
@@ -86,14 +83,6 @@ public final class VfsData {
       }
     }
     return isIsIndexedFlagDisabled;
-  }
-
-  @ApiStatus.Internal
-  static void markAllFilesAsUnindexed() {
-    ourIndexingStamp.updateAndGet(cur -> {
-      int next = cur + 1;
-      return (short)next == NULL_INDEXING_STAMP ? (NULL_INDEXING_STAMP + 1) : next;
-    });
   }
 
   private final Object myDeadMarker = ObjectUtils.sentinel("dead file");
@@ -271,19 +260,18 @@ public final class VfsData {
       this.vfsData = vfsData;
     }
 
-    boolean isIndexed(int fileId) {
+    int getIndexedStamp(int fileId) {
       if (isIsIndexedFlagDisabled(vfsData.app)) {
-        return false;
+        return 0;
       }
-      return myIntArray.get(getOffset(fileId) * 3 + 2) == ourIndexingStamp.intValue();
+      return myIntArray.get(getOffset(fileId) * 3 + 2);
     }
 
-    void setIndexed(int fileId, boolean indexed) {
+    void setIndexedStamp(int fileId, int stamp) {
       if (isIsIndexedFlagDisabled(vfsData.app)) {
         return;
       }
       if (fileId <= 0) throw new IllegalArgumentException("invalid arguments id: " + fileId);
-      int stamp = indexed ? ourIndexingStamp.intValue() : NULL_INDEXING_STAMP;
       myIntArray.set(getOffset(fileId) * 3 + 2, stamp);
     }
 

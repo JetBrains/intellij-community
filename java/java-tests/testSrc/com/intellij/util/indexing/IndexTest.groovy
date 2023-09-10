@@ -534,7 +534,7 @@ class IndexTest extends JavaCodeInsightFixtureTestCase {
     assertIsIndexed(vFile)
 
     WriteAction.run { VfsUtil.saveText(vFile, "Foo class") }
-    assertTrue(!((VirtualFileSystemEntry)vFile).isFileIndexed())
+    assertFalse(IndexingFlag.isFileIndexed(vFile))
     assertTrue(stamp == FileBasedIndex.instance.getIndexModificationStamp(IdIndex.NAME, project))
     assertIsIndexed(vFile)
 
@@ -560,7 +560,7 @@ class IndexTest extends JavaCodeInsightFixtureTestCase {
   }
 
   private static assertIsIndexed(VirtualFile vFile) {
-    assertTrue(((VirtualFileSystemEntry)vFile).isFileIndexed() || VfsData.isIsIndexedFlagDisabled())
+    assertTrue(IndexingFlag.isFileIndexed(vFile) || VfsData.isIsIndexedFlagDisabled())
   }
 
   void "test no index stamp update when no change 2"() throws IOException {
@@ -1188,7 +1188,7 @@ class IndexTest extends JavaCodeInsightFixtureTestCase {
     // content-less indexes has been passed
     // now all directories are indexed
 
-    assertFalse(((VirtualFileSystemEntry)foo).isFileIndexed())
+    assertFalse(IndexingFlag.isFileIndexed(foo))
     assertIsIndexed(main)
     assertIsIndexed(src)
 
@@ -1505,7 +1505,7 @@ class IndexTest extends JavaCodeInsightFixtureTestCase {
 
     fileBasedIndex.ensureUpToDate(trigramId, project, GlobalSearchScope.everythingScope(project))
     assertEmpty(fileBasedIndex.getIndex(trigramId).getIndexedFileData(fileId).values())
-    assertFalse(((VirtualFileSystemEntry)file).isFileIndexed())
+    assertFalse(IndexingFlag.isFileIndexed(file))
   }
 
   void 'test stub index updated after language level change'() {
