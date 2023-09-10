@@ -5,7 +5,7 @@ import com.intellij.codeInsight.CodeInsightActionHandler
 import com.intellij.codeInsight.inline.completion.InlineCompletionContext.Companion.getInlineCompletionContextOrNull
 import com.intellij.codeInsight.inline.completion.InlineCompletionContext.Companion.initOrGetInlineCompletionContext
 import com.intellij.codeInsight.inline.completion.InlineCompletionContext.Companion.initOrGetInlineCompletionContextWithPlaceholder
-import com.intellij.codeInsight.inline.completion.InlineCompletionContext.Companion.resetInlineCompletionContextWithPlaceholder
+import com.intellij.codeInsight.inline.completion.InlineCompletionContext.Companion.removeInlineCompletionContext
 import com.intellij.codeInsight.inline.completion.InlineState.Companion.getInlineCompletionState
 import com.intellij.codeInsight.inline.completion.InlineState.Companion.initOrGetInlineCompletionState
 import com.intellij.codeInsight.inline.completion.logs.InlineCompletionUsageTracker
@@ -28,10 +28,11 @@ import kotlinx.coroutines.flow.onCompletion
 import kotlinx.coroutines.flow.onEmpty
 import org.jetbrains.annotations.ApiStatus
 import java.util.concurrent.atomic.AtomicBoolean
+import java.util.concurrent.atomic.AtomicReference
 
 @ApiStatus.Experimental
 class InlineCompletionHandler(private val scope: CoroutineScope) : CodeInsightActionHandler {
-  private var runningJob: Job? = null
+  private var runningJob: AtomicReference<Job?> = AtomicReference(null)
   private var lastInvocationTime = 0L
 
   private fun getProvider(event: InlineCompletionEvent): InlineCompletionProvider? {
@@ -52,42 +53,6 @@ class InlineCompletionHandler(private val scope: CoroutineScope) : CodeInsightAc
   fun invoke(event: InlineCompletionEvent.LookupChange) = invokeEvent(event)
   fun invoke(event: InlineCompletionEvent.DirectCall) = invokeEvent(event)
 
-  @Deprecated(
-    "replaced with direct event call type",
-    ReplaceWith("invoke(InlineCompletionEvent.DocumentChange(event, editor))"),
-    DeprecationLevel.ERROR
-  )
-  fun invoke(event: DocumentEvent, editor: Editor) {
-    return invoke(InlineCompletionEvent.DocumentChange(event, editor))
-  }
-
-  @Deprecated(
-    "replaced with direct event call type",
-    ReplaceWith("invoke(InlineCompletionEvent.CaretMove(event))"),
-    DeprecationLevel.ERROR
-  )
-  fun invoke(event: EditorMouseEvent) {
-    return invoke(InlineCompletionEvent.CaretMove(event))
-  }
-
-  @Deprecated(
-    "replaced with direct event call type",
-    ReplaceWith("invoke(InlineCompletionEvent.LookupChange(event))"),
-    DeprecationLevel.ERROR
-  )
-  fun invoke(event: LookupEvent) {
-    return invoke(InlineCompletionEvent.LookupChange(event))
-  }
-
-  @Deprecated(
-    "replaced with direct event call type",
-    ReplaceWith("invoke(InlineCompletionEvent.DirectCall(editor, file, caret, context))"),
-    DeprecationLevel.ERROR
-  )
-  fun invoke(editor: Editor, file: PsiFile, caret: Caret, context: DataContext?) {
-    return invoke(InlineCompletionEvent.DirectCall(editor, file, caret, context))
-  }
-
   private fun shouldShowPlaceholder(): Boolean = Registry.`is`("inline.completion.show.placeholder")
 
   private fun invokeEvent(event: InlineCompletionEvent) {
@@ -100,11 +65,14 @@ class InlineCompletionHandler(private val scope: CoroutineScope) : CodeInsightAc
     val request = event.toRequest() ?: return
 
     LOG.trace("Schedule new job")
-    runningJob?.cancel()
-    runningJob = scope.launch { invokeDebounced(event, request) }
+    runningJob.getAndUpdate {
+      scope.launch {
+        invokeRequest(event, request)
+      }
+    }?.cancel()
   }
 
-  private suspend fun invokeDebounced(event: InlineCompletionEvent, request: InlineCompletionRequest) {
+  private suspend fun invokeRequest(event: InlineCompletionEvent, request: InlineCompletionRequest) {
     lastInvocationTime = System.currentTimeMillis()
     val provider = getProvider(event) ?: return
     val triggerTracker = InlineCompletionUsageTracker.TriggerTracker(lastInvocationTime, event, provider)
@@ -143,23 +111,23 @@ class InlineCompletionHandler(private val scope: CoroutineScope) : CodeInsightAc
           if (index == 0) {
             disposePlaceholder(editor)
             triggerTracker.hasSuggestion()
-          }
-          if (index == 0 && modificationStamp != request.document.modificationStamp) {
-            cancel()
-            return@collectIndexed
-          }
-
-          if (index == 0) {
-            inlineState.suggestions = listOf(InlineCompletionElement(value.text))
+            if (modificationStamp != request.document.modificationStamp) {
+              cancel()
+              return@collectIndexed
+            }
+            inlineState.suggestion = InlineCompletionElement(value.text)
             showInlineSuggestion(editor, inlineState, offset, triggerTracker)
           }
           else {
-            if (editor.getInlineCompletionContextOrNull() == null) {
-              cancel()
+            inlineState.suggestion?.run {
+              if (modificationStamp != request.document.modificationStamp) {
+                cancel()
+                return@collectIndexed
+              }
+              ensureActive()
+              inlineState.suggestion = withText(text + value.text)
+              showInlineSuggestion(editor, inlineState, offset, triggerTracker)
             }
-            ensureActive()
-            inlineState.suggestions = inlineState.suggestions.map { it.withText(it.text + value.text) }
-            showInlineSuggestion(editor, inlineState, offset, triggerTracker)
           }
         }
     }
@@ -174,39 +142,65 @@ class InlineCompletionHandler(private val scope: CoroutineScope) : CodeInsightAc
     if (!shouldShowPlaceholder()) return
 
     val ctx = editor.initOrGetInlineCompletionContextWithPlaceholder(triggerTracker)
-    ctx.update(listOf(placeholder.element), 0, startOffset)
+    ctx.show(placeholder.element, startOffset)
   }
 
   private fun disposePlaceholder(editor: Editor) {
     LOG.trace("Trying to dispose placeholder")
     if (!shouldShowPlaceholder()) return
 
-    editor.resetInlineCompletionContextWithPlaceholder()
+    editor.getInlineCompletionContextOrNull()?.let {
+      editor.removeInlineCompletionContext()
+    }
   }
 
   private fun showInlineSuggestion(editor: Editor,
-                                   inlineContext: InlineState,
+                                   inlineState: InlineState,
                                    startOffset: Int,
                                    triggerTracker: InlineCompletionUsageTracker.TriggerTracker) {
-    val suggestions = inlineContext.suggestions
-    LOG.trace("Trying to show inline suggestions $suggestions")
-    if (suggestions.isEmpty()) {
-      return
-    }
+    val suggestion = inlineState.suggestion ?: return
+    LOG.trace("Trying to show inline suggestion $suggestion")
+    val ctx = editor.initOrGetInlineCompletionContext(triggerTracker)
+    ctx.show(suggestion, startOffset)
 
-    val idOffset = 1 // TODO: replace with 0?
-    val size = suggestions.size
+    inlineState.lastStartOffset = startOffset
+    inlineState.lastModificationStamp = editor.document.modificationStamp
+  }
 
-    val suggestionIndex = (inlineContext.suggestionIndex + idOffset + size) % size
-    if (suggestions.getOrNull(suggestionIndex) == null) {
-      return
-    }
+  @Deprecated(
+    "replaced with direct event call type",
+    ReplaceWith("invoke(InlineCompletionEvent.DocumentChange(event, editor))"),
+    DeprecationLevel.ERROR
+  )
+  fun invoke(event: DocumentEvent, editor: Editor) {
+    return invoke(InlineCompletionEvent.DocumentChange(event, editor))
+  }
 
-    editor.initOrGetInlineCompletionContext(triggerTracker).update(suggestions, suggestionIndex, startOffset)
+  @Deprecated(
+    "replaced with direct event call type",
+    ReplaceWith("invoke(InlineCompletionEvent.CaretMove(event))"),
+    DeprecationLevel.ERROR
+  )
+  fun invoke(event: EditorMouseEvent) {
+    return invoke(InlineCompletionEvent.CaretMove(event))
+  }
 
-    inlineContext.suggestionIndex = suggestionIndex
-    inlineContext.lastStartOffset = startOffset
-    inlineContext.lastModificationStamp = editor.document.modificationStamp
+  @Deprecated(
+    "replaced with direct event call type",
+    ReplaceWith("invoke(InlineCompletionEvent.LookupChange(event))"),
+    DeprecationLevel.ERROR
+  )
+  fun invoke(event: LookupEvent) {
+    return invoke(InlineCompletionEvent.LookupChange(event))
+  }
+
+  @Deprecated(
+    "replaced with direct event call type",
+    ReplaceWith("invoke(InlineCompletionEvent.DirectCall(editor, file, caret, context))"),
+    DeprecationLevel.ERROR
+  )
+  fun invoke(editor: Editor, file: PsiFile, caret: Caret, context: DataContext?) {
+    return invoke(InlineCompletionEvent.DirectCall(editor, file, caret, context))
   }
 
   companion object {
@@ -214,6 +208,17 @@ class InlineCompletionHandler(private val scope: CoroutineScope) : CodeInsightAc
     val KEY = Key.create<InlineCompletionHandler>("inline.completion.handler")
 
     val isMuted: AtomicBoolean = AtomicBoolean(false)
+
+    fun withSafeMute(block: () -> Unit) {
+      mute()
+      try {
+        block()
+      }
+      finally {
+        unmute()
+      }
+    }
+
     fun mute(): Unit = isMuted.set(true)
     fun unmute(): Unit = isMuted.set(false)
   }

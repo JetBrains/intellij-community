@@ -7,14 +7,11 @@ import org.jetbrains.annotations.ApiStatus
 
 @ApiStatus.Experimental
 class InlineState private constructor(
-  var suggestionIndex: Int = 0,
   var lastStartOffset: Int = 0,
   var lastModificationStamp: Long = 0,
-  var suggestions: List<InlineCompletionElement> = emptyList(),
+  var suggestion: InlineCompletionElement? = null,
 ) {
-  fun init() {
-    suggestionIndex = 0
-  }
+  fun init() {}
 
   fun rest() {
     lastModificationStamp = 0
@@ -24,7 +21,10 @@ class InlineState private constructor(
     private val INLINE_COMPLETION_STATE: Key<InlineState> = Key.create("inline.completion.completion.state")
 
     fun Editor.getInlineCompletionState(): InlineState? = getUserData(INLINE_COMPLETION_STATE)
-    fun Editor.initOrGetInlineCompletionState(): InlineState = getInlineCompletionState() ?: InlineState().also { putUserData(INLINE_COMPLETION_STATE, it) }
+    fun Editor.initOrGetInlineCompletionState(): InlineState = getInlineCompletionState() ?: InlineState().also {
+      putUserData(INLINE_COMPLETION_STATE, it)
+    }
+
     fun Editor.resetInlineCompletionState(): Unit = putUserData(INLINE_COMPLETION_STATE, null)
   }
 }

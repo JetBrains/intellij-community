@@ -10,6 +10,7 @@ import com.intellij.openapi.editor.Document
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.event.DocumentEvent
 import com.intellij.openapi.editor.event.EditorMouseEvent
+import com.intellij.openapi.util.UserDataHolderBase
 import com.intellij.psi.PsiFile
 import com.intellij.psi.PsiManager
 import org.jetbrains.annotations.ApiStatus
@@ -26,7 +27,7 @@ data class InlineCompletionRequest(
   val startOffset: Int,
   val endOffset: Int,
   val lookupElement: LookupElement? = null,
-)
+) : UserDataHolderBase()
 
 @ApiStatus.Experimental
 data class InlineCompletionElement(val text: String) {

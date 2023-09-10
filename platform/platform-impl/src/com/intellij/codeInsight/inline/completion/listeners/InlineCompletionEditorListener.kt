@@ -31,11 +31,9 @@ class InlineCompletionEditorListener(scope: CoroutineScope) : EditorFactoryListe
 
     editor.putUserData(InlineCompletionHandler.KEY, handler)
     val docListener = InlineCompletionDocumentListener(editor)
-    val caretListener = InlineCaretListener(editor)
 
     editor.document.addDocumentListener(docListener, disposable)
     editor.addEditorMouseListener(editorMouseListener, disposable)
-    editor.caretModel.addCaretListener(caretListener, disposable)
   }
 
   override fun editorReleased(event: EditorFactoryEvent) {

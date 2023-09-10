@@ -72,7 +72,7 @@ class EditorInlineInlineCompletion(private val editor: Editor) : InlineCompletio
 
     val line = lines.first()
     if (line.isBlank()) {
-      suffixInlay = editor.inlayModel.addInlineElement(editor.caretModel.offset, object: EditorCustomElementRenderer {
+      suffixInlay = editor.inlayModel.addInlineElement(editor.caretModel.offset, object : EditorCustomElementRenderer {
         override fun calcWidthInPixels(inlay: Inlay<*>) = 1
         override fun calcHeightInPixels(inlay: Inlay<*>) = 1
         override fun paint(inlay: Inlay<*>, g: Graphics, targetRegion: Rectangle, textAttributes: TextAttributes) {}
@@ -82,7 +82,8 @@ class EditorInlineInlineCompletion(private val editor: Editor) : InlineCompletio
     editor.inlayModel.execute(true) {
       // wrapping into a batch to notify inlay listeners after the hint is added
       val element = editor.inlayModel.addInlineElement(offset, true, InlineSuffixRenderer(editor, line)) ?: return@execute
-      element.addActionAvailabilityHint(EditorActionAvailabilityHint("InsertInlineCompletionAction", EditorActionAvailabilityHint.AvailabilityCondition.CaretOnStart))
+      element.addActionAvailabilityHint(
+        EditorActionAvailabilityHint("InsertInlineCompletionAction", EditorActionAvailabilityHint.AvailabilityCondition.CaretOnStart))
       Disposer.tryRegister(this, element)
       suffixInlay = element
     }

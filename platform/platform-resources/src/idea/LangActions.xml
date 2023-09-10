@@ -1754,7 +1754,19 @@
     <action id="InsertInlineCompletionAction" class="com.intellij.codeInsight.inline.completion.InsertInlineCompletionAction">
       <keyboard-shortcut first-keystroke="TAB" keymap="$default"/>
     </action>
+
+    <group id="InlineCompletion.Settings" popup="true" internal="true"/>
     <action id="CallInlineCompletionAction" class="com.intellij.codeInsight.inline.completion.CallInlineCompletionAction"/>
+    <action id="ResetICOnboardingAtFirstShowAction"
+            class="com.intellij.codeInsight.inline.completion.onboarding.ResetICOnboardingAtFirstShowAction"/>
+    <action id="ResetICOnboardingAtFirstAcceptAction"
+            class="com.intellij.codeInsight.inline.completion.onboarding.ResetICOnboardingAtFirstAcceptAction"/>
+    <action id="ResetICOnboardingShowSettingsAction"
+            class="com.intellij.codeInsight.inline.completion.onboarding.ResetICOnboardingShowSettingsAction"/>
+
+    <!--<action id="ShortcutChangeInlineCompletionAction" class="com.intellij.codeInsight.inline.completion.ShortcutChangeInlineCompletionAction"/>-->
+    <!--<action id="ChangeToEnterInlineCompletionAction" class="com.intellij.codeInsight.inline.completion.ChangeToEnterInlineCompletionAction"/>-->
+    <!--<action id="ChangeToCustomInlineCompletionAction" class="com.intellij.codeInsight.inline.completion.ChangeToCustomInlineCompletionAction"/>-->
 
     <!-- copy of CheckVfsSanityInMenu: !internal so could be invoked via 'search everywhere' -->
     <action id="CheckVfsSanity" class="com.intellij.openapi.vfs.newvfs.persistent.CheckVFSHealthAction"/>

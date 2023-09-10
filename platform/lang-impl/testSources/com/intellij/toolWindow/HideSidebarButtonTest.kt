@@ -12,7 +12,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withContext
 
-class HiddenSidebarButtonTest : ToolWindowManagerTestCase() {
+class HideSidebarButtonTest : ToolWindowManagerTestCase() {
   fun testHiddenButton() {
     runBlocking {
       withContext(Dispatchers.EDT) {

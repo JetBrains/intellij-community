@@ -19,14 +19,14 @@ import java.util.concurrent.atomic.AtomicBoolean
 class InlineCompletionContext private constructor(
   val editor: Editor,
   private val showTracker: InlineCompletionUsageTracker.ShowTracker,
-  private var hasPlaceholder: Boolean = false
+  private var hasPlaceholder: Boolean = false,
 ) : Disposable {
   private val keyListener = InlineCompletionKeyListener(editor)
   private val isSelecting = AtomicBoolean(false)
   private val inlay = InlineCompletion.forEditor(editor)
+  private var inserted = false
 
-  private var completions = emptyList<InlineCompletionElement>()
-  private var selectedIndex = -1
+  private var element: InlineCompletionElement? = null
 
   val isCurrentlyDisplayingInlays: Boolean
     get() = !inlay.isEmpty && !hasPlaceholder
@@ -34,20 +34,17 @@ class InlineCompletionContext private constructor(
   val startOffset: Int?
     get() = inlay.offset
 
-  fun update(proposals: List<InlineCompletionElement>, selectedIndex: Int, offset: Int) {
+  fun show(element: InlineCompletionElement, offset: Int) {
     LOG.trace("Update inline completion context")
-    this.completions = proposals
-    this.selectedIndex = selectedIndex
-    val proposal = proposals[selectedIndex]
-    val text = proposal.text
+    this.element = element
 
     if (!inlay.isEmpty) {
       showTracker.rejected()
       inlay.reset()
     }
-    if (text.isNotBlank() && editor is EditorImpl) {
-      inlay.render(proposal, offset)
-      showTracker.shown(editor, proposal)
+    if (element.text.isNotBlank() && editor is EditorImpl) {
+      inlay.render(element, offset)
+      showTracker.shown(editor, element)
       if (!inlay.isEmpty) {
         Disposer.register(this, inlay)
         editor.contentComponent.addKeyListener(keyListener)
@@ -55,11 +52,35 @@ class InlineCompletionContext private constructor(
     }
   }
 
-  override fun dispose() {
-    if (isSelecting.get()) {
-      return
+  fun insert(): Boolean {
+    if (hasPlaceholder) return false
+    val offset = inlay.offset ?: return false
+    val currentCompletion = element ?: return false
+
+    InlineCompletionHandler.withSafeMute {
+      isSelecting.set(true)
+
+      editor.document.insertString(offset, currentCompletion.text)
+      editor.caretModel.moveToOffset(offset + currentCompletion.text.length)
+      showTracker.accepted()
+      inserted = true
+
+      isSelecting.set(false)
+      editor.removeInlineCompletionContext()
     }
+
+    LookupManager.getActiveLookup(editor)?.hideLookup(false)
+    hide()
+    return true
+  }
+
+  fun hide() {
+    if (!isCurrentlyDisplayingInlays || isSelecting.get()) return
+
     if (!inlay.isEmpty) {
+      if (!inserted) {
+        showTracker.rejected()
+      }
       Disposer.dispose(inlay)
     }
 
@@ -67,36 +88,23 @@ class InlineCompletionContext private constructor(
     editor.resetInlineCompletionState()
   }
 
-  fun insert() {
-    isSelecting.set(true)
-    InlineCompletionHandler.mute()
-    val offset = inlay.offset ?: return
-    if (selectedIndex < 0) return
-
-    val currentCompletion = completions[selectedIndex]
-    editor.document.insertString(offset, currentCompletion.text)
-    editor.caretModel.moveToOffset(offset + currentCompletion.text.length)
-    showTracker.accepted()
-
-    isSelecting.set(false)
-    InlineCompletionHandler.unmute()
-    editor.removeInlineCompletionContext()
-    LookupManager.getActiveLookup(editor)?.hideLookup(false)
-    Disposer.dispose(this)
+  override fun dispose() {
+    hide()
   }
 
   companion object {
     private val LOG = thisLogger()
     private val INLINE_COMPLETION_CONTEXT = Key.create<InlineCompletionContext>("inline.completion.context")
 
-    fun Editor.initOrGetInlineCompletionContext(triggerTracker: InlineCompletionUsageTracker.TriggerTracker): InlineCompletionContext {
+    // Inline context
+    internal fun Editor.initOrGetInlineCompletionContext(triggerTracker: InlineCompletionUsageTracker.TriggerTracker): InlineCompletionContext {
       return getUserData(INLINE_COMPLETION_CONTEXT) ?: InlineCompletionContext(this, createShowTracker(triggerTracker)).also {
         LOG.trace("Create new inline completion context")
         putUserData(INLINE_COMPLETION_CONTEXT, it)
       }
     }
 
-    fun Editor.initOrGetInlineCompletionContextWithPlaceholder(triggerTracker: InlineCompletionUsageTracker.TriggerTracker): InlineCompletionContext {
+    internal fun Editor.initOrGetInlineCompletionContextWithPlaceholder(triggerTracker: InlineCompletionUsageTracker.TriggerTracker): InlineCompletionContext {
       return getUserData(INLINE_COMPLETION_CONTEXT) ?: InlineCompletionContext(
         this, createShowTracker(triggerTracker),
         hasPlaceholder = true
@@ -111,22 +119,23 @@ class InlineCompletionContext private constructor(
       requestId = triggerTracker.requestId,
     )
 
-    fun Editor.resetInlineCompletionContextWithPlaceholder(): Unit? = getInlineCompletionContextOrNull()?.let {
-      removeInlineCompletionContext()
-      Disposer.dispose(it)
-    }
-
     fun Editor.getInlineCompletionContextOrNull(): InlineCompletionContext? = getUserData(INLINE_COMPLETION_CONTEXT)
+
     fun Editor.removeInlineCompletionContext(): Unit = putUserData(INLINE_COMPLETION_CONTEXT, null).also {
       LOG.trace("Remove inline completion context")
     }
 
     fun Editor.resetInlineCompletionContext(): Unit? = getInlineCompletionContextOrNull()?.let {
-      if (it.isCurrentlyDisplayingInlays) {
-        it.showTracker.rejected()
-        removeInlineCompletionContext()
-        Disposer.dispose(it)
-      }
+      removeInlineCompletionContext()
+      it.hide()
+    }
+
+    @Deprecated(
+      "Resetting completion context is unsafe now. Use direct get/reset/remove~InlineCompletionContext instead",
+      ReplaceWith("getInlineCompletionContextOrNull()"), DeprecationLevel.ERROR
+    )
+    fun Editor.initOrGetInlineCompletionContext(): InlineCompletionContext {
+      return getUserData(INLINE_COMPLETION_CONTEXT)!!
     }
   }
 }

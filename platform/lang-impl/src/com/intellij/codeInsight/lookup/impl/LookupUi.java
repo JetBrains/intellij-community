@@ -54,6 +54,8 @@ import java.awt.*;
 import java.awt.event.MouseEvent;
 import java.util.concurrent.TimeUnit;
 
+import static com.intellij.codeInsight.inline.completion.onboarding.ActionsKt.addInlineCompletionBehaviourActions;
+
 final class LookupUi {
   private static final Logger LOG = Logger.getInstance(LookupUi.class);
 
@@ -81,7 +83,7 @@ final class LookupUi {
 
     MenuAction menuAction = new MenuAction();
     menuAction.add(new ChangeSortingAction());
-    menuAction.add(new DelegatedAction(ActionManager.getInstance().getAction(IdeActions.ACTION_QUICK_JAVADOC)){
+    menuAction.add(new DelegatedAction(ActionManager.getInstance().getAction(IdeActions.ACTION_QUICK_JAVADOC)) {
       @Override
       public void update(@NotNull AnActionEvent e) {
         e.getPresentation().setVisible(!CodeInsightSettings.getInstance().AUTO_POPUP_JAVADOC_INFO);
@@ -95,6 +97,7 @@ final class LookupUi {
     menuAction.add(new DelegatedAction(ActionManager.getInstance().getAction(IdeActions.ACTION_QUICK_IMPLEMENTATIONS)));
     menuAction.addSeparator();
     menuAction.add(new ShowCompletionSettingsAction());
+    addInlineCompletionBehaviourActions(menuAction);
 
     Presentation presentation = new Presentation();
     presentation.setIcon(AllIcons.Actions.More);
@@ -203,7 +206,7 @@ final class LookupUi {
   void setCalculating(boolean calculating) {
     if (calculating) {
       myProcessIcon.resume();
-    } 
+    }
     else {
       myProcessIcon.suspend();
     }
@@ -293,7 +296,10 @@ final class LookupUi {
     final Rectangle screenRectangle = ScreenUtil.getScreenRectangle(editorComponent);
     if (LOG.isDebugEnabled()) {
       var editorLocation = editorComponent.getLocationOnScreen();
-      LOG.debug("Location after converting to screen coordinates (editor component bounds " + new Rectangle(editorLocation, editorComponent.getSize()) + "): " + location);
+      LOG.debug("Location after converting to screen coordinates (editor component bounds " +
+                new Rectangle(editorLocation, editorComponent.getSize()) +
+                "): " +
+                location);
       LOG.debug("Editor component screen rectangle is: " + screenRectangle);
     }
 
@@ -349,11 +355,19 @@ final class LookupUi {
       SwingUtilities.convertPointFromScreen(location, rootPane.getLayeredPane());
       if (LOG.isDebugEnabled()) {
         var rootPaneLocation = rootPane.getLocationOnScreen();
-        LOG.debug("Location after converting from screen coordinates (root pane bounds " + new Rectangle(rootPaneLocation, rootPane.getSize()) + "): " + location);
+        LOG.debug("Location after converting from screen coordinates (root pane bounds " +
+                  new Rectangle(rootPaneLocation, rootPane.getSize()) +
+                  "): " +
+                  location);
       }
     }
     else {
-      LOG.error("editor.disposed=" + editor.isDisposed() + "; lookup.disposed=" + myLookup.isLookupDisposed() + "; editorShowing=" + editorComponent.isShowing());
+      LOG.error("editor.disposed=" +
+                editor.isDisposed() +
+                "; lookup.disposed=" +
+                myLookup.isLookupDisposed() +
+                "; editorShowing=" +
+                editorComponent.isShowing());
     }
 
     myMaximumHeight = candidate.height;
@@ -412,7 +426,9 @@ final class LookupUi {
             }
 
             int listHeight = myList.getLastVisibleIndex() - myList.getFirstVisibleIndex() + 1;
-            if (listHeight != myList.getModel().getSize() && listHeight != myList.getVisibleRowCount() && preferredSize.height != size.height) {
+            if (listHeight != myList.getModel().getSize() &&
+                listHeight != myList.getVisibleRowCount() &&
+                preferredSize.height != size.height) {
               UISettings.getInstance().setMaxLookupListHeight(Math.max(5, listHeight));
             }
           }
@@ -471,6 +487,7 @@ final class LookupUi {
 
   private static class DelegatedAction extends DumbAwareAction implements HintManagerImpl.ActionToIgnore {
     private final AnAction delegateAction;
+
     private DelegatedAction(AnAction action) {
       delegateAction = action;
       getTemplatePresentation().setText(delegateAction.getTemplateText(), true);
@@ -485,10 +502,10 @@ final class LookupUi {
 
   private final class LookupBottomLayout implements LayoutManager {
     @Override
-    public void addLayoutComponent(String name, Component comp) {}
+    public void addLayoutComponent(String name, Component comp) { }
 
     @Override
-    public void removeLayoutComponent(Component comp) {}
+    public void removeLayoutComponent(Component comp) { }
 
     @Override
     public Dimension preferredLayoutSize(Container parent) {
@@ -509,7 +526,7 @@ final class LookupUi {
       Dimension menuButtonSize = myMenuButton.getMinimumSize();
 
       return new Dimension(adSize.width + hintButtonSize.width + menuButtonSize.width + insets.left + insets.right,
-                           Math.max(adSize.height, menuButtonSize.height)  + insets.top + insets.bottom);
+                           Math.max(adSize.height, menuButtonSize.height) + insets.top + insets.bottom);
     }
 
     @Override

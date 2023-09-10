@@ -18,7 +18,6 @@ class InsertInlineCompletionAction : EditorAction(InsertInlineCompletionHandler(
   class InsertInlineCompletionHandler : EditorWriteActionHandler() {
     override fun executeWriteAction(editor: Editor, caret: Caret?, dataContext: DataContext) {
       editor.getInlineCompletionContextOrNull()?.insert()
-      editor.resetInlineCompletionContext()
     }
 
     override fun isEnabledForCaret(editor: Editor, caret: Caret, dataContext: DataContext): Boolean {
