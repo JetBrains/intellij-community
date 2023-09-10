@@ -3,21 +3,30 @@
 
 package com.intellij.ide.ui.laf.darcula
 
-import com.intellij.diagnostic.LoadingState
+import com.intellij.ide.ApplicationInitializedListener
 import com.intellij.ide.IdeEventQueue
 import com.intellij.ide.bootstrap.createBaseLaF
 import com.intellij.ide.ui.UITheme
-import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.application.EDT
+import com.intellij.openapi.application.ModalityState
+import com.intellij.openapi.application.asContextElement
+import com.intellij.openapi.components.Service
+import com.intellij.openapi.components.serviceAsync
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.diagnostic.logger
+import com.intellij.openapi.extensions.ExtensionNotApplicableException
 import com.intellij.openapi.util.*
 import com.intellij.ui.ComponentUtil
 import com.intellij.ui.TableActions
-import com.intellij.util.Alarm
 import com.intellij.util.ResourceUtil
 import com.intellij.util.ui.JBDimension
 import com.intellij.util.ui.StartupUiUtil.initInputMapDefaults
+import kotlinx.coroutines.*
+import kotlinx.coroutines.channels.BufferOverflow
+import kotlinx.coroutines.flow.MutableSharedFlow
+import kotlinx.coroutines.flow.collectLatest
+import kotlinx.coroutines.flow.debounce
 import org.jetbrains.annotations.TestOnly
 import java.awt.*
 import java.awt.event.KeyEvent
@@ -29,6 +38,7 @@ import javax.swing.UIDefaults.LazyInputMap
 import javax.swing.plaf.FontUIResource
 import javax.swing.plaf.basic.BasicLookAndFeel
 import javax.swing.plaf.metal.MetalLookAndFeel
+import kotlin.time.Duration.Companion.milliseconds
 
 private val LOG: Logger
   get() = logger<DarculaLaf>()
@@ -40,7 +50,6 @@ private const val DESCRIPTION: @NlsSafe String = "IntelliJ Dark Look and Feel"
  */
 open class DarculaLaf(private val isThemeAdapter: Boolean) : BasicLookAndFeel() {
   private var base: LookAndFeel? = null
-  private var disposable: Disposable? = null
   private val baseDefaults = UIDefaults()
 
   @TestOnly
@@ -57,7 +66,7 @@ open class DarculaLaf(private val isThemeAdapter: Boolean) : BasicLookAndFeel() 
 
     @JvmStatic
     var isAltPressed: Boolean = false
-      private set
+      internal set
   }
 
   override fun getDefaults(): UIDefaults {
@@ -191,38 +200,6 @@ open class DarculaLaf(private val isThemeAdapter: Boolean) : BasicLookAndFeel() 
     catch (e: Throwable) {
       LOG.error(e)
     }
-    ideEventQueueInitialized(IdeEventQueue.getInstance())
-  }
-
-  private fun ideEventQueueInitialized(eventQueue: IdeEventQueue) {
-    if (disposable == null) {
-      disposable = Disposer.newDisposable()
-      if (LoadingState.COMPONENTS_REGISTERED.isOccurred) {
-        Disposer.register(ApplicationManager.getApplication(), disposable!!)
-      }
-    }
-    eventQueue.addDispatcher(object : IdeEventQueue.EventDispatcher {
-      private var mnemonicAlarm: Alarm? = null
-
-      override fun dispatch(e: AWTEvent): Boolean {
-        if (e !is KeyEvent || e.keyCode != KeyEvent.VK_ALT) {
-          return false
-        }
-
-        isAltPressed = e.getID() == KeyEvent.KEY_PRESSED
-        var mnemonicAlarm = mnemonicAlarm
-        if (mnemonicAlarm == null) {
-          mnemonicAlarm = Alarm(Alarm.ThreadToUse.POOLED_THREAD, disposable)
-          this.mnemonicAlarm = mnemonicAlarm
-        }
-        mnemonicAlarm.cancelAllRequests()
-        val focusOwner = KeyboardFocusManager.getCurrentKeyboardFocusManager().focusOwner
-        if (focusOwner != null) {
-          mnemonicAlarm.addRequest(Runnable { repaintMnemonics(focusOwner, isAltPressed) }, 10)
-        }
-        return false
-      }
-    }, disposable)
   }
 
   override fun uninitialize() {
@@ -230,11 +207,6 @@ open class DarculaLaf(private val isThemeAdapter: Boolean) : BasicLookAndFeel() 
       base?.uninitialize()
     }
     catch (ignore: Exception) {
-    }
-
-    disposable?.let {
-      disposable = null
-      Disposer.dispose(it)
     }
   }
 
@@ -280,19 +252,73 @@ private fun patchComboBox(defaults: UIDefaults) {
   defaults.put("ComboBox.actionMap", metalDefaults.get("ComboBox.actionMap"))
 }
 
-private fun repaintMnemonics(focusOwner: Component, pressed: Boolean) {
-  if (pressed != DarculaLaf.isAltPressed) {
-    return
+private class RepaintMnemonicRequest(@JvmField val focusOwner: Component, @JvmField val pressed: Boolean)
+
+@OptIn(FlowPreview::class)
+@Service
+private class MnemonicListenerService(coroutineScope: CoroutineScope) {
+  // null as "cancel all"
+  private val repaintRequests = MutableSharedFlow<RepaintMnemonicRequest?>(replay=1, onBufferOverflow = BufferOverflow.DROP_OLDEST)
+
+  init {
+    coroutineScope.launch(CoroutineName("LaF Mnemonic Support")) {
+      val repaintDispatcher = Dispatchers.EDT + ModalityState.any().asContextElement()
+
+      repaintRequests
+        .debounce(10.milliseconds)
+        .collectLatest {
+          it?.let {
+            withContext(repaintDispatcher) {
+              repaintMnemonics(focusOwner = it.focusOwner, pressed = it.pressed)
+            }
+          }
+        }
+    }
+
+    IdeEventQueue.getInstance().addDispatcher(object : IdeEventQueue.EventDispatcher {
+      override fun dispatch(e: AWTEvent): Boolean {
+        if (e !is KeyEvent || e.keyCode != KeyEvent.VK_ALT) {
+          return false
+        }
+
+        DarculaLaf.isAltPressed = e.getID() == KeyEvent.KEY_PRESSED
+        val focusOwner = KeyboardFocusManager.getCurrentKeyboardFocusManager().focusOwner
+        check(repaintRequests.tryEmit(focusOwner?.let {
+          RepaintMnemonicRequest(focusOwner = focusOwner, pressed = DarculaLaf.isAltPressed)
+        }))
+        return false
+      }
+    }, coroutineScope)
   }
 
-  val window = SwingUtilities.windowForComponent(focusOwner) ?: return
-  for (component in window.components) {
-    if (component is JComponent) {
-      for (c in ComponentUtil.findComponentsOfType(component, JComponent::class.java)) {
-        if (c is JLabel && c.displayedMnemonicIndex != -1 || c is AbstractButton && c.displayedMnemonicIndex != -1) {
-          c.repaint()
+  private fun repaintMnemonics(focusOwner: Component, pressed: Boolean) {
+    if (pressed != DarculaLaf.isAltPressed) {
+      return
+    }
+
+    val window = SwingUtilities.windowForComponent(focusOwner) ?: return
+    for (component in window.components) {
+      if (component is JComponent) {
+        for (c in ComponentUtil.findComponentsOfType(component, JComponent::class.java)) {
+          if (c is JLabel && c.displayedMnemonicIndex != -1 || c is AbstractButton && c.displayedMnemonicIndex != -1) {
+            c.repaint()
+          }
         }
       }
+    }
+  }
+}
+
+private class MnemonicListener : ApplicationInitializedListener {
+  init {
+    if (ApplicationManager.getApplication().isHeadlessEnvironment) {
+      throw ExtensionNotApplicableException.create()
+    }
+  }
+
+  override suspend fun execute(asyncScope: CoroutineScope) {
+    asyncScope.launch {
+      serviceAsync<MnemonicListenerService>()
     }
   }
 }
