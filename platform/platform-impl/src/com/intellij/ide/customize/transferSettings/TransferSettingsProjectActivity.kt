@@ -35,17 +35,10 @@ class TransferSettingsProjectActivity : ProjectActivity {
     wasShownOnce = true
 
     val config = DefaultTransferSettingsConfiguration(TransferSettingsDataProvider(VSCodeTransferSettingsProvider()), false)
-    val hasVsCode = run {
-      config.dataProvider.refresh()
-      for (ideVersion in config.dataProvider.orderedIdeVersions) {
-        if ((ideVersion as IdeVersion).provider is VSCodeTransferSettingsProvider) {
-          return@run true
-        }
-      }
-      false
-    }
+    config.dataProvider.refresh()
+    val vscode = config.dataProvider.orderedIdeVersions.filterIsInstance<IdeVersion>().find { it.provider is VSCodeTransferSettingsProvider }
 
-    if (!hasVsCode) {
+    if (vscode == null) {
       LOG.info("VSCode is not detected")
       return
     }
@@ -57,7 +50,7 @@ class TransferSettingsProjectActivity : ProjectActivity {
       .setSuggestionType(true)
 
     notification.addAction(NotificationAction.create(IdeBundle.message("transfersettings.notification.button"), com.intellij.util.Consumer {
-      if (TransferSettingsDialog(project, config).showAndGet()) {
+      if (showTransferSettingsDialog(project, config)) {
         notification.hideBalloon()
       }
     }))
@@ -79,6 +72,16 @@ class TransferSettingsProjectActivity : ProjectActivity {
     const val TRANSFER_SETTINGS_REGISTRY_KEY = "transferSettings.enabled"
     val LOG = logger<TransferSettingsProjectActivity>()
   }
+}
+
+fun showTransferSettingsDialog(project: Project, configuration: TransferSettingsConfiguration?): Boolean {
+  val config = run {
+    configuration ?: DefaultTransferSettingsConfiguration(TransferSettingsDataProvider(VSCodeTransferSettingsProvider()), false).apply {
+      dataProvider.refresh()
+    }
+  }
+
+  return TransferSettingsDialog(project, config).showAndGet()
 }
 
 fun neverShowTransferSettingsBalloonAgain() {

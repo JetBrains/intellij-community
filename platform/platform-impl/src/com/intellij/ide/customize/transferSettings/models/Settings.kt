@@ -14,7 +14,9 @@ open class Settings(
    * Don't forget to set info.projectOpenTimestamp
    */
   val recentProjects: MutableList<RecentPathInfo> = mutableListOf()
-)
+) {
+  val notes = mutableMapOf<String, Any>()
+}
 
 data class RecentPathInfo(
   val path: String,
