@@ -24,7 +24,7 @@ import kotlin.random.Random
 
 
 @ApiStatus.Experimental
-class InlineCompletionUsageTracker : CounterUsagesCollector() {
+object InlineCompletionUsageTracker : CounterUsagesCollector() {
   override fun getGroup() = GROUP
 
   /**
@@ -186,7 +186,5 @@ class InlineCompletionUsageTracker : CounterUsagesCollector() {
     }
   }
 
-  private companion object {
-    private val GROUP: EventLogGroup = EventLogGroup("inline.completion", 3)
-  }
+  private val GROUP: EventLogGroup = EventLogGroup("inline.completion", 3)
 }
