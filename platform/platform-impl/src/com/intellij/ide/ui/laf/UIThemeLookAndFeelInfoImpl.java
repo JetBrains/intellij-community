@@ -13,6 +13,7 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.Strings;
 import com.intellij.openapi.wm.impl.IdeBackgroundUtil;
 import com.intellij.ui.AppUIUtil;
+import com.intellij.ui.svg.SvgKt;
 import com.intellij.util.SVGLoader;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -69,11 +70,11 @@ public class UIThemeLookAndFeelInfoImpl extends UIManager.LookAndFeelInfo implem
     defaults.put("ui.theme.is.dark", theme.isDark());
     defaults.put("ClassLoader", theme.getProviderClassLoader());
     theme.applyProperties(defaults);
-    IconPathPatcher patcher = theme.getPatcher();
+    IconPathPatcher patcher = theme.patcher;
     if (patcher != null) {
       IconLoader.installPathPatcher(patcher);
     }
-    SVGLoader.setSelectionColorPatcherProvider(theme.getSelectionColorPatcher());
+    SvgKt.setSelectionColorPatcherProvider(theme.selectionColorPatcher);
 
     SVGLoader.SvgElementColorPatcherProvider colorPatcher = theme.getColorPatcher();
     if (colorPatcher != null) {
@@ -174,7 +175,7 @@ public class UIThemeLookAndFeelInfoImpl extends UIManager.LookAndFeelInfo implem
 
   @Override
   public void dispose() {
-    IconPathPatcher patcher = theme.getPatcher();
+    IconPathPatcher patcher = theme.patcher;
     if (patcher != null) {
       IconLoader.removePathPatcher(patcher);
     }

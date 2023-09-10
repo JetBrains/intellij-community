@@ -1,16 +1,13 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-@file:Suppress("ReplacePutWithAssignment", "ReplaceGetOrSet")
+@file:Suppress("ReplacePutWithAssignment", "ReplaceGetOrSet", "SSBasedInspection")
 
 package com.intellij.ide.ui
 
 import com.fasterxml.jackson.core.JsonParser
 import com.fasterxml.jackson.core.JsonToken
 import com.intellij.openapi.diagnostic.logger
-import com.intellij.openapi.util.IconPathPatcher
 import com.intellij.openapi.util.SystemInfoRt
-import com.intellij.ui.ColorHexUtil
 import com.intellij.ui.ExperimentalUI
-import com.intellij.util.SVGLoader.SvgElementColorPatcherProvider
 import it.unimi.dsi.fastutil.Hash
 import it.unimi.dsi.fastutil.objects.Object2ObjectLinkedOpenHashMap
 import java.util.*
@@ -42,10 +39,11 @@ internal class UIThemeBean {
               "iconColorsOnSelection" -> bean.iconColorsOnSelection = readMapFromJson(parser)
               "ui" -> {
                 // ordered map is required (not clear why)
-                val map = LinkedHashMap<String, Any?>()
+                val map = Object2ObjectLinkedOpenHashMap<String, Any?>(700, Hash.FAST_LOAD_FACTOR)
                 readFlatMapFromJson(parser, map)
                 putDefaultsIfAbsent(map)
                 bean.ui = map
+                map.trim()
               }
               "UIDesigner" -> {
                 parser.skipChildren()
@@ -108,10 +106,6 @@ internal class UIThemeBean {
     }
   }
 
-  @Transient
-  @JvmField
-  var providerClassLoader: ClassLoader? = null
-
   @JvmField
   var name: String? = null
 
@@ -157,21 +151,7 @@ internal class UIThemeBean {
   @JvmField
   var iconColorsOnSelection: Map<String, Any?>? = null
 
-  @JvmField
-  @Transient
-  var patcher: IconPathPatcher? = null
-
-  @JvmField
-  @Transient
-  var colorPatcher: SvgElementColorPatcherProvider? = null
-
-  @JvmField
-  @Transient
-  var selectionColorPatcher: SvgElementColorPatcherProvider? = null
-
-  override fun toString(): String {
-    return "UIThemeBean(name=$name, parentTheme=$parentTheme, dark=$dark)"
-  }
+  override fun toString() = "UIThemeBean(name=$name, parentTheme=$parentTheme, dark=$dark)"
 }
 
 /**
@@ -268,8 +248,9 @@ private fun readFlatMapFromJson(parser: JsonParser, result: MutableMap<String, A
 }
 
 private fun readMapFromJson(parser: JsonParser): MutableMap<String, Any?> {
-  val m = LinkedHashMap<String, Any?>()
+  val m = Object2ObjectLinkedOpenHashMap<String, Any?>(Hash.DEFAULT_INITIAL_SIZE, Hash.FAST_LOAD_FACTOR)
   readMapFromJson(parser, m)
+  m.trim()
   return m
 }
 
@@ -282,9 +263,10 @@ private fun readMapFromJson(parser: JsonParser, result: MutableMap<String, Any?>
     when (parser.nextToken()) {
       JsonToken.START_OBJECT -> {
         level++
-        val m = LinkedHashMap<String, Any?>()
+        val m = Object2ObjectLinkedOpenHashMap<String, Any?>(Hash.DEFAULT_INITIAL_SIZE, Hash.FAST_LOAD_FACTOR)
         result.put(parser.currentName(), m)
         readMapFromJson(parser, m)
+        m.trim()
       }
       JsonToken.END_OBJECT -> {
         level--
@@ -297,7 +279,7 @@ private fun readMapFromJson(parser: JsonParser, result: MutableMap<String, Any?>
         val text = parser.text
         val key = parser.currentName()
         if (text.startsWith('#')) {
-          val color = ColorHexUtil.fromHexOrNull(text)
+          val color = parseColorOrNull(text, key)
           if (color != null) {
             result.put(key, ColorUIResource(color))
             continue@l
@@ -414,7 +396,7 @@ private fun putDefaultsIfAbsent(theme: UIThemeBean) {
 
   var ui = theme.ui
   if (ui == null) {
-    ui = LinkedHashMap()
+    ui = Object2ObjectLinkedOpenHashMap()
     theme.ui = ui
     putDefaultsIfAbsent(ui)
   }
@@ -444,7 +426,7 @@ private fun importMapFromParentTheme(map: Map<String, Any?>?, parentMap: Map<Str
     return map
   }
   if (map == null) {
-    return LinkedHashMap(parentMap)
+    return Object2ObjectLinkedOpenHashMap(parentMap, Hash.FAST_LOAD_FACTOR)
   }
 
   val result = Object2ObjectLinkedOpenHashMap<String, Any?>(parentMap.size + map.size, Hash.FAST_LOAD_FACTOR)

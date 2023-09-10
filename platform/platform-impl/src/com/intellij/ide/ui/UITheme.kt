@@ -1,5 +1,5 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-@file:Suppress("ReplaceGetOrSet", "ReplacePutWithAssignment")
+@file:Suppress("ReplaceGetOrSet", "ReplacePutWithAssignment", "SSBasedInspection")
 
 package com.intellij.ide.ui
 
@@ -19,14 +19,16 @@ import com.intellij.ui.Gray
 import com.intellij.ui.IdeUICustomization
 import com.intellij.ui.svg.SvgAttributePatcher
 import com.intellij.ui.svg.newSvgPatcher
-import com.intellij.util.ArrayUtilRt
 import com.intellij.util.InsecureHashBuilder
 import com.intellij.util.SVGLoader.SvgElementColorPatcherProvider
+import it.unimi.dsi.fastutil.Hash
+import it.unimi.dsi.fastutil.objects.Object2ObjectLinkedOpenHashMap
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.NonNls
 import org.jetbrains.annotations.TestOnly
 import java.awt.Color
 import java.io.InputStream
+import java.util.concurrent.ConcurrentHashMap
 import java.util.function.Function
 import java.util.function.Supplier
 import javax.swing.UIDefaults
@@ -37,14 +39,22 @@ private val LOG: Logger
 /**
  * @author Konstantin Bulenkov
  */
-class UITheme private constructor(val id: @NonNls String, private val bean: UIThemeBean) {
+class UITheme internal constructor(
+  val id: @NonNls String,
+  private val bean: UIThemeBean,
+  val colorPatcher: SvgElementColorPatcherProvider?,
+  @JvmField internal val selectionColorPatcher: SvgElementColorPatcherProvider?,
+  @JvmField internal var patcher: IconPathPatcher?,
+  private var _providerClassLoader: ClassLoader? = null,
+) {
   val name: String?
     get() = bean.name
 
   val displayName: String?
     get() {
-      if (bean.resourceBundle != null && bean.nameKey != null && bean.providerClassLoader != null) {
-        val bundle = DynamicBundle.getResourceBundle(bean.providerClassLoader!!, bean.resourceBundle!!)
+      val classLoader = _providerClassLoader
+      if (bean.resourceBundle != null && bean.nameKey != null && classLoader != null) {
+        val bundle = DynamicBundle.getResourceBundle(classLoader, bean.resourceBundle!!)
         return AbstractBundle.message(bundle, bean.nameKey!!)
       }
       return name
@@ -72,28 +82,16 @@ class UITheme private constructor(val id: @NonNls String, private val bean: UITh
       }
     }
 
-    applyTheme(theme = bean, defaults = defaults)
+    applyTheme(theme = bean, defaults = defaults, classLoader = providerClassLoader)
   }
 
   @get:ApiStatus.Internal
-  @set:ApiStatus.Internal
-  var patcher: IconPathPatcher?
-    get() = bean.patcher
-    set(patcher) {
-      bean.patcher = patcher
-    }
-  val colorPatcher: SvgElementColorPatcherProvider?
-    get() = bean.colorPatcher
-  val selectionColorPatcher: SvgElementColorPatcherProvider?
-    get() = bean.selectionColorPatcher
-
-  @get:ApiStatus.Internal
   val providerClassLoader: ClassLoader
-    get() = bean.providerClassLoader ?: throw RuntimeException("The theme classloader has already been detached")
+    get() = _providerClassLoader ?: throw RuntimeException("The theme classloader has already been detached")
 
   @ApiStatus.Internal
   fun setProviderClassLoader(value: ClassLoader?) {
-    bean.providerClassLoader = value
+    _providerClassLoader = value
   }
 
   val editorSchemePath: String?
@@ -114,9 +112,9 @@ class UITheme private constructor(val id: @NonNls String, private val bean: UITh
                      themeId: @NonNls String,
                      nameToParent: Function<String, UITheme?>): UITheme {
       val theme = readTheme(JsonFactory().createParser(stream))
-      return UITheme(id = themeId,
-                     bean = postProcessTheme(theme = theme,
-                                             parentTheme = findParentTheme(theme = theme, nameToParent = nameToParent)?.bean))
+      return createTheme(themeId = themeId,
+                         theme = theme,
+                         parentTheme = findParentTheme(theme = theme, nameToParent = nameToParent)?.bean)
     }
 
     fun loadFromJson(data: ByteArray?,
@@ -127,8 +125,7 @@ class UITheme private constructor(val id: @NonNls String, private val bean: UITh
       val parentTheme = findParentTheme(theme) {
         (UiThemeProviderListManager.getInstance().findThemeByName(it) as? UIThemeLookAndFeelInfoImpl)?.theme
       }?.bean
-      return UITheme(id = themeId,
-                     bean = postProcessTheme(theme = theme, parentTheme = parentTheme, provider = provider, iconMapper = iconMapper))
+      return createTheme(theme = theme, parentTheme = parentTheme, provider = provider, iconMapper = iconMapper, themeId = themeId)
     }
 
     fun loadFromJson(parentTheme: UITheme?,
@@ -141,7 +138,7 @@ class UITheme private constructor(val id: @NonNls String, private val bean: UITh
       val theme = readTheme(JsonFactory().createParser(data))
       theme.parentTheme = parentTheme?.id
       val parent = parentTheme?.bean ?: (if (theme.dark) defaultDarkParent?.get()?.bean else defaultLightParent?.get()?.bean)
-      return UITheme(id = themeId, postProcessTheme(theme = theme, parentTheme = parent, provider = provider, iconMapper = iconMapper))
+      return createTheme(theme = theme, parentTheme = parent, provider = provider, iconMapper = iconMapper, themeId = themeId)
     }
 
     @TestOnly
@@ -154,75 +151,93 @@ private fun findParentTheme(theme: UIThemeBean, nameToParent: Function<String, U
   return nameToParent.apply(theme.parentTheme ?: return null)
 }
 
-private fun postProcessTheme(theme: UIThemeBean,
-                             parentTheme: UIThemeBean?,
-                             provider: ClassLoader? = null,
-                             iconMapper: ((String) -> String?)? = null): UIThemeBean {
+private fun createTheme(theme: UIThemeBean,
+                        parentTheme: UIThemeBean?,
+                        provider: ClassLoader? = null,
+                        iconMapper: ((String) -> String?)? = null,
+                        themeId: @NonNls String): UITheme {
   if (parentTheme != null) {
     importFromParentTheme(theme, parentTheme)
   }
-  if (provider != null) {
-    theme.providerClassLoader = provider
-  }
-
   initializeNamedColors(theme = theme)
 
   val paletteScopeManager = UiThemePaletteScopeManager()
   val colorsOnSelection = theme.iconColorsOnSelection
+  var selectionColorPatcher: SvgElementColorPatcherProvider? = null
   if (!colorsOnSelection.isNullOrEmpty()) {
     val colors = HashMap<String, String>(colorsOnSelection.size)
     val alphaColors = HashSet<String>(colorsOnSelection.size)
-    for ((key, value1) in colorsOnSelection) {
-      val value = value1.toString()
+    for ((key, v) in colorsOnSelection) {
+      val value = v.toString()
       colors.put(key, value)
       alphaColors.add(value)
     }
-    theme.selectionColorPatcher = object : SvgElementColorPatcherProvider {
-      override fun attributeForPath(path: String): SvgAttributePatcher? {
-        val scope = paletteScopeManager.getScopeByPath(path)
-        val hash = InsecureHashBuilder()
-          .stringMap(colors)
-          .update(scope?.digest() ?: ArrayUtilRt.EMPTY_LONG_ARRAY)
-        return newSvgPatcher(hash.build(), colors) { if (alphaColors.contains(it)) 255 else null }
+
+    selectionColorPatcher = object : SvgElementColorPatcherProvider {
+      private val svgPatcher = ConcurrentHashMap<UiThemePaletteScope, SvgAttributePatcher>()
+
+      private val paletteSvgPatcher: SvgAttributePatcher
+
+      init {
+        val hashBuilder = InsecureHashBuilder().stringMap(colors).update(0/* without scope */)
+        paletteSvgPatcher = newSvgPatcher(digest = hashBuilder.build(), newPalette = colors) { if (alphaColors.contains(it)) 255 else null }
+      }
+
+      override fun attributeForPath(path: String): SvgAttributePatcher {
+        val scope = paletteScopeManager.getScopeByPath(path) ?: return paletteSvgPatcher
+        return svgPatcher.computeIfAbsent(scope) {
+          val hashBuilder = scope.updateHash(InsecureHashBuilder().stringMap(colors).update(1 /* with scope */))
+          // `255` here is not a mistake - we want to set that corresponding color as non-transparent explicitly
+          newSvgPatcher(digest = hashBuilder.build(), newPalette = colors) { if (alphaColors.contains(it)) 255 else null }
+        }
       }
     }
   }
 
-  val icons = theme.icons
-  if (!icons.isNullOrEmpty()) {
-    configureIcons(theme = theme, iconMapper = iconMapper ?: { it }, paletteScopeManager = paletteScopeManager, iconMap = icons)
+  val iconMap = theme.icons
+  var colorPatcher: SvgElementColorPatcherProvider? = null
+
+  var patcher: IconPathPatcher? = null
+  if (!iconMap.isNullOrEmpty()) {
+    patcher = object : IconPathPatcher() {
+      private val iconMapper = iconMapper ?: { it }
+
+      override fun patchPath(path: String, classLoader: ClassLoader?): String? {
+        if (classLoader is PluginAwareClassLoader) {
+          val icons = iconMap.get(classLoader.getPluginId().idString)
+          if (icons is Map<*, *>) {
+            val pluginIconPath = icons.get(path)
+            if (pluginIconPath is String) {
+              return iconMapper(pluginIconPath)
+            }
+          }
+        }
+
+        var value = iconMap.get(path)
+        if (value == null && path[0] != '/') {
+          value = iconMap.get("/$path")
+        }
+        return if (value is String) iconMapper(value) else null
+      }
+
+      override fun getContextClassLoader(path: String, originalClassLoader: ClassLoader?): ClassLoader? = provider
+    }
+
+    colorPatcher = configureIcons(theme = theme, paletteScopeManager = paletteScopeManager, iconMap = iconMap)
   }
 
-  return theme
+  return UITheme(id = themeId,
+                 bean = theme,
+                 colorPatcher = colorPatcher,
+                 _providerClassLoader = provider,
+                 patcher = patcher,
+                 selectionColorPatcher = selectionColorPatcher)
 }
 
 private fun configureIcons(theme: UIThemeBean,
-                           iconMapper: (String) -> String?,
                            paletteScopeManager: UiThemePaletteScopeManager,
-                           iconMap: Map<String, Any?>) {
-  theme.patcher = object : IconPathPatcher() {
-    override fun patchPath(path: String, classLoader: ClassLoader?): String? {
-      if (classLoader is PluginAwareClassLoader) {
-        val icons = iconMap.get(classLoader.getPluginId().idString)
-        if (icons is Map<*, *>) {
-          val pluginIconPath = icons.get(path)
-          if (pluginIconPath is String) {
-            return iconMapper(pluginIconPath)
-          }
-        }
-      }
-
-      var value = iconMap.get(path)
-      if (value == null && path[0] != '/') {
-        value = iconMap.get("/$path")
-      }
-      return if (value is String) iconMapper(value) else null
-    }
-
-    override fun getContextClassLoader(path: String, originalClassLoader: ClassLoader?): ClassLoader? = theme.providerClassLoader
-  }
-
-  val palette = iconMap.get("ColorPalette") as? Map<*, *> ?: return
+                           iconMap: Map<String, Any?>): SvgElementColorPatcherProvider? {
+  val palette = iconMap.get("ColorPalette") as? Map<*, *> ?: return null
   for (o in palette.keys) {
     val colorKey = o.toString()
     val scope = paletteScopeManager.getScope(colorKey) ?: continue
@@ -244,9 +259,13 @@ private fun configureIcons(theme: UIThemeBean,
     }
   }
 
-  theme.colorPatcher = object : SvgElementColorPatcherProvider {
+  return object : SvgElementColorPatcherProvider {
     override fun attributeForPath(path: String): SvgAttributePatcher? {
       val scope = paletteScopeManager.getScopeByPath(path) ?: return null
+      if (scope.newPalette.isEmpty()) {
+        return null
+      }
+
       return newSvgPatcher(digest = scope.digest(), newPalette = scope.newPalette) { scope.alphas.get(it) }
     }
   }
@@ -255,11 +274,11 @@ private fun configureIcons(theme: UIThemeBean,
 private fun initializeNamedColors(theme: UIThemeBean) {
   val originalColors = theme.colors ?: return
   var colors = originalColors
-  var mutableMap: MutableMap<String, Any?>? = null
+  var mutableMap: Object2ObjectLinkedOpenHashMap<String, Any?>? = null
   for ((key, value) in originalColors) {
     if (value is String) {
       if (mutableMap == null) {
-        mutableMap = LinkedHashMap(originalColors)
+        mutableMap = Object2ObjectLinkedOpenHashMap(originalColors, Hash.FAST_LOAD_FACTOR)
         colors = mutableMap
         theme.colors = colors
       }
@@ -275,6 +294,8 @@ private fun initializeNamedColors(theme: UIThemeBean) {
     }
   }
 
+  mutableMap?.trim()
+
   val originalColorsOnSelection = theme.iconColorsOnSelection ?: return
   mutableMap = null
   for (entry in originalColorsOnSelection) {
@@ -286,7 +307,7 @@ private fun initializeNamedColors(theme: UIThemeBean) {
     }
 
     if (mutableMap == null) {
-      mutableMap = LinkedHashMap(originalColors)
+      mutableMap = Object2ObjectLinkedOpenHashMap(originalColors, Hash.FAST_LOAD_FACTOR)
       theme.iconColorsOnSelection = mutableMap
     }
 
@@ -300,6 +321,8 @@ private fun initializeNamedColors(theme: UIThemeBean) {
       mutableMap.put(key.toString(), value)
     }
   }
+
+  mutableMap?.trim()
 }
 
 private fun toColorString(key: String, darkTheme: Boolean): String {
@@ -361,7 +384,7 @@ private val colorPalette: @NonNls Map<String, String> = java.util.Map.ofEntries(
   java.util.Map.entry("Tree.iconColor.Dark", "#AFB1B3")
 )
 
-private fun applyTheme(theme: UIThemeBean, defaults: UIDefaults) {
+private fun applyTheme(theme: UIThemeBean, defaults: UIDefaults, classLoader: ClassLoader) {
   val colors = theme.colors
   for ((key, value) in (theme.ui ?: return)) {
     var color: Color? = null
@@ -372,7 +395,7 @@ private fun applyTheme(theme: UIThemeBean, defaults: UIDefaults) {
     }
 
     @Suppress("NAME_SHADOWING")
-    val value = color ?: parseUiThemeValue(key = key, value = value, classLoader = theme.providerClassLoader!!)
+    val value = color ?: parseUiThemeValue(key = key, value = value, classLoader = classLoader)
     if (key.startsWith("*.")) {
       val tail = key.substring(1)
       addPattern(key, value, defaults)

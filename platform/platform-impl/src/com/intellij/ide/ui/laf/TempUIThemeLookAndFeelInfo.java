@@ -110,20 +110,20 @@ public final class TempUIThemeLookAndFeelInfo extends UIThemeLookAndFeelInfoImpl
       return t == null ? null : t.getTheme();
     });
 
-    IconPathPatcher oldPatcher = theme.getPatcher();
+    IconPathPatcher oldPatcher = theme.patcher;
     if (oldPatcher != null) {
-      theme.setPatcher(new IconPathPatcher() {
+      theme.patcher = new IconPathPatcher() {
         @Override
         public @Nullable String patchPath(@NotNull String path, @Nullable ClassLoader classLoader) {
           String result = oldPatcher.patchPath(path, classLoader);
-          return result != null ? patcher.patchPath(result, classLoader) : null;
+          return result == null ? null : patcher.patchPath(result, classLoader);
         }
 
         @Override
         public @Nullable ClassLoader getContextClassLoader(@NotNull String path, @Nullable ClassLoader originalClassLoader) {
           return patcher.getContextClassLoader(path, originalClassLoader);
         }
-      });
+      };
     }
 
     return theme;

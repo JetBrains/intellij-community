@@ -6,6 +6,7 @@ import com.intellij.util.InsecureHashBuilder
 
 internal class UiThemePaletteScope {
   val newPalette: MutableMap<String, String> = HashMap()
+
   // 0-255
   val alphas: MutableMap<String, Int> = HashMap()
   private var hash: LongArray? = null
@@ -15,12 +16,15 @@ internal class UiThemePaletteScope {
       return it
     }
 
-    // order is significant - use TreeMap
-    hash = InsecureHashBuilder()
+    hash = updateHash(InsecureHashBuilder()).build()
+    return hash!!
+  }
+
+  fun updateHash(insecureHashBuilder: InsecureHashBuilder): InsecureHashBuilder {
+    insecureHashBuilder
       .stringMap(newPalette)
       .stringIntMap(alphas)
-      .build()
-    return hash!!
+    return insecureHashBuilder
   }
 }
 

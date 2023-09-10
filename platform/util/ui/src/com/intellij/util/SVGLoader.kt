@@ -4,7 +4,6 @@
 package com.intellij.util
 
 import com.intellij.openapi.util.IconLoader
-import com.intellij.openapi.util.registry.Registry
 import com.intellij.ui.scale.DerivedScaleType
 import com.intellij.ui.scale.ScaleContext
 import com.intellij.ui.svg.*
@@ -17,10 +16,7 @@ import java.awt.image.BufferedImage
 import java.io.IOException
 import java.io.InputStream
 import java.net.URL
-import javax.swing.Icon
 import kotlin.math.max
-
-private var selectionColorPatcher: SVGLoader.SvgElementColorPatcherProvider? = null
 
 private val iconMaxSize: Float by lazy {
   var maxSize = Integer.MAX_VALUE.toFloat()
@@ -102,23 +98,6 @@ object SVGLoader {
       field = colorPatcher
       IconLoader.clearCache()
     }
-
-  @JvmStatic
-  fun setSelectionColorPatcherProvider(colorPatcher: SvgElementColorPatcherProvider?) {
-    selectionColorPatcher = colorPatcher
-    IconLoader.clearCache()
-  }
-
-  @JvmStatic
-  fun paintIconWithSelection(icon: Icon, c: Component?, g: Graphics?, x: Int, y: Int) {
-    val patcher = selectionColorPatcher
-    if (patcher == null || !Registry.`is`("ide.patch.icons.on.selection", false)) {
-      icon.paintIcon(c, g, x, y)
-    }
-    else {
-      IconLoader.colorPatchedIcon(icon, patcher).paintIcon(c, g, x, y)
-    }
-  }
 
   @ScheduledForRemoval
   @Deprecated("Please use SvgAttributePatcher")

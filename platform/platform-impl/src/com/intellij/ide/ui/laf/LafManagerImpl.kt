@@ -55,12 +55,12 @@ import com.intellij.ui.scale.JBUIScale.getFontScale
 import com.intellij.ui.scale.JBUIScale.scale
 import com.intellij.ui.scale.JBUIScale.scaleFontSize
 import com.intellij.ui.scale.JBUIScale.setUserScaleFactor
+import com.intellij.ui.svg.setSelectionColorPatcherProvider
 import com.intellij.ui.tree.ui.DefaultTreeUI
 import com.intellij.util.EventDispatcher
 import com.intellij.util.FontUtil
 import com.intellij.util.IJSwingUtilities
 import com.intellij.util.SVGLoader.colorPatcherProvider
-import com.intellij.util.SVGLoader.setSelectionColorPatcherProvider
 import com.intellij.util.concurrency.SynchronizedClearableLazy
 import com.intellij.util.ui.*
 import com.intellij.util.ui.LafIconLookup.getIcon
