@@ -135,7 +135,7 @@ class SyntaxNodeDescriptorImpl implements MutableSyntaxNodeDescriptor {
     return syntaxNodeDescriptor;
   }
 
-  @NotNull
+  @Nullable
   @Override
   public CharSequence getScopeName() {
     return myScopeName;
