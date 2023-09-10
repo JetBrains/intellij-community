@@ -275,7 +275,7 @@ internal fun CoroutineScope.updateFrameClassAndWindowIconAndPreloadSystemFonts(i
 @ApiStatus.Internal
 fun createBaseLaF(): LookAndFeel {
   if (SystemInfoRt.isMac) {
-    val aClass = AppStarter::class.java.getClassLoader().loadClass(UIManager.getSystemLookAndFeelClassName())
+    val aClass = ClassLoader.getPlatformClassLoader().loadClass("com.apple.laf.AquaLookAndFeel")
     return MethodHandles.lookup().findConstructor(aClass, MethodType.methodType(Void.TYPE)).invoke() as BasicLookAndFeel
   }
   else if (!SystemInfoRt.isLinux || GraphicsEnvironment.isHeadless()) {
@@ -288,7 +288,7 @@ fun createBaseLaF(): LookAndFeel {
   // and scale them based on Xft.dpi value.
   try {
     @Suppress("SpellCheckingInspection")
-    val aClass = DarculaLaf::class.java.getClassLoader().loadClass("com.sun.java.swing.plaf.gtk.GTKLookAndFeel")
+    val aClass = ClassLoader.getPlatformClassLoader().loadClass("com.sun.java.swing.plaf.gtk.GTKLookAndFeel")
     val gtk = MethodHandles.privateLookupIn(aClass, MethodHandles.lookup())
       .findConstructor(aClass, MethodType.methodType(Void.TYPE)).invoke() as LookAndFeel
     // GTK is available

@@ -109,17 +109,11 @@ open class DarculaLaf(private val isThemeAdapter: Boolean) : BasicLookAndFeel() 
 
   protected open val prefix: String
     get() = "themes/darcula"
-  protected open val systemPrefix: String?
-    get() = null
-
   private fun initDarculaDefaults(defaults: UIDefaults) {
     if (!isThemeAdapter) {
       // it is important to use class loader of a current instance class (LaF in plugin)
       val classLoader = javaClass.getClassLoader()
       deprecatedLoadDefaultsFromJson(defaults = defaults, prefix = prefix, classLoader = classLoader)
-      systemPrefix?.let {
-        deprecatedLoadDefaultsFromJson(defaults = defaults, prefix = it, classLoader = classLoader)
-      }
     }
 
     defaults.put("Table.ancestorInputMap", LazyInputMap(arrayOf<Any>(
@@ -193,6 +187,10 @@ open class DarculaLaf(private val isThemeAdapter: Boolean) : BasicLookAndFeel() 
         base = preInitializedBaseLaf.getAndSet(null)
         if (base == null) {
           base = createBaseLaF()
+        }
+        else {
+          // base is already initialized
+          return
         }
       }
       base!!.initialize()
