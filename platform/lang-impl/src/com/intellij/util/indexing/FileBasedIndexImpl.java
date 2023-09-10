@@ -2061,7 +2061,7 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
   }
 
   static void setupWritingIndexValuesSeparatedFromCounting() {
-    if (IndexUpdateRunner.WRITE_INDEXES_ON_SEPARATE_THREAD) {
+    if (IndexUpdateRunner.WRITE_INDEXES_ON_SEPARATE_THREAD && VfsData.isIsIndexedFlagDisabled()) {
       ourWritingIndexValuesSeparatedFromCounting = ApplicationMode.AnotherThread;
     } else {
       ourWritingIndexValuesSeparatedFromCounting =
