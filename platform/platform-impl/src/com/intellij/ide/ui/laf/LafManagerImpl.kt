@@ -49,6 +49,7 @@ import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.util.SystemInfoRt
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.wm.impl.IdeGlassPaneImpl
+import com.intellij.platform.diagnostic.telemetry.impl.span
 import com.intellij.ui.*
 import com.intellij.ui.components.DefaultLinkButtonUI
 import com.intellij.ui.popup.HeavyWeightPopup
@@ -225,7 +226,7 @@ class LafManagerImpl(private val coroutineScope: CoroutineScope) : LafManager(),
   }
 
   internal suspend fun applyInitState() {
-    withContext(RawSwingDispatcher) {
+    span("laf initialization in EDT", RawSwingDispatcher) {
       initInEdt()
     }
     addListeners()
