@@ -658,19 +658,6 @@ class LafManagerImpl(private val coroutineScope: CoroutineScope) : LafManager(),
     }
   }
 
-  private fun computeValuesOfUsedUiOptions(): List<Any?> {
-    val instance = UISettings.getInstance()
-    return listOf(
-      instance.overrideLafFonts,
-      instance.fontFace,
-      instance.fontSize2D,
-      instance.ideAAType,
-      instance.editorAAType,
-      instance.ideScale,
-      instance.presentationModeIdeScale,
-    )
-  }
-
   private fun notifyLookAndFeelChanged() {
     val activity = StartUpMeasurer.startActivity("lookAndFeelChanged event processing")
     ApplicationManager.getApplication().messageBus.syncPublisher(LafManagerListener.TOPIC).lookAndFeelChanged(this)
@@ -1486,4 +1473,17 @@ internal fun initFontDefaults(defaults: UIDefaults, uiFont: FontUIResource) {
   defaults.put("TextArea.font", monoFont)
   defaults.put("TextPane.font", textFont)
   defaults.put("EditorPane.font", textFont)
+}
+
+private fun computeValuesOfUsedUiOptions(): List<Any?> {
+  val uiSettings = UISettings.getInstance()
+  return listOf(
+    uiSettings.overrideLafFonts,
+    uiSettings.fontFace,
+    uiSettings.fontSize2D,
+    uiSettings.ideAAType,
+    uiSettings.editorAAType,
+    uiSettings.ideScale,
+    uiSettings.presentationModeIdeScale,
+  )
 }

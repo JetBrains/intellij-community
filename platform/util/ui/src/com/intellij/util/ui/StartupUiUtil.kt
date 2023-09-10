@@ -57,17 +57,19 @@ object StartupUiUtil {
   }
 
   @JvmStatic
-  @Deprecated("Starts from NewUI default mac theme lost meaning. If you want to something based on theme please check current theme id.", ReplaceWith("false"))
+  @Deprecated("Starts from NewUI default mac theme lost meaning. If you want to something based on theme please check current theme id.",
+              ReplaceWith("false"))
   @ScheduledForRemoval
   fun isUnderDefaultMacTheme(): Boolean {
-      return false
+    return false
   }
 
   @JvmStatic
-  @Deprecated("Starts from NewUI default win10 theme lost meaning. If you want to something based on theme please check current theme id.", ReplaceWith("false"))
+  @Deprecated("Starts from NewUI default win10 theme lost meaning. If you want to something based on theme please check current theme id.",
+              ReplaceWith("false"))
   @ScheduledForRemoval
   fun isUnderWin10LookAndFeel(): Boolean {
-      return false
+    return false
   }
 
   @JvmStatic
@@ -113,7 +115,6 @@ object StartupUiUtil {
   /**
    * Returns whether the JRE-managed HiDPI mode is enabled and the provided system scale context is HiDPI.
    */
-  @JvmStatic
   fun isJreHiDPI(scaleContext: ScaleContext?): Boolean {
     return isHiDPIEnabledAndApplicable(scaleContext?.getScale(ScaleType.SYS_SCALE)?.toFloat() ?: JBUIScale.sysScale())
   }
@@ -139,14 +140,8 @@ object StartupUiUtil {
   }
 
   @JvmStatic
-  fun drawImage(g: Graphics, image: Image, x: Int, y: Int, width: Int, height: Int, op: BufferedImageOp?) {
-    val srcBounds = if (width >= 0 && height >= 0) Rectangle(x, y, width, height) else null
-    drawImage(g = g, image = image, x = x, y = y, dw = width, dh = height, sourceBounds = srcBounds, op = op, observer = null)
-  }
-
-  @JvmStatic
   fun drawImage(g: Graphics, image: Image) {
-    drawImage(g = g, image = image, x = 0, y = 0, width = -1, height = -1, op = null)
+    drawImage(g = g, image = image, x = 0, y = 0, dw = -1, dh = -1, sourceBounds = null, op = null, observer = null)
   }
 
   /**
