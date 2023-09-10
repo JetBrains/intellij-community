@@ -9,7 +9,6 @@ import com.intellij.ui.TableActions
 import com.intellij.ui.plaf.beg.*
 import com.intellij.ui.scale.JBUIScale.getSystemFontData
 import com.intellij.util.ui.StartupUiUtil.getFontWithFallback
-import com.intellij.util.ui.StartupUiUtil.initFontDefaults
 import com.intellij.util.ui.StartupUiUtil.initInputMapDefaults
 import java.awt.Color
 import java.awt.Font
@@ -38,8 +37,6 @@ internal class IdeaLaf(private val customFontDefaults: Map<Any, Any?>?) : MetalL
   }
 }
 
-private val TOOLTIP_BACKGROUND_COLOR = ColorUIResource(255, 255, 231)
-
 @Suppress("UseDPIAwareInsets", "UseJBColor")
 private fun initIdeaDefaults(defaults: UIDefaults) {
   defaults.put("Menu.maxGutterIconWidth", 18)
@@ -60,7 +57,7 @@ private fun initIdeaDefaults(defaults: UIDefaults) {
   defaults.put("TableUI", LazyValue { BegTableUI::class.java.getName() })
   defaults.put("TreeUI", LazyValue { BegTreeUI::class.java.getName() })
   defaults.put("TabbedPane.tabInsets", Insets(0, 4, 0, 4))
-  defaults.put("ToolTip.background", TOOLTIP_BACKGROUND_COLOR)
+  defaults.put("ToolTip.background", ColorUIResource(255, 255, 231))
   defaults.put("ToolTip.border", ColoredSideBorder(Color.gray, Color.gray, Color.black, Color.black, 1))
   defaults.put("Tree.ancestorInputMap", null)
   defaults.put("FileView.directoryIcon", LazyValue { AllIcons.Nodes.Folder })
@@ -122,4 +119,3 @@ private fun initIdeaDefaults(defaults: UIDefaults) {
     ))
   })
 }
-

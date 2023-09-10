@@ -167,7 +167,7 @@ class LafManagerImpl(private val coroutineScope: CoroutineScope) : LafManager(),
     fun installMacOSXFonts(defaults: UIDefaults) {
       val face = "Helvetica Neue"
       // ui font
-      StartupUiUtil.initFontDefaults(defaults, getFont(face, 13, Font.PLAIN))
+      initFontDefaults(defaults, getFont(face, 13, Font.PLAIN))
       for (key in java.util.List.copyOf(defaults.keys)) {
         if (key !is String || !key.endsWith("font", ignoreCase = true)) {
           continue
@@ -192,7 +192,6 @@ class LafManagerImpl(private val coroutineScope: CoroutineScope) : LafManager(),
 
     @OptIn(DelicateCoroutinesApi::class)
     @TestOnly
-    @JvmStatic
     fun getTestInstance(): LafManagerImpl? {
       if (ourTestInstance == null) {
         ourTestInstance = LafManagerImpl(GlobalScope)
@@ -212,9 +211,26 @@ class LafManagerImpl(private val coroutineScope: CoroutineScope) : LafManager(),
   }
 
   override fun initializeComponent() {
-    // we preload LafManagerImpl in EDT, no one can access LafManagerImpl early
-    EDT.assertIsEdt()
+    // must be after updateUI
+    isFirstSetup = false
 
+    if (EDT.isCurrentThreadEdt()) {
+      initInEdt()
+      addListeners()
+    }
+    else {
+      // expected that applyInitState will be called
+    }
+  }
+
+  internal suspend fun applyInitState() {
+    withContext(RawSwingDispatcher) {
+      initInEdt()
+    }
+    addListeners()
+  }
+
+  private fun initInEdt() {
     val theme = currentTheme!!
     if (!theme.isInitialized) {
       doSetLaF(theme = theme, installEditorScheme = false)
@@ -225,11 +241,8 @@ class LafManagerImpl(private val coroutineScope: CoroutineScope) : LafManager(),
       ExperimentalUI.getInstance().lookAndFeelChanged()
     }
 
-    updateUI()
-    // must be after updateUI
-    isFirstSetup = false
+    updateUI(isFirstSetup = true)
     detectAndSyncLaf()
-    addListeners()
   }
 
   private fun addListeners() {
@@ -595,6 +608,10 @@ class LafManagerImpl(private val coroutineScope: CoroutineScope) : LafManager(),
    * Updates LAF of all windows. The method also updates font of components as it's configured in `UISettings`.
    */
   override fun updateUI() {
+    updateUI(isFirstSetup = false)
+  }
+
+  private fun updateUI(isFirstSetup: Boolean) {
     val uiDefaults = UIManager.getLookAndFeelDefaults()
     uiDefaults.put("*cache", ConcurrentHashMap<String, Color>()) // for JBColor
     uiDefaults.put("LinkButtonUI", DefaultLinkButtonUI::class.java.name)
@@ -667,13 +684,13 @@ class LafManagerImpl(private val coroutineScope: CoroutineScope) : LafManager(),
       storeOriginalFontDefaults(uiDefaults)
       val fontFace = if (uiSettings.overrideLafFonts) uiSettings.fontFace else defaultFont.family
       val fontSize = (if (uiSettings.overrideLafFonts) uiSettings.fontSize2D else defaultFont.size2D) * currentScale
-      StartupUiUtil.initFontDefaults(uiDefaults, StartupUiUtil.getFontWithFallback(fontFace, Font.PLAIN, fontSize))
+      initFontDefaults(uiDefaults, StartupUiUtil.getFontWithFallback(fontFace, Font.PLAIN, fontSize))
       val userScaleFactor = if (useInterFont()) fontSize / INTER_SIZE else getFontScale(fontSize)
       setUserScaleFactor(userScaleFactor)
     }
     else if (useInterFont()) {
       storeOriginalFontDefaults(uiDefaults)
-      StartupUiUtil.initFontDefaults(uiDefaults, defaultInterFont)
+      initFontDefaults(uiDefaults, defaultInterFont)
       setUserScaleFactor(defaultUserScaleFactor)
     }
     else {
@@ -705,7 +722,7 @@ class LafManagerImpl(private val coroutineScope: CoroutineScope) : LafManager(),
     val laf = if (currentTheme == null) null else lookAndFeelReference
     val lafDefaults = storedDefaults.get(laf)
     if (lafDefaults != null) {
-      for (resource in StartupUiUtil.patchableFontResources) {
+      for (resource in patchableFontResources) {
         defaults.put(resource, lafDefaults.get(resource))
       }
     }
@@ -717,7 +734,7 @@ class LafManagerImpl(private val coroutineScope: CoroutineScope) : LafManager(),
     var lafDefaults = storedDefaults.get(laf)
     if (lafDefaults == null) {
       lafDefaults = HashMap()
-      for (resource in StartupUiUtil.patchableFontResources) {
+      for (resource in patchableFontResources) {
         lafDefaults.put(resource, defaults.get(resource))
       }
       storedDefaults.put(laf, lafDefaults)
@@ -1431,10 +1448,41 @@ private fun fillFallbackDefaults(defaults: UIDefaults) {
   // These icons are only needed to prevent Swing from trying to fetch defaults with AWT ImageFetcher threads (IDEA-322089),
   // but might as well just put something sensibly-looking there, just in case they show up due to some bug:
   val folderIcon = UIDefaults.LazyValue { AllIcons.Nodes.Folder }
-  defaults["Tree.openIcon"] = folderIcon
-  defaults["Tree.closedIcon"] = folderIcon
-  defaults["Tree.leafIcon"] = UIDefaults.LazyValue { AllIcons.FileTypes.Any_type }
+  defaults.put("Tree.openIcon", folderIcon)
+  defaults.put("Tree.closedIcon", folderIcon)
+  defaults.put("Tree.leafIcon", UIDefaults.LazyValue { AllIcons.FileTypes.Any_type })
   // Our themes actually set these two, so we don't want to override them here:
   //defaults.put("Tree.expandedIcon", AllIcons.Toolbar.Expand);
   //defaults.put("Tree.collapsedIcon", AllIcons.Actions.ArrowExpand);
+}
+
+@JvmField
+internal val patchableFontResources: Array<String> = arrayOf("Button.font", "ToggleButton.font", "RadioButton.font",
+                                                             "CheckBox.font", "ColorChooser.font", "ComboBox.font", "Label.font",
+                                                             "List.font", "MenuBar.font",
+                                                             "MenuItem.font",
+                                                             "MenuItem.acceleratorFont", "RadioButtonMenuItem.font",
+                                                             "CheckBoxMenuItem.font", "Menu.font",
+                                                             "PopupMenu.font", "OptionPane.font",
+                                                             "Panel.font", "ProgressBar.font", "ScrollPane.font", "Viewport.font",
+                                                             "TabbedPane.font",
+                                                             "Table.font", "TableHeader.font",
+                                                             "TextField.font", "FormattedTextField.font", "Spinner.font",
+                                                             "PasswordField.font",
+                                                             "TextArea.font", "TextPane.font", "EditorPane.font",
+                                                             "TitledBorder.font", "ToolBar.font", "ToolTip.font", "Tree.font")
+
+internal fun initFontDefaults(defaults: UIDefaults, uiFont: FontUIResource) {
+  defaults.put("Tree.ancestorInputMap", null)
+  val textFont = FontUIResource(uiFont)
+  val monoFont = FontUIResource("Monospaced", Font.PLAIN, uiFont.size)
+  for (fontResource in patchableFontResources) {
+    defaults.put(fontResource, uiFont)
+  }
+  if (!SystemInfoRt.isMac) {
+    defaults.put("PasswordField.font", monoFont)
+  }
+  defaults.put("TextArea.font", monoFont)
+  defaults.put("TextPane.font", textFont)
+  defaults.put("EditorPane.font", textFont)
 }

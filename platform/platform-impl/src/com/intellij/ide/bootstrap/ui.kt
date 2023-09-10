@@ -141,7 +141,9 @@ internal fun CoroutineScope.scheduleInitAwtToolkit(lockSystemDirsJob: Job, busyT
     val classLoader = AppStarter::class.java.classLoader
     // preload class not in EDT
     Class.forName(DarculaLaf::class.java.name, true, classLoader)
-    Class.forName(IdeaLaf::class.java.name, true, classLoader)
+    if (SystemInfoRt.isWindows) {
+      Class.forName(IdeaLaf::class.java.name, true, classLoader)
+    }
     Class.forName(JBUIScale::class.java.name, true, classLoader)
     Class.forName(JreHiDpiUtil::class.java.name, true, classLoader)
     Class.forName(SynchronizedClearableLazy::class.java.name, true, classLoader)

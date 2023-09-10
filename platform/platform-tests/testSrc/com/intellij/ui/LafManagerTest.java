@@ -23,7 +23,7 @@ public class LafManagerTest {
     UISettings uiSettings = UISettings.getInstance();
     String fontFace = uiSettings.getFontFace();
     int fontSize = UISettings.getInstance().getFontSize();
-    LafManagerImpl lafManager = EdtTestUtil.runInEdtAndGet(() -> LafManagerImpl.getTestInstance());
+    LafManagerImpl lafManager = EdtTestUtil.runInEdtAndGet(() -> LafManagerImpl.Companion.getTestInstance());
     try {
       String newFontName = "Arial";
       int newFontSize = 17;

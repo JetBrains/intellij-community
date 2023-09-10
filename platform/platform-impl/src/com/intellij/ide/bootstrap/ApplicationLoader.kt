@@ -18,13 +18,13 @@ import com.intellij.ide.plugins.marketplace.statistics.enums.DialogAcceptanceRes
 import com.intellij.ide.ui.IconMapLoader
 import com.intellij.ide.ui.LafManager
 import com.intellij.ide.ui.UISettings
+import com.intellij.ide.ui.laf.LafManagerImpl
 import com.intellij.ide.ui.laf.UiThemeProviderListManager
 import com.intellij.idea.*
 import com.intellij.internal.statistic.collectors.fus.actions.persistence.ActionsEventLogGroup
 import com.intellij.openapi.application.*
 import com.intellij.openapi.application.ex.ApplicationEx
 import com.intellij.openapi.application.impl.ApplicationImpl
-import com.intellij.openapi.application.impl.RawSwingDispatcher
 import com.intellij.openapi.components.service
 import com.intellij.openapi.components.serviceAsync
 import com.intellij.openapi.components.stateStore
@@ -248,8 +248,11 @@ private suspend fun preInitApp(app: ApplicationImpl,
       }
     }
 
-    span("laf initialization", RawSwingDispatcher) {
-      app.serviceAsync<LafManager>()
+    span("laf initialization") {
+      val lafManager = app.serviceAsync<LafManager>()
+      if (lafManager is LafManagerImpl) {
+        lafManager.applyInitState()
+      }
     }
   }
 

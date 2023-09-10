@@ -37,18 +37,6 @@ import kotlin.math.pow
 import kotlin.math.roundToInt
 
 object StartupUiUtil {
-  @Internal
-  @JvmField
-  val patchableFontResources: Array<String> = arrayOf("Button.font", "ToggleButton.font", "RadioButton.font",
-                                                      "CheckBox.font", "ColorChooser.font", "ComboBox.font", "Label.font", "List.font", "MenuBar.font",
-                                                      "MenuItem.font",
-                                                      "MenuItem.acceleratorFont", "RadioButtonMenuItem.font", "CheckBoxMenuItem.font", "Menu.font",
-                                                      "PopupMenu.font", "OptionPane.font",
-                                                      "Panel.font", "ProgressBar.font", "ScrollPane.font", "Viewport.font", "TabbedPane.font",
-                                                      "Table.font", "TableHeader.font",
-                                                      "TextField.font", "FormattedTextField.font", "Spinner.font", "PasswordField.font",
-                                                      "TextArea.font", "TextPane.font", "EditorPane.font",
-                                                      "TitledBorder.font", "ToolBar.font", "ToolTip.font", "Tree.font")
   @JvmStatic
   val isUnderDarcula: Boolean
     @Deprecated("Do not use it. Use UI theme properties.", ReplaceWith("StartupUiUtil[isDarkTheme]"))
@@ -242,27 +230,11 @@ object StartupUiUtil {
   }
 
   @JvmStatic
-  fun initFontDefaults(defaults: UIDefaults, uiFont: FontUIResource) {
-    defaults["Tree.ancestorInputMap"] = null
-    val textFont = FontUIResource(uiFont)
-    val monoFont = FontUIResource("Monospaced", Font.PLAIN, uiFont.size)
-    for (fontResource in patchableFontResources) {
-      defaults[fontResource] = uiFont
-    }
-    if (!SystemInfoRt.isMac) {
-      defaults["PasswordField.font"] = monoFont
-    }
-    defaults["TextArea.font"] = monoFont
-    defaults["TextPane.font"] = textFont
-    defaults["EditorPane.font"] = textFont
-  }
-
-  @JvmStatic
   fun getFontWithFallback(familyName: String?,
                           @Suppress("DEPRECATION") @org.intellij.lang.annotations.JdkConstants.FontStyle style: Int,
                           size: Float): FontUIResource {
     // On macOS font fallback is implemented in JDK by default
-    // (except for explicitly registered fonts, e.g. the fonts we bundle with IDE, for them, we don't have a solution now)
+    // (except for explicitly registered fonts, e.g., the fonts we bundle with IDE, for them, we don't have a solution now)
     // in headless mode just use fallback in order to avoid font loading
     val fontWithFallback = if (SystemInfoRt.isMac || GraphicsEnvironment.isHeadless()) Font(familyName, style, size.toInt()).deriveFont(
       size)
