@@ -8,6 +8,7 @@ import com.intellij.internal.statistic.collectors.fus.ui.persistence.ToolbarClic
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.*;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.keymap.impl.IdeMouseEventDispatcher;
 import com.intellij.openapi.ui.popup.JBPopup;
@@ -20,6 +21,7 @@ import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.util.text.Strings;
 import com.intellij.ui.ExperimentalUI;
+import com.intellij.ui.codeFloatingToolbar.CodeFloatingToolbar;
 import com.intellij.ui.popup.PopupFactoryImpl;
 import com.intellij.ui.popup.PopupState;
 import com.intellij.ui.popup.WizardPopup;
@@ -246,7 +248,11 @@ public class ActionButton extends JComponent implements ActionButtonComponent, A
     popup.setAlignByParentBounds(false);
     popup.setActiveRoot(getPopupContainer(this) == null);
     if (ActionPlaces.EDITOR_FLOATING_TOOLBAR.equals(event.getPlace())) {
-      PopupUtils.attachToWindowComponent(popup, this, new Point(1, 1));
+      Editor editor = event.getData(CommonDataKeys.EDITOR);
+      CodeFloatingToolbar floatingToolbar = CodeFloatingToolbar.getToolbar(editor);
+      if (floatingToolbar != null) {
+        floatingToolbar.attachPopup(popup);
+      }
     }
     popup.showUnderneathOf(this);
     return popup;

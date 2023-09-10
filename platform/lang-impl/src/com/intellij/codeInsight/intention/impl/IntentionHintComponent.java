@@ -19,7 +19,6 @@ import com.intellij.internal.statistic.IntentionFUSCollector;
 import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
-import com.intellij.openapi.actionSystem.impl.PopupUtils;
 import com.intellij.openapi.actionSystem.impl.SimpleDataContext;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
@@ -257,7 +256,7 @@ public final class IntentionHintComponent implements Disposable, ScrollAwareHint
     if (component == null) return;
     RelativePoint defaultPosition = new AnchoredPoint(AnchoredPoint.Anchor.BOTTOM, component);
     ListPopup popup = getOrCreateListPopup();
-    PopupUtils.attachToWindowComponent(popup, component, new Point(1, 1));
+    toolbar.attachPopup(popup);
     showPopup(defaultPosition);
   }
 
