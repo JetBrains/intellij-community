@@ -5,13 +5,11 @@ import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.colors.TextAttributesKey;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
-/**
- * @author Dennis.Ushakov
- */
-public final class TextAttributeKeyDefaultsProviderImpl implements TextAttributesKey.TextAttributeKeyDefaultsProvider {
+final class TextAttributeKeyDefaultsProviderImpl implements TextAttributesKey.TextAttributeKeyDefaultsProvider {
   @Override
-  public TextAttributes getDefaultAttributes(@NotNull TextAttributesKey key) {
+  public @Nullable TextAttributes getDefaultAttributes(@NotNull TextAttributesKey key) {
     return ((EditorColorsManagerImpl)EditorColorsManager.getInstance()).getDefaultAttributes(key);
   }
 }

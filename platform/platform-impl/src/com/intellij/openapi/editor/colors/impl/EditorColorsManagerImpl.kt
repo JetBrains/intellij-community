@@ -1,841 +1,784 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.openapi.editor.colors.impl;
+@file:Suppress("PropertyName")
 
-import com.google.common.collect.Sets;
-import com.intellij.configurationStore.BundledSchemeEP;
-import com.intellij.configurationStore.LazySchemeProcessor;
-import com.intellij.configurationStore.SchemeDataHolder;
-import com.intellij.configurationStore.SchemeExtensionProvider;
-import com.intellij.diagnostic.Activity;
-import com.intellij.diagnostic.LoadingState;
-import com.intellij.diagnostic.StartUpMeasurer;
-import com.intellij.ide.IdeBundle;
-import com.intellij.ide.plugins.DynamicPluginListener;
-import com.intellij.ide.plugins.IdeaPluginDescriptor;
-import com.intellij.ide.plugins.PluginManager;
-import com.intellij.ide.plugins.cl.PluginClassLoader;
-import com.intellij.ide.ui.LafManager;
-import com.intellij.ide.ui.LafManagerListener;
-import com.intellij.ide.ui.UITheme;
-import com.intellij.ide.ui.laf.TempUIThemeLookAndFeelInfo;
-import com.intellij.ide.ui.laf.UIThemeLookAndFeelInfo;
-import com.intellij.ide.ui.laf.UIThemeLookAndFeelInfoImpl;
-import com.intellij.ide.ui.laf.UiThemeProviderListManager;
-import com.intellij.ide.util.RunOnceUtil;
-import com.intellij.notification.Notification;
-import com.intellij.notification.NotificationAction;
-import com.intellij.notification.NotificationType;
-import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.ModalityState;
-import com.intellij.openapi.components.PersistentStateComponent;
-import com.intellij.openapi.components.SettingsCategory;
-import com.intellij.openapi.components.State;
-import com.intellij.openapi.components.Storage;
-import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.editor.colors.EditorColorsListener;
-import com.intellij.openapi.editor.colors.EditorColorsManager;
-import com.intellij.openapi.editor.colors.EditorColorsScheme;
-import com.intellij.openapi.editor.colors.TextAttributesKey;
-import com.intellij.openapi.editor.colors.ex.DefaultColorSchemesManager;
-import com.intellij.openapi.editor.markup.TextAttributes;
-import com.intellij.openapi.extensions.ExtensionPointName;
-import com.intellij.openapi.extensions.PluginDescriptor;
-import com.intellij.openapi.extensions.PluginId;
-import com.intellij.openapi.options.Scheme;
-import com.intellij.openapi.options.SchemeManager;
-import com.intellij.openapi.options.SchemeManagerFactory;
-import com.intellij.openapi.options.SchemeState;
-import com.intellij.openapi.project.Project;
-import com.intellij.openapi.project.ProjectManager;
-import com.intellij.openapi.project.ProjectManagerListener;
-import com.intellij.openapi.updateSettings.impl.pluginsAdvertisement.PluginsAdvertiser;
-import com.intellij.openapi.util.InvalidDataException;
-import com.intellij.openapi.util.JDOMUtil;
-import com.intellij.openapi.util.Ref;
-import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.util.text.Strings;
-import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.psi.PsiManager;
-import com.intellij.serviceContainer.NonInjectable;
-import com.intellij.ui.ColorUtil;
-import com.intellij.ui.ExperimentalUI;
-import com.intellij.util.ComponentTreeEventDispatcher;
-import com.intellij.util.ResourceUtil;
-import com.intellij.util.messages.MessageBusConnection;
-import com.intellij.util.ui.StartupUiUtil;
-import com.intellij.util.xmlb.annotations.OptionTag;
-import kotlin.jvm.functions.Function1;
-import kotlin.sequences.SequencesKt;
-import org.jdom.Element;
-import org.jetbrains.annotations.*;
+package com.intellij.openapi.editor.colors.impl
 
-import java.nio.file.Path;
-import java.util.*;
+import com.intellij.configurationStore.BundledSchemeEP
+import com.intellij.configurationStore.LazySchemeProcessor
+import com.intellij.configurationStore.SchemeDataHolder
+import com.intellij.configurationStore.SchemeExtensionProvider
+import com.intellij.diagnostic.LoadingState
+import com.intellij.diagnostic.StartUpMeasurer
+import com.intellij.ide.IdeBundle
+import com.intellij.ide.plugins.DynamicPluginListener
+import com.intellij.ide.plugins.IdeaPluginDescriptor
+import com.intellij.ide.plugins.PluginManager
+import com.intellij.ide.plugins.cl.PluginClassLoader
+import com.intellij.ide.ui.LafManager
+import com.intellij.ide.ui.LafManagerListener
+import com.intellij.ide.ui.UITheme
+import com.intellij.ide.ui.laf.TempUIThemeLookAndFeelInfo
+import com.intellij.ide.ui.laf.UIThemeLookAndFeelInfo
+import com.intellij.ide.ui.laf.UIThemeLookAndFeelInfoImpl
+import com.intellij.ide.ui.laf.UiThemeProviderListManager
+import com.intellij.ide.util.RunOnceUtil.runOnceForApp
+import com.intellij.notification.Notification
+import com.intellij.notification.NotificationAction
+import com.intellij.notification.NotificationType
+import com.intellij.openapi.actionSystem.AnActionEvent
+import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.application.ModalityState
+import com.intellij.openapi.components.PersistentStateComponent
+import com.intellij.openapi.components.SettingsCategory
+import com.intellij.openapi.components.State
+import com.intellij.openapi.components.Storage
+import com.intellij.openapi.diagnostic.Logger
+import com.intellij.openapi.diagnostic.logger
+import com.intellij.openapi.editor.colors.EditorColorsListener
+import com.intellij.openapi.editor.colors.EditorColorsManager
+import com.intellij.openapi.editor.colors.EditorColorsScheme
+import com.intellij.openapi.editor.colors.TextAttributesKey
+import com.intellij.openapi.editor.colors.ex.DefaultColorSchemesManager
+import com.intellij.openapi.editor.markup.TextAttributes
+import com.intellij.openapi.extensions.ExtensionPointName
+import com.intellij.openapi.extensions.PluginDescriptor
+import com.intellij.openapi.extensions.PluginId
+import com.intellij.openapi.options.Scheme
+import com.intellij.openapi.options.SchemeManager
+import com.intellij.openapi.options.SchemeManagerFactory
+import com.intellij.openapi.options.SchemeState
+import com.intellij.openapi.project.Project
+import com.intellij.openapi.project.ProjectManager
+import com.intellij.openapi.project.ProjectManagerListener
+import com.intellij.openapi.updateSettings.impl.pluginsAdvertisement.installAndEnable
+import com.intellij.openapi.util.InvalidDataException
+import com.intellij.openapi.util.JDOMUtil
+import com.intellij.openapi.util.text.Strings
+import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.psi.PsiManager
+import com.intellij.serviceContainer.NonInjectable
+import com.intellij.ui.ColorUtil
+import com.intellij.ui.ExperimentalUI
+import com.intellij.util.ComponentTreeEventDispatcher
+import com.intellij.util.ResourceUtil
+import com.intellij.util.ui.StartupUiUtil
+import com.intellij.util.xmlb.annotations.OptionTag
+import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.annotations.NonNls
+import org.jetbrains.annotations.TestOnly
+import java.nio.file.Path
+import java.util.*
 
-import static com.intellij.openapi.editor.colors.impl.EditorColorsManagerImpl.COMPONENT_NAME;
-import static com.intellij.openapi.editor.colors.impl.EditorColorsManagerImpl.STORAGE_NAME;
+private val LOG: Logger
+  get() = logger<EditorColorsManagerImpl>()
 
-@State(
-  name = COMPONENT_NAME,
-  storages = @Storage(STORAGE_NAME),
-  additionalExportDirectory = EditorColorsManagerImpl.FILE_SPEC,
-  category = SettingsCategory.UI
-)
+private const val TEMP_SCHEME_KEY: @NonNls String = "TEMP_SCHEME_KEY"
+private const val TEMP_SCHEME_FILE_KEY: @NonNls String = "TEMP_SCHEME_FILE_KEY"
+
+@State(name = EditorColorsManagerImpl.COMPONENT_NAME, storages = [Storage(EditorColorsManagerImpl.STORAGE_NAME)],
+       additionalExportDirectory = EditorColorsManagerImpl.FILE_SPEC, category = SettingsCategory.UI)
 @ApiStatus.Internal
-public final class EditorColorsManagerImpl extends EditorColorsManager implements PersistentStateComponent<EditorColorsManagerImpl.State> {
-  public static final ExtensionPointName<AdditionalTextAttributesEP> ADDITIONAL_TEXT_ATTRIBUTES_EP_NAME = new ExtensionPointName<>("com.intellij.additionalTextAttributes");
+class EditorColorsManagerImpl @NonInjectable constructor(schemeManagerFactory: SchemeManagerFactory) : EditorColorsManager(), PersistentStateComponent<EditorColorsManagerImpl.State?> {
+  private val treeDispatcher: ComponentTreeEventDispatcher<EditorColorsListener> =
+    ComponentTreeEventDispatcher.create(EditorColorsListener::class.java)
 
-  private static final Logger LOG = Logger.getInstance(EditorColorsManagerImpl.class);
+  val schemeManager: SchemeManager<EditorColorsScheme>
+  private var state = State()
+  private var themeIsCustomized = false
+  private var isInitialConfigurationLoaded = false
 
-  public static final String COMPONENT_NAME = "EditorColorsManagerImpl";
-  public static final String STORAGE_NAME = "colors.scheme.xml";
-  public static final ExtensionPointName<BundledSchemeEP> BUNDLED_EP_NAME = new ExtensionPointName<>("com.intellij.bundledColorScheme");
+  constructor() : this(SchemeManagerFactory.getInstance())
 
-  private final ComponentTreeEventDispatcher<EditorColorsListener> myTreeDispatcher = ComponentTreeEventDispatcher.create(EditorColorsListener.class);
+  init {
+    val additionalTextAttributes = collectAdditionalTextAttributesEPs()
+    schemeManager = schemeManagerFactory.create(directoryName = FILE_SPEC,
+                                                processor = EditorColorSchemeProcessor(additionalTextAttributes),
+                                                presentableName = null,
+                                                directoryPath = null,
+                                                settingsCategory = SettingsCategory.UI)
+    initDefaultSchemes()
+    loadBundledSchemes()
+    loadSchemesFromThemes()
+    schemeManager.loadSchemes()
+    loadRemainAdditionalTextAttributes(additionalTextAttributes)
 
-  private final SchemeManager<EditorColorsScheme> schemeManager;
-  public static final String FILE_SPEC = "colors";
+    initEditableDefaultSchemesCopies()
+    initEditableBundledSchemesCopies()
+    resolveLinksToBundledSchemes()
 
-  private State state = new State();
-  private boolean themeIsCustomized;
-  private boolean isInitialConfigurationLoaded = false;
+    ApplicationManager.getApplication().getMessageBus()
+      .simpleConnect().subscribe(DynamicPluginListener.TOPIC, object : DynamicPluginListener {
+        override fun pluginLoaded(pluginDescriptor: IdeaPluginDescriptor) {
+          reloadKeepingActiveScheme()
+        }
 
-  public EditorColorsManagerImpl() {
-    this(SchemeManagerFactory.getInstance());
+        override fun pluginUnloaded(pluginDescriptor: IdeaPluginDescriptor,
+                                    isUpdate: Boolean) {
+          reloadKeepingActiveScheme()
+        }
+      })
   }
 
-  @NonInjectable
-  public EditorColorsManagerImpl(@NotNull SchemeManagerFactory schemeManagerFactory) {
-    Map<String, List<AdditionalTextAttributesEP>> additionalTextAttributes = collectAdditionalTextAttributesEPs();
-    schemeManager = schemeManagerFactory.create(FILE_SPEC, new EditorColorSchemeProcessor(additionalTextAttributes),
-                                                null, null, SettingsCategory.UI);
-    initDefaultSchemes();
-    loadBundledSchemes();
-    loadSchemesFromThemes();
-    schemeManager.loadSchemes();
-    loadRemainAdditionalTextAttributes(additionalTextAttributes);
+  companion object {
+    val ADDITIONAL_TEXT_ATTRIBUTES_EP_NAME: ExtensionPointName<AdditionalTextAttributesEP> = ExtensionPointName(
+      "com.intellij.additionalTextAttributes")
 
-    initEditableDefaultSchemesCopies();
-    initEditableBundledSchemesCopies();
-    resolveLinksToBundledSchemes();
+    const val COMPONENT_NAME: String = "EditorColorsManagerImpl"
+    const val STORAGE_NAME: String = "colors.scheme.xml"
 
-    ApplicationManager.getApplication().getMessageBus().simpleConnect().subscribe(DynamicPluginListener.TOPIC, new DynamicPluginListener() {
-      @Override
-      public void pluginLoaded(@NotNull IdeaPluginDescriptor pluginDescriptor) {
-        reloadKeepingActiveScheme();
+    val BUNDLED_EP_NAME: ExtensionPointName<BundledSchemeEP> = ExtensionPointName("com.intellij.bundledColorScheme")
+
+    const val FILE_SPEC: String = "colors"
+
+    fun isTempScheme(scheme: EditorColorsScheme?): Boolean {
+      return (scheme ?: return false).getMetaProperties().getProperty(TEMP_SCHEME_KEY).toBoolean()
+    }
+
+    fun getTempSchemeOriginalFilePath(scheme: EditorColorsScheme): Path? {
+      if (isTempScheme(scheme)) {
+        val path = scheme.getMetaProperties().getProperty(TEMP_SCHEME_FILE_KEY)
+        if (path != null) {
+          return Path.of(path)
+        }
+      }
+      return null
+    }
+
+    fun setTempScheme(scheme: EditorColorsScheme?, originalSchemeFile: VirtualFile?) {
+      if (scheme == null) {
+        return
       }
 
-      @Override
-      public void pluginUnloaded(@NotNull IdeaPluginDescriptor pluginDescriptor, boolean isUpdate) {
-        reloadKeepingActiveScheme();
-      }
-    });
-  }
-
-  @Override
-  public void reloadKeepingActiveScheme() {
-    String activeScheme = schemeManager.getCurrentSchemeName();
-    schemeManager.reload();
-
-    if (Strings.isNotEmpty(activeScheme)) {
-      EditorColorsScheme scheme = getScheme(activeScheme);
-      if (scheme != null) {
-        setGlobalScheme(scheme);
+      scheme.getMetaProperties().setProperty(TEMP_SCHEME_KEY, true.toString())
+      if (originalSchemeFile != null) {
+        scheme.getMetaProperties().setProperty(TEMP_SCHEME_FILE_KEY, originalSchemeFile.getPath())
       }
     }
   }
 
-  private void initDefaultSchemes() {
-    for (DefaultColorsScheme defaultScheme : DefaultColorSchemesManager.getInstance().getAllSchemes()) {
-      schemeManager.addScheme(defaultScheme);
+  override fun reloadKeepingActiveScheme() {
+    val activeScheme = schemeManager.currentSchemeName
+    schemeManager.reload()
+
+    if (Strings.isNotEmpty(activeScheme)) {
+      val scheme = getScheme(activeScheme!!)
+      if (scheme != null) {
+        globalScheme = scheme
+      }
+    }
+  }
+
+  private fun initDefaultSchemes() {
+    for (defaultScheme in DefaultColorSchemesManager.getInstance().allSchemes) {
+      schemeManager.addScheme(defaultScheme)
     }
   }
 
   // initScheme has to execute only after the LaF has been set in LafManagerImpl.initializeComponent
-
-  private void initEditableDefaultSchemesCopies() {
-    for (DefaultColorsScheme defaultScheme : DefaultColorSchemesManager.getInstance().getAllSchemes()) {
+  private fun initEditableDefaultSchemesCopies() {
+    for (defaultScheme in DefaultColorSchemesManager.getInstance().allSchemes) {
       if (defaultScheme.hasEditableCopy()) {
-        createEditableCopy(defaultScheme, defaultScheme.getEditableCopyName());
+        createEditableCopy(defaultScheme, defaultScheme.editableCopyName)
       }
     }
   }
 
   @TestOnly
-  public void removeScheme(@NotNull EditorColorsScheme scheme) {
-    assert ApplicationManager.getApplication().isUnitTestMode() : "Test-only method";
-    schemeManager.removeScheme(scheme);
+  fun removeScheme(scheme: EditorColorsScheme) {
+    assert(ApplicationManager.getApplication().isUnitTestMode()) { "Test-only method" }
+    schemeManager.removeScheme(scheme)
   }
 
-  private void loadBundledSchemes() {
-    if (!isUnitTestOrHeadlessMode()) {
-      BUNDLED_EP_NAME.processWithPluginDescriptor((ep, pluginDescriptor) -> {
-        loadBundledScheme(ep.getPath() + ".xml", null, pluginDescriptor);
-      });
+  private fun loadBundledSchemes() {
+    if (!isUnitTestOrHeadlessMode) {
+      BUNDLED_EP_NAME.processWithPluginDescriptor { ep: BundledSchemeEP, pluginDescriptor: PluginDescriptor? ->
+        loadBundledScheme(ep.path + ".xml", null, pluginDescriptor)
+      }
     }
   }
 
   @TestOnly
-  public @Nullable EditorColorsScheme loadBundledScheme(@NotNull String themeName) {
-    assert ApplicationManager.getApplication().isUnitTestMode() : "Test-only method";
-    UIThemeLookAndFeelInfoImpl theme =
-      (UIThemeLookAndFeelInfoImpl)UiThemeProviderListManager.Companion.getInstance().findThemeByName(themeName);
-    String schemePath = theme == null ? null : theme.getTheme().getEditorSchemePath();
+  fun loadBundledScheme(themeName: String): EditorColorsScheme? {
+    assert(ApplicationManager.getApplication().isUnitTestMode()) { "Test-only method" }
+    val theme =
+      UiThemeProviderListManager.getInstance().findThemeByName(themeName) as UIThemeLookAndFeelInfoImpl?
+    val schemePath = theme?.theme?.editorSchemePath
     if (schemePath == null) {
-      return null;
+      return null
     }
 
-    EditorColorsScheme bundledScheme = loadBundledScheme(schemePath, theme, null);
-    initEditableBundledSchemesCopies();
-    return bundledScheme;
+    val bundledScheme = loadBundledScheme(schemePath, theme, null)
+    initEditableBundledSchemesCopies()
+    return bundledScheme
   }
-  
+
   @TestOnly
-  public @Nullable EditorColorsScheme loadBundledScheme(@NotNull String resourcePath, @NotNull PluginDescriptor descriptor) {
-    assert ApplicationManager.getApplication().isUnitTestMode() : "Test-only method";
-    EditorColorsScheme bundledScheme = loadBundledScheme(resourcePath, null, descriptor);
-    initEditableBundledSchemesCopies();
-    return bundledScheme;
+  fun loadBundledScheme(resourcePath: String, descriptor: PluginDescriptor): EditorColorsScheme? {
+    assert(ApplicationManager.getApplication().isUnitTestMode()) { "Test-only method" }
+    val bundledScheme = loadBundledScheme(resourcePath, null, descriptor)
+    initEditableBundledSchemesCopies()
+    return bundledScheme
   }
 
-  private @Nullable EditorColorsScheme loadBundledScheme(@NotNull String resourceName,
-                                                         @Nullable Object requestor,
-                                                         @Nullable PluginDescriptor descriptor) {
-    BundledScheme scheme = (BundledScheme)schemeManager.loadBundledScheme(resourceName, requestor, descriptor);
+  private fun loadBundledScheme(resourceName: String,
+                                requestor: Any?,
+                                descriptor: PluginDescriptor?): EditorColorsScheme? {
+    val scheme = schemeManager.loadBundledScheme(resourceName, requestor, descriptor) as BundledScheme?
     if (scheme != null && descriptor != null) {
-      scheme.getMetaProperties().setProperty(AbstractColorsScheme.META_INFO_PLUGIN_ID, descriptor.getPluginId().getIdString());
+      scheme.metaProperties.setProperty(AbstractColorsScheme.META_INFO_PLUGIN_ID, descriptor.getPluginId().idString)
     }
-    return scheme;
+    return scheme
   }
 
-  private void loadSchemesFromThemes() {
-    if (isUnitTestOrHeadlessMode()) {
-      return;
+  private fun loadSchemesFromThemes() {
+    if (isUnitTestOrHeadlessMode) {
+      return
     }
 
-    for (UIThemeLookAndFeelInfo laf : SequencesKt.asIterable(UiThemeProviderListManager.Companion.getInstance().getLaFs())) {
-      UITheme theme = ((UIThemeLookAndFeelInfoImpl)laf).getTheme();
-      PluginDescriptor pluginDescriptor = getPluginDescriptor(laf);
-      for (String scheme : theme.getAdditionalEditorSchemes()) {
-        loadBundledScheme(scheme, theme, pluginDescriptor);
+    for (laf in UiThemeProviderListManager.getInstance().getLaFs().asIterable()) {
+      val theme = (laf as UIThemeLookAndFeelInfoImpl).theme
+      val pluginDescriptor = getPluginDescriptor(laf)
+      for (scheme in theme.additionalEditorSchemes) {
+        loadBundledScheme(scheme, theme, pluginDescriptor)
       }
 
-      String path = theme.getEditorSchemePath();
+      val path = theme.editorSchemePath
       if (path != null) {
-        loadBundledScheme(path, theme, pluginDescriptor);
+        loadBundledScheme(path, theme, pluginDescriptor)
       }
     }
   }
 
-  private void initEditableBundledSchemesCopies() {
-    for (EditorColorsScheme scheme : schemeManager.getAllSchemes()) {
-      if (scheme instanceof BundledScheme) {
-        createEditableCopy((BundledScheme)scheme, Scheme.EDITABLE_COPY_PREFIX + scheme.getName());
+  private fun initEditableBundledSchemesCopies() {
+    for (scheme in schemeManager.allSchemes) {
+      if (scheme is BundledScheme) {
+        createEditableCopy(scheme, Scheme.EDITABLE_COPY_PREFIX + scheme.getName())
       }
     }
   }
-  
-  public void handleThemeAdded(@NotNull UITheme theme) {
-    String editorScheme = theme.getEditorSchemePath();
+
+  fun handleThemeAdded(theme: UITheme) {
+    val editorScheme = theme.editorSchemePath
     if (editorScheme != null) {
-      loadBundledScheme(editorScheme, theme, null);
-      initEditableBundledSchemesCopies();
+      loadBundledScheme(editorScheme, theme, null)
+      initEditableBundledSchemesCopies()
     }
   }
 
-  private void resolveLinksToBundledSchemes() {
-    List<EditorColorsScheme> brokenSchemesList = new ArrayList<>();
-    for (EditorColorsScheme scheme : schemeManager.getAllSchemes()) {
+  private fun resolveLinksToBundledSchemes() {
+    val brokenSchemesList: MutableList<EditorColorsScheme> = ArrayList()
+    for (scheme in schemeManager.allSchemes) {
       try {
-        resolveSchemeParent(scheme);
+        resolveSchemeParent(scheme)
       }
-      catch (InvalidDataException e) {
-        LOG.warn("Skipping '" + scheme.getName() + "' because its parent scheme '" + e.getMessage() + "' is missing.");
-        brokenSchemesList.add(scheme);
+      catch (e: InvalidDataException) {
+        LOG.warn("Skipping '" + scheme.getName() + "' because its parent scheme '" + e.message + "' is missing.")
+        brokenSchemesList.add(scheme)
       }
     }
-    for (EditorColorsScheme brokenScheme : brokenSchemesList) {
-      if (brokenScheme instanceof AbstractColorsScheme && !(brokenScheme instanceof ReadOnlyColorsScheme)) {
-        ((AbstractColorsScheme)brokenScheme).setVisible(false);
+    for (brokenScheme in brokenSchemesList) {
+      if (brokenScheme is AbstractColorsScheme && brokenScheme !is ReadOnlyColorsScheme) {
+        brokenScheme.isVisible = false
       }
       else {
-        schemeManager.removeScheme(brokenScheme);
+        schemeManager.removeScheme(brokenScheme)
       }
     }
   }
 
-  @Override
-  public void resolveSchemeParent(@NotNull EditorColorsScheme scheme) {
-    if (scheme instanceof AbstractColorsScheme && !(scheme instanceof ReadOnlyColorsScheme)) {
-      ((AbstractColorsScheme)scheme).resolveParent(name -> schemeManager.findSchemeByName(name));
+  override fun resolveSchemeParent(scheme: EditorColorsScheme) {
+    if (scheme is AbstractColorsScheme && scheme !is ReadOnlyColorsScheme) {
+      scheme.resolveParent { name: String? ->
+        schemeManager.findSchemeByName(
+          name!!)
+      }
     }
   }
 
-  private void createEditableCopy(@NotNull AbstractColorsScheme initialScheme, @NotNull String editableCopyName) {
-    AbstractColorsScheme editableCopy = (AbstractColorsScheme)getScheme(editableCopyName);
+  private fun createEditableCopy(initialScheme: AbstractColorsScheme, editableCopyName: String) {
+    var editableCopy = getScheme(editableCopyName) as AbstractColorsScheme?
     if (editableCopy == null) {
-      editableCopy = (AbstractColorsScheme)initialScheme.clone();
-      editableCopy.setName(editableCopyName);
-      schemeManager.addScheme(editableCopy);
+      editableCopy = initialScheme.clone() as AbstractColorsScheme
+      editableCopy.name = editableCopyName
+      schemeManager.addScheme(editableCopy)
     }
     else {
-      if (initialScheme instanceof BundledScheme) {
-        editableCopy.copyMissingAttributes(initialScheme);
+      if (initialScheme is BundledScheme) {
+        editableCopy.copyMissingAttributes(initialScheme)
       }
     }
-    editableCopy.setCanBeDeleted(false);
+    editableCopy.setCanBeDeleted(false)
   }
 
-  public void handleThemeRemoved(@NotNull UITheme theme) {
-    String editorSchemeName = theme.getEditorSchemeName();
+  fun handleThemeRemoved(theme: UITheme) {
+    val editorSchemeName = theme.editorSchemeName
     if (editorSchemeName != null) {
-      EditorColorsScheme scheme = schemeManager.findSchemeByName(editorSchemeName);
+      val scheme = schemeManager.findSchemeByName(editorSchemeName)
       if (scheme != null) {
-        schemeManager.removeScheme(scheme);
-        String editableCopyName = getEditableCopyName(scheme);
+        schemeManager.removeScheme(scheme)
+        val editableCopyName = getEditableCopyName(scheme)
         if (editableCopyName != null) {
-          schemeManager.removeScheme(editableCopyName);
+          schemeManager.removeScheme(editableCopyName)
         }
       }
     }
   }
 
-  public void schemeChangedOrSwitched(@Nullable EditorColorsScheme newScheme) {
+  fun schemeChangedOrSwitched(newScheme: EditorColorsScheme?) {
     // refreshAllEditors is not enough - for example, change "Errors and warnings -> Typo" from green (default) to red
-    for (Project project : ProjectManager.getInstance().getOpenProjects()) {
-      PsiManager.getInstance(project).dropPsiCaches();
+    for (project in ProjectManager.getInstance().getOpenProjects()) {
+      PsiManager.getInstance(project).dropPsiCaches()
     }
 
-    // we need to push events to components that use editor font, e.g. HTML editor panes
-    ApplicationManager.getApplication().getMessageBus().syncPublisher(TOPIC).globalSchemeChange(newScheme);
-    myTreeDispatcher.getMulticaster().globalSchemeChange(newScheme);
+    // we need to push events to components that use editor font, e.g., HTML editor panes
+    ApplicationManager.getApplication().getMessageBus().syncPublisher(TOPIC).globalSchemeChange(newScheme)
+    treeDispatcher.multicaster.globalSchemeChange(newScheme)
   }
 
-  @Override
-  public @NotNull EditorColorsScheme getSchemeForCurrentUITheme() {
-    UIThemeLookAndFeelInfo lookAndFeelInfo = LafManager.getInstance().getCurrentUIThemeLookAndFeel();
-    EditorColorsScheme scheme = null;
-    if (lookAndFeelInfo instanceof TempUIThemeLookAndFeelInfo) {
-      EditorColorsScheme globalScheme = EditorColorsManager.getInstance().getGlobalScheme();
+  override fun getSchemeForCurrentUITheme(): EditorColorsScheme {
+    val lookAndFeelInfo = LafManager.getInstance().getCurrentUIThemeLookAndFeel()
+    var scheme: EditorColorsScheme? = null
+    if (lookAndFeelInfo is TempUIThemeLookAndFeelInfo) {
+      val globalScheme = getInstance().getGlobalScheme()
       if (isTempScheme(globalScheme)) {
-        return globalScheme;
+        return globalScheme
       }
     }
     if (lookAndFeelInfo != null) {
-      String schemeName = lookAndFeelInfo.getEditorSchemeName();
+      val schemeName = lookAndFeelInfo.editorSchemeName
       if (schemeName != null) {
-        scheme = getScheme(schemeName);
-        assert scheme != null : "Theme " + lookAndFeelInfo.getName() + " refers to unknown color scheme " + schemeName;
+        scheme = getScheme(schemeName)
+        assert(scheme != null) { "Theme " + lookAndFeelInfo.name + " refers to unknown color scheme " + schemeName }
       }
     }
     if (scheme == null) {
-      String schemeName = StartupUiUtil.isUnderDarcula() ? "Darcula" : DEFAULT_SCHEME_NAME;
-      DefaultColorSchemesManager colorSchemeManager = DefaultColorSchemesManager.getInstance();
-      scheme = colorSchemeManager.getScheme(schemeName);
-      assert scheme != null :
+      @Suppress("DEPRECATION") val schemeName = if (StartupUiUtil.isUnderDarcula) "Darcula" else DEFAULT_SCHEME_NAME
+      val colorSchemeManager = DefaultColorSchemesManager.getInstance()
+      scheme = colorSchemeManager.getScheme(schemeName)
+      assert(scheme != null) {
         "The default scheme '" + schemeName + "' not found, " +
-        "available schemes: " + colorSchemeManager.listNames();
+        "available schemes: " + colorSchemeManager.listNames()
+      }
     }
-    EditorColorsScheme editableCopy = getEditableCopy(scheme);
-    return editableCopy != null ? editableCopy : scheme;
+    val editableCopy = getEditableCopy(scheme)
+    return editableCopy ?: scheme!!
   }
 
-  private void loadRemainAdditionalTextAttributes(@NotNull Map<String, List<AdditionalTextAttributesEP>> additionalTextAttributes) {
-    for (Map.Entry<String, List<AdditionalTextAttributesEP>> entry : additionalTextAttributes.entrySet()) {
-      String schemeName = entry.getKey();
-      EditorColorsScheme editorColorsScheme = schemeManager.findSchemeByName(schemeName);
-      if (!(editorColorsScheme instanceof AbstractColorsScheme)) {
-        if (!isUnitTestOrHeadlessMode()) {
-          LOG.warn("Cannot find scheme: " + schemeName + " from plugins: " +
-                   Strings.join(entry.getValue(), ep -> ep.pluginDescriptor.getPluginId().getIdString(), ";"));
+  private fun loadRemainAdditionalTextAttributes(additionalTextAttributes: MutableMap<String, MutableList<AdditionalTextAttributesEP>>) {
+    for ((schemeName, value) in additionalTextAttributes) {
+      val editorColorsScheme = schemeManager.findSchemeByName(schemeName)
+      if (editorColorsScheme !is AbstractColorsScheme) {
+        if (!isUnitTestOrHeadlessMode) {
+          LOG.warn("Cannot find scheme: $schemeName from plugins: " +
+                   value.joinToString(separator = ";") { it.pluginDescriptor.getPluginId().idString })
         }
-        continue;
+        continue
       }
 
-      loadAdditionalTextAttributesForScheme((AbstractColorsScheme)editorColorsScheme, entry.getValue());
+      loadAdditionalTextAttributesForScheme(scheme = editorColorsScheme, attributeEps = value)
     }
-    additionalTextAttributes.clear();
+    additionalTextAttributes.clear()
   }
 
-  static final class BundledScheme extends EditorColorsSchemeImpl implements ReadOnlyColorsScheme {
-    BundledScheme() {
-      super(null);
-    }
-
-    @Override
-    public boolean isVisible() {
-      return false;
-    }
+  internal class BundledScheme : EditorColorsSchemeImpl(null), ReadOnlyColorsScheme {
+    override fun isVisible() = false
   }
 
-  static final class State {
-    public boolean USE_ONLY_MONOSPACED_FONTS = true;
+  class State {
+    @JvmField
+    var USE_ONLY_MONOSPACED_FONTS: Boolean = true
 
+    @JvmField
     @OptionTag(tag = "global_color_scheme", nameAttribute = "", valueAttribute = "name")
-    public String colorScheme;
+    var colorScheme: String? = null
   }
 
-  private static boolean isUnitTestOrHeadlessMode() {
-    return ApplicationManager.getApplication().isUnitTestMode() || ApplicationManager.getApplication().isHeadlessEnvironment();
+  fun getDefaultAttributes(key: TextAttributesKey): TextAttributes? {
+    @Suppress("DEPRECATION") val dark = StartupUiUtil.isUnderDarcula && getScheme("Darcula") != null
+    // It is reasonable to fetch attributes from a Default color scheme.
+    // Otherwise, if we launch IDE and then try to switch from a custom colors scheme (e.g., with a dark background) to the default one.
+    // The editor will show incorrect highlighting with "traces" of a color scheme which was active during IDE startup.
+    return getScheme(if (dark) "Darcula" else EditorColorsScheme.DEFAULT_SCHEME_NAME)?.getAttributes(key)
   }
 
-  public TextAttributes getDefaultAttributes(@NotNull TextAttributesKey key) {
-    final boolean dark = StartupUiUtil.isUnderDarcula() && getScheme("Darcula") != null;
-    // It is reasonable to fetch attributes from Default color scheme. Otherwise, if we launch IDE and then
-    // try switch from custom colors scheme (e.g. with dark background) to default one. Editor will show
-    // incorrect highlighting with "traces" of color scheme which was active during IDE startup.
-    return getScheme(dark ? "Darcula" : EditorColorsScheme.DEFAULT_SCHEME_NAME).getAttributes(key);
-  }
-
-  private static @NotNull Map<String, List<AdditionalTextAttributesEP>> collectAdditionalTextAttributesEPs() {
-    Map<String, List<AdditionalTextAttributesEP>> result = new HashMap<>();
-    ADDITIONAL_TEXT_ATTRIBUTES_EP_NAME.forEachExtensionSafe(attributesEP -> {
-      result.computeIfAbsent(attributesEP.scheme, __ -> new ArrayList<>()).add(attributesEP);
-    });
-    return result;
-  }
-
-  @Override
-  public void addColorsScheme(@NotNull EditorColorsScheme scheme) {
+  override fun addColorsScheme(scheme: EditorColorsScheme) {
     if (!isDefaultScheme(scheme) && !Strings.isEmpty(scheme.getName())) {
-      schemeManager.addScheme(scheme);
+      schemeManager.addScheme(scheme)
     }
   }
 
-  private static void loadAdditionalTextAttributesForScheme(@NotNull AbstractColorsScheme scheme,
-                                                            @NotNull Collection<AdditionalTextAttributesEP> attributeEps) {
-    for (AdditionalTextAttributesEP attributesEP : attributeEps) {
-      try {
-        byte[] data =
-          ResourceUtil.getResourceAsBytes(Strings.trimStart(attributesEP.file, "/"), attributesEP.pluginDescriptor.getClassLoader());
-        if (data == null) {
-          LOG.warn("resource not found: " + attributesEP.file);
-          continue;
-        }
-
-        Element root = JDOMUtil.load(data);
-        scheme.readAttributes(Objects.requireNonNullElse(root.getChild("attributes"), root));
-        Element colors = root.getChild("colors");
-        if (colors != null) {
-          scheme.readColors(colors);
-        }
-      }
-      catch (Exception e) {
-        LOG.error(e);
-      }
-    }
+  override fun getAllSchemes(): Array<EditorColorsScheme> {
+    val result = getAllVisibleSchemes(schemeManager.allSchemes)
+    Arrays.sort(result, EditorColorSchemesComparator.INSTANCE)
+    return result
   }
 
-  @Override
-  public EditorColorsScheme @NotNull [] getAllSchemes() {
-    EditorColorsScheme[] result = getAllVisibleSchemes(schemeManager.getAllSchemes());
-    Arrays.sort(result, EditorColorSchemesComparator.INSTANCE);
-    return result;
+  fun setGlobalScheme(scheme: EditorColorsScheme?, processChangeSynchronously: Boolean) {
+    val notify = LoadingState.COMPONENTS_LOADED.isOccurred
+    schemeManager.setCurrent(scheme ?: getDefaultScheme(), notify, processChangeSynchronously)
   }
 
-  public void setGlobalScheme(@Nullable EditorColorsScheme scheme, boolean processChangeSynchronously) {
-    boolean notify = LoadingState.COMPONENTS_LOADED.isOccurred();
-    schemeManager.setCurrent(scheme == null ? getDefaultScheme() : scheme, notify, processChangeSynchronously);
+  override fun setGlobalScheme(scheme: EditorColorsScheme?) {
+    setGlobalScheme(scheme, false)
   }
 
-  private static EditorColorsScheme[] getAllVisibleSchemes(@NotNull Collection<? extends EditorColorsScheme> schemes) {
-    List<EditorColorsScheme> visibleSchemes = new ArrayList<>(schemes.size() - 1);
-    for (EditorColorsScheme scheme : schemes) {
-      if (AbstractColorsScheme.isVisible(scheme)) {
-        visibleSchemes.add(scheme);
-      }
-    }
-    return visibleSchemes.toArray(new EditorColorsScheme[0]);
-  }
-
-  @Override
-  public void setGlobalScheme(@Nullable EditorColorsScheme scheme) {
-    setGlobalScheme(scheme, false);
-  }
-
-  @Override
-  public @NotNull EditorColorsScheme getGlobalScheme() {
-    EditorColorsScheme scheme = schemeManager.getActiveScheme();
-    if (scheme instanceof AbstractColorsScheme &&
-        !(scheme instanceof ReadOnlyColorsScheme) &&
-        !((AbstractColorsScheme)scheme).isVisible()) {
-      return getDefaultScheme();
+  override fun getGlobalScheme(): EditorColorsScheme {
+    val scheme = schemeManager.activeScheme
+    if (scheme is AbstractColorsScheme &&
+        scheme !is ReadOnlyColorsScheme &&
+        !scheme.isVisible) {
+      return getDefaultScheme()
     }
 
-    EditorColorsScheme editableCopy = getEditableCopy(scheme);
+    val editableCopy = getEditableCopy(scheme)
     if (editableCopy != null) {
-      return editableCopy;
+      return editableCopy
     }
-    return scheme == null ? getDefaultScheme() : scheme;
+    return scheme ?: getDefaultScheme()
   }
 
-  private @NotNull EditorColorsScheme getDefaultScheme() {
-    DefaultColorsScheme defaultScheme = DefaultColorSchemesManager.getInstance().getFirstScheme();
-    String editableCopyName = defaultScheme.getEditableCopyName();
-    EditorColorsScheme editableCopy = getScheme(editableCopyName);
+  private fun getDefaultScheme(): EditorColorsScheme {
+    val defaultScheme = DefaultColorSchemesManager.getInstance().firstScheme
+    val editableCopyName = defaultScheme.editableCopyName
+    val editableCopy = getScheme(editableCopyName)
     if (editableCopy == null) {
-      LOG.error("An editable copy of " + defaultScheme.getName() + " has not been initialized.");
-      return defaultScheme;
+      LOG.error("An editable copy of ${defaultScheme.name} has not been initialized.")
+      return defaultScheme
     }
-    return editableCopy;
+    return editableCopy
   }
 
-  @Override
-  public EditorColorsScheme getScheme(@NonNls @NotNull String schemeName) {
-    return schemeManager.findSchemeByName(schemeName);
+  override fun getScheme(schemeName: @NonNls String): EditorColorsScheme? {
+    return schemeManager.findSchemeByName(schemeName)
   }
 
-  private @Nullable EditorColorsScheme getEditableCopy(EditorColorsScheme scheme) {
+  private fun getEditableCopy(scheme: EditorColorsScheme?): EditorColorsScheme? {
     if (isTempScheme(scheme)) {
-      return scheme;
+      return scheme
     }
 
-    String editableCopyName = getEditableCopyName(scheme);
+    val editableCopyName = getEditableCopyName(scheme)
     if (editableCopyName != null) {
-      EditorColorsScheme editableCopy = getScheme(editableCopyName);
+      val editableCopy = getScheme(editableCopyName)
       if (editableCopy != null) {
-        return editableCopy;
+        return editableCopy
       }
     }
-    return null;
+    return null
   }
 
-  private static @Nullable String getEditableCopyName(EditorColorsScheme scheme) {
-    String editableCopyName = null;
-    if (scheme instanceof DefaultColorsScheme && ((DefaultColorsScheme)scheme).hasEditableCopy()) {
-      editableCopyName = ((DefaultColorsScheme)scheme).getEditableCopyName();
+  override fun getState(): State {
+    val currentSchemeName = schemeManager.currentSchemeName
+    if (currentSchemeName != null && !isTempScheme(schemeManager.activeScheme)) {
+      state.colorScheme = currentSchemeName
     }
-    else if (scheme instanceof BundledScheme) {
-      editableCopyName = Scheme.EDITABLE_COPY_PREFIX + scheme.getName();
-    }
-    return editableCopyName;
+    return state
   }
 
-  @Override
-  public @Nullable State getState() {
-    String currentSchemeName = schemeManager.getCurrentSchemeName();
-    if (currentSchemeName != null && !isTempScheme(schemeManager.getActiveScheme())) {
-      state.colorScheme = currentSchemeName;
-    }
-    return state;
+  override fun isUseOnlyMonospacedFonts(): Boolean {
+    return state.USE_ONLY_MONOSPACED_FONTS
   }
 
-  @Override
-  public boolean isUseOnlyMonospacedFonts() {
-    return state.USE_ONLY_MONOSPACED_FONTS;
+  override fun setUseOnlyMonospacedFonts(value: Boolean) {
+    state.USE_ONLY_MONOSPACED_FONTS = value
   }
 
-  @Override
-  public void setUseOnlyMonospacedFonts(boolean value) {
-    state.USE_ONLY_MONOSPACED_FONTS = value;
-  }
-
-  @Override
-  public void loadState(@NotNull State state) {
-    this.state = state;
-    EditorColorsScheme colorScheme = state.colorScheme == null ? null : getScheme(state.colorScheme);
+  override fun loadState(state: State) {
+    this.state = state
+    val colorSchemeName = state.colorScheme
+    var colorScheme = colorSchemeName?.let { getScheme(it) }
     if (colorScheme == null) {
-      if (state.colorScheme != null) {
-        LOG.warn(state.colorScheme + " color scheme is missing");
+      if (colorSchemeName != null) {
+        LOG.warn("$colorSchemeName color scheme is missing")
       }
 
-      noStateLoaded();
-      return;
+      noStateLoaded()
+      return
     }
 
-    themeIsCustomized = true;
-    Ref<EditorColorsScheme> schemeRef = new Ref<>(colorScheme);
-    String schemeName = colorScheme.getName();
+    themeIsCustomized = true
+    val schemeName = colorScheme.getName()
     //todo[kb] remove after 23.1 EAPs
     // New Dark RC is renamed to Dark, switch the scheme accordingly
-    if (ExperimentalUI.isNewUI() && (schemeName.equals("_@user_New Dark RC") || schemeName.equals("New Dark RC"))) {
-      RunOnceUtil.runOnceForApp("force.switch.from.new.dark.editor.scheme", () -> {
-        EditorColorsScheme newDark = schemeManager.findSchemeByName("Dark");
-        if (newDark != null) {
-          schemeRef.set(newDark);
+    if (ExperimentalUI.isNewUI() && (schemeName == "_@user_New Dark RC" || schemeName == "New Dark RC")) {
+      runOnceForApp("force.switch.from.new.dark.editor.scheme") {
+        schemeManager.findSchemeByName("Dark")?.let {
+          colorScheme = it
         }
-      });
+      }
     }
 
-    EditorColorsScheme scheme = schemeRef.get();
-    schemeManager.setCurrent(scheme, isInitialConfigurationLoaded);
-    isInitialConfigurationLoaded = true;
+    schemeManager.setCurrent(scheme = colorScheme, notify = isInitialConfigurationLoaded)
+    isInitialConfigurationLoaded = true
 
-    notifyAboutSolarizedColorSchemeDeprecationIfSet(colorScheme);
+    notifyAboutSolarizedColorSchemeDeprecationIfSet(colorScheme)
 
-    Activity activity = StartUpMeasurer.startActivity("editor color scheme initialization");
-    UIThemeLookAndFeelInfo laf = ApplicationManager.getApplication().isUnitTestMode() ? null : LafManager.getInstance().getCurrentUIThemeLookAndFeel();
+    val activity = StartUpMeasurer.startActivity("editor color scheme initialization")
+    val laf = if (ApplicationManager.getApplication().isUnitTestMode()) null else LafManager.getInstance().getCurrentUIThemeLookAndFeel()
     // null in a headless mode
     if (laf != null) {
       if (!themeIsCustomized) {
-        EditorColorsScheme scheme1 = null;
-        String schemeName1 = laf.getEditorSchemeName();
+        var scheme1: EditorColorsScheme? = null
+        val schemeName1 = laf.editorSchemeName
         if (schemeName1 != null) {
-          scheme1 = getScheme(schemeName1);
+          scheme1 = getScheme(schemeName1)
         }
         if (scheme1 != null) {
-          schemeManager.setCurrent(scheme1, false);
+          schemeManager.setCurrent(scheme = scheme1, notify = false)
         }
       }
     }
-    activity.end();
+    activity.end()
   }
 
-  @Override
-  public void noStateLoaded() {
-    themeIsCustomized = false;
+  override fun noStateLoaded() {
+    themeIsCustomized = false
 
-    Activity activity = StartUpMeasurer.startActivity("editor color scheme initialization");
-    UIThemeLookAndFeelInfo laf = ApplicationManager.getApplication().isUnitTestMode() ? null : LafManager.getInstance().getCurrentUIThemeLookAndFeel();
+    val activity = StartUpMeasurer.startActivity("editor color scheme initialization")
+    val laf = if (ApplicationManager.getApplication().isUnitTestMode()) null else LafManager.getInstance().getCurrentUIThemeLookAndFeel()
 
-    EditorColorsScheme scheme = null;
-    String schemeName = laf == null ? null : laf.getEditorSchemeName();
-    if (schemeName != null) {
-      scheme = getScheme(schemeName);
-    }
-    if (scheme == null) {
-      scheme = getDefaultScheme();
-    }
-    schemeManager.setCurrent(scheme, isInitialConfigurationLoaded);
-    isInitialConfigurationLoaded = true;
-    activity.end();
+    val scheme = laf?.editorSchemeName?.let { getScheme(it) } ?: getDefaultScheme()
+    schemeManager.setCurrent(scheme = scheme, notify = isInitialConfigurationLoaded)
+    isInitialConfigurationLoaded = true
+    activity.end()
   }
 
-  public @NotNull SchemeManager<EditorColorsScheme> getSchemeManager() {
-    return schemeManager;
-  }
+  override fun isDefaultScheme(scheme: EditorColorsScheme): Boolean = scheme is DefaultColorsScheme
 
-  @Override
-  public boolean isDefaultScheme(EditorColorsScheme scheme) {
-    return scheme instanceof DefaultColorsScheme;
-  }
-
-  private static PluginDescriptor getPluginDescriptor(@NotNull UIThemeLookAndFeelInfo theme) {
-    ClassLoader classLoader = theme.getProviderClassLoader();
-    return classLoader instanceof PluginClassLoader ? ((PluginClassLoader)classLoader).getPluginDescriptor() : null;
-  }
-
-  private final class EditorColorSchemeProcessor extends LazySchemeProcessor<EditorColorsScheme, EditorColorsSchemeImpl>
-    implements SchemeExtensionProvider {
-    private final Map<String, List<AdditionalTextAttributesEP>> additionalTextAttributes;
-
-    EditorColorSchemeProcessor(@NotNull Map<String, List<AdditionalTextAttributesEP>> additionalTextAttributes) {
-      this.additionalTextAttributes = additionalTextAttributes;
-    }
-
-    @Override
-    public @NotNull EditorColorsSchemeImpl createScheme(@NotNull SchemeDataHolder<? super EditorColorsSchemeImpl> dataHolder,
-                                                        @NotNull String name,
-                                                        @NotNull Function1<? super String, String> attributeProvider,
-                                                        boolean isBundled) {
-      EditorColorsSchemeImpl scheme = isBundled ? new BundledScheme() : new EditorColorsSchemeImpl(null);
+  private inner class EditorColorSchemeProcessor(
+    private val additionalTextAttributes: MutableMap<String, MutableList<AdditionalTextAttributesEP>>,
+  ) :
+    LazySchemeProcessor<EditorColorsScheme, EditorColorsSchemeImpl>(), SchemeExtensionProvider {
+    override fun createScheme(dataHolder: SchemeDataHolder<EditorColorsSchemeImpl>,
+                              name: String,
+                              attributeProvider: (String) -> String?,
+                              isBundled: Boolean): EditorColorsSchemeImpl {
+      val scheme = if (isBundled) BundledScheme() else EditorColorsSchemeImpl(null)
       // todo be lazy
-      scheme.readExternal(dataHolder.read());
-      // we don't need to update digest for bundled scheme because
-      // 1) it can be computed on demand later (because bundled scheme is not mutable)
-      // 2) in the future user copy of bundled scheme will use bundled scheme as parent (not as full copy)
+      scheme.readExternal(dataHolder.read())
+      // we don't need to update digest for a bundled scheme because
+      // 1) it can be computed on demand later (because a bundled scheme is not mutable)
+      // 2) in the future user copy of a bundled scheme will use a bundled scheme as parent (not as full copy)
       if (isBundled ||
-          (ApplicationManager.getApplication().isUnitTestMode() &&
-           Boolean.parseBoolean(scheme.getMetaProperties().getProperty("forceOptimize")))) {
-        if (scheme.myParentScheme instanceof AbstractColorsScheme) {
-          Collection<AdditionalTextAttributesEP> attributesEPs = additionalTextAttributes.remove(scheme.myParentScheme.getName());
-          if (attributesEPs != null && !attributesEPs.isEmpty()) {
-            loadAdditionalTextAttributesForScheme((AbstractColorsScheme)scheme.myParentScheme, attributesEPs);
+          (ApplicationManager.getApplication().isUnitTestMode() && scheme.metaProperties.getProperty("forceOptimize").toBoolean())) {
+        if (scheme.myParentScheme is AbstractColorsScheme) {
+          val attributesEPs = additionalTextAttributes.remove(scheme.myParentScheme.getName())
+          if (!attributesEPs.isNullOrEmpty()) {
+            loadAdditionalTextAttributesForScheme(scheme = scheme.myParentScheme as AbstractColorsScheme, attributeEps = attributesEPs)
           }
         }
 
-        scheme.optimizeAttributeMap();
+        scheme.optimizeAttributeMap()
       }
-      return scheme;
+      return scheme
     }
 
-    @Override
-    public @NotNull SchemeState getState(@NotNull EditorColorsScheme scheme) {
-      return scheme instanceof ReadOnlyColorsScheme ? SchemeState.NON_PERSISTENT : SchemeState.POSSIBLY_CHANGED;
+    override fun getState(scheme: EditorColorsScheme): SchemeState {
+      return if (scheme is ReadOnlyColorsScheme) SchemeState.NON_PERSISTENT else SchemeState.POSSIBLY_CHANGED
     }
 
-    @Override
-    public void onCurrentSchemeSwitched(@Nullable EditorColorsScheme oldScheme,
-                                        @Nullable EditorColorsScheme newScheme,
-                                        boolean processChangeSynchronously) {
+    override fun onCurrentSchemeSwitched(oldScheme: EditorColorsScheme?,
+                                         newScheme: EditorColorsScheme?,
+                                         processChangeSynchronously: Boolean) {
       if (processChangeSynchronously) {
-        handleCurrentSchemeSwitched(newScheme);
+        handleCurrentSchemeSwitched(newScheme)
       }
       else {
         // don't do heavy operations right away
-        ApplicationManager.getApplication().invokeLater(() -> {
-          handleCurrentSchemeSwitched(newScheme);
-        });
-      }
-    }
-
-    private void handleCurrentSchemeSwitched(@Nullable EditorColorsScheme newScheme) {
-      LafManager.getInstance().updateUI();
-      schemeChangedOrSwitched(newScheme);
-    }
-
-    @Override
-    public @NotNull @NonNls String getSchemeExtension() {
-      return COLOR_SCHEME_FILE_EXTENSION;
-    }
-
-    @Override
-    public boolean isSchemeEqualToBundled(@NotNull EditorColorsSchemeImpl scheme) {
-      if (!scheme.getName().startsWith(Scheme.EDITABLE_COPY_PREFIX)) {
-        return false;
-      }
-
-      AbstractColorsScheme bundledScheme =
-        (AbstractColorsScheme)schemeManager.findSchemeByName(scheme.getName().substring(Scheme.EDITABLE_COPY_PREFIX.length()));
-      if (bundledScheme == null) {
-        return false;
-      }
-
-      return scheme.settingsEqual(bundledScheme);
-    }
-
-    @Override
-    public void reloaded(@NotNull SchemeManager<EditorColorsScheme> schemeManager,
-                         @NotNull Collection<? extends EditorColorsScheme> schemes) {
-      loadBundledSchemes();
-      loadSchemesFromThemes();
-      initEditableDefaultSchemesCopies();
-      initEditableBundledSchemesCopies();
-      ApplicationManager.getApplication().getMessageBus().syncPublisher(EditorColorsManagerListener.TOPIC).schemesReloaded();
-    }
-  }
-
-  private static final @NonNls String TEMP_SCHEME_KEY = "TEMP_SCHEME_KEY";
-  private static final @NonNls String TEMP_SCHEME_FILE_KEY = "TEMP_SCHEME_FILE_KEY";
-  public static boolean isTempScheme(EditorColorsScheme scheme) {
-    if (scheme == null) {
-      return false;
-    }
-
-    return StringUtil.equals(scheme.getMetaProperties().getProperty(TEMP_SCHEME_KEY), Boolean.TRUE.toString());
-  }
-
-  public static @Nullable Path getTempSchemeOriginalFilePath(EditorColorsScheme scheme) {
-    if (isTempScheme(scheme)) {
-      String path = scheme.getMetaProperties().getProperty(TEMP_SCHEME_FILE_KEY);
-      if (path != null) {
-        return Path.of(path);
-      }
-    }
-    return null;
-  }
-
-  public static void setTempScheme(EditorColorsScheme scheme, @Nullable VirtualFile originalSchemeFile) {
-    if (scheme == null) {
-      return;
-    }
-
-    scheme.getMetaProperties().setProperty(TEMP_SCHEME_KEY, Boolean.TRUE.toString());
-    if (originalSchemeFile != null) {
-      scheme.getMetaProperties().setProperty(TEMP_SCHEME_FILE_KEY, originalSchemeFile.getPath());
-    }
-  }
-
-  private static void notifyAboutSolarizedColorSchemeDeprecationIfSet(@Nullable EditorColorsScheme scheme) {
-    if (scheme == null) {
-      return;
-    }
-
-    Set<String> solarizedColorSchemeNames = Set.of("Solarized (dark)",
-                                                   "Solarized (light)",
-                                                   "Solarized Dark",
-                                                   "Solarized Light",
-                                                   "Solarized Dark (Darcula)");
-
-    @NotNull String name = Strings.trimStart(scheme.getName(), Scheme.EDITABLE_COPY_PREFIX);
-    if (!solarizedColorSchemeNames.contains(name)) {
-      return;
-    }
-
-    @SuppressWarnings("SpellCheckingInspection")
-    PluginId[] solarizedPluginsContainingSchemesWithTheSameName = {
-      PluginId.getId("solarized"),
-      PluginId.getId("com.tylerthrailkill.intellij.solarized")
-    };
-    if ((name.equals("Solarized Dark") || name.equals("Solarized Light"))) {
-      for (PluginId t : solarizedPluginsContainingSchemesWithTheSameName) {
-        if (PluginManager.getInstance().findEnabledPlugin(t) != null) {
-          return;
+        ApplicationManager.getApplication().invokeLater {
+          handleCurrentSchemeSwitched(newScheme)
         }
       }
     }
 
-    MessageBusConnection connection = ApplicationManager.getApplication().getMessageBus().connect();
-    connection.subscribe(ProjectManager.TOPIC, new ProjectManagerListener() {
-      @Override
-      public void projectOpened(@NotNull Project project) {
-        connection.disconnect();
-        ApplicationManager.getApplication().invokeLater(() -> {
-          @NotNull PluginId pluginId = PluginId.getId("com.4lex4.intellij.solarized");
+    private fun handleCurrentSchemeSwitched(newScheme: EditorColorsScheme?) {
+      LafManager.getInstance().updateUI()
+      schemeChangedOrSwitched(newScheme)
+    }
 
-          boolean isDark = ColorUtil.isDark(scheme.getDefaultBackground());
-          String neededThemeName = isDark ? "Solarized Dark" : "Solarized Light";
+    override val schemeExtension: @NonNls String
+      get() = COLOR_SCHEME_FILE_EXTENSION
 
-          UIThemeLookAndFeelInfo neededTheme = UiThemeProviderListManager.Companion.getInstance().findThemeByName(neededThemeName);
-          Notification notification = new Notification("ColorSchemeDeprecation",
-                                                       IdeBundle.message("notification.title.solarized.color.scheme.deprecation"),
-                                                       "",
-                                                       NotificationType.ERROR);
+    override fun isSchemeEqualToBundled(scheme: EditorColorsSchemeImpl): Boolean {
+      if (!scheme.getName().startsWith(Scheme.EDITABLE_COPY_PREFIX)) {
+        return false
+      }
+
+      val bundledScheme =
+        (schemeManager.findSchemeByName(scheme.getName().substring(Scheme.EDITABLE_COPY_PREFIX.length)) as AbstractColorsScheme?)
+        ?: return false
+      return scheme.settingsEqual(bundledScheme)
+    }
+
+    override fun reloaded(schemeManager: SchemeManager<EditorColorsScheme>, schemes: Collection<EditorColorsScheme>) {
+      loadBundledSchemes()
+      loadSchemesFromThemes()
+      initEditableDefaultSchemesCopies()
+      initEditableBundledSchemesCopies()
+      ApplicationManager.getApplication().getMessageBus().syncPublisher(EditorColorsManagerListener.TOPIC).schemesReloaded()
+    }
+  }
+}
+
+private val isUnitTestOrHeadlessMode: Boolean
+  get() = ApplicationManager.getApplication().isUnitTestMode() || ApplicationManager.getApplication().isHeadlessEnvironment()
+
+private fun collectAdditionalTextAttributesEPs(): MutableMap<String, MutableList<AdditionalTextAttributesEP>> {
+  val result = HashMap<String, MutableList<AdditionalTextAttributesEP>>()
+  EditorColorsManagerImpl.ADDITIONAL_TEXT_ATTRIBUTES_EP_NAME.forEachExtensionSafe {
+    result.computeIfAbsent(it.scheme) { ArrayList() }.add(it)
+  }
+  return result
+}
+
+private fun loadAdditionalTextAttributesForScheme(scheme: AbstractColorsScheme, attributeEps: Collection<AdditionalTextAttributesEP>) {
+  for (attributesEP in attributeEps) {
+    try {
+      val data = ResourceUtil.getResourceAsBytes(attributesEP.file.removePrefix("/"), attributesEP.pluginDescriptor.getClassLoader())
+      if (data == null) {
+        LOG.warn("resource not found: " + attributesEP.file)
+        continue
+      }
+
+      val root = JDOMUtil.load(data)
+      scheme.readAttributes(root.getChild("attributes") ?: root)
+      root.getChild("colors")?.let {
+        scheme.readColors(it)
+      }
+    }
+    catch (e: Exception) {
+      LOG.error(e)
+    }
+  }
+}
+
+private fun getAllVisibleSchemes(schemes: Collection<EditorColorsScheme>): Array<EditorColorsScheme> {
+  val visibleSchemes = ArrayList<EditorColorsScheme>(schemes.size - 1)
+  schemes.filterTo(visibleSchemes) { AbstractColorsScheme.isVisible(it) }
+  return visibleSchemes.toTypedArray<EditorColorsScheme>()
+}
+
+private fun getEditableCopyName(scheme: EditorColorsScheme?): String? {
+  return when {
+    scheme is DefaultColorsScheme && scheme.hasEditableCopy() -> scheme.editableCopyName
+    scheme is EditorColorsManagerImpl.BundledScheme -> Scheme.EDITABLE_COPY_PREFIX + scheme.getName()
+    else -> null
+  }
+}
+
+private fun getPluginDescriptor(theme: UIThemeLookAndFeelInfo): PluginDescriptor? {
+  return (theme.providerClassLoader as? PluginClassLoader)?.pluginDescriptor
+}
+
+private fun notifyAboutSolarizedColorSchemeDeprecationIfSet(scheme: EditorColorsScheme?) {
+  if (scheme == null) {
+    return
+  }
+
+  val solarizedColorSchemeNames = setOf("Solarized (dark)",
+                                        "Solarized (light)",
+                                        "Solarized Dark",
+                                        "Solarized Light",
+                                        "Solarized Dark (Darcula)")
+
+  val name = Strings.trimStart(scheme.getName(), Scheme.EDITABLE_COPY_PREFIX)
+  if (!solarizedColorSchemeNames.contains(name)) {
+    return
+  }
+
+  if (name == "Solarized Dark" || name == "Solarized Light") {
+    @Suppress("SpellCheckingInspection")
+    val solarizedPluginsContainingSchemesWithTheSameName = arrayOf(
+      PluginId.getId("solarized"),
+      PluginId.getId("com.tylerthrailkill.intellij.solarized")
+    )
+    for (t in solarizedPluginsContainingSchemesWithTheSameName) {
+      if (PluginManager.getInstance().findEnabledPlugin(t) != null) {
+        return
+      }
+    }
+  }
+
+  val connection = ApplicationManager.getApplication().getMessageBus().connect()
+  connection.subscribe<ProjectManagerListener>(ProjectManager.TOPIC, object : ProjectManagerListener {
+    @Suppress("removal", "OVERRIDE_DEPRECATION")
+    override fun projectOpened(project: Project) {
+      connection.disconnect()
+
+      ApplicationManager.getApplication().invokeLater(
+        {
+          val pluginId = PluginId.getId("com.4lex4.intellij.solarized")
+          val isDark = ColorUtil.isDark(scheme.getDefaultBackground())
+          val neededThemeName = if (isDark) "Solarized Dark" else "Solarized Light"
+
+          val neededTheme = UiThemeProviderListManager.getInstance().findThemeByName(neededThemeName)
+          val notification = Notification("ColorSchemeDeprecation",
+                                          IdeBundle.message(
+                                            "notification.title.solarized.color.scheme.deprecation"),
+                                          "",
+                                          NotificationType.ERROR)
           if (neededTheme != null) {
-            notification.setContent(IdeBundle.message("notification.content.solarized.color.scheme.deprecation.enable", name, neededThemeName));
-            notification.addAction(new NotificationAction(IdeBundle.message("notification.title.enable.action.solarized.color.scheme.deprecation", neededThemeName)) {
-              @Override
-              public void actionPerformed(@NotNull AnActionEvent e, @NotNull Notification notification) {
-                LafManager lafManager = LafManager.getInstance();
-                lafManager.setCurrentLookAndFeel(neededTheme, false);
-                lafManager.updateUI();
-                notification.expire();
+            notification.setContent(IdeBundle.message(
+              "notification.content.solarized.color.scheme.deprecation.enable", name,
+              neededThemeName))
+            notification.addAction(object : NotificationAction(IdeBundle.message(
+              "notification.title.enable.action.solarized.color.scheme.deprecation",
+              neededThemeName)) {
+              override fun actionPerformed(e: AnActionEvent, notification: Notification) {
+                val lafManager = LafManager.getInstance()
+                lafManager.setCurrentLookAndFeel(neededTheme, false)
+                lafManager.updateUI()
+                notification.expire()
               }
-            });
-          } else {
-            notification.setContent(IdeBundle.message("notification.content.solarized.color.scheme.deprecation.install", name, "Solarized Themes"));
-            notification.addAction(new NotificationAction(IdeBundle.message("notification.title.install.action.solarized.color.scheme.deprecation")) {
-              @Override
-              public void actionPerformed(@NotNull AnActionEvent e, @NotNull Notification notification) {
-                @NotNull MessageBusConnection connection = ApplicationManager.getApplication().getMessageBus().connect();
-                // Needed to enable matching theme after plugin install. Since the plugin provides 2 themes,
-                // we need to wait to both of them to be added (and applied) to reapply the needed one if it wasn't added last.
-                connection.subscribe(LafManagerListener.TOPIC, new LafManagerListener() {
-                  UIThemeLookAndFeelInfo matchingTheme = null;
-                  boolean otherWasSet = false;
+            })
+          }
+          else {
+            notification.setContent(IdeBundle.message(
+              "notification.content.solarized.color.scheme.deprecation.install", name,
+              "Solarized Themes"))
+            notification.addAction(object : NotificationAction(IdeBundle.message(
+              "notification.title.install.action.solarized.color.scheme.deprecation")) {
+              override fun actionPerformed(e: AnActionEvent, notification: Notification) {
+                @Suppress("NAME_SHADOWING")
+                val connection = ApplicationManager.getApplication().getMessageBus().connect()
+                // Needed to enable matching theme after plugin installation.
+                // Since the plugin provides two themes, we need to wait for both of them to be added
+                // (and applied) to reapply the needed one if it wasn't added last.
+                connection.subscribe(LafManagerListener.TOPIC, object : LafManagerListener {
+                  var matchingTheme: UIThemeLookAndFeelInfo? = null
+                  var otherWasSet: Boolean = false
 
-                  @Override
-                  public void lookAndFeelChanged(@NotNull LafManager source) {
-                    UIThemeLookAndFeelInfo themeInfo = source.getCurrentUIThemeLookAndFeel();
-                    if (themeInfo.getName().contains("Solarized")) {
-                      if (isDark && themeInfo.isDark() || !isDark && !themeInfo.isDark()) {
-                        matchingTheme = themeInfo;
+                  override fun lookAndFeelChanged(source: LafManager) {
+                    val themeInfo = source.getCurrentUIThemeLookAndFeel()
+                    if (themeInfo.name.contains("Solarized")) {
+                      if (isDark && themeInfo.isDark || !isDark && !themeInfo.isDark) {
+                        matchingTheme = themeInfo
                       }
                       else {
-                        otherWasSet = true;
+                        otherWasSet = true
                       }
                     }
 
                     if (matchingTheme != null && otherWasSet) {
-                      connection.disconnect();
+                      connection.disconnect()
 
-                      LafManager lafManager = LafManager.getInstance();
-                      if (!lafManager.getCurrentUIThemeLookAndFeel().equals(matchingTheme)) {
-                        lafManager.setCurrentLookAndFeel(matchingTheme, false);
-                        lafManager.updateUI();
+                      val lafManager = LafManager.getInstance()
+                      if (lafManager.getCurrentUIThemeLookAndFeel() != matchingTheme) {
+                        lafManager.setCurrentLookAndFeel(matchingTheme!!, false)
+                        lafManager.updateUI()
                       }
                     }
                   }
-                });
+                })
 
-                PluginsAdvertiser.installAndEnable(project, Sets.newHashSet(pluginId), notification::expire);
+                installAndEnable(project = project, pluginIds = setOf(pluginId), onSuccess = notification::expire)
               }
-            });
+            })
           }
-          notification.notify(project);
-        }, ModalityState.nonModal());
-      }
-    });
-  }
+          notification.notify(project)
+        },
+        ModalityState.nonModal(),
+      )
+    }
+  })
 }

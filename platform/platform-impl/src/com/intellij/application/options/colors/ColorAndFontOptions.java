@@ -504,7 +504,7 @@ public class ColorAndFontOptions extends SearchableConfigurable.Parent.Abstract
       mySchemes.put(schemeDelegate.getName(), schemeDelegate);
     }
     EditorColorsScheme globalScheme = EditorColorsManager.getInstance().getGlobalScheme();
-    if (EditorColorsManagerImpl.isTempScheme(globalScheme)) {
+    if (EditorColorsManagerImpl.Companion.isTempScheme(globalScheme)) {
       MyColorScheme schemeDelegate = new MyTempColorScheme((AbstractColorsScheme)globalScheme);
       initScheme(schemeDelegate);
       mySchemes.put(schemeDelegate.getName(), schemeDelegate);
@@ -1241,7 +1241,7 @@ public class ColorAndFontOptions extends SearchableConfigurable.Parent.Abstract
   }
 
   public static void writeTempScheme(Element scheme, EditorColorsScheme parentScheme) {
-    Path path = EditorColorsManagerImpl.getTempSchemeOriginalFilePath(parentScheme);
+    Path path = EditorColorsManagerImpl.Companion.getTempSchemeOriginalFilePath(parentScheme);
     if (path != null) {
       try {
         Element originalFile = JDOMUtil.load(path.toFile());

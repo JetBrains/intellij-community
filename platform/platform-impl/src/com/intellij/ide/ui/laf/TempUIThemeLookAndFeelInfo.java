@@ -91,7 +91,7 @@ public final class TempUIThemeLookAndFeelInfo extends UIThemeLookAndFeelInfoImpl
 
     if (loaded) {
       AbstractColorsScheme scheme = tmpScheme;
-      EditorColorsManagerImpl.setTempScheme(scheme, mySchemeFile);
+      EditorColorsManagerImpl.Companion.setTempScheme(scheme, mySchemeFile);
       cm.setGlobalScheme(scheme);
       MessageBusConnection connect = ApplicationManager.getApplication().getMessageBus().connect();
       connect.subscribe(EditorColorsManager.TOPIC, editorColorsScheme -> {
