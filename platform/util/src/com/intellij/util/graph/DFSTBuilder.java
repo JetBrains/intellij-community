@@ -149,7 +149,7 @@ public final class DFSTBuilder<Node> {
         }
 
         frames.addLast(new TarjanFrame<>(i, allNodes, buildOuts(allNodes[i])));
-        List<List<Node>> sccs = new ArrayList<>();
+        List<List<Node>> sccs = new LinkedList<>();
 
         strongConnect(sccs, allNodes);
 
