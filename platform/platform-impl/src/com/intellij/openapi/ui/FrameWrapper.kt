@@ -9,6 +9,7 @@ import com.intellij.openapi.actionSystem.DataProvider
 import com.intellij.openapi.actionSystem.ex.ActionUtil
 import com.intellij.openapi.actionSystem.impl.MouseGestureManager
 import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.options.advanced.AdvancedSettings
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectCloseListener
@@ -424,6 +425,14 @@ private class MyJFrame(private var owner: FrameWrapper, private val parent: IdeF
     setupAntialiasing(g)
     super.paint(g)
   }
+
+  @Suppress("OVERRIDE_DEPRECATION") // need this just for logging
+  override fun reshape(x: Int, y: Int, width: Int, height: Int) {
+    if (LOG.isTraceEnabled) {
+      LOG.trace(Throwable("FrameWrapper frame bounds changed to $x, $y, $width, $height"))
+    }
+    super.reshape(x, y, width, height)
+  }
 }
 
 private class MyJDialog(private val owner: FrameWrapper, private val parent: IdeFrame) :
@@ -475,8 +484,18 @@ private class MyJDialog(private val owner: FrameWrapper, private val parent: Ide
     setupAntialiasing(g)
     super.paint(g)
   }
+
+  @Suppress("OVERRIDE_DEPRECATION") // need this just for logging
+  override fun reshape(x: Int, y: Int, width: Int, height: Int) {
+    if (LOG.isTraceEnabled) {
+      LOG.trace(Throwable("FrameWrapper dialog bounds changed to $x, $y, $width, $height"))
+    }
+    super.reshape(x, y, width, height)
+  }
 }
 
 private fun getWindowStateService(project: Project?): WindowStateService {
   return if (project == null) WindowStateService.getInstance() else WindowStateService.getInstance(project)
 }
+
+private val LOG = logger<FrameWrapper>()
