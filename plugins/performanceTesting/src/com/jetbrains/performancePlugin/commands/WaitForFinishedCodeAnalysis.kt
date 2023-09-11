@@ -8,7 +8,6 @@ import com.intellij.openapi.application.invokeLater
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.fileEditor.FileEditor
 import com.intellij.openapi.fileEditor.TextEditor
-import com.intellij.openapi.fileEditor.impl.text.PsiAwareTextEditorImpl
 import com.intellij.openapi.project.DumbService
 import com.intellij.openapi.ui.playback.PlaybackContext
 import com.intellij.openapi.ui.playback.commands.AbstractCommand
@@ -37,10 +36,11 @@ class WaitForFinishedCodeAnalysis(text: String, line: Int) : AbstractCommand(tex
     val wasEntireFileHighlighted = Ref<Boolean>(false)
     connection.subscribe(DaemonCodeAnalyzer.DAEMON_EVENT_TOPIC, object : DaemonListener {
       @Volatile
+      private var canceled: Boolean = false
+      @Volatile
       private var daemonStartTrace: Exception? = null
 
       override fun daemonStarting(fileEditors: Collection<FileEditor>) {
-        if (skipNonPsiFileEditors(fileEditors)) return
         if (daemonStartTrace != null) {
           val errMsg = "Overlapping highlighting sessions"
           val err = AssertionError(errMsg)
@@ -50,18 +50,14 @@ class WaitForFinishedCodeAnalysis(text: String, line: Int) : AbstractCommand(tex
           actionCallback.reject(errMsg)
         }
         daemonStartTrace = Exception("Previous daemon start trace (editors = $fileEditors)")
+        canceled = false
       }
 
-      override fun daemonCanceled(reason: String, fileEditors: Collection<FileEditor>) {
-        daemonStopped(fileEditors, true)
+      override fun daemonCancelEventOccurred(reason: String) {
+        canceled = true
       }
 
       override fun daemonFinished(fileEditors: Collection<FileEditor>) {
-        daemonStopped(fileEditors, false)
-      }
-
-      private fun daemonStopped(fileEditors: Collection<FileEditor>, canceled: Boolean) {
-        if (skipNonPsiFileEditors(fileEditors)) return
         daemonStartTrace = null
         val fileEditor = fileEditors.filterIsInstance<TextEditor>().firstOrNull()!!
         val entireFileHighlighted = DaemonCodeAnalyzerImpl.isHighlightingCompleted(fileEditor, project)
@@ -76,8 +72,7 @@ class WaitForFinishedCodeAnalysis(text: String, line: Int) : AbstractCommand(tex
               .substringBefore("[")
               .replace(",", ".")
               .trim()
-            val dateTimeWhenAppStarted = LocalDateTime.parse(rowFirstDateTimeFromLog,
-                                                             DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss.SSS"))
+            val dateTimeWhenAppStarted = LocalDateTime.parse(rowFirstDateTimeFromLog, DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss.SSS"))
             LOG.info("Total opening time is : ${ChronoUnit.MILLIS.between(dateTimeWhenAppStarted, LocalDateTime.now())}")
 
             actionCallback.setDone()
@@ -88,7 +83,4 @@ class WaitForFinishedCodeAnalysis(text: String, line: Int) : AbstractCommand(tex
 
     return actionCallback.toPromise()
   }
-
-  private fun skipNonPsiFileEditors(fileEditors: Collection<FileEditor>): Boolean =
-    fileEditors.none { editor -> editor is PsiAwareTextEditorImpl }
 }

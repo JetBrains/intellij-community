@@ -92,13 +92,6 @@ public abstract class DaemonCodeAnalyzer {
      * Please don't do anything remotely expensive in your listener implementation because it's called in the background thread under the read action,
      * and if it's not fast enough, it could slow down the highlighting process and hurt overall responsiveness.
      */
-    default void daemonCanceled(@NotNull String reason, @NotNull Collection<? extends @NotNull FileEditor> fileEditors) {
-      daemonCancelEventOccurred(reason);
-    }
-
-    /**
-     * @see DaemonListener#daemonCanceled(String, Collection)
-     */
     default void daemonCancelEventOccurred(@NotNull String reason) {
     }
 

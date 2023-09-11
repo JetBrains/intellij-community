@@ -3460,7 +3460,7 @@ public class DaemonRespondToChangesTest extends DaemonAnalyzerTestCase {
 
     List<HighlightInfo> infos = DaemonCodeAnalyzerImpl.getHighlights(getEditor().getDocument(), HighlightSeverity.WARNING, getProject());
     MyInterruptingVisitor.assertHighlighted(infos);
-    assertEquals("[S, C]", log.toString());
+    assertEquals("[S, C, F]", log.toString());
 
     INTERRUPT.set(false);
     log.clear();
