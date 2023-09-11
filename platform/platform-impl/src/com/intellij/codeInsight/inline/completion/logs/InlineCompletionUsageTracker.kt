@@ -16,7 +16,6 @@ import com.intellij.internal.statistic.service.fus.collectors.CounterUsagesColle
 import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.progress.ProcessCanceledException
-import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.util.PsiUtilCore
 import org.jetbrains.annotations.ApiStatus
@@ -33,10 +32,8 @@ object InlineCompletionUsageTracker : CounterUsagesCollector() {
   class Listener : InlineCompletionEventAdapter {
     private var triggerTracker: TriggerTracker? = null
     private var showTracker: ShowTracker? = null
-    private var editor: Editor? = null
 
     override fun onRequest(event: InlineCompletionEventType.Request) {
-      editor = event.request.editor
       triggerTracker = TriggerTracker(event).also {
         runReadAction { it.captureContext(event.request.editor, event.request.endOffset) }
       }
@@ -49,7 +46,7 @@ object InlineCompletionUsageTracker : CounterUsagesCollector() {
       if (event.i == 0) {
         // trigger tracker -> show tracker
         showTracker = triggerTracker?.createShowTracker()
-        editor?.let { showTracker!!.firstShown(it, event.element) }
+        showTracker!!.firstShown(event.element)
       }
       if (event.i != 0) {
         showTracker!!.nextShown(event.element)
@@ -75,9 +72,7 @@ object InlineCompletionUsageTracker : CounterUsagesCollector() {
       else if (event.cause != null) {
         triggerTracker?.exception()
       }
-      editor?.let {
-        triggerTracker?.finished(it.project)
-      }
+      triggerTracker?.finished()
       triggerTracker = null
     }
   }
@@ -131,11 +126,11 @@ object InlineCompletionUsageTracker : CounterUsagesCollector() {
       assert(!finished.get())
     }
 
-    fun finished(project: Project?) {
+    fun finished() {
       if (!finished.compareAndSet(false, true)) {
         error("Already finished")
       }
-      TriggeredEvent.log(project, listOf(
+      TriggeredEvent.log(listOf(
         TriggeredEvents.REQUEST_ID.with(requestId),
         *data.toTypedArray(),
         TriggeredEvents.EVENT.with(request.event::class.java),
@@ -192,17 +187,15 @@ object InlineCompletionUsageTracker : CounterUsagesCollector() {
     private val data = mutableListOf<EventPair<*>>()
     private val firstShown = AtomicBoolean(false)
     private val shownLogSent = AtomicBoolean(false)
-    private var project: Project? = null
     private var showStartTime = 0L
     private var suggestionLength = 0
 
-    fun firstShown(editor: Editor, element: InlineCompletionElement) {
+    fun firstShown(element: InlineCompletionElement) {
       if (!firstShown.compareAndSet(false, true)) {
         error("Already first shown")
       }
       showStartTime = System.currentTimeMillis()
       data.add(ShownEvents.REQUEST_ID.with(requestId))
-      project = editor.project
       data.add(ShownEvents.TIME_TO_SHOW.with(System.currentTimeMillis() - invocationTime))
       data.add(triggerFeatures)
       nextShown(element)
@@ -232,7 +225,7 @@ object InlineCompletionUsageTracker : CounterUsagesCollector() {
       data.add(ShownEvents.SUGGESTION_LENGTH.with(suggestionLength))
       data.add(ShownEvents.SHOWING_TIME.with(System.currentTimeMillis() - showStartTime))
       data.add(ShownEvents.OUTCOME.with(outcome))
-      ShownEvent.log(project, data)
+      ShownEvent.log(data)
     }
   }
 
