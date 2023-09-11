@@ -26,7 +26,6 @@ import com.intellij.openapi.project.ProjectCloseListener;
 import com.intellij.openapi.ui.MessageType;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Comparing;
-import com.intellij.openapi.util.Factory;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.io.FileUtilRt;
@@ -108,7 +107,7 @@ public final class ChangeListManagerImpl extends ChangeListManagerEx implements 
 
   private boolean myInitialUpdate = true;
   private VcsException myUpdateException;
-  private Factory<JComponent> myAdditionalInfo;
+  private @NotNull List<Supplier<@Nullable JComponent>> myAdditionalInfo = Collections.emptyList();
   private volatile boolean myShowLocalChangesInvalidated;
 
   private volatile @Nls String myFreezeName;
@@ -449,7 +448,7 @@ public final class ChangeListManagerImpl extends ChangeListManagerEx implements 
         myComposite = dataHolder.getComposite();
 
         myUpdateException = null;
-        myAdditionalInfo = null;
+        myAdditionalInfo = Collections.emptyList();
       }
 
       myDelayedNotificator.changedFileStatusChanged(true);
@@ -506,7 +505,7 @@ public final class ChangeListManagerImpl extends ChangeListManagerEx implements 
           myModifier.enterUpdate();
           if (wasEverythingDirty) {
             myUpdateException = null;
-            myAdditionalInfo = null;
+            myAdditionalInfo = Collections.emptyList();
           }
 
           if (LOG.isDebugEnabled()) {
@@ -633,9 +632,7 @@ public final class ChangeListManagerImpl extends ChangeListManagerEx implements 
     }
 
     synchronized (myDataLock) {
-      if (myAdditionalInfo == null) {
-        myAdditionalInfo = builder.getAdditionalInfo();
-      }
+      myAdditionalInfo = builder.getAdditionalInfo();
     }
   }
 
@@ -913,9 +910,15 @@ public final class ChangeListManagerImpl extends ChangeListManagerEx implements 
     }
   }
 
-  public Factory<JComponent> getAdditionalUpdateInfo() {
+  public @NotNull List<Supplier<@Nullable JComponent>> getAdditionalUpdateInfo() {
     synchronized (myDataLock) {
-      return myAdditionalInfo;
+      List<Supplier<JComponent>> updateInfo = new ArrayList<>();
+      if (myUpdateException != null) {
+        String errorMessage = VcsBundle.message("error.updating.changes", myUpdateException.getMessage());
+        updateInfo.add(ChangesViewManager.createTextStatusFactory(errorMessage, true));
+      }
+      updateInfo.addAll(myAdditionalInfo);
+      return updateInfo;
     }
   }
 

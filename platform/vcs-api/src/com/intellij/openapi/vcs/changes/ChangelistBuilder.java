@@ -116,5 +116,5 @@ public interface ChangelistBuilder {
 
   void reportAdditionalInfo(@NlsContexts.Label final String text);
 
-  void reportAdditionalInfo(final Factory<JComponent> infoComponent);
+  void reportAdditionalInfo(@NotNull Factory<@Nullable JComponent> infoComponent);
 }

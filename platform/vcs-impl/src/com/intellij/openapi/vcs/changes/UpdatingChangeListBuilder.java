@@ -18,6 +18,8 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.function.Supplier;
 
 final class UpdatingChangeListBuilder implements ChangelistBuilder {
@@ -30,7 +32,7 @@ final class UpdatingChangeListBuilder implements ChangelistBuilder {
   private VcsDirtyScope myScope;
   private FoldersCutDownWorker myFoldersCutDownWorker;
 
-  private Factory<JComponent> myAdditionalInfo;
+  private final List<Supplier<@Nullable JComponent>> myAdditionalInfo = new ArrayList<>();
 
   UpdatingChangeListBuilder(ChangeListUpdater changeListUpdater,
                             FileHolderComposite composite,
@@ -190,13 +192,11 @@ final class UpdatingChangeListBuilder implements ChangelistBuilder {
   }
 
   @Override
-  public void reportAdditionalInfo(Factory<JComponent> infoComponent) {
-    if (myAdditionalInfo == null) {
-      myAdditionalInfo = infoComponent;
-    }
+  public void reportAdditionalInfo(@NotNull Factory<@Nullable JComponent> infoComponent) {
+    myAdditionalInfo.add(infoComponent);
   }
 
-  public Factory<JComponent> getAdditionalInfo() {
+  public @NotNull List<Supplier<@Nullable JComponent>> getAdditionalInfo() {
     return myAdditionalInfo;
   }
 

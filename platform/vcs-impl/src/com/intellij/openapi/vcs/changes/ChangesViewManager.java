@@ -4,6 +4,7 @@ package com.intellij.openapi.vcs.changes;
 
 import com.intellij.diagnostic.Activity;
 import com.intellij.diagnostic.StartUpMeasurer;
+import com.intellij.diff.util.DiffUtil;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.CommonActionsManager;
 import com.intellij.ide.DataManager;
@@ -807,10 +808,11 @@ public class ChangesViewManager implements ChangesViewEx,
       return actions;
     }
 
-    private void updateProgressComponent(@Nullable Factory<? extends JComponent> progress) {
+    private void updateProgressComponent(@NotNull List<Supplier<@Nullable JComponent>> progress) {
       invokeLaterIfNeeded(() -> {
         if (myDisposed) return;
-        JComponent component = progress != null ? progress.create() : null;
+        List<? extends @Nullable JComponent> components = ContainerUtil.mapNotNull(progress, it -> it.get());
+        JComponent component = DiffUtil.createStackedComponents(components, DiffUtil.TITLE_GAP);
         if (component != null) {
           myProgressLabel.setContent(new FixedSizeScrollPanel(component, new JBDimension(400, 100)));
         }
@@ -821,7 +823,7 @@ public class ChangesViewManager implements ChangesViewEx,
     }
 
     public void updateProgressText(@NlsContexts.Label String text, boolean isError) {
-      updateProgressComponent(createTextStatusFactory(text, isError));
+      updateProgressComponent(Collections.singletonList(createTextStatusFactory(text, isError)));
     }
 
     public void setBusy(final boolean b) {
@@ -1055,13 +1057,7 @@ public class ChangesViewManager implements ChangesViewEx,
         scheduleRefresh();
 
         ChangeListManagerImpl changeListManager = ChangeListManagerImpl.getInstanceImpl(myProject);
-        VcsException updateException = changeListManager.getUpdateException();
-        if (updateException == null) {
-          updateProgressComponent(changeListManager.getAdditionalUpdateInfo());
-        }
-        else {
-          updateProgressText(VcsBundle.message("error.updating.changes", updateException.getMessage()), true);
-        }
+        updateProgressComponent(changeListManager.getAdditionalUpdateInfo());
       }
     }
 
