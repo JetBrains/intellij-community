@@ -21,6 +21,7 @@ import com.intellij.lang.LighterASTNode;
 import com.intellij.psi.PsiJavaModule;
 import com.intellij.psi.impl.java.stubs.impl.PsiJavaModuleStubImpl;
 import com.intellij.psi.impl.java.stubs.index.JavaStubIndexKeys;
+import com.intellij.psi.impl.source.BasicJavaElementType;
 import com.intellij.psi.impl.source.PsiJavaModuleImpl;
 import com.intellij.psi.impl.source.tree.CompositeElement;
 import com.intellij.psi.impl.source.tree.JavaElementType;
@@ -36,7 +37,7 @@ import java.io.IOException;
 
 public class JavaModuleElementType extends JavaStubElementType<PsiJavaModuleStub, PsiJavaModule> {
   public JavaModuleElementType() {
-    super("MODULE");
+    super("MODULE", BasicJavaElementType.BASIC_MODULE);
   }
 
   @NotNull

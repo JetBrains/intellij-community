@@ -8,20 +8,32 @@ import com.intellij.psi.stubs.ILightStubElementType;
 import com.intellij.psi.stubs.PsiFileStub;
 import com.intellij.psi.stubs.StubElement;
 import com.intellij.psi.tree.ICompositeElementType;
+import com.intellij.psi.tree.IElementType;
+import com.intellij.psi.tree.ParentProviderElementType;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.Collections;
+import java.util.Set;
+
 public abstract class JavaStubElementType<StubT extends StubElement<?>, PsiT extends PsiElement>
-    extends ILightStubElementType<StubT, PsiT> implements ICompositeElementType {
+    extends ILightStubElementType<StubT, PsiT> implements ICompositeElementType, ParentProviderElementType {
   private final boolean myLeftBound;
 
-  protected JavaStubElementType(@NotNull @NonNls final String debugName) {
-    this(debugName, false);
+  private final Set<IElementType> myParentElementTypes;
+  protected JavaStubElementType(@NotNull @NonNls final String debugName, @NotNull IElementType parentElementType) {
+    this(debugName, false, parentElementType);
   }
 
-  protected JavaStubElementType(@NotNull @NonNls final String debugName, final boolean leftBound) {
+  protected JavaStubElementType(@NotNull @NonNls final String debugName, final boolean leftBound, @NotNull IElementType parentElementType) {
     super(debugName, JavaLanguage.INSTANCE);
     myLeftBound = leftBound;
+    myParentElementTypes = Collections.singleton(parentElementType);
+  }
+
+  @Override
+  public Set<IElementType> getParents() {
+    return myParentElementTypes;
   }
 
   @NotNull

@@ -20,6 +20,7 @@
 
   <xi:include href="/idea/JavaActions.xml" xpointer="xpointer(/idea-plugin/*)"/>
 
+  <xi:include href="intellij.java.frontback.impl.xml" xpointer="xpointer(/idea-plugin/*)"/>
   <xi:include href="/META-INF/JvmAnalysisPlugin.xml" xpointer="xpointer(/idea-plugin/*)"/>
   <xi:include href="/META-INF/JavaIndexingPlugin.xml" xpointer="xpointer(/idea-plugin/*)"/>
   <xi:include href="/META-INF/JavaPsiPlugin.xml" xpointer="xpointer(/idea-plugin/*)"/>
@@ -2458,6 +2459,7 @@
   </actions>
 
   <extensions defaultExtensionNs="com.intellij">
+    <java.definitions id="java-backend" implementation="com.intellij.codeInsight.JavaDefinitionService"/>
     <projectService serviceImplementation="com.intellij.jarRepository.RepositoryLibrarySettings$Service" configurationSchemaKey="repositoryLibrary"/>
   </extensions>
 

@@ -8,6 +8,7 @@ import com.intellij.psi.JavaTokenType;
 import com.intellij.psi.PsiNameValuePair;
 import com.intellij.psi.impl.cache.RecordUtil;
 import com.intellij.psi.impl.java.stubs.impl.PsiNameValuePairStubImpl;
+import com.intellij.psi.impl.source.BasicJavaElementType;
 import com.intellij.psi.impl.source.tree.ElementType;
 import com.intellij.psi.impl.source.tree.LightTreeUtil;
 import com.intellij.psi.impl.source.tree.java.NameValuePairElement;
@@ -26,7 +27,7 @@ import java.util.List;
  */
 public final class JavaNameValuePairType extends JavaStubElementType<PsiNameValuePairStub, PsiNameValuePair> {
   JavaNameValuePairType() {
-    super("NAME_VALUE_PAIR", true);
+    super("NAME_VALUE_PAIR", true, BasicJavaElementType.BASIC_NAME_VALUE_PAIR);
   }
 
   @Override

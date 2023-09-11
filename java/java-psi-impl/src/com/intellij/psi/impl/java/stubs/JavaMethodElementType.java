@@ -34,8 +34,8 @@ import java.util.List;
 import java.util.Set;
 
 abstract class JavaMethodElementType extends JavaStubElementType<PsiMethodStub, PsiMethod> {
-  JavaMethodElementType(@NonNls final String name) {
-    super(name);
+  JavaMethodElementType(@NonNls final String name, @NotNull IElementType parentElementType) {
+    super(name, parentElementType);
   }
 
   @Override

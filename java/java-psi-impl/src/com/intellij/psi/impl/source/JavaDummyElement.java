@@ -15,11 +15,9 @@
  */
 package com.intellij.psi.impl.source;
 
-import com.intellij.lang.java.parser.JavaParserUtil;
+import com.intellij.lang.java.parser.BasicJavaParserUtil;
 import com.intellij.pom.java.LanguageLevel;
-import com.intellij.psi.impl.source.tree.FileElement;
-import com.intellij.psi.impl.source.tree.JavaElementType;
-import com.intellij.psi.impl.source.tree.TreeElement;
+import com.intellij.psi.impl.source.tree.JavaElementTypeFactory;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -27,66 +25,17 @@ import org.jetbrains.annotations.Nullable;
  * Dummy file element for using together with DummyHolder.
  * See {@link com.intellij.psi.impl.PsiJavaParserFacadeImpl} for details.
  */
-public class JavaDummyElement extends FileElement {
-  private final JavaParserUtil.ParserWrapper myParser;
-  private final LanguageLevel myLanguageLevel;
-  private final boolean myConsumeAll;
-  private Throwable myParserError;
-
+public class JavaDummyElement extends BasicJavaDummyElement {
   public JavaDummyElement(@Nullable CharSequence text,
-                          @NotNull JavaParserUtil.ParserWrapper parser,
+                          BasicJavaParserUtil.@NotNull ParserWrapper parser,
                           @NotNull LanguageLevel level) {
-    this(text, parser, level, false);
+    super(text, parser, level, JavaElementTypeFactory.INSTANCE);
   }
 
   public JavaDummyElement(@Nullable CharSequence text,
-                          @NotNull JavaParserUtil.ParserWrapper parser,
+                          BasicJavaParserUtil.@NotNull ParserWrapper parser,
                           @NotNull LanguageLevel level,
                           boolean consumeAll) {
-    super(JavaElementType.DUMMY_ELEMENT, text);
-    myParser = parser;
-    myLanguageLevel = level;
-    myConsumeAll = consumeAll;
-  }
-
-  @NotNull
-  public JavaParserUtil.ParserWrapper getParser() {
-    return myParser;
-  }
-
-  public boolean consumeAll() {
-    return myConsumeAll;
-  }
-
-  @NotNull
-  public LanguageLevel getLanguageLevel() {
-    return myLanguageLevel;
-  }
-
-  @Override
-  public TreeElement getFirstChildNode() {
-    try {
-      return super.getFirstChildNode();
-    }
-    catch (AssertionError e) {
-      myParserError = e;
-      return null;  // masquerade parser errors
-    }
-  }
-
-  @Override
-  public TreeElement getLastChildNode() {
-    try {
-      return super.getLastChildNode();
-    }
-    catch (AssertionError e) {
-      myParserError = e;
-      return null;  // masquerade parser errors
-    }
-  }
-
-  @Nullable
-  public Throwable getParserError() {
-    return myParserError;
+    super(text, parser, level, JavaElementTypeFactory.INSTANCE, consumeAll);
   }
 }

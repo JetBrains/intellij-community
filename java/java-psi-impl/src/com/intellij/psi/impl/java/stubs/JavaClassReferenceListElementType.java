@@ -27,8 +27,8 @@ import java.io.IOException;
 import java.util.List;
 
 public abstract class JavaClassReferenceListElementType extends JavaStubElementType<PsiClassReferenceListStub, PsiReferenceList> {
-  public JavaClassReferenceListElementType(@NotNull String id) {
-    super(id, true);
+  public JavaClassReferenceListElementType(@NotNull String id, @NotNull IElementType parentElementType) {
+    super(id, true, parentElementType);
   }
 
   @Override

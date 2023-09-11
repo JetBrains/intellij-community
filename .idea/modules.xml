@@ -125,6 +125,9 @@
     <module old-name="java-analysis-impl" new-name="intellij.java.analysis.impl" />
     <module old-name="java-decompiler-engine" new-name="intellij.java.decompiler.engine" />
     <module old-name="java-decompiler-plugin" new-name="intellij.java.decompiler" />
+    <module old-name="java-frontback-impl" new-name="intellij.java.frontback.impl" />
+    <module old-name="java-frontback-psi-api" new-name="intellij.java.frontback.psi" />
+    <module old-name="java-frontback-psi-impl" new-name="intellij.java.frontback.psi.impl" />
     <module old-name="java-i18n" new-name="intellij.java.i18n" />
     <module old-name="java-impl" new-name="intellij.java.impl" />
     <module old-name="java-indexing-api" new-name="intellij.java.indexing" />
@@ -298,6 +301,7 @@
     <module old-name="xml" new-name="intellij.xml.impl" />
     <module old-name="xml-analysis-api" new-name="intellij.xml.analysis" />
     <module old-name="xml-analysis-impl" new-name="intellij.xml.analysis.impl" />
+    <module old-name="xml-frontback" new-name="intellij.xml.frontback" />
     <module old-name="xml-openapi" new-name="intellij.xml" />
     <module old-name="xml-psi-api" new-name="intellij.xml.psi" />
     <module old-name="xml-psi-impl" new-name="intellij.xml.psi.impl" />
@@ -706,6 +710,10 @@
       <module fileurl="file://$PROJECT_DIR$/java/execution/openapi/intellij.java.execution.iml" filepath="$PROJECT_DIR$/java/execution/openapi/intellij.java.execution.iml" />
       <module fileurl="file://$PROJECT_DIR$/java/execution/impl/intellij.java.execution.impl.iml" filepath="$PROJECT_DIR$/java/execution/impl/intellij.java.execution.impl.iml" />
       <module fileurl="file://$PROJECT_DIR$/java/java-features-trainer/intellij.java.featuresTrainer.iml" filepath="$PROJECT_DIR$/java/java-features-trainer/intellij.java.featuresTrainer.iml" />
+      <module fileurl="file://$PROJECT_DIR$/java/java-frontback-impl/intellij.java.frontback.impl.iml" filepath="$PROJECT_DIR$/java/java-frontback-impl/intellij.java.frontback.impl.iml" />
+      <module fileurl="file://$PROJECT_DIR$/java/java-frontback-psi-api/intellij.java.frontback.psi.iml" filepath="$PROJECT_DIR$/java/java-frontback-psi-api/intellij.java.frontback.psi.iml" />
+      <module fileurl="file://$PROJECT_DIR$/java/java-frontback-psi-impl/intellij.java.frontback.psi.impl.iml" filepath="$PROJECT_DIR$/java/java-frontback-psi-impl/intellij.java.frontback.psi.impl.iml" />
+      <module fileurl="file://$PROJECT_DIR$/java/java-frontback-tests/intellij.java.frontback.tests.iml" filepath="$PROJECT_DIR$/java/java-frontback-tests/intellij.java.frontback.tests.iml" />
       <module fileurl="file://$PROJECT_DIR$/java/compiler/forms-compiler/intellij.java.guiForms.compiler.iml" filepath="$PROJECT_DIR$/java/compiler/forms-compiler/intellij.java.guiForms.compiler.iml" />
       <module fileurl="file://$PROJECT_DIR$/plugins/ui-designer/intellij.java.guiForms.designer.iml" filepath="$PROJECT_DIR$/plugins/ui-designer/intellij.java.guiForms.designer.iml" />
       <module fileurl="file://$PROJECT_DIR$/plugins/ui-designer/jps-plugin/intellij.java.guiForms.jps.iml" filepath="$PROJECT_DIR$/plugins/ui-designer/jps-plugin/intellij.java.guiForms.jps.iml" />
@@ -1129,6 +1137,7 @@
       <module fileurl="file://$PROJECT_DIR$/xml/dom-openapi/intellij.xml.dom.iml" filepath="$PROJECT_DIR$/xml/dom-openapi/intellij.xml.dom.iml" />
       <module fileurl="file://$PROJECT_DIR$/xml/dom-impl/intellij.xml.dom.impl.iml" filepath="$PROJECT_DIR$/xml/dom-impl/intellij.xml.dom.impl.iml" />
       <module fileurl="file://$PROJECT_DIR$/xml/dom-tests/intellij.xml.dom.tests.iml" filepath="$PROJECT_DIR$/xml/dom-tests/intellij.xml.dom.tests.iml" />
+      <module fileurl="file://$PROJECT_DIR$/xml/xml-frontback/intellij.xml.frontback.iml" filepath="$PROJECT_DIR$/xml/xml-frontback/intellij.xml.frontback.iml" />
       <module fileurl="file://$PROJECT_DIR$/xml/impl/intellij.xml.impl.iml" filepath="$PROJECT_DIR$/xml/impl/intellij.xml.impl.iml" />
       <module fileurl="file://$PROJECT_DIR$/plugins/IntelliLang/intellij.xml.langInjection.iml" filepath="$PROJECT_DIR$/plugins/IntelliLang/intellij.xml.langInjection.iml" />
       <module fileurl="file://$PROJECT_DIR$/xml/xml-psi-api/intellij.xml.psi.iml" filepath="$PROJECT_DIR$/xml/xml-psi-api/intellij.xml.psi.iml" />

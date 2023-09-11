@@ -15,14 +15,14 @@
  */
 package com.intellij.psi;
 
+import com.intellij.pom.java.LanguageLevel;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import com.intellij.pom.java.LanguageLevel;
 
 /**
  * Represents a Java, JSP or .class file.
  */
-public interface PsiJavaFile extends PsiImportHolder, PsiClassOwner {
+public interface PsiJavaFile extends PsiImportHolder, PsiClassOwner, AbstractBasicJavaFile {
   /**
    * Returns the package statement contained in the file.
    *

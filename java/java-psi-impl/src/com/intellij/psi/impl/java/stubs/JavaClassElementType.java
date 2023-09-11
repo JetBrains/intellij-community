@@ -30,8 +30,8 @@ import org.jetbrains.annotations.NotNull;
 import java.io.IOException;
 
 public abstract class JavaClassElementType extends JavaStubElementType<PsiClassStub<?>, PsiClass> {
-  JavaClassElementType(@NotNull String id) {
-    super(id);
+  JavaClassElementType(@NotNull String id, @NotNull IElementType parentElementType) {
+    super(id, parentElementType);
   }
 
   @Override

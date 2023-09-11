@@ -9,6 +9,7 @@ import com.intellij.psi.PsiAnnotation;
 import com.intellij.psi.PsiNameHelper;
 import com.intellij.psi.impl.java.stubs.impl.PsiAnnotationStubImpl;
 import com.intellij.psi.impl.java.stubs.index.JavaStubIndexKeys;
+import com.intellij.psi.impl.source.BasicJavaElementType;
 import com.intellij.psi.impl.source.tree.LightTreeUtil;
 import com.intellij.psi.impl.source.tree.java.AnnotationElement;
 import com.intellij.psi.impl.source.tree.java.PsiAnnotationImpl;
@@ -19,7 +20,7 @@ import java.io.IOException;
 
 public class JavaAnnotationElementType extends JavaStubElementType<PsiAnnotationStub, PsiAnnotation> {
   public JavaAnnotationElementType() {
-    super("ANNOTATION");
+    super("ANNOTATION", BasicJavaElementType.BASIC_ANNOTATION);
   }
 
   @NotNull
