@@ -9,10 +9,11 @@ import java.io.IOException;
 import java.io.UncheckedIOException;
 
 /**
- * Implements {@link IntToMultiIntMap} on top of {@link Int2IntMultimap}
- * Thread-safe but not concurrent -- all operations are just guarded by 'this' lock
+ * Implements {@link DurableIntToMultiIntMap} on top of {@link Int2IntMultimap}
+ * <b>Not durable</b>: keeps content in memory only, lost on restart.
+ * <b>Thread-safe but not concurrent</b> -- all operations are just guarded by 'this' lock
  */
-public final class NonParallelNonPersistentIntToMultiIntMap implements IntToMultiIntMap {
+public final class NonDurableNonParallelIntToMultiIntMap implements DurableIntToMultiIntMap {
   private final Int2IntMultimap multimap = new Int2IntMultimap();
 
   @Override
@@ -22,7 +23,8 @@ public final class NonParallelNonPersistentIntToMultiIntMap implements IntToMult
   }
 
   @Override
-  public boolean has(int key, int value) throws IOException {
+  public synchronized boolean has(int key,
+                                  int value) throws IOException {
     return multimap.has(key, value);
   }
 

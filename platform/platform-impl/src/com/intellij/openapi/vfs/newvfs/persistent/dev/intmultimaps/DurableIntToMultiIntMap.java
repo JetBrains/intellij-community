@@ -21,7 +21,7 @@ import java.io.IOException;
  * Durability is optional: the map implements {@link Closeable} and {@link Flushable}, but it doesn't
  * _require_ to be durable -- empty flush/close methods are OK.
  */
-public interface IntToMultiIntMap extends Flushable, Closeable {
+public interface DurableIntToMultiIntMap extends Flushable, Closeable {
   int NO_VALUE = DataEnumeratorEx.NULL_ID;
 
   void put(int key,

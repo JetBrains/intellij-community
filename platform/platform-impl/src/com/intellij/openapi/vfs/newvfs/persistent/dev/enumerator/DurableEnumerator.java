@@ -2,9 +2,9 @@
 package com.intellij.openapi.vfs.newvfs.persistent.dev.enumerator;
 
 import com.intellij.openapi.util.ThrowableComputable;
+import com.intellij.openapi.vfs.newvfs.persistent.dev.intmultimaps.DurableIntToMultiIntMap;
+import com.intellij.openapi.vfs.newvfs.persistent.dev.intmultimaps.NonDurableNonParallelIntToMultiIntMap;
 import com.intellij.util.io.DurableDataEnumerator;
-import com.intellij.openapi.vfs.newvfs.persistent.dev.intmultimaps.IntToMultiIntMap;
-import com.intellij.openapi.vfs.newvfs.persistent.dev.intmultimaps.NonParallelNonPersistentIntToMultiIntMap;
 import com.intellij.openapi.vfs.newvfs.persistent.dev.intmultimaps.extendiblehashmap.ExtendibleHashMap;
 import com.intellij.openapi.vfs.newvfs.persistent.dev.appendonlylog.AppendOnlyLog;
 import com.intellij.openapi.vfs.newvfs.persistent.dev.appendonlylog.AppendOnlyLogOverMMappedFile;
@@ -42,7 +42,7 @@ public final class DurableEnumerator<V> implements DurableDataEnumerator<V>,
   //             map is re-populated from log on each start
   //          3) on-disk map, durable between restarts re-populated from log only on
   //             corruption
-  private final @NotNull IntToMultiIntMap valueHashToId;
+  private final @NotNull DurableIntToMultiIntMap valueHashToId;
 
   public static <K> DurableEnumerator<K> openWithInMemoryMap(@NotNull Path storagePath,
                                                              @NotNull KeyDescriptorEx<K> valueDescriptor) throws IOException {
@@ -54,7 +54,7 @@ public final class DurableEnumerator<V> implements DurableDataEnumerator<V>,
     return new DurableEnumerator<>(
       valueDescriptor,
       appendOnlyLog,
-      () -> fillValueHashToIdMap(appendOnlyLog, valueDescriptor, new NonParallelNonPersistentIntToMultiIntMap())
+      () -> fillValueHashToIdMap(appendOnlyLog, valueDescriptor, new NonDurableNonParallelIntToMultiIntMap())
     );
   }
 
@@ -75,15 +75,15 @@ public final class DurableEnumerator<V> implements DurableDataEnumerator<V>,
 
   public DurableEnumerator(@NotNull KeyDescriptorEx<V> valueDescriptor,
                            @NotNull AppendOnlyLog appendOnlyLog,
-                           @NotNull ThrowableComputable<IntToMultiIntMap, IOException> mapFactory) throws IOException {
+                           @NotNull ThrowableComputable<DurableIntToMultiIntMap, IOException> mapFactory) throws IOException {
     this.valueDescriptor = valueDescriptor;
     this.valuesLog = appendOnlyLog;
     this.valueHashToId = mapFactory.compute();
   }
 
-  private static <K> @NotNull IntToMultiIntMap fillValueHashToIdMap(@NotNull AppendOnlyLog valuesLog,
-                                                                    @NotNull KeyDescriptorEx<K> valueDescriptor,
-                                                                    @NotNull IntToMultiIntMap valueHashToId) throws IOException {
+  private static <K> @NotNull DurableIntToMultiIntMap fillValueHashToIdMap(@NotNull AppendOnlyLog valuesLog,
+                                                                           @NotNull KeyDescriptorEx<K> valueDescriptor,
+                                                                           @NotNull DurableIntToMultiIntMap valueHashToId) throws IOException {
     valuesLog.forEachRecord((logId, buffer) -> {
       K value = valueDescriptor.read(buffer);
       int valueHash = adjustHash(valueDescriptor.hashCodeOf(value));
@@ -194,8 +194,8 @@ public final class DurableEnumerator<V> implements DurableDataEnumerator<V>,
   }
 
   private static int adjustHash(int hash) {
-    if (hash == IntToMultiIntMap.NO_VALUE) {
-      //IntToMultiIntMap doesn't allow 0 keys/values, hence replace 0 key with just anything !=0.
+    if (hash == DurableIntToMultiIntMap.NO_VALUE) {
+      //DurableIntToMultiIntMap doesn't allow 0 keys/values, hence replace 0 key with just anything !=0.
       // Key (=hash) doesn't identify value uniquely anyway, hence this replacement just adds another
       // collision -- basically, we replaced original Key.hash with our own hash, which avoids 0 at
       // the cost of slightly higher collision chances

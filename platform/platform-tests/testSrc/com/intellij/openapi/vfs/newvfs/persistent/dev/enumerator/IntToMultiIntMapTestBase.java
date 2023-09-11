@@ -3,7 +3,7 @@ package com.intellij.openapi.vfs.newvfs.persistent.dev.enumerator;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-import com.intellij.openapi.vfs.newvfs.persistent.dev.intmultimaps.IntToMultiIntMap;
+import com.intellij.openapi.vfs.newvfs.persistent.dev.intmultimaps.DurableIntToMultiIntMap;
 import it.unimi.dsi.fastutil.ints.IntOpenHashSet;
 import org.jetbrains.annotations.NotNull;
 import org.junit.jupiter.api.*;
@@ -13,7 +13,7 @@ import java.io.IOException;
 import java.nio.file.Path;
 import java.util.concurrent.ThreadLocalRandom;
 
-public abstract class IntToMultiIntMapTestBase<M extends IntToMultiIntMap> {
+public abstract class IntToMultiIntMapTestBase<M extends DurableIntToMultiIntMap> {
 
   protected final int entriesCountToTest;
 
@@ -42,7 +42,7 @@ public abstract class IntToMultiIntMapTestBase<M extends IntToMultiIntMap> {
   @Test
   void ZERO_IS_PROHIBITED_KEY() throws IOException {
     assertThrows(IllegalArgumentException.class,
-                 () -> multimap.put(IntToMultiIntMap.NO_VALUE, 1),
+                 () -> multimap.put(DurableIntToMultiIntMap.NO_VALUE, 1),
                  "Can't use key=0: 0 is reserved value (NO_VALUE)"
     );
   }
@@ -117,7 +117,7 @@ public abstract class IntToMultiIntMapTestBase<M extends IntToMultiIntMap> {
   /* ======================== infrastructure: ================================================================ */
 
 
-  //private static void assertInvariant_ValuesForEachKeysAreUnique(final IntToMultiIntMap multimap) throws IOException {
+  //private static void assertInvariant_ValuesForEachKeysAreUnique(final DurableIntToMultiIntMap multimap) throws IOException {
   //  IntOpenHashSet keys = new IntOpenHashSet();
   //  multimap.forEach((key, value) -> keys.add(key));
   //  for (int key : keys) {
@@ -136,7 +136,7 @@ public abstract class IntToMultiIntMapTestBase<M extends IntToMultiIntMap> {
     return multimap.lookup(key, v -> (v == value));
   }
 
-  private static @NotNull IntOpenHashSet lookupAllValues(@NotNull IntToMultiIntMap multimap,
+  private static @NotNull IntOpenHashSet lookupAllValues(@NotNull DurableIntToMultiIntMap multimap,
                                                          int key) throws IOException {
     IntOpenHashSet values = new IntOpenHashSet();
     multimap.lookup(key, value -> {
@@ -156,8 +156,8 @@ public abstract class IntToMultiIntMapTestBase<M extends IntToMultiIntMap> {
 
   private static long[] generateKeyValues(int size) {
     return ThreadLocalRandom.current().longs()
-      .filter(v -> key(v) != IntToMultiIntMap.NO_VALUE
-                   && value(v) != IntToMultiIntMap.NO_VALUE)
+      .filter(v -> key(v) != DurableIntToMultiIntMap.NO_VALUE
+                   && value(v) != DurableIntToMultiIntMap.NO_VALUE)
       .limit(size)
       .toArray();
   }
