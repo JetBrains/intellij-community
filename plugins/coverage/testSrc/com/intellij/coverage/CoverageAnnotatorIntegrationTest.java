@@ -86,7 +86,7 @@ public class CoverageAnnotatorIntegrationTest extends JavaModuleTestCase {
       public void annotateClass(String classQualifiedName, PackageAnnotator.ClassCoverageInfo classCoverageInfo) {
         Assert.fail("No classes are accepted by filter");
       }
-    }).visitRootPackage(psiPackage);
+    }).visitRootPackage(psiPackage, (JavaCoverageSuite)suite.getSuites()[0]);
   }
 
   public void testMultipleSourceRoots() {
@@ -118,7 +118,7 @@ public class CoverageAnnotatorIntegrationTest extends JavaModuleTestCase {
                                           Module module) {
         dirs.put(virtualFile, packageCoverageInfo);
       }
-    }).visitRootPackage(psiPackage);
+    }).visitRootPackage(psiPackage, (JavaCoverageSuite)suite.getSuites()[0]);
 
     assertEquals(2, dirs.size());
     for (PackageAnnotator.PackageCoverageInfo coverageInfo : dirs.values()) {

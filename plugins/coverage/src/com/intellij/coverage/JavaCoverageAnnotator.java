@@ -12,6 +12,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.rt.coverage.data.ProjectData;
+import com.intellij.util.TimeoutUtil;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -20,8 +21,6 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.WeakHashMap;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.TimeUnit;
-
 /**
  * @author Roman.Chernyatchik
  */
@@ -137,20 +136,20 @@ public class JavaCoverageAnnotator extends BaseCoverageAnnotator implements Disp
     final Project project = getProject();
 
     return () -> {
-      final PackageAnnotator.Annotator annotator = new JavaPackageAnnotator();
-      final long startNs = System.nanoTime();
+      PackageAnnotator.Annotator annotator = new JavaPackageAnnotator();
 
-      final int totalRoots = new JavaCoverageClassesEnumerator.RootsCounter(suite, project).getRoots();
-      new JavaCoverageClassesAnnotator(suite, project, annotator, totalRoots).visitSuite();
-      myStructure = new CoverageClassStructure(project);
-      Disposer.register(this, myStructure);
-      dataManager.triggerPresentationUpdate();
+      long timeMs = TimeoutUtil.measureExecutionTime(() -> {
+        final int totalRoots = new JavaCoverageClassesEnumerator.RootsCounter(suite, project).getRoots();
+        new JavaCoverageClassesAnnotator(suite, project, annotator, totalRoots).visitSuite();
+        myStructure = new CoverageClassStructure(project);
+        Disposer.register(this, myStructure);
+        dataManager.triggerPresentationUpdate();
+      });
 
-      final long endNs = System.nanoTime();
-      final int annotatedClasses = myClassCoverageInfos.size();
-      final ProjectData data = suite.getCoverageData();
-      final int loadedClasses = data == null ? 0 : data.getClassesNumber();
-      CoverageLogger.logReportBuilding(project, TimeUnit.NANOSECONDS.toMillis(endNs - startNs), annotatedClasses, loadedClasses);
+      int annotatedClasses = myClassCoverageInfos.size();
+      ProjectData data = suite.getCoverageData();
+      int loadedClasses = data == null ? 0 : data.getClassesNumber();
+      CoverageLogger.logReportBuilding(project, timeMs, annotatedClasses, loadedClasses);
     };
   }
 

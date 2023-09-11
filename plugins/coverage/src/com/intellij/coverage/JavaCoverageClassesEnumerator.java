@@ -14,7 +14,6 @@ import com.intellij.psi.JavaPsiFacade;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiClassOwner;
 import com.intellij.psi.PsiPackage;
-import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.rt.coverage.data.ProjectData;
 import com.intellij.util.containers.Stack;
 import org.jetbrains.annotations.NotNull;
@@ -29,6 +28,7 @@ public abstract class JavaCoverageClassesEnumerator {
   private final boolean[] myShouldVisitTestSource;
   private final int myRootsCount;
   private int myCurrentRootsCount;
+  protected JavaCoverageSuite myCurrentSuite;
 
   public JavaCoverageClassesEnumerator(@NotNull final CoverageSuitesBundle suite, @NotNull final Project project, final int totalRoots) {
     mySuite = suite;
@@ -43,23 +43,20 @@ public abstract class JavaCoverageClassesEnumerator {
   /**
    * Visit classes with the same top level name.
    */
-  protected void visitClassFiles(String topLevelClassName, List<File> files, String packageVMName, GlobalSearchScope scope) { }
-
-  protected void setJavaSuite(JavaCoverageSuite suite) { }
+  protected void visitClassFiles(String topLevelClassName, List<File> files, String packageVMName) { }
 
   public void visitSuite() {
     myCurrentRootsCount = 0;
     updateProgress();
 
     for (CoverageSuite coverageSuite : mySuite.getSuites()) {
-      final JavaCoverageSuite javaSuite = (JavaCoverageSuite)coverageSuite;
-      setJavaSuite(javaSuite);
+      JavaCoverageSuite javaSuite = (JavaCoverageSuite)coverageSuite;
       final List<PsiClass> classes = javaSuite.getCurrentSuiteClasses(myProject);
       final List<PsiPackage> packages = javaSuite.getCurrentSuitePackages(myProject);
 
       for (PsiPackage psiPackage : packages) {
         ProgressIndicatorProvider.checkCanceled();
-        visitRootPackage(psiPackage);
+        visitRootPackage(psiPackage, javaSuite);
       }
       for (final PsiClass psiClass : classes) {
         ProgressIndicatorProvider.checkCanceled();
@@ -74,13 +71,13 @@ public abstract class JavaCoverageClassesEnumerator {
   }
 
   //get read lock myself when needed
-  void visitRootPackage(final PsiPackage psiPackage) {
+  void visitRootPackage(final PsiPackage psiPackage, JavaCoverageSuite suite) {
+    myCurrentSuite = suite;
     final ProjectData data = mySuite.getCoverageData();
     if (data == null) return;
 
     if (!isPackageFiltered(psiPackage)) return;
 
-    final GlobalSearchScope scope = mySuite.getSearchScope(myProject);
     final Module[] modules = myCoverageManager.doInReadActionIfProjectOpen(() -> ModuleManager.getInstance(myProject).getModules());
     if (modules == null) return;
 
@@ -89,17 +86,16 @@ public abstract class JavaCoverageClassesEnumerator {
 
     final Set<VirtualFile> seenRoots = new HashSet<>();
     for (final Module module : modules) {
-      if (!scope.isSearchInModuleContent(module)) continue;
+      if (!mySuite.getSearchScope(myProject).isSearchInModuleContent(module)) continue;
       ProgressIndicatorProvider.checkCanceled();
       for (boolean isTestSource : myShouldVisitTestSource) {
-        visitSource(psiPackage, module, scope, rootPackageVMName, isTestSource, seenRoots);
+        visitSource(psiPackage, module, rootPackageVMName, isTestSource, seenRoots);
       }
     }
   }
 
   protected void visitSource(final PsiPackage psiPackage,
                              final Module module,
-                             final GlobalSearchScope scope,
                              final String rootPackageVMName,
                              final boolean isTestSource,
                              final Set<VirtualFile> seenRoots) {
@@ -109,12 +105,12 @@ public abstract class JavaCoverageClassesEnumerator {
       if (!seenRoots.add(output)) continue;
       final File outputRoot = PackageAnnotator.findRelativeFile(rootPackageVMName, VfsUtilCore.virtualToIoFile(output));
       if (outputRoot.exists()) {
-        visitRoot(outputRoot, rootPackageVMName, scope);
+        visitRoot(outputRoot, rootPackageVMName);
       }
     }
   }
 
-  protected void visitRoot(final File packageOutputRoot, final String rootPackageVMName, final GlobalSearchScope scope) {
+  protected void visitRoot(final File packageOutputRoot, final String rootPackageVMName) {
     final Stack<PackageData> stack = new Stack<>(new PackageData(rootPackageVMName, packageOutputRoot.listFiles()));
     while (!stack.isEmpty()) {
       ProgressIndicatorProvider.checkCanceled();
@@ -136,7 +132,7 @@ public abstract class JavaCoverageClassesEnumerator {
         }
       }
       for (Map.Entry<String, List<File>> entry : topLevelClasses.entrySet()) {
-        visitClassFiles(entry.getKey(), entry.getValue(), packageVMName, scope);
+        visitClassFiles(entry.getKey(), entry.getValue(), packageVMName);
       }
     }
     myCurrentRootsCount++;
@@ -201,9 +197,7 @@ public abstract class JavaCoverageClassesEnumerator {
     }
 
     @Override
-    protected void visitRoot(File packageOutputRoot,
-                             String rootPackageVMName,
-                             GlobalSearchScope scope) {
+    protected void visitRoot(File packageOutputRoot, String rootPackageVMName) {
       myRoots++;
     }
 

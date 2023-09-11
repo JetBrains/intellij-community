@@ -19,7 +19,6 @@ import com.intellij.psi.JavaPsiFacade;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiMethod;
-import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.rt.coverage.data.*;
 import com.intellij.rt.coverage.instrumentation.UnloadedUtil;
@@ -32,7 +31,7 @@ import org.jetbrains.coverage.org.objectweb.asm.ClassReader;
 import java.io.File;
 import java.io.IOException;
 import java.util.Collection;
-import java.util.List;
+import java.util.Map;
 import java.util.concurrent.atomic.AtomicInteger;
 
 public final class PackageAnnotator {
@@ -42,23 +41,27 @@ public final class PackageAnnotator {
   private final CoverageSuitesBundle mySuite;
   private final Project myProject;
   private final ProjectData myProjectData;
-  private final JavaCoverageClassesAnnotator myAnnotator;
   private final boolean myIgnoreImplicitConstructor;
-  private final ProjectData myUnloadedClassesProjectData = new ProjectData();
-  private JavaCoverageRunner myRunner;
+  private ProjectData myUnloadedClassesProjectData;
 
   public PackageAnnotator(CoverageSuitesBundle suite,
                           Project project,
-                          ProjectData projectData,
-                          JavaCoverageClassesAnnotator annotator,
-                          boolean ignoreImplicitConstructor) {
+                          ProjectData projectData) {
     mySuite = suite;
     myProject = project;
     myProjectData = projectData;
-    myAnnotator = annotator;
-    myIgnoreImplicitConstructor = ignoreImplicitConstructor;
     IDEACoverageRunner.setExcludeAnnotations(project, myProjectData);
-    IDEACoverageRunner.setExcludeAnnotations(project, myUnloadedClassesProjectData);
+
+    JavaCoverageOptionsProvider optionsProvider = JavaCoverageOptionsProvider.getInstance(myProject);
+    myIgnoreImplicitConstructor = optionsProvider.ignoreImplicitConstructors();
+  }
+
+  private synchronized ProjectData getUnloadedClassesProjectData() {
+    if (myUnloadedClassesProjectData == null) {
+      myUnloadedClassesProjectData = new ProjectData();
+      IDEACoverageRunner.setExcludeAnnotations(myProject, myUnloadedClassesProjectData);
+    }
+    return myUnloadedClassesProjectData;
   }
 
   public interface Annotator {
@@ -180,8 +183,14 @@ public final class PackageAnnotator {
     }
   }
 
-  public void setRunner(@Nullable JavaCoverageRunner runner) {
-    myRunner = runner;
+  public static class Result {
+    public final ClassCoverageInfo info;
+    public final VirtualFile directory;
+
+    public Result(ClassCoverageInfo info, VirtualFile directory) {
+      this.info = info;
+      this.directory = directory;
+    }
   }
 
   public static @NotNull File findRelativeFile(@NotNull String rootPackageVMName, File outputRoot) {
@@ -230,16 +239,24 @@ public final class PackageAnnotator {
     return null;
   }
 
-  public void visitFiles(final String toplevelClassSrcFQName,
-                         final List<File> files,
-                         final String packageVMName,
-                         final GlobalSearchScope scope) {
+
+  /**
+   * Collect coverage for classes with the same top level name.
+   * @param toplevelClassSrcFQName Top level element name
+   * @param children name - file pairs, where file is optional (could be null),
+   *                 when file is null, unloaded class analysis is skipped
+   * @param packageVMName common package name in internal VM format
+   */
+  @Nullable
+  public Result visitFiles(final String toplevelClassSrcFQName,
+                         final Map<String, File> children,
+                         final String packageVMName) {
     final Ref<VirtualFile> containingFileRef = new Ref<>();
     final Ref<PsiClass> psiClassRef = new Ref<>();
-    if (myProject.isDisposed()) return;
+    if (myProject.isDisposed()) return null;
     final Boolean isInSource = DumbService.getInstance(myProject).runReadActionInSmartMode(() -> {
       if (myProject.isDisposed()) return null;
-      final PsiClass aClass = JavaPsiFacade.getInstance(myProject).findClass(toplevelClassSrcFQName, scope);
+      final PsiClass aClass = JavaPsiFacade.getInstance(myProject).findClass(toplevelClassSrcFQName, mySuite.getSearchScope(myProject));
       if (aClass == null || !aClass.isValid()) return Boolean.FALSE;
       psiClassRef.set(aClass);
       PsiElement element = aClass.getNavigationElement();
@@ -251,86 +268,84 @@ public final class PackageAnnotator {
       return mySuite.getCoverageEngine().acceptedByFilters(element.getContainingFile(), mySuite);
     });
 
-    if (isInSource == null || !isInSource.booleanValue()) return;
+    if (isInSource == null || !isInSource.booleanValue()) return null;
     VirtualFile virtualFile = containingFileRef.get();
-    PackageAnnotator.ClassCoverageInfo topLevelClassCoverageInfo = new PackageAnnotator.ClassCoverageInfo();
-    VirtualFile parent = null;
-    for (File file : files) {
+    var topLevelClassCoverageInfo = new PackageAnnotator.ClassCoverageInfo();
+    VirtualFile parent = virtualFile == null ? null : virtualFile.getParent();
+    for (Map.Entry<String, File> e : children.entrySet()) {
+      File file = e.getValue();
       if (virtualFile == null && !ContainerUtil.exists(JavaCoverageEngineExtension.EP_NAME.getExtensions(),
                                                        extension -> extension.keepCoverageInfoForClassWithoutSource(mySuite, file))) {
-        return;
+        continue;
       }
-      parent = virtualFile == null ? null : virtualFile.getParent();
-      final String childName = getClassName(file);
-      final String classFqVMName = !packageVMName.isEmpty() ? packageVMName + "/" + childName : childName;
-      final PackageAnnotator.ClassCoverageInfo
-        info = collectClassCoverageInformation(file, psiClassRef.get(), classFqVMName.replace('/', '.'));
+      String childName = e.getKey();
+      String classFqName = !packageVMName.isEmpty() ? packageVMName.replace('/', '.') + "." + childName : childName;
+      var info = collectClassCoverageInformation(file, psiClassRef.get(), classFqName);
       if (info == null) continue;
       topLevelClassCoverageInfo.append(info);
     }
-    myAnnotator.annotateClass(toplevelClassSrcFQName, topLevelClassCoverageInfo, packageVMName, parent);
+    return new Result(topLevelClassCoverageInfo, parent);
   }
 
   @Nullable
-  public PackageAnnotator.ClassCoverageInfo collectClassCoverageInformation(final File classFile,
-                                                                            @Nullable final PsiClass psiClass,
-                                                                            final String className) {
-    final PackageAnnotator.ClassCoverageInfo info = new PackageAnnotator.ClassCoverageInfo();
+  private PackageAnnotator.ClassCoverageInfo collectClassCoverageInformation(@Nullable File classFile,
+                                                                            @Nullable PsiClass psiClass,
+                                                                            String className) {
     ClassData classData = myProjectData.getClassData(className);
     final boolean classExists = classData != null && classData.getLines() != null;
-    if ((!classExists || !classData.isFullyAnalysed()) && (myRunner == null || myRunner.shouldProcessUnloadedClasses())) {
-      classData = collectNonCoveredClassInfo(classFile, className, classExists ? myProjectData : myUnloadedClassesProjectData);
+    if (classFile != null && (!classExists || !classData.isFullyAnalysed())) {
+      classData = collectNonCoveredClassInfo(classFile, className, classExists ? myProjectData : getUnloadedClassesProjectData());
     }
 
-    if (classData != null && classData.getLines() != null) {
-      boolean isDefaultConstructorGenerated = false;
-      final Collection<String> methodSigs = classData.getMethodSigs();
-      for (final String nameAndSig : methodSigs) {
-        if (myIgnoreImplicitConstructor && isGeneratedDefaultConstructor(psiClass, nameAndSig)) {
-          isDefaultConstructorGenerated = true;
+    return getSummaryInfo(psiClass, classData, myIgnoreImplicitConstructor);
+  }
+
+  @Nullable
+  private static ClassCoverageInfo getSummaryInfo(@Nullable PsiClass psiClass, @Nullable ClassData classData, boolean ignoreImplicitConstructor) {
+    if (classData == null || classData.getLines() == null) return null;
+    ClassCoverageInfo info = new ClassCoverageInfo();
+    boolean isDefaultConstructorGenerated = false;
+    final Collection<String> methodSigs = classData.getMethodSigs();
+    for (final String nameAndSig : methodSigs) {
+      if (ignoreImplicitConstructor && isGeneratedDefaultConstructor(psiClass, nameAndSig)) {
+        isDefaultConstructorGenerated = true;
+        continue;
+      }
+
+      if (classData.getStatus(nameAndSig) != LineCoverage.NONE) {
+        info.coveredMethodCount++;
+      }
+      info.totalMethodCount++;
+    }
+
+    final Object[] lines = classData.getLines();
+    for (Object l : lines) {
+      if (l instanceof LineData lineData) {
+        if (lineData.getStatus() == LineCoverage.FULL) {
+          info.fullyCoveredLineCount++;
+        }
+        else if (lineData.getStatus() == LineCoverage.PARTIAL) {
+          info.partiallyCoveredLineCount++;
+        }
+        else if (ignoreImplicitConstructor &&
+                 isDefaultConstructorGenerated &&
+                 isDefaultConstructor(lineData.getMethodSignature())) {
           continue;
         }
-
-        if (classData.getStatus(nameAndSig) != LineCoverage.NONE) {
-          info.coveredMethodCount++;
-        }
-        info.totalMethodCount++;
-      }
-
-      final Object[] lines = classData.getLines();
-      for (Object l : lines) {
-        if (l instanceof LineData lineData) {
-          if (lineData.getStatus() == LineCoverage.FULL) {
-            info.fullyCoveredLineCount++;
-          }
-          else if (lineData.getStatus() == LineCoverage.PARTIAL) {
-            info.partiallyCoveredLineCount++;
-          }
-          else if (myIgnoreImplicitConstructor &&
-                   isDefaultConstructorGenerated &&
-                   isDefaultConstructor(lineData.getMethodSignature())) {
-            continue;
-          }
-          info.totalLineCount++;
-          BranchData branchData = lineData.getBranchData();
-          if (branchData != null) {
-            info.totalBranchCount += branchData.getTotalBranches();
-            info.coveredBranchCount += branchData.getCoveredBranches();
-          }
-        }
-      }
-      if (!methodSigs.isEmpty()) {
-        info.totalClassCount = 1;
-        if (info.getCoveredLineCount() > 0) {
-          info.coveredClassCount = 1;
+        info.totalLineCount++;
+        BranchData branchData = lineData.getBranchData();
+        if (branchData != null) {
+          info.totalBranchCount += branchData.getTotalBranches();
+          info.coveredBranchCount += branchData.getCoveredBranches();
         }
       }
     }
-    else {
-      return null;
+    if (!methodSigs.isEmpty()) {
+      info.totalClassCount = 1;
+      if (info.getCoveredLineCount() > 0) {
+        info.coveredClassCount = 1;
+      }
     }
-
-
     return info;
   }
 

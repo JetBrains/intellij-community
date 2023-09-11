@@ -12,7 +12,6 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiPackage;
-import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.rt.coverage.data.ProjectData;
 import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.containers.ContainerUtil;
@@ -47,10 +46,7 @@ public class JavaCoverageClassesAnnotator extends JavaCoverageClassesEnumerator 
     super(suite, project, totalRoots);
     myAnnotator = annotator;
     myProjectData = mySuite.getCoverageData();
-
-    final JavaCoverageOptionsProvider optionsProvider = JavaCoverageOptionsProvider.getInstance(myProject);
-    myPackageAnnotator = new PackageAnnotator(suite, project, myProjectData, this,
-                                              optionsProvider.ignoreImplicitConstructors());
+    myPackageAnnotator = new PackageAnnotator(suite, project, myProjectData);
   }
 
   @Override
@@ -61,24 +57,11 @@ public class JavaCoverageClassesAnnotator extends JavaCoverageClassesEnumerator 
   }
 
   @Override
-  protected void setJavaSuite(JavaCoverageSuite suite) {
-    final CoverageRunner runner = suite.getRunner();
-    final JavaCoverageRunner javaRunner;
-    if (runner instanceof JavaCoverageRunner) {
-      javaRunner = (JavaCoverageRunner)runner;
-    }
-    else {
-      javaRunner = null;
-    }
-    myPackageAnnotator.setRunner(javaRunner);
-  }
-
-  @Override
-  void visitRootPackage(PsiPackage psiPackage) {
+  void visitRootPackage(PsiPackage psiPackage, JavaCoverageSuite suite) {
     if (myProjectData == null) return;
     myFlattenPackages.clear();
     var created = initExecutor();
-    super.visitRootPackage(psiPackage);
+    super.visitRootPackage(psiPackage, suite);
 
     final Map<String, PackageAnnotator.PackageCoverageInfo> packages = new HashMap<>();
     for (Map.Entry<String, PackageAnnotator.AtomicPackageCoverageInfo> entry : myFlattenPackages.entrySet()) {
@@ -104,7 +87,6 @@ public class JavaCoverageClassesAnnotator extends JavaCoverageClassesEnumerator 
   @Override
   protected void visitSource(final PsiPackage psiPackage,
                              final Module module,
-                             final GlobalSearchScope scope,
                              final String rootPackageVMName,
                              final boolean isTestSource,
                              final Set<VirtualFile> seenRoots) {
@@ -113,7 +95,7 @@ public class JavaCoverageClassesAnnotator extends JavaCoverageClassesEnumerator 
       LOG.warn("Module is already disposed: " + module);
       return;
     }
-    super.visitSource(psiPackage, module, scope, rootPackageVMName, isTestSource, seenRoots);
+    super.visitSource(psiPackage, module, rootPackageVMName, isTestSource, seenRoots);
     final List<VirtualFile> sourceRoots = ContainerUtil.filter(prepareRoots(module, rootPackageVMName, isTestSource), Objects::nonNull);
     syncPoolThreads();
     final Map<VirtualFile, PackageAnnotator.DirCoverageInfo> directories = new HashMap<>();
@@ -141,13 +123,23 @@ public class JavaCoverageClassesAnnotator extends JavaCoverageClassesEnumerator 
   @Override
   protected void visitClassFiles(final String toplevelClassSrcFQName,
                                  final List<File> files,
-                                 final String packageVMName,
-                                 final GlobalSearchScope scope) {
-    if (files.isEmpty()) return;
+                                 final String packageVMName) {
+    if (JavaCoverageSuite.isClassFiltered(toplevelClassSrcFQName, myCurrentSuite.getExcludedClassNames())) return;
+
+    var runner = myCurrentSuite.getRunner();
+    boolean processUnloaded = runner instanceof JavaCoverageRunner && ((JavaCoverageRunner)runner).shouldProcessUnloadedClasses();
+    var children = new HashMap<String, File>();
     for (File file : files) {
-      if (ignoreClass(mySuite, file, toplevelClassSrcFQName)) return;
+      if (ignoreClass(file)) continue;
+      children.put(PackageAnnotator.getClassName(file), processUnloaded ? file : null);
     }
-    myExecutor.execute(() -> myPackageAnnotator.visitFiles(toplevelClassSrcFQName, files, packageVMName, scope));
+    if (children.isEmpty()) return;
+    myExecutor.execute(() -> {
+      PackageAnnotator.Result result = myPackageAnnotator.visitFiles(toplevelClassSrcFQName, children, packageVMName);
+      if (result != null) {
+        annotateClass(toplevelClassSrcFQName, result.info, packageVMName, result.directory);
+      }
+    });
   }
 
   @Override
@@ -159,7 +151,7 @@ public class JavaCoverageClassesAnnotator extends JavaCoverageClassesEnumerator 
     }
   }
 
-  public void annotateClass(String toplevelClassSrcFQName,
+  private void annotateClass(String toplevelClassSrcFQName,
                             PackageAnnotator.ClassCoverageInfo info,
                             String packageVMName,
                             VirtualFile directory) {
@@ -214,15 +206,9 @@ public class JavaCoverageClassesAnnotator extends JavaCoverageClassesEnumerator 
   }
 
 
-  private static boolean ignoreClass(CoverageSuitesBundle bundle, File child, String toplevelClassSrcFQName) {
+  private boolean ignoreClass(File child) {
     for (JavaCoverageEngineExtension extension : JavaCoverageEngineExtension.EP_NAME.getExtensions()) {
-      if (extension.ignoreCoverageForClass(bundle, child)) {
-        return true;
-      }
-    }
-    for (CoverageSuite suite : bundle.getSuites()) {
-      if (suite instanceof JavaCoverageSuite javaSuite &&
-          JavaCoverageSuite.isClassFiltered(toplevelClassSrcFQName, javaSuite.getExcludedClassNames())) {
+      if (extension.ignoreCoverageForClass(mySuite, child)) {
         return true;
       }
     }

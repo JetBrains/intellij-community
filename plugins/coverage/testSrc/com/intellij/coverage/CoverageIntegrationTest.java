@@ -35,7 +35,7 @@ public class CoverageIntegrationTest extends JavaModuleTestCase {
     CoverageSuitesBundle bundle = loadCoverageSuite(IDEACoverageRunner.class, "simple$foo_in_simple.coverage");
     PsiPackage psiPackage = JavaPsiFacade.getInstance(myProject).findPackage("foo");
     PackageAnnotationConsumer consumer = new PackageAnnotationConsumer();
-    new JavaCoverageClassesAnnotator(bundle, myProject, consumer).visitRootPackage(psiPackage);
+    new JavaCoverageClassesAnnotator(bundle, myProject, consumer).visitRootPackage(psiPackage, (JavaCoverageSuite)bundle.getSuites()[0]);
     PackageAnnotator.ClassCoverageInfo barClassCoverage = consumer.myClassCoverageInfo.get("foo.bar.BarClass");
     assertEquals(3, barClassCoverage.totalMethodCount);
     assertEquals(1, barClassCoverage.coveredMethodCount);
