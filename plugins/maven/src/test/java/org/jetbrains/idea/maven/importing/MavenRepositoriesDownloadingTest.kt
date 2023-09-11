@@ -199,6 +199,81 @@ class MavenRepositoriesDownloadingTest : MavenMultiVersionImportingTestCase() {
 
   }
 
+  @Test
+  @Throws(Exception::class)
+  fun testWithLastDependencyUpdatedWithErrorNoForce() {
+    val helper = MavenCustomRepositoryHelper(myDir, "local1", "remote")
+    val remoteRepoPath = helper.getTestDataPath("remote")
+    val localRepoPath = helper.getTestDataPath("local1")
+    httpServerFixture.startRepositoryFor(remoteRepoPath)
+    repositoryPath = localRepoPath
+    val settingsXml = createProjectSubFile(
+      "settings.xml",
+      """
+       <settings>
+          <localRepository>$localRepoPath</localRepository>
+       </settings>
+       """.trimIndent())
+    mavenGeneralSettings.setUserSettingsFile(settingsXml.canonicalPath)
+    myProjectsManager.forceUpdateSnapshots = false
+    mavenGeneralSettings.isAlwaysUpdateSnapshots = false
+
+    removeFromLocalRepository("org/mytest/myartifact/")
+    val lastUpdatedText =
+      "#NOTE: This is a Maven Resolver internal implementation file, its format can be changed without prior notice\n" +
+      "${myUrl.replace(":", "\\:")}/.error=\n" +
+      "${myUrl.replace(":", "\\:")}/.lastUpdated=${System.currentTimeMillis()}\n"
+    val dir = helper.getTestData("local1/org/mytest/myartifact/1.0");
+    dir.mkdirs()
+
+    File(dir, "myartifact-1.0.jar.lastUpdated").writeText(lastUpdatedText)
+    File(dir, "myartifact-1.0.pom.lastUpdated").writeText(lastUpdatedText)
+
+    importProject(pom())
+
+    TestCase.assertEquals(1, myProjectsManager.rootProjects.size)
+    TestCase.assertEquals("Unresolved dependency: 'org.mytest:myartifact:jar:1.0'",
+                          myProjectsManager.rootProjects[0].problems.single { it.type == MavenProjectProblem.ProblemType.DEPENDENCY }.description)
+
+  }
+
+
+  @Test
+  @Throws(Exception::class)
+  fun testWithLastDependencyUpdatedWithErrorForceUpdate() {
+    val helper = MavenCustomRepositoryHelper(myDir, "local1", "remote")
+    val remoteRepoPath = helper.getTestDataPath("remote")
+    val localRepoPath = helper.getTestDataPath("local1")
+    httpServerFixture.startRepositoryFor(remoteRepoPath)
+    repositoryPath = localRepoPath
+    val settingsXml = createProjectSubFile(
+      "settings.xml",
+      """
+       <settings>
+          <localRepository>$localRepoPath</localRepository>
+       </settings>
+       """.trimIndent())
+    mavenGeneralSettings.setUserSettingsFile(settingsXml.canonicalPath)
+    myProjectsManager.forceUpdateSnapshots = true
+
+    removeFromLocalRepository("org/mytest/myartifact/")
+    val lastUpdatedText =
+      "#NOTE: This is a Maven Resolver internal implementation file, its format can be changed without prior notice\n" +
+      "${myUrl.replace(":", "\\:")}/.error=\n" +
+      "${myUrl.replace(":", "\\:")}/.lastUpdated=${System.currentTimeMillis()}\n"
+    val dir = helper.getTestData("local1/org/mytest/myartifact/1.0");
+    dir.mkdirs()
+
+    File(dir, "myartifact-1.0.jar.lastUpdated").writeText(lastUpdatedText)
+    File(dir, "myartifact-1.0.pom.lastUpdated").writeText(lastUpdatedText)
+
+    importProject(pom())
+
+    TestCase.assertEquals(1, myProjectsManager.rootProjects.size)
+    TestCase.assertEquals(0, myProjectsManager.rootProjects[0].problems.size)
+
+  }
+
 
   fun pom() = """
                        <groupId>test</groupId>
