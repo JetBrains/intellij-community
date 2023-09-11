@@ -6,7 +6,6 @@ import com.intellij.openapi.components.BaseState
 import com.intellij.openapi.components.State
 import com.intellij.openapi.components.Storage
 import com.intellij.openapi.components.service
-import com.intellij.openapi.util.Version
 import org.gradle.util.GradleVersion
 import org.jetbrains.kotlin.idea.compiler.configuration.IdeKotlinVersion
 import org.jetbrains.plugins.gradle.jvmcompat.IdeVersionedDataParser
@@ -45,7 +44,7 @@ internal object KotlinGradleCompatibilityParser : IdeVersionedDataParser<KotlinG
         val kotlinVersionsArr = data["kotlinVersions"]?.takeIf { it.isJsonArray }?.asJsonArray ?: return null
         val kotlinVersions = kotlinVersionsArr.mapNotNull { entry ->
             val str = entry.takeIf { it.isJsonPrimitive }?.asString ?: return@mapNotNull null
-            Version.parseVersion(str)?.toString()
+            IdeKotlinVersion.parse(str).getOrNull()?.toString()
         }
 
         val compatibilityArr = data["compatibility"]?.takeIf { it.isJsonArray }?.asJsonArray ?: return null
