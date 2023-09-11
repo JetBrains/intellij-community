@@ -12,7 +12,6 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiJavaCodeReferenceElement;
-import com.intellij.util.concurrency.ThreadingAssertions;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
@@ -20,15 +19,6 @@ import java.util.function.BooleanSupplier;
 
 
 public class JavaReferenceImporter implements ReferenceImporter {
-  /**
-   * @deprecated use {@link JavaReferenceImporter#computeAutoImportAtOffset(Editor, PsiFile, int, boolean)}
-   */
-  @Deprecated(forRemoval = true)
-  public static boolean autoImportReferenceAtCursor(@NotNull Editor editor, @NotNull PsiFile file, boolean allowCaretNearRef) {
-    ThreadingAssertions.assertEventDispatchThread();
-    return new JavaReferenceImporter().autoImportReferenceAtCursor(editor, file);
-  }
-
   @Override
   public BooleanSupplier computeAutoImportAtOffset(@NotNull Editor editor, @NotNull PsiFile file, int offset, boolean allowCaretNearReference) {
     ApplicationManager.getApplication().assertIsNonDispatchThread();

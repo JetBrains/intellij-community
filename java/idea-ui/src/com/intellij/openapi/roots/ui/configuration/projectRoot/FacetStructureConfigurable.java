@@ -15,7 +15,6 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.project.DumbAware;
-import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ui.configuration.ProjectStructureConfigurable;
 import com.intellij.openapi.roots.ui.configuration.projectRoot.daemon.FacetProjectStructureElement;
 import com.intellij.openapi.roots.ui.configuration.projectRoot.daemon.ProjectStructureElement;
@@ -46,14 +45,6 @@ public class FacetStructureConfigurable extends BaseStructureConfigurable {
   @Override
   protected String getComponentStateKey() {
     return "FacetStructureConfigurable.UI";
-  }
-
-  /**
-   * @deprecated use {@link ProjectStructureConfigurable#getFacetStructureConfigurable()} instead
-   */
-  @Deprecated(forRemoval = true)
-  public static FacetStructureConfigurable getInstance(final @NotNull Project project) {
-    return ProjectStructureConfigurable.getInstance(project).getFacetStructureConfigurable();
   }
 
   public boolean isVisible() {
