@@ -27,6 +27,7 @@ import java.util.ServiceLoader;
  */
 public class ExtraModelBuilder implements ToolingModelBuilder {
 
+  @SuppressWarnings("unused") // Used in JetGradlePlugin.gradle init script.
   public static class ForGradle44 extends ExtraModelBuilder implements ParameterizedToolingModelBuilder<ModelBuilderService.Parameter> {
     @NotNull
     @Override
