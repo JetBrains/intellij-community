@@ -132,7 +132,8 @@ private fun getScriptSettings(project: Project, virtualFile: VirtualFile, defini
 }
 
 private fun Iterable<String>.addGradleSpecificsIfNeeded(definition: ScriptDefinition): Iterable<String> {
-    if (!none() || (definition.baseClassType.typeName !in gradleTemplatesClasses)) return this
+    val keyArgumentIsPresent = contains("-XXLanguage:+DisableCompatibilityModeForNewInference")
+    if (keyArgumentIsPresent || (definition.baseClassType.typeName !in gradleTemplatesClasses)) return this
 
     return listOf(
             "-java-parameters",
