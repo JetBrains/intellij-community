@@ -179,6 +179,19 @@
     <target name="patch" description="Apply MPS patches to IDEA Community sources">
         <echo message="Applying MPS patches to IDEA Community sources..."/>
 
+        <property name="editorSplitterTabs"
+                  value="${basedir}/patches/IDEA-306348-Splitter_tabs.patch"/>
+        <echo message="Applying ${editorSplitterTabs}"/>
+        <exec executable="git" dir="${community.folder}" failonerror="true">
+            <arg value="apply"/>
+            <arg value="&#45;-check"/>
+            <arg value="${editorSplitterTabs}"/>
+        </exec>
+        <exec executable="git" dir="${community.folder}">
+            <arg value="apply"/>
+            <arg value="${editorSplitterTabs}"/>
+        </exec>
+
         <property name="frameIconOnWindows"
                   value="${basedir}/patches/IDEA-315803-Frame_icon.patch"/>
         <echo message="Applying ${frameIconOnWindows}"/>

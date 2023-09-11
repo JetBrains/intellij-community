@@ -1,0 +1,17 @@
+Index: platform/platform-impl/src/com/intellij/openapi/fileEditor/impl/EditorWindow.kt
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/platform/platform-impl/src/com/intellij/openapi/fileEditor/impl/EditorWindow.kt b/platform/platform-impl/src/com/intellij/openapi/fileEditor/impl/EditorWindow.kt
+--- a/platform/platform-impl/src/com/intellij/openapi/fileEditor/impl/EditorWindow.kt	(revision 7ff5c6541b265b30d4ecd702dccd8005502d3a74)
++++ b/platform/platform-impl/src/com/intellij/openapi/fileEditor/impl/EditorWindow.kt	(date 1694435187749)
+@@ -387,7 +387,7 @@
+     normalizeProportionsIfNeed(this.panel)
+     // open only selected file in the new splitter instead of opening all tabs
+     val nextFile = virtualFile ?: selectedComposite!!.file
+-    val currentState = selectedComposite?.currentStateAsHistoryEntry()?.takeIf { it.file != nextFile }
++    val currentState = selectedComposite?.currentStateAsHistoryEntry()?.takeIf { it.file == nextFile }
+     val openOptions = FileEditorOpenOptions(requestFocus = focusNew, isExactState = true)
+     val editors = fileEditorManager.openFileImpl4(result, nextFile, currentState, openOptions).first
+     syncCaretIfPossible(editors)
