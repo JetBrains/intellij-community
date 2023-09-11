@@ -2,8 +2,11 @@
 package com.intellij.vcs.log.ui.actions
 
 import com.intellij.icons.AllIcons
+import com.intellij.ide.HelpTooltip
 import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
+import com.intellij.openapi.actionSystem.impl.ActionButton
+import com.intellij.openapi.keymap.KeymapUtil
 import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.vcs.log.VcsLogBundle
@@ -34,6 +37,7 @@ class ResumeIndexingAction : DumbAwareAction() {
       e.presentation.text = VcsLogBundle.message("action.title.enable.indexing", vcsDisplayName)
       e.presentation.description = VcsLogBundle.message("action.description.was.disabled", vcsDisplayName)
       e.presentation.icon = AllIcons.Process.ProgressResumeSmall
+      updateHelpTooltip(e)
       return
     }
 
@@ -58,6 +62,16 @@ class ResumeIndexingAction : DumbAwareAction() {
       e.presentation.description = VcsLogBundle.message("action.description.was.paused", getText(rootsWithPausedIndexing))
       e.presentation.icon = AllIcons.Process.ProgressResumeSmall
     }
+    updateHelpTooltip(e)
+  }
+
+  @Suppress("DialogTitleCapitalization")
+  private fun updateHelpTooltip(e: AnActionEvent) {
+    e.presentation.putClientProperty(ActionButton.CUSTOM_HELP_TOOLTIP, HelpTooltip().apply {
+      setTitle(e.presentation.text)
+      setShortcut(KeymapUtil.getFirstKeyboardShortcutText(this@ResumeIndexingAction))
+      setDescription(VcsLogBundle.message("action.help.tooltip.resume.indexing"))
+    })
   }
 
   private fun getText(repositories: List<VirtualFile>): String {
