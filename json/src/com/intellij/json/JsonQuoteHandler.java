@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.json;
 
 import com.intellij.codeInsight.editorActions.MultiCharQuoteHandler;
@@ -22,14 +22,13 @@ import static com.intellij.json.JsonTokenSets.STRING_LITERALS;
 /**
  * @author Mikhail Golubev
  */
-public class JsonQuoteHandler extends SimpleTokenSetQuoteHandler implements MultiCharQuoteHandler {
+public final class JsonQuoteHandler extends SimpleTokenSetQuoteHandler implements MultiCharQuoteHandler {
   public JsonQuoteHandler() {
     super(STRING_LITERALS);
   }
 
-  @Nullable
   @Override
-  public CharSequence getClosingQuote(@NotNull HighlighterIterator iterator, int offset) {
+  public @Nullable CharSequence getClosingQuote(@NotNull HighlighterIterator iterator, int offset) {
     final IElementType tokenType = iterator.getTokenType();
     if (tokenType == TokenType.WHITE_SPACE) {
       final int index = iterator.getStart() - 1;

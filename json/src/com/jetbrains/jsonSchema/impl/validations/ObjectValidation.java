@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.jsonSchema.impl.validations;
 
 import com.intellij.json.JsonBundle;
@@ -22,7 +22,7 @@ import java.util.*;
 
 import static com.jetbrains.jsonSchema.impl.JsonSchemaVariantsTreeBuilder.doSingleStep;
 
-public class ObjectValidation implements JsonSchemaValidation {
+public final class ObjectValidation implements JsonSchemaValidation {
   public static final ObjectValidation INSTANCE = new ObjectValidation();
 
   @Override
@@ -189,8 +189,7 @@ public class ObjectValidation implements JsonSchemaValidation {
   }
 
 
-  @Nullable
-  private static Object getDefaultValueFromEnum(@NotNull JsonSchemaObject propertySchema, @NotNull Ref<Integer> enumCount) {
+  private static @Nullable Object getDefaultValueFromEnum(@NotNull JsonSchemaObject propertySchema, @NotNull Ref<Integer> enumCount) {
     List<Object> enumValues = propertySchema.getEnum();
     if (enumValues != null) {
       enumCount.set(enumValues.size());

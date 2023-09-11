@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.jsonSchema.impl.validations;
 
 import com.jetbrains.jsonSchema.extension.JsonSchemaValidation;
@@ -11,7 +11,7 @@ import com.jetbrains.jsonSchema.impl.JsonSchemaType;
 
 import java.util.Collections;
 
-public class TypeValidation implements JsonSchemaValidation {
+public final class TypeValidation implements JsonSchemaValidation {
   public static final TypeValidation INSTANCE = new TypeValidation();
   @Override
   public void validate(JsonValueAdapter propValue,

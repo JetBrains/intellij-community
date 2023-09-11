@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.json.psi.impl;
 
 import com.intellij.openapi.util.Ref;
@@ -23,7 +23,7 @@ public abstract class JSStringLiteralEscaper<T extends PsiLanguageInjectionHost>
   }
 
   @Override
-  public boolean decode(@NotNull final TextRange rangeInsideHost, @NotNull StringBuilder outChars) {
+  public boolean decode(final @NotNull TextRange rangeInsideHost, @NotNull StringBuilder outChars) {
     String subText = rangeInsideHost.substring(myHost.getText());
 
     Ref<int[]> sourceOffsetsRef = new Ref<>();
@@ -35,7 +35,7 @@ public abstract class JSStringLiteralEscaper<T extends PsiLanguageInjectionHost>
   protected abstract boolean isRegExpLiteral();
 
   @Override
-  public int getOffsetInHost(int offsetInDecoded, @NotNull final TextRange rangeInsideHost) {
+  public int getOffsetInHost(int offsetInDecoded, final @NotNull TextRange rangeInsideHost) {
     int result = offsetInDecoded < outSourceOffsets.length ? outSourceOffsets[offsetInDecoded] : -1;
     if (result == -1) return -1;
     return Math.min(result, rangeInsideHost.getLength()) + rangeInsideHost.getStartOffset();

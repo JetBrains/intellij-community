@@ -1,3 +1,4 @@
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.json.highlighting;
 
 import com.google.common.collect.ImmutableMap;
@@ -44,21 +45,18 @@ public class JsonColorsPage implements RainbowColorSettingsPage, DisplayPriority
     new AttributesDescriptor(JsonBundle.messagePointer("color.page.attribute.parameter"), JSON_PARAMETER)
   };
 
-  @Nullable
   @Override
-  public Icon getIcon() {
+  public @Nullable Icon getIcon() {
     return AllIcons.FileTypes.Json;
   }
 
-  @NotNull
   @Override
-  public SyntaxHighlighter getHighlighter() {
+  public @NotNull SyntaxHighlighter getHighlighter() {
     return SyntaxHighlighterFactory.getSyntaxHighlighter(JsonLanguage.INSTANCE, null, null);
   }
 
-  @NotNull
   @Override
-  public String getDemoText() {
+  public @NotNull String getDemoText() {
     return """
       {
         // Line comments are not included in standard but nonetheless allowed.
@@ -77,9 +75,8 @@ public class JsonColorsPage implements RainbowColorSettingsPage, DisplayPriority
       }""";
   }
 
-  @Nullable
   @Override
-  public Map<String, TextAttributesKey> getAdditionalHighlightingTagToDescriptorMap() {
+  public @Nullable Map<String, TextAttributesKey> getAdditionalHighlightingTagToDescriptorMap() {
     return ourAdditionalHighlighting;
   }
 
@@ -93,9 +90,8 @@ public class JsonColorsPage implements RainbowColorSettingsPage, DisplayPriority
     return ColorDescriptor.EMPTY_ARRAY;
   }
 
-  @NotNull
   @Override
-  public String getDisplayName() {
+  public @NotNull String getDisplayName() {
     return JsonBundle.message("settings.display.name.json");
   }
 
@@ -114,9 +110,8 @@ public class JsonColorsPage implements RainbowColorSettingsPage, DisplayPriority
       || JSON_KEYWORD.equals(type);
   }
 
-  @Nullable
   @Override
-  public Language getLanguage() {
+  public @Nullable Language getLanguage() {
     return JsonLanguage.INSTANCE;
   }
 }

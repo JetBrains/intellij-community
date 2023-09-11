@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.jsonSchema.impl;
 
 import com.intellij.json.pointer.JsonPointerPosition;
@@ -20,8 +20,8 @@ import static com.jetbrains.jsonSchema.JsonPointerUtil.isSelfReference;
 public final class JsonSchemaVariantsTreeBuilder {
 
   public static JsonSchemaTreeNode buildTree(@NotNull Project project,
-                                             @NotNull final JsonSchemaObject schema,
-                                             @NotNull final JsonPointerPosition position,
+                                             final @NotNull JsonSchemaObject schema,
+                                             final @NotNull JsonPointerPosition position,
                                              final boolean skipLastExpand) {
     final JsonSchemaTreeNode root = new JsonSchemaTreeNode(null, schema);
     JsonSchemaService service = JsonSchemaService.Impl.get(project);
@@ -57,7 +57,7 @@ public final class JsonSchemaVariantsTreeBuilder {
     return root;
   }
 
-  private static boolean typeMatches(final boolean isObject, @NotNull final JsonSchemaObject schema) {
+  private static boolean typeMatches(final boolean isObject, final @NotNull JsonSchemaObject schema) {
     final JsonSchemaType requiredType = isObject ? JsonSchemaType._object : JsonSchemaType._array;
     if (schema.getType() != null) {
       return requiredType.equals(schema.getType());
@@ -82,19 +82,17 @@ public final class JsonSchemaVariantsTreeBuilder {
     }
   }
 
-  @NotNull
-  private static Operation getOperation(@NotNull JsonSchemaService service,
-                                        JsonSchemaObject param) {
+  private static @NotNull Operation getOperation(@NotNull JsonSchemaService service,
+                                                 JsonSchemaObject param) {
     final Operation expand = new ProcessDefinitionsOperation(param, service);
     expand.doMap(new HashSet<>());
     expand.doReduce();
     return expand;
   }
 
-  @NotNull
-  public static Pair<ThreeState, JsonSchemaObject> doSingleStep(@NotNull JsonPointerPosition step,
-                                                                @NotNull JsonSchemaObject parent,
-                                                                boolean processAllBranches) {
+  public static @NotNull Pair<ThreeState, JsonSchemaObject> doSingleStep(@NotNull JsonPointerPosition step,
+                                                                         @NotNull JsonSchemaObject parent,
+                                                                         boolean processAllBranches) {
     final String name = step.getFirstName();
     if (name != null) {
       return propertyStep(name, parent, processAllBranches);
@@ -105,11 +103,11 @@ public final class JsonSchemaVariantsTreeBuilder {
     }
   }
 
-  static abstract class Operation {
-    @NotNull final List<JsonSchemaObject> myAnyOfGroup = new SmartList<>();
-    @NotNull final List<List<JsonSchemaObject>> myOneOfGroup = new SmartList<>();
-    @NotNull protected final List<Operation> myChildOperations;
-    @NotNull protected final JsonSchemaObject mySourceNode;
+  abstract static class Operation {
+    final @NotNull List<JsonSchemaObject> myAnyOfGroup = new SmartList<>();
+    final @NotNull List<List<JsonSchemaObject>> myOneOfGroup = new SmartList<>();
+    protected final @NotNull List<Operation> myChildOperations;
+    protected final @NotNull JsonSchemaObject mySourceNode;
     protected SchemaResolveState myState = SchemaResolveState.normal;
 
     protected Operation(@NotNull JsonSchemaObject sourceNode) {
@@ -120,7 +118,7 @@ public final class JsonSchemaVariantsTreeBuilder {
     protected abstract void map(@NotNull Set<JsonSchemaObject> visited);
     protected abstract void reduce();
 
-    public void doMap(@NotNull final Set<JsonSchemaObject> visited) {
+    public void doMap(final @NotNull Set<JsonSchemaObject> visited) {
       map(visited);
       for (Operation operation : myChildOperations) {
         operation.doMap(visited);
@@ -152,9 +150,8 @@ public final class JsonSchemaVariantsTreeBuilder {
       object.setOneOf(null);
     }
 
-    @Nullable
-    protected Operation createExpandOperation(@NotNull JsonSchemaObject schema,
-                                              @NotNull JsonSchemaService service) {
+    protected @Nullable Operation createExpandOperation(@NotNull JsonSchemaObject schema,
+                                                        @NotNull JsonSchemaService service) {
       Operation forConflict = getOperationForConflict(schema, service);
       if (forConflict != null) return forConflict;
       if (schema.getAnyOf() != null) return new AnyOfOperation(schema, service);
@@ -163,9 +160,8 @@ public final class JsonSchemaVariantsTreeBuilder {
       return null;
     }
 
-    @Nullable
-    private static Operation getOperationForConflict(@NotNull JsonSchemaObject schema,
-                                                     @NotNull JsonSchemaService service) {
+    private static @Nullable Operation getOperationForConflict(@NotNull JsonSchemaObject schema,
+                                                               @NotNull JsonSchemaService service) {
       // in case of several incompatible operations, choose the most permissive one
       List<JsonSchemaObject> anyOf = schema.getAnyOf();
       List<JsonSchemaObject> oneOf = schema.getOneOf();
@@ -186,16 +182,16 @@ public final class JsonSchemaVariantsTreeBuilder {
 
   // even if there are no definitions to expand, this object may work as an intermediate node in a tree,
   // connecting oneOf and allOf expansion, for example
-  private static class ProcessDefinitionsOperation extends Operation {
+  private static final class ProcessDefinitionsOperation extends Operation {
     private final JsonSchemaService myService;
 
-    protected ProcessDefinitionsOperation(@NotNull JsonSchemaObject sourceNode, JsonSchemaService service) {
+    private ProcessDefinitionsOperation(@NotNull JsonSchemaObject sourceNode, JsonSchemaService service) {
       super(sourceNode);
       myService = service;
     }
 
     @Override
-    public void map(@NotNull final Set<JsonSchemaObject> visited) {
+    public void map(final @NotNull Set<JsonSchemaObject> visited) {
       JsonSchemaObject current = mySourceNode;
       while (!StringUtil.isEmptyOrSpaces(current.getRef())) {
         final JsonSchemaObject definition = current.resolveRefSchema(myService);
@@ -223,16 +219,16 @@ public final class JsonSchemaVariantsTreeBuilder {
     }
   }
 
-  private static class AllOfOperation extends Operation {
+  private static final class AllOfOperation extends Operation {
     private final JsonSchemaService myService;
 
-    protected AllOfOperation(@NotNull JsonSchemaObject sourceNode, JsonSchemaService service) {
+    private AllOfOperation(@NotNull JsonSchemaObject sourceNode, JsonSchemaService service) {
       super(sourceNode);
       myService = service;
     }
 
     @Override
-    public void map(@NotNull final Set<JsonSchemaObject> visited) {
+    public void map(final @NotNull Set<JsonSchemaObject> visited) {
       List<JsonSchemaObject> allOf = mySourceNode.getAllOf();
       assert allOf != null;
       myChildOperations.addAll(ContainerUtil.map(allOf, sourceNode -> new ProcessDefinitionsOperation(sourceNode, myService)));
@@ -312,7 +308,7 @@ public final class JsonSchemaVariantsTreeBuilder {
     }
 
     @Override
-    public void map(@NotNull final Set<JsonSchemaObject> visited) {
+    public void map(final @NotNull Set<JsonSchemaObject> visited) {
       List<JsonSchemaObject> oneOf = mySourceNode.getOneOf();
       assert oneOf != null;
       myChildOperations.addAll(ContainerUtil.map(oneOf, sourceNode -> new ProcessDefinitionsOperation(sourceNode, myService)));
@@ -340,7 +336,7 @@ public final class JsonSchemaVariantsTreeBuilder {
     }
 
     @Override
-    public void map(@NotNull final Set<JsonSchemaObject> visited) {
+    public void map(final @NotNull Set<JsonSchemaObject> visited) {
       List<JsonSchemaObject> anyOf = mySourceNode.getAnyOf();
       assert anyOf != null;
       myChildOperations.addAll(ContainerUtil.map(anyOf, sourceNode -> new ProcessDefinitionsOperation(sourceNode, myService)));
@@ -365,10 +361,9 @@ public final class JsonSchemaVariantsTreeBuilder {
   }
 
 
-  @NotNull
-  private static Pair<ThreeState, JsonSchemaObject> propertyStep(@NotNull String name,
-                                                                 @NotNull JsonSchemaObject parent,
-                                                                 boolean processAllBranches) {
+  private static @NotNull Pair<ThreeState, JsonSchemaObject> propertyStep(@NotNull String name,
+                                                                          @NotNull JsonSchemaObject parent,
+                                                                          boolean processAllBranches) {
     final JsonSchemaObject child = parent.getProperties().get(name);
     if (child != null) {
       return Pair.create(ThreeState.UNSURE, child);
@@ -417,8 +412,7 @@ public final class JsonSchemaVariantsTreeBuilder {
     return Pair.create(ThreeState.YES, null);
   }
 
-  @NotNull
-  private static Pair<ThreeState, JsonSchemaObject> arrayOrNumericPropertyElementStep(int idx, @NotNull JsonSchemaObject parent) {
+  private static @NotNull Pair<ThreeState, JsonSchemaObject> arrayOrNumericPropertyElementStep(int idx, @NotNull JsonSchemaObject parent) {
     if (parent.getItemsSchema() != null) {
       return Pair.create(ThreeState.UNSURE, parent.getItemsSchema());
     }
@@ -445,13 +439,11 @@ public final class JsonSchemaVariantsTreeBuilder {
     return Pair.create(ThreeState.YES, null);
   }
 
-  public static class SchemaUrlSplitter {
-    @Nullable
-    private final String mySchemaId;
-    @NotNull
-    private final String myRelativePath;
+  public static final class SchemaUrlSplitter {
+    private final @Nullable String mySchemaId;
+    private final @NotNull String myRelativePath;
 
-    public SchemaUrlSplitter(@NotNull final String ref) {
+    public SchemaUrlSplitter(final @NotNull String ref) {
       if (isSelfReference(ref)) {
         mySchemaId = null;
         myRelativePath = "";
@@ -476,13 +468,11 @@ public final class JsonSchemaVariantsTreeBuilder {
       return mySchemaId != null;
     }
 
-    @Nullable
-    public String getSchemaId() {
+    public @Nullable String getSchemaId() {
       return mySchemaId;
     }
 
-    @NotNull
-    public String getRelativePath() {
+    public @NotNull String getRelativePath() {
       return myRelativePath;
     }
   }

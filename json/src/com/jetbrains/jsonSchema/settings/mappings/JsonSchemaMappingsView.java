@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.jsonSchema.settings.mappings;
 
 import com.intellij.icons.AllIcons;
@@ -58,7 +58,7 @@ import java.util.function.BiConsumer;
 import static com.jetbrains.jsonSchema.remote.JsonFileResolver.isAbsoluteUrl;
 import static com.jetbrains.jsonSchema.remote.JsonFileResolver.isHttpPath;
 
-public class JsonSchemaMappingsView implements Disposable {
+public final class JsonSchemaMappingsView implements Disposable {
   private static final String ADD_SCHEMA_MAPPING = "settings.json.schema.add.mapping";
   private static final String EDIT_SCHEMA_MAPPING = "settings.json.schema.edit.mapping";
   private static final String REMOVE_SCHEMA_MAPPING = "settings.json.schema.remove.mapping";
@@ -231,18 +231,16 @@ public class JsonSchemaMappingsView implements Disposable {
     return myComponent;
   }
 
-  private class MappingItemColumnInfo extends ColumnInfo<UserDefinedJsonSchemaConfiguration.Item, String> {
+  private final class MappingItemColumnInfo extends ColumnInfo<UserDefinedJsonSchemaConfiguration.Item, String> {
     MappingItemColumnInfo() {super("");}
 
-    @Nullable
     @Override
-    public String valueOf(UserDefinedJsonSchemaConfiguration.Item item) {
+    public @Nullable String valueOf(UserDefinedJsonSchemaConfiguration.Item item) {
       return item.getPresentation();
     }
 
-    @NotNull
     @Override
-    public TableCellRenderer getRenderer(UserDefinedJsonSchemaConfiguration.Item item) {
+    public @NotNull TableCellRenderer getRenderer(UserDefinedJsonSchemaConfiguration.Item item) {
       return new DefaultTableCellRenderer() {
         @Override
         public Component getTableCellRendererComponent(JTable table,
@@ -271,9 +269,8 @@ public class JsonSchemaMappingsView implements Disposable {
       };
     }
 
-    @Nullable
     @Override
-    public TableCellEditor getEditor(UserDefinedJsonSchemaConfiguration.Item item) {
+    public @Nullable TableCellEditor getEditor(UserDefinedJsonSchemaConfiguration.Item item) {
       return new JsonMappingsTableCellEditor(item, myProject, myTreeUpdater);
     }
 
@@ -283,7 +280,7 @@ public class JsonSchemaMappingsView implements Disposable {
     }
   }
 
-  class MyAddActionButtonRunnable implements AnActionButtonRunnable {
+  final class MyAddActionButtonRunnable implements AnActionButtonRunnable {
     MyAddActionButtonRunnable() {
       super();
     }
@@ -293,9 +290,8 @@ public class JsonSchemaMappingsView implements Disposable {
       RelativePoint point = button.getPreferredPopupPoint();
       JBPopupFactory.getInstance().createListPopup(new BaseListPopupStep<>(null,
                                                                            JsonMappingKind.values()) {
-        @NotNull
         @Override
-        public String getTextFor(JsonMappingKind value) {
+        public @NotNull String getTextFor(JsonMappingKind value) {
           return JsonBundle.message("schema.add.mapping.kind.text", StringUtil.capitalizeWords(value.getDescription(), true));
         }
 
@@ -323,7 +319,7 @@ public class JsonSchemaMappingsView implements Disposable {
     }
   }
 
-  private class MyEditActionButtonRunnableImpl implements AnActionButtonRunnable {
+  private final class MyEditActionButtonRunnableImpl implements AnActionButtonRunnable {
     MyEditActionButtonRunnableImpl() {
       super();
     }
@@ -340,7 +336,7 @@ public class JsonSchemaMappingsView implements Disposable {
     }
   }
 
-  private class MyRemoveActionButtonRunnable implements AnActionButtonRunnable {
+  private final class MyRemoveActionButtonRunnable implements AnActionButtonRunnable {
     @Override
     public void run(AnActionButton button) {
       final int[] rows = myTableView.getSelectedRows();

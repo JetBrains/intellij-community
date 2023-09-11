@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.json.psi;
 
 import com.intellij.json.JsonElementTypes;
@@ -74,8 +74,7 @@ public final class JsonPsiUtil {
    * @param after  whether to scan through sibling elements forward or backward
    * @return described element or anchor if search stops immediately
    */
-  @NotNull
-  public static PsiElement findFurthestSiblingOfSameType(@NotNull PsiElement anchor, boolean after) {
+  public static @NotNull PsiElement findFurthestSiblingOfSameType(@NotNull PsiElement anchor, boolean after) {
     ASTNode node = anchor.getNode();
     // Compare by node type to distinguish between different types of comments
     final IElementType expectedType = node.getElementType();
@@ -136,8 +135,7 @@ public final class JsonPsiUtil {
    * @param element PSI element which text is needed
    * @return text of the element with any host escaping removed
    */
-  @NotNull
-  public static String getElementTextWithoutHostEscaping(@NotNull PsiElement element) {
+  public static @NotNull String getElementTextWithoutHostEscaping(@NotNull PsiElement element) {
     final InjectedLanguageManager manager = InjectedLanguageManager.getInstance(element.getProject());
     if (manager.isInjectedFragment(element.getContainingFile())) {
       return manager.getUnescapedText(element);
@@ -158,8 +156,7 @@ public final class JsonPsiUtil {
    *
    * @param text presumably result of {@link JsonStringLiteral#getText()}
    */
-  @NotNull
-  public static String stripQuotes(@NotNull String text) {
+  public static @NotNull String stripQuotes(@NotNull String text) {
     if (text.length() > 0) {
       final char firstChar = text.charAt(0);
       final char lastChar = text.charAt(text.length() - 1);
@@ -196,8 +193,7 @@ public final class JsonPsiUtil {
    * @param first    if true make new property first in the object, otherwise append in the end of property list
    * @return property as returned by {@link PsiElement#addAfter(PsiElement, PsiElement)}
    */
-  @NotNull
-  public static PsiElement addProperty(@NotNull JsonObject object, @NotNull JsonProperty property, boolean first) {
+  public static @NotNull PsiElement addProperty(@NotNull JsonObject object, @NotNull JsonProperty property, boolean first) {
     final List<JsonProperty> propertyList = object.getPropertyList();
     if (!first) {
       final JsonProperty lastProperty = ContainerUtil.getLastItem(propertyList);
@@ -216,8 +212,7 @@ public final class JsonPsiUtil {
     return addedProperty;
   }
 
-  @NotNull
-  public static Set<String> getOtherSiblingPropertyNames(@Nullable JsonProperty property) {
+  public static @NotNull Set<String> getOtherSiblingPropertyNames(@Nullable JsonProperty property) {
     if (property == null) return Collections.emptySet();
     JsonObject object = ObjectUtils.tryCast(property.getParent(), JsonObject.class);
     if (object == null) return Collections.emptySet();

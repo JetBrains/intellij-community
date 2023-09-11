@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.json.editor;
 
 import com.intellij.codeInsight.editorActions.CopyPastePreProcessor;
@@ -16,10 +16,9 @@ import com.intellij.psi.util.PsiTreeUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public class JsonCopyPasteProcessor implements CopyPastePreProcessor {
-  @Nullable
+public final class JsonCopyPasteProcessor implements CopyPastePreProcessor {
   @Override
-  public String preprocessOnCopy(PsiFile file, int[] startOffsets, int[] endOffsets, String text) {
+  public @Nullable String preprocessOnCopy(PsiFile file, int[] startOffsets, int[] endOffsets, String text) {
     if (!JsonEditorOptions.getInstance().ESCAPE_PASTED_TEXT) {
       return null;
     }
@@ -37,8 +36,7 @@ public class JsonCopyPasteProcessor implements CopyPastePreProcessor {
     return StringUtil.unescapeStringCharacters(StringUtil.replaceUnicodeEscapeSequences(text));
   }
 
-  @Nullable
-  private static JsonStringLiteral getSingleElementFromSelectionOrNull(PsiFile file, int start, int end) {
+  private static @Nullable JsonStringLiteral getSingleElementFromSelectionOrNull(PsiFile file, int start, int end) {
     final PsiElement element = file.findElementAt(start);
     final JsonStringLiteral literalExpression = PsiTreeUtil.getParentOfType(element, JsonStringLiteral.class);
     if (literalExpression == null) return null;
@@ -49,9 +47,8 @@ public class JsonCopyPasteProcessor implements CopyPastePreProcessor {
     return literalExpression;
   }
 
-  @NotNull
   @Override
-  public String preprocessOnPaste(Project project, PsiFile file, Editor editor, String text, RawText rawText) {
+  public @NotNull String preprocessOnPaste(Project project, PsiFile file, Editor editor, String text, RawText rawText) {
     if (!JsonEditorOptions.getInstance().ESCAPE_PASTED_TEXT) {
       return text;
     }
@@ -71,7 +68,7 @@ public class JsonCopyPasteProcessor implements CopyPastePreProcessor {
     return StringUtil.escapeStringCharacters(text);
   }
 
-  protected boolean isSupportedFile(PsiFile file) {
+  private boolean isSupportedFile(PsiFile file) {
     return file instanceof JsonFile && file.isPhysical();
   }
 

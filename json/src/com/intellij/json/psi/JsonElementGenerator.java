@@ -1,3 +1,4 @@
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.json.psi;
 
 import com.intellij.json.JsonFileType;
@@ -24,8 +25,7 @@ public class JsonElementGenerator {
    * @param content content of the file to be created
    * @return created file
    */
-  @NotNull
-  public PsiFile createDummyFile(@NotNull String content) {
+  public @NotNull PsiFile createDummyFile(@NotNull String content) {
     final PsiFileFactory psiFileFactory = PsiFileFactory.getInstance(myProject);
     return psiFileFactory.createFileFromText("dummy." + JsonFileType.INSTANCE.getDefaultExtension(), JsonFileType.INSTANCE, content);
   }
@@ -39,15 +39,13 @@ public class JsonElementGenerator {
    *
    * @see #createStringLiteral(String)
    */
-  @NotNull
-  public <T extends JsonValue> T createValue(@NotNull String content) {
+  public @NotNull <T extends JsonValue> T createValue(@NotNull String content) {
     final PsiFile file = createDummyFile("{\"foo\": " + content + "}");
     //noinspection unchecked,ConstantConditions
     return (T)((JsonObject)file.getFirstChild()).getPropertyList().get(0).getValue();
   }
 
-  @NotNull
-  public JsonObject createObject(@NotNull String content) {
+  public @NotNull JsonObject createObject(@NotNull String content) {
     final PsiFile file = createDummyFile("{" + content + "}");
     return (JsonObject) file.getFirstChild();
   }
@@ -58,19 +56,16 @@ public class JsonElementGenerator {
    * @param unescapedContent unescaped content of string literal, e.g. Java literal {@code "new\nline"} (compare with {@link #createValue(String)}).
    * @return JSON string literal created from given text
    */
-  @NotNull
-  public JsonStringLiteral createStringLiteral(@NotNull String unescapedContent) {
+  public @NotNull JsonStringLiteral createStringLiteral(@NotNull String unescapedContent) {
     return createValue('"' + StringUtil.escapeStringCharacters(unescapedContent) + '"');
   }
 
-  @NotNull
-  public JsonProperty createProperty(@NotNull final String name, @NotNull final String value) {
+  public @NotNull JsonProperty createProperty(final @NotNull String name, final @NotNull String value) {
     final PsiFile file = createDummyFile("{\"" + name + "\": " + value + "}");
     return ((JsonObject) file.getFirstChild()).getPropertyList().get(0);
   }
 
-  @NotNull
-  public PsiElement createComma() {
+  public @NotNull PsiElement createComma() {
     final JsonArray jsonArray1 = createValue("[1, 2]");
     return jsonArray1.getValueList().get(0).getNextSibling();
   }

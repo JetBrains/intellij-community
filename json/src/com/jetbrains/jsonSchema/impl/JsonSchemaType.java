@@ -1,3 +1,4 @@
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.jsonSchema.impl;
 
 import com.jetbrains.jsonSchema.extension.adapters.JsonValueAdapter;
@@ -32,8 +33,7 @@ public enum JsonSchemaType {
     };
   }
 
-  @Nullable
-  static JsonSchemaType getType(@NotNull final JsonValueAdapter value) {
+  static @Nullable JsonSchemaType getType(final @NotNull JsonValueAdapter value) {
     if (value.isNull()) return _null;
     if (value.isBooleanLiteral()) return _boolean;
     if (value.isStringLiteral()) {
@@ -51,8 +51,7 @@ public enum JsonSchemaType {
     return getIntegerValue(text) != null;
   }
 
-  @Nullable
-  public static Number getIntegerValue(@NotNull String text) {
+  public static @Nullable Number getIntegerValue(@NotNull String text) {
     try {
       return Integer.parseInt(text);
     }

@@ -132,7 +132,7 @@ public final class JsonSchemaCompletionContributor extends CompletionContributor
     });
   }
 
-  private static class Worker {
+  private static final class Worker {
     private final @NotNull JsonSchemaObject myRootSchema;
     private final @NotNull PsiElement myPosition;
     private final @NotNull PsiElement myOriginalPosition;

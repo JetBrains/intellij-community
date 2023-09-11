@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.jsonSchema.extension;
 
 import com.intellij.json.pointer.JsonPointerPosition;
@@ -29,10 +29,10 @@ public interface JsonLikePsiWalker {
 
   boolean isPropertyWithValue(@NotNull PsiElement element);
 
-  PsiElement findElementToCheck(@NotNull final PsiElement element);
+  PsiElement findElementToCheck(final @NotNull PsiElement element);
 
   @Nullable
-  JsonPointerPosition findPosition(@NotNull final PsiElement element, boolean forceLastTransition);
+  JsonPointerPosition findPosition(final @NotNull PsiElement element, boolean forceLastTransition);
 
   boolean requiresNameQuotes();
   default boolean requiresValueQuotes() { return true; }
@@ -84,8 +84,7 @@ public interface JsonLikePsiWalker {
     return true;
   }
 
-  @Nullable
-  static JsonLikePsiWalker getWalker(@NotNull final PsiElement element, JsonSchemaObject schemaObject) {
+  static @Nullable JsonLikePsiWalker getWalker(final @NotNull PsiElement element, JsonSchemaObject schemaObject) {
     if (JsonOriginalPsiWalker.INSTANCE.handles(element)) return JsonOriginalPsiWalker.INSTANCE;
 
     return JsonLikePsiWalkerFactory.EXTENSION_POINT_NAME.getExtensionList().stream()
@@ -104,8 +103,7 @@ public interface JsonLikePsiWalker {
 
   default JsonLikeSyntaxAdapter getSyntaxAdapter(Project project) { return null; }
 
-  @Nullable
-  default PsiElement getParentContainer(PsiElement element) {
+  default @Nullable PsiElement getParentContainer(PsiElement element) {
     return null;
   }
 

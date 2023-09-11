@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.jsonSchema.remote;
 
 import com.intellij.json.JsonFileType;
@@ -18,7 +18,7 @@ import java.nio.file.Files;
 import java.time.Duration;
 import java.util.List;
 
-public class JsonSchemaRemoteContentProvider extends DefaultRemoteContentProvider {
+public final class JsonSchemaRemoteContentProvider extends DefaultRemoteContentProvider {
   private static final int DEFAULT_CONNECT_TIMEOUT = 10000;
   private static final long UPDATE_DELAY = Duration.ofHours(4).toMillis();
   static final String STORE_URL_PREFIX_HTTP = "http://json.schemastore.org";
@@ -47,9 +47,8 @@ public class JsonSchemaRemoteContentProvider extends DefaultRemoteContentProvide
     saveTag(file, connection, LAST_MODIFIED_HEADER);
   }
 
-  @Nullable
   @Override
-  protected FileType adjustFileType(@Nullable FileType type, @NotNull Url url) {
+  protected @Nullable FileType adjustFileType(@Nullable FileType type, @NotNull Url url) {
     if (type == null) {
       String fullUrl = url.toExternalForm();
       if (fullUrl.startsWith(SCHEMA_URL_PREFIX) || fullUrl.startsWith(SCHEMA_URL_PREFIX_HTTPS)) {

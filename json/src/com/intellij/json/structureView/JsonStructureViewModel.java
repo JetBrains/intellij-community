@@ -1,3 +1,4 @@
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.json.structureView;
 
 import com.intellij.ide.structureView.StructureViewModel;
@@ -16,7 +17,7 @@ import org.jetbrains.annotations.Nullable;
 /**
  * @author Mikhail Golubev
  */
-public class JsonStructureViewModel extends StructureViewModelBase implements StructureViewModel.ElementInfoProvider {
+public final class JsonStructureViewModel extends StructureViewModelBase implements StructureViewModel.ElementInfoProvider {
 
   public JsonStructureViewModel(@NotNull PsiFile psiFile, @Nullable Editor editor) {
     super(psiFile, editor, new JsonStructureViewElement((JsonFile)psiFile));

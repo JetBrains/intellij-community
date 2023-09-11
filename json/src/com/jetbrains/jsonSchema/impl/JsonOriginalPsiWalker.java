@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.jsonSchema.impl;
 
 import com.intellij.codeInsight.completion.CompletionUtil;
@@ -73,9 +73,8 @@ public class JsonOriginalPsiWalker implements JsonLikePsiWalker {
     return null;
   }
 
-  @Nullable
   @Override
-  public JsonPointerPosition findPosition(@NotNull PsiElement element, boolean forceLastTransition) {
+  public @Nullable JsonPointerPosition findPosition(@NotNull PsiElement element, boolean forceLastTransition) {
     JsonPointerPosition pos = new JsonPointerPosition();
     PsiElement current = element;
     while (! (current instanceof PsiFile)) {
@@ -168,9 +167,8 @@ public class JsonOriginalPsiWalker implements JsonLikePsiWalker {
     return element instanceof PsiFile;
   }
 
-  @Nullable
   @Override
-  public JsonValueAdapter createValueAdapter(@NotNull PsiElement element) {
+  public @Nullable JsonValueAdapter createValueAdapter(@NotNull PsiElement element) {
     return element instanceof JsonValue ? JsonJsonPropertyAdapter.createAdapterByType((JsonValue)element) : null;
   }
 
@@ -178,23 +176,20 @@ public class JsonOriginalPsiWalker implements JsonLikePsiWalker {
   public JsonLikeSyntaxAdapter getSyntaxAdapter(Project project) {
     return new JsonLikeSyntaxAdapter() {
       private final JsonElementGenerator myGenerator = new JsonElementGenerator(project);
-      @Nullable
       @Override
-      public PsiElement getPropertyValue(PsiElement property) {
+      public @Nullable PsiElement getPropertyValue(PsiElement property) {
         assert property instanceof JsonProperty;
         return ((JsonProperty)property).getValue();
       }
 
-      @NotNull
       @Override
-      public String getPropertyName(PsiElement property) {
+      public @NotNull String getPropertyName(PsiElement property) {
         assert property instanceof JsonProperty;
         return ((JsonProperty)property).getName();
       }
 
-      @NotNull
       @Override
-      public PsiElement createProperty(@NotNull String name, @NotNull String value, PsiElement element) {
+      public @NotNull PsiElement createProperty(@NotNull String name, @NotNull String value, PsiElement element) {
         return myGenerator.createProperty(name, value);
       }
 
@@ -219,9 +214,8 @@ public class JsonOriginalPsiWalker implements JsonLikePsiWalker {
         return true;
       }
 
-      @NotNull
       @Override
-      public String getDefaultValueFromType(@Nullable JsonSchemaType type) {
+      public @NotNull String getDefaultValueFromType(@Nullable JsonSchemaType type) {
         return type == null ? "" : type.getDefaultValue();
       }
 
@@ -237,22 +231,19 @@ public class JsonOriginalPsiWalker implements JsonLikePsiWalker {
     };
   }
 
-  @Nullable
   @Override
-  public PsiElement getParentContainer(PsiElement element) {
+  public @Nullable PsiElement getParentContainer(PsiElement element) {
     return PsiTreeUtil.getParentOfType(PsiTreeUtil.getParentOfType(element, JsonProperty.class),
                                 JsonObject.class, JsonArray.class);
   }
 
-  @NotNull
   @Override
-  public Collection<PsiElement> getRoots(@NotNull PsiFile file) {
+  public @NotNull Collection<PsiElement> getRoots(@NotNull PsiFile file) {
     return file instanceof JsonFile ? ContainerUtil.createMaybeSingletonList(((JsonFile)file).getTopLevelValue()) : ContainerUtil.emptyList();
   }
 
-  @Nullable
   @Override
-  public PsiElement getPropertyNameElement(PsiElement property) {
+  public @Nullable PsiElement getPropertyNameElement(PsiElement property) {
     return property instanceof JsonProperty ? ((JsonProperty)property).getNameElement() : null;
   }
 

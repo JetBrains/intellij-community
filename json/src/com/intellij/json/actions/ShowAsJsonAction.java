@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.json.actions;
 
 import com.google.common.base.CharMatcher;
@@ -29,14 +29,14 @@ import org.jetbrains.annotations.NotNull;
 
 import java.lang.ref.WeakReference;
 
-class ShowAsJsonAction extends DumbAwareAction {
-  private static class Holder {
+final class ShowAsJsonAction extends DumbAwareAction {
+  private static final class Holder {
     private static final CharMatcher JSON_START_MATCHER = CharMatcher.is('{');
   }
   private static final Key<Integer> LINE_KEY = Key.create("jsonFileToLogLineNumber");
   private static final Key<WeakReference<Editor>> EDITOR_REF_KEY = Key.create("jsonFileToConsoleEditor");
 
-  private final static class JsonLineExtractor {
+  private static final class JsonLineExtractor {
     private int start = -1;
     private int end = -1;
 

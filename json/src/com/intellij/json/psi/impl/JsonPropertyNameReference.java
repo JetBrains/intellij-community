@@ -1,3 +1,4 @@
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.json.psi.impl;
 
 import com.intellij.json.psi.JsonProperty;
@@ -20,29 +21,25 @@ public class JsonPropertyNameReference implements PsiReference {
     myProperty = property;
   }
 
-  @NotNull
   @Override
-  public PsiElement getElement() {
+  public @NotNull PsiElement getElement() {
     return myProperty;
   }
 
-  @NotNull
   @Override
-  public TextRange getRangeInElement() {
+  public @NotNull TextRange getRangeInElement() {
     final JsonValue nameElement = myProperty.getNameElement();
     // Either value of string with quotes stripped or element's text as is
     return ElementManipulators.getValueTextRange(nameElement);
   }
 
-  @Nullable
   @Override
-  public PsiElement resolve() {
+  public @Nullable PsiElement resolve() {
     return myProperty;
   }
 
-  @NotNull
   @Override
-  public String getCanonicalText() {
+  public @NotNull String getCanonicalText() {
     return myProperty.getName();
   }
 
