@@ -11,6 +11,7 @@ import com.intellij.testFramework.fixtures.JavaCodeInsightFixtureTestCase
 import com.intellij.util.SystemProperties
 import com.intellij.util.indexing.diagnostic.IndexDiagnosticDumper
 import com.intellij.util.indexing.diagnostic.IndexDiagnosticDumperUtils
+import com.intellij.util.indexing.diagnostic.IndexStatisticGroup
 import com.intellij.util.indexing.diagnostic.ScanningType
 import com.intellij.util.indexing.diagnostic.dto.*
 import com.intellij.util.indexing.diagnostic.dump.paths.PortableFilePath
@@ -78,7 +79,7 @@ class IndexDiagnosticTest : JavaCodeInsightFixtureTestCase() {
     val indexDiagnostic = JsonIndexingActivityDiagnostic(
       JsonIndexDiagnosticAppInfo.create(),
       JsonRuntimeInfo.create(),
-      IndexDiagnosticDumper.IndexingActivityType.Scanning,
+      IndexStatisticGroup.IndexingActivityType.Scanning,
       JsonProjectScanningHistory(
         projectName = "projectName",
         times = JsonProjectScanningHistoryTimes(
@@ -144,7 +145,7 @@ class IndexDiagnosticTest : JavaCodeInsightFixtureTestCase() {
     val indexDiagnostic = JsonIndexingActivityDiagnostic(
       JsonIndexDiagnosticAppInfo.create(),
       JsonRuntimeInfo.create(),
-      IndexDiagnosticDumper.IndexingActivityType.DumbIndexing,
+      IndexStatisticGroup.IndexingActivityType.DumbIndexing,
       JsonProjectDumbIndexingHistory(
         projectName = "projectName",
         times = JsonProjectDumbIndexingHistoryTimes(

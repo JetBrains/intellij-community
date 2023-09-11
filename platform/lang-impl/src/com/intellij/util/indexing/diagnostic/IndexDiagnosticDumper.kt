@@ -19,6 +19,7 @@ import com.intellij.util.concurrency.NonUrgentExecutor
 import com.intellij.util.indexing.diagnostic.IndexDiagnosticDumperUtils.indexingDiagnosticDir
 import com.intellij.util.indexing.diagnostic.IndexDiagnosticDumperUtils.jacksonMapper
 import com.intellij.util.indexing.diagnostic.IndexDiagnosticDumperUtils.oldVersionIndexingDiagnosticDir
+import com.intellij.util.indexing.diagnostic.IndexStatisticGroup.IndexingActivityType
 import com.intellij.util.indexing.diagnostic.dto.*
 import com.intellij.util.indexing.diagnostic.presentation.createAggregateActivityHtml
 import com.intellij.util.indexing.diagnostic.presentation.generateHtml
@@ -401,7 +402,6 @@ class IndexDiagnosticDumper : Disposable {
         .toList()
     }
 
-  enum class IndexingActivityType { Scanning, DumbIndexing }
   data class ExistingIndexingActivityDiagnostic(
     val jsonFile: Path,
     val htmlFile: Path,

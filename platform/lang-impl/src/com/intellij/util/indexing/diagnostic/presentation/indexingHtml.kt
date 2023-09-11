@@ -5,6 +5,7 @@ package com.intellij.util.indexing.diagnostic.presentation
 
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.util.indexing.diagnostic.IndexDiagnosticDumper
+import com.intellij.util.indexing.diagnostic.IndexStatisticGroup.IndexingActivityType
 import com.intellij.util.indexing.diagnostic.IndexingFileSetStatistics
 import com.intellij.util.indexing.diagnostic.dto.*
 import kotlinx.html.*
@@ -99,9 +100,9 @@ private fun getMinorDataClass(isMinor: Boolean) = if (isMinor) "minor-data" + (i
 
 fun JsonIndexingActivityDiagnostic.generateHtml(target: Appendable): String =
   when (type) {
-    IndexDiagnosticDumper.IndexingActivityType.Scanning ->
+    IndexingActivityType.Scanning ->
       (this.projectIndexingActivityHistory as JsonProjectScanningHistory).generateScanningHtml(target, appInfo, runtimeInfo)
-    IndexDiagnosticDumper.IndexingActivityType.DumbIndexing ->
+    IndexingActivityType.DumbIndexing ->
       (this.projectIndexingActivityHistory as JsonProjectDumbIndexingHistory).generateDumbIndexingHtml(target, appInfo, runtimeInfo)
   }
 
