@@ -46,10 +46,9 @@ object InlineCompletionUsageTracker : CounterUsagesCollector() {
       if (event.i == 0 && !event.element.text.isEmpty()) {
         triggerTracker.hasSuggestion()
       }
-
       if (event.i == 0) {
         // trigger tracker -> show tracker
-        showTracker = ShowTracker(triggerTracker.invocationTime, triggerTracker.requestId)
+        showTracker = triggerTracker.createShowTracker()
         editor?.let { showTracker!!.firstShown(it, event.element) }
       }
       if (event.i != 0) {
@@ -96,17 +95,42 @@ object InlineCompletionUsageTracker : CounterUsagesCollector() {
     val requestId = Random.nextLong()
     private val finished = AtomicBoolean(false)
     private val data = mutableListOf<EventPair<*>>()
+    private val triggerFeatures = mutableListOf<EventPair<*>>()
     private var hasSuggestions: Boolean? = null
     private var cancelled: Boolean = false
     private var exception: Boolean = false
 
+    fun createShowTracker() = ShowTracker(requestId, invocationTime, ShownEvents.TRIGGER_FEATURES.with(ObjectEventData(triggerFeatures)))
 
     fun captureContext(editor: Editor, offset: Int) {
       val psiFile = PsiDocumentManager.getInstance(editor.project ?: return).getPsiFile(editor.document) ?: return
       val language = PsiUtilCore.getLanguageAtOffset(psiFile, offset)
       data.add(EventFields.Language.with(language))
       data.add(EventFields.CurrentFile.with(psiFile.language))
+      captureTriggerFeatures(editor, offset)
       assert(!finished.get())
+    }
+
+    fun captureTriggerFeatures(editor: Editor, offset: Int) {
+      triggerFeatures.clear()
+      val logicalPosition = editor.offsetToLogicalPosition(offset)
+      val lineNumber = logicalPosition.line
+      val columnNumber = logicalPosition.column
+
+      triggerFeatures.add(ShownEvents.LINE_NUMBER.with(lineNumber))
+      triggerFeatures.add(ShownEvents.COLUMN_NUMBER.with(columnNumber))
+
+      val lineStartOffset = editor.document.getLineStartOffset(lineNumber)
+      val lineEndOffset = editor.document.getLineEndOffset(lineNumber)
+
+      val textBeforeCaret = editor.document.getText(TextRange(lineStartOffset, offset))
+      val textAfterCaret = editor.document.getText(TextRange(offset, lineEndOffset))
+
+      val symbolsInLineBeforeCaret = textBeforeCaret.trim().length
+      val symbolsInLineAfterCaret = textAfterCaret.trim().length
+
+      triggerFeatures.add(ShownEvents.SYMBOLS_IN_LINE_BEFORE_CARET.with(symbolsInLineBeforeCaret))
+      triggerFeatures.add(ShownEvents.SYMBOLS_IN_LINE_AFTER_CARET.with(symbolsInLineAfterCaret))
     }
 
     fun noSuggestions() {
@@ -184,7 +208,9 @@ object InlineCompletionUsageTracker : CounterUsagesCollector() {
   /**
    * This tracker lives from the moment the inline completion appears on the screen until its end.
    */
-  class ShowTracker(private val invocationTime: Long, private val requestId: Long) {
+  class ShowTracker(private val requestId: Long,
+                    private val invocationTime: Long,
+                    private val triggerFeatures: EventPair<*>) {
     private val data = mutableListOf<EventPair<*>>()
     private val firstShown = AtomicBoolean(false)
     private val shownLogSent = AtomicBoolean(false)
@@ -200,6 +226,7 @@ object InlineCompletionUsageTracker : CounterUsagesCollector() {
       data.add(ShownEvents.REQUEST_ID.with(requestId))
       project = editor.project
       data.add(ShownEvents.TIME_TO_SHOW.with(System.currentTimeMillis() - invocationTime))
+      data.add(triggerFeatures)
       nextShown(element)
       assert(!shownLogSent.get())
     }
@@ -242,6 +269,20 @@ object InlineCompletionUsageTracker : CounterUsagesCollector() {
     val SHOWING_TIME = Long("showing_time")
     val OUTCOME = Enum<Outcome>("outcome")
 
+    val TRIGGER_FEATURES_KEY = "trigger_features"
+    val LINE_NUMBER = Int("line_number")
+    val COLUMN_NUMBER = Int("column_number")
+    val SYMBOLS_IN_LINE_BEFORE_CARET = Int("symbols_in_line_before_caret")
+    val SYMBOLS_IN_LINE_AFTER_CARET = Int("symbols_in_line_after_caret")
+
+    val TRIGGER_FEATURES = ObjectEventField(
+      TRIGGER_FEATURES_KEY,
+      LINE_NUMBER,
+      COLUMN_NUMBER,
+      SYMBOLS_IN_LINE_BEFORE_CARET,
+      SYMBOLS_IN_LINE_AFTER_CARET
+    )
+
     enum class Outcome { ACCEPT, REJECT }
   }
 
@@ -252,5 +293,6 @@ object InlineCompletionUsageTracker : CounterUsagesCollector() {
     ShownEvents.TIME_TO_SHOW,
     ShownEvents.SHOWING_TIME,
     ShownEvents.OUTCOME,
+    ShownEvents.TRIGGER_FEATURES
   )
 }
