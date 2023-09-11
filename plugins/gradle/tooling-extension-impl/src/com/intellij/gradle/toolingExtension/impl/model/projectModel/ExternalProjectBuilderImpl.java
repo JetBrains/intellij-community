@@ -1,10 +1,11 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.gradle.toolingExtension.impl.model.projectModel;
 
-import com.intellij.gradle.toolingExtension.impl.model.sourceSetModel.GradleSourceSetModelBuilder;
+import com.intellij.gradle.toolingExtension.impl.model.sourceSetModel.DefaultGradleSourceSetModel;
+import com.intellij.gradle.toolingExtension.impl.model.sourceSetModel.GradleSourceSetCache;
 import com.intellij.gradle.toolingExtension.impl.model.taskModel.GradleTaskCache;
-import com.intellij.gradle.toolingExtension.impl.util.*;
-import com.intellij.gradle.toolingExtension.impl.util.javaPluginUtil.JavaPluginUtil;
+import com.intellij.gradle.toolingExtension.impl.util.GradleObjectUtil;
+import com.intellij.gradle.toolingExtension.impl.util.GradleTaskUtil;
 import org.gradle.api.Project;
 import org.gradle.api.Task;
 import org.gradle.api.tasks.testing.AbstractTestTask;
@@ -79,17 +80,16 @@ public class ExternalProjectBuilderImpl extends AbstractModelBuilderService {
     externalProject.setBuildFile(project.getBuildFile());
     externalProject.setGroup(wrap(project.getGroup()));
     externalProject.setProjectDir(project.getProjectDir());
-    externalProject.setSourceSets(GradleSourceSetModelBuilder.getSourceSets(project, context));
     externalProject.setTasks(getTasks(project, context));
-    externalProject.setSourceCompatibility(JavaPluginUtil.getSourceCompatibility(project));
-    externalProject.setTargetCompatibility(JavaPluginUtil.getTargetCompatibility(project));
-
-    GradleSourceSetModelBuilder.addArtifactsData(project, externalProject);
+    externalProject.setSourceSetModel(getSourceSetModel(project, context));
 
     return externalProject;
   }
 
-  private static Map<String, DefaultExternalTask> getTasks(@NotNull Project project, @NotNull ModelBuilderContext context) {
+  private static @NotNull Map<String, DefaultExternalTask> getTasks(
+    @NotNull Project project,
+    @NotNull ModelBuilderContext context
+  ) {
     Map<String, DefaultExternalTask> result = new HashMap<>();
 
     GradleTaskCache taskCache = GradleTaskCache.getInstance(context);
@@ -120,7 +120,15 @@ public class ExternalProjectBuilderImpl extends AbstractModelBuilderService {
     return result;
   }
 
-  private static String wrap(Object o) {
+  private static @NotNull DefaultGradleSourceSetModel getSourceSetModel(
+    @NotNull Project project,
+    @NotNull ModelBuilderContext context
+  ) {
+    return GradleSourceSetCache.getInstance(context)
+      .getSourceSetModel(project);
+  }
+
+  private static @NotNull String wrap(@Nullable Object o) {
     return o instanceof CharSequence ? o.toString() : "";
   }
 

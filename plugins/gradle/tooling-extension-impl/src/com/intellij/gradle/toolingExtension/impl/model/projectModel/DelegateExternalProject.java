@@ -7,6 +7,7 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.gradle.model.ExternalProject;
 import org.jetbrains.plugins.gradle.model.ExternalSourceSet;
 import org.jetbrains.plugins.gradle.model.ExternalTask;
+import org.jetbrains.plugins.gradle.model.GradleSourceSetModel;
 
 import java.io.File;
 import java.util.List;
@@ -115,5 +116,10 @@ public abstract class DelegateExternalProject implements ExternalProject {
   @Override
   public @NotNull Map<String, Set<File>> getArtifactsByConfiguration() {
     return externalProject.getArtifactsByConfiguration();
+  }
+
+  @Override
+  public @NotNull GradleSourceSetModel getSourceSetModel() {
+    return externalProject.getSourceSetModel();
   }
 }

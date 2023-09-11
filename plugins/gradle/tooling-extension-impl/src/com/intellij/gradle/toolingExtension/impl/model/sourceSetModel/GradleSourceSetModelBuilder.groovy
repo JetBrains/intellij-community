@@ -19,9 +19,14 @@ import org.gradle.api.tasks.compile.JavaCompile
 import org.gradle.jvm.toolchain.internal.JavaToolchain
 import org.gradle.plugins.ide.idea.IdeaPlugin
 import org.gradle.util.GradleVersion
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.NotNull
-import org.jetbrains.plugins.gradle.model.*
-import org.jetbrains.plugins.gradle.tooling.ModelBuilderContext
+import org.jetbrains.plugins.gradle.model.DefaultExternalSourceDirectorySet
+import org.jetbrains.plugins.gradle.model.DefaultExternalSourceSet
+import org.jetbrains.plugins.gradle.model.ExternalSourceDirectorySet
+import org.jetbrains.plugins.gradle.model.ExternalSourceSet
+import org.jetbrains.plugins.gradle.model.GradleSourceSetModel
+import org.jetbrains.plugins.gradle.tooling.*
 import org.jetbrains.plugins.gradle.tooling.util.resolve.DependencyResolverImpl
 
 import java.lang.reflect.InvocationTargetException
@@ -32,7 +37,8 @@ import static com.intellij.gradle.toolingExtension.impl.util.GradleNegotiationUt
 import static org.jetbrains.plugins.gradle.tooling.util.ReflectionUtil.dynamicCheckInstanceOf
 import static org.jetbrains.plugins.gradle.tooling.util.StringUtils.toCamelCase
 
-class GradleSourceSetModelBuilder {
+@ApiStatus.Internal
+class GradleSourceSetModelBuilder extends AbstractModelBuilderService {
 
   private static final GradleVersion gradleBaseVersion = GradleVersion.current().baseVersion
   private static final boolean is4OrBetter = gradleBaseVersion >= GradleVersion.version("4.0")
@@ -40,42 +46,86 @@ class GradleSourceSetModelBuilder {
   private static final boolean is74OrBetter = gradleBaseVersion >= GradleVersion.version("7.4")
   private static final boolean is80OrBetter = gradleBaseVersion >= GradleVersion.version("8.0")
 
-  static void addArtifactsData(final Project project, DefaultExternalProject externalProject) {
-    final List<File> artifacts = new ArrayList<File>()
+  @Override
+  boolean canBuild(String modelName) {
+    return GradleSourceSetModel.class.name == modelName
+  }
+
+  @Override
+  Object buildAll(@NotNull String modelName, @NotNull Project project, @NotNull ModelBuilderContext context) {
+    DefaultGradleSourceSetModel sourceSetModel = new DefaultGradleSourceSetModel()
+    sourceSetModel.setSourceCompatibility(JavaPluginUtil.getSourceCompatibility(project))
+    sourceSetModel.setTargetCompatibility(JavaPluginUtil.getTargetCompatibility(project))
+    sourceSetModel.setTaskArtifacts(collectProjectTaskArtifacts(project, context))
+    sourceSetModel.setConfigurationArtifacts(collectProjectConfigurationArtifacts(project, context))
+    sourceSetModel.setSourceSets(getSourceSets(project, context))
+
+    GradleSourceSetCache.getInstance(context)
+      .setSourceSetModel(project, sourceSetModel)
+
+    return sourceSetModel
+  }
+
+  @NotNull
+  @Override
+  ErrorMessageBuilder getErrorMessageBuilder(@NotNull Project project, @NotNull Exception e) {
+    return ErrorMessageBuilder.create(project, e, "Gradle source set model error")
+  }
+
+  @NotNull
+  private static List<File> collectProjectTaskArtifacts(
+    @NotNull Project project,
+    @NotNull ModelBuilderContext context
+  ) {
+    List<File> taskArtifacts = new ArrayList<File>()
     project.getTasks().withType(Jar.class, { Jar jar ->
       try {
         def archiveFile = getTaskArchiveFile(jar)
         if (archiveFile != null) {
-          artifacts.add(archiveFile)
+          taskArtifacts.add(archiveFile)
         }
       }
       catch (e) {
-        // TODO add reporting for such issues
-        project.getLogger().error("warning: [task $jar.path] $e.message")
+        Message message = MessageBuilder.create(
+          "Jar task configuration error",
+          "Cannot resolve artifact file for the project Jar task: " + jar.path
+        ).warning().withException(e).build()
+        context.report(project, message)
       }
     })
-    externalProject.setArtifacts(artifacts)
+    return taskArtifacts
+  }
 
-    def configurationsByName = project.getConfigurations().getAsMap()
-    Map<String, Set<File>> artifactsByConfiguration = new HashMap<String, Set<File>>()
+  @NotNull
+  private static Map<String, Set<File>> collectProjectConfigurationArtifacts(
+    @NotNull Project project,
+    @NotNull ModelBuilderContext context
+  ) {
+    Map<String, Configuration> configurationsByName = project.getConfigurations().getAsMap()
+    Map<String, Set<File>> configurationArtifacts = new HashMap<String, Set<File>>()
     for (Map.Entry<String, Configuration> configurationEntry : configurationsByName.entrySet()) {
+      def configurationName = configurationEntry.getKey()
       def configuration = configurationEntry.getValue()
       try {
         def artifactSet = configuration.getArtifacts()
         def fileCollection = artifactSet.getFiles()
         Set<File> files = fileCollection.getFiles()
-        artifactsByConfiguration.put(configurationEntry.getKey(), new LinkedHashSet<>(files))
+        configurationArtifacts.put(configurationName, new LinkedHashSet<>(files))
       }
       catch (Exception e) {
-        project.getLogger().warn("warning: can not resolve artifacts of [$configuration]\n$e.message")
+        Message message = MessageBuilder.create(
+          "Project configuration error",
+          "Cannot resolve artifact files for project configuration" + configuration
+        ).warning().withException(e).build()
+        context.report(project, message)
       }
     }
-    externalProject.setArtifactsByConfiguration(artifactsByConfiguration)
+    return configurationArtifacts
   }
 
   @NotNull
   @CompileDynamic
-  static Map<String, DefaultExternalSourceSet> getSourceSets(
+  private static Map<String, DefaultExternalSourceSet> getSourceSets(
     @NotNull Project project,
     @NotNull ModelBuilderContext context
   ) {
