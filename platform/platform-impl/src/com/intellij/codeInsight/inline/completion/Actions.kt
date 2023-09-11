@@ -27,7 +27,12 @@ class InsertInlineCompletionAction : EditorAction(InsertInlineCompletionHandler(
 @ApiStatus.Experimental
 class EscapeInlineCompletionHandler(val originalHandler: EditorActionHandler) : EditorActionHandler() {
   public override fun doExecute(editor: Editor, caret: Caret?, dataContext: DataContext) {
-    val context = InlineCompletionContext.getOrNull(editor) ?: return
+    val context = InlineCompletionContext.getOrNull(editor) ?: run {
+      if (originalHandler.isEnabled(editor, caret, dataContext)) {
+        originalHandler.execute(editor, caret, dataContext)
+      }
+      return
+    }
     InlineCompletionHandler.getOrNull(editor)?.hide(editor, false, context)
 
     if (originalHandler.isEnabled(editor, caret, dataContext)) {
