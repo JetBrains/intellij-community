@@ -362,14 +362,6 @@ private class UnstashMergeDialogCustomizer(private val stashInfo: StashInfo) : M
   }
 }
 
-@Deprecated("use the simpler overloading method which returns a list")
-@ApiStatus.ScheduledForRemoval
-fun loadStashStack(project: Project, root: VirtualFile, consumer: Consumer<StashInfo>) {
-  for (stash in loadStashStack(project, root)) {
-    consumer.consume(stash)
-  }
-}
-
 @Throws(VcsException::class)
 fun loadStashStack(project: Project, root: VirtualFile): List<StashInfo> {
   val options = arrayOf(GitLogOption.HASH, GitLogOption.PARENTS, GitLogOption.AUTHOR_TIME, GitLogOption.SHORT_REF_LOG_SELECTOR,

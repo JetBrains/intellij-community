@@ -48,7 +48,7 @@ public interface GitHttpAuthDataProvider {
 
   /**
    * @return true  - if provider does not show any prompts except internal password storage access {@link com.intellij.ide.passwordSafe.PasswordSafe},
-   * such provider can be interrogated by GitHttpAuthenticator with {@link git4idea.commands.GitAuthenticationMode#SILENT} mode
+   * such provider can be interrogated by GitHttpAuthenticator with {@link com.intellij.externalProcessAuthHelper.AuthenticationMode#SILENT} mode
    */
   default boolean isSilent() {return false;}
 }
