@@ -29,7 +29,7 @@ import java.util.concurrent.atomic.AtomicReference
 
 @ApiStatus.Experimental
 class InlineCompletionHandler(private val scope: CoroutineScope) {
-  private var runningJob: AtomicReference<Job?> = AtomicReference(null)
+  private val runningJob: AtomicReference<Job?> = AtomicReference(null)
   private var lastInvocationTime = 0L
   private val eventListeners = EventDispatcher.create(InlineCompletionEventListener::class.java)
 
