@@ -179,19 +179,20 @@ class StatusBarWidgetsManager(private val project: Project,
       .filter { !isLightEditProject || it.first is LightEditCompatible }
       .toList()
 
-    val widgets: List<Pair<StatusBarWidget, LoadingOrder>> = synchronized(widgetFactories) {
-      val pendingFactories = availableFactories.toMutableList()
-      @Suppress("removal", "DEPRECATION")
-      StatusBarWidgetProvider.EP_NAME.extensionList.mapTo(pendingFactories) {
-        StatusBarWidgetProviderToFactoryAdapter(project, frame, it) to anchorToOrder(it.anchor)
-      }
+    val pendingFactories = availableFactories.toMutableList()
 
+    @Suppress("removal", "DEPRECATION")
+    StatusBarWidgetProvider.EP_NAME.extensionList.mapTo(pendingFactories) {
+      StatusBarWidgetProviderToFactoryAdapter(project, frame, it) to anchorToOrder(it.anchor)
+    }
+
+    pendingFactories.removeAll {  (factory, _) ->
+      (factory.isConfigurable && !statusBarWidgetSettings.isEnabled(factory)) || !factory.isAvailable(project)
+    }
+
+    val widgets: List<Pair<StatusBarWidget, LoadingOrder>> = synchronized(widgetFactories) {
       val result = mutableListOf<Pair<StatusBarWidget, LoadingOrder>>()
       for ((factory, anchor) in pendingFactories) {
-        if ((factory.isConfigurable && !statusBarWidgetSettings.isEnabled(factory)) || !factory.isAvailable(project)) {
-          continue
-        }
-
         if (widgetFactories.containsKey(factory)) {
           LOG.error("Factory has been added already: ${factory.id}")
           continue
