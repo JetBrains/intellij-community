@@ -40,6 +40,9 @@ interface SearchEverywhereConcurrentElementsFetcher<I : MergeableElement, E : An
     var ready = false
     val readyCondition = mutex.newCondition()
     syncSearchSettings()
+    val standardContributorStartedMutex = ReentrantLock()
+    var standardContributorStarted = false
+    val standardContributorStartedCondition = standardContributorStartedMutex.newCondition()
 
     ApplicationManager.getApplication().apply {
       executeOnPooledThread {
@@ -49,6 +52,11 @@ interface SearchEverywhereConcurrentElementsFetcher<I : MergeableElement, E : An
         val iterate = {
           val semanticMatches = itemsProvider.streamSearch(pattern, getPriorityThresholds()[DescriptorPriority.LOW])
           for (priority in ORDERED_PRIORITIES) {
+            if (priority == DescriptorPriority.HIGH) {
+              standardContributorStartedMutex.withLock {
+                while (!standardContributorStarted) standardContributorStartedCondition.await()
+              }
+            }
             val iterator = if (priority == DescriptorPriority.HIGH) semanticMatches.iterator()
             else cachedDescriptors.filter { it.findPriority() == priority }.iterator()
 
@@ -78,7 +86,22 @@ interface SearchEverywhereConcurrentElementsFetcher<I : MergeableElement, E : An
       }
     }
 
-    defaultFetchElements(pattern, progressIndicator) { consumer.process(prepareStandardDescriptor(it, knownItems, mutex)) }
+    var isFirstElement = true
+    val allowSemanticSearch = {
+      if (isFirstElement) {
+        standardContributorStartedMutex.withLock {
+          standardContributorStarted = true
+          standardContributorStartedCondition.signal()
+        }
+        isFirstElement = false
+      }
+    }
+
+    defaultFetchElements(pattern, progressIndicator) {
+      allowSemanticSearch()
+      consumer.process(prepareStandardDescriptor(it, knownItems, mutex))
+    }
+    allowSemanticSearch()
     mutex.withLock { while (!ready) readyCondition.await() } // account for possible spurious wakeup
   }
 
