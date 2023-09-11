@@ -32,30 +32,32 @@ import java.util.concurrent.atomic.AtomicReferenceArray;
 
 /**
  * The place where all the data is stored for VFS parts loaded into a memory: name-ids, flags, user data, children.
- *
+ * <p>
  * The purpose is to avoid holding this data in separate immortal file/directory objects because that involves space overhead, significant
  * when there are hundreds of thousands of files.
- *
+ * <p>
  * The data is stored per-id in blocks of {@link #SEGMENT_SIZE}. File ids in one project tend to cluster together,
  * so the overhead for non-loaded id should not be large in most cases.
- *
+ * <p>
  * File objects are still created if needed. There might be several objects for the same file, so equals() should be used instead of ==.
- *
+ * <p>
  * The lifecycle of a file object is as follows:
  *
- * 1. The file has not been instantiated yet, so {@link #getFileById} returns null.
+ * <ol>
+ * <li> The file has not been instantiated yet, so {@link #getFileById} returns null. </li>
  *
- * 2. A file is explicitly requested by calling getChildren or findChild on its parent. The parent initializes all the necessary data (in a thread-safe context)
- * and creates the file instance. See {@link #initFile}
+ * <li> A file is explicitly requested by calling getChildren or findChild on its parent. The parent initializes all the necessary data (in a thread-safe context)
+ * and creates the file instance. See {@link #initFile} </li>
  *
- * 3. After that the file is live, an object representing it can be retrieved any time from its parent. File system roots are
- * kept on hard references in {@link PersistentFS}
+ * <li> After that the file is live, an object representing it can be retrieved any time from its parent. File system roots are
+ * kept on hard references in {@link PersistentFS} </li>
  *
- * 4. If a file is deleted (invalidated), then its data is not needed anymore, and should be removed. But this can only happen after
- * all the listener have been notified about the file deletion and have had their chance to look at the data the last time. See {@link #killInvalidatedFiles()}
+ * <li> If a file is deleted (invalidated), then its data is not needed anymore, and should be removed. But this can only happen after
+ * all the listener have been notified about the file deletion and have had their chance to look at the data the last time. See {@link #killInvalidatedFiles()} </li>
  *
- * 5. The file with removed data is marked as "dead" (see {@link #myDeadMarker}), any access to it will throw {@link InvalidVirtualFileAccessException}
- * Dead ids won't be reused in the same session of the IDE.
+ * <li> The file with removed data is marked as "dead" (see {@link #myDeadMarker}), any access to it will throw {@link InvalidVirtualFileAccessException}
+ * Dead ids won't be reused in the same session of the IDE. </li>
+ * </ol>
  */
 public final class VfsData {
   @TestOnly
