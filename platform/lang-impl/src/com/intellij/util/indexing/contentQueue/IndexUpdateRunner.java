@@ -9,6 +9,7 @@ import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.FileTypeRegistry;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
+import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.WrappedProgressIndicator;
 import com.intellij.openapi.progress.impl.ProgressSuspender;
 import com.intellij.openapi.project.Project;
@@ -62,13 +63,7 @@ import java.util.function.Supplier;
 public final class IndexUpdateRunner {
   private static final Logger LOG = Logger.getInstance(IndexUpdateRunner.class);
 
-  private static final int INDEXING_THREADS_NUMBER = UnindexedFilesUpdater.getMaxNumberOfIndexingThreads();
-  private static final long SOFT_MAX_TOTAL_BYTES_LOADED_INTO_MEMORY = INDEXING_THREADS_NUMBER * 4L * FileUtilRt.MEGABYTE;
-
   private static final CopyOnWriteArrayList<IndexingJob> ourIndexingJobs = new CopyOnWriteArrayList<>();
-
-  private static final ExecutorService GLOBAL_INDEXING_EXECUTOR =
-    AppExecutorUtil.createBoundedApplicationPoolExecutor("Indexing", INDEXING_THREADS_NUMBER);
 
   private final FileBasedIndexImpl myFileBasedIndex;
   
@@ -82,28 +77,32 @@ public final class IndexUpdateRunner {
   private final AtomicInteger myIndexingSuccessfulCount = new AtomicInteger();
 
   /**
+   * When disabled, each indexing thread is equal and writing indexes by itself.
+   * When enabled, indexing threads preparing updates and submitting writing to the dedicated threads: IdIndex, TrigramIndex, Stubs and rest.
+   * By default, it is enabled for multiprocessor systems, where we can benefit from the parallel processing.
+   */
+  public static final boolean WRITE_INDEXES_ON_SEPARATE_THREAD =
+    SystemProperties.getBooleanProperty("idea.write.indexes.on.separate.thread", UnindexedFilesUpdater.getMaxNumberOfIndexingThreads() > 5);
+
+  /**
    * Base writers are for: IdIndex, Stubs and Trigrams
    */
-  private static final int BASE_WRITERS_NUMBER = 3;
+  private static final int BASE_WRITERS_NUMBER = WRITE_INDEXES_ON_SEPARATE_THREAD ? 3 : 0;
 
   /**
    * Aux writers used to write other indexes in parallel. But each index is 100% written on the same thread.
    */
-  private static final int AUX_WRITERS_NUMBER = 1;
+  private static final int AUX_WRITERS_NUMBER = WRITE_INDEXES_ON_SEPARATE_THREAD ? 1 : 0;
 
   /**
-   * Max allowed writes in the queue.
-   * The system will try to avoid reaching this limit by suspending indexing threads one by one.
-   * After reaching this limit, all indexing threads are going to sleep until queue is shrunk enough.
-   * Increasing this value may speed up things a bit, but will increase memory fluctuations
-   * because each queued write will waste some memory.
+   * Max number of queued updates per indexing thread, after which one indexing thread is going to sleep, until queue is shrunk.
    */
-  private static final int MAX_ALLOWED_WRITES_QUEUE_SIZE = 3000;
+  private static final int MAX_ALLOWED_WRITES_IN_QUEUE_PER_INDEXER = 100;
 
   /**
-   * This is experimental data from indexing IDEA project, would be nice to have a stat for it.
+   * This is an experimental data from indexing IDEA project: median write time for a single index entry.
    */
-  private static final long EXPECTED_SINGLE_WRITE_TIME_NS = 100_000;
+  private static final long EXPECTED_SINGLE_WRITE_TIME_NS = 2_500;
 
   /**
    * Total number of index writing threads
@@ -111,23 +110,29 @@ public final class IndexUpdateRunner {
   public static final int TOTAL_WRITERS_NUMBER = BASE_WRITERS_NUMBER + AUX_WRITERS_NUMBER;
 
   /**
-   * Max number of queued updates per indexing thread, after which one indexing thread is going to sleep, until queue is shrunk.
+   * Number of indexing threads. We are reserving writing threads number here.
    */
-  private static final int MAX_WRITES_IN_QUEUE_PER_INDEXER = MAX_ALLOWED_WRITES_QUEUE_SIZE / INDEXING_THREADS_NUMBER;
+  private static final int INDEXING_THREADS_NUMBER =
+    Math.max(UnindexedFilesUpdater.getMaxNumberOfIndexingThreads() - TOTAL_WRITERS_NUMBER, 1);
 
   /**
-   * Minimal time indexer sleeps between checks for the updates of queue size.
-   * For better balancing, first sleeping indexer will check for the queue size
-   * each {@code N * time}, next one each {@code (N-1) * time}, etc.,
-   * where {@code N} is total number of indexing threads.
+   * Soft cap of memory we are using for loading files content during indexing process. Single file may be bigger, but until memory is freed
+   * indexing threads are sleeping.
+   *
+   * @see #signalThatFileIsUnloaded(long)
    */
-  private static final long MINIMAL_INDEXER_SLEEP_STEP_NS =
-    EXPECTED_SINGLE_WRITE_TIME_NS * MAX_WRITES_IN_QUEUE_PER_INDEXER / (BASE_WRITERS_NUMBER + AUX_WRITERS_NUMBER);
+  private static final long SOFT_MAX_TOTAL_BYTES_LOADED_INTO_MEMORY = INDEXING_THREADS_NUMBER * 4L * FileUtilRt.MEGABYTE;
+
+  /**
+   * Indexing workers
+   */
+  private static final ExecutorService GLOBAL_INDEXING_EXECUTOR =
+    AppExecutorUtil.createBoundedApplicationPoolExecutor("Indexing", INDEXING_THREADS_NUMBER);
 
   /**
    * Time in milliseconds we are waiting writers to finish their job and shutdown.
    */
-  private static final long WRITERS_SHUTDOWN_WAITING_TIME_MS = 10000;
+  private static final long WRITERS_SHUTDOWN_WAITING_TIME_MS = 10_000;
 
   /**
    * Number of asynchronous updates scheduled by {@link #scheduleIndexWriting(int, Runnable)}
@@ -137,9 +142,6 @@ public final class IndexUpdateRunner {
    * Number of currently sleeping indexers, because of too large updates queue
    */
   private static final AtomicInteger SLEEPING_INDEXERS = new AtomicInteger();
-
-  public static final boolean WRITE_INDEXES_ON_SEPARATE_THREAD =
-    SystemProperties.getBooleanProperty("idea.write.indexes.on.separate.thread", true);
 
   private static final List<ExecutorService> INDEX_WRITING_POOL;
 
@@ -185,8 +187,12 @@ public final class IndexUpdateRunner {
     myFileBasedIndex = fileBasedIndex;
     this.indexingStamp = indexingStamp;
     myIndexingExecutor = GLOBAL_INDEXING_EXECUTOR;
-    LOG.assertTrue(numberOfIndexingThreads <= INDEXING_THREADS_NUMBER,
-                   "Got indexing thread " + numberOfIndexingThreads + " when pool has " + INDEXING_THREADS_NUMBER);
+    if (numberOfIndexingThreads > INDEXING_THREADS_NUMBER) {
+      LOG.warn("Got request to index using " + numberOfIndexingThreads + " when pool has only " + INDEXING_THREADS_NUMBER +
+               " falling back to max available");
+      numberOfIndexingThreads = INDEXING_THREADS_NUMBER;
+    }
+    LOG.info("Using " + numberOfIndexingThreads + " indexing  and " + TOTAL_WRITERS_NUMBER + " writing threads for indexing");
     myNumberOfIndexingThreads = numberOfIndexingThreads;
   }
 
@@ -378,12 +384,8 @@ public final class IndexUpdateRunner {
           ourIndexingJobs.remove(job);
         }
 
-        var currentlySleeping = SLEEPING_INDEXERS.get();
-        var mayBeSleeping = currentlySleeping + 1;
-        int updatesToSleep = mayBeSleeping * MAX_WRITES_IN_QUEUE_PER_INDEXER;
-        var updatesInQueue = INDEX_WRITES_QUEUED.get();
-        if (updatesToSleep < updatesInQueue && SLEEPING_INDEXERS.compareAndSet(currentlySleeping, mayBeSleeping)) {
-          sleepUntilUpdatesQueueIsShrunk(mayBeSleeping, updatesInQueue, updatesToSleep);
+        if( WRITE_INDEXES_ON_SEPARATE_THREAD){
+          sleepIfNecessary();
         }
       }
       if (allJobsAreSuspended) {
@@ -393,19 +395,38 @@ public final class IndexUpdateRunner {
     }
   }
 
+  private void sleepIfNecessary() {
+    var currentlySleeping = SLEEPING_INDEXERS.get();
+    var couldBeSleeping = currentlySleeping + 1;
+    int writesInQueueToSleep =
+      MAX_ALLOWED_WRITES_IN_QUEUE_PER_INDEXER * myNumberOfIndexingThreads + couldBeSleeping * MAX_ALLOWED_WRITES_IN_QUEUE_PER_INDEXER;
+    var writesInQueue = INDEX_WRITES_QUEUED.get();
+    if (writesInQueue > writesInQueueToSleep && SLEEPING_INDEXERS.compareAndSet(currentlySleeping, couldBeSleeping)) {
+      var writesToWakeUp = writesInQueueToSleep - MAX_ALLOWED_WRITES_IN_QUEUE_PER_INDEXER;
+      LOG.debug("Sleeping indexer: ", couldBeSleeping, " of ", myNumberOfIndexingThreads, "; writes queued: ", writesInQueue,
+                "; wake up when queue shrinks to ", writesToWakeUp);
+      var napTimeNs = MAX_ALLOWED_WRITES_IN_QUEUE_PER_INDEXER * EXPECTED_SINGLE_WRITE_TIME_NS;
+      sleepUntilUpdatesQueueIsShrunk(writesToWakeUp, napTimeNs);
+    }
+  }
+
   /**
    * Puts the indexing thread to the sleep until the queue of updates is shrunk enough to increase the number of indexing threads.
    * To balance load better, each next sleeping indexer checks for the queue more frequently.
    */
-  private void sleepUntilUpdatesQueueIsShrunk(int sleeperNumber, int updatesInQueue, int updatesToSleep) {
+  private void sleepUntilUpdatesQueueIsShrunk(int writesToWakeUp, long napTimeNs) {
     try {
-      LOG.debug("Sleeping indexer: ", sleeperNumber, " of ", myNumberOfIndexingThreads, "; updates in queue: ", updatesInQueue);
-      int updatesToWake = updatesToSleep - MAX_WRITES_IN_QUEUE_PER_INDEXER * 9 / 10;
-      while (updatesToWake < INDEX_WRITES_QUEUED.get()) {
-        LockSupport.parkNanos(MINIMAL_INDEXER_SLEEP_STEP_NS * (INDEXING_THREADS_NUMBER - sleeperNumber + 1));
+      var sleepStart = System.nanoTime();
+      int iterations = 1;
+      while (writesToWakeUp < INDEX_WRITES_QUEUED.get()) {
+        LockSupport.parkNanos(napTimeNs * iterations);
+        iterations++;
       }
-      LOG.debug("Waking indexer ", SLEEPING_INDEXERS.get(), " of ", myNumberOfIndexingThreads, " by ", updatesToWake,
-                " updates in queue");
+      var slept = (System.nanoTime() - sleepStart) / 1_000_000;
+      LOG.debug("Waking indexer ", SLEEPING_INDEXERS.get(), " of ", myNumberOfIndexingThreads, " by ", INDEX_WRITES_QUEUED.get(),
+                " updates in queue, should have wake up on ", writesToWakeUp,
+                "; slept for ", slept,
+                " ms, ", iterations, " iterations; ");
     }
     finally {
       SLEEPING_INDEXERS.decrementAndGet();
@@ -582,6 +603,9 @@ public final class IndexUpdateRunner {
     }
   }
 
+  /**
+   * @see #SOFT_MAX_TOTAL_BYTES_LOADED_INTO_MEMORY
+   */
   private static void signalThatFileIsUnloaded(long fileLength) {
     ourLoadedBytesLimitLock.lock();
     try {
@@ -743,15 +767,15 @@ public final class IndexUpdateRunner {
     else if (indexId == TrigramIndex.INDEX_ID) {
       return 2;
     }
-    //noinspection ConstantValue
-    return indexId.getName().hashCode() % AUX_WRITERS_NUMBER + BASE_WRITERS_NUMBER;
+    return AUX_WRITERS_NUMBER == 1 ? BASE_WRITERS_NUMBER :
+           BASE_WRITERS_NUMBER + Math.abs(indexId.getName().hashCode()) % AUX_WRITERS_NUMBER;
   }
 
   public static void scheduleIndexWriting(int executorIndex, @NotNull Runnable runnable) {
     INDEX_WRITES_QUEUED.incrementAndGet();
     INDEX_WRITING_POOL.get(executorIndex).execute(() -> {
       try {
-        runnable.run();
+        ProgressManager.getInstance().executeNonCancelableSection(runnable);
       }
       finally {
         INDEX_WRITES_QUEUED.decrementAndGet();

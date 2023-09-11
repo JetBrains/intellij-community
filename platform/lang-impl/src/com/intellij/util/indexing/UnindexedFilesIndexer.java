@@ -96,9 +96,6 @@ public final class UnindexedFilesIndexer extends DumbModeTask {
   private void doIndexFiles(@NotNull ProjectDumbIndexingHistoryImpl projectDumbIndexingHistory,
                             @NotNull ProgressIndicator progressIndicator) {
     int numberOfIndexingThreads = UnindexedFilesUpdater.getNumberOfIndexingThreads();
-    LOG.info(
-      "Use " + numberOfIndexingThreads + " indexing " + StringUtil.pluralize("thread", numberOfIndexingThreads) +
-      " for indexing of " + myProject.getName());
     IndexUpdateRunner indexUpdateRunner = new IndexUpdateRunner(myIndex, indexingStamp, numberOfIndexingThreads);
 
     List<IndexUpdateRunner.FileSet> fileSets = getExplicitlyRequestedFilesSets();
