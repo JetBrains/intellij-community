@@ -100,7 +100,7 @@ public final class TextMateLexer {
     int lineByteOffset = 0;
     boolean matchBeginOfString = startLinePosition == 0;
     int anchorByteOffset = -1; // makes sense only for a line, cannot be used across lines
-    String line = lineCharSequence.length() > 0 && lineCharSequence.charAt(lineCharSequence.length() - 1) == '\n'
+    String line = !lineCharSequence.isEmpty() && lineCharSequence.charAt(lineCharSequence.length() - 1) == '\n'
                   ? lineCharSequence.toString()
                   : lineCharSequence + "\n";
 
@@ -114,7 +114,7 @@ public final class TextMateLexer {
           closeScopeSelector(output, linePosition + startLinePosition);
           closeScopeSelector(output, linePosition + startLinePosition);
           myStates = myStates.getTail();
-          // this is happening at line start, none of previous states couldn't be run on this line, so no need to update anchorByteOffset
+          // this is happening at line start, none of the previous states couldn't be run on this line, so no need to update anchorByteOffset
           continue;
         }
         else {
@@ -141,7 +141,7 @@ public final class TextMateLexer {
                                  lastState.equals(currentState))) {
         TextMateLexerState poppedState = myStates.getHead();
         if (poppedState.matchData.matched() && !poppedState.matchedEOL) {
-          // if begin hasn't matched EOL, it was performed on the same line, we need to use its anchor
+          // if begin hasn't matched EOL, it was performed on the same line; we need to use its anchor
           anchorByteOffset = poppedState.matchData.byteOffset().end;
         }
         myStates = myStates.getTail();
@@ -251,7 +251,7 @@ public final class TextMateLexer {
     Int2ObjectMap<CharSequence> captures = rule.getCaptures(capturesKey);
     if (captures != null) {
       List<CaptureMatchData> matches = SyntaxMatchUtils.matchCaptures(captures, matchData, string, line);
-      List<CaptureMatchData> nonEmptyMatches = matches.stream().filter(m -> m.selectorName.length() > 0 && !m.range.isEmpty()).toList();
+      List<CaptureMatchData> nonEmptyMatches = matches.stream().filter(m -> !m.selectorName.isEmpty() && !m.range.isEmpty()).toList();
       LinkedList<CaptureMatchData> starts = new LinkedList<>(nonEmptyMatches);
       Collections.sort(starts, CaptureMatchData.START_OFFSET_ORDERING);
 
@@ -295,7 +295,7 @@ public final class TextMateLexer {
 
   private void closeScopeSelector(@NotNull Queue<Token> output, int position) {
     CharSequence lastOpenedName = myCurrentScope.getScopeName();
-    if (lastOpenedName != null && lastOpenedName.length() > 0) {
+    if (lastOpenedName != null && !lastOpenedName.isEmpty()) {
       addToken(output, position);
     }
     myCurrentScope = myCurrentScope.getParentOrSelf();
