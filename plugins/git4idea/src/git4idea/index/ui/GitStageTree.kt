@@ -17,6 +17,7 @@ import com.intellij.openapi.vcs.FilePath
 import com.intellij.openapi.vcs.FileStatus
 import com.intellij.openapi.vcs.VcsBundle
 import com.intellij.openapi.vcs.VcsDataKeys
+import com.intellij.openapi.vcs.changes.Change
 import com.intellij.openapi.vcs.changes.IgnoredViewDialog
 import com.intellij.openapi.vcs.changes.UnversionedViewDialog
 import com.intellij.openapi.vcs.changes.ui.*
@@ -125,6 +126,9 @@ abstract class GitStageTree(project: Project,
       GitStageDataKeys.GIT_STAGE_UI_SETTINGS.`is`(dataId) -> settings
       GitStageDataKeys.GIT_FILE_STATUS_NODES.`is`(dataId) -> selectedStatusNodes()
       VcsDataKeys.FILE_PATHS.`is`(dataId) -> selectedStatusNodes().map { it.filePath }
+      VcsDataKeys.CHANGES.`is`(dataId) -> {
+        VcsTreeModelData.selected(this).iterateUserObjects(Change::class.java).toArray(Change.EMPTY_CHANGE_ARRAY)
+      }
       PlatformDataKeys.DELETE_ELEMENT_PROVIDER.`is`(dataId) -> if (!selectedStatusNodes().isEmpty) VirtualFileDeleteProvider() else null
       PlatformCoreDataKeys.BGT_DATA_PROVIDER.`is`(dataId) -> {
         val superProvider = super.getData(dataId) as DataProvider?
@@ -151,35 +155,37 @@ abstract class GitStageTree(project: Project,
   }
 
   fun statusNodesListSelection(preferLimitedContext: Boolean): ListSelection<GitFileStatusNode> {
-    val entries = VcsTreeModelData.selected(this).userObjects(GitFileStatusNode::class.java)
+    return listSelection(preferLimitedContext, includeChanges = false).map { it as? GitFileStatusNode }
+  }
+
+  fun listSelection(preferLimitedContext: Boolean, includeChanges: Boolean = true): ListSelection<*> {
+    val selectedData = VcsTreeModelData.selected(this)
+    val entries = selectedData.targetUserObjects(includeChanges)
     if (entries.size > 1) {
-      return ListSelection.createAt(entries, 0)
-        .asExplicitSelection()
+      return ListSelection.createAt(entries, 0).asExplicitSelection()
     }
 
     val selected = entries.singleOrNull()
-    val selectedKind = selected?.kind
+    val allEntriesData = if (preferLimitedContext && selected is GitFileStatusNode) {
+      when (val selectedKind = selected.kind) {
+        NodeKind.UNSTAGED, NodeKind.UNTRACKED -> VcsTreeModelData.allUnderTag(this, NodeKind.UNSTAGED)
+        NodeKind.STAGED, NodeKind.IGNORED, NodeKind.CONFLICTED -> VcsTreeModelData.allUnderTag(this, selectedKind)
+      }
+    }
+    else VcsTreeModelData.all(this)
 
-    val allEntriesData: VcsTreeModelData = when {
-      preferLimitedContext && (selectedKind == NodeKind.UNSTAGED || selectedKind == NodeKind.UNTRACKED) -> {
-        VcsTreeModelData.allUnderTag(this, NodeKind.UNSTAGED)
-      }
-      preferLimitedContext && (selectedKind == NodeKind.STAGED || selectedKind == NodeKind.IGNORED || selectedKind == NodeKind.CONFLICTED) -> {
-        VcsTreeModelData.allUnderTag(this, selectedKind)
-      }
-      else -> {
-        VcsTreeModelData.all(this)
-      }
+    val allEntries = if (preferLimitedContext && selected != null) {
+      if (!includeChanges && selected is Change) emptyList<Any>()
+      allEntriesData.userObjects(selected.javaClass)
     }
+    else allEntriesData.targetUserObjects(includeChanges)
+    return if (allEntries.size <= entries.size) ListSelection.createAt(entries, 0).asExplicitSelection()
+    else ListSelection.create(allEntries, selected)
+  }
 
-    val allEntries = allEntriesData.userObjects(GitFileStatusNode::class.java)
-    return if (allEntries.size <= entries.size) {
-      ListSelection.createAt(entries, 0)
-        .asExplicitSelection()
-    }
-    else {
-      ListSelection.create(allEntries, selected)
-    }
+  private fun VcsTreeModelData.targetUserObjects(includeChanges: Boolean = false): List<Any> {
+    if (!includeChanges) return userObjects(GitFileStatusNode::class.java)
+    return userObjects(GitFileStatusNode::class.java) + userObjects(Change::class.java)
   }
 
   private val StagingAreaOperation.tooltipText: String

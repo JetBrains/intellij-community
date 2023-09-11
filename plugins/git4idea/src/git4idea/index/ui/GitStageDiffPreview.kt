@@ -77,8 +77,13 @@ class GitStageDiffPreview(project: Project,
 
   private inner class MyGoToChangePopupAction : PresentableGoToChangePopupAction.Default<Wrapper>() {
     override fun getChanges(): ListSelection<Wrapper> {
-      return tree.statusNodesListSelection(false)
-        .map(::GitFileStatusNodeWrapper)
+      return tree.listSelection(false).map {
+        when (it) {
+          is GitFileStatusNode -> GitFileStatusNodeWrapper(it)
+          is Change -> ChangeWrapper(it)
+          else -> null
+        }
+      }
     }
 
     override fun onSelected(change: Wrapper) {
