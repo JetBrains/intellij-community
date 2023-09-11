@@ -14,6 +14,7 @@ import com.intellij.ui.DeferredIconImpl
 import com.intellij.util.IconUtil
 import com.intellij.util.PathUtil
 import com.intellij.util.messages.SimpleMessageBusConnection
+import com.intellij.util.ui.AvatarUtils
 import com.intellij.util.ui.EmptyIcon
 import kotlinx.coroutines.runBlocking
 import org.junit.ClassRule
@@ -22,6 +23,7 @@ import org.junit.Test
 import org.junit.rules.ExternalResource
 import java.awt.Color
 import java.nio.file.Path
+import kotlin.test.assertEquals
 
 class RecentProjectsTest {
   companion object {
@@ -134,6 +136,30 @@ class RecentProjectsTest {
           assertThat(color).isEqualTo(0)
         }
       }
+    }
+  }
+
+  @Test
+  fun projectInitialsMakeSense() {
+     val cases = mapOf("John Smith" to "JS",
+                       "John Smith-Harris" to "JS",
+                       "John-Smith-Harris" to "JH",
+                       "John-Smith Harris" to "JH",
+                       "MyProject" to "MP",
+                       "My-Project" to "MP",
+                       "My-Project_Strong" to "MP",
+                       "My_Project_Strong" to "MS",
+                       "One,Two-Four" to "OT",
+                       "One.Two.Four" to "OF",
+                       "Project_" to "P",
+                       "_internal-project" to "IP",
+                       ".internal-project" to "IP",
+                       ".internalProject" to "IP",
+                       "proj_[ver1]" to "PV",
+                       "myProject-0" to "MP")
+
+    for ((name, expected) in cases) {
+      assertEquals(expected, AvatarUtils.initials(name))
     }
   }
 
