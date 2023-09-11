@@ -3,12 +3,12 @@ package com.intellij.util.indexing.diagnostic.dto
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties
 import com.intellij.openapi.util.text.StringUtil
-import com.intellij.util.indexing.diagnostic.BytesNumber
+import com.intellij.util.indexing.diagnostic.NumberOfBytes
 import com.intellij.util.indexing.diagnostic.TimeNano
 import java.util.concurrent.TimeUnit
 
 @JsonIgnoreProperties(ignoreUnknown = true)
-data class JsonProcessingSpeed(val totalBytes: BytesNumber = 0, val totalCpuTime: TimeNano = 0) {
+data class JsonProcessingSpeed(val totalBytes: NumberOfBytes = 0, val totalCpuTime: TimeNano = 0) {
   fun presentableSpeed(): String {
     if (totalCpuTime == 0L) {
       return "0 B/s"

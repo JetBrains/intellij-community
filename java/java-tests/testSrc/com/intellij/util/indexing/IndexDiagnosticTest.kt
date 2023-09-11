@@ -20,6 +20,7 @@ import java.io.BufferedReader
 import java.io.StringReader
 import java.nio.file.Files
 import java.time.ZonedDateTime
+import kotlin.io.path.createTempDirectory
 
 /**
  * Tests for [IndexDiagnosticDumper].
@@ -28,7 +29,7 @@ class IndexDiagnosticTest : JavaCodeInsightFixtureTestCase() {
   private var previousLogDir: String? = null
 
   override fun setUp() {
-    previousLogDir = System.setProperty(PathManager.PROPERTY_LOG_PATH, createTempDir().path)
+    previousLogDir = System.setProperty(PathManager.PROPERTY_LOG_PATH, createTempDirectory().toString())
     IndexDiagnosticDumper.shouldDumpInUnitTestMode = true
     super.setUp()
   }

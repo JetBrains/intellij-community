@@ -13,11 +13,11 @@ import java.time.ZonedDateTime
 
 typealias TimeMillis = Long
 typealias TimeNano = Long
-typealias BytesNumber = Long
+typealias NumberOfBytes = Long
 
 /**
  * Extend this extension point to receive project scanning & indexing statistics
- * (e.g.: indexed file count, indexation speed, etc.) after each scanning or **dumb** indexation task was performed.
+ * (e.g.: indexed file count, indexation speed, etc.) after each scanning or a **dumb** indexation task was performed.
  */
 interface ProjectIndexingActivityHistoryListener {
   companion object {
@@ -69,7 +69,7 @@ interface ProjectDumbIndexingHistory : ProjectIndexingActivityHistory {
 
 interface StatsPerFileType {
   val totalNumberOfFiles: Int
-  val totalBytes: BytesNumber
+  val totalBytes: NumberOfBytes
   val totalProcessingTimeInAllThreads: TimeNano
   val totalContentLoadingTimeInAllThreads: TimeNano
   val biggestFileTypeContributorList: List<BiggestFileTypeContributor>
@@ -78,14 +78,14 @@ interface StatsPerFileType {
 interface BiggestFileTypeContributor {
   val providerName: String
   val numberOfFiles: Int
-  val totalBytes: BytesNumber
+  val totalBytes: NumberOfBytes
   val processingTimeInAllThreads: TimeNano
 }
 
 interface StatsPerIndexer {
   val totalNumberOfFiles: Int
   val totalNumberOfFilesIndexedByExtensions: Int
-  val totalBytes: BytesNumber
+  val totalBytes: NumberOfBytes
   val totalIndexValueChangerEvaluationTimeInAllThreads: TimeNano
 }
 

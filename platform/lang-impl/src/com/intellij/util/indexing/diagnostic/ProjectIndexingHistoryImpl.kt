@@ -396,7 +396,7 @@ data class ProjectDumbIndexingHistoryImpl(override val project: Project) : Proje
 
   data class StatsPerFileTypeImpl(
     override var totalNumberOfFiles: Int,
-    override var totalBytes: BytesNumber,
+    override var totalBytes: NumberOfBytes,
     override var totalProcessingTimeInAllThreads: TimeNano,
     override var totalContentLoadingTimeInAllThreads: TimeNano,
     val biggestFileTypeContributors: LimitedPriorityQueue<BiggestFileTypeContributorImpl>,
@@ -409,14 +409,14 @@ data class ProjectDumbIndexingHistoryImpl(override val project: Project) : Proje
   data class BiggestFileTypeContributorImpl(
     override val providerName: String,
     override val numberOfFiles: Int,
-    override val totalBytes: BytesNumber,
+    override val totalBytes: NumberOfBytes,
     override val processingTimeInAllThreads: TimeNano
   ) : BiggestFileTypeContributor
 
   data class StatsPerIndexerImpl(
     override var totalNumberOfFiles: Int,
     override var totalNumberOfFilesIndexedByExtensions: Int,
-    override var totalBytes: BytesNumber,
+    override var totalBytes: NumberOfBytes,
     override var totalIndexValueChangerEvaluationTimeInAllThreads: TimeNano,
   ) : StatsPerIndexer
 

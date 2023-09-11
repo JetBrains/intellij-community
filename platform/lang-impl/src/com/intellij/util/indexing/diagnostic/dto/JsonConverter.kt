@@ -193,7 +193,7 @@ private fun ProjectDumbIndexingHistoryImpl.aggregateStatsPerFileTypeAndLanguage(
   }
 
   data class LanguageData(var totalNumberOfFiles: Int,
-                          var totalBytes: BytesNumber,
+                          var totalBytes: NumberOfBytes,
                           var totalProcessingTimeInAllThreads: TimeNano,
                           val totalContentLoadingTime: TimeNano) {
     fun plus(fileTypeStats: ProjectDumbIndexingHistoryImpl.StatsPerFileTypeImpl): LanguageData =

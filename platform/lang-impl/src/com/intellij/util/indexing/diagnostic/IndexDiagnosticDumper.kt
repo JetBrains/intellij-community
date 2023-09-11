@@ -63,11 +63,11 @@ class IndexDiagnosticDumper : Disposable {
     private val indexingDiagnosticsLimitOfFiles: Int
       get() = SystemProperties.getIntProperty(DIAGNOSTIC_LIMIT_OF_FILES_PROPERTY, 300)
 
-    private fun hasProvidedDiagnosticsLimitOfFilesValue(): Boolean {
-      val providedLimitOfFilesValue = System.getProperty(DIAGNOSTIC_LIMIT_OF_FILES_PROPERTY)
-      if (providedLimitOfFilesValue == null) return false
+    private fun hasProvidedDiagnosticsLimitOfFilesFromProperty(): Boolean {
+      val providedLimitOfFiles = System.getProperty(DIAGNOSTIC_LIMIT_OF_FILES_PROPERTY)
+      if (providedLimitOfFiles == null) return false
       try {
-        providedLimitOfFilesValue.toInt()
+        providedLimitOfFiles.toInt()
       }
       catch (ignored: NumberFormatException) {
         return false
@@ -87,7 +87,7 @@ class IndexDiagnosticDumper : Disposable {
           }
         }
 
-        return if (hasProvidedDiagnosticsLimitOfFilesValue()) 0 else 10
+        return if (hasProvidedDiagnosticsLimitOfFilesFromProperty()) 0 else 10
       }
 
     @JvmStatic
@@ -106,7 +106,7 @@ class IndexDiagnosticDumper : Disposable {
      * Such processes have InAllThreads time and visible time, see [com.intellij.util.indexing.contentQueue.IndexUpdateRunner.indexFiles],
      * [ProjectDumbIndexingHistoryImpl.visibleTimeToAllThreadsTimeRatio], [IndexingFileSetStatistics]
      *
-     * This property allows to provide more details on those times and ratio in html
+     * This property allows providing more details on those times and ratio in html
      */
     @JvmStatic
     val shouldProvideVisibleAndAllThreadsTimeInfo: Boolean
@@ -418,7 +418,7 @@ class IndexDiagnosticDumper : Disposable {
     for (unsavedIndexingActivityHistory in unsavedIndexingActivityHistories) {
       dumpProjectIndexingActivityHistoryToLogSubdirectory(unsavedIndexingActivityHistory)
     }
-    // The synchronized block allows to wait for unfinished background dumpers.
+    // The synchronized block allows waiting for unfinished background dumpers.
     isDisposed = true
   }
 }

@@ -51,14 +51,14 @@ class IndexingFileSetStatistics(private val project: Project, val fileSetName: S
     var evaluateIndexValueChangerTime: TimeNano,
     var numberOfFiles: Int,
     var numberOfFilesIndexedByExtensions: Int,
-    var totalBytes: BytesNumber
+    var totalBytes: NumberOfBytes
   )
 
   data class StatsPerFileType(
     var processingTimeInAllThreads: TimeNano,
     var contentLoadingTimeInAllThreads: TimeNano,
     var numberOfFiles: Int,
-    var totalBytes: BytesNumber,
+    var totalBytes: NumberOfBytes,
     val parentLanguages: MutableList<String> = mutableListOf()
   ) {
     constructor(fileType: FileType) : this(0, 0, 0, 0) {
@@ -75,7 +75,7 @@ class IndexingFileSetStatistics(private val project: Project, val fileSetName: S
     fileStatistics: FileIndexingStatistics,
     processingTime: TimeNano,
     contentLoadingTime: TimeNano,
-    fileSize: BytesNumber,
+    fileSize: NumberOfBytes,
     valuesAppliedSeparately: Boolean,
     separateApplicationTime: TimeNano
   ) {
