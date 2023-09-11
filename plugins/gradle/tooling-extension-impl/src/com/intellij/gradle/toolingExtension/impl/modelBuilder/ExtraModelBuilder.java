@@ -9,7 +9,6 @@ import org.gradle.internal.impldep.com.google.common.collect.Lists;
 import org.gradle.tooling.provider.model.ParameterizedToolingModelBuilder;
 import org.gradle.tooling.provider.model.ToolingModelBuilder;
 import org.gradle.util.GradleVersion;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.TestOnly;
 import org.jetbrains.plugins.gradle.model.internal.DummyModel;
@@ -37,9 +36,6 @@ public class ExtraModelBuilder implements ToolingModelBuilder {
   }
 
   private static final Logger LOG = LoggerFactory.getLogger("org.jetbrains.plugins.gradle.toolingExtension.modelBuilder");
-
-  @ApiStatus.Internal
-  public static final String MODEL_BUILDER_SERVICE_MESSAGE_PREFIX = "ModelBuilderService message: ";
 
   private final List<ModelBuilderService> modelBuilderServices;
 

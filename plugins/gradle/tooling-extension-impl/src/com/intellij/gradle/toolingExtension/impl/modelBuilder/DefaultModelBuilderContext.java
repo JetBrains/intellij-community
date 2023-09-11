@@ -2,26 +2,15 @@
 package com.intellij.gradle.toolingExtension.impl.modelBuilder;
 
 import org.gradle.api.Project;
-import org.gradle.api.internal.project.DefaultProject;
 import org.gradle.api.invocation.Gradle;
-import org.gradle.internal.impldep.com.google.gson.GsonBuilder;
-import org.gradle.internal.logging.progress.ProgressLogger;
-import org.gradle.internal.logging.progress.ProgressLoggerFactory;
-import org.gradle.util.GradleVersion;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.gradle.tooling.Message;
 import org.jetbrains.plugins.gradle.tooling.ModelBuilderContext;
-import org.jetbrains.plugins.gradle.tooling.ModelBuilderService;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.util.IdentityHashMap;
 import java.util.Map;
 
 public final class DefaultModelBuilderContext implements ModelBuilderContext {
-
-  private static final Logger LOG = LoggerFactory.getLogger("org.jetbrains.plugins.gradle.toolingExtension.modelBuilder");
 
   private final Map<DataProvider<?>, Object> myMap = new IdentityHashMap<>();
   private final Gradle myGradle;
@@ -57,22 +46,8 @@ public final class DefaultModelBuilderContext implements ModelBuilderContext {
     }
   }
 
-  @ApiStatus.Experimental
   @Override
   public void report(@NotNull Project project, @NotNull Message message) {
-    if (GradleVersion.current().getBaseVersion().compareTo(GradleVersion.version("2.14.1")) < 0) {
-      return;
-    }
-    try {
-      ProgressLoggerFactory progressLoggerFactory = ((DefaultProject)project).getServices().get(ProgressLoggerFactory.class);
-      ProgressLogger operation = progressLoggerFactory.newOperation(ModelBuilderService.class);
-      String jsonMessage = new GsonBuilder().create().toJson(message);
-      operation.setDescription(ExtraModelBuilder.MODEL_BUILDER_SERVICE_MESSAGE_PREFIX + jsonMessage);
-      operation.started();
-      operation.completed();
-    }
-    catch (Throwable e) {
-      LOG.warn("Failed to report model builder message", e);
-    }
+    new DefaultMessageReporter().report(project, message);
   }
 }

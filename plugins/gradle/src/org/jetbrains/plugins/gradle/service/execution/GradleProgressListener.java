@@ -6,6 +6,7 @@ import com.intellij.build.FilePosition;
 import com.intellij.build.events.MessageEvent;
 import com.intellij.build.events.impl.MessageEventImpl;
 import com.intellij.build.events.impl.ProgressBuildEventImpl;
+import com.intellij.gradle.toolingExtension.impl.modelBuilder.DefaultMessageReporter;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskId;
 import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskNotificationEvent;
@@ -32,7 +33,6 @@ import java.util.UUID;
 
 import static com.intellij.openapi.util.text.StringUtil.formatDuration;
 import static com.intellij.openapi.util.text.StringUtil.formatFileSize;
-import static com.intellij.gradle.toolingExtension.impl.modelBuilder.ExtraModelBuilder.MODEL_BUILDER_SERVICE_MESSAGE_PREFIX;
 
 /**
  * @author Vladislav.Soroka
@@ -105,12 +105,12 @@ public class GradleProgressListener implements ProgressListener, org.gradle.tool
   }
 
   private boolean maybeReportModelBuilderMessage(String eventDescription) {
-    if (!eventDescription.startsWith(MODEL_BUILDER_SERVICE_MESSAGE_PREFIX)) {
+    if (!eventDescription.startsWith(DefaultMessageReporter.MODEL_BUILDER_SERVICE_MESSAGE_PREFIX)) {
       return false;
     }
     try {
       Message message = new GsonBuilder().create()
-        .fromJson(StringUtil.substringAfter(eventDescription, MODEL_BUILDER_SERVICE_MESSAGE_PREFIX), Message.class);
+        .fromJson(StringUtil.substringAfter(eventDescription, DefaultMessageReporter.MODEL_BUILDER_SERVICE_MESSAGE_PREFIX), Message.class);
       MessageEvent.Kind kind = MessageEvent.Kind.valueOf(message.getKind().name());
       Message.FilePosition messageFilePosition = message.getFilePosition();
       FilePosition filePosition = messageFilePosition == null ? null :
