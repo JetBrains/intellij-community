@@ -44,7 +44,8 @@ sealed interface InlineCompletionEvent {
     val context: DataContext? = null,
   ) : InlineCompletionEvent {
     override fun toRequest(): InlineCompletionRequest {
-      return InlineCompletionRequest(this, file, editor, editor.document, caret.offset, caret.offset)
+      val offset = runReadAction { caret.offset }
+      return InlineCompletionRequest(this, file, editor, editor.document, offset, offset)
     }
   }
 
@@ -105,7 +106,7 @@ sealed interface InlineCompletionEvent {
   data class LookupChange(val event: LookupEvent) : InlineCompletionEvent {
     override fun toRequest(): InlineCompletionRequest? {
       val item = event.item ?: return null
-      val editor = event.lookup?.editor ?: return null
+      val editor = runReadAction { event.lookup?.editor } ?: return null
       if (editor.caretModel.caretCount != 1) return null
 
       val virtualFile = editor.virtualFile ?: return null
