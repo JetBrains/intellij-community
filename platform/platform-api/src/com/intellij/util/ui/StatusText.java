@@ -270,7 +270,7 @@ public abstract class StatusText {
   }
 
   private void repaintOwner() {
-    if (myOwner != null && isStatusVisibleInner()) myOwner.repaint();
+    if (myOwner != null && myOwner.isShowing() && isStatusVisibleInner()) myOwner.repaint();
   }
 
   public StatusText appendText(@NlsContexts.StatusText String text) {
