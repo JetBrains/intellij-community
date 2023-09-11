@@ -13,17 +13,8 @@ public interface PresentableChange {
   @NotNull
   FileStatus getFileStatus();
 
-  /**
-   * @deprecated Use {@link #getTag()} instead.
-   */
-  @Deprecated(forRemoval = true)
-  @Nullable
-  default Object getPopupTag() {
-    return null;
-  }
-
   @Nullable
   default ChangesBrowserNode.Tag getTag() {
-    return ChangesBrowserNode.WrapperTag.wrap(getPopupTag());
+    return null;
   }
 }
