@@ -119,7 +119,6 @@ interface DumbIndexingTimes {
   val contentLoadingVisibleDuration: Duration
   val retrievingChangedDuringIndexingFilesDuration: Duration
   val pausedDuration: Duration
-  val appliedAllValuesSeparately: Boolean
   val separateValueApplicationVisibleTime: TimeNano
   val wasInterrupted: Boolean
 }

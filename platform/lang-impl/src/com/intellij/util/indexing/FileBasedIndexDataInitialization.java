@@ -180,7 +180,6 @@ final class FileBasedIndexDataInitialization extends IndexDataInitializer<IndexC
     finally {
       //CorruptionMarker.markIndexesAsDirty();
       FileBasedIndexImpl.setupWritingIndexValuesSeparatedFromCounting();
-      FileBasedIndexImpl.setupWritingIndexValuesSeparatedFromCountingForContentIndependentIndexes();
       myFileBasedIndex.addStaleIds(myStaleIds);
       myFileBasedIndex.addStaleIds(myDirtyFileIds);
       myFileBasedIndex.setUpFlusher();

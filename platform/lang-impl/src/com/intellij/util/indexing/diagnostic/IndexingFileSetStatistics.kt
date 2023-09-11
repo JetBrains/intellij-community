@@ -42,8 +42,7 @@ class IndexingFileSetStatistics(private val project: Project, val fileSetName: S
 
   val slowIndexedFiles: LimitedPriorityQueue<SlowIndexedFile> = LimitedPriorityQueue(SLOW_FILES_LIMIT, compareBy { it.processingTime })
 
-  var allValuesAppliedSeparately: Boolean = true
-  var allSeparateApplicationTimeInAllThreads: TimeNano = 0 //is 0 when !allValuesAppliedSeparately
+  var allSeparateApplicationTimeInAllThreads: TimeNano = 0
 
   data class IndexedFile(val portableFilePath: PortableFilePath, val wasFullyIndexedByExtensions: Boolean)
 
@@ -76,7 +75,6 @@ class IndexingFileSetStatistics(private val project: Project, val fileSetName: S
     processingTime: TimeNano,
     contentLoadingTime: TimeNano,
     fileSize: NumberOfBytes,
-    valuesAppliedSeparately: Boolean,
     separateApplicationTime: TimeNano
   ) {
     numberOfIndexedFiles++
@@ -118,7 +116,6 @@ class IndexingFileSetStatistics(private val project: Project, val fileSetName: S
     if (processingTime > SLOW_FILE_PROCESSING_THRESHOLD_MS * 1_000_000) {
       slowIndexedFiles.addElement(SlowIndexedFile(file.name, processingTime, evaluationOfIndexValueChangerTime, contentLoadingTime))
     }
-    allValuesAppliedSeparately = allValuesAppliedSeparately && valuesAppliedSeparately
     allSeparateApplicationTimeInAllThreads += separateApplicationTime
   }
 

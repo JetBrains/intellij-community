@@ -44,10 +44,6 @@ class SingleIndexValueApplier<FileIndexMetaData> {
            ((IndexInfrastructureExtensionUpdateComputation)storageUpdate).isIndexProvided();
   }
 
-  boolean applyImmediately() {
-    return doApply();
-  }
-
   boolean apply() {
     FileBasedIndexImpl.markFileWritingIndexes(inputId);
     try {

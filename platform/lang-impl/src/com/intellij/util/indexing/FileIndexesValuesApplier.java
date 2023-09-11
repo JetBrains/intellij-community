@@ -21,9 +21,11 @@ public final class FileIndexesValuesApplier {
   /**
    * Initially, index values were applied synchronously under the same read lock they were counted.
    * Later there was introduced an optimization to apply (or erase if needed) them later outside read lock.
+   * Then application on separate threads became available.
+   * And then the single-thread-under-read-lock application was <a href="https://youtrack.jetbrains.com/issue/IDEA-332132">removed</a> as unused.
    */
   public enum ApplicationMode {
-    SameThreadUnderReadLock, SameThreadOutsideReadLock, AnotherThread;
+    SameThreadOutsideReadLock, AnotherThread
   }
   private final FileBasedIndexImpl myIndex;
   private final int fileId;
@@ -106,38 +108,11 @@ public final class FileIndexesValuesApplier {
                                       perIndexerEvaluatingIndexValueRemoversTimes);
   }
 
-  void applyImmediately(@NotNull VirtualFile file, boolean isValid) {
-    if (getApplicationMode() != ApplicationMode.SameThreadUnderReadLock) {
-      return;
-    }
-    if (removeDataFromIndicesForFile) {
-      myIndex.removeDataFromIndicesForFile(fileId, file, "invalid_or_large_file");
-    }
-    if (shouldMarkFileAsIndexed) {
-      IndexingFlag.setFileIndexed(file);
-    }
-
-    VfsEventsMerger.tryLog("INDEX_UPDATED", file,
-                           () -> " updated_indexes=" + stats.getPerIndexerEvaluateIndexValueTimes().keySet() +
-                                 " deleted_indexes=" + stats.getPerIndexerEvaluatingIndexValueRemoversTimes().keySet() +
-                                 " valid=" + isValid);
-    myIndex.getChangedFilesCollector().removeFileIdFromFilesScheduledForUpdate(fileId);
-  }
-
   /**
    * Apply the applier in the same or separate thread and runs {@code callback} in the end on any outcome
    */
   public void apply(@NotNull VirtualFile file, @Nullable Runnable callback, boolean forceApplicationOnSameThread) {
     this.wasForcedToApplyOnTheSameThread = forceApplicationOnSameThread;
-    if (getApplicationMode() != ApplicationMode.SameThreadUnderReadLock) {
-      doApply(file, callback);
-    }
-    else if (callback != null) {
-      callback.run();
-    }
-  }
-
-  private void doApply(@NotNull VirtualFile file, @Nullable Runnable callback) {
     long startTime = System.nanoTime();
     if (removeDataFromIndicesForFile) {
       myIndex.removeDataFromIndicesForFile(fileId, file, "invalid_or_large_file");
@@ -239,7 +214,6 @@ public final class FileIndexesValuesApplier {
   }
 
   public long getSeparateApplicationTimeNanos() {
-    if (getApplicationMode() == ApplicationMode.SameThreadUnderReadLock) return 0;
     var result = separateApplicationTimeNanos.get();
     if (result == -1) throw new IllegalStateException("Index values were not applied");
     return result;

@@ -436,11 +436,7 @@ private fun JsonProjectDumbIndexingHistory.generateDumbIndexingHtml(target: Appe
               tr { td("Content loading time"); td(times.contentLoadingVisibleTime.presentableDuration()) }
               tr {
                 td("Index writing time")
-                td(if (times.isAppliedAllValuesSeparately)
-                     StringUtil.formatDuration(times.separateApplyingIndexesVisibleTime.milliseconds)
-                   else
-                     "Applied under read lock"
-                )
+                td(StringUtil.formatDuration(times.separateApplyingIndexesVisibleTime.milliseconds))
               }
 
               tr {

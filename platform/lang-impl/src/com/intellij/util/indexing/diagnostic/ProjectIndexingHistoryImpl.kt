@@ -428,7 +428,6 @@ data class ProjectDumbIndexingHistoryImpl(override val project: Project) : Proje
     override var contentLoadingVisibleDuration: Duration = Duration.ZERO,
     override var retrievingChangedDuringIndexingFilesDuration: Duration = Duration.ZERO,
     override var pausedDuration: Duration = Duration.ZERO,
-    override var appliedAllValuesSeparately: Boolean = true,
     override var separateValueApplicationVisibleTime: TimeNano = 0,
     override var wasInterrupted: Boolean = false
   ) : DumbIndexingTimes

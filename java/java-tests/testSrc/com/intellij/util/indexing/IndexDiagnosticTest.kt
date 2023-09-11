@@ -153,7 +153,6 @@ class IndexDiagnosticTest : JavaCodeInsightFixtureTestCase() {
           setOf(3, 4),
           JsonDuration(123),
           JsonDuration(456),
-          true,
           JsonDuration(789),
           JsonDateTime(ZonedDateTime.now()),
           JsonDateTime(ZonedDateTime.now()),
@@ -216,7 +215,6 @@ class IndexDiagnosticTest : JavaCodeInsightFixtureTestCase() {
                 wasFullyIndexedByExtensions = true
               )
             ),
-            isAppliedAllValuesSeparately = true,
             separateApplyingIndexesVisibleTime = JsonDuration(362)
           )
         )

@@ -61,25 +61,15 @@ final class UnindexedFilesFinder {
     boolean addOrRunRemover(@Nullable SingleIndexValueRemover remover) {
       if (remover == null) return true;
 
-      if (applicationMode != FileIndexesValuesApplier.ApplicationMode.SameThreadUnderReadLock) {
-        if (removers.isEmpty()) removers = new SmartList<>();
-        return removers.add(remover);
-      }
-      else {
-        return remover.remove();
-      }
+      if (removers.isEmpty()) removers = new SmartList<>();
+      return removers.add(remover);
     }
 
     boolean addOrRunApplier(@Nullable SingleIndexValueApplier applier) {
       if (applier == null) return true;
 
-      if (applicationMode != FileIndexesValuesApplier.ApplicationMode.SameThreadUnderReadLock) {
-        if (appliers.isEmpty()) appliers = new SmartList<>();
-        return appliers.add(applier);
-      }
-      else {
-        return applier.apply();
-      }
+      if (appliers.isEmpty()) appliers = new SmartList<>();
+      return appliers.add(applier);
     }
 
     void addUnindexedState(FileIndexingState state, ID<?, ?> id) {
@@ -397,8 +387,7 @@ final class UnindexedFilesFinder {
     }
     else {
       SingleIndexValueApplier<?> applier =
-        myFileBasedIndex.createSingleIndexValueApplier(indexId, indexedFile.getFile(), inputId, new IndexedFileWrapper(indexedFile),
-                                                       fileStatusBuilder.applicationMode);
+        myFileBasedIndex.createSingleIndexValueApplier(indexId, indexedFile.getFile(), inputId, new IndexedFileWrapper(indexedFile));
       if (applier != null) {
         boolean updated = fileStatusBuilder.addOrRunApplier(applier);
         if (!updated) {

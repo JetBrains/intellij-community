@@ -63,7 +63,6 @@ fun IndexingFileSetStatistics.toJsonStatistics(visibleTimeToAllThreadsTimeRatio:
     contentLoadingVisibleTime = convertAllThreadsTimeToVisibleDuration(contentLoadingTimeInAllThreads, visibleTimeToAllThreadsTimeRatio),
     numberOfTooLargeForIndexingFiles = numberOfTooLargeForIndexingFiles,
     slowIndexedFiles = slowIndexedFiles.biggestElements.map { it.toJson() },
-    isAppliedAllValuesSeparately = allValuesAppliedSeparately,
     separateApplyingIndexesVisibleTime = convertAllThreadsTimeToVisibleDuration(allSeparateApplicationTimeInAllThreads,
                                                                                 visibleTimeToAllThreadsTimeRatio),
     indexedFiles = jsonIndexedFiles
@@ -115,7 +114,6 @@ fun DumbIndexingTimes.toJson(): JsonProjectDumbIndexingHistoryTimes =
     totalWallTimeWithPauses = JsonDuration(totalUpdatingTime),
     contentLoadingVisibleTime = JsonDuration(contentLoadingVisibleDuration.toNanos()),
     retrievingChangedDuringIndexingFilesTime = JsonDuration(retrievingChangedDuringIndexingFilesDuration.toNanos()),
-    isAppliedAllValuesSeparately = appliedAllValuesSeparately,
     separateApplyingIndexesVisibleTime = JsonDuration(separateValueApplicationVisibleTime),
     updatingStart = JsonDateTime(updatingStart),
     updatingEnd = JsonDateTime(updatingEnd),
@@ -142,14 +140,7 @@ private fun ProjectScanningHistoryImpl.changeToJson(): JsonProjectScanningHistor
 private fun ProjectDumbIndexingHistoryImpl.changeToJson(): JsonProjectDumbIndexingHistory {
   val timesImpl = times as ProjectDumbIndexingHistoryImpl.DumbIndexingTimesImpl
   timesImpl.contentLoadingVisibleDuration = Duration.ofNanos(providerStatistics.sumOf { it.contentLoadingVisibleTime.nano })
-  if (providerStatistics.all { it.isAppliedAllValuesSeparately }) {
-    timesImpl.appliedAllValuesSeparately = true
-    timesImpl.separateValueApplicationVisibleTime = providerStatistics.sumOf { it.separateApplyingIndexesVisibleTime.nano }
-  }
-  else {
-    timesImpl.appliedAllValuesSeparately = false
-    timesImpl.separateValueApplicationVisibleTime = 0
-  }
+  timesImpl.separateValueApplicationVisibleTime = providerStatistics.sumOf { it.separateApplyingIndexesVisibleTime.nano }
   val (statsPerFileType, statsPerParentLanguage) = aggregateStatsPerFileTypeAndLanguage()
   return JsonProjectDumbIndexingHistory(
     projectName = project.name,

@@ -500,7 +500,6 @@ public final class IndexUpdateRunner {
                                      preparingTime + applicationTime,
                                      contentLoadingTime,
                                      length,
-                                     applier.getApplicationMode() != FileIndexesValuesApplier.ApplicationMode.SameThreadUnderReadLock,
                                      applicationTime
         );
       }
