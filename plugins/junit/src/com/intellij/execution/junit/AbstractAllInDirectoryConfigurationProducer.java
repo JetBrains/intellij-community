@@ -2,7 +2,6 @@
 package com.intellij.execution.junit;
 
 import com.intellij.execution.actions.ConfigurationContext;
-import com.intellij.execution.configurations.ConfigurationType;
 import com.intellij.execution.junit2.info.LocationUtil;
 import com.intellij.execution.testframework.AbstractJavaTestConfigurationProducer;
 import com.intellij.openapi.module.Module;
@@ -19,17 +18,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.jps.model.java.JavaSourceRootType;
 
 public class AbstractAllInDirectoryConfigurationProducer extends JUnitConfigurationProducer {
-  /**
-   * @deprecated Override {@link #getConfigurationFactory()}.
-   */
-  @Deprecated(forRemoval = true)
-  protected AbstractAllInDirectoryConfigurationProducer(ConfigurationType configurationType) {
-    super(configurationType);
-  }
-
-  public AbstractAllInDirectoryConfigurationProducer() {
-  }
-
   @Override
   protected boolean isApplicableTestType(String type, ConfigurationContext context) {
     return JUnitConfiguration.TEST_DIRECTORY.equals(type);

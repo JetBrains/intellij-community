@@ -2,21 +2,12 @@
 package com.intellij.execution.junit;
 
 import com.intellij.execution.configurations.ConfigurationFactory;
-import com.intellij.execution.configurations.ConfigurationType;
 import com.intellij.execution.testframework.AbstractJavaTestConfigurationProducer;
 import org.jetbrains.annotations.NotNull;
 
 public abstract class JUnitConfigurationProducer extends AbstractJavaTestConfigurationProducer<JUnitConfiguration> implements Cloneable {
   public JUnitConfigurationProducer() {
     super();
-  }
-
-  /**
-   * @deprecated Override {@link #getConfigurationFactory()}.
-   */
-  @Deprecated(forRemoval = true)
-  protected JUnitConfigurationProducer(ConfigurationType configurationType) {
-    super(configurationType);
   }
 
   @NotNull
