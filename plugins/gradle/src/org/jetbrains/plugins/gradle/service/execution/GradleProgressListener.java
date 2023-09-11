@@ -32,7 +32,7 @@ import java.util.UUID;
 
 import static com.intellij.openapi.util.text.StringUtil.formatDuration;
 import static com.intellij.openapi.util.text.StringUtil.formatFileSize;
-import static org.jetbrains.plugins.gradle.tooling.internal.ExtraModelBuilder.MODEL_BUILDER_SERVICE_MESSAGE_PREFIX;
+import static com.intellij.gradle.toolingExtension.impl.modelBuilder.ExtraModelBuilder.MODEL_BUILDER_SERVICE_MESSAGE_PREFIX;
 
 /**
  * @author Vladislav.Soroka

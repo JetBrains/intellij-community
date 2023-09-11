@@ -9,7 +9,7 @@ import org.gradle.tooling.provider.model.ToolingModelBuilderRegistry
 import org.gradle.tooling.provider.model.UnknownModelException
 import org.gradle.util.GradleVersion
 import org.jetbrains.plugins.gradle.model.internal.DummyModel
-import org.jetbrains.plugins.gradle.tooling.internal.ExtraModelBuilder
+import com.intellij.gradle.toolingExtension.impl.modelBuilder.ExtraModelBuilder
 
 import javax.inject.Inject
 

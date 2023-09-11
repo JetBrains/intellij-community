@@ -22,7 +22,7 @@ import org.jetbrains.plugins.gradle.tooling.internal.web.WebResourceImpl
 
 import static com.intellij.gradle.toolingExtension.impl.util.GradleNegotiationUtil.getTaskArchiveFile
 import static com.intellij.gradle.toolingExtension.impl.util.GradleNegotiationUtil.getTaskArchiveFileName
-import static org.jetbrains.plugins.gradle.tooling.internal.ExtraModelBuilder.reportModelBuilderFailure
+import static com.intellij.gradle.toolingExtension.impl.modelBuilder.ExtraModelBuilder.reportModelBuilderFailure
 /**
  * @author Vladislav.Soroka
  */
