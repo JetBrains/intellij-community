@@ -19,7 +19,6 @@ import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.util.PsiUtilCore
-import com.intellij.util.concurrency.annotations.RequiresEdt
 import org.jetbrains.annotations.ApiStatus
 import java.util.concurrent.atomic.AtomicBoolean
 import kotlin.coroutines.cancellation.CancellationException
@@ -32,7 +31,7 @@ object InlineCompletionUsageTracker : CounterUsagesCollector() {
   override fun getGroup() = GROUP
 
   class Listener : InlineCompletionEventAdapter {
-    private var triggerTracker: TriggerTracker? = null
+    private lateinit var triggerTracker: TriggerTracker
     private var showTracker: ShowTracker? = null
     private var editor: Editor? = null
 
@@ -45,16 +44,16 @@ object InlineCompletionUsageTracker : CounterUsagesCollector() {
 
     override fun onShow(event: InlineCompletionEventType.Show) {
       if (event.i == 0 && !event.element.text.isEmpty()) {
-        triggerTracker?.hasSuggestion()
+        triggerTracker.hasSuggestion()
       }
 
-      if (triggerTracker != null && event.i == 0) {
+      if (event.i == 0) {
         // trigger tracker -> show tracker
-        showTracker = ShowTracker(triggerTracker!!.invocationTime, triggerTracker!!.requestId)
-        editor?.let { showTracker?.firstShown(it, event.element) }
+        showTracker = ShowTracker(triggerTracker.invocationTime, triggerTracker.requestId)
+        editor?.let { showTracker!!.firstShown(it, event.element) }
       }
       if (event.i != 0) {
-        showTracker?.nextShown(event.element)
+        showTracker!!.nextShown(event.element)
       }
     }
 
@@ -67,18 +66,18 @@ object InlineCompletionUsageTracker : CounterUsagesCollector() {
     }
 
     override fun onEmpty(event: InlineCompletionEventType.Empty) {
-      triggerTracker?.noSuggestions()
+      triggerTracker.noSuggestions()
     }
 
     override fun onCompletion(event: InlineCompletionEventType.Completion) {
       if (!event.isActive || event.cause is CancellationException || event.cause is ProcessCanceledException) {
-        triggerTracker?.cancelled()
+        triggerTracker.cancelled()
       }
       else if (event.cause != null) {
-        triggerTracker?.exception()
+        triggerTracker.exception()
       }
       editor?.let {
-        triggerTracker?.finished(it.project)
+        triggerTracker.finished(it.project)
       }
       triggerTracker = null
     }
@@ -101,7 +100,7 @@ object InlineCompletionUsageTracker : CounterUsagesCollector() {
     private var cancelled: Boolean = false
     private var exception: Boolean = false
 
-    @RequiresEdt
+
     fun captureContext(editor: Editor, offset: Int) {
       val psiFile = PsiDocumentManager.getInstance(editor.project ?: return).getPsiFile(editor.document) ?: return
       val language = PsiUtilCore.getLanguageAtOffset(psiFile, offset)
