@@ -211,28 +211,24 @@ public class RollbackWorker {
     }
 
     private void doRefresh(final Project project, final List<? extends Change> changesToRefresh) {
-      final Runnable forAwtThread = () -> {
-        VcsDirtyScopeManager manager = VcsDirtyScopeManager.getInstance(myProject);
-        ProjectLevelVcsManager vcsManager = ProjectLevelVcsManager.getInstance(myProject);
+      VcsDirtyScopeManager manager = VcsDirtyScopeManager.getInstance(myProject);
+      ProjectLevelVcsManager vcsManager = ProjectLevelVcsManager.getInstance(myProject);
 
-        for (Change change : changesToRefresh) {
-          final ContentRevision beforeRevision = change.getBeforeRevision();
-          final ContentRevision afterRevision = change.getAfterRevision();
-          if ((!change.isIsReplaced()) && beforeRevision != null && Comparing.equal(beforeRevision, afterRevision)) {
-            manager.fileDirty(beforeRevision.getFile());
-          }
-          else {
-            markDirty(manager, vcsManager, beforeRevision);
-            markDirty(manager, vcsManager, afterRevision);
-          }
+      for (Change change : changesToRefresh) {
+        final ContentRevision beforeRevision = change.getBeforeRevision();
+        final ContentRevision afterRevision = change.getAfterRevision();
+        if ((!change.isIsReplaced()) && beforeRevision != null && Comparing.equal(beforeRevision, afterRevision)) {
+          manager.fileDirty(beforeRevision.getFile());
         }
-
-        myAfterRefresh.run();
-      };
+        else {
+          markDirty(manager, vcsManager, beforeRevision);
+          markDirty(manager, vcsManager, afterRevision);
+        }
+      }
 
       RefreshVFsSynchronously.updateChangesForRollback(changesToRefresh);
 
-      WaitForProgressToShow.runOrInvokeLaterAboveProgress(forAwtThread, null, project);
+      WaitForProgressToShow.runOrInvokeLaterAboveProgress(myAfterRefresh, null, project);
     }
 
     private void markDirty(@NotNull VcsDirtyScopeManager manager,
