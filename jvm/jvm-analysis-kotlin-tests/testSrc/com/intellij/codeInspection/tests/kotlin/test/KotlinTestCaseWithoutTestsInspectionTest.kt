@@ -4,8 +4,7 @@ import com.intellij.codeInspection.tests.JvmLanguage
 import com.intellij.codeInspection.tests.test.TestCaseWithoutTestsInspectionTestBase
 
 class KotlinTestCaseWithoutTestsInspectionTest : TestCaseWithoutTestsInspectionTestBase() {
-  // Wait for KotlinJUnit framework to be fixed
-  fun `_test case without test methods`() {
+  fun `test case without test methods`() {
     myFixture.testHighlighting(JvmLanguage.KOTLIN, """
       class <warning descr="Test class 'TestCaseWithNoTestMethods' has no tests">TestCaseWithNoTestMethods</warning> : junit.framework.TestCase() {
         override fun setUp() {
@@ -20,11 +19,11 @@ class KotlinTestCaseWithoutTestsInspectionTest : TestCaseWithoutTestsInspectionT
           return 1
         }
 
-        fun testThree() {}
+        private fun testThree() { }
 
         fun testFour(i: Int) { i + 1 }
       }
-    """.trimIndent(), fileName = "TestCaseWithNoTestMethods")
+    """.trimIndent())
   }
 
   fun `test case with JUnit 3 inner class without test methods`() {
@@ -34,26 +33,25 @@ class KotlinTestCaseWithoutTestsInspectionTest : TestCaseWithoutTestsInspectionT
           fun test1() {}
         }
       }
-    """.trimIndent(), fileName = "TestCaseWithInner")
+    """.trimIndent())
   }
 
-  // Wait for KotlinJUnit framework to be fixed
-  fun `_test case with JUnit 5 nested class without test methods`() {
+  fun `test case with JUnit 5 nested class without test methods`() {
     myFixture.testHighlighting(JvmLanguage.KOTLIN, """
       class <warning descr="Test class 'TestCaseWithInner' has no tests">TestCaseWithInner</warning> {
         @org.junit.jupiter.api.Nested
-        class <warning descr="Test class 'Inner' has no tests">Inner</warning> {
-          fun test1() { }
+        inner class <warning descr="Test class 'Inner' has no tests">Inner</warning> {
+          private fun test1() { }
         }
       }
-    """.trimIndent(), "TestCaseWithInner")
+    """.trimIndent())
   }
 
   fun `test case without test methods but class is ignored`() {
     myFixture.testHighlighting(JvmLanguage.KOTLIN, """
       @org.junit.Ignore
       class IgnoredTest : junit.framework.TestCase() { }
-    """.trimIndent(), "IgnoredTest")
+    """.trimIndent())
   }
 
   fun `test case with test in parent class`() {
@@ -63,6 +61,6 @@ class KotlinTestCaseWithoutTestsInspectionTest : TestCaseWithoutTestsInspectionT
       }
       
       class SomeTestClass : SomeParentClass("") { }
-    """.trimIndent(), "SomeTestClass")
+    """.trimIndent())
   }
 }
