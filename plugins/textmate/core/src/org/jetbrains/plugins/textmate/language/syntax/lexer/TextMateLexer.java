@@ -1,5 +1,6 @@
 package org.jetbrains.plugins.textmate.language.syntax.lexer;
 
+import com.intellij.openapi.util.text.Strings;
 import com.intellij.util.containers.FList;
 import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
 import org.jetbrains.annotations.NotNull;
@@ -255,21 +256,23 @@ public final class TextMateLexer {
       List<CaptureMatchEdge> captureMatchEdges = new ArrayList<>(matches.size() * 2);
       for (CaptureMatchData match : matches) {
         if (!match.range.isEmpty() && !match.selectorName.isEmpty()) {
-          captureMatchEdges.add(new CaptureMatchEdge(match.range.start, match.group, CaptureMatchEdge.Type.START, match.selectorName));
-          captureMatchEdges.add(new CaptureMatchEdge(match.range.end, match.group, CaptureMatchEdge.Type.END, match.selectorName));
+          CharSequence selectorName = rule.hasBackReference(capturesKey, match.group)
+                                      ? SyntaxMatchUtils.replaceGroupsWithMatchData(match.selectorName, string, matchData, '$')
+                                      : match.selectorName;
+          captureMatchEdges.add(new CaptureMatchEdge(match.range.start, match.group, CaptureMatchEdge.Type.START, selectorName));
+          captureMatchEdges.add(new CaptureMatchEdge(match.range.end, match.group, CaptureMatchEdge.Type.END, selectorName));
         }
       }
       captureMatchEdges.sort(CaptureMatchEdge.OFFSET_ORDERING);
 
       for (CaptureMatchEdge edge : captureMatchEdges) {
         switch (edge.type) {
-          case START -> {
-            CharSequence name = rule.hasBackReference(capturesKey, edge.group)
-                                ? SyntaxMatchUtils.replaceGroupsWithMatchData(edge.selectorName, string, matchData, '$')
-                                : edge.selectorName;
-            openScopeSelector(output, name, edge.offset + startLineOffset);
+          case START -> splitAndOpenScopeSelectors(output, edge.selectorName, edge.offset + startLineOffset);
+          case END -> {
+            for (int i = 0; i < Strings.countChars(edge.selectorName, ' ') + 1; i++) {
+              closeScopeSelector(output, edge.offset + startLineOffset);
+            }
           }
-          case END -> closeScopeSelector(output, edge.offset + startLineOffset);
         }
       }
       return !matches.isEmpty();
@@ -277,6 +280,22 @@ public final class TextMateLexer {
     return false;
   }
 
+  private void splitAndOpenScopeSelectors(@NotNull Queue<Token> output, CharSequence name, int position) {
+    addToken(output, position);
+    int prevIndex = 0;
+    int i = Strings.indexOf(name, ' ', prevIndex);
+    if (i == -1) {
+      myCurrentScope = myCurrentScope.add(name);
+    }
+    else {
+      while (i >= 0) {
+        myCurrentScope = myCurrentScope.add(name.subSequence(prevIndex, i));
+        prevIndex = i + 1;
+        i = Strings.indexOf(name, ' ', prevIndex);
+      }
+      myCurrentScope = myCurrentScope.add(name.subSequence(prevIndex, name.length()));
+    }
+  }
 
   private void openScopeSelector(@NotNull Queue<Token> output, @Nullable CharSequence name, int position) {
     addToken(output, position);
