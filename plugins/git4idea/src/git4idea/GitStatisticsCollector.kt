@@ -17,6 +17,7 @@ import com.intellij.openapi.components.serviceIfCreated
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Comparing
 import com.intellij.openapi.vcs.VcsException
+import com.intellij.util.concurrency.ThreadingAssertions.assertBackgroundThread
 import com.intellij.util.io.URLUtil
 import com.intellij.vcs.log.impl.VcsLogApplicationSettings
 import com.intellij.vcs.log.impl.VcsLogProjectTabsProperties
@@ -36,7 +37,7 @@ import kotlin.io.path.exists
 import kotlin.io.path.isDirectory
 import kotlin.io.path.isRegularFile
 
-class GitStatisticsCollector : ProjectUsagesCollector() {
+internal class GitStatisticsCollector : ProjectUsagesCollector() {
   override fun getGroup(): EventLogGroup = GROUP
 
   override fun getMetrics(project: Project): Set<MetricEvent> {
@@ -63,11 +64,7 @@ class GitStatisticsCollector : ProjectUsagesCollector() {
 
     addBoolIfDiffers(set, appSettings, defaultAppSettings, { it.isStagingAreaEnabled }, STAGING_AREA)
 
-    val version = GitVcs.getInstance(project).version
-    set.add(EXECUTABLE.metric(
-      EventFields.Version with version.presentation,
-      TYPE with version.type
-    ))
+    reportVersion(project, set)
 
     for (repository in repositories) {
       val branches = repository.branches
@@ -98,6 +95,20 @@ class GitStatisticsCollector : ProjectUsagesCollector() {
     addGitLogMetrics(project, set)
 
     return set
+  }
+
+  private fun reportVersion(project: Project, set: MutableSet<MetricEvent>) {
+    val executableManager = GitExecutableManager.getInstance()
+    var version = executableManager.getVersion(project)
+    if (version == GitVersion.NULL) {
+      assertBackgroundThread()
+      version = executableManager.tryGetVersion(project) ?: GitVersion.NULL
+    }
+
+    set.add(EXECUTABLE.metric(
+      EventFields.Version with version.presentation,
+      TYPE with version.type
+    ))
   }
 
   private fun addRecentBranchesOptionMetric(set: MutableSet<MetricEvent>,
