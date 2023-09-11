@@ -255,4 +255,7 @@ public interface ApplicationEx extends Application {
   default void runWithImplicitRead(@NotNull Runnable runnable) {
     runnable.run();
   }
+
+  @ApiStatus.Internal
+  default void flushNativeEventQueue() {}
 }
