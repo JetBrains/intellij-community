@@ -34,7 +34,7 @@ public class StringAsUTF8 implements KeyDescriptorEx<String> {
   }
 
   @Override
-  public long saveToLog(String key,
+  public long saveToLog(@NotNull String key,
                         @NotNull AppendOnlyLog log) throws IOException {
     byte[] stringBytes = key.getBytes(UTF_8);
     return log.append(stringBytes);

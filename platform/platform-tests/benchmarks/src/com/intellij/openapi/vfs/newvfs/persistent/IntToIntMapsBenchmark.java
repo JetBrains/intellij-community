@@ -3,7 +3,6 @@ package com.intellij.openapi.vfs.newvfs.persistent;
 
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.newvfs.persistent.dev.intmultimaps.extendiblehashmap.ExtendibleHashMap;
-import com.intellij.openapi.vfs.newvfs.persistent.mapped.MMappedFileStorage;
 import com.intellij.util.io.AbstractIntToIntBtree;
 import com.intellij.util.io.IntToIntBtree;
 import com.intellij.util.io.IntToIntBtreeLockFree;

@@ -27,7 +27,7 @@ public interface KeyDescriptorEx<K> {
   //         -- hence API basically forces to do it twice: first time to assess the size,
   //         second time to actually write the object into ByteBuffer. This is dummy.
 
-  default long saveToLog(K key,
+  default long saveToLog(@NotNull K key,
                          @NotNull AppendOnlyLog log) throws IOException {
     int recordSize = sizeOfSerialized(key);
     return log.append(buffer -> {

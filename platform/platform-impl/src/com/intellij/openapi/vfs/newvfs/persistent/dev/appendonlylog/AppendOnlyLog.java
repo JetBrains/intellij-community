@@ -20,7 +20,7 @@ public interface AppendOnlyLog extends Closeable {
   long append(@NotNull ByteBufferWriter writer,
               int recordSize) throws IOException;
 
-  default long append(byte[] data) throws IOException {
+  default long append(byte @NotNull [] data) throws IOException {
     return append(buffer -> buffer.put(data), data.length);
   }
 
