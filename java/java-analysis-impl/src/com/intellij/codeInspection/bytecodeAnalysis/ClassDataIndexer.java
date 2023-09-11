@@ -324,7 +324,7 @@ public class ClassDataIndexer implements VirtualFileGist.GistCalculator<Map<HMem
       final boolean isInterestingResult = isReferenceResult || isBooleanResult;
 
       List<Equation> equations = new ArrayList<>();
-      ContainerUtil.addIfNotNull(equations, PurityAnalysis.analyze(method, methodNode, stable));
+      ContainerUtil.addIfNotNull(equations, PurityAnalysis.analyze(method, methodNode, stable, jsr));
 
       try {
         final ControlFlowGraph graph = ControlFlowGraph.build(className, methodNode, jsr);

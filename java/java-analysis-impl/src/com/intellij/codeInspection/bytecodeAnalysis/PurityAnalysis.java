@@ -2,6 +2,7 @@
 package com.intellij.codeInspection.bytecodeAnalysis;
 
 import com.intellij.codeInspection.bytecodeAnalysis.asm.ASMUtils;
+import com.intellij.codeInspection.bytecodeAnalysis.asm.LiteAnalyzer;
 import com.intellij.codeInspection.dataFlow.ContractReturnValue;
 import com.intellij.util.ArrayUtil;
 import one.util.streamex.StreamEx;
@@ -27,13 +28,14 @@ public final class PurityAnalysis {
   static final int UN_ANALYZABLE_FLAG = Opcodes.ACC_ABSTRACT | Opcodes.ACC_NATIVE | Opcodes.ACC_INTERFACE;
 
   /**
-   * @param method a method descriptor
+   * @param method     a method descriptor
    * @param methodNode an ASM MethodNode
-   * @param stable whether a method is stable (e.g. final or declared in final class)
+   * @param stable     whether a method is stable (e.g. final or declared in final class)
+   * @param jsr        whether jsr is possible in a current method
    * @return a purity equation or null for top result (either impure or unknown, impurity assumed)
    */
   @Nullable
-  public static Equation analyze(Member method, MethodNode methodNode, boolean stable) {
+  static Equation analyze(Member method, MethodNode methodNode, boolean stable, boolean jsr) {
     EKey key = new EKey(method, Direction.Pure, stable);
     Effects hardCodedSolution = HardCodedPurity.getInstance().getHardCodedSolution(method);
     if (hardCodedSolution != null) {
@@ -41,10 +43,19 @@ public final class PurityAnalysis {
     }
 
     if ((methodNode.access & UN_ANALYZABLE_FLAG) != 0) return null;
+    if (methodNode.instructions.size() > 1000) {
+      // Skip purity analysis for very long methods, as it's rarely useful
+      return null;
+    }
 
     DataInterpreter dataInterpreter = new DataInterpreter(methodNode);
     try {
-      new Analyzer<>(dataInterpreter).analyze("this", methodNode);
+      if (jsr) {
+        new Analyzer<>(dataInterpreter).analyze("this", methodNode);
+      }
+      else {
+        new LiteAnalyzer<>(dataInterpreter).analyze("this", methodNode);
+      }
     }
     catch (AnalyzerException e) {
       return null;
