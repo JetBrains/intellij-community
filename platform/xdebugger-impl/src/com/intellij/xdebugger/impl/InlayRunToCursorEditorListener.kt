@@ -34,7 +34,6 @@ import com.intellij.xdebugger.impl.breakpoints.XBreakpointUtil
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
 import java.awt.Point
 import java.lang.ref.WeakReference
 import javax.swing.JComponent
@@ -106,8 +105,13 @@ internal class InlayRunToCursorEditorListener(private val project: Project, priv
       return true
     }
     val lineY = editor.logicalPositionToXY(LogicalPosition(lineNumber, 0)).y
-    val position = SwingUtilities.convertPoint(editor.getContentComponent(), Point(JBUI.scale(NEGATIVE_INLAY_PANEL_SHIFT), lineY),
-                                               editor.getComponent().rootPane.layeredPane)
+
+    val position = SwingUtilities.convertPoint(
+      editor.getContentComponent(),
+      Point(JBUI.scale(NEGATIVE_INLAY_PANEL_SHIFT), lineY + (editor.lineHeight - JBUI.scale(ACTION_BUTTON_SIZE))/2),
+      editor.getComponent().rootPane.layeredPane
+    )
+
     val group = DefaultActionGroup()
     val pausePosition = session.currentPosition
     if (pausePosition != null && pausePosition.getFile() == editor.virtualFile && pausePosition.getLine() == lineNumber) {
