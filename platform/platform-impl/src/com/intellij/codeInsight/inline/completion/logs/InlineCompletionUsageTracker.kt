@@ -80,7 +80,7 @@ object InlineCompletionUsageTracker : CounterUsagesCollector() {
   /**
    * This tracker lives from the moment the inline completion is invoked until the end of generation.
    */
-  class InvocationTracker(
+  private class InvocationTracker(
     private val invocationTime: Long,
     private val request: InlineCompletionRequest,
     private val provider: Class<out InlineCompletionProvider>
@@ -181,7 +181,7 @@ object InlineCompletionUsageTracker : CounterUsagesCollector() {
   /**
    * This tracker lives from the moment the inline completion appears on the screen until its end.
    */
-  class ShowTracker(private val requestId: Long,
+  private class ShowTracker(private val requestId: Long,
                     private val invocationTime: Long,
                     private val triggerFeatures: EventPair<*>) {
     private val data = mutableListOf<EventPair<*>>()
