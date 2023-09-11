@@ -9,6 +9,7 @@ import groovy.transform.CompileDynamic
 import org.codehaus.groovy.runtime.DefaultGroovyMethods
 import org.gradle.api.Project
 import org.gradle.api.artifacts.Configuration
+import org.gradle.api.file.FileCollection
 import org.gradle.api.tasks.AbstractCopyTask
 import org.gradle.api.tasks.SourceSet
 import org.gradle.api.tasks.SourceSetOutput
@@ -264,9 +265,9 @@ class GradleSourceSetModelBuilder extends AbstractModelBuilderService {
         externalSourceSet.targetCompatibility = projectTargetCompatibility
       }
 
-      project.tasks.withType(AbstractArchiveTask) { AbstractArchiveTask task ->
-        if (containsAllSourceSetOutput(task, sourceSet)) {
-          externalSourceSet.artifacts.add(getTaskArchiveFile(task))
+        project.tasks.withType(AbstractArchiveTask) { AbstractArchiveTask task ->
+          if (containsAllSourceSetOutput(task, sourceSet)) {
+            externalSourceSet.artifacts.add(getTaskArchiveFile(task))
         }
       }
 
@@ -633,6 +634,7 @@ class GradleSourceSetModelBuilder extends AbstractModelBuilderService {
       || object instanceof File || object instanceof Path
       || isDirectoryOrRegularFile
       || object instanceof SourceSetOutput
+      || object instanceof FileCollection
   }
 
   /**
