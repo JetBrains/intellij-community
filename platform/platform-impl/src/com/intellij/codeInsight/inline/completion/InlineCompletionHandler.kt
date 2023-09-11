@@ -72,17 +72,19 @@ class InlineCompletionHandler(private val scope: CoroutineScope) {
       return
     }
 
-    val request = event.toRequest() ?: return
+    val provider = getProvider(event) ?: return
 
     LOG.trace("Schedule new job")
     runningJob.getAndUpdate {
       scope.launch {
-        invokeRequest(event, request)
+        invokeRequest(provider, event)
       }
     }?.cancel()
   }
 
-  private suspend fun invokeRequest(event: InlineCompletionEvent, request: InlineCompletionRequest) {
+  private suspend fun invokeRequest(provider: InlineCompletionProvider, event: InlineCompletionEvent) {
+    val request = event.toRequest() ?: return
+
     val editor = request.editor
     val offset = request.endOffset
 
@@ -95,7 +97,6 @@ class InlineCompletionHandler(private val scope: CoroutineScope) {
     }
 
     lastInvocationTime = System.currentTimeMillis()
-    val provider = getProvider(event) ?: return
     val modificationStamp = request.document.modificationStamp
     val resultFlow = request(provider, request) // .flowOn(Dispatchers.IO)
 
