@@ -83,7 +83,7 @@ private class TestComboButtonAction: ExpandableComboAction() {
     (component as? ToolbarComboButton)?.apply {
       text = "Combo button"
       leftIcons = listOf(AllIcons.General.Filter)
-      //rightIcons = emptyList()
+      rightIcons = emptyList()
     }
   }
 }
