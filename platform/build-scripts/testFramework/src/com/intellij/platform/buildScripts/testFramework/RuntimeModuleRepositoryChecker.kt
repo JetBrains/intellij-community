@@ -1,11 +1,11 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.buildScripts.testFramework
 
-import com.intellij.devkit.runtimeModuleRepository.jps.build.RuntimeModuleRepositoryBuildConstants
 import com.intellij.platform.runtime.repository.*
 import com.intellij.platform.runtime.repository.serialization.RuntimeModuleRepositorySerialization
 import org.assertj.core.api.SoftAssertions
 import org.jetbrains.intellij.build.BuildContext
+import org.jetbrains.intellij.build.impl.MODULE_DESCRIPTORS_JAR_PATH
 import org.jetbrains.intellij.build.impl.SUPPORTED_DISTRIBUTIONS
 import org.jetbrains.intellij.build.impl.getOsAndArchSpecificDistDirectory
 import java.nio.file.Path
@@ -38,7 +38,7 @@ class RuntimeModuleRepositoryChecker private constructor(
     else {
       osSpecificFilePaths = emptyList()
     }
-    descriptorsJarFile = commonDistPath.resolve(RuntimeModuleRepositoryBuildConstants.JAR_REPOSITORY_FILE_NAME)
+    descriptorsJarFile = commonDistPath.resolve(MODULE_DESCRIPTORS_JAR_PATH)
     repository = RuntimeModuleRepository.create(descriptorsJarFile)
   }
   
@@ -66,13 +66,13 @@ class RuntimeModuleRepositoryChecker private constructor(
 
     private fun createCheckers(context: BuildContext): List<() -> RuntimeModuleRepositoryChecker> {
       val commonDistPath = context.paths.distAllDir 
-      if (commonDistPath.resolve(RuntimeModuleRepositoryBuildConstants.JAR_REPOSITORY_FILE_NAME).exists()) {
+      if (commonDistPath.resolve(MODULE_DESCRIPTORS_JAR_PATH).exists()) {
         return listOf { RuntimeModuleRepositoryChecker(commonDistPath, null, context) }
       }
       return SUPPORTED_DISTRIBUTIONS
         .mapNotNull { distribution ->
           val osSpecificDistPath = getOsAndArchSpecificDistDirectory(distribution.os, distribution.arch, context)
-          if (osSpecificDistPath.resolve(RuntimeModuleRepositoryBuildConstants.JAR_REPOSITORY_FILE_NAME).exists()) {
+          if (osSpecificDistPath.resolve(MODULE_DESCRIPTORS_JAR_PATH).exists()) {
             { RuntimeModuleRepositoryChecker(commonDistPath, osSpecificDistPath, context) }
           }
           else null

@@ -12,6 +12,7 @@ import com.intellij.platform.runtime.repository.serialization.RawRuntimeModuleDe
 import com.intellij.platform.runtime.repository.serialization.RuntimeModuleRepositorySerialization
 import com.intellij.util.containers.MultiMap
 import com.jetbrains.plugin.structure.base.utils.exists
+import org.jetbrains.annotations.VisibleForTesting
 import org.jetbrains.intellij.build.BuildContext
 import org.jetbrains.intellij.build.CompilationTasks
 import org.jetbrains.intellij.build.impl.projectStructureMapping.*
@@ -111,7 +112,10 @@ private fun generateRepositoryForDistribution(
         else -> dependency
       }
     }
-    distDescriptors.add(RawRuntimeModuleDescriptor(moduleId.stringId, resourcePaths.toList(), actualDependencies))
+    val actualResourcePaths = resourcePaths.mapTo(ArrayList()) {
+      if (it.startsWith("$MODULES_DIR_NAME/")) it.removePrefix("$MODULES_DIR_NAME/") else "../$it"
+    }
+    distDescriptors.add(RawRuntimeModuleDescriptor(moduleId.stringId, actualResourcePaths, actualDependencies))
   }
 
   /* include descriptors of aggregating modules which don't have own resources (and therefore don't have DistributionFileEntry),
@@ -133,7 +137,7 @@ private fun generateRepositoryForDistribution(
   }
   try {
     RuntimeModuleRepositorySerialization.saveToJar(distDescriptors, "intellij.platform.bootstrap",
-                                                   targetDirectory.resolve(JAR_REPOSITORY_FILE_NAME), GENERATOR_VERSION)
+                                                   targetDirectory.resolve(MODULE_DESCRIPTORS_JAR_PATH), GENERATOR_VERSION)
   }
   catch (e: IOException) {
     context.messages.error("Failed to save runtime module repository: ${e.message}", e)
@@ -238,6 +242,10 @@ private val DistributionFileEntry.runtimeModuleId: RuntimeModuleId
     is ModuleLibraryFileEntry -> RuntimeModuleId.moduleLibrary(moduleName, libraryName)
     is ProjectLibraryEntry -> RuntimeModuleId.projectLibrary(data.libraryName)
   }
+
+private const val MODULES_DIR_NAME = "modules"
+@VisibleForTesting
+const val MODULE_DESCRIPTORS_JAR_PATH: String = "$MODULES_DIR_NAME/$JAR_REPOSITORY_FILE_NAME" 
 
 private val dependenciesToSkip = mapOf(
   //may be removed when IJPL-125 is fixed

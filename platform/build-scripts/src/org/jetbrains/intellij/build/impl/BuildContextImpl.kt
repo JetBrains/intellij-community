@@ -2,7 +2,6 @@
 @file:Suppress("ReplaceGetOrSet")
 package org.jetbrains.intellij.build.impl
 
-import com.intellij.devkit.runtimeModuleRepository.jps.build.RuntimeModuleRepositoryBuildConstants
 import com.intellij.openapi.util.io.FileUtilRt
 import com.intellij.openapi.util.text.Strings
 import io.opentelemetry.api.common.AttributeKey
@@ -270,7 +269,7 @@ class BuildContextImpl(
     jvmArgs.add("-Djna.noclasspath=true")
 
     if (useModularLoader || generateRuntimeModuleRepository) {
-      jvmArgs.add("-Dintellij.platform.runtime.repository.path=$macroName/${RuntimeModuleRepositoryBuildConstants.JAR_REPOSITORY_FILE_NAME}")
+      jvmArgs.add("-Dintellij.platform.runtime.repository.path=$macroName/${MODULE_DESCRIPTORS_JAR_PATH}")
     }
     if (useModularLoader) {
       jvmArgs.add("-Dintellij.platform.root.module=${productProperties.applicationInfoModule}")
