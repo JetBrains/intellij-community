@@ -63,7 +63,7 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 
-@State(name = "MavenProjectNavigator", storages = @Storage(StoragePathMacros.PRODUCT_WORKSPACE_FILE))
+@State(name = "MavenProjectNavigator", storages = @Storage(StoragePathMacros.PRODUCT_WORKSPACE_FILE), getStateRequiresEdt = true)
 public final class MavenProjectsNavigator extends MavenSimpleProjectComponent
   implements PersistentStateComponent<MavenProjectsNavigatorState>, Disposable {
   public static final String TOOL_WINDOW_ID = "Maven";
