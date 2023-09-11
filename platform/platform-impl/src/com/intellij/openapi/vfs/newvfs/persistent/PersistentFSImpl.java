@@ -165,19 +165,33 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
   private void doConnect() {
     if (myConnected.compareAndSet(false, true)) {
       Activity activity = StartUpMeasurer.startActivity("connect FSRecords");
-      if (!VfsLog.isVfsTrackingEnabled()) {
-        // forcefully erase VfsLog storages if the feature is disabled so that when it will be enabled again we won't consider old data as a source for recovery
-        try {
-          if (VfsLogImpl.clearStorage(new PersistentFSPaths(Path.of(FSRecords.getCachesDir())).getVfsLogStorage())) {
-            LOG.info("VfsLog data was cleared, because VFS operations logging was turned off");
-          }
-        }
-        catch (Throwable e) {
-          LOG.error("failed to clear VfsLog storage", e);
-        }
-      }
+      applyVfsLogPreferences();
       vfsPeer = FSRecords.connect();
       activity.end();
+    }
+  }
+
+  private static void applyVfsLogPreferences() {
+    PersistentFSPaths fsRecordsPaths = new PersistentFSPaths(Path.of(FSRecords.getCachesDir()));
+    Path vfsLogPath = fsRecordsPaths.getVfsLogStorage();
+    if (!VfsLog.isVfsTrackingEnabled()) {
+      // forcefully erase VfsLog storages if the feature is disabled so that when it will be enabled again we won't consider old data as a source for recovery
+      try {
+        if (VfsLogImpl.clearStorage(vfsLogPath)) {
+          LOG.info("VfsLog data was cleared because VFS operations logging was turned off");
+        }
+      }
+      catch (Throwable e) {
+        LOG.error("failed to clear VfsLog storage", e);
+      }
+    } else {
+      if (!vfsLogPath.toFile().exists()) {
+        // existing vfs must be cleared if vfslog directory does not exist, otherwise, vfslog will lack crucial data for recovery
+        Path corruptionMarker = fsRecordsPaths.getCorruptionMarkerFile();
+        if (!corruptionMarker.toFile().exists()) {
+          PersistentFSConnection.scheduleVFSRebuild(corruptionMarker, "VfsLog: VFS operations tracking was enabled", null);
+        }
+      }
     }
   }
 

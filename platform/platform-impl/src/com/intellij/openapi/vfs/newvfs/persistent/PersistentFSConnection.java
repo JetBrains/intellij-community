@@ -375,8 +375,9 @@ public final class PersistentFSConnection {
     }
   }
 
-  void scheduleVFSRebuild(@Nullable String message,
-                          @Nullable Throwable errorCause) {
+  static void scheduleVFSRebuild(@NotNull Path corruptionMarkerFile,
+                                 @Nullable String message,
+                                 @Nullable Throwable errorCause) {
     final VFSCorruptedException corruptedException = new VFSCorruptedException(
       message == null ? "(No specific reason of corruption was given)" : message,
       errorCause
@@ -391,14 +392,13 @@ public final class PersistentFSConnection {
     }
 
     try {
-      final Path brokenMarker = persistentFSPaths.getCorruptionMarkerFile();
       final ByteArrayOutputStream out = new ByteArrayOutputStream();
       try (PrintStream stream = new PrintStream(out, false, UTF_8)) {
         stream.println("VFS files are corrupted and must be rebuilt from the scratch on next startup");
         corruptedException.printStackTrace(stream);
       }
       Files.write(
-        brokenMarker,
+        corruptionMarkerFile,
         out.toByteArray(),
         StandardOpenOption.WRITE, StandardOpenOption.CREATE
       );
@@ -406,6 +406,11 @@ public final class PersistentFSConnection {
     catch (IOException ex) {// No luck:
       LOG.info("Can't create VFS corruption marker", ex);
     }
+  }
+
+  void scheduleVFSRebuild(@Nullable String message,
+                          @Nullable Throwable errorCause) {
+    scheduleVFSRebuild(persistentFSPaths.getCorruptionMarkerFile(), message, errorCause);
   }
 
   public @NotNull VFSRecoveryInfo recoveryInfo() {

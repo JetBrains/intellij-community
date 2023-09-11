@@ -495,6 +495,9 @@ class VfsLogImpl private constructor(
       }
     }
 
+    /**
+     * deletes the vfslog storage directory completely
+     */
     @JvmStatic
     @Throws(IOException::class)
     fun clearStorage(storagePath: Path): Boolean {
