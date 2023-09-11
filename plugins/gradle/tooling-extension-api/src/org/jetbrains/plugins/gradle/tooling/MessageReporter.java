@@ -2,10 +2,9 @@
 package org.jetbrains.plugins.gradle.tooling;
 
 import org.gradle.api.Project;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
-@ApiStatus.Experimental
 public interface MessageReporter {
+
   void report(@NotNull Project project, @NotNull Message message);
 }

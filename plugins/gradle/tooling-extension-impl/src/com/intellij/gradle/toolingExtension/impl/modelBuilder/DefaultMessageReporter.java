@@ -22,7 +22,6 @@ public class DefaultMessageReporter implements MessageReporter {
 
   private static final Logger LOG = LoggerFactory.getLogger("org.jetbrains.plugins.gradle.toolingExtension.modelBuilder");
 
-  @ApiStatus.Experimental
   @Override
   public void report(@NotNull Project project, @NotNull Message message) {
     if (GradleVersion.current().getBaseVersion().compareTo(GradleVersion.version("2.14.1")) < 0) {
