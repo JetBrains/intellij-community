@@ -254,6 +254,27 @@ fun <T> CompletableFuture<T>.asPromise(): Promise<T> {
   return promise
 }
 
+fun <T> CompletableFuture<T>.asCancellablePromise(): CancellablePromise<T> {
+  val promise = AsyncPromise<T>()
+  val future = this
+  handle { result, throwable ->
+    if (throwable == null) {
+      promise.setResult(result)
+    }
+    else {
+      promise.setError(throwable)
+    }
+    result
+  }
+  promise.f.handle { result, throwable ->
+    if (throwable == AsyncPromise.CANCELED && !future.isDone) {
+      future.completeExceptionally(throwable)
+    }
+    result
+  }
+  return promise
+}
+
 /**
  * @see [kotlinx.coroutines.future.asCompletableFuture]
  * @see [kotlinx.coroutines.future.setupCancellation]
