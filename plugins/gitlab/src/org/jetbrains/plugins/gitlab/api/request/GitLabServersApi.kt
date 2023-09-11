@@ -4,12 +4,15 @@ package org.jetbrains.plugins.gitlab.api.request
 import com.intellij.collaboration.api.HttpStatusErrorException
 import com.intellij.collaboration.api.graphql.loadResponse
 import com.intellij.collaboration.api.httpclient.HttpClientUtil.inflateAndReadWithErrorHandlingAndLogging
+import com.intellij.collaboration.api.json.loadJsonList
 import com.intellij.collaboration.api.json.loadJsonValue
 import com.intellij.collaboration.util.resolveRelative
 import com.intellij.openapi.diagnostic.logger
+import kotlinx.coroutines.CancellationException
 import org.jetbrains.plugins.gitlab.api.*
 import org.jetbrains.plugins.gitlab.api.GitLabEdition.Community
 import org.jetbrains.plugins.gitlab.api.GitLabEdition.Enterprise
+import org.jetbrains.plugins.gitlab.api.dto.GitLabProjectsDTO
 import org.jetbrains.plugins.gitlab.api.dto.GitLabServerMetadataDTO
 import org.jetbrains.plugins.gitlab.api.dto.GitLabServerVersionDTO
 import org.jsoup.Jsoup
@@ -31,14 +34,14 @@ private val LOG = logger<GitLabApi>()
 suspend fun GitLabApi.Rest.checkIsGitLabServer(): Boolean {
   val uri = server.restApiUri.resolveRelative("projects?page=1&per_page=1")
   val request = request(uri).GET().build()
-  val bodyHandler = inflateAndReadWithErrorHandlingAndLogging(LOG, request) { reader, _ ->
-    reader.readText()
-  }
   return try {
-    sendAndAwaitCancellable(request, bodyHandler)
+    loadJsonList<Unit>(request).body()
     true
   }
-  catch (e: HttpStatusErrorException) {
+  catch (e: CancellationException) {
+    throw e
+  }
+  catch (e: Exception) {
     false
   }
 }
