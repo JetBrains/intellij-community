@@ -4,11 +4,11 @@ package org.jetbrains.idea.maven.internal
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.components.service
 import com.intellij.openapi.project.DumbAwareAction
+import org.jetbrains.plugins.groovy.lang.resolve.api.Applicability
 
 class MavenShowReadStatisticsAction : DumbAwareAction() {
   override fun actionPerformed(e: AnActionEvent) {
-    val project = e.project ?: throw RuntimeException("No project found in context")
-    project.service<ReadStatisticsCollector>().print()
+    ReadStatisticsCollector.getInstance().print()
   }
 
 }
