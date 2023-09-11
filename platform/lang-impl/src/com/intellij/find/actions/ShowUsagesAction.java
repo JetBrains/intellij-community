@@ -434,6 +434,14 @@ public final class ShowUsagesAction extends AnAction implements PopupAction, Hin
   private static Future<Collection<Usage>> showElementUsagesWithResult(@NotNull ShowUsagesParameters parameters,
                                                                        @NotNull ShowUsagesActionHandler actionHandler) {
     ThreadingAssertions.assertEventDispatchThread();
+    Project project = parameters.project;
+    UsageViewImpl usageView = createUsageView(project, actionHandler.getTargetLanguage());
+    return ShowUsagesManager.getInstance(project).showElementUsagesWithResult(parameters, actionHandler, usageView);
+  }
+
+  public static Future<Collection<Usage>> showElementUsagesWithResult(@NotNull ShowUsagesParameters parameters,
+                                                                      @NotNull ShowUsagesActionHandler actionHandler,
+                                                                      @NotNull UsageViewImpl usageView) {
 
     Span findUsageSpan = myFindUsagesTracer.spanBuilder("findUsages").startSpan();
     Scope opentelemetryScope = findUsageSpan.makeCurrent();
@@ -441,7 +449,6 @@ public final class ShowUsagesAction extends AnAction implements PopupAction, Hin
     Span firstUsageSpan = myFindUsagesTracer.spanBuilder("findUsages_firstUsage").startSpan();
 
     Project project = parameters.project;
-    UsageViewImpl usageView = createUsageView(project, actionHandler.getTargetLanguage());
     ReadAction.nonBlocking(() -> actionHandler.getEventData()).submit(AppExecutorUtil.getAppExecutorService()).onSuccess(
       (eventData) -> UsageViewStatisticsCollector.logSearchStarted(project, usageView, CodeNavigateSource.ShowUsagesPopup, eventData));
     final SearchScope searchScope = actionHandler.getSelectedScope();
@@ -1107,7 +1114,10 @@ public final class ShowUsagesAction extends AnAction implements PopupAction, Hin
       UsageViewStatisticsCollector.logScopeChanged(project, usageView, actionHandler.getSelectedScope(), scope,
                                                    actionHandler.getTargetClass());
       cancel(showUsagesPopupData.popupRef.get());
-      showElementUsages(showUsagesPopupData.parameters, actionHandler.withScope(scope));
+      ShowUsagesActionHandler handler = actionHandler.withScope(scope);
+      if (handler != null) {
+        showElementUsages(showUsagesPopupData.parameters, handler);
+      }
     });
 
     return result;
@@ -1527,7 +1537,10 @@ public final class ShowUsagesAction extends AnAction implements PopupAction, Hin
 
   private static void showUsagesInMaximalScope(@NotNull ShowUsagesParameters parameters,
                                                @NotNull ShowUsagesActionHandler actionHandler) {
-    showElementUsages(parameters, actionHandler.withScope(actionHandler.getMaximalScope()));
+    ShowUsagesActionHandler handler = actionHandler.withScope(actionHandler.getMaximalScope());
+    if (handler != null) {
+      showElementUsages(parameters, handler);
+    }
   }
 
   private static @NotNull Runnable showDialogAndRestartRunnable(@NotNull ShowUsagesParameters parameters,

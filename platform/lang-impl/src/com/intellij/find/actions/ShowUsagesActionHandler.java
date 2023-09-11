@@ -17,7 +17,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 
-interface ShowUsagesActionHandler {
+public interface ShowUsagesActionHandler {
 
   boolean isValid();
 
@@ -29,7 +29,7 @@ interface ShowUsagesActionHandler {
 
   @Nullable ShowUsagesActionHandler showDialog();
 
-  @NotNull ShowUsagesActionHandler withScope(@NotNull SearchScope searchScope);
+  @Nullable ShowUsagesActionHandler withScope(@NotNull SearchScope searchScope);
 
   @NotNull SearchScope getSelectedScope();
 
