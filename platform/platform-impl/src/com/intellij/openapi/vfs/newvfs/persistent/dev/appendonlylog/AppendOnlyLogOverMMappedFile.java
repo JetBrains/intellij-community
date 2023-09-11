@@ -6,7 +6,9 @@ import com.intellij.openapi.vfs.newvfs.persistent.mapped.MMappedFileStorage;
 import com.intellij.openapi.vfs.newvfs.persistent.mapped.MMappedFileStorage.Page;
 import com.intellij.openapi.vfs.newvfs.persistent.dev.blobstorage.ByteBufferReader;
 import com.intellij.openapi.vfs.newvfs.persistent.dev.blobstorage.ByteBufferWriter;
+import com.intellij.util.ExceptionUtil;
 import com.intellij.util.io.IOUtil;
+import com.intellij.util.io.VersionUpdatedException;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.VisibleForTesting;
@@ -14,7 +16,6 @@ import org.jetbrains.annotations.VisibleForTesting;
 import java.io.IOException;
 import java.lang.invoke.VarHandle;
 import java.nio.ByteBuffer;
-import java.nio.file.Files;
 import java.nio.file.Path;
 
 import static com.intellij.util.SystemProperties.getBooleanProperty;
@@ -228,7 +229,7 @@ public final class AppendOnlyLogOverMMappedFile implements AppendOnlyLog {
   private final long endOfRecoveredRegion;
 
 
-  public AppendOnlyLogOverMMappedFile(@NotNull MMappedFileStorage storage) throws IOException {
+  private AppendOnlyLogOverMMappedFile(@NotNull MMappedFileStorage storage) throws IOException {
     this.storage = storage;
     headerPage = storage.pageByOffset(0L);
 
@@ -297,6 +298,10 @@ public final class AppendOnlyLogOverMMappedFile implements AppendOnlyLog {
     setLongHeaderField(HeaderLayout.NEXT_RECORD_TO_BE_COMMITTED_OFFSET, nextRecordToBeCommittedOffset);
   }
 
+  /**
+   * @return version of the log implementation (i.e., this class) used to create the file.
+   * Current version is {@link #CURRENT_IMPLEMENTATION_VERSION}
+   */
   public int getImplementationVersion() throws IOException {
     return getIntHeaderField(HeaderLayout.IMPLEMENTATION_VERSION_OFFSET);
   }
@@ -305,6 +310,7 @@ public final class AppendOnlyLogOverMMappedFile implements AppendOnlyLog {
     setIntHeaderField(HeaderLayout.IMPLEMENTATION_VERSION_OFFSET, implementationVersion);
   }
 
+  /** @return version of _data_ stored in records -- up to the client to define/recognize it */
   public int getDataVersion() throws IOException {
     return getIntHeaderField(HeaderLayout.EXTERNAL_VERSION_OFFSET);
   }
@@ -500,6 +506,12 @@ public final class AppendOnlyLogOverMMappedFile implements AppendOnlyLog {
   }
 
   @Override
+  public boolean isEmpty() {
+    return firstUnAllocatedOffset() == HeaderLayout.HEADER_SIZE
+           && firstUnCommittedOffset() == HeaderLayout.HEADER_SIZE;
+  }
+
+  @Override
   public void close() throws IOException {
     //MAYBE RC: is it better to state that flush(true) should be called
     //          explicitly, if needed, otherwise leave it to OS to decide
@@ -528,26 +540,35 @@ public final class AppendOnlyLogOverMMappedFile implements AppendOnlyLog {
     return "AppendOnlyLogOverMMappedFile[" + storage.storagePath() + "]";
   }
 
-  /**
-   * @return log records in a region [aroundRecordId-regionWidth .. aroundRecordId+regionWidth],
-   * one record per line. Record content formatted as hex-string
-   */
-  private String dumpContentAroundId(long aroundRecordId,
-                                     int regionWidth) throws IOException {
-    StringBuilder sb = new StringBuilder("Log content around id: " + aroundRecordId + " +/- " + regionWidth +
-                                         " (first uncommitted offset: " + firstUnCommittedOffset() +
-                                         ", first unallocated: " + firstUnAllocatedOffset() + ")\n");
-    forEachRecord((recordId, buffer) -> {
-      if (aroundRecordId - regionWidth <= recordId && recordId <= aroundRecordId + regionWidth) {
-        String bufferAsHex = IOUtil.toHexString(buffer);
-        sb.append("[id: ").append(recordId).append("][offset: ").append(recordIdToOffset(recordId)).append("][hex: ")
-          .append(bufferAsHex).append("]\n");
-      }
-      return recordId <= aroundRecordId + regionWidth;
-    });
-    return sb.toString();
+  public static @NotNull AppendOnlyLogOverMMappedFile openLog(@NotNull Path storagePath,
+                                                              int expectedDataFormatVersion) throws IOException {
+    return openLog(storagePath, expectedDataFormatVersion, DEFAULT_PAGE_SIZE);
   }
 
+  public static @NotNull AppendOnlyLogOverMMappedFile openLog(@NotNull Path storagePath,
+                                                              int expectedDataFormatVersion,
+                                                              int pageSize) throws IOException {
+    MMappedFileStorage storage = new MMappedFileStorage(storagePath, pageSize);
+    try {
+      AppendOnlyLogOverMMappedFile appendOnlyLog = new AppendOnlyLogOverMMappedFile(storage);
+      int dataFormatVersion = appendOnlyLog.getDataVersion();
+      if (dataFormatVersion == 0 && appendOnlyLog.isEmpty()) {
+        appendOnlyLog.setDataVersion(expectedDataFormatVersion);
+      }
+      else if (dataFormatVersion != expectedDataFormatVersion) {
+        appendOnlyLog.close();
+        throw new VersionUpdatedException(storagePath, expectedDataFormatVersion, dataFormatVersion);
+      }
+      return appendOnlyLog;
+    }
+    catch (Throwable t) {
+      Exception closeEx = ExceptionUtil.runAndCatch(storage::close);
+      if (closeEx != null) {
+        t.addSuppressed(closeEx);
+      }
+      throw t;
+    }
+  }
 
   // ============== implementation: ======================================================================
 
@@ -747,6 +768,27 @@ public final class AppendOnlyLogOverMMappedFile implements AppendOnlyLog {
     return "(There was a recovery so it may be due to some un-recovered records, " +
            "but the record is outside the region [" + startOfRecoveredRegion + ".." + endOfRecoveredRegion + ") recovered)";
   }
+
+  /**
+   * @return log records in a region [aroundRecordId-regionWidth..aroundRecordId+regionWidth],
+   * one record per line. Record content formatted as hex-string
+   */
+  private String dumpContentAroundId(long aroundRecordId,
+                                     int regionWidth) throws IOException {
+    StringBuilder sb = new StringBuilder("Log content around id: " + aroundRecordId + " +/- " + regionWidth +
+                                         " (first uncommitted offset: " + firstUnCommittedOffset() +
+                                         ", first unallocated: " + firstUnAllocatedOffset() + ")\n");
+    forEachRecord((recordId, buffer) -> {
+      if (aroundRecordId - regionWidth <= recordId && recordId <= aroundRecordId + regionWidth) {
+        String bufferAsHex = IOUtil.toHexString(buffer);
+        sb.append("[id: ").append(recordId).append("][offset: ").append(recordIdToOffset(recordId)).append("][hex: ")
+          .append(bufferAsHex).append("]\n");
+      }
+      return recordId <= aroundRecordId + regionWidth;
+    });
+    return sb.toString();
+  }
+
 
   //MAYBE RC: since record offsets are now 32b-aligned, we could drop 2 lowest bits from an offset while
   //          converting it to the id -> this way we could address wider offsets range with int id

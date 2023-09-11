@@ -4,14 +4,12 @@ package com.intellij.openapi.vfs.newvfs.persistent.dev.enumerator;
 import com.intellij.openapi.util.IntRef;
 import com.intellij.openapi.vfs.newvfs.persistent.VFSAsyncTaskExecutor;
 import com.intellij.util.io.DurableDataEnumerator;
-import com.intellij.openapi.vfs.newvfs.persistent.mapped.MMappedFileStorage;
 import com.intellij.openapi.vfs.newvfs.persistent.dev.InvertedFilenameHashBasedIndex.Int2IntMultimap;
 import com.intellij.openapi.vfs.newvfs.persistent.dev.appendonlylog.AppendOnlyLog;
 import com.intellij.openapi.vfs.newvfs.persistent.dev.appendonlylog.AppendOnlyLogOverMMappedFile;
 import com.intellij.util.Processor;
 import com.intellij.util.io.IOUtil;
 import com.intellij.util.io.ScannableDataEnumeratorEx;
-import com.intellij.util.io.VersionUpdatedException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -79,7 +77,7 @@ public final class DurableStringEnumerator implements DurableDataEnumerator<Stri
   }
 
   public static @NotNull DurableStringEnumerator open(@NotNull Path storagePath) throws IOException {
-    AppendOnlyLog valuesLog = openValuesLog(storagePath);
+    AppendOnlyLog valuesLog = AppendOnlyLogOverMMappedFile.openLog(storagePath, DATA_FORMAT_VERSION, PAGE_SIZE);
 
     return new DurableStringEnumerator(
       valuesLog,
@@ -89,7 +87,7 @@ public final class DurableStringEnumerator implements DurableDataEnumerator<Stri
 
   public static @NotNull DurableStringEnumerator openAsync(@NotNull Path storagePath,
                                                            @NotNull VFSAsyncTaskExecutor executor) throws IOException {
-    AppendOnlyLogOverMMappedFile valuesLog = openValuesLog(storagePath);
+    AppendOnlyLogOverMMappedFile valuesLog = AppendOnlyLogOverMMappedFile.openLog(storagePath, DATA_FORMAT_VERSION, PAGE_SIZE);
 
     CompletableFuture<Int2IntMultimap> indexBuildingFuture = executor.async(() -> buildValueToIdIndex(valuesLog));
     return new DurableStringEnumerator(
@@ -269,20 +267,5 @@ public final class DurableStringEnumerator implements DurableDataEnumerator<Stri
       return true;
     });
     return valueHashToId;
-  }
-
-  private static @NotNull AppendOnlyLogOverMMappedFile openValuesLog(@NotNull Path storagePath) throws IOException {
-    AppendOnlyLogOverMMappedFile valuesLog = new AppendOnlyLogOverMMappedFile(
-      new MMappedFileStorage(storagePath, PAGE_SIZE)
-    );
-    int dataFormatVersion = valuesLog.getDataVersion();
-    if (dataFormatVersion == 0) {//FIXME RC: also check log is empty
-      valuesLog.setDataVersion(DATA_FORMAT_VERSION);
-    }
-    else if (dataFormatVersion != DATA_FORMAT_VERSION) {
-      valuesLog.close();
-      throw new VersionUpdatedException(storagePath, DATA_FORMAT_VERSION, dataFormatVersion);
-    }
-    return valuesLog;
   }
 }

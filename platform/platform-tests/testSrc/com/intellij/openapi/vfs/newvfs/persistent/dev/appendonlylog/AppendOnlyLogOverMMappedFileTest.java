@@ -3,7 +3,6 @@ package com.intellij.openapi.vfs.newvfs.persistent.dev.appendonlylog;
 
 import com.intellij.openapi.util.IntRef;
 import com.intellij.openapi.util.Ref;
-import com.intellij.openapi.vfs.newvfs.persistent.mapped.MMappedFileStorage;
 import com.intellij.openapi.vfs.newvfs.persistent.dev.blobstorage.BlobStorageTestBase;
 import com.intellij.util.io.IOUtil;
 import org.jetbrains.annotations.NotNull;
@@ -244,11 +243,7 @@ public class AppendOnlyLogOverMMappedFileTest {
   }
 
   private static @NotNull AppendOnlyLogOverMMappedFile openLog(@NotNull Path storageFile) throws IOException {
-    MMappedFileStorage mappedStorage = new MMappedFileStorage(
-      storageFile,
-      PAGE_SIZE
-    );
-    return new AppendOnlyLogOverMMappedFile(mappedStorage);
+    return AppendOnlyLogOverMMappedFile.openLog(storageFile, 0, PAGE_SIZE);
   }
 
   private static String[] generateRandomStrings(int stringsCount) {

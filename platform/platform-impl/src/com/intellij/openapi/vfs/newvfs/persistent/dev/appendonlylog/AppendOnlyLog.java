@@ -40,6 +40,9 @@ public interface AppendOnlyLog extends Closeable {
 
   void flush(boolean force) throws IOException;
 
+  /** @return true if there are no records in the log */
+  boolean isEmpty();
+
   interface RecordReader {
     /** @return true if reading should continue, false to stop the reading */
     boolean read(long recordId,
