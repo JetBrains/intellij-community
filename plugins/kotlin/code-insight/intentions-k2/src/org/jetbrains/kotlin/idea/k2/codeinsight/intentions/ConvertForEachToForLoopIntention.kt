@@ -2,7 +2,6 @@
 package org.jetbrains.kotlin.idea.k2.codeinsight.intentions
 
 import com.intellij.modcommand.ModPsiUpdater
-import com.intellij.openapi.project.Project
 import com.intellij.psi.SmartPsiElementPointer
 import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
 import org.jetbrains.kotlin.analysis.api.symbols.KtFunctionSymbol
@@ -10,6 +9,7 @@ import org.jetbrains.kotlin.builtins.StandardNames
 import org.jetbrains.kotlin.idea.base.codeInsight.KotlinNameSuggester
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.intentions.AbstractKotlinModCommandWithContext
+import org.jetbrains.kotlin.idea.codeinsight.api.applicable.intentions.AnalysisActionContext
 import org.jetbrains.kotlin.idea.codeinsight.api.applicators.KotlinApplicabilityRange
 import org.jetbrains.kotlin.idea.codeinsight.utils.ImplicitReceiverInfo
 import org.jetbrains.kotlin.idea.codeinsight.utils.dereferenceValidPointers
@@ -110,7 +110,7 @@ internal class ConvertForEachToForLoopIntention
         }
     }
 
-    override fun apply(element: KtCallExpression, context: Context, project: Project, updater: ModPsiUpdater?) {
+    override fun apply(element: KtCallExpression, context: AnalysisActionContext<Context>, updater: ModPsiUpdater) {
         val qualifiedExpression = element.getQualifiedExpressionForSelector()
         val receiverExpression = qualifiedExpression?.receiverExpression
         val targetExpression = qualifiedExpression ?: element
@@ -119,11 +119,9 @@ internal class ConvertForEachToForLoopIntention
         val lambda = element.getSingleLambdaArgument()?.takeIf { it.bodyExpression != null } ?: return
         val isForEachIndexed =  element.getCallNameExpression()?.getReferencedName() == FOR_EACH_INDEXED_NAME.asString()
         val loopLabelName= suggestLoopName(lambda)
-        val loop = generateLoop(receiverExpression, lambda, loopLabelName, isForEachIndexed, context) ?: return
+        val loop = generateLoop(receiverExpression, lambda, loopLabelName, isForEachIndexed, context.analyzeContext) ?: return
         val result = targetExpression.replace(loop)
         commentSaver.restore(result)
-
-        if (updater == null) return
 
         if (result is KtLabeledExpression) {
             updater.rename(result, listOf(loopLabelName))

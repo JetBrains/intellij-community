@@ -2,20 +2,17 @@
 package org.jetbrains.kotlin.idea.codeinsight.api.applicable.intentions
 
 import com.intellij.codeInsight.intention.impl.BaseIntentionAction
+import com.intellij.codeInspection.util.IntentionName
 import com.intellij.modcommand.ActionContext
-import com.intellij.modcommand.ModPsiUpdater
 import com.intellij.modcommand.Presentation
 import com.intellij.modcommand.PsiUpdateModCommandAction
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.progress.ProgressManager
-import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
 import com.intellij.psi.util.PsiTreeUtil
-import org.jetbrains.kotlin.analysis.api.analyze
-import org.jetbrains.kotlin.idea.codeinsight.api.applicable.KotlinApplicableToolWithContext
+import org.jetbrains.kotlin.idea.codeinsight.api.applicable.KotlinApplicableToolBase
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.isApplicableToElement
-import org.jetbrains.kotlin.idea.codeinsight.api.applicable.prepareContextWithAnalyze
 import org.jetbrains.kotlin.idea.codeinsight.api.applicators.KotlinApplicabilityRange
 import org.jetbrains.kotlin.psi.KtBlockExpression
 import org.jetbrains.kotlin.psi.KtElement
@@ -24,15 +21,16 @@ import org.jetbrains.kotlin.psi.psiUtil.containsInside
 import org.jetbrains.kotlin.psi.psiUtil.parentsWithSelf
 import kotlin.reflect.KClass
 
-abstract class AbstractKotlinModCommandWithContext<ELEMENT : KtElement, CONTEXT>(private val clazz: KClass<ELEMENT>) :
+abstract class AbstractKotlinApplicableModCommandIntentionBase<ELEMENT : KtElement>(private val clazz: KClass<ELEMENT>) :
     PsiUpdateModCommandAction<ELEMENT>(clazz.java),
-    KotlinApplicableToolWithContext<ELEMENT, CONTEXT> {
+    KotlinApplicableToolBase<ELEMENT> {
 
-
+    protected abstract fun getActionName(element: ELEMENT): @IntentionName String
+    
     /**
      * Checks the intention's applicability based on [isApplicableByPsi] and [KotlinApplicabilityRange].
      */
-    fun isApplicableTo(element: ELEMENT, caretOffset: Int): Boolean = isApplicableToElement(element, caretOffset)
+    open fun isApplicableTo(element: ELEMENT, caretOffset: Int): Boolean = isApplicableToElement(element, caretOffset)
 
     protected open val isKotlinOnlyIntention: Boolean = true
 
@@ -86,27 +84,6 @@ abstract class AbstractKotlinModCommandWithContext<ELEMENT : KtElement, CONTEXT>
 
     override fun getPresentation(context: ActionContext, element: ELEMENT): Presentation? {
         if (!isApplicableTo(element, context.offset)) return null
-        val analysisContext = prepareContextWithAnalyze(element) ?: return null
-        return Presentation.of(getActionName(element, analysisContext))
+        return Presentation.of(getActionName(element))
     }
-
-    final override fun invoke(context: ActionContext, element: ELEMENT, updater: ModPsiUpdater) {
-        val analyzeContext = analyze(element) { prepareContext(element) } ?: return
-        apply(element, AnalysisActionContext(analyzeContext, context), updater)
-    }
-
-    /**
-     * Applies a fix to [element] using information from [context]. [apply] should not use the Analysis API due to performance concerns, as
-     * [apply] is usually executed on the EDT. Any information that needs to come from the Analysis API should be supplied via
-     * [prepareContext]. [apply] is executed in a write action if [element] is physical and [shouldApplyInWriteAction] returns `true`.
-     */
-    open fun apply(element: ELEMENT, context: AnalysisActionContext<CONTEXT>, updater: ModPsiUpdater) {
-        apply(element, context.analyzeContext, context.actionContext.project, editor = null)
-    }
-
-    override fun apply(element: ELEMENT, context: CONTEXT, project: Project, editor: Editor?) {
-    }
-
 }
-
-data class AnalysisActionContext<C>(val analyzeContext: C, val actionContext: ActionContext)
