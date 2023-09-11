@@ -31,8 +31,8 @@ abstract class AbstractInProgressService(private val scope: CoroutineScope) {
 
   @RequiresBlockingContext
   fun <T> trackConfigurationActivityBlocking(action: () -> T) : T {
+    val currentContext = currentThreadContext()
     return withBlockingJob { blockingJob ->
-      val currentContext = currentThreadContext()
       installThreadContext(currentContext + blockingJob, true).use {
         action()
       }
@@ -41,16 +41,19 @@ abstract class AbstractInProgressService(private val scope: CoroutineScope) {
 
   private inline fun <T> withBlockingJob(consumer: (BlockingJob) -> T) : T {
     inProgress += 1
+    // new job here to track those and only those computations which are invoked under explicit `trackConfigurationActivity`
     val tracker = Job()
-    val blockingJob = BlockingJob(tracker)
     tracker.invokeOnCompletion {
       inProgress -= 1
     }
+    val blockingJob = BlockingJob(tracker)
     try {
       return consumer(blockingJob)
     } finally {
       scope.launch {
         tracker.children.forEach { it.join() }
+        tracker.complete()
+      }.invokeOnCompletion {
         tracker.complete()
       }
     }
