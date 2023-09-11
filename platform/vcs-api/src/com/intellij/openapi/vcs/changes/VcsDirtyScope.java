@@ -77,7 +77,7 @@ public abstract class VcsDirtyScope {
    * @param iterator an iterator to invoke
    */
   public abstract void iterate(Processor<? super FilePath> iterator);
-  
+
   public abstract void iterateExistingInsideScope(Processor<? super VirtualFile> vf);
 
   public abstract boolean isEmpty();
@@ -89,7 +89,5 @@ public abstract class VcsDirtyScope {
    */
   public abstract boolean belongsTo(final FilePath path);
 
-  public boolean wasEveryThingDirty() {
-    return false;
-  }
+  public abstract boolean wasEveryThingDirty();
 }

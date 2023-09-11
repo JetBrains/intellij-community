@@ -407,7 +407,8 @@ public final class VcsDirtyScopeImpl extends VcsModifiableDirtyScope {
     return files != null && files.contains(path);
   }
 
-  @Override @NonNls
+  @Override
+  @NonNls
   public String toString() {
     @NonNls StringBuilder result = new StringBuilder("VcsDirtyScope[");
     if (!myDirtyFiles.isEmpty()) {

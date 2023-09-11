@@ -26,6 +26,7 @@ class AlienDirtyScope(private val vcs: SvnVcs) : VcsDirtyScope() {
 
   override fun isEmpty(): Boolean = files.isEmpty() && dirs.isEmpty()
   override fun belongsTo(path: FilePath): Boolean = false
+  override fun wasEveryThingDirty(): Boolean = false
 
   fun addFile(path: FilePath) {
     files += path
