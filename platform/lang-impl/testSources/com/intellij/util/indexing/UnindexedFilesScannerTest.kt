@@ -317,7 +317,7 @@ class UnindexedFilesScannerTest {
   }
 
   private fun indexFiles(provider: SingleRootIndexableFilesIterator, dirtyFiles: Collection<VirtualFile>) {
-    val indexingStamp = FileIndexingStampService.invalidateAllStamps()
+    val indexingStamp = application.service<FileIndexingStampService>().invalidateAllStamps()
     val indexingTask = UnindexedFilesIndexer(project, mapOf(provider to dirtyFiles), "Test", LongSet.of(), indexingStamp)
     val indicator = EmptyProgressIndicator()
     ProgressManager.getInstance().runProcess({ indexingTask.perform(indicator) }, indicator)
@@ -346,7 +346,7 @@ class UnindexedFilesScannerTest {
   private fun scanFiles(filesAndDirs: IndexableFilesIterator): Pair<ProjectScanningHistory, Map<IndexableFilesIterator, Collection<VirtualFile>>> {
     val scanningHistoryRef = Ref<ProjectScanningHistory>()
     val scanningTask = object : UnindexedFilesScanner(project, false, false, listOf(filesAndDirs), null, "Test", ScanningType.PARTIAL,
-                                                      FileIndexingStampService.getCurrentStamp()) {
+                                                      application.service<FileIndexingStampService>().getCurrentStamp()) {
       override fun performScanningAndIndexing(indicator: CheckCancelOnlyProgressIndicator,
                                               progressReporter: IndexingProgressReporter): ProjectScanningHistory {
         return super.performScanningAndIndexing(indicator, progressReporter).also(scanningHistoryRef::set)

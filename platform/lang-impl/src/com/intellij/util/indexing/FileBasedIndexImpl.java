@@ -1683,7 +1683,8 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
   private final class VirtualFileUpdateTask extends UpdateTask<VirtualFile> {
     @Override
     void doProcess(VirtualFile item, Project project) {
-      processRefreshedFile(project, new CachedFileContent(item), FileIndexingStampService.getCurrentStamp());
+      processRefreshedFile(project, new CachedFileContent(item),
+                           ApplicationManager.getApplication().getService(FileIndexingStampService.class).getCurrentStamp());
     }
   }
 

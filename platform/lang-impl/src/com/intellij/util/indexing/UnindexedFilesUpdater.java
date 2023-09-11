@@ -7,6 +7,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.util.SystemProperties;
 import com.intellij.util.indexing.dependencies.FileIndexingStampService;
+import com.intellij.util.indexing.dependencies.FileIndexingStampService.FileIndexingStamp;
 import com.intellij.util.indexing.dependenciesCache.DependenciesIndexedStatusService;
 import com.intellij.util.indexing.diagnostic.ScanningType;
 import com.intellij.util.indexing.roots.IndexableFilesIterator;
@@ -76,7 +77,7 @@ public final class UnindexedFilesUpdater {
   }
 
   public void queue() {
-    FileIndexingStampService.FileIndexingStamp indexingStamp = FileIndexingStampService.getCurrentStamp();
+    FileIndexingStamp indexingStamp = ApplicationManager.getApplication().getService(FileIndexingStampService.class).getCurrentStamp();
     new UnindexedFilesScanner(myProject, myStartSuspended, myOnProjectOpen, myPredefinedIndexableFilesIterators, myMark, myIndexingReason,
                               myScanningType, indexingStamp)
       .queue(myProject);

@@ -31,6 +31,7 @@ import com.intellij.util.gist.GistManagerImpl;
 import com.intellij.util.indexing.FilesScanningTaskBase.IndexingProgressReporter.IndexingSubTaskProgressReporter;
 import com.intellij.util.indexing.PerProjectIndexingQueue.PerProviderSink;
 import com.intellij.util.indexing.dependencies.FileIndexingStampService;
+import com.intellij.util.indexing.dependencies.FileIndexingStampService.FileIndexingStamp;
 import com.intellij.util.indexing.dependenciesCache.DependenciesIndexedStatusService;
 import com.intellij.util.indexing.dependenciesCache.DependenciesIndexedStatusService.StatusMark;
 import com.intellij.util.indexing.diagnostic.*;
@@ -74,7 +75,7 @@ public class UnindexedFilesScanner extends FilesScanningTaskBase {
   protected final Project myProject;
   private final boolean myStartSuspended;
   private final boolean myOnProjectOpen;
-  private final FileIndexingStampService.FileIndexingStamp indexingStamp;
+  private final FileIndexingStamp indexingStamp;
   private final @NotNull @NonNls String myIndexingReason;
   private final @NotNull ScanningType myScanningType;
   private final PushedFilePropertiesUpdater myPusher;
@@ -90,7 +91,7 @@ public class UnindexedFilesScanner extends FilesScanningTaskBase {
                                @Nullable StatusMark mark,
                                @Nullable @NonNls String indexingReason,
                                @NotNull ScanningType scanningType,
-                               @NotNull FileIndexingStampService.FileIndexingStamp indexingStamp) {
+                               @NotNull FileIndexingStamp indexingStamp) {
     super(project);
     myProject = project;
     myStartSuspended = startSuspended;
@@ -550,18 +551,19 @@ public class UnindexedFilesScanner extends FilesScanningTaskBase {
                                                   @Nullable @NonNls String indexingReason) {
     FileBasedIndex.getInstance().loadIndexes();
     project.putUserData(FIRST_SCANNING_REQUESTED, true);
+    FileIndexingStamp currentStamp = ApplicationManager.getApplication().getService(FileIndexingStampService.class).getCurrentStamp();
     if (TestModeFlags.is(INDEX_PROJECT_WITH_MANY_UPDATERS_TEST_KEY)) {
       LOG.assertTrue(ApplicationManager.getApplication().isUnitTestMode());
       List<IndexableFilesIterator> iterators = collectProviders(project, (FileBasedIndexImpl)FileBasedIndex.getInstance()).getFirst();
       for (IndexableFilesIterator iterator : iterators) {
         new UnindexedFilesScanner(project, startSuspended, true, Collections.singletonList(iterator), null, indexingReason,
-                                  ScanningType.FULL_ON_PROJECT_OPEN, FileIndexingStampService.getCurrentStamp()).queue(project);
+                                  ScanningType.FULL_ON_PROJECT_OPEN, currentStamp).queue(project);
       }
       project.putUserData(CONTENT_SCANNED, true);
     }
     else {
       new UnindexedFilesScanner(project, startSuspended, true, null, null, indexingReason, ScanningType.FULL_ON_PROJECT_OPEN,
-                                FileIndexingStampService.getCurrentStamp()).
+                                currentStamp).
         queue(project);
     }
   }

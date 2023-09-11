@@ -3,6 +3,7 @@ package com.intellij.util.indexing
 
 import com.intellij.ide.actions.cache.*
 import com.intellij.lang.LangBundle
+import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.progress.util.ProgressIndicatorUtils
 import com.intellij.openapi.project.FilesScanningTask
@@ -10,6 +11,7 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.VirtualFileWithId
 import com.intellij.psi.stubs.StubTreeBuilder
 import com.intellij.psi.stubs.StubUpdatingIndex
+import com.intellij.util.application
 import com.intellij.util.indexing.dependencies.FileIndexingStampService
 import com.intellij.util.indexing.diagnostic.ProjectScanningHistory
 import com.intellij.util.indexing.diagnostic.ScanningType
@@ -40,10 +42,11 @@ class RescanIndexesAction : RecoveryAction {
       predefinedIndexableFilesIterators = recoveryScope.files.map { ProjectIndexableFilesIteratorImpl(it) }
       if (predefinedIndexableFilesIterators.isEmpty()) return emptyList()
     }
+    val rescan = application.service<FileIndexingStampService>().invalidateAllStamps()
     object : UnindexedFilesScanner(project, false, false,
                                    predefinedIndexableFilesIterators, null, "Rescanning indexes recovery action",
                                    if(predefinedIndexableFilesIterators == null) ScanningType.FULL_FORCED else ScanningType.PARTIAL_FORCED,
-                                   FileIndexingStampService.invalidateAllStamps()) {
+                                   rescan) {
       private val stubIndex =
         runCatching { (FileBasedIndex.getInstance() as FileBasedIndexImpl).getIndex(StubUpdatingIndex.INDEX_ID) }
         .onFailure { logger<RescanIndexesAction>().error(it) }.getOrNull()
@@ -76,7 +79,6 @@ class RescanIndexesAction : RecoveryAction {
       override fun performScanningAndIndexing(indicator: CheckCancelOnlyProgressIndicator,
                                               progressReporter: IndexingProgressReporter): ProjectScanningHistory {
         try {
-          IndexingFlag.cleanupProcessedFlag()
           val history = super.performScanningAndIndexing(indicator, progressReporter)
           historyFuture.complete(history)
           return history

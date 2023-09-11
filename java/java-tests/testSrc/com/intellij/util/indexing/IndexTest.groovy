@@ -535,7 +535,7 @@ class IndexTest extends JavaCodeInsightFixtureTestCase {
     assertIsIndexed(vFile)
 
     WriteAction.run { VfsUtil.saveText(vFile, "Foo class") }
-    assertFalse(IndexingFlag.isFileIndexed(vFile, FileIndexingStampService.currentStamp))
+    assertFalse(IndexingFlag.isFileIndexed(vFile, ApplicationManager.getApplication().getService(FileIndexingStampService.class).currentStamp))
     assertTrue(stamp == FileBasedIndex.instance.getIndexModificationStamp(IdIndex.NAME, project))
     assertIsIndexed(vFile)
 
@@ -561,7 +561,8 @@ class IndexTest extends JavaCodeInsightFixtureTestCase {
   }
 
   private static assertIsIndexed(VirtualFile vFile) {
-    assertTrue(IndexingFlag.isFileIndexed(vFile, FileIndexingStampService.currentStamp) || VfsData.isIsIndexedFlagDisabled())
+    def currentStamp = ApplicationManager.getApplication().getService(FileIndexingStampService.class).currentStamp
+    assertTrue(IndexingFlag.isFileIndexed(vFile, currentStamp) || VfsData.isIsIndexedFlagDisabled())
   }
 
   void "test no index stamp update when no change 2"() throws IOException {
@@ -1189,7 +1190,7 @@ class IndexTest extends JavaCodeInsightFixtureTestCase {
     // content-less indexes has been passed
     // now all directories are indexed
 
-    assertFalse(IndexingFlag.isFileIndexed(foo, FileIndexingStampService.currentStamp))
+    assertFalse(IndexingFlag.isFileIndexed(foo, ApplicationManager.getApplication().getService(FileIndexingStampService.class).currentStamp))
     assertIsIndexed(main)
     assertIsIndexed(src)
 
@@ -1506,7 +1507,7 @@ class IndexTest extends JavaCodeInsightFixtureTestCase {
 
     fileBasedIndex.ensureUpToDate(trigramId, project, GlobalSearchScope.everythingScope(project))
     assertEmpty(fileBasedIndex.getIndex(trigramId).getIndexedFileData(fileId).values())
-    assertFalse(IndexingFlag.isFileIndexed(file, FileIndexingStampService.currentStamp))
+    assertFalse(IndexingFlag.isFileIndexed(file, ApplicationManager.getApplication().getService(FileIndexingStampService.class).currentStamp))
   }
 
   void 'test stub index updated after language level change'() {

@@ -2,6 +2,7 @@ package com.jetbrains.performancePlugin.commands
 
 import com.intellij.find.ngrams.TrigramIndex
 import com.intellij.openapi.application.ReadAction
+import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectCoreUtil
 import com.intellij.openapi.roots.ContentIterator
@@ -15,6 +16,7 @@ import com.intellij.psi.impl.cache.impl.id.IdIndex
 import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.psi.stubs.StubUpdatingIndex
 import com.intellij.util.ExceptionUtil
+import com.intellij.util.application
 import com.intellij.util.indexing.FileBasedIndex
 import com.intellij.util.indexing.FileBasedIndexImpl
 import com.intellij.util.indexing.IndexingFlag
@@ -92,7 +94,7 @@ class CollectFilesNotMarkedAsIndex(text: String, line: Int) : PerformanceCommand
             }
           }
           else {
-            val currentStamp = FileIndexingStampService.getCurrentStamp()
+            val currentStamp = application.service<FileIndexingStampService>().getCurrentStamp()
             checkIndexed(fileOrDir, true, "not marked as indexed") {
               IndexingFlag.isFileIndexed(it, currentStamp)
             }

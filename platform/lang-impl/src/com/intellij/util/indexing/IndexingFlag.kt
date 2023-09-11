@@ -1,10 +1,12 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.indexing
 
+import com.intellij.openapi.components.service
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.VirtualFileWithId
 import com.intellij.openapi.vfs.newvfs.impl.VfsData
 import com.intellij.openapi.vfs.newvfs.impl.VirtualFileSystemEntry
+import com.intellij.util.application
 import com.intellij.util.indexing.dependencies.FileIndexingStampService
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.TestOnly
@@ -21,7 +23,7 @@ object IndexingFlag {
 
   @JvmStatic
   fun cleanupProcessedFlag() {
-    FileIndexingStampService.invalidateAllStamps()
+    application.service<FileIndexingStampService>().invalidateAllStamps()
   }
 
   @JvmStatic

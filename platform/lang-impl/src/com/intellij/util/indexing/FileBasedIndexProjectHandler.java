@@ -1,11 +1,13 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.indexing;
 
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.Processor;
 import com.intellij.util.indexing.dependencies.FileIndexingStampService;
+import com.intellij.util.indexing.dependencies.FileIndexingStampService.FileIndexingStamp;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
@@ -22,8 +24,8 @@ public final class FileBasedIndexProjectHandler {
         mightHaveManyChangedFilesInProject(project)) {
 
       String indexingReason = "On refresh of files in " + project.getName();
-      FileIndexingStampService.FileIndexingStamp invalidateAndRescan = FileIndexingStampService.invalidateAllStamps();
-      new UnindexedFilesIndexer(project, indexingReason, invalidateAndRescan).queue(project);
+      FileIndexingStamp rescan = ApplicationManager.getApplication().getService(FileIndexingStampService.class).invalidateAllStamps();
+      new UnindexedFilesIndexer(project, indexingReason, rescan).queue(project);
     }
   }
 
