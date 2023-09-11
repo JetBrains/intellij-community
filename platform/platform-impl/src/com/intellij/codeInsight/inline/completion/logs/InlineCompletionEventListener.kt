@@ -3,7 +3,7 @@ package com.intellij.codeInsight.inline.completion.logs
 
 import com.intellij.codeInsight.inline.completion.InlineCompletionProvider
 import com.intellij.codeInsight.inline.completion.InlineCompletionRequest
-import com.intellij.codeInsight.inline.completion.render.InlineCompletionElement
+import com.intellij.codeInsight.inline.completion.InlineCompletionElement
 import org.jetbrains.annotations.ApiStatus
 import java.util.*
 

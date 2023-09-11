@@ -4,7 +4,6 @@ package com.intellij.codeInsight.inline.completion
 import com.intellij.codeInsight.inline.completion.logs.InlineCompletionEventListener
 import com.intellij.codeInsight.inline.completion.logs.InlineCompletionEventType
 import com.intellij.codeInsight.inline.completion.logs.InlineCompletionUsageTracker
-import com.intellij.codeInsight.inline.completion.render.InlineCompletionElement
 import com.intellij.codeInsight.lookup.LookupEvent
 import com.intellij.codeInsight.lookup.LookupManager
 import com.intellij.openapi.Disposable
@@ -90,7 +89,7 @@ class InlineCompletionHandler(private val scope: CoroutineScope) {
     InlineCompletionContext.getOrNull(editor)?.let {
       if (it.isCurrentlyDisplayingInlays) {
         withContext(Dispatchers.EDT) {
-          InlineCompletionContext.remove(editor)
+          hide(editor, false, it)
         }
       }
     }

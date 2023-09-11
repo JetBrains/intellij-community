@@ -3,7 +3,7 @@ package com.intellij.codeInsight.inline.completion.logs
 
 import com.intellij.codeInsight.inline.completion.InlineCompletionProvider
 import com.intellij.codeInsight.inline.completion.InlineCompletionRequest
-import com.intellij.codeInsight.inline.completion.render.InlineCompletionElement
+import com.intellij.codeInsight.inline.completion.InlineCompletionElement
 import com.intellij.internal.statistic.eventLog.EventLogGroup
 import com.intellij.internal.statistic.eventLog.events.EventFields
 import com.intellij.internal.statistic.eventLog.events.EventFields.Enum
@@ -70,11 +70,15 @@ object InlineCompletionUsageTracker : CounterUsagesCollector() {
     override fun onCompletion(event: InlineCompletionEventType.Completion) {
       if (event.cause is CancellationException || event.cause is ProcessCanceledException) {
         triggerTracker?.cancelled()
+        return
       }
       else if (event.cause != null) {
         triggerTracker?.exception()
+        return
       }
-      editor?.let { triggerTracker?.finished(it.project) }
+      editor?.let {
+        triggerTracker?.finished(it.project)
+      }
     }
   }
 
@@ -208,7 +212,7 @@ object InlineCompletionUsageTracker : CounterUsagesCollector() {
 
     private fun finish(outcome: ShownEvents.Outcome) {
       if (!shownLogSent.compareAndSet(false, true)) {
-        error("Already sent")
+        return
       }
       data.add(ShownEvents.SHOWING_TIME.with(System.currentTimeMillis() - showStartTime))
       data.add(ShownEvents.OUTCOME.with(outcome))
