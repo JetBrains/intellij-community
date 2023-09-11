@@ -2432,7 +2432,7 @@ public class AbstractPopup implements JBPopup, ScreenAreaConsumer, AlignedPopup 
   private static Component getFrameOrDialog(Component component) {
     while (component != null) {
       if (component instanceof Window) return component;
-      component = component.getParent();
+      component = UIUtil.getParent(component);
     }
     return null;
   }
