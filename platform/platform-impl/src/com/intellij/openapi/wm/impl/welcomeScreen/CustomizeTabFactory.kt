@@ -58,7 +58,7 @@ private val laf: LafManager
 private val keymapManager: KeymapManagerImpl
   get() = KeymapManager.getInstance() as KeymapManagerImpl
 
-private class CustomizeTabFactory : WelcomeTabFactory {
+class CustomizeTabFactory : WelcomeTabFactory {
   override fun createWelcomeTab(parentDisposable: Disposable): CustomizeTab = CustomizeTab(parentDisposable)
 }
 
