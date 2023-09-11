@@ -80,7 +80,6 @@ class SingleIndexValueApplier<FileIndexMetaData> {
                                                           int inputId,
                                                           boolean indexWasProvided) {
     if (index instanceof FileBasedIndexInfrastructureExtensionUpdatableIndex) {
-      //noinspection unchecked
       ((FileBasedIndexInfrastructureExtensionUpdatableIndex<?, ?, ?, FileIndexMetaData>)index)
         .setIndexedStateForFileOnFileIndexMetaData(inputId, fileData, indexWasProvided);
     }

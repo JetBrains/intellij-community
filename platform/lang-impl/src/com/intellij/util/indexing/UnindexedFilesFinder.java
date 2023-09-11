@@ -65,7 +65,7 @@ final class UnindexedFilesFinder {
       return removers.add(remover);
     }
 
-    boolean addOrRunApplier(@Nullable SingleIndexValueApplier applier) {
+    boolean addOrRunApplier(@Nullable SingleIndexValueApplier<?> applier) {
       if (applier == null) return true;
 
       if (appliers.isEmpty()) appliers = new SmartList<>();
@@ -343,7 +343,7 @@ final class UnindexedFilesFinder {
     }
   }
 
-  private boolean removeIndexedValue(IndexedFileImpl indexedFile,
+  private void removeIndexedValue(IndexedFileImpl indexedFile,
                                      int inputId,
                                      ID<?, ?> indexId,
                                      UnindexedFileStatusBuilder fileStatusBuilder) {
@@ -357,10 +357,6 @@ final class UnindexedFilesFinder {
         LOG.error("Failed to remove value from index " + indexId + " for file " + indexedFile.getFile() + ", " +
                   "applicationMode=" + fileStatusBuilder.applicationMode);
       }
-      return removed;
-    }
-    else {
-      return true;
     }
   }
 

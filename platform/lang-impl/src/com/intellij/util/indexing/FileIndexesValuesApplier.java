@@ -30,7 +30,7 @@ public final class FileIndexesValuesApplier {
   private final FileBasedIndexImpl myIndex;
   private final int fileId;
   private final @NotNull List<? extends SingleIndexValueApplier<?>> appliers;
-  private final @NotNull List<? extends SingleIndexValueRemover> removers;
+  private final @NotNull List<SingleIndexValueRemover> removers;
   private final boolean removeDataFromIndicesForFile;
   private boolean shouldMarkFileAsIndexed;
   private final long fileStatusLockObject;
@@ -45,7 +45,7 @@ public final class FileIndexesValuesApplier {
   FileIndexesValuesApplier(FileBasedIndexImpl index, int fileId,
                            @NotNull VirtualFile file,
                            @NotNull List<? extends SingleIndexValueApplier<?>> appliers,
-                           @NotNull List<? extends SingleIndexValueRemover> removers,
+                           @NotNull List<SingleIndexValueRemover> removers,
                            boolean removeDataFromIndicesForFile,
                            boolean shouldMarkFileAsIndexed,
                            @NotNull ApplicationMode applicationMode,
@@ -75,7 +75,7 @@ public final class FileIndexesValuesApplier {
 
   private FileIndexingStatistics createStats(@NotNull VirtualFile file,
                                              @NotNull List<? extends SingleIndexValueApplier<?>> appliers,
-                                             @NotNull List<? extends SingleIndexValueRemover> removers,
+                                             @NotNull List<SingleIndexValueRemover> removers,
                                              @NotNull FileType fileType,
                                              boolean logEmptyProvidedIndexes) {
     Set<ID<?, ?>> indexesProvidedByExtensions = new HashSet<>();

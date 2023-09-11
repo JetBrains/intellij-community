@@ -65,8 +65,8 @@ final class FileBasedIndexDataInitialization extends IndexDataInitializer<IndexC
 
   private @NotNull Collection<ThrowableRunnable<?>> initAssociatedDataForExtensions() {
     Activity activity = StartUpMeasurer.startActivity("file index extensions iteration");
-    ExtensionPointImpl<FileBasedIndexExtension<?, ?>> extPoint =
-      (ExtensionPointImpl<FileBasedIndexExtension<?, ?>>)FileBasedIndexExtension.EXTENSION_POINT_NAME.getPoint();
+    ExtensionPointImpl<@NotNull FileBasedIndexExtension<?, ?>> extPoint =
+      (ExtensionPointImpl<@NotNull FileBasedIndexExtension<?, ?>>)FileBasedIndexExtension.EXTENSION_POINT_NAME.getPoint();
     Iterator<FileBasedIndexExtension<?, ?>> extensions = extPoint.iterator();
     List<ThrowableRunnable<?>> tasks = new ArrayList<>(extPoint.size());
 
@@ -126,7 +126,7 @@ final class FileBasedIndexDataInitialization extends IndexDataInitializer<IndexC
     };
     ApplicationManager.getApplication().addApplicationListener(new MyApplicationListener(fileBasedIndex), disposable);
     Disposer.register(fs, disposable);
-    //Generally, Index will be shutdown by Disposer -- but to be sure we'll register a shutdown task also:
+    //Generally, Index will be shutdown by Disposer -- but to be sure, we'll register a shutdown task also:
     myFileBasedIndex.setUpShutDownTask();
 
     Collection<ThrowableRunnable<?>> tasks = initAssociatedDataForExtensions();

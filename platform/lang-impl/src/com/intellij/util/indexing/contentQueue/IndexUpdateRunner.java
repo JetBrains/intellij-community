@@ -84,19 +84,21 @@ public final class IndexUpdateRunner {
   private static final int BASE_WRITERS_NUMBER = 3;
 
   /**
-   * Aux writers used to write other indexes in parallel. But each index 100% written on the same thread.
+   * Aux writers used to write other indexes in parallel. But each index is 100% written on the same thread.
    */
   private static final int AUX_WRITERS_NUMBER = 1;
 
   /**
-   * Max allowed writes in the queue. System will try to avoid reaching this limit by suspending indexing threads one by one. After reaching
-   * this limit, all indexing threads are going to sleep until queue is shrunk enough. Increasing this value may speed up things a bit, but
-   * increase memory fluctuations, because each queued write will waste some memory.
+   * Max allowed writes in the queue.
+   * The system will try to avoid reaching this limit by suspending indexing threads one by one.
+   * After reaching this limit, all indexing threads are going to sleep until queue is shrunk enough.
+   * Increasing this value may speed up things a bit, but will increase memory fluctuations
+   * because each queued write will waste some memory.
    */
   private static final int MAX_ALLOWED_WRITES_QUEUE_SIZE = 3000;
 
   /**
-   * This is an experimental data from indexing IDEA project, would be nice to have a stat for it.
+   * This is experimental data from indexing IDEA project, would be nice to have a stat for it.
    */
   private static final long EXPECTED_SINGLE_WRITE_TIME_NS = 100_000;
 
@@ -111,8 +113,10 @@ public final class IndexUpdateRunner {
   private static final int MAX_WRITES_IN_QUEUE_PER_INDEXER = MAX_ALLOWED_WRITES_QUEUE_SIZE / INDEXING_THREADS_NUMBER;
 
   /**
-   * Minimal time indexer sleeps between checks for the updates queue size. For better balancing, first sleeping indexer will check for
-   * the queue size each {@code N * time}, next one each {@code (N-1) * time}, etc. Where {@code N} is total number of indexing threads.
+   * Minimal time indexer sleeps between checks for the updates of queue size.
+   * For better balancing, first sleeping indexer will check for the queue size
+   * each {@code N * time}, next one each {@code (N-1) * time}, etc.,
+   * where {@code N} is total number of indexing threads.
    */
   private static final long MINIMAL_INDEXER_SLEEP_STEP_NS =
     EXPECTED_SINGLE_WRITE_TIME_NS * MAX_WRITES_IN_QUEUE_PER_INDEXER / (BASE_WRITERS_NUMBER + AUX_WRITERS_NUMBER);
@@ -386,8 +390,8 @@ public final class IndexUpdateRunner {
   }
 
   /**
-   * Puts the indexing thread to the sleep until the updates queue is shrunk enough to increase number of indexing threads. To balance load
-   * better, each next sleeping indexers checks for the queue more frequently.
+   * Puts the indexing thread to the sleep until the queue of updates is shrunk enough to increase the number of indexing threads.
+   * To balance load better, each next sleeping indexer checks for the queue more frequently.
    */
   private void sleepUntilUpdatesQueueIsShrunk(int sleeperNumber, int updatesInQueue, int updatesToSleep) {
     try {
@@ -643,7 +647,7 @@ public final class IndexUpdateRunner {
   private static final class IndexingJob {
     final Project myProject;
     final CachedFileContentLoader myContentLoader;
-    final ArrayBlockingQueue<FileIndexingJob> myQueueOfFiles; // for Community sources the size is about 615K entries
+    final ArrayBlockingQueue<FileIndexingJob> myQueueOfFiles; // the size for Community sources is about 615K entries
     final ProgressIndicator myIndicator;
     final int myTotalFiles;
     final AtomicBoolean myNoMoreFilesInQueue = new AtomicBoolean();
@@ -717,10 +721,11 @@ public final class IndexUpdateRunner {
   }
 
   /**
-   * @return executor index in {@link #INDEX_WRITING_POOL}. Allow to partition indexes writing to different threads to avoid concurrency.
+   * @return executor index in {@link #INDEX_WRITING_POOL}.
+   * Allow partitioning indexes writing to different threads to avoid concurrency.
    * We may add aux executors if necessary, system scheduler will handle the rest.
    */
-  public static int getExecutorIndex(@NotNull IndexId indexId) {
+  public static int getExecutorIndex(@NotNull IndexId<?, ?> indexId) {
     if (indexId == IdIndex.NAME) {
       return 0;
     }
