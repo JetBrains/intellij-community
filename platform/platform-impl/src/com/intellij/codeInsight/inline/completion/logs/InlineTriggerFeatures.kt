@@ -8,7 +8,7 @@ import com.intellij.internal.statistic.eventLog.events.ObjectEventField
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.util.TextRange
 
-object InlineTriggerFeatures {
+internal object InlineTriggerFeatures {
   fun capture(editor: Editor, offset: Int, triggerFeatures: MutableList<EventPair<*>>) {
     val logicalPosition = editor.offsetToLogicalPosition(offset)
     val lineNumber = logicalPosition.line
