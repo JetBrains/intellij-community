@@ -151,11 +151,4 @@ public class DaemonProgressIndicator extends AbstractProgressIndicatorBase imple
     // to avoid silly exceptions "this progress is indeterminate" on storing/restoring wrapper states in JobLauncher
     return false;
   }
-
-  /**
-   * @deprecated does nothing, use {@link #cancel()} instead
-   */
-  @Deprecated(forRemoval = true)
-  public void dispose() {
-  }
 }

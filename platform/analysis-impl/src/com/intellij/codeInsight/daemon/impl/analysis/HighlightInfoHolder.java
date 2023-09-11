@@ -12,7 +12,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.List;
 
 public class HighlightInfoHolder {
@@ -52,18 +51,6 @@ public class HighlightInfoHolder {
 
   public boolean hasErrorResults() {
     return myErrorCount != 0;
-  }
-
-  /**
-   * @deprecated Use {@link #add(HighlightInfo)} instead, as soon as HighlightInfo is ready, to reduce the latency between generating the highlight info and showing it onscreen
-   */
-  @Deprecated(forRemoval = true)
-  public boolean addAll(@NotNull Collection<? extends HighlightInfo> highlightInfos) {
-    boolean added = false;
-    for (HighlightInfo highlightInfo : highlightInfos) {
-      added |= add(highlightInfo);
-    }
-    return added;
   }
 
   public int size() {
