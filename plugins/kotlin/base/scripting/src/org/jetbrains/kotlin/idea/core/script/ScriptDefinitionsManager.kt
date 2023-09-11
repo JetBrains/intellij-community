@@ -15,7 +15,7 @@ import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.ControlFlowException
 import com.intellij.openapi.extensions.ProjectExtensionPointName
 import com.intellij.openapi.fileTypes.FileTypeManager
-import com.intellij.openapi.progress.blockingContext
+import com.intellij.openapi.progress.blockingContextScope
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.JavaSdk
 import com.intellij.openapi.projectRoots.ProjectJdkTable
@@ -59,7 +59,7 @@ import kotlin.script.experimental.jvm.util.scriptCompilationClasspathFromContext
 import kotlin.script.templates.standard.ScriptTemplateWithArgs
 
 internal class LoadScriptDefinitionsStartupActivity : ProjectActivity {
-    override suspend fun execute(project: Project) : Unit = blockingContext {
+    override suspend fun execute(project: Project) : Unit = blockingContextScope {
         if (isUnitTestMode()) {
             // In tests definitions are loaded synchronously because they are needed to analyze script
             // In IDE script won't be highlighted before all definitions are loaded, then the highlighting will be restarted

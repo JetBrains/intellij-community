@@ -14,6 +14,7 @@ import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.search.FileTypeIndex
 import com.intellij.psi.search.FilenameIndex
+import com.intellij.util.concurrency.annotations.RequiresBlockingContext
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.base.util.allScope
 import org.jetbrains.kotlin.idea.core.KotlinPluginDisposable
@@ -90,6 +91,7 @@ class ScriptTemplatesFromDependenciesProvider(private val project: Project) : Sc
     @Volatile
     private var forceStartUpdate = false
 
+    @RequiresBlockingContext
     private fun loadScriptDefinitions() {
         if (project.isDefault || project.isDisposed) {
             return onEarlyEnd()
