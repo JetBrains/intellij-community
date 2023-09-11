@@ -6,6 +6,7 @@ import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.getProjectCachePath
+import com.intellij.openapi.roots.ProjectFileIndex
 import com.intellij.openapi.roots.ProjectRootManager
 import com.intellij.openapi.startup.ProjectActivity
 import com.intellij.openapi.util.registry.Registry
@@ -58,11 +59,9 @@ class FileEmbeddingsStorage(project: Project) : DiskSynchronizedEmbeddingsStorag
     // If the write action is invoked, the read action is restarted
     return ReadAction.nonBlocking<List<IndexableFile>> {
       buildList {
-        ProjectRootManager.getInstance(project).contentSourceRoots.forEach { root ->
-          VfsUtilCore.iterateChildrenRecursively(root, null) { virtualFile ->
-            virtualFile.canonicalFile?.also { if (it.isFile) add(IndexableFile(it)) }
-            return@iterateChildrenRecursively true
-          }
+        ProjectFileIndex.getInstance(project).iterateContent{
+            if (it.isFile and it.isInLocalFileSystem) add(IndexableFile(it))
+            true
         }
       }
     }.executeSynchronously()
@@ -96,6 +95,6 @@ class FileSemanticSearchServiceInitializer : ProjectActivity {
 }
 
 class IndexableFile(file: VirtualFile) : IndexableEntity {
-  override val id = file.name.intern()
+  override val id = file.path
   override val indexableRepresentation by lazy { splitIdentifierIntoTokens(file.nameWithoutExtension).joinToString(separator = " ") }
 }
