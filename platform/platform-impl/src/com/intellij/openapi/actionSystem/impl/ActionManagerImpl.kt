@@ -1134,11 +1134,6 @@ open class ActionManagerImpl protected constructor(private val coroutineScope: C
     actionListeners.add(listener)
   }
 
-  @Suppress("removal", "OVERRIDE_DEPRECATION")
-  override fun removeAnActionListener(listener: AnActionListener) {
-    actionListeners.remove(listener)
-  }
-
   override fun fireBeforeActionPerformed(action: AnAction, event: AnActionEvent) {
     prevPreformedActionId = lastPreformedActionId
     lastPreformedActionId = getId(action)
