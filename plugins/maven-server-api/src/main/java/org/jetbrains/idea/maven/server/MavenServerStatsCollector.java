@@ -7,8 +7,8 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicInteger;
 
 public final class MavenServerStatsCollector {
-  private static final Map<String, AtomicInteger> readCounters = new ConcurrentHashMap<String, AtomicInteger>();
-  private static final Map<String, AtomicInteger> pluginResolving = new ConcurrentHashMap<String, AtomicInteger>();
+  private static final Map<String, AtomicInteger> readCounters = new ConcurrentHashMap<>();
+  private static final Map<String, AtomicInteger> pluginResolving = new ConcurrentHashMap<>();
   public static final boolean collectStatistics = Boolean.getBoolean("maven.collect.stat");
 
   private MavenServerStatsCollector() { }
@@ -33,7 +33,7 @@ public final class MavenServerStatsCollector {
     src.forEach((key, value) -> dest.put(key, value.get()));
   }
 
-  static void pluginResolve(String mavenid) {
+  public static void pluginResolve(String mavenid) {
     if (!collectStatistics) return;
     putOrAdd(mavenid, pluginResolving);
   }
