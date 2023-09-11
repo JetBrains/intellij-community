@@ -7,6 +7,7 @@ import com.intellij.openapi.extensions.ExtensionPoint
 import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.progress.ProcessCanceledException
 import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.annotations.NotNull
 import java.util.AbstractMap.SimpleImmutableEntry
 import java.util.concurrent.CancellationException
 import java.util.concurrent.ConcurrentMap
@@ -23,7 +24,7 @@ import java.util.function.Supplier
 // but also supporting the ability to mock an extension list in tests (a custom list is set).
 @ApiStatus.Internal
 object ExtensionProcessingHelper {
-  fun <T : Any> forEachExtensionSafe(iterable: Iterable<T?>, extensionConsumer: Consumer<T>) {
+  fun <T : Any> forEachExtensionSafe(iterable: Iterable<T?>, extensionConsumer: Consumer<@NotNull T>) {
     for (t in iterable) {
       if (t == null) {
         break

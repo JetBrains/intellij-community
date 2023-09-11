@@ -30,7 +30,7 @@ import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
 
 @ApiStatus.Internal
-public abstract class ExtensionPointImpl<T extends @NotNull Object> implements ExtensionPoint<T>, Iterable<@Nullable T> {
+public abstract class ExtensionPointImpl<T> implements ExtensionPoint<T>, Iterable<@Nullable T> {
   static final Logger LOG = Logger.getInstance(ExtensionPointImpl.class);
 
   // test-only
