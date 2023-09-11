@@ -42,6 +42,7 @@ class TerminalPromptController(
     editor.putUserData(TerminalCompletionManager.KEY, completionManager)
 
     commandHistoryManager = CommandHistoryManager(session)
+    session.addCommandListener(this)
   }
 
   fun addListener(listener: PromptStateListener) {
