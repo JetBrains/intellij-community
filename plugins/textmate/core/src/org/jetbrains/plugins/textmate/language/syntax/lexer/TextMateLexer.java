@@ -24,17 +24,6 @@ public final class TextMateLexer {
    */
   private static final int MAX_LOOPS_COUNT = 10;
 
-  /**
-   * State of the moment when currentOffset had been changed last time.
-   * Becomes null on each new line.
-   */
-  private List<TextMateLexerState> lastSuccessState;
-
-  /**
-   * How many times the {@link #lastSuccessState} repeated since last offset changing.
-   */
-  private int lastSuccessStateOccursCount;
-
   private int myCurrentOffset = 0;
 
   private CharSequence myText = "";
@@ -67,7 +56,6 @@ public final class TextMateLexer {
 
     myStates = FList.<TextMateLexerState>emptyList().prepend(myLanguageInitialState);
     myCurrentScope = new TextMateScope(myLanguageScopeName, null);
-    setLastSuccessState(null);
   }
 
   public int getCurrentOffset() {
@@ -96,6 +84,10 @@ public final class TextMateLexer {
   }
 
   private void parseLine(@NotNull CharSequence lineCharSequence, @NotNull Queue<Token> output) {
+    FList<TextMateLexerState> lastSuccessState = myStates;
+    int lastSuccessStateOccursCount = 0;
+    int lastMovedOffset = myCurrentOffset;
+
     int startLinePosition = myCurrentOffset;
     int linePosition = 0;
     int lineByteOffset = 0;
@@ -206,15 +198,17 @@ public final class TextMateLexer {
       }
 
       // global looping protection
-      List<TextMateLexerState> currentStateSnapshot = myStates;
-      if (lastSuccessState != null) {
-        if (currentStateSnapshot.equals(lastSuccessState)) {
-          lastSuccessStateOccursCount++;
-          if (lastSuccessStateOccursCount > MAX_LOOPS_COUNT) {
-            addToken(output, line.length() + startLinePosition);
-            break;
-          }
+      if (lastMovedOffset < myCurrentOffset) {
+        lastSuccessState = myStates;
+        lastSuccessStateOccursCount = 0;
+        lastMovedOffset = myCurrentOffset;
+      }
+      else if (lastSuccessState.equals(myStates)) {
+        if (lastSuccessStateOccursCount > MAX_LOOPS_COUNT) {
+          addToken(output, line.length() + startLinePosition);
+          break;
         }
+        lastSuccessStateOccursCount++;
       }
 
       if (linePosition != endPosition) {
@@ -235,11 +229,6 @@ public final class TextMateLexer {
       }
     }
     return false;
-  }
-
-  private void setLastSuccessState(@Nullable List<TextMateLexerState> state) {
-    lastSuccessState = state;
-    lastSuccessStateOccursCount = 0;
   }
 
   private boolean parseCaptures(@NotNull Queue<Token> output,
@@ -339,7 +328,6 @@ public final class TextMateLexer {
       }
 
       myCurrentOffset = position;
-      setLastSuccessState(myStates);
     }
   }
 
