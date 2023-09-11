@@ -70,7 +70,7 @@ public class DeleteAction extends PatchAction {
     boolean canDelete = true;
     if (Files.isDirectory(toFile.toPath(), LinkOption.NOFOLLOW_LINKS)) {
       try (Stream<Path> children = Files.list(toFile.toPath())) {
-        canDelete = !children.findAny().isPresent();
+        canDelete = children.findAny().isEmpty();
       }
     }
 
