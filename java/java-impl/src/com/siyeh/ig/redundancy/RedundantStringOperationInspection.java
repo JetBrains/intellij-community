@@ -149,6 +149,13 @@ public class RedundantStringOperationInspection extends AbstractBaseJavaLocalIns
       }
     }
 
+    @Override
+    public void visitTemplateExpression(@NotNull PsiTemplateExpression element) {
+      if (element.getProcessor() != null && element.getLiteralExpression() != null) {
+        myHolder.registerProblem(element.getProcessor(), InspectionGadgetsBundle.message("inspection.redundant.string.fix.remove.str.processor.description"), new RemoveStrTemplateProcessorFix(element));
+      }
+    }
+
     private ProblemDescriptor getStringConstructorProblem(PsiNewExpression expression) {
       PsiExpressionList argumentList = expression.getArgumentList();
       if (argumentList == null) return null;
@@ -1156,6 +1163,27 @@ public class RedundantStringOperationInspection extends AbstractBaseJavaLocalIns
     @Override
     public void invoke(@NotNull Project project, @NotNull PsiFile file, @NotNull PsiElement startElement, @NotNull PsiElement endElement) {
       new CommentTracker().delete(startElement, endElement);
+    }
+  }
+
+  private static final class RemoveStrTemplateProcessorFix implements LocalQuickFix {
+    private final PsiTemplateExpression myTemplate;
+
+    public RemoveStrTemplateProcessorFix(@NotNull final PsiTemplateExpression template) {
+      myTemplate = template;
+    }
+
+    @Override
+    public @NotNull String getFamilyName() {
+      return QuickFixBundle.message("remove.redundant.str.processor");
+    }
+
+    @Override
+    public void applyFix(@NotNull final Project project, @NotNull final ProblemDescriptor descriptor) {
+      final PsiLiteralExpression literal = myTemplate.getLiteralExpression();
+      if (literal != null) {
+        myTemplate.replace(literal);
+      }
     }
   }
 }
