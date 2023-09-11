@@ -1,6 +1,5 @@
 package org.jetbrains.jewel
 
-import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.getValue
@@ -8,7 +7,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.takeOrElse
 import androidx.compose.ui.res.ResourceLoader
 import org.jetbrains.jewel.foundation.lazy.SelectableLazyItemScope
-import org.jetbrains.jewel.foundation.lazy.SelectableLazyListState
 import org.jetbrains.jewel.foundation.tree.BasicLazyTree
 import org.jetbrains.jewel.foundation.tree.DefaultTreeViewKeyActions
 import org.jetbrains.jewel.foundation.tree.InitialNodeStatus
