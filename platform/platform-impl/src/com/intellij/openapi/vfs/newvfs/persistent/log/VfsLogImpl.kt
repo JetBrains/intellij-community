@@ -501,6 +501,7 @@ class VfsLogImpl private constructor(
     @JvmStatic
     @Throws(IOException::class)
     fun clearStorage(storagePath: Path): Boolean {
+      require(storagePath.name == "vfslog")
       if (storagePath.exists()) {
         storagePath.delete(true)
         return true
