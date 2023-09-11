@@ -709,6 +709,6 @@ abstract class KotlinWithGradleConfigurator : KotlinProjectConfigurator {
             )
         }
 
-        fun isAutoConfigurationEnabled(): Boolean = Registry.`is`("kotlin.configuration.gradle.autoConfig.enabled", false)
+        fun isAutoConfigurationEnabled(): Boolean = Registry.`is`("kotlin.configuration.gradle.autoConfig.enabled", true)
     }
 }
