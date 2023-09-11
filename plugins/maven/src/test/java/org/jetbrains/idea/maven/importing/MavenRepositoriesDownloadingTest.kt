@@ -62,6 +62,29 @@ class MavenRepositoriesDownloadingTest : MavenMultiVersionImportingTestCase() {
 
   @Test
   @Throws(Exception::class)
+  fun testPluginDownloadedFromRepository() {
+    val helper = MavenCustomRepositoryHelper(myDir, "local1", "remote")
+    val remoteRepoPath = helper.getTestDataPath("remote")
+    val localRepoPath = helper.getTestDataPath("local1")
+    httpServerFixture.startRepositoryFor(remoteRepoPath)
+    repositoryPath = localRepoPath
+    val settingsXml = createProjectSubFile(
+      "settings.xml",
+      """
+       <settings>
+          <localRepository>$localRepoPath</localRepository>
+       </settings>
+       """.trimIndent())
+    mavenGeneralSettings.setUserSettingsFile(settingsXml.canonicalPath)
+    removeFromLocalRepository("org/mytest/myartifact/")
+    assertFalse(helper.getTestData("local1/org/mytest/myartifact/1.0/myartifact-1.0.jar").isFile)
+    importProject(pomPlugins())
+    assertTrue(helper.getTestData("local1/org/mytest/myartifact/1.0/myartifact-1.0.jar").isFile)
+  }
+
+
+  @Test
+  @Throws(Exception::class)
   fun testDownloadedFromRepositoryWithAuthentification() {
     val helper = MavenCustomRepositoryHelper(myDir, "local1", "remote")
     val remoteRepoPath = helper.getTestDataPath("remote")
@@ -201,7 +224,7 @@ class MavenRepositoriesDownloadingTest : MavenMultiVersionImportingTestCase() {
 
   @Test
   @Throws(Exception::class)
-  fun testWithLastDependencyUpdatedWithErrorNoForce() {
+  fun testWithDependencyLastUpdatedWithErrorNoForce() {
     val helper = MavenCustomRepositoryHelper(myDir, "local1", "remote")
     val remoteRepoPath = helper.getTestDataPath("remote")
     val localRepoPath = helper.getTestDataPath("local1")
@@ -237,10 +260,48 @@ class MavenRepositoriesDownloadingTest : MavenMultiVersionImportingTestCase() {
 
   }
 
+  @Test
+  @Throws(Exception::class)
+  fun testWithPluginLastUpdatedWithErrorNoForce() {
+    val helper = MavenCustomRepositoryHelper(myDir, "local1", "remote")
+    val remoteRepoPath = helper.getTestDataPath("remote")
+    val localRepoPath = helper.getTestDataPath("local1")
+    httpServerFixture.startRepositoryFor(remoteRepoPath)
+    repositoryPath = localRepoPath
+    val settingsXml = createProjectSubFile(
+      "settings.xml",
+      """
+       <settings>
+          <localRepository>$localRepoPath</localRepository>
+       </settings>
+       """.trimIndent())
+    mavenGeneralSettings.setUserSettingsFile(settingsXml.canonicalPath)
+    myProjectsManager.forceUpdateSnapshots = false
+    mavenGeneralSettings.isAlwaysUpdateSnapshots = false
+
+    removeFromLocalRepository("org/mytest/myartifact/")
+    val lastUpdatedText =
+      "#NOTE: This is a Maven Resolver internal implementation file, its format can be changed without prior notice\n" +
+      "${myUrl.replace(":", "\\:")}/.error=\n" +
+      "${myUrl.replace(":", "\\:")}/.lastUpdated=${System.currentTimeMillis()}\n"
+    val dir = helper.getTestData("local1/org/mytest/myartifact/1.0");
+    dir.mkdirs()
+
+    File(dir, "myartifact-1.0.jar.lastUpdated").writeText(lastUpdatedText)
+    File(dir, "myartifact-1.0.pom.lastUpdated").writeText(lastUpdatedText)
+
+    importProject(pomPlugins())
+
+    TestCase.assertEquals(1, myProjectsManager.rootProjects.size)
+    TestCase.assertEquals("Unresolved plugin: 'org.mytest:myartifact:jar:1.0'",
+                          myProjectsManager.rootProjects[0].problems.single { it.type == MavenProjectProblem.ProblemType.DEPENDENCY }.description)
+
+  }
+
 
   @Test
   @Throws(Exception::class)
-  fun testWithLastDependencyUpdatedWithErrorForceUpdate() {
+  fun testWithDependencyLastUpdatedWithErrorForceUpdate() {
     val helper = MavenCustomRepositoryHelper(myDir, "local1", "remote")
     val remoteRepoPath = helper.getTestDataPath("remote")
     val localRepoPath = helper.getTestDataPath("local1")
@@ -274,6 +335,43 @@ class MavenRepositoriesDownloadingTest : MavenMultiVersionImportingTestCase() {
 
   }
 
+  @Test
+  @Throws(Exception::class)
+  fun testWithPluginLastUpdatedWithErrorForceUpdate() {
+    Registry.get("maven.server.debug").setValue(true)
+    val helper = MavenCustomRepositoryHelper(myDir, "local1", "remote")
+    val remoteRepoPath = helper.getTestDataPath("remote")
+    val localRepoPath = helper.getTestDataPath("local1")
+    httpServerFixture.startRepositoryFor(remoteRepoPath)
+    repositoryPath = localRepoPath
+    val settingsXml = createProjectSubFile(
+      "settings.xml",
+      """
+       <settings>
+          <localRepository>$localRepoPath</localRepository>
+       </settings>
+       """.trimIndent())
+    mavenGeneralSettings.setUserSettingsFile(settingsXml.canonicalPath)
+    myProjectsManager.forceUpdateSnapshots = true
+
+    removeFromLocalRepository("org/mytest/myartifact/")
+    val lastUpdatedText =
+      "#NOTE: This is a Maven Resolver internal implementation file, its format can be changed without prior notice\n" +
+      "${myUrl.replace(":", "\\:")}/.error=\n" +
+      "${myUrl.replace(":", "\\:")}/.lastUpdated=${System.currentTimeMillis()}\n"
+    val dir = helper.getTestData("local1/org/mytest/myartifact/1.0");
+    dir.mkdirs()
+
+    File(dir, "myartifact-1.0.jar.lastUpdated").writeText(lastUpdatedText)
+    File(dir, "myartifact-1.0.pom.lastUpdated").writeText(lastUpdatedText)
+
+    importProject(pomPlugins())
+
+    TestCase.assertEquals(1, myProjectsManager.rootProjects.size)
+    TestCase.assertEquals(0, myProjectsManager.rootProjects[0].problems.size)
+
+  }
+
 
   fun pom() = """
                        <groupId>test</groupId>
@@ -293,6 +391,27 @@ class MavenRepositoriesDownloadingTest : MavenMultiVersionImportingTestCase() {
                              <url>${myUrl}</url>
                            </repository>
                        </repositories>
+                       """.trimIndent()
+
+  fun pomPlugins() = """
+                       <groupId>test</groupId>
+                       <artifactId>project</artifactId>
+                       <version>1</version>
+                       <build>
+                          <plugins>
+                            <plugin>
+                               <groupId>org.mytest</groupId>
+                               <artifactId>myartifact</artifactId>
+                               <version>1.0</version>
+                            </plugin>
+                          </plugins>
+                       </build>
+                       <pluginRepositories>
+                         <pluginRepository>
+                           <id>artifacts</id>
+                           <url>$myUrl</url>
+                         </pluginRepository>
+                       </pluginRepositories>
                        """.trimIndent()
 
   companion object {
