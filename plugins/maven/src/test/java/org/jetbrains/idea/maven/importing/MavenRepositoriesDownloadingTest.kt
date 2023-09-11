@@ -293,7 +293,7 @@ class MavenRepositoriesDownloadingTest : MavenMultiVersionImportingTestCase() {
     importProject(pomPlugins())
 
     TestCase.assertEquals(1, myProjectsManager.rootProjects.size)
-    TestCase.assertEquals("Unresolved plugin: 'org.mytest:myartifact:jar:1.0'",
+    TestCase.assertEquals("Unresolved plugin: 'org.mytest:myartifact:1.0'",
                           myProjectsManager.rootProjects[0].problems.single { it.type == MavenProjectProblem.ProblemType.DEPENDENCY }.description)
 
   }
@@ -338,7 +338,6 @@ class MavenRepositoriesDownloadingTest : MavenMultiVersionImportingTestCase() {
   @Test
   @Throws(Exception::class)
   fun testWithPluginLastUpdatedWithErrorForceUpdate() {
-    Registry.get("maven.server.debug").setValue(true)
     val helper = MavenCustomRepositoryHelper(myDir, "local1", "remote")
     val remoteRepoPath = helper.getTestDataPath("remote")
     val localRepoPath = helper.getTestDataPath("local1")

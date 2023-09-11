@@ -640,6 +640,7 @@ public class Maven40ServerEmbedderImpl extends MavenServerEmbeddedBase {
   @Override
   public ArrayList<PluginResolutionResponse> resolvePlugins(@NotNull String longRunningTaskId,
                                                        @NotNull ArrayList<PluginResolutionRequest> pluginResolutionRequests,
+                                                       boolean forceUpdateSnapshots,
                                                        MavenToken token) {
     MavenServerUtil.checkToken(token);
 
@@ -647,6 +648,7 @@ public class Maven40ServerEmbedderImpl extends MavenServerEmbeddedBase {
     try (LongRunningTask task = newLongRunningTask(longRunningTaskId, pluginResolutionRequests.size(), myConsoleWrapper)) {
       MavenExecutionRequest request = createRequest(null, null, null);
       request.setTransferListener(new Maven40TransferListenerAdapter(task.getIndicator()));
+      request.setUpdateSnapshots(myAlwaysUpdateSnapshots || forceUpdateSnapshots);
 
       DefaultMaven maven = (DefaultMaven)getComponent(Maven.class);
       RepositorySystemSession session = maven.newRepositorySession(request);
