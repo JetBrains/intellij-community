@@ -251,35 +251,25 @@ public final class TextMateLexer {
     Int2ObjectMap<CharSequence> captures = rule.getCaptures(capturesKey);
     if (captures != null) {
       List<CaptureMatchData> matches = SyntaxMatchUtils.matchCaptures(captures, matchData, string, line);
-      List<CaptureMatchData> nonEmptyMatches = matches.stream().filter(m -> !m.selectorName.isEmpty() && !m.range.isEmpty()).toList();
-      LinkedList<CaptureMatchData> starts = new LinkedList<>(nonEmptyMatches);
-      Collections.sort(starts, CaptureMatchData.START_OFFSET_ORDERING);
 
-      LinkedList<CaptureMatchData> ends = new LinkedList<>(nonEmptyMatches);
-      Collections.sort(ends, CaptureMatchData.END_OFFSET_ORDERING);
+      List<CaptureMatchEdge> captureMatchEdges = new ArrayList<>(matches.size() * 2);
+      for (CaptureMatchData match : matches) {
+        if (!match.range.isEmpty() && !match.selectorName.isEmpty()) {
+          captureMatchEdges.add(new CaptureMatchEdge(match.range.start, match.group, CaptureMatchEdge.Type.START, match.selectorName));
+          captureMatchEdges.add(new CaptureMatchEdge(match.range.end, match.group, CaptureMatchEdge.Type.END, match.selectorName));
+        }
+      }
+      captureMatchEdges.sort(CaptureMatchEdge.OFFSET_ORDERING);
 
-      while (!starts.isEmpty() || !ends.isEmpty()) {
-        if (starts.isEmpty()) {
-          CaptureMatchData end = ends.removeLast();
-          closeScopeSelector(output, end.range.end + startLineOffset);
-        }
-        else if (ends.isEmpty()) {
-          CaptureMatchData start = starts.removeLast();
-          CharSequence name = rule.hasBackReference(capturesKey, start.group)
-                              ? SyntaxMatchUtils.replaceGroupsWithMatchData(start.selectorName, string, matchData, '$')
-                              : start.selectorName;
-          openScopeSelector(output, name, start.range.start + startLineOffset);
-        }
-        else if (ends.getLast().group < starts.getLast().group) {
-          CaptureMatchData end = ends.removeLast();
-          closeScopeSelector(output, end.range.end + startLineOffset);
-        }
-        else {
-          CaptureMatchData start = starts.removeLast();
-          CharSequence name = rule.hasBackReference(capturesKey, start.group)
-                              ? SyntaxMatchUtils.replaceGroupsWithMatchData(start.selectorName, string, matchData, '$')
-                              : start.selectorName;
-          openScopeSelector(output, name, start.range.start + startLineOffset);
+      for (CaptureMatchEdge edge : captureMatchEdges) {
+        switch (edge.type) {
+          case START -> {
+            CharSequence name = rule.hasBackReference(capturesKey, edge.group)
+                                ? SyntaxMatchUtils.replaceGroupsWithMatchData(edge.selectorName, string, matchData, '$')
+                                : edge.selectorName;
+            openScopeSelector(output, name, edge.offset + startLineOffset);
+          }
+          case END -> closeScopeSelector(output, edge.offset + startLineOffset);
         }
       }
       return !matches.isEmpty();
