@@ -247,7 +247,11 @@ object KotlinIntroduceVariableHandler : RefactoringActionHandler {
                     }
                 }
                 propertyRef = property
-                shortenReferences(property)
+
+                val addedTypeReference = (property as? KtProperty)?.typeReference
+                if (addedTypeReference != null) {
+                    shortenReferences(addedTypeReference)
+                }
             }
         }
 
