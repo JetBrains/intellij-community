@@ -15,6 +15,7 @@ import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Key;
+import com.intellij.ui.HintHint;
 import com.intellij.ui.LightweightHint;
 import com.intellij.util.BitUtil;
 import com.intellij.util.concurrency.ThreadingAssertions;
@@ -41,9 +42,7 @@ public class LookupManagerImpl extends LookupManager {
     MessageBusConnection connection = project.getMessageBus().connect();
     connection.subscribe(EditorHintListener.TOPIC, new EditorHintListener() {
       @Override
-      public void hintShown(final Project project,
-                            @NotNull final LightweightHint hint,
-                            final int flags) {
+      public void hintShown(@NotNull Editor editor, @NotNull LightweightHint hint, int flags, @NotNull HintHint hintInfo) {
         if (project == myProject) {
           Lookup lookup = getActiveLookup();
           if (lookup != null && BitUtil.isSet(flags, HintManager.HIDE_BY_LOOKUP_ITEM_CHANGE)) {

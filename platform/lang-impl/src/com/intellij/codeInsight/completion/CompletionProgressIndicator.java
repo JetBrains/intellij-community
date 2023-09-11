@@ -53,6 +53,7 @@ import com.intellij.psi.PsiReference;
 import com.intellij.psi.ReferenceRange;
 import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.testFramework.TestModeFlags;
+import com.intellij.ui.HintHint;
 import com.intellij.ui.LightweightHint;
 import com.intellij.util.ModalityUiUtil;
 import com.intellij.util.ObjectUtils;
@@ -819,7 +820,7 @@ public final class CompletionProgressIndicator extends ProgressIndicatorBase imp
     LightweightHint[] result = {null};
     EditorHintListener listener = new EditorHintListener() {
       @Override
-      public void hintShown(Project project, @NotNull LightweightHint hint, int flags) {
+      public void hintShown(@NotNull Editor editor, @NotNull LightweightHint hint, int flags, @NotNull HintHint hintInfo) {
         result[0] = hint;
       }
     };
