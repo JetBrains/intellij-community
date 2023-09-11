@@ -547,6 +547,7 @@
                      bundle="messages.JavaBundle"/>
     <advancedSetting id="code.vision.java.minimal.usages" groupKey="advanced.settings.group.java" default="0" bundle="messages.JavaBundle" />
     <advancedSetting id="java.completion.qualifier.as.argument" groupKey="advanced.settings.group.java" default="true" bundle="messages.JavaBundle" />
+    <advancedSetting id="java.sdkmanrc.watcher" groupKey="advanced.settings.group.java" default="true" bundle="messages.JavaBundle" />
 
     <editorNotificationProvider implementation="com.intellij.codeInsight.daemon.impl.AttachSourcesNotificationProvider"/>
     <editorNotificationProvider implementation="com.intellij.codeInsight.daemon.impl.LibrarySourceNotificationProvider"/>

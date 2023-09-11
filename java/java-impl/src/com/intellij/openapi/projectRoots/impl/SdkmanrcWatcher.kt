@@ -12,6 +12,7 @@ import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.fileEditor.FileDocumentManager
+import com.intellij.openapi.options.advanced.AdvancedSettings
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.JavaSdk
 import com.intellij.openapi.projectRoots.JdkFinder
@@ -221,6 +222,7 @@ class SdkmanrcWatcherService(private val project: Project, private val scope: Co
 
 class SdkmanrcWatcher : ProjectActivity {
   override suspend fun execute(project: Project) {
+    if (!AdvancedSettings.getBoolean("java.sdkmanrc.watcher")) return
     project.service<SdkmanrcWatcherService>().apply {
       registerListener(project)
       configureSdkFromSdkmanrc()
