@@ -59,8 +59,21 @@
     <group id="AdditionalRunningOptionsGroup" popup="false"/>
     <group id="AdditionalRunningOptionsGroupMain" popup="false"/>
 
+    <!-- Import Settings -->
+    <action id="ImportSettingAction" class="com.intellij.importSettings.chooser.ImportSettingAction" text="Bla ImportSettingAction"/>
+    <action id="TestSettingAction" class="com.intellij.importSettings.chooser.TestDialogAction" text="Bla TestDialogAction"/>
+    <action id="SettingSyncAction" class="com.intellij.importSettings.importer.SettingSyncAction" text="Bla SettingSyncActiona"/>
+
+
+    <!-- Import Settings -->
+
   </actions>
   <extensions defaultExtensionNs="com.intellij">
+    <!-- Import Settings -->
+    <applicationService serviceInterface="com.intellij.importSettings.data.SettingsService"
+                    serviceImplementation="com.intellij.importSettings.data.TestBaseService"/>
+
+    <!-- Import Settings -->
     <actionPromoter implementation="com.intellij.execution.runToolbar.RunToolbarActionPromoter"/>
     <projectConfigurable groupId="build" provider="com.intellij.execution.runToolbar.RunToolbarSettingsConfigurableProvider" bundle="messages.LangBundle" key="run.toolbar.configurable.title"/>
     <console.folding implementation="com.intellij.execution.wsl.WslDistributionConsoleFolding" os="windows"/>
@@ -92,4 +105,9 @@
     <listener class="com.intellij.execution.runToolbar.RunToolbarComponentService$MyExecutionListener"
               topic="com.intellij.execution.ExecutionListener"/>
   </projectListeners>
+
+
+
+
+
 </idea-plugin>
