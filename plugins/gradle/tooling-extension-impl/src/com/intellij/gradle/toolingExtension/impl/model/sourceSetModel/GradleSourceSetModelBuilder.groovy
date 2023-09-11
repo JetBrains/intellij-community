@@ -560,24 +560,37 @@ class GradleSourceSetModelBuilder extends AbstractModelBuilderService {
     }
   }
 
-  private static boolean containsOnlySourceSetOutput(@NotNull AbstractArchiveTask archiveTask, @NotNull Project project) {
+  /**
+   * Check the configured archive task inputs for specific files.
+   *
+   * We want to check, if IDEA is interested in keeping this archive task output in dependencies list
+   * <br>
+   * This may happen if <ul>
+   *    <li>there are some class files
+   *    <li>there are directories, not known to be outputs of source sets (modules)
+   * @param archiveTask task to check
+   * @param project project with source sets, potentially contributing to this task.
+   * @return true if this jar should be kept in IDEA modules' dependencies' lists.
+   */
+  private static boolean containsPotentialClasspathElements(@NotNull AbstractArchiveTask archiveTask, @NotNull Project project) {
     def sourceSetContainer = JavaPluginUtil.getSourceSetContainer(project)
     if (sourceSetContainer == null || sourceSetContainer.isEmpty()) {
-      return false
+      return true
     }
     def outputFiles = new HashSet<File>();
     sourceSetContainer.all { SourceSet ss -> outputFiles.addAll(ss.output.files) }
     for (Object path: getArchiveTaskSourcePaths(archiveTask)) {
       if (isSafeToResolve(path, project)) {
         def files = project.files(path).files
-        if (!outputFiles.containsAll(files)) {
-          return false
+        files.removeAll(outputFiles)
+        if (files.any { it.isDirectory() || (it.isFile() && it.name.endsWith(".class"))}) {
+          return true
         }
       } else {
-        return false
+        return true
       }
     }
-    return true
+    return false
   }
 
   private static boolean containsAllSourceSetOutput(@NotNull AbstractArchiveTask archiveTask, @NotNull SourceSet sourceSet) {
