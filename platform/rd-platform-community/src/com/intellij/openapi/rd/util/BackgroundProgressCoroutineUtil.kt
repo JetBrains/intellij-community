@@ -428,12 +428,6 @@ class ProgressCoroutineScopeLegacy private constructor(indicator: ProgressIndica
     }
   }
 
-  @ApiStatus.ScheduledForRemoval
-  @Deprecated("Use withText", ReplaceWith("withText(text, action)"))
-  inline fun withTextAboveProgressBar(@Nls(capitalization = Nls.Capitalization.Sentence) text: String, action: ProgressCoroutineScope.() -> Unit) {
-    withText(text, action)
-  }
-
   @Deprecated("Use progress reporter api")
   inline fun withText(@Nls(capitalization = Nls.Capitalization.Sentence) text: String, action: ProgressCoroutineScope.() -> Unit) {
     val oldText = indicator.text
@@ -444,12 +438,6 @@ class ProgressCoroutineScopeLegacy private constructor(indicator: ProgressIndica
     finally {
       indicator.text = oldText
     }
-  }
-
-  @ApiStatus.ScheduledForRemoval
-  @Deprecated("Use withDetails", ReplaceWith("withDetails(text, action)"))
-  inline fun withTextUnderProgressBar(@Nls(capitalization = Nls.Capitalization.Sentence) text: String, action: ProgressCoroutineScope.() -> Unit) {
-    withDetails(text, action)
   }
 
   @Deprecated("Use progress reporter api")

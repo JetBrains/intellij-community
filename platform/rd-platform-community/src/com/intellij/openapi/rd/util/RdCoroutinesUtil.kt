@@ -149,14 +149,6 @@ fun <T> Lifetime.startNonUrgentBackgroundAsync(
   action: suspend CoroutineScope.() -> T
 ): Deferred<T> = startAsync(nonUrgentDispatcher + context, start, action)
 
-@ApiStatus.ScheduledForRemoval
-@Deprecated("Use launchChildOnUi without lifetime or use lifetimedCoroutineScope", ReplaceWith("launchChildOnUi(start, action)"))
-fun CoroutineScope.launchChildOnUi(
-  lifetime: Lifetime,
-  start: CoroutineStart = CoroutineStart.DEFAULT,
-  action: suspend CoroutineScope.() -> Unit
-): Job = launchChild(lifetime, uiDispatcher, start, action)
-
 fun CoroutineScope.launchChildOnUi(
   start: CoroutineStart = CoroutineStart.DEFAULT,
   action: suspend CoroutineScope.() -> Unit
@@ -166,14 +158,6 @@ fun CoroutineScope.launchChildOnUiAllowInlining(
   start: CoroutineStart = CoroutineStart.DEFAULT,
   action: suspend CoroutineScope.() -> Unit
 ): Job = launch(uiDispatcherWithInlining, start, action)
-
-@ApiStatus.ScheduledForRemoval
-@Deprecated("Use launchChildSyncIOBackground or launchChildBackground or use lifetimedCoroutineScope")
-fun CoroutineScope.launchChildIOBackground(
-  lifetime: Lifetime = Lifetime.Eternal,
-  start: CoroutineStart = CoroutineStart.DEFAULT,
-  action: suspend CoroutineScope.() -> Unit
-): Job = launchChild(lifetime, processIODispatcher, start, action)
 
 fun CoroutineScope.launchChildSyncIOBackground(
   start: CoroutineStart = CoroutineStart.DEFAULT,
@@ -185,34 +169,10 @@ fun CoroutineScope.launchChildBackground(
   action: suspend CoroutineScope.() -> Unit
 ): Job = launch(applicationThreadPool, start, action)
 
-@ApiStatus.ScheduledForRemoval
-@Deprecated("Use launchChildBackground or use lifetimedCoroutineScope", ReplaceWith("launchChildBackground(start, action)"))
-fun CoroutineScope.launchChildLongBackground(
-  lifetime: Lifetime = Lifetime.Eternal,
-  start: CoroutineStart = CoroutineStart.DEFAULT,
-  action: suspend CoroutineScope.() -> Unit
-): Job = launchChild(lifetime, applicationThreadPool, start, action)
-
-@ApiStatus.ScheduledForRemoval
-@Deprecated("Use launchChildNonUrgentBackground without lifetime or use lifetimedCoroutineScope", ReplaceWith("launchChildNonUrgentBackground(start, action)"))
-fun CoroutineScope.launchChildNonUrgentBackground(
-  lifetime: Lifetime,
-  start: CoroutineStart = CoroutineStart.DEFAULT,
-  action: suspend CoroutineScope.() -> Unit
-): Job = launchChild(lifetime, nonUrgentDispatcher, start, action)
-
 fun CoroutineScope.launchChildNonUrgentBackground(
   start: CoroutineStart = CoroutineStart.DEFAULT,
   action: suspend CoroutineScope.() -> Unit
 ): Job = launch(nonUrgentDispatcher, start, action)
-
-@ApiStatus.ScheduledForRemoval
-@Deprecated("Use startChildOnUiAsync without lifetime or use lifetimedCoroutineScope", ReplaceWith("startChildOnUiAsync(start, action)"))
-fun <T> CoroutineScope.startChildOnUiAsync(
-  lifetime: Lifetime,
-  start: CoroutineStart = CoroutineStart.DEFAULT,
-  action: suspend CoroutineScope.() -> T
-): Deferred<T> = startChildAsync(lifetime, uiDispatcher, start, action)
 
 fun <T> CoroutineScope.startChildOnUiAsync(
   start: CoroutineStart = CoroutineStart.DEFAULT,
@@ -224,26 +184,10 @@ fun <T> CoroutineScope.startChildOnUiAllowInliningAsync(
   action: suspend CoroutineScope.() -> T
 ): Deferred<T> = async(uiDispatcherWithInlining, start, action)
 
-@ApiStatus.ScheduledForRemoval
-@Deprecated("Use startChildSyncIOBackgroundAsync or startChildBackgroundAsync or use lifetimedCoroutineScope")
-fun <T> CoroutineScope.startChildIOBackgroundAsync(
-  lifetime: Lifetime = Lifetime.Eternal,
-  start: CoroutineStart = CoroutineStart.DEFAULT,
-  action: suspend CoroutineScope.() -> T
-): Deferred<T> = startChildAsync(lifetime, processIODispatcher, start, action)
-
 fun <T> CoroutineScope.startChildSyncIOBackgroundAsync(
   start: CoroutineStart = CoroutineStart.DEFAULT,
   action: () -> T
 ): Deferred<T> = async(processIODispatcher, start) { action() }
-
-@ApiStatus.ScheduledForRemoval
-@Deprecated("Use startChildBackgroundAsync without lifetime or use lifetimedCoroutineScope", ReplaceWith("startChildBackgroundAsync(start, action)"))
-fun <T> CoroutineScope.startChildLongBackgroundAsync(
-  lifetime: Lifetime = Lifetime.Eternal,
-  start: CoroutineStart = CoroutineStart.DEFAULT,
-  action: suspend CoroutineScope.() -> T
-) = startChildAsync(lifetime, applicationThreadPool, start, action)
 
 fun <T> CoroutineScope.startChildBackgroundAsync(
   start: CoroutineStart = CoroutineStart.DEFAULT,
