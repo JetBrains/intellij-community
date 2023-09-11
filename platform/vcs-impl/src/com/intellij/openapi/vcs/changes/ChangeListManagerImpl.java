@@ -43,10 +43,7 @@ import com.intellij.openapi.vcs.changes.actions.VcsStatisticsCollector;
 import com.intellij.openapi.vcs.changes.conflicts.ChangelistConflictTracker;
 import com.intellij.openapi.vcs.changes.shelf.ShelveChangesManager;
 import com.intellij.openapi.vcs.changes.ui.ChangeListDeltaListener;
-import com.intellij.openapi.vcs.impl.AbstractVcsHelperImpl;
-import com.intellij.openapi.vcs.impl.VcsEP;
-import com.intellij.openapi.vcs.impl.VcsInitObject;
-import com.intellij.openapi.vcs.impl.VcsStartupActivity;
+import com.intellij.openapi.vcs.impl.*;
 import com.intellij.openapi.vcs.readOnlyHandler.ReadonlyStatusHandlerImpl;
 import com.intellij.openapi.vcs.ui.VcsBalloonProblemNotifier;
 import com.intellij.openapi.vfs.ReadonlyStatusHandler;
@@ -578,7 +575,7 @@ public final class ChangeListManagerImpl extends ChangeListManagerEx implements 
 
         for (VcsDirtyScope scope : scopes) {
           if (scope.getVcs().isTrackingUnchangedContent()) {
-            scope.iterateExistingInsideScope(file -> {
+            VcsRootIterator.iterateExistingInsideScope(scope, file -> {
               LastUnchangedContentTracker.markUntouched(file); //todo what if it has become dirty again during update?
               return true;
             });

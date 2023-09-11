@@ -71,13 +71,15 @@ public abstract class VcsDirtyScope {
   public abstract Set<FilePath> getRecursivelyDirtyDirectories();
 
   /**
-   * Invoke the {@code iterator} for all files in the dirty scope.
-   * For recursively dirty directories all children are processed.
-   *
-   * @param iterator an iterator to invoke
+   * @deprecated Prefer not walking the VFS, or using {@link com.intellij.openapi.vcs.impl.VcsRootIterator} directly if necessary.
    */
+  @Deprecated
   public abstract void iterate(Processor<? super FilePath> iterator);
 
+  /**
+   * @deprecated Prefer not walking the VFS, or using {@link com.intellij.openapi.vcs.impl.VcsRootIterator} directly if necessary.
+   */
+  @Deprecated
   public abstract void iterateExistingInsideScope(Processor<? super VirtualFile> vf);
 
   public abstract boolean isEmpty();

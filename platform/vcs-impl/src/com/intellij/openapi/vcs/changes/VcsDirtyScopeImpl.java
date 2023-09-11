@@ -7,8 +7,8 @@ import com.intellij.openapi.vcs.AbstractVcs;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.ProjectLevelVcsManager;
 import com.intellij.openapi.vcs.VcsRoot;
+import com.intellij.openapi.vcs.impl.VcsRootIterator;
 import com.intellij.openapi.vcs.impl.projectlevelman.RecursiveFilePathSet;
-import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.Processor;
@@ -280,74 +280,12 @@ public final class VcsDirtyScopeImpl extends VcsModifiableDirtyScope {
 
   @Override
   public void iterate(final Processor<? super FilePath> iterator) {
-    if (myProject.isDisposed()) return;
-
-    for (VirtualFile root : myAffectedVcsRoots) {
-      RecursiveFilePathSet dirsByRoot = myDirtyDirectoriesRecursively.get(root);
-      if (dirsByRoot != null) {
-        for (FilePath dir : dirsByRoot.filePaths()) {
-          final VirtualFile vFile = dir.getVirtualFile();
-          if (vFile != null && vFile.isValid()) {
-            myVcsManager.iterateVcsRoot(vFile, iterator);
-          }
-        }
-      }
-    }
-
-    for (VirtualFile root : myAffectedVcsRoots) {
-      final Set<FilePath> files = myDirtyFiles.get(root);
-      if (files != null) {
-        for (FilePath file : files) {
-          iterator.process(file);
-          final VirtualFile vFile = file.getVirtualFile();
-          if (vFile != null && vFile.isValid() && vFile.isDirectory()) {
-            for (VirtualFile child : vFile.getChildren()) {
-              iterator.process(VcsUtil.getFilePath(child));
-            }
-          }
-        }
-      }
-    }
+    VcsRootIterator.iterate(this, iterator);
   }
 
   @Override
-  public void iterateExistingInsideScope(Processor<? super VirtualFile> processor) {
-    if (myProject.isDisposed()) return;
-
-    for (VirtualFile root : myAffectedVcsRoots) {
-      RecursiveFilePathSet dirsByRoot = myDirtyDirectoriesRecursively.get(root);
-      if (dirsByRoot != null) {
-        for (FilePath dir : dirsByRoot.filePaths()) {
-          final VirtualFile vFile = obtainVirtualFile(dir);
-          if (vFile != null && vFile.isValid()) {
-            myVcsManager.iterateVfUnderVcsRoot(vFile, processor);
-          }
-        }
-      }
-    }
-
-    for (VirtualFile root : myAffectedVcsRoots) {
-      final Set<FilePath> files = myDirtyFiles.get(root);
-      if (files != null) {
-        for (FilePath file : files) {
-          VirtualFile vFile = obtainVirtualFile(file);
-          if (vFile != null && vFile.isValid()) {
-            processor.process(vFile);
-            if (vFile.isDirectory()) {
-              for (VirtualFile child : vFile.getChildren()) {
-                processor.process(child);
-              }
-            }
-          }
-        }
-      }
-    }
-  }
-
-  @Nullable
-  private static VirtualFile obtainVirtualFile(FilePath file) {
-    VirtualFile vFile = file.getVirtualFile();
-    return vFile == null ? VfsUtil.findFileByIoFile(file.getIOFile(), false) : vFile;
+  public void iterateExistingInsideScope(Processor<? super VirtualFile> iterator) {
+    VcsRootIterator.iterateExistingInsideScope(this, iterator);
   }
 
   @Override
