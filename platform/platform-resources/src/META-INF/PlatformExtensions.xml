@@ -1573,7 +1573,7 @@
     <notificationRouter implementation="com.intellij.notification.impl.LocalNotificationRouter" order="last"/>
 
     <applicationInitializedListener implementation="com.intellij.ide.ui.IconDbMaintainer"/>
-    <applicationInitializedListener implementation="com.intellij.ide.ui.laf.darcula.MnemonicListener"/>
+    <ideEventQueueDispatcher implementation="com.intellij.ide.ui.laf.darcula.LaFMnemonicDispatcher"/>
   </extensions>
 
   <extensions defaultExtensionNs="org.jetbrains">

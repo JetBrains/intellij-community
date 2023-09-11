@@ -3,19 +3,16 @@
 
 package com.intellij.ide.ui.laf.darcula
 
-import com.intellij.ide.ApplicationInitializedListener
 import com.intellij.ide.IdeEventQueue
 import com.intellij.ide.bootstrap.createBaseLaF
 import com.intellij.ide.ui.UITheme
-import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.asContextElement
 import com.intellij.openapi.components.Service
-import com.intellij.openapi.components.serviceAsync
+import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.diagnostic.logger
-import com.intellij.openapi.extensions.ExtensionNotApplicableException
 import com.intellij.openapi.util.*
 import com.intellij.ui.ComponentUtil
 import com.intellij.ui.TableActions
@@ -114,6 +111,7 @@ open class DarculaLaf(private val isThemeAdapter: Boolean) : BasicLookAndFeel() 
 
   protected open val prefix: String
     get() = "themes/darcula"
+
   private fun initDarculaDefaults(defaults: UIDefaults) {
     if (!isThemeAdapter) {
       // it is important to use class loader of a current instance class (LaF in plugin)
@@ -257,11 +255,27 @@ private fun patchComboBox(defaults: UIDefaults) {
 
 private class RepaintMnemonicRequest(@JvmField val focusOwner: Component, @JvmField val pressed: Boolean)
 
+private class LaFMnemonicDispatcher : IdeEventQueue.EventDispatcher {
+  override fun dispatch(e: AWTEvent): Boolean {
+    if (e !is KeyEvent || e.keyCode != KeyEvent.VK_ALT) {
+      return false
+    }
+
+    DarculaLaf.isAltPressed = e.getID() == KeyEvent.KEY_PRESSED
+    val focusOwner = KeyboardFocusManager.getCurrentKeyboardFocusManager().focusOwner
+    check(service<MnemonicListenerService>().repaintRequests.tryEmit(focusOwner?.let {
+      RepaintMnemonicRequest(focusOwner = focusOwner, pressed = DarculaLaf.isAltPressed)
+    }))
+    return false
+  }
+}
+
 @OptIn(FlowPreview::class)
 @Service
 private class MnemonicListenerService(coroutineScope: CoroutineScope) {
   // null as "cancel all"
-  private val repaintRequests = MutableSharedFlow<RepaintMnemonicRequest?>(replay=1, onBufferOverflow = BufferOverflow.DROP_OLDEST)
+  @JvmField
+  val repaintRequests = MutableSharedFlow<RepaintMnemonicRequest?>(replay = 1, onBufferOverflow = BufferOverflow.DROP_OLDEST)
 
   init {
     coroutineScope.launch(CoroutineName("LaF Mnemonic Support")) {
@@ -277,21 +291,6 @@ private class MnemonicListenerService(coroutineScope: CoroutineScope) {
           }
         }
     }
-
-    IdeEventQueue.getInstance().addDispatcher(object : IdeEventQueue.EventDispatcher {
-      override fun dispatch(e: AWTEvent): Boolean {
-        if (e !is KeyEvent || e.keyCode != KeyEvent.VK_ALT) {
-          return false
-        }
-
-        DarculaLaf.isAltPressed = e.getID() == KeyEvent.KEY_PRESSED
-        val focusOwner = KeyboardFocusManager.getCurrentKeyboardFocusManager().focusOwner
-        check(repaintRequests.tryEmit(focusOwner?.let {
-          RepaintMnemonicRequest(focusOwner = focusOwner, pressed = DarculaLaf.isAltPressed)
-        }))
-        return false
-      }
-    }, coroutineScope)
   }
 
   private fun repaintMnemonics(focusOwner: Component, pressed: Boolean) {
@@ -308,20 +307,6 @@ private class MnemonicListenerService(coroutineScope: CoroutineScope) {
           }
         }
       }
-    }
-  }
-}
-
-private class MnemonicListener : ApplicationInitializedListener {
-  init {
-    if (ApplicationManager.getApplication().isHeadlessEnvironment) {
-      throw ExtensionNotApplicableException.create()
-    }
-  }
-
-  override suspend fun execute(asyncScope: CoroutineScope) {
-    asyncScope.launch {
-      serviceAsync<MnemonicListenerService>()
     }
   }
 }
