@@ -1,15 +1,12 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.gradle.tooling.internal;
 
+import com.intellij.gradle.toolingExtension.impl.modelBuilder.DefaultModelBuilderContext;
 import com.intellij.openapi.externalSystem.model.ExternalSystemException;
 import org.gradle.StartParameter;
 import org.gradle.api.Project;
-import org.gradle.api.internal.project.DefaultProject;
 import org.gradle.api.invocation.Gradle;
 import org.gradle.internal.impldep.com.google.common.collect.Lists;
-import org.gradle.internal.impldep.com.google.gson.GsonBuilder;
-import org.gradle.internal.logging.progress.ProgressLogger;
-import org.gradle.internal.logging.progress.ProgressLoggerFactory;
 import org.gradle.tooling.provider.model.ParameterizedToolingModelBuilder;
 import org.gradle.tooling.provider.model.ToolingModelBuilder;
 import org.gradle.util.GradleVersion;
@@ -40,7 +37,8 @@ public class ExtraModelBuilder implements ToolingModelBuilder {
     }
   }
 
-  private static final Logger LOG = LoggerFactory.getLogger(ExtraModelBuilder.class);
+  private static final Logger LOG = LoggerFactory.getLogger("org.jetbrains.plugins.gradle.toolingExtension.modelBuilder");
+
   @ApiStatus.Internal
   public static final String MODEL_BUILDER_SERVICE_MESSAGE_PREFIX = "ModelBuilderService message: ";
 
@@ -48,7 +46,7 @@ public class ExtraModelBuilder implements ToolingModelBuilder {
 
   @NotNull
   private final GradleVersion myCurrentGradleVersion;
-  private MyModelBuilderContext myModelBuilderContext;
+  private DefaultModelBuilderContext myModelBuilderContext;
 
   public ExtraModelBuilder() {
     this(GradleVersion.current());
@@ -94,7 +92,7 @@ public class ExtraModelBuilder implements ToolingModelBuilder {
 
     if (myModelBuilderContext == null) {
       Gradle rootGradle = getRootGradle(project.getGradle());
-      myModelBuilderContext = new MyModelBuilderContext(rootGradle);
+      myModelBuilderContext = new DefaultModelBuilderContext(rootGradle);
     }
 
     for (ModelBuilderService service : modelBuilderServices) {
@@ -156,61 +154,5 @@ public class ExtraModelBuilder implements ToolingModelBuilder {
       root = root.getParent();
     }
     return root;
-  }
-
-  private static final class MyModelBuilderContext implements ModelBuilderContext {
-
-    private final Map<DataProvider<?>, Object> myMap = new IdentityHashMap<>();
-    private final Gradle myGradle;
-
-    private MyModelBuilderContext(Gradle gradle) {
-      myGradle = gradle;
-    }
-
-    @Override
-    public @NotNull Gradle getGradle() {
-      return myGradle;
-    }
-
-    @NotNull
-    @Override
-    public <T> T getData(@NotNull DataProvider<T> provider) {
-      Object data = myMap.get(provider);
-      if (data == null) {
-        synchronized (myMap) {
-          Object secondAttempt = myMap.get(provider);
-          if (secondAttempt != null) {
-            //noinspection unchecked
-            return (T)secondAttempt;
-          }
-          T value = provider.create(this);
-          myMap.put(provider, value);
-          return value;
-        }
-      }
-      else {
-        //noinspection unchecked
-        return (T)data;
-      }
-    }
-
-    @ApiStatus.Experimental
-    @Override
-    public void report(@NotNull Project project, @NotNull Message message) {
-      if (GradleVersion.current().getBaseVersion().compareTo(GradleVersion.version("2.14.1")) < 0) {
-        return;
-      }
-      try {
-        ProgressLoggerFactory progressLoggerFactory = ((DefaultProject)project).getServices().get(ProgressLoggerFactory.class);
-        ProgressLogger operation = progressLoggerFactory.newOperation(ModelBuilderService.class);
-        String jsonMessage = new GsonBuilder().create().toJson(message);
-        operation.setDescription(MODEL_BUILDER_SERVICE_MESSAGE_PREFIX + jsonMessage);
-        operation.started();
-        operation.completed();
-      }
-      catch (Throwable e) {
-        LOG.warn("Failed to report model builder message", e);
-      }
-    }
   }
 }
