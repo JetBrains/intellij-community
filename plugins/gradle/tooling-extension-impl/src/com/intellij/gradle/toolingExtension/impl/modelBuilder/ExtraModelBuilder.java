@@ -1,6 +1,7 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.gradle.toolingExtension.impl.modelBuilder;
 
+import com.intellij.gradle.toolingExtension.impl.model.projectModel.ExternalProjectBuilderImpl;
 import com.intellij.openapi.externalSystem.model.ExternalSystemException;
 import org.gradle.StartParameter;
 import org.gradle.api.Project;
@@ -8,19 +9,18 @@ import org.gradle.api.invocation.Gradle;
 import org.gradle.internal.impldep.com.google.common.collect.Lists;
 import org.gradle.tooling.provider.model.ParameterizedToolingModelBuilder;
 import org.gradle.tooling.provider.model.ToolingModelBuilder;
-import org.gradle.util.GradleVersion;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.TestOnly;
 import org.jetbrains.plugins.gradle.model.internal.DummyModel;
 import org.jetbrains.plugins.gradle.model.internal.TurnOffDefaultTasks;
 import org.jetbrains.plugins.gradle.tooling.Message;
 import org.jetbrains.plugins.gradle.tooling.ModelBuilderContext;
 import org.jetbrains.plugins.gradle.tooling.ModelBuilderService;
-import com.intellij.gradle.toolingExtension.impl.model.projectModel.ExternalProjectBuilderImpl;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.*;
+import java.util.Collections;
+import java.util.List;
+import java.util.ServiceLoader;
 
 /**
  * @author Vladislav.Soroka
@@ -39,17 +39,9 @@ public class ExtraModelBuilder implements ToolingModelBuilder {
 
   private final List<ModelBuilderService> modelBuilderServices;
 
-  @NotNull
-  private final GradleVersion myCurrentGradleVersion;
   private DefaultModelBuilderContext myModelBuilderContext;
 
   public ExtraModelBuilder() {
-    this(GradleVersion.current());
-  }
-
-  @TestOnly
-  public ExtraModelBuilder(@NotNull GradleVersion gradleVersion) {
-    myCurrentGradleVersion = gradleVersion;
     modelBuilderServices = Lists.newArrayList(ServiceLoader.load(ModelBuilderService.class, ExtraModelBuilder.class.getClassLoader()));
   }
 
