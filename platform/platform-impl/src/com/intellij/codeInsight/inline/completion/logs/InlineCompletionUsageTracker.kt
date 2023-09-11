@@ -30,22 +30,22 @@ object InlineCompletionUsageTracker : CounterUsagesCollector() {
   override fun getGroup() = GROUP
 
   class Listener : InlineCompletionEventAdapter {
-    private var triggerTracker: TriggerTracker? = null
+    private var myInvocationTracker: InvocationTracker? = null
     private var showTracker: ShowTracker? = null
 
     override fun onRequest(event: InlineCompletionEventType.Request) {
-      triggerTracker = TriggerTracker(event).also {
+      myInvocationTracker = InvocationTracker(event).also {
         runReadAction { it.captureContext(event.request.editor, event.request.endOffset) }
       }
     }
 
     override fun onShow(event: InlineCompletionEventType.Show) {
       if (event.i == 0 && !event.element.text.isEmpty()) {
-        triggerTracker?.hasSuggestion()
+        myInvocationTracker?.hasSuggestion()
       }
       if (event.i == 0) {
-        // trigger tracker -> show tracker
-        showTracker = triggerTracker?.createShowTracker()
+        // invocation tracker -> show tracker
+        showTracker = myInvocationTracker?.createShowTracker()
         showTracker!!.firstShown(event.element)
       }
       if (event.i != 0) {
@@ -62,25 +62,25 @@ object InlineCompletionUsageTracker : CounterUsagesCollector() {
     }
 
     override fun onEmpty(event: InlineCompletionEventType.Empty) {
-      triggerTracker?.noSuggestions()
+      myInvocationTracker?.noSuggestions()
     }
 
     override fun onCompletion(event: InlineCompletionEventType.Completion) {
       if (!event.isActive || event.cause is CancellationException || event.cause is ProcessCanceledException) {
-        triggerTracker?.cancelled()
+        myInvocationTracker?.cancelled()
       }
       else if (event.cause != null) {
-        triggerTracker?.exception()
+        myInvocationTracker?.exception()
       }
-      triggerTracker?.finished()
-      triggerTracker = null
+      myInvocationTracker?.finished()
+      myInvocationTracker = null
     }
   }
 
   /**
-   * This tracker lives from the moment the inline completion triggered until the end of generation.
+   * This tracker lives from the moment the inline completion is invoked until the end of generation.
    */
-  class TriggerTracker(
+  class InvocationTracker(
     private val invocationTime: Long,
     private val request: InlineCompletionRequest,
     private val provider: Class<out InlineCompletionProvider>
@@ -130,19 +130,19 @@ object InlineCompletionUsageTracker : CounterUsagesCollector() {
       if (!finished.compareAndSet(false, true)) {
         error("Already finished")
       }
-      TriggeredEvent.log(listOf(
-        TriggeredEvents.REQUEST_ID.with(requestId),
+      InvokedEvent.log(listOf(
+        InvokedEvents.REQUEST_ID.with(requestId),
         *data.toTypedArray(),
-        TriggeredEvents.EVENT.with(request.event::class.java),
-        TriggeredEvents.PROVIDER.with(provider),
-        TriggeredEvents.TIME_TO_COMPUTE.with(System.currentTimeMillis() - invocationTime),
-        TriggeredEvents.OUTCOME.with(
+        InvokedEvents.EVENT.with(request.event::class.java),
+        InvokedEvents.PROVIDER.with(provider),
+        InvokedEvents.TIME_TO_COMPUTE.with(System.currentTimeMillis() - invocationTime),
+        InvokedEvents.OUTCOME.with(
           when {
             // fixed order
-            exception -> TriggeredEvents.Outcome.EXCEPTION
-            cancelled -> TriggeredEvents.Outcome.CANCELLED
-            hasSuggestions == true -> TriggeredEvents.Outcome.SHOW
-            hasSuggestions == false -> TriggeredEvents.Outcome.NO_SUGGESTIONS
+            exception -> InvokedEvents.Outcome.EXCEPTION
+            cancelled -> InvokedEvents.Outcome.CANCELLED
+            hasSuggestions == true -> InvokedEvents.Outcome.SHOW
+            hasSuggestions == false -> InvokedEvents.Outcome.NO_SUGGESTIONS
             else -> null
           }
         )
@@ -150,8 +150,8 @@ object InlineCompletionUsageTracker : CounterUsagesCollector() {
     }
   }
 
-  private object TriggeredEvents {
-    const val TRIGGERED_EVENT_ID = "inline.triggered"
+  private object InvokedEvents {
+    const val INVOKED_EVENT_ID = "inline.triggered"
 
     val REQUEST_ID = Long("request_id")
     val EVENT = EventFields.Class("event")
@@ -167,15 +167,15 @@ object InlineCompletionUsageTracker : CounterUsagesCollector() {
     }
   }
 
-  private val TriggeredEvent: VarargEventId = GROUP.registerVarargEvent(
-    TriggeredEvents.TRIGGERED_EVENT_ID,
-    TriggeredEvents.REQUEST_ID,
+  private val InvokedEvent: VarargEventId = GROUP.registerVarargEvent(
+    InvokedEvents.INVOKED_EVENT_ID,
+    InvokedEvents.REQUEST_ID,
     EventFields.Language,
     EventFields.CurrentFile,
-    TriggeredEvents.EVENT,
-    TriggeredEvents.PROVIDER,
-    TriggeredEvents.TIME_TO_COMPUTE,
-    TriggeredEvents.OUTCOME,
+    InvokedEvents.EVENT,
+    InvokedEvents.PROVIDER,
+    InvokedEvents.TIME_TO_COMPUTE,
+    InvokedEvents.OUTCOME,
   )
 
   /**
