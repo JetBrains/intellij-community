@@ -190,7 +190,12 @@ internal open class CloudConfigServerCommunicator(serverUrl: String? = null) : S
       try {
         FileUtil.writeToFile(tempFile, stream.readAllBytes())
         val snapshot = SettingsSnapshotZipSerializer.extractFromZip(tempFile.toPath())
-        return if (snapshot.isDeleted()) UpdateResult.FileDeletedFromServer else UpdateResult.Success(snapshot, version)
+        if (snapshot == null) {
+          LOG.info("cannot extract snapshot from tempFile ${tempFile.toPath()}. Implying there's no snapshot")
+          return UpdateResult.NoFileOnServer
+        } else {
+          return if (snapshot.isDeleted()) UpdateResult.FileDeletedFromServer else UpdateResult.Success(snapshot, version)
+        }
       }
       finally {
         FileUtil.delete(tempFile)

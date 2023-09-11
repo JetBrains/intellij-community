@@ -91,26 +91,31 @@ internal object SettingsSnapshotZipSerializer {
     return json.encodeToString(plugins)
   }
 
-  fun extractFromZip(zipFile: Path): SettingsSnapshot {
-    val tempDir = FileUtil.createTempDirectory("settings.sync.updates", null).toPath()
-    Decompressor.Zip(zipFile).extract(tempDir)
-    val metaInfoFolder = tempDir / METAINFO
-    val metaInfo = parseMetaInfo(metaInfoFolder)
+  fun extractFromZip(zipFile: Path): SettingsSnapshot? {
+    try {
+      val tempDir = FileUtil.createTempDirectory("settings.sync.updates", null).toPath()
+      Decompressor.Zip(zipFile).extract(tempDir)
+      val metaInfoFolder = tempDir / METAINFO
+      val metaInfo = parseMetaInfo(metaInfoFolder)
 
-    val fileStates = Files.walk(tempDir)
-      .filter { it.isRegularFile() && !it.startsWith(metaInfoFolder) }
-      .map { getFileStateFromFileWithDeletedMarker(it, tempDir) }
-      .collect(Collectors.toSet())
+      val fileStates = Files.walk(tempDir)
+        .filter { it.isRegularFile() && !it.startsWith(metaInfoFolder) }
+        .map { getFileStateFromFileWithDeletedMarker(it, tempDir) }
+        .collect(Collectors.toSet())
 
-    val (settingsFromProviders, filesFromProviders) = deserializeSettingsProviders(metaInfoFolder)
+      val (settingsFromProviders, filesFromProviders) = deserializeSettingsProviders(metaInfoFolder)
 
-    val additionalFiles = Files.walk(metaInfoFolder)
-      .filter { it.isRegularFile() && it.name != INFO && it.name != PLUGINS && !filesFromProviders.contains(it) }
-      .map { getFileStateFromFileWithDeletedMarker(it, metaInfoFolder) }
-      .collect(Collectors.toSet())
+      val additionalFiles = Files.walk(metaInfoFolder)
+        .filter { it.isRegularFile() && it.name != INFO && it.name != PLUGINS && !filesFromProviders.contains(it) }
+        .map { getFileStateFromFileWithDeletedMarker(it, metaInfoFolder) }
+        .collect(Collectors.toSet())
 
-    val plugins = deserializePlugins(metaInfoFolder)
-    return SettingsSnapshot(metaInfo, fileStates, plugins, settingsFromProviders, additionalFiles)
+      val plugins = deserializePlugins(metaInfoFolder)
+      return SettingsSnapshot(metaInfo, fileStates, plugins, settingsFromProviders, additionalFiles)
+    } catch (ex: Exception) {
+      LOG.warn("Cannot extract settings snapshot from zipFile", ex)
+      return null
+    }
   }
 
   internal fun deserializeSettingsProviders(containingFolder: Path): Pair<Map<String, Any>, Set<Path>> {
