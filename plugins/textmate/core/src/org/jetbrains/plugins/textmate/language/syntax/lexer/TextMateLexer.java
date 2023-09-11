@@ -64,7 +64,7 @@ public final class TextMateLexer {
 
   public void advanceLine(@NotNull Queue<Token> output) {
     int startLineOffset = myCurrentOffset;
-    int endLineOffset = myCurrentOffset;
+    int endLineOffset = startLineOffset;
     while (endLineOffset < myText.length()) {
       if (myText.charAt(endLineOffset) == '\n') {
         endLineOffset++;
@@ -75,23 +75,25 @@ public final class TextMateLexer {
 
     CharSequence lineCharSequence = myText.subSequence(startLineOffset, endLineOffset);
     if (myLineLimit >= 0 && lineCharSequence.length() > myLineLimit) {
-      parseLine(lineCharSequence.subSequence(0, myLineLimit), output);
+      myStates = parseLine(lineCharSequence.subSequence(0, myLineLimit), output, myStates, startLineOffset, 0, 0);
       addToken(output, endLineOffset);
     }
     else {
-      parseLine(lineCharSequence, output);
+      myStates = parseLine(lineCharSequence, output, myStates, startLineOffset, 0, 0);
     }
   }
 
-  private void parseLine(@NotNull CharSequence lineCharSequence, @NotNull Queue<Token> output) {
-    FList<TextMateLexerState> lastSuccessState = myStates;
+  private FList<TextMateLexerState> parseLine(@NotNull CharSequence lineCharSequence,
+                                              @NotNull Queue<Token> output,
+                                              @NotNull FList<TextMateLexerState> states,
+                                              int lineStartOffset,
+                                              int linePosition,
+                                              int lineByteOffset) {
+    FList<TextMateLexerState> lastSuccessState = states;
     int lastSuccessStateOccursCount = 0;
-    int lastMovedOffset = myCurrentOffset;
+    int lastMovedOffset = lineStartOffset;
 
-    int startLinePosition = myCurrentOffset;
-    int linePosition = 0;
-    int lineByteOffset = 0;
-    boolean matchBeginOfString = startLinePosition == 0;
+    boolean matchBeginOfString = lineStartOffset == 0;
     int anchorByteOffset = -1; // makes sense only for a line, cannot be used across lines
     String line = !lineCharSequence.isEmpty() && lineCharSequence.charAt(lineCharSequence.length() - 1) == '\n'
                   ? lineCharSequence.toString()
@@ -99,14 +101,14 @@ public final class TextMateLexer {
 
     StringWithId string = new StringWithId(line);
     while (true) {
-      final TextMateLexerState lexerState = myStates.getHead();
+      final TextMateLexerState lexerState = states.getHead();
       if (lexerState.syntaxRule.getStringAttribute(Constants.StringKey.WHILE) != null) {
         MatchData matchWhile = SyntaxMatchUtils.matchStringRegex(Constants.StringKey.WHILE, string, lineByteOffset, anchorByteOffset,
                                                                  matchBeginOfString, lexerState);
         if (!matchWhile.matched()) {
-          closeScopeSelector(output, linePosition + startLinePosition);
-          closeScopeSelector(output, linePosition + startLinePosition);
-          myStates = myStates.getTail();
+          closeScopeSelector(output, linePosition + lineStartOffset);
+          closeScopeSelector(output, linePosition + lineStartOffset);
+          states = states.getTail();
           // this is happening at line start, none of the previous states couldn't be run on this line, so no need to update anchorByteOffset
           continue;
         }
@@ -119,7 +121,7 @@ public final class TextMateLexer {
 
     Set<TextMateLexerState> localStates = new HashSet<>();
     while (true) {
-      TextMateLexerState lastState = myStates.getHead();
+      TextMateLexerState lastState = states.getHead();
       SyntaxNodeDescriptor lastRule = lastState.syntaxRule;
 
       TextMateLexerState currentState = SyntaxMatchUtils.matchFirst(lastRule, string, lineByteOffset, anchorByteOffset, matchBeginOfString,
@@ -128,34 +130,35 @@ public final class TextMateLexer {
       MatchData currentMatch = currentState.matchData;
 
       int endPosition;
-      MatchData endMatch = SyntaxMatchUtils.matchStringRegex(Constants.StringKey.END, string, lineByteOffset, anchorByteOffset, matchBeginOfString, lastState);
+      MatchData endMatch =
+        SyntaxMatchUtils.matchStringRegex(Constants.StringKey.END, string, lineByteOffset, anchorByteOffset, matchBeginOfString, lastState);
       if (endMatch.matched() && (!currentMatch.matched() ||
                                  currentMatch.byteOffset().start >= endMatch.byteOffset().start ||
                                  lastState.equals(currentState))) {
-        TextMateLexerState poppedState = myStates.getHead();
+        TextMateLexerState poppedState = states.getHead();
         if (poppedState.matchData.matched() && !poppedState.matchedEOL) {
           // if begin hasn't matched EOL, it was performed on the same line; we need to use its anchor
           anchorByteOffset = poppedState.matchData.byteOffset().end;
         }
-        myStates = myStates.getTail();
+        states = states.getTail();
 
         TextMateRange endRange = endMatch.charRange(line, string.bytes);
         int startPosition = endPosition = endRange.start;
-        closeScopeSelector(output, startPosition + startLinePosition); // closing content scope
+        closeScopeSelector(output, startPosition + lineStartOffset); // closing content scope
         if (lastRule.getCaptures(Constants.CaptureKey.END_CAPTURES) == null
             && lastRule.getCaptures(Constants.CaptureKey.CAPTURES) == null
             && lastRule.getCaptures(Constants.CaptureKey.BEGIN_CAPTURES) == null
             ||
-            parseCaptures(output, Constants.CaptureKey.END_CAPTURES, lastRule, endMatch, string, line, startLinePosition)
+            parseCaptures(output, Constants.CaptureKey.END_CAPTURES, lastRule, endMatch, string, line, lineStartOffset)
             ||
-            parseCaptures(output, Constants.CaptureKey.CAPTURES, lastRule, endMatch, string, line, startLinePosition)) {
+            parseCaptures(output, Constants.CaptureKey.CAPTURES, lastRule, endMatch, string, line, lineStartOffset)) {
           // move line position only if anything was captured or if there is nothing to capture at all
           endPosition = endRange.end;
         }
-        closeScopeSelector(output, endPosition + startLinePosition); // closing basic scope
+        closeScopeSelector(output, endPosition + lineStartOffset); // closing basic scope
 
         if (linePosition == endPosition && containsLexerState(localStates, poppedState) && poppedState.enterByteOffset == lineByteOffset) {
-          addToken(output, line.length() + startLinePosition);
+          addToken(output, line.length() + lineStartOffset);
           break;
         }
         localStates.remove(poppedState);
@@ -168,44 +171,44 @@ public final class TextMateLexer {
         endPosition = currentRange.end;
 
         if (currentRule.getStringAttribute(Constants.StringKey.BEGIN) != null) {
-          myStates = myStates.prepend(currentState);
+          states = states.prepend(currentState);
 
           String name = SyntaxMatchUtils.getStringAttribute(Constants.StringKey.NAME, currentRule, string, currentMatch);
-          openScopeSelector(output, name, startPosition + startLinePosition);
+          openScopeSelector(output, name, startPosition + lineStartOffset);
 
-          parseCaptures(output, Constants.CaptureKey.BEGIN_CAPTURES, currentRule, currentMatch, string, line, startLinePosition);
-          parseCaptures(output, Constants.CaptureKey.CAPTURES, currentRule, currentMatch, string, line, startLinePosition);
+          parseCaptures(output, Constants.CaptureKey.BEGIN_CAPTURES, currentRule, currentMatch, string, line, lineStartOffset);
+          parseCaptures(output, Constants.CaptureKey.CAPTURES, currentRule, currentMatch, string, line, lineStartOffset);
 
           String contentName = SyntaxMatchUtils.getStringAttribute(Constants.StringKey.CONTENT_NAME, currentRule, string, currentMatch);
-          openScopeSelector(output, contentName, endPosition + startLinePosition);
+          openScopeSelector(output, contentName, endPosition + lineStartOffset);
         }
         else if (currentRule.getStringAttribute(Constants.StringKey.MATCH) != null) {
           String name = SyntaxMatchUtils.getStringAttribute(Constants.StringKey.NAME, currentRule, string, currentMatch);
-          openScopeSelector(output, name, startPosition + startLinePosition);
-          parseCaptures(output, Constants.CaptureKey.CAPTURES, currentRule, currentMatch, string, line, startLinePosition);
-          closeScopeSelector(output, endPosition + startLinePosition);
+          openScopeSelector(output, name, startPosition + lineStartOffset);
+          parseCaptures(output, Constants.CaptureKey.CAPTURES, currentRule, currentMatch, string, line, lineStartOffset);
+          closeScopeSelector(output, endPosition + lineStartOffset);
         }
 
         if (linePosition == endPosition && containsLexerState(localStates, currentState)) {
-          addToken(output, line.length() + startLinePosition);
+          addToken(output, line.length() + lineStartOffset);
           break;
         }
         localStates.add(currentState);
       }
       else {
-        addToken(output, line.length() + startLinePosition);
+        addToken(output, line.length() + lineStartOffset);
         break;
       }
 
       // global looping protection
       if (lastMovedOffset < myCurrentOffset) {
-        lastSuccessState = myStates;
+        lastSuccessState = states;
         lastSuccessStateOccursCount = 0;
         lastMovedOffset = myCurrentOffset;
       }
-      else if (lastSuccessState.equals(myStates)) {
+      else if (lastSuccessState.equals(states)) {
         if (lastSuccessStateOccursCount > MAX_LOOPS_COUNT) {
-          addToken(output, line.length() + startLinePosition);
+          addToken(output, line.length() + lineStartOffset);
           break;
         }
         lastSuccessStateOccursCount++;
@@ -220,6 +223,7 @@ public final class TextMateLexer {
         myCheckCancelledCallback.run();
       }
     }
+    return states;
   }
 
   private static boolean containsLexerState(Set<TextMateLexerState> states, TextMateLexerState state) {
