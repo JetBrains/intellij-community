@@ -9,7 +9,6 @@ import org.jdom.Document
 import org.jdom.Element
 import org.jdom.JDOMException
 import org.jdom.input.SAXBuilder
-import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.NonNls
 import org.xml.sax.EntityResolver
 import org.xml.sax.InputSource
@@ -40,11 +39,6 @@ fun Element.addOptionTag(@NonNls name: String, value: String, @NonNls elementNam
   element.setAttribute(Constants.VALUE, value)
   addContent(element)
 }
-
-@Suppress("EXTENSION_SHADOWED_BY_MEMBER")
-@ApiStatus.ScheduledForRemoval
-@Deprecated("Use Element.getAttributeBooleanValue", ReplaceWith("getAttributeBooleanValue(name))"))
-fun Element.getAttributeBooleanValue(name: String): Boolean = java.lang.Boolean.parseBoolean(getAttributeValue(name))
 
 @Suppress("DEPRECATION")
 private val cachedSpecialSaxBuilder = ThreadLocal<SoftReference<SAXBuilder>>()

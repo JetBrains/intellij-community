@@ -3140,18 +3140,4 @@ public class StringUtil extends StringUtilRt {
   private static boolean isWhitespaceTabOrNewLine(char c) {
     return c == ' ' || c == '\t' || c == '\n';
   }
-
-  /**
-   * @deprecated use {@link com.intellij.ide.nls.NlsMessages#formatAndList(java.util.Collection)} instead to get properly localized concatenation
-   */
-  @SuppressWarnings("HardCodedStringLiteral")
-  @ApiStatus.ScheduledForRemoval
-  @Deprecated
-  public static @Nls @NotNull String naturalJoin(List<String> strings) {
-    if (strings.isEmpty()) return "";
-    if (strings.size() == 1) return strings.get(0);
-    String lastWord = strings.get(strings.size() - 1);
-    String leadingWords = join(strings.subList(0, strings.size() - 1), ", ");
-    return leadingWords + " and " + lastWord;
-  }
 }

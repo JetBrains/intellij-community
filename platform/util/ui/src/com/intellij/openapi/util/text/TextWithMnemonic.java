@@ -63,16 +63,6 @@ public final class TextWithMnemonic {
   }
 
   /**
-   * @return a mnemonic character (upper-cased) if mnemonic is set; 0 otherwise
-   * @deprecated use {@link #getMnemonicChar} or {@link #getMnemonicCode} instead
-   */
-  @Deprecated(forRemoval = true)
-  public int getMnemonic() {
-    char ch = getMnemonicChar();
-    return ch == KeyEvent.CHAR_UNDEFINED ? 0 : Character.toUpperCase(ch);
-  }
-
-  /**
    * @return an extended key code for a mnemonic character, or {@link KeyEvent#VK_UNDEFINED} if mnemonic is not set
    */
   public int getMnemonicCode() {
@@ -117,20 +107,6 @@ public final class TextWithMnemonic {
       return fromPlainText(matcher.replaceAll(""));
     }
     return this;
-  }
-
-  /**
-   * Sets mnemonic at given index
-   * @param index index, must be within the {@link #getText() text} string.
-   * @return a TextWithMnemonic object with a mnemonic set at given index
-   * @deprecated use {@link #withMnemonicIndex} or {@link #fromPlainTextWithIndex(String, int)} instead
-   */
-  @Deprecated(forRemoval = true)
-  public TextWithMnemonic setMnemonicAt(int index) {
-    if (index < 0 || index >= text.length() + mnemonicSuffix.length()) {
-      throw new IndexOutOfBoundsException(String.valueOf(index));
-    }
-    return index == mnemonicIndex ? this : new TextWithMnemonic(text, index, mnemonicSuffix);
   }
 
   /**

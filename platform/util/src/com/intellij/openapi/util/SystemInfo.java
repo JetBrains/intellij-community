@@ -176,13 +176,6 @@ public final class SystemInfo {
   }
 
   //<editor-fold desc="Deprecated stuff.">
-  /** @deprecated please use {@link Runtime#version()} (in the platform) or {@link JavaVersion} (in utils) */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval
-  @SuppressWarnings("Since15")
-  public static boolean isJavaVersionAtLeast(int major) {
-    return JavaVersion.current().feature >= major;
-  }
 
   /** @deprecated please use {@link Runtime#version()} (in the platform) or {@link JavaVersion} (in utils) */
   @Deprecated

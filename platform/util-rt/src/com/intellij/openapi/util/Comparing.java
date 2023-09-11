@@ -32,12 +32,6 @@ public final class Comparing {
     return arg1.equals(arg2);
   }
 
-  /** @deprecated same as {@link Arrays#equals(Object[], Object[])} */
-  @Deprecated @ApiStatus.ScheduledForRemoval
-  public static <T> boolean equal(@Nullable T[] arr1, @Nullable T[] arr2) {
-    return Arrays.equals(arr1, arr2);
-  }
-
   @Contract(value = "null,!null -> false; !null,null -> false; null,null -> true", pure = true)
   public static boolean equal(CharSequence s1, CharSequence s2) {
     return StringUtilRt.equal(s1, s2, true);
