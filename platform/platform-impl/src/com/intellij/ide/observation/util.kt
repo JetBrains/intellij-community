@@ -18,7 +18,7 @@ object Observation {
    * Suspends until configuration processes in the IDE are completed.
    */
   @JvmStatic
-  suspend fun awaitConfigurationPredicates(project: Project) {
+  suspend fun awaitConfiguration(project: Project) {
     indeterminateStep {
       withRawProgressReporter {
         while (true) {
