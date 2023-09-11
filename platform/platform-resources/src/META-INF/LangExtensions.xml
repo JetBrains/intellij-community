@@ -1539,6 +1539,10 @@
       id="inline.completion.escape" action="EditorEscape"
       implementationClass="com.intellij.codeInsight.inline.completion.EscapeInlineCompletionHandler"
       order="before hide-hints"/>
+    <editorActionHandler
+      id="inline.completion.backspace" action="EditorBackSpace"
+      implementationClass="com.intellij.codeInsight.inline.completion.EscapeInlineCompletionHandler"
+      order="before hide-hints"/>
     <editorFactoryListener implementation="com.intellij.codeInsight.inline.completion.listeners.InlineCompletionEditorListener"/>
     <actionPromoter implementation="com.intellij.codeInsight.inline.completion.InlineActionsPromoter"/>
 
