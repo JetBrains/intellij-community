@@ -105,8 +105,8 @@ class InlineCompletionHandler(private val scope: CoroutineScope) {
     withContext(Dispatchers.EDT) {
       resultFlow
         .onStart { isShowing.set(true) }
-        .onCompletion { complete(editor, it, context) }
         .onEmpty { trace(InlineCompletionEventType.Empty) }
+        .onCompletion { complete(editor, it, context) }
         .collectIndexed { index, it ->
           ensureActive()
 
