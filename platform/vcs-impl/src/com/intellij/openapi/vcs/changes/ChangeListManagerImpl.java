@@ -606,21 +606,24 @@ public final class ChangeListManagerImpl extends ChangeListManagerEx implements 
     return invalidated.isEmpty();
   }
 
-  private void iterateScopes(DataHolder dataHolder,
-                             List<? extends VcsModifiableDirtyScope> scopes,
+  private void iterateScopes(@NotNull DataHolder dataHolder,
+                             @NotNull List<? extends VcsModifiableDirtyScope> scopes,
                              @NotNull ProgressIndicator indicator) {
-    final ChangeListUpdater updater = dataHolder.getChangeListUpdater();
-    // do actual requests about file statuses
+    ChangeListUpdater updater = dataHolder.getChangeListUpdater();
+    FileHolderComposite composite = dataHolder.getComposite();
     Supplier<Boolean> disposedGetter = () -> myProject.isDisposed() || myUpdater.isStopped();
-    final UpdatingChangeListBuilder builder = new UpdatingChangeListBuilder(updater,
-                                                                            dataHolder.getComposite(), disposedGetter);
+
+    List<Supplier<@Nullable JComponent>> additionalInfos = new ArrayList<>();
 
     dataHolder.notifyStart();
     try {
       for (VcsModifiableDirtyScope scope : scopes) {
         indicator.checkCanceled();
 
-        actualUpdate(builder, scope, scope.getVcs(), dataHolder, updater, indicator);
+        // do actual requests about file statuses
+        UpdatingChangeListBuilder builder = new UpdatingChangeListBuilder(scope, updater, composite, disposedGetter);
+        actualUpdate(builder, scope, dataHolder, updater, indicator);
+        additionalInfos.addAll(builder.getAdditionalInfo());
 
         synchronized (myDataLock) {
           if (myUpdateException != null) break;
@@ -632,7 +635,7 @@ public final class ChangeListManagerImpl extends ChangeListManagerEx implements 
     }
 
     synchronized (myDataLock) {
-      myAdditionalInfo = builder.getAdditionalInfo();
+      myAdditionalInfo = additionalInfos;
     }
   }
 
@@ -697,16 +700,14 @@ public final class ChangeListManagerImpl extends ChangeListManagerEx implements 
 
   private void actualUpdate(@NotNull UpdatingChangeListBuilder builder,
                             @NotNull VcsModifiableDirtyScope scope,
-                            @NotNull AbstractVcs vcs,
                             @NotNull DataHolder dataHolder,
                             @NotNull ChangeListManagerGate gate,
                             @NotNull ProgressIndicator indicator) {
     dataHolder.notifyStartProcessingChanges(scope);
     try {
-      final ChangeProvider changeProvider = vcs.getChangeProvider();
+      AbstractVcs vcs = scope.getVcs();
+      ChangeProvider changeProvider = vcs.getChangeProvider();
       if (changeProvider != null) {
-        builder.setCurrent(scope);
-
         StructuredIdeActivity activity = VcsStatisticsCollector.logClmRefresh(myProject, vcs, scope.wasEveryThingDirty());
         changeProvider.getChanges(scope, builder, indicator, gate);
         activity.finished();

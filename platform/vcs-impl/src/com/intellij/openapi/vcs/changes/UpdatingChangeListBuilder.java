@@ -24,32 +24,31 @@ import java.util.function.Supplier;
 
 final class UpdatingChangeListBuilder implements ChangelistBuilder {
   private static final Logger LOG = Logger.getInstance(UpdatingChangeListBuilder.class);
-  private final ChangeListUpdater myChangeListUpdater;
-  private final FileHolderComposite myComposite;
-  private final Supplier<Boolean> myDisposedGetter;
-  private final ProjectLevelVcsManager myVcsManager;
 
-  private VcsDirtyScope myScope;
-  private FoldersCutDownWorker myFoldersCutDownWorker;
+  private final @NotNull VcsDirtyScope myScope;
+  private final @NotNull ChangeListUpdater myChangeListUpdater;
+  private final @NotNull FileHolderComposite myComposite;
+  private final @NotNull Supplier<Boolean> myDisposedGetter;
+
+  private final @NotNull ProjectLevelVcsManager myVcsManager;
+  private final @NotNull FoldersCutDownWorker myFoldersCutDownWorker;
 
   private final List<Supplier<@Nullable JComponent>> myAdditionalInfo = new ArrayList<>();
 
-  UpdatingChangeListBuilder(ChangeListUpdater changeListUpdater,
-                            FileHolderComposite composite,
-                            Supplier<Boolean> disposedGetter) {
+  UpdatingChangeListBuilder(@NotNull VcsDirtyScope scope,
+                            @NotNull ChangeListUpdater changeListUpdater,
+                            @NotNull FileHolderComposite composite,
+                            @NotNull Supplier<Boolean> disposedGetter) {
+    myScope = scope;
     myChangeListUpdater = changeListUpdater;
     myComposite = composite;
     myDisposedGetter = disposedGetter;
     myVcsManager = ProjectLevelVcsManager.getInstance(changeListUpdater.getProject());
+    myFoldersCutDownWorker = new FoldersCutDownWorker();
   }
 
   private void checkIfDisposed() {
     if (myDisposedGetter.get()) throw new ProcessCanceledException();
-  }
-
-  public void setCurrent(VcsDirtyScope scope) {
-    myScope = scope;
-    myFoldersCutDownWorker = new FoldersCutDownWorker();
   }
 
   @Override
