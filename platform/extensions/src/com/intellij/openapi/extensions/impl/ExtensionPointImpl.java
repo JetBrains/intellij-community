@@ -42,10 +42,10 @@ public abstract class ExtensionPointImpl<T> implements ExtensionPoint<T>, Iterab
   private final String name;
   private final String className;
 
-  // immutable list, never modified inplace, only swapped atomically
+  // immutable list, never modified in-place, only swapped atomically
   private volatile List<T> cachedExtensions;
-  // Since JDK 9 Arrays.ArrayList.toArray() doesn't return T[] array (https://bugs.openjdk.org/browse/JDK-6260652),
-  // but instead returns Object[], so, we cannot use toArray() anymore.
+  // Since JDK 9, Arrays.ArrayList.toArray() returns {@code Object[]} instead of {@code T[]}
+  // (https://bugs.openjdk.org/browse/JDK-6260652), so we cannot use it anymore.
   // Only array.clone should be used because of performance reasons (https://youtrack.jetbrains.com/issue/IDEA-198172).
   private volatile T @Nullable [] cachedExtensionsAsArray;
 
@@ -60,6 +60,7 @@ public abstract class ExtensionPointImpl<T> implements ExtensionPoint<T>, Iterab
   // guarded by this
   private ExtensionPointListener<T> @NotNull [] listeners = ExtensionPointListener.Companion.emptyArray();
 
+  @SuppressWarnings("FieldAccessedSynchronizedAndUnsynchronized")
   private @Nullable Class<T> extensionClass;
 
   private final boolean isDynamic;
@@ -247,6 +248,7 @@ public abstract class ExtensionPointImpl<T> implements ExtensionPoint<T>, Iterab
         if (result == null) {
           T[] array = processAdapters();
           cachedExtensionsAsArray = array;
+          //noinspection deprecation
           cachedExtensions = result = array.length == 0 ? Collections.emptyList() : ContainerUtil.immutableList(array);
         }
       }
@@ -263,6 +265,7 @@ public abstract class ExtensionPointImpl<T> implements ExtensionPoint<T>, Iterab
         array = cachedExtensionsAsArray;
         if (array == null) {
           cachedExtensionsAsArray = array = processAdapters();
+          //noinspection deprecation
           cachedExtensions = array.length == 0 ? Collections.emptyList() : ContainerUtil.immutableList(array);
         }
       }
@@ -271,10 +274,10 @@ public abstract class ExtensionPointImpl<T> implements ExtensionPoint<T>, Iterab
   }
 
   /**
-   * Do not use it if there is any extension point listener, because in this case behaviour is not predictable:
-   * events will be fired during iteration which probably not expected.
+   * Do not use it if there is any extension point listener, because in this case behavior is not predictable:
+   * events will be fired during iteration, which is probably not expected.
    * <p>
-   * Use only for interface extension points, not for bean.
+   * Use only for interface extension points, not for beans.
    * <p>
    * Due to internal reasons, there is no easy way to implement hasNext in a reliable manner,
    * so, `next` may return `null` (in this case, stop iteration).
@@ -420,7 +423,7 @@ public abstract class ExtensionPointImpl<T> implements ExtensionPoint<T>, Iterab
       result = Arrays.copyOf(result, extensionIndex);
     }
 
-    // don't count ProcessCanceledException as valid action to measure (later special category can be introduced if needed)
+    // do not count ProcessCanceledException as a valid action to measure (later special category can be introduced if needed)
     ActivityCategory category = componentManager.getActivityCategory(true);
     StartUpMeasurer.addCompletedActivity(startTime, extensionClass, category, /* pluginId = */ null, StartUpMeasurer.MEASURE_THRESHOLD);
     return result;
@@ -543,6 +546,7 @@ public abstract class ExtensionPointImpl<T> implements ExtensionPoint<T>, Iterab
     //noinspection unchecked
     T[] newArray = newList.toArray((T[])Array.newInstance(getExtensionClass(), 0));
     cachedExtensionsAsArray = newArray;
+    //noinspection deprecation
     cachedExtensions = ContainerUtil.immutableList(newArray);
     adapters = ContainerUtil.map(newList, it -> new ObjectComponentAdapter<>(it, pluginDescriptor, LoadingOrder.ANY));
     adaptersAreSorted = true;
@@ -624,8 +628,9 @@ public abstract class ExtensionPointImpl<T> implements ExtensionPoint<T>, Iterab
     if (!unregisterExtensions((__, adapter) ->
                                 !adapter.isInstanceCreated$intellij_platform_extensions() ||
                                 adapter.createInstance(componentManager) != extension, true)) {
-      // there is a possible case that particular extension was replaced in particular environment, e.g., Upsource
-      // replaces some IntelliJ extensions (important for CoreApplicationEnvironment), so, just log as error instead of throw error
+      // there is a possible case that a particular extension was replaced in a particular environment
+      // (e.g., Upsource replaces some platform extensions important for CoreApplicationEnvironment),
+      // so just log an error instead of throwing
       LOG.warn("Extension to be removed not found: " + extension);
     }
   }
@@ -639,8 +644,7 @@ public abstract class ExtensionPointImpl<T> implements ExtensionPoint<T>, Iterab
   }
 
   @Override
-  public final boolean unregisterExtensions(@NotNull BiPredicate<? super String, ? super ExtensionComponentAdapter> extensionClassNameFilter,
-                                            boolean stopAfterFirstMatch) {
+  public final boolean unregisterExtensions(@NotNull BiPredicate<String, ExtensionComponentAdapter> extensionClassNameFilter, boolean stopAfterFirstMatch) {
     List<Runnable> listenerCallbacks = new ArrayList<>();
     List<Runnable> priorityListenerCallbacks = new ArrayList<>();
     boolean result = unregisterExtensions(stopAfterFirstMatch, priorityListenerCallbacks, listenerCallbacks,
@@ -893,7 +897,7 @@ public abstract class ExtensionPointImpl<T> implements ExtensionPoint<T>, Iterab
 
   /**
    * {@link #clearCache} is not called.
-   * myAdapters is modified directly without copying - method must be called only during start-up.
+   * `myAdapters` is modified directly without copying - method must be called only during start-up.
    */
   public final synchronized void registerExtensions(@NotNull List<ExtensionDescriptor> extensionElements,
                                                     @NotNull PluginDescriptor pluginDescriptor,
@@ -964,8 +968,8 @@ public abstract class ExtensionPointImpl<T> implements ExtensionPoint<T>, Iterab
       }
     }
 
-    T[] extensionsCache = cachedExtensionsAsArray;
-    if (extensionsCache == null) {
+    T[] extensionCache = cachedExtensionsAsArray;
+    if (extensionCache == null) {
       for (ExtensionComponentAdapter adapter : getSortedAdapters()) {
         // findExtension is called for a lot of extension points - do not fail if listeners were added (e.g., FacetTypeRegistryImpl)
         try {
@@ -980,7 +984,7 @@ public abstract class ExtensionPointImpl<T> implements ExtensionPoint<T>, Iterab
       }
     }
     else {
-      for (T extension : extensionsCache) {
+      for (T extension : extensionCache) {
         if (aClass.isInstance(extension)) {
           //noinspection unchecked
           return (V)extension;

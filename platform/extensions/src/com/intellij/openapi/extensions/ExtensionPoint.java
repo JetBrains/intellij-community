@@ -30,7 +30,7 @@ public interface ExtensionPoint<T> {
 
   /**
    * Use {@link com.intellij.testFramework.PlatformTestUtil#maskExtensions}
-   * to register extension as first or to completely replace existing extensions in tests.
+   * to register an extension as the first one or to completely replace existing extensions in tests.
    */
   @TestOnly
   void registerExtension(T extension, @NotNull LoadingOrder order, @NotNull Disposable parentDisposable);
@@ -40,35 +40,33 @@ public interface ExtensionPoint<T> {
    */
   T @NotNull [] getExtensions();
 
-  @NotNull
-  List<T> getExtensionList();
+  @NotNull List<T> getExtensionList();
 
-  @NotNull
-  Stream<T> extensions();
+  @NotNull Stream<T> extensions();
 
   int size();
 
   /**
-   * @deprecated Use another solution to unregister not applicable extension, because this method instantiates all extensions.
+   * @deprecated Use another solution to unregister an inapplicable extension, because this method instantiates all extensions.
    */
   @Deprecated
   void unregisterExtension(T extension);
 
   /**
    * Unregisters an extension of the specified type.
-   *
+   * <p>
    * Please note that you can deregister service specifying empty implementation class.
-   *
+   * <p>
    * Consider to use {@link ExtensionNotApplicableException} instead.
    */
   void unregisterExtension(@NotNull Class<? extends T> extensionClass);
 
   /**
-   * Unregisters extensions for which the specified predicate returns false.
-   *
+   * Unregisters all extensions for which the specified predicate returns {@code false}.
+   * <p>
    * Consider to use {@link ExtensionNotApplicableException} instead.
    */
-  boolean unregisterExtensions(@NotNull BiPredicate<? super String, ? super ExtensionComponentAdapter> extensionClassNameFilter, boolean stopAfterFirstMatch);
+  boolean unregisterExtensions(@NotNull BiPredicate<String, ExtensionComponentAdapter> extensionClassNameFilter, boolean stopAfterFirstMatch);
 
   void addExtensionPointListener(@NotNull ExtensionPointListener<T> listener, boolean invokeForLoadedExtensions, @Nullable Disposable parentDisposable);
 
@@ -81,12 +79,11 @@ public interface ExtensionPoint<T> {
   void removeExtensionPointListener(@NotNull ExtensionPointListener<T> extensionPointListener);
 
   /**
-   * @return true if the EP allows adding/removing extensions at runtime
+   * @return {@code true} if the EP allows adding/removing extensions at runtime
    */
   boolean isDynamic();
 
-  @NotNull
-  PluginDescriptor getPluginDescriptor();
+  @NotNull PluginDescriptor getPluginDescriptor();
 
   enum Kind {INTERFACE, BEAN_CLASS}
 }
