@@ -35,7 +35,6 @@ import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.LinkedList;
 import java.util.List;
 
 public abstract class ASTDelegatePsiElement extends PsiElementBase {
@@ -74,7 +73,7 @@ public abstract class ASTDelegatePsiElement extends PsiElementBase {
     while (psiChild != null) {
       if (psiChild.getNode() instanceof CompositeElement) {
         if (result == null) {
-          result = new LinkedList<>();
+          result = new ArrayList<>();
         }
         result.add(psiChild);
       }
