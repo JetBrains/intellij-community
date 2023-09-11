@@ -43,6 +43,7 @@ import java.util.function.Supplier;
 import java.util.regex.Pattern;
 
 import static com.intellij.util.ui.UIUtil.DEFAULT_HGAP;
+import static com.intellij.util.ui.UIUtil.DEFAULT_VGAP;
 
 public final class ExistingTemplatesComponent {
   private static final Pattern SPLIT = Pattern.compile("(?<!/)/(?!/)"); // slash not preceded or followed by another slash
@@ -181,7 +182,7 @@ public final class ExistingTemplatesComponent {
     toolbar.setTargetComponent(patternTree);
     toolbar.setLayoutPolicy(ActionToolbar.NOWRAP_LAYOUT_POLICY);
     toolbar.setForceMinimumSize(true);
-    toolbar.setBorder(JBUI.Borders.empty(3));
+    toolbar.setBorder(JBUI.Borders.empty(DEFAULT_VGAP, 0));
 
     panel = new JPanel(new GridBagLayout());
     final var constraints = new GridBag().setDefaultWeightX(1.0);
