@@ -151,10 +151,6 @@ public class UnindexedFilesScanner extends FilesScanningTaskBase {
     return new ArrayList<>(uniqueIterators.values());
   }
 
-  public UnindexedFilesScanner(@NotNull Project project, @Nullable @NonNls String indexingReason) {
-    this(project, false, false, null, null, indexingReason, ScanningType.FULL);
-  }
-
   private void scan(@NotNull PerformanceWatcher.Snapshot snapshot,
                     @NotNull ProjectScanningHistoryImpl scanningHistory,
                     @NotNull CheckCancelOnlyProgressIndicator indicator,
