@@ -20,6 +20,10 @@
       "pressedBorderColor": "#c9c9c9"
     },
 
+    "AppInspector.GraphNode.background": "#fdfdfd",
+
+    "BigSpinner.background": "#ffffff",
+
     "BookmarkMnemonicAssigned": {
       "background": "#F7C777",
       "borderColor": "#F7C777",
@@ -40,6 +44,8 @@
       "UI": "com.intellij.laf.macos.MacIntelliJButtonUI"
     },
 
+    "Canvas.Tooltip.background": "#F7F7F7",
+
     "CellEditor.border.width": 2,
 
     "CheckBox": {
@@ -59,6 +65,8 @@
 
     "CompletionPopup.selectionBackground": "#c5dffc",
 
+    "ComplexPopup.Header.background": "#FFFFFF",
+
     "Component": {
       "errorFocusColor": "#f53b3b80",
       "focusColor": "#479cfc80",
@@ -67,6 +75,10 @@
       "inactiveWarningFocusColor": "#ffda9980",
       "warningFocusColor": "#e9ad4380"
     },
+
+    "Content.background": "#ffffff",
+
+    "Debugger.EvaluateExpression.background": "#ffffff",
 
     "BookmarkMnemonicCurrent": {
       "background": "#389FD6",
@@ -82,12 +94,23 @@
       "yOffset": 1
     },
 
+    "HelpBrowser": {
+      "AiEditor.background": "#FAF5FF",
+      "HelpBrowserMessage.Snippet.MoreLines.background": "#F2F2F2",
+      "UserMessage.background": "#E2E6EC"
+    },
+
     "Label.background": "#ececec",
 
     "Link": {
       "activeForeground": "#2470B3",
       "hoverForeground": "#2470B3",
       "pressedForeground": "#0058a6"
+    },
+
+    "List": {
+      "Tag.background": "#EBECF0",
+      "background": "#ffffff"
     },
 
     "Menu": {
@@ -114,6 +137,9 @@
     },
 
     "NavBar.borderColor": "#cdcdcd",
+
+    "NewUiOnboarding.Dialog.background": "#ffffff",
+
     "OptionButtonUI": "com.intellij.laf.macos.MacIntelliJOptionButtonUI",
     "Panel.background": "#ececec",
 
@@ -122,7 +148,14 @@
       "UI": "com.intellij.laf.macos.MacIntelliJPasswordFieldUI"
     },
 
+    "Plugins": {
+      "background": "#FFFFFF",
+      "SearchField.background": "#FFFFFF",
+      "SectionHeader.background": "#F7F7F7"
+    },
+
     "Popup": {
+      "background": "#ffffff",
       "Header.activeBackground": "#e0e0e0",
       "Header.inactiveBackground": "#ebebeb",
       "Toolbar.background": "#f5f5f5",
@@ -167,6 +200,72 @@
       "border": "com.intellij.ide.ui.laf.darcula.ui.DarculaRadioButtonBorder",
       "borderInsets": "3,3,3,0",
       "UI": "com.intellij.laf.macos.MacIntelliJRadioButtonUI"
+    },
+
+    "RecentProject": {
+      "Color1": {
+        "MainToolbarGradientStart": "#F5D4C1",
+        "Avatar": {
+          "Start": "#E08855",
+          "End": "#E9806F"
+        }
+      },
+      "Color2": {
+        "MainToolbarGradientStart": "#EEE2BD",
+        "Avatar": {
+          "Start": "#B08B14",
+          "End": "#BB7F19"
+        }
+      },
+      "Color3": {
+        "MainToolbarGradientStart": "#DBE7C9",
+        "Avatar": {
+          "Start": "#A1A359",
+          "End": "#87AA59"
+        }
+      },
+      "Color4": {
+        "MainToolbarGradientStart": "#CADFEA",
+        "Avatar": {
+          "Start": "#3B92B8",
+          "End": "#6183EC"
+        }
+      },
+      "Color5": {
+        "MainToolbarGradientStart": "#DBD8EF",
+        "Avatar": {
+          "Start": "#3574F0",
+          "End": "#7A64F0"
+        }
+      },
+      "Color6": {
+        "MainToolbarGradientStart": "#EED7F5",
+        "Avatar": {
+          "Start": "#C84D8F",
+          "End": "#A956CF"
+        }
+      },
+      "Color7": {
+        "MainToolbarGradientStart": "#DFCCF4",
+        "Avatar": {
+          "Start": "#955AE0",
+          "End": "#A84DE0"
+        }
+      },
+      "Color8": {
+        "MainToolbarGradientStart": "#BEE4E1",
+        "Avatar": {
+          "Start": "#24A394",
+          "End": "#279CCD"
+        }
+      },
+      "Color9": {
+        "MainToolbarGradientStart": "#CCEBD1",
+        "Avatar": {
+          "Start": "#5FAD65",
+          "End": "#3D968B"
+        }
+      }
     },
 
     "ScrollBar.background": "#F5F5F5",
@@ -223,15 +322,28 @@
       "UI": "com.intellij.ui.components.DarculaSearchFieldWithExtensionUI"
     },
 
+    "Toolbar.Floating.background": "#EDEDED",
+
+    "ToolTip": {
+      "Actions.background": "#EBEBEB",
+      "background": "#f7f7f7"
+    },
+
     "Tree": {
       "selectionBackground": "#084ad9",
       "hash": "#E6E6E6",
       "paintLines": false
     },
 
+    "MainWindow.FullScreeControl.Background": "#7A7B80",
+
     "MainToolbar": {
       "Icon.borderInsets": "10,10,10,10",
       "Dropdown.borderInsets": "12,6,12,6"
+    },
+
+    "VersionControl": {
+      "MarkerPopup.Toolbar.background": "#FFFFFF"
     },
 
     "window": "#ececec"
