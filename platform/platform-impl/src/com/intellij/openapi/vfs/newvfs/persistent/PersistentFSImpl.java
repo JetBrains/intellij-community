@@ -172,7 +172,9 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
   }
 
   private static void applyVfsLogPreferences() {
-    PersistentFSPaths fsRecordsPaths = new PersistentFSPaths(Path.of(FSRecords.getCachesDir()));
+    Path cachesDir = Path.of(FSRecords.getCachesDir());
+    if (!cachesDir.toFile().exists()) return;
+    PersistentFSPaths fsRecordsPaths = new PersistentFSPaths(cachesDir);
     Path vfsLogPath = fsRecordsPaths.getVfsLogStorage();
     if (!VfsLog.isVfsTrackingEnabled()) {
       // forcefully erase VfsLog storages if the feature is disabled so that when it will be enabled again we won't consider old data as a source for recovery
