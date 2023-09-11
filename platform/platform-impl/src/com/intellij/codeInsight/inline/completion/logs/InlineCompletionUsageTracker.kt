@@ -100,37 +100,15 @@ object InlineCompletionUsageTracker : CounterUsagesCollector() {
     private var cancelled: Boolean = false
     private var exception: Boolean = false
 
-    fun createShowTracker() = ShowTracker(requestId, invocationTime, ShownEvents.TRIGGER_FEATURES.with(ObjectEventData(triggerFeatures)))
+    fun createShowTracker() = ShowTracker(requestId, invocationTime, InlineTriggerFeatures.getEventPair(triggerFeatures))
 
     fun captureContext(editor: Editor, offset: Int) {
       val psiFile = PsiDocumentManager.getInstance(editor.project ?: return).getPsiFile(editor.document) ?: return
       val language = PsiUtilCore.getLanguageAtOffset(psiFile, offset)
       data.add(EventFields.Language.with(language))
       data.add(EventFields.CurrentFile.with(psiFile.language))
-      captureTriggerFeatures(editor, offset)
+      InlineTriggerFeatures.capture(editor, offset, triggerFeatures)
       assert(!finished.get())
-    }
-
-    fun captureTriggerFeatures(editor: Editor, offset: Int) {
-      triggerFeatures.clear()
-      val logicalPosition = editor.offsetToLogicalPosition(offset)
-      val lineNumber = logicalPosition.line
-      val columnNumber = logicalPosition.column
-
-      triggerFeatures.add(ShownEvents.LINE_NUMBER.with(lineNumber))
-      triggerFeatures.add(ShownEvents.COLUMN_NUMBER.with(columnNumber))
-
-      val lineStartOffset = editor.document.getLineStartOffset(lineNumber)
-      val lineEndOffset = editor.document.getLineEndOffset(lineNumber)
-
-      val textBeforeCaret = editor.document.getText(TextRange(lineStartOffset, offset))
-      val textAfterCaret = editor.document.getText(TextRange(offset, lineEndOffset))
-
-      val symbolsInLineBeforeCaret = textBeforeCaret.trim().length
-      val symbolsInLineAfterCaret = textAfterCaret.trim().length
-
-      triggerFeatures.add(ShownEvents.SYMBOLS_IN_LINE_BEFORE_CARET.with(symbolsInLineBeforeCaret))
-      triggerFeatures.add(ShownEvents.SYMBOLS_IN_LINE_AFTER_CARET.with(symbolsInLineAfterCaret))
     }
 
     fun noSuggestions() {
@@ -269,20 +247,6 @@ object InlineCompletionUsageTracker : CounterUsagesCollector() {
     val SHOWING_TIME = Long("showing_time")
     val OUTCOME = Enum<Outcome>("outcome")
 
-    val TRIGGER_FEATURES_KEY = "trigger_features"
-    val LINE_NUMBER = Int("line_number")
-    val COLUMN_NUMBER = Int("column_number")
-    val SYMBOLS_IN_LINE_BEFORE_CARET = Int("symbols_in_line_before_caret")
-    val SYMBOLS_IN_LINE_AFTER_CARET = Int("symbols_in_line_after_caret")
-
-    val TRIGGER_FEATURES = ObjectEventField(
-      TRIGGER_FEATURES_KEY,
-      LINE_NUMBER,
-      COLUMN_NUMBER,
-      SYMBOLS_IN_LINE_BEFORE_CARET,
-      SYMBOLS_IN_LINE_AFTER_CARET
-    )
-
     enum class Outcome { ACCEPT, REJECT }
   }
 
@@ -293,6 +257,6 @@ object InlineCompletionUsageTracker : CounterUsagesCollector() {
     ShownEvents.TIME_TO_SHOW,
     ShownEvents.SHOWING_TIME,
     ShownEvents.OUTCOME,
-    ShownEvents.TRIGGER_FEATURES
+    InlineTriggerFeatures.TRIGGER_FEATURES
   )
 }
