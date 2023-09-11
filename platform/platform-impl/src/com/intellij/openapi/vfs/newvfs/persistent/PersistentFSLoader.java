@@ -218,12 +218,12 @@ public final class PersistentFSLoader {
         return true;
       } else {
         LOG.info("Failed to recover caches from VfsLog");
+        return false;
       }
     }
     finally {
       vfsLog.dispose();
     }
-    return false;
   }
 
   private boolean recoverCachesFromVfsLog(@NotNull VfsLogImpl vfsLog) throws IOException {
