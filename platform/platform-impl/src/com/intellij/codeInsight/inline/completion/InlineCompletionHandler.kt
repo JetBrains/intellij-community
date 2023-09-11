@@ -105,8 +105,12 @@ class InlineCompletionHandler(private val scope: CoroutineScope) {
     withContext(Dispatchers.EDT) {
       resultFlow
         .onStart { isShowing.set(true) }
-        .onEmpty { trace(InlineCompletionEventType.Empty) }
-        .onCompletion { complete(editor, it, context) }
+        .onEmpty {
+          trace(InlineCompletionEventType.Empty)
+        }
+        .onCompletion {
+          complete(currentCoroutineContext().isActive, editor, it, context)
+        }
         .collectIndexed { index, it ->
           ensureActive()
 
@@ -165,8 +169,8 @@ class InlineCompletionHandler(private val scope: CoroutineScope) {
     }
   }
 
-  fun complete(editor: Editor, cause: Throwable?, context: InlineCompletionContext) {
-    trace(InlineCompletionEventType.Completion(cause))
+  fun complete(isActive: Boolean, editor: Editor, cause: Throwable?, context: InlineCompletionContext) {
+    trace(InlineCompletionEventType.Completion(cause, isActive))
     isShowing.set(false)
     if (cause != null) {
       hide(editor, false, context)

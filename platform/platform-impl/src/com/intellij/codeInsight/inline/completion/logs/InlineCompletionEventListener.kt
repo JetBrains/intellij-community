@@ -9,10 +9,13 @@ import java.util.*
 
 @ApiStatus.Experimental
 sealed class InlineCompletionEventType {
-  class Request(val lastInvocation: Long, val request: InlineCompletionRequest, val provider: Class<out InlineCompletionProvider>) : InlineCompletionEventType()
-  class Show(val element: InlineCompletionElement, val i: Int) : InlineCompletionEventType()
+  data class Request(val lastInvocation: Long,
+                     val request: InlineCompletionRequest,
+                     val provider: Class<out InlineCompletionProvider>) : InlineCompletionEventType()
+
+  data class Show(val element: InlineCompletionElement, val i: Int) : InlineCompletionEventType()
   object Empty : InlineCompletionEventType()
-  class Completion(val cause: Throwable?) : InlineCompletionEventType()
+  data class Completion(val cause: Throwable?, val isActive: Boolean) : InlineCompletionEventType()
   object Insert : InlineCompletionEventType()
   open class Hide(val explicit: Boolean) : InlineCompletionEventType()
 }

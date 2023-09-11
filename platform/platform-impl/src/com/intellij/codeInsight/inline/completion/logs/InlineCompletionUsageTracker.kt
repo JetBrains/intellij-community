@@ -1,9 +1,9 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.inline.completion.logs
 
+import com.intellij.codeInsight.inline.completion.InlineCompletionElement
 import com.intellij.codeInsight.inline.completion.InlineCompletionProvider
 import com.intellij.codeInsight.inline.completion.InlineCompletionRequest
-import com.intellij.codeInsight.inline.completion.InlineCompletionElement
 import com.intellij.internal.statistic.eventLog.EventLogGroup
 import com.intellij.internal.statistic.eventLog.events.EventFields
 import com.intellij.internal.statistic.eventLog.events.EventFields.Enum
@@ -49,7 +49,9 @@ object InlineCompletionUsageTracker : CounterUsagesCollector() {
       }
 
       if (triggerTracker != null) {
-        showTracker = ShowTracker(triggerTracker!!.invocationTime, triggerTracker!!.requestId, )
+        // trigger tracker -> show tracker
+        showTracker = ShowTracker(triggerTracker!!.invocationTime, triggerTracker!!.requestId)
+        triggerTracker = null
       }
 
       editor?.let { showTracker?.shown(it, event.element) }
@@ -68,17 +70,16 @@ object InlineCompletionUsageTracker : CounterUsagesCollector() {
     }
 
     override fun onCompletion(event: InlineCompletionEventType.Completion) {
-      if (event.cause is CancellationException || event.cause is ProcessCanceledException) {
+      if (!event.isActive || event.cause is CancellationException || event.cause is ProcessCanceledException) {
         triggerTracker?.cancelled()
-        return
       }
       else if (event.cause != null) {
         triggerTracker?.exception()
-        return
       }
       editor?.let {
         triggerTracker?.finished(it.project)
       }
+      triggerTracker = null
     }
   }
 
