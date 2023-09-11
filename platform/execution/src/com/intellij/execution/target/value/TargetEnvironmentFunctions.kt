@@ -5,7 +5,6 @@ package com.intellij.execution.target.value
 
 import com.intellij.execution.target.*
 import com.intellij.execution.target.local.LocalTargetEnvironment
-import com.intellij.execution.target.local.LocalTargetEnvironmentRequest
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.util.io.FileUtil
@@ -99,30 +98,6 @@ fun <T> Iterable<TargetEnvironmentFunction<T>>.joinToStringFunction(separator: C
 fun <T> TargetEnvironmentFunction<out Iterable<T>>.andThenJoinToString(separator: CharSequence,
                                                                        transform: ((T) -> CharSequence)? = null): TargetEnvironmentFunction<String> =
   AndThenJoinToStringTargetEnvironmentFunction(function = this, separator = separator, transform = transform)
-
-@ApiStatus.ScheduledForRemoval
-@Deprecated("Do not use strings for local path",
-            ReplaceWith("getTargetEnvironmentForLocalPath(Paths.get(localPath))", "java.nio.file.Paths"))
-fun TargetEnvironmentRequest.getTargetEnvironmentValueForLocalPath(localPath: String): TargetEnvironmentFunction<String> = getTargetEnvironmentValueForLocalPath(
-  Path.of(localPath))
-
-/**
- * Consider using [targetPath] function, which does not throw an exception if [localPath] cannot be mapped to a target path during the
- * resolution against [TargetEnvironment].
- */
-@ApiStatus.ScheduledForRemoval
-@Deprecated("Use the overloaded method that takes no `TargetEnvironmentRequest` as a receiver",
-            ReplaceWith("getTargetEnvironmentValueForLocalPath(localPath)"))
-fun TargetEnvironmentRequest.getTargetEnvironmentValueForLocalPath(localPath: Path): TargetEnvironmentFunction<String> {
-  if (this is LocalTargetEnvironmentRequest) return constant(localPath.toString())
-  return TraceableTargetEnvironmentFunction { targetEnvironment -> targetEnvironment.resolveLocalPath(localPath) }
-}
-
-@ApiStatus.ScheduledForRemoval
-@Deprecated("Do not use strings for local path",
-            ReplaceWith("getTargetEnvironmentValueForLocalPath(Paths.get(localPath))", "java.nio.file.Paths"))
-fun getTargetEnvironmentValueForLocalPath(localPath: String): TargetEnvironmentFunction<String> =
-  getTargetEnvironmentValueForLocalPath(Path.of(localPath))
 
 /**
  * Returns function [target,targetPath] that converts [localPath] to the targetPath on certain target.

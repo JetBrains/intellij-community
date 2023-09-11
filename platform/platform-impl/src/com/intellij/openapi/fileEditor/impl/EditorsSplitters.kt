@@ -697,13 +697,6 @@ open class EditorsSplitters internal constructor(
 
   fun containsWindow(window: EditorWindow): Boolean = windows.contains(window)
 
-  @ApiStatus.ScheduledForRemoval
-  @Suppress("DEPRECATION")
-  @Deprecated("Use {@link #getAllComposites()}")
-  fun getEditorComposites(): List<EditorWithProviderComposite> {
-    return windows.asSequence().flatMap { it.getComposites() }.filterIsInstance<EditorWithProviderComposite>().toList()
-  }
-
   fun getAllComposites(): List<EditorComposite> = windows.flatMap { it.getComposites() }
 
   @Suppress("DEPRECATION")

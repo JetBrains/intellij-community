@@ -614,15 +614,6 @@ public abstract class HeavyPlatformTestCase extends UsefulTestCase implements Da
     }
   }
 
-  /**
-   * @deprecated do not use. instead, start write action where necessary for the shortest time possible
-   */
-  @Deprecated(forRemoval = true)
-  protected boolean isRunInWriteAction() {
-    PluginException.reportDeprecatedUsage("this method", "do not use. instead, start write action where necessary for the shortest time possible");
-    return false;
-  }
-
   @Override
   protected void runTestRunnable(@NotNull ThrowableRunnable<Throwable> testRunnable) throws Throwable {
     boolean runInCommand = annotatedWith(WrapInCommand.class);

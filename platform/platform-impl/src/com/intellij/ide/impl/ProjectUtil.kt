@@ -51,7 +51,6 @@ import com.intellij.util.SystemProperties
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.intellij.util.io.basicAttributesIfExists
 import kotlinx.coroutines.*
-import kotlinx.coroutines.future.asCompletableFuture
 import org.jetbrains.annotations.ApiStatus.Internal
 import org.jetbrains.annotations.ApiStatus.ScheduledForRemoval
 import org.jetbrains.annotations.Nls
@@ -66,8 +65,6 @@ import java.io.File
 import java.io.IOException
 import java.nio.file.Files
 import java.nio.file.Path
-import java.util.concurrent.Callable
-import java.util.concurrent.CompletableFuture
 import kotlin.Result
 
 private val LOG = Logger.getInstance(ProjectUtil::class.java)
@@ -412,14 +409,6 @@ object ProjectUtil {
     return mode
   }
 
-  @ScheduledForRemoval
-  @Deprecated("Use {@link #isSameProject(Path, Project)} ",
-              ReplaceWith("projectFilePath != null && isSameProject(Path.of(projectFilePath), project)",
-                          "com.intellij.ide.impl.ProjectUtil.isSameProject", "java.nio.file.Path"))
-  fun isSameProject(projectFilePath: String?, project: Project): Boolean {
-    return projectFilePath != null && isSameProject(Path.of(projectFilePath), project)
-  }
-
   @JvmStatic
   fun isSameProject(projectFile: Path, project: Project): Boolean {
     val projectStore = project.stateStore
@@ -721,14 +710,6 @@ fun <T> runUnderModalProgressIfIsEdt(task: suspend CoroutineScope.() -> T): T {
 fun Project.executeOnPooledThread(task: Runnable) {
   @Suppress("DEPRECATION")
   coroutineScope.launch { blockingContext { task.run() } }
-}
-
-@ScheduledForRemoval
-@Internal
-@Deprecated(message = "temporary solution for old code in java", level = DeprecationLevel.ERROR)
-fun <T> Project.computeOnPooledThread(task: Callable<T>): CompletableFuture<T> {
-  @Suppress("DEPRECATION")
-  return coroutineScope.async { blockingContext { task.call() } }.asCompletableFuture()
 }
 
 @Suppress("DeprecatedCallableAddReplaceWith")

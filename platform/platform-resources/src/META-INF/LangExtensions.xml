@@ -93,8 +93,6 @@
                         serviceImplementation="com.intellij.psi.codeStyle.CodeStyleSettingsServiceImpl"/>
     <applicationService serviceInterface="com.intellij.formatting.FormattingProgressCallbackFactory"
                         serviceImplementation="com.intellij.formatting.FormattingProgressTaskFactory"/>
-    <applicationService serviceInterface="com.intellij.openapi.editor.ex.util.EditorFacade"
-                        serviceImplementation="com.intellij.formatting.EditorFacadeImpl"/>
     <applicationService serviceInterface="com.intellij.injected.editor.InjectionEditService"
                         serviceImplementation="com.intellij.codeInsight.intention.impl.InjectionEditServiceImpl"/>
 

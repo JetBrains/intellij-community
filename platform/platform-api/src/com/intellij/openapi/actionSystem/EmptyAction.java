@@ -83,7 +83,7 @@ public final class EmptyAction extends AnAction {
    */
   public static AnAction wrap(final AnAction action) {
     return action instanceof ActionGroup ?
-           new MyDelegatingActionGroup(((ActionGroup)action)) :
+           new ActionGroupWrapper(((ActionGroup)action)) :
            new MyDelegatingAction(action);
   }
 
@@ -94,17 +94,6 @@ public final class EmptyAction extends AnAction {
   public static class MyDelegatingAction extends AnActionWrapper {
     public MyDelegatingAction(@NotNull AnAction action) {
       super(action);
-    }
-  }
-
-  /**
-   * @deprecated Use {@link ActionGroupWrapper} instead.
-   */
-  @Deprecated(forRemoval = true)
-  public static class MyDelegatingActionGroup extends ActionGroupWrapper {
-
-    public MyDelegatingActionGroup(@NotNull ActionGroup group) {
-      super(group);
     }
   }
 }

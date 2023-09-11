@@ -770,14 +770,6 @@ public abstract class MasterDetailsComponent implements Configurable, DetailsCom
       this((Predicate<Object[]>)null);
     }
 
-    /**
-     * @deprecated Use {@link #MyDeleteAction(Predicate)}
-     */
-    @Deprecated(forRemoval = true)
-    public MyDeleteAction(@Nullable Condition<Object[]> availableCondition) {
-      this(availableCondition == null ? null : (Predicate<Object[]>)availableCondition::value);
-    }
-
     public MyDeleteAction(@Nullable Predicate<Object[]> availableCondition) {
       super(CommonBundle.messagePointer("button.delete"), CommonBundle.messagePointer("button.delete"), PlatformIcons.DELETE_ICON);
       registerCustomShortcutSet(CommonActionsPanel.getCommonShortcut(CommonActionsPanel.Buttons.REMOVE), myTree);

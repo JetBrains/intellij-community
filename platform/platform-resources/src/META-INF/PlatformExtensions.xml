@@ -430,9 +430,6 @@
     <applicationService serviceInterface="com.intellij.execution.process.ElevationServiceAvailability"
                         serviceImplementation="com.intellij.execution.process.elevation.ElevationServiceAvailabilityImpl"/>
 
-    <applicationService serviceInterface="com.intellij.execution.process.OSProcessManager"
-                        serviceImplementation="com.intellij.execution.process.impl.OSProcessManagerImpl"/>
-
     <applicationService serviceInterface="com.intellij.openapi.options.SchemeManagerFactory"
                         serviceImplementation="com.intellij.configurationStore.schemeManager.SchemeManagerFactoryBase$ApplicationSchemeManagerFactory"/>
     <projectService serviceInterface="com.intellij.openapi.options.SchemeManagerFactory"

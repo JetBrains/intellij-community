@@ -193,13 +193,6 @@ public final class ApplicationNamesInfo {
     return myScriptName;
   }
 
-  /** @deprecated separate command-line launchers are no longer supported. Please use {@link #getScriptName()} instead. */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval
-  public String getDefaultLauncherName() {
-    return getScriptName();
-  }
-
   /**
    * Returns motto of the product. Used as a comment for a desktop entry on XDG-compliant systems (read "Linux").
    */

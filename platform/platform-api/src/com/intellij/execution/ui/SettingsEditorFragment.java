@@ -351,14 +351,6 @@ public class SettingsEditorFragment<Settings, C extends JComponent> extends Sett
     return component;
   }
 
-  /**
-   * @deprecated use <code>getPriority</code> instead
-   */
-  @Deprecated(forRemoval = true)
-  public int getCommandLinePosition() {
-    return myPriority;
-  }
-
   public int getMenuPosition() { return 0; }
 
   @Override

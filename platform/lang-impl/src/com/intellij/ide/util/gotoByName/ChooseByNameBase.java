@@ -1048,14 +1048,6 @@ public abstract class ChooseByNameBase implements ChooseByNameViewModel {
     }
   }
 
-  /**
-   * @deprecated unused
-   */
-  @Deprecated(forRemoval = true)
-  public boolean hasPostponedAction() {
-    return false;
-  }
-
   protected abstract void showList();
 
   protected abstract void hideList();

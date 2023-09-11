@@ -9,7 +9,6 @@ import com.intellij.ui.dsl.builder.Row
 import com.intellij.ui.dsl.builder.bindSelected
 import com.intellij.ui.layout.Cell
 import com.intellij.ui.layout.CellBuilder
-import com.intellij.ui.layout.PropertyBinding
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
 import kotlin.reflect.KMutableProperty0
@@ -19,15 +18,6 @@ class CheckboxDescriptor(val name: @NlsContexts.Checkbox String,
                          @ApiStatus.Internal val setter: (value: Boolean) -> Unit,
                          internal val comment: @NlsContexts.DetailedDescription String? = null,
                          internal val groupName: @Nls String? = null) {
-
-  @ApiStatus.ScheduledForRemoval
-  @Deprecated("PropertyBinding is deprecated")
-  constructor(name: @NlsContexts.Checkbox String,
-              binding: PropertyBinding<Boolean>,
-              comment: @NlsContexts.DetailedDescription String? = null,
-              groupName: @Nls String? = null)
-    : this(name, binding.get, binding.set, comment, groupName)
-
   constructor(name: @NlsContexts.Checkbox String,
               mutableProperty: KMutableProperty0<Boolean>,
               comment: @NlsContexts.DetailedDescription String? = null,

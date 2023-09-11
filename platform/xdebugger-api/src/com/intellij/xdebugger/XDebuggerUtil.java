@@ -23,7 +23,6 @@ import com.intellij.xdebugger.settings.XDebuggerSettings;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.Comparator;
 import java.util.List;
 
 public abstract class XDebuggerUtil {
@@ -102,12 +101,6 @@ public abstract class XDebuggerUtil {
   public abstract <B extends XLineBreakpoint<?>> XBreakpointGroupingRule<B, ?> getGroupingByFileRule();
 
   public abstract <B extends XLineBreakpoint<?>> List<XBreakpointGroupingRule<B, ?>> getGroupingByFileRuleAsList();
-
-  /**
-   * @deprecated use {@link XBreakpointType#getBreakpointComparator()}
-   */
-  @Deprecated(forRemoval = true)
-  public abstract <B extends XBreakpoint<?>> Comparator<B> getDefaultBreakpointComparator(XBreakpointType<B, ?> type);
 
   public abstract <T extends XDebuggerSettings<?>> T getDebuggerSettings(Class<T> aClass);
 

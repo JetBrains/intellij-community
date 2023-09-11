@@ -61,19 +61,6 @@ public final class TipAndTrickBean implements PluginAware {
     return null;
   }
 
-  /**
-   * @deprecated Use {@code findById()} instead
-   */
-  @Deprecated(forRemoval = true)
-  public static @Nullable TipAndTrickBean findByFileName(String tipFileName) {
-    for (TipAndTrickBean tip : EP_NAME.getExtensionList()) {
-      if (Objects.equals(tipFileName, tip.fileName)) {
-        return tip;
-      }
-    }
-    return null;
-  }
-
   @Override
   public @NonNls String toString() {
     return "TipAndTrickBean{" +

@@ -6,7 +6,6 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.psi.codeStyle.MinusculeMatcher;
-import com.intellij.ui.ColoredTreeCellRenderer;
 import com.intellij.ui.SimpleColoredComponent;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.util.text.Matcher;
@@ -163,18 +162,6 @@ public final class SpeedSearchUtil {
     if (lastOffset < text.length()) {
       simpleColoredComponent.append(text.substring(lastOffset), plain);
     }
-  }
-
-  /**
-   * @deprecated use more generic {@link #applySpeedSearchHighlightingFiltered(JTree, Object, SimpleColoredComponent, boolean, boolean)}
-   */
-  @Deprecated(forRemoval = true)
-  public static void applySpeedSearchHighlightingFiltered(@NotNull JTree tree,
-                                                          @NotNull Object value,
-                                                          @NotNull ColoredTreeCellRenderer coloredTreeCellRenderer,
-                                                          boolean mainTextOnly,
-                                                          boolean selected) {
-    applySpeedSearchHighlightingFiltered(tree, value, (SimpleColoredComponent)coloredTreeCellRenderer, mainTextOnly, selected);
   }
 
   public static void applySpeedSearchHighlightingFiltered(@NotNull JTree tree,

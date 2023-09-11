@@ -560,11 +560,6 @@ public class XDebuggerUtilImpl extends XDebuggerUtil {
   }
 
   @Override
-  public <B extends XBreakpoint<?>> Comparator<B> getDefaultBreakpointComparator(final XBreakpointType<B, ?> type) {
-    return Comparator.comparing(type::getDisplayText);
-  }
-
-  @Override
   public void iterateLine(@NotNull Project project, @NotNull Document document, int line, @NotNull Processor<? super PsiElement> processor) {
     int lineStart;
     int lineEnd;

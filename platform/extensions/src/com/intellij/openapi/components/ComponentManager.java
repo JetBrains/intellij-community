@@ -77,20 +77,6 @@ public interface ComponentManager extends UserDataHolder, Disposable, AreaInstan
   @NotNull
   Condition<?> getDisposed();
 
-  /**
-   * @deprecated Use {@link #getServiceIfCreated(Class)} or {@link #getService(Class)}.
-   */
-  @ApiStatus.ScheduledForRemoval
-  @Deprecated
-  default <T> T getService(@NotNull Class<T> serviceClass, boolean createIfNeeded) {
-    if (createIfNeeded) {
-      return getService(serviceClass);
-    }
-    else {
-      return getServiceIfCreated(serviceClass);
-    }
-  }
-
   <T> T getService(@NotNull Class<T> serviceClass);
 
   /**

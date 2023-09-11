@@ -2,7 +2,6 @@
 package com.intellij.codeInsight.hint;
 
 import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.project.Project;
 import com.intellij.ui.HintHint;
 import com.intellij.ui.LightweightHint;
 import com.intellij.util.messages.Topic;
@@ -14,13 +13,6 @@ public interface EditorHintListener {
    */
   Topic<EditorHintListener> TOPIC = new Topic<>(EditorHintListener.class, Topic.BroadcastDirection.TO_DIRECT_CHILDREN);
 
-  /**
-   * @deprecated use overloaded method below
-   */
-  @Deprecated(forRemoval = true)
-  default void hintShown(Project project, @NotNull LightweightHint hint, int flags) { }
-
   default void hintShown(@NotNull Editor editor, @NotNull LightweightHint hint, int flags, @NotNull HintHint hintInfo) {
-    hintShown(editor.getProject(), hint, flags);
   }
 }
