@@ -137,7 +137,6 @@ public final class CompilerConfigurationImpl extends CompilerConfiguration imple
     }, project);
   }
 
-  // Overridden in Upsource
   @NotNull
   private ExcludedEntriesConfiguration createExcludedEntriesConfiguration(@NotNull Project project) {
     final ExcludedEntriesConfiguration cfg = new ExcludedEntriesConfiguration(project.getMessageBus().syncPublisher(ExcludedEntriesListener.TOPIC));

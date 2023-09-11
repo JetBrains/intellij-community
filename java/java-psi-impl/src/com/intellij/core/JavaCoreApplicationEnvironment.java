@@ -38,7 +38,7 @@ import com.intellij.util.QueryExecutor;
 import org.jetbrains.annotations.NotNull;
 
 
-@SuppressWarnings("UnusedDeclaration") // Upsource and Kotlin
+@SuppressWarnings("UnusedDeclaration") // Used in Kotlin Compiler
 public class JavaCoreApplicationEnvironment extends CoreApplicationEnvironment {
   public JavaCoreApplicationEnvironment(@NotNull Disposable parentDisposable) {
     this(parentDisposable, true);

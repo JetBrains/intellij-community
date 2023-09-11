@@ -57,8 +57,7 @@ public final class DefaultColorSchemesManager {
     }
   }
 
-  // public for Upsource
-  public void loadState(@NotNull Element state) {
+  private void loadState(@NotNull Element state) {
     List<DefaultColorsScheme> schemes = new ArrayList<>();
     for (Element schemeElement : state.getChildren(SCHEME_ELEMENT)) {
       boolean isUpdated = false;
