@@ -539,7 +539,7 @@ open class JBTabsImpl(private var project: Project?,
   override val isEditorTabs: Boolean
     get() = false
 
-  fun supportsCompression(): Boolean = supportCompression
+  fun supportCompression(): Boolean = supportCompression
 
   fun addNestedTabs(tabs: JBTabsImpl, parentDisposable: Disposable) {
     nestedTabs.add(tabs)
@@ -3293,18 +3293,18 @@ private class AccessibleTabPage(private val parent: JBTabsImpl,
   override fun isShowing(): Boolean = parent.isShowing
 
   override fun contains(p: Point): Boolean {
-    return bounds.contains(p)
+    return (bounds ?: return false).contains(p)
   }
 
-  override fun getLocationOnScreen(): Point {
+  override fun getLocationOnScreen(): Point? {
     val parentLocation = parent.locationOnScreen
-    val componentLocation = location
+    val componentLocation = location ?: return null
     componentLocation.translate(parentLocation.x, parentLocation.y)
     return componentLocation
   }
 
-  override fun getLocation(): Point {
-    val r = bounds
+  override fun getLocation(): Point? {
+    val r = bounds ?: return null
     return Point(r.x, r.y)
   }
 
@@ -3315,14 +3315,14 @@ private class AccessibleTabPage(private val parent: JBTabsImpl,
   /**
    * Returns the bounds of tab.  The bounds are with respect to the JBTabsImpl coordinate space.
    */
-  override fun getBounds(): Rectangle = tabLabel!!.bounds
+  override fun getBounds(): Rectangle? = tabLabel?.bounds
 
   override fun setBounds(r: Rectangle) {
     // do nothing
   }
 
-  override fun getSize(): Dimension {
-    val r = bounds
+  override fun getSize(): Dimension? {
+    val r = bounds ?: return null
     return Dimension(r.width, r.height)
   }
 
