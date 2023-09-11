@@ -12,10 +12,7 @@ import com.intellij.psi.impl.java.stubs.index.JavaStubIndexKeys;
 import com.intellij.psi.impl.source.tree.LightTreeUtil;
 import com.intellij.psi.impl.source.tree.java.AnnotationElement;
 import com.intellij.psi.impl.source.tree.java.PsiAnnotationImpl;
-import com.intellij.psi.stubs.IndexSink;
-import com.intellij.psi.stubs.StubElement;
-import com.intellij.psi.stubs.StubInputStream;
-import com.intellij.psi.stubs.StubOutputStream;
+import com.intellij.psi.stubs.*;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
@@ -71,5 +68,10 @@ public class JavaAnnotationElementType extends JavaStubElementType<PsiAnnotation
     int index = annotationText.indexOf('(');
     if (index >= 0) annotationText = annotationText.substring(0, index);
     return PsiNameHelper.getShortClassName(annotationText);
+  }
+
+  @Override
+  public boolean isAlwaysLeaf(StubBase<?> root) {
+    return root instanceof PsiJavaFileStub && ((PsiJavaFileStub)root).isCompiled();
   }
 }

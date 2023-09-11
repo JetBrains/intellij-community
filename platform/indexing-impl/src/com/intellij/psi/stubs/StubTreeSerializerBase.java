@@ -163,7 +163,7 @@ abstract class StubTreeSerializerBase<SerializationState> {
       if (root != stubList.get(0)) {
         throw new IllegalArgumentException("Serialization is supported only for root stubs");
       }
-      serializeStubList(stubList, out, storage, state);
+      serializeStubList((StubBase<?>)root, stubList, out, storage, state);
     } else {
       serializeChildren(root, out, state);
     }
@@ -192,8 +192,11 @@ abstract class StubTreeSerializerBase<SerializationState> {
 
         allStarts.set(start);
 
-        addStub(parentIndex, index, start, (IElementType)getClassByIdLocal(serializerId, null, state));
-        deserializeChildren(index);
+        ObjectStubSerializer<?, Stub> serializer = getClassByIdLocal(serializerId, null, state);
+        addStub(parentIndex, index, start, (IElementType)serializer);
+        if (!serializer.isAlwaysLeaf(root)) {
+          deserializeChildren(index);
+        }
       }
 
       private void addStub(int parentIndex, int index, int start, IElementType type) {
@@ -219,8 +222,9 @@ abstract class StubTreeSerializerBase<SerializationState> {
     stubList.setStubData(new LazyStubData(storage, parentsAndStarts, serializedStubs, allStarts));
   }
 
-  private void serializeStubList(StubList stubList,
-                                 DataOutput out,
+  private void serializeStubList(@NotNull StubBase<?> root, 
+                                 @NotNull StubList stubList,
+                                 @NotNull DataOutput out,
                                  AbstractStringEnumerator storage,
                                  @NotNull SerializationState state) throws IOException {
     if (!stubList.isChildrenLayoutOptimal()) {
@@ -237,7 +241,17 @@ abstract class StubTreeSerializerBase<SerializationState> {
       StubBase<?> stub = stubList.get(i);
       ObjectStubSerializer<Stub, Stub> serializer = writeSerializerId(stub, out, state);
       DataInputOutputUtil.writeINT(out, interner.internBytes(serializeStub(serializer, storage, stub, tempBuffer)));
-      DataInputOutputUtil.writeINT(out, stubList.getChildrenCount(stub.id));
+      int count = stubList.getChildrenCount(stub.id);
+      if (!serializer.isAlwaysLeaf(root)) {
+        DataInputOutputUtil.writeINT(out, count);
+      }
+      else {
+        if (count != 0) {
+          throw new IllegalStateException(
+            "Serializer reported that children are not possible, but they are present. Serializer = " +
+            serializer.getClass().getName() + "; Children count = " + count);
+        }
+      }
     }
 
     writeByteArray(out, interner.joinedBuffer.getInternalBuffer(), interner.joinedBuffer.size());
