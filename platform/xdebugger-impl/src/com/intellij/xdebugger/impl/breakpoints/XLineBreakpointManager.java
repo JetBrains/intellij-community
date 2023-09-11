@@ -99,7 +99,7 @@ public final class XLineBreakpointManager {
           if (file == null) return;
           myBreakpoints.get(file.getUrl()).forEach(XLineBreakpointManager.this::queueBreakpointUpdate);
         }
-      });
+      }, project);
     }
     myBreakpointsUpdateQueue = new MergingUpdateQueue("XLine breakpoints", 300, true, null, project, null, Alarm.ThreadToUse.POOLED_THREAD);
 
