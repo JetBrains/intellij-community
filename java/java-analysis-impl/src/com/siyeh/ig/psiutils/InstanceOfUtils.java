@@ -399,16 +399,24 @@ public final class InstanceOfUtils {
     return false;
   }
 
-  private static boolean isConflictingNameDeclaredInside(@Nullable PsiVariable myVariable,
-                                                         @Nullable PsiElement statement,
+  /**
+   * Checks if there are other variables declared with the same name inside a given element.
+   *
+   * @param myVariable        the variable to check for conflicts
+   * @param element         the statement where to search for conflicts
+   * @param checkRedeclared   true if re-declaration of the variable should be counted as conflict
+   * @return true if other variables with the same name are found inside the statement, false otherwise
+   */
+  public static boolean isConflictingNameDeclaredInside(@Nullable PsiVariable myVariable,
+                                                         @Nullable PsiElement element,
                                                          boolean checkRedeclared) {
-    if (myVariable == null || statement == null) return false;
+    if (myVariable == null || element == null) return false;
     PsiIdentifier identifier = myVariable.getNameIdentifier();
     if (identifier == null) {
       return false;
     }
     HasDeclaredVariableWithTheSameNameVisitor visitor = new HasDeclaredVariableWithTheSameNameVisitor(myVariable, checkRedeclared);
-    statement.accept(visitor);
+    element.accept(visitor);
     return visitor.hasConflict;
   }
 
