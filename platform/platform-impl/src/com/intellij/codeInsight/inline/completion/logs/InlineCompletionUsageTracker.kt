@@ -48,13 +48,14 @@ object InlineCompletionUsageTracker : CounterUsagesCollector() {
         triggerTracker?.hasSuggestion()
       }
 
-      if (triggerTracker != null) {
+      if (triggerTracker != null && event.i == 0) {
         // trigger tracker -> show tracker
         showTracker = ShowTracker(triggerTracker!!.invocationTime, triggerTracker!!.requestId)
-        triggerTracker = null
+        editor?.let { showTracker?.firstShown(it, event.element) }
       }
-
-      editor?.let { showTracker?.shown(it, event.element) }
+      if (event.i != 0) {
+        showTracker?.nextShown(event.element)
+      }
     }
 
     override fun onInsert(event: InlineCompletionEventType.Insert) {
@@ -84,7 +85,7 @@ object InlineCompletionUsageTracker : CounterUsagesCollector() {
   }
 
   /**
-   * This tracker lives from the moment the inline completion triggered until it appears on the screen or showing will be cancelled.
+   * This tracker lives from the moment the inline completion triggered until the end of generation.
    */
   class TriggerTracker(
     val invocationTime: Long,
@@ -186,20 +187,29 @@ object InlineCompletionUsageTracker : CounterUsagesCollector() {
    */
   class ShowTracker(private val invocationTime: Long, private val requestId: Long) {
     private val data = mutableListOf<EventPair<*>>()
-    private val shown = AtomicBoolean(false)
+    private val firstShown = AtomicBoolean(false)
     private val shownLogSent = AtomicBoolean(false)
     private var project: Project? = null
     private var showStartTime = 0L
+    private var suggestionLength = 0
 
-    fun shown(editor: Editor, element: InlineCompletionElement) {
-      if (!shown.compareAndSet(false, true)) {
-        error("Already shown")
+    fun firstShown(editor: Editor, element: InlineCompletionElement) {
+      if (!firstShown.compareAndSet(false, true)) {
+        error("Already first shown")
       }
       showStartTime = System.currentTimeMillis()
       data.add(ShownEvents.REQUEST_ID.with(requestId))
       project = editor.project
-      data.add(ShownEvents.SUGGESTION_LENGTH.with(element.text.length))
       data.add(ShownEvents.TIME_TO_SHOW.with(System.currentTimeMillis() - invocationTime))
+      nextShown(element)
+      assert(!shownLogSent.get())
+    }
+
+    fun nextShown(element: InlineCompletionElement) {
+      assert(firstShown.get()) {
+        "Call firstShown firstly"
+      }
+      suggestionLength += element.text.length
       assert(!shownLogSent.get())
     }
 
@@ -215,6 +225,7 @@ object InlineCompletionUsageTracker : CounterUsagesCollector() {
       if (!shownLogSent.compareAndSet(false, true)) {
         return
       }
+      data.add(ShownEvents.SUGGESTION_LENGTH.with(suggestionLength))
       data.add(ShownEvents.SHOWING_TIME.with(System.currentTimeMillis() - showStartTime))
       data.add(ShownEvents.OUTCOME.with(outcome))
       ShownEvent.log(project, data)
