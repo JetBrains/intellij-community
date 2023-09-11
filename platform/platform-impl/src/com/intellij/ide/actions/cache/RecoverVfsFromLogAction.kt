@@ -31,7 +31,7 @@ class RecoverVfsFromLogAction : RecoveryAction {
           if (recoveryPoint == null) {
             return emptyList()
           }
-          queryContext.transferLock().launchRecovery(recoveryScope.project, recoveryPoint)
+          queryContext.transferLock().launchRecovery(recoveryScope.project, recoveryPoint, true)
         }
       }
     }

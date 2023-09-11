@@ -139,7 +139,8 @@ class RecoverVfsFromLogService(val coroutineScope: CoroutineScope) {
   private suspend fun runRecovery(queryContext: VfsLogQueryContext,
                                   project: Project?,
                                   recoveryPoint: RecoveryPoint,
-                                  restart: Boolean = true) {
+                                  restart: Boolean,
+                                  calledOnVfsInit: Boolean) {
     val app = ApplicationManagerEx.getApplicationEx()
     withModalProgress(
       if (project != null) ModalTaskOwner.project(project) else ModalTaskOwner.guess(),
@@ -147,7 +148,7 @@ class RecoverVfsFromLogService(val coroutineScope: CoroutineScope) {
       TaskCancellation.nonCancellable()
     ) {
       LOG.info("recovering a VFS instance as of ${recoveryPoint}...")
-      prepareRecoveredCaches(queryContext, recoveryPoint.point, progressReporter!!.rawReporter())
+      recoverCaches(queryContext, recoveryPoint.point, progressReporter!!.rawReporter(), calledOnVfsInit)
     }
     if (restart) {
       LOG.info("restarting...")
@@ -158,13 +159,13 @@ class RecoverVfsFromLogService(val coroutineScope: CoroutineScope) {
   /**
    * consumes the context
    */
-  fun VfsLogQueryContext.launchRecovery(project: Project?, recoveryPoint: RecoveryPoint, restart: Boolean = true): Job? {
+  fun VfsLogQueryContext.launchRecovery(project: Project?, recoveryPoint: RecoveryPoint, restart: Boolean): Job? {
     if (!tryAcquireRecovery()) {
       close()
       return null
     }
     val job = coroutineScope.launch {
-      runRecovery(this@launchRecovery, project, recoveryPoint, restart)
+      runRecovery(this@launchRecovery, project, recoveryPoint, restart, false)
     }
     job.invokeOnCompletion {
       close()
@@ -180,21 +181,25 @@ class RecoverVfsFromLogService(val coroutineScope: CoroutineScope) {
     private val cachesDir = FSRecords.getCachesDir().toNioPath()
     private val recoveredCachesDir = cachesDir.parent / "recovered-caches"
 
+    // used only in vfs init
     fun recoverSynchronouslyFromLastRecoveryPoint(queryContext: VfsLogQueryContextEx): Boolean {
       // FIXME this modal should be at the call site, but it's java code that is not friendly to coroutines
       return invokeAndWaitIfNeeded {
         runWithModalProgressBlocking(ModalTaskOwner.guess(), IdeBundle.message("progress.cache.recover.from.logs.title"),
                                      TaskCancellation.nonCancellable()) {
           val recoveryPoint = getRecoveryPoints(queryContext).firstOrNull() ?: return@runWithModalProgressBlocking false
-          prepareRecoveredCaches(queryContext, recoveryPoint.point, rawProgressReporter)
+          recoverCaches(queryContext, recoveryPoint.point, rawProgressReporter, true)
           true
         }
       }
     }
 
-    private fun prepareRecoveredCaches(queryContext: VfsLogQueryContext,
-                                       point: OperationLogStorage.Iterator,
-                                       progressReporter: RawProgressReporter?) {
+    private fun recoverCaches(queryContext: VfsLogQueryContext,
+                              point: OperationLogStorage.Iterator,
+                              progressReporter: RawProgressReporter?,
+                              calledOnVfsInit: Boolean) {
+      CacheRecoveryUsageCollector.recordRecoveryFromLogStarted(calledOnVfsInit)
+
       try {
         // TODO FileBasedIndexTumbler disable indexing while recovery is in progress
         val vfsLogEx = serviceIfCreated<PersistentFS>()?.vfsLog as? VfsLogEx
@@ -209,6 +214,19 @@ class RecoverVfsFromLogService(val coroutineScope: CoroutineScope) {
       val result = VfsRecoveryUtils.recoverFromPoint(point, queryContext, cachesDir, recoveredCachesDir,
                                                      progressReporter = progressReporter)
       LOG.info(result.toString())
+      CacheRecoveryUsageCollector.recordRecoveryFromLogFinishedEvent(
+        calledOnVfsInit,
+        result.recoveryTime.inWholeMilliseconds,
+        result.fileStateCounts[VfsRecoveryUtils.RecoveryState.CONNECTED] ?: -1,
+        result.fileStateCounts[VfsRecoveryUtils.RecoveryState.BOTCHED] ?: -1,
+        result.duplicateChildrenLost,
+        result.duplicateChildrenDeduplicated,
+        result.recoveredAttributesCount,
+        result.droppedObsoleteAttributesCount,
+        result.recoveredContentsCount,
+        result.lostContentsCount
+      )
+
       LOG.info("creating a storages replacement marker...")
       VfsRecoveryUtils.createStoragesReplacementMarker(cachesDir, recoveredCachesDir)
     }
