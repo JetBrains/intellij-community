@@ -2,8 +2,6 @@
 package com.intellij.codeInsight.inline.completion
 
 import com.intellij.codeInsight.hint.HintManagerImpl
-import com.intellij.codeInsight.inline.completion.InlineCompletionContext.Companion.getInlineCompletionContextOrNull
-import com.intellij.codeInsight.inline.completion.InlineCompletionContext.Companion.resetInlineCompletionContext
 import com.intellij.openapi.actionSystem.CommonDataKeys
 import com.intellij.openapi.actionSystem.DataContext
 import com.intellij.openapi.editor.Caret
@@ -17,11 +15,11 @@ import org.jetbrains.annotations.ApiStatus
 class InsertInlineCompletionAction : EditorAction(InsertInlineCompletionHandler()), HintManagerImpl.ActionToIgnore {
   class InsertInlineCompletionHandler : EditorWriteActionHandler() {
     override fun executeWriteAction(editor: Editor, caret: Caret?, dataContext: DataContext) {
-      editor.getInlineCompletionContextOrNull()?.insert()
+      InlineCompletionHandler.getOrNull(editor)?.insert(editor)
     }
 
     override fun isEnabledForCaret(editor: Editor, caret: Caret, dataContext: DataContext): Boolean {
-      return editor.getInlineCompletionContextOrNull()?.startOffset == caret.offset
+      return InlineCompletionContext.getOrNull(editor)?.startOffset == caret.offset
     }
   }
 }
@@ -29,7 +27,8 @@ class InsertInlineCompletionAction : EditorAction(InsertInlineCompletionHandler(
 @ApiStatus.Experimental
 class EscapeInlineCompletionHandler(val originalHandler: EditorActionHandler) : EditorActionHandler() {
   public override fun doExecute(editor: Editor, caret: Caret?, dataContext: DataContext) {
-    editor.resetInlineCompletionContext()
+    val context = InlineCompletionContext.getOrNull(editor) ?: return
+    InlineCompletionHandler.getOrNull(editor)?.hide(editor, false, context)
 
     if (originalHandler.isEnabled(editor, caret, dataContext)) {
       originalHandler.execute(editor, caret, dataContext)
@@ -37,7 +36,7 @@ class EscapeInlineCompletionHandler(val originalHandler: EditorActionHandler) : 
   }
 
   public override fun isEnabledForCaret(editor: Editor, caret: Caret, dataContext: DataContext): Boolean {
-    if (editor.getInlineCompletionContextOrNull() != null) {
+    if (InlineCompletionHandler.getOrNull(editor) != null) {
       return true
     }
 

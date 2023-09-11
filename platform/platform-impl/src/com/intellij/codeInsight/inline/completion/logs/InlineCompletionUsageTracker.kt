@@ -1,9 +1,9 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.inline.completion.logs
 
-import com.intellij.codeInsight.inline.completion.InlineCompletionElement
-import com.intellij.codeInsight.inline.completion.InlineCompletionEvent
 import com.intellij.codeInsight.inline.completion.InlineCompletionProvider
+import com.intellij.codeInsight.inline.completion.InlineCompletionRequest
+import com.intellij.codeInsight.inline.completion.render.InlineCompletionElement
 import com.intellij.internal.statistic.eventLog.EventLogGroup
 import com.intellij.internal.statistic.eventLog.events.EventFields
 import com.intellij.internal.statistic.eventLog.events.EventFields.Enum
@@ -13,15 +13,17 @@ import com.intellij.internal.statistic.eventLog.events.EventFields.NullableEnum
 import com.intellij.internal.statistic.eventLog.events.EventPair
 import com.intellij.internal.statistic.eventLog.events.VarargEventId
 import com.intellij.internal.statistic.service.fus.collectors.CounterUsagesCollector
+import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.editor.Editor
+import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.util.PsiUtilCore
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import org.jetbrains.annotations.ApiStatus
 import java.util.concurrent.atomic.AtomicBoolean
+import kotlin.coroutines.cancellation.CancellationException
 import kotlin.random.Random
-
 
 @ApiStatus.Experimental
 object InlineCompletionUsageTracker : CounterUsagesCollector() {
@@ -29,14 +31,63 @@ object InlineCompletionUsageTracker : CounterUsagesCollector() {
 
   override fun getGroup() = GROUP
 
+  class Listener : InlineCompletionEventAdapter {
+    private var triggerTracker: TriggerTracker? = null
+    private var showTracker: ShowTracker? = null
+    private var editor: Editor? = null
+
+    override fun onRequest(event: InlineCompletionEventType.Request) {
+      editor = event.request.editor
+      triggerTracker = TriggerTracker(event).also {
+        runReadAction { it.captureContext(event.request.editor, event.request.endOffset) }
+      }
+    }
+
+    override fun onShow(event: InlineCompletionEventType.Show) {
+      if (event.i == 0 && !event.element.text.isEmpty()) {
+        triggerTracker?.hasSuggestion()
+      }
+
+      if (triggerTracker != null) {
+        showTracker = ShowTracker(triggerTracker!!.invocationTime, triggerTracker!!.requestId, )
+      }
+
+      editor?.let { showTracker?.shown(it, event.element) }
+    }
+
+    override fun onInsert(event: InlineCompletionEventType.Insert) {
+      showTracker?.accepted()
+    }
+
+    override fun onHide(event: InlineCompletionEventType.Hide) {
+      showTracker?.rejected()
+    }
+
+    override fun onEmpty(event: InlineCompletionEventType.Empty) {
+      triggerTracker?.noSuggestions()
+    }
+
+    override fun onCompletion(event: InlineCompletionEventType.Completion) {
+      if (event.cause is CancellationException || event.cause is ProcessCanceledException) {
+        triggerTracker?.cancelled()
+      }
+      else if (event.cause != null) {
+        triggerTracker?.exception()
+      }
+      editor?.let { triggerTracker?.finished(it.project) }
+    }
+  }
+
   /**
    * This tracker lives from the moment the inline completion triggered until it appears on the screen or showing will be cancelled.
    */
   class TriggerTracker(
     val invocationTime: Long,
-    private val event: InlineCompletionEvent,
-    private val provider: InlineCompletionProvider
+    private val request: InlineCompletionRequest,
+    private val provider: Class<out InlineCompletionProvider>
   ) {
+    constructor(event: InlineCompletionEventType.Request) : this(event.lastInvocation, event.request, event.provider)
+
     val requestId = Random.nextLong()
     private val finished = AtomicBoolean(false)
     private val data = mutableListOf<EventPair<*>>()
@@ -80,7 +131,7 @@ object InlineCompletionUsageTracker : CounterUsagesCollector() {
       TriggeredEvent.log(project, listOf(
         TriggeredEvents.REQUEST_ID.with(requestId),
         *data.toTypedArray(),
-        TriggeredEvents.EVENT.with(event::class.java),
+        TriggeredEvents.EVENT.with(request.event::class.java),
         TriggeredEvents.PROVIDER.with(provider::class.java),
         TriggeredEvents.TIME_TO_COMPUTE.with(System.currentTimeMillis() - invocationTime),
         TriggeredEvents.OUTCOME.with(

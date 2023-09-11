@@ -30,11 +30,6 @@ data class InlineCompletionRequest(
 ) : UserDataHolderBase()
 
 @ApiStatus.Experimental
-data class InlineCompletionElement(val text: String) {
-  fun withText(text: String) = InlineCompletionElement(text)
-}
-
-@ApiStatus.Experimental
 sealed interface InlineCompletionEvent {
   fun toRequest(): InlineCompletionRequest?
 

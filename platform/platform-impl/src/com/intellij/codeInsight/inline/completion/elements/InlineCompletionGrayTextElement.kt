@@ -1,7 +1,11 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.codeInsight.inline.completion.render
+@file:Suppress("PackageDirectoryMismatch")
 
-import com.intellij.codeInsight.inline.completion.InlineCompletionElement
+package com.intellij.codeInsight.inline.completion
+
+import com.intellij.codeInsight.inline.completion.render.InlineBlockElementRenderer
+import com.intellij.codeInsight.inline.completion.render.InlineCompletionBlock
+import com.intellij.codeInsight.inline.completion.render.InlineSuffixRenderer
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.EditorCustomElementRenderer
 import com.intellij.openapi.editor.Inlay
@@ -16,7 +20,7 @@ import java.awt.Graphics
 import java.awt.Rectangle
 
 @ApiStatus.Experimental
-class EditorInlineInlineCompletion(private val editor: Editor) : InlineCompletion {
+data class InlineCompletionGrayTextElement(val text: String) : InlineCompletionBlock {
   private var suffixInlay: Inlay<*>? = null
   private var blockInlay: Inlay<*>? = null
 
@@ -32,15 +36,14 @@ class EditorInlineInlineCompletion(private val editor: Editor) : InlineCompletio
     return bounds
   }
 
-  override fun render(proposal: InlineCompletionElement, offset: Int) {
-    if (proposal.text.isEmpty()) return
-    val lines = proposal.text.lines()
+  override fun render(editor: Editor, offset: Int) {
+    if (text.isEmpty()) return
+    val lines = text.lines()
     renderSuffix(editor, lines, offset)
     if (lines.size > 1) {
       renderBlock(lines.drop(1), editor, offset)
     }
   }
-
 
   override fun reset() {
     blockInlay?.let {

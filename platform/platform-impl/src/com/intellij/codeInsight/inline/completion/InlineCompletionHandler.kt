@@ -1,15 +1,13 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.inline.completion
 
-import com.intellij.codeInsight.CodeInsightActionHandler
-import com.intellij.codeInsight.inline.completion.InlineCompletionContext.Companion.getInlineCompletionContextOrNull
-import com.intellij.codeInsight.inline.completion.InlineCompletionContext.Companion.initOrGetInlineCompletionContext
-import com.intellij.codeInsight.inline.completion.InlineCompletionContext.Companion.initOrGetInlineCompletionContextWithPlaceholder
-import com.intellij.codeInsight.inline.completion.InlineCompletionContext.Companion.removeInlineCompletionContext
-import com.intellij.codeInsight.inline.completion.InlineState.Companion.getInlineCompletionState
-import com.intellij.codeInsight.inline.completion.InlineState.Companion.initOrGetInlineCompletionState
+import com.intellij.codeInsight.inline.completion.logs.InlineCompletionEventListener
+import com.intellij.codeInsight.inline.completion.logs.InlineCompletionEventType
 import com.intellij.codeInsight.inline.completion.logs.InlineCompletionUsageTracker
+import com.intellij.codeInsight.inline.completion.render.InlineCompletionElement
 import com.intellij.codeInsight.lookup.LookupEvent
+import com.intellij.codeInsight.lookup.LookupManager
+import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.DataContext
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.diagnostic.thisLogger
@@ -17,43 +15,56 @@ import com.intellij.openapi.editor.Caret
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.event.DocumentEvent
 import com.intellij.openapi.editor.event.EditorMouseEvent
-import com.intellij.openapi.progress.ProcessCanceledException
-import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.psi.PsiFile
+import com.intellij.util.EventDispatcher
+import com.intellij.util.application
 import kotlinx.coroutines.*
-import kotlinx.coroutines.flow.collectIndexed
-import kotlinx.coroutines.flow.onCompletion
-import kotlinx.coroutines.flow.onEmpty
+import kotlinx.coroutines.flow.*
 import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.annotations.TestOnly
 import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.atomic.AtomicReference
 
 @ApiStatus.Experimental
-class InlineCompletionHandler(private val scope: CoroutineScope) : CodeInsightActionHandler {
+class InlineCompletionHandler(private val scope: CoroutineScope) {
   private var runningJob: AtomicReference<Job?> = AtomicReference(null)
   private var lastInvocationTime = 0L
+  private val eventListeners = EventDispatcher.create(InlineCompletionEventListener::class.java)
+
+  init {
+    addEventListener(InlineCompletionUsageTracker.Listener())
+  }
 
   private fun getProvider(event: InlineCompletionEvent): InlineCompletionProvider? {
+    if (application.isUnitTestMode && testProvider != null) {
+      return testProvider
+    }
+
     return InlineCompletionProvider.extensions().firstOrNull { it.isEnabled(event) }?.also {
       LOG.trace("Selected inline provider: $it")
     }
   }
 
-  override fun invoke(project: Project, editor: Editor, file: PsiFile) {
-    val inlineState = editor.getInlineCompletionState() ?: return
+  fun addEventListener(listener: InlineCompletionEventListener) {
+    eventListeners.addListener(listener)
+  }
 
-    // TODO another implementation? Currently there is no inline triggering
-    //showInlineSuggestion(editor, inlineState, editor.caretModel.offset, triggerTracker)
+  fun addEventListener(listener: InlineCompletionEventListener, parentDisposable: Disposable) {
+    addEventListener(listener)
+    Disposer.register(parentDisposable) { removeEventListener(listener) }
+  }
+
+  fun removeEventListener(listener: InlineCompletionEventListener) {
+    eventListeners.removeListener(listener)
   }
 
   fun invoke(event: InlineCompletionEvent.DocumentChange) = invokeEvent(event)
   fun invoke(event: InlineCompletionEvent.CaretMove) = invokeEvent(event)
   fun invoke(event: InlineCompletionEvent.LookupChange) = invokeEvent(event)
   fun invoke(event: InlineCompletionEvent.DirectCall) = invokeEvent(event)
-
-  private fun shouldShowPlaceholder(): Boolean = Registry.`is`("inline.completion.show.placeholder")
 
   private fun invokeEvent(event: InlineCompletionEvent) {
     LOG.trace("Start processing inline event $event")
@@ -73,98 +84,100 @@ class InlineCompletionHandler(private val scope: CoroutineScope) : CodeInsightAc
   }
 
   private suspend fun invokeRequest(event: InlineCompletionEvent, request: InlineCompletionRequest) {
-    lastInvocationTime = System.currentTimeMillis()
-    val provider = getProvider(event) ?: return
-    val triggerTracker = InlineCompletionUsageTracker.TriggerTracker(lastInvocationTime, event, provider)
-    val modificationStamp = request.document.modificationStamp
-    val resultFlow = withContext(Dispatchers.IO) { provider.getProposals(request) }
-    val placeholder = provider.getPlaceholder(request)
-
     val editor = request.editor
     val offset = request.endOffset
 
-    val inlineState = editor.initOrGetInlineCompletionState()
+    InlineCompletionContext.getOrNull(editor)?.let {
+      if (it.isCurrentlyDisplayingInlays) {
+        withContext(Dispatchers.EDT) {
+          InlineCompletionContext.remove(editor)
+        }
+      }
+    }
+
+    lastInvocationTime = System.currentTimeMillis()
+    val provider = getProvider(event) ?: return
+    val modificationStamp = request.document.modificationStamp
+    val resultFlow = request(provider, request) // .flowOn(Dispatchers.IO)
+
+    val context = InlineCompletionContext.getOrInit(editor)
 
     // If you write a test and observe an infinite hang here, set [UsefulTestCase.runInDispatchThread] to false.
     withContext(Dispatchers.EDT) {
-      triggerTracker.captureContext(editor, offset)
-      showPlaceholder(editor, offset, placeholder, triggerTracker)
-
       resultFlow
-        .onEmpty {
-          disposePlaceholder(editor)
-          triggerTracker.noSuggestions()
-        }
-        .onCompletion {
-          if (it != null) {
-            disposePlaceholder(editor)
+        .onStart { isShowing.set(true) }
+        .onCompletion { complete(editor, it, context) }
+        .onEmpty { trace(InlineCompletionEventType.Empty) }
+        .collectIndexed { index, it ->
+          ensureActive()
+
+          if (!isShowing.get() || modificationStamp != request.document.modificationStamp) {
+            cancel()
+            return@collectIndexed
           }
-          if (!isActive || it is CancellationException || it is ProcessCanceledException) {
-            triggerTracker.cancelled()
-          }
-          else if (it != null) {
-            triggerTracker.exception()
-          }
-          triggerTracker.finished(editor.project)
-        }
-        .collectIndexed { index, value ->
-          if (index == 0) {
-            disposePlaceholder(editor)
-            triggerTracker.hasSuggestion()
-            if (modificationStamp != request.document.modificationStamp) {
-              cancel()
-              return@collectIndexed
-            }
-            inlineState.suggestion = InlineCompletionElement(value.text)
-            showInlineSuggestion(editor, inlineState, offset, triggerTracker)
-          }
-          else {
-            inlineState.suggestion?.run {
-              if (modificationStamp != request.document.modificationStamp) {
-                cancel()
-                return@collectIndexed
-              }
-              ensureActive()
-              inlineState.suggestion = withText(text + value.text)
-              showInlineSuggestion(editor, inlineState, offset, triggerTracker)
-            }
-          }
+
+          showInlineElement(editor, it, index, offset, context)
         }
     }
   }
 
-  private fun showPlaceholder(
+  suspend fun request(provider: InlineCompletionProvider, request: InlineCompletionRequest): Flow<InlineCompletionElement> {
+    trace(InlineCompletionEventType.Request(lastInvocationTime, request, provider::class.java))
+    return provider.getProposals(request)
+  }
+
+  fun showInlineElement(
     editor: Editor,
-    startOffset: Int,
-    placeholder: InlineCompletionPlaceholder,
-    triggerTracker: InlineCompletionUsageTracker.TriggerTracker) {
-    LOG.trace("Trying to show placeholder")
-    if (!shouldShowPlaceholder()) return
+    element: InlineCompletionElement,
+    index: Int,
+    offset: Int,
+    context: InlineCompletionContext = InlineCompletionContext.getOrInit(editor)
+  ) {
+    trace(InlineCompletionEventType.Show(element, index))
 
-    val ctx = editor.initOrGetInlineCompletionContextWithPlaceholder(triggerTracker)
-    ctx.show(placeholder.element, startOffset)
-  }
-
-  private fun disposePlaceholder(editor: Editor) {
-    LOG.trace("Trying to dispose placeholder")
-    if (!shouldShowPlaceholder()) return
-
-    editor.getInlineCompletionContextOrNull()?.let {
-      editor.removeInlineCompletionContext()
+    withSafeMute {
+      element.render(editor, context.lastOffset ?: offset)
+      context.state.addElement(element)
     }
   }
 
-  private fun showInlineSuggestion(editor: Editor,
-                                   inlineState: InlineState,
-                                   startOffset: Int,
-                                   triggerTracker: InlineCompletionUsageTracker.TriggerTracker) {
-    val suggestion = inlineState.suggestion ?: return
-    LOG.trace("Trying to show inline suggestion $suggestion")
-    val ctx = editor.initOrGetInlineCompletionContext(triggerTracker)
-    ctx.show(suggestion, startOffset)
+  fun insert(editor: Editor, context: InlineCompletionContext = InlineCompletionContext.getOrInit(editor)) {
+    trace(InlineCompletionEventType.Insert)
 
-    inlineState.lastStartOffset = startOffset
-    inlineState.lastModificationStamp = editor.document.modificationStamp
+    withSafeMute {
+      val offset = context.lastOffset ?: return@withSafeMute
+      val currentCompletion = context.lineToInsert
+
+      editor.document.insertString(offset, currentCompletion)
+      editor.caretModel.moveToOffset(offset + currentCompletion.length)
+    }
+
+    LookupManager.getActiveLookup(editor)?.hideLookup(false) //TODO: remove this
+    hide(editor, false, context)
+  }
+
+  fun hide(editor: Editor, explicit: Boolean, context: InlineCompletionContext) {
+    if (!context.isCurrentlyDisplayingInlays) return
+    trace(InlineCompletionEventType.Hide(explicit))
+
+    withSafeMute {
+      isShowing.set(false)
+      InlineCompletionContext.remove(editor)
+    }
+  }
+
+  fun complete(editor: Editor, cause: Throwable?, context: InlineCompletionContext) {
+    trace(InlineCompletionEventType.Completion(cause))
+    isShowing.set(false)
+    if (cause != null) {
+      hide(editor, false, context)
+    }
+  }
+
+  private fun shouldShowPlaceholder(): Boolean = Registry.`is`("inline.completion.show.placeholder")
+
+  private fun trace(event: InlineCompletionEventType) {
+    eventListeners.getMulticaster().on(event)
   }
 
   @Deprecated(
@@ -207,7 +220,10 @@ class InlineCompletionHandler(private val scope: CoroutineScope) : CodeInsightAc
     private val LOG = thisLogger()
     val KEY = Key.create<InlineCompletionHandler>("inline.completion.handler")
 
+    fun getOrNull(editor: Editor) = editor.getUserData(KEY)
+
     val isMuted: AtomicBoolean = AtomicBoolean(false)
+    val isShowing: AtomicBoolean = AtomicBoolean(false)
 
     fun withSafeMute(block: () -> Unit) {
       mute()
@@ -221,5 +237,17 @@ class InlineCompletionHandler(private val scope: CoroutineScope) : CodeInsightAc
 
     fun mute(): Unit = isMuted.set(true)
     fun unmute(): Unit = isMuted.set(false)
+
+    private var testProvider: InlineCompletionProvider? = null
+
+    @TestOnly
+    fun registerTestHandler(provider: InlineCompletionProvider) {
+      testProvider = provider
+    }
+
+    @TestOnly
+    fun unRegisterTestHandler() {
+      testProvider = null
+    }
   }
 }

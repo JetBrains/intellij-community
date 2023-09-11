@@ -2,7 +2,7 @@
 package com.intellij.codeInsight.inline.completion.listeners
 
 import com.intellij.codeInsight.completion.CompletionUtil
-import com.intellij.codeInsight.inline.completion.InlineCompletionContext.Companion.resetInlineCompletionContext
+import com.intellij.codeInsight.inline.completion.InlineCompletionContext
 import com.intellij.codeInsight.inline.completion.InlineCompletionEvent
 import com.intellij.codeInsight.inline.completion.InlineCompletionHandler
 import com.intellij.codeInsight.lookup.LookupManager
@@ -28,7 +28,8 @@ class InlineCompletionDocumentListener(private val editor: EditorImpl) : BulkAwa
     }
 
     LOG.trace("Valuable document event $event")
-    editor.getUserData(InlineCompletionHandler.KEY)?.invoke(InlineCompletionEvent.DocumentChange(event, editor))
+    InlineCompletionHandler.getOrNull(editor)
+      ?.invoke(InlineCompletionEvent.DocumentChange(event, editor))
   }
 
   fun isEnabled(event: DocumentEvent): Boolean {
@@ -62,7 +63,8 @@ open class InlineCompletionKeyListener(private val editor: Editor) : KeyAdapter(
   }
 
   protected open fun hideInlineCompletion() {
-    editor.resetInlineCompletionContext()
+    val context = InlineCompletionContext.getOrNull(editor) ?: return
+    InlineCompletionHandler.getOrNull(editor)?.hide(editor, false, context)
   }
 
   companion object {
@@ -86,7 +88,8 @@ open class InlineCompletionKeyListener(private val editor: Editor) : KeyAdapter(
 class InlineEditorMouseListener : EditorMouseListener {
   override fun mousePressed(event: EditorMouseEvent) {
     LOG.trace("Valuable mouse pressed event $event")
-    event.editor.resetInlineCompletionContext()
+    val context = InlineCompletionContext.getOrNull(event.editor) ?: return
+    InlineCompletionHandler.getOrNull(event.editor)?.hide(event.editor, false, context)
   }
 
   companion object {
