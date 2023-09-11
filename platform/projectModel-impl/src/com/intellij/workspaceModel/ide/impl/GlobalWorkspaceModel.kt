@@ -245,7 +245,7 @@ class GlobalWorkspaceModel : Disposable {
         version = sdkEntity.version
       }
       mutableEntityStorage.addEntity(sdkEntityCopy)
-      val sdkBridge = storage.getExternalMapping<Any>(SDK_BRIDGE_MAPPING_ID).getDataByEntity(sdkEntityCopy)
+      val sdkBridge = storage.getExternalMapping<Any>(SDK_BRIDGE_MAPPING_ID).getDataByEntity(sdkEntity)
       if (sdkBridge != null) {
         mutableEntityStorage.getMutableExternalMapping<Any>(SDK_BRIDGE_MAPPING_ID).addIfAbsent(sdkEntityCopy, sdkBridge)
       }
