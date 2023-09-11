@@ -6,7 +6,6 @@ import org.gradle.api.internal.project.DefaultProject;
 import org.gradle.internal.impldep.com.google.gson.GsonBuilder;
 import org.gradle.internal.logging.progress.ProgressLogger;
 import org.gradle.internal.logging.progress.ProgressLoggerFactory;
-import org.gradle.util.GradleVersion;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.gradle.tooling.Message;
@@ -24,9 +23,6 @@ public class DefaultMessageReporter implements MessageReporter {
 
   @Override
   public void report(@NotNull Project project, @NotNull Message message) {
-    if (GradleVersion.current().getBaseVersion().compareTo(GradleVersion.version("2.14.1")) < 0) {
-      return;
-    }
     try {
       ProgressLoggerFactory progressLoggerFactory = ((DefaultProject)project).getServices().get(ProgressLoggerFactory.class);
       ProgressLogger operation = progressLoggerFactory.newOperation(ModelBuilderService.class);
