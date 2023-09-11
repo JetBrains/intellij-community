@@ -785,13 +785,16 @@ open class FileEditorManagerImpl(
     }
 
     if (windowToOpenIn == null) {
-      val mode = getOpenMode(IdeEventQueue.getInstance().trueCurrentEvent)
+      val mode = options.openMode ?: getOpenMode(IdeEventQueue.getInstance().trueCurrentEvent)
       if (mode == OpenMode.NEW_WINDOW) {
         if (forbidSplitFor(file)) {
           closeFile(file)
         }
         return (DockManager.getInstance(project) as DockManagerImpl).createNewDockContainerFor(file) { editorWindow ->
-          openFileImpl2(window = editorWindow, file = file, options = options)
+          if (forbidSplitFor(file = file) && !editorWindow.isFileOpen(file = file)) {
+            closeFile(file = file)
+          }
+          doOpenFile(file = file, windowToOpenIn = editorWindow, options = options)
         }
       }
       else if (mode == OpenMode.RIGHT_SPLIT) {
@@ -808,6 +811,12 @@ open class FileEditorManagerImpl(
       windowToOpenIn = getOrCreateCurrentWindow(file)
     }
 
+    return doOpenFile(file = file, windowToOpenIn = windowToOpenIn, options = options)
+  }
+
+  private fun doOpenFile(file: VirtualFile,
+                         windowToOpenIn: EditorWindow,
+                         options: FileEditorOpenOptions): FileEditorComposite {
     if (ApplicationManager.getApplication().isWriteAccessAllowed) {
       if (forbidSplitFor(file = file) && !windowToOpenIn.isFileOpen(file)) {
         closeFile(file)
@@ -826,6 +835,30 @@ open class FileEditorManagerImpl(
 
   override suspend fun openFile(file: VirtualFile, options: FileEditorOpenOptions): FileEditorComposite {
     var windowToOpenIn: EditorWindow? = null
+
+    val mode = options.openMode
+    if (mode == OpenMode.NEW_WINDOW) {
+      return withContext(Dispatchers.EDT) {
+        if (forbidSplitFor(file)) {
+          closeFile(file)
+        }
+        (DockManager.getInstance(project) as DockManagerImpl).createNewDockContainerFor(file) { editorWindow ->
+          if (forbidSplitFor(file = file) && !editorWindow.isFileOpen(file = file)) {
+            closeFile(file = file)
+          }
+
+          doOpenFile(file = file, windowToOpenIn = editorWindow, options = options)
+        }
+      }
+    }
+    else if (mode == OpenMode.RIGHT_SPLIT) {
+      withContext(Dispatchers.EDT) {
+        openInRightSplit(file)
+      }?.let {
+        return it
+      }
+    }
+
     if (options.reuseOpen || !AdvancedSettings.getBoolean(EDITOR_OPEN_INACTIVE_SPLITTER)) {
       windowToOpenIn = withContext(Dispatchers.EDT) { findWindowInAllSplitters(file) }
     }
@@ -912,15 +945,11 @@ open class FileEditorManagerImpl(
 
   @Suppress("DeprecatedCallableAddReplaceWith")
   @Deprecated("Use public API.", level = DeprecationLevel.ERROR)
-  fun openFileImpl2(window: EditorWindow,
-                    file: VirtualFile,
-                    focusEditor: Boolean): Pair<Array<FileEditor>, Array<FileEditorProvider>> {
+  fun openFileImpl2(window: EditorWindow, file: VirtualFile, focusEditor: Boolean): Pair<Array<FileEditor>, Array<FileEditorProvider>> {
     return openFileImpl2(window = window, file = file, options = FileEditorOpenOptions(requestFocus = focusEditor)).retrofit()
   }
 
-  open fun openFileImpl2(window: EditorWindow,
-                         file: VirtualFile,
-                         options: FileEditorOpenOptions): FileEditorComposite {
+  open fun openFileImpl2(window: EditorWindow, file: VirtualFile, options: FileEditorOpenOptions): FileEditorComposite {
     if (forbidSplitFor(file) && !window.isFileOpen(file)) {
       closeFile(file)
     }
@@ -1304,6 +1333,7 @@ open class FileEditorManagerImpl(
       reuseOpen = !effectiveDescriptor.isUseCurrentWindow,
       usePreviewTab = effectiveDescriptor.isUsePreviewTab,
       requestFocus = focusEditor,
+      openMode = getOpenMode(IdeEventQueue.getInstance().trueCurrentEvent),
     )
     val result = if (ApplicationManager.getApplication().isWriteAccessAllowed) {
       // runWithModalProgressBlocking cannot be used under a write action - https://youtrack.jetbrains.com/issue/IDEA-319932
