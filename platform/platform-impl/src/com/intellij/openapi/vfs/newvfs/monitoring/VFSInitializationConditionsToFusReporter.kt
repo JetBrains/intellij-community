@@ -46,6 +46,7 @@ private class VFSInitializationConditionsToFusReporter : ProjectActivity {
       HAS_ERRORS_IN_PREVIOUS_SESSION -> VFSInitKind.UNRECOGNIZED
 
       SCHEDULED_REBUILD -> VFSInitKind.SCHEDULED_REBUILD
+      RECOVERED_FROM_LOG -> VFSInitKind.RECOVERED_FROM_LOG
 
       NOT_CLOSED_PROPERLY -> VFSInitKind.NOT_CLOSED_PROPERLY
 
@@ -91,6 +92,8 @@ private class VFSInitializationConditionsToFusReporter : ProjectActivity {
     /** VFS was loaded from already existing files, with some errors fixed along the way */
     RECOVERED,
 
+    /** VFS caches were recovered from VfsLog, because there were some unrecoverable initialization errors */
+    RECOVERED_FROM_LOG,
 
     /** VFS was cleared and rebuild from scratch because: rebuild marker was found */
     SCHEDULED_REBUILD,

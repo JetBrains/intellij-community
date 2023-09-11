@@ -36,6 +36,12 @@ final class PersistentFSConnector {
     new ContentStoragesRecoverer()
   );
 
+  private static class CachesWereRecoveredFromLogException extends Exception {
+    CachesWereRecoveredFromLogException(Throwable initializationException) {
+      super("VFS caches were recovered from VfsLog due to residual unrecoverable initialization problems", initializationException);
+    }
+  }
+
   public static @NotNull VFSInitializationResult connect(@NotNull Path cachesDir,
                                                          int version,
                                                          boolean enableVfsLog,
@@ -154,7 +160,6 @@ final class PersistentFSConnector {
 
     PersistentFSPaths persistentFSPaths = new PersistentFSPaths(cachesDir);
     PersistentFSLoader vfsLoader = new PersistentFSLoader(persistentFSPaths, enableVfsLog, pool);
-    boolean cachesWereRecoveredFromLog = false;
     try {
       if (VfsLog.isVfsTrackingEnabled() && enableVfsLog) {
         vfsLoader.replaceStoragesIfMarkerPresent();
@@ -186,17 +191,26 @@ final class PersistentFSConnector {
           //Were all problems recovered? -> fail if not
           List<VFSInitException> problemsNotRecovered = vfsLoader.problemsDuringLoad();
           if (!problemsNotRecovered.isEmpty()) {
-            if (allowRecoveryFromVfsLog && VfsLog.isVfsTrackingEnabled() && enableVfsLog) {
-              // if vfslog is enabled, try to recover caches from the operations log first.
-              // exception will be rethrown, but we won't delete the files and will just retry
-              // initialization on the next attempt with substituted storages
-              cachesWereRecoveredFromLog = vfsLoader.recoverCachesFromVfsLog();
-            }
-
             VFSInitException mainEx = problemsNotRecovered.get(0);
             for (int i = 1; i < problemsNotRecovered.size(); i++) {
               mainEx.addSuppressed(problemsNotRecovered.get(i));
             }
+
+            if (allowRecoveryFromVfsLog && VfsLog.isVfsTrackingEnabled() && enableVfsLog) {
+              // if vfslog is enabled, try to recover caches from the operations log first.
+              // exception will be rethrown, but we won't delete the files and will just retry
+              // initialization on the next attempt with substituted storages
+              boolean cachesWereRecoveredFromLog = false;
+              try {
+                cachesWereRecoveredFromLog = vfsLoader.recoverCachesFromVfsLog();
+              } catch (Throwable recoveryEx) {
+                LOG.error("Cache recovery attempt via VfsLog has failed", recoveryEx);
+              }
+              if (cachesWereRecoveredFromLog) {
+                throw new CachesWereRecoveredFromLogException(mainEx);
+              }
+            }
+
             throw mainEx;
           }
         }
@@ -215,9 +229,9 @@ final class PersistentFSConnector {
       LOG.warn("Filesystem storage is corrupted or does not exist. [Re]Building. Reason: " + e.getMessage());
       try {
         vfsLoader.closeEverything();
-        if (cachesWereRecoveredFromLog) {
+        if (e instanceof CachesWereRecoveredFromLogException) {
           // don't delete the caches, they will be substituted on the next attempt
-          // FIXME this may potentially mess up VFS rebuild event statistics
+          throw new VFSInitException(RECOVERED_FROM_LOG, e.getMessage(), e);
         } else {
           vfsLoader.deleteEverything();
         }
