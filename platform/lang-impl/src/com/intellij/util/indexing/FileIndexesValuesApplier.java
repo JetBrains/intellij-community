@@ -202,7 +202,7 @@ public final class FileIndexesValuesApplier {
       var lastOrOnlyInvocationForFile = syncCounter == null || syncCounter.decrementAndGet() == 0;
       if (lastOrOnlyInvocationForFile) {
         if (shouldMarkFileAsIndexed) {
-          IndexingFlag.setIndexedIfFileWithSameLock(file, fileStatusLockObject);
+          IndexingFlag.setIndexedIfFileWithSameLock(file, fileStatusLockObject, indexingStamp);
         }
         else if (fileStatusLockObject != IndexingFlag.getNonExistentHash()) {
           IndexingFlag.unlockFile(file);

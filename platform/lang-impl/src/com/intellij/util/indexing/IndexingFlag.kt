@@ -51,11 +51,11 @@ object IndexingFlag {
   }
 
   @JvmStatic
-  fun isFileIndexed(file: VirtualFile): Boolean {
+  fun isFileIndexed(file: VirtualFile, stamp: FileIndexingStampService.FileIndexingStamp): Boolean {
     if (VfsData.isIsIndexedFlagDisabled()) {
       return false;
     }
-    return file is VirtualFileSystemEntry && file.indexedStamp == FileIndexingStampService.getCurrentStamp().toInt()
+    return file is VirtualFileSystemEntry && file.indexedStamp == stamp.toInt()
   }
 
   @JvmStatic
@@ -74,11 +74,11 @@ object IndexingFlag {
   }
 
   @JvmStatic
-  fun setIndexedIfFileWithSameLock(file: VirtualFile, lockObject: Long) {
+  fun setIndexedIfFileWithSameLock(file: VirtualFile, lockObject: Long, stamp: FileIndexingStampService.FileIndexingStamp) {
     if (file is VirtualFileSystemEntry) {
       val hash = hashes.releaseHash(file.id)
-      if (file.indexedStamp != FileIndexingStampService.getCurrentStamp().toInt()) {
-        file.indexedStamp = (if (hash == lockObject) FileIndexingStampService.getCurrentStamp() else FileIndexingStampService.NULL_STAMP).toInt()
+      if (file.indexedStamp != stamp.toInt()) {
+        file.indexedStamp = (if (hash == lockObject) stamp else FileIndexingStampService.NULL_STAMP).toInt()
       }
     }
   }

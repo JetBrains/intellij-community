@@ -19,6 +19,7 @@ import com.intellij.util.indexing.FileBasedIndex
 import com.intellij.util.indexing.FileBasedIndexImpl
 import com.intellij.util.indexing.IndexingFlag
 import com.intellij.util.indexing.IndexingStamp
+import com.intellij.util.indexing.dependencies.FileIndexingStampService
 import com.intellij.util.indexing.roots.IndexableFilesIterator
 import com.intellij.util.indexing.roots.kind.SdkOrigin
 import org.jetbrains.annotations.NonNls
@@ -91,8 +92,9 @@ class CollectFilesNotMarkedAsIndex(text: String, line: Int) : PerformanceCommand
             }
           }
           else {
+            val currentStamp = FileIndexingStampService.getCurrentStamp()
             checkIndexed(fileOrDir, true, "not marked as indexed") {
-              IndexingFlag.isFileIndexed(it)
+              IndexingFlag.isFileIndexed(it, currentStamp)
             }
           }
           return true

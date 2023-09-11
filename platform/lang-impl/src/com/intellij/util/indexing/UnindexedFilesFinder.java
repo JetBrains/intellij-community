@@ -178,7 +178,7 @@ final class UnindexedFilesFinder {
       int inputId = FileBasedIndex.getFileId(file);
       boolean fileWereJustAdded = myIndexableFilesFilterHolder.addFileId(inputId, myProject) == FileAddStatus.ADDED;
 
-      if (IndexingFlag.isFileIndexed(file)) {
+      if (IndexingFlag.isFileIndexed(file, indexingStamp)) {
         boolean wasInvalidated = false;
         if (fileWereJustAdded) {
           List<ID<?, ?>> ids = IndexingStamp.getNontrivialFileIndexedStates(inputId);
