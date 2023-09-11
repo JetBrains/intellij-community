@@ -277,10 +277,6 @@ internal class BackgroundLoadingBarController(
     }
 }
 
-@ApiStatus.ScheduledForRemoval
-@Deprecated("", ReplaceWith("com.intellij.openapi.application.writeAction(action)"))
-suspend fun <R> writeAction(action: () -> R): R = com.intellij.openapi.application.writeAction { action() }
-
 internal fun AsyncModuleTransformer.asCoroutine() = object : ModuleTransformer {
     override suspend fun transformModules(project: Project, nativeModules: List<Module>): List<PackageSearchModule> =
         this@asCoroutine.transformModules(project, nativeModules).await()
