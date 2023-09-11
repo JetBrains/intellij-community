@@ -1,5 +1,7 @@
 package com.intellij.searchEverywhereMl.semantics.services
 
+import com.intellij.ide.actions.searcheverywhere.FileSearchEverywhereContributor
+import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.ReadAction
 import com.intellij.openapi.components.*
 import com.intellij.openapi.project.Project
@@ -9,6 +11,8 @@ import com.intellij.openapi.startup.ProjectActivity
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.vfs.*
 import com.intellij.searchEverywhereMl.semantics.SemanticSearchBundle
+import com.intellij.searchEverywhereMl.semantics.experiments.SearchEverywhereSemanticExperiments
+import com.intellij.searchEverywhereMl.semantics.experiments.SearchEverywhereSemanticExperiments.SemanticSearchFeature
 import com.intellij.searchEverywhereMl.semantics.indices.DiskSynchronizedEmbeddingSearchIndex
 import com.intellij.searchEverywhereMl.semantics.indices.IndexableEntity
 import com.intellij.searchEverywhereMl.semantics.services.LocalArtifactsManager.Companion.SEMANTIC_SEARCH_RESOURCES_DIR
@@ -85,6 +89,15 @@ class FileSemanticSearchServiceInitializer : ProjectActivity {
     // Whether the state exists or not, we generate the missing embeddings:
     if (SemanticSearchSettings.getInstance().enabledInFilesTab) {
       FileEmbeddingsStorage.getInstance(project).prepareForSearch()
+    }
+    else if ((ApplicationManager.getApplication().isInternal
+              || (ApplicationManager.getApplication().isEAP &&
+                  SearchEverywhereSemanticExperiments.getInstance().getSemanticFeatureForTab(
+                    FileSearchEverywhereContributor::class.java.simpleName) == SemanticSearchFeature.ENABLED))
+             && !SemanticSearchSettings.getInstance().manuallyDisabledInFilesTab
+    ) {
+      // Manually enable search in the corresponding experiment groups
+      SemanticSearchSettings.getInstance().enabledInFilesTab = true
     }
   }
 }

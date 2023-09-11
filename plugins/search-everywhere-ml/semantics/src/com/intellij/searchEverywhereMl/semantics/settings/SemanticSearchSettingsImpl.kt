@@ -21,6 +21,11 @@ class SemanticSearchSettingsImpl : SemanticSearchSettings, PersistentStateCompon
   override var enabledInActionsTab: Boolean
     get() = state.enabledInActionsTab
     set(newValue) {
+      if (!newValue) {
+        state.manuallyDisabledInActionsTab = true
+      } else if (state.manuallyDisabledInActionsTab) {
+        state.manuallyDisabledInActionsTab = false
+      }
       state.enabledInActionsTab = newValue
       ProjectManager.getInstance().openProjects.first().let {
         ActionEmbeddingsStorage.getInstance().run { if (newValue) prepareForSearch(it) else tryStopGeneratingEmbeddings() }
@@ -30,6 +35,11 @@ class SemanticSearchSettingsImpl : SemanticSearchSettings, PersistentStateCompon
   override var enabledInFilesTab: Boolean
     get() = state.enabledInFilesTab
     set(newValue) {
+      if (!newValue) {
+        state.manuallyDisabledInFilesTab = true
+      } else if (state.manuallyDisabledInFilesTab) {
+        state.manuallyDisabledInFilesTab = false
+      }
       state.enabledInFilesTab = newValue
       ProjectManager.getInstance().openProjects.forEach {
         FileEmbeddingsStorage.getInstance(it).run { if (newValue) prepareForSearch() else tryStopGeneratingEmbeddings()}
@@ -39,6 +49,11 @@ class SemanticSearchSettingsImpl : SemanticSearchSettings, PersistentStateCompon
   override var enabledInSymbolsTab: Boolean
     get() = state.enabledInSymbolsTab
     set(newValue) {
+      if (!newValue) {
+        state.manuallyDisabledInSymbolsTab = true
+      } else if (state.manuallyDisabledInSymbolsTab) {
+        state.manuallyDisabledInSymbolsTab = false
+      }
       state.enabledInSymbolsTab = newValue
       ProjectManager.getInstance().openProjects.forEach {
         SymbolEmbeddingStorage.getInstance(it).run { if (newValue) prepareForSearch() else tryStopGeneratingEmbeddings() }
@@ -48,11 +63,28 @@ class SemanticSearchSettingsImpl : SemanticSearchSettings, PersistentStateCompon
   override var enabledInClassesTab: Boolean
     get() = state.enabledInClassesTab
     set(newValue) {
+      if (!newValue) {
+        state.manuallyDisabledInClassesTab = true
+      } else if (state.manuallyDisabledInClassesTab) {
+        state.manuallyDisabledInClassesTab = false
+      }
       state.enabledInClassesTab = newValue
       ProjectManager.getInstance().openProjects.forEach {
         ClassEmbeddingsStorage.getInstance(it).run { if (newValue) prepareForSearch() else tryStopGeneratingEmbeddings() }
       }
     }
+
+  override val manuallyDisabledInActionsTab: Boolean
+    get() = state.manuallyDisabledInActionsTab
+
+  override val manuallyDisabledInFilesTab: Boolean
+    get() = state.manuallyDisabledInFilesTab
+
+  override val manuallyDisabledInSymbolsTab: Boolean
+    get() = state.manuallyDisabledInSymbolsTab
+
+  override val manuallyDisabledInClassesTab: Boolean
+    get() = state.manuallyDisabledInClassesTab
 
   override fun getState(): SemanticSearchSettingsState = state
 
@@ -83,4 +115,16 @@ class SemanticSearchSettingsState : BaseState() {
 
   @get:OptionTag("enabled_in_classes_tab")
   var enabledInClassesTab by property(false)
+
+  @get:OptionTag("manually_disabled_in_actions_tab")
+  var manuallyDisabledInActionsTab by property(false)
+
+  @get:OptionTag("manually_disabled_in_files_tab")
+  var manuallyDisabledInFilesTab by property(false)
+
+  @get:OptionTag("manually_disabled_in_symbols_tab")
+  var manuallyDisabledInSymbolsTab by property(false)
+
+  @get:OptionTag("manually_disabled_in_classes_tab")
+  var manuallyDisabledInClassesTab by property(false)
 }

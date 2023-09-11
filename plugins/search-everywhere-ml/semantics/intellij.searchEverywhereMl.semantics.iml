@@ -425,6 +425,7 @@
       </library>
     </orderEntry>
     <orderEntry type="module" module-name="intellij.searchEverywhereMl" />
+    <orderEntry type="module" module-name="intellij.platform.statistics" />
     <orderEntry type="module" module-name="intellij.platform.diagnostic.telemetry" />
     <orderEntry type="library" name="opentelemetry" level="project" />
   </component>

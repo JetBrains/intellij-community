@@ -8,6 +8,15 @@ interface SemanticSearchSettings {
   var enabledInSymbolsTab: Boolean
   var enabledInClassesTab: Boolean
 
+  val manuallyDisabledInActionsTab: Boolean
+    get() = false
+  val manuallyDisabledInFilesTab: Boolean
+    get() = false
+  val manuallyDisabledInSymbolsTab: Boolean
+    get() = false
+  val manuallyDisabledInClassesTab: Boolean
+    get() = false
+
   fun isEnabled(): Boolean
   fun getUseRemoteActionsServer(): Boolean
   fun getActionsAPIToken(): String

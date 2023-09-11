@@ -1,5 +1,6 @@
 package com.intellij.searchEverywhereMl.semantics.services
 
+import com.intellij.ide.actions.searcheverywhere.ActionSearchEverywhereContributor
 import com.intellij.openapi.actionSystem.ActionGroup
 import com.intellij.openapi.actionSystem.ActionManager
 import com.intellij.openapi.actionSystem.AnAction
@@ -14,6 +15,8 @@ import com.intellij.openapi.project.DumbService
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.startup.ProjectActivity
 import com.intellij.openapi.util.registry.Registry
+import com.intellij.searchEverywhereMl.semantics.experiments.SearchEverywhereSemanticExperiments
+import com.intellij.searchEverywhereMl.semantics.experiments.SearchEverywhereSemanticExperiments.SemanticSearchFeature
 import com.intellij.searchEverywhereMl.semantics.indices.InMemoryEmbeddingSearchIndex
 import com.intellij.searchEverywhereMl.semantics.services.LocalArtifactsManager.Companion.SEMANTIC_SEARCH_RESOURCES_DIR
 import com.intellij.searchEverywhereMl.semantics.settings.SemanticSearchSettings
@@ -105,6 +108,15 @@ class ActionSemanticSearchServiceInitializer : ProjectActivity {
     // Whether the state exists or not, we generate the missing embeddings:
     if (SemanticSearchSettings.getInstance().enabledInActionsTab) {
       ActionEmbeddingsStorage.getInstance().prepareForSearch(project)
+    }
+    else if ((ApplicationManager.getApplication().isInternal
+              || (ApplicationManager.getApplication().isEAP &&
+                  SearchEverywhereSemanticExperiments.getInstance().getSemanticFeatureForTab(
+                    ActionSearchEverywhereContributor::class.java.simpleName) == SemanticSearchFeature.ENABLED))
+             && !SemanticSearchSettings.getInstance().manuallyDisabledInActionsTab
+    ) {
+      // Manually enable search in the corresponding experiment groups
+      SemanticSearchSettings.getInstance().enabledInActionsTab = true
     }
   }
 }
