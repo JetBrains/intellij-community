@@ -3,8 +3,6 @@ package com.intellij.openapi.vfs.impl.local;
 
 import com.intellij.core.CoreBundle;
 import com.intellij.ide.IdeCoreBundle;
-import com.intellij.openapi.application.Application;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
@@ -13,7 +11,6 @@ import com.intellij.openapi.util.SystemInfoRt;
 import com.intellij.openapi.util.io.*;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.*;
-import com.intellij.openapi.vfs.ex.VirtualFileManagerEx;
 import com.intellij.openapi.vfs.newvfs.ManagingFS;
 import com.intellij.openapi.vfs.newvfs.RefreshQueue;
 import com.intellij.openapi.vfs.newvfs.VfsImplUtil;
@@ -254,35 +251,12 @@ public abstract class LocalFileSystemBase extends LocalFileSystem {
 
   @Override
   public void refreshIoFiles(@NotNull Iterable<? extends File> files, boolean async, boolean recursive, @Nullable Runnable onFinish) {
-    List<VirtualFile> virtualFiles = ContainerUtil.mapNotNull(files, f1 -> refreshAndFindFileByIoFile(f1));
-    refreshFiles(async, recursive, virtualFiles, onFinish);
+    refreshFiles(ContainerUtil.mapNotNull(files, this::refreshAndFindFileByIoFile), async, recursive, onFinish);
   }
 
   @Override
-  public void refreshNioFiles(@NotNull Iterable<? extends Path> files,
-                              boolean async,
-                              boolean recursive,
-                              @Nullable Runnable onFinish) {
-    List<VirtualFile> virtualFiles = ContainerUtil.mapNotNull(files, f1 -> refreshAndFindFileByNioFile(f1));
-    refreshFiles(async, recursive, virtualFiles, onFinish);
-  }
-
-  private static void refreshFiles(boolean async,
-                                   boolean recursive,
-                                   List<? extends VirtualFile> virtualFiles,
-                                   @Nullable Runnable onFinish) {
-    VirtualFileManagerEx manager = (VirtualFileManagerEx)VirtualFileManager.getInstance();
-
-    Application app = ApplicationManager.getApplication();
-    boolean fireCommonRefreshSession = app.isDispatchThread() || app.isWriteAccessAllowed();
-    if (fireCommonRefreshSession) manager.fireBeforeRefreshStart(false);
-
-    try {
-      RefreshQueue.getInstance().refresh(async, recursive, onFinish, virtualFiles);
-    }
-    finally {
-      if (fireCommonRefreshSession) manager.fireAfterRefreshFinish(false);
-    }
+  public void refreshNioFiles(@NotNull Iterable<? extends Path> files, boolean async, boolean recursive, @Nullable Runnable onFinish) {
+    refreshFiles(ContainerUtil.mapNotNull(files, this::refreshAndFindFileByNioFile), async, recursive, onFinish);
   }
 
   @Override
