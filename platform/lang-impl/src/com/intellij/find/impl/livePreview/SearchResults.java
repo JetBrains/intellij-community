@@ -114,7 +114,7 @@ public class SearchResults implements DocumentListener, CaretListener {
     FindModel findModel = new FindModel();
     findModel.copyFrom(myFindModel);
     findModel.setForward(isForward);
-    int caretOffset = !findModel.isGlobal() && myCursor != null ? myCursor.getEndOffset() : myEditor.getCaretModel().getOffset();
+    int caretOffset = myCursor != null ? myCursor.getEndOffset() : myEditor.getCaretModel().getOffset();
     FindUtil.processNotFound(myEditor, caretOffset, findModel.getStringToFind(), findModel, getProject());
   }
 
@@ -190,8 +190,7 @@ public class SearchResults implements DocumentListener, CaretListener {
   }
 
   public int getCursorVisualIndex() {
-    FindResult curOccurrence = myFindModel.isGlobal() ? getOccurrenceAtCaret() : myCursor;
-    return curOccurrence != null ? myOccurrences.indexOf(curOccurrence) + 1 : -1;
+    return myCursor != null ? myOccurrences.indexOf(myCursor) + 1 : -1;
   }
 
   @NotNull
