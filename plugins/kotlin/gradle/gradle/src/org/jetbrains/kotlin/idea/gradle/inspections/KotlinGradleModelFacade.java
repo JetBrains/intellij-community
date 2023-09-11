@@ -8,7 +8,6 @@ import com.intellij.openapi.externalSystem.model.project.ModuleData;
 import org.gradle.tooling.model.idea.IdeaProject;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.kotlin.idea.compiler.configuration.IdeKotlinVersion;
 
 import java.util.Collection;
 import java.util.List;
@@ -16,20 +15,13 @@ import java.util.List;
 public interface KotlinGradleModelFacade {
     ExtensionPointName<KotlinGradleModelFacade> EP_NAME = ExtensionPointName.create("org.jetbrains.kotlin.gradleModelFacade");
 
-    @Deprecated(forRemoval = true)
-    @Nullable
-    default IdeKotlinVersion getResolvedKotlinStdlibVersionByModuleData(@NotNull DataNode<?> moduleData, @NotNull List<String> libraryIds) {
-        return null;
-    }
-
     @Nullable
     default String getResolvedVersionByModuleData(
             @NotNull DataNode<?> moduleData,
             @NotNull String groupId,
             @NotNull List<String> libraryIds
     ) {
-        IdeKotlinVersion stdlibVersion = getResolvedKotlinStdlibVersionByModuleData(moduleData, libraryIds);
-        return (stdlibVersion != null) ? stdlibVersion.getRawVersion() : null;
+        return null;
     }
 
     @NotNull

@@ -52,10 +52,6 @@ interface KotlinUastResolveProviderService : BaseKotlinUastResolveProviderServic
     )
     fun getBindingContextIfAny(element: KtElement): BindingContext? = getBindingContext(element)
 
-    @ApiStatus.ScheduledForRemoval
-    @Deprecated("For binary compatibility, please, use KotlinUastTypeMapper")
-    fun getTypeMapper(element: KtElement): KotlinTypeMapper?
-
     fun getLanguageVersionSettings(element: KtElement): LanguageVersionSettings
 
     fun isJvmElement(psiElement: PsiElement): Boolean

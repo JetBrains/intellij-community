@@ -241,17 +241,6 @@ fun PsiFile.getLineStartOffset(line: Int): Int? {
     return null
 }
 
-@ApiStatus.ScheduledForRemoval
-@Deprecated(
-    "Use org.jetbrains.kotlin.idea.base.psi.getLineEndOffset() instead",
-    ReplaceWith("this.getLineEndOffset(line)", "org.jetbrains.kotlin.idea.base.psi.getLineEndOffset"),
-    DeprecationLevel.ERROR
-)
-fun PsiFile.getLineEndOffset(line: Int): Int? {
-    val document = viewProvider.document ?: PsiDocumentManager.getInstance(project).getDocument(this)
-    return document?.getLineEndOffset(line)
-}
-
 @Deprecated("Use org.jetbrains.kotlin.idea.base.psi.PsiLinesUtilsKt.getLineNumber instead")
 fun PsiElement.getLineNumber(start: Boolean = true): Int {
    return _getLineNumber(start)
@@ -786,16 +775,6 @@ fun <T : KtExpression> T.replaceWithCopyWithResolveCheck(
     val newDescriptor = resolveStrategy(elementCopy, newContext) ?: return null
 
     return if (originDescriptor.canonicalRender() == newDescriptor.canonicalRender()) elementCopy.postHook() else null
-}
-
-@ApiStatus.ScheduledForRemoval
-@Deprecated(
-    "Use org.jetbrains.kotlin.idea.base.psi.getLineCount() instead",
-    ReplaceWith("this.getLineCount()", "org.jetbrains.kotlin.idea.base.psi.getLineCount"),
-    DeprecationLevel.ERROR
-)
-fun PsiElement.getLineCount(): Int {
-    return newGetLineCount()
 }
 
 @Deprecated(

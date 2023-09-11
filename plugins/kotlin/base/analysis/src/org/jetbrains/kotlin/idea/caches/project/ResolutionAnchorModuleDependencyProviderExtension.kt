@@ -15,16 +15,6 @@ import org.jetbrains.kotlin.idea.caches.trackers.ModuleDependencyProviderExtensi
 import org.jetbrains.kotlin.progress.ProgressIndicatorAndCompilationCanceledStatus.checkCanceled
 
 class ResolutionAnchorModuleDependencyProviderExtension(private val project: Project) : ModuleDependencyProviderExtension {
-    @Deprecated(
-        "Use #processAdditionalDependencyModules",
-        replaceWith = ReplaceWith("processAdditionalDependencyModules(module, processor)"),
-    )
-    override fun getAdditionalDependencyModules(module: Module): Collection<Module> {
-        val modules = HashSet<Module>()
-        processAdditionalDependencyModules(module, CommonProcessors.CollectProcessor(modules))
-        return modules
-    }
-
     /**
      * Consider modules M1, M2, M3, library L1 resolving via Resolution anchor M2, other libraries L2, L3 with the following dependencies:
      * M2 depends on M1
