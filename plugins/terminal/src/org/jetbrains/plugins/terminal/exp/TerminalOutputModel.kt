@@ -64,6 +64,7 @@ class TerminalOutputModel(val editor: EditorEx) {
     decorations[block]?.let {
       Disposer.dispose(it.topInlay)
       Disposer.dispose(it.bottomInlay)
+      it.commandToOutputInlay?.let { inlay -> Disposer.dispose(inlay) }
       editor.markupModel.removeHighlighter(it.backgroundHighlighter)
       editor.markupModel.removeHighlighter(it.cornersHighlighter)
     }

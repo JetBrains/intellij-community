@@ -11,6 +11,7 @@ object TerminalUi {
   const val blockLeftInset = 12
   const val blockRightInset = 12
   const val cornerToBlockInset = 7
+  const val commandToOutputInset = 2
   const val blockArc = 8
   const val blocksGap = 6
 

@@ -35,6 +35,11 @@ class TerminalBlocksDecorator(private val outputModel: TerminalOutputModel,
     val topInlay = editor.inlayModel.addBlockElement(block.startOffset, false, true, 1, topRenderer)!!
     val bottomRenderer = EmptyWidthInlayRenderer(TerminalUi.blockBottomInset + TerminalUi.blocksGap)
     val bottomInlay = editor.inlayModel.addBlockElement(block.endOffset, true, false, 0, bottomRenderer)!!
+    val commandToOutputInlay = if (!block.command.isNullOrEmpty()) {
+      val renderer = EmptyWidthInlayRenderer(TerminalUi.commandToOutputInset)
+      editor.inlayModel.addBlockElement(block.outputStartOffset, false, true, 0, renderer)!!
+    }
+    else null
 
     val bgHighlighter = editor.markupModel.addRangeHighlighter(block.startOffset, block.endOffset,
                                                                // the order doesn't matter because there is only custom renderer with its own order
@@ -47,7 +52,7 @@ class TerminalBlocksDecorator(private val outputModel: TerminalOutputModel,
                                                                     HighlighterTargetArea.LINES_IN_RANGE)
     cornersHighlighter.isGreedyToRight = true
 
-    val decoration = BlockDecoration(bgHighlighter, cornersHighlighter, topInlay, bottomInlay)
+    val decoration = BlockDecoration(bgHighlighter, cornersHighlighter, topInlay, bottomInlay, commandToOutputInlay)
     outputModel.putDecoration(block, decoration)
     outputModel.addBlockState(block, DefaultBlockDecorationState())
   }
@@ -98,4 +103,5 @@ class TerminalBlocksDecorator(private val outputModel: TerminalOutputModel,
 data class BlockDecoration(val backgroundHighlighter: RangeHighlighter,
                            val cornersHighlighter: RangeHighlighter,
                            val topInlay: Inlay<*>,
-                           val bottomInlay: Inlay<*>)
+                           val bottomInlay: Inlay<*>,
+                           val commandToOutputInlay: Inlay<*>?)
