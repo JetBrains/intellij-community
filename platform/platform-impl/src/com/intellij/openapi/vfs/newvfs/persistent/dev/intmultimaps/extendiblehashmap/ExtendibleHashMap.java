@@ -4,6 +4,7 @@ package com.intellij.openapi.vfs.newvfs.persistent.dev.intmultimaps.extendibleha
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vfs.newvfs.persistent.dev.intmultimaps.DurableIntToMultiIntMap;
 import com.intellij.openapi.vfs.newvfs.persistent.mapped.MMappedFileStorage;
+import com.intellij.util.ExceptionUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.VisibleForTesting;
 
@@ -30,6 +31,8 @@ public class ExtendibleHashMap implements DurableIntToMultiIntMap {
   private static final int VERSION = 1;
 
   public static final int DEFAULT_SEGMENT_SIZE = 1 << 15; //32k
+  public static final int DEFAULT_SEGMENTS_PER_PAGE = 32;
+  public static final int DEFAULT_PAGE_SIZE = DEFAULT_SEGMENT_SIZE * DEFAULT_SEGMENTS_PER_PAGE;
 
   //Binary layout: (header segment) (data segment)+
   //  Header segment: (fixed header fields) (segments table)
@@ -68,12 +71,37 @@ public class ExtendibleHashMap implements DurableIntToMultiIntMap {
 
   private final transient HashMapAlgo hashMapAlgo = new HashMapAlgo(0.5f);
 
-  public static ExtendibleHashMap defaultInstance(@NotNull Path storagePath) throws IOException {
-    int pageSize = 1 << 20;
-    int maxFileSize = DEFAULT_SEGMENT_SIZE / 2 * DEFAULT_SEGMENT_SIZE;
-    MMappedFileStorage storage = new MMappedFileStorage(storagePath, pageSize, maxFileSize);
+  public static ExtendibleHashMap open(@NotNull Path storagePath) throws IOException {
+    return open(storagePath, DEFAULT_PAGE_SIZE);
+  }
 
-    return new ExtendibleHashMap(storage, DEFAULT_SEGMENT_SIZE);
+  public static ExtendibleHashMap open(@NotNull Path storagePath,
+                                       int pageSize) throws IOException {
+    return open(storagePath, pageSize, DEFAULT_SEGMENT_SIZE);
+  }
+
+  public static ExtendibleHashMap open(@NotNull Path storagePath,
+                                       int pageSize,
+                                       int segmentSize) throws IOException {
+    if (segmentSize > pageSize) {
+      throw new IllegalArgumentException("segmentSize(=" + segmentSize + ") must be <= pageSize(=" + pageSize + ")");
+    }
+    if ((pageSize % segmentSize) != 0) {
+      throw new IllegalArgumentException("segmentSize(=" + segmentSize + ") must align with pageSize(=" + pageSize + ")");
+    }
+
+    int maxFileSize = segmentSize / 2 * segmentSize;
+    MMappedFileStorage storage = new MMappedFileStorage(storagePath, pageSize, maxFileSize);
+    try {
+      return new ExtendibleHashMap(storage, segmentSize);
+    }
+    catch (Throwable t) {
+      Exception closeEx = ExceptionUtil.runAndCatch(storage::close);
+      if (closeEx != null) {
+        t.addSuppressed(closeEx);
+      }
+      throw t;
+    }
   }
 
   public ExtendibleHashMap(@NotNull MMappedFileStorage storage) throws IOException {

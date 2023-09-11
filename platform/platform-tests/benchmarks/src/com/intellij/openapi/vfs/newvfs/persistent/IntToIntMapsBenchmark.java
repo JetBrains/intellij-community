@@ -125,9 +125,7 @@ public class IntToIntMapsBenchmark {
     @Setup
     public void setup() throws Exception {
       file = FileUtil.createTempFile("IntToIntBtree", "tst", /*deleteOnExit: */ true);
-      map = new ExtendibleHashMap(
-        new MMappedFileStorage(file.toPath(), 1 << 22, 1 << 30)
-      );
+      map = ExtendibleHashMap.open(file.toPath());
 
 
       generatedKeyValues = generateKeyValues(TOTAL_KEYS);
@@ -217,7 +215,6 @@ public class IntToIntMapsBenchmark {
       map.put(key, key);
     }
   }
-
 
 
   public static void main(String[] args) throws RunnerException {

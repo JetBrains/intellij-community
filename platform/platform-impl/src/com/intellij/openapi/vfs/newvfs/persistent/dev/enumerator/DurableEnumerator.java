@@ -36,54 +36,52 @@ public final class DurableEnumerator<V> implements DurableDataEnumerator<V>,
 
   private final @NotNull KeyDescriptorEx<V> valueDescriptor;
 
-  //MAYBE RC: we actually don't need _durable_ map here. We could go with
+  //MAYBE RC: durable map is not _required_ here. We could go with:
   //          1) in-memory map, transient & re-populated from log on each start
   //          2) swappable in-memory/on-disk map, there on-disk part is transient and
   //             map is re-populated from log on each start
   //          3) on-disk map, durable between restarts re-populated from log only on
   //             corruption
+
   private final @NotNull DurableIntToMultiIntMap valueHashToId;
 
   public static <K> DurableEnumerator<K> openWithInMemoryMap(@NotNull Path storagePath,
                                                              @NotNull KeyDescriptorEx<K> valueDescriptor) throws IOException {
-    AppendOnlyLog appendOnlyLog = AppendOnlyLogOverMMappedFile.openLog(
+    AppendOnlyLog valuesLog = AppendOnlyLogOverMMappedFile.openLog(
       storagePath,
       DATA_FORMAT_VERSION
     );
 
     return new DurableEnumerator<>(
       valueDescriptor,
-      appendOnlyLog,
-      () -> fillValueHashToIdMap(appendOnlyLog, valueDescriptor, new NonDurableNonParallelIntToMultiIntMap())
+      valuesLog,
+      () -> fillValueHashToIdMap(valuesLog, valueDescriptor, new NonDurableNonParallelIntToMultiIntMap())
     );
   }
 
   public static <K> DurableEnumerator<K> openWithDurableMap(@NotNull Path storagePath,
                                                             @NotNull KeyDescriptorEx<K> valueDescriptor) throws IOException {
-    AppendOnlyLog appendOnlyLog = AppendOnlyLogOverMMappedFile.openLog(storagePath, DATA_FORMAT_VERSION);
-    ExtendibleHashMap valueHashToId = ExtendibleHashMap.defaultInstance(
-      storagePath.resolveSibling(storagePath.getFileName() + ".hashToId")
+    String name = storagePath.getName(storagePath.getNameCount() - 1).toString();
+    Path hashToIdPath = storagePath.resolveSibling(name + ".hashToId");
+    AppendOnlyLog valuesLog = AppendOnlyLogOverMMappedFile.openLog(
+      storagePath,
+      DATA_FORMAT_VERSION
     );
+    ExtendibleHashMap valueHashToId = ExtendibleHashMap.open(hashToIdPath);
     return new DurableEnumerator<>(
       valueDescriptor,
-      appendOnlyLog,
+      valuesLog,
       () -> valueHashToId
     );
   }
 
-  //MAYBE RC: valueHashToId could be loaded async -- to not delay initialization (see DurableStringEnumerator)
-
-  public DurableEnumerator(@NotNull KeyDescriptorEx<V> valueDescriptor,
-                           @NotNull AppendOnlyLog appendOnlyLog,
-                           @NotNull ThrowableComputable<DurableIntToMultiIntMap, IOException> mapFactory) throws IOException {
-    this.valueDescriptor = valueDescriptor;
-    this.valuesLog = appendOnlyLog;
-    this.valueHashToId = mapFactory.compute();
-  }
+  //TODO RC: valueHashToId could be loaded async -- to not delay initialization (see DurableStringEnumerator)
+  //TODO RC: if valueHashToId is missed/corrupted -> we could rebuild it from .valuesLog
 
   private static <K> @NotNull DurableIntToMultiIntMap fillValueHashToIdMap(@NotNull AppendOnlyLog valuesLog,
                                                                            @NotNull KeyDescriptorEx<K> valueDescriptor,
-                                                                           @NotNull DurableIntToMultiIntMap valueHashToId) throws IOException {
+                                                                           @NotNull DurableIntToMultiIntMap valueHashToId)
+    throws IOException {
     valuesLog.forEachRecord((logId, buffer) -> {
       K value = valueDescriptor.read(buffer);
       int valueHash = adjustHash(valueDescriptor.hashCodeOf(value));
@@ -92,6 +90,14 @@ public final class DurableEnumerator<V> implements DurableDataEnumerator<V>,
       return true;
     });
     return valueHashToId;
+  }
+
+  private DurableEnumerator(@NotNull KeyDescriptorEx<V> valueDescriptor,
+                            @NotNull AppendOnlyLog valuesLog,
+                            @NotNull ThrowableComputable<DurableIntToMultiIntMap, IOException> mapFactory) throws IOException {
+    this.valueDescriptor = valueDescriptor;
+    this.valuesLog = valuesLog;
+    this.valueHashToId = mapFactory.compute();
   }
 
   @Override
