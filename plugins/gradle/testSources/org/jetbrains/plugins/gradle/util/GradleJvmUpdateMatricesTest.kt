@@ -8,8 +8,6 @@ import com.intellij.testFramework.PlatformTestUtil
 import com.intellij.testFramework.UsefulTestCase
 import com.sun.net.httpserver.HttpExchange
 import com.sun.net.httpserver.HttpServer
-import junit.framework.TestCase
-import junit.framework.TestCase.assertEquals
 import org.jetbrains.plugins.gradle.jvmcompat.GradleCompatibilityState
 import org.jetbrains.plugins.gradle.jvmcompat.GradleCompatibilitySupportUpdater
 import org.jetbrains.plugins.gradle.jvmcompat.GradleJvmSupportMatrix
@@ -27,7 +25,7 @@ class GradleJvmUpdateMatricesTest : LightIdeaTestCase() {
   private lateinit var myUrl: String
   private var updateTime = 0L
 
-  private var requests = 0;
+  private var requests = 0
 
   override fun setUp() {
     super.setUp()
@@ -67,7 +65,7 @@ class GradleJvmUpdateMatricesTest : LightIdeaTestCase() {
   }
 
   private fun withResponse(serverResponse: () -> String) {
-    val previous = Registry.stringValue("gradle.compatibility.config.url");
+    val previous = Registry.stringValue("gradle.compatibility.config.url")
     Registry.get("gradle.compatibility.config.url").setValue(myUrl)
     Disposer.register(testRootDisposable) {
       Registry.get("gradle.compatibility.config.url").setValue(previous)
@@ -108,7 +106,7 @@ class GradleJvmUpdateMatricesTest : LightIdeaTestCase() {
     UsefulTestCase.assertSameElements(GradleJvmSupportMatrix.getInstance().state?.supportedGradleVersions!!, "1.0", "2.0")
     UsefulTestCase.assertSameElements(GradleJvmSupportMatrix.getInstance().state?.supportedJavaVersions!!, "5", "6")
     assertFalse(updateTime == newUpdateTime)
-    requests = 0;
+    requests = 0
 
     PlatformTestUtil.waitForFuture(GradleCompatibilitySupportUpdater.getInstance().checkForUpdates(), 2000)
     assertEquals(0, requests)
