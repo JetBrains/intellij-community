@@ -26,6 +26,10 @@ class InlineCompletionDocumentListener(private val editor: EditorImpl) : BulkAwa
     if (!isEnabled(event) || !(ClientEditorManager.getClientId(editor) ?: ClientId.localId).isCurrent()) {
       return
     }
+    // ML-1109 ML-1131
+    if (event.newLength > 1) {
+      return
+    }
 
     LOG.trace("Valuable document event $event")
     InlineCompletionHandler.getOrNull(editor)
