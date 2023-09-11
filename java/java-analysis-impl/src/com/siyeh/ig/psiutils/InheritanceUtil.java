@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2018 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2023 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -36,7 +36,7 @@ public final class InheritanceUtil {
 
   private InheritanceUtil() {}
 
-  public static ThreeState existsMutualSubclass(PsiClass class1, final PsiClass class2, final boolean avoidExpensiveProcessing) {
+  public static ThreeState existsMutualSubclass(PsiClass class1, PsiClass class2, boolean avoidExpensiveProcessing) {
     if (class1 instanceof PsiTypeParameter) {
       final PsiClass[] superClasses = class1.getSupers();
       ThreeState result = ThreeState.YES;
@@ -86,6 +86,10 @@ public final class InheritanceUtil {
   }
 
   private static ThreeState doSearch(PsiClass class1, PsiClass class2, boolean avoidExpensiveProcessing, SearchScope scope) {
+    if (avoidExpensiveProcessing && DeclarationSearchUtils.isTooExpensiveToSearch(class1, false)) {
+      // class inheritor search is expensive on common names
+      return ThreeState.UNSURE;
+    }
     final Query<PsiClass> search = ClassInheritorsSearch.search(class1, scope, true);
     var processor = new Processor<PsiClass>() {
       ThreeState result = ThreeState.NO;

@@ -9,15 +9,27 @@ import com.siyeh.ig.LightJavaInspectionTestCase;
  */
 public class InstanceofIncompatibleInterfaceInspectionTest extends LightJavaInspectionTestCase {
 
-  public void testHashMap() {
+  public void testTooExpensiveToCheck() {
     doTest("""
              import java.util.HashMap;
              import java.util.List;
              class X {
                void m() {
-                 if(new HashMap() instanceof /*'instanceof' with incompatible interface 'List'*/List/**/);
+                 if(new HashMap() instanceof List);
                }
              }""");
+  }
+
+  public void testSimple() {
+    doTest("""
+           class Alfa {}
+           interface Bravo {}
+           class Charlie {
+             boolean x(Alfa a) {
+               return a instanceof /*'instanceof' with incompatible interface 'Bravo'*/Bravo/**/;
+             }
+           }
+           """);
   }
 
   public void testClasses() {
