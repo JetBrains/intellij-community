@@ -16,20 +16,22 @@ import javax.swing.event.TableColumnModelEvent;
 import javax.swing.event.TableColumnModelListener;
 import javax.swing.table.TableColumn;
 import java.awt.*;
-import java.util.*;
+import java.util.HashSet;
+import java.util.Objects;
+import java.util.Set;
 
 public class TableFilterHeader extends AdditionalTableHeader {
   /** Flag to handle instant filtering support. */
-  private final boolean instantFilteringEnabled = FilterSettings.instantFiltering;
+  private static final boolean instantFilteringEnabled = FilterSettings.instantFiltering;
 
   /** Flag to handle auto completion support. */
-  private final boolean autoCompletionEnabled = FilterSettings.autoCompletion;
+  private static final boolean autoCompletionEnabled = FilterSettings.autoCompletion;
 
   /** This is the total max number of visible rows (history PLUS choices). */
-  private final int maxHistory = FilterSettings.maxPopupHistory;
+  private static final int maxHistory = FilterSettings.maxPopupHistory;
 
   /** Setting to add / decrease height to the filter row. */
-  private final int filterRowHeightDelta = FilterSettings.filterRowHeightDelta;
+  private static final int filterRowHeightDelta = FilterSettings.filterRowHeightDelta;
 
   /**
    * The privately owned instance of FiltersHandler that conforms the filter
