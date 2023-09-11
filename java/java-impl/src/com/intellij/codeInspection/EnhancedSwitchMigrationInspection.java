@@ -928,22 +928,18 @@ public class EnhancedSwitchMigrationInspection extends AbstractBaseJavaLocalInsp
       StringBuilder sb = new StringBuilder("{");
       for (int i = 0, length = myResultStatements.length; i < length; i++) {
         PsiStatement element = myResultStatements[i];
-        String text = ct.textWithComments(element);
-        if (i == length - 1) {
-          sb.append(text);
-          continue;
+        if (i == 0) {
+          PsiElement current = element.getPrevSibling();
+          while (current instanceof PsiWhiteSpace || current instanceof PsiComment) {
+            current = current.getPrevSibling();
+          }
+          addWhiteSpaceAndComments(current, sb, ct);
         }
-        int lastCommentIndex = text.lastIndexOf("//");
-        if (lastCommentIndex == -1) {
-          sb.append(text);
-          continue;
+        ct.markUnchanged(element);
+        sb.append(element.getText());
+        if (i + 1 < length) {
+          addWhiteSpaceAndComments(element, sb, ct);
         }
-        String afterComment = text.substring(lastCommentIndex);
-        if (afterComment.contains("\n")) {
-          sb.append(text);
-          continue;
-        }
-        sb.append(text).append("\n");
       }
       addCommentsUntilNextLabel(ct, branch, sb);
       if (sb.charAt(sb.length() - 1) != '\n') {
@@ -951,6 +947,18 @@ public class EnhancedSwitchMigrationInspection extends AbstractBaseJavaLocalInsp
       }
       sb.append("}");
       return sb.toString();
+    }
+
+    private static void addWhiteSpaceAndComments(@Nullable PsiElement element, @NotNull StringBuilder sb, CommentTracker ct) {
+      if (element == null) {
+        return;
+      }
+      PsiElement current = element.getNextSibling();
+      while (current instanceof PsiComment || current instanceof PsiWhiteSpace) {
+        ct.markUnchanged(current);
+        sb.append(current.getText());
+        current = current.getNextSibling();
+      }
     }
   }
 
