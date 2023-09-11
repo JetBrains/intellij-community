@@ -91,13 +91,6 @@ public abstract class JpsJavaExtensionService {
   @NotNull
   public abstract JpsJavaCompilerConfiguration getCompilerConfiguration(@NotNull JpsProject project);
 
-  /**
-   * @deprecated use {@link JpsJavaExtensionService#getCompilerConfiguration(JpsProject)} instead
-   */
-  @Deprecated(forRemoval = true)
-  @NotNull
-  public abstract JpsJavaCompilerConfiguration getOrCreateCompilerConfiguration(@NotNull JpsProject project);
-
   @Nullable
   public abstract JpsTestModuleProperties getTestModuleProperties(@NotNull JpsModule module);
 

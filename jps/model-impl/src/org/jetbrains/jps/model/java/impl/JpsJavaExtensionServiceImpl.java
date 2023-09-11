@@ -142,13 +142,6 @@ public class JpsJavaExtensionServiceImpl extends JpsJavaExtensionService {
     return project.getContainer().getOrSetChild(JpsJavaCompilerConfigurationImpl.ROLE);
   }
 
-  @Deprecated
-  @NotNull
-  @Override
-  public JpsJavaCompilerConfiguration getOrCreateCompilerConfiguration(@NotNull JpsProject project) {
-    return getCompilerConfiguration(project);
-  }
-
   @Nullable
   @Override
   public JpsTestModuleProperties getTestModuleProperties(@NotNull JpsModule module) {

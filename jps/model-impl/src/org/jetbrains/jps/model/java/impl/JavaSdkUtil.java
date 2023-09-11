@@ -7,7 +7,6 @@ import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.io.File;
 import java.io.IOException;
 import java.nio.file.DirectoryStream;
 import java.nio.file.Files;
@@ -17,12 +16,6 @@ import java.util.List;
 import java.util.Set;
 
 public final class JavaSdkUtil {
-  /** @deprecated use {@link #getJdkClassesRoots(Path, boolean)} instead */
-  @Deprecated(forRemoval = true)
-  public static @NotNull List<File> getJdkClassesRoots(@NotNull File home, boolean isJre) {
-    return ContainerUtil.map(getJdkClassesRoots(home.toPath(), isJre), Path::toFile);
-  }
-
   public static @NotNull List<Path> getJdkClassesRoots(@NotNull Path home, boolean isJre) {
     Path[] jarDirs;
     Path fileName = home.getFileName();
