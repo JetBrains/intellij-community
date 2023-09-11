@@ -127,12 +127,15 @@ class GitLabMergeRequestChangesImpl(
 }
 
 private fun GitLabDiffDTO.toPatch(): TextFilePatch {
-  val aPath = oldPath.takeIf { !newFile }?.let { "a/$it" } ?: "/dev/null"
-  val bPath = newPath.takeIf { !deletedFile }?.let { "b/$it" } ?: "/dev/null"
-  val header = """--- $aPath
-+++ $bPath
+  val beforeFilePath = oldPath.takeIf { !newFile } ?: "/dev/null"
+  val afterFilePath = newPath.takeIf { !deletedFile } ?: "/dev/null"
+  val header = """--- a/$beforeFilePath
++++ b/$afterFilePath
 """
 
   val patchReader = PatchReader(header + diff)
-  return patchReader.readTextPatches().firstOrNull() ?: throw IllegalStateException("Could not parse diff $this")
+  return patchReader.readTextPatches().firstOrNull()?.apply {
+    beforeName = beforeFilePath
+    afterName = afterFilePath
+  } ?: throw IllegalStateException("Could not parse diff $this")
 }
