@@ -14,6 +14,7 @@ import com.intellij.openapi.editor.Caret
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.event.DocumentEvent
 import com.intellij.openapi.editor.event.EditorMouseEvent
+import com.intellij.openapi.progress.coroutineToIndicator
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.registry.Registry
@@ -88,11 +89,20 @@ class InlineCompletionHandler(private val scope: CoroutineScope) {
     val editor = request.editor
     val offset = request.endOffset
 
-    InlineCompletionContext.getOrNull(editor)?.let {
-      if (it.isCurrentlyDisplayingInlays) {
-        withContext(Dispatchers.EDT) {
-          hide(editor, false, it)
+    InlineCompletionContext.getOrNull(editor)?.let { context ->
+      if (event is InlineCompletionEvent.LookupChange && context.elements.isNotEmpty()) {
+        return
+      }
+      if (context.isCurrentlyDisplayingInlays) {
+        getFragmentToAppendPrefix(event)?.let { prefixFragment ->
+          val prefixUpdateResult = coroutineToIndicator { context.appendPrefix(prefixFragment, offset) }
+          if (prefixUpdateResult == InlineCompletionContext.PrefixUpdateResult.SUCCESS) {
+            return
+          }
         }
+      }
+      withContext(Dispatchers.EDT) {
+        hide(editor, false, context)
       }
     }
 
@@ -130,7 +140,7 @@ class InlineCompletionHandler(private val scope: CoroutineScope) {
     return provider.getProposals(request)
   }
 
-  fun showInlineElement(
+  private fun showInlineElement(
     editor: Editor,
     element: InlineCompletionElement,
     index: Int,
@@ -141,7 +151,7 @@ class InlineCompletionHandler(private val scope: CoroutineScope) {
 
     withSafeMute {
       element.render(editor, context.lastOffset ?: offset)
-      context.state.addElement(element)
+      context.addElement(element)
     }
   }
 
@@ -176,6 +186,17 @@ class InlineCompletionHandler(private val scope: CoroutineScope) {
     if (cause != null) {
       hide(editor, false, context)
     }
+  }
+
+  private fun getFragmentToAppendPrefix(completionEvent: InlineCompletionEvent): CharSequence? {
+    if (completionEvent !is InlineCompletionEvent.DocumentChange) {
+      return null
+    }
+    val documentEvent = completionEvent.event
+    val newFragment = documentEvent.newFragment
+    val oldFragment = documentEvent.oldFragment
+
+    return if (newFragment.isNotEmpty() && oldFragment.isEmpty()) newFragment else null
   }
 
   private fun shouldShowPlaceholder(): Boolean = Registry.`is`("inline.completion.show.placeholder")
