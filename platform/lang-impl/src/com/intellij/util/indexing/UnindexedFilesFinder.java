@@ -17,6 +17,7 @@ import com.intellij.openapi.vfs.newvfs.impl.CachedFileType;
 import com.intellij.psi.search.FileTypeIndex;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.indexing.dependencies.FileIndexingStampService;
 import com.intellij.util.indexing.projectFilter.FileAddStatus;
 import com.intellij.util.indexing.projectFilter.ProjectIndexableFilesFilterHolder;
 import org.jetbrains.annotations.Contract;
@@ -40,6 +41,7 @@ final class UnindexedFilesFinder {
   private final @NotNull ProjectIndexableFilesFilterHolder myIndexableFilesFilterHolder;
   private final boolean myShouldProcessUpToDateFiles;
   private final IndexingReasonExplanationLogger explanationLogger;
+  private final FileIndexingStampService.FileIndexingStamp indexingStamp;
 
   private static final class UnindexedFileStatusBuilder {
     boolean shouldIndex = false;
@@ -137,7 +139,7 @@ final class UnindexedFilesFinder {
                        IndexingReasonExplanationLogger explanationLogger,
                        @NotNull FileBasedIndexImpl fileBasedIndex,
                        @Nullable Predicate<? super IndexedFile> forceReindexingTrigger,
-                       @Nullable VirtualFile root) {
+                       @Nullable VirtualFile root, FileIndexingStampService.FileIndexingStamp indexingStamp) {
     this.explanationLogger = explanationLogger;
     myProject = project;
     myFileBasedIndex = fileBasedIndex;
@@ -152,6 +154,7 @@ final class UnindexedFilesFinder {
     myShouldProcessUpToDateFiles = ContainerUtil.find(myStateProcessors, p -> p.shouldProcessUpToDateFiles()) != null;
 
     myIndexableFilesFilterHolder = fileBasedIndex.getIndexableFilesFilterHolder();
+    this.indexingStamp = indexingStamp;
   }
 
   @Nullable("null if the file is not subject for indexing (a directory, invalid, etc.)")
@@ -409,7 +412,7 @@ final class UnindexedFilesFinder {
 
     IndexingStamp.flushCache(inputId);
     if (!fileStatusBuilder.shouldIndex && fileStatusBuilder.mayMarkFileIndexed) {
-      IndexingFlag.setFileIndexed(file);
+      IndexingFlag.setFileIndexed(file, indexingStamp);
     }
   }
 

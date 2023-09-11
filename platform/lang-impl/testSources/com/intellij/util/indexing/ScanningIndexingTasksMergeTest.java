@@ -12,6 +12,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileFilter;
 import com.intellij.openapi.vfs.newvfs.impl.FakeVirtualFile;
 import com.intellij.testFramework.LightPlatformTestCase;
+import com.intellij.util.indexing.dependencies.FileIndexingStampService;
 import com.intellij.util.indexing.diagnostic.ScanningType;
 import com.intellij.util.indexing.roots.IndexableFilesIterator;
 import com.intellij.util.indexing.roots.kind.IndexableSetOrigin;
@@ -54,8 +55,8 @@ public class ScanningIndexingTasksMergeTest extends LightPlatformTestCase {
     map2.put(iter2, f2);
     map2.put(iterShared, fShared.subList(1, 3));
 
-    task1 = new UnindexedFilesIndexer(getProject(), map1, "test task1", LongSet.of());
-    task2 = new UnindexedFilesIndexer(getProject(), map2, "test task2", LongSet.of());
+    task1 = new UnindexedFilesIndexer(getProject(), map1, "test task1", LongSet.of(), FileIndexingStampService.getCurrentStamp());
+    task2 = new UnindexedFilesIndexer(getProject(), map2, "test task2", LongSet.of(), FileIndexingStampService.getCurrentStamp());
   }
 
   public void testTryMergeIndexingTasks() {
@@ -115,8 +116,8 @@ public class ScanningIndexingTasksMergeTest extends LightPlatformTestCase {
 
 
     for (String[] situation : situations) {
-      UnindexedFilesIndexer t1 = new UnindexedFilesIndexer(getProject(), situation[0]);
-      UnindexedFilesIndexer t2 = new UnindexedFilesIndexer(getProject(), situation[1]);
+      UnindexedFilesIndexer t1 = new UnindexedFilesIndexer(getProject(), situation[0], FileIndexingStampService.getCurrentStamp());
+      UnindexedFilesIndexer t2 = new UnindexedFilesIndexer(getProject(), situation[1], FileIndexingStampService.getCurrentStamp());
       UnindexedFilesIndexer merged = t1.tryMergeWith(t2);
       assertEquals(situation[2], merged.getIndexingReason());
     }
@@ -150,7 +151,7 @@ public class ScanningIndexingTasksMergeTest extends LightPlatformTestCase {
   @NotNull
   private UnindexedFilesScanner createScanningTask(IndexableFilesIterator iter, String reason, ScanningType type) {
     List<IndexableFilesIterator> iterators = iter == null ? null : Collections.singletonList(iter);
-    return new UnindexedFilesScanner(getProject(), false, false, iterators, null, reason, type);
+    return new UnindexedFilesScanner(getProject(), false, false, iterators, null, reason, type, FileIndexingStampService.getCurrentStamp());
   }
 
   private void assertMergedStateInvariants(UnindexedFilesIndexer mergedTask) {

@@ -44,9 +44,9 @@ object IndexingFlag {
   }
 
   @JvmStatic
-  fun setFileIndexed(file: VirtualFile) {
+  fun setFileIndexed(file: VirtualFile, stamp: FileIndexingStampService.FileIndexingStamp) {
     if (file is VirtualFileSystemEntry) {
-      file.indexedStamp = FileIndexingStampService.getCurrentStamp().toInt()
+      file.indexedStamp = stamp.toInt()
     }
   }
 

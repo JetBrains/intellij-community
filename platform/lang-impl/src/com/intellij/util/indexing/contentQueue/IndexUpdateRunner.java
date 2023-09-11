@@ -32,6 +32,7 @@ import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.concurrency.SequentialTaskExecutor;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.indexing.*;
+import com.intellij.util.indexing.dependencies.FileIndexingStampService;
 import com.intellij.util.indexing.diagnostic.IndexingFileSetStatistics;
 import com.intellij.util.indexing.diagnostic.ProjectDumbIndexingHistoryImpl;
 import com.intellij.util.indexing.roots.IndexableFilesDeduplicateFilter;
@@ -70,6 +71,8 @@ public final class IndexUpdateRunner {
     AppExecutorUtil.createBoundedApplicationPoolExecutor("Indexing", INDEXING_THREADS_NUMBER);
 
   private final FileBasedIndexImpl myFileBasedIndex;
+  
+  private final @NotNull FileIndexingStampService.FileIndexingStamp indexingStamp;
 
   private final ExecutorService myIndexingExecutor;
 
@@ -178,8 +181,9 @@ public final class IndexUpdateRunner {
   private static final Condition ourLoadedBytesAreReleasedCondition = ourLoadedBytesLimitLock.newCondition();
 
   public IndexUpdateRunner(@NotNull FileBasedIndexImpl fileBasedIndex,
-                           int numberOfIndexingThreads) {
+                           @NotNull FileIndexingStampService.FileIndexingStamp indexingStamp, int numberOfIndexingThreads) {
     myFileBasedIndex = fileBasedIndex;
+    this.indexingStamp = indexingStamp;
     myIndexingExecutor = GLOBAL_INDEXING_EXECUTOR;
     LOG.assertTrue(numberOfIndexingThreads <= INDEXING_THREADS_NUMBER,
                    "Got indexing thread " + numberOfIndexingThreads + " when pool has " + INDEXING_THREADS_NUMBER);
@@ -461,7 +465,7 @@ public final class IndexUpdateRunner {
         .nonBlocking(() -> {
           myIndexingAttemptCount.incrementAndGet();
           FileType fileType = fileTypeChangeChecker.get() ? type : null;
-          return myFileBasedIndex.indexFileContent(indexingJob.myProject, fileContent, fileType);
+          return myFileBasedIndex.indexFileContent(indexingJob.myProject, fileContent, fileType, indexingStamp);
         })
         .expireWith(indexingJob.myProject)
         .wrapProgress(indexingJob.myIndicator)

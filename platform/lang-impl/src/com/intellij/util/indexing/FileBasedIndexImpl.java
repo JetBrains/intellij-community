@@ -65,6 +65,7 @@ import com.intellij.util.gist.GistManager;
 import com.intellij.util.indexing.FileIndexesValuesApplier.ApplicationMode;
 import com.intellij.util.indexing.contentQueue.CachedFileContent;
 import com.intellij.util.indexing.contentQueue.IndexUpdateRunner;
+import com.intellij.util.indexing.dependencies.FileIndexingStampService;
 import com.intellij.util.indexing.diagnostic.BrokenIndexingDiagnostics;
 import com.intellij.util.indexing.diagnostic.IndexStatisticGroup;
 import com.intellij.util.indexing.diagnostic.StorageDiagnosticData;
@@ -1302,12 +1303,13 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
   }
 
   // caller is responsible to ensure no concurrent same document processing
-  private void processRefreshedFile(@Nullable Project project, @NotNull final CachedFileContent fileContent) {
+  private void processRefreshedFile(@Nullable Project project, @NotNull final CachedFileContent fileContent,
+                                    @NotNull FileIndexingStampService.FileIndexingStamp indexingStamp) {
     // ProcessCanceledException will cause re-adding the file to the processing list
     final VirtualFile file = fileContent.getVirtualFile();
     if (getChangedFilesCollector().isScheduledForUpdate(file)) {
       try {
-        indexFileContent(project, fileContent, null).apply(file, null, true);
+        indexFileContent(project, fileContent, null, indexingStamp).apply(file, null, true);
       }
       finally {
         IndexingStamp.flushCache(getFileId(file));
@@ -1330,7 +1332,8 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
   @NotNull
   public FileIndexesValuesApplier indexFileContent(@Nullable Project project,
                                                    @NotNull CachedFileContent content,
-                                                   @Nullable FileType cachedFileType) {
+                                                   @Nullable FileType cachedFileType,
+                                                   @NotNull FileIndexingStampService.FileIndexingStamp indexingStamp) {
     ProgressManager.checkCanceled();
     VirtualFile file = content.getVirtualFile();
     final int fileId = getFileId(file);
@@ -1355,12 +1358,12 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
     FileIndexesValuesApplier applier;
     if (!isValid || isTooLarge(file)) {
       ProgressManager.checkCanceled();
-      applier = new FileIndexesValuesApplier(this, fileId, file, Collections.emptyList(), Collections.emptyList(),
+      applier = new FileIndexesValuesApplier(this, fileId, file, indexingStamp, Collections.emptyList(), Collections.emptyList(),
                                              true, true, applicationMode,
                                              cachedFileType == null ? file.getFileType() : cachedFileType, false);
     }
     else {
-      applier = doIndexFileContent(project, content, cachedFileType, applicationMode);
+      applier = doIndexFileContent(project, content, cachedFileType, applicationMode, indexingStamp);
     }
     return applier;
   }
@@ -1369,7 +1372,8 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
   private FileIndexesValuesApplier doIndexFileContent(@Nullable Project project,
                                                       @NotNull CachedFileContent content,
                                                       @Nullable FileType cachedFileType,
-                                                      @NotNull ApplicationMode applicationMode) {
+                                                      @NotNull ApplicationMode applicationMode,
+                                                      FileIndexingStampService.FileIndexingStamp indexingStamp) {
     ProgressManager.checkCanceled();
     final VirtualFile file = content.getVirtualFile();
     Ref<Boolean> setIndexedStatus = Ref.create(Boolean.TRUE);
@@ -1459,7 +1463,7 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
 
     file.putUserData(IndexingDataKeys.REBUILD_REQUESTED, null);
     return new FileIndexesValuesApplier(this,
-                                        inputId, file, appliers, removers, false, setIndexedStatus.get(), applicationMode,
+                                        inputId, file, indexingStamp, appliers, removers, false, setIndexedStatus.get(), applicationMode,
                                         fileTypeRef.get(), doTraceSharedIndexUpdates()
     );
   }
@@ -1680,7 +1684,7 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
   private final class VirtualFileUpdateTask extends UpdateTask<VirtualFile> {
     @Override
     void doProcess(VirtualFile item, Project project) {
-      processRefreshedFile(project, new CachedFileContent(item));
+      processRefreshedFile(project, new CachedFileContent(item), FileIndexingStampService.getCurrentStamp());
     }
   }
 
@@ -1792,7 +1796,8 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
     }
   }
 
-  public void scheduleFileForIndexing(int fileId, @NotNull VirtualFile file, boolean contentChange) {
+  public void scheduleFileForIndexing(int fileId, @NotNull VirtualFile file, boolean contentChange,
+                                      FileIndexingStampService.FileIndexingStamp stamp) {
     if (ensureFileBelongsToIndexableFilter(fileId, file) == FileAddStatus.SKIPPED) {
       doInvalidateIndicesForFile(fileId, file);
       return;
@@ -1844,7 +1849,7 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
           getChangedFilesCollector().scheduleForUpdate(file);
         }
         else {
-          IndexingFlag.setFileIndexed(file);
+          IndexingFlag.setFileIndexed(file, stamp);
         }
       });
     }

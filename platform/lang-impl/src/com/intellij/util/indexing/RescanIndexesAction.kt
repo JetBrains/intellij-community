@@ -10,6 +10,7 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.VirtualFileWithId
 import com.intellij.psi.stubs.StubTreeBuilder
 import com.intellij.psi.stubs.StubUpdatingIndex
+import com.intellij.util.indexing.dependencies.FileIndexingStampService
 import com.intellij.util.indexing.diagnostic.ProjectScanningHistory
 import com.intellij.util.indexing.diagnostic.ScanningType
 import com.intellij.util.indexing.roots.IndexableFilesIterator
@@ -41,7 +42,8 @@ class RescanIndexesAction : RecoveryAction {
     }
     object : UnindexedFilesScanner(project, false, false,
                                    predefinedIndexableFilesIterators, null, "Rescanning indexes recovery action",
-                                   if(predefinedIndexableFilesIterators == null) ScanningType.FULL_FORCED else ScanningType.PARTIAL_FORCED) {
+                                   if(predefinedIndexableFilesIterators == null) ScanningType.FULL_FORCED else ScanningType.PARTIAL_FORCED,
+                                   FileIndexingStampService.invalidateAllStamps()) {
       private val stubIndex =
         runCatching { (FileBasedIndex.getInstance() as FileBasedIndexImpl).getIndex(StubUpdatingIndex.INDEX_ID) }
         .onFailure { logger<RescanIndexesAction>().error(it) }.getOrNull()

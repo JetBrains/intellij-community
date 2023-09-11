@@ -3,6 +3,7 @@ package com.intellij.util.indexing.dependencies
 
 import org.jetbrains.annotations.VisibleForTesting
 import java.util.concurrent.atomic.AtomicReference
+import kotlin.math.max
 
 // @Service(Service.Level.APP) <= TODO-ank
 object FileIndexingStampService {
@@ -14,11 +15,15 @@ object FileIndexingStampService {
      * Monotonically increasing number representing IndexingStamp
      */
     fun toInt(): Int
+    fun mergeWith(other: FileIndexingStamp): FileIndexingStamp
   }
 
   @VisibleForTesting
   data class FileIndexingStampImpl(val stamp: Int) : FileIndexingStamp {
     override fun toInt(): Int = stamp
+    override fun mergeWith(other: FileIndexingStamp): FileIndexingStamp {
+      return FileIndexingStampImpl(max(stamp, (other as FileIndexingStampImpl).stamp))
+    }
     override fun toString(): String = stamp.toString()
   }
 

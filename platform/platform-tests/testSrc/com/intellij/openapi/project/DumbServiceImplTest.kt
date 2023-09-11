@@ -25,6 +25,7 @@ import com.intellij.util.concurrency.Semaphore
 import com.intellij.util.indexing.FileBasedIndex
 import com.intellij.util.indexing.FileBasedIndexImpl
 import com.intellij.util.indexing.contentQueue.IndexUpdateRunner
+import com.intellij.util.indexing.dependencies.FileIndexingStampService
 import com.intellij.util.indexing.diagnostic.ProjectDumbIndexingHistoryImpl
 import com.intellij.util.ui.UIUtil
 import kotlinx.coroutines.*
@@ -288,7 +289,7 @@ class DumbServiceImplTest {
         try {
           ProgressIndicatorUtils.withTimeout(20_000) {
             val index = FileBasedIndex.getInstance() as FileBasedIndexImpl
-            IndexUpdateRunner(index, 1)
+            IndexUpdateRunner(index, FileIndexingStampService.getCurrentStamp(), 1)
               .indexFiles(project, listOf(IndexUpdateRunner.FileSet(project, "child", listOf(child))),
                           indicator,
                           ProjectDumbIndexingHistoryImpl(project))
