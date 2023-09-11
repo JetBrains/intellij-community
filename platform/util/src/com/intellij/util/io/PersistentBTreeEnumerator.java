@@ -83,7 +83,7 @@ public class PersistentBTreeEnumerator<Data> extends PersistentEnumeratorBase<Da
 
   private static final int MAX_DATA_SEGMENT_LENGTH = 128;
 
-  protected static int baseVersion() {
+  public static int baseVersion() {
     return 8 + IntToIntBtree.version() + BTREE_PAGE_SIZE + INTERNAL_PAGE_SIZE + MAX_DATA_SEGMENT_LENGTH;
   }
 

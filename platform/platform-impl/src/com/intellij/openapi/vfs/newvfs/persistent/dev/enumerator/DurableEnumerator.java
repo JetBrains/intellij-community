@@ -11,6 +11,7 @@ import com.intellij.openapi.vfs.newvfs.persistent.dev.appendonlylog.AppendOnlyLo
 import com.intellij.openapi.vfs.newvfs.persistent.dev.appendonlylog.AppendOnlyLogOverMMappedFile;
 import com.intellij.util.ExceptionUtil;
 import com.intellij.util.Processor;
+import com.intellij.util.io.ScannableDataEnumeratorEx;
 import com.intellij.util.io.VersionUpdatedException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -26,7 +27,8 @@ import java.nio.file.Path;
  * <p>
  * Implementation uses append-only log to store objects, and some (pluggable) Map[object.hash -> id*].
  */
-public final class DurableEnumerator<V> implements DurableDataEnumerator<V> {
+public final class DurableEnumerator<V> implements DurableDataEnumerator<V>,
+                                                   ScannableDataEnumeratorEx<V> {
 
   public static final int DATA_FORMAT_VERSION = 1;
 

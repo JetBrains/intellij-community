@@ -1,20 +1,19 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.io;
 
-import com.intellij.openapi.Forceable;
 import com.intellij.util.Processor;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.io.Closeable;
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Path;
 import java.util.Collection;
 import java.util.concurrent.locks.Lock;
 
-public class PersistentEnumerator<Data> implements DurableDataEnumerator<Data>, Closeable, Forceable {
+public class PersistentEnumerator<Data> implements DurableDataEnumerator<Data>,
+                                                   ScannableDataEnumeratorEx<Data> {
   protected final @NotNull PersistentEnumeratorBase<Data> myEnumerator;
 
   public PersistentEnumerator(@NotNull Path file, @NotNull KeyDescriptor<Data> dataDescriptor, final int initialSize) throws IOException {

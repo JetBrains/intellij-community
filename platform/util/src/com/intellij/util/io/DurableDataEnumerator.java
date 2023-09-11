@@ -6,6 +6,6 @@ import com.intellij.openapi.Forceable;
 import java.io.Closeable;
 
 
-public interface DurableDataEnumerator<V> extends ScannableDataEnumeratorEx<V>, Closeable, Forceable {
+public interface DurableDataEnumerator<V> extends DataEnumeratorEx<V>, Closeable, Forceable {
 
 }
