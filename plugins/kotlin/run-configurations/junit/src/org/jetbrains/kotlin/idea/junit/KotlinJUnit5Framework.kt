@@ -3,8 +3,8 @@ package org.jetbrains.kotlin.idea.junit
 
 import com.intellij.execution.junit.JUnit5Framework
 import com.intellij.execution.junit.JUnitUtil
-import com.intellij.lang.Language
 import com.intellij.java.analysis.OuterModelsModificationTrackerManager
+import com.intellij.lang.Language
 import com.intellij.psi.PsiElement
 import com.intellij.psi.util.CachedValueProvider
 import com.intellij.psi.util.CachedValuesManager
@@ -77,7 +77,7 @@ class KotlinJUnit5Framework: JUnit5Framework(), KotlinPsiBasedTestFramework {
             if (!isFrameworkAvailable(declaration)) {
                 NO
             } else if (declaration is KtClass && declaration.isInner() && !isAnnotated(declaration, "org.junit.jupiter.api.Nested")) {
-                NO
+                YES
             } else if (declaration.isTopLevel() && isAnnotated(declaration, "org.junit.jupiter.api.extension.ExtendWith")) {
                 YES
             } else if (findAnnotatedFunction(declaration, METHOD_ANNOTATION_FQN) != null) {
