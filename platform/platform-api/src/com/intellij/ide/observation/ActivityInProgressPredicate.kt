@@ -1,4 +1,6 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+@file:Suppress("RedundantUnitReturnType")
+
 package com.intellij.ide.observation
 
 import com.intellij.openapi.extensions.ExtensionPointName
@@ -41,4 +43,18 @@ interface ActivityInProgressPredicate {
    * @return `true` if there is some activity happening, `false` otherwise
    */
   suspend fun isInProgress(project: Project): Boolean
+
+  /**
+   * Suspends the current coroutine until the configuration process of a subsystem is finished.
+   *
+   * Please note, that this method is intended to be used to avoid the active polling of [isInProgress],
+   * and therefore it does **NOT** provide any guarantees about the state of the configuration activities
+   * in a subsystem on the moment of resumption.
+   *
+   * In other words, the usage of this method is prone to [TOCTOU](https://en.wikipedia.org/wiki/Time-of-check_to_time-of-use) bug,
+   * as some unrelated activity may trigger another phase of configuration for the current subsystem.
+   *
+   * @param project the project which is configured
+   */
+  suspend fun awaitFinished(project: Project) : Unit {}
 }
