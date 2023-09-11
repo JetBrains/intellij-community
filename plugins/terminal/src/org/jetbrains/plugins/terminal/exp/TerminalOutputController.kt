@@ -53,7 +53,14 @@ class TerminalOutputController(
 
   @RequiresEdt
   fun startCommandBlock(command: String?) {
-    outputModel.createBlock(command)
+    val block = outputModel.createBlock(command)
+    if (!command.isNullOrEmpty()) {
+      editor.document.insertString(block.endOffset, command + "\n")
+      val highlighting = createCommandHighlighting(block)
+      outputModel.putHighlightings(block, listOf(highlighting))
+      blocksDecorator.installDecoration(block, isFirstBlock = outputModel.getBlocksSize() == 1)
+    }
+
     installRunningCommandListeners()
   }
 
@@ -117,18 +124,19 @@ class TerminalOutputController(
   }
 
   private fun updateEditorContent() {
-    val content = computeTerminalContent()
+    val output = computeCommandOutput()
     // Can not use invokeAndWait here because deadlock may happen. TerminalTextBuffer is locked at this place,
     // and EDT can be frozen now trying to acquire this lock
     invokeLater(ModalityState.any()) {
       if (!editor.isDisposed) {
-        updateEditor(content)
+        updateEditor(output)
       }
     }
   }
 
-  private fun computeTerminalContent(): TerminalContent {
-    val baseOffset = outputModel.getLastBlock()!!.startOffset
+  private fun computeCommandOutput(): CommandOutput {
+    val block = outputModel.getLastBlock()!!
+    val baseOffset = block.outputStartOffset
     val builder = StringBuilder()
     val highlightings = mutableListOf<HighlightingInfo>()
     val consumer = object : StyledTextConsumer {
@@ -163,32 +171,48 @@ class TerminalOutputController(
       }
     }
 
-    if (terminalModel.useAlternateBuffer) {
-      terminalModel.processScreenLines(0, terminalModel.screenLinesCount, consumer)
+    val commandLines = block.command?.let { command ->
+      command.split("\n").sumOf { it.length / terminalModel.width + if (it.length % terminalModel.width > 0) 1 else 0 }
+    } ?: 0
+    val historyLines = terminalModel.historyLinesCount
+    if (terminalModel.historyLinesCount > 0) {
+      if (commandLines <= historyLines) {
+        terminalModel.processHistoryAndScreenLines(commandLines - historyLines, historyLines - commandLines, consumer)
+        terminalModel.processScreenLines(0, terminalModel.cursorY, consumer)
+      }
+      else {
+        terminalModel.processHistoryAndScreenLines(-historyLines, historyLines, consumer)
+        terminalModel.processScreenLines(commandLines - historyLines, terminalModel.cursorY, consumer)
+      }
     }
     else {
-      terminalModel.processHistoryAndScreenLines(-terminalModel.historyLinesCount,
-                                                 terminalModel.historyLinesCount + terminalModel.cursorY,
-                                                 consumer)
+      terminalModel.processScreenLines(commandLines, terminalModel.cursorY - commandLines, consumer)
     }
 
     while (builder.lastOrNull() == '\n') {
       builder.deleteCharAt(builder.lastIndex)
       highlightings.removeLast()
     }
-    return TerminalContent(builder.toString(), highlightings)
+    return CommandOutput(builder.toString(), highlightings)
   }
 
-  private fun updateEditor(content: TerminalContent) {
+  private fun updateEditor(output: CommandOutput) {
     val block = outputModel.getLastBlock() ?: error("No active block")
-    editor.document.replaceString(block.startOffset, block.endOffset, content.text)
-    outputModel.putHighlightings(block, content.highlightings)
+    editor.document.replaceString(block.outputStartOffset, block.endOffset, output.text)
+    // highlightings are collected only for output, so add command highlighting in the first place
+    val command = block.command
+    val highlightings = if (command != null) {
+      val commandHighlighting = createCommandHighlighting(block)
+      output.highlightings.toMutableList().also { it.add(0, commandHighlighting) }
+    }
+    else output.highlightings
+    outputModel.putHighlightings(block, highlightings)
     // Install decorations lazily, only if there is some text.
     // ZSH prints '%' character on startup and then removing it immediately, so ignore this character to avoid blinking.
     // This hack can be solved by debouncing the update text requests.
     if (outputModel.getDecoration(block) == null
-        && content.text.isNotBlank()
-        && content.text.trim() != "%") {
+        && output.text.isNotBlank()
+        && output.text.trim() != "%") {
       blocksDecorator.installDecoration(block, isFirstBlock = outputModel.getBlocksSize() == 1)
     }
 
@@ -233,6 +257,12 @@ class TerminalOutputController(
     else AwtTransformers.toAwtColor(foreground)!!
   }
 
+  /** It is implied that the command is not null */
+  private fun createCommandHighlighting(block: CommandBlock): HighlightingInfo {
+    val attributes = TextAttributes(TerminalUi.commandForeground, null, null, null, Font.BOLD)
+    return HighlightingInfo(block.startOffset, block.startOffset + block.command!!.length, attributes)
+  }
+
   fun addDocumentListener(listener: DocumentListener, disposable: Disposable? = null) {
     if (disposable != null) {
       editor.document.addDocumentListener(listener, disposable)
@@ -240,7 +270,7 @@ class TerminalOutputController(
     else editor.document.addDocumentListener(listener)
   }
 
-  private data class TerminalContent(val text: String, val highlightings: List<HighlightingInfo>)
+  private data class CommandOutput(val text: String, val highlightings: List<HighlightingInfo>)
 
   companion object {
     val KEY: DataKey<TerminalOutputController> = DataKey.create("TerminalOutputController")

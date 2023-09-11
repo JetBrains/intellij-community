@@ -40,6 +40,8 @@ object TerminalUi {
 
   val outputForeground: Color
     get() = JBColor(0x080808, 0xBDC0C9)
+  val commandForeground: Color
+    get() = JBColor(0x000000, 0xFFFFFF)
   val promptForeground: Color
     get() = JBColor(0x6C707E, 0x868A91)
 
