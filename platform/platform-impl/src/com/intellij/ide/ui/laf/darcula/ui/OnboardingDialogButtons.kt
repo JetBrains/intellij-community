@@ -12,20 +12,31 @@ import java.awt.event.MouseEvent
 import javax.swing.*
 
 object OnboardingDialogButtons {
-  @JvmStatic
-  fun createHoverLinkButton(@Nls text: String, icon: Icon?, onClick: Runnable): JComponent {
+  fun createLinkButton(@Nls text: String, icon: Icon?, onClick: Runnable): JButton {
     val action: Action = object : AbstractAction(text, icon) {
       override fun actionPerformed(e: ActionEvent) {
         onClick.run()
       }
     }
     val btn = JButton(action)
-    btn.preferredSize = Dimension(280, 40)
     btn.putClientProperty("ActionToolbar.smallVariant", true)
-    btn.putClientProperty("JButton.backgroundColor", JBUI.CurrentTheme.ActionButton.hoverBackground())
-    btn.putClientProperty("JButton.borderColor", Color(0, true))
+    btn.setHorizontalTextPosition(SwingConstants.LEFT)
     btn.setContentAreaFilled(false)
     btn.setForeground(JBUI.CurrentTheme.Link.Foreground.ENABLED)
+    btn.isBorderPainted = false
+    btn.iconTextGap = 0
+
+    return btn
+  }
+
+  @JvmStatic
+  fun createHoveredLinkButton(@Nls text: String, icon: Icon?, onClick: Runnable): JComponent {
+
+    val btn = createLinkButton(text, icon, onClick)
+    btn.preferredSize = Dimension(280, 40)
+    btn.isBorderPainted = true
+    btn.putClientProperty("JButton.backgroundColor", JBUI.CurrentTheme.ActionButton.hoverBackground())
+    btn.putClientProperty("JButton.borderColor", Color(0, true))
 
     val listener: MouseAdapter = object : MouseAdapter() {
       override fun mouseEntered(e: MouseEvent) {
