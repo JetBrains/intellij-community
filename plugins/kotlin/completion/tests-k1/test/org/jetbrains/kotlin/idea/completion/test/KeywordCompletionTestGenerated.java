@@ -463,6 +463,11 @@ public class KeywordCompletionTestGenerated extends AbstractKeywordCompletionTes
         runTest("../testData/keywords/PropertyAccessors2.kt");
     }
 
+    @TestMetadata("PropertyAccessorsSameLine.kt")
+    public void testPropertyAccessorsSameLine() throws Exception {
+        runTest("../testData/keywords/PropertyAccessorsSameLine.kt");
+    }
+
     @TestMetadata("PropertyAccessors_ExplicitBackingFieldsEnabled.kt")
     public void testPropertyAccessors_ExplicitBackingFieldsEnabled() throws Exception {
         runTest("../testData/keywords/PropertyAccessors_ExplicitBackingFieldsEnabled.kt");

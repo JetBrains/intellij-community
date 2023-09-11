@@ -465,6 +465,11 @@ public abstract class FirKeywordCompletionTestGenerated extends AbstractFirKeywo
             runTest("../completion/testData/keywords/PropertyAccessors2.kt");
         }
 
+        @TestMetadata("PropertyAccessorsSameLine.kt")
+        public void testPropertyAccessorsSameLine() throws Exception {
+            runTest("../completion/testData/keywords/PropertyAccessorsSameLine.kt");
+        }
+
         @TestMetadata("PropertyAccessors_ExplicitBackingFieldsEnabled.kt")
         public void testPropertyAccessors_ExplicitBackingFieldsEnabled() throws Exception {
             runTest("../completion/testData/keywords/PropertyAccessors_ExplicitBackingFieldsEnabled.kt");
