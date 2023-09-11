@@ -13,9 +13,8 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.JDOMUtil
 import com.intellij.platform.diagnostic.telemetry.helpers.addElapsedTimeMs
-import com.intellij.platform.jps.model.diagnostic.JpsMetrics
+import com.intellij.platform.workspace.jps.JpsMetrics
 import com.intellij.platform.backend.workspace.WorkspaceModelChangeListener
-import com.intellij.platform.backend.workspace.WorkspaceModelTopics
 import com.intellij.workspaceModel.ide.impl.jps.serialization.BaseIdeSerializationContext
 import com.intellij.workspaceModel.ide.impl.legacyBridge.facet.FacetModelBridge.Companion.facetMapping
 import com.intellij.workspaceModel.ide.impl.legacyBridge.facet.FacetModelBridge.Companion.mutableFacetMapping
