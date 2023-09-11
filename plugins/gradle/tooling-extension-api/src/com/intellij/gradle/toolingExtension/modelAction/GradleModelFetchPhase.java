@@ -17,7 +17,7 @@ public enum GradleModelFetchPhase {
 
   /**
    * Model provider, in this phase, fetches and caches a Gradle task model into
-   * {@link com.intellij.gradle.toolingExtension.impl.taskModel.GradleTaskCache}.
+   * {@link com.intellij.gradle.toolingExtension.impl.model.taskModel.GradleTaskCache}.
    * This cache is available by {@link org.jetbrains.plugins.gradle.tooling.ModelBuilderContext}.
    * <p>
    * These model providers will be executed after "sync" tasks are run
