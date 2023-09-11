@@ -10,6 +10,7 @@ import com.intellij.util.io.PageCacheUtils;
 import com.intellij.util.io.PagedFileStorage;
 import com.intellij.util.io.PagedFileStorageWithRWLockedPageContent;
 import com.intellij.util.io.StorageLockContext;
+import com.intellij.util.io.blobstorage.StreamlinedBlobStorage;
 import com.intellij.util.io.pagecache.impl.PageContentLockingStrategy;
 import it.unimi.dsi.fastutil.ints.Int2IntMap;
 import it.unimi.dsi.fastutil.ints.Int2IntOpenHashMap;

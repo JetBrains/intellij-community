@@ -1,8 +1,8 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.openapi.vfs.newvfs.persistent.dev.intmultimaps;
+package com.intellij.util.io.dev.intmultimaps;
 
 import com.intellij.openapi.util.IntRef;
-import com.intellij.openapi.vfs.newvfs.persistent.dev.InvertedFilenameHashBasedIndex.Int2IntMultimap;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
@@ -13,6 +13,7 @@ import java.io.UncheckedIOException;
  * <b>Not durable</b>: keeps content in memory only, lost on restart.
  * <b>Thread-safe but not concurrent</b> -- all operations are just guarded by 'this' lock
  */
+@ApiStatus.Internal
 public final class NonDurableNonParallelIntToMultiIntMap implements DurableIntToMultiIntMap {
   private final Int2IntMultimap multimap = new Int2IntMultimap();
 

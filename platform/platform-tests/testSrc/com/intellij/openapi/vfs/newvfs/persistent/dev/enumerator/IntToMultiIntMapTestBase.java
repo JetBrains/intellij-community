@@ -3,7 +3,7 @@ package com.intellij.openapi.vfs.newvfs.persistent.dev.enumerator;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-import com.intellij.openapi.vfs.newvfs.persistent.dev.intmultimaps.DurableIntToMultiIntMap;
+import com.intellij.util.io.dev.intmultimaps.DurableIntToMultiIntMap;
 import it.unimi.dsi.fastutil.ints.IntOpenHashSet;
 import org.jetbrains.annotations.NotNull;
 import org.junit.jupiter.api.*;

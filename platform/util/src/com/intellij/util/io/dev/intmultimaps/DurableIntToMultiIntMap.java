@@ -1,8 +1,8 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.openapi.vfs.newvfs.persistent.dev.intmultimaps;
+package com.intellij.util.io.dev.intmultimaps;
 
-import com.intellij.openapi.vfs.newvfs.persistent.dev.enumerator.DurableEnumerator;
 import com.intellij.util.io.DataEnumeratorEx;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.Closeable;
@@ -21,6 +21,7 @@ import java.io.IOException;
  * Durability is optional: the map implements {@link Closeable} and {@link Flushable}, but it doesn't
  * _require_ to be durable -- empty flush/close methods are OK.
  */
+@ApiStatus.Internal
 public interface DurableIntToMultiIntMap extends Flushable, Closeable {
   int NO_VALUE = DataEnumeratorEx.NULL_ID;
 

@@ -2,6 +2,7 @@
 package com.intellij.openapi.vfs.newvfs.persistent.dev.enumerator;
 
 import com.intellij.util.io.StringEnumeratorTestBase;
+import com.intellij.util.io.dev.enumerator.StringAsUTF8;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;

@@ -1,9 +1,10 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.openapi.vfs.newvfs.persistent.dev.appendonlylog;
+package com.intellij.util.io.dev.appendonlylog;
 
+import com.intellij.util.io.blobstorage.ByteBufferReader;
+import com.intellij.util.io.blobstorage.ByteBufferWriter;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
-import com.intellij.openapi.vfs.newvfs.persistent.dev.blobstorage.*;
 
 import java.io.Closeable;
 import java.io.IOException;

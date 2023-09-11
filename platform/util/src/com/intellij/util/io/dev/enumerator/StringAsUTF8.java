@@ -1,7 +1,7 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.openapi.vfs.newvfs.persistent.dev.enumerator;
+package com.intellij.util.io.dev.enumerator;
 
-import com.intellij.openapi.vfs.newvfs.persistent.dev.appendonlylog.AppendOnlyLog;
+import com.intellij.util.io.dev.appendonlylog.AppendOnlyLog;
 import com.intellij.util.io.IOUtil;
 import org.jetbrains.annotations.NotNull;
 

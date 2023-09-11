@@ -4,12 +4,12 @@ package com.intellij.openapi.vfs.newvfs.persistent.dev.enumerator;
 import com.intellij.openapi.util.IntRef;
 import com.intellij.openapi.vfs.newvfs.persistent.VFSAsyncTaskExecutor;
 import com.intellij.util.io.DurableDataEnumerator;
-import com.intellij.openapi.vfs.newvfs.persistent.dev.InvertedFilenameHashBasedIndex.Int2IntMultimap;
-import com.intellij.openapi.vfs.newvfs.persistent.dev.appendonlylog.AppendOnlyLog;
+import com.intellij.util.io.dev.appendonlylog.AppendOnlyLog;
 import com.intellij.openapi.vfs.newvfs.persistent.dev.appendonlylog.AppendOnlyLogOverMMappedFile;
 import com.intellij.util.Processor;
 import com.intellij.util.io.IOUtil;
 import com.intellij.util.io.ScannableDataEnumeratorEx;
+import com.intellij.util.io.dev.intmultimaps.Int2IntMultimap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 

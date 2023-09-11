@@ -1,8 +1,9 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.openapi.vfs.newvfs.persistent.dev.enumerator;
+package com.intellij.util.io.dev.enumerator;
 
-import com.intellij.openapi.vfs.newvfs.persistent.dev.appendonlylog.AppendOnlyLog;
+import com.intellij.util.io.dev.appendonlylog.AppendOnlyLog;
 import com.intellij.util.io.KeyDescriptor;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
@@ -12,6 +13,7 @@ import java.nio.ByteBuffer;
  * Full analog of {@link KeyDescriptor}, but with {@link ByteBuffer} instead of {@link java.io.InputStream} and
  * {@link java.io.OutputStream}
  */
+@ApiStatus.Internal
 public interface KeyDescriptorEx<K> {
   int hashCodeOf(K value);
 

@@ -4,6 +4,7 @@ package com.intellij.openapi.vfs.newvfs.persistent.dev.blobstorage;
 import com.intellij.openapi.util.IntRef;
 import com.intellij.openapi.vfs.newvfs.persistent.dev.blobstorage.SpaceAllocationStrategy.DataLengthPlusFixedPercentStrategy;
 import com.intellij.openapi.vfs.newvfs.persistent.dev.blobstorage.SpaceAllocationStrategy.WriterDecidesStrategy;
+import com.intellij.util.io.blobstorage.StreamlinedBlobStorage;
 import it.unimi.dsi.fastutil.ints.*;
 import org.jetbrains.annotations.NotNull;
 import org.junit.Test;
@@ -19,7 +20,7 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.ThreadLocalRandom;
 
-import static com.intellij.openapi.vfs.newvfs.persistent.dev.blobstorage.StreamlinedBlobStorage.NULL_ID;
+import static com.intellij.util.io.blobstorage.StreamlinedBlobStorage.NULL_ID;
 import static java.nio.charset.StandardCharsets.US_ASCII;
 import static org.junit.Assert.*;
 import static org.junit.Assume.assumeTrue;

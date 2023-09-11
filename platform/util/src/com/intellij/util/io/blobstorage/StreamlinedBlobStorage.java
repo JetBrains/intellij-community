@@ -1,8 +1,9 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.openapi.vfs.newvfs.persistent.dev.blobstorage;
+package com.intellij.util.io.blobstorage;
 
 import com.intellij.openapi.Forceable;
 import com.intellij.openapi.util.IntRef;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -32,6 +33,7 @@ import java.nio.ByteBuffer;
  * <br/>
  * Thread safety is a property of specific implementation
  */
+@ApiStatus.Internal
 public interface StreamlinedBlobStorage extends Closeable, AutoCloseable, Forceable {
   int NULL_ID = 0;
 

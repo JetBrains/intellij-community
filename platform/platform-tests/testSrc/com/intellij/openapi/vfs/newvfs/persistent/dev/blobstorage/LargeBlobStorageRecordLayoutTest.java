@@ -9,7 +9,7 @@ import java.util.concurrent.ThreadLocalRandom;
 import java.util.stream.IntStream;
 
 import static com.intellij.openapi.vfs.newvfs.persistent.dev.blobstorage.LargeBlobStorageRecordLayout.*;
-import static com.intellij.openapi.vfs.newvfs.persistent.dev.blobstorage.StreamlinedBlobStorage.NULL_ID;
+import static com.intellij.util.io.blobstorage.StreamlinedBlobStorage.NULL_ID;
 import static org.junit.Assert.assertEquals;
 
 /**

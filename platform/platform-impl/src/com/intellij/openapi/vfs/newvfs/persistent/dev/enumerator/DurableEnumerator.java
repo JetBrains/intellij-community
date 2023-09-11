@@ -2,15 +2,16 @@
 package com.intellij.openapi.vfs.newvfs.persistent.dev.enumerator;
 
 import com.intellij.openapi.util.ThrowableComputable;
-import com.intellij.openapi.vfs.newvfs.persistent.dev.intmultimaps.DurableIntToMultiIntMap;
-import com.intellij.openapi.vfs.newvfs.persistent.dev.intmultimaps.NonDurableNonParallelIntToMultiIntMap;
 import com.intellij.util.io.DurableDataEnumerator;
-import com.intellij.openapi.vfs.newvfs.persistent.dev.intmultimaps.extendiblehashmap.ExtendibleHashMap;
-import com.intellij.openapi.vfs.newvfs.persistent.dev.appendonlylog.AppendOnlyLog;
+import com.intellij.util.io.dev.appendonlylog.AppendOnlyLog;
 import com.intellij.openapi.vfs.newvfs.persistent.dev.appendonlylog.AppendOnlyLogOverMMappedFile;
 import com.intellij.util.ExceptionUtil;
 import com.intellij.util.Processor;
 import com.intellij.util.io.ScannableDataEnumeratorEx;
+import com.intellij.util.io.dev.enumerator.KeyDescriptorEx;
+import com.intellij.util.io.dev.intmultimaps.DurableIntToMultiIntMap;
+import com.intellij.util.io.dev.intmultimaps.NonDurableNonParallelIntToMultiIntMap;
+import com.intellij.openapi.vfs.newvfs.persistent.dev.intmultimaps.extendiblehashmap.ExtendibleHashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 

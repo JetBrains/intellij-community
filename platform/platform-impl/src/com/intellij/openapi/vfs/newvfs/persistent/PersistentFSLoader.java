@@ -7,7 +7,7 @@ import com.intellij.openapi.util.NotNullLazyValue;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.newvfs.persistent.dev.blobstorage.LargeSizeStreamlinedBlobStorage;
 import com.intellij.openapi.vfs.newvfs.persistent.dev.blobstorage.SpaceAllocationStrategy;
-import com.intellij.openapi.vfs.newvfs.persistent.dev.blobstorage.StreamlinedBlobStorage;
+import com.intellij.util.io.blobstorage.StreamlinedBlobStorage;
 import com.intellij.openapi.vfs.newvfs.persistent.dev.blobstorage.StreamlinedBlobStorageOverLockFreePagesStorage;
 import com.intellij.openapi.vfs.newvfs.persistent.dev.enumerator.DurableStringEnumerator;
 import com.intellij.openapi.vfs.newvfs.persistent.intercept.*;

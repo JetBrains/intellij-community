@@ -2,9 +2,10 @@
 package com.intellij.openapi.vfs.newvfs.persistent.dev.intmultimaps.extendiblehashmap;
 
 import com.intellij.openapi.util.Pair;
-import com.intellij.openapi.vfs.newvfs.persistent.dev.intmultimaps.DurableIntToMultiIntMap;
+import com.intellij.util.io.dev.intmultimaps.DurableIntToMultiIntMap;
 import com.intellij.openapi.vfs.newvfs.persistent.mapped.MMappedFileStorage;
 import com.intellij.util.ExceptionUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.VisibleForTesting;
 
@@ -27,6 +28,7 @@ import java.util.Objects;
  * Threading: so far implementation is guarded by a single lock, so it is thread-safe but
  * not concurrent. It is possible to replace that with some kind of 'segmented RW lock'.
  */
+@ApiStatus.Internal
 public class ExtendibleHashMap implements DurableIntToMultiIntMap {
   private static final int VERSION = 1;
 
