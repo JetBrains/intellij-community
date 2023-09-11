@@ -12,7 +12,7 @@ private const val URL = "https://localhost/"
 
 class ExternalEventLogSettingsTest : BasePlatformTestCase() {
   private class TestExternalEventLogSettings: ExternalEventLogSettings {
-    override fun getTemplateUrl(recorderId: String): String = URL
+    override fun getTemplateUrl(): String = URL
     override fun isSendAllowedOverride(): Boolean = true
     override fun isCollectAllowedOverride(): Boolean = true
     override fun forceDisableCollectionConsent(): Boolean = true

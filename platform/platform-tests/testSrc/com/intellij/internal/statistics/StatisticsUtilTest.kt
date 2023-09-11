@@ -23,7 +23,6 @@ import kotlin.test.assertEquals
 @Suppress("SameParameterValue")
 @RunWith(JUnit4::class)
 class StatisticsUtilTest : LightPlatformTestCase() {
-
   @Test
   fun `test round to power of two int`() {
     testRoundToPowerOfTwoInt(0, 0)

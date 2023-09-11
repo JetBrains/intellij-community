@@ -23,14 +23,6 @@ public interface ExternalEventLogSettings {
   ExtensionPointName<ExternalEventLogSettings> EP_NAME = new ExtensionPointName<>("com.intellij.statistic.eventLog.externalEventLogSettings");
 
   /**
-   * @deprecated Endpoint shouldn't depend on recorder id. Use {@link #getTemplateUrl()}
-   */
-  @Deprecated(since = "2022.2", forRemoval = true)
-  default @Nullable String getTemplateUrl(@NotNull String recorderId) {
-    return null;
-  }
-
-  /**
    * Provides a custom endpoint for fetching configuration
    *
    * @return Remote endpoint URL or null if platform default should be used
@@ -38,7 +30,7 @@ public interface ExternalEventLogSettings {
    */
   @Deprecated(since = "2023.1")
   default @Nullable String getTemplateUrl() {
-    return getTemplateUrl("UNDEFINED");
+    return null;
   }
 
   /**

@@ -9,7 +9,6 @@ import com.intellij.internal.statistic.eventLog.connection.request.StatsHttpRequ
 import com.intellij.internal.statistic.eventLog.connection.request.StatsHttpResponse;
 import com.intellij.internal.statistic.eventLog.connection.request.StatsRequestBuilder;
 import com.intellij.internal.statistic.eventLog.filters.LogEventFilter;
-import com.intellij.internal.statistic.uploader.EventLogExternalSendConfig;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -23,7 +22,6 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
-import java.util.stream.Collectors;
 
 import static com.intellij.internal.statistic.config.StatisticsStringUtil.isEmpty;
 
@@ -55,27 +53,6 @@ public class EventLogStatisticsService implements StatisticsService {
   @Override
   public StatisticsResult send() {
     return send(myConfiguration, mySettingsService, new EventLogCounterResultDecorator(mySendListener));
-  }
-
-  /**
-   * @deprecated Use {@link EventLogStatisticsService#send(EventLogSendConfig, EventLogSettingsService, EventLogResultDecorator)}
-   * Kept for compatibility with TBE.
-   */
-  @Deprecated(forRemoval = true)
-  public static StatisticsResult send(@NotNull DeviceConfiguration device,
-                                      @NotNull EventLogRecorderConfig config,
-                                      @NotNull EventLogSettingsService settings,
-                                      @NotNull EventLogResultDecorator decorator) {
-    boolean isSendEnabled = config.isSendEnabled();
-    //noinspection SSBasedInspection
-    List<String> logFiles = config.getFilesToSendProvider().getFilesToSend().stream()
-      .map(file -> file.getFile().getAbsolutePath()).collect(Collectors.toList());
-
-    String recorderId = config.getRecorderId();
-    return send(
-      new EventLogExternalSendConfig(recorderId, device.getDeviceId(), device.getBucket(), device.getMachineId(), logFiles, isSendEnabled),
-      settings, decorator
-    );
   }
 
   public StatisticsResult send(@NotNull EventLogResultDecorator decorator) {
