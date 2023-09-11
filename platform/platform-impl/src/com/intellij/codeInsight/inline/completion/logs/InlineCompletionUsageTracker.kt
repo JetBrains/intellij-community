@@ -86,7 +86,7 @@ object InlineCompletionUsageTracker : CounterUsagesCollector() {
    * This tracker lives from the moment the inline completion triggered until the end of generation.
    */
   class TriggerTracker(
-    val invocationTime: Long,
+    private val invocationTime: Long,
     private val request: InlineCompletionRequest,
     private val provider: Class<out InlineCompletionProvider>
   ) {
