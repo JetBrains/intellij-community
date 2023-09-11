@@ -5,20 +5,15 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.VirtualFileWithId
 import com.intellij.openapi.vfs.newvfs.impl.VfsData
 import com.intellij.openapi.vfs.newvfs.impl.VirtualFileSystemEntry
+import com.intellij.util.indexing.dependencies.FileIndexingStampService
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.TestOnly
-import java.util.concurrent.atomic.AtomicInteger
 
 /**
  * An object dedicated to manage in memory `isIndexed` file flag.
  */
 @ApiStatus.Internal
 object IndexingFlag {
-
-  private const val NULL_INDEXING_STAMP: Int = 0
-
-  private val indexingStamp = AtomicInteger(1)
-
   private val hashes = StripedIndexingStampLock()
 
   @JvmStatic
@@ -26,10 +21,7 @@ object IndexingFlag {
 
   @JvmStatic
   fun cleanupProcessedFlag() {
-    indexingStamp.updateAndGet { cur ->
-      val next: Int = cur + 1
-      if (next == NULL_INDEXING_STAMP) NULL_INDEXING_STAMP + 1 else next
-    }
+    FileIndexingStampService.invalidateAllStamps()
   }
 
   @JvmStatic
@@ -47,14 +39,14 @@ object IndexingFlag {
   fun cleanProcessingFlag(file: VirtualFile) {
     if (file is VirtualFileSystemEntry) {
       hashes.releaseHash(file.id)
-      file.indexedStamp = NULL_INDEXING_STAMP
+      file.indexedStamp = FileIndexingStampService.NULL_STAMP.toInt()
     }
   }
 
   @JvmStatic
   fun setFileIndexed(file: VirtualFile) {
     if (file is VirtualFileSystemEntry) {
-      file.indexedStamp = indexingStamp.get()
+      file.indexedStamp = FileIndexingStampService.getCurrentStamp().toInt()
     }
   }
 
@@ -63,7 +55,7 @@ object IndexingFlag {
     if (VfsData.isIsIndexedFlagDisabled()) {
       return false;
     }
-    return file is VirtualFileSystemEntry && file.indexedStamp == indexingStamp.get()
+    return file is VirtualFileSystemEntry && file.indexedStamp == FileIndexingStampService.getCurrentStamp().toInt()
   }
 
   @JvmStatic
@@ -85,8 +77,8 @@ object IndexingFlag {
   fun setIndexedIfFileWithSameLock(file: VirtualFile, lockObject: Long) {
     if (file is VirtualFileSystemEntry) {
       val hash = hashes.releaseHash(file.id)
-      if (file.indexedStamp != indexingStamp.get()) {
-        file.indexedStamp = if (hash == lockObject) indexingStamp.get() else NULL_INDEXING_STAMP
+      if (file.indexedStamp != FileIndexingStampService.getCurrentStamp().toInt()) {
+        file.indexedStamp = (if (hash == lockObject) FileIndexingStampService.getCurrentStamp() else FileIndexingStampService.NULL_STAMP).toInt()
       }
     }
   }
