@@ -139,7 +139,7 @@ object InlineCompletionUsageTracker : CounterUsagesCollector() {
         TriggeredEvents.REQUEST_ID.with(requestId),
         *data.toTypedArray(),
         TriggeredEvents.EVENT.with(request.event::class.java),
-        TriggeredEvents.PROVIDER.with(provider::class.java),
+        TriggeredEvents.PROVIDER.with(provider),
         TriggeredEvents.TIME_TO_COMPUTE.with(System.currentTimeMillis() - invocationTime),
         TriggeredEvents.OUTCOME.with(
           when {
