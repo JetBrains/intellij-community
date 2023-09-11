@@ -20,6 +20,7 @@ import com.intellij.openapi.editor.event.EditorMouseEvent
 import com.intellij.openapi.editor.event.EditorMouseListener
 import com.intellij.openapi.editor.event.EditorMouseMotionListener
 import com.intellij.openapi.fileEditor.FileDocumentManager
+import com.intellij.openapi.options.advanced.AdvancedSettings
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.ui.HintHint
@@ -46,12 +47,18 @@ private const val ACTION_BUTTON_SIZE = 22
 private const val ACTION_BUTTON_GAP = 2
 
 internal class InlayRunToCursorEditorListener(private val project: Project, private val coroutineScope: CoroutineScope) : EditorMouseMotionListener, EditorMouseListener {
+  companion object {
+    @JvmStatic
+    val isInlayRunToCursorEnabled: Boolean get() =
+      Registry.`is`("debugger.inlayRunToCursor") || AdvancedSettings.getBoolean("debugger.inlay.run.to.cursor")
+  }
+
   private var currentHint = WeakReference<RunToCursorHint?>(null)
   private var currentEditor = WeakReference<Editor?>(null)
   private var currentLineNumber = -1
 
   override fun mouseMoved(e: EditorMouseEvent) {
-    if (!Registry.`is`("debugger.inlayRunToCursor")) {
+    if (!isInlayRunToCursorEnabled) {
       IntentionsUIImpl.DISABLE_INTENTION_BULB[project] = false
       return
     }

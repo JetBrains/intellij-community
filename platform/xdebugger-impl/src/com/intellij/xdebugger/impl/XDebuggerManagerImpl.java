@@ -38,7 +38,6 @@ import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileEditor.FileDocumentManagerListener;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.Balloon;
-import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.IdeGlassPaneUtil;
 import com.intellij.openapi.wm.ToolWindowId;
@@ -481,7 +480,7 @@ public final class XDebuggerManagerImpl extends XDebuggerManager implements Pers
     RangeHighlighter myCurrentHighlighter;
 
     boolean isEnabled(@NotNull EditorMouseEvent e) {
-      if (Registry.is("debugger.inlayRunToCursor") && ExperimentalUI.isNewUI()) return false;
+      if (InlayRunToCursorEditorListener.isInlayRunToCursorEnabled() && ExperimentalUI.isNewUI()) return false;
 
       Editor editor = e.getEditor();
       if (ExperimentalUI.isNewUI() && ShowBreakpointsOverLineNumbersAction.isSelected()) {
