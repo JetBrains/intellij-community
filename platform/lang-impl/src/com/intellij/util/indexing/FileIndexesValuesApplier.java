@@ -32,7 +32,7 @@ public final class FileIndexesValuesApplier {
   private final @NotNull List<? extends SingleIndexValueApplier<?>> appliers;
   private final @NotNull List<SingleIndexValueRemover> removers;
   private final boolean removeDataFromIndicesForFile;
-  private boolean shouldMarkFileAsIndexed;
+  private volatile boolean shouldMarkFileAsIndexed;
   private final long fileStatusLockObject;
   @NotNull
   public final FileIndexingStatistics stats;
@@ -193,17 +193,16 @@ public final class FileIndexesValuesApplier {
           }
         }
       }
-
-      if (shouldMarkFileAsIndexed) {
-        IndexingFlag.setIndexedIfFileWithSameLock(file, fileStatusLockObject);
-      }
-      else if (fileStatusLockObject != IndexingFlag.getNonExistentHash()) {
-        IndexingFlag.unlockFile(file);
-      }
     }
     finally {
       var lastOrOnlyInvocationForFile = syncCounter == null || syncCounter.decrementAndGet() == 0;
       if (lastOrOnlyInvocationForFile) {
+        if (shouldMarkFileAsIndexed) {
+          IndexingFlag.setIndexedIfFileWithSameLock(file, fileStatusLockObject);
+        }
+        else if (fileStatusLockObject != IndexingFlag.getNonExistentHash()) {
+          IndexingFlag.unlockFile(file);
+        }
         doPostModificationJob(file);
       }
       separateApplicationTimeNanos.addAndGet(System.nanoTime() - startTime);
