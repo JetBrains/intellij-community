@@ -713,18 +713,6 @@ public final class ExternalSystemApiUtil {
     return ContainerUtil.map(taskNodes, it -> it.getData());
   }
 
-  /**
-   * @deprecated use ExternalSystemApiUtil.findProjectNode instead
-   */
-  @Deprecated(forRemoval = true)
-  public static @Nullable DataNode<ProjectData> findProjectData(
-    @NotNull Project project,
-    @NotNull ProjectSystemId systemId,
-    @NotNull String projectPath
-  ) {
-    return findProjectNode(project, systemId, projectPath);
-  }
-
   public static @Nullable DataNode<ProjectData> findProjectNode(
     @NotNull Project project,
     @NotNull ProjectSystemId systemId,
