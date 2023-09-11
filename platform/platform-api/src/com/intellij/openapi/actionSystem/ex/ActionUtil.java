@@ -158,7 +158,7 @@ public final class ActionUtil {
       Runnable runnable = () -> {
         // init group flags from deprecated methods
         boolean isGroup = action instanceof ActionGroup;
-        boolean wasPopup = isGroup && ((ActionGroup)action).isPopup(e.getPlace());
+        boolean wasPopup = isGroup && ((ActionGroup)action).isPopup();
         boolean wasHideIfEmpty = isGroup && ((ActionGroup)action).hideIfNoVisibleChildren();
         boolean wasDisableIfEmpty = isGroup && ((ActionGroup)action).disableIfNoVisibleChildren();
         presentation.setPopupGroup(isGroup && (presentation.isPopupGroup() || wasPopup));
@@ -223,7 +223,7 @@ public final class ActionUtil {
 
   private static void assertDeprecatedActionGroupFlagsNotChanged(@NotNull ActionGroup group, @NotNull AnActionEvent event,
                                                                  boolean wasPopup, boolean wasHideIfEmpty, boolean wasDisableIfEmpty) {
-    boolean warnPopup = wasPopup != group.isPopup(event.getPlace());
+    boolean warnPopup = wasPopup != group.isPopup();
     boolean warnHide = wasHideIfEmpty != group.hideIfNoVisibleChildren();
     boolean warnDisable = wasDisableIfEmpty != group.disableIfNoVisibleChildren();
     if (!(warnPopup || warnHide || warnDisable)) return;
