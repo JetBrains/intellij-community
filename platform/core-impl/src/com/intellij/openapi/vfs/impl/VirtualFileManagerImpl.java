@@ -15,7 +15,6 @@ import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.KeyedExtensionCollector;
 import com.intellij.openapi.vfs.*;
-import com.intellij.openapi.vfs.ex.VirtualFileManagerEx;
 import com.intellij.openapi.vfs.newvfs.BulkFileListener;
 import com.intellij.openapi.vfs.newvfs.CachingVirtualFileSystem;
 import com.intellij.openapi.vfs.newvfs.events.VFileEvent;
@@ -37,7 +36,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
-public class VirtualFileManagerImpl extends VirtualFileManagerEx implements Disposable {
+public class VirtualFileManagerImpl extends VirtualFileManager implements Disposable {
   protected static final Logger LOG = Logger.getInstance(VirtualFileManagerImpl.class);
 
   // do not use extension point name to avoid map lookup on each event publishing
@@ -216,7 +215,7 @@ public class VirtualFileManagerImpl extends VirtualFileManagerEx implements Disp
     }, ModalityState.nonModal());
   }
 
-  @Override
+  @ApiStatus.Internal
   public void fireBeforeRefreshStart(boolean asynchronous) {
     if (myRefreshCount++ != 0) {
       return;
@@ -237,7 +236,7 @@ public class VirtualFileManagerImpl extends VirtualFileManagerEx implements Disp
     ExtensionProcessingHelper.INSTANCE.forEachExtensionSafe(MANAGER_LISTENER_EP, listener -> listener.beforeRefreshStart(asynchronous));
   }
 
-  @Override
+  @ApiStatus.Internal
   public void fireAfterRefreshFinish(boolean asynchronous) {
     if (--myRefreshCount != 0) {
       return;
