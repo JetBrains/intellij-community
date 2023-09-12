@@ -45,9 +45,6 @@ public final class DurableStringEnumerator implements DurableDataEnumerator<Stri
   //@GuardedBy("valueHashLock")
   private Int2IntMultimap valueHashToId = null;
 
-  //@GuardedBy("valueHashLock")
-  //private volatile int maxId = -1;
-
   //FIXME RC: currently .enumerate() and .tryEnumerate() execute under global lock, i.e. not scalable.
   //          It is not worse than PersistentEnumerator does, but we could do better -- we just need
   //          concurrent Map[int->int*] which is definitely possible
@@ -174,6 +171,13 @@ public final class DurableStringEnumerator implements DurableDataEnumerator<Stri
       String value = readString(buffer);
       return reader.read(valueId, value);
     });
+  }
+
+  @Override
+  public int recordsCount() throws IOException {
+    synchronized (valueHashLock) {
+      return valueHashToId().size();
+    }
   }
 
   @Override

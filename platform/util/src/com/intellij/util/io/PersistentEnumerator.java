@@ -122,4 +122,9 @@ public class PersistentEnumerator<Data> implements DurableDataEnumerator<Data>,
   public boolean forEach(@NotNull ValueReader<? super Data> reader) throws IOException {
     return myEnumerator.forEach(reader);
   }
+
+  @Override
+  public int recordsCount() throws IOException {
+    return myEnumerator.recordsCount();
+  }
 }

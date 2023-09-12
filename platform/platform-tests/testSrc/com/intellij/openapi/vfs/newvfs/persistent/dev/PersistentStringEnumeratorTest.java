@@ -44,7 +44,7 @@ public class PersistentStringEnumeratorTest extends StringEnumeratorTestBase<Per
     int minSize = AppendableStorageBackedByResizableMappedFile.APPEND_BUFFER_SIZE - 10;
     int maxSize = AppendableStorageBackedByResizableMappedFile.APPEND_BUFFER_SIZE * 2;
 
-    String[] largeStrings = generateValues(10_000, minSize, maxSize);
+    String[] largeStrings = generateUniqueValues(10_000, minSize, maxSize);
 
     //check serialized strings are indeed all >minSize
     for (String string : largeStrings) {

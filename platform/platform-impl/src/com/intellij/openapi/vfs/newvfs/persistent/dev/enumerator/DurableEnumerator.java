@@ -84,8 +84,10 @@ public final class DurableEnumerator<V> implements DurableDataEnumerator<V>,
     throws IOException {
     valuesLog.forEachRecord((logId, buffer) -> {
       K value = valueDescriptor.read(buffer);
+
       int valueHash = adjustHash(valueDescriptor.hashCodeOf(value));
       int id = convertLogIdToEnumeratorId(logId);
+
       valueHashToId.put(valueHash, id);
       return true;
     });
@@ -159,6 +161,11 @@ public final class DurableEnumerator<V> implements DurableDataEnumerator<V>,
       V value = valueDescriptor.read(buffer);
       return reader.read(valueId, value);
     });
+  }
+
+  @Override
+  public int recordsCount() throws IOException {
+    return valueHashToId.size();
   }
 
   @Override

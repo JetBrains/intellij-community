@@ -18,6 +18,8 @@ public interface ScannableDataEnumeratorEx<Data> extends DataEnumeratorEx<Data> 
    */
   boolean forEach(@NotNull ValueReader<? super Data> reader) throws IOException;
 
+  int recordsCount() throws IOException;
+
   interface ValueReader<Data> {
     /** @return true if reading should continue, false to stop the reading */
     boolean read(int valueId, Data value) throws IOException;

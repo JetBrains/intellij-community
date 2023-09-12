@@ -18,9 +18,9 @@ public final class NonDurableNonParallelIntToMultiIntMap implements DurableIntTo
   private final Int2IntMultimap multimap = new Int2IntMultimap();
 
   @Override
-  public synchronized void put(int key,
-                               int value) throws IOException {
-    multimap.put(adjustKey(key), value);
+  public synchronized boolean put(int key,
+                                  int value) throws IOException {
+    return multimap.put(adjustKey(key), value);
   }
 
   @Override
@@ -73,6 +73,11 @@ public final class NonDurableNonParallelIntToMultiIntMap implements DurableIntTo
     int newValue = valueCreator.newValueForKey(key);
     multimap.put(adjustedKey, newValue);
     return newValue;
+  }
+
+  @Override
+  public synchronized int size() {
+    return multimap.size();
   }
 
   @Override

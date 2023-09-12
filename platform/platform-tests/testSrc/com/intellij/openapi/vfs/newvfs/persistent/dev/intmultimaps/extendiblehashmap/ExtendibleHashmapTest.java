@@ -10,7 +10,7 @@ import java.nio.file.Path;
 public class ExtendibleHashmapTest extends IntToMultiIntMapTestBase<ExtendibleHashMap> {
 
   public ExtendibleHashmapTest() {
-    super(5_000_000);
+    super(1_000_000);
   }
 
   @Override

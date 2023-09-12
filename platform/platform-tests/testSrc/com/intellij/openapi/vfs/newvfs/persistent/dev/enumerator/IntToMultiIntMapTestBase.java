@@ -1,6 +1,7 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vfs.newvfs.persistent.dev.enumerator;
 
+import static com.intellij.util.io.dev.intmultimaps.DurableIntToMultiIntMap.NO_VALUE;
 import static org.junit.jupiter.api.Assertions.*;
 
 import com.intellij.util.io.dev.intmultimaps.DurableIntToMultiIntMap;
@@ -42,7 +43,7 @@ public abstract class IntToMultiIntMapTestBase<M extends DurableIntToMultiIntMap
   @Test
   void ZERO_IS_PROHIBITED_KEY() throws IOException {
     assertThrows(IllegalArgumentException.class,
-                 () -> multimap.put(DurableIntToMultiIntMap.NO_VALUE, 1),
+                 () -> multimap.put(NO_VALUE, 1),
                  "Can't use key=0: 0 is reserved value (NO_VALUE)"
     );
   }
@@ -57,7 +58,7 @@ public abstract class IntToMultiIntMapTestBase<M extends DurableIntToMultiIntMap
 
   @Test
   void manyKeyValuesPut_AreAllExistInTheMap() throws IOException {
-    long[] packedKeysValues = generateKeyValues(entriesCountToTest);
+    long[] packedKeysValues = generateUniqueKeyValues(entriesCountToTest);
 
     for (int i = 0; i < packedKeysValues.length; i++) {
       long packedKeyValue = packedKeysValues[i];
@@ -72,11 +73,16 @@ public abstract class IntToMultiIntMapTestBase<M extends DurableIntToMultiIntMap
                    lookupSingleValue(key, value),
                    "[" + i + "].lookup(" + key + "," + value + ") must be " + value);
     }
+    assertEquals(
+      packedKeysValues.length,
+      multimap.size(),
+      packedKeysValues.length + " values were added to multimap"
+    );
   }
 
   @Test
   void manyKeyValuesInserted_AreAllExistInTheMap() throws IOException {
-    long[] packedKeysValues = generateKeyValues(entriesCountToTest);
+    long[] packedKeysValues = generateUniqueKeyValues(entriesCountToTest);
 
     for (int i = 0; i < packedKeysValues.length; i++) {
       long packedKeyValue = packedKeysValues[i];
@@ -109,6 +115,53 @@ public abstract class IntToMultiIntMapTestBase<M extends DurableIntToMultiIntMap
     assertTrue(values.contains(2), "Values for key=1 must contain 2");
     assertTrue(values.contains(3), "Values for key=1 must contain 3");
   }
+
+
+  @Test
+  void withManyKeyValuesPut_SizeIsCountOfTruthReturned() throws IOException {
+    long[] packedKeysValues = generateUniqueKeyValues(entriesCountToTest);
+
+    int entriesPut = 0;
+    for (long packedKeyValue : packedKeysValues) {
+      int key = key(packedKeyValue);
+      int value = value(packedKeyValue);
+
+      if (multimap.put(key, value)) {
+        entriesPut++;
+      }
+
+      assertEquals(
+        entriesPut,
+        multimap.size(),
+        entriesPut + " entries were really put to multimap"
+      );
+    }
+  }
+
+  @Test
+  void putReturnTrue_IfKeyValueNotInTheMap() throws IOException {
+    long[] packedKeysValues = generateUniqueKeyValues(entriesCountToTest);
+
+    for (int i = 0; i < packedKeysValues.length; i++) {
+      long packedKeyValue = packedKeysValues[i];
+      int key = key(packedKeyValue);
+      int value = value(packedKeyValue);
+
+      if (lookupSingleValue(key, value) == NO_VALUE) {
+        assertTrue(multimap.put(key, value),
+                   "[" + i + "].put(" + key + "," + value + ") must be true since .lookup() can't find value");
+        assertEquals(value,
+                     lookupSingleValue(key, value),
+                     "[" + i + "].lookup(" + key + "," + value + ") must be " + value);
+      }
+    }
+    assertEquals(
+      packedKeysValues.length,
+      multimap.size(),
+      packedKeysValues.length + " values were added to multimap"
+    );
+  }
+
 
   //TODO RC: test modification of records
   //TODO RC: test many multi-mapping (>1 value for the same key)
@@ -154,10 +207,11 @@ public abstract class IntToMultiIntMapTestBase<M extends DurableIntToMultiIntMap
     return (int)packedKeyValue;
   }
 
-  private static long[] generateKeyValues(int size) {
+  private static long[] generateUniqueKeyValues(int size) {
     return ThreadLocalRandom.current().longs()
-      .filter(v -> key(v) != DurableIntToMultiIntMap.NO_VALUE
-                   && value(v) != DurableIntToMultiIntMap.NO_VALUE)
+      .filter(v -> key(v) != NO_VALUE
+                   && value(v) != NO_VALUE)
+      .distinct()
       .limit(size)
       .toArray();
   }

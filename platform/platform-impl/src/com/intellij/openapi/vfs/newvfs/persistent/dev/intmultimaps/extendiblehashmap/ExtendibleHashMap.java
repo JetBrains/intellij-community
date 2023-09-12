@@ -2,6 +2,7 @@
 package com.intellij.openapi.vfs.newvfs.persistent.dev.intmultimaps.extendiblehashmap;
 
 import com.intellij.openapi.util.Pair;
+import com.intellij.util.io.ClosedStorageException;
 import com.intellij.util.io.dev.intmultimaps.DurableIntToMultiIntMap;
 import com.intellij.openapi.vfs.newvfs.persistent.mapped.MMappedFileStorage;
 import com.intellij.util.ExceptionUtil;
@@ -106,10 +107,6 @@ public class ExtendibleHashMap implements DurableIntToMultiIntMap {
     }
   }
 
-  public ExtendibleHashMap(@NotNull MMappedFileStorage storage) throws IOException {
-    this(storage, DEFAULT_SEGMENT_SIZE);
-  }
-
   public ExtendibleHashMap(@NotNull MMappedFileStorage storage,
                            int segmentSize) throws IOException {
     if (Integer.bitCount(segmentSize) != 1) {
@@ -148,18 +145,20 @@ public class ExtendibleHashMap implements DurableIntToMultiIntMap {
   }
 
   @Override
-  public synchronized void put(int key,
-                               int value) throws IOException {
+  public synchronized boolean put(int key,
+                                  int value) throws IOException {
+    checkNotClosed();
     int hash = hash(key);
     int segmentIndex = header.segmentIndexByHash(hash);
     HashMapSegmentLayout segment = new HashMapSegmentLayout(bufferSource, segmentIndex, header.segmentSize());
 
-    putAndSplitSegmentIfNeeded(segment, key, value);
+    return putAndSplitSegmentIfNeeded(segment, key, value);
   }
 
   @Override
   public synchronized boolean has(int key,
                                   int value) throws IOException {
+    checkNotClosed();
     int hash = hash(key);
     int hashSuffixDepth = header.globalHashSuffixDepth();
     int segmentSlotIndex = segmentSlotIndex(hash, hashSuffixDepth);
@@ -172,6 +171,7 @@ public class ExtendibleHashMap implements DurableIntToMultiIntMap {
   @Override
   public synchronized int lookup(int key,
                                  @NotNull ValueAcceptor valuesAcceptor) throws IOException {
+    checkNotClosed();
     int hash = hash(key);
     int hashSuffixDepth = header.globalHashSuffixDepth();
     int segmentSlotIndex = segmentSlotIndex(hash, hashSuffixDepth);
@@ -185,6 +185,7 @@ public class ExtendibleHashMap implements DurableIntToMultiIntMap {
   public synchronized int lookupOrInsert(int key,
                                          @NotNull ValueAcceptor valuesAcceptor,
                                          @NotNull ValueCreator valueCreator) throws IOException {
+    checkNotClosed();
     int hash = hash(key);
     int hashSuffixDepth = header.globalHashSuffixDepth();
     int segmentSlotIndex = segmentSlotIndex(hash, hashSuffixDepth);
@@ -196,8 +197,23 @@ public class ExtendibleHashMap implements DurableIntToMultiIntMap {
       return valueFound;
     }
     int newValue = valueCreator.newValueForKey(key);
-    putAndSplitSegmentIfNeeded(segment, key, newValue);
+    boolean reallyPut = putAndSplitSegmentIfNeeded(segment, key, newValue);
+    assert reallyPut : key + " must be really put since we've checked it wasn't there";
     return newValue;
+  }
+
+  @Override
+  public synchronized int size() throws IOException {
+    checkNotClosed();
+    //FIXME RC: now it is O(N), better to have O(1) -- just keep records count in a header
+    int segmentSize = header.segmentSize();
+    int segmentsCount = header.actualSegmentsCount();
+    int totalEntries = 0;
+    for (int segmentIndex = 1; segmentIndex <= segmentsCount; segmentIndex++) {
+      HashMapSegmentLayout segment = new HashMapSegmentLayout(bufferSource, segmentIndex, segmentSize);
+      totalEntries += segment.aliveEntriesCount();
+    }
+    return totalEntries;
   }
 
 
@@ -212,6 +228,13 @@ public class ExtendibleHashMap implements DurableIntToMultiIntMap {
     //clean all references to mapped ByteBuffers:
     header = null;
     bufferSource = null;
+  }
+
+  //@GuardedBy(this)
+  private void checkNotClosed() throws IOException {
+    if (!storage.isOpen()) {
+      throw new ClosedStorageException("Storage [" + storage + "] is closed");
+    }
   }
 
   //=============== implementation ============================================================
@@ -271,14 +294,15 @@ public class ExtendibleHashMap implements DurableIntToMultiIntMap {
     return slotIndexes;
   }
 
-  private void putAndSplitSegmentIfNeeded(HashMapSegmentLayout segment,
-                                          int key,
-                                          int value) throws IOException {
-    hashMapAlgo.put(segment, key, value);
+  private boolean putAndSplitSegmentIfNeeded(HashMapSegmentLayout segment,
+                                             int key,
+                                             int value) throws IOException {
+    boolean wasReallyPut = hashMapAlgo.put(segment, key, value);
 
     if (hashMapAlgo.needsSplit(segment)) {
       splitAndRearrangeEntries(segment);
     }
+    return wasReallyPut;
   }
 
   /**
@@ -536,7 +560,6 @@ public class ExtendibleHashMap implements DurableIntToMultiIntMap {
     private final int segmentSize;
     private final int segmentIndex;
 
-    private final long offsetInFile;
     private final ByteBuffer segmentBuffer;
 
     HashMapSegmentLayout(@NotNull BufferSource bufferSource,
@@ -550,7 +573,6 @@ public class ExtendibleHashMap implements DurableIntToMultiIntMap {
 
       long offsetInFile = segmentIndex * (long)segmentSize;
 
-      this.offsetInFile = offsetInFile;
       this.segmentBuffer = bufferSource.slice(offsetInFile, segmentSize);
     }
 
@@ -826,8 +848,7 @@ public class ExtendibleHashMap implements DurableIntToMultiIntMap {
         int slotValue = table.entryValue(slotIndex);
         if (slotKey == key && slotValue == value) {
           //reset key, but leave value as-is: this is the marker of 'removed' slot
-          table.updateEntry(slotIndex, NO_VALUE, value);
-          decrementAliveValues(table);
+          markEntryAsDeleted(table, slotIndex);
           //No need to look farther, since only one (key,value) record could be in the map
           return;
         }

@@ -1,7 +1,7 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.io.dev.intmultimaps;
 
-import com.intellij.util.io.DataEnumeratorEx;
+import com.intellij.util.io.DataEnumerator;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
@@ -23,10 +23,11 @@ import java.io.IOException;
  */
 @ApiStatus.Internal
 public interface DurableIntToMultiIntMap extends Flushable, Closeable {
-  int NO_VALUE = DataEnumeratorEx.NULL_ID;
+  int NO_VALUE = DataEnumerator.NULL_ID;
 
-  void put(int key,
-           int value) throws IOException;
+  /** @return true if (key,value) pair was really put into the map -- i.e., wasn't there before */
+  boolean put(int key,
+              int value) throws IOException;
 
   boolean has(int key,
               int value) throws IOException;
@@ -53,6 +54,8 @@ public interface DurableIntToMultiIntMap extends Flushable, Closeable {
   int lookupOrInsert(int key,
                      @NotNull ValueAcceptor valuesAcceptor,
                      @NotNull ValueCreator valueCreator) throws IOException;
+
+  int size() throws IOException;
 
 
   @FunctionalInterface

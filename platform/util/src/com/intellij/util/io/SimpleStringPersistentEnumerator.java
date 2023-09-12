@@ -152,6 +152,11 @@ public final class SimpleStringPersistentEnumerator implements ScannableDataEnum
     return true;
   }
 
+  @Override
+  public int recordsCount() throws IOException {
+    return getSize();
+  }
+
   public synchronized void forceDiskSync() {
     writeStorageToDisk(idToValue, file, charset);
   }

@@ -54,6 +54,11 @@ public final class InMemoryEnumerator<Data> implements ScannableDataEnumeratorEx
     return true;
   }
 
+  @Override
+  public int recordsCount() throws IOException {
+    return valueById.size();
+  }
+
   public Iterable<Data> enumeratedValues() {
     return new ArrayList<>(valueById.values());
   }

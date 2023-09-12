@@ -44,7 +44,7 @@ public abstract class StringEnumeratorTestBase<T extends ScannableDataEnumerator
   public void setUp() throws Exception {
     storageFile = temporaryFolder.newFile().toPath();
     enumerator = openEnumerator(storageFile);
-    manyValues = generateValues(valuesCountToTest, 1, 50);
+    manyValues = generateUniqueValues(valuesCountToTest, 1, 50);
   }
 
   @After
@@ -95,6 +95,11 @@ public abstract class StringEnumeratorTestBase<T extends ScannableDataEnumerator
       "A",
       enumerator.valueOf(id)
     );
+    assertEquals(
+      "Only 1 object was enumerated",
+      1,
+      enumerator.recordsCount()
+    );
   }
 
   @Test
@@ -108,6 +113,11 @@ public abstract class StringEnumeratorTestBase<T extends ScannableDataEnumerator
       "[" + value + "] must be given same ID if .enumerate()-ed subsequently",
       id1,
       id2
+    );
+    assertEquals(
+      "Only 1 object was enumerated",
+      1,
+      enumerator.recordsCount()
     );
   }
 
@@ -123,6 +133,11 @@ public abstract class StringEnumeratorTestBase<T extends ScannableDataEnumerator
       id1,
       id2
     );
+    assertEquals(
+      "Only 1 object was enumerated",
+      1,
+      enumerator.recordsCount()
+    );
   }
 
 
@@ -134,6 +149,11 @@ public abstract class StringEnumeratorTestBase<T extends ScannableDataEnumerator
       String value = values[i];
       int id = enumerator.enumerate(value);
       ids[i] = id;
+      assertEquals(
+        (i + 1) + " unique objects were enumerated",
+        i + 1,
+        enumerator.recordsCount()
+      );
     }
 
     for (int i = 0; i < ids.length; i++) {
@@ -169,6 +189,11 @@ public abstract class StringEnumeratorTestBase<T extends ScannableDataEnumerator
       int id = enumerator.enumerate(value);
       ids[i] = id;
     }
+    assertEquals(
+      values.length + " unique objects were enumerated",
+      values.length,
+      enumerator.recordsCount()
+    );
 
     for (int i = 0; i < ids.length; i++) {
       int id = ids[i];
@@ -179,6 +204,11 @@ public abstract class StringEnumeratorTestBase<T extends ScannableDataEnumerator
         enumerator.enumerate(value)
       );
     }
+    assertEquals(
+      values.length + " unique objects were enumerated",
+      values.length,
+      enumerator.recordsCount()
+    );
   }
 
   @Test
@@ -240,6 +270,12 @@ public abstract class StringEnumeratorTestBase<T extends ScannableDataEnumerator
         actualValue
       );
     }
+
+    assertEquals(
+      values.length + " unique objects were enumerated before reload",
+      values.length,
+      enumerator.recordsCount()
+    );
   }
 
   @Test
@@ -376,14 +412,14 @@ public abstract class StringEnumeratorTestBase<T extends ScannableDataEnumerator
 
     Set<String> expectedNames = ContainerUtil.newHashSet(values);
     Set<String> returnedNames = new HashSet<>(expectedNames.size());
-    enumerator.forEach( (nameId,name) -> {
+    enumerator.forEach((nameId, name) -> {
       returnedNames.add(name);
       return true;
     });
 
     long startedAtNs = System.nanoTime();
     for (int i = 0; i < 16; i++) {
-      enumerator.forEach( (nameId,name) -> {
+      enumerator.forEach((nameId, name) -> {
         returnedNames.add(name);
         return true;
       });
@@ -406,9 +442,10 @@ public abstract class StringEnumeratorTestBase<T extends ScannableDataEnumerator
 
   protected abstract T openEnumerator(@NotNull Path storagePath) throws IOException;
 
-  protected static String @NotNull [] generateValues(int poolSize, int minStringSize, int maxStringSize) {
+  protected static String @NotNull [] generateUniqueValues(int poolSize, int minStringSize, int maxStringSize) {
     //ThreadLocalRandom rnd = ThreadLocalRandom.current();
     Random rnd = new Random(1);
+    HashSet<String> unique = new HashSet<>();
     return Stream.generate(() -> {
         int length = rnd.nextInt(minStringSize, maxStringSize);
         char[] chars = new char[length];
@@ -417,6 +454,7 @@ public abstract class StringEnumeratorTestBase<T extends ScannableDataEnumerator
         }
         return new String(chars);
       })
+      .distinct()
       .limit(poolSize)
       .toArray(String[]::new);
   }
