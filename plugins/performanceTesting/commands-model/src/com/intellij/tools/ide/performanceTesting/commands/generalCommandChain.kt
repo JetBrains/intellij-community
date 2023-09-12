@@ -672,8 +672,8 @@ fun <T : CommandChain> T.waitForLlmNameSuggestions(file: String, offset: Int): T
   return this
 }
 
-fun <T : CommandChain> T.assertOpenedFileInRoot(): T {
-  addCommand("${CMD_PREFIX}assertOpenedFileInRoot")
+fun <T : CommandChain> T.assertOpenedFileInRoot(path: String): T {
+  addCommand("${CMD_PREFIX}assertOpenedFileInRoot $path")
   return this
 }
 
@@ -795,8 +795,8 @@ fun <T : CommandChain> T.convertJavaToKotlinByDefault(value: Boolean): T {
   return this
 }
 
-fun <T : CommandChain> T.assertOpenedKotlinFileInRoot(): T {
-  addCommand("${CMD_PREFIX}assertOpenedKotlinFileInRoot")
+fun <T : CommandChain> T.assertOpenedKotlinFileInRoot(path: String): T {
+  addCommand("${CMD_PREFIX}assertOpenedKotlinFileInRoot $path")
   return this
 }
 
