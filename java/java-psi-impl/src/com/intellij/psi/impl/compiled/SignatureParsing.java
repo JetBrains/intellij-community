@@ -42,10 +42,8 @@ public final class SignatureParsing {
     }
     
     void next() {
-      if (myPos < myEnd - 1) {
+      if (myPos < myEnd) {
         ++myPos;
-      } else {
-        myPos = myEnd;
       }
     }
     
