@@ -31,7 +31,6 @@ import java.util.concurrent.locks.ReentrantReadWriteLock;
  */
 public abstract class PersistentEnumeratorBase<Data> implements DataEnumeratorEx<Data>, Forceable, Closeable, SelfDiagnosing {
   protected static final Logger LOG = Logger.getInstance(PersistentEnumeratorBase.class);
-  protected static final int NULL_ID = DataEnumeratorEx.NULL_ID;
 
   protected static final boolean USE_RW_LOCK = SystemProperties.getBooleanProperty("idea.persistent.data.use.read.write.lock", false);
   private static final int META_DATA_OFFSET = 4;
