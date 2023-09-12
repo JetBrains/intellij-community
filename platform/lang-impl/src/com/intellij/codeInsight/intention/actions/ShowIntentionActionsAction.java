@@ -19,7 +19,6 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.registry.Registry;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.util.PsiUtilBase;
 import org.jetbrains.annotations.NotNull;
@@ -41,12 +40,8 @@ public final class ShowIntentionActionsAction extends BaseCodeInsightAction impl
       return;
     }
     super.update(event);
-    boolean isInFloatingToolbar = ActionPlaces.EDITOR_FLOATING_TOOLBAR.equals(event.getPlace());
-    if (isInFloatingToolbar || ActionPlaces.EDITOR_HINT.equals(event.getPlace())) {
+    if (ActionPlaces.EDITOR_HINT.equals(event.getPlace()) || ActionPlaces.EDITOR_FLOATING_TOOLBAR.equals(event.getPlace())) {
       presentation.setIcon(AllIcons.Actions.IntentionBulb);
-    }
-    if ( isInFloatingToolbar && Registry.is("floating.codeToolbar.showIntentionsUnderPopup")) {
-      presentation.setPopupGroup(true);
     }
   }
 
