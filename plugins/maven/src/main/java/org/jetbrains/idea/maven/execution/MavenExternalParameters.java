@@ -11,6 +11,7 @@ import com.intellij.notification.Notification;
 import com.intellij.notification.NotificationListener;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.PathManager;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.externalSystem.service.execution.ExternalSystemJdkUtil;
 import com.intellij.openapi.module.Module;
@@ -76,7 +77,6 @@ public final class MavenExternalParameters {
                                                     @Nullable MavenRunConfiguration runConfiguration) throws ExecutionException {
     final JavaParameters params = new JavaParameters();
 
-    ApplicationManager.getApplication().assertReadAccessAllowed();
 
     if (coreSettings == null) {
       coreSettings = MavenProjectsManager.getInstance(project).getGeneralSettings();
@@ -94,7 +94,10 @@ public final class MavenExternalParameters {
 
     params.setWorkingDirectory(expandPathAndMacros(parameters.getWorkingDirPath(), null, project));
 
-    Sdk jdk = getJdk(project, runnerSettings, MavenRunner.getInstance(project).getState() == runnerSettings);
+
+    String jreName = runnerSettings.getJreName();
+    boolean isGlobalRunnerSettings = MavenRunner.getInstance(project).getState() == runnerSettings;
+    Sdk jdk = ReadAction.compute(()->getJdk(project, jreName, isGlobalRunnerSettings ));
     params.setJdk(jdk);
 
     if(!verifyMavenSdkRequirements(jdk, mavenVersion)){
@@ -319,14 +322,13 @@ public final class MavenExternalParameters {
   }
 
   @NotNull
-  private static Sdk getJdk(@Nullable Project project, MavenRunnerSettings runnerSettings, boolean isGlobalRunnerSettings)
+  private static Sdk getJdk(@Nullable Project project, String jreName, boolean isGlobalRunnerSettings)
     throws ExecutionException {
-    String name = runnerSettings.getJreName();
-    if (name.equals(MavenRunnerSettings.USE_INTERNAL_JAVA)) {
+    if (jreName.equals(MavenRunnerSettings.USE_INTERNAL_JAVA)) {
       return JavaAwareProjectJdkTableImpl.getInstanceEx().getInternalJdk();
     }
 
-    if (name.equals(MavenRunnerSettings.USE_PROJECT_JDK)) {
+    if (jreName.equals(MavenRunnerSettings.USE_PROJECT_JDK)) {
       if (project != null) {
         Sdk res = ProjectRootManager.getInstance(project).getProjectSdk();
         if (res != null) {
@@ -351,7 +353,7 @@ public final class MavenExternalParameters {
        RunnerBundle.message("dialog.message.project.jdk.not.specified.href.configure"), project);
     }
 
-    if (name.equals(MavenRunnerSettings.USE_JAVA_HOME)) {
+    if (jreName.equals(MavenRunnerSettings.USE_JAVA_HOME)) {
       final String javaHome = ExternalSystemJdkUtil.getJavaHome();
       if (StringUtil.isEmptyOrSpaces(javaHome)) {
         throw new ExecutionException(RunnerBundle.message("maven.java.home.undefined"));
@@ -360,16 +362,16 @@ public final class MavenExternalParameters {
     }
 
     for (Sdk projectJdk : ProjectJdkTable.getInstance().getAllJdks()) {
-      if (projectJdk.getName().equals(name)) {
+      if (projectJdk.getName().equals(jreName)) {
         return projectJdk;
       }
     }
 
     if (isGlobalRunnerSettings) {
-      throw new ExecutionException(RunnerBundle.message("maven.java.not.found.default.config", name));
+      throw new ExecutionException(RunnerBundle.message("maven.java.not.found.default.config", jreName));
     }
     else {
-      throw new ExecutionException(RunnerBundle.message("maven.java.not.found", name));
+      throw new ExecutionException(RunnerBundle.message("maven.java.not.found", jreName));
     }
   }
 
