@@ -54,7 +54,10 @@ class EmbeddingIndexingTaskManager(private val index: DiskSynchronizedEmbeddingS
 
   private fun processingJob() {
     while (true) {
-      val task = mutex.withLock { queue.pop() }
+      val task = mutex.withLock {
+        if (queue.isEmpty()) return
+        queue.pop()
+      }
       if ((task is EmbeddingIndexingTask.Add || task is EmbeddingIndexingTask.AddDiskSynchronized)
           && !index.checkCanAddEntry()) {
         cancelIndexTasks()
