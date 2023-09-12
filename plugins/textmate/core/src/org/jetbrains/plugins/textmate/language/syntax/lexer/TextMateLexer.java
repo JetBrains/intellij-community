@@ -84,7 +84,7 @@ public final class TextMateLexer {
     }
   }
 
-  private FList<TextMateLexerState> parseLine(@NotNull CharSequence lineCharSequence,
+  private FList<TextMateLexerState> parseLine(@NotNull CharSequence line,
                                               @NotNull Queue<Token> output,
                                               @NotNull FList<TextMateLexerState> states,
                                               int lineStartOffset,
@@ -96,7 +96,6 @@ public final class TextMateLexer {
 
     boolean matchBeginOfString = lineStartOffset == 0;
     int anchorByteOffset = -1; // makes sense only for a line, cannot be used across lines
-    String line = lineCharSequence.toString();
 
     StringWithId string = new StringWithId(line);
     while (true) {
@@ -239,7 +238,7 @@ public final class TextMateLexer {
                                 SyntaxNodeDescriptor rule,
                                 MatchData matchData,
                                 StringWithId string,
-                                String line,
+                                CharSequence line,
                                 int startLineOffset,
                                 FList<TextMateLexerState> states) {
     Int2ObjectMap<TextMateCapture> captures = rule.getCaptureRules(captureKey);
@@ -287,7 +286,7 @@ public final class TextMateLexer {
         }
       }
       else if (capture instanceof TextMateCapture.Rule) {
-        String capturedString = line.substring(0, captureRange.end);
+        CharSequence capturedString = line.subSequence(0, captureRange.end);
         StringWithId capturedStringWithId = new StringWithId(capturedString);
         TextMateLexerState captureState = new TextMateLexerState(((TextMateCapture.Rule)capture).getNode(),
                                                                  matchData,

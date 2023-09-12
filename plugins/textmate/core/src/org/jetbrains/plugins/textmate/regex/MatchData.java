@@ -44,14 +44,14 @@ public final class MatchData {
     return new TextMateRange(offsets[endIndex - 1], offsets[endIndex]);
   }
 
-  public TextMateRange charRange(String s, byte[] stringBytes) {
+  public TextMateRange charRange(CharSequence s, byte[] stringBytes) {
     return charRange(s, stringBytes, 0);
   }
 
-  public TextMateRange charRange(String s, byte[] stringBytes, int group) {
+  public TextMateRange charRange(CharSequence s, byte[] stringBytes, int group) {
     TextMateRange range = codePointRange(stringBytes, group);
-    return new TextMateRange(s.offsetByCodePoints(0, range.start),
-                             s.offsetByCodePoints(0, range.end));
+    return new TextMateRange(Character.offsetByCodePoints(s, 0, range.start),
+                             Character.offsetByCodePoints(s, 0, range.end));
   }
 
   public TextMateRange codePointRange(byte[] stringBytes) {
