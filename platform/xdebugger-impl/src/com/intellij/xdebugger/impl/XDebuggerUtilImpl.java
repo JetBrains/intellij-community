@@ -412,6 +412,10 @@ public class XDebuggerUtilImpl extends XDebuggerUtil {
     return WriteAction.compute(() -> breakpointManager.addLineBreakpoint(type, file.getUrl(), line, properties, temporary));
   }
 
+  public static void removeBreakpointWithConfirmation(final XBreakpointBase<?, ?, ?> breakpoint) {
+    removeBreakpointWithConfirmation(breakpoint.getProject(), breakpoint);
+  }
+
   public static void removeBreakpointWithConfirmation(final Project project, final XBreakpoint<?> breakpoint) {
     if ((!isEmptyExpression(breakpoint.getConditionExpression()) || !isEmptyExpression(breakpoint.getLogExpressionObject())) &&
         !ApplicationManager.getApplication().isHeadlessEnvironment() &&
