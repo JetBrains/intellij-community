@@ -4,10 +4,7 @@ package com.intellij.openapi.progress.util;
 import com.intellij.codeWithMe.ClientId;
 import com.intellij.concurrency.SensitiveProgressWrapper;
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.application.Application;
-import com.intellij.openapi.application.ApplicationListener;
-import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.ModalityState;
+import com.intellij.openapi.application.*;
 import com.intellij.openapi.application.ex.ApplicationEx;
 import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.diagnostic.Logger;
@@ -125,12 +122,15 @@ public final class ProgressIndicatorUtils {
   }
 
   @ApiStatus.Internal
-  public static boolean runActionAndCancelBeforeWrite(
-    @NotNull ApplicationEx application,
-    @NotNull Runnable cancellation,
-    @NotNull Runnable action
-  ) {
+  public static boolean runActionAndCancelBeforeWrite(@NotNull ApplicationEx application,
+                                                      @NotNull Runnable cancellation,
+                                                      @NotNull Runnable action) {
     return ProgressIndicatorUtilService.getInstance(application).runActionAndCancelBeforeWrite(cancellation, action);
+  }
+
+  @ApiStatus.Internal
+  public static @NotNull AccessToken prohibitWriteActionsInside(@NotNull Application application) {
+    return ProgressIndicatorUtilService.getInstance(application).prohibitWriteActionsInside();
   }
 
   private static @NotNull Runnable indicatorCancellation(@NotNull ProgressIndicator progressIndicator) {
