@@ -461,7 +461,7 @@ public class Maven40ServerEmbedderImpl extends MavenServerEmbeddedBase {
       result.setSystemProperties(mySystemProperties);
       Properties userProperties = new Properties();
       if (file != null) {
-        userProperties.putAll(MavenServerConfigUtil.getMavenAndJvmConfigProperties(file.getParentFile()));
+        userProperties.putAll(MavenServerConfigUtil.getMavenAndJvmConfigPropertiesForNestedProjectDir(file.getParentFile()));
       }
       result.setUserProperties(userProperties);
 

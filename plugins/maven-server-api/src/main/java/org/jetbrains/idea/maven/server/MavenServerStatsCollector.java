@@ -38,7 +38,7 @@ public final class MavenServerStatsCollector {
     putOrAdd(mavenid, pluginResolving);
   }
 
-  static void fill(MavenServerStatus status, boolean clean) {
+  public static void fill(MavenServerStatus status, boolean clean) {
     fill(status.fileReadAccessCount, readCounters);
     fill(status.pluginResolveCount, pluginResolving);
   }

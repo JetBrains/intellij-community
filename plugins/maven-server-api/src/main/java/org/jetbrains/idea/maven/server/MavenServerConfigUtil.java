@@ -15,12 +15,16 @@ import java.util.regex.Pattern;
 public final class MavenServerConfigUtil {
   private static final Pattern PROPERTY_PATTERN = Pattern.compile("\"-D([\\S&&[^=]]+)(?:=([^\"]+))?\"|-D([\\S&&[^=]]+)(?:=(\\S+))?");
 
-  public static Map<String, String> getMavenAndJvmConfigProperties(File workingDir) {
-    if (workingDir == null) {
+  public static Map<String, String> getMavenAndJvmConfigPropertiesForNestedProjectDir(File nestedProjectDir) {
+    if (nestedProjectDir == null) {
       return Collections.emptyMap();
     }
-    File baseDir = MavenServerUtil.findMavenBasedir(workingDir);
+    File baseDir = MavenServerUtil.findMavenBasedir(nestedProjectDir);
 
+    return getMavenAndJvmConfigPropertiesForBaseDir(baseDir);
+  }
+
+  public static Map<String, String> getMavenAndJvmConfigPropertiesForBaseDir(File baseDir) {
     Map<String, String> result = new HashMap<>();
     readConfigFiles(baseDir, result);
     return result.isEmpty() ? Collections.emptyMap() : result;
