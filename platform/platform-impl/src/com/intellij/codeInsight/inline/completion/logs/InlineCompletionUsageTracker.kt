@@ -60,7 +60,7 @@ object InlineCompletionUsageTracker : CounterUsagesCollector() {
     }
 
     override fun onHide(event: InlineCompletionEventType.Hide): Unit = lock.withLock {
-      showTracker?.cancelled()
+      showTracker?.canceled()
     }
 
     override fun onEmpty(event: InlineCompletionEventType.Empty): Unit = lock.withLock {
@@ -69,7 +69,7 @@ object InlineCompletionUsageTracker : CounterUsagesCollector() {
 
     override fun onCompletion(event: InlineCompletionEventType.Completion): Unit = lock.withLock {
       if (!event.isActive || event.cause is CancellationException || event.cause is ProcessCanceledException) {
-        invocationTracker?.cancelled()
+        invocationTracker?.canceled()
       }
       else if (event.cause != null) {
         invocationTracker?.exception()
@@ -95,7 +95,7 @@ object InlineCompletionUsageTracker : CounterUsagesCollector() {
     private val data = mutableListOf<EventPair<*>>()
     private val contextFeatures = mutableListOf<EventPair<*>>()
     private var hasSuggestions: Boolean? = null
-    private var cancelled: Boolean = false
+    private var canceled: Boolean = false
     private var exception: Boolean = false
 
     fun createShowTracker() = ShowTracker(requestId, invocationTime, InlineContextFeatures.getEventPair(contextFeatures))
@@ -119,8 +119,8 @@ object InlineCompletionUsageTracker : CounterUsagesCollector() {
       assert(!finished)
     }
 
-    fun cancelled() {
-      cancelled = true
+    fun canceled() {
+      canceled = true
       assert(!finished)
     }
 
@@ -144,7 +144,7 @@ object InlineCompletionUsageTracker : CounterUsagesCollector() {
           when {
             // fixed order
             exception -> InvokedEvents.Outcome.EXCEPTION
-            cancelled -> InvokedEvents.Outcome.CANCELLED
+            canceled -> InvokedEvents.Outcome.CANCELED
             hasSuggestions == true -> InvokedEvents.Outcome.SHOW
             hasSuggestions == false -> InvokedEvents.Outcome.NO_SUGGESTIONS
             else -> null
@@ -163,7 +163,7 @@ object InlineCompletionUsageTracker : CounterUsagesCollector() {
 
     enum class Outcome {
       EXCEPTION,
-      CANCELLED,
+      CANCELED,
       SHOW,
       NO_SUGGESTIONS
     }
@@ -223,7 +223,7 @@ object InlineCompletionUsageTracker : CounterUsagesCollector() {
       finish(ShownEvents.FinishType.SELECTED)
     }
 
-    fun cancelled() {
+    fun canceled() {
       finish(ShownEvents.FinishType.CANCELED)
     }
 
