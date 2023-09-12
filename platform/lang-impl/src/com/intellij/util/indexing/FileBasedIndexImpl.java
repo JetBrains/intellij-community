@@ -65,6 +65,8 @@ import com.intellij.util.indexing.FileIndexesValuesApplier.ApplicationMode;
 import com.intellij.util.indexing.contentQueue.CachedFileContent;
 import com.intellij.util.indexing.contentQueue.IndexUpdateRunner;
 import com.intellij.util.indexing.dependencies.FileIndexingStampService;
+import com.intellij.util.indexing.dependencies.FileIndexingStampService.FileIndexingStamp;
+import com.intellij.util.indexing.dependencies.FileIndexingStampService.IndexingRequestToken;
 import com.intellij.util.indexing.diagnostic.BrokenIndexingDiagnostics;
 import com.intellij.util.indexing.diagnostic.IndexStatisticGroup;
 import com.intellij.util.indexing.diagnostic.StorageDiagnosticData;
@@ -1303,7 +1305,7 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
 
   // caller is responsible to ensure no concurrent same document processing
   private void processRefreshedFile(@Nullable Project project, @NotNull final CachedFileContent fileContent,
-                                    @NotNull FileIndexingStampService.FileIndexingStamp indexingStamp) {
+                                    @NotNull FileIndexingStamp indexingStamp) {
     // ProcessCanceledException will cause re-adding the file to the processing list
     final VirtualFile file = fileContent.getVirtualFile();
     if (getChangedFilesCollector().isScheduledForUpdate(file)) {
@@ -1332,7 +1334,7 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
   public FileIndexesValuesApplier indexFileContent(@Nullable Project project,
                                                    @NotNull CachedFileContent content,
                                                    @Nullable FileType cachedFileType,
-                                                   @NotNull FileIndexingStampService.FileIndexingStamp indexingStamp) {
+                                                   @NotNull FileIndexingStamp indexingStamp) {
     ProgressManager.checkCanceled();
     VirtualFile file = content.getVirtualFile();
     final int fileId = getFileId(file);
@@ -1372,7 +1374,7 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
                                                       @NotNull CachedFileContent content,
                                                       @Nullable FileType cachedFileType,
                                                       @NotNull ApplicationMode applicationMode,
-                                                      FileIndexingStampService.FileIndexingStamp indexingStamp) {
+                                                      FileIndexingStamp indexingStamp) {
     ProgressManager.checkCanceled();
     final VirtualFile file = content.getVirtualFile();
     Ref<Boolean> setIndexedStatus = Ref.create(Boolean.TRUE);
@@ -1683,8 +1685,10 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
   private final class VirtualFileUpdateTask extends UpdateTask<VirtualFile> {
     @Override
     void doProcess(VirtualFile item, Project project) {
-      processRefreshedFile(project, new CachedFileContent(item),
-                           ApplicationManager.getApplication().getService(FileIndexingStampService.class).getCurrentStamp());
+      // snapshot at the beginning: if file changes while being processed, we can detect this on the following scanning
+      IndexingRequestToken indexingRequest = ApplicationManager.getApplication().getService(FileIndexingStampService.class).getCurrentStamp();
+      var stamp = indexingRequest.getFileIndexingStamp(item);
+      processRefreshedFile(project, new CachedFileContent(item), stamp);
     }
   }
 
@@ -1797,7 +1801,9 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
   }
 
   public void scheduleFileForIndexing(int fileId, @NotNull VirtualFile file, boolean contentChange,
-                                      FileIndexingStampService.FileIndexingStamp stamp) {
+                                      IndexingRequestToken indexingRequest) {
+    // snapshot at the beginning: if file changes while being processed, we can detect this on the following scanning
+    FileIndexingStamp indexingStamp = indexingRequest.getFileIndexingStamp(file);
     if (ensureFileBelongsToIndexableFilter(fileId, file) == FileAddStatus.SKIPPED) {
       doInvalidateIndicesForFile(fileId, file);
       return;
@@ -1849,7 +1855,7 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
           getChangedFilesCollector().scheduleForUpdate(file);
         }
         else {
-          IndexingFlag.setFileIndexed(file, stamp);
+          IndexingFlag.setFileIndexed(file, indexingStamp);
         }
       });
     }

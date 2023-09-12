@@ -14,7 +14,7 @@ import com.intellij.openapi.vfs.VirtualFileFilter;
 import com.intellij.openapi.vfs.newvfs.impl.FakeVirtualFile;
 import com.intellij.testFramework.LightPlatformTestCase;
 import com.intellij.util.indexing.dependencies.FileIndexingStampService;
-import com.intellij.util.indexing.dependencies.FileIndexingStampService.FileIndexingStamp;
+import com.intellij.util.indexing.dependencies.FileIndexingStampService.IndexingRequestToken;
 import com.intellij.util.indexing.diagnostic.ScanningType;
 import com.intellij.util.indexing.roots.IndexableFilesIterator;
 import com.intellij.util.indexing.roots.kind.IndexableSetOrigin;
@@ -57,9 +57,9 @@ public class ScanningIndexingTasksMergeTest extends LightPlatformTestCase {
     map2.put(iter2, f2);
     map2.put(iterShared, fShared.subList(1, 3));
 
-    FileIndexingStamp currentStamp = ApplicationManager.getApplication().getService(FileIndexingStampService.class).getCurrentStamp();
-    task1 = new UnindexedFilesIndexer(getProject(), map1, "test task1", LongSet.of(), currentStamp);
-    task2 = new UnindexedFilesIndexer(getProject(), map2, "test task2", LongSet.of(), currentStamp);
+    IndexingRequestToken indexingRequest = ApplicationManager.getApplication().getService(FileIndexingStampService.class).getCurrentStamp();
+    task1 = new UnindexedFilesIndexer(getProject(), map1, "test task1", LongSet.of(), indexingRequest);
+    task2 = new UnindexedFilesIndexer(getProject(), map2, "test task2", LongSet.of(), indexingRequest);
   }
 
   public void testTryMergeIndexingTasks() {
@@ -119,9 +119,9 @@ public class ScanningIndexingTasksMergeTest extends LightPlatformTestCase {
 
 
     for (String[] situation : situations) {
-      FileIndexingStamp currentStamp = ApplicationManager.getApplication().getService(FileIndexingStampService.class).getCurrentStamp();
-      UnindexedFilesIndexer t1 = new UnindexedFilesIndexer(getProject(), situation[0], currentStamp);
-      UnindexedFilesIndexer t2 = new UnindexedFilesIndexer(getProject(), situation[1], currentStamp);
+      IndexingRequestToken indexingRequest = ApplicationManager.getApplication().getService(FileIndexingStampService.class).getCurrentStamp();
+      UnindexedFilesIndexer t1 = new UnindexedFilesIndexer(getProject(), situation[0], indexingRequest);
+      UnindexedFilesIndexer t2 = new UnindexedFilesIndexer(getProject(), situation[1], indexingRequest);
       UnindexedFilesIndexer merged = t1.tryMergeWith(t2);
       assertEquals(situation[2], merged.getIndexingReason());
     }
@@ -155,8 +155,8 @@ public class ScanningIndexingTasksMergeTest extends LightPlatformTestCase {
   @NotNull
   private UnindexedFilesScanner createScanningTask(IndexableFilesIterator iter, String reason, ScanningType type) {
     List<IndexableFilesIterator> iterators = iter == null ? null : Collections.singletonList(iter);
-    FileIndexingStamp currentStamp = ApplicationManager.getApplication().getService(FileIndexingStampService.class).getCurrentStamp();
-    return new UnindexedFilesScanner(getProject(), false, false, iterators, null, reason, type, currentStamp);
+    IndexingRequestToken indexingRequest = ApplicationManager.getApplication().getService(FileIndexingStampService.class).getCurrentStamp();
+    return new UnindexedFilesScanner(getProject(), false, false, iterators, null, reason, type, indexingRequest);
   }
 
   private void assertMergedStateInvariants(UnindexedFilesIndexer mergedTask) {

@@ -33,7 +33,8 @@ import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.concurrency.SequentialTaskExecutor;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.indexing.*;
-import com.intellij.util.indexing.dependencies.FileIndexingStampService;
+import com.intellij.util.indexing.dependencies.FileIndexingStampService.FileIndexingStamp;
+import com.intellij.util.indexing.dependencies.FileIndexingStampService.IndexingRequestToken;
 import com.intellij.util.indexing.diagnostic.IndexingFileSetStatistics;
 import com.intellij.util.indexing.diagnostic.ProjectDumbIndexingHistoryImpl;
 import com.intellij.util.indexing.roots.IndexableFilesDeduplicateFilter;
@@ -67,7 +68,7 @@ public final class IndexUpdateRunner {
 
   private final FileBasedIndexImpl myFileBasedIndex;
   
-  private final @NotNull FileIndexingStampService.FileIndexingStamp indexingStamp;
+  private final @NotNull IndexingRequestToken indexingRequest;
 
   private final ExecutorService myIndexingExecutor;
 
@@ -183,9 +184,9 @@ public final class IndexUpdateRunner {
   private static final Condition ourLoadedBytesAreReleasedCondition = ourLoadedBytesLimitLock.newCondition();
 
   public IndexUpdateRunner(@NotNull FileBasedIndexImpl fileBasedIndex,
-                           @NotNull FileIndexingStampService.FileIndexingStamp indexingStamp, int numberOfIndexingThreads) {
+                           @NotNull IndexingRequestToken indexingRequest, int numberOfIndexingThreads) {
     myFileBasedIndex = fileBasedIndex;
-    this.indexingStamp = indexingStamp;
+    this.indexingRequest = indexingRequest;
     myIndexingExecutor = GLOBAL_INDEXING_EXECUTOR;
     if (numberOfIndexingThreads > INDEXING_THREADS_NUMBER) {
       LOG.warn("Got request to index using " + numberOfIndexingThreads + " when pool has only " + INDEXING_THREADS_NUMBER +
@@ -445,6 +446,8 @@ public final class IndexUpdateRunner {
     }
 
     VirtualFile file = fileIndexingJob.file;
+    // snapshot at the beginning: if file changes while being processed, we can detect this on the following scanning
+    FileIndexingStamp indexingStamp = indexingRequest.getFileIndexingStamp(file);
     try {
       // Propagate ProcessCanceledException and unchecked exceptions. The latter fails the whole indexing (see IndexingJob.myError).
       loadingResult = loadContent(indexingJob.myIndicator, file, indexingJob.myContentLoader);

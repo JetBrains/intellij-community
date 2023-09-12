@@ -15,7 +15,7 @@ import com.intellij.util.indexing.FileBasedIndexImpl;
 import com.intellij.util.indexing.UnindexedFilesUpdater;
 import com.intellij.util.indexing.contentQueue.IndexUpdateRunner;
 import com.intellij.util.indexing.dependencies.FileIndexingStampService;
-import com.intellij.util.indexing.dependencies.FileIndexingStampService.FileIndexingStamp;
+import com.intellij.util.indexing.dependencies.FileIndexingStampService.IndexingRequestToken;
 import com.intellij.util.indexing.diagnostic.ProjectDumbIndexingHistoryImpl;
 import org.jetbrains.annotations.NotNull;
 
@@ -108,8 +108,9 @@ public class PersistencePerformanceTest extends BasePlatformTestCase {
     FileBasedIndexImpl index = (FileBasedIndexImpl)FileBasedIndex.getInstance();
     while (ContainerUtil.exists(futures, future -> !future.isDone())) {
       Thread.sleep(100);
-      FileIndexingStamp indexingStamp = ApplicationManager.getApplication().getService(FileIndexingStampService.class).getCurrentStamp();
-      new IndexUpdateRunner(index, indexingStamp, UnindexedFilesUpdater.getNumberOfIndexingThreads())
+      IndexingRequestToken indexingRequest =
+        ApplicationManager.getApplication().getService(FileIndexingStampService.class).getCurrentStamp();
+      new IndexUpdateRunner(index, indexingRequest, UnindexedFilesUpdater.getNumberOfIndexingThreads())
         .indexFiles(getProject(), Collections.singletonList(new IndexUpdateRunner.FileSet(getProject(), "test files", files)),
                     new EmptyProgressIndicator(), new ProjectDumbIndexingHistoryImpl(getProject()));
     }

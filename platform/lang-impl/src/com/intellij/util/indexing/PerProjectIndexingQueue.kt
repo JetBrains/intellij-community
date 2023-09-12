@@ -10,7 +10,7 @@ import com.intellij.openapi.progress.util.PingProgress
 import com.intellij.openapi.progress.util.ProgressIndicatorUtils
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.util.indexing.dependencies.FileIndexingStampService
+import com.intellij.util.indexing.dependencies.FileIndexingStampService.IndexingRequestToken
 import com.intellij.util.indexing.diagnostic.IndexDiagnosticDumper
 import com.intellij.util.indexing.diagnostic.ProjectDumbIndexingHistoryImpl
 import com.intellij.util.indexing.roots.IndexableFilesIterator
@@ -184,24 +184,24 @@ class PerProjectIndexingQueue(private val project: Project) {
     estimatedFilesCount.value = newValue
   }
 
-  fun flushNow(reason: String, indexingStamp: FileIndexingStampService.FileIndexingStamp) {
+  fun flushNow(reason: String, indexingRequest: IndexingRequestToken) {
     val (filesInQueue, totalFiles, scanningIds) = getAndResetQueuedFiles()
     if (totalFiles > 0) {
       // note that DumbModeWhileScanningTrigger will not finish dumb mode until scanning is finished
-      UnindexedFilesIndexer(project, filesInQueue, reason, scanningIds, indexingStamp).queue(project)
+      UnindexedFilesIndexer(project, filesInQueue, reason, scanningIds, indexingRequest).queue(project)
     }
     else {
       LOG.info("Finished for " + project.name + ". No files to index with loading content.")
     }
   }
 
-  fun flushNowSync(indexingReason: String?, indicator: ProgressIndicator, indexingStamp: FileIndexingStampService.FileIndexingStamp) {
+  fun flushNowSync(indexingReason: String?, indicator: ProgressIndicator, indexingRequest: IndexingRequestToken) {
     val (filesInQueue, totalFiles, scanningIds) = getAndResetQueuedFiles()
     if (totalFiles > 0) {
       val projectDumbIndexingHistory = ProjectDumbIndexingHistoryImpl(project)
       try {
         UnindexedFilesIndexer(project, filesInQueue, indexingReason ?: "Flushing queue of project ${project.name}",
-                              scanningIds, indexingStamp).indexFiles(
+                              scanningIds, indexingRequest).indexFiles(
           projectDumbIndexingHistory, indicator)
       }
       catch (e: Throwable) {

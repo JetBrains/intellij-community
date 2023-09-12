@@ -66,6 +66,7 @@ class CollectFilesNotMarkedAsIndex(text: String, line: Int) : PerformanceCommand
     }
 
     Files.newBufferedWriter(fullLogPath).use { writer ->
+      val indexingRequest = application.service<FileIndexingStampService>().getCurrentStamp()
       val iterator = object : ContentIterator {
         var number = 0
 
@@ -94,9 +95,8 @@ class CollectFilesNotMarkedAsIndex(text: String, line: Int) : PerformanceCommand
             }
           }
           else {
-            val currentStamp = application.service<FileIndexingStampService>().getCurrentStamp()
             checkIndexed(fileOrDir, true, "not marked as indexed") {
-              IndexingFlag.isFileIndexed(it, currentStamp)
+              IndexingFlag.isFileIndexed(it, indexingRequest.getFileIndexingStamp(fileOrDir))
             }
           }
           return true

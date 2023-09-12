@@ -5,7 +5,7 @@ import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.newvfs.impl.VfsData;
 import com.intellij.util.indexing.contentQueue.IndexUpdateRunner;
-import com.intellij.util.indexing.dependencies.FileIndexingStampService;
+import com.intellij.util.indexing.dependencies.FileIndexingStampService.FileIndexingStamp;
 import com.intellij.util.indexing.diagnostic.FileIndexingStatistics;
 import com.intellij.util.indexing.events.VfsEventsMerger;
 import org.jetbrains.annotations.ApiStatus;
@@ -31,7 +31,7 @@ public final class FileIndexesValuesApplier {
   }
   private final FileBasedIndexImpl myIndex;
   private final int fileId;
-  private final @NotNull FileIndexingStampService.FileIndexingStamp indexingStamp;
+  private final @NotNull FileIndexingStamp indexingStamp;
   private final @NotNull List<? extends SingleIndexValueApplier<?>> appliers;
   private final @NotNull List<SingleIndexValueRemover> removers;
   private final boolean removeDataFromIndicesForFile;
@@ -47,7 +47,7 @@ public final class FileIndexesValuesApplier {
 
   FileIndexesValuesApplier(FileBasedIndexImpl index, int fileId,
                            @NotNull VirtualFile file,
-                           @NotNull FileIndexingStampService.@NotNull FileIndexingStamp indexingStamp,
+                           @NotNull FileIndexingStamp indexingStamp,
                            @NotNull List<? extends SingleIndexValueApplier<?>> appliers,
                            @NotNull List<SingleIndexValueRemover> removers,
                            boolean removeDataFromIndicesForFile,

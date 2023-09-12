@@ -5,6 +5,7 @@ import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.diagnostic.thisLogger
+import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.newvfs.persistent.FSRecords
 import com.intellij.serviceContainer.NonInjectable
 import com.intellij.util.indexing.dependencies.FileIndexingStampService.FileIndexingStamp
@@ -51,26 +52,48 @@ class FileIndexingStampService @NonInjectable @VisibleForTesting constructor(sto
     val NULL_STAMP: FileIndexingStamp = FileIndexingStampImpl(NULL_INDEXING_STAMP)
   }
 
+  interface IndexingRequestToken {
+    /**
+     * Monotonically increasing number representing IndexingStamp
+     */
+    fun getFileIndexingStamp(file: VirtualFile): FileIndexingStamp
+    fun mergeWith(other: IndexingRequestToken): IndexingRequestToken
+  }
+
   interface FileIndexingStamp {
     /**
      * Number representing IndexingStamp. Do not compare this number to any other stamps except for equality.
      */
     fun toInt(): Int
-    fun mergeWith(other: FileIndexingStamp): FileIndexingStamp
   }
 
   private data class FileIndexingStampImpl(val stamp: Int) : FileIndexingStamp {
     override fun toInt(): Int = stamp
-    override fun mergeWith(other: FileIndexingStamp): FileIndexingStamp {
-      return FileIndexingStampImpl(max(stamp, (other as FileIndexingStampImpl).stamp))
+  }
+
+  private data class IndexingRequestTokenImpl(val requestId: Int) : IndexingRequestToken {
+    override fun getFileIndexingStamp(file: VirtualFile): FileIndexingStamp {
+      val fileStamp = file.modificationStamp
+      if (fileStamp == -1L || requestId == NULL_INDEXING_STAMP) {
+        return FileIndexingStampImpl(NULL_INDEXING_STAMP)
+      }
+      else {
+        // we assume that stamp and file.modificationStamp never decrease => their sum only grow up
+        // in the case of overflow we hope that new value does not match any previously used value
+        // (which is hopefully true in most cases, because (new value)==(old value) was used veeeery long time ago)
+        return FileIndexingStampImpl(fileStamp.toInt() + requestId)
+      }
     }
-    override fun toString(): String = stamp.toString()
+
+    override fun mergeWith(other: IndexingRequestToken): IndexingRequestToken {
+      return IndexingRequestTokenImpl(max(requestId, (other as IndexingRequestTokenImpl).requestId))
+    }
   }
 
   // Monotonically increasing. You should not compare this number to other stamps other than for equality (because of possible overflows).
   // Monotonic property is to make sure that value is unique, and it will produce unique value after sum with any other
   // monotonically growing number.
-  private val current = AtomicReference(FileIndexingStampImpl(NULL_INDEXING_STAMP))
+  private val current = AtomicReference(IndexingRequestTokenImpl(NULL_INDEXING_STAMP))
 
   // Use under synchronized to avoid data corruption
   private val storage = ResilientFileChannel.open(storagePath, CREATE, READ, WRITE)
@@ -93,10 +116,10 @@ class FileIndexingStampService @NonInjectable @VisibleForTesting constructor(sto
         throw IOException("Incompatible version change in FileIndexingStampService: $storageVersion > $CURRENT_STORAGE_VERSION")
       }
 
-      val latestStamp = readIntOrExecute(fourBytes, INDEXING_STAMP_OFFSET) { bytesRead ->
+      val requestId = readIntOrExecute(fourBytes, INDEXING_STAMP_OFFSET) { bytesRead ->
         throw IOException("Could not read indexing stamp (only $bytesRead bytes read). Storage path: $storagePath")
       }
-      current.set(FileIndexingStampImpl(latestStamp))
+      current.set(IndexingRequestTokenImpl(requestId))
     }
     catch (ioException: IOException) {
       resetStorage()
@@ -133,19 +156,19 @@ class FileIndexingStampService @NonInjectable @VisibleForTesting constructor(sto
     }
   }
 
-  fun getCurrentStamp(): FileIndexingStamp {
+  fun getCurrentStamp(): IndexingRequestToken {
     return current.get()
   }
 
-  fun invalidateAllStamps(): FileIndexingStamp {
+  fun invalidateAllStamps(): IndexingRequestToken {
     return current.updateAndGet { current ->
-      val next = current.stamp + 1
-      FileIndexingStampImpl(if (next == NULL_INDEXING_STAMP) NULL_INDEXING_STAMP + 1 else next)
+      val next = current.requestId + 1
+      IndexingRequestTokenImpl(if (next == NULL_INDEXING_STAMP) NULL_INDEXING_STAMP + 1 else next)
     }.also {
       synchronized(storage) {
         val bytes = ByteBuffer.allocate(Int.SIZE_BYTES)
         // don't use `it`: current.get() will return just updated value or more up-to-date value
-        bytes.putInt(current.get().stamp)
+        bytes.putInt(current.get().requestId)
         val wrote = storage.write(bytes.rewind(), INDEXING_STAMP_OFFSET)
         thisLogger().assertTrue(wrote == Int.SIZE_BYTES, "Could not write new indexing stamp (only $wrote bytes written)")
         storage.force(false)
