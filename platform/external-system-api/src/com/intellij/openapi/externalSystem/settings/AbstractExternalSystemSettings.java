@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.externalSystem.settings;
 
 import com.intellij.openapi.Disposable;
@@ -6,6 +6,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.externalSystem.ExternalSystemManager;
 import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil;
+import com.intellij.openapi.externalSystem.util.ExternalSystemInProgressService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.NullableLazyValue;
 import com.intellij.util.containers.ContainerUtil;
@@ -220,25 +221,29 @@ public abstract class AbstractExternalSystemSettings<
   }
 
   protected void loadState(@NotNull State<PS> state) {
-    Set<PS> settings = state.getLinkedExternalProjectsSettings();
-    if (settings != null) {
-      setLinkedProjectsSettings(settings, new ExternalSystemSettingsListener<>() {
-        @Override
-        public void onProjectsLinked(@NotNull Collection<PS> settings) {
-          ApplicationManager.getApplication().invokeLater(() -> {
-            AbstractExternalSystemSettings.this.onProjectsLinked(settings);
-            AbstractExternalSystemSettings.this.onProjectsLoaded(settings);
-          }, myProject.getDisposed());
-        }
+    ExternalSystemInProgressService trackingService = myProject.getService(ExternalSystemInProgressService.class);
+    trackingService.trackConfigurationActivityBlocking(() -> {
+      Set<PS> settings = state.getLinkedExternalProjectsSettings();
+      if (settings != null) {
+        setLinkedProjectsSettings(settings, new ExternalSystemSettingsListener<>() {
+          @Override
+          public void onProjectsLinked(@NotNull Collection<PS> settings) {
+            ApplicationManager.getApplication().invokeLater(() -> {
+              AbstractExternalSystemSettings.this.onProjectsLinked(settings);
+              AbstractExternalSystemSettings.this.onProjectsLoaded(settings);
+            }, myProject.getDisposed());
+          }
 
-        @Override
-        public void onProjectsUnlinked(@NotNull Set<String> linkedProjectPaths) {
-          ApplicationManager.getApplication().invokeLater(() -> {
-            AbstractExternalSystemSettings.this.onProjectsUnlinked(linkedProjectPaths);
-          }, myProject.getDisposed());
-        }
-      });
-    }
+          @Override
+          public void onProjectsUnlinked(@NotNull Set<String> linkedProjectPaths) {
+            ApplicationManager.getApplication().invokeLater(() -> {
+              AbstractExternalSystemSettings.this.onProjectsUnlinked(linkedProjectPaths);
+            }, myProject.getDisposed());
+          }
+        });
+      }
+      return null;
+    });
   }
 
   private void onProjectsLoaded(@NotNull Collection<PS> settings) {

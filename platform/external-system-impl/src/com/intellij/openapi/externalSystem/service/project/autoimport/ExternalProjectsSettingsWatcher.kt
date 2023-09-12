@@ -1,6 +1,7 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.externalSystem.service.project.autoimport
 
+import com.intellij.openapi.components.service
 import com.intellij.openapi.extensions.ExtensionPointUtil
 import com.intellij.openapi.externalSystem.ExternalSystemAutoImportAware
 import com.intellij.openapi.externalSystem.ExternalSystemManager
@@ -8,6 +9,7 @@ import com.intellij.openapi.externalSystem.autoimport.ExternalSystemProjectId
 import com.intellij.openapi.externalSystem.autoimport.ExternalSystemProjectTracker
 import com.intellij.openapi.externalSystem.settings.ExternalProjectSettings
 import com.intellij.openapi.externalSystem.settings.ExternalSystemSettingsListenerEx
+import com.intellij.openapi.externalSystem.util.ExternalSystemInProgressService
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
 
@@ -21,10 +23,12 @@ internal class ExternalProjectsSettingsWatcher : ExternalSystemSettingsListenerE
       return
     }
 
-    val projectTracker = ExternalSystemProjectTracker.getInstance(project)
-    val systemId = manager.systemId
-    for (projectSettings in settings) {
-      projectTracker.activate(ExternalSystemProjectId(systemId = systemId, externalProjectPath = projectSettings.externalProjectPath))
+    project.service<ExternalSystemInProgressService>().trackConfigurationActivityBlocking {
+      val projectTracker = ExternalSystemProjectTracker.getInstance(project)
+      val systemId = manager.systemId
+      for (projectSettings in settings) {
+        projectTracker.activate(ExternalSystemProjectId(systemId = systemId, externalProjectPath = projectSettings.externalProjectPath))
+      }
     }
   }
 
