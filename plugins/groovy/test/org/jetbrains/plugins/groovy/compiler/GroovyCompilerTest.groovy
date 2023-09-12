@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.compiler
 
 import com.intellij.compiler.CompilerConfiguration
@@ -728,11 +728,11 @@ class Main {
 
   void testCompileTimeConstants() {
     myFixture.addFileToProject 'Gr.groovy', '''
-interface Gr {
-  String HELLO = "Hello"
-  int MAGIC = 239
-  Boolean BOOL = true
-  boolean bool = true
+class Gr {
+  public static final String HELLO = "Hello"
+  public static final int MAGIC = 239
+  public static final Boolean BOOL = true
+  public static final boolean bool = true
 }'''
     myFixture.addFileToProject 'Main.java', '''
 public class Main {
