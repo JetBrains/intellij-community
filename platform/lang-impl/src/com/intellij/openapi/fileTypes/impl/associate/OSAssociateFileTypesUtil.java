@@ -11,9 +11,9 @@ import com.intellij.openapi.fileTypes.impl.associate.ui.FileTypeAssociationDialo
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.registry.Registry;
+import com.intellij.openapi.util.text.Strings;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.containers.ContainerUtil;
-import org.apache.commons.lang.StringUtils;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -157,7 +157,7 @@ public final class OSAssociateFileTypesUtil {
   }
 
   private static String getSubtypeName(@NotNull String baseName, @NotNull ExtensionFileNameMatcher matcher) {
-    String ext = StringUtils.removeStart(matcher.getExtension(), ".");
+    String ext = Strings.trimStart(matcher.getExtension(), ".");
     return baseName + EXTENSION_SEPARATOR + ext;
   }
 

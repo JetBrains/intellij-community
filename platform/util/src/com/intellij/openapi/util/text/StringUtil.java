@@ -3041,10 +3041,27 @@ public class StringUtil extends StringUtilRt {
     }
     for (int i = 0; i < str.length(); i++) {
       char c = str.charAt(i);
-      if (c >= 'A' && c <= 'Z' || c >= 'a' && c <= 'z' || Character.isDigit(c)) {
-        continue;
+      if ((c < 'A' || c > 'Z') && (c < 'a' || c > 'z') && !Character.isDigit(c)) {
+        return false;
       }
+    }
+    return true;
+  }
+
+  /**
+   * @return {@code true} if the passed string is not {@code null} and not empty
+   * and contains only digits; {@code false} otherwise.
+   */
+  @Contract(pure = true)
+  public static boolean isNumeric(@Nullable CharSequence str) {
+    if (isEmpty(str)) {
       return false;
+    }
+
+    for (int i = 0; i < str.length(); i++) {
+      if (!Character.isDigit(str.charAt(i))) {
+        return false;
+      }
     }
     return true;
   }

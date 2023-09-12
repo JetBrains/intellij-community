@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.actions.internal.refactoringTesting.cases
 
@@ -7,10 +7,9 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.search.FileTypeIndex
 import com.intellij.psi.search.ProjectScope
 import com.intellij.psi.util.PsiTreeUtil
-import org.apache.commons.lang.RandomStringUtils
 import org.jetbrains.kotlin.idea.KotlinFileType
-import org.jetbrains.kotlin.idea.core.util.toPsiFile
 import org.jetbrains.kotlin.idea.base.projectStructure.scope.KotlinSourceFilterScope
+import org.jetbrains.kotlin.idea.core.util.toPsiFile
 import org.jetbrains.kotlin.psi.KtClass
 import java.io.File
 import kotlin.random.Random
@@ -40,7 +39,11 @@ internal fun Project.files(): List<VirtualFile> {
 
 internal inline fun <T> randomNullability(body: () -> T) = randomFunctor(0.8F, body) { null }
 
-internal fun randomString() = RandomStringUtils.randomAlphanumeric(Random.nextInt(1, 10))
+internal fun randomString(): String {
+    return String(CharArray(Random.nextInt(1, 10)) {
+        Character.forDigit(Random.nextInt(0, 36), 36)
+    })
+}
 
 internal fun randomClassName(): String {
     var count = Random.nextInt(1, 10)
