@@ -192,6 +192,7 @@ object InlineCompletionUsageTracker : CounterUsagesCollector() {
     private var shownLogSent = false
     private var showStartTime = 0L
     private var suggestionLength = 0
+    private var lines = 0
 
     fun firstShown(element: InlineCompletionElement) {
       if (firstShown) {
@@ -210,6 +211,10 @@ object InlineCompletionUsageTracker : CounterUsagesCollector() {
       assert(firstShown) {
         "Call firstShown firstly"
       }
+      lines += (element.text.lines().size - 1).coerceAtLeast(0)
+      if (suggestionLength == 0 && element.text.isNotEmpty()) {
+        lines++ // first line
+      }
       suggestionLength += element.text.length
       assert(!shownLogSent)
     }
@@ -227,6 +232,7 @@ object InlineCompletionUsageTracker : CounterUsagesCollector() {
         return
       }
       shownLogSent = true
+      data.add(ShownEvents.LINES.with(lines))
       data.add(ShownEvents.SUGGESTION_LENGTH.with(suggestionLength))
       data.add(ShownEvents.SHOWING_TIME.with(System.currentTimeMillis() - showStartTime))
       data.add(ShownEvents.OUTCOME.with(outcome))
@@ -237,6 +243,7 @@ object InlineCompletionUsageTracker : CounterUsagesCollector() {
   private object ShownEvents {
     val REQUEST_ID = Long("request_id")
 
+    val LINES = Int("lines")
     val SUGGESTION_LENGTH = Int("suggestion_length")
 
     val TIME_TO_SHOW = Long("time_to_show")
@@ -249,6 +256,7 @@ object InlineCompletionUsageTracker : CounterUsagesCollector() {
   private val ShownEvent: VarargEventId = GROUP.registerVarargEvent(
     "shown",
     ShownEvents.REQUEST_ID,
+    ShownEvents.LINES,
     ShownEvents.SUGGESTION_LENGTH,
     ShownEvents.TIME_TO_SHOW,
     ShownEvents.SHOWING_TIME,
