@@ -6,9 +6,9 @@ import com.intellij.openapi.vcs.FilePath
 import com.intellij.openapi.vcs.changes.actions.diff.CombinedDiffPreviewModel
 import git4idea.repo.GitRepository
 import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequestShort
-import org.jetbrains.plugins.github.pullrequest.GHPRToolWindowProjectViewModel
 import org.jetbrains.plugins.github.pullrequest.data.provider.GHPRDataProvider
 import org.jetbrains.plugins.github.pullrequest.ui.list.GHPRListController
+import org.jetbrains.plugins.github.pullrequest.ui.toolwindow.GHPRToolWindowProjectViewModel
 
 object GHPRActionKeys {
   @JvmStatic

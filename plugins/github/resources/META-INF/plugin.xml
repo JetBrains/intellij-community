@@ -68,7 +68,7 @@
 
     <toolWindow id="Pull Requests" icon="org.jetbrains.plugins.github.GithubIcons.PullRequestsToolWindow"
                 anchor="left" doNotActivateOnStart="true" canCloseContents="true"
-                factoryClass="org.jetbrains.plugins.github.pullrequest.GHPRToolWindowFactory"/>
+                factoryClass="org.jetbrains.plugins.github.pullrequest.ui.toolwindow.GHPRToolWindowFactory"/>
 
     <diff.actions.ShowDiffAction.ExtensionProvider
       implementation="org.jetbrains.plugins.github.pullrequest.action.GHPRShowDiffActionProvider"/>

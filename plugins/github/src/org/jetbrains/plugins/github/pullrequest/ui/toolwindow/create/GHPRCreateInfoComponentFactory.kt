@@ -39,8 +39,6 @@ import org.jetbrains.plugins.github.api.data.GHUser
 import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequestRequestedReviewer
 import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequestShort
 import org.jetbrains.plugins.github.i18n.GithubBundle
-import org.jetbrains.plugins.github.pullrequest.GHPRToolWindowProjectViewModel
-import org.jetbrains.plugins.github.pullrequest.GHPRToolWindowTab
 import org.jetbrains.plugins.github.pullrequest.config.GithubPullRequestsProjectUISettings
 import org.jetbrains.plugins.github.pullrequest.data.GHPRDataContext
 import org.jetbrains.plugins.github.pullrequest.data.GHPRIdentifier
@@ -49,6 +47,8 @@ import org.jetbrains.plugins.github.pullrequest.ui.GHIOExecutorLoadingModel
 import org.jetbrains.plugins.github.pullrequest.ui.GHLoadingModel
 import org.jetbrains.plugins.github.pullrequest.ui.GHSimpleLoadingModel
 import org.jetbrains.plugins.github.pullrequest.ui.details.GHPRMetadataPanelFactory
+import org.jetbrains.plugins.github.pullrequest.ui.toolwindow.GHPRToolWindowProjectViewModel
+import org.jetbrains.plugins.github.pullrequest.ui.toolwindow.GHPRToolWindowTab
 import org.jetbrains.plugins.github.ui.util.DisableableDocument
 import org.jetbrains.plugins.github.util.GHGitRepositoryMapping
 import java.awt.Component

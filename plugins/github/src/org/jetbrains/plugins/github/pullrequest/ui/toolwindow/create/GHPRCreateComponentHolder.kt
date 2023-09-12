@@ -44,12 +44,12 @@ import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequestShort
 import org.jetbrains.plugins.github.i18n.GithubBundle
 import org.jetbrains.plugins.github.pullrequest.GHPRCombinedDiffPreviewBase.Companion.createAndSetupDiffPreview
 import org.jetbrains.plugins.github.pullrequest.GHPRDiffPreview
-import org.jetbrains.plugins.github.pullrequest.GHPRToolWindowProjectViewModel
 import org.jetbrains.plugins.github.pullrequest.config.GithubPullRequestsProjectUISettings
 import org.jetbrains.plugins.github.pullrequest.data.GHPRDataContext
 import org.jetbrains.plugins.github.pullrequest.data.GHPRIdentifier
 import org.jetbrains.plugins.github.pullrequest.ui.*
 import org.jetbrains.plugins.github.pullrequest.ui.toolwindow.GHPRDiffController
+import org.jetbrains.plugins.github.pullrequest.ui.toolwindow.GHPRToolWindowProjectViewModel
 import org.jetbrains.plugins.github.pullrequest.ui.toolwindow.GHPRViewTabsFactory
 import org.jetbrains.plugins.github.ui.util.DisableableDocument
 import org.jetbrains.plugins.github.util.ChangeDiffRequestProducerFactory
