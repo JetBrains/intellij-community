@@ -22,9 +22,7 @@ class TextSearchContributorTest : BasePlatformTestCase() {
       c8a1f836-5198-41b5-a906-793bd9d0d241
     """.trimIndent())
 
-      val initEvent = createEvent(project)
-      val contributor = TextSearchContributor(initEvent)
-      SearchEverywhereMlContributorReplacementService.saveInitEvent(initEvent)
+      val contributor = TextSearchContributor(createEvent(project))
       val ui = SearchEverywhereUI(project, listOf(contributor))
       ui.switchToTab(contributor.searchProviderId)
       val elements = waitForFuture(ui.findElementsForPattern("eedafea0f30d"))

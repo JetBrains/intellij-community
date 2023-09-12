@@ -9,7 +9,7 @@ import org.jetbrains.annotations.ApiStatus
 class SearchEverywhereMlContributorReplacementServiceImpl : SearchEverywhereMlContributorReplacementService {
   override fun replaceInSeparateTab(contributor: SearchEverywhereContributor<*>): SearchEverywhereContributor<*> {
     if (contributor is SemanticSearchEverywhereContributor) return contributor
-    val initEvent = SearchEverywhereMlContributorReplacementService.initEvent!!
+    val initEvent = SearchEverywhereMlContributorReplacementService.initEvent ?: return contributor
     return when (contributor.searchProviderId) {
       ActionSearchEverywhereContributor::class.java.simpleName ->
         configureContributor(SemanticActionSearchEverywhereContributor(contributor as ActionSearchEverywhereContributor), contributor)

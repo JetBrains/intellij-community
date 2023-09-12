@@ -623,8 +623,7 @@ class Intf {
     if (file != null) {
       dataContext = SimpleDataContext.getSimpleContext(CommonDataKeys.PSI_FILE, file, dataContext)
     }
-    def result = AnActionEvent.createFromDataContext(ActionPlaces.UNKNOWN, null, dataContext)
-    return result
+    return AnActionEvent.createFromDataContext(ActionPlaces.UNKNOWN, null, dataContext)
   }
 
   private static class TestClassContributor extends ClassSearchEverywhereContributor {
