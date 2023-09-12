@@ -7,15 +7,15 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
 import com.intellij.testFramework.EditorTestUtil;
 import com.intellij.testFramework.fixtures.BasePlatformTestCase;
-import com.intellij.util.containers.ContainerUtil;
 import org.intellij.lang.annotations.Language;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
-import java.util.Comparator;
+import java.util.Arrays;
 import java.util.List;
 import java.util.function.Function;
+import java.util.stream.Stream;
 
 import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
 
@@ -46,14 +46,17 @@ public abstract class JsonBySchemaCompletionBaseTest extends BasePlatformTestCas
       getElementAtCaretIn(text, extension)
     );
 
-    foundVariants.sort(Comparator.comparing(lookupElementRepresentation)); // Mutates!
-
-    assertOrderedEquals(
-      ContainerUtil.map(foundVariants, it -> lookupElementRepresentation.apply(it)),
-      variants
+    assertEqualRegardlessOfOrder(
+      foundVariants.stream().map(lookupElementRepresentation),
+      Arrays.stream(variants)
     );
 
     myItems = foundVariants;
+  }
+
+  /** Duplicates are semantic in [expected] and [actual] */
+  private static <T extends Comparable<T>> void assertEqualRegardlessOfOrder(Stream<@NotNull T> expected, Stream<@NotNull T> actual) {
+    assertEquals(expected.sorted().toList(), actual.sorted().toList());
   }
 
   @NotNull
