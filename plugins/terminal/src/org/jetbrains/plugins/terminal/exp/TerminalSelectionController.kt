@@ -58,6 +58,12 @@ class TerminalSelectionController(
           selectionModel.selectedBlocks = listOf(newBlock)
           makeBlockVisible(newBlock)
         }
+        else if (isBelow) {
+          // The last block is already selected, so scroll to the end of the output
+          val editor = outputModel.editor
+          val visibleHeight = editor.scrollingModel.visibleArea.height
+          editor.scrollingModel.scrollVertically(editor.contentComponent.height - visibleHeight)
+        }
       }
     }
   }
