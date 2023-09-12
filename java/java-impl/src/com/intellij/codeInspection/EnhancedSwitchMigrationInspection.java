@@ -935,8 +935,7 @@ public class EnhancedSwitchMigrationInspection extends AbstractBaseJavaLocalInsp
           }
           addWhiteSpaceAndComments(current, sb, ct);
         }
-        ct.markUnchanged(element);
-        sb.append(element.getText());
+        sb.append(ct.text(element));
         if (i + 1 < length) {
           addWhiteSpaceAndComments(element, sb, ct);
         }
@@ -955,8 +954,7 @@ public class EnhancedSwitchMigrationInspection extends AbstractBaseJavaLocalInsp
       }
       PsiElement current = element.getNextSibling();
       while (current instanceof PsiComment || current instanceof PsiWhiteSpace) {
-        ct.markUnchanged(current);
-        sb.append(current.getText());
+        sb.append(ct.text(current));
         current = current.getNextSibling();
       }
     }
