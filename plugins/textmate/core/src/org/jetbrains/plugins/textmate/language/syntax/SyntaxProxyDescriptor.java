@@ -41,6 +41,11 @@ abstract class SyntaxProxyDescriptor implements SyntaxNodeDescriptor {
   }
 
   @Override
+  public @Nullable Int2ObjectMap<TextMateCapture> getCaptureRules(Constants.@NotNull CaptureKey key) {
+    return getTargetNode().getCaptureRules(key);
+  }
+
+  @Override
   public boolean hasBackReference(Constants.@NotNull CaptureKey key, int group) {
     return getTargetNode().hasBackReference(key, group);
   }

@@ -36,6 +36,13 @@ public interface SyntaxNodeDescriptor {
   boolean hasBackReference(@NotNull Constants.StringKey key);
 
   @Nullable
+  Int2ObjectMap<TextMateCapture> getCaptureRules(@NotNull Constants.CaptureKey key);
+
+  /**
+   * @deprecated use {@link #getCaptureRules(Constants.CaptureKey)}
+   */
+  @Deprecated(forRemoval = true)
+  @Nullable
   Int2ObjectMap<CharSequence> getCaptures(@NotNull Constants.CaptureKey key);
 
   boolean hasBackReference(@NotNull Constants.CaptureKey key, int group);

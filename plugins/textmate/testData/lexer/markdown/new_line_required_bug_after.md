@@ -10,4 +10,4 @@ text.html.markdown;markup.heading.${1/(#)(#)?(#)?(#)?(#)?(#)?/${6:?6:${5:?5:${4:
 }
 text.html.markdown: [16, 17], {
 }
-text.html.markdown;markup.heading.${1/(#)(#)?(#)?(#)?(#)?(#)?/${6:?6:${5:?5:${4:?4:${3:?3:${2:?2:1}}}}}/}.markdown;punctuation.definition.heading.markdown: [17, 18], {#}
+text.html.markdown;meta.paragraph.markdown: [17, 18], {#}

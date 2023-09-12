@@ -8,6 +8,7 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.textmate.Constants;
 import org.jetbrains.plugins.textmate.language.TextMateLanguageDescriptor;
 import org.jetbrains.plugins.textmate.language.syntax.SyntaxNodeDescriptor;
+import org.jetbrains.plugins.textmate.language.syntax.TextMateCapture;
 import org.jetbrains.plugins.textmate.language.syntax.selector.TextMateWeigh;
 import org.jetbrains.plugins.textmate.regex.MatchData;
 import org.jetbrains.plugins.textmate.regex.RegexUtil;
@@ -18,8 +19,8 @@ import java.util.*;
 
 public final class TextMateLexer {
   /**
-   * Count of {@link #lastSuccessState} that can be occurred again without offset changing.
-   * If {@link #lastSuccessStateOccursCount} reaches {@code MAX_LOOPS_COUNT}
+   * Count of `lastSuccessState` that can be occurred again without offset changing.
+   * If `lastSuccessStateOccursCount` reaches {@code MAX_LOOPS_COUNT}
    * then lexing of current line stops and lexer moved to the EOL.
    */
   private static final int MAX_LOOPS_COUNT = 10;
@@ -95,9 +96,7 @@ public final class TextMateLexer {
 
     boolean matchBeginOfString = lineStartOffset == 0;
     int anchorByteOffset = -1; // makes sense only for a line, cannot be used across lines
-    String line = !lineCharSequence.isEmpty() && lineCharSequence.charAt(lineCharSequence.length() - 1) == '\n'
-                  ? lineCharSequence.toString()
-                  : lineCharSequence + "\n";
+    String line = lineCharSequence.toString();
 
     StringWithId string = new StringWithId(line);
     while (true) {
@@ -145,13 +144,13 @@ public final class TextMateLexer {
         TextMateRange endRange = endMatch.charRange(line, string.bytes);
         int startPosition = endPosition = endRange.start;
         closeScopeSelector(output, startPosition + lineStartOffset); // closing content scope
-        if (lastRule.getCaptures(Constants.CaptureKey.END_CAPTURES) == null
-            && lastRule.getCaptures(Constants.CaptureKey.CAPTURES) == null
-            && lastRule.getCaptures(Constants.CaptureKey.BEGIN_CAPTURES) == null
+        if (lastRule.getCaptureRules(Constants.CaptureKey.END_CAPTURES) == null
+            && lastRule.getCaptureRules(Constants.CaptureKey.CAPTURES) == null
+            && lastRule.getCaptureRules(Constants.CaptureKey.BEGIN_CAPTURES) == null
             ||
-            parseCaptures(output, Constants.CaptureKey.END_CAPTURES, lastRule, endMatch, string, line, lineStartOffset)
+            parseCaptures(output, Constants.CaptureKey.END_CAPTURES, lastRule, endMatch, string, line, lineStartOffset, states)
             ||
-            parseCaptures(output, Constants.CaptureKey.CAPTURES, lastRule, endMatch, string, line, lineStartOffset)) {
+            parseCaptures(output, Constants.CaptureKey.CAPTURES, lastRule, endMatch, string, line, lineStartOffset, states)) {
           // move line position only if anything was captured or if there is nothing to capture at all
           endPosition = endRange.end;
         }
@@ -176,8 +175,8 @@ public final class TextMateLexer {
           String name = SyntaxMatchUtils.getStringAttribute(Constants.StringKey.NAME, currentRule, string, currentMatch);
           openScopeSelector(output, name, startPosition + lineStartOffset);
 
-          parseCaptures(output, Constants.CaptureKey.BEGIN_CAPTURES, currentRule, currentMatch, string, line, lineStartOffset);
-          parseCaptures(output, Constants.CaptureKey.CAPTURES, currentRule, currentMatch, string, line, lineStartOffset);
+          parseCaptures(output, Constants.CaptureKey.BEGIN_CAPTURES, currentRule, currentMatch, string, line, lineStartOffset, states);
+          parseCaptures(output, Constants.CaptureKey.CAPTURES, currentRule, currentMatch, string, line, lineStartOffset, states);
 
           String contentName = SyntaxMatchUtils.getStringAttribute(Constants.StringKey.CONTENT_NAME, currentRule, string, currentMatch);
           openScopeSelector(output, contentName, endPosition + lineStartOffset);
@@ -185,7 +184,7 @@ public final class TextMateLexer {
         else if (currentRule.getStringAttribute(Constants.StringKey.MATCH) != null) {
           String name = SyntaxMatchUtils.getStringAttribute(Constants.StringKey.NAME, currentRule, string, currentMatch);
           openScopeSelector(output, name, startPosition + lineStartOffset);
-          parseCaptures(output, Constants.CaptureKey.CAPTURES, currentRule, currentMatch, string, line, lineStartOffset);
+          parseCaptures(output, Constants.CaptureKey.CAPTURES, currentRule, currentMatch, string, line, lineStartOffset, states);
           closeScopeSelector(output, endPosition + lineStartOffset);
         }
 
@@ -236,58 +235,75 @@ public final class TextMateLexer {
   }
 
   private boolean parseCaptures(@NotNull Queue<Token> output,
-                                Constants.CaptureKey capturesKey,
+                                Constants.CaptureKey captureKey,
                                 SyntaxNodeDescriptor rule,
                                 MatchData matchData,
                                 StringWithId string,
                                 String line,
-                                int startLineOffset) {
-    Int2ObjectMap<CharSequence> captures = rule.getCaptures(capturesKey);
-    if (captures != null) {
-      List<CaptureMatchData> matches = SyntaxMatchUtils.matchCaptures(captures, matchData, string, line);
+                                int startLineOffset,
+                                FList<TextMateLexerState> states) {
+    Int2ObjectMap<TextMateCapture> captures = rule.getCaptureRules(captureKey);
+    if (captures == null) {
+      return false;
+    }
 
-      List<CaptureMatchEdge> captureMatchEdges = new ArrayList<>(matches.size() * 2);
-      for (CaptureMatchData match : matches) {
-        if (!match.range.isEmpty() && !match.selectorName.isEmpty()) {
-          CharSequence selectorName = rule.hasBackReference(capturesKey, match.group)
-                                      ? SyntaxMatchUtils.replaceGroupsWithMatchData(match.selectorName, string, matchData, '$')
-                                      : match.selectorName;
-          captureMatchEdges.add(new CaptureMatchEdge(match.range.start, match.group, CaptureMatchEdge.Type.START, selectorName));
-          captureMatchEdges.add(new CaptureMatchEdge(match.range.end, match.group, CaptureMatchEdge.Type.END, selectorName));
-        }
+    Deque<TextMateRange> activeCaptureRanges = new LinkedList<>();
+    for (int group = 0; group < matchData.count(); group++) {
+      TextMateCapture capture = captures.get(group);
+      if (capture == null) {
+        continue;
       }
-      captureMatchEdges.sort(CaptureMatchEdge.OFFSET_ORDERING);
 
-      for (CaptureMatchEdge edge : captureMatchEdges) {
-        switch (edge.type) {
-          case START -> splitAndOpenScopeSelectors(output, edge.selectorName, edge.offset + startLineOffset);
-          case END -> {
-            for (int i = 0; i < Strings.countChars(edge.selectorName, ' ') + 1; i++) {
-              closeScopeSelector(output, edge.offset + startLineOffset);
-            }
+      TextMateRange byteRange = matchData.byteOffset(group);
+      if (byteRange.isEmpty()) {
+        continue;
+      }
+
+      TextMateRange captureRange = matchData.charRange(line, string.bytes, group);
+
+      while (!activeCaptureRanges.isEmpty() && activeCaptureRanges.peek().end <= captureRange.start) {
+        closeScopeSelector(output, startLineOffset + activeCaptureRanges.pop().end);
+      }
+
+      if (capture instanceof TextMateCapture.Name) {
+        CharSequence captureName = ((TextMateCapture.Name)capture).getName();
+        CharSequence scopeName = rule.hasBackReference(captureKey, group)
+                                    ? SyntaxMatchUtils.replaceGroupsWithMatchData(captureName, string, matchData, '$')
+                                    : captureName;
+        int selectorStartOffset = 0;
+        int indexOfSpace = Strings.indexOf(scopeName, ' ', selectorStartOffset);
+        if (indexOfSpace == -1) {
+          openScopeSelector(output, scopeName, startLineOffset + captureRange.start);
+          activeCaptureRanges.push(captureRange);
+        }
+        else {
+          while (indexOfSpace >= 0) {
+            openScopeSelector(output, scopeName.subSequence(selectorStartOffset, indexOfSpace), startLineOffset + captureRange.start);
+            selectorStartOffset = indexOfSpace + 1;
+            indexOfSpace = Strings.indexOf(scopeName, ' ', selectorStartOffset);
           }
+          openScopeSelector(output, scopeName.subSequence(selectorStartOffset, scopeName.length()), startLineOffset + captureRange.start);
+          activeCaptureRanges.push(captureRange);
         }
       }
-      return !matches.isEmpty();
-    }
-    return false;
-  }
-
-  private void splitAndOpenScopeSelectors(@NotNull Queue<Token> output, CharSequence name, int position) {
-    addToken(output, position);
-    int prevIndex = 0;
-    int i = Strings.indexOf(name, ' ', prevIndex);
-    if (i == -1) {
-      myCurrentScope = myCurrentScope.add(name);
-    }
-    else {
-      while (i >= 0) {
-        myCurrentScope = myCurrentScope.add(name.subSequence(prevIndex, i));
-        prevIndex = i + 1;
-        i = Strings.indexOf(name, ' ', prevIndex);
+      else if (capture instanceof TextMateCapture.Rule) {
+        String capturedString = line.substring(0, captureRange.end);
+        StringWithId capturedStringWithId = new StringWithId(capturedString);
+        TextMateLexerState captureState = new TextMateLexerState(((TextMateCapture.Rule)capture).getNode(),
+                                                                 matchData,
+                                                                 TextMateWeigh.Priority.NORMAL,
+                                                                 byteRange.start,
+                                                                 capturedStringWithId);
+        parseLine(capturedString, output, states.prepend(captureState), startLineOffset, captureRange.start, byteRange.start);
       }
-      myCurrentScope = myCurrentScope.add(name.subSequence(prevIndex, name.length()));
+      else {
+        throw new IllegalStateException("unknown capture type: " + capture);
+      }
     }
+    while (!activeCaptureRanges.isEmpty()) {
+      closeScopeSelector(output, startLineOffset + activeCaptureRanges.pop().end);
+    }
+    return true;
   }
 
   private void openScopeSelector(@NotNull Queue<Token> output, @Nullable CharSequence name, int position) {

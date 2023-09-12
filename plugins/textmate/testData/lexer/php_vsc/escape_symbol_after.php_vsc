@@ -1,7 +1,7 @@
 text.html.php;meta.embedded.block.php;punctuation.section.embedded.begin.php: [0, 5], {<?php}
 text.html.php;meta.embedded.block.php;source.php: [5, 6], {
 }
-text.html.php;meta.embedded.block.php;source.php;meta.function-call.php: [6, 19], {session_start}
+text.html.php;meta.embedded.block.php;source.php;meta.function-call.php;entity.name.function.php: [6, 19], {session_start}
 text.html.php;meta.embedded.block.php;source.php;meta.function-call.php;punctuation.definition.arguments.begin.bracket.round.php: [19, 20], {(}
 text.html.php;meta.embedded.block.php;source.php;meta.function-call.php;punctuation.definition.arguments.end.bracket.round.php: [20, 21], {)}
 text.html.php;meta.embedded.block.php;source.php;punctuation.terminator.expression.php: [21, 22], {;}
@@ -113,7 +113,7 @@ text.html.php;meta.embedded.block.php;source.php;punctuation.section.array.begin
 text.html.php;meta.embedded.block.php;source.php;constant.other.php: [269, 270], {i}
 text.html.php;meta.embedded.block.php;source.php;punctuation.section.array.end.php: [270, 271], {]}
 text.html.php;meta.embedded.block.php;source.php;keyword.operator.string.php: [271, 272], {.}
-text.html.php;meta.embedded.block.php;source.php;meta.function-call.php: [272, 279], {replace}
+text.html.php;meta.embedded.block.php;source.php;meta.function-call.php;entity.name.function.php: [272, 279], {replace}
 text.html.php;meta.embedded.block.php;source.php;meta.function-call.php;punctuation.definition.arguments.begin.bracket.round.php: [279, 280], {(}
 text.html.php;meta.embedded.block.php;source.php;meta.function-call.php;keyword.operator.arithmetic.php: [280, 281], {/}
 text.html.php;meta.embedded.block.php;source.php;meta.function-call.php;string.quoted.double.php;punctuation.definition.string.begin.php: [281, 282], {"}

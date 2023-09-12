@@ -117,14 +117,19 @@ public final class TextMateSyntaxTable {
 
   @SuppressWarnings("SSBasedInspection")
   @Nullable
-  private static Int2ObjectMap<CharSequence> loadCaptures(@NotNull Plist captures, @NotNull Interner<CharSequence> interner) {
-    Int2ObjectOpenHashMap<CharSequence> result = new Int2ObjectOpenHashMap<>();
+  private Int2ObjectMap<TextMateCapture> loadCaptures(@NotNull Plist captures, @NotNull Interner<CharSequence> interner) {
+    Int2ObjectOpenHashMap<TextMateCapture> result = new Int2ObjectOpenHashMap<>();
     for (Map.Entry<String, PListValue> capture : captures.entries()) {
       try {
         int index = Integer.parseInt(capture.getKey());
         Plist captureDict = capture.getValue().getPlist();
-        String captureName = captureDict.getPlistValue(Constants.NAME_KEY, "").getString();
-        result.put(index, interner.intern(captureName));
+        PListValue captureName = captureDict.getPlistValue(Constants.NAME_KEY);
+        if (captureName != null) {
+          result.put(index, new TextMateCapture.Name(interner.intern(captureName.getString())));
+        }
+        else {
+          result.put(index, new TextMateCapture.Rule(loadRealNode(captureDict, null, interner)));
+        }
       }
       catch (NumberFormatException ignore) {
       }

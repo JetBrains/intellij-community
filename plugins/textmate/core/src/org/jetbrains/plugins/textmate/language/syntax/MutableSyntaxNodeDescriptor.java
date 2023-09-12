@@ -32,7 +32,7 @@ public interface MutableSyntaxNodeDescriptor extends SyntaxNodeDescriptor {
 
   void setStringAttribute(@NotNull Constants.StringKey key, @Nullable CharSequence value);
 
-  void setCaptures(@NotNull Constants.CaptureKey key, @Nullable Int2ObjectMap<CharSequence> captures);
+  void setCaptures(@NotNull Constants.CaptureKey key, @Nullable Int2ObjectMap<TextMateCapture> captures);
 
   void appendRepository(int ruleId, SyntaxNodeDescriptor descriptor);
 
