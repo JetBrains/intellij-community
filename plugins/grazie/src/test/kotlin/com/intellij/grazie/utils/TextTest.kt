@@ -57,5 +57,6 @@ internal class TextTest {
     assertTrue("public void Method<T>(T string)".looksLikeCode())
     assertTrue("public void Method<TA, TB, TC>()".looksLikeCode())
     assertTrue("public void Method<TA, in TB,out    TC>()".looksLikeCode())
+    assertTrue("public void Method<in (TA, TB, TC)>()".looksLikeCode())
   }
 }
