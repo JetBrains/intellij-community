@@ -36,7 +36,8 @@ import java.util.Map;
 public class JarApplicationConfiguration extends LocatableConfigurationBase implements CommonJavaRunConfigurationParameters,
                                                                                        SearchScopeProvidingRunProfile,
                                                                                        InputRedirectAware,
-                                                                                       TargetEnvironmentAwareRunProfile {
+                                                                                       TargetEnvironmentAwareRunProfile,
+                                                                                       RunProfileWithCompileBeforeLaunchOption {
   private JarApplicationConfigurationBean myBean = new JarApplicationConfigurationBean();
   private Map<String, String> myEnvs = new LinkedHashMap<>();
   private JavaRunConfigurationModule myConfigurationModule;
@@ -51,6 +52,11 @@ public class JarApplicationConfiguration extends LocatableConfigurationBase impl
   public JarApplicationConfiguration(Project project, ConfigurationFactory factory, String name) {
     super(project, factory, name);
     myConfigurationModule = new JavaRunConfigurationModule(project, true);
+  }
+
+  @Override
+  public boolean isBuildBeforeLaunchAddedByDefault() {
+    return false;
   }
 
   @NotNull
