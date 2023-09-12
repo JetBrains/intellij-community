@@ -66,7 +66,7 @@ import com.intellij.util.indexing.contentQueue.CachedFileContent;
 import com.intellij.util.indexing.contentQueue.IndexUpdateRunner;
 import com.intellij.util.indexing.dependencies.FileIndexingStampService;
 import com.intellij.util.indexing.dependencies.FileIndexingStampService.FileIndexingStamp;
-import com.intellij.util.indexing.dependencies.FileIndexingStampService.IndexingRequestToken;
+import com.intellij.util.indexing.dependencies.IndexingRequestToken;
 import com.intellij.util.indexing.diagnostic.BrokenIndexingDiagnostics;
 import com.intellij.util.indexing.diagnostic.IndexStatisticGroup;
 import com.intellij.util.indexing.diagnostic.StorageDiagnosticData;

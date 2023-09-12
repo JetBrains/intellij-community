@@ -28,7 +28,7 @@ import com.intellij.util.gist.GistManagerImpl;
 import com.intellij.util.indexing.FilesScanningTaskBase.IndexingProgressReporter.IndexingSubTaskProgressReporter;
 import com.intellij.util.indexing.PerProjectIndexingQueue.PerProviderSink;
 import com.intellij.util.indexing.dependencies.FileIndexingStampService;
-import com.intellij.util.indexing.dependencies.FileIndexingStampService.IndexingRequestToken;
+import com.intellij.util.indexing.dependencies.IndexingRequestToken;
 import com.intellij.util.indexing.dependenciesCache.DependenciesIndexedStatusService;
 import com.intellij.util.indexing.dependenciesCache.DependenciesIndexedStatusService.StatusMark;
 import com.intellij.util.indexing.diagnostic.*;

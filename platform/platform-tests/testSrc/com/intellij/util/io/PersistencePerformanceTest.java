@@ -15,7 +15,7 @@ import com.intellij.util.indexing.FileBasedIndexImpl;
 import com.intellij.util.indexing.UnindexedFilesUpdater;
 import com.intellij.util.indexing.contentQueue.IndexUpdateRunner;
 import com.intellij.util.indexing.dependencies.FileIndexingStampService;
-import com.intellij.util.indexing.dependencies.FileIndexingStampService.IndexingRequestToken;
+import com.intellij.util.indexing.dependencies.IndexingRequestToken;
 import com.intellij.util.indexing.diagnostic.ProjectDumbIndexingHistoryImpl;
 import org.jetbrains.annotations.NotNull;
 

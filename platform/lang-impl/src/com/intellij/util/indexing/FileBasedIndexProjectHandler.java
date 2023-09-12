@@ -7,7 +7,7 @@ import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.Processor;
 import com.intellij.util.indexing.dependencies.FileIndexingStampService;
-import com.intellij.util.indexing.dependencies.FileIndexingStampService.IndexingRequestToken;
+import com.intellij.util.indexing.dependencies.IndexingRequestToken;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 

@@ -10,7 +10,7 @@ import com.intellij.openapi.progress.util.PingProgress
 import com.intellij.openapi.progress.util.ProgressIndicatorUtils
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.util.indexing.dependencies.FileIndexingStampService.IndexingRequestToken
+import com.intellij.util.indexing.dependencies.IndexingRequestToken
 import com.intellij.util.indexing.diagnostic.IndexDiagnosticDumper
 import com.intellij.util.indexing.diagnostic.ProjectDumbIndexingHistoryImpl
 import com.intellij.util.indexing.roots.IndexableFilesIterator

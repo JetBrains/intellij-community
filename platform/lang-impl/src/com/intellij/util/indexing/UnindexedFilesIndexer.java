@@ -18,7 +18,7 @@ import com.intellij.util.SystemProperties;
 import com.intellij.util.gist.GistManager;
 import com.intellij.util.gist.GistManagerImpl;
 import com.intellij.util.indexing.contentQueue.IndexUpdateRunner;
-import com.intellij.util.indexing.dependencies.FileIndexingStampService.IndexingRequestToken;
+import com.intellij.util.indexing.dependencies.IndexingRequestToken;
 import com.intellij.util.indexing.diagnostic.IndexDiagnosticDumper;
 import com.intellij.util.indexing.diagnostic.ProjectDumbIndexingHistoryImpl;
 import com.intellij.util.indexing.roots.IndexableFilesIterator;

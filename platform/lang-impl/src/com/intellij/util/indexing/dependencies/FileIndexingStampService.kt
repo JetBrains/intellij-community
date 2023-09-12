@@ -52,14 +52,6 @@ class FileIndexingStampService @NonInjectable @VisibleForTesting constructor(sto
     val NULL_STAMP: FileIndexingStamp = FileIndexingStampImpl(NULL_INDEXING_STAMP)
   }
 
-  interface IndexingRequestToken {
-    /**
-     * Monotonically increasing number representing IndexingStamp
-     */
-    fun getFileIndexingStamp(file: VirtualFile): FileIndexingStamp
-    fun mergeWith(other: IndexingRequestToken): IndexingRequestToken
-  }
-
   interface FileIndexingStamp {
     /**
      * Number representing IndexingStamp. Do not compare this number to any other stamps except for equality.

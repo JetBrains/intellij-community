@@ -14,7 +14,7 @@ import com.intellij.openapi.vfs.VirtualFileFilter;
 import com.intellij.openapi.vfs.newvfs.impl.FakeVirtualFile;
 import com.intellij.testFramework.LightPlatformTestCase;
 import com.intellij.util.indexing.dependencies.FileIndexingStampService;
-import com.intellij.util.indexing.dependencies.FileIndexingStampService.IndexingRequestToken;
+import com.intellij.util.indexing.dependencies.IndexingRequestToken;
 import com.intellij.util.indexing.diagnostic.ScanningType;
 import com.intellij.util.indexing.roots.IndexableFilesIterator;
 import com.intellij.util.indexing.roots.kind.IndexableSetOrigin;
