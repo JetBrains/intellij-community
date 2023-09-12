@@ -4,14 +4,10 @@ package com.intellij.codeInsight.inline.completion
 import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.util.Key
-import com.intellij.util.application
-import com.intellij.util.concurrency.annotations.RequiresBlockingContext
 import org.jetbrains.annotations.ApiStatus
 
 @ApiStatus.Experimental
 class InlineCompletionContext internal constructor(val editor: Editor) {
-  private val prefixUpdater = PrefixUpdater()
-
   private val state = InlineState()
 
   val isCurrentlyDisplayingInlays: Boolean
@@ -24,42 +20,17 @@ class InlineCompletionContext internal constructor(val editor: Editor) {
     get() = state.lastElement?.offset
 
   val lineToInsert: String
-    get() = prefixUpdater.lineToInsert
+    get() = elements.joinToString("") { it.text }
 
   val elements: List<InlineCompletionElement>
-    get() = prefixUpdater.getElements()
+    get() = state.elements
 
   fun addElement(element: InlineCompletionElement) {
-    prefixUpdater.addElement(element)
     state.addElement(element)
   }
 
   fun clear() {
     state.clear()
-    prefixUpdater.clear()
-  }
-
-  @RequiresBlockingContext
-  fun appendPrefix(fragment: CharSequence, offset: Int): PrefixUpdateResult {
-    val prefixUpdateResult = prefixUpdater.appendPrefix(fragment)
-    if (prefixUpdateResult == PrefixUpdateResult.SUCCESS) {
-      // TODO this code should be in InlineCompletionHandler
-      application.invokeAndWait {
-        editor.inlayModel.execute(true) {
-          state.clear()
-          elements.forEach {
-            it.render(editor, lastOffset ?: offset)
-            state.addElement(it)
-          }
-        }
-      }
-    }
-    return prefixUpdateResult
-  }
-
-  enum class PrefixUpdateResult {
-    SUCCESS,
-    FAIL
   }
 
   companion object {
@@ -93,61 +64,5 @@ class InlineCompletionContext internal constructor(val editor: Editor) {
       ReplaceWith("InlineCompletionContext.getOrNull(this)"), DeprecationLevel.ERROR
     )
     fun Editor.getInlineCompletionContextOrNull(): InlineCompletionContext? = getOrNull(this)
-  }
-}
-
-private class PrefixUpdater {
-
-  private var typedPrefixLength = 0
-  private val elements = mutableListOf<InlineCompletionElement>()
-
-  private val fullText: String
-    get() = elements.joinToString("") { it.text }
-
-  val lineToInsert: String
-    get() = fullText.drop(typedPrefixLength)
-
-  fun getElements(): List<InlineCompletionElement> {
-    if (elements.isEmpty()) {
-      return emptyList()
-    }
-
-    var currentPrefixLength = typedPrefixLength
-    val currentElementIndex = elements.indexOfFirst {
-      currentPrefixLength -= it.text.length
-      currentPrefixLength < 0
-    }
-    val currentElement = elements[currentElementIndex]
-    currentPrefixLength += currentElement.text.length
-    return buildList {
-      add(InlineCompletionElement(currentElement.text.drop(currentPrefixLength)))
-      for (index in currentElementIndex + 1 until elements.size) {
-        add(elements[index])
-      }
-    }
-  }
-
-  fun addElement(element: InlineCompletionElement) {
-    elements += element
-  }
-
-  fun appendPrefix(fragment: CharSequence): InlineCompletionContext.PrefixUpdateResult {
-    return if (fragment.isNotEmpty() && lineToInsert.startsWith(fragment)) {
-      typedPrefixLength += fragment.length
-      if (typedPrefixLength >= fullText.length) {
-        InlineCompletionContext.PrefixUpdateResult.FAIL
-      }
-      else {
-        InlineCompletionContext.PrefixUpdateResult.SUCCESS
-      }
-    }
-    else {
-      InlineCompletionContext.PrefixUpdateResult.FAIL
-    }
-  }
-
-  fun clear() {
-    elements.clear()
-    typedPrefixLength = 0
   }
 }
