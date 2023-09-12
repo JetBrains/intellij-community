@@ -624,7 +624,6 @@ class Intf {
       dataContext = SimpleDataContext.getSimpleContext(CommonDataKeys.PSI_FILE, file, dataContext)
     }
     def result = AnActionEvent.createFromDataContext(ActionPlaces.UNKNOWN, null, dataContext)
-    SearchEverywhereMlContributorReplacementService.saveInitEvent(result);
     return result
   }
 

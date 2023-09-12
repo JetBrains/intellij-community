@@ -12,7 +12,6 @@ import com.intellij.openapi.application.Experiments
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.registry.Registry
-import com.intellij.testFramework.PlatformTestUtil
 import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase
 import com.intellij.util.Consumer
 import com.intellij.util.Processor
@@ -59,10 +58,10 @@ class SearchEverywhereTest extends LightJavaCodeInsightFixtureTestCase {
     def ui = createTestUI([ChooseByNameTest.createClassContributor(project, testRootDisposable)])
 
     def future = ui.findElementsForPattern("StrBuffer")
-    assert waitForFuture(future, SEARCH_TIMEOUT) == [strBuffer]
+    assert extractPsiElements(waitForFuture(future, SEARCH_TIMEOUT)) == [strBuffer]
 
     future = ui.findElementsForPattern("StringBuffer")
-    assert waitForFuture(future, SEARCH_TIMEOUT) == [stringBuffer]
+    assert extractPsiElements(waitForFuture(future, SEARCH_TIMEOUT)) == [stringBuffer]
   }
 
   void "test mixing classes and files"() {
@@ -78,15 +77,15 @@ class SearchEverywhereTest extends LightJavaCodeInsightFixtureTestCase {
     ])
 
     def future = ui.findElementsForPattern("TestClass")
-    assert waitForFuture(future, SEARCH_TIMEOUT) == [testClass, testFile, anotherTestClass]
+    assert extractPsiElements(waitForFuture(future, SEARCH_TIMEOUT)) == [testClass, testFile, anotherTestClass]
 
     future = ui.findElementsForPattern("testClass")
-    assert waitForFuture(future, SEARCH_TIMEOUT) == [testFile, testClass, anotherTestClass]
+    assert extractPsiElements(waitForFuture(future, SEARCH_TIMEOUT)) == [testFile, testClass, anotherTestClass]
 
     def testClass2 = myFixture.addClass("class testClass2{}")
 
     future = ui.findElementsForPattern("testClass")
-    assert waitForFuture(future, SEARCH_TIMEOUT) == [testClass2, testFile, testClass, anotherTestClass]
+    assert extractPsiElements(waitForFuture(future, SEARCH_TIMEOUT)) == [testClass2, testFile, testClass, anotherTestClass]
   }
 
   void "test mixing results from stub contributors"() {
@@ -125,12 +124,12 @@ class SearchEverywhereTest extends LightJavaCodeInsightFixtureTestCase {
       def future = ui.findElementsForPattern("bravocharlie")
       def matchedAction1 = GotoActionTest.createMatchedAction(project, action1, "bravocharlie")
       def matchedAction2 = GotoActionTest.createMatchedAction(project, action2, "bravocharlie")
-      assert waitForFuture(future, SEARCH_TIMEOUT) == [class1, matchedAction1, class2, matchedAction2]
+      assert extractPsiElements(waitForFuture(future, SEARCH_TIMEOUT)) == [class1, matchedAction1, class2, matchedAction2]
 
       future = ui.findElementsForPattern("bravo charlie")
       matchedAction1 = GotoActionTest.createMatchedAction(project, action1, "bravo charlie")
       matchedAction2 = GotoActionTest.createMatchedAction(project, action2, "bravo charlie")
-      assert waitForFuture(future, SEARCH_TIMEOUT) == [matchedAction1, class1, matchedAction2,  class2]
+      assert extractPsiElements(waitForFuture(future, SEARCH_TIMEOUT)) == [matchedAction1, class1, matchedAction2,  class2]
     }
     finally {
       actions.each {actionManager.unregisterAction(it.key)}
@@ -163,12 +162,12 @@ class SearchEverywhereTest extends LightJavaCodeInsightFixtureTestCase {
       def testElements = [action1, action2, matchedAction1, matchedAction2, class1, class2] as Set
 
       def future = ui.findElementsForPattern("bravo")
-      def bravoResult = PlatformTestUtil.waitForFuture(future, SEARCH_TIMEOUT)
+      def bravoResult = extractPsiElements(waitForFuture(future, SEARCH_TIMEOUT))
       assert bravoResult.findAll { it in testElements } == [class1, matchedAction1, class2, matchedAction2]
 
       abbreviationManager.register("bravo", "ia2")
       future = ui.findElementsForPattern("bravo")
-      bravoResult = PlatformTestUtil.waitForFuture(future, SEARCH_TIMEOUT)
+      bravoResult = extractPsiElements(waitForFuture(future, SEARCH_TIMEOUT))
       assert bravoResult.findAll { it in testElements } == [action2, class1, matchedAction1, class2]
     }
     finally {
@@ -242,6 +241,19 @@ class SearchEverywhereTest extends LightJavaCodeInsightFixtureTestCase {
     }
   }
 
+  static List<Object> extractPsiElements(List<Object> items) {
+    def res = []
+    for (item in items) {
+      if (item instanceof PsiItemWithSimilarity<?>) {
+        res.add(item.value)
+      }
+      else [
+        res.add(item)
+      ]
+    }
+    return res
+  }
+
   void "test search events topic"() {
     def contributor1 = new StubContributor("contributor1", 1)
     def contributor2 = new StubContributor("contributor2", 2)
@@ -264,6 +276,7 @@ class SearchEverywhereTest extends LightJavaCodeInsightFixtureTestCase {
   private SearchEverywhereUI createTestUI(List<SearchEverywhereContributor<Object>> contributorsList) {
     if (mySearchUI != null) Disposer.dispose(mySearchUI)
 
+    SearchEverywhereMlContributorReplacementService.saveInitEvent(ChooseByNameTest.createEvent(project))
     mySearchUI = new SearchEverywhereUI(project, contributorsList)
     def tab = contributorsList.size() > 1
       ? SearchEverywhereManagerImpl.ALL_CONTRIBUTORS_GROUP_ID

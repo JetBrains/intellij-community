@@ -1,11 +1,12 @@
 package com.intellij.searchEverywhereMl.typos
 
-import com.intellij.ide.actions.searcheverywhere.SearchEverywhereContributor
-import com.intellij.ide.actions.searcheverywhere.SearchEverywhereSpellCheckResult
-import com.intellij.ide.actions.searcheverywhere.SearchEverywhereSpellingCorrector
-import com.intellij.ide.actions.searcheverywhere.SearchEverywhereUI
+import com.intellij.ide.actions.searcheverywhere.*
+import com.intellij.openapi.actionSystem.ActionPlaces
+import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.PlatformDataKeys
+import com.intellij.openapi.actionSystem.impl.SimpleDataContext
 import com.intellij.openapi.progress.ProgressIndicator
+import com.intellij.openapi.project.Project
 import com.intellij.testFramework.LightPlatformTestCase
 import com.intellij.testFramework.PlatformTestUtil
 import com.intellij.util.Processor
@@ -15,6 +16,7 @@ import javax.swing.ListCellRenderer
 
 class SearchEverywhereTyposUITest : LightPlatformTestCase() {
   fun `test first actual search result gets preselected`() {
+    SearchEverywhereMlContributorReplacementService.saveInitEvent(createEvent(project))
     val searchEverywhereUI = SearchEverywhereUI(project,
                                                 listOf(MockSearchEverywhereContributor("Show Color Picker")),
                                                 { _ -> null},
@@ -55,4 +57,8 @@ private class MockSpellingCorrector : SearchEverywhereSpellingCorrector {
   override fun checkSpellingOf(query: String): SearchEverywhereSpellCheckResult {
     return SearchEverywhereSpellCheckResult.Correction("color", 1.0)
   }
+}
+
+internal fun createEvent(project: Project): AnActionEvent {
+  return AnActionEvent.createFromDataContext(ActionPlaces.UNKNOWN, null, SimpleDataContext.getProjectContext(project))
 }
