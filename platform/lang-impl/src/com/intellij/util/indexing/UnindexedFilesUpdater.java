@@ -78,7 +78,7 @@ public final class UnindexedFilesUpdater {
   }
 
   public void queue() {
-    IndexingRequestToken indexingRequest = ApplicationManager.getApplication().getService(FileIndexingStampService.class).getCurrentStamp();
+    IndexingRequestToken indexingRequest = ApplicationManager.getApplication().getService(FileIndexingStampService.class).getLatestIndexingRequestToken();
     new UnindexedFilesScanner(myProject, myStartSuspended, myOnProjectOpen, myPredefinedIndexableFilesIterators, myMark, myIndexingReason,
                               myScanningType, indexingRequest)
       .queue(myProject);

@@ -346,7 +346,7 @@ class UnindexedFilesScannerTest {
   private fun scanFiles(filesAndDirs: IndexableFilesIterator): Pair<ProjectScanningHistory, Map<IndexableFilesIterator, Collection<VirtualFile>>> {
     val scanningHistoryRef = Ref<ProjectScanningHistory>()
     val scanningTask = object : UnindexedFilesScanner(project, false, false, listOf(filesAndDirs), null, "Test", ScanningType.PARTIAL,
-                                                      application.service<FileIndexingStampService>().getCurrentStamp()) {
+                                                      application.service<FileIndexingStampService>().getLatestIndexingRequestToken()) {
       override fun performScanningAndIndexing(indicator: CheckCancelOnlyProgressIndicator,
                                               progressReporter: IndexingProgressReporter): ProjectScanningHistory {
         return super.performScanningAndIndexing(indicator, progressReporter).also(scanningHistoryRef::set)

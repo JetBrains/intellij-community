@@ -548,7 +548,7 @@ public class UnindexedFilesScanner extends FilesScanningTaskBase {
                                                   @Nullable @NonNls String indexingReason) {
     FileBasedIndex.getInstance().loadIndexes();
     project.putUserData(FIRST_SCANNING_REQUESTED, true);
-    IndexingRequestToken indexingRequest = ApplicationManager.getApplication().getService(FileIndexingStampService.class).getCurrentStamp();
+    IndexingRequestToken indexingRequest = ApplicationManager.getApplication().getService(FileIndexingStampService.class).getLatestIndexingRequestToken();
     if (TestModeFlags.is(INDEX_PROJECT_WITH_MANY_UPDATERS_TEST_KEY)) {
       LOG.assertTrue(ApplicationManager.getApplication().isUnitTestMode());
       List<IndexableFilesIterator> iterators = collectProviders(project, (FileBasedIndexImpl)FileBasedIndex.getInstance()).getFirst();

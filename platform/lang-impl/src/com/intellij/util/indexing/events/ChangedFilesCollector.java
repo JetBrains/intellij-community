@@ -231,7 +231,7 @@ public final class ChangedFilesCollector extends IndexedFilesListener {
   public void processFilesToUpdateInReadAction() {
     processFilesInReadAction(new VfsEventsMerger.VfsEventProcessor() {
       private final IndexingRequestToken indexingRequest =
-        ApplicationManager.getApplication().getService(FileIndexingStampService.class).getCurrentStamp();
+        ApplicationManager.getApplication().getService(FileIndexingStampService.class).getLatestIndexingRequestToken();
       private final StubIndexImpl.FileUpdateProcessor perFileElementTypeUpdateProcessor =
         ((StubIndexImpl)StubIndex.getInstance()).getPerFileElementTypeModificationTrackerUpdateProcessor();
       @Override

@@ -289,7 +289,7 @@ class DumbServiceImplTest {
         try {
           ProgressIndicatorUtils.withTimeout(20_000) {
             val index = FileBasedIndex.getInstance() as FileBasedIndexImpl
-            IndexUpdateRunner(index, application.service<FileIndexingStampService>().getCurrentStamp(), 1)
+            IndexUpdateRunner(index, application.service<FileIndexingStampService>().getLatestIndexingRequestToken(), 1)
               .indexFiles(project, listOf(IndexUpdateRunner.FileSet(project, "child", listOf(child))),
                           indicator,
                           ProjectDumbIndexingHistoryImpl(project))

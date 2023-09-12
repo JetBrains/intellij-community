@@ -140,7 +140,7 @@ class FileIndexingStampService @NonInjectable @VisibleForTesting constructor(sto
     }
   }
 
-  fun getCurrentStamp(): IndexingRequestToken {
+  fun getLatestIndexingRequestToken(): IndexingRequestToken {
     return current.get()
   }
 

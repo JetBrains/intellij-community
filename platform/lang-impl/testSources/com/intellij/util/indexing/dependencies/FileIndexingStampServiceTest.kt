@@ -72,9 +72,9 @@ class FileIndexingStampServiceTest {
   fun `test invalidateAllStamps`() {
     val file = nonExistingFile()
     val inst = newFileIndexingStampService(file)
-    val oldStamp = inst.getCurrentStamp()
+    val oldStamp = inst.getLatestIndexingRequestToken()
     inst.invalidateAllStamps()
-    val newStamp = inst.getCurrentStamp()
+    val newStamp = inst.getLatestIndexingRequestToken()
 
     assertNotEquals(oldStamp, newStamp)
   }
@@ -85,10 +85,10 @@ class FileIndexingStampServiceTest {
     val inst1 = newFileIndexingStampService(file)
 
     inst1.invalidateAllStamps() // make some non-default sate
-    val oldStamp = inst1.getCurrentStamp()
+    val oldStamp = inst1.getLatestIndexingRequestToken()
 
     val inst2 = newFileIndexingStampService(file)
-    val newStamp = inst2.getCurrentStamp()
+    val newStamp = inst2.getLatestIndexingRequestToken()
 
     assertEquals(oldStamp, newStamp)
   }

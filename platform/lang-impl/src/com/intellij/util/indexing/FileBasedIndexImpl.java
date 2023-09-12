@@ -1686,7 +1686,7 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
     @Override
     void doProcess(VirtualFile item, Project project) {
       // snapshot at the beginning: if file changes while being processed, we can detect this on the following scanning
-      IndexingRequestToken indexingRequest = ApplicationManager.getApplication().getService(FileIndexingStampService.class).getCurrentStamp();
+      IndexingRequestToken indexingRequest = ApplicationManager.getApplication().getService(FileIndexingStampService.class).getLatestIndexingRequestToken();
       var stamp = indexingRequest.getFileIndexingStamp(item);
       processRefreshedFile(project, new CachedFileContent(item), stamp);
     }

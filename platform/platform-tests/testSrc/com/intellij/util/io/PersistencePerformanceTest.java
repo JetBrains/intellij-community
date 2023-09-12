@@ -109,7 +109,7 @@ public class PersistencePerformanceTest extends BasePlatformTestCase {
     while (ContainerUtil.exists(futures, future -> !future.isDone())) {
       Thread.sleep(100);
       IndexingRequestToken indexingRequest =
-        ApplicationManager.getApplication().getService(FileIndexingStampService.class).getCurrentStamp();
+        ApplicationManager.getApplication().getService(FileIndexingStampService.class).getLatestIndexingRequestToken();
       new IndexUpdateRunner(index, indexingRequest, UnindexedFilesUpdater.getNumberOfIndexingThreads())
         .indexFiles(getProject(), Collections.singletonList(new IndexUpdateRunner.FileSet(getProject(), "test files", files)),
                     new EmptyProgressIndicator(), new ProjectDumbIndexingHistoryImpl(getProject()));
