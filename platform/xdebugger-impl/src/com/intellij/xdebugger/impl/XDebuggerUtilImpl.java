@@ -412,11 +412,15 @@ public class XDebuggerUtilImpl extends XDebuggerUtil {
     return WriteAction.compute(() -> breakpointManager.addLineBreakpoint(type, file.getUrl(), line, properties, temporary));
   }
 
-  public static void removeBreakpointWithConfirmation(final XBreakpointBase<?, ?, ?> breakpoint) {
-    removeBreakpointWithConfirmation(breakpoint.getProject(), breakpoint);
+  public static boolean removeBreakpointWithConfirmation(final XBreakpointBase<?, ?, ?> breakpoint) {
+    return removeBreakpointWithConfirmation(breakpoint.getProject(), breakpoint);
   }
 
-  public static void removeBreakpointWithConfirmation(final Project project, final XBreakpoint<?> breakpoint) {
+  /**
+   * Remove breakpoint. Show confirmation dialog if breakpoint has non-empty condition or log expression.
+   * Returns whether breakpoint was really deleted.
+   */
+  public static boolean removeBreakpointWithConfirmation(final Project project, final XBreakpoint<?> breakpoint) {
     if ((!isEmptyExpression(breakpoint.getConditionExpression()) || !isEmptyExpression(breakpoint.getLogExpressionObject())) &&
         !ApplicationManager.getApplication().isHeadlessEnvironment() &&
         !ApplicationManager.getApplication().isUnitTestMode() &&
@@ -451,12 +455,13 @@ public class XDebuggerUtilImpl extends XDebuggerUtil {
                                           }
                                         }
                                       }) != Messages.OK) {
-        return;
+        return false;
       }
     }
     ((XBreakpointManagerImpl)XDebuggerManager.getInstance(project).getBreakpointManager())
       .rememberRemovedBreakpoint((XBreakpointBase)breakpoint);
     getInstance().removeBreakpoint(project, breakpoint);
+    return true;
   }
 
   @Override

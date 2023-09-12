@@ -687,6 +687,7 @@ public final class XBreakpointManagerImpl implements XBreakpointManager {
 
   @Nullable
   public XBreakpoint restoreLastRemovedBreakpoint() {
+    // FIXME[inline-bp]: support multiple breakpoints here
     if (myLastRemovedBreakpoint != null) {
       XBreakpoint breakpoint = myLastRemovedBreakpoint.restore();
       myLastRemovedBreakpoint = null;

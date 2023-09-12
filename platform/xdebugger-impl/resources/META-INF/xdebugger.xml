@@ -124,6 +124,8 @@
 
     <applicationService serviceInterface="com.intellij.xdebugger.attach.XAttachRecentItemsMatcher"
                         serviceImplementation="com.intellij.xdebugger.impl.actions.DefaultAttachRecentItemsMatcher"/>
+
+    <gutterMarkPreprocessor implementation="com.intellij.xdebugger.impl.breakpoints.XBreakpointBase$BreakpointGutterIconMerge"/>
   </extensions>
 
   <actions>

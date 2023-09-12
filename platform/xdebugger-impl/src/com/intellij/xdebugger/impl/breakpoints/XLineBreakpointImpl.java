@@ -546,9 +546,38 @@ public final class XLineBreakpointImpl<P extends XBreakpointProperties> extends 
       GraphicsUtil.paintWithAlpha(g, alpha, () -> scaledIcon.paintIcon(component, g, x, y));
     }
 
+    private enum ClickAction {
+      SET, ENABLE_DISABLE, REMOVE
+    }
+
     @Override
     public void mouseClicked(@NotNull MouseEvent event, @NotNull Point translated) {
       event.consume();
+
+      var button = event.getButton();
+      ClickAction action = null;
+      if (breakpoint != null) {
+        // mimic gutter icon
+        if (button == MouseEvent.BUTTON1) {
+          action = Registry.is("debugger.click.disable.breakpoints")
+                   ? ClickAction.ENABLE_DISABLE
+                   : ClickAction.REMOVE;
+        }
+        else if (button == MouseEvent.BUTTON2) {
+          action = !Registry.is("debugger.click.disable.breakpoints")
+                   ? ClickAction.ENABLE_DISABLE
+                   : ClickAction.REMOVE;
+        }
+      }
+      else if (button == MouseEvent.BUTTON1) {
+        action = ClickAction.SET;
+      }
+
+      if (action == null) {
+        return;
+      }
+      // FIXME[inline-bp]: what about removal by drag and drop?
+
       var editor = inlay.getEditor();
       var project = editor.getProject();
       assert project != null; // FIXME[inline-bp]: replace by if?
@@ -557,27 +586,28 @@ public final class XLineBreakpointImpl<P extends XBreakpointProperties> extends 
       var offset = inlay.getOffset();
       var position = XSourcePositionImpl.createByOffset(file, offset);
       var canRemove = breakpoint != null; // FIXME[inline-bp]: reconsider, I'm not sure
-      if (Registry.is("debugger.click.disable.breakpoints")) {
-        // FIXME[inline-bp]: what about me?
-      }
-      var togglingPromise = XBreakpointUtil.toggleLineBreakpoint(project, position, editor, false, false, canRemove);
-      // FIXME[inline-bp]: do we really need to get all this information above here or can we just capture outer breakpoint object?
 
-      // FIXME[inline-bp]: it's a dirty hack to render inlay as "hovered" just after we clicked on set breakpoint
-      //       The problem is that after breakpoint removal we currently recreate all inlays and new ones would not be "hovered".
-      //       So we manually propogate this property to future inlay at the same position.
-      //       Otherwise there will be flickering:
-      //       transparent -> (move mouse) -> hovered -> (click) -> set -> (click) -> transparent -> (move mouse 1px) -> hovered
-      //                                                                              ^^^^^^^^^^^ this is bad
-      //       One day we would keep old inlays and this hack would gone.
-      if (breakpoint != null) {
-        togglingPromise.onSuccess(b -> {
-          if (b == null) { // some breakpoint was really deleted
+      switch (action) {
+        case SET -> {
+          XBreakpointUtil.toggleLineBreakpoint(project, position, editor, false, false, false);
+        }
+        case ENABLE_DISABLE -> {
+          breakpoint.setEnabled(!breakpoint.isEnabled());
+        }
+        case REMOVE -> {
+          if (XDebuggerUtilImpl.removeBreakpointWithConfirmation(breakpoint)) {
+            // FIXME[inline-bp]: it's a dirty hack to render inlay as "hovered" just after we clicked on set breakpoint
+            //       The problem is that after breakpoint removal we currently recreate all inlays and new ones would not be "hovered".
+            //       So we manually propogate this property to future inlay at the same position.
+            //       Otherwise there will be flickering:
+            //       transparent -> (move mouse) -> hovered -> (click) -> set -> (click) -> transparent -> (move mouse 1px) -> hovered
+            //                                                                              ^^^^^^^^^^^ this is bad
+            //       One day we would keep old inlays and this hack would gone.
             for (var newInlay : editor.getInlayModel().getInlineElementsInRange(offset, offset, InlineBreakpointInlayRenderer.class)) {
               newInlay.getRenderer().hovered = true;
             }
           }
-        });
+        }
       }
     }
 
