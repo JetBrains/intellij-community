@@ -43,7 +43,7 @@ envs {
   String python39version = "3.9.13"
   String python310version = "3.10.8"
   String python311version = "3.11.0"
-  String python312version = "3.12.0b3"
+  String python312version = "3.12.0rc2"
 
   bootstrapDirectory = new File(System.getenv().getOrDefault("PYCHARM_PYTHONS", new File(buildDir, 'pythons').path))
   envsDirectory = new File(System.getenv().getOrDefault("PYCHARM_PYTHON_VIRTUAL_ENVS", new File(buildDir, 'envs').path))
@@ -182,13 +182,10 @@ envs {
                "python3.11\nblack",
                true)
 
-  if (isWindows) { //There is no py312 in pyenv
-    createPython("python3.12",
-                 python312version,
-                 [],
-                 "python3\npython3.12")
-  }
-
+  createPython("python3.12",
+               python312version,
+               [],
+               "python3\npython3.12")
 
   createPython("py27",
                python27version,
