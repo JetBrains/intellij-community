@@ -76,7 +76,20 @@ public final class InheritanceUtil {
         (isJavaClass(class2) && !isJavaClass(class1))) {
       // Assume that it could be faster to search inheritors from non-functional interface or from class with a longer simple name
       // Also prefer searching inheritors from Java class over other JVM languages as Java is usually faster
-      return doSearch(class2, class1, avoidExpensiveProcessing, scope);
+      PsiClass tmp = class1;
+      class1 = class2;
+      class2 = tmp;
+    }
+    if (DeclarationSearchUtils.isTooExpensiveToSearch(class1, false)) {
+      if (!DeclarationSearchUtils.isTooExpensiveToSearch(class2, false)) {
+        PsiClass tmp = class1;
+        class1 = class2;
+        class2 = tmp;
+      }
+      else if (avoidExpensiveProcessing) {
+        // class inheritor search is too expensive on common names
+        return ThreeState.UNSURE;
+      }
     }
     return doSearch(class1, class2, avoidExpensiveProcessing, scope);
   }
@@ -86,10 +99,6 @@ public final class InheritanceUtil {
   }
 
   private static ThreeState doSearch(PsiClass class1, PsiClass class2, boolean avoidExpensiveProcessing, SearchScope scope) {
-    if (avoidExpensiveProcessing && DeclarationSearchUtils.isTooExpensiveToSearch(class1, false)) {
-      // class inheritor search is expensive on common names
-      return ThreeState.UNSURE;
-    }
     final Query<PsiClass> search = ClassInheritorsSearch.search(class1, scope, true);
     var processor = new Processor<PsiClass>() {
       ThreeState result = ThreeState.NO;
