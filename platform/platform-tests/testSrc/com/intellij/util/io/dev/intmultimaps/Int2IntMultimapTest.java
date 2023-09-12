@@ -1,7 +1,6 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.openapi.vfs.newvfs.persistent.dev;
+package com.intellij.util.io.dev.intmultimaps;
 
-import com.intellij.util.io.dev.intmultimaps.Int2IntMultimap;
 import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
 import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
 import it.unimi.dsi.fastutil.ints.IntOpenHashSet;
@@ -16,9 +15,6 @@ import java.util.concurrent.ThreadLocalRandom;
 
 import static org.junit.Assert.*;
 
-/**
- *
- */
 public class Int2IntMultimapTest {
 
   public static final int ENOUGH_ENTRIES = 100_000;

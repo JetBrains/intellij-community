@@ -1,10 +1,9 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.openapi.vfs.newvfs.persistent.dev.enumerator;
+package com.intellij.util.io.dev.intmultimaps;
 
 import static com.intellij.util.io.dev.intmultimaps.DurableIntToMultiIntMap.NO_VALUE;
 import static org.junit.jupiter.api.Assertions.*;
 
-import com.intellij.util.io.dev.intmultimaps.DurableIntToMultiIntMap;
 import it.unimi.dsi.fastutil.ints.IntOpenHashSet;
 import org.jetbrains.annotations.NotNull;
 import org.junit.jupiter.api.*;
@@ -41,7 +40,7 @@ public abstract class IntToMultiIntMapTestBase<M extends DurableIntToMultiIntMap
   protected abstract M create(@NotNull Path tempDir) throws IOException;
 
   @Test
-  void ZERO_IS_PROHIBITED_KEY() throws IOException {
+  public void ZERO_IS_PROHIBITED_KEY() throws IOException {
     assertThrows(IllegalArgumentException.class,
                  () -> multimap.put(NO_VALUE, 1),
                  "Can't use key=0: 0 is reserved value (NO_VALUE)"
@@ -49,7 +48,7 @@ public abstract class IntToMultiIntMapTestBase<M extends DurableIntToMultiIntMap
   }
 
   @Test
-  void ZERO_IS_PROHIBITED_VALUE() throws IOException {
+  public void ZERO_IS_PROHIBITED_VALUE() throws IOException {
     assertThrows(IllegalArgumentException.class,
                  () -> multimap.put(1, 0),
                  "Can't use value=0: 0 is reserved value (NO_VALUE)"
@@ -57,7 +56,7 @@ public abstract class IntToMultiIntMapTestBase<M extends DurableIntToMultiIntMap
   }
 
   @Test
-  void manyKeyValuesPut_AreAllExistInTheMap() throws IOException {
+  public void manyKeyValuesPut_AreAllExistInTheMap() throws IOException {
     long[] packedKeysValues = generateUniqueKeyValues(entriesCountToTest);
 
     for (int i = 0; i < packedKeysValues.length; i++) {
@@ -81,7 +80,7 @@ public abstract class IntToMultiIntMapTestBase<M extends DurableIntToMultiIntMap
   }
 
   @Test
-  void manyKeyValuesInserted_AreAllExistInTheMap() throws IOException {
+  public void manyKeyValuesInserted_AreAllExistInTheMap() throws IOException {
     long[] packedKeysValues = generateUniqueKeyValues(entriesCountToTest);
 
     for (int i = 0; i < packedKeysValues.length; i++) {
@@ -102,7 +101,7 @@ public abstract class IntToMultiIntMapTestBase<M extends DurableIntToMultiIntMap
   }
 
   @Test
-  void singleKeyTo2ValuesMapping_CouldBeReadBack() throws IOException {
+  public void singleKeyTo2ValuesMapping_CouldBeReadBack() throws IOException {
     multimap.put(1, 2);
     multimap.put(1, 3);
 
@@ -118,7 +117,7 @@ public abstract class IntToMultiIntMapTestBase<M extends DurableIntToMultiIntMap
 
 
   @Test
-  void withManyKeyValuesPut_SizeIsCountOfTruthReturned() throws IOException {
+  public void withManyKeyValuesPut_SizeIsCountOfTruthReturned() throws IOException {
     long[] packedKeysValues = generateUniqueKeyValues(entriesCountToTest);
 
     int entriesPut = 0;
@@ -139,7 +138,7 @@ public abstract class IntToMultiIntMapTestBase<M extends DurableIntToMultiIntMap
   }
 
   @Test
-  void putReturnTrue_IfKeyValueNotInTheMap() throws IOException {
+  public void putReturnTrue_IfKeyValueNotInTheMap() throws IOException {
     long[] packedKeysValues = generateUniqueKeyValues(entriesCountToTest);
 
     for (int i = 0; i < packedKeysValues.length; i++) {

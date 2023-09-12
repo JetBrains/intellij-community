@@ -1,7 +1,6 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.openapi.vfs.newvfs.persistent.dev.enumerator;
+package com.intellij.util.io.dev.intmultimaps;
 
-import com.intellij.util.io.dev.intmultimaps.NonDurableNonParallelIntToMultiIntMap;
 import org.jetbrains.annotations.NotNull;
 import org.junit.AssumptionViolatedException;
 
@@ -16,12 +15,12 @@ public class NonParallelNonPersistentInToMultiIntMapTest extends IntToMultiIntMa
   }
 
   @Override
-  void ZERO_IS_PROHIBITED_KEY() throws IOException {
+  public void ZERO_IS_PROHIBITED_KEY() throws IOException {
     throw new AssumptionViolatedException("NonDurableNonParallelIntToMultiIntMap is implemented it differently");
   }
 
   @Override
-  void ZERO_IS_PROHIBITED_VALUE() throws IOException {
+  public void ZERO_IS_PROHIBITED_VALUE() throws IOException {
     throw new AssumptionViolatedException("NonDurableNonParallelIntToMultiIntMap is implemented it differently");
   }
 }
