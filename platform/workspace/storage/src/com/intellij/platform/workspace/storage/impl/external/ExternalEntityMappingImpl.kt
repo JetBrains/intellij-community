@@ -110,7 +110,9 @@ internal class MutableExternalEntityMappingImpl<T> private constructor(
     startWrite()
     LOG.trace { "Remove $id from external index" }
     val removed = index.remove(id)
-    indexLogBunches.add(id, IndexLogRecord.Remove(id))
+    if (removed != null) {
+      indexLogBunches.add(id, IndexLogRecord.Remove(id))
+    }
     return removed
   }
 

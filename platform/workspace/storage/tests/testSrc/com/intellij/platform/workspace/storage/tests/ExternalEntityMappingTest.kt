@@ -10,6 +10,7 @@ import com.intellij.platform.workspace.storage.testEntities.entities.SampleEntit
 import com.intellij.platform.workspace.storage.testEntities.entities.SampleEntitySource
 import com.intellij.platform.workspace.storage.testEntities.entities.SourceEntity
 import com.intellij.platform.workspace.storage.testEntities.entities.modifyEntity
+import com.intellij.platform.workspace.storage.toBuilder
 import com.intellij.testFramework.UsefulTestCase.assertEmpty
 import org.junit.jupiter.api.Assertions
 import org.junit.jupiter.api.Test
@@ -572,5 +573,24 @@ class ExternalEntityMappingTest {
       .chain
       .single() as MutableExternalEntityMappingImpl.IndexLogOperation.Changes)
       .changes.values.single() as MutableExternalEntityMappingImpl.IndexLogRecord.Add<*>).data)
+  }
+
+  @Test
+  fun `index log don't have removed entity that was not commited`() {
+    val initialBuilder = createEmptyBuilder()
+    val foo = initialBuilder addEntity SampleEntity(false, "foo", ArrayList(), HashMap(),
+                                                    VirtualFileUrlManagerImpl().fromUrl("file:///tmp"), SampleEntitySource("test"))
+    initialBuilder.getMutableExternalMapping<Int>(INDEX_ID).addMapping(foo, 1)
+
+    val newBuilder = initialBuilder.toSnapshot().toBuilder()
+    val addedEntity = newBuilder addEntity SampleEntity(false, "foo", ArrayList(), HashMap(),
+                                                    VirtualFileUrlManagerImpl().fromUrl("file:///tmp"), SampleEntitySource("test"))
+    newBuilder.removeEntity(addedEntity)
+
+    assertEquals(0, (newBuilder.getMutableExternalMapping<Int>(INDEX_ID) as MutableExternalEntityMappingImpl)
+      .indexLogBunches
+      .chain
+      .size
+    )
   }
 }
