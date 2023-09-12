@@ -32,6 +32,19 @@ public class InstanceofIncompatibleInterfaceInspectionTest extends LightJavaInsp
            """);
   }
 
+  public void testNoWarnOnAssertion() {
+    doTest("""
+      interface Cat {}
+      class Dog {
+        Dog() {
+          if (this instanceof Cat) {
+            throw new IllegalStateException("a dog should never be a cat!");
+          }
+        }
+      }
+      """);
+  }
+
   public void testClasses() {
     doTest("""
              class Foo { }

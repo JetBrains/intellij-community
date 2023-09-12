@@ -15,6 +15,7 @@
  */
 package com.siyeh.ig.bugs;
 
+import com.intellij.codeInspection.dataFlow.DfaPsiUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.util.ThreeState;
@@ -55,6 +56,9 @@ public class InstanceofIncompatibleInterfaceInspection extends BaseInspection {
       final PsiExpression operand = expression.getOperand();
       final PsiType operandType = operand.getType();
       if (!(operandType instanceof PsiClassType operandClassType)) {
+        return;
+      }
+      if (DfaPsiUtil.isAssertionEffectively(expression, false)) {
         return;
       }
       if (!TypeConversionUtil.areTypesConvertible(operandClassType, checkType)) {
