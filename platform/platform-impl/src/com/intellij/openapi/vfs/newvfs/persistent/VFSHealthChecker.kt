@@ -407,20 +407,20 @@ class VFSHealthChecker(private val impl: FSRecordsImpl,
     val namesEnumerator = impl.connection().names
     val report = VFSHealthCheckReport.NamesEnumeratorReport()
     try {
-      namesEnumerator.processAllDataObjects { name ->
+      namesEnumerator.forEach{ id, name ->
         try {
           report.namesChecked++
           val nameId = namesEnumerator.tryEnumerate(name)
           if (nameId == DataEnumeratorEx.NULL_ID) {
             report.namesResolvedToNull++.alsoLogThrottled(
               "name[$name] enumerated to NULL -> namesEnumerator is corrupted")
-            return@processAllDataObjects true
+            return@forEach true
           }
           val nameResolved = namesEnumerator.valueOf(nameId)
           if (nameResolved == null) {
             report.idsResolvedToNull++.alsoLogThrottled(
               "name[$name]: enumerated to nameId(=$nameId), resolved back to null -> namesEnumerator is corrupted")
-            return@processAllDataObjects true
+            return@forEach true
           }
           if (name != nameResolved) {
             report.inconsistentNames++.alsoLogThrottled(
@@ -431,7 +431,7 @@ class VFSHealthChecker(private val impl: FSRecordsImpl,
         catch (e: Throwable) {
           report.generalErrors++.alsoLogThrottled("name[$name]: exception while checking -> namesEnumerator is corrupted: ${e.message}")
         }
-        return@processAllDataObjects true
+        return@forEach true
       }
     }
     catch (e: Throwable) {
@@ -446,13 +446,10 @@ class VFSHealthChecker(private val impl: FSRecordsImpl,
     val connection = impl.connection()
     val contentHashesEnumerator = connection.contentHashesEnumerator
     val contentsStorage = connection.contents
-    val largestContentId = contentHashesEnumerator.largestId
-
-    for (contentId in (DataEnumeratorEx.NULL_ID + 1)..largestContentId) {
-      val contentHash = contentHashesEnumerator.valueOf(contentId)
+    contentHashesEnumerator.forEach{ contentId, contentHash ->
       if (contentHash == null) {
         report.generalErrors++.alsoLogThrottled(
-          "contentId[#$contentId]: id is absent in contentHashes -> contentHashEnumerator is corrupted?")
+          "contentId[#$contentId]: contentHash is absent in contentHashes -> contentHashEnumerator is corrupted?")
       }
       try {
         contentsStorage.readStream(contentId).use { stream -> stream.readAllBytes() }
@@ -463,7 +460,9 @@ class VFSHealthChecker(private val impl: FSRecordsImpl,
           "contentId[#$contentId]: present in contentHashesEnumerator, but can't be read from content storage: ${e.message}")
       }
       report.contentRecordsChecked = contentId
+      return@forEach true
     }
+
     return report
   }
 

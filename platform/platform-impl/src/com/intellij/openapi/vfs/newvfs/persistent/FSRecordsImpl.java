@@ -813,7 +813,7 @@ public final class FSRecordsImpl {
   boolean processAllNames(@NotNull Processor<? super CharSequence> processor) {
     try {
       checkNotDisposed();
-      return connection.getNames().processAllDataObjects(processor);
+      return connection.getNames().forEach((nameId, name) -> processor.process(name));
     }
     catch (IOException e) {
       throw handleError(e);
