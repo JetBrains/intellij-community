@@ -611,7 +611,7 @@ final class JvmClassAnalyzer {
         @Override
         public void visitInvokeDynamicInsn(String methodName, String desc, Handle bsm, Object... bsmArgs) {
           final Type returnType = Type.getReturnType(desc);
-          addClassUsage(TypeRepr.getType(returnType));
+          Iterators.collect(TypeRepr.getType(returnType).getUsages(), myUsages);
 
           // common args processing
           for (Object arg : bsmArgs) {
@@ -619,12 +619,12 @@ final class JvmClassAnalyzer {
               final Type type = (Type)arg;
               if (type.getSort() == Type.METHOD) {
                 for (Type argType : type.getArgumentTypes()) {
-                  addClassUsage(TypeRepr.getType(argType));
+                  Iterators.collect(TypeRepr.getType(argType).getUsages(), myUsages);
                 }
-                addClassUsage(TypeRepr.getType(type.getReturnType()));
+                Iterators.collect(TypeRepr.getType(type.getReturnType()).getUsages(), myUsages);
               }
               else {
-                addClassUsage(TypeRepr.getType(type));
+                Iterators.collect(TypeRepr.getType(type).getUsages(), myUsages);
               }
             }
             else if (arg instanceof Handle) {
@@ -678,7 +678,7 @@ final class JvmClassAnalyzer {
             myUsages.add(new FieldAssignUsage(owner, fName, desc));
           }
           if (opcode == Opcodes.GETFIELD || opcode == Opcodes.GETSTATIC) {
-            addClassUsage(TypeRepr.getType(desc));
+            Iterators.collect(TypeRepr.getType(desc).getUsages(), myUsages);
           }
           myUsages.add(new FieldUsage(owner, fName, desc));
         }
@@ -687,27 +687,11 @@ final class JvmClassAnalyzer {
           //myUsages.add(UsageRepr.createMetaMethodUsage(myContext, methodName, methodOwner));
           if (desc != null) {
             myUsages.add(new MethodUsage(owner, name, desc));
-            addClassUsage(TypeRepr.getType(Type.getReturnType(desc)));
+            Iterators.collect(TypeRepr.getType(Type.getReturnType(desc)).getUsages(), myUsages);
           }
           else {
             // todo: verify for which methods null descriptor is passed
             myUsages.add(new MethodUsage(owner, name, ""));
-          }
-        }
-
-        private void addClassUsage(final TypeRepr type) {
-          TypeRepr.ClassType classType = null;
-          if (type instanceof TypeRepr.ClassType) {
-            classType = (TypeRepr.ClassType)type;
-          }
-          else if (type instanceof TypeRepr.ArrayType) {
-            final TypeRepr elemType = ((TypeRepr.ArrayType)type).getDeepElementType();
-            if (elemType instanceof TypeRepr.ClassType) {
-              classType = (TypeRepr.ClassType)elemType;
-            }
-          }
-          if (classType != null) {
-            myUsages.add(new ClassUsage(classType.getJvmName()));
           }
         }
 
