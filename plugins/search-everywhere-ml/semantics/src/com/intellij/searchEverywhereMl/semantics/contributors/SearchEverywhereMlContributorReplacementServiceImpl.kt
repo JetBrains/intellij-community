@@ -1,9 +1,6 @@
 package com.intellij.searchEverywhereMl.semantics.contributors
 
 import com.intellij.ide.actions.searcheverywhere.*
-import com.intellij.openapi.actionSystem.ActionPlaces
-import com.intellij.openapi.actionSystem.AnActionEvent
-import com.intellij.openapi.actionSystem.DataContext
 import com.intellij.openapi.util.Disposer
 import com.intellij.searchEverywhereMl.SemanticSearchEverywhereContributor
 import org.jetbrains.annotations.ApiStatus
@@ -12,8 +9,7 @@ import org.jetbrains.annotations.ApiStatus
 class SearchEverywhereMlContributorReplacementServiceImpl : SearchEverywhereMlContributorReplacementService {
   override fun replaceInSeparateTab(contributor: SearchEverywhereContributor<*>): SearchEverywhereContributor<*> {
     if (contributor is SemanticSearchEverywhereContributor) return contributor
-    val initEvent = SearchEverywhereMlContributorReplacementService.initEvent ?:
-      AnActionEvent.createFromDataContext(ActionPlaces.UNKNOWN, null, DataContext.EMPTY_CONTEXT)
+    val initEvent = SearchEverywhereMlContributorReplacementService.initEvent!!
     return when (contributor.searchProviderId) {
       ActionSearchEverywhereContributor::class.java.simpleName ->
         configureContributor(SemanticActionSearchEverywhereContributor(contributor as ActionSearchEverywhereContributor), contributor)
