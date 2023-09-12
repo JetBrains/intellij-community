@@ -149,9 +149,6 @@ object CommunityLibraryLicenses {
       .apache("https://gitbox.apache.org/repos/asf?p=commons-cli.git;a=blob_plain;f=LICENSE.txt;hb=HEAD"),
     LibraryLicense(name = "Apache Commons Codec", libraryName = "commons-codec", url = "https://commons.apache.org/proper/commons-codec/")
       .apache("https://github.com/apache/commons-codec/blob/master/LICENSE.txt"),
-    LibraryLicense(name = "Apache Commons Collections", libraryName = "commons-collections",
-                   url = "https://commons.apache.org/proper/commons-collections/")
-      .apache("https://gitbox.apache.org/repos/asf?p=commons-collections.git;a=blob_plain;f=LICENSE.txt;hb=HEAD"),
     LibraryLicense(name = "Apache Commons Compress", libraryName = "commons-compress",
                    url = "https://commons.apache.org/proper/commons-compress/")
       .apache("https://gitbox.apache.org/repos/asf?p=commons-compress.git;a=blob_plain;f=LICENSE.txt;hb=HEAD"),
