@@ -1,0 +1,20 @@
+test.java.file
+  METHOD_REF_EXPRESSION
+    REFERENCE_EXPRESSION
+      REFERENCE_EXPRESSION
+        REFERENCE_EXPRESSION
+          REFERENCE_PARAMETER_LIST
+            <empty list>
+          IDENTIFIER
+        DOT
+        REFERENCE_PARAMETER_LIST
+          <empty list>
+        IDENTIFIER
+      DOT
+      REFERENCE_PARAMETER_LIST
+        <empty list>
+      IDENTIFIER
+    DOUBLE_COLON
+    REFERENCE_PARAMETER_LIST
+      <empty list>
+    IDENTIFIER

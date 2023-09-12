@@ -15,12 +15,10 @@
  */
 package com.intellij.java.parser.statementParsing;
 
-import com.intellij.java.parser.JavaParsingTestCase;
+import com.intellij.java.parser.JavaParsingTestConfigurator;
 
-public class AssignmentParsingTest extends JavaParsingTestCase {
+public class AssignmentParsingTest extends AbstractBasicAssignmentParsingTest {
   public AssignmentParsingTest() {
-    super("parser-full/statementParsing/assignment");
+    super(new JavaParsingTestConfigurator());
   }
-
-  public void testSimple() { doTest(true); }
 }

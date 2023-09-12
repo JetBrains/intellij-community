@@ -1,0 +1,8 @@
+test.java.file
+  EXPRESSION_STATEMENT
+    REFERENCE_EXPRESSION
+      REFERENCE_PARAMETER_LIST
+        <empty list>
+      IDENTIFIER
+    ERROR_ELEMENT
+      <empty list>

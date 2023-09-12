@@ -1,0 +1,10 @@
+test.java.file
+  RETURN_STATEMENT
+    RETURN_KEYWORD
+    WHITE_SPACE
+    REFERENCE_EXPRESSION
+      REFERENCE_PARAMETER_LIST
+        <empty list>
+      IDENTIFIER
+    ERROR_ELEMENT
+      <empty list>

@@ -15,25 +15,10 @@
  */
 package com.intellij.java.parser.statementParsing;
 
-import com.intellij.java.parser.JavaParsingTestCase;
+import com.intellij.java.parser.JavaParsingTestConfigurator;
 
-public class TryParsingTest extends JavaParsingTestCase {
+public class TryParsingTest extends AbstractBasicTryParsingTest {
   public TryParsingTest() {
-    super("parser-full/statementParsing/try");
+    super(new JavaParsingTestConfigurator());
   }
-
-  public void testNormal1() { doTest(true); }
-  public void testNormal2() { doTest(true); }
-  public void testNormal3() { doTest(true); }
-  public void testNormal4() { doTest(true); }
-
-  public void testIncomplete1() { doTest(true); }
-  public void testIncomplete2() { doTest(true); }
-  public void testIncomplete3() { doTest(true); }
-  public void testIncomplete4() { doTest(true); }
-  public void testIncomplete5() { doTest(true); }
-  public void testIncomplete6() { doTest(true); }
-  public void testIncomplete7() { doTest(true); }
-  public void testIncomplete8() { doTest(true); }
-  public void testIncomplete9() { doTest(true); }
 }

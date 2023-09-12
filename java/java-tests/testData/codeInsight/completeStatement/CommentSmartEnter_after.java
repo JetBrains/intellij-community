@@ -1,0 +1,4 @@
+//comment
+// 
+public class Bar {
+}

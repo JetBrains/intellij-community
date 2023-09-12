@@ -1,0 +1,7 @@
+test.java.file
+  POSTFIX_EXPRESSION
+    REFERENCE_EXPRESSION
+      REFERENCE_PARAMETER_LIST
+        <empty list>
+      IDENTIFIER
+    PLUSPLUS

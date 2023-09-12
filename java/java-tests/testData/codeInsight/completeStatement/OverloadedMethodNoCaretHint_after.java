@@ -5,7 +5,8 @@ public class Foo {
   public Foo(String a, String b) {
   }
 
+  public static void println(Object o){}
   public static void main(String[] args) {
-      System.out.println(new Foo("a", "b"));
+      println(new Foo("a", "b"));
   }
 }
