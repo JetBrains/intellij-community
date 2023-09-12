@@ -1,7 +1,5 @@
 package com.intellij.searchEverywhereMl.semantics.services
 
-import com.intellij.ide.actions.searcheverywhere.SymbolSearchEverywhereContributor
-import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
@@ -11,8 +9,6 @@ import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.vfs.VirtualFileManager
 import com.intellij.psi.*
 import com.intellij.searchEverywhereMl.semantics.SemanticSearchBundle
-import com.intellij.searchEverywhereMl.semantics.experiments.SearchEverywhereSemanticExperiments
-import com.intellij.searchEverywhereMl.semantics.experiments.SearchEverywhereSemanticExperiments.SemanticSearchFeature
 import com.intellij.searchEverywhereMl.semantics.indices.DiskSynchronizedEmbeddingSearchIndex
 import com.intellij.searchEverywhereMl.semantics.indices.FileIndexableEntitiesProvider
 import com.intellij.searchEverywhereMl.semantics.indices.IndexableEntity
@@ -69,15 +65,6 @@ class SymbolSemanticSearchServiceInitializer : ProjectActivity {
   override suspend fun execute(project: Project) {
     if (SemanticSearchSettings.getInstance().enabledInSymbolsTab) {
       SymbolEmbeddingStorage.getInstance(project).prepareForSearch()
-    }
-    else if ((ApplicationManager.getApplication().isInternal
-              || (ApplicationManager.getApplication().isEAP &&
-                  SearchEverywhereSemanticExperiments.getInstance().getSemanticFeatureForTab(
-                    SymbolSearchEverywhereContributor::class.java.simpleName) == SemanticSearchFeature.ENABLED))
-             && !SemanticSearchSettings.getInstance().manuallyDisabledInSymbolsTab
-    ) {
-      // Manually enable search in the corresponding experiment groups
-      SemanticSearchSettings.getInstance().enabledInSymbolsTab = true
     }
   }
 }
