@@ -12,7 +12,7 @@ import java.util.*
 
 @Internal
 object IndexStatisticGroup {
-  val GROUP = EventLogGroup("indexing.statistics", 9)
+  val GROUP = EventLogGroup("indexing.statistics", 10)
 
   private val stubIndexInconsistencyRegistered = GROUP.registerEvent("stub.index.inconsistency")
 
