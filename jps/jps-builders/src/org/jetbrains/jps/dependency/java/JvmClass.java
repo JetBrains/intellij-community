@@ -4,18 +4,20 @@ package org.jetbrains.jps.dependency.java;
 import org.jetbrains.jps.dependency.Usage;
 import org.jetbrains.jps.dependency.diff.Difference;
 
-public class JavaClassType extends ObjectType<JavaClassType, JavaClassType.Diff> {
+import java.util.Objects;
+
+public class JvmClass extends JvmObjectType<JvmClass, JvmClass.Diff> {
   private final String mySuperFqName;
   private final String myOuterFqName;
   private final Iterable<String> myInterfaces;
 
-  public JavaClassType(
+  public JvmClass(
     JVMFlags flags, String signature, String fqName, String outFilePath,
     String superFqName,
     String outerFqName,
     Iterable<String> interfaces,
-    Iterable<Field> fields,
-    Iterable<Method> methods,
+    Iterable<JvmField> fields,
+    Iterable<JvmMethod> methods,
     Iterable<TypeRepr.ClassType> annotations,
     Iterable<Usage> usages
     ) {
@@ -39,20 +41,32 @@ public class JavaClassType extends ObjectType<JavaClassType, JavaClassType.Diff>
   }
 
   @Override
-  public Diff difference(JavaClassType other) {
-    return new Diff(other);
+  public Diff difference(JvmClass past) {
+    return new Diff(past);
   }
 
-  public static class Diff implements Difference {
+  public class Diff extends JvmObjectType<JvmClass, JvmClass.Diff>.Diff<JvmClass> {
 
-    public Diff(JavaClassType other) {
-      // todo: diff necessary data
+    public Diff(JvmClass past) {
+      super(past);
     }
 
     @Override
     public boolean unchanged() {
-      return false;
+      return super.unchanged() && !superClassChanged() && !outerClassChanged() && interfaces().unchanged();
     }
-    
+
+    public boolean superClassChanged() {
+      return !Objects.equals(myPast.getSuperFqName(), getSuperFqName());
+    }
+
+    public boolean outerClassChanged() {
+      return !Objects.equals(myPast.getOuterFqName(), getOuterFqName());
+    }
+
+    public Specifier<String, ?> interfaces() {
+      return Difference.diff(myPast.getInterfaces(), getInterfaces());
+    }
+
   }
 }

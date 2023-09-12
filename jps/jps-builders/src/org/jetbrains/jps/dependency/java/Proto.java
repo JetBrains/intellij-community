@@ -2,7 +2,10 @@
 package org.jetbrains.jps.dependency.java;
 
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.jps.dependency.diff.Difference;
 import org.jetbrains.jps.dependency.java.TypeRepr.ClassType;
+
+import java.util.Collections;
 
 public class Proto {
   private final JVMFlags access;
@@ -90,6 +93,35 @@ public class Proto {
       return this.isPublic();
     }
     return false;
+  }
+
+  public class Diff<V extends Proto> implements Difference {
+    protected final V myPast;
+
+    public Diff(V past) {
+      myPast = past;
+    }
+
+    @Override
+    public boolean unchanged() {
+      return myPast.getFlags().equals(getFlags()) && signature().unchanged() && annotations().unchanged();
+    }
+
+    public JVMFlags getAddedFlags() {
+      return getFlags().deriveAdded(myPast.getFlags());
+    }
+
+    public JVMFlags getRemovedFlags() {
+      return getFlags().deriveRemoved(myPast.getFlags());
+    }
+
+    public Specifier<String, ?> signature() {
+      return Difference.diff(Collections.singleton(myPast.getSignature()), Collections.singleton(getSignature()));
+    }
+
+    public Specifier<ClassType, ?> annotations() {
+      return Difference.diff(myPast.getAnnotations(), getAnnotations());
+    }
   }
 
 }

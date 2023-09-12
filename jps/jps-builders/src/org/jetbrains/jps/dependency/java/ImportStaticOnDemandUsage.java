@@ -4,14 +4,13 @@ package org.jetbrains.jps.dependency.java;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.jps.dependency.impl.StringReferenceID;
 
-public class ClassUsage extends JvmElementUsage {
+public class ImportStaticOnDemandUsage extends JvmElementUsage {
 
-  public ClassUsage(@NotNull String className) {
-    super(new StringReferenceID(className));
+  public ImportStaticOnDemandUsage(@NotNull String importedClassName) {
+    super(new StringReferenceID(importedClassName));
   }
-
-  public String getClassName() {
+  
+  public String getImportedClassName() {
     return ((StringReferenceID)getElementOwner()).getValue();
   }
-
 }

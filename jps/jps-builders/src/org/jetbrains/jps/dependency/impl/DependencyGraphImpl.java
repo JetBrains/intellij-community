@@ -11,6 +11,7 @@ import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import java.util.function.Predicate;
 
 public class DependencyGraphImpl extends GraphImpl implements DependencyGraph {
   private List<DifferentiateStrategy> myDifferentiateStrategies = new ArrayList<>(); // todo: fill the list
@@ -32,6 +33,7 @@ public class DependencyGraphImpl extends GraphImpl implements DependencyGraph {
 
     var diffContext = new DifferentiateContext() {
       final Set<Usage> affectedUsages = new HashSet<>();
+      final Set<Predicate<Usage>> usageQueries = new HashSet<>();
       final Set<NodeSource> affectedSources = new HashSet<>();
 
       @Override
@@ -50,8 +52,27 @@ public class DependencyGraphImpl extends GraphImpl implements DependencyGraph {
       }
 
       @Override
+      public void affectUsage(Predicate<Usage> usageQuery) {
+        usageQueries.add(usageQuery);
+      }
+
+      @Override
       public void affectNodeSource(NodeSource source) {
         affectedSources.add(source);
+      }
+
+      boolean isNodeAffected(Node<?, ?> node) {
+        for (Usage usage : node.getUsages()) {
+          if (affectedUsages.contains(usage)) {
+            return true;
+          }
+          for (Predicate<Usage> query : usageQueries) {
+            if (query.test(usage)) {
+              return true;
+            }
+          }
+        }
+        return false;
       }
     };
     
@@ -73,7 +94,7 @@ public class DependencyGraphImpl extends GraphImpl implements DependencyGraph {
       for (NodeSource depSrc : getSources(dependent)) {
         if (!affectedSources.contains(depSrc)) {
           for (var depNode : getNodes(depSrc)) {
-            if (depNode.containsAny(diffContext.affectedUsages)) {
+            if (diffContext.isNodeAffected(depNode)) {
               affectedSources.add(depSrc);
               break;
             }

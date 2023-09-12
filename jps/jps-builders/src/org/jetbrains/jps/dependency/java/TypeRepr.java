@@ -2,6 +2,7 @@
 package org.jetbrains.jps.dependency.java;
 
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.jps.dependency.Usage;
 import org.jetbrains.jps.javac.Iterators;
 import org.jetbrains.org.objectweb.asm.Type;
 
@@ -15,6 +16,10 @@ public abstract class TypeRepr {
   public abstract boolean equals(Object o);
 
   public abstract int hashCode();
+
+  public Iterable<Usage> getUsages() {
+    return Collections.emptyList();
+  }
 
   public static class PrimitiveType extends TypeRepr {
 
@@ -62,6 +67,15 @@ public abstract class TypeRepr {
       myJvmName = jvmName;
     }
 
+    public String getJvmName() {
+      return myJvmName;
+    }
+
+    @Override
+    public Iterable<Usage> getUsages() {
+      return Collections.singleton(new ClassUsage(myJvmName));
+    }
+
     @Override
     public @NotNull String getDescriptor() {
       return "L" + myJvmName + ";";
@@ -102,6 +116,19 @@ public abstract class TypeRepr {
     @Override
     public @NotNull String getDescriptor() {
       return "[" + myElementType.getDescriptor();
+    }
+
+    public TypeRepr getDeepElementType() {
+      TypeRepr current = this;
+      while (current instanceof ArrayType) {
+        current = ((ArrayType)current).myElementType;
+      }
+      return current;
+    }
+
+    @Override
+    public Iterable<Usage> getUsages() {
+      return getDeepElementType().getUsages();
     }
 
     @Override

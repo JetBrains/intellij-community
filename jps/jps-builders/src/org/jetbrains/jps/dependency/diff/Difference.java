@@ -59,7 +59,29 @@ public interface Difference {
     }
   }
 
-  static <T extends DiffCapable<T, D>, D extends Difference> Specifier<T, D> make(@Nullable Iterable<T> past, @Nullable Iterable<T> now) {
+  static <V> Specifier<V, ?> diff(@Nullable Iterable<V> past, @Nullable Iterable<V> now) {
+    var _past = Iterators.map(past, v -> DiffCapable.wrap(v));
+    var _now = Iterators.map(now, v -> DiffCapable.wrap(v));
+    var diff = deepDiff(_past, _now);
+    return new Specifier<>() {
+      @Override
+      public Iterable<V> added() {
+        return Iterators.map(diff.added(), adapter -> adapter.getValue());
+      }
+
+      @Override
+      public Iterable<V> removed() {
+        return Iterators.map(diff.removed(), adapter -> adapter.getValue());
+      }
+
+      @Override
+      public Iterable<Change<V, Difference>> changed() {
+        return Iterators.map(diff.changed(), c -> Change.create(c.getPast().getValue(), c.getNow().getValue(), c.getDiff()));
+      }
+    };
+  }
+
+  static <T extends DiffCapable<T, D>, D extends Difference> Specifier<T, D> deepDiff(@Nullable Iterable<T> past, @Nullable Iterable<T> now) {
     if (Iterators.isEmpty(past)) {
       if (Iterators.isEmpty(now)) {
         return new Specifier<>() {
@@ -151,6 +173,5 @@ public interface Difference {
       }
     };
   }
-
-
+  
 }

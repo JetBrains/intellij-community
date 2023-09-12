@@ -4,6 +4,8 @@ package org.jetbrains.jps.dependency.java;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.Objects;
+
 public abstract class ProtoMember extends Proto {
   @NotNull
   private final TypeRepr type;
@@ -22,5 +24,25 @@ public abstract class ProtoMember extends Proto {
 
   public @Nullable Object getValue() {
     return value;
+  }
+
+  public class Diff<V extends ProtoMember> extends Proto.Diff<V> {
+
+    public Diff(V past) {
+      super(past);
+    }
+
+    @Override
+    public boolean unchanged() {
+      return super.unchanged() && !typeChanged() && !valueChanged();
+    }
+
+    public boolean typeChanged() {
+      return !Objects.equals(myPast.getType(), getType());
+    }
+
+    public boolean valueChanged() {
+      return !Objects.equals(myPast.getValue(), getValue());
+    }
   }
 }
