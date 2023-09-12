@@ -38,15 +38,11 @@ class KotlinConfiguratorChangesDialog(
     }
 
     private fun createCenterPanel(): JComponent {
-        return if (changes.size > 1) {
-            val panel = OnePixelSplitter(0.3f)
+        val panel = OnePixelSplitter(0.3f)
 
-            panel.firstComponent = changesTree
-            panel.secondComponent = diffProcessor.component
-            panel
-        } else {
-            diffProcessor.component
-        }
+        panel.firstComponent = changesTree
+        panel.secondComponent = diffProcessor.component
+        return panel
     }
 
     override fun dispose() {

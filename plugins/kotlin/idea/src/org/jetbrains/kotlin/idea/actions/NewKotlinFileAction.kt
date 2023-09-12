@@ -38,7 +38,6 @@ import org.jetbrains.kotlin.idea.base.projectStructure.languageVersionSettings
 import org.jetbrains.kotlin.idea.base.projectStructure.toModuleGroup
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.configuration.ConfigureKotlinStatus
-import org.jetbrains.kotlin.idea.configuration.KotlinProjectConfigurationService
 import org.jetbrains.kotlin.idea.configuration.KotlinProjectConfigurator
 import org.jetbrains.kotlin.idea.statistics.KotlinCreateFileFUSCollector
 import org.jetbrains.kotlin.idea.statistics.KotlinJ2KOnboardingFUSCollector
@@ -48,7 +47,6 @@ import org.jetbrains.kotlin.psi.KtClass
 import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.psi.KtNamedDeclaration
 import org.jetbrains.kotlin.psi.psiUtil.startOffset
-import java.util.*
 import javax.swing.Icon
 
 internal class NewKotlinFileAction : AbstractNewKotlinFileAction(), DumbAware {
@@ -290,7 +288,7 @@ internal fun createKotlinFileFromTemplate(name: String, template: FileTemplate, 
         val module = ModuleUtil.findModuleForFile(psiFile) ?: return@computeWithAlternativeResolveEnabled psiFile
 
         // Old JPS configurator logic
-        // TODO: Unify with other auto-configuration logic
+        // TODO: Unify with other auto-configuration logic in NewKotlinFileConfigurationHook
         val configurator = KotlinProjectConfigurator.EP_NAME.extensions.firstOrNull()
         if (configurator != null) {
             DumbService.getInstance(module.project).runWhenSmart {
@@ -299,9 +297,6 @@ internal fun createKotlinFileFromTemplate(name: String, template: FileTemplate, 
                 }
             }
         }
-
-        // New auto-config logic
-        KotlinProjectConfigurationService.getInstance(module.project).runAutoConfigurationIfPossible(module)
         psiFile
     }
 }

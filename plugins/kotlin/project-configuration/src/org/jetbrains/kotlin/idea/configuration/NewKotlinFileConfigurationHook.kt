@@ -8,6 +8,11 @@ import org.jetbrains.kotlin.psi.KtFile
 
 class NewKotlinFileConfigurationHook : NewKotlinFileHook() {
     override fun postProcess(createdElement: KtFile, module: Module) {
-        showConfigureKotlinNotificationIfNeeded(module)
+        // New auto-config logic
+        KotlinProjectConfigurationService.getInstance(module.project).runAutoConfigurationIfPossible(module) { configured ->
+            if (!configured) {
+                showConfigureKotlinNotificationIfNeeded(module)
+            }
+        }
     }
 }

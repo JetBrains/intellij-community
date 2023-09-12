@@ -54,6 +54,11 @@ class KotlinSetupEnvironmentNotificationProvider : EditorNotificationProvider {
             return null
         }
 
+        // No notification while auto-configuration is checking/running
+        if (!KotlinProjectConfigurationService.getInstance(project).shouldShowNotConfiguredDialog()) {
+            return null
+        }
+
         val module = ModuleUtilCore.findModuleForPsiElement(psiFile) ?: return null
         if (!ModuleRootManager.getInstance(module).fileIndex.isInSourceContent(file)) {
             return null

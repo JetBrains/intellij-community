@@ -1,43 +1,96 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.configuration
 
+import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.readAction
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
+import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.progress.withBackgroundProgress
 import com.intellij.openapi.project.Project
+import com.intellij.ui.EditorNotifications
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import org.jetbrains.kotlin.idea.projectConfiguration.KotlinProjectConfigurationBundle
+import org.jetbrains.kotlin.idea.util.isKotlinFileType
 
 @Service(Service.Level.PROJECT)
-class KotlinProjectConfigurationService(private val coroutineScope: CoroutineScope) {
-
+class KotlinProjectConfigurationService(private val project: Project, private val coroutineScope: CoroutineScope) {
     companion object {
         fun getInstance(project: Project): KotlinProjectConfigurationService {
             return project.service()
         }
     }
 
+    @Volatile
+    private var checkingAutoConfig: Boolean = false
 
-    fun runAutoConfigurationIfPossible(module: Module) {
+    // A small cooldown after configuration was performed, to bridge the gap between the files being created and the Gradle sync starting
+    @Volatile
+    private var notificationCooldownEnd: Long? = null
+
+    fun shouldShowNotConfiguredDialog(): Boolean {
+        if (checkingAutoConfig) return false
+        val cooldownEnd = notificationCooldownEnd ?: return true
+        return System.currentTimeMillis() >= cooldownEnd
+    }
+
+    fun refreshEditorNotifications() {
+        // We want to remove the "Kotlin not configured" notification banner as fast as possible
+        // once a gradle reload was started.
+        val openFiles = FileEditorManager.getInstance(project).openFiles
+        val openKotlinFiles = openFiles.filter { it.isKotlinFileType() }
+        if (openKotlinFiles.isEmpty()) return
+        val editorNotifications = EditorNotifications.getInstance(project)
+
+        openKotlinFiles.forEach {
+            editorNotifications.updateNotifications(it)
+        }
+    }
+
+    /**
+     * Checks if the [module] can be auto-configured and runs auto-configuration if it is possible.
+     * If the configuration succeeded, the [onCompleted] callback is run with argument true,
+     * otherwise (configuration, failed, not enabled, etc.) the callback is run with argument false.
+     *
+     * The [onCompleted] callback is invoked on EDT.
+     */
+    fun runAutoConfigurationIfPossible(module: Module, onCompleted: (Boolean) -> Unit) {
+        checkingAutoConfig = true
+        // Removes the notification showing for a split second
+        refreshEditorNotifications()
         coroutineScope.launch(Dispatchers.Default) {
-            val autoConfigurator = readAction {
-                KotlinProjectConfigurator.EP_NAME.extensions
-                    .firstOrNull { it.canRunAutoConfig() && it.isApplicable(module) }
-            } ?: return@launch
+            var configured = false
+            try {
+                val autoConfigurator = readAction {
+                    KotlinProjectConfigurator.EP_NAME.extensions
+                        .firstOrNull { it.canRunAutoConfig() && it.isApplicable(module) }
+                } ?: return@launch
 
-            val autoConfigSettings = withBackgroundProgress(
-                project = module.project,
-                title = KotlinProjectConfigurationBundle.message("auto.configure.kotlin.check")
-            ) {
-                autoConfigurator.calculateAutoConfigSettings(module)
+                val autoConfigSettings = withBackgroundProgress(
+                    project = module.project,
+                    title = KotlinProjectConfigurationBundle.message("auto.configure.kotlin.check")
+                ) {
+                    autoConfigurator.calculateAutoConfigSettings(module)
+                }
+
+                if (autoConfigSettings == null) return@launch
+                autoConfigurator.runAutoConfig(autoConfigSettings)
+                configured = true
+                notificationCooldownEnd = System.currentTimeMillis() + 2000
+            } finally {
+                checkingAutoConfig = false
+                withContext(Dispatchers.EDT) {
+                    onCompleted(configured)
+                }
+                if (!configured) {
+                    // Immediately refresh editor notifications to show Kotlin not-configured notification, if necessary
+                    refreshEditorNotifications()
+                }
             }
-
-            if (autoConfigSettings == null) return@launch
-            autoConfigurator.runAutoConfig(autoConfigSettings)
         }
     }
 }
