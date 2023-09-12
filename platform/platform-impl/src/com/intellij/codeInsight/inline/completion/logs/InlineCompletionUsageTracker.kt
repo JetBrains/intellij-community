@@ -151,7 +151,7 @@ object InlineCompletionUsageTracker : CounterUsagesCollector() {
   }
 
   private object InvokedEvents {
-    const val INVOKED_EVENT_ID = "inline.triggered"
+    const val INVOKED_EVENT_ID = "inline.invoked"
 
     val REQUEST_ID = Long("request_id")
     val EVENT = EventFields.Class("event")
