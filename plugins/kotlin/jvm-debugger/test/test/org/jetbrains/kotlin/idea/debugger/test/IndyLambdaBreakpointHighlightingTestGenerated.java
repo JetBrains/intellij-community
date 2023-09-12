@@ -43,6 +43,11 @@ public class IndyLambdaBreakpointHighlightingTestGenerated extends AbstractIndyL
         runTest("testData/highlighting/inlineOnlyFunctions.kt");
     }
 
+    @TestMetadata("lambdaClosingBrace.kt")
+    public void testLambdaClosingBrace() throws Exception {
+        runTest("testData/highlighting/lambdaClosingBrace.kt");
+    }
+
     @TestMetadata("lambdas.kt")
     public void testLambdas() throws Exception {
         runTest("testData/highlighting/lambdas.kt");
