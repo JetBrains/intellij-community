@@ -263,7 +263,6 @@ class SearchEverywhereTest extends LightJavaCodeInsightFixtureTestCase {
   private SearchEverywhereUI createTestUI(List<SearchEverywhereContributor<Object>> contributorsList) {
     if (mySearchUI != null) Disposer.dispose(mySearchUI)
 
-    SearchEverywhereMlContributorReplacementService.saveInitEvent(ChooseByNameTest.createEvent(project))
     mySearchUI = new SearchEverywhereUI(project, contributorsList)
     def tab = contributorsList.size() > 1
       ? SearchEverywhereManagerImpl.ALL_CONTRIBUTORS_GROUP_ID
