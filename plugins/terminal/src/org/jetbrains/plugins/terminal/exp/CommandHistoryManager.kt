@@ -35,9 +35,9 @@ class CommandHistoryManager(session: TerminalSession) {
       return
     }
     val unsortedHistory = history.split("\n").mapNotNull { row ->
-      // row is in the format <spaces><row_number><spaces><command>
+      // row is in the format <spaces><row_number><spaces><command><spaces>
       // retrieve command from the row
-      row.trimStart().trimStart { Character.isDigit(it) }.trimStart().takeIf { it.isNotBlank() }
+      row.trimStart().trimStart { Character.isDigit(it) }.trim().takeIf { it.isNotEmpty() }
     }
     // filter repeating items preserving the order
     // start from the end, because the latest commands have a prioritized position
