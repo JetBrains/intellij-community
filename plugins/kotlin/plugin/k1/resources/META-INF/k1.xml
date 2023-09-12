@@ -93,6 +93,7 @@
 
     <module name="kotlin.copyright"/>
     <module name="kotlin.injection"/>
+    <module name="kotlin.base.injection"/>
 
     <module name="kotlin.code-insight.intentions-shared"/>
     <module name="kotlin.code-insight.inspections-shared"/>

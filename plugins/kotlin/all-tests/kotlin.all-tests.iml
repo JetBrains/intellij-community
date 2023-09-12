@@ -62,5 +62,6 @@
     <orderEntry type="module" module-name="kotlin.base.statistics" scope="RUNTIME" />
     <orderEntry type="module" module-name="kotlin.compiler-plugins.parcelize.tests" scope="RUNTIME" />
     <orderEntry type="module" module-name="kotlin.base.facet.tests" scope="RUNTIME" />
+    <orderEntry type="module" module-name="kotlin.injection.tests" scope="RUNTIME" />
   </component>
 </module>

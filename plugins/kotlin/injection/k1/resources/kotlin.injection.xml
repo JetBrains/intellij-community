@@ -1,6 +1,7 @@
 <idea-plugin package="org.jetbrains.kotlin.idea.injection">
   <dependencies>
     <plugin id="org.intellij.intelliLang"/>
+    <module name="kotlin.base.injection"/>
   </dependencies>
 
   <extensions defaultExtensionNs="com.intellij">

@@ -107,5 +107,6 @@
     <orderEntry type="module" module-name="kotlin.code-insight.structural-search-k2" />
     <orderEntry type="module" module-name="kotlin.i18n" scope="RUNTIME" />
     <orderEntry type="module" module-name="kotlin.injection-k2" />
+    <orderEntry type="module" module-name="kotlin.base.injection" />
   </component>
 </module>
