@@ -7,6 +7,10 @@
 
   <description><![CDATA[Provides macOS Look And Feel that mimics macOS native Blue and Graphite themes]]></description>
 
+  <dependencies>
+    <plugin id="com.intellij.modules.lang"/>
+  </dependencies>
+
   <extensions defaultExtensionNs="com.intellij">
     <themeProvider id="macOSLight" path="/macintellijlaf.theme.json" targetUi="classic" parentTheme="IntelliJ" />
   </extensions>
