@@ -4,7 +4,7 @@
   <build number="__BUILD_NUMBER__" date="__BUILD_DATE__"/>
   <logo url="/idea_community_logo.png"/>
   <icon svg="/idea-ce.svg" svg-small="/idea-ce_16.svg"/>
-  <names product="IDEA" fullname="IntelliJ IDEA"/>
+  <names product="IDEA" fullname="IntelliJ IDEA" script="idea"/>
   <productUrl url="https://www.jetbrains.com/idea/"/>
 
   <update-urls check="https://www.jetbrains.com/updates/updates.xml"

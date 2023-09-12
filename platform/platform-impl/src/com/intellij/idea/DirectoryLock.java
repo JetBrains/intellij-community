@@ -6,6 +6,7 @@ import com.intellij.ide.BootstrapBundle;
 import com.intellij.ide.CliResult;
 import com.intellij.ide.SpecialConfigFiles;
 import com.intellij.jna.JnaLoader;
+import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.diagnostic.LogLevel;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.SystemInfoRt;
@@ -71,7 +72,7 @@ final class DirectoryLock {
     return logger;
   }
 
-  private final String myPid = String.valueOf(ProcessHandle.current().pid());
+  private final String myPid = Long.toString(ProcessHandle.current().pid());
   private final Path myPortFile;
   private final Path myLockFile;
   private final boolean myFallbackMode;
@@ -279,7 +280,7 @@ final class DirectoryLock {
     return null;
   }
 
-  private void lockDirectory(Path lockFile) throws Exception {
+  private void lockDirectory(Path lockFile) throws IOException, IllegalStateException {
     IOException first = null;
 
     for (var i = 0; i < LOCK_RETRIES; i++) {
@@ -292,8 +293,12 @@ final class DirectoryLock {
         try {
           try {
             var otherPid = Long.parseLong(Files.readString(lockFile));
-            if (ProcessHandle.of(otherPid).isPresent()) {
-              throw new Exception(BootstrapBundle.message("bootstrap.error.still.running", otherPid), e);
+            var handle = ProcessHandle.of(otherPid).orElse(null);
+            if (handle != null) {
+              var command = handle.info().command().orElse("");
+              if (command.contains("java") || command.contains(ApplicationNamesInfo.getInstance().getScriptName())) {
+                throw new IllegalStateException(BootstrapBundle.message("bootstrap.error.still.running", command, Long.toString(otherPid), lockFile), e);
+              }
             }
           }
           catch (NumberFormatException ignored) { }
