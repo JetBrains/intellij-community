@@ -30,22 +30,22 @@ object InlineCompletionUsageTracker : CounterUsagesCollector() {
   override fun getGroup() = GROUP
 
   class Listener : InlineCompletionEventAdapter {
-    private var myInvocationTracker: InvocationTracker? = null
+    private var invocationTracker: InvocationTracker? = null
     private var showTracker: ShowTracker? = null
 
     override fun onRequest(event: InlineCompletionEventType.Request) {
-      myInvocationTracker = InvocationTracker(event).also {
+      invocationTracker = InvocationTracker(event).also {
         runReadAction { it.captureContext(event.request.editor, event.request.endOffset) }
       }
     }
 
     override fun onShow(event: InlineCompletionEventType.Show) {
       if (event.i == 0 && !event.element.text.isEmpty()) {
-        myInvocationTracker?.hasSuggestion()
+        invocationTracker?.hasSuggestion()
       }
       if (event.i == 0) {
         // invocation tracker -> show tracker
-        showTracker = myInvocationTracker?.createShowTracker()
+        showTracker = invocationTracker?.createShowTracker()
         showTracker!!.firstShown(event.element)
       }
       if (event.i != 0) {
@@ -62,18 +62,18 @@ object InlineCompletionUsageTracker : CounterUsagesCollector() {
     }
 
     override fun onEmpty(event: InlineCompletionEventType.Empty) {
-      myInvocationTracker?.noSuggestions()
+      invocationTracker?.noSuggestions()
     }
 
     override fun onCompletion(event: InlineCompletionEventType.Completion) {
       if (!event.isActive || event.cause is CancellationException || event.cause is ProcessCanceledException) {
-        myInvocationTracker?.cancelled()
+        invocationTracker?.cancelled()
       }
       else if (event.cause != null) {
-        myInvocationTracker?.exception()
+        invocationTracker?.exception()
       }
-      myInvocationTracker?.finished()
-      myInvocationTracker = null
+      invocationTracker?.finished()
+      invocationTracker = null
     }
   }
 
@@ -182,8 +182,8 @@ object InlineCompletionUsageTracker : CounterUsagesCollector() {
    * This tracker lives from the moment the inline completion appears on the screen until its end.
    */
   private class ShowTracker(private val requestId: Long,
-                    private val invocationTime: Long,
-                    private val triggerFeatures: EventPair<*>) {
+                            private val invocationTime: Long,
+                            private val triggerFeatures: EventPair<*>) {
     private val data = mutableListOf<EventPair<*>>()
     private val firstShown = AtomicBoolean(false)
     private val shownLogSent = AtomicBoolean(false)
