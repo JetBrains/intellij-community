@@ -86,7 +86,7 @@ final class MixedSearchListModel extends SearchListModel {
   }
 
   private void reorderItemsIfApplicable() {
-    if (myReorderingService != null && myMaxFrozenIndex == -1) {
+    if (myReorderingService != null && myMaxFrozenIndex == -1 && tabIDProvider != null) {
       String tabID = tabIDProvider.compute();
       myReorderingService.reorder(tabID, listElements);
       fireContentsChanged(this, 0, listElements.size() - 1);
