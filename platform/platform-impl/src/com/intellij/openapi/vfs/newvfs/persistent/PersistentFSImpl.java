@@ -9,6 +9,7 @@ import com.intellij.ide.plugins.DynamicPluginListener;
 import com.intellij.ide.plugins.IdeaPluginDescriptor;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.Application;
+import com.intellij.openapi.diagnostic.ControlFlowException;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileTypes.InternalFileType;
 import com.intellij.openapi.progress.ProcessCanceledException;
@@ -1640,6 +1641,9 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
       return cachedRoot;
     }
     catch (Throwable t) {
+      if (t instanceof ControlFlowException) {
+        throw t;
+      }
       StringBuilder sb = new StringBuilder();
       vfsPeer.forEachRoot((rootUrl, rootFileId) -> {
         sb.append("[#").append(rootFileId).append("]: '").append(rootUrl).append("'\n");
