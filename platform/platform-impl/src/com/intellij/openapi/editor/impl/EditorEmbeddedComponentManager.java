@@ -4,6 +4,7 @@ package com.intellij.openapi.editor.impl;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.*;
 import com.intellij.openapi.editor.event.*;
@@ -197,8 +198,10 @@ public final class EditorEmbeddedComponentManager {
 
     @Override
     public void doLayout() {
-      synchronizeBoundsWithInlay();
-      super.doLayout();
+      ReadAction.run(() -> {
+        synchronizeBoundsWithInlay();
+        super.doLayout();
+      });
     }
 
     @Override
