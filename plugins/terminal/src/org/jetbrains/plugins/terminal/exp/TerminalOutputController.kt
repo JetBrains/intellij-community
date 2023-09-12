@@ -5,6 +5,7 @@ import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.DataKey
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.invokeLater
+import com.intellij.openapi.application.runInEdt
 import com.intellij.openapi.editor.ScrollType
 import com.intellij.openapi.editor.event.DocumentListener
 import com.intellij.openapi.editor.ex.EditorEx
@@ -42,7 +43,10 @@ class TerminalOutputController(
     get() = settings.terminalColorPalette
 
   @Volatile
-  private var runningListenersDisposable: Disposable? = null
+  private var keyEventsListenerDisposable: Disposable? = null
+
+  @Volatile
+  private var mouseAndContentListenersDisposable: Disposable? = null
 
   init {
     editor.putUserData(IS_OUTPUT_EDITOR_KEY, true)
@@ -65,17 +69,30 @@ class TerminalOutputController(
   }
 
   private fun installRunningCommandListeners() {
-    val disposable = Disposer.newDisposable().also { Disposer.register(session, it) }
-    runningListenersDisposable = disposable
+    val mouseAndContentDisposable = Disposer.newDisposable().also { Disposer.register(session, it) }
+    mouseAndContentListenersDisposable = mouseAndContentDisposable
+    val keyEventsDisposable = Disposer.newDisposable().also { Disposer.register(session, it) }
+    keyEventsListenerDisposable = keyEventsDisposable
+
     val eventsHandler = TerminalEventsHandler(session, settings)
-    setupKeyEventDispatcher(editor, settings, eventsHandler, outputModel, selectionModel, disposable)
-    setupMouseListener(editor, settings, session.model, eventsHandler, disposable)
-    setupContentListener(disposable)
+    setupKeyEventDispatcher(editor, settings, eventsHandler, outputModel, selectionModel, keyEventsDisposable)
+    setupMouseListener(editor, settings, session.model, eventsHandler, mouseAndContentDisposable)
+    setupContentListener(mouseAndContentDisposable)
+  }
+
+  private fun disposeRunningCommandListeners() {
+    mouseAndContentListenersDisposable?.let { Disposer.dispose(it) }
+    mouseAndContentListenersDisposable = null
+    runInEdt {
+      // Dispose at EDT, because there can be a race when focus listener trying to install TerminalEventDispatcher on EDT,
+      // and this disposable is disposed on BGT. The dispatcher won't be removed as a result.
+      keyEventsListenerDisposable?.let { Disposer.dispose(it) }
+      keyEventsListenerDisposable = null
+    }
   }
 
   fun finishCommandBlock(exitCode: Int) {
-    runningListenersDisposable?.let { Disposer.dispose(it) }
-    runningListenersDisposable = null
+    disposeRunningCommandListeners()
     invokeLater {
       val block = outputModel.getLastBlock() ?: error("No active block")
       val document = editor.document
@@ -104,8 +121,7 @@ class TerminalOutputController(
   override fun onAlternateBufferChanged(enabled: Boolean) {
     if (enabled) {
       // stop updating the block content, because alternate buffer application will be shown in a separate component
-      runningListenersDisposable?.let { Disposer.dispose(it) }
-      runningListenersDisposable = null
+      disposeRunningCommandListeners()
     }
     else {
       installRunningCommandListeners()
