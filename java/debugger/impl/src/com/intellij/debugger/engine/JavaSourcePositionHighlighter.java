@@ -36,7 +36,8 @@ public class JavaSourcePositionHighlighter extends SourcePositionHighlighter imp
         Document document = PsiDocumentManager.getInstance(file.getProject()).getDocument(file);
         if (document != null) {
           TextRange lineRange = DocumentUtil.getLineTextRange(document, sourcePosition.getLine());
-          return range.intersection(lineRange); // highlight the whole line for multiline lambdas
+          TextRange res = range.intersection(lineRange);
+          return lineRange.equals(res) ? null : res; // highlight the whole line for multiline lambdas
         }
       }
       return range;
