@@ -149,6 +149,10 @@ class ProjectWindowCustomizerService : Disposable {
 
     // Get calculated earlier color or calculate the next color
     return colorCache.computeIfAbsent(projectPath) {
+      if (colorStorage is WorkspaceProjectColorStorage && colorStorage.isEmpty) {
+        setupWorkspaceStorage(colorStorage.project)
+      }
+
       // Get custom project color and transform it for toolbar
       val customColors = colorStorage.customColor?.takeIf { it.isNotEmpty() }?.let {
         val color = ColorHexUtil.fromHex(it)
@@ -233,6 +237,12 @@ class ProjectWindowCustomizerService : Disposable {
 
     val workspaceStorage = WorkspaceProjectColorStorage(project)
     if (!workspaceStorage.isEmpty) return
+
+    if (RecentProjectsManagerBase.getInstanceEx().hasCustomIcon(project)) {
+      // On the first opening if there is a custom icon, we set the custom color generated from the icon
+      setIconMainColorAsProjectColor(project)
+      return
+    }
 
     // Perform initial setup of storages for the project
     val path = projectPath(project) ?: return
