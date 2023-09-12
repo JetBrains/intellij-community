@@ -1,6 +1,10 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-package com.intellij.coverage;
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package com.intellij.coverage.analysis;
 
+import com.intellij.coverage.CoverageSuitesBundle;
+import com.intellij.coverage.JavaCoverageEngineExtension;
+import com.intellij.coverage.JavaCoverageRunner;
+import com.intellij.coverage.JavaCoverageSuite;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
@@ -57,7 +61,7 @@ public class JavaCoverageClassesAnnotator extends JavaCoverageClassesEnumerator 
   }
 
   @Override
-  void visitRootPackage(PsiPackage psiPackage, JavaCoverageSuite suite) {
+  public void visitRootPackage(PsiPackage psiPackage, JavaCoverageSuite suite) {
     if (myProjectData == null) return;
     myFlattenPackages.clear();
     var created = initExecutor();

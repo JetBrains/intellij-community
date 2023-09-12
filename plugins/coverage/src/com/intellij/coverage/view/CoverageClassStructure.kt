@@ -3,8 +3,8 @@
 
 package com.intellij.coverage.view
 
-import com.intellij.coverage.JavaCoverageAnnotator
-import com.intellij.coverage.PackageAnnotator
+import com.intellij.coverage.analysis.JavaCoverageAnnotator
+import com.intellij.coverage.analysis.PackageAnnotator
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.project.DumbService

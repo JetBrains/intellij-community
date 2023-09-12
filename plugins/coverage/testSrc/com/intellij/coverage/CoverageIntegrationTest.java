@@ -2,6 +2,8 @@
 package com.intellij.coverage;
 
 import com.intellij.codeEditor.printing.ExportToHTMLSettings;
+import com.intellij.coverage.analysis.JavaCoverageClassesAnnotator;
+import com.intellij.coverage.analysis.PackageAnnotator;
 import com.intellij.idea.ExcludeFromTestDiscovery;
 import com.intellij.openapi.application.PluginPathManager;
 import com.intellij.openapi.module.Module;

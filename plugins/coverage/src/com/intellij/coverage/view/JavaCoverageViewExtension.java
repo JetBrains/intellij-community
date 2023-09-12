@@ -2,6 +2,8 @@
 package com.intellij.coverage.view;
 
 import com.intellij.coverage.*;
+import com.intellij.coverage.analysis.JavaCoverageAnnotator;
+import com.intellij.coverage.analysis.PackageAnnotator;
 import com.intellij.execution.configurations.RunConfigurationBase;
 import com.intellij.execution.configurations.coverage.JavaCoverageEnabledConfiguration;
 import com.intellij.ide.util.treeView.AbstractTreeNode;

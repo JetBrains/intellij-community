@@ -15,7 +15,7 @@ import javax.swing.Icon
 
 /**
  * This node aims to avoid long [getValue] invocations. Namely, type of node (class/package) and fqn are used
- * for fast [com.intellij.coverage.JavaCoverageAnnotator] requests.
+ * for fast [com.intellij.coverage.analysis.JavaCoverageAnnotator] requests.
  */
 class JavaCoverageNode(
   project: Project,

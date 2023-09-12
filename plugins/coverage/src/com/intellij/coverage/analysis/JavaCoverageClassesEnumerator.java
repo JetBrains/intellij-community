@@ -1,6 +1,10 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-package com.intellij.coverage;
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package com.intellij.coverage.analysis;
 
+import com.intellij.coverage.CoverageDataManager;
+import com.intellij.coverage.CoverageSuite;
+import com.intellij.coverage.CoverageSuitesBundle;
+import com.intellij.coverage.JavaCoverageSuite;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;

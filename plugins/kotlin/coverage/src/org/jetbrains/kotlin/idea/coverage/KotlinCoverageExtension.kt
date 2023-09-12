@@ -3,6 +3,9 @@
 package org.jetbrains.kotlin.idea.coverage
 
 import com.intellij.coverage.*
+import com.intellij.coverage.analysis.JavaCoverageAnnotator
+import com.intellij.coverage.analysis.JavaCoverageClassesEnumerator
+import com.intellij.coverage.analysis.PackageAnnotator
 import com.intellij.execution.configurations.RunConfigurationBase
 import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.diagnostic.Logger
@@ -23,7 +26,6 @@ import org.jetbrains.kotlin.idea.base.facet.isMultiPlatformModule
 import org.jetbrains.kotlin.idea.base.facet.platform.platform
 import org.jetbrains.kotlin.idea.base.projectStructure.getKotlinSourceRootType
 import org.jetbrains.kotlin.idea.run.KotlinRunConfiguration
-import org.jetbrains.kotlin.platform.isCommon
 import org.jetbrains.kotlin.platform.jvm.isJvm
 import org.jetbrains.kotlin.psi.KtClassOrObject
 import org.jetbrains.kotlin.psi.KtFile

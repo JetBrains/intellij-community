@@ -270,7 +270,7 @@ public final class IDEACoverageRunner extends JavaCoverageRunner {
     return true;
   }
 
-  static void setExcludeAnnotations(Project project, ProjectData projectData) {
+  public static void setExcludeAnnotations(Project project, ProjectData projectData) {
     final JavaCoverageOptionsProvider optionsProvider = JavaCoverageOptionsProvider.getInstance(project);
     try {
       final String[] patterns = ArrayUtil.toStringArray(optionsProvider.getExcludeAnnotationPatterns());

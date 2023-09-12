@@ -1,5 +1,7 @@
 package com.intellij.coverage;
 
+import com.intellij.coverage.analysis.JavaCoverageAnnotator;
+import com.intellij.coverage.analysis.PackageAnnotator;
 import com.intellij.execution.configurations.RunConfigurationBase;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.extensions.ExtensionPointName;
