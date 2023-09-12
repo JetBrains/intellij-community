@@ -3,6 +3,7 @@ package org.jetbrains.plugins.terminal.action
 
 import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
+import com.intellij.openapi.actionSystem.remoting.ActionRemoteBehaviorSpecification
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.ide.CopyPasteManager
 import org.jetbrains.plugins.terminal.exp.CommandBlock
@@ -12,7 +13,7 @@ import org.jetbrains.plugins.terminal.exp.TerminalDataContextUtils.isOutputEdito
 import org.jetbrains.plugins.terminal.exp.TerminalDataContextUtils.selectionController
 import org.jetbrains.plugins.terminal.exp.TerminalPromotedDumbAwareAction
 
-class TerminalCopyAction : TerminalPromotedDumbAwareAction() {
+class TerminalCopyAction : TerminalPromotedDumbAwareAction(), ActionRemoteBehaviorSpecification.Disabled {
   override fun actionPerformed(e: AnActionEvent) {
     val editor = e.editor ?: return
     val selectionController = e.selectionController
