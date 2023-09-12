@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.io.keyStorage;
 
 import com.intellij.openapi.Forceable;
@@ -29,7 +29,7 @@ public interface AppendableObjectStorage<Data> extends Forceable, Closeable {
    * the whole duration of (force+processAll) calls. But force() requires writeLock to be held,
    * since this 'some lock' must be the writeLock -- which is usually quite undesirable, since
    * processAll is a long call.
-   *
+   * <p/>
    * Hence, currently the method used as 'eventually consistent': i.e. callsites call {@link #force()}
    * under writeLock, and after that call processAll under readLock (or, sometimes, under no lock at all)
    * -- which means some items could be missed.
@@ -60,6 +60,6 @@ public interface AppendableObjectStorage<Data> extends Forceable, Closeable {
 
   @FunctionalInterface
   interface StorageObjectProcessor<Data> {
-    boolean process(int valueId, Data value);
+    boolean process(int valueId, Data value) throws IOException;
   }
 }

@@ -29,7 +29,9 @@ import java.util.concurrent.locks.ReentrantReadWriteLock;
  * @author max
  * @author jeka
  */
-public abstract class PersistentEnumeratorBase<Data> implements DataEnumeratorEx<Data>, Forceable, Closeable, SelfDiagnosing {
+public abstract class PersistentEnumeratorBase<Data> implements DataEnumeratorEx<Data>,
+                                                                ScannableDataEnumeratorEx<Data>,
+                                                                Forceable, Closeable, SelfDiagnosing {
   protected static final Logger LOG = Logger.getInstance(PersistentEnumeratorBase.class);
 
   protected static final boolean USE_RW_LOCK = SystemProperties.getBooleanProperty("idea.persistent.data.use.read.write.lock", false);
@@ -200,7 +202,8 @@ public abstract class PersistentEnumeratorBase<Data> implements DataEnumeratorEx
         t.addSuppressed(errorOnClose);
       }
       throw t;
-    } finally {
+    }
+    finally {
       unlockStorageWrite();
     }
   }
@@ -322,17 +325,37 @@ public abstract class PersistentEnumeratorBase<Data> implements DataEnumeratorEx
     }
   }
 
-  public boolean processAllDataObject(final @NotNull Processor<? super Data> processor, final @Nullable DataFilter filter)
+  public boolean processAllDataObject(final @NotNull Processor<? super Data> processor,
+                                      final @Nullable DataFilter filter)
     throws IOException {
     return traverseAllRecords(new RecordsProcessor() {
       @Override
-      public boolean process(final int record) throws IOException {
+      public boolean process(int record) throws IOException {
         if (filter == null || filter.accept(record)) {
           return processor.process(valueOf(record));
         }
         return true;
       }
     });
+  }
+
+  public boolean forEach(@NotNull ValueReader<? super Data> reader,
+                         @Nullable DataFilter filter) throws IOException {
+    return traverseAllRecords(new RecordsProcessor() {
+      @Override
+      public boolean process(final int record) throws IOException {
+        if (filter == null || filter.accept(record)) {
+          Data value = valueOf(record);
+          return reader.read(record, value);
+        }
+        return true;
+      }
+    });
+  }
+
+  @Override
+  public boolean forEach(@NotNull ValueReader<? super Data> reader) throws IOException {
+    return forEach(reader, /*filter: */null);
   }
 
   public @NotNull Collection<Data> getAllDataObjects(final @Nullable DataFilter filter) throws IOException {
@@ -408,10 +431,10 @@ public abstract class PersistentEnumeratorBase<Data> implements DataEnumeratorEx
   }
 
   public boolean iterateData(@NotNull Processor<? super Data> processor) throws IOException {
-    return doIterateData((offset, data) -> processor.process(data));
+    return iterateData((offset, data) -> processor.process(data));
   }
 
-  protected boolean doIterateData(@NotNull AppendableObjectStorage.StorageObjectProcessor<? super Data> processor) throws IOException {
+  boolean iterateData(@NotNull AppendableObjectStorage.StorageObjectProcessor<? super Data> processor) throws IOException {
     lockStorageWrite(); // todo locking in key storage
     try {
       myKeyStorage.force();

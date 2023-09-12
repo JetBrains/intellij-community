@@ -4,12 +4,15 @@ package com.intellij.util.io;
 import com.intellij.util.TimeoutUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.indexing.impl.IndexDebugProperties;
+import it.unimi.dsi.fastutil.ints.IntOpenHashSet;
+import it.unimi.dsi.fastutil.ints.IntSet;
 import org.jetbrains.annotations.NotNull;
 import org.junit.*;
 import org.junit.rules.TemporaryFolder;
 
 import java.io.IOException;
 import java.nio.file.Path;
+import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Random;
 import java.util.Set;
@@ -96,7 +99,7 @@ public abstract class StringEnumeratorTestBase<T extends ScannableDataEnumerator
 
   @Test
   public void forSingleValueEnumerated_SecondTimeEnumerate_ReturnsSameId() throws IOException {
-    //Check ID is 'stable' at least without interference of other values: not guarantee id
+    //Check ID is 'stable' at least without an interference of other values: not guarantee id
     // stability if other values enumerated in between -- this is NonStrict part is about.
     String value = "A";
     int id1 = enumerator.enumerate(value);
@@ -240,7 +243,7 @@ public abstract class StringEnumeratorTestBase<T extends ScannableDataEnumerator
   }
 
   @Test
-  public void manyValuesEnumerated_CouldBeGetBack_ByProcessAllDataObjects() throws Exception {
+  public void manyValuesEnumerated_CouldBeGetBack_ByForEach() throws Exception {
     String[] values = manyValues;
     for (String value : values) {
       enumerator.enumerate(value);
@@ -248,20 +251,47 @@ public abstract class StringEnumeratorTestBase<T extends ScannableDataEnumerator
 
     Set<String> expectedNames = ContainerUtil.newHashSet(values);
     Set<String> returnedNames = new HashSet<>(expectedNames.size());
-    enumerator.processAllDataObjects(name -> {
+    enumerator.forEach((nameId, name) -> {
       returnedNames.add(name);
       return true;
     });
 
     assertEquals(
-      "processAllDataObjects must return all names put into enumerator",
+      ".forEach() must return all names put into enumerator",
       expectedNames,
       returnedNames
     );
   }
 
   @Test
-  public void manyValuesEnumerated_CouldBeGetBack_ByProcessAllDataObjects_AfterReload() throws Exception {
+  public void forManyValuesEnumerated_TheirIdsReported_ByForEach() throws Exception {
+    String[] values = manyValues;
+    IntSet expectedIdsSet = new IntOpenHashSet();
+    for (String value : values) {
+      expectedIdsSet.add(enumerator.enumerate(value));
+    }
+
+    IntSet returnedIdsSet = new IntOpenHashSet(expectedIdsSet.size());
+    enumerator.forEach((nameId, name) -> {
+      returnedIdsSet.add(nameId);
+      return true;
+    });
+
+    int[] expectedIds = expectedIdsSet.toIntArray();
+    int[] returnedIds = returnedIdsSet.toIntArray();
+    Arrays.sort(expectedIds);
+    Arrays.sort(returnedIds);
+
+    assertArrayEquals(
+      ".forEach() must return all ids returned by .enumerate() before",
+      expectedIds,
+      returnedIds
+    );
+  }
+
+
+  @Test
+  public void manyValuesEnumerated_CouldBeGetBack_ByForEach_AfterReload() throws Exception {
     String[] values = manyValues;
     for (String value : values) {
       enumerator.enumerate(value);
@@ -272,13 +302,13 @@ public abstract class StringEnumeratorTestBase<T extends ScannableDataEnumerator
 
     Set<String> expectedNames = ContainerUtil.newHashSet(values);
     Set<String> returnedNames = new HashSet<>(expectedNames.size());
-    enumerator.processAllDataObjects(name -> {
+    enumerator.forEach((nameId, name) -> {
       returnedNames.add(name);
       return true;
     });
 
     assertEquals(
-      "processAllDataObjects must return all names put into enumerator",
+      ".forEach() must return all names put into enumerator",
       expectedNames,
       returnedNames
     );
@@ -335,7 +365,7 @@ public abstract class StringEnumeratorTestBase<T extends ScannableDataEnumerator
 
   @Test
   @Ignore("poor-man benchmark, not a test")
-  public void manyValuesEnumerated_CouldBeGetBack_ByProcessAllDataObjects_AfterReload_Benchmark() throws Exception {
+  public void manyValuesEnumerated_CouldBeGetBack_ByForEach_AfterReload_Benchmark() throws Exception {
     String[] values = manyValues;
     for (String value : values) {
       enumerator.enumerate(value);
@@ -346,14 +376,14 @@ public abstract class StringEnumeratorTestBase<T extends ScannableDataEnumerator
 
     Set<String> expectedNames = ContainerUtil.newHashSet(values);
     Set<String> returnedNames = new HashSet<>(expectedNames.size());
-    enumerator.processAllDataObjects(name -> {
+    enumerator.forEach( (nameId,name) -> {
       returnedNames.add(name);
       return true;
     });
 
     long startedAtNs = System.nanoTime();
     for (int i = 0; i < 16; i++) {
-      enumerator.processAllDataObjects(name -> {
+      enumerator.forEach( (nameId,name) -> {
         returnedNames.add(name);
         return true;
       });
@@ -361,7 +391,7 @@ public abstract class StringEnumeratorTestBase<T extends ScannableDataEnumerator
     System.out.println(returnedNames.size() + " names: " + TimeoutUtil.getDurationMillis(startedAtNs) / 10.0 + " ms per listing");
 
     assertEquals(
-      "processAllDataObjects must return all names put into enumerator",
+      ".forEach() must return all names put into enumerator",
       expectedNames,
       returnedNames
     );

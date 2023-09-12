@@ -6,7 +6,6 @@ import com.intellij.openapi.vfs.newvfs.persistent.VFSAsyncTaskExecutor;
 import com.intellij.util.io.DurableDataEnumerator;
 import com.intellij.util.io.dev.appendonlylog.AppendOnlyLog;
 import com.intellij.openapi.vfs.newvfs.persistent.dev.appendonlylog.AppendOnlyLogOverMMappedFile;
-import com.intellij.util.Processor;
 import com.intellij.util.io.IOUtil;
 import com.intellij.util.io.ScannableDataEnumeratorEx;
 import com.intellij.util.io.dev.intmultimaps.Int2IntMultimap;
@@ -169,10 +168,11 @@ public final class DurableStringEnumerator implements DurableDataEnumerator<Stri
   }
 
   @Override
-  public boolean processAllDataObjects(@NotNull Processor<? super String> processor) throws IOException {
+  public boolean forEach(@NotNull ValueReader<? super String> reader) throws IOException {
     return valuesLog.forEachRecord((recordId, buffer) -> {
+      int valueId = convertLogIdToValueId(recordId);
       String value = readString(buffer);
-      return processor.process(value);
+      return reader.read(valueId, value);
     });
   }
 
@@ -250,8 +250,7 @@ public final class DurableStringEnumerator implements DurableDataEnumerator<Stri
                                  @NotNull AppendOnlyLog valuesLog) throws IOException {
     byte[] valueBytes = value.getBytes(UTF_8);
     long appendedId = valuesLog.append(valueBytes);
-    int id = Math.toIntExact(appendedId);
-    return id;
+    return convertLogIdToValueId(appendedId);
   }
 
 
@@ -259,7 +258,7 @@ public final class DurableStringEnumerator implements DurableDataEnumerator<Stri
     Int2IntMultimap valueHashToId = new Int2IntMultimap();
     valuesLog.forEachRecord((logId, buffer) -> {
       String value = readString(buffer);
-      int id = Math.toIntExact(logId);
+      int id = convertLogIdToValueId(logId);
 
       int valueHash = hashOf(value);
 
@@ -267,5 +266,9 @@ public final class DurableStringEnumerator implements DurableDataEnumerator<Stri
       return true;
     });
     return valueHashToId;
+  }
+
+  private static int convertLogIdToValueId(long logId) {
+    return Math.toIntExact(logId);
   }
 }

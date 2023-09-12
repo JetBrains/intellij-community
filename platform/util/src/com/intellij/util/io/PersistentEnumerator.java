@@ -1,7 +1,6 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.io;
 
-import com.intellij.util.Processor;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -119,9 +118,8 @@ public class PersistentEnumerator<Data> implements DurableDataEnumerator<Data>,
     return myEnumerator.getAllDataObjects(filter);
   }
 
-  @ApiStatus.Internal
   @Override
-  public boolean processAllDataObjects(@NotNull Processor<? super Data> processor) throws IOException {
-    return myEnumerator.iterateData(processor);
+  public boolean forEach(@NotNull ValueReader<? super Data> reader) throws IOException {
+    return myEnumerator.forEach(reader);
   }
 }

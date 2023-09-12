@@ -1,7 +1,6 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.io;
 
-import com.intellij.util.Processor;
 import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
 import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
 import it.unimi.dsi.fastutil.objects.Object2IntMap;
@@ -9,6 +8,7 @@ import it.unimi.dsi.fastutil.objects.Object2IntOpenHashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.io.IOException;
 import java.util.ArrayList;
 
 /**
@@ -44,9 +44,9 @@ public final class InMemoryEnumerator<Data> implements ScannableDataEnumeratorEx
   }
 
   @Override
-  public boolean processAllDataObjects(final @NotNull Processor<? super Data> processor) {
-    for (final Data value : idByValue.keySet()) {
-      final boolean shouldContinue = processor.process(value);
+  public boolean forEach(@NotNull ValueReader<? super Data> reader) throws IOException {
+    for (Int2ObjectMap.Entry<Data> entry : valueById.int2ObjectEntrySet()) {
+      boolean shouldContinue = reader.read(entry.getIntKey(), entry.getValue());
       if (!shouldContinue) {
         return false;
       }

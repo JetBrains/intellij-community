@@ -5,7 +5,6 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.ArrayUtil;
-import com.intellij.util.Processor;
 import it.unimi.dsi.fastutil.objects.Object2IntMap;
 import it.unimi.dsi.fastutil.objects.Object2IntOpenHashMap;
 import org.jetbrains.annotations.ApiStatus;
@@ -140,10 +139,12 @@ public final class SimpleStringPersistentEnumerator implements ScannableDataEnum
   }
 
   @Override
-  public boolean processAllDataObjects(@NotNull Processor<? super String> processor) throws IOException {
+  public boolean forEach(@NotNull ValueReader<? super String> reader) throws IOException {
     String[] idToNameLocal = idToValue;
-    for (String value : idToNameLocal) {
-      boolean continueProcessing = processor.process(value);
+    for (int i = 0; i < idToNameLocal.length; i++) {
+      String value = idToNameLocal[i];
+      int id = i + 1;
+      boolean continueProcessing = reader.read(id, value);
       if (!continueProcessing) {
         return false;
       }

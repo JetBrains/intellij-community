@@ -6,7 +6,6 @@ import com.intellij.util.io.DurableDataEnumerator;
 import com.intellij.util.io.dev.appendonlylog.AppendOnlyLog;
 import com.intellij.openapi.vfs.newvfs.persistent.dev.appendonlylog.AppendOnlyLogOverMMappedFile;
 import com.intellij.util.ExceptionUtil;
-import com.intellij.util.Processor;
 import com.intellij.util.io.ScannableDataEnumeratorEx;
 import com.intellij.util.io.dev.enumerator.KeyDescriptorEx;
 import com.intellij.util.io.dev.intmultimaps.DurableIntToMultiIntMap;
@@ -154,10 +153,11 @@ public final class DurableEnumerator<V> implements DurableDataEnumerator<V>,
   }
 
   @Override
-  public boolean processAllDataObjects(@NotNull Processor<? super V> processor) throws IOException {
+  public boolean forEach(@NotNull ValueReader<? super V> reader) throws IOException {
     return valuesLog.forEachRecord((recordId, buffer) -> {
+      int valueId = convertLogIdToEnumeratorId(recordId);
       V value = valueDescriptor.read(buffer);
-      return processor.process(value);
+      return reader.read(valueId, value);
     });
   }
 

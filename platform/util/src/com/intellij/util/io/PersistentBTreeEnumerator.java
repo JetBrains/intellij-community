@@ -41,7 +41,8 @@ import java.util.List;
  * be serialized to an integer, so there is a bijection between {@link Data} and its hashcode. In such
  * cases {@link #myInlineKeysNoMapping} param allows to skip collision resolution paths altogether.
  */
-public class PersistentBTreeEnumerator<Data> extends PersistentEnumeratorBase<Data> {
+public class PersistentBTreeEnumerator<Data> extends PersistentEnumeratorBase<Data> implements DurableDataEnumerator<Data>,
+                                                                                               ScannableDataEnumeratorEx<Data>{
   private static final int BTREE_PAGE_SIZE;
   private static final int DEFAULT_BTREE_PAGE_SIZE = 32768;
 
@@ -232,7 +233,7 @@ public class PersistentBTreeEnumerator<Data> extends PersistentEnumeratorBase<Da
 
     List<DataWithOffset> items = new ArrayList<>();
     try {
-      doIterateData((offset, data) -> {
+      iterateData((offset, data) -> {
         items.add(new DataWithOffset(data, offset));
         return true;
       });
@@ -353,7 +354,8 @@ public class PersistentBTreeEnumerator<Data> extends PersistentEnumeratorBase<Da
   }
 
   @Override
-  public boolean processAllDataObject(final @NotNull Processor<? super Data> processor, final @Nullable DataFilter filter)
+  public boolean processAllDataObject(final @NotNull Processor<? super Data> processor,
+                                      final @Nullable DataFilter filter)
     throws IOException {
     if (myInlineKeysNoMapping) {
       return traverseAllRecords(new RecordsProcessor() {
@@ -368,6 +370,25 @@ public class PersistentBTreeEnumerator<Data> extends PersistentEnumeratorBase<Da
       });
     }
     return super.processAllDataObject(processor, filter);
+  }
+
+  @Override
+  public boolean forEach(@NotNull ValueReader<? super Data> reader,
+                         @Nullable DataFilter filter) throws IOException {
+    if (myInlineKeysNoMapping) {
+      return traverseAllRecords(new RecordsProcessor() {
+        @Override
+        public boolean process(int recordId) throws IOException {
+          if (filter == null || filter.accept(recordId)) {
+            int currentKey = getCurrentKey();
+            Data data = ((InlineKeyDescriptor<Data>)myDataDescriptor).fromInt(currentKey);
+            return reader.read(recordId, data);
+          }
+          return true;
+        }
+      });
+    }
+    return super.forEach(reader, filter);
   }
 
   @Override
@@ -704,7 +725,7 @@ public class PersistentBTreeEnumerator<Data> extends PersistentEnumeratorBase<Da
     try {
       try {
         LOG.info("Listing corrupted enumerator:");
-        doIterateData((offset, data) -> {
+        iterateData((offset, data) -> {
           LOG.info("Enumerator entry '" + data.toString() + "'");
           return true;
         });
