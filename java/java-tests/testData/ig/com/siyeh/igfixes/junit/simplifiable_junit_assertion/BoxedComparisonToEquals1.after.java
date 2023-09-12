@@ -4,7 +4,7 @@ import org.junit.*;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 
-public class BoxedComparisonToEquals {
+public class BoxedComparisonToEquals1 {
     void test(Boolean a, boolean b) {
         assertEquals((boolean) a, b);
     }

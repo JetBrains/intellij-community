@@ -2,8 +2,7 @@ import static org.junit.Assert.assertTrue;
 
 class MyTest {
 
-  @Test
   public void testObjectsEquals() {
-      <caret>assertTrue("message", !(1 == 2));
+      <warning descr="'assertTrue()' can be simplified to 'assertFalse()'"><caret>assertTrue</warning>("message", !(1 == 2));
   }
 }

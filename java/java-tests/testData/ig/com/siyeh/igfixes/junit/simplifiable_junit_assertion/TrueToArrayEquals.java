@@ -4,11 +4,10 @@ import java.util.Arrays;
 
 class ObjectEqualsToEquals {
 
-  @Test
   public void testObjectsEquals() {
-      <caret>assertTrue(Arrays.equals(getFoo(), getBar()));
+      <warning descr="'assertTrue()' can be simplified to 'assertArrayEquals()'"><caret>assertTrue</warning>(Arrays.equals(getFoo(), getBar()));
   }
 
-  int[] getFoo() { return "foo"; }
-  int[] getBar() { return "foo"; }
+  int[] getFoo() { <error descr="Incompatible types. Found: 'java.lang.String', required: 'int[]'">return "foo";</error> }
+  int[] getBar() { <error descr="Incompatible types. Found: 'java.lang.String', required: 'int[]'">return "foo";</error> }
 }

@@ -3,10 +3,13 @@ package com.siyeh.ig.testFrameworks;
 
 import com.intellij.codeInspection.CleanupLocalInspectionTool;
 import com.intellij.codeInspection.LocalQuickFix;
+import com.intellij.lang.jvm.JvmMethod;
+import com.intellij.lang.jvm.JvmParameter;
 import com.intellij.modcommand.ModPsiUpdater;
 import com.intellij.modcommand.PsiUpdateModCommandQuickFix;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
+import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.*;
 import com.siyeh.InspectionGadgetsBundle;
@@ -17,6 +20,9 @@ import com.siyeh.ig.callMatcher.CallMatcher;
 import com.siyeh.ig.psiutils.*;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+
+import java.util.Objects;
+import java.util.stream.IntStream;
 
 public class SimplifiableAssertionInspection extends BaseInspection implements CleanupLocalInspectionTool {
   @Override
@@ -40,18 +46,18 @@ public class SimplifiableAssertionInspection extends BaseInspection implements C
     return new SimplifiableJUnitAssertionVisitor();
   }
 
-  static boolean isAssertThatCouldBeFail(PsiExpression position, boolean checkTrue) {
+  private static boolean isAssertThatCouldBeFail(PsiExpression position, boolean checkTrue) {
     return (checkTrue ? PsiKeyword.TRUE : PsiKeyword.FALSE).equals(position.getText());
   }
 
-  boolean isAssertEqualsThatCouldBeAssertLiteral(AssertHint assertHint) {
+  private static boolean isAssertEqualsThatCouldBeAssertLiteral(AssertHint assertHint) {
     final PsiExpression firstTestArgument = assertHint.getFirstArgument();
     final PsiExpression secondTestArgument = assertHint.getSecondArgument();
     return isSimpleLiteral(firstTestArgument, secondTestArgument) ||
            isSimpleLiteral(secondTestArgument, firstTestArgument);
   }
 
-  static boolean isSimpleLiteral(PsiExpression expression1, PsiExpression expression2) {
+  private static boolean isSimpleLiteral(PsiExpression expression1, PsiExpression expression2) {
     if (!(expression1 instanceof PsiLiteralExpression) || expression2 == null) {
       return false;
     }
@@ -66,7 +72,7 @@ public class SimplifiableAssertionInspection extends BaseInspection implements C
     return PsiTypes.booleanType().equals(type);
   }
 
-  static boolean isEqualityComparison(PsiExpression expression) {
+  private static boolean isEqualityComparison(PsiExpression expression) {
     if (expression instanceof PsiBinaryExpression binaryExpression) {
       final IElementType tokenType = binaryExpression.getOperationTokenType();
       if (!tokenType.equals(JavaTokenType.EQEQ)) {
@@ -83,12 +89,37 @@ public class SimplifiableAssertionInspection extends BaseInspection implements C
     return EqualityCheck.from(expression) != null;
   }
 
-  static final CallMatcher ARRAYS_EQUALS = CallMatcher.staticCall("java.util.Arrays", "equals").parameterCount(2);
-  static boolean isArrayEqualityComparison(PsiExpression expression) {
+  private static final CallMatcher ARRAYS_EQUALS = CallMatcher.staticCall("java.util.Arrays", "equals").parameterCount(2);
+  private static boolean isArrayEqualityComparison(PsiExpression expression) {
     return expression instanceof PsiMethodCallExpression && ARRAYS_EQUALS.test((PsiMethodCallExpression)expression);
   }
 
-  static boolean isIdentityComparison(PsiExpression expression) {
+  private static boolean isInstanceOfComparison(@NotNull AssertHint assertHint, @NotNull PsiExpression expression) {
+    if (!(expression instanceof PsiInstanceOfExpression)) return false;
+    final PsiClass clazz = assertHint.getMethod().getContainingClass();
+    if (clazz == null) return false;
+    final String clazzName = clazz.getQualifiedName();
+    if (clazzName == null) return false;
+    final PsiClass assertClass = JavaPsiFacade.getInstance(expression.getProject())
+      .findClass(clazzName, GlobalSearchScope.allScope(expression.getProject()));
+    if (assertClass == null) return false;
+    final JvmMethod[] methods = assertClass.findMethodsByName("assertInstanceOf");
+    final JvmParameter[] originalParameters = assertHint.getMethod().getParameters();
+    for (final JvmMethod method : methods) {
+      final JvmParameter[] parameters = method.getParameters();
+      if (parameters.length - 1 != originalParameters.length) {
+        continue; // assertTrue(condition, ?, ?, ...) vs assertInstanceOf(param1, param2, ?, ?, ...)
+      }
+      if (originalParameters.length == 1) return true;
+      if (IntStream.range(1, originalParameters.length)
+        .allMatch(i -> Objects.equals(originalParameters[i].getType(), parameters[i + 1].getType()))) {
+        return true;
+      }
+    }
+    return false;
+  }
+
+  private static boolean isIdentityComparison(PsiExpression expression) {
     if (!(expression instanceof PsiBinaryExpression binaryExpression)) {
       return false;
     }
@@ -108,7 +139,7 @@ public class SimplifiableAssertionInspection extends BaseInspection implements C
     return !(rhsType instanceof PsiPrimitiveType);
   }
 
-  private class SimplifyAssertFix extends PsiUpdateModCommandQuickFix {
+  private static class SimplifyAssertFix extends PsiUpdateModCommandQuickFix {
 
     @Override
     @NotNull
@@ -155,6 +186,9 @@ public class SimplifiableAssertionInspection extends BaseInspection implements C
         else if (BoolUtils.isNegation(argument)) {
           replaceWithNegatedBooleanAssertion(assertTrueFalseHint);
         }
+        else if(assertTrue && isInstanceOfComparison(assertTrueFalseHint, argument)) {
+          replaceWithInstanceOfComparison(assertTrueFalseHint);
+        }
       }
     }
 
@@ -183,7 +217,7 @@ public class SimplifiableAssertionInspection extends BaseInspection implements C
       }
     }
 
-    private void replaceWithFail(AssertHint assertHint) {
+    private static void replaceWithFail(AssertHint assertHint) {
       @NonNls final StringBuilder newExpression = new StringBuilder();
       addStaticImportOrQualifier("fail", assertHint, newExpression);
       newExpression.append("fail(");
@@ -201,7 +235,7 @@ public class SimplifiableAssertionInspection extends BaseInspection implements C
      * <code>assertFalse</code> -> <code>assertNotEquals</code> (do not replace for junit 5 Assertions
      * as there is no primitive overloads for <code>assertNotEquals</code> and boxing would be enforced if replaced)
      */
-    private void replaceWithAssertEquals(AssertHint assertHint, final @NonNls String methodName) {
+    private static void replaceWithAssertEquals(AssertHint assertHint, final @NonNls String methodName) {
       final PsiExpression firstArgument = assertHint.getFirstArgument();
       PsiExpression lhs = null;
       PsiExpression rhs = null;
@@ -275,14 +309,14 @@ public class SimplifiableAssertionInspection extends BaseInspection implements C
       PsiReplacementUtil.replaceExpressionAndShorten(originalExpression, newExpression);
     }
 
-    private boolean isPrimitiveAndBoxedWithOverloads(PsiType lhsType, PsiType rhsType) {
+    private static boolean isPrimitiveAndBoxedWithOverloads(PsiType lhsType, PsiType rhsType) {
       if (lhsType instanceof PsiPrimitiveType && !PsiTypes.floatType().equals(lhsType) && !PsiTypes.doubleType().equals(lhsType)) {
         return rhsType instanceof PsiClassType;
       }
       return false;
     }
 
-    private void replaceWithNegatedBooleanAssertion(AssertHint assertHint) {
+    private static void replaceWithNegatedBooleanAssertion(AssertHint assertHint) {
       final PsiPrefixExpression expression = (PsiPrefixExpression)assertHint.getFirstArgument();
       final PsiExpression operand = PsiUtil.skipParenthesizedExprDown(expression.getOperand());
       if (operand == null) {
@@ -293,7 +327,7 @@ public class SimplifiableAssertionInspection extends BaseInspection implements C
       PsiReplacementUtil.replaceExpressionAndShorten(assertHint.getOriginalExpression(), newExpression);
     }
 
-    private void replaceAssertWithAssertNull(AssertHint assertHint) {
+    private static void replaceAssertWithAssertNull(AssertHint assertHint) {
       final PsiBinaryExpression binaryExpression = (PsiBinaryExpression)assertHint.getFirstArgument();
       final PsiExpression lhs = binaryExpression.getLOperand();
       PsiExpression rhs = binaryExpression.getROperand();
@@ -316,7 +350,16 @@ public class SimplifiableAssertionInspection extends BaseInspection implements C
       PsiReplacementUtil.replaceExpressionAndShorten(assertHint.getOriginalExpression(), newExpression);
     }
 
-    private String compoundMethodCall(@NonNls String methodName, AssertHint assertHint, String args) {
+    private static void replaceWithInstanceOfComparison(@NotNull AssertHint assertHint) {
+      final PsiInstanceOfExpression expression = (PsiInstanceOfExpression)assertHint.getFirstArgument();
+      final PsiExpression operand = expression.getOperand();
+      final PsiTypeElement type = expression.getCheckType();
+      if (type == null) return;
+      final String newExpression = compoundMethodCall("assertInstanceOf", assertHint, type.getText() + ".class," + operand.getText());
+      PsiReplacementUtil.replaceExpressionAndShorten(assertHint.getOriginalExpression(), newExpression);
+    }
+
+    private static String compoundMethodCall(@NonNls String methodName, AssertHint assertHint, String args) {
       final PsiExpression message = assertHint.getMessage();
       final StringBuilder newExpression = new StringBuilder();
       addStaticImportOrQualifier(methodName, assertHint, newExpression);
@@ -333,7 +376,7 @@ public class SimplifiableAssertionInspection extends BaseInspection implements C
       return newExpression.toString();
     }
 
-    private void replaceWithAssertSame(AssertHint assertHint) {
+    private static void replaceWithAssertSame(AssertHint assertHint) {
       final PsiBinaryExpression firstArgument = (PsiBinaryExpression)assertHint.getFirstArgument();
       PsiExpression lhs = firstArgument.getLOperand();
       PsiExpression rhs = firstArgument.getROperand();
@@ -358,7 +401,7 @@ public class SimplifiableAssertionInspection extends BaseInspection implements C
       PsiReplacementUtil.replaceExpressionAndShorten(assertHint.getOriginalExpression(), newExpression);
     }
 
-    private void replaceAssertEqualsWithAssertLiteral(AssertHint assertHint) {
+    private static void replaceAssertEqualsWithAssertLiteral(AssertHint assertHint) {
       final PsiExpression firstTestArgument = assertHint.getFirstArgument();
       final PsiExpression secondTestArgument = assertHint.getSecondArgument();
       final String literalValue;
@@ -378,7 +421,7 @@ public class SimplifiableAssertionInspection extends BaseInspection implements C
     }
   }
 
-  private class SimplifiableJUnitAssertionVisitor extends BaseInspectionVisitor {
+  private static class SimplifiableJUnitAssertionVisitor extends BaseInspectionVisitor {
 
     @Override
     public void visitMethodCallExpression(@NotNull PsiMethodCallExpression expression) {
@@ -419,11 +462,14 @@ public class SimplifiableAssertionInspection extends BaseInspection implements C
           else if (BoolUtils.isNegation(firstArgument)) {
             registerMethodCallError(expression, assertTrue ? "assertFalse()" : "assertTrue()");
           }
+          else if(assertTrue && isInstanceOfComparison(assertTrueFalseHint, firstArgument)) {
+            registerMethodCallError(expression, "assertInstanceOf()");
+          }
         }
       }
     }
 
-    private boolean hasPrimitiveOverload(AssertHint assertHint) {
+    private static boolean hasPrimitiveOverload(AssertHint assertHint) {
       final PsiClass containingClass = assertHint.getMethod().getContainingClass();
       if (containingClass == null) {
         return false;
@@ -438,7 +484,7 @@ public class SimplifiableAssertionInspection extends BaseInspection implements C
     }
 
     @NonNls
-    private String getReplacementMethodName(AssertHint assertHint) {
+    private static String getReplacementMethodName(AssertHint assertHint) {
       final PsiExpression firstArgument = assertHint.getFirstArgument();
       final PsiExpression secondArgument = assertHint.getSecondArgument();
       final PsiLiteralExpression literalExpression;
@@ -464,7 +510,7 @@ public class SimplifiableAssertionInspection extends BaseInspection implements C
       return "";
     }
 
-    private boolean isEqEqExpression(PsiExpression argument) {
+    private static boolean isEqEqExpression(PsiExpression argument) {
       if (!(argument instanceof PsiBinaryExpression binaryExpression)) {
         return false;
       }

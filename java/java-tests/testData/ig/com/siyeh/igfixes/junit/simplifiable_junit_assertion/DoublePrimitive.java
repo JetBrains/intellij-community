@@ -6,7 +6,7 @@ public class DoublePrimitive {
 
   @Test
   public void testPrimitive() {
-      <caret>assertTrue(doubleValue().equals(2.0));
+      <warning descr="'assertTrue()' can be simplified to 'assertEquals()'"><caret>assertTrue</warning>(doubleValue().equals(2.0));
   }
 
   Double doubleValue() {
