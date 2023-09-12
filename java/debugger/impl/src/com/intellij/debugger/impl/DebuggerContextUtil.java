@@ -13,8 +13,6 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileEditor.impl.FileEditorManagerImpl;
-import com.intellij.openapi.progress.EmptyProgressIndicator;
-import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiCompiledElement;
 import com.intellij.psi.PsiElement;
@@ -78,47 +76,44 @@ public final class DebuggerContextUtil {
     }
     final DebuggerSession session = context.getDebuggerSession();
     if (session != null) {
-      return ProgressManager.getInstance().runProcess(() -> {
-        try {
-          final XDebugSession debugSession = session.getXDebugSession();
-          if (debugSession != null) {
-            final XSourcePosition position = debugSession.getCurrentPosition();
-            Editor editor = ((FileEditorManagerImpl)FileEditorManager.getInstance(file.getProject())).getSelectedTextEditor(true);
+      try {
+        final XDebugSession debugSession = session.getXDebugSession();
+        if (debugSession != null) {
+          final XSourcePosition position = debugSession.getCurrentPosition();
+          Editor editor = ((FileEditorManagerImpl)FileEditorManager.getInstance(file.getProject())).getSelectedTextEditor(true);
 
-            //final Editor editor = fileEditor instanceof TextEditorImpl ? ((TextEditorImpl)fileEditor).getEditor() : null;
-            if (editor != null && position != null && position.getFile().equals(file.getOriginalFile().getVirtualFile())) {
-              PsiMethod method = PsiTreeUtil.getParentOfType(PositionUtil.getContextElement(context), PsiMethod.class, false);
-              final Collection<TextRange> ranges =
-                IdentifierHighlighterPass.getUsages(psi, method != null ? method : file, false);
-              final int breakPointLine = position.getLine();
-              int bestLine = -1;
-              int bestOffset = -1;
-              int textOffset = method != null ? method.getTextOffset() : -1;
-              for (TextRange range : ranges) {
-                // skip comments
-                if (range.getEndOffset() < textOffset) {
-                  continue;
-                }
-                final int line = editor.offsetToLogicalPosition(range.getStartOffset()).line;
-                if (line > bestLine && line < breakPointLine) {
-                  bestLine = line;
-                  bestOffset = range.getStartOffset();
-                }
-                else if (line == breakPointLine) {
-                  bestOffset = range.getStartOffset();
-                  break;
-                }
+          //final Editor editor = fileEditor instanceof TextEditorImpl ? ((TextEditorImpl)fileEditor).getEditor() : null;
+          if (editor != null && position != null && position.getFile().equals(file.getOriginalFile().getVirtualFile())) {
+            PsiMethod method = PsiTreeUtil.getParentOfType(PositionUtil.getContextElement(context), PsiMethod.class, false);
+            final Collection<TextRange> ranges =
+              IdentifierHighlighterPass.getUsages(psi, method != null ? method : file, false);
+            final int breakPointLine = position.getLine();
+            int bestLine = -1;
+            int bestOffset = -1;
+            int textOffset = method != null ? method.getTextOffset() : -1;
+            for (TextRange range : ranges) {
+              // skip comments
+              if (range.getEndOffset() < textOffset) {
+                continue;
               }
-              if (bestOffset > -1) {
-                return SourcePosition.createFromOffset(file, bestOffset);
+              final int line = editor.offsetToLogicalPosition(range.getStartOffset()).line;
+              if (line > bestLine && line < breakPointLine) {
+                bestLine = line;
+                bestOffset = range.getStartOffset();
               }
+              else if (line == breakPointLine) {
+                bestOffset = range.getStartOffset();
+                break;
+              }
+            }
+            if (bestOffset > -1) {
+              return SourcePosition.createFromOffset(file, bestOffset);
             }
           }
         }
-        catch (Exception ignore) {
-        }
-        return null;
-      }, new EmptyProgressIndicator());
+      }
+      catch (Exception ignore) {
+      }
     }
     return null;
   }
