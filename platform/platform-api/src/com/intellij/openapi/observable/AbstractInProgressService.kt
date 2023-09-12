@@ -1,5 +1,5 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.ide.observation
+package com.intellij.openapi.observable
 
 import com.intellij.concurrency.currentThreadContext
 import com.intellij.concurrency.installThreadContext

@@ -3,6 +3,7 @@ package com.intellij.openapi.externalSystem.service
 
 import com.intellij.ide.observation.ActivityInProgressPredicate
 import com.intellij.openapi.components.serviceAsync
+import com.intellij.openapi.externalSystem.util.ExternalSystemInProgressService
 import com.intellij.openapi.project.Project
 
 
