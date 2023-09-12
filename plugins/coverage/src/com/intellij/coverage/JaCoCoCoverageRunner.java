@@ -5,7 +5,6 @@ import com.intellij.codeEditor.printing.ExportToHTMLSettings;
 import com.intellij.coverage.analysis.AnalysisUtils;
 import com.intellij.coverage.analysis.JavaCoverageClassesEnumerator;
 import com.intellij.execution.configurations.ModuleBasedConfiguration;
-import com.intellij.execution.configurations.RunConfigurationBase;
 import com.intellij.execution.configurations.SimpleJavaParameters;
 import com.intellij.execution.target.java.JavaTargetParameter;
 import com.intellij.java.coverage.JavaCoverageBundle;
@@ -56,7 +55,7 @@ public final class JaCoCoCoverageRunner extends JavaCoverageRunner {
     try {
       final Project project = baseCoverageSuite instanceof BaseCoverageSuite ? baseCoverageSuite.getProject() : null;
       if (project != null) {
-        RunConfigurationBase configuration = ((BaseCoverageSuite)baseCoverageSuite).getConfiguration();
+        var configuration = ((BaseCoverageSuite)baseCoverageSuite).getConfiguration();
 
         Module mainModule = configuration instanceof ModuleBasedConfiguration
                             ? ((ModuleBasedConfiguration<?, ?>)configuration).getConfigurationModule().getModule()
@@ -171,11 +170,11 @@ public final class JaCoCoCoverageRunner extends JavaCoverageRunner {
           Files.walkFileTree(rootPath, new SimpleFileVisitor<>() {
             @Override
             public FileVisitResult visitFile(Path path, BasicFileAttributes attrs) {
-              String vmClassName = rootPath.relativize(path).toString().replaceAll(StringUtil.escapeToRegexp(File.separator), ".");
-              vmClassName = StringUtil.trimEnd(vmClassName, ".class");
-              if (JavaCoverageSuite.isClassFiltered(vmClassName, suite.getExcludedClassNames()) ||
-                  (!suite.isClassFiltered(vmClassName) &&
-                   !suite.isPackageFiltered(StringUtil.getPackageName(vmClassName)))) {
+              String internalName = StringUtil.trimEnd(rootPath.relativize(path).toString(), ".class");
+              String fqn = AnalysisUtils.internalNameToFqn(internalName);
+              if (JavaCoverageSuite.isClassFiltered(fqn, suite.getExcludedClassNames()) ||
+                  (!suite.isClassFiltered(fqn) &&
+                   !suite.isPackageFiltered(StringUtil.getPackageName(fqn)))) {
                 return FileVisitResult.CONTINUE;
               }
               File file = path.toFile();
@@ -281,7 +280,7 @@ public final class JaCoCoCoverageRunner extends JavaCoverageRunner {
   public void generateReport(CoverageSuitesBundle suite, Project project) throws IOException {
     final ExportToHTMLSettings settings = ExportToHTMLSettings.getInstance(project);
     File targetDirectory = new File(settings.OUTPUT_DIRECTORY);
-    RunConfigurationBase runConfiguration = suite.getRunConfiguration();
+    var runConfiguration = suite.getRunConfiguration();
     Module module = runConfiguration instanceof ModuleBasedConfiguration
                     ? ((ModuleBasedConfiguration<?, ?>)runConfiguration).getConfigurationModule().getModule()
                     : null;

@@ -55,7 +55,7 @@ public final class JavaCoverageEnabledConfiguration extends CoverageEnabledConfi
   }
 
   @Nullable
-  public static JavaCoverageEnabledConfiguration getFrom(@NotNull final RunConfigurationBase configuration) {
+  public static JavaCoverageEnabledConfiguration getFrom(@NotNull final RunConfigurationBase<?> configuration) {
     final CoverageEnabledConfiguration coverageEnabledConfiguration = getOrCreate(configuration);
     if (coverageEnabledConfiguration instanceof JavaCoverageEnabledConfiguration) {
       return (JavaCoverageEnabledConfiguration)coverageEnabledConfiguration;
@@ -63,7 +63,7 @@ public final class JavaCoverageEnabledConfiguration extends CoverageEnabledConfi
     return null;
   }
 
-  public void appendCoverageArgument(@NotNull RunConfigurationBase configuration, final SimpleJavaParameters javaParameters) {
+  public void appendCoverageArgument(@NotNull RunConfigurationBase<?> configuration, final SimpleJavaParameters javaParameters) {
     final CoverageRunner runner = getCoverageRunner();
     if (runner instanceof JavaCoverageRunner javaCoverageRunner) {
       final String path = getCoverageFilePath();
@@ -136,7 +136,7 @@ public final class JavaCoverageEnabledConfiguration extends CoverageEnabledConfi
 
     // coverage patters
     List<Element> children = element.getChildren(COVERAGE_PATTERN_ELEMENT_NAME);
-    if (children.size() > 0) {
+    if (!children.isEmpty()) {
       myCoveragePatterns = new ClassFilter[children.size()];
       for (int i = 0; i < children.size(); i++) {
         Element e = children.get(i);

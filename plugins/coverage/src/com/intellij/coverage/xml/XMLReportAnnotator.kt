@@ -7,12 +7,14 @@ import com.intellij.coverage.analysis.AnalysisUtils
 import com.intellij.coverage.analysis.JavaCoverageAnnotator
 import com.intellij.coverage.analysis.PackageAnnotator.ClassCoverageInfo
 import com.intellij.coverage.analysis.PackageAnnotator.PackageCoverageInfo
+import com.intellij.openapi.components.Service
 import com.intellij.openapi.module.ModuleManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.OrderEnumerator
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.rt.coverage.report.XMLProjectData
 
+@Service(Service.Level.PROJECT)
 class XMLReportAnnotator(project: Project?) : JavaCoverageAnnotator(project) {
   override fun createRenewRequest(suite: CoverageSuitesBundle, dataManager: CoverageDataManager) = Runnable {
     val annotator = JavaPackageAnnotator()

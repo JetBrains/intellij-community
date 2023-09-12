@@ -156,7 +156,7 @@ public abstract class JavaCoverageClassesEnumerator {
   private boolean isPackageFiltered(@NotNull PsiPackage psiPackage) {
     final String qualifiedName = psiPackage.getQualifiedName();
     for (CoverageSuite coverageSuite : mySuite.getSuites()) {
-      if (coverageSuite instanceof JavaCoverageSuite && ((JavaCoverageSuite)coverageSuite).isPackageFiltered(qualifiedName)) {
+      if (coverageSuite instanceof JavaCoverageSuite javaSuite && javaSuite.isPackageFiltered(qualifiedName)) {
         return true;
       }
     }
