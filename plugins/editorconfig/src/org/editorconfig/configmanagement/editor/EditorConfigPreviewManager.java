@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.editorconfig.configmanagement.editor;
 
 import com.intellij.openapi.components.PersistentStateComponent;
@@ -8,7 +8,7 @@ import com.intellij.openapi.components.StoragePathMacros;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
-import org.apache.commons.lang.CharUtils;
+import org.apache.commons.lang3.CharUtils;
 import org.editorconfig.language.psi.EditorConfigHeader;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
@@ -79,7 +79,7 @@ public class EditorConfigPreviewManager implements PersistentStateComponent<Elem
         extBuilder.append(c);
       }
       else {
-        if (isInExt && extBuilder.length() > 0) {
+        if (isInExt && !extBuilder.isEmpty()) {
           extensions.add(extBuilder.toString());
           extBuilder = new StringBuilder();
         }

@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.maven.wizards;
 
 import com.intellij.ide.util.projectWizard.*;
@@ -22,7 +22,6 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
-import org.apache.commons.lang.StringUtils;
 import org.jdom.JDOMException;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -127,9 +126,9 @@ public abstract class AbstractMavenModuleBuilder extends ModuleBuilder implement
     if (sdk1 == null && sdk2 == null) return true;
     if (sdk1 == null || sdk2 == null) return false;
     return sdk1.getSdkType() == sdk2.getSdkType()
-           && StringUtils.equals(sdk1.getName(), sdk2.getName())
-           && StringUtils.equals(sdk1.getVersionString(), sdk2.getVersionString())
-           && StringUtils.equals(sdk1.getHomePath(), sdk2.getHomePath())
+           && StringUtil.equals(sdk1.getName(), sdk2.getName())
+           && StringUtil.equals(sdk1.getVersionString(), sdk2.getVersionString())
+           && StringUtil.equals(sdk1.getHomePath(), sdk2.getHomePath())
       ;
   }
 

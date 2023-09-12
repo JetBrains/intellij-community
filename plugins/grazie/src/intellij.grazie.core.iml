@@ -14,11 +14,10 @@
     <orderEntry type="library" name="jackson-databind" level="project" />
     <orderEntry type="library" name="Slf4j" level="project" />
     <orderEntry type="library" name="slf4j-jdk14" level="project" />
-    <orderEntry type="library" name="commons-lang3" level="project" />
     <orderEntry type="library" name="commons-logging" level="project" />
     <orderEntry type="module-library">
       <library name="commons-text" type="repository">
-        <properties include-transitive-deps="false" maven-id="org.apache.commons:commons-text:1.10.0">
+        <properties include-transitive-deps="false" jar-repository-id="central-proxy" maven-id="org.apache.commons:commons-text:1.10.0">
           <verification>
             <artifact url="file://$MAVEN_REPOSITORY$/org/apache/commons/commons-text/1.10.0/commons-text-1.10.0.jar">
               <sha256sum>770cd903fa7b604d1f7ef7ba17f84108667294b2b478be8ed1af3bffb4ae0018</sha256sum>
@@ -87,19 +86,19 @@
     </orderEntry>
     <orderEntry type="module-library">
       <library name="net.loomchild:segment:2.0.1" type="repository">
-        <properties include-transitive-deps="false" maven-id="net.loomchild:segment:2.0.1">
+        <properties include-transitive-deps="false" jar-repository-id="central-proxy" maven-id="net.loomchild:segment:2.0.3">
           <verification>
-            <artifact url="file://$MAVEN_REPOSITORY$/net/loomchild/segment/2.0.1/segment-2.0.1.jar">
-              <sha256sum>00ffa85bb3aaf252ecfab4f97f8b49a8894aced02229529ff5c2a7ad31f94070</sha256sum>
+            <artifact url="file://$MAVEN_REPOSITORY$/net/loomchild/segment/2.0.3/segment-2.0.3.jar">
+              <sha256sum>a134be9884ddfa18304c8e437e64aa598d83ccfa439310029e61ea3fdae8b2ce</sha256sum>
             </artifact>
           </verification>
         </properties>
         <CLASSES>
-          <root url="jar://$MAVEN_REPOSITORY$/net/loomchild/segment/2.0.1/segment-2.0.1.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/net/loomchild/segment/2.0.3/segment-2.0.3.jar!/" />
         </CLASSES>
         <JAVADOC />
         <SOURCES>
-          <root url="jar://$MAVEN_REPOSITORY$/net/loomchild/segment/2.0.1/segment-2.0.1-sources.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/net/loomchild/segment/2.0.3/segment-2.0.3-sources.jar!/" />
         </SOURCES>
       </library>
     </orderEntry>

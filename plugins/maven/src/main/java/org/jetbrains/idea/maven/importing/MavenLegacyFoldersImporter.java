@@ -22,7 +22,6 @@ import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
 import com.intellij.util.containers.NotNullList;
-import org.apache.commons.lang.StringUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.maven.model.MavenResource;
@@ -245,10 +244,10 @@ class MavenLegacyFoldersImporter {
   private void configOutputFolders(boolean test) {
     if (myImportingSettings.isUseMavenOutput()) {
       if (test) {
-        myModel.useModuleOutput(StringUtils.EMPTY, myMavenProject.getTestOutputDirectory());
+        myModel.useModuleOutput("", myMavenProject.getTestOutputDirectory());
       }
       else {
-        myModel.useModuleOutput(myMavenProject.getOutputDirectory(), StringUtils.EMPTY);
+        myModel.useModuleOutput(myMavenProject.getOutputDirectory(), "");
       }
     }
 
@@ -331,7 +330,7 @@ class MavenLegacyFoldersImporter {
   private void generateNewContentRoots(boolean orphansOnly) {
     Map<String, SourceFolder> sourceFoldersMap = new TreeMap<>(FileUtil::comparePaths);
     for (String sourceRootUrl : myModel.getSourceRootUrls(true)) {
-      String sourceRootPath = FileUtil.toSystemDependentName(VfsUtil.urlToPath(sourceRootUrl));
+      String sourceRootPath = FileUtil.toSystemDependentName(VfsUtilCore.urlToPath(sourceRootUrl));
       SourceFolder sourceFolder = myModel.getSourceFolder(new File(sourceRootPath));
       if (sourceFolder != null) {
         sourceFoldersMap.put(sourceRootUrl, sourceFolder);

@@ -6,7 +6,7 @@ import com.intellij.cce.workspace.info.FileEvaluationInfo
 import com.intellij.cce.workspace.storages.FeaturesStorage
 import kotlinx.html.*
 import kotlinx.html.stream.createHTML
-import org.apache.commons.lang.StringEscapeUtils
+import org.apache.commons.lang3.StringEscapeUtils
 
 class BasicFileReportGenerator(
   filterName: String,
@@ -61,7 +61,7 @@ class BasicFileReportGenerator(
 
       for (sessionGroup in sessionGroups) {
         val session = sessionGroup.filterNotNull().first()
-        val commonText = StringEscapeUtils.escapeHtml(text.substring(offset, session.offset))
+        val commonText = StringEscapeUtils.escapeHtml4(text.substring(offset, session.offset))
         append(commonText)
 
         val center = session.expectedText.length / sessions.size
@@ -75,7 +75,7 @@ class BasicFileReportGenerator(
         append(getSpan(sessionGroup.last(), session.expectedText.substring(shift), lookupOrder))
         offset = session.offset + session.expectedText.length
       }
-      append(StringEscapeUtils.escapeHtml(text.substring(offset)))
+      append(StringEscapeUtils.escapeHtml4(text.substring(offset)))
       toString()
     }
   }

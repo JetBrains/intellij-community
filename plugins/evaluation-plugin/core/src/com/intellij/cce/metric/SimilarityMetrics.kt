@@ -4,7 +4,7 @@ package com.intellij.cce.metric
 import com.intellij.cce.core.Lookup
 import com.intellij.cce.core.Session
 import com.intellij.cce.metric.util.Bootstrap
-import org.apache.commons.lang.StringUtils
+import org.apache.commons.lang3.StringUtils
 import kotlin.math.max
 import kotlin.math.min
 
@@ -79,7 +79,7 @@ class PrefixSimilarity(showByDefault: Boolean = false) : SimilarityMetric(showBy
 
   override fun computeSimilarity(lookup: Lookup, expectedText: String): Double? =
     lookup.suggestions.maxOfOrNull {
-      StringUtils.getCommonPrefix(arrayOf(it.text.drop(lookup.prefix.length), expectedText)).length
+      StringUtils.getCommonPrefix(it.text.drop(lookup.prefix.length), expectedText).length
     }?.toDouble()
 }
 

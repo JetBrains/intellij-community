@@ -58,7 +58,7 @@ import com.intellij.util.containers.MultiMap;
 import com.intellij.util.text.VersionComparatorUtil;
 import com.intellij.util.xml.NanoXmlBuilder;
 import com.intellij.util.xml.NanoXmlUtil;
-import org.apache.commons.lang.StringUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.jdom.Element;
 import org.jdom.JDOMException;
 import org.jdom.Namespace;
@@ -100,7 +100,6 @@ import static com.intellij.openapi.util.io.JarUtil.loadProperties;
 import static com.intellij.openapi.util.text.StringUtil.*;
 import static com.intellij.util.xml.NanoXmlBuilder.stop;
 import static icons.ExternalSystemIcons.Task;
-import static org.apache.commons.lang.StringUtils.EMPTY;
 import static org.jetbrains.idea.maven.project.MavenHomeKt.resolveMavenHomeType;
 import static org.jetbrains.idea.maven.project.MavenHomeKt.staticOrBundled;
 
@@ -1613,7 +1612,7 @@ public class MavenUtil {
   @NotNull
   public static String getCompilerPluginVersion(@NotNull MavenProject mavenProject) {
     MavenPlugin plugin = mavenProject.findPlugin("org.apache.maven.plugins", "maven-compiler-plugin");
-    return plugin != null ? plugin.getVersion() : EMPTY;
+    return plugin != null ? plugin.getVersion() : "";
   }
 
   public static boolean isWrapper(@NotNull MavenGeneralSettings settings) {
@@ -1657,7 +1656,7 @@ public class MavenUtil {
       baseDir = getBaseDir(projects.get(0).getDirectoryFile()).toString();
     }
     if (null == baseDir) {
-      baseDir = EMPTY;
+      baseDir = "";
     }
 
     MavenEmbedderWrapper embedderWrapper = embeddersManager.getEmbedder(MavenEmbeddersManager.FOR_POST_PROCESSING, baseDir);

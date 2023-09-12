@@ -20,7 +20,7 @@ import com.intellij.vfs.AsyncVfsEventsPostProcessorImpl
 import git4idea.index.vfs.GitIndexFileSystemRefresher
 import git4idea.test.GitSingleRepoTest
 import junit.framework.TestCase
-import org.apache.commons.lang.RandomStringUtils
+import org.apache.commons.lang3.RandomStringUtils
 import java.util.concurrent.Future
 import java.util.concurrent.TimeUnit
 
