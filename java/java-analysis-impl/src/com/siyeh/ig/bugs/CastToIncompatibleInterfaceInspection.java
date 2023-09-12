@@ -32,7 +32,8 @@ public class CastToIncompatibleInterfaceInspection extends BaseInspection {
   @NotNull
   public String buildErrorString(Object... infos) {
     final Boolean isInterface = (Boolean)infos[0];
-    return InspectionGadgetsBundle.message("casting.to.incompatible.interface.problem.descriptor", isInterface ? 1 : 2);
+    final String className = (String)infos[1];
+    return InspectionGadgetsBundle.message("casting.to.incompatible.interface.problem.descriptor", isInterface ? 1 : 2, className);
   }
 
   @Override
@@ -75,6 +76,10 @@ public class CastToIncompatibleInterfaceInspection extends BaseInspection {
       if (operandClass == null) {
         return;
       }
+      String operandClassName = operandClass.getName();
+      if (operandClassName == null) {
+        return;
+      }
       ThreeState hasMutualSubclass = InheritanceUtil.existsMutualSubclass(operandClass, castClass, isOnTheFly());
       if (hasMutualSubclass == ThreeState.YES) return;
       if (InstanceOfUtils.findCorrespondingInstanceOf(expression) != null) return;
@@ -83,7 +88,7 @@ public class CastToIncompatibleInterfaceInspection extends BaseInspection {
       if (hasMutualSubclass == ThreeState.UNSURE) {
         registerPossibleProblem(castTypeElement);
       } else {
-        registerError(castTypeElement, castClass.isInterface());
+        registerError(castTypeElement, castClass.isInterface(), operandClassName);
       }
     }
   }

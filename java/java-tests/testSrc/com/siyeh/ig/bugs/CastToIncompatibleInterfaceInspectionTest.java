@@ -12,7 +12,7 @@ public class CastToIncompatibleInterfaceInspectionTest extends LightJavaInspecti
 
   public void testSimple() {
     doTest("class X { " +
-           "  I list = (/*Cast to incompatible interface 'I'*/I/**/) new C(); " +
+           "  I list = (/*Cast of expression with type 'C' to incompatible interface 'I'*/I/**/) new C(); " +
            "}" +
            "interface I {}" +
            "class C {}");

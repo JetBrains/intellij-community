@@ -26,7 +26,7 @@ public class InstanceofIncompatibleInterfaceInspectionTest extends LightJavaInsp
            interface Bravo {}
            class Charlie {
              boolean x(Alfa a) {
-               return a instanceof /*'instanceof' with incompatible interface 'Bravo'*/Bravo/**/;
+               return a instanceof /*'instanceof' of expression with type 'Alfa' with incompatible interface 'Bravo'*/Bravo/**/;
              }
            }
            """);
@@ -39,10 +39,10 @@ public class InstanceofIncompatibleInterfaceInspectionTest extends LightJavaInsp
              final class Main213 {
              
                  static void x(Foo f, Bar b) {
-                     if (f instanceof /*'instanceof' with incompatible interface 'Bar'*/Bar/**/) {
+                     if (f instanceof /*'instanceof' of expression with type 'Foo' with incompatible interface 'Bar'*/Bar/**/) {
                          System.out.println("fail");
                      }
-                     if (b instanceof /*'instanceof' with incompatible class 'Foo'*/Foo/**/) {
+                     if (b instanceof /*'instanceof' of expression with type 'Bar' with incompatible class 'Foo'*/Foo/**/) {
                          System.out.println("fail");
                      }
                  }
