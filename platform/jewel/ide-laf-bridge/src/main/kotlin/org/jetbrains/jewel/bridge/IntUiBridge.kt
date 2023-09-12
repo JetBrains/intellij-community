@@ -731,8 +731,8 @@ private fun readLazyTreeStyle(iconData: IntelliJThemeIconData, svgLoader: SvgLoa
         colors = colors,
         metrics = IntUiLazyTreeMetrics(
             indentSize = retrieveIntAsDpOrUnspecified("Tree.leftChildIndent").takeOrElse { 7.dp } +
-                retrieveIntAsDpOrUnspecified("Tree.rightChildIndent").takeOrElse { 11.dp },
-            elementBackgroundCornerSize = CornerSize(JBUI.CurrentTheme.Tree.ARC.dp),
+                    retrieveIntAsDpOrUnspecified("Tree.rightChildIndent").takeOrElse { 11.dp },
+            elementBackgroundCornerSize = CornerSize(JBUI.CurrentTheme.Tree.ARC.dp / 2),
             elementPadding = PaddingValues(horizontal = 12.dp),
             elementContentPadding = PaddingValues(4.dp),
             elementMinHeight = retrieveIntAsDpOrUnspecified("Tree.rowHeight").takeOrElse { 24.dp },
