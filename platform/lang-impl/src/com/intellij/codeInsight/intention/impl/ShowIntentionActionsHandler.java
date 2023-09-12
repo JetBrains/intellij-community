@@ -289,7 +289,8 @@ public class ShowIntentionActionsHandler implements CodeInsightActionHandler {
       ModCommandAction commandAction = action.asModCommandAction();
       if (commandAction != null) {
         invokeCommandAction(hostFile, hostEditor, commandName, commandAction, problemOffset);
-      } else {
+      }
+      else {
         Pair<PsiFile, Editor> pair = chooseFileForAction(hostFile, hostEditor, action);
         if (pair == null) return false;
         CommandProcessor.getInstance().executeCommand(project, () ->
