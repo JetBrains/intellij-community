@@ -29,7 +29,7 @@ import java.util.concurrent.*;
 public class JavaCoverageClassesAnnotator extends JavaCoverageClassesEnumerator {
   private static final Logger LOG = Logger.getInstance(JavaCoverageClassesAnnotator.class);
 
-  private final PackageAnnotator.Annotator myAnnotator;
+  private final Annotator myAnnotator;
   private final ProjectData myProjectData;
   private final Map<String, PackageAnnotator.AtomicPackageCoverageInfo> myFlattenPackages = new ConcurrentHashMap<>();
   private final Map<VirtualFile, PackageAnnotator.AtomicPackageCoverageInfo> myFlattenDirectories = new ConcurrentHashMap<>();
@@ -39,13 +39,13 @@ public class JavaCoverageClassesAnnotator extends JavaCoverageClassesEnumerator 
 
   public JavaCoverageClassesAnnotator(@NotNull CoverageSuitesBundle suite,
                                       @NotNull Project project,
-                                      @NotNull PackageAnnotator.Annotator annotator) {
+                                      @NotNull Annotator annotator) {
     this(suite, project, annotator, 0);
   }
 
   public JavaCoverageClassesAnnotator(@NotNull CoverageSuitesBundle suite,
                                       @NotNull Project project,
-                                      @NotNull PackageAnnotator.Annotator annotator,
+                                      @NotNull Annotator annotator,
                                       int totalRoots) {
     super(suite, project, totalRoots);
     myAnnotator = annotator;
@@ -69,7 +69,7 @@ public class JavaCoverageClassesAnnotator extends JavaCoverageClassesEnumerator 
 
     final Map<String, PackageAnnotator.PackageCoverageInfo> packages = new HashMap<>();
     for (Map.Entry<String, PackageAnnotator.AtomicPackageCoverageInfo> entry : myFlattenPackages.entrySet()) {
-      String packageFQName = entry.getKey().replace('/', '.');
+      String packageFQName = AnalysisUtils.internalNameToFqn(entry.getKey());
       final PackageAnnotator.PackageCoverageInfo info = entry.getValue().toPackageCoverageInfo();
       myAnnotator.annotatePackage(packageFQName, info, true);
 
@@ -135,7 +135,7 @@ public class JavaCoverageClassesAnnotator extends JavaCoverageClassesEnumerator 
     var children = new HashMap<String, File>();
     for (File file : files) {
       if (ignoreClass(file)) continue;
-      children.put(PackageAnnotator.getClassName(file), processUnloaded ? file : null);
+      children.put(AnalysisUtils.getClassName(file), processUnloaded ? file : null);
     }
     if (children.isEmpty()) return;
     myExecutor.execute(() -> {
@@ -227,7 +227,7 @@ public class JavaCoverageClassesAnnotator extends JavaCoverageClassesEnumerator 
         .getSourceFolders(isTestHierarchy ? JavaSourceRootType.TEST_SOURCE : JavaSourceRootType.SOURCE)) {
         final VirtualFile file = folder.getFile();
         if (file == null) continue;
-        final String prefix = folder.getPackagePrefix().replace('.', '/');
+        final String prefix = AnalysisUtils.fqnToInternalName(folder.getPackagePrefix());
         final VirtualFile relativeSrcRoot = file.findFileByRelativePath(StringUtil.trimStart(rootPackageVMName, prefix));
         result.add(relativeSrcRoot);
       }

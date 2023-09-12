@@ -2,6 +2,7 @@
 package com.intellij.coverage;
 
 import com.intellij.codeEditor.printing.ExportToHTMLSettings;
+import com.intellij.coverage.analysis.AnalysisUtils;
 import com.intellij.coverage.analysis.JavaCoverageClassesEnumerator;
 import com.intellij.execution.configurations.ModuleBasedConfiguration;
 import com.intellij.execution.configurations.RunConfigurationBase;
@@ -107,8 +108,7 @@ public final class JaCoCoCoverageRunner extends JavaCoverageRunner {
     loadReportToCoverageBuilder(coverageBuilder, sessionDataFile, mainModule, project, loader, (JavaCoverageSuite)suite);
 
     for (IClassCoverage classCoverage : coverageBuilder.getClasses()) {
-      String className = classCoverage.getName();
-      className = className.replace('\\', '.').replace('/', '.');
+      String className = AnalysisUtils.internalNameToFqn(classCoverage.getName());
       final ClassData classData = data.getOrCreateClassData(className);
       final Collection<IMethodCoverage> methods = classCoverage.getMethods();
       LineData[] lines = new LineData[classCoverage.getLastLine() + 1];

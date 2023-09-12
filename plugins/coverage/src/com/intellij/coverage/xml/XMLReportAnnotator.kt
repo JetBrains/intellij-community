@@ -3,8 +3,8 @@ package com.intellij.coverage.xml
 
 import com.intellij.coverage.CoverageDataManager
 import com.intellij.coverage.CoverageSuitesBundle
+import com.intellij.coverage.analysis.AnalysisUtils
 import com.intellij.coverage.analysis.JavaCoverageAnnotator
-import com.intellij.coverage.analysis.PackageAnnotator
 import com.intellij.coverage.analysis.PackageAnnotator.ClassCoverageInfo
 import com.intellij.coverage.analysis.PackageAnnotator.PackageCoverageInfo
 import com.intellij.openapi.module.ModuleManager
@@ -50,7 +50,7 @@ class XMLReportAnnotator(project: Project?) : JavaCoverageAnnotator(project) {
     }
 
     // Include anonymous and internal classes to the containing class
-    classCoverage.entries.groupBy { PackageAnnotator.getSourceToplevelFQName(it.key) }.forEach { (className, classes) ->
+    classCoverage.entries.groupBy { AnalysisUtils.getSourceToplevelFQName(it.key) }.forEach { (className, classes) ->
       val coverage = ClassCoverageInfo()
       classes.forEach { coverage.append(it.value) }
       annotator.annotateClass(className, coverage)

@@ -94,7 +94,7 @@ public class JavaCoverageAnnotator extends BaseCoverageAnnotator implements Disp
     myStructure = null;
   }
 
-  public class JavaPackageAnnotator implements PackageAnnotator.Annotator {
+  public class JavaPackageAnnotator implements Annotator {
     @Override
     public void annotatePackage(String packageQualifiedName, PackageAnnotator.PackageCoverageInfo packageCoverageInfo) {
       myPackageCoverageInfos.put(packageQualifiedName, packageCoverageInfo);
@@ -137,7 +137,7 @@ public class JavaCoverageAnnotator extends BaseCoverageAnnotator implements Disp
     final Project project = getProject();
 
     return () -> {
-      PackageAnnotator.Annotator annotator = new JavaPackageAnnotator();
+      Annotator annotator = new JavaPackageAnnotator();
 
       long timeMs = TimeoutUtil.measureExecutionTime(() -> {
         final int totalRoots = new JavaCoverageClassesEnumerator.RootsCounter(suite, project).getRoots();

@@ -2,6 +2,7 @@
 package com.intellij.coverage;
 
 import com.intellij.codeEditor.printing.ExportToHTMLSettings;
+import com.intellij.coverage.analysis.Annotator;
 import com.intellij.coverage.analysis.JavaCoverageClassesAnnotator;
 import com.intellij.coverage.analysis.PackageAnnotator;
 import com.intellij.idea.ExcludeFromTestDiscovery;
@@ -82,7 +83,7 @@ public class CoverageIntegrationTest extends JavaModuleTestCase {
     return bundle;
   }
 
-  private static class PackageAnnotationConsumer implements PackageAnnotator.Annotator {
+  private static class PackageAnnotationConsumer implements Annotator {
     private final Map<VirtualFile, PackageAnnotator.PackageCoverageInfo> myDirectoryCoverage = new HashMap<>();
     private final Map<String, PackageAnnotator.PackageCoverageInfo> myPackageCoverage = new HashMap<>();
     private final Map<String, PackageAnnotator.PackageCoverageInfo> myFlatPackageCoverage = new HashMap<>();

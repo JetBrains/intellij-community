@@ -85,8 +85,7 @@ public abstract class JavaCoverageClassesEnumerator {
     final Module[] modules = myCoverageManager.doInReadActionIfProjectOpen(() -> ModuleManager.getInstance(myProject).getModules());
     if (modules == null) return;
 
-    final String qualifiedName = psiPackage.getQualifiedName();
-    final String rootPackageVMName = qualifiedName.replace('.', '/');
+    final String rootPackageVMName = AnalysisUtils.fqnToInternalName(psiPackage.getQualifiedName());
 
     final Set<VirtualFile> seenRoots = new HashSet<>();
     for (final Module module : modules) {
@@ -124,14 +123,14 @@ public abstract class JavaCoverageClassesEnumerator {
       if (children == null) continue;
       final Map<String, List<File>> topLevelClasses = new HashMap<>();
       for (File child : children) {
-        if (PackageAnnotator.isClassFile(child)) {
-          final String childName = PackageAnnotator.getClassName(child);
-          final String classFqVMName = !packageVMName.isEmpty() ? packageVMName + "/" + childName : childName;
-          final String toplevelClassSrcFQName = PackageAnnotator.getSourceToplevelFQName(classFqVMName);
+        if (AnalysisUtils.isClassFile(child)) {
+          String simpleName = AnalysisUtils.getClassName(child);
+          String classFqVMName = AnalysisUtils.buildVMName(packageVMName, simpleName);
+          String toplevelClassSrcFQName = AnalysisUtils.getSourceToplevelFQName(classFqVMName);
           topLevelClasses.computeIfAbsent(toplevelClassSrcFQName, k -> new ArrayList<>()).add(child);
         }
         else if (child.isDirectory()) {
-          final String childPackageVMName = getChildVMName(packageVMName, child);
+          String childPackageVMName = AnalysisUtils.buildVMName(packageVMName, child.getName());
           stack.push(new PackageData(childPackageVMName, child.listFiles()));
         }
       }
@@ -153,13 +152,6 @@ public abstract class JavaCoverageClassesEnumerator {
 
   private record PackageData(String packageVMName, File[] children) {
   }
-
-  @NotNull
-  protected static String getChildVMName(@NotNull String packageVMName, @NotNull File child) {
-    final String childName = child.getName();
-    return !packageVMName.isEmpty() ? packageVMName + "/" + childName : childName;
-  }
-
 
   private boolean isPackageFiltered(@NotNull PsiPackage psiPackage) {
     final String qualifiedName = psiPackage.getQualifiedName();
