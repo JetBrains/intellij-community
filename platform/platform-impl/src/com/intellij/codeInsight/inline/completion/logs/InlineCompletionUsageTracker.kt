@@ -26,7 +26,7 @@ import kotlin.random.Random
 
 @ApiStatus.Experimental
 object InlineCompletionUsageTracker : CounterUsagesCollector() {
-  private val GROUP: EventLogGroup = EventLogGroup("inline.completion", 4)
+  private val GROUP = EventLogGroup("inline.completion", 5)
 
   override fun getGroup() = GROUP
 
@@ -170,7 +170,7 @@ object InlineCompletionUsageTracker : CounterUsagesCollector() {
   }
 
   private val InvokedEvent: VarargEventId = GROUP.registerVarargEvent(
-    "inline.invoked",
+    "invoked",
     InvokedEvents.REQUEST_ID,
     EventFields.Language,
     EventFields.CurrentFile,
@@ -247,7 +247,7 @@ object InlineCompletionUsageTracker : CounterUsagesCollector() {
   }
 
   private val ShownEvent: VarargEventId = GROUP.registerVarargEvent(
-    "inline.shown",
+    "shown",
     ShownEvents.REQUEST_ID,
     ShownEvents.SUGGESTION_LENGTH,
     ShownEvents.TIME_TO_SHOW,
