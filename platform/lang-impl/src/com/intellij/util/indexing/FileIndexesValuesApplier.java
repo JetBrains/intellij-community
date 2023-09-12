@@ -5,7 +5,7 @@ import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.newvfs.impl.VfsData;
 import com.intellij.util.indexing.contentQueue.IndexUpdateRunner;
-import com.intellij.util.indexing.dependencies.FileIndexingStampService.FileIndexingStamp;
+import com.intellij.util.indexing.dependencies.FileIndexingStamp;
 import com.intellij.util.indexing.diagnostic.FileIndexingStatistics;
 import com.intellij.util.indexing.events.VfsEventsMerger;
 import org.jetbrains.annotations.ApiStatus;

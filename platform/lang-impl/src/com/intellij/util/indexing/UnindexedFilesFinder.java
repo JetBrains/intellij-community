@@ -17,7 +17,7 @@ import com.intellij.openapi.vfs.newvfs.impl.CachedFileType;
 import com.intellij.psi.search.FileTypeIndex;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.indexing.dependencies.FileIndexingStampService.FileIndexingStamp;
+import com.intellij.util.indexing.dependencies.FileIndexingStamp;
 import com.intellij.util.indexing.dependencies.IndexingRequestToken;
 import com.intellij.util.indexing.projectFilter.FileAddStatus;
 import com.intellij.util.indexing.projectFilter.ProjectIndexableFilesFilterHolder;

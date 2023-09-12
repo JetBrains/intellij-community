@@ -8,7 +8,6 @@ import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.newvfs.persistent.FSRecords
 import com.intellij.serviceContainer.NonInjectable
-import com.intellij.util.indexing.dependencies.FileIndexingStampService.FileIndexingStamp
 import com.intellij.util.io.ResilientFileChannel
 import org.jetbrains.annotations.VisibleForTesting
 import java.io.IOException
@@ -50,13 +49,6 @@ class FileIndexingStampService @NonInjectable @VisibleForTesting constructor(sto
 
     @JvmStatic
     val NULL_STAMP: FileIndexingStamp = FileIndexingStampImpl(NULL_INDEXING_STAMP)
-  }
-
-  interface FileIndexingStamp {
-    /**
-     * Number representing IndexingStamp. Do not compare this number to any other stamps except for equality.
-     */
-    fun toInt(): Int
   }
 
   private data class FileIndexingStampImpl(val stamp: Int) : FileIndexingStamp {

@@ -33,7 +33,7 @@ import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.concurrency.SequentialTaskExecutor;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.indexing.*;
-import com.intellij.util.indexing.dependencies.FileIndexingStampService.FileIndexingStamp;
+import com.intellij.util.indexing.dependencies.FileIndexingStamp;
 import com.intellij.util.indexing.dependencies.IndexingRequestToken;
 import com.intellij.util.indexing.diagnostic.IndexingFileSetStatistics;
 import com.intellij.util.indexing.diagnostic.ProjectDumbIndexingHistoryImpl;

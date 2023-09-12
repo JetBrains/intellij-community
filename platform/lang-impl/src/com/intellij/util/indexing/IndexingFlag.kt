@@ -7,6 +7,7 @@ import com.intellij.openapi.vfs.newvfs.impl.VfsData
 import com.intellij.openapi.vfs.newvfs.impl.VirtualFileSystemEntry
 import com.intellij.util.application
 import com.intellij.util.asSafely
+import com.intellij.util.indexing.dependencies.FileIndexingStamp
 import com.intellij.util.indexing.dependencies.FileIndexingStampService
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.TestOnly
@@ -51,12 +52,12 @@ object IndexingFlag {
   }
 
   @JvmStatic
-  fun setFileIndexed(file: VirtualFile, stamp: FileIndexingStampService.FileIndexingStamp) {
+  fun setFileIndexed(file: VirtualFile, stamp: FileIndexingStamp) {
     file.asApplicable()?.also { entry -> entry.indexedStamp = stamp.toInt() }
   }
 
   @JvmStatic
-  fun isFileIndexed(file: VirtualFile, stamp: FileIndexingStampService.FileIndexingStamp): Boolean {
+  fun isFileIndexed(file: VirtualFile, stamp: FileIndexingStamp): Boolean {
     return file.asApplicable()?.let { entry -> entry.indexedStamp == stamp.toInt() } ?: false
   }
 
@@ -71,7 +72,7 @@ object IndexingFlag {
   }
 
   @JvmStatic
-  fun setIndexedIfFileWithSameLock(file: VirtualFile, lockObject: Long, stamp: FileIndexingStampService.FileIndexingStamp) {
+  fun setIndexedIfFileWithSameLock(file: VirtualFile, lockObject: Long, stamp: FileIndexingStamp) {
     file.asApplicable()?.also { entry ->
       val hash = hashes.releaseHash(entry.id)
       if (entry.indexedStamp != stamp.toInt()) {
