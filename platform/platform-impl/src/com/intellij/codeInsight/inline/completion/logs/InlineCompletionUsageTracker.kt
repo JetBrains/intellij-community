@@ -151,8 +151,6 @@ object InlineCompletionUsageTracker : CounterUsagesCollector() {
   }
 
   private object InvokedEvents {
-    const val INVOKED_EVENT_ID = "inline.invoked"
-
     val REQUEST_ID = Long("request_id")
     val EVENT = EventFields.Class("event")
     val PROVIDER = EventFields.Class("provider")
@@ -168,7 +166,7 @@ object InlineCompletionUsageTracker : CounterUsagesCollector() {
   }
 
   private val InvokedEvent: VarargEventId = GROUP.registerVarargEvent(
-    InvokedEvents.INVOKED_EVENT_ID,
+    "inline.invoked",
     InvokedEvents.REQUEST_ID,
     EventFields.Language,
     EventFields.CurrentFile,
@@ -230,8 +228,6 @@ object InlineCompletionUsageTracker : CounterUsagesCollector() {
   }
 
   private object ShownEvents {
-    const val SHOWN_EVENT_ID = "inline.shown"
-
     val REQUEST_ID = Long("request_id")
 
     val SUGGESTION_LENGTH = Int("suggestion_length")
@@ -244,7 +240,7 @@ object InlineCompletionUsageTracker : CounterUsagesCollector() {
   }
 
   private val ShownEvent: VarargEventId = GROUP.registerVarargEvent(
-    ShownEvents.SHOWN_EVENT_ID,
+    "inline.shown",
     ShownEvents.REQUEST_ID,
     ShownEvents.SUGGESTION_LENGTH,
     ShownEvents.TIME_TO_SHOW,
