@@ -393,6 +393,11 @@ public class KeywordCompletionTestGenerated extends AbstractKeywordCompletionTes
         runTest("../testData/keywords/NoContinue.kt");
     }
 
+    @TestMetadata("NoExistingClassifier.kt")
+    public void testNoExistingClassifier() throws Exception {
+        runTest("../testData/keywords/NoExistingClassifier.kt");
+    }
+
     @TestMetadata("NoFinalInParameterList.kt")
     public void testNoFinalInParameterList() throws Exception {
         runTest("../testData/keywords/NoFinalInParameterList.kt");

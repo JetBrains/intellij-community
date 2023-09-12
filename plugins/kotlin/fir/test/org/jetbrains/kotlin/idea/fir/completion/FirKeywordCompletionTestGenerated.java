@@ -395,6 +395,11 @@ public abstract class FirKeywordCompletionTestGenerated extends AbstractFirKeywo
             runTest("../completion/testData/keywords/NoContinue.kt");
         }
 
+        @TestMetadata("NoExistingClassifier.kt")
+        public void testNoExistingClassifier() throws Exception {
+            runTest("../completion/testData/keywords/NoExistingClassifier.kt");
+        }
+
         @TestMetadata("NoFinalInParameterList.kt")
         public void testNoFinalInParameterList() throws Exception {
             runTest("../completion/testData/keywords/NoFinalInParameterList.kt");
