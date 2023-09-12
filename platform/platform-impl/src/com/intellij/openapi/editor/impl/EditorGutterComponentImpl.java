@@ -2226,10 +2226,12 @@ final class EditorGutterComponentImpl extends EditorGutterComponentEx implements
     PointInfo info = getPointInfo(e.getPoint());
     GutterIconRenderer renderer = info == null ? null : info.renderer;
     AnAction clickAction = null;
-    if (renderer != null && e.getButton() < 4) {
-      clickAction = BitUtil.isSet(e.getModifiers(), InputEvent.BUTTON2_MASK)
-                    ? renderer.getMiddleButtonClickAction()
-                    : renderer.getClickAction();
+    if (renderer != null) {
+      clickAction = switch (e.getButton()) {
+        case MouseEvent.BUTTON1 -> renderer.getClickAction();
+        case MouseEvent.BUTTON2 -> renderer.getMiddleButtonClickAction();
+        default -> null;
+      };
     }
     if (clickAction != null) {
       myLastActionableClick = new ClickInfo(EditorUtil.yPositionToLogicalLine(myEditor, e), info.iconCenterPosition);
