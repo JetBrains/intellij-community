@@ -223,6 +223,9 @@ private class EditorTabDiffPreviewProvider(
 ) : ChainBackedDiffPreviewProvider {
   override fun createDiffRequestProcessor(): DiffRequestProcessor {
     IJSwingUtilities.updateComponentTreeUI(diffProcessor.component)
+    if (diffProcessor is DiffPreviewUpdateProcessor) {
+      diffProcessor.refresh(false) // ensureHasContent
+    }
     return diffProcessor
   }
 
