@@ -12,6 +12,7 @@ import com.intellij.util.io.keyStorage.InlinedKeyStorage;
 import com.intellij.util.io.keyStorage.NoDataException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Range;
 import org.jetbrains.annotations.VisibleForTesting;
 
 import java.io.Closeable;
@@ -451,14 +452,15 @@ public abstract class PersistentEnumeratorBase<Data> implements DataEnumeratorEx
   }
 
   @Override
-  public Data valueOf(int idx) throws IOException {
+  public Data valueOf(@Range(from = 1, to = Integer.MAX_VALUE) int idx) throws IOException {
+    //noinspection ConstantValue
     if (idx <= NULL_ID) return null;
     return catchCorruption(() -> {
       return findValueFor(idx);
     });
   }
 
-  private Data findValueFor(int idx) throws IOException {
+  private Data findValueFor(@Range(from = 1, to = Integer.MAX_VALUE) int idx) throws IOException {
     boolean shouldLock = shouldLockOnValueOf();
     if (shouldLock) {
       lockStorageRead();

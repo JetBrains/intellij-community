@@ -4,6 +4,7 @@ package com.intellij.util.io;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Range;
 
 import java.io.File;
 import java.io.IOException;
@@ -99,12 +100,12 @@ public class PersistentEnumerator<Data> implements DurableDataEnumerator<Data>,
   }
 
   @Override
-  public Data valueOf(int id) throws IOException {
+  public Data valueOf(@Range(from = 1, to = Integer.MAX_VALUE) int id) throws IOException {
     return myEnumerator.valueOf(id);
   }
 
   @Override
-  public int enumerate(Data name) throws IOException {
+  public @Range(from = 1, to = Integer.MAX_VALUE) int enumerate(Data name) throws IOException {
     return myEnumerator.enumerate(name);
   }
 
