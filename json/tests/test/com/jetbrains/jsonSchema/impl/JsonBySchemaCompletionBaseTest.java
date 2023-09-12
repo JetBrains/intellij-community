@@ -32,23 +32,24 @@ public abstract class JsonBySchemaCompletionBaseTest extends BasePlatformTestCas
                               @NotNull String text,
                               @NotNull String extension,
                               String @NotNull ... variants) throws Exception {
-    testBySchema(schema, text, extension, Function.identity(), variants);
+    testBySchema(schema, text, extension, Function.identity(), LookupElement::getLookupString, variants);
   }
 
   protected void testBySchema(@Language("JSON") @NotNull String schema,
                               @NotNull String text,
                               @NotNull String extension,
-                              @NotNull Function<JsonSchemaObject, JsonSchemaObject> schemaMapper,
+                              @NotNull Function<@NotNull JsonSchemaObject, @NotNull JsonSchemaObject> schemaMapper,
+                              @NotNull Function<@NotNull LookupElement, @NotNull String> lookupElementRepresentation,
                               String @NotNull ... variants) throws Exception {
     List<LookupElement> foundVariants = findVariants(
       schemaMapper.apply(configureSchema(schema)),
       getElementAtCaretIn(text, extension)
     );
 
-    foundVariants.sort(Comparator.comparing(LookupElement::getLookupString)); // Mutates!
+    foundVariants.sort(Comparator.comparing(lookupElementRepresentation)); // Mutates!
 
     assertOrderedEquals(
-      ContainerUtil.map(foundVariants, LookupElement::getLookupString),
+      ContainerUtil.map(foundVariants, it -> lookupElementRepresentation.apply(it)),
       variants
     );
 

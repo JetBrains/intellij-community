@@ -1,6 +1,8 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.yaml.schema
 
+import com.intellij.codeInsight.lookup.LookupElement
+import com.intellij.codeInsight.lookup.LookupElementPresentation
 import com.jetbrains.jsonSchema.impl.*
 import com.jetbrains.jsonSchema.impl.nestedCompletions.buildNestedCompletionsRootTree
 import org.intellij.lang.annotations.Language
@@ -13,7 +15,7 @@ class YamlByJsonSchemaNestedCompletionTest : JsonBySchemaCompletionBaseTest() {
           <caret>
       """.trimIndent())
       .hasCompletionVariantsAtCaret(
-        "three",
+        "two.three",
         "two",
       )
   }
@@ -27,7 +29,7 @@ class YamlByJsonSchemaNestedCompletionTest : JsonBySchemaCompletionBaseTest() {
             bla: false
       """.trimIndent())
       .hasCompletionVariantsAtCaret(
-        "three",
+        "one.two.three",
       )
   }
 
@@ -40,7 +42,7 @@ class YamlByJsonSchemaNestedCompletionTest : JsonBySchemaCompletionBaseTest() {
             foo: bar
       """.trimIndent())
       .hasCompletionVariantsAtCaret(
-        "three",
+        "two.three",
       )
   }
 
@@ -126,7 +128,7 @@ class YamlByJsonSchemaNestedCompletionTest : JsonBySchemaCompletionBaseTest() {
           <caret>
       """.trimIndent())
       .hasCompletionVariantsAtCaret(
-        "three",
+        "two.three",
         "two",
       )
 
@@ -135,7 +137,7 @@ class YamlByJsonSchemaNestedCompletionTest : JsonBySchemaCompletionBaseTest() {
           <caret>
       """.trimIndent())
       .hasCompletionVariantsAtCaret(
-        "three",
+        "two.three",
         "two",
       )
 
@@ -184,7 +186,7 @@ class YamlByJsonSchemaNestedCompletionTest : JsonBySchemaCompletionBaseTest() {
       """.trimIndent())
       .hasCompletionVariantsAtCaret(
         "one",
-        "two",
+        "one.two",
       )
 
       .appliedToYamlFile("""
@@ -201,7 +203,7 @@ class YamlByJsonSchemaNestedCompletionTest : JsonBySchemaCompletionBaseTest() {
             <caret>
       """.trimIndent())
       .hasCompletionVariantsAtCaret(
-        "four",
+        "three.four",
         "three",
       )
   }
@@ -212,6 +214,7 @@ class YamlByJsonSchemaNestedCompletionTest : JsonBySchemaCompletionBaseTest() {
       yaml,
       "yaml",
       { it.apply(schemaSetup.configurator) },
+      { it.renderedText()!! },
       *expectedVariants,
     )
 
@@ -221,3 +224,21 @@ class YamlByJsonSchemaNestedCompletionTest : JsonBySchemaCompletionBaseTest() {
 
 internal data class JsonSchemaYamlSetup(val schemaSetup: JsonSchemaSetup, @Language("YAML") val yaml: String)
 internal fun JsonSchemaSetup.appliedToYamlFile(@Language("YAML") yaml: String) = JsonSchemaYamlSetup(this, yaml)
+
+private fun LookupElement.renderedText(): String? =
+  LookupElementPresentation()
+    .renderedBy(this)
+    .itemText
+
+private fun LookupElementPresentation.renderedBy(element: LookupElement): LookupElementPresentation =
+  copied().also { element.renderInto(it) }
+
+private fun LookupElementPresentation.copied(): LookupElementPresentation = LookupElementPresentation().also { this.copiedInto(it) }
+
+private fun LookupElementPresentation.copiedInto(presentation: LookupElementPresentation) {
+  copyFrom(presentation)
+}
+
+private fun LookupElement.renderInto(renderedPresentation: LookupElementPresentation) {
+  renderElement(renderedPresentation)
+}
