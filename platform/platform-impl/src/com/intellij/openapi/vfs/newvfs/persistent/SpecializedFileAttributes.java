@@ -7,6 +7,7 @@ import com.intellij.openapi.vfs.newvfs.FileAttribute;
 import com.intellij.openapi.vfs.newvfs.persistent.mapped.MappedFileStorageHelper;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Range;
 
 import java.io.Closeable;
 import java.io.IOException;
@@ -261,11 +262,11 @@ public final class SpecializedFileAttributes {
       update(extractFileId(vFile), updater);
     }
 
-    int read(int fileId, int defaultValue) throws IOException;
+    int read(@Range(from = 1, to = Integer.MAX_VALUE) int fileId, int defaultValue) throws IOException;
 
-    void write(int fileId, int value) throws IOException;
+    void write(@Range(from = 1, to = Integer.MAX_VALUE) int fileId, int value) throws IOException;
 
-    void update(int fileId,
+    void update(@Range(from = 1, to = Integer.MAX_VALUE) int fileId,
                 @NotNull IntUnaryOperator updater) throws IOException;
   }
 
