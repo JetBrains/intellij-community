@@ -35,7 +35,6 @@ import com.intellij.openapi.vfs.VirtualFileWithId;
 import com.intellij.openapi.vfs.newvfs.AsyncEventSupport;
 import com.intellij.openapi.vfs.newvfs.ManagingFS;
 import com.intellij.openapi.vfs.newvfs.NewVirtualFile;
-import com.intellij.openapi.vfs.newvfs.impl.VfsData;
 import com.intellij.openapi.vfs.newvfs.impl.VirtualFileSystemEntry;
 import com.intellij.openapi.vfs.newvfs.persistent.PersistentFS;
 import com.intellij.platform.diagnostic.telemetry.TelemetryManager;
@@ -2034,11 +2033,8 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
   }
 
   static void setupWritingIndexValuesSeparatedFromCounting() {
-    if (IndexUpdateRunner.WRITE_INDEXES_ON_SEPARATE_THREAD && VfsData.isIsIndexedFlagDisabled()) {
-      ourWritingIndexValuesSeparatedFromCounting = ApplicationMode.AnotherThread;
-    } else {
-      ourWritingIndexValuesSeparatedFromCounting = ApplicationMode.SameThreadOutsideReadLock;
-    }
+    ourWritingIndexValuesSeparatedFromCounting =
+      IndexUpdateRunner.WRITE_INDEXES_ON_SEPARATE_THREAD ? ApplicationMode.AnotherThread : ApplicationMode.SameThreadOutsideReadLock;
   }
 
   private static volatile ApplicationMode ourWritingIndexValuesSeparatedFromCounting;
