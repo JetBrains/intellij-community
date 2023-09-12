@@ -233,7 +233,7 @@ object InlineCompletionUsageTracker : CounterUsagesCollector() {
       }
       shownLogSent = true
       data.add(ShownEvents.LINES.with(lines))
-      data.add(ShownEvents.SUGGESTION_LENGTH.with(suggestionLength))
+      data.add(ShownEvents.LENGTH.with(suggestionLength))
       data.add(ShownEvents.SHOWING_TIME.with(System.currentTimeMillis() - showStartTime))
       data.add(ShownEvents.OUTCOME.with(outcome))
       ShownEvent.log(data)
@@ -244,7 +244,7 @@ object InlineCompletionUsageTracker : CounterUsagesCollector() {
     val REQUEST_ID = Long("request_id")
 
     val LINES = Int("lines")
-    val SUGGESTION_LENGTH = Int("suggestion_length")
+    val LENGTH = Int("length")
 
     val TIME_TO_SHOW = Long("time_to_show")
     val SHOWING_TIME = Long("showing_time")
@@ -257,7 +257,7 @@ object InlineCompletionUsageTracker : CounterUsagesCollector() {
     "shown",
     ShownEvents.REQUEST_ID,
     ShownEvents.LINES,
-    ShownEvents.SUGGESTION_LENGTH,
+    ShownEvents.LENGTH,
     ShownEvents.TIME_TO_SHOW,
     ShownEvents.SHOWING_TIME,
     ShownEvents.OUTCOME,
