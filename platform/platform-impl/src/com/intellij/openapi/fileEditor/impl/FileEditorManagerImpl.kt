@@ -487,15 +487,10 @@ open class FileEditorManagerImpl(
     val result = CompletableDeferred<EditorsSplitters?>()
     val focusManager = IdeFocusManager.getGlobalInstance()
     focusManager.doWhenFocusSettlesDown {
-      if (project.isDisposed) {
-        result.complete(null)
-        return@doWhenFocusSettlesDown
-      }
-
-      val container = DockManager.getInstance(project).getContainerFor(focusManager.focusOwner) {
-        it is DockableEditorTabbedContainer
-      }
-      result.complete(if (container is DockableEditorTabbedContainer) container.splitters else mainSplitters)
+      result.complete(
+        if (project.isDisposed) null
+        else getDockContainer(focusManager.focusOwner)?.splitters ?: mainSplitters
+      )
     }
     return result
   }
@@ -505,18 +500,17 @@ open class FileEditorManagerImpl(
     if (Registry.`is`("ide.navigate.to.recently.focused.editor", false)) {
       getLastFocusedSplitters()?.let { return it }
     }
-
     val focusManager = IdeFocusManager.getGlobalInstance()
-    var focusOwner = focusManager.focusOwner
+    val focusOwner = focusManager.focusOwner
                      ?: KeyboardFocusManager.getCurrentKeyboardFocusManager().focusOwner
                      ?: focusManager.getLastFocusedFor(focusManager.lastFocusedIdeWindow)
-    var container = DockManager.getInstance(project).getContainerFor(focusOwner) { it is DockableEditorTabbedContainer }
-    if (container == null) {
-      focusOwner = KeyboardFocusManager.getCurrentKeyboardFocusManager().activeWindow
-      container = DockManager.getInstance(project).getContainerFor(focusOwner) { it is DockableEditorTabbedContainer }
-    }
-    return if (container is DockableEditorTabbedContainer) container.splitters else mainSplitters
+    val container = getDockContainer(focusOwner)
+                    ?: getDockContainer(KeyboardFocusManager.getCurrentKeyboardFocusManager().activeWindow)
+    return container?.splitters ?: mainSplitters
   }
+
+  private fun getDockContainer(focusOwner: Component?) =
+    DockManager.getInstance(project).getContainerFor(focusOwner) { it is DockableEditorTabbedContainer } as DockableEditorTabbedContainer?
 
   override val preferredFocusedComponent: JComponent?
     get() = currentFileEditorFlow.value?.preferredFocusedComponent
@@ -615,26 +609,21 @@ open class FileEditorManagerImpl(
   override val windows: Array<EditorWindow>
     get() = getAllSplitters().flatMap(EditorsSplitters::getWindowSequence).toTypedArray()
 
-  override fun getNextWindow(window: EditorWindow): EditorWindow? {
-    val windows = splitters.getOrderedWindows()
-    for (i in windows.indices) {
-      if (windows[i] == window) {
-        return windows.get((i + 1) % windows.size)
-      }
-    }
-    LOG.error("No window found")
-    return null
-  }
+  override fun getNextWindow(window: EditorWindow) = getNextWindowImpl(window, ascending = true)
 
-  override fun getPrevWindow(window: EditorWindow): EditorWindow? {
+  override fun getPrevWindow(window: EditorWindow) = getNextWindowImpl(window, ascending = false)
+
+  private fun getNextWindowImpl(currentWindow: EditorWindow, ascending: Boolean): EditorWindow? {
     val windows = splitters.getOrderedWindows()
-    for (i in windows.indices) {
-      if (windows[i] == window) {
-        return windows.get((i + windows.size - 1) % windows.size)
-      }
+    val currentWindowIndex = windows.indexOf(currentWindow)
+    return if (currentWindowIndex != -1) {
+      val nextWindowIndex = currentWindowIndex + (if (ascending) 1 else -1)
+      windows[nextWindowIndex % windows.size]
     }
-    LOG.error("No window found")
-    return null
+    else {
+      LOG.error("No window found")
+      null
+    }
   }
 
   override fun createSplitter(orientation: Int, window: EditorWindow?) {
