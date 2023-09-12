@@ -13,13 +13,14 @@ import com.intellij.internal.statistic.eventLog.events.EventFields.NullableEnum
 import com.intellij.internal.statistic.eventLog.events.EventPair
 import com.intellij.internal.statistic.eventLog.events.VarargEventId
 import com.intellij.internal.statistic.service.fus.collectors.CounterUsagesCollector
-import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.util.PsiUtilCore
+import com.intellij.util.application
 import org.jetbrains.annotations.ApiStatus
-import java.util.concurrent.atomic.AtomicBoolean
+import java.util.concurrent.locks.ReentrantLock
+import kotlin.concurrent.withLock
 import kotlin.coroutines.cancellation.CancellationException
 import kotlin.random.Random
 
@@ -30,16 +31,17 @@ object InlineCompletionUsageTracker : CounterUsagesCollector() {
   override fun getGroup() = GROUP
 
   class Listener : InlineCompletionEventAdapter {
+    private val lock = ReentrantLock()
     private var invocationTracker: InvocationTracker? = null
     private var showTracker: ShowTracker? = null
 
-    override fun onRequest(event: InlineCompletionEventType.Request) {
+    override fun onRequest(event: InlineCompletionEventType.Request) = lock.withLock {
       invocationTracker = InvocationTracker(event).also {
-        runReadAction { it.captureContext(event.request.editor, event.request.endOffset) }
+        application.runReadAction { it.captureContext(event.request.editor, event.request.endOffset) }
       }
     }
 
-    override fun onShow(event: InlineCompletionEventType.Show) {
+    override fun onShow(event: InlineCompletionEventType.Show) = lock.withLock {
       if (event.i == 0 && !event.element.text.isEmpty()) {
         invocationTracker?.hasSuggestion()
       }
@@ -53,19 +55,19 @@ object InlineCompletionUsageTracker : CounterUsagesCollector() {
       }
     }
 
-    override fun onInsert(event: InlineCompletionEventType.Insert) {
+    override fun onInsert(event: InlineCompletionEventType.Insert): Unit = lock.withLock {
       showTracker?.accepted()
     }
 
-    override fun onHide(event: InlineCompletionEventType.Hide) {
+    override fun onHide(event: InlineCompletionEventType.Hide): Unit = lock.withLock {
       showTracker?.rejected()
     }
 
-    override fun onEmpty(event: InlineCompletionEventType.Empty) {
+    override fun onEmpty(event: InlineCompletionEventType.Empty): Unit = lock.withLock {
       invocationTracker?.noSuggestions()
     }
 
-    override fun onCompletion(event: InlineCompletionEventType.Completion) {
+    override fun onCompletion(event: InlineCompletionEventType.Completion): Unit = lock.withLock {
       if (!event.isActive || event.cause is CancellationException || event.cause is ProcessCanceledException) {
         invocationTracker?.cancelled()
       }
@@ -79,6 +81,7 @@ object InlineCompletionUsageTracker : CounterUsagesCollector() {
 
   /**
    * This tracker lives from the moment the inline completion is invoked until the end of generation.
+   * This tracker is not thread-safe.
    */
   private class InvocationTracker(
     private val invocationTime: Long,
@@ -88,7 +91,7 @@ object InlineCompletionUsageTracker : CounterUsagesCollector() {
     constructor(event: InlineCompletionEventType.Request) : this(event.lastInvocation, event.request, event.provider)
 
     val requestId = Random.nextLong()
-    private val finished = AtomicBoolean(false)
+    private var finished = false
     private val data = mutableListOf<EventPair<*>>()
     private val triggerFeatures = mutableListOf<EventPair<*>>()
     private var hasSuggestions: Boolean? = null
@@ -103,33 +106,34 @@ object InlineCompletionUsageTracker : CounterUsagesCollector() {
       data.add(EventFields.Language.with(language))
       data.add(EventFields.CurrentFile.with(psiFile.language))
       InlineTriggerFeatures.capture(editor, offset, triggerFeatures)
-      assert(!finished.get())
+      assert(!finished)
     }
 
     fun noSuggestions() {
       hasSuggestions = false
-      assert(!finished.get())
+      assert(!finished)
     }
 
     fun hasSuggestion() {
       hasSuggestions = true
-      assert(!finished.get())
+      assert(!finished)
     }
 
     fun cancelled() {
       cancelled = true
-      assert(!finished.get())
+      assert(!finished)
     }
 
     fun exception() {
       exception = true
-      assert(!finished.get())
+      assert(!finished)
     }
 
     fun finished() {
-      if (!finished.compareAndSet(false, true)) {
+      if (finished) {
         error("Already finished")
       }
+      finished = true
       InvokedEvent.log(listOf(
         InvokedEvents.REQUEST_ID.with(requestId),
         *data.toTypedArray(),
@@ -178,34 +182,36 @@ object InlineCompletionUsageTracker : CounterUsagesCollector() {
 
   /**
    * This tracker lives from the moment the inline completion appears on the screen until its end.
+   * This tracker is not thread-safe.
    */
   private class ShowTracker(private val requestId: Long,
                             private val invocationTime: Long,
                             private val triggerFeatures: EventPair<*>) {
     private val data = mutableListOf<EventPair<*>>()
-    private val firstShown = AtomicBoolean(false)
-    private val shownLogSent = AtomicBoolean(false)
+    private var firstShown = false
+    private var shownLogSent = false
     private var showStartTime = 0L
     private var suggestionLength = 0
 
     fun firstShown(element: InlineCompletionElement) {
-      if (!firstShown.compareAndSet(false, true)) {
+      if (firstShown) {
         error("Already first shown")
       }
+      firstShown = true
       showStartTime = System.currentTimeMillis()
       data.add(ShownEvents.REQUEST_ID.with(requestId))
       data.add(ShownEvents.TIME_TO_SHOW.with(System.currentTimeMillis() - invocationTime))
       data.add(triggerFeatures)
       nextShown(element)
-      assert(!shownLogSent.get())
+      assert(!shownLogSent)
     }
 
     fun nextShown(element: InlineCompletionElement) {
-      assert(firstShown.get()) {
+      assert(firstShown) {
         "Call firstShown firstly"
       }
       suggestionLength += element.text.length
-      assert(!shownLogSent.get())
+      assert(!shownLogSent)
     }
 
     fun accepted() {
@@ -217,9 +223,10 @@ object InlineCompletionUsageTracker : CounterUsagesCollector() {
     }
 
     private fun finish(outcome: ShownEvents.Outcome) {
-      if (!shownLogSent.compareAndSet(false, true)) {
+      if (shownLogSent) {
         return
       }
+      shownLogSent = true
       data.add(ShownEvents.SUGGESTION_LENGTH.with(suggestionLength))
       data.add(ShownEvents.SHOWING_TIME.with(System.currentTimeMillis() - showStartTime))
       data.add(ShownEvents.OUTCOME.with(outcome))
