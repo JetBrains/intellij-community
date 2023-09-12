@@ -56,11 +56,11 @@ object InlineCompletionUsageTracker : CounterUsagesCollector() {
     }
 
     override fun onInsert(event: InlineCompletionEventType.Insert): Unit = lock.withLock {
-      showTracker?.accepted()
+      showTracker?.selected()
     }
 
     override fun onHide(event: InlineCompletionEventType.Hide): Unit = lock.withLock {
-      showTracker?.rejected()
+      showTracker?.cancelled()
     }
 
     override fun onEmpty(event: InlineCompletionEventType.Empty): Unit = lock.withLock {
@@ -219,15 +219,15 @@ object InlineCompletionUsageTracker : CounterUsagesCollector() {
       assert(!shownLogSent)
     }
 
-    fun accepted() {
-      finish(ShownEvents.Outcome.ACCEPT)
+    fun selected() {
+      finish(ShownEvents.FinishType.SELECTED)
     }
 
-    fun rejected() {
-      finish(ShownEvents.Outcome.REJECT)
+    fun cancelled() {
+      finish(ShownEvents.FinishType.CANCELED)
     }
 
-    private fun finish(outcome: ShownEvents.Outcome) {
+    private fun finish(finishType: ShownEvents.FinishType) {
       if (shownLogSent) {
         return
       }
@@ -235,7 +235,7 @@ object InlineCompletionUsageTracker : CounterUsagesCollector() {
       data.add(ShownEvents.LINES.with(lines))
       data.add(ShownEvents.LENGTH.with(suggestionLength))
       data.add(ShownEvents.SHOWING_TIME.with(System.currentTimeMillis() - showStartTime))
-      data.add(ShownEvents.OUTCOME.with(outcome))
+      data.add(ShownEvents.FINISH_TYPE.with(finishType))
       ShownEvent.log(data)
     }
   }
@@ -248,9 +248,9 @@ object InlineCompletionUsageTracker : CounterUsagesCollector() {
 
     val TIME_TO_SHOW = Long("time_to_show")
     val SHOWING_TIME = Long("showing_time")
-    val OUTCOME = Enum<Outcome>("outcome")
+    val FINISH_TYPE = Enum<FinishType>("finish_type")
 
-    enum class Outcome { ACCEPT, REJECT }
+    enum class FinishType { SELECTED, CANCELED }
   }
 
   private val ShownEvent: VarargEventId = GROUP.registerVarargEvent(
@@ -260,7 +260,7 @@ object InlineCompletionUsageTracker : CounterUsagesCollector() {
     ShownEvents.LENGTH,
     ShownEvents.TIME_TO_SHOW,
     ShownEvents.SHOWING_TIME,
-    ShownEvents.OUTCOME,
+    ShownEvents.FINISH_TYPE,
     InlineTriggerFeatures.TRIGGER_FEATURES
   )
 }
