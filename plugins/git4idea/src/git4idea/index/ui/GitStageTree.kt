@@ -18,6 +18,7 @@ import com.intellij.openapi.vcs.FileStatus
 import com.intellij.openapi.vcs.VcsBundle
 import com.intellij.openapi.vcs.VcsDataKeys
 import com.intellij.openapi.vcs.changes.Change
+import com.intellij.openapi.vcs.changes.ChangesUtil
 import com.intellij.openapi.vcs.changes.IgnoredViewDialog
 import com.intellij.openapi.vcs.changes.UnversionedViewDialog
 import com.intellij.openapi.vcs.changes.ui.*
@@ -125,26 +126,26 @@ abstract class GitStageTree(project: Project,
       GitStageDataKeys.GIT_STAGE_TREE.`is`(dataId) -> this
       GitStageDataKeys.GIT_STAGE_UI_SETTINGS.`is`(dataId) -> settings
       GitStageDataKeys.GIT_FILE_STATUS_NODES.`is`(dataId) -> selectedStatusNodes()
-      VcsDataKeys.FILE_PATHS.`is`(dataId) -> selectedStatusNodes().map { it.filePath }
-      VcsDataKeys.CHANGES.`is`(dataId) -> {
-        VcsTreeModelData.selected(this).iterateUserObjects(Change::class.java).toArray(Change.EMPTY_CHANGE_ARRAY)
+      VcsDataKeys.FILE_PATHS.`is`(dataId) -> {
+        selectedStatusNodes().map { it.filePath } + selectedChanges().map { ChangesUtil.getFilePath(it) }
       }
+      VcsDataKeys.CHANGES.`is`(dataId) -> selectedChanges().toArray(Change.EMPTY_CHANGE_ARRAY)
       PlatformDataKeys.DELETE_ELEMENT_PROVIDER.`is`(dataId) -> if (!selectedStatusNodes().isEmpty) VirtualFileDeleteProvider() else null
       PlatformCoreDataKeys.BGT_DATA_PROVIDER.`is`(dataId) -> {
         val superProvider = super.getData(dataId) as DataProvider?
         val selectedNodes = selectedStatusNodes()
-        return CompositeDataProvider.compose({ slowId -> getSlowData(selectedNodes, slowId) }, superProvider)
+        val selectedChanges = selectedChanges()
+        return CompositeDataProvider.compose({ slowId -> getSlowData(selectedNodes, selectedChanges, slowId) }, superProvider)
       }
       else -> super.getData(dataId)
     }
   }
 
-  private fun getSlowData(selectedNodes: JBIterable<GitFileStatusNode>, slowId: String): Any? {
+  private fun getSlowData(selectedNodes: JBIterable<GitFileStatusNode>, selectedChanges: JBIterable<Change>, slowId: String): Any? {
     return when {
-      VcsDataKeys.VIRTUAL_FILES.`is`(slowId) -> selectedNodes.map { it.filePath.virtualFile }.filterNotNull()
-      CommonDataKeys.VIRTUAL_FILE_ARRAY.`is`(slowId) -> selectedNodes.map { it.filePath.virtualFile }.filterNotNull()
-        .toList().toTypedArray()
-      CommonDataKeys.NAVIGATABLE_ARRAY.`is`(slowId) -> selectedNodes.map { it.filePath.virtualFile }.filterNotNull()
+      VcsDataKeys.VIRTUAL_FILES.`is`(slowId) -> selectedVirtualFiles(selectedNodes, selectedChanges)
+      CommonDataKeys.VIRTUAL_FILE_ARRAY.`is`(slowId) -> selectedVirtualFiles(selectedNodes, selectedChanges).toList().toTypedArray()
+      CommonDataKeys.NAVIGATABLE_ARRAY.`is`(slowId) -> selectedVirtualFiles(selectedNodes, selectedChanges)
         .map { OpenFileDescriptor(project, it) }.toList().toTypedArray()
       else -> null
     }
@@ -152,6 +153,13 @@ abstract class GitStageTree(project: Project,
 
   fun selectedStatusNodes(): JBIterable<GitFileStatusNode> {
     return VcsTreeModelData.selected(this).iterateUserObjects(GitFileStatusNode::class.java)
+  }
+
+  private fun selectedChanges() = VcsTreeModelData.selected(this).iterateUserObjects(Change::class.java)
+
+  private fun selectedVirtualFiles(selectedNodes: JBIterable<GitFileStatusNode>,
+                                   selectedChanges: JBIterable<Change>): List<VirtualFile> {
+    return (selectedNodes.map { it.filePath.virtualFile } + selectedChanges.map { it.virtualFile }).filterNotNull()
   }
 
   fun statusNodesListSelection(preferLimitedContext: Boolean): ListSelection<GitFileStatusNode> {
