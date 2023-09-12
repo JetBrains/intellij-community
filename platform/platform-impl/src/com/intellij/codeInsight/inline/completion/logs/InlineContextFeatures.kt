@@ -8,14 +8,14 @@ import com.intellij.internal.statistic.eventLog.events.ObjectEventField
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.util.TextRange
 
-internal object InlineTriggerFeatures {
-  fun capture(editor: Editor, offset: Int, triggerFeatures: MutableList<EventPair<*>>) {
+internal object InlineContextFeatures {
+  fun capture(editor: Editor, offset: Int, contextFeatures: MutableList<EventPair<*>>) {
     val logicalPosition = editor.offsetToLogicalPosition(offset)
     val lineNumber = logicalPosition.line
     val columnNumber = logicalPosition.column
 
-    triggerFeatures.add(LINE_NUMBER.with(lineNumber))
-    triggerFeatures.add(COLUMN_NUMBER.with(columnNumber))
+    contextFeatures.add(LINE_NUMBER.with(lineNumber))
+    contextFeatures.add(COLUMN_NUMBER.with(columnNumber))
 
     val lineStartOffset = editor.document.getLineStartOffset(lineNumber)
     val lineEndOffset = editor.document.getLineEndOffset(lineNumber)
@@ -26,19 +26,19 @@ internal object InlineTriggerFeatures {
     val symbolsInLineBeforeCaret = textBeforeCaret.trim().length
     val symbolsInLineAfterCaret = textAfterCaret.trim().length
 
-    triggerFeatures.add(SYMBOLS_IN_LINE_BEFORE_CARET.with(symbolsInLineBeforeCaret))
-    triggerFeatures.add(SYMBOLS_IN_LINE_AFTER_CARET.with(symbolsInLineAfterCaret))
+    contextFeatures.add(SYMBOLS_IN_LINE_BEFORE_CARET.with(symbolsInLineBeforeCaret))
+    contextFeatures.add(SYMBOLS_IN_LINE_AFTER_CARET.with(symbolsInLineAfterCaret))
   }
 
-  fun getEventPair(triggerFeatures: List<EventPair<*>>) = TRIGGER_FEATURES.with(ObjectEventData(triggerFeatures))
+  fun getEventPair(triggerFeatures: List<EventPair<*>>) = CONTEXT_FEATURES.with(ObjectEventData(triggerFeatures))
 
   private val LINE_NUMBER = Int("line_number")
   private val COLUMN_NUMBER = Int("column_number")
   private val SYMBOLS_IN_LINE_BEFORE_CARET = Int("symbols_in_line_before_caret")
   private val SYMBOLS_IN_LINE_AFTER_CARET = Int("symbols_in_line_after_caret")
 
-  val TRIGGER_FEATURES = ObjectEventField(
-    "trigger_features",
+  val CONTEXT_FEATURES = ObjectEventField(
+    "context_features",
     LINE_NUMBER,
     COLUMN_NUMBER,
     SYMBOLS_IN_LINE_BEFORE_CARET,

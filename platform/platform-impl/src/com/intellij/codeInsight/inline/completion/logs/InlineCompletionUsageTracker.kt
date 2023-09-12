@@ -93,19 +93,19 @@ object InlineCompletionUsageTracker : CounterUsagesCollector() {
     val requestId = Random.nextLong()
     private var finished = false
     private val data = mutableListOf<EventPair<*>>()
-    private val triggerFeatures = mutableListOf<EventPair<*>>()
+    private val contextFeatures = mutableListOf<EventPair<*>>()
     private var hasSuggestions: Boolean? = null
     private var cancelled: Boolean = false
     private var exception: Boolean = false
 
-    fun createShowTracker() = ShowTracker(requestId, invocationTime, InlineTriggerFeatures.getEventPair(triggerFeatures))
+    fun createShowTracker() = ShowTracker(requestId, invocationTime, InlineContextFeatures.getEventPair(contextFeatures))
 
     fun captureContext(editor: Editor, offset: Int) {
       val psiFile = PsiDocumentManager.getInstance(editor.project ?: return).getPsiFile(editor.document) ?: return
       val language = PsiUtilCore.getLanguageAtOffset(psiFile, offset)
       data.add(EventFields.Language.with(language))
       data.add(EventFields.CurrentFile.with(psiFile.language))
-      InlineTriggerFeatures.capture(editor, offset, triggerFeatures)
+      InlineContextFeatures.capture(editor, offset, contextFeatures)
       assert(!finished)
     }
 
@@ -261,6 +261,6 @@ object InlineCompletionUsageTracker : CounterUsagesCollector() {
     ShownEvents.TIME_TO_SHOW,
     ShownEvents.SHOWING_TIME,
     ShownEvents.FINISH_TYPE,
-    InlineTriggerFeatures.TRIGGER_FEATURES
+    InlineContextFeatures.CONTEXT_FEATURES
   )
 }
