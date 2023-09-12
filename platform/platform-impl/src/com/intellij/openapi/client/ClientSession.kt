@@ -62,10 +62,6 @@ interface ClientAppSession : ClientSession {
    * For remote-dev having several projects, or not having one open is natural same as in a local setup
    */
   val projectSessions: List<ClientProjectSession>
-
-  fun getProjectSession(project: Project): ClientProjectSession? {
-    return projectSessions.find { it.project == project }
-  }
 }
 
 /**
