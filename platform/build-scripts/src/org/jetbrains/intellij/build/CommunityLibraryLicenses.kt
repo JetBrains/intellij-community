@@ -171,9 +171,6 @@ object CommunityLibraryLicenses {
     LibraryLicense(name = "Apache Commons IO", libraryName = "commons-io",
                    url = "https://commons.apache.org/proper/commons-io/")
       .apache("https://gitbox.apache.org/repos/asf?p=commons-io.git;a=blob_plain;f=LICENSE.txt;hb=HEAD"),
-    LibraryLicense(name = "Apache Commons Lang", libraryName = "commons-lang",
-                   url = "https://commons.apache.org/proper/commons-lang/")
-      .apache("https://gitbox.apache.org/repos/asf?p=commons-lang.git;a=blob_plain;f=LICENSE.txt;hb=HEAD"),
     LibraryLicense(name = "Apache Commons Lang", libraryName = "commons-lang3",
                    url = "https://commons.apache.org/proper/commons-lang/")
       .apache("https://gitbox.apache.org/repos/asf?p=commons-lang.git;a=blob_plain;f=LICENSE.txt;hb=HEAD"),
