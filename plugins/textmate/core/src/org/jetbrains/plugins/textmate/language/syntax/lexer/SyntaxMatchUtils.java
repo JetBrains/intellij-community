@@ -2,9 +2,8 @@ package org.jetbrains.plugins.textmate.language.syntax.lexer;
 
 import com.github.benmanes.caffeine.cache.Cache;
 import com.github.benmanes.caffeine.cache.Caffeine;
+import com.intellij.openapi.util.text.StringUtilRt;
 import com.intellij.openapi.util.text.Strings;
-import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
-import it.unimi.dsi.fastutil.ints.IntIterator;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.textmate.Constants;
@@ -20,15 +19,18 @@ import org.jetbrains.plugins.textmate.regex.StringWithId;
 import org.jetbrains.plugins.textmate.regex.TextMateRange;
 
 import java.nio.charset.StandardCharsets;
-import java.util.ArrayList;
 import java.util.List;
+import java.util.Locale;
 import java.util.Objects;
 import java.util.concurrent.TimeUnit;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import static org.jetbrains.plugins.textmate.regex.RegexFacade.regex;
 
 public final class SyntaxMatchUtils {
-  private static final Cache<MatchKey, TextMateLexerState> CACHE = Caffeine.newBuilder().maximumSize(100_000).expireAfterAccess(1, TimeUnit.MINUTES).build();
+  private static final Cache<MatchKey, TextMateLexerState> CACHE =
+    Caffeine.newBuilder().maximumSize(100_000).expireAfterAccess(1, TimeUnit.MINUTES).build();
   private static final TextMateSelectorWeigher mySelectorWeigher = new TextMateSelectorCachingWeigher(new TextMateSelectorWeigherImpl());
 
   private static Runnable ourCheckCancelledCallback = null;
@@ -69,13 +71,15 @@ public final class SyntaxMatchUtils {
     TextMateLexerState resultState = TextMateLexerState.notMatched(syntaxNodeDescriptor);
     List<SyntaxNodeDescriptor> children = syntaxNodeDescriptor.getChildren();
     for (SyntaxNodeDescriptor child : children) {
-      resultState = moreImportantState(resultState, matchFirstChild(child, string, byteOffset, gosOffset, matchBeginOfString, priority, currentScope));
+      resultState =
+        moreImportantState(resultState, matchFirstChild(child, string, byteOffset, gosOffset, matchBeginOfString, priority, currentScope));
       if (resultState.matchData.matched() && resultState.matchData.byteOffset().start == byteOffset) {
         // optimization. There cannot be anything more `important` than current state matched from the very beginning
         break;
       }
     }
-    return moreImportantState(resultState, matchInjections(syntaxNodeDescriptor, string, byteOffset, gosOffset, matchBeginOfString, currentScope));
+    return moreImportantState(resultState,
+                              matchInjections(syntaxNodeDescriptor, string, byteOffset, gosOffset, matchBeginOfString, currentScope));
   }
 
   @NotNull
@@ -94,7 +98,8 @@ public final class SyntaxMatchUtils {
         continue;
       }
       TextMateLexerState injectionState =
-        matchFirstUncached(injection.getSyntaxNodeDescriptor(), string, byteOffset, gosOffset, matchBeginOfString, selectorWeigh.priority, currentScope);
+        matchFirstUncached(injection.getSyntaxNodeDescriptor(), string, byteOffset, gosOffset, matchBeginOfString, selectorWeigh.priority,
+                           currentScope);
       resultState = moreImportantState(resultState, injectionState);
     }
     return resultState;
@@ -147,64 +152,48 @@ public final class SyntaxMatchUtils {
     return matchFirstUncached(syntaxNodeDescriptor, string, byteOffset, gosOffset, matchBeginOfString, priority, currentScope);
   }
 
-  public static List<CaptureMatchData> matchCaptures(@NotNull Int2ObjectMap<CharSequence> captures,
-                                                     @NotNull MatchData matchData,
-                                                     @NotNull StringWithId string,
-                                                     @NotNull String s) {
-    List<CaptureMatchData> result = new ArrayList<>();
-    for (IntIterator iterator = captures.keySet().iterator(); iterator.hasNext(); ) {
-      int index = iterator.nextInt();
-      TextMateRange range = index < matchData.count() ? matchData.charRange(s, string.bytes, index) : TextMateRange.EMPTY_RANGE;
-      result.add(new CaptureMatchData(range, index, captures.get(index)));
-    }
-    return result;
-  }
-
   public static MatchData matchStringRegex(@NotNull Constants.StringKey keyName,
                                            @NotNull StringWithId string,
                                            int byteOffset,
                                            int anchorOffset,
                                            boolean matchBeginOfString,
                                            @NotNull TextMateLexerState lexerState) {
-    String regex = getStringAttribute(keyName, lexerState.syntaxRule, lexerState.string, lexerState.matchData);
-    return regex != null
-           ? regex(regex).match(string, byteOffset, anchorOffset, matchBeginOfString, ourCheckCancelledCallback)
-           : MatchData.NOT_MATCHED;
+    CharSequence regex = lexerState.syntaxRule.getStringAttribute(keyName);
+    if (regex == null) return MatchData.NOT_MATCHED;
+    String regexString = lexerState.syntaxRule.hasBackReference(keyName)
+                         ? replaceGroupsWithMatchDataInRegex(regex, lexerState.string, lexerState.matchData)
+                         : regex.toString();
+    return regex(regexString).match(string, byteOffset, anchorOffset, matchBeginOfString, ourCheckCancelledCallback);
   }
 
   @Nullable
-  public static String getStringAttribute(Constants.@NotNull StringKey keyName,
-                                          @NotNull SyntaxNodeDescriptor syntaxRule,
-                                          @Nullable StringWithId string,
-                                          @NotNull MatchData matchData) {
+  public static CharSequence getStringAttribute(Constants.@NotNull StringKey keyName,
+                                                @NotNull SyntaxNodeDescriptor syntaxRule,
+                                                @NotNull StringWithId string,
+                                                @NotNull MatchData matchData) {
     CharSequence stringAttribute = syntaxRule.getStringAttribute(keyName);
     if (stringAttribute == null) {
       return null;
     }
     return syntaxRule.hasBackReference(keyName)
-           ? replaceGroupsWithMatchData(stringAttribute, string, matchData, keyName.backReferencePrefix)
-           : stringAttribute.toString();
+           ? replaceGroupsWithMatchDataInCaptures(stringAttribute, string, matchData)
+           : stringAttribute;
   }
 
   /**
    * Replaces parts like \1 or \20 in string parameter with group captures from matchData.
    * <p/>
-   * E.g. given string "\1-\2" and matchData consists of two groups: "first" and "second",
+   * E.g. given string "\1-\2" and matchData consists of two groups: "first" and "second"
    * then string "first-second" will be returned.
    *
-   * @param string string pattern
-   * @param matchingString        matched matchingString
-   * @param matchData     matched data with captured groups for replacement
+   * @param string         string pattern
+   * @param matchingString matched matchingString
+   * @param matchData      matched data with captured groups for replacement
    * @return string with replaced group-references
    */
-  public static String replaceGroupsWithMatchData(@Nullable CharSequence string,
-                                                  @Nullable StringWithId matchingString,
-                                                  @NotNull MatchData matchData,
-                                                  char groupPrefix) {
-    if (string == null) {
-      return null;
-    }
-
+  public static String replaceGroupsWithMatchDataInRegex(@NotNull CharSequence string,
+                                                         @Nullable StringWithId matchingString,
+                                                         @NotNull MatchData matchData) {
     if (matchingString == null || !matchData.matched()) {
       return string.toString();
     }
@@ -213,7 +202,7 @@ public final class SyntaxMatchUtils {
     int length = string.length();
     while (charIndex < length) {
       char c = string.charAt(charIndex);
-      if (c == groupPrefix) {
+      if (c == '\\') {
         boolean hasGroupIndex = false;
         int groupIndex = 0;
         int digitIndex = charIndex + 1;
@@ -235,6 +224,56 @@ public final class SyntaxMatchUtils {
       }
       result.append(c);
       charIndex++;
+    }
+    return result.toString();
+  }
+
+  private static final Pattern CAPTURE_GROUP_REGEX = Pattern.compile("\\$([0-9]+)|\\$\\{([0-9]+):/(downcase|upcase)}");
+
+  /**
+   * Replaces parts like $1 or $20 in string parameter with group captures from matchData,
+   * specifically for {@link org.jetbrains.plugins.textmate.language.syntax.TextMateCapture}.
+   * <p>
+   * Unlike {@link #replaceGroupsWithMatchDataInRegex(CharSequence, StringWithId, MatchData)},
+   * this method also supports `upcase` and `downcase` command for the replacement.
+   *
+   * @param string         string pattern
+   * @param matchingString matched matchingString
+   * @param matchData      matched data with captured groups for replacement
+   * @return string with replaced group-references
+   */
+  public static CharSequence replaceGroupsWithMatchDataInCaptures(@NotNull CharSequence string,
+                                                                  @NotNull StringWithId matchingString,
+                                                                  @NotNull MatchData matchData) {
+    if (!matchData.matched()) {
+      return string;
+    }
+    Matcher matcher = CAPTURE_GROUP_REGEX.matcher(string);
+    StringBuilder result = new StringBuilder();
+    int lastPosition = 0;
+    while (matcher.find()) {
+      int groupIndex = StringUtilRt.parseInt(matcher.group(1) != null ? matcher.group(1) : matcher.group(2), -1);
+      if (groupIndex >= 0 && matchData.count() > groupIndex) {
+        result.append(string, lastPosition, matcher.start());
+        TextMateRange range = matchData.byteOffset(groupIndex);
+        String capturedText = new String(matchingString.bytes, range.start, range.getLength(), StandardCharsets.UTF_8);
+        int numberOfDotsAtTheBeginning = Strings.countChars(capturedText, '.', 0, true);
+        String replacement = capturedText.substring(numberOfDotsAtTheBeginning);
+        String command = matcher.group(3);
+        if ("downcase".equals(command)) {
+          result.append(replacement.toLowerCase(Locale.ROOT));
+        }
+        else if ("upcase".equals(command)) {
+          result.append(replacement.toUpperCase(Locale.ROOT));
+        }
+        else {
+          result.append(replacement);
+        }
+        lastPosition = matcher.end();
+      }
+    }
+    if (lastPosition < string.length()) {
+      result.append(string.subSequence(lastPosition, string.length()));
     }
     return result.toString();
   }

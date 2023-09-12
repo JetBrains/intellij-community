@@ -165,7 +165,7 @@ source.makefile: [385, 386], {
 }
 source.makefile: [386, 387], {
 }
-source.makefile;meta.scope.target.makefile;support.function.target.\.PHONY.makefile: [387, 393], {.PHONY}
+source.makefile;meta.scope.target.makefile;support.function.target.PHONY.makefile: [387, 393], {.PHONY}
 source.makefile;meta.scope.target.makefile;punctuation.separator.key-value.makefile: [393, 394], {:}
 source.makefile;meta.scope.target.makefile;meta.scope.prerequisites.makefile: [394, 400], { clean}
 source.makefile: [400, 401], {

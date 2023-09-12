@@ -171,17 +171,17 @@ public final class TextMateLexer {
         if (currentRule.getStringAttribute(Constants.StringKey.BEGIN) != null) {
           states = states.prepend(currentState);
 
-          String name = SyntaxMatchUtils.getStringAttribute(Constants.StringKey.NAME, currentRule, string, currentMatch);
+          CharSequence name = SyntaxMatchUtils.getStringAttribute(Constants.StringKey.NAME, currentRule, string, currentMatch);
           openScopeSelector(output, name, startPosition + lineStartOffset);
 
           parseCaptures(output, Constants.CaptureKey.BEGIN_CAPTURES, currentRule, currentMatch, string, line, lineStartOffset, states);
           parseCaptures(output, Constants.CaptureKey.CAPTURES, currentRule, currentMatch, string, line, lineStartOffset, states);
 
-          String contentName = SyntaxMatchUtils.getStringAttribute(Constants.StringKey.CONTENT_NAME, currentRule, string, currentMatch);
+          CharSequence contentName = SyntaxMatchUtils.getStringAttribute(Constants.StringKey.CONTENT_NAME, currentRule, string, currentMatch);
           openScopeSelector(output, contentName, endPosition + lineStartOffset);
         }
         else if (currentRule.getStringAttribute(Constants.StringKey.MATCH) != null) {
-          String name = SyntaxMatchUtils.getStringAttribute(Constants.StringKey.NAME, currentRule, string, currentMatch);
+          CharSequence name = SyntaxMatchUtils.getStringAttribute(Constants.StringKey.NAME, currentRule, string, currentMatch);
           openScopeSelector(output, name, startPosition + lineStartOffset);
           parseCaptures(output, Constants.CaptureKey.CAPTURES, currentRule, currentMatch, string, line, lineStartOffset, states);
           closeScopeSelector(output, endPosition + lineStartOffset);
@@ -267,7 +267,7 @@ public final class TextMateLexer {
       if (capture instanceof TextMateCapture.Name) {
         CharSequence captureName = ((TextMateCapture.Name)capture).getName();
         CharSequence scopeName = rule.hasBackReference(captureKey, group)
-                                    ? SyntaxMatchUtils.replaceGroupsWithMatchData(captureName, string, matchData, '$')
+                                    ? SyntaxMatchUtils.replaceGroupsWithMatchDataInCaptures(captureName, string, matchData)
                                     : captureName;
         int selectorStartOffset = 0;
         int indexOfSpace = Strings.indexOf(scopeName, ' ', selectorStartOffset);

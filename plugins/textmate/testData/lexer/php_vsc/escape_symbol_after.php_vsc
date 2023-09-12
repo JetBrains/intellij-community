@@ -51,7 +51,7 @@ text.html.php;meta.embedded.block.php;source.php;comment.line.double-slash.php;p
 text.html.php;meta.embedded.block.php;source.php;comment.line.double-slash.php: [125, 146], { wrong brace matching}
 text.html.php;meta.embedded.block.php;source.php: [146, 147], {
 }
-text.html.php;meta.embedded.block.php;source.php;keyword.control.${1:/downcase}.php: [147, 150], {for}
+text.html.php;meta.embedded.block.php;source.php;keyword.control.for.php: [147, 150], {for}
 text.html.php;meta.embedded.block.php;source.php: [150, 151], { }
 text.html.php;meta.embedded.block.php;source.php;punctuation.definition.begin.bracket.round.php: [151, 152], {(}
 text.html.php;meta.embedded.block.php;source.php;variable.other.php;punctuation.definition.variable.php: [152, 153], {$}

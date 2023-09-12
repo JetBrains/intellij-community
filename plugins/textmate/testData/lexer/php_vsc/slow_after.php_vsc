@@ -37,7 +37,7 @@ text.html.php;meta.embedded.block.php;source.php: [115, 116], {
 }
 text.html.php;meta.embedded.block.php;source.php: [116, 117], {
 }
-text.html.php;meta.embedded.block.php;source.php;keyword.control.${1:/downcase}.php: [117, 119], {if}
+text.html.php;meta.embedded.block.php;source.php;keyword.control.if.php: [117, 119], {if}
 text.html.php;meta.embedded.block.php;source.php: [119, 120], { }
 text.html.php;meta.embedded.block.php;source.php;punctuation.definition.begin.bracket.round.php: [120, 121], {(}
 text.html.php;meta.embedded.block.php;source.php;meta.function-call.php;entity.name.function.php: [121, 126], {isset}
@@ -238,7 +238,7 @@ text.html.php;meta.embedded.block.php;source.php: [598, 599], {
 text.html.php;meta.embedded.block.php;source.php: [599, 600], {
 }
 text.html.php;meta.embedded.block.php;source.php: [600, 604], {    }
-text.html.php;meta.embedded.block.php;source.php;keyword.control.${1:/downcase}.php: [604, 607], {for}
+text.html.php;meta.embedded.block.php;source.php;keyword.control.for.php: [604, 607], {for}
 text.html.php;meta.embedded.block.php;source.php: [607, 608], { }
 text.html.php;meta.embedded.block.php;source.php;punctuation.definition.begin.bracket.round.php: [608, 609], {(}
 text.html.php;meta.embedded.block.php;source.php;variable.other.php;punctuation.definition.variable.php: [609, 610], {$}
@@ -597,7 +597,7 @@ text.html.php;meta.embedded.block.php;source.php: [1886, 1887], {
 text.html.php;meta.embedded.block.php;source.php: [1887, 1888], {
 }
 text.html.php;meta.embedded.block.php;source.php: [1888, 1896], {        }
-text.html.php;meta.embedded.block.php;source.php;keyword.control.${1:/downcase}.php: [1896, 1898], {if}
+text.html.php;meta.embedded.block.php;source.php;keyword.control.if.php: [1896, 1898], {if}
 text.html.php;meta.embedded.block.php;source.php: [1898, 1899], { }
 text.html.php;meta.embedded.block.php;source.php;punctuation.definition.begin.bracket.round.php: [1899, 1900], {(}
 text.html.php;meta.embedded.block.php;source.php;meta.function-call.php;entity.name.function.php: [1900, 1905], {count}
@@ -774,7 +774,7 @@ text.html.php;meta.embedded.block.php;source.php: [2556, 2557], {
 text.html.php;meta.embedded.block.php;source.php: [2557, 2565], {        }
 text.html.php;meta.embedded.block.php;source.php;punctuation.definition.end.bracket.curly.php: [2565, 2566], {}}
 text.html.php;meta.embedded.block.php;source.php: [2566, 2567], { }
-text.html.php;meta.embedded.block.php;source.php;keyword.control.${1:/downcase}.php: [2567, 2571], {else}
+text.html.php;meta.embedded.block.php;source.php;keyword.control.else.php: [2567, 2571], {else}
 text.html.php;meta.embedded.block.php;source.php: [2571, 2572], { }
 text.html.php;meta.embedded.block.php;source.php;punctuation.definition.begin.bracket.curly.php: [2572, 2573], {{}
 text.html.php;meta.embedded.block.php;source.php: [2573, 2574], {
@@ -782,7 +782,7 @@ text.html.php;meta.embedded.block.php;source.php: [2573, 2574], {
 text.html.php;meta.embedded.block.php;source.php: [2574, 2575], {
 }
 text.html.php;meta.embedded.block.php;source.php: [2575, 2587], {            }
-text.html.php;meta.embedded.block.php;source.php;keyword.control.${1:/downcase}.php: [2587, 2590], {for}
+text.html.php;meta.embedded.block.php;source.php;keyword.control.for.php: [2587, 2590], {for}
 text.html.php;meta.embedded.block.php;source.php: [2590, 2591], { }
 text.html.php;meta.embedded.block.php;source.php;punctuation.definition.begin.bracket.round.php: [2591, 2592], {(}
 text.html.php;meta.embedded.block.php;source.php;variable.other.php;punctuation.definition.variable.php: [2592, 2593], {$}
@@ -1001,7 +1001,7 @@ text.html.php;meta.embedded.block.php;source.php;comment.line.double-slash.php: 
 text.html.php;meta.embedded.block.php;source.php: [3679, 3680], {
 }
 text.html.php;meta.embedded.block.php;source.php: [3680, 3692], {            }
-text.html.php;meta.embedded.block.php;source.php;keyword.control.${1:/downcase}.php: [3692, 3695], {for}
+text.html.php;meta.embedded.block.php;source.php;keyword.control.for.php: [3692, 3695], {for}
 text.html.php;meta.embedded.block.php;source.php: [3695, 3696], { }
 text.html.php;meta.embedded.block.php;source.php;punctuation.definition.begin.bracket.round.php: [3696, 3697], {(}
 text.html.php;meta.embedded.block.php;source.php;variable.other.php;punctuation.definition.variable.php: [3697, 3698], {$}
@@ -1100,7 +1100,7 @@ text.html.php;meta.embedded.block.php;source.php: [3927, 3928], {
 text.html.php;meta.embedded.block.php;source.php: [3928, 3929], {
 }
 text.html.php;meta.embedded.block.php;source.php: [3929, 3941], {            }
-text.html.php;meta.embedded.block.php;source.php;keyword.control.${1:/downcase}.php: [3941, 3944], {for}
+text.html.php;meta.embedded.block.php;source.php;keyword.control.for.php: [3941, 3944], {for}
 text.html.php;meta.embedded.block.php;source.php: [3944, 3945], { }
 text.html.php;meta.embedded.block.php;source.php;punctuation.definition.begin.bracket.round.php: [3945, 3946], {(}
 text.html.php;meta.embedded.block.php;source.php;variable.other.php;punctuation.definition.variable.php: [3946, 3947], {$}
@@ -1172,7 +1172,7 @@ text.html.php;meta.embedded.block.php;source.php;punctuation.definition.end.brac
 text.html.php;meta.embedded.block.php;source.php: [4094, 4095], {
 }
 text.html.php;meta.embedded.block.php;source.php: [4095, 4107], {            }
-text.html.php;meta.embedded.block.php;source.php;keyword.control.${1:/downcase}.php: [4107, 4110], {for}
+text.html.php;meta.embedded.block.php;source.php;keyword.control.for.php: [4107, 4110], {for}
 text.html.php;meta.embedded.block.php;source.php: [4110, 4111], { }
 text.html.php;meta.embedded.block.php;source.php;punctuation.definition.begin.bracket.round.php: [4111, 4112], {(}
 text.html.php;meta.embedded.block.php;source.php;variable.other.php;punctuation.definition.variable.php: [4112, 4113], {$}
@@ -1244,7 +1244,7 @@ text.html.php;meta.embedded.block.php;source.php;punctuation.definition.end.brac
 text.html.php;meta.embedded.block.php;source.php: [4269, 4270], {
 }
 text.html.php;meta.embedded.block.php;source.php: [4270, 4282], {            }
-text.html.php;meta.embedded.block.php;source.php;keyword.control.${1:/downcase}.php: [4282, 4285], {for}
+text.html.php;meta.embedded.block.php;source.php;keyword.control.for.php: [4282, 4285], {for}
 text.html.php;meta.embedded.block.php;source.php: [4285, 4286], { }
 text.html.php;meta.embedded.block.php;source.php;punctuation.definition.begin.bracket.round.php: [4286, 4287], {(}
 text.html.php;meta.embedded.block.php;source.php;variable.other.php;punctuation.definition.variable.php: [4287, 4288], {$}
@@ -1341,7 +1341,7 @@ text.html.php;meta.embedded.block.php;source.php;punctuation.definition.end.brac
 text.html.php;meta.embedded.block.php;source.php: [4557, 4558], {
 }
 text.html.php;meta.embedded.block.php;source.php: [4558, 4570], {            }
-text.html.php;meta.embedded.block.php;source.php;keyword.control.${1:/downcase}.php: [4570, 4573], {for}
+text.html.php;meta.embedded.block.php;source.php;keyword.control.for.php: [4570, 4573], {for}
 text.html.php;meta.embedded.block.php;source.php: [4573, 4574], { }
 text.html.php;meta.embedded.block.php;source.php;punctuation.definition.begin.bracket.round.php: [4574, 4575], {(}
 text.html.php;meta.embedded.block.php;source.php;variable.other.php;punctuation.definition.variable.php: [4575, 4576], {$}
@@ -1767,7 +1767,7 @@ text.html.php;meta.embedded.block.html;source.css;meta.property-list.css;meta.pr
 text.html.php;meta.embedded.block.html;source.css;meta.property-list.css;punctuation.separator.key-value.css: [6260, 6261], {:}
 text.html.php;meta.embedded.block.html;source.css;meta.property-list.css: [6261, 6262], { }
 text.html.php;meta.embedded.block.html;source.css;meta.property-list.css;meta.property-value.css;constant.numeric.css: [6262, 6263], {1}
-text.html.php;meta.embedded.block.html;source.css;meta.property-list.css;meta.property-value.css;constant.numeric.css;keyword.other.unit.${2:/downcase}.css: [6263, 6265], {px}
+text.html.php;meta.embedded.block.html;source.css;meta.property-list.css;meta.property-value.css;constant.numeric.css;keyword.other.unit.px.css: [6263, 6265], {px}
 text.html.php;meta.embedded.block.html;source.css;meta.property-list.css;punctuation.terminator.rule.css: [6265, 6266], {;}
 text.html.php;meta.embedded.block.html;source.css;meta.property-list.css: [6266, 6267], {
 }
@@ -1994,17 +1994,17 @@ text.html.php;meta.tag.structure.div.start.html;meta.attribute.class.html;string
 text.html.php;meta.tag.structure.div.start.html;meta.attribute.class.html;string.quoted.double.html: [7227, 7260], {sidenav-toggler d-none d-xl-block}
 text.html.php;meta.tag.structure.div.start.html;meta.attribute.class.html;string.quoted.double.html;punctuation.definition.string.end.html: [7260, 7261], {"}
 text.html.php;meta.tag.structure.div.start.html: [7261, 7262], { }
-text.html.php;meta.tag.structure.div.start.html;meta.attribute.data-x.data\-action.html;entity.other.attribute-name.html: [7262, 7273], {data-action}
-text.html.php;meta.tag.structure.div.start.html;meta.attribute.data-x.data\-action.html;punctuation.separator.key-value.html: [7273, 7274], {=}
-text.html.php;meta.tag.structure.div.start.html;meta.attribute.data-x.data\-action.html;string.quoted.double.html;punctuation.definition.string.begin.html: [7274, 7275], {"}
-text.html.php;meta.tag.structure.div.start.html;meta.attribute.data-x.data\-action.html;string.quoted.double.html: [7275, 7288], {sidenav-unpin}
-text.html.php;meta.tag.structure.div.start.html;meta.attribute.data-x.data\-action.html;string.quoted.double.html;punctuation.definition.string.end.html: [7288, 7289], {"}
+text.html.php;meta.tag.structure.div.start.html;meta.attribute.data-x.data-action.html;entity.other.attribute-name.html: [7262, 7273], {data-action}
+text.html.php;meta.tag.structure.div.start.html;meta.attribute.data-x.data-action.html;punctuation.separator.key-value.html: [7273, 7274], {=}
+text.html.php;meta.tag.structure.div.start.html;meta.attribute.data-x.data-action.html;string.quoted.double.html;punctuation.definition.string.begin.html: [7274, 7275], {"}
+text.html.php;meta.tag.structure.div.start.html;meta.attribute.data-x.data-action.html;string.quoted.double.html: [7275, 7288], {sidenav-unpin}
+text.html.php;meta.tag.structure.div.start.html;meta.attribute.data-x.data-action.html;string.quoted.double.html;punctuation.definition.string.end.html: [7288, 7289], {"}
 text.html.php;meta.tag.structure.div.start.html: [7289, 7290], { }
-text.html.php;meta.tag.structure.div.start.html;meta.attribute.data-x.data\-target.html;entity.other.attribute-name.html: [7290, 7301], {data-target}
-text.html.php;meta.tag.structure.div.start.html;meta.attribute.data-x.data\-target.html;punctuation.separator.key-value.html: [7301, 7302], {=}
-text.html.php;meta.tag.structure.div.start.html;meta.attribute.data-x.data\-target.html;string.quoted.double.html;punctuation.definition.string.begin.html: [7302, 7303], {"}
-text.html.php;meta.tag.structure.div.start.html;meta.attribute.data-x.data\-target.html;string.quoted.double.html: [7303, 7316], {#sidenav-main}
-text.html.php;meta.tag.structure.div.start.html;meta.attribute.data-x.data\-target.html;string.quoted.double.html;punctuation.definition.string.end.html: [7316, 7317], {"}
+text.html.php;meta.tag.structure.div.start.html;meta.attribute.data-x.data-target.html;entity.other.attribute-name.html: [7290, 7301], {data-target}
+text.html.php;meta.tag.structure.div.start.html;meta.attribute.data-x.data-target.html;punctuation.separator.key-value.html: [7301, 7302], {=}
+text.html.php;meta.tag.structure.div.start.html;meta.attribute.data-x.data-target.html;string.quoted.double.html;punctuation.definition.string.begin.html: [7302, 7303], {"}
+text.html.php;meta.tag.structure.div.start.html;meta.attribute.data-x.data-target.html;string.quoted.double.html: [7303, 7316], {#sidenav-main}
+text.html.php;meta.tag.structure.div.start.html;meta.attribute.data-x.data-target.html;string.quoted.double.html;punctuation.definition.string.end.html: [7316, 7317], {"}
 text.html.php;meta.tag.structure.div.start.html;punctuation.definition.tag.end.html: [7317, 7318], {>}
 text.html.php: [7318, 7319], {
 }
@@ -2134,7 +2134,7 @@ text.html.php: [7819, 7820], {
 text.html.php: [7820, 7836], {                }
 text.html.php;meta.embedded.line.php;punctuation.section.embedded.begin.php: [7836, 7841], {<?php}
 text.html.php;meta.embedded.line.php;source.php: [7841, 7842], { }
-text.html.php;meta.embedded.line.php;source.php;keyword.control.${1:/downcase}.php: [7842, 7844], {if}
+text.html.php;meta.embedded.line.php;source.php;keyword.control.if.php: [7842, 7844], {if}
 text.html.php;meta.embedded.line.php;source.php: [7844, 7845], { }
 text.html.php;meta.embedded.line.php;source.php;punctuation.definition.begin.bracket.round.php: [7845, 7846], {(}
 text.html.php;meta.embedded.line.php;source.php;variable.other.php;punctuation.definition.variable.php: [7846, 7847], {$}
@@ -2171,9 +2171,9 @@ text.html.php: [7927, 7943], {                }
 text.html.php;meta.embedded.line.php;punctuation.section.embedded.begin.php: [7943, 7948], {<?php}
 text.html.php;meta.embedded.line.php;source.php: [7948, 7950], { }}
 text.html.php;meta.embedded.line.php;source.php: [7950, 7951], { }
-text.html.php;meta.embedded.line.php;source.php;keyword.control.${1:/downcase}.php: [7951, 7955], {else}
+text.html.php;meta.embedded.line.php;source.php;keyword.control.else.php: [7951, 7955], {else}
 text.html.php;meta.embedded.line.php;source.php: [7955, 7956], { }
-text.html.php;meta.embedded.line.php;source.php;keyword.control.${1:/downcase}.php: [7956, 7958], {if}
+text.html.php;meta.embedded.line.php;source.php;keyword.control.if.php: [7956, 7958], {if}
 text.html.php;meta.embedded.line.php;source.php: [7958, 7959], { }
 text.html.php;meta.embedded.line.php;source.php;punctuation.definition.begin.bracket.round.php: [7959, 7960], {(}
 text.html.php;meta.embedded.line.php;source.php;variable.other.php;punctuation.definition.variable.php: [7960, 7961], {$}
@@ -2210,9 +2210,9 @@ text.html.php: [8055, 8071], {                }
 text.html.php;meta.embedded.line.php;punctuation.section.embedded.begin.php: [8071, 8076], {<?php}
 text.html.php;meta.embedded.line.php;source.php: [8076, 8078], { }}
 text.html.php;meta.embedded.line.php;source.php: [8078, 8079], { }
-text.html.php;meta.embedded.line.php;source.php;keyword.control.${1:/downcase}.php: [8079, 8083], {else}
+text.html.php;meta.embedded.line.php;source.php;keyword.control.else.php: [8079, 8083], {else}
 text.html.php;meta.embedded.line.php;source.php: [8083, 8084], { }
-text.html.php;meta.embedded.line.php;source.php;keyword.control.${1:/downcase}.php: [8084, 8086], {if}
+text.html.php;meta.embedded.line.php;source.php;keyword.control.if.php: [8084, 8086], {if}
 text.html.php;meta.embedded.line.php;source.php: [8086, 8087], { }
 text.html.php;meta.embedded.line.php;source.php;punctuation.definition.begin.bracket.round.php: [8087, 8088], {(}
 text.html.php;meta.embedded.line.php;source.php;variable.other.php;punctuation.definition.variable.php: [8088, 8089], {$}
@@ -2249,9 +2249,9 @@ text.html.php: [8169, 8185], {                }
 text.html.php;meta.embedded.line.php;punctuation.section.embedded.begin.php: [8185, 8190], {<?php}
 text.html.php;meta.embedded.line.php;source.php: [8190, 8192], { }}
 text.html.php;meta.embedded.line.php;source.php: [8192, 8193], { }
-text.html.php;meta.embedded.line.php;source.php;keyword.control.${1:/downcase}.php: [8193, 8197], {else}
+text.html.php;meta.embedded.line.php;source.php;keyword.control.else.php: [8193, 8197], {else}
 text.html.php;meta.embedded.line.php;source.php: [8197, 8198], { }
-text.html.php;meta.embedded.line.php;source.php;keyword.control.${1:/downcase}.php: [8198, 8200], {if}
+text.html.php;meta.embedded.line.php;source.php;keyword.control.if.php: [8198, 8200], {if}
 text.html.php;meta.embedded.line.php;source.php: [8200, 8201], { }
 text.html.php;meta.embedded.line.php;source.php;punctuation.definition.begin.bracket.round.php: [8201, 8202], {(}
 text.html.php;meta.embedded.line.php;source.php;variable.other.php;punctuation.definition.variable.php: [8202, 8203], {$}
@@ -2288,9 +2288,9 @@ text.html.php: [8285, 8301], {                }
 text.html.php;meta.embedded.line.php;punctuation.section.embedded.begin.php: [8301, 8306], {<?php}
 text.html.php;meta.embedded.line.php;source.php: [8306, 8308], { }}
 text.html.php;meta.embedded.line.php;source.php: [8308, 8309], { }
-text.html.php;meta.embedded.line.php;source.php;keyword.control.${1:/downcase}.php: [8309, 8313], {else}
+text.html.php;meta.embedded.line.php;source.php;keyword.control.else.php: [8309, 8313], {else}
 text.html.php;meta.embedded.line.php;source.php: [8313, 8314], { }
-text.html.php;meta.embedded.line.php;source.php;keyword.control.${1:/downcase}.php: [8314, 8316], {if}
+text.html.php;meta.embedded.line.php;source.php;keyword.control.if.php: [8314, 8316], {if}
 text.html.php;meta.embedded.line.php;source.php: [8316, 8317], { }
 text.html.php;meta.embedded.line.php;source.php;punctuation.definition.begin.bracket.round.php: [8317, 8318], {(}
 text.html.php;meta.embedded.line.php;source.php;variable.other.php;punctuation.definition.variable.php: [8318, 8319], {$}
@@ -2327,9 +2327,9 @@ text.html.php: [8403, 8419], {                }
 text.html.php;meta.embedded.line.php;punctuation.section.embedded.begin.php: [8419, 8424], {<?php}
 text.html.php;meta.embedded.line.php;source.php: [8424, 8426], { }}
 text.html.php;meta.embedded.line.php;source.php: [8426, 8427], { }
-text.html.php;meta.embedded.line.php;source.php;keyword.control.${1:/downcase}.php: [8427, 8431], {else}
+text.html.php;meta.embedded.line.php;source.php;keyword.control.else.php: [8427, 8431], {else}
 text.html.php;meta.embedded.line.php;source.php: [8431, 8432], { }
-text.html.php;meta.embedded.line.php;source.php;keyword.control.${1:/downcase}.php: [8432, 8434], {if}
+text.html.php;meta.embedded.line.php;source.php;keyword.control.if.php: [8432, 8434], {if}
 text.html.php;meta.embedded.line.php;source.php: [8434, 8435], { }
 text.html.php;meta.embedded.line.php;source.php;punctuation.definition.begin.bracket.round.php: [8435, 8436], {(}
 text.html.php;meta.embedded.line.php;source.php;variable.other.php;punctuation.definition.variable.php: [8436, 8437], {$}
@@ -2366,9 +2366,9 @@ text.html.php: [8525, 8541], {                }
 text.html.php;meta.embedded.line.php;punctuation.section.embedded.begin.php: [8541, 8546], {<?php}
 text.html.php;meta.embedded.line.php;source.php: [8546, 8548], { }}
 text.html.php;meta.embedded.line.php;source.php: [8548, 8549], { }
-text.html.php;meta.embedded.line.php;source.php;keyword.control.${1:/downcase}.php: [8549, 8553], {else}
+text.html.php;meta.embedded.line.php;source.php;keyword.control.else.php: [8549, 8553], {else}
 text.html.php;meta.embedded.line.php;source.php: [8553, 8554], { }
-text.html.php;meta.embedded.line.php;source.php;keyword.control.${1:/downcase}.php: [8554, 8556], {if}
+text.html.php;meta.embedded.line.php;source.php;keyword.control.if.php: [8554, 8556], {if}
 text.html.php;meta.embedded.line.php;source.php: [8556, 8557], { }
 text.html.php;meta.embedded.line.php;source.php;punctuation.definition.begin.bracket.round.php: [8557, 8558], {(}
 text.html.php;meta.embedded.line.php;source.php;variable.other.php;punctuation.definition.variable.php: [8558, 8559], {$}
@@ -2405,9 +2405,9 @@ text.html.php: [8638, 8654], {                }
 text.html.php;meta.embedded.line.php;punctuation.section.embedded.begin.php: [8654, 8659], {<?php}
 text.html.php;meta.embedded.line.php;source.php: [8659, 8661], { }}
 text.html.php;meta.embedded.line.php;source.php: [8661, 8662], { }
-text.html.php;meta.embedded.line.php;source.php;keyword.control.${1:/downcase}.php: [8662, 8666], {else}
+text.html.php;meta.embedded.line.php;source.php;keyword.control.else.php: [8662, 8666], {else}
 text.html.php;meta.embedded.line.php;source.php: [8666, 8667], { }
-text.html.php;meta.embedded.line.php;source.php;keyword.control.${1:/downcase}.php: [8667, 8669], {if}
+text.html.php;meta.embedded.line.php;source.php;keyword.control.if.php: [8667, 8669], {if}
 text.html.php;meta.embedded.line.php;source.php: [8669, 8670], { }
 text.html.php;meta.embedded.line.php;source.php;punctuation.definition.begin.bracket.round.php: [8670, 8671], {(}
 text.html.php;meta.embedded.line.php;source.php;variable.other.php;punctuation.definition.variable.php: [8671, 8672], {$}
@@ -2444,9 +2444,9 @@ text.html.php: [8756, 8772], {                }
 text.html.php;meta.embedded.line.php;punctuation.section.embedded.begin.php: [8772, 8777], {<?php}
 text.html.php;meta.embedded.line.php;source.php: [8777, 8779], { }}
 text.html.php;meta.embedded.line.php;source.php: [8779, 8780], { }
-text.html.php;meta.embedded.line.php;source.php;keyword.control.${1:/downcase}.php: [8780, 8784], {else}
+text.html.php;meta.embedded.line.php;source.php;keyword.control.else.php: [8780, 8784], {else}
 text.html.php;meta.embedded.line.php;source.php: [8784, 8785], { }
-text.html.php;meta.embedded.line.php;source.php;keyword.control.${1:/downcase}.php: [8785, 8787], {if}
+text.html.php;meta.embedded.line.php;source.php;keyword.control.if.php: [8785, 8787], {if}
 text.html.php;meta.embedded.line.php;source.php: [8787, 8788], { }
 text.html.php;meta.embedded.line.php;source.php;punctuation.definition.begin.bracket.round.php: [8788, 8789], {(}
 text.html.php;meta.embedded.line.php;source.php;variable.other.php;punctuation.definition.variable.php: [8789, 8790], {$}
@@ -2483,7 +2483,7 @@ text.html.php: [8878, 8894], {                }
 text.html.php;meta.embedded.line.php;punctuation.section.embedded.begin.php: [8894, 8899], {<?php}
 text.html.php;meta.embedded.line.php;source.php: [8899, 8901], { }}
 text.html.php;meta.embedded.line.php;source.php: [8901, 8902], { }
-text.html.php;meta.embedded.line.php;source.php;keyword.control.${1:/downcase}.php: [8902, 8906], {else}
+text.html.php;meta.embedded.line.php;source.php;keyword.control.else.php: [8902, 8906], {else}
 text.html.php;meta.embedded.line.php;source.php: [8906, 8907], { }
 text.html.php;meta.embedded.line.php;source.php;punctuation.definition.begin.bracket.curly.php: [8907, 8908], {{}
 text.html.php;meta.embedded.line.php;source.php: [8908, 8909], { }
@@ -2766,11 +2766,11 @@ text.html.php: [10004, 10028], {                        }
 text.html.php;meta.tag.structure.nav.start.html;punctuation.definition.tag.begin.html: [10028, 10029], {<}
 text.html.php;meta.tag.structure.nav.start.html;entity.name.tag.html: [10029, 10032], {nav}
 text.html.php;meta.tag.structure.nav.start.html: [10032, 10033], { }
-text.html.php;meta.tag.structure.nav.start.html;meta.attribute.unrecognized.aria\-label.html;entity.other.attribute-name.html: [10033, 10043], {aria-label}
-text.html.php;meta.tag.structure.nav.start.html;meta.attribute.unrecognized.aria\-label.html;punctuation.separator.key-value.html: [10043, 10044], {=}
-text.html.php;meta.tag.structure.nav.start.html;meta.attribute.unrecognized.aria\-label.html;string.quoted.double.html;punctuation.definition.string.begin.html: [10044, 10045], {"}
-text.html.php;meta.tag.structure.nav.start.html;meta.attribute.unrecognized.aria\-label.html;string.quoted.double.html: [10045, 10055], {breadcrumb}
-text.html.php;meta.tag.structure.nav.start.html;meta.attribute.unrecognized.aria\-label.html;string.quoted.double.html;punctuation.definition.string.end.html: [10055, 10056], {"}
+text.html.php;meta.tag.structure.nav.start.html;meta.attribute.unrecognized.aria-label.html;entity.other.attribute-name.html: [10033, 10043], {aria-label}
+text.html.php;meta.tag.structure.nav.start.html;meta.attribute.unrecognized.aria-label.html;punctuation.separator.key-value.html: [10043, 10044], {=}
+text.html.php;meta.tag.structure.nav.start.html;meta.attribute.unrecognized.aria-label.html;string.quoted.double.html;punctuation.definition.string.begin.html: [10044, 10045], {"}
+text.html.php;meta.tag.structure.nav.start.html;meta.attribute.unrecognized.aria-label.html;string.quoted.double.html: [10045, 10055], {breadcrumb}
+text.html.php;meta.tag.structure.nav.start.html;meta.attribute.unrecognized.aria-label.html;string.quoted.double.html;punctuation.definition.string.end.html: [10055, 10056], {"}
 text.html.php;meta.tag.structure.nav.start.html: [10056, 10057], { }
 text.html.php;meta.tag.structure.nav.start.html;meta.attribute.class.html;entity.other.attribute-name.html: [10057, 10062], {class}
 text.html.php;meta.tag.structure.nav.start.html;meta.attribute.class.html;punctuation.separator.key-value.html: [10062, 10063], {=}
@@ -3040,7 +3040,7 @@ text.html.php: [11166, 11167], {
 text.html.php: [11167, 11191], {                        }
 text.html.php;meta.embedded.line.php;punctuation.section.embedded.begin.php: [11191, 11196], {<?php}
 text.html.php;meta.embedded.line.php;source.php: [11196, 11197], { }
-text.html.php;meta.embedded.line.php;source.php;keyword.control.${1:/downcase}.php: [11197, 11199], {if}
+text.html.php;meta.embedded.line.php;source.php;keyword.control.if.php: [11197, 11199], {if}
 text.html.php;meta.embedded.line.php;source.php: [11199, 11200], { }
 text.html.php;meta.embedded.line.php;source.php;punctuation.definition.begin.bracket.round.php: [11200, 11201], {(}
 text.html.php;meta.embedded.line.php;source.php;variable.other.php;punctuation.definition.variable.php: [11201, 11202], {$}
@@ -5518,9 +5518,9 @@ text.html.php: [28627, 28651], {                        }
 text.html.php;meta.embedded.line.php;punctuation.section.embedded.begin.php: [28651, 28656], {<?php}
 text.html.php;meta.embedded.line.php;source.php: [28656, 28658], { }}
 text.html.php;meta.embedded.line.php;source.php: [28658, 28659], { }
-text.html.php;meta.embedded.line.php;source.php;keyword.control.${1:/downcase}.php: [28659, 28663], {else}
+text.html.php;meta.embedded.line.php;source.php;keyword.control.else.php: [28659, 28663], {else}
 text.html.php;meta.embedded.line.php;source.php: [28663, 28664], { }
-text.html.php;meta.embedded.line.php;source.php;keyword.control.${1:/downcase}.php: [28664, 28666], {if}
+text.html.php;meta.embedded.line.php;source.php;keyword.control.if.php: [28664, 28666], {if}
 text.html.php;meta.embedded.line.php;source.php: [28666, 28667], { }
 text.html.php;meta.embedded.line.php;source.php;punctuation.definition.begin.bracket.round.php: [28667, 28668], {(}
 text.html.php;meta.embedded.line.php;source.php;variable.other.php;punctuation.definition.variable.php: [28668, 28669], {$}
@@ -5806,7 +5806,7 @@ text.html.php: [30479, 30480], {
 text.html.php: [30480, 30516], {                                    }
 text.html.php;meta.embedded.line.php;punctuation.section.embedded.begin.php: [30516, 30521], {<?php}
 text.html.php;meta.embedded.line.php;source.php: [30521, 30522], { }
-text.html.php;meta.embedded.line.php;source.php;keyword.control.${1:/downcase}.php: [30522, 30525], {for}
+text.html.php;meta.embedded.line.php;source.php;keyword.control.for.php: [30522, 30525], {for}
 text.html.php;meta.embedded.line.php;source.php: [30525, 30526], { }
 text.html.php;meta.embedded.line.php;source.php;punctuation.definition.begin.bracket.round.php: [30526, 30527], {(}
 text.html.php;meta.embedded.line.php;source.php;variable.other.php;punctuation.definition.variable.php: [30527, 30528], {$}
