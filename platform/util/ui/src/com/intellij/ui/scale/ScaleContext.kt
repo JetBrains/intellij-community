@@ -121,23 +121,17 @@ class ScaleContext : UserScaleContext {
   /**
    * {@inheritDoc}
    */
-  override fun getScale(type: ScaleType): Double {
-    return if (type == ScaleType.SYS_SCALE) sysScale.value else super.getScale(type)
-  }
+  override fun getScale(type: ScaleType): Double = if (type == ScaleType.SYS_SCALE) sysScale.value else super.getScale(type)
 
-  override fun getScaleObject(type: ScaleType): Scale {
-    return if (type == ScaleType.SYS_SCALE) sysScale else super.getScaleObject(type)
-  }
+  override fun getScaleObject(type: ScaleType): Scale = if (type == ScaleType.SYS_SCALE) sysScale else super.getScaleObject(type)
 
   /**
    * {@inheritDoc}
    */
-  override fun getScale(type: DerivedScaleType): Double {
-    return when (type) {
-      DerivedScaleType.DEV_SCALE -> if (JreHiDpiUtil.isJreHiDPIEnabled()) sysScale.value else 1.0
-      DerivedScaleType.EFF_USR_SCALE -> usrScale.value * objScale.value
-      DerivedScaleType.PIX_SCALE -> pixScale
-    }
+  override fun getScale(type: DerivedScaleType): Double = when (type) {
+    DerivedScaleType.DEV_SCALE -> if (JreHiDpiUtil.isJreHiDPIEnabled()) sysScale.value else 1.0
+    DerivedScaleType.EFF_USR_SCALE -> usrScale.value * objScale.value
+    DerivedScaleType.PIX_SCALE -> pixScale
   }
 
   /**
@@ -193,9 +187,8 @@ class ScaleContext : UserScaleContext {
     return setScale(scaleContext.sysScale) || updated
   }
 
-  override fun equals(other: Any?): Boolean {
-    return if (super.equals(other) && other is ScaleContext) other.sysScale.value == sysScale.value else false
-  }
+  override fun equals(other: Any?): Boolean =
+    if (super.equals(other) && other is ScaleContext) other.sysScale.value == sysScale.value else false
 
   override fun hashCode(): Int = sysScale.value.hashCode() * 31 + super.hashCode()
 

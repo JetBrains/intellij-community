@@ -68,19 +68,17 @@ fun updateAppWindowIcon(window: Window) {
   if (images == null) {
     images = ArrayList(3)
     val appInfo = ApplicationInfoImpl.getShadowInstance()
-    val svgIconUrl = appInfo.applicationSvgIconUrl
-    val smallSvgIconUrl = appInfo.smallApplicationSvgIconUrl
     val scaleContext = ScaleContext.create(window)
     if (SystemInfoRt.isUnix) {
-      loadAppIconImage(svgPath = svgIconUrl, scaleContext = scaleContext, size = 128)?.let {
+      loadAppIconImage(svgPath = appInfo.applicationSvgIconUrl, scaleContext = scaleContext, size = 128)?.let {
         images.add(it)
       }
     }
-    loadAppIconImage(svgPath = svgIconUrl, scaleContext = scaleContext, size = 32)?.let {
+    loadAppIconImage(svgPath = appInfo.applicationSvgIconUrl, scaleContext = scaleContext, size = 32)?.let {
       images.add(it)
     }
     if (SystemInfoRt.isWindows) {
-      loadAppIconImage(svgPath = smallSvgIconUrl, scaleContext = scaleContext, size = 16)?.let {
+      loadAppIconImage(svgPath = appInfo.smallApplicationSvgIconUrl, scaleContext = scaleContext, size = 16)?.let {
         images.add(it)
       }
     }
@@ -134,7 +132,6 @@ private fun findAppIconSvgData(path: String, pixScale: Float): ByteArray? {
     if (loadingStart != -1L) {
       IconLoadMeasurer.addLoading(isSvg = descriptor.isSvg, start = loadingStart)
     }
-
     return data
   }
   return null
@@ -168,13 +165,10 @@ fun findAppIcon(): String? {
 }
 
 @Suppress("MemberVisibilityCanBePrivate")
-fun isWindowIconAlreadyExternallySet(): Boolean {
-  if (SystemInfoRt.isMac) {
-    return isMacDocIconSet || (!PlatformUtils.isJetBrainsClient() && !PluginManagerCore.isRunningFromSources())
-  }
-  else {
-    return SystemInfoRt.isWindows && java.lang.Boolean.getBoolean("ide.native.launcher") && SystemInfo.isJetBrainsJvm
-  }
+fun isWindowIconAlreadyExternallySet(): Boolean = when {
+  SystemInfoRt.isWindows -> java.lang.Boolean.getBoolean("ide.native.launcher") && SystemInfo.isJetBrainsJvm
+  SystemInfoRt.isMac -> isMacDocIconSet || (!PlatformUtils.isJetBrainsClient() && !PluginManagerCore.isRunningFromSources())
+  else -> false
 }
 
 object AppUIUtil {
@@ -185,10 +179,8 @@ object AppUIUtil {
     loadSmallApplicationIcon(scaleContext, size, requestReleaseIcon = !ApplicationInfoImpl.getShadowInstance().isEAP)
 
   @JvmStatic
-  fun loadApplicationIcon(ctx: ScaleContext, size: Int): Icon? {
-    val url = ApplicationInfoImpl.getShadowInstance().applicationSvgIconUrl
-    return loadAppIconImage(url, ctx, size)?.let { JBImageIcon(it) }
-  }
+  fun loadApplicationIcon(ctx: ScaleContext, size: Int): Icon? =
+    loadAppIconImage(ApplicationInfoImpl.getShadowInstance().applicationSvgIconUrl, ctx, size)?.let { JBImageIcon(it) }
 
   @JvmStatic
   fun invokeLaterIfProjectAlive(project: Project, runnable: Runnable) {
