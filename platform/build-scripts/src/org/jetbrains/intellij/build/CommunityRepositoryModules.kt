@@ -622,7 +622,6 @@ object CommunityRepositoryModules {
       spec.withProjectLibrary("android-test-plugin-host-device-info-proto")
       spec.withProjectLibrary("asm-tools")
       spec.withProjectLibrary("baksmali")
-      spec.withProjectLibrary("commons-lang")
       spec.withProjectLibrary("emulator-proto")
       spec.withProjectLibrary("ffmpeg")
       spec.withProjectLibrary("ffmpeg-javacpp")

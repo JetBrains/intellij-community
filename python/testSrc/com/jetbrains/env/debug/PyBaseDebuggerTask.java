@@ -31,7 +31,6 @@ import com.jetbrains.python.debugger.*;
 import com.jetbrains.python.debugger.pydev.ProcessDebugger;
 import com.jetbrains.python.debugger.pydev.PyDebugCallback;
 import com.jetbrains.python.debugger.smartstepinto.PySmartStepIntoVariant;
-import org.apache.commons.lang.StringUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
@@ -272,7 +271,7 @@ public abstract class PyBaseDebuggerTask extends PyExecutionFixtureTestTask {
   }
 
   protected void outputContains(String substring, int times) {
-    Assert.assertEquals(times, StringUtils.countMatches(output(), substring));
+    Assert.assertEquals(times, StringUtil.getOccurrenceCount(output(), substring));
   }
 
   public void setProcessCanTerminate(boolean processCanTerminate) {
@@ -479,7 +478,7 @@ public abstract class PyBaseDebuggerTask extends PyExecutionFixtureTestTask {
     long started = System.currentTimeMillis();
     int matches;
 
-    while ((matches = StringUtils.countMatches(output(), string)) != times) {
+    while ((matches = StringUtil.getOccurrenceCount(output(), string)) != times) {
       if (System.currentTimeMillis() - started > myTimeout) {
         Assert.fail("The substring '" + string + "' appeared in the output " + matches + " times, must be " + times + " times.\n" +
                     output());
