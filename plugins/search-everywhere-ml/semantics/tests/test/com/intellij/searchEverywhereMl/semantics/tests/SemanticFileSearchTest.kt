@@ -64,7 +64,7 @@ class SemanticFileSearchTest : SemanticSearchBaseTestCase() {
     assertEquals(3, storage.index.size)
 
     var neighbours = storage.streamSearchNeighbours("index project job", 0.5).toList()
-    assertEquals(setOf("IndexProjectAction.java", "ProjectIndexingTask.kt"), neighbours.toIdsSet())
+    assertEquals(setOf("ProjectIndexingTask.kt", "IndexProjectAction.java"), neighbours.toIdsSet())
 
     neighbours = storage.streamSearchNeighbours("handle file with scores", 0.4).toList()
     assertEquals(setOf("ScoresFileManager.java"), neighbours.toIdsSet())

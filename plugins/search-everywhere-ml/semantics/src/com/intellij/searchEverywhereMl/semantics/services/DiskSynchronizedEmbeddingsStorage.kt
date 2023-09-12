@@ -57,6 +57,11 @@ abstract class DiskSynchronizedEmbeddingsStorage<T : IndexableEntity>(val projec
   @RequiresBackgroundThread
  override fun searchNeighbours(text: String, topK: Int, similarityThreshold: Double?): List<ScoredText> {
     if (!checkSearchEnabled()) return emptyList()
+    return searchNeighboursForce(text, topK, similarityThreshold)
+  }
+
+  @RequiresBackgroundThread
+  override fun searchNeighboursForce(text: String, topK: Int, similarityThreshold: Double?): List<ScoredText> {
     val embedding = generateEmbedding(text) ?: return emptyList()
     return index.findClosest(embedding, topK, similarityThreshold)
   }

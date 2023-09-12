@@ -6,4 +6,8 @@ import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 abstract class AbstractEmbeddingsStorage {
   @RequiresBackgroundThread
   abstract fun searchNeighbours(text: String, topK: Int, similarityThreshold: Double? = null): List<ScoredText>
+
+
+  @RequiresBackgroundThread
+  abstract fun searchNeighboursForce(text: String, topK: Int, similarityThreshold: Double? = null): List<ScoredText>
 }
