@@ -77,7 +77,7 @@
     <postStartupActivity implementation="org.jetbrains.plugins.gradle.service.project.GradleVersionUpdateStartupActivity"/>
     <postStartupActivity implementation="org.jetbrains.plugins.gradle.service.project.GradleHeadlessLoggingProjectActivity"/>
     <externalSystemUnlinkedProjectAware implementation="org.jetbrains.plugins.gradle.autolink.GradleUnlinkedProjectAware"/>
-    <externalSystemSettingsListener id="gradle" implementation="org.jetbrains.plugins.gradle.startup.GradleProjectSettingsUpdater"/>
+    <externalSystemSettingsListener id="gradle" implementation="org.jetbrains.plugins.gradle.startup.GradleProjectSettingsUpdater" order="before external-system"/>
     <projectOpenProcessor id="gradle" implementation="org.jetbrains.plugins.gradle.service.project.open.GradleProjectOpenProcessor"/>
     <orderEnumerationHandlerFactory implementation="org.jetbrains.plugins.gradle.execution.GradleOrderEnumeratorHandler$FactoryImpl"/>
     <consoleFilterProvider implementation="org.jetbrains.plugins.gradle.execution.GradleConsoleFilterProvider"/>
