@@ -25,6 +25,11 @@ public abstract class FirKeywordCompletionTestGenerated extends AbstractFirKeywo
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
         }
 
+        @TestMetadata("AfterAsInImport.kt")
+        public void testAfterAsInImport() throws Exception {
+            runTest("../completion/testData/keywords/AfterAsInImport.kt");
+        }
+
         @TestMetadata("AfterClassName.kt")
         public void testAfterClassName() throws Exception {
             runTest("../completion/testData/keywords/AfterClassName.kt");
@@ -63,6 +68,11 @@ public abstract class FirKeywordCompletionTestGenerated extends AbstractFirKeywo
         @TestMetadata("AfterIf.kt")
         public void testAfterIf() throws Exception {
             runTest("../completion/testData/keywords/AfterIf.kt");
+        }
+
+        @TestMetadata("AfterImportDirective.kt")
+        public void testAfterImportDirective() throws Exception {
+            runTest("../completion/testData/keywords/AfterImportDirective.kt");
         }
 
         @TestMetadata("AfterSafeDot.kt")

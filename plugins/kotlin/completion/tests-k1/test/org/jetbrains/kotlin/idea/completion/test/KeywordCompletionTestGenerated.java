@@ -23,6 +23,11 @@ public class KeywordCompletionTestGenerated extends AbstractKeywordCompletionTes
         KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
     }
 
+    @TestMetadata("AfterAsInImport.kt")
+    public void testAfterAsInImport() throws Exception {
+        runTest("../testData/keywords/AfterAsInImport.kt");
+    }
+
     @TestMetadata("AfterClassName.kt")
     public void testAfterClassName() throws Exception {
         runTest("../testData/keywords/AfterClassName.kt");
@@ -61,6 +66,11 @@ public class KeywordCompletionTestGenerated extends AbstractKeywordCompletionTes
     @TestMetadata("AfterIf.kt")
     public void testAfterIf() throws Exception {
         runTest("../testData/keywords/AfterIf.kt");
+    }
+
+    @TestMetadata("AfterImportDirective.kt")
+    public void testAfterImportDirective() throws Exception {
+        runTest("../testData/keywords/AfterImportDirective.kt");
     }
 
     @TestMetadata("AfterSafeDot.kt")
