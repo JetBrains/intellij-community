@@ -27,8 +27,8 @@ import com.intellij.util.gist.GistManager;
 import com.intellij.util.gist.GistManagerImpl;
 import com.intellij.util.indexing.FilesScanningTaskBase.IndexingProgressReporter.IndexingSubTaskProgressReporter;
 import com.intellij.util.indexing.PerProjectIndexingQueue.PerProviderSink;
-import com.intellij.util.indexing.dependencies.FileIndexingStampService;
 import com.intellij.util.indexing.dependencies.IndexingRequestToken;
+import com.intellij.util.indexing.dependencies.ProjectIndexingDependenciesService;
 import com.intellij.util.indexing.dependenciesCache.DependenciesIndexedStatusService;
 import com.intellij.util.indexing.dependenciesCache.DependenciesIndexedStatusService.StatusMark;
 import com.intellij.util.indexing.diagnostic.*;
@@ -548,7 +548,7 @@ public class UnindexedFilesScanner extends FilesScanningTaskBase {
                                                   @Nullable @NonNls String indexingReason) {
     FileBasedIndex.getInstance().loadIndexes();
     project.putUserData(FIRST_SCANNING_REQUESTED, true);
-    IndexingRequestToken indexingRequest = ApplicationManager.getApplication().getService(FileIndexingStampService.class).getLatestIndexingRequestToken();
+    IndexingRequestToken indexingRequest = ApplicationManager.getApplication().getService(ProjectIndexingDependenciesService.class).getLatestIndexingRequestToken();
     if (TestModeFlags.is(INDEX_PROJECT_WITH_MANY_UPDATERS_TEST_KEY)) {
       LOG.assertTrue(ApplicationManager.getApplication().isUnitTestMode());
       List<IndexableFilesIterator> iterators = collectProviders(project, (FileBasedIndexImpl)FileBasedIndex.getInstance()).getFirst();

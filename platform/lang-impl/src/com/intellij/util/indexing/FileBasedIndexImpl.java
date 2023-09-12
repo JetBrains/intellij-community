@@ -65,8 +65,8 @@ import com.intellij.util.indexing.FileIndexesValuesApplier.ApplicationMode;
 import com.intellij.util.indexing.contentQueue.CachedFileContent;
 import com.intellij.util.indexing.contentQueue.IndexUpdateRunner;
 import com.intellij.util.indexing.dependencies.FileIndexingStamp;
-import com.intellij.util.indexing.dependencies.FileIndexingStampService;
 import com.intellij.util.indexing.dependencies.IndexingRequestToken;
+import com.intellij.util.indexing.dependencies.ProjectIndexingDependenciesService;
 import com.intellij.util.indexing.diagnostic.BrokenIndexingDiagnostics;
 import com.intellij.util.indexing.diagnostic.IndexStatisticGroup;
 import com.intellij.util.indexing.diagnostic.StorageDiagnosticData;
@@ -1686,7 +1686,7 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
     @Override
     void doProcess(VirtualFile item, Project project) {
       // snapshot at the beginning: if file changes while being processed, we can detect this on the following scanning
-      IndexingRequestToken indexingRequest = ApplicationManager.getApplication().getService(FileIndexingStampService.class).getLatestIndexingRequestToken();
+      IndexingRequestToken indexingRequest = ApplicationManager.getApplication().getService(ProjectIndexingDependenciesService.class).getLatestIndexingRequestToken();
       var stamp = indexingRequest.getFileIndexingStamp(item);
       processRefreshedFile(project, new CachedFileContent(item), stamp);
     }

@@ -20,7 +20,7 @@ import com.intellij.psi.search.FilenameIndex;
 import com.intellij.serviceContainer.AlreadyDisposedException;
 import com.intellij.util.ThrowableRunnable;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.indexing.dependencies.FileIndexingStampService;
+import com.intellij.util.indexing.dependencies.ProjectIndexingDependenciesService;
 import com.intellij.util.indexing.impl.storage.DefaultIndexStorageLayout;
 import com.intellij.util.indexing.impl.storage.FileBasedIndexLayoutSettings;
 import com.intellij.util.io.DataOutputStream;
@@ -145,7 +145,7 @@ final class FileBasedIndexDataInitialization extends IndexDataInitializer<IndexC
 
     if (myCurrentVersionCorrupted) {
       CorruptionMarker.dropIndexes();
-      ApplicationManager.getApplication().getService(FileIndexingStampService.class).invalidateAllStamps();
+      ApplicationManager.getApplication().getService(ProjectIndexingDependenciesService.class).invalidateAllStamps();
     }
 
     return tasks;

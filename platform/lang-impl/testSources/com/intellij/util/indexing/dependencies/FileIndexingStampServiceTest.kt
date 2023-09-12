@@ -100,8 +100,8 @@ class FileIndexingStampServiceTest {
     return file
   }
 
-  private fun newFileIndexingStampService(file: File): FileIndexingStampService {
-    return FileIndexingStampService(file.toPath()).also {
+  private fun newFileIndexingStampService(file: File): ProjectIndexingDependenciesService {
+    return ProjectIndexingDependenciesService(file.toPath()).also {
       Disposer.register(testDisposable, it)
       assertTrue(file.exists())
     }

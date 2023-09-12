@@ -8,7 +8,7 @@ import com.intellij.openapi.vfs.newvfs.impl.VirtualFileSystemEntry
 import com.intellij.util.application
 import com.intellij.util.asSafely
 import com.intellij.util.indexing.dependencies.FileIndexingStamp
-import com.intellij.util.indexing.dependencies.FileIndexingStampService
+import com.intellij.util.indexing.dependencies.ProjectIndexingDependenciesService
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.TestOnly
 
@@ -24,7 +24,7 @@ object IndexingFlag {
 
   @JvmStatic
   fun cleanupProcessedFlag() {
-    application.service<FileIndexingStampService>().invalidateAllStamps()
+    application.service<ProjectIndexingDependenciesService>().invalidateAllStamps()
   }
 
   private fun VirtualFile.asApplicable(): VirtualFileSystemEntry? {
@@ -47,7 +47,7 @@ object IndexingFlag {
   fun cleanProcessingFlag(file: VirtualFile) {
     file.asApplicable()?.also { entry ->
       hashes.releaseHash(entry.id)
-      entry.indexedStamp = FileIndexingStampService.NULL_STAMP.toInt()
+      entry.indexedStamp = ProjectIndexingDependenciesService.NULL_STAMP.toInt()
     }
   }
 
@@ -76,7 +76,7 @@ object IndexingFlag {
     file.asApplicable()?.also { entry ->
       val hash = hashes.releaseHash(entry.id)
       if (entry.indexedStamp != stamp.toInt()) {
-        entry.indexedStamp = (if (hash == lockObject) stamp else FileIndexingStampService.NULL_STAMP).toInt()
+        entry.indexedStamp = (if (hash == lockObject) stamp else ProjectIndexingDependenciesService.NULL_STAMP).toInt()
       }
     }
   }

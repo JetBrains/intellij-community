@@ -68,7 +68,7 @@ import com.intellij.testFramework.*
 import com.intellij.testFramework.builders.JavaModuleFixtureBuilder
 import com.intellij.testFramework.fixtures.JavaCodeInsightFixtureTestCase
 import com.intellij.util.*
-import com.intellij.util.indexing.dependencies.FileIndexingStampService
+import com.intellij.util.indexing.dependencies.ProjectIndexingDependenciesService
 import com.intellij.util.indexing.events.IndexedFilesListener
 import com.intellij.util.indexing.events.VfsEventsMerger
 import com.intellij.util.indexing.impl.IndexDebugProperties
@@ -536,7 +536,7 @@ class IndexTest extends JavaCodeInsightFixtureTestCase {
     assertIsIndexed(vFile)
 
     WriteAction.run { VfsUtil.saveText(vFile, "Foo class") }
-    def indexingRequest = ApplicationManager.getApplication().getService(FileIndexingStampService.class).latestIndexingRequestToken
+    def indexingRequest = ApplicationManager.getApplication().getService(ProjectIndexingDependenciesService.class).latestIndexingRequestToken
     assertFalse(IndexingFlag.isFileIndexed(vFile, indexingRequest.getFileIndexingStamp(vFile)))
     assertTrue(stamp == FileBasedIndex.instance.getIndexModificationStamp(IdIndex.NAME, project))
     assertIsIndexed(vFile)
@@ -563,7 +563,7 @@ class IndexTest extends JavaCodeInsightFixtureTestCase {
   }
 
   private static assertIsIndexed(VirtualFile vFile) {
-    def indexingRequest = ApplicationManager.getApplication().getService(FileIndexingStampService.class).latestIndexingRequestToken
+    def indexingRequest = ApplicationManager.getApplication().getService(ProjectIndexingDependenciesService.class).latestIndexingRequestToken
     assertTrue(IndexingFlag.isFileIndexed(vFile, indexingRequest.getFileIndexingStamp(vFile)) || VfsData.isIsIndexedFlagDisabled())
   }
 
@@ -1189,7 +1189,7 @@ class IndexTest extends JavaCodeInsightFixtureTestCase {
     // now all directories are indexed
 
 
-    def indexingRequest = ApplicationManager.getApplication().getService(FileIndexingStampService.class).latestIndexingRequestToken
+    def indexingRequest = ApplicationManager.getApplication().getService(ProjectIndexingDependenciesService.class).latestIndexingRequestToken
     assertFalse(IndexingFlag.isFileIndexed(foo, indexingRequest.getFileIndexingStamp(foo)))
     assertIsIndexed(main)
     assertIsIndexed(src)
@@ -1508,7 +1508,7 @@ class IndexTest extends JavaCodeInsightFixtureTestCase {
 
     fileBasedIndex.ensureUpToDate(trigramId, project, GlobalSearchScope.everythingScope(project))
     assertEmpty(fileBasedIndex.getIndex(trigramId).getIndexedFileData(fileId).values())
-    def indexingRequest = ApplicationManager.getApplication().getService(FileIndexingStampService.class).latestIndexingRequestToken
+    def indexingRequest = ApplicationManager.getApplication().getService(ProjectIndexingDependenciesService.class).latestIndexingRequestToken
     assertFalse(IndexingFlag.isFileIndexed(file, indexingRequest.getFileIndexingStamp(file)))
   }
 

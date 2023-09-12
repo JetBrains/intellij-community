@@ -22,7 +22,7 @@ import com.intellij.openapi.vfs.VirtualFileManager
 import com.intellij.testFramework.*
 import com.intellij.testFramework.assertions.Assertions.assertThat
 import com.intellij.util.application
-import com.intellij.util.indexing.dependencies.FileIndexingStampService
+import com.intellij.util.indexing.dependencies.ProjectIndexingDependenciesService
 import com.intellij.util.indexing.diagnostic.ProjectScanningHistory
 import com.intellij.util.indexing.diagnostic.ScanningType
 import com.intellij.util.indexing.diagnostic.dto.JsonScanningStatistics
@@ -317,7 +317,7 @@ class UnindexedFilesScannerTest {
   }
 
   private fun indexFiles(provider: SingleRootIndexableFilesIterator, dirtyFiles: Collection<VirtualFile>) {
-    val indexingStamp = application.service<FileIndexingStampService>().invalidateAllStamps()
+    val indexingStamp = application.service<ProjectIndexingDependenciesService>().invalidateAllStamps()
     val indexingTask = UnindexedFilesIndexer(project, mapOf(provider to dirtyFiles), "Test", LongSet.of(), indexingStamp)
     val indicator = EmptyProgressIndicator()
     ProgressManager.getInstance().runProcess({ indexingTask.perform(indicator) }, indicator)
@@ -346,7 +346,7 @@ class UnindexedFilesScannerTest {
   private fun scanFiles(filesAndDirs: IndexableFilesIterator): Pair<ProjectScanningHistory, Map<IndexableFilesIterator, Collection<VirtualFile>>> {
     val scanningHistoryRef = Ref<ProjectScanningHistory>()
     val scanningTask = object : UnindexedFilesScanner(project, false, false, listOf(filesAndDirs), null, "Test", ScanningType.PARTIAL,
-                                                      application.service<FileIndexingStampService>().getLatestIndexingRequestToken()) {
+                                                      application.service<ProjectIndexingDependenciesService>().getLatestIndexingRequestToken()) {
       override fun performScanningAndIndexing(indicator: CheckCancelOnlyProgressIndicator,
                                               progressReporter: IndexingProgressReporter): ProjectScanningHistory {
         return super.performScanningAndIndexing(indicator, progressReporter).also(scanningHistoryRef::set)

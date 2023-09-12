@@ -27,8 +27,8 @@ import com.intellij.util.concurrency.SequentialTaskExecutor;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.IntObjectMap;
 import com.intellij.util.indexing.*;
-import com.intellij.util.indexing.dependencies.FileIndexingStampService;
 import com.intellij.util.indexing.dependencies.IndexingRequestToken;
+import com.intellij.util.indexing.dependencies.ProjectIndexingDependenciesService;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
@@ -231,7 +231,7 @@ public final class ChangedFilesCollector extends IndexedFilesListener {
   public void processFilesToUpdateInReadAction() {
     processFilesInReadAction(new VfsEventsMerger.VfsEventProcessor() {
       private final IndexingRequestToken indexingRequest =
-        ApplicationManager.getApplication().getService(FileIndexingStampService.class).getLatestIndexingRequestToken();
+        ApplicationManager.getApplication().getService(ProjectIndexingDependenciesService.class).getLatestIndexingRequestToken();
       private final StubIndexImpl.FileUpdateProcessor perFileElementTypeUpdateProcessor =
         ((StubIndexImpl)StubIndex.getInstance()).getPerFileElementTypeModificationTrackerUpdateProcessor();
       @Override

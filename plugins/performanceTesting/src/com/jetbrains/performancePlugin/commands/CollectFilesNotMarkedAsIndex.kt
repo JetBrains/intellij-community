@@ -21,7 +21,7 @@ import com.intellij.util.indexing.FileBasedIndex
 import com.intellij.util.indexing.FileBasedIndexImpl
 import com.intellij.util.indexing.IndexingFlag
 import com.intellij.util.indexing.IndexingStamp
-import com.intellij.util.indexing.dependencies.FileIndexingStampService
+import com.intellij.util.indexing.dependencies.ProjectIndexingDependenciesService
 import com.intellij.util.indexing.roots.IndexableFilesIterator
 import com.intellij.util.indexing.roots.kind.SdkOrigin
 import org.jetbrains.annotations.NonNls
@@ -64,7 +64,7 @@ class CollectFilesNotMarkedAsIndex(text: String, line: Int) : PerformanceCommand
     }
 
     Files.newBufferedWriter(fullLogPath).use { writer ->
-      val indexingRequest = application.service<FileIndexingStampService>().getLatestIndexingRequestToken()
+      val indexingRequest = application.service<ProjectIndexingDependenciesService>().getLatestIndexingRequestToken()
       val iterator = object : ContentIterator {
         var number = 0
 

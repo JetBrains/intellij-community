@@ -26,19 +26,19 @@ import kotlin.math.max
  * 1. If VFS is invalidated, we don't need any additional actions. IndexingFlag is stored in the VFS records, invalidating VFS
  * effectively means "reset all the stamps to the default value (unindexed)".
  *
- * 2. If Indexes are invalidated, indexes must call [FileIndexingStampService.invalidateAllStamps], otherwise files that were indexed
+ * 2. If Indexes are invalidated, indexes must call [ProjectIndexingDependenciesService.invalidateAllStamps], otherwise files that were indexed
  * early will be recognized as "indexed", however real data has been wiped from storages.
  *
  * 3. If int inside [FileIndexingStamp], invalidate VFS storages will help, because all the files fil be marked as "unindexed", and
  * we don't really care if indexing stamp starts counting from 0, or from -42. We only care that after
- * [FileIndexingStampService.invalidateAllStamps] invocation "expected" and "actual" stamps are different numbers
+ * [ProjectIndexingDependenciesService.invalidateAllStamps] invocation "expected" and "actual" stamps are different numbers
  *
  * 4. We don't want "invalidate caches" to drop persistent state. It is OK, if the state is dropped together with VFS invalidation,
  * but persistence should not be dropped in other cases, because IndexingStamp is actually stored in VFS.
  *
  */
-@Service(Service.Level.APP)
-class FileIndexingStampService @NonInjectable @VisibleForTesting constructor(storagePath: Path) : Disposable {
+@Service(Service.Level.APP) // TODO: project
+class ProjectIndexingDependenciesService @NonInjectable @VisibleForTesting constructor(storagePath: Path) : Disposable {
   companion object {
     private const val NULL_INDEXING_STAMP: Int = 0
     private const val CURRENT_STORAGE_VERSION = 0
