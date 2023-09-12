@@ -46,18 +46,15 @@ import javax.swing.plaf.basic.BasicLookAndFeel
 import kotlin.system.exitProcess
 
 internal fun CoroutineScope.scheduleInitUi(initAwtToolkitJob: Job, isHeadless: Boolean): Job {
-  val iconManagerActivateJob = launch {
+  return launch {
     // IdeaLaF uses AllIcons - icon manager must be activated
     if (!isHeadless) {
       span("icon manager activation") {
         IconManager.activate(CoreIconManager())
       }
     }
-  }
 
-  return launch {
     initAwtToolkitJob.join()
-    iconManagerActivateJob.join()
     // SwingDispatcher must be used after Toolkit init
     span("initUi", RawSwingDispatcher) {
       initLafAndScale(isHeadless)
