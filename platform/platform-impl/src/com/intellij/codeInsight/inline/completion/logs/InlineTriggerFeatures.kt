@@ -32,10 +32,10 @@ internal object InlineTriggerFeatures {
 
   fun getEventPair(triggerFeatures: List<EventPair<*>>) = TRIGGER_FEATURES.with(ObjectEventData(triggerFeatures))
 
-  val LINE_NUMBER = Int("line_number")
-  val COLUMN_NUMBER = Int("column_number")
-  val SYMBOLS_IN_LINE_BEFORE_CARET = Int("symbols_in_line_before_caret")
-  val SYMBOLS_IN_LINE_AFTER_CARET = Int("symbols_in_line_after_caret")
+  private val LINE_NUMBER = Int("line_number")
+  private val COLUMN_NUMBER = Int("column_number")
+  private val SYMBOLS_IN_LINE_BEFORE_CARET = Int("symbols_in_line_before_caret")
+  private val SYMBOLS_IN_LINE_AFTER_CARET = Int("symbols_in_line_after_caret")
 
   val TRIGGER_FEATURES = ObjectEventField(
     "trigger_features",
