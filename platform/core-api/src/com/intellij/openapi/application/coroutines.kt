@@ -240,7 +240,7 @@ suspend fun <T> writeAction(action: () -> T): T {
 
 private fun readWriteActionSupport() = ApplicationManager.getApplication().getService(ReadWriteActionSupport::class.java)
 
-@Suppress("CONFLICTING_OVERLOADS")
+@Suppress("CONFLICTING_OVERLOADS") // KT-61878
 @Deprecated("Moved to modality.kt", level = DeprecationLevel.HIDDEN)
 fun ModalityState.asContextElement(): CoroutineContext = asContextElement()
 
