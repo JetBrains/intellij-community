@@ -179,6 +179,19 @@
     <target name="patch" description="Apply MPS patches to IDEA Community sources">
         <echo message="Applying MPS patches to IDEA Community sources..."/>
 
+        <property name="patchInitComponentsBeforeEditorOpens"
+                  value="${basedir}/patches/MPS-36060.patch"/>
+        <echo message="Applying ${patchInitComponentsBeforeEditorOpens}"/>
+        <exec executable="git" dir="${community.folder}" failonerror="true">
+            <arg value="apply"/>
+            <arg value="&#45;-check"/>
+            <arg value="${patchInitComponentsBeforeEditorOpens}"/>
+        </exec>
+        <exec executable="git" dir="${community.folder}">
+            <arg value="apply"/>
+            <arg value="${patchInitComponentsBeforeEditorOpens}"/>
+        </exec>
+
         <property name="patchDisableRunCurrentFile"
                   value="${basedir}/patches/DisableRunCurrentFile.patch"/>
         <echo message="Applying ${patchDisableRunCurrentFile}"/>
