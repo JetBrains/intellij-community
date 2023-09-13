@@ -2,21 +2,24 @@
 package org.jetbrains.idea.maven.project
 
 import com.intellij.maven.testFramework.MavenDomTestCase
-import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.command.CommandProcessor
+import com.intellij.openapi.application.readAction
+import com.intellij.openapi.application.writeAction
 import com.intellij.openapi.module.ModuleManager
 import com.intellij.openapi.module.ModuleWithNameAlreadyExists
 import com.intellij.openapi.project.ModuleListener
+import kotlinx.coroutines.runBlocking
 import org.junit.Test
 
 class MavenRenameModulesWatcherTest : MavenDomTestCase() {
+  override fun runInDispatchThread() = false
+
   override fun setUp() {
     super.setUp()
     myProjectsManager.initForTests()
     myProjectsManager.listenForExternalChanges()
   }
 
-  private fun renameModule(oldName: String, newName: String) {
+  private suspend fun renameModule(oldName: String, newName: String) {
     val moduleManager = ModuleManager.getInstance(myProject)
     val module = moduleManager.findModuleByName(oldName)!!
     val modifiableModel = moduleManager.getModifiableModel()
@@ -26,16 +29,14 @@ class MavenRenameModulesWatcherTest : MavenDomTestCase() {
     catch (e: ModuleWithNameAlreadyExists) {
       throw RuntimeException(e)
     }
-    CommandProcessor.getInstance().executeCommand(myProject, {
-      ApplicationManager.getApplication().runWriteAction {
-        modifiableModel.commit()
-        myProject.getMessageBus().syncPublisher(ModuleListener.TOPIC).modulesRenamed(myProject, listOf(module)) { oldName }
-      }
-    }, "renaming model", null)
+    writeAction {
+      modifiableModel.commit()
+      myProject.getMessageBus().syncPublisher(ModuleListener.TOPIC).modulesRenamed(myProject, listOf(module)) { oldName }
+    }
   }
 
   @Test
-  fun testModuleRenameArtifactIdChanged() {
+  fun testModuleRenameArtifactIdChanged() = runBlocking {
     importProject("""
                   <groupId>group</groupId>
                   <artifactId>module</artifactId>
@@ -44,12 +45,14 @@ class MavenRenameModulesWatcherTest : MavenDomTestCase() {
     val oldModuleName = "module"
     val newModuleName = "newModule"
     renameModule(oldModuleName, newModuleName)
-    val tag = findTag("project.artifactId")
-    assertEquals(newModuleName, tag.getValue().getText())
+    readAction {
+      val tag = findTag("project.artifactId")
+      assertEquals(newModuleName, tag.getValue().getText())
+    }
   }
 
   @Test
-  fun testModuleRenameImplicitGroupIdArtifactIdChanged() {
+  fun testModuleRenameImplicitGroupIdArtifactIdChanged() = runBlocking {
     createProjectPom("""
                   <groupId>group</groupId>
                   <artifactId>parent</artifactId>
@@ -71,12 +74,14 @@ class MavenRenameModulesWatcherTest : MavenDomTestCase() {
     val oldModuleName = "m1"
     val newModuleName = "m1new"
     renameModule(oldModuleName, newModuleName)
-    val tag = findTag(m1File, "project.artifactId")
-    assertEquals(newModuleName, tag.getValue().getText())
+    readAction {
+      val tag = findTag(m1File, "project.artifactId")
+      assertEquals(newModuleName, tag.getValue().getText())
+    }
   }
 
   @Test
-  fun testModuleRenameParentChanged() {
+  fun testModuleRenameParentChanged() = runBlocking {
     createProjectPom("""
                   <groupId>group</groupId>
                   <artifactId>parent</artifactId>
@@ -98,12 +103,14 @@ class MavenRenameModulesWatcherTest : MavenDomTestCase() {
     val oldModuleName = "parent"
     val newModuleName = "newParent"
     renameModule(oldModuleName, newModuleName)
-    val tag = findTag(m1File, "project.parent.artifactId")
-    assertEquals(newModuleName, tag.getValue().getText())
+    readAction {
+      val tag = findTag(m1File, "project.parent.artifactId")
+      assertEquals(newModuleName, tag.getValue().getText())
+    }
   }
 
   @Test
-  fun testModuleRenameDependenciesChanged() {
+  fun testModuleRenameDependenciesChanged() = runBlocking {
     createProjectPom("""
                   <groupId>group</groupId>
                   <artifactId>parent</artifactId>
@@ -141,12 +148,14 @@ class MavenRenameModulesWatcherTest : MavenDomTestCase() {
     val oldModuleName = "m1"
     val newModuleName = "m1new"
     renameModule(oldModuleName, newModuleName)
-    val tag = findTag(m2File, "project.dependencies.dependency.artifactId")
-    assertEquals(newModuleName, tag.getValue().getText())
+    readAction {
+      val tag = findTag(m2File, "project.dependencies.dependency.artifactId")
+      assertEquals(newModuleName, tag.getValue().getText())
+    }
   }
 
   @Test
-  fun testModuleRenameExclusionsChanged() {
+  fun testModuleRenameExclusionsChanged() = runBlocking {
     createProjectPom("""
                   <groupId>group</groupId>
                   <artifactId>parent</artifactId>
@@ -210,12 +219,14 @@ class MavenRenameModulesWatcherTest : MavenDomTestCase() {
     val oldModuleName = "m1"
     val newModuleName = "m1new"
     renameModule(oldModuleName, newModuleName)
-    val tag = findTag(m3File, "project.dependencies.dependency.exclusions.exclusion.artifactId")
-    assertEquals(newModuleName, tag.getValue().getText())
+    readAction {
+      val tag = findTag(m3File, "project.dependencies.dependency.exclusions.exclusion.artifactId")
+      assertEquals(newModuleName, tag.getValue().getText())
+    }
   }
 
   @Test
-  fun testModuleRenameAnotherGroupArtifactIdNotChanged() {
+  fun testModuleRenameAnotherGroupArtifactIdNotChanged() = runBlocking {
     createProjectPom("""
                   <groupId>group</groupId>
                   <artifactId>parent</artifactId>
@@ -257,12 +268,14 @@ class MavenRenameModulesWatcherTest : MavenDomTestCase() {
     val oldModuleName = "m1"
     val newModuleName = "m1new"
     renameModule(oldModuleName, newModuleName)
-    val tag = findTag(m2File, "project.dependencies.dependency.artifactId")
-    assertEquals(oldModuleName, tag.getValue().getText())
+    readAction {
+      val tag = findTag(m2File, "project.dependencies.dependency.artifactId")
+      assertEquals(oldModuleName, tag.getValue().getText())
+    }
   }
 
   @Test
-  fun test_when_ModuleMovedToGroup_then_ArtifactIdRemains() {
+  fun test_when_ModuleMovedToGroup_then_ArtifactIdRemains() = runBlocking {
     importProject("""
                   <groupId>group</groupId>
                   <artifactId>module</artifactId>
@@ -271,7 +284,9 @@ class MavenRenameModulesWatcherTest : MavenDomTestCase() {
     val oldModuleName = "module"
     val newModuleName = "group.module"
     renameModule(oldModuleName, newModuleName)
-    val tag = findTag("project.artifactId")
-    assertEquals(oldModuleName, tag.getValue().getText())
+    readAction {
+      val tag = findTag("project.artifactId")
+      assertEquals(oldModuleName, tag.getValue().getText())
+    }
   }
 }
