@@ -13,6 +13,7 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.CornerSize
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.Immutable
 import androidx.compose.runtime.Stable
 import androidx.compose.runtime.getValue
@@ -113,11 +114,12 @@ fun <T> BasicLazyTree(
         }
     }
 
-    remember(tree, treeState.allNodes.size) {
+    DisposableEffect(tree, treeState.allNodes.size) {
         if (initialNodeStatus == InitialNodeStatus.Open) {
             treeState.openNodes.clear()
             treeState.openNodes.addAll(treeState.allNodes.map { it.first })
         }
+        onDispose { }
     }
 
     SelectableLazyColumn(
