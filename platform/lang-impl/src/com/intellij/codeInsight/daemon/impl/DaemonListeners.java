@@ -411,8 +411,8 @@ public final class DaemonListeners implements Disposable {
       return;
     }
     for (RangeHighlighter highlighter : model.getAllHighlighters()) {
-      Object tooltip = highlighter.getErrorStripeTooltip();
-      if (tooltip instanceof HighlightInfo) {
+      HighlightInfo info = HighlightInfo.fromRangeHighlighter(highlighter);
+      if (info != null) {
         highlighter.dispose();
       }
     }
@@ -736,10 +736,9 @@ public final class DaemonListeners implements Disposable {
       return true;
     }
 
-    Object errorStripeTooltip = highlighter.getErrorStripeTooltip();
-    if (errorStripeTooltip instanceof HighlightInfo) {
-      IntentionAction quickFixFromPlugin =
-        ((HighlightInfo)errorStripeTooltip).findRegisteredQuickFix((descriptor, range) -> {
+    HighlightInfo info = HighlightInfo.fromRangeHighlighter(highlighter);
+    if (info != null) {
+      IntentionAction quickFixFromPlugin = info.findRegisteredQuickFix((descriptor, range) -> {
           IntentionAction intentionAction = IntentionActionDelegate.unwrap(descriptor.getAction());
           if (intentionAction.getClass().getClassLoader() == pluginClassLoader) {
             return intentionAction;
@@ -753,8 +752,8 @@ public final class DaemonListeners implements Disposable {
       if (quickFixFromPlugin != null) return true;
     }
 
-    LineMarkerInfo<?> info = LineMarkersUtil.getLineMarkerInfo(highlighter);
-    return info != null && info.getClass().getClassLoader() == pluginClassLoader;
+    LineMarkerInfo<?> lmInfo = LineMarkersUtil.getLineMarkerInfo(highlighter);
+    return lmInfo != null && lmInfo.getClass().getClassLoader() == pluginClassLoader;
   }
 
   boolean isEscapeJustPressed() {

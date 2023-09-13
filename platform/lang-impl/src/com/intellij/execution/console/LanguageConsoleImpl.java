@@ -352,8 +352,7 @@ public class LanguageConsoleImpl extends ConsoleViewImpl implements LanguageCons
       if (!rangeHighlighter.isValid()) {
         continue;
       }
-      Object tooltip = rangeHighlighter.getErrorStripeTooltip();
-      HighlightInfo highlightInfo = tooltip instanceof HighlightInfo? (HighlightInfo)tooltip : null;
+      HighlightInfo highlightInfo = HighlightInfo.fromRangeHighlighter(rangeHighlighter);
       if (highlightInfo != null) {
         if (highlightInfo.getSeverity() != HighlightSeverity.INFORMATION) {
           continue;

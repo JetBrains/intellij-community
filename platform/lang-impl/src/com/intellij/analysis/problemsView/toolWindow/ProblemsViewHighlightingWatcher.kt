@@ -89,7 +89,7 @@ internal class ProblemsViewHighlightingWatcher(
   }
 
   private fun isValid(highlighter: RangeHighlighter): Boolean {
-    val info = highlighter.errorStripeTooltip as? HighlightInfo ?: return false
+    val info = HighlightInfo.fromRangeHighlighter(highlighter) ?: return false
     return info.description != null && info.severity.myVal >= level
   }
 

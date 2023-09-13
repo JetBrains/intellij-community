@@ -2670,9 +2670,9 @@ public class DaemonRespondToChangesTest extends DaemonAnalyzerTestCase {
       called.incrementAndGet();
       UIUtil.dispatchAllInvocationEvents();
       long highlighted = Arrays.stream(markupModel.getAllHighlighters())
-        .map(highlighter -> highlighter.getErrorStripeTooltip())
-        .filter(tooltip -> tooltip instanceof HighlightInfo
-                             && MyFastAnnotator.SWEARING.equals(((HighlightInfo)tooltip).getDescription()))
+        .map(highlighter -> HighlightInfo.fromRangeHighlighter(highlighter))
+        .filter(Objects::nonNull)
+        .filter(info -> MyFastAnnotator.SWEARING.equals(info.getDescription()))
         .count();
       if (highlighted != 0) {
         toSleepMs.set(0);
@@ -2689,7 +2689,7 @@ public class DaemonRespondToChangesTest extends DaemonAnalyzerTestCase {
       PsiDocumentManager.getInstance(myProject).commitAllDocuments();
       long start = System.currentTimeMillis();
       myDaemonCodeAnalyzer.runPasses(getFile(), getEditor().getDocument(), textEditor, ArrayUtilRt.EMPTY_INT_ARRAY, false, checkHighlighted);
-      List<RangeHighlighter> errors = ContainerUtil.filter(markupModel.getAllHighlighters(), highlighter -> highlighter.getErrorStripeTooltip() instanceof HighlightInfo && ((HighlightInfo)highlighter.getErrorStripeTooltip()).getSeverity() == HighlightSeverity.ERROR);
+      List<RangeHighlighter> errors = ContainerUtil.filter(markupModel.getAllHighlighters(), highlighter -> HighlightInfo.fromRangeHighlighter(highlighter) != null && HighlightInfo.fromRangeHighlighter(highlighter).getSeverity() == HighlightSeverity.ERROR);
       long elapsed = System.currentTimeMillis() - start;
 
       fail("should have been interrupted. toSleepMs: " + toSleepMs + "; highlights: " + errors + "; called: " + called+"; highlighted in "+elapsed+"ms");

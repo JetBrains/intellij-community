@@ -225,8 +225,8 @@ public final class UpdateHighlightersUtil {
   }
 
   private static boolean shouldRemoveInfoEvenInEssentialMode(@NotNull RangeHighlighter highlighter) {
-    Object tooltip = highlighter.getErrorStripeTooltip();
-    if (!(tooltip instanceof HighlightInfo info)) return true;
+    HighlightInfo info = HighlightInfo.fromRangeHighlighter(highlighter);
+    if (info == null) return true;
     int group = info.getGroup();
     if (group != Pass.LOCAL_INSPECTIONS
         && group != Pass.EXTERNAL_TOOLS

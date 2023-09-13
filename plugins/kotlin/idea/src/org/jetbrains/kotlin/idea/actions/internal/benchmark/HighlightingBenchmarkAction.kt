@@ -184,7 +184,7 @@ class HighlightingBenchmarkAction : AnAction() {
 
         val maxSeverity = model.allHighlighters
             .mapNotNull { highlighter ->
-                val info = highlighter.errorStripeTooltip as? HighlightInfo ?: return@mapNotNull null
+                val info = HighlightInfo.fromRangeHighlighter(highlighter) ?: return@mapNotNull null
                 info.severity
             }.maxWithOrNull(severityRegistrar)
         return Result.Success(location, lines, analysisTime, maxSeverity?.myName ?: "clean")
