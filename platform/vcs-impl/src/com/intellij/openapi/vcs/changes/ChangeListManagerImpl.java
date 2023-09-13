@@ -43,7 +43,10 @@ import com.intellij.openapi.vcs.changes.actions.VcsStatisticsCollector;
 import com.intellij.openapi.vcs.changes.conflicts.ChangelistConflictTracker;
 import com.intellij.openapi.vcs.changes.shelf.ShelveChangesManager;
 import com.intellij.openapi.vcs.changes.ui.ChangeListDeltaListener;
-import com.intellij.openapi.vcs.impl.*;
+import com.intellij.openapi.vcs.impl.AbstractVcsHelperImpl;
+import com.intellij.openapi.vcs.impl.VcsEP;
+import com.intellij.openapi.vcs.impl.VcsInitObject;
+import com.intellij.openapi.vcs.impl.VcsStartupActivity;
 import com.intellij.openapi.vcs.readOnlyHandler.ReadonlyStatusHandlerImpl;
 import com.intellij.openapi.vcs.ui.VcsBalloonProblemNotifier;
 import com.intellij.openapi.vfs.ReadonlyStatusHandler;
@@ -538,7 +541,6 @@ public final class ChangeListManagerImpl extends ChangeListManagerEx implements 
         // for the case of project being closed we need a read action here -> to be more consistent
         ApplicationManager.getApplication().runReadAction(() -> {
           if (myProject.isDisposed()) return;
-          clearCurrentRevisionsCache(invalidated);
 
           synchronized (myDataLock) {
             ChangeListWorker updatedWorker = dataHolder.getUpdatedWorker();
@@ -637,16 +639,6 @@ public final class ChangeListManagerImpl extends ChangeListManagerEx implements 
       if (myAdditionalInfo == null) {
         myAdditionalInfo = builder.getAdditionalInfo();
       }
-    }
-  }
-
-  private void clearCurrentRevisionsCache(final VcsInvalidated invalidated) {
-    final ContentRevisionCache cache = ProjectLevelVcsManager.getInstance(myProject).getContentRevisionCache();
-    if (invalidated.isEverythingDirty()) {
-      cache.clearAllCurrent();
-    }
-    else {
-      cache.clearScope(invalidated.getScopes());
     }
   }
 

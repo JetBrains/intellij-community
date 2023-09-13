@@ -6,7 +6,6 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.Throwable2Computable;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.*;
-import com.intellij.openapi.vcs.changes.VcsDirtyScope;
 import com.intellij.openapi.vcs.history.VcsRevisionNumber;
 import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.openapi.vfs.encoding.EncodingRegistry;
@@ -23,9 +22,7 @@ import java.nio.ByteBuffer;
 import java.nio.CharBuffer;
 import java.nio.charset.Charset;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
-import java.util.Set;
 
 import static com.intellij.reference.SoftReference.dereference;
 
@@ -33,12 +30,10 @@ public final class ContentRevisionCache {
   private final Object myLock;
   private final SLRUMap<Key, SoftReference<byte[]>> myCache;
   private final Map<Key, byte[]> myConstantCache = new HashMap<>();
-  private long myCounter;
 
   public ContentRevisionCache() {
     myLock = new Object();
     myCache = new SLRUMap<>(100, 50);
-    myCounter = 0;
   }
 
   private void put(@NotNull FilePath path,
@@ -50,21 +45,6 @@ public final class ContentRevisionCache {
     synchronized (myLock) {
       myCache.put(new Key(path, number, vcsKey, type), new SoftReference<>(bytes));
     }
-  }
-
-  public void clearAllCurrent() {
-    synchronized (myLock) {
-      ++myCounter;
-    }
-  }
-
-  public void clearScope(final List<? extends VcsDirtyScope> scopes) {
-    synchronized (myLock) {
-      ++myCounter;
-    }
-  }
-
-  public void clearCurrent(Set<String> paths) {
   }
 
   @Contract("!null, _, _ -> !null")
@@ -168,27 +148,6 @@ public final class ContentRevisionCache {
     }
   }
 
-  private static @NotNull VcsRevisionNumber putIntoCurrentCache(@NotNull ContentRevisionCache cache,
-                                                                @NotNull FilePath path,
-                                                                @NotNull VcsKey vcsKey,
-                                                                @NotNull CurrentRevisionProvider loader) throws VcsException {
-    while (true) {
-      VcsRevisionNumber loadedRevisionNumber = loader.getCurrentRevision();
-
-      long counter;
-      synchronized (cache.myLock) {
-        counter = cache.myCounter;
-      }
-
-      synchronized (cache.myLock) {
-        if (cache.myCounter == counter) {
-          ++cache.myCounter;
-          return loadedRevisionNumber;
-        }
-      }
-    }
-  }
-
   public void putIntoConstantCache(@NotNull FilePath path,
                                    @NotNull VcsRevisionNumber revisionNumber,
                                    @NotNull VcsKey vcsKey,
@@ -219,7 +178,8 @@ public final class ContentRevisionCache {
     ContentRevisionCache cache = ProjectLevelVcsManager.getInstance(project).getContentRevisionCache();
 
     while (true) {
-      VcsRevisionNumber currentRevision = putIntoCurrentCache(cache, path, vcsKey, loader);
+      VcsRevisionNumber currentRevision = loader.getCurrentRevision();
+
       final byte[] cachedCurrent = cache.getBytes(path, currentRevision, vcsKey, UniqueType.REPOSITORY_CONTENT);
       if (cachedCurrent != null) {
         return Pair.create(currentRevision, cachedCurrent);
@@ -321,7 +281,6 @@ public final class ContentRevisionCache {
 
   public void clearAll() {
     synchronized (myLock) {
-      ++myCounter;
       myCache.clear();
       myConstantCache.clear();
     }
