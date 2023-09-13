@@ -604,6 +604,7 @@ private fun getLibraryFiles(library: JpsLibrary,
     val alreadyCopiedLibraryName = alreadyCopiedFor.library.name
     alreadyCopiedFor.targetFile == targetFile &&
     (alreadyCopiedLibraryName.startsWith("ktor-") ||
+     alreadyCopiedLibraryName.startsWith("commons-") ||
      alreadyCopiedLibraryName.startsWith("ai.grazie.") ||
      (isModuleLevel && alreadyCopiedLibraryName == libName))
   }

@@ -5,6 +5,7 @@ import com.intellij.cce.core.Lookup
 import com.intellij.cce.core.Session
 import com.intellij.cce.metric.util.Bootstrap
 import org.apache.commons.lang3.StringUtils
+import org.apache.commons.text.similarity.LevenshteinDistance
 import kotlin.math.max
 import kotlin.math.min
 
@@ -87,8 +88,9 @@ class EditSimilarity(showByDefault: Boolean = false) : SimilarityMetric(showByDe
   override val name = "Edit Similarity"
   override val description: String = "The minimum edit similarity among proposals normalized by expected text (avg by invocations)"
 
-  override fun computeSimilarity(lookup: Lookup, expectedText: String): Double? =
-    lookup.suggestions.maxOfOrNull {
-      expectedText.length - StringUtils.getLevenshteinDistance(it.text.drop(lookup.prefix.length), expectedText)
+  override fun computeSimilarity(lookup: Lookup, expectedText: String): Double? {
+    return lookup.suggestions.maxOfOrNull {
+      expectedText.length - LevenshteinDistance.getDefaultInstance().apply(it.text.drop(lookup.prefix.length), expectedText)
     }?.toDouble()
+  }
 }

@@ -8,7 +8,6 @@ import com.intellij.openapi.util.io.NioFiles
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.platform.diagnostic.telemetry.helpers.useWithScope
 import com.intellij.platform.diagnostic.telemetry.helpers.useWithScope2
-import com.intellij.util.containers.MultiMap
 import com.intellij.util.io.Compressor
 import com.jetbrains.plugin.blockmap.core.BlockMap
 import com.jetbrains.plugin.blockmap.core.FileHash
@@ -22,7 +21,6 @@ import io.opentelemetry.extension.kotlin.asContextElement
 import kotlinx.collections.immutable.persistentListOf
 import kotlinx.coroutines.*
 import org.apache.commons.compress.archivers.zip.Zip64Mode
-import org.jetbrains.annotations.TestOnly
 import org.jetbrains.annotations.VisibleForTesting
 import org.jetbrains.intellij.build.*
 import org.jetbrains.intellij.build.TraceManager.spanBuilder
@@ -32,12 +30,8 @@ import org.jetbrains.intellij.build.io.*
 import org.jetbrains.jps.model.artifact.JpsArtifact
 import org.jetbrains.jps.model.artifact.JpsArtifactService
 import org.jetbrains.jps.model.artifact.elements.JpsLibraryFilesPackagingElement
-import org.jetbrains.jps.model.java.JpsJavaClasspathKind
-import org.jetbrains.jps.model.java.JpsJavaExtensionService
 import org.jetbrains.jps.model.java.JpsProductionModuleOutputPackagingElement
 import org.jetbrains.jps.model.java.JpsTestModuleOutputPackagingElement
-import org.jetbrains.jps.model.library.JpsLibrary
-import org.jetbrains.jps.model.module.JpsModule
 import org.jetbrains.jps.model.module.JpsModuleReference
 import org.jetbrains.jps.util.JpsPathUtil
 import java.nio.ByteBuffer
@@ -101,9 +95,12 @@ internal suspend fun buildDistribution(state: DistributionBuilderState,
 
         val distAllDir = context.paths.distAllDir
         val libDir = distAllDir.resolve("lib")
-        context.bootClassPathJarNames =
-          if (context.useModularLoader) persistentListOf(PLATFORM_LOADER_JAR)
-          else generateClasspath(homeDir = distAllDir, libDir = libDir, antTargetFile = antTargetFile)
+        context.bootClassPathJarNames = if (context.useModularLoader) {
+          persistentListOf(PLATFORM_LOADER_JAR)
+        }
+        else {
+          generateClasspath(homeDir = distAllDir, libDir = libDir, antTargetFile = antTargetFile)
+        }
         result
       }
     }
@@ -137,7 +134,7 @@ internal suspend fun buildDistribution(state: DistributionBuilderState,
     val pluginDir = context.paths.distAllDir.resolve("plugins")
     withContext(Dispatchers.IO) {
       for (sourceDir in additionalPluginPaths) {
-        copyDir(sourceDir, pluginDir.resolve(sourceDir.fileName))
+        copyDir(sourceDir = sourceDir, targetDir = pluginDir.resolve(sourceDir.fileName))
       }
     }
   }
@@ -147,9 +144,7 @@ internal suspend fun buildDistribution(state: DistributionBuilderState,
       spanBuilder("generate content report").useWithScope2 {
         Files.createDirectories(context.paths.artifactDir)
         val contentMappingJson = context.paths.artifactDir.resolve("content-mapping.json")
-        writeProjectStructureReport(entries = entries,
-                                    file = contentMappingJson,
-                                    buildPaths = context.paths)
+        writeProjectStructureReport(entries = entries, file = contentMappingJson, buildPaths = context.paths)
         val contentJson = context.paths.artifactDir.resolve("content.json")
         Files.newOutputStream(contentJson).use {
           buildJarContentReport(entries = entries, out = it, buildPaths = context.paths, context = context)
@@ -488,7 +483,7 @@ private suspend fun buildPlugins(moduleOutputPatcher: ModuleOutputPatcher,
           Span.current().addEvent("skip scrambling plugin because step is disabled", attributes)
         }
         else {
-          // we can not start executing right now because the plugin can use other plugins in a scramble classpath
+          // we cannot start executing right now because the plugin can use other plugins in a scramble classpath
           scrambleTasks.add(ScrambleTask(plugin, pluginDir, targetDir))
         }
       }
@@ -531,7 +526,7 @@ internal class PluginRepositorySpec(@JvmField val pluginZip: Path, @JvmField val
 
 fun getPluginLayoutsByJpsModuleNames(modules: Collection<String>, productLayout: ProductModulesLayout): MutableSet<PluginLayout> {
   if (modules.isEmpty()) {
-    return createPluginLayoutSet(0)
+    return createPluginLayoutSet(expectedSize = 0)
   }
 
   val pluginLayouts = productLayout.pluginLayouts
@@ -540,7 +535,7 @@ fun getPluginLayoutsByJpsModuleNames(modules: Collection<String>, productLayout:
   for (moduleName in modules) {
     val customLayouts = pluginLayoutsByMainModule.get(moduleName)
     if (customLayouts == null) {
-      check(moduleName == "kotlin-ultimate.kmm-plugin" || result.add(PluginLayout.plugin(moduleName))) {
+      check(moduleName == "kotlin-ultimate.kmm-plugin" || result.add(PluginLayout.pluginAuto(listOf(moduleName)))) {
         "Plugin layout for module $moduleName is already added (duplicated module name?)"
       }
     }
@@ -553,21 +548,6 @@ fun getPluginLayoutsByJpsModuleNames(modules: Collection<String>, productLayout:
     }
   }
   return result
-}
-
-@TestOnly
-fun collectProjectLibrariesWhichShouldBeProvidedByPlatform(plugin: BaseLayout,
-                                                           result: MultiMap<JpsLibrary, JpsModule>,
-                                                           context: BuildContext) {
-  for (moduleName in plugin.includedModules.map { it.moduleName }.distinct()) {
-    val module = context.findRequiredModule((moduleName))
-    val dependencies = JpsJavaExtensionService.dependencies(module)
-    for (library in dependencies.includedIn(JpsJavaClasspathKind.PRODUCTION_RUNTIME).libraries) {
-      if (isProjectLibraryUsedByPlugin(library, plugin)) {
-        result.putValue(library, module)
-      }
-    }
-  }
 }
 
 private fun basePath(buildContext: BuildContext, moduleName: String): Path {

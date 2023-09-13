@@ -40,7 +40,6 @@ For more information, check the documentation for <a href="https://editorconfig.
     <trailingSpacesOptionsProvider implementation="org.editorconfig.configmanagement.EditorConfigTrailingSpacesOptionsProvider" id="editorConfigTrailingSpacesOptionsProvider"/>
     <fileEditorProvider implementation="org.editorconfig.configmanagement.editor.EditorConfigEditorProvider" fileType="EditorConfig"/>
     <codeInsight.lineMarkerProvider language="" implementationClass="org.editorconfig.configmanagement.editor.EditorConfigPreviewMarkerProvider"/>
-    <projectService serviceImplementation="org.editorconfig.configmanagement.editor.EditorConfigPreviewManager"/>
     <gotoFileContributor implementation="org.editorconfig.configmanagement.finder.EditorConfigGotoFileContributor"/>
     <stripTrailingSpacesFilterFactory implementation="org.editorconfig.configmanagement.EditorConfigTrailingSpacesFilterFactory"/>
     <editorNotificationProvider implementation="org.editorconfig.configmanagement.editor.EditorConfigEditorNotificationProvider"/>

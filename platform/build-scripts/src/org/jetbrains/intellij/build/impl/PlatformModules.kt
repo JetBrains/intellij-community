@@ -184,7 +184,7 @@ internal suspend fun createPlatformLayout(addPlatformCoverage: Boolean,
   ), productLayout = productLayout, layout = layout)
   layout.withProjectLibrary(libraryName = "ion", jarName = UTIL_RT_JAR)
 
-  // JDOM is used by maven in an external process
+  // Maven uses JDOM in an external process
   addModule(UTIL_8_JAR, listOf(
     "intellij.platform.util.jdom",
     "intellij.platform.util.xmlDom",
@@ -199,6 +199,9 @@ internal suspend fun createPlatformLayout(addPlatformCoverage: Boolean,
   // Space plugin uses it and bundles into IntelliJ IDEA, but not bundles into DataGrip, so, or Space plugin should bundle this lib,
   // or IJ Platform. As it is a small library and consistency is important across other coroutine libs, bundle to IJ Platform.
   layout.withProjectLibrary(libraryName = "kotlinx-coroutines-slf4j", jarName = APP_JAR)
+  // make sure that all ktor libraries bundled into the platform
+  layout.withProjectLibrary(libraryName = "ktor-client-content-negotiation")
+  layout.withProjectLibrary(libraryName = "ktor-client-logging")
 
   // used by intellij.database.jdbcConsole -
   // cannot be in 3rd-party-rt.jar, because this JAR must contain classes for java versions <= 7 only
