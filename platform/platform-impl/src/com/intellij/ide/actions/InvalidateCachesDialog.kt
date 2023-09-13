@@ -83,6 +83,7 @@ class InvalidateCachesDialog(
           row {
             val defaultValue = descr.optionalCheckboxDefaultValue()
             val checkbox = checkBox(text)
+              .comment(descr.comment)
               .enabled(defaultValue != null)
               .selected(defaultValue ?: true)
               .component
