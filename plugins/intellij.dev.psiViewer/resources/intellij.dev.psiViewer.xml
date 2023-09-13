@@ -12,5 +12,8 @@
       <separator/>
       <add-to-group group-id="ToolsMenu" anchor="first"/>
     </group>
+    <action class="com.intellij.dev.psiViewer.PsiViewerDebugAction" id="Debug.PsiViewer">
+      <add-to-group group-id="XDebugger.ValueGroup" anchor="after" relative-to-action="Memory.CalculateRetainedSize"/>
+    </action>
   </actions>
 </idea-plugin>
