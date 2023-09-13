@@ -39,6 +39,9 @@ internal class PluginVerifierFilter(private val project: Project) : Filter {
   private val DYNAMIC_PLUGIN_FAIL = "Plugin probably cannot be enabled or disabled without IDE restart:"
   private val DYNAMIC_PLUGIN_URL = "https://plugins.jetbrains.com/docs/intellij/dynamic-plugins.html"
 
+  private val VERIFICATION_REPORTS = "Verification reports for "
+  private val VERIFICATION_SAVED_TO = " saved to "
+
   override fun applyFilter(line: String, entireLength: Int): Filter.Result? {
     if (line.startsWith("Plugin ")) {
       val initialOffset = entireLength - line.length
@@ -56,6 +59,9 @@ internal class PluginVerifierFilter(private val project: Project) : Filter {
     }
     if (line.contains(READING_IDE_FROM)) {
       return fileOrDirectoryLink(line, entireLength, READING_IDE_FROM)
+    }
+    if (line.contains(VERIFICATION_REPORTS) && line.contains(VERIFICATION_SAVED_TO)) {
+      return fileOrDirectoryLink(line,entireLength, VERIFICATION_SAVED_TO)
     }
 
     if (StringUtil.contains(line, DYNAMIC_PLUGIN_PASS)) {

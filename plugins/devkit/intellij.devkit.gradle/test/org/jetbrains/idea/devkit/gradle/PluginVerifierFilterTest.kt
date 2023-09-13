@@ -64,6 +64,9 @@ class PluginVerifierFilterTest : LightJavaCodeInsightFixtureTestCase() {
 
     assertFileOrDirectoryLink("2023-09-07T10:38:02 [main] INFO  verification - Reading plugin to check from /a/b/plugin.zip\n",
                               77, 93)
+
+    assertFileOrDirectoryLink("2023-09-13T17:00:14 [main] INFO  verification - Verification reports for a.b:0.1 saved to /a/b/dir\n",
+                              90, 99)
   }
 
   fun testHighlighting() {
@@ -80,15 +83,15 @@ class PluginVerifierFilterTest : LightJavaCodeInsightFixtureTestCase() {
 
   fun testColoredWebLinks() {
     assertColoredWebLink("  Plugin can probably be enabled or disabled without IDE restart",
-                         2,64,
+                         2, 64,
                          JBColor.GREEN)
 
     assertColoredWebLink("  Plugin probably cannot be enabled or disabled without IDE restart:",
-                         2,68,
+                         2, 68,
                          JBColor.RED)
   }
 
-  private fun assertColoredWebLink(text:String, expectedStartOffset: Int, expectedEndOffset: Int, expectedForegroundColor: JBColor) {
+  private fun assertColoredWebLink(text: String, expectedStartOffset: Int, expectedEndOffset: Int, expectedForegroundColor: JBColor) {
     val result = getResult(text)
     val resultItem = assertOneElement(result.resultItems)
     assertHighlightingRange(resultItem, text, expectedStartOffset, expectedEndOffset)
