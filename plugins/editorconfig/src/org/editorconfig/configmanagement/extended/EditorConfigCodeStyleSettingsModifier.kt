@@ -37,7 +37,7 @@ import org.editorconfig.EditorConfigNotifier
 import org.editorconfig.Utils
 import org.editorconfig.configmanagement.EditorConfigNavigationActionsFactory
 import org.editorconfig.language.messages.EditorConfigBundle.message
-import org.editorconfig.plugincomponents.SettingsProviderComponent
+import org.editorconfig.plugincomponents.EditorConfigPropertiesService
 import org.editorconfig.settings.EditorConfigSettings
 import org.jetbrains.annotations.Nls
 import org.jetbrains.annotations.TestOnly
@@ -333,7 +333,7 @@ private suspend fun processEditorConfig(project: Project, psiFile: PsiFile): Pai
   val file = psiFile.virtualFile
   val filePath = Utils.getFilePath(project, file)
   if (filePath != null) {
-    return SettingsProviderComponent.getInstance(project).getPropertiesAndEditorConfigs(file)
+    return EditorConfigPropertiesService.getInstance(project).getPropertiesAndEditorConfigs(file)
   }
   else if (VfsUtilCore.isBrokenLink(file)) {
     LOG.warn("${file.presentableUrl} is a broken link")

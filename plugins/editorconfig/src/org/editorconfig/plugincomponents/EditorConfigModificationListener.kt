@@ -23,9 +23,9 @@ internal class EditorConfigModificationListener : BulkFileListener {
       for (project in ProjectManager.getInstance().openProjects) {
         if (ProjectRootManager.getInstance(project).fileIndex.isInContent(file) ||
             !EditorConfigRegistry.shouldStopAtProjectRoot()) {
-          SettingsProviderComponent.getInstance(project).resourceCache.clear()
+          EditorConfigPropertiesService.getInstance(project).resourceCache.clear()
           ApplicationManager.getApplication().invokeLater {
-            SettingsProviderComponent.getInstance(project).incModificationCount()
+            EditorConfigPropertiesService.getInstance(project).incModificationCount()
             for (editor in EditorFactory.getInstance().allEditors) {
               if (editor.isDisposed) continue
               (editor as EditorEx).reinitSettings()

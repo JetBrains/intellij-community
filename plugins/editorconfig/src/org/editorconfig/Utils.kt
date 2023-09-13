@@ -26,7 +26,7 @@ import org.editorconfig.configmanagement.ConfigEncodingManager
 import org.editorconfig.configmanagement.EditorConfigIndentOptionsProvider
 import org.editorconfig.configmanagement.StandardEditorConfigProperties
 import org.editorconfig.language.messages.EditorConfigBundle
-import org.editorconfig.plugincomponents.SettingsProviderComponent
+import org.editorconfig.plugincomponents.EditorConfigPropertiesService
 import org.editorconfig.settings.EditorConfigSettings
 import org.jetbrains.annotations.TestOnly
 import java.io.File
@@ -209,7 +209,7 @@ object Utils {
 
   fun editorConfigExists(project: Project): Boolean {
     val projectDir = File(project.basePath ?: return false)
-    return SettingsProviderComponent.getInstance(project).getRootDirs().asSequence()
+    return EditorConfigPropertiesService.getInstance(project).getRootDirs().asSequence()
       .map { File(it.path) }
       .ifEmpty { sequenceOf(projectDir) }
       .flatMap { rootDir ->

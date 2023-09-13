@@ -30,7 +30,7 @@ import java.util.concurrent.ConcurrentHashMap
 import kotlin.time.Duration.Companion.seconds
 
 @Service
-class SettingsProviderComponent(private val project: Project, private val coroutineScope: CoroutineScope) : SimpleModificationTracker() {
+class EditorConfigPropertiesService(private val project: Project, private val coroutineScope: CoroutineScope) : SimpleModificationTracker() {
   companion object {
     private val LOG = thisLogger()
     private const val PROCESSING_POOL_SIZE = 16
@@ -38,7 +38,7 @@ class SettingsProviderComponent(private val project: Project, private val corout
     private val EMPTY_PROPERTIES = ResourceProperties.builder().build()
 
     @JvmStatic
-    fun getInstance(project: Project): SettingsProviderComponent = project.service()
+    fun getInstance(project: Project): EditorConfigPropertiesService = project.service()
   }
 
   internal val resourceCache = EditorConfigPermanentCache()

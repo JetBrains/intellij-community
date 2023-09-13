@@ -7,12 +7,12 @@ import com.intellij.openapi.vfs.VirtualFile
 import org.ec4j.core.ResourceProperties
 import org.editorconfig.Utils
 import org.editorconfig.Utils.configValueForKey
-import org.editorconfig.plugincomponents.SettingsProviderComponent
+import org.editorconfig.plugincomponents.EditorConfigPropertiesService
 
 class EditorConfigTrailingSpacesOptionsProvider : TrailingSpacesOptionsProvider, StandardEditorConfigProperties {
   override fun getOptions(project: Project, file: VirtualFile): TrailingSpacesOptionsProvider.Options? {
     if (Utils.isEnabledFor(project, file)) {
-      val properties = SettingsProviderComponent.getInstance(project).getProperties(file)
+      val properties = EditorConfigPropertiesService.getInstance(project).getProperties(file)
       val trimTrailingWhitespace = getBooleanValue(properties, StandardEditorConfigProperties.TRIM_TRAILING_WHITESPACE)
       val insertFinalNewline = getBooleanValue(properties, StandardEditorConfigProperties.INSERT_FINAL_NEWLINE)
       if (trimTrailingWhitespace != null || insertFinalNewline != null) {

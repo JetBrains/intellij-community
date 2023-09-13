@@ -8,12 +8,9 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.VirtualFileEvent
 import com.intellij.openapi.vfs.VirtualFileListener
 import com.intellij.openapi.vfs.impl.BulkVirtualFileListenerAdapter
-import com.intellij.util.ObjectUtils
 import org.editorconfig.Utils
 import org.editorconfig.Utils.configValueForKey
-import org.editorconfig.Utils.isApplicableTo
-import org.editorconfig.Utils.isEditorConfigFile
-import org.editorconfig.plugincomponents.SettingsProviderComponent
+import org.editorconfig.plugincomponents.EditorConfigPropertiesService
 import org.jdom.Attribute
 import org.jdom.DataConversionException
 import org.jdom.Element
@@ -145,7 +142,7 @@ class EditorConfigEncodingCache : PersistentStateComponent<Element?> {
     fun getInstance(): EditorConfigEncodingCache = service()
 
     private fun computeCharsetData(project: Project, virtualFile: VirtualFile): CharsetData? {
-      val properties = SettingsProviderComponent.getInstance(project).getProperties(virtualFile)
+      val properties = EditorConfigPropertiesService.getInstance(project).getProperties(virtualFile)
       val charsetStr = properties.configValueForKey(ConfigEncodingManager.charsetKey)
       if (!charsetStr.isEmpty()) {
         val charset = ConfigEncodingManager.toCharset(charsetStr)

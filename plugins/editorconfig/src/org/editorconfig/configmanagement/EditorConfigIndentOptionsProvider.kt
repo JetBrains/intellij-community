@@ -10,14 +10,14 @@ import com.intellij.psi.codeStyle.IndentStatusBarUIContributor
 import org.ec4j.core.ResourceProperties
 import org.editorconfig.Utils
 import org.editorconfig.Utils.configValueForKey
-import org.editorconfig.plugincomponents.SettingsProviderComponent
+import org.editorconfig.plugincomponents.EditorConfigPropertiesService
 
 class EditorConfigIndentOptionsProvider : FileIndentOptionsProvider() {
   override fun getIndentOptions(project: Project, settings: CodeStyleSettings, file: VirtualFile): CommonCodeStyleSettings.IndentOptions? {
     if (Utils.isFullIntellijSettingsSupport()) return null
     if (project.isDisposed || !Utils.isEnabled(settings)) return null
     // Get editorconfig settings
-    val properties = SettingsProviderComponent.getInstance(project).getProperties(file)
+    val properties = EditorConfigPropertiesService.getInstance(project).getProperties(file)
     // Apply editorconfig settings for the current editor
     return applyCodeStyleSettings(project, properties, file, settings)
   }

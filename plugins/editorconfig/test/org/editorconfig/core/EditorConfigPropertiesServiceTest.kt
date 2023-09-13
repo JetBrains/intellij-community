@@ -3,14 +3,14 @@ package org.editorconfig.core
 
 import com.intellij.testFramework.fixtures.BasePlatformTestCase
 import org.ec4j.core.model.Property
-import org.editorconfig.plugincomponents.SettingsProviderComponent
+import org.editorconfig.plugincomponents.EditorConfigPropertiesService
 
-class SettingsProviderComponentTest : BasePlatformTestCase() {
+class EditorConfigPropertiesServiceTest : BasePlatformTestCase() {
   fun testEmptyValueIsNotFailure() {
     val file = myFixture.configureByFile(".editorconfig")
     lateinit var props: Map<String, Property>
     assertNoThrowable {
-      props = SettingsProviderComponent.getInstance(myFixture.project).getProperties(file.virtualFile).properties
+      props = EditorConfigPropertiesService.getInstance(myFixture.project).getProperties(file.virtualFile).properties
     }
     assertTrue("key" in props)
     assertTrue(props["key"]!!.sourceValue.isEmpty())
