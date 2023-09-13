@@ -1,5 +1,6 @@
 package com.intellij.remoteDev.downloader
 
+import com.intellij.openapi.application.ApplicationInfo
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.Logger
@@ -10,8 +11,10 @@ import com.intellij.openapi.progress.Task.Backgroundable
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.rd.createLifetime
 import com.intellij.openapi.ui.Messages
+import com.intellij.openapi.util.BuildNumber
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.util.io.FileUtil
+import com.intellij.openapi.util.registry.Registry
 import com.intellij.remoteDev.RemoteDevUtilBundle
 import com.intellij.remoteDev.downloader.exceptions.CodeWithMeDownloaderExceptionHandler
 import com.intellij.remoteDev.util.UrlUtil
@@ -89,10 +92,29 @@ object CodeWithMeGuestLauncher {
           }
         }
 
+        val parentLifetime = lifetime ?: project?.createLifetime() ?: Lifetime.Eternal
+        if (Registry.`is`("rdct.use.embedded.client")) {
+          val hostBuildNumber = BuildNumber.fromStringOrNull(sessionInfo.hostBuildNumber)?.withoutProductCode()
+          val currentIdeBuildNumber = ApplicationInfo.getInstance().build.withoutProductCode()
+          LOG.debug("Host build number: $hostBuildNumber, current IDE build number: $currentIdeBuildNumber")
+          if (hostBuildNumber == currentIdeBuildNumber) {
+            val embeddedClientLauncher = EmbeddedClientLauncher.create()
+            if (embeddedClientLauncher != null) {
+              LOG.debug("Launching client process from current IDE")
+              val lifetime = embeddedClientLauncher.launch(url, parentLifetime, project)
+              onDone(lifetime)
+              return
+            }
+            else {
+              LOG.debug("Cannot launch client process from the current IDE because information about runtime modules isn't available")
+            }
+          }
+        }
+        
         val extractedJetBrainsClientData = CodeWithMeClientDownloader.downloadClientAndJdk(sessionInfo, progressIndicator)
 
         clientLifetime = runDownloadedClient(
-          lifetime = lifetime ?: project?.createLifetime() ?: Lifetime.Eternal,
+          lifetime = parentLifetime,
           extractedJetBrainsClientData = extractedJetBrainsClientData,
           urlForThinClient = url,
           product = product,
