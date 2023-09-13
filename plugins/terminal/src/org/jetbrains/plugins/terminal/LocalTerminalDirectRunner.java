@@ -22,6 +22,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.impl.wsl.WslConstants;
 import com.intellij.terminal.pty.PtyProcessTtyConnector;
 import com.intellij.terminal.ui.TerminalWidget;
+import com.intellij.ui.ExperimentalUI;
 import com.intellij.util.*;
 import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.containers.CollectionFactory;
@@ -160,7 +161,7 @@ public class LocalTerminalDirectRunner extends AbstractTerminalRunner<PtyProcess
     // Prevent sourcing non-existent 'terminal/fish/config.fish' and 'terminal/.zshenv' by Fig.io
     envs.put("FIG_JETBRAINS_SHELL_INTEGRATION", "1");
 
-    if (Registry.is(BLOCK_TERMINAL_REGISTRY, false)) {
+    if (isBlockTerminalEnabled()) {
       envs.put("INTELLIJ_TERMINAL_COMMAND_BLOCKS", "1");
     }
 
@@ -180,7 +181,7 @@ public class LocalTerminalDirectRunner extends AbstractTerminalRunner<PtyProcess
 
   @Override
   protected @NotNull TerminalWidget createShellTerminalWidget(@NotNull Disposable parent, @NotNull ShellStartupOptions startupOptions) {
-    if (Registry.is(BLOCK_TERMINAL_REGISTRY, false)) {
+    if (isBlockTerminalEnabled()) {
       return new TerminalWidgetImpl(myProject, getSettingsProvider(), parent);
     }
     return super.createShellTerminalWidget(parent, startupOptions);
@@ -538,5 +539,10 @@ public class LocalTerminalDirectRunner extends AbstractTerminalRunner<PtyProcess
 
   private static boolean isLogin(@NotNull List<String> command) {
     return ContainerUtil.exists(command, LOGIN_CLI_OPTIONS::contains);
+  }
+
+  private static boolean isBlockTerminalEnabled() {
+    return (ExperimentalUI.isNewUI() || ApplicationManager.getApplication().isUnitTestMode())
+           && Registry.is(BLOCK_TERMINAL_REGISTRY, false);
   }
 }
