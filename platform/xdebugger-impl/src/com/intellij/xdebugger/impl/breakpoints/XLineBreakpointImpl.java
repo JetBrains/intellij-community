@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.xdebugger.impl.breakpoints;
 
 import com.intellij.codeInsight.hints.presentation.InputHandler;
@@ -354,8 +354,8 @@ public final class XLineBreakpointImpl<P extends XBreakpointProperties> extends 
 
   public void updatePosition() {
     if (myHighlighter != null && myHighlighter.isValid()) {
+      mySourcePosition = null; // reset the source position even if the line number has not changed, as the offset may be cached inside
       setLine(myHighlighter.getDocument().getLineNumber(getOffset()), false);
-      mySourcePosition = null; // need to clear this no matter what as the offset may be cached inside
     }
   }
 
