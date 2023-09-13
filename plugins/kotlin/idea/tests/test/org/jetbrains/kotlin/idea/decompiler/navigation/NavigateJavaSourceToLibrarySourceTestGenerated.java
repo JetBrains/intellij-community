@@ -17,24 +17,14 @@ import org.junit.runner.RunWith;
 @TestRoot("idea/tests")
 @TestDataPath("$CONTENT_ROOT")
 @RunWith(JUnit3RunnerWithInners.class)
-@TestMetadata("testData/decompiler/navigation/userJavaCode")
-public class NavigateJavaToLibrarySourceTestGenerated extends AbstractNavigateJavaToLibrarySourceTest {
+@TestMetadata("testData/navigation/javaSource")
+public class NavigateJavaSourceToLibrarySourceTestGenerated extends AbstractNavigateJavaSourceToLibrarySourceTest {
     private void runTest(String testDataFilePath) throws Exception {
         KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
     }
 
-    @TestMetadata("ClassAndConstuctors.java")
-    public void testClassAndConstuctors() throws Exception {
-        runTest("testData/decompiler/navigation/userJavaCode/ClassAndConstuctors.java");
-    }
-
-    @TestMetadata("OverloadedFun.java")
-    public void testOverloadedFun() throws Exception {
-        runTest("testData/decompiler/navigation/userJavaCode/OverloadedFun.java");
-    }
-
-    @TestMetadata("RenamedElements.java")
-    public void testRenamedElements() throws Exception {
-        runTest("testData/decompiler/navigation/userJavaCode/RenamedElements.java");
+    @TestMetadata("SuspendFunctionWithSources.java")
+    public void testSuspendFunctionWithSources() throws Exception {
+        runTest("testData/navigation/javaSource/SuspendFunctionWithSources.java");
     }
 }
