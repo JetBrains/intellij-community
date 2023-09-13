@@ -21,19 +21,19 @@ class DeclarativeInlayHintsMouseMotionListener : EditorMouseMotionListener {
     val mouseArea = if (renderer == null || inlay == null) null else getMouseAreaUnderCursor(inlay, renderer, e.mouseEvent)
     val ctrlDown = isControlDown(e.mouseEvent)
     if (mouseArea != areaUnderCursor || ctrlDown != this.ctrlDown) {
-      val isHovered = ctrlDown && mouseArea != null
+      val isHoveredWithCtrl = ctrlDown && mouseArea != null
 
       val oldEntries = areaUnderCursor?.entries
-      if (oldEntries != null && !isHovered) {
+      if (oldEntries != null && !isHoveredWithCtrl) {
         for (entry in oldEntries) {
-          entry.isHovered = false
+          entry.isHoveredWithCtrl = false
         }
       }
 
       val newEntries = mouseArea?.entries
-      if (newEntries != null && isHovered) {
+      if (newEntries != null && isHoveredWithCtrl) {
         for (entry in newEntries) {
-          entry.isHovered = true
+          entry.isHoveredWithCtrl = true
         }
       }
       inlayUnderCursor?.get()?.update()

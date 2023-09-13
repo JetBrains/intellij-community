@@ -34,7 +34,7 @@ sealed class InlayPresentationEntry(
 
   abstract fun handleClick(editor: Editor, list: InlayPresentationList, controlDown: Boolean)
 
-  var isHovered: Boolean = false
+  var isHoveredWithCtrl: Boolean = false
 }
 
 class TextInlayPresentationEntry(

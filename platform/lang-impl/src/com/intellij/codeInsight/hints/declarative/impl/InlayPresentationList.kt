@@ -171,8 +171,8 @@ class InlayPresentationList(
 
     g.withTranslated(LEFT_MARGIN + targetRegion.x, targetRegion.y) {
       for (entry in entries) {
-        val hovered = entry.isHovered
-        val finalAttrs = if (hovered) {
+        val hoveredWithCtrl = entry.isHoveredWithCtrl
+        val finalAttrs = if (hoveredWithCtrl) {
           val refAttrs = inlay.editor.colorsScheme.getAttributes(EditorColors.REFERENCE_HYPERLINK_COLOR)
           val inlayAttrsWithRefForeground = attrs.clone()
           inlayAttrsWithRefForeground.foregroundColor = refAttrs.foregroundColor
