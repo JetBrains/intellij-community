@@ -570,7 +570,12 @@ object CodeWithMeClientDownloader {
             progressIndicator.text2 = ""
           }
           "file" -> {
-            Files.copy(url.toPath(), path, StandardCopyOption.REPLACE_EXISTING)
+            val source = url.toPath()
+            if (source.isDirectory()) {
+              error("Downloading a directory is not supported. Source: $url, destination: ${path.absolutePathString()}")
+            }
+
+            Files.copy(source, path, StandardCopyOption.REPLACE_EXISTING)
           }
           else -> {
             error("scheme ${url.scheme} is not supported")
