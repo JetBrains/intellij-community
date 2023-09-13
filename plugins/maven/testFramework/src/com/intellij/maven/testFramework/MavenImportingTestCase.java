@@ -69,7 +69,6 @@ import static com.intellij.testFramework.PlatformTestUtil.waitForFuture;
 import static com.intellij.testFramework.PlatformTestUtil.waitForPromise;
 
 public abstract class MavenImportingTestCase extends MavenTestCase {
-  protected MavenProjectResolver myProjectResolver;
   private MavenProjectsManager myProjectsManager;
   private CodeStyleSettingsTracker myCodeStyleSettingsTracker;
   protected boolean isNewImportingProcess;
@@ -113,7 +112,6 @@ public abstract class MavenImportingTestCase extends MavenTestCase {
       () -> CompilerTestUtil.deleteBuildSystemDirectory(myProject),
       () -> {
         myProjectsManager = null;
-        myProjectResolver = null;
       },
       () -> super.tearDown(),
       () -> {
@@ -597,7 +595,6 @@ public abstract class MavenImportingTestCase extends MavenTestCase {
 
   protected void initProjectsManager(boolean enableEventHandling) {
     getProjectsManager().initForTests();
-    myProjectResolver = MavenProjectResolver.getInstance(myProject);
     if (enableEventHandling) {
       enableAutoReload();
     }

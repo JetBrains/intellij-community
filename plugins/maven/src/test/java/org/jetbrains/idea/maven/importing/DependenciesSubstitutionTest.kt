@@ -4,7 +4,6 @@ package org.jetbrains.idea.maven.importing
 import com.intellij.maven.testFramework.MavenMultiVersionImportingTestCase
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.vfs.VirtualFile
-import org.jetbrains.idea.maven.project.MavenProjectResolver
 import org.junit.Test
 
 open class DependenciesSubstitutionTest : MavenMultiVersionImportingTestCase() {
@@ -55,7 +54,6 @@ open class DependenciesSubstitutionTest : MavenMultiVersionImportingTestCase() {
     val files = listOf(file)
 
     projectsManager.initForTests()
-    myProjectResolver = MavenProjectResolver.getInstance(myProject)
 
     projectsManager.addManagedFiles(files)
   }
