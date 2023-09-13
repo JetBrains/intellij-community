@@ -1,13 +1,11 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vcs.impl;
 
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.Throwable2Computable;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.*;
-import com.intellij.openapi.vcs.changes.FilePathsHelper;
 import com.intellij.openapi.vcs.changes.VcsDirtyScope;
 import com.intellij.openapi.vcs.history.VcsRevisionNumber;
 import com.intellij.openapi.vfs.CharsetToolkit;
@@ -24,21 +22,22 @@ import java.lang.ref.SoftReference;
 import java.nio.ByteBuffer;
 import java.nio.CharBuffer;
 import java.nio.charset.Charset;
-import java.util.*;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 import static com.intellij.reference.SoftReference.dereference;
 
 public final class ContentRevisionCache {
   private final Object myLock;
   private final SLRUMap<Key, SoftReference<byte[]>> myCache;
-  private final SLRUMap<CurrentKey, VcsRevisionNumber> myCurrentRevisionsCache;
   private final Map<Key, byte[]> myConstantCache = new HashMap<>();
   private long myCounter;
 
   public ContentRevisionCache() {
     myLock = new Object();
     myCache = new SLRUMap<>(100, 50);
-    myCurrentRevisionsCache = new SLRUMap<>(200, 50);
     myCounter = 0;
   }
 
@@ -56,49 +55,16 @@ public final class ContentRevisionCache {
   public void clearAllCurrent() {
     synchronized (myLock) {
       ++myCounter;
-      myCurrentRevisionsCache.clear();
     }
   }
 
   public void clearScope(final List<? extends VcsDirtyScope> scopes) {
-    // VcsDirtyScope.belongsTo() performs some checks under read action. So deadlock could occur if some thread tries to modify
-    // ContentRevisionCache (i.e. call getOrLoadCurrentAsBytes()) under write action while other thread invokes clearScope(). To prevent
-    // such deadlocks we also perform locking "myLock" (and other logic) under read action.
-    // TODO: "myCurrentRevisionsCache" logic should be refactored to be more clear and possibly to avoid creating such wrapping read actions
-    ApplicationManager.getApplication().runReadAction(() -> {
-      synchronized (myLock) {
-        ++myCounter;
-        for (final VcsDirtyScope scope : scopes) {
-          final Set<CurrentKey> toRemove = new HashSet<>();
-          myCurrentRevisionsCache.iterateKeys(currentKey -> {
-            if (scope.belongsTo(currentKey.getPath())) {
-              toRemove.add(currentKey);
-            }
-          });
-          for (CurrentKey key : toRemove) {
-            myCurrentRevisionsCache.remove(key);
-          }
-        }
-      }
-    });
+    synchronized (myLock) {
+      ++myCounter;
+    }
   }
 
   public void clearCurrent(Set<String> paths) {
-    final HashSet<String> converted = new HashSet<>();
-    for (String path : paths) {
-      converted.add(FilePathsHelper.convertPath(path));
-    }
-    synchronized (myLock) {
-      final Set<CurrentKey> toRemove = new HashSet<>();
-      myCurrentRevisionsCache.iterateKeys(currentKey -> {
-        if (converted.contains(FilePathsHelper.convertPath(currentKey.getPath().getPath()))) {
-          toRemove.add(currentKey);
-        }
-      });
-      for (CurrentKey key : toRemove) {
-        myCurrentRevisionsCache.remove(key);
-      }
-    }
   }
 
   @Contract("!null, _, _ -> !null")
@@ -206,23 +172,17 @@ public final class ContentRevisionCache {
                                                                 @NotNull FilePath path,
                                                                 @NotNull VcsKey vcsKey,
                                                                 @NotNull CurrentRevisionProvider loader) throws VcsException {
-    CurrentKey key = new CurrentKey(path, vcsKey);
     while (true) {
       VcsRevisionNumber loadedRevisionNumber = loader.getCurrentRevision();
 
-      VcsRevisionNumber currentRevision;
       long counter;
       synchronized (cache.myLock) {
-        currentRevision = cache.myCurrentRevisionsCache.get(key);
         counter = cache.myCounter;
       }
-
-      if (loadedRevisionNumber.equals(currentRevision)) return loadedRevisionNumber;
 
       synchronized (cache.myLock) {
         if (cache.myCounter == counter) {
           ++cache.myCounter;
-          cache.myCurrentRevisionsCache.put(key, loadedRevisionNumber);
           return loadedRevisionNumber;
         }
       }
@@ -362,7 +322,6 @@ public final class ContentRevisionCache {
   public void clearAll() {
     synchronized (myLock) {
       ++myCounter;
-      myCurrentRevisionsCache.clear();
       myCache.clear();
       myConstantCache.clear();
     }
