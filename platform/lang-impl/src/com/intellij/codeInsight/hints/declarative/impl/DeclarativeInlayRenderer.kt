@@ -16,6 +16,7 @@ import com.intellij.openapi.editor.event.EditorMouseEvent
 import com.intellij.openapi.editor.markup.TextAttributes
 import com.intellij.openapi.ui.JBPopupMenu
 import com.intellij.psi.PsiDocumentManager
+import com.intellij.ui.LightweightHint
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import org.jetbrains.annotations.TestOnly
 import java.awt.Graphics2D
@@ -45,6 +46,10 @@ class DeclarativeInlayRenderer(
 
   fun handleLeftClick(e: EditorMouseEvent, pointInsideInlay: Point, controlDown: Boolean) {
     presentationList.handleClick(e, pointInsideInlay, fontMetricsStorage, controlDown)
+  }
+
+  fun handleHover(e: EditorMouseEvent): LightweightHint? {
+    return presentationList.handleHover(e)
   }
 
   fun handleRightClick(e: EditorMouseEvent) {

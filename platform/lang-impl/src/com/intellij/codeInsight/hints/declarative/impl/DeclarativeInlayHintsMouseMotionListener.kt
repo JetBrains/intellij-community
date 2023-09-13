@@ -6,6 +6,7 @@ import com.intellij.openapi.editor.event.EditorMouseEvent
 import com.intellij.openapi.editor.event.EditorMouseEventArea
 import com.intellij.openapi.editor.event.EditorMouseMotionListener
 import com.intellij.openapi.util.SystemInfo
+import com.intellij.ui.LightweightHint
 import java.awt.Point
 import java.awt.event.MouseEvent
 import java.lang.ref.WeakReference
@@ -14,6 +15,7 @@ class DeclarativeInlayHintsMouseMotionListener : EditorMouseMotionListener {
   private var areaUnderCursor: InlayMouseArea? = null
   private var inlayUnderCursor: WeakReference<Inlay<*>>? = null
   private var ctrlDown = false
+  private var hint: LightweightHint? = null
 
   override fun mouseMoved(e: EditorMouseEvent) {
     val inlay = getInlay(e)
@@ -21,6 +23,7 @@ class DeclarativeInlayHintsMouseMotionListener : EditorMouseMotionListener {
     val mouseArea = if (renderer == null || inlay == null) null else getMouseAreaUnderCursor(inlay, renderer, e.mouseEvent)
     val ctrlDown = isControlDown(e.mouseEvent)
     if (mouseArea != areaUnderCursor || ctrlDown != this.ctrlDown) {
+      val isHovered = !ctrlDown && mouseArea != null
       val isHoveredWithCtrl = ctrlDown && mouseArea != null
 
       val oldEntries = areaUnderCursor?.entries
@@ -36,6 +39,14 @@ class DeclarativeInlayHintsMouseMotionListener : EditorMouseMotionListener {
           entry.isHoveredWithCtrl = true
         }
       }
+
+      if (isHovered && renderer != null) {
+        hint = renderer.handleHover(e)
+      }
+      else {
+        hint?.hide()
+      }
+
       inlayUnderCursor?.get()?.update()
       inlay?.update()
 
