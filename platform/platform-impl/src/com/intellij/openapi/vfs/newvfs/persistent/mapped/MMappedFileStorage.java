@@ -39,6 +39,18 @@ import static java.util.concurrent.TimeUnit.NANOSECONDS;
 public final class MMappedFileStorage implements Closeable {
   private static final Logger LOG = Logger.getInstance(MMappedFileStorage.class);
 
+  //RC: do we need method like 'unmap', which forcibly unmaps pages, or it is enough to rely on JVM which will
+  //    unmap pages eventually, as they are collected by GC?
+  //    Forcible unmap allows to 'clean after yourself', but carries a risk of JVM crash if somebody still tries
+  //    to access unmapped pages.
+  //    So far, my take is: in regular use, it is better to let JVM unmap pages, and not carry the risk of JVM
+  //    crash after too eager unmapping. There is no clear benefits for explicit (eager) unmap, that outweigh
+  //    risk of JVM crash.
+  //MAYBE: but we _could_ provide 'unmap' as a dedicated method, not as a part of .close() -- so it
+  //    could be used in e.g. tests, and in other cases there we could 100% guarantee no usages anymore,
+  //    and we're ready to take risk of JVM crash if we're wrong.
+
+
   //Keep track of mapped buffers allocated & their total size, numbers are reported to OTel.Metrics.
   //Why: mapped buffers are limited resources (~4096 per app by default), so it is worth to monitor
   //     how we use them, and issue the alarm early on as we start to use too many
