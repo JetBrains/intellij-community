@@ -23,20 +23,8 @@ internal class JMenuBasedIdeMenuBarHelper(flavor: IdeMenuFlavor, menuBar: IdeJMe
     }
   }
 
-  override suspend fun updateMenuActions(mainActionGroup: ActionGroup?, forceRebuild: Boolean, isFirstUpdate: Boolean): List<ActionGroup> {
+  override suspend fun doUpdateVisibleActions(newVisibleActions: List<ActionGroup>, forceRebuild: Boolean) {
     val menuBarComponent = menuBar.component
-    val newVisibleActions = if (mainActionGroup == null) {
-      emptyList()
-    }
-    else {
-      // null means "cancelled" (todo - reconsider when Promise will be changed to coroutine)
-      expandMainActionGroup(mainActionGroup = mainActionGroup,
-                            menuBar = menuBarComponent,
-                            frame = menuBar.frame,
-                            presentationFactory = presentationFactory,
-                            isFirstUpdate = isFirstUpdate) ?: return emptyList()
-    }
-
     if (!forceRebuild && newVisibleActions == visibleActions && !presentationFactory.isNeedRebuild) {
       val enableMnemonics = !UISettings.getInstance().disableMnemonics
       withContext(Dispatchers.EDT) {
@@ -46,7 +34,7 @@ internal class JMenuBasedIdeMenuBarHelper(flavor: IdeMenuFlavor, menuBar: IdeJMe
           }
         }
       }
-      return newVisibleActions
+      return
     }
 
     // should rebuild UI
@@ -82,6 +70,5 @@ internal class JMenuBasedIdeMenuBarHelper(flavor: IdeMenuFlavor, menuBar: IdeJMe
         menuBar.frame.validate()
       }
     }
-    return newVisibleActions
   }
 }
