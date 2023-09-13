@@ -2,6 +2,7 @@ package com.intellij.terminal.completion
 
 import com.intellij.util.containers.TreeTraversal
 import org.jetbrains.terminal.completion.BaseSuggestion
+import org.jetbrains.terminal.completion.ShellCommand
 
 class CommandSpecCompletion(
   private val commandSpecManager: CommandSpecManager,
@@ -16,12 +17,15 @@ class CommandSpecCompletion(
    * 3. File path should be a single token.
    * 4. Quoted string should be a single token.
    *
-   * @return null if there is less than 2 tokens or failed to find the command spec for command.
+   * @return null if command name is empty or failed to find the command spec for command.
    */
   suspend fun computeCompletionItems(commandTokens: List<String>): List<BaseSuggestion>? {
-    if (commandTokens.size < 2) {
-      // there should be at least a complete command name and one empty argument ""
-      return null
+    if (commandTokens.isEmpty() || commandTokens.singleOrNull()?.isBlank() == true) {
+      return null  // do not propose command suggestions if there is an empty command prefix
+    }
+    if (commandTokens.size == 1) {
+      // command name is incomplete, so provide suggestions for commands
+      return computeCommandSuggestions()
     }
     val command = commandTokens.first()
     val arguments = commandTokens.subList(1, commandTokens.size)
@@ -34,6 +38,18 @@ class CommandSpecCompletion(
     val rootNode: SubcommandNode = CommandTreeBuilder.build(suggestionsProvider, commandSpecManager,
                                                             command, commandSpec, completeArguments)
     return computeSuggestions(suggestionsProvider, rootNode, lastArgument)
+  }
+
+  private suspend fun computeCommandSuggestions(): List<BaseSuggestion> {
+    val shellEnv = runtimeDataProvider.getShellEnvironment() ?: return emptyList()
+    return sequence {
+      yieldAll(shellEnv.keywords)
+      yieldAll(shellEnv.builtins)
+      yieldAll(shellEnv.functions)
+      yieldAll(shellEnv.commands)
+    }.distinct()
+      .map { ShellCommand(names = listOf(it)) }
+      .toList()
   }
 
   private suspend fun computeSuggestions(suggestionsProvider: CommandTreeSuggestionsProvider,
