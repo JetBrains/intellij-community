@@ -23,14 +23,16 @@ import com.intellij.util.application
 import com.intellij.util.concurrency.annotations.RequiresBlockingContext
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.*
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.TestOnly
 import java.util.concurrent.atomic.AtomicBoolean
-import java.util.concurrent.atomic.AtomicReference
 
 @ApiStatus.Experimental
 class InlineCompletionHandler(private val scope: CoroutineScope) {
-  private val runningJob: AtomicReference<Job?> = AtomicReference(null)
+  private var runningJob: Job? = null
+  private val lock = Mutex()
   private var lastInvocationTime = 0L
   private val eventListeners = EventDispatcher.create(InlineCompletionEventListener::class.java)
 
@@ -75,12 +77,16 @@ class InlineCompletionHandler(private val scope: CoroutineScope) {
 
     val provider = getProvider(event) ?: return
 
-    LOG.trace("Schedule new job")
-    runningJob.getAndUpdate {
-      scope.launch {
-        invokeRequest(provider, event)
+    // TODO
+    scope.launch {
+      lock.withLock {
+        runningJob?.cancelAndJoin()
+        LOG.trace("Schedule new job")
+        runningJob = scope.launch {
+          invokeRequest(provider, event)
+        }
       }
-    }?.cancel()
+    }
   }
 
   private suspend fun invokeRequest(provider: InlineCompletionProvider, event: InlineCompletionEvent) {
@@ -123,6 +129,7 @@ class InlineCompletionHandler(private val scope: CoroutineScope) {
   }
 
   suspend fun request(provider: InlineCompletionProvider, request: InlineCompletionRequest): Flow<InlineCompletionElement> {
+    val listener = InlineCompletionUsageTracker.Listener()
     trace(InlineCompletionEventType.Request(lastInvocationTime, request, provider::class.java))
     return provider.getProposals(request)
   }
