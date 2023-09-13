@@ -4,6 +4,8 @@ package org.jetbrains.plugins.terminal.exp
 import com.intellij.openapi.progress.withBackgroundProgress
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.io.FileUtil
+import com.intellij.terminal.completion.ShellEnvironment
+import com.intellij.terminal.completion.ShellRuntimeDataProvider
 import com.intellij.testFramework.UsefulTestCase
 import com.intellij.testFramework.fixtures.BasePlatformTestCase
 import com.intellij.testFramework.utils.io.createDirectory
@@ -45,15 +47,25 @@ class ShellRuntimeDataProviderTest : BasePlatformTestCase() {
 
   @Test
   fun `get all files from directory (zsh)`() {
-    doTest(shellPath = "/bin/zsh")
+    doGetFilesTest(shellPath = "/bin/zsh")
   }
 
   @Test
   fun `get all files from directory (bash)`() {
-    doTest(shellPath = "/bin/bash")
+    doGetFilesTest(shellPath = "/bin/bash")
   }
 
-  fun doTest(shellPath: String) = runBlocking {
+  @Test
+  fun `get shell environment (zsh)`() {
+    doGetEnvironmentTest("/bin/zsh")
+  }
+
+  @Test
+  fun `get shell environment (bash)`() {
+    doGetEnvironmentTest("/bin/bash")
+  }
+
+  private fun doGetFilesTest(shellPath: String) {
     Assume.assumeTrue("Shell is not found in '$shellPath'", File(shellPath).exists())
     session = TerminalSessionTestUtil.startTerminalSession(project, shellPath, testRootDisposable)
     testDirectory = createTempDirectory(prefix = "runtime_data")
@@ -69,15 +81,35 @@ class ShellRuntimeDataProviderTest : BasePlatformTestCase() {
     )
     expected.forEach { it.create(testDirectory) }
 
+    val actual: List<String> = executeRuntimeDataRequest { provider ->
+      provider.getFilesFromDirectory(testDirectory.toString())
+    }
+    UsefulTestCase.assertSameElements(actual, expected.map { it.toString() } + listOf("./", "../"))
+  }
+
+  private fun doGetEnvironmentTest(shellPath: String) {
+    Assume.assumeTrue("Shell is not found in '$shellPath'", File(shellPath).exists())
+    session = TerminalSessionTestUtil.startTerminalSession(project, shellPath, testRootDisposable)
+
+    val env: ShellEnvironment = executeRuntimeDataRequest { provider ->
+      provider.getShellEnvironment()
+    } ?: error("Returned environment is null")
+
+    assertNotEmpty(env.envs)
+    assertNotEmpty(env.keywords)
+    assertNotEmpty(env.builtins)
+    assertNotEmpty(env.functions)
+    assertNotEmpty(env.commands)
+  }
+
+  private fun <T> executeRuntimeDataRequest(request: suspend (ShellRuntimeDataProvider) -> T): T = runBlocking {
     val provider = IJShellRuntimeDataProvider(session)
-    val deferred: Deferred<List<String>> = async(Dispatchers.Default) {
+    val deferred: Deferred<T> = async(Dispatchers.Default) {
       withBackgroundProgress(project, "test", cancellable = true) {
-        provider.getFilesFromDirectory(testDirectory.toString())
+        request(provider)
       }
     }
-    val actual = withTimeoutOrNull(5.seconds) { deferred.await() }
-                 ?: error("Failed to finish in time. Probably something went wrong.")
-    UsefulTestCase.assertSameElements(actual, expected.map { it.toString() } + listOf("./", "../"))
+    withTimeout(5.seconds) { deferred.await() }
   }
 
   private data class FileDescriptor(val name: String, val isDirectory: Boolean = false) {

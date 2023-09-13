@@ -1,9 +1,14 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.terminal.exp.completion
 
+import com.intellij.openapi.diagnostic.Logger
+import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.util.Disposer
+import com.intellij.terminal.completion.ShellEnvironment
 import com.intellij.terminal.completion.ShellRuntimeDataProvider
 import com.intellij.util.io.await
+import kotlinx.serialization.Serializable
+import kotlinx.serialization.json.Json
 import org.jetbrains.plugins.terminal.exp.ShellCommandListener
 import org.jetbrains.plugins.terminal.exp.TerminalSession
 import org.jetbrains.plugins.terminal.util.ShellType
@@ -14,6 +19,10 @@ class IJShellRuntimeDataProvider(private val session: TerminalSession) : ShellRu
   override suspend fun getFilesFromDirectory(path: String): List<String> {
     val command = GetFilesCommand(path)
     return executeCommand(command)
+  }
+
+  override suspend fun getShellEnvironment(): ShellEnvironment? {
+    return executeCommand(GetEnvironmentCommand())
   }
 
   private suspend fun <T> executeCommand(command: DataProviderCommand<T>): T {
@@ -66,8 +75,7 @@ class IJShellRuntimeDataProvider(private val session: TerminalSession) : ShellRu
     override val defaultResult: List<String> = emptyList()
 
     override fun isAvailable(session: TerminalSession): Boolean {
-      val shellType = session.shellIntegration?.shellType
-      return shellType == ShellType.ZSH || shellType == ShellType.BASH
+      return session.isBashOrZsh()
     }
 
     override fun parseResult(result: String): List<String> {
@@ -75,7 +83,49 @@ class IJShellRuntimeDataProvider(private val session: TerminalSession) : ShellRu
     }
   }
 
+  private class GetEnvironmentCommand : DataProviderCommand<ShellEnvironment?> {
+    override val functionName: String = "__jetbrains_intellij_get_environment"
+    override val parameters: List<String> = emptyList()
+    override val defaultResult: ShellEnvironment? = null
+
+    override fun isAvailable(session: TerminalSession): Boolean {
+      return session.isBashOrZsh()
+    }
+
+    override fun parseResult(result: String): ShellEnvironment? {
+      val rawEnv: ShellEnvCommandResult = try {
+        Json.decodeFromString(result)
+      }
+      catch (t: Throwable) {
+        LOG.error("Failed to parse shell env:\n$result", t)
+        return null
+      }
+      return ShellEnvironment(
+        envs = rawEnv.envs.split("\n"),
+        keywords = rawEnv.keywords.split("\n"),
+        builtins = rawEnv.builtins.split("\n"),
+        functions = rawEnv.functions.split("\n"),
+        commands = rawEnv.commands.split("\n"),
+      )
+    }
+
+    @Serializable
+    private data class ShellEnvCommandResult(
+      val envs: String,
+      val keywords: String,
+      val builtins: String,
+      val functions: String,
+      val commands: String
+    )
+  }
+
   companion object {
     private val CUR_ID = AtomicInteger(0)
+    private val LOG: Logger = logger<IJShellRuntimeDataProvider>()
+
+    private fun TerminalSession.isBashOrZsh(): Boolean {
+      val shellType = shellIntegration?.shellType
+      return shellType == ShellType.ZSH || shellType == ShellType.BASH
+    }
   }
 }
