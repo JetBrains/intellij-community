@@ -31,8 +31,11 @@ import java.util.concurrent.atomic.AtomicBoolean
 
 @ApiStatus.Experimental
 class InlineCompletionHandler(private val scope: CoroutineScope) {
+  /**
+   * Mutex is fair => we will get an implicit queue of jobs for execution.
+   */
+  private val mutex = Mutex()
   private var runningJob: Job? = null
-  private val lock = Mutex()
   private var lastInvocationTime = 0L
   private val eventListeners = EventDispatcher.create(InlineCompletionEventListener::class.java)
 
@@ -79,7 +82,7 @@ class InlineCompletionHandler(private val scope: CoroutineScope) {
 
     // TODO
     scope.launch {
-      lock.withLock {
+      mutex.withLock {
         runningJob?.cancelAndJoin()
         LOG.trace("Schedule new job")
         runningJob = scope.launch {
