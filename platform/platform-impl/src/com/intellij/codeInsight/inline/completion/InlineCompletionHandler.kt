@@ -20,7 +20,6 @@ import com.intellij.openapi.util.registry.Registry
 import com.intellij.psi.PsiFile
 import com.intellij.util.EventDispatcher
 import com.intellij.util.application
-import com.intellij.util.concurrency.annotations.RequiresBlockingContext
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.sync.Mutex
@@ -180,11 +179,15 @@ class InlineCompletionHandler(private val scope: CoroutineScope) {
     }
   }
 
-  @RequiresBlockingContext
-  fun hideIfRendering(editor: Editor) {
-    InlineCompletionContext.getOrNull(editor)?.let { context ->
-      application.invokeAndWait {
-        hide(editor, false, context)
+  fun cancel(editor: Editor) {
+    scope.launch {
+      mutex.withLock {
+        runningJob?.cancelAndJoin()
+        withContext(Dispatchers.EDT) {
+          InlineCompletionContext.getOrNull(editor)?.let { context ->
+            hide(editor, false, context)
+          }
+        }
       }
     }
   }
