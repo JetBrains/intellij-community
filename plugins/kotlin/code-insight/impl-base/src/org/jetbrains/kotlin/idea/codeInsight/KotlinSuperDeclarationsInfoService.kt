@@ -7,6 +7,7 @@ import com.intellij.psi.PsiClass
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiMethod
 import com.intellij.psi.SmartPsiElementPointer
+import com.intellij.psi.util.parents
 import com.intellij.refactoring.suggested.createSmartPointer
 import com.intellij.util.concurrency.annotations.RequiresReadLock
 import org.jetbrains.annotations.ApiStatus
@@ -38,6 +39,7 @@ sealed class SuperDeclaration {
         }
 }
 
+@ApiStatus.Internal
 object SuperDeclarationProvider {
     @RequiresReadLock
     @ApiStatus.Internal
@@ -72,4 +74,16 @@ object SuperDeclarationProvider {
             }
         }
     }
+
+    @ApiStatus.Internal
+    fun findDeclaration(element: PsiElement): KtDeclaration? = element
+        .parents(false)
+        .filter { declaration ->
+            when (declaration) {
+                is KtNamedFunction, is KtClassOrObject, is KtProperty -> true
+                is KtParameter -> declaration.hasValOrVar()
+                else -> false
+            }
+        }
+        .firstOrNull() as? KtDeclaration
 }
