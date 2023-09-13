@@ -455,4 +455,6 @@ public class GenericsHighlightingTest extends LightDaemonAnalyzerTestCase {
   public void testOnlyUncheckedWarningCastWithDuplicatedArguments(){doTest(LanguageLevel.JDK_1_7, JavaSdkVersion.JDK_1_7, true);}
   public void testCastUnboxingConversionWithWidening(){doTest(LanguageLevel.JDK_1_7, JavaSdkVersion.JDK_1_7, true);}
   public void testVarCaptureForLoop(){doTest(LanguageLevel.JDK_10, JavaSdkVersion.JDK_10, true);}
+
+  public void testInvalidCastWithNestedGeneric(){doTest(LanguageLevel.JDK_1_8, JavaSdkVersion.JDK_1_8, true);}
 }
