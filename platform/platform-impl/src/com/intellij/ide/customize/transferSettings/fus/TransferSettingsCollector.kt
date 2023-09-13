@@ -18,56 +18,56 @@ object TransferSettingsCollector : CounterUsagesCollector() {
 
   private val logger = logger<TransferSettingsCollector>()
 
-  private val GROUP = EventLogGroup("wizard.transferSettings", 1)
+  private val GROUP = EventLogGroup("wizard.transfer.settings", 1)
   override fun getGroup(): EventLogGroup = GROUP
 
   private val ideField = EventFields.Enum<TransferableIdeId>("ide")
   private val ideVersionField = EventFields.NullableEnum<TransferableIdeVersionId>("version")
   private val featureField = EventFields.Enum<TransferableIdeFeatureId>("feature")
-  private val perfEventTypeField = EventFields.Enum<PerfEvent>("type")
+  private val performanceMetricTypeTypeField = EventFields.Enum<PerformanceMetricType>("type")
   private val perfEventValueField = EventFields.Long("value")
 
   // Common events
-  private val transferSettingsShown = GROUP.registerEvent("transferSettingsShown")
-  private val transferSettingsSkipped = GROUP.registerEvent("transferSettingsSkipped")
-  private val importStarted = GROUP.registerEvent("importStarted")
-  private val importSucceeded = GROUP.registerEvent("importSucceeded", ideField)
-  private val importFailed = GROUP.registerEvent("importFailed", ideField)
+  private val transferSettingsShown = GROUP.registerEvent("transfer.settings.shown")
+  private val transferSettingsSkipped = GROUP.registerEvent("transfer.settings.skipped")
+  private val importStarted = GROUP.registerEvent("import.started")
+  private val importSucceeded = GROUP.registerEvent("import.succeeded", ideField)
+  private val importFailed = GROUP.registerEvent("import.failed", ideField)
 
   // Discovery events
   private val instancesOfIdeFound = GROUP.registerEvent(
-    "instancesOfIdeFound",
+    "instances.of.ide.found",
     ideField,
     ideVersionField,
     EventFields.Count
   )
   private val instancesOfIdeFailed = GROUP.registerEvent(
-    "instancesOfIdeFailed",
+    "instances.of.ide.failed",
     ideField,
     EventFields.Count
   )
-  private val featureDetected = GROUP.registerEvent("featureDetected", ideField, featureField)
-  private val recentProjectsDetected = GROUP.registerEvent("recentProjectsDetected", ideField, EventFields.Count)
+  private val featureDetected = GROUP.registerEvent("feature.detected", ideField, featureField)
+  private val recentProjectsDetected = GROUP.registerEvent("recent.projects.detected", ideField, EventFields.Count)
 
   // Import events
-  private val lafImported = GROUP.registerEvent("lafImported", EventFields.Enum<TransferableLafId>("laf"))
+  private val lafImported = GROUP.registerEvent("laf.imported", EventFields.Enum<TransferableLafId>("laf"))
   private val shortcutsTransferred = GROUP.registerEvent(
-    "shortcutsTransferred",
+    "shortcuts.transferred",
     EventFields.Enum<TransferableKeymapId>("keymap"),
-    EventFields.Int("addedShortcutCount"),
-    EventFields.Int("removedShortcutCount")
+    EventFields.Int("added_shortcut_count"),
+    EventFields.Int("removed_shortcut_count")
   )
-  private val recentProjectsTransferred = GROUP.registerEvent("recentProjectsTransferred", ideField, EventFields.Count)
-  private val featureImported = GROUP.registerEvent("featureImported", featureField, ideField)
+  private val recentProjectsTransferred = GROUP.registerEvent("recent.projects.transferred", ideField, EventFields.Count)
+  private val featureImported = GROUP.registerEvent("feature.imported", featureField, ideField)
 
   // Performance events, see RIDER-60328.
-  enum class PerfEvent {
+  enum class PerformanceMetricType {
     SubName, Registry, ReadSettingsFile, Total
   }
 
-  private val perfEvent = GROUP.registerVarargEvent(
-    "perfEvent",
-    perfEventTypeField,
+  private val performanceMeasuredEvent = GROUP.registerVarargEvent(
+    "performance.measured",
+    performanceMetricTypeTypeField,
     ideField,
     ideVersionField,
     perfEventValueField
@@ -142,10 +142,10 @@ object TransferSettingsCollector : CounterUsagesCollector() {
     }
   }
 
-  fun logPerformanceEvent(type: PerfEvent, ide: TransferableIdeId, version: TransferableIdeVersionId?, duration: Duration) {
+  fun logPerformanceMeasured(type: PerformanceMetricType, ide: TransferableIdeId, version: TransferableIdeVersionId?, duration: Duration) {
     logger.runAndLogException {
-      perfEvent.log(
-        EventPair(perfEventTypeField, type),
+      performanceMeasuredEvent.log(
+        EventPair(performanceMetricTypeTypeField, type),
         EventPair(ideField, ide),
         EventPair(ideVersionField, version),
         EventPair(perfEventValueField, duration.inWholeMilliseconds)

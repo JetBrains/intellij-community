@@ -61,8 +61,8 @@ private class TransferSettingsDataProviderSession(private val providers: List<Tr
         val startTime = System.nanoTime().nanoseconds
         val result = provider.getIdeVersions(skipIds ?: emptyList()).stream()
         val endTime = System.nanoTime().nanoseconds
-        TransferSettingsCollector.logPerformanceEvent(
-          TransferSettingsCollector.PerfEvent.Total,
+        TransferSettingsCollector.logPerformanceMeasured(
+          TransferSettingsCollector.PerformanceMetricType.Total,
           provider.transferableIdeId,
           null,
           endTime - startTime

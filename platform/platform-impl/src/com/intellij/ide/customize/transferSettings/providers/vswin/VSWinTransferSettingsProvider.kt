@@ -91,8 +91,8 @@ class VSWinTransferSettingsProvider : TransferSettingsProvider {
 
       val res2 = convertTimeFn(timeFn() - registryTime)
       speedResult += "registryTime $res2\n" // NON-NLS
-      TransferSettingsCollector.logPerformanceEvent(
-        TransferSettingsCollector.PerfEvent.Registry,
+      TransferSettingsCollector.logPerformanceMeasured(
+        TransferSettingsCollector.PerformanceMetricType.Registry,
         TransferableIdeId.VisualStudio,
         hive.transferableVersion(),
         res2
@@ -126,8 +126,8 @@ class VSWinTransferSettingsProvider : TransferSettingsProvider {
 
       val res1 = convertTimeFn(timeFn() - subNameTime)
       speedResult += "subname $res1\n" // NON-NLS
-      TransferSettingsCollector.logPerformanceEvent(
-        TransferSettingsCollector.PerfEvent.SubName,
+      TransferSettingsCollector.logPerformanceMeasured(
+        TransferSettingsCollector.PerformanceMetricType.SubName,
         TransferableIdeId.VisualStudio,
         hive.transferableVersion(),
         res1
@@ -149,8 +149,8 @@ class VSWinTransferSettingsProvider : TransferSettingsProvider {
 
       val res3 = convertTimeFn(timeFn() - readSettingsTime)
       speedResult += "readSettingsFile $res3\n" // NON-NLS
-      TransferSettingsCollector.logPerformanceEvent(
-        TransferSettingsCollector.PerfEvent.ReadSettingsFile,
+      TransferSettingsCollector.logPerformanceMeasured(
+        TransferSettingsCollector.PerformanceMetricType.ReadSettingsFile,
         TransferableIdeId.VisualStudio,
         hive.transferableVersion(),
         res3
