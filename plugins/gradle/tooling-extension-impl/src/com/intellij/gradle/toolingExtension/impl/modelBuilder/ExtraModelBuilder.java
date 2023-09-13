@@ -115,14 +115,12 @@ public class ExtraModelBuilder implements ToolingModelBuilder {
             return service.buildAll(modelName, project);
           }
         }
-        catch (Exception e) {
+        catch (Exception exception) {
           if (service instanceof ExternalProjectBuilderImpl) {
             //Probably checked exception might still pop from poorly behaving implementation
-            //noinspection ConstantValue
-            if (e instanceof RuntimeException) throw (RuntimeException)e;
-            throw new ExternalSystemException(e);
+            throw asRuntimeException(exception);
           }
-          reportModelBuilderFailure(project, service, myModelBuilderContext, e);
+          reportModelBuilderFailure(project, service, myModelBuilderContext, exception);
         }
         finally {
           if (Boolean.getBoolean("idea.gradle.custom.tooling.perf")) {
@@ -152,15 +150,22 @@ public class ExtraModelBuilder implements ToolingModelBuilder {
     @NotNull Project project,
     @NotNull ModelBuilderService service,
     @NotNull ModelBuilderContext modelBuilderContext,
-    @NotNull Exception modelBuilderError
+    @NotNull Exception exception
   ) {
     try {
-      Message message = service.getErrorMessageBuilder(project, modelBuilderError).buildMessage();
+      Message message = service.getErrorMessageBuilder(project, exception).buildMessage();
       modelBuilderContext.report(project, message);
     }
     catch (Throwable e) {
       LOG.warn("Failed to report model builder error", e);
     }
+  }
+
+  private static @NotNull RuntimeException asRuntimeException(@NotNull Exception exception) {
+    if (exception instanceof RuntimeException) {
+      return (RuntimeException)exception;
+    }
+    return new ExternalSystemException(exception);
   }
 
   @NotNull
