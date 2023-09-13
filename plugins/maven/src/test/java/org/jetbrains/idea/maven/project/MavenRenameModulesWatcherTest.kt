@@ -155,6 +155,53 @@ class MavenRenameModulesWatcherTest : MavenDomTestCase() {
   }
 
   @Test
+  fun testModuleRenameDependencyManagementChanged() = runBlocking {
+    createProjectPom("""
+                  <groupId>group</groupId>
+                  <artifactId>parent</artifactId>
+                  <version>1</version>
+                  <packaging>pom</packaging>
+                  <modules>
+                    <module>m1</module>
+                    <module>m2</module>
+                  </modules>
+                  """.trimIndent())
+    val m1File = createModulePom("m1", """
+                  <artifactId>m1</artifactId>
+                  <version>1</version>
+                  <parent>
+                    <groupId>group</groupId>
+                    <artifactId>parent</artifactId>
+                  </parent>
+                  """.trimIndent())
+    val m2File = createModulePom("m2", """
+                  <artifactId>m2</artifactId>
+                  <version>1</version>
+                  <parent>
+                    <groupId>group</groupId>
+                    <artifactId>parent</artifactId>
+                  </parent>
+                  <dependencyManagement>
+                    <dependencies>
+                      <dependency>
+                        <version>1</version>
+                        <groupId>group</groupId>
+                        <artifactId>m1</artifactId>
+                      </dependency>
+                    </dependencies>
+                  </dependencyManagement>
+                  """.trimIndent())
+    importProject()
+    val oldModuleName = "m1"
+    val newModuleName = "m1new"
+    renameModule(oldModuleName, newModuleName)
+    readAction {
+      val tag = findTag(m2File, "project.dependencyManagement.dependencies.dependency.artifactId")
+      assertEquals(newModuleName, tag.getValue().getText())
+    }
+  }
+
+  @Test
   fun testModuleRenameExclusionsChanged() = runBlocking {
     createProjectPom("""
                   <groupId>group</groupId>
