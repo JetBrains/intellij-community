@@ -22,13 +22,9 @@ import org.jetbrains.intellij.build.TraceManager.spanBuilder
 import org.jetbrains.intellij.build.impl.PlatformJarNames.PRODUCT_CLIENT_JAR
 import org.jetbrains.intellij.build.impl.PlatformJarNames.PRODUCT_JAR
 import org.jetbrains.intellij.build.impl.projectStructureMapping.*
-import org.jetbrains.jps.model.java.JpsJavaClasspathKind
-import org.jetbrains.jps.model.java.JpsJavaExtensionService
 import org.jetbrains.jps.model.library.JpsLibrary
 import org.jetbrains.jps.model.library.JpsOrderRootType
-import org.jetbrains.jps.model.module.JpsLibraryDependency
 import org.jetbrains.jps.model.module.JpsModule
-import org.jetbrains.jps.model.module.JpsModuleDependency
 import org.jetbrains.jps.model.module.JpsModuleReference
 import java.io.File
 import java.nio.ByteBuffer
@@ -125,6 +121,8 @@ class JarPackager private constructor(private val outputDir: Path,
   private val libraryEntries = ConcurrentLinkedQueue<LibraryFileEntry>()
   private val libToMetadata = HashMap<JpsLibrary, ProjectLibraryData>()
   private val copiedFiles = HashMap<Path, CopiedFor>()
+
+  private val helper = JarPackagerDependencyHelper(context)
 
   companion object {
     suspend fun pack(includedModules: Collection<ModuleItem>,
@@ -257,16 +255,8 @@ class JarPackager private constructor(private val outputDir: Path,
     }
 
     // for now, check only direct dependencies of the main plugin module
-    val module = context.findRequiredModule(layout.mainModule)
-    val javaExtensionService = JpsJavaExtensionService.getInstance()
     val childPrefix = "${layout.mainModule}."
-    for (element in module.dependenciesList.dependencies) {
-      if (element !is JpsModuleDependency ||
-          javaExtensionService.getDependencyExtension(element)?.scope?.isIncludedIn(JpsJavaClasspathKind.PRODUCTION_RUNTIME) != true) {
-        continue
-      }
-
-      val name = element.moduleReference.moduleName
+    for (name in helper.getModuleDependencies(layout.mainModule)) {
       if (includedModules.any { it.moduleName == name } || !name.startsWith(childPrefix)) {
         continue
       }
@@ -345,9 +335,7 @@ class JarPackager private constructor(private val outputDir: Path,
       val fileSystem = FileSystems.getDefault()
       commonModuleExcludes + extraExcludes.map { fileSystem.getPathMatcher("glob:$it") }
     }
-    sourceList.add(DirSource(dir = moduleOutputDir,
-                             excludes = excludes,
-                             sizeConsumer = sizeConsumer))
+    sourceList.add(DirSource(dir = moduleOutputDir, excludes = excludes, sizeConsumer = sizeConsumer))
 
     if (layout != null) {
       packModuleLibs(item = item, module = module, layout = layout, copiedFiles = copiedFiles, sources = descriptor.sources)
@@ -377,13 +365,17 @@ class JarPackager private constructor(private val outputDir: Path,
     val includeProjectLib = layout is PluginLayout && layout.auto
 
     val excluded = layout.excludedModuleLibraries.get(moduleName)
-    for (element in module.dependenciesList.dependencies) {
+    for (element in helper.getLibraryDependencies(module)) {
       var isModuleLevel = true
-      val libraryReference = (element as? JpsLibraryDependency)?.libraryReference ?: continue
+      val libraryReference = element.libraryReference
       if (libraryReference.parentReference !is JpsModuleReference) {
         if (includeProjectLib) {
           val name = element.library!!.name
           if (platformLayout!!.hasLibrary(name) || layout.hasLibrary(name)) {
+            continue
+          }
+
+          if (helper.hasLibraryInDependencyChainOfModuleDependencies(module, name, layout.includedModules)) {
             continue
           }
           isModuleLevel = false
@@ -391,11 +383,6 @@ class JarPackager private constructor(private val outputDir: Path,
         else {
           continue
         }
-      }
-
-      if (JpsJavaExtensionService.getInstance().getDependencyExtension(element)?.scope
-          ?.isIncludedIn(JpsJavaClasspathKind.PRODUCTION_RUNTIME) != true) {
-        continue
       }
 
       val library = element.library!!
