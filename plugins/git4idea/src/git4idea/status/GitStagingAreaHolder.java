@@ -7,9 +7,6 @@ import com.intellij.openapi.progress.util.BackgroundTaskUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vcs.*;
-import com.intellij.openapi.vcs.changes.Change;
-import com.intellij.openapi.vcs.changes.ChangeListManager;
-import com.intellij.openapi.vcs.changes.ChangesUtil;
 import com.intellij.openapi.vcs.changes.VcsDirtyScope;
 import com.intellij.openapi.vcs.impl.projectlevelman.RecursiveFilePathSet;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -22,6 +19,7 @@ import git4idea.index.GitFileStatus;
 import git4idea.index.GitIndexStatusUtilKt;
 import git4idea.repo.GitConflict;
 import git4idea.repo.GitRepository;
+import git4idea.repo.GitRepositoryManager;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -148,7 +146,7 @@ public class GitStagingAreaHolder {
    * The paths will be automatically collapsed later if the summary length more than limit, see {@link GitHandler#isLargeCommandLine()}.
    */
   @ApiStatus.Internal
-  public static @NotNull Map<VirtualFile, List<FilePath>> collectDirtyPaths(@NotNull VcsDirtyScope dirtyScope) {
+  public static @NotNull Map<VirtualFile, List<FilePath>> collectDirtyPathsPerRoot(@NotNull VcsDirtyScope dirtyScope) {
     Project project = dirtyScope.getProject();
     AbstractVcs vcs = dirtyScope.getVcs();
     ProjectLevelVcsManager vcsManager = ProjectLevelVcsManager.getInstance(project);
@@ -161,24 +159,40 @@ public class GitStagingAreaHolder {
       addToPaths(p, result, vcs, vcsManager);
     }
 
-    // Git will not detect renames, unless both affected paths are passed to the 'git status' command.
-    // Thus we are forced to pass all deleted/added files to ensure all renames are detected.
-    for (Change c : ChangeListManager.getInstance(project).getAllChanges()) {
-      switch (c.getType()) {
-        case NEW:
-        case DELETED:
-        case MOVED:
-          FilePath afterPath = ChangesUtil.getAfterPath(c);
-          if (afterPath != null) {
-            addToPaths(afterPath, result, vcs, vcsManager);
-          }
-          FilePath beforePath = ChangesUtil.getBeforePath(c);
-          if (beforePath != null) {
-            addToPaths(beforePath, result, vcs, vcsManager);
-          }
-        case MODIFICATION:
-        default:
-          // do nothing
+    // do not use belongsTo to skip non-recursively dirty directories
+    RecursiveFilePathSet recursivelyDirtyDirectories = new RecursiveFilePathSet(true);
+    recursivelyDirtyDirectories.addAll(dirtyScope.getRecursivelyDirtyDirectories());
+
+    // process nested vcs roots
+    for (VirtualFile root : vcsManager.getRootsUnderVcs(vcs)) {
+      FilePath rootPath = VcsUtil.getFilePath(root);
+      if (recursivelyDirtyDirectories.hasAncestor(rootPath)) {
+        LOG.debug("adding git root for check. root: ", root);
+        List<FilePath> paths = result.computeIfAbsent(root, key -> new ArrayList<>());
+        paths.add(rootPath);
+      }
+    }
+
+    // Git will not detect renames unless both affected paths are passed to the 'git status' command.
+    // Thus, we are forced to pass all deleted/added files in a repository to ensure all renames are detected.
+    for (VirtualFile root : result.keySet()) {
+      GitRepository gitRepository = GitRepositoryManager.getInstance(project).getRepositoryForRoot(root);
+      if (gitRepository == null) continue;
+
+      List<FilePath> rootPaths = result.get(root);
+
+      List<GitFileStatus> records = gitRepository.getStagingAreaHolder().getAllRecords();
+      for (GitFileStatus record : records) {
+        FilePath filePath = record.getPath();
+        FilePath origPath = record.getOrigPath();
+        if (origPath != null) {
+          rootPaths.add(origPath);
+          rootPaths.add(filePath);
+        }
+        else if (isStatusCodeForPotentialRename(record.getIndex()) ||
+                 isStatusCodeForPotentialRename(record.getWorkTree())) {
+          rootPaths.add(filePath);
+        }
       }
     }
 
@@ -217,6 +231,12 @@ public class GitStagingAreaHolder {
         prevPath = path;
       }
     }
+  }
+
+  private static boolean isStatusCodeForPotentialRename(char statusCode) {
+    return GitIndexStatusUtilKt.isRenamed(statusCode) ||
+           GitIndexStatusUtilKt.isDeleted(statusCode) ||
+           GitIndexStatusUtilKt.isAdded(statusCode);
   }
 
   public interface StagingAreaListener {
