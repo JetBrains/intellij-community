@@ -8,7 +8,7 @@ import org.jetbrains.annotations.ApiStatus
 
 @ApiStatus.Experimental
 class InlineCompletionContext internal constructor(val editor: Editor) {
-  private val state = InlineState()
+  val state = InlineState()
 
   val isCurrentlyDisplayingInlays: Boolean
     get() = state.elements.any { !it.isEmpty }
@@ -20,14 +20,7 @@ class InlineCompletionContext internal constructor(val editor: Editor) {
     get() = state.lastElement?.offset
 
   val lineToInsert: String
-    get() = elements.joinToString("") { it.text }
-
-  val elements: List<InlineCompletionElement>
-    get() = state.elements
-
-  fun addElement(element: InlineCompletionElement) {
-    state.addElement(element)
-  }
+    get() = state.elements.joinToString("") { it.text }
 
   fun clear() {
     state.clear()

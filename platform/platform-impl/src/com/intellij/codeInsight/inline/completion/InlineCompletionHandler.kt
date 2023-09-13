@@ -20,7 +20,6 @@ import com.intellij.openapi.util.registry.Registry
 import com.intellij.psi.PsiFile
 import com.intellij.util.EventDispatcher
 import com.intellij.util.application
-import com.intellij.util.concurrency.annotations.RequiresBlockingContext
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.*
 import org.jetbrains.annotations.ApiStatus
@@ -75,11 +74,6 @@ class InlineCompletionHandler(private val scope: CoroutineScope) {
 
     val provider = getProvider(event) ?: return
 
-    if (updateContextOrInvalidate(request)) {
-      runningJob.getAndSet(null)?.cancel()
-      return
-    }
-
     LOG.trace("Schedule new job")
     runningJob.getAndUpdate {
       scope.launch {
@@ -90,6 +84,10 @@ class InlineCompletionHandler(private val scope: CoroutineScope) {
 
   private suspend fun invokeRequest(provider: InlineCompletionProvider, event: InlineCompletionEvent) {
     val request = event.toRequest() ?: return
+
+    if (updateContextOrInvalidate(request)) {
+      return
+    }
 
     val editor = request.editor
     val offset = request.endOffset
@@ -142,7 +140,7 @@ class InlineCompletionHandler(private val scope: CoroutineScope) {
   private fun InlineCompletionContext.renderElement(element: InlineCompletionElement, startOffset: Int) {
     withSafeMute {
       element.render(editor, lastOffset ?: startOffset)
-      addElement(element)
+      state.addElement(element)
     }
   }
 
@@ -179,75 +177,33 @@ class InlineCompletionHandler(private val scope: CoroutineScope) {
     }
   }
 
+  private fun getContextUpdater(): DefinedInlineCompletionContextUpdater {
+    return CompositeContextUpdater(AppendPrefixContextUpdater(), LookupChangeContextUpdater()).invalidateOnUndefined()
+  }
+
   /**
    * @return `true` if update was successful. Otherwise, [hide] is invoked to invalidate the current context.
    */
-  @RequiresBlockingContext
-  private fun updateContextOrInvalidate(request: InlineCompletionRequest): Boolean {
+  private suspend fun updateContextOrInvalidate(request: InlineCompletionRequest): Boolean {
     return InlineCompletionContext.getOrNull(request.editor)?.let { context ->
-      context.updateWithEvent(request.event).also { success ->
-        if (!success) {
-          hide(request.editor, false, context)
+      val updater = getContextUpdater()
+      val result = updater.onEvent(context, request.event)
+      withContext(Dispatchers.EDT) {
+        when (result) {
+          is InlineCompletionContextUpdater.Result.Updated.Changed -> {
+            context.clear()
+            result.newElements.forEach { context.renderElement(it, request.endOffset) }
+          }
+          is InlineCompletionContextUpdater.Result.Updated.Same -> Unit
+          is InlineCompletionContextUpdater.Result.Invalidated -> {
+            if (context.isCurrentlyDisplayingInlays) {
+              hide(context.editor, false, context)
+            }
+          }
         }
       }
+      result is InlineCompletionContextUpdater.Result.Updated
     } ?: false
-  }
-
-  @RequiresBlockingContext
-  private fun InlineCompletionContext.updateWithEvent(event: InlineCompletionEvent): Boolean {
-    if (!isCurrentlyDisplayingInlays) {
-      return false
-    }
-    return when (event) {
-      is InlineCompletionEvent.LookupChange -> {
-        // If we have elements to show and lookup hides/appears, then we do not need to hide gray text
-        true
-      }
-      is InlineCompletionEvent.DocumentChange -> {
-        // We may add new prefix to the gray text if it matches, and do not re-call providers
-        event.getFragmentToAppendPrefix()?.let { applyPrefixAppend(it) } ?: false
-      }
-      else -> false
-    }
-  }
-
-  @RequiresBlockingContext
-  private fun InlineCompletionContext.applyPrefixAppend(fragment: CharSequence): Boolean {
-    if (!lineToInsert.startsWith(fragment) || lineToInsert == fragment.toString()) {
-      return false
-    }
-    val newElements = truncateElementsPrefix(elements, fragment.length)
-    val startOffset = checkNotNull(startOffset)
-
-    application.invokeAndWait {
-      editor.inlayModel.execute(true) {
-        clear()
-        newElements.forEach {
-          this@applyPrefixAppend.renderElement(it, startOffset)
-        }
-      }
-    }
-    return true
-  }
-
-  private fun truncateElementsPrefix(elements: List<InlineCompletionElement>, length: Int): List<InlineCompletionElement> {
-    var currentLength = length
-    val newFirstElementIndex = elements.indexOfFirst {
-      currentLength -= it.text.length
-      currentLength < 0 // Searching for the element that exceeds [length]
-    }
-    assert(newFirstElementIndex >= 0)
-    currentLength += elements[newFirstElementIndex].text.length
-    val newFirstElement = InlineCompletionElement(elements[newFirstElementIndex].text.drop(currentLength))
-    return listOf(newFirstElement) + elements.drop(newFirstElementIndex + 1)
-  }
-
-  private fun InlineCompletionEvent.DocumentChange.getFragmentToAppendPrefix(): CharSequence? {
-    val documentEvent = event
-    val newFragment = documentEvent.newFragment
-    val oldFragment = documentEvent.oldFragment
-
-    return newFragment.takeIf { it.isNotEmpty() && oldFragment.isEmpty() }
   }
 
   private fun shouldShowPlaceholder(): Boolean = Registry.`is`("inline.completion.show.placeholder")
