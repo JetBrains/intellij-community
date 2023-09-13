@@ -216,6 +216,7 @@ abstract class KotlinWithGradleConfigurator : KotlinProjectConfigurator {
         val jvmTargets = readAction {
             checkModuleJvmTargetCompatibility(listOf(module), settings.kotlinVersion).moduleJvmTargets
         }
+        KotlinJ2KOnboardingFUSCollector.logStartConfigureKt(project, true)
         val commandKey = "command.name.configure.kotlin.automatically"
         val result = withModalProgress(project, KotlinIdeaGradleBundle.message(commandKey)) {
             configureSilently(
@@ -238,20 +239,24 @@ abstract class KotlinWithGradleConfigurator : KotlinProjectConfigurator {
         val changedFiles: ChangedConfiguratorFiles
     )
 
-    private fun performPostAutoConfigActions(project: Project, module: Module) {
-        // Schedule Gradle sync
-        project.scheduleGradleSync()
-        // When an undo/redo happens also re-run gradle syncs and show the appropriate notifications
+    private fun addUndoListener(project: Project, modules: List<Module>, isAutoConfig: Boolean) {
+        // Auto-config only ever works on a single module
+        val firstModule = modules.firstOrNull()
         UndoManager.getInstance(project).undoableActionPerformed(object : BasicUndoableAction() {
             override fun undo() {
-                project.scheduleGradleSync()
-                KotlinAutoConfigurationNotificationHolder.getInstance(project)
-                  .showAutoConfigurationUndoneNotification(module)
+                if (isAutoConfig && firstModule != null) {
+                    project.scheduleGradleSync()
+                    KotlinAutoConfigurationNotificationHolder.getInstance(project)
+                        .showAutoConfigurationUndoneNotification(firstModule)
+                }
+                KotlinJ2KOnboardingFUSCollector.logConfigureKtUndone(project)
             }
 
             override fun redo() {
-                project.scheduleGradleSync()
-                KotlinAutoConfigurationNotificationHolder.getInstance(project).reshowAutoConfiguredNotification(module)
+                if (isAutoConfig && firstModule != null) {
+                    project.scheduleGradleSync()
+                    KotlinAutoConfigurationNotificationHolder.getInstance(project).reshowAutoConfiguredNotification(firstModule)
+                }
             }
         })
     }
@@ -286,9 +291,9 @@ abstract class KotlinWithGradleConfigurator : KotlinProjectConfigurator {
                         val changedFiles = configureAction()
                         val firstModule = modules.firstOrNull()
                         if (isAutoConfig && firstModule != null) {
-                            // Auto-configuration only ever works on a single module
-                            performPostAutoConfigActions(project, firstModule)
+                            project.scheduleGradleSync()
                         }
+                        addUndoListener(project, modules, isAutoConfig)
                         progressReporter?.fraction(1.0)
                         ConfigurationResult(collector, changedFiles)
                     }

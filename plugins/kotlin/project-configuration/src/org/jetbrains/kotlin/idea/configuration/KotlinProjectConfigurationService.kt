@@ -15,6 +15,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import org.jetbrains.kotlin.idea.projectConfiguration.KotlinProjectConfigurationBundle
+import org.jetbrains.kotlin.idea.statistics.KotlinJ2KOnboardingFUSCollector
 import org.jetbrains.kotlin.idea.util.isKotlinFileType
 
 @Service(Service.Level.PROJECT)
@@ -74,7 +75,9 @@ class KotlinProjectConfigurationService(private val project: Project, private va
                     project = module.project,
                     title = KotlinProjectConfigurationBundle.message("auto.configure.kotlin.check")
                 ) {
-                    autoConfigurator.calculateAutoConfigSettings(module)
+                    val settings = autoConfigurator.calculateAutoConfigSettings(module)
+                    KotlinJ2KOnboardingFUSCollector.logCheckAutoConfigStatus(module.project, settings != null)
+                    settings
                 }
 
                 if (autoConfigSettings == null) return@launch
