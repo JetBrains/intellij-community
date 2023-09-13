@@ -817,16 +817,16 @@ public class MavenUtil {
       for (File mavenLibFile : libs) {
         String lib = mavenLibFile.getName();
         if (lib.equals("maven-core.jar")) {
-          MavenLog.LOG.debug("Choosing version by maven-core.jar");
+          MavenLog.LOG.trace("Choosing version by maven-core.jar");
           return getMavenLibVersion(mavenLibFile);
         }
         if (lib.startsWith("maven-core-") && lib.endsWith(".jar")) {
-          MavenLog.LOG.debug("Choosing version by maven-core.xxx.jar");
+          MavenLog.LOG.trace("Choosing version by maven-core.xxx.jar");
           String version = lib.substring("maven-core-".length(), lib.length() - ".jar".length());
           return contains(version, ".x") ? getMavenLibVersion(mavenLibFile) : version;
         }
         if (lib.startsWith("maven-") && lib.endsWith("-uber.jar")) {
-          MavenLog.LOG.debug("Choosing version by maven-xxx-uber.jar");
+          MavenLog.LOG.trace("Choosing version by maven-xxx-uber.jar");
           return lib.substring("maven-".length(), lib.length() - "-uber.jar".length());
         }
       }

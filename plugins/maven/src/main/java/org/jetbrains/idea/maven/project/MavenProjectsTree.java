@@ -563,7 +563,7 @@ public final class MavenProjectsTree {
 
       if ((null != previousUpdate && !forceRead) || Boolean.TRUE.equals(previousUpdate)) {
         // we already updated this file
-        MavenLog.LOG.debug("Has already been updated (%s): %s; forceRead: %s".formatted(previousUpdate, mavenProjectFile, forceRead));
+        MavenLog.LOG.trace("Has already been updated (%s): %s; forceRead: %s".formatted(previousUpdate, mavenProjectFile, forceRead));
         return false;
       }
       if (null != process) {
