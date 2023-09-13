@@ -72,14 +72,19 @@ public abstract class AbstractApplicationConfigurationProducer<T extends Applica
 
   @Override
   public boolean isConfigurationFromContext(@NotNull T appConfiguration, @NotNull ConfigurationContext context) {
-    Location location = context.getLocation();
+    Location<?> location = context.getLocation();
     if (location == null) {
       return false;
     }
 
-    Location singleClassLocation = JavaExecutionUtil.stepIntoSingleClass(location);
+    Location<?> singleClassLocation = JavaExecutionUtil.stepIntoSingleClass(location);
     final PsiClass aClass = PsiTreeUtil.getParentOfType(singleClassLocation.getPsiElement(), PsiClass.class, false);
-    if (aClass != null && Objects.equals(JavaExecutionUtil.getRuntimeQualifiedName(aClass), appConfiguration.getMainClassName())) {
+    if (aClass != null) {
+      final String className = aClass instanceof PsiUnnamedClass
+                               ? StringUtil.trimEnd(aClass.getContainingFile().getName(), ".java")
+                               : JavaExecutionUtil.getRuntimeQualifiedName(aClass);
+      if (!Objects.equals(className, appConfiguration.getMainClassName())) return false;
+
       final PsiMethod method = PsiTreeUtil.getParentOfType(context.getPsiLocation(), PsiMethod.class, false);
       if (method != null && TestFrameworks.getInstance().isTestMethod(method)) {
         return false;
@@ -88,12 +93,12 @@ public abstract class AbstractApplicationConfigurationProducer<T extends Applica
       final Module configurationModule = appConfiguration.getConfigurationModule().getModule();
       if (Comparing.equal(context.getModule(), configurationModule)) return true;
 
-      ApplicationConfiguration template =
-        (ApplicationConfiguration)context.getRunManager().getConfigurationTemplate(getConfigurationFactory()).getConfiguration();
+      ApplicationConfiguration template = (ApplicationConfiguration)context
+        .getRunManager()
+        .getConfigurationTemplate(getConfigurationFactory())
+        .getConfiguration();
       final Module predefinedModule = template.getConfigurationModule().getModule();
-      if (Comparing.equal(predefinedModule, configurationModule)) {
-        return true;
-      }
+      return Comparing.equal(predefinedModule, configurationModule);
     }
     return false;
   }
