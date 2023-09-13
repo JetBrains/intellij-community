@@ -4,7 +4,7 @@ package com.intellij.codeInsight.inline.completion
 import com.intellij.codeInsight.lookup.LookupElement
 import com.intellij.codeInsight.lookup.LookupEvent
 import com.intellij.openapi.actionSystem.DataContext
-import com.intellij.openapi.application.runReadAction
+import com.intellij.openapi.application.readAction
 import com.intellij.openapi.editor.Caret
 import com.intellij.openapi.editor.Document
 import com.intellij.openapi.editor.Editor
@@ -31,7 +31,7 @@ data class InlineCompletionRequest(
 
 @ApiStatus.Experimental
 sealed interface InlineCompletionEvent {
-  fun toRequest(): InlineCompletionRequest?
+  suspend fun toRequest(): InlineCompletionRequest?
 
   /**
    * A class representing a direct call in the code editor by [InsertInlineCompletionAction].
@@ -43,8 +43,8 @@ sealed interface InlineCompletionEvent {
     val caret: EditorCaret,
     val context: DataContext? = null,
   ) : InlineCompletionEvent {
-    override fun toRequest(): InlineCompletionRequest {
-      val offset = runReadAction { caret.offset }
+    override suspend fun toRequest(): InlineCompletionRequest {
+      val offset = readAction { caret.offset }
       return InlineCompletionRequest(this, file, editor, editor.document, offset, offset)
     }
   }
@@ -54,12 +54,12 @@ sealed interface InlineCompletionEvent {
    */
   @ApiStatus.Experimental
   data class DocumentChange(val event: DocumentEvent, val editor: Editor) : InlineCompletionEvent {
-    override fun toRequest(): InlineCompletionRequest? {
+    override suspend fun toRequest(): InlineCompletionRequest? {
       val virtualFile = editor.virtualFile ?: return null
       val project = editor.project ?: return null
       if (editor.caretModel.caretCount != 1) return null
 
-      val file = runReadAction { PsiManager.getInstance(project).findFile(virtualFile) } ?: return null
+      val file = readAction { PsiManager.getInstance(project).findFile(virtualFile) } ?: return null
 
       return InlineCompletionRequest(this, file, editor, event.document, event.offset, event.offset + event.newLength)
     }
@@ -79,13 +79,13 @@ sealed interface InlineCompletionEvent {
   @ApiStatus.Experimental
   @Deprecated("platform caret listener is disabled")
   data class CaretMove(val event: EditorMouseEvent) : InlineCompletionEvent {
-    override fun toRequest(): InlineCompletionRequest? {
+    override suspend fun toRequest(): InlineCompletionRequest? {
       val editor = event.editor
       val virtualFile = editor.virtualFile ?: return null
       val project = editor.project ?: return null
       if (editor.caretModel.caretCount != 1) return null
 
-      val (file, offset) = runReadAction {
+      val (file, offset) = readAction {
         PsiManager.getInstance(project).findFile(virtualFile) to editor.caretModel.offset
       }
       if (file == null) return null
@@ -104,15 +104,15 @@ sealed interface InlineCompletionEvent {
    */
   @ApiStatus.Experimental
   data class LookupChange(val event: LookupEvent) : InlineCompletionEvent {
-    override fun toRequest(): InlineCompletionRequest? {
+    override suspend fun toRequest(): InlineCompletionRequest? {
       val item = event.item ?: return null
-      val editor = runReadAction { event.lookup?.editor } ?: return null
+      val editor = readAction { event.lookup?.editor } ?: return null
       if (editor.caretModel.caretCount != 1) return null
 
       val virtualFile = editor.virtualFile ?: return null
       val project = editor.project ?: return null
 
-      val (file, offset) = runReadAction {
+      val (file, offset) = readAction {
         PsiManager.getInstance(project).findFile(virtualFile) to editor.caretModel.offset
       }
       if (file == null) return null
