@@ -800,6 +800,13 @@
                         preloaderClassName="git4idea.conflicts.GitConflictsToolWindowManager$ContentPreloader"
                         displayNameSupplierClassName="git4idea.conflicts.GitConflictsToolWindowManager$DisplayNameSupplier"
                         isInCommitToolWindow="true"/>
+
+    <registryKey os="windows" key="git.version.check.minutes" defaultValue="1"
+                 restartRequired="true"
+                 description="Amount of time in minutes to check new Git version after IDE inactivity.\n
+                             -1 to disable check."/>
+    <postStartupActivity os="windows" implementation="git4idea.config.GitNewVersionChecker$Starter"/>
+    <settingsEntryPointActionProvider os="windows" implementation="git4idea.config.GitVersionUpdateSettingsEntryProvider"/>
   </extensions>
 
   <extensionPoints>

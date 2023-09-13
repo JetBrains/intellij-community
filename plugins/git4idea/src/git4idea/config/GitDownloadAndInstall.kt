@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package git4idea.config
 
 import com.fasterxml.jackson.databind.ObjectMapper
@@ -10,6 +10,7 @@ import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.SystemInfo
+import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import com.intellij.util.io.HttpRequests
 import git4idea.i18n.GitBundle
 import org.tukaani.xz.XZInputStream
@@ -25,6 +26,25 @@ fun downloadAndInstallGit(project: Project, onSuccess: () -> Unit = {}) {
     SystemInfo.isWindows -> WindowsExecutableProblemHandler(project).downloadAndInstall(errorNotifier, onSuccess)
     SystemInfo.isMac -> MacExecutableProblemHandler(project).downloadAndInstall(errorNotifier, onSuccess)
   }
+}
+
+@RequiresBackgroundThread
+internal fun getLatestAvailableVersion(): GitVersion {
+  try {
+    return downloadListOfGitInstallers()
+      .asSequence().filter {
+        it.os == when {
+          SystemInfo.isWindows && WindowsExecutableProblemHandler.archMatches(it.arch) -> "windows"
+          SystemInfo.isMac -> "macOS"
+          else -> "undefined"
+        }
+      }.maxOfWith(compareBy { it }) { GitVersion.parse("git version ${it.version}") }
+  }
+  catch (e: Throwable) {
+    LOG.warn("Failed to check Git latest version", e)
+  }
+
+  return GitVersion.NULL
 }
 
 internal data class GitInstaller(
