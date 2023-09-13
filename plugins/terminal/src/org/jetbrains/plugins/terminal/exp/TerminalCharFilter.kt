@@ -19,8 +19,8 @@ class TerminalCharFilter : CharFilter() {
       // It is command completion lookup
       val matches = lookup.items.filter { matchesAfterAppendingChar(lookup, it, c) }
       if (matches.isNotEmpty()) {
-        if (matches.all { TerminalSessionCompletionContributor.isSingleCharParameter(it.lookupString) }
-            && !lookup.items.any { TerminalSessionCompletionContributor.isSingleCharParameter(it.lookupString) && it.lookupString[1] == c }) {
+        if (matches.all { isSingleCharParameter(it.lookupString) }
+            && !lookup.items.any { isSingleCharParameter(it.lookupString) && it.lookupString[1] == c }) {
           // Close lookup if we are completing single char parameters and user typed the char,
           // that do not match any of available parameters
           Result.HIDE_LOOKUP
@@ -36,4 +36,6 @@ class TerminalCharFilter : CharFilter() {
     val matcher = lookup.itemMatcher(item)
     return matcher.cloneWithPrefix(matcher.prefix + (lookup as LookupImpl).additionalPrefix + c).prefixMatches(item)
   }
+
+  private fun isSingleCharParameter(value: String): Boolean = value.length == 2 && value[0] == '-'
 }

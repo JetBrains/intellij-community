@@ -57,9 +57,6 @@
                             id="terminalCommandSpec"
                             implementationClass="org.jetbrains.plugins.terminal.exp.TerminalCommandSpecCompletionContributor"
                             order="first, before shShebang, before liveTemplates"/>
-    <completion.contributor language="any"
-                            implementationClass="org.jetbrains.plugins.terminal.exp.TerminalSessionCompletionContributor"
-                            order="first, after terminalCommandSpec, before shShebang, before liveTemplates"/>
     <weigher key="completion"
              id="terminalCommandSpec"
              order="before stats"

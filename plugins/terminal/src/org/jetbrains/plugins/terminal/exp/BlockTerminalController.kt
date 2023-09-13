@@ -7,9 +7,7 @@ import com.intellij.find.FindUtil
 import com.intellij.find.SearchSession
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.DataKey
-import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.invokeLater
-import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
 import com.intellij.util.concurrency.annotations.RequiresEdt
@@ -54,22 +52,9 @@ class BlockTerminalController(
   }
 
   private fun startCommand(command: String) {
-    ApplicationManager.getApplication().executeOnPooledThread {
-      val model = session.model
-      if (model.commandExecutionSemaphore.waitFor(3000)) {
-        model.commandExecutionSemaphore.down()
-      }
-      else {
-        thisLogger().error("Failed to acquire the command execution lock to execute command: '$command'\n" +
-                           "Text buffer:\n" + model.withContentLock { model.getAllText() })
-      }
-
-      invokeLater {
-        outputController.startCommandBlock(command)
-        promptController.promptIsVisible = false
-        session.executeCommand(command)
-      }
-    }
+    outputController.startCommandBlock(command)
+    promptController.promptIsVisible = false
+    session.executeCommand(command)
   }
 
   override fun commandStarted(command: String) {
@@ -94,8 +79,6 @@ class BlockTerminalController(
     model.withContentLock {
       model.clearAllExceptPrompt()
     }
-
-    model.commandExecutionSemaphore.up()
 
     invokeLater {
       promptController.reset()

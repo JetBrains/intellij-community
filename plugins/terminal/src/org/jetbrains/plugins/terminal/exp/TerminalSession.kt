@@ -31,7 +31,7 @@ class TerminalSession(settings: JBTerminalSystemSettingsProviderBase) : Disposab
   init {
     val styleState = StyleState()
     styleState.setDefaultStyle(settings.defaultStyle)
-    textBuffer = TerminalTextBufferEx(80, 24, styleState)
+    textBuffer = TerminalTextBuffer(80, 24, styleState)
     model = TerminalModel(textBuffer, styleState)
     controller = TerminalController(model, settings)
 

@@ -11,7 +11,6 @@ import com.intellij.openapi.util.io.FileUtil
 import com.intellij.util.SystemProperties
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import org.jetbrains.plugins.terminal.exp.TerminalDataContextUtils.IS_PROMPT_EDITOR_KEY
-import org.jetbrains.plugins.terminal.util.ShellType
 import java.util.concurrent.CopyOnWriteArrayList
 import kotlin.properties.Delegates
 
@@ -20,7 +19,6 @@ class TerminalPromptController(
   session: TerminalSession,
   private val commandExecutor: TerminalCommandExecutor
 ) : ShellCommandListener {
-  private val completionManager: TerminalCompletionManager?
   private val commandHistoryManager: CommandHistoryManager
   private val listeners: MutableList<PromptStateListener> = CopyOnWriteArrayList()
 
@@ -32,14 +30,8 @@ class TerminalPromptController(
   }
 
   init {
-    completionManager = when (session.shellIntegration?.shellType) {
-      ShellType.ZSH -> ZshCompletionManager(session)
-      ShellType.BASH -> BashCompletionManager(session)
-      else -> null
-    }
     editor.putUserData(IS_PROMPT_EDITOR_KEY, true)
     editor.putUserData(TerminalSession.KEY, session)
-    editor.putUserData(TerminalCompletionManager.KEY, completionManager)
 
     commandHistoryManager = CommandHistoryManager(session)
     session.addCommandListener(this)
