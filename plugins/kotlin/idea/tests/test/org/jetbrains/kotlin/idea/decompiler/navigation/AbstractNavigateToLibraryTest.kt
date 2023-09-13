@@ -11,7 +11,6 @@ import org.jetbrains.kotlin.idea.base.projectStructure.matches
 import org.jetbrains.kotlin.idea.navigation.NavigationTestUtils
 import org.jetbrains.kotlin.idea.references.KtReference
 import org.jetbrains.kotlin.idea.test.*
-import org.jetbrains.kotlin.idea.test.KotlinTestUtils
 import java.io.File
 
 abstract class AbstractNavigateToLibraryTest : KotlinLightCodeInsightFixtureTestCase() {
@@ -66,10 +65,10 @@ abstract class AbstractNavigateToLibrarySourceTest : AbstractNavigateToLibraryTe
     )
 }
 
-abstract class AbstractNavigateJavaToLibrarySourceTest : AbstractNavigateToLibraryTest() {
+abstract class AbstractNavigateJavaToLibraryTest(testDataPath: String, attachSources: Boolean) : AbstractNavigateToLibraryTest() {
     protected val mockLibraryFacility = MockLibraryFacility(
-        source = IDEA_TEST_DATA_DIR.resolve("decompiler/navigation/fromJavaSource"),
-        attachSources = false,
+        source = IDEA_TEST_DATA_DIR.resolve(testDataPath),
+        attachSources = attachSources,
         options = listOf("-Xcontext-receivers")
     )
 
@@ -85,6 +84,10 @@ abstract class AbstractNavigateJavaToLibrarySourceTest : AbstractNavigateToLibra
         ThrowableRunnable { super.tearDown() }
     )
 }
+
+abstract class AbstractNavigateJavaSourceToLibraryTest : AbstractNavigateJavaToLibraryTest("decompiler/navigation/fromJavaSource", false)
+
+abstract class AbstractNavigateJavaSourceToLibrarySourceTest : AbstractNavigateJavaToLibraryTest("navigation/javaSource/librarySource", true)
 
 abstract class AbstractNavigateToLibrarySourceTestWithJS : AbstractNavigateToLibrarySourceTest() {
     private val mockLibraryFacility = MockLibraryFacility(IDEA_TEST_DATA_DIR.resolve("decompiler/navigation/fromJavaSource"),
