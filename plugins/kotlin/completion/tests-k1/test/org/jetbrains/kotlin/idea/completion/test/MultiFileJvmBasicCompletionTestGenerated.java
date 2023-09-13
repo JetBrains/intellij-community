@@ -168,6 +168,16 @@ public class MultiFileJvmBasicCompletionTestGenerated extends AbstractMultiFileJ
         runTest("../testData/basic/multifile/InImport/");
     }
 
+    @TestMetadata("InImportExtension")
+    public void testInImportExtension() throws Exception {
+        runTest("../testData/basic/multifile/InImportExtension/");
+    }
+
+    @TestMetadata("InImportExtensionNoAttributes")
+    public void testInImportExtensionNoAttributes() throws Exception {
+        runTest("../testData/basic/multifile/InImportExtensionNoAttributes/");
+    }
+
     @TestMetadata("InImportedFunctionLiteralParameter")
     public void testInImportedFunctionLiteralParameter() throws Exception {
         runTest("../testData/basic/multifile/InImportedFunctionLiteralParameter/");

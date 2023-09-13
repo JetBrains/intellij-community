@@ -168,6 +168,16 @@ public class HighLevelMultiFileJvmBasicCompletionTestGenerated extends AbstractH
         runTest("../completion/testData/basic/multifile/InImport/");
     }
 
+    @TestMetadata("InImportExtension")
+    public void testInImportExtension() throws Exception {
+        runTest("../completion/testData/basic/multifile/InImportExtension/");
+    }
+
+    @TestMetadata("InImportExtensionNoAttributes")
+    public void testInImportExtensionNoAttributes() throws Exception {
+        runTest("../completion/testData/basic/multifile/InImportExtensionNoAttributes/");
+    }
+
     @TestMetadata("InImportedFunctionLiteralParameter")
     public void testInImportedFunctionLiteralParameter() throws Exception {
         runTest("../completion/testData/basic/multifile/InImportedFunctionLiteralParameter/");
