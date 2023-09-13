@@ -105,6 +105,9 @@ public abstract class OccurenceNavigatorSupport implements OccurenceNavigator {
     if (selectedNode == null) {
       selectedNode = (TreeNode)tree.getModel().getRoot();
     }
+    if (selectedNode == null) {
+      return null;
+    }
     if (forward) {
       for (DefaultMutableTreeNode node=((DefaultMutableTreeNode)selectedNode).getNextNode(); node != null; node = node.getNextNode()) {
         if (createDescriptorForNode(node) != null) {
