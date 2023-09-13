@@ -72,7 +72,7 @@ public final class DiscoveredTestDataHolder {
 
       int iterations = 0;
 
-      Throwable lastProblem;
+      List<Attachment> problems = new ArrayList<>(3);
 
       while (true) {
         ++iterations;
@@ -107,11 +107,11 @@ public final class DiscoveredTestDataHolder {
 
           PathKt.delete(basePath);
           // try another time
-          lastProblem = throwable;
+          problems.add(new Attachment("problem-" + iterations, throwable));
         }
 
         if (iterations >= 3) {
-          LOG.error("Unexpected repeatable initialization problem", new Attachment("last-reported-problem", lastProblem));
+          LOG.error("Unexpected repeatable initialization problem", problems.toArray(Attachment[]::new));
           assert false;
         }
       }
