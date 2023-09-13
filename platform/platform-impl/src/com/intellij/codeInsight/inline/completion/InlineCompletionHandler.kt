@@ -131,7 +131,6 @@ class InlineCompletionHandler(private val scope: CoroutineScope) {
   }
 
   suspend fun request(provider: InlineCompletionProvider, request: InlineCompletionRequest): Flow<InlineCompletionElement> {
-    val listener = InlineCompletionUsageTracker.Listener()
     trace(InlineCompletionEventType.Request(lastInvocationTime, request, provider::class.java))
     return provider.getProposals(request)
   }
