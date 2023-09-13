@@ -63,9 +63,8 @@ class VirtualFileHolder(private val myProject: Project) : FileHolder {
           val iterator = files.iterator()
           while (iterator.hasNext()) {
             val file = iterator.next()
-            if (fileDropped(file)) {
+            if (!file.isValid) {
               iterator.remove()
-              scope.addDirtyFile(VcsUtil.getFilePath(file))
             }
           }
         }
@@ -74,17 +73,11 @@ class VirtualFileHolder(private val myProject: Project) : FileHolder {
         val iterator = files.iterator()
         while (iterator.hasNext()) {
           val file = iterator.next()
-          val fileDropped = fileDropped(file)
-          if (fileDropped) {
-            scope.addDirtyFile(VcsUtil.getFilePath(file))
-          }
-          if (fileDropped || scope.belongsTo(VcsUtil.getFilePath(file))) {
+          if (!file.isValid || scope.belongsTo(VcsUtil.getFilePath(file))) {
             iterator.remove()
           }
         }
       }
     }
-
-    private fun fileDropped(file: VirtualFile): Boolean = !file.isValid
   }
 }
