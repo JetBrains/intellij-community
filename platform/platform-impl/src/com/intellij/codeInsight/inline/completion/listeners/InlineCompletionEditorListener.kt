@@ -33,9 +33,11 @@ class InlineCompletionEditorListener(scope: CoroutineScope) : EditorFactoryListe
 
     editor.putUserData(InlineCompletionHandler.KEY, handler)
     val docListener = InlineCompletionDocumentListener(editor)
+    val caretListener = InlineCaretListener()
 
     editor.document.addDocumentListener(docListener, disposable)
     editor.addEditorMouseListener(editorMouseListener, disposable)
+    editor.caretModel.addCaretListener(caretListener, disposable)
   }
 
   private fun editorTypeSupported(editor: Editor): Boolean {
@@ -47,5 +49,9 @@ class InlineCompletionEditorListener(scope: CoroutineScope) : EditorFactoryListe
     event.editor.putUserData(InlineCompletionHandler.KEY, null)
   }
 }
-
-
+// [root]
+// InlineLifecycleActionTest
+// test lifecycle ARSCNcH
+// InlineLifecycleLookupTest
+// test lifecycle LRSCTH
+// test lifecycle LRSCNcH

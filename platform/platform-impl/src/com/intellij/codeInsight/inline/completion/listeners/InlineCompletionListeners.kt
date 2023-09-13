@@ -11,10 +11,7 @@ import com.intellij.codeWithMe.isCurrent
 import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.editor.ClientEditorManager
 import com.intellij.openapi.editor.Editor
-import com.intellij.openapi.editor.event.BulkAwareDocumentListener
-import com.intellij.openapi.editor.event.DocumentEvent
-import com.intellij.openapi.editor.event.EditorMouseEvent
-import com.intellij.openapi.editor.event.EditorMouseListener
+import com.intellij.openapi.editor.event.*
 import com.intellij.openapi.editor.impl.EditorImpl
 import org.jetbrains.annotations.ApiStatus
 import java.awt.event.KeyAdapter
@@ -94,6 +91,25 @@ class InlineEditorMouseListener : EditorMouseListener {
     LOG.trace("Valuable mouse pressed event $event")
     val context = InlineCompletionContext.getOrNull(event.editor) ?: return
     InlineCompletionHandler.getOrNull(event.editor)?.hide(event.editor, false, context)
+  }
+
+  companion object {
+    private val LOG = thisLogger()
+  }
+}
+
+@ApiStatus.Experimental
+class InlineCaretListener : CaretListener {
+  override fun caretPositionChanged(event: CaretEvent) {
+    if (isSimple(event)) return
+
+    LOG.trace("Valuable caret position event $event")
+    val context = InlineCompletionContext.getOrNull(event.editor) ?: return
+    InlineCompletionHandler.getOrNull(event.editor)?.hide(event.editor, false, context)
+  }
+
+  private fun isSimple(event: CaretEvent): Boolean {
+    return event.oldPosition.line == event.newPosition.line && event.oldPosition.column + 1 == event.newPosition.column
   }
 
   companion object {
