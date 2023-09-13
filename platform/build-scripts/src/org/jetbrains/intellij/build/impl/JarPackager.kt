@@ -252,42 +252,44 @@ class JarPackager private constructor(private val outputDir: Path,
                  unpackedModules = unpackedModules)
     }
 
-    if (layout is PluginLayout && layout.auto) {
-      // for now, check only direct dependencies of the main plugin module
-      val module = context.findRequiredModule(layout.mainModule)
-      val javaExtensionService = JpsJavaExtensionService.getInstance()
-      val childPrefix = "${layout.mainModule}."
-      for (element in module.dependenciesList.dependencies) {
-        if (element !is JpsModuleDependency ||
-            javaExtensionService.getDependencyExtension(element)?.scope?.isIncludedIn(JpsJavaClasspathKind.PRODUCTION_RUNTIME) != true) {
-          continue
-        }
+    if (layout !is PluginLayout || !layout.auto) {
+      return unpackedModules
+    }
 
-        val name = element.moduleReference.moduleName
-        if (includedModules.any { it.moduleName == name } || !name.startsWith(childPrefix)) {
-          continue
-        }
-
-        val moduleItem = ModuleItem(moduleName = name, relativeOutputFile = layout.getMainJarName(), reason = "<- ${layout.mainModule}")
-        if (platformLayout!!.includedModules.contains(moduleItem)) {
-          continue
-        }
-
-        packModule(item = moduleItem,
-                   moduleOutputPatcher = moduleOutputPatcher,
-                   layout = layout,
-                   moduleNameToSize = moduleNameToSize,
-                   unpackedModules = unpackedModules)
+    // for now, check only direct dependencies of the main plugin module
+    val module = context.findRequiredModule(layout.mainModule)
+    val javaExtensionService = JpsJavaExtensionService.getInstance()
+    val childPrefix = "${layout.mainModule}."
+    for (element in module.dependenciesList.dependencies) {
+      if (element !is JpsModuleDependency ||
+          javaExtensionService.getDependencyExtension(element)?.scope?.isIncludedIn(JpsJavaClasspathKind.PRODUCTION_RUNTIME) != true) {
+        continue
       }
+
+      val name = element.moduleReference.moduleName
+      if (includedModules.any { it.moduleName == name } || !name.startsWith(childPrefix)) {
+        continue
+      }
+
+      val moduleItem = ModuleItem(moduleName = name, relativeOutputFile = layout.getMainJarName(), reason = "<- ${layout.mainModule}")
+      if (platformLayout!!.includedModules.contains(moduleItem)) {
+        continue
+      }
+
+      packModule(item = moduleItem,
+                 moduleOutputPatcher = moduleOutputPatcher,
+                 layout = layout,
+                 moduleNameToSize = moduleNameToSize,
+                 unpackedModules = unpackedModules)
     }
     return unpackedModules
   }
 
-  private suspend fun JarPackager.packModule(item: ModuleItem,
-                                             moduleOutputPatcher: ModuleOutputPatcher,
-                                             layout: BaseLayout?,
-                                             moduleNameToSize: ConcurrentHashMap<String, Int>,
-                                             unpackedModules: MutableList<ModuleOutputEntry>) {
+  private suspend fun packModule(item: ModuleItem,
+                                 moduleOutputPatcher: ModuleOutputPatcher,
+                                 layout: BaseLayout?,
+                                 moduleNameToSize: ConcurrentHashMap<String, Int>,
+                                 unpackedModules: MutableList<ModuleOutputEntry>) {
     val moduleName = item.moduleName
     val patchedDirs = moduleOutputPatcher.getPatchedDir(moduleName)
     val patchedContent = moduleOutputPatcher.getPatchedContent(moduleName)
