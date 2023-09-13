@@ -86,14 +86,7 @@ public class ExtraModelBuilder implements ToolingModelBuilder {
       };
     }
     if (TurnOffDefaultTasks.class.getName().equals(modelName)) {
-      StartParameter startParameter = project.getGradle().getStartParameter();
-      List<String> taskNames = startParameter.getTaskNames();
-      if (taskNames.isEmpty()) {
-        startParameter.setTaskNames(null);
-        List<String> helpTask = Collections.singletonList("help");
-        project.setDefaultTasks(helpTask);
-        startParameter.setExcludedTaskNames(helpTask);
-      }
+      turnOffDefaultTasks(project);
       return null;
     }
 
@@ -104,34 +97,57 @@ public class ExtraModelBuilder implements ToolingModelBuilder {
 
     for (ModelBuilderService service : modelBuilderServices) {
       if (service.canBuild(modelName)) {
-        final long startTime = System.currentTimeMillis();
-        try {
-          if (service instanceof ModelBuilderService.ParameterizedModelBuilderService)
-            return ((ModelBuilderService.ParameterizedModelBuilderService)service)
-              .buildAll(modelName, project, myModelBuilderContext, parameter);
-          if (service instanceof ModelBuilderService.Ex)
-            return ((ModelBuilderService.Ex)service).buildAll(modelName, project, myModelBuilderContext);
-          else {
-            return service.buildAll(modelName, project);
-          }
-        }
-        catch (Exception exception) {
-          if (service instanceof ExternalProjectBuilderImpl) {
-            //Probably checked exception might still pop from poorly behaving implementation
-            throw asRuntimeException(exception);
-          }
-          reportModelBuilderFailure(project, service, myModelBuilderContext, exception);
-        }
-        finally {
-          if (Boolean.getBoolean("idea.gradle.custom.tooling.perf")) {
-            final long timeInMs = (System.currentTimeMillis() - startTime);
-            reportPerformanceStatistic(project, service, modelName, timeInMs);
-          }
-        }
-        return null;
+        return buildServiceModel(modelName, project, myModelBuilderContext, service, parameter);
       }
     }
     throw new IllegalArgumentException("Unsupported model: " + modelName);
+  }
+
+  private static void turnOffDefaultTasks(@NotNull Project project) {
+    StartParameter startParameter = project.getGradle().getStartParameter();
+    List<String> taskNames = startParameter.getTaskNames();
+    if (taskNames.isEmpty()) {
+      startParameter.setTaskNames(null);
+      List<String> helpTask = Collections.singletonList("help");
+      project.setDefaultTasks(helpTask);
+      startParameter.setExcludedTaskNames(helpTask);
+    }
+  }
+
+  private static @Nullable Object buildServiceModel(
+    @NotNull String modelName,
+    @NotNull Project project,
+    @NotNull ModelBuilderContext context,
+    @NotNull ModelBuilderService service,
+    @Nullable ModelBuilderService.Parameter parameter
+  ) {
+    final long startTime = System.currentTimeMillis();
+    try {
+      if (service instanceof ModelBuilderService.ParameterizedModelBuilderService) {
+        return ((ModelBuilderService.ParameterizedModelBuilderService)service)
+          .buildAll(modelName, project, context, parameter);
+      }
+      if (service instanceof ModelBuilderService.Ex) {
+        return ((ModelBuilderService.Ex)service).buildAll(modelName, project, context);
+      }
+      else {
+        return service.buildAll(modelName, project);
+      }
+    }
+    catch (Exception exception) {
+      if (service instanceof ExternalProjectBuilderImpl) {
+        //Probably checked exception might still pop from poorly behaving implementation
+        throw asRuntimeException(exception);
+      }
+      reportModelBuilderFailure(project, service, context, exception);
+      return null;
+    }
+    finally {
+      if (Boolean.getBoolean("idea.gradle.custom.tooling.perf")) {
+        final long timeInMs = (System.currentTimeMillis() - startTime);
+        reportPerformanceStatistic(project, service, modelName, timeInMs);
+      }
+    }
   }
 
   private static void reportPerformanceStatistic(
