@@ -37,6 +37,7 @@ public interface SweepProcessor<T> {
    *   (offset=4, atStart=false, overlapping=(2-5),
    *   (offset=5, atStart=false, overlapping=empty)
    * </pre>
+   * To maintain the correct order the {@code generator} must supply intervals in their {@link Segment#getStartOffset()} order.
    */
   static <T extends Segment> boolean sweep(@NotNull Generator<? extends T> generator, @NotNull SweepProcessor<T> sweepProcessor) {
     Queue<T> ends = new PriorityQueue<>(5, Comparator.comparingInt(Segment::getEndOffset));

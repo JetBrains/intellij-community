@@ -646,30 +646,36 @@ public final class ContainerUtil {
     return res;
   }
 
+  public enum MergeResult { COPIED_FROM_LIST1, MERGED_EQUAL_FROM_BOTH, COPIED_FROM_LIST2 }
   /**
    * Process both sorted lists in order defined by {@code comparator}, call {@code processor} for each element in the merged list result.
    * When equal elements occurred, then if {@code mergeEqualItems} then output only the element from the {@code list1} and ignore the second,
    * else output them both in unspecified order.
-   * {@code processor} is invoked for each (output element, is the element from {@code list1}) pair.
-   * Both {@code list1} and {@code list2} must be sorted according to {@code comparator}
+   * {@code processor} is invoked for each output element, with the following arguments:
+   * <ul>
+   * <li> When the element {@code e} from the {@code list1} was copied to the result list, then {@code processor.consume(e, MergeResult.COPIED_FROM_LIST1)} will be invoked.</li>
+   * <li> When the element {@code e} from the {@code list2} was copied to the result list, then {@code processor.consume(e, MergeResult.COPIED_FROM_LIST2)} will be invoked.</li>
+   * <li> When both elements {@code e1} from the {@code list1} and {@code e2} from the {@code list2} were merged into one, then {@code processor.consume(e, MergeResult.MERGED_EQUAL_FROM_BOTH)} will be invoked.</li>
+   * </ul>
+   * Both {@code list1} and {@code list2} must be sorted according to the {@code comparator}
    */
   public static <T> void processSortedListsInOrder(@NotNull List<? extends T> list1,
                                                    @NotNull List<? extends T> list2,
                                                    @NotNull Comparator<? super T> comparator,
                                                    boolean mergeEqualItems,
                                                    // (`element in the result`, `is the element from the list1`)
-                                                   @NotNull PairConsumer<? super T, ? super Boolean> processor) {
+                                                   @NotNull PairConsumer<? super T, ? super MergeResult> processor) {
     int index1 = 0;
     int index2 = 0;
     while (index1 < list1.size() || index2 < list2.size()) {
       T e;
       if (index1 >= list1.size()) {
         e = list2.get(index2++);
-        processor.consume(e, false);
+        processor.consume(e, MergeResult.COPIED_FROM_LIST2);
       }
       else if (index2 >= list2.size()) {
         e = list1.get(index1++);
-        processor.consume(e, true);
+        processor.consume(e, MergeResult.COPIED_FROM_LIST1);
       }
       else {
         T element1 = list1.get(index1);
@@ -680,23 +686,23 @@ public final class ContainerUtil {
           index2++;
           if (mergeEqualItems) {
             e = element1;
-            processor.consume(e, true);
+            processor.consume(e, MergeResult.MERGED_EQUAL_FROM_BOTH);
           }
           else {
-            processor.consume(element1, true);
+            processor.consume(element1, MergeResult.COPIED_FROM_LIST1);
             e = element2;
-            processor.consume(e, false);
+            processor.consume(e, MergeResult.COPIED_FROM_LIST2);
           }
         }
         else if (c < 0) {
           e = element1;
           index1++;
-          processor.consume(e, true);
+          processor.consume(e, MergeResult.COPIED_FROM_LIST1);
         }
         else {
           e = element2;
           index2++;
-          processor.consume(e, false);
+          processor.consume(e, MergeResult.COPIED_FROM_LIST2);
         }
       }
     }

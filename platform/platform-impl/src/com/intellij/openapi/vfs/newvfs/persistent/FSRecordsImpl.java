@@ -745,8 +745,8 @@ public final class FSRecordsImpl {
       oldChildren.children, newChildren.children,
       Comparator.comparingInt(ChildInfo::getId),
       /*mergeEqualItems: */ true,
-      (childInfo, isOldInfo) -> {
-        if (!isOldInfo) {
+      (childInfo, mergeResult) -> {
+        if (mergeResult != ContainerUtil.MergeResult.COPIED_FROM_LIST1) {
           updateSymlinkInfoForNewChild(parent, childInfo);
         }
       });
