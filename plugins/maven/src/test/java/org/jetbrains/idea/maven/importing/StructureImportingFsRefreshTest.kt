@@ -21,7 +21,7 @@ class StructureImportingFsRefreshTest : MavenMultiVersionImportingTestCase() {
     val vfsRefreshPromise = AsyncPromise<Any?>()
     val mockFm = MockVirtualFileManager(fm, vfsRefreshPromise)
     withMockVirtualFileManager(mockFm) {
-      myProjectRoot.children // make sure fs is cached
+      myProjectRoot.children // make sure fs is cached
       File(myProjectRoot.path, "foo").mkdirs()
       importProject("""
                     <groupId>test</groupId>
@@ -29,7 +29,7 @@ class StructureImportingFsRefreshTest : MavenMultiVersionImportingTestCase() {
                     <version>1</version>
                     """.trimIndent())
       if (isNewImportingProcess) {
-        PlatformTestUtil.waitForPromise(myImportingResult.vfsRefreshPromise!!)
+        PlatformTestUtil.waitForPromise(myImportingResult!!.vfsRefreshPromise!!)
       }
       else {
         PlatformTestUtil.waitForPromise(vfsRefreshPromise)
