@@ -28,10 +28,7 @@ class TerminalCommandSpecCompletionContributor : CompletionContributor() {
     val suggestions = runBlockingCancellable {
       val runtimeDataProvider = IJShellRuntimeDataProvider(session)
       val completion = CommandSpecCompletion(IJCommandSpecManager.getInstance(), runtimeDataProvider)
-      completion.computeCompletionItems(tokens)
-    }
-    if (suggestions == null) {
-      return // insufficient number of arguments or failed to find command spec for command
+      completion.computeCompletionItems(tokens) ?: emptyList()
     }
 
     val elements = suggestions.flatMap { it.toLookupElements() }
