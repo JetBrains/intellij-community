@@ -10,6 +10,7 @@ import org.gradle.internal.impldep.com.google.common.collect.Lists;
 import org.gradle.tooling.provider.model.ParameterizedToolingModelBuilder;
 import org.gradle.tooling.provider.model.ToolingModelBuilder;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.gradle.model.internal.DummyModel;
 import org.jetbrains.plugins.gradle.model.internal.TurnOffDefaultTasks;
 import org.jetbrains.plugins.gradle.tooling.Message;
@@ -34,6 +35,16 @@ public class ExtraModelBuilder implements ToolingModelBuilder {
     public Class<ModelBuilderService.Parameter> getParameterType() {
       return ModelBuilderService.Parameter.class;
     }
+
+    @Override
+    @SuppressWarnings("NullableProblems")
+    public @Nullable Object buildAll(
+      @NotNull String modelName,
+      @NotNull ModelBuilderService.Parameter parameter,
+      @NotNull Project project
+    ) {
+      return buildModel(modelName, parameter, project);
+    }
   }
 
   private static final Logger LOG = LoggerFactory.getLogger("org.jetbrains.plugins.gradle.toolingExtension.modelBuilder");
@@ -47,7 +58,7 @@ public class ExtraModelBuilder implements ToolingModelBuilder {
   }
 
   @Override
-  public boolean canBuild(String modelName) {
+  public boolean canBuild(@NotNull String modelName) {
     if (DummyModel.class.getName().equals(modelName)) return true;
     if (TurnOffDefaultTasks.class.getName().equals(modelName)) return true;
     for (ModelBuilderService service : modelBuilderServices) {
@@ -57,11 +68,19 @@ public class ExtraModelBuilder implements ToolingModelBuilder {
   }
 
   @Override
-  public Object buildAll(String modelName, Project project) {
-    return buildAll(modelName, null, project);
+  @SuppressWarnings("NullableProblems")
+  public @Nullable Object buildAll(
+    @NotNull String modelName,
+    @NotNull Project project
+  ) {
+    return buildModel(modelName, null, project);
   }
 
-  public Object buildAll(String modelName, ModelBuilderService.Parameter parameter, Project project) {
+  protected @Nullable Object buildModel(
+    @NotNull String modelName,
+    @Nullable ModelBuilderService.Parameter parameter,
+    @NotNull Project project
+  ) {
     if (DummyModel.class.getName().equals(modelName)) {
       return new DummyModel() {
       };
@@ -117,15 +136,24 @@ public class ExtraModelBuilder implements ToolingModelBuilder {
     throw new IllegalArgumentException("Unsupported model: " + modelName);
   }
 
-  private static void reportPerformanceStatistic(Project project, ModelBuilderService service, String modelName, long timeInMs) {
-    String msg = String.format("%s: service %s imported '%s' in %d ms", project.getDisplayName(), service.getClass().getSimpleName(), modelName, timeInMs);
+  private static void reportPerformanceStatistic(
+    @NotNull Project project,
+    @NotNull ModelBuilderService service,
+    @NotNull String modelName,
+    long timeInMs
+  ) {
+    String projectName = project.getDisplayName();
+    String serviceName = service.getClass().getSimpleName();
+    String msg = String.format("%s: service %s imported '%s' in %d ms", projectName, serviceName, modelName, timeInMs);
     project.getLogger().error(msg);
   }
 
-  public static void reportModelBuilderFailure(@NotNull Project project,
-                                               @NotNull ModelBuilderService service,
-                                               @NotNull ModelBuilderContext modelBuilderContext,
-                                               @NotNull Exception modelBuilderError) {
+  public static void reportModelBuilderFailure(
+    @NotNull Project project,
+    @NotNull ModelBuilderService service,
+    @NotNull ModelBuilderContext modelBuilderContext,
+    @NotNull Exception modelBuilderError
+  ) {
     try {
       Message message = service.getErrorMessageBuilder(project, modelBuilderError).buildMessage();
       modelBuilderContext.report(project, message);
