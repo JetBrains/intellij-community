@@ -40,6 +40,7 @@ import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.impl.source.tree.injected.InjectedFileViewProvider;
+import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.Interner;
 import com.intellij.xml.util.XmlStringUtil;
@@ -300,12 +301,11 @@ public class LocalInspectionsPass extends ProgressableTextEditorHighlightingPass
     PsiFile context = getTopLevelFileInBaseLanguage(element, file.getProject());
     PsiFile myContext = getTopLevelFileInBaseLanguage(file, file.getProject());
     if (context != myContext) {
-      String errorMessage = "Reported element " + element +
-                            " is not from the file '" + file.getVirtualFile().getPath() +
-                            "' the inspection '" + shortName +
+      String errorMessage = "Reported element " + element + " ("+element.getClass()+")"+
+                            " is not from the file the inspection '" + shortName +
                             "' (" + toolWrapper.getTool().getClass() +
                             ") was invoked for. Message: '" + descriptor + "'.\nElement containing file: " +
-                            context + "\nInspection invoked for file: " + myContext + "\n";
+                            PsiUtilCore.getVirtualFile(context) + "\nInspection invoked for the file: " + PsiUtilCore.getVirtualFile(myContext) + "\n";
       PluginException.logPluginError(LOG, errorMessage, null, toolWrapper.getTool().getClass());
     }
     boolean isInInjected = myInspectInjectedPsi && file.getViewProvider() instanceof InjectedFileViewProvider;
