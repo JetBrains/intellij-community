@@ -80,9 +80,7 @@ internal class AppendPrefixContextUpdater : InlineCompletionContextUpdater() {
 internal class LookupChangeContextUpdater : InlineCompletionContextUpdater() {
   override fun onEvent(context: InlineCompletionContext, event: InlineCompletionEvent): Result {
     return when (event) {
-      is InlineCompletionEvent.LookupChange -> {
-        if (context.isCurrentlyDisplayingInlays) Result.Updated.Same else Result.Invalidated
-      }
+      is InlineCompletionEvent.LookupChange -> Result.Invalidated
       else -> Result.Undefined
     }
   }
