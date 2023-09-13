@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package git4idea.config
 
 import com.intellij.dvcs.branch.DvcsBranchSettings
@@ -47,6 +47,8 @@ class GitVcsOptions : BaseState() {
   val recentBranchByRepository by map<String, String>()
   @get:OptionTag("RECENT_COMMON_BRANCH")
   var recentCommonBranch by string()
+  @get:OptionTag("SHOW_RECENT_BRANCHES")
+  var showRecentBranches by property(true)
 
   @get:OptionTag("WARN_ABOUT_CRLF")
   var warnAboutCrlf by property(true)

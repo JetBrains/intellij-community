@@ -31,14 +31,14 @@ class Test {
 
   void testParenthesizedPattern1(Object o) {
     o = "fsd";
-    if (<warning descr="Condition 'o instanceof (String s)' is always 'true'">o instanceof (String s)</warning>) {
+    if (<warning descr="Condition 'o instanceof String s' is always 'true'">o instanceof String s</warning>) {
       System.out.println();
     }
   }
 
   void testParenthesizedPattern2(Object o) {
     o = "fsd";
-    if (<warning descr="Condition 'o instanceof (Integer i)' is always 'false'">o instanceof (Integer i)</warning>) {
+    if (<warning descr="Condition 'o instanceof Integer i' is always 'false'">o instanceof Integer i</warning>) {
       System.out.println();
     }
   }

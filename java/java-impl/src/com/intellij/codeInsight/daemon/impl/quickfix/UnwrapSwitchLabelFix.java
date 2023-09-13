@@ -44,9 +44,16 @@ public class UnwrapSwitchLabelFix implements LocalQuickFix {
     boolean shouldKeepDefault = block instanceof PsiSwitchExpression &&
                                 !(labelStatement instanceof PsiSwitchLabeledRuleStatement ruleStatement &&
                                   ruleStatement.getBody() instanceof PsiExpressionStatement);
+    Set<PsiCaseLabelElement> removableUnreachableBranches = new HashSet<>(SwitchUtils.findRemovableUnreachableBranches(label, block));
     for (PsiSwitchLabelStatementBase otherLabel : labels) {
       if (otherLabel == labelStatement) continue;
-      if (!shouldKeepDefault || !SwitchUtils.isDefaultLabel(otherLabel)) {
+      boolean isDefault = SwitchUtils.isDefaultLabel(otherLabel);
+      PsiCaseLabelElementList otherElementList = otherLabel.getCaseLabelElementList();
+      if (otherElementList != null) {
+        PsiCaseLabelElement[] otherElements = otherElementList.getElements();
+        if(!removableUnreachableBranches.containsAll(Set.of(otherElements)) && !isDefault) continue;
+      }
+      if (!shouldKeepDefault || !isDefault) {
         DeleteSwitchLabelFix.deleteLabel(otherLabel);
       }
       else {
@@ -54,7 +61,9 @@ public class UnwrapSwitchLabelFix implements LocalQuickFix {
       }
     }
     for (PsiCaseLabelElement labelElement : Objects.requireNonNull(labelStatement.getCaseLabelElementList()).getElements()) {
-      if (labelElement != label && !(shouldKeepDefault && labelElement instanceof PsiDefaultCaseLabelElement)) {
+      boolean isDefault = labelElement instanceof PsiDefaultCaseLabelElement;
+      if(!removableUnreachableBranches.contains(labelElement) && !isDefault) continue;
+      if (labelElement != label && !(shouldKeepDefault && isDefault)) {
         new CommentTracker().deleteAndRestoreComments(labelElement);
       }
     }

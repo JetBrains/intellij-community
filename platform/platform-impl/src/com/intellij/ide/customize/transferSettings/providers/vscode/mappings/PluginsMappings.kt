@@ -2,6 +2,7 @@ package com.intellij.ide.customize.transferSettings.providers.vscode.mappings
 
 import com.intellij.ide.customize.transferSettings.db.KnownPlugins
 import com.intellij.ide.customize.transferSettings.models.FeatureInfo
+import com.intellij.openapi.util.registry.Registry
 
 object PluginsMappings {
   private val theMap = mapOf(
@@ -42,7 +43,12 @@ object PluginsMappings {
     "mtxr.sqltools" to KnownPlugins.DatabaseSupport
   )
 
-  fun pluginIdMap(pluginId: String): FeatureInfo? = theMap[pluginId]
+  fun pluginIdMap(pluginId: String): FeatureInfo? {
+    if (Registry.`is`("transferSettings.vscode.showRust") && pluginId == "rust-lang.rust-analyzer") {
+      return KnownPlugins.Rust
+    }
+    return theMap[pluginId]
+  }
 
   fun idsList(): Collection<String> {
     return theMap.keys

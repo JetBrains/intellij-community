@@ -328,7 +328,12 @@ public abstract class PythonCommonCompletionTest extends PythonCommonTestCase {
   }
 
   public void testSuperMethodWithAnnotation() {
-    doTest();
+    runWithLanguageLevel(LanguageLevel.getLatest(), this::doTest);
+  }
+
+  // PY-45588
+  public void testSuperMethodWithAnnotationInsertingImports() {
+    runWithLanguageLevel(LanguageLevel.getLatest(), this::doMultiFileTest);
   }
 
   public void testSuperMethodWithCommentAnnotation() {
@@ -338,6 +343,33 @@ public abstract class PythonCommonCompletionTest extends PythonCommonTestCase {
   // PY-53200
   public void testSuperMethodWithExistingParameterList() {
     doTest();
+  }
+
+  // PY-34493
+  public void testSuperMethodAnnotationsNotCopiedFromPyiStub() {
+    doMultiFileTest();
+  }
+
+  // PY-34493
+  public void testSuperMethodAnnotationsCopiedFromThirdPartyLibrary() {
+    runWithLanguageLevel(LanguageLevel.getLatest(), () -> {
+      runWithAdditionalClassEntryInSdkRoots(getTestName(true) + "/lib", () -> {
+        myFixture.copyDirectoryToProject(getTestName(true) + "/src", "");
+        myFixture.configureByFile("a.py");
+        myFixture.completeBasic();
+        myFixture.checkResultByFile(getTestName(true) + "/src/a.after.py");
+      });
+    });
+  }
+
+  // PY-34493
+  public void testSuperMethodAnnotationsCopiedFromPyiStubToPyiStub() {
+    runWithLanguageLevel(LanguageLevel.getLatest(), () -> {
+      myFixture.copyDirectoryToProject(getTestName(true), "");
+      myFixture.configureByFile("a.pyi");
+      myFixture.complete(CompletionType.BASIC, 1);
+      myFixture.checkResultByFile(getTestName(true) + "/a.after.pyi");
+    });
   }
 
   public void testLocalVarInDictKey() {  // PY-2558
@@ -2076,7 +2108,8 @@ public abstract class PythonCommonCompletionTest extends PythonCommonTestCase {
     });
   }
 
-  protected String getTestDataPath() {
-    return PythonTestUtil.getTestDataPath() + "/completion";
+  @Override
+  protected @NotNull String getTestDataPath() {
+    return super.getTestDataPath() + "/completion";
   }
 }

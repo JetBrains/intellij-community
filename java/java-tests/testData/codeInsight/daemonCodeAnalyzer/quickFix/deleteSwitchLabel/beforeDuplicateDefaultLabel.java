@@ -5,7 +5,7 @@ class Main {
             case 1, 2, <caret>default:
                 System.out.println("A");
                 break;
-            case default:
+            default:
                 System.out.println("B");
         }
     }

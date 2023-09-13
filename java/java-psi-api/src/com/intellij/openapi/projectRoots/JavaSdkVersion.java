@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.projectRoots;
 
 import com.intellij.openapi.util.NlsSafe;
@@ -35,7 +35,8 @@ public enum JavaSdkVersion {
   JDK_18(LanguageLevel.JDK_18),
   JDK_19(LanguageLevel.JDK_19),
   JDK_20(LanguageLevel.JDK_20),
-  JDK_21(LanguageLevel.JDK_X);
+  JDK_21(LanguageLevel.JDK_21),
+  JDK_22(LanguageLevel.JDK_X);
 
   private final LanguageLevel myMaxLanguageLevel;
 

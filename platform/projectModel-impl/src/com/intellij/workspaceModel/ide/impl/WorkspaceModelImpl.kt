@@ -276,7 +276,7 @@ open class WorkspaceModelImpl(private val project: Project, private val cs: Coro
       startPreUpdateHandlers(before, builder)
       val changes = builder.collectChanges(before)
       val newStorage = builder.toSnapshot()
-      unloadedEntitiesStorage.replace(newStorage, changes, ::onBeforeUnloadedEntitiesChanged, ::onUnloadedEntitiesChanged)
+      unloadedEntitiesStorage.replace(newStorage, changes, {}, ::onUnloadedEntitiesChanged)
     }.apply { updateUnloadedEntitiesTimeMs.addAndGet(this) }
 
     log.info("Unloaded entity storage updated in $time ms: $description")
@@ -345,12 +345,6 @@ open class WorkspaceModelImpl(private val project: Project, private val cs: Coro
 
     logErrorOnEventHandling {
       project.messageBus.syncPublisher(WorkspaceModelTopics.CHANGED).changed(change)
-    }
-  }
-
-  private fun onBeforeUnloadedEntitiesChanged(change: VersionedStorageChange) {
-    logErrorOnEventHandling {
-      project.messageBus.syncPublisher(WorkspaceModelTopics.UNLOADED_ENTITIES_CHANGED).beforeChanged(change)
     }
   }
 

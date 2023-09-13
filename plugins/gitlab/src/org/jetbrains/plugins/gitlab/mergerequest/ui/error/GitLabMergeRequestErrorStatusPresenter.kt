@@ -12,6 +12,7 @@ import org.jetbrains.plugins.gitlab.api.data.asGitLabStatusError
 import org.jetbrains.plugins.gitlab.authentication.accounts.GitLabAccountViewModel
 import org.jetbrains.plugins.gitlab.mergerequest.data.GitLabMergeRequestDataException
 import org.jetbrains.plugins.gitlab.util.GitLabBundle
+import java.net.ConnectException
 import javax.swing.Action
 
 internal class GitLabMergeRequestErrorStatusPresenter(private val accountVm: GitLabAccountViewModel) : ErrorStatusPresenter<Throwable> {
@@ -19,6 +20,7 @@ internal class GitLabMergeRequestErrorStatusPresenter(private val accountVm: Git
 
   override fun getErrorDescription(error: Throwable): @Nls String {
     return when (error) {
+      is ConnectException -> CollaborationToolsBundle.message("review.list.connection.error")
       is HttpStatusErrorException -> {
         val actualError = error.asGitLabStatusError() ?: return error.localizedMessage
         when (actualError.statusErrorType) {

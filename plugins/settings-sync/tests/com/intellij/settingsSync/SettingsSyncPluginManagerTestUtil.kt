@@ -18,6 +18,9 @@ internal class TestPluginInstaller(private val afterInstallPluginCallback: (Plug
 
   override fun install(installer: PluginDownloader): Boolean {
     val pluginId = installer.id
+    val descriptor = TestPluginDescriptor.ALL[pluginId] as TestPluginDescriptor
+    if (!descriptor.isDynamic)
+      return false
     installPluginExceptionThrower?.invoke(pluginId)
     installedPluginIds += pluginId
     afterInstallPluginCallback.invoke(pluginId)
@@ -41,10 +44,15 @@ data class TestPluginDescriptor(
   var pluginDependencies: List<TestPluginDependency> = emptyList(),
   val bundled: Boolean = false,
   val essential: Boolean = false,
-  val compatible: Boolean = true
+  val compatible: Boolean = true,
+  val isDependencyOnly: Boolean = false, // it's only a dependency, should be listed as a plugin
+  val isDynamic: Boolean = true // whether can be enabled/disabled/installed without restart
 ) : IdeaPluginDescriptor {
   companion object {
     val ALL = hashMapOf<PluginId, TestPluginDescriptor>()
+
+    fun allDependenciesOnly() : List<TestPluginDescriptor> =
+      ALL.values.filter { it.isDependencyOnly }
   }
 
   private var _enabled = true

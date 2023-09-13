@@ -8,7 +8,7 @@ class X {
                 // line contains no height
                 System.out.println(i+1);
                 break;
-            case String s && !s.isEmpty():
+            case String s when !s.isEmpty():
                 // line contains no code
                 System.out.println("Goodbye.");
                 break;

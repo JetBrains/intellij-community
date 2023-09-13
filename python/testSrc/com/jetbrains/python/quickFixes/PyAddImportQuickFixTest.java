@@ -464,6 +464,11 @@ public class PyAddImportQuickFixTest extends PyQuickFixTestCase {
     );
   }
 
+  // PY-58464
+  public void testDecimalCanonicalPath() {
+    doMultiFileAutoImportTest("Import 'decimal.Decimal'");
+  }
+
   private void doTestProposedImportsOrdering(String @NotNull ... expected) {
     doMultiFileAutoImportTest("Import", fix -> {
       final List<String> candidates = ContainerUtil.map(fix.getCandidates(), c -> c.getPresentableText());

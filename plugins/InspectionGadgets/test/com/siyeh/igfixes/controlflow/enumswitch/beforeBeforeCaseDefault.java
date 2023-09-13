@@ -10,7 +10,7 @@ class Main {
         break;
       case INACTIVE:
         break;
-      case default:
+      default:
         throw new IllegalArgumentException("Unknown Status " + status);
     }
   }

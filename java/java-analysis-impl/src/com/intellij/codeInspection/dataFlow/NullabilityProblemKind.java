@@ -349,7 +349,7 @@ public final class NullabilityProblemKind<T extends PsiElement> {
           if (labelElementList == null) continue;
           for (PsiCaseLabelElement element : labelElementList.getElements()) {
             if (element instanceof PsiExpression && TypeConversionUtil.isNullType(((PsiExpression)element).getType())) return null;
-            if (PsiUtil.getLanguageLevel(element).isLessThan(LanguageLevel.JDK_19_PREVIEW) &&
+            if (PsiUtil.getLanguageLevel(element).isLessThan(LanguageLevel.JDK_20_PREVIEW) &&
                 element instanceof PsiPattern && expressionType != null &&
                 JavaPsiPatternUtil.isUnconditionalForType(element, expressionType)) {
               return null;

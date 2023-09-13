@@ -1523,6 +1523,18 @@ Android Studio: b/285867050 -->
     <registryKey key="transferSettings.enabled"
                  defaultValue="false"
                  description="Enable Transfer Setting from VSCode sticky ballon"/>
+    <registryKey key="transferSettings.vscode.showRunningInfo"
+                 defaultValue="false"
+                 description="Show info about possible running vscode instance"
+                 />
+    <registryKey key="transferSettings.vscode.onlyCargoToml"
+                 defaultValue="false"
+                 description="Import only projects that contain cargo.toml file"
+    />
+    <registryKey key="transferSettings.vscode.showRust"
+                 defaultValue="false"
+                 description="Suggest rust"
+    />
   </extensions>
 
   <extensions defaultExtensionNs="org.jetbrains">

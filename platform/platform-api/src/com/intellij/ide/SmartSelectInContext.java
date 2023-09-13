@@ -41,4 +41,11 @@ public class SmartSelectInContext extends FileSelectInContext {
     Object selector = pointer.getElement();
     return selector instanceof PsiFile ? (PsiFile)selector : null;
   }
+
+  @Override
+  public String toString() {
+    return "SmartSelectInContext{" +
+           "pointer=" + pointer +
+           "} " + super.toString();
+  }
 }

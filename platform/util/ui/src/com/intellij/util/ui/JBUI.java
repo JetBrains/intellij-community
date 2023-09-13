@@ -632,7 +632,7 @@ public final class JBUI {
       }
 
       public static Insets verticalTabInsets() {
-        return insets(verticalTabInsetsKey(), JBInsets.create(tabInsets()));
+        return insets(verticalTabInsetsKey(), isNewUI() ? insets(-2, 8) : insets(0, 4));
       }
 
       public static String verticalTabInsetsKey() {

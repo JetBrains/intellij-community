@@ -108,9 +108,11 @@ DONT_TRACE = {
     'pydevd_kill_all_pydevd_threads.py': PYDEV_FILE,
     'pydevd_modify_bytecode.py': PYDEV_FILE,
     'pydevd_nest_asyncio.py': PYDEV_FILE,
+    'pydevd_pandas.py': PYDEV_FILE,
     'pydevd_plugin_numpy_types.py': PYDEV_FILE,
     'pydevd_plugin_utils.py': PYDEV_FILE,
     'pydevd_plugins_django_form_str.py': PYDEV_FILE,
+    'pydevd_polars.py': PYDEV_FILE,
     'pydevd_process_net_command.py': PYDEV_FILE,
     'pydevd_pycharm.py': PYDEV_FILE,
     'pydevd_referrers.py': PYDEV_FILE,
@@ -134,6 +136,8 @@ DONT_TRACE = {
     'pydevd_vars.py': PYDEV_FILE,
     'pydevd_vm_type.py': PYDEV_FILE,
     'pydevd_xml.py': PYDEV_FILE,
+    'test_common.py': PYDEV_FILE,
+    'test_pydev_pandas.py': PYDEV_FILE,
 }
 
 DONT_TRACE['pydev_jupyter_plugin.py'] = PYDEV_FILE

@@ -552,8 +552,14 @@ class UnusedSymbolInspection : AbstractKotlinInspection() {
         return this.parent as? KtImportDirective
     }
 
+    /**
+     * The function normalizes two possible variants of KtQualifiedExpression:
+     * 1) EnumClass.enumFun() - doesn't need normalization;
+     * 2) packageName.EnumClass - will be normalized to EnumClass.enumFun().
+     * Otherwise, the function returns null.
+     */
     private fun KtQualifiedExpression.normalizeEnumQualifiedExpression(enumClass: KtClass): KtQualifiedExpression? {
-        if (this.parent !is KtQualifiedExpression && this.receiverExpression.text == enumClass.name) return this
+        if (this.receiverExpression.text == enumClass.name) return this
         if (this.selectorExpression?.text == enumClass.name) return this.parent as? KtQualifiedExpression
         return null
     }

@@ -3,6 +3,7 @@ package com.intellij.ide.customize;
 
 import com.intellij.ui.ClickListener;
 import com.intellij.ui.ColorUtil;
+import com.intellij.ui.components.JBLabel;
 import com.intellij.util.ui.StartupUiUtil;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.Nls;
@@ -16,6 +17,10 @@ import java.awt.event.ItemEvent;
 import java.awt.event.ItemListener;
 import java.awt.event.MouseEvent;
 
+/**
+ * @deprecated Not used anymore.
+ */
+@Deprecated(forRemoval = true)
 public abstract class AbstractCustomizeWizardStep extends JPanel {
   protected static final int SMALL_GAP = 10;
   protected static final int GAP = 20;
@@ -55,6 +60,10 @@ public abstract class AbstractCustomizeWizardStep extends JPanel {
     return new BorderLayout(SMALL_GAP, SMALL_GAP);
   }
 
+  public static void applyHeaderFooterStyle(@NotNull JBLabel label) {
+    label.setForeground(UIUtil.getLabelDisabledForeground());
+  }
+
   protected static JPanel createBigButtonPanel(LayoutManager layout, final JToggleButton anchorButton, final Runnable action) {
     final JPanel panel = new JPanel(layout) {
       @Override
@@ -90,5 +99,9 @@ public abstract class AbstractCustomizeWizardStep extends JPanel {
   }
 
   public void beforeShown(boolean forward) {
+  }
+
+  public boolean beforeOkAction() {
+    return true;
   }
 }

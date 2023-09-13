@@ -548,18 +548,7 @@ public class StatementParser {
     }
     if (myParser.getPatternParser().isPattern(builder)) {
       PsiBuilder.Marker pattern = myParser.getPatternParser().parsePattern(builder);
-      if (builder.getTokenType() != JavaTokenType.IDENTIFIER || !PsiKeyword.WHEN.equals(builder.getTokenText())) {
-        return Pair.create(pattern, false);
-      }
-      builder.remapCurrentToken(JavaTokenType.WHEN_KEYWORD);
-      builder.advanceLexer();
-      PsiBuilder.Marker guardingExpression = myParser.getExpressionParser().parseAssignmentForbiddingLambda(builder);
-      if (guardingExpression == null) {
-        error(builder, JavaPsiBundle.message("expected.expression"));
-      }
-      PsiBuilder.Marker patternGuard = pattern.precede();
-      done(patternGuard, JavaElementType.PATTERN_GUARD);
-      return Pair.create(patternGuard, false);
+      return Pair.create(pattern, false);
     }
     return Pair.create(myParser.getExpressionParser().parseAssignmentForbiddingLambda(builder), true);
   }
@@ -581,6 +570,7 @@ public class StatementParser {
       }
       while (expect(builder, JavaTokenType.COMMA));
       done(list, JavaElementType.CASE_LABEL_ELEMENT_LIST);
+      parseGuard(builder);
     }
 
     if (expect(builder, JavaTokenType.ARROW)) {
@@ -615,6 +605,17 @@ public class StatementParser {
     }
 
     return statement;
+  }
+
+  private void parseGuard(PsiBuilder builder) {
+    if (builder.getTokenType() == JavaTokenType.IDENTIFIER && PsiKeyword.WHEN.equals(builder.getTokenText())) {
+      builder.remapCurrentToken(JavaTokenType.WHEN_KEYWORD);
+      builder.advanceLexer();
+      PsiBuilder.Marker guardingExpression = myParser.getExpressionParser().parseAssignmentForbiddingLambda(builder);
+      if (guardingExpression == null) {
+        error(builder, JavaPsiBundle.message("expected.expression"));
+      }
+    }
   }
 
   @NotNull

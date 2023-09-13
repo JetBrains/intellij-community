@@ -112,10 +112,6 @@ internal fun CoroutineScope.scheduleInitAwtToolkitAndEventQueue(lockSystemDirsJo
     // this should happen before UI initialization - if we're not going to show the UI (in case another IDE instance is already running),
     // we shouldn't initialize AWT toolkit in order to avoid unnecessary focus stealing and space switching on macOS.
     initAwtToolkit(lockSystemDirsJob, busyThread, isHeadless)
-
-    withContext(RawSwingDispatcher) {
-      patchSystem(isHeadless)
-    }
   }
 }
 
@@ -143,6 +139,10 @@ private fun CoroutineScope.initAwtToolkit(lockSystemDirsJob: Job, busyThread: Th
       and thus will effectively disable auto shutdown behavior for this application.
       */
       AWTAutoShutdown.getInstance().notifyThreadBusy(busyThread)
+    }
+    // Ready to start EDT, it can not be killed due inactivity  now, after "notifyThreadBusy" call.
+    withContext(RawSwingDispatcher) {
+      patchSystem(isHeadless)
     }
   }
 

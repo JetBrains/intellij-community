@@ -1,9 +1,8 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.java.parser.partial;
 
 import com.intellij.java.parser.JavaParsingTestCase;
 import com.intellij.lang.java.parser.JavaParser;
-import com.intellij.pom.java.LanguageLevel;
 
 public class ExpressionParserTest extends JavaParsingTestCase {
   public ExpressionParserTest() {
@@ -38,8 +37,6 @@ public class ExpressionParserTest extends JavaParsingTestCase {
   public void testInstanceOfPattern2() { doParserTest("x instanceof @Ann() final Foo v"); }
   public void testInstanceOfPattern3() { doParserTest("x instanceof (Foo v)"); }
   public void testInstanceOfPattern4() { doParserTest("x instanceof Foo v && v > 10"); }
-  public void testInstanceOfPattern5() { doParserTest("x instanceof (Foo v && v > 10)"); }
-  public void testInstanceOfPattern6() { doParserTest("x instanceof ((A a && a.b instanceof (B b && b > 0)) && a > 10)"); }
 
   public void testNot0() { doParserTest("!!a"); }
   public void testNot1() { doParserTest("!"); }
@@ -165,7 +162,28 @@ public class ExpressionParserTest extends JavaParsingTestCase {
   public void testYieldAsExpr2() { doParserTest("yield += 2"); }
   public void testYieldAsExpr3() { doParserTest("yield ? 10 : 20"); }
 
+  public void testStringTemplate1() { doParserTest(); }
+  public void testStringTemplate2() { doParserTest(); }
+  public void testStringTemplate3() { doParserTest(); }
+  public void testStringTemplate4() { doParserTest(); }
+  public void testStringTemplate5() { doParserTest(); }
+  public void testStringTemplate6() { doParserTest(); }
+  public void testStringTemplate7() { doParserTest(); }
+  public void testStringTemplate8() { doParserTest(); }
+  public void testTextBlockTemplate1() { doParserTest(); }
+  public void testTextBlockTemplate2() { doParserTest(); }
+  public void testTextBlockTemplate3() { doParserTest(); }
+  public void testTextBlockTemplate4() { doParserTest(); }
+  public void testTextBlockTemplate5() { doParserTest(); }
+  public void testTextBlockTemplate6() { doParserTest(); }
+  public void testTextBlockTemplate7() { doParserTest(); }
+  public void testTextBlockTemplate8() { doParserTest(); }
+
   private void doParserTest(String text) {
     doParserTest(text, builder -> JavaParser.INSTANCE.getExpressionParser().parse(builder));
+  }
+
+  private void doParserTest() {
+    doParserTest(builder -> JavaParser.INSTANCE.getExpressionParser().parse(builder));
   }
 }

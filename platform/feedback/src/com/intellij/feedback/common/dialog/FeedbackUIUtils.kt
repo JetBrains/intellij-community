@@ -5,10 +5,13 @@ import com.intellij.feedback.common.bundle.CommonFeedbackBundle
 import com.intellij.openapi.observable.properties.ObservableMutableProperty
 import com.intellij.openapi.ui.panel.ComponentPanelBuilder
 import com.intellij.openapi.util.NlsContexts
+import com.intellij.ui.components.JBLabel
 import com.intellij.ui.components.JBTextArea
 import com.intellij.ui.dsl.builder.*
 import com.intellij.ui.dsl.gridLayout.UnscaledGaps
+import com.intellij.util.ui.JBFont
 import com.intellij.util.ui.JBUI
+import java.awt.Font
 import java.awt.event.KeyAdapter
 import java.awt.event.KeyEvent
 import javax.swing.SwingConstants
@@ -100,5 +103,11 @@ fun <T> Panel.createSegmentedButtonWithBottomLabels(@NlsContexts.Label mainLabel
           .widthGroup("Group")
       }
     }
+  }
+}
+
+internal fun createBoldJBLabel(@NlsContexts.Label label: String): JBLabel {
+  return JBLabel(label).apply {
+    font = JBFont.create(font.deriveFont(Font.BOLD), false)
   }
 }

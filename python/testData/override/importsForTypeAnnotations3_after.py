@@ -1,4 +1,4 @@
-from override.importsForTypeAnnotations3_import import Foo, Param, Return
+from importsForTypeAnnotations3_import import Foo, Param, Return
 
 
 class Bar(Foo):

@@ -1,6 +1,7 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.fileChooser.ex;
 
+import com.intellij.icons.AllIcons;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.PasteProvider;
 import com.intellij.ide.SaveAndSyncHandler;
@@ -160,7 +161,17 @@ public class FileChooserDialogImpl extends DialogWrapper implements FileChooserD
     registerTreeActionShortcut("FileChooser.Delete");
     registerTreeActionShortcut("FileChooser.Refresh");
 
-    return (DefaultActionGroup)ActionManager.getInstance().getAction("FileChooserToolbar");
+    var group = new DefaultActionGroup();
+    for (var action : ((DefaultActionGroup)ActionManager.getInstance().getAction("FileChooserToolbar")).getChildActionsOrStubs()) {
+      group.addAction(action);
+    }
+    for (var action : ((DefaultActionGroup)ActionManager.getInstance().getAction("FileChooserSettings")).getChildActionsOrStubs()) {
+      if (action instanceof ActionStub stub && "FileChooser.ShowHidden".equals(stub.getId())) {
+        action.getTemplatePresentation().setIcon(AllIcons.Actions.ToggleVisibility);
+        group.addAction(action);
+      }
+    }
+    return group;
   }
 
   private void registerTreeActionShortcut(String actionId) {

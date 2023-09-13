@@ -54,6 +54,54 @@ class KotlinLoggingConditionDisagreesWithLogLevelStatementInspectionTest : Loggi
     """.trimIndent())
   }
 
+  fun `test several logs`() {
+    myFixture.testHighlighting(JvmLanguage.KOTLIN, """
+      
+      import org.slf4j.Logger
+      import org.slf4j.LoggerFactory
+
+      internal object X {
+          private val logger = LoggerFactory.getLogger()
+          fun test1() {
+              if (logger.isDebugEnabled) {
+                  try {
+                      something()
+                      logger.debug("a")
+                  } catch (e: Exception) {
+                      logger.error("a")
+                  }
+              }
+              if (logger.isDebugEnabled()) {
+                  try {
+                      something()
+                      logger.debug("a")
+                  } catch (e: Exception) {
+                      logger.error("a")
+                  }
+              }
+              if (logger.<warning descr="Level of condition 'INFO' does not match level of logging call 'DEBUG'"><warning descr="Level of condition 'INFO' does not match level of logging call 'ERROR'">isInfoEnabled</warning></warning>) {
+                  try {
+                      something()
+                      logger.debug("a")
+                  } catch (e: Exception) {
+                      logger.error("a")
+                  }
+              }
+              if (logger.<warning descr="Level of condition 'INFO' does not match level of logging call 'DEBUG'"><warning descr="Level of condition 'INFO' does not match level of logging call 'ERROR'">isInfoEnabled</warning></warning>()) {
+                  try {
+                      something()
+                      logger.debug("a")
+                  } catch (e: Exception) {
+                      logger.error("a")
+                  }
+              }
+          }
+
+          private fun something() {}
+      }
+    """.trimIndent())
+  }
+
   fun `test java util logging`() {
     myFixture.testHighlighting(JvmLanguage.KOTLIN, """
       import java.util.logging.Level

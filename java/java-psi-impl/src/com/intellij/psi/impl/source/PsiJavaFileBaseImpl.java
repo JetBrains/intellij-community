@@ -282,7 +282,7 @@ public abstract class PsiJavaFileBaseImpl extends PsiFileImpl implements PsiJava
     NameHint nameHint = processor.getHint(NameHint.KEY);
     String name = nameHint != null ? nameHint.getName(state) : null;
 
-    Map<String, Iterable<ResultWithContext>> explicitlyEnumerated = getExplicitlyEnumeratedDeclarations();
+    Map<String, Iterable<ResultWithContext>> explicitlyEnumerated = getEnumeratedDeclarations();
     //noinspection unchecked
     Iterable<ResultWithContext> iterable = name != null ? explicitlyEnumerated.get(name)
                                                         : ContainerUtil.concat(explicitlyEnumerated.values().toArray(new Iterable[0]));
@@ -299,7 +299,7 @@ public abstract class PsiJavaFileBaseImpl extends PsiFileImpl implements PsiJava
     return processOnDemandPackages(processor, state, place);
   }
 
-  private Map<String, Iterable<ResultWithContext>> getExplicitlyEnumeratedDeclarations() {
+  private Map<String, Iterable<ResultWithContext>> getEnumeratedDeclarations() {
     return CachedValuesManager.getCachedValue(this, () -> {
       MultiMap<String, PsiClass> ownClasses = MultiMap.create();
       MultiMap<String, PsiImportStatement> typeImports = MultiMap.create();
@@ -323,6 +323,14 @@ public abstract class PsiJavaFileBaseImpl extends PsiFileImpl implements PsiJava
         String name = staticImport.getReferenceName();
         if (name != null) {
           staticImports.putValue(name, staticImport);
+        }
+      }
+      if (PsiUtil.getLanguageLevel(this).isAtLeast(LanguageLevel.JDK_21_PREVIEW)) {
+        JavaPsiFacade psiFacade = JavaPsiFacade.getInstance(getProject());
+        PsiClass aClass = psiFacade.findClass("java.lang.StringTemplate", getResolveScope());
+        if (aClass != null) {
+          PsiImportStaticStatement importStaticStatement = psiFacade.getElementFactory().createImportStaticStatement(aClass, "STR");
+          staticImports.putValue("STR", importStaticStatement);
         }
       }
 
@@ -368,7 +376,7 @@ public abstract class PsiJavaFileBaseImpl extends PsiFileImpl implements PsiJava
     boolean shouldProcessClasses = classHint == null || classHint.shouldProcess(ElementClassHint.DeclarationKind.CLASS);
     if (shouldProcessClasses && !processCurrentPackage(processor, state, place)) return false;
 
-    if (!processOnDemandStaticImports(state, new StaticImportFilteringProcessor(processor, getExplicitlyEnumeratedDeclarations()))) {
+    if (!processOnDemandStaticImports(state, new StaticImportFilteringProcessor(processor, getEnumeratedDeclarations()))) {
       return false;
     }
 

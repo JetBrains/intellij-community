@@ -48,7 +48,7 @@ public class PsiTypeTestPatternImpl extends CompositePsiElement implements PsiTy
     processor.handleEvent(PsiScopeProcessor.Event.SET_DECLARATION_HOLDER, this);
     
     PsiPatternVariable variable = getPatternVariable();
-    if (variable != null && variable != lastParent) {
+    if (variable != null && variable != lastParent && !variable.isUnnamed()) {
       return processor.execute(variable, state);
     }
     return true;

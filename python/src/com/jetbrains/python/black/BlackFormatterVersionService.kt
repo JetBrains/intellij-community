@@ -56,7 +56,7 @@ class BlackFormatterVersionService(private val project: Project) {
         } ?: UNKNOWN_VERSION
       }
       BlackFormatterConfiguration.ExecutionMode.PACKAGE -> {
-        BlackFormatterUtil.getBlackFormatterPackageInfo(configuration.getSdk(project))?.let {
+        BlackFormatterUtil.getBlackFormatterPackageInfo(configuration.getSdk())?.let {
           getVersionForPackage(it)
         } ?: UNKNOWN_VERSION
       }

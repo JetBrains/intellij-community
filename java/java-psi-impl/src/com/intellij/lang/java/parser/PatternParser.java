@@ -37,6 +37,20 @@ public class PatternParser {
     return true;
   }
 
+  private static boolean parseUnnamedPattern(final PsiBuilder builder) {
+    PsiBuilder.Marker patternStart = builder.mark();
+    if (builder.getTokenType() == JavaTokenType.IDENTIFIER &&
+        "_".equals(builder.getTokenText())) {
+      emptyElement(builder, JavaElementType.TYPE);
+      builder.advanceLexer();
+      done(patternStart, JavaElementType.UNNAMED_PATTERN);
+      return true;
+    }
+    patternStart.rollbackTo();
+    return false;
+  }
+
+
   @Nullable("when not pattern")
   PsiBuilder.Marker preParsePattern(final PsiBuilder builder, boolean parensAllowed) {
     PsiBuilder.Marker patternStart = builder.mark();
@@ -64,19 +78,7 @@ public class PatternParser {
   }
 
   private PsiBuilder.@NotNull Marker parsePattern(final PsiBuilder builder, boolean expectVar) {
-    PsiBuilder.Marker guardPattern = builder.mark();
-    PsiBuilder.Marker primaryPattern = parsePrimaryPattern(builder, expectVar);
-    if (builder.getTokenType() != JavaTokenType.ANDAND) {
-      guardPattern.drop();
-      return primaryPattern;
-    }
-    builder.advanceLexer();
-    PsiBuilder.Marker guardingExpression = myParser.getExpressionParser().parseConditionalAndForbiddingLambda(builder);
-    if (guardingExpression == null) {
-      error(builder, JavaPsiBundle.message("expected.expression"));
-    }
-    done(guardPattern, JavaElementType.GUARDED_PATTERN);
-    return guardPattern;
+    return parsePrimaryPattern(builder, expectVar);
   }
 
   PsiBuilder.@NotNull Marker parsePrimaryPattern(final PsiBuilder builder, boolean expectVar) {
@@ -110,6 +112,9 @@ public class PatternParser {
 
       if (isPattern(builder)) {
         parsePattern(builder, true);
+        isFirst = false;
+      }
+      else if (parseUnnamedPattern(builder)) {
         isFirst = false;
       }
       else {

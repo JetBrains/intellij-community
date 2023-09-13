@@ -139,7 +139,6 @@ class VSWinTransferSettingsProvider : TransferSettingsProvider {
       val res3 = convertTimeFn(timeFn() - readSettingsTime)
       speedResult += "readSettingsFile $res3\n" // NON-NLS
 
-      val settings by lazy { VSParser(hive).settings }
 
       // Finally, IdeVersion
       val l = IdeVersion(
@@ -149,7 +148,7 @@ class VSWinTransferSettingsProvider : TransferSettingsProvider {
         icon = AllIcons.TransferSettings.VS,
 
         lastUsed = hive.lastUsage,
-        settings = settings,
+        settingsInit = { VSParser(hive).settings },
 
         provider = this
       )
@@ -179,7 +178,7 @@ class VSWinTransferSettingsProvider : TransferSettingsProvider {
 
   private class VSWinTransferSettingsRightPanelChooser(private val ide: IdeVersion, config: TransferSettingsConfiguration) : TransferSettingsRightPanelChooser(ide, config) {
     override fun getBottomComponentFactory(): () -> JComponent? = {
-      if (ide.settings.plugins.contains(KnownPlugins.ReSharper)) {
+      if (ide.settingsCache.plugins.contains(KnownPlugins.ReSharper)) {
         panel {
           row {
             icon(AllIcons.TransferSettings.Resharper).customize(UnscaledGaps(left = 5, right = 5))

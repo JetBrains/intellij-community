@@ -7,8 +7,8 @@ class Test {
       case Object s -> System.out.println(s);
     }
     switch (o) {
-      case (Object s) when s != null -> System.out.println();
-      case default -> System.out.println();
+      case <error descr="Parenthesized patterns are not supported at language level '21'">(Object s)</error> when s != null -> System.out.println();
+      default -> System.out.println();
     }
   }
 

@@ -75,23 +75,23 @@ public class DeconstructionInstanceOf20 {
 
   record Pair<T,T1>(T first, T1 second) {};
 
-  public static void notDowncastConvertible(){
+  public static void notCheckcastConvertible(){
     Object o = "Some string";
     if (o instanceof Pair(Integer x, String y)) {
       System.out.println(x + " " + y);
     } else {
-      System.out.println("notDowncastConvertible default branch");
+      System.out.println("notCheckcastConvertible default branch");
     }
   };
 
-  public static void downcastConvertible(){
+  public static void checkcastConvertible(){
     Pair<Integer, String> pair = new Pair<>(42, "hello");
 
     Object o = pair;
     if (o instanceof Pair(Integer x, String y)) {
       System.out.println(x + " " + y);
     } else {
-      System.out.println("notDowncastConvertible default branch");
+      System.out.println("notCheckcastConvertible default branch");
     }
   };
 }

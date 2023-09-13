@@ -467,6 +467,11 @@ public class EquivalenceChecker {
     if (!labelElementsAreEquivalent(labelElements1, labelElements2, true).isExactMatch()) {
       return EXACT_MISMATCH;
     }
+    PsiExpression guard1 = statement1.getGuardExpression();
+    PsiExpression guard2 = statement2.getGuardExpression();
+    if (!expressionsAreEquivalent(guard1, guard2)) {
+      return EXACT_MISMATCH;
+    }
     final boolean rule1 = statement1 instanceof PsiSwitchLabeledRuleStatement;
     final boolean rule2 = statement2 instanceof PsiSwitchLabeledRuleStatement;
     if (rule1 && rule2) {
@@ -491,8 +496,8 @@ public class EquivalenceChecker {
     }
     pattern1 = JavaPsiPatternUtil.skipParenthesizedPatternDown(pattern1);
     pattern2 = JavaPsiPatternUtil.skipParenthesizedPatternDown(pattern2);
-    if (pattern1 instanceof PsiGuardedPattern && pattern2 instanceof PsiGuardedPattern) {
-      return guardedPatternsMatch((PsiGuardedPattern)pattern1, (PsiGuardedPattern)pattern2);
+    if (pattern1 instanceof PsiUnnamedPattern && pattern2 instanceof PsiUnnamedPattern) {
+      return EXACT_MATCH;
     }
     if (pattern1 instanceof PsiTypeTestPattern && pattern2 instanceof PsiTypeTestPattern) {
       return Match.exact(primaryPatternsMatch((PsiTypeTestPattern)pattern1, (PsiTypeTestPattern)pattern2));
@@ -522,28 +527,6 @@ public class EquivalenceChecker {
       return EXACT_MATCH;
     }
     return EXACT_MISMATCH;
-  }
-
-  protected Match patternGuardsMatch(@NotNull PsiPatternGuard guard1, @NotNull PsiPatternGuard guard2) {
-    PsiPattern pattern1 = guard1.getPattern();
-    PsiPattern pattern2 = guard2.getPattern();
-    if (!patternsMatch(pattern1, pattern2).isExactMatch()) {
-      return EXACT_MISMATCH;
-    }
-    PsiExpression expression1 = guard1.getGuardingExpression();
-    PsiExpression expression2 = guard2.getGuardingExpression();
-    return expressionsMatch(expression1, expression2);
-  }
-
-  private Match guardedPatternsMatch(@NotNull PsiGuardedPattern guardedPattern1, @NotNull PsiGuardedPattern guardedPattern2) {
-    PsiPrimaryPattern primaryPattern1 = guardedPattern1.getPrimaryPattern();
-    PsiPrimaryPattern primaryPattern2 = guardedPattern2.getPrimaryPattern();
-    if (!primaryPatternsMatch(primaryPattern1, primaryPattern2)) {
-      return EXACT_MISMATCH;
-    }
-    PsiExpression guardingExpression1 = guardedPattern1.getGuardingExpression();
-    PsiExpression guardingExpression2 = guardedPattern2.getGuardingExpression();
-    return expressionsMatch(guardingExpression1, guardingExpression2);
   }
 
   private boolean primaryPatternsMatch(@NotNull PsiPrimaryPattern primaryPattern1, @NotNull PsiPrimaryPattern primaryPattern2) {
@@ -673,9 +656,6 @@ public class EquivalenceChecker {
     }
     if (element1 instanceof PsiPattern) {
       return patternsMatch((PsiPattern)element1, (PsiPattern)element2);
-    }
-    if (element1 instanceof PsiPatternGuard) {
-      return patternGuardsMatch((PsiPatternGuard)element1, (PsiPatternGuard)element2);
     }
     if (element1 instanceof PsiExpression) {
       return expressionsMatch((PsiExpression)element1, (PsiExpression)element2);

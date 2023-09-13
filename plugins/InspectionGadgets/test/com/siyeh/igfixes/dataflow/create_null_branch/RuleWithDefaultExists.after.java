@@ -6,7 +6,7 @@ class Test {
       case 1 -> System.out.println();
         case null -> {
         }
-        case default -> System.out.println();
+        default -> System.out.println();
     }
   }
 }

@@ -19,6 +19,13 @@ interface SharedBypassCollector : InlayHintsCollector {
    * Collects inlays for a given element.
    */
   fun collectFromElement(element: PsiElement, sink: InlayTreeSink)
+
+  /**
+   * Version which is invoked from intention, and which is supposed to run faster.
+   */
+  fun collectFromElementForActions(element: PsiElement, sink: InlayTreeSink) {
+    collectFromElement(element, sink)
+  }
 }
 
 /**

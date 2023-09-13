@@ -13,14 +13,16 @@ class TestTransferSettingsProvider : TransferSettingsProvider {
 
   override fun isAvailable(): Boolean = true
 
-  val saved = listOf(IdeVersion("test23", AllIcons.CodeWithMe.CwmJoin, "Test Instance", "yes", Settings(
+  val saved = listOf(IdeVersion("test23", AllIcons.CodeWithMe.CwmJoin, "Test Instance", "yes", {
+    Settings(
 
-    laf = KnownLafs.Light,
-    //keymap = BundledKeymap("My cool keymap", "Sublime Text", emptyList(/* fill this with shortcuts samples or action ids */)),
-    plugins = mutableListOf(
-      PluginFeature("com.intellij.ideolog", "Ideolog")
+      laf = KnownLafs.Light,
+      //keymap = BundledKeymap("My cool keymap", "Sublime Text", emptyList(/* fill this with shortcuts samples or action ids */)),
+      plugins = mutableListOf(
+        PluginFeature("com.intellij.ideolog", "Ideolog")
+      )
     )
-  ), Date(), this))
+  }, Date(), this))
 
   override fun getIdeVersions(skipIds: List<String>): List<BaseIdeVersion> {
     if (skipIds.isNotEmpty()) return emptyList()

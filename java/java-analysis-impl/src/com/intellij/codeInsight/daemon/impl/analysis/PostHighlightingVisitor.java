@@ -6,6 +6,7 @@ import com.intellij.codeInsight.daemon.ImplicitUsageProvider;
 import com.intellij.codeInsight.daemon.JavaErrorBundle;
 import com.intellij.codeInsight.daemon.UnusedImportProvider;
 import com.intellij.codeInsight.daemon.impl.*;
+import com.intellij.codeInsight.daemon.impl.quickfix.ReplaceWithUnnamedPatternFix;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInsight.intention.QuickFixFactory;
 import com.intellij.codeInsight.intention.impl.PriorityIntentionActionWrapper;
@@ -221,7 +222,7 @@ class PostHighlightingVisitor {
 
   private HighlightInfo.Builder processLocalVariable(@NotNull PsiLocalVariable variable,
                                                      @NotNull PsiIdentifier identifier) {
-    if (PsiUtil.isIgnoredName(variable.getName())) return null;
+    if (variable.isUnnamed() || PsiUtil.isIgnoredName(variable.getName())) return null;
     if (UnusedSymbolUtil.isImplicitUsage(myProject, variable)) return null;
 
     String message = null;
@@ -365,7 +366,7 @@ class PostHighlightingVisitor {
   private HighlightInfo.Builder processParameter(@NotNull Project project,
                                                  @NotNull PsiParameter parameter,
                                                  @NotNull PsiIdentifier identifier) {
-    if (PsiUtil.isIgnoredName(parameter.getName())) return null;
+    if (parameter.isUnnamed() || PsiUtil.isIgnoredName(parameter.getName())) return null;
     PsiElement declarationScope = parameter.getDeclarationScope();
     QuickFixFactory quickFixFactory = QuickFixFactory.getInstance();
     if (declarationScope instanceof PsiMethod method) {
@@ -399,21 +400,35 @@ class PostHighlightingVisitor {
     }
     else if (parameter instanceof PsiPatternVariable variable) {
       HighlightInfo.Builder highlightInfo = checkUnusedParameter(parameter, identifier, null);
+      PsiPattern pattern = variable.getPattern();
       if (highlightInfo != null) {
-        if (declarationScope.getParent() instanceof PsiSwitchBlock) {
-          IntentionAction action = variable.getParent() instanceof PsiDeconstructionPattern
+        IntentionAction action = null;
+        if (HighlightingFeature.UNNAMED_PATTERNS_AND_VARIABLES.isAvailable(parameter)) {
+          if (pattern instanceof PsiTypeTestPattern && pattern.getParent() instanceof PsiDeconstructionList) {
+            PsiRecordComponent component = JavaPsiPatternUtil.getRecordComponentForPattern(pattern);
+            PsiTypeElement checkType = ((PsiTypeTestPattern)pattern).getCheckType();
+            if (component != null && checkType != null && checkType.getType().isAssignableFrom(component.getType())) {
+              action = new ReplaceWithUnnamedPatternFix(pattern).asIntention();
+            }
+          }
+        }
+        if (action == null && declarationScope.getParent() instanceof PsiSwitchBlock) {
+          action = variable.getParent() instanceof PsiDeconstructionPattern
                                    ? quickFixFactory.createDeleteFix(parameter)
                                    : quickFixFactory.createRenameToIgnoredFix(parameter, false);
-          highlightInfo.registerFix(action, null, null, null, null);
         }
-        else if (!(variable.getPattern() instanceof PsiTypeTestPattern pattern && pattern.getParent() instanceof PsiDeconstructionList)) {
-          IntentionAction action = quickFixFactory.createDeleteFix(parameter);
+        else if (!(pattern instanceof PsiTypeTestPattern && pattern.getParent() instanceof PsiDeconstructionList)) {
+          action = quickFixFactory.createDeleteFix(parameter);
+        }
+        if (action != null) {
           highlightInfo.registerFix(action, null, null, null, null);
         }
         return highlightInfo;
       }
     }
-    else if (myUnusedSymbolInspection.checkParameterExcludingHierarchy() && declarationScope instanceof PsiLambdaExpression) {
+    else if ((myUnusedSymbolInspection.checkParameterExcludingHierarchy() ||
+              HighlightingFeature.UNNAMED_PATTERNS_AND_VARIABLES.isAvailable(declarationScope))
+             && declarationScope instanceof PsiLambdaExpression) {
       HighlightInfo.Builder highlightInfo = checkUnusedParameter(parameter, identifier, null);
       if (highlightInfo != null) {
         IntentionAction action1 = quickFixFactory.createRenameToIgnoredFix(parameter, true);

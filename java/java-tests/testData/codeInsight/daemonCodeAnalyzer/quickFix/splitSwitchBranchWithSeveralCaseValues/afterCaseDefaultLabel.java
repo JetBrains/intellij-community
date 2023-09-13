@@ -7,7 +7,7 @@ class C {
             case 2:
                 s = "x";
                 break;
-            case default:
+            default:
                 s = "x";
                 break;
         }

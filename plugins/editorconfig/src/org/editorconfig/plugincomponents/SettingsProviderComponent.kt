@@ -1,6 +1,7 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.editorconfig.plugincomponents
 
+import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.application.ReadAction
 import com.intellij.openapi.components.Service
@@ -15,10 +16,7 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.util.CachedValueProvider
 import com.intellij.psi.util.CachedValuesManager
 import com.intellij.util.SlowOperations
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Deferred
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.async
+import kotlinx.coroutines.*
 import org.ec4j.core.*
 import org.ec4j.core.model.Version
 import org.ec4j.core.parser.ParseException
@@ -27,13 +25,15 @@ import org.editorconfig.core.ec4jwrappers.EditorConfigLoadErrorHandler
 import org.editorconfig.core.ec4jwrappers.EditorConfigPermanentCache
 import org.editorconfig.core.ec4jwrappers.VirtualFileResource
 import java.io.IOException
+import java.util.concurrent.ConcurrentHashMap
+import kotlin.time.Duration.Companion.seconds
 
 @Service
 class SettingsProviderComponent(private val project: Project, private val coroutineScope: CoroutineScope) : SimpleModificationTracker() {
-  // TODO not caching properties per virtual file right now (c.f. CachedPairProvider in SettingsProviderComponentOld)
   companion object {
     private val LOG = thisLogger()
-    private const val TIMEOUT = 3 // Seconds
+    private const val PROCESSING_POOL_SIZE = 16
+    private const val TIMEOUT = 10 // Seconds
     private val EMPTY_PROPERTIES = ResourceProperties.builder().build()
 
     @JvmStatic
@@ -60,7 +60,6 @@ class SettingsProviderComponent(private val project: Project, private val corout
       ReadAction.run<RuntimeException> {
         dirs.addAll(project.getBaseDirectories())
       }
-      // TODO move this into the above ReadAction and use refreshAndFindFileByPath?
       LocalFileSystem.getInstance().findFileByPath(PathManager.getConfigPath())?.let { dirs.add(it) }
       CachedValueProvider.Result(
         dirs,
@@ -83,16 +82,42 @@ class SettingsProviderComponent(private val project: Project, private val corout
     }
   }
 
-  fun getPropertiesAndEditorConfigs(file: VirtualFile): Deferred<Pair<ResourceProperties, List<VirtualFile>>> {
-    return coroutineScope.async(Dispatchers.IO) {
-      var properties: ResourceProperties? = null
-      val accessed = resourceCache.doWhileRecordingAccess {
-        properties = getProperties(file)
-      }.map {
-        require(it is VirtualFileResource)
-        it.file
+  @OptIn(ExperimentalCoroutinesApi::class)
+  private val processingDispatcher = Dispatchers.IO.limitedParallelism(PROCESSING_POOL_SIZE)
+
+  private val pendingJobs = ConcurrentHashMap<String, Lazy<Deferred<Pair<ResourceProperties, List<VirtualFile>>>>>()
+
+  private fun doGetPropertiesAndEditorConfigs(file: VirtualFile): Pair<ResourceProperties, List<VirtualFile>> {
+    var properties: ResourceProperties? = null
+    val accessed = resourceCache.doWhileRecordingAccess {
+      properties = getProperties(file)
+    }.map {
+      require(it is VirtualFileResource)
+      it.file
+    }
+    return Pair(properties!!, accessed)
+  }
+
+  suspend fun getPropertiesAndEditorConfigs(file: VirtualFile): Pair<ResourceProperties, List<VirtualFile>> {
+    val app = ApplicationManager.getApplication()
+    if (app.isUnitTestMode || app.isHeadlessEnvironment) {
+      return doGetPropertiesAndEditorConfigs(file)
+    }
+    else {
+      val key = file.url
+      val lazyDeferred = pendingJobs.computeIfAbsent(key) {
+        lazy {
+          coroutineScope.async(CoroutineName("EditorConfig IO") + processingDispatcher) {
+            doGetPropertiesAndEditorConfigs(file)
+          }.apply {
+            invokeOnCompletion { pendingJobs.remove(key) } // cleanup
+          }
+        }
       }
-      Pair(properties!!, accessed)
+      val deferred = lazyDeferred.value
+      return withTimeout(TIMEOUT.seconds) {
+        deferred.await()
+      }
     }
   }
 }

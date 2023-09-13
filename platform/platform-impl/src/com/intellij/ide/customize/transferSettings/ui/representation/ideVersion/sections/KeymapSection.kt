@@ -26,7 +26,7 @@ import java.awt.Font
 import javax.swing.*
 import javax.swing.border.CompoundBorder
 
-class KeymapSection(private val ideVersion: IdeVersion) : IdeRepresentationSection(ideVersion.settings.preferences, SettingsPreferencesKind.Keymap, AllIcons.TransferSettings.Keymap) {
+class KeymapSection(private val ideVersion: IdeVersion) : IdeRepresentationSection(ideVersion.settingsCache.preferences, SettingsPreferencesKind.Keymap, AllIcons.TransferSettings.Keymap) {
   companion object {
     @Nls
     private val delim = if (SystemInfo.isMac) "" else "+"
@@ -53,12 +53,12 @@ class KeymapSection(private val ideVersion: IdeVersion) : IdeRepresentationSecti
   override val name: String = "Keymap"
   override val disabledCheckboxText: String = "Default IntelliJ keymap will be used"
 
-  override fun worthShowing(): Boolean = ideVersion.settings.keymap != null
+  override fun worthShowing(): Boolean = ideVersion.settingsCache.keymap != null
 
   override fun getPopupHeight() = 250
 
   override fun getContent(): JComponent {
-    val keymap = ideVersion.settings.keymap ?: error("Keymap is null, this is very wrong")
+    val keymap = ideVersion.settingsCache.keymap ?: error("Keymap is null, this is very wrong")
 
     val customShortcuts = (keymap as? PatchedKeymap)?.overrides
 

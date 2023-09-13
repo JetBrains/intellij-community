@@ -23,6 +23,10 @@ public class PatternParserTest extends JavaParsingTestCase {
   public void testRecord10() { doParserTest("Rec r"); }
   public void testRecord11() { doParserTest("Rec(var x) r"); }
   public void testRecord12() { doParserTest("Rec(String)"); }
+  public void testRecordUnnamed0() { doParserTest("Point(_)"); }
+  public void testRecordUnnamed1() { doParserTest("Point(int x, _)"); }
+  public void testRecordUnnamed2() { doParserTest("Point(_, int y)"); }
+  public void testRecordUnnamed3() { doParserTest("Point(_, _)"); }
 
   private void doParserTest(String text) {
     doParserTest(text, builder -> {

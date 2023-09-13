@@ -163,14 +163,6 @@ public final class ParenthesesUtils {
       PsiPattern newPattern = (PsiPattern)commentTracker.replaceAndRestoreComments(parenthesizedPattern, innerPattern);
       removeParentheses(newPattern, ignoreClarifyingParentheses);
     }
-    else if (pattern instanceof PsiGuardedPattern guardedPattern) {
-      final PsiPrimaryPattern primaryPattern = guardedPattern.getPrimaryPattern();
-      removeParentheses(primaryPattern, ignoreClarifyingParentheses);
-      final PsiExpression guardingExpression = guardedPattern.getGuardingExpression();
-      if (guardingExpression != null) {
-        removeParentheses(guardingExpression, ignoreClarifyingParentheses);
-      }
-    }
     else if (pattern instanceof PsiDeconstructionPattern deconstructionPattern) {
       final PsiPattern[] components = deconstructionPattern.getDeconstructionList().getDeconstructionComponents();
       for (PsiPattern component : components) {

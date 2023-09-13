@@ -84,10 +84,12 @@ public class SwitchEvaluator implements Evaluator {
 
   static class SwitchCaseEvaluator implements Evaluator {
     final List<? extends Evaluator> myEvaluators;
+    final @Nullable Evaluator myGuardEvaluator;
     final boolean myDefaultCase;
 
-    SwitchCaseEvaluator(List<? extends Evaluator> evaluators, boolean defaultCase) {
+    SwitchCaseEvaluator(List<? extends Evaluator> evaluators, @Nullable Evaluator guardEvaluator, boolean defaultCase) {
       myEvaluators = evaluators;
+      myGuardEvaluator = guardEvaluator;
       myDefaultCase = defaultCase;
     }
 
@@ -99,7 +101,11 @@ public class SwitchEvaluator implements Evaluator {
       }
       for (Evaluator evaluator : myEvaluators) {
         if (evaluator instanceof PatternLabelEvaluator) {
-          return ((BooleanValue)evaluator.evaluate(context)).booleanValue();
+          if (((BooleanValue)evaluator.evaluate(context)).booleanValue() &&
+              (myGuardEvaluator == null || myGuardEvaluator.evaluate(context) instanceof BooleanValue bool && bool.booleanValue())) {
+            return true;
+          }
+          continue;
         }
         Object labelValue = evaluator.evaluate(context);
         Object unboxedLabelValue = labelValue != null ? UnBoxingEvaluator.unbox(labelValue, context) : null;
@@ -129,8 +135,8 @@ public class SwitchEvaluator implements Evaluator {
   static class SwitchCaseRuleEvaluator extends SwitchCaseEvaluator {
     final Evaluator myBodyEvaluator;
 
-    SwitchCaseRuleEvaluator(List<? extends Evaluator> evaluators, boolean defaultCase, Evaluator bodyEvaluator) {
-      super(evaluators, defaultCase);
+    SwitchCaseRuleEvaluator(List<? extends Evaluator> evaluators, @Nullable Evaluator guardEvaluator, boolean defaultCase, Evaluator bodyEvaluator) {
+      super(evaluators, guardEvaluator, defaultCase);
       myBodyEvaluator = bodyEvaluator;
     }
 

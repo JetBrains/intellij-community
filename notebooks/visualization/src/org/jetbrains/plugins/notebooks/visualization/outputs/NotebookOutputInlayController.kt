@@ -5,6 +5,7 @@ import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.logger
+import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.editor.Document
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.EditorCustomElementRenderer
@@ -14,7 +15,9 @@ import com.intellij.openapi.util.Disposer
 import com.intellij.util.asSafely
 import com.intellij.util.messages.Topic
 import org.jetbrains.plugins.notebooks.ui.visualization.notebookAppearance
-import org.jetbrains.plugins.notebooks.visualization.*
+import org.jetbrains.plugins.notebooks.visualization.NotebookCellInlayController
+import org.jetbrains.plugins.notebooks.visualization.NotebookCellLines
+import org.jetbrains.plugins.notebooks.visualization.SwingClientProperty
 import org.jetbrains.plugins.notebooks.visualization.outputs.NotebookOutputComponentFactory.Companion.gutterPainter
 import org.jetbrains.plugins.notebooks.visualization.outputs.impl.CollapsingComponent
 import org.jetbrains.plugins.notebooks.visualization.outputs.impl.InnerComponent
@@ -226,7 +229,14 @@ class NotebookOutputInlayController private constructor(
   private fun <K : NotebookOutputDataKey> createOutput(factory: NotebookOutputComponentFactory<*, K>,
                                                        outputDataKey: K): NotebookOutputComponentFactory.CreatedComponent<*>? {
     ApplicationManager.getApplication().messageBus.syncPublisher(OUTPUT_LISTENER).beforeOutputCreated(editor, lines.last)
-    val result = factory.createComponent(editor, outputDataKey)?.also {
+    val result = try {
+      factory.createComponent(editor, outputDataKey)
+    }
+    catch (t: Throwable) {
+      thisLogger().error("${factory.javaClass.name} shouldn't throw exceptions at .createComponent()", t)
+      null
+    }
+    result?.also {
       it.component.outputComponentFactory = factory
       it.component.gutterPainter = it.gutterPainter
     }

@@ -10,7 +10,7 @@ class Test {
     switch (o) {
       case (Integer i) when (switch (o) {
         case Integer ii when ii != <error descr="Variable used in guarded pattern should be final or effectively final">mode</error> -> 2;
-        case default -> 1;
+        default -> 1;
       }) == <error descr="Variable used in guarded pattern should be final or effectively final">mode</error> -> System.out.println();
       default -> {}
     }
@@ -26,7 +26,7 @@ class Test {
     switch (o) {
       case (Integer i) when (switch (<error descr="Variable used in guarded pattern should be final or effectively final">o</error>) {
         case Integer ii when ii != mode -> 2;
-          case default -> 1;
+        default -> 1;
       }) == mode -> o = null;
         default -> {}
     }
@@ -44,7 +44,7 @@ class Test {
     switch (o) {
       case (Integer i) when (switch (o) {
         case Integer ii when ii != mode -> 2;
-        case default -> 1;
+        default -> 1;
       }) == mode -> System.out.println();
       default -> {}
     }

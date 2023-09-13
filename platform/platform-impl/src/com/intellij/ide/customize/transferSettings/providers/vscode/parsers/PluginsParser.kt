@@ -6,6 +6,7 @@ import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.databind.node.JsonNodeType
 import com.fasterxml.jackson.databind.node.ObjectNode
 import com.intellij.ide.customize.transferSettings.db.KnownPlugins
+import com.intellij.ide.customize.transferSettings.models.FeatureInfo
 import com.intellij.ide.customize.transferSettings.models.Settings
 import com.intellij.ide.customize.transferSettings.providers.vscode.mappings.KeymapPluginsMappings
 import com.intellij.ide.customize.transferSettings.providers.vscode.mappings.PluginsMappings
@@ -63,6 +64,7 @@ class PluginsParser(private val settings: Settings) {
     }
   }
 
+  private val addedPluginIds = mutableSetOf<FeatureInfo>()
   private fun processPluginId(root: ObjectNode) {
     val publisher = root[PUBLISHER]?.textValue() ?: return
     val name = root[NAME]?.textValue() ?: return
@@ -79,6 +81,9 @@ class PluginsParser(private val settings: Settings) {
       return
     }
 
-    settings.plugins.add(pluginId)
+    if (!addedPluginIds.contains(pluginId)) {
+      settings.plugins.add(pluginId)
+      addedPluginIds.add(pluginId)
+    }
   }
 }

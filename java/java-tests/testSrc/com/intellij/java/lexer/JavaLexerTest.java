@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.java.lexer;
 
 import com.intellij.lang.java.JavaParserDefinition;
@@ -245,15 +245,170 @@ public class JavaLexerTest extends LexerTestCase {
   public void testTextBlockLiterals() {
     doTest("\"\"\"\n hi there. \"\"\" ", "TEXT_BLOCK_LITERAL ('\"\"\"\\n hi there. \"\"\"')\nWHITE_SPACE (' ')");
     doTest("\"\"\" ", "TEXT_BLOCK_LITERAL ('\"\"\" ')");
-    doTest("\"\"\".\\\"\"\" " , "TEXT_BLOCK_LITERAL ('\"\"\".\\\"\"\" ')");
-    doTest("\"\"\".\\\\\"\"\" " , "TEXT_BLOCK_LITERAL ('\"\"\".\\\\\"\"\"')\nWHITE_SPACE (' ')");
-    doTest("\"\"\".\\\\\\\"\"\" " , "TEXT_BLOCK_LITERAL ('\"\"\".\\\\\\\"\"\" ')");
+    doTest("\"\"\".\\\"\"\" ", "TEXT_BLOCK_LITERAL ('\"\"\".\\\"\"\" ')");
+    doTest("\"\"\".\\\\\"\"\" ", "TEXT_BLOCK_LITERAL ('\"\"\".\\\\\"\"\"')\nWHITE_SPACE (' ')");
+    doTest("\"\"\".\\\\\\\"\"\" ", "TEXT_BLOCK_LITERAL ('\"\"\".\\\\\\\"\"\" ')");
     doTest("\"\"\"\"\"\"+\"\"\"\"\"\" ", "TEXT_BLOCK_LITERAL ('\"\"\"\"\"\"')\nPLUS ('+')\nTEXT_BLOCK_LITERAL ('\"\"\"\"\"\"')\nWHITE_SPACE (' ')");
     doTest("\\\"\"\".\"\"\" ", "BAD_CHARACTER ('\\')\nTEXT_BLOCK_LITERAL ('\"\"\".\"\"\"')\nWHITE_SPACE (' ')");
     doTest("\"\"\"\n  \"\\\"\"\"  \"\"\" ", "TEXT_BLOCK_LITERAL ('\"\"\"\\n  \"\\\"\"\"  \"\"\"')\nWHITE_SPACE (' ')");
     doTest("\"\"\"\n  \"\"\\\"\"\"  \"\"\" ", "TEXT_BLOCK_LITERAL ('\"\"\"\\n  \"\"\\\"\"\"  \"\"\"')\nWHITE_SPACE (' ')");
     doTest("\"\"\" \n\"\"\" ", "TEXT_BLOCK_LITERAL ('\"\"\" \\n\"\"\"')\nWHITE_SPACE (' ')");
     doTest("\"\"\"\n \\u005C\"\"\"\n \"\"\"", "TEXT_BLOCK_LITERAL ('\"\"\"\\n \\u005C\"\"\"\\n \"\"\"')"); // unicode escaped backslash '\'
+
+    doTest("\"\"\"\n\\{}\"\"\"", "TEXT_BLOCK_LITERAL ('\"\"\"\\n\\{}\"\"\"')");
+    doTest("\"\"\"\n ...\n\"\" \"\"\" ", "TEXT_BLOCK_LITERAL ('\"\"\"\\n ...\\n\"\" \"\"\"')\nWHITE_SPACE (' ')");
+  }
+
+  public void testStringTemplatesJDK21_Preview() {
+    doTest("\"\\{}\"", "STRING_TEMPLATE_BEGIN ('\"\\{')\nSTRING_TEMPLATE_END ('}\"')");
+    doTest("\"\"\"\n\\{}\"\"\"", "TEXT_BLOCK_TEMPLATE_BEGIN ('\"\"\"\\n\\{')\nTEXT_BLOCK_TEMPLATE_END ('}\"\"\"')");
+    doTest("\"\\{123}\"", "STRING_TEMPLATE_BEGIN ('\"\\{')\nINTEGER_LITERAL ('123')\nSTRING_TEMPLATE_END ('}\"')");
+    doTest("\"\"\"\n\\{123}\"\"\"", "TEXT_BLOCK_TEMPLATE_BEGIN ('\"\"\"\\n\\{')\nINTEGER_LITERAL ('123')\nTEXT_BLOCK_TEMPLATE_END ('}\"\"\"')");
+    doTest("\"\\{new int[][] {{}}}\"", """
+      STRING_TEMPLATE_BEGIN ('"\\{')
+      NEW_KEYWORD ('new')
+      WHITE_SPACE (' ')
+      INT_KEYWORD ('int')
+      LBRACKET ('[')
+      RBRACKET (']')
+      LBRACKET ('[')
+      RBRACKET (']')
+      WHITE_SPACE (' ')
+      LBRACE ('{')
+      LBRACE ('{')
+      RBRACE ('}')
+      RBRACE ('}')
+      STRING_TEMPLATE_END ('}"')""");
+    doTest("\"\"\"\n\\{new int[][] {{}}}\"\"\"", """
+      TEXT_BLOCK_TEMPLATE_BEGIN ('""\"\\n\\{')
+      NEW_KEYWORD ('new')
+      WHITE_SPACE (' ')
+      INT_KEYWORD ('int')
+      LBRACKET ('[')
+      RBRACKET (']')
+      LBRACKET ('[')
+      RBRACKET (']')
+      WHITE_SPACE (' ')
+      LBRACE ('{')
+      LBRACE ('{')
+      RBRACE ('}')
+      RBRACE ('}')
+      TEXT_BLOCK_TEMPLATE_END ('}""\"')""");
+    doTest("\"\\{x} + \\{y} = \\{x + y}\"", """
+      STRING_TEMPLATE_BEGIN ('"\\{')
+      IDENTIFIER ('x')
+      STRING_TEMPLATE_MID ('} + \\{')
+      IDENTIFIER ('y')
+      STRING_TEMPLATE_MID ('} = \\{')
+      IDENTIFIER ('x')
+      WHITE_SPACE (' ')
+      PLUS ('+')
+      WHITE_SPACE (' ')
+      IDENTIFIER ('y')
+      STRING_TEMPLATE_END ('}"')""");
+    doTest("\"\"\"\n\\{x} +\n \\{y} = \\{x + y}\"\"\"", """
+      TEXT_BLOCK_TEMPLATE_BEGIN ('""\"\\n\\{')
+      IDENTIFIER ('x')
+      TEXT_BLOCK_TEMPLATE_MID ('} +\\n \\{')
+      IDENTIFIER ('y')
+      TEXT_BLOCK_TEMPLATE_MID ('} = \\{')
+      IDENTIFIER ('x')
+      WHITE_SPACE (' ')
+      PLUS ('+')
+      WHITE_SPACE (' ')
+      IDENTIFIER ('y')
+      TEXT_BLOCK_TEMPLATE_END ('}""\"')""");
+    doTest("\"\\{}\" }\"", """
+      STRING_TEMPLATE_BEGIN ('"\\{')
+      STRING_TEMPLATE_END ('}"')
+      WHITE_SPACE (' ')
+      RBRACE ('}')
+      STRING_LITERAL ('"')""");
+    doTest("\"\\{\"hello\"}\" ", "STRING_TEMPLATE_BEGIN ('\"\\{')\nSTRING_LITERAL ('\"hello\"')\nSTRING_TEMPLATE_END ('}\"')\nWHITE_SPACE (' ')");
+    doTest("\"\"\"\n        \\{\"\"\"\n!\"\"\" }\"\"\"  ", """
+      TEXT_BLOCK_TEMPLATE_BEGIN ('""\"\\n        \\{')
+      TEXT_BLOCK_LITERAL ('""\"\\n!""\"')
+      WHITE_SPACE (' ')
+      TEXT_BLOCK_TEMPLATE_END ('}""\"')
+      WHITE_SPACE ('  ')""");
+    doTest("""
+             "\\{fruit[0]}, \\{STR."\\{fruit[1]}, \\{fruit[2]}"}"
+             """,
+           """
+             STRING_TEMPLATE_BEGIN ('"\\{')
+             IDENTIFIER ('fruit')
+             LBRACKET ('[')
+             INTEGER_LITERAL ('0')
+             RBRACKET (']')
+             STRING_TEMPLATE_MID ('}, \\{')
+             IDENTIFIER ('STR')
+             DOT ('.')
+             STRING_TEMPLATE_BEGIN ('"\\{')
+             IDENTIFIER ('fruit')
+             LBRACKET ('[')
+             INTEGER_LITERAL ('1')
+             RBRACKET (']')
+             STRING_TEMPLATE_MID ('}, \\{')
+             IDENTIFIER ('fruit')
+             LBRACKET ('[')
+             INTEGER_LITERAL ('2')
+             RBRACKET (']')
+             STRING_TEMPLATE_END ('}"')
+             STRING_TEMPLATE_END ('}"')
+             WHITE_SPACE ('\\n')""");
+    doTest("""
+             STR."\\{STR."\\{STR."\\{STR."\\{STR."\\{STR."\\{STR.""}"}"}"}"}"}"
+             """,
+           """
+             IDENTIFIER ('STR')
+             DOT ('.')
+             STRING_TEMPLATE_BEGIN ('"\\{')
+             IDENTIFIER ('STR')
+             DOT ('.')
+             STRING_TEMPLATE_BEGIN ('"\\{')
+             IDENTIFIER ('STR')
+             DOT ('.')
+             STRING_TEMPLATE_BEGIN ('"\\{')
+             IDENTIFIER ('STR')
+             DOT ('.')
+             STRING_TEMPLATE_BEGIN ('"\\{')
+             IDENTIFIER ('STR')
+             DOT ('.')
+             STRING_TEMPLATE_BEGIN ('"\\{')
+             IDENTIFIER ('STR')
+             DOT ('.')
+             STRING_TEMPLATE_BEGIN ('"\\{')
+             IDENTIFIER ('STR')
+             DOT ('.')
+             STRING_LITERAL ('""')
+             STRING_TEMPLATE_END ('}"')
+             STRING_TEMPLATE_END ('}"')
+             STRING_TEMPLATE_END ('}"')
+             STRING_TEMPLATE_END ('}"')
+             STRING_TEMPLATE_END ('}"')
+             STRING_TEMPLATE_END ('}"')
+             WHITE_SPACE ('\\n')""");
+    doTest("""
+             ""\"
+                   "\\{}""\"""",
+           """
+             TEXT_BLOCK_TEMPLATE_BEGIN ('""\"\\n      "\\{')
+             TEXT_BLOCK_TEMPLATE_END ('}""\"')""");
+    doTest("""
+             STR.""\"
+             xx
+             \\{STR."String \\{a} String"}
+             xx""\"""",
+           """
+             IDENTIFIER ('STR')
+             DOT ('.')
+             TEXT_BLOCK_TEMPLATE_BEGIN ('""\"\\nxx\\n\\{')
+             IDENTIFIER ('STR')
+             DOT ('.')
+             STRING_TEMPLATE_BEGIN ('"String \\{')
+             IDENTIFIER ('a')
+             STRING_TEMPLATE_END ('} String"')
+             TEXT_BLOCK_TEMPLATE_END ('}\\nxx""\"')""");
   }
 
   public void testStringLiterals() {
@@ -261,6 +416,7 @@ public class JavaLexerTest extends LexerTestCase {
     doTest("\" ", "STRING_LITERAL ('\" ')");
     doTest("\"\"", "STRING_LITERAL ('\"\"')");
     doTest("\"\" ", "STRING_LITERAL ('\"\"')\nWHITE_SPACE (' ')");
+    doTest("\"x\n ", "STRING_LITERAL ('\"x')\nWHITE_SPACE ('\\n ')");
     doTest("\"\\\"\" ", "STRING_LITERAL ('\"\\\"\"')\nWHITE_SPACE (' ')");
     doTest("\"\\", "STRING_LITERAL ('\"\\')");
     doTest("\"\\u", "STRING_LITERAL ('\"\\u')");
@@ -275,6 +431,8 @@ public class JavaLexerTest extends LexerTestCase {
 
     // see also com.intellij.java.codeInsight.daemon.LightAdvHighlightingTest#testStringLiterals
     doTest(" \"\\u000a\" ", "WHITE_SPACE (' ')\nSTRING_LITERAL ('\"\\u000a\"')\nWHITE_SPACE (' ')");
+
+    doTest("\"\\{}\"", "STRING_LITERAL ('\"\\{}\"')");
   }
 
   public void testCharLiterals() {
@@ -322,7 +480,8 @@ public class JavaLexerTest extends LexerTestCase {
     doTest("/", "DIV ('/')");
     doTest("1/2", "INTEGER_LITERAL ('1')\nDIV ('/')\nINTEGER_LITERAL ('2')");
     doTest("//\\\\u000A test", "END_OF_LINE_COMMENT ('//\\\\u000A test')"); // escaped backslash, not a unicode escape
-    doTest("//\\\\\\u000A test", "END_OF_LINE_COMMENT ('//\\\\')\nWHITE_SPACE ('\\u000A ')\nIDENTIFIER ('test')"); // escaped backslash, followed by a unicode escape
+    doTest("//\\\\\\u000A test",
+           "END_OF_LINE_COMMENT ('//\\\\')\nWHITE_SPACE ('\\u000A ')\nIDENTIFIER ('test')"); // escaped backslash, followed by a unicode escape
   }
 
   public void testWhitespace() {
@@ -346,6 +505,9 @@ public class JavaLexerTest extends LexerTestCase {
 
   @Override
   protected Lexer createLexer() {
+    if (getTestName(false).endsWith("JDK21_Preview")) {
+      return JavaParserDefinition.createLexer(LanguageLevel.JDK_21_PREVIEW);
+    }
     return JavaParserDefinition.createLexer(LanguageLevel.HIGHEST);
   }
 

@@ -9,4 +9,4 @@ class A:
 
 class B(A):
     def otherMethod(self, foo, bar):
-        print foo, bar
+        print(foo, bar)

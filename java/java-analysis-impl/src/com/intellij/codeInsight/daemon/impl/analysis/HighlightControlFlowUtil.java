@@ -742,8 +742,9 @@ public final class HighlightControlFlowUtil {
       if (parent instanceof PsiParameterList && parent.getParent() == lambdaExpression) {
         return null;
       }
-      if (PsiTreeUtil.getParentOfType(context, PsiGuardedPattern.class, true, PsiLambdaExpression.class) != null ||
-          PsiTreeUtil.getParentOfType(context, PsiPatternGuard.class, true, PsiLambdaExpression.class) != null) {
+      PsiSwitchLabelStatementBase label =
+        PsiTreeUtil.getParentOfType(context, PsiSwitchLabelStatementBase.class, true, PsiLambdaExpression.class);
+      if (label != null && PsiTreeUtil.isAncestor(label.getGuardExpression(), context, false)) {
         return null;
       }
       if (!isEffectivelyFinal(variable, lambdaExpression, context)) {
@@ -768,14 +769,26 @@ public final class HighlightControlFlowUtil {
    */
   @Nullable
   private static HighlightInfo.Builder checkFinalUsageInsideGuardedPattern(@NotNull PsiVariable variable, @NotNull PsiJavaCodeReferenceElement context) {
-    PsiCaseLabelElement refGuardedPattern = PsiTreeUtil.getParentOfType(context, PsiGuardedPattern.class, PsiPatternGuard.class);
-    if (refGuardedPattern == null) return null;
-    PsiCaseLabelElement varGuardedPattern = PsiTreeUtil.getParentOfType(variable, PsiGuardedPattern.class, PsiPatternGuard.class);
-    if (refGuardedPattern != varGuardedPattern && !isEffectivelyFinal(variable, refGuardedPattern, context)) {
+    PsiSwitchLabelStatementBase refLabel = PsiTreeUtil.getParentOfType(context, PsiSwitchLabelStatementBase.class);
+
+    if (refLabel == null) return null;
+    PsiExpression guardExpression = refLabel.getGuardExpression();
+    if (!PsiTreeUtil.isAncestor(guardExpression, context, false)) return null;
+    LanguageLevel level = PsiUtil.getLanguageLevel(refLabel);
+    //this assigment is covered by com.intellij.codeInsight.daemon.impl.analysis.HighlightUtil.checkOutsideDeclaredCantBeAssignmentInGuard
+    boolean isAssignment = context instanceof PsiReferenceExpression psiExpression && PsiUtil.isAccessedForWriting(psiExpression);
+    if (((level == LanguageLevel.JDK_20_PREVIEW && refLabel != PsiTreeUtil.getParentOfType(variable, PsiSwitchLabelStatementBase.class)) ||
+         (level != LanguageLevel.JDK_20_PREVIEW && !isAssignment &&
+          !PsiTreeUtil.isAncestor(guardExpression, variable, false))) &&
+        !isEffectivelyFinal(variable, refLabel, context)) {
       String message = JavaErrorBundle.message("guarded.pattern.variable.must.be.final");
       HighlightInfo.Builder builder = HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(context).descriptionAndTooltip(message);
-      IntentionAction action = QUICK_FIX_FACTORY.createVariableAccessFromInnerClassFix(variable, refGuardedPattern);
+      IntentionAction action = QUICK_FIX_FACTORY.createVariableAccessFromInnerClassFix(variable, refLabel);
       builder.registerFix(action, null, null, null, null);
+      IntentionAction action2 = QUICK_FIX_FACTORY.createMakeVariableEffectivelyFinalFix(variable);
+      if (action2 != null) {
+        builder.registerFix(action2, null, null, null, null);
+      }
       ErrorFixExtensionPoint.registerFixes(builder, context, "guarded.pattern.variable.must.be.final");
       return builder;
     }
@@ -831,7 +844,7 @@ public final class HighlightControlFlowUtil {
   /**
    * @param variable variable
    * @param context the context that reference to the variable
-   * @return inner class, lambda expression, or guarded pattern that refers to the variable
+   * @return inner class, lambda expression, or switch label that refers to the variable
    */
   public static @Nullable PsiElement getElementVariableReferencedFrom(@NotNull PsiVariable variable, @NotNull PsiElement context) {
     PsiElement[] scope;
@@ -862,7 +875,7 @@ public final class HighlightControlFlowUtil {
       if (parent instanceof PsiLambdaExpression) {
         return parent;
       }
-      if (parent instanceof PsiGuardedPattern || parent instanceof PsiPatternGuard) {
+      if (parent instanceof PsiSwitchLabelStatementBase label && label.getGuardExpression() == prevParent) {
         return parent;
       }
       prevParent = parent;

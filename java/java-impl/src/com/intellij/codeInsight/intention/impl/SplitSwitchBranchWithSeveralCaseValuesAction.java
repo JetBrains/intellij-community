@@ -239,7 +239,9 @@ public class SplitSwitchBranchWithSeveralCaseValuesAction extends PsiElementBase
       if (defaultElement != null) {
         return moveRuleAfter((PsiCaseLabelElement)defaultElement, labeledRule);
       }
-      newRule = (PsiSwitchLabeledRuleStatement)factory.createStatementFromText("case 1->{}", null);
+      var guard = labelElement.getParent().getParent() instanceof PsiSwitchLabelStatementBase label ? label.getGuardExpression() : null;
+      newRule = (PsiSwitchLabeledRuleStatement)factory.createStatementFromText(
+        "case 1" + (guard == null ? "" : " when " + guard.getText()) + "->{}", null);
       Objects.requireNonNull(newRule.getCaseLabelElementList()).getElements()[0].replace(labelElement);
     }
     newRule = (PsiSwitchLabeledRuleStatement)labeledRule.getParent().addAfter(newRule, labeledRule);
@@ -286,15 +288,17 @@ public class SplitSwitchBranchWithSeveralCaseValuesAction extends PsiElementBase
   private static final class Branch {
     private final PsiElement myFirstElement;
     private final PsiStatement myLastStatement;
+    private final PsiExpression myGuard;
     private final PsiCodeBlock myCodeBlock;
     private final PsiElement myLBrace;
 
     private Branch(@NotNull PsiElement firstElement,
                    @NotNull PsiStatement lastStatement,
-                   @NotNull PsiCodeBlock codeBlock,
+                   @Nullable PsiExpression guard, @NotNull PsiCodeBlock codeBlock,
                    @NotNull PsiElement lBrace) {
       myFirstElement = firstElement;
       myLastStatement = lastStatement;
+      myGuard = guard;
       myCodeBlock = codeBlock;
       myLBrace = lBrace;
     }
@@ -327,7 +331,7 @@ public class SplitSwitchBranchWithSeveralCaseValuesAction extends PsiElementBase
       if (lastStatement == null) {
         return null;
       }
-      return new Branch(firstElement, lastStatement, codeBlock, lBrace);
+      return new Branch(firstElement, lastStatement, label.getGuardExpression(), codeBlock, lBrace);
     }
 
     @Contract("null,_ -> false")
@@ -379,7 +383,8 @@ public class SplitSwitchBranchWithSeveralCaseValuesAction extends PsiElementBase
         if (defaultElement != null) {
           return addLabelAfter((PsiCaseLabelElement)defaultElement, labelStatement);
         }
-        newLabel = (PsiSwitchLabelStatement)factory.createStatementFromText("case 1:", null);
+        newLabel =
+          (PsiSwitchLabelStatement)factory.createStatementFromText("case 1" + (myGuard == null ? "" : " when " + myGuard.getText()) + ":", null);
         Objects.requireNonNull(newLabel.getCaseLabelElementList()).getElements()[0].replace(labelElement);
       }
 

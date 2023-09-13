@@ -9,6 +9,7 @@ import com.intellij.openapi.vcs.FileStatus
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.vcs.commit.CommitSessionInfo
 import com.intellij.vcs.commit.NonModalCommitWorkflow
+import com.intellij.vcs.commit.isAmendCommitMode
 import com.intellij.vcs.commit.isCleanupCommitMessage
 import git4idea.GitVcs
 import git4idea.i18n.GitBundle.message
@@ -57,7 +58,7 @@ class GitStageCommitWorkflow(project: Project) : NonModalCommitWorkflow(project)
 
   private fun getPathsToStage(): Map<VirtualFile, Collection<FilePath>> {
     return trackerState.rootStates.filter { commitState.roots.contains(it.key) }.mapValues {
-      if (commitState.isCommitAll) {
+      if (commitState.isCommitAll && !commitContext.isAmendCommitMode) {
         return@mapValues it.value.getChangedPaths()
       }
       return@mapValues it.value.getFullyStagedPaths()

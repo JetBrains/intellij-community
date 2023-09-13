@@ -267,7 +267,7 @@ public class JavaKeywordCompletion {
     }
 
     addFinal();
-
+    addWhen();
     boolean statementPosition = isStatementPosition(myPosition);
     if (statementPosition) {
       addCaseDefault();
@@ -315,6 +315,34 @@ public class JavaKeywordCompletion {
     addExtendsImplements();
 
     addCaseNullToSwitch();
+  }
+
+  private void addWhen() {
+    if (!HighlightingFeature.PATTERN_GUARDS_AND_RECORD_PATTERNS.isAvailable(myPosition)) {
+      return;
+    }
+    PsiElement element = PsiTreeUtil.skipWhitespacesAndCommentsForward(myPrevLeaf);
+    if (element instanceof PsiErrorElement) {
+      return;
+    }
+
+    element = PsiTreeUtil.skipWhitespacesAndCommentsBackward(PsiTreeUtil.prevLeaf(myPosition));
+    if (element instanceof PsiErrorElement) {
+      return;
+    }
+
+    PsiPattern psiPattern = PsiTreeUtil.getParentOfType(myPrevLeaf, PsiPattern.class, true, PsiStatement.class, PsiMember.class, PsiClass.class);
+    if (psiPattern == null ||
+        (psiPattern instanceof PsiTypeTestPattern testPattern &&
+         testPattern.getPatternVariable() != null &&
+         testPattern.getPatternVariable().getNameIdentifier() == myPosition)) {
+      return;
+    }
+    PsiElement parentOfPattern = PsiTreeUtil.skipParentsOfType(psiPattern, PsiPattern.class, PsiDeconstructionList.class);
+    if (!(parentOfPattern instanceof PsiCaseLabelElementList)) {
+      return;
+    }
+    addKeyword(new OverridableSpace(createKeyword(PsiKeyword.WHEN), TailType.INSERT_SPACE));
   }
 
   private void addSwitchRuleKeywords(@NotNull PsiSwitchLabeledRuleStatement rule) {
@@ -381,7 +409,6 @@ public class JavaKeywordCompletion {
     if (selectorType instanceof PsiPrimitiveType) return;
 
     addKeyword(createKeyword(PsiKeyword.NULL));
-    addKeyword(createKeyword(PsiKeyword.DEFAULT));
   }
 
   private boolean isInsideCaseLabel() {
@@ -467,7 +494,7 @@ public class JavaKeywordCompletion {
 
     final TailType caseRuleTail = TailTypes.forSwitchLabel(switchBlock);
     addKeyword(createCaseRule(PsiKeyword.NULL, caseRuleTail));
-    addKeyword(createCaseRule(PsiKeyword.DEFAULT, caseRuleTail));
+    addKeyword(createCaseRule(PsiKeyword.NULL +", " + PsiKeyword.DEFAULT, caseRuleTail));
 
     addSealedHierarchyCases(selectorType);
   }

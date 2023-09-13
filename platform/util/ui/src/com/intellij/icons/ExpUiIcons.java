@@ -140,6 +140,7 @@ public final class ExpUiIcons {
   }
 
   public static final class Debugger {
+    /** 16x16 */ public static final @NotNull Icon AddToWatch = load("expui/debugger/addToWatch.svg", -979955605, 2);
     /** 16x16 */ public static final @NotNull Icon DbPrimitive = load("expui/debugger/dbPrimitive.svg", 737408395, 2);
     /** 16x16 */ public static final @NotNull Icon Frame = load("expui/debugger/frame.svg", -1911875806, 2);
     /** 16x16 */ public static final @NotNull Icon Threads = load("expui/debugger/threads.svg", 779575452, 2);
@@ -216,7 +217,7 @@ public final class ExpUiIcons {
     /** 16x16 */ public static final @NotNull Icon Patch = load("expui/fileTypes/patch.svg", -706028010, 2);
     /** 16x16 */ public static final @NotNull Icon Perl = load("expui/fileTypes/perl.svg", 108994589, 2);
     /** 16x16 */ public static final @NotNull Icon Properties = load("expui/fileTypes/properties.svg", -560303724, 2);
-    /** 16x16 */ public static final @NotNull Icon React = load("expui/fileTypes/react.svg", 1620243355, 2);
+    /** 16x16 */ public static final @NotNull Icon React = load("expui/fileTypes/react.svg", -751586533, 2);
     /** 16x16 */ public static final @NotNull Icon Regexp = load("expui/fileTypes/regexp.svg", 1958077143, 2);
     /** 16x16 */ public static final @NotNull Icon Sbt = load("expui/fileTypes/sbt.svg", -984587052, 2);
     /** 16x16 */ public static final @NotNull Icon Scala = load("expui/fileTypes/scala.svg", 1475163984, 2);
@@ -224,7 +225,6 @@ public final class ExpUiIcons {
     /** 16x16 */ public static final @NotNull Icon Scratches = load("expui/fileTypes/scratches.svg", -1406379294, 2);
     /** 16x16 */ public static final @NotNull Icon Shell = load("expui/fileTypes/shell.svg", -1124749060, 2);
     /** 16x16 */ public static final @NotNull Icon SourceMap = load("expui/fileTypes/sourceMap.svg", -798309148, 2);
-    /** 16x16 */ public static final @NotNull Icon Sql = load("expui/fileTypes/sql.svg", -1496861857, 2);
     /** 16x16 */ public static final @NotNull Icon Text = load("expui/fileTypes/text.svg", 1946633559, 2);
     /** 16x16 */ public static final @NotNull Icon UiForm = load("expui/fileTypes/uiForm.svg", -397412144, 2);
     /** 16x16 */ public static final @NotNull Icon Unknown = load("expui/fileTypes/unknown.svg", -2043297803, 2);
@@ -676,6 +676,8 @@ public final class ExpUiIcons {
     /** 20x20 */ public static final @NotNull Icon ToolWindowInternal_20x20 = load("expui/toolwindow/toolWindowInternal@20x20.svg", -434982620, 2);
     /** 16x16 */ public static final @NotNull Icon ToolWindowJsonPath = load("expui/toolwindow/toolWindowJsonPath.svg", 1764965987, 2);
     /** 20x20 */ public static final @NotNull Icon ToolWindowJsonPath_20x20 = load("expui/toolwindow/toolWindowJsonPath@20x20.svg", -308711555, 2);
+    /** 16x16 */ public static final @NotNull Icon ToolWindowRunWithCoverage = load("expui/toolwindow/toolWindowRunWithCoverage.svg", 742934295, 2);
+    /** 20x20 */ public static final @NotNull Icon ToolWindowRunWithCoverage_20x20 = load("expui/toolwindow/toolWindowRunWithCoverage@20x20.svg", 2020487745, 2);
     /** 16x16 */ public static final @NotNull Icon ToolWindowVariableView = load("expui/toolwindow/toolWindowVariableView.svg", -944459308, 2);
     /** 20x20 */ public static final @NotNull Icon ToolWindowVariableView_20x20 = load("expui/toolwindow/toolWindowVariableView@20x20.svg", 1193386499, 2);
     /** 16x16 */ public static final @NotNull Icon Vcs = load("expui/toolwindow/vcs.svg", 468795750, 2);

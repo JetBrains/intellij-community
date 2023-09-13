@@ -15,6 +15,8 @@
  */
 package com.siyeh.ig.fixes.errorhandling;
 
+import com.intellij.pom.java.LanguageLevel;
+import com.intellij.testFramework.IdeaTestUtil;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.IGQuickFixesTestCase;
 import com.siyeh.ig.errorhandling.CatchMayIgnoreExceptionInspection;
@@ -42,10 +44,14 @@ public class CatchMayIgnoreExceptionInspectionFixTest extends IGQuickFixesTestCa
   }
 
   public void testRenameToIgnored() {
-    doTest(InspectionGadgetsBundle.message("rename.catch.parameter.to.ignored", "ignored"));
+    doTest("Rename 'ex' to 'ignored'");
+  }
+
+  public void testRenameToIgnoredJava21() {
+    IdeaTestUtil.withLevel(getModule(), LanguageLevel.JDK_21_PREVIEW, () -> doTest("Rename 'ex' to '_'"));
   }
 
   public void testRenameToIgnoredNameConflict() {
-    doTest(InspectionGadgetsBundle.message("rename.catch.parameter.to.ignored", "ignored1"));
+    doTest("Rename 'ex' to 'ignored1'");
   }
 }

@@ -17,7 +17,7 @@ public class Main {
         System.out.println("hello");
       case "world":
         System.out.println("world");
-      case <error descr="Illegal fall-through to a pattern">String str when str.isEmpty()</error>:
+      case <error descr="Illegal fall-through to a pattern">String str</error> when str.isEmpty():
         System.out.println("an empty string");
       case null:
         System.out.println("null");
@@ -127,7 +127,7 @@ public class Main {
 
   void test12(Integer integer) {
     switch (integer) {
-      case 1, 2, <error descr="Invalid case label combination: A case label must consist of either a list of case constants or a single case pattern">Integer i1 when i1 > 5</error>:
+      case 1, 2, <error descr="Invalid case label combination: a case label must consist of either a list of case constants or a single case pattern">Integer i1</error> when i1 > 5:
       case null:
         System.out.println("blah blah blah");
         break;
@@ -144,14 +144,14 @@ public class Main {
 
   void test14(Object obj) {
     switch (obj) {
-      case <error descr="Invalid case label combination: 'null' can only be used as a single case label or paired only with 'default'">null</error>, String s when s.isEmpty(), Integer i when i == 42 -> {}
+      case null, String s when s.isEmpty()<error descr="':' or '->' expected"><error descr="Unexpected token">,</error></error> Integer i<error descr="';' expected"> </error><error descr="Cannot resolve symbol 'when'" textAttributesKey="WRONG_REFERENCES_ATTRIBUTES">when</error> <error descr="Variable 'i' is already defined in the scope">i</error><error descr="';' expected"> </error><error descr="Unexpected token">==</error> <error descr="Not a statement">42</error> <error descr="Unexpected token">-></error> {}
       default -> {}
     }
   }
 
   void test15(Object obj) {
     switch (obj) {
-      case String s when s.isEmpty(), <error descr="Invalid case label combination: 'null' can only be used as a single case label or paired only with 'default'">null</error>, Integer i -> {}
+      case String s when s.isEmpty()<error descr="':' or '->' expected"><error descr="Unexpected token">,</error></error> null, <error descr="Expression expected">Integer</error><error descr="';' expected"> </error><error descr="Not a statement">i -> {}</error>
       default -> {}
     }
   }
@@ -172,7 +172,7 @@ public class Main {
 
   void test18(String s) {
     switch (s) {
-      case "hello", "world", <error descr="Invalid case label combination: 'null' can only be used as a single case label or paired only with 'default'">null</error>, String str when str.isEmpty() -> {}
+      case "hello", "world", null, String str when <error descr="Cannot resolve symbol 'str'" textAttributesKey="WRONG_REFERENCES_ATTRIBUTES">str</error>.isEmpty() -> {}
       default -> {}
     }
   }
@@ -199,7 +199,7 @@ public class Main {
 
   void test22(Object obj) {
     switch (obj) {
-      case String s when s.isEmpty(), <error descr="Invalid case label combination: 'null' can only be used as a single case label or paired only with 'default'">null</error>, Integer i -> {}
+      case String s when s.isEmpty()<error descr="':' or '->' expected"><error descr="Unexpected token">,</error></error> null, <error descr="Expression expected">Integer</error><error descr="';' expected"> </error><error descr="Not a statement">i -> {}</error>
       default -> {}
     }
   }
@@ -246,14 +246,14 @@ public class Main {
 
   void test28(Object obj) {
     switch (obj) {
-      case Integer i, <error descr="Invalid case label combination: A case label must not consist of more than one case pattern">String str</error> -> {}
+      case Integer i, <error descr="Invalid case label combination: a case label must not consist of more than one case pattern">String str</error> -> {}
       default -> {}
     }
   }
 
   void test28(String s) {
     switch (s) {
-      case String str, <error descr="Invalid case label combination: A case label must consist of either a list of case constants or a single case pattern">"hello"</error>, "world" -> {}
+      case String str, <error descr="Invalid case label combination: a case label must consist of either a list of case constants or a single case pattern">"hello"</error>, "world" -> {}
     }
   }
 

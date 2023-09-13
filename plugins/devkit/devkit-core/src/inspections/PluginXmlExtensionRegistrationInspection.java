@@ -11,6 +11,7 @@ import com.intellij.codeInspection.util.InspectionMessage;
 import com.intellij.ide.util.PsiNavigationSupport;
 import com.intellij.lang.LanguageExtensionPoint;
 import com.intellij.openapi.components.ServiceDescriptor;
+import com.intellij.openapi.options.ConfigurableEP;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiReferenceProviderBean;
@@ -55,12 +56,24 @@ final class PluginXmlExtensionRegistrationInspection extends DevKitPluginXmlInsp
       return;
     }
 
-    if ("com.intellij.statusBarWidgetFactory".equals(extensionPoint.getEffectiveQualifiedName())) {
+    String epFqn = extensionPoint.getEffectiveQualifiedName();
+    if ("com.intellij.statusBarWidgetFactory".equals(epFqn)) {
       if (hasMissingAttribute(extension, "id")) {
         holder.createProblem(extension, DevKitBundle.message("inspection.plugin.xml.extension.registration.should.define.id.attribute"),
                              new DefineAttributeQuickFix("id"));
       }
       return;
+    }
+
+    if ("com.intellij.applicationConfigurable".equals(epFqn) ||
+        "com.intellij.projectConfigurable".equals(epFqn)) {
+      if (hasMissingAttribute(extension, "displayName") &&
+          hasMissingAttribute(extension, "key")) {
+        holder.createProblem(extension, DevKitBundle.message(
+                               "inspection.plugin.xml.extension.registration.configurable.should.define.displayName.or.key.attribute"),
+                             new DefineAttributeQuickFix("displayName"),
+                             new DefineAttributeQuickFix("key"));
+      }
     }
 
     if (!DomUtil.hasXml(extensionPoint.getBeanClass())) {
@@ -123,7 +136,7 @@ final class PluginXmlExtensionRegistrationInspection extends DevKitPluginXmlInsp
         if (!DomUtil.hasXml(languageAttributeDescription.getDomAttributeValue(extension))) {
           holder.createProblem(extension,
                                DevKitBundle.message("inspection.plugin.xml.extension.registration.should.define.language.attribute",
-                                                    extensionPoint.getEffectiveQualifiedName()),
+                                                    epFqn),
                                new DefineAttributeQuickFix("language", "", LanguageResolvingUtil.getAnyLanguageValue(extensionPoint)));
         }
         return;
@@ -136,7 +149,7 @@ final class PluginXmlExtensionRegistrationInspection extends DevKitPluginXmlInsp
         if (languageTag != null && !DomUtil.hasXml(languageTag)) {
           holder.createProblem(extension,
                                DevKitBundle.message("inspection.plugin.xml.extension.registration.should.define.language.tag",
-                                                    extensionPoint.getEffectiveQualifiedName()),
+                                                    epFqn),
                                new AddLanguageTagQuickFix(LanguageResolvingUtil.getAnyLanguageValue(extensionPoint)));
         }
       }

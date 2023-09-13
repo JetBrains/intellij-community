@@ -51,7 +51,7 @@ class GradleJvmSupportMatrix : IdeVersionedDataStorage<GradleCompatibilityState>
 
   private fun isSupportedImpl(gradleVersion: GradleVersion, javaVersion: JavaVersion): Boolean {
     return myCompatibility.any { (javaVersions, gradleVersions) ->
-      javaVersion in javaVersions && gradleVersion in gradleVersions
+      javaVersion in javaVersions && gradleVersion.baseVersion in gradleVersions
     }
   }
 
@@ -60,11 +60,11 @@ class GradleJvmSupportMatrix : IdeVersionedDataStorage<GradleCompatibilityState>
   }
 
   private fun isGradleSupportedByIdeaImpl(gradleVersion: GradleVersion): Boolean {
-    return getOldestSupportedGradleVersionByIdeaImpl() <= gradleVersion
+    return getOldestSupportedGradleVersionByIdeaImpl() <= gradleVersion.baseVersion
   }
 
   private fun isGradleDeprecatedByIdeaImpl(gradleVersion: GradleVersion): Boolean {
-    return gradleVersion < getOldestRecommendedGradleVersionByIdeaImpl()
+    return gradleVersion.baseVersion < getOldestRecommendedGradleVersionByIdeaImpl()
   }
 
   private fun getSupportedGradleVersionsImpl(javaVersion: JavaVersion): List<GradleVersion> {

@@ -12,7 +12,9 @@ import org.jetbrains.kotlin.idea.base.projectStructure.moduleInfo.LanguageSettin
 import org.jetbrains.kotlin.idea.base.projectStructure.moduleInfo.ModuleOrigin
 import org.jetbrains.kotlin.idea.base.projectStructure.moduleInfo.SdkInfo
 import org.jetbrains.kotlin.idea.base.projectStructure.sourceModuleInfos
-import org.jetbrains.kotlin.idea.base.scripting.ScriptingTargetPlatformDetector
+import org.jetbrains.kotlin.idea.base.scripting.getLanguageVersionSettings
+import org.jetbrains.kotlin.idea.base.scripting.getPlatform
+import org.jetbrains.kotlin.idea.base.scripting.getTargetPlatformVersion
 import org.jetbrains.kotlin.idea.core.script.dependencies.KotlinScriptSearchScope
 import org.jetbrains.kotlin.idea.core.script.dependencies.ScriptAdditionalIdeaDependenciesProvider
 import org.jetbrains.kotlin.name.Name
@@ -60,14 +62,14 @@ data class ScriptModuleInfo(
     }.toList()
 
     override val platform: TargetPlatform
-        get() = ScriptingTargetPlatformDetector.getPlatform(project, scriptFile, scriptDefinition)
+        get() = getPlatform(project, scriptFile, scriptDefinition)
 
     override val analyzerServices: PlatformDependentAnalyzerServices
         get() = JvmPlatformAnalyzerServices
 
     override val languageVersionSettings: LanguageVersionSettings
-        get() = ScriptingTargetPlatformDetector.getLanguageVersionSettings(project, scriptFile, scriptDefinition)
+        get() = getLanguageVersionSettings(project, scriptFile, scriptDefinition)
 
     override val targetPlatformVersion: TargetPlatformVersion
-        get() = ScriptingTargetPlatformDetector.getTargetPlatformVersion(project, scriptFile, scriptDefinition)
+        get() = getTargetPlatformVersion(project, scriptFile, scriptDefinition)
 }

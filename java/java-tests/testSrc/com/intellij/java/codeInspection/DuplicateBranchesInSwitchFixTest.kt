@@ -4,7 +4,7 @@ package com.intellij.java.codeInspection
 import com.intellij.codeInsight.daemon.quickFix.LightQuickFixParameterizedTestCase
 import com.intellij.codeInspection.DuplicateBranchesInSwitchInspection
 import com.intellij.codeInspection.LocalInspectionTool
-import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase.JAVA_20
+import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase.JAVA_21
 
 class DuplicateBranchesInSwitchFixTest : LightQuickFixParameterizedTestCase() {
 
@@ -12,5 +12,5 @@ class DuplicateBranchesInSwitchFixTest : LightQuickFixParameterizedTestCase() {
 
   override fun getBasePath() = "/inspection/duplicateBranchesInSwitchFix"
 
-  override fun getProjectDescriptor() = JAVA_20
+  override fun getProjectDescriptor() = JAVA_21
 }

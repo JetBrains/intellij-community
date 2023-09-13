@@ -117,7 +117,7 @@ public final class VariableAccessUtils {
    * @return true, if the specified variable was assigned in the specified context, false otherwise
    */
   public static boolean variableIsAssigned(@NotNull PsiVariable variable, @Nullable PsiElement context) {
-    if (context == null) {
+    if (context == null || variable.isUnnamed()) {
       return false;
     }
     final VariableAssignedVisitor visitor = new VariableAssignedVisitor(variable);
@@ -135,7 +135,7 @@ public final class VariableAccessUtils {
    */
   public static boolean variableIsAssigned(@NotNull PsiVariable variable, @NotNull Predicate<? super PsiAssignmentExpression> skipFilter,
                                            @Nullable PsiElement context) {
-    if (context == null) {
+    if (context == null || variable.isUnnamed()) {
       return false;
     }
     final VariableAssignedVisitor visitor = new VariableAssignedVisitor(variable, skipFilter, true);
@@ -150,7 +150,7 @@ public final class VariableAccessUtils {
    * @return true, if the specified variable was assigned in the specified context, false otherwise
    */
   public static boolean variableIsAssigned(@NotNull PsiVariable variable, @Nullable PsiElement context, boolean recurseIntoClasses) {
-    if (context == null) {
+    if (context == null || variable.isUnnamed()) {
       return false;
     }
     final VariableAssignedVisitor visitor = new VariableAssignedVisitor(variable, recurseIntoClasses);
@@ -163,7 +163,7 @@ public final class VariableAccessUtils {
   }
 
   public static boolean variableIsReturned(@NotNull PsiVariable variable, @Nullable PsiElement context, boolean builderPattern) {
-    if (context == null) {
+    if (context == null || variable.isUnnamed()) {
       return false;
     }
     final VariableReturnedVisitor visitor = new VariableReturnedVisitor(variable, builderPattern);
@@ -173,7 +173,7 @@ public final class VariableAccessUtils {
 
   public static boolean variableValueIsUsed(
     @NotNull PsiVariable variable, @Nullable PsiElement context) {
-    if (context == null) {
+    if (context == null || variable.isUnnamed()) {
       return false;
     }
     final VariableValueUsedVisitor visitor =
@@ -195,7 +195,7 @@ public final class VariableAccessUtils {
 
   public static boolean variableIsUsedInInnerClass(
     @NotNull PsiVariable variable, @Nullable PsiElement context) {
-    if (context == null) {
+    if (context == null || variable.isUnnamed()) {
       return false;
     }
     final VariableUsedInInnerClassVisitor visitor =
@@ -209,7 +209,7 @@ public final class VariableAccessUtils {
   }
 
   static boolean mayEvaluateToVariable(@Nullable PsiExpression expression, @NotNull PsiVariable variable, boolean builderPattern) {
-    if (expression == null) {
+    if (expression == null || variable.isUnnamed()) {
       return false;
     }
     if (expression instanceof PsiParenthesizedExpression parenthesizedExpression) {

@@ -8,7 +8,7 @@ class Test {
           break;
         case null:
             break;
-        case default:
+        default:
         break;
     }
   }

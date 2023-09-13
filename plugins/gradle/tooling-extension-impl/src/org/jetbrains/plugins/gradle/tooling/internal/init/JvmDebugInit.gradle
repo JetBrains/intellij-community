@@ -65,9 +65,9 @@ gradle.taskGraph.whenReady { TaskExecutionGraph taskGraph ->
   def jvmTasks = taskGraph.allTasks.findAll { task -> task instanceof JavaForkOptions }
   def matchedTasks = debugAllIsEnabled ? jvmTasks : filterStartTasks(jvmTasks)
   matchedTasks.each { task ->
+    def moduleDir = task.project.projectDir.path
     task.doFirst {
       def options = task as JavaForkOptions
-      def moduleDir = task.project.projectDir.path
       def debugPort = ForkedDebuggerHelper.setupDebugger(debuggerId, task.path, processParameters, moduleDir)
       def jvmArgs = options.jvmArgs.findAll { !it?.startsWith('-agentlib:jdwp') && !it?.startsWith('-Xrunjdwp') }
       jvmArgs << ForkedDebuggerHelper.JVM_DEBUG_SETUP_PREFIX + ForkedDebuggerHelper.addrFromProperty + ':' + debugPort

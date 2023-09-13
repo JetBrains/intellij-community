@@ -15,29 +15,54 @@
  */
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
+import com.intellij.codeInsight.daemon.impl.analysis.HighlightingFeature;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.psi.PsiNamedElement;
+import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
+import com.intellij.psi.util.PsiUtil;
+import com.siyeh.ig.psiutils.VariableAccessUtils;
 import org.jetbrains.annotations.NotNull;
 
 public class RenameToIgnoredFix extends RenameElementFix {
   private static final String PREFIX = "ignored";
 
-  private RenameToIgnoredFix(@NotNull PsiNamedElement place, @NotNull String suffix) {
-    super(place, JavaCodeStyleManager.getInstance(place.getProject()).suggestUniqueVariableName(PREFIX + suffix, place, true));
+  private RenameToIgnoredFix(@NotNull PsiNamedElement place, @NotNull String name) {
+    super(place, name);
   }
 
   /**
    * @param useElementNameAsSuffix if true, let the fix suggest the variable name that consists of the "ignored" and name of the element
    *                               e.g. ignoredVar
    *                               <p>if false, let the fix suggest the variable that consists of the "ignored" and some number
-   *                               e.g. ignored1
+   *                               e.g. ignored1.
+   *                               If variable can be unnamed (place and language level allows, and it's totally unused), renaming to unnamed
+   *                               will be suggested instead.
    */
   public static RenameToIgnoredFix createRenameToIgnoreFix(@NotNull PsiNamedElement element, boolean useElementNameAsSuffix) {
+    if (element instanceof PsiVariable variable && canBeUnnamed(variable)
+        && !VariableAccessUtils.variableIsUsed(variable, PsiUtil.getVariableCodeBlock(variable, null))) {
+      return new RenameToIgnoredFix(variable, "_");
+    }
+    String baseName = "";
     if (useElementNameAsSuffix) {
       String elementName = element.getName();
-      if (elementName != null) return new RenameToIgnoredFix(element, StringUtil.capitalize(elementName));
+      if (elementName != null) {
+        baseName = StringUtil.capitalize(elementName);
+      }
     }
-    return new RenameToIgnoredFix(element, "");
+    return new RenameToIgnoredFix(element, JavaCodeStyleManager.getInstance(element.getProject())
+      .suggestUniqueVariableName(PREFIX + baseName, element, true));
+  }
+
+  private static boolean canBeUnnamed(PsiVariable variable) {
+    if (!HighlightingFeature.UNNAMED_PATTERNS_AND_VARIABLES.isAvailable(variable)) return false;
+    if (variable instanceof PsiPatternVariable || variable instanceof PsiResourceVariable) return true;
+    if (variable instanceof PsiLocalVariable) {
+      return variable.getParent() instanceof PsiDeclarationStatement decl && decl.getParent() instanceof PsiCodeBlock;
+    }
+    if (variable instanceof PsiParameter parameter) {
+      return !(parameter.getDeclarationScope() instanceof PsiMethod);
+    }
+    return false;
   }
 }

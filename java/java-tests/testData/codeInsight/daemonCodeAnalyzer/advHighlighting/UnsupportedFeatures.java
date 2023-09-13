@@ -26,5 +26,7 @@ class UnsupportedFeatures {
 
     String spaceEscapeSeq = <error descr="'\s' escape sequences are not supported at language level '1.4'">"\s"</error>;
     char c = <error descr="'\s' escape sequences are not supported at language level '1.4'">'\s'</error>;
+
+    String template = <error descr="Cannot resolve symbol 'STR'">STR</error>.<error descr="String templates are not supported at language level '1.4'">"Hello \{args[0]}"</error>;
   }
 }

@@ -3,31 +3,17 @@ PsiJavaFile:SwitchRulesWithPattern2.java
     PsiKeyword:case('case')
     PsiWhiteSpace(' ')
     PsiCaseLabelElementList
-      PsiGuardedPattern
-        PsiTypeTestPattern
-          PsiPatternVariable:i
-            PsiModifierList:
-              <empty list>
-            PsiTypeElement:Integer
-              PsiJavaCodeReferenceElement:Integer
-                PsiIdentifier:Integer('Integer')
-                PsiReferenceParameterList
-                  <empty list>
-            PsiWhiteSpace(' ')
-            PsiIdentifier:i('i')
-        PsiWhiteSpace(' ')
-        PsiJavaToken:ANDAND('&&')
-        PsiWhiteSpace(' ')
-        PsiBinaryExpression:i > 10
-          PsiReferenceExpression:i
-            PsiReferenceParameterList
-              <empty list>
-            PsiIdentifier:i('i')
+      PsiTypeTestPattern
+        PsiPatternVariable:i
+          PsiModifierList:
+            <empty list>
+          PsiTypeElement:Integer
+            PsiJavaCodeReferenceElement:Integer
+              PsiIdentifier:Integer('Integer')
+              PsiReferenceParameterList
+                <empty list>
           PsiWhiteSpace(' ')
-          PsiJavaToken:GT('>')
-          PsiWhiteSpace(' ')
-          PsiLiteralExpression:10
-            PsiJavaToken:INTEGER_LITERAL('10')
+          PsiIdentifier:i('i')
     PsiWhiteSpace(' ')
     PsiJavaToken:ARROW('->')
     PsiWhiteSpace(' ')

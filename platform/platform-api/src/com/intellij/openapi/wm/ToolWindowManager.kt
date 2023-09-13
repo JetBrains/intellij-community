@@ -34,19 +34,19 @@ abstract class ToolWindowManager {
   abstract fun canShowNotification(toolWindowId: String): Boolean
 
   @Suppress("DeprecatedCallableAddReplaceWith")
-  @Deprecated("Use ToolWindowFactory and toolWindow extension point")
+  @Deprecated("Use ToolWindowFactory and com.intellij.toolWindow extension point")
   fun registerToolWindow(id: String, component: JComponent, anchor: ToolWindowAnchor): ToolWindow {
     return registerToolWindow(RegisterToolWindowTask(id = id, component = component, anchor = anchor, canCloseContent = false, canWorkInDumbMode = false))
   }
 
   @Suppress("DeprecatedCallableAddReplaceWith")
-  @Deprecated("Use ToolWindowFactory and toolWindow extension point")
+  @Deprecated("Use ToolWindowFactory and com.intellij.toolWindow extension point")
   fun registerToolWindow(id: String, canCloseContent: Boolean, anchor: ToolWindowAnchor): ToolWindow {
     return registerToolWindow(RegisterToolWindowTask(id = id, anchor = anchor, canCloseContent = canCloseContent, canWorkInDumbMode = false))
   }
 
   @Suppress("DeprecatedCallableAddReplaceWith")
-  @Deprecated("Use ToolWindowFactory and toolWindow extension point")
+  @Deprecated("Use ToolWindowFactory and com.intellij.toolWindow extension point")
   fun registerToolWindow(id: String,
                          canCloseContent: Boolean,
                          anchor: ToolWindowAnchor,
@@ -55,7 +55,7 @@ abstract class ToolWindowManager {
   }
 
   @Suppress("DeprecatedCallableAddReplaceWith")
-  @Deprecated("Use ToolWindowFactory and toolWindow extension point")
+  @Deprecated("Use ToolWindowFactory and com.intellij.toolWindow extension point")
   fun registerToolWindow(id: String,
                          canCloseContent: Boolean,
                          anchor: ToolWindowAnchor,
@@ -65,7 +65,7 @@ abstract class ToolWindowManager {
   }
 
   @Suppress("DeprecatedCallableAddReplaceWith")
-  @Deprecated("Use ToolWindowFactory and toolWindow extension point")
+  @Deprecated("Use ToolWindowFactory and com.intellij.toolWindow extension point")
   fun registerToolWindow(id: String,
                          canCloseContent: Boolean,
                          anchor: ToolWindowAnchor,
@@ -76,7 +76,7 @@ abstract class ToolWindowManager {
   }
 
   @Suppress("DeprecatedCallableAddReplaceWith")
-  @Deprecated("Use ToolWindowFactory and toolWindow extension point")
+  @Deprecated("Use ToolWindowFactory and com.intellij.toolWindow extension point")
   @ApiStatus.ScheduledForRemoval
   fun registerToolWindow(id: String,
                          canCloseContent: Boolean,
@@ -89,6 +89,8 @@ abstract class ToolWindowManager {
   abstract fun registerToolWindow(task: RegisterToolWindowTask): ToolWindow
 
   /**
+   * Use only for dynamically registered toolwindows required for a certain operation.
+   *
    * [ToolWindow.getAnchor] is set to [ToolWindowAnchor.BOTTOM] by default.
    * [ToolWindow.setToHideOnEmptyContent] is set to `true` by default.
    */
@@ -99,9 +101,9 @@ abstract class ToolWindowManager {
   }
 
   /**
-   * does nothing if a tool window with specified isn't registered.
+   * Does nothing if a tool window with specified id isn't registered.
    */
-  @Deprecated("Use ToolWindowFactory and toolWindow extension point")
+  @Deprecated("Use ToolWindowFactory and com.intellij.toolWindow extension point")
   abstract fun unregisterToolWindow(id: String)
 
   abstract fun activateEditorComponent()

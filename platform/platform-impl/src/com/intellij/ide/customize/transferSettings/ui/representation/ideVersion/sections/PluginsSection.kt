@@ -15,8 +15,8 @@ import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.UIUtil
 import javax.swing.JComponent
 
-class PluginsSection(private val ideVersion: IdeVersion) : IdeRepresentationSection(ideVersion.settings.preferences, SettingsPreferencesKind.Plugins, AllIcons.TransferSettings.PluginsAndFeatures) {
-  private val plugins = ideVersion.settings.plugins.filter { !it.isHidden }
+class PluginsSection(private val ideVersion: IdeVersion) : IdeRepresentationSection(ideVersion.settingsCache.preferences, SettingsPreferencesKind.Plugins, AllIcons.TransferSettings.PluginsAndFeatures) {
+  private val plugins = ideVersion.settingsCache.plugins.filter { !it.isHidden }
   override val name: String = "Plugins and Features"
   override fun worthShowing(): Boolean = plugins.isNotEmpty()
 

@@ -20,16 +20,16 @@ class TransferSettingsControllerImpl : TransferSettingsController {
   }
 
   override fun performImport(project: Project?, ideVersion: IdeVersion, withPlugins: Boolean, pi: ProgressIndicator) {
-    eventDispatcher.multicaster.importStarted(ideVersion, ideVersion.settings)
+    eventDispatcher.multicaster.importStarted(ideVersion, ideVersion.settingsCache)
     val performer = getImportPerformer()
 
-    val task = object : TransferSettingsPerformImportTask(project, performer, ideVersion.settings, true) {
+    val task = object : TransferSettingsPerformImportTask(project, performer, ideVersion.settingsCache, true) {
       override fun onSuccess() {
-        eventDispatcher.multicaster.importPerformed(ideVersion, ideVersion.settings)
+        eventDispatcher.multicaster.importPerformed(ideVersion, ideVersion.settingsCache)
       }
 
       override fun onThrowable(error: Throwable) {
-        eventDispatcher.multicaster.importFailed(ideVersion, ideVersion.settings, error)
+        eventDispatcher.multicaster.importFailed(ideVersion, ideVersion.settingsCache, error)
       }
     }
 

@@ -285,8 +285,13 @@ public final class ExpectedTypeUtils {
     }
 
     @Override
-    public void visitPatternGuard(@NotNull PsiPatternGuard guard) {
-      expectedType = PsiTypes.booleanType();
+    public void visitSwitchLabeledRuleStatement(@NotNull PsiSwitchLabeledRuleStatement statement) {
+      expectedType = PsiTypes.booleanType(); // guard
+    }
+
+    @Override
+    public void visitSwitchLabelStatement(@NotNull PsiSwitchLabelStatement statement) {
+      expectedType = PsiTypes.booleanType(); // guard
     }
 
     @Override

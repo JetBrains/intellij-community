@@ -24,7 +24,7 @@ data class FormattingChanges(val preFormatText: CharSequence, val postFormatText
  * original and formatted text.
  *
  * Uses code style settings associated with [file]. To detect changes using different [CodeStyleSettings], use
- * [CodeStyle.doWithTemporarySettings].
+ * [CodeStyle.runWithLocalSettings].
  *
  * @param file
  * @return [FormattingChanges] object describing the changes. `null` if detection could not be performed. Empty list if no changes were

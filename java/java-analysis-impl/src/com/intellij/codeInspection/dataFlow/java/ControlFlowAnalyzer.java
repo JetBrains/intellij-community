@@ -1000,7 +1000,9 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
           continue;
         }
         try {
+          PsiExpression guard = psiLabelStatement.getGuardExpression();
           ControlFlowOffset offset = getStartOffset(statement);
+          ControlFlowOffset targetOffset = guard == null ? offset : new DeferredOffset();
           PsiCaseLabelElementList labelElementList = psiLabelStatement.getCaseLabelElementList();
           if (labelElementList != null) {
             for (PsiCaseLabelElement labelElement : labelElementList.getElements()) {
@@ -1016,7 +1018,7 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
                     addInstruction(new JvmPushInstruction(expressionValue, null));
                     expr.accept(this);
                     addInstruction(new BooleanBinaryInstruction(RelationType.EQ, true, new JavaSwitchLabelTakenAnchor(expr)));
-                    addInstruction(new ConditionalGotoInstruction(offset, DfTypes.TRUE));
+                    addInstruction(new ConditionalGotoInstruction(targetOffset, DfTypes.TRUE));
                   }
                   else {
                     addInstruction(new JvmPushInstruction(expressionValue, null));
@@ -1034,7 +1036,7 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
                     addInstruction(pushValInstr);
                     condGotoOffset.setOffset(pushValInstr.getIndex());
 
-                    ConditionalGotoInstruction exitFromSwitchBranchInstr = new ConditionalGotoInstruction(offset, DfTypes.TRUE);
+                    ConditionalGotoInstruction exitFromSwitchBranchInstr = new ConditionalGotoInstruction(targetOffset, DfTypes.TRUE);
                     addInstruction(exitFromSwitchBranchInstr);
                     gotoOffset.setOffset(exitFromSwitchBranchInstr.getIndex());
                   }
@@ -1043,35 +1045,30 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
                   addInstruction(new JvmPushInstruction(expressionValue, null));
                   expr.accept(this);
                   addInstruction(new BooleanBinaryInstruction(RelationType.EQ, true, new JavaSwitchLabelTakenAnchor(expr)));
-                  addInstruction(new ConditionalGotoInstruction(offset, DfTypes.TRUE));
+                  addInstruction(new ConditionalGotoInstruction(targetOffset, DfTypes.TRUE));
                 }
                 else {
                   pushUnknown();
-                  addInstruction(new ConditionalGotoInstruction(offset, DfTypes.TRUE));
+                  addInstruction(new ConditionalGotoInstruction(targetOffset, DfTypes.TRUE));
                 }
               }
               else if (expressionValue != null && targetType != null) {
                 if (labelElement instanceof PsiPattern pattern) {
                   processPatternInSwitch(pattern, expressionValue, targetType);
                   addInstruction(new ResultOfInstruction(new JavaSwitchLabelTakenAnchor(pattern)));
-                  addInstruction(new ConditionalGotoInstruction(offset, DfTypes.TRUE));
-                }
-                else if (labelElement instanceof PsiPatternGuard patternGuard) {
-                  processPatternInSwitch(patternGuard.getPattern(), expressionValue, targetType);
-                  PsiExpression guard = patternGuard.getGuardingExpression();
-                  DeferredOffset endGuardOffset = new DeferredOffset();
-                  if (guard != null) {
-                    addInstruction(new DupInstruction());
-                    addInstruction(new ConditionalGotoInstruction(endGuardOffset, DfTypes.FALSE));
-                    addInstruction(new PopInstruction());
-                    guard.accept(this);
-                  }
-                  endGuardOffset.setOffset(getInstructionCount());
-                  addInstruction(new ResultOfInstruction(new JavaSwitchLabelTakenAnchor(patternGuard)));
-                  addInstruction(new ConditionalGotoInstruction(offset, DfTypes.TRUE));
+                  addInstruction(new ConditionalGotoInstruction(targetOffset, DfTypes.TRUE));
                 }
               }
             }
+          }
+          if (guard != null) {
+            DeferredOffset endGuardOffset = new DeferredOffset();
+            addInstruction(new GotoInstruction(endGuardOffset));
+            ((DeferredOffset)targetOffset).setOffset(getInstructionCount());
+            guard.accept(this);
+            addInstruction(new ResultOfInstruction(new JavaSwitchLabelTakenAnchor(guard)));
+            addInstruction(new ConditionalGotoInstruction(targetOffset, DfTypes.TRUE));
+            endGuardOffset.setOffset(getInstructionCount());
           }
         }
         catch (IncorrectOperationException e) {
@@ -1121,24 +1118,6 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
   private void processPattern(@NotNull PsiPattern sourcePattern, @Nullable PsiPattern innerPattern,
                               @NotNull PsiType checkType, @Nullable DfaAnchor instanceofAnchor, @NotNull DeferredOffset endPatternOffset) {
     if (innerPattern == null) return;
-    if (innerPattern instanceof PsiGuardedPattern guardedPattern) {
-      PsiPrimaryPattern primaryPattern = guardedPattern.getPrimaryPattern();
-      processPattern(sourcePattern, primaryPattern, checkType, instanceofAnchor, endPatternOffset);
-      PsiExpression expression = guardedPattern.getGuardingExpression();
-      if (expression != null) {
-        expression.accept(this);
-      }
-      else {
-        addInstruction(new PushValueInstruction(DfTypes.BOOLEAN));
-      }
-      DeferredOffset condGotoOffset = new DeferredOffset();
-      addInstruction(new ConditionalGotoInstruction(condGotoOffset, DfTypes.TRUE));
-
-      addInstruction(new PushValueInstruction(DfTypes.FALSE));
-      addInstruction(new GotoInstruction(endPatternOffset));
-
-      condGotoOffset.setOffset(getInstructionCount());
-    }
     else if (innerPattern instanceof PsiParenthesizedPattern) {
       PsiPattern unwrappedPattern = JavaPsiPatternUtil.skipParenthesizedPatternDown(innerPattern);
       processPattern(sourcePattern, unwrappedPattern, checkType, instanceofAnchor, endPatternOffset);
@@ -1192,8 +1171,8 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
                                    @NotNull DeferredOffset endPatternOffset,
                                    @NotNull DfaVariableValue patternDfaVar,
                                    @Nullable DfaAnchor instanceofAnchor) {
-    boolean java19plus = PsiUtil.getLanguageLevel(myCodeFragment).isAtLeast(LanguageLevel.JDK_19_PREVIEW);
-    if (java19plus
+    boolean java20plus = PsiUtil.getLanguageLevel(myCodeFragment).isAtLeast(LanguageLevel.JDK_20_PREVIEW);
+    if (java20plus
         ? (sourcePattern == innerPattern || !JavaPsiPatternUtil.isUnconditionalForType(innerPattern, checkType))
         : !JavaPsiPatternUtil.isUnconditionalForType(innerPattern, checkType)) {
       addPatternTypeTest(innerPattern, instanceofAnchor, endPatternOffset, patternDfaVar);

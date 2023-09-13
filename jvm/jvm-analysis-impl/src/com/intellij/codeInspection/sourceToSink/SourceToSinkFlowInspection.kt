@@ -159,6 +159,9 @@ class SourceToSinkFlowInspection : AbstractBaseUastLocalInspectionTool() {
     if (firstAnnotation == null && untaintedParameterIndex.size == 0) {
       return PsiElementVisitor.EMPTY_VISITOR
     }
+    if (session.file.name.endsWith(".kts") || session.file.name.endsWith(".md")) {
+      return PsiElementVisitor.EMPTY_VISITOR
+    }
 
     val configuration = UntaintedConfiguration(taintedAnnotations = taintedAnnotations,
                                                unTaintedAnnotations = untaintedAnnotations,

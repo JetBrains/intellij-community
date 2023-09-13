@@ -116,12 +116,15 @@ public class ModuleUtilCore {
           return orderEntries.get(0).getOwnerModule();
         }
 
-        return orderEntries
+        Optional<Module> module = orderEntries
           .stream()
           .filter(entry -> entry instanceof LibraryOrSdkOrderEntry)
           .map(OrderEntry::getOwnerModule)
-          .min(ModuleManager.getInstance(project).moduleDependencyComparator())
-          .orElse(null);
+          .min(ModuleManager.getInstance(project).moduleDependencyComparator());
+        //there may be no LibraryOrSdkOrderEntry if the file is located under both module source root and a library root
+        if (module.isPresent()) {
+          return module.get();
+        }
       }
 
       return fileIndex.getModuleForFile(vFile);

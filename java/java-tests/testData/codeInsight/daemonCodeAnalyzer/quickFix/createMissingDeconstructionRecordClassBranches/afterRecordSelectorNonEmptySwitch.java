@@ -1,4 +1,4 @@
-// "Create missing branches: 'Pair<I>(D x, C y)', and 'Pair<I>(C x, C y)'" "true-preview"
+// "Create missing branches: 'Pair<I>(C x, C y)', and 'Pair<I>(D x, C y)'" "true-preview"
 sealed interface I permits C, D {}
 final class C implements I {}
 final class D implements I {}

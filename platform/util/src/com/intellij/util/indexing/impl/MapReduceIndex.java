@@ -81,7 +81,7 @@ public abstract class MapReduceIndex<Key,Value, Input> implements InvertedIndex<
     myLowMemoryFlusher = LowMemoryWatcher.register(() -> clearCaches());
   }
 
-  private void clearCaches() {
+  public void clearCaches() {
     try {
       myLock.readLock().lock();
       try {

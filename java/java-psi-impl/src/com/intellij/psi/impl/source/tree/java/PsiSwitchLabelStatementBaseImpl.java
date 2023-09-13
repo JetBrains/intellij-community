@@ -5,6 +5,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.impl.light.LightExpressionList;
 import com.intellij.psi.impl.source.tree.CompositePsiElement;
 import com.intellij.psi.scope.ElementClassFilter;
+import com.intellij.psi.scope.PatternResolveState;
 import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.psi.scope.processor.FilterScopeProcessor;
 import com.intellij.psi.tree.IElementType;
@@ -29,6 +30,11 @@ public abstract class PsiSwitchLabelStatementBaseImpl extends CompositePsiElemen
     PsiExpression[] expressions = PsiTreeUtil.getChildrenOfType(elementList, PsiExpression.class);
     expressions = expressions != null ? expressions : PsiExpression.EMPTY_ARRAY;
     return new LightExpressionList(getManager(), getLanguage(), expressions, elementList, elementList.getTextRange());
+  }
+
+  @Override
+  public @Nullable PsiExpression getGuardExpression() {
+    return PsiTreeUtil.getChildOfType(this, PsiExpression.class);
   }
 
   @Nullable
@@ -58,11 +64,17 @@ public abstract class PsiSwitchLabelStatementBaseImpl extends CompositePsiElemen
           if (type instanceof PsiClassType) {
             PsiClass aClass = ((PsiClassType)type).resolve();
             if (aClass != null) {
-              aClass.processDeclarations(new FilterScopeProcessor(ElementClassFilter.ENUM_CONST, processor), state, this, place);
+              if (!aClass.processDeclarations(new FilterScopeProcessor(ElementClassFilter.ENUM_CONST, processor), state, this, place)) {
+                return false;
+              }
             }
           }
         }
       }
+    }
+    PsiExpression guardExpression = getGuardExpression();
+    if (guardExpression != null) {
+      return guardExpression.processDeclarations(processor, PatternResolveState.WHEN_TRUE.putInto(state), null, place);
     }
 
     return true;

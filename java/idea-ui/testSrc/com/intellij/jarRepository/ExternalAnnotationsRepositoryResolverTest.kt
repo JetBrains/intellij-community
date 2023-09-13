@@ -5,6 +5,8 @@ import com.intellij.codeInsight.externalAnnotation.location.AnnotationsLocation
 import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.roots.AnnotationOrderRootType
 import com.intellij.openapi.roots.OrderRootType
+import com.intellij.platform.backend.workspace.workspaceModel
+import com.intellij.platform.workspace.storage.MutableEntityStorage
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.Test
 
@@ -171,5 +173,85 @@ class ExternalAnnotationsRepositoryResolverTest: LibraryTest() {
 
     assertEquals(2, libraryRootsChangedCounter)
   }
+
+
+  @Test fun `test annotations resolution using Workspace API`() {
+    val resolver = ExternalAnnotationsRepositoryResolver()
+    val library = createLibrary()
+
+    RemoteRepositoriesConfiguration.getInstance(myProject).repositories = listOf(myMavenRepoDescription)
+
+    MavenRepoFixture(myMavenRepo).apply {
+      addAnnotationsArtifact(version = "1.0-an1")
+      generateMavenMetadata("myGroup", "myArtifact")
+    }
+
+    val workspaceModel = myProject.workspaceModel
+    val diff = MutableEntityStorage.from(workspaceModel.currentSnapshot)
+    resolver.resolve(myProject, library, AnnotationsLocation("myGroup", "myArtifact", "1.0", myMavenRepoDescription.url), diff)
+    runWriteAction { workspaceModel.updateProjectModel("applying changes after test") { it.addDiff(diff)} }
+    assertTrue(library.getFiles(annotationsRootType).isNotEmpty())
+  }
+
+  @Test fun `test annotations resolution using Workspace API overrides existing roots`() {
+    val resolver = ExternalAnnotationsRepositoryResolver()
+    val library = createLibrary()
+    val modifiableModel = library.modifiableModel
+
+    modifiableModel.addRoot("file:///fake.url", annotationsRootType)
+    runWriteAction { modifiableModel.commit() }
+
+    assertThat(library.getUrls(annotationsRootType).single())
+      .endsWith("/fake.url")
+
+    RemoteRepositoriesConfiguration.getInstance(myProject).repositories = listOf(myMavenRepoDescription)
+
+    MavenRepoFixture(myMavenRepo).apply {
+      addAnnotationsArtifact(version = "1.0-an1")
+      generateMavenMetadata("myGroup", "myArtifact")
+    }
+
+    val workspaceModel = myProject.workspaceModel
+    val diff = MutableEntityStorage.from(workspaceModel.currentSnapshot)
+    resolver.resolve(myProject, library,  AnnotationsLocation("myGroup", "myArtifact", "1.0", myMavenRepoDescription.url), diff)
+    runWriteAction { workspaceModel.updateProjectModel("applying changes after test") { it.addDiff(diff)} }
+
+    assertThat(library.getUrls(annotationsRootType).single())
+      .endsWith("myGroup/myArtifact/1.0-an1/myArtifact-1.0-an1-annotations.zip!/")
+  }
+
+
+  @Test fun `test RootSetChanged should not be triggered resolving same artifact using Workspace API`() {
+    val resolver = ExternalAnnotationsRepositoryResolver()
+    val library = createLibrary()
+    var libraryRootsChangedCounter = 0
+    library.rootProvider.addRootSetChangedListener {
+      libraryRootsChangedCounter++
+    }
+
+    RemoteRepositoriesConfiguration.getInstance(myProject).repositories = listOf(myMavenRepoDescription)
+
+    MavenRepoFixture(myMavenRepo).apply {
+      addAnnotationsArtifact(artifact = "myArtifact", version = "1.0")
+      generateMavenMetadata("myGroup", "myArtifact")
+    }
+
+    val workspaceModel = myProject.workspaceModel
+    val diff1= MutableEntityStorage.from(workspaceModel.currentSnapshot)
+    resolver.resolve(myProject, library, AnnotationsLocation("myGroup", "myArtifact", "1.0", myMavenRepoDescription.url), diff1)
+    runWriteAction { workspaceModel.updateProjectModel("applying changes after test") { it.addDiff(diff1)} } // first write operation
+
+    val modifiableModel = library.modifiableModel
+    modifiableModel.addRoot("file:///fake.source", OrderRootType.SOURCES)
+    runWriteAction { modifiableModel.commit() } // second write operation
+
+    val diff2 = MutableEntityStorage.from(workspaceModel.currentSnapshot)
+    resolver.resolve(myProject, library, AnnotationsLocation("myGroup", "myArtifact", "1.0", myMavenRepoDescription.url), diff2)
+    assertFalse(diff2.hasChanges())
+    runWriteAction { workspaceModel.updateProjectModel("applying changes after test") { it.addDiff(diff2)} } // third write operation
+
+    assertTrue("Last library update should not cause root change events", libraryRootsChangedCounter < 3)
+  }
+
 
 }

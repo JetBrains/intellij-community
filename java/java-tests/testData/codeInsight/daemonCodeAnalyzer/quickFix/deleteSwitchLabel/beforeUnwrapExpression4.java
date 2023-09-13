@@ -5,7 +5,7 @@ class X {
         return switch (E.AA) {
             case A<caret>A: 
                 System.out.println(9);
-            case default: break 0;
+            default: break 0;
         };
     }
 }

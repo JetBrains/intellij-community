@@ -25,8 +25,8 @@ class MyTest {
         }
         switch (o) {
           case Double d      -> System.out.println("double");
-          case null, <warning descr="'default' branch not last case in 'switch' statement">default</warning> -> System.out.println("The rest (including null)");
           case String s      -> System.out.println("String");
+          case null, default -> System.out.println("The rest (including null)");
         }
     }
 }

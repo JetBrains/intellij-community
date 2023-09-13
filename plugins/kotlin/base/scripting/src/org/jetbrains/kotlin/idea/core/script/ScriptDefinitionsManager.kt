@@ -94,9 +94,6 @@ class ScriptDefinitionsManager(private val project: Project) : LazyScriptDefinit
         if (nonScriptId(locationId)) return null
 
         configurations?.tryGetScriptDefinitionFast(locationId)?.let { fastPath -> return fastPath }
-
-        if (!isReady()) return null
-
         scriptDefinitionsCacheLock.withLock { scriptDefinitionsCache.get(locationId) }?.let { cached -> return cached }
 
         val definition =
@@ -104,6 +101,7 @@ class ScriptDefinitionsManager(private val project: Project) : LazyScriptDefinit
                 // Scratch should always have default script definition
                 getDefaultDefinition()
             } else {
+                if (definitions == null) return DeferredScriptDefinition(script, this)
                 super.findDefinition(script) ?: return null
             }
 
@@ -112,6 +110,15 @@ class ScriptDefinitionsManager(private val project: Project) : LazyScriptDefinit
         }
 
         return definition
+    }
+
+    internal fun DeferredScriptDefinition.valueIfAny(): ScriptDefinition? {
+        if (definitions == null) return null
+
+        val locationId = requireNotNull(scriptCode.locationId)
+        configurations?.tryGetScriptDefinitionFast(locationId)?.let { fastPath -> return fastPath }
+        scriptDefinitionsCacheLock.withLock { scriptDefinitionsCache.get(locationId) }?.let { cached -> return cached }
+        return super.findDefinition(scriptCode)
     }
 
     private fun isScratchFile(script: SourceCode): Boolean {

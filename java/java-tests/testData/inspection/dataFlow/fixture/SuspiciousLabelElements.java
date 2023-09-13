@@ -18,7 +18,7 @@ public class DuplicateLabels {
         break;
       case <error descr="Duplicate unconditional pattern">Object oo</error>:
         break;
-      case <error descr="Duplicate unconditional pattern">Object oo when true</error>:
+      case <error descr="Duplicate unconditional pattern">Object oo</error> when true:
         break;
     }
   }
@@ -27,9 +27,9 @@ public class DuplicateLabels {
     switch (o) {
       case String ss when true:
         break;
-      case <error descr="Label is dominated by a preceding case label 'String ss when true'">String ss</error>:
+      case <error descr="Label is dominated by a preceding case label 'String ss'">String ss</error>:
         break;
-      case default:
+      default:
         break;
     }
   }

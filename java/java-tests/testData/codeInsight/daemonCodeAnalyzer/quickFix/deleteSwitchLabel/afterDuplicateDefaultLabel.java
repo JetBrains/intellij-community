@@ -5,7 +5,7 @@ class Main {
             case 1, 2:
                 System.out.println("A");
                 break;
-            case default:
+            default:
                 System.out.println("B");
         }
     }

@@ -386,4 +386,9 @@ public final class PyPsiRefactoringUtil {
 
     addSuperClassExpressions(project, clazz, superClassNames, null);
   }
+
+  public static boolean shouldCopyAnnotations(@NotNull PsiElement copiedElement, @NotNull PsiFile destFile) {
+    return !LanguageLevel.forElement(copiedElement).isPython2() &&
+           (!PyiUtil.isInsideStub(copiedElement) || PyiUtil.isPyiFileOfPackage(destFile));
+  }
 }

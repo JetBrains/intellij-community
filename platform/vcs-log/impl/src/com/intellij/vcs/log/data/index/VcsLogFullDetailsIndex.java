@@ -127,6 +127,10 @@ public class VcsLogFullDetailsIndex<T, D> implements Disposable {
     myMapReduceIndex.mapInputAndPrepareUpdate(commitId, details).compute();
   }
 
+  public void clearCaches() {
+    myMapReduceIndex.clearCaches();
+  }
+
   public void flush() throws StorageException {
     checkDisposed();
     myMapReduceIndex.flush();
@@ -166,7 +170,7 @@ public class VcsLogFullDetailsIndex<T, D> implements Disposable {
 
     MyMapIndexStorage(@NotNull String name, @NotNull StorageId.Directory storageId, @NotNull DataExternalizer<T> externalizer)
       throws IOException {
-      super(storageId.getStorageFile(name, true), EnumeratorIntegerDescriptor.INSTANCE, externalizer, 5000, false);
+      super(storageId.getStorageFile(name, true), EnumeratorIntegerDescriptor.INSTANCE, externalizer, 500, false);
       myName = name;
     }
 

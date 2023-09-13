@@ -31,7 +31,7 @@ import static com.intellij.codeInspection.options.OptPane.*;
 import static com.intellij.util.ObjectUtils.tryCast;
 
 public class EnhancedSwitchMigrationInspection extends AbstractBaseJavaLocalInspectionTool {
-  @SuppressWarnings("WeakerAccess") public boolean myWarnOnlyOnExpressionConversion;
+  @SuppressWarnings("WeakerAccess") public boolean myWarnOnlyOnExpressionConversion = true;
   @SuppressWarnings("WeakerAccess") public int myMaxNumberStatementsForBranch = 2;
 
   @Override
@@ -313,6 +313,12 @@ public class EnhancedSwitchMigrationInspection extends AbstractBaseJavaLocalInsp
     }
   }
 
+  /**
+   * This method is used to rearrange branches.
+   * Now it can change the order of branches or divide some branches into several separate branches.
+   * For example, a null branch will be extracted from others.
+   * @return rearranged branches
+   */
   @NotNull
   private static List<SwitchBranch> rearrangeBranches(@NotNull List<SwitchBranch> branches,
                                                       @NotNull PsiElement context) {
@@ -330,34 +336,46 @@ public class EnhancedSwitchMigrationInspection extends AbstractBaseJavaLocalInsp
         continue;
       }
       List<? extends PsiCaseLabelElement> caseExpressions = branch.myCaseExpressions;
-      if (caseExpressions == null) {
+      if (caseExpressions == null || caseExpressions.size() <= 1) {
         result.add(branch);
         continue;
       }
-      PsiCaseLabelElement nullLabel = findNullLabel(caseExpressions);
-      if (nullLabel == null) {
-        result.add(branch);
-        continue;
-      }
-      int index = caseExpressions.indexOf(nullLabel);
-      if (index == -1) {
-        result.add(branch);
-        continue;
-      }
-      List<? extends PsiCaseLabelElement> otherCases = new ArrayList<>(caseExpressions);
-      otherCases.remove(nullLabel);
-      SwitchBranch nullBranch = new SwitchBranch(branch.myIsDefault, List.of(nullLabel), branch.myRuleResult, branch.myUsedElements);
-      SwitchBranch otherBranch = new SwitchBranch(branch.myIsDefault, otherCases, branch.myRuleResult, branch.myUsedElements);
-      if (index == 0) {
-        result.add(nullBranch);
-        result.add(otherBranch);
-      }
-      else {
-        result.add(otherBranch);
-        result.add(nullBranch);
-      }
+      rearrangeCases(branch, caseExpressions, result);
     }
     return result;
+  }
+
+  /**
+   * This method is used to rearrange case elements.
+   * Method is used by {@link #rearrangeBranches(List, PsiElement)}.
+   * @param result - container, where sorted cases will be added
+   */
+  private static void rearrangeCases(@NotNull SwitchBranch branch,
+                                     @NotNull List<? extends PsiCaseLabelElement> caseExpressions,
+                                     @NotNull List<SwitchBranch> result) {
+    List<PsiCaseLabelElement> previousExpressions = new ArrayList<>();
+    for (PsiCaseLabelElement expression : caseExpressions) {
+      PsiCaseLabelElement external = findNullLabel(List.of(expression));
+      if (external == null && expression instanceof PsiPattern) {
+        external = expression;
+      }
+      if (external == null) {
+        previousExpressions.add(expression);
+      }
+      else {
+        if (!previousExpressions.isEmpty()) {
+          SwitchBranch otherBranch = branch.withLabels(new ArrayList<>(previousExpressions));
+          result.add(otherBranch);
+          previousExpressions.clear();
+        }
+        SwitchBranch specialBranch = branch.withLabels(List.of(external));
+        result.add(specialBranch);
+      }
+    }
+    if (!previousExpressions.isEmpty()) {
+      SwitchBranch otherBranch = branch.withLabels(previousExpressions);
+      result.add(otherBranch);
+    }
   }
 
   @Nullable
@@ -451,6 +469,9 @@ public class EnhancedSwitchMigrationInspection extends AbstractBaseJavaLocalInsp
       if (!isConvertibleBranch(branch, i != size - 1)) return null;
       if (branch.isFallthrough()) continue;
       PsiStatement[] statements = branch.getStatements();
+      if (statements.length == 1 && statements[0] instanceof PsiBlockStatement psiCodeBlock) {
+        statements = psiCodeBlock.getCodeBlock().getStatements();
+      }
       if (statements.length == 0) {
         return null;
       }
@@ -461,12 +482,20 @@ public class EnhancedSwitchMigrationInspection extends AbstractBaseJavaLocalInsp
         isInfo = true;
       }
       int lastIndex = statements.length - 1;
+      if (ContainerUtil.exists(statements,
+                               st -> !PsiTreeUtil.findChildrenOfAnyType(st, PsiContinueStatement.class, PsiBreakStatement.class, PsiYieldStatement.class).isEmpty())) {
+        return null;
+      }
       PsiReturnStatement returnStmt = tryCast(statements[lastIndex], PsiReturnStatement.class);
       SwitchRuleResult result;
       if (returnStmt == null) {
         PsiThrowStatement throwStatement = tryCast(statements[lastIndex], PsiThrowStatement.class);
         if (throwStatement == null) return null;
-        result = new SwitchStatementBranch(statements);
+        PsiStatement[]psiStatements = replaceAllReturnWithYield(statements);
+        if (psiStatements == null) {
+          return null;
+        }
+        result = new SwitchStatementBranch(psiStatements);
       }
       else {
         PsiExpression returnExpr = returnStmt.getReturnValue();
@@ -475,23 +504,21 @@ public class EnhancedSwitchMigrationInspection extends AbstractBaseJavaLocalInsp
           result = new SwitchRuleExpressionResult(returnExpr);
         }
         else {
-          result = new SwitchStatementBranch(withLastStatementReplacedWithYield(statements, returnExpr));
+          PsiStatement[] psiStatements = replaceAllReturnWithYield(statements);
+          if (psiStatements == null) {
+            return null;
+          }
+          result = new SwitchStatementBranch(psiStatements);
         }
         hasReturningBranch = true;
       }
-      newBranches.add(new SwitchBranch(branch.isDefault(),
-                                       branch.getCaseLabelElements(),
-                                       result,
-                                       branch.getUsedElements()));
+      newBranches.add(SwitchBranch.fromOldBranch(branch, result, branch.getUsedElements()));
     }
     if (!hasReturningBranch) return null;
     if (!isExhaustive) {
       PsiExpression returnExpr = returnAfterSwitch.getReturnValue();
       if (returnExpr == null) return null;
-      newBranches.add(new SwitchBranch(true,
-                                       Collections.emptyList(),
-                                       new SwitchRuleExpressionResult(returnExpr),
-                                       Collections.emptyList()));
+      newBranches.add(SwitchBranch.createDefault(new SwitchRuleExpressionResult(returnExpr)));
     }
     List<PsiStatement> statementsToDelete = new ArrayList<>();
     if (isExhaustive && returnAfterSwitch == null) {
@@ -510,6 +537,32 @@ public class EnhancedSwitchMigrationInspection extends AbstractBaseJavaLocalInsp
       }
     }
     return new ReturningSwitchReplacer(statement, newBranches, returnAfterSwitch, statementsToDelete, isInfo, maxLines);
+  }
+
+  private static PsiStatement @Nullable [] replaceAllReturnWithYield(PsiStatement[] statements) {
+    PsiStatement[] result = ArrayUtil.copyOf(statements);
+    for (int i = 0; i < statements.length; i++) {
+      PsiStatement statement = result[i];
+      if (statement instanceof PsiReturnStatement returnStatement) {
+        PsiExpression returnValue = returnStatement.getReturnValue();
+        if (returnValue == null) {
+          return null;
+        }
+        result[i] = createYieldStatement(returnValue);
+        continue;
+      }
+      PsiStatement copy = (PsiStatement)statement.copy();
+      result[i] = copy;
+      Collection<PsiReturnStatement> returnStatements = PsiTreeUtil.findChildrenOfType(copy, PsiReturnStatement.class);
+      for (PsiReturnStatement returnStatement : returnStatements) {
+        PsiExpression returnValue = returnStatement.getReturnValue();
+        if (returnValue == null) {
+          return null;
+        }
+        returnStatement.replace(createYieldStatement(returnValue));
+      }
+    }
+    return result;
   }
 
   private static PsiStatement[] withLastStatementReplacedWithYield(PsiStatement[] statements, @NotNull PsiExpression expr) {
@@ -640,6 +693,15 @@ public class EnhancedSwitchMigrationInspection extends AbstractBaseJavaLocalInsp
       PsiStatement[] statements = branch.getStatements();
       if (branch.isFallthrough() && statements.length == 0) continue;
       if (statements.length == 0) return null;
+      if (ContainerUtil.exists(statements,
+                               st -> !PsiTreeUtil.findChildrenOfAnyType(st, PsiContinueStatement.class,
+                                                                        PsiYieldStatement.class, PsiReturnStatement.class).isEmpty())) {
+        return null;
+      }
+      if (ContainerUtil.exists(Arrays.stream(statements).toList().subList(0, statements.length - 1),
+                               st -> !PsiTreeUtil.findChildrenOfAnyType(st, PsiBreakStatement.class).isEmpty())) {
+        return null;
+      }
       if (statements.length > maxNumberStatementsForExpression) {
         isInfo = true;
       }
@@ -675,14 +737,13 @@ public class EnhancedSwitchMigrationInspection extends AbstractBaseJavaLocalInsp
           result = new SwitchStatementBranch(withLastStatementReplacedWithYield(statements, rExpression));
         }
       }
-      boolean isDefault = branch.isDefault();
-      if (isDefault) {
+      if (branch.isDefault()) {
         wasDefault = true;
       }
       else {
         wasDefault = existsDefaultLabelElement(branch.myLabelStatement);
       }
-      newBranches.add(new SwitchBranch(isDefault, branch.getCaseLabelElements(), result, branch.getRelatedStatements()));
+      newBranches.add(SwitchBranch.fromOldBranch(branch, result, branch.getRelatedStatements()));
     }
     if (assignedVariable == null || !hasAssignedBranch) return null;
     boolean isRightAfterDeclaration = isRightAfterDeclaration(anchor, assignedVariable);
@@ -710,16 +771,27 @@ public class EnhancedSwitchMigrationInspection extends AbstractBaseJavaLocalInsp
                                                                                                   @NotNull PsiStatement statement) {
     if (assignedVariable == null) return null;
     PsiExpression initializer = assignedVariable.getInitializer();
-    if (isRightAfterDeclaration && initializer != null) {
-      return new SwitchBranch(true, Collections.emptyList(), new SwitchRuleExpressionResult(initializer), Collections.emptyList());
+    if (isRightAfterDeclaration && initializer instanceof PsiLiteralExpression) {
+      return SwitchBranch.createDefault(new SwitchRuleExpressionResult(initializer));
     }
     PsiDeclarationStatement declaration = tryCast(assignedVariable.getParent(), PsiDeclarationStatement.class);
-    if (declaration == null) return null;
-    if (!VariableAccessUtils.variableIsAssignedAtPoint(assignedVariable, declaration.getParent(), statement)) return null;
+    if (declaration == null || declaration.getParent()==null) return null;
+    try {
+      final LocalsOrMyInstanceFieldsControlFlowPolicy policy = LocalsOrMyInstanceFieldsControlFlowPolicy.getInstance();
+      final ControlFlow controlFlow = ControlFlowFactory.getInstance(declaration.getProject()).getControlFlow(declaration.getParent(), policy);
+      final int switchStart = controlFlow.getStartOffset(statement);
+      final ControlFlow beforeFlow = new ControlFlowSubRange(controlFlow, 0, switchStart);
+      if (!ControlFlowUtil.isVariableDefinitelyAssigned(assignedVariable, beforeFlow)) {
+        return null;
+      }
+    }
+    catch (AnalysisCanceledException e) {
+      return null;
+    }
     Project project = assignedVariable.getProject();
     PsiElementFactory factory = JavaPsiFacade.getInstance(project).getElementFactory();
     PsiExpression reference = factory.createExpressionFromText(assignedVariable.getName(), assignedVariable);
-    return new SwitchBranch(true, Collections.emptyList(), new SwitchRuleExpressionResult(reference), Collections.emptyList());
+    return SwitchBranch.createDefault(new SwitchRuleExpressionResult(reference));
   }
 
   private static boolean isRightAfterDeclaration(PsiElement anchor, PsiVariable assignedVariable) {
@@ -802,9 +874,7 @@ public class EnhancedSwitchMigrationInspection extends AbstractBaseJavaLocalInsp
       if (!allBranchRefsWillBeValid) return null;
       if (branch.isFallthrough() && branch.getStatements().length == 0) continue;
       PsiStatement[] statements = branch.getStatements();
-      switchRules.add(new SwitchBranch(branch.isDefault(), branch.getCaseLabelElements(),
-                                       new SwitchStatementBranch(statements),
-                                       branch.getRelatedStatements()));
+      switchRules.add(SwitchBranch.fromOldBranch(branch, new SwitchStatementBranch(statements), branch.getRelatedStatements()));
     }
     return new SwitchStatementReplacer(statement, switchRules);
   }
@@ -868,14 +938,16 @@ public class EnhancedSwitchMigrationInspection extends AbstractBaseJavaLocalInsp
   private static final class SwitchBranch {
     final boolean myIsDefault;
     final List<? extends PsiCaseLabelElement> myCaseExpressions;
-    @NotNull final List<? extends PsiElement> myUsedElements; // used elements only for this branch
-    private final SwitchRuleResult myRuleResult;
+    final @Nullable PsiExpression myGuard;
+    final @NotNull List<? extends PsiElement> myUsedElements; // used elements only for this branch
+    private final @NotNull SwitchRuleResult myRuleResult;
 
     private SwitchBranch(boolean isDefault,
                          List<? extends PsiCaseLabelElement> caseExpressions,
-                         SwitchRuleResult ruleResult,
+                         @Nullable PsiExpression guard, @NotNull SwitchRuleResult ruleResult,
                          @NotNull List<? extends PsiElement> usedElements) {
       myIsDefault = isDefault;
+      myGuard = guard;
       if (isDefault) {
         //if preview is disabled, only default can be used
         //in preview 20, we can combine default with null only
@@ -917,6 +989,9 @@ public class EnhancedSwitchMigrationInspection extends AbstractBaseJavaLocalInsp
         }
         sb.append("default");
       }
+      if (myGuard != null) {
+        sb.append(" when ").append(ct.text(myGuard));
+      }
       grabCommentsBeforeColon(label, ct, sb);
       sb.append("->");
       sb.append(myRuleResult.generate(ct));
@@ -933,6 +1008,21 @@ public class EnhancedSwitchMigrationInspection extends AbstractBaseJavaLocalInsp
           sb.append(ct.commentsBefore(child));
         }
       }
+    }
+
+    @NotNull
+    private SwitchBranch withLabels(@NotNull List<PsiCaseLabelElement> caseElements) {
+      return new SwitchBranch(myIsDefault, caseElements, myGuard, myRuleResult, myUsedElements);
+    }
+
+    private static @NotNull SwitchBranch createDefault(@NotNull SwitchRuleResult ruleResult) {
+      return new SwitchBranch(true, Collections.emptyList(), null, ruleResult, Collections.emptyList());
+    }
+
+    private static @NotNull SwitchBranch fromOldBranch(@NotNull OldSwitchStatementBranch branch,
+                                                       @NotNull SwitchRuleResult result,
+                                                       @NotNull List<? extends PsiElement> usedElements) {
+      return new SwitchBranch(branch.isDefault(), branch.getCaseLabelElements(), branch.getGuardExpression(), result, usedElements);
     }
   }
 
@@ -962,6 +1052,10 @@ public class EnhancedSwitchMigrationInspection extends AbstractBaseJavaLocalInsp
       return myIsFallthrough;
     }
 
+    public @Nullable PsiExpression getGuardExpression() {
+      return myLabelStatement.getGuardExpression();
+    }
+    
     private List<PsiCaseLabelElement> getCaseLabelElements() {
       List<OldSwitchStatementBranch> branches = getWithFallthroughBranches();
       Collections.reverse(branches);

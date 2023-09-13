@@ -51,7 +51,7 @@ def _load_latest_dbghelp_dll():
 
     program_files_location = getenv("ProgramFiles")
     if not program_files_location:
-        program_files_location = "C:\Program Files"
+        program_files_location = "C:\\Program Files"
         
     program_files_x86_location = getenv("ProgramFiles(x86)")
         

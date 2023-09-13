@@ -28,6 +28,17 @@ interface WorkspaceModelChangeListener : EventListener {
 }
 
 /**
+ * See documentation in [WorkspaceModelChangeListener] to understand how events are constructed
+ */
+public interface WorkspaceModelUnloadedStorageChangeListener : EventListener {
+  /**
+   * This method is invoked under Write Action after changes are applied.
+   * If its implementation involves heavy computations, it's better to schedule its execution on a separate thread to avoid blocking Event Dispatch Thread.
+   */
+  public fun changed(event: VersionedStorageChange)
+}
+
+/**
  * Topics to subscribe to Workspace changes.
  *
  * For the asynchronous approach please consider to collect changes from [com.intellij.workspaceModel.ide.WorkspaceModel.changesEventFlow]
@@ -45,7 +56,8 @@ class WorkspaceModelTopics : Disposable {
      */
     @Topic.ProjectLevel
     @JvmField
-    val UNLOADED_ENTITIES_CHANGED: Topic<WorkspaceModelChangeListener> = Topic(WorkspaceModelChangeListener::class.java,
+    val UNLOADED_ENTITIES_CHANGED: Topic<WorkspaceModelUnloadedStorageChangeListener> = Topic(
+      WorkspaceModelUnloadedStorageChangeListener::class.java,
                                                                                Topic.BroadcastDirection.NONE, true)
 
     fun getInstance(project: Project): WorkspaceModelTopics = project.service()

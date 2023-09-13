@@ -221,7 +221,7 @@ class Thread (object):
                                         win32.THREAD_QUERY_LIMITED_INFORMATION)
                     self.dwProcessId = win32.GetProcessIdOfThread(hThread)
                 except AttributeError:
-                    # This method really sucks :P
+                    # This method is really bad :P
                     self.dwProcessId = self.__get_pid_by_scanning()
         return self.dwProcessId
 
@@ -375,7 +375,7 @@ class Thread (object):
         win32.TerminateThread(hThread, dwExitCode)
 
         # Ugliest hack ever, won't work if many pieces of code are injected.
-        # Seriously, what was I thinking? Lame! :(
+        # Seriously, what was I thinking? :(
         if self.pInjectedMemory is not None:
             try:
                 self.get_process().free(self.pInjectedMemory)

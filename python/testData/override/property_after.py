@@ -7,5 +7,5 @@ class C(object):
 class D(C):
     @property
     def foo(self):
-        return super(D, self).foo
+        return super().foo
 

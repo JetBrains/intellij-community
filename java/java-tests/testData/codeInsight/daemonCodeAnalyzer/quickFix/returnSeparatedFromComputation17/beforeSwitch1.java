@@ -9,7 +9,7 @@ class T {
             case 2:
                 n = 4;
                 break;
-            case default:
+            default:
                 n = 0;
                 break;
             case 3:

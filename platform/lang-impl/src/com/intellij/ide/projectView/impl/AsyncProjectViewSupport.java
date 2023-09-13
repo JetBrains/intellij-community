@@ -144,9 +144,19 @@ public class AsyncProjectViewSupport {
   }
 
   public ActionCallback select(JTree tree, Object object, VirtualFile file) {
+    if (SelectInProjectViewImplKt.getLOG().isDebugEnabled()) {
+      SelectInProjectViewImplKt.getLOG().debug(
+        "AsyncProjectViewSupport.select: " +
+        "object=" + object
+        + ", file=" + file
+      );
+    }
     if (object instanceof AbstractTreeNode node) {
       object = node.getValue();
       LOG.debug("select AbstractTreeNode");
+      if (SelectInProjectViewImplKt.getLOG().isDebugEnabled()) {
+        SelectInProjectViewImplKt.getLOG().debug("Retrieved the value from the node: " + object);
+      }
     }
     PsiElement element = object instanceof PsiElement ? (PsiElement)object : null;
     LOG.debug("select object: ", object, " in file: ", file);
@@ -156,22 +166,47 @@ public class AsyncProjectViewSupport {
 
     ActionCallback callback = new ActionCallback();
     //noinspection CodeBlock2Expr
+    SelectInProjectViewImplKt.getLOG().debug("Updating nodes before selecting");
     myNodeUpdater.updateImmediately(() -> expand(tree, promise -> {
+      SelectInProjectViewImplKt.getLOG().debug("Updated nodes");
       promise.onSuccess(o -> callback.setDone());
+      if (SelectInProjectViewImplKt.getLOG().isDebugEnabled()) {
+        SelectInProjectViewImplKt.getLOG().debug("Collecting paths to select");
+      }
       acceptOnEDT(visitor, () -> {
-        if (selectPaths(tree, pathsToSelect, visitor) ||
+        if (SelectInProjectViewImplKt.getLOG().isDebugEnabled()) {
+          SelectInProjectViewImplKt.getLOG().debug("Collected paths to the element: " + pathsToSelect);
+        }
+        boolean selected = selectPaths(tree, pathsToSelect, visitor);
+        if (selected ||
             element == null ||
             file == null ||
             Registry.is("async.project.view.support.extra.select.disabled")) {
+          if (selected) {
+            SelectInProjectViewImplKt.getLOG().debug("Selected successfully. Done");
+          }
+          else {
+            SelectInProjectViewImplKt.getLOG().debug("Couldn't select, but there's nothing else to do. Done");
+          }
           promise.setResult(null);
         }
         else {
+          SelectInProjectViewImplKt.getLOG().debug("Couldn't select the element, falling back to selecting the file");
           // try to search the specified file instead of element,
           // because Kotlin files cannot represent containing functions
           pathsToSelect.clear();
           TreeVisitor fileVisitor = AbstractProjectViewPane.createVisitor(null, file, pathsToSelect);
           acceptOnEDT(fileVisitor, () -> {
-            selectPaths(tree, pathsToSelect, fileVisitor);
+            if (SelectInProjectViewImplKt.getLOG().isDebugEnabled()) {
+              SelectInProjectViewImplKt.getLOG().debug("Collected paths to the file: " + pathsToSelect);
+            }
+            boolean selectedFile = selectPaths(tree, pathsToSelect, fileVisitor);
+            if (selectedFile) {
+              SelectInProjectViewImplKt.getLOG().debug("Selected successfully. Done");
+            }
+            else {
+              SelectInProjectViewImplKt.getLOG().debug("Couldn't select, but there's nothing else to do. Done");
+            }
             promise.setResult(null);
           });
         }
@@ -185,7 +220,10 @@ public class AsyncProjectViewSupport {
   }
 
   private static boolean selectPaths(@NotNull JTree tree, @NotNull List<TreePath> paths, @NotNull TreeVisitor visitor) {
-    if (paths.isEmpty()) return false;
+    if (paths.isEmpty()) {
+      SelectInProjectViewImplKt.getLOG().debug("Nothing to select");
+      return false;
+    }
     if (paths.size() > 1) {
       if (visitor instanceof ProjectViewNodeVisitor nodeVisitor) {
         return selectPaths(tree, new SelectionDescriptor(nodeVisitor.getElement(), nodeVisitor.getFile(), paths));
@@ -197,6 +235,9 @@ public class AsyncProjectViewSupport {
     TreePath path = paths.get(0);
     tree.expandPath(path); // request to expand found path
     TreeUtil.selectPaths(tree, path); // select and scroll to center
+    if (SelectInProjectViewImplKt.getLOG().isDebugEnabled()) {
+      SelectInProjectViewImplKt.getLOG().debug("Selected the only path: " + path);
+    }
     return true;
   }
 
@@ -204,6 +245,9 @@ public class AsyncProjectViewSupport {
     List<? extends TreePath> adjustedPaths = ProjectViewPaneSelectionHelper.getAdjustedPaths(selectionDescriptor);
     adjustedPaths.forEach(it -> tree.expandPath(it));
     TreeUtil.selectPaths(tree, adjustedPaths);
+    if (SelectInProjectViewImplKt.getLOG().isDebugEnabled()) {
+      SelectInProjectViewImplKt.getLOG().debug("Selected paths adjusted according to " + selectionDescriptor + ": " + adjustedPaths);
+    }
     return true;
   }
 

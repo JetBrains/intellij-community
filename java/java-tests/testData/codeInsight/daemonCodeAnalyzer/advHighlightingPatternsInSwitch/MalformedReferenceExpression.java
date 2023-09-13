@@ -26,17 +26,17 @@ class Test {
     switch (n) {
       case <error descr="Type pattern expected">MyNumber</error>: break;
       case <error descr="Type pattern expected">Integer</error><error descr="':' or '->' expected"> </error>break;
-      case default: break;
+      default: break;
     }
     result = switch (n) {
       case <error descr="Type pattern expected">MyNumber</error>: yield 1;
       case Float ignored: yield 2;
-      case default: yield 3;
+      default: yield 3;
     };
     result = switch (n) {
       case <error descr="Type pattern expected">MyNumber</error> -> 1;
       case Float ignored -> 2;
-      case default -> 3;
+      default -> 3;
     };
   }
 }

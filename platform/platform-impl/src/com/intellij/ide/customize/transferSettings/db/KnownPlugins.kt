@@ -2,7 +2,10 @@
 package com.intellij.ide.customize.transferSettings.db
 
 import com.intellij.ide.customize.transferSettings.models.BuiltInFeature
+import com.intellij.ide.customize.transferSettings.models.FeatureInfo
 import com.intellij.ide.customize.transferSettings.models.PluginFeature
+import com.intellij.ide.plugins.PluginManager
+import com.intellij.openapi.extensions.PluginId
 
 object KnownPlugins {
   val ReSharper: BuiltInFeature = BuiltInFeature("ReSharper", isHidden = true)
@@ -23,7 +26,13 @@ object KnownPlugins {
   val LanguageSupport: BuiltInFeature = BuiltInFeature("Language Support")
   val DotNetDecompiler: BuiltInFeature = BuiltInFeature(".NET Decompiler")
   val DatabaseSupport: BuiltInFeature = BuiltInFeature("Database Support")
-  val TSLint: BuiltInFeature = BuiltInFeature("TSLint")
+  val TSLint: FeatureInfo =
+    if (PluginManager.isPluginInstalled(PluginId.getId("tslint")))
+      BuiltInFeature("TSLint")
+    else
+      PluginFeature("tslint", "TSLint")
+
+  val Rust: BuiltInFeature = BuiltInFeature("Rust Support")
 
   // Plugins
 

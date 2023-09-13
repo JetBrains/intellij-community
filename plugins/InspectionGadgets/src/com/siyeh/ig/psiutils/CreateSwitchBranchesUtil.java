@@ -12,6 +12,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Couple;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
+import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.codeStyle.VariableKind;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
@@ -65,11 +66,19 @@ public final class CreateSwitchBranchesUtil {
                                                                         @NotNull List<String> allNames,
                                                                         @NotNull Collection<String> missingNames,
                                                                         @NotNull Function<? super PsiSwitchLabelStatementBase, ? extends List<String>> caseExtractor) {
+    final JavaCodeStyleManager javaCodeStyleManager = JavaCodeStyleManager.getInstance(switchBlock.getProject());
     boolean isRuleBasedFormat = SwitchUtils.isRuleFormatSwitch(switchBlock);
     final PsiCodeBlock body = switchBlock.getBody();
     final PsiExpression switchExpression = switchBlock.getExpression();
     PsiClass selectorClass = PsiUtil.resolveClassInClassTypeOnly(switchExpression != null ? switchExpression.getType() : null);
-    boolean isPatternsGenerated = selectorClass != null && !selectorClass.isEnum() && selectorClass.hasModifierProperty(PsiModifier.SEALED);
+    boolean hasSealedClass = selectorClass != null &&
+                             (selectorClass.hasModifierProperty(PsiModifier.SEALED) ||
+                              (selectorClass instanceof PsiTypeParameter typeParameter &&
+                               ContainerUtil.exists(typeParameter.getExtendsListTypes(), extType -> {
+                                 PsiClass psiClass = PsiUtil.resolveClassInClassTypeOnly(extType);
+                                 return psiClass != null && psiClass.hasModifierProperty(PsiModifier.SEALED);
+                               })));
+    boolean isPatternsGenerated = selectorClass != null && !selectorClass.isEnum() && hasSealedClass;
     if (body == null) {
       // replace entire switch statement if no code block is present
       @NonNls final StringBuilder newStatementText = new StringBuilder();
@@ -80,6 +89,7 @@ public final class CreateSwitchBranchesUtil {
       }
       newStatementText.append('}');
       PsiSwitchBlock block = (PsiSwitchBlock)commentTracker.replaceAndRestoreComments(switchBlock, newStatementText.toString());
+      javaCodeStyleManager.shortenClassReferences(block);
       return PsiTreeUtil.getChildrenOfTypeAsList(block.getBody(), PsiSwitchLabelStatementBase.class);
     }
     Map<String, String> prevToNext = StreamEx.of(allNames).pairMap(Couple::of).toMap(c -> c.getFirst(), c -> c.getSecond());
@@ -115,6 +125,7 @@ public final class CreateSwitchBranchesUtil {
         addedLabels.add(addSwitchLabelStatementBefore(missingElement, lastChild, switchBlock, isRuleBasedFormat, isPatternsGenerated));
       }
     }
+    addedLabels.forEach(label -> javaCodeStyleManager.shortenClassReferences(label));
     return addedLabels;
   }
 

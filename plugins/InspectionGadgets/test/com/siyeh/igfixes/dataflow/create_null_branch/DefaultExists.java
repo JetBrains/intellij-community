@@ -6,7 +6,7 @@ class Test {
       case 1:
         System.out.println();
         break;
-      case default:
+      default:
         break;
     }
   }

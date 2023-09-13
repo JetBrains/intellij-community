@@ -8,7 +8,8 @@ class Main {
     switch (x<caret>) {
       case A -> System.out.println("foo");
       case C, D -> System.out.println("bar");
-      case F, null -> System.out.println("baz");
+      case F -> System.out.println("baz");
+      case null -> System.out.println("baz");
     };
   }
 }

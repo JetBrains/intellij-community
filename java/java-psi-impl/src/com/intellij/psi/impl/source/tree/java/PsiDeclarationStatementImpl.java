@@ -119,6 +119,7 @@ public class PsiDeclarationStatementImpl extends CompositePsiElement implements 
 
     for (PsiElement element : getDeclaredElements()) {
       if (element != lastParent) {
+        if (element instanceof PsiVariable && ((PsiVariable)element).isUnnamed()) continue;
         if (!processor.execute(element, state)) return false;
       }
       else {

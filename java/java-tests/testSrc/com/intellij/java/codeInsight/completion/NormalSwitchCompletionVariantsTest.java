@@ -13,7 +13,7 @@ import java.util.List;
 
 public class NormalSwitchCompletionVariantsTest extends LightFixtureCompletionTestCase {
   private static final String[] COMMON_VARIANTS = {"case", "default"};
-  private static final String[] COMMON_OBJECT_VARIANTS = ArrayUtil.mergeArrays(COMMON_VARIANTS, "case null", "case default");
+  private static final String[] COMMON_OBJECT_VARIANTS = ArrayUtil.mergeArrays(COMMON_VARIANTS, "case null", "case null, default");
 
   @Override
   protected String getBasePath() {
@@ -23,13 +23,36 @@ public class NormalSwitchCompletionVariantsTest extends LightFixtureCompletionTe
   @NotNull
   @Override
   protected LightProjectDescriptor getProjectDescriptor() {
-    return JAVA_20;
+    return JAVA_21;
   }
 
   public void testCompletionPrimitiveTypeExpr() { doTest(COMMON_VARIANTS); }
   public void testCompletionPrimitiveTypeStmt() { doTest(COMMON_VARIANTS); }
   public void testCompletionVariantsInStmt() { doTest(COMMON_OBJECT_VARIANTS); }
   public void testCompletionVariantsInExpr() { doTest(COMMON_OBJECT_VARIANTS); }
+  public void testCompletionWhenAfterTypeTest() {
+    List<String> lookup = doTestAndGetLookup();
+    assertContainsElements(lookup, "when");
+  }
+  public void testCompletionWhenAfterDeconstruction() {
+    List<String> lookup = doTestAndGetLookup();
+    assertContainsElements(lookup, "when");
+  }
+  public void testCompletionWhenAfterPartDeconstruction() {
+    List<String> lookup = doTestAndGetLookup();
+    if (lookup != null) {
+      assertDoesntContain(lookup, "when");
+    }
+    //if null - it is ok
+  }
+
+  public void testCompletionWhenAfterPartTypeTest() {
+    List<String> lookup = doTestAndGetLookup();
+    if (lookup != null) {
+      assertDoesntContain(lookup, "when");
+    }
+    //if null - it is ok
+  }
 
   @NeedsIndex.Full
   public void testCompletionSealedHierarchyStmt() {
@@ -42,10 +65,13 @@ public class NormalSwitchCompletionVariantsTest extends LightFixtureCompletionTe
   }
 
   private void doTest(String[] variants) {
+    final List<String> lookupElementStrings =doTestAndGetLookup();
+    assertSameElements(lookupElementStrings, variants);
+  }
+  private List<String> doTestAndGetLookup() {
     myFixture.configureByFile(getTestName(false) + ".java");
     myFixture.complete(CompletionType.BASIC);
 
-    final List<String> lookupElementStrings = myFixture.getLookupElementStrings();
-    assertSameElements(lookupElementStrings, variants);
+    return myFixture.getLookupElementStrings();
   }
 }

@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight;
 
 import com.intellij.openapi.util.Pair;
@@ -83,6 +83,12 @@ public final class ExceptionUtil {
       @Override
       public void visitClass(@NotNull PsiClass aClass) {
         // do not go inside class declaration
+      }
+
+      @Override
+      public void visitTemplateExpression(@NotNull PsiTemplateExpression expression) {
+        addExceptions(result, getUnhandledProcessorExceptions(expression, element));
+        super.visitTemplateExpression(expression);
       }
 
       @Override
@@ -266,6 +272,9 @@ public final class ExceptionUtil {
       PsiCallExpression expression = (PsiCallExpression)element;
       unhandledExceptions = getUnhandledExceptions(expression, topElement, callFilter);
     }
+    else if (element instanceof PsiTemplateExpression) {
+      unhandledExceptions = getUnhandledProcessorExceptions((PsiTemplateExpression)element, topElement);
+    }
     else if (element instanceof PsiMethodReferenceExpression) {
       PsiExpression qualifierExpression = ((PsiMethodReferenceExpression)element).getQualifierExpression();
       return qualifierExpression != null ? collectUnhandledExceptions(qualifierExpression, topElement, null, callFilter)
@@ -423,6 +432,9 @@ public final class ExceptionUtil {
     }
     if (element instanceof PsiResourceListElement) {
       return getUnhandledCloserExceptions((PsiResourceListElement)element, null);
+    }
+    if (element instanceof PsiTemplateExpression) {
+      return getUnhandledProcessorExceptions((PsiTemplateExpression)element, null);
     }
     return Collections.emptyList();
   }
@@ -596,6 +608,30 @@ public final class ExceptionUtil {
       }
     }
     return ex;
+  }
+
+  @NotNull
+  private static List<PsiClassType> getUnhandledProcessorExceptions(@NotNull PsiTemplateExpression templateExpression,
+                                                                    @Nullable PsiElement topElement) {
+    PsiExpression processor = templateExpression.getProcessor();
+    if (processor == null) return Collections.emptyList();
+    PsiType type = processor.getType();
+    List<PsiClassType> result = new ArrayList<>();
+    for (PsiClassType classType : PsiTypesUtil.getClassTypeComponents(type)) {
+      // Currently, generic parameter type is considered as unhandled exception; not actual exceptions declared by 'process' method
+      PsiType substituted = PsiUtil.substituteTypeParameter(classType, "java.lang.StringTemplate.Processor", 1, false);
+      if (substituted instanceof PsiCapturedWildcardType) {
+        PsiCapturedWildcardType wildcardType = (PsiCapturedWildcardType)substituted;
+        substituted = wildcardType.getUpperBound();
+      }
+      if (!(substituted instanceof PsiClassType)) continue;
+      PsiClassType exceptionType = (PsiClassType)substituted;
+      if (!isUncheckedException(exceptionType) &&
+          getHandlePlace(templateExpression, exceptionType, topElement) == HandlePlace.UNHANDLED) {
+        result.add(exceptionType);
+      }
+    }
+    return result;
   }
 
   @NotNull

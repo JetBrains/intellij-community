@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gradle.dsl.versionCatalogs
 
 import com.intellij.psi.util.parentOfType
@@ -75,6 +75,28 @@ class GradleVersionCatalogsResolveTest : GradleCodeInsightTestCase() {
 
   @ParameterizedTest
   @BaseGradleVersionSource
+  fun testNavigationToTomlEntry3(gradleVersion: GradleVersion) {
+    test(gradleVersion, BASE_VERSION_CATALOG_FIXTURE) {
+      testGotoDefinition("libs.groovy.n<caret>io") {
+        assertInstanceOf(TomlKeyValue::class.java, it)
+        assertTrue((it as TomlKeyValue).key.text == "groovy-nio")
+      }
+    }
+  }
+
+  @ParameterizedTest
+  @BaseGradleVersionSource
+  fun testNavigationToTomlEntry4(gradleVersion: GradleVersion) {
+    test(gradleVersion, BASE_VERSION_CATALOG_FIXTURE) {
+      testGotoDefinition("libs.groovy.nio.anot<caret>her") {
+        assertInstanceOf(TomlKeyValue::class.java, it)
+        assertTrue((it as TomlKeyValue).key.text == "groovy-nio-another")
+      }
+    }
+  }
+
+  @ParameterizedTest
+  @BaseGradleVersionSource
   fun testNavigationToTomlTable(gradleVersion: GradleVersion) {
     test(gradleVersion, BASE_VERSION_CATALOG_FIXTURE) {
       testGotoDefinition("libs.bun<caret>dles") {
@@ -145,6 +167,7 @@ class GradleVersionCatalogsResolveTest : GradleCodeInsightTestCase() {
         groovy-core = { module = "org.codehaus.groovy:groovy", version.ref = "groovy" }
         groovy-json = { module = "org.codehaus.groovy:groovy-json", version.ref = "groovy" }
         groovy-nio = { module = "org.codehaus.groovy:groovy-nio", version.ref = "groovy" }
+        groovy-nio-another = { module = "org.codehaus.groovy:groovy-nio", version.ref = "groovy" }
         commons-lang3 = { group = "org.apache.commons", name = "commons-lang3", version = { strictly = "[3.8, 4.0[", prefer="3.9" } }
 
         [bundles]

@@ -4,6 +4,8 @@ class Test {
       s = "hello"; // not reported
       System.out.println(s);
     }
+    if (object instanceof String ignored) {
+    }
 
     if (object instanceof R(var x, var <warning descr="The value of pattern variable 'y' is never used">y</warning>)) {
       if (1 == 1) {

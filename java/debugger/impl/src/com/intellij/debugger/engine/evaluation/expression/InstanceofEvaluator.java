@@ -11,12 +11,7 @@ import org.jetbrains.annotations.NotNull;
 
 class InstanceofEvaluator extends PatternLabelEvaluator {
   InstanceofEvaluator(@NotNull Evaluator operandEvaluator, @NotNull PatternEvaluator patternEvaluator) {
-    super(operandEvaluator, patternEvaluator, null);
-  }
-
-  @Override
-  protected boolean evaluateGuardingExpression(EvaluationContextImpl context) {
-    return true;
+    super(operandEvaluator, patternEvaluator);
   }
 
   @Override

@@ -466,6 +466,8 @@ public class LocalTerminalDirectRunner extends AbstractTerminalRunner<PtyProcess
         withCommandBlocks = true;
       }
       else if (isPowerShell(shellName)) {
+        resultCommand.addAll(arguments);
+        arguments.clear();
         resultCommand.addAll(List.of("-NoExit", "-ExecutionPolicy", "Bypass", "-File", rcFilePath));
         shellType = ShellType.POWERSHELL;
         withCommandBlocks = true;

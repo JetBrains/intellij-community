@@ -10,6 +10,7 @@ import com.intellij.openapi.actionSystem.ActionGroup
 import com.intellij.openapi.actionSystem.ActionManager
 import com.intellij.openapi.actionSystem.ActionToolbar
 import com.intellij.openapi.actionSystem.DataProvider
+import com.intellij.openapi.actionSystem.impl.ToolbarUtils
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.invokeLater
 import com.intellij.openapi.command.executeCommand
@@ -29,9 +30,9 @@ import org.intellij.plugins.markdown.editor.tables.actions.TableActionKeys
 import org.intellij.plugins.markdown.editor.tables.actions.TableActionPlaces
 import org.intellij.plugins.markdown.editor.tables.ui.presentation.GraphicsUtils.clearHalfOvalOverEditor
 import org.intellij.plugins.markdown.editor.tables.ui.presentation.GraphicsUtils.fillHalfOval
+import org.intellij.plugins.markdown.editor.tables.ui.presentation.GraphicsUtils.useCopy
 import org.intellij.plugins.markdown.lang.psi.impl.MarkdownTableRow
 import org.intellij.plugins.markdown.lang.psi.impl.MarkdownTableSeparatorRow
-import com.intellij.openapi.actionSystem.impl.ToolbarUtils
 import java.awt.Dimension
 import java.awt.Graphics2D
 import java.awt.Point
@@ -101,9 +102,11 @@ internal class VerticalBarPresentation(
     if (!row.isValid || editor.isDisposed || boundsState == initialState) {
       return
     }
-    GraphicsUtil.setupAntialiasing(graphics)
-    GraphicsUtil.setupRoundedBorderAntialiasing(graphics)
-    paintRow(graphics, rowLocation)
+    graphics.useCopy { local ->
+      GraphicsUtil.setupAntialiasing(local)
+      GraphicsUtil.setupRoundedBorderAntialiasing(local)
+      paintRow(local, rowLocation)
+    }
   }
 
   private fun calculateBarRect(location: RowLocation): Rectangle {

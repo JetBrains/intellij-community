@@ -125,7 +125,10 @@ public abstract class HtmlChunk {
     public void appendTo(@NotNull StringBuilder builder) {
       builder.append('<').append(myTagName);
       myAttributes.entrySet().stream().sorted(Map.Entry.comparingByKey()).forEach(entry -> {
-        builder.append(' ').append(entry.getKey()).append("=\"").append(StringUtil.escapeXmlEntities(entry.getValue())).append('"');
+        builder.append(' ').append(entry.getKey());
+        if (entry.getValue() != null) {
+          builder.append("=\"").append(StringUtil.escapeXmlEntities(entry.getValue())).append('"');
+        }
       });
       if (myChildren.isEmpty()) {
         builder.append("/>");
@@ -156,6 +159,17 @@ public abstract class HtmlChunk {
     @Contract(pure = true)
     public @NotNull Element attr(@NonNls String name, int value) {
       return new Element(myTagName, myAttributes.with(name, Integer.toString(value)), myChildren);
+    }
+
+    /**
+     * Adds an attribute without '=' sign and a value
+     *
+     * @param name attribute name
+     * @return a new element that is like this element but has the specified attribute added or replaced
+     */
+    @Contract(pure = true)
+    public @NotNull Element attr(@NonNls String name) {
+      return new Element(myTagName, myAttributes.with(name, null), myChildren);
     }
 
     /**

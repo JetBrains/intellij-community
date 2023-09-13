@@ -7,7 +7,7 @@ class X {
                 return 3;
             case B:
                 return 1;
-            case default:
+            default:
                 return 2;
         }
     }

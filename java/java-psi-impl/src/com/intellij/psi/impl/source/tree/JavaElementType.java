@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.impl.source.tree;
 
 import com.intellij.lang.*;
@@ -104,6 +104,8 @@ public interface JavaElementType {
   IElementType ARRAY_INITIALIZER_EXPRESSION = new JavaCompositeElementType("ARRAY_INITIALIZER_EXPRESSION", () -> new PsiArrayInitializerExpressionImpl());
   IElementType INSTANCE_OF_EXPRESSION = new JavaCompositeElementType("INSTANCE_OF_EXPRESSION", () -> new PsiInstanceOfExpressionImpl());
   IElementType CLASS_OBJECT_ACCESS_EXPRESSION = new JavaCompositeElementType("CLASS_OBJECT_ACCESS_EXPRESSION", () -> new PsiClassObjectAccessExpressionImpl());
+  IElementType TEMPLATE_EXPRESSION = new JavaCompositeElementType("TEMPLATE_EXPRESSION", () -> new PsiTemplateExpressionImpl());
+  IElementType TEMPLATE = new JavaCompositeElementType("TEMPLATE", () -> new PsiTemplateImpl());
   IElementType EMPTY_EXPRESSION = new JavaCompositeElementType("EMPTY_EXPRESSION", () -> new PsiEmptyExpressionImpl(), true);
   IElementType EXPRESSION_LIST = new JavaCompositeElementType("EXPRESSION_LIST", () -> new PsiExpressionListImpl(), true);
   IElementType EMPTY_STATEMENT = new JavaCompositeElementType("EMPTY_STATEMENT", () -> new PsiEmptyStatementImpl());
@@ -137,14 +139,13 @@ public interface JavaElementType {
   IElementType ANNOTATION_ARRAY_INITIALIZER = new JavaCompositeElementType("ANNOTATION_ARRAY_INITIALIZER", () -> new PsiArrayInitializerMemberValueImpl());
   IElementType RECEIVER_PARAMETER = new JavaCompositeElementType("RECEIVER", () -> new PsiReceiverParameterImpl());
   IElementType MODULE_REFERENCE = new JavaCompositeElementType("MODULE_REFERENCE", () -> new PsiJavaModuleReferenceElementImpl());
+  IElementType UNNAMED_PATTERN = new JavaCompositeElementType("UNNAMED_PATTERN", () -> new PsiUnnamedPatternImpl());
   IElementType TYPE_TEST_PATTERN = new JavaCompositeElementType("TYPE_TEST_PATTERN", () -> new PsiTypeTestPatternImpl());
   IElementType PATTERN_VARIABLE = new JavaCompositeElementType("PATTERN_VARIABLE", () -> new PsiPatternVariableImpl());
   IElementType DECONSTRUCTION_PATTERN = new JavaCompositeElementType("DECONSTRUCTION_PATTERN", () -> new PsiDeconstructionPatternImpl());
   IElementType DECONSTRUCTION_LIST = new JavaCompositeElementType("DECONSTRUCTION_LIST", () -> new PsiDeconstructionListImpl());
   IElementType DECONSTRUCTION_PATTERN_VARIABLE = new JavaCompositeElementType("DECONSTRUCTION_PATTERN_VARIABLE", () -> new PsiDeconstructionPatternVariableImpl());
-  IElementType PATTERN_GUARD = new JavaCompositeElementType("PATTERN_GUARD", () -> new PsiPatternGuardImpl());
   IElementType PARENTHESIZED_PATTERN = new JavaCompositeElementType("PARENTHESIZED_PATTERN", () -> new PsiParenthesizedPatternImpl());
-  IElementType GUARDED_PATTERN = new JavaCompositeElementType("GUARDED_PATTERN", () -> new PsiGuardedPatternImpl());
   IElementType DEFAULT_CASE_LABEL_ELEMENT = new JavaCompositeElementType("DEFAULT_CASE_LABEL_ELEMENT", () -> new PsiDefaultLabelElementImpl());
   IElementType CASE_LABEL_ELEMENT_LIST = new JavaCompositeElementType("CASE_LABEL_ELEMENT_LIST", () -> new PsiCaseLabelElementListImpl());
 

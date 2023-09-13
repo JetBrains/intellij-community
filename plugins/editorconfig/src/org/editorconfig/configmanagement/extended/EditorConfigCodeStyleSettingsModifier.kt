@@ -18,7 +18,6 @@ import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.fileTypes.FileType
-import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.progress.runBlockingMaybeCancellable
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.text.Strings
@@ -33,7 +32,6 @@ import com.intellij.psi.codeStyle.modifier.CodeStyleSettingsModifier
 import com.intellij.psi.codeStyle.modifier.CodeStyleStatusBarUIContributor
 import com.intellij.psi.codeStyle.modifier.TransientCodeStyleSettings
 import kotlinx.coroutines.TimeoutCancellationException
-import kotlinx.coroutines.withTimeout
 import org.ec4j.core.ResourceProperties
 import org.editorconfig.EditorConfigNotifier
 import org.editorconfig.Utils
@@ -45,7 +43,6 @@ import org.jetbrains.annotations.Nls
 import org.jetbrains.annotations.TestOnly
 import java.util.concurrent.CancellationException
 import java.util.function.Consumer
-import kotlin.time.Duration.Companion.seconds
 
 private val LOG: Logger
   get() = logger<EditorConfigCodeStyleSettingsModifier>()
@@ -66,44 +63,35 @@ class EditorConfigCodeStyleSettingsModifier : CodeStyleSettingsModifier {
       return false
     }
 
-    // Get editorconfig settings
-    try {
-      return runBlockingMaybeCancellable {
-        withTimeout(10.seconds) {
-          val (properties, editorConfigs) = processEditorConfig(project, psiFile)
-          // Apply editorconfig settings for the current editor
-          if (applyCodeStyleSettings(settings, properties, psiFile)) {
-            settings.addDependencies(editorConfigs)
-            val navigationFactory = EditorConfigNavigationActionsFactory.getInstance(psiFile)
-            navigationFactory?.updateEditorConfigFilePaths(editorConfigs.map { it.path })
-            true
-          }
-          else {
-            false
-          }
+    return runBlockingMaybeCancellable {
+      try {
+        // Get editorconfig settings
+        val (properties, editorConfigs) = processEditorConfig(project, psiFile)
+        // Apply editorconfig settings for the current editor
+        if (applyCodeStyleSettings(settings, properties, psiFile)) {
+          settings.addDependencies(editorConfigs)
+          val navigationFactory = EditorConfigNavigationActionsFactory.getInstance(psiFile)
+          navigationFactory?.updateEditorConfigFilePaths(editorConfigs.map { it.path })
+          return@runBlockingMaybeCancellable true
+        }
+        else {
+          return@runBlockingMaybeCancellable false
         }
       }
-    }
-    catch (e: TimeoutCancellationException) {
-      LOG.warn(e)
-      if (!ApplicationManager.getApplication().isHeadlessEnvironment) {
-        error(project, "timeout", message("error.timeout"), DisableEditorConfigAction(project), true)
+      catch (e: TimeoutCancellationException) {
+        LOG.warn(e)
+        if (!ApplicationManager.getApplication().isHeadlessEnvironment) {
+          error(project, "timeout", message("error.timeout"), DisableEditorConfigAction(project), true)
+        }
       }
+      catch (e: CancellationException) {
+        throw e
+      }
+      catch (e: Exception) {
+        LOG.error(e)
+      }
+      false
     }
-    // TODO ec4j error handling
-    //catch (e: EditorConfigException) {
-    //  // TODO: Report an error, ignore for now
-    //}
-    catch (e: CancellationException) {
-      throw e
-    }
-    catch (e: ProcessCanceledException) {
-      throw e
-    }
-    catch (e: Exception) {
-      LOG.error(e)
-    }
-    return false
   }
 
   @Synchronized
@@ -342,21 +330,13 @@ private fun applyCodeStyleSettings(settings: TransientCodeStyleSettings, propert
 }
 
 private suspend fun processEditorConfig(project: Project, psiFile: PsiFile): Pair<ResourceProperties, List<VirtualFile>> {
-  try {
-    val file = psiFile.virtualFile
-    val filePath = Utils.getFilePath(project, file)
-    if (filePath != null) {
-      return SettingsProviderComponent.getInstance(project).getPropertiesAndEditorConfigs(file).await()
-    }
-    else if (VfsUtilCore.isBrokenLink(file)) {
-      LOG.warn("${file.presentableUrl} is a broken link")
-    }
+  val file = psiFile.virtualFile
+  val filePath = Utils.getFilePath(project, file)
+  if (filePath != null) {
+    return SettingsProviderComponent.getInstance(project).getPropertiesAndEditorConfigs(file)
   }
-  catch (e: Exception) { // TODO exceptions when parsing
-    // Parsing exceptions may occur with incomplete files
-    // which is a normal case when .editorconfig is being edited.
-    // Thus, the error is logged only when debug mode is enabled.
-    LOG.debug(e)
+  else if (VfsUtilCore.isBrokenLink(file)) {
+    LOG.warn("${file.presentableUrl} is a broken link")
   }
   return Pair(ResourceProperties.Builder().build(), emptyList())
 }

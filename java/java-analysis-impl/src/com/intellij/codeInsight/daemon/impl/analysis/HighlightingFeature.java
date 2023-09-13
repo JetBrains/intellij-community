@@ -41,22 +41,56 @@ public enum HighlightingFeature {
   RECORDS(LanguageLevel.JDK_16, "feature.records"),
   PATTERNS(LanguageLevel.JDK_16, "feature.patterns.instanceof"),
   TEXT_BLOCK_ESCAPES(LanguageLevel.JDK_15, "feature.text.block.escape.sequences"),
-  TEXT_BLOCKS(LanguageLevel.JDK_15, "feature.text.blocks") ,
+  TEXT_BLOCKS(LanguageLevel.JDK_15, "feature.text.blocks"),
   SEALED_CLASSES(LanguageLevel.JDK_17, "feature.sealed.classes"),
   LOCAL_INTERFACES(LanguageLevel.JDK_16, "feature.local.interfaces"),
   LOCAL_ENUMS(LanguageLevel.JDK_16, "feature.local.enums"),
   INNER_STATICS(LanguageLevel.JDK_16, "feature.inner.statics"),
-  PATTERNS_IN_SWITCH(LanguageLevel.JDK_19_PREVIEW, "feature.patterns.in.switch"),
-  GUARDED_AND_PARENTHESIZED_PATTERNS(LanguageLevel.JDK_19_PREVIEW, "feature.guarded.and.parenthesised.patterns"),
-  PATTERN_GUARDS_AND_RECORD_PATTERNS(LanguageLevel.JDK_19_PREVIEW, "feature.pattern.guard.and.record.patterns"),
-  RECORD_PATTERNS_IN_FOR_EACH(LanguageLevel.JDK_20_PREVIEW, "feature.record.patterns.in.for.each");
+  PARENTHESIZED_PATTERNS(LanguageLevel.JDK_20_PREVIEW, "feature.parenthesised.patterns"){
+    @Override
+    boolean isSufficient(@NotNull LanguageLevel useSiteLevel) {
+      LanguageLevel until = LanguageLevel.JDK_20_PREVIEW;
+      return until == useSiteLevel;
+    }
+
+    @Override
+    boolean isLimited() {
+      return true;
+    }
+  },
+  PATTERNS_IN_SWITCH(LanguageLevel.JDK_21, "feature.patterns.in.switch") {
+    @Override
+    boolean isSufficient(@NotNull LanguageLevel useSiteLevel) {
+      return super.isSufficient(useSiteLevel) || LanguageLevel.JDK_20_PREVIEW == useSiteLevel;
+    }
+  },
+  PATTERN_GUARDS_AND_RECORD_PATTERNS(LanguageLevel.JDK_21, "feature.pattern.guard.and.record.patterns"){
+    @Override
+    boolean isSufficient(@NotNull LanguageLevel useSiteLevel) {
+      return super.isSufficient(useSiteLevel) || LanguageLevel.JDK_20_PREVIEW == useSiteLevel;
+    }
+  },
+  RECORD_PATTERNS_IN_FOR_EACH(LanguageLevel.JDK_20_PREVIEW, "feature.record.patterns.in.for.each"){
+    @Override
+    boolean isSufficient(@NotNull LanguageLevel useSiteLevel) {
+      LanguageLevel until = LanguageLevel.JDK_20_PREVIEW;
+      return until == useSiteLevel;
+    }
+
+    @Override
+    boolean isLimited() {
+      return true;
+    }
+  },
+  ENUM_QUALIFIED_NAME_IN_SWITCH(LanguageLevel.JDK_21, "feature.enum.qualified.name.in.switch"),
+  UNNAMED_PATTERNS_AND_VARIABLES(LanguageLevel.JDK_21_PREVIEW, "feature.unnamed.vars"),
+  STRING_TEMPLATES(LanguageLevel.JDK_21_PREVIEW, "feature.string.templates");
 
   public static final @NonNls String JDK_INTERNAL_PREVIEW_FEATURE = "jdk.internal.PreviewFeature";
   public static final @NonNls String JDK_INTERNAL_JAVAC_PREVIEW_FEATURE = "jdk.internal.javac.PreviewFeature";
 
   final LanguageLevel level;
-  @PropertyKey(resourceBundle = JavaErrorBundle.BUNDLE)
-  final String key;
+  @PropertyKey(resourceBundle = JavaErrorBundle.BUNDLE) final String key;
 
   HighlightingFeature(@NotNull LanguageLevel level, @NotNull @PropertyKey(resourceBundle = JavaAnalysisBundle.BUNDLE) String key) {
     this.level = level;
@@ -76,9 +110,13 @@ public enum HighlightingFeature {
   }
 
   boolean isSufficient(@NotNull LanguageLevel useSiteLevel) {
-    return useSiteLevel.isAtLeast(level) && (!level.isPreview() || useSiteLevel.isPreview());
+    return useSiteLevel.isAtLeast(level) &&
+           (!level.isPreview() || useSiteLevel.isPreview());
   }
 
+  boolean isLimited() {
+    return false;
+  }
   /**
    * Override if feature was preview and then accepted as standard
    */
@@ -133,7 +171,7 @@ public enum HighlightingFeature {
     }
 
     PsiPackage psiPackage = JavaResolveUtil.getContainingPackage(owner);
-    if (psiPackage  == null) return null;
+    if (psiPackage == null) return null;
 
     PsiAnnotation packageAnnotation = getAnnotation(psiPackage);
     if (packageAnnotation != null) return packageAnnotation;

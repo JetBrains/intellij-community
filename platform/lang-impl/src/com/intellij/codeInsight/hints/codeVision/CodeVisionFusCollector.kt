@@ -9,17 +9,17 @@ import org.jetbrains.annotations.ApiStatus.Internal
 @Internal
 class CodeVisionFusCollector: CounterUsagesCollector() {
   companion object {
-    private val GROUP = EventLogGroup("daemon.codeVision", 1)
+    private val GROUP = EventLogGroup("daemon.code.vision", 2)
 
 
     val CODE_VISION_FINISHED = GROUP.registerEvent(
       "finished",
       EventFields.DurationMs,
-      EventFields.Class("providerClass"),
+      EventFields.Class("provider_class"),
       EventFields.Language
     )
 
-    val ANNOTATION_LOADED = GROUP.registerEvent("vcsAnnotationLoaded", EventFields.DurationMs)
+    val ANNOTATION_LOADED = GROUP.registerEvent("vcs.annotation.loaded", EventFields.DurationMs)
   }
 
   override fun getGroup(): EventLogGroup = GROUP

@@ -818,12 +818,9 @@ public final class RedundantCastUtil {
                 // 14.11.1 A null case element is switch compatible with T if T is a reference type (JEP 427)
                 if (branch instanceof PsiExpression expression && TypeConversionUtil.isNullType(expression.getType())) return;
                 // 14.30.3 A type pattern that declares a pattern variable of a reference type U is
-                // applicable at another reference type T if T is downcast convertible to U (JEP 427)
+                // applicable at another reference type T if T is checkcast convertible to U (JEP 427)
                 // There is no rule that says that a reference type applies to a primitive type
-                // There is no restriction on primitive types in JEP 406 and JEP 420:
-                // 14.30.1 An expression e is compatible with a pattern if the pattern is of type T
-                // and e is downcast compatible with T
-                if (branch instanceof PsiPattern || branch instanceof PsiPatternGuard) return;
+                if (branch instanceof PsiPattern) return;
               }
             }
             else if (HighlightingFeature.PATTERNS_IN_SWITCH.isAvailable(switchBlock)) {

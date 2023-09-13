@@ -91,7 +91,7 @@ public class UnnecessaryDefaultInspectionTest extends LightJavaInspectionTestCas
            "    switch (e) {" +
            "      case A, B:" +
            "        break;" +
-           "      case /*'default' branch is unnecessary*/default/*_*//**/:" +
+           "      /*'default' branch is unnecessary*/default/*_*//**/:" +
            "        break;" +
            "    }" +
            "  }" +
@@ -107,26 +107,6 @@ public class UnnecessaryDefaultInspectionTest extends LightJavaInspectionTestCas
                   "}");
   }
 
-  public void testCaseDefaultWithEnumElements() {
-    doTest("class X {" +
-           "  void x(E e) {" +
-           "    switch (e) {" +
-           "      case A, /*'default' branch is unnecessary*/default/*_*//**/, B:" +
-           "        break;" +
-           "    }" +
-           "  }" +
-           "}");
-    checkQuickFix("Remove 'default' branch",
-                  "class X {" +
-                  "  void x(E e) {" +
-                  "    switch (e) {" +
-                  "      case A, B:" +
-                  "        break;" +
-                  "    }" +
-                  "  }" +
-                  "}");
-  }
-
   public void testCaseDefaultInSealedSwitch() {
     doTest("class X {" +
            "  void x(I i) {" +
@@ -137,7 +117,7 @@ public class UnnecessaryDefaultInspectionTest extends LightJavaInspectionTestCas
            "        break;" +
            "      case C2 c1:" +
            "        break;" +
-           "      case /*'default' branch is unnecessary*/default/*_*//**/:" +
+           "      /*'default' branch is unnecessary*/default/*_*//**/:" +
            "        break;" +
            "    }" +
            "  }" +
@@ -157,40 +137,12 @@ public class UnnecessaryDefaultInspectionTest extends LightJavaInspectionTestCas
                   "}");
   }
 
-  public void testCaseDefaultWithPattern() {
-    doTest("class X {" +
-           "  void x(I i) {" +
-           "    switch (i) {" +
-           "      case /*'default' branch is unnecessary*/default/*_*//**/, <error descr=\"Illegal fall-through to a pattern\">I ii when Math.random() > 0.5</error>:" +
-           "        break;" +
-           "      case C1 c1:" +
-           "        break;" +
-           "      case C2 c2:" +
-           "        break;" +
-           "    }" +
-           "  }" +
-           "}");
-    checkQuickFix("Remove 'default' branch",
-                  "class X {" +
-                  "  void x(I i) {" +
-                  "    switch (i) {" +
-                  "      case I ii when Math.random() > 0.5:" +
-                  "        break;" +
-                  "      case C1 c1:" +
-                  "        break;" +
-                  "      case C2 c2:" +
-                  "        break;" +
-                  "    }" +
-                  "  }" +
-                  "}");
-  }
-
   public void testDefaultInParameterizedSealedHierarchy() {
     doTest("class X {" +
            "  void x(J<Integer> j) {" +
            "    switch (j) {" +
            "      case D2 d2 -> {}" +
-           "      case /*'default' branch is unnecessary*/default/*_*//**/ -> {}" +
+           "      /*'default' branch is unnecessary*/default/*_*//**/ -> {}" +
            "    }" +
            "  }" +
            "}");
@@ -221,6 +173,6 @@ final class D2<T> implements J<T> {}
 
   @Override
   protected @NotNull LightProjectDescriptor getProjectDescriptor() {
-    return JAVA_19;
+    return JAVA_21;
   }
 }

@@ -19,7 +19,10 @@ class CheckBoxGroupBlock(
   override fun addToPanel(panel: Panel) {
     panel.apply {
       @Suppress("DialogTitleCapitalization")
-      buttonsGroup(myGroupLabel) {
+      buttonsGroup(indent = false) {
+        row {
+          label(myGroupLabel).bold()
+        }.bottomGap(BottomGap.NONE)
         myItemsData.forEachIndexed { i, itemData ->
           row {
             checkBox(itemData.label).bindSelected(

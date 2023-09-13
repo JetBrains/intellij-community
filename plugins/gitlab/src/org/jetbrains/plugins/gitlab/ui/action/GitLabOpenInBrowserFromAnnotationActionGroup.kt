@@ -8,6 +8,8 @@ import com.intellij.openapi.components.service
 import com.intellij.openapi.vcs.actions.ShowAnnotateOperationsPopup
 import com.intellij.openapi.vcs.annotate.AnnotationGutterActionProvider
 import com.intellij.openapi.vcs.annotate.FileAnnotation
+import com.intellij.util.asSafely
+import git4idea.GitRevisionNumber
 import git4idea.annotate.GitFileAnnotation
 import git4idea.remote.hosting.action.HostedGitRepositoryReference
 import git4idea.remote.hosting.action.HostedGitRepositoryReferenceActionGroup
@@ -23,15 +25,15 @@ class GitLabOpenInBrowserFromAnnotationActionGroup(val annotation: FileAnnotatio
 
   override fun findReferences(dataContext: DataContext): List<HostedGitRepositoryReference> {
     if (annotation !is GitFileAnnotation) return emptyList()
-
-    val lineNumber = ShowAnnotateOperationsPopup.getAnnotationLineNumber(dataContext)
-    if (lineNumber < 0) return emptyList()
-
     val project = annotation.project
     val virtualFile = annotation.file
 
-    return HostedGitRepositoryReferenceUtil.findReferences(project, project.service<GitLabProjectsManager>(), virtualFile,
-                                                           lineNumber..lineNumber, GitLabURIUtil::getWebURI)
+    val revision = ShowAnnotateOperationsPopup.getAnnotationLineNumber(dataContext).takeIf { it >= 0 }?.let {
+      annotation.getLineRevisionNumber(it)
+    }?.asSafely<GitRevisionNumber>() ?: return emptyList()
+
+    return HostedGitRepositoryReferenceUtil
+      .findReferences(project, project.service<GitLabProjectsManager>(), virtualFile, revision, GitLabURIUtil::getWebURI)
   }
 
   override fun handleReference(reference: HostedGitRepositoryReference) {

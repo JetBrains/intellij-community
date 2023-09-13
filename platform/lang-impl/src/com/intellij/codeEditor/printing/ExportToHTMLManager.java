@@ -99,30 +99,7 @@ final class ExportToHTMLManager {
     PsiDocumentManager.getInstance(project).commitAllDocuments();
     Path outDir = Paths.get(exportToHTMLSettings.OUTPUT_DIRECTORY);
     try {
-      if (exportToHTMLSettings.getPrintScope() != PrintSettings.PRINT_DIRECTORY) {
-        if (psiFile == null || psiFile.getText() == null) {
-          return;
-        }
-
-        try {
-          HTMLTextPainter textPainter = new HTMLTextPainter(psiFile, project, exportToHTMLSettings.PRINT_LINE_NUMBERS);
-          if (exportToHTMLSettings.getPrintScope() == PrintSettings.PRINT_SELECTED_TEXT &&
-              editor != null &&
-              editor.getSelectionModel().hasSelection()) {
-            int firstLine = editor.getDocument().getLineNumber(editor.getSelectionModel().getSelectionStart());
-            textPainter.setSegment(editor.getSelectionModel().getSelectionStart(), editor.getSelectionModel().getSelectionEnd(), firstLine);
-          }
-
-          Path htmlFile = doPaint(constructOutputDirectory(psiFile.getContainingDirectory(), outDir), textPainter, null);
-          if (exportToHTMLSettings.OPEN_IN_BROWSER) {
-            BrowserUtil.browse(htmlFile);
-          }
-        }
-        catch (IOException e) {
-          LOG.error(e);
-        }
-      }
-      else {
+      if (exportToHTMLSettings.getPrintScope() == PrintSettings.PRINT_DIRECTORY) {
         myLastException = null;
         Runnable exportRunnable = new ExportRunnable(exportToHTMLSettings, psiDirectory, outDir, project);
         ProgressManager.getInstance().runProcessWithProgressSynchronously(exportRunnable, EditorBundle.message("export.to.html.title"), true, project);
@@ -135,6 +112,46 @@ final class ExportToHTMLManager {
             LOG.error(exception);
           }
         }
+      }
+      else {
+        if (psiFile == null || psiFile.getText() == null) {
+          return;
+        }
+
+        boolean hasSelection = editor != null && editor.getSelectionModel().hasSelection();
+        int selectionStart;
+        int firstLine;
+        int selectionEnd;
+        if (hasSelection) {
+          selectionStart = editor.getSelectionModel().getSelectionStart();
+          firstLine = editor.getDocument().getLineNumber(selectionStart);
+          selectionEnd = editor.getSelectionModel().getSelectionEnd();
+        }
+        else {
+          selectionStart = firstLine = selectionEnd = 0;
+        }
+        ProgressManager.getInstance().runProcessWithProgressSynchronously(() -> {
+          ApplicationManager.getApplication().runReadAction(() -> {
+            if (!psiFile.isValid()) {
+              return;
+            }
+            try {
+              HTMLTextPainter textPainter = new HTMLTextPainter(psiFile, project, new HtmlStyleManager(false),
+                                                                exportToHTMLSettings.PRINT_LINE_NUMBERS, true);
+              if (exportToHTMLSettings.getPrintScope() == PrintSettings.PRINT_SELECTED_TEXT && hasSelection) {
+                textPainter.setSegment(selectionStart, selectionEnd, firstLine);
+              }
+
+              Path htmlFile = doPaint(constructOutputDirectory(psiFile.getContainingDirectory(), outDir), textPainter, null);
+              if (exportToHTMLSettings.OPEN_IN_BROWSER) {
+                BrowserUtil.browse(htmlFile);
+              }
+            }
+            catch (IOException e) {
+              LOG.error(e);
+            }
+          });
+        }, EditorBundle.message("export.to.html.title"), true, project);
       }
     }
     finally {
@@ -174,7 +191,9 @@ final class ExportToHTMLManager {
       }
 
       try {
-        doPaint(constructOutputDirectory(psiFile.getContainingDirectory(), outDir), new HTMLTextPainter(psiFile, project, ExportToHTMLSettings.getInstance(project).PRINT_LINE_NUMBERS), refMap);
+        HTMLTextPainter painter = new HTMLTextPainter(psiFile, project, new HtmlStyleManager(false),
+                                                      ExportToHTMLSettings.getInstance(project).PRINT_LINE_NUMBERS, true);
+        doPaint(constructOutputDirectory(psiFile.getContainingDirectory(), outDir), painter, refMap);
       }
       catch (NoSuchFileException e) {
         myLastException = e;

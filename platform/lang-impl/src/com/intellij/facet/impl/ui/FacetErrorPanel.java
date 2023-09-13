@@ -19,8 +19,10 @@ import com.intellij.facet.ui.*;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.application.AppUIExecutor;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.ReadAction;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Ref;
 import com.intellij.ui.UserActivityListener;
 import com.intellij.ui.UserActivityWatcher;
@@ -30,7 +32,6 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.xml.util.XmlStringUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.concurrency.CancellablePromise;
 
 import javax.swing.*;
 import java.awt.*;
@@ -40,6 +41,8 @@ import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.Future;
 
 public class FacetErrorPanel {
   private final JPanel myMainPanel;
@@ -115,7 +118,13 @@ public class FacetErrorPanel {
   private class FacetValidatorsManagerImpl implements FacetValidatorsManager {
     private final List<FacetEditorValidator> myValidators = new ArrayList<>();
     private final List<FacetEditorValidator> mySlowValidators = new SmartList<>();
-    private final Set<CancellablePromise<ValidationResult>> myChecks = new HashSet<>();
+    private final Set<Future<?>> myChecks = new HashSet<>();
+
+    FacetValidatorsManagerImpl() {
+      if (myParentDisposable != null) {
+        Disposer.register(myParentDisposable, () -> cancelChecks());
+      }
+    }
 
     @Override
     public void registerValidator(final FacetEditorValidator validator, JComponent... componentsToWatch) {
@@ -153,27 +162,7 @@ public class FacetErrorPanel {
       }
 
       for (FacetEditorValidator validator : mySlowValidators) {
-        Ref<CancellablePromise<ValidationResult>> ref = new Ref<>();
-        CancellablePromise<ValidationResult> promise = ReadAction
-          .nonBlocking(() -> validator.check())
-          .expireWith(myParentDisposable)
-          .finishOnUiThread(ModalityState.any(), validationResult -> {
-            // Current modality state could not be used,
-            // because validate() may be called on facet editor init
-            // before dialog's show() changes modality state from non-modal.
-            if (myChecks.remove(ref.get())) {
-              if (!validationResult.isOk()) {
-                validationCompleted(validationResult);
-              }
-              else if (myChecks.isEmpty()) {
-                myCurrentQuickFix = null;
-                setNoErrors();
-              }
-            }
-          })
-          .submit(NonUrgentExecutor.getInstance());
-        ref.set(promise);
-        myChecks.add(promise);
+        myChecks.add(getSlowCheck(validator));
       }
 
       if (myChecks.isEmpty()) {
@@ -182,13 +171,56 @@ public class FacetErrorPanel {
       }
     }
 
+    private Future<?> getSlowCheck(FacetEditorValidator validator) {
+      assert validator instanceof SlowFacetEditorValidator;
+
+      Ref<Future<?>> ref = new Ref<>();
+      Future<?> result;
+      CompletableFuture<ValidationResult> check = ((SlowFacetEditorValidator)validator).checkAsync();
+
+      // Current modality state could not be used,
+      // because validate() may be called on facet editor init
+      // before dialog's show() changes modality state from non-modal.
+      if (check != null) {
+        result = check.thenAccept(validationResult -> {
+          AppUIExecutor.onUiThread(ModalityState.any()).expireWith(myParentDisposable).submit(() -> {
+            validationCompleted(ref, validationResult);
+          });
+        });
+      }
+      else {
+        result = ReadAction
+          .nonBlocking(() -> validator.check())
+          .expireWith(myParentDisposable)
+          .finishOnUiThread(ModalityState.any(), validationResult -> {
+            validationCompleted(ref, validationResult);
+          })
+          .submit(NonUrgentExecutor.getInstance());
+      }
+
+      ref.set(result);
+      return result;
+    }
+
     void cancelChecks() {
-      for (CancellablePromise<ValidationResult> promise : myChecks) {
-        if (!promise.isDone()) {
-          promise.cancel();
+      for (Future<?> check : myChecks) {
+        if (!check.isDone()) {
+          check.cancel(true);
         }
       }
       myChecks.clear();
+    }
+
+    private void validationCompleted(Ref<Future<?>> ref, ValidationResult validationResult) {
+      if (myChecks.remove(ref.get())) {
+        if (!validationResult.isOk()) {
+          validationCompleted(validationResult);
+        }
+        else if (myChecks.isEmpty()) {
+          myCurrentQuickFix = null;
+          setNoErrors();
+        }
+      }
     }
 
     private void validationCompleted(ValidationResult validationResult) {

@@ -8,6 +8,7 @@ import com.intellij.psi.JavaTokenType;
 import com.intellij.psi.impl.source.javadoc.PsiDocTagValueImpl;
 import com.intellij.psi.impl.source.javadoc.PsiDocTokenImpl;
 import com.intellij.psi.impl.source.javadoc.PsiSnippetAttributeValueImpl;
+import com.intellij.psi.impl.source.tree.java.PsiFragmentImpl;
 import com.intellij.psi.impl.source.tree.java.PsiIdentifierImpl;
 import com.intellij.psi.impl.source.tree.java.PsiJavaTokenImpl;
 import com.intellij.psi.impl.source.tree.java.PsiKeywordImpl;
@@ -30,6 +31,9 @@ public class JavaASTFactory extends ASTFactory {
     }
     if (ElementType.KEYWORD_BIT_SET.contains(type)) {
       return new PsiKeywordImpl(type, text);
+    }
+    if (ElementType.STRING_TEMPLATE_FRAGMENTS.contains(type)) {
+      return new PsiFragmentImpl(type, text);
     }
     if (type instanceof IJavaElementType) {
       return new PsiJavaTokenImpl(type, text);
