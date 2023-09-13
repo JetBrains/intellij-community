@@ -54,6 +54,27 @@ interface InlineCompletionEvent {
     }
   }
 
+
+  /**
+   * Represents a typing event call in the editor.
+   */
+  @ApiStatus.Experimental
+  data class EditorTyping(val char: Char, val editor: Editor) : InlineCompletionEvent {
+    override fun toRequest(): InlineCompletionRequest? {
+      val virtualFile = editor.virtualFile ?: return null
+      val project = editor.project ?: return null
+      if (editor.caretModel.caretCount != 1) return null
+
+      val (file, offset) = blockingReadAction {
+        PsiManager.getInstance(project).findFile(virtualFile) to editor.caretModel.offset
+      }
+      if (file == null) return null
+
+      return InlineCompletionRequest(this, file, editor, editor.document, offset, offset)
+    }
+  }
+
+
   /**
    * Represents a non-dummy not empty document event call in the editor.
    */

@@ -69,6 +69,7 @@ class InlineCompletionHandler(scope: CoroutineScope, private val parentDisposabl
   }
 
   fun invoke(event: InlineCompletionEvent.DocumentChange) = invokeEvent(event)
+  fun invoke(event: InlineCompletionEvent.EditorTyping) = invokeEvent(event)
   fun invoke(event: InlineCompletionEvent.LookupChange) = invokeEvent(event)
   fun invoke(event: InlineCompletionEvent.LookupCancelled) = invokeEvent(event)
   fun invoke(event: InlineCompletionEvent.DirectCall) = invokeEvent(event)
