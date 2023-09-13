@@ -97,6 +97,15 @@ public interface SyntaxTreeBuilder {
   String getTokenText();
 
   /**
+   * Advance lexer by {@code steps} tokens ahead of current position without whitespace/comment tokens filtering.
+   *
+   * @param steps must be a positive number
+   */
+  default void rawAdvanceLexer(int steps) {
+    throw new UnsupportedOperationException("not implemented");
+  }
+
+  /**
    * Returns the start offset of the current token, or the file length when the token stream is over.
    *
    * @return the token offset.
