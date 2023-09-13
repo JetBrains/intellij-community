@@ -159,12 +159,12 @@ public final class VcsLogPersistentIndex implements VcsLogModifiableIndex, Dispo
     if (myDisposableFlag.isDisposed()) return;
     if (myCommitsToIndex.isEmpty()) return;
     // for fresh index, wait for complete log to load and index everything in one command
-    if (myBackend.isFresh() && !full) return;
+    if ((myBackend.isFresh() || myBackend.isEmpty()) && !full) return;
 
     Map<VirtualFile, IntSet> commitsToIndex = myCommitsToIndex;
     myCommitsToIndex = new HashMap<>();
 
-    boolean isFull = full && myBackend.isFresh();
+    boolean isFull = full && (myBackend.isFresh() || myBackend.isEmpty());
     if (isFull) LOG.debug("Index storage for project " + myProject.getName() + " is fresh, scheduling full reindex");
     for (VirtualFile root : commitsToIndex.keySet()) {
       IntSet commits = commitsToIndex.get(root);

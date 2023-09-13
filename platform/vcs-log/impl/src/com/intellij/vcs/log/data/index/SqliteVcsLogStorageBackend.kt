@@ -175,6 +175,8 @@ internal class SqliteVcsLogStorageBackend(project: Project,
       connectionManager.isFresh = value
     }
 
+  override val isEmpty: Boolean get() = connection.selectBoolean("select not exists (select 1 from log)")
+
   private val connection: SqliteConnection
     get() = connectionManager.connection
 

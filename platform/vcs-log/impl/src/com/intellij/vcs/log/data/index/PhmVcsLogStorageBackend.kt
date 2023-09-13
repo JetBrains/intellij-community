@@ -56,6 +56,7 @@ internal class PhmVcsLogStorageBackend(
 
   @Volatile
   override var isFresh = false
+  override val isEmpty: Boolean get() = messages.keysCountApproximately() == 0
 
   init {
     Disposer.register(disposable, this)
