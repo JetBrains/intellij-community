@@ -51,4 +51,6 @@ open class LineStatusMarkerPopupRenderer(protected val tracker: LineStatusTracke
                           "com.intellij.openapi.vcs.ex.LineStatusMarkerPopupActions"))
   inner class ToggleByWordDiffAction(editor: Editor, range: Range, mousePosition: Point?)
     : LineStatusMarkerPopupActions.ToggleByWordDiffAction(editor, tracker, range, mousePosition, this)
+
+  override fun toString(): String = "LineStatusMarkerPopupRenderer(tracker=$tracker)"
 }

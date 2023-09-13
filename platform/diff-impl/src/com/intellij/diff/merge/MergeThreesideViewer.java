@@ -169,7 +169,6 @@ public class MergeThreesideViewer extends ThreesideTextDiffViewerEx {
   }
 
 
-
   @NotNull
   @Override
   protected List<AnAction> createToolbarActions() {
@@ -340,17 +339,18 @@ public class MergeThreesideViewer extends ThreesideTextDiffViewerEx {
     myAcceptResolveAction.setEnabled(false);
 
     BackgroundTaskUtil.executeAndTryWait(indicator -> BackgroundTaskUtil.runUnderDisposeAwareIndicator(this, () -> {
-      try {
-        return doPerformRediff(indicator);
-      }
-      catch (ProcessCanceledException e) {
-        return () -> myMergeContext.finishMerge(MergeResult.CANCEL);
-      }
-      catch (Throwable e) {
-        LOG.error(e);
-        return () -> myMergeContext.finishMerge(MergeResult.CANCEL);
-      }
-    }), null, ProgressIndicatorWithDelayedPresentation.DEFAULT_PROGRESS_DIALOG_POSTPONE_TIME_MILLIS, ApplicationManager.getApplication().isUnitTestMode());
+                                           try {
+                                             return doPerformRediff(indicator);
+                                           }
+                                           catch (ProcessCanceledException e) {
+                                             return () -> myMergeContext.finishMerge(MergeResult.CANCEL);
+                                           }
+                                           catch (Throwable e) {
+                                             LOG.error(e);
+                                             return () -> myMergeContext.finishMerge(MergeResult.CANCEL);
+                                           }
+                                         }), null, ProgressIndicatorWithDelayedPresentation.DEFAULT_PROGRESS_DIALOG_POSTPONE_TIME_MILLIS,
+                                         ApplicationManager.getApplication().isUnitTestMode());
   }
 
   @NotNull
@@ -572,7 +572,8 @@ public class MergeThreesideViewer extends ThreesideTextDiffViewerEx {
       final List<InnerChunkData> data = ContainerUtil.map(scheduled, change -> new InnerChunkData(change, documents));
 
       int waitMillis = trySync ? ProgressIndicatorWithDelayedPresentation.DEFAULT_PROGRESS_DIALOG_POSTPONE_TIME_MILLIS : 0;
-      ProgressIndicator progress = BackgroundTaskUtil.executeAndTryWait(indicator -> performRediff(scheduled, data, indicator), null, waitMillis, false);
+      ProgressIndicator progress =
+        BackgroundTaskUtil.executeAndTryWait(indicator -> performRediff(scheduled, data, indicator), null, waitMillis, false);
 
       if (progress.isRunning()) {
         myProgress = progress;
@@ -899,7 +900,8 @@ public class MergeThreesideViewer extends ThreesideTextDiffViewerEx {
     if (!canResolveChangeAutomatically(change, side)) return;
 
     if (change.isConflict()) {
-      List<CharSequence> texts = ThreeSide.map(it -> DiffUtil.getLinesContent(getEditor(it).getDocument(), change.getStartLine(it), change.getEndLine(it)));
+      List<CharSequence> texts =
+        ThreeSide.map(it -> DiffUtil.getLinesContent(getEditor(it).getDocument(), change.getStartLine(it), change.getEndLine(it)));
 
       CharSequence newContent = ComparisonMergeUtil.tryResolveConflict(texts.get(0), texts.get(1), texts.get(2));
       if (newContent == null) {
@@ -969,7 +971,8 @@ public class MergeThreesideViewer extends ThreesideTextDiffViewerEx {
 
     private boolean isSomeChangeSelected(@NotNull ThreeSide side) {
       EditorEx editor = getEditor(side);
-      return DiffUtil.isSomeRangeSelected(editor, lines -> ContainerUtil.exists(getAllChanges(), change -> isChangeSelected(change, lines, side)));
+      return DiffUtil.isSomeRangeSelected(editor,
+                                          lines -> ContainerUtil.exists(getAllChanges(), change -> isChangeSelected(change, lines, side)));
     }
 
     @NotNull
@@ -1311,7 +1314,9 @@ public class MergeThreesideViewer extends ThreesideTextDiffViewerEx {
 
     @NotNull
     @Override
-    protected List<AnAction> createToolbarActions(@NotNull Editor editor, @NotNull com.intellij.openapi.vcs.ex.Range range, @Nullable Point mousePosition) {
+    protected List<AnAction> createToolbarActions(@NotNull Editor editor,
+                                                  @NotNull com.intellij.openapi.vcs.ex.Range range,
+                                                  @Nullable Point mousePosition) {
       List<AnAction> actions = new ArrayList<>();
       actions.add(new LineStatusMarkerPopupActions.ShowPrevChangeMarkerAction(editor, myTracker, range, this));
       actions.add(new LineStatusMarkerPopupActions.ShowNextChangeMarkerAction(editor, myTracker, range, this));
@@ -1343,6 +1348,13 @@ public class MergeThreesideViewer extends ThreesideTextDiffViewerEx {
     protected void paintGutterMarkers(@NotNull Editor editor, @NotNull List<? extends Range> ranges, @NotNull Graphics g) {
       int framingBorder = JBUIScale.scale(2);
       LineStatusMarkerDrawUtil.paintDefault(editor, g, ranges, DefaultFlagsProvider.DEFAULT, framingBorder);
+    }
+
+    @Override
+    public String toString() {
+      return "MergeThreesideViewer.MyLineStatusMarkerRenderer{" +
+             "myTracker=" + myTracker +
+             '}';
     }
   }
 
@@ -1396,6 +1408,5 @@ public class MergeThreesideViewer extends ThreesideTextDiffViewerEx {
       });
     }
   }
-
 }
 

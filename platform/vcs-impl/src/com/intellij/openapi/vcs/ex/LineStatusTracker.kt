@@ -156,6 +156,8 @@ abstract class LocalLineStatusTrackerImpl<R : Range>(
         rollback(tracker, range, editor)
       }
     }
+
+    override fun toString(): String = "LocalLineStatusMarkerRenderer(tracker=$tracker)"
   }
 
   private inner class LocalDocumentTrackerHandler : DocumentTracker.Handler {

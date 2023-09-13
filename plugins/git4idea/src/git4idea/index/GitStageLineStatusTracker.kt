@@ -770,6 +770,8 @@ class GitStageLineStatusTracker(
       return actions
     }
 
+    override fun toString(): String = "GitStageLineStatusTracker.MyLineStatusMarkerPopupRenderer(tracker=$tracker)"
+
     private inner class RollbackLineStatusRangeAction(editor: Editor, range: Range)
       : LineStatusMarkerPopupActions.RangeMarkerAction(editor, tracker, range, IdeActions.SELECTED_CHANGES_ROLLBACK) {
       override fun isEnabled(editor: Editor, range: Range): Boolean = (range as StagedRange).hasUnstaged

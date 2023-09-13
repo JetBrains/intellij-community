@@ -711,6 +711,8 @@ class ChangelistsLocalLineStatusTracker internal constructor(project: Project,
         reopenRange(editor, range, mousePosition)
       }
     }
+
+    override fun toString(): String = "MyLineStatusMarkerRenderer(tracker=$tracker)"
   }
 
 
