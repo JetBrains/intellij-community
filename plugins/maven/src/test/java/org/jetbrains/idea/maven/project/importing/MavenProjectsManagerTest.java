@@ -1556,7 +1556,7 @@ public class MavenProjectsManagerTest extends MavenMultiVersionImportingTestCase
     assertEquals(myProjectRoot.getName(), ModuleManager.getInstance(myProject).getModules()[0].getName());
   }
 
-  @Override
+/*  @Override
   protected void doImportProjects(List<VirtualFile> files, boolean failOnReadingError, String... profiles) {
     if(isNewImportingProcess){
       importViaNewFlow(files, failOnReadingError, Collections.emptyList(), profiles);
@@ -1565,7 +1565,7 @@ public class MavenProjectsManagerTest extends MavenMultiVersionImportingTestCase
       resolveDependenciesAndImport(); // wait of full import completion
     }
 
-  }
+  }*/
 
   /**
    * temporary solution. since The maven deletes files during the import process (renaming the file).
