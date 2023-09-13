@@ -15,7 +15,7 @@ final class SyntaxNodeDescriptorImpl implements MutableSyntaxNodeDescriptor {
 
   private Int2ObjectMap<SyntaxNodeDescriptor> myRepository = new Int2ObjectOpenHashMap<>();
   private Map<Constants.StringKey, CharSequence> myStringAttributes = new EnumMap<>(Constants.StringKey.class);
-  private Map<Constants.CaptureKey, Int2ObjectMap<TextMateCapture>> myCaptures = new EnumMap<>(Constants.CaptureKey.class);
+  private Map<Constants.CaptureKey, TextMateCapture[]> myCaptures = new EnumMap<>(Constants.CaptureKey.class);
 
   private List<SyntaxNodeDescriptor> myChildren = new ArrayList<>();
   private List<InjectionNodeDescriptor> myInjections = new ArrayList<>();
@@ -42,7 +42,7 @@ final class SyntaxNodeDescriptorImpl implements MutableSyntaxNodeDescriptor {
   }
 
   @Override
-  public void setCaptures(@NotNull Constants.CaptureKey key, @Nullable Int2ObjectMap<TextMateCapture> captures) {
+  public void setCaptures(@NotNull Constants.CaptureKey key, TextMateCapture @Nullable [] captures) {
     myCaptures.put(key, captures);
   }
 
@@ -52,23 +52,26 @@ final class SyntaxNodeDescriptorImpl implements MutableSyntaxNodeDescriptor {
   }
 
   @Override
-  public @Nullable Int2ObjectMap<TextMateCapture> getCaptureRules(Constants.@NotNull CaptureKey key) {
+  public TextMateCapture[] getCaptureRules(Constants.@NotNull CaptureKey key) {
     return myCaptures.get(key);
   }
 
   @Nullable
   @Override
   public Int2ObjectMap<CharSequence> getCaptures(@NotNull Constants.CaptureKey key) {
-    Int2ObjectMap<TextMateCapture> realCaptures = myCaptures.get(key);
+    TextMateCapture[] realCaptures = myCaptures.get(key);
     if (realCaptures == null) {
       return null;
     }
-    Int2ObjectMap<CharSequence> captures = new Int2ObjectOpenHashMap<>(realCaptures.size());
-    myCaptures.get(key).int2ObjectEntrySet().forEach(entry -> {
-      captures.put(entry.getIntKey(), entry.getValue() instanceof TextMateCapture.Name
-                                      ? ((TextMateCapture.Name)entry.getValue()).getName()
-                                      : "");
-    });
+    Int2ObjectMap<CharSequence> captures = new Int2ObjectOpenHashMap<>(realCaptures.length);
+    for (int group = 0; group < myCaptures.get(key).length; group++) {
+      TextMateCapture capture = realCaptures[group];
+      if (capture != null) {
+        captures.put(group, capture instanceof TextMateCapture.Name
+                            ? ((TextMateCapture.Name)capture).getName()
+                            : "");
+      }
+    }
     return captures;
   }
 

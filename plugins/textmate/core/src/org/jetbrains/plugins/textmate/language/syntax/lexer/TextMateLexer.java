@@ -2,7 +2,6 @@ package org.jetbrains.plugins.textmate.language.syntax.lexer;
 
 import com.intellij.openapi.util.text.Strings;
 import com.intellij.util.containers.FList;
-import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.textmate.Constants;
@@ -241,14 +240,14 @@ public final class TextMateLexer {
                                 CharSequence line,
                                 int startLineOffset,
                                 FList<TextMateLexerState> states) {
-    Int2ObjectMap<TextMateCapture> captures = rule.getCaptureRules(captureKey);
+    TextMateCapture @Nullable [] captures = rule.getCaptureRules(captureKey);
     if (captures == null) {
       return false;
     }
 
     Deque<TextMateRange> activeCaptureRanges = new LinkedList<>();
     for (int group = 0; group < matchData.count(); group++) {
-      TextMateCapture capture = captures.get(group);
+      TextMateCapture capture = group < captures.length ? captures[group] : null;
       if (capture == null) {
         continue;
       }
