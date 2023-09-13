@@ -76,6 +76,7 @@ internal class SelectableLazyListScopeContainer : SelectableLazyListScope {
             val content: @Composable (SelectableLazyItemScope.() -> Unit),
             val index: Int,
         ) : Entry
+
         data class Items(
             val count: Int,
             val key: (index: Int) -> Any,
@@ -83,6 +84,7 @@ internal class SelectableLazyListScopeContainer : SelectableLazyListScope {
             val itemContent: @Composable (SelectableLazyItemScope.(index: Int) -> Unit),
             val startIndex: Int,
         ) : Entry
+
         data class StickyHeader(
             val key: Any,
             val contentType: Any?,
@@ -90,6 +92,7 @@ internal class SelectableLazyListScopeContainer : SelectableLazyListScope {
             val index: Int,
         ) : Entry
     }
+
     override fun item(
         key: Any,
         contentType: Any?,
@@ -146,7 +149,6 @@ fun <T : Any> SelectableLazyListScope.items(
     selectable = { selectable(items[it]) },
     itemContent = { itemContent(items[it]) }
 )
-
 
 @Composable
 fun LazyItemScope.SelectableLazyItemScope(
