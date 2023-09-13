@@ -20,6 +20,7 @@ import com.intellij.openapi.util.registry.Registry
 import com.intellij.psi.PsiFile
 import com.intellij.util.EventDispatcher
 import com.intellij.util.application
+import com.intellij.util.concurrency.annotations.RequiresBlockingContext
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.*
 import org.jetbrains.annotations.ApiStatus
@@ -166,6 +167,15 @@ class InlineCompletionHandler(private val scope: CoroutineScope) {
     withSafeMute {
       isShowing.set(false)
       InlineCompletionContext.remove(editor)
+    }
+  }
+
+  @RequiresBlockingContext
+  fun hideIfRendering(editor: Editor) {
+    InlineCompletionContext.getOrNull(editor)?.let { context ->
+      application.invokeAndWait {
+        hide(editor, false, context)
+      }
     }
   }
 
