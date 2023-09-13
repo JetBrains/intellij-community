@@ -33,7 +33,7 @@ class InvalidEnvironmentImportingTest : MavenMultiVersionImportingTestCase() {
 
   private fun setupTestManagerForLegacyImport() {
 
-    myProjectsManager.setProgressListener(myTestSyncViewManager)
+    projectsManager.setProgressListener(myTestSyncViewManager)
   }
 
   @Test

@@ -15,8 +15,8 @@ class MavenRenameModulesWatcherTest : MavenDomTestCase() {
 
   override fun setUp() {
     super.setUp()
-    myProjectsManager.initForTests()
-    myProjectsManager.listenForExternalChanges()
+    projectsManager.initForTests()
+    projectsManager.listenForExternalChanges()
   }
 
   private suspend fun renameModule(oldName: String, newName: String) {

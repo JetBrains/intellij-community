@@ -159,8 +159,8 @@ public class MiscImportingTest extends MavenMultiVersionImportingTestCase {
     assertSources("m1");
     assertSources("m2");
 
-    assertFalse(myProjectsManager.isMavenizedProject());
-    myProjectsManager.forceUpdateAllProjectsOrFindAllAvailablePomFiles();
+    assertFalse(getProjectsManager().isMavenizedProject());
+    getProjectsManager().forceUpdateAllProjectsOrFindAllAvailablePomFiles();
     waitForReadingCompletion();
     resolveDependenciesAndImport();
 
@@ -380,7 +380,7 @@ public class MiscImportingTest extends MavenMultiVersionImportingTestCase {
     File jarFile = new File(getRepositoryFile(), "junit/junit/4.0/junit-4.0.jar");
     assertTrue(jarFile.exists());
 
-    myProjectsManager.listenForExternalChanges();
+    getProjectsManager().listenForExternalChanges();
 
     updateSettingsXml("""
                         <proxies>

@@ -25,7 +25,10 @@ import org.jetbrains.jps.model.java.JavaSourceRootType
 import org.jetbrains.kotlin.caches.resolve.KotlinCacheService
 import org.jetbrains.kotlin.cli.common.arguments.K2JSCompilerArguments
 import org.jetbrains.kotlin.cli.common.arguments.K2JVMCompilerArguments
-import org.jetbrains.kotlin.config.*
+import org.jetbrains.kotlin.config.IKotlinFacetSettings
+import org.jetbrains.kotlin.config.LanguageFeature
+import org.jetbrains.kotlin.config.LanguageVersion
+import org.jetbrains.kotlin.config.additionalArgumentsAsList
 import org.jetbrains.kotlin.idea.base.platforms.KotlinCommonLibraryKind
 import org.jetbrains.kotlin.idea.base.platforms.KotlinJavaScriptLibraryKind
 import org.jetbrains.kotlin.idea.base.plugin.artifacts.KotlinArtifacts
@@ -954,7 +957,7 @@ abstract class AbstractKotlinMavenImporterTest(private val createStdProjectFolde
             assertModules("project")
             assertImporterStatePresent()
 
-            val projectBasePath = myProjectsManager.projects.first().file.parent.path
+            val projectBasePath = projectsManager.projects.first().file.parent.path
 
             with(facetSettings) {
                 Assert.assertEquals(

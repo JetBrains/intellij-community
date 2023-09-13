@@ -34,7 +34,7 @@ public class MavenAutomaticVersioningResolutionTest extends MavenDomTestCase {
                                        <artifactId>m</artifactId>
                                       """);
     importProject();
-    assertEquals("1.1", myProjectsManager.findProject(m).getMavenId().getVersion());
+    assertEquals("1.1", getProjectsManager().findProject(m).getMavenId().getVersion());
 
     createModulePom("m",
                     """
@@ -123,8 +123,8 @@ public class MavenAutomaticVersioningResolutionTest extends MavenDomTestCase {
                                         </dependencies>
                                        """);
     importProject();
-    assertEquals("1.1", myProjectsManager.findProject(m1).getMavenId().getVersion());
-    assertEquals("1.1", myProjectsManager.findProject(m2).getMavenId().getVersion());
+    assertEquals("1.1", getProjectsManager().findProject(m1).getMavenId().getVersion());
+    assertEquals("1.1", getProjectsManager().findProject(m2).getMavenId().getVersion());
     assertModuleModuleDeps("m2", "m1");
 
     createModulePom("m2",
@@ -169,7 +169,7 @@ public class MavenAutomaticVersioningResolutionTest extends MavenDomTestCase {
                                         <artifactId>m1</artifactId>
                                        """);
     importProject();
-    assertEquals("1.1", myProjectsManager.findProject(m1).getMavenId().getVersion());
+    assertEquals("1.1", getProjectsManager().findProject(m1).getMavenId().getVersion());
 
     createModulePom("m/m1",
                                      """

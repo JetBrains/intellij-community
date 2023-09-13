@@ -23,7 +23,7 @@ public class MavenProjectsManagerStateTest extends MavenMultiVersionImportingTes
 
   @Test
   public void testSavingAndLoadingState() {
-    MavenProjectsManagerState state = myProjectsManager.getState();
+    MavenProjectsManagerState state = getProjectsManager().getState();
     assertTrue(state.originalFiles.isEmpty());
     assertTrue(MavenWorkspaceSettingsComponent.getInstance(myProject).getSettings().enabledProfiles.isEmpty());
     assertTrue(state.ignoredFiles.isEmpty());
@@ -66,11 +66,11 @@ public class MavenProjectsManagerStateTest extends MavenMultiVersionImportingTes
                                        """);
 
     importProjects(p1, p2);
-    myProjectsManager.setExplicitProfiles(new MavenExplicitProfiles(Arrays.asList("one", "two")));
+    getProjectsManager().setExplicitProfiles(new MavenExplicitProfiles(Arrays.asList("one", "two")));
     setIgnoredFilesPathForNextImport(Arrays.asList(p1.getPath()));
     setIgnoredPathPatternsForNextImport(Arrays.asList("*.xxx"));
 
-    state = myProjectsManager.getState();
+    state = getProjectsManager().getState();
     assertUnorderedPathsAreEqual(state.originalFiles, Arrays.asList(p1.getPath(), p2.getPath()));
     assertUnorderedElementsAreEqual(MavenWorkspaceSettingsComponent.getInstance(myProject).getState().enabledProfiles, "one", "two");
     assertUnorderedPathsAreEqual(state.ignoredFiles, Arrays.asList(p1.getPath()));
@@ -83,16 +83,16 @@ public class MavenProjectsManagerStateTest extends MavenMultiVersionImportingTes
     newState.ignoredFiles = Collections.singleton(p1.getPath());
     newState.ignoredPathMasks = Arrays.asList("*.zzz");
 
-    myProjectsManager.loadState(newState);
+    getProjectsManager().loadState(newState);
 
-    assertUnorderedPathsAreEqual(myProjectsManager.getProjectsTreeForTests().getManagedFilesPaths(),
+    assertUnorderedPathsAreEqual(getProjectsManager().getProjectsTreeForTests().getManagedFilesPaths(),
                                  Arrays.asList(p1.getPath(), p3.getPath()));
-    assertUnorderedElementsAreEqual(myProjectsManager.getExplicitProfiles().getEnabledProfiles(), "three");
-    assertUnorderedPathsAreEqual(myProjectsManager.getIgnoredFilesPaths(), Arrays.asList(p1.getPath()));
-    assertUnorderedElementsAreEqual(myProjectsManager.getIgnoredFilesPatterns(), "*.zzz");
+    assertUnorderedElementsAreEqual(getProjectsManager().getExplicitProfiles().getEnabledProfiles(), "three");
+    assertUnorderedPathsAreEqual(getProjectsManager().getIgnoredFilesPaths(), Arrays.asList(p1.getPath()));
+    assertUnorderedElementsAreEqual(getProjectsManager().getIgnoredFilesPatterns(), "*.zzz");
 
     waitForReadingCompletion();
-    assertUnorderedElementsAreEqual(myProjectsManager.getProjectsTreeForTests().getRootProjectsFiles(),
+    assertUnorderedElementsAreEqual(getProjectsManager().getProjectsTreeForTests().getRootProjectsFiles(),
                                     p1, p3);
   }
 }

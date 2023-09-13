@@ -43,7 +43,7 @@ class MavenModuleBuilderHelperTest : MavenMultiVersionImportingTestCase() {
          </properties>
        </project>""")
     )
-    val mavenProject: MavenProject? = myProjectsManager.findProject(getModule("project"))
+    val mavenProject: MavenProject? = projectsManager.findProject(getModule("project"))
     assertNotNull(mavenProject)
 
     val archetype = MavenArchetype("org.apache.maven.archetypes", "maven-archetype-quickstart", "1.0", null, null)

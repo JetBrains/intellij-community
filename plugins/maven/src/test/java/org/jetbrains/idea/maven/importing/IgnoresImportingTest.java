@@ -116,7 +116,7 @@ public class IgnoresImportingTest extends MavenMultiVersionImportingTestCase {
 
   private void doReadAndImport() {
     if (isNewImportingProcess) {
-      doImportProjects(myProjectsManager.getProjectsTree().getExistingManagedFiles(), true);
+      doImportProjects(getProjectsManager().getProjectsTree().getExistingManagedFiles(), true);
     }
     else {
       updateAllProjects();

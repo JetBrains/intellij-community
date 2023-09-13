@@ -49,8 +49,8 @@ public class FoldersImportingTest extends MavenMultiVersionImportingTestCase {
   @Override
   protected void setUp() throws Exception {
     super.setUp();
-    myProjectsManager.initForTests();
-    myProjectsManager.listenForExternalChanges();
+    getProjectsManager().initForTests();
+    getProjectsManager().listenForExternalChanges();
   }
 
   @Test

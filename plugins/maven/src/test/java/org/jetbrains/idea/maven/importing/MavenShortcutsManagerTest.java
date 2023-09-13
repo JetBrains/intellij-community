@@ -254,13 +254,13 @@ public class MavenShortcutsManagerTest extends MavenMultiVersionImportingTestCas
     assertKeymapContains(p1, goal);
     assertKeymapContains(p2, goal);
 
-    myProjectsManager.setIgnoredState(Collections.singletonList(myProjectsManager.findProject(p1)), true);
+    getProjectsManager().setIgnoredState(Collections.singletonList(getProjectsManager().findProject(p1)), true);
 
 
     assertKeymapDoesNotContain(p1, goal);
     assertKeymapContains(p2, goal);
 
-    myProjectsManager.setIgnoredState(Collections.singletonList(myProjectsManager.findProject(p1)), false);
+    getProjectsManager().setIgnoredState(Collections.singletonList(getProjectsManager().findProject(p1)), false);
 
     assertKeymapContains(p1, goal);
     assertKeymapContains(p2, goal);
@@ -281,7 +281,7 @@ public class MavenShortcutsManagerTest extends MavenMultiVersionImportingTestCas
   }
 
   private void assignShortcut(VirtualFile pomFile, String goal, String shortcut) {
-    MavenProject mavenProject = myProjectsManager.findProject(pomFile);
+    MavenProject mavenProject = getProjectsManager().findProject(pomFile);
     assert mavenProject != null;
     String actionId = myShortcutsManager.getActionId(mavenProject.getPath(), goal);
     assert actionId != null;

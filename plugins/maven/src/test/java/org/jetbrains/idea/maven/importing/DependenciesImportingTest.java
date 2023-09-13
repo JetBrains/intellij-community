@@ -31,8 +31,8 @@ public class DependenciesImportingTest extends MavenMultiVersionImportingTestCas
   @Override
   protected void setUp() throws Exception {
     super.setUp();
-    myProjectsManager.initForTests();
-    myProjectsManager.listenForExternalChanges();
+    getProjectsManager().initForTests();
+    getProjectsManager().listenForExternalChanges();
   }
 
   @Test
@@ -1643,7 +1643,7 @@ public class DependenciesImportingTest extends MavenMultiVersionImportingTestCas
                        "jar://" + getRepositoryPath() + "/junit/junit/4.0/junit-4.0-javadoc.jar!/");
 
     setRepositoryPath(new File(myDir, "__repo").getPath());
-    myProjectsManager.getEmbeddersManager().reset(); // to recognize repository change
+    getProjectsManager().getEmbeddersManager().reset(); // to recognize repository change
 
     updateAllProjects();
 
@@ -1675,7 +1675,7 @@ public class DependenciesImportingTest extends MavenMultiVersionImportingTestCas
                        "jar://" + getRepositoryPath() + "/org/testng/testng/5.8/testng-5.8-javadoc.jar!/");
 
     setRepositoryPath(new File(myDir, "__repo").getPath());
-    myProjectsManager.getEmbeddersManager().reset(); // to recognize repository change
+    getProjectsManager().getEmbeddersManager().reset(); // to recognize repository change
 
     updateAllProjects();
 
@@ -2311,7 +2311,7 @@ public class DependenciesImportingTest extends MavenMultiVersionImportingTestCas
     setIgnoredFilesPathForNextImport(Collections.singletonList(m2.getPath()));
 
     if(!isNewImportingProcess) {
-      myProjectsManager.forceUpdateProjects(myProjectsManager.getProjects());
+      getProjectsManager().forceUpdateProjects(getProjectsManager().getProjects());
     }
     importProject();
 

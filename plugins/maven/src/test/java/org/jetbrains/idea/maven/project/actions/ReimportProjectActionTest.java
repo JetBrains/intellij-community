@@ -38,10 +38,10 @@ public class ReimportProjectActionTest extends MavenMultiVersionImportingTestCas
 
     var module = getModule("m1");
     assertNotNull(module);
-    var mavenProject = myProjectsManager.findProject(module);
-    assertFalse(myProjectsManager.isIgnored(mavenProject));
-    myProjectsManager.setIgnoredState(Collections.singletonList(mavenProject), true);
-    assertTrue(myProjectsManager.isIgnored(mavenProject));
+    var mavenProject = getProjectsManager().findProject(module);
+    assertFalse(getProjectsManager().isIgnored(mavenProject));
+    getProjectsManager().setIgnoredState(Collections.singletonList(mavenProject), true);
+    assertTrue(getProjectsManager().isIgnored(mavenProject));
 
     var m1IgnoredActionVisible = action.isVisible(TestActionEvent.createTestEvent(action, createTestDataContext(m1File)));
     assertFalse(m1IgnoredActionVisible);

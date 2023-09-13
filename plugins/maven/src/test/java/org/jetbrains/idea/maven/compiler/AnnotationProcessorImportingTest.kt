@@ -410,7 +410,7 @@ class AnnotationProcessorImportingTest : MavenMultiVersionImportingTestCase() {
     </plugin>
   </plugins>
 </build>""")
-    val mavenProject = myProjectsManager.findProject(getModule("project"))
+    val mavenProject = projectsManager.findProject(getModule("project"))
     assertNotNull(mavenProject)
 
     val annotationProcessors = mavenProject!!.externalAnnotationProcessors
@@ -450,7 +450,7 @@ class AnnotationProcessorImportingTest : MavenMultiVersionImportingTestCase() {
   </plugins>
 </build>""")
 
-    val mavenProject = myProjectsManager.findProject(getModule("project"))
+    val mavenProject = projectsManager.findProject(getModule("project"))
     assertNotNull(mavenProject)
 
     val annotationProcessors = mavenProject!!.externalAnnotationProcessors
@@ -516,7 +516,7 @@ class AnnotationProcessorImportingTest : MavenMultiVersionImportingTestCase() {
     val module = getModule("m2")
     assertNotNull(module)
 
-    val mavenProject = myProjectsManager.findProject(module)
+    val mavenProject = projectsManager.findProject(module)
     assertNotNull(mavenProject)
 
     val annotationProcessors = mavenProject!!.externalAnnotationProcessors

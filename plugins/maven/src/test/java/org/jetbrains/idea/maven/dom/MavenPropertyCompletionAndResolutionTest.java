@@ -1112,8 +1112,8 @@ public class MavenPropertyCompletionAndResolutionTest extends MavenDomTestCase {
       readWithProfilesViaImportFlow(profiles);
     }
     else {
-      myProjectsManager.setExplicitProfiles(new MavenExplicitProfiles(Arrays.asList(profiles)));
-      myProjectsManager.scheduleUpdateAll(new MavenImportSpec(false, false, false));
+      getProjectsManager().setExplicitProfiles(new MavenExplicitProfiles(Arrays.asList(profiles)));
+      getProjectsManager().scheduleUpdateAll(new MavenImportSpec(false, false, false));
       waitForReadingCompletion();
     }
   }
@@ -1132,10 +1132,10 @@ public class MavenPropertyCompletionAndResolutionTest extends MavenDomTestCase {
                             getMavenImporterSettings(),
                             Arrays.asList(profiles),
                             Collections.emptyList());
-    myProjectsManager.initForTests();
+    getProjectsManager().initForTests();
     ApplicationManager.getApplication().executeOnPooledThread(() -> {
       myReadContext = flow.readMavenFiles(initialImportContext, getMavenProgressIndicator());
-      myProjectsManager.setProjectsTree(myReadContext.getProjectsTree());
+      getProjectsManager().setProjectsTree(myReadContext.getProjectsTree());
     }).get(10, TimeUnit.SECONDS);
   }
 }

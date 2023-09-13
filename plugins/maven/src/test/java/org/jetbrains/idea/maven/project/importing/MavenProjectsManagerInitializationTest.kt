@@ -19,12 +19,12 @@ class MavenProjectsManagerInitializationTest : MavenMultiVersionImportingTestCas
                              """.trimIndent())
     val activated = AtomicBoolean(false)
     Disposer.newDisposable().use { disposable ->
-      myProjectsManager.addManagerListener(object : MavenProjectsManager.Listener {
+      projectsManager.addManagerListener(object : MavenProjectsManager.Listener {
         override fun activated() {
           activated.set(true)
         }
       }, disposable)
-      myProjectsManager.addManagedFiles(listOf(m1))
+      projectsManager.addManagedFiles(listOf(m1))
     }
     assertTrue("activated() wasn't called on listener", activated.get())
   }

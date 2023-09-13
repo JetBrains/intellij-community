@@ -32,9 +32,9 @@ class MavenContextRunConfigurationTest : MavenDomTestCase() {
   <artifactId>project</artifactId>
   <version>1</version>
   """.trimIndent())
-    myProjectsManager.resetManagedFilesAndProfilesInTests(listOf(myProjectPom), MavenExplicitProfiles.NONE)
+    projectsManager.resetManagedFilesAndProfilesInTests(listOf(myProjectPom), MavenExplicitProfiles.NONE)
     importProject()
-    myProjectsManager.fireActivatedInTests()
+    projectsManager.fireActivatedInTests()
 
     val runConfiguration = createRunConfiguration(projectPom, "validate")
     TestCase.assertNotNull(runConfiguration)
@@ -48,9 +48,9 @@ class MavenContextRunConfigurationTest : MavenDomTestCase() {
   <artifactId>project</artifactId>
   <version>1</version>
   """.trimIndent())
-    myProjectsManager.resetManagedFilesAndProfilesInTests(listOf(myProjectPom), MavenExplicitProfiles.NONE)
+    projectsManager.resetManagedFilesAndProfilesInTests(listOf(myProjectPom), MavenExplicitProfiles.NONE)
     importProject()
-    myProjectsManager.fireActivatedInTests()
+    projectsManager.fireActivatedInTests()
 
     val psiFile = PsiManager.getInstance(myProject).findFile(projectPom)
     val context = ConfigurationContext.createEmptyContextForLocation(
@@ -88,9 +88,9 @@ class MavenContextRunConfigurationTest : MavenDomTestCase() {
                             <version>1</version>
                           </parent>
                           <artifactId>m2</artifactId>""")
-    myProjectsManager.resetManagedFilesAndProfilesInTests(listOf(myProjectPom, m2, m2), MavenExplicitProfiles.NONE)
+    projectsManager.resetManagedFilesAndProfilesInTests(listOf(myProjectPom, m2, m2), MavenExplicitProfiles.NONE)
     importProject()
-    myProjectsManager.fireActivatedInTests()
+    projectsManager.fireActivatedInTests()
 
     val psiFile = PsiManager.getInstance(myProject).findFile(m1)
     val context = ConfigurationContext.createEmptyContextForLocation(
@@ -143,9 +143,9 @@ class MavenContextRunConfigurationTest : MavenDomTestCase() {
                             <version>1</version>
                           </parent>
                           <artifactId>m2</artifactId>""")
-    myProjectsManager.resetManagedFilesAndProfilesInTests(listOf(myProjectPom, m2, m2), MavenExplicitProfiles.NONE)
+    projectsManager.resetManagedFilesAndProfilesInTests(listOf(myProjectPom, m2, m2), MavenExplicitProfiles.NONE)
     importProject()
-    myProjectsManager.fireActivatedInTests()
+    projectsManager.fireActivatedInTests()
 
     val runConfiguration1 = createRunConfiguration(m1, "validate")
     TestCase.assertNotNull(runConfiguration1)

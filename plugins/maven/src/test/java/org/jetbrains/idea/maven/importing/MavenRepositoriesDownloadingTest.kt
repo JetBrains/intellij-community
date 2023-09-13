@@ -144,9 +144,9 @@ class MavenRepositoriesDownloadingTest : MavenMultiVersionImportingTestCase() {
     assertFalse(helper.getTestData("local1/org/mytest/myartifact/1.0/myartifact-1.0.jar").isFile)
     createProjectPom(pom())
     doImportProjects(listOf(myProjectPom), false)
-    TestCase.assertEquals(1, myProjectsManager.rootProjects.size)
+    TestCase.assertEquals(1, projectsManager.rootProjects.size)
     TestCase.assertEquals("status code: 401, reason phrase: Unauthorized (401)",
-                          myProjectsManager.rootProjects[0].problems.single { it.type == MavenProjectProblem.ProblemType.REPOSITORY }.description)
+                          projectsManager.rootProjects[0].problems.single { it.type == MavenProjectProblem.ProblemType.REPOSITORY }.description)
 
   }
 
@@ -228,9 +228,9 @@ class MavenRepositoriesDownloadingTest : MavenMultiVersionImportingTestCase() {
 
     doLastUpdatedTest(false, pom()) {
 
-      TestCase.assertEquals(1, myProjectsManager.rootProjects.size)
+      TestCase.assertEquals(1, projectsManager.rootProjects.size)
       TestCase.assertEquals("Unresolved dependency: 'org.mytest:myartifact:jar:1.0'",
-                            myProjectsManager.rootProjects[0].problems.single { it.type == MavenProjectProblem.ProblemType.DEPENDENCY }.description)
+                            projectsManager.rootProjects[0].problems.single { it.type == MavenProjectProblem.ProblemType.DEPENDENCY }.description)
     }
   }
 
@@ -239,9 +239,9 @@ class MavenRepositoriesDownloadingTest : MavenMultiVersionImportingTestCase() {
   fun testWithPluginLastUpdatedWithErrorNoForce() {
 
     doLastUpdatedTest(false, pomPlugins()) {
-      TestCase.assertEquals(1, myProjectsManager.rootProjects.size)
+      TestCase.assertEquals(1, projectsManager.rootProjects.size)
       TestCase.assertEquals("Unresolved plugin: 'org.mytest:myartifact:1.0'",
-                            myProjectsManager.rootProjects[0].problems.single { it.type == MavenProjectProblem.ProblemType.DEPENDENCY }.description)
+                            projectsManager.rootProjects[0].problems.single { it.type == MavenProjectProblem.ProblemType.DEPENDENCY }.description)
 
     }
 
@@ -253,8 +253,8 @@ class MavenRepositoriesDownloadingTest : MavenMultiVersionImportingTestCase() {
   fun testWithDependencyLastUpdatedWithErrorForceUpdate() {
 
     doLastUpdatedTest(true, pom()) {
-      TestCase.assertEquals(1, myProjectsManager.rootProjects.size)
-      TestCase.assertEquals(0, myProjectsManager.rootProjects[0].problems.size)
+      TestCase.assertEquals(1, projectsManager.rootProjects.size)
+      TestCase.assertEquals(0, projectsManager.rootProjects[0].problems.size)
     }
   }
 
@@ -262,8 +262,8 @@ class MavenRepositoriesDownloadingTest : MavenMultiVersionImportingTestCase() {
   @Throws(Exception::class)
   fun testWithPluginLastUpdatedWithErrorForceUpdate() {
     doLastUpdatedTest(true, pomPlugins()) {
-      TestCase.assertEquals(1, myProjectsManager.rootProjects.size)
-      TestCase.assertEquals(0, myProjectsManager.rootProjects[0].problems.size)
+      TestCase.assertEquals(1, projectsManager.rootProjects.size)
+      TestCase.assertEquals(0, projectsManager.rootProjects[0].problems.size)
     }
   }
 
@@ -281,7 +281,7 @@ class MavenRepositoriesDownloadingTest : MavenMultiVersionImportingTestCase() {
        </settings>
        """.trimIndent())
     mavenGeneralSettings.setUserSettingsFile(settingsXml.canonicalPath)
-    myProjectsManager.forceUpdateSnapshots = updateSnapshots
+    projectsManager.forceUpdateSnapshots = updateSnapshots
     mavenGeneralSettings.isAlwaysUpdateSnapshots = updateSnapshots
 
     removeFromLocalRepository("org/mytest/myartifact/")

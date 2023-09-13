@@ -126,7 +126,7 @@ public class DependenciesManagementTest extends MavenMultiVersionImportingTestCa
     assertModules("bom", "project");
 
     // reset embedders and try to update projects from scratch
-    myProjectsManager.getEmbeddersManager().releaseForcefullyInTests();
+    getProjectsManager().getEmbeddersManager().releaseForcefullyInTests();
 
     updateAllProjects();
 

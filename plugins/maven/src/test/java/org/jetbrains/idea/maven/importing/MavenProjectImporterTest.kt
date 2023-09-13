@@ -67,9 +67,9 @@ class MavenProjectImporterTest : MavenMultiVersionImportingTestCase() {
                 </parent>
                 """.trimIndent())
 
-    myProjectsManager.initForTests()
-    myProjectsManager.setIgnoredStateForPoms(listOf(projectFile.path), true)
-    assertTrue(myProjectsManager.projectsTree.isIgnored(MavenProject(projectFile)))
+    projectsManager.initForTests()
+    projectsManager.setIgnoredStateForPoms(listOf(projectFile.path), true)
+    assertTrue(projectsManager.projectsTree.isIgnored(MavenProject(projectFile)))
 
     val resolvedProjects = mutableListOf<MavenProject>()
 

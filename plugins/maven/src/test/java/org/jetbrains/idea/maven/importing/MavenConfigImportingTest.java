@@ -23,7 +23,7 @@ public class MavenConfigImportingTest extends MavenDomTestCase {
                     <artifactId>project</artifactId>
                     <version>${ver}</version>""");
 
-    MavenProject mavenProject = myProjectsManager.findProject(getModule("project"));
+    MavenProject mavenProject = getProjectsManager().findProject(getModule("project"));
     assertEquals("1", mavenProject.getMavenId().getVersion());
   }
 
@@ -35,7 +35,7 @@ public class MavenConfigImportingTest extends MavenDomTestCase {
                     <artifactId>project</artifactId>
                     <version>${ver}</version>""");
 
-    MavenProject mavenProject = myProjectsManager.findProject(getModule("project"));
+    MavenProject mavenProject = getProjectsManager().findProject(getModule("project"));
     assertEquals("1", mavenProject.getMavenId().getVersion());
   }
 
@@ -50,7 +50,7 @@ public class MavenConfigImportingTest extends MavenDomTestCase {
                     <properties>
                       <ver>ignore</ver></properties>""");
 
-    MavenProject mavenProject = myProjectsManager.findProject(getModule("project"));
+    MavenProject mavenProject = getProjectsManager().findProject(getModule("project"));
     assertEquals("1", mavenProject.getMavenId().getVersion());
   }
 
@@ -76,10 +76,10 @@ public class MavenConfigImportingTest extends MavenDomTestCase {
                     <modules>
                       <module>${moduleName}</module></modules>""");
 
-    MavenProject mavenProject = myProjectsManager.findProject(getModule("project"));
+    MavenProject mavenProject = getProjectsManager().findProject(getModule("project"));
     assertEquals("1", mavenProject.getMavenId().getVersion());
 
-    MavenProject module = myProjectsManager.findProject(getModule(mn("project", "m1")));
+    MavenProject module = getProjectsManager().findProject(getModule(mn("project", "m1")));
     assertNotNull(module);
 
     assertEquals("m1", module.getMavenId().getArtifactId());
@@ -125,7 +125,7 @@ public class MavenConfigImportingTest extends MavenDomTestCase {
                     <artifactId>project</artifactId>
                     <version>${ver}</version>""");
 
-    MavenProject mavenProject = myProjectsManager.findProject(getModule("project"));
+    MavenProject mavenProject = getProjectsManager().findProject(getModule("project"));
     assertEquals("1", mavenProject.getMavenId().getVersion());
 
     WriteAction.runAndWait(() -> {
@@ -135,7 +135,7 @@ public class MavenConfigImportingTest extends MavenDomTestCase {
     configConfirmationForYesAnswer();
     importProject();
 
-    mavenProject = myProjectsManager.findProject(getModule("project"));
+    mavenProject = getProjectsManager().findProject(getModule("project"));
     assertEquals("2", mavenProject.getMavenId().getVersion());
   }
 }

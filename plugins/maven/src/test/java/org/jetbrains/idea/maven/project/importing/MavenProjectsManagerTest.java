@@ -71,7 +71,7 @@ public class MavenProjectsManagerTest extends MavenMultiVersionImportingTestCase
                        """);
 
     // shouldn't throw
-    assertNull(myProjectsManager.findProject(myProjectPom));
+    assertNull(getProjectsManager().findProject(myProjectPom));
   }
 
   @Test
@@ -84,7 +84,7 @@ public class MavenProjectsManagerTest extends MavenMultiVersionImportingTestCase
     importProject();
 
     // shouldn't throw
-    assertNotNull(myProjectsManager.findProject(myProjectPom));
+    assertNotNull(getProjectsManager().findProject(myProjectPom));
   }
 
   @Test
@@ -236,7 +236,7 @@ public class MavenProjectsManagerTest extends MavenMultiVersionImportingTestCase
     MavenProjectLegacyImporter.setAnswerToDeleteObsoleteModulesQuestion(true);
 
     scheduleProjectImportAndWaitWithoutCheckFloatingBar();
-    myProjectsManager.forceUpdateAllProjectsOrFindAllAvailablePomFiles();
+    getProjectsManager().forceUpdateAllProjectsOrFindAllAvailablePomFiles();
     waitForImportCompletion();
     assertEquals(0, getProjectsTree().getModules(getProjectsTree().getRootProjects().get(0)).size());
   }
@@ -295,12 +295,12 @@ public class MavenProjectsManagerTest extends MavenMultiVersionImportingTestCase
 
     assertUnorderedElementsAreEqual(getProjectsTree().getRootProjectsFiles(), m1);
 
-    myProjectsManager.addManagedFiles(Arrays.asList(m2));
+    getProjectsManager().addManagedFiles(Arrays.asList(m2));
     waitForReadingCompletion();
 
     assertUnorderedElementsAreEqual(getProjectsTree().getRootProjectsFiles(), m1, m2);
 
-    myProjectsManager.removeManagedFiles(Arrays.asList(m2));
+    getProjectsManager().removeManagedFiles(Arrays.asList(m2));
     waitForReadingCompletion();
     assertUnorderedElementsAreEqual(getProjectsTree().getRootProjectsFiles(), m1);
   }
@@ -325,7 +325,7 @@ public class MavenProjectsManagerTest extends MavenMultiVersionImportingTestCase
 
     resolveDependenciesAndImport(); // ensure no pending imports
 
-    myProjectsManager.addManagedFiles(Collections.singletonList(m2));
+    getProjectsManager().addManagedFiles(Collections.singletonList(m2));
     waitForReadingCompletion();
     resolveDependenciesAndImport();
 
@@ -334,7 +334,7 @@ public class MavenProjectsManagerTest extends MavenMultiVersionImportingTestCase
     //configConfirmationForYesAnswer();
     MavenProjectLegacyImporter.setAnswerToDeleteObsoleteModulesQuestion(true);
 
-    myProjectsManager.removeManagedFiles(Collections.singletonList(m2));
+    getProjectsManager().removeManagedFiles(Collections.singletonList(m2));
     waitForReadingCompletion();
     resolveDependenciesAndImport();
 
@@ -365,7 +365,7 @@ public class MavenProjectsManagerTest extends MavenMultiVersionImportingTestCase
     assertEquals(1, getProjectsTree().getRootProjects().size());
     assertEquals(1, getProjectsTree().getModules(getProjectsTree().getRootProjects().get(0)).size());
 
-    myProjectsManager.addManagedFiles(Arrays.asList(m));
+    getProjectsManager().addManagedFiles(Arrays.asList(m));
     waitForReadingCompletion();
 
     assertEquals(1, getProjectsTree().getRootProjects().size());
@@ -781,7 +781,7 @@ public class MavenProjectsManagerTest extends MavenMultiVersionImportingTestCase
   @Test
   public void testDoNotScheduleResolveOfInvalidProjectsDeleted() {
     final boolean[] called = new boolean[1];
-    myProjectsManager.addProjectsTreeListener(new MavenProjectsTree.Listener() {
+    getProjectsManager().addProjectsTreeListener(new MavenProjectsTree.Listener() {
       @Override
       public void projectResolved(@NotNull Pair<MavenProject, MavenProjectChanges> projectWithChanges,
                                   NativeMavenProjectHolder nativeMavenProject) {
@@ -938,10 +938,10 @@ public class MavenProjectsManagerTest extends MavenMultiVersionImportingTestCase
     assertSources("project");
     assertModuleLibDeps("project");
 
-    myProjectsManager.forceUpdateAllProjectsOrFindAllAvailablePomFiles();
+    getProjectsManager().forceUpdateAllProjectsOrFindAllAvailablePomFiles();
     waitForReadingCompletion();
-    myProjectsManager.waitForReadingCompletion();
-    MavenImportingTestCaseKt.importMavenProjects(myProjectsManager);
+    getProjectsManager().waitForReadingCompletion();
+    MavenImportingTestCaseKt.importMavenProjects(getProjectsManager());
     //myProjectsManager.performScheduledImportInTests();
 
     assertSources("project", "src/main/java");
@@ -1056,13 +1056,13 @@ public class MavenProjectsManagerTest extends MavenMultiVersionImportingTestCase
 
     Module module = getModule("m");
     assertNotNull(module);
-    assertFalse(myProjectsManager.isIgnored(myProjectsManager.findProject(m)));
+    assertFalse(getProjectsManager().isIgnored(getProjectsManager().findProject(m)));
 
     ModuleManager.getInstance(myProject).disposeModule(module);
     //myProjectsManager.performScheduledImportInTests();
 
     assertNull(ModuleManager.getInstance(myProject).findModuleByName("m"));
-    assertFalse(myProjectsManager.isIgnored(myProjectsManager.findProject(m)));
+    assertFalse(getProjectsManager().isIgnored(getProjectsManager().findProject(m)));
   }
 
   @Test
@@ -1089,7 +1089,7 @@ public class MavenProjectsManagerTest extends MavenMultiVersionImportingTestCase
 
     Module module = getModule("m");
     assertNotNull(module);
-    assertFalse(myProjectsManager.isIgnored(myProjectsManager.findProject(m)));
+    assertFalse(getProjectsManager().isIgnored(getProjectsManager().findProject(m)));
 
     var moduleManager = ModuleManager.getInstance(myProject);
     ModifiableModuleModel moduleModel = moduleManager.getModifiableModel();
@@ -1101,7 +1101,7 @@ public class MavenProjectsManagerTest extends MavenMultiVersionImportingTestCase
     updateAllProjects();
 
     assertNull(ModuleManager.getInstance(myProject).findModuleByName("m"));
-    assertTrue(myProjectsManager.isIgnored(myProjectsManager.findProject(m)));
+    assertTrue(getProjectsManager().isIgnored(getProjectsManager().findProject(m)));
   }
 
   @Test
@@ -1126,7 +1126,7 @@ public class MavenProjectsManagerTest extends MavenMultiVersionImportingTestCase
 
     Module module = getModule("m");
     assertNotNull(module);
-    assertFalse(myProjectsManager.isIgnored(myProjectsManager.findProject(m)));
+    assertFalse(getProjectsManager().isIgnored(getProjectsManager().findProject(m)));
 
     CommandProcessor.getInstance().executeCommand(myProject, () -> {
       final Runnable action = () -> {
@@ -1135,10 +1135,10 @@ public class MavenProjectsManagerTest extends MavenMultiVersionImportingTestCase
       ApplicationManager.getApplication().runWriteAction(action);
     }, ProjectBundle.message("module.remove.command"), null);
     //myProjectsManager.performScheduledImportInTests();
-    MavenImportingTestCaseKt.importMavenProjects(myProjectsManager);
+    MavenImportingTestCaseKt.importMavenProjects(getProjectsManager());
 
     assertNull(ModuleManager.getInstance(myProject).findModuleByName("m"));
-    assertTrue(myProjectsManager.isIgnored(myProjectsManager.findProject(m)));
+    assertTrue(getProjectsManager().isIgnored(getProjectsManager().findProject(m)));
   }
 
   private static DataContext createTestModuleDataContext(Module... modules) {
@@ -1282,8 +1282,8 @@ public class MavenProjectsManagerTest extends MavenMultiVersionImportingTestCase
     importProject();
 
     assertModules("project", "m");
-    assertSize(1, myProjectsManager.getRootProjects());
-    assertEmpty(myProjectsManager.getIgnoredFilesPaths());
+    assertSize(1, getProjectsManager().getRootProjects());
+    assertEmpty(getProjectsManager().getIgnoredFilesPaths());
 
     //configConfirmationForYesAnswer();
     MavenProjectLegacyImporter.setAnswerToDeleteObsoleteModulesQuestion(true);
@@ -1296,8 +1296,8 @@ public class MavenProjectsManagerTest extends MavenMultiVersionImportingTestCase
                     """);
 
     assertModules("project");
-    assertSize(1, myProjectsManager.getRootProjects());
-    assertEmpty(myProjectsManager.getIgnoredFilesPaths());
+    assertSize(1, getProjectsManager().getRootProjects());
+    assertEmpty(getProjectsManager().getIgnoredFilesPaths());
   }
 
   @Test
@@ -1323,8 +1323,8 @@ public class MavenProjectsManagerTest extends MavenMultiVersionImportingTestCase
     );
 
     assertModules("project", "project.main", "project.test");
-    assertSize(1, myProjectsManager.getRootProjects());
-    assertEmpty(myProjectsManager.getIgnoredFilesPaths());
+    assertSize(1, getProjectsManager().getRootProjects());
+    assertEmpty(getProjectsManager().getIgnoredFilesPaths());
 
     importProject("""
                     <groupId>test</groupId>
@@ -1333,8 +1333,8 @@ public class MavenProjectsManagerTest extends MavenMultiVersionImportingTestCase
                     """);
 
     assertModules("project");
-    assertSize(1, myProjectsManager.getRootProjects());
-    assertEmpty(myProjectsManager.getIgnoredFilesPaths());
+    assertSize(1, getProjectsManager().getRootProjects());
+    assertEmpty(getProjectsManager().getIgnoredFilesPaths());
   }
 
   @Test
@@ -1349,7 +1349,7 @@ public class MavenProjectsManagerTest extends MavenMultiVersionImportingTestCase
 
     final StringBuilder log = new StringBuilder();
     //myProjectsManager.performScheduledImportInTests();
-    myProjectsManager.addProjectsTreeListener(new MavenProjectsTree.Listener() {
+    getProjectsManager().addProjectsTreeListener(new MavenProjectsTree.Listener() {
       @Override
       public void projectsUpdated(@NotNull List<Pair<MavenProject, MavenProjectChanges>> updated, @NotNull List<MavenProject> deleted) {
         for (Pair<MavenProject, MavenProjectChanges> each : updated) {
@@ -1361,8 +1361,8 @@ public class MavenProjectsManagerTest extends MavenMultiVersionImportingTestCase
       }
     });
 
-    FileContentUtil.reparseFiles(myProject, myProjectsManager.getProjectsFiles(), true);
-    myProjectsManager.waitForReadingCompletion();
+    FileContentUtil.reparseFiles(myProject, getProjectsManager().getProjectsFiles(), true);
+    getProjectsManager().waitForReadingCompletion();
 
     assertTrue(log.toString(), log.length() == 0);
   }
@@ -1407,12 +1407,12 @@ public class MavenProjectsManagerTest extends MavenMultiVersionImportingTestCase
     action.actionPerformed(TestActionEvent.createTestEvent(action, createTestDataContext(mavenParentPom)));
     assertEquals(1, ModuleManager.getInstance(myProject).getModules().length);
     assertEquals("non-maven", ModuleManager.getInstance(myProject).getModules()[0].getName());
-    assertEmpty(myProjectsManager.getIgnoredFilesPaths());
+    assertEmpty(getProjectsManager().getIgnoredFilesPaths());
 
     //should then import project in non-ignored state again
     importProject(mavenParentPom);
     assertEquals(3, ModuleManager.getInstance(myProject).getModules().length);
-    assertEmpty(myProjectsManager.getIgnoredFilesPaths());
+    assertEmpty(getProjectsManager().getIgnoredFilesPaths());
   }
 
 
@@ -1470,11 +1470,11 @@ public class MavenProjectsManagerTest extends MavenMultiVersionImportingTestCase
     assertModuleModuleDeps("m2", "m1");
     assertModuleModuleDeps("m3", "m1");
 
-    var mavenProject2 = myProjectsManager.findProject(m2);
+    var mavenProject2 = getProjectsManager().findProject(m2);
     var m21dep = mavenProject2.findDependencies(new MavenId("test:m1:1")).get(0);
     assertEquals("jar", m21dep.getType());
 
-    var mavenProject3 = myProjectsManager.findProject(m3);
+    var mavenProject3 = getProjectsManager().findProject(m3);
     var m31dep = mavenProject3.findDependencies(new MavenId("test:m1:1")).get(0);
     assertEquals("ejb", m31dep.getType());
   }
@@ -1492,11 +1492,11 @@ public class MavenProjectsManagerTest extends MavenMultiVersionImportingTestCase
                     """);
 
     assertModules("project");
-    assertSize(1, myProjectsManager.getRootProjects());
+    assertSize(1, getProjectsManager().getRootProjects());
 
-    myProjectsManager.removeManagedFiles(Collections.singletonList(myProjectPom));
+    getProjectsManager().removeManagedFiles(Collections.singletonList(myProjectPom));
     waitForImportCompletion();
-    assertSize(0, myProjectsManager.getRootProjects());
+    assertSize(0, getProjectsManager().getRootProjects());
   }
 
   @Test

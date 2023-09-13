@@ -4,7 +4,6 @@ package org.jetbrains.idea.maven.project.importing;
 
 import com.intellij.maven.testFramework.MavenMultiVersionImportingTestCase;
 import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.java.LanguageLevel;
@@ -760,8 +759,8 @@ public class MavenProjectTest extends MavenMultiVersionImportingTestCase {
     //Registry.get("maven.server.debug").setValue(true);
     importProject();
 
-    Set<MavenRemoteRepository> repositories = myProjectsManager.getRemoteRepositories();
-    MavenEmbeddersManager embeddersManager = myProjectsManager.getEmbeddersManager();
+    Set<MavenRemoteRepository> repositories = getProjectsManager().getRemoteRepositories();
+    MavenEmbeddersManager embeddersManager = getProjectsManager().getEmbeddersManager();
     var mavenEmbedderWrapper = embeddersManager.getEmbedder(
       MavenEmbeddersManager.FOR_POST_PROCESSING,
       MavenUtil.getBaseDir(projectPom).toString());

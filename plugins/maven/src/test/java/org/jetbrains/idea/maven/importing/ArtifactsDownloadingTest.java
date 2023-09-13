@@ -21,7 +21,6 @@ import org.jetbrains.idea.maven.model.MavenArtifact;
 import org.jetbrains.idea.maven.model.MavenId;
 import org.jetbrains.idea.maven.project.MavenArtifactDownloader;
 import org.jetbrains.idea.maven.project.MavenProject;
-import org.jetbrains.idea.maven.project.MavenProjectsManager;
 import org.jetbrains.idea.maven.server.MavenServerManager;
 import org.junit.Test;
 
@@ -79,7 +78,7 @@ public class ArtifactsDownloadingTest extends ArtifactsDownloadingTestCase {
     assertFalse(javadoc.exists());
 
     getMavenGeneralSettings().setWorkOffline(false);
-    myProjectsManager.getEmbeddersManager().reset(); // to recognize change
+    getProjectsManager().getEmbeddersManager().reset(); // to recognize change
     downloadArtifacts();
 
     assertTrue(sources.exists());
@@ -89,7 +88,7 @@ public class ArtifactsDownloadingTest extends ArtifactsDownloadingTestCase {
     FileUtil.delete(javadoc);
 
     getMavenGeneralSettings().setWorkOffline(true);
-    myProjectsManager.getEmbeddersManager().reset(); // to recognize change
+    getProjectsManager().getEmbeddersManager().reset(); // to recognize change
 
     downloadArtifacts();
 

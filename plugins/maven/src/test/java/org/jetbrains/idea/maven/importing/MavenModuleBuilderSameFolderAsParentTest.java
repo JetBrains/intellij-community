@@ -46,7 +46,7 @@ public class MavenModuleBuilderSameFolderAsParentTest extends MavenMultiVersionI
   }
 
   private void setParentProject(VirtualFile pom) {
-    myBuilder.setParentProject(myProjectsManager.findProject(pom));
+    myBuilder.setParentProject(getProjectsManager().findProject(pom));
   }
 
   private void createNewModule(MavenId id) throws Exception {

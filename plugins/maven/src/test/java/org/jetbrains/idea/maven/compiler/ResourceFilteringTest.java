@@ -727,7 +727,7 @@ public class ResourceFilteringTest extends MavenCompilingTestCase {
     if(isNewImportingProcess) {
       importProjectWithProfiles("two");
     } else {
-      myProjectsManager.setExplicitProfiles(new MavenExplicitProfiles(Arrays.asList("two")));
+      getProjectsManager().setExplicitProfiles(new MavenExplicitProfiles(Arrays.asList("two")));
       updateAllProjects();
     }
 

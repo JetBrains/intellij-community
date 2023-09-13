@@ -29,7 +29,6 @@ import org.jetbrains.idea.maven.model.MavenArchetype;
 import org.jetbrains.idea.maven.model.MavenId;
 import org.jetbrains.idea.maven.project.MavenProject;
 import org.jetbrains.idea.maven.project.MavenProjectsManager;
-import org.jetbrains.idea.maven.utils.MavenUtil;
 import org.jetbrains.idea.maven.wizards.AbstractMavenModuleBuilder;
 import org.jetbrains.idea.maven.wizards.MavenJavaModuleBuilder;
 import org.junit.Test;
@@ -156,14 +155,14 @@ public class MavenModuleBuilderTest extends MavenMultiVersionImportingTestCase {
                     <version>1</version>
                     """);
 
-    assertEquals(1, myProjectsManager.getProjectsTreeForTests().getManagedFilesPaths().size());
+    assertEquals(1, getProjectsManager().getProjectsTreeForTests().getManagedFilesPaths().size());
 
     setModuleNameAndRoot("module", getProjectPath() + "/module");
     setAggregatorProject(null);
     createNewModule(new MavenId("org.foo", "module", "1.0"));
     myProjectRoot.findFileByRelativePath("module/pom.xml");
 
-    assertEquals(2, myProjectsManager.getProjectsTreeForTests().getManagedFilesPaths().size());
+    assertEquals(2, getProjectsManager().getProjectsTreeForTests().getManagedFilesPaths().size());
   }
 
   @Test
@@ -176,14 +175,14 @@ public class MavenModuleBuilderTest extends MavenMultiVersionImportingTestCase {
                     <version>1</version>
                     """);
 
-    assertEquals(1, myProjectsManager.getProjectsTreeForTests().getManagedFilesPaths().size());
+    assertEquals(1, getProjectsManager().getProjectsTreeForTests().getManagedFilesPaths().size());
 
     setModuleNameAndRoot("module", getProjectPath() + "/module");
     setAggregatorProject(myProjectPom);
     createNewModule(new MavenId("org.foo", "module", "1.0"));
     myProjectRoot.findFileByRelativePath("module/pom.xml");
 
-    assertEquals(1, myProjectsManager.getProjectsTreeForTests().getManagedFilesPaths().size());
+    assertEquals(1, getProjectsManager().getProjectsTreeForTests().getManagedFilesPaths().size());
   }
 
   @Test
@@ -361,11 +360,11 @@ public class MavenModuleBuilderTest extends MavenMultiVersionImportingTestCase {
   }
 
   private void setAggregatorProject(VirtualFile pom) {
-    myBuilder.setAggregatorProject(pom == null ? null : myProjectsManager.findProject(pom));
+    myBuilder.setAggregatorProject(pom == null ? null : getProjectsManager().findProject(pom));
   }
 
   private void setParentProject(VirtualFile pom) {
-    myBuilder.setParentProject(myProjectsManager.findProject(pom));
+    myBuilder.setParentProject(getProjectsManager().findProject(pom));
   }
 
   private void setInheritedOptions(boolean groupId, boolean version) {

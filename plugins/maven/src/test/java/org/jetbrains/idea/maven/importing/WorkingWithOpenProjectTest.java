@@ -45,7 +45,7 @@ public class WorkingWithOpenProjectTest extends MavenMultiVersionImportingTestCa
   public void _testSavingAllDocumentBeforeReimport() {
     // cannot make it work die to order of document listeners
 
-    myProjectsManager.listenForExternalChanges();
+    getProjectsManager().listenForExternalChanges();
     final Document d = FileDocumentManager.getInstance().getDocument(myProjectPom);
     WriteCommandAction.runWriteCommandAction(null, () -> d.setText(createPomXml("""
                                                                                   <groupId>test</groupId>
