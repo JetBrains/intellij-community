@@ -5,7 +5,7 @@ class C {
         get() = myX
         set(x) {
             println("setter invoked")
-            myX = x
+            this.myX = x
         }
 
     fun foo() {

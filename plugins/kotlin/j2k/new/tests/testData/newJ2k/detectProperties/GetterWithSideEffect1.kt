@@ -7,7 +7,7 @@ class C {
             return myX
         }
         set(x) {
-            myX = x
+            this.myX = x
         }
 
     fun foo() {

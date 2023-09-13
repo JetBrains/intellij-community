@@ -4,7 +4,7 @@ data class J(val x: Int) {
     fun i(y: Int) {}
 
     fun f1() {
-        i(x + x + x + x)
+        i(x + x + this.x + this.x)
     }
 
     fun f2(x: Int) {

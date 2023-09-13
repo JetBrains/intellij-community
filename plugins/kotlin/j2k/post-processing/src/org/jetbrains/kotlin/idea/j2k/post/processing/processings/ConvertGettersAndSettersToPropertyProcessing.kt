@@ -37,14 +37,11 @@ import org.jetbrains.kotlin.js.resolve.diagnostics.findPsi
 import org.jetbrains.kotlin.lexer.KtModifierKeywordToken
 import org.jetbrains.kotlin.lexer.KtTokens.*
 import org.jetbrains.kotlin.name.Name
-import org.jetbrains.kotlin.nj2k.NewJ2kConverterContext
-import org.jetbrains.kotlin.nj2k.asGetterName
-import org.jetbrains.kotlin.nj2k.asSetterName
+import org.jetbrains.kotlin.nj2k.*
 import org.jetbrains.kotlin.nj2k.externalCodeProcessing.JKFakeFieldData
 import org.jetbrains.kotlin.nj2k.externalCodeProcessing.JKFieldData
 import org.jetbrains.kotlin.nj2k.externalCodeProcessing.JKPhysicalMethodData
 import org.jetbrains.kotlin.nj2k.externalCodeProcessing.NewExternalCodeProcessing
-import org.jetbrains.kotlin.nj2k.fqNameWithoutCompanions
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.*
 import org.jetbrains.kotlin.resolve.descriptorUtil.getSuperClassNotAny
@@ -682,18 +679,22 @@ private class ConvertGettersAndSettersToPropertyStatefulProcessing(
                     createSetter(it, ktProperty, psiFactory, property.isFake)
                 }
             val getterVisibility = getter.safeAs<RealGetter>()?.function?.visibilityModifierTypeOrDefault()
+
             if (getter is RealGetter) {
                 if (getter.function.isAbstract()) {
                     ktProperty.addModifier(ABSTRACT_KEYWORD)
                 }
                 if (ktGetter.isRedundantGetter()) {
+                    getter.function.deleteExplicitLabelComments()
                     val commentSaver = CommentSaver(getter.function)
                     commentSaver.restore(ktProperty)
                 }
                 getter.function.delete()
             }
+
             if (setter is RealSetter) {
                 if (ktSetter?.isRedundantSetter() == true) {
+                    setter.function.deleteExplicitLabelComments()
                     val commentSaver = CommentSaver(setter.function)
                     commentSaver.restore(ktProperty)
                 }
@@ -723,6 +724,14 @@ private class ConvertGettersAndSettersToPropertyStatefulProcessing(
             }
 
             moveAccessorAnnotationsToProperty(ktProperty)
+        }
+    }
+
+    // Don't try to save the now useless explicit label comments,
+    // they may hurt formatting later
+    private fun KtNamedFunction.deleteExplicitLabelComments() {
+        forEachDescendantOfType<PsiComment> { comment ->
+            if (comment.text.asExplicitLabel() != null) comment.delete()
         }
     }
 

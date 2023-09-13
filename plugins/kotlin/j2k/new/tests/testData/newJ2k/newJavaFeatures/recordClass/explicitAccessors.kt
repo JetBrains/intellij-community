@@ -2,6 +2,6 @@
 @JvmRecord
 data class R(val x: Int) {
     fun x(): Int {
-        return if (x < 100) x else 100
+        return if (this.x < 100) this.x else 100
     }
 }

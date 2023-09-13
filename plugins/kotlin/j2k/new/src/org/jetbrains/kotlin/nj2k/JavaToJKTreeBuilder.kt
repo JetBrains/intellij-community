@@ -55,6 +55,7 @@ class JavaToJKTreeBuilder(
     converterServices: NewJavaToKotlinServices,
     private val importStorage: JKImportStorage,
     private val bodyFilter: ((PsiElement) -> Boolean)?,
+    private val forInlining: Boolean
 ) {
     private val expressionTreeMapper = ExpressionTreeMapper()
     private val declarationMapper = DeclarationMapper(expressionTreeMapper, withBody = bodyFilter == null)
@@ -152,7 +153,7 @@ class JavaToJKTreeBuilder(
 
         private fun PsiThisExpression.toJK(): JKThisExpression {
             val qualifierLabel = qualifier?.referenceName?.let { JKLabelText(JKNameIdentifier(it)) } ?: JKLabelEmpty()
-            return JKThisExpression(qualifierLabel, type.toJK())
+            return JKThisExpression(qualifierLabel, type.toJK(), shouldBePreserved = !forInlining)
         }
 
         private fun PsiSuperExpression.toJK(): JKSuperExpression {

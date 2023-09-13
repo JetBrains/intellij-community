@@ -123,9 +123,14 @@ class JKStubExpression(override val expressionType: JKType? = null) : JKExpressi
     override fun accept(visitor: JKVisitor) = visitor.visitStubExpression(this)
 }
 
+/**
+ * @param shouldBePreserved - this is an original `this` expression from Java code
+ * that should be preserved in Kotlin (don't run "Redundant explicit 'this'" inspection on it automatically).
+ */
 class JKThisExpression(
     qualifierLabel: JKLabel,
     override val expressionType: JKType? = null,
+    val shouldBePreserved: Boolean = false
 ) : JKExpression() {
     var qualifierLabel: JKLabel by child(qualifierLabel)
     override fun accept(visitor: JKVisitor) = visitor.visitThisExpression(this)

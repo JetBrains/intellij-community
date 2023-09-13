@@ -3,6 +3,7 @@
 package org.jetbrains.kotlin.idea.j2k.post.processing.processings
 
 import com.intellij.openapi.application.runReadAction
+import com.intellij.psi.PsiComment
 import com.intellij.psi.PsiElement
 import com.intellij.psi.impl.source.tree.LeafPsiElement
 import com.intellij.psi.search.LocalSearchScope
@@ -108,6 +109,8 @@ internal class MergePropertyWithConstructorParameterProcessing : ElementsBasedPo
                 restoreCommentsTarget = property
             }
         }
+
+        initialization.assignment.getExplicitLabelComment()?.delete()
         initialization.assignment.delete()
         commentSaver.restore(restoreCommentsTarget, forceAdjustIndent = false)
     }

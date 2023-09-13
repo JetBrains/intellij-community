@@ -6,7 +6,7 @@ enum class JavaEnum {
     }
 
     constructor() {
-        x = "default"
+        this.x = "default"
     }
 
     protected var x: String

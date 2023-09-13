@@ -1,7 +1,7 @@
 enum class E(protected val p: Int) {
     A(1) {
         override fun bar() {
-            foo(p)
+            foo(this.p)
         }
     },
 

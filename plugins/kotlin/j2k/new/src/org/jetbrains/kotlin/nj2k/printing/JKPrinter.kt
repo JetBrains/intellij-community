@@ -102,7 +102,7 @@ internal class JKPrinter(
     private val symbolRenderer = JKSymbolRenderer(importStorage, project)
 
     private fun JKType.renderTypeInfo() {
-        this@JKPrinter.print(elementInfoStorage.getOrCreateInfoForElement(this).render())
+        this@JKPrinter.print(elementInfoStorage.getOrCreateInferenceLabelForElement(this).render())
     }
 
     fun renderType(type: JKType, owner: JKTreeElement? = null) {

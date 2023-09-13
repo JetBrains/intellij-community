@@ -106,7 +106,7 @@ interface TestTypeParameter<@TypeUseAnon1 F : @TypeUseAnon1 File?> {
 
 class TestTypeArgument {
     fun f1() {
-        f2<@TypeUseAnon1 String?>("")
+        this.f2<@TypeUseAnon1 String?>("")
     }
 
     fun <T> f2(t: T) {

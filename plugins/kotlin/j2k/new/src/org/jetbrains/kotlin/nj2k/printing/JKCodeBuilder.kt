@@ -335,9 +335,7 @@ internal class JKCodeBuilder(context: NewJ2kConverterContext) {
                 method.typeParameterList.accept(this)
             }
 
-            elementInfoStorage.getOrCreateInfoForElement(method).let {
-                printer.print(it.render())
-            }
+            printElementInfoLabel(method)
             method.name.accept(this)
             renderParameterList(method)
 
@@ -414,6 +412,9 @@ internal class JKCodeBuilder(context: NewJ2kConverterContext) {
         }
 
         override fun visitThisExpressionRaw(thisExpression: JKThisExpression) {
+            if (thisExpression.shouldBePreserved) {
+                printElementInfoLabel(thisExpression)
+            }
             printer.print("this")
             thisExpression.qualifierLabel.accept(this)
         }
@@ -949,6 +950,15 @@ internal class JKCodeBuilder(context: NewJ2kConverterContext) {
             } else {
                 printer.print("TODO(\"$message\")")
             }
+        }
+
+        private fun printElementInfoLabel(element: JKElement) {
+            val label = if (element is JKThisExpression) {
+                elementInfoStorage.getOrCreateExplicitLabelForElement(element)
+            } else {
+                elementInfoStorage.getOrCreateInferenceLabelForElement(element)
+            }
+            printer.print(label.render())
         }
     }
 }

@@ -148,7 +148,7 @@ private val inferringTypesPostProcessingGroup = NamedPostProcessingGroup(
         ),
         NullabilityInferenceProcessing(),
         MutabilityInferenceProcessing(),
-        ClearUnknownLabelsProcessing()
+        ClearUnknownInferenceLabelsProcessing()
     )
 )
 
@@ -167,7 +167,8 @@ private val cleaningUpCodePostProcessingGroup = NamedPostProcessingGroup(
         addOrRemoveModifiersProcessingGroup,
         inspectionLikePostProcessingGroup,
         removeRedundantElementsProcessingGroup,
-        cleaningUpDiagnosticBasedPostProcessingGroup
+        ClearExplicitLabelsProcessing(),
+        cleaningUpDiagnosticBasedPostProcessingGroup,
     )
 )
 

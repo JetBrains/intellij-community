@@ -7,7 +7,7 @@ internal open class Base {
 internal class A : Base() {
     internal inner class C {
         fun test() {
-            foo()
+            this@A.foo()
         }
     }
 }
