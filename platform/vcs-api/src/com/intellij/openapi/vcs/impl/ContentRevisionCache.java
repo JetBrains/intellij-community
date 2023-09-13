@@ -149,21 +149,6 @@ public final class ContentRevisionCache {
     }
   }
 
-  private boolean putCurrent(FilePath path, VcsRevisionNumber number, @NotNull VcsKey vcsKey, final long counter) {
-    synchronized (myLock) {
-      if (myCounter != counter) return false;
-      ++ myCounter;
-      myCurrentRevisionsCache.put(new CurrentKey(path, vcsKey), number);
-    }
-    return true;
-  }
-
-  private Pair<VcsRevisionNumber, Long> getCurrent(final FilePath path, final VcsKey vcsKey) {
-    synchronized (myLock) {
-      return new Pair<>(myCurrentRevisionsCache.get(new CurrentKey(path, vcsKey)), myCounter);
-    }
-  }
-
   public static byte @NotNull [] loadAsBytes(@NotNull FilePath path,
                                              Throwable2Computable<byte @NotNull [], ? extends VcsException, ? extends IOException> loader)
     throws VcsException, IOException {
@@ -206,19 +191,28 @@ public final class ContentRevisionCache {
   }
 
   private static VcsRevisionNumber putIntoCurrentCache(final ContentRevisionCache cache,
-                                                                     FilePath path,
-                                                                     @NotNull VcsKey vcsKey,
-                                                                     final CurrentRevisionProvider loader) throws VcsException {
-    VcsRevisionNumber loadedRevisionNumber;
-    Pair<VcsRevisionNumber, Long> currentRevision;
-
+                                                       FilePath path,
+                                                       @NotNull VcsKey vcsKey,
+                                                       final CurrentRevisionProvider loader) throws VcsException {
+    CurrentKey key = new CurrentKey(path, vcsKey);
     while (true) {
-      loadedRevisionNumber = loader.getCurrentRevision();
-      currentRevision = cache.getCurrent(path, vcsKey);
-      if (loadedRevisionNumber.equals(currentRevision.getFirst())) return loadedRevisionNumber;
+      VcsRevisionNumber loadedRevisionNumber = loader.getCurrentRevision();
 
-      if (cache.putCurrent(path, loadedRevisionNumber, vcsKey, currentRevision.getSecond())) {
-        return loadedRevisionNumber;
+      VcsRevisionNumber currentRevision;
+      long counter;
+      synchronized (cache.myLock) {
+        currentRevision = cache.myCurrentRevisionsCache.get(key);
+        counter = cache.myCounter;
+      }
+
+      if (loadedRevisionNumber.equals(currentRevision)) return loadedRevisionNumber;
+
+      synchronized (cache.myLock) {
+        if (cache.myCounter == counter) {
+          ++cache.myCounter;
+          cache.myCurrentRevisionsCache.put(key, loadedRevisionNumber);
+          return loadedRevisionNumber;
+        }
       }
     }
   }
