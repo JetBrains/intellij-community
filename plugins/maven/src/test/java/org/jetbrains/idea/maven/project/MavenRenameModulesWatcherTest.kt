@@ -3,10 +3,6 @@ package org.jetbrains.idea.maven.project
 
 import com.intellij.maven.testFramework.MavenDomTestCase
 import com.intellij.openapi.application.readAction
-import com.intellij.openapi.application.writeAction
-import com.intellij.openapi.module.ModuleManager
-import com.intellij.openapi.module.ModuleWithNameAlreadyExists
-import com.intellij.openapi.project.ModuleListener
 import kotlinx.coroutines.runBlocking
 import org.junit.Test
 
@@ -17,22 +13,6 @@ class MavenRenameModulesWatcherTest : MavenDomTestCase() {
     super.setUp()
     projectsManager.initForTests()
     projectsManager.listenForExternalChanges()
-  }
-
-  private suspend fun renameModule(oldName: String, newName: String) {
-    val moduleManager = ModuleManager.getInstance(myProject)
-    val module = moduleManager.findModuleByName(oldName)!!
-    val modifiableModel = moduleManager.getModifiableModel()
-    try {
-      modifiableModel.renameModule(module, newName)
-    }
-    catch (e: ModuleWithNameAlreadyExists) {
-      throw RuntimeException(e)
-    }
-    writeAction {
-      modifiableModel.commit()
-      myProject.getMessageBus().syncPublisher(ModuleListener.TOPIC).modulesRenamed(myProject, listOf(module)) { oldName }
-    }
   }
 
   @Test

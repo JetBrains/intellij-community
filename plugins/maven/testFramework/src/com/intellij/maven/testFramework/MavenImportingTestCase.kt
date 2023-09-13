@@ -6,15 +6,14 @@ import com.intellij.compiler.CompilerTestUtil
 import com.intellij.java.library.LibraryWithMavenCoordinatesProperties
 import com.intellij.maven.testFramework.utils.importMavenProjects
 import com.intellij.maven.testFramework.utils.resolveFoldersAndImport
-import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.application.PathManager
-import com.intellij.openapi.application.ReadAction
-import com.intellij.openapi.application.WriteAction
+import com.intellij.openapi.application.*
 import com.intellij.openapi.externalSystem.autoimport.AutoImportProjectNotificationAware
 import com.intellij.openapi.externalSystem.autoimport.AutoImportProjectTracker
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.module.ModuleManager
+import com.intellij.openapi.module.ModuleWithNameAlreadyExists
 import com.intellij.openapi.project.DumbService
+import com.intellij.openapi.project.ModuleListener
 import com.intellij.openapi.projectRoots.ProjectJdkTable
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.projectRoots.impl.JavaAwareProjectJdkTableImpl
@@ -728,6 +727,22 @@ abstract class MavenImportingTestCase : MavenTestCase() {
     val promise = AsyncPromise<Void>()
     DumbService.getInstance(myProject).smartInvokeLater { promise.setResult(null) }
     edt<RuntimeException> { PlatformTestUtil.waitForPromise(promise, 60_000) }
+  }
+
+  protected suspend fun renameModule(oldName: String, newName: String) {
+    val moduleManager = ModuleManager.getInstance(myProject)
+    val module = moduleManager.findModuleByName(oldName)!!
+    val modifiableModel = moduleManager.getModifiableModel()
+    try {
+      modifiableModel.renameModule(module, newName)
+    }
+    catch (e: ModuleWithNameAlreadyExists) {
+      throw RuntimeException(e)
+    }
+    writeAction {
+      modifiableModel.commit()
+      myProject.getMessageBus().syncPublisher(ModuleListener.TOPIC).modulesRenamed(myProject, listOf(module)) { oldName }
+    }
   }
 
   companion object {
