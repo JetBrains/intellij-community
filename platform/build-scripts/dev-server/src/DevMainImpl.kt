@@ -6,11 +6,11 @@ package org.jetbrains.intellij.build.devServer
 import com.intellij.openapi.application.PathManager
 import com.intellij.platform.diagnostic.telemetry.BatchSpanProcessor
 import com.intellij.util.childScope
+import io.opentelemetry.api.common.AttributeKey
 import io.opentelemetry.api.common.Attributes
 import io.opentelemetry.sdk.OpenTelemetrySdk
 import io.opentelemetry.sdk.resources.Resource
 import io.opentelemetry.sdk.trace.SdkTracerProvider
-import io.opentelemetry.semconv.resource.attributes.ResourceAttributes
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.runBlocking
@@ -34,7 +34,7 @@ fun buildDevMain(): Collection<Path> {
 
     val tracerProvider = SdkTracerProvider.builder()
       .addSpanProcessor(spanProcessor)
-      .setResource(Resource.create(Attributes.of(ResourceAttributes.SERVICE_NAME, "builder")))
+      .setResource(Resource.create(Attributes.of(AttributeKey.stringKey("service.name"), "builder")))
       .build()
     try {
       // don't use JaegerJsonSpanExporter - not needed for clients, should be enabled only if needed to avoid writing ~500KB JSON file

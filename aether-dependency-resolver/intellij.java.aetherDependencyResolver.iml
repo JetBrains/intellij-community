@@ -33,10 +33,10 @@
     <orderEntry type="library" exported="" name="maven-resolver-provider" level="project" />
     <orderEntry type="module-library">
       <library name="org.apache.maven.resolver:maven-resolver-transport-file" type="repository">
-        <properties maven-id="org.apache.maven.resolver:maven-resolver-transport-file:1.3.3">
+        <properties jar-repository-id="central-proxy" maven-id="org.apache.maven.resolver:maven-resolver-transport-file:1.9.15">
           <verification>
-            <artifact url="file://$MAVEN_REPOSITORY$/org/apache/maven/resolver/maven-resolver-transport-file/1.3.3/maven-resolver-transport-file-1.3.3.jar">
-              <sha256sum>e6842c1a2c9080e60fed7747d2375fedf7e51277a995b7c053426f68537bc9c3</sha256sum>
+            <artifact url="file://$MAVEN_REPOSITORY$/org/apache/maven/resolver/maven-resolver-transport-file/1.9.15/maven-resolver-transport-file-1.9.15.jar">
+              <sha256sum>2402405da2a24324d5b15009c9cf65fc22a3b0d662af1533831c3b8b1ec5ceeb</sha256sum>
             </artifact>
           </verification>
           <exclude>
@@ -46,20 +46,20 @@
           </exclude>
         </properties>
         <CLASSES>
-          <root url="jar://$MAVEN_REPOSITORY$/org/apache/maven/resolver/maven-resolver-transport-file/1.3.3/maven-resolver-transport-file-1.3.3.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/apache/maven/resolver/maven-resolver-transport-file/1.9.15/maven-resolver-transport-file-1.9.15.jar!/" />
         </CLASSES>
         <JAVADOC />
         <SOURCES>
-          <root url="jar://$MAVEN_REPOSITORY$/org/apache/maven/resolver/maven-resolver-transport-file/1.3.3/maven-resolver-transport-file-1.3.3-sources.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/apache/maven/resolver/maven-resolver-transport-file/1.9.15/maven-resolver-transport-file-1.9.15-sources.jar!/" />
         </SOURCES>
       </library>
     </orderEntry>
     <orderEntry type="module-library">
       <library name="org.apache.maven.resolver:maven-resolver-transport-http" type="repository">
-        <properties maven-id="org.apache.maven.resolver:maven-resolver-transport-http:1.3.3">
+        <properties jar-repository-id="central-proxy" maven-id="org.apache.maven.resolver:maven-resolver-transport-http:1.9.15">
           <verification>
-            <artifact url="file://$MAVEN_REPOSITORY$/org/apache/maven/resolver/maven-resolver-transport-http/1.3.3/maven-resolver-transport-http-1.3.3.jar">
-              <sha256sum>efe8d834e7b55c30e1e17a1a9171ffcf67915eb00c3b0f8a9b8f2bc8aa4752f8</sha256sum>
+            <artifact url="file://$MAVEN_REPOSITORY$/org/apache/maven/resolver/maven-resolver-transport-http/1.9.15/maven-resolver-transport-http-1.9.15.jar">
+              <sha256sum>903130fb398dbedb1364cded7717ba3aa44084a1e403160cfb17e7ecbdc4e459</sha256sum>
             </artifact>
           </verification>
           <exclude>
@@ -74,20 +74,20 @@
           </exclude>
         </properties>
         <CLASSES>
-          <root url="jar://$MAVEN_REPOSITORY$/org/apache/maven/resolver/maven-resolver-transport-http/1.3.3/maven-resolver-transport-http-1.3.3.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/apache/maven/resolver/maven-resolver-transport-http/1.9.15/maven-resolver-transport-http-1.9.15.jar!/" />
         </CLASSES>
         <JAVADOC />
         <SOURCES>
-          <root url="jar://$MAVEN_REPOSITORY$/org/apache/maven/resolver/maven-resolver-transport-http/1.3.3/maven-resolver-transport-http-1.3.3-sources.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/apache/maven/resolver/maven-resolver-transport-http/1.9.15/maven-resolver-transport-http-1.9.15-sources.jar!/" />
         </SOURCES>
       </library>
     </orderEntry>
     <orderEntry type="module-library">
       <library name="org.apache.maven.resolver:maven-resolver-connector-basic" type="repository">
-        <properties maven-id="org.apache.maven.resolver:maven-resolver-connector-basic:1.3.3">
+        <properties maven-id="org.apache.maven.resolver:maven-resolver-connector-basic:1.9.15">
           <verification>
-            <artifact url="file://$MAVEN_REPOSITORY$/org/apache/maven/resolver/maven-resolver-connector-basic/1.3.3/maven-resolver-connector-basic-1.3.3.jar">
-              <sha256sum>273d2fe6bfe65986949d6e827794cf3ec43295af6dafe1d4186b6f3dd83c75a3</sha256sum>
+            <artifact url="file://$MAVEN_REPOSITORY$/org/apache/maven/resolver/maven-resolver-connector-basic/1.9.15/maven-resolver-connector-basic-1.9.15.jar">
+              <sha256sum>36b7449dc69418d8ecb421fc06a72453980dcc56d57db3c343b16f44c797726c</sha256sum>
             </artifact>
           </verification>
           <exclude>
@@ -98,16 +98,14 @@
           </exclude>
         </properties>
         <CLASSES>
-          <root url="jar://$MAVEN_REPOSITORY$/org/apache/maven/resolver/maven-resolver-connector-basic/1.3.3/maven-resolver-connector-basic-1.3.3.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/apache/maven/resolver/maven-resolver-connector-basic/1.9.15/maven-resolver-connector-basic-1.9.15.jar!/" />
         </CLASSES>
         <JAVADOC />
         <SOURCES>
-          <root url="jar://$MAVEN_REPOSITORY$/org/apache/maven/resolver/maven-resolver-connector-basic/1.3.3/maven-resolver-connector-basic-1.3.3-sources.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/apache/maven/resolver/maven-resolver-connector-basic/1.9.15/maven-resolver-connector-basic-1.9.15-sources.jar!/" />
         </SOURCES>
       </library>
     </orderEntry>
-    <orderEntry type="library" name="commons-lang3" level="project" />
-    <orderEntry type="library" name="plexus-utils" level="project" />
     <orderEntry type="library" name="commons-codec" level="project" />
     <orderEntry type="module" module-name="intellij.platform.util" />
   </component>

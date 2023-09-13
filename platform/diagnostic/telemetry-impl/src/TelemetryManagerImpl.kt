@@ -15,12 +15,12 @@ import com.intellij.openapi.util.Ref
 import com.intellij.platform.diagnostic.telemetry.*
 import com.intellij.platform.diagnostic.telemetry.impl.otExporters.OpenTelemetryExporterProvider
 import com.intellij.util.childScope
+import io.opentelemetry.api.common.AttributeKey
 import io.opentelemetry.api.metrics.Meter
 import io.opentelemetry.api.trace.propagation.W3CTraceContextPropagator
 import io.opentelemetry.context.propagation.ContextPropagators
 import io.opentelemetry.sdk.OpenTelemetrySdk
 import io.opentelemetry.sdk.resources.Resource
-import io.opentelemetry.semconv.resource.attributes.ResourceAttributes
 import kotlinx.coroutines.CoroutineName
 import kotlinx.coroutines.CoroutineScope
 import org.jetbrains.annotations.ApiStatus
@@ -140,9 +140,9 @@ private fun createSpanExporters(resource: Resource): List<AsyncSpanExporter> {
   System.getProperty("idea.diagnostic.opentelemetry.file")?.let { traceFile ->
     spanExporters.add(JaegerJsonSpanExporter(
       file = Path.of(traceFile),
-      serviceName = resource.getAttribute(ResourceAttributes.SERVICE_NAME)!!,
-      serviceVersion = resource.getAttribute(ResourceAttributes.SERVICE_VERSION),
-      serviceNamespace = resource.getAttribute(ResourceAttributes.SERVICE_NAMESPACE),
+      serviceName = resource.getAttribute(AttributeKey.stringKey("service.name"))!!,
+      serviceVersion = resource.getAttribute(AttributeKey.stringKey("service.version")),
+      serviceNamespace = resource.getAttribute(AttributeKey.stringKey("service.namespace")),
     ))
   }
 
@@ -175,7 +175,7 @@ private fun createOpenTelemetryConfigurator(mainScope: CoroutineScope, appInfo: 
     customResourceBuilder = {
       // don't write username to file - it maybe private information
       if (getOtlpEndPoint() != null) {
-        it.put(ResourceAttributes.PROCESS_OWNER, System.getProperty("user.name") ?: "unknown")
+        it.put(AttributeKey.stringKey("process.owner"), System.getProperty("user.name") ?: "unknown")
       }
     },
   )
