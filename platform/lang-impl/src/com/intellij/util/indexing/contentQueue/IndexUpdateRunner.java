@@ -512,12 +512,16 @@ public final class IndexUpdateRunner {
         );
       }
       indexingJob.oneMoreFileProcessed();
-      IndexingStamp.flushCache(FileBasedIndex.getFileId(fileIndexingJob.file));
+      doReleaseFile(fileIndexingJob.file);
     }, false);
   }
 
   private static void releaseFile(VirtualFile file, long length) {
     signalThatFileIsUnloaded(length);
+    doReleaseFile(file);
+  }
+
+  private static void doReleaseFile(VirtualFile file) {
     IndexingStamp.flushCache(FileBasedIndex.getFileId(file));
     IndexingFlag.unlockFile(file);
   }
