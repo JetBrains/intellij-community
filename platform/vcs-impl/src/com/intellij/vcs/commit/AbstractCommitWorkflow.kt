@@ -3,6 +3,7 @@ package com.intellij.vcs.commit
 
 import com.intellij.BundleBase
 import com.intellij.CommonBundle.getCancelButtonText
+import com.intellij.diagnostic.PluginException
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationNamesInfo
 import com.intellij.openapi.application.EDT
@@ -400,10 +401,12 @@ abstract class AbstractCommitWorkflow(val project: Project) {
         return null
       }
 
+      val commitCheckClazz = commitCheck.asCheckinHandler()?.javaClass ?: commitCheck.javaClass
+
       var success = false
       val activity = CommitSessionCounterUsagesCollector.COMMIT_CHECK_SESSION.started(project) {
         listOf(
-          CommitSessionCounterUsagesCollector.COMMIT_CHECK_CLASS.with(commitCheck.asCheckinHandler()?.javaClass ?: commitCheck.javaClass),
+          CommitSessionCounterUsagesCollector.COMMIT_CHECK_CLASS.with(commitCheckClazz),
           CommitSessionCounterUsagesCollector.EXECUTION_ORDER.with(commitCheck.getExecutionOrder())
         )
       }
@@ -423,7 +426,7 @@ abstract class AbstractCommitWorkflow(val project: Project) {
       }
       catch (e: Throwable) {
         LOG.error(e)
-        return CommitProblem.createError(e)
+        return CommitProblem.createError(PluginException.createByClass(e, commitCheckClazz))
       }
       finally {
         activity.finished {
