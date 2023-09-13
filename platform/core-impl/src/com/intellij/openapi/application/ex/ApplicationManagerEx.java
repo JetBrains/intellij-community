@@ -3,12 +3,16 @@ package com.intellij.openapi.application.ex;
 
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.util.indexing.impl.IndexDebugProperties;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
+
+import java.util.concurrent.CountDownLatch;
 
 public final class ApplicationManagerEx extends ApplicationManager {
   public static final String IS_INTERNAL_PROPERTY = "idea.is.internal";
 
   private static volatile boolean inStressTest;
+  private static volatile CountDownLatch isInitialStart;
 
   public static ApplicationEx getApplicationEx() {
     return (ApplicationEx)ourApplication;
@@ -27,4 +31,19 @@ public final class ApplicationManagerEx extends ApplicationManager {
     inStressTest = value;
     IndexDebugProperties.IS_IN_STRESS_TESTS = value;
   }
+
+  public static void setInitialStart() {
+    isInitialStart = new CountDownLatch(1);
+  }
+
+  public static boolean isInitialStart() {
+    return getInitialStartState() != null;
+  }
+
+  @Nullable
+  public static CountDownLatch getInitialStartState() {
+    return isInitialStart;
+  }
+
+
 }
