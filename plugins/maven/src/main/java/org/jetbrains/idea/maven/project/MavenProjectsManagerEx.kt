@@ -92,10 +92,6 @@ open class MavenProjectsManagerEx(project: Project) : MavenProjectsManager(proje
     return createdModules
   }
 
-  override fun importMavenProjectsSync() {
-    prepareImporter(null, emptyMap()).importMavenProjectsBlocking()
-  }
-
   private suspend fun doImportMavenProjects(projectsToImport: Map<MavenProject, MavenProjectChanges>,
                                             modelsProvider: IdeModifiableModelsProvider?): List<Module> {
     return prepareImporter(modelsProvider, projectsToImport).importMavenProjects()
@@ -150,9 +146,6 @@ open class MavenProjectsManagerEx(project: Project) : MavenProjectsManager(proje
       project.messageBus.syncPublisher<MavenImportListener>(MavenImportListener.TOPIC).importStarted()
 
       val importResult = runImportProjectActivity()
-
-      // do not block user too often
-      myImportingQueue.restartTimer()
 
       val createdModules = importResult.createdModules
 

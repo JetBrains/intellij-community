@@ -93,8 +93,6 @@ public abstract class MavenProjectsManager extends MavenSimpleProjectComponent
   private MavenProjectsTree myProjectsTree;
   private MavenProjectManagerWatcher myWatcher;
 
-  protected MavenMergingUpdateQueue myImportingQueue;
-
   private final EventDispatcher<MavenProjectsTree.Listener> myProjectsTreeDispatcher =
     EventDispatcher.create(MavenProjectsTree.Listener.class);
   private final List<Listener> myManagerListeners = ContainerUtil.createLockFreeCopyOnWriteList();
@@ -259,7 +257,6 @@ public abstract class MavenProjectsManager extends MavenSimpleProjectComponent
       initProjectsTree();
       initWorkers();
       listenForSettingsChanges();
-      listenForProjectsTreeChanges();
       registerSyncConsoleListener();
       updateTabTitles();
     }
@@ -433,12 +430,6 @@ public abstract class MavenProjectsManager extends MavenSimpleProjectComponent
 
   private void initWorkers() {
     myWatcher = new MavenProjectManagerWatcher(myProject, myProjectsTree);
-
-    myImportingQueue =
-      new MavenMergingUpdateQueue(getClass().getName() + ": Importing queue", IMPORT_DELAY, !MavenUtil.isMavenUnitTestModeEnabled(), this);
-
-    myImportingQueue.makeUserAware(myProject);
-    myImportingQueue.makeModalAware(myProject);
   }
 
   protected abstract void listenForSettingsChanges();
@@ -458,18 +449,6 @@ public abstract class MavenProjectsManager extends MavenSimpleProjectComponent
     });
   }
 
-  private void listenForProjectsTreeChanges() {
-    if (MavenUtil.isLinearImportEnabled()) return;
-    myProjectsTreeDispatcher.addListener(new MavenProjectsTree.Listener() {
-      @Override
-      public void projectsIgnoredStateChanged(@NotNull List<MavenProject> ignored,
-                                              @NotNull List<MavenProject> unignored,
-                                              boolean fromImport) {
-        if (!fromImport) scheduleImportChangedProjects();
-      }
-    }, this);
-  }
-
   public void listenForExternalChanges() {
     myWatcher.start();
   }
@@ -486,10 +465,6 @@ public abstract class MavenProjectsManager extends MavenSimpleProjectComponent
     try {
       if (!isInitialized.getAndSet(false)) {
         return;
-      }
-
-      if (myImportingQueue != null) {
-        Disposer.dispose(myImportingQueue);
       }
 
       myWatcher.stop();
@@ -1011,32 +986,6 @@ public abstract class MavenProjectsManager extends MavenSimpleProjectComponent
   // used in third-party plugins
   public void scheduleFoldersResolveForAllProjects() {
     MavenProjectsManagerUtilKt.scheduleFoldersResolveForAllProjects(myProject);
-  }
-
-
-  private void scheduleImportChangedProjects() {
-    runWhenFullyOpen(() -> myImportingQueue.queue(new Update(this) {
-      @Override
-      public void run() {
-        importMavenProjectsSync();
-        fireProjectImportCompleted();
-      }
-    }));
-  }
-
-  protected abstract void importMavenProjectsSync();
-
-  @TestOnly
-  public boolean hasScheduledImportsInTests() {
-    checkNoLegacyImportInNewTests();
-    if (!isInitialized()) return false;
-    return !myImportingQueue.isEmpty();
-  }
-
-  @TestOnly
-  public void performScheduledImportInTests() {
-    if (!isInitialized()) return;
-    runWhenFullyOpen(() -> myImportingQueue.flush());
   }
 
   private static void checkNoLegacyImportInNewTests() {

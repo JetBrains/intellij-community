@@ -179,11 +179,6 @@ public class CustomPomFileNameTest extends MavenDomTestCase {
                     </modules>
                     """);
 
-    //myProjectsManager.performScheduledImportInTests();
-    if (!isNewImportingProcess) {
-      assertFalse(myProjectsManager.hasScheduledImportsInTests());
-    }
-
     enableAutoReload();
 
     VirtualFile m1 = createProjectSubFile("m1/customName.xml", createPomXml(
