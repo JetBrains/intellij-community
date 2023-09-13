@@ -61,7 +61,7 @@ public class TypeMayBeWeakenedInspection extends BaseInspection {
   @SuppressWarnings({"PublicField", "WeakerAccess", "unused"})
   public boolean useParameterizedTypeForCollectionMethods = true;
 
-  @SuppressWarnings({"PublicField", "WeakerAccess"})
+  @SuppressWarnings({"PublicField", "WeakerAccess", "unused"})
   public boolean doNotWeakenToJavaLangObject = true;
 
   @SuppressWarnings("PublicField")
@@ -269,8 +269,6 @@ public class TypeMayBeWeakenedInspection extends BaseInspection {
   @Override
   public @NotNull OptPane getOptionsPane() {
     return pane(
-      checkbox("doNotWeakenToJavaLangObject",
-               InspectionGadgetsBundle.message("inspection.type.may.be.weakened.do.not.weaken.to.object.option")),
       checkbox("onlyWeakentoInterface", InspectionGadgetsBundle.message("inspection.type.may.be.weakened.only.weaken.to.an.interface")),
       checkbox("doNotWeakenInferredVariableType",
                InspectionGadgetsBundle.message("inspection.type.may.be.weakened.do.not.weaken.inferred.variable.type")),
@@ -464,9 +462,7 @@ public class TypeMayBeWeakenedInspection extends BaseInspection {
     private Collection<PsiClass> computeWeakestClasses(@NotNull PsiElement element, @NotNull PsiClass originClass) {
       Collection<PsiClass> weakestClasses =
         WeakestTypeFinder.calculateWeakestClassesNecessary(element, true);
-      if (doNotWeakenToJavaLangObject) {
-        weakestClasses.remove(ClassUtils.findObjectClass(element));
-      }
+      weakestClasses.remove(ClassUtils.findObjectClass(element));
       if (onlyWeakentoInterface) {
         weakestClasses.removeIf(weakestClass -> !weakestClass.isInterface());
       }

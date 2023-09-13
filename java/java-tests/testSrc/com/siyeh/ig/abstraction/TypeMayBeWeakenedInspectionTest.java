@@ -1,10 +1,11 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.siyeh.ig.abstraction;
 
+import com.intellij.JavaTestUtil;
 import com.intellij.codeInspection.InspectionProfileEntry;
 import com.intellij.codeInspection.ex.EntryPointsManagerBase;
 import com.siyeh.ig.LightJavaInspectionTestCase;
-import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.NotNull;
 
 public class TypeMayBeWeakenedInspectionTest extends LightJavaInspectionTestCase {
   @Override
@@ -41,11 +42,12 @@ public class NumberAdderExtension extends NumberAdderImpl {
     return super.getNumberOne();
   }
 }""",
-      "package java.util.function;" +
-      "@FunctionalInterface " +
-      "public interface Function<T, R> {" +
-      "    R apply(T t);" +
-      "}",
+      """
+package java.util.function;
+@FunctionalInterface
+public interface Function<T, R> {
+    R apply(T t);
+}""",
       """
 package java.util.function;
 @FunctionalInterface
@@ -57,10 +59,10 @@ public interface Supplier<T> {
 
   @Override
   protected String getBasePath() {
-    return "/java/java-tests/testData/ig/com/siyeh/igtest/abstraction/weaken_type";
+    return JavaTestUtil.getRelativeJavaTestDataPath() + "/ig/com/siyeh/igtest/abstraction/weaken_type";
   }
 
-  @Nullable
+  @NotNull
   @Override
   protected InspectionProfileEntry getInspection() {
     final TypeMayBeWeakenedInspection inspection = new TypeMayBeWeakenedInspection();
