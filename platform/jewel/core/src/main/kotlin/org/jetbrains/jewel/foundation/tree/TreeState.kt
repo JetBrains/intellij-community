@@ -3,8 +3,11 @@ package org.jetbrains.jewel.foundation.tree
 import androidx.compose.foundation.gestures.ScrollableState
 import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateListOf
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import org.jetbrains.jewel.foundation.lazy.SelectableLazyListState
 import org.jetbrains.jewel.foundation.lazy.SelectableScope
 import org.jetbrains.jewel.foundation.utils.Log
@@ -20,15 +23,20 @@ class TreeState(
 ) : SelectableScope by delegate, ScrollableState by delegate {
 
     internal val allNodes = mutableStateListOf<Pair<Any, Int>>()
-    internal val openNodes = mutableStateListOf<Any>()
+
+    var openNodes by mutableStateOf<Set<Any>>(emptySet())
 
     fun toggleNode(nodeId: Any) {
         Log.d("toggleNode $nodeId")
         if (nodeId in openNodes) {
-            openNodes.remove(nodeId)
+            openNodes -= nodeId
         } else {
-            openNodes.add(nodeId)
+            openNodes += nodeId
         }
         Log.d("open nodes ${openNodes.map { it.toString() }}")
+    }
+
+    fun openNodes(nodes: List<Any>) {
+        openNodes += nodes
     }
 }

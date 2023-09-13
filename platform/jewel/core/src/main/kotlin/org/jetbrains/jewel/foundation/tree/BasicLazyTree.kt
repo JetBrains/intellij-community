@@ -19,7 +19,6 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
-import androidx.compose.runtime.snapshots.SnapshotStateList
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -37,6 +36,7 @@ import org.jetbrains.jewel.SelectableComponentState
 import org.jetbrains.jewel.foundation.lazy.SelectableLazyColumn
 import org.jetbrains.jewel.foundation.lazy.SelectableLazyItemScope
 import org.jetbrains.jewel.foundation.lazy.SelectionMode
+import org.jetbrains.jewel.foundation.lazy.itemsIndexed
 import org.jetbrains.jewel.foundation.utils.Log
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.milliseconds
@@ -45,7 +45,6 @@ import kotlin.time.Duration.Companion.milliseconds
  * Renders a lazy tree view based on the provided tree data structure.
  *
  * @param tree The tree structure to be rendered.
- * @param initialNodeStatus The initial status of the tree nodes (opened or closed).
  * @param selectionMode The selection mode for the tree nodes.
  * @param onElementClick Callback function triggered when a tree node is clicked.
  * @param elementBackgroundFocused The background color of a tree node when focused.
@@ -99,17 +98,16 @@ fun <T> BasicLazyTree(
 ) {
     val scope = rememberCoroutineScope()
 
-    val flattenedTree = remember(tree, treeState.openNodes.size) {
-        val flattenTree = tree.roots.flatMap { flattenTree(it, treeState.openNodes, treeState.allNodes) }
-        flattenTree
-    }
+    val flattenedTree = remember(tree, treeState.openNodes, treeState.allNodes) { tree.roots.flatMap { it.flattenTree(treeState) } }
 
     remember(tree) { // if tree changes we need to update selection changes
-        flattenedTree.filter {
-            it.idPath() in treeState.delegate.selectedKeys
-        }.let {
-            onSelectionChange(it.map { element -> element as Tree.Element<T> })
-        }
+        onSelectionChange(
+            flattenedTree
+                .asSequence()
+                .filter { it.id in treeState.delegate.selectedKeys }
+                .map { element -> element as Tree.Element<T> }
+                .toList()
+        )
     }
 
     SelectableLazyColumn(
@@ -121,70 +119,65 @@ fun <T> BasicLazyTree(
         onSelectedIndexesChanged = {
             onSelectionChange(it.map { element -> flattenedTree[element] as Tree.Element<T> })
         },
-        content = {
-            items(
-                count = flattenedTree.size,
-                key = {
-                    val idPath = flattenedTree[it].idPath()
-                    idPath
-                },
-                contentType = { flattenedTree[it].data },
-            ) { itemIndex ->
-                val element = flattenedTree[itemIndex]
-                val elementState = TreeElementState.of(
-                    active = isActive,
-                    selected = isSelected,
-                    expanded = (element as? Tree.Element.Node)?.let { it.idPath() in treeState.openNodes } ?: false,
-                )
+        interactionSource = remember { MutableInteractionSource() },
+    ) {
+        itemsIndexed(
+            items = flattenedTree,
+            key = { _, item -> item.id },
+            contentType = { _, item -> item.data },
+        ) { index, element ->
+            val elementState = TreeElementState.of(
+                active = isActive,
+                selected = isSelected,
+                expanded = (element as? Tree.Element.Node)?.let { it.id in treeState.openNodes } ?: false,
+            )
 
-                val backgroundShape by remember { mutableStateOf(RoundedCornerShape(elementBackgroundCornerSize)) }
-                Row(
-                    verticalAlignment = Alignment.CenterVertically,
-                    modifier = Modifier.defaultMinSize(minHeight = elementMinHeight)
-                        .padding(elementPadding)
-                        .elementBackground(
-                            state = elementState,
-                            selectedFocused = elementBackgroundSelectedFocused,
-                            focused = elementBackgroundFocused,
-                            selected = elementBackgroundSelected,
-                            backgroundShape = backgroundShape,
+            val backgroundShape by remember { mutableStateOf(RoundedCornerShape(elementBackgroundCornerSize)) }
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                modifier = Modifier.defaultMinSize(minHeight = elementMinHeight)
+                    .padding(elementPadding)
+                    .elementBackground(
+                        state = elementState,
+                        selectedFocused = elementBackgroundSelectedFocused,
+                        focused = elementBackgroundFocused,
+                        selected = elementBackgroundSelected,
+                        backgroundShape = backgroundShape,
+                    )
+                    .padding(elementContentPadding)
+                    .padding(start = (element.depth * indentSize.value).dp)
+                    .clickable(
+                        interactionSource = remember { MutableInteractionSource() },
+                        indication = null,
+                    ) {
+                        (pointerEventScopedActions as? DefaultTreeViewPointerEventAction)?.notifyItemClicked(
+                            item = flattenedTree[index] as Tree.Element<T>,
+                            scope = scope,
+                            doubleClickTimeDelayMillis = platformDoubleClickDelay.inWholeMilliseconds,
+                            onElementClick = onElementClick,
+                            onElementDoubleClick = onElementDoubleClick,
                         )
-                        .padding(elementContentPadding)
-                        .padding(start = (element.depth * indentSize.value).dp)
-                        .clickable(
+                        treeState.delegate.lastActiveItemIndex = index
+                    },
+            ) {
+                if (element is Tree.Element.Node) {
+                    Box(
+                        modifier = Modifier.clickable(
                             interactionSource = remember { MutableInteractionSource() },
                             indication = null,
                         ) {
-                            (pointerEventScopedActions as? DefaultTreeViewPointerEventAction)?.notifyItemClicked(
-                                item = flattenedTree[itemIndex] as Tree.Element<T>,
-                                scope = scope,
-                                doubleClickTimeDelayMillis = platformDoubleClickDelay.inWholeMilliseconds,
-                                onElementClick = onElementClick,
-                                onElementDoubleClick = onElementDoubleClick,
-                            )
-                            treeState.delegate.lastActiveItemIndex = itemIndex
+                            treeState.toggleNode(element.id)
+                            onElementDoubleClick(element as Tree.Element<T>)
                         },
-                ) {
-                    if (element is Tree.Element.Node) {
-                        Box(
-                            modifier = Modifier.clickable(
-                                interactionSource = remember { MutableInteractionSource() },
-                                indication = null,
-                            ) {
-                                treeState.toggleNode(element.idPath())
-                                onElementDoubleClick(element as Tree.Element<T>)
-                            },
-                        ) {
-                            chevronContent(elementState)
-                        }
-                        Spacer(Modifier.width(chevronContentGap))
+                    ) {
+                        chevronContent(elementState)
                     }
-                    nodeContent(element as Tree.Element<T>)
+                    Spacer(Modifier.width(chevronContentGap))
                 }
+                nodeContent(element as Tree.Element<T>)
             }
-        },
-        interactionSource = remember { MutableInteractionSource() },
-    )
+        }
+    }
 }
 
 private fun Modifier.elementBackground(
@@ -284,51 +277,41 @@ value class TreeElementState(val state: ULong) : InteractiveComponentState, Sele
     }
 }
 
-private fun flattenTree(
-    element: Tree.Element<*>,
-    openNodes: SnapshotStateList<Any>,
-    allNodes: SnapshotStateList<Pair<Any, Int>>,
-): MutableList<Tree.Element<*>> {
+private fun Tree.Element<*>.flattenTree(state: TreeState): MutableList<Tree.Element<*>> {
     val orderedChildren = mutableListOf<Tree.Element<*>>()
-    when (element) {
+    when (this) {
         is Tree.Element.Node<*> -> {
-            if (element.idPath() !in allNodes.map { it.first }) allNodes.add(element.idPath() to element.depth)
-            orderedChildren.add(element)
-            if (element.idPath() !in openNodes) {
+            if (id !in state.allNodes.map { it.first }) state.allNodes.add(id to depth)
+            orderedChildren.add(this)
+            if (id !in state.openNodes) {
                 return orderedChildren.also {
-                    element.close()
+                    close()
                     // remove all children key from openNodes
-                    openNodes.removeAll(
-                        buildList {
-                            getAllSubNodes(element)
-                        },
-                    )
+                    state.openNodes -= buildSet {
+                        getAllSubNodes(this@flattenTree)
+                    }
                 }
             }
-            Log.w("the node is open, loading children for ${element.idPath()}")
-            Log.w("children size: ${element.children?.size}")
-            element.open(true)
-            element.children?.forEach { child ->
-                orderedChildren.addAll(flattenTree(child, openNodes, allNodes))
+            Log.w("the node is open, loading children for $id")
+            Log.w("children size: ${children?.size}")
+            open(true)
+            children?.forEach { child ->
+                orderedChildren.addAll(child.flattenTree(state))
             }
         }
 
         is Tree.Element.Leaf<*> -> {
-            orderedChildren.add(element)
+            orderedChildren.add(this)
         }
     }
     return orderedChildren
 }
 
-private infix fun MutableList<Any>.getAllSubNodes(node: Tree.Element.Node<*>) {
+private infix fun MutableSet<Any>.getAllSubNodes(node: Tree.Element.Node<*>) {
     node.children
         ?.filterIsInstance<Tree.Element.Node<*>>()
         ?.forEach {
-            add(it.idPath())
+            add(it.id)
             this@getAllSubNodes getAllSubNodes (it)
         }
-}
-
-enum class InitialNodeStatus {
-    Open, Close
 }

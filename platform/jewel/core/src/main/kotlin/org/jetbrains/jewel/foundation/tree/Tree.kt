@@ -27,8 +27,6 @@ class Tree<T> internal constructor(internal val roots: List<Element<T>>) {
             }
         }.reversed()
 
-        fun idPath() = path().map { it.id }
-
         fun previousElementsIterable() = Iterable { elementIterator(previous) { it.previous } }
         fun nextElementsIterable() = Iterable { elementIterator(next) { it.next } }
 

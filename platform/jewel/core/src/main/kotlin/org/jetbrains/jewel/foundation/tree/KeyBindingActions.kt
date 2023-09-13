@@ -152,7 +152,7 @@ class DefaultTreeViewPointerEventAction(
 
     // todo warning: move this away from here
     // for item click that lose focus and fail to match if a operation is a double-click
-    private var elementClickedTmpHolder: List<Any>? = null
+    private var elementClickedTmpHolder: Any? = null
     internal fun <T> notifyItemClicked(
         item: Tree.Element<T>,
         scope: CoroutineScope,
@@ -160,21 +160,21 @@ class DefaultTreeViewPointerEventAction(
         onElementClick: (Tree.Element<T>) -> Unit,
         onElementDoubleClick: (Tree.Element<T>) -> Unit,
     ) {
-        if (elementClickedTmpHolder == item.idPath()) {
+        if (elementClickedTmpHolder == item.id) {
             // is a double click
             if (item is Tree.Element.Node) {
-                treeState.toggleNode(item.idPath())
+                treeState.toggleNode(item.id)
             }
             onElementDoubleClick(item)
             elementClickedTmpHolder = null
             Log.d("doubleClicked!")
         } else {
-            elementClickedTmpHolder = item.idPath()
+            elementClickedTmpHolder = item.id
             // is a single click
             onElementClick(item)
             scope.launch {
                 delay(doubleClickTimeDelayMillis)
-                if (elementClickedTmpHolder == item.idPath()) elementClickedTmpHolder = null
+                if (elementClickedTmpHolder == item.id) elementClickedTmpHolder = null
             }
 
             Log.d("singleClicked!")
