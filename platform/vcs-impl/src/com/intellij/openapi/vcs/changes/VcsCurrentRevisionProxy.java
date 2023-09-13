@@ -77,12 +77,12 @@ public final class VcsCurrentRevisionProxy implements ByteBackedContentRevision 
       return ContentRevisionCache.getOrLoadCurrentAsBytes(myProject, getFile(), myVcsKey,
                                                           new CurrentRevisionProvider() {
                                                             @Override
-                                                            public VcsRevisionNumber getCurrentRevision() throws VcsException {
+                                                            public @NotNull VcsRevisionNumber getCurrentRevision() throws VcsException {
                                                               return getCurrentRevisionNumber();
                                                             }
 
                                                             @Override
-                                                            public Pair<VcsRevisionNumber, byte[]> get() throws VcsException {
+                                                            public @NotNull Pair<VcsRevisionNumber, byte[]> get() throws VcsException {
                                                               return loadContent();
                                                             }
                                                           });
