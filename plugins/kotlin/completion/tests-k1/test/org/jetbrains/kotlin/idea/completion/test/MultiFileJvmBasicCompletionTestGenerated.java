@@ -163,11 +163,6 @@ public class MultiFileJvmBasicCompletionTestGenerated extends AbstractMultiFileJ
         runTest("../testData/basic/multifile/HiddenDeclarations/");
     }
 
-    @TestMetadata("InImport")
-    public void testInImport() throws Exception {
-        runTest("../testData/basic/multifile/InImport/");
-    }
-
     @TestMetadata("InImportExtension")
     public void testInImportExtension() throws Exception {
         runTest("../testData/basic/multifile/InImportExtension/");
@@ -176,6 +171,21 @@ public class MultiFileJvmBasicCompletionTestGenerated extends AbstractMultiFileJ
     @TestMetadata("InImportExtensionNoAttributes")
     public void testInImportExtensionNoAttributes() throws Exception {
         runTest("../testData/basic/multifile/InImportExtensionNoAttributes/");
+    }
+
+    @TestMetadata("InImportHighOrderTopLevelFun")
+    public void testInImportHighOrderTopLevelFun() throws Exception {
+        runTest("../testData/basic/multifile/InImportHighOrderTopLevelFun/");
+    }
+
+    @TestMetadata("InImportHighOrderTopLevelFunNoTailText")
+    public void testInImportHighOrderTopLevelFunNoTailText() throws Exception {
+        runTest("../testData/basic/multifile/InImportHighOrderTopLevelFunNoTailText/");
+    }
+
+    @TestMetadata("InImportTopLevelVal")
+    public void testInImportTopLevelVal() throws Exception {
+        runTest("../testData/basic/multifile/InImportTopLevelVal/");
     }
 
     @TestMetadata("InImportedFunctionLiteralParameter")

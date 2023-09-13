@@ -3,9 +3,7 @@ package first
 import second.<caret>
 
 // IGNORE_K2
-// EXIST: { itemText: "extensionFun", tailText: "() for String in second", attributes: "" }
-// EXIST: { itemText: "extensionVal", tailText: " for Int in second", attributes: "" }
+// when the test passes in K2 `InImportHighOrderTopLevelFunNoTailText` may be removed - it is a duplicate without checking tailText
 // EXIST: { itemText: "topLevelFun1", tailText: "(p: (String, Int) -> Unit) (second)", attributes: "" }
 // EXIST: { itemText: "topLevelFun2", tailText: "(p: () -> Unit) (second)", attributes: "" }
-// EXIST: { itemText: "topLevelVal", tailText: " (second)", attributes: "" }
 // NOTHING_ELSE
