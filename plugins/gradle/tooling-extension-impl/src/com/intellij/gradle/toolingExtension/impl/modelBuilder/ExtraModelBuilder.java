@@ -22,6 +22,7 @@ import org.slf4j.LoggerFactory;
 import java.util.Collections;
 import java.util.List;
 import java.util.ServiceLoader;
+import java.util.concurrent.atomic.AtomicReference;
 
 /**
  * @author Vladislav.Soroka
@@ -49,13 +50,10 @@ public class ExtraModelBuilder implements ToolingModelBuilder {
 
   private static final Logger LOG = LoggerFactory.getLogger("org.jetbrains.plugins.gradle.toolingExtension.modelBuilder");
 
-  private final List<ModelBuilderService> modelBuilderServices;
+  private final List<ModelBuilderService> modelBuilderServices =
+    Lists.newArrayList(ServiceLoader.load(ModelBuilderService.class, ExtraModelBuilder.class.getClassLoader()));
 
-  private DefaultModelBuilderContext myModelBuilderContext;
-
-  public ExtraModelBuilder() {
-    modelBuilderServices = Lists.newArrayList(ServiceLoader.load(ModelBuilderService.class, ExtraModelBuilder.class.getClassLoader()));
-  }
+  private final AtomicReference<DefaultModelBuilderContext> modelBuilderContext = new AtomicReference<>(null);
 
   @Override
   public boolean canBuild(@NotNull String modelName) {
@@ -90,14 +88,17 @@ public class ExtraModelBuilder implements ToolingModelBuilder {
       return null;
     }
 
-    if (myModelBuilderContext == null) {
-      Gradle rootGradle = getRootGradle(project.getGradle());
-      myModelBuilderContext = new DefaultModelBuilderContext(rootGradle);
-    }
+    ModelBuilderContext context = modelBuilderContext.updateAndGet(it -> {
+      if (it == null) {
+        Gradle rootGradle = getRootGradle(project.getGradle());
+        return new DefaultModelBuilderContext(rootGradle);
+      }
+      return it;
+    });
 
     for (ModelBuilderService service : modelBuilderServices) {
       if (service.canBuild(modelName)) {
-        return buildServiceModel(modelName, project, myModelBuilderContext, service, parameter);
+        return buildServiceModel(modelName, project, context, service, parameter);
       }
     }
     throw new IllegalArgumentException("Unsupported model: " + modelName);
