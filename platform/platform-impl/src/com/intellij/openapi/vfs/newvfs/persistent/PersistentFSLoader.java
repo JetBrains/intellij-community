@@ -413,12 +413,12 @@ public final class PersistentFSLoader {
       addProblem(HAS_ERRORS_IN_PREVIOUS_SESSION, "VFS accumulated " + errorsAccumulated + " errors in last session");
     }
 
-    int largestId = contentHashesEnumerator.getLargestId();
+    int hashedRecordsCount = contentHashesEnumerator.recordsCount();
     int liveRecordsCount = contentsStorage.getRecordsCount();
-    if (largestId != liveRecordsCount) {
+    if (hashedRecordsCount != liveRecordsCount) {
       addProblem(CONTENT_STORAGES_NOT_MATCH,
                  "Content storage is not match content hash enumerator: " +
-                 "contents.records(=" + liveRecordsCount + ") != contentHashes.largestId(=" + largestId + ")"
+                 "contents.records(=" + liveRecordsCount + ") != contentHashes.recordsCount(=" + hashedRecordsCount + ")"
       );
     }
 
@@ -692,7 +692,7 @@ public final class PersistentFSLoader {
   }
 
   public static @NotNull ContentHashEnumerator createContentHashStorage(@NotNull Path contentsHashesFile) throws IOException {
-    return new ContentHashEnumerator(contentsHashesFile, PERSISTENT_FS_STORAGE_CONTEXT);
+    return ContentHashEnumerator.open(contentsHashesFile, PERSISTENT_FS_STORAGE_CONTEXT);
   }
 
   public @NotNull PersistentFSRecordsStorage createRecordsStorage(@NotNull Path recordsFile) throws IOException {

@@ -98,7 +98,8 @@ public final class PersistentFSContentAccessor {
     }
   }
 
-  boolean writeContent(int fileId, @NotNull ByteArraySequence bytes, @SuppressWarnings("ParameterCanBeLocal") boolean fixedSize) throws IOException {
+  boolean writeContent(int fileId, @NotNull ByteArraySequence bytes, @SuppressWarnings("ParameterCanBeLocal") boolean fixedSize)
+    throws IOException {
     PersistentFSConnection.ensureIdIsValid(fileId);
     lock.writeLock().lock();
     try {
@@ -181,10 +182,10 @@ public final class PersistentFSContentAccessor {
     }
 
     ContentHashEnumerator hashesEnumerator = connection.getContentHashesEnumerator();
-    final int largestId = hashesEnumerator.getLargestId();
-    int contentRecordId = hashesEnumerator.enumerate(contentHash);
+    int hashId = hashesEnumerator.enumerateEx(contentHash);
 
-    if (contentRecordId <= largestId) {
+    if (hashId < 0) {//already known hash -> already stored content
+      int contentRecordId = -hashId;
       ++reuses;
       connection.getContents().acquireRecord(contentRecordId);
       totalReuses += length;
@@ -192,12 +193,10 @@ public final class PersistentFSContentAccessor {
       return contentRecordId;
     }
     else {
+      int contentRecordId = hashId;
       int newRecord = connection.getContents().acquireNewRecord();
-      assert contentRecordId == newRecord : "Unexpected content storage modification: contentRecordId=" +
-                                            contentRecordId +
-                                            "; newRecord=" +
-                                            newRecord;
-
+      assert contentRecordId == newRecord
+        : "Unexpected content storage modification: contentRecordId=" + contentRecordId + "; newRecord=" + newRecord;
       return -contentRecordId;
     }
   }
