@@ -118,6 +118,14 @@ class TerminalOutputController(
     }
   }
 
+  @RequiresEdt
+  fun insertEmptyLine() {
+    outputModel.closeLastBlock()
+    editor.document.insertString(editor.document.textLength, "\n")
+    val visibleArea = editor.scrollingModel.visibleArea
+    editor.scrollingModel.scrollVertically(editor.contentComponent.height - visibleArea.height)
+  }
+
   override fun onAlternateBufferChanged(enabled: Boolean) {
     if (enabled) {
       // stop updating the block content, because alternate buffer application will be shown in a separate component

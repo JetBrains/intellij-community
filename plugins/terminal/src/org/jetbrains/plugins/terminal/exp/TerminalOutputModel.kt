@@ -43,7 +43,8 @@ class TerminalOutputModel(val editor: EditorEx) {
     return block
   }
 
-  private fun closeLastBlock() {
+  @RequiresEdt
+  fun closeLastBlock() {
     val lastBlock = getLastBlock()
     // restrict previous block expansion
     if (lastBlock != null) {

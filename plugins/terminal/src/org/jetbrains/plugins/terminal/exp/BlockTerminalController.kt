@@ -44,7 +44,16 @@ class BlockTerminalController(
     session.postResize(newSize)
   }
 
+  @RequiresEdt
   fun startCommandExecution(command: String) {
+    if (command.isBlank()) {
+      outputController.insertEmptyLine()
+      promptController.reset()
+    }
+    else startCommand(command)
+  }
+
+  private fun startCommand(command: String) {
     ApplicationManager.getApplication().executeOnPooledThread {
       val model = session.model
       if (model.commandExecutionSemaphore.waitFor(3000)) {
