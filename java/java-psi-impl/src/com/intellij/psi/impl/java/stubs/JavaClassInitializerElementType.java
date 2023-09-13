@@ -50,6 +50,11 @@ public class JavaClassInitializerElementType extends JavaStubElementType<PsiClas
   public void serialize(@NotNull final PsiClassInitializerStub stub, @NotNull final StubOutputStream dataStream) throws IOException {
   }
 
+  @Override
+  public boolean isAlwaysEmpty() {
+    return true;
+  }
+
   @NotNull
   @Override
   public PsiClassInitializerStub deserialize(@NotNull final StubInputStream dataStream, final StubElement parentStub) throws IOException {

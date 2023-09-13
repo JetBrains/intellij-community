@@ -39,6 +39,11 @@ public class JavaRecordHeaderElementType extends JavaStubElementType<PsiRecordHe
   }
 
   @Override
+  public boolean isAlwaysEmpty() {
+    return true;
+  }
+
+  @Override
   public void indexStub(@NotNull PsiRecordHeaderStub stub, @NotNull IndexSink sink) {
 
   }

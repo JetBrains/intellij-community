@@ -53,6 +53,11 @@ public final class JavaImportListElementType extends JavaStubElementType<PsiImpo
   }
 
   @Override
+  public boolean isAlwaysEmpty() {
+    return true;
+  }
+
+  @Override
   public void indexStub(@NotNull final PsiImportListStub stub, @NotNull final IndexSink sink) {
   }
 }

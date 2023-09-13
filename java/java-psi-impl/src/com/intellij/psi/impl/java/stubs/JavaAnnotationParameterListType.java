@@ -73,6 +73,11 @@ public class JavaAnnotationParameterListType extends JavaStubElementType<PsiAnno
   }
 
   @Override
+  public boolean isAlwaysEmpty() {
+    return true;
+  }
+
+  @Override
   public void indexStub(@NotNull PsiAnnotationParameterListStub stub, @NotNull IndexSink sink) {
   }
 }

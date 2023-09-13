@@ -188,11 +188,12 @@ abstract class StubTreeSerializerBase<SerializationState> {
         currentIndex++;
 
         int serializerId = DataInputOutputUtil.readINT(inputStream);
-        int start = DataInputOutputUtil.readINT(inputStream);
+        ObjectStubSerializer<?, Stub> serializer = getClassByIdLocal(serializerId, null, state);
+
+        int start = serializer.isAlwaysEmpty() ? 0 : DataInputOutputUtil.readINT(inputStream);
 
         allStarts.set(start);
 
-        ObjectStubSerializer<?, Stub> serializer = getClassByIdLocal(serializerId, null, state);
         addStub(parentIndex, index, start, (IElementType)serializer);
         if (!serializer.isAlwaysLeaf(root)) {
           deserializeChildren(index);
@@ -240,7 +241,9 @@ abstract class StubTreeSerializerBase<SerializationState> {
     for (int i = 1; i < stubList.size(); i++) {
       StubBase<?> stub = stubList.get(i);
       ObjectStubSerializer<Stub, Stub> serializer = writeSerializerId(stub, out, state);
-      DataInputOutputUtil.writeINT(out, interner.internBytes(serializeStub(serializer, storage, stub, tempBuffer)));
+      if (!serializer.isAlwaysEmpty()) {
+        DataInputOutputUtil.writeINT(out, interner.internBytes(serializeStub(serializer, storage, stub, tempBuffer)));
+      }
       int count = stubList.getChildrenCount(stub.id);
       if (!serializer.isAlwaysLeaf(root)) {
         DataInputOutputUtil.writeINT(out, count);

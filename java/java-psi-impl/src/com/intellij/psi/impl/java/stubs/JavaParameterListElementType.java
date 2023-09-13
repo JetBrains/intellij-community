@@ -55,6 +55,11 @@ public class JavaParameterListElementType extends JavaStubElementType<PsiParamet
   }
 
   @Override
+  public boolean isAlwaysEmpty() {
+    return true;
+  }
+
+  @Override
   public void indexStub(@NotNull final PsiParameterListStub stub, @NotNull final IndexSink sink) {
   }
 }
