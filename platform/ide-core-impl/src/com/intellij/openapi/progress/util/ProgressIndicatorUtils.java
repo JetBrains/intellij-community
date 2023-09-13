@@ -393,11 +393,11 @@ public final class ProgressIndicatorUtils {
 
   /** Use when a deadlock is possible otherwise. */
   public static void checkCancelledEvenWithPCEDisabled(@Nullable ProgressIndicator indicator) {
-    if (Cancellation.isInNonCancelableSection()) {
-      // just run the hooks, don't check for cancellation in non-cancellable section
+    boolean isNonCancelable = Cancellation.isInNonCancelableSection();
+    if (isNonCancelable || indicator == null) {
       ((CoreProgressManager)ProgressManager.getInstance()).runCheckCanceledHooks(indicator);
-      return;
     }
+    if (isNonCancelable) return;
     Cancellation.checkCancelled();
     if (indicator == null) return;
     indicator.checkCanceled();              // check for cancellation as usual and run the hooks

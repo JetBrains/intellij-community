@@ -63,8 +63,6 @@ public final class PotemkinProgress extends ProgressWindow implements PingProgre
 
     // problem (IDEA-192282): LWCToolkit event might be posted before PotemkinProgress appears,
     // and it then just sits in the queue blocking the whole UI until the progress is finished.
-
-    //noinspection SpellCheckingInspection
     String eventString = event.toString();
     return eventString.contains(",runnable=sun.lwawt.macosx.LWCToolkit") || // [tav] todo: remove in 2022.2
            (event.getClass().getName().equals("sun.awt.AWTThreading$TrackedInvocationEvent") // see JBR-4208
@@ -195,7 +193,11 @@ public final class PotemkinProgress extends ProgressWindow implements PingProgre
     private EventStealer(@NotNull Disposable parent, @NotNull Consumer<? super InputEvent> inputConsumer) {
       myInputEventDispatcher = inputConsumer;
       IdeEventQueue.getInstance().addPostEventListener(event -> {
-        if (event instanceof MouseEvent || event instanceof KeyEvent && event.getID() != KeyEvent.KEY_TYPED) {
+        if (event instanceof MouseEvent) {
+          myInputEvents.offer((InputEvent)event);
+          return true;
+        }
+        else if (event instanceof KeyEvent && event.getID() != KeyEvent.KEY_TYPED) {
           myInputEvents.offer((InputEvent)event);
           return true;
         }
