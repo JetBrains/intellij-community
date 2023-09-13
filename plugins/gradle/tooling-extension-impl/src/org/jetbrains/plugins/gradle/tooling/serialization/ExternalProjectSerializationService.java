@@ -6,6 +6,7 @@ import com.amazon.ion.IonType;
 import com.amazon.ion.IonWriter;
 import com.amazon.ion.system.IonReaderBuilder;
 import com.amazon.ion.util.IonStreamUtils;
+import com.intellij.gradle.toolingExtension.impl.model.sourceSetModel.DefaultGradleSourceSetModel;
 import com.intellij.openapi.externalSystem.model.project.ExternalSystemSourceType;
 import com.intellij.openapi.externalSystem.model.project.IExternalSystemSourceType;
 import org.jetbrains.annotations.NotNull;
@@ -71,15 +72,11 @@ public final class ExternalProjectSerializationService implements SerializationS
           writeString(writer, "description", project.getDescription());
           writeString(writer, "group", project.getGroup());
           writeString(writer, "version", project.getVersion());
-          writeString(writer, "sourceCompatibility", project.getSourceCompatibility());
-          writeString(writer, "targetCompatibility", project.getTargetCompatibility());
           writeString(writer, "projectDir", project.getProjectDir().getPath());
           writeString(writer, "buildDir", project.getBuildDir().getPath());
           writeFile(writer, "buildFile", project.getBuildFile());
           writeTasks(writer, project.getTasks());
-          writeSourceSets(writer, context, project.getSourceSets());
-          writeFiles(writer, "artifacts", project.getArtifacts());
-          writeArtifactsByConfiguration(writer, project.getArtifactsByConfiguration());
+          writeSourceSetModel(writer, context, project.getSourceSetModel());
           writeChildProjects(writer, context, project.getChildProjects());
         }
         writer.stepOut();
@@ -95,6 +92,21 @@ public final class ExternalProjectSerializationService implements SerializationS
     for (ExternalProject project : projects.values()) {
       writeProject(writer, context, project);
     }
+    writer.stepOut();
+  }
+
+  private static void writeSourceSetModel(IonWriter writer,
+                                          WriteContext context,
+                                          GradleSourceSetModel sourceSetModel) throws IOException {
+    writer.setFieldName("sourceSetModel");
+    writer.stepIn(IonType.STRUCT);
+
+    writeString(writer, "sourceCompatibility", sourceSetModel.getSourceCompatibility());
+    writeString(writer, "targetCompatibility", sourceSetModel.getTargetCompatibility());
+    writeFiles(writer, "taskArtifacts", sourceSetModel.getTaskArtifacts());
+    writeConfigurationArtifacts(writer, sourceSetModel.getConfigurationArtifacts());
+    writeSourceSets(writer, context, sourceSetModel.getSourceSets());
+
     writer.stepOut();
   }
 
@@ -355,8 +367,8 @@ public final class ExternalProjectSerializationService implements SerializationS
     writer.stepOut();
   }
 
-  private static void writeArtifactsByConfiguration(final IonWriter writer, Map<String, Set<File>> configuration) throws IOException {
-    writeMap(writer, "artifactsByConfiguration", configuration, s -> writer.writeString(s), files -> writeFiles(writer, "value", files));
+  private static void writeConfigurationArtifacts(final IonWriter writer, Map<String, Set<File>> configuration) throws IOException {
+    writeMap(writer, "configurationArtifacts", configuration, s -> writer.writeString(s), files -> writeFiles(writer, "value", files));
   }
 
   @Nullable
@@ -383,8 +395,6 @@ public final class ExternalProjectSerializationService implements SerializationS
           externalProject.setDescription(readString(reader, "description"));
           externalProject.setGroup(assertNotNull(readString(reader, "group")));
           externalProject.setVersion(assertNotNull(readString(reader, "version")));
-          externalProject.setSourceCompatibility(readString(reader, "sourceCompatibility"));
-          externalProject.setTargetCompatibility(readString(reader, "targetCompatibility"));
           File projectDir = readFile(reader, "projectDir");
           if (projectDir != null) {
             externalProject.setProjectDir(projectDir);
@@ -398,9 +408,7 @@ public final class ExternalProjectSerializationService implements SerializationS
             externalProject.setBuildFile(buildFile);
           }
           readTasks(reader, externalProject);
-          readSourceSets(reader, context, externalProject);
-          externalProject.setArtifacts(readFiles(reader));
-          externalProject.setArtifactsByConfiguration(readStringToFileSetMap(reader));
+          externalProject.setSourceSetModel(readSourceSetModel(reader, context));
           externalProject.setChildProjects(readProjects(reader, context));
         }
       });
@@ -449,18 +457,35 @@ public final class ExternalProjectSerializationService implements SerializationS
     return task;
   }
 
-  private static void readSourceSets(IonReader reader,
-                                     ReadContext context,
-                                     DefaultExternalProject project) {
+  private static @NotNull DefaultGradleSourceSetModel readSourceSetModel(IonReader reader, ReadContext context) {
     reader.next();
+    assertFieldName(reader, "sourceSetModel");
+    reader.stepIn();
+    DefaultGradleSourceSetModel sourceSetModel = new DefaultGradleSourceSetModel();
+    sourceSetModel.setSourceCompatibility(readString(reader, "sourceCompatibility"));
+    sourceSetModel.setTargetCompatibility(readString(reader, "targetCompatibility"));
+    sourceSetModel.setTaskArtifacts(readFiles(reader, "taskArtifacts"));
+    sourceSetModel.setConfigurationArtifacts(readConfigurationArtifacts(reader));
+    sourceSetModel.setSourceSets(readSourceSets(reader, context));
+    reader.stepOut();
+    return sourceSetModel;
+  }
+
+  private static @NotNull Map<String, Set<File>> readConfigurationArtifacts(IonReader reader) {
+    return readMap(reader, "configurationArtifacts", () -> readString(reader, null), () -> readFilesSet(reader));
+  }
+
+  private static @NotNull Map<String, DefaultExternalSourceSet> readSourceSets(IonReader reader, ReadContext context) {
+    reader.next();
+    assertFieldName(reader, "sourceSets");
     reader.stepIn();
     Map<String, DefaultExternalSourceSet> sourceSets = new LinkedHashMap<>();
     DefaultExternalSourceSet sourceSet;
     while ((sourceSet = readSourceSet(reader, context)) != null) {
       sourceSets.put(sourceSet.getName(), sourceSet);
     }
-    project.setSourceSets(sourceSets);
     reader.stepOut();
+    return sourceSets;
   }
 
   @Nullable
