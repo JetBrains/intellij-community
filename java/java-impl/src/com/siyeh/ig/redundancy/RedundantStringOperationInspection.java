@@ -3,6 +3,7 @@ package com.siyeh.ig.redundancy;
 
 import com.intellij.codeInsight.BlockUtils;
 import com.intellij.codeInsight.daemon.QuickFixBundle;
+import com.intellij.codeInsight.daemon.impl.analysis.HighlightingFeature;
 import com.intellij.codeInsight.daemon.impl.quickfix.DeleteElementFix;
 import com.intellij.codeInspection.*;
 import com.intellij.codeInspection.options.OptPane;
@@ -151,8 +152,12 @@ public class RedundantStringOperationInspection extends AbstractBaseJavaLocalIns
 
     @Override
     public void visitTemplateExpression(@NotNull PsiTemplateExpression element) {
-      if (element.getProcessor() != null && element.getLiteralExpression() != null) {
-        myHolder.registerProblem(element.getProcessor(), InspectionGadgetsBundle.message("inspection.redundant.string.fix.remove.str.processor.description"), new RemoveStrTemplateProcessorFix(element));
+      if (HighlightingFeature.STRING_TEMPLATES.isAvailable(element)) {
+        if (element.getProcessor() != null && element.getLiteralExpression() != null) {
+          myHolder.registerProblem(element.getProcessor(),
+                                   InspectionGadgetsBundle.message("inspection.redundant.string.fix.remove.str.processor.description"),
+                                   new RemoveStrTemplateProcessorFix());
+        }
       }
     }
 
@@ -1166,23 +1171,19 @@ public class RedundantStringOperationInspection extends AbstractBaseJavaLocalIns
     }
   }
 
-  private static final class RemoveStrTemplateProcessorFix implements LocalQuickFix {
-    private final PsiTemplateExpression myTemplate;
-
-    public RemoveStrTemplateProcessorFix(@NotNull final PsiTemplateExpression template) {
-      myTemplate = template;
-    }
-
+  private static final class RemoveStrTemplateProcessorFix extends PsiUpdateModCommandQuickFix {
     @Override
     public @NotNull String getFamilyName() {
       return QuickFixBundle.message("remove.redundant.str.processor");
     }
 
     @Override
-    public void applyFix(@NotNull final Project project, @NotNull final ProblemDescriptor descriptor) {
-      final PsiLiteralExpression literal = myTemplate.getLiteralExpression();
-      if (literal != null) {
-        myTemplate.replace(literal);
+    protected void applyFix(@NotNull Project project, @NotNull PsiElement element, @NotNull ModPsiUpdater updater) {
+      if (element.getParent() instanceof PsiTemplateExpression template) {
+        final PsiLiteralExpression literal = template.getLiteralExpression();
+        if (literal != null) {
+          template.replace(literal);
+        }
       }
     }
   }
