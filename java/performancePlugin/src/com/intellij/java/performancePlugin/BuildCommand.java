@@ -96,7 +96,7 @@ public class BuildCommand extends AbstractCommand {
         case BUILD -> promise = build(getModules(arguments, project), instance);
         case REBUILD -> promise = rebuild(getModules(arguments, project), instance);
         case RECOMPILE_FILES -> promise = recompileFiles(arguments, project);
-        default -> actionCallback.reject("Specified mode is neither BUILD nor REBUILD");
+        default -> actionCallback.reject("Specified mode is neither BUILD nor REBUILD nor RECOMPILE_FILES");
       }
       if (promise != null) {
         promise.onSuccess(result -> {
