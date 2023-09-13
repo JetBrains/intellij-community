@@ -37,24 +37,24 @@ internal object CallableWeigher {
         override fun weigh(element: LookupElement): Comparable<*>? {
             val weight = element.callableWeight ?: return null
             val w1 = when (weight.kind) {
-                CallableMetadataProvider.CallableKind.Local -> Weight1.LOCAL
+                CallableMetadataProvider.CallableKind.LOCAL -> Weight1.LOCAL
 
-                CallableMetadataProvider.CallableKind.ThisClassMember,
-                CallableMetadataProvider.CallableKind.BaseClassMember,
-                CallableMetadataProvider.CallableKind.ThisTypeExtension,
-                CallableMetadataProvider.CallableKind.BaseTypeExtension -> Weight1.MEMBER_OR_EXTENSION
+                CallableMetadataProvider.CallableKind.THIS_CLASS_MEMBER,
+                CallableMetadataProvider.CallableKind.BASE_CLASS_MEMBER,
+                CallableMetadataProvider.CallableKind.THIS_TYPE_EXTENSION,
+                CallableMetadataProvider.CallableKind.BASE_TYPE_EXTENSION -> Weight1.MEMBER_OR_EXTENSION
 
-                CallableMetadataProvider.CallableKind.GlobalOrStatic -> Weight1.GLOBAL_OR_STATIC
+                CallableMetadataProvider.CallableKind.GLOBAL_OR_STATIC -> Weight1.GLOBAL_OR_STATIC
 
-                CallableMetadataProvider.CallableKind.TypeParameterExtension -> Weight1.TYPE_PARAMETER_EXTENSION
+                CallableMetadataProvider.CallableKind.TYPE_PARAMETER_EXTENSION -> Weight1.TYPE_PARAMETER_EXTENSION
 
-                is CallableMetadataProvider.CallableKind.ReceiverCastRequired -> Weight1.RECEIVER_CAST_REQUIRED
+                CallableMetadataProvider.CallableKind.RECEIVER_CAST_REQUIRED -> Weight1.RECEIVER_CAST_REQUIRED
             }
             val w2 = when (weight.kind) {
-                CallableMetadataProvider.CallableKind.ThisClassMember -> Weight2.THIS_CLASS_MEMBER
-                CallableMetadataProvider.CallableKind.BaseClassMember -> Weight2.BASE_CLASS_MEMBER
-                CallableMetadataProvider.CallableKind.ThisTypeExtension -> Weight2.THIS_TYPE_EXTENSION
-                CallableMetadataProvider.CallableKind.BaseTypeExtension -> Weight2.BASE_TYPE_EXTENSION
+                CallableMetadataProvider.CallableKind.THIS_CLASS_MEMBER -> Weight2.THIS_CLASS_MEMBER
+                CallableMetadataProvider.CallableKind.BASE_CLASS_MEMBER -> Weight2.BASE_CLASS_MEMBER
+                CallableMetadataProvider.CallableKind.THIS_TYPE_EXTENSION -> Weight2.THIS_TYPE_EXTENSION
+                CallableMetadataProvider.CallableKind.BASE_TYPE_EXTENSION -> Weight2.BASE_TYPE_EXTENSION
                 else -> Weight2.OTHER
             }
 

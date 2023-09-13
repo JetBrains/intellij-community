@@ -5,17 +5,16 @@ package org.jetbrains.kotlin.idea.completion.contributors.helpers
 import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
 import org.jetbrains.kotlin.analysis.api.KtStarTypeProjection
 import org.jetbrains.kotlin.analysis.api.components.buildClassType
+import org.jetbrains.kotlin.analysis.api.signatures.KtCallableSignature
 import org.jetbrains.kotlin.analysis.api.symbols.*
 import org.jetbrains.kotlin.analysis.api.symbols.markers.KtSymbolKind
 import org.jetbrains.kotlin.analysis.api.types.*
 import org.jetbrains.kotlin.analysis.api.types.KtIntersectionType
 import org.jetbrains.kotlin.idea.completion.weighers.WeighingContext
 import org.jetbrains.kotlin.idea.references.mainReference
+import org.jetbrains.kotlin.kdoc.psi.impl.KDocName
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.getParentOfType
-import org.jetbrains.kotlin.analysis.api.components.KtScopeKind
-import org.jetbrains.kotlin.analysis.api.signatures.KtCallableSignature
-import org.jetbrains.kotlin.kdoc.psi.impl.KDocName
 
 internal object CallableMetadataProvider {
 
@@ -48,17 +47,19 @@ internal object CallableMetadataProvider {
         val scopeIndex: Int?
     )
 
-    sealed class CallableKind(private val index: Int) : Comparable<CallableKind> {
-        object Local : CallableKind(0) // local non_extension
-        object ThisClassMember : CallableKind(1)
-        object BaseClassMember : CallableKind(2)
-        object ThisTypeExtension : CallableKind(3)
-        object BaseTypeExtension : CallableKind(4)
-        object GlobalOrStatic : CallableKind(5) // global non_extension
-        object TypeParameterExtension : CallableKind(6)
-        object ReceiverCastRequired : CallableKind(7)
-
-        override fun compareTo(other: CallableKind): Int = this.index - other.index
+    /**
+     * Note that [CallableKind] is used to sort completion suggestions, so the order of the enum entries should be changed with care
+     */
+    enum class CallableKind {
+        LOCAL, // local non_extension
+        THIS_CLASS_MEMBER,
+        BASE_CLASS_MEMBER,
+        THIS_TYPE_EXTENSION,
+        BASE_TYPE_EXTENSION,
+        GLOBAL_OR_STATIC, // global non_extension
+        TYPE_PARAMETER_EXTENSION,
+        RECEIVER_CAST_REQUIRED,
+        ;
     }
 
     context(KtAnalysisSession)
@@ -95,9 +96,9 @@ internal object CallableMetadataProvider {
             KtSymbolKind.TOP_LEVEL,
             KtSymbolKind.CLASS_MEMBER -> callableWeightByReceiver(signature, context, returnCastRequiredOnReceiverMismatch = true)
 
-            KtSymbolKind.LOCAL -> CallableMetadata(CallableKind.Local, scopeIndex)
+            KtSymbolKind.LOCAL -> CallableMetadata(CallableKind.LOCAL, scopeIndex)
             else -> null
-        } ?: CallableMetadata(CallableKind.GlobalOrStatic, scopeIndex)
+        } ?: CallableMetadata(CallableKind.GLOBAL_OR_STATIC, scopeIndex)
     }
 
     context(KtAnalysisSession)
@@ -146,7 +147,8 @@ internal object CallableMetadataProvider {
             returnCastRequiredOnReceiverMismatch
         )
 
-        if (returnCastRequiredOnReceiverMismatch && weightBasedOnExtensionReceiver?.kind is CallableKind.ReceiverCastRequired) return weightBasedOnExtensionReceiver
+        if (returnCastRequiredOnReceiverMismatch && weightBasedOnExtensionReceiver?.kind == CallableKind.RECEIVER_CAST_REQUIRED)
+            return weightBasedOnExtensionReceiver
 
         // In Fir, a local function takes its containing function's dispatch receiver as its dispatch receiver. But we don't consider a
         // local function as a class member. Hence, here we return null so that it's handled by other logic.
@@ -161,7 +163,8 @@ internal object CallableMetadataProvider {
                 returnCastRequiredOnReceiverMismatch
             )
         }
-        if (returnCastRequiredOnReceiverMismatch && weightBasedOnDispatchReceiver?.kind is CallableKind.ReceiverCastRequired) return weightBasedOnDispatchReceiver
+        if (returnCastRequiredOnReceiverMismatch && weightBasedOnDispatchReceiver?.kind == CallableKind.RECEIVER_CAST_REQUIRED)
+            return weightBasedOnDispatchReceiver
         return weightBasedOnExtensionReceiver ?: weightBasedOnDispatchReceiver
     }
 
@@ -231,7 +234,7 @@ internal object CallableMetadataProvider {
 
         if (bestMatchWeightKind == null) {
             return if (returnCastRequiredOnReceiverTypeMismatch)
-                CallableMetadata(CallableKind.ReceiverCastRequired, null)
+                CallableMetadata(CallableKind.RECEIVER_CAST_REQUIRED, null)
             else null
         }
 
@@ -255,14 +258,14 @@ internal object CallableMetadataProvider {
 
         return when {
             receiverTypes.any { it isEqualTo expectedReceiverType } -> when {
-                isExtensionCallOnTypeParameterReceiver(symbol) -> CallableKind.TypeParameterExtension
-                symbol.isExtension -> CallableKind.ThisTypeExtension
-                else -> CallableKind.ThisClassMember
+                isExtensionCallOnTypeParameterReceiver(symbol) -> CallableKind.TYPE_PARAMETER_EXTENSION
+                symbol.isExtension -> CallableKind.THIS_TYPE_EXTENSION
+                else -> CallableKind.THIS_CLASS_MEMBER
             }
 
             receiverTypes.any { it isSubTypeOf expectedReceiverType } -> when {
-                symbol.isExtension -> CallableKind.BaseTypeExtension
-                else -> CallableKind.BaseClassMember
+                symbol.isExtension -> CallableKind.BASE_TYPE_EXTENSION
+                else -> CallableKind.BASE_CLASS_MEMBER
             }
 
             else -> null
