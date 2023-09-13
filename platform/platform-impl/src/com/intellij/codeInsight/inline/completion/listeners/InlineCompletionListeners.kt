@@ -20,13 +20,15 @@ import java.awt.event.KeyEvent
 @ApiStatus.Experimental
 class InlineCompletionDocumentListener(private val editor: EditorImpl) : BulkAwareDocumentListener {
   override fun documentChangedNonBulk(event: DocumentEvent) {
-    if (!isEnabled(event) || !(ClientEditorManager.getClientId(editor) ?: ClientId.localId).isCurrent()) {
-      return
-    }
     val handler = InlineCompletionHandler.getOrNull(editor)
+    if (!isEnabled(event) || !(ClientEditorManager.getClientId(editor) ?: ClientId.localId).isCurrent()) {
+      // ML-1168
+      handler?.cancel(editor)
+    }
+
     // ML-1109 ML-1131
-    if (event.newLength > 1) {
-      handler?.hideIfRendering(editor)
+    if (event.newLength != 1) {
+      handler?.cancel(editor)
       return
     }
 
