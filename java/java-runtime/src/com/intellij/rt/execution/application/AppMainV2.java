@@ -135,40 +135,51 @@ public final class AppMainV2 {
   /**
    * @param staticMode searches for static only if true and for instance only if false
    */
-  private static boolean isMainMethod(Method method, boolean staticMode) {
+  private static MainMethodStatus getMainMethodStatus(Method method, boolean staticMode) {
     if ("main".equals(method.getName()) ) {
       if (!Modifier.isPrivate(method.getModifiers())) {
         if (staticMode == Modifier.isStatic(method.getModifiers())) {
           Class<?>[] parameterTypes = method.getParameterTypes();
           if (parameterTypes.length == 1 && parameterTypes[0] == String[].class) {
-            return true;
+            return MainMethodStatus.WithArgs;
           }
           if (parameterTypes.length == 0) {
-            return true;
+            return MainMethodStatus.WithoutArgs;
           }
         }
       }
     }
-    return false;
+    return MainMethodStatus.NotMain;
   }
 
   private static Method findMethodToRun(Class<?> aClass) {
+    Method methodWithoutArgsCandidate = null;
     // static main methods may be only in this class
     for (Method declaredMethod : aClass.getDeclaredMethods()) {
-      if (isMainMethod(declaredMethod, true)) {
+      MainMethodStatus status = getMainMethodStatus(declaredMethod, true);
+      if (status == MainMethodStatus.WithArgs) {
         return declaredMethod;
+      } else if (status == MainMethodStatus.WithoutArgs) {
+        methodWithoutArgsCandidate = declaredMethod;
       }
     }
 
-    List<Class<?>> classesToVisit = new ArrayList<>();
+    if (methodWithoutArgsCandidate != null) {
+      return methodWithoutArgsCandidate;
+    }
+
+    Deque<Class<?>> classesToVisit = new ArrayDeque<>();
     classesToVisit.add(aClass);
     Set<Class<?>> visited = new HashSet<>();
     while (!classesToVisit.isEmpty()) {
-      Class<?> last = classesToVisit.remove(classesToVisit.size() - 1);
+      Class<?> last = classesToVisit.removeLast();
       Method[] declaredMethods = last.getDeclaredMethods();
       for (Method method : declaredMethods) {
-        if (isMainMethod(method, false)) {
+        MainMethodStatus status = getMainMethodStatus(method, false);
+        if (status == MainMethodStatus.WithArgs) {
           return method;
+        } else if (status == MainMethodStatus.WithoutArgs) {
+          methodWithoutArgsCandidate = method;
         }
       }
       visited.add(aClass);
@@ -182,7 +193,14 @@ public final class AppMainV2 {
         }
       }
     }
-    return null;
+
+    return methodWithoutArgsCandidate;
+  }
+
+  enum MainMethodStatus {
+    NotMain,
+    WithArgs,
+    WithoutArgs
   }
 
   private static boolean startJavaFXApplication(String[] params, Class<?> appClass) {
