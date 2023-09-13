@@ -662,7 +662,7 @@ public final class ChangeListManagerImpl extends ChangeListManagerEx implements 
 
     private void notifyStartProcessingChanges(@NotNull VcsModifiableDirtyScope scope) {
       if (!myWasEverythingDirty) {
-        myComposite.cleanAndAdjustScope(scope);
+        myComposite.cleanUnderScope(scope);
         myChangeListUpdater.notifyStartProcessingChanges(scope);
       }
 

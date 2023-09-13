@@ -28,11 +28,11 @@ public abstract class CompositeFilePathHolder implements FileHolder {
   }
 
   @Override
-  public void cleanAndAdjustScope(@NotNull VcsModifiableDirtyScope scope) {
+  public void cleanUnderScope(@NotNull VcsDirtyScope scope) {
     AbstractVcs vcs = scope.getVcs();
     FilePathHolder holder = myMap.get(vcs);
     if (holder != null) {
-      holder.cleanAndAdjustScope(scope);
+      holder.cleanUnderScope(scope);
     }
   }
 

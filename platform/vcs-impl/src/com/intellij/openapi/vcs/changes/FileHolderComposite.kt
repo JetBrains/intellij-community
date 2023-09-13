@@ -23,7 +23,7 @@ internal class FileHolderComposite private constructor(
                    rootSwitchFileHolder, switchedFileHolder, deletedFileHolder)
 
   override fun cleanAll() = fileHolders.forEach { it.cleanAll() }
-  override fun cleanAndAdjustScope(scope: VcsModifiableDirtyScope) = fileHolders.forEach { it.cleanAndAdjustScope(scope) }
+  override fun cleanUnderScope(scope: VcsDirtyScope) = fileHolders.forEach { it.cleanUnderScope(scope) }
 
   override fun copy(): FileHolderComposite =
     FileHolderComposite(project, unversionedFileHolder.copy(), ignoredFileHolder.copy(), modifiedWithoutEditingFileHolder.copy(),

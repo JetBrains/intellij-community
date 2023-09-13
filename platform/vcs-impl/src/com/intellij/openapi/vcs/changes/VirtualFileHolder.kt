@@ -12,7 +12,7 @@ class VirtualFileHolder(private val myProject: Project) : FileHolder {
   val files: List<VirtualFile> get() = myFiles.toList()
 
   override fun cleanAll() = myFiles.clear()
-  override fun cleanAndAdjustScope(scope: VcsModifiableDirtyScope) = cleanScope(myFiles, scope)
+  override fun cleanUnderScope(scope: VcsDirtyScope) = cleanScope(myFiles, scope)
 
   fun addFile(file: VirtualFile) {
     myFiles.add(file)
@@ -42,7 +42,7 @@ class VirtualFileHolder(private val myProject: Project) : FileHolder {
 
   companion object {
 
-    fun cleanScope(files: MutableCollection<VirtualFile>, scope: VcsModifiableDirtyScope) {
+    fun cleanScope(files: MutableCollection<VirtualFile>, scope: VcsDirtyScope) {
       ProgressManager.checkCanceled()
       if (files.isEmpty()) return
 

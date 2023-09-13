@@ -23,7 +23,7 @@ public class DeletedFilesHolder implements FileHolder {
   }
 
   @Override
-  public void cleanAndAdjustScope(@NotNull final VcsModifiableDirtyScope scope) {
+  public void cleanUnderScope(@NotNull VcsDirtyScope scope) {
     final List<LocallyDeletedChange> currentFiles = new ArrayList<>(myFiles.values());
     for (LocallyDeletedChange change : currentFiles) {
       if (scope.belongsTo(change.getPath())) {

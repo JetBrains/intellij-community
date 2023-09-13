@@ -12,7 +12,7 @@ class FilePathHolderImpl(private val project: Project) : FilePathHolder {
   override fun values(): Collection<FilePath> = files
 
   override fun cleanAll() = files.clear()
-  override fun cleanAndAdjustScope(scope: VcsModifiableDirtyScope) = cleanScope(files, scope)
+  override fun cleanUnderScope(scope: VcsDirtyScope) = cleanScope(files, scope)
 
   override fun addFile(file: FilePath) {
     files.add(file)
@@ -41,7 +41,7 @@ class FilePathHolderImpl(private val project: Project) : FilePathHolder {
   override fun hashCode(): Int = files.hashCode()
 
   companion object {
-    internal fun cleanScope(files: MutableCollection<FilePath>, scope: VcsModifiableDirtyScope) {
+    internal fun cleanScope(files: MutableCollection<FilePath>, scope: VcsDirtyScope) {
       ProgressManager.checkCanceled()
       if (files.isEmpty()) return
 

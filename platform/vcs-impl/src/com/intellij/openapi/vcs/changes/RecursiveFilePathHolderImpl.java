@@ -62,7 +62,7 @@ public class RecursiveFilePathHolderImpl implements FilePathHolder {
   }
 
   @Override
-  public void cleanAndAdjustScope(@NotNull final VcsModifiableDirtyScope scope) {
+  public void cleanUnderScope(@NotNull VcsDirtyScope scope) {
     if (myProject.isDisposed()) return;
     final Iterator<FilePath> iterator = myMap.iterator();
     while (iterator.hasNext()) {

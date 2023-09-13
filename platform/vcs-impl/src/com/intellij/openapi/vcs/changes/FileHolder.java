@@ -13,7 +13,7 @@ public interface FileHolder {
   /**
    * Notify that CLM refresh has started for particular scope
    */
-  void cleanAndAdjustScope(@NotNull VcsModifiableDirtyScope scope);
+  void cleanUnderScope(@NotNull VcsDirtyScope scope);
 
   FileHolder copy();
 
