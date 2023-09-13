@@ -5,11 +5,18 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
 import com.intellij.terminal.JBTerminalSystemSettingsProviderBase
 import com.jediterm.core.util.TermSize
+import com.jediterm.terminal.RequestOrigin
+import com.jediterm.terminal.TtyConnector
 import java.awt.Dimension
 import java.awt.event.ComponentAdapter
 import java.awt.event.ComponentEvent
+import java.util.concurrent.CompletableFuture
 import javax.swing.JComponent
 
+/**
+ * Once it's feature-rich and stable enough, it will replace [OldPlainTerminalView].
+ */
+@Suppress("unused")
 class PlainTerminalView(
   project: Project,
   private val session: TerminalSession,
@@ -33,6 +40,11 @@ class PlainTerminalView(
     })
 
     Disposer.register(this, view)
+  }
+
+  override fun connectToTty(ttyConnector: TtyConnector, initialTermSize: TermSize) {
+    session.controller.resize(initialTermSize, RequestOrigin.User, CompletableFuture.completedFuture(Unit))
+    session.start(ttyConnector)
   }
 
   // return preferred size of the terminal calculated from the component size

@@ -12,12 +12,15 @@ import com.intellij.openapi.wm.IdeFocusManager
 import com.intellij.terminal.JBTerminalSystemSettingsProviderBase
 import com.intellij.ui.util.preferredHeight
 import com.jediterm.core.util.TermSize
+import com.jediterm.terminal.RequestOrigin
+import com.jediterm.terminal.TtyConnector
 import org.jetbrains.plugins.terminal.exp.BlockTerminalController.BlockTerminalControllerListener
 import org.jetbrains.plugins.terminal.exp.TerminalPromptController.PromptStateListener
 import java.awt.BorderLayout
 import java.awt.Dimension
 import java.awt.event.ComponentAdapter
 import java.awt.event.ComponentEvent
+import java.util.concurrent.CompletableFuture
 import javax.swing.JComponent
 import javax.swing.JPanel
 
@@ -93,6 +96,11 @@ class BlockTerminalView(
     })
 
     installPromptAndOutput()
+  }
+
+  override fun connectToTty(ttyConnector: TtyConnector, initialTermSize: TermSize) {
+    session.controller.resize(initialTermSize, RequestOrigin.User, CompletableFuture.completedFuture(Unit))
+    session.start(ttyConnector)
   }
 
   private fun alternateBufferStateChanged(enabled: Boolean) {

@@ -15,7 +15,7 @@ import com.jediterm.terminal.model.TerminalTextBuffer
 import org.jetbrains.plugins.terminal.util.ShellIntegration
 import java.awt.event.KeyEvent
 
-class TerminalSession(settings: JBTerminalSystemSettingsProviderBase) : Disposable {
+class TerminalSession(settings: JBTerminalSystemSettingsProviderBase, val shellIntegration: ShellIntegration?) : Disposable {
   val model: TerminalModel
   lateinit var terminalStarter: TerminalStarter
 
@@ -25,8 +25,6 @@ class TerminalSession(settings: JBTerminalSystemSettingsProviderBase) : Disposab
   val controller: TerminalController
   private val commandManager: ShellCommandManager
   private val typeAheadManager: TerminalTypeAheadManager
-  @Volatile
-  var shellIntegration: ShellIntegration? = null
 
   init {
     val styleState = StyleState()
