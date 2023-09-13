@@ -615,6 +615,7 @@ internal class WorkspaceProjectImporter(
                                              prepareInBackground: (current: MutableEntityStorage) -> Unit,
                                              afterApplyInWriteAction: (storage: EntityStorage) -> Unit = {}) {
       val workspaceModel = WorkspaceModel.getInstance(project)
+      val prevStorageVersion = WorkspaceModel.getInstance(project).entityStorage.version
 
       var attempts = 0
       var durationInBackground = 0L
@@ -666,6 +667,8 @@ internal class WorkspaceProjectImporter(
                                    durationInWriteActionNano = durationInWriteAction,
                                    durationOfWorkspaceUpdateCallNano = durationOfWorkspaceUpdate,
                                    attempts = attempts)
+      val newStorageVersion = WorkspaceModel.getInstance(project).entityStorage.version
+      LOG.info("Project model updated to version ${newStorageVersion} (attempts: $attempts, previous version: $prevStorageVersion)")
     }
 
     private val LOG = Logger.getInstance(WorkspaceProjectImporter::class.java)
