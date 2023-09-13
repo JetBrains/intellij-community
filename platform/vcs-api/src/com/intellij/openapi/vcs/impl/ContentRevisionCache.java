@@ -244,21 +244,21 @@ public final class ContentRevisionCache {
     throws VcsException, IOException {
     ContentRevisionCache cache = ProjectLevelVcsManager.getInstance(project).getContentRevisionCache();
 
-    VcsRevisionNumber currentRevision;
-    Pair<VcsRevisionNumber, byte[]> loaded;
     while (true) {
-      currentRevision = putIntoCurrentCache(cache, path, vcsKey, loader);
+      VcsRevisionNumber currentRevision = putIntoCurrentCache(cache, path, vcsKey, loader);
       final byte[] cachedCurrent = cache.getBytes(path, currentRevision, vcsKey, UniqueType.REPOSITORY_CONTENT);
       if (cachedCurrent != null) {
         return Pair.create(currentRevision, cachedCurrent);
       }
-      checkLocalFileSize(path);
-      loaded = loader.get();
-      if (loaded.getFirst().equals(currentRevision)) break;
-    }
 
-    cache.put(path, currentRevision, vcsKey, UniqueType.REPOSITORY_CONTENT, loaded.getSecond());
-    return loaded;
+      checkLocalFileSize(path);
+      Pair<VcsRevisionNumber, byte[]> loaded = loader.get();
+
+      if (loaded.getFirst().equals(currentRevision)) {
+        cache.put(path, currentRevision, vcsKey, UniqueType.REPOSITORY_CONTENT, loaded.getSecond());
+        return loaded;
+      }
+    }
   }
 
   private static class CurrentKey {
