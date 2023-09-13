@@ -13,7 +13,6 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.CornerSize
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.Immutable
 import androidx.compose.runtime.Stable
 import androidx.compose.runtime.getValue
@@ -75,7 +74,6 @@ import kotlin.time.Duration.Companion.milliseconds
 @Composable
 fun <T> BasicLazyTree(
     tree: Tree<T>,
-    initialNodeStatus: InitialNodeStatus,
     selectionMode: SelectionMode = SelectionMode.Multiple,
     onElementClick: (Tree.Element<T>) -> Unit,
     elementBackgroundFocused: Color,
@@ -112,14 +110,6 @@ fun <T> BasicLazyTree(
         }.let {
             onSelectionChange(it.map { element -> element as Tree.Element<T> })
         }
-    }
-
-    DisposableEffect(tree, treeState.allNodes.size) {
-        if (initialNodeStatus == InitialNodeStatus.Open) {
-            treeState.openNodes.clear()
-            treeState.openNodes.addAll(treeState.allNodes.map { it.first })
-        }
-        onDispose { }
     }
 
     SelectableLazyColumn(

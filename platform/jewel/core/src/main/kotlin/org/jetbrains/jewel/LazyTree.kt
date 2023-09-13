@@ -9,7 +9,6 @@ import androidx.compose.ui.res.ResourceLoader
 import org.jetbrains.jewel.foundation.lazy.SelectableLazyItemScope
 import org.jetbrains.jewel.foundation.tree.BasicLazyTree
 import org.jetbrains.jewel.foundation.tree.DefaultTreeViewKeyActions
-import org.jetbrains.jewel.foundation.tree.InitialNodeStatus
 import org.jetbrains.jewel.foundation.tree.KeyBindingActions
 import org.jetbrains.jewel.foundation.tree.Tree
 import org.jetbrains.jewel.foundation.tree.TreeElementState
@@ -21,7 +20,6 @@ import org.jetbrains.jewel.styling.LazyTreeStyle
 @Composable
 fun <T> LazyTree(
     tree: Tree<T>,
-    initialNodeStatus: InitialNodeStatus = InitialNodeStatus.Close,
     resourceLoader: ResourceLoader,
     modifier: Modifier = Modifier,
     onElementClick: (Tree.Element<T>) -> Unit = {},
@@ -36,7 +34,6 @@ fun <T> LazyTree(
     val metrics = style.metrics
     BasicLazyTree(
         tree = tree,
-        initialNodeStatus = initialNodeStatus,
         onElementClick = onElementClick,
         elementBackgroundFocused = colors.elementBackgroundFocused,
         elementBackgroundSelectedFocused = colors.elementBackgroundSelectedFocused,
