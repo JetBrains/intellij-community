@@ -122,7 +122,7 @@ internal class RecentProjectIconHelper {
     }
   }
 
-  fun getProjectIcon(path: @SystemIndependent String, isProjectValid: Boolean = true, iconSize: Int = JBUIScale.scale(unscaledProjectIconSize())): Icon {
+  fun getProjectIcon(path: @SystemIndependent String, isProjectValid: Boolean = true, iconSize: Int = unscaledProjectIconSize()): Icon {
     if (!RecentProjectsManagerBase.isFileSystemPath(path)) {
       return EmptyIcon.create(iconSize)
     }
