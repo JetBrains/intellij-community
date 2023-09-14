@@ -1,11 +1,18 @@
 <component name="libraryTable">
-  <library name="kotlinc.kotlin-compiler-cli">
+  <library name="kotlinc.kotlin-compiler-cli" type="repository">
+    <properties include-transitive-deps="false" maven-id="org.jetbrains.kotlin:kotlin-compiler-cli-for-ide:1.9.30-dev-3330">
+      <verification>
+        <artifact url="file://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-compiler-cli-for-ide/1.9.30-dev-3330/kotlin-compiler-cli-for-ide-1.9.30-dev-3330.jar">
+          <sha256sum>74aad72d4589b93e85221973e12e4eaa229430a7ec8c222a8a65a646af8c06dc</sha256sum>
+        </artifact>
+      </verification>
+    </properties>
     <CLASSES>
-      <root url="jar://$PROJECT_DIR$/../build/repo/org/jetbrains/kotlin/kotlin-compiler-cli-for-ide/1.9.255/kotlin-compiler-cli-for-ide-1.9.255.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-compiler-cli-for-ide/1.9.30-dev-3330/kotlin-compiler-cli-for-ide-1.9.30-dev-3330.jar!/" />
     </CLASSES>
     <JAVADOC />
     <SOURCES>
-      <root url="jar://$PROJECT_DIR$/../build/repo/org/jetbrains/kotlin/kotlin-compiler-cli-for-ide/1.9.255/kotlin-compiler-cli-for-ide-1.9.255-sources.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-compiler-cli-for-ide/1.9.30-dev-3330/kotlin-compiler-cli-for-ide-1.9.30-dev-3330-sources.jar!/" />
     </SOURCES>
   </library>
 </component>
