@@ -1,9 +1,7 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.inline.completion
 
-import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.editor.Editor
-import com.intellij.openapi.util.Key
 import org.jetbrains.annotations.ApiStatus
 
 @ApiStatus.Experimental
@@ -27,22 +25,7 @@ class InlineCompletionContext internal constructor(val editor: Editor) {
   }
 
   companion object {
-    private val LOG = thisLogger()
-    private val INLINE_COMPLETION_CONTEXT = Key.create<InlineCompletionContext>("inline.completion.context")
-
-    fun getOrNull(editor: Editor): InlineCompletionContext? = editor.getUserData(INLINE_COMPLETION_CONTEXT)
-    internal fun getOrInit(editor: Editor): InlineCompletionContext {
-      return editor.getUserData(INLINE_COMPLETION_CONTEXT) ?: InlineCompletionContext(editor).also {
-        editor.putUserData(INLINE_COMPLETION_CONTEXT, it)
-      }
-    }
-
-    internal fun remove(editor: Editor) {
-      getOrNull(editor)?.clear()
-
-      editor.putUserData(INLINE_COMPLETION_CONTEXT, null)
-        .also { LOG.trace("Remove inline completion context") }
-    }
+    fun getOrNull(editor: Editor): InlineCompletionContext? = InlineCompletionSession.getOrNull(editor)?.context
 
     @Deprecated(
       "Resetting completion context is unsafe now. Use direct get/reset/remove~InlineCompletionContext instead",
