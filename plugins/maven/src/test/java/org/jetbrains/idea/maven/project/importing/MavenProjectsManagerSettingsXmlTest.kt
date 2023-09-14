@@ -2,12 +2,18 @@
 package org.jetbrains.idea.maven.project.importing
 
 import com.intellij.maven.testFramework.MavenMultiVersionImportingTestCase
+import com.intellij.openapi.application.writeAction
 import com.intellij.openapi.util.io.FileUtil
+import com.intellij.openapi.vfs.LocalFileSystem
+import kotlinx.coroutines.runBlocking
 import org.jetbrains.idea.maven.utils.MavenUtil
 import org.junit.Assume
 import org.junit.Test
+import java.io.File
 
 class MavenProjectsManagerSettingsXmlTest : MavenMultiVersionImportingTestCase() {
+  override fun runInDispatchThread() = false
+
   override fun setUp() {
     super.setUp()
     initProjectsManager(true)
@@ -15,7 +21,7 @@ class MavenProjectsManagerSettingsXmlTest : MavenMultiVersionImportingTestCase()
   }
 
   @Test
-  fun testUpdatingProjectsOnSettingsXmlChange() {
+  fun testUpdatingProjectsOnSettingsXmlChange() = runBlocking {
     createProjectPom("""
                        <groupId>test</groupId>
                        <artifactId>project</artifactId>
@@ -100,7 +106,7 @@ class MavenProjectsManagerSettingsXmlTest : MavenMultiVersionImportingTestCase()
   }
 
   @Test
-  fun testUpdatingProjectsOnSettingsXmlCreationAndDeletion() {
+  fun testUpdatingProjectsOnSettingsXmlCreationAndDeletion() = runBlocking {
     deleteSettingsXml()
     createProjectPom("""
                        <groupId>test</groupId>
@@ -121,5 +127,12 @@ class MavenProjectsManagerSettingsXmlTest : MavenMultiVersionImportingTestCase()
     deleteSettingsXml()
     waitForReadingCompletion()
     assertUnorderedElementsAreEqual(projectsTree.getAvailableProfiles())
+  }
+
+  private suspend fun deleteSettingsXml() {
+    val f = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(File(myDir, "settings.xml"))
+    writeAction {
+      f?.delete(this)
+    }
   }
 }

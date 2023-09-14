@@ -375,13 +375,6 @@ public abstract class MavenTestCase extends UsefulTestCase {
     return f;
   }
 
-  protected void deleteSettingsXml() throws IOException {
-    WriteCommandAction.writeCommandAction(myProject).run(() -> {
-      VirtualFile f = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(new File(myDir, "settings.xml"));
-      if (f != null) f.delete(this);
-    });
-  }
-
   private static String createSettingsXmlContent(String content) {
     return "<settings>" +
            content +
