@@ -5,6 +5,7 @@ import com.intellij.psi.impl.cache.TypeInfo;
 import com.intellij.psi.impl.compiled.SignatureParsing;
 import com.intellij.psi.impl.compiled.StubBuildingVisitor;
 import com.intellij.util.cls.ClsFormatException;
+import org.jetbrains.annotations.NotNull;
 import org.junit.Test;
 
 import java.text.StringCharacterIterator;
@@ -38,8 +39,8 @@ public class SignatureParsingTest {
 
   private static String parseTypeString(String signature) throws ClsFormatException {
     String oldStyle = SignatureParsing.parseTypeString(new StringCharacterIterator(signature), StubBuildingVisitor.GUESSING_MAPPER);
-    String newStyle = SignatureParsing.parseTypeString(new SignatureParsing.CharIterator(signature), StubBuildingVisitor.GUESSING_MAPPER);
-    assertEquals(oldStyle, newStyle);
-    return newStyle;
+    TypeInfo newStyle = SignatureParsing.parseTypeStringToTypeInfo(new SignatureParsing.CharIterator(signature), StubBuildingVisitor.GUESSING_PROVIDER);
+    assertEquals(oldStyle, newStyle.text());
+    return oldStyle;
   }
 }

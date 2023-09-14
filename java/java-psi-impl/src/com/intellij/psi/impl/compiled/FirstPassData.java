@@ -21,7 +21,7 @@ import static com.intellij.util.BitUtil.isSet;
 /**
  * Information retrieved during the first pass of a class file parsing
  */
-class FirstPassData implements Function<@NotNull String, @NotNull String> {
+class FirstPassData implements SignatureParsing.TypeInfoProvider {
   private static final Logger LOG = Logger.getInstance(FirstPassData.class);
 
   private abstract static class InnerClassEntry {}
@@ -69,11 +69,6 @@ class FirstPassData implements Function<@NotNull String, @NotNull String> {
     mySealed = sealed;
   }
 
-  @Override
-  public @NotNull String fun(@NotNull String jvmName) {
-    return toTypeInfo(jvmName).text();
-  }
-
   /**
    * @param componentName record component name
    * @return true if given component is var-arg
@@ -112,13 +107,14 @@ class FirstPassData implements Function<@NotNull String, @NotNull String> {
    * @param jvmName JVM class name like java/util/Map$Entry
    * @return Java class name like java.util.Map.Entry
    */
-  @NotNull RefTypeInfo toTypeInfo(@NotNull String jvmName) {
+  @Override
+  public @NotNull RefTypeInfo toTypeInfo(@NotNull String jvmName) {
     return toTypeInfo(jvmName, true);
   }
 
   /**
    * @param jvmName JVM class name like java/util/Map$Entry
-   * @param useGuesser if true, {@link StubBuildingVisitor#GUESSING_MAPPER} will be used in case if the entry was absent in
+   * @param useGuesser if true, {@link StubBuildingVisitor#GUESSING_PROVIDER} will be used in case if the entry was absent in
    *                   InnerClasses table.
    * @return Java class name like java.util.Map.Entry
    */
@@ -136,7 +132,7 @@ class FirstPassData implements Function<@NotNull String, @NotNull String> {
         return new RefTypeInfo(((TypeInfoInnerClassEntry)p).myInnerName, ((TypeInfoInnerClassEntry)p).myOuterType);
       }
       else if (!jvmName.equals(myTopLevelName) && (useGuesser || !myTrustInnerClasses)) {
-        return new RefTypeInfo(StubBuildingVisitor.GUESSING_MAPPER.fun(jvmName));
+        return StubBuildingVisitor.GUESSING_PROVIDER.toTypeInfo(jvmName);
       }
     }
 

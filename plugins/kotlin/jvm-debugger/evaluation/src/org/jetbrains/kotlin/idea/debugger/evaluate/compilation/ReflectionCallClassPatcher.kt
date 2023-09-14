@@ -86,7 +86,7 @@ private class ReflectionCallMethodVisitor(
         }
 
         val iterator = SignatureParsing.CharIterator(type.descriptor)
-        val classType = SignatureParsing.parseTypeString(iterator, StubBuildingVisitor.GUESSING_MAPPER)
+        val classType = SignatureParsing.parseTypeStringToTypeInfo(iterator, StubBuildingVisitor.GUESSING_PROVIDER).text()
         return JavaPsiFacade.getInstance(project).findClass(classType, scope)
     }
 

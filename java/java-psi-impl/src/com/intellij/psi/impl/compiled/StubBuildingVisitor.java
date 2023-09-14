@@ -4,9 +4,9 @@ package com.intellij.psi.impl.compiled;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.pom.java.LanguageLevel;
-import com.intellij.psi.PsiNameHelper;
 import com.intellij.psi.impl.cache.ModifierFlags;
 import com.intellij.psi.impl.cache.TypeInfo;
+import com.intellij.psi.impl.compiled.SignatureParsing.TypeInfoProvider;
 import com.intellij.psi.impl.compiled.SignatureParsing.TypeParametersDeclaration;
 import com.intellij.psi.impl.java.stubs.*;
 import com.intellij.psi.impl.java.stubs.impl.*;
@@ -707,7 +707,7 @@ public class StubBuildingVisitor<T> extends ClassVisitor {
   }
 
   @Nullable
-  static String constToString(@Nullable Object value, TypeInfo type, boolean anno, Function<? super String, String> mapping) {
+  static String constToString(@Nullable Object value, TypeInfo type, boolean anno, TypeInfoProvider mapping) {
     if (value == null) return null;
 
     if (value instanceof String) {
@@ -781,13 +781,13 @@ public class StubBuildingVisitor<T> extends ClassVisitor {
     return null;
   }
 
-  static String toJavaType(Type type, @NotNull Function<? super String, String> mapping) {
+  static String toJavaType(Type type, @NotNull TypeInfoProvider mapping) {
     int dimensions = 0;
     if (type.getSort() == Type.ARRAY) {
       dimensions = type.getDimensions();
       type = type.getElementType();
     }
-    String text = type.getSort() == Type.OBJECT ? mapping.fun(type.getInternalName()) : type.getClassName();
+    String text = type.getSort() == Type.OBJECT ? mapping.toTypeInfo(type.getInternalName()).text() : type.getClassName();
     if (dimensions > 0) text += StringUtil.repeat("[]", dimensions);
     return text;
   }
@@ -829,7 +829,9 @@ public class StubBuildingVisitor<T> extends ClassVisitor {
     return canonicalText.replace('/', '.');
   };
 
+  public static final TypeInfoProvider GUESSING_PROVIDER = TypeInfoProvider.from(GUESSING_MAPPER);
+
   public static AnnotationVisitor getAnnotationTextCollector(String desc, Consumer<? super String> consumer) {
-    return new AnnotationTextCollector(desc, GUESSING_MAPPER, consumer);
+    return new AnnotationTextCollector(desc, GUESSING_PROVIDER, consumer);
   }
 }
