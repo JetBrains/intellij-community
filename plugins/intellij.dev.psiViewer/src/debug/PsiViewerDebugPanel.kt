@@ -103,6 +103,7 @@ class PsiViewerDebugPanel(
     override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.EDT
 
     override fun actionPerformed(e: AnActionEvent) {
+      if (editor.contentComponent.hasFocus()) editor.selectionModel.setSelection(initialRange.startOffset, initialRange.endOffset)
       updatePsiTreeForSelection(initialRange.startOffset, initialRange.endOffset)
     }
   }
