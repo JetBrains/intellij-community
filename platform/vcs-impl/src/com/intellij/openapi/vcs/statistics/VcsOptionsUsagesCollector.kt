@@ -103,11 +103,11 @@ class VcsOptionsUsagesCollector : ProjectUsagesCollector() {
   }
 
   companion object {
-    private val GROUP = EventLogGroup("vcs.settings", 5)
+    private val GROUP = EventLogGroup("vcs.settings", 6)
 
-    private val CONFIRMATION_OPTION_FIELD = EventFields.Enum("value", ConfirmationOption::class.java)
-    private val STANDARD_CONFIRMATION_ADD = GROUP.registerEvent("vcs.standard.confirmation.add", CONFIRMATION_OPTION_FIELD)
-    private val STANDARD_CONFIRMATION_REMOVE = GROUP.registerEvent("vcs.standard.confirmation.remove", CONFIRMATION_OPTION_FIELD)
+    private val CONFIRMATION_OPTION_FIELD = EventFields.Enum<ConfirmationOption>("value")
+    private val STANDARD_CONFIRMATION_ADD = GROUP.registerEvent("standard.confirmation.for.add", CONFIRMATION_OPTION_FIELD)
+    private val STANDARD_CONFIRMATION_REMOVE = GROUP.registerEvent("standard.confirmation.for.remove", CONFIRMATION_OPTION_FIELD)
     private val OFFER_REMOVE_EMPTY_CHANGELIST = GROUP.registerEvent("offer.remove.empty.changelist", CONFIRMATION_OPTION_FIELD)
 
     private val CHANGELIST_MAKE_NEW_ACTIVE = GROUP.registerVarargEvent("changelist.make.new.active", EventFields.Enabled)
