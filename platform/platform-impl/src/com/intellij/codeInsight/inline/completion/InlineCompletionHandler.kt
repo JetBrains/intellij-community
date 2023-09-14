@@ -83,13 +83,10 @@ class InlineCompletionHandler(private val scope: CoroutineScope) {
     scope.launch {
       val request = event.toRequest() ?: return@launch
       mutex.withLock {
-        val updated = coroutineScope {
-          launch { runningJob?.cancelAndJoin() }
-          updateContextOrInvalidate(request, provider)
-        }
-        if (updated || provider == null) {
+        if (updateContextOrInvalidate(request, provider) || provider == null) {
           return@launch
         }
+        runningJob?.cancelAndJoin()
         LOG.trace("Schedule new job")
         runningJob = scope.launch {
           invokeRequest(request, provider)
