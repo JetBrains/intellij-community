@@ -7,11 +7,13 @@ import org.jetbrains.intellij.build.dependencies.TeamCityHelper
 import java.io.File
 import java.net.InetAddress
 import java.net.ServerSocket
+import java.util.Locale
 import java.util.logging.Logger
 
 object Launcher {
 
   private val logger = Logger.getLogger(Launcher::class.java.name)
+  private const val STRACE_PROPERTY_KEY = "com.intellij.tools.launch.Launcher.run.under.strace"
 
   fun launch(paths: PathsProvider,
              modules: ModulesProvider,
@@ -66,6 +68,18 @@ object Launcher {
       "-XX:+BytecodeVerificationLocal",
       "-Dshared.indexes.download.auto.consent=true"
     )
+
+    val straceValue = System.getProperty(STRACE_PROPERTY_KEY, "false")?.lowercase(Locale.ROOT) ?: "false"
+    if (straceValue == "true" || straceValue == "1") {
+      cmd.addAll(0,
+         listOf(
+           "strace",
+           "-f",
+           "-e", "trace=file",
+           "-o", paths.logFolder.resolve("strace.log").canonicalPath,
+         )
+      )
+    }
 
     val optionsOpenedFile = paths.communityRootFolder.resolve("platform/platform-impl/resources/META-INF/OpenedPackages.txt")
     val optionsOpenedPackages = JavaModuleOptions.readOptions(optionsOpenedFile.toPath(), OS.CURRENT)
