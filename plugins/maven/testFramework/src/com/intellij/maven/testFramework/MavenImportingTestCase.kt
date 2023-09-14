@@ -5,7 +5,6 @@ import com.intellij.application.options.CodeStyle
 import com.intellij.compiler.CompilerTestUtil
 import com.intellij.java.library.LibraryWithMavenCoordinatesProperties
 import com.intellij.maven.testFramework.utils.importMavenProjects
-import com.intellij.maven.testFramework.utils.resolveFoldersAndImport
 import com.intellij.openapi.application.*
 import com.intellij.openapi.externalSystem.autoimport.AutoImportProjectNotificationAware
 import com.intellij.openapi.externalSystem.autoimport.AutoImportProjectTracker
@@ -642,16 +641,6 @@ abstract class MavenImportingTestCase : MavenTestCase() {
       return
     }
     ApplicationManager.getApplication().invokeAndWait { projectsManager.waitForReadingCompletion() }
-  }
-
-  protected fun resolveFoldersAndImport() {
-    resolveFoldersAndImport(projectsManager.project, projectsManager.getProjects())
-    if (isNewImportingProcess) {
-      importProject()
-    }
-    else {
-      //ApplicationManager.getApplication().invokeAndWait(() -> myProjectsManager.performScheduledImportInTests());
-    }
   }
 
   protected fun resolvePlugins() {
