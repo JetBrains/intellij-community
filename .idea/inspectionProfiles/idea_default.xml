@@ -5,6 +5,9 @@
       <scope name="Production" level="WARNING" enabled="true" />
     </inspection_tool>
     <inspection_tool class="2b82dee6-0e1c-36ce-846f-749c578bd315" enabled="true" level="WARNING" enabled_by_default="true" />
+    <inspection_tool class="81c39993-de39-3a30-9c64-ab89d04bb566" enabled="true" level="TEXT ATTRIBUTES" enabled_by_default="false" editorAttributes="INFO_ATTRIBUTES">
+      <scope name="Production" level="TEXT ATTRIBUTES" enabled="true" editorAttributes="INFO_ATTRIBUTES" />
+    </inspection_tool>
     <inspection_tool class="AbstractMethodCallInConstructor" enabled="true" level="WARNING" enabled_by_default="true" />
     <inspection_tool class="AndroidDomInspection" enabled="false" level="ERROR" enabled_by_default="false" />
     <inspection_tool class="AndroidElementNotAllowed" enabled="false" level="WARNING" enabled_by_default="false" />
@@ -2328,6 +2331,14 @@
         <constraint name="Instance" nameOfExprType="com.intellij.openapi.wm.ToolWindowManager" exprTypeWithinHierarchy="true" minCount="0" within="" contains="" />
         <constraint name="Parameter" minCount="0" maxCount="2147483647" within="" contains="" />
         <constraint name="__context__" within="" contains="" />
+      </searchConfiguration>
+      <searchConfiguration name="Use of Toolkit.getSystemClipboard()" description="IntelliJ platform's CopyPasteManager should be used in most cases.&#10;It supports clipboard history and works in remote development scenarios." suppressId="SystemClipboardAccess" problemDescriptor="Consider using IntelliJ platform's CopyPasteManager instead. It supports clipboard history and works in remote development scenarios." text="$Instance$.getSystemClipboard()" recursive="true" caseInsensitive="true" type="JAVA" pattern_context="default">
+        <constraint name="__context__" within="" contains="" />
+        <constraint name="Instance" nameOfExprType="java\.awt\.Toolkit" exprTypeWithinHierarchy="true" within="" contains="" />
+      </searchConfiguration>
+      <searchConfiguration name="Use of Toolkit.getSystemClipboard()" text="$Instance$.systemClipboard" recursive="true" caseInsensitive="true" type="Kotlin" pattern_context="default">
+        <constraint name="__context__" within="" contains="" />
+        <constraint name="Instance" within="" contains="" />
       </searchConfiguration>
       <searchConfiguration name="Use RecursionManager?" text="class $Class$ { &#10;  ThreadLocal&lt;$FieldType$&gt; $FieldName$ = $Init$;&#10;}" recursive="false" caseInsensitive="false" type="JAVA" pattern_context="default">
         <constraint name="Class" within="" contains="" />
