@@ -14,6 +14,7 @@ sealed class InlineCompletionEventType {
                      val provider: Class<out InlineCompletionProvider>) : InlineCompletionEventType()
 
   data class Show(val element: InlineCompletionElement, val i: Int) : InlineCompletionEventType()
+  data class Change(val truncateTyping: Int) : InlineCompletionEventType()
   object Empty : InlineCompletionEventType()
   data class Completion(val cause: Throwable?, val isActive: Boolean) : InlineCompletionEventType()
   object Insert : InlineCompletionEventType()
@@ -31,6 +32,7 @@ interface InlineCompletionEventAdapter : InlineCompletionEventListener {
     when (event) {
       is InlineCompletionEventType.Request -> onRequest(event)
       is InlineCompletionEventType.Show -> onShow(event)
+      is InlineCompletionEventType.Change -> onChange(event)
       is InlineCompletionEventType.Insert -> onInsert(event)
       is InlineCompletionEventType.Hide -> onHide(event)
       is InlineCompletionEventType.Completion -> onCompletion(event)
@@ -40,6 +42,7 @@ interface InlineCompletionEventAdapter : InlineCompletionEventListener {
 
   fun onRequest(event: InlineCompletionEventType.Request) {}
   fun onShow(event: InlineCompletionEventType.Show) {}
+  fun onChange(event: InlineCompletionEventType.Change) {}
   fun onInsert(event: InlineCompletionEventType.Insert) {}
   fun onHide(event: InlineCompletionEventType.Hide) {}
   fun onCompletion(event: InlineCompletionEventType.Completion) {}

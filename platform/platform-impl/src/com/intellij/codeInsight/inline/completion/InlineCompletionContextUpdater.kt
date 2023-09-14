@@ -12,7 +12,7 @@ internal abstract class InlineCompletionContextUpdater {
     sealed interface Defined : Result
 
     sealed interface Updated : Defined {
-      class Changed(val newElements: List<InlineCompletionElement>) : Updated
+      class Changed(val newElements: List<InlineCompletionElement>, val truncateTyping: Int) : Updated
 
       object Same : Updated
     }
@@ -43,19 +43,20 @@ internal class AppendPrefixContextUpdater : InlineCompletionContextUpdater() {
     return when (event) {
       is InlineCompletionEvent.DocumentChange -> {
         val fragment = event.getFragmentToAppendPrefix()
-        val newElements = fragment?.let { applyPrefixAppend(context, it) }
-        if (newElements != null) Result.Updated.Changed(newElements) else Result.Invalidated
+        val (newElements, truncateTyping) = fragment?.let { applyPrefixAppend(context, it) } ?: return Result.Invalidated
+        Result.Updated.Changed(newElements, truncateTyping)
       }
       else -> Result.Undefined
     }
   }
 
-  private fun applyPrefixAppend(context: InlineCompletionContext, fragment: CharSequence): List<InlineCompletionElement>? {
+  private fun applyPrefixAppend(context: InlineCompletionContext, fragment: CharSequence): Pair<List<InlineCompletionElement>, Int>? {
     // only one symbol is permitted
     if (fragment.length != 1 || !context.lineToInsert.startsWith(fragment) || context.lineToInsert == fragment.toString()) {
       return null
     }
-    return truncateElementsPrefix(context.state.elements, fragment.length)
+    val truncateTyping = fragment.length
+    return truncateElementsPrefix(context.state.elements, truncateTyping) to truncateTyping
   }
 
   private fun InlineCompletionEvent.DocumentChange.getFragmentToAppendPrefix(): String? {
