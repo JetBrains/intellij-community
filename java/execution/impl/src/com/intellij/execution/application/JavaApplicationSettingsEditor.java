@@ -6,6 +6,7 @@ import com.intellij.execution.configurations.RuntimeConfigurationException;
 import com.intellij.execution.ui.*;
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.ui.ValidationInfo;
 import com.intellij.openapi.util.Predicates;
 import com.intellij.openapi.util.text.StringUtil;
@@ -96,7 +97,9 @@ public final class JavaApplicationSettingsEditor extends JavaSettingsEditorBase<
       myUnnamedClassField = new TextFieldWithAutoCompletion<>(
         getProject(),
         new StringsCompletionProvider(
-          ContainerUtil.map(
+          DumbService.isDumb(getProject())
+          ? List.of()
+          : ContainerUtil.map(
             FileBasedIndex.getInstance().getAllKeys(JavaUnnamedClassIndexKt.getId(), getProject()),
             fileName -> StringUtil.trimEnd(fileName, ".java")
           ),

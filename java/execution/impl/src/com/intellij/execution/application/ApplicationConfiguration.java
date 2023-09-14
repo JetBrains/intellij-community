@@ -23,6 +23,7 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.options.SettingsEditor;
 import com.intellij.openapi.options.SettingsEditorGroup;
+import com.intellij.openapi.project.IndexNotReadyException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.io.FileUtilRt;
@@ -191,17 +192,20 @@ public class ApplicationConfiguration extends JavaRunConfigurationBase
   public JavaRunConfigurationModule checkClass() throws RuntimeConfigurationException {
     final JavaRunConfigurationModule configurationModule = getConfigurationModule();
     String mainClassName = getMainClassName();
-    PsiClass psiClass = getOptions().isUnnamedClassConfiguration()
-                        ? checkUnnammedClassConfiguration(configurationModule, mainClassName)
-                        : configurationModule.checkModuleAndClassName(getMainClassName(), ExecutionBundle.message("no.main.class.specified.error.text"));
-    if (psiClass == null || !PsiMethodUtil.hasMainMethod(psiClass)) {
-      throw new RuntimeConfigurationWarning(ExecutionBundle.message("main.method.not.found.in.class.error.message", getMainClassName()));
-    }
+    try {
+      PsiClass psiClass = getOptions().isUnnamedClassConfiguration()
+                          ? checkUnnammedClassConfiguration(configurationModule, mainClassName)
+                          : configurationModule.checkModuleAndClassName(getMainClassName(), ExecutionBundle.message("no.main.class.specified.error.text"));
+      if (psiClass == null || !PsiMethodUtil.hasMainMethod(psiClass)) {
+        throw new RuntimeConfigurationWarning(ExecutionBundle.message("main.method.not.found.in.class.error.message", getMainClassName()));
+      }
+    } catch (IndexNotReadyException ignored) {}
     return configurationModule;
   }
 
   @Nullable
-  private PsiClass checkUnnammedClassConfiguration(JavaRunConfigurationModule configurationModule, String mainClassName) throws RuntimeConfigurationException {
+  private PsiClass checkUnnammedClassConfiguration(JavaRunConfigurationModule configurationModule, String mainClassName)
+    throws RuntimeConfigurationException, IndexNotReadyException {
     configurationModule.checkForWarning();
 
     if (mainClassName != null) {
