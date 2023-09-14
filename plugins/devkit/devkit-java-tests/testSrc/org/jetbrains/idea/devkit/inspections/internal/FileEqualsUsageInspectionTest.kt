@@ -28,4 +28,35 @@ class FileEqualsUsageInspectionTest : FileEqualsUsageInspectionTestBase() {
         }""")
     myFixture.testHighlighting()
   }
+
+  // identify comparisons should not be reported in Java:
+  fun testFilesWithEqualsOperator() {
+    doOperatorTest("file1", "==", "file2", false)
+  }
+
+  fun testFilesWithNotEqualOperator() {
+    doOperatorTest("file1", "!=", "file2", false)
+  }
+  fun testFilesWithLeftOperandNull() {
+    doOperatorTest("null", "==", "file2", false)
+  }
+
+  fun testFilesWithRightOperandNull() {
+    doOperatorTest("file1", "!=", "null", false)
+  }
+
+  private fun doOperatorTest(leftOperandText: String, operatorText: String, rightOperandText: String,
+                             @Suppress("SameParameterValue") highlightError: Boolean) {
+    val expectedOperatorExpression = getOperatorText(operatorText, highlightError)
+    myFixture.configureByText("Testing.java", """
+      import java.io.File;
+      class Testing {
+        boolean method() {
+           File file1 = new File("any");
+           File file2 = new File("any");
+           return $leftOperandText $expectedOperatorExpression $rightOperandText;
+        }
+      }""")
+    myFixture.testHighlighting()
+  }
 }
