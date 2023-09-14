@@ -5,8 +5,11 @@ import com.intellij.ide.actions.cache.RecoverVfsFromLogService;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.NotNullLazyValue;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.vfs.newvfs.persistent.dev.blobstorage.StreamlinedBlobStorageOverMMappedFile;
+import com.intellij.openapi.vfs.newvfs.persistent.mapped.MMappedFileStorage;
 import com.intellij.openapi.vfs.newvfs.persistent.dev.blobstorage.StreamlinedBlobStorageOverPagedStorage;
 import com.intellij.util.io.blobstorage.SpaceAllocationStrategy;
+import com.intellij.util.io.blobstorage.SpaceAllocationStrategy.DataLengthPlusFixedPercentStrategy;
 import com.intellij.util.io.blobstorage.StreamlinedBlobStorage;
 import com.intellij.openapi.vfs.newvfs.persistent.dev.blobstorage.StreamlinedBlobStorageOverLockFreePagesStorage;
 import com.intellij.openapi.vfs.newvfs.persistent.dev.enumerator.DurableStringEnumerator;
@@ -216,7 +219,8 @@ public final class PersistentFSLoader {
       if (recoverCachesFromVfsLog(vfsLog)) {
         LOG.info("Recovered caches from VfsLog");
         return true;
-      } else {
+      }
+      else {
         LOG.info("Failed to recover caches from VfsLog");
         return false;
       }
@@ -470,7 +474,7 @@ public final class PersistentFSLoader {
   private boolean contentResolvedSuccessfully(int fileId) throws IOException {
     int contentId = recordsStorage.getContentRecordId(fileId);
     if (contentHashesEnumerator != null
-        && contentId != DataEnumeratorEx.NULL_ID) {
+        && contentId != DataEnumerator.NULL_ID) {
       try {
         byte[] contentHash = contentHashesEnumerator.valueOf(contentId);
         if (contentHash == null) {
@@ -501,7 +505,7 @@ public final class PersistentFSLoader {
 
   private boolean nameResolvedSuccessfully(int fileId) throws IOException {
     int nameId = recordsStorage.getNameId(fileId);
-    if (nameId == DataEnumeratorEx.NULL_ID) {
+    if (nameId == DataEnumerator.NULL_ID) {
       return false;
     }
     try {
@@ -574,9 +578,10 @@ public final class PersistentFSLoader {
   private static @NotNull AbstractAttributesStorage createAttributesStorage_makeStorage(@NotNull Path attributesFile) throws IOException {
     if (FSRecordsImpl.USE_STREAMLINED_ATTRIBUTES_IMPLEMENTATION) {
       //avg record size is ~60b, hence I've chosen minCapacity=64 bytes, and defaultCapacity= 2*minCapacity
-      final SpaceAllocationStrategy allocationStrategy = new SpaceAllocationStrategy.DataLengthPlusFixedPercentStrategy(64, 128,
-                                                                                                                        StreamlinedBlobStorageOverLockFreePagesStorage.MAX_CAPACITY,
-                                                                                                                        30
+      final SpaceAllocationStrategy allocationStrategy = new DataLengthPlusFixedPercentStrategy(
+        /*min: */64, /*default: */ 128,
+        /*max: */StreamlinedBlobStorageOverLockFreePagesStorage.MAX_CAPACITY,
+        /*percentOnTop: */30
       );
       final StreamlinedBlobStorage blobStorage;
       if (FSRecordsImpl.USE_ATTRIBUTES_OVER_NEW_FILE_PAGE_CACHE && PageCacheUtils.LOCK_FREE_PAGE_CACHE_ENABLED) {
@@ -591,6 +596,14 @@ public final class PersistentFSLoader {
             /*nativeByteOrder: */  true,
             PageContentLockingStrategy.LOCK_PER_PAGE
           ),
+          allocationStrategy
+        );
+      }
+      else if (FSRecordsImpl.USE_ATTRIBUTES_OVER_MMAPPED_FILE) {
+        LOG.info("VFS uses streamlined attributes storage (over MMappedFile)");
+        int pageSize = 1 << 24;//16Mb
+        blobStorage = new StreamlinedBlobStorageOverMMappedFile(
+          new MMappedFileStorage(attributesFile, pageSize),
           allocationStrategy
         );
       }

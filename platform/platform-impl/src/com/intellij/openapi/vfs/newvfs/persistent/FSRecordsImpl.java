@@ -84,14 +84,13 @@ public final class FSRecordsImpl {
 
   public static final boolean USE_STREAMLINED_ATTRIBUTES_IMPLEMENTATION = getBooleanProperty("vfs.use-streamlined-attributes-storage", true);
   public static final boolean USE_RAW_ACCESS_TO_READ_CHILDREN = getBooleanProperty("vfs.use-raw-access-to-read-children", true);
-  //TODO RC: temporary false, must be LOCK_FREE_PAGE_CACHE_ENABLED by default (and eventually just true)
   public static final boolean USE_ATTRIBUTES_OVER_NEW_FILE_PAGE_CACHE = getBooleanProperty("vfs.attributes-storage.use-lock-free-page-cache", true);
+  public static final boolean USE_ATTRIBUTES_OVER_MMAPPED_FILE = getBooleanProperty("vfs.attributes-storage.use-mmapped-file", false);
 
   public static final boolean USE_FAST_NAMES_IMPLEMENTATION = getBooleanProperty("vfs.use-fast-names-enumerator", true);
   private static final boolean USE_FILE_NAME_CACHE = getBooleanProperty("vfs.name-cache.enable", true);
   private static final boolean USE_MRU_FILE_NAME_CACHE = getBooleanProperty("vfs.name-cache.use-mru", true);
 
-  //TODO RC: must be LOCK_FREE_PAGE_CACHE_ENABLED by default (and eventually just true)
   public static final boolean USE_CONTENT_STORAGE_OVER_NEW_FILE_PAGE_CACHE = getBooleanProperty("vfs.content-storage.use-lock-free-page-cache", true);
   //@formatter:on
 
@@ -210,7 +209,7 @@ public final class FSRecordsImpl {
            nextMask(PageCacheUtils.LOCK_FREE_PAGE_CACHE_ENABLED && USE_ATTRIBUTES_OVER_NEW_FILE_PAGE_CACHE,//pageSize was changed on old<->new transition
            nextMask(true,  //former 'inline attributes', feel free to re-use
            nextMask(getBooleanProperty(FSRecords.IDE_USE_FS_ROOTS_DATA_LOADER, false),
-           nextMask(false, // feel free to re-use
+           nextMask(USE_ATTRIBUTES_OVER_MMAPPED_FILE, // feel free to re-use
            nextMask(true,  // former USE_SMALL_ATTR_TABLE, feel free to re-use
            nextMask(PersistentHashMapValueStorage.COMPRESSION_ENABLED,
            nextMask(FileSystemUtil.DO_NOT_RESOLVE_SYMLINKS,
