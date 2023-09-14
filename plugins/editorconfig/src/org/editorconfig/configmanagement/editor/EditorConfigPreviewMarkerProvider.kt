@@ -22,7 +22,6 @@ import org.ec4j.core.model.Ec4jPath
 import org.ec4j.core.model.Glob
 import org.editorconfig.Utils
 import org.editorconfig.Utils.isEnabled
-import org.editorconfig.core.ec4jwrappers.VirtualFileResource
 import org.editorconfig.language.messages.EditorConfigBundle.message
 import org.editorconfig.language.psi.EditorConfigElementTypes
 import org.editorconfig.language.psi.EditorConfigHeader
@@ -99,12 +98,10 @@ class EditorConfigPreviewMarkerProvider : LineMarkerProviderDescriptor() {
       return if (virtualFiles.isNotEmpty()) virtualFiles[0] else null
     }
 
-    // TODO verify that the same needle and hay end up being used
     private fun matchesPattern(rootDir: VirtualFile, pattern: String, filePath: String): Boolean {
       val glob = Glob(pattern)
-      val resource = VirtualFileResource(rootDir)
       //return EditorConfig.filenameMatches(rootDir.getPath(), pattern, filePath);
-      return glob.match(resource.path.relativize(Ec4jPath.Ec4jPaths.of(filePath)))
+      return glob.match(Ec4jPath.Ec4jPaths.of(rootDir.path).relativize(Ec4jPath.Ec4jPaths.of(filePath)))
     }
 
     fun getRootDir(header: EditorConfigHeader): VirtualFile {
