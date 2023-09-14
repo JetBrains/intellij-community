@@ -471,10 +471,11 @@ public final class VcsLogPersistentIndex implements VcsLogModifiableIndex, Dispo
         myNumberOfTasks.get(myRoot).decrementAndGet();
 
         myIndexingTime.get(myRoot).updateAndGet(t -> t + (getCurrentTimeMillis() - myStartTime));
-        if (isIndexed(myRoot)) {
+        boolean isIndexed = isIndexed(myRoot);
+        if (isIndexed || myBigRepositoriesList.isBig(myRoot)) {
           long time = myIndexingTime.get(myRoot).getAndSet(0);
           myIndexCollector.reportIndexingTime(time);
-          myListeners.forEach(listener -> listener.indexingFinished(myRoot));
+          if (isIndexed) myListeners.forEach(listener -> listener.indexingFinished(myRoot));
         }
 
         report();
