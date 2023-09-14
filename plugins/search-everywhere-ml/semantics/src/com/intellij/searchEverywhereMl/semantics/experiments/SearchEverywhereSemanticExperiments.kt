@@ -1,9 +1,6 @@
 package com.intellij.searchEverywhereMl.semantics.experiments
 
 import com.intellij.ide.actions.searcheverywhere.ActionSearchEverywhereContributor
-import com.intellij.ide.actions.searcheverywhere.ClassSearchEverywhereContributor
-import com.intellij.ide.actions.searcheverywhere.FileSearchEverywhereContributor
-import com.intellij.ide.actions.searcheverywhere.SymbolSearchEverywhereContributor
 import com.intellij.internal.statistic.eventLog.EventLogConfiguration
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
@@ -43,18 +40,6 @@ class SearchEverywhereSemanticExperiments {
       ActionSearchEverywhereContributor::class.java.simpleName to TabExperimentPlan(
         0 to SemanticSearchFeature.ENABLED, // half of one of NO_EXPERIMENT groups
         2 to SemanticSearchFeature.ENABLED, // half of the USE_EXPERIMENTAL group
-      ),
-      FileSearchEverywhereContributor::class.java.simpleName to TabExperimentPlan(
-        0 to SemanticSearchFeature.ENABLED, // half of one of NO_EXPERIMENT groups
-        2 to SemanticSearchFeature.ENABLED, // half of the USE_EXPERIMENTAL group
-      ),
-      ClassSearchEverywhereContributor::class.java.simpleName to TabExperimentPlan(
-        0 to SemanticSearchFeature.ENABLED, // half of one of NO_EXPERIMENT groups
-        2 to SemanticSearchFeature.ENABLED, // half of the USE_EXPERIMENTAL group
-      ),
-      SymbolSearchEverywhereContributor::class.java.simpleName to TabExperimentPlan(
-        0 to SemanticSearchFeature.ENABLED,
-        2 to SemanticSearchFeature.ENABLED
       )
     )
 
