@@ -5,7 +5,7 @@ interface I<T> {
 }
 
 abstract class X<T extends @NotNull Object> implements I<T> {
-  public abstract T <warning descr="Overridden methods are not annotated">getT</warning>();
+  public abstract T <warning descr="Overriding methods are not annotated">getT</warning>();
 }
 
 class Y extends X<@NotNull String> {
