@@ -26,14 +26,14 @@ class InlineCompletionDocumentListener(private val editor: EditorImpl) : BulkAwa
       handler?.cancel(editor)
     }
 
-    // ML-1109 ML-1131
-    if (event.newLength != 1) {
-      handler?.cancel(editor)
-      return
+    // ML-1109 ML-1131 ML-1226
+    if (event.newLength == 1 || event.newLength != 0 && event.newFragment.isBlank()) {
+      LOG.trace("Valuable document event $event")
+      handler?.invoke(InlineCompletionEvent.DocumentChange(event, editor))
     }
-
-    LOG.trace("Valuable document event $event")
-    handler?.invoke(InlineCompletionEvent.DocumentChange(event, editor))
+    else {
+      handler?.cancel(editor)
+    }
   }
 
   fun isEnabled(event: DocumentEvent): Boolean {
