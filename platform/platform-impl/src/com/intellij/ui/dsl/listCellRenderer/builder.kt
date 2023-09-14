@@ -24,7 +24,7 @@ internal annotation class LcrDslMarker
  */
 @ApiStatus.Experimental
 fun <T> listCellRenderer(init: LcrRow<T>.() -> Unit): ListCellRenderer<T> {
-  return LcrRowImpl(init)
+  return UiDslRendererProvider.getRenderer(init)
 }
 
 /**
