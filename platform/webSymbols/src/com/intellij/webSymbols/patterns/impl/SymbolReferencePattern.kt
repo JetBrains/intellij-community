@@ -1,6 +1,7 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.webSymbols.patterns.impl
 
+import com.intellij.openapi.progress.ProgressManager
 import com.intellij.util.containers.Stack
 import com.intellij.webSymbols.WebSymbol
 import com.intellij.webSymbols.WebSymbolNameSegment
@@ -32,6 +33,7 @@ internal class SymbolReferencePattern(val displayName: String?) : WebSymbolsPatt
       ))))
     }
 
+    ProgressManager.checkCanceled()
     val hits = symbolsResolver
                  ?.matchName(params.name.substring(start, end), scopeStack, params.queryExecutor)
                ?: emptyList()

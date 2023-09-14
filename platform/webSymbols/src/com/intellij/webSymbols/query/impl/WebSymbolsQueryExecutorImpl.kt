@@ -2,9 +2,10 @@
 package com.intellij.webSymbols.query.impl
 
 import com.intellij.model.Pointer
-import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.diagnostic.thisLogger
+import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.util.RecursionManager
+import com.intellij.util.concurrency.annotations.RequiresReadLock
 import com.intellij.util.containers.Stack
 import com.intellij.webSymbols.*
 import com.intellij.webSymbols.completion.WebSymbolCodeCompletionItem
@@ -97,6 +98,7 @@ internal class WebSymbolsQueryExecutorImpl(private val rootScope: List<WebSymbol
         .takeLastUntilExclusiveScopeFor(namespace, kind)
         .asSequence()
         .flatMap { scope ->
+          ProgressManager.checkCanceled()
           scope.getSymbols(namespace, kind, qualifiedName.name.takeIf { it.isNotEmpty() }, params, Stack(finalContext))
         }
         .filterIsInstance<WebSymbol>()
@@ -104,6 +106,7 @@ internal class WebSymbolsQueryExecutorImpl(private val rootScope: List<WebSymbol
         .distinct()
         .toList()
         .let { list ->
+          ProgressManager.checkCanceled()
           if (list.isNotEmpty())
             resultsCustomizer.apply(list, params.strictScope, namespace, kind, qualifiedName.name.takeIf { it.isNotEmpty() })
           else list
@@ -156,6 +159,7 @@ internal class WebSymbolsQueryExecutorImpl(private val rootScope: List<WebSymbol
   override fun getModificationCount(): Long =
     rootScope.sumOf { it.modificationCount } + namesProvider.modificationCount + resultsCustomizer.modificationCount
 
+  @RequiresReadLock
   private fun <T, P : WebSymbolsQueryParams> runQuery(
     path: List<WebSymbolQualifiedName>,
     params: P,
@@ -165,7 +169,7 @@ internal class WebSymbolsQueryExecutorImpl(private val rootScope: List<WebSymbol
       pathSection: WebSymbolQualifiedName,
       params: P,
     ) -> List<T>): List<T> {
-    ApplicationManager.getApplication().assertReadAccessAllowed()
+    ProgressManager.checkCanceled()
     if (path.isEmpty()) return emptyList()
 
     val scope = rootScope.toMutableSet()

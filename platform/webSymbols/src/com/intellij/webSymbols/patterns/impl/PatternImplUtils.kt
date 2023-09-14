@@ -1,6 +1,7 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.webSymbols.patterns.impl
 
+import com.intellij.openapi.progress.ProgressManager
 import com.intellij.util.containers.Stack
 import com.intellij.webSymbols.WebSymbol
 import com.intellij.webSymbols.WebSymbolApiStatus
@@ -82,9 +83,11 @@ internal fun <T> withPrevMatchScope(scopeStack: Stack<WebSymbolsScope>,
                                     prevResult: List<WebSymbolNameSegment>?,
                                     action: () -> T): T =
   if (prevResult.isNullOrEmpty()) {
+    ProgressManager.checkCanceled()
     action()
   }
   else {
+    ProgressManager.checkCanceled()
     val additionalScope = prevResult
       .flatMap { it.symbols }
       .flatMap { it.queryScope }
