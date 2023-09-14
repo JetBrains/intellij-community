@@ -165,7 +165,7 @@ public final class VcsLogPersistentIndex implements VcsLogModifiableIndex, Dispo
     myCommitsToIndex = new HashMap<>();
 
     boolean isFull = full && (myBackend.isFresh() || myBackend.isEmpty());
-    if (isFull) LOG.debug("Index storage for project " + myProject.getName() + " is fresh, scheduling full reindex");
+    if (isFull) LOG.debug("Index storage for project " + myProject.getName() + " is fresh or empty, scheduling full reindex");
     for (VirtualFile root : commitsToIndex.keySet()) {
       IntSet commits = commitsToIndex.get(root);
       if (commits.isEmpty()) continue;
