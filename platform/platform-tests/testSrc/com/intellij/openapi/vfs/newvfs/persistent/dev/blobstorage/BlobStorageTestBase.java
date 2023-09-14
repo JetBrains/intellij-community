@@ -226,7 +226,7 @@ public abstract class BlobStorageTestBase<S> {
   }
 
   @Test
-  public void manyRecordsWritten_AndReWrittenWithLargerSize_AndCouldAllBeReadBackUnchanged_EventAfterStorageReopened() throws Exception {
+  public void manyRecordsWritten_AndReWrittenWithLargerSize_AndCouldAllBeReadBackUnchanged_EvenAfterStorageReopened() throws Exception {
     final StorageRecord[] recordsToWrite = BlobStorageTestBase.generateRecords(ENOUGH_RECORDS, 2000);
 
     //write initial records

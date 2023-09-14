@@ -15,7 +15,7 @@ import java.nio.file.Path;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assume.assumeTrue;
 
-public class StreamlinedBlobStorageOverLockFreePagesStorageTest
+public class StreamlinedBlobStorageOverLockFreePagedStorageTest
   extends StreamlinedBlobStorageTestBase<StreamlinedBlobStorageOverLockFreePagesStorage> {
 
   @Test
@@ -35,7 +35,7 @@ public class StreamlinedBlobStorageOverLockFreePagesStorageTest
     );
   }
 
-  public StreamlinedBlobStorageOverLockFreePagesStorageTest(final @NotNull Integer pageSize,
+  public StreamlinedBlobStorageOverLockFreePagedStorageTest(final @NotNull Integer pageSize,
                                                             final @NotNull SpaceAllocationStrategy strategy) {
     super(pageSize, strategy);
   }

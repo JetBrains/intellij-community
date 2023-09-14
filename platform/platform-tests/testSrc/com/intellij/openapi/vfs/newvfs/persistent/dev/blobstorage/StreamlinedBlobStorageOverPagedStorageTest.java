@@ -18,21 +18,21 @@ import static org.junit.Assert.assertEquals;
  *
  */
 @RunWith(Theories.class)
-public class LargeSizeStreamlinedBlobStorageTest extends StreamlinedBlobStorageTestBase<LargeSizeStreamlinedBlobStorage> {
+public class StreamlinedBlobStorageOverPagedStorageTest extends StreamlinedBlobStorageTestBase<StreamlinedBlobStorageOverPagedStorage> {
 
 
-  public LargeSizeStreamlinedBlobStorageTest(final @NotNull Integer pageSize,
-                                             final @NotNull SpaceAllocationStrategy strategy) {
+  public StreamlinedBlobStorageOverPagedStorageTest(final @NotNull Integer pageSize,
+                                                    final @NotNull SpaceAllocationStrategy strategy) {
     super(pageSize, strategy);
   }
 
   @Override
   protected int maxPayloadSize(int pageSize) {
-    return Math.min(LargeSizeStreamlinedBlobStorage.MAX_CAPACITY, pageSize) - 10;
+    return Math.min(StreamlinedBlobStorageOverPagedStorage.MAX_CAPACITY, pageSize) - 10;
   }
 
   @Override
-  protected LargeSizeStreamlinedBlobStorage openStorage(final Path pathToStorage) throws IOException {
+  protected StreamlinedBlobStorageOverPagedStorage openStorage(final Path pathToStorage) throws IOException {
     final PagedFileStorage pagedStorage = new PagedFileStorage(
       pathToStorage,
       LOCK_CONTEXT,
@@ -40,7 +40,7 @@ public class LargeSizeStreamlinedBlobStorageTest extends StreamlinedBlobStorageT
       true,
       true
     );
-    return new LargeSizeStreamlinedBlobStorage(
+    return new StreamlinedBlobStorageOverPagedStorage(
       pagedStorage,
       allocationStrategy
     );
@@ -71,7 +71,7 @@ public class LargeSizeStreamlinedBlobStorageTest extends StreamlinedBlobStorageT
     assertEquals(
       "New storage version == STORAGE_VERSION_CURRENT",
       storage.getStorageVersion(),
-      LargeSizeStreamlinedBlobStorage.STORAGE_VERSION_CURRENT
+      StreamlinedBlobStorageOverPagedStorage.STORAGE_VERSION_CURRENT
     );
   }
 }

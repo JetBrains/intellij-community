@@ -5,7 +5,7 @@ import com.intellij.ide.actions.cache.RecoverVfsFromLogService;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.NotNullLazyValue;
 import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.openapi.vfs.newvfs.persistent.dev.blobstorage.LargeSizeStreamlinedBlobStorage;
+import com.intellij.openapi.vfs.newvfs.persistent.dev.blobstorage.StreamlinedBlobStorageOverPagedStorage;
 import com.intellij.util.io.blobstorage.SpaceAllocationStrategy;
 import com.intellij.util.io.blobstorage.StreamlinedBlobStorage;
 import com.intellij.openapi.vfs.newvfs.persistent.dev.blobstorage.StreamlinedBlobStorageOverLockFreePagesStorage;
@@ -596,7 +596,7 @@ public final class PersistentFSLoader {
       }
       else {
         LOG.info("VFS uses streamlined attributes storage (over regular FilePageCache)");
-        blobStorage = new LargeSizeStreamlinedBlobStorage(
+        blobStorage = new StreamlinedBlobStorageOverPagedStorage(
           new PagedFileStorage(
             attributesFile,
             PERSISTENT_FS_STORAGE_CONTEXT,

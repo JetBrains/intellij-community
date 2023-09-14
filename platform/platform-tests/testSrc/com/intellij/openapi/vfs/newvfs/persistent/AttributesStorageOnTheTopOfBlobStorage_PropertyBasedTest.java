@@ -78,7 +78,7 @@ public class AttributesStorageOnTheTopOfBlobStorage_PropertyBasedTest {
                                              ),
                                              spaceAllocationStrategy
                                            ) :
-                                           new LargeSizeStreamlinedBlobStorage(
+                                           new StreamlinedBlobStorageOverPagedStorage(
                                              new PagedFileStorage(storagePath, LOCK_CONTEXT, PAGE_SIZE, true, true),
                                              spaceAllocationStrategy
                                            );

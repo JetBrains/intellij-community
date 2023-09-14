@@ -43,8 +43,8 @@ import static com.intellij.platform.diagnostic.telemetry.PlatformScopesKt.Storag
  * record size up to 1Mb large.
  * <p>
  */
-public final class LargeSizeStreamlinedBlobStorage implements StreamlinedBlobStorage {
-  private static final Logger LOG = Logger.getInstance(LargeSizeStreamlinedBlobStorage.class);
+public final class StreamlinedBlobStorageOverPagedStorage implements StreamlinedBlobStorage {
+  private static final Logger LOG = Logger.getInstance(StreamlinedBlobStorageOverPagedStorage.class);
 
   /* ======== Persistent format: =================================================================== */
 
@@ -171,8 +171,8 @@ public final class LargeSizeStreamlinedBlobStorage implements StreamlinedBlobSto
   private final BatchCallback openTelemetryCallback;
 
 
-  public LargeSizeStreamlinedBlobStorage(final @NotNull PagedFileStorage pagedStorage,
-                                         final @NotNull SpaceAllocationStrategy allocationStrategy) throws IOException {
+  public StreamlinedBlobStorageOverPagedStorage(final @NotNull PagedFileStorage pagedStorage,
+                                                final @NotNull SpaceAllocationStrategy allocationStrategy) throws IOException {
     this.pagedStorage = pagedStorage;
     this.allocationStrategy = allocationStrategy;
 

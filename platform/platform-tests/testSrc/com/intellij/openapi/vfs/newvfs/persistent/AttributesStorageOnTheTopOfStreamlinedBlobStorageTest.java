@@ -1,7 +1,7 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vfs.newvfs.persistent;
 
-import com.intellij.openapi.vfs.newvfs.persistent.dev.blobstorage.LargeSizeStreamlinedBlobStorage;
+import com.intellij.openapi.vfs.newvfs.persistent.dev.blobstorage.StreamlinedBlobStorageOverPagedStorage;
 import com.intellij.util.io.blobstorage.SpaceAllocationStrategy.DataLengthPlusFixedPercentStrategy;
 import com.intellij.openapi.vfs.newvfs.persistent.dev.blobstorage.StreamlinedBlobStorageOverLockFreePagesStorage;
 import com.intellij.util.io.PagedFileStorage;
@@ -21,7 +21,7 @@ public class AttributesStorageOnTheTopOfStreamlinedBlobStorageTest extends Attri
       true,
       true
     );
-    storage = new LargeSizeStreamlinedBlobStorage(
+    storage = new StreamlinedBlobStorageOverPagedStorage(
       pagedStorage,
       new DataLengthPlusFixedPercentStrategy(64, 256, StreamlinedBlobStorageOverLockFreePagesStorage.MAX_CAPACITY, 30)
     );
