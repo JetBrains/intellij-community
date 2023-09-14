@@ -796,8 +796,12 @@ private fun assembleWorkspace(): TWorkspace = workspace {
             model("copyPaste/moveDeclarations", pattern = KT_WITHOUT_DOTS, testMethodName = "doTest")
         }
 
-        testClass<AbstractHighlightExitPointsTest> {
+        testClass<AbstractCustomHighlightUsageHandlerTest>("HighlightExitPointsTestGenerated") {
             model("exitPoints")
+        }
+
+        testClass<AbstractCustomHighlightUsageHandlerTest>("KotlinReceiverUsageHighlightingTestGenerated") {
+            model("receiverUsageHighlighting")
         }
 
         testClass<AbstractLineMarkersTest> {

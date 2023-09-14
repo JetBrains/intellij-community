@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.highlighter
 
@@ -17,7 +17,7 @@ import org.jetbrains.kotlin.idea.test.KotlinLightCodeInsightFixtureTestCase
 import org.jetbrains.kotlin.idea.test.extractMarkerOffset
 import java.util.concurrent.Callable
 
-abstract class AbstractHighlightExitPointsTest : KotlinLightCodeInsightFixtureTestCase() {
+abstract class AbstractCustomHighlightUsageHandlerTest : KotlinLightCodeInsightFixtureTestCase() {
 
     companion object {
         // Not standard <caret> to leave it in text after configureByFile and remove manually after collecting highlighting information
