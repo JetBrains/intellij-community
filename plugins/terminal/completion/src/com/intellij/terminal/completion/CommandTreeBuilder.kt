@@ -1,8 +1,6 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.terminal.completion
 
-import com.intellij.openapi.diagnostic.Logger
-import com.intellij.openapi.diagnostic.logger
 import org.jetbrains.terminal.completion.BaseSuggestion
 import org.jetbrains.terminal.completion.ShellCommand
 import org.jetbrains.terminal.completion.ShellOption
@@ -23,8 +21,6 @@ internal class CommandTreeBuilder private constructor(
       builder.buildSubcommandTree(root)
       return root
     }
-
-    private val LOG: Logger = logger<CommandTreeBuilder>()
   }
 
   private var curIndex = 0
@@ -135,13 +131,6 @@ internal class CommandTreeBuilder private constructor(
 
   private suspend fun getLoadedCommandSpec(spec: ShellCommand): ShellCommand {
     val specRef = spec.loadSpec ?: return spec
-    val loadedSpec = commandSpecManager.getCommandSpec(specRef)
-    return if (loadedSpec != null) {
-      loadedSpec
-    }
-    else {
-      LOG.warn("Failed to find spec: $specRef")
-      spec
-    }
+    return commandSpecManager.getCommandSpec(specRef) ?: spec
   }
 }

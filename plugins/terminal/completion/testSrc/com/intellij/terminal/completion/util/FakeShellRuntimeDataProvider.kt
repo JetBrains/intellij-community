@@ -4,12 +4,15 @@ package com.intellij.terminal.completion.util
 import com.intellij.terminal.completion.ShellEnvironment
 import com.intellij.terminal.completion.ShellRuntimeDataProvider
 
-class FakeShellRuntimeDataProvider(private val filesToReturn: List<String> = emptyList()) : ShellRuntimeDataProvider {
+class FakeShellRuntimeDataProvider(
+  private val filesToReturn: List<String> = emptyList(),
+  private val shellEnvironment: ShellEnvironment? = null,
+) : ShellRuntimeDataProvider {
   override suspend fun getFilesFromDirectory(path: String): List<String> {
     return filesToReturn
   }
 
   override suspend fun getShellEnvironment(): ShellEnvironment? {
-    return null
+    return shellEnvironment
   }
 }

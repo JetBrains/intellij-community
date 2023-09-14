@@ -3,10 +3,7 @@ package com.intellij.terminal.completion
 
 import com.intellij.terminal.completion.CommandSpecCompletionUtil.isFilePath
 import com.intellij.terminal.completion.CommandSpecCompletionUtil.isFolder
-import org.jetbrains.terminal.completion.BaseSuggestion
-import org.jetbrains.terminal.completion.ShellArgument
-import org.jetbrains.terminal.completion.ShellOption
-import org.jetbrains.terminal.completion.ShellSuggestion
+import org.jetbrains.terminal.completion.*
 
 internal class CommandTreeSuggestionsProvider(private val runtimeDataProvider: ShellRuntimeDataProvider) {
   suspend fun getSuggestionsOfNext(node: CommandPartNode<*>, nextNodeText: String): List<BaseSuggestion> {
@@ -21,6 +18,22 @@ internal class CommandTreeSuggestionsProvider(private val runtimeDataProvider: S
   suspend fun getDirectSuggestionsOfNext(option: OptionNode, nextNodeText: String): List<BaseSuggestion> {
     val availableArgs = getAvailableArguments(option)
     return availableArgs.flatMap { getArgumentSuggestions(it, nextNodeText) }
+  }
+
+  /**
+   * Returns the list of the commands available in the Shell.
+   * Returned [ShellCommand] objects contain only names, and a 'loadSpec' reference to load full command spec (if it exists).
+   */
+  suspend fun getAvailableCommands(): List<ShellCommand> {
+    val shellEnv = runtimeDataProvider.getShellEnvironment() ?: return emptyList()
+    return sequence {
+      yieldAll(shellEnv.keywords)
+      yieldAll(shellEnv.builtins)
+      yieldAll(shellEnv.functions)
+      yieldAll(shellEnv.commands)
+    }.distinct()
+      .map { ShellCommand(names = listOf(it), loadSpec = it) }
+      .toList()
   }
 
   fun getAvailableArguments(node: OptionNode): List<ShellArgument> {
@@ -81,11 +94,23 @@ internal class CommandTreeSuggestionsProvider(private val runtimeDataProvider: S
   private fun getAllOptions(node: SubcommandNode): List<ShellOption> {
     val options = mutableListOf<ShellOption>()
     options.addAll(node.spec.options)
-    var cur = node.parent
-    while (cur is SubcommandNode) {
-      // parent commands can define 'persistent' options - they can be used in all nested subcommands
-      options.addAll(cur.spec.options.filter { it.isPersistent })
-      cur = cur.parent
+
+    /**
+     * Checks that [parent] command contain the subcommand with the name of [child].
+     * If there is no such subcommand, it means that [child] is a nested command in a place of argument with [ShellArgument.isCommand] = true.
+     */
+    fun isSubcommand(parent: SubcommandNode, child: SubcommandNode): Boolean {
+      return parent.spec.subcommands.find { subCmd -> child.spec.names.any { subCmd.names.contains(it) } } != null
+    }
+
+    var child = node
+    var parent = node.parent
+    // parent commands can define 'persistent' options - they can be used in all subcommands
+    // but add persistent options from parent, only if it is a direct subcommand
+    while (parent is SubcommandNode && isSubcommand(parent, child)) {
+      options.addAll(parent.spec.options.filter { it.isPersistent })
+      child = parent
+      parent = parent.parent
     }
     return options
   }
@@ -106,8 +131,13 @@ internal class CommandTreeSuggestionsProvider(private val runtimeDataProvider: S
     return suggestions
   }
 
-  private suspend fun getArgumentSuggestions(arg: ShellArgument, nextNodeText: String): List<ShellArgumentSuggestion> {
-    val suggestions = mutableListOf<ShellArgumentSuggestion>()
+  private suspend fun getArgumentSuggestions(arg: ShellArgument, nextNodeText: String): List<BaseSuggestion> {
+    val suggestions = mutableListOf<BaseSuggestion>()
+
+    if (arg.isCommand) {
+      val commands = getAvailableCommands()
+      suggestions.addAll(commands)
+    }
 
     val suggestAllFiles = arg.isFilePath()
     val suggestFolders = arg.isFolder()

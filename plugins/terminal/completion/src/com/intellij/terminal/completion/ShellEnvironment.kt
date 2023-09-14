@@ -1,9 +1,9 @@
 package com.intellij.terminal.completion
 
 data class ShellEnvironment(
-  val envs: List<String>,
-  val keywords: List<String>,
-  val builtins: List<String>,
-  val functions: List<String>,
-  val commands: List<String>
+  val envs: List<String> = emptyList(),
+  val keywords: List<String> = emptyList(),
+  val builtins: List<String> = emptyList(),
+  val functions: List<String> = emptyList(),
+  val commands: List<String> = emptyList()
 )

@@ -2,7 +2,6 @@ package com.intellij.terminal.completion
 
 import com.intellij.util.containers.TreeTraversal
 import org.jetbrains.terminal.completion.BaseSuggestion
-import org.jetbrains.terminal.completion.ShellCommand
 
 class CommandSpecCompletion(
   private val commandSpecManager: CommandSpecManager,
@@ -23,9 +22,10 @@ class CommandSpecCompletion(
     if (commandTokens.isEmpty() || commandTokens.singleOrNull()?.isBlank() == true) {
       return null  // do not propose command suggestions if there is an empty command prefix
     }
+    val suggestionsProvider = CommandTreeSuggestionsProvider(runtimeDataProvider)
     if (commandTokens.size == 1) {
       // command name is incomplete, so provide suggestions for commands
-      return computeCommandSuggestions()
+      return suggestionsProvider.getAvailableCommands()
     }
     val command = commandTokens.first()
     val arguments = commandTokens.subList(1, commandTokens.size)
@@ -34,22 +34,9 @@ class CommandSpecCompletion(
 
     val completeArguments = arguments.subList(0, arguments.size - 1)
     val lastArgument = arguments.last()
-    val suggestionsProvider = CommandTreeSuggestionsProvider(runtimeDataProvider)
     val rootNode: SubcommandNode = CommandTreeBuilder.build(suggestionsProvider, commandSpecManager,
                                                             command, commandSpec, completeArguments)
     return computeSuggestions(suggestionsProvider, rootNode, lastArgument)
-  }
-
-  private suspend fun computeCommandSuggestions(): List<BaseSuggestion> {
-    val shellEnv = runtimeDataProvider.getShellEnvironment() ?: return emptyList()
-    return sequence {
-      yieldAll(shellEnv.keywords)
-      yieldAll(shellEnv.builtins)
-      yieldAll(shellEnv.functions)
-      yieldAll(shellEnv.commands)
-    }.distinct()
-      .map { ShellCommand(names = listOf(it)) }
-      .toList()
   }
 
   private suspend fun computeSuggestions(suggestionsProvider: CommandTreeSuggestionsProvider,
