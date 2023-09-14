@@ -147,11 +147,11 @@ public class ViewerTreeStructure extends AbstractTreeStructure {
     return new ViewerNodeDescriptor(myProject, element, parentDescriptor);
   }
 
-  void setShowWhiteSpaces(boolean showWhiteSpaces) {
+  public void setShowWhiteSpaces(boolean showWhiteSpaces) {
     myShowWhiteSpaces = showWhiteSpaces;
   }
 
-  void setShowTreeNodes(boolean showTreeNodes) {
+  public void setShowTreeNodes(boolean showTreeNodes) {
     myShowTreeNodes = showTreeNodes;
   }
 

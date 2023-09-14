@@ -1,13 +1,21 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.dev.psiViewer.debug
 
+import com.intellij.dev.psiViewer.DevPsiViewerBundle
 import com.intellij.dev.psiViewer.PsiViewerDialog
+import com.intellij.dev.psiViewer.PsiViewerSettings
 import com.intellij.dev.psiViewer.ViewerNodeDescriptor
 import com.intellij.dev.psiViewer.ViewerTreeStructure
+import com.intellij.icons.AllIcons
 import com.intellij.ide.util.treeView.IndexComparator
 import com.intellij.lang.Language
 import com.intellij.lang.injection.InjectedLanguageManager
 import com.intellij.openapi.Disposable
+import com.intellij.openapi.actionSystem.ActionManager
+import com.intellij.openapi.actionSystem.ActionUpdateThread
+import com.intellij.openapi.actionSystem.AnActionEvent
+import com.intellij.openapi.actionSystem.DefaultActionGroup
+import com.intellij.openapi.actionSystem.ToggleAction
 import com.intellij.openapi.editor.EditorFactory
 import com.intellij.openapi.editor.ScrollType
 import com.intellij.openapi.editor.event.CaretEvent
@@ -39,16 +47,65 @@ class PsiViewerDebugPanel(
   private val editor: EditorEx,
   private val language: Language
 ) : JPanel(BorderLayout()), Disposable {
-  private val treeStructure = ViewerTreeStructure(project)
+  private val treeStructure = ViewerTreeStructure(project).apply {
+    val settings = PsiViewerSettings.getSettings()
+    setShowWhiteSpaces(settings.showWhiteSpaces)
+    setShowTreeNodes(settings.showTreeNodes)
+  }
+
   private val structureTreeModel = StructureTreeModel(treeStructure, IndexComparator.INSTANCE, this)
+
   private val psiTree = Tree()
 
   init {
+    initToolbar()?.let { add(it, BorderLayout.WEST) }
     val splitter = Splitter(false, 0.3f).apply {
       firstComponent = initPsiTree()
       secondComponent = initEditor()?.component
     }
     add(splitter, BorderLayout.CENTER)
+  }
+
+  private fun initToolbar(): JComponent? {
+    val toolBarActions = DefaultActionGroup().apply {
+      add(ShowWhiteSpaceAction())
+      add(ShowTreeNodesAction())
+    }
+    val toolbar = ActionManager.getInstance().createActionToolbar("PsiDump", toolBarActions, false)
+    toolbar.targetComponent = psiTree
+    return toolbar.component
+  }
+
+  private inner class ShowWhiteSpaceAction : ToggleAction(
+    DevPsiViewerBundle.message("psi.viewer.show.whitespace.action"),
+    DevPsiViewerBundle.message("psi.viewer.show.whitespace.description"),
+    AllIcons.Actions.Stub
+  ) {
+    override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.EDT
+
+    override fun isSelected(e: AnActionEvent): Boolean = PsiViewerSettings.getSettings().showWhiteSpaces
+
+    override fun setSelected(e: AnActionEvent, state: Boolean) {
+      PsiViewerSettings.getSettings().showWhiteSpaces = state
+      treeStructure.setShowWhiteSpaces(state)
+      structureTreeModel.invalidateAsync()
+    }
+  }
+
+  private inner class ShowTreeNodesAction : ToggleAction(
+    DevPsiViewerBundle.message("psi.viewer.show.tree.nodes.action"),
+    DevPsiViewerBundle.message("psi.viewer.show.tree.nodes.description"),
+    AllIcons.Json.Object
+  ) {
+    override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.EDT
+
+    override fun isSelected(e: AnActionEvent): Boolean = PsiViewerSettings.getSettings().showTreeNodes
+
+    override fun setSelected(e: AnActionEvent, state: Boolean) {
+      PsiViewerSettings.getSettings().showTreeNodes = state
+      treeStructure.setShowTreeNodes(state)
+      structureTreeModel.invalidateAsync()
+    }
   }
 
   private fun initPsiTree(): JComponent? {
