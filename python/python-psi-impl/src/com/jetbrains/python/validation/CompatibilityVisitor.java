@@ -747,6 +747,23 @@ public abstract class CompatibilityVisitor extends PyAnnotator {
                                    matchStatement.getFirstChild());
   }
 
+  @Override
+  public void visitPyTypeAliasStatement(@NotNull PyTypeAliasStatement node) {
+    registerForAllMatchingVersions(level -> level.isOlderThan(LanguageLevel.PYTHON312),
+                                   PyPsiBundle.message("INSP.compatibility.feature.support.type.alias.statements"),
+                                   node);
+  }
+
+  @Override
+  public void visitPyTypeParameterList(@NotNull PyTypeParameterList node) {
+    // No need to report an error inside the statement which is already reported as unsupported
+    if (!(node.getParent() instanceof PyTypeAliasStatement)) {
+      registerForAllMatchingVersions(level -> level.isOlderThan(LanguageLevel.PYTHON312),
+                                     PyPsiBundle.message("INSP.compatibility.feature.support.this.syntax"),
+                                     node);
+    }
+  }
+
   private void checkBitwiseOrUnionSyntax(@NotNull PyBinaryExpression node) {
     if (node.getOperator() != PyTokenTypes.OR) return;
 
