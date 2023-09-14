@@ -1529,6 +1529,9 @@ public final class ContainerUtil {
   @SafeVarargs
   @Contract(pure = true)
   public static @Unmodifiable @NotNull <T> List<T> concat(@NotNull List<? extends T> @NotNull ... lists) {
+    if (lists.length == 1) {
+      return (List<T>)lists[0];
+    }
     int size = 0;
     for (List<? extends T> each : lists) {
       size += each.size();
