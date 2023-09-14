@@ -580,14 +580,24 @@ public class PythonHighlightingTest extends PyTestCase {
     doTest(LanguageLevel.getLatest(), false, true);
   }
 
-  // PY-60767
+  // PY-61856
   public void testTypeAliasStatement() {
     doTest(LanguageLevel.PYTHON312, false, true);
   }
 
-  // PY-60767
+  // PY-61856
   public void testTypeParameter() {
     doTest(LanguageLevel.PYTHON312, false, true);
+  }
+
+  // PY-61856
+  public void testTypeAliasStatementBefore312() {
+    doTest(LanguageLevel.PYTHON311, false, true);
+  }
+
+  // PY-61856
+  public void testTypeParameterListBefore312() {
+    doTest(LanguageLevel.PYTHON311, false, true);
   }
 
   @NotNull
