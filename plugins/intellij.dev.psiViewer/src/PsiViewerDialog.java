@@ -237,7 +237,7 @@ public class PsiViewerDialog extends DialogWrapper implements DataProvider {
         myEditor.getScrollingModel().scrollToCaret(ScrollType.MAKE_VISIBLE);
         SelectionModel selectionModel = selectedEditor.getSelectionModel();
         if (selectionModel.hasSelection()) {
-          selectionModel.setSelection(selectionModel.getSelectionStart(), selectionModel.getSelectionEnd());
+          myEditor.getSelectionModel().setSelection(selectionModel.getSelectionStart(), selectionModel.getSelectionEnd());
         }
       }, ModalityState.stateForComponent(myPanel));
     }
