@@ -221,8 +221,10 @@ class InlineCompletionHandler(private val scope: CoroutineScope) {
       withContext(Dispatchers.EDT) {
         when (result) {
           is InlineCompletionContextUpdater.Result.Updated.Changed -> {
-            context.clear()
-            result.newElements.forEach { context.renderElement(it, request.endOffset) }
+            context.editor.inlayModel.execute(true) {
+              context.clear()
+              result.newElements.forEach { context.renderElement(it, request.endOffset) }
+            }
           }
           is InlineCompletionContextUpdater.Result.Updated.Same -> Unit
           is InlineCompletionContextUpdater.Result.Invalidated -> {
