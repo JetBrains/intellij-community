@@ -39,6 +39,11 @@ public class MavenModuleBuilderTest extends MavenMultiVersionImportingTestCase {
   private AbstractMavenModuleBuilder myBuilder;
 
   @Override
+  protected boolean runInDispatchThread() {
+    return false;
+  }
+
+  @Override
   protected void tearDown() throws Exception {
     RunAll.runAll(
       () -> stopMavenImportManager(),
