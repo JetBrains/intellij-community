@@ -36,6 +36,7 @@ import com.intellij.testFramework.IdeaTestUtil
 import com.intellij.testFramework.PlatformTestUtil
 import com.intellij.testFramework.RunAll.Companion.runAll
 import com.intellij.util.ThrowableRunnable
+import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import com.intellij.util.containers.ContainerUtil
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
@@ -59,6 +60,7 @@ import java.io.File
 import java.util.*
 import java.util.concurrent.Semaphore
 import java.util.concurrent.TimeUnit
+import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.atomic.AtomicInteger
 
 abstract class MavenImportingTestCase : MavenTestCase() {
@@ -761,6 +763,23 @@ abstract class MavenImportingTestCase : MavenTestCase() {
     writeAction {
       modifiableModel.commit()
       myProject.getMessageBus().syncPublisher(ModuleListener.TOPIC).modulesRenamed(myProject, listOf(module)) { oldName }
+    }
+  }
+
+  @RequiresBackgroundThread
+  protected suspend fun waitForImportWithinTimeout(action: suspend () -> Any) {
+    val isImportCompleted = AtomicBoolean(false)
+    myProject.messageBus.connect(testRootDisposable)
+      .subscribe(MavenImportListener.TOPIC, object : MavenImportListener {
+        override fun importFinished(importedProjects: MutableCollection<MavenProject>, newModules: MutableList<Module>) {
+          isImportCompleted.set(true)
+        }
+      })
+
+    action()
+
+    assertWithinTimeout {
+      assertTrue(isImportCompleted.get())
     }
   }
 

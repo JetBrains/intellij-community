@@ -67,7 +67,8 @@ class MavenProjectsManagerSettingsXmlTest : MavenMultiVersionImportingTestCase()
     val childNode = projectsTree.getModules(roots[0])[0]
     assertUnorderedPathsAreEqual(parentNode.sources, listOf(FileUtil.toSystemDependentName("$projectPath/value1")))
     assertUnorderedPathsAreEqual(childNode.sources, listOf(FileUtil.toSystemDependentName("$projectPath/m/value1")))
-    updateSettingsXml("""
+    //waitForImportWithinTimeout {
+      updateSettingsXml("""
                         <profiles>
                           <profile>
                             <id>one</id>
@@ -80,14 +81,16 @@ class MavenProjectsManagerSettingsXmlTest : MavenMultiVersionImportingTestCase()
                           </profile>
                         </profiles>
                         """.trimIndent())
-    waitForReadingCompletion()
+    //}
     assertUnorderedPathsAreEqual(parentNode.sources, listOf(FileUtil.toSystemDependentName("$projectPath/value2")))
     assertUnorderedPathsAreEqual(childNode.sources, listOf(FileUtil.toSystemDependentName("$projectPath/m/value2")))
-    deleteSettingsXml()
-    waitForReadingCompletion()
+    //waitForImportWithinTimeout {
+      deleteSettingsXml()
+    //}
     assertUnorderedPathsAreEqual(parentNode.sources, listOf(FileUtil.toSystemDependentName("$projectPath/\${prop}")))
     assertUnorderedPathsAreEqual(childNode.sources, listOf(FileUtil.toSystemDependentName("$projectPath/m/\${prop}")))
-    updateSettingsXml("""
+    //waitForImportWithinTimeout {
+      updateSettingsXml("""
                         <profiles>
                           <profile>
                             <id>one</id>
@@ -100,7 +103,7 @@ class MavenProjectsManagerSettingsXmlTest : MavenMultiVersionImportingTestCase()
                           </profile>
                         </profiles>
                         """.trimIndent())
-    waitForReadingCompletion()
+    //}
     assertUnorderedPathsAreEqual(parentNode.sources, listOf(FileUtil.toSystemDependentName("$projectPath/value2")))
     assertUnorderedPathsAreEqual(childNode.sources, listOf(FileUtil.toSystemDependentName("$projectPath/m/value2")))
   }
@@ -115,17 +118,20 @@ class MavenProjectsManagerSettingsXmlTest : MavenMultiVersionImportingTestCase()
                        """.trimIndent())
     importProject()
     assertUnorderedElementsAreEqual(projectsTree.getAvailableProfiles())
-    updateSettingsXml("""
+    //waitForImportWithinTimeout {
+      updateSettingsXml("""
                         <profiles>
                           <profile>
                             <id>one</id>
                           </profile>
                         </profiles>
                         """.trimIndent())
-    waitForReadingCompletion()
+    //}
+
     assertUnorderedElementsAreEqual(projectsTree.getAvailableProfiles(), "one")
-    deleteSettingsXml()
-    waitForReadingCompletion()
+    //waitForImportWithinTimeout {
+      deleteSettingsXml()
+    //}
     assertUnorderedElementsAreEqual(projectsTree.getAvailableProfiles())
   }
 
