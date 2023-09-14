@@ -128,27 +128,23 @@ object UpdateChecker {
   }
 
   @JvmStatic
-  fun getNotificationGroup(): NotificationGroup {
-    return NotificationGroupManager.getInstance().getNotificationGroup("IDE and Plugin Updates")
-  }
+  fun getNotificationGroup(): NotificationGroup =
+    NotificationGroupManager.getInstance().getNotificationGroup("IDE and Plugin Updates")
 
   @JvmStatic
-  fun getNotificationGroupForPluginUpdateResults(): NotificationGroup {
-    return NotificationGroupManager.getInstance().getNotificationGroup("Plugin Update Results")
-  }
+  fun getNotificationGroupForPluginUpdateResults(): NotificationGroup =
+    NotificationGroupManager.getInstance().getNotificationGroup("Plugin Update Results")
 
   @JvmStatic
-  fun getNotificationGroupForIdeUpdateResults(): NotificationGroup {
-    return NotificationGroupManager.getInstance().getNotificationGroup("IDE Update Results")
-  }
+  fun getNotificationGroupForIdeUpdateResults(): NotificationGroup =
+    NotificationGroupManager.getInstance().getNotificationGroup("IDE Update Results")
 
   /**
    * For scheduled update checks.
    */
   @JvmStatic
-  fun updateAndShowResult(): ActionCallback {
-    return service<UpdateCheckerHelper>().updateAndShowResult()
-  }
+  fun updateAndShowResult(): ActionCallback =
+    service<UpdateCheckerHelper>().updateAndShowResult()
 
   /**
    * For manual update checks (Help | Check for Updates, Settings | Updates | Check Now)
