@@ -15,8 +15,8 @@ import org.jetbrains.org.objectweb.asm.tree.analysis.AnalyzerException;
 import org.jetbrains.org.objectweb.asm.tree.analysis.Interpreter;
 
 import java.util.*;
+import java.util.function.Consumer;
 import java.util.function.Predicate;
-import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 /**
@@ -92,6 +92,10 @@ abstract class DataValue implements org.jetbrains.org.objectweb.asm.tree.analysi
 
   Stream<EKey> dependencies() {
     return Stream.empty();
+  }
+
+  void processDependencies(Consumer<EKey> consumer) {
+    
   }
 
   public ContractReturnValue asContractReturnValue() {
@@ -203,6 +207,11 @@ abstract class DataValue implements org.jetbrains.org.objectweb.asm.tree.analysi
     }
 
     @Override
+    void processDependencies(Consumer<EKey> consumer) {
+      consumer.accept(key);
+    }
+
+    @Override
     public String toString() {
       return "Return of: " + key;
     }
@@ -254,6 +263,10 @@ abstract class EffectQuantum {
     return Stream.empty();
   }
 
+  void processDependencies(Consumer<EKey> consumer) {
+    
+  }
+
   @Override
   public final int hashCode() {
     return myHash;
@@ -285,6 +298,11 @@ abstract class EffectQuantum {
     }
 
     @Override
+    void processDependencies(Consumer<EKey> consumer) {
+      consumer.accept(key);
+    }
+
+    @Override
     public boolean equals(Object o) {
       if (this == o) return true;
       return o != null && getClass() == o.getClass() && key == ((FieldReadQuantum)o).key;
@@ -306,6 +324,11 @@ abstract class EffectQuantum {
     @Override
     Stream<EKey> dependencies() {
       return Stream.of(key);
+    }
+
+    @Override
+    void processDependencies(Consumer<EKey> consumer) {
+      consumer.accept(key);
     }
 
     @Override
@@ -368,6 +391,14 @@ abstract class EffectQuantum {
     @Override
     Stream<EKey> dependencies() {
       return StreamEx.of(data).flatMap(DataValue::dependencies).prepend(key);
+    }
+
+    @Override
+    void processDependencies(Consumer<EKey> consumer) {
+      consumer.accept(key);
+      for (DataValue datum : data) {
+        datum.processDependencies(consumer);
+      }
     }
 
     @Override
@@ -610,16 +641,16 @@ final class PuritySolver {
   final HashMap<EKey, Effects> pending = new HashMap<>();
 
   void addEquation(EKey key, Effects effects) {
-    Set<EKey> depKeys = effects.dependencies().collect(Collectors.toSet());
-    if (depKeys.isEmpty()) {
+    boolean[] hasDeps = {false};
+    effects.processDependencies(depKey -> {
+      hasDeps[0] = true;
+      dependencies.computeIfAbsent(depKey, k -> new HashSet<>()).add(key);
+    });
+    if (hasDeps[0]) {
+      pending.put(key, effects);
+    } else {
       solved.put(key, effects);
       moving.add(key);
-    }
-    else {
-      pending.put(key, effects);
-      for (EKey depKey : depKeys) {
-        dependencies.computeIfAbsent(depKey, k -> new HashSet<>()).add(key);
-      }
     }
   }
 

@@ -160,7 +160,12 @@ public class ClassDataIndexer implements VirtualFileGist.GistCalculator<Map<HMem
   }
 
   private static Component hash(Component component) {
-    return new Component(component.value, StreamEx.of(component.ids).map(EKey::hashed).toArray(EKey[]::new));
+    EKey[] ids = component.ids;
+    EKey[] hashedKeys = new EKey[ids.length];
+    for (int i = 0; i < ids.length; i++) {
+      hashedKeys[i] = ids[i].hashed();
+    }
+    return new Component(component.value, hashedKeys);
   }
 
   private static EffectQuantum hash(EffectQuantum effect) {

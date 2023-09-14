@@ -411,7 +411,11 @@ public class ProjectBytecodeAnalysis {
           trivialSolver.addEquation(key, new Effects(returnValue, Effects.TOP_EFFECTS));
           return trivialSolver;
         }
-        combined.dependencies().filter(queued::add).forEach(queue::push);
+        combined.processDependencies(dep -> {
+          if (queued.add(dep)) {
+            queue.push(dep);
+          }
+        });
         puritySolver.addEquation(withStability(curKey, stable), combined);
       }
     }
@@ -438,7 +442,11 @@ public class ProjectBytecodeAnalysis {
       for (Equations equations : myEquationProvider.getEquations(curKey.member)) {
         Result result = equations.find(curKey.getDirection()).orElseGet(solver::getUnknownResult);
         solver.addEquation(new Equation(withStability(curKey, equations.stable), result));
-        result.dependencies().filter(queued::add).forEach(queue::push);
+        result.processDependencies(dep -> {
+          if (queued.add(dep)) {
+            queue.push(dep);
+          }
+        });
       }
     }
   }

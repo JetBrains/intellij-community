@@ -4,6 +4,7 @@ package com.intellij.codeInspection.bytecodeAnalysis;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
+import java.util.function.Consumer;
 import java.util.stream.Stream;
 
 /**
@@ -187,6 +188,9 @@ interface Result {
   default Stream<EKey> dependencies() {
     return Stream.empty();
   }
+  
+  default void processDependencies(Consumer<EKey> processor) {
+  }
 }
 
 final class Pending implements Result {
@@ -224,6 +228,15 @@ final class Pending implements Result {
   @Override
   public Stream<EKey> dependencies() {
     return Arrays.stream(delta).flatMap(component -> Stream.of(component.ids));
+  }
+
+  @Override
+  public void processDependencies(Consumer<EKey> processor) {
+    for (Component component : delta) {
+      for (EKey id : component.ids) {
+        processor.accept(id);
+      }
+    }
   }
 
   @Override
@@ -268,6 +281,14 @@ final class Effects implements Result {
   @Override
   public Stream<EKey> dependencies() {
     return Stream.concat(returnValue.dependencies(), effects.stream().flatMap(EffectQuantum::dependencies));
+  }
+
+  @Override
+  public void processDependencies(Consumer<EKey> processor) {
+    returnValue.processDependencies(processor);
+    for (EffectQuantum effect : effects) {
+      effect.processDependencies(processor);
+    }
   }
 
   public boolean isTop() {
