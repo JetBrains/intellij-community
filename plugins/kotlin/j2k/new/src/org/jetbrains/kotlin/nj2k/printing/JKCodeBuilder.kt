@@ -335,7 +335,7 @@ internal class JKCodeBuilder(context: NewJ2kConverterContext) {
                 method.typeParameterList.accept(this)
             }
 
-            printElementInfoLabel(method)
+            printInferenceLabel(method)
             method.name.accept(this)
             renderParameterList(method)
 
@@ -413,7 +413,7 @@ internal class JKCodeBuilder(context: NewJ2kConverterContext) {
 
         override fun visitThisExpressionRaw(thisExpression: JKThisExpression) {
             if (thisExpression.shouldBePreserved) {
-                printElementInfoLabel(thisExpression)
+                printExplicitLabel(thisExpression)
             }
             printer.print("this")
             thisExpression.qualifierLabel.accept(this)
@@ -519,6 +519,9 @@ internal class JKCodeBuilder(context: NewJ2kConverterContext) {
         }
 
         override fun visitParenthesizedExpressionRaw(parenthesizedExpression: JKParenthesizedExpression) {
+            if (parenthesizedExpression.shouldBePreserved) {
+                printExplicitLabel(parenthesizedExpression)
+            }
             printer.par {
                 parenthesizedExpression.expression.accept(this)
             }
@@ -952,12 +955,13 @@ internal class JKCodeBuilder(context: NewJ2kConverterContext) {
             }
         }
 
-        private fun printElementInfoLabel(element: JKElement) {
-            val label = if (element is JKThisExpression) {
-                elementInfoStorage.getOrCreateExplicitLabelForElement(element)
-            } else {
-                elementInfoStorage.getOrCreateInferenceLabelForElement(element)
-            }
+        private fun printExplicitLabel(element: JKElement) {
+            val label = elementInfoStorage.getOrCreateExplicitLabelForElement(element)
+            printer.print(label.render())
+        }
+
+        private fun printInferenceLabel(element: JKElement) {
+            val label = elementInfoStorage.getOrCreateInferenceLabelForElement(element)
             printer.print(label.render())
         }
     }

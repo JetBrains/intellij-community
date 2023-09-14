@@ -26,10 +26,15 @@ class JavaStatementConversion(context: NewJ2kConverterContext) : RecursiveApplic
     }
 
     private fun convertAssert(element: JKJavaAssertStatement): JKExpressionStatement {
+        var assertion = element::condition.detached()
+        if (assertion is JKParenthesizedExpression) {
+            // drop awkward parentheses around the first argument
+            assertion = assertion::expression.detached()
+        }
         val messageExpression =
             if (element.description is JKStubExpression) null
             else JKLambdaExpression(JKExpressionStatement(element::description.detached()))
-        return JKExpressionStatement(kotlinAssert(element::condition.detached(), messageExpression, typeFactory))
+        return JKExpressionStatement(kotlinAssert(assertion, messageExpression, typeFactory))
     }
 
     private fun convertSynchronized(element: JKJavaSynchronizedStatement): JKExpressionStatement {

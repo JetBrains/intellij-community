@@ -564,7 +564,7 @@ class JavaToJKTreeBuilder(
         }
 
         private fun PsiParenthesizedExpression.toJK(): JKExpression =
-            JKParenthesizedExpression(expression.toJK())
+            JKParenthesizedExpression(expression.toJK(), shouldBePreserved = true)
 
         fun PsiExpressionList.toJK(): JKArgumentList {
             val jkExpressions = expressions.mapIndexed { i, argument ->

@@ -72,9 +72,14 @@ class JKQualifiedExpression(
     override fun accept(visitor: JKVisitor) = visitor.visitQualifiedExpression(this)
 }
 
+/**
+ * @param shouldBePreserved - parentheses came from original Java code and should be preserved
+ * (don't run "Remove unnecessary parentheses" inspection on them)
+ */
 class JKParenthesizedExpression(
     expression: JKExpression,
-    override val expressionType: JKType? = null
+    override val expressionType: JKType? = null,
+    val shouldBePreserved: Boolean = false
 ) : JKExpression() {
     var expression: JKExpression by child(expression)
     override fun calculateType(typeFactory: JKTypeFactory) = expressionType ?: expression.calculateType(typeFactory)

@@ -114,7 +114,10 @@ private val inspectionLikePostProcessingGroup = InspectionLikeProcessingGroup(
     },
     inspectionBasedProcessing(ReplaceGetOrSetInspection()),
     intentionBasedProcessing(ObjectLiteralToLambdaIntention(), writeActionNeeded = true),
-    intentionBasedProcessing(RemoveUnnecessaryParenthesesIntention()),
+    intentionBasedProcessing(RemoveUnnecessaryParenthesesIntention()) {
+        // skip parentheses that were originally present in Java code
+        it.getExplicitLabelComment() == null
+    },
     DestructureForLoopParameterProcessing(),
     inspectionBasedProcessing(SimplifyAssertNotNullInspection()),
     LiftReturnInspectionBasedProcessing(),

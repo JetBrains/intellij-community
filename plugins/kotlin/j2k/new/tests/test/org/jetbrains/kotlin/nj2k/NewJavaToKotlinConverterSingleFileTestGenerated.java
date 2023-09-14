@@ -5039,6 +5039,11 @@ public abstract class NewJavaToKotlinConverterSingleFileTestGenerated extends Ab
             runTest("testData/newJ2k/postProcessing/ConvertConcatenationToRawString.java");
         }
 
+        @TestMetadata("ExplicitParentheses.java")
+        public void testExplicitParentheses() throws Exception {
+            runTest("testData/newJ2k/postProcessing/ExplicitParentheses.java");
+        }
+
         @TestMetadata("ExplicitThis.java")
         public void testExplicitThis() throws Exception {
             runTest("testData/newJ2k/postProcessing/ExplicitThis.java");

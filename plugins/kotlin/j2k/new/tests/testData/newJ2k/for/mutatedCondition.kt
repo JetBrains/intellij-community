@@ -12,7 +12,7 @@ class J {
     fun test2() {
         var lastIndex = 5
         var i = 0
-        while (i < 1 + 2 + lastIndex) {
+        while (i < (1 + 2 + lastIndex)) {
             lastIndex--
             println(lastIndex)
             i++
