@@ -44,9 +44,9 @@ public class FileEqualsUsageInspection extends DevKitUastInspectionBase {
 
   private static void inspectCallExpression(@NotNull UCallExpression node, @NotNull ProblemsHolder holder) {
     if (!node.isMethodNameOneOf(List.of(METHOD_NAMES))) return;
-    final PsiMethod psiMethod = node.resolve();
+    PsiMethod psiMethod = node.resolve();
     if (psiMethod == null) return;
-    final PsiClass containingClass = psiMethod.getContainingClass();
+    PsiClass containingClass = psiMethod.getContainingClass();
     if (containingClass == null) return;
     if (!CommonClassNames.JAVA_IO_FILE.equals(containingClass.getQualifiedName())) return;
 
