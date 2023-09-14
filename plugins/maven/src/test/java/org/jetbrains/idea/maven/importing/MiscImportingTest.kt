@@ -1,107 +1,89 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package org.jetbrains.idea.maven.importing;
+package org.jetbrains.idea.maven.importing
 
-import com.intellij.maven.testFramework.MavenMultiVersionImportingTestCase;
-import com.intellij.openapi.application.WriteAction;
-import com.intellij.openapi.module.Module;
-import com.intellij.openapi.roots.libraries.Library;
-import com.intellij.openapi.roots.libraries.LibraryTable;
-import com.intellij.openapi.roots.libraries.LibraryTablesRegistrar;
-import com.intellij.platform.backend.workspace.WorkspaceModelChangeListener;
-import com.intellij.platform.backend.workspace.WorkspaceModelTopics;
-import com.intellij.platform.workspace.storage.EntityChange;
-import com.intellij.platform.workspace.storage.VersionedStorageChange;
-import com.intellij.platform.workspace.storage.WorkspaceEntity;
-import com.intellij.platform.workspace.storage.WorkspaceEntityWithSymbolicId;
-import com.intellij.testFramework.PlatformTestUtil;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.idea.maven.MavenCustomRepositoryHelper;
-import org.jetbrains.idea.maven.importing.workspaceModel.WorkspaceProjectImporterKt;
-import org.jetbrains.idea.maven.project.MavenProject;
-import org.jetbrains.idea.maven.project.MavenProjectsManager;
-import org.jetbrains.idea.maven.server.MavenServerManager;
-import org.junit.Assume;
-import org.junit.Test;
+import com.intellij.maven.testFramework.MavenMultiVersionImportingTestCase
+import com.intellij.openapi.application.WriteAction
+import com.intellij.openapi.roots.libraries.LibraryTablesRegistrar
+import com.intellij.platform.backend.workspace.WorkspaceModelChangeListener
+import com.intellij.platform.backend.workspace.WorkspaceModelTopics
+import com.intellij.platform.workspace.storage.VersionedStorageChange
+import com.intellij.platform.workspace.storage.WorkspaceEntity
+import com.intellij.platform.workspace.storage.WorkspaceEntityWithSymbolicId
+import com.intellij.testFramework.PlatformTestUtil
+import org.jetbrains.idea.maven.MavenCustomRepositoryHelper
+import org.jetbrains.idea.maven.importing.workspaceModel.WORKSPACE_IMPORTER_SKIP_FAST_APPLY_ATTEMPTS_ONCE
+import org.jetbrains.idea.maven.project.MavenProjectsManager
+import org.jetbrains.idea.maven.server.MavenServerManager
+import org.junit.Assume
+import org.junit.Test
+import java.io.File
+import java.util.function.Function
 
-import java.io.File;
-import java.util.HashSet;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Set;
-import java.util.function.Function;
+class MiscImportingTest : MavenMultiVersionImportingTestCase() {
+  private val myEventsTestHelper = MavenEventsTestHelper()
 
-public class MiscImportingTest extends MavenMultiVersionImportingTestCase {
-  private MavenEventsTestHelper myEventsTestHelper = new MavenEventsTestHelper();
-
-  @Override
-  protected void setUp() throws Exception {
-    super.setUp();
-    myEventsTestHelper.setUp(myProject);
+  override fun setUp() {
+    super.setUp()
+    myEventsTestHelper.setUp(myProject)
   }
 
-  @Override
-  protected void tearDown() throws Exception {
+  override fun tearDown() {
     try {
-      myEventsTestHelper.tearDown();
+      myEventsTestHelper.tearDown()
     }
-    catch (Throwable e) {
-      addSuppressedException(e);
+    catch (e: Throwable) {
+      addSuppressedException(e)
     }
     finally {
-      super.tearDown();
+      super.tearDown()
     }
   }
 
   @Test
-  public void testRestarting() {
+  fun testRestarting() {
     importProject("""
                     <groupId>test</groupId>
                     <artifactId>project</artifactId>
                     <version>1</version>
                     <name>1</name>
-                    """);
-
-    assertModules("project");
-    assertEquals("1", getProjectsTree().getRootProjects().get(0).getName());
-
-    MavenServerManager.getInstance().shutdown(true);
-
+                    """.trimIndent())
+    assertModules("project")
+    assertEquals("1", projectsTree.rootProjects[0].name)
+    MavenServerManager.getInstance().shutdown(true)
     importProject("""
                     <groupId>test</groupId>
                     <artifactId>project</artifactId>
                     <version>1</version>
                     <name>2</name>
-                    """);
-
-    assertModules("project");
-    assertEquals("2", getProjectsTree().getRootProjects().get(0).getName());
+                    """.trimIndent())
+    assertModules("project")
+    assertEquals("2", projectsTree.rootProjects[0].name)
   }
 
   @Test
-  public void testFallbackToSlowWorkspaceCommit() {
-    Assume.assumeTrue(isWorkspaceImport());
-
+  fun testFallbackToSlowWorkspaceCommit() {
+    Assume.assumeTrue(isWorkspaceImport)
     try {
-      WorkspaceProjectImporterKt.setWORKSPACE_IMPORTER_SKIP_FAST_APPLY_ATTEMPTS_ONCE(true);
+      WORKSPACE_IMPORTER_SKIP_FAST_APPLY_ATTEMPTS_ONCE = true
       importProject("""
                       <groupId>test</groupId>
                       <artifactId>project</artifactId>
                       <version>1</version>
                       <name>1</name>
-                      """);
-
-      assertModules("project");
+                      """.trimIndent())
+      assertModules("project")
 
       // make sure the logic in WorkspaceProjectImporter worked as expected
-      assertFalse(WorkspaceProjectImporterKt.getWORKSPACE_IMPORTER_SKIP_FAST_APPLY_ATTEMPTS_ONCE());
+      assertFalse(WORKSPACE_IMPORTER_SKIP_FAST_APPLY_ATTEMPTS_ONCE)
     }
     finally {
-      WorkspaceProjectImporterKt.setWORKSPACE_IMPORTER_SKIP_FAST_APPLY_ATTEMPTS_ONCE(false);
+      WORKSPACE_IMPORTER_SKIP_FAST_APPLY_ATTEMPTS_ONCE = false
     }
   }
 
   @Test
-  public void testDoNotFailOnInvalidMirrors() throws Exception {
+
+  fun testDoNotFailOnInvalidMirrors() {
     updateSettingsXmlFully("""
                              <settings>
                              <mirrors>
@@ -124,80 +106,56 @@ public class MiscImportingTest extends MavenMultiVersionImportingTestCase {
                                </mirror>
                              </mirrors>
                              </settings>
-                             """);
-
+                             """.trimIndent())
     importProject("""
                     <groupId>test</groupId>
                     <artifactId>project</artifactId>
                     <version>1</version>
-                    """);
-
-    assertModules("project");
+                    """.trimIndent())
+    assertModules("project")
   }
 
   @Test
-  public void testImportingAllAvailableFilesIfNotInitialized() {
-    createModule("m1");
-    createModule("m2");
+  fun testImportingAllAvailableFilesIfNotInitialized() {
+    createModule("m1")
+    createModule("m2")
     createProjectSubDirs("m1/src/main/java",
-                         "m2/src/main/java");
-
+                         "m2/src/main/java")
     createModulePom("m1",
                     """
                       <groupId>test</groupId>
                       <artifactId>m1</artifactId>
                       <version>1</version>
-                      """);
-
+                      """.trimIndent())
     createModulePom("m2",
                     """
                       <groupId>test</groupId>
                       <artifactId>m2</artifactId>
                       <version>1</version>
-                      """);
-
-    assertSources("m1");
-    assertSources("m2");
-
-    assertFalse(getProjectsManager().isMavenizedProject());
-    getProjectsManager().forceUpdateAllProjectsOrFindAllAvailablePomFiles();
-    waitForReadingCompletion();
-    resolveDependenciesAndImport();
-
-    assertSources("m1", "src/main/java");
-    assertSources("m2", "src/main/java");
+                      """.trimIndent())
+    assertSources("m1")
+    assertSources("m2")
+    assertFalse(projectsManager.isMavenizedProject)
+    projectsManager.forceUpdateAllProjectsOrFindAllAvailablePomFiles()
+    waitForReadingCompletion()
+    resolveDependenciesAndImport()
+    assertSources("m1", "src/main/java")
+    assertSources("m2", "src/main/java")
   }
 
   @Test
-  public void testImportingFiresRootChangesOnlyOnce() {
+  fun testImportingFiresRootChangesOnlyOnce() {
     importProject("""
                     <groupId>test</groupId>
                     <artifactId>project</artifactId>
                     <version>1</version>
-                    """);
-
-    myEventsTestHelper.assertRootsChanged(1);
-    myEventsTestHelper.assertWorkspaceModelChanges(isWorkspaceImport() ? 1 : 2);
+                    """.trimIndent())
+    myEventsTestHelper.assertRootsChanged(1)
+    myEventsTestHelper.assertWorkspaceModelChanges(if (isWorkspaceImport) 1 else 2)
   }
 
   @Test
-  public void testDoRootChangesOnProjectReimportWhenNothingChanges() {
-    importProject("""
-                    <groupId>test</groupId>
-                    <artifactId>project</artifactId>
-                    <version>1</version>
-                    <dependencies>
-                      <dependency>
-                        <groupId>junit</groupId>
-                        <artifactId>junit</artifactId>
-                        <version>4.0</version>
-                      </dependency>
-                    </dependencies>
-                    """);
-
-    myEventsTestHelper.assertRootsChanged(1);
-    myEventsTestHelper.assertWorkspaceModelChanges(isWorkspaceImport() ? 1 : 2);
-
+  fun testDoRootChangesOnProjectReimportWhenNothingChanges() {
     importProject("""
                     <groupId>test</groupId>
                     <artifactId>project</artifactId>
@@ -209,26 +167,37 @@ public class MiscImportingTest extends MavenMultiVersionImportingTestCase {
                         <version>4.0</version>
                       </dependency>
                     </dependencies>
-                    """);
-
-    myEventsTestHelper.assertRootsChanged(isWorkspaceImport() ? 0 : 1);
-    myEventsTestHelper.assertWorkspaceModelChanges(isWorkspaceImport() ? 0 : 1);
+                    """.trimIndent())
+    myEventsTestHelper.assertRootsChanged(1)
+    myEventsTestHelper.assertWorkspaceModelChanges(if (isWorkspaceImport) 1 else 2)
+    importProject("""
+                    <groupId>test</groupId>
+                    <artifactId>project</artifactId>
+                    <version>1</version>
+                    <dependencies>
+                      <dependency>
+                        <groupId>junit</groupId>
+                        <artifactId>junit</artifactId>
+                        <version>4.0</version>
+                      </dependency>
+                    </dependencies>
+                    """.trimIndent())
+    myEventsTestHelper.assertRootsChanged(if (isWorkspaceImport) 0 else 1)
+    myEventsTestHelper.assertWorkspaceModelChanges(if (isWorkspaceImport) 0 else 1)
   }
 
   @Test
-  public void testSetExternalSourceForExistingLibrary() {
+  fun testSetExternalSourceForExistingLibrary() {
     /* this test checks that the external source will be restored if it wasn't saved due to the bug (IDEA-264750);
        the bug isn't relevant for Workspace Import because it is actual only if "Store generated files under project root" is switched on */
-    MavenProjectsManager.getInstance(myProject).getImportingSettings().setWorkspaceImportEnabled(false);
-
-    String libraryName = "Maven: junit:junit:4.0";
-    LibraryTable libraryTable = LibraryTablesRegistrar.getInstance().getLibraryTable(myProject);
-    WriteAction.runAndWait(() -> {
-      LibraryTable.ModifiableModel model = libraryTable.getModifiableModel();
-      model.createLibrary(libraryName);
-      model.commit();
-    });
-
+    MavenProjectsManager.getInstance(myProject).importingSettings.setWorkspaceImportEnabled(false)
+    val libraryName = "Maven: junit:junit:4.0"
+    val libraryTable = LibraryTablesRegistrar.getInstance().getLibraryTable(myProject)
+    WriteAction.runAndWait<RuntimeException> {
+      val model = libraryTable.getModifiableModel()
+      model.createLibrary(libraryName)
+      model.commit()
+    }
     importProject("""
                     <groupId>test</groupId>
                     <artifactId>project</artifactId>
@@ -239,19 +208,18 @@ public class MiscImportingTest extends MavenMultiVersionImportingTestCase {
                         <artifactId>junit</artifactId>
                         <version>4.0</version>
                       </dependency>
-                    </dependencies>""");
-    importProject();
-
-    assertModules("project");
-    Library library = getModuleLibDep("project", libraryName).getLibrary();
-    assertNotNull(library);
-    assertNotNull(library.getExternalSource());
+                    </dependencies>
+                    """.trimIndent())
+    importProject()
+    assertModules("project")
+    val library = getModuleLibDep("project", libraryName).getLibrary()
+    assertNotNull(library)
+    assertNotNull(library!!.getExternalSource())
   }
 
   @Test
-  public void testSendWorkspaceEventsOnlyForChangedEntities() {
-    Assume.assumeTrue(isWorkspaceImport());
-
+  fun testSendWorkspaceEventsOnlyForChangedEntities() {
+    Assume.assumeTrue(isWorkspaceImport)
     importProject("""
                     <groupId>test</groupId>
                     <artifactId>project</artifactId>
@@ -261,24 +229,20 @@ public class MiscImportingTest extends MavenMultiVersionImportingTestCase {
                       <module>m1</module>
                       <module>m2</module>
                     </modules>
-                    """);
-
+                    """.trimIndent())
     createModulePom("m1",
                     """
                       <groupId>test</groupId>
                       <artifactId>m1</artifactId>
                       <version>1</version>
-                      """);
-
+                      """.trimIndent())
     createModulePom("m2",
                     """
                       <groupId>test</groupId>
                       <artifactId>m2</artifactId>
                       <version>1</version>
-                      """);
-
-    importProject();
-
+                      """.trimIndent())
+    importProject()
     createModulePom("m1",
                     """
                       <groupId>test</groupId>
@@ -291,75 +255,69 @@ public class MiscImportingTest extends MavenMultiVersionImportingTestCase {
                           <version>4.0</version>
                         </dependency>
                       </dependencies>
-                      """);
-
-    var changeLog = new HashSet<String>();
-    myProject.getMessageBus().connect().subscribe(WorkspaceModelTopics.CHANGED, new WorkspaceModelChangeListener() {
-      @Override
-      public void changed(@NotNull VersionedStorageChange event) {
-        Iterator<EntityChange<?>> iterator = event.getAllChanges().iterator();
-
-        var getName = new Function<WorkspaceEntity, String>() {
-          @Override
-          public String apply(WorkspaceEntity entity) {
-            if (entity instanceof WorkspaceEntityWithSymbolicId) {
-              return ((WorkspaceEntityWithSymbolicId)entity).getSymbolicId().getPresentableName();
+                      """.trimIndent())
+    val changeLog = HashSet<String>()
+    myProject.getMessageBus().connect().subscribe(
+      WorkspaceModelTopics.CHANGED,
+      object : WorkspaceModelChangeListener {
+        override fun changed(event: VersionedStorageChange) {
+          val iterator = event.getAllChanges().iterator()
+          val getName: Function<WorkspaceEntity?, String> = Function { entity ->
+            if (entity is WorkspaceEntityWithSymbolicId) {
+              entity.symbolicId.presentableName
             }
             else {
-              return entity.getClass().getSimpleName();
+              entity!!.javaClass.getSimpleName()
             }
           }
-        };
-        while (iterator.hasNext()) {
-          var change = iterator.next();
-          if (change.getNewEntity() == null) {
-            changeLog.add("deleted " + getName.apply(change.getOldEntity()));
-          }
-          else if (change.getOldEntity() == null) {
-            changeLog.add("created " + getName.apply(change.getNewEntity()));
-          }
-          else {
-            changeLog.add("modified " + getName.apply(change.getNewEntity()));
+          while (iterator.hasNext()) {
+            val change = iterator.next()
+            if (change.newEntity == null) {
+              changeLog.add(
+                "deleted " + getName.apply(change.oldEntity))
+            }
+            else if (change.oldEntity == null) {
+              changeLog.add(
+                "created " + getName.apply(change.newEntity))
+            }
+            else {
+              changeLog.add(
+                "modified " + getName.apply(change.newEntity))
+            }
           }
         }
-      }
-    });
-
-    importProject();
-    assertEquals(Set.of("modified m1", "created Maven: junit:junit:4.0", "created LibraryPropertiesEntityImpl"), changeLog);
+      })
+    importProject()
+    assertEquals(setOf("modified m1", "created Maven: junit:junit:4.0", "created LibraryPropertiesEntityImpl"), changeLog)
   }
 
   @Test
-  public void testResolvingFiresRootChangesOnlyOnce() {
+  fun testResolvingFiresRootChangesOnlyOnce() {
     importProject("""
                     <groupId>test</groupId>
                     <artifactId>project</artifactId>
                     <version>1</version>
-                    """);
-
-    myEventsTestHelper.assertRootsChanged(1);
-    myEventsTestHelper.assertWorkspaceModelChanges(isWorkspaceImport() ? 1 : 2);
+                    """.trimIndent())
+    myEventsTestHelper.assertRootsChanged(1)
+    myEventsTestHelper.assertWorkspaceModelChanges(if (isWorkspaceImport) 1 else 2)
   }
 
   @Test
-  public void testDoNotRecreateModulesBeforeResolution() {
+  fun testDoNotRecreateModulesBeforeResolution() {
     importProject("""
                     <groupId>test</groupId>
                     <artifactId>project</artifactId>
                     <version>1</version>
-                    """);
-
-    Module m = getModule("project");
-    resolveDependenciesAndImport();
-
-    assertSame(m, getModule("project"));
+                    """.trimIndent())
+    val m = getModule("project")
+    resolveDependenciesAndImport()
+    assertSame(m, getModule("project"))
   }
 
   @Test
-  public void testTakingProxySettingsIntoAccount() throws Exception {
-    MavenCustomRepositoryHelper helper = new MavenCustomRepositoryHelper(myDir, "local1");
-    setRepositoryPath(helper.getTestDataPath("local1"));
-
+  fun testTakingProxySettingsIntoAccount() {
+    val helper = MavenCustomRepositoryHelper(myDir, "local1")
+    repositoryPath = helper.getTestDataPath("local1")
     importProject("""
                     <groupId>test</groupId>
                     <artifactId>project</artifactId>
@@ -371,17 +329,12 @@ public class MiscImportingTest extends MavenMultiVersionImportingTestCase {
                         <version>4.0</version>
                       </dependency>
                     </dependencies>
-                    """);
-
-    removeFromLocalRepository("junit");
-
-    updateAllProjects();
-
-    File jarFile = new File(getRepositoryFile(), "junit/junit/4.0/junit-4.0.jar");
-    assertTrue(jarFile.exists());
-
-    getProjectsManager().listenForExternalChanges();
-
+                    """.trimIndent())
+    removeFromLocalRepository("junit")
+    updateAllProjects()
+    val jarFile = File(repositoryFile, "junit/junit/4.0/junit-4.0.jar")
+    assertTrue(jarFile.exists())
+    projectsManager.listenForExternalChanges()
     updateSettingsXml("""
                         <proxies>
                          <proxy>
@@ -392,34 +345,30 @@ public class MiscImportingTest extends MavenMultiVersionImportingTestCase {
                             <port>3128</port>
                           </proxy>
                         </proxies>
-                        """);
-
-    removeFromLocalRepository("junit");
-    assertFalse(jarFile.exists());
-
+                        """.trimIndent())
+    removeFromLocalRepository("junit")
+    assertFalse(jarFile.exists())
     try {
-      updateAllProjects();
+      updateAllProjects()
     }
     finally {
       // LightweightHttpWagon does not clear settings if they were not set before a proxy was configured.
-      System.clearProperty("http.proxyHost");
-      System.clearProperty("http.proxyPort");
+      System.clearProperty("http.proxyHost")
+      System.clearProperty("http.proxyPort")
     }
-    assertFalse(jarFile.exists());
-
-    restoreSettingsFile();
-
-    updateAllProjects();
-    assertTrue(jarFile.exists());
+    assertFalse(jarFile.exists())
+    restoreSettingsFile()
+    updateAllProjects()
+    assertTrue(jarFile.exists())
   }
 
   @Test
-  public void testMavenExtensionsAreLoadedAndAfterProjectsReadIsCalled() throws Exception {
-    try {
-      MavenCustomRepositoryHelper helper = new MavenCustomRepositoryHelper(myDir, "plugins");
-      setRepositoryPath(helper.getTestDataPath("plugins"));
-      getMavenGeneralSettings().setWorkOffline(true);
 
+  fun testMavenExtensionsAreLoadedAndAfterProjectsReadIsCalled() {
+    try {
+      val helper = MavenCustomRepositoryHelper(myDir, "plugins")
+      repositoryPath = helper.getTestDataPath("plugins")
+      mavenGeneralSettings.isWorkOffline = true
       importProject("""
                       <groupId>test</groupId>
                       <artifactId>project</artifactId>
@@ -433,18 +382,15 @@ public class MiscImportingTest extends MavenMultiVersionImportingTestCase {
                           </extension>
                         </extensions>
                       </build>
-                      """);
-
-      List<MavenProject> projects = getProjectsTree().getProjects();
-      assertEquals(1, projects.size());
-      MavenProject mavenProject = projects.get(0);
-      assertEquals("Name for test:project generated by MyMavenExtension.", mavenProject.getFinalName());
-
-      PlatformTestUtil.assertPathsEqual(myProjectPom.getPath(), mavenProject.getProperties().getProperty("workspace-info"));
+                      """.trimIndent())
+      val projects = projectsTree.projects
+      assertEquals(1, projects.size)
+      val mavenProject = projects[0]
+      assertEquals("Name for test:project generated by MyMavenExtension.", mavenProject.finalName)
+      PlatformTestUtil.assertPathsEqual(myProjectPom.getPath(), mavenProject.properties.getProperty("workspace-info"))
     }
     finally {
-      MavenServerManager.getInstance().shutdown(true);  // to unlock files
+      MavenServerManager.getInstance().shutdown(true) // to unlock files
     }
   }
-
 }
