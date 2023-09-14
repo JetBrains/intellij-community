@@ -159,8 +159,6 @@ public class HighlightInfo implements Segment {
   @Nullable("null means it the same as highlighter")
   private RangeMarker fixMarker;
   volatile RangeHighlighterEx highlighter;
-  @Nullable
-  final PsiElement psiElement;
   /**
    * in case this HighlightInfo is created to highlight unresolved reference, store this reference here to be able to call {@link com.intellij.codeInsight.quickfix.UnresolvedReferenceQuickFixProvider} later
    */
@@ -187,8 +185,7 @@ public class HighlightInfo implements Segment {
                           @Nullable String inspectionToolId,
                           @Nullable GutterMark gutterIconRenderer,
                           int group,
-                          @Nullable PsiReference unresolvedReference,
-                          @Nullable PsiElement psiElement) {
+                          @Nullable PsiReference unresolvedReference) {
     if (startOffset < 0 || startOffset > endOffset) {
       LOG.error("Incorrect highlightInfo bounds. description="+escapedDescription+"; startOffset="+startOffset+"; endOffset="+endOffset+";type="+type);
     }
@@ -211,7 +208,6 @@ public class HighlightInfo implements Segment {
     this.inspectionToolId = inspectionToolId;
     this.group = group;
     this.unresolvedReference = unresolvedReference;
-    this.psiElement = psiElement;
   }
 
   /**
@@ -625,7 +621,7 @@ public class HighlightInfo implements Segment {
       annotation.getMessage(), annotation.getTooltip(), annotation.getSeverity(), annotation.isAfterEndOfLine(),
       annotation.needsUpdateOnTyping(),
       annotation.isFileLevelAnnotation(), 0, annotation.getProblemGroup(), null, annotation.getGutterIconRenderer(), Pass.UPDATE_ALL,
-      unresolvedReference, psiElement);
+      unresolvedReference);
 
     List<? extends Annotation.QuickFixInfo> fixes = batchMode ? annotation.getBatchFixes() : annotation.getQuickFixes();
     if (fixes != null) {

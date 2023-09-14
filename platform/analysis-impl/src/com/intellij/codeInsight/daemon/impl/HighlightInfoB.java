@@ -284,7 +284,7 @@ final class HighlightInfoB implements HighlightInfo.Builder {
     HighlightInfo info = new HighlightInfo(forcedTextAttributes, forcedTextAttributesKey, type, startOffset, endOffset, escapedDescription,
                                            escapedToolTip, severity, isAfterEndOfLine, myNeedsUpdateOnTyping, isFileLevelAnnotation,
                                            navigationShift,
-                                           problemGroup, inspectionToolId, gutterIconRenderer, group, unresolvedReference, psiElement);
+                                           problemGroup, inspectionToolId, gutterIconRenderer, group, unresolvedReference);
     for (FixInfo fix : fixes) {
       info.registerFix(fix.action(), fix.options(), fix.displayName(), fix.fixRange(), fix.key());
     }
