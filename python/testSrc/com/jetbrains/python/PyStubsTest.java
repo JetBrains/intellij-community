@@ -1094,6 +1094,71 @@ public class PyStubsTest extends PyTestCase {
     assertNotParsed(file);
   }
 
+  // PY-62608
+  public void testTypeParameterListInFunctionDeclaration() {
+    PyFile file = getTestFile();
+    PyFunction function = file.findTopLevelFunction("foo");
+
+    PyTypeParameter firstTypeParameter = function.getTypeParameterList().getTypeParameters().get(0);
+    PyTypeParameter secondTypeParameter = function.getTypeParameterList().getTypeParameters().get(1);
+
+    assertNotNull(firstTypeParameter);
+    assertNotNull(secondTypeParameter);
+
+    assertEquals("T", firstTypeParameter.getName());
+    assertEquals("U", secondTypeParameter.getName());
+
+    assertNull(firstTypeParameter.getBoundExpressionText());
+    assertEquals(secondTypeParameter.getBoundExpressionText(), "str");
+
+    assertNotParsed(file);
+  }
+
+  // PY-62608
+  public void testTypeParameterListInClassDeclaration() {
+    PyFile file = getTestFile();
+    PyClass cls = file.findTopLevelClass("Clazz");
+
+    PyTypeParameter firstTypeParameter = cls.getTypeParameterList().getTypeParameters().get(0);
+    PyTypeParameter secondTypeParameter = cls.getTypeParameterList().getTypeParameters().get(1);
+
+    assertNotNull(firstTypeParameter);
+    assertNotNull(secondTypeParameter);
+
+
+    assertEquals("T", firstTypeParameter.getName());
+    assertEquals("U", secondTypeParameter.getName());
+
+
+    assertNull(firstTypeParameter.getBoundExpressionText());
+    assertEquals(secondTypeParameter.getBoundExpressionText(), "str");
+
+    assertNotParsed(file);
+  }
+
+  // PY-62608
+  public void testTypeAliasStatement() {
+    PyFile file = getTestFile();
+    PyTypeAliasStatement typeAliasStatement = file.findTypeAliasStatement("myType");
+
+    assertNotNull(typeAliasStatement);
+
+    PyTypeParameter firstTypeParameter = typeAliasStatement.getTypeParameterList().getTypeParameters().get(0);
+    PyTypeParameter secondTypeParameter = typeAliasStatement.getTypeParameterList().getTypeParameters().get(1);
+
+
+    assertNotNull(firstTypeParameter);
+    assertNotNull(secondTypeParameter);
+
+    assertEquals("T", firstTypeParameter.getName());
+    assertEquals("U", secondTypeParameter.getName());
+
+    assertNull(firstTypeParameter.getBoundExpressionText());
+    assertEquals(secondTypeParameter.getBoundExpressionText(), "str");
+
+    assertNotParsed(file);
+  }
+
 
   private void doTestTypingTypedDictArguments() {
     doTestTypedDict("name", Arrays.asList("x", "y"), Arrays.asList("str", "int"), QualifiedName.fromComponents("TypedDict"));
