@@ -20,8 +20,8 @@ import org.jetbrains.annotations.TestOnly
  *   otherwise, proposals will be generated/canceled on each typing.
  *   - Any inline completion request will be cancelled if inline is in rendering mode
  *   - In case a newer inline completion proposals are generated, previous call will be cancelled and hidden
- *   - While elements are computing, the inline completion shows a placeholder ([getPlaceholder]). If no placeholder is required,
- *   please use [InlineCompletionPlaceholder.Empty].
+ *   - If some event requires hiding of shown elements, implement [requiresInvalidation].
+ *
  *
  * @see InlineCompletionElement
  * @see InlineCompletionRequest
@@ -33,6 +33,8 @@ interface InlineCompletionProvider {
   suspend fun getProposals(request: InlineCompletionRequest): Flow<InlineCompletionElement>
 
   fun isEnabled(event: InlineCompletionEvent): Boolean
+
+  fun requiresInvalidation(event: InlineCompletionEvent): Boolean = false
 
   companion object {
     val EP_NAME = ExtensionPointName.create<InlineCompletionProvider>("com.intellij.inline.completion.provider")

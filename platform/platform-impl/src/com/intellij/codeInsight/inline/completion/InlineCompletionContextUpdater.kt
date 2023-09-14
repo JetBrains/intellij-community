@@ -78,20 +78,14 @@ internal class AppendPrefixContextUpdater : InlineCompletionContextUpdater() {
   }
 }
 
-internal class LookupChangeContextUpdater(private val providerExists: Boolean) : InlineCompletionContextUpdater() {
+internal class LookupChangeContextUpdater : InlineCompletionContextUpdater() {
   override fun onEvent(context: InlineCompletionContext, event: InlineCompletionEvent): Result {
     return when (event) {
       is InlineCompletionEvent.LookupChange -> {
-        if (providerExists || !context.isCurrentlyDisplayingInlays) Result.Invalidated else Result.Updated.Same
+        if (context.isCurrentlyDisplayingInlays) Result.Updated.Same else Result.Invalidated
       }
       else -> Result.Undefined
     }
-  }
-}
-
-internal class InvalidateIfNoProviderContextUpdater(private val providerExists: Boolean) : InlineCompletionContextUpdater() {
-  override fun onEvent(context: InlineCompletionContext, event: InlineCompletionEvent): Result {
-    return if (providerExists) Result.Undefined else Result.Invalidated
   }
 }
 

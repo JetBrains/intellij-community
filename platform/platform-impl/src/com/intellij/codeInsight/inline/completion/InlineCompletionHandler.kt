@@ -19,6 +19,7 @@ import com.intellij.openapi.util.Key
 import com.intellij.psi.PsiFile
 import com.intellij.util.EventDispatcher
 import com.intellij.util.application
+import com.intellij.util.concurrency.annotations.RequiresEdt
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.sync.Mutex
@@ -84,7 +85,7 @@ class InlineCompletionHandler(private val scope: CoroutineScope) {
       mutex.withLock {
         val updated = coroutineScope {
           launch { runningJob?.cancelAndJoin() }
-          updateContextOrInvalidate(request, getContextUpdater(provider))
+          updateContextOrInvalidate(request, provider)
         }
         if (updated || provider == null) {
           return@launch
@@ -200,13 +201,8 @@ class InlineCompletionHandler(private val scope: CoroutineScope) {
     }
   }
 
-  private fun getContextUpdater(provider: InlineCompletionProvider?): DefinedInlineCompletionContextUpdater {
-    val providerExists = provider != null
-    return CompositeContextUpdater(
-      AppendPrefixContextUpdater(),
-      LookupChangeContextUpdater(providerExists),
-      InvalidateIfNoProviderContextUpdater(providerExists)
-    ).invalidateOnUndefined()
+  private fun getContextUpdater(): DefinedInlineCompletionContextUpdater {
+    return CompositeContextUpdater(AppendPrefixContextUpdater(), LookupChangeContextUpdater()).invalidateOnUndefined()
   }
 
   /**
@@ -214,29 +210,37 @@ class InlineCompletionHandler(private val scope: CoroutineScope) {
    */
   private suspend fun updateContextOrInvalidate(
     request: InlineCompletionRequest,
-    updater: DefinedInlineCompletionContextUpdater
+    provider: InlineCompletionProvider?
   ): Boolean {
-    return InlineCompletionContext.getOrNull(request.editor)?.let { context ->
-      val result = updater.onEvent(context, request.event)
-      withContext(Dispatchers.EDT) {
-        when (result) {
-          is InlineCompletionContextUpdater.Result.Updated.Changed -> {
-            context.editor.inlayModel.execute(true) {
-              context.clear()
-              trace(InlineCompletionEventType.Change(result.truncateTyping))
-              result.newElements.forEach { context.renderElement(it, request.endOffset) }
-            }
-          }
-          is InlineCompletionContextUpdater.Result.Updated.Same -> Unit
-          is InlineCompletionContextUpdater.Result.Invalidated -> {
-            if (context.isCurrentlyDisplayingInlays) {
-              hide(context.editor, false, context)
-            }
+    val session = InlineCompletionSession.getOrNull(request.editor) ?: return false
+    if (provider != null && session.provider != provider || session.provider.requiresInvalidation(request.event)) {
+      withContext(Dispatchers.EDT) { session.invalidate() }
+      return false
+    }
+
+    val context = session.context
+    val result = getContextUpdater().onEvent(context, request.event)
+    withContext(Dispatchers.EDT) {
+      when (result) {
+        is InlineCompletionContextUpdater.Result.Updated.Changed -> {
+          context.editor.inlayModel.execute(true) {
+            context.clear()
+            trace(InlineCompletionEventType.Change(result.truncateTyping))
+            result.newElements.forEach { context.renderElement(it, request.endOffset) }
           }
         }
+        is InlineCompletionContextUpdater.Result.Updated.Same -> Unit
+        is InlineCompletionContextUpdater.Result.Invalidated -> session.invalidate()
       }
-      result is InlineCompletionContextUpdater.Result.Updated
-    } ?: false
+    }
+    return result is InlineCompletionContextUpdater.Result.Updated
+  }
+
+  @RequiresEdt
+  private fun InlineCompletionSession.invalidate() {
+    if (context.isCurrentlyDisplayingInlays) {
+      hide(context.editor, false, context)
+    }
   }
 
   private fun trace(event: InlineCompletionEventType) {
@@ -288,7 +292,7 @@ class InlineCompletionHandler(private val scope: CoroutineScope) {
     val isMuted: AtomicBoolean = AtomicBoolean(false)
     val isShowing: AtomicBoolean = AtomicBoolean(false)
 
-    fun withSafeMute(block: () -> Unit) {
+    inline fun withSafeMute(block: () -> Unit) {
       mute()
       try {
         block()
