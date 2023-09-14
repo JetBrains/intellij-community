@@ -1,32 +1,53 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInspection.bytecodeAnalysis.asm;
 
-import com.intellij.codeInspection.bytecodeAnalysis.asm.ControlFlowGraph.Edge;
-
-import java.util.HashSet;
-import java.util.Set;
+import it.unimi.dsi.fastutil.longs.LongOpenHashSet;
 
 public final class DFSTree {
   public final int[] preOrder, postOrder;
-  public final Set<Edge> nonBack, back;
+  private final LongOpenHashSet nonBack, back;
   public final boolean[] loopEnters;
+  
+  public interface EdgeVisitor {
+    void visit(int from, int to);
+  }
 
-  DFSTree(int[] preOrder, int[] postOrder, Set<Edge> nonBack, Set<Edge> back, boolean[] loopEnters) {
+  DFSTree(int[] preOrder, int[] postOrder, LongOpenHashSet nonBack, LongOpenHashSet back, boolean[] loopEnters) {
     this.preOrder = preOrder;
     this.postOrder = postOrder;
     this.nonBack = nonBack;
     this.back = back;
     this.loopEnters = loopEnters;
   }
+  
+  public boolean isBackEmpty() {
+    return back.isEmpty();
+  }
 
   public boolean isDescendant(int child, int parent) {
     return preOrder[parent] <= preOrder[child] && postOrder[child] <= postOrder[parent];
   }
+  
+  public void iterateBack(EdgeVisitor visitor) {
+    iterate(back, visitor);
+  }
+
+  public void iterateNonBack(EdgeVisitor visitor) {
+    iterate(nonBack, visitor);
+  }
+
+  private static void iterate(LongOpenHashSet set, EdgeVisitor visitor) {
+    set.forEach(packed -> visitor.visit((int)(packed >>> 32), (int)(packed)));
+  }
+
+  private static void putEdge(LongOpenHashSet set, int from, int to) {
+    set.add(from * 0x1_0000_0000L + to);
+  }
 
   // "Graphs: Theory and Algorithms" (ISBN 0471513563), 11.7.2 DFS of a directed graph
   public static DFSTree build(int[][] transitions, int edgeCount) {
-    HashSet<Edge> nonBack = new HashSet<>();
-    HashSet<Edge> back = new HashSet<>();
+    LongOpenHashSet nonBack = new LongOpenHashSet();
+    LongOpenHashSet back = new LongOpenHashSet();
 
     boolean[] marked = new boolean[transitions.length];
     boolean[] scanned = new boolean[transitions.length];
@@ -76,7 +97,7 @@ public final class DFSTree {
         int from = stackFrom[top];
         int to = stackTo[top];
         if (!marked[to]) {
-          nonBack.add(new Edge(from, to));
+          putEdge(nonBack, from, to);
           // enter to
           entered++;
           preOrder[to] = entered;
@@ -96,14 +117,14 @@ public final class DFSTree {
           }
         }
         else if (preOrder[to] > preOrder[from]) {
-          nonBack.add(new Edge(from, to));
+          putEdge(nonBack, from, to);
         }
         else if (preOrder[to] < preOrder[from] && !scanned[to]) {
-          back.add(new Edge(from, to));
+          putEdge(back, from, to);
           loopEnters[to] = true;
         }
         else {
-          nonBack.add(new Edge(from, to));
+          putEdge(nonBack, from, to);
         }
       }
     }

@@ -330,7 +330,7 @@ public class ClassDataIndexer implements VirtualFileGist.GistCalculator<Map<HMem
         final ControlFlowGraph graph = ControlFlowGraph.build(className, methodNode, jsr);
         if (graph.transitions.length > 0) {
           final DFSTree dfs = DFSTree.build(graph.transitions, graph.edgeCount);
-          boolean branching = !dfs.back.isEmpty();
+          boolean branching = !dfs.isBackEmpty();
           if (!branching) {
             for (int[] transition : graph.transitions) {
               if (transition != null && transition.length > 1) {
@@ -447,7 +447,7 @@ public class ClassDataIndexer implements VirtualFileGist.GistCalculator<Map<HMem
         }
       }
 
-      if (graph.methodNode.instructions.size() < 20 && isBooleanResult && dfs.back.isEmpty() && !jsr) {
+      if (graph.methodNode.instructions.size() < 20 && isBooleanResult && dfs.isBackEmpty() && !jsr) {
         Util util = new Util();
         if (util.singleIfBranch() && util.singleMethodCall() && util.booleanConstResult()) {
           NegationAnalysis analyzer = new NegationAnalysis(method, graph);
@@ -511,7 +511,7 @@ public class ClassDataIndexer implements VirtualFileGist.GistCalculator<Map<HMem
                                                 richControlFlow.controlFlow.errorTransitions.isEmpty();
       }
 
-      boolean withCycle = !richControlFlow.dfsTree.back.isEmpty();
+      boolean withCycle = !richControlFlow.dfsTree.isBackEmpty();
       if (argumentTypes.length > 50 && withCycle) {
         // IDEA-137443 - do not analyze very complex methods
         return;
