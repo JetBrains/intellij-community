@@ -14,6 +14,7 @@ import com.intellij.psi.PsiElement
 import com.intellij.psi.util.findParentInFile
 import com.intellij.psi.util.findTopmostParentInFile
 import com.intellij.psi.util.findTopmostParentOfType
+import com.intellij.psi.util.parents
 import org.jetbrains.kotlin.analyzer.AnalysisResult
 import org.jetbrains.kotlin.cfg.ControlFlowInformationProviderImpl
 import org.jetbrains.kotlin.container.ComponentProvider
@@ -431,6 +432,30 @@ private class StackedCompositeBindingContextTrace(
         // to prevent too deep stacked binding context
         fun isIncrementalAnalysisApplicable(): Boolean = this@StackedCompositeBindingContextTrace.depth < 16
 
+        // Predicate to check if the receiver is a PsiElement that was reanalyzed and therefore should
+        // have a result in the reanalysis context. We should not look such elements up in the
+        // parent context when there is no information for it in the current context. Because of mutations
+        // to PsiElements, that could result in incorrect information
+        // (see https://youtrack.jetbrains.com/issue/KTIJ-26856).
+        private fun <K: Any?> K.containedInReanalyzedElement(): Boolean {
+            return when (element) {
+                is KtDeclarationWithBody -> {
+                    // Psi elements within the body of a reanalyzed function should have
+                    // information only in reanalysis context.
+                    val body = element.bodyExpression ?: return false
+                    (this as? PsiElement)?.parentsWithSelf?.contains(body) == true
+                }
+                is KtClassOrObject -> {
+                    // Psi elements within anonymous initializers and secondary constructors should have information
+                    // only in the reanalysis context.
+                    (this as? PsiElement)?.parents(withSelf = false)?.any {
+                        it in element.getAnonymousInitializers() || it in element.secondaryConstructors
+                    } == true
+                }
+                else -> false
+            }
+        }
+
         override fun getDiagnostics(): Diagnostics {
             if (cachedDiagnostics == null) {
                 val mergedDiagnostics = mutableSetOf<Diagnostic>()
@@ -451,9 +476,13 @@ private class StackedCompositeBindingContextTrace(
         }
 
         override fun <K : Any?, V : Any?> get(slice: ReadOnlySlice<K, V>, key: K): V? {
-            return selfGet(slice, key) ?: parentContext.get(slice, key)?.takeIf {
-                (it as? DeclarationDescriptorWithSource)?.source?.getPsi()?.isValid != false
+            selfGet(slice, key)?.let { return it }
+            if (!key.containedInReanalyzedElement()) {
+                return parentContext.get(slice, key)?.takeIf {
+                    (it as? DeclarationDescriptorWithSource)?.source?.getPsi()?.isValid != false
+                }
             }
+            return null
         }
 
         override fun getType(expression: KtExpression): KotlinType? {
@@ -463,7 +492,9 @@ private class StackedCompositeBindingContextTrace(
 
         override fun <K, V> getKeys(slice: WritableSlice<K, V>): Collection<K> {
             val keys = map.getKeys(slice)
-            val fromParent = parentContext.getKeys(slice)
+            val fromParent = parentContext.getKeys(slice).filter {
+                !it.containedInReanalyzedElement()
+            }
             if (keys.isEmpty()) return fromParent
             if (fromParent.isEmpty()) return keys
 
@@ -472,7 +503,7 @@ private class StackedCompositeBindingContextTrace(
 
         override fun <K : Any?, V : Any?> getSliceContents(slice: ReadOnlySlice<K, V>): ImmutableMap<K, V> {
             val parentSliceContents = parentContext.getSliceContents(slice).filter {
-                (it.key as? PsiElement)?.parentsWithSelf?.none { e -> e == element } != false
+                !it.key.containedInReanalyzedElement()
             }
             val mapSliceContents = map.getSliceContents(slice)
             return ImmutableMap.copyOf(parentSliceContents + mapSliceContents)
