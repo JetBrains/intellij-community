@@ -179,7 +179,7 @@ private class CourseInfoComponent(
       border = JBUI.Borders.emptyRight(CARD_GAP)
       maximum = totalTaskNumber
       value = solvedTasksNumber
-      isVisible = solvedTasksNumber != 0
+      isVisible = solvedTasksNumber != 0 && solvedTasksNumber != totalTaskNumber
     }
     add(progressBar)
 
