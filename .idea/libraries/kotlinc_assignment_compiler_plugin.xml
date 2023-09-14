@@ -1,18 +1,11 @@
 <component name="libraryTable">
-  <library name="kotlinc.assignment-compiler-plugin" type="repository">
-    <properties include-transitive-deps="false" maven-id="org.jetbrains.kotlin:assignment-compiler-plugin-for-ide:1.9.30-dev-2548">
-      <verification>
-        <artifact url="file://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/assignment-compiler-plugin-for-ide/1.9.30-dev-2548/assignment-compiler-plugin-for-ide-1.9.30-dev-2548.jar">
-          <sha256sum>c7978c0761009f61b5964bfc8df192c19f861d21da2297cdc43f600bfe8437d3</sha256sum>
-        </artifact>
-      </verification>
-    </properties>
+  <library name="kotlinc.assignment-compiler-plugin">
     <CLASSES>
-      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/assignment-compiler-plugin-for-ide/1.9.30-dev-2548/assignment-compiler-plugin-for-ide-1.9.30-dev-2548.jar!/" />
+      <root url="jar://$PROJECT_DIR$/../build/repo/org/jetbrains/kotlin/assignment-compiler-plugin-for-ide/1.9.255/assignment-compiler-plugin-for-ide-1.9.255.jar!/" />
     </CLASSES>
     <JAVADOC />
     <SOURCES>
-      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/assignment-compiler-plugin-for-ide/1.9.30-dev-2548/assignment-compiler-plugin-for-ide-1.9.30-dev-2548-sources.jar!/" />
+      <root url="jar://$PROJECT_DIR$/../build/repo/org/jetbrains/kotlin/assignment-compiler-plugin-for-ide/1.9.255/assignment-compiler-plugin-for-ide-1.9.255-sources.jar!/" />
     </SOURCES>
   </library>
 </component>

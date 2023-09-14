@@ -9,6 +9,7 @@ import org.jetbrains.kotlin.analysis.api.symbols.KtFunctionSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KtPropertySymbol
 import org.jetbrains.kotlin.analysis.api.symbols.markers.KtPossiblyNamedSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.markers.KtSymbolWithMembers
+import org.jetbrains.kotlin.idea.base.analysis.api.utils.getSymbolContainingMemberDeclarations
 import org.jetbrains.kotlin.idea.fir.invalidateCaches
 import org.jetbrains.kotlin.idea.refactoring.rename.AbstractRenameTest
 import org.jetbrains.kotlin.idea.refactoring.rename.loadTestConfiguration
@@ -49,11 +50,17 @@ abstract class AbstractFirRenameTest : AbstractRenameTest() {
         fun getContainingMemberSymbol(classId: ClassId): KtSymbolWithMembers {
             getClassOrObjectSymbolByClassId(classId)?.let { return it }
             val parentSymbol = getClassOrObjectSymbolByClassId(classId.parentClassId!!)!!
-            return parentSymbol.getDeclaredMemberScope().getAllSymbols().first { (it as? KtPossiblyNamedSymbol)?.name == classId.shortClassName } as KtSymbolWithMembers
+
+            // The function supports getting a `KtEnumEntrySymbol`'s initializer via the enum entry's "class ID". Despite not being 100%
+            // semantically correct in FIR (enum entries aren't classes), it simplifies referring to the initializing object.
+            val declarationSymbol = parentSymbol.getDeclaredMemberScope().getAllSymbols().first { (it as? KtPossiblyNamedSymbol)?.name == classId.shortClassName }
+            return declarationSymbol.getSymbolContainingMemberDeclarations() ?:
+                error("Unexpected declaration symbol `$classId` of type `${declarationSymbol.javaClass.simpleName}`.")
         }
 
         when (target) {
             is KotlinTarget.Classifier -> getContainingMemberSymbol(target.classId).psi!!
+
             is KotlinTarget.Callable -> {
                 val callableId = target.callableId
                 val scope = callableId.classId
@@ -69,6 +76,12 @@ abstract class AbstractFirRenameTest : AbstractRenameTest() {
                     }
 
                 callablesOfProperType.first().psi!!
+            }
+
+            is KotlinTarget.EnumEntry -> {
+                val callableId = target.callableId
+                val containingScope = getContainingMemberSymbol(callableId.classId!!).getDeclaredMemberScope()
+                containingScope.getCallableSymbols(callableId.callableName).singleOrNull()?.psi!!
             }
         }
     }

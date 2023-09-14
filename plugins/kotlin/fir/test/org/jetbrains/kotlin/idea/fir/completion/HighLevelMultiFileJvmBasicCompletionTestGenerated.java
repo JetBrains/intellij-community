@@ -163,6 +163,11 @@ public class HighLevelMultiFileJvmBasicCompletionTestGenerated extends AbstractH
         runTest("../completion/testData/basic/multifile/HiddenDeclarations/");
     }
 
+    @TestMetadata("HiddenDeclarationsInWhenCondition")
+    public void testHiddenDeclarationsInWhenCondition() throws Exception {
+        runTest("../completion/testData/basic/multifile/HiddenDeclarationsInWhenCondition/");
+    }
+
     @TestMetadata("InImportExtension")
     public void testInImportExtension() throws Exception {
         runTest("../completion/testData/basic/multifile/InImportExtension/");

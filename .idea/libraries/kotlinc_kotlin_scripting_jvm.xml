@@ -1,18 +1,11 @@
 <component name="libraryTable">
-  <library name="kotlinc.kotlin-scripting-jvm" type="repository">
-    <properties include-transitive-deps="false" maven-id="org.jetbrains.kotlin:kotlin-scripting-jvm:1.9.30-dev-2548">
-      <verification>
-        <artifact url="file://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-scripting-jvm/1.9.30-dev-2548/kotlin-scripting-jvm-1.9.30-dev-2548.jar">
-          <sha256sum>1719fec584fa22f2d5110583c76b7d3186b180965c665c3afa89b37b4cf3b311</sha256sum>
-        </artifact>
-      </verification>
-    </properties>
+  <library name="kotlinc.kotlin-scripting-jvm">
     <CLASSES>
-      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-scripting-jvm/1.9.30-dev-2548/kotlin-scripting-jvm-1.9.30-dev-2548.jar!/" />
+      <root url="jar://$PROJECT_DIR$/../build/repo/org/jetbrains/kotlin/kotlin-scripting-jvm/1.9.255/kotlin-scripting-jvm-1.9.255.jar!/" />
     </CLASSES>
     <JAVADOC />
     <SOURCES>
-      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-scripting-jvm/1.9.30-dev-2548/kotlin-scripting-jvm-1.9.30-dev-2548-sources.jar!/" />
+      <root url="jar://$PROJECT_DIR$/../build/repo/org/jetbrains/kotlin/kotlin-scripting-jvm/1.9.255/kotlin-scripting-jvm-1.9.255-sources.jar!/" />
     </SOURCES>
   </library>
 </component>

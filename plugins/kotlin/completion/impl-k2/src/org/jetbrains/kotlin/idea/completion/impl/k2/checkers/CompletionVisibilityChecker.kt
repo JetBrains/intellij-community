@@ -13,6 +13,7 @@ import org.jetbrains.kotlin.idea.completion.context.FirKDocNameReferencePosition
 import org.jetbrains.kotlin.idea.completion.context.FirNameReferencePositionContext
 import org.jetbrains.kotlin.idea.completion.context.FirRawPositionCompletionContext
 import org.jetbrains.kotlin.psi.KtExpression
+import org.jetbrains.kotlin.resolve.deprecation.DeprecationLevelValue
 
 internal fun interface CompletionVisibilityChecker {
     context(KtAnalysisSession)
@@ -36,6 +37,9 @@ internal fun interface CompletionVisibilityChecker {
             context(KtAnalysisSession)
             override fun isVisible(symbol: KtSymbolWithVisibility): Boolean {
                 if (positionContext is FirKDocNameReferencePositionContext) return true
+
+                // Don't offer any deprecated items that could lead to compile errors.
+                if (symbol.deprecationStatus?.deprecationLevel == DeprecationLevelValue.HIDDEN) return false
 
                 if (basicContext.parameters.invocationCount > 1) return true
 

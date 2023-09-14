@@ -6,6 +6,7 @@ import com.intellij.ide.plugins.DynamicPluginListener
 import com.intellij.ide.plugins.IdeaPluginDescriptor
 import com.intellij.java.workspace.entities.JavaSourceRootPropertiesEntity
 import com.intellij.openapi.Disposable
+import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.fileEditor.FileDocumentManagerListener
 import com.intellij.openapi.module.Module
@@ -79,7 +80,9 @@ class FirIdeModuleStateModificationService(val project: Project) : Disposable {
     }
 
     internal class LibraryUpdatesListener(private val project: Project) : BulkFileListener {
-        val index = ProjectRootManager.getInstance(project).fileIndex
+        private val fileIndex by lazy(LazyThreadSafetyMode.PUBLICATION) {
+            ProjectRootManager.getInstance(project).fileIndex
+        }
 
         override fun before(events: List<VFileEvent>) {
             if (mayBuiltinsHaveChanged(events)) {
@@ -95,7 +98,7 @@ class FirIdeModuleStateModificationService(val project: Project) : Disposable {
                 }
                 if (!file.extension.equals("jar", ignoreCase = true)) return@mapNotNull null  //react only on jars
                 val jarRoot = StandardFileSystems.jar().findFileByPath(file.path + URLUtil.JAR_SEPARATOR) ?: return@mapNotNull null
-                (index.getOrderEntriesForFile(jarRoot).firstOrNull { it is LibraryOrderEntry } as? LibraryOrderEntry)?.library
+                (fileIndex.getOrderEntriesForFile(jarRoot).firstOrNull { it is LibraryOrderEntry } as? LibraryOrderEntry)?.library
             }.distinct().forEach { it.publishModuleStateModification(project) }
         }
 
@@ -129,7 +132,7 @@ class FirIdeModuleStateModificationService(val project: Project) : Disposable {
     internal class FileDocumentListener(private val project: Project) : FileDocumentManagerListener {
         override fun fileWithNoDocumentChanged(file: VirtualFile) {
             // `FileDocumentManagerListener` may receive events from other projects via `FileDocumentManagerImpl`'s `AsyncFileListener`.
-            if (!ProjectFileIndex.getInstance(project).isInContent(file)) {
+            if (!project.isInitialized || !ProjectFileIndex.getInstance(project).isInContent(file)) {
                 return
             }
 
@@ -149,11 +152,15 @@ class FirIdeModuleStateModificationService(val project: Project) : Disposable {
 
     internal class MyDynamicPluginListener(private val project: Project) : DynamicPluginListener {
         override fun beforePluginUnload(pluginDescriptor: IdeaPluginDescriptor, isUpdate: Boolean) {
-            KotlinGlobalModificationService.getInstance(project).publishGlobalModuleStateModification()
+            runWriteAction {
+                KotlinGlobalModificationService.getInstance(project).publishGlobalModuleStateModification()
+            }
         }
 
         override fun pluginLoaded(pluginDescriptor: IdeaPluginDescriptor) {
-            KotlinGlobalModificationService.getInstance(project).publishGlobalModuleStateModification()
+            runWriteAction {
+                KotlinGlobalModificationService.getInstance(project).publishGlobalModuleStateModification()
+            }
         }
     }
 

@@ -18,7 +18,7 @@ import org.junit.runner.RunWith;
 @TestDataPath("$CONTENT_ROOT")
 @RunWith(JUnit3RunnerWithInners.class)
 @TestMetadata("testData/decompiler/navigation/userJavaCode")
-public class NavigateJavaToLibrarySourceTestGenerated extends AbstractNavigateJavaToLibrarySourceTest {
+public class NavigateJavaSourceToLibraryTestGenerated extends AbstractNavigateJavaSourceToLibraryTest {
     private void runTest(String testDataFilePath) throws Exception {
         KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
     }

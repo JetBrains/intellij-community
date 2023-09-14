@@ -624,5 +624,10 @@ public abstract class HighLevelWeigherTestGenerated extends AbstractHighLevelWei
         public void testUnavailableDslReceiver() throws Exception {
             runTest("../completion/testData/weighers/basic/UnavailableDslReceiver.kt");
         }
+
+        @TestMetadata("WhenWithSubject.kt")
+        public void testWhenWithSubject() throws Exception {
+            runTest("../completion/testData/weighers/basic/WhenWithSubject.kt");
+        }
     }
 }

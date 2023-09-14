@@ -13,6 +13,7 @@ import org.jetbrains.kotlin.analysis.api.lifetime.KtLifetimeToken
 import org.jetbrains.kotlin.analysis.api.lifetime.withValidityAssertion
 import org.jetbrains.kotlin.analysis.api.signatures.KtCallableSignature
 import org.jetbrains.kotlin.analysis.api.symbols.KtCallableSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.KtSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.getSymbolOfType
 import org.jetbrains.kotlin.analysis.api.symbols.markers.KtNamedSymbol
 import org.jetbrains.kotlin.analysis.api.types.KtSubstitutor
@@ -47,6 +48,7 @@ internal class WeighingContext private constructor(
     private val myImplicitReceivers: List<KtImplicitReceiver>,
     val contextualSymbolsCache: ContextualSymbolsCache,
     val importableFqNameClassifier: ImportableFqNameClassifier,
+    private val mySymbolsToSkip: Set<KtSymbol>,
 ) : KtLifetimeOwner {
     /**
      * Cache for contextual symbols, i.e. symbols which are overridden by callables containing current position.
@@ -82,6 +84,14 @@ internal class WeighingContext private constructor(
             myImplicitReceivers
         }
 
+    /**
+     * Symbols that are very unlikely to be completed. They will appear on low positions in completion.
+     */
+    val symbolsToSkip: Set<KtSymbol>
+        get() = withValidityAssertion {
+            mySymbolsToSkip
+        }
+
     val isPositionSuitableForNull: Boolean = isPositionSuitableForNull(positionInFakeCompletionFile)
 
     fun withoutExpectedType(): WeighingContext = withValidityAssertion {
@@ -94,6 +104,7 @@ internal class WeighingContext private constructor(
             myImplicitReceivers,
             contextualSymbolsCache,
             importableFqNameClassifier,
+            mySymbolsToSkip,
         )
     }
 
@@ -104,6 +115,7 @@ internal class WeighingContext private constructor(
             expectedType: KtType?,
             implicitReceivers: List<KtImplicitReceiver>,
             positionInFakeCompletionFile: PsiElement,
+            symbolsToSkip: Set<KtSymbol> = emptySet(),
         ): WeighingContext {
             val fakeCompletionFile = positionInFakeCompletionFile.containingFile as KtFile
             val defaultImportPaths = fakeCompletionFile.getDefaultImportPaths()
@@ -117,6 +129,7 @@ internal class WeighingContext private constructor(
                 implicitReceivers,
                 positionInFakeCompletionFile.getContextualSymbolsCache(),
                 ImportableFqNameClassifier(fakeCompletionFile) { defaultImportPaths.hasImport(it) },
+                symbolsToSkip,
             )
         }
 

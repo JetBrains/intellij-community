@@ -226,6 +226,7 @@ internal open class FirCallableCompletionContributor(
 
             topLevelCallablesFromIndex
                 .filter { filter(it, sessionParameters) }
+                .filter { visibilityChecker.isVisible(it) }
                 .forEach { yield(createCallableWithMetadata(it.asSignature(), CompletionSymbolOrigin.Index)) }
         }
 
