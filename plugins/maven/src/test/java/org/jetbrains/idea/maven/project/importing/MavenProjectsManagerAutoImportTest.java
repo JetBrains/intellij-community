@@ -23,12 +23,16 @@ import static org.junit.Assume.assumeTrue;
 
 public class MavenProjectsManagerAutoImportTest extends MavenMultiVersionImportingTestCase {
   @Override
+  protected boolean runInDispatchThread() {
+    return true;
+  }
+
+  @Override
   protected void setUp() throws Exception {
     super.setUp();
     initProjectsManager(true);
     Assume.assumeFalse(MavenUtil.isLinearImportEnabled());
   }
-
 
   @Test
   public void testResolvingEnvVariableInRepositoryPath() throws Exception {
@@ -748,6 +752,5 @@ public class MavenProjectsManagerAutoImportTest extends MavenMultiVersionImporti
    */
   private void scheduleProjectImportAndWaitWithoutCheckFloatingBar() {
     ExternalSystemProjectTracker.getInstance(myProject).scheduleProjectRefresh();
-    resolveDependenciesAndImport();
   }
 }
