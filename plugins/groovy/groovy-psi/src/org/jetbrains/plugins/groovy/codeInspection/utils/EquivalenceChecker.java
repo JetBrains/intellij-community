@@ -36,6 +36,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.*;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.literals.GrLiteral;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrIndexProperty;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameter;
+import org.jetbrains.plugins.groovy.lang.psi.api.types.GrCodeReferenceElement;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrTypeElement;
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 
@@ -344,7 +345,6 @@ public final class EquivalenceChecker {
       }
       case CALL_EXPRESSION -> methodCallExpressionsAreEquivalent((GrMethodCall)expToCompare1, (GrMethodCall)expToCompare2);
       case NEW_EXPRESSION -> newExpressionsAreEquivalent((GrNewExpression)expToCompare1, (GrNewExpression)expToCompare2);
-      case ARRAY_LITERAL_EXPRESSION -> arrayDeclarationsAreEquivalent((GrArrayDeclaration)expToCompare1, (GrArrayDeclaration)expToCompare2);
       case PREFIX_EXPRESSION -> prefixExpressionsAreEquivalent((GrUnaryExpression)expToCompare1, (GrUnaryExpression)expToCompare2);
       case POSTFIX_EXPRESSION -> postfixExpressionsAreEquivalent((GrUnaryExpression)expToCompare1, (GrUnaryExpression)expToCompare2);
       case BINARY_EXPRESSION -> binaryExpressionsAreEquivalent((GrBinaryExpression)expToCompare1, (GrBinaryExpression)expToCompare2);
@@ -390,15 +390,14 @@ public final class EquivalenceChecker {
            namedArgumentListsAreEquivalent(expression1.getNamedArguments(), expression2.getNamedArguments());
   }
 
-  private static boolean arrayDeclarationsAreEquivalent(GrArrayDeclaration expression1,
-                                                        GrArrayDeclaration expression2) {
-    final int count1 = expression1.getArrayCount();
-    final int count2 = expression2.getArrayCount();
+  private static boolean arrayDeclarationsAreEquivalent(GrArrayDeclaration declaration1, GrArrayDeclaration declaration2) {
+    final int count1 = declaration1.getArrayCount();
+    final int count2 = declaration2.getArrayCount();
     if (count1 != count2) {
       return false;
     }
-    final GrExpression[] bounds1 = expression1.getBoundExpressions();
-    final GrExpression[] bounds2 = expression2.getBoundExpressions();
+    final GrExpression[] bounds1 = declaration1.getBoundExpressions();
+    final GrExpression[] bounds2 = declaration2.getBoundExpressions();
     return expressionListsAreEquivalent(bounds1, bounds2);
   }
 
@@ -525,14 +524,31 @@ public final class EquivalenceChecker {
     return true;
   }
 
-  private static boolean newExpressionsAreEquivalent(@NotNull GrNewExpression newExp1,
-                                                     @NotNull GrNewExpression newExp2) {
-    final PsiMethod constructor1 = newExp1.resolveMethod();
-    final PsiMethod constructor2 = newExp2.resolveMethod();
-    if (constructor1 == null || constructor2 == null || !constructor1.equals(constructor2)) {
-      return false;
+  private static boolean newExpressionsAreEquivalent(@NotNull GrNewExpression newExp1, @NotNull GrNewExpression newExp2) {
+    if (newExp1.getArrayCount() == newExp2.getArrayCount()) {
+      GrCodeReferenceElement referenceElement1 = newExp1.getReferenceElement();
+      GrCodeReferenceElement referenceElement2 = newExp2.getReferenceElement();
+      if (referenceElement1 == null || referenceElement2 == null) {
+        return referenceElement1 == referenceElement2;
+      }
+      if (referenceElement1.resolve() != referenceElement2.resolve()) {
+        return false;
+      }
+      GrArrayDeclaration arrayDeclaration1 = newExp1.getArrayDeclaration();
+      GrArrayDeclaration arrayDeclaration2 = newExp2.getArrayDeclaration();
+      if (arrayDeclaration1 == null || arrayDeclaration2 == null) {
+        return arrayDeclaration1 == arrayDeclaration2;
+      }
+      return arrayDeclarationsAreEquivalent(arrayDeclaration1, arrayDeclaration2);
     }
-    return argumentListsAreEquivalent(newExp1.getArgumentList(), newExp2.getArgumentList());
+    else {
+      final PsiMethod constructor1 = newExp1.resolveMethod();
+      final PsiMethod constructor2 = newExp2.resolveMethod();
+      if (constructor1 == null || constructor2 == null || !constructor1.equals(constructor2)) {
+        return false;
+      }
+      return argumentListsAreEquivalent(newExp1.getArgumentList(), newExp2.getArgumentList());
+    }
   }
 
   private static boolean prefixExpressionsAreEquivalent(@NotNull GrUnaryExpression prefixExp1,
@@ -631,9 +647,6 @@ public final class EquivalenceChecker {
   }
 
   private static int getExpressionType(@Nullable GrExpression exp) {
-    if (exp instanceof GrArrayDeclaration) {
-      return ARRAY_LITERAL_EXPRESSION;
-    }
     if (exp instanceof GrLiteral) {
       return LITERAL_EXPRESSION;
     }
