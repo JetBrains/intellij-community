@@ -1,47 +1,37 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package org.jetbrains.idea.maven.project.importing;
+package org.jetbrains.idea.maven.project.importing
 
-import com.intellij.maven.testFramework.MavenMultiVersionImportingTestCase;
-import com.intellij.openapi.command.WriteCommandAction;
-import com.intellij.openapi.externalSystem.autoimport.ExternalSystemProjectTracker;
-import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.openapi.vfs.VfsUtil;
-import com.intellij.openapi.vfs.VirtualFile;
-import org.jetbrains.idea.maven.importing.MavenProjectLegacyImporter;
-import org.jetbrains.idea.maven.project.MavenProject;
-import org.jetbrains.idea.maven.project.MavenProjectsManager;
-import org.jetbrains.idea.maven.utils.MavenUtil;
-import org.junit.Assume;
-import org.junit.Test;
+import com.intellij.maven.testFramework.MavenMultiVersionImportingTestCase
+import com.intellij.openapi.command.WriteCommandAction
+import com.intellij.openapi.externalSystem.autoimport.ExternalSystemProjectTracker
+import com.intellij.openapi.util.io.FileUtil
+import com.intellij.openapi.vfs.VfsUtil
+import com.intellij.openapi.vfs.VirtualFile
+import org.jetbrains.idea.maven.importing.MavenProjectLegacyImporter
+import org.jetbrains.idea.maven.project.MavenProjectsManager
+import org.jetbrains.idea.maven.utils.MavenUtil
+import org.junit.Assume
+import org.junit.Test
+import java.io.File
+import java.io.IOException
+import java.util.*
 
-import java.io.File;
-import java.io.IOException;
-import java.util.Arrays;
-import java.util.List;
+class MavenProjectsManagerAutoImportTest : MavenMultiVersionImportingTestCase() {
+  override fun runInDispatchThread() = true //TODO: false
 
-import static org.junit.Assume.assumeTrue;
-
-public class MavenProjectsManagerAutoImportTest extends MavenMultiVersionImportingTestCase {
-  @Override
-  protected boolean runInDispatchThread() {
-    return true;
-  }
-
-  @Override
-  protected void setUp() throws Exception {
-    super.setUp();
-    initProjectsManager(true);
-    Assume.assumeFalse(MavenUtil.isLinearImportEnabled());
+  override fun setUp() {
+    super.setUp()
+    initProjectsManager(true)
+    Assume.assumeFalse(MavenUtil.isLinearImportEnabled())
   }
 
   @Test
-  public void testResolvingEnvVariableInRepositoryPath() throws Exception {
-    String temp = System.getenv(getEnvVar());
-    updateSettingsXml("<localRepository>${env." + getEnvVar() + "}/tmpRepo</localRepository>");
-
-    File repo = new File(temp + "/tmpRepo").getCanonicalFile();
-    assertEquals(repo.getPath(), getMavenGeneralSettings().getEffectiveLocalRepository().getPath());
-
+  @Throws(Exception::class)
+  fun testResolvingEnvVariableInRepositoryPath() {
+    val temp = System.getenv(getEnvVar())
+    updateSettingsXml("<localRepository>\${env." + getEnvVar() + "}/tmpRepo</localRepository>")
+    val repo = File("$temp/tmpRepo").getCanonicalFile()
+    assertEquals(repo.path, mavenGeneralSettings.getEffectiveLocalRepository().path)
     importProject("""
                     <groupId>test</groupId>
                     <artifactId>project</artifactId>
@@ -53,14 +43,14 @@ public class MavenProjectsManagerAutoImportTest extends MavenMultiVersionImporti
                         <version>4.0</version>
                       </dependency>
                     </dependencies>
-                    """);
-
+                    """.trimIndent())
     assertModuleLibDep("project", "Maven: junit:junit:4.0",
-                       "jar://" + FileUtil.toSystemIndependentName(repo.getPath()) + "/junit/junit/4.0/junit-4.0.jar!/");
+                       "jar://" + FileUtil.toSystemIndependentName(repo.path) + "/junit/junit/4.0/junit-4.0.jar!/")
   }
 
   @Test
-  public void testUpdatingProjectsOnProfilesXmlChange() throws IOException {
+  @Throws(IOException::class)
+  fun testUpdatingProjectsOnProfilesXmlChange() {
     createProjectPom("""
                        <groupId>test</groupId>
                        <artifactId>project</artifactId>
@@ -70,10 +60,9 @@ public class MavenProjectsManagerAutoImportTest extends MavenMultiVersionImporti
                          <module>m</module>
                        </modules>
                        <build>
-                         <sourceDirectory>${prop}</sourceDirectory>
+                         <sourceDirectory>${'$'}{prop}</sourceDirectory>
                        </build>
-                       """);
-
+                       """.trimIndent())
     createModulePom("m",
                     """
                       <groupId>test</groupId>
@@ -85,10 +74,9 @@ public class MavenProjectsManagerAutoImportTest extends MavenMultiVersionImporti
                         <version>1</version>
                       </parent>
                       <build>
-                        <sourceDirectory>${prop}</sourceDirectory>
+                        <sourceDirectory>${'$'}{prop}</sourceDirectory>
                       </build>
-                      """);
-
+                      """.trimIndent())
     updateSettingsXml("""
                         <profiles>
                           <profile>
@@ -101,18 +89,15 @@ public class MavenProjectsManagerAutoImportTest extends MavenMultiVersionImporti
                             </properties>
                           </profile>
                         </profiles>
-                        """);
-
-    importProject();
-
-    List<MavenProject> roots = getProjectsTree().getRootProjects();
-
-    MavenProject parentNode = roots.get(0);
-    MavenProject childNode = getProjectsTree().getModules(roots.get(0)).get(0);
-
-    assertUnorderedPathsAreEqual(parentNode.getSources(), Arrays.asList(FileUtil.toSystemDependentName(getProjectPath() + "/value1")));
-    assertUnorderedPathsAreEqual(childNode.getSources(), Arrays.asList(FileUtil.toSystemDependentName(getProjectPath() + "/m/value1")));
-
+                        """.trimIndent())
+    importProject()
+    val roots = projectsTree.rootProjects
+    val parentNode = roots[0]
+    val childNode = projectsTree.getModules(roots[0])[0]
+    assertUnorderedPathsAreEqual(parentNode.sources, Arrays.asList(FileUtil.toSystemDependentName(
+      "$projectPath/value1")))
+    assertUnorderedPathsAreEqual(childNode.sources, Arrays.asList(FileUtil.toSystemDependentName(
+      "$projectPath/m/value1")))
     updateSettingsXml("""
                         <profiles>
                           <profile>
@@ -125,18 +110,18 @@ public class MavenProjectsManagerAutoImportTest extends MavenMultiVersionImporti
                             </properties>
                           </profile>
                         </profiles>
-                        """);
-    importProject();
-
-    assertUnorderedPathsAreEqual(parentNode.getSources(), Arrays.asList(FileUtil.toSystemDependentName(getProjectPath() + "/value2")));
-    assertUnorderedPathsAreEqual(childNode.getSources(), Arrays.asList(FileUtil.toSystemDependentName(getProjectPath() + "/m/value2")));
-
-    updateSettingsXml("<profiles/>");
-    importProject();
-
-    assertUnorderedPathsAreEqual(parentNode.getSources(), Arrays.asList(FileUtil.toSystemDependentName(getProjectPath() + "/${prop}")));
-    assertUnorderedPathsAreEqual(childNode.getSources(), Arrays.asList(FileUtil.toSystemDependentName(getProjectPath() + "/m/${prop}")));
-
+                        """.trimIndent())
+    importProject()
+    assertUnorderedPathsAreEqual(parentNode.sources, Arrays.asList(FileUtil.toSystemDependentName(
+      "$projectPath/value2")))
+    assertUnorderedPathsAreEqual(childNode.sources, Arrays.asList(FileUtil.toSystemDependentName(
+      "$projectPath/m/value2")))
+    updateSettingsXml("<profiles/>")
+    importProject()
+    assertUnorderedPathsAreEqual(parentNode.sources, Arrays.asList(FileUtil.toSystemDependentName(
+      "$projectPath/\${prop}")))
+    assertUnorderedPathsAreEqual(childNode.sources, Arrays.asList(FileUtil.toSystemDependentName(
+      "$projectPath/m/\${prop}")))
     updateSettingsXml("""
                         <profiles>
                           <profile>
@@ -149,15 +134,17 @@ public class MavenProjectsManagerAutoImportTest extends MavenMultiVersionImporti
                             </properties>
                           </profile>
                         </profiles>
-                        """);
-    importProject();
-
-    assertUnorderedPathsAreEqual(parentNode.getSources(), Arrays.asList(FileUtil.toSystemDependentName(getProjectPath() + "/value2")));
-    assertUnorderedPathsAreEqual(childNode.getSources(), Arrays.asList(FileUtil.toSystemDependentName(getProjectPath() + "/m/value2")));
+                        """.trimIndent())
+    importProject()
+    assertUnorderedPathsAreEqual(parentNode.sources, Arrays.asList(FileUtil.toSystemDependentName(
+      "$projectPath/value2")))
+    assertUnorderedPathsAreEqual(childNode.sources, Arrays.asList(FileUtil.toSystemDependentName(
+      "$projectPath/m/value2")))
   }
 
   @Test
-  public void testUpdatingProjectsWhenSettingsXmlLocationIsChanged() throws Exception {
+  @Throws(Exception::class)
+  fun testUpdatingProjectsWhenSettingsXmlLocationIsChanged() {
     createProjectPom("""
                        <groupId>test</groupId>
                        <artifactId>project</artifactId>
@@ -167,10 +154,9 @@ public class MavenProjectsManagerAutoImportTest extends MavenMultiVersionImporti
                          <module>m</module>
                        </modules>
                        <build>
-                         <sourceDirectory>${prop}</sourceDirectory>
+                         <sourceDirectory>${'$'}{prop}</sourceDirectory>
                        </build>
-                       """);
-
+                       """.trimIndent())
     createModulePom("m",
                     """
                       <groupId>test</groupId>
@@ -182,10 +168,9 @@ public class MavenProjectsManagerAutoImportTest extends MavenMultiVersionImporti
                         <version>1</version>
                       </parent>
                       <build>
-                        <sourceDirectory>${prop}</sourceDirectory>
+                        <sourceDirectory>${'$'}{prop}</sourceDirectory>
                       </build>
-                      """);
-
+                      """.trimIndent())
     updateSettingsXml("""
                         <profiles>
                           <profile>
@@ -198,54 +183,56 @@ public class MavenProjectsManagerAutoImportTest extends MavenMultiVersionImporti
                             </properties>
                           </profile>
                         </profiles>
-                        """);
-
-    importProject();
-
-    List<MavenProject> roots = getProjectsTree().getRootProjects();
-
-    MavenProject parentNode = roots.get(0);
-    MavenProject childNode = getProjectsTree().getModules(roots.get(0)).get(0);
-
-    assertUnorderedPathsAreEqual(parentNode.getSources(), Arrays.asList(FileUtil.toSystemDependentName(getProjectPath() + "/value1")));
-    assertUnorderedPathsAreEqual(childNode.getSources(), Arrays.asList(FileUtil.toSystemDependentName(getProjectPath() + "/m/value1")));
-
-    getMavenGeneralSettings().setUserSettingsFile("");
-    waitForReadingCompletion();
-
-    assertUnorderedPathsAreEqual(parentNode.getSources(), Arrays.asList(FileUtil.toSystemDependentName(getProjectPath() + "/${prop}")));
-    assertUnorderedPathsAreEqual(childNode.getSources(), Arrays.asList(FileUtil.toSystemDependentName(getProjectPath() + "/m/${prop}")));
-
-    getMavenGeneralSettings().setUserSettingsFile(new File(myDir, "settings.xml").getPath());
-    waitForReadingCompletion();
-
-    assertUnorderedPathsAreEqual(parentNode.getSources(), Arrays.asList(FileUtil.toSystemDependentName(getProjectPath() + "/value1")));
-    assertUnorderedPathsAreEqual(childNode.getSources(), Arrays.asList(FileUtil.toSystemDependentName(getProjectPath() + "/m/value1")));
+                        """.trimIndent())
+    importProject()
+    val roots = projectsTree.rootProjects
+    val parentNode = roots[0]
+    val childNode = projectsTree.getModules(roots[0])[0]
+    assertUnorderedPathsAreEqual(parentNode.sources, Arrays.asList(FileUtil.toSystemDependentName(
+      "$projectPath/value1")))
+    assertUnorderedPathsAreEqual(childNode.sources, Arrays.asList(FileUtil.toSystemDependentName(
+      "$projectPath/m/value1")))
+    mavenGeneralSettings.setUserSettingsFile("")
+    waitForReadingCompletion()
+    assertUnorderedPathsAreEqual(parentNode.sources, Arrays.asList(FileUtil.toSystemDependentName(
+      "$projectPath/\${prop}")))
+    assertUnorderedPathsAreEqual(childNode.sources, Arrays.asList(FileUtil.toSystemDependentName(
+      "$projectPath/m/\${prop}")))
+    mavenGeneralSettings.setUserSettingsFile(File(myDir, "settings.xml").path)
+    waitForReadingCompletion()
+    assertUnorderedPathsAreEqual(parentNode.sources, Arrays.asList(FileUtil.toSystemDependentName(
+      "$projectPath/value1")))
+    assertUnorderedPathsAreEqual(childNode.sources, Arrays.asList(FileUtil.toSystemDependentName(
+      "$projectPath/m/value1")))
   }
 
   @Test
-  public void testUpdatingMavenPathsWhenSettingsChanges() throws Exception {
+  @Throws(Exception::class)
+  fun testUpdatingMavenPathsWhenSettingsChanges() {
     createProjectPom("""
                        <groupId>test</groupId>
                        <artifactId>project</artifactId>
                        <version>1</version>
-                       """);
-
-    File repo1 = new File(myDir, "localRepo1");
-    updateSettingsXml("<localRepository>\n" + repo1.getPath() + "</localRepository>");
-
-    waitForReadingCompletion();
-    assertEquals(repo1, getMavenGeneralSettings().getEffectiveLocalRepository());
-
-    File repo2 = new File(myDir, "localRepo2");
-    updateSettingsXml("<localRepository>\n" + repo2.getPath() + "</localRepository>");
-
-    waitForReadingCompletion();
-    assertEquals(repo2, getMavenGeneralSettings().getEffectiveLocalRepository());
+                       """.trimIndent())
+    val repo1 = File(myDir, "localRepo1")
+    updateSettingsXml("""
+  <localRepository>
+  ${repo1.path}</localRepository>
+  """.trimIndent())
+    waitForReadingCompletion()
+    assertEquals(repo1, mavenGeneralSettings.getEffectiveLocalRepository())
+    val repo2 = File(myDir, "localRepo2")
+    updateSettingsXml("""
+  <localRepository>
+  ${repo2.path}</localRepository>
+  """.trimIndent())
+    waitForReadingCompletion()
+    assertEquals(repo2, mavenGeneralSettings.getEffectiveLocalRepository())
   }
 
   @Test
-  public void testSchedulingReimportWhenPomFileIsDeleted() throws IOException {
+  @Throws(IOException::class)
+  fun testSchedulingReimportWhenPomFileIsDeleted() {
     createProjectPom("""
                        <groupId>test</groupId>
                        <artifactId>project</artifactId>
@@ -254,41 +241,38 @@ public class MavenProjectsManagerAutoImportTest extends MavenMultiVersionImporti
                        <modules>
                          <module>m</module>
                        </modules>
-                       """);
-
-    final VirtualFile m = createModulePom("m",
-                                          """
+                       """.trimIndent())
+    val m = createModulePom("m",
+                            """
                                             <groupId>test</groupId>
                                             <artifactId>m</artifactId>
                                             <version>1</version>
-                                            """);
-    importProject();
+                                            """.trimIndent())
+    importProject()
     //myProjectsManager.performScheduledImportInTests(); // ensure no pending requests
-    assertModules("project", mn("project", "m"));
-
-    runWriteAction(() -> m.delete(this));
+    assertModules("project", mn("project", "m"))
+    runWriteAction<IOException> { m.delete(this) }
 
     //configConfirmationForYesAnswer();
-    MavenProjectLegacyImporter.setAnswerToDeleteObsoleteModulesQuestion(true);
-
-    scheduleProjectImportAndWait();
-    assertModules("project");
+    MavenProjectLegacyImporter.setAnswerToDeleteObsoleteModulesQuestion(true)
+    scheduleProjectImportAndWait()
+    assertModules("project")
   }
 
   @Test
-  public void testHandlingDirectoryWithPomFileDeletion() throws IOException {
+  @Throws(IOException::class)
+  fun testHandlingDirectoryWithPomFileDeletion() {
     importProject("""
                     <groupId>test</groupId>
                     <artifactId>project</artifactId>
                     <packaging>pom</packaging>
                     <version>1</version>
-                    """);
-
+                    """.trimIndent())
     createModulePom("dir/module", """
       <groupId>test</groupId>
       <artifactId>module</artifactId>
       <version>1</version>
-      """);
+      """.trimIndent())
     createProjectPom("""
                        <groupId>test</groupId>
                        <artifactId>project</artifactId>
@@ -297,24 +281,20 @@ public class MavenProjectsManagerAutoImportTest extends MavenMultiVersionImporti
                        <modules>
                          <module>dir/module</module>
                        </modules>
-                       """);
-    scheduleProjectImportAndWait();
-
-    assertEquals(2, MavenProjectsManager.getInstance(myProject).getProjects().size());
-
-    final VirtualFile dir = myProjectRoot.findChild("dir");
-    WriteCommandAction.writeCommandAction(myProject).run(() -> dir.delete(null));
+                       """.trimIndent())
+    scheduleProjectImportAndWait()
+    assertEquals(2, MavenProjectsManager.getInstance(myProject).getProjects().size)
+    val dir = myProjectRoot.findChild("dir")
+    WriteCommandAction.writeCommandAction(myProject).run<IOException> { dir!!.delete(null) }
 
     //configConfirmationForYesAnswer();
-    MavenProjectLegacyImporter.setAnswerToDeleteObsoleteModulesQuestion(true);
-
-    scheduleProjectImportAndWait();
-
-    assertEquals(1, MavenProjectsManager.getInstance(myProject).getProjects().size());
+    MavenProjectLegacyImporter.setAnswerToDeleteObsoleteModulesQuestion(true)
+    scheduleProjectImportAndWait()
+    assertEquals(1, MavenProjectsManager.getInstance(myProject).getProjects().size)
   }
 
   @Test
-  public void testScheduleReimportWhenPluginConfigurationChangesInTagName() {
+  fun testScheduleReimportWhenPluginConfigurationChangesInTagName() {
     importProject("""
                     <groupId>test</groupId>
                     <artifactId>project</artifactId>
@@ -331,9 +311,8 @@ public class MavenProjectsManagerAutoImportTest extends MavenMultiVersionImporti
                         </plugin>
                       </plugins>
                     </build>
-                    """);
-    assertNoPendingProjectForReload();
-
+                    """.trimIndent())
+    assertNoPendingProjectForReload()
     createProjectPom("""
                        <groupId>test</groupId>
                        <artifactId>project</artifactId>
@@ -350,15 +329,13 @@ public class MavenProjectsManagerAutoImportTest extends MavenMultiVersionImporti
                            </plugin>
                          </plugins>
                        </build>
-                       """);
-    assertHasPendingProjectForReload();
-
-    scheduleProjectImportAndWait();
+                       """.trimIndent())
+    assertHasPendingProjectForReload()
+    scheduleProjectImportAndWait()
   }
 
-
   @Test
-  public void testUpdatingProjectsWhenAbsentModuleFileAppears() {
+  fun testUpdatingProjectsWhenAbsentModuleFileAppears() {
     importProject("""
                     <groupId>test</groupId>
                     <artifactId>parent</artifactId>
@@ -367,29 +344,25 @@ public class MavenProjectsManagerAutoImportTest extends MavenMultiVersionImporti
                     <modules>
                       <module>m</module>
                     </modules>
-                    """);
-
-    List<MavenProject> roots = getProjectsTree().getRootProjects();
-    MavenProject parentNode = roots.get(0);
-
-    assertNotNull(parentNode);
-    assertTrue(getProjectsTree().getModules(roots.get(0)).isEmpty());
-
-    VirtualFile m = createModulePom("m",
-                                    """
+                    """.trimIndent())
+    val roots = projectsTree.rootProjects
+    val parentNode = roots[0]
+    assertNotNull(parentNode)
+    assertTrue(projectsTree.getModules(roots[0]).isEmpty())
+    val m = createModulePom("m",
+                            """
                                       <groupId>test</groupId>
                                       <artifactId>m</artifactId>
                                       <version>1</version>
-                                      """);
-    scheduleProjectImportAndWait();
-
-    List<MavenProject> children = getProjectsTree().getModules(roots.get(0));
-    assertEquals(1, children.size());
-    assertEquals(m, children.get(0).getFile());
+                                      """.trimIndent())
+    scheduleProjectImportAndWait()
+    val children = projectsTree.getModules(roots[0])
+    assertEquals(1, children.size)
+    assertEquals(m, children[0].file)
   }
 
   @Test
-  public void testScheduleReimportWhenPluginConfigurationChangesInValue() {
+  fun testScheduleReimportWhenPluginConfigurationChangesInValue() {
     importProject("""
                     <groupId>test</groupId>
                     <artifactId>project</artifactId>
@@ -406,9 +379,8 @@ public class MavenProjectsManagerAutoImportTest extends MavenMultiVersionImporti
                         </plugin>
                       </plugins>
                     </build>
-                    """);
-    assertNoPendingProjectForReload();
-
+                    """.trimIndent())
+    assertNoPendingProjectForReload()
     createProjectPom("""
                        <groupId>test</groupId>
                        <artifactId>project</artifactId>
@@ -425,14 +397,13 @@ public class MavenProjectsManagerAutoImportTest extends MavenMultiVersionImporti
                            </plugin>
                          </plugins>
                        </build>
-                       """);
-    assertHasPendingProjectForReload();
-
-    scheduleProjectImportAndWait();
+                       """.trimIndent())
+    assertHasPendingProjectForReload()
+    scheduleProjectImportAndWait()
   }
 
   @Test
-  public void testSchedulingResolveOfDependentProjectWhenDependencyChanges() {
+  fun testSchedulingResolveOfDependentProjectWhenDependencyChanges() {
     createProjectPom("""
                        <groupId>test</groupId>
                        <artifactId>project</artifactId>
@@ -442,8 +413,7 @@ public class MavenProjectsManagerAutoImportTest extends MavenMultiVersionImporti
                          <module>m1</module>
                          <module>m2</module>
                        </modules>
-                       """);
-
+                       """.trimIndent())
     createModulePom("m1", """
       <groupId>test</groupId>
       <artifactId>m1</artifactId>
@@ -455,19 +425,15 @@ public class MavenProjectsManagerAutoImportTest extends MavenMultiVersionImporti
           <version>1</version>
         </dependency>
       </dependencies>
-      """);
-
+      """.trimIndent())
     createModulePom("m2", """
       <groupId>test</groupId>
       <artifactId>m2</artifactId>
       <version>1</version>
-      """);
-
-    importProject();
-
-    assertModuleModuleDeps("m1", "m2");
-    assertModuleLibDeps("m1");
-
+      """.trimIndent())
+    importProject()
+    assertModuleModuleDeps("m1", "m2")
+    assertModuleLibDeps("m1")
     createModulePom("m2", """
       <groupId>test</groupId>
       <artifactId>m2</artifactId>
@@ -479,18 +445,15 @@ public class MavenProjectsManagerAutoImportTest extends MavenMultiVersionImporti
           <version>4.0</version>
         </dependency>
       </dependencies>
-      """);
-
-    scheduleProjectImportAndWait();
-
-    assertModuleModuleDeps("m1", "m2");
-    assertModuleLibDeps("m1", "Maven: junit:junit:4.0");
+      """.trimIndent())
+    scheduleProjectImportAndWait()
+    assertModuleModuleDeps("m1", "m2")
+    assertModuleLibDeps("m1", "Maven: junit:junit:4.0")
   }
 
-
   @Test
-  public void testAddingManagedFileAndChangingAggregation() {
-    assumeTrue(isWorkspaceImport());
+  fun testAddingManagedFileAndChangingAggregation() {
+    Assume.assumeTrue(isWorkspaceImport)
     importProject("""
                     <groupId>test</groupId>
                     <artifactId>parent</artifactId>
@@ -499,39 +462,34 @@ public class MavenProjectsManagerAutoImportTest extends MavenMultiVersionImporti
                     <modules>
                       <module>m</module>
                     </modules>
-                    """);
-
-    VirtualFile m = createModulePom("m",
-                                    """
+                    """.trimIndent())
+    val m = createModulePom("m",
+                            """
                                       <groupId>test</groupId>
                                       <artifactId>m</artifactId>
                                       <version>1</version>
-                                      """);
-    scheduleProjectImportAndWait();
-
-    assertEquals(1, getProjectsTree().getRootProjects().size());
-    assertEquals(1, getProjectsTree().getModules(getProjectsTree().getRootProjects().get(0)).size());
-
-    getProjectsManager().addManagedFiles(Arrays.asList(m));
-    waitForReadingCompletion();
-
-    assertEquals(1, getProjectsTree().getRootProjects().size());
-    assertEquals(1, getProjectsTree().getModules(getProjectsTree().getRootProjects().get(0)).size());
-
+                                      """.trimIndent())
+    scheduleProjectImportAndWait()
+    assertEquals(1, projectsTree.rootProjects.size)
+    assertEquals(1, projectsTree.getModules(projectsTree.rootProjects[0]).size)
+    projectsManager.addManagedFiles(Arrays.asList(m))
+    waitForReadingCompletion()
+    assertEquals(1, projectsTree.rootProjects.size)
+    assertEquals(1, projectsTree.getModules(projectsTree.rootProjects[0]).size)
     createProjectPom("""
                        <groupId>test</groupId>
                        <artifactId>parent</artifactId>
                        <version>1</version>
                        <packaging>pom</packaging>
-                       """);
-    importProject();
-
-    assertEquals(1, getProjectsTree().getRootProjects().size());
-    assertEquals(0, getProjectsTree().getModules(getProjectsTree().getRootProjects().get(0)).size());
+                       """.trimIndent())
+    importProject()
+    assertEquals(1, projectsTree.rootProjects.size)
+    assertEquals(0, projectsTree.getModules(projectsTree.rootProjects[0]).size)
   }
 
   @Test
-  public void testSchedulingResolveOfDependentProjectWhenDependencyIsDeleted() throws IOException {
+  @Throws(IOException::class)
+  fun testSchedulingResolveOfDependentProjectWhenDependencyIsDeleted() {
     createProjectPom("""
                        <groupId>test</groupId>
                        <artifactId>project</artifactId>
@@ -541,8 +499,7 @@ public class MavenProjectsManagerAutoImportTest extends MavenMultiVersionImporti
                          <module>m1</module>
                          <module>m2</module>
                        </modules>
-                       """);
-
+                       """.trimIndent())
     createModulePom("m1", """
       <groupId>test</groupId>
       <artifactId>m1</artifactId>
@@ -554,9 +511,8 @@ public class MavenProjectsManagerAutoImportTest extends MavenMultiVersionImporti
           <version>1</version>
         </dependency>
       </dependencies>
-      """);
-
-    final VirtualFile m2 = createModulePom("m2", """
+      """.trimIndent())
+    val m2 = createModulePom("m2", """
       <groupId>test</groupId>
       <artifactId>m2</artifactId>
       <version>1</version>
@@ -567,31 +523,25 @@ public class MavenProjectsManagerAutoImportTest extends MavenMultiVersionImporti
           <version>4.0</version>
         </dependency>
       </dependencies>
-      """);
-
-    importProject();
-
-    assertModules("project", "m1", "m2");
-
-    assertModuleModuleDeps("m1", "m2");
-    assertModuleLibDeps("m1", "Maven: junit:junit:4.0");
-
-    WriteCommandAction.writeCommandAction(myProject).run(() -> m2.delete(this));
+      """.trimIndent())
+    importProject()
+    assertModules("project", "m1", "m2")
+    assertModuleModuleDeps("m1", "m2")
+    assertModuleLibDeps("m1", "Maven: junit:junit:4.0")
+    WriteCommandAction.writeCommandAction(myProject).run<IOException> { m2.delete(this) }
 
 
     //configConfirmationForYesAnswer();// should update deps even if module is not removed
-    MavenProjectLegacyImporter.setAnswerToDeleteObsoleteModulesQuestion(true);
-
-    scheduleProjectImportAndWait();
-
-    assertModules("project", "m1");
-
-    assertModuleModuleDeps("m1");
-    assertModuleLibDeps("m1", "Maven: test:m2:1");
+    MavenProjectLegacyImporter.setAnswerToDeleteObsoleteModulesQuestion(true)
+    scheduleProjectImportAndWait()
+    assertModules("project", "m1")
+    assertModuleModuleDeps("m1")
+    assertModuleLibDeps("m1", "Maven: test:m2:1")
   }
 
   @Test
-  public void testUpdatingProjectsWhenAbsentManagedProjectFileAppears() throws IOException {
+  @Throws(IOException::class)
+  fun testUpdatingProjectsWhenAbsentManagedProjectFileAppears() {
     importProject("""
                     <groupId>test</groupId>
                     <artifactId>parent</artifactId>
@@ -600,18 +550,14 @@ public class MavenProjectsManagerAutoImportTest extends MavenMultiVersionImporti
                     <modules>
                       <module>m</module>
                     </modules>
-                    """);
-    assertEquals(1, getProjectsTree().getRootProjects().size());
-
-    WriteCommandAction.writeCommandAction(myProject).run(() -> myProjectPom.delete(this));
+                    """.trimIndent())
+    assertEquals(1, projectsTree.rootProjects.size)
+    WriteCommandAction.writeCommandAction(myProject).run<IOException> { myProjectPom.delete(this) }
 
     //configConfirmationForYesAnswer();
-    MavenProjectLegacyImporter.setAnswerToDeleteObsoleteModulesQuestion(true);
-
-    importProject();
-
-    assertEquals(0, getProjectsTree().getRootProjects().size());
-
+    MavenProjectLegacyImporter.setAnswerToDeleteObsoleteModulesQuestion(true)
+    importProject()
+    assertEquals(0, projectsTree.rootProjects.size)
     createProjectPom("""
                        <groupId>test</groupId>
                        <artifactId>parent</artifactId>
@@ -620,82 +566,74 @@ public class MavenProjectsManagerAutoImportTest extends MavenMultiVersionImporti
                        <modules>
                          <module>m</module>
                        </modules>
-                       """);
+                       """.trimIndent())
     //importProject();
-    scheduleProjectImportAndWait();
-
-    assertEquals(1, getProjectsTree().getRootProjects().size());
+    scheduleProjectImportAndWait()
+    assertEquals(1, projectsTree.rootProjects.size)
   }
 
   @Test
-  public void testUpdatingProjectsWhenRenaming() throws IOException {
-    VirtualFile p1 = createModulePom("project1",
-                                     """
+  @Throws(IOException::class)
+  fun testUpdatingProjectsWhenRenaming() {
+    val p1 = createModulePom("project1",
+                             """
                                        <groupId>test</groupId>
                                        <artifactId>project1</artifactId>
                                        <version>1</version>
-                                       """);
-
-    final VirtualFile p2 = createModulePom("project2",
-                                           """
+                                       """.trimIndent())
+    val p2 = createModulePom("project2",
+                             """
                                              <groupId>test</groupId>
                                              <artifactId>project2</artifactId>
                                              <version>1</version>
-                                             """);
-    importProjects(p1, p2);
-
-    assertEquals(2, getProjectsTree().getRootProjects().size());
-
-    runWriteAction(() -> p2.rename(this, "foo.bar"));
+                                             """.trimIndent())
+    importProjects(p1, p2)
+    assertEquals(2, projectsTree.rootProjects.size)
+    runWriteAction<IOException> { p2.rename(this, "foo.bar") }
 
     //configConfirmationForYesAnswer();
-    MavenProjectLegacyImporter.setAnswerToDeleteObsoleteModulesQuestion(true);
-
-    scheduleProjectImportAndWaitWithoutCheckFloatingBar();
-    assertEquals(1, getProjectsTree().getRootProjects().size());
-
-    runWriteAction(() -> p2.rename(this, "pom.xml"));
-    scheduleProjectImportAndWaitWithoutCheckFloatingBar();
-    assertEquals(2, getProjectsTree().getRootProjects().size());
+    MavenProjectLegacyImporter.setAnswerToDeleteObsoleteModulesQuestion(true)
+    scheduleProjectImportAndWaitWithoutCheckFloatingBar()
+    assertEquals(1, projectsTree.rootProjects.size)
+    runWriteAction<IOException> { p2.rename(this, "pom.xml") }
+    scheduleProjectImportAndWaitWithoutCheckFloatingBar()
+    assertEquals(2, projectsTree.rootProjects.size)
   }
 
   @Test
-  public void testUpdatingProjectsWhenMoving() throws IOException, InterruptedException {
-    VirtualFile p1 = createModulePom("project1",
-                                     """
+  @Throws(IOException::class, InterruptedException::class)
+  fun testUpdatingProjectsWhenMoving() {
+    val p1 = createModulePom("project1",
+                             """
                                        <groupId>test</groupId>
                                        <artifactId>project1</artifactId>
                                        <version>1</version>
-                                       """);
-
-    final VirtualFile p2 = createModulePom("project2",
-                                           """
+                                       """.trimIndent())
+    val p2 = createModulePom("project2",
+                             """
                                              <groupId>test</groupId>
                                              <artifactId>project2</artifactId>
                                              <version>1</version>
-                                             """);
-    importProjects(p1, p2);
-
-    final VirtualFile oldDir = p2.getParent();
-    runWriteAction(() -> VfsUtil.markDirtyAndRefresh(false, true, true, myProjectRoot));
-    VirtualFile newDir = runWriteAction(() -> myProjectRoot.createChildDirectory(this, "foo"));
-    assertEquals(2, getProjectsTree().getRootProjects().size());
-
-    runWriteAction(() -> p2.move(this, newDir));
+                                             """.trimIndent())
+    importProjects(p1, p2)
+    val oldDir = p2.getParent()
+    runWriteAction<RuntimeException> { VfsUtil.markDirtyAndRefresh(false, true, true, myProjectRoot) }
+    val newDir = runWriteAction<VirtualFile, IOException> { myProjectRoot.createChildDirectory(this, "foo") }
+    assertEquals(2, projectsTree.rootProjects.size)
+    runWriteAction<IOException> { p2.move(this, newDir) }
 
     //configConfirmationForYesAnswer();
-    MavenProjectLegacyImporter.setAnswerToDeleteObsoleteModulesQuestion(true);
-
-    scheduleProjectImportAndWaitWithoutCheckFloatingBar();
-    assertEquals(1, getProjectsTree().getRootProjects().size());
-
-    runWriteAction(() -> p2.move(this, oldDir));
-    scheduleProjectImportAndWaitWithoutCheckFloatingBar();
-    assertEquals(2, getProjectsTree().getRootProjects().size());
+    MavenProjectLegacyImporter.setAnswerToDeleteObsoleteModulesQuestion(true)
+    scheduleProjectImportAndWaitWithoutCheckFloatingBar()
+    assertEquals(1, projectsTree.rootProjects.size)
+    runWriteAction<IOException> { p2.move(this, oldDir) }
+    scheduleProjectImportAndWaitWithoutCheckFloatingBar()
+    assertEquals(2, projectsTree.rootProjects.size)
   }
 
   @Test
-  public void testUpdatingProjectsWhenMovingModuleFile() throws IOException {
+  @Throws(IOException::class)
+  fun testUpdatingProjectsWhenMovingModuleFile() {
     createProjectPom("""
                        <groupId>test</groupId>
                        <artifactId>parent</artifactId>
@@ -705,43 +643,34 @@ public class MavenProjectsManagerAutoImportTest extends MavenMultiVersionImporti
                          <module>m1</module>
                          <module>m2</module>
                        </modules>
-                       """);
-
-    final VirtualFile m = createModulePom("m1",
-                                          """
+                       """.trimIndent())
+    val m = createModulePom("m1",
+                            """
                                             <groupId>test</groupId>
                                             <artifactId>m</artifactId>
                                             <version>1</version>
-                                            """);
-    importProject();
-
-    final VirtualFile oldDir = m.getParent();
-    WriteCommandAction.writeCommandAction(myProject).run(() -> {
-      VirtualFile newDir = myProjectRoot.createChildDirectory(this, "m2");
-
-      assertEquals(1, getProjectsTree().getRootProjects().size());
-      assertEquals(1, getProjectsTree().getModules(getProjectsTree().getRootProjects().get(0)).size());
-
-      m.move(this, newDir);
-      scheduleProjectImportAndWaitWithoutCheckFloatingBar();
-
-      assertEquals(1, getProjectsTree().getModules(getProjectsTree().getRootProjects().get(0)).size());
-
-      m.move(this, oldDir);
-      scheduleProjectImportAndWaitWithoutCheckFloatingBar();
-
-      assertEquals(1, getProjectsTree().getModules(getProjectsTree().getRootProjects().get(0)).size());
-
-      m.move(this, myProjectRoot.createChildDirectory(this, "xxx"));
-    });
+                                            """.trimIndent())
+    importProject()
+    val oldDir = m.getParent()
+    WriteCommandAction.writeCommandAction(myProject).run<IOException> {
+      val newDir = myProjectRoot.createChildDirectory(this, "m2")
+      assertEquals(1, projectsTree.rootProjects.size)
+      assertEquals(1, projectsTree.getModules(projectsTree.rootProjects[0]).size)
+      m.move(this, newDir)
+      scheduleProjectImportAndWaitWithoutCheckFloatingBar()
+      assertEquals(1, projectsTree.getModules(projectsTree.rootProjects[0]).size)
+      m.move(this, oldDir)
+      scheduleProjectImportAndWaitWithoutCheckFloatingBar()
+      assertEquals(1, projectsTree.getModules(projectsTree.rootProjects[0]).size)
+      m.move(this, myProjectRoot.createChildDirectory(this, "xxx"))
+    }
 
     //configConfirmationForYesAnswer();
-    MavenProjectLegacyImporter.setAnswerToDeleteObsoleteModulesQuestion(true);
-
-    scheduleProjectImportAndWaitWithoutCheckFloatingBar();
-    getProjectsManager().forceUpdateAllProjectsOrFindAllAvailablePomFiles();
-    waitForImportCompletion();
-    assertEquals(0, getProjectsTree().getModules(getProjectsTree().getRootProjects().get(0)).size());
+    MavenProjectLegacyImporter.setAnswerToDeleteObsoleteModulesQuestion(true)
+    scheduleProjectImportAndWaitWithoutCheckFloatingBar()
+    projectsManager.forceUpdateAllProjectsOrFindAllAvailablePomFiles()
+    waitForImportCompletion()
+    assertEquals(0, projectsTree.getModules(projectsTree.rootProjects[0]).size)
   }
 
   /**
@@ -750,7 +679,7 @@ public class MavenProjectsManagerAutoImportTest extends MavenMultiVersionImporti
    * Because there is no information who deleted the import file or the other user action
    * problem in MavenProjectsAware#collectSettingsFiles() / yieldAll(projectsTree.projectsFiles.map { it.path })
    */
-  private void scheduleProjectImportAndWaitWithoutCheckFloatingBar() {
-    ExternalSystemProjectTracker.getInstance(myProject).scheduleProjectRefresh();
+  private fun scheduleProjectImportAndWaitWithoutCheckFloatingBar() {
+    ExternalSystemProjectTracker.getInstance(myProject).scheduleProjectRefresh()
   }
 }
