@@ -3,7 +3,9 @@ package org.jetbrains.plugins.terminal;
 
 import com.intellij.execution.process.OSProcessUtil;
 import com.intellij.execution.process.UnixProcessManager;
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
@@ -18,6 +20,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
+import java.util.List;
 import java.util.StringTokenizer;
 
 public final class TerminalUtil {
@@ -74,5 +77,15 @@ public final class TerminalUtil {
 
   private static @Nullable String getExecutable(@NotNull WinPtyProcess process) {
     return ContainerUtil.getFirstItem(process.getCommand());
+  }
+
+  public static <T> void addItem(@NotNull List<T> items, @NotNull T item, @NotNull Disposable parentDisposable) {
+    items.add(item);
+    boolean registered = Disposer.tryRegister(parentDisposable, () -> {
+      items.remove(item);
+    });
+    if (!registered) {
+      items.remove(item);
+    }
   }
 }

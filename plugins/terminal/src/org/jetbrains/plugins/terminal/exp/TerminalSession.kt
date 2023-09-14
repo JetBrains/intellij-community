@@ -12,8 +12,10 @@ import com.jediterm.terminal.model.JediTermDebouncerImpl
 import com.jediterm.terminal.model.JediTermTypeAheadModel
 import com.jediterm.terminal.model.StyleState
 import com.jediterm.terminal.model.TerminalTextBuffer
+import org.jetbrains.plugins.terminal.TerminalUtil
 import org.jetbrains.plugins.terminal.util.ShellIntegration
 import java.awt.event.KeyEvent
+import java.util.concurrent.CopyOnWriteArrayList
 
 class TerminalSession(settings: JBTerminalSystemSettingsProviderBase, val shellIntegration: ShellIntegration?) : Disposable {
   val model: TerminalModel
@@ -25,6 +27,7 @@ class TerminalSession(settings: JBTerminalSystemSettingsProviderBase, val shellI
   val controller: TerminalController
   private val commandManager: ShellCommandManager
   private val typeAheadManager: TerminalTypeAheadManager
+  private val terminationListeners: MutableList<Runnable> = CopyOnWriteArrayList()
 
   init {
     val styleState = StyleState()
@@ -45,7 +48,19 @@ class TerminalSession(settings: JBTerminalSystemSettingsProviderBase, val shellI
     terminalStarter = TerminalStarter(controller, ttyConnector, TtyBasedArrayDataStream(ttyConnector), typeAheadManager, executorServiceManager)
     executorServiceManager.unboundedExecutorService.submit {
       terminalStarter.start()
+      try {
+        ttyConnector.close()
+      }
+      catch (ignored: Exception) {
+      }
+      for (terminationListener in terminationListeners) {
+        terminationListener.run()
+      }
     }
+  }
+
+  fun addTerminationCallback(onTerminated: Runnable, parentDisposable: Disposable) {
+    TerminalUtil.addItem(terminationListeners, onTerminated, parentDisposable)
   }
 
   fun executeCommand(command: String) {

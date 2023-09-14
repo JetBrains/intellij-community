@@ -16,4 +16,6 @@ interface TerminalContentView : Disposable {
   fun getTerminalSize(): TermSize?
 
   fun isFocused(): Boolean
+
+  fun addTerminationCallback(onTerminated: Runnable, parentDisposable: Disposable)
 }

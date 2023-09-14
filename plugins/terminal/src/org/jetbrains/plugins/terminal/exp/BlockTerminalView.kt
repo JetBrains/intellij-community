@@ -2,6 +2,7 @@
 package org.jetbrains.plugins.terminal.exp
 
 import com.intellij.find.SearchSession
+import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.DataProvider
 import com.intellij.openapi.application.invokeLater
 import com.intellij.openapi.editor.event.DocumentEvent
@@ -162,6 +163,10 @@ class BlockTerminalView(
 
   override fun isFocused(): Boolean {
     return outputView.component.hasFocus() || promptView.component.hasFocus()
+  }
+
+  override fun addTerminationCallback(onTerminated: Runnable, parentDisposable: Disposable) {
+    session.addTerminationCallback(onTerminated, parentDisposable)
   }
 
   override fun dispose() {}

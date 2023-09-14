@@ -9,6 +9,7 @@ import com.intellij.terminal.TerminalTitle
 import com.intellij.terminal.ui.TerminalWidget
 import com.intellij.terminal.ui.TtyConnectorAccessor
 import com.intellij.ui.components.panels.Wrapper
+import com.intellij.util.asSafely
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.jediterm.core.util.TermSize
 import com.jediterm.terminal.TtyConnector
@@ -16,6 +17,7 @@ import org.jetbrains.plugins.terminal.JBTerminalSystemSettingsProvider
 import org.jetbrains.plugins.terminal.ShellStartupOptions
 import java.awt.Color
 import java.util.concurrent.CompletableFuture
+import java.util.concurrent.CopyOnWriteArrayList
 import javax.swing.JComponent
 import javax.swing.JPanel
 
@@ -31,6 +33,7 @@ class TerminalWidgetImpl(private val project: Project,
 
   override val ttyConnectorAccessor: TtyConnectorAccessor = TtyConnectorAccessor()
 
+  @Volatile
   private var view: TerminalContentView = TerminalPlaceholder()
 
   init {
@@ -47,7 +50,7 @@ class TerminalWidgetImpl(private val project: Project,
 
   @RequiresEdt(generateAssertion = false)
   fun initialize(options: ShellStartupOptions): CompletableFuture<TermSize> {
-    Disposer.dispose(view)
+    val oldView = view
     view = if (options.shellIntegration?.withCommandBlocks == true) {
       val session = TerminalSession(settings, options.shellIntegration)
       Disposer.register(this, session)
@@ -56,6 +59,8 @@ class TerminalWidgetImpl(private val project: Project,
     else {
       OldPlainTerminalView(project, settings)
     }
+    oldView.asSafely<TerminalPlaceholder>()?.moveTerminationCallbacksTo(view)
+    Disposer.dispose(oldView)
     Disposer.register(this, view)
 
     val component = view.component
@@ -88,18 +93,20 @@ class TerminalWidgetImpl(private val project: Project,
   }
 
   override fun addTerminationCallback(onTerminated: Runnable, parentDisposable: Disposable) {
-
+    view.addTerminationCallback(onTerminated, parentDisposable)
   }
 
-  override fun dispose() {
-
-  }
+  override fun dispose() {}
 
   override fun getComponent(): JComponent = wrapper
 
   override fun getPreferredFocusableComponent(): JComponent = view.preferredFocusableComponent
 
   private class TerminalPlaceholder : TerminalContentView {
+
+    private val postponedTerminationCallbackInfos: MutableList<Pair<Runnable, Disposable>> = CopyOnWriteArrayList()
+    private var destView: TerminalContentView? = null
+
     override val component: JComponent = object : JPanel() {
       override fun getBackground(): Color {
         return TerminalUi.terminalBackground
@@ -116,7 +123,29 @@ class TerminalWidgetImpl(private val project: Project,
 
     override fun isFocused(): Boolean = false
 
+    override fun addTerminationCallback(onTerminated: Runnable, parentDisposable: Disposable) {
+      synchronized(this) {
+        destView?.addTerminationCallback(onTerminated, parentDisposable) ?: run {
+          postponedTerminationCallbackInfos.add(Pair(onTerminated, parentDisposable))
+        }
+      }
+    }
+
+    fun moveTerminationCallbacksTo(destView: TerminalContentView) {
+      synchronized(this) {
+        this.destView = destView
+        for (info in postponedTerminationCallbackInfos) {
+          destView.addTerminationCallback(info.first, info.second)
+        }
+        postponedTerminationCallbackInfos.clear()
+      }
+    }
+
     override fun dispose() {
+      synchronized(this) {
+        destView = null
+        postponedTerminationCallbackInfos.clear()
+      }
     }
   }
 }
