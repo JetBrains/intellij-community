@@ -3,6 +3,8 @@ package com.intellij.codeInsight.daemon.impl.analysis;
 
 import com.intellij.codeInsight.AnnotationUtil;
 import com.intellij.codeInsight.daemon.JavaErrorBundle;
+import com.intellij.codeInsight.daemon.impl.HighlightInfo;
+import com.intellij.codeInsight.daemon.impl.HighlightInfoType;
 import com.intellij.java.analysis.JavaAnalysisBundle;
 import com.intellij.lang.jvm.JvmModifier;
 import com.intellij.pom.java.LanguageLevel;
@@ -10,6 +12,8 @@ import com.intellij.psi.*;
 import com.intellij.psi.impl.source.resolve.JavaResolveUtil;
 import com.intellij.psi.util.PsiUtil;
 import org.jetbrains.annotations.*;
+
+import java.util.function.Consumer;
 
 import static com.intellij.util.ObjectUtils.tryCast;
 
@@ -189,5 +193,34 @@ public enum HighlightingFeature {
     if (annotation != null) return annotation;
 
     return owner.getAnnotation(JDK_INTERNAL_PREVIEW_FEATURE);
+  }
+
+  static void checkPreviewFeature(@NotNull PsiElement statement, @Nullable HighlightingFeature.PreviewFeatureVisitor visitor) {
+    if (visitor != null) {
+      statement.accept(visitor);
+    }
+  }
+
+  static class PreviewFeatureVisitor extends PreviewFeatureVisitorBase {
+    private final LanguageLevel myLanguageLevel;
+    private final Consumer<? super HighlightInfo.Builder> myErrorSink;
+
+    PreviewFeatureVisitor(@NotNull LanguageLevel languageLevel, @NotNull Consumer<? super HighlightInfo.Builder> errorSink) {
+      myLanguageLevel = languageLevel;
+      myErrorSink = errorSink;
+    }
+
+    @Override
+    protected void registerProblem(PsiElement element, String description, HighlightingFeature feature, PsiAnnotation annotation) {
+      boolean isReflective = Boolean.TRUE.equals(AnnotationUtil.getBooleanAttributeValue(annotation, "reflective"));
+
+      HighlightInfoType type = isReflective ? HighlightInfoType.WARNING : HighlightInfoType.ERROR;
+
+      HighlightInfo.Builder highlightInfo =
+        HighlightUtil.checkFeature(element, feature, myLanguageLevel, element.getContainingFile(), description, type);
+      if (highlightInfo != null) {
+        myErrorSink.accept(highlightInfo);
+      }
+    }
   }
 }

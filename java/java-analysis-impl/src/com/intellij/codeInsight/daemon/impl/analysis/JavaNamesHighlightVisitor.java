@@ -1,9 +1,7 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.daemon.impl.analysis;
 
-import com.intellij.codeInsight.daemon.impl.HighlightInfo;
 import com.intellij.codeInsight.daemon.impl.HighlightVisitor;
-import com.intellij.codeInsight.daemon.impl.JavaHighlightInfoTypes;
 import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.lang.java.lexer.JavaLexer;
 import com.intellij.openapi.editor.colors.TextAttributesScheme;
@@ -152,7 +150,7 @@ class JavaNamesHighlightVisitor extends JavaElementVisitor implements HighlightV
   public void visitKeyword(@NotNull PsiKeyword keyword) {
     if (shouldHighlightSoftKeywords &&
         (JavaLexer.isSoftKeyword(keyword.getNode().getChars(), myLanguageLevel) || JavaTokenType.NON_SEALED_KEYWORD == keyword.getTokenType())) {
-      myHolder.add(HighlightInfo.newHighlightInfo(JavaHighlightInfoTypes.JAVA_KEYWORD).range(keyword).create());
+      myHolder.add(HighlightNamesUtil.highlightKeyword(keyword));
     }
   }
 
@@ -178,7 +176,7 @@ class JavaNamesHighlightVisitor extends JavaElementVisitor implements HighlightV
                !PsiTreeUtil.isAncestor(containingClass, variable, false)) {
           if (containingClass instanceof PsiLambdaExpression ||
               !PsiTreeUtil.isAncestor(((PsiAnonymousClass)containingClass).getArgumentList(), ref, false)) {
-            myHolder.add(HighlightInfo.newHighlightInfo(JavaHighlightInfoTypes.IMPLICIT_ANONYMOUS_CLASS_PARAMETER).range(ref).create());
+            myHolder.add(HighlightNamesUtil.highlightImplicitAnonymousClassParameter(ref));
             break;
           }
           containingClass = PsiTreeUtil.getParentOfType(containingClass, PsiClass.class, PsiLambdaExpression.class);
@@ -233,7 +231,7 @@ class JavaNamesHighlightVisitor extends JavaElementVisitor implements HighlightV
   public void visitNameValuePair(@NotNull PsiNameValuePair pair) {
     PsiIdentifier nameId = pair.getNameIdentifier();
     if (nameId != null) {
-      myHolder.add(HighlightInfo.newHighlightInfo(JavaHighlightInfoTypes.ANNOTATION_ATTRIBUTE_NAME).range(nameId).create());
+      myHolder.add(HighlightNamesUtil.highlightAnnotationAttributeName(nameId));
     }
   }
 
