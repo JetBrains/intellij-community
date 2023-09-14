@@ -2260,6 +2260,11 @@ public abstract class K1JSBasicCompletionTestGenerated extends AbstractK1JSBasic
                 KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
             }
 
+            @TestMetadata("DispatchReceiver.kt")
+            public void testDispatchReceiver() throws Exception {
+                runTest("../testData/basic/common/smartCast/DispatchReceiver.kt");
+            }
+
             @TestMetadata("functionWithContract.kt")
             public void testFunctionWithContract() throws Exception {
                 runTest("../testData/basic/common/smartCast/functionWithContract.kt");

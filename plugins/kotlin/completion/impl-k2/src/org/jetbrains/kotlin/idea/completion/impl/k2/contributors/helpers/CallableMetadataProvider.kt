@@ -146,26 +146,7 @@ internal object CallableMetadataProvider {
             expectedExtensionReceiverType,
             returnCastRequiredOnReceiverMismatch
         )
-
-        if (returnCastRequiredOnReceiverMismatch && weightBasedOnExtensionReceiver?.kind == CallableKind.RECEIVER_CAST_REQUIRED)
-            return weightBasedOnExtensionReceiver
-
-        // In Fir, a local function takes its containing function's dispatch receiver as its dispatch receiver. But we don't consider a
-        // local function as a class member. Hence, here we return null so that it's handled by other logic.
-        if (signature.callableIdIfNonLocal == null) return null
-
-        val expectedDispatchReceiverType = (symbol as? KtCallableSymbol)?.getDispatchReceiverType()
-        val weightBasedOnDispatchReceiver = expectedDispatchReceiverType?.let { receiverType ->
-            callableWeightByReceiver(
-                symbol,
-                actualImplicitReceiverTypes + listOfNotNull(actualExplicitReceiverType),
-                receiverType,
-                returnCastRequiredOnReceiverMismatch
-            )
-        }
-        if (returnCastRequiredOnReceiverMismatch && weightBasedOnDispatchReceiver?.kind == CallableKind.RECEIVER_CAST_REQUIRED)
-            return weightBasedOnDispatchReceiver
-        return weightBasedOnExtensionReceiver ?: weightBasedOnDispatchReceiver
+        return weightBasedOnExtensionReceiver
     }
 
     /**
