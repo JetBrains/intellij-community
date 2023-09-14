@@ -132,13 +132,8 @@ internal class CloseTab(component: JComponent,
           showModifiedIcon -> {
             if (pinned) {
               val pinIcon = AllIcons.Actions.PinTab
-              BadgeIcon(pinIcon, JBUI.CurrentTheme.IconBadge.INFORMATION, object : BadgeDotProvider() {
-                override fun getX(): Double = 0.7
-
-                override fun getY(): Double = 0.2
-
-                override fun getRadius(): Double = 3.0 / pinIcon.iconWidth
-              })
+              val provider = BadgeDotProvider(x = 0.7, y = 0.2, radius = 3.0 / pinIcon.iconWidth)
+              BadgeIcon(pinIcon, JBUI.CurrentTheme.IconBadge.INFORMATION, provider)
             }
             else {
               DotIcon(JBUI.CurrentTheme.IconBadge.INFORMATION)
