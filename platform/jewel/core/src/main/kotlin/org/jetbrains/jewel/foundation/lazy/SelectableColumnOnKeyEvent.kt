@@ -205,6 +205,13 @@ interface SelectableColumnOnKeyEvent {
         // ij with this shortcut just focus the first element with issue
         // unavailable here
     }
+
+    /**
+     * Select All
+     */
+    fun onSelectAll(keys: List<SelectableLazyListKey>, state: SelectableLazyListState) {
+        state.selectedKeys = keys.filterIsInstance<Selectable>().map { it.key }
+    }
 }
 
 open class DefaultSelectableOnKeyEvent(

@@ -283,6 +283,10 @@ open class DefaultSelectableLazyColumnKeyActions : KeyBindingActions {
                 if (selectionMode == SelectionMode.Multiple) onScrollPageUpAndSelectItem(keys, state)
             }
 
+            selectAll() ?: false -> {
+                if (selectionMode == SelectionMode.Multiple) onSelectAll(keys, state)
+            }
+
             else -> return false
         }
         return true

@@ -2,11 +2,11 @@ package org.jetbrains.jewel.foundation.lazy
 
 import androidx.compose.ui.input.key.Key
 import androidx.compose.ui.input.key.KeyEvent
+import androidx.compose.ui.input.key.isCtrlPressed
 import androidx.compose.ui.input.key.isMetaPressed
 import androidx.compose.ui.input.key.isShiftPressed
 import androidx.compose.ui.input.key.key
 import androidx.compose.ui.input.pointer.PointerKeyboardModifiers
-import androidx.compose.ui.input.pointer.isMetaPressed
 import androidx.compose.ui.input.pointer.isShiftPressed
 
 interface SelectableColumnKeybindings {
@@ -16,6 +16,9 @@ interface SelectableColumnKeybindings {
 
     val PointerKeyboardModifiers.isKeyboardMultiSelectionKeyPressed: Boolean
         get() = isShiftPressed
+
+    val KeyEvent.isKeyboardCtrlMetaKeyPressed: Boolean
+        get() = isCtrlPressed || isMetaPressed
 
     /**
      * Select First Node
@@ -81,6 +84,11 @@ interface SelectableColumnKeybindings {
      * Edit item
      */
     fun KeyEvent.edit(): Boolean?
+
+    /**
+     * SelectAll
+     */
+    fun KeyEvent.selectAll(): Boolean?
 }
 
 open class DefaultSelectableColumnKeybindings : SelectableColumnKeybindings {
@@ -91,6 +99,7 @@ open class DefaultSelectableColumnKeybindings : SelectableColumnKeybindings {
 
     override val PointerKeyboardModifiers.isKeyboardMultiSelectionKeyPressed: Boolean
         get() = isShiftPressed
+
 
     override fun KeyEvent.selectFirstItem() =
         key == Key.Home && !isKeyboardMultiSelectionKeyPressed
@@ -129,14 +138,8 @@ open class DefaultSelectableColumnKeybindings : SelectableColumnKeybindings {
         key == Key.PageDown && isKeyboardMultiSelectionKeyPressed
 
     override fun KeyEvent.edit() = false
-}
 
-open class DefaultMacOsSelectableColumnKeybindings : DefaultSelectableColumnKeybindings() {
-    companion object : DefaultMacOsSelectableColumnKeybindings()
+    override fun KeyEvent.selectAll(): Boolean? =
+        key == Key.A && isKeyboardCtrlMetaKeyPressed
 
-    override val KeyEvent.isKeyboardMultiSelectionKeyPressed: Boolean
-        get() = isMetaPressed
-
-    override val PointerKeyboardModifiers.isKeyboardMultiSelectionKeyPressed: Boolean
-        get() = isMetaPressed
 }
