@@ -2,7 +2,10 @@
 package com.intellij.psi.impl.java
 
 import com.intellij.ide.highlighter.JavaFileType
-import com.intellij.psi.util.JavaUnnamedClassUtil
+import com.intellij.lang.LighterASTNode
+import com.intellij.psi.impl.java.stubs.JavaStubElementTypes
+import com.intellij.psi.impl.source.JavaFileElementType
+import com.intellij.psi.impl.source.tree.RecursiveLighterASTNodeWalkingVisitor
 import com.intellij.util.indexing.*
 import com.intellij.util.io.KeyDescriptor
 import java.io.DataInput
@@ -11,20 +14,24 @@ import java.io.DataOutput
 val id: ID<String, Void> = ID.create("java.unnamed.class")
 
 class JavaUnnamedClassIndex: ScalarIndexExtension<String>() {
-  private object UnnamedClassIndexer: DataIndexer<String, Void, FileContent> {
-    override fun map(inputData: FileContent): MutableMap<String, Void?> {
-      return when {
-        JavaUnnamedClassUtil.isFileWithUnnamedClass(inputData.psiFile) -> {
-          mutableMapOf(inputData.fileName to null)
-        }
-        else -> mutableMapOf()
-      }
-    }
-  }
 
   override fun getName(): ID<String, Void> = id
 
-  override fun getIndexer(): DataIndexer<String, Void, FileContent> = UnnamedClassIndexer
+  override fun getIndexer(): DataIndexer<String, Void, FileContent> = DataIndexer { inputData ->
+    val result: MutableMap<String, Void?> = mutableMapOf()
+
+    val lightAST = inputData.psiFile.node.lighterAST
+    object: RecursiveLighterASTNodeWalkingVisitor(lightAST) {
+      override fun visitNode(element: LighterASTNode) {
+        when (element.tokenType) {
+          is JavaFileElementType -> super.visitNode(element)
+          JavaStubElementTypes.UNNAMED_CLASS -> result[inputData.fileName] = null
+        }
+      }
+    }.visitNode(lightAST.getRoot())
+
+    return@DataIndexer result
+  }
 
   override fun getKeyDescriptor(): KeyDescriptor<String> = object: KeyDescriptor<String> {
     override fun isEqual(val1: String?, val2: String?): Boolean = val1 == val2
