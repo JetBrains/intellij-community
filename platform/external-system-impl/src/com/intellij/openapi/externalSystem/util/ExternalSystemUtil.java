@@ -3,14 +3,12 @@ package com.intellij.openapi.externalSystem.util;
 
 import com.intellij.build.*;
 import com.intellij.build.events.BuildEvent;
-import com.intellij.build.events.FailureResult;
 import com.intellij.build.events.FinishBuildEvent;
 import com.intellij.build.events.impl.*;
 import com.intellij.build.issue.BuildIssue;
 import com.intellij.execution.*;
 import com.intellij.execution.configurations.ConfigurationType;
 import com.intellij.execution.executors.DefaultRunExecutor;
-import com.intellij.execution.filters.Filter;
 import com.intellij.execution.process.ProcessHandler;
 import com.intellij.execution.process.ProcessOutputTypes;
 import com.intellij.execution.rmi.RemoteUtil;
@@ -24,7 +22,9 @@ import com.intellij.internal.statistic.StructuredIdeActivity;
 import com.intellij.notification.Notification;
 import com.intellij.notification.NotificationGroup;
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.actionSystem.ActionUpdateThread;
+import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
@@ -76,10 +76,7 @@ import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.progress.util.AbstractProgressIndicatorExBase;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.util.Pair;
-import com.intellij.openapi.util.Ref;
-import com.intellij.openapi.util.UserDataHolderBase;
+import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.NaturalComparator;
 import com.intellij.openapi.util.text.StringUtil;
@@ -96,7 +93,6 @@ import com.intellij.pom.NonNavigatable;
 import com.intellij.util.Consumer;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.PlatformUtils;
-import com.intellij.util.ThreeState;
 import com.intellij.util.concurrency.Semaphore;
 import com.intellij.util.containers.HashingStrategy;
 import org.jetbrains.annotations.ApiStatus;
@@ -289,18 +285,8 @@ public final class ExternalSystemUtil {
     ExternalProjectRefreshCallback callback = importSpec.getCallback();
     boolean isPreviewMode = importSpec.isPreviewMode();
     ProgressExecutionMode progressExecutionMode = importSpec.getProgressExecutionMode();
-    boolean isActivateBuildToolWindowOnStart = importSpec.isActivateBuildToolWindowOnStart();
-    boolean isActivateBuildToolWindowOnFailure = importSpec.isActivateBuildToolWindowOnFailure();
-    ThreeState isNavigateToError = importSpec.isNavigateToError();
 
-    File projectFile = new File(externalProjectPath);
-    final String projectName;
-    if (projectFile.isFile()) {
-      projectName = projectFile.getParentFile().getName();
-    }
-    else {
-      projectName = projectFile.getName();
-    }
+    final String projectName = getProjectName(externalProjectPath);
 
     TransactionGuard.getInstance().assertWriteSafeContext(ModalityState.defaultModalityState());
     ApplicationManager.getApplication().invokeAndWait(FileDocumentManager.getInstance()::saveAllDocuments);
@@ -312,10 +298,10 @@ public final class ExternalSystemUtil {
     LOG.debug("Stated " + externalSystemId + " load", new Throwable());
 
     AbstractExternalSystemLocalSettings<?> localSettings = ExternalSystemApiUtil.getLocalSettings(project, externalSystemId);
-    AbstractExternalSystemLocalSettings.SyncType syncType =
-      isPreviewMode ? PREVIEW :
-      localSettings.getProjectSyncType().get(externalProjectPath) == PREVIEW ? IMPORT : RE_IMPORT;
-    localSettings.getProjectSyncType().put(externalProjectPath, syncType);
+    Map<String, AbstractExternalSystemLocalSettings.SyncType> projectSyncTypeStorage = localSettings.getProjectSyncType();
+    AbstractExternalSystemLocalSettings.SyncType previousSyncType = projectSyncTypeStorage.get(externalProjectPath);
+    AbstractExternalSystemLocalSettings.SyncType syncType = isPreviewMode ? PREVIEW : (previousSyncType == PREVIEW ? IMPORT : RE_IMPORT);
+    projectSyncTypeStorage.put(externalProjectPath, syncType);
 
     ExternalSystemResolveProjectTask resolveProjectTask = new ExternalSystemResolveProjectTask(project, projectName, externalProjectPath, importSpec);
 
@@ -323,7 +309,6 @@ public final class ExternalSystemUtil {
 
       @Override
       public void execute(@NotNull ProgressIndicator indicator) {
-
         StructuredIdeActivity activity = ExternalSystemStatUtilKt.importActivityStarted(project, externalSystemId, null);
         try {
           executeImpl(indicator);
@@ -346,8 +331,7 @@ public final class ExternalSystemUtil {
           });
         }
 
-        ExternalSystemProcessingManager processingManager =
-          ApplicationManager.getApplication().getService(ExternalSystemProcessingManager.class);
+        ExternalSystemProcessingManager processingManager = ExternalSystemProcessingManager.getInstance();
         if (processingManager.findTask(ExternalSystemTaskType.RESOLVE_PROJECT, externalSystemId, externalProjectPath) != null) {
           if (callback != null) {
             callback
@@ -362,9 +346,11 @@ public final class ExternalSystemUtil {
             .clearNotifications(null, NotificationSource.PROJECT_SYNC, externalSystemId);
         }
 
-        final ExternalSystemTaskActivator externalSystemTaskActivator = ExternalProjectsManagerImpl.getInstance(project).getTaskActivator();
-        if (!isPreviewMode && !externalSystemTaskActivator.runTasks(externalProjectPath, ExternalSystemTaskActivator.Phase.BEFORE_SYNC)) {
-          return;
+        if (!isPreviewMode) {
+          ExternalSystemTaskActivator externalSystemTaskActivator = ExternalProjectsManagerImpl.getInstance(project).getTaskActivator();
+          if (!externalSystemTaskActivator.runTasks(externalProjectPath, ExternalSystemTaskActivator.Phase.BEFORE_SYNC)) {
+            return;
+          }
         }
 
         final ExternalSystemProcessHandler processHandler = new ExternalSystemProcessHandler(resolveProjectTask, projectName + " import") {
@@ -375,25 +361,32 @@ public final class ExternalSystemUtil {
           }
         };
 
-        final ExternalSystemExecutionConsoleManager<ExecutionConsole, ProcessHandler>
-          consoleManager = getConsoleManagerFor(resolveProjectTask);
-
-        final ExecutionConsole consoleView =
-          consoleManager.attachExecutionConsole(project, resolveProjectTask, null, processHandler);
+        final ExternalSystemExecutionConsoleManager<ExecutionConsole, ProcessHandler> consoleManager = getConsoleManagerFor(resolveProjectTask);
+        final ExecutionConsole consoleView = consoleManager.attachExecutionConsole(project, resolveProjectTask, null, processHandler);
         Disposer.register(project, Objects.requireNonNullElse(consoleView, processHandler));
 
-        Ref<Supplier<? extends FinishBuildEvent>> finishSyncEventSupplier = Ref.create();
         SyncViewManager syncViewManager = project.getService(SyncViewManager.class);
         try (BuildEventDispatcher eventDispatcher = new ExternalSystemEventDispatcher(resolveProjectTask.getId(), syncViewManager, false)) {
+          Ref<Supplier<? extends FinishBuildEvent>> finishSyncEventSupplier = Ref.create();
           ExternalSystemTaskNotificationListenerAdapter taskListener = new ExternalSystemTaskNotificationListenerAdapter() {
-            @Override
-            public void onStart(@NotNull ExternalSystemTaskId id, String workingDir) {
-              long eventTime = System.currentTimeMillis();
-              AnAction rerunImportAction = new DumbAwareAction() {
+
+            private static @NotNull DefaultBuildDescriptor createSyncDescriptor(
+              @NotNull String externalProjectPath,
+              @NotNull ImportSpec importSpec,
+              @NotNull ExternalSystemResolveProjectTask resolveProjectTask,
+              @NotNull ExternalSystemProcessHandler processHandler,
+              @Nullable ExecutionConsole consoleView,
+              @NotNull ExternalSystemExecutionConsoleManager<ExecutionConsole, ProcessHandler> consoleManager
+            ) {
+              Project project = importSpec.getProject();
+              ExternalSystemTaskId taskId = resolveProjectTask.getId();
+              ProjectSystemId externalSystemId = taskId.getProjectSystemId();
+              String projectName = getProjectName(externalProjectPath);
+              DumbAwareAction rerunImportAction = new DumbAwareAction() {
+
                 @Override
                 public void update(@NotNull AnActionEvent e) {
-                  Presentation p = e.getPresentation();
-                  p.setEnabled(processHandler.isProcessTerminated());
+                  e.getPresentation().setEnabled(processHandler.isProcessTerminated());
                 }
 
                 @Override
@@ -403,8 +396,7 @@ public final class ExternalSystemUtil {
 
                 @Override
                 public void actionPerformed(@NotNull AnActionEvent e) {
-                  Presentation p = e.getPresentation();
-                  p.setEnabled(false);
+                  e.getPresentation().setEnabled(false);
                   Runnable rerunRunnable = importSpec instanceof ImportSpecImpl ? ((ImportSpecImpl)importSpec).getRerunAction() : null;
                   if (rerunRunnable == null) {
                     refreshProject(externalProjectPath, importSpec);
@@ -414,15 +406,13 @@ public final class ExternalSystemUtil {
                   }
                 }
               };
-              String systemId = id.getProjectSystemId().getReadableName();
+              String systemId = externalSystemId.getReadableName();
               rerunImportAction.getTemplatePresentation()
                 .setText(ExternalSystemBundle.messagePointer("action.refresh.project.text", systemId));
               rerunImportAction.getTemplatePresentation()
                 .setDescription(ExternalSystemBundle.messagePointer("action.refresh.project.description", systemId));
               rerunImportAction.getTemplatePresentation().setIcon(AllIcons.Actions.Refresh);
-
-              if (isPreviewMode) return;
-              DefaultBuildDescriptor buildDescriptor = new DefaultBuildDescriptor(id, projectName, externalProjectPath, eventTime)
+              return new DefaultBuildDescriptor(taskId, projectName, externalProjectPath, System.currentTimeMillis())
                 .withProcessHandler(processHandler, null)
                 .withRestartAction(rerunImportAction)
                 .withContentDescriptor(() -> {
@@ -431,16 +421,22 @@ public final class ExternalSystemUtil {
                     consoleView, processHandler, consoleView.getComponent(),
                     ExternalSystemBundle.message("build.event.title.sync")
                   );
-                  contentDescriptor.setActivateToolWindowWhenAdded(isActivateBuildToolWindowOnStart);
-                  contentDescriptor.setActivateToolWindowWhenFailed(isActivateBuildToolWindowOnFailure);
-                  contentDescriptor.setNavigateToError(isNavigateToError);
-                  contentDescriptor.setAutoFocusContent(isActivateBuildToolWindowOnFailure);
+                  contentDescriptor.setActivateToolWindowWhenAdded(importSpec.isActivateBuildToolWindowOnStart());
+                  contentDescriptor.setActivateToolWindowWhenFailed(importSpec.isActivateBuildToolWindowOnFailure());
+                  contentDescriptor.setNavigateToError(importSpec.isNavigateToError());
+                  contentDescriptor.setAutoFocusContent(importSpec.isActivateBuildToolWindowOnFailure());
                   return contentDescriptor;
                 })
                 .withActions(consoleManager.getCustomActions(project, resolveProjectTask, null))
-                .withContextActions(consoleManager.getCustomContextActions(project, resolveProjectTask, null));
-              Filter[] filters = consoleManager.getCustomExecutionFilters(project, resolveProjectTask, null);
-              Arrays.stream(filters).forEach(buildDescriptor::withExecutionFilter);
+                .withContextActions(consoleManager.getCustomContextActions(project, resolveProjectTask, null))
+                .withExecutionFilters(consoleManager.getCustomExecutionFilters(project, resolveProjectTask, null));
+            }
+
+            @Override
+            public void onStart(@NotNull ExternalSystemTaskId id, String workingDir) {
+              if (isPreviewMode) return;
+              DefaultBuildDescriptor buildDescriptor =
+                createSyncDescriptor(externalProjectPath, importSpec, resolveProjectTask, processHandler, consoleView, consoleManager);
               eventDispatcher.onEvent(id, new StartBuildEventImpl(buildDescriptor, BuildBundle.message("build.event.message.syncing")));
             }
 
@@ -453,28 +449,37 @@ public final class ExternalSystemUtil {
 
             @Override
             public void onFailure(@NotNull ExternalSystemTaskId id, @NotNull Exception e) {
-              String title = ExternalSystemBundle.message("notification.project.refresh.fail.title",
-                                                          externalSystemId.getReadableName(), projectName);
-              DataContext dataContext = BuildConsoleUtils.getDataContext(id, syncViewManager);
-              FailureResult failureResult = createFailureResult(title, e, externalSystemId, project, dataContext);
-              finishSyncEventSupplier.set(() -> new FinishBuildEventImpl(id, null, System.currentTimeMillis(),
-                                                                         BuildBundle.message("build.status.failed"), failureResult));
+              finishSyncEventSupplier.set(() -> {
+                long eventTime = System.currentTimeMillis();
+                String eventMessage = BuildBundle.message("build.status.failed");
+                String externalSystemName = externalSystemId.getReadableName();
+                String title = ExternalSystemBundle.message("notification.project.refresh.fail.title", externalSystemName, projectName);
+                DataContext dataContext = BuildConsoleUtils.getDataContext(id, syncViewManager);
+                FailureResultImpl eventResult = createFailureResult(title, e, externalSystemId, project, dataContext);
+                return new FinishBuildEventImpl(id, null, eventTime, eventMessage, eventResult);
+              });
               processHandler.notifyProcessTerminated(1);
             }
 
             @Override
             public void onCancel(@NotNull ExternalSystemTaskId id) {
-              finishSyncEventSupplier.set(() -> new FinishBuildEventImpl(id, null, System.currentTimeMillis(),
-                                                                         BuildBundle.message("build.status.cancelled"),
-                                                                         new FailureResultImpl()));
+              finishSyncEventSupplier.set(() -> {
+                long eventTime = System.currentTimeMillis();
+                String eventMessage = BuildBundle.message("build.status.cancelled");
+                FailureResultImpl eventResult = new FailureResultImpl();
+                return new FinishBuildEventImpl(id, null, eventTime, eventMessage, eventResult);
+              });
               processHandler.notifyProcessTerminated(1);
             }
 
             @Override
             public void onSuccess(@NotNull ExternalSystemTaskId id) {
-              finishSyncEventSupplier.set(
-                () -> new FinishBuildEventImpl(id, null, System.currentTimeMillis(), BuildBundle.message("build.status.finished"),
-                                               new SuccessResultImpl()));
+              finishSyncEventSupplier.set(() -> {
+                long eventTime = System.currentTimeMillis();
+                String eventMessage = BuildBundle.message("build.status.finished");
+                SuccessResultImpl eventResult = new SuccessResultImpl();
+                return new FinishBuildEventImpl(id, null, eventTime, eventMessage, eventResult);
+              });
               processHandler.notifyProcessTerminated(0);
             }
 
@@ -495,15 +500,25 @@ public final class ExternalSystemUtil {
           LOG.info("External project [" + externalProjectPath + "] resolution task started");
           final long startTS = System.currentTimeMillis();
           resolveProjectTask.execute(indicator, taskListener);
-          LOG.info("External project [" + externalProjectPath + "] resolution task executed in " +
-                   (System.currentTimeMillis() - startTS) + " ms.");
-          handExecutionResult(externalSystemTaskActivator, eventDispatcher, finishSyncEventSupplier);
+          final long endTS = System.currentTimeMillis();
+          LOG.info("External project [" + externalProjectPath + "] resolution task executed in " + (endTS - startTS) + " ms.");
+          handleSyncResult(externalProjectPath, importSpec, resolveProjectTask, eventDispatcher, finishSyncEventSupplier);
         }
       }
 
-      private void handExecutionResult(@NotNull ExternalSystemTaskActivator externalSystemTaskActivator,
-                                       @NotNull BuildEventDispatcher eventDispatcher,
-                                       @NotNull Ref<Supplier<? extends FinishBuildEvent>> finishSyncEventSupplier) {
+      private static void handleSyncResult(
+        @NotNull String externalProjectPath,
+        @NotNull ImportSpec importSpec,
+        @NotNull ExternalSystemResolveProjectTask resolveProjectTask,
+        @NotNull BuildEventDispatcher eventDispatcher,
+        @NotNull Ref<Supplier<? extends FinishBuildEvent>> finishSyncEventSupplier
+      ) {
+        Project project = importSpec.getProject();
+        ExternalSystemTaskId taskId = resolveProjectTask.getId();
+        ProjectSystemId externalSystemId = taskId.getProjectSystemId();
+        boolean isPreviewMode = importSpec.isPreviewMode();
+        ExternalProjectRefreshCallback callback = importSpec.getCallback();
+
         if (project.isDisposed()) return;
 
         try {
@@ -517,10 +532,11 @@ public final class ExternalSystemUtil {
                 if (externalProject != null && importSpec.shouldCreateDirectoriesForEmptyContentRoots()) {
                   externalProject.putUserData(ContentRootDataService.CREATE_EMPTY_DIRECTORIES, Boolean.TRUE);
                 }
-                callback.onSuccess(resolveProjectTask.getId(), externalProject);
+                callback.onSuccess(taskId, externalProject);
               }
             }
             if (!isPreviewMode) {
+              ExternalSystemTaskActivator externalSystemTaskActivator = ExternalProjectsManagerImpl.getInstance(project).getTaskActivator();
               externalSystemTaskActivator.runTasks(externalProjectPath, ExternalSystemTaskActivator.Phase.AFTER_SYNC);
             }
             return;
@@ -529,42 +545,46 @@ public final class ExternalSystemUtil {
             // stop refresh task
             return;
           }
-          String message = ExternalSystemApiUtil.buildErrorMessage(error);
-          if (StringUtil.isEmpty(message)) {
-            message = String.format(
-              "Can't resolve %s project at '%s'. Reason: %s", externalSystemId.getReadableName(), externalProjectPath, message
-            );
-          }
 
           if (callback != null) {
-            callback.onFailure(resolveProjectTask.getId(), message, extractDetails(error));
+            String message = ExternalSystemApiUtil.buildErrorMessage(error);
+            if (StringUtil.isEmpty(message)) {
+              String systemName = externalSystemId.getReadableName();
+              message = String.format("Can't resolve %s project at '%s'. Reason: %s", systemName, externalProjectPath, message);
+            }
+            callback.onFailure(taskId, message, extractDetails(error));
           }
-        } catch (Throwable t) {
-          ExternalSystemTaskId id = resolveProjectTask.getId();
-          String title = ExternalSystemBundle.message("notification.project.refresh.fail.title",
-                                                      externalSystemId.getReadableName(), projectName);
-          FailureResult failureResult = createFailureResult(title, t, externalSystemId, project, DataContext.EMPTY_CONTEXT);
-          finishSyncEventSupplier.set(() -> new FinishBuildEventImpl(id, null, System.currentTimeMillis(),
-                                                                     BuildBundle.message("build.status.failed"), failureResult));
-
+        }
+        catch (Throwable t) {
+          finishSyncEventSupplier.set(() -> {
+            long eventTime = System.currentTimeMillis();
+            String eventMessage = BuildBundle.message("build.status.failed");
+            String systemName = externalSystemId.getReadableName();
+            String projectName = getProjectName(externalProjectPath);
+            String title = ExternalSystemBundle.message("notification.project.refresh.fail.title", systemName, projectName);
+            FailureResultImpl eventResult = createFailureResult(title, t, externalSystemId, project, DataContext.EMPTY_CONTEXT);
+            return new FinishBuildEventImpl(taskId, null, eventTime, eventMessage, eventResult);
+          });
         }
         finally {
           if (!isPreviewMode) {
-            boolean isNewProject = isNewProject(project);
-            if (isNewProject) {
-              VirtualFile virtualFile = VfsUtil.findFileByIoFile(projectFile, false);
+            if (isNewProject(project)) {
+              VirtualFile virtualFile = VfsUtil.findFileByIoFile(new File(externalProjectPath), false);
               if (virtualFile != null) {
                 VfsUtil.markDirtyAndRefresh(true, false, true, virtualFile);
               }
             }
             project.putUserData(ExternalSystemDataKeys.NEWLY_CREATED_PROJECT, null);
             project.putUserData(ExternalSystemDataKeys.NEWLY_IMPORTED_PROJECT, null);
-            eventDispatcher.onEvent(resolveProjectTask.getId(), getSyncFinishEvent(finishSyncEventSupplier));
+            eventDispatcher.onEvent(taskId, getSyncFinishEvent(taskId, finishSyncEventSupplier));
           }
         }
       }
 
-      private @NotNull FinishBuildEvent getSyncFinishEvent(@NotNull Ref<? extends Supplier<? extends FinishBuildEvent>> finishSyncEventSupplier) {
+      private static @NotNull FinishBuildEvent getSyncFinishEvent(
+        @NotNull ExternalSystemTaskId taskId,
+        @NotNull Ref<? extends Supplier<? extends FinishBuildEvent>> finishSyncEventSupplier
+      ) {
         Exception exception = null;
         Supplier<? extends FinishBuildEvent> finishBuildEventSupplier = finishSyncEventSupplier.get();
         if (finishBuildEventSupplier != null) {
@@ -578,8 +598,10 @@ public final class ExternalSystemUtil {
         if (!(exception instanceof ControlFlowException)) {
           LOG.warn("Sync finish event has not been received", exception);
         }
-        return new FinishBuildEventImpl(resolveProjectTask.getId(), null, System.currentTimeMillis(),
-                                        BuildBundle.message("build.status.cancelled"), new FailureResultImpl());
+        long eventTime = System.currentTimeMillis();
+        String eventMessage = BuildBundle.message("build.status.cancelled");
+        FailureResultImpl eventResult = new FailureResultImpl();
+        return new FinishBuildEventImpl(taskId, null, eventTime, eventMessage, eventResult);
       }
 
       private void cancelImport() {
@@ -587,11 +609,11 @@ public final class ExternalSystemUtil {
       }
     };
 
-    final String title;
+    String externalSystemName = externalSystemId.getReadableName();
     switch (progressExecutionMode) {
       case NO_PROGRESS_SYNC, NO_PROGRESS_ASYNC -> throw new ExternalSystemException("Please, use progress for the project import!");
       case MODAL_SYNC -> {
-        title = ExternalSystemBundle.message("progress.import.text", projectName, externalSystemId.getReadableName());
+        String title = ExternalSystemBundle.message("progress.import.text", projectName, externalSystemName);
         new Task.Modal(project, title, true) {
           @Override
           public @NotNull Object getId() {
@@ -605,7 +627,7 @@ public final class ExternalSystemUtil {
         }.queue();
       }
       case IN_BACKGROUND_ASYNC -> {
-        title = ExternalSystemBundle.message("progress.refresh.text", projectName, externalSystemId.getReadableName());
+        String title = ExternalSystemBundle.message("progress.refresh.text", projectName, externalSystemName);
         new Task.Backgroundable(project, title) {
           @Override
           public @NotNull Object getId() {
@@ -619,7 +641,7 @@ public final class ExternalSystemUtil {
         }.queue();
       }
       case START_IN_FOREGROUND_ASYNC -> {
-        title = ExternalSystemBundle.message("progress.refresh.text", projectName, externalSystemId.getReadableName());
+        String title = ExternalSystemBundle.message("progress.refresh.text", projectName, externalSystemName);
         new Task.Backgroundable(project, title, true, PerformInBackgroundOption.DEAF) {
           @Override
           public @NotNull Object getId() {
@@ -635,10 +657,21 @@ public final class ExternalSystemUtil {
     }
   }
 
+  private static @NotNull @NlsSafe String getProjectName(@NotNull String externalProjectPath) {
+    File projectFile = new File(externalProjectPath);
+    if (projectFile.isFile()) {
+      return projectFile.getParentFile().getName();
+    }
+    else {
+      return projectFile.getName();
+    }
+  }
+
   /**
-   * @deprecated Use {@link com.intellij.openapi.externalSystem.service.project.trusted.ExternalSystemTrustedProjectDialog} instead
+   * @deprecated Use {@link ExternalSystemTrustedProjectDialog} instead
    */
   @Deprecated
+  @SuppressWarnings("DeprecatedIsStillUsed")
   public static boolean confirmLinkingUntrustedProject(
     @NotNull Project project,
     @NotNull ProjectSystemId systemId,
@@ -648,7 +681,7 @@ public final class ExternalSystemUtil {
   }
 
   /**
-   * @deprecated Use {@link com.intellij.openapi.externalSystem.service.project.trusted.ExternalSystemTrustedProjectDialog} instead
+   * @deprecated Use {@link ExternalSystemTrustedProjectDialog} instead
    */
   @Deprecated
   public static boolean confirmLoadingUntrustedProject(
@@ -659,7 +692,7 @@ public final class ExternalSystemUtil {
   }
 
   /**
-   * @deprecated Use {@link com.intellij.openapi.externalSystem.service.project.trusted.ExternalSystemTrustedProjectDialog} instead
+   * @deprecated Use {@link ExternalSystemTrustedProjectDialog} instead
    */
   @Deprecated
   public static boolean confirmLoadingUntrustedProject(
