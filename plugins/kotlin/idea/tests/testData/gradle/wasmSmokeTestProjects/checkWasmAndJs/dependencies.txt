@@ -18,7 +18,6 @@ wasm20221114.jsMain
 wasm20221114.jsTest
     commonMain (friend, TEST)
     commonTest (refines, TEST)
-    jsMain (friend, RUNTIME)
     jsMain (friend, TEST)
     org.jetbrains.kotlin:kotlin-dom-api-compat:klib:{{KGP_VERSION}} (TEST)
     org.jetbrains.kotlin:kotlin-stdlib-js:klib:{{KGP_VERSION}} (TEST)
@@ -35,7 +34,6 @@ wasm20221114.wasmJsTest
     org.jetbrains.kotlin:kotlin-stdlib-wasm-js:klib:{{KGP_VERSION}} (TEST)
     org.jetbrains.kotlin:kotlin-test-annotations-wasm-js:{{KGP_VERSION}} (TEST)
     org.jetbrains.kotlin:kotlin-test-wasm-js:klib:{{KGP_VERSION}} (TEST)
-    wasmJsMain (friend, RUNTIME)
     wasmJsMain (friend, TEST)
 
 
