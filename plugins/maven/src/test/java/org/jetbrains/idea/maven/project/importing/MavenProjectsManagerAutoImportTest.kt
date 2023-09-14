@@ -2,11 +2,16 @@
 package org.jetbrains.idea.maven.project.importing
 
 import com.intellij.maven.testFramework.MavenMultiVersionImportingTestCase
+import com.intellij.openapi.application.EDT
+import com.intellij.openapi.application.writeAction
 import com.intellij.openapi.command.WriteCommandAction
 import com.intellij.openapi.externalSystem.autoimport.ExternalSystemProjectTracker
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.openapi.vfs.VirtualFile
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.withContext
 import org.jetbrains.idea.maven.importing.MavenProjectLegacyImporter
 import org.jetbrains.idea.maven.project.MavenProjectsManager
 import org.jetbrains.idea.maven.utils.MavenUtil
@@ -17,7 +22,7 @@ import java.io.IOException
 import java.util.*
 
 class MavenProjectsManagerAutoImportTest : MavenMultiVersionImportingTestCase() {
-  override fun runInDispatchThread() = true //TODO: false
+  override fun runInDispatchThread() = false
 
   override fun setUp() {
     super.setUp()
@@ -232,7 +237,7 @@ class MavenProjectsManagerAutoImportTest : MavenMultiVersionImportingTestCase() 
 
   @Test
   @Throws(IOException::class)
-  fun testSchedulingReimportWhenPomFileIsDeleted() {
+  fun testSchedulingReimportWhenPomFileIsDeleted() = runBlocking {
     createProjectPom("""
                        <groupId>test</groupId>
                        <artifactId>project</artifactId>
@@ -255,13 +260,13 @@ class MavenProjectsManagerAutoImportTest : MavenMultiVersionImportingTestCase() 
 
     //configConfirmationForYesAnswer();
     MavenProjectLegacyImporter.setAnswerToDeleteObsoleteModulesQuestion(true)
-    scheduleProjectImportAndWait()
+    scheduleProjectImportAndWaitAsync()
     assertModules("project")
   }
 
   @Test
   @Throws(IOException::class)
-  fun testHandlingDirectoryWithPomFileDeletion() {
+  fun testHandlingDirectoryWithPomFileDeletion() = runBlocking {
     importProject("""
                     <groupId>test</groupId>
                     <artifactId>project</artifactId>
@@ -282,19 +287,19 @@ class MavenProjectsManagerAutoImportTest : MavenMultiVersionImportingTestCase() 
                          <module>dir/module</module>
                        </modules>
                        """.trimIndent())
-    scheduleProjectImportAndWait()
+    scheduleProjectImportAndWaitAsync()
     assertEquals(2, MavenProjectsManager.getInstance(myProject).getProjects().size)
     val dir = myProjectRoot.findChild("dir")
     WriteCommandAction.writeCommandAction(myProject).run<IOException> { dir!!.delete(null) }
 
     //configConfirmationForYesAnswer();
     MavenProjectLegacyImporter.setAnswerToDeleteObsoleteModulesQuestion(true)
-    scheduleProjectImportAndWait()
+    scheduleProjectImportAndWaitAsync()
     assertEquals(1, MavenProjectsManager.getInstance(myProject).getProjects().size)
   }
 
   @Test
-  fun testScheduleReimportWhenPluginConfigurationChangesInTagName() {
+  fun testScheduleReimportWhenPluginConfigurationChangesInTagName() = runBlocking {
     importProject("""
                     <groupId>test</groupId>
                     <artifactId>project</artifactId>
@@ -331,11 +336,11 @@ class MavenProjectsManagerAutoImportTest : MavenMultiVersionImportingTestCase() 
                        </build>
                        """.trimIndent())
     assertHasPendingProjectForReload()
-    scheduleProjectImportAndWait()
+    scheduleProjectImportAndWaitAsync()
   }
 
   @Test
-  fun testUpdatingProjectsWhenAbsentModuleFileAppears() {
+  fun testUpdatingProjectsWhenAbsentModuleFileAppears() = runBlocking {
     importProject("""
                     <groupId>test</groupId>
                     <artifactId>parent</artifactId>
@@ -355,14 +360,14 @@ class MavenProjectsManagerAutoImportTest : MavenMultiVersionImportingTestCase() 
                                       <artifactId>m</artifactId>
                                       <version>1</version>
                                       """.trimIndent())
-    scheduleProjectImportAndWait()
+    scheduleProjectImportAndWaitAsync()
     val children = projectsTree.getModules(roots[0])
     assertEquals(1, children.size)
     assertEquals(m, children[0].file)
   }
 
   @Test
-  fun testScheduleReimportWhenPluginConfigurationChangesInValue() {
+  fun testScheduleReimportWhenPluginConfigurationChangesInValue() = runBlocking {
     importProject("""
                     <groupId>test</groupId>
                     <artifactId>project</artifactId>
@@ -399,11 +404,11 @@ class MavenProjectsManagerAutoImportTest : MavenMultiVersionImportingTestCase() 
                        </build>
                        """.trimIndent())
     assertHasPendingProjectForReload()
-    scheduleProjectImportAndWait()
+    scheduleProjectImportAndWaitAsync()
   }
 
   @Test
-  fun testSchedulingResolveOfDependentProjectWhenDependencyChanges() {
+  fun testSchedulingResolveOfDependentProjectWhenDependencyChanges() = runBlocking {
     createProjectPom("""
                        <groupId>test</groupId>
                        <artifactId>project</artifactId>
@@ -446,13 +451,13 @@ class MavenProjectsManagerAutoImportTest : MavenMultiVersionImportingTestCase() 
         </dependency>
       </dependencies>
       """.trimIndent())
-    scheduleProjectImportAndWait()
+    scheduleProjectImportAndWaitAsync()
     assertModuleModuleDeps("m1", "m2")
     assertModuleLibDeps("m1", "Maven: junit:junit:4.0")
   }
 
   @Test
-  fun testAddingManagedFileAndChangingAggregation() {
+  fun testAddingManagedFileAndChangingAggregation() = runBlocking {
     Assume.assumeTrue(isWorkspaceImport)
     importProject("""
                     <groupId>test</groupId>
@@ -469,7 +474,7 @@ class MavenProjectsManagerAutoImportTest : MavenMultiVersionImportingTestCase() 
                                       <artifactId>m</artifactId>
                                       <version>1</version>
                                       """.trimIndent())
-    scheduleProjectImportAndWait()
+    scheduleProjectImportAndWaitAsync()
     assertEquals(1, projectsTree.rootProjects.size)
     assertEquals(1, projectsTree.getModules(projectsTree.rootProjects[0]).size)
     projectsManager.addManagedFiles(Arrays.asList(m))
@@ -489,7 +494,7 @@ class MavenProjectsManagerAutoImportTest : MavenMultiVersionImportingTestCase() 
 
   @Test
   @Throws(IOException::class)
-  fun testSchedulingResolveOfDependentProjectWhenDependencyIsDeleted() {
+  fun testSchedulingResolveOfDependentProjectWhenDependencyIsDeleted() = runBlocking {
     createProjectPom("""
                        <groupId>test</groupId>
                        <artifactId>project</artifactId>
@@ -533,7 +538,7 @@ class MavenProjectsManagerAutoImportTest : MavenMultiVersionImportingTestCase() 
 
     //configConfirmationForYesAnswer();// should update deps even if module is not removed
     MavenProjectLegacyImporter.setAnswerToDeleteObsoleteModulesQuestion(true)
-    scheduleProjectImportAndWait()
+    scheduleProjectImportAndWaitAsync()
     assertModules("project", "m1")
     assertModuleModuleDeps("m1")
     assertModuleLibDeps("m1", "Maven: test:m2:1")
@@ -541,7 +546,7 @@ class MavenProjectsManagerAutoImportTest : MavenMultiVersionImportingTestCase() 
 
   @Test
   @Throws(IOException::class)
-  fun testUpdatingProjectsWhenAbsentManagedProjectFileAppears() {
+  fun testUpdatingProjectsWhenAbsentManagedProjectFileAppears() = runBlocking {
     importProject("""
                     <groupId>test</groupId>
                     <artifactId>parent</artifactId>
@@ -568,13 +573,13 @@ class MavenProjectsManagerAutoImportTest : MavenMultiVersionImportingTestCase() 
                        </modules>
                        """.trimIndent())
     //importProject();
-    scheduleProjectImportAndWait()
+    scheduleProjectImportAndWaitAsync()
     assertEquals(1, projectsTree.rootProjects.size)
   }
 
   @Test
   @Throws(IOException::class)
-  fun testUpdatingProjectsWhenRenaming() {
+  fun testUpdatingProjectsWhenRenaming() = runBlocking {
     val p1 = createModulePom("project1",
                              """
                                        <groupId>test</groupId>
@@ -602,7 +607,7 @@ class MavenProjectsManagerAutoImportTest : MavenMultiVersionImportingTestCase() 
 
   @Test
   @Throws(IOException::class, InterruptedException::class)
-  fun testUpdatingProjectsWhenMoving() {
+  fun testUpdatingProjectsWhenMoving() = runBlocking {
     val p1 = createModulePom("project1",
                              """
                                        <groupId>test</groupId>
@@ -633,7 +638,7 @@ class MavenProjectsManagerAutoImportTest : MavenMultiVersionImportingTestCase() 
 
   @Test
   @Throws(IOException::class)
-  fun testUpdatingProjectsWhenMovingModuleFile() {
+  fun testUpdatingProjectsWhenMovingModuleFile() = runBlocking {
     createProjectPom("""
                        <groupId>test</groupId>
                        <artifactId>parent</artifactId>
@@ -652,15 +657,15 @@ class MavenProjectsManagerAutoImportTest : MavenMultiVersionImportingTestCase() 
                                             """.trimIndent())
     importProject()
     val oldDir = m.getParent()
-    WriteCommandAction.writeCommandAction(myProject).run<IOException> {
+    writeAction {
       val newDir = myProjectRoot.createChildDirectory(this, "m2")
       assertEquals(1, projectsTree.rootProjects.size)
       assertEquals(1, projectsTree.getModules(projectsTree.rootProjects[0]).size)
       m.move(this, newDir)
-      scheduleProjectImportAndWaitWithoutCheckFloatingBar()
+      scheduleProjectImportAndWaitWithoutCheckFloatingBarEdt()
       assertEquals(1, projectsTree.getModules(projectsTree.rootProjects[0]).size)
       m.move(this, oldDir)
-      scheduleProjectImportAndWaitWithoutCheckFloatingBar()
+      scheduleProjectImportAndWaitWithoutCheckFloatingBarEdt()
       assertEquals(1, projectsTree.getModules(projectsTree.rootProjects[0]).size)
       m.move(this, myProjectRoot.createChildDirectory(this, "xxx"))
     }
@@ -679,7 +684,13 @@ class MavenProjectsManagerAutoImportTest : MavenMultiVersionImportingTestCase() 
    * Because there is no information who deleted the import file or the other user action
    * problem in MavenProjectsAware#collectSettingsFiles() / yieldAll(projectsTree.projectsFiles.map { it.path })
    */
-  private fun scheduleProjectImportAndWaitWithoutCheckFloatingBar() {
+  private suspend fun scheduleProjectImportAndWaitWithoutCheckFloatingBar() {
+    withContext(Dispatchers.EDT) {
+      scheduleProjectImportAndWaitWithoutCheckFloatingBarEdt()
+    }
+  }
+
+  private fun scheduleProjectImportAndWaitWithoutCheckFloatingBarEdt() {
     ExternalSystemProjectTracker.getInstance(myProject).scheduleProjectRefresh()
   }
 }

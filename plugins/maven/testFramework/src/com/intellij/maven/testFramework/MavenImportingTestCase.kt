@@ -37,6 +37,8 @@ import com.intellij.testFramework.PlatformTestUtil
 import com.intellij.testFramework.RunAll.Companion.runAll
 import com.intellij.util.ThrowableRunnable
 import com.intellij.util.containers.ContainerUtil
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 import org.intellij.lang.annotations.Language
 import org.jetbrains.concurrency.AsyncPromise
 import org.jetbrains.concurrency.Promise
@@ -573,6 +575,23 @@ abstract class MavenImportingTestCase : MavenTestCase() {
     // otherwise all imports will be skipped
     assertHasPendingProjectForReload()
     myProjectTracker!!.scheduleProjectRefresh()
+    waitForImportCompletion()
+    if (!isNewImportingProcess) {
+      MavenUtil.invokeAndWait(myProject) {}
+    }
+
+    // otherwise project settings was modified while importing
+    assertNoPendingProjectForReload()
+  }
+
+  protected suspend fun scheduleProjectImportAndWaitAsync() {
+    assertAutoReloadIsInitialized()
+
+    // otherwise all imports will be skipped
+    assertHasPendingProjectForReload()
+    withContext(Dispatchers.EDT) {
+      myProjectTracker!!.scheduleProjectRefresh()
+    }
     waitForImportCompletion()
     if (!isNewImportingProcess) {
       MavenUtil.invokeAndWait(myProject) {}
