@@ -496,8 +496,8 @@ public class ClassDataIndexer implements VirtualFileGist.GistCalculator<Map<HMem
       }
       final boolean shouldInferNonTrivialFailingContracts;
       final Equation throwEquation;
-      if (methodNode.name.equals("<init>")) {
-        // Do not infer failing contracts for constructors
+      if (methodNode.name.equals("<init>") || methodNode.instructions.size() > 64) {
+        // Do not infer failing contracts for constructors or long methods
         shouldInferNonTrivialFailingContracts = false;
         throwEquation = new Equation(new EKey(method, Throw, stable), Value.Top);
       }

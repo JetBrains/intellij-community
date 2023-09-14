@@ -355,7 +355,7 @@ class InThrowAnalysis extends ContractAnalysis {
       if (throwKeys != null && !throwKeys.isEmpty()) {
         prevKeys = new HashSet<>(prevKeys);
         prevKeys.addAll(throwKeys);
-        if (prevKeys.size() > 32) {
+        if (prevKeys.size() > 8) {
           myThrowKeys = null;
           return;
         }
