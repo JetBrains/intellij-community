@@ -11,13 +11,13 @@ import com.intellij.icons.AllIcons
 import com.intellij.ide.HelpTooltip
 import com.intellij.ide.IdeBundle
 import com.intellij.ide.actions.QuickChangeLookAndFeel
+import com.intellij.ide.bootstrap.createBaseLaF
 import com.intellij.ide.plugins.DynamicPluginListener
 import com.intellij.ide.plugins.IdeaPluginDescriptor
 import com.intellij.ide.ui.*
 import com.intellij.ide.ui.UISettings.Companion.getPreferredFractionalMetricsValue
 import com.intellij.ide.ui.laf.SystemDarkThemeDetector.Companion.createDetector
 import com.intellij.ide.ui.laf.darcula.DarculaLaf
-import com.intellij.ide.ui.laf.darcula.initInputMapDefaults
 import com.intellij.ide.ui.laf.intellij.IdeaPopupMenuUI
 import com.intellij.ide.util.PropertiesComponent
 import com.intellij.openapi.actionSystem.*
@@ -112,8 +112,6 @@ private const val INTER_SIZE = 13
        reportStatistic = false)
 class LafManagerImpl(private val coroutineScope: CoroutineScope) : LafManager(), PersistentStateComponent<Element> {
   private val eventDispatcher = EventDispatcher.create(LafManagerListener::class.java)
-
-  private val ourDefaults: Map<Any, Any> = UIManager.getDefaults().clone() as UIDefaults
 
   private var currentTheme: UIThemeLookAndFeelInfo? = null
 
@@ -494,19 +492,20 @@ class LafManagerImpl(private val coroutineScope: CoroutineScope) : LafManager(),
   }
 
   private fun doSetLaF(theme: UIThemeLookAndFeelInfo, installEditorScheme: Boolean): Boolean {
-    val defaults = UIManager.getDefaults()
-    defaults.clear()
-    fillFallbackDefaults(defaults)
-    defaults.putAll(ourDefaults)
     if (!isFirstSetup) {
       colorPatcherProvider = null
       setSelectionColorPatcherProvider(null)
     }
-    val lafAdapter = DarculaLaf(isThemeAdapter = true)
-    UIManager.setLookAndFeel(lafAdapter)
+
+    val lafAdapter = LookAndFeelThemeAdapter(
+      base = LookAndFeelThemeAdapter.preInitializedBaseLaf.get() ?: createBaseLaF().also { it.initialize() },
+      theme = theme,
+      installEditorScheme = installEditorScheme,
+    )
+
     // set L&F
     try {
-      theme.installTheme(UIManager.getLookAndFeelDefaults(), !installEditorScheme)
+      UIManager.setLookAndFeel(lafAdapter)
     }
     catch (e: Exception) {
       LOG.error(e)
@@ -517,21 +516,12 @@ class LafManagerImpl(private val coroutineScope: CoroutineScope) : LafManager(),
       )
       return true
     }
+
     if (SystemInfoRt.isMac) {
       installMacosXFonts(UIManager.getLookAndFeelDefaults())
     }
     else if (SystemInfoRt.isLinux) {
       installLinuxFonts(UIManager.getLookAndFeelDefaults())
-    }
-    // MultiUIDefaults doesn't override keySet() in JDK 11 (JDK 17 is ok) and returns set of UIDefaults,
-    // but not expected UI pairs with key/value.
-    // So don't use it.
-    for (entry in defaults.entries) {
-      val value = entry.value
-      if (value is Color && !(value is JBColor && value.name != null)) {
-        val key = entry.key.toString()
-        entry.setValue(if (value is UIResource) IJColorUIResource(value, key) else IJColor(value, key))
-      }
     }
     return false
   }
@@ -944,14 +934,6 @@ private class LafCellRenderer : SimpleListCellRenderer<LafManager.LafReference>(
     text = value.toString()
   }
 }
-
-open class IJColor internal constructor(color: Color?, private val name: String) : JBColor(Supplier { color }) {
-  override fun getName(): String = name
-
-  override fun toString(): String = "${super.toString()} Name: $name"
-}
-
-private class IJColorUIResource(color: Color?, name: String) : IJColor(color, name), UIResource
 
 private val SEPARATOR = LafManager.LafReference("", null)
 
@@ -1399,18 +1381,6 @@ private fun getDefaultClassicDarkTheme(): UIThemeLookAndFeelInfo {
     return themeListManager.findThemeById(name) ?: themeListManager.findThemeByName(name)
            ?: error("Default classic dark theme '$name' not found")
   }
-}
-
-private fun fillFallbackDefaults(defaults: UIDefaults) {
-  // These icons are only needed to prevent Swing from trying to fetch defaults with AWT ImageFetcher threads (IDEA-322089),
-  // but might as well just put something sensibly-looking there, just in case they show up due to some bug:
-  val folderIcon = UIDefaults.LazyValue { AllIcons.Nodes.Folder }
-  defaults.put("Tree.openIcon", folderIcon)
-  defaults.put("Tree.closedIcon", folderIcon)
-  defaults.put("Tree.leafIcon", UIDefaults.LazyValue { AllIcons.FileTypes.Any_type })
-  // Our themes actually set these two, so we don't want to override them here:
-  //defaults.put("Tree.expandedIcon", AllIcons.Toolbar.Expand);
-  //defaults.put("Tree.collapsedIcon", AllIcons.Actions.ArrowExpand);
 }
 
 @JvmField

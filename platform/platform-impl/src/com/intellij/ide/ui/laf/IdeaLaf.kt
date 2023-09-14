@@ -4,7 +4,7 @@
 package com.intellij.ide.ui.laf
 
 import com.intellij.icons.AllIcons
-import com.intellij.ide.ui.laf.darcula.initInputMapDefaults
+import com.intellij.ide.ui.laf.initInputMapDefaults
 import com.intellij.ui.ColoredSideBorder
 import com.intellij.ui.TableActions
 import com.intellij.ui.plaf.beg.*

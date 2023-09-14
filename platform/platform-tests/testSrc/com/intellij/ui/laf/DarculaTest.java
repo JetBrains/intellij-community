@@ -87,7 +87,7 @@ public class DarculaTest {
 
   public static void main(String[] args) {
     try {
-      UIManager.setLookAndFeel(new DarculaLaf(false));
+      UIManager.setLookAndFeel(new DarculaLaf());
     }
     catch (UnsupportedLookAndFeelException ignored) {}
     final JFrame frame = new JFrame("Darcula Demo");

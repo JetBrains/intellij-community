@@ -1,7 +1,7 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui.components
 
-import com.intellij.ide.ui.laf.darcula.DarculaLaf
+import com.intellij.ide.ui.laf.LookAndFeelThemeAdapter
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.ui.JBColor
 import com.intellij.ui.paint.RectanglePainter
@@ -104,7 +104,7 @@ internal class DefaultLinkButtonUI : BasicButtonUI() {
       val view = htmlView(button)
       if (view == null) {
         g.color = getTextColor(button)
-        val index = if (isEnabled(button) && DarculaLaf.isAltPressed) button.displayedMnemonicIndex else -1
+        val index = if (isEnabled(button) && LookAndFeelThemeAdapter.isAltPressed) button.displayedMnemonicIndex else -1
         UIUtilities.drawStringUnderlineCharAt(button, g, layout.text, index, layout.textBounds.x, layout.baseline)
         if (hovered) {
           g.fillRect(layout.textBounds.x, layout.baseline + 1, layout.textBounds.width, 1)

@@ -5,14 +5,17 @@ package com.intellij.ide.ui
 
 import com.fasterxml.jackson.core.JsonParser
 import com.fasterxml.jackson.core.JsonToken
+import com.intellij.ide.ui.laf.IJColorUIResource
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.util.SystemInfoRt
 import com.intellij.ui.ExperimentalUI
 import it.unimi.dsi.fastutil.Hash
 import it.unimi.dsi.fastutil.objects.Object2ObjectLinkedOpenHashMap
+import java.awt.Color
 import java.util.*
 import java.util.function.BiFunction
 import javax.swing.plaf.ColorUIResource
+import javax.swing.plaf.UIResource
 
 internal class UIThemeBean {
   companion object {
@@ -216,7 +219,7 @@ private fun readFlatMapFromJson(parser: JsonParser, result: MutableMap<String, A
         }
       }
       JsonToken.VALUE_STRING -> {
-        putEntry(prefix, result, parser, path) {
+        putEntry(prefix, result, parser, path) { key ->
           val text = parser.text
           if (isColorLike(text)) {
             val color = parseColorOrNull(text, null)
@@ -226,7 +229,7 @@ private fun readFlatMapFromJson(parser: JsonParser, result: MutableMap<String, A
               text
             }
             else {
-              ColorUIResource(color)
+              createColorResource(color, key)
             }
           }
           else {
@@ -297,7 +300,7 @@ private fun readMapFromJson(parser: JsonParser, result: MutableMap<String, Any?>
         if (isColorLike(text)) {
           val color = parseColorOrNull(text, key)
           if (color != null) {
-            result.put(key, ColorUIResource(color))
+            result.put(key, createColorResource(color, key))
             continue@l
           }
           logger<UITheme>().warn("$key=$text has # prefix but cannot be parsed as color")
@@ -330,6 +333,15 @@ private fun readMapFromJson(parser: JsonParser, result: MutableMap<String, Any?>
   }
 }
 
+private fun createColorResource(color: Color?, key: String): UIResource {
+  if (key.startsWith("*.")) {
+    return ColorUIResource(color)
+  }
+  else {
+    return IJColorUIResource(color, key)
+  }
+}
+
 private const val OS_MACOS_KEY = "os.mac"
 private const val OS_WINDOWS_KEY = "os.windows"
 private const val OS_LINUX_KEY = "os.linux"
@@ -345,7 +357,7 @@ private fun putEntry(prefix: Deque<String>,
                      result: MutableMap<String, Any?>,
                      parser: JsonParser,
                      path: StringBuilder,
-                     getter: () -> Any?) {
+                     getter: (key: String) -> Any?) {
   if (!prefix.isEmpty()) {
     var isFirst = true
     for (element in prefix) {
@@ -359,9 +371,7 @@ private fun putEntry(prefix: Deque<String>,
     }
   }
 
-  val key = parser.currentName()
-  val value = getter()
-  when (key) {
+  when (val key = parser.currentName()) {
     osKey -> {
     }
     OS_WINDOWS_KEY, OS_MACOS_KEY, OS_LINUX_KEY -> {
@@ -372,6 +382,7 @@ private fun putEntry(prefix: Deque<String>,
       val compositeKey = path.toString()
       path.setLength(0)
 
+      val value = getter(compositeKey)
       val oldValue = result.putIfAbsent(compositeKey, OsDefaultValue(value))
       if (oldValue is OsDefaultValue) {
         logger<UIThemeBean>().error("Duplicated value: (value=$value, compositeKey=$compositeKey)")
@@ -389,7 +400,9 @@ private fun putEntry(prefix: Deque<String>,
     }
   }
 
-  result.put(path.toString(), value)
+  val finalKey = path.toString()
+  val value = getter(finalKey)
+  result.put(finalKey, value)
   path.setLength(0)
 }
 

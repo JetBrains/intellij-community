@@ -11,7 +11,7 @@ import com.intellij.ide.IdeEventQueue
 import com.intellij.ide.plugins.PluginManagerCore
 import com.intellij.ide.ui.html.GlobalStyleSheetHolder
 import com.intellij.ide.ui.laf.IdeaLaf
-import com.intellij.ide.ui.laf.darcula.DarculaLaf
+import com.intellij.ide.ui.laf.LookAndFeelThemeAdapter
 import com.intellij.idea.AppExitCodes
 import com.intellij.idea.AppStarter
 import com.intellij.idea.StartupErrorReporter
@@ -103,7 +103,7 @@ private suspend fun initLafAndScale(isHeadless: Boolean) {
   span("base LaF initialization") {
     // LaF is useless until initialized (`getDefaults` "should only be invoked ... after `initialize` has been invoked.")
     baseLaF.initialize()
-    DarculaLaf.setPreInitializedBaseLaf(baseLaF)
+    LookAndFeelThemeAdapter.preInitializedBaseLaf.compareAndSet(null, baseLaF)
   }
 
   // to compute the system scale factor on non-macOS (JRE HiDPI is not enabled), we need to know system font data,
@@ -137,7 +137,7 @@ internal fun CoroutineScope.scheduleInitAwtToolkit(lockSystemDirsJob: Job, busyT
   launch(CoroutineName("LaF class preloading") + Dispatchers.IO) {
     val classLoader = AppStarter::class.java.classLoader
     // preload class not in EDT
-    Class.forName(DarculaLaf::class.java.name, true, classLoader)
+    Class.forName(LookAndFeelThemeAdapter::class.java.name, true, classLoader)
     if (SystemInfoRt.isWindows) {
       Class.forName(IdeaLaf::class.java.name, true, classLoader)
     }
