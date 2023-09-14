@@ -14,11 +14,11 @@ final class Component {
   @NotNull Value value;
   final EKey @NotNull [] ids;
 
-  Component(@NotNull Value value, @NotNull Set<EKey> ids) {
+  Component(@NotNull Value value, @NotNull Collection<EKey> ids) {
     this(value, ids.toArray(new EKey[0]));
   }
 
-  Component(@NotNull Value value, EKey @NotNull [] ids) {
+  Component(@NotNull Value value, EKey @NotNull ... ids) {
     this.value = value;
     this.ids = ids;
   }

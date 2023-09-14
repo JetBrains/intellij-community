@@ -132,7 +132,7 @@ final class NullableMethodAnalysis {
           int mappedOrigin = originsMapping[origin];
           EKey createdKey = createdKeys[origin];
           if (createdKey != null && (mergedMappedLabels & (1 << mappedOrigin)) != 0) {
-            sum.add(new Component(Value.Null, Collections.singleton(createdKey)));
+            sum.add(new Component(Value.Null, createdKey));
           }
         }
         if (!sum.isEmpty()) {
