@@ -1,4 +1,5 @@
-package com.intellij.dev.psiViewer
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package com.intellij.dev.psiViewer.debug
 
 import com.intellij.debugger.engine.DebuggerUtils
 import com.intellij.debugger.engine.JavaDebugProcess
@@ -7,6 +8,10 @@ import com.intellij.debugger.engine.evaluation.EvaluateException
 import com.intellij.debugger.engine.evaluation.EvaluationContextImpl
 import com.intellij.debugger.engine.events.SuspendContextCommandImpl
 import com.intellij.debugger.memory.action.DebuggerTreeAction
+import com.intellij.dev.psiViewer.DevPsiViewerBundle
+import com.intellij.dev.psiViewer.PsiViewerDialog
+import com.intellij.dev.psiViewer.PsiViewerSettings
+import com.intellij.lang.Language
 import com.intellij.notification.NotificationType
 import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
@@ -27,8 +32,12 @@ private val GET_CONTAINING_FILE = "getContainingFile"
 
 private val GET_TEXT = "getText"
 
+private val GET_LANGUAGE = "getLanguage"
+
+private val GET_ID = "getID"
+
 class PsiViewerDebugAction : DebuggerTreeAction() {
-  override fun getActionUpdateThread() = ActionUpdateThread.BGT
+  override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.BGT
 
   override fun isEnabled(node: XValueNodeImpl, e: AnActionEvent): Boolean {
     val refType = getObjectReference(node)?.referenceType()
@@ -58,11 +67,19 @@ class PsiViewerDebugAction : DebuggerTreeAction() {
             return DebuggerUtils.getValueAsString(evalContext, stringObj) ?: return null
           }
 
+          fun ObjectReference.getLanguageId(): String? {
+            val languageObj = invokeMethod(GET_LANGUAGE) ?: return null
+            val stringObj = languageObj.invokeMethod(GET_ID) ?: return null
+            return DebuggerUtils.getValueAsString(evalContext, stringObj) ?: return null
+          }
+
           val psiElemObj = getObjectReference(node) ?: return
           val psiFileObj = psiElemObj.invokeMethod(GET_CONTAINING_FILE) ?: return
           val psiText = psiElemObj.getText() ?: return
           val fileText = psiFileObj.getText() ?: return
           val psiRangeInFile = fileText.findTextRange(psiText)
+          val languageId = psiFileObj.getLanguageId()
+          val language = Language.findLanguageByID(languageId) ?: return
 
           DebuggerUIUtil.invokeLater {
             val editorFactory = EditorFactory.getInstance()
@@ -75,7 +92,16 @@ class PsiViewerDebugAction : DebuggerTreeAction() {
               dialog.show()
             }
 
-            showDialog()
+            fun showDebugTab() {
+              val runnerLayoutUi = debugProcess.session?.xDebugSession?.ui ?: return
+              val psiViewerPanel = PsiViewerDebugPanel(project, editor, language)
+              val name = node.name ?: return
+              val content = runnerLayoutUi.createContent(name, psiViewerPanel, name, null, null)
+              runnerLayoutUi.addContent(content)
+              runnerLayoutUi.selectAndFocus(content, true, true)
+            }
+
+            if (PsiViewerSettings.getSettings().showDialogFromDebugAction) showDialog() else showDebugTab()
           }
         } catch (e: EvaluateException) {
           XDebuggerManagerImpl.getNotificationGroup().createNotification(

@@ -161,7 +161,7 @@ public class PsiViewerDialog extends DialogWrapper implements DataProvider {
     }
   }
 
-  PsiViewerDialog(@NotNull Project project, @Nullable Editor selectedEditor) {
+  public PsiViewerDialog(@NotNull Project project, @Nullable Editor selectedEditor) {
     super(project, true, IdeModalityType.MODELESS);
     myProject = project;
     myExternalDocument = selectedEditor != null;
