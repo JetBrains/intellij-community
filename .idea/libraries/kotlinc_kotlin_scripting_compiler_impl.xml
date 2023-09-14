@@ -1,18 +1,18 @@
 <component name="libraryTable">
   <library name="kotlinc.kotlin-scripting-compiler-impl" type="repository">
-    <properties include-transitive-deps="false" maven-id="org.jetbrains.kotlin:kotlin-scripting-compiler-impl:1.9.30-dev-2548">
+    <properties include-transitive-deps="false" maven-id="org.jetbrains.kotlin:kotlin-scripting-compiler-impl:1.9.30-dev-3330">
       <verification>
-        <artifact url="file://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-scripting-compiler-impl/1.9.30-dev-2548/kotlin-scripting-compiler-impl-1.9.30-dev-2548.jar">
-          <sha256sum>3b01ab1fa305c2b861586e87f4a58397358e680a5ce0931232b40cd8c5e35130</sha256sum>
+        <artifact url="file://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-scripting-compiler-impl/1.9.30-dev-3330/kotlin-scripting-compiler-impl-1.9.30-dev-3330.jar">
+          <sha256sum>9e148fa83b2c134549a51ef6ce5398ce84d2e4474ecd21f5ed4eaf9bf260d094</sha256sum>
         </artifact>
       </verification>
     </properties>
     <CLASSES>
-      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-scripting-compiler-impl/1.9.30-dev-2548/kotlin-scripting-compiler-impl-1.9.30-dev-2548.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-scripting-compiler-impl/1.9.30-dev-3330/kotlin-scripting-compiler-impl-1.9.30-dev-3330.jar!/" />
     </CLASSES>
     <JAVADOC />
     <SOURCES>
-      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-scripting-compiler-impl/1.9.30-dev-2548/kotlin-scripting-compiler-impl-1.9.30-dev-2548-sources.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-scripting-compiler-impl/1.9.30-dev-3330/kotlin-scripting-compiler-impl-1.9.30-dev-3330-sources.jar!/" />
     </SOURCES>
   </library>
 </component>

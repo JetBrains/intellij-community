@@ -1,18 +1,18 @@
 <component name="libraryTable">
   <library name="kotlinc.scripting-compiler-plugin" type="repository">
-    <properties include-transitive-deps="false" maven-id="org.jetbrains.kotlin:scripting-compiler-plugin-for-ide:1.9.30-dev-2548">
+    <properties include-transitive-deps="false" maven-id="org.jetbrains.kotlin:scripting-compiler-plugin-for-ide:1.9.30-dev-3330">
       <verification>
-        <artifact url="file://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/scripting-compiler-plugin-for-ide/1.9.30-dev-2548/scripting-compiler-plugin-for-ide-1.9.30-dev-2548.jar">
-          <sha256sum>b57300049985b84b435a61e1195f647f1902cc982c4ec006462e039abf40f21f</sha256sum>
+        <artifact url="file://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/scripting-compiler-plugin-for-ide/1.9.30-dev-3330/scripting-compiler-plugin-for-ide-1.9.30-dev-3330.jar">
+          <sha256sum>4e472b1e3111c00c537e3443050a88406b49adbf4a332efe3ab3edb04e943599</sha256sum>
         </artifact>
       </verification>
     </properties>
     <CLASSES>
-      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/scripting-compiler-plugin-for-ide/1.9.30-dev-2548/scripting-compiler-plugin-for-ide-1.9.30-dev-2548.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/scripting-compiler-plugin-for-ide/1.9.30-dev-3330/scripting-compiler-plugin-for-ide-1.9.30-dev-3330.jar!/" />
     </CLASSES>
     <JAVADOC />
     <SOURCES>
-      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/scripting-compiler-plugin-for-ide/1.9.30-dev-2548/scripting-compiler-plugin-for-ide-1.9.30-dev-2548-sources.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/scripting-compiler-plugin-for-ide/1.9.30-dev-3330/scripting-compiler-plugin-for-ide-1.9.30-dev-3330-sources.jar!/" />
     </SOURCES>
   </library>
 </component>

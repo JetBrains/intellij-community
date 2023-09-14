@@ -1617,4 +1617,32 @@ public abstract class PerformanceBasicCompletionHandlerTestGenerated extends Abs
             runTest("../completion/testData/handlers/basic/variableNameAndType/TypeInsertionOnLateinit.kt");
         }
     }
+
+    @RunWith(JUnit3RunnerWithInners.class)
+    @TestMetadata("../completion/testData/handlers/basic/withTab")
+    public static class WithTab extends AbstractPerformanceBasicCompletionHandlerTest {
+        private void runTest(String testDataFilePath) throws Exception {
+            KotlinTestUtils.runTest(this::doPerfTest, this, testDataFilePath);
+        }
+
+        @TestMetadata("InsideBracketsClassifier.kt")
+        public void testInsideBracketsClassifier() throws Exception {
+            runTest("../completion/testData/handlers/basic/withTab/InsideBracketsClassifier.kt");
+        }
+
+        @TestMetadata("InsideBracketsFunction.kt")
+        public void testInsideBracketsFunction() throws Exception {
+            runTest("../completion/testData/handlers/basic/withTab/InsideBracketsFunction.kt");
+        }
+
+        @TestMetadata("InsideBracketsFunction2.kt")
+        public void testInsideBracketsFunction2() throws Exception {
+            runTest("../completion/testData/handlers/basic/withTab/InsideBracketsFunction2.kt");
+        }
+
+        @TestMetadata("InsideBracketsVariable.kt")
+        public void testInsideBracketsVariable() throws Exception {
+            runTest("../completion/testData/handlers/basic/withTab/InsideBracketsVariable.kt");
+        }
+    }
 }

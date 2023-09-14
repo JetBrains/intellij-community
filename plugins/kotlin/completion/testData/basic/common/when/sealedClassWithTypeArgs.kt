@@ -11,9 +11,9 @@ fun foo(e: SEALED) {
     }
 }
 
+// WITH_ORDER
 // EXIST: { lookupString: "is AAAA", tailText: "<*, *> -> " }
 // EXIST: BBBB
 // EXIST: { lookupString: "is CCCC", tailText: "<*> -> " }
 // EXIST: { lookupString: "else -> "}
-// NOTHING_ELSE
 // FIR_COMPARISON

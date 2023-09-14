@@ -51,6 +51,11 @@ class KotlinFirCompletionContributor : CompletionContributor() {
         identifierProviderService: CompletionDummyIdentifierProviderService,
         context: CompletionInitializationContext
     ) {
+        // If replacement context is not "modified" externally then `com.intellij.codeInsight.completion.CompletionProgressIndicator`
+        // searches for the reference at caret and on Tab replaces the whole reference, which in case of completion in Kotlin leads to bugs
+        // such as KTIJ-26872.
+        context.markReplacementOffsetAsModified()
+
         val dummyIdentifierCorrected = identifierProviderService.correctPositionForStringTemplateEntry(context)
         if (dummyIdentifierCorrected) {
             return

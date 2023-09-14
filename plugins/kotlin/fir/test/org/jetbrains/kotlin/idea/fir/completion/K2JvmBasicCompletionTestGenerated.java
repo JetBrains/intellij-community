@@ -3452,6 +3452,16 @@ public abstract class K2JvmBasicCompletionTestGenerated extends AbstractK2JvmBas
                 KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
             }
 
+            @TestMetadata("callable.kt")
+            public void testCallable() throws Exception {
+                runTest("../completion/testData/basic/common/when/callable.kt");
+            }
+
+            @TestMetadata("callable2.kt")
+            public void testCallable2() throws Exception {
+                runTest("../completion/testData/basic/common/when/callable2.kt");
+            }
+
             @TestMetadata("enumInEmptyWhen.kt")
             public void testEnumInEmptyWhen() throws Exception {
                 runTest("../completion/testData/basic/common/when/enumInEmptyWhen.kt");
@@ -3487,6 +3497,11 @@ public abstract class K2JvmBasicCompletionTestGenerated extends AbstractK2JvmBas
                 runTest("../completion/testData/basic/common/when/nonSealedClassInWhen.kt");
             }
 
+            @TestMetadata("nonSealedClassInWhen2.kt")
+            public void testNonSealedClassInWhen2() throws Exception {
+                runTest("../completion/testData/basic/common/when/nonSealedClassInWhen2.kt");
+            }
+
             @TestMetadata("nonSealedClassWithTypeArgs.kt")
             public void testNonSealedClassWithTypeArgs() throws Exception {
                 runTest("../completion/testData/basic/common/when/nonSealedClassWithTypeArgs.kt");
@@ -3500,6 +3515,11 @@ public abstract class K2JvmBasicCompletionTestGenerated extends AbstractK2JvmBas
             @TestMetadata("nullableSealedClassInWhen.kt")
             public void testNullableSealedClassInWhen() throws Exception {
                 runTest("../completion/testData/basic/common/when/nullableSealedClassInWhen.kt");
+            }
+
+            @TestMetadata("onTyping.kt")
+            public void testOnTyping() throws Exception {
+                runTest("../completion/testData/basic/common/when/onTyping.kt");
             }
 
             @TestMetadata("sealedClassInWhen.kt")
