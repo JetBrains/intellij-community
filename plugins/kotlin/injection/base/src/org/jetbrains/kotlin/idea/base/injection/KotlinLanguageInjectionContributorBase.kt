@@ -29,6 +29,10 @@ import org.intellij.plugins.intelliLang.inject.config.InjectionPlace
 import org.intellij.plugins.intelliLang.inject.java.JavaLanguageInjectionSupport
 import org.intellij.plugins.intelliLang.util.AnnotationUtilEx
 import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.kotlin.analysis.api.KtAllowAnalysisFromWriteAction
+import org.jetbrains.kotlin.analysis.api.KtAllowAnalysisOnEdt
+import org.jetbrains.kotlin.analysis.api.lifetime.allowAnalysisFromWriteAction
+import org.jetbrains.kotlin.analysis.api.lifetime.allowAnalysisOnEdt
 import org.jetbrains.kotlin.idea.base.projectStructure.RootKindFilter
 import org.jetbrains.kotlin.idea.base.projectStructure.matches
 import org.jetbrains.kotlin.idea.base.psi.KotlinPsiHeuristics
@@ -111,7 +115,12 @@ abstract class KotlinLanguageInjectionContributorBase : LanguageInjectionContrib
         if (context !is KtElement) return null
         if (!isSupportedElement(context)) return null
         val support = kotlinSupport ?: return null
-        return getBaseInjection(context, support).takeIf { it != absentKotlinInjection }
+        @OptIn(KtAllowAnalysisOnEdt::class, KtAllowAnalysisFromWriteAction::class)
+        return allowAnalysisOnEdt {
+            allowAnalysisFromWriteAction {
+                getBaseInjection(context, support).takeIf { it != absentKotlinInjection }
+            }
+        }
     }
 
     private fun computeBaseInjection(

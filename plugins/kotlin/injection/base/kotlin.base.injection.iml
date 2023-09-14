@@ -4,7 +4,7 @@
     <facet type="kotlin-language" name="Kotlin">
       <configuration version="5" platform="JVM 17" allPlatforms="JVM [17]" useProjectSettings="false">
         <compilerSettings>
-          <option name="additionalArguments" value="-Xcontext-receivers -Xjvm-default=all" />
+          <option name="additionalArguments" value="-Xcontext-receivers -Xjvm-default=all -opt-in=org.jetbrains.kotlin.analysis.api.lifetime.KtAllowProhibitedAnalyzeFromWriteAction" />
         </compilerSettings>
         <compilerArguments>
           <stringArguments>
@@ -39,5 +39,6 @@
     <orderEntry type="module" module-name="kotlin.base.project-structure" />
     <orderEntry type="module" module-name="intellij.java.langInjection" />
     <orderEntry type="module" module-name="kotlin.base.psi" />
+    <orderEntry type="library" name="kotlinc.high-level-api" level="project" />
   </component>
 </module>
