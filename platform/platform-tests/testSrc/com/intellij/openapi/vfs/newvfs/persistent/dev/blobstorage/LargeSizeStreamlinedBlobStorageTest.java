@@ -2,6 +2,7 @@
 package com.intellij.openapi.vfs.newvfs.persistent.dev.blobstorage;
 
 import com.intellij.util.io.PagedFileStorage;
+import com.intellij.util.io.blobstorage.SpaceAllocationStrategy;
 import org.jetbrains.annotations.NotNull;
 import org.junit.Test;
 import org.junit.experimental.theories.Theories;

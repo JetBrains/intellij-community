@@ -2,8 +2,9 @@
 package com.intellij.openapi.vfs.newvfs.persistent.dev.blobstorage;
 
 import com.intellij.openapi.util.IntRef;
-import com.intellij.openapi.vfs.newvfs.persistent.dev.blobstorage.SpaceAllocationStrategy.DataLengthPlusFixedPercentStrategy;
-import com.intellij.openapi.vfs.newvfs.persistent.dev.blobstorage.SpaceAllocationStrategy.WriterDecidesStrategy;
+import com.intellij.util.io.blobstorage.SpaceAllocationStrategy;
+import com.intellij.util.io.blobstorage.SpaceAllocationStrategy.DataLengthPlusFixedPercentStrategy;
+import com.intellij.util.io.blobstorage.SpaceAllocationStrategy.WriterDecidesStrategy;
 import com.intellij.util.io.blobstorage.StreamlinedBlobStorage;
 import it.unimi.dsi.fastutil.ints.*;
 import org.jetbrains.annotations.NotNull;
@@ -36,14 +37,14 @@ public abstract class StreamlinedBlobStorageTestBase<S extends StreamlinedBlobSt
   @DataPoints
   public static List<SpaceAllocationStrategy> allocationStrategiesToTry() {
     return Arrays.asList(
-      new WriterDecidesStrategy(1024),
-      new WriterDecidesStrategy(256),
-      new DataLengthPlusFixedPercentStrategy(1024, 256, 30),
-      new DataLengthPlusFixedPercentStrategy(256, 64, 30),
+      new WriterDecidesStrategy(StreamlinedBlobStorageOverLockFreePagesStorage.MAX_CAPACITY, 1024),
+      new WriterDecidesStrategy(StreamlinedBlobStorageOverLockFreePagesStorage.MAX_CAPACITY, 256),
+      new DataLengthPlusFixedPercentStrategy(256, 1024, StreamlinedBlobStorageOverLockFreePagesStorage.MAX_CAPACITY, 30),
+      new DataLengthPlusFixedPercentStrategy(64, 256, StreamlinedBlobStorageOverLockFreePagesStorage.MAX_CAPACITY, 30),
 
       //put stress on allocation/reallocation code paths
-      new DataLengthPlusFixedPercentStrategy(128, 64, 0),
-      new DataLengthPlusFixedPercentStrategy(2, 2, 0)
+      new DataLengthPlusFixedPercentStrategy(64, 128, StreamlinedBlobStorageOverLockFreePagesStorage.MAX_CAPACITY, 0),
+      new DataLengthPlusFixedPercentStrategy(2, 2, StreamlinedBlobStorageOverLockFreePagesStorage.MAX_CAPACITY, 0)
     );
   }
 

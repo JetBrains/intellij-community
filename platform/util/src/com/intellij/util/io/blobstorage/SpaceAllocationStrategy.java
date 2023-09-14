@@ -1,8 +1,5 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.openapi.vfs.newvfs.persistent.dev.blobstorage;
-
-import com.intellij.util.io.blobstorage.ByteBufferWriter;
-import com.intellij.util.io.blobstorage.StreamlinedBlobStorage;
+package com.intellij.util.io.blobstorage;
 
 /**
  * Allocation strategy for records in {@link StreamlinedBlobStorage}: "how much capacity reserve for a
@@ -25,16 +22,18 @@ public interface SpaceAllocationStrategy {
 
   final class WriterDecidesStrategy implements SpaceAllocationStrategy {
     private final int defaultCapacity;
+    private final int maxCapacity;
 
-    public WriterDecidesStrategy(final int defaultCapacity) {
-      if (defaultCapacity <= 0 || defaultCapacity >= StreamlinedBlobStorageOverLockFreePagesStorage.MAX_CAPACITY) {
-        throw new IllegalArgumentException(
-          "defaultCapacity(" +
-          defaultCapacity +
-          ") must be in [1," +
-          StreamlinedBlobStorageOverLockFreePagesStorage.MAX_CAPACITY +
-          "]");
+    public WriterDecidesStrategy(final int maxCapacity,
+                                 final int defaultCapacity) {
+      if (maxCapacity <= 0) {
+        throw new IllegalArgumentException("maxCapacity(" + maxCapacity + ") must be >0");
       }
+      if (defaultCapacity <= 0 || defaultCapacity >= maxCapacity) {
+        throw new IllegalArgumentException("defaultCapacity(" + defaultCapacity + ") must be in [1," + maxCapacity + "]");
+      }
+
+      this.maxCapacity = maxCapacity;
       this.defaultCapacity = defaultCapacity;
     }
 
@@ -47,35 +46,38 @@ public interface SpaceAllocationStrategy {
     public int capacity(final int actualLength,
                         final int currentCapacity) {
       if (actualLength < 0) {
-        throw new IllegalArgumentException("actualLength(=" + actualLength + " should be >=0");
+        throw new IllegalArgumentException("actualLength(=" + actualLength + " must be >=0");
       }
       if (currentCapacity < actualLength) {
-        throw new IllegalArgumentException("currentCapacity(=" + currentCapacity + ") should be >= actualLength(=" + actualLength + ")");
+        throw new IllegalArgumentException("currentCapacity(=" + currentCapacity + ") must be >= actualLength(=" + actualLength + ")");
+      }
+      if (currentCapacity > maxCapacity) {
+        throw new IllegalArgumentException("currentCapacity(=" + currentCapacity + ") must be <= max(=" + maxCapacity + ")");
       }
       return currentCapacity;
     }
 
     @Override
     public String toString() {
-      return "WriterDecidesStrategy{default: " + defaultCapacity + '}';
+      return "WriterDecidesStrategy{default: " + defaultCapacity + ", max: " + maxCapacity + "}";
     }
   }
 
   final class DataLengthPlusFixedPercentStrategy implements SpaceAllocationStrategy {
     private final int defaultCapacity;
     private final int minCapacity;
+    private final int maxCapacity;
     private final int percentOnTheTop;
 
-    public DataLengthPlusFixedPercentStrategy(final int defaultCapacity,
-                                              final int minCapacity,
+    public DataLengthPlusFixedPercentStrategy(final int minCapacity,
+                                              final int defaultCapacity,
+                                              final int maxCapacity,
                                               final int percentOnTheTop) {
-      if (defaultCapacity <= 0 || defaultCapacity > StreamlinedBlobStorageOverLockFreePagesStorage.MAX_CAPACITY) {
-        throw new IllegalArgumentException(
-          "defaultCapacity(" +
-          defaultCapacity +
-          ") must be in [1," +
-          StreamlinedBlobStorageOverLockFreePagesStorage.MAX_CAPACITY +
-          "]");
+      if (maxCapacity <= 0) {
+        throw new IllegalArgumentException("maxCapacity(" + maxCapacity + ") must be >0");
+      }
+      if (defaultCapacity <= 0 || defaultCapacity > maxCapacity) {
+        throw new IllegalArgumentException("defaultCapacity(" + defaultCapacity + ") must be in [1," + maxCapacity + "]");
       }
       if (minCapacity <= 0 || minCapacity > defaultCapacity) {
         throw new IllegalArgumentException("minCapacity(" + minCapacity + ") must be > 0 && <= defaultCapacity(" + defaultCapacity + ")");
@@ -83,8 +85,11 @@ public interface SpaceAllocationStrategy {
       if (percentOnTheTop < 0) {
         throw new IllegalArgumentException("percentOnTheTop(" + percentOnTheTop + ") must be >= 0");
       }
-      this.defaultCapacity = defaultCapacity;
+
       this.minCapacity = minCapacity;
+      this.defaultCapacity = defaultCapacity;
+      this.maxCapacity = maxCapacity;
+
       this.percentOnTheTop = percentOnTheTop;
     }
 
@@ -104,8 +109,8 @@ public interface SpaceAllocationStrategy {
       }
       final double capacity = Math.ceil(actualLength * (1.0 + percentOnTheTop / 100.0));
       final int advisedCapacity = (int)Math.max(minCapacity, capacity);
-      if (advisedCapacity < 0 || advisedCapacity > StreamlinedBlobStorageOverLockFreePagesStorage.MAX_CAPACITY) {
-        return StreamlinedBlobStorageOverLockFreePagesStorage.MAX_CAPACITY;
+      if (advisedCapacity < 0 || advisedCapacity > maxCapacity) {
+        return maxCapacity;
       }
       return advisedCapacity;
     }
@@ -115,6 +120,7 @@ public interface SpaceAllocationStrategy {
       return "DataLengthPlusFixedPercentStrategy{" +
              "length + " + percentOnTheTop + "%" +
              ", min: " + minCapacity +
+             ", max: " + maxCapacity +
              ", default: " + defaultCapacity + "}";
     }
   }

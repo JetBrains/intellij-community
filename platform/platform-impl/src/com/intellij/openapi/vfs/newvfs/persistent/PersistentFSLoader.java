@@ -6,7 +6,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.NotNullLazyValue;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.newvfs.persistent.dev.blobstorage.LargeSizeStreamlinedBlobStorage;
-import com.intellij.openapi.vfs.newvfs.persistent.dev.blobstorage.SpaceAllocationStrategy;
+import com.intellij.util.io.blobstorage.SpaceAllocationStrategy;
 import com.intellij.util.io.blobstorage.StreamlinedBlobStorage;
 import com.intellij.openapi.vfs.newvfs.persistent.dev.blobstorage.StreamlinedBlobStorageOverLockFreePagesStorage;
 import com.intellij.openapi.vfs.newvfs.persistent.dev.enumerator.DurableStringEnumerator;
@@ -574,7 +574,10 @@ public final class PersistentFSLoader {
   private static @NotNull AbstractAttributesStorage createAttributesStorage_makeStorage(@NotNull Path attributesFile) throws IOException {
     if (FSRecordsImpl.USE_STREAMLINED_ATTRIBUTES_IMPLEMENTATION) {
       //avg record size is ~60b, hence I've chosen minCapacity=64 bytes, and defaultCapacity= 2*minCapacity
-      final SpaceAllocationStrategy allocationStrategy = new SpaceAllocationStrategy.DataLengthPlusFixedPercentStrategy(128, 64, 30);
+      final SpaceAllocationStrategy allocationStrategy = new SpaceAllocationStrategy.DataLengthPlusFixedPercentStrategy(64, 128,
+                                                                                                                        StreamlinedBlobStorageOverLockFreePagesStorage.MAX_CAPACITY,
+                                                                                                                        30
+      );
       final StreamlinedBlobStorage blobStorage;
       if (FSRecordsImpl.USE_ATTRIBUTES_OVER_NEW_FILE_PAGE_CACHE && PageCacheUtils.LOCK_FREE_PAGE_CACHE_ENABLED) {
         LOG.info("VFS uses streamlined attributes storage (over new FilePageCache)");

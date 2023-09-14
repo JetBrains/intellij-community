@@ -10,6 +10,7 @@ import com.intellij.util.io.DirectBufferWrapper;
 import com.intellij.util.io.PagedFileStorage;
 import com.intellij.util.io.blobstorage.ByteBufferReader;
 import com.intellij.util.io.blobstorage.ByteBufferWriter;
+import com.intellij.util.io.blobstorage.SpaceAllocationStrategy;
 import com.intellij.util.io.blobstorage.StreamlinedBlobStorage;
 import io.opentelemetry.api.common.Attributes;
 import io.opentelemetry.api.metrics.BatchCallback;
