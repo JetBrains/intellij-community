@@ -85,7 +85,7 @@ abstract class AdditionalTableHeader : JPanel(BorderLayout()) {
   /** The helper to handle the location of the additional header in the table header.  */
   protected val positionHelper: AdditionalTableHeaderPositionHelper = AdditionalTableHeaderPositionHelper(this)
 
-  private fun changeTableAtPositionHelper(oldTable: JTable?, newTable: JTable?) {
+  protected fun changeTableAtPositionHelper(oldTable: JTable?, newTable: JTable?) {
     positionHelper.changeTable(oldTable, newTable)
   }
 
