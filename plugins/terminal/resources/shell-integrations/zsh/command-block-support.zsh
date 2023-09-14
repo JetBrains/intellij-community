@@ -64,8 +64,6 @@ __jetbrains_intellij_configure_prompt() {
   # do not show right prompt
   builtin unset RPS1
   builtin unset RPROMPT
-  # always show new prompt after completion list
-  builtin unsetopt ALWAYS_LAST_PROMPT
 }
 
 __jetbrains_intellij_command_preexec() {
@@ -96,10 +94,6 @@ __jetbrains_intellij_command_precmd() {
 add-zsh-hook preexec __jetbrains_intellij_command_preexec
 add-zsh-hook precmd __jetbrains_intellij_command_precmd
 add-zsh-hook zshaddhistory __jetbrains_intellij_zshaddhistory
-
-# Do not show "zsh: do you wish to see all <N> possibilities (<M> lines)?" question
-# when there are big number of completion items
-LISTMAX=1000000
 
 # This script is sourced from inside a `precmd` hook, i.e. right before the first prompt.
 builtin printf '\e]1341;initialized\a'

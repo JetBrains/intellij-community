@@ -91,14 +91,6 @@ __jetbrains_intellij_command_terminated() {
     return 0
   fi
 
-  # Show completions on first TAB if there are more than one suitable option
-  # (by default Bash show all options only after second TAB in a such case)
-  builtin bind 'set show-all-if-ambiguous on'
-  # Do not show "Display all N possibilities?" question during completion
-  builtin bind 'set completion-query-items 0'
-  # Print all completion items at once instead of pagination
-  builtin bind 'set page-completions off'
-
   __jetbrains_intellij_configure_prompt
 
   if [ -z "$__jetbrains_intellij_initialized" ]; then
