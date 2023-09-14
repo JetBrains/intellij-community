@@ -6,10 +6,12 @@ import com.intellij.openapi.externalSystem.autoimport.changes.AsyncFilesChangesL
 import com.intellij.openapi.externalSystem.autoimport.changes.FilesChangesListener
 import com.intellij.openapi.externalSystem.autoimport.settings.ReadAsyncSupplier
 import com.intellij.openapi.util.io.toCanonicalPath
+import kotlinx.coroutines.launch
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.idea.maven.buildtool.MavenImportSpec
 import org.jetbrains.idea.maven.project.MavenProjectsManager
 import org.jetbrains.idea.maven.server.MavenDistributionsCache
+import org.jetbrains.idea.maven.utils.MavenCoroutineScopeProvider
 import org.jetbrains.idea.maven.utils.MavenUtil
 import java.util.concurrent.ExecutorService
 
@@ -31,8 +33,12 @@ class MavenGeneralSettingsWatcher(
 
   private fun fireSettingsChange() {
     embeddersManager.reset()
-    MavenDistributionsCache.getInstance(manager.project).cleanCaches()
-    manager.scheduleUpdateAll(MavenImportSpec.IMPLICIT_IMPORT)
+    val project = manager.project
+    MavenDistributionsCache.getInstance(project).cleanCaches()
+    val cs = MavenCoroutineScopeProvider.getCoroutineScope(project)
+    cs.launch {
+      manager.updateAllMavenProjects(MavenImportSpec.IMPLICIT_IMPORT)
+    }
   }
 
   private fun fireSettingsXmlChange() {

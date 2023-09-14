@@ -757,18 +757,24 @@ abstract class MavenImportingTestCase : MavenTestCase() {
 
   @RequiresBackgroundThread
   protected suspend fun waitForImportWithinTimeout(action: suspend () -> Any) {
-    val isImportCompleted = AtomicBoolean(false)
+    val importStarted = AtomicBoolean(false)
+    val importFinished = AtomicBoolean(false)
     myProject.messageBus.connect(testRootDisposable)
       .subscribe(MavenImportListener.TOPIC, object : MavenImportListener {
+        override fun importStarted() {
+          importStarted.set(true)
+        }
         override fun importFinished(importedProjects: MutableCollection<MavenProject>, newModules: MutableList<Module>) {
-          isImportCompleted.set(true)
+          if (importStarted.get()) {
+            importFinished.set(true)
+          }
         }
       })
 
     action()
 
     assertWithinTimeout {
-      assertTrue(isImportCompleted.get())
+      assertTrue(importStarted.get() && importFinished.get())
     }
   }
 

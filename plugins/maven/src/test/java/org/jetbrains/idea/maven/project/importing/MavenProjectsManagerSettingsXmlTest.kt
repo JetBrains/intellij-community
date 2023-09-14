@@ -67,7 +67,7 @@ class MavenProjectsManagerSettingsXmlTest : MavenMultiVersionImportingTestCase()
     val childNode = projectsTree.getModules(roots[0])[0]
     assertUnorderedPathsAreEqual(parentNode.sources, listOf(FileUtil.toSystemDependentName("$projectPath/value1")))
     assertUnorderedPathsAreEqual(childNode.sources, listOf(FileUtil.toSystemDependentName("$projectPath/m/value1")))
-    //waitForImportWithinTimeout {
+    waitForImportWithinTimeout {
       updateSettingsXml("""
                         <profiles>
                           <profile>
@@ -81,15 +81,15 @@ class MavenProjectsManagerSettingsXmlTest : MavenMultiVersionImportingTestCase()
                           </profile>
                         </profiles>
                         """.trimIndent())
-    //}
+    }
     assertUnorderedPathsAreEqual(parentNode.sources, listOf(FileUtil.toSystemDependentName("$projectPath/value2")))
     assertUnorderedPathsAreEqual(childNode.sources, listOf(FileUtil.toSystemDependentName("$projectPath/m/value2")))
-    //waitForImportWithinTimeout {
+    waitForImportWithinTimeout {
       deleteSettingsXml()
-    //}
+    }
     assertUnorderedPathsAreEqual(parentNode.sources, listOf(FileUtil.toSystemDependentName("$projectPath/\${prop}")))
     assertUnorderedPathsAreEqual(childNode.sources, listOf(FileUtil.toSystemDependentName("$projectPath/m/\${prop}")))
-    //waitForImportWithinTimeout {
+    waitForImportWithinTimeout {
       updateSettingsXml("""
                         <profiles>
                           <profile>
@@ -103,7 +103,7 @@ class MavenProjectsManagerSettingsXmlTest : MavenMultiVersionImportingTestCase()
                           </profile>
                         </profiles>
                         """.trimIndent())
-    //}
+    }
     assertUnorderedPathsAreEqual(parentNode.sources, listOf(FileUtil.toSystemDependentName("$projectPath/value2")))
     assertUnorderedPathsAreEqual(childNode.sources, listOf(FileUtil.toSystemDependentName("$projectPath/m/value2")))
   }
@@ -118,7 +118,7 @@ class MavenProjectsManagerSettingsXmlTest : MavenMultiVersionImportingTestCase()
                        """.trimIndent())
     importProject()
     assertUnorderedElementsAreEqual(projectsTree.getAvailableProfiles())
-    //waitForImportWithinTimeout {
+    waitForImportWithinTimeout {
       updateSettingsXml("""
                         <profiles>
                           <profile>
@@ -126,12 +126,12 @@ class MavenProjectsManagerSettingsXmlTest : MavenMultiVersionImportingTestCase()
                           </profile>
                         </profiles>
                         """.trimIndent())
-    //}
+    }
 
     assertUnorderedElementsAreEqual(projectsTree.getAvailableProfiles(), "one")
-    //waitForImportWithinTimeout {
+    waitForImportWithinTimeout {
       deleteSettingsXml()
-    //}
+    }
     assertUnorderedElementsAreEqual(projectsTree.getAvailableProfiles())
   }
 

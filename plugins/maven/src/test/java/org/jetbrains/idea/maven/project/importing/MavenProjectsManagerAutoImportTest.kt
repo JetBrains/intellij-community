@@ -99,10 +99,8 @@ class MavenProjectsManagerAutoImportTest : MavenMultiVersionImportingTestCase() 
     val roots = projectsTree.rootProjects
     val parentNode = roots[0]
     val childNode = projectsTree.getModules(roots[0])[0]
-    assertUnorderedPathsAreEqual(parentNode.sources, Arrays.asList(FileUtil.toSystemDependentName(
-      "$projectPath/value1")))
-    assertUnorderedPathsAreEqual(childNode.sources, Arrays.asList(FileUtil.toSystemDependentName(
-      "$projectPath/m/value1")))
+    assertUnorderedPathsAreEqual(parentNode.sources, listOf(FileUtil.toSystemDependentName("$projectPath/value1")))
+    assertUnorderedPathsAreEqual(childNode.sources, listOf(FileUtil.toSystemDependentName("$projectPath/m/value1")))
     updateSettingsXml("""
                         <profiles>
                           <profile>
@@ -117,16 +115,12 @@ class MavenProjectsManagerAutoImportTest : MavenMultiVersionImportingTestCase() 
                         </profiles>
                         """.trimIndent())
     importProject()
-    assertUnorderedPathsAreEqual(parentNode.sources, Arrays.asList(FileUtil.toSystemDependentName(
-      "$projectPath/value2")))
-    assertUnorderedPathsAreEqual(childNode.sources, Arrays.asList(FileUtil.toSystemDependentName(
-      "$projectPath/m/value2")))
+    assertUnorderedPathsAreEqual(parentNode.sources, listOf(FileUtil.toSystemDependentName("$projectPath/value2")))
+    assertUnorderedPathsAreEqual(childNode.sources, listOf(FileUtil.toSystemDependentName("$projectPath/m/value2")))
     updateSettingsXml("<profiles/>")
     importProject()
-    assertUnorderedPathsAreEqual(parentNode.sources, Arrays.asList(FileUtil.toSystemDependentName(
-      "$projectPath/\${prop}")))
-    assertUnorderedPathsAreEqual(childNode.sources, Arrays.asList(FileUtil.toSystemDependentName(
-      "$projectPath/m/\${prop}")))
+    assertUnorderedPathsAreEqual(parentNode.sources, listOf(FileUtil.toSystemDependentName("$projectPath/\${prop}")))
+    assertUnorderedPathsAreEqual(childNode.sources, listOf(FileUtil.toSystemDependentName("$projectPath/m/\${prop}")))
     updateSettingsXml("""
                         <profiles>
                           <profile>
@@ -141,15 +135,13 @@ class MavenProjectsManagerAutoImportTest : MavenMultiVersionImportingTestCase() 
                         </profiles>
                         """.trimIndent())
     importProject()
-    assertUnorderedPathsAreEqual(parentNode.sources, Arrays.asList(FileUtil.toSystemDependentName(
-      "$projectPath/value2")))
-    assertUnorderedPathsAreEqual(childNode.sources, Arrays.asList(FileUtil.toSystemDependentName(
-      "$projectPath/m/value2")))
+    assertUnorderedPathsAreEqual(parentNode.sources, listOf(FileUtil.toSystemDependentName("$projectPath/value2")))
+    assertUnorderedPathsAreEqual(childNode.sources, listOf(FileUtil.toSystemDependentName("$projectPath/m/value2")))
   }
 
   @Test
   @Throws(Exception::class)
-  fun testUpdatingProjectsWhenSettingsXmlLocationIsChanged() {
+  fun testUpdatingProjectsWhenSettingsXmlLocationIsChanged() = runBlocking {
     createProjectPom("""
                        <groupId>test</groupId>
                        <artifactId>project</artifactId>
@@ -193,22 +185,18 @@ class MavenProjectsManagerAutoImportTest : MavenMultiVersionImportingTestCase() 
     val roots = projectsTree.rootProjects
     val parentNode = roots[0]
     val childNode = projectsTree.getModules(roots[0])[0]
-    assertUnorderedPathsAreEqual(parentNode.sources, Arrays.asList(FileUtil.toSystemDependentName(
-      "$projectPath/value1")))
-    assertUnorderedPathsAreEqual(childNode.sources, Arrays.asList(FileUtil.toSystemDependentName(
-      "$projectPath/m/value1")))
-    mavenGeneralSettings.setUserSettingsFile("")
-    waitForReadingCompletion()
-    assertUnorderedPathsAreEqual(parentNode.sources, Arrays.asList(FileUtil.toSystemDependentName(
-      "$projectPath/\${prop}")))
-    assertUnorderedPathsAreEqual(childNode.sources, Arrays.asList(FileUtil.toSystemDependentName(
-      "$projectPath/m/\${prop}")))
-    mavenGeneralSettings.setUserSettingsFile(File(myDir, "settings.xml").path)
-    waitForReadingCompletion()
-    assertUnorderedPathsAreEqual(parentNode.sources, Arrays.asList(FileUtil.toSystemDependentName(
-      "$projectPath/value1")))
-    assertUnorderedPathsAreEqual(childNode.sources, Arrays.asList(FileUtil.toSystemDependentName(
-      "$projectPath/m/value1")))
+    assertUnorderedPathsAreEqual(parentNode.sources, listOf(FileUtil.toSystemDependentName("$projectPath/value1")))
+    assertUnorderedPathsAreEqual(childNode.sources, listOf(FileUtil.toSystemDependentName("$projectPath/m/value1")))
+    waitForImportWithinTimeout {
+      mavenGeneralSettings.setUserSettingsFile("")
+    }
+    assertUnorderedPathsAreEqual(parentNode.sources, listOf(FileUtil.toSystemDependentName("$projectPath/\${prop}")))
+    assertUnorderedPathsAreEqual(childNode.sources, listOf(FileUtil.toSystemDependentName("$projectPath/m/\${prop}")))
+    waitForImportWithinTimeout {
+      mavenGeneralSettings.setUserSettingsFile(File(myDir, "settings.xml").path)
+    }
+    assertUnorderedPathsAreEqual(parentNode.sources, listOf(FileUtil.toSystemDependentName("$projectPath/value1")))
+    assertUnorderedPathsAreEqual(childNode.sources, listOf(FileUtil.toSystemDependentName("$projectPath/m/value1")))
   }
 
   @Test
@@ -477,7 +465,7 @@ class MavenProjectsManagerAutoImportTest : MavenMultiVersionImportingTestCase() 
     scheduleProjectImportAndWaitAsync()
     assertEquals(1, projectsTree.rootProjects.size)
     assertEquals(1, projectsTree.getModules(projectsTree.rootProjects[0]).size)
-    projectsManager.addManagedFiles(Arrays.asList(m))
+    projectsManager.addManagedFiles(listOf(m))
     waitForReadingCompletion()
     assertEquals(1, projectsTree.rootProjects.size)
     assertEquals(1, projectsTree.getModules(projectsTree.rootProjects[0]).size)
