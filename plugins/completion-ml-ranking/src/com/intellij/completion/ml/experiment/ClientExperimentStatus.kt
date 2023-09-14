@@ -53,6 +53,7 @@ class ClientExperimentStatus : ExperimentStatus {
   private val experimentConfig: ExperimentConfig = loadExperimentInfo()
   private val languageToGroup: MutableMap<String, ExperimentInfo> = HashMap()
   private val isDisabledByEvaluation: Boolean = System.getenv(EXPERIMENT_DISABLED_BY_EVALUATION_ENV)?.toBooleanStrictOrNull() ?: false
+  private var experimentGroupRegistryValue: Int? = null
 
   init {
     val bucketsMapping = getBucketsMapping(experimentConfig.seed)
@@ -79,7 +80,10 @@ class ClientExperimentStatus : ExperimentStatus {
     val matchingLanguage = findMatchingLanguage(language) ?: return ExperimentInfo(false, experimentConfig.version)
     val experimentGroupRegistry = Registry.get("completion.ml.override.experiment.group.number")
     if (experimentGroupRegistry.isChangedFromDefault && !experimentGroupRegistry.isChangedSinceAppStart) {
-      val group = experimentConfig.groups.find { it.number == experimentGroupRegistry.asInteger() }
+      experimentGroupRegistryValue = experimentGroupRegistry.asInteger()
+    }
+    if (experimentGroupRegistryValue != null) {
+      val group = experimentConfig.groups.find { it.number == experimentGroupRegistryValue }
       if (group != null) {
         setDisabled(false)
         return ExperimentInfo(true, group.number, group.useMLRanking, group.showArrows, group.calculateFeatures, true)
