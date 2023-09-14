@@ -13,6 +13,7 @@ import com.intellij.lang.injection.InjectedLanguageManager
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.ActionManager
 import com.intellij.openapi.actionSystem.ActionUpdateThread
+import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.DefaultActionGroup
 import com.intellij.openapi.actionSystem.ToggleAction
@@ -68,12 +69,26 @@ class PsiViewerDebugPanel(
 
   private fun initToolbar(): JComponent? {
     val toolBarActions = DefaultActionGroup().apply {
+      add(OpenDialogAction())
       add(ShowWhiteSpaceAction())
       add(ShowTreeNodesAction())
     }
     val toolbar = ActionManager.getInstance().createActionToolbar("PsiDump", toolBarActions, false)
     toolbar.targetComponent = psiTree
     return toolbar.component
+  }
+
+  private inner class OpenDialogAction : AnAction(
+    DevPsiViewerBundle.message("psi.viewer.show.open.dialog.action"),
+    DevPsiViewerBundle.message("psi.viewer.show.open.dialog.description"),
+    AllIcons.ToolbarDecorator.Export
+  ) {
+    override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.EDT
+
+    override fun actionPerformed(e: AnActionEvent) {
+      val dialog = PsiViewerDialog(project, editor)
+      dialog.show()
+    }
   }
 
   private inner class ShowWhiteSpaceAction : ToggleAction(
@@ -95,7 +110,7 @@ class PsiViewerDebugPanel(
   private inner class ShowTreeNodesAction : ToggleAction(
     DevPsiViewerBundle.message("psi.viewer.show.tree.nodes.action"),
     DevPsiViewerBundle.message("psi.viewer.show.tree.nodes.description"),
-    AllIcons.Json.Object
+    AllIcons.Actions.PrettyPrint
   ) {
     override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.EDT
 
