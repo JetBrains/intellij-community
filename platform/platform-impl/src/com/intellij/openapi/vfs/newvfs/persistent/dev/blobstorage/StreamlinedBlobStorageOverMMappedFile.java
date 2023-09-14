@@ -4,10 +4,10 @@ package com.intellij.openapi.vfs.newvfs.persistent.dev.blobstorage;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.IntRef;
 import com.intellij.openapi.vfs.newvfs.persistent.dev.blobstorage.LargeBlobStorageRecordLayout.ActualRecords.LargeRecord;
+import com.intellij.openapi.vfs.newvfs.persistent.mapped.MMappedFileStorage;
+import com.intellij.openapi.vfs.newvfs.persistent.mapped.MMappedFileStorage.Page;
 import com.intellij.platform.diagnostic.telemetry.TelemetryManager;
 import com.intellij.util.io.ClosedStorageException;
-import com.intellij.util.io.DirectBufferWrapper;
-import com.intellij.util.io.PagedFileStorage;
 import com.intellij.util.io.blobstorage.ByteBufferReader;
 import com.intellij.util.io.blobstorage.ByteBufferWriter;
 import com.intellij.util.io.blobstorage.SpaceAllocationStrategy;
@@ -20,7 +20,6 @@ import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
 import java.nio.ByteBuffer;
-import java.nio.ByteOrder;
 import java.nio.file.Path;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -33,42 +32,21 @@ import static com.intellij.platform.diagnostic.telemetry.PlatformScopesKt.Storag
 
 
 /**
- * Backport of {@link StreamlinedBlobStorageOverLockFreePagesStorage} to on the top of {@link PagedFileStorage}
- * <p/>
- * Implements {@link StreamlinedBlobStorage} blobs over {@link PagedFileStorage} storage.
- * Implementation is thread-safe (protected by {@link com.intellij.util.io.StorageLockContext} locks)
- * <p/>
+ * Implements {@link StreamlinedBlobStorage} blobs over {@link MMappedFileStorage} storage.
  * Storage is optimized to store small records (~tens bytes) -- it tries to compress record headers
  * so smaller records have just 2 bytes of overhead because of header. At the same time storage allows
  * record size up to 1Mb large.
  * <p>
+ * Storage is NOT thread-safe: it is up to calling code to protect the accesses
  */
-public final class StreamlinedBlobStorageOverPagedStorage implements StreamlinedBlobStorage {
-  private static final Logger LOG = Logger.getInstance(StreamlinedBlobStorageOverPagedStorage.class);
+public final class StreamlinedBlobStorageOverMMappedFile implements StreamlinedBlobStorage {
+  private static final Logger LOG = Logger.getInstance(StreamlinedBlobStorageOverMMappedFile.class);
 
   /* ======== Persistent format: =================================================================== */
 
   // Persistent format: (header) (records)*
   //  header: storageVersion[int32], safeCloseMagic[int32] ...monitoring fields... dataFormatVersion[int32]
-  //  record:
-  //          recordHeader: recordType[int8], capacity, length?, redirectTo?, recordData[length]?
-  //                        First byte of header contains the record type, which defines other header
-  //                        fields & their length. A lot of bits wiggling are used to compress header
-  //                        into as few bytes as possible -- see LargeBlobStorageRecordLayout for details.
-  //
-  //  1. capacity is the allocated size of the record payload _excluding_ header, so
-  //     nextRecordOffset = currentRecordOffset + recordHeader + recordCapacity
-  //     (and recordHeader size depends on a record type, which is encoded in a first header byte)
-  //
-  //  2. actualLength (<=capacity) is the actual size of record payload written into the record, so
-  //     recordData[0..actualLength) contains actual data, and recordData[actualLength..capacity)
-  //     contains trash.
-  //
-  //  3. redirectTo is a 'forwarding pointer' for records that were moved (e.g. re-allocated).
-  //
-  //  4. records are always allocated on a single page: i.e. record never breaks a page boundary.
-  //     If a record doesn't fit the current page, it is moved to another page (remaining space on
-  //     page is filled by placeholder record, if needed).
+  //  record: see LargeBlobStorageRecordLayout for details
 
   //TODO RC: implement space reclamation: re-use space of deleted records for the newly allocated ones.
   //         Need to keep a free-list.
@@ -88,7 +66,7 @@ public final class StreamlinedBlobStorageOverPagedStorage implements Streamlined
   //    b) implement something like BlobStorageHousekeeper, which runs in dedicated thread, with some precautions to not
   //       interrupt frontend work.
 
-  public static final int STORAGE_VERSION_CURRENT = 2;
+  public static final int STORAGE_VERSION_CURRENT = 1;
 
 
   private static final int FILE_STATUS_OPENED = 0;
@@ -116,7 +94,10 @@ public final class StreamlinedBlobStorageOverPagedStorage implements Streamlined
    * (see below)?
    */
   private static final int HEADER_OFFSET_DATA_FORMAT_VERSION = HEADER_OFFSET_RECORDS_LIVE_TOTAL_CAPACITY_SIZE + Long.BYTES;
-  private static final int HEADER_SIZE = HEADER_OFFSET_DATA_FORMAT_VERSION + Integer.BYTES;
+  private static final int HEADER_OFFSET_ACTUAL_LENGTH = HEADER_OFFSET_DATA_FORMAT_VERSION + Integer.BYTES;
+
+
+  private static final int HEADER_SIZE = HEADER_OFFSET_ACTUAL_LENGTH + Long.BYTES;
 
   //MAYBE allow to reserve additional space in header for something implemented on the top of the storage?
 
@@ -138,7 +119,10 @@ public final class StreamlinedBlobStorageOverPagedStorage implements Streamlined
   /* ============== instance fields: ====================================================================== */
 
 
-  private final @NotNull PagedFileStorage pagedStorage;
+  private final @NotNull MMappedFileStorage storage;
+
+  /** Cached storage.pageByOffset(0) value for faster access */
+  private transient Page headerPage;
 
   /** To avoid write file header to already closed storage */
   private final AtomicBoolean closed = new AtomicBoolean(false);
@@ -147,7 +131,7 @@ public final class StreamlinedBlobStorageOverPagedStorage implements Streamlined
 
   /**
    * Since records are page-aligned, record (with header) can't be larger than pageSize.
-   * This is max record payload capacity (i.e. not including headers) for a current pageSize.
+   * This is max record payload capacity (i.e. NOT including headers) for a current pageSize.
    * ({@link #MAX_CAPACITY} is a max capacity implementation supports -- regardless of page size)
    */
   private final int maxCapacityForPageSize;
@@ -168,25 +152,16 @@ public final class StreamlinedBlobStorageOverPagedStorage implements Streamlined
   private final AtomicInteger recordsDeleted = new AtomicInteger();
   private final AtomicLong totalLiveRecordsPayloadBytes = new AtomicLong();
   private final AtomicLong totalLiveRecordsCapacityBytes = new AtomicLong();
+
   private final BatchCallback openTelemetryCallback;
 
 
-  public StreamlinedBlobStorageOverPagedStorage(final @NotNull PagedFileStorage pagedStorage,
-                                                final @NotNull SpaceAllocationStrategy allocationStrategy) throws IOException {
-    this.pagedStorage = pagedStorage;
+  public StreamlinedBlobStorageOverMMappedFile(final @NotNull MMappedFileStorage storage,
+                                               final @NotNull SpaceAllocationStrategy allocationStrategy) throws IOException {
+    this.storage = storage;
     this.allocationStrategy = allocationStrategy;
 
-    final int defaultCapacity = allocationStrategy.defaultCapacity();
-    final boolean useNativeByteOrder = pagedStorage.isNativeBytesOrder();
-    threadLocalBuffer = ThreadLocal.withInitial(() -> {
-      final ByteBuffer buffer = ByteBuffer.allocate(defaultCapacity);
-      if (useNativeByteOrder) {
-        buffer.order(ByteOrder.nativeOrder());
-      }
-      return buffer;
-    });
-
-    final int pageSize = pagedStorage.getPageSize();
+    final int pageSize = storage.pageSize();
     if (pageSize < headerSize()) {
       throw new IllegalStateException("header(" + headerSize() + " b) must fit on 0th page(" + pageSize + " b)");
     }
@@ -198,88 +173,65 @@ public final class StreamlinedBlobStorageOverPagedStorage implements Streamlined
       );
     }
 
-    synchronized (this) {//protect nextRecordId modifications:
-      pagedStorage.lockWrite();
-      try {
-        final DirectBufferWrapper headerPage = pagedStorage.getByteBuffer(0, /*forWrite: */ true);
-        try {
-          final long length = pagedStorage.length();
-          if (length >= headerSize()) {
-            final int version = readHeaderInt(HEADER_OFFSET_STORAGE_VERSION);
-            if (version != STORAGE_VERSION_CURRENT) {
-              throw new IOException(
-                "Can't read file[" + pagedStorage + "]: version(" + version + ") != storage version (" + STORAGE_VERSION_CURRENT + ")");
-            }
-            final int fileStatus = readHeaderInt(HEADER_OFFSET_FILE_STATUS);
-            if (fileStatus != FILE_STATUS_SAFELY_CLOSED) {
-              throw new IOException(
-                "Can't read file[" + pagedStorage + "]: status(" + fileStatus + ") != SAFELY_CLOSED (" + FILE_STATUS_SAFELY_CLOSED + ")");
-            }
-            if (length > Integer.MAX_VALUE * (long)OFFSET_BUCKET) {
-              throw new IOException(
-                "Can't read file[" + pagedStorage + "]: too big, " + length + " > Integer.MAX_VALUE * " + OFFSET_BUCKET);
-            }
+    headerPage = storage.pageByOffset(0L);
 
-            nextRecordId = offsetToId(length);
+    final int defaultCapacity = allocationStrategy.defaultCapacity();
+    threadLocalBuffer = ThreadLocal.withInitial(() -> {
+      final ByteBuffer buffer = ByteBuffer.allocate(defaultCapacity);
+      buffer.order(headerPage.rawPageBuffer().order());
+      return buffer;
+    });
 
-            recordsAllocated.set(readHeaderInt(HEADER_OFFSET_RECORDS_ALLOCATED));
-            recordsRelocated.set(readHeaderInt(HEADER_OFFSET_RECORDS_RELOCATED));
-            recordsDeleted.set(readHeaderInt(HEADER_OFFSET_RECORDS_DELETED));
-            totalLiveRecordsPayloadBytes.set(readHeaderLong(HEADER_OFFSET_RECORDS_LIVE_TOTAL_PAYLOAD_SIZE));
-            totalLiveRecordsCapacityBytes.set(readHeaderLong(HEADER_OFFSET_RECORDS_LIVE_TOTAL_CAPACITY_SIZE));
-          }
-          else {
-            nextRecordId = offsetToId(recordsStartOffset());
-
-            putHeaderInt(HEADER_OFFSET_STORAGE_VERSION, STORAGE_VERSION_CURRENT);
-            putHeaderInt(HEADER_OFFSET_FILE_STATUS, FILE_STATUS_OPENED);
-            headerPage.fileSizeMayChanged(HEADER_SIZE);
-            headerPage.markDirty();
-          }
-        }
-        finally {
-          headerPage.unlock();
-        }
+    final long length = actualLength();
+    if (length >= headerSize()) {
+      final int version = readHeaderInt(HEADER_OFFSET_STORAGE_VERSION);
+      if (version != STORAGE_VERSION_CURRENT) {
+        throw new IOException(
+          "Can't read file[" + storage + "]: version(" + version + ") != storage version (" + STORAGE_VERSION_CURRENT + ")");
       }
-      finally {
-        pagedStorage.unlockWrite();
+      final int fileStatus = readHeaderInt(HEADER_OFFSET_FILE_STATUS);
+      if (fileStatus != FILE_STATUS_SAFELY_CLOSED) {
+        throw new IOException(
+          "Can't read file[" + storage + "]: status(" + fileStatus + ") != SAFELY_CLOSED (" + FILE_STATUS_SAFELY_CLOSED + ")");
       }
+      if (length > Integer.MAX_VALUE * (long)OFFSET_BUCKET) {
+        throw new IOException(
+          "Can't read file[" + storage + "]: too big, " + length + " > Integer.MAX_VALUE * " + OFFSET_BUCKET);
+      }
+
+      nextRecordId = offsetToId(length);
+
+      recordsAllocated.set(readHeaderInt(HEADER_OFFSET_RECORDS_ALLOCATED));
+      recordsRelocated.set(readHeaderInt(HEADER_OFFSET_RECORDS_RELOCATED));
+      recordsDeleted.set(readHeaderInt(HEADER_OFFSET_RECORDS_DELETED));
+      totalLiveRecordsPayloadBytes.set(readHeaderLong(HEADER_OFFSET_RECORDS_LIVE_TOTAL_PAYLOAD_SIZE));
+      totalLiveRecordsCapacityBytes.set(readHeaderLong(HEADER_OFFSET_RECORDS_LIVE_TOTAL_CAPACITY_SIZE));
+    }
+    else {
+      nextRecordId = offsetToId(recordsStartOffset());
+
+      putHeaderInt(HEADER_OFFSET_STORAGE_VERSION, STORAGE_VERSION_CURRENT);
+      putHeaderInt(HEADER_OFFSET_FILE_STATUS, FILE_STATUS_OPENED);
+
+      fileSizeMayChanged(headerPage, HEADER_SIZE);
     }
 
-    openTelemetryCallback = setupReportingToOpenTelemetry(pagedStorage.getFile().getFileName());
+    openTelemetryCallback = setupReportingToOpenTelemetry(storage.storagePath().getFileName());
   }
 
   @Override
-  public int getStorageVersion() throws IOException {
-    pagedStorage.lockRead();
-    try {
-      return readHeaderInt(HEADER_OFFSET_STORAGE_VERSION);
-    }
-    finally {
-      pagedStorage.unlockRead();
-    }
+  public int getStorageVersion() {
+    return readHeaderInt(HEADER_OFFSET_STORAGE_VERSION);
   }
 
   @Override
-  public int getDataFormatVersion() throws IOException {
-    pagedStorage.lockRead();
-    try {
-      return readHeaderInt(HEADER_OFFSET_DATA_FORMAT_VERSION);
-    }
-    finally {
-      pagedStorage.unlockRead();
-    }
+  public int getDataFormatVersion() {
+    return readHeaderInt(HEADER_OFFSET_DATA_FORMAT_VERSION);
   }
 
   @Override
-  public void setDataFormatVersion(final int expectedVersion) throws IOException {
-    pagedStorage.lockWrite();
-    try {
-      putHeaderInt(HEADER_OFFSET_DATA_FORMAT_VERSION, expectedVersion);
-    }
-    finally {
-      pagedStorage.unlockWrite();
-    }
+  public void setDataFormatVersion(final int expectedVersion) {
+    putHeaderInt(HEADER_OFFSET_DATA_FORMAT_VERSION, expectedVersion);
   }
 
 
@@ -307,41 +259,30 @@ public final class StreamlinedBlobStorageOverPagedStorage implements Streamlined
     int currentRecordId = recordId;
     for (int i = 0; i < MAX_REDIRECTS; i++) {
       final long recordOffset = idToOffset(currentRecordId);
-      pagedStorage.lockRead();
-      try {
-        final DirectBufferWrapper page = pagedStorage.getByteBuffer(recordOffset, /*forWrite: */ false);
-        try {
-          final int offsetOnPage = pagedStorage.getOffsetInPage(recordOffset);
-          final ByteBuffer buffer = page.getBuffer();
-          final LargeBlobStorageRecordLayout recordLayout = LargeBlobStorageRecordLayout.recordLayout(buffer, offsetOnPage);
-          final byte recordType = recordLayout.recordType();
+      final Page page = storage.pageByOffset(recordOffset);
+      final int offsetOnPage = storage.toOffsetInPage(recordOffset);
+      final ByteBuffer buffer = page.rawPageBuffer();
+      final LargeBlobStorageRecordLayout recordLayout = LargeBlobStorageRecordLayout.recordLayout(buffer, offsetOnPage);
+      final byte recordType = recordLayout.recordType();
 
-          if (redirectToIdRef != null) {
-            redirectToIdRef.set(currentRecordId);
-          }
-
-          if (recordType == LargeBlobStorageRecordLayout.RECORD_TYPE_ACTUAL) {
-            return true;
-          }
-
-          if (recordType == LargeBlobStorageRecordLayout.RECORD_TYPE_MOVED) {
-            final int redirectToId = recordLayout.redirectToId(buffer, offsetOnPage);
-            if (redirectToId == NULL_ID) {
-              return false;
-            }
-            currentRecordId = redirectToId;
-          }
-          else {
-            throw new AssertionError("RecordType(" + recordType + ") should not appear in the chain: " +
-                                     "it is either not implemented yet, or all wrong");
-          }
-        }
-        finally {
-          page.unlock();
-        }
+      if (redirectToIdRef != null) {
+        redirectToIdRef.set(currentRecordId);
       }
-      finally {
-        pagedStorage.unlockRead();
+
+      if (recordType == LargeBlobStorageRecordLayout.RECORD_TYPE_ACTUAL) {
+        return true;
+      }
+
+      if (recordType == LargeBlobStorageRecordLayout.RECORD_TYPE_MOVED) {
+        final int redirectToId = recordLayout.redirectToId(buffer, offsetOnPage);
+        if (redirectToId == NULL_ID) {
+          return false;
+        }
+        currentRecordId = redirectToId;
+      }
+      else {
+        throw new AssertionError("RecordType(" + recordType + ") should not appear in the chain: " +
+                                 "it is either not implemented yet, or all wrong");
       }
     }
     throw new IOException("record[" + recordId + "].redirectTo chain is too long (>=" + MAX_REDIRECTS + "): circular reference?");
@@ -369,45 +310,34 @@ public final class StreamlinedBlobStorageOverPagedStorage implements Streamlined
     int currentRecordId = recordId;
     for (int i = 0; i < MAX_REDIRECTS; i++) {
       final long recordOffset = idToOffset(currentRecordId);
-      pagedStorage.lockRead();
-      try {
-        final int offsetOnPage = pagedStorage.getOffsetInPage(recordOffset);
-        final DirectBufferWrapper page = pagedStorage.getByteBuffer(recordOffset, /*forWrite: */ false);
-        try {
-          final ByteBuffer buffer = page.getBuffer();
-          final LargeBlobStorageRecordLayout recordLayout = LargeBlobStorageRecordLayout.recordLayout(buffer, offsetOnPage);
-          final byte recordType = recordLayout.recordType();
+      final int offsetOnPage = storage.toOffsetInPage(recordOffset);
+      final Page page = storage.pageByOffset(recordOffset);
+      final ByteBuffer buffer = page.rawPageBuffer();
+      final LargeBlobStorageRecordLayout recordLayout = LargeBlobStorageRecordLayout.recordLayout(buffer, offsetOnPage);
+      final byte recordType = recordLayout.recordType();
 
-          if (redirectToIdRef != null) {
-            redirectToIdRef.set(currentRecordId); //will be overwritten if we follow .redirectedToId chain
-          }
-
-          if (recordType == LargeBlobStorageRecordLayout.RECORD_TYPE_ACTUAL) {
-            final int recordPayloadLength = recordLayout.length(buffer, offsetOnPage);
-            final ByteBuffer slice = buffer.slice(offsetOnPage + recordLayout.headerSize(), recordPayloadLength)
-              .asReadOnlyBuffer()
-              .order(buffer.order());
-            return reader.read(slice);
-          }
-
-          if (recordType == LargeBlobStorageRecordLayout.RECORD_TYPE_MOVED) {
-            final int redirectToId = recordLayout.redirectToId(buffer, offsetOnPage);
-            if (redirectToId == NULL_ID) { //!actual && redirectTo = NULL
-              throw new RecordAlreadyDeletedException("Can't read record[" + currentRecordId + "]: it was deleted");
-            }
-            currentRecordId = redirectToId;
-          }
-          else {
-            throw new AssertionError("RecordType(" + recordType + ") should not appear in the chain: " +
-                                     "it is either not implemented yet, or all wrong");
-          }
-        }
-        finally {
-          page.unlock();
-        }
+      if (redirectToIdRef != null) {
+        redirectToIdRef.set(currentRecordId); //will be overwritten if we follow .redirectedToId chain
       }
-      finally {
-        pagedStorage.unlockRead();
+
+      if (recordType == LargeBlobStorageRecordLayout.RECORD_TYPE_ACTUAL) {
+        final int recordPayloadLength = recordLayout.length(buffer, offsetOnPage);
+        final ByteBuffer slice = buffer.slice(offsetOnPage + recordLayout.headerSize(), recordPayloadLength)
+          .asReadOnlyBuffer()
+          .order(buffer.order());
+        return reader.read(slice);
+      }
+
+      if (recordType == LargeBlobStorageRecordLayout.RECORD_TYPE_MOVED) {
+        final int redirectToId = recordLayout.redirectToId(buffer, offsetOnPage);
+        if (redirectToId == NULL_ID) { //!actual && redirectTo = NULL
+          throw new RecordAlreadyDeletedException("Can't read record[" + currentRecordId + "]: it was deleted");
+        }
+        currentRecordId = redirectToId;
+      }
+      else {
+        throw new AssertionError("RecordType(" + recordType + ") should not appear in the chain: " +
+                                 "it is either not implemented yet, or all wrong");
       }
     }
     throw new IOException("record[" + recordId + "].redirectTo chain is too long (>=" + MAX_REDIRECTS + "): circular reference?");
@@ -491,102 +421,88 @@ public final class StreamlinedBlobStorageOverPagedStorage implements Streamlined
     int currentRecordId = recordId;
     for (int i = 0; i < MAX_REDIRECTS; i++) {
       final long recordOffset = idToOffset(currentRecordId);
-      final int offsetOnPage = pagedStorage.getOffsetInPage(recordOffset);
-      pagedStorage.lockWrite();
-      try {
-        final DirectBufferWrapper page = pagedStorage.getByteBuffer(recordOffset, /*forWrite: */ true);
-        try {
-          final ByteBuffer buffer = page.getBuffer();
-          final LargeBlobStorageRecordLayout recordLayout = LargeBlobStorageRecordLayout.recordLayout(buffer, offsetOnPage);
-          final byte recordType = recordLayout.recordType();
-          if (recordType == LargeBlobStorageRecordLayout.RECORD_TYPE_MOVED) {
-            final int redirectToId = recordLayout.redirectToId(buffer, offsetOnPage);
-            if (!isValidRecordId(redirectToId)) {
-              throw new RecordAlreadyDeletedException("Can't write to record[" + currentRecordId + "]: it was deleted");
-            }
-            currentRecordId = redirectToId;
-            continue;//hope redirect chains are not too long...
-          }
-          if (recordType != LargeBlobStorageRecordLayout.RECORD_TYPE_ACTUAL) {
-            throw new AssertionError("RecordType(" + recordType + ") should not appear in the chain: " +
-                                     "it is either not implemented yet, or all wrong");
-          }
-          final int recordCapacity = recordLayout.capacity(buffer, offsetOnPage);
-          final int recordActualLength = recordLayout.length(buffer, offsetOnPage);
-          //TODO RC: consider 'expectedRecordSizeHint' here? I.e. if expectedRecordSizeHint>record.capacity -> allocate heap buffer
-          //         of the size asked, copy actual record content into it?
-          final int recordPayloadOffset = offsetOnPage + recordLayout.headerSize();
-          final ByteBuffer recordContent = buffer.slice(recordPayloadOffset, recordCapacity)
-            .limit(recordActualLength)
-            .order(buffer.order());
-
-          final ByteBuffer newRecordContent = writer.write(recordContent);
-          if (newRecordContent == null) {
-            //returned null means writer decides to skip write -> just return current recordId
-            return currentRecordId;
-          }
-
-          if (newRecordContent != recordContent) {//writer decides to allocate new buffer for content:
-            newRecordContent.flip();
-            final int newRecordLength = newRecordContent.remaining();
-            if (newRecordLength <= recordCapacity) {
-              //RC: really, in this case writer should just write data right in the 'recordContent'
-              //    buffer, not allocate the new buffer -- but ok, we could deal with it:
-              recordLayout.putRecord(buffer, offsetOnPage,
-                                     recordCapacity, newRecordLength, NULL_ID, newRecordContent);
-              page.fileSizeMayChanged(offsetOnPage + recordLayout.headerSize() + newRecordLength);
-              page.markDirty();
-
-              totalLiveRecordsPayloadBytes.addAndGet(newRecordLength - recordActualLength);
-            }
-            else {//current record is too small for new content -> relocate to a new place
-              final int newRecordId = writeToNewlyAllocatedRecord(newRecordContent, newRecordContent.capacity());
-
-              final LargeBlobStorageRecordLayout.MovedRecord movedRecordLayout = LargeBlobStorageRecordLayout.MovedRecord.INSTANCE;
-              //mark current record as either 'moved' or 'deleted'
-              final int redirectToId = leaveRedirectOnRecordRelocation ? newRecordId : NULL_ID;
-              //Total space occupied by record must remain constant, but record capacity should be
-              // changed since MovedRecord has another headerSize than Small|LargeRecord
-              final int movedRecordCapacity = recordLayout.fullRecordSize(recordCapacity) - movedRecordLayout.headerSize();
-              movedRecordLayout.putRecord(buffer, offsetOnPage, movedRecordCapacity, 0, redirectToId, null);
-
-              page.fileSizeMayChanged(offsetOnPage + movedRecordLayout.headerSize());
-              page.markDirty();
-
-              totalLiveRecordsPayloadBytes.addAndGet(-recordActualLength);
-              totalLiveRecordsCapacityBytes.addAndGet(-recordCapacity);
-              if (leaveRedirectOnRecordRelocation) {
-                recordsRelocated.incrementAndGet();
-              }
-              else {
-                recordsDeleted.incrementAndGet();
-              }
-
-              return newRecordId;
-            }
-          }
-          else {//if newRecordContent is null or == recordContent -> changes are already written by writer into the recordContent,
-            // we only need to adjust record header:
-            recordContent.flip();
-            final int newRecordLength = recordContent.remaining();
-            assert (newRecordLength <= recordCapacity) : newRecordLength + " > " + recordCapacity +
-                                                         ": can't be, since recordContent.capacity()==recordCapacity!";
-            recordLayout.putLength(buffer, offsetOnPage, newRecordLength);
-
-            page.fileSizeMayChanged(offsetOnPage + recordLayout.headerSize() + newRecordLength);
-            page.markDirty();
-
-            totalLiveRecordsPayloadBytes.addAndGet(newRecordLength - recordActualLength);
-          }
-          return currentRecordId;
+      final int offsetOnPage = storage.toOffsetInPage(recordOffset);
+      final Page page = storage.pageByOffset(recordOffset);
+      final ByteBuffer buffer = page.rawPageBuffer();
+      final LargeBlobStorageRecordLayout recordLayout = LargeBlobStorageRecordLayout.recordLayout(buffer, offsetOnPage);
+      final byte recordType = recordLayout.recordType();
+      if (recordType == LargeBlobStorageRecordLayout.RECORD_TYPE_MOVED) {
+        final int redirectToId = recordLayout.redirectToId(buffer, offsetOnPage);
+        if (!isValidRecordId(redirectToId)) {
+          throw new RecordAlreadyDeletedException("Can't write to record[" + currentRecordId + "]: it was deleted");
         }
-        finally {
-          page.unlock();
+        currentRecordId = redirectToId;
+        continue;//hope redirect chains are not too long...
+      }
+      if (recordType != LargeBlobStorageRecordLayout.RECORD_TYPE_ACTUAL) {
+        throw new AssertionError("RecordType(" + recordType + ") should not appear in the chain: " +
+                                 "it is either not implemented yet, or all wrong");
+      }
+      final int recordCapacity = recordLayout.capacity(buffer, offsetOnPage);
+      final int recordActualLength = recordLayout.length(buffer, offsetOnPage);
+      //TODO RC: consider 'expectedRecordSizeHint' here? I.e. if expectedRecordSizeHint>record.capacity -> allocate heap buffer
+      //         of the size asked, copy actual record content into it?
+      final int recordPayloadOffset = offsetOnPage + recordLayout.headerSize();
+      final ByteBuffer recordContent = buffer.slice(recordPayloadOffset, recordCapacity)
+        .limit(recordActualLength)
+        .order(buffer.order());
+
+      final ByteBuffer newRecordContent = writer.write(recordContent);
+      if (newRecordContent == null) {
+        //returned null means writer decides to skip write -> just return current recordId
+        return currentRecordId;
+      }
+
+      if (newRecordContent != recordContent) {//writer decides to allocate new buffer for content:
+        newRecordContent.flip();
+        final int newRecordLength = newRecordContent.remaining();
+        if (newRecordLength <= recordCapacity) {
+          //RC: really, in this case writer should just write data right in the 'recordContent'
+          //    buffer, not allocate the new buffer -- but ok, we could deal with it:
+          recordLayout.putRecord(buffer, offsetOnPage,
+                                 recordCapacity, newRecordLength, NULL_ID, newRecordContent);
+          fileSizeMayChanged(page, offsetOnPage + recordLayout.headerSize() + newRecordLength);
+
+          totalLiveRecordsPayloadBytes.addAndGet(newRecordLength - recordActualLength);
+        }
+        else {//current record is too small for new content -> relocate to a new place
+          final int newRecordId = writeToNewlyAllocatedRecord(newRecordContent, newRecordContent.capacity());
+
+          final LargeBlobStorageRecordLayout.MovedRecord movedRecordLayout = LargeBlobStorageRecordLayout.MovedRecord.INSTANCE;
+          //mark current record as either 'moved' or 'deleted'
+          final int redirectToId = leaveRedirectOnRecordRelocation ? newRecordId : NULL_ID;
+          //Total space occupied by record must remain constant, but record capacity should be
+          // changed since MovedRecord has another headerSize than Small|LargeRecord
+          final int movedRecordCapacity = recordLayout.fullRecordSize(recordCapacity) - movedRecordLayout.headerSize();
+          movedRecordLayout.putRecord(buffer, offsetOnPage, movedRecordCapacity, 0, redirectToId, null);
+
+          fileSizeMayChanged(page, offsetOnPage + movedRecordLayout.headerSize());
+
+          totalLiveRecordsPayloadBytes.addAndGet(-recordActualLength);
+          totalLiveRecordsCapacityBytes.addAndGet(-recordCapacity);
+          if (leaveRedirectOnRecordRelocation) {
+            recordsRelocated.incrementAndGet();
+          }
+          else {
+            recordsDeleted.incrementAndGet();
+          }
+
+          return newRecordId;
         }
       }
-      finally {
-        pagedStorage.unlockWrite();
+      else {//if newRecordContent is null or == recordContent -> changes are already written by writer into the recordContent,
+        // we only need to adjust record header:
+        recordContent.flip();
+        final int newRecordLength = recordContent.remaining();
+        assert (newRecordLength <= recordCapacity) : newRecordLength + " > " + recordCapacity +
+                                                     ": can't be, since recordContent.capacity()==recordCapacity!";
+        recordLayout.putLength(buffer, offsetOnPage, newRecordLength);
+
+        fileSizeMayChanged(page, offsetOnPage + recordLayout.headerSize() + newRecordLength);
+
+        totalLiveRecordsPayloadBytes.addAndGet(newRecordLength - recordActualLength);
       }
+      return currentRecordId;
     }
     throw new IOException("record[" + recordId + "].redirectTo chain is too long (>=" + MAX_REDIRECTS + "): circular reference?");
   }
@@ -610,53 +526,40 @@ public final class StreamlinedBlobStorageOverPagedStorage implements Streamlined
     checkRecordIdExists(recordId);
 
     final long recordOffset = idToOffset(recordId);
-    pagedStorage.lockWrite();
-    try {
-      final DirectBufferWrapper page = pagedStorage.getByteBuffer(recordOffset, /*forWrite: */ true);
-      final int offsetOnPage = pagedStorage.getOffsetInPage(recordOffset);
-      try {
-        final ByteBuffer buffer = page.getBuffer();
-        final LargeBlobStorageRecordLayout recordLayout = LargeBlobStorageRecordLayout.recordLayout(buffer, offsetOnPage);
-        final int recordCapacity = recordLayout.capacity(buffer, offsetOnPage);
-        final int recordActualLength = recordLayout.length(buffer, offsetOnPage);
-        final byte recordType = recordLayout.recordType();
-        switch (recordType) {
-          case LargeBlobStorageRecordLayout.RECORD_TYPE_MOVED -> {
-            final int redirectToId = recordLayout.redirectToId(buffer, offsetOnPage);
-            if (!isValidRecordId(redirectToId)) {
-              throw new RecordAlreadyDeletedException("Can't delete record[" + recordId + "]: it was already deleted");
-            }
-
-            // (redirectToId=NULL) <=> 'record deleted' ('moved nowhere')
-            ((LargeBlobStorageRecordLayout.MovedRecord)recordLayout).putRedirectTo(buffer, offsetOnPage, NULL_ID);
-            page.fileSizeMayChanged(offsetOnPage + recordLayout.headerSize());
-            page.markDirty();
-          }
-          case LargeBlobStorageRecordLayout.RECORD_TYPE_ACTUAL -> {
-            final LargeBlobStorageRecordLayout.MovedRecord movedRecordLayout = LargeBlobStorageRecordLayout.MovedRecord.INSTANCE;
-            //Total space occupied by record must remain constant, but record capacity should be
-            // changed since MovedRecord has another headerSize than Small|LargeRecord
-            final int deletedRecordCapacity = recordLayout.fullRecordSize(recordCapacity) - movedRecordLayout.headerSize();
-            // set (redirectToId=NULL) to mark record as deleted ('moved nowhere')
-            movedRecordLayout.putRecord(buffer, offsetOnPage, deletedRecordCapacity, 0, NULL_ID, null);
-            page.fileSizeMayChanged(offsetOnPage + movedRecordLayout.headerSize());
-            page.markDirty();
-          }
-          default -> throw new AssertionError("RecordType(" + recordType + ") should not appear in the chain: " +
-                                              "it is either not implemented yet, or all wrong");
+    final Page page = storage.pageByOffset(recordOffset);
+    final int offsetOnPage = storage.toOffsetInPage(recordOffset);
+    final ByteBuffer buffer = page.rawPageBuffer();
+    final LargeBlobStorageRecordLayout recordLayout = LargeBlobStorageRecordLayout.recordLayout(buffer, offsetOnPage);
+    final int recordCapacity = recordLayout.capacity(buffer, offsetOnPage);
+    final int recordActualLength = recordLayout.length(buffer, offsetOnPage);
+    final byte recordType = recordLayout.recordType();
+    switch (recordType) {
+      case LargeBlobStorageRecordLayout.RECORD_TYPE_MOVED -> {
+        final int redirectToId = recordLayout.redirectToId(buffer, offsetOnPage);
+        if (!isValidRecordId(redirectToId)) {
+          throw new RecordAlreadyDeletedException("Can't delete record[" + recordId + "]: it was already deleted");
         }
 
-        recordsDeleted.incrementAndGet();
-        totalLiveRecordsPayloadBytes.addAndGet(-recordActualLength);
-        totalLiveRecordsCapacityBytes.addAndGet(-recordCapacity);
+        // (redirectToId=NULL) <=> 'record deleted' ('moved nowhere')
+        ((LargeBlobStorageRecordLayout.MovedRecord)recordLayout).putRedirectTo(buffer, offsetOnPage, NULL_ID);
+        fileSizeMayChanged(page, offsetOnPage + recordLayout.headerSize());
       }
-      finally {
-        page.unlock();
+      case LargeBlobStorageRecordLayout.RECORD_TYPE_ACTUAL -> {
+        final LargeBlobStorageRecordLayout.MovedRecord movedRecordLayout = LargeBlobStorageRecordLayout.MovedRecord.INSTANCE;
+        //Total space occupied by record must remain constant, but record capacity should be
+        // changed since MovedRecord has another headerSize than Small|LargeRecord
+        final int deletedRecordCapacity = recordLayout.fullRecordSize(recordCapacity) - movedRecordLayout.headerSize();
+        // set (redirectToId=NULL) to mark record as deleted ('moved nowhere')
+        movedRecordLayout.putRecord(buffer, offsetOnPage, deletedRecordCapacity, 0, NULL_ID, null);
+        fileSizeMayChanged(page, offsetOnPage + movedRecordLayout.headerSize());
       }
+      default -> throw new AssertionError("RecordType(" + recordType + ") should not appear in the chain: " +
+                                          "it is either not implemented yet, or all wrong");
     }
-    finally {
-      pagedStorage.unlockWrite();
-    }
+
+    recordsDeleted.incrementAndGet();
+    totalLiveRecordsPayloadBytes.addAndGet(-recordActualLength);
+    totalLiveRecordsCapacityBytes.addAndGet(-recordCapacity);
   }
 
   //TODO int deleteAllForwarders(final int recordId) throws IOException;
@@ -671,55 +574,44 @@ public final class StreamlinedBlobStorageOverPagedStorage implements Streamlined
    */
   @Override
   public <E extends Exception> int forEach(final @NotNull Processor<E> processor) throws IOException, E {
-    final long storageLength = pagedStorage.length();
+    final long storageLength = actualLength();
     int currentId = offsetToId(recordsStartOffset());
     for (int recordNo = 0; ; recordNo++) {
       final long recordOffset = idToOffset(currentId);
-      pagedStorage.lockRead();
-      try {
-        final DirectBufferWrapper page = pagedStorage.getByteBuffer(recordOffset, /*forWrite: */ false);
-        final int offsetOnPage = pagedStorage.getOffsetInPage(recordOffset);
-        try {
-          final ByteBuffer buffer = page.getBuffer();
-          final LargeBlobStorageRecordLayout recordLayout = LargeBlobStorageRecordLayout.recordLayout(buffer, offsetOnPage);
-          final byte recordType = recordLayout.recordType();
-          final int recordCapacity = recordLayout.capacity(buffer, offsetOnPage);
-          switch (recordType) {
-            case LargeBlobStorageRecordLayout.RECORD_TYPE_ACTUAL, LargeBlobStorageRecordLayout.RECORD_TYPE_MOVED -> {
-              final int headerSize = recordLayout.headerSize();
-              final boolean isActual = recordType == LargeBlobStorageRecordLayout.RECORD_TYPE_ACTUAL;
-              final int recordActualLength = isActual ? recordLayout.length(buffer, offsetOnPage) : -1;
-              final ByteBuffer slice = isActual ?
-                                       buffer.slice(offsetOnPage + headerSize, recordActualLength)
-                                         .asReadOnlyBuffer()
-                                         .order(buffer.order()) :
-                                       buffer.slice(offsetOnPage + headerSize, 0)
-                                         .asReadOnlyBuffer()
-                                         .order(buffer.order());
-              final boolean ok = processor.processRecord(currentId, recordCapacity, recordActualLength, slice);
-              if (!ok) {
-                return recordNo;
-              }
-            }
-            default -> {
-              //just skip for now
-            }
-          }
-
-          final long nextRecordOffset = nextRecordOffset(recordOffset, recordLayout, recordCapacity);
-          if (nextRecordOffset >= storageLength) {
+      final Page page = storage.pageByOffset(recordOffset);
+      final int offsetOnPage = storage.toOffsetInPage(recordOffset);
+      final ByteBuffer buffer = page.rawPageBuffer();
+      final LargeBlobStorageRecordLayout recordLayout = LargeBlobStorageRecordLayout.recordLayout(buffer, offsetOnPage);
+      final byte recordType = recordLayout.recordType();
+      final int recordCapacity = recordLayout.capacity(buffer, offsetOnPage);
+      switch (recordType) {
+        case LargeBlobStorageRecordLayout.RECORD_TYPE_ACTUAL, LargeBlobStorageRecordLayout.RECORD_TYPE_MOVED -> {
+          final int headerSize = recordLayout.headerSize();
+          final boolean isActual = recordType == LargeBlobStorageRecordLayout.RECORD_TYPE_ACTUAL;
+          final int recordActualLength = isActual ? recordLayout.length(buffer, offsetOnPage) : -1;
+          final ByteBuffer slice = isActual ?
+                                   buffer.slice(offsetOnPage + headerSize, recordActualLength)
+                                     .asReadOnlyBuffer()
+                                     .order(buffer.order()) :
+                                   buffer.slice(offsetOnPage + headerSize, 0)
+                                     .asReadOnlyBuffer()
+                                     .order(buffer.order());
+          final boolean ok = processor.processRecord(currentId, recordCapacity, recordActualLength, slice);
+          if (!ok) {
             return recordNo;
           }
+        }
+        default -> {
+          //just skip for now
+        }
+      }
 
-          currentId = offsetToId(nextRecordOffset);
-        }
-        finally {
-          page.unlock();
-        }
+      final long nextRecordOffset = nextRecordOffset(recordOffset, recordLayout, recordCapacity);
+      if (nextRecordOffset >= storageLength) {
+        return recordNo;
       }
-      finally {
-        pagedStorage.unlockRead();
-      }
+
+      currentId = offsetToId(nextRecordOffset);
     }
   }
 
@@ -762,68 +654,58 @@ public final class StreamlinedBlobStorageOverPagedStorage implements Streamlined
 
   @Override
   public long sizeInBytes() {
-    return pagedStorage.length();
+    return actualLength();
   }
 
 
   @Override
   public boolean isDirty() {
-    return pagedStorage.isDirty();
+    //TODO RC: as always, with mapped storage it is hard to say when it is 'dirty' -- 'cos almost all writes
+    // go directly to the mapped buffer, and mapped buffer dirty/flush management is up to OS. We can manage
+    // .dirty flag ourself, but it seems an overhead for (almost) nothing.
+    // So I just define: 'storage is always dirty if not closed'
+    return !closed.get();
   }
 
   @Override
   public void force() throws IOException {
     checkNotClosed();
-    pagedStorage.lockWrite();
-    try {
-      final DirectBufferWrapper headerPage = pagedStorage.getByteBuffer(0, /*forWrite: */ true);
-      try {
-        putHeaderInt(HEADER_OFFSET_FILE_STATUS, FILE_STATUS_SAFELY_CLOSED);
 
-        putHeaderInt(HEADER_OFFSET_RECORDS_ALLOCATED, recordsAllocated.get());
-        putHeaderInt(HEADER_OFFSET_RECORDS_RELOCATED, recordsRelocated.get());
-        putHeaderInt(HEADER_OFFSET_RECORDS_DELETED, recordsDeleted.get());
-        putHeaderLong(HEADER_OFFSET_RECORDS_LIVE_TOTAL_PAYLOAD_SIZE, totalLiveRecordsPayloadBytes.get());
-        putHeaderLong(HEADER_OFFSET_RECORDS_LIVE_TOTAL_CAPACITY_SIZE, totalLiveRecordsCapacityBytes.get());
-        headerPage.fileSizeMayChanged(HEADER_SIZE);
-        headerPage.markDirty();
-      }
-      finally {
-        headerPage.unlock();
-      }
-      pagedStorage.force();
-    }
-    finally {
-      pagedStorage.unlockWrite();
-    }
+    putHeaderInt(HEADER_OFFSET_FILE_STATUS, FILE_STATUS_SAFELY_CLOSED);
+
+    putHeaderInt(HEADER_OFFSET_RECORDS_ALLOCATED, recordsAllocated.get());
+    putHeaderInt(HEADER_OFFSET_RECORDS_RELOCATED, recordsRelocated.get());
+    putHeaderInt(HEADER_OFFSET_RECORDS_DELETED, recordsDeleted.get());
+    putHeaderLong(HEADER_OFFSET_RECORDS_LIVE_TOTAL_PAYLOAD_SIZE, totalLiveRecordsPayloadBytes.get());
+    putHeaderLong(HEADER_OFFSET_RECORDS_LIVE_TOTAL_CAPACITY_SIZE, totalLiveRecordsCapacityBytes.get());
+
+    fileSizeMayChanged(headerPage, HEADER_SIZE);
+
+    storage.fsync();
   }
 
   @Override
   public void close() throws IOException {
-    pagedStorage.lockWrite();
-    try {
-      //.close() methods are better to be idempotent, i.e. not throw exceptions on repeating calls,
-      // but just silently ignore attempts to 'close already closed'. And pagedStorage conforms with
-      // that. But in .force() we write file status and other header fields, and without .closed
-      // flag we'll do that even on already closed pagedStorage, which leads to exception.
-      if (!closed.get()) {
-        force();
-        openTelemetryCallback.close();
-        closed.set(true);
-      }
+    //.close() methods are better to be idempotent, i.e. not throw exceptions on repeating calls,
+    // but just silently ignore attempts to 'close already closed'. And storage conforms with
+    // that. But in .force() we write file status and other header fields, and without .closed
+    // flag we'll do that even on already closed storage, which leads to exception.
+    if (!closed.get()) {
+      force();
+      closed.set(true);
 
-      //MAYBE RC: it shouldn't be this class's responsibility to close pagedStorage, since not this class creates it?
+      openTelemetryCallback.close();
+      //MAYBE RC: it shouldn't be this class's responsibility to close storage, since not this class creates it?
       //          Better whoever creates it -- is responsible for closing it?
-      pagedStorage.close();
-    }
-    finally {
-      pagedStorage.unlockWrite();
+
+      storage.close();
+      headerPage = null;
     }
   }
 
   @Override
   public String toString() {
-    return "StreamlinedBlobStorageOverLockFree{" + pagedStorage + "}{nextRecordId: " + nextRecordId + '}';
+    return "StreamlinedBlobStorageOverMMappedFile{" + storage + "}{nextRecordId: " + nextRecordId + '}';
   }
 
 
@@ -831,36 +713,36 @@ public final class StreamlinedBlobStorageOverPagedStorage implements Streamlined
 
   private void checkNotClosed() throws ClosedStorageException {
     if (closed.get()) {
-      throw new ClosedStorageException("Storage " + pagedStorage + " is already closed");
+      throw new ClosedStorageException("Storage " + storage + " is already closed");
     }
   }
 
   // === storage header accessors: ===
 
-  private int readHeaderInt(final int offset) throws IOException {
+  private int readHeaderInt(final int offset) {
     assert (0 <= offset && offset <= HEADER_SIZE - Integer.BYTES)
       : "header offset(=" + offset + ") must be in [0," + (HEADER_SIZE - Integer.BYTES) + "]";
-    return pagedStorage.getInt(offset);
+    return headerPage.rawPageBuffer().getInt(offset);
   }
 
   private void putHeaderInt(final int offset,
-                            final int value) throws IOException {
+                            final int value) {
     assert (0 <= offset && offset <= HEADER_SIZE - Integer.BYTES)
       : "header offset(=" + offset + ") must be in [0," + (HEADER_SIZE - Integer.BYTES) + "]";
-    pagedStorage.putInt(offset, value);
+    headerPage.rawPageBuffer().putInt(offset, value);
   }
 
-  private long readHeaderLong(final int offset) throws IOException {
+  private long readHeaderLong(final int offset) {
     assert (0 <= offset && offset <= HEADER_SIZE - Long.BYTES)
       : "header offset(=" + offset + ") must be in [0," + (HEADER_SIZE - Long.BYTES) + "]";
-    return pagedStorage.getLong(offset);
+    return headerPage.rawPageBuffer().getLong(offset);
   }
 
   private void putHeaderLong(final int offset,
-                             final long value) throws IOException {
+                             final long value) {
     assert (0 <= offset && offset <= HEADER_SIZE - Long.BYTES)
       : "header offset(=" + offset + ") must be in [0," + (HEADER_SIZE - Long.BYTES) + "]";
-    pagedStorage.putLong(offset, value);
+    headerPage.rawPageBuffer().putLong(offset, value);
   }
 
   /** Storage header size */
@@ -869,6 +751,22 @@ public final class StreamlinedBlobStorageOverPagedStorage implements Streamlined
     return HEADER_SIZE;
   }
 
+  /**
+   * Actual size of data -- i.e. all allocated records.
+   * File size is almost always larger than that because {@link MMappedFileStorage} pre-allocates each page
+   * in advance.
+   */
+  private long actualLength() {
+    return readHeaderLong(HEADER_OFFSET_ACTUAL_LENGTH);
+  }
+
+  private void fileSizeMayChanged(Page page,
+                                  int maxWrittenOffsetInPage) {
+    long writtenOffsetInFile = page.firstOffsetInFile() + maxWrittenOffsetInPage;
+    if (writtenOffsetInFile > actualLength()) {
+      putHeaderLong(HEADER_OFFSET_ACTUAL_LENGTH, writtenOffsetInFile);
+    }
+  }
 
   // === storage records accessors: ===
 
@@ -887,7 +785,7 @@ public final class StreamlinedBlobStorageOverPagedStorage implements Streamlined
    */
   private int writeToNewlyAllocatedRecord(final ByteBuffer content,
                                           final int requestedRecordCapacity) throws IOException {
-    final int pageSize = pagedStorage.getPageSize();
+    final int pageSize = storage.pageSize();
 
     final int recordLength = content.limit();
     if (recordLength > maxCapacityForPageSize) {
@@ -918,25 +816,16 @@ public final class StreamlinedBlobStorageOverPagedStorage implements Streamlined
     checkCapacityHardLimit(actualRecordCapacity);
     checkLengthHardLimit(newRecordLength);
 
-    final int offsetOnPage = pagedStorage.getOffsetInPage(newRecordOffset);
-    pagedStorage.lockWrite();
+    final int offsetOnPage = storage.toOffsetInPage(newRecordOffset);
     try {
-      final DirectBufferWrapper page = pagedStorage.getByteBuffer(newRecordOffset, /*forWrite: */ true);
-      try {
-        recordLayout.putRecord(page.getBuffer(), offsetOnPage,
-                               actualRecordCapacity, newRecordLength, NULL_ID,
-                               content);
-        page.fileSizeMayChanged(offsetOnPage + actualRecordSize);
-        page.markDirty();
-        return newRecordId;
-      }
-      finally {
-        page.unlock();
-      }
+      final Page page = storage.pageByOffset(newRecordOffset);
+      recordLayout.putRecord(page.rawPageBuffer(), offsetOnPage,
+                             actualRecordCapacity, newRecordLength, NULL_ID,
+                             content);
+      fileSizeMayChanged(page, offsetOnPage + actualRecordSize);
+      return newRecordId;
     }
     finally {
-      pagedStorage.unlockWrite();
-
       recordsAllocated.incrementAndGet();
       totalLiveRecordsCapacityBytes.addAndGet(actualRecordCapacity);
       totalLiveRecordsPayloadBytes.addAndGet(newRecordLength);
@@ -950,38 +839,37 @@ public final class StreamlinedBlobStorageOverPagedStorage implements Streamlined
       throw new IllegalArgumentException("recordSize(" + totalRecordSize + " b) must be <= pageSize(" + pageSize + " b)");
     }
     //MAYBE RC: all this could be implemented as CAS-loop, without lock
-    synchronized (this) {// protect nextRecordId modifications:
-      while (true) {     // [totalRecordSize <= pageSize] =implies=> [loop must finish in <=2 iterations]
-        final int newRecordId = nextRecordId;
-        final long recordStartOffset = idToOffset(newRecordId);
-        final int offsetOnPage = pagedStorage.getOffsetInPage(recordStartOffset);
-        final int recordSizeRoundedUp = roundSizeUpToBucket(offsetOnPage, pageSize, totalRecordSize);
-        final long recordEndOffset = recordStartOffset + recordSizeRoundedUp - 1;
-        final long startPage = recordStartOffset / pageSize;
-        //we don't want record to be broken by page boundary, so if the current record steps out of the current
-        // page -> we move the entire record to the next page, and pad the space remaining on the current page
-        // with filler (padding) record:
-        final long endPage = recordEndOffset / pageSize;
-        if (startPage == endPage) {
-          actualRecordSize.set(recordSizeRoundedUp);
-          nextRecordId = offsetToId(recordEndOffset + 1);
-          return newRecordId;
-        }
-
-        //insert a space-filler record to occupy space till the end of page:
-        //MAYBE RC: even better would be to add that space to the previous record (i.e. last record
-        // remains on the current page). We do this in .roundSizeUpToBucket() with small bytes at
-        // the end of page, but unfortunately here we don't know there 'previous record' header
-        // is located => can't adjust its capacity. This problem could be solved, but I don't
-        // think it is important enough for now.
-        putSpaceFillerRecord(recordStartOffset, pageSize);
-
-        //...move pointer to the next page, and re-try allocate record:
-        final long nextPageStartOffset = (startPage + 1) * pageSize;
-        nextRecordId = offsetToId(nextPageStartOffset);
-        assert idToOffset(nextRecordId) == nextPageStartOffset : "idToOffset(" + nextRecordId + ")=" + idToOffset(nextRecordId) +
-                                                                 " != nextPageStartOffset(" + nextPageStartOffset + ")";
+    //synchronized (this) {// protect nextRecordId modifications:
+    while (true) {     // [totalRecordSize <= pageSize] =implies=> [loop must finish in <=2 iterations]
+      final int newRecordId = nextRecordId;
+      final long recordStartOffset = idToOffset(newRecordId);
+      final int offsetOnPage = storage.toOffsetInPage(recordStartOffset);
+      final int recordSizeRoundedUp = roundSizeUpToBucket(offsetOnPage, pageSize, totalRecordSize);
+      final long recordEndOffset = recordStartOffset + recordSizeRoundedUp - 1;
+      final long startPage = recordStartOffset / pageSize;
+      //we don't want record to be broken by page boundary, so if the current record steps out of the current
+      // page -> we move the entire record to the next page, and pad the space remaining on the current page
+      // with filler (padding) record:
+      final long endPage = recordEndOffset / pageSize;
+      if (startPage == endPage) {
+        actualRecordSize.set(recordSizeRoundedUp);
+        nextRecordId = offsetToId(recordEndOffset + 1);
+        return newRecordId;
       }
+
+      //insert a space-filler record to occupy space till the end of page:
+      //MAYBE RC: even better would be to add that space to the previous record (i.e. last record
+      // remains on the current page). We do this in .roundSizeUpToBucket() with small bytes at
+      // the end of page, but unfortunately here we don't know there 'previous record' header
+      // is located => can't adjust its capacity. This problem could be solved, but I don't
+      // think it is important enough for now.
+      putSpaceFillerRecord(recordStartOffset, pageSize);
+
+      //...move pointer to the next page, and re-try allocate record:
+      final long nextPageStartOffset = (startPage + 1) * pageSize;
+      nextRecordId = offsetToId(nextPageStartOffset);
+      assert idToOffset(nextRecordId) == nextPageStartOffset : "idToOffset(" + nextRecordId + ")=" + idToOffset(nextRecordId) +
+                                                               " != nextPageStartOffset(" + nextPageStartOffset + ")";
     }
   }
 
@@ -989,25 +877,13 @@ public final class StreamlinedBlobStorageOverPagedStorage implements Streamlined
                                     final int pageSize) throws IOException {
     final LargeBlobStorageRecordLayout.PaddingRecord paddingRecord = LargeBlobStorageRecordLayout.PaddingRecord.INSTANCE;
 
-    final int offsetInPage = pagedStorage.getOffsetInPage(recordOffset);
+    final int offsetInPage = storage.toOffsetInPage(recordOffset);
     final int remainingOnPage = pageSize - offsetInPage;
 
-    pagedStorage.lockWrite();
-    try {
-      final DirectBufferWrapper page = pagedStorage.getByteBuffer(recordOffset, /*forWrite: */ true);
-      try {
-        final int capacity = remainingOnPage - paddingRecord.headerSize();
-        paddingRecord.putRecord(page.getBuffer(), offsetInPage, capacity, 0, NULL_ID, null);
-        page.fileSizeMayChanged(offsetInPage + paddingRecord.headerSize());
-        page.markDirty();
-      }
-      finally {
-        page.unlock();
-      }
-    }
-    finally {
-      pagedStorage.unlockWrite();
-    }
+    final Page page = storage.pageByOffset(recordOffset);
+    final int capacity = remainingOnPage - paddingRecord.headerSize();
+    paddingRecord.putRecord(page.rawPageBuffer(), offsetInPage, capacity, 0, NULL_ID, null);
+    fileSizeMayChanged(page, offsetInPage + paddingRecord.headerSize());
   }
 
   private long nextRecordOffset(final long recordOffset,
@@ -1016,8 +892,8 @@ public final class StreamlinedBlobStorageOverPagedStorage implements Streamlined
     final int headerSize = recordLayout.headerSize();
     final long nextOffset = recordOffset + headerSize + recordCapacity;
 
-    final int offsetOnPage = pagedStorage.getOffsetInPage(nextOffset);
-    final int pageSize = pagedStorage.getPageSize();
+    final int offsetOnPage = storage.toOffsetInPage(nextOffset);
+    final int pageSize = storage.pageSize();
     if (pageSize - offsetOnPage < headerSize) {
       //Previously, I _fix_ the mismatch here -- by moving offset to the next page:
       //  nextOffset = (nextOffset / pageSize + 1) * pageSize;
@@ -1042,16 +918,14 @@ public final class StreamlinedBlobStorageOverPagedStorage implements Streamlined
       final int defaultCapacity = allocationStrategy.defaultCapacity();
       final int capacity = Math.max(defaultCapacity, expectedRecordSizeHint);
       final ByteBuffer buffer = ByteBuffer.allocate(capacity);
-      if (pagedStorage.isNativeBytesOrder()) {
-        buffer.order(ByteOrder.nativeOrder());
-      }
+      buffer.order(headerPage.rawPageBuffer().order());
       return buffer;
     }
   }
 
   private void releaseTemporaryBuffer(final @NotNull ByteBuffer temp) {
     final int defaultCapacity = allocationStrategy.defaultCapacity();
-    //avoid keeping too big buffers from GC:
+    //avoid keeping too big buffers:
     if (temp.capacity() <= 2 * defaultCapacity) {
       threadLocalBuffer.set(temp);
     }

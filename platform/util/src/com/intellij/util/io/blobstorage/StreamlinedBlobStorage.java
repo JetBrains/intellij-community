@@ -43,7 +43,10 @@ public interface StreamlinedBlobStorage extends Closeable, AutoCloseable, Forcea
 
   void setDataFormatVersion(final int expectedVersion) throws IOException;
 
-  /** @return max size of a record this storage could store */
+  /**
+   * @return max size of a record this storage could store.
+   * I.e. it is guaranteed storage could store record of that size, but not larger
+   */
   int maxPayloadSupported();
 
   <Out> Out readRecord(final int recordId,
@@ -136,6 +139,12 @@ public interface StreamlinedBlobStorage extends Closeable, AutoCloseable, Forcea
 
   int liveRecordsCount();
 
+  /**
+   * Total size of data in a storage -- including metadata, reserved and deleted
+   * records.
+   * Not guaranteed to be == actual file size on disk -- disk file could be pre-allocated
+   * in advance.
+   */
   long sizeInBytes();
 
   @Override

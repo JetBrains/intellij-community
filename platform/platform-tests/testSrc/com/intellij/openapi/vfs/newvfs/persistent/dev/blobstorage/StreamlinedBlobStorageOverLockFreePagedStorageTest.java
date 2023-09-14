@@ -41,12 +41,6 @@ public class StreamlinedBlobStorageOverLockFreePagedStorageTest
   }
 
   @Override
-  protected int maxPayloadSize(int pageSize) {
-    return Math.min(StreamlinedBlobStorageOverLockFreePagesStorage.MAX_CAPACITY, pageSize) - 10;
-  }
-
-
-  @Override
   protected StreamlinedBlobStorageOverLockFreePagesStorage openStorage(final Path pathToStorage) throws IOException {
     PagedFileStorageWithRWLockedPageContent pagedStorage = new PagedFileStorageWithRWLockedPageContent(
         pathToStorage,

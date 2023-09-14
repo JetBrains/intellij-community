@@ -690,7 +690,7 @@ public final class StreamlinedBlobStorageOverLockFreePagesStorage implements Str
 
   @Override
   public int maxPayloadSupported() {
-    return Math.min(MAX_CAPACITY, pagedStorage.getPageSize());
+    return Math.min(maxCapacityForPageSize, MAX_CAPACITY);
   }
 
   // === monitoring information accessors: ===================
