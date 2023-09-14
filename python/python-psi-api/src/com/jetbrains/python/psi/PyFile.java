@@ -45,6 +45,12 @@ public interface PyFile extends PyElement, PsiFile, PyDocStringOwner, ScopeOwner
   @Nullable
   PyTargetExpression findTopLevelAttribute(@NotNull String name);
 
+  @NotNull
+  List<PyTypeAliasStatement> getTypeAliasStatements();
+
+  @Nullable
+  PyTypeAliasStatement findTypeAliasStatement(@NotNull String name);
+
   LanguageLevel getLanguageLevel();
 
   /**

@@ -225,6 +225,17 @@ public class PyFileImpl extends PsiFileBase implements PyFile, PyExpression {
     return findByName(name, getTopLevelAttributes());
   }
 
+  @Override
+  public @NotNull List<PyTypeAliasStatement> getTypeAliasStatements() {
+    return PyPsiUtils.collectStubChildren(this, getGreenStub(), PyTypeAliasStatement.class);
+  }
+
+  @Override
+  @Nullable
+  public PyTypeAliasStatement findTypeAliasStatement(@NotNull String name) {
+    return findByName(name, getTypeAliasStatements());
+  }
+
   @Nullable
   private static <T extends PsiNamedElement> T findByName(@NotNull String name, @NotNull List<T> namedElements) {
     for (T namedElement : namedElements) {
