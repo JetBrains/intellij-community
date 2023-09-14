@@ -164,32 +164,6 @@ class LafManagerImpl(private val coroutineScope: CoroutineScope) : LafManager(),
     }
 
   companion object {
-    @JvmStatic
-    @Suppress("SpellCheckingInspection")
-    fun installMacOSXFonts(defaults: UIDefaults) {
-      val face = "Helvetica Neue"
-      // ui font
-      initFontDefaults(defaults, getFont(face, 13, Font.PLAIN))
-      for (key in java.util.List.copyOf(defaults.keys)) {
-        if (key !is String || !key.endsWith("font", ignoreCase = true)) {
-          continue
-        }
-
-        val value = defaults.get(key)
-        if (value is FontUIResource && (value.family == "Lucida Grande" || value.family == "Serif") && !key.toString().contains("Menu")) {
-          defaults.put(key, getFont(face, value.size, value.style))
-        }
-      }
-      defaults.put("TableHeader.font", getFont(face, 11, Font.PLAIN))
-      @Suppress("SpellCheckingInspection") val buttonFont = getFont("Helvetica Neue", 13, Font.PLAIN)
-      defaults.put("Button.font", buttonFont)
-      val menuFont = getFont("Lucida Grande", 13, Font.PLAIN)
-      defaults.put("Menu.font", menuFont)
-      defaults.put("MenuItem.font", menuFont)
-      defaults.put("MenuItem.acceleratorFont", menuFont)
-      defaults.put("PasswordField.font", defaults.getFont("TextField.font"))
-    }
-
     private var ourTestInstance: LafManagerImpl? = null
 
     @OptIn(DelicateCoroutinesApi::class)
@@ -544,12 +518,21 @@ class LafManagerImpl(private val coroutineScope: CoroutineScope) : LafManager(),
       return true
     }
     if (SystemInfoRt.isMac) {
-      installMacOSXFonts(UIManager.getLookAndFeelDefaults())
+      installMacosXFonts(UIManager.getLookAndFeelDefaults())
     }
     else if (SystemInfoRt.isLinux) {
       installLinuxFonts(UIManager.getLookAndFeelDefaults())
     }
-    updateColors(defaults)
+    // MultiUIDefaults doesn't override keySet() in JDK 11 (JDK 17 is ok) and returns set of UIDefaults,
+    // but not expected UI pairs with key/value.
+    // So don't use it.
+    for (entry in defaults.entries) {
+      val value = entry.value
+      if (value is Color && !(value is JBColor && value.name != null)) {
+        val key = entry.key.toString()
+        entry.setValue(if (value is UIResource) IJColorUIResource(value, key) else IJColor(value, key))
+      }
+    }
     return false
   }
 
@@ -668,12 +651,12 @@ class LafManagerImpl(private val coroutineScope: CoroutineScope) : LafManager(),
 
   private fun patchLafFonts(uiDefaults: UIDefaults) {
     val uiSettings = UISettings.getInstance()
-    val currentScale = UISettingsUtils.with(uiSettings).currentIdeScale
+    val currentScale = uiSettings.currentIdeScale
     if (uiSettings.overrideLafFonts || currentScale != 1f) {
       storeOriginalFontDefaults(uiDefaults)
       val fontFace = if (uiSettings.overrideLafFonts) uiSettings.fontFace else defaultFont.family
       val fontSize = (if (uiSettings.overrideLafFonts) uiSettings.fontSize2D else defaultFont.size2D) * currentScale
-      initFontDefaults(uiDefaults, StartupUiUtil.getFontWithFallback(fontFace, Font.PLAIN, fontSize))
+      initFontDefaults(uiDefaults, getFontWithFallback(fontFace, Font.PLAIN, fontSize))
       val userScaleFactor = if (useInterFont()) fontSize / INTER_SIZE else getFontScale(fontSize)
       setUserScaleFactor(userScaleFactor)
     }
@@ -689,22 +672,21 @@ class LafManagerImpl(private val coroutineScope: CoroutineScope) : LafManager(),
 
   private val defaultUserScaleFactor: Float
     get() {
-      var font = storedLafFont
-      if (font == null) {
-        font = JBFont.label()
-      }
+      val font = storedLafFont ?: JBFont.label()
       return getFontScale(font.size.toFloat())
     }
+
   private val defaultInterFont: FontUIResource
     get() {
       val userScaleFactor = defaultUserScaleFactor
-      return StartupUiUtil.getFontWithFallback(INTER_NAME, Font.PLAIN, scaleFontSize(INTER_SIZE.toFloat(), userScaleFactor).toFloat())
+      return getFontWithFallback(INTER_NAME, Font.PLAIN, scaleFontSize(INTER_SIZE.toFloat(), userScaleFactor).toFloat())
     }
+
   private val storedLafFont: Font?
     get() {
-      val lf = if (currentTheme == null) null else lookAndFeelReference
-      val lfDefaults: Map<String, Any?>? = storedDefaults[lf]
-      return if (lfDefaults == null) null else lfDefaults["Label.font"] as Font?
+      val laf = if (currentTheme == null) null else lookAndFeelReference
+      val lafDefaults = storedDefaults.get(laf) ?: return null
+      return lafDefaults.get("Label.font") as Font?
     }
 
   private fun restoreOriginalFontDefaults(defaults: UIDefaults) {
@@ -858,7 +840,8 @@ class LafManagerImpl(private val coroutineScope: CoroutineScope) : LafManager(),
     }
 
     override fun actionPerformed(e: AnActionEvent) {
-      val popup = JBPopupFactory.getInstance().createActionGroupPopup(IdeBundle.message("preferred.theme.text"), getLafGroups(), e.dataContext,
+      val popup = JBPopupFactory.getInstance().createActionGroupPopup(IdeBundle.message("preferred.theme.text"), getLafGroups(),
+                                                                      e.dataContext,
                                                                       true, null, Int.MAX_VALUE)
       val component = e.inputEvent!!.component
       HelpTooltip.setMasterPopup(component, popup)
@@ -1091,21 +1074,6 @@ private class OurPopupFactory(private val delegate: PopupFactory) : PopupFactory
 
 private fun createLafReference(laf: UIThemeLookAndFeelInfo): LafManager.LafReference {
   return LafManager.LafReference(laf.name, laf.id)
-}
-
-private fun updateColors(defaults: UIDefaults) {
-  // MultiUIDefaults doesn't override keySet() in JDK 11 (JDK 17 is ok) and returns set of UIDefaults,
-  // but not expected UI pairs with key/value. So don't use it
-  for (entry in defaults.entries) {
-    val value = entry.value
-    if (value is Color && !(value is JBColor && value.name != null)) {
-      entry.setValue(wrapColorToNamedColor(value, entry.key.toString()))
-    }
-  }
-}
-
-private fun wrapColorToNamedColor(color: Color, key: String): Color {
-  return if (color is UIResource) IJColorUIResource(color, key) else IJColor(color, key)
 }
 
 private fun getFont(yosemite: String, size: Int, style: Int): FontUIResource {
@@ -1487,4 +1455,28 @@ private fun computeValuesOfUsedUiOptions(): List<Any?> {
     uiSettings.ideScale,
     uiSettings.presentationModeIdeScale,
   )
+}
+
+private fun installMacosXFonts(defaults: UIDefaults) {
+  @Suppress("SpellCheckingInspection") val face = "Helvetica Neue"
+  // ui font
+  initFontDefaults(defaults, getFont(face, 13, Font.PLAIN))
+  for (key in java.util.List.copyOf(defaults.keys)) {
+    if (key !is String || !key.endsWith("font", ignoreCase = true)) {
+      continue
+    }
+
+    val value = defaults.get(key)
+    if (value is FontUIResource && (value.family == "Lucida Grande" || value.family == "Serif") && !key.toString().contains("Menu")) {
+      defaults.put(key, getFont(face, value.size, value.style))
+    }
+  }
+  defaults.put("TableHeader.font", getFont(face, 11, Font.PLAIN))
+  @Suppress("SpellCheckingInspection") val buttonFont = getFont("Helvetica Neue", 13, Font.PLAIN)
+  defaults.put("Button.font", buttonFont)
+  val menuFont = getFont("Lucida Grande", 13, Font.PLAIN)
+  defaults.put("Menu.font", menuFont)
+  defaults.put("MenuItem.font", menuFont)
+  defaults.put("MenuItem.acceleratorFont", menuFont)
+  defaults.put("PasswordField.font", defaults.getFont("TextField.font"))
 }

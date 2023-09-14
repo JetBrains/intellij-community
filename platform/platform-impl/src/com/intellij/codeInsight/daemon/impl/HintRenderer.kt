@@ -21,6 +21,7 @@ import com.intellij.openapi.util.Key
 import com.intellij.ui.paint.EffectPainter
 import com.intellij.util.ui.GraphicsUtil
 import com.intellij.util.ui.StartupUiUtil
+import com.intellij.util.ui.getFontWithFallback
 import org.intellij.lang.annotations.JdkConstants
 import java.awt.*
 import java.awt.font.FontRenderContext
@@ -210,7 +211,7 @@ open class HintRenderer(var text: String?) : EditorCustomElementRenderer {
           editorFont.deriveFont(fontType, size)
         } else {
           val familyName = UIManager.getFont("Label.font").family
-          StartupUiUtil.getFontWithFallback(familyName, fontType, size)
+          getFontWithFallback(familyName = familyName, style = fontType, size = size)
         }
         val context = getCurrentContext(editor)
         metrics = FontInfo.getFontMetrics(font, context)

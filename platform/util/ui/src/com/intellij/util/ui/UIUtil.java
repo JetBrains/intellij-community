@@ -1965,14 +1965,14 @@ public final class UIUtil {
         // this might happen e.g., if we're running under newer runtime, forbidding access to sun.font package
         getLogger().warn(e);
         // this might not give the same result, but we have no choice here
-        return StartupUiUtil.getFontWithFallback(font.getFamily(), font.getStyle(), font.getSize());
+        return StartupUiUtilKt.getFontWithFallback(font.getFamily(), font.getStyle(), font.getSize());
       }
     }
     return font instanceof FontUIResource ? (FontUIResource)font : new FontUIResource(font);
   }
 
   public static @NotNull FontUIResource getFontWithFallback(@Nullable String familyName, @JdkConstants.FontStyle int style, int size) {
-    return StartupUiUtil.getFontWithFallback(familyName, style, size);
+    return StartupUiUtilKt.getFontWithFallback(familyName, style, size);
   }
 
   //Escape error-prone HTML data (if any) when we use it in renderers, see IDEA-170768

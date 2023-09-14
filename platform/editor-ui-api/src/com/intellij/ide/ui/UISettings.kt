@@ -500,6 +500,9 @@ class UISettings @NonInjectable constructor(private val notRoamableOptions: NotR
       state.showBreakpointsOverLineNumbers = value
     }
 
+  val currentIdeScale: Float
+    get() = if (presentationMode) presentationModeIdeScale else ideScale
+
   companion object {
     init {
       if (JBUIScale.SCALE_VERBOSE) {

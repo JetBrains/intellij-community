@@ -6,7 +6,7 @@ import com.intellij.util.ui.JBFont
 
 class UISettingsUtils(private val settings: UISettings) {
   val currentIdeScale: Float
-    get() = if (settings.presentationMode) settings.presentationModeIdeScale else settings.ideScale
+    get() = settings.currentIdeScale
 
   fun setCurrentIdeScale(scale: Float) {
     when {

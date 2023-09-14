@@ -178,19 +178,6 @@ object StartupUiUtil {
   fun isDialogFont(font: Font): Boolean = Font.DIALOG == font.getFamily(Locale.US)
 
   @JvmStatic
-  fun getFontWithFallback(familyName: String?,
-                          @Suppress("DEPRECATION") @org.intellij.lang.annotations.JdkConstants.FontStyle style: Int,
-                          size: Float): FontUIResource {
-    // On macOS font fallback is implemented in JDK by default
-    // (except for explicitly registered fonts, e.g., the fonts we bundle with IDE, for them, we don't have a solution now)
-    // in headless mode just use fallback in order to avoid font loading
-    val fontWithFallback = if (SystemInfoRt.isMac || GraphicsEnvironment.isHeadless()) Font(familyName, style, size.toInt()).deriveFont(
-      size)
-    else StyleContext().getFont(familyName, style, size.toInt()).deriveFont(size)
-    return if (fontWithFallback is FontUIResource) fontWithFallback else FontUIResource(fontWithFallback)
-  }
-
-  @JvmStatic
   fun addAwtListener(listener: AWTEventListener, mask: Long, parent: Disposable) {
     Toolkit.getDefaultToolkit().addAWTEventListener(listener, mask)
     Disposer.register(parent) { Toolkit.getDefaultToolkit().removeAWTEventListener(listener) }
@@ -208,6 +195,21 @@ object StartupUiUtil {
     SwingUtilities.invokeLater { lock.up() }
     lock.waitFor()
   }
+}
+
+fun getFontWithFallback(familyName: String?,
+                        @Suppress("DEPRECATION") @org.intellij.lang.annotations.JdkConstants.FontStyle style: Int,
+                        size: Float): FontUIResource {
+  // On macOS font fallback is implemented in JDK by default
+  // (except for explicitly registered fonts, e.g., the fonts we bundle with IDE, for them, we don't have a solution now)
+  // in headless mode just use fallback in order to avoid font loading
+  val fontWithFallback = if (SystemInfoRt.isMac || GraphicsEnvironment.isHeadless()) {
+    Font(familyName, style, size.toInt()).deriveFont(size)
+  }
+  else {
+    StyleContext().getFont(familyName, style, size.toInt()).deriveFont(size)
+  }
+  return if (fontWithFallback is FontUIResource) fontWithFallback else FontUIResource(fontWithFallback)
 }
 
 @Internal
