@@ -160,8 +160,8 @@ envs {
 
   createPython("python3.12",
                python312version,
-               [],
-               "python3\npython3.12")
+               ["teamcity-messages"],
+               "python3\npython3.12\nmessages")
 
   // For tox
   createPython("py36",
