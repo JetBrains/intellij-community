@@ -7,8 +7,8 @@ import com.intellij.collaboration.ui.codereview.diff.DiffLineLocation
 import com.intellij.collaboration.ui.codereview.diff.DiscussionsViewOption
 import com.intellij.collaboration.ui.codereview.diff.viewer.DiffMapped
 import com.intellij.collaboration.ui.codereview.diff.viewer.LineHoverAwareGutterMark
-import com.intellij.collaboration.ui.codereview.diff.viewer.controlGutterIconsIn
 import com.intellij.collaboration.ui.codereview.diff.viewer.controlInlaysIn
+import com.intellij.collaboration.ui.codereview.editor.controlGutterIconsIn
 import com.intellij.diff.DiffContext
 import com.intellij.diff.DiffExtension
 import com.intellij.diff.FrameDiffTool

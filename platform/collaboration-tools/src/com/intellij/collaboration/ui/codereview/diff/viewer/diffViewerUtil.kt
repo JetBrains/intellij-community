@@ -2,6 +2,8 @@
 package com.intellij.collaboration.ui.codereview.diff.viewer
 
 import com.intellij.collaboration.ui.codereview.diff.DiffLineLocation
+import com.intellij.collaboration.ui.codereview.editor.EditorMapped
+import com.intellij.collaboration.ui.codereview.editor.controlInlaysIn
 import com.intellij.diff.tools.fragmented.UnifiedDiffViewer
 import com.intellij.diff.tools.simple.SimpleOnesideDiffViewer
 import com.intellij.diff.tools.util.base.DiffViewerBase
