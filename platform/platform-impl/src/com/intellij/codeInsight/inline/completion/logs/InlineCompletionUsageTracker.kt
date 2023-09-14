@@ -26,7 +26,7 @@ import kotlin.random.Random
 
 @ApiStatus.Experimental
 object InlineCompletionUsageTracker : CounterUsagesCollector() {
-  private val GROUP = EventLogGroup("inline.completion", 5)
+  private val GROUP = EventLogGroup("inline.completion", 6)
 
   override fun getGroup() = GROUP
 
@@ -53,6 +53,10 @@ object InlineCompletionUsageTracker : CounterUsagesCollector() {
       if (event.i != 0) {
         showTracker!!.nextShown(event.element)
       }
+    }
+
+    override fun onChange(event: InlineCompletionEventType.Change) {
+      showTracker!!.truncateTyping(event.truncateTyping)
     }
 
     override fun onInsert(event: InlineCompletionEventType.Insert): Unit = lock.withLock {
@@ -193,6 +197,7 @@ object InlineCompletionUsageTracker : CounterUsagesCollector() {
     private var showStartTime = 0L
     private var suggestionLength = 0
     private var lines = 0
+    private var typingDuringShow = 0
 
     fun firstShown(element: InlineCompletionElement) {
       if (firstShown) {
@@ -219,6 +224,12 @@ object InlineCompletionUsageTracker : CounterUsagesCollector() {
       assert(!shownLogSent)
     }
 
+    fun truncateTyping(truncateTyping: Int) {
+      assert(firstShown)
+      typingDuringShow += truncateTyping
+      assert(!shownLogSent)
+    }
+
     fun selected() {
       finish(ShownEvents.FinishType.SELECTED)
     }
@@ -234,6 +245,7 @@ object InlineCompletionUsageTracker : CounterUsagesCollector() {
       shownLogSent = true
       data.add(ShownEvents.LINES.with(lines))
       data.add(ShownEvents.LENGTH.with(suggestionLength))
+      data.add(ShownEvents.TYPING_DURING_SHOW.with(typingDuringShow))
       data.add(ShownEvents.SHOWING_TIME.with(System.currentTimeMillis() - showStartTime))
       data.add(ShownEvents.FINISH_TYPE.with(finishType))
       ShownEvent.log(data)
@@ -245,6 +257,7 @@ object InlineCompletionUsageTracker : CounterUsagesCollector() {
 
     val LINES = Int("lines")
     val LENGTH = Int("length")
+    val TYPING_DURING_SHOW = Int("typing_during_show")
 
     val TIME_TO_SHOW = Long("time_to_show")
     val SHOWING_TIME = Long("showing_time")
@@ -258,6 +271,7 @@ object InlineCompletionUsageTracker : CounterUsagesCollector() {
     ShownEvents.REQUEST_ID,
     ShownEvents.LINES,
     ShownEvents.LENGTH,
+    ShownEvents.TYPING_DURING_SHOW,
     ShownEvents.TIME_TO_SHOW,
     ShownEvents.SHOWING_TIME,
     ShownEvents.FINISH_TYPE,

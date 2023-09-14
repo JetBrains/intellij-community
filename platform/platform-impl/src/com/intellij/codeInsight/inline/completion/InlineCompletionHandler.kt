@@ -224,6 +224,7 @@ class InlineCompletionHandler(private val scope: CoroutineScope) {
           is InlineCompletionContextUpdater.Result.Updated.Changed -> {
             context.editor.inlayModel.execute(true) {
               context.clear()
+              trace(InlineCompletionEventType.Change(result.truncateTyping))
               result.newElements.forEach { context.renderElement(it, request.endOffset) }
             }
           }
