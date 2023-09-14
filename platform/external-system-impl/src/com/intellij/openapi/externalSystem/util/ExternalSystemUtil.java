@@ -296,10 +296,10 @@ public final class ExternalSystemUtil {
     AbstractExternalSystemLocalSettings.SyncType syncType = isPreviewMode ? PREVIEW : (previousSyncType == PREVIEW ? IMPORT : RE_IMPORT);
     projectSyncTypeStorage.put(externalProjectPath, syncType);
 
-    final String projectName = getProjectName(externalProjectPath);
-    ExternalSystemResolveProjectTask resolveProjectTask = new ExternalSystemResolveProjectTask(project, projectName, externalProjectPath, importSpec);
+    ExternalSystemResolveProjectTask resolveProjectTask = new ExternalSystemResolveProjectTask(project, externalProjectPath, importSpec);
 
     ExternalSystemTaskId taskId = resolveProjectTask.getId();
+    String projectName = resolveProjectTask.getProjectName();
     String externalSystemName = externalSystemId.getReadableName();
     ProgressExecutionMode progressExecutionMode = importSpec.getProgressExecutionMode();
     String title = progressExecutionMode == ProgressExecutionMode.MODAL_SYNC
@@ -373,7 +373,7 @@ public final class ExternalSystemUtil {
       }
     }
 
-    String projectName = getProjectName(externalProjectPath);
+    String projectName = resolveProjectTask.getProjectName();
     final ExternalSystemProcessHandler processHandler = new ExternalSystemProcessHandler(resolveProjectTask, projectName + " import") {
       @Override
       protected void destroyProcessImpl() {
@@ -412,7 +412,6 @@ public final class ExternalSystemUtil {
             long eventTime = System.currentTimeMillis();
             String eventMessage = BuildBundle.message("build.status.failed");
             String externalSystemName = externalSystemId.getReadableName();
-            String projectName = getProjectName(externalProjectPath);
             String title = ExternalSystemBundle.message("notification.project.refresh.fail.title", externalSystemName, projectName);
             DataContext dataContext = BuildConsoleUtils.getDataContext(id, syncViewManager);
             FailureResultImpl eventResult = createFailureResult(title, e, externalSystemId, project, dataContext);
@@ -477,7 +476,6 @@ public final class ExternalSystemUtil {
     Project project = importSpec.getProject();
     ExternalSystemTaskId taskId = resolveProjectTask.getId();
     ProjectSystemId externalSystemId = taskId.getProjectSystemId();
-    String projectName = getProjectName(externalProjectPath);
     DumbAwareAction rerunImportAction = new DumbAwareAction() {
 
       @Override
@@ -508,6 +506,7 @@ public final class ExternalSystemUtil {
     rerunImportAction.getTemplatePresentation()
       .setDescription(ExternalSystemBundle.messagePointer("action.refresh.project.description", systemId));
     rerunImportAction.getTemplatePresentation().setIcon(AllIcons.Actions.Refresh);
+    String projectName = resolveProjectTask.getProjectName();
     return new DefaultBuildDescriptor(taskId, projectName, externalProjectPath, System.currentTimeMillis())
       .withProcessHandler(processHandler, null)
       .withRestartAction(rerunImportAction)
@@ -582,7 +581,7 @@ public final class ExternalSystemUtil {
         long eventTime = System.currentTimeMillis();
         String eventMessage = BuildBundle.message("build.status.failed");
         String systemName = externalSystemId.getReadableName();
-        String projectName = getProjectName(externalProjectPath);
+        String projectName = resolveProjectTask.getProjectName();
         String title = ExternalSystemBundle.message("notification.project.refresh.fail.title", systemName, projectName);
         FailureResultImpl eventResult = createFailureResult(title, t, externalSystemId, project, DataContext.EMPTY_CONTEXT);
         return new FinishBuildEventImpl(taskId, null, eventTime, eventMessage, eventResult);
@@ -624,16 +623,6 @@ public final class ExternalSystemUtil {
     String eventMessage = BuildBundle.message("build.status.cancelled");
     FailureResultImpl eventResult = new FailureResultImpl();
     return new FinishBuildEventImpl(taskId, null, eventTime, eventMessage, eventResult);
-  }
-
-  private static @NotNull @NlsSafe String getProjectName(@NotNull String externalProjectPath) {
-    File projectFile = new File(externalProjectPath);
-    if (projectFile.isFile()) {
-      return projectFile.getParentFile().getName();
-    }
-    else {
-      return projectFile.getName();
-    }
   }
 
   /**
