@@ -13,7 +13,7 @@ import java.util.concurrent.ConcurrentHashMap
 
 @ApiStatus.Experimental
 @ApiStatus.Internal
-open class ClientSessionsManager<T : ClientSession> {
+sealed class ClientSessionsManager<T : ClientSession> {
   companion object {
     /**
      * Returns an application-level session for a particular client.
@@ -22,7 +22,7 @@ open class ClientSessionsManager<T : ClientSession> {
     @JvmStatic
     @JvmOverloads
     fun getAppSession(clientId: ClientId = ClientId.current): ClientAppSession? {
-      return ApplicationManager.getApplication().service<ClientSessionsManager<*>>().getSession(clientId) as? ClientAppSession
+      return ApplicationManager.getApplication().service<ClientSessionsManager<ClientAppSession>>().getSession(clientId)
     }
 
     /**
@@ -32,8 +32,7 @@ open class ClientSessionsManager<T : ClientSession> {
      */
     @JvmStatic
     fun getAppSessions(kind: ClientKind): List<ClientAppSession> {
-      @Suppress("UNCHECKED_CAST")
-      return ApplicationManager.getApplication().service<ClientSessionsManager<*>>().getSessions(kind) as List<ClientAppSession>
+      return ApplicationManager.getApplication().service<ClientSessionsManager<ClientAppSession>>().getSessions(kind)
     }
 
     /**
@@ -43,7 +42,7 @@ open class ClientSessionsManager<T : ClientSession> {
     @JvmStatic
     @JvmOverloads
     fun getProjectSession(project: Project, clientId: ClientId = ClientId.current): ClientProjectSession? {
-      return project.service<ClientSessionsManager<*>>().getSession(clientId) as? ClientProjectSession
+      return project.service<ClientSessionsManager<ClientProjectSession>>().getSession(clientId)
     }
 
     /**
@@ -53,7 +52,7 @@ open class ClientSessionsManager<T : ClientSession> {
      */
     @JvmStatic
     fun getProjectSessions(project: Project, kind: ClientKind): List<ClientProjectSession> {
-      @Suppress("UNCHECKED_CAST") return project.service<ClientSessionsManager<*>>().getSessions(kind) as List<ClientProjectSession>
+      return project.service<ClientSessionsManager<ClientProjectSession>>().getSessions(kind)
     }
 
     /**
