@@ -9,13 +9,12 @@ import com.intellij.maven.testFramework.utils.importMavenProjects
 import com.intellij.openapi.actionSystem.DataContext
 import com.intellij.openapi.actionSystem.LangDataKeys
 import com.intellij.openapi.actionSystem.PlatformDataKeys
-import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.command.CommandProcessor
+import com.intellij.openapi.application.EDT
+import com.intellij.openapi.application.writeAction
 import com.intellij.openapi.module.Module
-import com.intellij.openapi.module.ModuleManager.Companion.getInstance
+import com.intellij.openapi.module.ModuleManager
 import com.intellij.openapi.module.ModuleTypeId
 import com.intellij.openapi.options.ConfigurationException
-import com.intellij.openapi.project.ProjectBundle
 import com.intellij.openapi.roots.LibraryOrderEntry
 import com.intellij.openapi.roots.ModuleRootManager
 import com.intellij.openapi.roots.ui.configuration.actions.ModuleDeleteProvider
@@ -24,6 +23,9 @@ import com.intellij.openapi.util.registry.Registry
 import com.intellij.testFramework.TestActionEvent
 import com.intellij.testFramework.UsefulTestCase
 import com.intellij.util.FileContentUtil
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.withContext
 import org.jetbrains.idea.maven.importing.MavenProjectLegacyImporter
 import org.jetbrains.idea.maven.importing.MavenRootModelAdapter
 import org.jetbrains.idea.maven.model.MavenId
@@ -40,7 +42,8 @@ import org.junit.Test
 import java.util.*
 
 class MavenProjectsManagerTest : MavenMultiVersionImportingTestCase() {
-  @Throws(Exception::class)
+  override fun runInDispatchThread() = false
+
   override fun setUp() {
     super.setUp()
     initProjectsManager(false)
@@ -244,7 +247,7 @@ class MavenProjectsManagerTest : MavenMultiVersionImportingTestCase() {
   }
 
   @Test
-  fun testForceReimport() {
+  fun testForceReimport() = runBlocking {
     createProjectSubDir("src/main/java")
     createProjectPom("""
                        <groupId>test</groupId>
@@ -262,7 +265,7 @@ class MavenProjectsManagerTest : MavenMultiVersionImportingTestCase() {
     assertModules("project")
     assertSources("project", "src/main/java")
     assertModuleLibDeps("project", "Maven: junit:junit:4.0")
-    ApplicationManager.getApplication().runWriteAction {
+    writeAction {
       val model = ModuleRootManager.getInstance(getModule("project")).getModifiableModel()
       val contentRoot = model.getContentEntries()[0]
       for (eachSourceFolders in contentRoot.getSourceFolders()) {
@@ -287,7 +290,7 @@ class MavenProjectsManagerTest : MavenMultiVersionImportingTestCase() {
   }
 
   @Test
-  fun testNotIgnoringProjectsForDeletedInBackgroundModules() {
+  fun testNotIgnoringProjectsForDeletedInBackgroundModules() = runBlocking {
     createProjectPom("""
                        <groupId>test</groupId>
                        <artifactId>project</artifactId>
@@ -307,9 +310,10 @@ class MavenProjectsManagerTest : MavenMultiVersionImportingTestCase() {
     val module = getModule("m")
     assertNotNull(module)
     assertFalse(projectsManager.isIgnored(projectsManager.findProject(m)!!))
-    getInstance(myProject).disposeModule(module)
-    //myProjectsManager.performScheduledImportInTests();
-    assertNull(getInstance(myProject).findModuleByName("m"))
+    writeAction {
+      ModuleManager.getInstance(myProject).disposeModule(module)
+    }
+    assertNull(ModuleManager.getInstance(myProject).findModuleByName("m"))
     assertFalse(projectsManager.isIgnored(projectsManager.findProject(m)!!))
   }
 
@@ -336,7 +340,7 @@ class MavenProjectsManagerTest : MavenMultiVersionImportingTestCase() {
     val module = getModule("m")
     assertNotNull(module)
     assertFalse(projectsManager.isIgnored(projectsManager.findProject(m)!!))
-    val moduleManager = getInstance(myProject)
+    val moduleManager = ModuleManager.getInstance(myProject)
     val moduleModel = moduleManager.getModifiableModel()
     ModuleDeleteProvider.removeModule(module, listOf(), moduleModel)
     val moduleStructureExtension = MavenModuleStructureExtension()
@@ -344,12 +348,12 @@ class MavenProjectsManagerTest : MavenMultiVersionImportingTestCase() {
     moduleStructureExtension.apply()
     moduleStructureExtension.disposeUIResources()
     updateAllProjects()
-    assertNull(getInstance(myProject).findModuleByName("m"))
+    assertNull(ModuleManager.getInstance(myProject).findModuleByName("m"))
     assertTrue(projectsManager.isIgnored(projectsManager.findProject(m)!!))
   }
 
   @Test
-  fun testIgnoringProjectsForDetachedInUiModules() {
+  fun testIgnoringProjectsForDetachedInUiModules() = runBlocking {
     createProjectPom("""
                        <groupId>test</groupId>
                        <artifactId>project</artifactId>
@@ -369,18 +373,17 @@ class MavenProjectsManagerTest : MavenMultiVersionImportingTestCase() {
     val module = getModule("m")
     assertNotNull(module)
     assertFalse(projectsManager.isIgnored(projectsManager.findProject(m)!!))
-    CommandProcessor.getInstance().executeCommand(myProject, {
-      val action = Runnable { ModuleDeleteProvider.detachModules(myProject, arrayOf(module)) }
-      ApplicationManager.getApplication().runWriteAction(action)
-    }, ProjectBundle.message("module.remove.command"), null)
+    writeAction {
+      ModuleDeleteProvider.detachModules(myProject, arrayOf(module))
+    }
     //myProjectsManager.performScheduledImportInTests();
     importMavenProjects(projectsManager)
-    assertNull(getInstance(myProject).findModuleByName("m"))
+    assertNull(ModuleManager.getInstance(myProject).findModuleByName("m"))
     assertTrue(projectsManager.isIgnored(projectsManager.findProject(m)!!))
   }
 
   @Test
-  fun testWhenDeleteModuleThenChangeModuleDependencyToLibraryDependency() {
+  fun testWhenDeleteModuleThenChangeModuleDependencyToLibraryDependency() = runBlocking {
     Assume.assumeTrue(isWorkspaceImport)
     createProjectPom("""
                        <groupId>test</groupId>
@@ -416,7 +419,9 @@ class MavenProjectsManagerTest : MavenMultiVersionImportingTestCase() {
     val module1 = getModule("m1")
     configConfirmationForYesAnswer()
     val action = DeleteAction()
-    action.actionPerformed(TestActionEvent.createTestEvent(action, createTestModuleDataContext(module1)))
+    withContext(Dispatchers.EDT) {
+      action.actionPerformed(TestActionEvent.createTestEvent(action, createTestModuleDataContext(module1)))
+    }
     updateAllProjects()
     assertModuleModuleDeps("m2")
     assertModuleLibDep("m2", "Maven: test:m1:1")
@@ -459,7 +464,7 @@ class MavenProjectsManagerTest : MavenMultiVersionImportingTestCase() {
     assertModuleModuleDeps("m2", "m1")
     val module1 = getModule("m1")
     val module2 = getModule("m2")
-    val moduleManager = getInstance(myProject)
+    val moduleManager = ModuleManager.getInstance(myProject)
     val moduleModel = moduleManager.getModifiableModel()
     val otherModuleRootModels = java.util.List.of(ModuleRootManager.getInstance(module2).getModifiableModel())
     ModuleDeleteProvider.removeModule(module1, otherModuleRootModels, moduleModel)
@@ -542,7 +547,7 @@ class MavenProjectsManagerTest : MavenMultiVersionImportingTestCase() {
   }
 
   @Test
-  fun testDoNotRemoveMavenProjectsOnReparse() {
+  fun testDoNotRemoveMavenProjectsOnReparse() = runBlocking {
     // this pom file doesn't belong to any of the modules, this is won't be processed
     // by MavenProjectProjectsManager and won't occur in its projects list.
     importProject("""
@@ -562,14 +567,16 @@ class MavenProjectsManagerTest : MavenMultiVersionImportingTestCase() {
         }
       }
     })
-    FileContentUtil.reparseFiles(myProject, projectsManager.getProjectsFiles(), true)
+    withContext(Dispatchers.EDT) {
+      FileContentUtil.reparseFiles(myProject, projectsManager.getProjectsFiles(), true)
+    }
     projectsManager.waitForReadingCompletion()
     assertTrue(log.toString(), log.length == 0)
   }
 
   @Test
   @Throws(Exception::class)
-  fun testShouldRemoveMavenProjectsAndNotAddThemToIgnore() {
+  fun testShouldRemoveMavenProjectsAndNotAddThemToIgnore() = runBlocking {
     val mavenParentPom = createProjectSubFile("maven-parent/pom.xml", """
       <?xml version="1.0" encoding="UTF-8"?>
       <project xmlns="http://maven.apache.org/POM/4.0.0"
@@ -599,19 +606,21 @@ class MavenProjectsManagerTest : MavenMultiVersionImportingTestCase() {
           <artifactId>child1</artifactId>
       </project>
       """.trimIndent())
-    ApplicationManager.getApplication().runWriteAction { getInstance(myProject).newModule("non-maven", ModuleTypeId.JAVA_MODULE) }
+    writeAction { ModuleManager.getInstance(myProject).newModule("non-maven", ModuleTypeId.JAVA_MODULE) }
     importProject(mavenParentPom)
-    assertEquals(3, getInstance(myProject).modules.size)
+    assertEquals(3, ModuleManager.getInstance(myProject).modules.size)
     configConfirmationForYesAnswer()
     val action = RemoveManagedFilesAction()
-    action.actionPerformed(TestActionEvent.createTestEvent(action, createTestDataContext(mavenParentPom)))
-    assertEquals(1, getInstance(myProject).modules.size)
-    assertEquals("non-maven", getInstance(myProject).modules[0].getName())
+    withContext(Dispatchers.EDT) {
+      action.actionPerformed(TestActionEvent.createTestEvent(action, createTestDataContext(mavenParentPom)))
+    }
+    assertEquals(1, ModuleManager.getInstance(myProject).modules.size)
+    assertEquals("non-maven", ModuleManager.getInstance(myProject).modules[0].getName())
     UsefulTestCase.assertEmpty(projectsManager.getIgnoredFilesPaths())
 
     //should then import project in non-ignored state again
     importProject(mavenParentPom)
-    assertEquals(3, getInstance(myProject).modules.size)
+    assertEquals(3, ModuleManager.getInstance(myProject).modules.size)
     UsefulTestCase.assertEmpty(projectsManager.getIgnoredFilesPaths())
   }
 
@@ -695,13 +704,13 @@ class MavenProjectsManagerTest : MavenMultiVersionImportingTestCase() {
                     <artifactId>project</artifactId>
                     <version>1</version>
                     """.trimIndent())
-    assertEquals("project", getInstance(myProject).modules[0].getName())
+    assertEquals("project", ModuleManager.getInstance(myProject).modules[0].getName())
     importProject("""
                     <groupId>test</groupId>
                     <artifactId>project1</artifactId>
                     <version>1</version>
                     """.trimIndent())
-    assertEquals("project", getInstance(myProject).modules[0].getName())
+    assertEquals("project", ModuleManager.getInstance(myProject).modules[0].getName())
   }
 
   @Test
@@ -711,7 +720,7 @@ class MavenProjectsManagerTest : MavenMultiVersionImportingTestCase() {
                     <artifactId>artifactId</artifactId>
                     <version>1</version>
                     """.trimIndent())
-    assertEquals("artifactId", getInstance(myProject).modules[0].getName())
+    assertEquals("artifactId", ModuleManager.getInstance(myProject).modules[0].getName())
   }
 
   @Test
@@ -722,7 +731,7 @@ class MavenProjectsManagerTest : MavenMultiVersionImportingTestCase() {
                     <artifactId>artifactId</artifactId>
                     <version>1</version>
                     """.trimIndent())
-    assertEquals("myGroup.artifactId", getInstance(myProject).modules[0].getName())
+    assertEquals("myGroup.artifactId", ModuleManager.getInstance(myProject).modules[0].getName())
   }
 
   @Test
@@ -734,7 +743,7 @@ class MavenProjectsManagerTest : MavenMultiVersionImportingTestCase() {
                     <version>1</version>
                     """.trimIndent())
     assertNotSame("ignoredArtifactId", myProjectRoot.getName())
-    assertEquals(myProjectRoot.getName(), getInstance(myProject).modules[0].getName())
+    assertEquals(myProjectRoot.getName(), ModuleManager.getInstance(myProject).modules[0].getName())
   }
 
   companion object {
