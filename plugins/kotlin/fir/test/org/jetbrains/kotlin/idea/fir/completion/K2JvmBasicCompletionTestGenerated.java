@@ -945,6 +945,11 @@ public abstract class K2JvmBasicCompletionTestGenerated extends AbstractK2JvmBas
                 runTest("../completion/testData/basic/common/extensions/runCatchingWithoutScope.kt");
             }
 
+            @TestMetadata("runCatchingWithoutScopeK2.kt")
+            public void testRunCatchingWithoutScopeK2() throws Exception {
+                runTest("../completion/testData/basic/common/extensions/runCatchingWithoutScopeK2.kt");
+            }
+
             @TestMetadata("StarTypeArg.kt")
             public void testStarTypeArg() throws Exception {
                 runTest("../completion/testData/basic/common/extensions/StarTypeArg.kt");
