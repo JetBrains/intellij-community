@@ -3,14 +3,14 @@
 package org.jetbrains.idea.maven.importing;
 
 import com.intellij.maven.testFramework.MavenMultiVersionImportingTestCase;
+import com.intellij.maven.testFramework.utils.MavenImportingTestCaseKt;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.externalSystem.service.project.ProjectDataManager;
 import com.intellij.openapi.roots.OrderRootType;
 import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.vfs.LocalFileSystem;
-import com.intellij.testFramework.RunAll;
+import org.jetbrains.idea.maven.project.MavenProjectsManager;
 import org.jetbrains.idea.maven.server.MavenServerManager;
-import org.jetbrains.idea.maven.utils.MavenUtil;
 import org.jetbrains.plugins.groovy.compiler.GreclipseIdeaCompilerSettings;
 import org.jetbrains.plugins.groovy.config.GroovyConfigUtils;
 import org.junit.Test;
@@ -769,7 +769,8 @@ public class GroovyImporterTest extends MavenMultiVersionImportingTestCase {
                            "target/generated-sources/groovy-stubs/main/foo",
                            "target/generated-sources/groovy-stubs/test/bar");
 
-      resolveFoldersAndImport();
+      MavenProjectsManager projectsManager = getProjectsManager();
+      MavenImportingTestCaseKt.resolveFoldersAndImport(projectsManager.getProject(), projectsManager.getProjects());
 
       if (supportsImportOfNonExistingFolders()) {
         assertSources("project",
