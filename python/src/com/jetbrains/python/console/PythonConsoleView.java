@@ -150,6 +150,8 @@ public class PythonConsoleView extends LanguageConsoleImpl implements Observable
     if (PsiUtilCore.getPsiFile(project, getVirtualFile()) instanceof PyExpressionCodeFragmentImpl codeFragment) {
       codeFragment.setContext(myHistoryPsiFile);
     }
+
+    getConsoleEditor().setFile(getVirtualFile());
     myTestMode = testMode;
     isShowVars = PyConsoleOptions.getInstance(project).isShowVariableByDefault();
     VirtualFile virtualFile = getVirtualFile();
