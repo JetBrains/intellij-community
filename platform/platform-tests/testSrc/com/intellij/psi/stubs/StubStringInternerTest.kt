@@ -8,9 +8,9 @@ class StubStringInternerTest {
   @Test
   fun test() {
     val interner = StubStringInterner()
-    val s = interner.intern("a")!!
+    val s = interner.apply("a")!!
     val s1 = s.encodeToByteArray().decodeToString()
     assertThat(s).isNotSameAs(s1)
-    assertThat(s).isSameAs(interner.intern(s1))
+    assertThat(s).isSameAs(interner.apply(s1))
   }
 }

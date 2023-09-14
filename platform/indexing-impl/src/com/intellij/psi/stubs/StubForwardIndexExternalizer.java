@@ -15,7 +15,6 @@ import java.io.DataInputStream;
 import java.io.DataOutput;
 import java.io.IOException;
 import java.util.*;
-import java.util.function.UnaryOperator;
 
 public abstract class StubForwardIndexExternalizer<StubKeySerializationState>
   implements DataExternalizer<Map<StubIndexKey<?, ?>, Map<Object, StubIdList>>> {
@@ -39,7 +38,9 @@ public abstract class StubForwardIndexExternalizer<StubKeySerializationState>
 
   protected StubForwardIndexExternalizer(final boolean useStableBinaryFormat) { this.useStableBinaryFormat = useStableBinaryFormat; }
 
-  private @NotNull <K> Map<K, StubIdList> deserializeIndexValue(@NotNull DataInput in, @NotNull StubIndexKey<K, ?> stubIndexKey, @Nullable K requestedKey) throws IOException {
+  private static @NotNull <K> Map<K, StubIdList> deserializeIndexValue(@NotNull DataInput in,
+                                                                       @NotNull StubIndexKey<K, ?> stubIndexKey,
+                                                                       @Nullable K requestedKey) throws IOException {
     KeyDescriptor<K> keyDescriptor = StubIndexKeyDescriptorCache.INSTANCE.getKeyDescriptor(stubIndexKey);
 
     int bufferSize = DataInputOutputUtil.readINT(in);
@@ -165,7 +166,7 @@ public abstract class StubForwardIndexExternalizer<StubKeySerializationState>
     return new FileLocalStubForwardIndexExternalizer();
   }
 
-  private void skipIndexValue(@NotNull DataInput in) throws IOException {
+  private static void skipIndexValue(@NotNull DataInput in) throws IOException {
     int bufferSize = DataInputOutputUtil.readINT(in);
     in.skipBytes(bufferSize);
   }
@@ -215,7 +216,7 @@ public abstract class StubForwardIndexExternalizer<StubKeySerializationState>
     @Override
     protected FileLocalStringEnumerator createStubIndexKeySerializationState(@NotNull DataInput input, int stubIndexKeyCount)  throws IOException {
       FileLocalStringEnumerator enumerator = new FileLocalStringEnumerator(false);
-      enumerator.read(input, UnaryOperator.identity());
+      enumerator.read(input);
       return enumerator;
     }
 

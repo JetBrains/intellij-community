@@ -9,11 +9,12 @@ import com.intellij.openapi.components.Service;
 import com.intellij.openapi.util.LowMemoryWatcher;
 import kotlinx.coroutines.Dispatchers;
 import kotlinx.coroutines.ExecutorsKt;
-import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.function.UnaryOperator;
+
 @Service
-final class StubStringInterner implements Disposable {
+final class StubStringInterner implements Disposable, UnaryOperator<@Nullable String> {
   private final LoadingCache<String, String> internCache = Caffeine.newBuilder()
     .maximumSize(8192)
     .executor(ExecutorsKt.asExecutor(Dispatchers.getDefault()))
@@ -31,9 +32,8 @@ final class StubStringInterner implements Disposable {
   public void dispose() {
   }
 
-  @Nullable
-  @Contract("null -> null")
-  String intern(@Nullable String s) {
+  @Override
+  public @Nullable String apply(@Nullable String s) {
     return s == null ? null : internCache.get(s);
   }
 }

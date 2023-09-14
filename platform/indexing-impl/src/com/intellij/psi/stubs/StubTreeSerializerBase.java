@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.stubs;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -14,13 +14,16 @@ import java.io.*;
 import java.util.ArrayList;
 import java.util.BitSet;
 import java.util.List;
+import java.util.function.UnaryOperator;
 
 abstract class StubTreeSerializerBase<SerializationState> {
   protected static final ThreadLocal<ObjectStubSerializer<?, ? extends Stub>> ourRootStubSerializer = new ThreadLocal<>();
-  private final @NotNull StubStringInterner myStubStringInterner;
+  private static final boolean useStubStringInterner = Boolean.parseBoolean(System.getProperty("idea.use.stub.string.interner", "false"));
+
+  private final @Nullable UnaryOperator<String> stubStringInterner;
 
   StubTreeSerializerBase() {
-    myStubStringInterner = StubStringInterner.getInstance();
+    stubStringInterner = useStubStringInterner ? StubStringInterner.getInstance() : UnaryOperator.identity();
   }
 
   @NotNull
@@ -29,7 +32,12 @@ abstract class StubTreeSerializerBase<SerializationState> {
     StubInputStream inputStream = new StubInputStream(stream, storage);
 
     @NotNull SerializationState state = readSerializationState(inputStream);
-    storage.read(inputStream, myStubStringInterner::intern);
+    if (stubStringInterner == null) {
+      storage.read(inputStream);
+    }
+    else {
+      storage.read(inputStream, stubStringInterner);
+    }
 
     final int stubFilesCount = DataInputOutputUtil.readINT(inputStream);
     if (stubFilesCount <= 0) {
