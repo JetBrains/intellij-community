@@ -168,8 +168,9 @@ class InlineCompletionHandler(private val scope: CoroutineScope) {
   }
 
   fun hide(editor: Editor, explicit: Boolean, context: InlineCompletionContext) {
-    if (!context.isCurrentlyDisplayingInlays) return
-    trace(InlineCompletionEventType.Hide(explicit))
+    if (context.isCurrentlyDisplayingInlays) {
+      trace(InlineCompletionEventType.Hide(explicit))
+    }
 
     withSafeMute {
       isShowing.set(false)
