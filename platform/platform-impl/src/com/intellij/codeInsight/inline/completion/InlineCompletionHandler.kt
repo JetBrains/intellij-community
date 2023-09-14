@@ -16,7 +16,6 @@ import com.intellij.openapi.editor.event.DocumentEvent
 import com.intellij.openapi.editor.event.EditorMouseEvent
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.Key
-import com.intellij.openapi.util.registry.Registry
 import com.intellij.psi.PsiFile
 import com.intellij.util.EventDispatcher
 import com.intellij.util.application
@@ -106,7 +105,7 @@ class InlineCompletionHandler(private val scope: CoroutineScope) {
     val modificationStamp = request.document.modificationStamp
     val resultFlow = request(provider, request) // .flowOn(Dispatchers.IO)
 
-    val context = InlineCompletionContext.getOrInit(editor)
+    val context = InlineCompletionSession.getOrInit(editor, provider).context
 
     // If you write a test and observe an infinite hang here, set [UsefulTestCase.runInDispatchThread] to false.
     withContext(Dispatchers.EDT) {
@@ -114,7 +113,7 @@ class InlineCompletionHandler(private val scope: CoroutineScope) {
         .onStart { isShowing.set(true) }
         .onEmpty {
           trace(InlineCompletionEventType.Empty)
-          InlineCompletionContext.remove(editor)
+          InlineCompletionSession.remove(editor)
         }
         .onCompletion {
           complete(currentCoroutineContext().isActive, editor, it, context)
@@ -127,7 +126,7 @@ class InlineCompletionHandler(private val scope: CoroutineScope) {
             return@collectIndexed
           }
 
-          showInlineElement(editor, it, index, offset, context)
+          showInlineElement(it, index, offset, context)
         }
     }
   }
@@ -138,11 +137,10 @@ class InlineCompletionHandler(private val scope: CoroutineScope) {
   }
 
   private fun showInlineElement(
-    editor: Editor,
     element: InlineCompletionElement,
     index: Int,
     offset: Int,
-    context: InlineCompletionContext = InlineCompletionContext.getOrInit(editor)
+    context: InlineCompletionContext
   ) {
     trace(InlineCompletionEventType.Show(element, index))
     context.renderElement(element, offset)
@@ -155,7 +153,8 @@ class InlineCompletionHandler(private val scope: CoroutineScope) {
     }
   }
 
-  fun insert(editor: Editor, context: InlineCompletionContext = InlineCompletionContext.getOrInit(editor)) {
+  fun insert(editor: Editor) {
+    val context = InlineCompletionContext.getOrNull(editor) ?: return
     trace(InlineCompletionEventType.Insert)
 
     withSafeMute {
@@ -176,7 +175,7 @@ class InlineCompletionHandler(private val scope: CoroutineScope) {
 
     withSafeMute {
       isShowing.set(false)
-      InlineCompletionContext.remove(editor)
+      InlineCompletionSession.remove(editor)
     }
   }
 
@@ -239,8 +238,6 @@ class InlineCompletionHandler(private val scope: CoroutineScope) {
       result is InlineCompletionContextUpdater.Result.Updated
     } ?: false
   }
-
-  private fun shouldShowPlaceholder(): Boolean = Registry.`is`("inline.completion.show.placeholder")
 
   private fun trace(event: InlineCompletionEventType) {
     eventListeners.getMulticaster().on(event)
