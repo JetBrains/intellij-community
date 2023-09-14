@@ -28,6 +28,12 @@ import java.util.Collections;
 import java.util.List;
 
 public class DependenciesImportingTest extends MavenMultiVersionImportingTestCase {
+
+  @Override
+  protected boolean runInDispatchThread() {
+    return false;
+  }
+
   @Override
   protected void setUp() throws Exception {
     super.setUp();
