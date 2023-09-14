@@ -46,6 +46,7 @@ class InlineCompletionEditorListener(scope: CoroutineScope) : EditorFactoryListe
   }
 
   override fun editorReleased(event: EditorFactoryEvent) {
+    handler.cancel(event.editor)
     event.editor.putUserData(InlineCompletionHandler.KEY, null)
   }
 }
