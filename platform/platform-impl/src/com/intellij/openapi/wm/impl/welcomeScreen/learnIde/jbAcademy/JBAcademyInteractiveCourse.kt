@@ -21,7 +21,7 @@ internal class JBAcademyInteractiveCourse : InteractiveCourseFactory {
     get() = PlatformUtils.isIntelliJ() ||
             PlatformUtils.isPyCharm() && !PlatformUtils.isDataSpell() ||
             PlatformUtils.isWebStorm() ||
-            PlatformUtils.isCidr() ||
+            PlatformUtils.isCLion() ||
             PlatformUtils.isGoIde() ||
             PlatformUtils.isPhpStorm() ||
             PlatformUtils.isRustRover()
