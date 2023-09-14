@@ -136,6 +136,7 @@ public final class ExpUiIcons {
     /** 17x17 */ public static final @NotNull Icon CwmIconModificator = load("expui/codeWithMe/cwmIconModificator.svg", -457325122, 2);
     /** 15x15 */ public static final @NotNull Icon CwmIconModificator_14x14 = load("expui/codeWithMe/cwmIconModificator@14x14.svg", 1233056681, 2);
     /** 22x22 */ public static final @NotNull Icon CwmIconModificator_20x20 = load("expui/codeWithMe/cwmIconModificator@20x20.svg", 561818425, 2);
+    /** 16x16 */ public static final @NotNull Icon CwmIconModificatorMenu = load("expui/codeWithMe/cwmIconModificatorMenu.svg", 91482355, 2);
     /** 16x16 */ public static final @NotNull Icon CwmInvite = load("expui/codeWithMe/cwmInvite.svg", 1273298697, 2);
     /** 16x16 */ public static final @NotNull Icon CwmUsers = load("expui/codeWithMe/cwmUsers.svg", 374429727, 2);
     /** 20x20 */ public static final @NotNull Icon CwmUsers_20x20 = load("expui/codeWithMe/cwmUsers@20x20.svg", 1716201367, 2);
