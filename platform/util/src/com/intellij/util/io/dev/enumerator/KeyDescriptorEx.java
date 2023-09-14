@@ -23,23 +23,6 @@ public interface KeyDescriptorEx<K> {
 
   K read(@NotNull ByteBuffer input) throws IOException;
 
-  //TODO RC: this is quite troubling API choice: we need to know the size of key binary
-  //         representation to allocate room for the record in append-log. But for many
-  //         types K the only way to know the size is to actually serialize the object
-  //         -- hence API basically forces to do it twice: first time to assess the size,
-  //         second time to actually write the object into ByteBuffer. This is dummy.
-
-  default long saveToLog(@NotNull K key,
-                         @NotNull AppendOnlyLog log) throws IOException {
-    int recordSize = sizeOfSerialized(key);
-    return log.append(buffer -> {
-      save(buffer, key);
-      return buffer;
-    }, recordSize);
-  }
-
-  int sizeOfSerialized(K key) throws IOException;
-
-  void save(@NotNull ByteBuffer output,
-            K key) throws IOException;
+  long saveToLog(@NotNull K key,
+                 @NotNull AppendOnlyLog log) throws IOException;
 }

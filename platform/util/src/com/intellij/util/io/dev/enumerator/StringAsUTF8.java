@@ -24,7 +24,8 @@ public class StringAsUTF8 implements KeyDescriptorEx<String> {
   }
 
   @Override
-  public boolean areEqual(String key1, String key2) {
+  public boolean areEqual(String key1,
+                          String key2) {
     return key1.equals(key2);
   }
 
@@ -38,16 +39,5 @@ public class StringAsUTF8 implements KeyDescriptorEx<String> {
                         @NotNull AppendOnlyLog log) throws IOException {
     byte[] stringBytes = key.getBytes(UTF_8);
     return log.append(stringBytes);
-  }
-
-  @Override
-  public int sizeOfSerialized(String key) {
-    throw new UnsupportedOperationException("Method is not needed, since .saveToLog() is implemented");
-  }
-
-  @Override
-  public void save(@NotNull ByteBuffer output,
-                   String key) {
-    throw new UnsupportedOperationException("Method is not needed, since .saveToLog() is implemented");
   }
 }
