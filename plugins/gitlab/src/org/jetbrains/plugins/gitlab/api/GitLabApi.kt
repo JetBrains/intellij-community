@@ -69,7 +69,7 @@ internal class GitLabApiImpl(
 
 suspend fun GitLabApi.getMetadata(): GitLabServerMetadata {
   val metadata = getMetadataOrNull()
-  requireNotNull(metadata)
+  requireNotNull(metadata) { "Could not retrieve server metadata for $server" }
   return metadata
 }
 

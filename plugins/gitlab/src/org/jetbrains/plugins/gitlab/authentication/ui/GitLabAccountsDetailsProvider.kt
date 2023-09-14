@@ -5,6 +5,7 @@ import com.intellij.collaboration.auth.ui.LazyLoadingAccountsDetailsProvider
 import com.intellij.collaboration.messages.CollaborationToolsBundle
 import com.intellij.openapi.components.service
 import icons.CollaborationToolsIcons
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
 import org.jetbrains.plugins.gitlab.GitLabServersManager
 import org.jetbrains.plugins.gitlab.api.GitLabApi
@@ -21,17 +22,20 @@ internal class GitLabAccountsDetailsProvider(scope: CoroutineScope,
   : LazyLoadingAccountsDetailsProvider<GitLabAccount, GitLabUserDTO>(scope, CollaborationToolsIcons.Review.DefaultAvatar) {
 
   override suspend fun loadDetails(account: GitLabAccount): Result<GitLabUserDTO> {
-    val api = apiClientSupplier(account) ?: return Result.Error(CollaborationToolsBundle.message("account.token.missing"), true)
-    val details = api.graphQL.getCurrentUser() ?: return Result.Error(CollaborationToolsBundle.message("account.token.invalid"), true)
     try {
+      val api = apiClientSupplier(account) ?: return Result.Error(CollaborationToolsBundle.message("account.token.missing"), true)
+      val details = api.graphQL.getCurrentUser() ?: return Result.Error(CollaborationToolsBundle.message("account.token.invalid"), true)
       val serversManager = service<GitLabServersManager>()
       val supported = serversManager.earliestSupportedVersion <= api.getMetadata().version
       if (!supported) return Result.Error(GitLabBundle.message("server.version.unsupported.short"), false)
+      return Result.Success(details)
+    }
+    catch (ce: CancellationException) {
+      throw ce
     }
     catch (e: Exception) {
       return Result.Error(e.message, false)
     }
-    return Result.Success(details)
   }
 
   override suspend fun loadAvatar(account: GitLabAccount, url: String): Image? {
