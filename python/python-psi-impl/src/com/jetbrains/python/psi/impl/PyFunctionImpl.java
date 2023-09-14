@@ -67,7 +67,7 @@ public class PyFunctionImpl extends PyBaseElementImpl<PyFunctionStub> implements
   @Override
   @Nullable
   public PyTypeParameterList getTypeParameterList() {
-    return childToPsi(PyElementTypes.TYPE_PARAMETER_LIST);
+    return getStubOrPsiChild(PyElementTypes.TYPE_PARAMETER_LIST);
   }
 
   private class CachedStructuredDocStringProvider implements CachedValueProvider<StructuredDocString> {

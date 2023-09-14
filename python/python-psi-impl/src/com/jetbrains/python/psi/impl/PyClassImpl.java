@@ -146,7 +146,7 @@ public class PyClassImpl extends PyBaseElementImpl<PyClassStub> implements PyCla
   @Override
   @Nullable
   public PyTypeParameterList getTypeParameterList() {
-    return childToPsi(PyElementTypes.TYPE_PARAMETER_LIST);
+    return getStubOrPsiChild(PyElementTypes.TYPE_PARAMETER_LIST);
   }
 
   @Override
