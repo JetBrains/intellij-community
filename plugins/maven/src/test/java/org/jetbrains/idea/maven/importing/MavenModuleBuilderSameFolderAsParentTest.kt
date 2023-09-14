@@ -3,12 +3,14 @@ package org.jetbrains.idea.maven.importing
 
 import com.intellij.maven.testFramework.MavenMultiVersionImportingTestCase
 import com.intellij.openapi.application.WriteAction
+import com.intellij.openapi.application.readAction
 import com.intellij.openapi.module.ModuleManager.Companion.getInstance
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.testFramework.RunAll.Companion.runAll
 import com.intellij.util.ArrayUtil
 import com.intellij.util.ThrowableRunnable
+import kotlinx.coroutines.runBlocking
 import org.jetbrains.idea.maven.dom.MavenDomUtil
 import org.jetbrains.idea.maven.model.MavenId
 import org.jetbrains.idea.maven.project.MavenProjectsManager
@@ -19,6 +21,9 @@ import org.junit.Test
 
 class MavenModuleBuilderSameFolderAsParentTest : MavenMultiVersionImportingTestCase() {
   private var myBuilder: AbstractMavenModuleBuilder? = null
+
+  override fun runInDispatchThread() = false
+
   override fun tearDown() {
     runAll(
       ThrowableRunnable<Throwable> { stopMavenImportManager() },
@@ -54,7 +59,7 @@ class MavenModuleBuilderSameFolderAsParentTest : MavenMultiVersionImportingTestC
   }
 
   @Test
-  fun testSameFolderAsParent() {
+  fun testSameFolderAsParent() = runBlocking {
     configConfirmationForYesAnswer()
     Assume.assumeFalse(Registry.`is`("maven.linear.import"))
     val customPomXml = createProjectSubFile("custompom.xml", createPomXml(
@@ -83,7 +88,9 @@ class MavenModuleBuilderSameFolderAsParentTest : MavenMultiVersionImportingTestC
     }
     assertRelativeContentRoots("module", "")
     val module = MavenProjectsManager.getInstance(myProject).findProject(getModule("module"))
-    val domProjectModel = MavenDomUtil.getMavenDomProjectModel(myProject, module!!.file)
-    assertEquals("custompom.xml", domProjectModel!!.getMavenParent().getRelativePath().getRawText())
+    readAction {
+      val domProjectModel = MavenDomUtil.getMavenDomProjectModel(myProject, module!!.file)
+      assertEquals("custompom.xml", domProjectModel!!.getMavenParent().getRelativePath().getRawText())
+    }
   }
 }
