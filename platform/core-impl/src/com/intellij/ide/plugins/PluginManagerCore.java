@@ -552,6 +552,22 @@ public final class PluginManagerCore {
                                                                     message("plugin.loading.error.short.plugin.loading.disabled")));
       }
     }
+
+
+    if (explicitlyEnabled == null) {
+      for (PluginId essentialId : ApplicationInfoImpl.getShadowInstance().getEssentialPluginsIds()) {
+        IdeaPluginDescriptorImpl essentialPlugin = idMap.get(essentialId);
+        if (essentialPlugin == null) continue;
+        for (PluginId incompatibleId : essentialPlugin.incompatibilities){
+          IdeaPluginDescriptorImpl incompatiblePlugin = idMap.get(incompatibleId);
+          if (incompatiblePlugin == null) continue;
+          if (incompatiblePlugin.isEnabled()) {
+            incompatiblePlugin.setEnabled(false);
+            getLogger().info("Plugin '${incompatiblePlugin.name}' conflicts with required plugin '${essentialPlugin.name}', hence disabled");
+          }
+        }
+      }
+    }
   }
 
   public static boolean isCompatible(@NotNull IdeaPluginDescriptor descriptor) {
