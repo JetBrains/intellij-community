@@ -191,11 +191,8 @@ object UpdateChecker {
       }
     }
     catch (e: Exception) {
-      LOG.infoWithDebug(e)
-      return when (e) {
-        is JDOMException -> PlatformUpdates.Empty  // corrupted content, don't bother telling users
-        else -> PlatformUpdates.ConnectionError(e)
-      }
+      LOG.info("failed to load update data (${e.javaClass.name}: ${e.message})", if (e !is IOException || LOG.isDebugEnabled) e else null)
+      return PlatformUpdates.ConnectionError(e)
     }
   }
 
@@ -295,10 +292,7 @@ object UpdateChecker {
         }
       }
       catch (e: Exception) {
-        LOG.info(
-          "failed to load plugins from ${host ?: "default repository"}: ${e.message}",
-          if (LOG.isDebugEnabled) e else null,
-        )
+        LOG.info("failed to load plugins from ${host ?: "default repository"}: ${e.message}", if (LOG.isDebugEnabled) e else null)
         errors[host] = e
       }
     }
