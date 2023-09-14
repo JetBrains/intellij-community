@@ -120,6 +120,7 @@ class PsiViewerDebugPanel(
     psiTree.addTreeSelectionListener(PsiTreeSelectionListener())
 
     PsiViewerDialog.initTree(psiTree)
+    updatePsiTreeForSelection(editor.selectionModel.selectionStart, editor.selectionModel.selectionEnd)
     return JBScrollPane(psiTree)
   }
 
@@ -160,14 +161,18 @@ class PsiViewerDebugPanel(
 
     override fun selectionChanged(e: SelectionEvent) {
       if (!editor.contentComponent.hasFocus()) return
-      val rootElement = treeStructure.rootPsiElement as? PsiFile ?: return
       val startOffset = e.newRange.startOffset
       val endOffset = e.newRange.endOffset
-      val startElement = rootElement.findElementAt(startOffset) ?: return
-      val endElement = rootElement.findElementAt(endOffset - 1) ?: return
-      val commonElement = PsiTreeUtil.findCommonParent(startElement, endElement) ?: return
-      structureTreeModel.select(commonElement, psiTree) { }
+      updatePsiTreeForSelection(startOffset, endOffset)
     }
+  }
+
+  private fun updatePsiTreeForSelection(startOffset: Int, endOffset: Int) {
+    val rootElement = treeStructure.rootPsiElement as? PsiFile ?: return
+    val startElement = rootElement.findElementAt(startOffset) ?: return
+    val endElement = rootElement.findElementAt(endOffset - 1) ?: return
+    val commonElement = PsiTreeUtil.findCommonParent(startElement, endElement) ?: return
+    structureTreeModel.select(commonElement, psiTree) { }
   }
 
   override fun dispose() {
