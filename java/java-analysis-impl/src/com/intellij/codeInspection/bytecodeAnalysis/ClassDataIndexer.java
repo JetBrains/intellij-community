@@ -17,8 +17,8 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.gist.GistManager;
 import com.intellij.util.gist.VirtualFileGist;
 import com.intellij.util.indexing.FileBasedIndex;
-import one.util.streamex.EntryStream;
 import one.util.streamex.StreamEx;
+import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.org.objectweb.asm.*;
@@ -32,7 +32,6 @@ import java.util.*;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.function.BiFunction;
 import java.util.function.BinaryOperator;
-import java.util.function.Function;
 
 import static com.intellij.codeInspection.bytecodeAnalysis.Direction.*;
 import static com.intellij.codeInspection.bytecodeAnalysis.Effects.VOLATILE_EFFECTS;
@@ -70,7 +69,7 @@ public class ClassDataIndexer implements VirtualFileGist.GistCalculator<Map<HMem
     try {
       ClassReader reader = new ClassReader(file.contentsToByteArray(false));
       Map<EKey, Equations> allEquations = processClass(reader, file.getPresentableUrl());
-      allEquations = solvePartially(reader.getClassName(), allEquations);
+      solvePartially(reader.getClassName(), allEquations);
       allEquations.forEach((methodKey, equations) -> map.merge(methodKey.member.hashed(), hash(equations), MERGER));
     }
     catch (ProcessCanceledException e) {
@@ -110,21 +109,36 @@ public class ClassDataIndexer implements VirtualFileGist.GistCalculator<Map<HMem
     return index > 0 && path.lastIndexOf("platforms/android-", index) > 0;
   }
 
-  private static Map<EKey, Equations> solvePartially(String className, Map<EKey, Equations> map) {
+  @Contract(mutates = "param2")
+  private static void solvePartially(String className, Map<EKey, Equations> map) {
     PuritySolver solver = new PuritySolver();
     BiFunction<EKey, Equations, EKey> keyCreator =
       (key, eqs) -> new EKey(key.member, eqs.find(Volatile).isPresent() ? Volatile : Pure, eqs.stable, false);
-    EntryStream.of(map).mapToKey(keyCreator)
-      .flatMapValues(eqs -> eqs.results.stream().map(drp -> drp.result))
-      .selectValues(Effects.class)
-      .forKeyValue(solver::addEquation);
-    solver.addPlainFieldEquations(md -> md instanceof Member && ((Member)md).internalClassName.equals(className));
+    for (Map.Entry<EKey, Equations> entry : map.entrySet()) {
+      EKey key = entry.getKey();
+      Equations equations = entry.getValue();
+      key = keyCreator.apply(key, equations);
+      for (DirectionResultPair drp : equations.results) {
+        Result result = drp.result;
+        if (result instanceof Effects effects) {
+          solver.addEquation(key, effects);
+        }
+      }
+    }
+    solver.addPlainFieldEquations(md -> md instanceof Member member && member.internalClassName.equals(className));
     Map<EKey, Effects> solved = solver.solve();
-    Map<EKey, Effects> partiallySolvedPurity =
-      StreamEx.of(solved, solver.pending).flatMapToEntry(Function.identity()).removeValues(Effects::isTop).toMap();
-    return EntryStream.of(map)
-      .mapToValue((key, eqs) -> eqs.update(Pure, partiallySolvedPurity.get(keyCreator.apply(key, eqs))))
-      .toMap();
+    Map<EKey, Effects> partiallySolvedPurity = new HashMap<>();
+    solved.forEach((key, value) -> {
+      if (!value.isTop()) {
+        partiallySolvedPurity.put(key, value);
+      }
+    });
+    solver.pending.forEach((key, value) -> {
+      if (!value.isTop()) {
+        partiallySolvedPurity.put(key, value);
+      }
+    });
+    map.replaceAll((key, eqs) -> eqs.update(Pure, partiallySolvedPurity.get(keyCreator.apply(key, eqs))));
   }
 
   private static Equations hash(Equations equations) {

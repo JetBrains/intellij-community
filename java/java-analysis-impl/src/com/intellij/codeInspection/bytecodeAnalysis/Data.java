@@ -1,9 +1,7 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInspection.bytecodeAnalysis;
 
-import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 import java.util.stream.Stream;
@@ -121,16 +119,34 @@ class Equations {
 
   @NotNull
   Equations update(@SuppressWarnings("SameParameterValue") Direction direction, Effects newResult) {
-    List<DirectionResultPair> newPairs = StreamEx.of(this.results)
-      .map(drp -> drp.updateForDirection(direction, newResult))
-      .nonNull()
-      .toList();
-    return new Equations(newPairs, this.stable);
+    for (int i = 0; i < this.results.size(); i++) {
+      DirectionResultPair drp = this.results.get(i);
+      if (drp.directionKey == direction.asInt()) {
+        List<DirectionResultPair> newPairs;
+        if (newResult == null) {
+          newPairs = new ArrayList<>();
+          newPairs.addAll(this.results.subList(0, i));
+          newPairs.addAll(this.results.subList(i + 1, this.results.size()));
+        } else if (newResult == drp.result) {
+          return this;
+        } else {
+          newPairs = new ArrayList<>(this.results);
+          newPairs.set(i, new DirectionResultPair(direction.asInt(), newResult));
+        }
+        return new Equations(newPairs, this.stable);
+      }
+    }
+    return this;
   }
 
   Optional<Result> find(Direction direction) {
     int key = direction.asInt();
-    return StreamEx.of(results).findFirst(pair -> pair.directionKey == key).map(pair -> pair.result);
+    for (DirectionResultPair result : results) {
+      if (result.directionKey == key) {
+        return Optional.of(result).map(pair -> pair.result);
+      }
+    }
+    return Optional.empty();
   }
 }
 
@@ -161,16 +177,6 @@ class DirectionResultPair {
   @Override
   public String toString() {
     return Direction.fromInt(directionKey) + "->" + result;
-  }
-
-  @Nullable
-  DirectionResultPair updateForDirection(Direction direction, Result newResult) {
-    if (this.directionKey == direction.asInt()) {
-      return newResult == null ? null : new DirectionResultPair(direction.asInt(), newResult);
-    }
-    else {
-      return this;
-    }
   }
 }
 
