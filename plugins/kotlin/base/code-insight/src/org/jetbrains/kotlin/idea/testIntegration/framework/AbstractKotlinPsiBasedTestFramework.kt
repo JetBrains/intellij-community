@@ -115,7 +115,8 @@ abstract class AbstractKotlinPsiBasedTestFramework : KotlinPsiBasedTestFramework
 
         for (annotationEntry in annotationEntries) {
             val shortName = annotationEntry.shortName ?: continue
-            if (checkNameMatch(file, fqNames, shortName.asString())) {
+            val fqName = annotationEntry.typeReference?.text
+            if (fqName in fqNames || checkNameMatch(file, fqNames, shortName.asString())) {
                 return true
             }
         }

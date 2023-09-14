@@ -11,6 +11,7 @@ import com.intellij.psi.util.CachedValuesManager
 import com.intellij.psi.util.parentOfType
 import com.intellij.util.ThreeState
 import com.intellij.util.ThreeState.*
+import com.siyeh.ig.junit.JUnitCommonClassNames
 import org.jetbrains.kotlin.asJava.elements.KtLightElement
 import org.jetbrains.kotlin.idea.KotlinLanguage
 import org.jetbrains.kotlin.idea.testIntegration.framework.AbstractKotlinPsiBasedTestFramework
@@ -76,8 +77,8 @@ class KotlinJUnit5Framework: JUnit5Framework(), KotlinPsiBasedTestFramework {
         private fun checkIsJUnit5LikeTestClass(declaration: KtClassOrObject): ThreeState =
             if (!isFrameworkAvailable(declaration)) {
                 NO
-            } else if (declaration is KtClass && declaration.isInner() && !isAnnotated(declaration, "org.junit.jupiter.api.Nested")) {
-                YES
+            } else if (declaration is KtClass && declaration.isInner()) {
+                if (isAnnotated(declaration, JUnitCommonClassNames.ORG_JUNIT_JUPITER_API_NESTED)) YES else NO
             } else if (declaration.isTopLevel() && isAnnotated(declaration, "org.junit.jupiter.api.extension.ExtendWith")) {
                 YES
             } else if (findAnnotatedFunction(declaration, METHOD_ANNOTATION_FQN) != null) {
