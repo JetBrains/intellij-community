@@ -27,6 +27,7 @@ import com.intellij.openapi.editor.ex.EditorEx
 import com.intellij.openapi.editor.highlighter.EditorHighlighterFactory
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.Splitter
+import com.intellij.openapi.util.TextRange
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
 import com.intellij.psi.PsiFileFactory
@@ -58,6 +59,8 @@ class PsiViewerDebugPanel(
 
   private val psiTree = Tree()
 
+  private val initialRange = TextRange.create(editor.selectionModel.selectionStart, editor.selectionModel.selectionEnd)
+
   init {
     initToolbar()?.let { add(it, BorderLayout.WEST) }
     val splitter = Splitter(false, 0.3f).apply {
@@ -70,6 +73,7 @@ class PsiViewerDebugPanel(
   private fun initToolbar(): JComponent? {
     val toolBarActions = DefaultActionGroup().apply {
       add(OpenDialogAction())
+      add(ResetSelection())
       add(ShowWhiteSpaceAction())
       add(ShowTreeNodesAction())
     }
@@ -91,10 +95,23 @@ class PsiViewerDebugPanel(
     }
   }
 
+  private inner class ResetSelection : AnAction(
+    DevPsiViewerBundle.message("psi.viewer.show.reset.selection.action"),
+    DevPsiViewerBundle.message("psi.viewer.show.reset.selection.description"),
+    AllIcons.General.Reset
+  ) {
+    override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.EDT
+
+    override fun actionPerformed(e: AnActionEvent) {
+      updatePsiTreeForSelection(initialRange.startOffset, initialRange.endOffset)
+    }
+  }
+
+
   private inner class ShowWhiteSpaceAction : ToggleAction(
     DevPsiViewerBundle.message("psi.viewer.show.whitespace.action"),
     DevPsiViewerBundle.message("psi.viewer.show.whitespace.description"),
-    AllIcons.Actions.Stub
+    AllIcons.Diff.GutterCheckBox
   ) {
     override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.EDT
 
@@ -135,7 +152,7 @@ class PsiViewerDebugPanel(
     psiTree.addTreeSelectionListener(PsiTreeSelectionListener())
 
     PsiViewerDialog.initTree(psiTree)
-    updatePsiTreeForSelection(editor.selectionModel.selectionStart, editor.selectionModel.selectionEnd)
+    updatePsiTreeForSelection(initialRange.startOffset, initialRange.endOffset)
     return JBScrollPane(psiTree)
   }
 
