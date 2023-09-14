@@ -870,7 +870,6 @@ public class FoldersImportingTest extends MavenMultiVersionImportingTestCase {
                         </plugins>
                       </build>
                       """);
-      resolveDependenciesAndImport();
       resolveFoldersAndImport();
 
       assertTrue(pluginFile.exists());
