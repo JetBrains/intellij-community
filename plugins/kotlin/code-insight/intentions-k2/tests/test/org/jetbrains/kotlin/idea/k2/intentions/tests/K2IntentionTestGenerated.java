@@ -3130,11 +3130,6 @@ public abstract class K2IntentionTestGenerated extends AbstractK2IntentionTest {
             runTest("../../../idea/tests/testData/intentions/insertExplicitTypeArguments/notApplicableGenericType.kt");
         }
 
-        @TestMetadata("platformType.kt")
-        public void testPlatformType() throws Exception {
-            runTest("../../../idea/tests/testData/intentions/insertExplicitTypeArguments/platformType.kt");
-        }
-
         @TestMetadata("simpleInsertTypeClass.kt")
         public void testSimpleInsertTypeClass() throws Exception {
             runTest("../../../idea/tests/testData/intentions/insertExplicitTypeArguments/simpleInsertTypeClass.kt");
