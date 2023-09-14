@@ -522,7 +522,7 @@ object KotlinIntroduceVariableHandler : RefactoringActionHandler {
         return parent.bodyExpression == this && (parent is KtFunctionLiteral || parent.isFunctionalExpression())
     }
 
-    private fun KtExpression.getCandidateContainers(): List<KtElement> {
+    internal fun KtExpression.getCandidateContainers(): List<KtElement> {
         val firstContainer = getContainer() ?: return emptyList()
 
         val containers = SmartList(firstContainer)

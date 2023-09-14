@@ -26,6 +26,10 @@
             language="kotlin"
             implementationClass="org.jetbrains.kotlin.idea.refactoring.KotlinRefactoringSupportProvider"/>
 
+    <projectService serviceInterface="org.jetbrains.kotlin.idea.refactoring.introduce.KotlinIntroduceVariableService"
+                    serviceImplementation="org.jetbrains.kotlin.idea.refactoring.introduce.introduceVariable.KotlinIntroduceVariableServiceK1Impl"
+    />
+
     <lang.refactoringSupport.classMembersRefactoringSupport
             language="kotlin"
             implementationClass="org.jetbrains.kotlin.idea.refactoring.memberInfo.KotlinClassMembersRefactoringSupport"/>
