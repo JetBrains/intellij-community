@@ -27,7 +27,7 @@ object IndexingFlag {
   }
 
   private fun VirtualFile.asApplicable(): VirtualFileSystemEntry? {
-    return asSafely<VirtualFileSystemEntry>()
+    return asSafely<VirtualFileSystemEntry>()?.let { if (VfsData.isIsIndexedFlagDisabled()) null else it }
   }
 
   @JvmStatic
@@ -57,9 +57,6 @@ object IndexingFlag {
 
   @JvmStatic
   fun isFileIndexed(file: VirtualFile, stamp: FileIndexingStampService.FileIndexingStamp): Boolean {
-    if (VfsData.isIsIndexedFlagDisabled()) {
-      return false
-    }
     return file.asApplicable()?.let { entry -> entry.indexedStamp == stamp.toInt() } ?: false
   }
 

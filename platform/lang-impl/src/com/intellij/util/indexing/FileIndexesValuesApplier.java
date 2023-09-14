@@ -3,6 +3,7 @@ package com.intellij.util.indexing;
 
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.newvfs.impl.VfsData;
 import com.intellij.util.indexing.contentQueue.IndexUpdateRunner;
 import com.intellij.util.indexing.dependencies.FileIndexingStampService;
 import com.intellij.util.indexing.diagnostic.FileIndexingStatistics;
@@ -61,7 +62,9 @@ public final class FileIndexesValuesApplier {
     this.removers = removers;
     this.removeDataFromIndicesForFile = removeDataFromIndicesForFile;
     this.shouldMarkFileAsIndexed = shouldMarkFileAsIndexed;
-    fileStatusLockObject = shouldMarkFileAsIndexed ? IndexingFlag.getOrCreateHash(file) : IndexingFlag.getNonExistentHash();
+    fileStatusLockObject = shouldMarkFileAsIndexed && !VfsData.isIsIndexedFlagDisabled()
+                           ? IndexingFlag.getOrCreateHash(file)
+                           : IndexingFlag.getNonExistentHash();
     this._initialApplicationMode = applicationMode;
     stats = createStats(file, appliers, removers, fileType, logEmptyProvidedIndexes);
   }
