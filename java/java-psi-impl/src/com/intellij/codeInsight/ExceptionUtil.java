@@ -611,8 +611,8 @@ public final class ExceptionUtil {
   }
 
   @NotNull
-  private static List<PsiClassType> getUnhandledProcessorExceptions(@NotNull PsiTemplateExpression templateExpression,
-                                                                    @Nullable PsiElement topElement) {
+  public static List<PsiClassType> getUnhandledProcessorExceptions(@NotNull PsiTemplateExpression templateExpression,
+                                                                   @Nullable PsiElement topElement) {
     PsiExpression processor = templateExpression.getProcessor();
     if (processor == null) return Collections.emptyList();
     PsiType type = processor.getType();

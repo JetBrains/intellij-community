@@ -1704,6 +1704,25 @@ final class ControlFlowAnalyzer extends JavaElementVisitor {
   }
 
   @Override
+  public void visitTemplateExpression(@NotNull PsiTemplateExpression expression) {
+    startElement(expression);
+    PsiExpression processor = expression.getProcessor();
+    if (processor != null) processor.accept(this);
+
+    PsiTemplate template = expression.getTemplate();
+    if (template != null) {
+      List<@NotNull PsiExpression> expressions = template.getEmbeddedExpressions();
+      for (PsiExpression embeddedExpression : expressions) {
+        ProgressManager.checkCanceled();
+        embeddedExpression.accept(this);
+      }
+    }
+    generateExceptionJumps(expression, ExceptionUtil.getUnhandledProcessorExceptions(expression, expression.getParent()));
+
+    finishElement(expression);
+  }
+
+  @Override
   public void visitNewExpression(@NotNull PsiNewExpression expression) {
     startElement(expression);
 
