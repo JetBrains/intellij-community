@@ -86,7 +86,7 @@ open class ModuleImpl @ApiStatus.Internal constructor(name: String, project: Pro
     this.name = name
   }
 
-  final override fun <T : Any> findConstrictorAndInstantiateClass(lookup: MethodHandles.Lookup, aClass: Class<T>): T {
+  final override fun <T : Any> findConstructorAndInstantiateClass(lookup: MethodHandles.Lookup, aClass: Class<T>): T {
     @Suppress("UNCHECKED_CAST")
     return (lookup.findConstructorOrNull(aClass, moduleMethodType)?.invoke(this)
             ?: lookup.findConstructorOrNull(aClass, emptyConstructorMethodType)?.invoke()

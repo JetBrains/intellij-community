@@ -189,7 +189,7 @@ private class DefaultProjectImpl(private val actualContainerInstance: Project,
   coroutineScope = coroutineScope,
   setExtensionsRootArea = false,
 ), Project {
-  override fun <T : Any> findConstrictorAndInstantiateClass(lookup: MethodHandles.Lookup, aClass: Class<T>): T {
+  override fun <T : Any> findConstructorAndInstantiateClass(lookup: MethodHandles.Lookup, aClass: Class<T>): T {
     @Suppress("UNCHECKED_CAST")
     // see ConfigurableEP - prefer constructor that accepts our instance
     return (lookup.findConstructorOrNull(aClass, projectMethodType)?.invoke(actualContainerInstance)

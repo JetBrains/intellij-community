@@ -51,10 +51,10 @@ abstract class ClientSessionImpl(
     registerServiceInstance(ClientSession::class.java, this, fakeCorePluginDescriptor)
   }
 
-  override fun <T : Any> findConstrictorAndInstantiateClass(lookup: MethodHandles.Lookup, aClass: Class<T>): T {
+  override fun <T : Any> findConstructorAndInstantiateClass(lookup: MethodHandles.Lookup, aClass: Class<T>): T {
     @Suppress("UNCHECKED_CAST")
     return (lookup.findConstructorOrNull(aClass, sessionConstructorMethodType)?.invoke(this) as T?)
-           ?: super.findConstrictorAndInstantiateClass(lookup, aClass)
+           ?: super.findConstructorAndInstantiateClass(lookup, aClass)
   }
 
   fun registerServices() {
@@ -193,11 +193,11 @@ open class ClientProjectSessionImpl(
                                                                                        componentManager = project,
                                                                                        project = project)
 
-  override fun <T : Any> findConstrictorAndInstantiateClass(lookup: MethodHandles.Lookup, aClass: Class<T>): T {
+  override fun <T : Any> findConstructorAndInstantiateClass(lookup: MethodHandles.Lookup, aClass: Class<T>): T {
     @Suppress("UNCHECKED_CAST")
     return ((lookup.findConstructorOrNull(aClass, projectMethodType)?.invoke(project)
             ?: lookup.findConstructorOrNull(aClass, projectSessionConstructorMethodType)?.invoke(this) ) as T?)
-           ?: super.findConstrictorAndInstantiateClass(lookup, aClass)
+           ?: super.findConstructorAndInstantiateClass(lookup, aClass)
   }
 
 

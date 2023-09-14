@@ -882,7 +882,7 @@ abstract class ComponentManagerImpl(
     }
   }
 
-  protected open fun <T : Any> findConstrictorAndInstantiateClass(lookup: MethodHandles.Lookup, aClass: Class<T>): T {
+  protected open fun <T : Any> findConstructorAndInstantiateClass(lookup: MethodHandles.Lookup, aClass: Class<T>): T {
     @Suppress("UNCHECKED_CAST")
     return (lookup.findConstructorOrNull(aClass, emptyConstructorMethodType)?.invoke()
             ?: lookup.findConstructorOrNull(aClass, coroutineScopeMethodType)?.invoke(instanceCoroutineScope(aClass))
@@ -893,7 +893,7 @@ abstract class ComponentManagerImpl(
 
   private fun <T : Any> doInstantiateClass(aClass: Class<T>, pluginId: PluginId): T {
     try {
-      return findConstrictorAndInstantiateClass(MethodHandles.privateLookupIn(aClass, methodLookup), aClass)
+      return findConstructorAndInstantiateClass(MethodHandles.privateLookupIn(aClass, methodLookup), aClass)
     }
     catch (e: CancellationException) {
       throw e

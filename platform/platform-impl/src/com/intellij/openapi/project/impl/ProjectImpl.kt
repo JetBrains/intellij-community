@@ -131,7 +131,7 @@ open class ProjectImpl(parent: ComponentManagerImpl, filePath: Path, projectName
     isLight = ApplicationManager.getApplication().isUnitTestMode && filePath.toString().contains(LIGHT_PROJECT_NAME)
   }
 
-  final override fun <T : Any> findConstrictorAndInstantiateClass(lookup: MethodHandles.Lookup, aClass: Class<T>): T {
+  final override fun <T : Any> findConstructorAndInstantiateClass(lookup: MethodHandles.Lookup, aClass: Class<T>): T {
     @Suppress("UNCHECKED_CAST")
     // see ConfigurableEP - prefer constructor that accepts our instance
     return (lookup.findConstructorOrNull(aClass, projectMethodType)?.invoke(this)
