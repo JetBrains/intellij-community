@@ -485,6 +485,19 @@ object PluginManagerCore {
                                                                 message("plugin.loading.error.short.plugin.loading.disabled")))
       }
     }
+
+    if (explicitlyEnabled == null) {
+      for (essentialId in ApplicationInfoImpl.getShadowInstance().getEssentialPluginsIds()) {
+        val essentialPlugin = idMap[essentialId] ?: continue
+        for (incompatibleId in essentialPlugin.incompatibilities) {
+          val incompatiblePlugin = idMap[incompatibleId] ?: continue
+          if (incompatiblePlugin.isEnabled) {
+            incompatiblePlugin.isEnabled = false
+            logger.info("Plugin '${incompatiblePlugin.name}' conflicts with required plugin '${essentialPlugin.name}', hence disabled")
+          }
+        }
+      }
+    }
   }
 
   @JvmStatic
