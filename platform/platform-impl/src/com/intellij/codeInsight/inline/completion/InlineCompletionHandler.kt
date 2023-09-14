@@ -77,27 +77,28 @@ class InlineCompletionHandler(private val scope: CoroutineScope) {
       return
     }
 
-    val provider = getProvider(event) ?: return
+    val provider = getProvider(event)
 
     // TODO
     scope.launch {
+      val request = event.toRequest() ?: return@launch
       mutex.withLock {
-        runningJob?.cancelAndJoin()
+        val updated = coroutineScope {
+          launch { runningJob?.cancelAndJoin() }
+          updateContextOrInvalidate(request, getContextUpdater(provider))
+        }
+        if (updated || provider == null) {
+          return@launch
+        }
         LOG.trace("Schedule new job")
         runningJob = scope.launch {
-          invokeRequest(provider, event)
+          invokeRequest(request, provider)
         }
       }
     }
   }
 
-  private suspend fun invokeRequest(provider: InlineCompletionProvider, event: InlineCompletionEvent) {
-    val request = event.toRequest() ?: return
-
-    if (updateContextOrInvalidate(request)) {
-      return
-    }
-
+  private suspend fun invokeRequest(request: InlineCompletionRequest, provider: InlineCompletionProvider) {
     val editor = request.editor
     val offset = request.endOffset
 
@@ -199,16 +200,23 @@ class InlineCompletionHandler(private val scope: CoroutineScope) {
     }
   }
 
-  private fun getContextUpdater(): DefinedInlineCompletionContextUpdater {
-    return CompositeContextUpdater(AppendPrefixContextUpdater(), LookupChangeContextUpdater()).invalidateOnUndefined()
+  private fun getContextUpdater(provider: InlineCompletionProvider?): DefinedInlineCompletionContextUpdater {
+    val providerExists = provider != null
+    return CompositeContextUpdater(
+      AppendPrefixContextUpdater(),
+      LookupChangeContextUpdater(providerExists),
+      InvalidateIfNoProviderContextUpdater(providerExists)
+    ).invalidateOnUndefined()
   }
 
   /**
    * @return `true` if update was successful. Otherwise, [hide] is invoked to invalidate the current context.
    */
-  private suspend fun updateContextOrInvalidate(request: InlineCompletionRequest): Boolean {
+  private suspend fun updateContextOrInvalidate(
+    request: InlineCompletionRequest,
+    updater: DefinedInlineCompletionContextUpdater
+  ): Boolean {
     return InlineCompletionContext.getOrNull(request.editor)?.let { context ->
-      val updater = getContextUpdater()
       val result = updater.onEvent(context, request.event)
       withContext(Dispatchers.EDT) {
         when (result) {
