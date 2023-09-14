@@ -114,6 +114,7 @@ class InlineCompletionHandler(private val scope: CoroutineScope) {
         .onStart { isShowing.set(true) }
         .onEmpty {
           trace(InlineCompletionEventType.Empty)
+          InlineCompletionContext.remove(editor)
         }
         .onCompletion {
           complete(currentCoroutineContext().isActive, editor, it, context)
