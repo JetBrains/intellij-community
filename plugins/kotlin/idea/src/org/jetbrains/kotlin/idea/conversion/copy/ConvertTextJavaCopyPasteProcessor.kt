@@ -21,6 +21,8 @@ import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.PsiErrorElement
 import com.intellij.psi.PsiFile
 import com.intellij.psi.PsiFileFactory
+import com.intellij.psi.PsiJavaFile
+import com.intellij.psi.PsiUnnamedClass
 import com.intellij.refactoring.suggested.range
 import com.intellij.util.LocalTimeCounter
 import org.jetbrains.annotations.TestOnly
@@ -242,7 +244,9 @@ class ConvertTextJavaCopyPasteProcessor : CopyPastePostProcessor<TextBlockTransf
 
     private fun isParsedAsFile(text: String, fileType: LanguageFileType, project: Project): Boolean {
         val psiFile = parseAsFile(text, fileType, project)
-        return !psiFile.anyDescendantOfType<PsiErrorElement>()
+        val hasErrors = psiFile.anyDescendantOfType<PsiErrorElement>()
+        if (hasErrors || fileType != JavaFileType.INSTANCE) return !hasErrors
+        return (psiFile as? PsiJavaFile)?.classes?.any { it is PsiUnnamedClass } != true
     }
 
     private fun parseAsFile(text: String, fileType: LanguageFileType, project: Project): PsiFile {
