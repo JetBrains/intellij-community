@@ -18,6 +18,7 @@ import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.editor.EditorFactory
 import com.intellij.openapi.editor.ex.EditorEx
+import com.intellij.util.text.DateFormatUtil
 import com.intellij.util.text.findTextRange
 import com.intellij.xdebugger.impl.XDebuggerManagerImpl
 import com.intellij.xdebugger.impl.ui.DebuggerUIUtil
@@ -95,8 +96,8 @@ class PsiViewerDebugAction : DebuggerTreeAction() {
             fun showDebugTab() {
               val runnerLayoutUi = debugProcess.session?.xDebugSession?.ui ?: return
               val psiViewerPanel = PsiViewerDebugPanel(project, editor, language)
-              val name = node.name ?: return
-              val content = runnerLayoutUi.createContent(name, psiViewerPanel, name, null, null)
+              val id = "${node.name} ${DateFormatUtil.formatTimeWithSeconds(System.currentTimeMillis())}"
+              val content = runnerLayoutUi.createContent(id, psiViewerPanel, id, null, null)
               runnerLayoutUi.addContent(content)
               runnerLayoutUi.selectAndFocus(content, true, true)
             }
