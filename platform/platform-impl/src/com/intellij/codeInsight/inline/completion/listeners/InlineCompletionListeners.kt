@@ -23,7 +23,7 @@ class InlineCompletionDocumentListener(private val editor: EditorImpl) : BulkAwa
     val handler = InlineCompletionHandler.getOrNull(editor)
     if (!isEnabled(event) || !(ClientEditorManager.getClientId(editor) ?: ClientId.localId).isCurrent()) {
       // ML-1168
-      handler?.cancel(editor)
+      handler?.hide()
     }
 
     // ML-1109 ML-1131 ML-1226
@@ -32,12 +32,16 @@ class InlineCompletionDocumentListener(private val editor: EditorImpl) : BulkAwa
       handler?.invoke(InlineCompletionEvent.DocumentChange(event, editor))
     }
     else {
-      handler?.cancel(editor)
+      handler?.hide()
     }
   }
 
   fun isEnabled(event: DocumentEvent): Boolean {
     return event.newFragment != CompletionUtil.DUMMY_IDENTIFIER && event.newLength >= 1
+  }
+
+  private fun InlineCompletionHandler.hide() {
+    InlineCompletionContext.getOrNull(editor)?.let { hide(editor, false, it) }
   }
 
   companion object {
