@@ -202,6 +202,9 @@ class InlineCompletionHandler(scope: CoroutineScope) {
     provider: InlineCompletionProvider?
   ): Boolean {
     val session = InlineCompletionSession.getOrNull(request.editor) ?: return false
+    if (provider == null && !session.context.isCurrentlyDisplayingInlays) {
+      return true // Fast fall not to slow down editor
+    }
     if (provider != null && session.provider != provider || session.provider.requiresInvalidation(request.event)) {
       application.invokeAndWait { session.invalidate() }
       return false
