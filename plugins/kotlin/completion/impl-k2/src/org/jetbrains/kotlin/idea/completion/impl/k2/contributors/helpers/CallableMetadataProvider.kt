@@ -109,18 +109,12 @@ internal object CallableMetadataProvider {
     ): CallableMetadata? {
         val symbol = signature.symbol
 
-        val actualExplicitReceiverType = context.explicitReceiver?.let {
-            getReferencedClassTypeInCallableReferenceExpression(it)
-                ?: getQualifierClassTypeInKDocName(it)
-                ?: (it as? KtExpression)?.getKtType()
-        }
-        val actualImplicitReceiverTypes = context.implicitReceiver.map { it.type }
+        val actualReceiverTypes = getActualReceiverTypes(context)
         val expectedExtensionReceiverType = signature.receiverType
 
         if (expectedExtensionReceiverType == null) {
             val expectedReceiver = symbol.originalContainingClassForOverride ?: return null
             val expectedReceiverType = buildClassType(expectedReceiver)
-            val actualReceiverTypes = actualExplicitReceiverType?.let { listOf(actualExplicitReceiverType) } ?: actualImplicitReceiverTypes
 
             val replaceTypeArguments = expectedReceiverType is KtNonErrorClassType && expectedReceiverType.ownTypeArguments.isNotEmpty()
             val correctedActualReceiverTypes = if (replaceTypeArguments) {
@@ -142,11 +136,26 @@ internal object CallableMetadataProvider {
         // In other words, in this case, an explicit receiver can never be a dispatch receiver.
         val weightBasedOnExtensionReceiver = callableWeightByReceiver(
             symbol,
-            actualExplicitReceiverType?.let { listOf(it) } ?: actualImplicitReceiverTypes,
+            actualReceiverTypes,
             expectedExtensionReceiverType,
             returnCastRequiredOnReceiverMismatch
         )
         return weightBasedOnExtensionReceiver
+    }
+
+    context(KtAnalysisSession)
+    private fun getActualReceiverTypes(context: WeighingContext): List<KtType> {
+        val actualExplicitReceiverType = context.explicitReceiver?.let {
+            getReferencedClassTypeInCallableReferenceExpression(it)
+                ?: getQualifierClassTypeInKDocName(it)
+                ?: (it as? KtExpression)?.getKtType()
+        }
+
+        return if (actualExplicitReceiverType != null) {
+            listOf(actualExplicitReceiverType)
+        } else {
+            context.implicitReceiver.map { it.type }
+        }
     }
 
     /**
