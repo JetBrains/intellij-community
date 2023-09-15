@@ -533,7 +533,12 @@ class EditorColorsManagerImpl @NonInjectable constructor(schemeManagerFactory: S
     val activity = StartUpMeasurer.startActivity("editor color scheme initialization")
     val laf = if (ApplicationManager.getApplication().isUnitTestMode()) null else LafManager.getInstance().getCurrentUIThemeLookAndFeel()
 
-    val scheme = laf?.editorSchemeName?.let { getScheme(it) } ?: getDefaultScheme()
+    var editorSchemeName = laf?.editorSchemeName
+    if (editorSchemeName == null && laf != null && laf.isDark) {
+      editorSchemeName = "Darcula"
+    }
+
+    val scheme = editorSchemeName?.let { getScheme(it) } ?: getDefaultScheme()
     schemeManager.setCurrent(scheme = scheme, notify = isInitialConfigurationLoaded)
     isInitialConfigurationLoaded = true
     activity.end()
