@@ -575,14 +575,14 @@ public final class ExpUiIcons {
     /** 16x16 */ public static final @NotNull Icon StepOver = load("expui/run/stepOver.svg", -1962436714, 2);
     /** 16x16 */ public static final @NotNull Icon Stop = load("expui/run/stop.svg", 1749021823, 10);
     /** 16x16 */ public static final @NotNull Icon TestCustom = load("expui/run/testCustom.svg", -1282705019, 2);
-    /** 16x16 */ public static final @NotNull Icon TestError = load("expui/run/testError.svg", -395679554, 2);
-    /** 16x16 */ public static final @NotNull Icon TestFailed = load("expui/run/testFailed.svg", -721083451, 2);
+    /** 16x16 */ public static final @NotNull Icon TestError = load("expui/run/testError.svg", 1371661315, 2);
+    /** 16x16 */ public static final @NotNull Icon TestFailed = load("expui/run/testFailed.svg", -343958905, 2);
     /** 16x16 */ public static final @NotNull Icon TestIgnored = load("expui/run/testIgnored.svg", 1363493756, 2);
     /** 16x16 */ public static final @NotNull Icon TestNotRunYet = load("expui/run/testNotRunYet.svg", 328670944, 2);
-    /** 16x16 */ public static final @NotNull Icon TestPassed = load("expui/run/testPassed.svg", 480210793, 2);
+    /** 16x16 */ public static final @NotNull Icon TestPassed = load("expui/run/testPassed.svg", -1947435834, 2);
     /** 16x16 */ public static final @NotNull Icon TestPassedIgnored = load("expui/run/testPassedIgnored.svg", -291968708, 2);
     /** 16x16 */ public static final @NotNull Icon TestPaused = load("expui/run/testPaused.svg", 820702611, 2);
-    /** 16x16 */ public static final @NotNull Icon TestSkipped = load("expui/run/testSkipped.svg", -1005073221, 2);
+    /** 16x16 */ public static final @NotNull Icon TestSkipped = load("expui/run/testSkipped.svg", 1242536403, 2);
     /** 16x16 */ public static final @NotNull Icon TestTerminated = load("expui/run/testTerminated.svg", -2033175435, 2);
     /** 16x16 */ public static final @NotNull Icon TestUnknown = load("expui/run/testUnknown.svg", -611982271, 2);
     /** 16x16 */ public static final @NotNull Icon ViewBreakpoints = load("expui/run/viewBreakpoints.svg", -924866217, 2);
@@ -607,7 +607,7 @@ public final class ExpUiIcons {
   public static final class Status {
     /** 16x16 */ public static final @NotNull Icon Error = load("expui/status/error.svg", -143235814, 2);
     /** 16x16 */ public static final @NotNull Icon ErrorOutline = load("expui/status/errorOutline.svg", -281923861, 2);
-    /** 16x16 */ public static final @NotNull Icon FailedInProgress = load("expui/status/failedInProgress.svg", 8468379, 2);
+    /** 16x16 */ public static final @NotNull Icon FailedInProgress = load("expui/status/failedInProgress.svg", -821599555, 2);
     /** 16x16 */ public static final @NotNull Icon Info = load("expui/status/info.svg", 370358095, 2);
     /** 16x16 */ public static final @NotNull Icon InfoOutline = load("expui/status/infoOutline.svg", -1701696200, 2);
     /** 16x16 */ public static final @NotNull Icon Success = load("expui/status/success.svg", 282847188, 2);
