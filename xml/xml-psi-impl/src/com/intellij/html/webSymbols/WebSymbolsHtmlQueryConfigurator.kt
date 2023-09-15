@@ -24,6 +24,7 @@ import com.intellij.webSymbols.completion.WebSymbolCodeCompletionItem
 import com.intellij.webSymbols.completion.WebSymbolCodeCompletionItemCustomizer
 import com.intellij.webSymbols.context.WebSymbolsContext
 import com.intellij.webSymbols.html.WebSymbolHtmlAttributeValue
+import com.intellij.webSymbols.query.WebSymbolsListSymbolsQueryParams
 import com.intellij.webSymbols.query.WebSymbolsNameMatchQueryParams
 import com.intellij.webSymbols.query.WebSymbolsQueryConfigurator
 import com.intellij.webSymbols.utils.match
@@ -151,59 +152,64 @@ class WebSymbolsHtmlQueryConfigurator : WebSymbolsQueryConfigurator {
     }
 
     override fun getSymbols(namespace: SymbolNamespace,
-                            kind: String,
-                            name: String?,
-                            params: WebSymbolsNameMatchQueryParams,
+                            kind: SymbolKind,
+                            params: WebSymbolsListSymbolsQueryParams,
                             scope: Stack<WebSymbolsScope>): List<WebSymbolsScope> =
       if (params.queryExecutor.allowResolve) {
         if (namespace == WebSymbol.NAMESPACE_HTML) {
           when (kind) {
             WebSymbol.KIND_HTML_ELEMENTS ->
-              if (name.isNullOrEmpty()) {
-                (getStandardHtmlElementDescriptor(tag)?.getElementsDescriptors(tag)
-                 ?: getHtmlNSDescriptor(tag.project)?.getAllElementsDescriptors(null)
-                 ?: emptyArray())
-                  .map { HtmlElementDescriptorBasedSymbol(it, tag) }
-                  .toList()
-              }
-              else {
-                getStandardHtmlElementDescriptor(tag, name)
-                  ?.let { HtmlElementDescriptorBasedSymbol(it, tag) }
-                  ?.match(name, scope, params)
-                ?: emptyList()
-              }
+              (getStandardHtmlElementDescriptor(tag)?.getElementsDescriptors(tag)
+               ?: getHtmlNSDescriptor(tag.project)?.getAllElementsDescriptors(null)
+               ?: emptyArray())
+                .map { HtmlElementDescriptorBasedSymbol(it, tag) }
+                .toList()
             WebSymbol.KIND_HTML_ATTRIBUTES ->
-              if (name.isNullOrEmpty()) {
-                getStandardHtmlAttributeDescriptors(tag)
-                  .map { HtmlAttributeDescriptorBasedSymbol(it, tag) }
-                  .toList()
-              }
-              else {
-                getStandardHtmlAttributeDescriptor(tag, name)
-                  ?.let { HtmlAttributeDescriptorBasedSymbol(it, tag) }
-                  ?.match(name, scope, params)
-                ?: emptyList()
-              }
+              getStandardHtmlAttributeDescriptors(tag)
+                .map { HtmlAttributeDescriptorBasedSymbol(it, tag) }
+                .toList()
             else -> emptyList()
           }
         }
         else if (namespace == WebSymbol.NAMESPACE_JS && kind == WebSymbol.KIND_JS_EVENTS) {
-          if (name.isNullOrEmpty()) {
-            getStandardHtmlAttributeDescriptors(tag)
-              .filter { it.name.startsWith("on") }
-              .map { HtmlEventDescriptorBasedSymbol(it) }
-              .toList()
-          }
-          else {
-            getStandardHtmlAttributeDescriptor(tag, "on$name")
-              ?.let { HtmlEventDescriptorBasedSymbol(it) }
-              ?.match(name, scope, params)
-            ?: emptyList()
-          }
+          getStandardHtmlAttributeDescriptors(tag)
+            .filter { it.name.startsWith("on") }
+            .map { HtmlEventDescriptorBasedSymbol(it) }
+            .toList()
         }
         else emptyList()
       }
       else emptyList()
+
+    override fun getMatchingSymbols(namespace: SymbolNamespace,
+                                    kind: String,
+                                    name: String,
+                                    params: WebSymbolsNameMatchQueryParams,
+                                    scope: Stack<WebSymbolsScope>): List<WebSymbol> {
+      if (params.queryExecutor.allowResolve) {
+        if (namespace == WebSymbol.NAMESPACE_HTML) {
+          when (kind) {
+            WebSymbol.KIND_HTML_ELEMENTS ->
+              getStandardHtmlElementDescriptor(tag, name)
+                ?.let { HtmlElementDescriptorBasedSymbol(it, tag) }
+                ?.match(name, params, scope)
+                ?.let { return it }
+            WebSymbol.KIND_HTML_ATTRIBUTES ->
+              getStandardHtmlAttributeDescriptor(tag, name)
+                ?.let { HtmlAttributeDescriptorBasedSymbol(it, tag) }
+                ?.match(name, params, scope)
+                ?.let { return it }
+          }
+        }
+        else if (namespace == WebSymbol.NAMESPACE_JS && kind == WebSymbol.KIND_JS_EVENTS) {
+          getStandardHtmlAttributeDescriptor(tag, "on$name")
+            ?.let { HtmlEventDescriptorBasedSymbol(it) }
+            ?.match(name, params, scope)
+            ?.let { return it }
+        }
+      }
+      return emptyList()
+    }
   }
 
   abstract class StandardHtmlSymbol : MdnDocumentedSymbol(), PsiSourcedWebSymbol
@@ -350,5 +356,5 @@ class WebSymbolsHtmlQueryConfigurator : WebSymbolsQueryConfigurator {
       Pointer.hardPointer(this)
 
   }
-
 }
+

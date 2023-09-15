@@ -4,4 +4,7 @@ package com.intellij.webSymbols.query
 data class WebSymbolsNameMatchQueryParams(override val queryExecutor: WebSymbolsQueryExecutor,
                                           override val virtualSymbols: Boolean = true,
                                           val abstractSymbols: Boolean = false,
-                                          val strictScope: Boolean = false) : WebSymbolsQueryParams
+                                          val strictScope: Boolean = false) : WebSymbolsQueryParams {
+  fun toListSymbolsQueryParams() =
+    WebSymbolsListSymbolsQueryParams(queryExecutor, virtualSymbols, abstractSymbols, strictScope)
+}

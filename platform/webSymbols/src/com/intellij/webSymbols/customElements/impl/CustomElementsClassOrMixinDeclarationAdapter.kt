@@ -16,6 +16,7 @@ import com.intellij.webSymbols.customElements.json.toApiStatus
 import com.intellij.webSymbols.impl.StaticWebSymbolsScopeBase
 import com.intellij.webSymbols.patterns.WebSymbolsPattern
 import com.intellij.webSymbols.query.WebSymbolsCodeCompletionQueryParams
+import com.intellij.webSymbols.query.WebSymbolsListSymbolsQueryParams
 import com.intellij.webSymbols.query.WebSymbolsNameMatchQueryParams
 import com.intellij.webSymbols.query.WebSymbolsQueryExecutor
 
@@ -108,14 +109,23 @@ class CustomElementsClassOrMixinDeclarationAdapter private constructor(
       }
     }
 
+    override fun getMatchingSymbols(namespace: SymbolNamespace,
+                                    kind: String,
+                                    name: String,
+                                    params: WebSymbolsNameMatchQueryParams,
+                                    scope: Stack<WebSymbolsScope>): List<WebSymbol> =
+      base.rootScope
+        .getMatchingSymbols(base.declaration, this.origin, namespace,
+                            kind, name, params, scope)
+        .toList()
+
     override fun getSymbols(namespace: SymbolNamespace,
-                            kind: String,
-                            name: String?,
-                            params: WebSymbolsNameMatchQueryParams,
+                            kind: SymbolKind,
+                            params: WebSymbolsListSymbolsQueryParams,
                             scope: Stack<WebSymbolsScope>): List<WebSymbolsScope> =
       base.rootScope
-        .getSymbols(base.declaration, this.namespace, this.origin,
-                    namespace, kind, name, params, scope)
+        .getSymbols(base.declaration, this.origin, namespace,
+                    kind, params)
         .toList()
 
     override fun getCodeCompletions(namespace: SymbolNamespace,
@@ -124,8 +134,8 @@ class CustomElementsClassOrMixinDeclarationAdapter private constructor(
                                     params: WebSymbolsCodeCompletionQueryParams,
                                     scope: Stack<WebSymbolsScope>): List<WebSymbolCodeCompletionItem> =
       base.rootScope
-        .getCodeCompletions(base.declaration, this.namespace, this.origin,
-                            namespace, kind, name, params, scope)
+        .getCodeCompletions(base.declaration, this.origin, namespace,
+                            kind, name, params, scope)
         .toList()
 
 

@@ -7,6 +7,7 @@ import com.intellij.webSymbols.WebSymbolsScope
 import com.intellij.webSymbols.completion.WebSymbolCodeCompletionItem
 import com.intellij.webSymbols.patterns.impl.*
 import com.intellij.webSymbols.query.WebSymbolsCodeCompletionQueryParams
+import com.intellij.webSymbols.query.WebSymbolsListSymbolsQueryParams
 import com.intellij.webSymbols.query.WebSymbolsNameMatchQueryParams
 
 abstract class WebSymbolsPattern {
@@ -24,7 +25,7 @@ abstract class WebSymbolsPattern {
 
   internal fun list(owner: WebSymbol?,
                     scope: Stack<WebSymbolsScope>,
-                    params: WebSymbolsNameMatchQueryParams): List<WebSymbol> =
+                    params: WebSymbolsListSymbolsQueryParams): List<WebSymbol> =
     list(owner, scope, null, ListParameters(params))
       .items
       .mapNotNull { it.symbol }

@@ -18,6 +18,7 @@ import com.intellij.webSymbols.html.WebSymbolHtmlAttributeValue
 import com.intellij.webSymbols.impl.StaticWebSymbolsScopeBase
 import com.intellij.webSymbols.patterns.WebSymbolsPattern
 import com.intellij.webSymbols.query.WebSymbolsCodeCompletionQueryParams
+import com.intellij.webSymbols.query.WebSymbolsListSymbolsQueryParams
 import com.intellij.webSymbols.query.WebSymbolsNameMatchQueryParams
 import com.intellij.webSymbols.query.WebSymbolsQueryExecutor
 import com.intellij.webSymbols.utils.merge
@@ -111,14 +112,23 @@ abstract class WebTypesJsonContributionAdapter private constructor(protected val
                 ?.also { contributions -> _superContributions = contributions }
               ?: emptyList()
 
+    override fun getMatchingSymbols(namespace: SymbolNamespace,
+                                    kind: String,
+                                    name: String,
+                                    params: WebSymbolsNameMatchQueryParams,
+                                    scope: Stack<WebSymbolsScope>): List<WebSymbol> =
+      base.rootScope
+        .getMatchingSymbols(base.contributionForQuery, base.jsonOrigin, namespace,
+                            kind, name, params, scope)
+        .toList()
+
     override fun getSymbols(namespace: SymbolNamespace,
-                            kind: String,
-                            name: String?,
-                            params: WebSymbolsNameMatchQueryParams,
+                            kind: SymbolKind,
+                            params: WebSymbolsListSymbolsQueryParams,
                             scope: Stack<WebSymbolsScope>): List<WebSymbolsScope> =
       base.rootScope
-        .getSymbols(base.contributionForQuery, this.namespace, base.jsonOrigin,
-                    namespace, kind, name, params, scope)
+        .getSymbols(base.contributionForQuery, this.origin, namespace,
+                    kind, params)
         .toList()
 
     override fun getCodeCompletions(namespace: SymbolNamespace,
@@ -127,8 +137,8 @@ abstract class WebTypesJsonContributionAdapter private constructor(protected val
                                     params: WebSymbolsCodeCompletionQueryParams,
                                     scope: Stack<WebSymbolsScope>): List<WebSymbolCodeCompletionItem> =
       base.rootScope
-        .getCodeCompletions(base.contributionForQuery, this.namespace, base.jsonOrigin,
-                            namespace, kind, name, params, scope)
+        .getCodeCompletions(base.contributionForQuery, base.jsonOrigin, namespace,
+                            kind, name, params, scope)
         .toList()
 
     override val kind: SymbolKind

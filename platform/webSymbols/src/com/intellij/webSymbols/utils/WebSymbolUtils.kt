@@ -96,8 +96,8 @@ fun WebSymbol.unwrapMatchedSymbols(): Sequence<WebSymbol> =
   }
 
 fun WebSymbol.match(nameToMatch: String,
-                    context: Stack<WebSymbolsScope>,
-                    params: WebSymbolsNameMatchQueryParams): List<WebSymbol> {
+                    params: WebSymbolsNameMatchQueryParams,
+                    context: Stack<WebSymbolsScope>): List<WebSymbol> {
   pattern?.let { pattern ->
     context.push(this)
     try {
@@ -337,7 +337,7 @@ fun WebSymbolsScope.getDefaultCodeCompletions(namespace: SymbolNamespace,
                                               name: String,
                                               params: WebSymbolsCodeCompletionQueryParams,
                                               scope: Stack<WebSymbolsScope>) =
-  getSymbols(namespace, kind, null, WebSymbolsNameMatchQueryParams(params.queryExecutor), scope)
+  getSymbols(namespace, kind, WebSymbolsListSymbolsQueryParams(params.queryExecutor), scope)
     .flatMap { (it as? WebSymbol)?.toCodeCompletionItems(name, params, scope) ?: emptyList() }
 
 internal val List<WebSymbolsScope>.lastWebSymbol: WebSymbol?
