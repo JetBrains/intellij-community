@@ -92,19 +92,19 @@ public class ClassDataIndexer implements VirtualFileGist.GistCalculator<Map<HMem
    * @return true if this file must be excluded
    */
   static boolean isFileExcluded(VirtualFile file) {
-    return isInsideDummyAndroidJar(file) ||
+    String path = file.getPath();
+    return isInsideDummyAndroidJar(path) ||
            // Methods of GenericModel.class in Play framework throw UnsupportedOperationException
            // However, it looks like they are replaced with something meaningful during compilation/runtime
            // See IDEA-285334.
-           file.getPath().endsWith("!/play/db/jpa/GenericModel.class");
+           path.endsWith("!/play/db/jpa/GenericModel.class");
   }
 
   /**
    * Ignore inside android.jar because all class files there are dummy and contain no code at all.
    * Rely on the fact that it's always located at .../platforms/android-.../android.jar!/
    */
-  private static boolean isInsideDummyAndroidJar(VirtualFile file) {
-    String path = file.getPath();
+  private static boolean isInsideDummyAndroidJar(String path) {
     int index = path.indexOf("/android.jar!/");
     return index > 0 && path.lastIndexOf("platforms/android-", index) > 0;
   }
