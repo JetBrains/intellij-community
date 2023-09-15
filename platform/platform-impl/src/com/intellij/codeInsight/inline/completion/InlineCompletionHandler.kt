@@ -19,6 +19,7 @@ import com.intellij.openapi.util.Key
 import com.intellij.psi.PsiFile
 import com.intellij.util.EventDispatcher
 import com.intellij.util.application
+import com.intellij.util.concurrency.annotations.RequiresBlockingContext
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.*
@@ -71,6 +72,11 @@ class InlineCompletionHandler(private val scope: CoroutineScope) {
   fun invoke(event: InlineCompletionEvent.DirectCall) = invokeEvent(event)
 
   private fun invokeEvent(event: InlineCompletionEvent) {
+    if (!application.isDispatchThread) {
+      LOG.error("Cannot run inline completion handler outside of EDT.")
+      return
+    }
+
     LOG.trace("Start processing inline event $event")
     if (isMuted.get()) {
       LOG.trace("Muted")
@@ -79,20 +85,33 @@ class InlineCompletionHandler(private val scope: CoroutineScope) {
 
     val provider = getProvider(event)
 
+    val request = event.toRequest() ?: return
+    if (updateContextOrInvalidate(request, provider) || provider == null) {
+      return
+    }
+
     // TODO
     scope.launch {
-      val request = event.toRequest() ?: return@launch
-      mutex.withLock {
-        if (updateContextOrInvalidate(request, provider) || provider == null) {
-          return@launch
-        }
-        runningJob?.cancelAndJoin()
-        LOG.trace("Schedule new job")
-        runningJob = scope.launch {
+      updateRunningJob {
+        scope.launch {
           invokeRequest(request, provider)
         }
       }
     }
+  }
+
+  private suspend fun updateRunningJob(newJob: () -> Job) {
+    do {
+      var isFinished = false
+      mutex.withLock { runningJob }?.cancelAndJoin()
+      mutex.withLock {
+        if (runningJob?.isActive != true) {
+          LOG.trace("Schedule new job")
+          runningJob = newJob()
+          isFinished = true
+        }
+      }
+    } while (!isFinished)
   }
 
   private suspend fun invokeRequest(request: InlineCompletionRequest, provider: InlineCompletionProvider) {
@@ -206,19 +225,20 @@ class InlineCompletionHandler(private val scope: CoroutineScope) {
   /**
    * @return `true` if update was successful. Otherwise, [hide] is invoked to invalidate the current context.
    */
-  private suspend fun updateContextOrInvalidate(
+  @RequiresBlockingContext
+  private fun updateContextOrInvalidate(
     request: InlineCompletionRequest,
     provider: InlineCompletionProvider?
   ): Boolean {
     val session = InlineCompletionSession.getOrNull(request.editor) ?: return false
     if (provider != null && session.provider != provider || session.provider.requiresInvalidation(request.event)) {
-      withContext(Dispatchers.EDT) { session.invalidate() }
+      application.invokeAndWait { session.invalidate() }
       return false
     }
 
     val context = session.context
     val result = getContextUpdater().onEvent(context, request.event)
-    withContext(Dispatchers.EDT) {
+    application.invokeAndWait {
       when (result) {
         is InlineCompletionContextUpdater.Result.Updated.Changed -> {
           context.editor.inlayModel.execute(true) {
