@@ -25,13 +25,14 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 
 import static com.jetbrains.python.psi.PyUtil.as;
 
 
-public class PyFromImportStatementImpl extends PyBaseElementImpl<PyFromImportStatementStub> implements PyFromImportStatement{
+public class PyFromImportStatementImpl extends PyBaseElementImpl<PyFromImportStatementStub> implements PyFromImportStatement, PsiListLikeElement{
   public PyFromImportStatementImpl(ASTNode astNode) {
     super(astNode);
   }
@@ -307,5 +308,10 @@ public class PyFromImportStatementImpl extends PyBaseElementImpl<PyFromImportSta
       }
     }
     return null;
+  }
+
+  @Override
+  public @NotNull List<? extends PsiElement> getComponents() {
+    return Arrays.asList(getImportElements());
   }
 }
