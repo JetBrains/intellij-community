@@ -52,8 +52,12 @@ public final class PreferencesRegistryImpl implements PreferencesRegistry {
   private void fillHighlightingBraces(Collection<TextMateBracePair> highlightingPairs) {
     if (highlightingPairs != null) {
       for (TextMateBracePair pair : highlightingPairs) {
-        myLeftHighlightingBraces.add(pair.leftChar);
-        myRightHighlightingBraces.add(pair.rightChar);
+        if (!pair.getLeft().isEmpty()) {
+          myLeftHighlightingBraces.add(pair.getLeft().charAt(0));
+        }
+        if (!pair.getRight().isEmpty()) {
+          myRightHighlightingBraces.add(pair.getRight().charAt(pair.getRight().length() - 1));
+        }
       }
     }
   }
@@ -61,30 +65,36 @@ public final class PreferencesRegistryImpl implements PreferencesRegistry {
   private void fillSmartTypingBraces(Collection<TextMateBracePair> smartTypingPairs) {
     if (smartTypingPairs != null) {
       for (TextMateBracePair pair : smartTypingPairs) {
-        myLeftSmartTypingBraces.add(pair.leftChar);
-        myRightSmartTypingBraces.add(pair.rightChar);
+        if (!pair.getLeft().isEmpty()) {
+          myLeftSmartTypingBraces.add(pair.getLeft().charAt(pair.getLeft().length() - 1));
+        }
+        if (!pair.getRight().isEmpty()) {
+          myRightSmartTypingBraces.add(pair.getRight().charAt(pair.getRight().length() - 1));
+        }
       }
     }
   }
 
   @Override
-  public boolean isPossibleLeftHighlightingBrace(char c) {
-    return myLeftHighlightingBraces.contains(c) || (c != ' ' && myLeftSmartTypingBraces.contains(c));
+  public boolean isPossibleLeftHighlightingBrace(char firstLeftBraceChar) {
+    return myLeftHighlightingBraces.contains(firstLeftBraceChar) || (firstLeftBraceChar != ' ' && myLeftSmartTypingBraces.contains(
+      firstLeftBraceChar));
   }
 
   @Override
-  public boolean isPossibleRightHighlightingBrace(char c) {
-    return myRightHighlightingBraces.contains(c) || (c != ' ' && myRightSmartTypingBraces.contains(c));
+  public boolean isPossibleRightHighlightingBrace(char lastRightBraceChar) {
+    return myRightHighlightingBraces.contains(lastRightBraceChar) || (lastRightBraceChar != ' ' && myRightSmartTypingBraces.contains(
+      lastRightBraceChar));
   }
 
   @Override
-  public boolean isPossibleLeftSmartTypingBrace(char c) {
-    return myLeftSmartTypingBraces.contains(c);
+  public boolean isPossibleLeftSmartTypingBrace(char lastLeftBraceChar) {
+    return myLeftSmartTypingBraces.contains(lastLeftBraceChar);
   }
 
   @Override
-  public boolean isPossibleRightSmartTypingBrace(char c) {
-    return myRightSmartTypingBraces.contains(c);
+  public boolean isPossibleRightSmartTypingBrace(char lastRightBraceChar) {
+    return myRightSmartTypingBraces.contains(lastRightBraceChar);
   }
 
   /**

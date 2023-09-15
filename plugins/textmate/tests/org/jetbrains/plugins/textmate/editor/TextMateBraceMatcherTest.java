@@ -10,6 +10,11 @@ public class TextMateBraceMatcherTest extends TextMateAcceptanceTestCase {
     assertEquals(19, getMatchedOffset());
   }
 
+  public void testMultiCharBracesInJs() {
+    myFixture.configureByText("text.js_hack", "<caret>/** hello */");
+    assertEquals(10, getMatchedOffset());
+  }
+
   public void testMatchingInInjectedCode() {
     myFixture.configureByText("text.md_hack", "<html><caret><p>Paragraph</p></html>");
     assertEquals(8, getMatchedOffset());

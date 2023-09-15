@@ -109,16 +109,16 @@ public interface Constants {
   // we should depend on intellij util classes as little as possible
   @SuppressWarnings("SSBasedInspection")
   Set<TextMateBracePair> DEFAULT_HIGHLIGHTING_BRACE_PAIRS =
-    new HashSet<>(Arrays.asList(new TextMateBracePair('[', ']'),
-                                new TextMateBracePair('{', '}'),
-                                new TextMateBracePair('(', ')')));
+    new HashSet<>(Arrays.asList(new TextMateBracePair("[", "]"),
+                                new TextMateBracePair("{", "}"),
+                                new TextMateBracePair("(", ")")));
 
   // we should depend on intellij util classes as little as possible
   @SuppressWarnings("SSBasedInspection")
   Set<TextMateBracePair> DEFAULT_SMART_TYPING_BRACE_PAIRS =
-    new HashSet<>(Arrays.asList(new TextMateBracePair('"', '"'),
-                                new TextMateBracePair('\'', '\''),
-                                new TextMateBracePair('[', ']'),
-                                new TextMateBracePair('{', '}'),
-                                new TextMateBracePair('(', ')')));
+    new HashSet<>(Arrays.asList(new TextMateBracePair("\"", "\""),
+                                new TextMateBracePair("'", "'"),
+                                new TextMateBracePair("[", "]"),
+                                new TextMateBracePair("{", "}"),
+                                new TextMateBracePair("(", ")")));
 }

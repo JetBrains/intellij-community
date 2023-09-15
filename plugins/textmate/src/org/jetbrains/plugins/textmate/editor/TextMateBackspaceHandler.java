@@ -8,10 +8,16 @@ import com.intellij.openapi.editor.highlighter.HighlighterIterator;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.tree.IElementType;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.textmate.TextMateFileType;
+import org.jetbrains.plugins.textmate.TextMateService;
 import org.jetbrains.plugins.textmate.language.preferences.TextMateBracePair;
 import org.jetbrains.plugins.textmate.language.syntax.lexer.TextMateElementType;
 import org.jetbrains.plugins.textmate.language.syntax.lexer.TextMateScope;
+
+import java.util.Set;
+
+import static org.jetbrains.plugins.textmate.editor.TextMateEditorUtils.getSmartTypingPairs;
 
 public class TextMateBackspaceHandler extends BackspaceHandlerDelegate {
   @Override
@@ -30,13 +36,13 @@ public class TextMateBackspaceHandler extends BackspaceHandlerDelegate {
       final IElementType tokenType = iterator.getTokenType();
       if (tokenType instanceof TextMateElementType) {
         TextMateScope scopeSelector = ((TextMateElementType)tokenType).getScope();
-        final TextMateBracePair pairForChar = TextMateEditorUtils.getSmartTypingPairForLeftChar(c, scopeSelector);
+        final TextMateBracePair pairForChar = findSingleCharSmartTypingPair(c, scopeSelector);
         if (pairForChar != null) {
           final Document document = editor.getDocument();
-          if (document.getTextLength() > offset) {
-            char prevChar = document.getCharsSequence().charAt(offset);
-            if (prevChar == pairForChar.rightChar) {
-              document.deleteString(offset, offset + 1);
+          int endOffset = offset + pairForChar.getRight().length();
+          if (endOffset < document.getTextLength()) {
+            if (pairForChar.getRight().contentEquals(document.getCharsSequence().subSequence(offset, endOffset))) {
+              document.deleteString(offset, endOffset);
               return true;
             }
           }
@@ -44,5 +50,19 @@ public class TextMateBackspaceHandler extends BackspaceHandlerDelegate {
       }
     }
     return false;
+  }
+
+  @Nullable
+  private static TextMateBracePair findSingleCharSmartTypingPair(char openingChar, @Nullable TextMateScope currentSelector) {
+    if (!TextMateService.getInstance().getPreferenceRegistry().isPossibleLeftSmartTypingBrace(openingChar)) {
+      return null;
+    }
+    Set<TextMateBracePair> pairs = getSmartTypingPairs(currentSelector);
+    for (TextMateBracePair pair : pairs) {
+      if (pair.getLeft().length() == 1 && pair.getLeft().charAt(0) == openingChar) {
+        return pair;
+      }
+    }
+    return null;
   }
 }

@@ -69,7 +69,8 @@ private class VSCBundleReader(private val extension: VSCodeExtension,
         it.filenamePatterns.map { pattern -> TextMateFileNameMatcher.Pattern(pattern) }
       } ?: emptyList()
 
-      TextMateGrammar(fileNameMatchers = fileNameMatchers, plist = plist, overrideName = language?.aliases?.firstOrNull(), overrideScopeName = grammar.scopeName)
+      TextMateGrammar(fileNameMatchers = fileNameMatchers, plist = plist, overrideName = language?.aliases?.firstOrNull(),
+                      overrideScopeName = grammar.scopeName)
     }
   }
 
@@ -80,8 +81,8 @@ private class VSCBundleReader(private val extension: VSCodeExtension,
           val configuration = jsonReader.readValue(inputStream,
                                                    VSCodeExtensionLanguageConfiguration::class.java)
           val highlightingPairs = readBrackets(configuration.brackets).takeIf { it.isNotEmpty() }
-          val smartTypingPairs = configuration.surroundingPairs.map {
-            TextMateBracePair(it.open[0], it.close[0])
+          val smartTypingPairs = configuration.autoClosingPairs.map {
+            TextMateBracePair(it.open, it.close)
           }.toSet().takeIf { it.isNotEmpty() }
           val indentationRules = IndentationRules(configuration.indentationRules?.increaseIndentPattern,
                                                   configuration.indentationRules?.decreaseIndentPattern,
@@ -140,8 +141,8 @@ private class VSCBundleReader(private val extension: VSCodeExtension,
 
   private fun readBrackets(pairs: List<List<String>>): Set<TextMateBracePair> {
     return pairs.mapNotNull { pair ->
-      pair.takeIf { it.size == 2 && it[0].length == 1 && it[1].length == 1 }?.let {
-        TextMateBracePair(it[0][0], it[1][0])
+      pair.takeIf { it.size == 2 }?.let {
+        TextMateBracePair(it[0], it[1])
       }
     }.toSet()
   }
@@ -183,6 +184,7 @@ data class VSCodeExtension(val name: String,
                            val contributes: VSCodeExtensionContributes)
 
 data class VSCodeExtensionLanguageConfiguration(val brackets: List<List<String>> = emptyList(),
+                                                val autoClosingPairs: List<VSCodeExtensionAutoClosingPairs> = emptyList(),
                                                 val surroundingPairs: List<VSCodeExtensionSurroundingPairs> = emptyList(),
                                                 val comments: VSCodeExtensionComments,
                                                 val indentationRules: VSCodeExtensionIndentationRules?)
@@ -199,6 +201,22 @@ class VSCodeExtensionSurroundingPairsDeserializer(vc: Class<*>?) : StdDeserializ
       is ArrayNode -> VSCodeExtensionSurroundingPairs(node.get(0).asText(), node.get(1).asText())
       is ObjectNode -> VSCodeExtensionSurroundingPairs(node["open"].asText(), node["close"].asText())
       else -> error("unexpected surroundingPairs node")
+    }
+  }
+}
+
+@JsonDeserialize(using = VSCodeExtensionAutoClosingPairsDeserializer::class)
+data class VSCodeExtensionAutoClosingPairs(val open: String, val close: String, val notIn: String?)
+
+class VSCodeExtensionAutoClosingPairsDeserializer(vc: Class<*>?) : StdDeserializer<VSCodeExtensionAutoClosingPairs>(vc) {
+  @Suppress("unused")
+  constructor() : this(null)
+
+  override fun deserialize(p: JsonParser, ctxt: DeserializationContext): VSCodeExtensionAutoClosingPairs {
+    return when (val node: JsonNode = p.codec.readTree(p)) {
+      is ArrayNode -> VSCodeExtensionAutoClosingPairs(node.get(0).asText(), node.get(1).asText(), null)
+      is ObjectNode -> VSCodeExtensionAutoClosingPairs(node["open"].asText(), node["close"].asText(), node["notIn"]?.asText(null))
+      else -> error("unexpected autoClosingPairs node")
     }
   }
 }
