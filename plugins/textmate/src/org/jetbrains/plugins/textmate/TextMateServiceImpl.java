@@ -302,6 +302,8 @@ public final class TextMateServiceImpl extends TextMateService {
       myPreferenceRegistry.addPreferences(new Preferences(scopeName,
                                                           internedHighlightingPairs,
                                                           internedSmartTypingPairs,
+                                                          preferences.getSurroundingPairs(),
+                                                          preferences.getAutoCloseBefore(),
                                                           preferences.getIndentationRules()));
       for (TextMateShellVariable variable : preferences.getVariables()) {
         myShellVariablesRegistry.addVariable(variable);

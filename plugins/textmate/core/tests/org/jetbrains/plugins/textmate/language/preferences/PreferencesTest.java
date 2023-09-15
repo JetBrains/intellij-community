@@ -1,5 +1,6 @@
 package org.jetbrains.plugins.textmate.language.preferences;
 
+import com.intellij.openapi.util.text.Strings;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.textmate.TestUtil;
@@ -97,6 +98,8 @@ public class PreferencesTest {
       preferencesRegistry.addPreferences(new Preferences(next.getScopeName(),
                                                          next.getHighlightingPairs(),
                                                          next.getSmartTypingPairs(),
+                                                         Collections.emptySet(),
+                                                         null,
                                                          next.getIndentationRules()));
     }
     return preferencesRegistry;
@@ -105,21 +108,38 @@ public class PreferencesTest {
   @NotNull
   private static Preferences mergeAll(@NotNull List<Preferences> preferences) {
     Set<TextMateBracePair> highlightingPairs = new HashSet<>();
-    Set<TextMateAutoClosingPair> smartTypingParis = new HashSet<>();
+    Set<TextMateAutoClosingPair> smartTypingPairs = new HashSet<>();
+    Set<TextMateBracePair> surroundingPairs = new HashSet<>();
+    Set<Character> autoCloseBefore = new HashSet<>();
     IndentationRules indentationRules = IndentationRules.empty();
 
     for (Preferences preference : preferences) {
       final Set<TextMateBracePair> localHighlightingPairs = preference.getHighlightingPairs();
       final @Nullable Set<TextMateAutoClosingPair> localSmartTypingPairs = preference.getSmartTypingPairs();
+      final Set<TextMateBracePair> localSurroundingPairs = preference.getSurroundingPairs();
+      final String localAutoCloseBefore = preference.getAutoCloseBefore();
       indentationRules = indentationRules.updateWith(preference.getIndentationRules());
       if (localHighlightingPairs != null) {
         highlightingPairs.addAll(localHighlightingPairs);
       }
       if (localSmartTypingPairs != null) {
-        smartTypingParis.addAll(localSmartTypingPairs);
+        smartTypingPairs.addAll(localSmartTypingPairs);
+      }
+      if (localSurroundingPairs != null) {
+        surroundingPairs.addAll(localSurroundingPairs);
+      }
+      if (localAutoCloseBefore != null) {
+        for (char c : localAutoCloseBefore.toCharArray()) {
+          autoCloseBefore.add(c);
+        }
       }
     }
-    return new Preferences("", highlightingPairs, smartTypingParis, indentationRules);
+    return new Preferences("",
+                           highlightingPairs,
+                           smartTypingPairs,
+                           surroundingPairs,
+                           Strings.nullize(Strings.join(autoCloseBefore, "")),
+                           indentationRules);
   }
 
   private static <T> Set<T> newHashSet(T... pairs) {

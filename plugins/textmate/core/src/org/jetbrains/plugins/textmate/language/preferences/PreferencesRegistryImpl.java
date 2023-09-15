@@ -9,10 +9,7 @@ import org.jetbrains.plugins.textmate.language.TextMateScopeComparator;
 import org.jetbrains.plugins.textmate.language.syntax.lexer.TextMateScope;
 import org.jetbrains.plugins.textmate.plist.Plist;
 
-import java.util.Collection;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 import java.util.stream.Collectors;
 
 public final class PreferencesRegistryImpl implements PreferencesRegistry {
@@ -49,7 +46,7 @@ public final class PreferencesRegistryImpl implements PreferencesRegistry {
     fillHighlightingBraces(highlightingPairs);
     fillSmartTypingBraces(smartTypingPairs);
     if (highlightingPairs != null || smartTypingPairs != null || !indentationRules.isEmpty()) {
-      myPreferences.add(new Preferences(scopeName, highlightingPairs, smartTypingPairs, indentationRules));
+      myPreferences.add(new Preferences(scopeName, highlightingPairs, smartTypingPairs, Collections.emptySet(), null, indentationRules));
     }
   }
 

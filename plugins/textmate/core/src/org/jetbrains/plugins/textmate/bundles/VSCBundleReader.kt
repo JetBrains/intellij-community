@@ -96,6 +96,7 @@ private class VSCBundleReader(private val extension: VSCodeExtension,
                                 variables = variables,
                                 highlightingPairs = highlightingPairs,
                                 smartTypingPairs = smartTypingPairs,
+                                autoCloseBefore = configuration.autoCloseBefore,
                                 surroundingPairs = surroundingPairs,
                                 indentationRules = indentationRules,
                                 null)
@@ -188,6 +189,7 @@ data class VSCodeExtension(val name: String,
 
 data class VSCodeExtensionLanguageConfiguration(val brackets: List<List<String>> = emptyList(),
                                                 val autoClosingPairs: List<VSCodeExtensionAutoClosingPairs> = emptyList(),
+                                                val autoCloseBefore: String?,
                                                 val surroundingPairs: List<VSCodeExtensionSurroundingPairs> = emptyList(),
                                                 val comments: VSCodeExtensionComments,
                                                 val indentationRules: VSCodeExtensionIndentationRules?)

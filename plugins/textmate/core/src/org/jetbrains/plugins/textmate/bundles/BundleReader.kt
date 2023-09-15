@@ -38,6 +38,7 @@ data class TextMatePreferences(val scopeName: TextMateScopeName,
                                val variables: Collection<TextMateShellVariable>,
                                val highlightingPairs: Set<TextMateBracePair>?,
                                val smartTypingPairs: Set<TextMateAutoClosingPair>?,
+                               val autoCloseBefore: String?,
                                val surroundingPairs:  Set<TextMateBracePair>?,
                                val indentationRules: IndentationRules,
                                val customHighlightingAttributes: TextMateTextAttributes?)
@@ -136,6 +137,7 @@ private fun readPreferencesFromPlist(plist: Plist): TextMatePreferences? {
                           highlightingPairs = highlightingPairs ?: Constants.DEFAULT_HIGHLIGHTING_BRACE_PAIRS,
                           smartTypingPairs = smartTypingPairs ?: Constants.DEFAULT_SMART_TYPING_BRACE_PAIRS,
                           surroundingPairs = null,
+                          autoCloseBefore = null,
                           indentationRules = indentationRules,
                           customHighlightingAttributes = customHighlightingAttributes)
     }
