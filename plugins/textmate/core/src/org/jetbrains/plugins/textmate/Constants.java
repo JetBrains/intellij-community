@@ -97,7 +97,7 @@ public interface Constants {
 
 
   // PREFERENCES
-  @NonNls String HIGHLIGHTING_PAIRS_KEY = "highlightingPairs";
+  @NonNls String HIGHLIGHTING_PAIRS_KEY = "highlightPairs";
   @NonNls String SMART_TYPING_PAIRS_KEY = "smartTypingPairs";
   @NonNls String INDENTATION_RULES = "indentationRules";
 

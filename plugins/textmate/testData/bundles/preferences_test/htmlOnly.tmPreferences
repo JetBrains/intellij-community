@@ -15,7 +15,7 @@
 				<string>"</string>
 			</array>
                   </array>
-                  <key>highlightingPairs</key>
+                  <key>highlightPairs</key>
                   <array>
 			<array>
 				<string>`</string>
