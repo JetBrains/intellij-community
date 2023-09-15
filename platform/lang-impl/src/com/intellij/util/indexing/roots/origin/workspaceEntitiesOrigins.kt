@@ -22,6 +22,11 @@ interface ExternalEntityOrigin : IndexableSetOrigin {
   val rootHolder: IndexingSourceRootHolder
 }
 
+interface CustomKindEntityOrigin : IndexableSetOrigin {
+  val reference: EntityReference<*>
+  val rootHolder: IndexingRootHolder
+}
+
 interface IndexingRootHolder {
   val roots: List<VirtualFile>
   val nonRecursiveRoots: List<VirtualFile>

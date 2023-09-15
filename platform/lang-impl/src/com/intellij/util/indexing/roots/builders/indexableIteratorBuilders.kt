@@ -76,6 +76,12 @@ internal object IndexableIteratorBuilders {
     if (roots.isEmpty()) emptyList()
     else listOf(ExternalEntityIteratorBuilder(entityReference, roots, presentation))
 
+  fun <E : WorkspaceEntity> forCustomKindEntity(entityReference: EntityReference<E>,
+                                                roots: IndexingRootHolder,
+                                                presentation: IndexableIteratorPresentation?): Collection<IndexableIteratorBuilder> =
+    if (roots.isEmpty()) emptyList()
+    else listOf(CustomKindEntityBuilder(entityReference, roots, presentation))
+
   fun instantiateBuilders(builders: Collection<IndexableIteratorBuilder>,
                           project: Project,
                           entityStorage: EntityStorage): List<IndexableFilesIterator> {
@@ -142,3 +148,7 @@ internal data class GenericContentEntityBuilder<E : WorkspaceEntity>(val entityR
 internal data class ExternalEntityIteratorBuilder<E : WorkspaceEntity>(val entityReference: EntityReference<E>,
                                                                        val roots: IndexingSourceRootHolder,
                                                                        val presentation: IndexableIteratorPresentation?) : IndexableIteratorBuilder
+
+internal data class CustomKindEntityBuilder<E : WorkspaceEntity>(val entityReference: EntityReference<E>,
+                                                                 val roots: IndexingRootHolder,
+                                                                 val presentation: IndexableIteratorPresentation?) : IndexableIteratorBuilder

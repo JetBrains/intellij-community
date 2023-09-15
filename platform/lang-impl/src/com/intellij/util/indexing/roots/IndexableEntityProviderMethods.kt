@@ -97,6 +97,13 @@ object IndexableEntityProviderMethods {
     return listOf(ExternalEntityIndexableIteratorImpl(reference, roots, presentation))
   }
 
+  fun createCustomKindEntityIterators(reference: EntityReference<*>,
+                                      roots: IndexingRootHolder,
+                                      presentation: IndexableIteratorPresentation?): Collection<IndexableFilesIterator> {
+    if (roots.isEmpty()) return emptyList()
+    return listOf(CustomKindEntityIteratorImpl(reference, roots, presentation))
+  }
+
   fun createGenericContentEntityIterators(reference: EntityReference<*>,
                                           rootHolder: IndexingRootHolder,
                                           presentation: IndexableIteratorPresentation?): Collection<IndexableFilesIterator> {

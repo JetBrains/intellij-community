@@ -12,6 +12,12 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.platform.backend.workspace.WorkspaceModel;
+import com.intellij.platform.workspace.jps.entities.LibraryId;
+import com.intellij.platform.workspace.jps.entities.ModuleId;
+import com.intellij.platform.workspace.storage.EntityReference;
+import com.intellij.platform.workspace.storage.EntityStorage;
+import com.intellij.platform.workspace.storage.WorkspaceEntity;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
 import com.intellij.util.indexing.roots.IndexableIteratorPresentation;
@@ -25,13 +31,7 @@ import com.intellij.workspaceModel.core.fileIndex.WorkspaceFileKind;
 import com.intellij.workspaceModel.core.fileIndex.WorkspaceFileSet;
 import com.intellij.workspaceModel.core.fileIndex.impl.WorkspaceFileIndexImpl;
 import com.intellij.workspaceModel.core.fileIndex.impl.WorkspaceFileSetRecognizer;
-import com.intellij.platform.backend.workspace.WorkspaceModel;
 import com.intellij.workspaceModel.ide.legacyBridge.ModuleBridge;
-import com.intellij.platform.workspace.storage.EntityReference;
-import com.intellij.platform.workspace.storage.EntityStorage;
-import com.intellij.platform.workspace.storage.WorkspaceEntity;
-import com.intellij.platform.workspace.jps.entities.LibraryId;
-import com.intellij.platform.workspace.jps.entities.ModuleId;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -83,7 +83,7 @@ public final class ReincludedRootsUtil {
     private final List<ModuleRootData<?>> filesFromModulesContent = new ArrayList<>();
     private final List<ContentRootData<?>> filesFromContent = new ArrayList<>();
     private final List<ExternalRootData<?>> filesFromExternal = new ArrayList<>();
-
+    private final List<CustomKindRootData<?>> filesFromCustomKind = new ArrayList<>();
     private final MultiMap<Sdk, VirtualFile> filesFromSdks = MultiMap.createSet();
     private final MultiMap<LibraryId, VirtualFile> sourceFilesFromLibraries = MultiMap.createSet();
     private final MultiMap<LibraryId, VirtualFile> classFilesFromLibraries = MultiMap.createSet();
@@ -103,7 +103,7 @@ public final class ReincludedRootsUtil {
     void classifyFiles(@NotNull Project project, @NotNull Collection<VirtualFile> files) {
       WorkspaceFileIndex workspaceFileIndex = WorkspaceFileIndex.getInstance(project);
       for (VirtualFile file : files) {
-        WorkspaceFileSet fileSet = workspaceFileIndex.findFileSet(file, true, true, true, true);
+        WorkspaceFileSet fileSet = workspaceFileIndex.findFileSet(file, true, true, true, true, true);
         if (fileSet == null) {
           filesFromIndexableSetContributors.add(file);
           continue;
@@ -145,8 +145,11 @@ public final class ReincludedRootsUtil {
         if (fileSet.getKind() == WorkspaceFileKind.EXTERNAL_SOURCE) {
           addExternalRoots(entityReference, Collections.emptyList(), Collections.singletonList(file));
         }
-        else {
+        else if (fileSet.getKind() == WorkspaceFileKind.EXTERNAL) {
           addExternalRoots(entityReference, Collections.singletonList(file), Collections.emptyList());
+        }
+        else {
+          addCustomKindRoot(entityReference, file);
         }
       }
     }
@@ -163,6 +166,11 @@ public final class ReincludedRootsUtil {
 
     private void addExternalRoots(EntityReference<?> entityReference, List<VirtualFile> roots, List<VirtualFile> sourceRoots) {
       filesFromExternal.add(new ExternalRootData<>(entityReference, roots, sourceRoots));
+      references.add(entityReference);
+    }
+
+    private void addCustomKindRoot(EntityReference<?> entityReference, VirtualFile file) {
+      filesFromCustomKind.add(new CustomKindRootData<>(entityReference, file));
       references.add(entityReference);
     }
 
@@ -214,6 +222,15 @@ public final class ReincludedRootsUtil {
       }
     }
 
+    private record CustomKindRootData<E extends WorkspaceEntity>(@NotNull EntityReference<E> entityReference, @NotNull VirtualFile file) {
+      public @NotNull Collection<IndexableIteratorBuilder> createBuilders(Map<EntityReference<?>, WorkspaceEntity> referenceMap,
+                                                                          Map<Class<WorkspaceEntity>, CustomizingIndexingPresentationContributor<?>> contributorMap) {
+        IndexableIteratorPresentation customization = findPresentation(entityReference, referenceMap, contributorMap);
+        return IndexableIteratorBuilders.INSTANCE.forCustomKindEntity(entityReference, IndexingRootHolder.Companion.fromFile(file),
+                                                                      customization);
+      }
+    }
+
     @Override
     @NotNull
     public Collection<IndexableIteratorBuilder> createBuildersFromWorkspaceFiles() {
@@ -249,6 +266,9 @@ public final class ReincludedRootsUtil {
         result.addAll(IndexableIteratorBuilders.INSTANCE.forSdk(entry.getKey(), entry.getValue()));
       }
       for (ExternalRootData<?> data : filesFromExternal) {
+        result.addAll(data.createBuilders(referenceMap, customizingContributorsMap));
+      }
+      for (CustomKindRootData<?> data : filesFromCustomKind) {
         result.addAll(data.createBuilders(referenceMap, customizingContributorsMap));
       }
       return result;
