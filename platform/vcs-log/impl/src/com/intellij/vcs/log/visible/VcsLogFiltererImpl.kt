@@ -27,7 +27,6 @@ import com.intellij.vcs.log.history.removeTrivialMerges
 import com.intellij.vcs.log.impl.HashImpl
 import com.intellij.vcs.log.util.*
 import com.intellij.vcs.log.util.VcsLogUtil.FULL_HASH_LENGTH
-import com.intellij.vcs.log.util.VcsLogUtil.SHORT_HASH_LENGTH
 import com.intellij.vcs.log.visible.filters.VcsLogFilterObject
 import com.intellij.vcs.log.visible.filters.with
 import com.intellij.vcs.log.visible.filters.without
@@ -82,7 +81,7 @@ class VcsLogFiltererImpl(private val logProviders: Map<VirtualFile, VcsLogProvid
           collectCommitsReachableFromHeads(dataPack, explicitMatchingHeads)
         else IntOpenHashSet()
 
-        when (val commitsForRangeFilter = filterByRange(dataPack, rangeFilters)) {
+        when (val commitsForRangeFilter = filterByRange(storage, logProviders, dataPack, rangeFilters)) {
           is RangeFilterResult.Commits -> {
             commitCandidates = IntCollectionUtil.union(listOf(commitsReachableFromHeads, commitsForRangeFilter.commits))
             forceFilterByVcs = false
@@ -202,69 +201,6 @@ class VcsLogFiltererImpl(private val logProviders: Map<VirtualFile, VcsLogProvid
 
     val filteredCommits = union(filteredWithIndex, filteredWithVcs.matchingCommits)
     return FilterByDetailsResult(filteredCommits, filteredWithVcs.canRequestMore, filteredWithVcs.commitCount, historyData)
-  }
-
-  private sealed class RangeFilterResult {
-    class Commits(val commits: IntSet) : RangeFilterResult()
-    object InvalidRange : RangeFilterResult()
-    object Error : RangeFilterResult()
-  }
-
-  private fun filterByRange(dataPack: DataPack, rangeFilter: VcsLogRangeFilter): RangeFilterResult {
-    val set = IntOpenHashSet()
-    for (range in rangeFilter.ranges) {
-      var rangeResolvedAnywhere = false
-      for ((root, _) in logProviders) {
-        val resolvedRange = resolveCommits(dataPack, root, range)
-        if (resolvedRange != null) {
-          val commits = getCommitsByRange(dataPack, root, resolvedRange)
-          if (commits == null) return RangeFilterResult.Error // error => will be handled by the VCS provider
-          else set.addAll(commits)
-          rangeResolvedAnywhere = true
-        }
-      }
-      // If a range is resolved in some roots, but not all of them => skip others and handle those which know about the range.
-      // Otherwise, if none of the roots know about the range => return null and let VcsLogProviders handle the range
-      if (!rangeResolvedAnywhere) {
-        LOG.warn("Range limits unresolved for: $range")
-        return RangeFilterResult.InvalidRange
-      }
-    }
-    return RangeFilterResult.Commits(set)
-  }
-
-  private fun resolveCommits(dataPack: DataPack, root: VirtualFile, range: VcsLogRangeFilter.RefRange): Pair<CommitId, CommitId>? {
-    val from = resolveCommit(dataPack, root, range.exclusiveRef)
-    val to = resolveCommit(dataPack, root, range.inclusiveRef)
-    if (from == null || to == null) {
-      LOG.debug("Range limits unresolved for: $range in $root")
-      return null
-    }
-    return from to to
-  }
-
-  private fun getCommitsByRange(dataPack: DataPack, root: VirtualFile, range: Pair<CommitId, CommitId>): IntSet? {
-    val fromIndex = storage.getCommitIndex(range.first.hash, root)
-    val toIndex = storage.getCommitIndex(range.second.hash, root)
-
-    return dataPack.subgraphDifference(toIndex, fromIndex)
-  }
-
-  private fun resolveCommit(dataPack: DataPack, root: VirtualFile, refName: String): CommitId? {
-    if (VcsLogUtil.isFullHash(refName)) {
-      val commitId = CommitId(HashImpl.build(refName), root)
-      return if (storage.containsCommit(commitId)) commitId else null
-    }
-
-    val ref = dataPack.refsModel.findBranch(refName, root)
-    return if (ref != null) {
-      CommitId(ref.commitHash, root)
-    }
-    else if (refName.length >= SHORT_HASH_LENGTH && VcsLogUtil.HASH_REGEX.matcher(refName).matches()) {
-      // don't search for too short hashes: high probability to treat a ref, existing not in all roots, as a hash
-      storage.findCommitId(CommitIdByStringCondition(refName))
-    }
-    else null
   }
 
   private fun filterWithIndex(dataGetter: IndexDataGetter,
