@@ -12,7 +12,6 @@ import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.CachedValue;
 import com.intellij.psi.util.CachedValueProvider;
 import com.intellij.util.CachedValueImpl;
-import com.intellij.util.Consumer;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.gist.GistManager;
 import com.intellij.util.gist.VirtualFileGist;
@@ -26,13 +25,13 @@ import org.jetbrains.org.objectweb.asm.*;
 import org.jetbrains.org.objectweb.asm.tree.MethodNode;
 import org.jetbrains.org.objectweb.asm.tree.analysis.AnalyzerException;
 
-import java.io.ByteArrayOutputStream;
 import java.io.DataOutputStream;
 import java.io.IOException;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.function.BiFunction;
 import java.util.function.BinaryOperator;
+import java.util.function.Consumer;
 
 import static com.intellij.codeInspection.bytecodeAnalysis.Direction.*;
 import static com.intellij.codeInspection.bytecodeAnalysis.Effects.VOLATILE_EFFECTS;
@@ -81,7 +80,7 @@ public class ClassDataIndexer implements VirtualFileGist.GistCalculator<Map<HMem
       // so here we suppose that exception is due to incorrect bytecode
       LOG.debug("Unexpected Error during indexing of bytecode", e);
     }
-    ourIndexSizeStatistics.consume(map);
+    ourIndexSizeStatistics.accept(map);
     return map;
   }
 
@@ -264,7 +263,7 @@ public class ClassDataIndexer implements VirtualFileGist.GistCalculator<Map<HMem
     private static final AtomicLong ourTotalCount = new AtomicLong(0);
 
     @Override
-    public void consume(Map<HMember, Equations> map) {
+    public void accept(Map<HMember, Equations> map) {
       try {
         UnsyncByteArrayOutputStream stream = new UnsyncByteArrayOutputStream();
         new BytecodeAnalysisIndex.EquationsExternalizer().save(new DataOutputStream(stream), map);
