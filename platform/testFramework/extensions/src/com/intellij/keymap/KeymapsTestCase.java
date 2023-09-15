@@ -152,6 +152,7 @@ public abstract class KeymapsTestCase extends KeymapsTestCaseBase {
       {"shift ctrl alt UP",        "ResizeToolWindowUp", "VcsShowPrevChangeMarker"},
       {"shift ctrl alt M",         "Console.TableResult.MaximizeEditingCell", "FullLine.GenerateMarkerAction"},
       {"ctrl alt N",               "Console.TableResult.SetNull", "Git.New.Branch.In.Log", "GitNewBranchAction", "Inline"},
+      {"ctrl BACK_SLASH",          "AIAssistant.Editor.GenerateCodeInplace", "FileChooser.GoToRoot"},
     }),
     Map.entry("Mac OS X 10.5+", new String[][]{
       {"BACK_SPACE",               "$Delete", "EditorBackSpace"},
