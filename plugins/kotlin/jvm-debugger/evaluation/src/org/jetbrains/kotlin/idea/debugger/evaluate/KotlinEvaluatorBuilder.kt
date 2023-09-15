@@ -17,10 +17,10 @@ import com.intellij.openapi.diagnostic.Attachment
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.project.IndexNotReadyException
+import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiElement
 import com.intellij.psi.util.CachedValueProvider
 import com.intellij.psi.util.CachedValuesManager
-import com.intellij.psi.util.PsiModificationTracker
 import com.sun.jdi.*
 import com.sun.jdi.Value
 import org.jetbrains.annotations.ApiStatus
@@ -101,6 +101,7 @@ object KotlinEvaluatorBuilder : EvaluatorBuilder {
 }
 
 class KotlinEvaluator(val codeFragment: KtCodeFragment, private val sourcePosition: SourcePosition?) : Evaluator {
+
     override fun evaluate(context: EvaluationContextImpl): Any? {
         if (codeFragment.text.isEmpty()) {
             return context.debugProcess.virtualMachineProxy.mirrorOfVoid()
@@ -171,10 +172,7 @@ class KotlinEvaluator(val codeFragment: KtCodeFragment, private val sourcePositi
     private fun getCompiledCodeFragment(context: ExecutionContext): CompiledCodeFragmentData {
         val cache = runReadAction {
             val contextElement = codeFragment.context ?: return@runReadAction null
-            CachedValuesManager.getCachedValue(contextElement) {
-                val storage = ConcurrentHashMap<String, CompiledCodeFragmentData>()
-                CachedValueProvider.Result(ConcurrentFactoryCache(storage), PsiModificationTracker.MODIFICATION_COUNT)
-            }
+            CachedValuesManager.getCachedValue(contextElement, OnRefreshCachedValueProvider(context.project))
         }
         if (cache == null) return compileCodeFragment(context)
 
@@ -185,6 +183,13 @@ class KotlinEvaluator(val codeFragment: KtCodeFragment, private val sourcePositi
 
         return cache.get(key) {
             compileCodeFragment(context)
+        }
+    }
+
+    private class OnRefreshCachedValueProvider(private val project: Project) : CachedValueProvider<ConcurrentFactoryCache<String, CompiledCodeFragmentData>> {
+        override fun compute(): CachedValueProvider.Result<ConcurrentFactoryCache<String, CompiledCodeFragmentData>> {
+            val storage = ConcurrentHashMap<String, CompiledCodeFragmentData>()
+            return CachedValueProvider.Result(ConcurrentFactoryCache(storage), KotlinDebuggerSessionRefreshTracker.getInstance(project))
         }
     }
 
