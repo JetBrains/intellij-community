@@ -11,7 +11,6 @@ import com.intellij.ui.components.DarculaSearchFieldWithExtensionUI;
 import com.intellij.ui.components.DefaultLinkButtonUI;
 import com.intellij.ui.tree.ui.DefaultTreeUI;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 
@@ -92,11 +91,6 @@ final class HeadlessLafManagerImpl extends LafManager {
 
   @Override
   public void setPreferredLightLaf(@NotNull UIThemeLookAndFeelInfo value) { }
-
-  @Override
-  public @Nullable EditorColorsScheme getPreviousSchemeForLaf(@NotNull UIThemeLookAndFeelInfo value) {
-    return null;
-  }
 
   @Override
   public void setRememberSchemeForLaf(boolean rememberSchemeForLaf) { }

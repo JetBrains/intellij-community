@@ -7,22 +7,16 @@ import com.fasterxml.jackson.core.JsonFactory
 import com.intellij.AbstractBundle
 import com.intellij.DynamicBundle
 import com.intellij.ide.plugins.cl.PluginAwareClassLoader
-import com.intellij.ide.ui.UIThemeBean.Companion.importFromParentTheme
 import com.intellij.ide.ui.UIThemeBean.Companion.readTheme
 import com.intellij.ide.ui.laf.UIThemeLookAndFeelInfoImpl
 import com.intellij.ide.ui.laf.UiThemeProviderListManager
-import com.intellij.openapi.diagnostic.Logger
-import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.util.IconPathPatcher
 import com.intellij.ui.ColorUtil
-import com.intellij.ui.Gray
 import com.intellij.ui.IdeUICustomization
 import com.intellij.ui.svg.SvgAttributePatcher
 import com.intellij.ui.svg.newSvgPatcher
 import com.intellij.util.InsecureHashBuilder
 import com.intellij.util.SVGLoader.SvgElementColorPatcherProvider
-import it.unimi.dsi.fastutil.Hash
-import it.unimi.dsi.fastutil.objects.Object2ObjectLinkedOpenHashMap
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.NonNls
 import org.jetbrains.annotations.TestOnly
@@ -32,9 +26,8 @@ import java.util.concurrent.ConcurrentHashMap
 import java.util.function.Function
 import java.util.function.Supplier
 import javax.swing.UIDefaults
-
-private val LOG: Logger
-  get() = logger<UITheme>()
+import javax.swing.plaf.ColorUIResource
+import javax.swing.plaf.UIResource
 
 /**
  * @author Konstantin Bulenkov
@@ -74,12 +67,8 @@ class UITheme internal constructor(
     get() = bean.emptyFrameBackground ?: emptyMap()
 
   fun applyProperties(defaults: UIDefaults) {
-    bean.colors?.let {
-      for ((key, value) in it) {
-        if (value is Color) {
-          defaults.put("ColorPalette.$key", value)
-        }
-      }
+    for ((key, value) in bean.colorMap.map) {
+      defaults.put("ColorPalette.$key", if (value is UIResource) value else ColorUIResource(value))
     }
 
     applyTheme(theme = bean, defaults = defaults, classLoader = providerClassLoader)
@@ -99,18 +88,11 @@ class UITheme internal constructor(
 
   var editorSchemeName: String? = null
 
-  @Deprecated("Do not use.")
-  fun setColors(colors: Map<String, Any?>?) {
-    bean.colors = colors
-  }
-
   companion object {
     const val FILE_EXT_ENDING: String = ".theme.json"
 
     @ApiStatus.Internal
-    fun loadFromJson(stream: InputStream,
-                     themeId: @NonNls String,
-                     nameToParent: Function<String, UITheme?>): UITheme {
+    fun loadFromJson(stream: InputStream, themeId: @NonNls String, nameToParent: Function<String, UITheme?>): UITheme {
       val theme = readTheme(JsonFactory().createParser(stream))
       return createTheme(themeId = themeId,
                          theme = theme,
@@ -159,16 +141,16 @@ private fun createTheme(theme: UIThemeBean,
   if (parentTheme != null) {
     importFromParentTheme(theme, parentTheme)
   }
-  initializeNamedColors(theme = theme)
+  initializeNamedColors(theme)
 
   val paletteScopeManager = UiThemePaletteScopeManager()
-  val colorsOnSelection = theme.iconColorsOnSelection
+  val colorsOnSelection = theme.iconColorOnSelectionMap.map
   var selectionColorPatcher: SvgElementColorPatcherProvider? = null
-  if (!colorsOnSelection.isNullOrEmpty()) {
+  if (!colorsOnSelection.isEmpty()) {
     val colors = HashMap<String, String>(colorsOnSelection.size)
     val alphaColors = HashSet<String>(colorsOnSelection.size)
     for ((key, v) in colorsOnSelection) {
-      val value = v.toString()
+      val value = "#" + ColorUtil.toHex(/* c = */ v, /* withAlpha = */ false)
       colors.put(key, value)
       alphaColors.add(value)
     }
@@ -245,7 +227,7 @@ private fun configureIcons(theme: UIThemeBean,
     var v = palette.get(colorKey)
     if (v is String) {
       // named
-      v = theme.colors?.get(v) ?: parseColorOrNull(key, null)
+      v = theme.colorMap.map.get(v) ?: parseColorOrNull(key, null)
     }
 
     val colorFromKey = parseColorOrNull(key, null)
@@ -269,60 +251,6 @@ private fun configureIcons(theme: UIThemeBean,
       return newSvgPatcher(digest = scope.digest(), newPalette = scope.newPalette) { scope.alphas.get(it) }
     }
   }
-}
-
-private fun initializeNamedColors(theme: UIThemeBean) {
-  val originalColors = theme.colors ?: return
-  var colors = originalColors
-  var mutableMap: Object2ObjectLinkedOpenHashMap<String, Any?>? = null
-  for ((key, value) in originalColors) {
-    if (value is String) {
-      if (mutableMap == null) {
-        mutableMap = Object2ObjectLinkedOpenHashMap(originalColors, Hash.FAST_LOAD_FACTOR)
-        colors = mutableMap
-        theme.colors = colors
-      }
-
-      val delegateColor = originalColors.get(value)
-      if (delegateColor != null) {
-        mutableMap.put(key, delegateColor)
-      }
-      else {
-        LOG.warn("Can't parse '$value' for key '$key'")
-        mutableMap.put(key, Gray.TRANSPARENT)
-      }
-    }
-  }
-
-  mutableMap?.trim()
-
-  val originalColorsOnSelection = theme.iconColorsOnSelection ?: return
-  mutableMap = null
-  for (entry in originalColorsOnSelection) {
-    var key: Any? = entry.key
-    var value: Any? = entry.value
-
-    if (value is Color) {
-      continue
-    }
-
-    if (mutableMap == null) {
-      mutableMap = Object2ObjectLinkedOpenHashMap(originalColors, Hash.FAST_LOAD_FACTOR)
-      theme.iconColorsOnSelection = mutableMap
-    }
-
-    if (!key.toString().startsWith('#')) {
-      key = colors.get(key)
-    }
-    if (!value.toString().startsWith('#')) {
-      value = colors.get(value)
-    }
-    if (key.toString().startsWith('#') and value.toString().startsWith('#')) {
-      mutableMap.put(key.toString(), value)
-    }
-  }
-
-  mutableMap?.trim()
 }
 
 private fun toColorString(key: String, darkTheme: Boolean): String {
@@ -385,12 +313,12 @@ private val colorPalette: @NonNls Map<String, String> = java.util.Map.ofEntries(
 )
 
 private fun applyTheme(theme: UIThemeBean, defaults: UIDefaults, classLoader: ClassLoader) {
-  val colors = theme.colors
+  val colors = theme.colorMap.map.takeIf { it.isNotEmpty() }
   for ((key, value) in (theme.ui ?: return)) {
     var color: Color? = null
     if (colors != null && value is String) {
       colors.get(value)?.let {
-        color = if (it is Color) it else parseColorOrNull(it.toString(), key)
+        color = it
       }
     }
 

@@ -17,15 +17,6 @@ import javax.swing.plaf.UIResource
 
 internal class UIThemeBean {
   companion object {
-    fun importFromParentTheme(theme: UIThemeBean, parentTheme: UIThemeBean) {
-      theme.ui = importMapFromParentTheme(theme.ui, parentTheme.ui)
-      theme.icons = importMapFromParentTheme(theme.icons, parentTheme.icons)
-      theme.background = importMapFromParentTheme(theme.background, parentTheme.background)
-      theme.emptyFrameBackground = importMapFromParentTheme(theme.emptyFrameBackground, parentTheme.emptyFrameBackground)
-      theme.colors = importMapFromParentTheme(theme.colors, parentTheme.colors)
-      theme.iconColorsOnSelection = importMapFromParentTheme(theme.iconColorsOnSelection, parentTheme.iconColorsOnSelection)
-    }
-
     fun readTheme(parser: JsonParser): UIThemeBean {
       check(parser.nextToken() == JsonToken.START_OBJECT)
       val bean = UIThemeBean()
@@ -36,8 +27,8 @@ internal class UIThemeBean {
               "icons" -> bean.icons = readMapFromJson(parser)
               "background" -> bean.background = readMapFromJson(parser)
               "emptyFrameBackground" -> bean.emptyFrameBackground = readMapFromJson(parser)
-              "colors" -> bean.colors = readMapFromJson(parser)
-              "iconColorsOnSelection" -> bean.iconColorsOnSelection = readMapFromJson(parser)
+              "colors" -> bean.colorMap.rawMap = readColorMapFromJson(parser, HashMap())
+              "iconColorsOnSelection" -> bean.iconColorOnSelectionMap.rawMap = readColorMapFromJson(parser, HashMap())
               "ui" -> {
                 // ordered map is required (not clear why)
                 val map = LinkedHashMap<String, Any?>(700)
@@ -146,10 +137,9 @@ internal class UIThemeBean {
   var emptyFrameBackground: Map<String, Any?>? = null
 
   @JvmField
-  var colors: Map<String, Any?>? = null
-
+  var colorMap: ColorMap = ColorMap()
   @JvmField
-  var iconColorsOnSelection: Map<String, Any?>? = null
+  var iconColorOnSelectionMap: ColorMap = ColorMap()
 
   override fun toString() = "UIThemeBean(name=$name, parentTheme=$parentTheme, dark=$dark)"
 }
@@ -264,7 +254,7 @@ private fun readFlatMapFromJson(parser: JsonParser, result: MutableMap<String, A
 }
 
 private fun readMapFromJson(parser: JsonParser): MutableMap<String, Any?> {
-  val m = LinkedHashMap<String, Any?>(700)
+  val m = LinkedHashMap<String, Any?>()
   readMapFromJson(parser, m)
   return m
 }
@@ -444,8 +434,17 @@ private fun readTopLevelBoolean(parser: JsonParser, bean: UIThemeBean, value: Bo
   }
 }
 
+internal fun importFromParentTheme(theme: UIThemeBean, parentTheme: UIThemeBean) {
+  theme.ui = importMapFromParentTheme(theme.ui, parentTheme.ui)
+  theme.icons = importMapFromParentTheme(theme.icons, parentTheme.icons)
+  theme.background = importMapFromParentTheme(theme.background, parentTheme.background)
+  theme.emptyFrameBackground = importMapFromParentTheme(theme.emptyFrameBackground, parentTheme.emptyFrameBackground)
+  theme.colorMap.rawMap = importMapFromParentTheme(theme.colorMap.rawMap, parentTheme.colorMap.rawMap)
+  theme.iconColorOnSelectionMap.rawMap = importMapFromParentTheme(theme.iconColorOnSelectionMap.rawMap, parentTheme.iconColorOnSelectionMap.rawMap)
+}
+
 @Suppress("SSBasedInspection")
-private fun importMapFromParentTheme(map: Map<String, Any?>?, parentMap: Map<String, Any?>?): Map<String, Any?>? {
+private fun <T : Any?> importMapFromParentTheme(map: Map<String, T>?, parentMap: Map<String, T>?): Map<String, T>? {
   if (parentMap == null) {
     return map
   }
@@ -453,7 +452,7 @@ private fun importMapFromParentTheme(map: Map<String, Any?>?, parentMap: Map<Str
     return LinkedHashMap(parentMap)
   }
 
-  val result = LinkedHashMap<String, Any?>(parentMap.size + map.size)
+  val result = LinkedHashMap<String, T>(parentMap.size + map.size)
   for (entry in parentMap.entries) {
     if (entry.key !in map) {
       result.put(entry.key, entry.value)
