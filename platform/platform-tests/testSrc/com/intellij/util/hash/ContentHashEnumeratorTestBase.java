@@ -4,14 +4,11 @@ package com.intellij.util.hash;
 import com.intellij.openapi.util.io.ByteArraySequence;
 import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
 import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
-import it.unimi.dsi.fastutil.ints.IntArrayList;
-import org.jetbrains.annotations.NotNull;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 import java.io.IOException;
-import java.util.ArrayList;
 import java.util.Random;
 import java.util.concurrent.ThreadLocalRandom;
 import java.util.stream.IntStream;
@@ -62,9 +59,11 @@ public abstract class ContentHashEnumeratorTestBase {
     ByteArraySequence[] uniqueHashes = generateUniqueHashes(rnd);
     for (int i = 0; i < uniqueHashes.length; i++) {
       ByteArraySequence hash = uniqueHashes[i];
+      int enumeratedExId = enumerator.enumerateEx(hash.toBytes());
+      int enumeratedId = enumerator.enumerate(hash.toBytes());
       assertEquals(
-        enumerator.enumerateEx(hash.toBytes()),
-        enumerator.enumerate(hash.toBytes()),
+        enumeratedId,
+        enumeratedExId,
         "[" + i + "] .enumerateEx() for new hashes must return same id as .enumerate()"
       );
     }
@@ -76,9 +75,11 @@ public abstract class ContentHashEnumeratorTestBase {
     ByteArraySequence[] uniqueHashes = generateUniqueHashes(rnd);
     for (int i = 0; i < uniqueHashes.length; i++) {
       ByteArraySequence hash = uniqueHashes[i];
+      int enumeratedId = enumerator.enumerate(hash.toBytes());
+      int enumeratedExId = enumerator.enumerateEx(hash.toBytes());
       assertEquals(
-        enumerator.enumerate(hash.toBytes()),
-        -enumerator.enumerateEx(hash.toBytes()),
+        -enumeratedId,
+        enumeratedExId,
         "[" + i + "] .enumerateEx() for _known_ hashes must return -id returned by .enumerate()"
       );
     }
