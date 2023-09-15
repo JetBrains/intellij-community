@@ -140,6 +140,7 @@ internal class KotlinPluginKindSwitcherController {
 
     companion object {
         fun createIfPluginSwitchIsPossible(): KotlinPluginKindSwitcherController? {
+            if (!ApplicationManager.getApplication().isInternal) return null
             if (!KotlinPluginKindSwitcher.canPluginBeSwitchedByVmOptions()) return null
             return KotlinPluginKindSwitcherController()
         }
