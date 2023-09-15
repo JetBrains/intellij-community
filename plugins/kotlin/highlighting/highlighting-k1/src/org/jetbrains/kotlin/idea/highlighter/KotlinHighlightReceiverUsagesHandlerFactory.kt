@@ -118,7 +118,7 @@ sealed class ReceiverInfo {
     abstract val psi: KtFunction
     protected abstract fun getDescriptor(bindingContext: BindingContext): CallableDescriptor?
 
-    fun collectReceiverUsages(consumer: (TextRange) -> Unit) {
+    open fun collectReceiverUsages(consumer: (TextRange) -> Unit) {
         val bindingContext = psi.safeAnalyze(BodyResolveMode.FULL)
         val callableDescriptor = getDescriptor(bindingContext) ?: return
         processInternalReferences(bindingContext, ReceiverUsageCollector(callableDescriptor, consumer))
@@ -127,6 +127,11 @@ sealed class ReceiverInfo {
     class Function(override val psi: KtFunction) : ReceiverInfo() {
         override fun getDescriptor(bindingContext: BindingContext): CallableDescriptor? =
             bindingContext.get(BindingContext.DECLARATION_TO_DESCRIPTOR, psi) as? CallableDescriptor
+
+        override fun collectReceiverUsages(consumer: (TextRange) -> Unit) {
+            psi.receiverTypeReference?.textRange?.let(consumer)
+            super.collectReceiverUsages(consumer)
+        }
     }
 
     class Lambda(override val psi: KtFunctionLiteral) : ReceiverInfo() {
